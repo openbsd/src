@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.115 2001/05/21 03:02:19 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.116 2001/05/22 02:55:49 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -45,6 +45,7 @@
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -905,6 +906,7 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
     return EINVAL;
 }
 
+#ifdef KERNFS
 /*
  * Used by kernfs.
  */
@@ -913,7 +915,18 @@ ipsp_kern(int off, char **bufp, int len)
 {
     static char buffer[IPSEC_KERNFS_BUFSIZE];
     struct tdb *tdb;
-    int l, i, s;
+    int l, i, s, k;
+
+    struct ctlname ipspflags[] = { \
+				   { "unique", TDBF_UNIQUE }, \
+				   { "invalid", TDBF_INVALID }, \
+				   { "halfiv", TDBF_HALFIV }, \
+				   { "pfs", TDBF_PFS }, \
+				   { "tunneling", TDBF_TUNNELING }, \
+				   { "noreplay", TDBF_NOREPLAY }, \
+				   { "random padding", TDBF_RANDOMPADDING }, \
+				   { "skipcrypto", TDBF_SKIPCRYPTO }, \
+				};
 
     if (bufp == NULL)
       return 0;
@@ -968,79 +981,16 @@ ipsp_kern(int off, char **bufp, int len)
 	      else
 	      {
 		  /* We can reuse variable 'i' here, since we're not looping */
-		  i = 0;
-
-		  if (tdb->tdb_flags & TDBF_UNIQUE)
+		for (k = 0, i = 0;
+		     k < sizeof(ipspflags) / sizeof(struct ctlname); k++)
+		  if (tdb->tdb_flags & ipspflags[k].ctl_type)
 		  {
-		      if (i)
-			l += sprintf(buffer + l, ", ");
-		      else
-			i = 1;
-
-		      l += sprintf(buffer + l, "unique");
+		      l += sprintf(buffer + l, "%s,", ipspflags[k].ctl_name);
 		      i = 1;
 		  }
 
-		  if (tdb->tdb_flags & TDBF_INVALID)
-		  {
-		      if (i)
-			l += sprintf(buffer + l, ", ");
-		      else
-			i = 1;
-
-		      l += sprintf(buffer + l, "invalid");
-		  }
-
-		  if (tdb->tdb_flags & TDBF_HALFIV)
-		  {
-		      if (i)
-			l += sprintf(buffer + l, ", ");
-		      else
-			i = 1;
-
-		      l += sprintf(buffer + l, "halfiv");
-		  }
-
-		  if (tdb->tdb_flags & TDBF_PFS)
-		  {
-		      if (i)
-			l += sprintf(buffer + l, ", ");
-		      else
-			i = 1;
-
-		      l += sprintf(buffer + l, "pfs");
-		  }
-
-		  if (tdb->tdb_flags & TDBF_TUNNELING)
-		  {
-		      if (i)
-			l += sprintf(buffer + l, ", ");
-		      else
-			i = 1;
-
-		      l += sprintf(buffer + l, "tunneling");
-		  }
-
-		  if (tdb->tdb_flags & TDBF_NOREPLAY)
-		  {
-		      if (i)
-			l += sprintf(buffer + l, ", ");
-		      else
-			i = 1;
-
-		      l += sprintf(buffer + l, "noreplay");
-		  }
-
-		  if (tdb->tdb_flags & TDBF_RANDOMPADDING)
-		  {
-		      if (i)
-			l += sprintf(buffer + l, ", ");
-		      else
-			i = 1;
-
-		      l += sprintf(buffer + l, "random padding");
-		  }
-
+		  if (i) /* If we added flags, remove trailing comma */
+		    l--;
 		  l += sprintf(buffer + l, ">\n");
 	      }
 
@@ -1154,6 +1104,7 @@ ipsp_kern(int off, char **bufp, int len)
     }
     return 0;
 }
+#endif /* KERNFS */
 
 /*
  * Check which transformations are required.
