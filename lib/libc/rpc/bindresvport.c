@@ -1,4 +1,4 @@
-/*	$OpenBSD: bindresvport.c,v 1.2 1996/07/20 06:12:20 deraadt Exp $	*/
+/*	$OpenBSD: bindresvport.c,v 1.3 1996/07/29 06:11:57 downsj Exp $	*/
 /*	$NetBSD: bindresvport.c,v 1.5 1995/06/03 22:37:19 mycroft Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.2 1996/07/20 06:12:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.3 1996/07/29 06:11:57 downsj Exp $";
 #endif
 
 /*
@@ -49,18 +49,13 @@ static char *rcsid = "$OpenBSD: bindresvport.c,v 1.2 1996/07/20 06:12:20 deraadt
 /*
  * Bind a socket to a privileged IP port
  */
+int
 bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
 {
-	int res;
-	static short port;
+	int on, error;
 	struct sockaddr_in myaddr;
-	int i;
-
-#define STARTPORT 600
-#define ENDPORT (IPPORT_RESERVED - 1)
-#define NPORTS	(ENDPORT - STARTPORT + 1)
 
 	if (sin == (struct sockaddr_in *)0) {
 		sin = &myaddr;
@@ -71,18 +66,15 @@ bindresvport(sd, sin)
 		errno = EPFNOSUPPORT;
 		return (-1);
 	}
-	if (port == 0) {
-		port = (getpid() % NPORTS) + STARTPORT;
+
+	if (sin->sin_port == 0) {
+		on = IP_PORTRANGE_LOW;
+		error = setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
+		           	   (char *)&on, sizeof(on));
+		if (error < 0)
+			return(error);
 	}
-	res = -1;
-	errno = EADDRINUSE;
-	for (i = 0; i < NPORTS && res < 0 && errno == EADDRINUSE; i++) {
-		sin->sin_port = htons(port++);
-		if (port > ENDPORT) {
-			port = STARTPORT;
-		}
-		res = bind(sd,
-		    (struct sockaddr *)sin, sizeof(struct sockaddr_in));
-	}
-	return (res);
+
+	error = bind(sd, (struct sockaddr *)sin, sizeof(struct sockaddr_in));
+	return(error);
 }
