@@ -826,6 +826,8 @@ check_sudoers()
 	log_error(USE_ERRNO, "can't stat %s", _PATH_SUDOERS);
     else if (!S_ISREG(statbuf.st_mode))
 	log_error(0, "%s is not a regular file", _PATH_SUDOERS);
+    else if (statbuf.st_size == 0)
+	log_error(0, "%s is zero length", _PATH_SUDOERS);
     else if ((statbuf.st_mode & 07777) != SUDOERS_MODE)
 	log_error(0, "%s is mode 0%o, should be 0%o", _PATH_SUDOERS,
 	    (statbuf.st_mode & 07777), SUDOERS_MODE);
