@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.8 1996/05/13 23:29:38 jtc Exp $	*/
+/*	$NetBSD: catgets.c,v 1.8.4.1 1996/05/28 20:06:20 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #define _NLS_PRIVATE
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <nl_types.h>
@@ -54,7 +55,8 @@ _catgets(catd, set_id, msg_id, s)
 	struct _nls_msg_hdr *msg_hdr;
 	int l, u, i, r;
 
-	if (catd == (nl_catd) 0 || catd == (nl_catd) -1) {
+	if (catd == (nl_catd) -1) {
+		errno = EBADF;
 		return (char *) s;
 	}
 
