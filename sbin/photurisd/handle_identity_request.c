@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_identity_request.c,v 1.3 2000/12/11 21:21:17 provos Exp $";
+static char rcsid[] = "$Id: handle_identity_request.c,v 1.4 2000/12/15 01:06:50 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -52,7 +52,6 @@ static char rcsid[] = "$Id: handle_identity_request.c,v 1.3 2000/12/11 21:21:17 
 #include "secrets.h"
 #include "scheme.h"
 #include "log.h"
-#include "schedule.h"
 #include "attributes.h"
 #include "md5.h"
 #ifdef IPSEC
@@ -297,7 +296,7 @@ handle_identity_request(u_char *packet, int size, char *address,
 #ifdef IPSEC
 	     kernel_insert_spi(st, spi);
 #endif
-             schedule_insert(UPDATE, st->olifetime/2, spi->SPI, SPI_SIZE); 
+	     spi_update_insert(spi);
 	}
 
 	if (st->uSPI[0] || st->uSPI[1] || st->uSPI[2] || st->uSPI[3]) {

@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: schedule.c,v 1.2 2000/12/11 21:21:18 provos Exp $";
+static char rcsid[] = "$Id: schedule.c,v 1.3 2000/12/15 01:06:51 provos Exp $";
 #endif
 
 #define _SCHEDULE_C_
@@ -54,7 +54,6 @@ static char rcsid[] = "$Id: schedule.c,v 1.2 2000/12/11 21:21:18 provos Exp $";
 #include "photuris.h"
 #include "buffer.h"
 #include "schedule.h"
-#include "secrets.h"
 #include "log.h"
 #include "cookie.h"
 #include "modulus.h"
@@ -184,7 +183,6 @@ schedule_process(int sock)
      struct schedule *tmp, *tmp2;
      struct sockaddr_in sin;
      struct stateob *st;
-     struct spiob *spi, *nspi;
      time_t tm;
      int remove;
 
@@ -292,96 +290,9 @@ schedule_process(int sock)
 	       }
 	       break;
 	  case UPDATE:
-#ifdef DEBUG
-	  {
-	       int i = BUFFER_SIZE;
-	       bin2hex(buffer, &i, tmp->cookie, SPI_SIZE);
-	       printf("Upating SPI 0x%s\n", buffer);
-	  }
-#endif
-	       remove = 1;
-	       /* We are to create a new SPI */
-	       if ((spi = spi_find(NULL, tmp->cookie)) == NULL) {
-		    log_print("spi_find() in schedule_process()");
-		    break;
-	       }
-	       if ((st = state_find_cookies(spi->address, spi->icookie, NULL)) == NULL) {
-#ifdef DEBUG2
-		    /* 
-		     * This happens always when an exchange expires but
-		     * updates are still scheduled for it.
-		     */
-		    log_print("state_find_cookies() in schedule_process()");
-#endif
-		    break;
-	       }
-
-	       if (st->oSPIattrib != NULL)
-		    free(st->oSPIattrib);
-	       if ((st->oSPIattrib = calloc(spi->attribsize, sizeof(u_int8_t))) == NULL) {
-		    log_error("calloc() in schedule_process()");
-		    break;
-	       }
-	       st->oSPIattribsize = spi->attribsize;
-	       bcopy(spi->attributes, st->oSPIattrib, st->oSPIattribsize);
-
-	       /* We can keep our old attributes, this is only an update */
-	       if (make_spi(st, spi->local_address, st->oSPI, &(st->olifetime),
-			    &(st->oSPIattrib), &(st->oSPIattribsize)) == -1) {
-		    log_print("make_spi() in schedule_process()");
-		    break;
-	       }
-
-	       packet_size = PACKET_BUFFER_SIZE; 
-	       if (photuris_spi_update(st, packet_buffer, &packet_size) == -1) {
-		    log_print("photuris_spi_update() in schedule_process()");
-		    break;
-	       }
-
-	       /* Send the packet */
-	       sin.sin_port = htons(st->port); 
-	       sin.sin_family = AF_INET; 
-	       sin.sin_addr.s_addr = inet_addr(st->address);
-		    
-	       if (sendto(sock, packet_buffer, packet_size, 0,
-			  (struct sockaddr *) &sin, sizeof(sin)) != packet_size) {
-		    log_error("sendto() in schedule_process()");
-		    break;
-	       }
-	       
-#ifdef DEBUG
-	       printf("Sending SPI UPDATE to %s.\n", st->address);
-#endif
-	       /* Insert Owner SPI */
-	       if ((nspi = spi_new(st->address, st->oSPI)) == NULL) {
-		    log_error("spi_new() in handle_spi_needed()");
-		    break;
-	       }
-	       if ((nspi->local_address = strdup(spi->local_address)) == NULL) {
-		    log_error("strdup() in handle_spi_needed()");
-		    spi_value_reset(nspi);
-		    break;
-	       }
-	       bcopy(st->icookie, nspi->icookie, COOKIE_SIZE);
-	       nspi->flags |= SPI_OWNER;
-	       nspi->attribsize = st->oSPIattribsize;
-	       nspi->attributes = calloc(nspi->attribsize, sizeof(u_int8_t));
-	       if (nspi->attributes == NULL) {
-		    log_error("calloc() in handle_spi_needed()");
-		    spi_value_reset(nspi);
-		    break;
-	       }
-	       bcopy(st->oSPIattrib, nspi->attributes, nspi->attribsize);
-	       nspi->lifetime = time(NULL) + st->olifetime;
-
-	       make_session_keys(st, nspi);
-
-	       spi_insert(nspi);
-	       schedule_insert(UPDATE, st->olifetime/2, nspi->SPI, SPI_SIZE);
-#ifdef IPSEC
-	       kernel_insert_spi(st, nspi);
-#endif
-	       break;
+		  spi_update(sock, tmp->cookie);
+		  remove = 1;
+		  break;
 	  default:
 	       remove = 1;
 	       log_print("Unknown event in schedule_process()");

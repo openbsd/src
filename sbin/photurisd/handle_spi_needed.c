@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_needed.c,v 1.2 2000/12/11 21:21:17 provos Exp $";
+static char rcsid[] = "$Id: handle_spi_needed.c,v 1.3 2000/12/15 01:06:51 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -51,7 +51,6 @@ static char rcsid[] = "$Id: handle_spi_needed.c,v 1.2 2000/12/11 21:21:17 provos
 #include "validity.h"
 #include "attributes.h"
 #include "secrets.h"
-#include "schedule.h"
 #include "scheme.h"
 #include "log.h"
 #include "spi.h"
@@ -188,7 +187,7 @@ handle_spi_needed(u_char *packet, int size, char *address,
 	make_session_keys(st, spi);
 
 	spi_insert(spi);
-	schedule_insert(UPDATE, st->olifetime/2, spi->SPI, SPI_SIZE);
+	spi_update_insert(spi);
 #ifdef IPSEC
 	kernel_insert_spi(st, spi);
 #endif

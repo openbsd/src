@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.15 2000/12/14 23:28:58 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.16 2000/12/15 01:06:51 provos Exp $";
 #endif
 
 #include <time.h>
@@ -75,6 +75,7 @@ static char rcsid[] = "$Id: kernel.c,v 1.15 2000/12/14 23:28:58 provos Exp $";
 #include "state.h"
 #include "attributes.h"
 #include "buffer.h"
+#include "api.h"
 #include "spi.h"
 #include "kernel.h"
 #include "log.h"
@@ -385,10 +386,9 @@ kernel_register(int sd)
 {
      struct sadb_msg smsg, *sres;
      struct sadb_supported *ssup;
-     struct sadb_alg *salg;
      struct sadb_ext *ext;
      void *end;
-     int encfound, authfound, len;
+     int encfound, authfound;
      struct iovec iov[1];
      int cnt = 0;
 
@@ -609,9 +609,8 @@ kernel_add_lifetime(struct sadb_msg *sa, struct iovec *iov, int seconds)
 	slh.sadb_lifetime_len = sizeof(slh) / 8;
 	slh.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
 	slh.sadb_lifetime_allocations = 0;
-	slh.sadb_lifetime_bytes = 1000000000;   /* lots of bytes */
-	slh.sadb_lifetime_addtime = seconds + 60;
-	slh.sadb_lifetime_usetime = seconds; /* first use */
+	slh.sadb_lifetime_bytes = 10000000;   /* lots of bytes */
+	slh.sadb_lifetime_addtime = seconds;
 	sa->sadb_msg_len += slh.sadb_lifetime_len;
 
 	iov[cnt].iov_base = &slh;
@@ -620,9 +619,8 @@ kernel_add_lifetime(struct sadb_msg *sa, struct iovec *iov, int seconds)
 	sls.sadb_lifetime_len = sizeof(sls) / 8;
 	sls.sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
 	sls.sadb_lifetime_allocations = 0;
-	sls.sadb_lifetime_bytes = 900000000;   /* lots of bytes */
-	sls.sadb_lifetime_addtime = (seconds + 60) * 9 / 10;
-	sls.sadb_lifetime_usetime = seconds * 9 / 10; /* first use */
+	sls.sadb_lifetime_bytes = 9000000;   /* lots of bytes */
+	sls.sadb_lifetime_addtime = seconds * 9 / 10;
 	sa->sadb_msg_len += slh.sadb_lifetime_len;
 
 	iov[cnt].iov_base = &sls;
@@ -1284,6 +1282,22 @@ kernel_handle_expire(struct sadb_msg *sadb)
 		spi_unlink(spi);
 		break;
 	case SADB_EXT_LIFETIME_SOFT:
+		life = (struct sadb_lifetime *)
+			pfkey_find_extension(ext, end,
+					     SADB_EXT_LIFETIME_CURRENT);
+		if (life == NULL) {
+			log_print(__FUNCTION__": no current lifetime");
+			return (-1);
+		}
+
+		if (!life->sadb_lifetime_bytes) {
+			LOG_DBG((LOG_KERNEL, 45, __FUNCTION__
+				 ": SPI %x not been used, skipping update",
+				 ntohl(sa->sadb_sa_spi)));
+			return (0);
+		}
+
+		spi_update(global_socket, (u_int8_t *)&sa->sadb_sa_spi);
 		break;
 	default:
 		log_print(__FUNCTION__": unknown extension type %d",
@@ -1304,7 +1318,6 @@ kernel_request_sa(struct sadb_msg *sadb)
 {
 	struct stateob *st;
 	time_t tm;
-	struct sadb_msg *res;
 	struct sadb_address *dst, *src;
 	struct sockaddr *dstaddr, *srcaddr;
 	struct sadb_ext *ext = (struct sadb_ext *)(sadb + 1);
@@ -1365,14 +1378,10 @@ kernel_request_sa(struct sadb_msg *sadb)
 		st->protocol = 0;
 
 		st->flags = IPSEC_NOTIFY;
-		st->flags |= IPSEC_OPT_ENC;
 
-		/* XXX - maybe see if we needs this
-		if (em->em_not_satype & NOTIFY_SATYPE_AUTH)
-			st->flags |= IPSEC_OPT_AUTH;
-		*/
+		st->flags |= sadb->sadb_msg_satype == SADB_SATYPE_ESP ?
+			IPSEC_OPT_ENC : IPSEC_OPT_AUTH;
 
-		/* XXX - handling of tunnel requests missing */
 		if (start_exchange(global_socket, st, st->address,
 				   st->port) == -1) {
 			log_print(__FUNCTION__": start_exchange() - informing kernel of failure");
@@ -1389,6 +1398,8 @@ kernel_request_sa(struct sadb_msg *sadb)
 		 * an SPI_NEEDED message.
 		 */
 	}
+
+	return (0);
 }
 
 /*
