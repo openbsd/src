@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.19 2004/05/18 12:37:51 pedro Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.20 2004/06/06 01:00:51 tedu Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -339,7 +339,9 @@ portal_open(v)
 	/*
 	 * Kick off connection
 	 */
+	s = splsoftnet();
 	error = portal_connect(so, (struct socket *)fmp->pm_server->f_data);
+	splx(s);
 	if (error)
 		goto bad;
 
@@ -453,7 +455,7 @@ portal_open(v)
 	 * than a single mbuf in it.  What to do?
 	 */
 	cmsg = mtod(cm, struct cmsghdr *);
-	newfds = (cmsg->cmsg_len - CMSG_ALIGN(sizeof(*cmsg))) / sizeof (int);
+	newfds = (cmsg->cmsg_len - sizeof(*cmsg)) / sizeof (int);
 	if (newfds == 0) {
 		error = ECONNREFUSED;
 		goto bad;
@@ -464,7 +466,7 @@ portal_open(v)
 	 * integer file descriptors.  The fds were allocated by the action
 	 * of receiving the control message.
 	 */
-	ip = (int *)CMSG_DATA(cmsg);
+	ip = (int *)(cmsg + 1);
 	fd = *ip++;
 	if (newfds > 1) {
 		/*
@@ -483,7 +485,6 @@ portal_open(v)
 	 * of the mode of the existing descriptor.
 	 */
 	if ((fp = fd_getfile(p->p_fd, fd)) == NULL) {
-		portal_closefd(p, fd);
 		error = EBADF;
 		goto bad;
 	}
