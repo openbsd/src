@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: random.c,v 1.7 2000/04/03 23:23:48 millert Exp $";
+static char *rcsid = "$OpenBSD: random.c,v 1.8 2000/04/04 13:38:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -245,10 +245,8 @@ srandomdev()
 	else
 		len = rand_deg * sizeof(state[0]);
 
-	if ((fd = open("/dev/arandom", O_RDONLY, 0)) != -1 &&
-	    read(fd, (void *) state, len) == (ssize_t) len) {
-		close(fd);
-	} else {
+	if ((fd = open("/dev/arandom", O_RDONLY, 0)) == -1 ||
+	    read(fd, (void *) state, len) != (ssize_t) len) {
 		struct timeval tv;
 		u_int junk;
 
@@ -257,6 +255,8 @@ srandomdev()
 		srandom(getpid() ^ tv.tv_sec ^ tv.tv_usec ^ junk);
 		return;
 	}
+	if (fd != -1)
+		close(fd);
 
 	if (rand_type != TYPE_0) {
 		fptr = &state[rand_sep];
