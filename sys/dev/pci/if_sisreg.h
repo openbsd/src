@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.11 2002/11/20 15:19:33 fgsch Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.12 2003/06/30 02:52:09 avsm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -391,7 +391,6 @@ struct sis_softc {
 	mii_data_t		sc_mii;
 	bus_space_handle_t	sis_bhandle;
 	bus_space_tag_t		sis_btag;
-	u_int8_t		sis_unit;
 	u_int8_t		sis_type;
 	u_int8_t		sis_rev;
 	u_int8_t		sis_link;

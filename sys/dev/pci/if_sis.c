@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.31 2003/03/10 12:13:23 mcbride Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.32 2003/06/30 02:52:09 avsm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -397,7 +397,7 @@ int sis_miibus_readreg(self, phy, reg)
 	}
 
 	if (i == SIS_TIMEOUT) {
-		printf("sis%d: PHY failed to come ready\n", sc->sis_unit);
+		printf("%s: PHY failed to come ready\n", sc->sc_dev.dv_xname);
 		return(0);
 	}
 
@@ -436,7 +436,7 @@ void sis_miibus_writereg(self, phy, reg, data)
 	}
 
 	if (i == SIS_TIMEOUT)
-		printf("sis%d: PHY failed to come ready\n", sc->sis_unit);
+		printf("%s: PHY failed to come ready\n", sc->sc_dev.dv_xname);
 
 	return;
 }
@@ -588,7 +588,7 @@ void sis_reset(sc)
 	}
 
 	if (i == SIS_TIMEOUT)
-		printf("sis%d: reset never completed\n", sc->sis_unit);
+		printf("%s: reset never completed\n", sc->sc_dev.dv_xname);
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -644,7 +644,6 @@ void sis_attach(parent, self, aux)
 	bus_size_t		iosize;
 
 	s = splnet();
-	sc->sis_unit = sc->sc_dev.dv_unit;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_SIS_900:
@@ -676,8 +675,8 @@ void sis_attach(parent, self, aux)
 			irq = pci_conf_read(pc, pa->pa_tag, SIS_PCI_INTLINE);
 
 			/* Reset the power state. */
-			printf("sis%d: chip is in D%d power mode "
-			"-- setting to D0\n", sc->sis_unit, command & SIS_PSTATE_MASK);
+			printf("%s: chip is in D%d power mode -- setting to D0\n",
+				sc->sc_dev.dv_xname, command & SIS_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag, SIS_PCI_PWRMGMTCTRL, command);
 
@@ -1012,15 +1011,15 @@ int sis_newbuf(sc, c, m)
 	if (m == NULL) {
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			printf("sis%d: no memory for rx list "
-			    "-- packet dropped!\n", sc->sis_unit);
+			printf("%s: no memory for rx list -- packet dropped!\n",
+				sc->sc_dev.dv_xname);
 			return(ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
-			printf("sis%d: no memory for rx list "
-			    "-- packet dropped!\n", sc->sis_unit);
+			printf("%s: no memory for rx list -- packet dropped!\n",
+				sc->sc_dev.dv_xname);
 			m_freem(m_new);
 			return(ENOBUFS);
 		}
@@ -1481,8 +1480,8 @@ void sis_init(xsc)
 
 	/* Init circular RX list. */
 	if (sis_list_rx_init(sc) == ENOBUFS) {
-		printf("sis%d: initialization failed: no "
-			"memory for rx buffers\n", sc->sis_unit);
+		printf("%s: initialization failed: no memory for rx buffers\n",
+			sc->sc_dev.dv_xname);
 		sis_stop(sc);
 		splx(s);
 		return;
@@ -1751,7 +1750,7 @@ void sis_watchdog(ifp)
 	sc = ifp->if_softc;
 
 	ifp->if_oerrors++;
-	printf("sis%d: watchdog timeout\n", sc->sis_unit);
+	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 	s = splnet();
 	sis_stop(sc);
