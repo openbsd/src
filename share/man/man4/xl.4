@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.29 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: xl.4,v 1.30 2003/12/23 14:04:18 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -41,6 +41,9 @@
 .Sh SYNOPSIS
 .Cd "xl* at pci? dev ? function ?"
 .Cd "xl* at cardbus? dev ? function ?"
+.Cd "amphy* at mii? phy ?"
+.Cd "exphy* at mii? phy ?"
+.Cd "nsphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -202,16 +205,19 @@ The driver makes a lot of noise about this condition because
 the author considers it a manufacturing defect.
 .El
 .Sh SEE ALSO
+.Xr amphy 4 ,
 .Xr arp 4 ,
 .Xr cardbus 4 ,
 .Xr ec 4 ,
 .Xr eg 4 ,
 .Xr el 4 ,
 .Xr ep 4 ,
+.Xr exphy 4 ,
 .Xr ie 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr nsphy 4 ,
 .Xr ti 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
