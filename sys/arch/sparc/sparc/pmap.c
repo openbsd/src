@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 1997/06/26 01:00:59 downsj Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 1997/07/07 07:45:32 grr Exp $	*/
 /*	$NetBSD: pmap.c,v 1.60.4.1 1996/06/12 20:36:30 pk Exp $ */
 
 /*
@@ -6206,7 +6206,13 @@ pmap_zero_page4m(pa)
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(pa));
 	}
-	pte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
+	/*
+	 * there really needs to be a conditional ecache flush here, but
+	 * making the page cacheable avoids problems with potentially
+	 * leaving dirty cache lines pending in the e-cache while the page
+	 * is marked non-cachable.  Per Chris Torek and Aaron Brown...
+	 */
+	pte = SRMMU_PG_C | (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
 	      (atop(pa) << SRMMU_PPNSHIFT));
 	va = vpage[0];
 	setpte4m((vm_offset_t) va, pte);
@@ -6242,7 +6248,13 @@ pmap_copy_page4m(src, dst)
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(dst));
 	}
-	dpte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
+	/*
+	 * there really needs to be a conditional ecache flush here, but
+	 * making the page cacheable avoids problems with potentially
+	 * leaving dirty cache lines pending in the e-cache while the page
+	 * is marked non-cachable.  Per Chris Torek and Aaron Brown...
+	 */
+	dpte = SRMMU_PG_C | (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
 		(atop(dst) << SRMMU_PPNSHIFT));
 
 	sva = vpage[0];
