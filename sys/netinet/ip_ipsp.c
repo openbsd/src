@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.49 1999/07/15 14:15:41 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.50 1999/07/15 14:46:05 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -74,10 +74,19 @@
 
 #include <dev/rndvar.h>
 
+#ifdef DDB
+#include <ddb/db_output.h>
+void tdb_hashstats(void);
+#endif
+
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
+#endif
+
+#ifdef __GNUC__
+#define INLINE static __inline
 #endif
 
 int		ipsp_kern __P((int, char **, int));
@@ -154,6 +163,7 @@ unsigned char ipseczeroes[IPSEC_ZEROES_SIZE]; /* zeroes! */
 #define TDB_HASHSIZE_INIT 32
 static struct tdb **tdbh = NULL;
 static u_int tdb_hashmask = TDB_HASHSIZE_INIT - 1;
+static int tdb_count;
 
 /*
  * Check which transformationes are required
@@ -410,6 +420,39 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 }
 
 /*
+ * Our hashing function needs to stir things with a non-zero random multiplier
+ * so we cannot be DoS-attacked via choosing of the data to hash.
+ */
+INLINE int
+tdb_hash(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
+{
+    static u_int32_t seed1 = 0, seed2 = 0;
+    u_int8_t *ptr = (u_int8_t *) dst;
+    int i;
+    u_int32_t hash, val32 = 0;
+
+    if (!seed1) {
+	seed1 = arc4random ();
+	seed2 = arc4random ();
+    }
+
+    hash = spi ^ proto;
+    for (i = 0; i < SA_LEN(&dst->sa); i++)
+    {
+	val32 = (val32 << 8) | ptr[i];
+	if (i % 4 == 3)
+	{
+	    hash ^= val32;
+	    val32 = 0;
+	}
+    }
+    if (i % 4 != 0)
+	hash ^= val32;
+
+    return (((hash >> 16) ^ seed1) * (hash ^ seed2)) & tdb_hashmask;
+}
+
+/*
  * An IPSP SAID is really the concatenation of the SPI found in the 
  * packet, the destination address of the packet and the IPsec protocol.
  * When we receive an IPSP packet, we need to look up its tunnel descriptor
@@ -420,18 +463,14 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 struct tdb *
 gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 {
-    u_int8_t *ptr = (u_int8_t *) dst;
-    u_int32_t hashval = proto + spi;
+    u_int32_t hashval;
     struct tdb *tdbp;
-    int i, s;
+    int s;
 
     if (tdbh == NULL)
       return (struct tdb *) NULL;
 
-    for (i = 0; i < SA_LEN(&dst->sa); i++)
-      hashval += ptr[i];
-    
-    hashval &= tdb_hashmask;
+    hashval = tdb_hash(spi, dst, proto);
 
     s = spltdb();
     for (tdbp = tdbh[hashval]; tdbp != NULL; tdbp = tdbp->tdb_hnext)
@@ -443,6 +482,35 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 
     return tdbp;
 }
+
+#if DDB
+void
+tdb_hashstats()
+{
+    int i, cnt, buckets[16];
+    struct tdb *tdbp;
+
+    if (tdbh == NULL)
+    {
+	db_printf("no tdb hash table\n");
+	return;
+    }
+
+    bzero (buckets, sizeof(buckets));
+    for (i = 0; i <= tdb_hashmask; i++)
+    {
+	cnt = 0;
+	for (tdbp = tdbh[i]; cnt < 16 && tdbp != NULL; tdbp = tdbp->tdb_hnext)
+	  cnt++;
+	buckets[cnt]++;
+    }
+
+    db_printf("tdb cnt\t\tbucket cnt\n");
+    for (i = 0; i < 16; i++)
+      if (buckets[i] > 0)
+	db_printf("%d%c\tne\t\%d\n", i, i == 15 ? "+" : "", buckets[i]);
+}
+#endif	/* DDB */
 
 struct flow *
 get_flow(void)
@@ -759,53 +827,56 @@ void
 tdb_rehash(void)
 {
     struct tdb **new_tdbh, *tdbp, *tdbnp;
-    u_int i, j, new_hashmask = (tdb_hashmask << 1) | 1;
-    u_int8_t *ptr;
+    u_int i, old_hashmask = tdb_hashmask;
     u_int32_t hashval;
 
-    MALLOC(new_tdbh, struct tdb **, sizeof(struct tdb *) * (new_hashmask + 1),
+    tdb_hashmask = (tdb_hashmask << 1) | 1;
+    MALLOC(new_tdbh, struct tdb **, sizeof(struct tdb *) * (tdb_hashmask + 1),
 	   M_TDB, M_WAITOK);
-    bzero(new_tdbh, sizeof(struct tdbh *) * (new_hashmask + 1));
-    for (i = 0; i <= tdb_hashmask; i++)
-      for (tdbp = tdbh[i]; tdbp != NULL; tdbp = tdbnp) {
+    bzero(new_tdbh, sizeof(struct tdbh *) * (tdb_hashmask + 1));
+    for (i = 0; i <= old_hashmask; i++)
+      for (tdbp = tdbh[i]; tdbp != NULL; tdbp = tdbnp)
+      {
 	  tdbnp = tdbp->tdb_hnext;
-      	  hashval = tdbp->tdb_sproto + tdbp->tdb_spi;
-	  ptr = (u_int8_t *) &tdbp->tdb_dst;
-	  for (j = 0; j < SA_LEN(&tdbp->tdb_dst.sa); j++)
-	    hashval += ptr[j];
-	  hashval &= new_hashmask;
+      	  hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 	  tdbp->tdb_hnext = new_tdbh[hashval];
 	  new_tdbh[hashval] = tdbp;
       }
     FREE(tdbh, M_TDB);
-    tdb_hashmask = new_hashmask;
     tdbh = new_tdbh;
 }
 
 void
 puttdb(struct tdb *tdbp)
 {
-    u_int8_t *ptr = (u_int8_t *) &tdbp->tdb_dst;
-    u_int32_t hashsum = tdbp->tdb_sproto + tdbp->tdb_spi, hashval, i;
+    u_int32_t hashval;
     int s = spltdb();
 
-    if (tdbh == NULL) {
+    if (tdbh == NULL)
+    {
 	MALLOC(tdbh, struct tdb **, sizeof(struct tdb *) * (tdb_hashmask + 1),
 	       M_TDB, M_WAITOK);
 	bzero(tdbh, sizeof(struct tdb *) * (tdb_hashmask + 1));
     }
 
-    for (i = 0; i < SA_LEN(&tdbp->tdb_dst.sa); i++)
-      hashsum += ptr[i];
+    hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
     
-    hashval = hashsum & tdb_hashmask;
-    /* Rehash if this tdb would cause a bucket to have more than two items. */
-    if (tdbh[hashval] != NULL && tdbh[hashval]->tdb_hnext != NULL) {
+    /*
+     * Rehash if this tdb would cause a bucket to have more than two items
+     * and if the number of tdbs exceed 10% of the bucket count.  This
+     * number is arbitratily chosen and is just a measure to not keep rehashing
+     * when adding and removing tdbs which happens to always end up in the
+     * same bucket, which is not uncommon when doing manual keying.
+     */
+    if (tdbh[hashval] != NULL && tdbh[hashval]->tdb_hnext != NULL &&
+	tdb_count * 10 > tdb_hashmask + 1)
+    {
 	tdb_rehash();
-	hashval = hashsum & tdb_hashmask;
+	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
     }
     tdbp->tdb_hnext = tdbh[hashval];
     tdbh[hashval] = tdbp;
+    tdb_count++;
     splx(s);
 }
 
@@ -857,19 +928,15 @@ delete_flow(struct flow *flow, struct tdb *tdb)
 void
 tdb_delete(struct tdb *tdbp, int delchain, int expflags)
 {
-    u_int8_t *ptr = (u_int8_t *) &tdbp->tdb_dst;
     struct tdb *tdbpp;
     struct inpcb *inp;
-    u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi, i;
+    u_int32_t hashval = tdbp->tdb_sproto + tdbp->tdb_spi;
     int s;
 
     if (tdbh == NULL)
       return;
 
-    for (i = 0; i < SA_LEN(&tdbp->tdb_dst.sa); i++)
-      hashval += ptr[i];
-
-    hashval &= tdb_hashmask;
+    hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
     s = spltdb();
     if (tdbh[hashval] == tdbp)
@@ -942,6 +1009,7 @@ tdb_delete(struct tdb *tdbp, int delchain, int expflags)
       FREE(tdbp->tdb_dstid, M_XDATA);
 
     FREE(tdbp, M_TDB);
+    tdb_count--;
 
     if (delchain && tdbpp)
       tdb_delete(tdbpp, delchain, expflags);
