@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.266 2004/01/31 00:09:41 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.267 2004/02/01 12:26:45 grange Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -454,7 +454,6 @@ i386_proc0_tss_ldt_init()
 	int x;
 
 	curpcb = pcb = &proc0.p_addr->u_pcb;
-	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
@@ -2618,7 +2617,6 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	struct trapframe *tf = p->p_md.md_regs;
 
@@ -2629,12 +2627,10 @@ setregs(p, pack, stack, retval)
 #endif
 
 #ifdef USER_LDT
-	if (pcb->pcb_flags & PCB_USER_LDT)
-		i386_user_cleanup(pcb);
+	pmap_ldt_cleanup(p);
 #endif
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
-	pcb->pcb_flags = 0;
 
 	__asm("movw %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	__asm("movw %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));

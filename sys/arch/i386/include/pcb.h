@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.9 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.10 2004/02/01 12:26:45 grange Exp $	*/
 /*	$NetBSD: pcb.h,v 1.21 1996/01/08 13:51:42 mycroft Exp $	*/
 
 /*-
@@ -70,8 +70,6 @@ struct pcb {
 /*
  * Software pcb (extension)
  */
-	int	pcb_flags;
-#define	PCB_USER_LDT	0x01		/* has user-set LDT */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.74 2004/01/29 19:01:54 tedu Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.75 2004/02/01 12:26:45 grange Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1881,6 +1881,9 @@ pmap_release(pmap)
 		/*
 		 * no need to switch the LDT; this address space is gone,
 		 * nothing is using it.
+		 *
+		 * No need to lock the pmap for ldt_free (or anything else),
+		 * we're the last one to use it.
 		 */
 		ldt_free(pmap);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,

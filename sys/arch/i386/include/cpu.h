@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.55 2004/01/06 21:09:20 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.56 2004/02/01 12:26:45 grange Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -216,7 +216,6 @@ int	math_emulate(struct trapframe *);
 #ifdef USER_LDT
 /* sys_machdep.h */
 extern int user_ldt_enable;
-void	i386_user_cleanup(struct pcb *);
 int	i386_get_ldt(struct proc *, void *, register_t *);
 int	i386_set_ldt(struct proc *, void *, register_t *);
 #endif
