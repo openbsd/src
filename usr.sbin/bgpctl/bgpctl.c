@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.18 2004/01/06 18:01:48 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.19 2004/01/06 19:24:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -77,7 +77,7 @@ int		 show_summary_msg(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
 void		 print_neighbor_msgstats(struct peer *);
 void		 print_neighbor_timers(struct peer *);
-void		 print_timer(const char *, time_t);
+void		 print_timer(const char *, time_t, u_int);
 static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
 int		 parse_addr(const char *, struct bgpd_addr *);
@@ -334,14 +334,15 @@ print_neighbor_msgstats(struct peer *p)
 void
 print_neighbor_timers(struct peer *p)
 {
-	print_timer("IdleHoldTimer:", p->IdleHoldTimer);
-	print_timer("ConnectRetryTimer:", p->ConnectRetryTimer);
-	print_timer("HoldTimer:", p->HoldTimer);
-	print_timer("KeepaliveTimer:", p->KeepaliveTimer);
+	print_timer("IdleHoldTimer:", p->IdleHoldTimer, p->IdleHoldTime);
+	print_timer("ConnectRetryTimer:", p->ConnectRetryTimer,
+	    INTERVAL_CONNECTRETRY);
+	print_timer("HoldTimer:", p->HoldTimer, p->holdtime);
+	print_timer("KeepaliveTimer:", p->KeepaliveTimer, p->holdtime/3);
 }
 
 void
-print_timer(const char *name, time_t val)
+print_timer(const char *name, time_t val, u_int interval)
 {
 	int	d;
 
@@ -349,11 +350,13 @@ print_timer(const char *name, time_t val)
 	printf("  %-20s ", name);
 
 	if (val == 0)
-		printf("not running\n");
+		printf("%-20s", "not running");
 	else if (d <= 0)
-		printf("due\n");
+		printf("%-20s", "due");
 	else
-		printf("due in %s\n", fmt_timeframe_core(d));
+		printf("due in %-13s", fmt_timeframe_core(d));
+
+	printf("Interval: %5us\n", interval);
 }
 
 #define TF_BUFS	8
