@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.4 2001/06/26 05:52:53 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.5 2001/06/26 06:33:51 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -135,6 +135,8 @@ lofn_attach(parent, self, aux)
 		goto fail;
 	}
 
+	WRITE_REG_0(sc, LOFN_REL_RNC, LOFN_RNG_SCALAR);
+
 	/* Enable RNG */
 	WRITE_REG_0(sc, LOFN_REL_IER,
 	    READ_REG_0(sc, LOFN_REL_IER) | LOFN_IER_RDY);
@@ -169,7 +171,7 @@ lofn_intr(vsc)
 	} else if (sr & LOFN_SR_RNG_RDY) {
 		r = 1;
 
-		bus_space_read_region_4(sc->sc_st, sc->sc_sh, 0x1080,
+		bus_space_read_region_4(sc->sc_st, sc->sc_sh, LOFN_REL_RNG,
 		    sc->sc_rngbuf, LOFN_RNGBUF_SIZE);
 		for (i = 0; i < LOFN_RNGBUF_SIZE; i++)
 			add_true_randomness(sc->sc_rngbuf[i]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnvar.h,v 1.3 2001/06/26 05:03:10 jason Exp $	*/
+/*	$OpenBSD: lofnvar.h,v 1.4 2001/06/26 06:33:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -55,3 +55,7 @@ struct lofn_softc {
 #define	WRITE_REG_1(sc,r,v)	WRITE_REG((sc), (r) | LOFN_WIN_1, (v))
 #define	WRITE_REG_2(sc,r,v)	WRITE_REG((sc), (r) | LOFN_WIN_2, (v))
 #define	WRITE_REG_3(sc,r,v)	WRITE_REG((sc), (r) | LOFN_WIN_3, (v))
+
+#ifndef LOFN_RNG_SCALAR
+#define	LOFN_RNG_SCALAR		0x00000700
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.5 2001/06/26 05:45:27 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.6 2001/06/26 06:33:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -38,6 +38,8 @@
 #define	LOFN_WIN_2	0x4000
 #define	LOFN_WIN_3	0x6000
 
+#define	LOFN_REL_RNG		0x1080		/* RNG FIFO start */
+#define	LOFN_REL_RNG_END	0x10bf		/* RNG FIFO end */
 /* Control and status registers, relative to window number */
 #define	LOFN_REL_CR		0x1fd4		/* Command */
 #define	LOFN_REL_SR		0x1fd8		/* Status */
