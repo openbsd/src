@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.7 1996/08/02 11:26:23 deraadt Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.8 1996/09/16 16:35:09 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.7 1996/08/02 11:26:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.8 1996/09/16 16:35:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ extractdirs(genmode)
 	int fd;
 
 	vprintf(stdout, "Extract directories from tape\n");
-	(void) sprintf(dirfile, "%s/rstdir%d", _PATH_TMP, dumpdate);
+	(void) sprintf(dirfile, "%srstdir%d", _PATH_TMP, dumpdate);
 	if (command != 'r' && command != 'R') {
 		(void *) strcat(dirfile, "-XXXXXX");
 		if (mktemp(dirfile) == NULL) {
@@ -174,7 +174,7 @@ extractdirs(genmode)
 		exit(1);
 	}
 	if (genmode != 0) {
-		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+		(void) sprintf(modefile, "%srstmode%d", _PATH_TMP, dumpdate);
 		if (command != 'r' && command != 'R') {
 			(void *) strcat(modefile, "-XXXXXX");
 			if (mktemp(modefile) == NULL) {
@@ -616,7 +616,7 @@ setdirmodes(flags)
 	
 	vprintf(stdout, "Set directory mode, owner, and times.\n");
 	if (command == 'r' || command == 'R')
-		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
+		(void) sprintf(modefile, "%srstmode%d", _PATH_TMP, dumpdate);
 	if (modefile[0] == '#') {
 		panic("modefile not defined\n");
 		fprintf(stderr, "directory mode, owner, and times not set\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.2 1996/06/26 05:31:45 deraadt Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.3 1996/09/16 16:36:04 millert Exp $	*/
 /*	$NetBSD: calendar.c,v 1.8 1995/09/02 05:38:38 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.2 1996/06/26 05:31:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.3 1996/09/16 16:36:04 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -323,7 +323,7 @@ opencal()
 		return (stdout);
 
 	/* set output to a temporary file, so if no output don't send mail */
-	(void)snprintf(path, sizeof(path), "%s/_calXXXXXX", _PATH_TMP);
+	(void)snprintf(path, sizeof(path), "%s_calXXXXXX", _PATH_TMP);
 	if ((fd = mkstemp(path)) < 0)
 		return (NULL);
 	return (fdopen(fd, "w+"));
