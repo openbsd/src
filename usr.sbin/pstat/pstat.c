@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.13 1997/09/12 04:07:19 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.14 1997/09/18 08:54:09 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.13 1997/09/12 04:07:19 millert Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.14 1997/09/18 08:54:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -754,7 +754,7 @@ kinfo_vnodes(avnodes)
 	return ((struct e_vnode *)vbuf);
 }
 	
-char hdr[]="  LINE  RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
+char hdr[]="   LINE RAW  CAN  OUT  HWT LWT    COL STATE      SESS  PGID DISC\n";
 
 void
 ttymode()
@@ -805,9 +805,9 @@ ttyprt(tp)
 	char *name, state[20];
 
 	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
-		(void)printf("%2d,%-3d  ", major(tp->t_dev), minor(tp->t_dev));
+		(void)printf("%2d,%-3d   ", major(tp->t_dev), minor(tp->t_dev));
 	else
-		(void)printf("%6s ", name);
+		(void)printf("%7s ", name);
 	(void)printf("%3d %4d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
 	(void)printf("%4d %4d %3d %6d ", tp->t_outq.c_cc, 
 		tp->t_hiwat, tp->t_lowat, tp->t_column);
