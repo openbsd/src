@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.9 2001/03/09 05:44:41 smurph Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.10 2001/03/18 01:52:30 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -149,19 +149,24 @@ setup_board_config(void)
 void 
 setup_cmmu_config(void)
 {
-   switch (cputyp) {
+	int cpu;
+
+	for (cpu = 0; cpu < MAX_CPUS; cpu++)
+		cpu_sets[cpu] = 0;
+
+	switch (cputyp) {
 #if defined(MVME187) || defined(MVME188)
-   case CPU_187:
-   case CPU_188:
-      m18x_setup_cmmu_config();
-      break;
+	case CPU_187:
+	case CPU_188:
+		m18x_setup_cmmu_config();
+		break;
 #endif
 #ifdef MVME197
-   case CPU_197:
-      m197_setup_cmmu_config();
-      break;
+	case CPU_197:
+		m197_setup_cmmu_config();
+		break;
 #endif 
-   }
+	}
 }
 
 void 
@@ -289,7 +294,7 @@ cmmu_shutdown_now(void)
 void 
 cmmu_parity_enable(void)
 {
-#ifdef	PARITY_ENABLE
+#ifdef PARITY_ENABLE
    CMMU_LOCK;
    switch (cputyp) {
 #if defined(MVME187) || defined(MVME188)
@@ -339,9 +344,6 @@ cmmu_cpu_number(void)
  **	Funcitons that actually modify CMMU registers.
  **/
 
-#if !DDB
-static
-#endif
 void
 cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 {
@@ -366,9 +368,6 @@ cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
  * cmmu_cpu_lock should be held when called if read
  * the CMMU_SCR or CMMU_SAR.
  */
-#if !DDB
-static
-#endif
 unsigned
 cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
 {
@@ -801,7 +800,7 @@ dma_cachectl(vm_offset_t va, int size, int op)
    CMMU_UNLOCK;
 }
 
-#if DDB
+#ifdef DDB
 
 /*
  * Show (for debugging) how the given CMMU translates the given ADDRESS.
