@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.15 2002/02/09 16:59:50 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.16 2002/02/10 21:55:53 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -110,7 +110,8 @@ _std(2,3,76,7,16)
 	M openprom	c 70 0 644
 	;;
 
-mouse*)name=${i##mouse-}
+mouse*)
+	name=${i##mouse-}
 	if [ ! -c $name ]; then
 		$0 $name	# make the appropriate device
 	fi
