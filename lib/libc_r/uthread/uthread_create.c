@@ -88,6 +88,8 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			new_thread->stack = stack;
 			new_thread->start_routine = start_routine;
 			new_thread->arg = arg;
+			timerclear(&new_thread->ru_utime);
+			timerclear(&new_thread->ru_stime);
 
 			/*
 			 * Write a magic value to the thread structure

@@ -383,6 +383,12 @@ struct pthread {
 	long	slice_usec;
 
 	/*
+	 * Cumulative times spent in thread
+	 */
+	struct	timeval		ru_utime;
+	struct	timeval		ru_stime;
+
+	/*
 	 * Incremental priority accumulated by thread while it is ready to
 	 * run but is denied being run.
 	 */
