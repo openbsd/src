@@ -32,8 +32,6 @@ usr/lib/libc.so.??.?
 usr/lib/libcurses.so.?.?
 usr/lib/libedit.so.?.?
 usr/lib/libm.so.?.?
-usr/lib/libtermcap.so.?.?
-usr/lib/libtermlib.so.?.?
 usr/lib/libutil.so.?.?
 usr/libexec/ld.so
 usr/mdec
