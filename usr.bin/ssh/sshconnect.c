@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.31 1999/11/15 23:58:54 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.32 1999/11/16 20:44:42 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1075,9 +1075,9 @@ void ssh_login(int host_key_valid,
 
   rbits = BN_num_bits(public_key->n);
   if (bits != rbits) {
-    log("Warning: Server lies about size of server public key,");
-    log("Warning: this may be due to an old implementation of ssh.");
-    log("Warning: (actual size %d bits, announced size %d bits)", rbits, bits);
+    log("Warning: Server lies about size of server public key: "
+        "actual size is %d bits vs. announced %d.", rbits, bits);
+    log("Warning: This may be due to an old implementation of ssh.");
   }
 
   /* Get the host key. */
@@ -1092,9 +1092,9 @@ void ssh_login(int host_key_valid,
 
   rbits = BN_num_bits(host_key->n);
   if (bits != rbits) {
-    log("Warning: Server lies about size of server host key,");
-    log("Warning: this may be due to an old implementation of ssh.");
-    log("Warning: (actual size %d bits, announced size %d bits)", rbits, bits);
+    log("Warning: Server lies about size of server host key: "
+        "actual size is %d bits vs. announced %d.", rbits, bits);
+    log("Warning: This may be due to an old implementation of ssh.");
   }
 
   /* Store the host key from the known host file in here
