@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.187 2001/02/10 10:42:34 niklas Exp $
+#	$OpenBSD: files,v 1.188 2001/02/15 04:07:57 krw Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -121,6 +121,14 @@ file	dev/ic/uha.c		uha
 define	ncr53c9x
 device	esp: scsi, ncr53c9x
 file	dev/ic/ncr53c9x.c	ncr53c9x
+
+# common stuff for siop and esiop
+define siop_common
+file dev/ic/siop_common.c		siop_common
+
+# Symbios/NCR 53c720/53c8xx SCSI controllers
+device siop: scsi,siop_common
+file dev/ic/siop.c			siop
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet, ifmedia, mii

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.93 2001/02/14 05:10:17 fgsch Exp $
+#	$OpenBSD: files.pci,v 1.94 2001/02/15 04:07:57 krw Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -160,6 +160,15 @@ file	dev/pci/if_le_pci.c		le_pci
 device	ncr: scsi
 attach	ncr at pci
 file	dev/pci/ncr.c			ncr
+
+# common code for siop/esiop pci front end
+define siop_pci_common
+file	dev/pci/siop_pci_common.c	siop_pci_common
+
+# Symbios 53c8xx SCSI chips
+# device declaration in sys/conf/files
+attach	siop at pci with siop_pci: siop_pci_common
+file	dev/pci/siop_pci.c	siop_pci
 
 # NeoMagic 256AV and 256ZX
 device	neo: audio, auconv, mulaw, ac97
