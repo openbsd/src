@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.15 1998/03/25 07:54:53 jason Exp $
+#	$OpenBSD: files.sparc,v 1.16 1998/05/20 19:29:15 deraadt Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -257,3 +257,12 @@ include "../../../compat/sunos/files.sunos"
 
 # Miscellaneous
 file	netns/ns_cksum.c		ns
+
+# Magma Serial/Parallel boards
+device magma {}
+attach magma at sbus                                 
+device mtty
+attach mtty at magma
+device mbpp
+attach mbpp at magma
+file    arch/sparc/dev/magma.c          magma | mtty | mbpp needs-flag

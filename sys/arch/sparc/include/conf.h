@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.5 1997/08/08 08:26:10 downsj Exp $	*/
+/*	$OpenBSD: conf.h,v 1.6 1998/05/20 19:29:18 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -94,3 +94,6 @@ cdev_decl(sw);
 
 bdev_decl(rd);
 cdev_decl(rd);
+
+cdev_decl(mtty);
+cdev_decl(mbpp);
