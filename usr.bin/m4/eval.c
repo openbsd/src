@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.22 1999/12/21 22:30:47 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.23 2000/01/05 16:06:14 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.22 1999/12/21 22:30:47 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.23 2000/01/05 16:06:14 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,6 +397,11 @@ eval(argv, argc, td)
 				dodefn(argv[n]);
 		break;
 
+	case SELFTYPE:
+		pbstr(rquote);
+		pbstr(argv[1]);
+		pbstr(lquote);
+		break;
 	default:
 		errx(1, "eval: major botch.");
 		break;

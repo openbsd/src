@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.9 1999/12/21 22:30:48 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.10 2000/01/05 16:06:14 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #define SYSVTYPE        31
 #define EXITTYPE        32
 #define DEFNTYPE        33
+#define SELFTYPE	34
  
 #define TYPEMASK	63	/* Keep bits really corresponding to a type. */
 #define STATIC          128	/* Name is statically allocated, don't free. */
