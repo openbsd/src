@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.13 1998/11/11 00:50:31 jason Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.14 1998/12/13 21:47:09 deraadt Exp $	*/
 /*	$NetBSD: if_le.c,v 1.50 1997/09/09 20:54:48 pk Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ myleintr(arg)
 	void	*arg;
 {
 	register struct le_softc *lesc = arg;
-static int dodrain=0;
+	static int dodrain=0;
 
 	if (lesc->sc_dma->sc_regs->csr & D_ERR_PEND) {
 		dodrain = 1;
@@ -213,6 +213,7 @@ lemediachange(ifp)
 {
 	struct am7990_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;
+	struct le_softc *lesc = (struct le_softc *)sc;
 
 	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return (EINVAL);
@@ -226,14 +227,14 @@ lemediachange(ifp)
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 #if defined(SUN4M)
 	case IFM_10_T:
-		if (CPU_ISSUN4M)
+		if (CPU_ISSUN4M && lesc->sc_dma)
 			lesetutp(sc);
 		else
 			return (EOPNOTSUPP);
 		break;
 
 	case IFM_AUTO:
-		if (CPU_ISSUN4M)
+		if (CPU_ISSUN4M && lesc->sc_dma)
 			return (0);
 		else
 			return (EOPNOTSUPP);
@@ -242,7 +243,7 @@ lemediachange(ifp)
 
 	case IFM_10_5:
 #if defined(SUN4M)
-		if (CPU_ISSUN4M)
+		if (CPU_ISSUN4M && lesc->sc_dma)
 			lesetaui(sc);
 #else
 		return (0);
