@@ -1,4 +1,4 @@
-/* $OpenBSD: vsbus_dma.c,v 1.1 2000/10/11 05:45:30 bjc Exp $ */
+/* $OpenBSD: vsbus_dma.c,v 1.2 2001/02/06 04:27:46 hugh Exp $ */
 /* $NetBSD: vsbus_dma.c,v 1.7 2000/07/26 21:50:49 matt Exp $ */
 
 /*-
@@ -131,10 +131,9 @@ vsbus_dma_init(sc, ptecnt)
 		memset(pte, 0, mapsize);
 		*(int *) (sc->sc_vsregs + 8) = segs->ds_addr;	/* set MAP BASE 0x2008008 */
 	} else {
-		sc->sc_sgmap.aps_flags |= SGMAP_KA49;
 		pte = (struct pte *) vax_map_physmem(KA49_SCSIMAP, mapsize / VAX_NBPG);
 		for (nsegs = ptecnt; nsegs > 0; ) {
-			((u_int32_t *) pte)[--nsegs] = 0x88000000;
+			((u_int32_t *) pte)[--nsegs] = 0;
 		}
 		segs->ds_addr = KA49_SCSIMAP;
 	}
