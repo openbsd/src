@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/10/19 22:26:29 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/10/19 22:35:57 etheisen Exp $
 
 # from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #
@@ -19,7 +19,7 @@ links::
 	    (cd $$i && { rm -f tags; ln -s ${SYSTAGS} tags; }) done
 
 MVME68K=/sys/arch/mvme68k/dev/*.[ch] /sys/arch/mvme68k/include/*.[ch] \
-	/sys/dev/rcons/*.[ch] /sys/arch/mvme68k/mvme68k/*.[ch]
+	/sys/arch/mvme68k/mvme68k/*.[ch]
 AMVME68K=/sys/arch/mvme68k/mvme68k/*.s
 
 tags:
