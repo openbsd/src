@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.258 2002/12/17 12:01:22 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.259 2002/12/17 12:05:58 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -742,6 +742,9 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 			case ALTQT_CBQ:
 				a.pq_u.cbq_opts =
 				    $3.scheduler.data.cbq_opts;
+				break;
+			default:
+				break;
 			}
 			a.qlimit = $3.qlimit;
 			a.tbrsize = $3.tbrsize;
