@@ -1,4 +1,4 @@
-/*	$OpenBSD: hashmap.c,v 1.6 2001/01/22 18:01:59 millert Exp $	*/
+/*	$OpenBSD: hashmap.c,v 1.7 2002/06/22 18:13:05 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -448,7 +448,7 @@ usage(void)
 int
 main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 {
-    char line[BUFSIZ], *st;
+    char line[BUFSIZ], *st, *last;
     int n;
 
     SP = typeCalloc(SCREEN, 1);
@@ -480,11 +480,11 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 		oldnums[n] = _NEWINDEX;
 	    }
 	    n = 0;
-	    st = strtok(line, " ");
+	    st = strtok_r(line, " ", &last);
 	    do {
 		oldnums[n++] = atoi(st);
 	    } while
-		((st = strtok((char *) NULL, " ")) != 0);
+		((st = strtok_r((char *) NULL, " "), &last) != 0);
 	    break;
 
 	case 'n':		/* use following letters as text of new lines */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hardscroll.c,v 1.3 2001/01/22 18:01:59 millert Exp $	*/
+/*	$OpenBSD: hardscroll.c,v 1.4 2002/06/22 18:13:05 deraadt Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -287,7 +287,7 @@ _nc_linedump(void)
 int
 main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 {
-    char line[BUFSIZ], *st;
+    char line[BUFSIZ], *st, *last;
 
 #ifdef TRACE
     _nc_tracing = TRACE_MOVE;
@@ -308,11 +308,11 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 	    (void) fputs(line, stderr);
 	    continue;
 	}
-	st = strtok(line, " ");
+	st = strtok_r(line, " ", &last);
 	do {
 	    oldnums[n++] = atoi(st);
 	} while
-	    ((st = strtok((char *) NULL, " ")) != 0);
+	    ((st = strtok_r((char *) NULL, " ", &last)) != 0);
 
 	/* display it */
 	(void) fputs("Initial input:\n", stderr);
