@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.34 2003/07/15 10:28:29 jmc Exp $
+.\"	$OpenBSD: shutdown.8,v 1.35 2005/03/09 13:52:20 aoyama Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -111,7 +111,8 @@ The
 flag is passed on to
 .Xr halt 8 ,
 causing machines which support automatic power down to do so after halting.
-(Currently supported on some i386, mac68k, macppc, sparc and sparc64 platforms.)
+(Currently supported on some i386, luna88k, mac68k, macppc, sparc,
+sparc64 and zaurus platforms.)
 .It Ar time
 .Ar time
 is the time at which
