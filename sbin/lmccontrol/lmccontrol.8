@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmccontrol.8,v 1.2 2000/10/13 19:11:34 aaron Exp $
+.\"	$OpenBSD: lmccontrol.8,v 1.3 2000/10/13 19:27:10 chris Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -42,7 +42,7 @@
 .Nd configure Lan Media Corporation SSI/HSSI/T1/T3 devices
 .Sh SYNOPSIS
 .Nm lmcctl
-.Op Fl i Ar interface
+.Op Ar interface
 .Op Fl l Ar speed
 .Op Fl cCeEsSkKoO
 .Sh DESCRIPTION
@@ -69,7 +69,7 @@ The T1 card is the LMC1200 and runs at a speed of 1.544Mbps or
 2Mbps for E1 operation, without CSU/DSU.
 .Pp
 The
-.Op Fl i Ar iface
+.Op Ar interface
 argument given to
 .Nm
 should be the logical interface name associated with the Lan Media
@@ -83,7 +83,7 @@ settings from the driver and prints them out.
 The options are as follows:
 .Pp
 .Bl -tag -width Fl
-.It Fl i Ar interface
+.It Ar interface
 The interface name of the Lan Media card (default is lmc0)
 .It Fl l Ar speed
 To manually specify line speed, in bits per second (for devices without built-in CSU/DSU)
@@ -122,7 +122,7 @@ power).
 To set a SSI card for a speed of 2048000 bits/sec with HDLC keepalive off,
 one could use:
 .Bd -unfilled -offset indent
-lmcctl -i lmc0 -l 2048000 -K
+lmcctl lmc0 -l 2048000 -K
 .Ed
 .Pp
 .Sh SEE ALSO
