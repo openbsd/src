@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.5 1997/07/08 00:00:48 downsj Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.6 1998/03/07 03:04:49 d Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -107,7 +107,7 @@ in the system password and group databases.
 .It mode of logfile & archives
 Octal mode of created log files and archives.
 .It number of archives
-Specify he number of archives to be kept besides the log file itself.
+Specify the number of archives to be kept besides the log file itself.
 .It size of archives
 When the size of the log file reaches this point, the log file becomes trimmed
 as described above.  If this field is replaced by a ``*'', then the size of
@@ -135,9 +135,9 @@ log file.
 .It monitor notification (optional)
 Specify the account that should receive notification messages if this is
 a monitored log file.  Notification messages are sent as email; the operator
-deserves what they get if they mark the log file
+deserves what they get if they mark the 
 .Xr sendmail 8
-logs to as monitored.
+log file as monitored.
 .El
 .Pp
 .Sh OPTIONS
