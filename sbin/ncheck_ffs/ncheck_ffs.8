@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.14 2001/12/01 19:05:39 deraadt Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.15 2003/01/17 18:27:58 millert Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -36,6 +36,7 @@
 .Nd generate names from inode-numbers
 .Sh SYNOPSIS
 .Nm ncheck_ffs
+.Op Fl f Ar format
 .Op Fl i Ar number Op Ar ...
 .Op Fl ams
 .Ar filesystem
@@ -48,6 +49,47 @@ Names of directories are followed by a
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl f Ar format
+Use a custom output format when printing inode information.
+Characters from
+.Ar format
+are printed for each inode with the following escape sequences:
+.Bl -tag -width Ds -offset indent -compact
+.It Cm \eI
+Print the inode number.
+.It Cm \eP
+Print the pathname to the file using the current inode number.
+.It Cm \ee
+Print an <escape> character.
+.It Cm \ea
+Print a <bell> character.
+.It Cm \eb
+Print a <backspace> character.
+.It Cm \ef
+Print a <form-feed> character.
+.It Cm \en
+Print a <new-line> character.
+.It Cm \er
+Print a <carriage return> character.
+.It Cm \et
+Print a <tab> character.
+.It Cm \ev
+Print a <vertical tab> character.
+.It Cm \e\'
+Print a <single quote> character.
+.It Cm \e\e
+Print a backslash character.
+.It Cm \e Ns Ar 0
+Print a
+.Tn NUL
+character.
+.El
+.Pp
+All other characters, when prefixed by a backslash, simply print
+the character following the backslash.
+The device name is not printed on the first line out output when the
+.Fl f
+option is specified.
 .It Fl i Ar number Op Ar ...
 Report only those files whose inode numbers are as listed.
 .It Fl a

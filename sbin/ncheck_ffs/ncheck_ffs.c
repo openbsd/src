@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.15 2003/01/17 17:56:53 millert Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.16 2003/01/17 18:27:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.15 2003/01/17 17:56:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.16 2003/01/17 18:27:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@ int	sflag;		/* only suid and special files */
 int	aflag;		/* print the . and .. entries too */
 int	mflag;		/* verbose output */
 int	iflag;		/* specific inode */
+char	*format;	/* output format */
 
 struct icache_s {
 	ino_t		ino;
@@ -76,7 +77,7 @@ void addinode(ino_t inum);
 struct dinode *getino(ino_t inum);
 void findinodes(ino_t);
 void bread(daddr_t, char *, int);
-void usage(void);
+__dead void usage(void);
 void scanonedir(ino_t, const char *);
 void dirindir(ino_t, daddr_t, int, long *, const char *);
 void searchdir(ino_t, daddr_t, long, long, const char *);
@@ -86,6 +87,7 @@ void cacheino(ino_t, struct dinode *);
 struct dinode *cached(ino_t);
 int main(int, char *[]);
 char *rawname(char *);
+void format_entry(const char *, struct direct *);
 
 /*
  * Check to see if the indicated inodes are the same
@@ -354,7 +356,7 @@ searchdir(ino_t ino, daddr_t blkno, long size, long filesize,
 	for (loc = 0; loc < size;) {
 		dp = (struct direct *)(dblk + loc);
 		if (dp->d_reclen == 0) {
-			warnx("corrupted directory, inode %lu", (long)ino);
+			warnx("corrupted directory, inode %u", ino);
 			break;
 		}
 		loc += dp->d_reclen;
@@ -368,12 +370,15 @@ searchdir(ino_t ino, daddr_t blkno, long size, long filesize,
 		di = getino(dp->d_ino);
 		mode = di->di_mode & IFMT;
 		if (bsearch(&dp->d_ino, ilist, ninodes, sizeof(*ilist), matchino)) {
-			if (mflag)
-				printf("mode %-6o uid %-5lu gid %-5lu ino ",
-				    di->di_mode, (unsigned long)di->di_uid,
-				    (unsigned long)di->di_gid);
-			printf("%-7lu %s/%s%s\n", (unsigned long)dp->d_ino,
-			    path, dp->d_name, mode == IFDIR ? "/." : "");
+			if (format) {
+				format_entry(path, dp);
+			} else {
+				if (mflag)
+					printf("mode %-6o uid %-5u gid %-5u ino ",
+					    di->di_mode, di->di_uid, di->di_gid);
+				printf("%-7u %s/%s%s\n", dp->d_ino, path,
+				    dp->d_name, mode == IFDIR ? "/." : "");
+			}
 		}
 		if (mode == IFDIR) {
 			int len;
@@ -410,10 +415,13 @@ rawname(char *name)
 	return(newname);
 }
 
-void
+__dead void
 usage(void)
 {
-	fprintf(stderr, "Usage: ncheck_ffs [-i numbers] [-ams] filesystem\n");
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-f format] [-i numbers] [-ams] filesystem\n",
+	    __progname);
 	exit(3);
 }
 
@@ -422,11 +430,11 @@ main(int argc, char *argv[])
 {
 	struct stat stblock;
 	struct fstab *fsp;
-	u_long ulval;
+	unsigned long ulval;
 	char *ep;
 	int c;
 
-	while ((c = getopt(argc, argv, "ai:ms")) != -1)
+	while ((c = getopt(argc, argv, "af:i:ms")) != -1)
 		switch (c) {
 		case 'a':
 			aflag++;
@@ -456,6 +464,9 @@ main(int argc, char *argv[])
 				optind++;
 			}
 			break;
+		case 'f':
+			format = optarg;
+			break;
 		case 'm':
 			mflag++;
 			break;
@@ -466,7 +477,7 @@ main(int argc, char *argv[])
 			usage();
 			exit(2);
 		}
-	if (optind != argc - 1)
+	if (optind != argc - 1 || (mflag && format))
 		usage();
 
 	disk = argv[optind];
@@ -476,8 +487,7 @@ main(int argc, char *argv[])
 
         if (S_ISBLK(stblock.st_mode)) {
 		disk = rawname(disk);
-	}
-	else if (!S_ISCHR(stblock.st_mode)) {
+	} else if (!S_ISCHR(stblock.st_mode)) {
 		if ((fsp = getfsfile(disk)) == NULL)
 			err(1, "cound not find file system %s", disk);
                 disk = rawname(fsp->fs_spec);
@@ -494,8 +504,89 @@ main(int argc, char *argv[])
 	if (dev_bsize != (1 << dev_bshift))
 		errx(2, "blocksize (%ld) not a power of 2", dev_bsize);
 	findinodes(sblock->fs_ipg * sblock->fs_ncg);
-	printf("%s:\n", disk);
+	if (!format)
+		printf("%s:\n", disk);
 	scanonedir(ROOTINO, "");
 	close(diskfd);
-	return 0;
+	exit (0);
+}
+
+void
+format_entry(const char *path, struct direct *dp)
+{
+	static size_t size;
+	static char *buf;
+	size_t len;
+	char *src, *dst;
+
+	if (buf == NULL) {
+		if ((buf = malloc(LINE_MAX)) == NULL)
+			err(1, "malloc");
+		size = LINE_MAX;
+	}
+
+	for (src = format, dst = buf; *src; src++) {
+		/* Need room for at least one character in buf. */
+		if (size <= dst - buf) {
+		    expand_buf:
+			size <<= 1;
+			if ((buf = realloc(buf, size)) == NULL)
+				err(1, "realloc");
+		}
+		if (src[0] =='\\') {
+			switch (src[1]) {
+			case 'I':
+				len = snprintf(dst, size - (dst - buf), "%u",
+				    dp->d_ino);
+				if (len >= size - (dst - buf))
+					goto expand_buf;
+				dst += len;
+				break;
+			case 'P':
+				len = snprintf(dst, size - (dst - buf), "%s/%s",
+				    path, dp->d_name);
+				if (len >= size - (dst - buf))
+					goto expand_buf;
+				dst += len;
+				break;
+			case '\\':
+				*dst++ = '\\';
+				break;
+			case '0':
+				/* XXX - support other octal numbers? */
+				*dst++ = '\0';
+				break;
+			case 'a':
+				*dst++ = '\a';
+				break;
+			case 'b':
+				*dst++ = '\b';
+				break;
+			case 'e':
+				*dst++ = '\e';
+				break;
+			case 'f':
+				*dst++ = '\f';
+				break;
+			case 'n':
+				*dst++ = '\n';
+				break;
+			case 'r':
+				*dst++ = '\r';
+				break;
+			case 't':
+				*dst++ = '\t';
+				break;
+			case 'v':
+				*dst++ = '\v';
+				break;
+			default:
+				*dst++ = src[1];
+				break;
+			}
+			src++;
+		} else
+			*dst++ = *src;
+	}
+	fwrite(buf, dst - buf, 1, stdout);
 }
