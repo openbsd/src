@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.15 2003/08/01 08:56:01 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.16 2003/08/21 20:24:56 espie Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: perform.c,v 1.15 2003/08/01 08:56:01 espie Exp $";
+static const char rcsid[] = "$OpenBSD: perform.c,v 1.16 2003/08/21 20:24:56 espie Exp $";
 #endif
 
 /*
@@ -34,6 +34,7 @@ static int pkg_do(char *);
 static void sanity_check(char *);
 static int undepend(const char *, char *, int);
 static char LogDir[FILENAME_MAX];
+extern Boolean CleanConf;
 
 
 int
@@ -192,6 +193,7 @@ try_again:
     }
 
     setenv(PKG_PREFIX_VNAME, p->name, 1);
+    setenv("PKG_DELETE_EXTRA", (CleanConf ? "Yes" : "No"), 1);
     if (fexists(REQUIRE_FNAME)) {
 	if (Verbose)
 	    printf("Executing 'require' script.\n");
@@ -221,7 +223,7 @@ try_again:
     }
     if (!Fake) {
 	/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
-	if (delete_package(FALSE, CleanDirs, CheckMD5, &Plist) == FAIL)
+	if (delete_package(FALSE, CleanDirs, CleanConf, CheckMD5, &Plist) == FAIL)
 	    pwarnx(
 	"couldn't entirely delete package (perhaps the packing list is\n"
 	"incorrectly specified?)");

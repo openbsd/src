@@ -1,7 +1,7 @@
-/*	$OpenBSD: show.c,v 1.12 2003/07/04 17:31:19 avsm Exp $	*/
+/*	$OpenBSD: show.c,v 1.13 2003/08/21 20:24:56 espie Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: show.c,v 1.12 2003/07/04 17:31:19 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: show.c,v 1.13 2003/08/21 20:24:56 espie Exp $";
 #endif
 
 /*
@@ -55,6 +55,10 @@ static show_t	showv[] = {
 	{	PLIST_DIR_RM,	"@dirrm %s",	"\tDeinstall directory remove: %s" },
 	{	PLIST_OPTION,	"@option %s",	"\tPackage has option: %s" },
 	{	PLIST_PKGCFL,	"@pkgcfl %s",	"\tPackage conflicts with: %s" },
+	{	PLIST_EXTRA,	"@extra %s",	"\tExtra files: %s" },
+	{	PLIST_EXTRAUNEXEC,	
+				"@extraunexec %s",	
+						"\tExtra UNEXEC: %s" },
 	{	-1,		NULL,		 NULL }
 };
 
@@ -150,6 +154,8 @@ show_plist(char *title, package_t *plist, pl_ent_t type)
 		case PLIST_DIR_RM:
 		case PLIST_OPTION:
 		case PLIST_PKGCFL:
+		case PLIST_EXTRA:
+		case PLIST_EXTRAUNEXEC:
 			printf(Quiet ? showv[p->type].sh_quiet : showv[p->type].sh_verbose, p->name);
 			break;
 		default:

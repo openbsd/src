@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.27 2003/08/15 00:03:22 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.28 2003/08/21 20:24:56 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -376,6 +376,20 @@ directive is used, the directories are removed in the order specified.
 The
 .Pa name
 directory will not be removed unless it is empty.
+.It Cm @extra Ar file
+Declare extra file
+.Pa file
+to be deleted at deinstall time, if user sets
+.Fl c
+option.
+Those files are extra configuration files that are normally not deleted.
+If
+.Pa file
+ends with a slash, it is a directory.
+.It Cm @extraunexec Ar command
+Extra
+.Ar command
+to execute when removing extra files.
 .It Cm @mtree Ar name
 Declare
 .Pa name

@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.13 2003/08/01 08:56:01 espie Exp $ */
+/* $OpenBSD: lib.h,v 1.14 2003/08/21 20:24:57 espie Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -103,6 +103,8 @@ typedef enum pl_ent_t {
 	PLIST_DIR_RM,
 	PLIST_OPTION,
 	PLIST_PKGCFL,
+	PLIST_EXTRA,
+	PLIST_EXTRAUNEXEC,
 	PLIST_NEWDEP,
 	PLIST_LIBDEP
 } pl_ent_t;
@@ -161,14 +163,13 @@ int		ispkgpattern(const char *);
 char		*strnncpy(char *to, size_t tosize, char *from, size_t cc);
 
 /* File */
-Boolean		fexists(char *);
-Boolean		isdir(char *);
-Boolean		islinktodir(char *);
-Boolean		isemptydir(char *fname);
-Boolean		isemptyfile(char *fname);
-Boolean         isfile(char *);
-Boolean		isempty(char *);
-Boolean		isURL(char *);
+Boolean		fexists(const char *);
+Boolean		isdir(const char *);
+Boolean		islinktodir(const char *);
+Boolean		isemptydir(const char *fname);
+Boolean		isemptyfile(const char *fname);
+Boolean         isfile(const char *);
+Boolean		isURL(const char *);
 char		*ensure_tgz(char *);
 char		*fileGetURL(char *, char *);
 char		*fileURLFilename(char *, char *, int);
@@ -200,7 +201,7 @@ void		delete_plist(package_t *pkg, Boolean all, pl_ent_t type, char *name);
 void		write_plist(package_t *, FILE *);
 void		read_plist(package_t *, FILE *);
 int		plist_cmd(char *, char **);
-int		delete_package(Boolean, Boolean, Boolean, package_t *);
+int		delete_package(Boolean, Boolean, Boolean, Boolean, package_t *);
 
 /* For all */
 int		pkg_perform(char **);
@@ -208,6 +209,7 @@ int		pkg_perform(char **);
 
 void		set_pkg(char *);
 void 		pwarnx(const char *, ...);
+void 		pwarn(const char *, ...);
 
 /* Externs */
 extern Boolean	Verbose;

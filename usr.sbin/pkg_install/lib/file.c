@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.25 2003/08/06 20:46:36 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.26 2003/08/21 20:24:57 espie Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: file.c,v 1.25 2003/08/06 20:46:36 millert Exp $";
+static const char rcsid[] = "$OpenBSD: file.c,v 1.26 2003/08/21 20:24:57 espie Exp $";
 #endif
 
 /*
@@ -105,7 +105,7 @@ ftpGetURL(char *url, int *retcode)
 
 /* Quick check to see if a file exists */
 Boolean
-fexists(char *fname)
+fexists(const char *fname)
 {
     struct stat dummy;
     if (!lstat(fname, &dummy))
@@ -115,7 +115,7 @@ fexists(char *fname)
 
 /* Quick check to see if something is a directory */
 Boolean
-isdir(char *fname)
+isdir(const char *fname)
 {
     struct stat sb;
 
@@ -127,7 +127,7 @@ isdir(char *fname)
 
 /* Check if something is a link to a directory */
 Boolean
-islinktodir(char *fname)
+islinktodir(const char *fname)
 {
     struct stat sb;
 
@@ -142,7 +142,7 @@ islinktodir(char *fname)
 
 /* Check to see if file is a dir, and is empty */
 Boolean
-isemptydir(char *fname)
+isemptydir(const char *fname)
 {
     if (isdir(fname) || islinktodir(fname)) {
 	DIR *dirp;
@@ -164,7 +164,7 @@ isemptydir(char *fname)
 }
 
 Boolean
-isfile(char *fname)
+isfile(const char *fname)
 {
     struct stat sb;
     if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode))
@@ -175,7 +175,7 @@ isfile(char *fname)
 /* Check to see if file is a file and is empty. If nonexistent or not
    a file, say "it's empty", otherwise return TRUE if zero sized. */
 Boolean
-isemptyfile(char *fname)
+isemptyfile(const char *fname)
 {
     struct stat sb;
     if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode)) {
@@ -187,7 +187,7 @@ isemptyfile(char *fname)
 
 /* Returns TRUE if file is a URL specification */
 Boolean
-isURL(char *fname)
+isURL(const char *fname)
 {
     /*
      * Hardcode url types... not perfect, but working.

@@ -1,8 +1,8 @@
-/*	$OpenBSD: main.c,v 1.11 2003/08/01 08:56:01 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2003/08/21 20:24:56 espie Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: main.c,v 1.11 2003/08/01 08:56:01 espie Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.12 2003/08/21 20:24:56 espie Exp $";
 #endif
 
 /*
@@ -30,11 +30,12 @@ static const char rcsid[] = "$OpenBSD: main.c,v 1.11 2003/08/01 08:56:01 espie E
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "hvDdnfp:q";
+static char Options[] = "chvDdnfp:q";
 
 char	*Prefix		= NULL;
 Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
+Boolean CleanConf	= FALSE;
 Boolean CheckMD5	= TRUE;
 
 static void usage(void);
@@ -77,6 +78,9 @@ main(int argc, char **argv)
 	    CheckMD5 = FALSE;
 	    break;
 
+	case 'c':
+	    CleanConf = TRUE;
+	    break;
 	case 'h':
 	case '?':
 	default:
@@ -110,6 +114,6 @@ main(int argc, char **argv)
 static void
 usage()
 {
-    fprintf(stderr, "usage: pkg_delete [-vDdhnfq] [-p prefix] pkg-name ...\n");
+    fprintf(stderr, "usage: pkg_delete [-cvDdhnfq] [-p prefix] pkg-name ...\n");
     exit(1);
 }

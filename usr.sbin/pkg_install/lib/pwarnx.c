@@ -1,4 +1,4 @@
-/* $OpenBSD: pwarnx.c,v 1.3 2003/06/02 23:36:54 millert Exp $ */
+/* $OpenBSD: pwarnx.c,v 1.4 2003/08/21 20:24:57 espie Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "lib.h"
 
 static char pkgname[60];
@@ -76,6 +77,28 @@ pwarnx(const char *fmt, ...)
 	    (void)fprintf(stderr, "%s(%s): ", __progname, pkgname);
 	if (fmt != NULL)
 		(void)vfprintf(stderr, fmt, ap);
+	(void)fprintf(stderr, "\n");
+	va_end(ap);
+}
+
+void 
+pwarn(const char *fmt, ...)
+{
+	va_list ap;
+	int sverrno;
+
+	sverrno = errno;
+	va_start(ap, fmt);
+
+	if (pkgname[0] == '\0')
+	    (void)fprintf(stderr, "%s: ", __progname);
+	else
+	    (void)fprintf(stderr, "%s(%s): ", __progname, pkgname);
+	if (fmt != NULL) {
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
 }
