@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.32 2002/07/12 14:02:23 art Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.33 2002/07/24 23:32:11 nordin Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -1087,7 +1087,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	else {
 		*auth_len = nmp->nm_authlen;
 		*verf_len = nmp->nm_verflen;
-		bcopy((caddr_t)nmp->nm_key, (caddr_t)key, sizeof (key));
+		bcopy((caddr_t)nmp->nm_key, (caddr_t)key, sizeof (NFSKERBKEY_T));
 	}
 	nmp->nm_flag &= ~NFSMNT_HASAUTH;
 	nmp->nm_flag |= NFSMNT_WAITAUTH;
@@ -1211,7 +1211,7 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 			nuidp->nu_expire = time.tv_sec + NFS_KERBTTL;
 			nuidp->nu_timestamp = ktvout;
 			nuidp->nu_nickname = nick;
-			bcopy(key, nuidp->nu_key, sizeof (key));
+			bcopy(key, nuidp->nu_key, sizeof (NFSKERBKEY_T));
 			TAILQ_INSERT_TAIL(&nmp->nm_uidlruhead, nuidp,
 				nu_lru);
 			LIST_INSERT_HEAD(NMUIDHASH(nmp, cred->cr_uid),
