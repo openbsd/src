@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.90 2004/04/27 22:42:13 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.91 2004/04/27 23:02:41 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -964,8 +964,8 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
-		{ "in",			IN},
 		{ "ike",		IKE},
+		{ "in",			IN},
 		{ "ipsec",		IPSEC},
 		{ "key",		KEY},
 		{ "listen",		LISTEN},
