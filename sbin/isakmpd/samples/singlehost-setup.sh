@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: singlehost-setup.sh,v 1.4 2002/06/17 12:23:31 ho Exp $
+#	$OpenBSD: singlehost-setup.sh,v 1.5 2003/08/18 09:41:40 markus Exp $
 #	$EOM: singlehost-setup.sh,v 1.3 2000/11/23 12:24:43 niklas Exp $
 
 # A script to test single-host VPNs
@@ -8,7 +8,6 @@
 . /etc/rc.conf
 
 # Default paths
-PF_CONF=/etc/pf.conf
 PFCTL=/sbin/pfctl
 ISAKMPD=/sbin/isakmpd
 
@@ -21,8 +20,8 @@ do_routes()
 
 # Called on script exit
 cleanup () {
-    if [ "X${pf}" = "xYES" -a -f ${PF_CONF} ]; then
-	${PFCTL} -R -f ${PF_CONF}
+    if [ "x${pf}" = "xYES" -a -f ${pf_rules} ]; then
+	${PFCTL} -R -f ${pf_rules}
     else
 	${PFCTL} -qd
     fi
@@ -56,8 +55,8 @@ pass out quick on lo3 from 192.168.12.0/24 to any
 block out on lo2 all
 block out on lo3 all
 EOF
-    if [ "X${pf}" = "xYES" -a -f ${PF_CONF} ]; then
-	cat ${PF_CONF} | egrep -v '^(scrub|rdr|binat|nat)'
+    if [ "x${pf}" = "xYES" -a -f ${pf_rules} ]; then
+	cat ${pf_rules} | egrep -v '^(scrub|rdr|binat|nat)'
     else
 	pfctl -qe >/dev/null
     fi
