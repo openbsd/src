@@ -1,3 +1,4 @@
+#	$OpenBSD: genassym.cf,v 1.13 2004/12/01 14:31:25 miod Exp $
 #	$NetBSD: genassym.cf,v 1.23 2001/08/08 00:09:30 eeh Exp $
 
 #
@@ -111,11 +112,6 @@ ifdef notyet
 include <dev/ic/am7930reg.h>
 include <dev/ic/am7930var.h>
 endif
-
-# general constants
-export	BSD
-export	USRSTACK
-define	PADDRT		sizeof(paddr_t)
 
 # proc fields and values
 struct	proc
