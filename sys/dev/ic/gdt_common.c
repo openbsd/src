@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.17 2002/03/05 06:58:54 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.18 2002/03/05 07:46:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -604,8 +604,8 @@ gdt_scsi_cmd(xs)
 			 */
 			if (ccb == NULL) {
 				xs->error = XS_DRIVER_STUFFUP;
-				xs->flags |= TRY_AGAIN_LATER;
-				goto ready;
+				AAC_UNLOCK(sc, lock);
+				return (TRY_AGAIN_LATER);
 			}
 
 			ccb->gc_blockno = blockno;
