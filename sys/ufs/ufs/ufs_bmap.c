@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.7 1999/11/17 09:23:54 art Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.8 2000/03/13 14:07:54 art Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		}
 #ifdef DIAGNOSTIC
 		else if (!daddr)
-			panic("ufs_bmaparry: indirect block not in cache");
+			panic("ufs_bmaparray: indirect block not in cache");
 #endif
 		else {
 			trace(TR_BREADMISS, pack(vp, size), metalbn);
