@@ -1,0 +1,102 @@
+#
+#	SPARE-PARTS: spare-parts.teeny.org
+#
+#	$OpenBSD: SPARE-PARTS,v 1.1 1996/07/07 00:11:48 downsj Exp $
+#
+
+machine		i386
+option		I386_CPU
+option		I486_CPU
+option		MATH_EMULATE
+
+maxusers	8
+option		TIMEZONE=480
+option		DST=0
+
+option		SWAPPAGER
+option		VNODEPAGER
+option		DEVPAGER
+
+#option		DDB
+#makeoptions	DEBUG="-g"
+#option		DIAGNOSTIC
+option		KTRACE
+
+option		SYSVMSG
+option		SYSVSEM
+option		SYSVSHM
+#option		SHMMAXPGS=1024
+
+option		COMPAT_NOMID
+option		COMPAT_09
+option		COMPAT_10
+option		COMPAT_11
+option		COMPAT_43
+option		TCP_COMPAT_42
+
+option		COMPAT_SVR4
+option		COMPAT_IBCS2
+option		COMPAT_LINUX
+option		COMPAT_FREEBSD
+
+option		LKM
+
+option		FFS
+option		QUOTA
+option		MFS
+
+option		PPP_BSDCOMP,PPP_DEFLATE
+option		IPFILTER
+
+option		NFSCLIENT
+option		NFSSERVER
+
+option		CD9660
+option		MSDOSFS
+option		FDESC
+option		FIFO
+option		KERNFS
+option		NULLFS
+option		PROCFS
+option		UMAPFS
+option		UNION
+
+option		GATEWAY
+option		INET
+
+config		bsd root on wd0 swap on wd0
+
+mainbus0 at root
+
+isa0	at mainbus0
+
+npx0	at isa? port 0xf0 irq 13
+isadma0 at isa?
+
+pc0	at isa? port 0x60 irq 1
+
+#com0	at isa? port 0x3f8 irq 4
+#com1	at isa? port 0x2f8 irq 3
+#com2	at isa? port 0x3e8 irq 2
+pccom0	at isa? port 0x3f8 irq 4
+pccom1	at isa? port 0x2f8 irq 3
+pccom2	at isa? port 0x3e8 irq 2
+
+lpt0	at isa? port 0x3BC irq 7
+lpt1	at isa? port 0x278 irq 5
+
+ed0	at isa? port 0x300 irq 10
+
+fdc0	at isa? port 0x3f0 irq 6 drq 2
+fd*	at fdc? drive ?
+
+wdc0	at isa? port 0x1f0 irq 14
+wd*	at wdc? drive ?
+
+pseudo-device	loop	1
+pseudo-device	bpfilter 8
+pseudo-device	ppp	4
+pseudo-device	tun	2
+
+pseudo-device	pty	64
+pseudo-device	vnd	8
