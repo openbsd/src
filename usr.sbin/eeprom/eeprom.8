@@ -1,4 +1,4 @@
-.\"	$OpenBSD: eeprom.8,v 1.5 1998/07/04 19:36:20 millert Exp $
+.\"	$OpenBSD: eeprom.8,v 1.6 1998/07/13 02:04:44 jason Exp $
 .\"	$NetBSD: eeprom.8,v 1.2 1996/02/28 01:13:24 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -328,6 +328,13 @@ Similar to
 describing when the CPU was last updated.
 .It diag-switch?
 If true, the system will boot and run in diagnostic mode.
+.It local-mac-address?
+When set to
+.Pa false
+all Ethernet devices will use same system default MAC address.  When
+.Pa true ,
+Ethernet devices which have a unique MAC address will use it
+rather than the system default MAC address.
 .El
 .Sh WARNINGS
 The fields and their values are not necessarily well defined on
