@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.5 1996/05/22 11:35:54 deraadt Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.6 1996/08/30 14:24:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -113,6 +113,8 @@ main(argc, argv)
 			break;
 		case 'd':
 			basedir = optarg;
+			if (strlen(basedir) > MAXPATHLEN - 40)
+				error("basedir too long");
 			break;
 		case '?':
 		default:
