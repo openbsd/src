@@ -1,61 +1,57 @@
 # create
 1 table added.
-# add -n  10 10.11 10.11.12 10.11.12.13
+# pass add -n 10 10.11 10.11.12 10.11.12.13
 4/4 addresses added (dummy).
-# add -nf-
+# pass add -nf-
 4/4 addresses added (dummy).
-# add -nqv
+# pass add -nqv 10 10.11 10.11.12 10.11.12.13
 A  10.0.0.0/8
 A  10.11.0.0/16
 A  10.11.12.0/24
 A  10.11.12.13
-# add -nqvv
+# pass add -nqvv 10 10.11 10.11.12 10.11.12.13
 A  10.0.0.0/8
 A  10.11.0.0/16
 A  10.11.12.0/24
 A  10.11.12.13
-# add
+# pass add 10 10.11 10.11.12 10.11.12.13
 4/4 addresses added.
-# delete -n  10.11.0.0/16 10.11.12.0/24
+# pass delete -n 10.11.0.0/16 10.11.12.0/24
 2/2 addresses deleted (dummy).
-# delete -nf-
+# pass delete -nf-
 2/2 addresses deleted (dummy).
-# delete -nqv
+# pass delete -nqv 10.11.0.0/16 10.11.12.0/24
 D  10.11.0.0/16
 D  10.11.12.0/24
-# delete -nqvv
+# pass delete -nqvv 10.11.0.0/16 10.11.12.0/24
 D  10.11.0.0/16
 D  10.11.12.0/24
-# delete
+# pass delete 10.11.0.0/16 10.11.12.0/24
 2/2 addresses deleted.
-# replace -n  10.0/8 172.16.0/12 192.168.0/16
+# pass replace -n 10.0/8 172.16.0/12 192.168.0/16
 2 addresses added (dummy).
 1 addresses deleted (dummy).
-# replace -nf-
+# pass replace -nf-
 2 addresses added (dummy).
 1 addresses deleted (dummy).
-# replace -nqv
+# pass replace -nqv 10.0/8 172.16.0/12 192.168.0/16
 A  172.16.0.0/12
 A  192.168.0.0/16
 D  10.11.12.13
-# replace -nqvv
+# pass replace -nqvv 10.0/8 172.16.0/12 192.168.0/16
    10.0.0.0/8
 A  172.16.0.0/12
 A  192.168.0.0/16
 D  10.11.12.13
-# replace
+# pass replace 10.0/8 172.16.0/12 192.168.0/16
 2 addresses added.
 1 addresses deleted.
-# test
+# pass test 10.1.1.1 172.17.1.1 192.168.1.1
 3/3 addresses match.
-# test
+# fail test 11.1.1.1
 0/1 addresses match.
-# test
+# fail test 10.1.1.1 11.1.1.1
 1/2 addresses match.
-# table
-regress
-# table -v
--pa--	regress
 # kill
 1 table deleted.
 ktable: 11 allocated, 11 released, 0 leaked.

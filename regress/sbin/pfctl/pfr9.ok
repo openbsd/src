@@ -1,98 +1,94 @@
 # create
 1 table added.
-# add -n  1.2.3.4 ::1 1.2.3.4 ::1
+# pass add -n 1.2.3.4 ::1 1.2.3.4 ::1
 2/4 addresses added (dummy).
-# add -nf-
+# pass add -nf-
 2/4 addresses added (dummy).
-# add -nqv
+# pass add -nqv 1.2.3.4 ::1 1.2.3.4 ::1
 A  1.2.3.4
 A  ::1
 X  1.2.3.4
 X  ::1
-# add -nqvv
+# pass add -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
 A  1.2.3.4
 A  ::1
 X  1.2.3.4
 X  ::1
-# add
+# pass add 1.2.3.4 ::1 1.2.3.4 ::1
 2/4 addresses added.
-# add -n  1.2.3.4 ::1 1.2.3.4 ::1
+# pass add -n 1.2.3.4 ::1 1.2.3.4 ::1
 0/4 addresses added (dummy).
-# add -nf-
+# pass add -nf-
 0/4 addresses added (dummy).
-# add -nqv
-# add -nqvv
+# pass add -nqv 1.2.3.4 ::1 1.2.3.4 ::1
+# pass add -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
    1.2.3.4
    ::1
    1.2.3.4
    ::1
-# add
+# pass add 1.2.3.4 ::1 1.2.3.4 ::1
 0/4 addresses added.
-# delete -n  1.2.3.4 ::1 1.2.3.4 ::1
+# pass delete -n 1.2.3.4 ::1 1.2.3.4 ::1
 2/4 addresses deleted (dummy).
-# delete -nf-
+# pass delete -nf-
 2/4 addresses deleted (dummy).
-# delete -nqv
+# pass delete -nqv 1.2.3.4 ::1 1.2.3.4 ::1
 D  1.2.3.4
 D  ::1
 X  1.2.3.4
 X  ::1
-# delete -nqvv
+# pass delete -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
 D  1.2.3.4
 D  ::1
 X  1.2.3.4
 X  ::1
-# delete
+# pass delete 1.2.3.4 ::1 1.2.3.4 ::1
 2/4 addresses deleted.
-# delete -n  1.2.3.4 ::1 1.2.3.4 ::1
+# pass delete -n 1.2.3.4 ::1 1.2.3.4 ::1
 0/4 addresses deleted (dummy).
-# delete -nf-
+# pass delete -nf-
 0/4 addresses deleted (dummy).
-# delete -nqv
-# delete -nqvv
+# pass delete -nqv 1.2.3.4 ::1 1.2.3.4 ::1
+# pass delete -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
    1.2.3.4
    ::1
    1.2.3.4
    ::1
-# delete
+# pass delete 1.2.3.4 ::1 1.2.3.4 ::1
 0/4 addresses deleted.
-# replace -n  1.2.3.4 ::1 1.2.3.4 ::1
+# pass replace -n 1.2.3.4 ::1 1.2.3.4 ::1
 2 addresses added (dummy).
-# replace -nf-
+# pass replace -nf-
 2 addresses added (dummy).
-# replace -nqv
+# pass replace -nqv 1.2.3.4 ::1 1.2.3.4 ::1
 A  1.2.3.4
 A  ::1
 X  1.2.3.4
 X  ::1
-# replace -nqvv
+# pass replace -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
 A  1.2.3.4
 A  ::1
 X  1.2.3.4
 X  ::1
-# replace
+# pass replace 1.2.3.4 ::1 1.2.3.4 ::1
 2 addresses added.
-# replace -n  1.2.3.4 ::1 1.2.3.4 ::1
+# pass replace -n 1.2.3.4 ::1 1.2.3.4 ::1
 no changes (dummy).
-# replace -nf-
+# pass replace -nf-
 no changes (dummy).
-# replace -nqv
+# pass replace -nqv 1.2.3.4 ::1 1.2.3.4 ::1
 X  1.2.3.4
 X  ::1
-# replace -nqvv
+# pass replace -nqvv 1.2.3.4 ::1 1.2.3.4 ::1
    1.2.3.4
    ::1
 X  1.2.3.4
 X  ::1
-# replace
+# pass replace 1.2.3.4 ::1 1.2.3.4 ::1
 no changes.
-# show
+# pass show 
    1.2.3.4
    ::1
-# table
-regress
-# table -v
--pa--	regress
 # kill
 1 table deleted.
 ktable: 21 allocated, 21 released, 0 leaked.

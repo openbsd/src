@@ -1,0 +1,34 @@
+# create
+1 table added.
+# pass list 
+regress
+# pass list -v
+-pa--	regress
+# pass rule pass in from <regress.1> to any
+# pass list 
+regress
+# pass list -v
+-pa--	regress
+----r	regress.1
+# pass rule pass in from <regress.1> to <regress.2>
+# pass list 
+regress
+# pass list -v
+-pa--	regress
+----r	regress.1
+----r	regress.2
+# pass rule pass in from <regress.1> to any
+# pass list 
+regress
+# pass list -v
+-pa--	regress
+----r	regress.1
+# pass rule 
+# pass list 
+regress
+# pass list -v
+-pa--	regress
+# kill
+1 table deleted.
+ktable: 3 allocated, 3 released, 0 leaked.
+kentry: 0 allocated, 0 released, 0 leaked.

@@ -1,23 +1,19 @@
 # create
 1 table added.
-# add -n  localhost
+# pass add -n localhost
 2/2 addresses added (dummy).
-# add -nf-
+# pass add -nf-
 2/2 addresses added (dummy).
-# add -nqv
+# pass add -nqv localhost
 A  ::1
 A  127.0.0.1
-# add -nqvv
+# pass add -nqvv localhost
 A  ::1
 A  127.0.0.1
-# add
+# pass add localhost
 2/2 addresses added.
-# add
+# fail add invalid$host
 cannot resolve invalid$host: no address associated with name
-# table
-regress
-# table -v
--pa--	regress
 # kill
 1 table deleted.
 ktable: 6 allocated, 6 released, 0 leaked.

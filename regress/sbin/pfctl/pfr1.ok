@@ -1,61 +1,61 @@
 # create
 1 table added.
-# add -n  1.1.1.1 1.1.1.2 1.1.1.3
+# pass add -n 1.1.1.1 1.1.1.2 1.1.1.3
 3/3 addresses added (dummy).
-# add -nf-
+# pass add -nf-
 3/3 addresses added (dummy).
-# add -nqv
+# pass add -nqv 1.1.1.1 1.1.1.2 1.1.1.3
 A  1.1.1.1
 A  1.1.1.2
 A  1.1.1.3
-# add -nqvv
+# pass add -nqvv 1.1.1.1 1.1.1.2 1.1.1.3
 A  1.1.1.1
 A  1.1.1.2
 A  1.1.1.3
-# add
+# pass add 1.1.1.1 1.1.1.2 1.1.1.3
 3/3 addresses added.
-# delete -n  1.1.1.1 1.1.1.2 1.1.1.4
+# pass delete -n 1.1.1.1 1.1.1.2 1.1.1.4
 2/3 addresses deleted (dummy).
-# delete -nf-
+# pass delete -nf-
 2/3 addresses deleted (dummy).
-# delete -nqv
+# pass delete -nqv 1.1.1.1 1.1.1.2 1.1.1.4
 D  1.1.1.1
 D  1.1.1.2
-# delete -nqvv
+# pass delete -nqvv 1.1.1.1 1.1.1.2 1.1.1.4
 D  1.1.1.1
 D  1.1.1.2
    1.1.1.4
-# delete
+# pass delete 1.1.1.1 1.1.1.2 1.1.1.4
 2/3 addresses deleted.
-# replace -n  1.1.1.1 1.1.1.2 1.1.1.3
+# pass replace -n 1.1.1.1 1.1.1.2 1.1.1.3
 2 addresses added (dummy).
-# replace -nf-
+# pass replace -nf-
 2 addresses added (dummy).
-# replace -nqv
+# pass replace -nqv 1.1.1.1 1.1.1.2 1.1.1.3
 A  1.1.1.1
 A  1.1.1.2
-# replace -nqvv
+# pass replace -nqvv 1.1.1.1 1.1.1.2 1.1.1.3
 A  1.1.1.1
 A  1.1.1.2
    1.1.1.3
-# replace
+# pass replace 1.1.1.1 1.1.1.2 1.1.1.3
 2 addresses added.
-# test
+# pass test 1.1.1.1 1.1.1.2 1.1.1.3
 3/3 addresses match.
-# test
+# fail test 1.1.1.1 1.1.1.2 1.1.1.4
 2/3 addresses match.
-# zero
+# pass zero 
 1 table/stats cleared.
-# show
+# pass show 
    1.1.1.1
    1.1.1.2
    1.1.1.3
-# flush
+# pass flush 
 3 addresses deleted.
-# show
-# table
+# pass show 
+# pass list 
 regress
-# table -v
+# pass list -v
 -pa--	regress
 # kill
 1 table deleted.

@@ -1,9 +1,13 @@
 #!/bin/ksh
+for TABLE in `pfctl -sT | grep regress`; do 
+	pfctl -t $TABLE -qTk 2>&1 || exit 1
+done
+pfctl -Fr -a regress:regress 2>/dev/null
+pfctl -Fn -a regress:regress 2>/dev/null
 KT_A=0`vmstat -m | awk '/pfrktable/{print $3}'`
 KT_R=0`vmstat -m | awk '/pfrktable/{print $5}'`
 KE_A=0`vmstat -m | awk '/pfrkentry/{print $3}'`
 KE_R=0`vmstat -m | awk '/pfrkentry/{print $5}'`
-pfctl -t regress -qTk 2>&1 || exit 1
 echo "# create"
 pfctl -t regress -Tc 2>&1 || exit 1
 for LINE in `sed -e "s/ /_/g" $1`; do 
@@ -15,34 +19,63 @@ for LINE in `sed -e "s/ /_/g" $1`; do
 	CMD=`echo $LINE | awk '{split($1,a,"_");print a[2]}'` 
 	ARGSX=`echo $LINE | awk '{split($1,a,"_");for(i=3;a[i];i++)print a[i]}'`
 	ARGS=""
-	for ARG in $ARGSX; do ARGS="$ARGS $ARG"; done
+	for ARG in $ARGSX; do
+		if [ "X$ARGS" = "X" ]; then
+			ARGS="$ARG"
+		else
+			ARGS="$ARGS $ARG"
+		fi
+	done
 	if [ "$RESULT" = "pass" ]; then case $CMD in
-	a*|d*|r*)
-		echo "# $CMD -n $ARGS"
+	add|delete|replace)
+		echo "# pass $CMD -n $ARGS"
 		pfctl -t regress -nT $CMD $ARGS 2>&1 || exit 1
-		echo "# $CMD -nf-"
+		echo "# pass $CMD -nf-"
 		echo "# test\n" $ARGSX | pfctl -t regress -nT $CMD -f- \
 			2>&1 || exit 1
-		echo "# $CMD -nqv"
+		echo "# pass $CMD -nqv $ARGS"
 		pfctl -t regress -nqvT $CMD $ARGS 2>&1 || exit 1
-		echo "# $CMD -nqvv"
+		echo "# pass $CMD -nqvv $ARGS"
 		pfctl -t regress -nqvvT $CMD $ARGS 2>&1 || exit 1
 		;;
 	esac fi
+	echo "# $RESULT $CMD $ARGS"
 	if [ "$RESULT" = "pass" ]; then
-		echo "# $CMD"
-		pfctl -t regress -T $CMD $ARGS 2>&1 || exit 1
+		case $CMD in
+		list)
+			(pfctl -sT | grep regress) 2>&1
+			echo "# pass $CMD -v"
+			(pfctl -vsT | grep regress) 2>&1
+			;;
+		load)
+			echo $ARGS | pfctl -Tl -f- || exit 1
+			;;
+		rule)
+			echo $ARGS | pfctl -a regress:regress -f- 2>&1 || exit 1
+			;;
+		*)
+			pfctl -t regress -T $CMD $ARGS 2>&1 || exit 1
+			;;
+		esac
 	else
-		echo "# $CMD"
-		pfctl -t regress -T $CMD $ARGS 2>&1 && exit 1
+		case $CMD in
+		load)
+			echo $ARGS | pfctl -Tl -f- && exit 1
+			;;
+		rule)
+			echo $ARGS | pfctl -a regress:regress -f- 2>&1 && exit 1			;;
+		*)
+			pfctl -t regress -T $CMD $ARGS 2>&1 && exit 1
+			;;
+		esac
 	fi
 done
-echo "# table"
-pfctl -sT | grep regress 2>&1 || exit 1
-echo "# table -v"
-pfctl -vsT | grep regress 2>&1 || exit 1
 echo "# kill"
-pfctl -t regress -Tk 2>&1 || exit 1
+for TABLE in `pfctl -sT | grep regress`; do
+        pfctl -t $TABLE -Tk 2>&1 || exit 1
+done
+pfctl -Fr -a regress:regress 2>/dev/null
+pfctl -Fn -a regress:regress 2>/dev/null
 let KT_A=`vmstat -m | awk '/pfrktable/{print $3}'`-$KT_A
 let KT_R=`vmstat -m | awk '/pfrktable/{print $5}'`-$KT_R
 let KT_L=$KT_A-$KT_R
@@ -52,4 +85,3 @@ let KE_L=$KE_A-$KE_R
 echo "ktable: $KT_A allocated, $KT_R released, $KT_L leaked."
 echo "kentry: $KE_A allocated, $KE_R released, $KE_L leaked."
 [ "$KT_L" = "0" -a "$KE_L" = "0" ] || exit 1
-

@@ -1,10 +1,10 @@
 # create
 1 table added.
-# replace -n  0/0 0/1 0/2 0/3 0/4 0/5 0/6 0/7
+# pass replace -n 0/0 0/1 0/2 0/3 0/4 0/5 0/6 0/7
 8 addresses added (dummy).
-# replace -nf-
+# pass replace -nf-
 8 addresses added (dummy).
-# replace -nqv
+# pass replace -nqv 0/0 0/1 0/2 0/3 0/4 0/5 0/6 0/7
 A  0.0.0.0/0
 A  0.0.0.0/1
 A  0.0.0.0/2
@@ -13,7 +13,7 @@ A  0.0.0.0/4
 A  0.0.0.0/5
 A  0.0.0.0/6
 A  0.0.0.0/7
-# replace -nqvv
+# pass replace -nqvv 0/0 0/1 0/2 0/3 0/4 0/5 0/6 0/7
 A  0.0.0.0/0
 A  0.0.0.0/1
 A  0.0.0.0/2
@@ -22,9 +22,9 @@ A  0.0.0.0/4
 A  0.0.0.0/5
 A  0.0.0.0/6
 A  0.0.0.0/7
-# replace
+# pass replace 0/0 0/1 0/2 0/3 0/4 0/5 0/6 0/7
 8 addresses added.
-# show
+# pass show 
    0.0.0.0/0
    0.0.0.0/7
    0.0.0.0/6
@@ -33,13 +33,13 @@ A  0.0.0.0/7
    0.0.0.0/3
    0.0.0.0/2
    0.0.0.0/1
-# replace -n  0/8 0/9 0/10 0/11 0/12 0/13 0/14 0/15
+# pass replace -n 0/8 0/9 0/10 0/11 0/12 0/13 0/14 0/15
 8 addresses added (dummy).
 8 addresses deleted (dummy).
-# replace -nf-
+# pass replace -nf-
 8 addresses added (dummy).
 8 addresses deleted (dummy).
-# replace -nqv
+# pass replace -nqv 0/8 0/9 0/10 0/11 0/12 0/13 0/14 0/15
 A  0.0.0.0/8
 A  0.0.0.0/9
 A  0.0.0.0/10
@@ -56,7 +56,7 @@ D  0.0.0.0/5
 D  0.0.0.0/6
 D  0.0.0.0/7
 D  0.0.0.0/0
-# replace -nqvv
+# pass replace -nqvv 0/8 0/9 0/10 0/11 0/12 0/13 0/14 0/15
 A  0.0.0.0/8
 A  0.0.0.0/9
 A  0.0.0.0/10
@@ -73,10 +73,10 @@ D  0.0.0.0/5
 D  0.0.0.0/6
 D  0.0.0.0/7
 D  0.0.0.0/0
-# replace
+# pass replace 0/8 0/9 0/10 0/11 0/12 0/13 0/14 0/15
 8 addresses added.
 8 addresses deleted.
-# show
+# pass show 
    0.0.0.0/15
    0.0.0.0/14
    0.0.0.0/13
@@ -85,13 +85,13 @@ D  0.0.0.0/0
    0.0.0.0/10
    0.0.0.0/9
    0.0.0.0/8
-# replace -n  0/16 0/17 0/18 0/19 0/20 0/21 0/22 0/23
+# pass replace -n 0/16 0/17 0/18 0/19 0/20 0/21 0/22 0/23
 8 addresses added (dummy).
 8 addresses deleted (dummy).
-# replace -nf-
+# pass replace -nf-
 8 addresses added (dummy).
 8 addresses deleted (dummy).
-# replace -nqv
+# pass replace -nqv 0/16 0/17 0/18 0/19 0/20 0/21 0/22 0/23
 A  0.0.0.0/16
 A  0.0.0.0/17
 A  0.0.0.0/18
@@ -108,7 +108,7 @@ D  0.0.0.0/12
 D  0.0.0.0/13
 D  0.0.0.0/14
 D  0.0.0.0/15
-# replace -nqvv
+# pass replace -nqvv 0/16 0/17 0/18 0/19 0/20 0/21 0/22 0/23
 A  0.0.0.0/16
 A  0.0.0.0/17
 A  0.0.0.0/18
@@ -125,10 +125,10 @@ D  0.0.0.0/12
 D  0.0.0.0/13
 D  0.0.0.0/14
 D  0.0.0.0/15
-# replace
+# pass replace 0/16 0/17 0/18 0/19 0/20 0/21 0/22 0/23
 8 addresses added.
 8 addresses deleted.
-# show
+# pass show 
    0.0.0.0/23
    0.0.0.0/22
    0.0.0.0/21
@@ -137,13 +137,13 @@ D  0.0.0.0/15
    0.0.0.0/18
    0.0.0.0/17
    0.0.0.0/16
-# replace -n  0/24 0/25 0/26 0/27 0/28 0/29 0/30 0/31
+# pass replace -n 0/24 0/25 0/26 0/27 0/28 0/29 0/30 0/31
 8 addresses added (dummy).
 8 addresses deleted (dummy).
-# replace -nf-
+# pass replace -nf-
 8 addresses added (dummy).
 8 addresses deleted (dummy).
-# replace -nqv
+# pass replace -nqv 0/24 0/25 0/26 0/27 0/28 0/29 0/30 0/31
 A  0.0.0.0/24
 A  0.0.0.0/25
 A  0.0.0.0/26
@@ -160,7 +160,7 @@ D  0.0.0.0/20
 D  0.0.0.0/21
 D  0.0.0.0/22
 D  0.0.0.0/23
-# replace -nqvv
+# pass replace -nqvv 0/24 0/25 0/26 0/27 0/28 0/29 0/30 0/31
 A  0.0.0.0/24
 A  0.0.0.0/25
 A  0.0.0.0/26
@@ -177,10 +177,10 @@ D  0.0.0.0/20
 D  0.0.0.0/21
 D  0.0.0.0/22
 D  0.0.0.0/23
-# replace
+# pass replace 0/24 0/25 0/26 0/27 0/28 0/29 0/30 0/31
 8 addresses added.
 8 addresses deleted.
-# show
+# pass show 
    0.0.0.0/31
    0.0.0.0/30
    0.0.0.0/29
@@ -189,10 +189,6 @@ D  0.0.0.0/23
    0.0.0.0/26
    0.0.0.0/25
    0.0.0.0/24
-# table
-regress
-# table -v
--pa--	regress
 # kill
 1 table deleted.
 ktable: 21 allocated, 21 released, 0 leaked.

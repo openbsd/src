@@ -1,46 +1,46 @@
 # create
 1 table added.
-# add -n  1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
+# pass add -n 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
 6/6 addresses added (dummy).
-# add -nf-
+# pass add -nf-
 6/6 addresses added (dummy).
-# add -nqv
+# pass add -nqv 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
 A  1.1.1.1
 A !1.1.1.2
 A  10.10.0.0/16
 A !10.11.0.0/16
 A  ::1
 A !::2
-# add -nqvv
+# pass add -nqvv 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
 A  1.1.1.1
 A !1.1.1.2
 A  10.10.0.0/16
 A !10.11.0.0/16
 A  ::1
 A !::2
-# add
+# pass add 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
 6/6 addresses added.
-# show
+# pass show 
    1.1.1.1
   !1.1.1.2
    10.10.0.0/16
   !10.11.0.0/16
    ::1
   !::2
-# replace -n  1.1.1.1 !1.1.1.2 !!1.1.1.3 !!!1.1.1.4
+# pass replace -n 1.1.1.1 !1.1.1.2 !!1.1.1.3 !!!1.1.1.4
 2 addresses added (dummy).
 4 addresses deleted (dummy).
-# replace -nf-
+# pass replace -nf-
 2 addresses added (dummy).
 4 addresses deleted (dummy).
-# replace -nqv
+# pass replace -nqv 1.1.1.1 !1.1.1.2 !!1.1.1.3 !!!1.1.1.4
 A  1.1.1.3
 A !1.1.1.4
 D !::2
 D  ::1
 D !10.11.0.0/16
 D  10.10.0.0/16
-# replace -nqvv
+# pass replace -nqvv 1.1.1.1 !1.1.1.2 !!1.1.1.3 !!!1.1.1.4
    1.1.1.1
   !1.1.1.2
 A  1.1.1.3
@@ -49,21 +49,21 @@ D !::2
 D  ::1
 D !10.11.0.0/16
 D  10.10.0.0/16
-# replace
+# pass replace 1.1.1.1 !1.1.1.2 !!1.1.1.3 !!!1.1.1.4
 2 addresses added.
 4 addresses deleted.
-# show
+# pass show 
    1.1.1.1
   !1.1.1.2
    1.1.1.3
   !1.1.1.4
-# replace -n  fe80::/16 !fe81::/16 !!fe82::/16 !!!fe83::/16
+# pass replace -n fe80::/16 !fe81::/16 !!fe82::/16 !!!fe83::/16
 4 addresses added (dummy).
 4 addresses deleted (dummy).
-# replace -nf-
+# pass replace -nf-
 4 addresses added (dummy).
 4 addresses deleted (dummy).
-# replace -nqv
+# pass replace -nqv fe80::/16 !fe81::/16 !!fe82::/16 !!!fe83::/16
 A  fe80::/16
 A !fe81::/16
 A  fe82::/16
@@ -72,7 +72,7 @@ D !1.1.1.4
 D  1.1.1.3
 D !1.1.1.2
 D  1.1.1.1
-# replace -nqvv
+# pass replace -nqvv fe80::/16 !fe81::/16 !!fe82::/16 !!!fe83::/16
 A  fe80::/16
 A !fe81::/16
 A  fe82::/16
@@ -81,21 +81,21 @@ D !1.1.1.4
 D  1.1.1.3
 D !1.1.1.2
 D  1.1.1.1
-# replace
+# pass replace fe80::/16 !fe81::/16 !!fe82::/16 !!!fe83::/16
 4 addresses added.
 4 addresses deleted.
-# show
+# pass show 
    fe80::/16
   !fe81::/16
    fe82::/16
   !fe83::/16
-# replace -n  10 !10.10 10.10.10 !10.10.10.10
+# pass replace -n 10 !10.10 10.10.10 !10.10.10.10
 4 addresses added (dummy).
 4 addresses deleted (dummy).
-# replace -nf-
+# pass replace -nf-
 4 addresses added (dummy).
 4 addresses deleted (dummy).
-# replace -nqv
+# pass replace -nqv 10 !10.10 10.10.10 !10.10.10.10
 A  10.0.0.0/8
 A !10.10.0.0/16
 A  10.10.10.0/24
@@ -104,7 +104,7 @@ D !fe83::/16
 D  fe82::/16
 D !fe81::/16
 D  fe80::/16
-# replace -nqvv
+# pass replace -nqvv 10 !10.10 10.10.10 !10.10.10.10
 A  10.0.0.0/8
 A !10.10.0.0/16
 A  10.10.10.0/24
@@ -113,24 +113,24 @@ D !fe83::/16
 D  fe82::/16
 D !fe81::/16
 D  fe80::/16
-# replace
+# pass replace 10 !10.10 10.10.10 !10.10.10.10
 4 addresses added.
 4 addresses deleted.
-# add -n  fe80::/16 !fe80:fe80::/32 fe80:fe80:fe80::/48
+# pass add -n fe80::/16 !fe80:fe80::/32 fe80:fe80:fe80::/48
 3/3 addresses added (dummy).
-# add -nf-
+# pass add -nf-
 3/3 addresses added (dummy).
-# add -nqv
+# pass add -nqv fe80::/16 !fe80:fe80::/32 fe80:fe80:fe80::/48
 A  fe80::/16
 A !fe80:fe80::/32
 A  fe80:fe80:fe80::/48
-# add -nqvv
+# pass add -nqvv fe80::/16 !fe80:fe80::/32 fe80:fe80:fe80::/48
 A  fe80::/16
 A !fe80:fe80::/32
 A  fe80:fe80:fe80::/48
-# add
+# pass add fe80::/16 !fe80:fe80::/32 fe80:fe80:fe80::/48
 3/3 addresses added.
-# show
+# pass show 
    10.0.0.0/8
   !10.10.0.0/16
    10.10.10.0/24
@@ -138,16 +138,12 @@ A  fe80:fe80:fe80::/48
    fe80::/16
   !fe80:fe80::/32
    fe80:fe80:fe80::/48
-# test
+# pass test 10.1.1.1 10.10.10.1
 2/2 addresses match.
-# test
+# fail test 11.1.1.1 10.10.1.1 10.10.10.10
 0/3 addresses match.
-# test
+# fail test 10.1.1.1 11.1.1.1
 1/2 addresses match.
-# table
-regress
-# table -v
--pa--	regress
 # kill
 1 table deleted.
 ktable: 26 allocated, 26 released, 0 leaked.
