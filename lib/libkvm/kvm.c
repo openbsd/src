@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.31 2002/06/08 22:31:24 art Exp $ */
+/*	$OpenBSD: kvm.c,v 1.32 2002/09/17 20:01:22 millert Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.31 2002/06/08 22:31:24 art Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.32 2002/09/17 20:01:22 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,7 @@ static int	_kvm_get_header(kvm_t *);
 static kvm_t	*_kvm_open(kvm_t *, const char *, const char *, const char *,
 		    int, char *);
 static int	clear_gap(kvm_t *, FILE *, int);
+static int	kvm_setfd(kvm_t *);
 
 char *
 kvm_geterr(kd)
@@ -294,7 +295,10 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 				goto failed;
 		}
 	}
-	return (kd);
+	if (kvm_setfd(kd) == 0)
+		return (kd);
+	else
+		_kvm_syserr(kd, kd->program, "can't set close on exec flag");
 failed:
 	/*
 	 * Copy out the error if doing sane error semantics.
@@ -934,4 +938,20 @@ kvm_write(kd, kva, buf, len)
 		return (-1);
 	}
 	/* NOTREACHED */
+}
+
+static int
+kvm_setfd(kd)
+	kvm_t *kd;
+{
+	if (kd->pmfd >= 0 && fcntl(kd->pmfd, F_SETFD, FD_CLOEXEC) < 0)
+		return (-1);
+	if (kd->vmfd >= 0 && fcntl(kd->vmfd, F_SETFD, FD_CLOEXEC) < 0)
+		return (-1);
+	if (kd->nlfd >= 0 && fcntl(kd->nlfd, F_SETFD, FD_CLOEXEC) < 0)
+		return (-1);
+	if (kd->swfd >= 0 && fcntl(kd->swfd, F_SETFD, FD_CLOEXEC) < 0)
+		return (-1);
+
+	return (0);
 }
