@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2003/02/14 23:08:35 miod Exp $
+#	$OpenBSD: GENERIC,v 1.24 2003/02/15 20:16:41 miod Exp $
 #
 # Diskless kernel config
 #
@@ -48,7 +48,7 @@ mongoose* at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI???)
 #dino*	at mainbus0 irq ?	# PCI bus bridge
 
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
-sti1	at mainbus0 irq 12 disable
+sti1	at mainbus0 disable irq 12
 
 # internal i/o space
 gsc0	at asp?			# 7xx
