@@ -19,7 +19,10 @@ system, you should have already completed the section of these notes
 that instructed you on how to prepare your hard disk.  You should know
 the size of the OpenBSD area of the disk and its offset from the
 beginning of the disk.  You will need this information when setting up
-your OpenBSD partitions.
+your OpenBSD partitions.  If you BIOS uses translated geometry, you
+should use this geometry for the remainder of the install.  This is
+only neccecary if you are sharing the disk with other operating systems
+that use the translated geometry.
 
 You should now be ready to install OpenBSD.  It might be handy for you
 to have a pencil, some paper, and a calculator handy.
@@ -69,121 +72,106 @@ should make a new inst floppy or fsck your existing one (if you can).
 	completely normal.  When you reach the prompt asking you for a
 	shell name, just hit return.
 
-	You will be presented with a welcome message and a prompt,
-	asking if you wish to proceed with the installation process.
-	If you wish to proceed, enter "y" and hit return.
+	You will be presented with a welcome message and a prompt.  At
+	this time you should enter the command "install" to start the
+	installation process.
 
-	You will be asked what type of disk driver you have.  The
-	valid options are listed by the install program, to make sure
-	you get it right.  If you're installing on an ST-506 or ESDI
-	drive, you'll be asked if your disk supports automatic sector
-	forwarding.  If you are SURE that it does, reply
-	affirmatively.  Otherwise, the install program will
-	automatically reserve space for bad144 tables.
-
-	(If at any time you decide you want to run fdisk, you can
-	type ^Z to pause the install script.  You can type 'fg' to
-	get back.  This is a nasty kludge because the install script
-	has not been properly changed to let the user run fdisk
-	nicely yet.)
+	You will be asked which terminal type to use, you should just
+	hit return to select the default (pc3).
 
 	The install program will then tell you which disks of that
-	type it can install on, and ask you which it should use.
-	Reply with the name of your disk.  (The first disk of the type
-	you selected, either "wd0" for ST-506/ESDI/IDE disks, or "sd0"
-	for SCSI disks, is the default.)
+	type it can install on, and ask you which it should use.  The
+	name of the disk is typically "wd0" for IDE/RLL/ESDI/ST506
+	drives or "sd0" for SCSI drives.  Reply with the name of your
+	disk.
 
-	You will then be asked to name your disk's disklabel.  The
-	default response is "mywd" or "mysd" depending on the type of
-	your disk, and for most purposes it will be OK.  If you choose
-	to name it something different, make sure the name is a single
-	word and contains no special characters.  You don't need to
-	remember this name.
+	Next you will have to edit or create a disklabel for the disk
+	OpenBSD is being installed on.  If there are any existing
+	partitions defined (for any operating system), and a disk label
+	is not found, you will first be given an opportunity to run
+	fdisk and create an OpenBSD partition.
 
-	You will be prompted for your disk's geometry information,
-	i.e. the number of bytes per sector, cylinders on the disk,
-	tracks per cylinder (heads), and sectors per track.  Enter
-	them when they are requested.  If you make a mistake, hit
-	Control-C and when you get to the shell prompt, restart the
-	install process by running the "install" command.  Once you
-	have entered this data, the install program will tell you the
-	total size of your disk, in both sectors, and cylinders.
-	Remember this number; if you're installing on the whole disk,
-	you'll need it again soon.
+	If fdisk is being invoked on your behalf, it will start by
+	displaying the current partitions defined and then allow you
+	to modify this information, add new partitions and change
+	which partition to boot from by default.  If you make a mistake,
+	you will be allowed to repeat this procedure as neccecary to
+	correct this.  Note that you should make OpenBSD be the active
+	partition at least until the install has been completed.
 
-	When describing your partitions, you will have the option of
-	entering data about them in units of disk sectors or
-	cylinders.  If you choose to enter the information in units of
-	sectors, remember that, for optimal performance, partitions
-	should begin and end on cylinder boundaries.  You will be
-	asked about which units you wish to use, and you should reply
-	with "c" for cylinders, or "s" for sectors.
+	Next the disk label which defines the layout of the OpenBSD file
+	systems must be set up.  The installation script will invoke an
+	editor allowing you to do this.  Note that partition 'c' inside
+	this disk label should ALWAYS reflect the entire disk, including
+	any non-OpenBSD portions.  The root file system should be in
+	partition 'a', and swap is usually in partition 'b'.  If you have
+	DOS or Linux partitions defined on the disk, these will usually
+	show up as partition 'h', 'i' and so on.  It is recommended that
+	you create seperate partitions for /usr and /var, and if you have
+	room for it, also for /home.
 
-	You will be asked for the size of the OpenBSD portion of the
-	disk.  If you're installing on the whole disk, reply with the
-	size of the disk, as printed earlier by the install program.
-	If you're using only part of the disk, reply with the size
-	that you specified in the partition editor.  (Don't forget to
-	enter the size in the units you specified in the last step!)
+	Note that all OpenBSD partitions in the disk label must have an
+	offset that makes it start within the OpenBSD part of the disk,
+	and a size that keeps it inside of that portion of the disk.  This
+	is within the bounds of the 'c' partition if the disk is not being
+	shared with other operating systems, and within the OpenBSD fdisk
+	partition if the disk is being shared.
 
-	If you are not installing on the whole disk, you will be asked
-	fro the offset of the OpenBSD partition from the beginning of
-	the disk.  Reply with the appropriate offset (again, in
-	whichever units you specified), as determined by how you
-	set up your disk using the partition editor.
+	The swap partition (usually 'b') should have a type of "swap", all
+	other native OpenBSD partitions should have a type of "4.2BSD".
+	Block and fragment sizes are usually 8192 and 1024 bytes, but can
+	also be 4096 and 512 or even 16384 and 2048 bytes.
 
-	You will be asked to enter the size of your OpenBSD root
-	partition.  It should be at least 13M, but if you are going to
-	be doing development, 14-16M is a more desirable size.  This
-	size should be expressed in units of sectors or cylinders,
-	depending on which you said you wanted to use.
+	The install program will now label your disk and ask which file
+	systems should be created on which partitions.  It will auto-
+	matically select the 'a' partition to be the root file system.
+	Next it will ask for which disk and partition you want a file
+	system created on.  This will be the same as the disk name (eg.
+	"wd0") with the letter identifying the partition (eg. "d")
+	appended (eg. "wd0d").  Then it will ask where this partition is
+	to be mounted, eg. /usr.  This process will be repeated until
+	you just hit return.
 
-	Next, you will be asked for the size of your swap partition.
-	You should probably allocate twice as much swap space as you
-	have real memory.  Systems that will be heavily used should
-	have more swap space allocated, and systems that will be
-	lightly used can get by with less.  If you want the system to
-	be able to save crash dumps when it panics, you will need at
-	least as much swap space as you have RAM.  Again, this number
-	should be expressed in units of sectors or cylinders, as
-	appropriate.
+	At this poing you will be asked to confirm that the file system
+	information you have entered is correct, and given an opportunity
+	to change the file system table.  Next it will create the new file
+	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
+	point of no return.
 
-	The install program will then ask you for information about
-	the rest of the partitions you want on your disk.  For most
-	purposes, you will want only one more partition, "/usr".
-	(Machines used as servers will probably also want /var as a
-	separate partition.  That can be done with these installation
-	tools, but is not covered here.)  The install program will
-	tell you how much space there is left to be allocated in the
-	OpenBSD area of the disk, and, if you only want one more
-	partition ("/usr"), you should enter it at the prompt when the
-	installer asks you how large the next partition should be.
-	It will then ask you for the name of the mount point for that
-	partition.  If you're doing a basic installation, that is
-	"/usr".
+	After all your file systems have been created, the install program
+	will give you an opportunity to configure the network.  The network
+	configuration you enter (if any) can then be used to do the install
+	from another system using NFS, HTTP or FTP, and will also be the
+	configuration used by the system after the installation is complete.
 
-	YOU ARE NOW AT THE POINT OF NO RETURN.  Nothing has been
-	written to your disk yet, but if you confirm that you want to
-	install OpenBSD, your hard drive will be modified, and its
-	contents may be scrambled at the whim of the install program.
-	This is especially likely if you have given the install
-	program incorrect information.  If you are sure you want to
-	proceed, enter "yes" at the prompt.
+	If you select to configure the network, the install program will
+	ask you for a name of your system and the DNS domain name to use.
+	Note that the host name should be without the domain part, and that
+	the domain name should NOT include the host name part.
 
-	The install program will now label your disk and make the file
-	systems you specified.  The filesystems will be initialized to
-	contain OpenBSD bootstrapping binaries and configuration files.
-	It will also create an /etc/fstab for your system, and mount
-	all of the file systems under /mnt. (In other words, your root
-	partition will be mounted on /mnt, your /usr partition on
-	/mnt/usr, and so on.)  There should be no errors in this
-	section of the installation.  If there are, restart from the
-	beginning of the installation process.
+	Next the system will give you a list of network interfaces you can
+	configure.  For each network interface you select to configure, it
+	will ask for the IP address to use, the symbolic host name to use,
+	the netmask to use and any interface-specific flags to set.  The
+	interface-specific flags are usually used to determine which media
+	the network card is to use.  The flags usually carry the following
+	meaning:
 
-	After all your filesystems have been created, the install
-	program will now prompt you asking how you wish to install
-	the remaining required system files.
+		-link0 -link1	Use BNC (coaxial) port [default]
+		link0 -link1	Use AUI port
+		link0 link1	Use UTP (twisted pair) port
 
+	After all network interfaces has been configured the install pro-
+	gram will ask for a default route and IP address of the primary
+	name server to use.  You will also be presented with an opportunity
+	to edit the host table.
+
+	At this point you will be allowed to edit the file system table
+	that will be used for the remainder of the installation and that
+	will be used by the finished system, following which the new file
+	systems will be mounted to complete the installation.
+
+-----------------------------------------------------------------------
 	To install from floppy:
 		The first thing you should do is pick a temporary
 		directory where the distribution files can be stored.
@@ -402,10 +390,13 @@ should make a new inst floppy or fsck your existing one (if you can).
 	host name, domain name, and other network configuration
 	information.  It will set up your configuration files and make
 	the device nodes for the newly-installed system.
+-----------------------------------------------------------------------
 
-XXX
-At this point, you should ensure that you have installed a kernel on
-the new filesystem!
+	When all the selected distribution sets has been extracted, you
+	will be allowed to select which time zone your system will be
+	using, all the device nodes needed by the installed system will
+	be created for you and the file systems will be unmounted.
+
 
 Congratulations, you have successfully installed OpenBSD 2.1. When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
