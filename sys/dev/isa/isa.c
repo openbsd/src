@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.32 1998/04/26 21:02:47 provos Exp $	*/
+/*	$OpenBSD: isa.c,v 1.33 1998/06/29 02:14:23 downsj Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -210,6 +210,15 @@ isascan(parent, match)
 			printf(">>> probing for %s*\n",
 			    cf->cf_driver->cd_name);
 		while ((*cf->cf_attach->ca_match)(parent, dev, &ia2) > 0) {
+			if ((ia2.ia_irq != IRQUNK) &&
+			    !isa_intr_check(sc->sc_ic, ia2.ia_irq, IST_EDGE)) {
+				printf("%s%d: irq %d already in use\n",
+				    cf->cf_driver->cd_name, cf->cf_unit,
+				    ia2.ia_irq);
+				ia2 = ia;
+				continue;
+			}
+
 			if (autoconf_verbose)
 				printf(">>> probe for %s* clone into %s%d\n",
 				    cf->cf_driver->cd_name,
@@ -221,14 +230,13 @@ isascan(parent, match)
 			}
 			config_attach(parent, dev, &ia2, isaprint);
 			dev = config_make_softc(parent, cf);
-			ia2 = ia;
-
 #if NISADMA > 0
-			if (ia.ia_drq != DRQUNK)
-				ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq);
-			if (ia.ia_drq2 != DRQUNK)
-				ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq2);
+			if (ia2.ia_drq != DRQUNK)
+				ISA_DRQ_ALLOC((struct device *)sc, ia2.ia_drq);
+			if (ia2.ia_drq2 != DRQUNK)
+				ISA_DRQ_ALLOC((struct device *)sc, ia2.ia_drq2);
 #endif /* NISAMDA > 0 */
+			ia2 = ia;
 		}
 		if (autoconf_verbose)
 			printf(">>> probing for %s* finished\n",
@@ -241,17 +249,24 @@ isascan(parent, match)
 		printf(">>> probing for %s%d\n", cf->cf_driver->cd_name,
 		    cf->cf_unit);
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0) {
-		if (autoconf_verbose)
-			printf(">>> probing for %s%d succeeded\n",
-			    cf->cf_driver->cd_name, cf->cf_unit);
-		config_attach(parent, dev, &ia, isaprint);
+		if ((ia.ia_irq != IRQUNK) &&
+		    !isa_intr_check(sc->sc_ic, ia.ia_irq, IST_EDGE)) {
+			printf("%s%d: irq %d already in use\n",
+			    cf->cf_driver->cd_name, cf->cf_unit, ia.ia_irq);
+			free(dev, M_DEVBUF);
+		} else {
+			if (autoconf_verbose)
+				printf(">>> probing for %s%d succeeded\n",
+				    cf->cf_driver->cd_name, cf->cf_unit);
+			config_attach(parent, dev, &ia, isaprint);
 
 #if NISADMA > 0
-		if (ia.ia_drq != DRQUNK)
-			ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq);
-		if (ia.ia_drq2 != DRQUNK)
-			ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq2);
+			if (ia.ia_drq != DRQUNK)
+				ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq);
+			if (ia.ia_drq2 != DRQUNK)
+				ISA_DRQ_ALLOC((struct device *)sc, ia.ia_drq2);
 #endif /* NISAMDA > 0 */
+		}
 	} else {
 		if (autoconf_verbose)
 			printf(">>> probing for %s%d failed\n",
