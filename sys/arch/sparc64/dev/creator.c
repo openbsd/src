@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.9 2002/05/22 21:30:47 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.10 2002/05/22 22:02:08 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -91,15 +91,16 @@ const struct wsscreen_descr *creator_scrlist[] = {
 };
 
 struct wsscreen_list creator_screenlist = {
-	sizeof(creator_scrlist) / sizeof(struct wsscreen_descr *), creator_scrlist
+	sizeof(creator_scrlist) / sizeof(struct wsscreen_descr *),
+	    creator_scrlist
 };
 
-int creator_ioctl(void *, u_long, caddr_t, int, struct proc *);
-int creator_alloc_screen(void *, const struct wsscreen_descr *, void **,
-    int *, int *, long *);
-void creator_free_screen(void *, void *);
-int creator_show_screen(void *, void *, int, void (*cb)(void *, int, int),
-    void *);
+int	creator_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	creator_alloc_screen(void *, const struct wsscreen_descr *, void **,
+	    int *, int *, long *);
+void	creator_free_screen(void *, void *);
+int	creator_show_screen(void *, void *, int, void (*cb)(void *, int, int),
+	    void *);
 paddr_t creator_mmap(void *, off_t, int);
 static int a2int(char *, int);
 
@@ -145,7 +146,8 @@ creator_match(parent, match, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma->ma_name, "SUNW,ffb") == 0)
+	if (strcmp(ma->ma_name, "SUNW,ffb") == 0 ||
+	    strcmp(ma->ma_name, "SUNW,afb") == 0)
 		return (1);
 	return (0);
 }
@@ -169,12 +171,16 @@ creator_attach(parent, self, aux)
 	printf(":");
 
 	btype = getpropint(ma->ma_node, "board_type", 0);
-	if ((btype & 7) == 3)
-		printf(" Creator3D");
-	else
-		printf(" Creator");
 
-	printf("\n");
+	if (strcmp(ma->ma_name, "SUNW,afb") != 0) {
+		if ((btype & 7) == 3)
+			printf(" Creator3D");
+		else
+			printf(" Creator");
+	} else
+		printf(" Elite3D");
+
+	printf(", type %d\n", btype);
 
 	if (nregs < FFB_REG_DFB32) {
 		printf(": no dfb32 regs found\n");
