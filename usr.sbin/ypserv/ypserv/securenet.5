@@ -1,4 +1,4 @@
-.\"	$OpenBSD: securenet.5,v 1.4 1996/06/26 21:26:37 maja Exp $
+.\"	$OpenBSD: securenet.5,v 1.5 1999/03/12 15:34:00 aaron Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -38,7 +38,7 @@
 configuration file for secure networks
 .Sh DESCRIPTION
 The 
-.Nm securenet
+.Nm
 file controls which hosts can connect to the
 .Nm YP
 server.
@@ -46,8 +46,7 @@ server.
 The format is rather simple. Each row consists of two items. The first item
 is the network mask. The second item is the network.
 .Sh EXAMPLES
-.Pp
-A configuration file might appear as follows:
+A configuration file might look like the following:
 .Bd -literal
 #
 # Only my local net is secure. 
@@ -57,18 +56,18 @@ A configuration file might appear as follows:
 .Sh FILES
 .Bl -tag -width /var/yp/securenet -compact
 .It Pa /var/yp/securenet
-A
+a
 .Xr ypserv 8
-configuration file.
+configuration file
 .El
 .Sh SEE ALSO
+.Xr ypserv.acl 5 ,
 .Xr yp 8 ,
-.Xr ypserv 8 ,
-.Xr ypserv.acl 5
+.Xr ypserv 8
 .Sh HISTORY
 The
-.Nm securenet
-was added to
-.Nm NIS
+.Xr securenet 5
+file was added to
+.Tn NIS
 by Sun Microsystems, Inc. as a bugfix for weak security.
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypinit.8,v 1.1 1997/04/20 10:00:25 maja Exp $
+.\"	$OpenBSD: ypinit.8,v 1.2 1999/03/12 15:34:00 aaron Exp $
 .\" Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm ypinit
-.Nd create an YP server (master or slave)
+.Nd create a YP server (master or slave)
 .Sh SYNOPSIS
 .Nm ypinit
 .Fl m Op Ar domainname
@@ -42,22 +42,22 @@
 .Nm ypinit
 .Fl u Op Ar domainname
 .Sh DESCRIPTION
-.Nm Ypinit
-is the utiliy to setup an YP server, or changing the ypserver map.
+.Nm
+may be used to setup a YP server, or to change the ypserver map.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl m
+.It Fl m Ar domainname
 Setup a master YP server. If 
 .Ar domainname
 is not given the default domainname will be used.
-.It Fl s
-Setup a slave YP server.
+.It Fl s Ar master_server Op Ar domainname
+Setup a slave YP server. If
 .Ar domainname
 is not given the default domainname will be used.
 .Ar master_server
 must be a running YP master server.
-.It Fl u
+.It Fl u Op Ar domainname
 Update the ypserver map on a YP master server. If 
 .Ar domainname
 is not given the default domainname will be used.

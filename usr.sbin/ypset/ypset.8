@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypset.8,v 1.3 1996/04/24 21:39:27 deraadt Exp $
+.\"	$OpenBSD: ypset.8,v 1.4 1999/03/12 15:34:00 aaron Exp $
 .\"	$NetBSD: ypset.8,v 1.2 1996/02/28 01:25:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ which YP server process to use
 .Op Fl d Ar domain
 .Ar server
 .Sh DESCRIPTION
-.Nm Ypset
+.Nm
 tells the
 .Xr ypbind 8
 process on the current machine which YP server process to communicate with.
@@ -60,7 +60,7 @@ a YP client process attempts to access a YP map, at which time
 .Xr ypbind 8
 tests the binding and takes appropriate action.
 .Pp
-.Nm Ypset
+.Nm
 is most useful for binding a YP client that is not on the same broadcast
 network as the closest YP server, but can also be used for debugging
 a local network's YP configuration, testing specific YP client
@@ -81,11 +81,11 @@ instead of the default domain as returned by
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr ypbind 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
-.Xr yppoll 8 ,
 .Xr ypwhich 1 ,
-.Xr yp 8
+.Xr yp 8 ,
+.Xr ypbind 8 ,
+.Xr yppoll 8
 .Sh AUTHOR
 Theo de Raadt

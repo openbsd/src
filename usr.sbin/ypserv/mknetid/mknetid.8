@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknetid.8,v 1.3 1996/05/30 09:53:07 deraadt Exp $
+.\"	$OpenBSD: mknetid.8,v 1.4 1999/03/12 15:33:59 aaron Exp $
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Op Fl h Ar hostfile
 .Op Fl m Ar netidfile
 .Sh DESCRIPTION
-.Nm Mknetid
+.Nm
 is used to create a map named 
 .Ar netid.byname .
 The map consists of information from
@@ -60,26 +60,27 @@ The options are as follows:
 .It Fl d Ar domain
 Which yp-domain if not default yp-domain.
 .It Fl q
-Keep quiet about multipy occuraces of a uid. Ignore all but the first.
+Keep quiet about multiple occurrences of a UID. Ignore all but the first.
 .It Fl p Ar passwdfile
 Alternate
 .Xr passwd 5
 file. Default is
-.Nm /etc/passwd .
+.Pa /etc/passwd .
 .It Fl g Ar groupfile
 Alternate
 .Xr group 5
 file. Default is
-.Nm /etc/group .
+.Pa /etc/group .
 .It Fl h Ar hostfile
 Alternate
-.Xr hosts 5 Default is
-.Nm /etc/hosts .
-file
+.Xr hosts 5
+file. Default is
+.Pa /etc/hosts .
 .It Fl m Ar netidfile
 Alternate
-.Xr netid 5 Default is
-.Nm /etc/netid .
+.Xr netid 5
+file. Default is
+.Pa /etc/netid .
 file.
 .El
 .Sh FILES
@@ -90,10 +91,10 @@ file.
 .It Pa /etc/netid
 .El
 .Sh SEE ALSO
-.Xr yp 8
-.Xr passwd 5 ,
 .Xr group 5 ,
 .Xr hosts 5 ,
-.Xr netid 5
+.Xr netid 5 ,
+.Xr passwd 5 ,
+.Xr yp 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>

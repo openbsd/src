@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.acl.5,v 1.6 1997/08/05 09:26:56 maja Exp $
+.\"	$OpenBSD: ypserv.acl.5,v 1.7 1999/03/12 15:34:00 aaron Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -38,14 +38,14 @@
 configuration file
 .Sh DESCRIPTION
 The 
-.Nm ypserv.acl
+.Nm
 file controls which hosts can connect to the
 .Nm YP
 server.
 .Pp
 The format is more complex than the format for
 .Xr securenet 5 .
-The first two verbs on each line controls if the line will
+The first two words on each line controls if the line will
 .Nm allow
 or
 .Nm deny
@@ -59,13 +59,14 @@ hosts.
 .Pp
 The
 .Nm YP
-server reads the configuration file and build a list in memory. This list
+server reads the configuration file and builds a list in memory. This list
 is processed from the beginning for every incomming request. As soon a
 match is found in the list the search terminates and it returns success
-or failure depending on 
+or failure depending on which of
 .Nm allow
 or 
-.Nm deny .
+.Nm deny
+was specified.
 If no match was found in the list success is returned.
 .Pp
 If access is denied every call will cause a 
@@ -74,51 +75,50 @@ error for the caller.
 .Pp
 Don't forget to allow localhost access if you want the machine running
 .Nm ypserv
-access it too.
+to be able to access it too.
 .Pp
 There is no default name for this file. Start 
 .Nm ypserv
 with a
-.Ar -a filename
+.Fl a Ar filename
 to read a file with this format.
 .Pp
-The following different syntax can be used:
+The following syntaxes may be used:
 .Pp
 <
-.Nm allow|deny
+.Ic allow|deny
 >
-.Nm host
+.Ic host
 <
-.Nm hostname|ip-address
+.Ic hostname|ip-address
 >
 .Pp
 If 
-.Nm hostname
-has more than one ip address then all will be added to the list.
+.Ic hostname
+has more than one IP address then all will be added to the list.
 .Pp
 <
-.Nm allow|deny
+.Ic allow|deny
 >
-.Nm net
+.Ic net
 <
-.Nm netname|netnumber
+.Ic netname|netnumber
 >
-.Op Nm netmask <netname|netnumber>
+.Op Ic netmask <netname|netnumber>
 .Pp
-If
-.Nm netmask
+If the the the the
+.Ic netmask
 part of the command isn't given then the netmask will be assumed to be a
 class A, B or C net depending on the net number.
 .Pp
 <
-.Nm allow|deny 
+.Ic allow|deny 
 >
-.Nm all
+.Ic all
 .Pp
 A line containing one of these commands will always match any host.
 .Sh EXAMPLES
-.Pp
-A configuration file might appear as follows:
+A configuration file might look like the following:
 .Bd -literal
 # This is an example of an access control file to be used by ypserv.
 #
@@ -169,14 +169,14 @@ deny all
 .Sh FILES
 .Bl -tag -width /var/yp/ypserv.acl -compact
 .It Pa /var/yp/ypserv.acl
-A
+a
 .Xr ypserv 8
-configuration file.
+configuration file
 .El
 .Sh SEE ALSO
+.Xr securenet 5 ,
 .Xr yp 8 ,
-.Xr ypserv 8 ,
-.Xr securenet 5
+.Xr ypserv 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>
 

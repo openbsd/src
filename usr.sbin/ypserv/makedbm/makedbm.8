@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makedbm.8,v 1.5 1997/07/22 10:53:00 maja Exp $
+.\"	$OpenBSD: makedbm.8,v 1.6 1999/03/12 15:33:59 aaron Exp $
 .\" Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -48,7 +48,7 @@
 .Ar infile
 .Ar outfile
 .Sh DESCRIPTION
-.Nm Makedbm
+.Nm
 is the utiliy in YP that creates the database file containing the YP map.
 The databse format is a slightly modified version of ndbm.
 .Pp
@@ -89,9 +89,9 @@ Include an entry the in the map with the key YP_MASTER_NAME and the argument
 as value.
 .El
 .Sh SEE ALSO
-.Xr yp 8 ,
 .Xr db 3 ,
-.Xr ypxfr 8 ,
-.Xr ypserv 8 
+.Xr yp 8 ,
+.Xr ypserv 8 ,
+.Xr ypxfr 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkalias.8,v 1.1 1997/07/26 12:12:28 maja Exp $
+.\"	$OpenBSD: mkalias.8,v 1.2 1999/03/12 15:33:59 aaron Exp $
 .\" Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm mkalias
-.Nd a YP map convertion program
+.Nd a YP map conversion program
 .Sh SYNOPSIS
 .Nm mkalias
 .Op Fl v
@@ -45,9 +45,9 @@
 .Ar input
 .Op Ar output
 .Sh DESCRIPTION
-.Nm Mkalias
-is used to convert a mail.aliases map to a mail.byaddr map. This is a
-a inverse map of user@host (or user!host) back to alias. 
+.Nm
+is used to convert a mail.aliases map to a mail.byaddr map. This is
+an inverse map of user@host (or user!host) back to alias. 
 .Pp
 .Pp
 The options are as follows:
@@ -73,7 +73,7 @@ or
 .It Fl n
 Capitalize name. eg mats.o.jansson becomes Mats.O.Jansson.  
 .It Ar input
-Use this map as input
+Use this map as input.
 .It Ar output
 Use this map as output. If the output map isn't given don't create database.
 Can be useful together with
@@ -82,10 +82,10 @@ or
 .Fl E .
 .El
 .Sh BUGS
-.Nm mkalias
+.Nm
 on SunOS 4.1.x seems to have a
 .Fl s .
-Since I don't know what it is supposed to do I havn't implemented it. But it is accepted by the program.
+Since I don't know what it is supposed to do I haven't implemented it. But it is accepted by the program.
 .Sh SEE ALSO
 .Xr yp 8 ,
 .Xr ypserv 8 

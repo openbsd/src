@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stdethers.8,v 1.3 1996/05/30 09:53:11 deraadt Exp $
+.\"	$OpenBSD: stdethers.8,v 1.4 1999/03/12 15:33:59 aaron Exp $
 .\" Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -33,21 +33,18 @@
 .Os
 .Sh NAME
 .Nm stdethers
-.Nd a YP filter program
+.Nd YP filtering program
 .Sh SYNOPSIS
 .Nm stdethers
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Stdethers
-is used to get ride of some unwanted information in file or stdin. This
-program is used by YP when creating some YP maps.
+.Nm
+is used to get rid of unwanted information in
+.Ar file ,
+or the standard input if no
+.Ar file
+argument is given. This utility is used by YP when creating YP maps.
 .Pp
-.Pp
-The options are as follows:
-.Bl -tag -width indent
-.It Ar file
-Use this file as input instead of stdin.
-.El
 .Sh SEE ALSO
 .Xr yp 8 ,
 .Xr ypserv 8 

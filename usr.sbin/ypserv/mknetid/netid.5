@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netid.5,v 1.3 1996/05/30 09:53:10 deraadt Exp $
+.\"	$OpenBSD: netid.5,v 1.4 1999/03/12 15:33:59 aaron Exp $
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -38,32 +38,31 @@
 network credential file
 .Sh DESCRIPTION
 Files in
-.Nm netid
-format is rare. One lives in the
+.Xr netid 5
+format are rare. One lives in the
 .Nm YP
 map
-.Nm netid.byname .
+.Dq netid.byname .
 The format is rather simple. Each row consists of two
 items, a key and a value. When created by
 .Xr mknetid 8
-there is three kind of records.
+there are three types of records.
 .Pp
-The first type is information about which gids a uid has:
+The first type is information about which GIDs a UID has:
 .Bd -literal
 unix.<uid>@<yp-domain> <uid>:<gid>,<gid>
 .Ed
 .Pp
-The second type has informations about hosts:
+The second type contains information about hosts:
 .Bd -literal
 unix.<hostname>@<yp-domain> 0:<hostname>
 .Ed
 .Pp
-The third type is records from a 
+The third type refers to records from a 
 .Xr netid 5
 file other than the two types above.
 .Sh EXAMPLES
-.Pp
-A configuration file might appear as follows:
+A configuration file might look like the following:
 .Bd -literal
 unix.10714@kaka 10714:400,10
 unix.jodie@kaka 0:jodie
@@ -71,11 +70,11 @@ unix.jodie@kaka 0:jodie
 .Sh FILES
 .Bl -tag -width /etc/netid -compact
 .It Pa /etc/netid
-A file for lines not generated automatic by
+for lines not generated automatically by
 .Xr mknetid 8 .
 .El
 .Sh SEE ALSO
-.Xr yp 8 ,
-.Xr mknetid 8
+.Xr mknetid 8 ,
+.Xr yp 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>
