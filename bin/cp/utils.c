@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.18 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: utils.c,v 1.19 2002/05/30 06:20:27 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.18 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.19 2002/05/30 06:20:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ copy_file(entp, dne)
 
 	/*
 	 * In -f (force) mode, we always unlink the destination first
-	 * if it exists.  Note that -i and -f are mututally exclusive.
+	 * if it exists.  Note that -i and -f are mutually exclusive.
 	 */
 	if (!dne && fflag)
 		(void)unlink(to.p_path);
