@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.34 2004/03/31 10:26:34 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.35 2004/04/27 04:37:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -129,8 +129,9 @@ host(const char *s, struct bgpd_addr *h, u_int8_t *len)
 	char			*p, *q, *ps;
 
 	if ((p = strrchr(s, '/')) != NULL) {
+		errno = 0;
 		mask = strtol(p+1, &q, 0);
-		if (!q || *q || mask > 128 || q == (p+1)) {
+		if (errno == ERANGE || !q || *q || mask > 128 || q == (p+1)) {
 			log_warnx("invalid netmask");
 			return (0);
 		}
