@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2004/09/15 00:23:08 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.22 2004/11/05 14:28:29 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -117,6 +117,7 @@ conf_main	: LISTEN ON address	{
 					    h->ss.ss_family != AF_INET6) {
 						yyerror("IPv4 or IPv6 address "
 						    "or hostname expected");
+						free(h);
 						free($2->name);
 						free($2);
 						YYERROR;
@@ -151,6 +152,8 @@ conf_main	: LISTEN ON address	{
 				    h->ss.ss_family != AF_INET6) {
 					yyerror("IPv4 or IPv6 address "
 					    "or hostname expected");
+					free(h);
+					free(p);
 					free($2->name);
 					free($2);
 					YYERROR;
@@ -178,6 +181,7 @@ address		: STRING		{
 				yyerror("could not parse address spec \"%s\"",
 				    $1);
 				free($1);
+				free($$);
 				YYERROR;
 			}
 			$$->name = $1;
