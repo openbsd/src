@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.7 2001/01/19 17:57:36 deraadt Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.8 2001/01/31 22:31:51 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #if 0
 static char rcsid[] = "$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.7 2001/01/19 17:57:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.8 2001/01/31 22:31:51 deraadt Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -480,7 +480,7 @@ void
 catchquit(n)
 	int n;
 {
-	extern returntosingle;
+	extern int returntosingle;
 
 	/* XXX signal race */
 	printf("returning to single-user after filesystem check\n");
