@@ -1,18 +1,16 @@
-#       $OpenBSD: Makefile,v 1.1 2003/06/15 16:34:53 mickey Exp $
-
-NOMAN=	# defined
+#       $OpenBSD: Makefile,v 1.2 2003/06/16 14:14:29 markus Exp $
 
 PROG=	eventtest
-CFLAGS+=-Wall
-DPADD+=	${LIBEVENT}
-LDADD+=	-levent
+LDADD=	-levent
+DPADD=	${LIBEVENT}
 
-libevent-regress: ${PROG}
-	@EVENT_SHOW_METHOD="yes" EVENT_NOPOLL="yes" ./eventtest
-	@EVENT_SHOW_METHOD="yes" EVENT_NOKQUEUE="yes" ./eventtest
-
-REGRESS_TARGETS=libevent-regress
+REGRESS_TARGETS=	eventtest-select eventtest-kqueue
 .PHONY: ${REGRESS_TARGETS}
 
-.include <bsd.regress.mk>
+eventtest-kqueue:
+	@EVENT_SHOW_METHOD=yes EVENT_NOSELECT=yes ./${PROG} 
 
+eventtest-select:
+	@EVENT_SHOW_METHOD=yes EVENT_NOKQUEUE=yes ./${PROG} 
+
+.include <bsd.regress.mk>
