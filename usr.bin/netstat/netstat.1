@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.23 2000/12/11 17:33:07 provos Exp $
+.\"	$OpenBSD: netstat.1,v 1.24 2000/12/13 15:52:58 camield Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -47,12 +47,12 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm netstat
-.Op Fl dgimnrs
+.Op Fl bdgimnrs
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm netstat
-.Op Fl dn
+.Op Fl bdn
 .Op Fl I Ar interface
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -102,6 +102,10 @@ for debugging.
 With the default display,
 show the state of all sockets; normally sockets used by
 server processes are not shown.
+.It Fl b
+With the interface display (option
+.Fl i ) ,
+show bytes in and out, instead of packet statistics.
 .It Fl d
 With either interface display (option
 .Fl i

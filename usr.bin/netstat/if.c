@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.21 2000/10/23 19:17:08 mickey Exp $	*/
+/*	$OpenBSD: if.c,v 1.22 2000/12/13 15:52:58 camield Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.21 2000/10/23 19:17:08 mickey Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.22 2000/12/13 15:52:58 camield Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,10 +119,13 @@ intpr(interval, ifnetaddr)
 		return;
 	ifnetaddr = (u_long)ifhead.tqh_first;
 
-	printf("%-7.7s %-5.5s %-11.11s %-17.17s %8.8s %5.5s %8.8s %5.5s",
-		"Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs",
-		"Opkts", "Oerrs");
-	printf(" %5s", "Coll");
+	printf("%-7.7s %-5.5s %-11.11s %-17.17s ",
+	       "Name", "Mtu", "Network", "Address");
+	if (bflag)
+		printf("%10.10s %10.10s", "Ibytes", "Obytes");
+	else
+		printf("%8.8s %5.5s %8.8s %5.5s %5.5s",
+		    "Ipkts", "Ierrs", "Opkts", "Oerrs", "Colls");
 	if (tflag)
 		printf(" %s", "Time");
 	if (dflag)
@@ -327,14 +330,18 @@ intpr(interval, ifnetaddr)
 			}
 			ifaddraddr = (u_long)ifaddr.ifa.ifa_list.tqe_next;
 		}
-		printf("%8lu %5lu %8lu %5lu %5lu",
-		    ifnet.if_ipackets, ifnet.if_ierrors,
-		    ifnet.if_opackets, ifnet.if_oerrors,
-		    ifnet.if_collisions);
+		if (bflag)
+			printf("%10lu %10lu",
+			    ifnet.if_ibytes, ifnet.if_obytes);
+		else
+			printf("%8lu %5lu %8lu %5lu %5lu",
+			    ifnet.if_ipackets, ifnet.if_ierrors,
+			    ifnet.if_opackets, ifnet.if_oerrors,
+			    ifnet.if_collisions);
 		if (tflag)
-			printf(" %3d", ifnet.if_timer);
+			printf(" %4d", ifnet.if_timer);
 		if (dflag)
-			printf(" %3d", ifnet.if_snd.ifq_drops);
+			printf(" %4d", ifnet.if_snd.ifq_drops);
 		putchar('\n');
 	}
 }
@@ -343,8 +350,10 @@ intpr(interval, ifnetaddr)
 struct	iftot {
 	char	ift_name[IFNAMSIZ];	/* interface name */
 	int	ift_ip;			/* input packets */
+	int	ift_ib;			/* input bytes */
 	int	ift_ie;			/* input errors */
 	int	ift_op;			/* output packets */
+	int	ift_ob;			/* output bytes */
 	int	ift_oe;			/* output errors */
 	int	ift_co;			/* collisions */
 	int	ift_dr;			/* drops */
@@ -388,7 +397,7 @@ sidewaysintpr(interval, off)
 		if (kread(off, (char *)&ifnet, sizeof ifnet))
 			break;
 		bzero(ip->ift_name, sizeof(ip->ift_name));
-		snprintf(ip->ift_name, IFNAMSIZ, "(%s)", ifnet.if_xname);
+		snprintf(ip->ift_name, IFNAMSIZ, "%s", ifnet.if_xname);
 		if (interface && strcmp(ifnet.if_xname, interface) == 0)
 			interesting = ip;
 		ip++;
@@ -407,37 +416,64 @@ sidewaysintpr(interval, off)
 	signalled = NO;
 	(void)alarm(interval);
 banner:
-	printf("   input    %-6.6s    output       ", interesting->ift_name);
+	if (bflag)
+		printf("%7.7s in %8.8s %6.6s out %5.5s",
+		    interesting->ift_name, " ",
+		    interesting->ift_name, " ");
+	else
+		printf("%5.5s in %5.5s%5.5s out %5.5s %5.5s",
+		    interesting->ift_name, " ",
+		    interesting->ift_name, " ", " ");
+	if (dflag)
+		printf(" %5.5s", " ");
 	if (lastif - iftot > 0) {
+		if (bflag)
+			printf("  %7.7s in %8.8s %6.6s out %5.5s",
+			    "total", " ", "total", " ");
+		else
+			printf("  %5.5s in %5.5s%5.5s out %5.5s %5.5s",
+			    "total", " ", "total", " ", " ");
 		if (dflag)
-			printf("      ");
-		printf("     input   (Total)    output");
+			printf(" %5.5s", " ");
 	}
 	for (ip = iftot; ip < iftot + MAXIF; ip++) {
 		ip->ift_ip = 0;
+		ip->ift_ib = 0;
 		ip->ift_ie = 0;
 		ip->ift_op = 0;
+		ip->ift_ob = 0;
 		ip->ift_oe = 0;
 		ip->ift_co = 0;
 		ip->ift_dr = 0;
 	}
 	putchar('\n');
-	printf("%8.8s %5.5s %8.8s %5.5s %5.5s ",
-		"packets", "errs", "packets", "errs", "colls");
-	if (dflag)
-		printf("%5.5s ", "drops");
-	if (lastif - iftot > 0)
-		printf(" %8.8s %5.5s %8.8s %5.5s %5.5s",
-			"packets", "errs", "packets", "errs", "colls");
+	if (bflag)
+		printf("%10.10s %8.8s %10.10s %5.5s",
+		    "bytes", " ", "bytes", " ");
+	else
+		printf("%8.8s %5.5s %8.8s %5.5s %5.5s",
+		    "packets", "errs", "packets", "errs", "colls");
 	if (dflag)
 		printf(" %5.5s", "drops");
+	if (lastif - iftot > 0) {
+		if (bflag)
+			printf("  %10.10s %8.8s %10.10s %5.5s",
+			    "bytes", " ", "bytes", " ");
+		else
+			printf("  %8.8s %5.5s %8.8s %5.5s %5.5s",
+			    "packets", "errs", "packets", "errs", "colls");
+		if (dflag)
+			printf(" %5.5s", "drops");
+	}
 	putchar('\n');
 	fflush(stdout);
 	line = 0;
 loop:
 	sum->ift_ip = 0;
+	sum->ift_ib = 0;
 	sum->ift_ie = 0;
 	sum->ift_op = 0;
+	sum->ift_ob = 0;
 	sum->ift_oe = 0;
 	sum->ift_co = 0;
 	sum->ift_dr = 0;
@@ -447,37 +483,51 @@ loop:
 			continue;
 		}
 		if (ip == interesting) {
-			printf("%8ld %5ld %8ld %5ld %5ld",
-				ifnet.if_ipackets - ip->ift_ip,
-				ifnet.if_ierrors - ip->ift_ie,
-				ifnet.if_opackets - ip->ift_op,
-				ifnet.if_oerrors - ip->ift_oe,
-				ifnet.if_collisions - ip->ift_co);
+			if (bflag)
+				printf("%10lu %8.8s %10lu %5.5s",
+				    ifnet.if_ibytes - ip->ift_ib, " ",
+				    ifnet.if_obytes - ip->ift_ob, " ");
+			else
+				printf("%8lu %5lu %8lu %5lu %5lu",
+				    ifnet.if_ipackets - ip->ift_ip,
+				    ifnet.if_ierrors - ip->ift_ie,
+				    ifnet.if_opackets - ip->ift_op,
+				    ifnet.if_oerrors - ip->ift_oe,
+				    ifnet.if_collisions - ip->ift_co);
 			if (dflag)
 				printf(" %5d",
 				    ifnet.if_snd.ifq_drops - ip->ift_dr);
 		}
 		ip->ift_ip = ifnet.if_ipackets;
+		ip->ift_ib = ifnet.if_ibytes;
 		ip->ift_ie = ifnet.if_ierrors;
 		ip->ift_op = ifnet.if_opackets;
+		ip->ift_ob = ifnet.if_obytes;
 		ip->ift_oe = ifnet.if_oerrors;
 		ip->ift_co = ifnet.if_collisions;
 		ip->ift_dr = ifnet.if_snd.ifq_drops;
 		sum->ift_ip += ip->ift_ip;
+		sum->ift_ib += ip->ift_ib;
 		sum->ift_ie += ip->ift_ie;
 		sum->ift_op += ip->ift_op;
+		sum->ift_ob += ip->ift_ob;
 		sum->ift_oe += ip->ift_oe;
 		sum->ift_co += ip->ift_co;
 		sum->ift_dr += ip->ift_dr;
 		off = (u_long)ifnet.if_list.tqe_next;
 	}
 	if (lastif - iftot > 0) {
-		printf("  %8d %5d %8d %5d %5d",
-			sum->ift_ip - total->ift_ip,
-			sum->ift_ie - total->ift_ie,
-			sum->ift_op - total->ift_op,
-			sum->ift_oe - total->ift_oe,
-			sum->ift_co - total->ift_co);
+		if (bflag)
+			printf("  %10lu %8.8s %10lu %5.5s",
+			    sum->ift_ib -  total->ift_ib, " ",
+			    sum->ift_ob -  total->ift_ob, " ");
+		else
+			printf("  %8lu %5lu %8lu %5lu %5lu",
+			    sum->ift_ip - total->ift_ip,
+			    sum->ift_ie - total->ift_ie,
+			    sum->ift_op - total->ift_op,
+			    sum->ift_oe - total->ift_oe,
+			    sum->ift_co - total->ift_co);
 		if (dflag)
 			printf(" %5d", sum->ift_dr - total->ift_dr);
 	}

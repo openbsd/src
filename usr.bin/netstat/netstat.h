@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.15 2000/06/30 20:04:01 itojun Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.16 2000/12/13 15:52:58 camield Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 
 int	Aflag;		/* show addresses of protocol control block */
 int	aflag;		/* show all sockets (including servers) */
+int	bflag;		/* show bytes instead of packets */
 int	dflag;		/* show i/f dropped packets */
 int	gflag;		/* show group (multicast) routing or stats */
 int	iflag;		/* show interfaces */
