@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.6 2001/08/25 13:46:36 hugh Exp $ */
+/*	$OpenBSD: boot.c,v 1.7 2001/09/10 04:28:52 bjc Exp $ */
 /*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -82,8 +82,9 @@ int sluttid, senast, skip;
 
 Xmain()
 {
-	int io, type, askname, filindex = 0;
+	int io, type, filindex = 0;
 	int j, nu;
+	volatile int askname;
 
 	/* make sure the rpb is out of the way so it does not get trampled;
 	 * this will be the case if booting from net
