@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 2001/11/08 23:53:10 miod Exp $
+#	$OpenBSD: GENERIC,v 1.21 2004/01/28 23:53:56 miod Exp $
 
 machine		mvme68k m68k
 
@@ -53,7 +53,8 @@ vme0	at mc0 offset 0x40000
 flash0	at mainbus0 addr 0xffa00000
 sram0	at mainbus0 addr 0xffe00000
 
-fooip*	at ipic? manu 0x11 prod 0x22 ipl 1
+# IndustryPack modules
+#fooip*	at ipic? manu 0x11 prod 0x22 ipl 1
 
 # MVME166/167/177
 pcctwo0 at mainbus0 addr 0xfff00000
