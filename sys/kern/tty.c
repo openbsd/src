@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.45 2001/07/05 10:12:24 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.46 2001/09/28 13:04:39 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1653,13 +1653,13 @@ ttycheckoutq(tp, wait)
  */
 int
 ttwrite(tp, uio, flag)
-	register struct tty *tp;
-	register struct uio *uio;
+	struct tty *tp;
+	struct uio *uio;
 	int flag;
 {
-	register u_char *cp = NULL;
-	register int cc, ce;
-	register struct proc *p;
+	u_char *cp = NULL;
+	int cc, ce;
+	struct proc *p;
 	int i, hiwat, cnt, error, s;
 	u_char obuf[OBUFSIZ];
 
