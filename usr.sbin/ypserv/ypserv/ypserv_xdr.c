@@ -5,7 +5,7 @@
 
 #include "yp.h"
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypserv_xdr.c,v 1.3 1996/05/30 09:53:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_xdr.c,v 1.4 2001/11/19 09:03:07 deraadt Exp $";
 #endif /* not lint */
 
 bool_t
@@ -14,11 +14,11 @@ xdr_ypstat(xdrs, objp)
 	ypstat *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		 return (FALSE);
-	 }
+	if (!xdr_enum(xdrs, (enum_t *)objp)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -28,11 +28,11 @@ xdr_ypxfrstat(xdrs, objp)
 	ypxfrstat *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		 return (FALSE);
-	 }
+	if (!xdr_enum(xdrs, (enum_t *)objp)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -42,11 +42,11 @@ xdr_domainname(xdrs, objp)
 	domainname *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_string(xdrs, objp, YPMAXDOMAIN)) {
-		 return (FALSE);
-	 }
+	if (!xdr_string(xdrs, objp, YPMAXDOMAIN)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -56,11 +56,11 @@ xdr_mapname(xdrs, objp)
 	mapname *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_string(xdrs, objp, YPMAXMAP)) {
-		 return (FALSE);
-	 }
+	if (!xdr_string(xdrs, objp, YPMAXMAP)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -70,11 +70,11 @@ xdr_peername(xdrs, objp)
 	peername *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_string(xdrs, objp, YPMAXPEER)) {
-		 return (FALSE);
-	 }
+	if (!xdr_string(xdrs, objp, YPMAXPEER)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -84,11 +84,11 @@ xdr_keydat(xdrs, objp)
 	keydat *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_bytes(xdrs, (char **)&objp->keydat_val, (u_int *)&objp->keydat_len, YPMAXRECORD)) {
-		 return (FALSE);
-	 }
+	if (!xdr_bytes(xdrs, (char **)&objp->keydat_val, (u_int *)&objp->keydat_len, YPMAXRECORD)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -98,11 +98,11 @@ xdr_valdat(xdrs, objp)
 	valdat *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_bytes(xdrs, (char **)&objp->valdat_val, (u_int *)&objp->valdat_len, YPMAXRECORD)) {
-		 return (FALSE);
-	 }
+	if (!xdr_bytes(xdrs, (char **)&objp->valdat_val, (u_int *)&objp->valdat_len, YPMAXRECORD)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -112,20 +112,20 @@ xdr_ypmap_parms(xdrs, objp)
 	ypmap_parms *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_domainname(xdrs, &objp->domain)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_mapname(xdrs, &objp->map)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_u_int(xdrs, &objp->ordernum)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_peername(xdrs, &objp->peer)) {
-		 return (FALSE);
-	 }
+	if (!xdr_domainname(xdrs, &objp->domain)) {
+		return (FALSE);
+	}
+	if (!xdr_mapname(xdrs, &objp->map)) {
+		return (FALSE);
+	}
+	if (!xdr_u_int(xdrs, &objp->ordernum)) {
+		return (FALSE);
+	}
+	if (!xdr_peername(xdrs, &objp->peer)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -135,17 +135,17 @@ xdr_ypreq_key(xdrs, objp)
 	ypreq_key *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_domainname(xdrs, &objp->domain)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_mapname(xdrs, &objp->map)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_keydat(xdrs, &objp->key)) {
-		 return (FALSE);
-	 }
+	if (!xdr_domainname(xdrs, &objp->domain)) {
+		return (FALSE);
+	}
+	if (!xdr_mapname(xdrs, &objp->map)) {
+		return (FALSE);
+	}
+	if (!xdr_keydat(xdrs, &objp->key)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -155,14 +155,14 @@ xdr_ypreq_nokey(xdrs, objp)
 	ypreq_nokey *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_domainname(xdrs, &objp->domain)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_mapname(xdrs, &objp->map)) {
-		 return (FALSE);
-	 }
+	if (!xdr_domainname(xdrs, &objp->domain)) {
+		return (FALSE);
+	}
+	if (!xdr_mapname(xdrs, &objp->map)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -172,20 +172,20 @@ xdr_ypreq_xfr(xdrs, objp)
 	ypreq_xfr *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_ypmap_parms(xdrs, &objp->map_parms)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_u_int(xdrs, &objp->transid)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_u_int(xdrs, &objp->prog)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_u_int(xdrs, &objp->port)) {
-		 return (FALSE);
-	 }
+	if (!xdr_ypmap_parms(xdrs, &objp->map_parms)) {
+		return (FALSE);
+	}
+	if (!xdr_u_int(xdrs, &objp->transid)) {
+		return (FALSE);
+	}
+	if (!xdr_u_int(xdrs, &objp->prog)) {
+		return (FALSE);
+	}
+	if (!xdr_u_int(xdrs, &objp->port)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -195,14 +195,14 @@ xdr_ypresp_val(xdrs, objp)
 	ypresp_val *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_ypstat(xdrs, &objp->stat)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_valdat(xdrs, &objp->val)) {
-		 return (FALSE);
-	 }
+	if (!xdr_ypstat(xdrs, &objp->stat)) {
+		return (FALSE);
+	}
+	if (!xdr_valdat(xdrs, &objp->val)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -212,17 +212,17 @@ xdr_ypresp_key_val(xdrs, objp)
 	ypresp_key_val *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_ypstat(xdrs, &objp->stat)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_valdat(xdrs, &objp->val)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_keydat(xdrs, &objp->key)) {
-		 return (FALSE);
-	 }
+	if (!xdr_ypstat(xdrs, &objp->stat)) {
+		return (FALSE);
+	}
+	if (!xdr_valdat(xdrs, &objp->val)) {
+		return (FALSE);
+	}
+	if (!xdr_keydat(xdrs, &objp->key)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -232,14 +232,14 @@ xdr_ypresp_master(xdrs, objp)
 	ypresp_master *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_ypstat(xdrs, &objp->stat)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_peername(xdrs, &objp->peer)) {
-		 return (FALSE);
-	 }
+	if (!xdr_ypstat(xdrs, &objp->stat)) {
+		return (FALSE);
+	}
+	if (!xdr_peername(xdrs, &objp->peer)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -249,14 +249,14 @@ xdr_ypresp_order(xdrs, objp)
 	ypresp_order *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_ypstat(xdrs, &objp->stat)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_u_int(xdrs, &objp->ordernum)) {
-		 return (FALSE);
-	 }
+	if (!xdr_ypstat(xdrs, &objp->stat)) {
+		return (FALSE);
+	}
+	if (!xdr_u_int(xdrs, &objp->ordernum)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -266,16 +266,16 @@ xdr_ypresp_all(xdrs, objp)
 	ypresp_all *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_bool(xdrs, &objp->more)) {
-		 return (FALSE);
-	 }
+	if (!xdr_bool(xdrs, &objp->more)) {
+		return (FALSE);
+	}
 	switch (objp->more) {
 	case TRUE:
-		 if (!xdr_ypresp_key_val(xdrs, &objp->ypresp_all_u.val)) {
-			 return (FALSE);
-		 }
+		if (!xdr_ypresp_key_val(xdrs, &objp->ypresp_all_u.val)) {
+			return (FALSE);
+		}
 		break;
 	case FALSE:
 		break;
@@ -291,14 +291,14 @@ xdr_ypresp_xfr(xdrs, objp)
 	ypresp_xfr *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_u_int(xdrs, &objp->transid)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_ypxfrstat(xdrs, &objp->xfrstat)) {
-		 return (FALSE);
-	 }
+	if (!xdr_u_int(xdrs, &objp->transid)) {
+		return (FALSE);
+	}
+	if (!xdr_ypxfrstat(xdrs, &objp->xfrstat)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -308,14 +308,14 @@ xdr_ypmaplist(xdrs, objp)
 	ypmaplist *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_mapname(xdrs, &objp->map)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_pointer(xdrs, (char **)&objp->next, sizeof(ypmaplist), (xdrproc_t)xdr_ypmaplist)) {
-		 return (FALSE);
-	 }
+	if (!xdr_mapname(xdrs, &objp->map)) {
+		return (FALSE);
+	}
+	if (!xdr_pointer(xdrs, (char **)&objp->next, sizeof(ypmaplist), (xdrproc_t)xdr_ypmaplist)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -325,14 +325,14 @@ xdr_ypresp_maplist(xdrs, objp)
 	ypresp_maplist *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_ypstat(xdrs, &objp->stat)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_pointer(xdrs, (char **)&objp->maps, sizeof(ypmaplist), (xdrproc_t)xdr_ypmaplist)) {
-		 return (FALSE);
-	 }
+	if (!xdr_ypstat(xdrs, &objp->stat)) {
+		return (FALSE);
+	}
+	if (!xdr_pointer(xdrs, (char **)&objp->maps, sizeof(ypmaplist), (xdrproc_t)xdr_ypmaplist)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -342,11 +342,11 @@ xdr_yppush_status(xdrs, objp)
 	yppush_status *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		 return (FALSE);
-	 }
+	if (!xdr_enum(xdrs, (enum_t *)objp)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -356,14 +356,14 @@ xdr_yppushresp_xfr(xdrs, objp)
 	yppushresp_xfr *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_u_int(xdrs, &objp->transid)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_yppush_status(xdrs, &objp->status)) {
-		 return (FALSE);
-	 }
+	if (!xdr_u_int(xdrs, &objp->transid)) {
+		return (FALSE);
+	}
+	if (!xdr_yppush_status(xdrs, &objp->status)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -373,11 +373,11 @@ xdr_ypbind_resptype(xdrs, objp)
 	ypbind_resptype *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		 return (FALSE);
-	 }
+	if (!xdr_enum(xdrs, (enum_t *)objp)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -387,15 +387,14 @@ xdr_ypbind_binding(xdrs, objp)
 	ypbind_binding *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 int i;
-	 if (!xdr_opaque(xdrs, objp->ypbind_binding_addr, 4)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_opaque(xdrs, objp->ypbind_binding_port, 2)) {
-		 return (FALSE);
-	 }
+	if (!xdr_opaque(xdrs, objp->ypbind_binding_addr, 4)) {
+		return (FALSE);
+	}
+	if (!xdr_opaque(xdrs, objp->ypbind_binding_port, 2)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -405,21 +404,21 @@ xdr_ypbind_resp(xdrs, objp)
 	ypbind_resp *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_ypbind_resptype(xdrs, &objp->ypbind_status)) {
-		 return (FALSE);
-	 }
+	if (!xdr_ypbind_resptype(xdrs, &objp->ypbind_status)) {
+		return (FALSE);
+	}
 	switch (objp->ypbind_status) {
 	case YPBIND_FAIL_VAL:
-		 if (!xdr_u_int(xdrs, &objp->ypbind_resp_u.ypbind_error)) {
-			 return (FALSE);
-		 }
+		if (!xdr_u_int(xdrs, &objp->ypbind_resp_u.ypbind_error)) {
+			return (FALSE);
+		}
 		break;
 	case YPBIND_SUCC_VAL:
-		 if (!xdr_ypbind_binding(xdrs, &objp->ypbind_resp_u.ypbind_bindinfo)) {
-			 return (FALSE);
-		 }
+		if (!xdr_ypbind_binding(xdrs, &objp->ypbind_resp_u.ypbind_bindinfo)) {
+			return (FALSE);
+		}
 		break;
 	default:
 		return (FALSE);
@@ -433,16 +432,16 @@ xdr_ypbind_setdom(xdrs, objp)
 	ypbind_setdom *objp;
 {
 
-	 register long *buf;
+	register long *buf;
 
-	 if (!xdr_domainname(xdrs, &objp->ypsetdom_domain)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_ypbind_binding(xdrs, &objp->ypsetdom_binding)) {
-		 return (FALSE);
-	 }
-	 if (!xdr_u_int(xdrs, &objp->ypsetdom_vers)) {
-		 return (FALSE);
-	 }
+	if (!xdr_domainname(xdrs, &objp->ypsetdom_domain)) {
+		return (FALSE);
+	}
+	if (!xdr_ypbind_binding(xdrs, &objp->ypsetdom_binding)) {
+		return (FALSE);
+	}
+	if (!xdr_u_int(xdrs, &objp->ypsetdom_vers)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.15 2001/01/11 23:36:07 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.16 2001/11/19 09:03:06 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.15 2001/01/11 23:36:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.16 2001/11/19 09:03:06 deraadt Exp $";
 #endif
 
 /*
@@ -42,7 +42,6 @@ static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.15 2001/01/11 23:36:07 deraadt 
  * done by Chuck Cranor <chuck@ccrc.wustl.edu>
  * Jan 1996.
  */
-
 
 #include <rpc/rpc.h>
 #include <rpcsvc/yp.h>
@@ -87,7 +86,6 @@ struct opt_domain {
 	LIST_ENTRY(opt_domain) domsl;   /* global linked list of domains */
 };
 
-
 struct domainlist doms;			/* global list of domains */
 struct mapq maps;			/* global queue of maps (LRU) */
 
@@ -96,7 +94,6 @@ extern int usedns;
 /*
  * ypdb_init: init the queues and lists
  */
-
 void
 ypdb_init()
 
@@ -105,56 +102,53 @@ ypdb_init()
 	CIRCLEQ_INIT(&maps);
 }
 
-
 /*
  * yp_private:
  * Check if key is a YP private key. Return TRUE if it is and
  * ypprivate is FALSE.
  */
-
 int
-yp_private(key,ypprivate)
+yp_private(key, ypprivate)
 	datum	key;
 	int	ypprivate;
 {
 	int	result;
 
   	if (ypprivate)
-	    return (FALSE);
+		return (FALSE);
 
 	if (key.dsize == 0 || key.dptr == NULL)
 		return (FALSE);
 
 	if (key.dsize == YP_LAST_LEN &&
-	    strncmp(key.dptr,YP_LAST_KEY,YP_LAST_LEN) == 0)
+	    strncmp(key.dptr, YP_LAST_KEY, YP_LAST_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_INPUT_LEN &&
-	    strncmp(key.dptr,YP_INPUT_KEY,YP_INPUT_LEN) == 0)
+	    strncmp(key.dptr, YP_INPUT_KEY, YP_INPUT_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_OUTPUT_LEN &&
-	    strncmp(key.dptr,YP_OUTPUT_KEY,YP_OUTPUT_LEN) == 0)
+	    strncmp(key.dptr, YP_OUTPUT_KEY, YP_OUTPUT_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_MASTER_LEN &&
-	    strncmp(key.dptr,YP_MASTER_KEY,YP_MASTER_LEN) == 0)
+	    strncmp(key.dptr, YP_MASTER_KEY, YP_MASTER_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_DOMAIN_LEN &&
-	    strncmp(key.dptr,YP_DOMAIN_KEY,YP_DOMAIN_LEN) == 0)
+	    strncmp(key.dptr, YP_DOMAIN_KEY, YP_DOMAIN_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_INTERDOMAIN_LEN &&
-	    strncmp(key.dptr,YP_INTERDOMAIN_KEY,YP_INTERDOMAIN_LEN) == 0)
+	    strncmp(key.dptr, YP_INTERDOMAIN_KEY, YP_INTERDOMAIN_LEN) == 0)
 		return(TRUE);
 	if (key.dsize == YP_SECURE_LEN &&
-	    strncmp(key.dptr,YP_SECURE_KEY,YP_SECURE_LEN) == 0)
+	    strncmp(key.dptr, YP_SECURE_KEY, YP_SECURE_LEN) == 0)
 		return(TRUE);
 	
 	return(FALSE);
-}     
+}
 
 /*
  * Close least recent used map. This routine is called when we have
  * no more file descripotors free, or we want to close all maps.
  */
-
 void
 ypdb_close_last()
 {
@@ -170,20 +164,17 @@ ypdb_close_last()
 
 #ifdef DEBUG
 	yplog("  ypdb_close_last: closing map %s in domain %s [db=0x%x]",
-		last->map, last->dom->domain, last->db);
+	    last->map, last->dom->domain, last->db);
 #endif
 
 	ypdb_close(last->db);			/* close DB */
 	free(last->map);			/* free map name */
 	free(last);				/* free map */
-
-	
 }
 
 /*
  * Close all open maps.
  */
-
 void
 ypdb_close_all()
 {
@@ -191,9 +182,8 @@ ypdb_close_all()
 #ifdef DEBUG
 	yplog("  ypdb_close_all(): start");
 #endif
-	while (maps.cqh_first != (void *)&maps) {
+	while (maps.cqh_first != (void *)&maps)
 		ypdb_close_last();
-	}
 #ifdef DEBUG
 	yplog("  ypdb_close_all(): done");
 #endif
@@ -202,7 +192,6 @@ ypdb_close_all()
 /*
  * Close Database if Open/Close Optimization isn't turned on.
  */
-
 void
 ypdb_close_db(db)
 	DBM	*db;
@@ -218,7 +207,6 @@ ypdb_close_db(db)
 /*
  * ypdb_open_db
  */
-
 DBM *
 ypdb_open_db(domain, map, status, map_info)
 	domainname	domain;
@@ -234,36 +222,38 @@ ypdb_open_db(domain, map, status, map_info)
 	int	fd;
 	struct opt_domain *d = NULL;
 	struct opt_map	*m = NULL;
-	datum	k,v;
+	datum	k, v;
 #ifdef OPTDB
 	int	i;
 #endif
+
 	/*
 	 * check for preloaded domain, map
 	 */
-
 	for (d = doms.lh_first ; d != NULL ; d = d->domsl.le_next) {
-		if (strcmp(domain, d->domain) == 0) break;
+		if (strcmp(domain, d->domain) == 0)
+			break;
 	}
 
 	if (d) {
 		for (m = d->dmaps.lh_first ; m != NULL ; m = m->mapsl.le_next)
-			if (strcmp(map, m->map) == 0) break;
+			if (strcmp(map, m->map) == 0)
+				break;
 	}
 
 	/*
 	 * map found open?
 	 */
-
 	if (m) {
 #ifdef DEBUG
 		yplog("  ypdb_open_db: cached open: domain=%s, map=%s, db=0x%x",
-			domain, map, m->db);
+		    domain, map, m->db);
 #endif
 		CIRCLEQ_REMOVE(&maps, m, mapsq);	/* adjust LRU queue */
 		CIRCLEQ_INSERT_HEAD(&maps, m, mapsq);
 		*status = YP_TRUE;
-		if (map_info) *map_info = m;
+		if (map_info)
+			*map_info = m;
 		return(m->db);
 	}
 
@@ -278,7 +268,6 @@ ypdb_open_db(domain, map, status, map_info)
 		return (NULL);
 	}
 
-
 	/*
 	 * open map
 	 */
@@ -287,15 +276,15 @@ ypdb_open_db(domain, map, status, map_info)
 	while (i == 0) {
 #endif
 		snprintf(map_path, sizeof(map_path), "%s/%s/%s", YP_DB_PATH, 
-			 domain, map);
+		    domain, map);
 		db = ypdb_open(map_path, O_RDONLY, 0444);
 #ifdef OPTDB
 		if (db == NULL) {
 #ifdef DEBUG
 			yplog("  ypdb_open_db: errno %d (%s)",
-		        errno,sys_errlist[errno]);
+			    errno, sys_errlist[errno]);
 #endif
-			if ((errno == ENFILE) || (errno == EMFILE)) {
+			if (errno == ENFILE || errno == EMFILE) {
 				ypdb_close_last();
 			} else {
 				i = errno;
@@ -303,20 +292,20 @@ ypdb_open_db(domain, map, status, map_info)
 		} else {
 			i = 4711;
 		}
-	};
+	}
 #endif
 	*status = YP_NOMAP;		/* see note below */
 	if (db == NULL) {
 		if (errno == ENOENT) {
 #ifdef DEBUG
 			yplog("  ypdb_open_db: no map %s (domain=%s)",
-			      map, domain);
+			    map, domain);
 #endif
 			return(NULL);
 		}
 #ifdef DEBUG
 		yplog("  ypdb_open_db: ypdb_open FAILED: map %s (domain=%s)", 
-			map, domain);
+		    map, domain);
 #endif
 		return(NULL);
 	}
@@ -327,11 +316,13 @@ ypdb_open_db(domain, map, status, map_info)
 
 	if (d == NULL) {		/* allocate new domain? */
 		d = (struct opt_domain *) malloc(sizeof(*d));
-		if (d) d->domain = strdup(domain);
+		if (d)
+			d->domain = strdup(domain);
 		if (d == NULL || d->domain == NULL) {
 			yplog("  ypdb_open_db: MALLOC failed");
 			ypdb_close(db);
-			if (d) free(d);
+			if (d)
+				free(d);
 			return(NULL);
 		}
 		LIST_INIT(&d->dmaps);
@@ -346,11 +337,11 @@ ypdb_open_db(domain, map, status, map_info)
 	 */
 
 	m = (struct opt_map *) malloc(sizeof(*m));
-	if (m) {
+	if (m)
 		m->map = strdup(map);
-	}
 	if (m == NULL || m->map == NULL) {
-		if (m) free(m);
+		if (m)
+			free(m);
 		yplog("  ypdb_open_db: MALLOC failed");
 		ypdb_close(db);
 		return(NULL);
@@ -364,22 +355,24 @@ ypdb_open_db(domain, map, status, map_info)
 		if (!usedns) {
 			k.dptr = domain_key;
 			k.dsize = YP_INTERDOMAIN_LEN;
-			v = ypdb_fetch(db,k);
-			if (v.dptr) m->host_lookup = TRUE;
-		} else {
+			v = ypdb_fetch(db, k);
+			if (v.dptr)
+				m->host_lookup = TRUE;
+		} else
 			m->host_lookup = TRUE;
-		}
 	}
 	m->secure = FALSE;
 	k.dptr = secure_key;
 	k.dsize = YP_SECURE_LEN;
-	v = ypdb_fetch(db,k);
-	if (v.dptr) m->secure = TRUE;
+	v = ypdb_fetch(db, k);
+	if (v.dptr)
+		m->secure = TRUE;
 	*status = YP_TRUE;
-	if (map_info) *map_info = m;
+	if (map_info)
+		*map_info = m;
 #ifdef DEBUG
-	     yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=0x%x", 
-			domain, map, m->host_lookup, m->secure, m->db);
+	yplog("  ypdb_open_db: NEW MAP domain=%s, map=%s, hl=%d, s=%d, db=0x%x", 
+	    domain, map, m->host_lookup, m->secure, m->db);
 #endif
 	return(m->db);
 }
@@ -387,7 +380,6 @@ ypdb_open_db(domain, map, status, map_info)
 /*
  * lookup host
  */
-
 ypstat
 lookup_host(nametable, host_lookup, db, keystr, result)
 	int	nametable;
@@ -406,7 +398,8 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	int l;
 	char	*ptr;
 	
-	if (!host_lookup) return(YP_NOKEY);
+	if (!host_lookup)
+		return(YP_NOKEY);
 
 	if ((_res.options & RES_INIT) == 0)
 		res_init();
@@ -439,7 +432,8 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 	strncpy((char *)hostname, host->h_name, sizeof(hostname) - 1);
 	hostname[sizeof(hostname) - 1] = '\0';
 	host = gethostbyname((char *)hostname);
-	if (host == NULL) return(YP_NOKEY);
+	if (host == NULL)
+		return(YP_NOKEY);
 
 	l = 0;
 	for(; host->h_addr_list[0] != NULL; host->h_addr_list++)
@@ -447,14 +441,14 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 			l++;
 	if (l == 0) {
 		yplog("lookup_host: address %s not listed for host %s\n",
-		       inet_ntoa(addr_addr), hostname);
+		    inet_ntoa(addr_addr), hostname);
 		syslog(LOG_NOTICE,
-		       "ypserv: address %s not listed for host %s\n",
-		       inet_ntoa(addr_addr), hostname);
+		    "ypserv: address %s not listed for host %s\n",
+		    inet_ntoa(addr_addr), hostname);
 		return(YP_NOKEY);
 	}
 
-	snprintf(val,sizeof(val),"%s %s",keystr,host->h_name);
+	snprintf(val, sizeof(val), "%s %s", keystr, host->h_name);
 	l = strlen(val);
 	v = val + l;
 	while ((ptr = *(host->h_aliases)) != NULL) {
@@ -483,7 +477,7 @@ ypdb_get_record(domain, map, key, ypprivate)
 	static	ypresp_val res;
 	static	char keystr[YPMAXRECORD+1];
 	DBM	*db;
-	datum	k,v;
+	datum	k, v;
 	int	host_lookup, hn;
 	struct opt_map *map_info = NULL;
 
@@ -498,7 +492,7 @@ ypdb_get_record(domain, map, key, ypprivate)
 	k.dptr = key.keydat_val;
 	k.dsize = key.keydat_len;
 	
-	if (yp_private(k,ypprivate)) {
+	if (yp_private(k, ypprivate)) {
 		res.stat = YP_NOKEY;
 		goto done;
 	}
@@ -508,13 +502,13 @@ ypdb_get_record(domain, map, key, ypprivate)
 	if (v.dptr == NULL) {
 		res.stat = YP_NOKEY;
 		if ((hn = strcmp(map, YP_HOSTNAME)) != 0 &&
-				strcmp(map, YP_HOSTADDR) != 0) 
+		    strcmp(map, YP_HOSTADDR) != 0) 
 			goto done;
 		/* note: lookup_host needs null terminated string */
 		strncpy(keystr, key.keydat_val, key.keydat_len);
 		keystr[key.keydat_len] = '\0';
 		res.stat = lookup_host((hn == 0) ? TRUE : FALSE,
-				host_lookup, db, keystr, &res);
+		    host_lookup, db, keystr, &res);
 	} else {
 		res.val.valdat_val = v.dptr;
 		res.val.valdat_len = v.dsize;
@@ -534,37 +528,33 @@ ypdb_get_first(domain, map, ypprivate)
 {
 	static ypresp_key_val res;
 	DBM	*db;
-	datum	k,v;
+	datum	k, v;
 
 	bzero((char *)&res, sizeof(res));
 	
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 
 	if (res.stat >= 0) {
-
-	  k = ypdb_firstkey(db);
+		k = ypdb_firstkey(db);
 	  
-	  while (yp_private(k,ypprivate)) {
-	    k = ypdb_nextkey(db);
-	  };
+		while (yp_private(k, ypprivate))
+			k = ypdb_nextkey(db);
 	  
-	  if (k.dptr == NULL) {
-	    res.stat = YP_NOKEY;
-	  } else {
-	    res.key.keydat_val = k.dptr;
-	    res.key.keydat_len = k.dsize;
-	    v = ypdb_fetch(db,k);
-	    if (v.dptr == NULL) {
-	      res.stat = YP_NOKEY;
-	    } else {
-	      res.val.valdat_val = v.dptr;
-	      res.val.valdat_len = v.dsize;
-	    }
-	  }
+		if (k.dptr == NULL) {
+			res.stat = YP_NOKEY;
+		} else {
+			res.key.keydat_val = k.dptr;
+			res.key.keydat_len = k.dsize;
+			v = ypdb_fetch(db, k);
+			if (v.dptr == NULL) {
+				res.stat = YP_NOKEY;
+			} else {
+				res.val.valdat_val = v.dptr;
+				res.val.valdat_len = v.dsize;
+			}
+		}
 	}
-
 	ypdb_close_db(db);
-	
 	return (res);
 }
 
@@ -577,52 +567,46 @@ ypdb_get_next(domain, map, key, ypprivate)
 {
 	static ypresp_key_val res;
 	DBM	*db;
-	datum	k,v,n;
+	datum	k, v, n;
 
 	bzero((char *)&res, sizeof(res));
-	
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 	
 	if (res.stat >= 0) {
+		n.dptr = key.keydat_val;
+		n.dsize = key.keydat_len;
+		v.dptr = NULL;
+		v.dsize = 0;
+		k.dptr = NULL;
+		k.dsize = 0;
 
-	  n.dptr = key.keydat_val;
-	  n.dsize = key.keydat_len;
-	  v.dptr = NULL;
-	  v.dsize = 0;
-	  k.dptr = NULL;
-	  k.dsize = 0;
+		n = ypdb_setkey(db, n);
 
-	  n = ypdb_setkey(db,n);
+		if (n.dptr != NULL)
+			k = ypdb_nextkey(db);
+		else
+			k.dptr = NULL;
 
-	  if (n.dptr != NULL) {
-	    k = ypdb_nextkey(db);
-	  } else {
-	    k.dptr = NULL;
-	  };
+		if (k.dptr != NULL) {
+			while (yp_private(k, ypprivate))
+				k = ypdb_nextkey(db);
+		}
 
-	  if (k.dptr != NULL) {
-	    while (yp_private(k,ypprivate)) {
-	      k = ypdb_nextkey(db);
-	    };
-	  };
-
-	  if (k.dptr == NULL) {
-	    res.stat = YP_NOMORE;
-	  } else {
-	    res.key.keydat_val = k.dptr;
-	    res.key.keydat_len = k.dsize;
-	    v = ypdb_fetch(db,k);
-	    if (v.dptr == NULL) {
-	      res.stat = YP_NOMORE;
-	    } else {
-	      res.val.valdat_val = v.dptr;
-	      res.val.valdat_len = v.dsize;
-	    }
-	  }
+		if (k.dptr == NULL) {
+			res.stat = YP_NOMORE;
+		} else {
+			res.key.keydat_val = k.dptr;
+			res.key.keydat_len = k.dsize;
+			v = ypdb_fetch(db, k);
+			if (v.dptr == NULL) {
+				res.stat = YP_NOMORE;
+			} else {
+				res.val.valdat_val = v.dptr;
+				res.val.valdat_len = v.dsize;
+			}
+		}
 	}
-
 	ypdb_close_db(db);
-	
 	return (res);
 }
 
@@ -635,29 +619,25 @@ ypdb_get_order(domain, map)
 	static char   *order_key = YP_LAST_KEY;
 	char   order[MAX_LAST_LEN+1];
 	DBM	*db;
-	datum	k,v;
+	datum	k, v;
 
 	bzero((char *)&res, sizeof(res));
-	
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 	
 	if (res.stat >= 0) {
+		k.dptr = order_key;
+		k.dsize = YP_LAST_LEN;
 
-	  k.dptr = order_key;
-	  k.dsize = YP_LAST_LEN;
-
-	  v = ypdb_fetch(db,k);
-	  if (v.dptr == NULL) {
-	    res.stat = YP_NOKEY;
-	  } else {
-	    strncpy(order, v.dptr, v.dsize);
-	    order[v.dsize] = '\0';
-	    res.ordernum = (u_int32_t)atol(order);
-	  }
+		v = ypdb_fetch(db, k);
+		if (v.dptr == NULL) {
+			res.stat = YP_NOKEY;
+		} else {
+			strncpy(order, v.dptr, v.dsize);
+			order[v.dsize] = '\0';
+			res.ordernum = (u_int32_t)atol(order);
+		}
 	}
-
 	ypdb_close_db(db);
-	
 	return (res);
 }
 
@@ -670,29 +650,25 @@ ypdb_get_master(domain, map)
 	static char   *master_key = YP_MASTER_KEY;
 	static char   master[MAX_MASTER_LEN+1];
 	DBM	*db;
-	datum	k,v;
+	datum	k, v;
 
 	bzero((char *)&res, sizeof(res));
-	
 	db = ypdb_open_db(domain, map, &res.stat, NULL);
 	
 	if (res.stat >= 0) {
+		k.dptr = master_key;
+		k.dsize = YP_MASTER_LEN;
 
-	  k.dptr = master_key;
-	  k.dsize = YP_MASTER_LEN;
-
-	  v = ypdb_fetch(db,k);
-	  if (v.dptr == NULL) {
-	    res.stat = YP_NOKEY;
-	  } else {
-	    strncpy(master, v.dptr, v.dsize);
-	    master[v.dsize] = '\0';
-	    res.peer = (peername) &master;
-	  }
+		v = ypdb_fetch(db, k);
+		if (v.dptr == NULL) {
+			res.stat = YP_NOKEY;
+		} else {
+			strncpy(master, v.dptr, v.dsize);
+			master[v.dsize] = '\0';
+			res.peer = (peername) &master;
+		}
 	}
-
 	ypdb_close_db(db);
-	
 	return (res);
 }
 
@@ -703,30 +679,26 @@ ypdb_xdr_get_all(xdrs, req)
 {
 	static ypresp_all resp;
 	DBM	*db;
-	datum	k,v;
+	datum	k, v;
 
 	bzero((char *)&resp, sizeof(resp));
 	
 	/*
 	 * open db, and advance past any private keys we may see
 	 */
-
 	db = ypdb_open_db(req->domain, req->map, 
-			&resp.ypresp_all_u.val.stat, NULL);
+	    &resp.ypresp_all_u.val.stat, NULL);
 	if (!db || resp.ypresp_all_u.val.stat < 0) 
 		return(FALSE);
 	k = ypdb_firstkey(db);
-	while (yp_private(k,FALSE)) {
+	while (yp_private(k, FALSE))
 		k = ypdb_nextkey(db);
-	};
 	
 	while(1) {
-		
 		if (k.dptr == NULL) 
 			break;
 
-		v = ypdb_fetch(db,k);
-
+		v = ypdb_fetch(db, k);
 		if (v.dptr == NULL) 
 			break;
 
@@ -746,9 +718,8 @@ ypdb_xdr_get_all(xdrs, req)
 			
 		/* advance past private keys */
 		k = ypdb_nextkey(db);
-		while (yp_private(k,FALSE)) {
+		while (yp_private(k, FALSE))
 			k = ypdb_nextkey(db);
-		}
 	}
 		
 	bzero((char *)&resp, sizeof(resp));
@@ -761,9 +732,7 @@ ypdb_xdr_get_all(xdrs, req)
 #endif
 		return(FALSE);
 	}
-		
 	ypdb_close_db(db);
-	
 	return (TRUE);
 }
 

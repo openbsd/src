@@ -6,7 +6,7 @@
 #include "yp.h"
 #include "ypv1.h"
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.1 1997/03/30 20:51:22 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.2 2001/11/19 09:03:07 deraadt Exp $";
 #endif /* not lint */
 
 bool_t
@@ -14,12 +14,11 @@ xdr_ypreqtype(xdrs, objp)
 	XDR *xdrs;
 	ypreqtype *objp;
 {
+	register long *buf;
 
-	 register long *buf;
-
-	 if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		 return (FALSE);
-	 }
+	if (!xdr_enum(xdrs, (enum_t *)objp)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -28,12 +27,11 @@ xdr_ypresptype(xdrs, objp)
 	XDR *xdrs;
 	ypresptype *objp;
 {
+	register long *buf;
 
-	 register long *buf;
-
-	 if (!xdr_enum(xdrs, (enum_t *)objp)) {
-		 return (FALSE);
-	 }
+	if (!xdr_enum(xdrs, (enum_t *)objp)) {
+		return (FALSE);
+	}
 	return (TRUE);
 }
 
@@ -67,7 +65,7 @@ xdr_yprequest(xdrs, objp)
 		break;
 	default:
 		printf("error 5\n");
-		return (FALSE);	 	
+		return (FALSE);
 	}
 	return (TRUE);
 }
@@ -77,7 +75,6 @@ xdr_ypresponse(xdrs, objp)
 	XDR *xdrs;
 	ypresponse *objp;
 {
-
 	register long *buf;
 
 	if (!xdr_ypresptype(xdrs, &objp->yp_resptype)) {
@@ -104,4 +101,3 @@ xdr_ypresponse(xdrs, objp)
 	}
 	return (TRUE);
 }
-

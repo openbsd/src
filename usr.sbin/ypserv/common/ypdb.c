@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypdb.c,v 1.5 1997/02/09 09:49:36 maja Exp $ */
+/*	$OpenBSD: ypdb.c,v 1.6 2001/11/19 09:03:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -209,7 +209,7 @@ ypdb_nextkey(db)
 extern datum
 ypdb_setkey(db, key)
 	DBM *db;
-        datum key;
+	datum key;
 {
 	int status;
 	datum retdata;
@@ -219,13 +219,13 @@ ypdb_setkey(db, key)
 	status = (db->seq)(db, (DBT *)&retkey, (DBT *)&retdata, R_FIRST);
 	if (status)
 		retkey.dptr = NULL;
-	while ((retkey.dptr != NULL) &&
-	       ((retkey.dsize != key.dsize) ||
-		(strncmp(key.dptr,retkey.dptr,retkey.dsize) != 0))) {
-	  status = (db->seq)(db, (DBT *)&retkey, (DBT *)&retdata, R_NEXT);
-	  if (status)
-	  	retkey.dptr = NULL;
-	};
+	while (retkey.dptr != NULL &&
+	    (retkey.dsize != key.dsize ||
+	    strncmp(key.dptr, retkey.dptr, retkey.dsize) != 0)) {
+		status = (db->seq)(db, (DBT *)&retkey, (DBT *)&retdata, R_NEXT);
+		if (status)
+			retkey.dptr = NULL;
+	}
 	return (retkey);
 #else
 	status = (db->seq)(db, (DBT *)&key, (DBT *)&retdata, R_CURSOR);
@@ -240,7 +240,6 @@ ypdb_setkey(db, key)
  *	 0 on success
  *	<0 failure
  */
-
 int
 ypdb_delete(db, key)
 	DBM *db;
@@ -261,7 +260,6 @@ ypdb_delete(db, key)
  *	<0 failure
  *	 1 if YPDB_INSERT and entry exists
  */
-
 int
 ypdb_store(db, key, content, flags)
 	DBM *db;
