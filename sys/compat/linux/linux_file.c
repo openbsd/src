@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.10 2000/02/28 13:29:29 jasoni Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.11 2000/04/04 05:31:50 jasoni Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
+#include <sys/signalvar.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
@@ -63,6 +65,8 @@ static void bsd_to_linux_flock __P((struct flock *, struct linux_flock *));
 static void linux_to_bsd_flock __P((struct linux_flock *, struct flock *));
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat *));
 static int linux_stat1 __P((struct proc *, void *, register_t *, int));
+static int linux_set_pos __P((struct proc *, int, off_t, off_t *));
+
 
 /*
  * Some file-related calls are handled here. The usual flag conversion
@@ -70,7 +74,7 @@ static int linux_stat1 __P((struct proc *, void *, register_t *, int));
  */
 
 /*
- * The next two functions convert between the Linux and NetBSD values
+ * The next two functions convert between the Linux and OpenBSD values
  * of the flags used in open(2) and fcntl(2).
  */
 static int
@@ -146,7 +150,7 @@ linux_sys_creat(p, v, retval)
 
 /*
  * open(2). Take care of the different flag values, and let the
- * NetBSD syscall do the real work. See if this operation
+ * OpenBSD syscall do the real work. See if this operation
  * gives the current process a controlling terminal.
  * (XXX is this necessary?)
  */
@@ -236,7 +240,7 @@ linux_sys_llseek(p, v, retval)
 
 /*
  * The next two functions take care of converting the flock
- * structure back and forth between Linux and NetBSD format.
+ * structure back and forth between Linux and OpenBSD format.
  * The only difference in the structures is the order of
  * the fields, and the 'whence' value.
  */
@@ -288,7 +292,7 @@ linux_to_bsd_flock(lfp, bfp)
 
 /*
  * Most actions in the fcntl() call are straightforward; simply
- * pass control to the NetBSD system call. A few commands need
+ * pass control to the OpenBSD system call. A few commands need
  * conversions after the actual system call has done its work,
  * because the flag values and lock structure are different.
  */
@@ -431,7 +435,7 @@ linux_sys_fcntl(p, v, retval)
 }
 
 /*
- * Convert a NetBSD stat structure to a Linux stat structure.
+ * Convert a OpenBSD stat structure to a Linux stat structure.
  * Only the order of the fields and the padding in the structure
  * is different. linux_fakedev is a machine-dependent function
  * which optionally converts device driver major/minor numbers
@@ -848,4 +852,143 @@ linux_sys_fdatasync(p, v, retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	return sys_fsync(p, uap, retval);
+}
+
+/*
+ * sys_lseek trimmed down
+ */
+static int
+linux_set_pos(p, fd, offset, ooffset)
+	struct proc *p;
+	int fd;
+	off_t offset;
+	off_t *ooffset;
+{
+	register struct filedesc *fdp = p->p_fd;
+	register struct file *fp;
+	struct vnode *vp;
+	int special;
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
+		return (EBADF);
+	if (fp->f_type != DTYPE_VNODE)
+		return (ESPIPE);
+	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type == VFIFO)
+		return (ESPIPE);
+	if (vp->v_type == VCHR)
+		special = 1;
+	else
+		special = 0;
+	if (!special && offset < 0)
+		return (EINVAL);
+	*ooffset = fp->f_offset;
+	fp->f_offset = offset;
+	return (0);
+}
+
+/*
+ * pread(2).
+ */
+int
+linux_sys_pread(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_pread_args /* {
+		syscallarg(int) fd;
+		syscallarg(void *) buf;
+		syscallarg(size_t) nbyte;
+		syscallarg(linux_off_t) offset;
+	} */ *uap = v;
+	register struct file *fp;
+	register struct filedesc *fdp = p->p_fd;
+	struct uio auio;
+	struct iovec aiov;
+	long cnt, error = 0;
+	off_t save_offset;
+
+	/* Don't allow nbyte to be larger than max return val */
+	if (SCARG(uap, nbyte) > SSIZE_MAX)
+		return(EINVAL);
+	if ((error = linux_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
+		&save_offset)))
+		return (error);
+	fp = fdp->fd_ofiles[SCARG(uap, fd)];
+	aiov.iov_base = (caddr_t)SCARG(uap, buf);
+	aiov.iov_len = SCARG(uap, nbyte);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = SCARG(uap, nbyte);
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_procp = p;
+	cnt = SCARG(uap, nbyte);
+	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	if (error)
+		if (auio.uio_resid != cnt && (error == ERESTART ||
+		    error == EINTR || error == EWOULDBLOCK))
+			error = 0;
+	cnt -= auio.uio_resid;
+	fp->f_offset = save_offset;
+	*retval = cnt;
+	return (error);
+}
+
+/*
+ * pwrite(2).
+ */
+int
+linux_sys_pwrite(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_pwrite_args /* {
+		syscallarg(int) fd;
+		syscallarg(char *) buf;
+		syscallarg(size_t) nbyte;
+		syscallarg(linux_off_t) offset;
+	} */ *uap = v;
+	register struct file *fp;
+	register struct filedesc *fdp = p->p_fd;
+	struct uio auio;
+	struct iovec aiov;
+	long cnt, error = 0;
+	off_t save_offset;
+
+	/* Don't allow nbyte to be larger than max return val */
+	if (SCARG(uap, nbyte) > SSIZE_MAX)
+		return(EINVAL);
+	if ((error = linux_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
+		&save_offset)))
+		return (error);
+	fp = fdp->fd_ofiles[SCARG(uap, fd)];
+	if ((fp->f_flag & FWRITE) == 0) {
+		fp->f_offset = save_offset;
+		return (EBADF);
+	}
+	aiov.iov_base = (caddr_t)SCARG(uap, buf);
+	aiov.iov_len = SCARG(uap, nbyte);
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_resid = SCARG(uap, nbyte);
+	auio.uio_rw = UIO_WRITE;
+	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_procp = p;
+	cnt = SCARG(uap, nbyte);
+	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	if (error) {
+		if (auio.uio_resid != cnt && (error == ERESTART ||
+		    error == EINTR || error == EWOULDBLOCK))
+			error = 0;
+		if (error == EPIPE)
+			psignal(p, SIGPIPE);
+	}
+	cnt -= auio.uio_resid;
+	*retval = cnt;
+	fp->f_offset = save_offset;
+	return (error);
 }
