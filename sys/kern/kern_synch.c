@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.9 1997/10/06 20:19:57 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.10 1997/11/04 21:09:49 chuck Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -699,32 +699,71 @@ db_show_all_procs(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	int map = modif[0] == 'm';
+	char *mode;
 	int doingzomb = 0;
 	struct proc *p, *pp;
     
+	if (modif[0] == 0)
+		modif[0] = 'n';			/* default == normal mode */
+
+	mode = "mawn";
+	while (*mode && *mode != modif[0])
+		mode++;
+	if (*mode == 0 || *mode == 'm') {
+		db_printf("usage: show all procs [/a] [/n] [/w]\n");
+		db_printf("\t/a == show process address info\n");
+		db_printf("\t/n == show normal process info [default]\n");
+		db_printf("\t/w == show process wait/emul info\n");
+		return;
+	}
+	
 	p = allproc.lh_first;
-	db_printf("  pid proc     addr     %s comm         wchan\n",
-	    map ? "map     " : "uid  ppid  pgrp  flag stat em ");
+
+	switch (*mode) {
+
+	case 'a':
+		db_printf("PID        %10s %18s %18s %18s\n",
+		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
+		break;
+	case 'n':
+		db_printf("PID        %10s %10s %10s S %7s %16s %7s\n",
+		    "PPID", "PGRP", "UID", "FLAGS", "COMMAND", "WAIT");
+		break;
+	case 'w':
+		db_printf("PID        %16s %8s %18s %s\n",
+		    "COMMAND", "EMUL", "WAIT-CHANNEL", "WAIT-MSG");
+		break;
+	}
+
 	while (p != 0) {
 		pp = p->p_pptr;
 		if (p->p_stat) {
-			db_printf("%5d %p %p ",
-			    p->p_pid, p, p->p_addr);
-			if (map)
-				db_printf("%p %s   ",
-				    p->p_vmspace, p->p_comm);
-			else
-				db_printf("%3d %5d %5d  %06x  %d  %s  %s   ",
-				    p->p_cred->p_ruid, pp ? pp->p_pid : -1,
-				    p->p_pgrp->pg_id, p->p_flag, p->p_stat,
-				    p->p_emul->e_name, p->p_comm);
-			if (p->p_wchan) {
-				if (p->p_wmesg)
-					db_printf("%s ", p->p_wmesg);
-				db_printf("%p", p->p_wchan);
+
+			db_printf("%-10d ", p->p_pid);
+
+			switch (*mode) {
+
+			case 'a':
+				db_printf("%10.10s %18p %18p %18p\n",
+				    p->p_comm, p, p->p_addr, p->p_vmspace);
+				break;
+
+			case 'n':
+				db_printf("%10d %10d %10d %d %#7x %16s %7.7s\n",
+				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
+				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
+				    p->p_comm, (p->p_wchan && p->p_wmesg) ?
+					p->p_wmesg : "");
+				break;
+
+			case 'w':
+				db_printf("%16s %8s %18p %s\n", p->p_comm,
+				    p->p_emul->e_name, p->p_wchan,
+				    (p->p_wchan && p->p_wmesg) ? 
+					p->p_wmesg : "");
+				break;
+
 			}
-			db_printf("\n");
 		}
 		p = p->p_list.le_next;
 		if (p == 0 && doingzomb == 0) {
