@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.12 2002/05/09 21:27:05 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.13 2002/06/08 00:05:02 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -59,7 +59,7 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 pciide*	at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
-gm*		at pci? dev ? function ?	# GMAC ethernet
+gem*		at pci? dev ? function ?	# GMAC ethernet
 hme*		at pci? dev ? function ?	# HME ethernet
 dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 an*		at pci? dev ? function ?	# Cisco/Aironet 802.11DS
