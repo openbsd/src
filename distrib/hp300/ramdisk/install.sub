@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.6 1997/10/13 07:47:23 downsj Exp $
+#	$OpenBSD: install.sub,v 1.7 1997/10/20 07:06:04 downsj Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -301,11 +301,9 @@ __get_reldir_1
 getrootdisk() {
 	cat << \__getrootdisk_1
 
-The installation program needs to know which disk to consider
-the root disk.  Note the unit number may be different than
-the unit number you used in the standalone installation
-program.
-
+The installation program needs to know which disk to consider the root disk.
+Note the unit number may be different than the unit number you used in the
+boot program (especially on a PC with multiple disk controllers).
 Available disks are:
 
 __getrootdisk_1
@@ -381,31 +379,40 @@ addifconfig() {
 configurenetwork() {
 	local _ifsdone
 	local _ifs
+	local _ouranswer
+	local _reprompt
 
 	_IFS=`md_get_ifdevs`
 	_ifsdone=""
+	_ouranswer=""
+	_reprompt=1
 	resp=""		# force at least one iteration
 	while [ "X${resp}" != X"done" ]; do
-	cat << \__configurenetwork_1
+		if [ $_reprompt = 1 ]; then
+			cat << \__configurenetwork_1
 
 You may configure the following network interfaces (the interfaces
 marked with [X] have been succesfully configured):
 
 __configurenetwork_1
 
-		for _ifs in $_IFS; do
-			if isin $_ifs $_ifsdone ; then
-				echo -n "[X] "
-			else
-				echo -n "    "
-			fi
-			echo $_ifs
-		done
-		echo	""
-		echo -n	"Configure which interface? [done] "
-		getresp "done"
+			for _ifs in $_IFS; do
+				if isin $_ifs $_ifsdone ; then
+					echo -n "	[X] "
+				else
+					echo -n "	[ ] "
+				fi
+				echo $_ifs
+			done
+			echo	""
+		fi
+		echo -n	"Configure which interface? (or, enter 'done') [$_ouranswer] "
+		getresp "$_ouranswer"
 		case "$resp" in
 		"done")
+			;;
+		"")
+			_reprompt=0
 			;;
 		*)
 			_ifs=$resp
@@ -416,8 +423,11 @@ __configurenetwork_1
 			else
 				echo "Invalid response: \"$resp\" is not in list"
 			fi
+			_ouranswer="done"
+			_reprompt=1
 			;;
 		esac
+
 	done
 }
 
@@ -464,9 +474,11 @@ configure_ifs() {
 	done
 
 	# Get netmask
-	resp=""		# force one iteration
+	if [ "X${_interface_mask}" = X"" ]; then
+		_interface_mask=255.255.255.0
+	fi
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Netmask? [$_interface_mask] "
+		echo -n "Netmask ? [$_interface_mask] "
 		getresp "$_interface_mask"
 		_interface_mask=$resp
 	done
@@ -477,8 +489,7 @@ configure_ifs() {
 	echo "    -link0            BNC"
 	echo "    link0 -link1      AUI"
 	echo "    link0 link1       UTP"
-	echo "But please keep in mind not all drivers use flags like this."
-	echo ""
+	echo "(But please keep in mind not all drivers use flags like this)."
 	echo -n "Additional link-layer arguments? [$_interface_extra] "
 	getresp "$_interface_extra"
 	if [ "X${resp}" != X"" ]; then
@@ -611,15 +622,16 @@ install_url() {
 	# Is this an ftp or http install?
 	_url_type=$1; shift
 
-	echo "\nThis is an automated ${_url_type}-based installation process.\n"\
-"You will be asked several questions and then the\n"\
-"files will be retrieved iteratively via ftp(1).\n"
+	echo
+	echo "This is an automated ${_url_type}-based installation process.  You will be asked"
+	echo "questions and then the files will be retrieved iteratively via ftp(1)."
+	echo
 	    
 	# Proxy the connections?
 	if [ "X${_proxy_host}" = X"" ]; then
 		_proxy_host=none
 	fi
-	echo -n "http/ftp proxy URL? [${_proxy_host}] "
+	echo -n "HTTP/FTP proxy URL? (if you use a proxy) [${_proxy_host}] "
 	getresp "${_proxy_host}"
 	if [ "X${resp}" = X"none" ]; then
 		unset _proxy_host ftp_proxy http_proxy
@@ -648,14 +660,14 @@ install_url() {
 	case "$resp" in
 	n*|N*) ;;
 	*)
-		ftp ${_ftp_passive} -V -a ftp://ftp.usa.openbsd.org/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist | grep "^${_url_type}:"
+		ftp ${_ftp_passive} -V -a ftp://ftp.openbsd.org/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist | grep "^${_url_type}:"
 		;;
 	esac
 
 	# Get server IP address
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		eval echo -n "Server IP? [\$_${_url_type}_server_ip]\ "
+		eval echo -n "Server IP address or hostname? [\$_${_url_type}_server_ip]\ "
 		eval getresp "\$_${_url_type}_server_ip"
 		eval _${_url_type}_server_ip=$resp
 	done
@@ -777,17 +789,16 @@ install_url() {
 		_next=""
 		for _f in $_sets $_kernel ; do
 			if isin $_f $_setsdone ; then
-				echo -n "[X] "
+				echo -n "	[X] "
 				_next=""
 			else
-				echo -n "    "
+				echo -n "	[ ] "
 				if [ -z "$_next" ]; then
 				    _next=$_f
 				fi
 			fi
 			echo $_f
 		done
-		echo ""
 
 		# Get the name of the file.
 		echo -n "File name [$_next]? "
@@ -825,10 +836,9 @@ install_url() {
 		return
 	fi
 
-	echo	""
-	echo	"Fetching files via ${_url_type} may take a long time,"
-	echo	"especially over a slow network connection."
-	echo -n	"Ready to download files? [y] "
+	echo
+	echo "Fetching files via ${_url_type} may take a long time, especially over a slow network"
+	echo -n "connection.  Ready to download files? [y] "
 	getresp "y"
 	case "$resp" in
 		y*|Y*)
@@ -875,10 +885,10 @@ install_url() {
 			_next=""
 			for _f in $_failed_files ; do
 				if isin $_f $_setsdone ; then
-					echo -n "[X] "
+					echo -n "	[X] "
 					_next=""
 				else
-					echo -n "    "
+					echo -n "	[ ] "
 					if [ -z "$_next" ]; then
 						_next=$_f
 					fi
@@ -947,10 +957,10 @@ install_from_mounted_fs() {
 		_next=""
 		for _f in $_sets $_kernel ; do
 			if isin $_f $_setsdone; then
-				echo -n "[X] "
+				echo -n "	[X] "
 				_next=""
 			else
-				echo -n "    "
+				echo -n "	[ ] "
 				if [ -z "$_next" ]; then
 					_next=$_f
 				fi
@@ -1253,7 +1263,7 @@ install_nfs() {
 	# Get the IP address of the server
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Server IP address? [${_nfs_server_ip}] "
+		echo -n "Server IP address or hostname? [${_nfs_server_ip}] "
 		getresp "${_nfs_server_ip}"
 	done
 	_nfs_server_ip=$resp

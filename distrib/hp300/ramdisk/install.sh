@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.4 1997/10/13 07:47:22 downsj Exp $
+#	$OpenBSD: install.sh,v 1.5 1997/10/20 07:06:03 downsj Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,15 +138,9 @@ if [ "`df /`" = "`df /mnt`" ]; then
 	# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
 	cat << \__get_filesystems_1
 
-You will now have the opportunity to enter filesystem information.
-You will be prompted for device name and mount point (full path,
-including the prepending '/' character).
-
-Note that these do not have to be in any particular order.  You will
-be given the opportunity to edit the resulting 'fstab' file before
-any of the filesystems are mounted.  At that time you will be able
-to resolve any filesystem order dependencies.
-
+You will now have the opportunity to enter filesystem information.  You will be
+prompted for device name and mount point (full path, including the prepending
+'/' character).  (NOTE: these do not have to be in any particular order).
 __get_filesystems_1
 
 	echo	"The following will be used for the root filesystem:"
@@ -204,8 +198,9 @@ __get_filesystems_1
 		*)
 			;;
 	esac
-	echo 	""
-	echo	 "The next step will overwrite any existing data on:"
+	echo
+	echo "============================================================"
+	echo "The next step will overwrite any existing data on:"
 	(
 		echo -n "	"
 		while read _device_name _junk; do
@@ -231,7 +226,6 @@ __get_filesystems_1
 	(
 		while read _device_name _junk; do
 			newfs /dev/r${_device_name}
-			echo ""
 		done
 	) < ${FILESYSTEMS}
 else
@@ -246,13 +240,10 @@ fi
 # root filesystem later.
 cat << \__network_config_1
 
-You will now be given the opportunity to configure the network.  This will
-be useful if you need to transfer the installation sets via FTP or NFS.
-Even if you choose not to transfer installation sets that way, this
-information will be preserved and copied into the new root filesystem.
-
-Note, enter all symbolic host names WITHOUT the domain name appended.
-I.e. use 'hostname' NOT 'hostname.domain.name'.
+You will now be given the opportunity to configure the network.  This will be
+useful if you need to transfer the installation sets via FTP, HTTP, or NFS.
+Even if you choose not to transfer installation sets that way, this information
+will be preserved and copied into the new root filesystem.
 
 __network_config_1
 echo -n	"Configure the network? [y] "
@@ -260,17 +251,22 @@ getresp "y"
 case "$resp" in
 	y*|Y*)
 		resp=""		# force at least one iteration
-		if [ -f /etc/myname ]; then
-			resp=`cat /etc/myname`
+		_nam=""
+		if [ -f /tmp/myname ]; then
+			_nam=`cat /tmp/myname`
 		fi
 		while [ "X${resp}" = X"" ]; do
-			echo -n "Enter system hostname: [$resp] "
-			getresp "$resp"
+			echo -n "Enter system hostname (short form): [$_nam] "
+			getresp "$_nam"
 		done
 		hostname $resp
 		echo $resp > /tmp/myname
 
 		resp=""		# force at least one iteration
+		if [ -f /tmp/resolv.conf ]; then
+			FQDN=`grep '^domain ' /tmp/resolv.conf | \
+			    sed -e 's/^domain //'`
+		fi
 		while [ "X${resp}" = X"" ]; do
 			echo -n "Enter DNS domain name: [$FQDN] "
 			getresp "$FQDN"
@@ -279,8 +275,12 @@ case "$resp" in
 
 		configurenetwork
 
-		echo -n "Enter IP address of default route: [none] "
-		getresp "none"
+		resp="none"
+		if [ -f /tmp/mygate ]; then
+			resp=`cat /tmp/mygate`
+		fi
+		echo -n "Enter IP address of default route: [$resp] "
+		getresp "$resp"
 		if [ "X${resp}" != X"none" ]; then
 			route delete default > /dev/null 2>&1
 			if route add default $resp > /dev/null ; then
@@ -288,8 +288,13 @@ case "$resp" in
 			fi
 		fi
 
-		echo -n	"Enter IP address of primary nameserver: [none] "
-		getresp "none"
+		resp="none"
+		if [ -f /tmp/resolv.conf ]; then
+			resp=`grep '^nameserver ' /tmp/resolv.conf | \
+			    sed -e 's/^nameserver //'`
+		fi
+		echo -n	"Enter IP address of primary nameserver: [$resp] "
+		getresp "$resp"
 		if [ "X${resp}" != X"none" ]; then
 			echo "domain $FQDN" > /tmp/resolv.conf
 			echo "nameserver $resp" >> /tmp/resolv.conf
@@ -308,40 +313,34 @@ case "$resp" in
 			esac
 		fi
 
-		echo ""
-		echo "The host table is as follows:"
-		echo ""
-		cat /tmp/hosts
-		echo ""
-		echo "You may want to edit the host table in the event that"
-		echo "you are doing an NFS installation or an FTP installation"
-		echo "without a name server and want to refer to the server by"
-		echo "name rather than by its numeric ip address."
-		echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				${EDITOR} /tmp/hosts
-				;;
-
-			*)
-				;;
-		esac
+		if [ ! -f /tmp/resolv.conf.shadow ]; then 
+			echo ""
+			echo "The host table is as follows:"
+			echo ""
+			cat /tmp/hosts
+			echo ""
+			echo "You may want to edit the host table in the event that"
+			echo "you are doing an NFS installation or an FTP installation"
+			echo "without a name server and want to refer to the server by"
+			echo "name rather than by its numeric ip address."
+			echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
+			getresp "n"
+			case "$resp" in
+				y*|Y*)
+					${EDITOR} /tmp/hosts
+					;;
+	
+				*)
+					;;
+			esac
+		fi
 
 		cat << \__network_config_2
 
-You will now be given the opportunity to escape to the command shell to
-do any additional network configuration you may need.  This may include
-adding additional routes, if needed.  In addition, you might take this
-opportunity to redo the default route in the event that it failed above.
-If you do change the default route, and wish for that change to carry over
-to the installed system, execute the following command at the shell
-prompt:
-
-	echo <ip_address_of_gateway> > /tmp/mygate
-
-where <ip_address_of_gateway> is the IP address of the default router.
-
+You will now be given the opportunity to escape to the command shell to do
+any additional network configuration you may need.  This may include adding
+additional routes, if needed.  In addition, you might take this opportunity
+to redo the default route in the event that it failed above.
 __network_config_2
 		echo -n "Escape to shell? [n] "
 		getresp "n"
@@ -372,30 +371,31 @@ if [ "`df /`" = "`df /mnt`" ]; then
 		done
 	) < ${FILESYSTEMS} > /tmp/fstab
 
-	echo	"The fstab is configured as follows:"
-	echo	""
-	cat /tmp/fstab
-	cat << \__fstab_config_1
+# XXX We no longer do the following. It is not neccessary. It can be done
+# XXX after the install is complete.
+#
+#	echo	"The fstab is configured as follows:"
+#	echo	""
+#	cat /tmp/fstab
+#	cat << \__fstab_config_1
+#
+#You may wish to edit the fstab.  You may also wish to take this opportunity to
+#place NFS mounts in the fstab  (this would be especially useful if you plan to
+#keep '/usr' on an NFS server.
+#__fstab_config_1
+#	echo -n	"Edit the fstab with ${EDITOR}? [n] "
+#	getresp "n"
+#	case "$resp" in
+#		y*|Y*)
+#			${EDITOR} /tmp/fstab
+#			;;
+#
+#		*)
+#			;;
+#	esac
+#
+#	echo ""
 
-You may wish to edit the fstab.  For example, you may need to resolve
-dependencies in the order which the filesystems are mounted.  You may
-also wish to take this opportunity to place NFS mounts in the fstab.
-This would be especially useful if you plan to keep '/usr' on an NFS
-server.
-
-__fstab_config_1
-	echo -n	"Edit the fstab with ${EDITOR}? [n] "
-	getresp "n"
-	case "$resp" in
-		y*|Y*)
-			${EDITOR} /tmp/fstab
-			;;
-
-		*)
-			;;
-	esac
-
-	echo ""
 	munge_fstab /tmp/fstab /tmp/fstab.shadow
 	mount_fs /tmp/fstab.shadow
 fi
