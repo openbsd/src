@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.11 2004/06/25 11:03:28 art Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.12 2004/07/11 01:40:08 tedu Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -217,6 +217,7 @@ sk*	at skc?					#  each port of above
 em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 #txp*	at pci? dev ? function ?		# 3com 3CR990
 #nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
+sf*	at pci? dev ? function ?		# Adaptec AIC-6915 ethernet
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 re*	at pci? dev ? function ?		# Realtek 8169/8169S/8110S
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
