@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtol.3	5.4 (Berkeley) 6/25/92
-.\"	$Id: strtol.3,v 1.1.1.1 1995/10/18 08:42:19 deraadt Exp $
+.\"	$Id: strtol.3,v 1.2 1995/12/14 02:16:48 deraadt Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOL 3
@@ -46,13 +46,13 @@
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft long
-.Fn strtol "char *nptr" "char **endptr" "int base"
+.Fn strtol "const char *nptr" "char **endptr" "int base"
 
 .Fd #include <sys/types.h>
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft quad_t
-.Fn strtoq "char *nptr" "char **endptr" "int base"
+.Fn strtoq "const char *nptr" "char **endptr" "int base"
 .Sh DESCRIPTION
 The
 .Fn strtol
