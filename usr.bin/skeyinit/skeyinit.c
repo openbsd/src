@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.32 2002/05/16 03:50:42 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.33 2002/05/16 17:54:34 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -429,6 +429,8 @@ enable_db(op)
 		/* enable */
 		if (mkdir(_PATH_SKEYDIR, 01730) != 0 && errno != EEXIST)
 			err(1, "can't mkdir %s", _PATH_SKEYDIR);
+		if (chown(_PATH_SKEYDIR, geteuid(), getegid()) != 0)
+			err(1, "can't chown %s", _PATH_SKEYDIR);
 		if (chmod(_PATH_SKEYDIR, 01730) != 0)
 			err(1, "can't chmod %s", _PATH_SKEYDIR);
 	} else {
