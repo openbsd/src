@@ -73,6 +73,16 @@ partition naming a=0, b=1...
 	ok boot disk1:b bsd     # example - scsi target 1 or
 				# second ide drive
 
+dnl Change wording if miniroot available
+During the boot, the kernel might not be able to determine by itself
+which device it has been booted from.  In this case, it will ask you
+for the root and swap devices.  Answer the device and partition you
+booted from as the root partition (likely sd0b or wd0b); you might
+want to rely on the boot messages to find the correct device name
+(see below).  When the kernel asks your for the swap device, just
+validate the suggested device name; since the installation procedure
+does not use swap, it doesn't matter.
+
 
 Installing using a diskless setup:
 
@@ -112,6 +122,10 @@ OpenBSDBootMsgs
 	it booted from.  Do not be alarmed, this is completely normal.
 	This warning occurs because while OpenBSD/MACHINE can boot from
 	the floppy drive, the kernel itself lacks a floppy driver.
+	On some machines, you might also get this kind of warning:
+	"No counter-timer -- using %tick at 179MHz as system clock."
+	Unless the frequency displayed does not match your CPU speed,
+	this is nothing to worry about.
 
 	You will next be asked for your terminal type.  If you are
 	installing from a keyboard/monitor console, the default of
