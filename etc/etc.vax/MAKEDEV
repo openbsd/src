@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 2000/11/24 19:14:03 hugh Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 2000/11/24 20:13:10 hugh Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -237,7 +237,35 @@ random|srandom|urandom|prandom|arandom)
 	chmod 644 random srandom urandom prandom arandom
 	;;
 
-hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
+vnd*)
+	umask 2
+	unit=${i#vnd}
+	if [ -z "$unit" -o 0$unit -gt 7 ]
+	then
+		echo bad disk unit: $i - $unit
+		exit 127
+	fi
+	blk=18; chr=55;
+	for name in vnd svnd; do
+		case $name in
+		vnd) off=0;;
+		svnd) off=128;;
+		esac
+		rm -f $name$unit? r$name$unit?
+		minor=$(($unit * 16 + $off))
+		for slice in a b c d e f g h i j k l m n o p
+		do
+			mknod ${name}${unit}${slice}  b $blk $minor
+			mknod r${name}${unit}${slice} c $chr $minor
+			minor=$(($minor + 1))
+		done
+		chown root.operator $name$unit? r$name$unit?
+		chmod 640 $name$unit? r$name$unit?
+	done
+	umask 77
+	;;
+
+hp*|hk*|up*|ra*|rl*|rb*|ccd*|rd*|sd*|rx*|raid*)
 	umask 2
 	case $i in
 	hp*) name=hp;	unit=${i#hp};	blk=0; chr=4;;
@@ -249,7 +277,6 @@ hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
 	rx*) name=rx;	unit=${i#rx};	blk=12; chr=30;;
 	rl*) name=rl;	unit=${i#rl};	blk=14; chr=32;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=17; chr=54;;
-	vnd*) name=vnd;	unit=${i#vnd};	blk=18; chr=55;;
 	rd*) name=rd;	unit=${i#rd};	blk=19; chr=58;;
 	sd*) name=sd;	unit=${i#sd};	blk=20; chr=59;;
 	esac
