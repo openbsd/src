@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.8 1997/04/22 23:50:05 gene Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.9 1998/04/22 19:59:49 deraadt Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.5 1997/04/21 18:04:28 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
@@ -55,6 +55,13 @@
 #else
 #include "via.h"				/* for macos based testing */
 typedef unsigned char	u_char;
+#endif
+
+
+#ifdef MRG_ADB
+int     adb_poweroff __P((void));
+int     adb_read_date_time __P((unsigned long *t));
+int     adb_set_date_time __P((unsigned long t));
 #endif
 
 /* more verbose for testing */
