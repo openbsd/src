@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.216 2003/01/20 20:42:28 millert Exp $
+#	$OpenBSD: rc,v 1.217 2003/01/20 22:42:01 jakob Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -201,6 +201,16 @@ syslogd ${syslogd_flags}
 if [ X"${pf}" != X"NO" -a X"${pflogd_flags}" != X"NO" ]; then
 	ifconfig pflog0 up
 	pflogd ${pflogd_flags}
+fi
+
+if [ -x /usr/sbin/rndc-confgen -a ! -f /etc/rndc.key ]; then
+	echo -n "rndc-confgen: generating new shared secret... "
+	if /usr/sbin/rndc-confgen -a; then
+		install -c -o root -g named -m 640 /etc/rndc.key /var/named/etc
+		echo done.
+	else
+		echo failed.
+	fi
 fi
 
 # $named_flags, $named_user, and $named_chroot are imported from /etc/rc.conf;
