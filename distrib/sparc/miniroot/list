@@ -1,3 +1,4 @@
+#	$OpenBSD: list,v 1.7 1997/04/30 18:56:03 niklas Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -14,8 +15,6 @@ SYMLINK ../../instbin		usr/bin/netstat
 SYMLINK ../../instbin		usr/bin/rsh
 SYMLINK ../../instbin		usr/bin/strings
 SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
-SYMLINK ../../instbin		usr/bin/vim
-SYMLINK usr/bin/vim		usr/bin/vi
 SYMLINK	../../instbin		usr/bin/less usr/bin/more
 SYMLINK	../../instbin		usr/sbin/installboot
 SYMLINK	../../instbin		usr/sbin/sysctl
