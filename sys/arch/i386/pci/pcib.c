@@ -80,7 +80,7 @@ pcibmatch(parent, match, aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_SIO:
 		case PCI_PRODUCT_INTEL_82371MX:
-		case PCI_PRODUCT_INTEL_82371AB:
+		case PCI_PRODUCT_INTEL_82371AB_ISA:
 			/* The above bridges mis-identify themselves */
 			return (1);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.30 1999/09/12 19:44:04 weingart Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.31 2000/03/26 22:38:32 mickey Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -59,6 +59,9 @@
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/biosvar.h>
+
+#include <i386/pci/pcibios.h>
 
 #include <dev/cons.h>
 
@@ -83,6 +86,14 @@ configure()
 {
 
 	startrtclock();
+
+#ifdef BIOS32
+	bios32_init();
+#endif
+
+#ifdef PCIBIOS
+	pcibios_init();
+#endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.65 2000/03/16 20:33:48 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.66 2000/03/26 22:38:20 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -9,6 +9,7 @@ device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
 file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_map.c		pci
+file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
 
 # Generic VGA

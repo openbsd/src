@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.62 2000/02/21 17:09:08 mickey Exp $
+#	$OpenBSD: files.i386,v 1.63 2000/03/26 22:38:32 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -84,8 +84,17 @@ file	arch/i386/i386/mainbus.c	mainbus
 
 include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
-file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pci_compat.c	pci	# XXX compatibility
+file	arch/i386/pci/pcibios.c		pcibios
+file	arch/i386/pci/pci_intr_fixup.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/piix.c		pcibios & pcibios_intr_fixup
+file	arch/i386/pci/opti82c558.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
+file	arch/i386/pci/pciide_machdep.c	pciide
+file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
 # PCI-Host bridge chipsets
 device	pchb:	pcibus
@@ -243,6 +252,8 @@ device apm
 attach apm at bios
 file	arch/i386/i386/apm.c		apm needs-count
 file	arch/i386/i386/apmcall.S	apm
+
+file	arch/i386/i386/bios32.c		bios32
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it

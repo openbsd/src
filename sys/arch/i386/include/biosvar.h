@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.34 2000/03/05 19:07:43 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.35 2000/03/26 22:38:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -59,6 +59,25 @@
 #define	BIOS_MAP_RES	0x02	/* Reserved memory */
 #define	BIOS_MAP_ACPI	0x03	/* ACPI Reclaim memory */
 #define	BIOS_MAP_NVS	0x04	/* ACPI NVS memory */
+
+/*
+ * BIOS32
+ */
+typedef
+struct bios32_entry_info {
+	paddr_t	bei_base;
+	psize_t	bei_size;
+	paddr_t	bei_entry;
+} *bios32_entry_info_t;
+
+typedef
+struct bios32_entry {
+	caddr_t	offset;
+	u_int16_t segment;
+} __attribute__((__packed__)) *bios32_entry_t;
+
+#define	BIOS32_MAKESIG(a, b, c, d) \
+	((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
 
 /*
  * CTL_BIOS definitions.
@@ -191,6 +210,10 @@ void bioscnputc __P((dev_t, int));
 int bioscngetc __P((dev_t));
 void bioscnpollc __P((dev_t, int));
 void bios_getopt __P((void));
+
+/* bios32.c */
+void bios32_init __P((void));
+int  bios32_service __P((u_int32_t, bios32_entry_t, bios32_entry_info_t));
 
 extern u_int bootapiver;
 extern bios_memmap_t *bios_memmap;

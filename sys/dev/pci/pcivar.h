@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.16 1999/07/18 03:20:18 csapuntz Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.17 2000/03/26 22:38:22 mickey Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -134,6 +134,16 @@ struct pci_attach_args {
 #define	PCI_FLAGS_MEM_ENABLED	0x02		/* memory space is enabled */
 
 /*
+ *
+ */
+struct pci_quirkdata {
+	pci_vendor_id_t		vendor;		/* Vendor ID */
+	pci_product_id_t	product;	/* Product ID */
+	int			quirks;		/* quirks; see below */
+};
+#define	PCI_QUIRK_MULTIFUNCTION		0x00000001
+
+/*
  * Locators devices that attach to 'pcibus', as specified to config.
  */
 #define	pcibuscf_bus		cf_loc[0]
@@ -176,5 +186,6 @@ int pci_get_capability __P((pci_chipset_tag_t, pcitag_t, int,
  */
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 void	set_pci_isa_bridge_callback __P((void (*)(void *), void *));
-
+const struct pci_quirkdata *
+	pci_lookup_quirkdata __P((pci_vendor_id_t, pci_product_id_t));
 #endif /* _DEV_PCI_PCIVAR_H_ */
