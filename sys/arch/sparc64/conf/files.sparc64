@@ -112,3 +112,10 @@ file	arch/sparc64/sparc64/db_trace.c	ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
 
 file	arch/sparc64/dev/md_root.c	memory_disk_hooks
+
+include "../../../scsi/files.scsi"
+major { sd = 7 }
+major { vnd = 8 }
+major { cd = 18 }
+major { rd = 5 }
+
