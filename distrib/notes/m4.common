@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.18 2001/10/02 00:36:39 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.19 2001/10/02 20:08:46 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -202,11 +202,14 @@ dnl
 dnl
 dnl  Various Install Instructions
 dnl
-define({:-OpenBSDInstallPrelude-:},
+define({:-OpenBSDInstallShortPrelude-:},
 {:-Installing OpenBSD is a relatively complex process, but if you have
 this document in hand and are careful to read and remember the
 information which is presented to you by the install program, it
-shouldn't be too much trouble.
+shouldn't be too much trouble.-:})dnl
+dnl
+define({:-OpenBSDInstallPrelude-:},
+{:-OpenBSDInstallShortPrelude
 
 Before you begin, you should know the geometry of your hard disk, i.e.
 the sector size (note that sector sizes other than 512 bytes are not

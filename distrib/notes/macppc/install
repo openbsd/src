@@ -1,7 +1,4 @@
-Installing OpenBSD is a relatively complex process, but if you have
-this document in hand and are careful to read and remember the
-information which is presented to you by the install program, it
-shouldn't be too much trouble.
+OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
 on the whole disk or share the disk with MacOS.
