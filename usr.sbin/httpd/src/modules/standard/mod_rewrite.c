@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.21 2004/05/16 18:36:02 otto Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.22 2004/09/08 16:12:30 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3080,16 +3080,17 @@ static char *lookup_map_dbmfile(request_rec *r, char *file, char *key)
     datum dbmval;
     char *value = NULL;
     char buf[MAX_STRING_LEN];
+    size_t len;
 
     dbmkey.dptr  = key;
     dbmkey.dsize = strlen(key);
     if ((dbmfp = dbm_open(file, O_RDONLY, 0666)) != NULL) {
         dbmval = dbm_fetch(dbmfp, dbmkey);
         if (dbmval.dptr != NULL) {
-            memcpy(buf, dbmval.dptr, 
-                   dbmval.dsize < sizeof(buf)-1 ? 
-                   dbmval.dsize : sizeof(buf)-1  );
-            buf[dbmval.dsize] = '\0';
+            len = dbmval.dsize < sizeof(buf)-1 ? 
+                  dbmval.dsize : sizeof(buf)-1;
+            memcpy(buf, dbmval.dptr, len);
+            buf[len] = '\0';
             value = ap_pstrdup(r->pool, buf);
         }
         dbm_close(dbmfp);
