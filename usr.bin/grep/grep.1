@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grep.1,v 1.11 2003/06/23 02:02:41 tedu Exp $
+.\"	$OpenBSD: grep.1,v 1.12 2003/06/23 18:14:33 tedu Exp $
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -38,6 +38,8 @@
 .Nm grep
 .Op Fl AB Ar num
 .Op Fl CEFGHILPRSUVZabchilnoqsvwx
+.Op Fl -context Ns Op = Ns Ar num
+.Op Fl -binary-files Ns = Ns Ar value
 .Op Fl e Ar pattern
 .Op Fl f Ar file
 .Op Ar
@@ -211,6 +213,25 @@ and `\e>', see
 .It Fl x
 Only input lines selected against an entire fixed string or regular
 expression are considered to be matching lines.
+.Sm off
+.It Fl Fl context Op = Ar num
+.Sm on
+Print
+.Ar num
+lines of leading and trailing context.
+Default is 2.
+.Sm off
+.It Fl Fl binary-files No = Ar value
+.Sm on
+Controls searching and printing of binary files.
+Options are
+.Ar binary ,
+the default, search binary files but do not print them;
+.Ar without-match ,
+do not search binary files;
+and
+.Ar text ,
+treat all files as text.
 .Pp
 .El
 If no file arguments are specified, the standard input is used.
