@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.39 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.40 2002/08/11 02:20:24 provos Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -644,12 +644,9 @@ int	selwait, nselcoll;
  * Select system call.
  */
 int
-sys_select(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+sys_select(struct proc *p, void *v, register_t *retval)
 {
-	register struct sys_select_args /* {
+	struct sys_select_args /* {
 		syscallarg(int) nd;
 		syscallarg(fd_set *) in;
 		syscallarg(fd_set *) ou;
@@ -659,14 +656,15 @@ sys_select(p, v, retval)
 	fd_set bits[6], *pibits[3], *pobits[3];
 	struct timeval atv;
 	int s, ncoll, error = 0, timo;
-	u_int ni;
+	u_int nd, ni;
 
-	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
+	nd = SCARG(uap, nd);
+	if (nd > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
-		SCARG(uap, nd) = p->p_fd->fd_nfiles;
+		nd = p->p_fd->fd_nfiles;
 	}
-	ni = howmany(SCARG(uap, nd), NFDBITS) * sizeof(fd_mask);
-	if (SCARG(uap, nd) > FD_SETSIZE) {
+	ni = howmany(nd, NFDBITS) * sizeof(fd_mask);
+	if (nd > FD_SETSIZE) {
 		caddr_t mbits;
 
 		mbits = malloc(ni * 6, M_TEMP, M_WAITOK);
@@ -713,7 +711,7 @@ sys_select(p, v, retval)
 retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
-	error = selscan(p, pibits[0], pobits[0], SCARG(uap, nd), retval);
+	error = selscan(p, pibits[0], pobits[0], nd, retval);
 	if (error || *retval)
 		goto done;
 	if (SCARG(uap, tv)) {
@@ -919,10 +917,7 @@ pollscan(p, pl, nfd, retval)
  * differently.
  */
 int
-sys_poll(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
+sys_poll(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_poll_args *uap = v;
 	size_t sz;
@@ -931,13 +926,13 @@ sys_poll(p, v, retval)
 	struct timeval atv;
 	int timo, ncoll, i, s, error, error2;
 	extern int nselcoll, selwait;
+	u_int nfds = SCARG(uap, nfds);
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
-	if (SCARG(uap, nfds) > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, 
-	    maxfiles))
+	if (nfds > min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles))
 		return (EINVAL);
 
-	sz = sizeof(struct pollfd) * SCARG(uap, nfds);
+	sz = sizeof(struct pollfd) * nfds;
 	
 	/* optimize for the default case, of a small nfds value */
 	if (sz > sizeof(pfds))
@@ -946,7 +941,7 @@ sys_poll(p, v, retval)
 	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
 		goto bad;
 
-	for (i = 0; i < SCARG(uap, nfds); i++)
+	for (i = 0; i < nfds; i++)
 		pl[i].revents = 0;
 
 	if (msec != -1) {
@@ -966,7 +961,7 @@ sys_poll(p, v, retval)
 retry:
 	ncoll = nselcoll;
 	p->p_flag |= P_SELECT;
-	pollscan(p, pl, SCARG(uap, nfds), retval);
+	pollscan(p, pl, nfds, retval);
 	if (*retval)
 		goto done;
 	if (msec != -1) {
