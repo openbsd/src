@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.30 2003/01/31 21:54:40 jmc Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.31 2003/02/26 15:05:07 david Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -200,7 +200,8 @@ statefully:
 .Pp
 Alternatively, rules can make use of the fact that by default,
 .Nm ftp-proxy
-runs as user "proxy" to allow the backchannel connections, as in the following example:
+runs as user "proxy" to allow the backchannel connections, as in the
+following example:
 .Bd -literal
   block in on $ext_if proto tcp all
   pass  in on $ext_if inet proto tcp from any to $ext_if \\
@@ -208,8 +209,9 @@ runs as user "proxy" to allow the backchannel connections, as in the following e
 .Ed
 .Pp
 These examples do not cover the connections from the proxy to the
-foreign ftp server. If one does not pass outgoing connections by default
-additional rules are needed.
+foreign ftp server.
+If one does not pass outgoing connections by default additional rules
+are needed.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pf 4 ,

@@ -203,11 +203,13 @@ This option is only enabled when
 is compiled for
 .Dv UNICOS .
 It specifies an inclusive range of pseudo-terminal devices to
-use.  If the system has sysconf variable
+use.
+If the system has sysconf variable
 .Dv _SC_CRAY_NPTY
 configured, the default pty search range is 0 to
 .Dv _SC_CRAY_NPTY ;
-otherwise, the default range is 0 to 128.  Either
+otherwise, the default range is 0 to 128.
+Either
 .Ar lowpty
 or
 .Ar highpty

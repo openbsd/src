@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.40 2003/02/15 11:45:53 deraadt Exp $
+.\"	$OpenBSD: ssl.8,v 1.41 2003/02/26 15:05:07 david Exp $
 .\" 
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -96,9 +96,9 @@ directory.
 Private keys can be encrypted using
 .Ar 3DES
 and a passphrase to protect their integrity should the encrypted file
-be disclosed. However, it is
-important to note that encrypted server keys mean that the passphrase
-needs to be typed in every time the server is started.
+be disclosed.
+However, it is important to note that encrypted server keys mean that the
+passphrase needs to be typed in every time the server is started.
 If a passphrase is not used, you will need to be absolutely sure your
 key file is kept secure.
 .Sh GENERATING DSA SERVER CERTIFICATES

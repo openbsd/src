@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.13 2002/09/30 23:30:47 frantzen Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.14 2003/02/26 15:05:07 david Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -180,9 +180,9 @@ Contains no data.
 Used to mark fragmented packets cached by the packet filter
 .Xr pf 4 .
 Packets with this tag have been cached by the fragment cache already
-and will short circuit it if processed again.  If they were to re-enter
-the fragcache, they would be indistinguishable from a duplicate of a
-previous packet and would be dropped.
+and will short circuit it if processed again.
+If they were to re-enter the fragcache, they would be indistinguishable
+from a duplicate of a previous packet and would be dropped.
 Contains no data.
 .El
 .Pp

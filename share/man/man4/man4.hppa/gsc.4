@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.9 2003/01/31 23:03:12 miod Exp $
+.\"	$OpenBSD: gsc.4,v 1.10 2003/02/26 15:05:07 david Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -40,16 +40,16 @@
 .Cd "gsc* at asp?"
 .Cd "gsc* at wax?"
 .Sh DESCRIPTION
-This is core I/O bus for all HP9000/700 series workstations. All I/O subsystems
-connect to this bus.
+This is core I/O bus for all HP9000/700 series workstations.
+All I/O subsystems connect to this bus.
 The devices can be either on seperate chips, expansion
 cards or on an integrated megacell, like the LASI MBA.
 .Pp
 The
 .Tn GSC
-bus is a 32-bit wide, address and data multiplexed bus. In its "standard"
-implementation it has a maximum throughput of 160MB/s, the "2x" implementation
-reaches up to 250MB/s.
+bus is a 32-bit wide, address and data multiplexed bus.
+In its "standard" implementation it has a maximum throughput of 160MB/s,
+the "2x" implementation reaches up to 250MB/s.
 Some HPPA CPUs directly attach to this bus, namely the PA7100LC and PA7300LC.
 .Pp
 As for the expansion cards, there appeared different form-factors, depending on

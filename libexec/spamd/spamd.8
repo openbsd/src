@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.10 2003/02/13 08:23:39 jmc Exp $
+.\"	$OpenBSD: spamd.8,v 1.11 2003/02/26 15:05:07 david Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -59,8 +59,8 @@ does not
 .Xr fork 2
 into the background.
 .It Fl r
-The SMTP error to return to the spammer, ie 450, 451, 550.  This defaults
-to 450.
+The SMTP error to return to the spammer, i.e., 450, 451, 550.
+This defaults to 450.
 .It Fl c
 The maximum number of concurrent connections to allow.
 .It Fl p
@@ -73,9 +73,11 @@ The SMTP version banner that is reported upon initial connection.
 .Pp
 .Nm
 is designed to be very efficient so that it does not slow down the
-receiving machine.  SPAM is never accepted, but always rejected with
-either a 450 or 550 error message.  The normal way that SPAM has been
-dealt with in the past is to either accept and drop, or outright block.
+receiving machine.
+SPAM is never accepted, but always rejected with either a 450 or 550
+error message.
+The normal way that SPAM has been dealt with in the past is to either
+accept and drop, or outright block.
 When configured to use 450 responses,
 .Nm
 takes neither of these actions: it rejects the mail back to the senders'

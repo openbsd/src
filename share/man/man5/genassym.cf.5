@@ -1,4 +1,4 @@
-.\"	$OpenBSD: genassym.cf.5,v 1.3 2003/01/18 23:40:58 deraadt Exp $
+.\"	$OpenBSD: genassym.cf.5,v 1.4 2003/02/26 15:05:07 david Exp $
 .\"	$NetBSD: genassym.cf.5,v 1.8 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Matthias Pfaller.
@@ -115,10 +115,10 @@ can be used to customize the output of
 .Xr genassym.sh 8 .
 .br
 When producing C output, values are cast to <ctype> (default: long)
-before they get handed to printf. <gcc constraint> (default: n) is the
-constraint used in the __asm__ statements. <asm print modifier> (default:
-empty) can be used to force gcc to output operands in different ways
-than normal.
+before they get handed to printf.
+<gcc constraint> (default: n) is the constraint used in the __asm__ statements.
+<asm print modifier> (default: empty) can be used to force gcc to output
+operands in different ways than normal.
 The "a" modifier e.g. stops gcc from emitting immediate
 prefixes in front of constants for the i386 and m68k port.
 .Sh FILES
