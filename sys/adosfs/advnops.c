@@ -1,5 +1,5 @@
-/*	$OpenBSD: advnops.c,v 1.4 1996/04/21 22:14:40 deraadt Exp $	*/
-/*	$NetBSD: advnops.c,v 1.22 1995/08/18 15:14:38 chopps Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.5 1996/05/02 13:05:18 deraadt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.28 1996/04/23 05:18:32 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -312,14 +312,14 @@ adosfs_read(v)
 				error = EIO; /* OFS needs the complete block */
 			else if (adoswordn(bp, 0) != BPT_DATA) {
 #ifdef DIAGNOSTIC
-				printf("adosfs: bad primary type blk %d\n",
+				printf("adosfs: bad primary type blk %ld\n",
 				       bp->b_blkno / amp->secsperblk);
 #endif
 				error=EINVAL;
 			}
 			else if ( adoscksum(bp, ap->nwords)) {
 #ifdef DIAGNOSTIC
-				printf("adosfs: blk %d failed cksum.\n",
+				printf("adosfs: blk %ld failed cksum.\n",
 				       bp->b_blkno / amp->secsperblk);
 #endif
 				error=EINVAL;
@@ -654,7 +654,7 @@ adosfs_bmap(v)
 			goto reterr;
 		if (adoscksum(flbp, ap->nwords)) {
 #ifdef DIAGNOSTIC
-			printf("adosfs: blk %d failed cksum.\n", nb);
+			printf("adosfs: blk %ld failed cksum.\n", nb);
 #endif
 			brelse(flbp);
 			error = EINVAL;
@@ -680,7 +680,7 @@ adosfs_bmap(v)
 		*bnp = adoswordn(flbp, flblkoff) * ap->amp->secsperblk;
 	} else {
 #ifdef DIAGNOSTIC
-		printf("flblk offset %d too large in lblk %d blk %d\n", 
+		printf("flblk offset %ld too large in lblk %ld blk %d\n", 
 		    flblkoff, bn / ap->amp->secsperblk , flbp->b_blkno);
 #endif
 		error = EINVAL;
