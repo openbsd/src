@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.11 2005/03/04 18:21:00 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.12 2005/03/05 03:30:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,6 +41,12 @@
 #define RCS_FILE_EXT   ",v"
 
 #define RCS_HEAD_INIT  "1.1"
+
+
+/* lock types */
+#define RCS_LOCK_LOOSE    0
+#define RCS_LOCK_STRICT   1
+
 
 /* RCS keyword expansion modes (kflags) */
 #define RCS_KWEXP_NONE     0x00
@@ -160,6 +166,8 @@ int         rcs_access_check  (RCSFILE *, const char *);
 int         rcs_sym_add       (RCSFILE *, const char *, RCSNUM *);
 int         rcs_sym_remove    (RCSFILE *, const char *);
 RCSNUM*     rcs_sym_getrev    (RCSFILE *, const char *);
+int         rcs_lock_getmode  (RCSFILE *);
+int         rcs_lock_setmode  (RCSFILE *, int);
 BUF*        rcs_getrev        (RCSFILE *, RCSNUM *);
 BUF*        rcs_gethead       (RCSFILE *);
 RCSNUM*     rcs_getrevbydate  (RCSFILE *, struct tm *);

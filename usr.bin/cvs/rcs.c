@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.29 2005/03/04 18:21:00 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.30 2005/03/05 03:30:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -592,6 +592,44 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 	}
 
 	return (num);
+}
+
+
+/*
+ * rcs_lock_getmode()
+ *
+ * Retrieve the locking mode of the RCS file <file>.
+ */
+int
+rcs_lock_getmode(RCSFILE *file)
+{
+	return (file->rf_flags & RCS_SLOCK) ? RCS_LOCK_STRICT : RCS_LOCK_LOOSE;
+}
+
+
+/*
+ * rcs_lock_setmode()
+ *
+ * Set the locking mode of the RCS file <file> to <mode>, which must either
+ * be RCS_LOCK_LOOSE or RCS_LOCK_STRICT.
+ * Returns the previous mode on success, or -1 on failure.
+ */
+int
+rcs_lock_setmode(RCSFILE *file, int mode)
+{
+	int pmode;
+	pmode = rcs_lock_getmode(file);
+
+	if (mode == RCS_LOCK_STRICT)
+		file->rf_flags |= RCS_SLOCK;
+	else if (mode == RCS_LOCK_LOOSE)
+		file->rf_flags &= ~RCS_SLOCK;
+	else {
+		cvs_log(LP_ERRNO, "invalid lock mode %d", mode);
+		return (-1);
+	}
+
+	return (pmode);
 }
 
 
