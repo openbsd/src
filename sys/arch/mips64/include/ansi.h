@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.3 2004/08/30 16:31:51 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,15 +48,21 @@
  *	#endif
  */
 #define	_BSD_CLOCK_T_	int			/* clock() */
-#define	_BSD_PTRDIFF_T_	long			/* ptr1 - ptr2 */
 #if defined(_LP64)
+#define	_BSD_PTRDIFF_T_	long			/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_	unsigned long		/* sizeof() */
-#else
-#define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
-#endif
 #define	_BSD_SSIZE_T_	long			/* byte count or error */
+#else
+#define	_BSD_PTRDIFF_T_	int			/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_	unsigned int		/* sizeof() */
+#define	_BSD_SSIZE_T_	int			/* byte count or error */
+#endif
 #define	_BSD_TIME_T_	int			/* time() */
+#if defined(__GNUC__) && __GNUC__ >= 3
+#define _BSD_VA_LIST_   __builtin_va_list
+#else
 #define	_BSD_VA_LIST_	char *			/* va_list */
+#endif
 #define	_BSD_CLOCKID_T_	int
 #define	_BSD_TIMER_T_	int
 
