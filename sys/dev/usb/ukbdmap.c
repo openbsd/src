@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.7 2001/05/03 02:20:33 aaron Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.8 2002/03/12 15:16:33 mickey Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.6 2001/04/04 05:31:57 toshii Exp $	*/
 
 /*
@@ -389,6 +389,49 @@ Static const keysym_t ukbd_keydesc_es[] = {
     KC(230), KS_Mode_switch,	KS_Multi_key,
 };
 
+Static const keysym_t ukbd_keydesc_sg[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(30),  KS_1,		KS_plus,	KS_bar,
+    KC(31),  KS_2,		KS_quotedbl,	KS_at,
+    KC(32),  KS_3,		KS_asterisk,	KS_numbersign,
+    KC(33),  KS_4,		KS_ccedilla,
+    KC(35),  KS_6,		KS_ampersand,	KS_notsign,
+    KC(36),  KS_7,		KS_slash,	KS_brokenbar,
+    KC(37),  KS_8,		KS_parenleft,	KS_cent,
+    KC(38),  KS_9,		KS_parenright,
+    KC(39),  KS_0,		KS_equal,
+    KC(45),  KS_apostrophe,	KS_question,	KS_dead_acute,
+    KC(46),  KS_dead_circumflex,KS_dead_grave,	KS_dead_tilde,
+    KC(8),   KS_e,		KS_E,		KS_currency,
+    KC(28),  KS_z,
+    KC(47),  KS_udiaeresis,	KS_egrave,	KS_bracketleft,
+    KC(48),  KS_dead_diaeresis,	KS_exclam,	KS_bracketright,
+    KC(51),  KS_odiaeresis,	KS_eacute,
+    KC(52),  KS_adiaeresis,	KS_agrave,	KS_braceleft,
+    KC(53),  KS_section,	KS_degree,	KS_dead_abovering,
+    KC(50),  KS_dollar,		KS_sterling,	KS_braceright,
+    KC(29),  KS_y,
+    KC(54),  KS_comma,		KS_semicolon,
+    KC(55),  KS_period,		KS_colon,
+    KC(56),  KS_minus,		KS_underscore,
+    KC(100), KS_less,		KS_greater,	KS_backslash,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
+Static const keysym_t ukbd_keydesc_sg_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(45),  KS_apostrophe,	KS_question,	KS_acute,
+    KC(46),  KS_asciicircum,	KS_grave,	KS_asciitilde,
+    KC(48),  KS_diaeresis,	KS_exclam,	KS_bracketright
+};
+
+Static const keysym_t ukbd_keydesc_sf[] = {
+/*  pos      normal            shifted         altgr           shift-altgr */
+    KC(47),  KS_egrave,        KS_udiaeresis,  KS_bracketleft,
+    KC(51),  KS_eacute,        KS_odiaeresis,
+    KC(52),  KS_agrave,        KS_adiaeresis,  KS_braceleft
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -410,6 +453,10 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_NO,			KB_DK,	ukbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	ukbd_keydesc_no_nodead),
 	KBD_MAP(KB_ES ,			KB_US,	ukbd_keydesc_es),
+	KBD_MAP(KB_SG,			KB_US,	ukbd_keydesc_sg),
+	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	ukbd_keydesc_sg_nodead),
+	KBD_MAP(KB_SF,			KB_SG,	ukbd_keydesc_sf),
+	KBD_MAP(KB_SF | KB_NODEAD,	KB_SF,	ukbd_keydesc_sg_nodead),
 	{0, 0, 0, 0}
 };
 
