@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 2001/12/06 04:23:51 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 2002/01/22 21:47:38 ericj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.16 1996/11/13 21:13:04 cgd Exp $	*/
 
 /*
@@ -142,13 +142,11 @@ struct nam2blk {
 } nam2blk[] = {
 	{ "st",		2 },
 	{ "cd",		3 },
+	{ "fd",		4 },
 	{ "rd",		6 },
 	{ "sd",		8 },
 	{ "wd",		0 },
 	{ "raid",	16 },
-#if 0
-	{ "fd",		XXX },
-#endif
 };
 
 #ifdef RAMDISK_HOOKS
@@ -625,7 +623,6 @@ device_register(dev, aux)
 		/*
 		 * There is no hope.
 		 */
-
 		return;
 	}
 
