@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.51 1997/02/27 14:05:52 briggs Exp $
+#	$OpenBSD: files,v 1.52 1997/03/23 11:02:58 pefo Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -53,7 +53,7 @@ file	dev/ic/am7990.c		le
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
-file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica) needs-flag
+file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica | com_algor) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 device	cy: tty
@@ -61,7 +61,7 @@ file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
 
 # PC parallel ports (XXX what chip?)
 device	lpt
-file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica) needs-flag
+file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor) needs-flag
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
