@@ -1,11 +1,9 @@
 /* zutil.c -- target dependent utility functions for the compression library
- * Copyright (C) 1995-1996 Jean-loup Gailly.
+ * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* $Id: zutil.c,v 1.2 1997/01/19 17:11:26 millert Exp $ */
-
-#include <stdio.h>
+/* @(#) $Id: zutil.c,v 1.3 1998/08/08 20:57:33 millert Exp $ */
 
 #include "zutil.h"
 
@@ -28,12 +26,18 @@ const char *z_errmsg[10] = {
 ""};
 
 
-const char *zlibVersion()
+const char * ZEXPORT zlibVersion()
 {
     return ZLIB_VERSION;
 }
 
 #ifdef DEBUG
+
+#  ifndef verbose
+#    define verbose 0
+#  endif
+int z_verbose = verbose;
+
 void z_error (m)
     char *m;
 {
@@ -42,11 +46,21 @@ void z_error (m)
 }
 #endif
 
+/* exported to allow conversion of error code to string for compress() and
+ * uncompress()
+ */
+const char * ZEXPORT zError(err)
+    int err;
+{
+    return ERR_MSG(err);
+}
+
+
 #ifndef HAVE_MEMCPY
 
 void zmemcpy(dest, source, len)
     Bytef* dest;
-    Bytef* source;
+    const Bytef* source;
     uInt  len;
 {
     if (len == 0) return;
@@ -56,8 +70,8 @@ void zmemcpy(dest, source, len)
 }
 
 int zmemcmp(s1, s2, len)
-    Bytef* s1;
-    Bytef* s2;
+    const Bytef* s1;
+    const Bytef* s2;
     uInt  len;
 {
     uInt j;
@@ -164,7 +178,7 @@ void  zcfree (voidpf opaque, voidpf ptr)
 
 #  define MY_ZCALLOC
 
-#if (!defined(_MSC_VER) || (_MSC_VER < 600))
+#if (!defined(_MSC_VER) || (_MSC_VER <= 600))
 #  define _halloc  halloc
 #  define _hfree   hfree
 #endif

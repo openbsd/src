@@ -1,2 +1,2 @@
 major=1
-minor=2
+minor=3
