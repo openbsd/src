@@ -93,7 +93,7 @@ namespace std
   abs(long double __x)
   { return __builtin_fabsl(__x); }
 
-#if _GLIBCPP_HAVE_MODFF
+#if defined(_GLIBCPP_HAVE_MODFF)
   inline float 
   modf(float __x, float* __iptr) { return modff(__x, __iptr); }
 #else
@@ -107,7 +107,7 @@ namespace std
   }
 #endif
 
-#if _GLIBCPP_HAVE_MODFL
+#if defined(_GLIBCPP_HAVE_MODFL)
   inline long double 
   modf(long double __x, long double* __iptr) { return modfl(__x, __iptr); }
 #else

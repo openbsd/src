@@ -294,7 +294,7 @@ void test02()
 
 int main ()
 {
-#if _GLIBCPP_USE___ENC_TRAITS
+#if defined(_GLIBCPP_USE___ENC_TRAITS)
   test01();
   test02();
 #endif 

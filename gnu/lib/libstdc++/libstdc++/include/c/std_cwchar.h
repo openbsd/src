@@ -40,7 +40,7 @@
 #include <cstddef>
 #include <ctime>
 
-#if _GLIBCPP_HAVE_WCHAR_H
+#if defined(_GLIBCPP_HAVE_WCHAR_H)
 #include_next <wchar.h>
 #endif
 

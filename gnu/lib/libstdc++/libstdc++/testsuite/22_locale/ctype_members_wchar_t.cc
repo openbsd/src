@@ -32,7 +32,7 @@
 #include <locale>
 #include <testsuite_hooks.h>
 
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
 void test01()
 {
   // Nothing, right now.  
@@ -41,7 +41,7 @@ void test01()
 
 int main() 
 {
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
   test01();
 #endif 
 

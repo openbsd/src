@@ -38,7 +38,7 @@
 
 #include <bits/c++config.h>
 
-#if _GLIBCPP_HAVE_WCTYPE_H
+#if defined(_GLIBCPP_HAVE_WCTYPE_H)
 #include_next <wctype.h>
 #endif
 

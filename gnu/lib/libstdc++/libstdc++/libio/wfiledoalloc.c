@@ -92,7 +92,7 @@ _IO_wfile_doallocate (fp)
   else
     {
       couldbetty = S_ISCHR (st.st_mode);
-#if _IO_HAVE_ST_BLKSIZE
+#if defined(_IO_HAVE_ST_BLKSIZE)
       size = st.st_blksize <= 0 ? _IO_BUFSIZ : st.st_blksize;
 #else
       size = _IO_BUFSIZ;

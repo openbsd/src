@@ -41,7 +41,7 @@ namespace std
 // for fpos.h
   typedef long  	streamoff;
   typedef ptrdiff_t	streamsize; // Signed integral type
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
   typedef ptrdiff_t	wstreamsize;
 #endif
   typedef fpos_t  	__c_streampos;

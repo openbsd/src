@@ -207,7 +207,7 @@ namespace std
   // Inhibit implicit instantiations for required instantiations,
   // which are defined via explicit instantiations elsewhere.  
   // NB:  This syntax is a GNU extension.
-#if _GLIBCPP_EXTERN_TEMPLATE
+#if defined(_GLIBCPP_EXTERN_TEMPLATE)
   extern template class basic_ios<char>;
 
 #ifdef _GLIBCPP_USE_WCHAR_T

@@ -129,7 +129,7 @@ namespace std
 #undef wprintf
 #undef wscanf
 
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
 namespace std
 {
   using ::wint_t;
@@ -217,7 +217,7 @@ namespace std
   { return wmemchr(const_cast<const wchar_t*>(__p), __c, __n); }
 }
 
-#if _GLIBCPP_USE_C99
+#if defined(_GLIBCPP_USE_C99)
 
 #undef wcstold
 #undef wcstoll
@@ -225,20 +225,20 @@ namespace std
 
 namespace __gnu_cxx
 {
-#if _GLIBCPP_USE_C99_CHECK || _GLIBCPP_USE_C99_DYNAMIC
+#if defined(_GLIBCPP_USE_C99_CHECK) || defined(_GLIBCPP_USE_C99_DYNAMIC)
   extern "C" long double
     (wcstold)(const wchar_t * restrict, wchar_t ** restrict);
 #endif
-#if !_GLIBCPP_USE_C99_DYNAMIC
+#if !defined(_GLIBCPP_USE_C99_DYNAMIC)
   using ::wcstold;
 #endif
-#if _GLIBCPP_USE_C99_LONG_LONG_CHECK || _GLIBCPP_USE_C99_LONG_LONG_DYNAMIC
+#if defined(_GLIBCPP_USE_C99_LONG_LONG_CHECK) || defined(_GLIBCPP_USE_C99_LONG_LONG_DYNAMIC)
   extern "C" long long int
     (wcstoll)(const wchar_t * restrict, wchar_t ** restrict, int);
   extern "C" unsigned long long int
     (wcstoull)(const wchar_t * restrict, wchar_t ** restrict, int);
 #endif
-#if !_GLIBCPP_USE_C99_LONG_LONG_DYNAMIC
+#if !defined(_GLIBCPP_USE_C99_LONG_LONG_DYNAMIC)
   using ::wcstoll;
   using ::wcstoull;
 #endif

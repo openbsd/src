@@ -107,7 +107,7 @@ int test01(void)
   return test;
 }
 
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
 int test02(void)
 {
   bool test = true;
@@ -197,7 +197,7 @@ int test02(void)
 int main()
 { 
   test01();
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
   test02();
 #endif
   return 0;

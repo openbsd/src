@@ -54,7 +54,7 @@ struct _TestCase
   bool right;
 
   const char* result;
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
   const wchar_t* wresult;
 #endif
 };
@@ -64,7 +64,7 @@ static bool F=false;
 
 static _TestCase testcases[] =
 {
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
   // standard output (no formatting applied) 1-4
   { 1.2, 6,0,'.',' ', F,F,F,F,F,F,F,F, "1.2",L"1.2" },
   { 54, 6,0,'.',' ', F,F,F,F,F,F,F,F, "54",L"54" },
@@ -226,7 +226,7 @@ test01()
 #endif
         VERIFY( os && os.str() == tc.result );
       }
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
       // test double with wchar_t type
       {
         testpunct<wchar_t>* __tp = new testpunct<wchar_t>(tc.decimal);

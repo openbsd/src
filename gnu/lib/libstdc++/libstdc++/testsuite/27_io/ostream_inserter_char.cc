@@ -253,7 +253,7 @@ protected:
 // [lib.ostream.inserters.character]
 void test07()
 {
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
   using namespace std;
   bool test = true;
 
@@ -304,7 +304,7 @@ void test08()
   oss << "";
   VERIFY( oss.good() );
 
-#if _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T)
   // 2
   std::wostringstream woss;
   woss << pt;
