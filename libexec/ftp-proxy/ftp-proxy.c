@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.40 2005/02/24 15:49:08 dhartmei Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.41 2005/03/05 23:11:19 cloder Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -317,7 +317,7 @@ show_xfer_stats(void)
 	char tbuf[1000];
 	double delta;
 	size_t len;
-	int i;
+	int i = -1;
 
 	if (!Verbose)
 		return;
@@ -344,21 +344,21 @@ show_xfer_stats(void)
 			    "data transfer complete (%dh %dm %ds",
 			    idelta / (60*60), (idelta % (60*60)) / 60,
 			    idelta % 60);
-			if (i >= len)
+			if (i == -1 || i >= len)
 				goto logit;
 			len -= i;
 		} else {
 			i = snprintf(tbuf, len,
 			    "data transfer complete (%dm %ds", idelta / 60,
 			    idelta % 60);
-			if (i >= len)
+			if (i == -1 || i >= len)
 				goto logit;
 			len -= i;
 		}
 	} else {
 		i = snprintf(tbuf, len, "data transfer complete (%.1fs",
 		    delta);
-		if (i >= len)
+		if (i == -1 || i >= len)
 			goto logit;
 		len -= i;
 	}
@@ -367,7 +367,7 @@ show_xfer_stats(void)
 		i = snprintf(&tbuf[strlen(tbuf)], len,
 		    ", %d bytes to server) (%.1fKB/s", client_data_bytes,
 		    (client_data_bytes / delta) / (double)1024);
-		if (i >= len)
+		if (i == -1 || i >= len)
 			goto logit;
 		len -= i;
 	}
@@ -375,13 +375,14 @@ show_xfer_stats(void)
 		i = snprintf(&tbuf[strlen(tbuf)], len,
 		    ", %d bytes to client) (%.1fKB/s", server_data_bytes,
 		    (server_data_bytes / delta) / (double)1024);
-		if (i >= len)
+		if (i == -1 || i >= len)
 			goto logit;
 		len -= i;
 	}
 	strlcat(tbuf, ")", sizeof(tbuf));
  logit:
-	syslog(LOG_INFO, "%s", tbuf);
+	if (i != -1)
+		syslog(LOG_INFO, "%s", tbuf);
 }
 
 void
