@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.209 2000/10/07 16:52:32 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.210 2000/10/13 14:43:36 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -78,12 +78,12 @@ cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
 
 # PCI USB Controllers
-uhci*	at pci?				# Universal Host Controller (Intel)
-ohci*	at pci?				# Open Host Controller
+uhci*	at pci? disable			# Universal Host Controller (Intel)
+ohci*	at pci? disable			# Open Host Controller
 
 # USB bus support
-usb*	at uhci? disable
-usb*	at ohci? disable
+usb*	at uhci?
+usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
