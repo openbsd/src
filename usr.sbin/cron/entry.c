@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: entry.c,v 1.4 1996/12/16 18:40:53 deraadt Exp $";
+static char rcsid[] = "$Id: entry.c,v 1.5 1997/12/22 08:10:43 deraadt Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -154,6 +154,7 @@ load_entry(file, error_func, pw, envp)
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= HR_STAR;
 		} else {
 			ecode = e_timespec;
 			goto eof;
@@ -161,6 +162,8 @@ load_entry(file, error_func, pw, envp)
 	} else {
 		Debug(DPARS, ("load_entry()...about to parse numerics\n"))
 
+		if (ch == '*')
+			e->flags |= MIN_STAR;
 		ch = get_list(e->minute, FIRST_MINUTE, LAST_MINUTE,
 			      PPC_NULL, ch, file);
 		if (ch == EOF) {
@@ -171,6 +174,8 @@ load_entry(file, error_func, pw, envp)
 		/* hours
 		 */
 
+		if (ch == '*')
+			e->flags |= HR_STAR;
 		ch = get_list(e->hour, FIRST_HOUR, LAST_HOUR,
 			      PPC_NULL, ch, file);
 		if (ch == EOF) {
@@ -241,8 +246,8 @@ load_entry(file, error_func, pw, envp)
 		}
 		Debug(DPARS, ("load_entry()...uid %d, gid %d\n",e->uid,e->gid))
 	} else if (ch == '*') {
-	    ecode = e_cmd;
-	    goto eof;
+		ecode = e_cmd;
+		goto eof;
 	}
 
 	e->uid = pw->pw_uid;

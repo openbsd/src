@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.3 1997/08/04 19:26:08 deraadt Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.4 1997/12/22 08:10:41 deraadt Exp $";
 #endif
 
 
@@ -34,9 +34,9 @@ static char rcsid[] = "$Id: cron.c,v 1.3 1997/08/04 19:26:08 deraadt Exp $";
 
 static	void	usage __P((void)),
 		run_reboot_jobs __P((cron_db *)),
-		cron_tick __P((cron_db *)),
-		cron_sync __P((void)),
-		cron_sleep __P((void)),
+		find_jobs __P((time_min, cron_db *, int, int)),
+		set_time __P((void)),
+		cron_sleep __P((time_min)),
 #ifdef USE_SIGCHLD
 		sigchld_handler __P((int)),
 #endif
@@ -89,12 +89,11 @@ main(argc, argv)
 
 	/* if there are no debug flags turned on, fork as a daemon should.
 	 */
-# if DEBUGGING
+
 	if (DebugFlags) {
-# else
-	if (0) {
-# endif
+#if DEBUGGING
 		(void) fprintf(stderr, "[%d] cron started\n", getpid());
+#endif
 	} else {
 		switch (fork()) {
 		case -1:
@@ -117,23 +116,123 @@ main(argc, argv)
 	database.tail = NULL;
 	database.mtime = (time_t) 0;
 	load_database(&database);
+
+	set_time();
 	run_reboot_jobs(&database);
-	cron_sync();
+	timeRunning = virtualTime = clockTime;
+
+	/*
+	 * too many clocks, not enough time (Al. Einstein)
+	 * These clocks are in minutes since the epoch (time()/60).
+	 * virtualTime: is the time it *would* be if we woke up
+	 * promptly and nobody ever changed the clock. It is
+	 * monotonically increasing... unless a timejump happens.
+	 * At the top of the loop, all jobs for 'virtualTime' have run.
+	 * timeRunning: is the time we last awakened.
+	 * clockTime: is the time when set_time was last called.
+	 */
 	while (TRUE) {
-# if DEBUGGING
-		if (!(DebugFlags & DTEST))
-# endif /*DEBUGGING*/
-			cron_sleep();
+		time_min timeDiff;
+		int wakeupKind;
 
 		load_database(&database);
 
-		/* do this iteration
-		 */
-		cron_tick(&database);
+		/* ... wait for the time (in minutes) to change ... */
+		do {
+			cron_sleep(timeRunning + 1);
+			set_time();
+		} while (clockTime == timeRunning);
+		timeRunning = clockTime;
 
-		/* sleep 1 minute
+		/*
+		 * ... calculate how the current time differs from
+		 * our virtual clock. Classify the change into one
+		 * of 4 cases
 		 */
-		TargetTime += 60;
+		timeDiff = timeRunning - virtualTime;
+
+		/* shortcut for the most common case */
+		if (timeDiff == 1) {
+			virtualTime = timeRunning;
+			find_jobs(virtualTime, &database, TRUE, TRUE);
+		} else {
+			wakeupKind = -1;
+			if (timeDiff > -(3*MINUTE_COUNT))
+				wakeupKind = 0;
+			if (timeDiff > 0)
+				wakeupKind = 1;
+			if (timeDiff > 5)
+				wakeupKind = 2;
+			if (timeDiff > (3*MINUTE_COUNT))
+				wakeupKind = 3;
+
+			switch (wakeupKind) {
+			case 1:
+				/*
+				 * case 1: timeDiff is a small positive number
+				 * (wokeup late) run jobs for each virtual minute
+				 * until caught up.
+				 */
+				Debug(DSCH, ("[%d], normal case %d minutes to go\n",
+				    getpid(), timeRunning - virtualTime))
+				do {
+					if (job_runqueue())
+						sleep(10);
+					virtualTime++;
+					find_jobs(virtualTime, &database, TRUE, TRUE);
+				} while (virtualTime< timeRunning);
+				break;
+
+			case 2:
+				/*
+				 * case 2: timeDiff is a medium-sized positive number,
+				 * for example because we went to DST run wildcard
+				 * jobs once, then run any fixed-time jobs that would
+				 * otherwise be skipped if we use up our minute
+				 * (possible, if there are a lot of jobs to run) go
+				 * around the loop again so that wildcard jobs have
+				 * a chance to run, and we do our housekeeping
+				 */
+				Debug(DSCH, ("[%d], DST begins %d minutes to go\n",
+				    getpid(), timeRunning - virtualTime))
+				/* run wildcard jobs for current minute */
+				find_jobs(timeRunning, &database, TRUE, FALSE);
+	
+				/* run fixed-time jobs for each minute missed */ 
+				do {
+					if (job_runqueue())
+						sleep(10);
+					virtualTime++;
+					find_jobs(virtualTime, &database, FALSE, TRUE);
+					set_time();
+				} while (virtualTime< timeRunning &&
+				    clockTime == timeRunning);
+				break;
+	
+			case 0:
+				/*
+				 * case 3: timeDiff is a small or medium-sized
+				 * negative num, eg. because of DST ending just run
+				 * the wildcard jobs. The fixed-time jobs probably
+				 * have already run, and should not be repeated
+				 * virtual time does not change until we are caught up
+				 */
+				Debug(DSCH, ("[%d], DST ends %d minutes to go\n",
+				    getpid(), virtualTime - timeRunning))
+				find_jobs(timeRunning, &database, TRUE, FALSE);
+				break;
+			default:
+				/*
+				 * other: time has changed a *lot*,
+				 * jump virtual time, and run everything
+				 */
+				Debug(DSCH, ("[%d], clock jumped\n", getpid()))
+				virtualTime = timeRunning;
+				find_jobs(timeRunning, &database, TRUE, TRUE);
+			}
+		}
+		/* jobs to be run (if any) are loaded. clear the queue */
+		job_runqueue();
 	}
 }
 
@@ -157,10 +256,14 @@ run_reboot_jobs(db)
 
 
 static void
-cron_tick(db)
+find_jobs(vtime, db, doWild, doNonWild)
+	time_min vtime;
 	cron_db	*db;
+	int doWild;
+	int doNonWild;
 {
- 	register struct tm	*tm = localtime(&TargetTime);
+	time_t   virtualSecond  = vtime * SECONDS_PER_MINUTE;
+	register struct tm	*tm = localtime(&virtualSecond);
 	register int		minute, hour, dom, month, dow;
 	register user		*u;
 	register entry		*e;
@@ -173,8 +276,9 @@ cron_tick(db)
 	month = tm->tm_mon +1 /* 0..11 -> 1..12 */ -FIRST_MONTH;
 	dow = tm->tm_wday -FIRST_DOW;
 
-	Debug(DSCH, ("[%d] tick(%d,%d,%d,%d,%d)\n",
-		getpid(), minute, hour, dom, month, dow))
+	Debug(DSCH, ("[%d] tick(%d,%d,%d,%d,%d) %s %s\n",
+		getpid(), minute, hour, dom, month, dow,
+		doWild?" ":"No wildcard",doNonWild?" ":"Wildcard only"))
 
 	/* the dom/dow situation is odd.  '* * 1,15 * Sun' will run on the
 	 * first and fifteenth AND every Sunday;  '* * * * Sun' will run *only*
@@ -185,67 +289,51 @@ cron_tick(db)
 	for (u = db->head;  u != NULL;  u = u->next) {
 		for (e = u->crontab;  e != NULL;  e = e->next) {
 			Debug(DSCH|DEXT, ("user [%s:%d:%d:...] cmd=\"%s\"\n",
-					  env_get("LOGNAME", e->envp),
-					  e->uid, e->gid, e->cmd))
-			if (bit_test(e->minute, minute)
-			 && bit_test(e->hour, hour)
-			 && bit_test(e->month, month)
-			 && ( ((e->flags & DOM_STAR) || (e->flags & DOW_STAR))
+			    env_get("LOGNAME", e->envp),
+			    e->uid, e->gid, e->cmd))
+			if (bit_test(e->minute, minute) &&
+			    bit_test(e->hour, hour) &&
+			    bit_test(e->month, month) &&
+			    ( ((e->flags & DOM_STAR) || (e->flags & DOW_STAR))
 			      ? (bit_test(e->dow,dow) && bit_test(e->dom,dom))
-			      : (bit_test(e->dow,dow) || bit_test(e->dom,dom))
-			    )
-			   ) {
-				job_add(e, u);
+			      : (bit_test(e->dow,dow) || bit_test(e->dom,dom)))) {
+				if ((doNonWild && !(e->flags & (MIN_STAR|HR_STAR)))
+				    || (doWild && (e->flags & (MIN_STAR|HR_STAR))))
+					job_add(e, u);
 			}
 		}
 	}
 }
 
 
-/* the task here is to figure out how long it's going to be until :00 of the
- * following minute and initialize TargetTime to this value.  TargetTime
- * will subsequently slide 60 seconds at a time, with correction applied
- * implicitly in cron_sleep().  it would be nice to let cron execute in
- * the "current minute" before going to sleep, but by restarting cron you
- * could then get it to execute a given minute's jobs more than once.
- * instead we have the chance of missing a minute's jobs completely, but
- * that's something sysadmin's know to expect what with crashing computers..
+/*
+ * set StartTime and clockTime to the current time.
+ * these are used for computing what time it really is right now.
+ * note that clockTime is a unix wallclock time converted to minutes
  */
 static void
-cron_sync() {
- 	register struct tm	*tm;
-
-	TargetTime = time((time_t*)0);
-	tm = localtime(&TargetTime);
-	TargetTime += (60 - tm->tm_sec);
+set_time()
+{
+	StartTime = time((time_t *)0);
+	clockTime = StartTime / (unsigned long)SECONDS_PER_MINUTE;
 }
 
-
+/*
+ * try to just hit the next minute
+ */
 static void
-cron_sleep() {
+cron_sleep(target)
+	time_min target;
+{
 	register int	seconds_to_wait;
+	register struct tm *tm;
 
-	do {
-		seconds_to_wait = (int) (TargetTime - time((time_t*)0));
-		Debug(DSCH, ("[%d] TargetTime=%ld, sec-to-wait=%d\n",
-			getpid(), TargetTime, seconds_to_wait))
+	seconds_to_wait = (int)(target*SECONDS_PER_MINUTE - time((time_t*)0)) + 1;
+	Debug(DSCH, ("[%d] TargetTime=%ld, sec-to-wait=%d\n",
+	    getpid(), target*SECONDS_PER_MINUTE, seconds_to_wait))
 
-		/* if we intend to sleep, this means that it's finally
-		 * time to empty the job queue (execute it).
-		 *
-		 * if we run any jobs, we'll probably screw up our timing,
-		 * so go recompute.
-		 *
-		 * note that we depend here on the left-to-right nature
-		 * of &&, and the short-circuiting.
-		 */
-	} while (seconds_to_wait > 0 && job_runqueue());
-
-	while (seconds_to_wait > 0) {
-		Debug(DSCH, ("[%d] sleeping for %d seconds\n",
-			getpid(), seconds_to_wait))
-		seconds_to_wait = (int) sleep((unsigned int) seconds_to_wait);
-	}
+	if (seconds_to_wait > 0 && seconds_to_wait< 65)
+		sleep((unsigned int) seconds_to_wait);
 }
 
 
