@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.2 1996/11/16 21:53:11 downsj Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/11/17 11:03:40 downsj Exp $
 
 LIB=	ss
-HDRS=	ss.h ss_err.h
+HDRS=	ss.h ${.OBJDIR}/ss_err.h
 SRCS=	ss_err.c data.c error.c execute_cmd.c help.c invocation.c list_rqs.c \
 	listen.c pager.c parse.c prompt.c request_tbl.c requests.c \
 	std_rqs.c
@@ -19,7 +19,7 @@ std_rqs.c:		${.CURDIR}/std_rqs.ct
 	mk_cmds std_rqs.ct
 	-test -h std_rqs.ct && rm std_rqs.ct
 
-includes:
+includes: ss_err.h
 	@cd ${.CURDIR}; for i in $(HDRS); do \
 	    j="cmp -s $$i ${DESTDIR}/usr/include/ss/$$i || \
 		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
