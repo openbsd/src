@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.21 2003/07/07 14:43:18 jmc Exp $
+.\"	$OpenBSD: dbopen.3,v 1.22 2004/05/05 20:19:48 millert Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -80,10 +80,12 @@ routine; however, only the
 .Dv O_CREAT ,
 .Dv O_EXCL ,
 .Dv O_EXLOCK ,
+.Dv O_NOFOLLOW ,
 .Dv O_NONBLOCK ,
 .Dv O_RDONLY ,
 .Dv O_RDWR ,
 .Dv O_SHLOCK ,
+.Dv O_SYNC ,
 and
 .Dv O_TRUNC
 flags are meaningful.
