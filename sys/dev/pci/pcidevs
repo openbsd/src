@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.32 1998/03/10 08:26:08 deraadt Exp $
+$OpenBSD: pcidevs,v 1.33 1998/03/10 08:43:50 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -486,6 +486,7 @@ vendor 3DO		0x1239	The 3D0 Company
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor AURORA		0x125c	Aurora Technologies
+vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor KOFAX		0x1296	Kofax Image Products
@@ -570,6 +571,7 @@ product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
 product ARC 1000PV	0xa091	1000PV
 product ARC 2000PV	0xa099	2000PV
 product ARC 2000MT	0xa0a1	2000MT
+product ARC 2000MI	0xa0a9	2000MI
 
 /* ATI products */
 product ATI MACH32	0x4158	Mach32
@@ -806,6 +808,9 @@ product MUTECH MV1000	0x0001	MV1000
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS NS87410	0xd001	NS87410
 
+/* NeoMagic */
+product NEOMAGIC NM3160	0x0004	NM3160
+
 /* NCR/Symbios Logic products */
 product SYMBIOS 810	0x0001	53c810
 product SYMBIOS 820	0x0002	53c820
@@ -866,7 +871,7 @@ product S3 TRIO64	0x8811	Trio32/64
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 868		0x8880	868
-product S3 VIRGE_VX	0x883d	ViRGE/VX
+product S3 VIRGE_VX	0x883d	ViRGE VX
 product S3 928		0x88b0	86C928
 product S3 864_0	0x88c0	86C864-0 (Vision864)
 product S3 864_1	0x88c1	86C864-1 (Vision864)
@@ -881,10 +886,15 @@ product S3 968_1	0x88f1	86C968-1 (Vision968)
 product S3 968_2	0x88f2	86C968-2 (Vision968)
 product S3 968_3	0x88f3	86C968-3 (Vision968)
 product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
+product S3 PLATO	0x8902	Plato
+product S3 VIRGE_DX_GX	0x8a01	ViRGE DX/GX
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
 product SGSTHOMSON 1764	0x1746	STG 1764X
+
+/* Sigma Designs */
+product SIGMA 64GX	0x6401	64GX
 
 /* Silicon Integrated System products */
 product SIS 86C201	0x0001	86C201
