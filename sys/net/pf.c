@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.152 2001/09/15 22:25:25 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.153 2001/09/17 17:16:27 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3124,6 +3124,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	u_short reason;
 	u_int16_t icmpid, af = pd->af;
 	u_int8_t icmptype, icmpcode;
+	int rewrite = 0;
 
 	switch (pd->proto) {
 #ifdef INET
@@ -3158,6 +3159,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			case AF_INET6:
 				pf_change_a6(saddr, &pd->hdr.icmp6->icmp6_cksum,
 				    &binat->raddr, 0);
+				rewrite++;
 				break;
 #endif /* INET6 */
 			}
@@ -3177,6 +3179,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			case AF_INET6:
 				pf_change_a6(saddr, &pd->hdr.icmp6->icmp6_cksum,
 				    &nat->raddr, 0);
+				rewrite++;
 				break;
 #endif /* INET6 */
 			}
@@ -3197,6 +3200,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			case AF_INET6:
 				pf_change_a6(daddr, &pd->hdr.icmp6->icmp6_cksum,
 				    &binat->saddr, 0);
+				rewrite++;
 				break;
 #endif /* INET6 */
 			}
@@ -3303,6 +3307,11 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->bytes = pd->tot_len;
 		pf_insert_state(s);
 	}
+
+	/* copy back packet headers if we performed IPv6 NAT operations */
+	if (rewrite)
+		m_copyback(m, off, ICMP_MINLEN,
+		    (caddr_t)pd->hdr.icmp6);
 
 	return (PF_PASS);
 }
@@ -3787,6 +3796,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 * Search for an ICMP state.
 		 */
 		struct pf_tree_key key;
+		int rewrite = 0;
 
 		key.af      = pd->af;
 		key.proto   = pd->proto;
@@ -3822,6 +3832,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					pf_change_a6(saddr,
 					    &pd->hdr.icmp6->icmp6_cksum,
 					    &(*state)->gwy.addr, 0);
+					rewrite++;
 					break;
 #endif /* INET6 */
 				}
@@ -3839,11 +3850,18 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					pf_change_a6(daddr,
 					    &pd->hdr.icmp6->icmp6_cksum,
 					    &(*state)->lan.addr, 0);
+					rewrite++;
 					break;
 #endif /* INET6 */
 				}
 			}
 		}
+
+		/* copy back packet headers if we performed IPv6 NAT */
+		if (rewrite)
+			m_copyback(m, off, ICMP_MINLEN,
+			    (caddr_t)pd->hdr.icmp6);
+
 
 		return (PF_PASS);
 
