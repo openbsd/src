@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.2 2004/08/03 14:46:35 jfb Exp $	*/
+/*	$OpenBSD: conf.y,v 1.3 2004/09/27 12:39:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -143,7 +143,7 @@ static u_int            acl_defact = CVS_ACL_DENY;
 %}
 
 %token	LISTEN CVSROOT MINCHILD MAXCHILD REQSOCK
-%token	ALLOW DENY LOG QUICK ON TAG FROM
+%token	ALLOW DENY LOG QUICK ON TAG FROM USER GROUP
 %token  ANY ADD CHECKOUT COMMIT DIFF HISTORY UPDATE
 %token  <v.string>    STRING
 %type   <v.num>       action number options operation
@@ -182,6 +182,16 @@ directive	: LISTEN address
 		| CVSROOT STRING
 		{
 			cvsd_set(CVSD_SET_ROOT, $2);
+			free($2);
+		}
+		| USER STRING
+		{
+			cvsd_set(CVSD_SET_USER, $2);
+			free($2);
+		}
+		| GROUP STRING
+		{
+			cvsd_set(CVSD_SET_GROUP, $2);
 			free($2);
 		}
 		| MINCHILD number	{ cvsd_set(CVSD_SET_CHMIN, $2); }
@@ -325,12 +335,14 @@ static const struct conf_kw keywords[] = {
 	{ "cvsroot", CVSROOT },
 	{ "deny",    DENY    },
 	{ "from",    FROM    },
+	{ "group",   GROUP   },
 	{ "listen",  LISTEN  },
 	{ "log",     LOG     },
 	{ "on",      ON      },
 	{ "quick",   QUICK   },
 	{ "reqsock", REQSOCK },
 	{ "tag",     TAG     },
+	{ "user",    USER    },
 
 };
 
@@ -571,6 +583,7 @@ cvs_conf_read(const char *conf)
 	TAILQ_INIT(&acl_rules);
 	acl_nrules = 0;
 
+	cvs_log(LP_INFO, "using configuration file `%s'", conf);
 	conf_file = conf;
 	conf_fin = fopen(conf, "r");
 	if (conf_fin == NULL) {

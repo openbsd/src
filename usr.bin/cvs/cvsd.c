@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.8 2004/09/27 12:16:05 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.9 2004/09/27 12:39:29 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -68,8 +68,8 @@ volatile sig_atomic_t restart = 0;
 uid_t  cvsd_uid = -1;
 gid_t  cvsd_gid = -1;
 
-static char  *cvsd_user = CVSD_USER;
-static char  *cvsd_group = CVSD_GROUP;
+static char  *cvsd_user = NULL;
+static char  *cvsd_group = NULL;
 static char  *cvsd_root = NULL;
 static char  *cvsd_conffile = CVSD_CONF;
 static int    cvsd_privfd = -1;
@@ -152,6 +152,8 @@ main(int argc, char **argv)
 	struct group *grp;
 
 	checkrepo = 0;
+	cvsd_set(CVSD_SET_USER, CVSD_USER);
+	cvsd_set(CVSD_SET_GROUP, CVSD_GROUP);
 
 	if (cvs_log_init(LD_STD|LD_SYSLOG, LF_PID) < 0)
 		err(1, "failed to initialize logging mechanism");
@@ -169,7 +171,7 @@ main(int argc, char **argv)
 			foreground = 1;
 			break;
 		case 'g':
-			cvsd_group = optarg;
+			cvsd_set(CVSD_SET_GROUP, optarg);
 			break;
 		case 'h':
 			usage();
@@ -186,7 +188,7 @@ main(int argc, char **argv)
 			cvsd_sock_path = optarg;
 			break;
 		case 'u':
-			cvsd_user = optarg;
+			cvsd_set(CVSD_SET_USER, optarg);
 			break;
 		case 'v':
 			cvs_log_filter(LP_FILTER_UNSET, LP_INFO);
@@ -860,18 +862,41 @@ cvsd_set(int what, ...)
 	char *str;
 	va_list vap;
 
+	str = NULL;
+
 	va_start(vap, what);
+
+	if ((what == CVSD_SET_ROOT) || (what == CVSD_SET_SOCK) ||
+	    (what == CVSD_SET_USER) || (what == CVSD_SET_GROUP)) {
+		str = strdup(va_arg(vap, char *));
+		if (str == NULL) {
+			cvs_log(LP_ERRNO, "failed to set string");
+			return (-1);
+		}
+	}
 
 	switch (what) {
 	case CVSD_SET_ROOT:
-		str = strdup(va_arg(vap, char *));
-		if (str == NULL) {
-			cvs_log(LP_ERRNO, "failed to set CVS root");
-			return (-1);
-		}
 		if (cvsd_root != NULL)
 			free(cvsd_root);
 		cvsd_root = str;
+		break;
+	case CVSD_SET_SOCK:
+		if (cvsd_sock_path != NULL)
+			free(cvsd_sock_path);
+		cvsd_sock_path = str;
+		if (cvsd_sock_open() < 0)
+			return (-1);
+		break;
+	case CVSD_SET_USER:
+		if (cvsd_user != NULL)
+			free(cvsd_user);
+		cvsd_user = str;
+		break;
+	case CVSD_SET_GROUP:
+		if (cvsd_group != NULL)
+			free(cvsd_group);
+		cvsd_group = str;
 		break;
 	case CVSD_SET_CHMIN:
 		cvsd_chmin = va_arg(vap, int);
@@ -883,18 +908,6 @@ cvsd_set(int what, ...)
 		break;
 	case CVSD_SET_ADDR:
 		/* this is more like an add than a set */
-		break;
-	case CVSD_SET_SOCK:
-		str = strdup(va_arg(vap, char *));
-		if (str == NULL) {
-			cvs_log(LP_ERRNO, "failed to set CVS socket path");
-			return (-1);
-		}
-		if (cvsd_sock_path != NULL)
-			free(cvsd_sock_path);
-		cvsd_sock_path = str;
-		if (cvsd_sock_open() < 0)
-			return (-1);
 		break;
 	default:
 		cvs_log(LP_ERR, "invalid field to set");
