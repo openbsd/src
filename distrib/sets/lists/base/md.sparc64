@@ -3,6 +3,15 @@
 ./etc/firmware/atu-intersil-ext
 ./etc/firmware/atu-intersil-int
 ./etc/firmware/atu-license
+./etc/firmware/atu-at76c503-i3863-ext
+./etc/firmware/atu-at76c503-i3863-int
+./etc/firmware/atu-at76c503-rfmd-acc-ext
+./etc/firmware/atu-at76c503-rfmd-acc-int
+./etc/firmware/atu-at76c505-rfmd-ext
+./etc/firmware/atu-at76c505-rfmd-int
+./etc/firmware/atu-intersil-ext
+./etc/firmware/atu-intersil-int
+./etc/firmware/atu-license
 ./etc/firmware/atu-rfmd-ext
 ./etc/firmware/atu-rfmd-int
 ./etc/firmware/atu-rfmd2958-ext
