@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_ipc.c,v 1.3 1997/02/13 19:45:18 niklas Exp $	*/
-/*	$NetBSD: svr4_ipc.c,v 1.2 1996/10/28 08:46:35 fvdl Exp $	*/
+/*	$OpenBSD: svr4_ipc.c,v 1.4 1997/08/29 18:30:58 kstailey Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.3 1997/03/30 17:21:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -349,8 +349,7 @@ bsd_to_svr4_msqid_ds(bds, sds)
 
 	/* use the padding for the rest of the fields */
 	{
-		const short *pad = (const short *)bds->msg_pad4;
-
+		const short *pad = (const short *) bds->msg_pad4;
 		sds->msg_cv = pad[0];
 		sds->msg_qnum_cv = pad[1];
 	}
@@ -669,12 +668,38 @@ svr4_shmctl(p, v, retval)
 	struct svr4_shmid_ds ss;
 
 	SCARG(&ap, shmid) = SCARG(uap, shmid);
-	SCARG(&ap, buf) = stackgap_alloc(&sg, sizeof (struct shmid_ds));
+
+	if (SCARG(uap, buf) != NULL) {
+		SCARG(&ap, buf) = stackgap_alloc(&sg, sizeof (struct shmid_ds));
+		switch (SCARG(uap, cmd)) {
+                case SVR4_IPC_SET:
+                case SVR4_IPC_RMID:
+                case SVR4_SHM_LOCK:
+                case SVR4_SHM_UNLOCK:
+			error = copyin(SCARG(uap, buf), (caddr_t) &ss,
+                            sizeof ss);
+                        if (error)
+                                return error;
+                        svr4_to_bsd_shmid_ds(&ss, &bs);
+                        error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
+                        if (error)
+                                return error;
+                        break;
+                default:
+                        break;
+                }
+	}
+	else
+		SCARG(&ap, buf) = NULL;
+
+
 	switch (SCARG(uap, cmd)) {
 	case SVR4_IPC_STAT:
 		SCARG(&ap, cmd) = IPC_STAT;
 		if ((error = sys_shmctl(p, &ap, retval)) != 0)
 			return error;
+		if (SCARG(uap, buf) == NULL)
+			return 0;
 		error = copyin(&bs, SCARG(&ap, buf), sizeof bs);
 		if (error)
 			return error;
@@ -683,13 +708,6 @@ svr4_shmctl(p, v, retval)
 
 	case SVR4_IPC_SET:
 		SCARG(&ap, cmd) = IPC_SET;
-		error = copyin(SCARG(uap, buf), (caddr_t) &ss, sizeof ss);
-		if (error)
-			return error;
-		svr4_to_bsd_shmid_ds(&ss, &bs);
-		error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
-		if (error)
-			return error;
 		return sys_shmctl(p, &ap, retval);
 
 	case SVR4_IPC_RMID:
@@ -705,14 +723,9 @@ svr4_shmctl(p, v, retval)
 		case SVR4_SHM_UNLOCK:
 			SCARG(&ap, cmd) = SHM_UNLOCK;
 			break;
+		default:
+			return EINVAL;
 		}
-		error = copyin(SCARG(uap, buf), &ss, sizeof ss);
-		if (error)
-			return error;
-		svr4_to_bsd_shmid_ds(&ss, &bs);
-		error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
-		if (error)
-			return error;
 		return sys_shmctl(p, &ap, retval);
 
 	default:
