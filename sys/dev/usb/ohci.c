@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.47 2004/08/11 04:15:10 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.48 2004/08/11 04:17:22 dlg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1342,6 +1342,9 @@ ohci_softintr(void *v)
 			continue;
 		}
 
+		if (std->flags & OHCI_CALL_DONE)
+			usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
+
 		len = std->len;
 		if (std->td.td_cbp != 0)
 			len -= le32toh(std->td.td_be) -
@@ -1351,7 +1354,6 @@ ohci_softintr(void *v)
 		if (std->flags & OHCI_ADD_LEN)
 			xfer->actlen += len;
 
-		usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 		cc = OHCI_TD_GET_CC(le32toh(std->td.td_flags));
 		if (cc == OHCI_CC_NO_ERROR) {
 			if (std->flags & OHCI_CALL_DONE) {
