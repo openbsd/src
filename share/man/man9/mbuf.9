@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.5 2002/06/12 07:25:35 aaron Exp $
+.\"     $OpenBSD: mbuf.9,v 1.6 2002/06/14 17:25:19 aaron Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -341,7 +341,7 @@ The same as
 .Fn m_copym
 except that it copies cluster mbufs, where
 .Fn m_copym
-just increase the reference count of the clusters.
+just increases the reference count of the clusters.
 .It Fn m_free "struct mbuf *m"
 Free the mbuf pointed to by
 .Fa m .
