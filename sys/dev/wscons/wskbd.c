@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.10 2001/03/01 03:43:12 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.11 2001/03/01 23:28:46 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1393,12 +1393,14 @@ internal_command(sc, type, ksym, ksym2)
 	case KS_Cmd_ResetClose:
 		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
 		return (1);
+#ifdef __i386__
 	case KS_Cmd_KbdReset:
 		if (kbd_reset == 1) {
 			kbd_reset = 0;
 			psignal(initproc, SIGUSR1);
 		}
 		return (1);
+#endif
 	case KS_Cmd_BacklightOn:
 	case KS_Cmd_BacklightOff:
 	case KS_Cmd_BacklightToggle:
