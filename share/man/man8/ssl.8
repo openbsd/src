@@ -7,8 +7,7 @@
 .Sh DESCRIPTION
 This document describes some of the issues relating to the use of
 the OpenSSL libssl and libcrypto libraries. This document
-is intended as an overview of what the libraries do, what uses them,
-and the slightly unorthodox way of upgrading the library.
+is intended as an overview of what the libraries do, and what uses them.
 .Pp
 The SSL libraries (libssl and libcrypto) implement the
 .Ar SSL version 2 ,
@@ -22,102 +21,13 @@ and
 are most
 commonly used by the
 .Ar https
-protocol for encrypted web transactions.
-Due to patent issues in the United States, there are
-problems with shipping a fully functional implementation of these
-protocols anywhere in the world, as such shipment would include shipping
-.Ar into
-the United States, thus causing problems.
-.Sh PATENTS AND THE RSA ALGORITHM
-.Ar RSA Data Security Inc (RSADSI)
-holds a patent on the
-.Ar RSA
-algorithm in the United States. Because of this, free
-implementations of
-.Ar RSA
-are difficult to distribute and propagate.
-(The
-.Ar RSA
-patent is probably more effective at preventing the widespread
-international adoption of integrated crypto than the much maligned
-ITAR restrictions are). The versions of libssl and libcrypto
-provided in the stock distribution do not contain the
-.Ar RSA
-algorithm -- all such functions
-are stubbed to fail. Since
-.Ar RSA
-is a key component of
-.Ar SSL version 2 ,
-this
-means that
-.Ar SSL version 2
-will not work at all.
-.Ar SSL version 3
+protocol for encrypted web transactions, as can be done with 
+.Xr httpd 8 .
+The libcrypto library is also used by various progams such as 
+.Xr ssh 1 ,
+.Xr sshd 8 ,
 and
-.Ar TLS version 1
-allow for the exchange of keys via mechanisms that do not
-involve
-.Ar RSA ,
-and will work with the shipped version of the libraries,
-assuming both ends can agree to a cipher suite and key exchange that
-does not involve RSA.
-.Pp
-For instance, another typical alternative
-is
-.Ar DSA ,
-which is not encumbered by commercial patents (and lawyers).
-.Pp
-The
-.Ar https
-protocol used by web browsers (in modern incarnations),
-allows for the use of
-.Ar SSL version 3
-and
-.Ar TLS version 1 ,
-which in theory allows for encrypted web transactions without using
-.Ar RSA .
-Unfortunately all the popular web browsers
-buy their cryptographic code from
-.Ar RSADSI .
-Predictably,
-.Ar RSADSI
-would prefer if web browsers used their patented algorithm, and thus their
-libraries do not implement any
-.Ar non-RSA
-cipher and keying combination.
-.Sh HOW TO ADD RSA-CAPABLE LIBRARIES
-Fortunately, not all of the world lives in the United
-States.
-Additionally
-.Ar RSA inc.
-permits non-licensed use of the algorithm by certain parties
-(i.e., non-commercial use).
-If you are permitted to use the
-.Ar RSA
-algorithm, you can enable the full function of the
-.Nm
-libraries by updating the shared libraries on your system,
-using a command like:
-.Bd -literal -offset xxx
-# pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/ssl27.tgz
-.Ed
-
-or
-.Bd -literal -offset xxx
-# pkg_add ftp://ftp.usa.openbsd.org/pub/OpenBSD/2.7/packages/i386/sslUSA27.tgz
-.Ed
-.Pp
-(Obviously, replace
-.Ar 2.7
-with the current release, and
-.Ar i386
-with your architecture name (see
-.Xr arch 1 ).
-See
-.Xr afterboot 8
-for more details on adding RSA capable libraries.
-
-Once your ssl libraries are updated, the ssl libraries will be fully functional.
+.Xr isakmpd 8 .
 .Sh RANDOM DATA SOURCE
 OpenBSD uses the 
 .Xr arandom 4
@@ -130,16 +40,16 @@ This is most commonly seen by users as the
 routines failing in applications such as 
 .Xr ssh 1 ,
 and 
-.Xr httpd 8 ,
-even after the 
-.Ar RSA
-capable versions of the library have been added to the system.
+.Xr httpd 8 . 
 .Pp
 It is important to remember when using a random data source for certificate
 and key generation that the random data source should not be visible by
 people who could duplicate the process and come up with the same result.
 You should ensure that nobody who you don't trust is in a position to read
-the same random data used by you to generate keys and certificates. See
+the same random data used by you to generate keys and certificates. The
+.Xr arandom 4 
+device ensures that no two users on the same machine will see the same 
+data. See
 .Xr openssl 1
 for more information on how to use different sources of random data. 
 .Sh SERVER CERTIFICATES
@@ -260,14 +170,6 @@ flag, enabling
 transactions with your machine on port 443.
 .Sh BUGS
 .Pp
-.Nm openssl
-and
-.Nm libssl
-have nearly nonexistent documentation.
-Most documentation consists of examples and README files in
-the sources.  Mail beck@openbsd.org to assist or
-encourage him to finish the job.
-.Pp
 The world needs more
 .Ar DSA
 capable
@@ -289,5 +191,79 @@ the RSA patent will expire September 20th, 2000.
 .Xr ssl 3 ,
 .Xr rc 8
 .Sh HISTORY
+ Prior to Sept 21, 2000
+There were problems shipping fully fuctional implementations of these
+protocols anywhere in the world, as such shipment would include shipping
+.Ar into
+the United States, thus causing problems. 
+.Ar RSA Data Security Inc (RSADSI)
+held the patent on the
+.Ar RSA
+algorithm in the United States. Because of this, free
+implementations of
+.Ar RSA
+were difficult to distribute and propagate. 
+(The
+.Ar RSA
+patent was probably more effective at preventing the widespread
+international adoption of integrated crypto than the much maligned
+ITAR restrictions were). Prior to OpenBSD 2.8, these libraries 
+shipped without the 
+.Ar RSA
+algorithm -- all such functions
+were stubbed to fail. Since
+.Ar RSA
+is a key component of
+.Ar SSL version 2 ,
+this
+meant that
+.Ar SSL version 2
+would not work at all.
+.Ar SSL version 3
+and
+.Ar TLS version 1
+allow for the exchange of keys via mechanisms that do not
+involve
+.Ar RSA ,
+and would work with the shipped version of the libraries,
+assuming both ends could agree to a cipher suite and key exchange that
+did not involve RSA.
+.Pp
+For instance, another typical alternative
+is
+.Ar DSA ,
+which is not encumbered by commercial patents (and lawyers).
+.Pp
+The
+.Ar https
+protocol used by web browsers (in modern incarnations),
+allows for the use of
+.Ar SSL version 3
+and
+.Ar TLS version 1 ,
+which in theory allows for encrypted web transactions without using
+.Ar RSA .
+Unfortunately all the popular web browsers
+buy their cryptographic code from
+.Ar RSADSI .
+Predictably,
+.Ar RSADSI
+would prefer if web browsers used their patented algorithm, and thus their
+libraries do not implement any
+.Ar non-RSA
+cipher and keying combination. The result of this was that while the
+.Ar https
+protocol allowed for many cipher suites that did not require the use
+of patented algorithms, It was very difficult to use these with the
+popular commercially available software. Prior to version 2.8, 
+OpenBSD allowed users to download 
+.Ar RSA 
+enabled versions of the shared libssl and libcrypto libraries
+which allowed users to enable full function without recompiling
+the applications. This method is now no longer needed, as the fully
+functional libraries ship with the system. However, this entire
+debacle is worth remembering when choosing software and vendors.
+.Pp
 This document first appeared in
 .Ox 2.5 .
+
