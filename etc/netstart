@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.92 2004/01/11 06:07:16 deraadt Exp $
+#	$OpenBSD: netstart,v 1.93 2004/01/13 08:36:57 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -194,8 +194,8 @@ if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
 fi
 
-# Set the address for the loopback interface.
-# It will also initialize IPv6 address for lo0 (::1 and others).
+# Set the address for the loopback interface.  Bringing the
+# interface up, automatically invokes the IPv6 address ::1)
 ifconfig lo0 inet 127.0.0.1
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
