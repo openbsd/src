@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.49 2004/12/28 13:56:08 espie Exp $
+# $OpenBSD: Update.pm,v 1.50 2004/12/28 14:00:21 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -147,10 +147,10 @@ sub validate_depend
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
 		if ($state->{forced}->{updatedepends}) {
-		    Warn "Forward dependency of $wanting on $toreplace doesn't match, forcing it\n";
+		    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
 		} else {
 		    $state->{okay} = 0;
-		    Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match\n";
 		}
 	}
 }
@@ -212,10 +212,10 @@ sub validate_depend
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
 		if ($state->{forced}->{updatedepends}) {
-		    Warn "Forward dependency of $wanting on $toreplace doesn't match, forcing it\n";
+		    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
 		} else {
 		    $state->{okay} = 0;
-		    Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match\n";
 		}
 	}
 }
@@ -230,10 +230,10 @@ sub validate_depend
 	return unless OpenBSD::PkgSpec::match($self->{pattern}, $toreplace);
 	if (!OpenBSD::PkgSpec::match($self->{pattern}, $replacement)) {
 		if ($state->{forced}->{updatedepends}) {
-		    Warn "Forward dependency of $wanting on $toreplace doesn't match, forcing it\n";
+		    Warn "Forward dependency of $wanting on $toreplace doesn't match $replacement, forcing it\n";
 		} else {
 		    $state->{okay} = 0;
-		    Warn "Can't update forward dependency of $wanting on $toreplace\n";
+		    Warn "Can't update forward dependency of $wanting on $toreplace: $replacement doesn't match\n";
 		}
 	}
 }
