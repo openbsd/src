@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.165 2002/05/23 22:44:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.166 2002/06/01 05:22:08 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -223,7 +223,7 @@ distribution-etc-root-var: distrib-dirs
 	cd ../usr.sbin/ypserv/ypinit && exec ${MAKE} distribution
 	cd ../usr.bin/ssh && exec ${MAKE} distribution
 	cd ../usr.sbin/httpd && exec ${MAKE} -f Makefile.bsd-wrapper distribution
-	cd ../lib/libssl && exec ${MAKE} -f Makefile.bsd-wrapper distribution
+	cd ../lib/libssl && exec ${MAKE} distribution
 	cd ../gnu/usr.bin/lynx && exec ${MAKE} -f Makefile.bsd-wrapper distribution
 	cd ../usr.bin/mail && exec ${MAKE} distribution
 	${INSTALL} -c -o root -g ${BINGRP} -m 644 aliases \
