@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.28 2004/07/30 11:59:03 jmc Exp $
+.\" $OpenBSD: cdio.1,v 1.29 2004/07/30 12:30:33 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Serge V. Vakulenko
 .\" All rights reserved.
@@ -96,7 +96,36 @@ need be specified.
 The word
 .Ic play
 may be omitted.
-.Bl -tag -width Ic
+.Bl -tag -width Ds
+.It Ic cddb Op Ar n
+Print the table of contents after matching the disc with the cddb.
+In case of multiple matches, reissue the command with
+.Ar n .
+.It Ic cdid
+Print the disc ID that will be used for matching with the cddb.
+.It Ic close
+Inject the disc.
+.It Ic debug Ar on | off
+Enable/disable the debugging mode of the CD device driver.
+.It Ic device Ar devname
+Make
+.Ar devname
+the current CD device.
+This is the equivalent of quitting
+.Nm
+and restarting with a different device.
+.It Ic eject
+Eject the disc.
+.It Ic help
+Print the list of available commands.
+.It Ic info
+Print the table of contents.
+.It Ic next
+Play the next track.
+If we're at the last track, stop.
+.It Ic pause
+Stop playing.
+Do not stop the disc.
 .It Ic play Ar first_track Op Ar last_track
 Play from track
 .Ar first_track
@@ -121,84 +150,56 @@ in seconds, and
 Minutes are in the range 0-99.
 Seconds are in the range 0-59.
 Frame numbers are in the range 0-74.
-.It Ic play Op Ar #start_block Op length
+.It Ic play Op Ar #start_block Op Ar length
 Play starting from the logical block
 .Ar start_block
 using
 .Ar length
 logical blocks.
-.It Ic pause
-Stop playing.
-Do not stop the disc.
-.It Ic next
-Play the next track.
-If we're at the last track, stop.
 .It Ic previous
 Play the previous track.
 If we're at the first track, restart.
+.It Ic quit
+Quit the program.
 .It Ic replay
 Replay the current track again.
+.It Ic reset
+Perform a hardware reset of the device.
 .It Ic resume
 Resume playing.
 Used after the
 .Ic pause
 command.
-.It Ic stop
-Stop the disc.
-.It Ic eject
-Eject the disc.
-.It Ic close
-Inject the disc.
-.It Ic volume Ar left_channel Ar right_channel
-Set the volume of the left channel to
-.Ar left_channel
-and the volume of the right channel to
-.Ar right_channel .
-Allowed values are in the range 0-255.
-.It Ic volume Ar mute
-Turn the sound off.
-.It Ic volume Ar mono
-Set the mono mode.
-.It Ic volume Ar stereo
-Set the stereo mode.
-.It Ic volume Ar left
-Play the left subtrack on both left and right channels.
-.It Ic volume Ar right
-Play the right subtrack on both left and right channels.
-.It Ic info
-Print the table of contents.
-.It Ic cddb Op Ar n
-Print the table of contents after matching the disc with the cddb.
-In case of multiple matches, reissue the command with
-.Ar n .
-.It Ic cdid
-Print the disc ID that will be used for matching with the cddb.
+.It Ic set Ar lba | msf
+Set LBA
+.Pq Ar lba
+or minute-second-frame
+.Pq Ar msf
+ioctl mode.
+The default is minute-second-frame ioctl mode.
 .It Ic status
 Print information about the disc:
 the current playing status and position,
 the current media catalog status,
 and the current values of the volume for left and right channels.
-.It Ic help
-Print the list of available commands.
-.It Ic debug Ar on
-Enable the debugging mode of the CD device driver.
-.It Ic debug Ar off
-Disable the driver debugging mode.
-.It Ic device Ar devname
-Make
-.Ar devname
-the current CD device.
-This is the equivalent of quitting
-.Nm
-and restarting with a different device.
-.It Ic reset
-Perform a hardware reset of the device.
-.It Ic set Ar msf
-Set minute-second-frame ioctl mode (default).
-.It Ic set Ar lba
-Set LBA ioctl mode.
-.It Ic quit
-Quit the program.
+.It Ic stop
+Stop the disc.
+.It Ic volume Ar left_channel Ar right_channel
+Set the volume of the left channel to
+.Ar left_channel
+and the volume of the right channel to
+.Ar right_channel .
+Allowed values are in the range 0\-255.
+.It Ic volume Ar left
+Play the left subtrack on both left and right channels.
+.It Ic volume Ar mono
+Set the mono mode.
+.It Ic volume Ar mute
+Turn the sound off.
+.It Ic volume Ar right
+Play the right subtrack on both left and right channels.
+.It Ic volume Ar stereo
+Set the stereo mode.
 .El
 .Sh FILES
 .Bl -tag -width /dev/rmcd0c -compact
