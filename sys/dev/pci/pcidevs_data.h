@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.163 1999/07/20 04:19:04 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.164 1999/07/22 08:19:13 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -546,7 +546,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A,
 	    0,
 	    "ASIX",
-	    "AX88140A 10/100 Ethernet",
+	    "AX88140A 10/100",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -3354,7 +3354,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F,
 	    0,
 	    "Winbond",
-	    "W89C840F 10/100 Ethernet",
+	    "W89C840F 10/100",
 	},
 	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.163 1999/07/20 04:19:04 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.164 1999/07/22 08:19:13 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -667,7 +667,7 @@
 #define	PCI_PRODUCT_ARC_2000MI	0xa0a9		/* 2000MI */
 
 /* ASIX Electronics products */
-#define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
+#define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
@@ -1341,7 +1341,7 @@
 
 /* Winbond Electronics products */
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
-#define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 Ethernet */
+#define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* Linksys EtherPCI II */
 
 /* Winbond Electronics products (PCI products set 2) */
