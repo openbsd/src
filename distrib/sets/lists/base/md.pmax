@@ -78,7 +78,6 @@
 ./usr/libdata/perl5/mips-openbsd/5.00503/CORE/intrpvar.h
 ./usr/libdata/perl5/mips-openbsd/5.00503/CORE/iperlsys.h
 ./usr/libdata/perl5/mips-openbsd/5.00503/CORE/keywords.h
-./usr/libdata/perl5/mips-openbsd/5.00503/CORE/libperl.a
 ./usr/libdata/perl5/mips-openbsd/5.00503/CORE/mg.h
 ./usr/libdata/perl5/mips-openbsd/5.00503/CORE/nostdio.h
 ./usr/libdata/perl5/mips-openbsd/5.00503/CORE/objXSUB.h
@@ -696,3 +695,4 @@
 ./usr/share/info/ld.info-3
 ./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/memrange.ph
+./usr/lib/libperl.so.5.3

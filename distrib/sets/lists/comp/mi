@@ -1281,6 +1281,8 @@
 ./usr/lib/gcrt0.o
 ./usr/lib/libacl.a
 ./usr/lib/libacl_p.a
+./usr/lib/libperl.a
+./usr/lib/libperl_p.a
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
 ./usr/lib/libc_r.a
@@ -3284,3 +3286,4 @@
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
 ./usr/include/sys/memrange.h
+./usr/include/dev/ic/isp_inline.h

@@ -52,7 +52,6 @@
 ./usr/libdata/perl5/alpha-openbsd/5.00503/CORE/intrpvar.h
 ./usr/libdata/perl5/alpha-openbsd/5.00503/CORE/iperlsys.h
 ./usr/libdata/perl5/alpha-openbsd/5.00503/CORE/keywords.h
-./usr/libdata/perl5/alpha-openbsd/5.00503/CORE/libperl.a
 ./usr/libdata/perl5/alpha-openbsd/5.00503/CORE/mg.h
 ./usr/libdata/perl5/alpha-openbsd/5.00503/CORE/nostdio.h
 ./usr/libdata/perl5/alpha-openbsd/5.00503/CORE/objXSUB.h

@@ -154,3 +154,4 @@
 ./usr/share/man/cat3/dlfcn.0
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
+./usr/lib/libperl_pic.a
