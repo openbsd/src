@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.2 2004/07/30 17:37:58 jfb Exp $	*/
+/*	$OpenBSD: proto.h,v 1.3 2004/08/03 04:58:45 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -110,6 +110,7 @@
 
 
 /* responses */
+#define CVS_RESP_NONE         0
 #define CVS_RESP_OK           1
 #define CVS_RESP_ERROR        2
 #define CVS_RESP_VALIDREQ     3
@@ -142,6 +143,24 @@
 #define CVS_RESP_E           30
 #define CVS_RESP_F           31
 #define CVS_RESP_MT          32
+
+#define CVS_RESP_MAX         32
+
+struct cvs_req {
+	int      req_id;
+	char     req_str[32];
+	u_int    req_flags;
+};
+
+struct cvs_resp {
+	u_int   resp_id;
+	char    resp_str[32];
+};
+
+
+
+
+
 
 
 

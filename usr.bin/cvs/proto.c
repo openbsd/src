@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.17 2004/08/02 22:45:57 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.18 2004/08/03 04:58:45 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -62,8 +62,6 @@
 #include "proto.h"
 
 
-#define CVS_MTSTK_MAXDEPTH   16
-
 /* request flags */
 #define CVS_REQF_RESP    0x01
 
@@ -76,149 +74,98 @@ extern char *cvs_rsh;
 extern int   cvs_trace;
 extern int   cvs_nolog;
 extern int   cvs_readonly;
+extern int   cvs_cmdop;
 
 
-
-static int  cvs_resp_validreq  (struct cvsroot *, int, char *);
-static int  cvs_resp_cksum     (struct cvsroot *, int, char *);
-static int  cvs_resp_modtime   (struct cvsroot *, int, char *);
-static int  cvs_resp_m         (struct cvsroot *, int, char *);
-static int  cvs_resp_ok        (struct cvsroot *, int, char *);
-static int  cvs_resp_error     (struct cvsroot *, int, char *);
-static int  cvs_resp_statdir   (struct cvsroot *, int, char *);
-static int  cvs_resp_sticky    (struct cvsroot *, int, char *);
-static int  cvs_resp_newentry  (struct cvsroot *, int, char *);
-static int  cvs_resp_updated   (struct cvsroot *, int, char *);
-static int  cvs_resp_removed   (struct cvsroot *, int, char *);
-static int  cvs_resp_mode      (struct cvsroot *, int, char *);
-static int  cvs_resp_modxpand  (struct cvsroot *, int, char *);
-static int  cvs_resp_rcsdiff   (struct cvsroot *, int, char *);
-static int  cvs_resp_template  (struct cvsroot *, int, char *);
 
 static int  cvs_initlog   (void);
 
-static const char *cvs_months[] = {
-	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+
+struct cvs_req cvs_requests[] = {
+	{ CVS_REQ_DIRECTORY,     "Directory",         0             },
+	{ CVS_REQ_MAXDOTDOT,     "Max-dotdot",        0             },
+	{ CVS_REQ_STATICDIR,     "Static-directory",  0             },
+	{ CVS_REQ_STICKY,        "Sticky",            0             },
+	{ CVS_REQ_ENTRY,         "Entry",             0             },
+	{ CVS_REQ_ENTRYEXTRA,    "EntryExtra",        0             },
+	{ CVS_REQ_CHECKINTIME,   "Checkin-time",      0             },
+	{ CVS_REQ_MODIFIED,      "Modified",          0             },
+	{ CVS_REQ_ISMODIFIED,    "Is-modified",       0             },
+	{ CVS_REQ_UNCHANGED,     "Unchanged",         0             },
+	{ CVS_REQ_USEUNCHANGED,  "UseUnchanged",      0             },
+	{ CVS_REQ_NOTIFY,        "Notify",            0             },
+	{ CVS_REQ_NOTIFYUSER,    "NotifyUser",        0             },
+	{ CVS_REQ_QUESTIONABLE,  "Questionable",      0             },
+	{ CVS_REQ_CASE,          "Case",              0             },
+	{ CVS_REQ_UTF8,          "Utf8",              0             },
+	{ CVS_REQ_ARGUMENT,      "Argument",          0             },
+	{ CVS_REQ_ARGUMENTX,     "Argumentx",         0             },
+	{ CVS_REQ_GLOBALOPT,     "Global_option",     0             },
+	{ CVS_REQ_GZIPSTREAM,    "Gzip-stream",       0             },
+	{ CVS_REQ_READCVSRC2,    "read-cvsrc2",       0             },
+	{ CVS_REQ_READWRAP,      "read-cvswrappers",  0             },
+	{ CVS_REQ_READIGNORE,    "read-cvsignore",    0             },
+	{ CVS_REQ_ERRIFREADER,   "Error-If-Reader",   0             },
+	{ CVS_REQ_VALIDRCSOPT,   "Valid-RcsOptions",  0             },
+	{ CVS_REQ_SET,           "Set",               0             },
+	{ CVS_REQ_XPANDMOD,      "expand-modules",    CVS_REQF_RESP },
+	{ CVS_REQ_LOG,           "log",               0             },
+	{ CVS_REQ_CO,            "co",                CVS_REQF_RESP },
+	{ CVS_REQ_EXPORT,        "export",            CVS_REQF_RESP },
+	{ CVS_REQ_RANNOTATE,     "rannotate",         0             },
+	{ CVS_REQ_RDIFF,         "rdiff",             0             },
+	{ CVS_REQ_RLOG,          "rlog",              0             },
+	{ CVS_REQ_RTAG,          "rtag",              CVS_REQF_RESP },
+	{ CVS_REQ_INIT,          "init",              CVS_REQF_RESP },
+	{ CVS_REQ_STATUS,        "status",            CVS_REQF_RESP },
+	{ CVS_REQ_UPDATE,        "update",            CVS_REQF_RESP },
+	{ CVS_REQ_HISTORY,       "history",           0             },
+	{ CVS_REQ_IMPORT,        "import",            CVS_REQF_RESP },
+	{ CVS_REQ_ADD,           "add",               CVS_REQF_RESP },
+	{ CVS_REQ_REMOVE,        "remove",            CVS_REQF_RESP },
+	{ CVS_REQ_RELEASE,       "release",           CVS_REQF_RESP },
+	{ CVS_REQ_ROOT,          "Root",              0             },
+	{ CVS_REQ_VALIDRESP,     "Valid-responses",   0             },
+	{ CVS_REQ_VALIDREQ,      "valid-requests",    CVS_REQF_RESP },
+	{ CVS_REQ_VERSION,       "version",           CVS_REQF_RESP },
+	{ CVS_REQ_NOOP,          "noop",              CVS_REQF_RESP },
+	{ CVS_REQ_DIFF,          "diff",              CVS_REQF_RESP },
 };
 
 
-
-struct cvs_req {
-	int      req_id;
-	char     req_str[32];
-	u_int    req_flags;
-	int     (*req_hdlr)(int, char *);
-} cvs_requests[] = {
-	{ CVS_REQ_DIRECTORY,     "Directory",         0,  NULL },
-	{ CVS_REQ_MAXDOTDOT,     "Max-dotdot",        0,  NULL },
-	{ CVS_REQ_STATICDIR,     "Static-directory",  0,  NULL },
-	{ CVS_REQ_STICKY,        "Sticky",            0,  NULL },
-	{ CVS_REQ_ENTRY,         "Entry",             0,  NULL },
-	{ CVS_REQ_ENTRYEXTRA,    "EntryExtra",        0,  NULL },
-	{ CVS_REQ_CHECKINTIME,   "Checkin-time",      0,  NULL },
-	{ CVS_REQ_MODIFIED,      "Modified",          0,  NULL },
-	{ CVS_REQ_ISMODIFIED,    "Is-modified",       0,  NULL },
-	{ CVS_REQ_UNCHANGED,     "Unchanged",         0,  NULL },
-	{ CVS_REQ_USEUNCHANGED,  "UseUnchanged",      0,  NULL },
-	{ CVS_REQ_NOTIFY,        "Notify",            0,  NULL },
-	{ CVS_REQ_NOTIFYUSER,    "NotifyUser",        0,  NULL },
-	{ CVS_REQ_QUESTIONABLE,  "Questionable",      0,  NULL },
-	{ CVS_REQ_CASE,          "Case",              0,  NULL },
-	{ CVS_REQ_UTF8,          "Utf8",              0,  NULL },
-	{ CVS_REQ_ARGUMENT,      "Argument",          0,  NULL },
-	{ CVS_REQ_ARGUMENTX,     "Argumentx",         0,  NULL },
-	{ CVS_REQ_GLOBALOPT,     "Global_option",     0,  NULL },
-	{ CVS_REQ_GZIPSTREAM,    "Gzip-stream",       0,  NULL },
-	{ CVS_REQ_READCVSRC2,    "read-cvsrc2",       0,  NULL },
-	{ CVS_REQ_READWRAP,      "read-cvswrappers",  0,  NULL },
-	{ CVS_REQ_READIGNORE,    "read-cvsignore",    0,  NULL },
-	{ CVS_REQ_ERRIFREADER,   "Error-If-Reader",   0,  NULL },
-	{ CVS_REQ_VALIDRCSOPT,   "Valid-RcsOptions",  0,  NULL },
-	{ CVS_REQ_SET,           "Set",               0,  NULL },
-	{ CVS_REQ_XPANDMOD,      "expand-modules",    CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_LOG,           "log",               0,  NULL },
-	{ CVS_REQ_CO,            "co",                CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_EXPORT,        "export",            CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_RANNOTATE,     "rannotate",         0,  NULL },
-	{ CVS_REQ_RDIFF,         "rdiff",             0,  NULL },
-	{ CVS_REQ_RLOG,          "rlog",              0,  NULL },
-	{ CVS_REQ_RTAG,          "rtag",              CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_INIT,          "init",              CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_STATUS,        "status",            CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_UPDATE,        "update",            CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_HISTORY,       "history",           0,  NULL },
-	{ CVS_REQ_IMPORT,        "import",            CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_ADD,           "add",               CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_REMOVE,        "remove",            CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_RELEASE,       "release",           CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_ROOT,          "Root",              0,  NULL },
-	{ CVS_REQ_VALIDRESP,     "Valid-responses",   0,  NULL },
-	{ CVS_REQ_VALIDREQ,      "valid-requests",    CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_VERSION,       "version",           CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_NOOP,          "noop",              CVS_REQF_RESP,  NULL },
-	{ CVS_REQ_DIFF,          "diff",              CVS_REQF_RESP,  NULL },
-};
-
-
-struct cvs_resp {
-	u_int  resp_id;
-	char   resp_str[32];
-	int  (*resp_hdlr)(struct cvsroot *, int, char *);
-} cvs_responses[] = {
-	{ CVS_RESP_OK,         "ok",                     cvs_resp_ok       },
-	{ CVS_RESP_ERROR,      "error",                  cvs_resp_error    },
-	{ CVS_RESP_VALIDREQ,   "Valid-requests",         cvs_resp_validreq },
-	{ CVS_RESP_M,          "M",                      cvs_resp_m        },
-	{ CVS_RESP_MBINARY,    "Mbinary",                cvs_resp_m        },
-	{ CVS_RESP_MT,         "MT",                     cvs_resp_m        },
-	{ CVS_RESP_E,          "E",                      cvs_resp_m        },
-	{ CVS_RESP_F,          "F",                      cvs_resp_m        },
-	{ CVS_RESP_CREATED,    "Created",                cvs_resp_updated  },
-	{ CVS_RESP_UPDATED,    "Updated",                cvs_resp_updated  },
-	{ CVS_RESP_UPDEXIST,   "Update-existing",        cvs_resp_updated  },
-	{ CVS_RESP_MERGED,     "Merged",                 cvs_resp_updated  },
-	{ CVS_RESP_REMOVED,    "Removed",                cvs_resp_removed  },
-	{ CVS_RESP_CKSUM,      "Checksum",               cvs_resp_cksum    },
-	{ CVS_RESP_CLRSTATDIR, "Clear-static-directory", cvs_resp_statdir  },
-	{ CVS_RESP_SETSTATDIR, "Set-static-directory",   cvs_resp_statdir  },
-	{ CVS_RESP_NEWENTRY,   "New-entry",              cvs_resp_newentry },
-	{ CVS_RESP_CHECKEDIN,  "Checked-in",             cvs_resp_newentry },
-	{ CVS_RESP_MODE,       "Mode",                   cvs_resp_mode     },
-	{ CVS_RESP_MODTIME,    "Mod-time",               cvs_resp_modtime  },
-	{ CVS_RESP_MODXPAND,   "Module-expansion",       cvs_resp_modxpand },
-	{ CVS_RESP_SETSTICKY,  "Set-sticky",             cvs_resp_sticky   },
-	{ CVS_RESP_CLRSTICKY,  "Clear-sticky",           cvs_resp_sticky   },
-	{ CVS_RESP_RCSDIFF,    "Rcs-diff",               cvs_resp_rcsdiff  },
-	{ CVS_RESP_TEMPLATE,   "Template",               cvs_resp_template },
+struct cvs_resp cvs_responses[] = {
+	{ CVS_RESP_OK,         "ok"                     },
+	{ CVS_RESP_ERROR,      "error"                  },
+	{ CVS_RESP_VALIDREQ,   "Valid-requests"         },
+	{ CVS_RESP_M,          "M"                      },
+	{ CVS_RESP_MBINARY,    "Mbinary"                },
+	{ CVS_RESP_MT,         "MT"                     },
+	{ CVS_RESP_E,          "E"                      },
+	{ CVS_RESP_F,          "F"                      },
+	{ CVS_RESP_CREATED,    "Created"                },
+	{ CVS_RESP_UPDATED,    "Updated"                },
+	{ CVS_RESP_UPDEXIST,   "Update-existing"        },
+	{ CVS_RESP_MERGED,     "Merged"                 },
+	{ CVS_RESP_REMOVED,    "Removed"                },
+	{ CVS_RESP_CKSUM,      "Checksum"               },
+	{ CVS_RESP_CLRSTATDIR, "Clear-static-directory" },
+	{ CVS_RESP_SETSTATDIR, "Set-static-directory"   },
+	{ CVS_RESP_NEWENTRY,   "New-entry"              },
+	{ CVS_RESP_CHECKEDIN,  "Checked-in"             },
+	{ CVS_RESP_MODE,       "Mode"                   },
+	{ CVS_RESP_MODTIME,    "Mod-time"               },
+	{ CVS_RESP_MODXPAND,   "Module-expansion"       },
+	{ CVS_RESP_SETSTICKY,  "Set-sticky"             },
+	{ CVS_RESP_CLRSTICKY,  "Clear-sticky"           },
+	{ CVS_RESP_RCSDIFF,    "Rcs-diff"               },
+	{ CVS_RESP_TEMPLATE,   "Template"               },
 };
 
 #define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))
 #define CVS_NBRESP  (sizeof(cvs_responses)/sizeof(cvs_responses[0]))
 
-
-/*
- * The MT command uses scoping to tag the data.  Whenever we encouter a '+',
- * we push the name of the tag on the stack, and we pop it when we encounter
- * a '-' with the same name.
- */
-
-static char *cvs_mt_stack[CVS_MTSTK_MAXDEPTH];
-static u_int cvs_mtstk_depth = 0;
-
-static time_t cvs_modtime = 0;
-
-
-/* mask of requets supported by server */
-static u_char  cvs_server_validreq[CVS_REQ_MAX + 1];
-
-/* last checksum received */
-char *cvs_fcksum = NULL;
-
-mode_t  cvs_lastmode = 0;
-
 /* hack to receive the remote version without outputting it */
-static u_int cvs_version_sent = 0;
+u_int cvs_version_sent = 0;
 
 
 static char  cvs_proto_buf[4096];
@@ -483,43 +430,6 @@ cvs_req_getvalid(void)
 
 
 /*
- * cvs_req_handle()
- *
- * Generic request handler dispatcher.
- */
-
-int
-cvs_req_handle(char *line)
-{
-	u_int i;
-	char *cp, *cmd;
-
-	cmd = line;
-
-	cp = strchr(cmd, ' ');
-	if (cp != NULL)
-		*(cp++) = '\0';
-
-	for (i = 0; i < CVS_NBREQ; i++) {
-		if (strcmp(cvs_requests[i].req_str, cmd) == 0) {
-			if (cvs_requests[i].req_hdlr == NULL) {
-				cvs_log(LP_ERR,
-				    "unimplemented request handler for `%s'",
-				    cmd);
-				break;
-			}
-			else
-				return (*cvs_requests[i].req_hdlr)
-				    (cvs_requests[i].req_id, cp);
-		}
-	}
-
-	/* unhandled */
-	return (-1);
-}
-
-
-/*
  * cvs_resp_getbyid()
  *
  */
@@ -597,604 +507,6 @@ cvs_resp_getvalid(void)
 	cvs_buf_free(buf);
 
 	return (vrstr);
-}
-
-
-/*
- * cvs_resp_handle()
- *
- * Generic response handler dispatcher.  The handler expects the first line
- * of the command as single argument.
- * Returns the return value of the command on success, or -1 on failure.
- */
-
-int
-cvs_resp_handle(struct cvsroot *root, char *line)
-{
-	u_int i;
-	char *cp, *cmd;
-
-	cmd = line;
-
-	cp = strchr(cmd, ' ');
-	if (cp != NULL)
-		*(cp++) = '\0';
-
-	for (i = 0; i < CVS_NBRESP; i++) {
-		if (strcmp(cvs_responses[i].resp_str, cmd) == 0) {
-			if (cvs_responses[i].resp_hdlr == NULL) {
-				cvs_log(LP_ERRNO,
-				    "unimplemented response handler for `%s'",
-				    cmd);
-				return (-1);
-			}
-			else
-				return (*cvs_responses[i].resp_hdlr)
-				    (root, cvs_responses[i].resp_id, cp);
-		}
-	}
-
-	/* unhandled */
-	return (-1);
-}
-
-
-/*
- * cvs_resp_validreq()
- *
- * Handler for the `Valid-requests' response.  The list of valid requests is
- * split on spaces and each request's entry in the valid request array is set
- * to 1 to indicate the validity.
- * Returns 0 on success, or -1 on failure.
- */
-
-static int
-cvs_resp_validreq(struct cvsroot *root, int type, char *line)
-{
-	char *sp, *ep;
-	struct cvs_req *req;
-
-	/* parse the requests */
-	sp = line;
-	do {
-		ep = strchr(sp, ' ');
-		if (ep != NULL)
-			*ep = '\0';
-
-		req = cvs_req_getbyname(sp);
-		if (req != NULL)
-			cvs_server_validreq[req->req_id] = 1;
-
-		if (ep != NULL)
-			sp = ep + 1;
-	} while (ep != NULL);
-
-	return (0);
-}
-
-
-/*
- * cvs_resp_m()
- *
- * Handler for the `M', 'MT', `F' and `E' responses.
- */
-
-static int
-cvs_resp_m(struct cvsroot *root, int type, char *line)
-{
-	char *cp;
-	FILE *stream;
-
-	stream = NULL;
-
-	switch (type) {
-	case CVS_RESP_F:
-		fflush(stderr);
-		return (0);
-	case CVS_RESP_M:
-		if (cvs_version_sent) {
-			/*
-			 * Instead of outputting the line, we save it as the
-			 * remote server's version string.
-			 */
-			cvs_version_sent = 0;
-			root->cr_version = strdup(line);
-			return (0);
-		}
-		stream = stdout;
-		break;
-	case CVS_RESP_E:
-		stream = stderr;
-		break;
-	case CVS_RESP_MT:
-		if (*line == '+') {
-			if (cvs_mtstk_depth == CVS_MTSTK_MAXDEPTH) {
-				cvs_log(LP_ERR,
-				    "MT scope stack has reached max depth");
-				return (-1);
-			}
-			cvs_mt_stack[cvs_mtstk_depth] = strdup(line + 1);
-			if (cvs_mt_stack[cvs_mtstk_depth] == NULL)
-				return (-1);
-			cvs_mtstk_depth++;
-		}
-		else if (*line == '-') {
-			if (cvs_mtstk_depth == 0) {
-				cvs_log(LP_ERR, "MT scope stack underflow");
-				return (-1);
-			}
-			else if (strcmp(line + 1,
-			    cvs_mt_stack[cvs_mtstk_depth - 1]) != 0) {
-				cvs_log(LP_ERR, "mismatch in MT scope stack");
-				return (-1);
-			}
-			free(cvs_mt_stack[cvs_mtstk_depth--]);
-		}
-		else {
-			if (strcmp(line, "newline") == 0)
-				putc('\n', stdout);
-			else if (strncmp(line, "fname ", 6) == 0)
-				printf("%s", line + 6);
-			else {
-				/* assume text */
-				cp = strchr(line, ' ');
-				if (cp != NULL)
-					printf("%s", cp + 1);
-			}
-		}
-
-		return (0);
-	case CVS_RESP_MBINARY:
-		cvs_log(LP_WARN, "Mbinary not supported in client yet");
-		break;
-	}
-
-	fputs(line, stream);
-	fputc('\n', stream);
-
-	return (0);
-}
-
-
-/*
- * cvs_resp_ok()
- *
- * Handler for the `ok' response.  This handler's job is to 
- */
-
-static int
-cvs_resp_ok(struct cvsroot *root, int type, char *line)
-{
-	return (1);
-}
-
-
-/*
- * cvs_resp_error()
- *
- * Handler for the `error' response.  This handler's job is to 
- */
-
-static int
-cvs_resp_error(struct cvsroot *root, int type, char *line)
-{
-	return (1);
-}
-
-
-/*
- * cvs_resp_statdir()
- *
- * Handler for the `Clear-static-directory' and `Set-static-directory'
- * responses.
- */
-
-static int
-cvs_resp_statdir(struct cvsroot *root, int type, char *line)
-{
-	int fd;
-	char rpath[MAXPATHLEN], statpath[MAXPATHLEN];
-
-	cvs_getln(root, rpath, sizeof(rpath));
-
-	snprintf(statpath, sizeof(statpath), "%s/%s", line,
-	    CVS_PATH_STATICENTRIES);
-
-	if ((type == CVS_RESP_CLRSTATDIR) &&
-	    (unlink(statpath) == -1) && (errno != ENOENT)) {
-		cvs_log(LP_ERRNO, "failed to unlink %s file",
-		    CVS_PATH_STATICENTRIES);
-		return (-1);
-	}
-	else if (type == CVS_RESP_SETSTATDIR) {
-		fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400);
-		if (fd == -1) {
-			cvs_log(LP_ERRNO, "failed to create %s file",
-			    CVS_PATH_STATICENTRIES);
-			return (-1);
-		}
-		(void)close(fd);
-
-	}
-
-	return (0);
-}
-
-/*
- * cvs_resp_sticky()
- *
- * Handler for the `Clear-sticky' and `Set-sticky' responses.
- */
-
-static int
-cvs_resp_sticky(struct cvsroot *root, int type, char *line)
-{
-	size_t len;
-	char rpath[MAXPATHLEN];
-	struct stat st;
-	CVSFILE *cf;
-
-	/* remove trailing slash */
-	len = strlen(line);
-	if ((len > 0) && (line[len - 1] == '/'))
-		line[--len] = '\0';
-
-	/* get the remote path */
-	cvs_getln(root, rpath, sizeof(rpath));
-
-	/* if the directory doesn't exist, create it */
-	if (stat(line, &st) == -1) {
-		/* attempt to create it */
-		if (errno != ENOENT) {
-			cvs_log(LP_ERRNO, "failed to stat %s", line);
-		}
-		else {
-			cf = cvs_file_create(line, DT_DIR, 0755);
-			if (cf == NULL)
-				return (-1);
-			cf->cf_ddat->cd_repo = strdup(line);
-			cf->cf_ddat->cd_root = root;
-			root->cr_ref++;
-			cvs_mkadmin(cf, 0755);
-
-			cvs_file_free(cf);
-		}
-	}
-
-	if (type == CVS_RESP_CLRSTICKY) {
-	}
-	else if (type == CVS_RESP_SETSTICKY) {
-	}
-
-	return (0);
-}
-
-
-/*
- * cvs_resp_newentry()
- *
- * Handler for the `New-entry' response and `Checked-in' responses.
- */
-
-static int
-cvs_resp_newentry(struct cvsroot *root, int type, char *line)
-{
-	char entbuf[128];
-	CVSENTRIES *entfile;
-
-	/* get the remote path */
-	cvs_getln(root, entbuf, sizeof(entbuf));
-
-	/* get the new Entries line */
-	if (cvs_getln(root, entbuf, sizeof(entbuf)) < 0)
-		return (-1);
-
-	entfile = cvs_ent_open(line, O_WRONLY);
-	if (entfile == NULL)
-		return (-1);
-	cvs_ent_addln(entfile, entbuf);
-	cvs_ent_close(entfile);
-
-	return (0);
-}
-
-
-/*
- * cvs_resp_cksum()
- *
- * Handler for the `Checksum' response.  We store the checksum received for
- * the next file in a dynamically-allocated buffer pointed to by <cvs_fcksum>.
- * Upon next file reception, the handler checks to see if there is a stored
- * checksum.
- * The file handler must make sure that the checksums match and free the
- * checksum buffer once it's done to indicate there is no further checksum.
- */
-
-static int
-cvs_resp_cksum(struct cvsroot *root, int type, char *line)
-{
-	if (cvs_fcksum != NULL) {
-		cvs_log(LP_WARN, "unused checksum");
-		free(cvs_fcksum);
-	}
-
-	cvs_fcksum = strdup(line);
-	if (cvs_fcksum == NULL) {
-		cvs_log(LP_ERRNO, "failed to copy checksum string");
-		return (-1);
-	}
-
-	return (0);
-}
-
-
-/*
- * cvs_resp_modtime()
- *
- * Handler for the `Mod-time' file update modifying response.  The timestamp
- * given is used to set the last modification time on the next file that
- * will be received.
- */
-
-static int
-cvs_resp_modtime(struct cvsroot *root, int type, char *line)
-{
-	int i;
-	long off;
-	char sign, mon[8], gmt[8], hr[4], min[4], *ep;
-	struct tm cvs_tm;
-
-	memset(&cvs_tm, 0, sizeof(cvs_tm));
-	sscanf(line, "%d %3s %d %2d:%2d:%2d %5s", &cvs_tm.tm_mday, mon,
-	    &cvs_tm.tm_year, &cvs_tm.tm_hour, &cvs_tm.tm_min,
-	    &cvs_tm.tm_sec, gmt);
-	cvs_tm.tm_year -= 1900;
-	cvs_tm.tm_isdst = -1;
-
-	if (*gmt == '-') {
-		sscanf(gmt, "%c%2s%2s", &sign, hr, min);
-		cvs_tm.tm_gmtoff = strtol(hr, &ep, 10);
-		if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
-		    (cvs_tm.tm_gmtoff == LONG_MAX) ||
-		    (*ep != '\0')) {
-			cvs_log(LP_ERR,
-			    "parse error in GMT hours specification `%s'", hr);
-			cvs_tm.tm_gmtoff = 0;
-		}
-		else {
-			/* get seconds */
-			cvs_tm.tm_gmtoff *= 3600;
-
-			/* add the minutes */
-			off = strtol(min, &ep, 10);
-			if ((cvs_tm.tm_gmtoff == LONG_MIN) ||
-			    (cvs_tm.tm_gmtoff == LONG_MAX) ||
-			    (*ep != '\0')) {
-				cvs_log(LP_ERR,
-				    "parse error in GMT minutes "
-				    "specification `%s'", min);
-			}
-			else
-				cvs_tm.tm_gmtoff += off * 60;
-		}
-	}
-	if (sign == '-')
-		cvs_tm.tm_gmtoff = -cvs_tm.tm_gmtoff;
-
-	for (i = 0; i < (int)(sizeof(cvs_months)/sizeof(cvs_months[0])); i++) {
-		if (strcmp(cvs_months[i], mon) == 0) {
-			cvs_tm.tm_mon = i;
-			break;
-		}
-	}
-
-	cvs_modtime = mktime(&cvs_tm);
-	return (0);
-}
-
-
-/*
- * cvs_resp_updated()
- *
- * Handler for the `Updated' and `Created' responses.
- */
-
-static int
-cvs_resp_updated(struct cvsroot *root, int type, char *line)
-{
-	size_t len;
-	mode_t fmode;
-	char tbuf[32], path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
-	BUF *fbuf;
-	CVSENTRIES *ef;
-	struct cvs_ent *ep;
-
-	ep = NULL;
-
-	len = strlen(tbuf);
-	if ((len > 0) && (tbuf[len - 1] == '\n'))
-		tbuf[--len] = '\0';
-
-	/* read the remote path of the file */
-	cvs_getln(root, path, sizeof(path));
-
-	/* read the new entry */
-	cvs_getln(root, path, sizeof(path));
-	ep = cvs_ent_parse(path);
-	if (ep == NULL)
-		return (-1);
-	snprintf(path, sizeof(path), "%s/%s", line, ep->ce_name);
-
-
-	if (type == CVS_RESP_CREATED) {
-		/* set the timestamp as the last one received from Mod-time */
-		ep->ce_timestamp = ctime_r(&cvs_modtime, tbuf);
-
-		ef = cvs_ent_open(line, O_WRONLY);
-		if (ef == NULL)
-			return (-1);
-
-		cvs_ent_add(ef, ep);
-		cvs_ent_close(ef);
-	}
-	else if (type == CVS_RESP_UPDEXIST) {
-	}
-	else if (type == CVS_RESP_UPDATED) {
-	}
-
-	fbuf = cvs_recvfile(root, &fmode);
-	if (fbuf == NULL)
-		return (-1);
-
-	cvs_buf_write(fbuf, path, fmode);
-
-	/* now see if there is a checksum */
-	if (cvs_fcksum != NULL) {
-		if (cvs_cksum(path, cksum_buf, sizeof(cksum_buf)) < 0) {
-		}
-
-		if (strcmp(cksum_buf, cvs_fcksum) != 0) {
-			cvs_log(LP_ERR, "checksum error on received file");
-			(void)unlink(line);
-		}
-
-		free(cvs_fcksum);
-		cvs_fcksum = NULL;
-	}
-
-	return (0);
-}
-
-
-/*
- * cvs_resp_removed()
- *
- * Handler for the `Updated' response.
- */
-
-static int
-cvs_resp_removed(struct cvsroot *root, int type, char *line)
-{
-	return (0);
-}
-
-
-/*
- * cvs_resp_mode()
- *
- * Handler for the `Mode' response.
- */
-
-static int
-cvs_resp_mode(struct cvsroot *root, int type, char *line)
-{
-	if (cvs_strtomode(line, &cvs_lastmode) < 0) {
-		return (-1);
-	}
-	return (0);
-}
-
-
-/*
- * cvs_resp_modxpand()
- *
- * Handler for the `Module-expansion' response.
- */
-
-static int
-cvs_resp_modxpand(struct cvsroot *root, int type, char *line)
-{
-	return (0);
-}
-
-/*
- * cvs_resp_rcsdiff()
- *
- * Handler for the `Rcs-diff' response.
- */
-
-static int
-cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
-{
-	char file[MAXPATHLEN], buf[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
-	char *fname, *orig, *patch;
-	mode_t fmode;
-	BUF *res, *fcont, *patchbuf;
-	CVSENTRIES *entf;
-	struct cvs_ent *ent;
-
-	/* get remote path and build local path of file to be patched */
-	cvs_getln(root, buf, sizeof(buf));
-	fname = strrchr(buf, '/');
-	if (fname == NULL)
-		fname = buf;
-	snprintf(file, sizeof(file), "%s%s", line, fname);
-
-	/* get updated entry fields */
-	cvs_getln(root, buf, sizeof(buf));
-	ent = cvs_ent_parse(buf);
-	if (ent == NULL) {
-		return (-1);
-	}
-
-	patchbuf = cvs_recvfile(root, &fmode);
-	fcont = cvs_buf_load(file, BUF_AUTOEXT);
-	if (fcont == NULL)
-		return (-1);
-
-	cvs_buf_putc(patchbuf, '\0');
-	cvs_buf_putc(fcont, '\0');
-	orig = cvs_buf_release(fcont);
-	patch = cvs_buf_release(patchbuf);
-
-	res = rcs_patch(orig, patch);
-	if (res == NULL)
-		return (-1);
-
-	cvs_buf_write(res, file, fmode);
-
-	/* now see if there is a checksum */
-	if (cvs_fcksum != NULL) {
-		if (cvs_cksum(file, cksum_buf, sizeof(cksum_buf)) < 0) {
-		}
-
-		if (strcmp(cksum_buf, cvs_fcksum) != 0) {
-			cvs_log(LP_ERR, "checksum error on received file");
-			(void)unlink(file);
-		}
-
-		free(cvs_fcksum);
-		cvs_fcksum = NULL;
-	}
-
-	/* update revision in entries */
-	entf = cvs_ent_open(line, O_WRONLY);
-	if (entf == NULL)
-		return (-1);
-
-	cvs_ent_close(entf);
-
-	return (0);
-}
-
-
-/*
- * cvs_resp_template()
- *
- * Handler for the `Template' response.
- */
-
-static int
-cvs_resp_template(struct cvsroot *root, int type, char *line)
-{
-	mode_t mode;
-	BUF *tmpl;
-
-	tmpl = cvs_recvfile(root, &mode);
-	if (tmpl == NULL)
-		return (-1);
-
-	return (0);
 }
 
 
@@ -1330,6 +642,13 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 		return (-1);
 	}
 
+	/* is this request supported by the server? */
+	if (!CVS_GETVR(root, req->req_id)) {
+		cvs_log(LP_ERR, "remote end does not support request `%s'",
+		    req->req_str);
+		return (-1);
+	}
+
 	snprintf(cvs_proto_buf, sizeof(cvs_proto_buf), "%s%s%s\n",
 	    req->req_str, (arg == NULL) ? "" : " ", (arg == NULL) ? "" : arg);
 
@@ -1404,7 +723,7 @@ cvs_getresp(struct cvsroot *root)
 /*
  * cvs_getln()
  *
- * Get a line from the server's output and store it in <lbuf>.  The terminating
+ * Get a line from the remote end and store it in <lbuf>.  The terminating
  * newline character is stripped from the result.
  */
 
@@ -1412,14 +731,20 @@ int
 cvs_getln(struct cvsroot *root, char *lbuf, size_t len)
 {
 	size_t rlen;
+	FILE *in;
 
-	if (fgets(lbuf, len, root->cr_srvout) == NULL) {
-		if (ferror(root->cr_srvout)) {
-			cvs_log(LP_ERRNO, "failed to read line from server");
+	if (cvs_cmdop == CVS_OP_SERVER)
+		in = stdin;
+	else
+		in = root->cr_srvout;
+
+	if (fgets(lbuf, len, in) == NULL) {
+		if (ferror(in)) {
+			cvs_log(LP_ERRNO, "failed to read line");
 			return (-1);
 		}
 
-		if (feof(root->cr_srvout))
+		if (feof(in))
 			*lbuf = '\0';
 	}
 
@@ -1512,7 +837,7 @@ cvs_getreq(void)
 /*
  * cvs_sendln()
  *
- * Send a single line <line> string to the server.  The line is sent as is,
+ * Send a single line <line> string to the remote end.  The line is sent as is,
  * without any modifications.
  * Returns 0 on success, or -1 on failure.
  */
@@ -1522,6 +847,12 @@ cvs_sendln(struct cvsroot *root, const char *line)
 {
 	int nl;
 	size_t len;
+	FILE *out;
+
+	if (cvs_cmdop == CVS_OP_SERVER)
+		out = stdout;
+	else
+		out = root->cr_srvin;
 
 	nl = 0;
 	len = strlen(line);
@@ -1534,10 +865,9 @@ cvs_sendln(struct cvsroot *root, const char *line)
 		if (nl)
 			fputc('\n', cvs_server_inlog);
 	}
-	fputs(line, root->cr_srvin);
+	fputs(line, out);
 	if (nl)
-		fputc('\n', root->cr_srvin);
-
+		fputc('\n', out);
 	return (0);
 }
 
@@ -1551,9 +881,16 @@ cvs_sendln(struct cvsroot *root, const char *line)
 int
 cvs_sendraw(struct cvsroot *root, const void *src, size_t len)
 {
+	FILE *out;
+
+	if (cvs_cmdop == CVS_OP_SERVER)
+		out = stdout;
+	else
+		out = root->cr_srvin;
+
 	if (cvs_server_inlog != NULL)
 		fwrite(src, sizeof(char), len, cvs_server_inlog);
-	if (fwrite(src, sizeof(char), len, root->cr_srvin) < len) {
+	if (fwrite(src, sizeof(char), len, out) < len) {
 		return (-1);
 	}
 
@@ -1571,8 +908,14 @@ ssize_t
 cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 {
 	size_t ret;
+	FILE *in;
 
-	ret = fread(dst, sizeof(char), len, root->cr_srvout);
+	if (cvs_cmdop == CVS_OP_SERVER)
+		in = stdin;
+	else
+		in = root->cr_srvout;
+
+	ret = fread(dst, sizeof(char), len, in);
 	if (ret == 0)
 		return (-1);
 	if (cvs_server_outlog != NULL)
