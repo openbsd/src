@@ -1,4 +1,4 @@
-/*	$OpenBSD: biostime.S,v 1.4 1997/04/21 19:52:51 mickey Exp $	*/
+/*	$OpenBSD: biostime.S,v 1.5 1997/04/21 20:20:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -50,8 +50,10 @@ ENTRY(usleep)
 
 	movb	$0x86, %ah
 	BIOSINT(0x15)
-	setnc	%al
-	movzbl	%al, %eax
+	xorb	%al, %al
+	jnc	1f
+	movl	%ah, %al
+1:	movzbl	%al, %eax
 
 	popl	%ecx
 	ret

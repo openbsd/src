@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.5 1997/04/18 06:54:42 weingart Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.6 1997/04/21 20:20:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -50,7 +50,7 @@ int biosioctl __P((struct open_file *, u_long, void *));
 
 /* biosdisk.S */
 u_int16_t biosdinfo __P((int dev));
-int		biosdreset __P((void));
+int	biosdreset __P((void));
 int     biosread  __P((int dev, int cyl, int hd, int sect, int nsect, void *));
 int     bioswrite __P((int dev, int cyl, int hd, int sect, int nsect, void *));
 
@@ -70,5 +70,5 @@ int	com_ischar __P((void));
 u_int	biosmem __P((void));
 
 /* biostime.S */
-void	usleep __P((u_long));
+int	usleep __P((u_long));
 #endif

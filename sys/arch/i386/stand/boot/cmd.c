@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.10 1997/04/21 20:03:30 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.11 1997/04/21 20:20:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -179,7 +179,11 @@ readline(buf, to)
 
 	for (i = to; i-- && !ischar(); )
 #ifndef _TEST
-		usleep(100000);
+		if ((to = usleep(100000))) {
+			printf ("usleep failed (%d)\n", to);
+			i = 1;
+			break;
+		}
 #else
 		;
 #endif
