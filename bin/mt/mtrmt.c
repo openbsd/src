@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.1 1996/03/08 23:34:22 niklas Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.2 1996/08/09 03:11:53 millert Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -197,7 +197,7 @@ rmtopen(tape, mode)
 {
 	char buf[256];
 
-	(void)sprintf(buf, "O%s\n%d\n", tape, mode);
+	(void)snprintf(buf, sizeof(buf), "O%s\n%d\n", tape, mode);
 	rmtstate = TS_OPEN;
 	return (rmtcall(tape, buf));
 }
@@ -236,7 +236,7 @@ rmtioctl(cmd, count)
 
 	if (count < 0)
 		return (-1);
-	(void)sprintf(buf, "I%d\n%d\n", cmd, count);
+	(void)snprintf(buf, sizeof(buf), "I%d\n%d\n", cmd, count);
 	return (rmtcall("ioctl", buf));
 }
 
