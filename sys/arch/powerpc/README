@@ -10,17 +10,9 @@ Other notes:
 	if compiled without -O.
 	(worked around with a makefile change)
 
-	a problem exists compiling the file:
-	gnu/usr.bin/binutils/opcodes/ppc-opc.c
-	with the normal data ulimit. it is necessary to raise
-	the ulimit to compile this file in (pd)ksh use "ulimit -d 200000".
-	(problem still exists)
-
-	examine src/sys/arch/powerpc/patches, that file may contain
-	changes necessary to the tree to rebuild the full system.
-
 TODO:
 	ptrace support (that works)
 	fp (setround, getround, getmask, setmask, setsticky, getsticky)
+	cleaner installation 
 Dale
 rahnds@cvs.openbsd.org
