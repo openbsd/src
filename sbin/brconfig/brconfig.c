@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.3 1999/12/03 03:38:23 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.4 2000/01/10 22:14:25 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -77,7 +77,7 @@ void printb __P((char *, unsigned short, char *));
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 #define	IFBAFBITS	"\020\1STATIC"
-#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER"
+#define	IFBIFBITS	"\020\1LEARNING\2DISCOVER\3BLOCKNONIP\4BLOCKARP"
 
 void
 usage()
@@ -174,6 +174,28 @@ main(argc, argv)
 			if (error)
 				return (error);
 		}
+		else if (strcmp("blocknonip", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("blocknonip requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifsetflag(sock, brdg, argv[0],
+			    IFBIF_BLOCKNONIP);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("-blocknonip", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("-blocknonip requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_ifclrflag(sock, brdg, argv[0],
+			    IFBIF_BLOCKNONIP);
+			if (error)
+				return (error);
+		}
 		else if (strcmp("learn", argv[0]) == 0) {
 			argc--; argv++;
 			if (argc == 0) {
@@ -244,6 +266,16 @@ main(argc, argv)
 		}
 		else if (strcmp("-link1", argv[0]) == 0) {
 			error = bridge_clrflag(sock, brdg, IFF_LINK1);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("link2", argv[0]) == 0) {
+			error = bridge_setflag(sock, brdg, IFF_LINK2);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("-link2", argv[0]) == 0) {
+			error = bridge_clrflag(sock, brdg, IFF_LINK2);
 			if (error)
 				return (error);
 		}

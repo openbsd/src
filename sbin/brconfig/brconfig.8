@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.3 2000/01/01 19:14:23 deraadt Exp $
+.\"	$OpenBSD: brconfig.8,v 1.4 2000/01/10 22:14:25 angelos Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -51,6 +51,8 @@
 .Op Ar deladdr address
 .Op Ar flush
 .Op Ar flushall
+.Op Ar blocknonip interface-name
+.Op Ar -blocknonip interface-name
 .Op Ar discover interface-name
 .Op Ar -discover interface-name
 .Op Ar learn interface-name
@@ -119,6 +121,13 @@ Delete an address from the cache.
 Remove all dynamically learned addresses from the cache.
 .It Ar flushall
 Remove all addresses from the cache including static addresses.
+.It Ar blocknonip interface
+Mark an interface so that no packets that are not IPv4, IPv6, ARP, or Reverse
+ARP are accepted from it or are forwarded to it from other bridge member
+interfaces.
+.It Ar -blocknonip interface
+Allow non-IPv4, IPv6, ARP, or Reverse ARP packets through the
+.Cm interface .
 .It Ar discover interface
 Mark an interface so that packets are sent out of the interface
 if the destination port of the packet is unknown.
