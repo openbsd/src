@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 2000/01/14 05:42:17 rahnds Exp $	*/
+/*	$OpenBSD: boot.c,v 1.10 2000/01/14 05:44:18 rahnds Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -454,7 +454,7 @@ main()
 	char *cp;
 	int fd;
 	
-	printf("\n>> OpenBSD/powerpc Boot tst \n");
+	printf("\n>> OpenBSD/powerpc Boot\n");
 
 	/*
 	 * Get the boot arguments from Openfirmware
