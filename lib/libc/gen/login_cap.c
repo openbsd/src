@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.8 2002/01/28 07:05:03 mpech Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.9 2002/01/29 08:08:57 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -690,20 +690,21 @@ setuserpath(lc, home)
 	login_cap_t *lc;
 	char *home;
 {
-	int hlen, plen;
+	int hlen, plen, error;
 	int cnt = 0;
 	char *path;
-	char *p, *q;
+	char *p, *savep;
+	char *q, *saveq = NULL;
 
 	hlen = strlen(home);
 
-	if ((p = path = login_getcapstr(lc, "path", NULL, NULL))) {
+	if ((savep = p = path = login_getcapstr(lc, "path", NULL, NULL))) {
 		while (*p)
 			if (*p++ == '~')
 				++cnt;
 		plen = (p - path) + cnt * (hlen + 1) + 1;
 		p = path;
-		if ((q = path = malloc(plen))) {
+		if ((saveq = q = path = malloc(plen))) {
 			while (*p) {
 				p += strspn(p, " \t");
 				if (*p == '\0')
@@ -726,14 +727,16 @@ setuserpath(lc, home)
 				q += plen;
 			}
 			*q = '\0';
-		} else
-			path = _PATH_DEFPATH;
-	} else
-		path = _PATH_DEFPATH;
-	if (setenv("PATH", path, 1))
-		return (-1);
+		}
+	}
+	error = setenv("PATH", path ? path : _PATH_DEFPATH, 1);
+	
+	if (savep)
+		free(savep);
+	if (saveq)
+		free(saveq);
 
-	return (0);
+	return (error);
 }
 
 /*
