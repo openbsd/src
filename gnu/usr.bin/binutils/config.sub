@@ -164,7 +164,7 @@ case $basic_machine in
 		| tron | a29k | 580 | i960 | h8300 | hppa1.0 | hppa1.1 \
 		| alpha | we32k | ns16k | clipper | i370 | sh \
 		| powerpc | powerpcle | 1750a | dsp16xx | mips64 | mipsel \
-		| pdp11 | mips64el | mips64orion | mips64orionel \
+		| mips | pdp11 | mips64el | mips64orion | mips64orionel \
 		| sparc | sparclet | sparclite | sparc64)
 		basic_machine=$basic_machine-unknown
 		;;
