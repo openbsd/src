@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.13 2005/03/25 17:01:04 jaredy Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.14 2005/03/30 07:50:11 deraadt Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -197,10 +197,10 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifad
 					bwm = mfc.mfc_bw_meter;
 					while (bwm) {
 						kread((u_long)bwm,
-						      &bw_meter,
-						      sizeof bw_meter);
+						    &bw_meter,
+						    sizeof bw_meter);
 						print_bw_meter(&bw_meter,
-							       &banner_printed2);
+						    &banner_printed2);
 						bwm = bw_meter.bm_mfc_next;
 					}
 #if 0	/* Don't ever print it? */
