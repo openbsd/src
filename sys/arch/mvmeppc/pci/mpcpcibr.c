@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.15 2004/01/29 20:27:37 miod Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.16 2004/11/19 22:11:07 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -119,6 +119,65 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 extern u_int8_t *ravenregs;
 extern vaddr_t isaspace_va;
 
+struct raven_setup {
+	unsigned int	pci_reg;
+	u_int32_t	value;
+};
+
+const struct raven_setup raven_prep_setup[] = {
+	/* PCI registers */
+	{ RAVEN_PCI_MEM, RAVEN_PCI_MEM_VAL },
+	{ RAVEN_PCI_PSADD0, RAVEN_PCI_PSADD0_VAL },
+	{ RAVEN_PCI_PSOFF0, RAVEN_PCI_PSOFF0_VAL },
+	{ RAVEN_PCI_PSADD1, RAVEN_PCI_PSADD1_VAL },
+	{ RAVEN_PCI_PSOFF1, RAVEN_PCI_PSOFF1_VAL },
+	{ RAVEN_PCI_PSADD2, RAVEN_PCI_PSADD2_VAL },
+	{ RAVEN_PCI_PSOFF2, RAVEN_PCI_PSOFF2_VAL },
+	{ RAVEN_PCI_PSADD3, RAVEN_PCI_PSADD3_VAL },
+	{ RAVEN_PCI_PSOFF3, RAVEN_PCI_PSOFF3_VAL },
+
+#ifdef notyet
+	/* Universe PCI registers */
+	{ 0x100, 0xc0825100 },
+	{ 0x104, 0x01000000 },
+	{ 0x108, 0x30000000 },
+	{ 0x10c, 0x00000000 },
+	{ 0x114, 0xc0425100 },
+	{ 0x118, 0x30000000 },
+	{ 0x11c, 0x38000000 },
+	{ 0x120, 0x00000000 },
+	{ 0x128, 0x00000000 },
+	{ 0x12c, 0x00000000 },
+	{ 0x130, 0x00000000 },
+	{ 0x134, 0x00000000 },
+	{ 0x13c, 0x00000000 },
+	{ 0x140, 0x00000000 },
+	{ 0x144, 0x00000000 },
+	{ 0x148, 0x00000000 },
+	{ 0x188, 0xc0a05338 },
+
+	/* Default Universe VME Slave Map */
+	{ 0xf00, 0xc0f20001 },
+	{ 0xf04, 0x40000000 },
+	{ 0xf08, 0x40001000 },
+	{ 0xf0c, 0xc0001000 },
+	{ 0xf14, 0xe0f200c0 },
+	{ 0xf18, 0x10000000 },
+	{ 0xf1c, 0x20000000 },
+	{ 0xf20, 0x70000000 },
+	{ 0xf28, 0x00000000 },
+	{ 0xf2c, 0x00000000 },
+	{ 0xf30, 0x00000000 },
+	{ 0xf34, 0x00000000 },
+	{ 0xf3c, 0x00000000 },
+	{ 0xf40, 0x00000000 },
+	{ 0xf44, 0x00000000 },
+	{ 0xf48, 0x00000000 },
+#endif
+
+	{ 0, 0 },
+};
+
 int
 mpcpcibrmatch(parent, match, aux)
 	struct device *parent;
@@ -139,6 +198,7 @@ mpcpcibrattach(parent, self, aux)
 	struct pcibr_softc *sc = (struct pcibr_softc *)self;
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
+	const struct raven_setup *rs;
 
 	lcp = sc->sc_pcibr = &mpc_config;
 
@@ -180,8 +240,10 @@ mpcpcibrattach(parent, self, aux)
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0; 
 
-#if 0
-	/* set up prep environment */
+	/*
+	 * Set up PREP environment
+	 */
+
 	*(u_int32_t *)(ravenregs + RAVEN_MSADD0) = RAVEN_MSADD0_PREP;
 	*(u_int32_t *)(ravenregs + RAVEN_MSOFF0) = RAVEN_MSOFF0_PREP;
 	*(u_int32_t *)(ravenregs + RAVEN_MSADD1) = RAVEN_MSADD1_PREP;
@@ -191,32 +253,13 @@ mpcpcibrattach(parent, self, aux)
 	*(u_int32_t *)(ravenregs + RAVEN_MSADD3) = RAVEN_MSADD3_PREP;
 	*(u_int32_t *)(ravenregs + RAVEN_MSOFF3) = RAVEN_MSOFF3_PREP;
 
-	/* set up PCI local bus */
-	mpc_cfg_write_4(lcp, RAVEN_PCI_MEM, MPCIC_BASE);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD0, RAVEN_PCI_PSADD0_VAL);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF0, RAVEN_PCI_PSOFF0_VAL);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD1, RAVEN_PCI_PSADD1_VAL);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF1, RAVEN_PCI_PSOFF1_VAL);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD2, RAVEN_PCI_PSADD2_VAL);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF2, RAVEN_PCI_PSOFF2_VAL);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD3, RAVEN_PCI_PSADD3_VAL);
-	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF3, RAVEN_PCI_PSOFF3_VAL);
+	for (rs = raven_prep_setup; rs->pci_reg != 0; rs++) {
+		mpc_cfg_write_4(lcp, rs->pci_reg, rs->value);
+	}
 
-	/* set up VME -> PCI local bus */
-
-	mpc_cfg_write_4(lcp, 0x100, 0x0);
-	mpc_cfg_write_4(lcp, 0x114, 0x0);
-	mpc_cfg_write_4(lcp, 0x128, 0x0);
-	mpc_cfg_write_4(lcp, 0x13C, 0x0);
-
-	mpc_cfg_write_4(lcp, 0xF00, 0x0);
-	mpc_cfg_write_4(lcp, 0xF14, 0x0);
-	mpc_cfg_write_4(lcp, 0xF28, 0x0);
-	mpc_cfg_write_4(lcp, 0xF3C, 0x0);
-#endif 
 	/* enable mem and io mapping, and bus master */
 	mpc_cfg_write_2(lcp, RAVEN_PCI_CMD, 
-	    RAVEN_CMD_IOSP|RAVEN_CMD_MEMSP|RAVEN_CMD_MASTR);
+	    RAVEN_CMD_IOSP | RAVEN_CMD_MEMSP | RAVEN_CMD_MASTR);
 
 	config_found(self, &pba, mpcpcibrprint);
 }
@@ -239,17 +282,14 @@ mpcpcibrprint(aux, pnp)
  *  XXX Note that cross page boundaries are *not* guaranteed to work!
  */
 paddr_t
-vtophys(paddr_t pa)
+vtophys(vaddr_t va)
 {
-	vaddr_t va = (vaddr_t) pa;
+	paddr_t pa;
 
-	if (va < VM_MIN_KERNEL_ADDRESS)
-		pa = va;
-	else
-		if (pmap_extract(pmap_kernel(), va, &pa) != 0)
-			return NULL;
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+		return NULL;
 
-	return pa;
+	return PHYS_TO_PCI_MEM(pa);
 }
 
 void
@@ -308,10 +348,13 @@ mpc_gen_config_reg(cpv, tag, offset)
 	pcitag_t tag;
 	int offset;
 {
+#if 0
 	struct pcibr_config *cp = cpv;
 	unsigned int bus, dev, fcn;
+#endif
 	u_int32_t reg;
 
+#if 0
 	mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
 
 	if (cp->config_type & 1) {
@@ -339,6 +382,9 @@ mpc_gen_config_reg(cpv, tag, offset)
 
 		}
 	} else {
+#else
+	{
+#endif
 		/* config mechanism #2, type 0 */
 		/* standard cf8/cfc config */
 		reg =  0x80000000 | tag  | offset;
@@ -519,7 +565,7 @@ void
 mpc_intr_disestablish(lcv, cookie)
 	void *lcv, *cookie;
 {
-	/* XXX We should probably do something clever here.... later */
+	(*intr_disestablish_func)(lcv, cookie);
 }
 
 u_int32_t
@@ -541,6 +587,7 @@ mpc_cfg_write_1(cp, reg, val)
 	u_int8_t val;
 {
 	int s;
+
 	s = splhigh();
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
 	bus_space_write_1(cp->lc_iot, cp->ioh_cfc, 0, val);
@@ -554,6 +601,7 @@ mpc_cfg_write_2(cp, reg, val)
 	u_int16_t val;
 {
 	int s;
+
 	s = splhigh();
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
 	bus_space_write_2(cp->lc_iot, cp->ioh_cfc, 0, val);
@@ -566,8 +614,8 @@ mpc_cfg_write_4(cp, reg, val)
 	u_int32_t reg;
 	u_int32_t val;
 {
-
 	int s;
+
 	s = splhigh();
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
 	bus_space_write_4(cp->lc_iot, cp->ioh_cfc, 0, val);
@@ -580,8 +628,8 @@ mpc_cfg_read_1(cp, reg)
 	u_int32_t reg;
 {
 	u_int8_t _v_;
-
 	int s;
+
 	s = splhigh();
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
 	_v_ = bus_space_read_1(cp->lc_iot, cp->ioh_cfc, 0);
@@ -595,8 +643,8 @@ mpc_cfg_read_2(cp, reg)
 	u_int32_t reg;
 {
 	u_int16_t _v_;
-
 	int s;
+
 	s = splhigh();
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
 	_v_ = bus_space_read_2(cp->lc_iot, cp->ioh_cfc, 0);
@@ -610,8 +658,8 @@ mpc_cfg_read_4(cp, reg)
 	u_int32_t reg;
 {
 	u_int32_t _v_;
-
 	int s;
+
 	s = splhigh();
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
 	_v_ = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, 0);
