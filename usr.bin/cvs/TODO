@@ -1,6 +1,24 @@
-* generate the proper diff arguments to output with the diff
-* cleanup the client/proto mess
-* find a way to make it easier to connect when acting as client
-* prevent reconnection when the cvsroot is the same as the previous one
-* make splitpath() require only one buffer that is MAXPATHLEN and the file
-  should be a char ** that points to the appropriate place in the dir buffer
+OpenCVS 0.2 TODO
+
+Missing commands
+================
+Implementing the missing commands is mostly a job of copying the code from
+the working commands and changing some of the requests to be sent.
+
+Specific file handling
+======================
+Right now, commands are only working when not specifying files on the
+command line.  cvs_file_getspec() needs to be implemented to load only
+a specific list of files along with the directory hierarchy for those
+files.
+
+Multiple server support
+=======================
+This is close to working but we need to put something like pre- and post-
+recursion handlers for cvs_file_examine() so we can send one command
+per root connection instead of one global command at the end.
+
+Client-daemon protocol
+======================
+I have not yet given too much thought to this.  Any suggestions would be
+welcome.
