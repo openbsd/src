@@ -1,8 +1,8 @@
-As complete as your OpenBSD system is you still may want to add any of
-several excellent third party software applications.  There are several
-ways to do this.  You can
+As complete as your OpenBSD system is, you may want to add any of several
+excellent third party software applications.  There are several ways to do
+this.  You can:
 
-1) Obtain the source code and building the application based
+1) Obtain the source code and build the application based
    upon whatever installation procedures are provided with the
    application.
 
@@ -17,10 +17,10 @@ If you purchased the OpenBSD CD-ROM you already have several popular
 ``packages'', the ``ports'' collection, and most of the ``ports''
 source file releases.
 
-Instructions for installing applications from various sources using
-the various methods follow.  If emacs is to be installed it should
-be installed first as it creates the ``info'' directory file that
-may be modified by other applications.
+Instructions for installing applications from the various sources using
+the different installation methods follow.  If emacs is to be installed
+it should be installed first as it creates the ``info'' directory file
+that may be modified by other applications.
 
 Installing applications from the the CD-ROM package collection:
 
@@ -55,7 +55,7 @@ Installing applications from the the CD-ROM package collection:
     # <add more packages if desired>
     # umount /cdrom
 	
-	Your hardware architecture can be determined by issing
+	Your hardware architecture can be determined by issuing
 	the command ``arch''.  The response will be something like
 	``OpenBSD.sparc''.  ``sparc'' is the architecture.
 
@@ -95,11 +95,34 @@ Installing applications from the CD-ROM ports collection:
 	from archives which are also, for the most part, on the
 	OpenBSD CD-ROM.
 
-	;;; <finish this>
+	Creating an application from sources can require a lot of
+	disk space, sometimes 50 megabytes or more.  The first step is
+	to determine which of your disks has enough room.  Once you've
+	made this determination read the file README.ports on CD-ROM 2
+	to see how to copy or mount the ports directory.
+
+	To build an application you must:
+
+	1) become the superuser (root)
+	2) mount CD-ROM number 2 on the directory /cdrom.  This is
+	   necessary to find the application source files.
+	3) cd to the ports directory containing the port you wish
+	   to build.  To build samba, for example, where you'd
+	   previously copied the ports files into the /usr/ports
+	   directory: cd /usr/ports/net/samba
+	4) make FETCH_SYMLINK_DISTFILES=YES
+	5) make FETCH_SYMLINK_DISTFILES=YES install
+	6) make FETCH_SYMLINK_DISTFILES=YES clean
+
+	The FETCH_SYMLINK_DISTFILES=YES parameter tells make not to copy
+	the application's distribution sources from the cdrom to your hard
+	disk, but instead create a symbolic link pointing to the CD-ROM.
+	This is done to conserve disk space.
 
 Installing applications from the OpenBSD ports collection:
 
-	;;; <finish this>
+	See http://www.openbsd.org/ports.html for current instructions
+	on obtaining and installing OpenBSD ports.
 
 Installing other applications:
 

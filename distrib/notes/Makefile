@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/09/21 11:45:58 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1998/04/06 21:42:11 marc Exp $
 
 NOPROG=
 NOMAN=
@@ -9,7 +9,8 @@ TARG=	INSTALL.$M
 SRC=	$(.CURDIR)/INSTALL
 DEP=	$(SRC) $(.CURDIR)/mirrors $(.CURDIR)/$M/whatis $(.CURDIR)/$M/contents \
 	$(.CURDIR)/$M/hardware $(.CURDIR)/$M/xfer $(.CURDIR)/$M/prep \
-	$(.CURDIR)/$M/install $(.CURDIR)/$M/upgrade $(.CURDIR)/donations
+	$(.CURDIR)/$M/install $(.CURDIR)/$M/upgrade $(.CURDIR)/donations \
+	$(.CURDIR)/packages
 
 all:	$(TARG)
 

@@ -135,6 +135,10 @@ If you are unsure of what man page you are looking for, enter
 where "subject-word" is your topic of interest; a list of possibly 
 related man pages will be displayed.
 
+Adding third party software; ``packages' and ``ports'':
+-------------------------------------------------------
+
+#include "packages"
 
 Administrivia:
 --------------
