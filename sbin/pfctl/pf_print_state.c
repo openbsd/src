@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.18 2003/01/07 00:21:08 dhartmei Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.19 2003/01/20 17:16:56 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,14 +58,21 @@
 void	print_name(struct pf_addr *, struct pf_addr *, sa_family_t);
 
 void
-print_addr(struct pf_addr_wrap *addr, sa_family_t af)
+print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 {
 	char buf[48];
 
 	if (addr->type == PF_ADDR_DYNIFTL)
 		printf("(%s)", addr->v.ifname);
 	else if (addr->type == PF_ADDR_TABLE)
-		printf("<%s>", addr->v.tblname);
+		if (verbose)
+			if (addr->p.tblcnt == -1)
+				printf("<%s:*>", addr->v.tblname);
+			else
+				printf("<%s:%d>", addr->v.tblname,
+				    addr->p.tblcnt);
+		else
+			printf("<%s>", addr->v.tblname);
 	else {
 		if (inet_ntop(af, &addr->v.a.addr, buf, sizeof(buf)) == NULL)
 			printf("?");
@@ -126,7 +133,7 @@ print_host(struct pf_state_host *h, sa_family_t af, int opts)
 		memset(&aw, 0, sizeof(aw));
 		aw.v.a.addr = h->addr;
 		memset(&aw.v.a.mask, 0xff, sizeof(aw.v.a.mask));
-		print_addr(&aw, af);
+		print_addr(&aw, af, opts & PF_OPT_VERBOSE2);
 	}
 
 	if (p) {

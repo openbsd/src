@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.132 2003/01/19 09:31:34 camield Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.133 2003/01/20 17:16:56 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -60,7 +60,7 @@ void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
 void		 print_gid (u_int8_t, gid_t, gid_t, const char *);
 void		 print_flags (u_int8_t);
 void		 print_fromto(struct pf_rule_addr *, struct pf_rule_addr *,
-		    u_int8_t, u_int8_t);
+		    u_int8_t, u_int8_t, int);
 
 struct node_host	*host_if(char *, int);
 struct node_host	*host_v4(char *);
@@ -361,7 +361,7 @@ print_flags(u_int8_t f)
 
 void
 print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
-    sa_family_t af, u_int8_t proto)
+    sa_family_t af, u_int8_t proto, int verbose)
 {
 	if (src->addr.type != PF_ADDR_NOROUTE &&
 	    dst->addr.type != PF_ADDR_NOROUTE &&
@@ -380,7 +380,7 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 		else {
 			if (src->not)
 				printf("! ");
-			print_addr(&src->addr, af);
+			print_addr(&src->addr, af, verbose);
 			printf(" ");
 		}
 		if (src->port_op)
@@ -397,7 +397,7 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 		else {
 			if (dst->not)
 				printf("! ");
-			print_addr(&dst->addr, af);
+			print_addr(&dst->addr, af, verbose);
 			printf(" ");
 		}
 		if (dst->port_op)
@@ -446,14 +446,14 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		case PF_NAT:
 		case PF_RDR:
 		case PF_BINAT:
-			print_addr(&pooladdr->addr.addr, af);
+			print_addr(&pooladdr->addr.addr, af, 0);
 			break;
 		case PF_PASS:
 			if (PF_AZERO(&pooladdr->addr.addr.v.a.addr, af))
 				printf("%s", pooladdr->ifname);
 			else {
 				printf("(%s ", pooladdr->ifname);
-				print_addr(&pooladdr->addr.addr, af);
+				print_addr(&pooladdr->addr.addr, af, 0);
 				printf(")");
 			}
 			break;
@@ -539,7 +539,7 @@ print_nat(struct pf_rule *n, int verbose)
 		else
 			printf("proto %u ", n->proto);
 	}
-	print_fromto(&n->src, &n->dst, n->af, n->proto);
+	print_fromto(&n->src, &n->dst, n->af, n->proto, verbose);
 	if (!n->anchorname[0] && (n->action == PF_NAT)) {
 		printf("-> ");
 		print_pool(&n->rpool, n->rpool.proxy_port[0],
@@ -581,7 +581,7 @@ print_binat(struct pf_rule *b, int verbose)
 	printf("from ");
 	if (!PF_AZERO(&b->src.addr.v.a.addr, b->af) ||
 	    !PF_AZERO(&b->src.addr.v.a.mask, b->af)) {
-		print_addr(&b->src.addr, b->af);
+		print_addr(&b->src.addr, b->af, verbose);
 		printf(" ");
 	} else
 		printf("any ");
@@ -590,7 +590,7 @@ print_binat(struct pf_rule *b, int verbose)
 	    !PF_AZERO(&b->dst.addr.v.a.mask, b->af)) {
 		if (b->dst.not)
 			printf("! ");
-		print_addr(&b->dst.addr, b->af);
+		print_addr(&b->dst.addr, b->af, verbose);
 		printf(" ");
 	} else
 		printf("any ");
@@ -638,7 +638,7 @@ print_rdr(struct pf_rule *r, int verbose)
 	    !PF_AZERO(&r->src.addr.v.a.mask, r->af)) {
 		if (r->src.not)
 			printf("! ");
-		print_addr(&r->src.addr, r->af);
+		print_addr(&r->src.addr, r->af, verbose);
 		printf(" ");
 	} else
 		printf("any ");
@@ -647,7 +647,7 @@ print_rdr(struct pf_rule *r, int verbose)
 	    !PF_AZERO(&r->dst.addr.v.a.mask, r->af)) {
 		if (r->dst.not)
 			printf("! ");
-		print_addr(&r->dst.addr, r->af);
+		print_addr(&r->dst.addr, r->af, verbose);
 		printf(" ");
 	} else
 		printf("any ");
@@ -851,7 +851,7 @@ print_filter(struct pf_rule *r, int verbose)
 		else
 			printf("proto %u ", r->proto);
 	}
-	print_fromto(&r->src, &r->dst, r->af, r->proto);
+	print_fromto(&r->src, &r->dst, r->af, r->proto, verbose);
 	if (r->uid.op)
 		print_uid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user");
 	if (r->gid.op)
