@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1995/11/07 21:16:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/04/28 11:12:35 deraadt Exp $
 
 # from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #
