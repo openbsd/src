@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.5 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: syscall.h,v 1.6 2002/07/12 20:18:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -34,9 +34,7 @@
 #ifndef __DL_SYSCALL_H__
 #define __DL_SYSCALL_H__
 
-#ifdef USE_CACHE
 #include <sys/stat.h>
-#endif
 
 #include <sys/syscall.h>
 
@@ -210,7 +208,6 @@ _dl_mprotect (const void *addr, int size, int prot)
 	return status;
 }
 
-#ifdef USE_CACHE
 extern inline int
 _dl_stat (const char *addr, struct stat *sb)
 {
@@ -225,8 +222,6 @@ _dl_stat (const char *addr, struct stat *sb)
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
-
-#endif
 
 /*
  * Not an actual syscall, but we need something in assembly to say

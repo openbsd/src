@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.7 2002/05/24 04:17:01 deraadt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.8 2002/07/12 20:18:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -57,6 +57,7 @@
  *	The following functions are declared inline so they can
  *	be used before bootstrap linking has been finished.
  */
+
 static inline void
 _dl_dcbf(Elf32_Addr *addr)
 {

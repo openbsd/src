@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.13 2002/05/27 23:37:25 deraadt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.14 2002/07/12 20:18:30 drahn Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -46,6 +46,7 @@
 
 #include "archdep.h"
 #include "util.h"
+#include "sod.h"
 
 #define PAGSIZ	__LDPGSZ
 int _dl_hinthash(char *cp, int vmajor, int vminor);
@@ -85,6 +86,7 @@ _dl_build_sod(name, sodp)
 	/* default */
 	major = minor = -1;
 
+	realname = NULL;
 	/* loop through name - parse skipping name */
 	for (tuplet = 0; (tok = strsep(&cp, ".")) != NULL; tuplet++) {
 		switch (tuplet) {
@@ -114,6 +116,9 @@ _dl_build_sod(name, sodp)
 			goto backout;
 		}
 	}
+	if (realname == NULL) {
+		goto backout;
+	}
 	cp = (char *)sodp->sod_name;
 	sodp->sod_name = (long)_dl_strdup(realname);
 	_dl_free(cp);
@@ -132,7 +137,7 @@ static long			hsize;
 static struct hints_header	*hheader = NULL;
 static struct hints_bucket	*hbuckets;
 static char			*hstrtab;
-static char			*hint_search_path = "";
+char				*_dl_hint_search_path = NULL;
 
 #define HINTS_VALID (hheader != NULL && hheader != (struct hints_header *)-1)
 
@@ -185,7 +190,7 @@ _dl_maphints()
 	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
 	hstrtab = (char *)(addr + hheader->hh_strtab);
 	if (hheader->hh_version >= LD_HINTS_VERSION_2)
-		hint_search_path = hstrtab + hheader->hh_dirlist;
+		_dl_hint_search_path = hstrtab + hheader->hh_dirlist;
 
 	/* close the file descriptor, leaving the hints mapped */
 	_dl_close(hfd);

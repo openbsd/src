@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.37 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: loader.c,v 1.38 2002/07/12 20:18:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -38,11 +38,13 @@
 #include <sys/mman.h>
 #include <sys/exec.h>
 #include <nlist.h>
+#include <string.h>
 #include <link.h>
 
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+#include "sod.h"
 
 /*
  * Local decls.
@@ -61,6 +63,8 @@ char *_dl_debug;
 char *_dl_showmap;
 
 struct r_debug *_dl_debug_map;
+
+void _dl_dopreload(char *paths);
 
 void
 _dl_debug_state(void)
@@ -88,6 +92,29 @@ _dl_dtors(void)
 	DL_DEB(("doing dtors\n"));
 	if (_dl_objects->next)
 		_dl_run_dtors(_dl_objects->next);
+}
+
+void
+_dl_dopreload(paths)
+	char		*paths;
+{
+	char		*cp, *dp;
+
+	dp = paths = _dl_strdup(paths);
+	if (dp == NULL) {
+		_dl_printf("preload: out of memory");
+		_dl_exit(1);
+	}
+
+	while ((cp = _dl_strsep(&dp, ":")) != NULL) {
+		if (_dl_load_shlib(cp, _dl_objects, OBJTYPE_LIB) == 0) {
+			_dl_printf("%s: can't load library '%s'\n",
+			    _dl_progname, cp);
+			_dl_exit(4);
+		}
+	}
+	_dl_free(paths);
+	return;
 }
 
 /*
@@ -139,7 +166,6 @@ _dl_boot(const char **argv, char **envp, const long loff,
 			_dl_debug = NULL;
 			_dl_unsetenv("LD_DEBUG", envp);
 		}
-
 	}
 
 	_dl_progname = argv[0];
@@ -150,6 +176,7 @@ _dl_boot(const char **argv, char **envp, const long loff,
 
 	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
+	exe_obj = NULL;
 	/*
 	 * Examine the user application and set up object information.
 	 */
@@ -164,6 +191,9 @@ _dl_boot(const char **argv, char **envp, const long loff,
 			us = _dl_strdup((char *)phdp->p_vaddr);
 		phdp++;
 	}
+
+	if (_dl_preload != NULL) 
+		_dl_dopreload(_dl_preload);
 
 	/*
 	 * Now, pick up and 'load' all libraries requierd. Start
@@ -202,7 +232,8 @@ _dl_boot(const char **argv, char **envp, const long loff,
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
-	_dl_rtld(_dl_objects);
+	if (_dl_traceld == NULL) 
+		_dl_rtld(_dl_objects);
 
 	/*
 	 * The first object is the executable itself,
@@ -232,13 +263,13 @@ _dl_boot(const char **argv, char **envp, const long loff,
 		}
 	}
 
-
 	/*
 	 * Finally make something to help gdb when poking around in the code.
 	 */
 #ifdef __mips__
 	map_link = (struct r_debug **)(exe_obj->Dyn.info[DT_MIPS_RLD_MAP - DT_LOPROC + DT_NUM]);
 #else
+	map_link = NULL;
 	for (dynp = exe_obj->load_dyn; dynp->d_tag; dynp++) {
 		if (dynp->d_tag == DT_DEBUG) {
 			map_link = (struct r_debug **)&dynp->d_un.d_ptr;
@@ -246,7 +277,6 @@ _dl_boot(const char **argv, char **envp, const long loff,
 		}
 	}
 	if (dynp->d_tag != DT_DEBUG) {
-		map_link = NULL;
 		DL_DEB(("failed to mark DTDEBUG\n"));
 	}
 #endif

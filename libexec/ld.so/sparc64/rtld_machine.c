@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.16 2002/06/05 23:13:55 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.17 2002/07/12 20:18:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -264,6 +264,8 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 		else
 			value = 0;
 
+		sym = NULL;
+		symn = NULL;
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 			sym = object->dyn.symtab;
 			sym += ELF_R_SYM(relas->r_info);

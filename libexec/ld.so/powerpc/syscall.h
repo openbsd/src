@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.8 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: syscall.h,v 1.9 2002/07/12 20:18:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -34,11 +34,12 @@
 #ifndef __DL_SYSCALL_H__
 #define __DL_SYSCALL_H__
 
-#ifdef USE_CACHE
 #include <sys/stat.h>
-#endif
 
 #include <sys/syscall.h>
+
+
+static off_t	_dl_lseek(int, off_t, int);
 
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 4096
@@ -145,7 +146,7 @@ _dl_read (int fd, const char* buf, int len)
 
 #define STRINGIFY(x)  #x
 #define XSTRINGIFY(x) STRINGIFY(x)
-int _dl__syscall(quad_t val, ...);
+long _dl__syscall(quad_t val, ...);
 __asm__(".align 2\n\t"
 	".type _dl__syscall,@function\n"
 	"_dl__syscall:\n\t"
@@ -157,7 +158,7 @@ __asm__(".align 2\n\t"
 	"1:\n\t"
 	"blr");
 
-static int
+static inline int
 _dl_mmap (void *addr, unsigned int len, unsigned int prot,
     unsigned int flags, int fd, off_t offset)
 {
@@ -204,7 +205,6 @@ _dl_mprotect (const void *addr, int size, int prot)
 	return status;
 }
 
-#ifdef USE_CACHE
 static inline int
 _dl_stat (const char *addr, struct stat *sb)
 {
@@ -224,7 +224,66 @@ _dl_stat (const char *addr, struct stat *sb)
 	return status;
 }
 
-#endif
+static inline int
+_dl_fstat (int fd, struct stat *sb)
+{
+	register int status __asm__ ("3");
+
+	__asm__ volatile ("mr    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "r" (SYS_fstat), "r" (fd), "r" (sb)
+	    : "0", "3", "4");
+	return status;
+}
+
+static inline int
+_dl_fcntl (int fd, int cmd, int flag)
+{
+	register int status __asm__ ("3");
+
+	__asm__ volatile ("mr    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "mr    5,%4\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "r" (SYS_fcntl), "r" (fd), "r" (cmd), "r"(flag)
+	    : "0", "3", "4", "5");
+	return status;
+}
+
+static inline int
+_dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
+{
+	register int status __asm__ ("3");
+
+	__asm__ volatile ("mr    0,%1\n\t"
+	    "mr    3,%2\n\t"
+	    "mr    4,%3\n\t"
+	    "mr    5,%4\n\t"
+	    "mr    6,%5\n\t"
+	    "sc\n\t"
+	    "cmpwi   0, 0\n\t"
+	    "beq   1f\n\t"
+	    "li    3,-1\n\t"
+	    "1:"
+	    : "=r" (status)
+	    : "r" (SYS_getdirentries), "r" (fd), "r" (buf), "r"(nbytes),
+	        "r" (basep)
+	    : "0", "3", "4", "5", "6");
+	return status;
+}
 
 static inline int
 _dl_issetugid()
@@ -242,5 +301,10 @@ _dl_issetugid()
 	    : "0", "3");
 	return status;
 }
-#include <elf_abi.h>
+
+static inline off_t
+_dl_lseek(int fildes, off_t offset, int whence)
+{
+        return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
+}
 #endif /*__DL_SYSCALL_H__*/

@@ -1,6 +1,7 @@
-/*	$OpenBSD: library.c,v 1.15 2002/06/05 19:34:44 art Exp $ */
+/*	$OpenBSD: library.c,v 1.16 2002/07/12 20:18:30 drahn Exp $ */
 
 /*
+ * Copyright (c) 2002 Dale Rahn
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,119 +37,287 @@
 
 #include <sys/types.h>
 #include <sys/syslimits.h>
+#include <sys/param.h>
 #include <fcntl.h>
 #include <nlist.h>
 #include <link.h>
 #include <sys/mman.h>
+#include <dirent.h>
 
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
+#include "dir.h"
+#include "sod.h"
+
+#define DEFAULT_PATH "/usr/lib"
 
 #define PFLAGS(X) ((((X) & PF_R) ? PROT_READ : 0) | \
 		   (((X) & PF_W) ? PROT_WRITE : 0) | \
 		   (((X) & PF_X) ? PROT_EXEC : 0))
 
-elf_object_t *_dl_tryload_shlib(const char *libname, int type);
-void	_dl_build_sod(const char *name, struct sod *sodp);
-char	*_dl_findhint(char *name, int major, int minor, char *prefered_path);
+static elf_object_t *_dl_tryload_shlib(const char *libname, int type);
+
+/*
+ * _dl_match_file()
+ *
+ * This fucntion determines if a given name matches what is specified
+ * in a struct sod. The major must match exactly, and the minor must
+ * be same or larger.
+ * 
+ * sodp is updated with the minor if this matches.
+ */
+
+int
+_dl_match_file(struct sod *sodp, char *name, int namelen)
+{
+	int match;
+	struct sod lsod;
+	char *lname;
+
+	lname = name;
+	if (sodp->sod_library) {
+		if (_dl_strncmp(name, "lib", 3)) {
+			return 0;
+		}
+		lname += 3;
+	}
+	if (_dl_strncmp(lname, (char *)sodp->sod_name,
+	    _dl_strlen((char *)sodp->sod_name))) {
+		return 0;
+	}
+
+	_dl_build_sod(name, &lsod);
+
+	match = 0;
+	if ((_dl_strcmp((char *)lsod.sod_name, (char *)sodp->sod_name) == 0) &&
+	    (lsod.sod_library == sodp->sod_library) &&
+	    (sodp->sod_major == lsod.sod_major) &&
+	    ((sodp->sod_minor == -1) ||
+	    (lsod.sod_minor >= sodp->sod_minor))) {
+		match = 1;
+
+		/* return version matched */
+		sodp->sod_minor = lsod.sod_minor; 
+	}
+	_dl_free((char *)lsod.sod_name);
+
+	return match;
+}
+
+char _dl_hint_store[MAXPATHLEN];
+
+char *
+_dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints)
+{
+	int len;
+	char *hint;
+	char lp[PATH_MAX + 10];
+	char *path;
+	const char *pp;
+	DIR *dd;
+	struct dirent *dp;
+	int match;
+
+	/* if we are to search default directories, and hints 
+	 * are not to be used, search the standard path from ldconfig
+	 * (_dl_hint_search_path) or use the default path
+	 */
+	if (nohints)
+		goto nohints;
+
+	if (searchpath == NULL) {
+		/* search 'standard' locations, find any match in the hints */
+		hint = _dl_findhint((char *)sodp->sod_name, sodp->sod_major,
+		    sodp->sod_minor, NULL);
+		if (hint)
+			return hint;
+	} else {
+		/* search hints requesting matches for only
+		 * the searchpath directories, 
+		 */
+		pp = searchpath;
+		while (pp) {
+			path = lp;
+			while (path < lp + PATH_MAX &&
+			    *pp && *pp != ':' && *pp != ';')
+				*path++ = *pp++;
+			*path = 0;
+
+			hint = _dl_findhint((char *)sodp->sod_name,
+			    sodp->sod_major, sodp->sod_minor, lp);
+			if (hint != NULL)
+				return hint;
+
+			if (*pp)	/* Try curdir if ':' at end */
+				pp++;
+			else
+				pp = 0;
+		}
+	}
+	/*
+	 * For each directory in the searchpath, read the directory
+	 * entries looking for a match to sod. filename compare is
+	 * done by _dl_match_file()
+	 */
+nohints:
+	if (searchpath == NULL) {
+		if (_dl_hint_search_path != NULL)
+			searchpath = _dl_hint_search_path;
+		else 
+			searchpath = DEFAULT_PATH;
+	}
+	pp = searchpath;
+	while (pp) {
+		path = lp;
+		while (path < lp + PATH_MAX && *pp && *pp != ':' && *pp != ';')
+			*path++ = *pp++;
+		*path = 0;
+
+		if ((dd = _dl_opendir(lp)) != NULL) {
+			match = 0;
+			while ((dp = _dl_readdir(dd)) != NULL) {
+				if (_dl_match_file(sodp, dp->d_name,
+				    dp->d_namlen)) {
+					/* When a match is found, sodp is
+					 * updated with the minor found.
+					 * We continue looking at this
+					 * directory, thus this will find
+					 * the largest matching library
+					 * in this directory.
+					 * we save off the d_name now
+					 * so that it doesn't have to be
+					 * recreated from the hint.
+					 */
+
+					match = 1;
+					len = _dl_strlcpy(_dl_hint_store, lp,
+					    MAXPATHLEN);
+					if (lp[len-1] != '/') {
+						_dl_hint_store[len] = '/';
+						len++;
+					}
+					_dl_strlcpy(&_dl_hint_store[len],
+						dp->d_name, MAXPATHLEN-len);
+				}
+			}
+			_dl_closedir(dd);
+			if (match)
+				return (_dl_hint_store);
+		}
+
+		if (*pp)	/* Try curdir if ':' at end */
+			pp++;
+		else
+			pp = 0;
+	}
+	return NULL;
+}
 
 /*
  *  Load a shared object. Search order is:
  *	If the name contains a '/' use the name exactly as is. (only)
  *	try the LD_LIBRARY_PATH specification (if present)
+ *	   search hints for match in LD_LIBRARY_PATH dirs
+ *           this will only match specific libary version.
+ *	   search LD_LIBRARY_PATH dirs for match.
+ *           this will find largest minor version in first dir found.
  *	check DT_RPATH paths, (if present)
- *	check /var/run/ld.so.hints cache
- *	last look in /usr/lib.
+ *	   search hints for match in DT_RPATH dirs
+ *           this will only match specific libary version.
+ *	   search DT_RPATH dirs for match.
+ *           this will find largest minor version in first dir found.
+ *	last look in default search directory, either as specified
+ *      by ldconfig or default to '/usr/lib'
  */
 
 elf_object_t *
 _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 {
-	char lp[PATH_MAX + 10], *hint, *path = lp;
 	elf_object_t *object;
-	const char *pp;
-	struct sod sodp;
+	struct sod sod;
+	struct sod req_sod;
+	char *hint;
+	int try_any_minor;
+	int ignore_hints;
+
+	try_any_minor = 0;
+	ignore_hints = 0;
 
 	if (_dl_strchr(libname, '/')) {
 		object = _dl_tryload_shlib(libname, type);
 		return(object);
 	}
 
+
+	_dl_build_sod(libname, &sod);
+	req_sod = sod;
+
+again:
 	/*
 	 *  No '/' in name. Scan the known places, LD_LIBRARY_PATH first.
 	 */
-	pp = _dl_libpath;
-	while (pp) {
-		const char *ln = libname;
-
-		path = lp;
-		while (path < lp + PATH_MAX && *pp && *pp != ':' && *pp != ';')
-			*path++ = *pp++;
-		/* Insert '/' */
-		if (path != lp && *(path - 1) != '/')
-			*path++ = '/';
-
-		while (path < lp + PATH_MAX && (*path++ = *ln++))
-			;
-		if (path < lp + PATH_MAX) {
-			object = _dl_tryload_shlib(lp, type);
-			if (object)
-				return(object);
+	if (_dl_libpath != NULL) {
+		hint = _dl_find_shlib(&req_sod, _dl_libpath, ignore_hints);
+		if (hint != NULL) {
+			if (req_sod.sod_minor < sod.sod_minor)
+				_dl_printf("warning: lib%s.so.%d.%d: "
+				    "minor version >= %d expected, "
+				    "using it anyway",
+				    sod.sod_name, sod.sod_major,
+				    sod.sod_minor, req_sod.sod_minor);
+			object = _dl_tryload_shlib(hint, type);
+			if (object != NULL) {
+				_dl_free((char *)sod.sod_name);
+				return (object);
+			}
 		}
-		if (*pp)	/* Try curdir if ':' at end */
-			pp++;
-		else
-			pp = 0;
 	}
 
 	/*
 	 *  Check DT_RPATH.
 	 */
-	pp = parent->dyn.rpath;
-	while (pp) {
-		const char *ln = libname;
-
-		path = lp;
-		while (path < lp + PATH_MAX && *pp && *pp != ':')
-			*path++ = *pp++;
-
-		/* Make sure '/' after dir path */
-		if (*(path - 1) != '/')
-			*path++ = '/';
-
-		while (path < lp + PATH_MAX && (*path++ = *ln++))
-			;
-		if (path < lp + PATH_MAX) {
-			object = _dl_tryload_shlib(lp, type);
-			if (object)
-				return(object);
+	if (parent->dyn.rpath != NULL) {
+		hint = _dl_find_shlib(&req_sod, parent->dyn.rpath,
+		    ignore_hints);
+		if (hint != NULL) {
+			if (req_sod.sod_minor < sod.sod_minor)
+				_dl_printf("warning: lib%s.so.%d.%d: "
+				    "minor version >= %d expected, "
+				    "using it anyway",
+				    sod.sod_name, sod.sod_major,
+				    sod.sod_minor, req_sod.sod_minor);
+			object = _dl_tryload_shlib(hint, type);
+			if (object != NULL) {
+				_dl_free((char *)sod.sod_name);
+				return (object);
+			}
 		}
-		if (*pp)	/* Try curdir if ':' at end */
-			pp++;
-		else
-			pp = 0;
 	}
 
-	_dl_build_sod(libname, &sodp);
-	if ((hint = _dl_findhint((char *)sodp.sod_name, sodp.sod_major,
-	    sodp.sod_minor, NULL)) != NULL) {
+	/* check 'standard' locations */
+	hint = _dl_find_shlib(&req_sod, NULL, ignore_hints);
+	if (hint != NULL) {
+		if (req_sod.sod_minor < sod.sod_minor)
+			_dl_printf("warning: lib%s.so.%d.%d: "
+			    "minor version >= %d expected, "
+			    "using it anyway",
+			    sod.sod_name, sod.sod_major,
+			    sod.sod_minor, req_sod.sod_minor);
 		object = _dl_tryload_shlib(hint, type);
-		return(object);
+		if (object != NULL) {
+			_dl_free((char *)sod.sod_name);
+			return(object);
+		}
 	}
 
-	/*
-	 *  Check '/usr/lib'
-	 */
-	_dl_strlcpy(lp, "/usr/lib/", sizeof(lp));
-	path = lp + sizeof("/usr/lib/") - 1;
-	while (path < lp + PATH_MAX && (*path++ = *libname++))
-		;
-	if (path < lp + PATH_MAX) {
-		object = _dl_tryload_shlib(lp, type);
-		if (object)
-			return(object);
+	if (try_any_minor == 0) {
+		try_any_minor = 1;
+		ignore_hints = 1;
+		req_sod.sod_minor = -1;
+		goto again;
 	}
+	_dl_free((char *)sod.sod_name);
 	_dl_errno = DL_NOT_FOUND;
 	return(0);
 }
@@ -165,10 +334,13 @@ _dl_load_list_free(struct load_list *load_list)
 	}
 }
 
+void _dl_run_dtors(elf_object_t *object);
+
 void
 _dl_unload_shlib(elf_object_t *object)
 {
 	if (--object->refcount == 0) {
+		_dl_run_dtors(object);
 		_dl_load_list_free(object->load_list);
 		_dl_munmap((void *)object->load_addr, object->load_size);
 		_dl_remove_object(object);
@@ -176,7 +348,7 @@ _dl_unload_shlib(elf_object_t *object)
 }
 
 
-elf_object_t *
+static elf_object_t *
 _dl_tryload_shlib(const char *libname, int type)
 {
 	int	libfile, i, align = _dl_pagesz - 1;

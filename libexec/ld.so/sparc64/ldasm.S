@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.11 2002/05/24 04:17:01 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.12 2002/07/12 20:18:30 drahn Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ _dl_bind_start_1:	# (x, y)
 	.type _dl_close,@function
 _dl_close:
 	mov SYS_close | SYSCALL_G2RFLAG, %g1	! call sys_close
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -231,7 +231,7 @@ _dl_close:
 	.type _dl_exit,@function
 _dl_exit:
 	mov SYS_exit | SYSCALL_G2RFLAG, %g1	! call sys_exit
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -251,11 +251,11 @@ _dl_issetugid:
 
 	.section ".text"
 	.align 4
-	.global _dl___syscall
-	.type _dl___syscall,@function
-_dl___syscall:
+	.global _dl__syscall
+	.type _dl__syscall,@function
+_dl__syscall:
 	mov SYS___syscall | SYSCALL_G2RFLAG, %g1	! call sys_exit
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -267,7 +267,7 @@ _dl___syscall:
 	.type _dl_munmap,@function
 _dl_munmap:
 	mov SYS_munmap | SYSCALL_G2RFLAG, %g1	! calling sys_mmap
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -279,7 +279,7 @@ _dl_munmap:
 	.type _dl_mprotect,@function
 _dl_mprotect:
 	mov SYS_mprotect | SYSCALL_G2RFLAG, %g1	! calling sys_mprotect
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -291,7 +291,7 @@ _dl_mprotect:
 	.type _dl_open,@function
 _dl_open:
 	mov SYS_open | SYSCALL_G2RFLAG, %g1	! calling sys_open
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -303,7 +303,7 @@ _dl_open:
 	.type _dl_read,@function
 _dl_read:
 	mov SYS_read | SYSCALL_G2RFLAG, %g1	! calling sys_read
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -315,7 +315,7 @@ _dl_read:
 	.type _dl_write,@function
 _dl_write:
 	mov SYS_write | SYSCALL_G2RFLAG, %g1	! calling sys_write
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
@@ -327,7 +327,43 @@ _dl_write:
 	.type _dl_stat,@function
 _dl_stat:
 	mov SYS_stat | SYSCALL_G2RFLAG, %g1	! call sys_stat
-	add %o7, 8, %g2				! just return on sucess
+	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
+
+
+	.section ".text"
+	.align 4
+	.globl _dl_fstat
+	.type _dl_fstat,@function
+_dl_fstat:
+	mov  SYS_fstat | SYSCALL_G2RFLAG, %g1	! call sys_fstat
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0                      ! error: result = -errno
+
+
+	.section ".text"
+	.align 4
+	.globl _dl_fcntl
+	.type _dl_fcntl,@function
+_dl_fcntl:
+	mov  SYS_fcntl | SYSCALL_G2RFLAG, %g1	! call sys_fstat
+	add %o7, 8, %g2				! just return on success
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0                      ! error: result = -errno
+
+
+	.section ".text"
+	.align 4
+	.globl _dl_getdirentries
+	.type _dl_getdirentries,@function
+_dl_getdirentries:
+	mov  SYS_getdirentries | SYSCALL_G2RFLAG, %g1	! call sys_fstat
+	add %o7, 8, %g2					! just return on success
+	t ST_SYSCALL					! off to wonderland
+	retl
+	 sub %g0, %o0, %o0                      ! error: result = -errno

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.11 2002/07/07 08:54:50 jufi Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.12 2002/07/12 20:18:30 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -81,6 +81,9 @@ _dl_printf("object relocation size %x, numrela %x\n",
 	if (relas == NULL)
 		return(0);
 
+	pltcall = NULL;
+	plttable = NULL;
+
 	/* for plt relocation usage */
 	if (object->Dyn.info[DT_JMPREL] != 0) {
 		/* resolver stub not set up */
@@ -144,6 +147,8 @@ _dl_printf("object relocation size %x, numrela %x\n",
 		sym += ELF32_R_SYM(relas->r_info);
 		this = sym;
 		symn = object->dyn.strtab + sym->st_name;
+
+		ooff = 0;
 
 		if (ELF32_R_SYM(relas->r_info) &&
 		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
@@ -344,6 +349,8 @@ _dl_dcbf(r_addr);
 			const Elf32_Sym *cpysrc = NULL;
 			Elf32_Addr src_loff;
 			int size;
+
+			src_loff = 0;
 			for (cobj = _dl_objects; cobj != NULL && cpysrc == NULL;
 			    cobj = cobj->next) {
 				if (object != cobj) {
