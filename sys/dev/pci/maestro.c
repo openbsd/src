@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.9 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.10 2001/09/05 08:29:55 espie Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -202,6 +202,7 @@ void	maestro_powerhook __P((int, void *));
 void 	maestro_channel_start __P((struct maestro_channel *));
 void 	maestro_channel_stop __P((struct maestro_channel *));
 void 	maestro_channel_advance_dma __P((struct maestro_channel *));
+void	maestro_channel_suppress_jitter __P((struct maestro_channel *));
 
 int	maestro_get_flags __P((struct pci_attach_args *));
 
@@ -1285,6 +1286,22 @@ maestro_channel_advance_dma(ch)
 #endif
 }
 
+/* Some maestro makes sometimes get desynchronized in stereo mode. */
+void
+maestro_channel_suppress_jitter(ch)
+	struct maestro_channel *ch;
+{
+	int cp, diff;
+
+	/* Verify that both channels are not too far off. */
+	cp = wp_apu_read(ch->sc, ch->num, APUREG_CURPTR);
+	diff = wp_apu_read(ch->sc, ch->num+1, APUREG_CURPTR) - cp;
+	if (diff > 4 || diff < -4)
+		/* Otherwise, directly resynch the 2nd channel. */
+		bus_space_write_2(ch->sc->iot, ch->sc->ioh,
+		    PORT_DSP_DATA, cp);
+}
+
 /* -----------------------------
  * Interrupt handler interface
  */
@@ -1342,9 +1359,11 @@ maestro_intr(arg)
 		    MIDDLE_VOLUME);
 	}
 
-	if (sc->play.mode & MAESTRO_RUNNING)
+	if (sc->play.mode & MAESTRO_RUNNING) {
 		maestro_channel_advance_dma(&sc->play);
-	/* XXX suppress jitter for stereo play? */
+		if (sc->play.mode & MAESTRO_STEREO)
+			maestro_channel_suppress_jitter(&sc->play);
+	}
 
 	if (sc->record.mode & MAESTRO_RUNNING)
 		maestro_channel_advance_dma(&sc->record);
