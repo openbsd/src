@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.36 2004/05/13 06:56:34 ho Exp $	 */
+/* $OpenBSD: sa.h,v 1.37 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -77,8 +77,8 @@ struct proto {
 	u_int8_t       *spi[2];
 
 	/*
-	 * The chosen transform, only valid while the incoming SA payload that held
-	 * it is available for duplicate testing.
+	 * The chosen transform, only valid while the incoming SA payload that
+	 * held it is available for duplicate testing.
          */
 	struct payload *chosen;
 
@@ -88,7 +88,7 @@ struct proto {
 	/* DOI-specific data.  */
 	void           *data;
 
-	/* Proposal transforms data, for validating the responders selection.  */
+	/* Proposal transforms data, for validating the responders selection. */
 	                TAILQ_HEAD(proto_attr_head, proto_attr) xfs;
 	size_t          xf_cnt;
 };
@@ -107,8 +107,8 @@ struct sa {
 	LIST_ENTRY(sa) link;
 
 	/*
-	 * When several SA's are being negotiated in one message we connect them
-	 * through this link.
+	 * When several SA's are being negotiated in one message we connect
+	 * them through this link.
          */
 	TAILQ_ENTRY(sa) next;
 
@@ -128,7 +128,7 @@ struct sa {
 	u_int8_t        message_id[ISAKMP_HDR_MESSAGE_ID_LEN];
 
 	/* The protection suite chosen.  */
-	                TAILQ_HEAD(proto_head, proto) protos;
+	TAILQ_HEAD(proto_head, proto) protos;
 
 	/* The exchange type we should use when rekeying.  */
 	u_int8_t        exch_type;
@@ -166,14 +166,15 @@ struct sa {
 	int             policy_id;
 
 	/*
-	 * The key used to authenticate phase 1, in printable format, used only by
-	 * KeyNote.
+	 * The key used to authenticate phase 1, in printable format, used
+	 * only by KeyNote.
          */
 	char           *keynote_key;
 
 	/*
-	 * Certificates or other information from Phase 1; these are copied from the
-	 * exchange, so look at exchange.h for an explanation of their use.
+	 * Certificates or other information from Phase 1; these are copied
+	 * from the exchange, so look at exchange.h for an explanation of
+	 * their use.
          */
 	int             recv_certtype, recv_keytype;
 	/* Certificate received from peer, native format.  */
@@ -182,8 +183,8 @@ struct sa {
 	void           *recv_key;
 
 	/*
-	 * Certificates or other information we used to authenticate to the peer,
-	 * Phase 1.
+	 * Certificates or other information we used to authenticate to the
+	 * peer, Phase 1.
          */
 	int             sent_certtype;
 	/* Certificate (to be) sent to peer, native format.  */
@@ -226,9 +227,8 @@ struct sa {
 #define SA_FLAG_IKECFG		0x40
 
 extern void     proto_free(struct proto * proto);
-extern int
-sa_add_transform(struct sa *, struct payload *, int,
-		 struct proto **);
+extern int	sa_add_transform(struct sa *, struct payload *, int,
+		    struct proto **);
 extern int      sa_create(struct exchange *, struct transport *);
 extern int      sa_enter(struct sa *);
 extern void     sa_delete(struct sa *, int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.16 2004/05/23 16:13:39 deraadt Exp $	 */
+/* $OpenBSD: key.c,v 1.17 2004/05/23 18:17:56 hshoexer Exp $	 */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -49,43 +49,45 @@ key_free(int type, int private, void *key)
 
 /* Convert from internal form to serialized */
 void
-key_serialize(int type, int private, void *key, u_int8_t **data, size_t *datalenp)
+key_serialize(int type, int private, void *key, u_int8_t **data,
+    size_t *datalenp)
 {
 	u_int8_t       *p;
 	size_t		datalen;
 
 	switch (type) {
 	case ISAKMP_KEY_PASSPHRASE:
-		*datalenp = strlen((char *) key);
-		*data = (u_int8_t *) strdup((char *) key);
+		*datalenp = strlen((char *)key);
+		*data = (u_int8_t *)strdup((char *)key);
 		break;
 	case ISAKMP_KEY_RSA:
 		switch (private) {
 		case ISAKMP_KEYTYPE_PUBLIC:
-			datalen = i2d_RSAPublicKey((RSA *) key, NULL);
+			datalen = i2d_RSAPublicKey((RSA *)key, NULL);
 			*data = p = malloc(datalen);
 			if (!p) {
 				log_error("key_serialize: malloc (%lu) failed",
-				    (unsigned long) datalen);
+				    (unsigned long)datalen);
 				return;
 			}
 			*datalenp = i2d_RSAPublicKey((RSA *) key, &p);
 			break;
 
 		case ISAKMP_KEYTYPE_PRIVATE:
-			datalen = i2d_RSAPrivateKey((RSA *) key, NULL);
+			datalen = i2d_RSAPrivateKey((RSA *)key, NULL);
 			*data = p = malloc(datalen);
 			if (!p) {
 				log_error("key_serialize: malloc (%lu) failed",
-				    (unsigned long) datalen);
+				    (unsigned long)datalen);
 				return;
 			}
-			*datalenp = i2d_RSAPrivateKey((RSA *) key, &p);
+			*datalenp = i2d_RSAPrivateKey((RSA *)key, &p);
 			break;
 		}
 		break;
 	default:
-		log_error("key_serialize: unknown/unsupported key type %d", type);
+		log_error("key_serialize: unknown/unsupported key type %d",
+		    type);
 		break;
 	}
 }
@@ -94,12 +96,12 @@ key_serialize(int type, int private, void *key, u_int8_t **data, size_t *datalen
 char *
 key_printable(int type, int private, u_int8_t *data, int datalen)
 {
-	char           *s;
-	int             i;
+	char	*s;
+	int	 i;
 
 	switch (type) {
 	case ISAKMP_KEY_PASSPHRASE:
-		return strdup((char *) data);
+		return strdup((char *)data);
 
 	case ISAKMP_KEY_RSA:
 		s = malloc(datalen * 2 + 1);
@@ -114,7 +116,8 @@ key_printable(int type, int private, u_int8_t *data, int datalen)
 		return s;
 
 	default:
-		log_error("key_printable: unknown/unsupported key type %d", type);
+		log_error("key_printable: unknown/unsupported key type %d",
+		    type);
 		return 0;
 	}
 }
@@ -125,7 +128,7 @@ key_internalize(int type, int private, u_int8_t *data, int datalen)
 {
 	switch (type) {
 	case ISAKMP_KEY_PASSPHRASE:
-		return strdup((char *) data);
+		return strdup((char *)data);
 	case ISAKMP_KEY_RSA:
 		switch (private) {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
@@ -170,10 +173,11 @@ key_from_printable(int type, int private, char *key, u_int8_t **data,
 		break;
 
 	case ISAKMP_KEY_RSA:
-		datalen = (strlen(key) + 1) / 2;	/* Round up, just in case */
+		datalen = (strlen(key) + 1) / 2; /* Round up, just in case */
 		*data = malloc(datalen);
 		if (!*data) {
-			log_error("key_from_printable: malloc (%d) failed", datalen);
+			log_error("key_from_printable: malloc (%d) failed",
+			    datalen);
 			*datalenp = 0;
 			return;
 		}
@@ -181,7 +185,8 @@ key_from_printable(int type, int private, char *key, u_int8_t **data,
 		break;
 
 	default:
-		log_error("key_from_printable: unknown/unsupported key type %d", type);
+		log_error("key_from_printable: unknown/unsupported key type %d",
+		    type);
 		*data = NULL;
 		*datalenp = 0;
 		break;

@@ -1,4 +1,4 @@
-/* $OpenBSD: log.h,v 1.20 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: log.h,v 1.21 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	 */
 
 /*
@@ -66,19 +66,18 @@ enum log_classes {
 #define LOG_DBG(x)	log_debug x
 #define LOG_DBG_BUF(x)	log_debug_buf x
 
-extern void
-log_debug(int, int, const char *,...)
-__attribute__((__format__(__printf__, 3, 4)));
-	extern void     log_debug_buf(int, int, const char *, const u_int8_t *, size_t);
-	extern void     log_debug_cmd(int, int);
-	extern void     log_debug_toggle(void);
+extern void	log_debug(int, int, const char *,...)
+		    __attribute__((__format__(__printf__, 3, 4)));
+extern void     log_debug_buf(int, int, const char *, const u_int8_t *, size_t);
+extern void     log_debug_cmd(int, int);
+extern void     log_debug_toggle(void);
 
 #define PCAP_FILE_DEFAULT "/var/run/isakmpd.pcap"
-	extern void     log_packet_init(char *);
-	extern void     log_packet_iov(struct sockaddr *, struct sockaddr *,
+extern void     log_packet_init(char *);
+extern void     log_packet_iov(struct sockaddr *, struct sockaddr *,
 				                       struct iovec *, int);
-	extern void     log_packet_restart(char *);
-	extern void     log_packet_stop(void);
+extern void     log_packet_restart(char *);
+extern void     log_packet_stop(void);
 
 #else				/* !USE_DEBUG */
 
@@ -88,17 +87,16 @@ __attribute__((__format__(__printf__, 3, 4)));
 #endif				/* USE_DEBUG */
 
 extern FILE    *log_current(void);
-extern void
-log_error(const char *,...)
-__attribute__((__format__(__printf__, 1, 2)));
-	extern void     log_fatal(const char *,...)
-                __attribute__((__format__(__printf__, 1, 2)));
-	extern void     log_print(const char *,...)
-                __attribute__((__format__(__printf__, 1, 2)));
-	extern void     log_verbose(const char *,...)
-                __attribute__((__format__(__printf__, 1, 2)));
-	extern void     log_to(FILE *);
-	extern void     log_init(int);
-	extern void     log_reinit(void);
+extern void	log_error(const char *,...)
+		    __attribute__((__format__(__printf__, 1, 2)));
+extern void     log_fatal(const char *,...)
+		    __attribute__((__format__(__printf__, 1, 2)));
+extern void     log_print(const char *,...)
+		    __attribute__((__format__(__printf__, 1, 2)));
+extern void     log_verbose(const char *,...)
+		    __attribute__((__format__(__printf__, 1, 2)));
+extern void     log_to(FILE *);
+extern void     log_init(int);
+extern void     log_reinit(void);
 
 #endif				/* _LOG_H_ */

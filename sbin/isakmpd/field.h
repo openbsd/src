@@ -1,4 +1,4 @@
-/* $OpenBSD: field.h,v 1.5 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: field.h,v 1.6 2004/05/23 18:17:55 hshoexer Exp $	 */
 /* $EOM: field.h,v 1.3 1998/08/02 20:25:01 niklas Exp $	 */
 
 /*
@@ -35,12 +35,12 @@
 #include <sys/types.h>
 
 struct field {
-	char           *name;
-	int             offset;
-	size_t          len;
+	char	*name;
+	int	 offset;
+	size_t	 len;
 	enum {
-		raw, num, mask, ign, cst
-	}               type;
+		 raw, num, mask, ign, cst
+	}	 type;
 	struct constant_map **maps;
 };
 

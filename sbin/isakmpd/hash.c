@@ -1,4 +1,4 @@
-/* $OpenBSD: hash.c,v 1.15 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: hash.c,v 1.16 2004/05/23 18:17:55 hshoexer Exp $	 */
 /* $EOM: hash.c,v 1.10 1999/04/17 23:20:34 niklas Exp $	 */
 
 /*
@@ -45,12 +45,12 @@
 #include "hash.h"
 #include "log.h"
 
-void            hmac_init(struct hash *, unsigned char *, unsigned int);
-void            hmac_final(unsigned char *, struct hash *);
+void	hmac_init(struct hash *, unsigned char *, unsigned int);
+void	hmac_final(unsigned char *, struct hash *);
 
 /* Temporary hash contexts.  */
 static union {
-	MD5_CTX         md5ctx;
+	MD5_CTX		md5ctx;
 	SHA1_CTX        sha1ctx;
 } Ctx, Ctx2;
 
@@ -61,19 +61,19 @@ static unsigned char digest[HASH_MAX];
 
 static struct hash hashes[] = {
     {
-	HASH_MD5, 5, MD5_SIZE, (void *) &Ctx.md5ctx, digest,
-	sizeof(MD5_CTX), (void *) &Ctx2.md5ctx,
-	(void (*) (void *)) MD5Init,
-	(void (*) (void *, unsigned char *, unsigned int)) MD5Update,
-	(void (*) (unsigned char *, void *)) MD5Final,
+	HASH_MD5, 5, MD5_SIZE, (void *)&Ctx.md5ctx, digest,
+	sizeof(MD5_CTX), (void *)&Ctx2.md5ctx,
+	(void (*)(void *))MD5Init,
+	(void (*)(void *, unsigned char *, unsigned int))MD5Update,
+	(void (*)(unsigned char *, void *))MD5Final,
 	hmac_init,
 	hmac_final
     }, {
-	HASH_SHA1, 6, SHA1_SIZE, (void *) &Ctx.sha1ctx, digest,
-	sizeof(SHA1_CTX), (void *) &Ctx2.sha1ctx,
-	(void (*) (void *)) SHA1Init,
-	(void (*) (void *, unsigned char *, unsigned int)) SHA1Update,
-	(void (*) (unsigned char *, void *)) SHA1Final,
+	HASH_SHA1, 6, SHA1_SIZE, (void *)&Ctx.sha1ctx, digest,
+	sizeof(SHA1_CTX), (void *)&Ctx2.sha1ctx,
+	(void (*)(void *))SHA1Init,
+	(void (*)(void *, unsigned char *, unsigned int))SHA1Update,
+	(void (*)(unsigned char *, void *))SHA1Final,
 	hmac_init,
 	hmac_final
     },
@@ -82,7 +82,7 @@ static struct hash hashes[] = {
 struct hash *
 hash_get(enum hashes hashtype)
 {
-	size_t          i;
+	size_t	i;
 
 	LOG_DBG((LOG_CRYPTO, 60, "hash_get: requested algorithm %d", hashtype));
 

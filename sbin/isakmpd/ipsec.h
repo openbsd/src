@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.h,v 1.23 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: ipsec.h,v 1.24 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	 */
 
 /*
@@ -67,8 +67,8 @@ struct ipsec_exch {
 	u_int8_t        pfs;
 
 	/*
-	 * A copy of the initiator SA payload body for later computation of hashes.
-	 * Phase 1 only.
+	 * A copy of the initiator SA payload body for later computation of
+	 * hashes.  Phase 1 only.
          */
 	size_t          sa_i_b_len;
 	u_int8_t       *sa_i_b;
@@ -144,34 +144,30 @@ struct ipsec_proto {
 	u_int8_t       *keymat[2];
 };
 
-extern u_int8_t *ipsec_add_hash_payload(struct message * msg, size_t);
+extern u_int8_t *ipsec_add_hash_payload(struct message *, size_t);
 extern int      ipsec_ah_keylength(struct proto *);
 extern u_int8_t *ipsec_build_id(char *, size_t *);
 extern int      ipsec_decode_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
-extern void
-ipsec_decode_transform(struct message *, struct sa *,
-		       struct proto *, u_int8_t *);
+extern void	ipsec_decode_transform(struct message *, struct sa *,
+		    struct proto *, u_int8_t *);
 extern int      ipsec_esp_authkeylength(struct proto *);
 extern int      ipsec_esp_enckeylength(struct proto *);
-extern int      ipsec_fill_in_hash(struct message * msg);
+extern int      ipsec_fill_in_hash(struct message *);
 extern int      ipsec_gen_g_x(struct message *);
-extern int
-ipsec_get_id(char *, int *, struct sockaddr **,
-	     struct sockaddr **, u_int8_t *, u_int16_t *);
+extern int	ipsec_get_id(char *, int *, struct sockaddr **,
+		    struct sockaddr **, u_int8_t *, u_int16_t *);
 extern ssize_t  ipsec_id_size(char *, u_int8_t *);
 extern char    *ipsec_id_string(u_int8_t *, size_t);
 extern void     ipsec_init(void);
-extern int      ipsec_initial_contact(struct message * msg);
-extern int
-ipsec_is_attribute_incompatible(u_int16_t, u_int8_t *, u_int16_t,
-				void *);
+extern int      ipsec_initial_contact(struct message *);
+extern int	ipsec_is_attribute_incompatible(u_int16_t, u_int8_t *,
+		    u_int16_t, void *);
 extern int      ipsec_keymat_length(struct proto *);
 extern int      ipsec_save_g_x(struct message *);
 extern struct sa *ipsec_sa_lookup(struct sockaddr *, u_int32_t, u_int8_t);
 
-extern char    *
-ipsec_decode_ids(char *, u_int8_t *, size_t, u_int8_t *, size_t,
-		 int);
+extern char	*ipsec_decode_ids(char *, u_int8_t *, size_t, u_int8_t *,
+		    size_t, int);
 extern int      ipsec_clone_id(u_int8_t **, size_t *, u_int8_t *, size_t);
 
 #endif				/* _IPSEC_H_ */

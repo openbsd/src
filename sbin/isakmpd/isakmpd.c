@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.62 2004/05/19 14:30:26 ho Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.63 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -157,7 +157,8 @@ parse_args(int argc, char *argv[])
 					for (cls = 0; cls < LOG_ENDCLASS; cls++)
 						log_debug_cmd(cls, level);
 				} else
-					log_print("parse_args: -D argument unparseable: %s", optarg);
+					log_print("parse_args: -D argument "
+					    "unparseable: %s", optarg);
 			} else
 				log_debug_cmd(cls, level);
 			break;
@@ -197,7 +198,8 @@ parse_args(int argc, char *argv[])
 			seed = strtoul(optarg, &ep, 0);
 			srandom(seed);
 			if (*ep != '\0')
-				log_fatal("parse_args: invalid numeric arg to -r (%s)", optarg);
+				log_fatal("parse_args: invalid numeric arg "
+				    "to -r (%s)", optarg);
 			regrand = 1;
 			break;
 
@@ -281,7 +283,7 @@ sigusr2(int sig)
 }
 
 static int
-phase2_sa_check(struct sa * sa, void *arg)
+phase2_sa_check(struct sa *sa, void *arg)
 {
 	return sa->phase == 2;
 }
@@ -290,7 +292,7 @@ static void
 daemon_shutdown(void)
 {
 	/* Perform a (protocol-wise) clean shutdown of the daemon.  */
-	struct sa      *sa;
+	struct sa	*sa;
 
 	if (sigtermed == 1) {
 		log_print("isakmpd: shutting down...");
@@ -330,7 +332,7 @@ daemon_shutdown_now(int sig)
 static void
 write_pid_file(void)
 {
-	FILE           *fp;
+	FILE	*fp;
 
 	/* Ignore errors. This will fail with USE_PRIVSEP.  */
 	unlink(pid_file);
@@ -338,11 +340,12 @@ write_pid_file(void)
 	fp = monitor_fopen(pid_file, "w");
 	if (fp != NULL) {
 		if (fprintf(fp, "%ld\n", (long) getpid()) < 0)
-			log_error("write_pid_file: failed to write PID to \"%.100s\"",
-			    pid_file);
+			log_error("write_pid_file: failed to write PID to "
+			    "\"%.100s\"", pid_file);
 		fclose(fp);
 	} else
-		log_fatal("write_pid_file: fopen (\"%.100s\", \"w\") failed", pid_file);
+		log_fatal("write_pid_file: fopen (\"%.100s\", \"w\") failed",
+		    pid_file);
 }
 
 int
@@ -430,10 +433,12 @@ main(int argc, char *argv[])
 	mask_size = howmany(n, NFDBITS) * sizeof(fd_mask);
 	rfds = (fd_set *) malloc(mask_size);
 	if (!rfds)
-		log_fatal("main: malloc (%lu) failed", (unsigned long) mask_size);
+		log_fatal("main: malloc (%lu) failed",
+		    (unsigned long)mask_size);
 	wfds = (fd_set *) malloc(mask_size);
 	if (!wfds)
-		log_fatal("main: malloc (%lu) failed", (unsigned long) mask_size);
+		log_fatal("main: malloc (%lu) failed",
+		    (unsigned long)mask_size);
 
 #if defined (USE_PRIVSEP)
 	monitor_init_done();
@@ -457,15 +462,17 @@ main(int argc, char *argv[])
 			rehash_timers();
 		}
 		/*
-		 * and if someone set 'sigtermed' (SIGTERM, SIGINT or via the UI),
-		 * this indicates we should start a controlled shutdown of the daemon.
+		 * and if someone set 'sigtermed' (SIGTERM, SIGINT or via the
+		 * UI), this indicates we should start a controlled shutdown
+		 * of the daemon.
 	         *
-		 * Note: Since _one_ message is sent per iteration of this enclosing
-		 * while-loop, and we want to send a number of DELETE notifications,
-		 * we must loop atleast this number of times. The daemon_shutdown()
-		 * function starts by queueing the DELETEs, all other calls just
-		 * increments the 'sigtermed' variable until it reaches a "safe"
-		 * value, and the daemon exits.
+		 * Note: Since _one_ message is sent per iteration of this
+		 * enclosing while-loop, and we want to send a number of
+		 * DELETE notifications, we must loop atleast this number of
+		 * times. The daemon_shutdown() function starts by queueing
+		 * the DELETEs, all other calls just increments the
+		 * 'sigtermed' variable until it reaches a "safe" value, and
+		 * the daemon exits.
 	         */
 		if (sigtermed)
 			daemon_shutdown();
@@ -478,8 +485,9 @@ main(int argc, char *argv[])
 			n = ui_socket + 1;
 
 		/*
-		 * XXX Some day we might want to deal with an abstract application
-		 * class instead, with many instantiations possible.
+		 * XXX Some day we might want to deal with an abstract
+		 * application class instead, with many instantiations
+		 * possible.
 	         */
 		if (!app_none && app_socket >= 0) {
 			FD_SET(app_socket, rfds);
@@ -514,7 +522,8 @@ main(int argc, char *argv[])
 			transport_send_messages(wfds);
 			if (FD_ISSET(ui_socket, rfds))
 				ui_handler();
-			if (!app_none && app_socket >= 0 && FD_ISSET(app_socket, rfds))
+			if (!app_none && app_socket >= 0 &&
+			    FD_ISSET(app_socket, rfds))
 				app_handler();
 		}
 		timer_handle_expirations();

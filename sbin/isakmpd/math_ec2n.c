@@ -1,4 +1,4 @@
-/* $OpenBSD: math_ec2n.c,v 1.10 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: math_ec2n.c,v 1.11 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: math_ec2n.c,v 1.9 1999/04/20 09:23:31 niklas Exp $	 */
 
 /*
@@ -98,7 +98,7 @@ ec2ng_set(ec2ng_ptr d, ec2ng_ptr n)
 int
 ec2np_right(b2n_ptr n, ec2np_ptr p, ec2ng_ptr g)
 {
-	b2n_t           temp;
+	b2n_t	temp;
 
 	b2n_init(temp);
 
@@ -134,9 +134,8 @@ fail:
 int
 ec2np_ison(ec2np_ptr p, ec2ng_ptr g)
 {
-	int             res;
-
-	b2n_t           x, y, temp;
+	int	res;
+	b2n_t	x, y, temp;
 
 	if (p->inf)
 		return 1;
@@ -180,7 +179,7 @@ fail:
 int
 ec2np_find_y(ec2np_ptr p, ec2ng_ptr g)
 {
-	b2n_t           right;
+	b2n_t	right;
 
 	b2n_init(right);
 
@@ -217,8 +216,8 @@ fail:
 int
 ec2np_add(ec2np_ptr d, ec2np_ptr a, ec2np_ptr b, ec2ng_ptr g)
 {
-	b2n_t           lambda, temp;
-	ec2np_t         pn;
+	b2n_t	lambda, temp;
+	ec2np_t	pn;
 
 	/* Check for Neutral Element */
 	if (b->inf)
@@ -226,7 +225,8 @@ ec2np_add(ec2np_ptr d, ec2np_ptr a, ec2np_ptr b, ec2ng_ptr g)
 	if (a->inf)
 		return ec2np_set(d, b);
 
-	if (!b2n_cmp(a->x, b->x) && (b2n_cmp(a->y, b->y) || !b2n_cmp_null(a->x))) {
+	if (!b2n_cmp(a->x, b->x) && (b2n_cmp(a->y, b->y) ||
+	    !b2n_cmp_null(a->x))) {
 		d->inf = 1;
 		if (b2n_set_null(d->x))
 			return -1;
@@ -303,9 +303,9 @@ fail:
 int
 ec2np_mul(ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
 {
-	int             i, j, bits, start;
-	b2n_t           h, k;
-	ec2np_t         q, mina;
+	int	i, j, bits, start;
+	b2n_t	h, k;
+	ec2np_t	q, mina;
 
 	if (!b2n_cmp_null(e)) {
 		d->inf = 1;
@@ -356,10 +356,12 @@ ec2np_mul(ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
 			if (i > 0 || j > 0) {
 				if (ec2np_add(q, q, q, g))
 					goto fail;
-				if ((h->limp[i] & b2n_mask[j]) && !(k->limp[i] & b2n_mask[j])) {
+				if ((h->limp[i] & b2n_mask[j]) && !(k->limp[i]
+				    & b2n_mask[j])) {
 					if (ec2np_add(q, q, a, g))
 						goto fail;
-				} else if (!(h->limp[i] & b2n_mask[j]) && (k->limp[i] & b2n_mask[j]))
+				} else if (!(h->limp[i] & b2n_mask[j])
+				    && (k->limp[i] & b2n_mask[j]))
 					if (ec2np_add(q, q, mina, g))
 						goto fail;
 			}

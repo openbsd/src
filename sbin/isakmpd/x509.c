@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.88 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.89 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -107,11 +107,11 @@ LIST_HEAD(x509_list, x509_hash) * x509_tab = 0;
 int
 x509_generate_kn(int id, X509 *cert)
 {
-	char	*fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s\"\n"
-	    "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
+	char	*fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s"
+	    	     "\"\nConditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	char	*ikey, *skey, *buf, isname[256], subname[256];
 	char	*fmt2 = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\n"
-	    "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
+		     "Conditions: %s >= \"%s\" && %s <= \"%s\";\n";
 	X509_NAME *issuer, *subject;
 	struct keynote_deckey dc;
 	X509_STORE_CTX  csc;
@@ -144,14 +144,17 @@ x509_generate_kn(int id, X509 *cert)
 	ikey = kn_encode_key(&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
 	    KEYNOTE_PUBLIC_KEY);
 	if (keynote_errno == ERROR_MEMORY) {
-		log_print("x509_generate_kn: failed to get memory for public key");
+		log_print("x509_generate_kn: failed to get memory for "
+		    "public key");
 		RSA_free(key);
-		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get subject key"));
+		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get "
+		    "subject key"));
 		return 0;
 	}
 	if (!ikey) {
 		RSA_free(key);
-		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get subject key"));
+		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get "
+		    "subject key"));
 		return 0;
 	}
 	RSA_free(key);
@@ -162,8 +165,8 @@ x509_generate_kn(int id, X509 *cert)
 	    X509_LU_X509) {
 		X509_STORE_CTX_cleanup(&csc);
 		X509_STORE_CTX_init(&csc, x509_certs, cert, NULL);
-		if (X509_STORE_get_by_subject(&csc, X509_LU_X509, issuer, &obj) !=
-		    X509_LU_X509) {
+		if (X509_STORE_get_by_subject(&csc, X509_LU_X509, issuer, &obj)
+		    != X509_LU_X509) {
 			X509_STORE_CTX_cleanup(&csc);
 			LOG_DBG((LOG_POLICY, 30,
 			    "x509_generate_kn: no certificate found for issuer"));
@@ -192,16 +195,19 @@ x509_generate_kn(int id, X509 *cert)
 	skey = kn_encode_key(&dc, INTERNAL_ENC_PKCS1, ENCODING_HEX,
 	    KEYNOTE_PUBLIC_KEY);
 	if (keynote_errno == ERROR_MEMORY) {
-		log_error("x509_generate_kn: failed to get memory for public key");
+		log_error("x509_generate_kn: failed to get memory for public "
+		    "key");
 		free(ikey);
 		RSA_free(key);
-		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer key"));
+		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer "
+		    "key"));
 		return 0;
 	}
 	if (!skey) {
 		free(ikey);
 		RSA_free(key);
-		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer key"));
+		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: cannot get issuer "
+		    "key"));
 		return 0;
 	}
 	RSA_free(key);
@@ -246,7 +252,8 @@ x509_generate_kn(int id, X509 *cert)
 			if ((tm->length < 10) || (tm->length > 13)) {
 				LOG_DBG((LOG_POLICY, 30,
 				    "x509_generate_kn: invalid length "
-				    "of NotValidBefore time field (%d)", tm->length));
+				    "of NotValidBefore time field (%d)",
+				    tm->length));
 				free(ikey);
 				free(skey);
 				free(buf);
@@ -272,14 +279,17 @@ x509_generate_kn(int id, X509 *cert)
 			}
 			/* Stupid UTC tricks.  */
 			if (tm->data[0] < '5')
-				snprintf(before, sizeof before, "20%s", tm->data);
+				snprintf(before, sizeof before, "20%s",
+				    tm->data);
 			else
-				snprintf(before, sizeof before, "19%s", tm->data);
+				snprintf(before, sizeof before, "19%s",
+				    tm->data);
 		} else {	/* V_ASN1_GENERICTIME */
 			if ((tm->length < 12) || (tm->length > 15)) {
 				LOG_DBG((LOG_POLICY, 30,
 				    "x509_generate_kn: invalid length of "
-				    "NotValidBefore time field (%d)", tm->length));
+				    "NotValidBefore time field (%d)",
+				    tm->length));
 				free(ikey);
 				free(skey);
 				free(buf);
@@ -379,7 +389,8 @@ x509_generate_kn(int id, X509 *cert)
 			if ((tm->length < 12) || (tm->length > 15)) {
 				LOG_DBG((LOG_POLICY, 30,
 				    "x509_generate_kn: invalid length of "
-				    "NotValidAfter time field (%d)", tm->length));
+				    "NotValidAfter time field (%d)",
+				    tm->length));
 				free(ikey);
 				free(skey);
 				free(buf);
@@ -414,7 +425,8 @@ x509_generate_kn(int id, X509 *cert)
 		after[14] = '\0';	/* This will overwrite trailing 'Z' */
 	}
 
-	snprintf(buf, buf_len, fmt, skey, ikey, timecomp, before, timecomp2, after);
+	snprintf(buf, buf_len, fmt, skey, ikey, timecomp, before, timecomp2,
+	    after);
 	free(ikey);
 	free(skey);
 
@@ -445,8 +457,8 @@ x509_generate_kn(int id, X509 *cert)
 		log_error("x509_generate_kn: malloc (%d) failed", buf_len);
 		return 0;
 	}
-	snprintf(buf, buf_len, fmt2, isname, subname, timecomp, before, timecomp2,
-	    after);
+	snprintf(buf, buf_len, fmt2, isname, subname, timecomp, before,
+	    timecomp2, after);
 
 	if (kn_add_assertion(id, buf, strlen(buf), ASSERT_FLAG_LOCAL) == -1) {
 		LOG_DBG((LOG_POLICY, 30,
@@ -454,7 +466,8 @@ x509_generate_kn(int id, X509 *cert)
 		free(buf);
 		return 0;
 	}
-	LOG_DBG((LOG_POLICY, 80, "x509_generate_kn: added credential:\n%s", buf));
+	LOG_DBG((LOG_POLICY, 80, "x509_generate_kn: added credential:\n%s",
+	    buf));
 
 	free(buf);
 	return 1;
@@ -492,7 +505,7 @@ x509_hash_init(void)
 	if (x509_tab) {
 		for (i = 0; i <= bucket_mask; i++)
 			for (certh = LIST_FIRST(&x509_tab[i]); certh;
-			     certh = LIST_FIRST(&x509_tab[i])) {
+			    certh = LIST_FIRST(&x509_tab[i])) {
 				LIST_REMOVE(certh, link);
 				free(certh);
 			}
@@ -501,7 +514,7 @@ x509_hash_init(void)
 	x509_tab = malloc((bucket_mask + 1) * sizeof(struct x509_list));
 	if (!x509_tab)
 		log_fatal("x509_hash_init: malloc (%lu) failed",
-		    (bucket_mask + 1) * (unsigned long) sizeof(struct x509_list));
+		    (bucket_mask + 1) * (unsigned long)sizeof(struct x509_list));
 	for (i = 0; i <= bucket_mask; i++) {
 		LIST_INIT(&x509_tab[i]);
 	}
@@ -524,7 +537,8 @@ x509_hash_find(u_int8_t *id, size_t len)
 		id_found = 0;
 		for (i = 0; i < n; i++) {
 			LOG_DBG_BUF((LOG_CRYPTO, 70, "cert_cmp", id, len));
-			LOG_DBG_BUF((LOG_CRYPTO, 70, "cert_cmp", cid[i], clen[i]));
+			LOG_DBG_BUF((LOG_CRYPTO, 70, "cert_cmp", cid[i],
+			    clen[i]));
 			/*
 			 * XXX This identity predicate needs to be
 			 * understood.
@@ -566,7 +580,7 @@ x509_hash_enter(X509 *cert)
 		if (!certh) {
 			cert_free_subjects(n, id, len);
 			log_error("x509_hash_enter: calloc (1, %lu) failed",
-			    (unsigned long) sizeof *certh);
+			    (unsigned long)sizeof *certh);
 			return 0;
 		}
 		certh->cert = cert;
@@ -574,7 +588,8 @@ x509_hash_enter(X509 *cert)
 		bucket = x509_hash(id[i], len[i]);
 
 		LIST_INSERT_HEAD(&x509_tab[bucket], certh, link);
-		LOG_DBG((LOG_CRYPTO, 70, "x509_hash_enter: cert %p added to bucket %d",
+		LOG_DBG((LOG_CRYPTO, 70,
+		    "x509_hash_enter: cert %p added to bucket %d",
 		    cert, bucket));
 	}
 	cert_free_subjects(n, id, len);
@@ -609,8 +624,8 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 	dir = monitor_opendir(name);
 	if (!dir) {
 		LOG_DBG((LOG_CRYPTO, 10,
-		    "x509_read_from_dir: opendir (\"%s\") failed: "
-		    "%s", name, strerror(errno)));
+		    "x509_read_from_dir: opendir (\"%s\") failed: %s",
+		    name, strerror(errno)));
 		return 0;
 	}
 	strlcpy(fullname, name, sizeof fullname);
@@ -631,7 +646,8 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 				continue;
 		}
 
-		LOG_DBG((LOG_CRYPTO, 60, "x509_read_from_dir: reading certificate %s",
+		LOG_DBG((LOG_CRYPTO, 60,
+		    "x509_read_from_dir: reading certificate %s",
 		    file->d_name));
 
 #if defined (USE_PRIVSEP)
@@ -651,7 +667,8 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 #else
 		certh = BIO_new(BIO_s_file());
 		if (!certh) {
-			log_error("x509_read_from_dir: BIO_new (BIO_s_file ()) failed");
+			log_error("x509_read_from_dir: BIO_new (BIO_s_file "
+			    "()) failed");
 			continue;
 		}
 		if (BIO_read_filename(certh, fullname) == -1) {
@@ -669,20 +686,20 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 		BIO_free(certh);
 #endif				/* USE_PRIVSEP */
 		if (cert == NULL) {
-			log_print("x509_read_from_dir: PEM_read_bio_X509 failed for %s",
-			    file->d_name);
+			log_print("x509_read_from_dir: PEM_read_bio_X509 "
+			    "failed for %s", file->d_name);
 			continue;
 		}
 		if (!X509_STORE_add_cert(ctx, cert)) {
 			/*
 			 * This is actually expected if we have several
-			 * certificates only differing in subjectAltName, which
-			 * is not an something that is strange.  Consider
-			 * multi-homed machines.
+			 * certificates only differing in subjectAltName,
+			 * which is not an something that is strange.
+			 * Consider multi-homed machines.
 		         */
 			LOG_DBG((LOG_CRYPTO, 50,
-			    "x509_read_from_dir: X509_STORE_add_cert failed for %s",
-			    file->d_name));
+			    "x509_read_from_dir: X509_STORE_add_cert failed "
+			    "for %s", file->d_name));
 		}
 		if (hash)
 			if (!x509_hash_enter(cert))
@@ -717,13 +734,13 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		log_print("x509_read_crls_from_dir: directory name too long");
 		return 0;
 	}
-	LOG_DBG((LOG_CRYPTO, 40, "x509_read_crls_from_dir: reading CRLs from %s",
-	    name));
+	LOG_DBG((LOG_CRYPTO, 40, "x509_read_crls_from_dir: reading CRLs "
+	    "from %s", name));
 
 	dir = monitor_opendir(name);
 	if (!dir) {
-		LOG_DBG((LOG_CRYPTO, 10, "x509_read_crls_from_dir: opendir (\"%s\") "
-		    "failed: %s", name, strerror(errno)));
+		LOG_DBG((LOG_CRYPTO, 10, "x509_read_crls_from_dir: opendir "
+		    "(\"%s\") failed: %s", name, strerror(errno)));
 		return 0;
 	}
 	strlcpy(fullname, name, sizeof fullname);
@@ -739,12 +756,13 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		} else {
 			struct stat     sb;
 
-			if (monitor_stat(fullname, &sb) == -1 || !(sb.st_mode & S_IFREG))
+			if (monitor_stat(fullname, &sb) == -1 ||
+			    !(sb.st_mode & S_IFREG))
 				continue;
 		}
 
-		LOG_DBG((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading CRL %s",
-		    file->d_name));
+		LOG_DBG((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading "
+		    "CRL %s", file->d_name));
 
 #if defined (USE_PRIVSEP)
 		crlfp = monitor_fopen(fullname, "r");
@@ -765,7 +783,8 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		if (BIO_read_filename(crlh, fullname) == -1) {
 			BIO_free(crlh);
 			log_error("x509_read_crls_from_dir: "
-			    "BIO_read_filename (crlh, \"%s\") failed", fullname);
+			    "BIO_read_filename (crlh, \"%s\") failed",
+			    fullname);
 			continue;
 		}
 		crl = PEM_read_bio_X509_CRL(crlh, NULL, NULL, NULL);
@@ -774,7 +793,8 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 #endif				/* USE_PRIVSEP */
 		if (crl == NULL) {
 			log_print("x509_read_crls_from_dir: "
-			    "PEM_read_bio_X509_CRL failed for %s", file->d_name);
+			    "PEM_read_bio_X509_CRL failed for %s",
+			    file->d_name);
 			continue;
 		}
 		if (!X509_STORE_add_crl(ctx, crl)) {
@@ -783,11 +803,12 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 			continue;
 		}
 		/*
-		 * XXX This is to make x509_cert_validate set this (and another) flag
-		 * XXX when validating certificates. Currently, OpenSSL defaults to
-		 * XXX reject an otherwise valid certificate (chain) if these flags
-		 * XXX are set but there are no CRLs to check. The current workaround
-		 * XXX is to only set the flags if we actually loaded some CRL data.
+		 * XXX This is to make x509_cert_validate set this (and
+		 * XXX another) flag when validating certificates. Currently,
+		 * XXX OpenSSL defaults to reject an otherwise valid
+		 * XXX certificate (chain) if these flags are set but there
+		 * XXX are no CRLs to check. The current workaround is to only
+		 * XXX set the flags if we actually loaded some CRL data.
 	         */
 		X509_STORE_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
 	}
@@ -802,7 +823,7 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 int
 x509_cert_init(void)
 {
-	char           *dirname;
+	char	*dirname;
 
 	x509_hash_init();
 
@@ -856,7 +877,7 @@ x509_crl_init(void)
 	 * support it.
          */
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
-	char           *dirname;
+	char	*dirname;
 	dirname = conf_get_str("X509-certificates", "CRL-directory");
 	if (!dirname) {
 		log_print("x509_crl_init: no CRL-directory");
@@ -940,10 +961,10 @@ x509_cert_validate(void *scert)
 int
 x509_cert_insert(int id, void *scert)
 {
-	X509           *cert;
-	int             res;
+	X509	*cert;
+	int	 res;
 
-	cert = X509_dup((X509 *) scert);
+	cert = X509_dup((X509 *)scert);
 	if (!cert) {
 		log_print("x509_cert_insert: X509_dup failed");
 		return 0;
@@ -998,7 +1019,8 @@ x509_certreq_validate(u_int8_t *asn, u_int32_t len)
 
 	if (!asn_template_clone(&name, 1) ||
 	    (asn = asn_decode_sequence(asn, len, &name)) == 0) {
-		log_print("x509_certreq_validate: can not decode 'acceptable CA' info");
+		log_print("x509_certreq_validate: can not decode 'acceptable "
+		    "CA' info");
 		res = 0;
 	}
 	asn_free(&name);
@@ -1021,13 +1043,14 @@ x509_certreq_decode(u_int8_t *asn, u_int32_t len)
 
 	if (!asn_template_clone(&aca, 1) ||
 	    (asn = asn_decode_sequence(asn, len, &aca)) == 0) {
-		log_print("x509_certreq_decode: can not decode 'acceptable CA' info");
+		log_print("x509_certreq_decode: can not decode 'acceptable "
+		    "CA' info");
 		goto fail;
 	}
 	memset(&naca, 0, sizeof(naca));
 
-	tmp = asn_decompose("aca.RelativeDistinguishedName.AttributeValueAssertion",
-	    &aca);
+	tmp = asn_decompose("aca.RelativeDistinguishedName."
+	    "AttributeValueAssertion", &aca);
 	if (!tmp)
 		goto fail;
 	x509_get_attribval(tmp, &naca.name1);
@@ -1146,7 +1169,8 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 
 	if (!subjectaltname || !subjectaltname->value ||
 	    !subjectaltname->value->data || subjectaltname->value->length < 4) {
-		log_print("x509_cert_subjectaltname: invalid subjectaltname extension");
+		log_print("x509_cert_subjectaltname: invalid "
+		    "subjectaltname extension");
 		return 0;
 	}
 	/* SSL does not handle unknown ASN stuff well, do it by hand.  */
@@ -1156,7 +1180,8 @@ x509_cert_subjectaltname(X509 *scert, u_int8_t **altname, u_int32_t *len)
 	sandata += 4;
 
 	if (sanlen + 4 != subjectaltname->value->length) {
-		log_print("x509_cert_subjectaltname: subjectaltname invalid length");
+		log_print("x509_cert_subjectaltname: subjectaltname invalid "
+		    "length");
 		return 0;
 	}
 	*len = sanlen;
@@ -1181,8 +1206,9 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 	*id_len = 0;
 
 	/*
-	 * XXX There can be a collection of subjectAltNames, but for now
-	 * I only return the subjectName and a single subjectAltName, if present.
+	 * XXX There can be a collection of subjectAltNames, but for now I
+	 * only return the subjectName and a single subjectAltName, if
+	 * present.
          */
 	type = x509_cert_subjectaltname(cert, &altname, &altlen);
 	if (!type) {
@@ -1194,13 +1220,13 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 	*id = calloc(*cnt, sizeof **id);
 	if (!*id) {
 		log_print("x509_cert_get_subject: malloc (%lu) failed",
-		    *cnt * (unsigned long) sizeof **id);
+		    *cnt * (unsigned long)sizeof **id);
 		goto fail;
 	}
 	*id_len = malloc(*cnt * sizeof **id_len);
 	if (!*id_len) {
 		log_print("x509_cert_get_subject: malloc (%lu) failed",
-		    *cnt * (unsigned long) sizeof **id_len);
+		    *cnt * (unsigned long)sizeof **id_len);
 		goto fail;
 	}
 	/* Stash the subjectName into the first slot.  */
@@ -1209,10 +1235,12 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 		goto fail;
 
 	(*id_len)[0] =
-		ISAKMP_ID_DATA_OFF + i2d_X509_NAME(subject, NULL) - ISAKMP_GEN_SZ;
+		ISAKMP_ID_DATA_OFF + i2d_X509_NAME(subject, NULL) -
+		    ISAKMP_GEN_SZ;
 	(*id)[0] = malloc((*id_len)[0]);
 	if (!(*id)[0]) {
-		log_print("x509_cert_get_subject: malloc (%d) failed", (*id_len)[0]);
+		log_print("x509_cert_get_subject: malloc (%d) failed",
+		    (*id_len)[0]);
 		goto fail;
 	}
 	SET_ISAKMP_ID_TYPE((*id)[0] - ISAKMP_GEN_SZ, IPSEC_ID_DER_ASN1_DN);
@@ -1238,8 +1266,8 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 
 		case X509v3_IP_ADDR:
 			/*
-			 * XXX I dislike the numeric constants, but I don't know what we
-			 * should use otherwise.
+			 * XXX I dislike the numeric constants, but I don't
+			 * know what we should use otherwise.
 		         */
 			switch (altlen) {
 			case 4:
@@ -1251,8 +1279,8 @@ x509_cert_get_subjects(void *scert, int *cnt, u_int8_t ***id,
 				break;
 
 			default:
-				log_print("x509_cert_get_subject: "
-				    "invalid subjectAltName IPaddress length %d ",
+				log_print("x509_cert_get_subject: invalid "
+				    "subjectAltName IPaddress length %d ",
 				    altlen);
 				goto fail;
 			}
@@ -1304,9 +1332,9 @@ x509_cert_get_key(void *scert, void *keyp)
 		X509_free(cert);
 		return 0;
 	}
-	*(RSA **) keyp = RSAPublicKey_dup(key->pkey.rsa);
+	*(RSA **)keyp = RSAPublicKey_dup(key->pkey.rsa);
 
-	return *(RSA **) keyp == NULL ? 0 : 1;
+	return *(RSA **)keyp == NULL ? 0 : 1;
 }
 
 void *
@@ -1320,13 +1348,13 @@ x509_serialize(void *scert, u_int8_t **data, u_int32_t *datalen)
 {
 	u_int8_t       *p;
 
-	*datalen = i2d_X509((X509 *) scert, NULL);
+	*datalen = i2d_X509((X509 *)scert, NULL);
 	*data = p = malloc(*datalen);
 	if (!p) {
 		log_error("x509_serialize: malloc (%d) failed", *datalen);
 		return;
 	}
-	*datalen = i2d_X509((X509 *) scert, &p);
+	*datalen = i2d_X509((X509 *)scert, &p);
 }
 
 /* From cert to printable */
@@ -1344,7 +1372,8 @@ x509_printable(void *cert)
 	s = malloc(datalen * 2 + 1);
 	if (!s) {
 		free(data);
-		log_error("x509_printable: malloc (%d) failed", datalen * 2 + 1);
+		log_error("x509_printable: malloc (%d) failed",
+		    datalen * 2 + 1);
 		return 0;
 	}
 	for (i = 0; i < datalen; i++)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_main_mode.c,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: ike_main_mode.c,v 1.14 2004/05/23 18:17:55 hshoexer Exp $	 */
 /* $EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	 */
 
 /*
@@ -62,7 +62,7 @@ static int      initiator_send_ID_AUTH(struct message *);
 static int      responder_send_ID_AUTH(struct message *);
 static int      responder_send_KE_NONCE(struct message *);
 
-int             (*ike_main_mode_initiator[]) (struct message *) = {
+int (*ike_main_mode_initiator[]) (struct message *) = {
 	ike_phase_1_initiator_send_SA,
 	ike_phase_1_initiator_recv_SA,
 	ike_phase_1_initiator_send_KE_NONCE,
@@ -71,7 +71,7 @@ int             (*ike_main_mode_initiator[]) (struct message *) = {
 	ike_phase_1_recv_ID_AUTH
 };
 
-int             (*ike_main_mode_responder[]) (struct message *) = {
+int (*ike_main_mode_responder[]) (struct message *) = {
 	ike_phase_1_responder_recv_SA,
 	ike_phase_1_responder_send_SA,
 	ike_phase_1_recv_KE_NONCE,
@@ -81,7 +81,7 @@ int             (*ike_main_mode_responder[]) (struct message *) = {
 };
 
 static int
-initiator_send_ID_AUTH(struct message * msg)
+initiator_send_ID_AUTH(struct message *msg)
 {
 	msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 
@@ -96,7 +96,7 @@ initiator_send_ID_AUTH(struct message * msg)
 
 /* Send our public DH value and a nonce to the initiator.  */
 int
-responder_send_KE_NONCE(struct message * msg)
+responder_send_KE_NONCE(struct message *msg)
 {
 	/* XXX Should we really just use the initiator's nonce size?  */
 	if (ike_phase_1_send_KE_NONCE(msg, msg->exchange->nonce_i_len))
@@ -107,14 +107,13 @@ responder_send_KE_NONCE(struct message * msg)
 	 * on a roundtrip over the wire.
          */
 	message_register_post_send(msg,
-				   (void (*) (struct message *))
-				   ike_phase_1_post_exchange_KE_NONCE);
+	    (void (*)(struct message *))ike_phase_1_post_exchange_KE_NONCE);
 
 	return 0;
 }
 
 static int
-responder_send_ID_AUTH(struct message * msg)
+responder_send_ID_AUTH(struct message *msg)
 {
 	msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 

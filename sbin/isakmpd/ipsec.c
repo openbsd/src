@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.90 2004/05/19 14:30:26 ho Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.91 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -104,9 +104,8 @@ static void     ipsec_free_proto_data(void *);
 static void     ipsec_free_sa_data(void *);
 static struct keystate *ipsec_get_keystate(struct message *);
 static u_int8_t *ipsec_get_spi(size_t *, u_int8_t, struct message *);
-static int
-ipsec_handle_leftover_payload(struct message *, u_int8_t,
-			      struct payload *);
+static int	ipsec_handle_leftover_payload(struct message *, u_int8_t,
+		    struct payload *);
 static int      ipsec_informational_post_hook(struct message *);
 static int      ipsec_informational_pre_hook(struct message *);
 static int      ipsec_initiator(struct message *);
@@ -116,11 +115,11 @@ static void     ipsec_setup_situation(u_int8_t *);
 static int      ipsec_set_network(u_int8_t *, u_int8_t *, struct ipsec_sa *);
 static size_t   ipsec_situation_size(void);
 static u_int8_t ipsec_spi_size(u_int8_t);
-static int      ipsec_validate_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
+static int      ipsec_validate_attribute(u_int16_t, u_int8_t *, u_int16_t,
+		    void *);
 static int      ipsec_validate_exchange(u_int8_t);
-static int
-ipsec_validate_id_information(u_int8_t, u_int8_t *, u_int8_t *,
-			      size_t, struct exchange *);
+static int	ipsec_validate_id_information(u_int8_t, u_int8_t *, u_int8_t *,
+		    size_t, struct exchange *);
 static int      ipsec_validate_key_information(u_int8_t *, size_t);
 static int      ipsec_validate_notification(u_int16_t);
 static int      ipsec_validate_proto(u_int8_t);
@@ -163,7 +162,7 @@ static struct doi ipsec_doi = {
 	ipsec_decode_ids
 };
 
-int16_t         script_quick_mode[] = {
+int16_t script_quick_mode[] = {
 	ISAKMP_PAYLOAD_HASH,	/* Initiator -> responder.  */
 	ISAKMP_PAYLOAD_SA,
 	ISAKMP_PAYLOAD_NONCE,
@@ -176,7 +175,7 @@ int16_t         script_quick_mode[] = {
 	EXCHANGE_SCRIPT_END
 };
 
-int16_t         script_new_group_mode[] = {
+int16_t script_new_group_mode[] = {
 	ISAKMP_PAYLOAD_HASH,	/* Initiator -> responder.  */
 	ISAKMP_PAYLOAD_SA,
 	EXCHANGE_SCRIPT_SWITCH,
@@ -223,7 +222,8 @@ ipsec_sa_check(struct sa *sa, void *v_arg)
 	for (proto = TAILQ_FIRST(&sa->protos); proto;
 	    proto = TAILQ_NEXT(proto, link))
 		if ((arg->proto == 0 || proto->proto == arg->proto) &&
-		    memcmp(proto->spi[incoming], &arg->spi, sizeof arg->spi) == 0)
+		    memcmp(proto->spi[incoming], &arg->spi, sizeof arg->spi)
+		    == 0)
 			return 1;
 	return 0;
 }
@@ -279,7 +279,7 @@ ipsec_sa_check_flow(struct sa * sa, void *v_arg)
  * the final message.
  */
 static void
-ipsec_finalize_exchange(struct message * msg)
+ipsec_finalize_exchange(struct message *msg)
 {
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_sa *isa;
@@ -319,7 +319,8 @@ ipsec_finalize_exchange(struct message * msg)
 		switch (exchange->type) {
 		case IKE_EXCH_QUICK_MODE:
 			/*
-			 * Tell the application(s) about the SPIs and key material.
+			 * Tell the application(s) about the SPIs and key
+			 * material.
 		         */
 			for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
 			    sa = TAILQ_NEXT(sa, next)) {
@@ -341,8 +342,8 @@ ipsec_finalize_exchange(struct message * msg)
 					 * Responder is source, initiator is
 					 * destination.
 					 */
-					if (ipsec_set_network(ie->id_cr, ie->id_ci,
-					    isa)) {
+					if (ipsec_set_network(ie->id_cr,
+					    ie->id_ci, isa)) {
 						log_print("ipsec_finalize_exchange: "
 						    "ipsec_set_network failed");
 						return;
@@ -354,12 +355,14 @@ ipsec_finalize_exchange(struct message * msg)
 				    proto = TAILQ_NEXT(proto, link)) {
 					if (sysdep_ipsec_set_spi(sa, proto,
 					    0, isakmp_sa) ||
-					    (last_proto && sysdep_ipsec_group_spis(sa,
-					    last_proto, proto, 0)) ||
+					    (last_proto &&
+					    	sysdep_ipsec_group_spis(sa,
+					    	last_proto, proto, 0)) ||
 					    sysdep_ipsec_set_spi(sa, proto,
-					    1, isakmp_sa) ||
-					    (last_proto && sysdep_ipsec_group_spis(sa,
-					    last_proto, proto, 1)))
+						1, isakmp_sa) ||
+					    (last_proto &&
+					    	sysdep_ipsec_group_spis(sa,
+						last_proto, proto, 1)))
 						/*
 						 * XXX Tear down this
 						 * exchange.
@@ -379,11 +382,14 @@ ipsec_finalize_exchange(struct message * msg)
 					mask2 = 0;
 
 				LOG_DBG((LOG_EXCHANGE, 50,
-				    "ipsec_finalize_exchange: "
-				    "src %s %s dst %s %s tproto %u sport %u dport %u",
-				     addr1 ? addr1 : "<??\?>", mask1 ? mask1 : "<??\?>",
-				    addr2 ? addr2 : "<??\?>", mask2 ? mask2 : "<??\?>",
-				     isa->tproto, ntohs(isa->sport), ntohs(isa->dport)));
+				    "ipsec_finalize_exchange: src %s %s "
+				    "dst %s %s tproto %u sport %u dport %u",
+				    addr1 ? addr1 : "<??\?>",
+				    mask1 ?  mask1 : "<??\?>",
+				    addr2 ? addr2 : "<??\?>",
+				    mask2 ? mask2 : "<??\?>",
+				    isa->tproto, ntohs(isa->sport),
+				    ntohs(isa->dport)));
 
 				if (addr1)
 					free(addr1);
@@ -397,8 +403,9 @@ ipsec_finalize_exchange(struct message * msg)
 #endif				/* USE_DEBUG */
 
 				/*
-				 * If this is not an SA acquired by the kernel, it needs
-				 * to have a SPD entry (a.k.a. flow) set up.
+				 * If this is not an SA acquired by the
+				 * kernel, it needs to have a SPD entry
+				 * (a.k.a. flow) set up.
 			         */
 				if (!(sa->flags & SA_FLAG_ONDEMAND) &&
 				    sysdep_ipsec_enable_sa(sa, isakmp_sa))
@@ -409,7 +416,8 @@ ipsec_finalize_exchange(struct message * msg)
 				 * Mark elder SAs with the same flow
 				 * information as replaced.
 				 */
-				while ((old_sa = sa_find(ipsec_sa_check_flow, sa)) != 0)
+				while ((old_sa = sa_find(ipsec_sa_check_flow,
+				    sa)) != 0)
 					sa_mark_replaced(old_sa);
 			}
 			break;
@@ -421,14 +429,14 @@ ipsec_finalize_exchange(struct message * msg)
 static int
 ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 {
-	int             id;
+	int	id;
 
 	/* Set source address/mask.  */
 	id = GET_ISAKMP_ID_TYPE(src_id);
 	switch (id) {
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
-		isa->src_net = (struct sockaddr *) calloc(1,
+		isa->src_net = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in));
 		if (!isa->src_net)
 			goto memfail;
@@ -437,7 +445,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->src_net->sa_len = sizeof(struct sockaddr_in);
 #endif
 
-		isa->src_mask = (struct sockaddr *) calloc(1,
+		isa->src_mask = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in));
 		if (!isa->src_mask)
 			goto memfail;
@@ -449,7 +457,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 
 	case IPSEC_ID_IPV6_ADDR:
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
-		isa->src_net = (struct sockaddr *) calloc(1,
+		isa->src_net = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in6));
 		if (!isa->src_net)
 			goto memfail;
@@ -458,7 +466,7 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->src_net->sa_len = sizeof(struct sockaddr_in6);
 #endif
 
-		isa->src_mask = (struct sockaddr *) calloc(1,
+		isa->src_mask = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in6));
 		if (!isa->src_mask)
 			goto memfail;
@@ -492,21 +500,22 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		break;
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
-		memcpy(sockaddr_addrdata(isa->src_mask), src_id + ISAKMP_ID_DATA_OFF +
-		    sockaddr_addrlen(isa->src_net), sockaddr_addrlen(isa->src_mask));
+		memcpy(sockaddr_addrdata(isa->src_mask), src_id +
+		    ISAKMP_ID_DATA_OFF + sockaddr_addrlen(isa->src_net),
+		    sockaddr_addrlen(isa->src_mask));
 		break;
 	}
 
 	memcpy(&isa->sport, src_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
-	       IPSEC_ID_PORT_LEN);
+	    IPSEC_ID_PORT_LEN);
 
 	/* Set destination address.  */
 	id = GET_ISAKMP_ID_TYPE(dst_id);
 	switch (id) {
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
-		isa->dst_net =
-			(struct sockaddr *) calloc(1, sizeof(struct sockaddr_in));
+		isa->dst_net = (struct sockaddr *)calloc(1,
+		    sizeof(struct sockaddr_in));
 		if (!isa->dst_net)
 			goto memfail;
 		isa->dst_net->sa_family = AF_INET;
@@ -514,8 +523,8 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->dst_net->sa_len = sizeof(struct sockaddr_in);
 #endif
 
-		isa->dst_mask =
-			(struct sockaddr *) calloc(1, sizeof(struct sockaddr_in));
+		isa->dst_mask = (struct sockaddr *)calloc(1,
+		    sizeof(struct sockaddr_in));
 		if (!isa->dst_mask)
 			goto memfail;
 		isa->dst_mask->sa_family = AF_INET;
@@ -526,8 +535,8 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 
 	case IPSEC_ID_IPV6_ADDR:
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
-		isa->dst_net =
-			(struct sockaddr *) calloc(1, sizeof(struct sockaddr_in6));
+		isa->dst_net = (struct sockaddr *)calloc(1,
+		    sizeof(struct sockaddr_in6));
 		if (!isa->dst_net)
 			goto memfail;
 		isa->dst_net->sa_family = AF_INET6;
@@ -535,8 +544,8 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		isa->dst_net->sa_len = sizeof(struct sockaddr_in6);
 #endif
 
-		isa->dst_mask =
-			(struct sockaddr *) calloc(1, sizeof(struct sockaddr_in6));
+		isa->dst_mask = (struct sockaddr *)calloc(1,
+		    sizeof(struct sockaddr_in6));
 		if (!isa->dst_mask)
 			goto memfail;
 		isa->dst_mask->sa_family = AF_INET6;
@@ -548,27 +557,27 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 
 	/* Net */
 	memcpy(sockaddr_addrdata(isa->dst_net), dst_id + ISAKMP_ID_DATA_OFF,
-	       sockaddr_addrlen(isa->dst_net));
+	    sockaddr_addrlen(isa->dst_net));
 
 	/* Mask */
 	switch (id) {
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV6_ADDR:
 		memset(sockaddr_addrdata(isa->dst_mask), 0xff,
-		       sockaddr_addrlen(isa->dst_mask));
+		    sockaddr_addrlen(isa->dst_mask));
 		break;
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
-		memcpy(sockaddr_addrdata(isa->dst_mask), dst_id + ISAKMP_ID_DATA_OFF +
-		       sockaddr_addrlen(isa->dst_net),
-		       sockaddr_addrlen(isa->dst_mask));
+		memcpy(sockaddr_addrdata(isa->dst_mask), dst_id +
+		    ISAKMP_ID_DATA_OFF + sockaddr_addrlen(isa->dst_net),
+		    sockaddr_addrlen(isa->dst_mask));
 		break;
 	}
 
-	memcpy(&isa->tproto, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PROTO_OFF,
-	       IPSEC_ID_PROTO_LEN);
+	memcpy(&isa->tproto, dst_id + ISAKMP_ID_DOI_DATA_OFF +
+	    IPSEC_ID_PROTO_OFF, IPSEC_ID_PROTO_LEN);
 	memcpy(&isa->dport, dst_id + ISAKMP_ID_DOI_DATA_OFF + IPSEC_ID_PORT_OFF,
-	       IPSEC_ID_PORT_LEN);
+	    IPSEC_ID_PORT_LEN);
 	return 0;
 
 memfail:
@@ -612,7 +621,8 @@ ipsec_free_exchange_data(void *vie)
 	if (ie->group)
 		group_free(ie->group);
 #ifdef USE_ISAKMP_CFG
-	for (attr = LIST_FIRST(&ie->attrs); attr; attr = LIST_FIRST(&ie->attrs)) {
+	for (attr = LIST_FIRST(&ie->attrs); attr;
+	    attr = LIST_FIRST(&ie->attrs)) {
 		LIST_REMOVE(attr, link);
 		if (attr->length)
 			free(attr->value);
@@ -689,7 +699,7 @@ ipsec_get_keystate(struct message * msg)
 		ks = malloc(sizeof *ks);
 		if (!ks) {
 			log_error("ipsec_get_keystate: malloc (%lu) failed",
-				  (unsigned long) sizeof *ks);
+			    (unsigned long) sizeof *ks);
 			return 0;
 		}
 		memcpy(ks, msg->exchange->keystate, sizeof *ks);
@@ -702,45 +712,43 @@ ipsec_get_keystate(struct message * msg)
          */
 	if (!msg->isakmp_sa->keystate) {
 		log_print("ipsec_get_keystate: no keystate in ISAKMP SA %p",
-			  msg->isakmp_sa);
+		    msg->isakmp_sa);
 		return 0;
 	}
 	ks = crypto_clone_keystate(msg->isakmp_sa->keystate);
 	if (!ks)
 		return 0;
 
-	hash = hash_get(((struct ipsec_sa *) msg->isakmp_sa->data)->hash);
+	hash = hash_get(((struct ipsec_sa *)msg->isakmp_sa->data)->hash);
 	hash->Init(hash->ctx);
 	LOG_DBG_BUF((LOG_CRYPTO, 80, "ipsec_get_keystate: final phase 1 IV",
-		     ks->riv, ks->xf->blocksize));
+	    ks->riv, ks->xf->blocksize));
 	hash->Update(hash->ctx, ks->riv, ks->xf->blocksize);
 	LOG_DBG_BUF((LOG_CRYPTO, 80, "ipsec_get_keystate: message ID",
-		     ((u_int8_t *) msg->iov[0].iov_base)
-		     + ISAKMP_HDR_MESSAGE_ID_OFF,
-		     ISAKMP_HDR_MESSAGE_ID_LEN));
-	hash->Update(hash->ctx,
 	    ((u_int8_t *) msg->iov[0].iov_base) + ISAKMP_HDR_MESSAGE_ID_OFF,
-		     ISAKMP_HDR_MESSAGE_ID_LEN);
+	    ISAKMP_HDR_MESSAGE_ID_LEN));
+	hash->Update(hash->ctx, ((u_int8_t *) msg->iov[0].iov_base) +
+	    ISAKMP_HDR_MESSAGE_ID_OFF, ISAKMP_HDR_MESSAGE_ID_LEN);
 	hash->Final(hash->digest, hash->ctx);
 	crypto_init_iv(ks, hash->digest, ks->xf->blocksize);
 	LOG_DBG_BUF((LOG_CRYPTO, 80, "ipsec_get_keystate: phase 2 IV",
-		     hash->digest, ks->xf->blocksize));
+	    hash->digest, ks->xf->blocksize));
 	return ks;
 }
 
 static void
-ipsec_setup_situation(u_int8_t * buf)
+ipsec_setup_situation(u_int8_t *buf)
 {
 	SET_IPSEC_SIT_SIT(buf + ISAKMP_SA_SIT_OFF, IPSEC_SIT_IDENTITY_ONLY);
 }
 
-static          size_t
+static size_t
 ipsec_situation_size(void)
 {
 	return IPSEC_SIT_SIT_LEN;
 }
 
-static          u_int8_t
+static u_int8_t
 ipsec_spi_size(u_int8_t proto)
 {
 	return IPSEC_SPI_SIZE;
@@ -748,13 +756,13 @@ ipsec_spi_size(u_int8_t proto)
 
 static int
 ipsec_validate_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
-			 void *vmsg)
+    void *vmsg)
 {
 	struct message *msg = vmsg;
 
 	if ((msg->exchange->phase == 1
-	     && (type < IKE_ATTR_ENCRYPTION_ALGORITHM
-		 || type > IKE_ATTR_GROUP_ORDER))
+	    && (type < IKE_ATTR_ENCRYPTION_ALGORITHM
+		|| type > IKE_ATTR_GROUP_ORDER))
 	    || (msg->exchange->phase == 2
 		&& (type < IPSEC_ATTR_SA_LIFE_TYPE
 		    || type > IPSEC_ATTR_ECN_TUNNEL)))
@@ -769,39 +777,41 @@ ipsec_validate_exchange(u_int8_t exch)
 }
 
 static int
-ipsec_validate_id_information(u_int8_t type, u_int8_t * extra, u_int8_t * buf,
-			      size_t sz, struct exchange * exchange)
+ipsec_validate_id_information(u_int8_t type, u_int8_t *extra, u_int8_t *buf,
+    size_t sz, struct exchange *exchange)
 {
 	u_int8_t        proto = GET_IPSEC_ID_PROTO(extra);
 	u_int16_t       port = GET_IPSEC_ID_PORT(extra);
 
 	LOG_DBG((LOG_MESSAGE, 40,
-		 "ipsec_validate_id_information: proto %d port %d type %d",
-		 proto, port, type));
+	    "ipsec_validate_id_information: proto %d port %d type %d",
+	    proto, port, type));
 	if (type < IPSEC_ID_IPV4_ADDR || type > IPSEC_ID_KEY_ID)
 		return -1;
 
 	switch (type) {
 	case IPSEC_ID_IPV4_ADDR:
-		LOG_DBG_BUF((LOG_MESSAGE, 40, "ipsec_validate_id_information: IPv4",
-			     buf, sizeof(struct in_addr)));
+		LOG_DBG_BUF((LOG_MESSAGE, 40,
+		    "ipsec_validate_id_information: IPv4", buf,
+		    sizeof(struct in_addr)));
 		break;
 
 	case IPSEC_ID_IPV6_ADDR:
-		LOG_DBG_BUF((LOG_MESSAGE, 40, "ipsec_validate_id_information: IPv6",
-			     buf, sizeof(struct in6_addr)));
+		LOG_DBG_BUF((LOG_MESSAGE, 40,
+		    "ipsec_validate_id_information: IPv6", buf,
+		    sizeof(struct in6_addr)));
 		break;
 
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
 		LOG_DBG_BUF((LOG_MESSAGE, 40,
-		      "ipsec_validate_id_information: IPv4 network/netmask",
-			     buf, 2 * sizeof(struct in_addr)));
+		    "ipsec_validate_id_information: IPv4 network/netmask",
+		    buf, 2 * sizeof(struct in_addr)));
 		break;
 
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
 		LOG_DBG_BUF((LOG_MESSAGE, 40,
-		      "ipsec_validate_id_information: IPv6 network/netmask",
-			     buf, 2 * sizeof(struct in6_addr)));
+		    "ipsec_validate_id_information: IPv6 network/netmask",
+		    buf, 2 * sizeof(struct in6_addr)));
 		break;
 
 	default:
@@ -818,8 +828,8 @@ ipsec_validate_id_information(u_int8_t type, u_int8_t * extra, u_int8_t * buf,
 #ifdef notyet
 		return -1;
 #else
-		log_print("ipsec_validate_id_information: "
-			  "dubious ID information accepted");
+		log_print("ipsec_validate_id_information: dubious ID "
+		    "information accepted");
 #endif
 	}
 	/* XXX More checks?  */
@@ -828,7 +838,7 @@ ipsec_validate_id_information(u_int8_t type, u_int8_t * extra, u_int8_t * buf,
 }
 
 static int
-ipsec_validate_key_information(u_int8_t * buf, size_t sz)
+ipsec_validate_key_information(u_int8_t *buf, size_t sz)
 {
 	/* XXX Not implemented yet.  */
 	return 0;
@@ -838,21 +848,22 @@ static int
 ipsec_validate_notification(u_int16_t type)
 {
 	return type < IPSEC_NOTIFY_RESPONDER_LIFETIME
-	|| type > IPSEC_NOTIFY_INITIAL_CONTACT ? -1 : 0;
+	    || type > IPSEC_NOTIFY_INITIAL_CONTACT ? -1 : 0;
 }
 
 static int
 ipsec_validate_proto(u_int8_t proto)
 {
-	return proto < IPSEC_PROTO_IPSEC_AH || proto > IPSEC_PROTO_IPCOMP ? -1 : 0;
+	return proto < IPSEC_PROTO_IPSEC_AH
+	    || proto > IPSEC_PROTO_IPCOMP ? -1 : 0;
 }
 
 static int
-ipsec_validate_situation(u_int8_t * buf, size_t * sz, size_t len)
+ipsec_validate_situation(u_int8_t *buf, size_t *sz, size_t len)
 {
 	if (len < IPSEC_SIT_SIT_OFF + IPSEC_SIT_SIT_LEN) {
 		log_print("ipsec_validate_situation: payload too short: %u",
-			  (unsigned int) len);
+		    (unsigned int) len);
 		return -1;
 	}
 	/* Currently only "identity only" situations are supported.  */
@@ -869,41 +880,42 @@ ipsec_validate_transform_id(u_int8_t proto, u_int8_t transform_id)
 {
 	switch (proto) {
 		/*
-		 * As no unexpected protocols can occur, we just tie the default case
-		 * to the first case, in orer to silence a GCC warning.
+		 * As no unexpected protocols can occur, we just tie the
+		 * default case to the first case, in orer to silence a GCC
+		 * warning.
 	         */
 		default:
 		case ISAKMP_PROTO_ISAKMP:
-		return transform_id != IPSEC_TRANSFORM_KEY_IKE;
-	case IPSEC_PROTO_IPSEC_AH:
-		return
-			transform_id < IPSEC_AH_MD5 || transform_id > IPSEC_AH_DES ? -1 : 0;
+			return transform_id != IPSEC_TRANSFORM_KEY_IKE;
+		case IPSEC_PROTO_IPSEC_AH:
+			return transform_id < IPSEC_AH_MD5
+			    || transform_id > IPSEC_AH_DES ? -1 : 0;
 	case IPSEC_PROTO_IPSEC_ESP:
 		return transform_id < IPSEC_ESP_DES_IV64
-			|| (transform_id > IPSEC_ESP_AES_128_CTR
-			    && transform_id < IPSEC_ESP_AES_MARS)
-			|| transform_id > IPSEC_ESP_AES_TWOFISH ? -1 : 0;
+		    || (transform_id > IPSEC_ESP_AES_128_CTR
+			&& transform_id < IPSEC_ESP_AES_MARS)
+		    || transform_id > IPSEC_ESP_AES_TWOFISH ? -1 : 0;
 	case IPSEC_PROTO_IPCOMP:
 		return transform_id < IPSEC_IPCOMP_OUI
-			|| transform_id > IPSEC_IPCOMP_V42BIS ? -1 : 0;
+		    || transform_id > IPSEC_IPCOMP_V42BIS ? -1 : 0;
 	}
 }
 
 static int
-ipsec_initiator(struct message * msg)
+ipsec_initiator(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
-	int             (**script) (struct message *) = 0;
+	int             (**script)(struct message *) = 0;
 
 	/* Check that the SA is coherent with the IKE rules.  */
 	if (exchange->type != ISAKMP_EXCH_TRANSACTION
-	  && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
-	       && exchange->type != ISAKMP_EXCH_AGGRESSIVE
-	       && exchange->type != ISAKMP_EXCH_INFO)
-	   || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE
-	       && exchange->type != ISAKMP_EXCH_INFO))) {
-		log_print("ipsec_initiator: unsupported exchange type %d in phase %d",
-			  exchange->type, exchange->phase);
+	    && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
+		&& exchange->type != ISAKMP_EXCH_AGGRESSIVE
+		&& exchange->type != ISAKMP_EXCH_INFO)
+	    || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE
+		&& exchange->type != ISAKMP_EXCH_INFO))) {
+		log_print("ipsec_initiator: unsupported exchange type %d "
+		    "in phase %d", exchange->type, exchange->phase);
 		return -1;
 	}
 	switch (exchange->type) {
@@ -945,15 +957,15 @@ ipsec_initiator(struct message * msg)
  * or 4-octet otherwise.
  */
 static void
-ipsec_delete_spi_list(struct sockaddr * addr, u_int8_t proto,
-		      u_int8_t * spis, int nspis, char *type)
+ipsec_delete_spi_list(struct sockaddr *addr, u_int8_t proto, u_int8_t *spis,
+    int nspis, char *type)
 {
 	struct sa      *sa;
 	int             i;
 
 	for (i = 0; i < nspis; i++) {
 		if (proto == ISAKMP_PROTO_ISAKMP) {
-			u_int8_t       *spi = spis + i * ISAKMP_HDR_COOKIES_LEN;
+			u_int8_t *spi = spis + i * ISAKMP_HDR_COOKIES_LEN;
 
 			/*
 			 * This really shouldn't happen in IPSEC DOI
@@ -962,46 +974,47 @@ ipsec_delete_spi_list(struct sockaddr * addr, u_int8_t proto,
 			 */
 			sa = sa_lookup_isakmp_sa(addr, spi);
 		} else {
-			u_int32_t       spi = ((u_int32_t *) spis)[i];
+			u_int32_t spi = ((u_int32_t *)spis)[i];
 
 			sa = ipsec_sa_lookup(addr, spi, proto);
 		}
 
 		if (sa == NULL) {
-			LOG_DBG((LOG_SA, 30, "ipsec_delete_spi_list: "
-				 "could not locate SA (SPI %08x, proto %u)",
-				 ((u_int32_t *) spis)[i], proto));
+			LOG_DBG((LOG_SA, 30, "ipsec_delete_spi_list: could "
+			    "not locate SA (SPI %08x, proto %u)",
+			    ((u_int32_t *)spis)[i], proto));
 			continue;
 		}
 		/* Delete the SA and search for the next */
 		LOG_DBG((LOG_SA, 30, "ipsec_delete_spi_list: "
-		     "%s made us delete SA %p (%d references) for proto %d",
-			 type, sa, sa->refcnt, proto));
+		    "%s made us delete SA %p (%d references) for proto %d",
+		    type, sa, sa->refcnt, proto));
 
 		sa_free(sa);
 	}
 }
 
 static int
-ipsec_responder(struct message * msg)
+ipsec_responder(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
-	int             (**script) (struct message *) = 0;
+	int             (**script)(struct message *) = 0;
 	struct payload *p;
 	u_int16_t       type;
 
 	/* Check that a new exchange is coherent with the IKE rules.  */
 	if (exchange->step == 0 && exchange->type != ISAKMP_EXCH_TRANSACTION
-	  && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
-	       && exchange->type != ISAKMP_EXCH_AGGRESSIVE
-	       && exchange->type != ISAKMP_EXCH_INFO)
-	      || (exchange->phase == 2 && exchange->type == ISAKMP_EXCH_ID_PROT))) {
-		message_drop(msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 1, 0);
+	    && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
+		&& exchange->type != ISAKMP_EXCH_AGGRESSIVE
+		&& exchange->type != ISAKMP_EXCH_INFO)
+	    || (exchange->phase == 2 && exchange->type ==
+		ISAKMP_EXCH_ID_PROT))) {
+		message_drop(msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE,
+		    0, 1, 0);
 		return -1;
 	}
-	LOG_DBG((LOG_MISC, 30,
-	   "ipsec_responder: phase %d exchange %d step %d", exchange->phase,
-		 exchange->type, exchange->step));
+	LOG_DBG((LOG_MISC, 30, "ipsec_responder: phase %d exchange %d step %d",
+	    exchange->phase, exchange->type, exchange->step));
 	switch (exchange->type) {
 	case ISAKMP_EXCH_ID_PROT:
 		script = ike_main_mode_responder;
@@ -1021,18 +1034,18 @@ ipsec_responder(struct message * msg)
 
 	case ISAKMP_EXCH_INFO:
 		for (p = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
-		     p = TAILQ_NEXT(p, link)) {
+		    p = TAILQ_NEXT(p, link)) {
 			type = GET_ISAKMP_NOTIFY_MSG_TYPE(p->p);
 			LOG_DBG((LOG_EXCHANGE, 10,
-				 "ipsec_responder: got NOTIFY of type %s",
-				 constant_name(isakmp_notify_cst, type)));
+			    "ipsec_responder: got NOTIFY of type %s",
+			    constant_name(isakmp_notify_cst, type)));
 
 			p->flags |= PL_MARK;
 		}
 
 		/*
-		 * If any DELETEs are in here, let the logic of leftover payloads deal
-		 * with them.
+		 * If any DELETEs are in here, let the logic of leftover
+		 * payloads deal with them.
 	         */
 
 		return 0;
@@ -1042,7 +1055,8 @@ ipsec_responder(struct message * msg)
 		break;
 
 	default:
-		message_drop(msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 1, 0);
+		message_drop(msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE,
+		    0, 1, 0);
 		return -1;
 	}
 
@@ -1051,7 +1065,8 @@ ipsec_responder(struct message * msg)
 		return script[exchange->step] (msg);
 
 	/*
-	 * XXX So far we don't accept any proposals for exchanges we don't support.
+	 * XXX So far we don't accept any proposals for exchanges we don't
+	 * support.
          */
 	if (TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_SA])) {
 		message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
@@ -1085,8 +1100,8 @@ from_ike_crypto(u_int16_t crypto)
  * VMSG is a pointer to the current message.
  */
 int
-ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t * value,
-				u_int16_t len, void *vmsg)
+ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
+    void *vmsg)
 {
 	struct message *msg = vmsg;
 
@@ -1100,9 +1115,9 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t * value,
 			return !ike_auth_get(decode_16(value));
 		case IKE_ATTR_GROUP_DESCRIPTION:
 			return (decode_16(value) < IKE_GROUP_DESC_MODP_768
-			     || decode_16(value) > IKE_GROUP_DESC_MODP_1536)
-				&& (decode_16(value) < IKE_GROUP_DESC_MODP_2048
-			    || decode_16(value) > IKE_GROUP_DESC_MODP_8192);
+				|| decode_16(value) > IKE_GROUP_DESC_MODP_1536)
+			    && (decode_16(value) < IKE_GROUP_DESC_MODP_2048
+				|| decode_16(value) > IKE_GROUP_DESC_MODP_8192);
 		case IKE_ATTR_GROUP_TYPE:
 			return 1;
 		case IKE_ATTR_GROUP_PRIME:
@@ -1117,15 +1132,15 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t * value,
 			return 1;
 		case IKE_ATTR_LIFE_TYPE:
 			return decode_16(value) < IKE_DURATION_SECONDS
-				|| decode_16(value) > IKE_DURATION_KILOBYTES;
+			    || decode_16(value) > IKE_DURATION_KILOBYTES;
 		case IKE_ATTR_LIFE_DURATION:
 			return len != 2 && len != 4;
 		case IKE_ATTR_PRF:
 			return 1;
 		case IKE_ATTR_KEY_LENGTH:
 			/*
-			 * Our crypto routines only allows key-lengths which are multiples
-			 * of an octet.
+			 * Our crypto routines only allows key-lengths which
+			 * are multiples of an octet.
 		         */
 			return decode_16(value) % 8 != 0;
 		case IKE_ATTR_FIELD_SIZE:
@@ -1137,20 +1152,20 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t * value,
 		switch (type) {
 		case IPSEC_ATTR_SA_LIFE_TYPE:
 			return decode_16(value) < IPSEC_DURATION_SECONDS
-				|| decode_16(value) > IPSEC_DURATION_KILOBYTES;
+			    || decode_16(value) > IPSEC_DURATION_KILOBYTES;
 		case IPSEC_ATTR_SA_LIFE_DURATION:
 			return len != 2 && len != 4;
 		case IPSEC_ATTR_GROUP_DESCRIPTION:
 			return (decode_16(value) < IKE_GROUP_DESC_MODP_768
-			     || decode_16(value) > IKE_GROUP_DESC_MODP_1536)
-				&& (decode_16(value) < IKE_GROUP_DESC_MODP_2048
-			    || IKE_GROUP_DESC_MODP_8192 < decode_16(value));
+				|| decode_16(value) > IKE_GROUP_DESC_MODP_1536)
+			    && (decode_16(value) < IKE_GROUP_DESC_MODP_2048
+				|| IKE_GROUP_DESC_MODP_8192 < decode_16(value));
 		case IPSEC_ATTR_ENCAPSULATION_MODE:
 			return decode_16(value) < IPSEC_ENCAP_TUNNEL
-				|| decode_16(value) > IPSEC_ENCAP_TRANSPORT;
+			    || decode_16(value) > IPSEC_ENCAP_TRANSPORT;
 		case IPSEC_ATTR_AUTHENTICATION_ALGORITHM:
 			return decode_16(value) < IPSEC_AUTH_HMAC_MD5
-				|| decode_16(value) > IPSEC_AUTH_HMAC_RIPEMD;
+			    || decode_16(value) > IPSEC_AUTH_HMAC_RIPEMD;
 		case IPSEC_ATTR_KEY_LENGTH:
 			/*
 			 * XXX Blowfish needs '0'. Others appear to disregard
@@ -1177,8 +1192,8 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t * value,
  * in human-readable form.  VMSG is a pointer to the current message.
  */
 int
-ipsec_debug_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
-		      void *vmsg)
+ipsec_debug_attribute(u_int16_t type, u_int8_t *value, u_int16_t len,
+    void *vmsg)
 {
 	struct message *msg = vmsg;
 	char            val[20];
@@ -1192,9 +1207,8 @@ ipsec_debug_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 		snprintf(val, sizeof val, "unrepresentable");
 
 	LOG_DBG((LOG_MESSAGE, 50, "Attribute %s value %s",
-		 constant_name(msg->exchange->phase == 1
-			       ? ike_attr_cst : ipsec_attr_cst, type),
-		 val));
+	    constant_name(msg->exchange->phase == 1 ? ike_attr_cst :
+	    ipsec_attr_cst, type), val));
 	return 0;
 }
 #endif
@@ -1205,8 +1219,8 @@ ipsec_debug_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
  * current message, SA and protocol.
  */
 int
-ipsec_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
-		       void *vida)
+ipsec_decode_attribute(u_int16_t type, u_int8_t *value, u_int16_t len,
+    void *vida)
 {
 	struct ipsec_decode_arg *ida = vida;
 	struct message *msg = ida->msg;
@@ -1222,7 +1236,8 @@ ipsec_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 		switch (type) {
 		case IKE_ATTR_ENCRYPTION_ALGORITHM:
 			/* XXX Errors possible?  */
-			exchange->crypto = crypto_get(from_ike_crypto(decode_16(value)));
+			exchange->crypto = crypto_get(from_ike_crypto(
+			    decode_16(value)));
 			break;
 		case IKE_ATTR_HASH_ALGORITHM:
 			/* XXX Errors possible?  */
@@ -1261,7 +1276,8 @@ ipsec_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 					sa->seconds = decode_32(value);
 					break;
 				default:
-					log_print("ipsec_decode_attribute: unreasonable lifetime");
+					log_print("ipsec_decode_attribute: "
+					    "unreasonable lifetime");
 				}
 				break;
 			case IKE_DURATION_KILOBYTES:
@@ -1273,11 +1289,13 @@ ipsec_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 					sa->kilobytes = decode_32(value);
 					break;
 				default:
-					log_print("ipsec_decode_attribute: unreasonable lifetime");
+					log_print("ipsec_decode_attribute: "
+					    "unreasonable lifetime");
 				}
 				break;
 			default:
-				log_print("ipsec_decode_attribute: unknown lifetime type");
+				log_print("ipsec_decode_attribute: unknown "
+				    "lifetime type");
 			}
 			break;
 		case IKE_ATTR_PRF:
@@ -1306,7 +1324,8 @@ ipsec_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 					sa->seconds = decode_32(value);
 					break;
 				default:
-					log_print("ipsec_decode_attribute: unreasonable lifetime");
+					log_print("ipsec_decode_attribute: "
+					    "unreasonable lifetime");
 				}
 				break;
 			case IPSEC_DURATION_KILOBYTES:
@@ -1318,11 +1337,13 @@ ipsec_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 					sa->kilobytes = decode_32(value);
 					break;
 				default:
-					log_print("ipsec_decode_attribute: unreasonable lifetime");
+					log_print("ipsec_decode_attribute: "
+					    "unreasonable lifetime");
 				}
 				break;
 			default:
-				log_print("ipsec_decode_attribute: unknown lifetime type");
+				log_print("ipsec_decode_attribute: unknown "
+				    "lifetime type");
 			}
 			break;
 		case IPSEC_ATTR_GROUP_DESCRIPTION:
@@ -1362,14 +1383,14 @@ ipsec_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
  * processed.
  */
 void
-ipsec_decode_transform(struct message * msg, struct sa * sa,
-		       struct proto * proto, u_int8_t * buf)
+ipsec_decode_transform(struct message *msg, struct sa *sa, struct proto *proto,
+    u_int8_t *buf)
 {
 	struct ipsec_exch *ie = msg->exchange->data;
 	struct ipsec_decode_arg ida;
 
 	LOG_DBG((LOG_MISC, 20, "ipsec_decode_transform: transform %d chosen",
-		 GET_ISAKMP_TRANSFORM_NO(buf)));
+	    GET_ISAKMP_TRANSFORM_NO(buf)));
 
 	ida.msg = msg;
 	ida.sa = sa;
@@ -1381,8 +1402,8 @@ ipsec_decode_transform(struct message * msg, struct sa * sa,
 
 	/* Extract the attributes and stuff them into the SA.  */
 	attribute_map(buf + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
-		 GET_ISAKMP_GEN_LENGTH(buf) - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
-		      ipsec_decode_attribute, &ida);
+	    GET_ISAKMP_GEN_LENGTH(buf) - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+	    ipsec_decode_attribute, &ida);
 
 	/*
 	 * If no pseudo-random function was negotiated, it's HMAC.
@@ -1397,7 +1418,7 @@ ipsec_decode_transform(struct message * msg, struct sa * sa,
  * of the IKE security association SA.
  */
 static void
-ipsec_delete_spi(struct sa * sa, struct proto * proto, int incoming)
+ipsec_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 {
 	if (sa->phase == 1)
 		return;
@@ -1410,7 +1431,7 @@ ipsec_delete_spi(struct sa * sa, struct proto * proto, int incoming)
  * PEER is non-zero when the value is our peer's, and zero when it is ours.
  */
 static int
-ipsec_g_x(struct message * msg, int peer, u_int8_t * buf)
+ipsec_g_x(struct message *msg, int peer, u_int8_t *buf)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -1421,18 +1442,20 @@ ipsec_g_x(struct message * msg, int peer, u_int8_t * buf)
 	g_x = initiator ? &ie->g_xi : &ie->g_xr;
 	*g_x = malloc(ie->g_x_len);
 	if (!*g_x) {
-		log_error("ipsec_g_x: malloc (%lu) failed", (unsigned long) ie->g_x_len);
+		log_error("ipsec_g_x: malloc (%lu) failed",
+		    (unsigned long)ie->g_x_len);
 		return -1;
 	}
 	memcpy(*g_x, buf, ie->g_x_len);
-	snprintf(header, sizeof header, "ipsec_g_x: g^x%c", initiator ? 'i' : 'r');
+	snprintf(header, sizeof header, "ipsec_g_x: g^x%c",
+	    initiator ? 'i' : 'r');
 	LOG_DBG_BUF((LOG_MISC, 80, header, *g_x, ie->g_x_len));
 	return 0;
 }
 
 /* Generate our DH value.  */
 int
-ipsec_gen_g_x(struct message * msg)
+ipsec_gen_g_x(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -1441,11 +1464,11 @@ ipsec_gen_g_x(struct message * msg)
 	buf = malloc(ISAKMP_KE_SZ + ie->g_x_len);
 	if (!buf) {
 		log_error("ipsec_gen_g_x: malloc (%lu) failed",
-			  ISAKMP_KE_SZ + (unsigned long) ie->g_x_len);
+		    ISAKMP_KE_SZ + (unsigned long)ie->g_x_len);
 		return -1;
 	}
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_KEY_EXCH, buf,
-				ISAKMP_KE_SZ + ie->g_x_len, 1)) {
+	    ISAKMP_KE_SZ + ie->g_x_len, 1)) {
 		free(buf);
 		return -1;
 	}
@@ -1459,7 +1482,7 @@ ipsec_gen_g_x(struct message * msg)
 
 /* Save the peer's DH value.  */
 int
-ipsec_save_g_x(struct message * msg)
+ipsec_save_g_x(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct ipsec_exch *ie = exchange->data;
@@ -1483,7 +1506,7 @@ ipsec_save_g_x(struct message * msg)
  * size where SZ points.  NB!  A zero return is OK if *SZ is zero.
  */
 static u_int8_t *
-ipsec_get_spi(size_t * sz, u_int8_t proto, struct message * msg)
+ipsec_get_spi(size_t *sz, u_int8_t proto, struct message *msg)
 {
 	struct sockaddr *dst, *src;
 	struct transport *transport = msg->transport;
@@ -1496,7 +1519,8 @@ ipsec_get_spi(size_t * sz, u_int8_t proto, struct message * msg)
 		transport->vtbl->get_src(transport, &dst);
 		/* The peer is the source.  */
 		transport->vtbl->get_dst(transport, &src);
-		return sysdep_ipsec_get_spi(sz, proto, src, dst, msg->exchange->seq);
+		return sysdep_ipsec_get_spi(sz, proto, src, dst,
+		    msg->exchange->seq);
 	}
 }
 
@@ -1507,8 +1531,8 @@ ipsec_get_spi(size_t * sz, u_int8_t proto, struct message * msg)
  * 0.
  */
 int
-ipsec_handle_leftover_payload(struct message * msg, u_int8_t type,
-			      struct payload * payload)
+ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
+    struct payload *payload)
 {
 	u_int32_t       spisz, nspis;
 	struct sockaddr *dst;
@@ -1523,22 +1547,24 @@ ipsec_handle_leftover_payload(struct message * msg, u_int8_t type,
 		spisz = GET_ISAKMP_DELETE_SPI_SZ(payload->p);
 
 		if (nspis == 0) {
-			LOG_DBG((LOG_SA, 60, "ipsec_handle_leftover_payload: message "
-				 "specified zero SPIs, ignoring"));
+			LOG_DBG((LOG_SA, 60, "ipsec_handle_leftover_payload: "
+			    "message specified zero SPIs, ignoring"));
 			return -1;
 		}
 		/* verify proper SPI size */
-		if ((proto == ISAKMP_PROTO_ISAKMP && spisz != ISAKMP_HDR_COOKIES_LEN)
-		    || (proto != ISAKMP_PROTO_ISAKMP && spisz != sizeof(u_int32_t))) {
-			log_print("ipsec_handle_leftover_payload: "
-			"invalid SPI size %d for proto %d in DELETE payload",
-				  spisz, proto);
+		if ((proto == ISAKMP_PROTO_ISAKMP && spisz !=
+			ISAKMP_HDR_COOKIES_LEN)
+		    || (proto != ISAKMP_PROTO_ISAKMP && spisz !=
+			sizeof(u_int32_t))) {
+			log_print("ipsec_handle_leftover_payload: invalid SPI "
+			    "size %d for proto %d in DELETE payload",
+			    spisz, proto);
 			return -1;
 		}
 		spis = (u_int8_t *) malloc(nspis * spisz);
 		if (!spis) {
-			log_error("ipsec_handle_leftover_payload: malloc (%d) failed",
-				  nspis * spisz);
+			log_error("ipsec_handle_leftover_payload: malloc "
+			    "(%d) failed", nspis * spisz);
 			return -1;
 		}
 		/* extract SPI and get dst address */
@@ -1559,35 +1585,40 @@ ipsec_handle_leftover_payload(struct message * msg, u_int8_t type,
 			 *   - this is not an AGGRESSIVE mode exchange
 			 *   - it is protected by an ISAKMP SA
 		         *
-			 * XXX Instead of the first condition above, we could permit this
-			 * XXX only for phase 2. In the last packet of main-mode, this
-			 * XXX payload, while encrypted, is not part of the hash digest.
-			 * XXX As we currently send our own INITIAL-CONTACTs at this point,
-			 * XXX this too would need to be changed.
+			 * XXX Instead of the first condition above, we could
+			 * XXX permit this only for phase 2. In the last
+			 * XXX packet of main-mode, this payload, while
+			 * XXX encrypted, is not part of the hash digest.  As
+			 * XXX we currently send our own INITIAL-CONTACTs at
+			 * XXX this point, this too would need to be changed.
 		         */
 			if (msg->exchange->type == ISAKMP_EXCH_AGGRESSIVE) {
-				log_print("ipsec_handle_leftover_payload: got INITIAL-CONTACT "
-					  "in AGGRESSIVE mode");
+				log_print("ipsec_handle_leftover_payload: got "
+				    "INITIAL-CONTACT in AGGRESSIVE mode");
 				return -1;
 			}
-			if ((msg->exchange->flags & EXCHANGE_FLAG_ENCRYPT) == 0) {
-				log_print("ipsec_handle_leftover_payload: got INITIAL-CONTACT "
-					  "without ISAKMP SA");
+			if ((msg->exchange->flags & EXCHANGE_FLAG_ENCRYPT)
+			    == 0) {
+				log_print("ipsec_handle_leftover_payload: got "
+				    "INITIAL-CONTACT without ISAKMP SA");
 				return -1;
 			}
 			/*
-			 * Find out who is sending this and then delete every SA that is
-			 * ready.  Exchanges will timeout themselves and then the
-			 * non-ready SAs will disappear too.
+			 * Find out who is sending this and then delete every
+			 * SA that is ready.  Exchanges will timeout
+			 * themselves and then the non-ready SAs will
+			 * disappear too.
 		         */
 			msg->transport->vtbl->get_dst(msg->transport, &dst);
-			while ((sa = sa_lookup_by_peer(dst, sysdep_sa_len(dst))) != 0) {
+			while ((sa = sa_lookup_by_peer(dst, sysdep_sa_len(dst)))
+			    != 0) {
 				/*
-				 * Don't delete the current SA -- we received the
-				 * notification over it, so it's obviously still
-				 * active. We temporarily need to remove the SA
-				 * from the list to avoid an endless loop, but
-				 * keep a reference so it won't disappear meanwhile.
+				 * Don't delete the current SA -- we received
+				 * the notification over it, so it's obviously
+				 * still active. We temporarily need to remove
+				 * the SA from the list to avoid an endless
+				 * loop, but keep a reference so it won't
+				 * disappear meanwhile.
 			         */
 				if (sa == msg->isakmp_sa) {
 					sa_reference(sa);
@@ -1615,7 +1646,7 @@ ipsec_handle_leftover_payload(struct message * msg, u_int8_t type,
 
 /* Return the encryption keylength in octets of the ESP protocol PROTO.  */
 int
-ipsec_esp_enckeylength(struct proto * proto)
+ipsec_esp_enckeylength(struct proto *proto)
 {
 	struct ipsec_proto *iproto = proto->data;
 
@@ -1643,7 +1674,7 @@ ipsec_esp_enckeylength(struct proto * proto)
 
 /* Return the authentication keylength in octets of the ESP protocol PROTO.  */
 int
-ipsec_esp_authkeylength(struct proto * proto)
+ipsec_esp_authkeylength(struct proto *proto)
 {
 	struct ipsec_proto *iproto = proto->data;
 
@@ -1666,7 +1697,7 @@ ipsec_esp_authkeylength(struct proto * proto)
 
 /* Return the authentication keylength in octets of the AH protocol PROTO.  */
 int
-ipsec_ah_keylength(struct proto * proto)
+ipsec_ah_keylength(struct proto *proto)
 {
 	switch (proto->id) {
 		case IPSEC_AH_MD5:
@@ -1687,11 +1718,12 @@ ipsec_ah_keylength(struct proto * proto)
 
 /* Return the total keymaterial length of the protocol PROTO.  */
 int
-ipsec_keymat_length(struct proto * proto)
+ipsec_keymat_length(struct proto *proto)
 {
 	switch (proto->proto) {
 		case IPSEC_PROTO_IPSEC_ESP:
-		return ipsec_esp_enckeylength(proto) + ipsec_esp_authkeylength(proto);
+		return ipsec_esp_enckeylength(proto)
+		    + ipsec_esp_authkeylength(proto);
 	case IPSEC_PROTO_IPSEC_AH:
 		return ipsec_ah_keylength(proto);
 	default:
@@ -1842,8 +1874,8 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
  * we cannot fit the information in the supplied buffer.
  */
 static void
-ipsec_decode_id(char *buf, size_t size, u_int8_t * id, size_t id_len,
-		int isakmpform)
+ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
+    int isakmpform)
 {
 	int             id_type;
 	char           *addr = 0, *mask = 0;
@@ -1864,29 +1896,30 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t * id, size_t id_len,
 		case IPSEC_ID_IPV4_ADDR:
 			util_ntoa(&addr, AF_INET, id + ISAKMP_ID_DATA_OFF);
 			snprintf(buf, size, "%08x: %s",
-				 decode_32(id + ISAKMP_ID_DATA_OFF), addr);
+			    decode_32(id + ISAKMP_ID_DATA_OFF), addr);
 			break;
 
 		case IPSEC_ID_IPV4_ADDR_SUBNET:
 			util_ntoa(&addr, AF_INET, id + ISAKMP_ID_DATA_OFF);
 			util_ntoa(&mask, AF_INET, id + ISAKMP_ID_DATA_OFF + 4);
 			snprintf(buf, size, "%08x/%08x: %s/%s",
-				 decode_32(id + ISAKMP_ID_DATA_OFF),
+			    decode_32(id + ISAKMP_ID_DATA_OFF),
 			decode_32(id + ISAKMP_ID_DATA_OFF + 4), addr, mask);
 			break;
 
 		case IPSEC_ID_IPV6_ADDR:
 			util_ntoa(&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
-			snprintf(buf, size, "%08x%08x%08x%08x: %s", *idp, *(idp + 1),
-				 *(idp + 2), *(idp + 3), addr);
+			snprintf(buf, size, "%08x%08x%08x%08x: %s", *idp,
+			    *(idp + 1), *(idp + 2), *(idp + 3), addr);
 			break;
 
 		case IPSEC_ID_IPV6_ADDR_SUBNET:
 			util_ntoa(&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
 			util_ntoa(&addr, AF_INET6, id + ISAKMP_ID_DATA_OFF +
-				  sizeof(struct in6_addr));
-			snprintf(buf, size, "%08x%08x%08x%08x/%08x%08x%08x%08x: %s/%s",
-			*idp, *(idp + 1), *(idp + 2), *(idp + 3), *(idp + 4),
+			    sizeof(struct in6_addr));
+			snprintf(buf, size,
+			    "%08x%08x%08x%08x/%08x%08x%08x%08x: %s/%s", *idp,
+			    *(idp + 1), *(idp + 2), *(idp + 3), *(idp + 4),
 			    *(idp + 5), *(idp + 6), *(idp + 7), addr, mask);
 			break;
 
@@ -1902,7 +1935,7 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t * id, size_t id_len,
 #ifdef USE_X509
 		case IPSEC_ID_DER_ASN1_DN:
 			addr = x509_DN_string(id + ISAKMP_ID_DATA_OFF,
-					      id_len - ISAKMP_ID_DATA_OFF);
+			    id_len - ISAKMP_ID_DATA_OFF);
 			if (!addr) {
 				snprintf(buf, size, "unparsable ASN1 DN ID");
 				return;
@@ -1923,9 +1956,9 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t * id, size_t id_len,
 		free(mask);
 }
 
-char           *
-ipsec_decode_ids(char *fmt, u_int8_t * id1, size_t id1_len,
-		 u_int8_t * id2, size_t id2_len, int isakmpform)
+char *
+ipsec_decode_ids(char *fmt, u_int8_t *id1, size_t id1_len, u_int8_t *id2,
+    size_t id2_len, int isakmpform)
 {
 	static char     result[1024];
 	char            s_id1[256], s_id2[256];
@@ -1942,8 +1975,8 @@ ipsec_decode_ids(char *fmt, u_int8_t * id1, size_t id1_len,
  * ISAKMP ID payload.  Ths payload size should be stashed in SZ.
  * The caller is responsible for freeing the payload.
  */
-u_int8_t       *
-ipsec_build_id(char *section, size_t * sz)
+u_int8_t *
+ipsec_build_id(char *section, size_t *sz)
 {
 	struct sockaddr *addr, *mask;
 	u_int8_t       *p;
@@ -1963,17 +1996,18 @@ ipsec_build_id(char *section, size_t * sz)
 
 	p = malloc(*sz);
 	if (!p) {
-		log_print("ipsec_build_id: malloc(%lu) failed", (unsigned long) *sz);
+		log_print("ipsec_build_id: malloc(%lu) failed",
+		    (unsigned long)*sz);
 		return 0;
 	}
 	SET_ISAKMP_ID_TYPE(p, id);
-	SET_ISAKMP_ID_DOI_DATA(p, (unsigned char *) "\000\000\000");
+	SET_ISAKMP_ID_DOI_DATA(p, (unsigned char *)"\000\000\000");
 
 	memcpy(p + ISAKMP_ID_DATA_OFF, sockaddr_addrdata(addr),
-	       sockaddr_addrlen(addr));
+	    sockaddr_addrlen(addr));
 	if (subnet)
 		memcpy(p + ISAKMP_ID_DATA_OFF + sockaddr_addrlen(addr),
-		       sockaddr_addrdata(mask), sockaddr_addrlen(mask));
+		    sockaddr_addrdata(mask), sockaddr_addrlen(mask));
 
 	SET_IPSEC_ID_PROTO(p + ISAKMP_ID_DOI_DATA_OFF, tproto);
 	SET_IPSEC_ID_PORT(p + ISAKMP_ID_DOI_DATA_OFF, port);
@@ -1985,7 +2019,7 @@ ipsec_build_id(char *section, size_t * sz)
  * copy an ISAKMPD id
  */
 int
-ipsec_clone_id(u_int8_t ** did, size_t * did_len, u_int8_t * id, size_t id_len)
+ipsec_clone_id(u_int8_t **did, size_t *did_len, u_int8_t *id, size_t id_len)
 {
 	if (*did)
 		free(*did);
@@ -1998,7 +2032,8 @@ ipsec_clone_id(u_int8_t ** did, size_t * did_len, u_int8_t * id, size_t id_len)
 	*did = malloc(id_len);
 	if (!*did) {
 		*did_len = 0;
-		log_error("ipsec_clone_id: malloc(%lu) failed", (unsigned long) id_len);
+		log_error("ipsec_clone_id: malloc(%lu) failed",
+		    (unsigned long)id_len);
 		return -1;
 	}
 	*did_len = id_len;
@@ -2013,13 +2048,13 @@ ipsec_clone_id(u_int8_t ** did, size_t * did_len, u_int8_t * id, size_t id_len)
  * XXX I want to fix this later.
  */
 void
-ipsec_proto_init(struct proto * proto, char *section)
+ipsec_proto_init(struct proto *proto, char *section)
 {
 	struct ipsec_proto *iproto = proto->data;
 
 	if (proto->sa->phase == 2 && section)
-		iproto->replay_window
-			= conf_get_num(section, "ReplayWindow", DEFAULT_REPLAY_WINDOW);
+		iproto->replay_window = conf_get_num(section, "ReplayWindow",
+		    DEFAULT_REPLAY_WINDOW);
 }
 
 /*
@@ -2027,9 +2062,9 @@ ipsec_proto_init(struct proto * proto, char *section)
  * the first contact we have made to our peer.
  */
 int
-ipsec_initial_contact(struct message * msg)
+ipsec_initial_contact(struct message *msg)
 {
-	u_int8_t       *buf;
+	u_int8_t *buf;
 
 	if (ipsec_contacted(msg))
 		return 0;
@@ -2037,7 +2072,7 @@ ipsec_initial_contact(struct message * msg)
 	buf = malloc(ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN);
 	if (!buf) {
 		log_error("ike_phase_1_initial_contact: malloc (%d) failed",
-			  ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN);
+		    ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN);
 		return -1;
 	}
 	SET_ISAKMP_NOTIFY_DOI(buf, IPSEC_DOI_IPSEC);
@@ -2045,9 +2080,9 @@ ipsec_initial_contact(struct message * msg)
 	SET_ISAKMP_NOTIFY_SPI_SZ(buf, ISAKMP_HDR_COOKIES_LEN);
 	SET_ISAKMP_NOTIFY_MSG_TYPE(buf, IPSEC_NOTIFY_INITIAL_CONTACT);
 	memcpy(buf + ISAKMP_NOTIFY_SPI_OFF, msg->isakmp_sa->cookies,
-	       ISAKMP_HDR_COOKIES_LEN);
+	    ISAKMP_HDR_COOKIES_LEN);
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_NOTIFY, buf,
-			    ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN, 1)) {
+	    ISAKMP_NOTIFY_SZ + ISAKMP_HDR_COOKIES_LEN, 1)) {
 		free(buf);
 		return -1;
 	}
@@ -2075,7 +2110,7 @@ addr_cmp(const void *a, const void *b)
  * is unimportant, if this is to scale.
  */
 static int
-ipsec_add_contact(struct message * msg)
+ipsec_add_contact(struct message *msg)
 {
 	struct contact *new_contacts;
 	struct sockaddr *dst, *addr;
@@ -2085,8 +2120,8 @@ ipsec_add_contact(struct message * msg)
 		cnt = contact_limit ? 2 * contact_limit : 64;
 		new_contacts = realloc(contacts, cnt * sizeof contacts[0]);
 		if (!new_contacts) {
-			log_error("ipsec_add_contact: realloc (%p, %lu) failed", contacts,
-				  cnt * (unsigned long) sizeof contacts[0]);
+			log_error("ipsec_add_contact: realloc (%p, %lu) failed",
+			    contacts, cnt * (unsigned long) sizeof contacts[0]);
 			return -1;
 		}
 		contact_limit = cnt;
@@ -2095,7 +2130,8 @@ ipsec_add_contact(struct message * msg)
 	msg->transport->vtbl->get_dst(msg->transport, &dst);
 	addr = malloc(sysdep_sa_len(dst));
 	if (!addr) {
-		log_error("ipsec_add_contact: malloc (%d) failed", sysdep_sa_len(dst));
+		log_error("ipsec_add_contact: malloc (%d) failed",
+		    sysdep_sa_len(dst));
 		return -1;
 	}
 	memcpy(addr, dst, sysdep_sa_len(dst));
@@ -2112,32 +2148,30 @@ ipsec_add_contact(struct message * msg)
 
 /* Return true if the recipient of MSG has already been contacted.  */
 static int
-ipsec_contacted(struct message * msg)
+ipsec_contacted(struct message *msg)
 {
 	struct contact  contact;
 
 	msg->transport->vtbl->get_dst(msg->transport, &contact.addr);
 	contact.len = sysdep_sa_len(contact.addr);
-	return contacts
-		? (bsearch(&contact, contacts, contact_cnt, sizeof *contacts, addr_cmp)
-		   != 0)
-		: 0;
+	return contacts ? (bsearch(&contact, contacts, contact_cnt,
+	    sizeof *contacts, addr_cmp) != 0) : 0;
 }
 
 /* Add a HASH for to MSG.  */
-u_int8_t       *
-ipsec_add_hash_payload(struct message * msg, size_t hashsize)
+u_int8_t *
+ipsec_add_hash_payload(struct message *msg, size_t hashsize)
 {
-	u_int8_t       *buf;
+	u_int8_t *buf;
 
 	buf = malloc(ISAKMP_HASH_SZ + hashsize);
 	if (!buf) {
 		log_error("ipsec_add_hash_payload: malloc (%lu) failed",
-			  ISAKMP_HASH_SZ + (unsigned long) hashsize);
+		    ISAKMP_HASH_SZ + (unsigned long) hashsize);
 		return 0;
 	}
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_HASH, buf,
-				ISAKMP_HASH_SZ + hashsize, 1)) {
+	    ISAKMP_HASH_SZ + hashsize, 1)) {
 		free(buf);
 		return 0;
 	}
@@ -2146,7 +2180,7 @@ ipsec_add_hash_payload(struct message * msg, size_t hashsize)
 
 /* Fill in the HASH payload of MSG.  */
 int
-ipsec_fill_in_hash(struct message * msg)
+ipsec_fill_in_hash(struct message *msg)
 {
 	struct exchange *exchange = msg->exchange;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
@@ -2170,37 +2204,40 @@ ipsec_fill_in_hash(struct message * msg)
 	buf = payload->p;
 
 	/* Allocate the prf and start calculating our HASH(1).  */
-	LOG_DBG_BUF((LOG_MISC, 90, "ipsec_fill_in_hash: SKEYID_a", isa->skeyid_a,
-		     isa->skeyid_len));
-	prf = prf_alloc(isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
+	LOG_DBG_BUF((LOG_MISC, 90, "ipsec_fill_in_hash: SKEYID_a",
+	    isa->skeyid_a, isa->skeyid_len));
+	prf = prf_alloc(isa->prf_type, hash->type, isa->skeyid_a,
+	    isa->skeyid_len);
 	if (!prf)
 		return -1;
 
 	prf->Init(prf->prfctx);
 	LOG_DBG_BUF((LOG_MISC, 90, "ipsec_fill_in_hash: message_id",
-		     exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
-	prf->Update(prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
+	    exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
+	prf->Update(prf->prfctx, exchange->message_id,
+	    ISAKMP_HDR_MESSAGE_ID_LEN);
 
 	/* Loop over all payloads after HASH(1).  */
 	for (i = 2; i < msg->iovlen; i++) {
 		/* XXX Misleading payload type printouts.  */
 		snprintf(header, sizeof header,
-		     "ipsec_fill_in_hash: payload %d after HASH(1)", i - 1);
+		    "ipsec_fill_in_hash: payload %d after HASH(1)", i - 1);
 		LOG_DBG_BUF((LOG_MISC, 90, header, msg->iov[i].iov_base,
-			     msg->iov[i].iov_len));
-		prf->Update(prf->prfctx, msg->iov[i].iov_base, msg->iov[i].iov_len);
+		    msg->iov[i].iov_len));
+		prf->Update(prf->prfctx, msg->iov[i].iov_base,
+		    msg->iov[i].iov_len);
 	}
 	prf->Final(buf + ISAKMP_HASH_DATA_OFF, prf->prfctx);
 	prf_free(prf);
-	LOG_DBG_BUF((LOG_MISC, 80, "ipsec_fill_in_hash: HASH(1)",
-		     buf + ISAKMP_HASH_DATA_OFF, hash->hashsize));
+	LOG_DBG_BUF((LOG_MISC, 80, "ipsec_fill_in_hash: HASH(1)", buf +
+	    ISAKMP_HASH_DATA_OFF, hash->hashsize));
 
 	return 0;
 }
 
 /* Add a HASH payload to MSG, if we have an ISAKMP SA we're protected by.  */
 static int
-ipsec_informational_pre_hook(struct message * msg)
+ipsec_informational_pre_hook(struct message *msg)
 {
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_sa *isa;
@@ -2217,7 +2254,7 @@ ipsec_informational_pre_hook(struct message * msg)
  * Fill in the HASH payload in MSG, if we have an ISAKMP SA we're protected by.
  */
 static int
-ipsec_informational_post_hook(struct message * msg)
+ipsec_informational_post_hook(struct message *msg)
 {
 	if (!msg->isakmp_sa)
 		return 0;
@@ -2225,13 +2262,14 @@ ipsec_informational_post_hook(struct message * msg)
 }
 
 ssize_t
-ipsec_id_size(char *section, u_int8_t * id)
+ipsec_id_size(char *section, u_int8_t *id)
 {
-	char           *type, *data;
+	char *type, *data;
 
 	type = conf_get_str(section, "ID-type");
 	if (!type) {
-		log_print("ipsec_id_size: section %s has no \"ID-type\" tag", section);
+		log_print("ipsec_id_size: section %s has no \"ID-type\" tag",
+		    section);
 		return -1;
 	}
 	*id = constant_value(ipsec_id_cst, type);
@@ -2251,30 +2289,31 @@ ipsec_id_size(char *section, u_int8_t * id)
 	case IPSEC_ID_DER_ASN1_GN:
 		data = conf_get_str(section, "Name");
 		if (!data) {
-			log_print("ipsec_id_size: section %s has no \"Name\" tag", section);
+			log_print("ipsec_id_size: section %s has no \"Name\" tag",
+			    section);
 			return -1;
 		}
 		return strlen(data);
 	}
 	log_print("ipsec_id_size: unrecognized/unsupported ID-type %d (%s)",
-		  *id, type);
+	    *id, type);
 	return -1;
 }
 
 /*
  * Generate a string version of the ID.
  */
-char           *
-ipsec_id_string(u_int8_t * id, size_t id_len)
+char *
+ipsec_id_string(u_int8_t *id, size_t id_len)
 {
 	char           *buf = 0;
 	char           *addrstr = 0;
 	size_t          len, size;
 
 	/*
-	 * XXX Real ugly way of making the offsets correct.  Be aware that id now
-	 * will point before the actual buffer and cannot be dereferenced without
-	 * an offset larger than or equal to ISAKM_GEN_SZ.
+	 * XXX Real ugly way of making the offsets correct.  Be aware that id
+	 * now will point before the actual buffer and cannot be dereferenced
+	 * without an offset larger than or equal to ISAKM_GEN_SZ.
          */
 	id -= ISAKMP_GEN_SZ;
 
@@ -2287,7 +2326,7 @@ ipsec_id_string(u_int8_t * id, size_t id_len)
 	 * estimate.
          */
 	size = MAX(sizeof "ipv6/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-		   sizeof "asn1_dn/" + id_len - ISAKMP_ID_DATA_OFF);
+	    sizeof "asn1_dn/" + id_len - ISAKMP_ID_DATA_OFF);
 	buf = malloc(size);
 	if (!buf)
 		/* XXX Log?  */
@@ -2316,7 +2355,7 @@ ipsec_id_string(u_int8_t * id, size_t id_len)
 	case IPSEC_ID_USER_FQDN:
 		strlcpy(buf,
 		GET_ISAKMP_ID_TYPE(id) == IPSEC_ID_FQDN ? "fqdn/" : "ufqdn/",
-			size);
+		    size);
 		len = strlen(buf);
 
 		memcpy(buf + len, id + ISAKMP_ID_DATA_OFF, id_len);
@@ -2328,7 +2367,7 @@ ipsec_id_string(u_int8_t * id, size_t id_len)
 		strlcpy(buf, "asn1_dn/", size);
 		len = strlen(buf);
 		addrstr = x509_DN_string(id + ISAKMP_ID_DATA_OFF,
-					 id_len - ISAKMP_ID_DATA_OFF);
+		    id_len - ISAKMP_ID_DATA_OFF);
 		if (!addrstr)
 			goto fail;
 		if (size < len + strlen(addrstr) + 1)
@@ -2339,8 +2378,9 @@ ipsec_id_string(u_int8_t * id, size_t id_len)
 
 	default:
 		/* Unknown type.  */
-		LOG_DBG((LOG_MISC, 10, "ipsec_id_string: unknown identity type %d\n",
-			 GET_ISAKMP_ID_TYPE(id)));
+		LOG_DBG((LOG_MISC, 10,
+		    "ipsec_id_string: unknown identity type %d\n",
+		    GET_ISAKMP_ID_TYPE(id)));
 		goto fail;
 	}
 

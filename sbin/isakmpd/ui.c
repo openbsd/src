@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.39 2004/05/13 06:56:34 ho Exp $	 */
+/* $OpenBSD: ui.c,v 1.40 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -114,7 +114,7 @@ ui_init(void)
 static void
 ui_connect(char *cmd)
 {
-	char            name[81];
+	char	name[81];
 
 	if (sscanf(cmd, "c %80s", name) != 1) {
 		log_print("ui_connect: command \"%s\" malformed", cmd);
@@ -478,7 +478,7 @@ ui_handler(void)
 		buf = malloc(sz);
 		if (!buf) {
 			log_print("ui_handler: malloc (%lu) failed",
-			    (unsigned long) sz);
+			    (unsigned long)sz);
 			return;
 		}
 		p = buf;
@@ -489,7 +489,7 @@ ui_handler(void)
 		new_buf = realloc(buf, sz * 2);
 		if (!new_buf) {
 			log_print("ui_handler: realloc (%p, %lu) failed", buf,
-			    (unsigned long) sz * 2);
+			    (unsigned long)sz * 2);
 			free(buf);
 			buf = 0;
 			return;
@@ -502,7 +502,7 @@ ui_handler(void)
 	n = read(ui_socket, p, resid);
 	if (n == -1) {
 		log_error("ui_handler: read (%d, %p, %lu)", ui_socket, p,
-		    (unsigned long) resid);
+		    (unsigned long)resid);
 		return;
 	}
 	if (!n)

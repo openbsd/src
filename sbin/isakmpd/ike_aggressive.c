@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_aggressive.c,v 1.6 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: ike_aggressive.c,v 1.7 2004/05/23 18:17:55 hshoexer Exp $	 */
 /* $EOM: ike_aggressive.c,v 1.4 2000/01/31 22:33:45 niklas Exp $	 */
 
 /*
@@ -65,13 +65,13 @@ static int      initiator_send_AUTH(struct message *);
 static int      responder_recv_SA_KE_NONCE_ID(struct message *);
 static int      responder_send_SA_KE_NONCE_ID_AUTH(struct message *);
 
-int             (*ike_aggressive_initiator[]) (struct message *) = {
+int (*ike_aggressive_initiator[])(struct message *) = {
 	initiator_send_SA_KE_NONCE_ID,
 	initiator_recv_SA_KE_NONCE_ID_AUTH,
 	initiator_send_AUTH
 };
 
-int             (*ike_aggressive_responder[]) (struct message *) = {
+int (*ike_aggressive_responder[])(struct message *) = {
 	responder_recv_SA_KE_NONCE_ID,
 	responder_send_SA_KE_NONCE_ID_AUTH,
 	ike_phase_1_recv_AUTH
@@ -79,7 +79,7 @@ int             (*ike_aggressive_responder[]) (struct message *) = {
 
 /* Offer a set of transforms to the responder in the MSG message.  */
 static int
-initiator_send_SA_KE_NONCE_ID(struct message * msg)
+initiator_send_SA_KE_NONCE_ID(struct message *msg)
 {
 	if (ike_phase_1_initiator_send_SA(msg))
 		return -1;
@@ -92,7 +92,7 @@ initiator_send_SA_KE_NONCE_ID(struct message * msg)
 
 /* Figure out what transform the responder chose.  */
 static int
-initiator_recv_SA_KE_NONCE_ID_AUTH(struct message * msg)
+initiator_recv_SA_KE_NONCE_ID_AUTH(struct message *msg)
 {
 	if (ike_phase_1_initiator_recv_SA(msg))
 		return -1;
@@ -104,7 +104,7 @@ initiator_recv_SA_KE_NONCE_ID_AUTH(struct message * msg)
 }
 
 static int
-initiator_send_AUTH(struct message * msg)
+initiator_send_AUTH(struct message *msg)
 {
 	msg->exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
 
@@ -129,7 +129,7 @@ initiator_send_AUTH(struct message * msg)
  * handle.  Also accept initiator's public DH value, nonce and ID.
  */
 static int
-responder_recv_SA_KE_NONCE_ID(struct message * msg)
+responder_recv_SA_KE_NONCE_ID(struct message *msg)
 {
 	if (ike_phase_1_responder_recv_SA(msg))
 		return -1;
@@ -145,7 +145,7 @@ responder_recv_SA_KE_NONCE_ID(struct message * msg)
  * to the initiator.
  */
 static int
-responder_send_SA_KE_NONCE_ID_AUTH(struct message * msg)
+responder_send_SA_KE_NONCE_ID_AUTH(struct message *msg)
 {
 	/* Add the SA payload with the transform that was chosen.  */
 	if (ike_phase_1_responder_send_SA(msg))

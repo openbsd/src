@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.38 2004/05/23 16:14:22 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.39 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -240,7 +240,7 @@ hex2raw(char *s, u_int8_t *buf, size_t sz)
 }
 
 int
-text2sockaddr(char *address, char *port, struct sockaddr ** sa)
+text2sockaddr(char *address, char *port, struct sockaddr **sa)
 {
 #ifdef HAVE_GETNAMEINFO
 	struct addrinfo *ai, hints;
@@ -287,7 +287,7 @@ text2sockaddr(char *address, char *port, struct sockaddr ** sa)
 	sp = getservbyname(port, "udp");
 	if (!sp) {
 		lport = strtol(port, &ep, 10);
-		if (ep == port || lport < 0 || lport > (long) USHRT_MAX) {
+		if (ep == port || lport < 0 || lport > (long)USHRT_MAX) {
 			free(*sa);
 			return -1;
 		}
@@ -295,9 +295,9 @@ text2sockaddr(char *address, char *port, struct sockaddr ** sa)
 	} else
 		lport = sp->s_port;
 	if ((*sa)->sa_family == AF_INET)
-		((struct sockaddr_in *) *sa)->sin_port = lport;
+		((struct sockaddr_in *)*sa)->sin_port = lport;
 	else
-		((struct sockaddr_in6 *) *sa)->sin6_port = lport;
+		((struct sockaddr_in6 *)*sa)->sin6_port = lport;
 	return 0;
 #endif
 }
@@ -321,9 +321,11 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 	switch (sa->sa_family) {
 	case AF_INET:
 	case AF_INET6:
-		if (inet_ntop(sa->sa_family, sa->sa_data, buf, NI_MAXHOST - 1) == NULL) {
-			log_error("sockaddr2text: inet_ntop (%d, %p, %p, %d) failed",
-			    sa->sa_family, sa->sa_data, buf, NI_MAXHOST - 1);
+		if (inet_ntop(sa->sa_family, sa->sa_data, buf, NI_MAXHOST - 1)
+		    == NULL) {
+			log_error("sockaddr2text: inet_ntop (%d, %p, %p, %d) "
+			    "failed", sa->sa_family, sa->sa_data, buf,
+			    NI_MAXHOST - 1);
 			return -1;
 		}
 		buf[NI_MAXHOST - 1] = '\0';
@@ -331,7 +333,7 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 
 	default:
 		log_print("sockaddr2text: unsupported protocol family %d\n",
-			  sa->sa_family);
+		    sa->sa_family);
 		return -1;
 	}
 #endif
@@ -356,8 +358,8 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 					return -1;
 				}
 				val = strtol(token, &ep, 10);
-				if (ep == token || val < (long) 0 ||
-				    val > (long) UCHAR_MAX) {
+				if (ep == token || val < (long)0 ||
+				    val > (long)UCHAR_MAX) {
 					free(*address);
 					return -1;
 				}
@@ -370,8 +372,8 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 
 		case AF_INET6:
 			/*
-			 * XXX In the algorithm below there are some magic numbers we
-			 * probably could give explaining names.
+			 * XXX In the algorithm below there are some magic
+			 * numbers we probably could give explaining names.
 			 */
 			addrlen = sizeof "0000:0000:0000:0000:0000:0000:0000:0000";
 			*address = malloc(addrlen);
@@ -379,7 +381,8 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 				return -1;
 
 			for (i = 0, j = 0; i < 8; i++) {
-				snprintf((*address) + j, addrlen - j, "%02x%02x",
+				snprintf((*address) + j, addrlen - j,
+				    "%02x%02x",
 				    ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2*i],
 				    ((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr[2*i + 1]);
 				j += 4;
@@ -406,9 +409,9 @@ sockaddr_addrlen(struct sockaddr *sa)
 {
 	switch (sa->sa_family) {
 	case AF_INET6:
-		return sizeof((struct sockaddr_in6 *) sa)->sin6_addr.s6_addr;
+		return sizeof((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr;
 	case AF_INET:
-		return sizeof((struct sockaddr_in *) sa)->sin_addr.s_addr;
+		return sizeof((struct sockaddr_in *)sa)->sin_addr.s_addr;
 	default:
 		log_print("sockaddr_addrlen: unsupported protocol family %d",
 		    sa->sa_family);
@@ -421,9 +424,9 @@ sockaddr_addrdata(struct sockaddr *sa)
 {
 	switch (sa->sa_family) {
 	case AF_INET6:
-		return (u_int8_t *) & ((struct sockaddr_in6 *) sa)->sin6_addr.s6_addr;
+		return (u_int8_t *)&((struct sockaddr_in6 *)sa)->sin6_addr.s6_addr;
 	case AF_INET:
-		return (u_int8_t *) & ((struct sockaddr_in *) sa)->sin_addr.s_addr;
+		return (u_int8_t *)&((struct sockaddr_in *)sa)->sin_addr.s_addr;
 	default:
 		log_print("sockaddr_addrdata: unsupported protocol family %d",
 		    sa->sa_family);
@@ -436,9 +439,9 @@ sockaddr_port(struct sockaddr *sa)
 {
 	switch (sa->sa_family) {
 	case AF_INET6:
-		return ((struct sockaddr_in6 *) sa)->sin6_port;
+		return ((struct sockaddr_in6 *)sa)->sin6_port;
 	case AF_INET:
-		return ((struct sockaddr_in *) sa)->sin_port;
+		return ((struct sockaddr_in *)sa)->sin_port;
 	default:
 		log_print("sockaddr_port: unsupported protocol family %d",
 		    sa->sa_family);
@@ -472,8 +475,8 @@ util_ntoa(char **buf, int af, u_int8_t *addr)
 	memcpy(sockaddr_addrdata(sfrom), addr, sockaddr_addrlen(sfrom));
 
 	if (sockaddr2text(sfrom, buf, 0)) {
-		log_print("util_ntoa: "
-		    "could not make printable address out of sockaddr %p", sfrom);
+		log_print("util_ntoa: could not make printable address out "
+		    "of sockaddr %p", sfrom);
 		*buf = 0;
 	}
 }
@@ -499,13 +502,13 @@ check_file_secrecy(char *name, size_t *file_size)
 		return -1;
 	}
 	if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
-		log_print("conf_file_secrecy: not loading %s - too open permissions",
-		    name);
+		log_print("conf_file_secrecy: not loading %s - too open "
+		    "permissions", name);
 		errno = EPERM;
 		return -1;
 	}
 	if (file_size)
-		*file_size = (size_t) st.st_size;
+		*file_size = (size_t)st.st_size;
 
 	return 0;
 }

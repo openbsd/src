@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.20 2004/05/10 18:34:15 deraadt Exp $	 */
+/* $OpenBSD: monitor.c,v 1.21 2004/05/23 18:17:56 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -117,10 +117,12 @@ monitor_init(void)
 			log_fatal("monitor_init: chroot failed");
 
 		if (setgid(pw->pw_gid) != 0)
-			log_fatal("monitor_init: setgid(%d) failed", pw->pw_gid);
+			log_fatal("monitor_init: setgid(%d) failed",
+			    pw->pw_gid);
 
 		if (setuid(pw->pw_uid) != 0)
-			log_fatal("monitor_init: setuid(%d) failed", pw->pw_uid);
+			log_fatal("monitor_init: setuid(%d) failed",
+			    pw->pw_uid);
 
 		LOG_DBG((LOG_MISC, 10,
 		    "monitor_init: privileges dropped for child process"));
@@ -134,14 +136,15 @@ monitor_init(void)
 int
 monitor_open(const char *path, int flags, mode_t mode)
 {
-	int             fd, mode32 = (int32_t) mode;
-	int32_t         err;
-	char            realpath[MAXPATHLEN];
+	int	fd, mode32 = (int32_t) mode;
+	int32_t	err;
+	char	realpath[MAXPATHLEN];
 
 	if (path[0] == '/')
 		strlcpy(realpath, path, sizeof realpath);
 	else
-		snprintf(realpath, sizeof realpath, "%s/%s", m_state.root, path);
+		snprintf(realpath, sizeof realpath, "%s/%s", m_state.root,
+		    path);
 
 	/* Write data to priv process.  */
 	if (m_write_int32(m_state.s, MONITOR_GET_FD))
@@ -180,8 +183,8 @@ errout:
 FILE *
 monitor_fopen(const char *path, const char *mode)
 {
-	FILE           *fp;
-	int             fd, flags = 0, mask, saved_errno;
+	FILE	*fp;
+	int	 fd, flags = 0, mask, saved_errno;
 
 	/* Only the child process is supposed to run this.  */
 	if (m_state.pid)
@@ -192,10 +195,12 @@ monitor_fopen(const char *path, const char *mode)
 		flags = (mode[1] == '+' ? O_RDWR : O_RDONLY);
 		break;
 	case 'w':
-		flags = (mode[1] == '+' ? O_RDWR : O_WRONLY) | O_CREAT | O_TRUNC;
+		flags = (mode[1] == '+' ? O_RDWR : O_WRONLY) | O_CREAT |
+		    O_TRUNC;
 		break;
 	case 'a':
-		flags = (mode[1] == '+' ? O_RDWR : O_WRONLY) | O_CREAT | O_APPEND;
+		flags = (mode[1] == '+' ? O_RDWR : O_WRONLY) | O_CREAT |
+		    O_APPEND;
 		break;
 	default:
 		log_fatal("monitor_fopen: bad call");
@@ -239,33 +244,33 @@ monitor_stat(const char *path, struct stat *sb)
 int
 monitor_socket(int domain, int type, int protocol)
 {
-	int             s;
-	int32_t         err;
+	int	s;
+	int32_t	err;
 
 	if (m_write_int32(m_state.s, MONITOR_GET_SOCKET))
 		goto errout;
 
-	if (m_write_int32(m_state.s, (int32_t) domain))
+	if (m_write_int32(m_state.s, (int32_t)domain))
 		goto errout;
 
-	if (m_write_int32(m_state.s, (int32_t) type))
+	if (m_write_int32(m_state.s, (int32_t)type))
 		goto errout;
 
-	if (m_write_int32(m_state.s, (int32_t) protocol))
+	if (m_write_int32(m_state.s, (int32_t)protocol))
 		goto errout;
 
 	if (m_read_int32(m_state.s, &err))
 		goto errout;
 
 	if (err != 0) {
-		errno = (int) err;
+		errno = (int)err;
 		return -1;
 	}
 	/* Read result.  */
 	s = mm_receive_fd(m_state.s);
 	if (s < 0) {
 		log_error("monitor_socket: mm_receive_fd () failed: %s",
-			  strerror(errno));
+		    strerror(errno));
 		return -1;
 	}
 	return s;
@@ -277,34 +282,34 @@ errout:
 
 int
 monitor_setsockopt(int s, int level, int optname, const void *optval,
-		   socklen_t optlen)
+    socklen_t optlen)
 {
-	int32_t         ret, err;
+	int32_t	ret, err;
 
 	if (m_write_int32(m_state.s, MONITOR_SETSOCKOPT))
 		goto errout;
 	if (mm_send_fd(m_state.s, s))
 		goto errout;
 
-	if (m_write_int32(m_state.s, (int32_t) level))
+	if (m_write_int32(m_state.s, (int32_t)level))
 		goto errout;
-	if (m_write_int32(m_state.s, (int32_t) optname))
+	if (m_write_int32(m_state.s, (int32_t)optname))
 		goto errout;
-	if (m_write_int32(m_state.s, (int32_t) optlen))
+	if (m_write_int32(m_state.s, (int32_t)optlen))
 		goto errout;
-	if (m_write_raw(m_state.s, (char *) optval, (size_t) optlen))
+	if (m_write_raw(m_state.s, (char *)optval, (size_t)optlen))
 		goto errout;
 
 	if (m_read_int32(m_state.s, &err))
 		goto errout;
 
 	if (err != 0)
-		errno = (int) err;
+		errno = (int)err;
 
 	if (m_read_int32(m_state.s, &ret))
 		goto errout;
 
-	return (int) ret;
+	return (int)ret;
 
 errout:
 	log_print("monitor_setsockopt: read/write error");
@@ -314,28 +319,28 @@ errout:
 int
 monitor_bind(int s, const struct sockaddr *name, socklen_t namelen)
 {
-	int32_t         ret, err;
+	int32_t	ret, err;
 
 	if (m_write_int32(m_state.s, MONITOR_BIND))
 		goto errout;
 	if (mm_send_fd(m_state.s, s))
 		goto errout;
 
-	if (m_write_int32(m_state.s, (int32_t) namelen))
+	if (m_write_int32(m_state.s, (int32_t)namelen))
 		goto errout;
-	if (m_write_raw(m_state.s, (char *) name, (size_t) namelen))
+	if (m_write_raw(m_state.s, (char *)name, (size_t)namelen))
 		goto errout;
 
 	if (m_read_int32(m_state.s, &err))
 		goto errout;
 
 	if (err != 0)
-		errno = (int) err;
+		errno = (int)err;
 
 	if (m_read_int32(m_state.s, &ret))
 		goto errout;
 
-	return (int) ret;
+	return (int)ret;
 
 errout:
 	log_print("monitor_bind: read/write error");
@@ -345,8 +350,8 @@ errout:
 int
 monitor_mkfifo(const char *path, mode_t mode)
 {
-	int32_t         ret, err;
-	char            realpath[MAXPATHLEN];
+	int32_t	ret, err;
+	char	realpath[MAXPATHLEN];
 
 	/* Only the child process is supposed to run this.  */
 	if (m_state.pid)
@@ -355,7 +360,8 @@ monitor_mkfifo(const char *path, mode_t mode)
 	if (path[0] == '/')
 		strlcpy(realpath, path, sizeof realpath);
 	else
-		snprintf(realpath, sizeof realpath, "%s/%s", m_state.root, path);
+		snprintf(realpath, sizeof realpath, "%s/%s", m_state.root,
+		    path);
 
 	if (m_write_int32(m_state.s, MONITOR_MKFIFO))
 		goto errout;
@@ -363,7 +369,7 @@ monitor_mkfifo(const char *path, mode_t mode)
 	if (m_write_raw(m_state.s, realpath, strlen(realpath) + 1))
 		goto errout;
 
-	ret = (int32_t) mode;
+	ret = (int32_t)mode;
 	if (m_write_int32(m_state.s, ret))
 		goto errout;
 
@@ -371,12 +377,12 @@ monitor_mkfifo(const char *path, mode_t mode)
 		goto errout;
 
 	if (err != 0)
-		errno = (int) err;
+		errno = (int)err;
 
 	if (m_read_int32(m_state.s, &ret))
 		goto errout;
 
-	return (int) ret;
+	return (int)ret;
 
 errout:
 	log_print("monitor_mkfifo: read/write error");
@@ -401,11 +407,11 @@ monitor_opendir(const char *path)
 	}
 	/* Now build a list with all dirents from fd. */
 	if (fstat(fd, &sb) < 0) {
-		(void) close(fd);
+		(void)close(fd);
 		return NULL;
 	}
 	if (!S_ISDIR(sb.st_mode)) {
-		(void) close(fd);
+		(void)close(fd);
 		errno = EACCES;
 		return NULL;
 	}
@@ -415,21 +421,21 @@ monitor_opendir(const char *path)
 
 	buf = calloc(bufsize, sizeof(char));
 	if (buf == NULL) {
-		(void) close(fd);
+		(void)close(fd);
 		errno = EACCES;
 		return NULL;
 	}
 	nbytes = getdirentries(fd, buf, bufsize, &base);
 	if (nbytes <= 0) {
-		(void) close(fd);
+		(void)close(fd);
 		free(buf);
 		errno = EACCES;
 		return NULL;
 	}
-	(void) close(fd);
+	(void)close(fd);
 
 	for (entries = 0, cp = buf; cp < buf + nbytes;) {
-		dp = (struct dirent *) cp;
+		dp = (struct dirent *)cp;
 		cp += dp->d_reclen;
 		entries++;
 	}
@@ -450,7 +456,7 @@ monitor_opendir(const char *path)
 	direntries->current = 0;
 
 	for (entries = 0, cp = buf; cp < buf + nbytes;) {
-		dp = (struct dirent *) cp;
+		dp = (struct dirent *)cp;
 		direntries->dirents[entries++] = dp;
 		cp += dp->d_reclen;
 	}
@@ -500,7 +506,7 @@ monitor_got_sigchld(int sig)
 static void
 sig_pass_to_chld(int sig)
 {
-	int             oerrno = errno;
+	int	oerrno = errno;
 
 	if (m_state.pid != -1)
 		kill(m_state.pid, sig);
@@ -511,10 +517,10 @@ sig_pass_to_chld(int sig)
 void
 monitor_loop(int debugging)
 {
-	pid_t           pid;
-	fd_set         *fds;
-	size_t          fdsn;
-	int             n, maxfd;
+	pid_t	 pid;
+	fd_set	*fds;
+	size_t	 fdsn;
+	int	 n, maxfd;
 
 	if (!debugging)
 		log_to(0);
@@ -522,7 +528,7 @@ monitor_loop(int debugging)
 	maxfd = m_state.s + 1;
 
 	fdsn = howmany(maxfd, NFDBITS) * sizeof(fd_mask);
-	fds = (fd_set *) malloc(fdsn);
+	fds = (fd_set *)malloc(fdsn);
 	if (!fds) {
 		kill(m_state.pid, SIGTERM);
 		log_fatal("monitor_loop: malloc (%lu) failed",
@@ -539,8 +545,8 @@ monitor_loop(int debugging)
 
 	while (cur_state < STATE_QUIT) {
 		/*
-		 * Currently, there is no need for us to hang around if the child
-		 * is in the process of shutting down.
+		 * Currently, there is no need for us to hang around if the
+		 * child is in the process of shutting down.
 	         */
 		if (sigtermed || sigchlded) {
 			if (sigtermed)
@@ -573,7 +579,7 @@ monitor_loop(int debugging)
 			}
 		} else if (n)
 			if (FD_ISSET(m_state.s, fds)) {
-				int32_t         msgcode;
+				int32_t	msgcode;
 				if (m_read_int32(m_state.s, &msgcode))
 					m_flush(m_state.s);
 				else
@@ -631,10 +637,10 @@ monitor_loop(int debugging)
 static void
 m_priv_getfd(int s)
 {
-	char            path[MAXPATHLEN];
-	int32_t         v, err;
-	int             flags;
-	mode_t          mode;
+	char	path[MAXPATHLEN];
+	int32_t	v, err;
+	int	flags;
+	mode_t	mode;
 
 	/*
 	 * We expect the following data on the socket:
@@ -649,7 +655,7 @@ m_priv_getfd(int s)
 
 	if (m_read_int32(s, &v))
 		goto errout;
-	flags = (int) v;
+	flags = (int)v;
 
 	if (m_read_int32(s, &v))
 		goto errout;
@@ -660,9 +666,9 @@ m_priv_getfd(int s)
 		v = -1;
 	} else {
 		err = 0;
-		v = (int32_t) open(path, flags, mode);
+		v = (int32_t)open(path, flags, mode);
 		if (v < 0)
-			err = (int32_t) errno;
+			err = (int32_t)errno;
 	}
 
 	if (m_write_int32(s, err))
@@ -684,25 +690,25 @@ errout:
 static void
 m_priv_getsocket(int s)
 {
-	int             domain, type, protocol;
-	int32_t         v, err;
+	int	domain, type, protocol;
+	int32_t	v, err;
 
 	if (m_read_int32(s, &v))
 		goto errout;
-	domain = (int) v;
+	domain = (int)v;
 
 	if (m_read_int32(s, &v))
 		goto errout;
-	type = (int) v;
+	type = (int)v;
 
 	if (m_read_int32(s, &v))
 		goto errout;
-	protocol = (int) v;
+	protocol = (int)v;
 
 	err = 0;
-	v = (int32_t) socket(domain, type, protocol);
+	v = (int32_t)socket(domain, type, protocol);
 	if (v < 0)
-		err = (int32_t) errno;
+		err = (int32_t)errno;
 
 	if (m_write_int32(s, err))
 		goto errout;
@@ -723,10 +729,10 @@ errout:
 static void
 m_priv_setsockopt(int s)
 {
-	int             sock, level, optname;
-	char           *optval = 0;
-	socklen_t       optlen;
-	int32_t         v, err;
+	int		 sock, level, optname;
+	char		*optval = 0;
+	socklen_t	 optlen;
+	int32_t		 v, err;
 
 	sock = mm_receive_fd(s);
 	if (sock < 0)
@@ -741,7 +747,7 @@ m_priv_setsockopt(int s)
 	if (m_read_int32(s, &optlen))
 		goto errout;
 
-	optval = (char *) malloc(optlen);
+	optval = (char *)malloc(optlen);
 	if (!optval)
 		goto errout;
 
@@ -753,9 +759,9 @@ m_priv_setsockopt(int s)
 		v = -1;
 	} else {
 		err = 0;
-		v = (int32_t) setsockopt(sock, level, optname, optval, optlen);
+		v = (int32_t)setsockopt(sock, level, optname, optval, optlen);
 		if (v < 0)
-			err = (int32_t) errno;
+			err = (int32_t)errno;
 	}
 
 	close(sock);
@@ -783,10 +789,10 @@ errout:
 static void
 m_priv_bind(int s)
 {
-	int             sock;
+	int		 sock;
 	struct sockaddr *name = 0;
-	socklen_t       namelen;
-	int32_t         v, err;
+	socklen_t        namelen;
+	int32_t          v, err;
 
 	sock = mm_receive_fd(s);
 	if (sock < 0)
@@ -796,11 +802,11 @@ m_priv_bind(int s)
 		goto errout;
 	namelen = (socklen_t) v;
 
-	name = (struct sockaddr *) malloc(namelen);
+	name = (struct sockaddr *)malloc(namelen);
 	if (!name)
 		goto errout;
 
-	if (m_read_raw(s, (char *) name, (size_t) namelen))
+	if (m_read_raw(s, (char *)name, (size_t)namelen))
 		goto errout;
 
 	if (m_priv_check_bind(name, namelen) != 0) {
@@ -808,11 +814,11 @@ m_priv_bind(int s)
 		v = -1;
 	} else {
 		err = 0;
-		v = (int32_t) bind(sock, name, namelen);
+		v = (int32_t)bind(sock, name, namelen);
 		if (v < 0) {
 			log_error("m_priv_bind: bind(%d,%p,%d) returned %d",
-				  sock, name, namelen, v);
-			err = (int32_t) errno;
+			    sock, name, namelen, v);
+			err = (int32_t)errno;
 		}
 	}
 
@@ -841,9 +847,9 @@ errout:
 static void
 m_priv_mkfifo(int s)
 {
-	char            path[MAXPATHLEN];
-	mode_t          mode;
-	int32_t         v, err;
+	char	path[MAXPATHLEN];
+	mode_t	mode;
+	int32_t	v, err;
 
 	if (m_read_raw(s, path, MAXPATHLEN))
 		goto errout;
@@ -856,18 +862,19 @@ m_priv_mkfifo(int s)
 	 * ui_fifo is set before creation of the unpriv'ed child.  So path
 	 * should exactly match ui_fifo.  It's also restricted to /var/run.
 	 */
-	if (m_priv_local_sanitize_path(path, sizeof path, O_RDWR) != 0 ||
-	    strncmp(ui_fifo, path, strlen(ui_fifo))) {
+	if (m_priv_local_sanitize_path(path, sizeof path, O_RDWR) != 0
+	    || strncmp(ui_fifo, path, strlen(ui_fifo))) {
 		err = EACCES;
 		v = -1;
 	} else {
 		unlink(path);	/* XXX See ui.c:ui_init() */
 
 		err = 0;
-		v = (int32_t) mkfifo(path, mode);
+		v = (int32_t)mkfifo(path, mode);
 		if (v) {
-			log_error("m_priv_mkfifo: mkfifo(\"%s\", %o) failed", path, mode);
-			err = (int32_t) errno;
+			log_error("m_priv_mkfifo: mkfifo(\"%s\", %o) failed",
+			    path, mode);
+			err = (int32_t)errno;
 		}
 	}
 
@@ -892,7 +899,8 @@ errout:
 int
 m_write_int32(int s, int32_t value)
 {
-	u_int32_t       v;
+	u_int32_t	v;
+
 	memcpy(&v, &value, sizeof v);
 	return (write(s, &v, sizeof v) == -1);
 }
@@ -909,7 +917,8 @@ m_write_raw(int s, char *data, size_t dlen)
 int
 m_read_int32(int s, int32_t *value)
 {
-	u_int32_t       v;
+	u_int32_t	v;
+
 	if (read(s, &v, sizeof v) != sizeof v)
 		return 1;
 	memcpy(value, &v, sizeof v);
@@ -919,8 +928,9 @@ m_read_int32(int s, int32_t *value)
 int
 m_read_raw(int s, char *data, size_t maxlen)
 {
-	u_int32_t       v;
-	int             r;
+	u_int32_t	v;
+	int		r;
+
 	if (m_read_int32(s, &v))
 		return 1;
 	if (v > maxlen)
@@ -933,7 +943,7 @@ m_read_raw(int s, char *data, size_t maxlen)
 void
 m_flush(int s)
 {
-	u_int8_t        tmp;
+	u_int8_t	tmp;
 	int             one = 1;
 
 	ioctl(s, FIONBIO, &one);/* Non-blocking */
@@ -945,7 +955,7 @@ m_flush(int s)
 static int
 m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 {
-	char           *p;
+	char	*p;
 
 	/*
 	 * We only permit paths starting with
@@ -957,7 +967,7 @@ m_priv_local_sanitize_path(char *path, size_t pmax, int flags)
 		goto bad_path;
 
 	/* Any path containing '..' is invalid.  */
-	for (p = path; *p && (p - path) < (int) pmax; p++)
+	for (p = path; *p && (p - path) < (int)pmax; p++)
 		if (*p == '.' && *(p + 1) == '.')
 			goto bad_path;
 
@@ -1027,9 +1037,9 @@ m_priv_check_bind(const struct sockaddr *sa, socklen_t salen)
 		log_print("NULL address");
 		return 1;
 	}
-	if (sysdep_sa_len((struct sockaddr *) sa) != salen) {
+	if (sysdep_sa_len((struct sockaddr *)sa) != salen) {
 		log_print("Length mismatch: %d %d",
-		  (int) sysdep_sa_len((struct sockaddr *) sa), (int) salen);
+		  (int)sysdep_sa_len((struct sockaddr *)sa), (int)salen);
 		return 1;
 	}
 	switch (sa->sa_family) {
@@ -1038,14 +1048,14 @@ m_priv_check_bind(const struct sockaddr *sa, socklen_t salen)
 			log_print("Invalid inet address length");
 			return 1;
 		}
-		port = ((const struct sockaddr_in *) sa)->sin_port;
+		port = ((const struct sockaddr_in *)sa)->sin_port;
 		break;
 	case AF_INET6:
 		if (salen != sizeof(struct sockaddr_in6)) {
 			log_print("Invalid inet6 address length");
 			return 1;
 		}
-		port = ((const struct sockaddr_in6 *) sa)->sin6_port;
+		port = ((const struct sockaddr_in6 *)sa)->sin6_port;
 		break;
 	default:
 		log_print("Unknown address family");
@@ -1066,10 +1076,11 @@ static void
 m_priv_increase_state(int state)
 {
 	if (state <= cur_state)
-		log_print("m_priv_increase_state: attempt to decrase state or match "
-			  "current state");
+		log_print("m_priv_increase_state: attempt to decrase state "
+		    "or match current state");
 	if (state < STATE_INIT || state > STATE_QUIT)
-		log_print("m_priv_increase_state: attempt to switch to invalid state");
+		log_print("m_priv_increase_state: attempt to switch to "
+		    "invalid state");
 	cur_state = state;
 }
 
@@ -1077,6 +1088,7 @@ static void
 m_priv_test_state(int state)
 {
 	if (cur_state != state)
-		log_print("m_priv_test_state: Illegal state: %d != %d", cur_state, state);
+		log_print("m_priv_test_state: Illegal state: %d != %d",
+		    cur_state, state);
 	return;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.43 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: log.c,v 1.44 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -135,8 +135,8 @@ log_reinit(void)
 				for (class = 0; class < LOG_ENDCLASS; class++)
 					log_debug_cmd(class, level);
 			else {
-				log_print("init: invalid logging class or level: %s",
-				    logclass->field);
+				log_print("init: invalid logging class or "
+				    "level: %s", logclass->field);
 				continue;
 			}
 		} else
@@ -190,13 +190,15 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 
 	len = vsnprintf(buffer, sizeof buffer, fmt, ap);
 	if (len > 0 && len < (int) sizeof buffer - 1 && error)
-		snprintf(buffer + len, sizeof buffer - len, ": %s", strerror(errno));
+		snprintf(buffer + len, sizeof buffer - len, ": %s",
+		    strerror(errno));
 	if (log_output) {
 		gettimeofday(&now, 0);
 		t = now.tv_sec;
 		tm = localtime(&t);
 		if (class >= 0)
-			snprintf(nbuf, sizeof nbuf, "%02d%02d%02d.%06ld %s %02d ",
+			snprintf(nbuf, sizeof nbuf,
+			    "%02d%02d%02d.%06ld %s %02d ",
 			    tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
 			    _log_get_class(class), level);
 		else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
@@ -215,9 +217,11 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 			fprintf(log_output, fallback_msg, errno);
 
 			/*
-			 * Close log_output to prevent isakmpd from locking the file.
-			 * We may need to explicitly close stdout to do this properly.
-			 * XXX - Figure out how to match two FILE *'s and rewrite.
+			 * Close log_output to prevent isakmpd from locking
+			 * the file.  We may need to explicitly close stdout
+			 * to do this properly.  
+			 * XXX - Figure out how to match two FILE *'s and
+			 * rewrite.
 			 */
 			if (fileno(log_output) != -1 &&
 			    fileno(stdout) == fileno(log_output))
@@ -232,8 +236,8 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 			    syslog_level, "%s", buffer);
 		}
 	} else
-		syslog(class == LOG_REPORT ? LOG_ALERT : syslog_level,
-		    "%s", buffer);
+		syslog(class == LOG_REPORT ? LOG_ALERT : syslog_level, "%s",
+		    buffer);
 }
 
 #ifdef USE_DEBUG
@@ -243,7 +247,8 @@ log_debug(int cls, int level, const char *fmt, ...)
 	va_list         ap;
 
 	/*
-	 * If we are not debugging this class, or the level is too low, just return.
+	 * If we are not debugging this class, or the level is too low, just
+	 * return.
          */
 	if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
 		return;
@@ -260,7 +265,8 @@ log_debug_buf(int cls, int level, const char *header, const u_int8_t *buf,
 	char	s[73];
 
 	/*
-	 * If we are not debugging this class, or the level is too low, just return.
+	 * If we are not debugging this class, or the level is too low, just
+	 * return.
          */
 	if (cls >= 0 && (log_level[cls] == 0 || level > log_level[cls]))
 		return;
@@ -292,15 +298,16 @@ log_debug_cmd(int cls, int level)
 		return;
 	}
 	if (level < 0) {
-		log_print("log_debug_cmd: invalid debugging level %d for class %d",
-		    level, cls);
+		log_print("log_debug_cmd: invalid debugging level %d for "
+		    "class %d", level, cls);
 		return;
 	}
 	if (level == log_level[cls])
-		log_print("log_debug_cmd: log level unchanged for class %d", cls);
+		log_print("log_debug_cmd: log level unchanged for class %d",
+		    cls);
 	else {
-		log_print("log_debug_cmd: log level changed from %d to %d for class %d",
-		    log_level[cls], level, cls);
+		log_print("log_debug_cmd: log level changed from %d to %d "
+		    "for class %d", log_level[cls], level, cls);
 		log_level[cls] = level;
 	}
 }
@@ -325,7 +332,7 @@ log_debug_toggle(void)
 void
 log_print(const char *fmt, ...)
 {
-	va_list         ap;
+	va_list	ap;
 
 	va_start(ap, fmt);
 	_log_print(0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
@@ -335,9 +342,9 @@ log_print(const char *fmt, ...)
 void
 log_verbose(const char *fmt, ...)
 {
-	va_list         ap;
+	va_list	ap;
 #ifdef USE_DEBUG
-	int             i;
+	int	i;
 #endif				/* USE_DEBUG */
 
 	if (verbose_logging == 0)
@@ -357,7 +364,7 @@ log_verbose(const char *fmt, ...)
 void
 log_error(const char *fmt, ...)
 {
-	va_list         ap;
+	va_list	ap;
 
 	va_start(ap, fmt);
 	_log_print(1, LOG_ERR, fmt, ap, LOG_PRINT, 0);
@@ -367,7 +374,7 @@ log_error(const char *fmt, ...)
 void
 log_fatal(const char *fmt, ...)
 {
-	va_list         ap;
+	va_list	ap;
 
 	va_start(ap, fmt);
 	_log_print(1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
@@ -458,8 +465,8 @@ void
 log_packet_restart(char *newname)
 {
 	if (packet_log) {
-		log_print("log_packet_restart: capture already active on file \"%s\"",
-		    pcaplog_file);
+		log_print("log_packet_restart: capture already active on "
+		    "file \"%s\"", pcaplog_file);
 		return;
 	}
 	if (newname)
@@ -482,7 +489,7 @@ log_packet_stop(void)
 }
 
 void
-log_packet_iov(struct sockaddr * src, struct sockaddr * dst, struct iovec * iov,
+log_packet_iov(struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
     int iovcnt)
 {
 	struct isakmp_hdr *isakmphdr;
@@ -528,8 +535,10 @@ log_packet_iov(struct sockaddr * src, struct sockaddr * dst, struct iovec * iov,
 		goto setup_ip4;
 
 	case AF_INET:
-		hdr.ip.ip4.ip_src.s_addr = ((struct sockaddr_in *) src)->sin_addr.s_addr;
-		hdr.ip.ip4.ip_dst.s_addr = ((struct sockaddr_in *) dst)->sin_addr.s_addr;
+		hdr.ip.ip4.ip_src.s_addr =
+		    ((struct sockaddr_in *)src)->sin_addr.s_addr;
+		hdr.ip.ip4.ip_dst.s_addr =
+		    ((struct sockaddr_in *)dst)->sin_addr.s_addr;
 
 setup_ip4:
 		hdrlen = sizeof hdr.ip.ip4;
@@ -550,9 +559,11 @@ setup_ip4:
 		hdr.ip.ip6.ip6_vfc = IPV6_VERSION;
 		hdr.ip.ip6.ip6_nxt = IPPROTO_UDP;
 		hdr.ip.ip6.ip6_plen = udp.uh_ulen;
-		memcpy(&hdr.ip.ip6.ip6_src, &((struct sockaddr_in6 *) src)->sin6_addr,
+		memcpy(&hdr.ip.ip6.ip6_src,
+		    &((struct sockaddr_in6 *)src)->sin6_addr,
 		    sizeof hdr.ip.ip6.ip6_src);
-		memcpy(&hdr.ip.ip6.ip6_dst, &((struct sockaddr_in6 *) dst)->sin6_addr,
+		memcpy(&hdr.ip.ip6.ip6_dst,
+		    &((struct sockaddr_in6 *)dst)->sin6_addr,
 		    sizeof hdr.ip.ip6.ip6_dst);
 		break;
 	}
@@ -641,7 +652,7 @@ udp_cksum(struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
 		sum += phu.pa[i / 2];
 
 	sp = (u_int16_t *) u;
-	for (i = 0; i < (int) sizeof(struct udphdr); i += 2)
+	for (i = 0; i < (int)sizeof(struct udphdr); i += 2)
 		sum += *sp++;
 
 	sp = d;
@@ -649,7 +660,7 @@ udp_cksum(struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
 		sum += *sp++;
 
 	if (tlen & 1)
-		sum += htons((*(const char *) sp) << 8);
+		sum += htons((*(const char *)sp) << 8);
 
 	while (sum > 0xffff)
 		sum = (sum & 0xffff) + (sum >> 16);
@@ -662,7 +673,7 @@ udp_cksum(struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
 static u_int16_t
 in_cksum(const u_int16_t *w, int len)
 {
-	int             nleft = len, sum = 0;
+	int		nleft = len, sum = 0;
 	u_int16_t       answer;
 
 	while (nleft > 1) {

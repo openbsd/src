@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.14 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.15 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -65,7 +65,7 @@ CHUNK_TYPE      b2n_mask[CHUNK_BITS] = {
 };
 
 /* Convert a hex character to its integer value.  */
-static          u_int8_t
+static u_int8_t
 hex2int(char c)
 {
 	if (c <= '9')
@@ -86,7 +86,7 @@ b2n_random(b2n_ptr n, u_int32_t bits)
 
 	/* Get the number of significant bits right */
 	if (bits & CHUNK_MASK) {
-		CHUNK_TYPE      m = (((1 << ((bits & CHUNK_MASK) - 1)) - 1) << 1) | 1;
+		CHUNK_TYPE m = (((1 << ((bits & CHUNK_MASK) - 1)) - 1) << 1) | 1;
 		n->limp[n->chunks - 1] &= m;
 	}
 	n->dirty = 1;
@@ -169,7 +169,7 @@ int
 b2n_set_ui(b2n_ptr n, unsigned int val)
 {
 #if CHUNK_BITS < 32
-	int             i, chunks;
+	int	i, chunks;
 
 	chunks = (CHUNK_BYTES - 1 + sizeof(val)) / CHUNK_BYTES;
 
@@ -193,7 +193,7 @@ b2n_set_ui(b2n_ptr n, unsigned int val)
 int
 b2n_set_str(b2n_ptr n, char *str)
 {
-	int             i, j, w, len, chunks;
+	int		i, j, w, len, chunks;
 	CHUNK_TYPE      tmp;
 
 	if (strncasecmp(str, "0x", 2))
@@ -216,8 +216,8 @@ b2n_set_str(b2n_ptr n, char *str)
 
 	for (w = 0, i = 0; i < chunks; i++) {
 		tmp = 0;
-		for (j = (i == 0 ? ((len - 1) % CHUNK_BYTES) + 1 : CHUNK_BYTES); j > 0;
-		     j--) {
+		for (j = (i == 0 ? ((len - 1) % CHUNK_BYTES) + 1 : CHUNK_BYTES);
+		    j > 0; j--) {
 			tmp <<= 8;
 			tmp |= (hex2int(str[w]) << 4) | hex2int(str[w + 1]);
 			w += 2;
@@ -281,9 +281,10 @@ b2n_snprint(char *buf, size_t sz, b2n_ptr n)
 			tmp >>= 8;
 		}
 
-		for (j = (i == 0 ? left - 1 : CHUNK_BYTES - 1); j >= 0 && k < sz - 3; j--)
+		for (j = (i == 0 ? left - 1 : CHUNK_BYTES - 1); j >= 0
+		    && k < sz - 3; j--)
 			if (flag || (i == n->chunks - 1 && j == 0) ||
-			 buffer[2 * j] != '0' || buffer[2 * j + 1] != '0') {
+			    buffer[2 * j] != '0' || buffer[2 * j + 1] != '0') {
 				buf[k++] = buffer[2 * j];
 				buf[k++] = buffer[2 * j + 1];
 				flag = 1;
@@ -299,7 +300,7 @@ b2n_snprint(char *buf, size_t sz, b2n_ptr n)
 u_int32_t
 b2n_sigbit(b2n_ptr n)
 {
-	int             i, j;
+	int	i, j;
 
 	if (!n->dirty)
 		return n->bits;
@@ -367,8 +368,8 @@ b2n_add(b2n_ptr d, b2n_ptr a, b2n_ptr b)
 int
 b2n_cmp(b2n_ptr n, b2n_ptr m)
 {
-	int             sn, sm;
-	int             i;
+	int	sn, sm;
+	int	i;
 
 	sn = b2n_sigbit(n);
 	sm = b2n_sigbit(m);
@@ -390,7 +391,7 @@ b2n_cmp(b2n_ptr n, b2n_ptr m)
 int
 b2n_cmp_null(b2n_ptr a)
 {
-	int             i = 0;
+	int	i = 0;
 
 	do {
 		if (a->limp[i])
@@ -416,7 +417,7 @@ b2n_lshift(b2n_ptr d, b2n_ptr n, unsigned int s)
 	min = s & CHUNK_MASK;
 
 	add = (!(bits & CHUNK_MASK) || ((bits & CHUNK_MASK) + min) > CHUNK_MASK)
-		? 1 : 0;
+	    ? 1 : 0;
 	chunks = n->chunks;
 	if (b2n_resize(d, chunks + maj + add))
 		return -1;
@@ -448,8 +449,8 @@ b2n_lshift(b2n_ptr d, b2n_ptr n, unsigned int s)
 int
 b2n_rshift(b2n_ptr d, b2n_ptr n, unsigned int s)
 {
-	int             maj, min, size = n->chunks, newsize;
-	b2n_ptr         tmp;
+	int	maj, min, size = n->chunks, newsize;
+	b2n_ptr	tmp;
 
 	if (!s)
 		return b2n_set(d, n);
@@ -484,8 +485,8 @@ b2n_rshift(b2n_ptr d, b2n_ptr n, unsigned int s)
 int
 b2n_mul(b2n_ptr d, b2n_ptr n, b2n_ptr m)
 {
-	int             i, j;
-	b2n_t           tmp, tmp2;
+	int	i, j;
+	b2n_t	tmp, tmp2;
 
 	if (!b2n_cmp_null(m) || !b2n_cmp_null(n))
 		return b2n_set_null(d);
@@ -537,8 +538,8 @@ fail:
 int
 b2n_square(b2n_ptr d, b2n_ptr n)
 {
-	int             i, j, maj, min, bits, chunk;
-	b2n_t           t;
+	int	i, j, maj, min, bits, chunk;
+	b2n_t	t;
 
 	maj = b2n_sigbit(n);
 	min = maj & CHUNK_MASK;
@@ -580,8 +581,8 @@ b2n_square(b2n_ptr d, b2n_ptr n)
 int
 b2n_div_q(b2n_ptr d, b2n_ptr n, b2n_ptr m)
 {
-	b2n_t           r;
-	int             rv;
+	b2n_t	r;
+	int	rv;
 
 	b2n_init(r);
 	rv = b2n_div(d, r, n, m);
@@ -592,8 +593,8 @@ b2n_div_q(b2n_ptr d, b2n_ptr n, b2n_ptr m)
 int
 b2n_div_r(b2n_ptr r, b2n_ptr n, b2n_ptr m)
 {
-	b2n_t           q;
-	int             rv;
+	b2n_t	q;
+	int	rv;
 
 	b2n_init(q);
 	rv = b2n_div(q, r, n, m);
@@ -604,9 +605,9 @@ b2n_div_r(b2n_ptr r, b2n_ptr n, b2n_ptr m)
 int
 b2n_div(b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
 {
-	int             i, j, len, bits;
-	u_int32_t       sm, sn;
-	b2n_t           nenn, div, shift, mask;
+	int		i, j, len, bits;
+	u_int32_t	sm, sn;
+	b2n_t		nenn, div, shift, mask;
 
 	/* If Teiler > Zaehler, the result is 0 */
 	if ((sm = b2n_sigbit(m)) > (sn = b2n_sigbit(n))) {
@@ -651,8 +652,8 @@ b2n_div(b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
 	/* The first iteration is done over the relevant bits */
 	bits = (CHUNK_MASK + sn) & CHUNK_MASK;
 	for (i = len; i >= 0 && b2n_sigbit(nenn) >= sm; i--)
-		for (j = (i == len ? bits : CHUNK_MASK); j >= 0 && b2n_sigbit(nenn) >= sm;
-		     j--) {
+		for (j = (i == len ? bits : CHUNK_MASK); j >= 0
+		    && b2n_sigbit(nenn) >= sm; j--) {
 			if (nenn->limp[i] & b2n_mask[j]) {
 				if (b2n_sub(nenn, nenn, shift))
 					goto fail;
@@ -685,7 +686,7 @@ fail:
 int
 b2n_mod(b2n_ptr m, b2n_ptr n, b2n_ptr p)
 {
-	int             bits, size;
+	int	bits, size;
 
 	if (b2n_div_r(m, n, p))
 		return -1;
@@ -706,7 +707,7 @@ b2n_mod(b2n_ptr m, b2n_ptr n, b2n_ptr p)
 int
 b2n_gcd(b2n_ptr e, b2n_ptr go, b2n_ptr ho)
 {
-	b2n_t           g, h;
+	b2n_t	g, h;
 
 	b2n_init(g);
 	b2n_init(h);
@@ -736,7 +737,7 @@ fail:
 int
 b2n_mul_inv(b2n_ptr ga, b2n_ptr be, b2n_ptr p)
 {
-	b2n_t           a;
+	b2n_t	a;
 
 	b2n_init(a);
 	if (b2n_set_ui(a, 1))
@@ -756,7 +757,7 @@ fail:
 int
 b2n_div_mod(b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
 {
-	b2n_t           s0, s1, s2, q, r0, r1;
+	b2n_t	s0, s1, s2, q, r0, r1;
 
 	/* There is no multiplicative inverse to Null.  */
 	if (!b2n_cmp_null(be))
@@ -823,8 +824,8 @@ fail:
 int
 b2n_trace(b2n_ptr ho, b2n_ptr a, b2n_ptr p)
 {
-	int             i, m = b2n_sigbit(p) - 1;
-	b2n_t           h;
+	int	i, m = b2n_sigbit(p) - 1;
+	b2n_t	h;
 
 	b2n_init(h);
 	if (b2n_set(h, a))
@@ -856,8 +857,8 @@ fail:
 int
 b2n_halftrace(b2n_ptr ho, b2n_ptr a, b2n_ptr p)
 {
-	int             i, m = b2n_sigbit(p) - 1;
-	b2n_t           h;
+	int	i, m = b2n_sigbit(p) - 1;
+	b2n_t	h;
 
 	b2n_init(h);
 	if (b2n_set(h, a))
@@ -894,8 +895,8 @@ fail:
 int
 b2n_sqrt(b2n_ptr zo, b2n_ptr b, b2n_ptr ip)
 {
-	int             i, m = b2n_sigbit(ip) - 1;
-	b2n_t           w, p, temp, z;
+	int	i, m = b2n_sigbit(ip) - 1;
+	b2n_t	w, p, temp, z;
 
 	if (!b2n_cmp_null(b))
 		return b2n_set_null(z);
@@ -960,7 +961,7 @@ fail:
 int
 b2n_exp_mod(b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
 {
-	b2n_t           u, b;
+	b2n_t	u, b;
 
 	b2n_init(u);
 	b2n_init(b);
@@ -1005,9 +1006,9 @@ fail:
 int
 b2n_nadd(b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
 {
-	int             i, carry;
-	b2n_ptr         a, b;
-	b2n_t           d;
+	int	i, carry;
+	b2n_ptr	a, b;
+	b2n_t	d;
 
 	if (!b2n_cmp_null(a0))
 		return b2n_set(d0, b0);
@@ -1047,8 +1048,8 @@ b2n_nadd(b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
 int
 b2n_nsub(b2n_ptr d0, b2n_ptr a, b2n_ptr b)
 {
-	int             i, carry;
-	b2n_t           d;
+	int	i, carry;
+	b2n_t	d;
 
 	if (b2n_cmp(a, b) <= 0)
 		return b2n_set_null(d0);
@@ -1082,7 +1083,7 @@ b2n_nsub(b2n_ptr d0, b2n_ptr a, b2n_ptr b)
 int
 b2n_3mul(b2n_ptr d0, b2n_ptr e)
 {
-	b2n_t           d;
+	b2n_t	d;
 
 	b2n_init(d);
 	if (b2n_lshift(d, e, 1))

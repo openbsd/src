@@ -1,4 +1,4 @@
-/* $OpenBSD: prf.c,v 1.13 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: prf.c,v 1.14 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: prf.c,v 1.7 1999/05/02 12:50:29 niklas Exp $	 */
 
 /*
@@ -40,9 +40,9 @@
 #include "log.h"
 #include "prf.h"
 
-void            prf_hash_init(struct prf_hash_ctx *);
-void            prf_hash_update(struct prf_hash_ctx *, unsigned char *, unsigned int);
-void            prf_hash_final(unsigned char *, struct prf_hash_ctx *);
+void	prf_hash_init(struct prf_hash_ctx *);
+void	prf_hash_update(struct prf_hash_ctx *, unsigned char *, unsigned int);
+void	prf_hash_final(unsigned char *, struct prf_hash_ctx *);
 
 /* PRF behaves likes a hash */
 
@@ -94,7 +94,7 @@ prf_alloc(enum prfs type, int subtype, unsigned char *shared,
 	prf = malloc(sizeof *prf);
 	if (!prf) {
 		log_error("prf_alloc: malloc (%lu) failed",
-		    (unsigned long) sizeof *prf);
+		    (unsigned long)sizeof *prf);
 		return 0;
 	}
 	if (type == PRF_HMAC) {
@@ -102,19 +102,21 @@ prf_alloc(enum prfs type, int subtype, unsigned char *shared,
 		prfctx = malloc(sizeof *prfctx);
 		if (!prfctx) {
 			log_error("prf_alloc: malloc (%lu) failed",
-			    (unsigned long) sizeof *prfctx);
+			    (unsigned long)sizeof *prfctx);
 			goto cleanprf;
 		}
 		prf->prfctx = prfctx;
 
 		prfctx->ctx = malloc(hash->ctxsize);
 		if (!prfctx->ctx) {
-			log_error("prf_alloc: malloc (%d) failed", hash->ctxsize);
+			log_error("prf_alloc: malloc (%d) failed",
+			    hash->ctxsize);
 			goto cleanprfctx;
 		}
 		prfctx->ctx2 = malloc(hash->ctxsize);
 		if (!prfctx->ctx2) {
-			log_error("prf_alloc: malloc (%d) failed", hash->ctxsize);
+			log_error("prf_alloc: malloc (%d) failed",
+			    hash->ctxsize);
 			free(prfctx->ctx);
 			goto cleanprfctx;
 		}
@@ -123,10 +125,10 @@ prf_alloc(enum prfs type, int subtype, unsigned char *shared,
 		prfctx->hash = hash;
 
 		/* Use the correct function pointers.  */
-		prf->Init = (void (*) (void *)) prf_hash_init;
-		prf->Update = (void (*) (void *, unsigned char *,
-		    unsigned int)) prf_hash_update;
-		prf->Final = (void (*) (unsigned char *, void *)) prf_hash_final;
+		prf->Init = (void(*)(void *))prf_hash_init;
+		prf->Update = (void(*)(void *, unsigned char *,
+		    unsigned int))prf_hash_update;
+		prf->Final = (void(*)(unsigned char *, void *))prf_hash_final;
 
 		/* Init HMAC contexts.  */
 		hash->HMACInit(hash, shared, sharedsize);

@@ -1,4 +1,4 @@
-/* $OpenBSD: timer.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: timer.h,v 1.7 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: timer.h,v 1.6 1999/04/11 22:35:55 ho Exp $	 */
 
 /*
@@ -48,7 +48,7 @@ extern void     timer_init(void);
 extern void     timer_next_event(struct timeval **);
 extern void     timer_handle_expirations(void);
 extern struct event *timer_add_event(char *, void (*) (void *), void *,
-				                     struct timeval *);
+		    struct timeval *);
 extern void     timer_remove_event(struct event *);
 extern void     timer_report(void);
 

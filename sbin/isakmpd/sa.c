@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.81 2004/05/13 06:56:34 ho Exp $	 */
+/* $OpenBSD: sa.c,v 1.82 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -92,7 +92,7 @@ sa_init(void)
 	sa_tab = malloc((bucket_mask + 1) * sizeof(struct sa_list));
 	if (!sa_tab)
 		log_fatal("sa_init: malloc (%lu) failed",
-		    (bucket_mask + 1) * (unsigned long) sizeof(struct sa_list));
+		    (bucket_mask + 1) * (unsigned long)sizeof(struct sa_list));
 	for (i = 0; i <= bucket_mask; i++)
 		LIST_INIT(&sa_tab[i]);
 }
@@ -102,8 +102,8 @@ sa_init(void)
 static void
 sa_resize(void)
 {
-	int             new_mask = (bucket_mask + 1) * 2 - 1;
-	int             i;
+	int	new_mask = (bucket_mask + 1) * 2 - 1;
+	int	i;
 	struct sa_list *new_tab;
 
 	new_tab = realloc(sa_tab, (new_mask + 1) * sizeof(struct sa_list));
@@ -145,7 +145,7 @@ sa_check_icookie(struct sa *sa, void *icookie)
 }
 
 /* Lookup an ISAKMP SA out of just the initiator cookie.  */
-struct sa      *
+struct sa *
 sa_lookup_from_icookie(u_int8_t *cookie)
 {
 	return sa_find(sa_check_icookie, cookie);
@@ -306,7 +306,7 @@ sa_enter(struct sa *sa)
  * Lookup the SA given by the header fields MSG.  PHASE2 is false when
  * looking for phase 1 SAa and true otherwise.
  */
-struct sa      *
+struct sa *
 sa_lookup_by_header(u_int8_t *msg, int phase2)
 {
 	return sa_lookup(msg + ISAKMP_HDR_COOKIES_OFF,
@@ -344,13 +344,13 @@ sa_lookup(u_int8_t *cookies, u_int8_t *message_id)
 			bucket ^= cp[0] | cp[1] << 8;
 		}
 	bucket &= bucket_mask;
-	for (sa = LIST_FIRST(&sa_tab[bucket]); sa &&
-		 (memcmp(cookies, sa->cookies, ISAKMP_HDR_COOKIES_LEN) != 0 ||
-		     (message_id && memcmp(message_id, sa->message_id,
-			 ISAKMP_HDR_MESSAGE_ID_LEN) != 0) ||
-		     (!message_id && !zero_test(sa->message_id,
-			 ISAKMP_HDR_MESSAGE_ID_LEN)));
-	     sa = LIST_NEXT(sa, link))
+	for (sa = LIST_FIRST(&sa_tab[bucket]);
+	    sa && (memcmp(cookies, sa->cookies, ISAKMP_HDR_COOKIES_LEN) != 0
+	    || (message_id && memcmp(message_id, sa->message_id,
+		ISAKMP_HDR_MESSAGE_ID_LEN) != 0)
+	    || (!message_id && !zero_test(sa->message_id,
+		ISAKMP_HDR_MESSAGE_ID_LEN)));
+	    sa = LIST_NEXT(sa, link))
 		;
 
 	return sa;
@@ -369,7 +369,7 @@ sa_create(struct exchange *exchange, struct transport *t)
 	sa = calloc(1, sizeof *sa);
 	if (!sa) {
 		log_error("sa_create: calloc (1, %lu) failed",
-		    (unsigned long) sizeof *sa);
+		    (unsigned long)sizeof *sa);
 		return -1;
 	}
 	sa->transport = t;
@@ -390,7 +390,7 @@ sa_create(struct exchange *exchange, struct transport *t)
 		sa->data = calloc(1, sa->doi->sa_size);
 		if (!sa->data) {
 			log_error("sa_create: calloc (1, %lu) failed",
-			    (unsigned long) sa->doi->sa_size);
+			    (unsigned long)sa->doi->sa_size);
 			free(sa);
 			return -1;
 		}
@@ -889,10 +889,10 @@ sa_validate_proto_xf(struct proto *match, struct payload *xf, int phase)
 		    "protocol mismatch", match, match->no));
 		return 1;
 	}
-	avs = (struct attr_validation_state *) calloc(1, sizeof *avs);
+	avs = (struct attr_validation_state *)calloc(1, sizeof *avs);
 	if (!avs) {
 		log_error("sa_validate_proto_xf: calloc (1, %lu)",
-		    (unsigned long) sizeof *avs);
+		    (unsigned long)sizeof *avs);
 		return 1;
 	}
 	avs->phase = phase;
@@ -906,7 +906,7 @@ sa_validate_proto_xf(struct proto *match, struct payload *xf, int phase)
 	/* Check against the transforms we suggested.  */
 	avs->mode++;
 	for (pa = TAILQ_FIRST(&match->xfs); pa && !found;
-	     pa = TAILQ_NEXT(pa, next)) {
+	    pa = TAILQ_NEXT(pa, next)) {
 		if (xf_id != GET_ISAKMP_TRANSFORM_ID(pa->attrs))
 			continue;
 
@@ -954,7 +954,7 @@ sa_add_transform(struct sa *sa, struct payload *xf, int initiator,
 		proto = calloc(1, sizeof *proto);
 		if (!proto)
 			log_error("sa_add_transform: calloc (1, %lu) failed",
-			    (unsigned long) sizeof *proto);
+			    (unsigned long)sizeof *proto);
 	} else {
 		/*
 		 * RFC 2408, section 4.2 states the responder SHOULD use the
@@ -989,7 +989,7 @@ sa_add_transform(struct sa *sa, struct payload *xf, int initiator,
 		proto->data = calloc(1, sa->doi->proto_size);
 		if (!proto->data) {
 			log_error("sa_add_transform: calloc (1, %lu) failed",
-			    (unsigned long) sa->doi->proto_size);
+			    (unsigned long)sa->doi->proto_size);
 			goto cleanup;
 		}
 	}
@@ -1151,11 +1151,12 @@ sa_flag(char *attr)
 		 */
 		{
 			"__ondemand", SA_FLAG_ONDEMAND
-		}, {
+		},
+		{
 			"ikecfg", SA_FLAG_IKECFG
 		},
 	};
-	size_t          i;
+	size_t	i;
 
 	for (i = 0; i < sizeof sa_flag_map / sizeof sa_flag_map[0]; i++)
 		if (strcasecmp(attr, sa_flag_map[i].name) == 0)

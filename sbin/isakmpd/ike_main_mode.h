@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_main_mode.h,v 1.5 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: ike_main_mode.h,v 1.6 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: ike_main_mode.h,v 1.1 1998/07/25 11:22:07 niklas Exp $	 */
 
 /*
@@ -34,7 +34,7 @@
 
 struct message;
 
-extern int      (*ike_main_mode_initiator[]) (struct message * msg);
-extern int      (*ike_main_mode_responder[]) (struct message * msg);
+extern int      (*ike_main_mode_initiator[]) (struct message *msg);
+extern int      (*ike_main_mode_responder[]) (struct message *msg);
 
 #endif				/* _IKE_MAIN_MODE_H_ */

@@ -1,4 +1,4 @@
-/* $OpenBSD: math_ec2n.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: math_ec2n.h,v 1.7 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: math_ec2n.h,v 1.4 1999/04/17 23:20:37 niklas Exp $	 */
 
 /*
@@ -54,9 +54,9 @@ typedef _ec2n_point ec2np_t[1];
   } \
 while (0)
 
-void            ec2np_init(ec2np_ptr);
-void            ec2np_clear(ec2np_ptr);
-int             ec2np_set(ec2np_ptr, ec2np_ptr);
+void	ec2np_init(ec2np_ptr);
+void	ec2np_clear(ec2np_ptr);
+int	ec2np_set(ec2np_ptr, ec2np_ptr);
 
 #define ec2np_set_x_ui(n, y) b2n_set_ui ((n)->x, y)
 #define ec2np_set_y_ui(n, x) b2n_set_ui ((n)->y, x)
@@ -72,9 +72,9 @@ typedef struct {
 typedef _ec2n_group *ec2ng_ptr;
 typedef _ec2n_group ec2ng_t[1];
 
-void            ec2ng_init(ec2ng_ptr);
-void            ec2ng_clear(ec2ng_ptr);
-int             ec2ng_set(ec2ng_ptr, ec2ng_ptr);
+void	ec2ng_init(ec2ng_ptr);
+void	ec2ng_clear(ec2ng_ptr);
+int	ec2ng_set(ec2ng_ptr, ec2ng_ptr);
 
 #define ec2ng_set_a_ui(n, x) b2n_set_ui ((n)->a, x)
 #define ec2ng_set_b_ui(n, x) b2n_set_ui ((n)->b, x)
@@ -85,10 +85,10 @@ int             ec2ng_set(ec2ng_ptr, ec2ng_ptr);
 
 /* Functions for computing on the elliptic group.  */
 
-int             ec2np_add(ec2np_ptr, ec2np_ptr, ec2np_ptr, ec2ng_ptr);
-int             ec2np_find_y(ec2np_ptr, ec2ng_ptr);
-int             ec2np_ison(ec2np_ptr, ec2ng_ptr);
-int             ec2np_mul(ec2np_ptr, ec2np_ptr, b2n_ptr, ec2ng_ptr);
-int             ec2np_right(b2n_ptr n, ec2np_ptr, ec2ng_ptr);
+int	ec2np_add(ec2np_ptr, ec2np_ptr, ec2np_ptr, ec2ng_ptr);
+int	ec2np_find_y(ec2np_ptr, ec2ng_ptr);
+int	ec2np_ison(ec2np_ptr, ec2ng_ptr);
+int	ec2np_mul(ec2np_ptr, ec2np_ptr, b2n_ptr, ec2ng_ptr);
+int	ec2np_right(b2n_ptr n, ec2np_ptr, ec2ng_ptr);
 
 #endif				/* _MATH_2N_H_ */

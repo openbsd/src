@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.20 2004/05/23 16:14:37 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.21 2004/05/23 18:17:55 hshoexer Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -74,24 +74,27 @@ siocgifconf(struct ifconf *ifcp)
 	buf = 0;
 	while (1) {
 		/*
-		 * Allocate a larger buffer each time around the loop and get the
-		 * network interfaces configurations into it.
+		 * Allocate a larger buffer each time around the loop and get
+		 * the network interfaces configurations into it.
 	         */
 		new_buf = realloc(buf, len);
 		if (!new_buf) {
-			log_error("siocgifconf: realloc (%p, %d) failed", buf, len);
+			log_error("siocgifconf: realloc (%p, %d) failed", buf,
+			    len);
 			goto err;
 		}
 		ifcp->ifc_len = len;
 		ifcp->ifc_buf = buf = new_buf;
 		if (ioctl(s, SIOCGIFCONF, ifcp) == -1) {
-			log_error("siocgifconf: ioctl (%d, SIOCGIFCONF, ...) failed", s);
+			log_error("siocgifconf: ioctl (%d, SIOCGIFCONF, ...) "
+			    "failed", s);
 			goto err;
 		}
 
 		/*
-		 * If there is place for another ifreq we can be sure that the buffer
-		 * was big enough, otherwise double the size and try again.
+		 * If there is place for another ifreq we can be sure that the
+		 * buffer was big enough, otherwise double the size and try
+		 * again.
 	         */
 		if (len - ifcp->ifc_len >= sizeof(struct ifreq))
 			break;
@@ -122,7 +125,7 @@ if_map(int (*func)(char *, struct sockaddr *, void *), void *arg)
 		return -1;
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
-		if ((*func) (ifa->ifa_name, ifa->ifa_addr, arg) == -1)
+		if ((*func)(ifa->ifa_name, ifa->ifa_addr, arg) == -1)
 			err = -1;
 	freeifaddrs(ifap);
 #else
@@ -136,7 +139,7 @@ if_map(int (*func)(char *, struct sockaddr *, void *), void *arg)
 
 	limit = ifc.ifc_buf + ifc.ifc_len;
 	for (p = ifc.ifc_buf; p < limit; p += len) {
-		ifrp = (struct ifreq *) p;
+		ifrp = (struct ifreq *)p;
 		if ((*func)(ifrp->ifr_name, &ifrp->ifr_addr, arg) == -1)
 			err = -1;
 		len = sizeof ifrp->ifr_name +

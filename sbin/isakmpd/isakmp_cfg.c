@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.28 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.29 2004/05/23 18:17:56 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -57,7 +57,7 @@
  * Validation script used to test messages for correct content of
  * payloads depending on the exchange type.
  */
-int16_t         script_transaction[] = {
+int16_t script_transaction[] = {
 	ISAKMP_PAYLOAD_ATTRIBUTE,	/* Initiator -> responder.  */
 	EXCHANGE_SCRIPT_SWITCH,
 	ISAKMP_PAYLOAD_ATTRIBUTE,	/* Responder -> initiator.  */
@@ -65,28 +65,26 @@ int16_t         script_transaction[] = {
 };
 
 static int      cfg_decode_attribute(u_int16_t, u_int8_t *, u_int16_t, void *);
-static int
-cfg_encode_attributes(struct isakmp_cfg_attr_head *, u_int32_t,
-		      u_int32_t, char *, u_int8_t **, u_int16_t *);
+static int	cfg_encode_attributes(struct isakmp_cfg_attr_head *, u_int32_t,
+		    u_int32_t, char *, u_int8_t **, u_int16_t *);
 static int      cfg_initiator_send_ATTR(struct message *);
 static int      cfg_initiator_recv_ATTR(struct message *);
 static int      cfg_responder_recv_ATTR(struct message *);
 static int      cfg_responder_send_ATTR(struct message *);
 
 u_int8_t       *cfg_add_hash(struct message *);
-int
-cfg_finalize_hash(struct message *, u_int8_t *, u_int8_t *,
-		  u_int16_t);
+int		cfg_finalize_hash(struct message *, u_int8_t *, u_int8_t *,
+		    u_int16_t);
 int             cfg_verify_hash(struct message * msg);
 
 /* Server: SET/ACK    Client; REQ/REPLY */
-int             (*isakmp_cfg_initiator[]) (struct message *) = {
+int (*isakmp_cfg_initiator[]) (struct message *) = {
 	cfg_initiator_send_ATTR,
 	cfg_initiator_recv_ATTR
 };
 
 /* Server: REQ/REPLY  Client: SET/ACK */
-int             (*isakmp_cfg_responder[]) (struct message *) = {
+int (*isakmp_cfg_responder[]) (struct message *) = {
 	cfg_responder_recv_ATTR,
 	cfg_responder_send_ATTR
 };
@@ -96,7 +94,7 @@ int             (*isakmp_cfg_responder[]) (struct message *) = {
  * When we are "the client", this starts REQ/REPLY mode
  */
 static int
-cfg_initiator_send_ATTR(struct message * msg)
+cfg_initiator_send_ATTR(struct message *msg)
 {
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_exch *ie = msg->exchange->data;
@@ -116,9 +114,11 @@ cfg_initiator_send_ATTR(struct message * msg)
 	}
 	/* We initiated this exchange, check isakmp_sa for other side.  */
 	if (isakmp_sa->initiator)
-		id_string = ipsec_id_string(isakmp_sa->id_r, isakmp_sa->id_r_len);
+		id_string = ipsec_id_string(isakmp_sa->id_r,
+		    isakmp_sa->id_r_len);
 	else
-		id_string = ipsec_id_string(isakmp_sa->id_i, isakmp_sa->id_i_len);
+		id_string = ipsec_id_string(isakmp_sa->id_i,
+		    isakmp_sa->id_i_len);
 	if (!id_string) {
 		log_print("cfg_initiator_send_ATTR: cannot parse ID");
 		goto fail;
@@ -132,49 +132,50 @@ cfg_initiator_send_ATTR(struct message * msg)
 		/* SET/ACK mode */
 		ie->cfg_type = ISAKMP_CFG_SET;
 
-		LOG_DBG((LOG_NEGOTIATION, 10, "cfg_initiator_send_ATTR: SET/ACK mode"));
+		LOG_DBG((LOG_NEGOTIATION, 10,
+		    "cfg_initiator_send_ATTR: SET/ACK mode"));
 
 #define ATTRFIND(STR,ATTR4,LEN4,ATTR6,LEN6) do				\
 	{								\
-	  if ((sa = conf_get_address (id_string, STR)) != NULL)		\
-	    switch (sa->sa_family)					\
-	      {								\
-	      case AF_INET:						\
-		bit_set (attrbits, ATTR4);				\
-		attrlen += ISAKMP_ATTR_SZ + LEN4;			\
-		break;							\
-	      case AF_INET6:						\
-		bit_set (attrbits, ATTR6);				\
-		attrlen += ISAKMP_ATTR_SZ + LEN6;			\
-		break;							\
-	      default:							\
-		break;							\
-	      }								\
-          free (sa);							\
-        } while (0)
+		if ((sa = conf_get_address (id_string, STR)) != NULL)	\
+			switch (sa->sa_family) {			\
+			case AF_INET:					\
+				bit_set (attrbits, ATTR4);		\
+				attrlen += ISAKMP_ATTR_SZ + LEN4;	\
+				break;					\
+			case AF_INET6:					\
+				bit_set (attrbits, ATTR6);		\
+				attrlen += ISAKMP_ATTR_SZ + LEN6;	\
+				break;					\
+			default:					\
+				break;					\
+			}						\
+		free (sa);						\
+	} while (0)
 
 		/*
 		 * XXX We don't simultaneously support IPv4 and IPv6
 		 * addresses.
 		 */
 		ATTRFIND("Address", ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS, 4,
-			 ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS, 16);
+		    ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS, 16);
 		ATTRFIND("Netmask", ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK, 4,
-			 ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK, 16);
+		    ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK, 16);
 		ATTRFIND("Nameserver", ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS, 4,
-			 ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS, 16);
+		    ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS, 16);
 		ATTRFIND("WINS-server", ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS, 4,
-			 ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS, 16);
+		    ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS, 16);
 		ATTRFIND("DHCP-server", ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP, 4,
-			 ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP, 16);
+		    ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP, 16);
 #ifdef notyet
 		ATTRFIND("Network", ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET, 8,
-			 ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET, 17);
+		    ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET, 17);
 #endif
 #undef ATTRFIND
 
 		if (conf_get_str(id_string, "Lifetime")) {
-			bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY);
+			bit_set(attrbits,
+			    ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY);
 			attrlen += ISAKMP_ATTR_SZ + 4;
 		}
 	} else {
@@ -184,38 +185,45 @@ cfg_initiator_send_ATTR(struct message * msg)
 		ie->cfg_type = ISAKMP_CFG_REQUEST;
 
 		LOG_DBG((LOG_NEGOTIATION, 10,
-			 "cfg_initiator_send_ATTR: REQ/REPLY mode"));
+		    "cfg_initiator_send_ATTR: REQ/REPLY mode"));
 
 		alist = conf_get_list(id_string, "Attributes");
 		if (alist) {
 			for (anode = TAILQ_FIRST(&alist->fields); anode;
-			     anode = TAILQ_NEXT(anode, link)) {
+			    anode = TAILQ_NEXT(anode, link)) {
 				if (strcasecmp(anode->field, "Address") == 0) {
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS);
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS);
 					attrlen += ISAKMP_ATTR_SZ * 2;
-				} else if (strcasecmp(anode->field, "Netmask") == 0) {
+				} else if (strcasecmp(anode->field, "Netmask")
+				    == 0) {
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK);
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK);
 					attrlen += ISAKMP_ATTR_SZ * 2;
-				} else if (strcasecmp(anode->field, "Nameserver") == 0) {
+				} else if (strcasecmp(anode->field,
+				    "Nameserver") == 0) {
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS);
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS);
 					attrlen += ISAKMP_ATTR_SZ * 2;
-				} else if (strcasecmp(anode->field, "WINS-server") == 0) {
+				} else if (strcasecmp(anode->field,
+				    "WINS-server") == 0) {
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS);
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS);
 					attrlen += ISAKMP_ATTR_SZ * 2;
-				} else if (strcasecmp(anode->field, "DHCP-server") == 0) {
+				} else if (strcasecmp(anode->field,
+				    "DHCP-server") == 0) {
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP);
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP);
 					attrlen += ISAKMP_ATTR_SZ * 2;
-				} else if (strcasecmp(anode->field, "Lifetime") == 0) {
+				} else if (strcasecmp(anode->field,
+				    "Lifetime") == 0) {
 					bit_set(attrbits, ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY);
 					attrlen += ISAKMP_ATTR_SZ;
 				} else {
-					log_print("cfg_initiator_send_ATTR: unknown attribute "
-						  "%.20s in section [%s]", anode->field, id_string);
+					log_print("cfg_initiator_send_ATTR: "
+					    "unknown attribute %.20s in "
+					    "section [%s]", anode->field,
+					    id_string);
 				}
 			}
 
@@ -226,11 +234,11 @@ cfg_initiator_send_ATTR(struct message * msg)
 	if (attrlen == 0) {
 		/* No data found.  */
 		log_print("cfg_initiator_send_ATTR: no IKECFG attributes "
-			  "found for [%s]", id_string);
+		    "found for [%s]", id_string);
 
 		/*
-		 * We can continue, but this indicates a configuration error that
-		 * the user probably will want to correct.
+		 * We can continue, but this indicates a configuration error
+		 * that the user probably will want to correct.
 	         */
 		free(id_string);
 		return 0;
@@ -239,10 +247,11 @@ cfg_initiator_send_ATTR(struct message * msg)
 	attrp = calloc(1, attrlen);
 	if (!attrp) {
 		log_error("cfg_initiator_send_ATTR: calloc (1, %lu) failed",
-			  (unsigned long) attrlen);
+		    (unsigned long)attrlen);
 		goto fail;
 	}
-	if (message_add_payload(msg, ISAKMP_PAYLOAD_ATTRIBUTE, attrp, attrlen, 1)) {
+	if (message_add_payload(msg, ISAKMP_PAYLOAD_ATTRIBUTE, attrp, attrlen,
+	    1)) {
 		free(attrp);
 		goto fail;
 	}
@@ -322,8 +331,8 @@ cfg_initiator_send_ATTR(struct message * msg)
 			sa = conf_get_address(id_string, field);
 
 			SET_ISAKMP_ATTR_LENGTH_VALUE(attr, length);
-			memcpy(attr + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata(sa),
-			       length);
+			memcpy(attr + ISAKMP_ATTR_VALUE_OFF,
+			    sockaddr_addrdata(sa), length);
 
 			free(sa);
 
@@ -346,10 +355,10 @@ fail:
  * As "the client", this ends REQ/REPLY.
  */
 static int
-cfg_initiator_recv_ATTR(struct message * msg)
+cfg_initiator_recv_ATTR(struct message *msg)
 {
-	struct payload *attrp
-	= TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ATTRIBUTE]);
+	struct payload *attrp =
+	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ATTRIBUTE]);
 	struct ipsec_exch *ie = msg->exchange->data;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct isakmp_cfg_attr *attr;
@@ -371,51 +380,52 @@ cfg_initiator_recv_ATTR(struct message * msg)
 	case ISAKMP_CFG_ACK:
 		if (ie->cfg_type != ISAKMP_CFG_SET) {
 			log_print("cfg_initiator_recv_ATTR: bad packet type ACK");
-			message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
+			message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED,
+			    0, 1, 0);
 			return -1;
 		}
 		break;
 	case ISAKMP_CFG_REPLY:
 		if (ie->cfg_type != ISAKMP_CFG_REQUEST) {
 			log_print("cfg_initiator_recv_ATTR: bad packet type REPLY");
-			message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
+			message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED,
+			    0, 1, 0);
 			return -1;
 		}
 		break;
 
 	default:
-		log_print("cfg_initiator_recv_ATTR: "
-			  "unexpected configuration message type %d",
-			  attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF]);
+		log_print("cfg_initiator_recv_ATTR: unexpected configuration "
+		    "message type %d", attrp->p[ISAKMP_ATTRIBUTE_TYPE_OFF]);
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
 		return -1;
 	}
 
 	attribute_map(attrp->p + ISAKMP_ATTRIBUTE_ATTRS_OFF,
-		      GET_ISAKMP_GEN_LENGTH(attrp->p)
-		 - ISAKMP_TRANSFORM_SA_ATTRS_OFF, cfg_decode_attribute, ie);
+	    GET_ISAKMP_GEN_LENGTH(attrp->p) - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+	    cfg_decode_attribute, ie);
 
 	switch (ie->cfg_type) {
-	case ISAKMP_CFG_ACK:
-		{
+	case ISAKMP_CFG_ACK: {
 			/* SET/ACK -- Server side (ACK from client) */
 			msg->transport->vtbl->get_src(isakmp_sa->transport, &sa);
 			if (sockaddr2text(sa, &addr, 0) < 0)
 				addr = (char *) uk_addr;
 
 			for (attr = LIST_FIRST(&ie->attrs); attr;
-			     attr = LIST_NEXT(attr, link))
-				LOG_DBG((LOG_NEGOTIATION, 50, "cfg_initiator_recv_ATTR: "
-					 "client %s ACKs attribute %s", addr,
-					 constant_name(isakmp_cfg_attr_cst, attr->type)));
+			    attr = LIST_NEXT(attr, link))
+				LOG_DBG((LOG_NEGOTIATION, 50,
+				    "cfg_initiator_recv_ATTR: "
+				    "client %s ACKs attribute %s", addr,
+				    constant_name(isakmp_cfg_attr_cst,
+					attr->type)));
 
 			if (addr != uk_addr)
 				free(addr);
 		}
 		break;
 
-	case ISAKMP_CFG_REPLY:
-		{
+	case ISAKMP_CFG_REPLY: {
 			/*
 			 * REQ/REPLY: effect attributes we've gotten
 			 * responses on.
@@ -425,10 +435,12 @@ cfg_initiator_recv_ATTR(struct message * msg)
 				addr = (char *) uk_addr;
 
 			for (attr = LIST_FIRST(&ie->attrs); attr;
-			     attr = LIST_NEXT(attr, link))
-				LOG_DBG((LOG_NEGOTIATION, 50, "cfg_initiator_recv_ATTR: "
-				"server %s replied with attribute %s", addr,
-					 constant_name(isakmp_cfg_attr_cst, attr->type)));
+			    attr = LIST_NEXT(attr, link))
+				LOG_DBG((LOG_NEGOTIATION, 50,
+				    "cfg_initiator_recv_ATTR: "
+				    "server %s replied with attribute %s",
+				    addr, constant_name(isakmp_cfg_attr_cst,
+					attr->type)));
 
 			if (addr != uk_addr)
 				free(addr);
@@ -448,10 +460,10 @@ cfg_initiator_recv_ATTR(struct message * msg)
  * As "the client", this starts SET/ACK (initiated by the server).
  */
 static int
-cfg_responder_recv_ATTR(struct message * msg)
+cfg_responder_recv_ATTR(struct message *msg)
 {
-	struct payload *attrp
-	= TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ATTRIBUTE]);
+	struct payload *attrp =
+	    TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_ATTRIBUTE]);
 	struct ipsec_exch *ie = msg->exchange->data;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct isakmp_cfg_attr *attr;
@@ -473,21 +485,20 @@ cfg_responder_recv_ATTR(struct message * msg)
 	default:
 		message_drop(msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
 		log_print("cfg_responder_recv_ATTR: "
-		  "unexpected configuration message type %d", ie->cfg_type);
+		    "unexpected configuration message type %d", ie->cfg_type);
 		return -1;
 	}
 
 	attribute_map(attrp->p + ISAKMP_ATTRIBUTE_ATTRS_OFF,
-		      GET_ISAKMP_GEN_LENGTH(attrp->p)
-		 - ISAKMP_TRANSFORM_SA_ATTRS_OFF, cfg_decode_attribute, ie);
+	    GET_ISAKMP_GEN_LENGTH(attrp->p) - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+	    cfg_decode_attribute, ie);
 
 	switch (ie->cfg_type) {
 	case ISAKMP_CFG_REQUEST:
 		/* We're done.  */
 		break;
 
-	case ISAKMP_CFG_SET:
-		{
+	case ISAKMP_CFG_SET: {
 			/* SET/ACK -- Client side (SET from server) */
 			const char     *uk_addr = "<unknown>";
 
@@ -496,17 +507,20 @@ cfg_responder_recv_ATTR(struct message * msg)
 				addr = (char *) uk_addr;
 
 			for (attr = LIST_FIRST(&ie->attrs); attr;
-			     attr = LIST_NEXT(attr, link))
-				LOG_DBG((LOG_NEGOTIATION, 50, "cfg_responder_recv_ATTR: "
-					 "server %s asks us to SET attribute %s", addr,
-					 constant_name(isakmp_cfg_attr_cst, attr->type)));
+			    attr = LIST_NEXT(attr, link))
+				LOG_DBG((LOG_NEGOTIATION, 50,
+				    "cfg_responder_recv_ATTR: "
+				    "server %s asks us to SET attribute %s",
+				    addr, constant_name(isakmp_cfg_attr_cst,
+					attr->type)));
 
 			/*
-			 * XXX Here's the place to add code to walk through each attribute
-			 * XXX and send them along to dhclient or whatever. Each attribute
-			 * XXX that we act upon (such as setting a netmask), should be
-			 * XXX marked like this for us to send the proper ACK response:
-			 * XXX   attr->attr_used++;
+			 * XXX Here's the place to add code to walk through
+			 * XXX each attribute and send them along to dhclient
+			 * XXX or whatever. Each attribute that we act upon
+			 * XXX (such as setting a netmask), should be marked
+			 * XXX like this for us to send the proper ACK
+			 * XXX response: attr->attr_used++;
 			 */
 
 			if (addr != uk_addr)
@@ -527,7 +541,7 @@ cfg_responder_recv_ATTR(struct message * msg)
  * As "the client", this ends SET/ACK mode.
  */
 static int
-cfg_responder_send_ATTR(struct message * msg)
+cfg_responder_send_ATTR(struct message *msg)
 {
 	struct ipsec_exch *ie = msg->exchange->data;
 	struct sa      *isakmp_sa = msg->isakmp_sa;
@@ -542,22 +556,25 @@ cfg_responder_send_ATTR(struct message * msg)
 	}
 	/* We are responder, check isakmp_sa for other side.  */
 	if (isakmp_sa->initiator ^ (ie->cfg_type == ISAKMP_CFG_REQUEST))
-		id_string = ipsec_id_string(isakmp_sa->id_i, isakmp_sa->id_i_len);
+		id_string = ipsec_id_string(isakmp_sa->id_i,
+		    isakmp_sa->id_i_len);
 	else
-		id_string = ipsec_id_string(isakmp_sa->id_r, isakmp_sa->id_r_len);
+		id_string = ipsec_id_string(isakmp_sa->id_r,
+		    isakmp_sa->id_r_len);
 	if (!id_string) {
 		log_print("cfg_responder_send_ATTR: cannot parse client's ID");
 		return -1;
 	}
 	if (cfg_encode_attributes(&ie->attrs, (ie->cfg_type == ISAKMP_CFG_SET ?
-					 ISAKMP_CFG_ACK : ISAKMP_CFG_REPLY),
-				  ie->cfg_id, id_string, &attrp, &attrlen)) {
+	    ISAKMP_CFG_ACK : ISAKMP_CFG_REPLY), ie->cfg_id, id_string, &attrp,
+	    &attrlen)) {
 		free(id_string);
 		return -1;
 	}
 	free(id_string);
 
-	if (message_add_payload(msg, ISAKMP_PAYLOAD_ATTRIBUTE, attrp, attrlen, 1)) {
+	if (message_add_payload(msg, ISAKMP_PAYLOAD_ATTRIBUTE, attrp, attrlen,
+	    1)) {
 		free(attrp);
 		return -1;
 	}
@@ -568,8 +585,8 @@ cfg_responder_send_ATTR(struct message * msg)
 	return 0;
 }
 
-u_int8_t       *
-cfg_add_hash(struct message * msg)
+u_int8_t *
+cfg_add_hash(struct message *msg)
 {
 	struct ipsec_sa *isa = msg->isakmp_sa->data;
 	struct hash    *hash = hash_get(isa->hash);
@@ -578,11 +595,11 @@ cfg_add_hash(struct message * msg)
 	hashp = malloc(ISAKMP_HASH_SZ + hash->hashsize);
 	if (!hashp) {
 		log_error("cfg_add_hash: malloc (%lu) failed",
-			  ISAKMP_HASH_SZ + (unsigned long) hash->hashsize);
+		    ISAKMP_HASH_SZ + (unsigned long)hash->hashsize);
 		return 0;
 	}
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_HASH, hashp,
-				ISAKMP_HASH_SZ + hash->hashsize, 1)) {
+	    ISAKMP_HASH_SZ + hash->hashsize, 1)) {
 		free(hashp);
 		return 0;
 	}
@@ -591,18 +608,19 @@ cfg_add_hash(struct message * msg)
 
 int
 cfg_finalize_hash(struct message * msg, u_int8_t * hashp, u_int8_t * data,
-		  u_int16_t length)
+    u_int16_t length)
 {
 	struct ipsec_sa *isa = msg->isakmp_sa->data;
 	struct prf     *prf;
 
-	prf = prf_alloc(isa->prf_type, isa->hash, isa->skeyid_a, isa->skeyid_len);
+	prf = prf_alloc(isa->prf_type, isa->hash, isa->skeyid_a,
+	    isa->skeyid_len);
 	if (!prf)
 		return -1;
 
 	prf->Init(prf->prfctx);
 	prf->Update(prf->prfctx, msg->exchange->message_id,
-		    ISAKMP_HDR_MESSAGE_ID_LEN);
+	    ISAKMP_HDR_MESSAGE_ID_LEN);
 	prf->Update(prf->prfctx, data, length);
 	prf->Final(hashp + ISAKMP_GEN_SZ, prf->prfctx);
 	prf_free(prf);
@@ -610,7 +628,7 @@ cfg_finalize_hash(struct message * msg, u_int8_t * hashp, u_int8_t * data,
 }
 
 int
-cfg_verify_hash(struct message * msg)
+cfg_verify_hash(struct message *msg)
 {
 	struct payload *hashp = TAILQ_FIRST(&msg->payload[ISAKMP_PAYLOAD_HASH]);
 	struct ipsec_sa *isa = msg->isakmp_sa->data;
@@ -620,7 +638,8 @@ cfg_verify_hash(struct message * msg)
 
 	if (!hashp) {
 		log_print("cfg_verify_hash: phase 2 message missing HASH");
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 0);
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
+		    0, 1, 0);
 		return -1;
 	}
 	hash = hashp->p;
@@ -628,26 +647,28 @@ cfg_verify_hash(struct message * msg)
 	comp_hash = malloc(hash_len - ISAKMP_GEN_SZ);
 	if (!comp_hash) {
 		log_error("cfg_verify_hash: malloc (%lu) failed",
-			  (unsigned long) hash_len - ISAKMP_GEN_SZ);
+		    (unsigned long)hash_len - ISAKMP_GEN_SZ);
 		return -1;
 	}
 	/* Verify hash.  */
 	prf = prf_alloc(isa->prf_type, isa->hash, isa->skeyid_a,
-			isa->skeyid_len);
+	    isa->skeyid_len);
 	if (!prf) {
 		free(comp_hash);
 		return -1;
 	}
 	prf->Init(prf->prfctx);
 	prf->Update(prf->prfctx, msg->exchange->message_id,
-		    ISAKMP_HDR_MESSAGE_ID_LEN);
+	    ISAKMP_HDR_MESSAGE_ID_LEN);
 	prf->Update(prf->prfctx, hash + hash_len,
-		    msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len);
+	    msg->iov[0].iov_len - ISAKMP_HDR_SZ - hash_len);
 	prf->Final(comp_hash, prf->prfctx);
 	prf_free(prf);
 
-	if (memcmp(hash + ISAKMP_GEN_SZ, comp_hash, hash_len - ISAKMP_GEN_SZ) != 0) {
-		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 0);
+	if (memcmp(hash + ISAKMP_GEN_SZ, comp_hash, hash_len - ISAKMP_GEN_SZ)
+	    != 0) {
+		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION,
+		    0, 1, 0);
 		free(comp_hash);
 		return -1;
 	}
@@ -666,7 +687,7 @@ cfg_verify_hash(struct message * msg)
  */
 static int
 cfg_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
-		     void *vie)
+    void *vie)
 {
 	struct ipsec_exch *ie = vie;
 	struct isakmp_cfg_attr *attr;
@@ -676,13 +697,13 @@ cfg_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 		return 0;
 	if (type == 0 || type >= ISAKMP_CFG_ATTR_FUTURE_MIN) {
 		LOG_DBG((LOG_NEGOTIATION, 30,
-		       "cfg_decode_attribute: invalid attr type %u", type));
+		    "cfg_decode_attribute: invalid attr type %u", type));
 		return -1;
 	}
 	attr = calloc(1, sizeof *attr);
 	if (!attr) {
 		log_error("cfg_decode_attribute: calloc (1, %lu) failed",
-			  (unsigned long) sizeof *attr);
+		    (unsigned long)sizeof *attr);
 		return -1;
 	}
 	attr->type = type;
@@ -690,7 +711,8 @@ cfg_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
 	if (len) {
 		attr->value = malloc(len);
 		if (!attr->value) {
-			log_error("cfg_decode_attribute: malloc (%d) failed", len);
+			log_error("cfg_decode_attribute: malloc (%d) failed",
+			    len);
 			free(attr);
 			/* Should we also deallocate all other values?  */
 			return -1;
@@ -705,9 +727,8 @@ cfg_decode_attribute(u_int16_t type, u_int8_t * value, u_int16_t len,
  * Encode list of attributes from ie->attrs into a attribute payload.
  */
 static int
-cfg_encode_attributes(struct isakmp_cfg_attr_head * attrs, u_int32_t type,
-		      u_int32_t cfg_id, char *id_string, u_int8_t ** attrp,
-		      u_int16_t * len)
+cfg_encode_attributes(struct isakmp_cfg_attr_head *attrs, u_int32_t type,
+    u_int32_t cfg_id, char *id_string, u_int8_t **attrp, u_int16_t *len)
 {
 	struct isakmp_cfg_attr *attr;
 	struct sockaddr *sa;
@@ -769,7 +790,7 @@ cfg_encode_attributes(struct isakmp_cfg_attr_head * attrs, u_int32_t type,
 	*attrp = calloc(1, *len);
 	if (!*attrp) {
 		log_error("cfg_encode_attributes: calloc (1, %lu) failed",
-			  (unsigned long) *len);
+		    (unsigned long)*len);
 		return -1;
 	}
 	SET_ISAKMP_ATTRIBUTE_TYPE(*attrp, type);
@@ -853,16 +874,18 @@ cfg_encode_attributes(struct isakmp_cfg_attr_head * attrs, u_int32_t type,
 		case ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS:
 			sa = conf_get_address(id_string, field);
 			if (!sa) {
-				LOG_DBG((LOG_NEGOTIATION, 10, "cfg_responder_send_ATTR: "
-					 "attribute not found: %s", field));
+				LOG_DBG((LOG_NEGOTIATION, 10,
+				    "cfg_responder_send_ATTR: "
+				    "attribute not found: %s", field));
 				attr->length = 0;
 				break;
 			}
 			if (sa->sa_family != family) {
-				log_print("cfg_responder_send_ATTR: attribute %s - expected %s "
-					  "got %s data", field,
-				      (family == AF_INET ? "IPv4" : "IPv6"),
-					  (sa->sa_family == AF_INET ? "IPv4" : "IPv6"));
+				log_print("cfg_responder_send_ATTR: "
+				    "attribute %s - expected %s got %s data",
+				    field,
+				    (family == AF_INET ? "IPv4" : "IPv6"),
+				    (sa->sa_family == AF_INET ? "IPv4" : "IPv6"));
 				free(sa);
 				attr->length = 0;
 				break;
@@ -870,48 +893,56 @@ cfg_encode_attributes(struct isakmp_cfg_attr_head * attrs, u_int32_t type,
 			/* Temporary limit length for the _SUBNET types. */
 			if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET)
 				attr->length = 4;
-			else if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET)
+			else if (attr->type ==
+			    ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET)
 				attr->length = 16;
 
-			memcpy(*attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata(sa),
-			       attr->length);
+			memcpy(*attrp + off + ISAKMP_ATTR_VALUE_OFF,
+			    sockaddr_addrdata(sa), attr->length);
 			free(sa);
 
 			/* _SUBNET types need some extra work. */
 			if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP4_SUBNET) {
 				sa = conf_get_address(id_string, "Netmask");
 				if (!sa) {
-					LOG_DBG((LOG_NEGOTIATION, 10, "cfg_responder_send_ATTR: "
+					LOG_DBG((LOG_NEGOTIATION, 10,
+					    "cfg_responder_send_ATTR: "
 					   "attribute not found: Netmask"));
 					attr->length = 0;
 					break;
 				}
 				if (sa->sa_family != AF_INET) {
-					log_print("cfg_responder_send_ATTR: attribute Netmask - "
-					     "expected IPv4 got IPv6 data");
+					log_print("cfg_responder_send_ATTR: "
+					    "attribute Netmask - expected "
+					    "IPv4 got IPv6 data");
 					free(sa);
 					attr->length = 0;
 					break;
 				}
-				memcpy(*attrp + off + ISAKMP_ATTR_VALUE_OFF + attr->length,
-				       sockaddr_addrdata(sa), attr->length);
+				memcpy(*attrp + off + ISAKMP_ATTR_VALUE_OFF +
+				    attr->length, sockaddr_addrdata(sa),
+				    attr->length);
 				attr->length = 8;
 				free(sa);
-			} else if (attr->type == ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET) {
-				int             prefix = conf_get_num(id_string, "Prefix", -1);
+			} else if (attr->type ==
+			    ISAKMP_CFG_ATTR_INTERNAL_IP6_SUBNET) {
+				int prefix = conf_get_num(id_string, "Prefix",
+				    -1);
 
 				if (prefix == -1) {
 					log_print("cfg_responder_send_ATTR: "
-					     "attribute not found: Prefix");
+					    "attribute not found: Prefix");
 					attr->length = 0;
 					break;
 				} else if (prefix < -1 || prefix > 128) {
-					log_print("cfg_responder_send_ATTR: attribute Prefix - "
-						"invalid value %d", prefix);
+					log_print("cfg_responder_send_ATTR: "
+					    "attribute Prefix - invalid value %d",
+					    prefix);
 					attr->length = 0;
 					break;
 				}
-				*(*attrp + off + ISAKMP_ATTR_VALUE_OFF + 16) = (u_int8_t) prefix;
+				*(*attrp + off + ISAKMP_ATTR_VALUE_OFF + 16) =
+				    (u_int8_t)prefix;
 				attr->length = 17;
 			}
 			break;

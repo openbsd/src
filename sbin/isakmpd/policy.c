@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.72 2004/05/23 16:14:22 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.73 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -81,7 +81,7 @@ static const char hextab[] = {
  * Adaptation of Vixie's inet_ntop4 ()
  */
 static const char *
-my_inet_ntop4(const in_addr_t * src, char *dst, size_t size, int normalize)
+my_inet_ntop4(const in_addr_t *src, char *dst, size_t size, int normalize)
 {
 	static const char fmt[] = "%03u.%03u.%03u.%03u";
 	char            tmp[sizeof "255.255.255.255"];
@@ -107,10 +107,10 @@ my_inet_ntop6(const unsigned char *src, char *dst, size_t size)
 {
 	static const char fmt[] =
 	    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x";
-	char            tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
+	char	tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
 
-	if (snprintf(tmp, sizeof tmp, fmt, src[0], src[1], src[2], src[3], src[4],
-	    src[5], src[6], src[7], src[8], src[9], src[10], src[11],
+	if (snprintf(tmp, sizeof tmp, fmt, src[0], src[1], src[2], src[3],
+	    src[4], src[5], src[6], src[7], src[8], src[9], src[10], src[11],
 	    src[12], src[13], src[14], src[15]) > (int)size) {
 		errno = ENOSPC;
 		return 0;
@@ -209,10 +209,14 @@ policy_callback(char *name)
 		memset(esp_key_rounds, 0, sizeof esp_key_rounds);
 		memset(comp_dict_size, 0, sizeof comp_dict_size);
 		memset(comp_private_alg, 0, sizeof comp_private_alg);
-		memset(remote_filter_addr_upper, 0, sizeof remote_filter_addr_upper);
-		memset(remote_filter_addr_lower, 0, sizeof remote_filter_addr_lower);
-		memset(local_filter_addr_upper, 0, sizeof local_filter_addr_upper);
-		memset(local_filter_addr_lower, 0, sizeof local_filter_addr_lower);
+		memset(remote_filter_addr_upper, 0,
+		    sizeof remote_filter_addr_upper);
+		memset(remote_filter_addr_lower, 0,
+		    sizeof remote_filter_addr_lower);
+		memset(local_filter_addr_upper, 0,
+		    sizeof local_filter_addr_upper);
+		memset(local_filter_addr_lower, 0,
+		    sizeof local_filter_addr_lower);
 		memset(remote_id_addr_upper, 0, sizeof remote_id_addr_upper);
 		memset(remote_id_addr_lower, 0, sizeof remote_id_addr_lower);
 		memset(ah_group_desc, 0, sizeof ah_group_desc);
@@ -236,7 +240,8 @@ policy_callback(char *name)
 			pfs = "yes";
 
 		is = policy_isakmp_sa->data;
-		snprintf(phase1_group, sizeof phase1_group, "%u", is->group_desc);
+		snprintf(phase1_group, sizeof phase1_group, "%u",
+		    is->group_desc);
 
 		for (proto = TAILQ_FIRST(&policy_sa->protos); proto;
 		    proto = TAILQ_NEXT(proto, link)) {
@@ -353,7 +358,8 @@ policy_callback(char *name)
 				break;
 			}
 
-			for (attr = proto->chosen->p + ISAKMP_TRANSFORM_SA_ATTRS_OFF;
+			for (attr = proto->chosen->p +
+			    ISAKMP_TRANSFORM_SA_ATTRS_OFF;
 			    attr < proto->chosen->p +
 			    GET_ISAKMP_GEN_LENGTH(proto->chosen->p);
 			    attr = value + len) {
@@ -365,7 +371,8 @@ policy_callback(char *name)
 				type = GET_ISAKMP_ATTR_TYPE(attr);
 				fmt = ISAKMP_ATTR_FORMAT(type);
 				type = ISAKMP_ATTR_TYPE(type);
-				value = attr + (fmt ? ISAKMP_ATTR_LENGTH_VALUE_OFF :
+				value = attr + (fmt ?
+				    ISAKMP_ATTR_LENGTH_VALUE_OFF :
 				    ISAKMP_ATTR_VALUE_OFF);
 				len = (fmt ? ISAKMP_ATTR_LENGTH_VALUE_LEN :
 				    GET_ISAKMP_ATTR_LENGTH_VALUE(attr));
@@ -1781,15 +1788,15 @@ policy_init(void)
 	/* Allocate memory to keep policies.  */
 	ptr = calloc(sz + 1, sizeof(char));
 	if (!ptr)
-		log_fatal("policy_init: calloc (%lu, %lu) failed", (unsigned long)sz + 1,
-			  (unsigned long)sizeof(char));
+		log_fatal("policy_init: calloc (%lu, %lu) failed",
+		    (unsigned long)sz + 1, (unsigned long)sizeof(char));
 
 	/* Just in case there are short reads...  */
 	for (len = 0; len < sz; len += i) {
 		i = read(fd, ptr + len, sz - len);
 		if (i == -1)
-			log_fatal("policy_init: read (%d, %p, %lu) failed", fd, ptr + len,
-				  (unsigned long)(sz - len));
+			log_fatal("policy_init: read (%d, %p, %lu) failed", fd,
+			    ptr + len, (unsigned long)(sz - len));
 	}
 
 	/* We're done with this.  */
@@ -1825,9 +1832,9 @@ keynote_cert_init(void)
 
 /* Just copy and return.  */
 void           *
-keynote_cert_get(u_int8_t * data, u_int32_t len)
+keynote_cert_get(u_int8_t *data, u_int32_t len)
 {
-	char           *foo = malloc(len + 1);
+	char	*foo = malloc(len + 1);
 
 	if (foo == NULL)
 		return NULL;
@@ -1844,8 +1851,8 @@ keynote_cert_get(u_int8_t * data, u_int32_t len)
 int
 keynote_cert_validate(void *scert)
 {
-	char          **foo;
-	int             num, i;
+	char	**foo;
+	int	  num, i;
 
 	if (scert == NULL)
 		return 0;
@@ -1873,8 +1880,8 @@ keynote_cert_validate(void *scert)
 int
 keynote_cert_insert(int sid, void *scert)
 {
-	char          **foo;
-	int             num;
+	char	**foo;
+	int	  num;
 
 	if (scert == NULL)
 		return 0;
@@ -1898,16 +1905,16 @@ keynote_cert_free(void *cert)
 
 /* Verify that the key given to us is valid.  */
 int
-keynote_certreq_validate(u_int8_t * data, u_int32_t len)
+keynote_certreq_validate(u_int8_t *data, u_int32_t len)
 {
 	struct keynote_deckey dc;
-	int             err = 1;
-	char           *dat;
+	int	 err = 1;
+	char	*dat;
 
 	dat = calloc(len + 1, sizeof(char));
 	if (!dat) {
-		log_error("keynote_certreq_validate: calloc (%d, %lu) failed", len + 1,
-			  (unsigned long)sizeof(char));
+		log_error("keynote_certreq_validate: calloc (%d, %lu) failed",
+		    len + 1, (unsigned long)sizeof(char));
 		return 0;
 	}
 	memcpy(dat, data, len);
@@ -1923,8 +1930,8 @@ keynote_certreq_validate(u_int8_t * data, u_int32_t len)
 }
 
 /* Beats me what we should be doing with this.  */
-void           *
-keynote_certreq_decode(u_int8_t * data, u_int32_t len)
+void *
+keynote_certreq_decode(u_int8_t *data, u_int32_t len)
 {
 	/* XXX */
 	return NULL;
@@ -1937,8 +1944,8 @@ keynote_free_aca(void *blob)
 }
 
 int
-keynote_cert_obtain(u_int8_t * id, size_t id_len, void *data, u_int8_t ** cert,
-		    u_int32_t * certlen)
+keynote_cert_obtain(u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
+    u_int32_t *certlen)
 {
 	char           *dirname, *file, *addr_str;
 	struct stat     sb;
@@ -1965,26 +1972,26 @@ keynote_cert_obtain(u_int8_t * id, size_t id_len, void *data, u_int8_t ** cert,
 	switch (idtype) {
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV6_ADDR:
-		util_ntoa(&addr_str, idtype == IPSEC_ID_IPV4_ADDR ? AF_INET : AF_INET6,
-			  id);
+		util_ntoa(&addr_str, idtype == IPSEC_ID_IPV4_ADDR ?
+		    AF_INET : AF_INET6, id);
 		if (addr_str == 0)
 			return 0;
 
 		file = calloc(len + strlen(addr_str), sizeof(char));
 		if (file == NULL) {
-			log_error("keynote_cert_obtain: failed to allocate %lu bytes",
-				  (unsigned long)len + strlen(addr_str));
+			log_error("keynote_cert_obtain: failed to allocate "
+			    "%lu bytes", (unsigned long)len +
+			    strlen(addr_str));
 			free(addr_str);
 			return 0;
 		}
-		snprintf(file, len + strlen(addr_str), "%s/%s/%s", dirname, addr_str,
-		    CREDENTIAL_FILE);
+		snprintf(file, len + strlen(addr_str), "%s/%s/%s", dirname,
+		    addr_str, CREDENTIAL_FILE);
 		free(addr_str);
 		break;
 
 	case IPSEC_ID_FQDN:
-	case IPSEC_ID_USER_FQDN:
-		{
+	case IPSEC_ID_USER_FQDN: {
 			file = calloc(len + id_len, sizeof(char));
 			if (file == NULL) {
 				log_error("keynote_cert_obtain: failed to allocate %lu bytes",

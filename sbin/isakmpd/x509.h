@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.20 2004/04/15 18:39:27 deraadt Exp $	 */
+/* $OpenBSD: x509.h,v 1.21 2004/05/23 18:17:56 hshoexer Exp $	 */
 /* $EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -68,7 +68,8 @@ int             x509_cert_get_key(void *, void *);
 int             x509_cert_get_subjects(void *, int *, u_int8_t ***, u_int32_t **);
 int             x509_cert_init(void);
 int             x509_crl_init(void);
-int             x509_cert_obtain(u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
+int             x509_cert_obtain(u_int8_t *, size_t, void *, u_int8_t **,
+		    u_int32_t *);
 int             x509_cert_validate(void *);
 void            x509_free_aca(void *);
 void           *x509_cert_dup(void *);

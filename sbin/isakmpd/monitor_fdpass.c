@@ -47,7 +47,7 @@ mm_send_fd(int socket, int fd)
 	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
-	*(int *) CMSG_DATA(cmsg) = fd;
+	*(int *)CMSG_DATA(cmsg) = fd;
 
 	vec.iov_base = &ch;
 	vec.iov_len = 1;
@@ -60,7 +60,7 @@ mm_send_fd(int socket, int fd)
 	}
 	if (n != 1) {
 		log_error("%s: sendmsg: expected sent 1 got %ld",
-		    __func__, (long) n);
+		    __func__, (long)n);
 		return -1;
 	}
 	return 0;
@@ -90,7 +90,7 @@ mm_receive_fd(int socket)
 	}
 	if (n != 1) {
 		log_error("%s: recvmsg: expected received 1 got %ld", __func__,
-		    (long) n);
+		    (long)n);
 		return -1;
 	}
 	cmsg = CMSG_FIRSTHDR(&msg);
@@ -99,6 +99,6 @@ mm_receive_fd(int socket)
 		    cmsg->cmsg_type);
 		return -1;
 	}
-	fd = (*(int *) CMSG_DATA(cmsg));
+	fd = (*(int *)CMSG_DATA(cmsg));
 	return fd;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: field.c,v 1.14 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: field.c,v 1.15 2004/05/23 18:17:55 hshoexer Exp $	 */
 /* $EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	 */
 
 /*
@@ -62,7 +62,7 @@ static char    *(*decode_field[]) (u_int8_t *, size_t, struct constant_map **) =
 static char *
 field_debug_raw(u_int8_t *buf, size_t len, struct constant_map **maps)
 {
-	char           *retval, *p;
+	char	*retval, *p;
 
 	if (len == 0)
 		return 0;
@@ -189,7 +189,7 @@ field_debug_cst(u_int8_t *buf, size_t len, struct constant_map **maps)
 void
 field_dump_field(struct field *f, u_int8_t *buf)
 {
-	char           *value;
+	char	*value;
 
 	value = decode_field[(int) f->type] (buf + f->offset, f->len, f->maps);
 	if (value) {
@@ -238,14 +238,14 @@ field_set_num(struct field *f, u_int8_t *buf, u_int32_t val)
 
 /* Stash BUF's raw field F into VAL.  */
 void
-field_get_raw(struct field * f, u_int8_t * buf, u_int8_t * val)
+field_get_raw(struct field *f, u_int8_t *buf, u_int8_t *val)
 {
 	memcpy(val, buf + f->offset, f->len);
 }
 
 /* Stash the buffer VAL into BUF's field F.  */
 void
-field_set_raw(struct field * f, u_int8_t * buf, u_int8_t * val)
+field_set_raw(struct field *f, u_int8_t *buf, u_int8_t *val)
 {
 	memcpy(buf + f->offset, val, f->len);
 }
