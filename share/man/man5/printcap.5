@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printcap.5,v 1.10 2000/03/01 18:01:22 aaron Exp $
+.\"	$OpenBSD: printcap.5,v 1.11 2000/03/02 04:08:11 aaron Exp $
 .\"	$NetBSD: printcap.5,v 1.7 1998/02/20 12:24:50 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -73,10 +73,10 @@ for a complete discussion on how to setup the database for a given printer.
 Refer to
 .Xr termcap 5
 for a description of the file layout.
-.Bl -column Name Type "/var/spool/lpd"
+.Bl -column "xx" "xx" "/var/spool/"
 .Sy Name	Type	Default	Description
 .It "af	str" Ta Dv NULL Ta No "name of accounting file"
-.It "br	num	none	if lp is a tty, set the baud rate"
+.It "br	num	none	if lp is a tty, set baud rate"
 .Pf ( Xr ioctl 2
 call)
 .It "cf	str" Ta Dv NULL Ta No "cifplot data filter"
@@ -87,21 +87,22 @@ format)
 .Pq Aq Pa sgtty.h
 .It "ff	str" Ta So Li \ef Sc Ta No "string to send for a form feed"
 .It "fo	bool	false	print a form feed when device is opened"
-.It "fs	num	0	like `fc' but set bits"
+.It "fs	num	0	if lp is a tty, set flag bits"
+.Pq Aq Pa sgtty.h
 .It "gf	str" Ta Dv NULL Ta No "graph data filter"
 .Pf ( Xr plot 3
-format
+format)
 .It "hl	bool	false	print the burst header page last"
-.It "ic	bool	false	driver supports (non standard) ioctl to indent printout"
+.It "ic	bool	false	supports non-standard ioctl to indent printout"
 .It "if	str" Ta Dv NULL Ta No "name of text filter which does accounting"
 .It "lf	str" Ta Pa /dev/console Ta No "error logging file name"
 .It "lo	str" Ta Pa lock Ta No "name of lock file"
-.It "lp	str" Ta Pa /dev/lp Ta No "device name to open for output to local printer, or port@host for remote printer/printer on print server"
+.It "lp	str" Ta Pa /dev/lp Ta No "local printer device, or port@host for remote"
 .It "ms	str" Ta Dv NULL Ta No "list of terminal modes to set or clear"
-.It "mx	num	1000	maximum file size (in"
+.It "mx	num	1000	max file size (in"
 .Dv BUFSIZ
-blocks), zero = unlimited
-.It "nd	str" Ta Dv NULL Ta No "next directory for list of queues (unimplemented)"
+blocks); 0=unlimited
+.It "nd	str" Ta Dv NULL Ta No "next directory for queues list (unimplemented)"
 .It "nf	str" Ta Dv NULL Ta No "ditroff data filter (device independent troff)"
 .It "of	str" Ta Dv NULL Ta No "name of output filtering program"
 .It "pc	num	200	price per foot or page in hundredths of cents"
@@ -112,11 +113,11 @@ blocks), zero = unlimited
 .It "rf	str" Ta Dv NULL Ta No "filter for printing"
 .Tn FORTRAN
 style text files
-.It "rg	str" Ta Dv NULL Ta No "restricted group. Only members of group allowed access"
+.It "rg	str" Ta Dv NULL Ta No "restricted group-only group members can access"
 .It "rm	str" Ta Dv NULL Ta No "machine name for remote printer"
 .It "rp	str	``lp''	remote printer name argument"
-.It "rs	bool	false	restrict remote users to those with local accounts"
-.It "rw	bool	false	open the printer device for reading and writing"
+.It "rs	bool	false	remote users must have a local account"
+.It "rw	bool	false	open printer device for reading and writing"
 .It "sb	bool	false	short banner (one line only)"
 .It "sc	bool	false	suppress multiple copies"
 .It "sd	str" Ta Pa /var/spool/lpd Ta No "spool directory"
@@ -128,7 +129,8 @@ style text files
 .It "vf	str" Ta Dv NULL Ta No "raster image filter"
 .It "xc	num	0	if lp is a tty, clear local mode bits"
 .Pq Xr tty 4
-.It "xs	num	0	like `xc' but set bits"
+.It "xs	num	0	if lp is a tty, set local mode bits"
+.Pq Xr tty 4
 .El
 .Pp
 If the local line printer driver supports indentation, the daemon
