@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.9 2002/03/15 18:19:53 millert Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.10 2002/03/19 01:39:04 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -771,8 +771,18 @@ rip6_usrreq(so, req, m, nam, control, p)
 				error = ENOTCONN;
 				break;
 			}
+			if (nam->m_len != sizeof(tmp)) {
+				error = EINVAL;
+				break;
+			}
+
 			tmp = *mtod(nam, struct sockaddr_in6 *);
 			dst = &tmp;
+
+			if (dst->sin6_family != AF_INET6) {
+				error = EAFNOSUPPORT;
+				break;
+			}
 		}
 #ifdef ENABLE_DEFAULT_SCOPE
 		if (dst->sin6_scope_id == 0) {
