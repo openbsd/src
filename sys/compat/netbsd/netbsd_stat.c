@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.c,v 1.9 2001/05/14 12:11:53 art Exp $	*/
+/*	$OpenBSD: netbsd_stat.c,v 1.10 2001/05/14 13:28:22 art Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -195,26 +195,8 @@ netbsd_sys___fstat13(p, v, retval)
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
-	switch (fp->f_type) {
 
-	case DTYPE_VNODE:
-		error = vn_statfile(fp, &sb, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat(fp, &sb, p);
-		break;
-
-#ifndef OLD_PIPE
-	case DTYPE_PIPE:
-		error = pipe_stat(fp, &sb, p);
-		break;
-#endif
-
-	default:
-		panic("netbsd_sys___fstat13");
-		/*NOTREACHED*/
-	}
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	if (error)
 		return (error);
 	openbsd_to_netbsd_stat(&sb, &nsb);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.26 2001/05/14 12:11:52 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.27 2001/05/14 13:28:20 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -500,7 +500,7 @@ sys_fstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fstat_args /* {
+	struct sys_fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct stat *) sb;
 	} */ *uap = v;
@@ -513,26 +513,7 @@ sys_fstat(p, v, retval)
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_statfile(fp, &ub, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat(fp, &ub, p);
-		break;
-
-#ifndef OLD_PIPE
-	case DTYPE_PIPE:
-		error = pipe_stat(fp, &ub, p);
-		break;
-#endif
-
-	default:
-		panic("fstat");
-		/*NOTREACHED*/
-	}
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	if (error == 0) {
 		/* Don't let non-root see generation numbers
 		   (for NFS security) */

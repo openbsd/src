@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.13 2001/05/14 12:11:53 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.14 2001/05/14 13:28:22 art Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -199,26 +199,7 @@ compat_43_sys_fstat(p, v, retval)
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_statfile(fp, &ub, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat(fp, &ub, p);
-		break;
-
-#ifndef OLD_PIPE
-	case DTYPE_PIPE:
-		error = pipe_stat(fp, &ub, p);
-		break;
-#endif
-
-	default:
-		panic("ofstat");
-		/*NOTREACHED*/
-	}
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
 	cvtstat(&ub, &oub);
 	if (error == 0)
 		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
