@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.74 2004/06/05 22:29:19 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.75 2004/06/06 04:50:57 pvalchev Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -308,7 +308,7 @@ sk*	at skc?					#  each port of above
 em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
 txp*	at pci? dev ? function ?		# 3com 3CR990
 nge*	at pci? dev ? function ?		# NS DP83820/DP83821 GigE
-re*	at pci? dev ? function ?		# Realtek 8139C+/8169/8169S/8110S
+re*	at pci? dev ? function ?		# Realtek 8169/8169S/8110S
 stge*	at pci? dev ? function ?		# Sundance TC9021 GigE
 bge*	at pci? dev ? function ?		# Broadcom BCM570x (aka Tigon3)
 #lge*	at pci? dev ? function ?		# Level1 LXT1001 GigE
