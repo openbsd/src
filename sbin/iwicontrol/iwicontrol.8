@@ -1,4 +1,4 @@
-.\" $Id: iwicontrol.8,v 1.3 2004/10/20 21:26:43 deraadt Exp $
+.\" $Id: iwicontrol.8,v 1.4 2004/11/22 21:34:28 damien Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -34,9 +34,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Ar interface
-.Op Fl d Ar directory
-.Op Fl m Ar bss|ibss
-.Op Fl k
 .Op Fl r
 .Sh DESCRIPTION
 The
@@ -54,17 +51,6 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl i Ar interface
 Displays adapter's internal statistics.
-.It Fl d Ar directory
-Download firmware binary image to the adapter. The image is read from the
-.Ar directory
-directory.
-.It Fl m Ar bss|ibss
-By default, the firmware binary image for BSS (aka infrastructure
-mode) mode is downloaded unless the
-.Fl m
-flag is given.
-.It Fl k
-Kill the firmware and reset the adapter.
 .It Fl r
 Displays the radio transmitter state (on or off).
 .El

@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.5 2004/11/08 23:05:42 deraadt Exp $
+.\" $OpenBSD: iwi.4,v 1.6 2004/11/22 21:34:32 damien Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -50,6 +50,17 @@ This mode requires the use of an access point.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh FILES
+The driver needs a couple of firmware files which are loaded on demand.
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/iwi-license
+.It Pa /etc/firmware/iwi-boot
+.It Pa /etc/firmware/iwi-bss
+.It Pa /etc/firmware/iwi-ibss
+.It Pa /etc/firmware/iwi-monitor
+.It Pa /etc/firmware/iwi-ucode
+.El
 .Sh EXAMPLES
 Join an existing BSS network (ie: connect to an access point):
 .Pp

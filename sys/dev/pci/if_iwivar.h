@@ -1,4 +1,4 @@
-/*	$Id: if_iwivar.h,v 1.1 2004/10/20 12:50:48 deraadt Exp $ */
+/*	$Id: if_iwivar.h,v 1.2 2004/11/22 21:34:35 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -26,15 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-struct iwi_firmware {
-	void	*boot;
-	int	boot_size;
-	void	*ucode;
-	int	ucode_size;
-	void	*main;
-	int	main_size;
-};
 
 struct iwi_buf {
 	struct mbuf		*m;
@@ -109,10 +100,8 @@ struct iwi_softc {
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 
-	struct iwi_firmware	fw;
 	u_int32_t		flags;
-#define IWI_FLAG_FW_CACHED	(1 << 0)
-#define IWI_FLAG_FW_INITED	(1 << 1)
+#define IWI_FLAG_FW_INITED	(1 << 0)
 
 	struct iwi_tx_queue	txqueue[5];
 	struct iwi_rx_queue	rxqueue;
@@ -156,7 +145,5 @@ struct iwi_softc {
 
 #define IWI_ASYNC_CMD	(1 << 0)
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)

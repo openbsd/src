@@ -1,4 +1,4 @@
-/*	$Id: iwicontrol.c,v 1.5 2004/10/27 21:39:05 damien Exp $	*/
+/*	$Id: iwicontrol.c,v 1.6 2004/11/22 21:34:28 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -29,9 +29,7 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/socket.h>
-#include <sys/stat.h>
 
 #include <net/if.h>
 
@@ -44,41 +42,22 @@
 #include <sysexits.h>
 #include <unistd.h>
 
-#define SIOCSLOADFW	 _IOW('i', 137, struct ifreq)
-#define SIOCSKILLFW	 _IOW('i', 138, struct ifreq)
 #define SIOCGRADIO	_IOWR('i', 139, struct ifreq)
 #define SIOCGTABLE0	_IOWR('i', 140, struct ifreq)
-
-struct firmware {
-	void	*boot;
-	int	boot_size;
-	void	*ucode;
-	int	ucode_size;
-	void	*main;
-	int	main_size;
-};
-
-struct header {
-	u_int32_t	version;
-	u_int32_t	mode;
-} __attribute__((__packed__));
 
 extern char *optarg;
 extern int optind;
 
 static void usage(void);
 static int do_req(char *, unsigned long, void *);
-static void mmap_file(char *, void **, size_t *);
-static void load_firmware(char *, char *, char *);
-static void kill_firmware(char *);
 static void get_radio_state(char *);
 static void get_statistics(char *);
 
 int
 main(int argc, char **argv)
 {
-	char *iface = NULL, *mode = NULL, *path = NULL;
-	int noflag = 1, kflag = 0, rflag = 0, ifspecified = 0;
+	char *iface = NULL;
+	int noflag = 1, rflag = 0, ifspecified = 0;
 	int ch;
 
 	iface = "iwi0";
@@ -88,24 +67,12 @@ main(int argc, char **argv)
 		optind = 2;
 	}
 
-	while ((ch = getopt(argc, argv, "hd:i:km:r")) != -1) {
+	while ((ch = getopt(argc, argv, "hi:r")) != -1) {
 		noflag = 0;
 		switch (ch) {
 		case 'i':
 			if (!ifspecified)
 				iface = optarg;
-			break;
-
-		case 'd':
-			path = optarg;
-			break;
-
-		case 'k':
-			kflag = 1;
-			break;
-
-		case 'm':
-			mode = optarg;
 			break;
 
 		case 'r':
@@ -121,15 +88,6 @@ main(int argc, char **argv)
 	if (iface == NULL)
 		usage();
 
-	if (kflag && (path != NULL || rflag))
-		usage();
-
-	if (kflag)
-		kill_firmware(iface);
-
-	if (path != NULL)
-		load_firmware(iface, path, mode);
-
 	if (rflag)
 		get_radio_state(iface);
 
@@ -144,9 +102,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr,
-	    "usage: %s [interface] [-d path] [-kr]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [interface] [-r]\n", __progname);
 
 	exit(EX_USAGE);
 }
@@ -169,63 +125,6 @@ do_req(char *iface, unsigned long req, void *data)
 	(void)close(s);
 
 	return error;
-}
-
-static void
-mmap_file(char *filename, void **addr, size_t *len)
-{
-	int fd;
-	struct stat st;
-
-	if ((fd = open(filename, O_RDONLY)) == -1)
-		err(EX_OSERR, "%s", filename);
-
-	if (fstat(fd, &st) == -1)
-		err(EX_OSERR, "Unable to stat %s", filename);
-
-	*len = st.st_size;
-
-	if ((*addr = mmap(NULL, st.st_size, PROT_READ, 0, fd, 0)) == NULL)
-		err(EX_OSERR, "Can't map %s into memory", filename);
-
-	*(char **)addr += sizeof (struct header);
-	*len -= sizeof (struct header);
-
-	(void)close(fd);
-}
-
-static void
-load_firmware(char *iface, char *path, char *opmode)
-{
-	char filename[FILENAME_MAX];
-	char *mainfw;
-	struct firmware fw;
-
-	if (opmode == NULL || strcasecmp(opmode, "bss") == 0)
-		mainfw = "ipw2200_bss.fw";
-	else if (strcasecmp(opmode, "ibss") == 0)
-		mainfw = "ipw2200_ibss.fw";
-	else
-		errx(EX_USAGE, "Unknown mode %s\n", opmode);
-
-	(void)snprintf(filename, sizeof filename, "%s/ipw2200_boot.fw", path);
-	mmap_file(filename, &fw.boot, &fw.boot_size);
-
-	(void)snprintf(filename, sizeof filename, "%s/ipw2200_ucode.fw", path);
-	mmap_file(filename, &fw.ucode, &fw.ucode_size);
-
-	(void)snprintf(filename, sizeof filename, "%s/%s", path, mainfw);
-	mmap_file(filename, &fw.main, &fw.main_size);
-
-	if (do_req(iface, SIOCSLOADFW, &fw) == -1)
-		err(EX_OSERR, "Can't load firmware to driver");
-}
-
-static void
-kill_firmware(char *iface)
-{
-	if (do_req(iface, SIOCSKILLFW, NULL) == -1)
-		err(EX_OSERR, "Can't kill firmware");
 }
 
 static void
