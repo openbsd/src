@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.28 1998/10/18 20:02:29 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.29 1999/01/09 17:57:10 espie Exp $
 
 SUBDIRS=	libiberty opcodes bfd
 MAN=
@@ -12,15 +12,11 @@ MAN+=		gdb/gdb.1
 # some ports use all of binutils, some do not.
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips") || \
 	(${MACHINE_ARCH} == "powerpc")
-SUBDIRS+=	binutils ld gas
+SUBDIRS+=	binutils ld gas gprof
 MAN+=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/objdump.1 binutils/ranlib.1 \
 		binutils/size.1 binutils/strings.1 binutils/strip.1 \
 		gas/doc/as.1 gprof/gprof.1 ld/ld.1
-.endif
-
-.if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "alpha")
-SUBDIRS+=	gprof
 .endif
 
 # Used by the GNU Makefile
