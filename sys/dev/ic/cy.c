@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.11 2001/02/03 06:33:37 mickey Exp $	*/
+/*	$OpenBSD: cy.c,v 1.12 2001/03/25 11:54:00 art Exp $	*/
 
 /*
  * cy.c
@@ -87,6 +87,7 @@ static bus_space_handle_t cy_card_memh[NCY];
 static int cy_open = 0;
 static int cy_events = 0;
 
+struct timeout cy_poll_to;
 
 /*
  * Common probe routine
@@ -224,7 +225,8 @@ cyattach(parent, self, aux)
 #endif
   }
 
-  timeout_set(&sc->sc_tmo, cy_poll, NULL);
+  if (!timeout_initialized(&cy_poll_to))
+    timeout_set(&cy_poll_to, cy_poll, NULL);
   bzero(sc->sc_ports, sizeof(sc->sc_ports));
   sc->sc_nports = num_chips * CD1400_NO_OF_CHANNELS;
 
@@ -409,7 +411,7 @@ cyopen(dev, flag, mode, p)
 	if(cy_open == 0)
 	  {
 	    cy_open = 1;
-	    timeout_add(&sc->sc_tmo, 1);
+	    timeout_add(&cy_poll_to, 1);
 	  }
 
 	/* this sets parameters and raises DTR */
@@ -1151,7 +1153,7 @@ cy_poll(arg)
     counter = 0;
 
 out:
-    timeout_add(&sc->sc_tmo, 1);
+    timeout_add(&cy_poll_to, 1);
 }
 
 /*
