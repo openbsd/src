@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.53 2004/10/11 14:40:04 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.54 2004/10/12 21:05:20 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1149,8 +1149,8 @@ sub prepare
 	print $dest "+-------------- ", $state->{pkgname}, "\n";
 	while (<$src>) {
 		next if m/^\+\-+\s*$/;
-		s/^\+ //;
-		print $dest $_;
+		s/^[+-] //;
+		print $dest "| $_";
 	}
 	print $dest "+-------------- ", $state->{pkgname}, "\n";
 }
