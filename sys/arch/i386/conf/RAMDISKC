@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.13 2001/02/15 04:58:08 krw Exp $
+#	$OpenBSD: RAMDISKC,v 1.14 2001/03/06 04:55:35 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -70,6 +70,9 @@ pci*	at pchb? bus ?
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
 pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 pcic2	at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
+
+# ISA Plug-and-Play PCMCIA controllers
+pcic*	at isapnp?
 
 # PCI PCMCIA controllers
 pcic*	at pci? dev? function ?
