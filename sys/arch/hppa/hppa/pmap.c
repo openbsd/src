@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 1999/01/20 19:29:50 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 1999/01/20 19:39:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -902,7 +902,7 @@ pmap_pinit(pmap)
 		 * If all are allocated, there is nothing we can do.
 		 */
 		simple_lock(&sid_pid_lock);
-		if (pid_counter <= MAX_PID) {
+		if (pid_counter <= HPPA_MAX_PID) {
 			pid = pid_counter;
 			pid_counter += 2;
 		} else
