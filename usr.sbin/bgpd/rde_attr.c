@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.31 2004/05/21 15:36:40 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.32 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -322,7 +322,7 @@ optattr:
 			*suberr = ERR_UPD_UNKNWN_WK_ATTR;
 			return (p);
 		}
-		TAILQ_FOREACH(a, &attr->others, attr_l)
+		TAILQ_FOREACH(a, &attr->others, entry)
 			if (type == a->type) {
 				*size = 0;
 				*suberr = ERR_UPD_ATTRLIST;
@@ -385,7 +385,7 @@ attr_compare(struct attr_flags *a, struct attr_flags *b)
 
 	for (oa = TAILQ_FIRST(&a->others), ob = TAILQ_FIRST(&b->others);
 	    oa != NULL && ob != NULL;
-	    oa = TAILQ_NEXT(oa, attr_l), ob = TAILQ_NEXT(ob, attr_l)) {
+	    oa = TAILQ_NEXT(oa, entry), ob = TAILQ_NEXT(ob, entry)) {
 		if (oa->type > ob->type)
 			return (1);
 		if (oa->type < ob->type)
@@ -418,7 +418,7 @@ attr_copy(struct attr_flags *t, struct attr_flags *s)
 	memcpy(t, s, sizeof(struct attr_flags));
 	t->aspath = aspath_create(s->aspath->data, s->aspath->hdr.len);
 	TAILQ_INIT(&t->others);
-	TAILQ_FOREACH(os, &s->others, attr_l)
+	TAILQ_FOREACH(os, &s->others, entry)
 		attr_optadd(t, os->flags, os->type, os->data, os->len);
 }
 
@@ -432,8 +432,8 @@ attr_move(struct attr_flags *t, struct attr_flags *s)
 	memcpy(t, s, sizeof(struct attr_flags));
 	TAILQ_INIT(&t->others);
 	while ((os = TAILQ_FIRST(&s->others)) != NULL) {
-		TAILQ_REMOVE(&s->others, os, attr_l);
-		TAILQ_INSERT_TAIL(&t->others, os, attr_l);
+		TAILQ_REMOVE(&s->others, os, entry);
+		TAILQ_INSERT_TAIL(&t->others, os, entry);
 	}
 }
 
@@ -502,7 +502,7 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 		a->data = NULL;
 
 	/* keep a sorted list */
-	TAILQ_FOREACH_REVERSE(p, &attr->others, attr_list, attr_l) {
+	TAILQ_FOREACH_REVERSE(p, &attr->others, attr_list, entry) {
 		if (type == p->type) {
 			/* attribute only once allowed */
 			free(a->data);
@@ -510,11 +510,11 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 			return (-1);
 		}
 		if (type > p->type) {
-			TAILQ_INSERT_AFTER(&attr->others, p, a, attr_l);
+			TAILQ_INSERT_AFTER(&attr->others, p, a, entry);
 			return (0);
 		}
 	}
-	TAILQ_INSERT_HEAD(&attr->others, a, attr_l);
+	TAILQ_INSERT_HEAD(&attr->others, a, entry);
 	return (0);
 }
 
@@ -523,7 +523,7 @@ attr_optget(struct attr_flags *attr, u_int8_t type)
 {
 	struct attr	*a;
 
-	TAILQ_FOREACH(a, &attr->others, attr_l) {
+	TAILQ_FOREACH(a, &attr->others, entry) {
 		if (type == a->type)
 			return (a);
 		if (type < a->type)
@@ -539,7 +539,7 @@ attr_optfree(struct attr_flags *attr)
 	struct attr	*a;
 
 	while ((a = TAILQ_FIRST(&attr->others)) != NULL) {
-		TAILQ_REMOVE(&attr->others, a, attr_l);
+		TAILQ_REMOVE(&attr->others, a, entry);
 		free(a->data);
 		free(a);
 	}

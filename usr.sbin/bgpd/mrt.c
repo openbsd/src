@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.30 2004/04/29 19:56:04 deraadt Exp $ */
+/*	$OpenBSD: mrt.c,v 1.31 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -170,7 +170,7 @@ mrt_attr_length(struct attr_flags *a)
 	if (a->med != 0)
 		alen += 7;
 
-	TAILQ_FOREACH(oa, &a->others, attr_l)
+	TAILQ_FOREACH(oa, &a->others, entry)
 		alen += 2 + oa->len + (oa->len > 255 ? 2 : 1);
 
 	return alen;
@@ -221,7 +221,7 @@ mrt_attr_dump(void *p, u_int16_t len, struct attr_flags *a)
 	wlen += r; len -= r;
 
 	/* dump all other path attributes without modification */
-	TAILQ_FOREACH(oa, &a->others, attr_l) {
+	TAILQ_FOREACH(oa, &a->others, entry) {
 		if ((r = attr_write(buf + wlen, len, oa->flags, oa->type,
 		    oa->data, oa->len)) == -1)
 			return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.96 2004/06/20 17:49:46 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.97 2004/06/20 18:35:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -222,12 +222,12 @@ main(int argc, char *argv[])
 		quit = 1;
 
 	while ((net = TAILQ_FIRST(&net_l)) != NULL) {
-		TAILQ_REMOVE(&net_l, net, network_l);
+		TAILQ_REMOVE(&net_l, net, entry);
 		free(net);
 	}
 
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
-		TAILQ_REMOVE(rules_l, r, entries);
+		TAILQ_REMOVE(rules_l, r, entry);
 		free(r);
 	}
 
@@ -400,14 +400,14 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		if (imsg_compose(&ibuf_rde, IMSG_NETWORK_ADD, 0,
 		    &n->net, sizeof(struct network_config)) == -1)
 			return (-1);
-		TAILQ_REMOVE(&net_l, n, network_l);
+		TAILQ_REMOVE(&net_l, n, entry);
 		free(n);
 	}
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 		if (imsg_compose(&ibuf_rde, IMSG_RECONF_FILTER, 0,
 		    r, sizeof(struct filter_rule)) == -1)
 			return (-1);
-		TAILQ_REMOVE(rules_l, r, entries);
+		TAILQ_REMOVE(rules_l, r, entry);
 		free(r);
 	}
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {

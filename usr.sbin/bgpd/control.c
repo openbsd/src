@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.32 2004/06/09 13:01:44 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.33 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -130,7 +130,7 @@ control_accept(int listenfd)
 
 	imsg_init(&ctl_conn->ibuf, connfd);
 
-	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entries);
+	TAILQ_INSERT_TAIL(&ctl_conns, ctl_conn, entry);
 
 	return (1);
 }
@@ -141,7 +141,7 @@ control_connbyfd(int fd)
 	struct ctl_conn	*c;
 
 	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.fd != fd;
-	    c = TAILQ_NEXT(c, entries))
+	    c = TAILQ_NEXT(c, entry))
 		;	/* nothing */
 
 	return (c);
@@ -153,7 +153,7 @@ control_connbypid(pid_t pid)
 	struct ctl_conn	*c;
 
 	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->ibuf.pid != pid;
-	    c = TAILQ_NEXT(c, entries))
+	    c = TAILQ_NEXT(c, entry))
 		;	/* nothing */
 
 	return (c);
@@ -170,7 +170,7 @@ control_close(int fd)
 	}
 
 	msgbuf_clear(&c->ibuf.w);
-	TAILQ_REMOVE(&ctl_conns, c, entries);
+	TAILQ_REMOVE(&ctl_conns, c, entry);
 
 	close(c->ibuf.fd);
 	free(c);

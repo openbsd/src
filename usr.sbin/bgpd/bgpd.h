@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.127 2004/06/20 17:49:46 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.128 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -78,7 +78,7 @@ enum reconf_action {
 };
 
 struct buf {
-	TAILQ_ENTRY(buf)	 entries;
+	TAILQ_ENTRY(buf)	 entry;
 	u_char			*buf;
 	ssize_t			 size;
 	ssize_t			 wpos;
@@ -232,7 +232,7 @@ TAILQ_HEAD(network_head, network);
 
 struct network {
 	struct network_config	net;
-	TAILQ_ENTRY(network)	network_l;
+	TAILQ_ENTRY(network)	entry;
 };
 
 /* ipc messages */
@@ -504,7 +504,7 @@ struct filter_match {
 TAILQ_HEAD(filter_head, filter_rule);
 
 struct filter_rule {
-	TAILQ_ENTRY(filter_rule)	entries;
+	TAILQ_ENTRY(filter_rule)	entry;
 	enum filter_actions		action;
 	enum directions			dir;
 	u_int8_t			quick;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.40 2004/05/21 15:36:40 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.41 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -116,7 +116,7 @@ struct attr {
 	u_int8_t			 type;
 	u_int16_t			 len;
 	u_char				*data;
-	TAILQ_ENTRY(attr)		 attr_l;
+	TAILQ_ENTRY(attr)		 entry;
 };
 
 TAILQ_HEAD(attr_list, attr);

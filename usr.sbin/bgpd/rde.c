@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.116 2004/06/06 17:38:10 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.117 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -370,7 +370,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((r = malloc(sizeof(struct filter_rule))) == NULL)
 				fatal(NULL);
 			memcpy(r, imsg.data, sizeof(struct filter_rule));
-			TAILQ_INSERT_TAIL(newrules, r, entries);
+			TAILQ_INSERT_TAIL(newrules, r, entry);
 			break;
 		case IMSG_RECONF_DONE:
 			if (nconf == NULL)
@@ -389,7 +389,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			nconf = NULL;
 			prefix_network_clean(&peerself, reloadtime);
 			while ((r = TAILQ_FIRST(rules_l)) != NULL) {
-				TAILQ_REMOVE(rules_l, r, entries);
+				TAILQ_REMOVE(rules_l, r, entry);
 				free(r);
 			}
 			free(rules_l);
@@ -1237,7 +1237,7 @@ network_init(struct network_head *net_l)
 	    "LOCAL AS %hu", conf->as);
 
 	while ((n = TAILQ_FIRST(net_l)) != NULL) {
-		TAILQ_REMOVE(net_l, n, network_l);
+		TAILQ_REMOVE(net_l, n, entry);
 		network_add(&n->net, 1);
 		free(n);
 	}
@@ -1362,7 +1362,7 @@ rde_shutdown(void)
 
 	/* free filters */
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
-		TAILQ_REMOVE(rules_l, r, entries);
+		TAILQ_REMOVE(rules_l, r, entry);
 		free(r);
 	}
 	free(rules_l);

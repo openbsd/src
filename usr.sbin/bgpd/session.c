@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.175 2004/06/20 17:49:46 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.176 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -234,14 +234,14 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 	/* filter rules are not used in the SE */
 	while ((r = TAILQ_FIRST(rules)) != NULL) {
-		TAILQ_REMOVE(rules, r, entries);
+		TAILQ_REMOVE(rules, r, entry);
 		free(r);
 	}
 	free(rules);
 
 	/* network list is not used in the SE */
 	while ((net = TAILQ_FIRST(net_l)) != NULL) {
-		TAILQ_REMOVE(net_l, net, network_l);
+		TAILQ_REMOVE(net_l, net, entry);
 		free(net);
 	}
 
@@ -391,7 +391,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 
 		idx_peers = i;
 
-		TAILQ_FOREACH(ctl_conn, &ctl_conns, entries) {
+		TAILQ_FOREACH(ctl_conn, &ctl_conns, entry) {
 			pfd[i].fd = ctl_conn->ibuf.fd;
 			pfd[i].events = POLLIN;
 			if (ctl_conn->ibuf.w.queued > 0)

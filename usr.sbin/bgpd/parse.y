@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.114 2004/06/08 14:34:48 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.115 2004/06/20 18:35:12 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,7 @@ int		 neighbor_consistent(struct peer *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
-	TAILQ_ENTRY(sym)	 entries;
+	TAILQ_ENTRY(sym)	 entry;
 	int			 used;
 	int			 persist;
 	char			*nam;
@@ -295,7 +295,7 @@ conf_main	: AS asnumber		{
 			memcpy(&n->net.attrset, &$3,
 			    sizeof(n->net.attrset));
 
-			TAILQ_INSERT_TAIL(netconf, n, network_l);
+			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
 		| DUMP TABLE STRING optnumber		{
 			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4, NULL) == -1) {
@@ -1341,14 +1341,14 @@ parse_config(char *filename, struct bgpd_config *xconf,
 
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
-		next = TAILQ_NEXT(sym, entries);
+		next = TAILQ_NEXT(sym, entry);
 		if ((conf->opts & BGPD_OPT_VERBOSE2) && !sym->used)
 			fprintf(stderr, "warning: macro \"%s\" not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {
 			free(sym->nam);
 			free(sym->val);
-			TAILQ_REMOVE(&symhead, sym, entries);
+			TAILQ_REMOVE(&symhead, sym, entry);
 			free(sym);
 		}
 	}
@@ -1374,7 +1374,7 @@ symset(const char *nam, const char *val, int persist)
 	struct sym	*sym;
 
 	for (sym = TAILQ_FIRST(&symhead); sym && strcmp(nam, sym->nam);
-	    sym = TAILQ_NEXT(sym, entries))
+	    sym = TAILQ_NEXT(sym, entry))
 		;	/* nothing */
 
 	if (sym != NULL) {
@@ -1383,7 +1383,7 @@ symset(const char *nam, const char *val, int persist)
 		else {
 			free(sym->nam);
 			free(sym->val);
-			TAILQ_REMOVE(&symhead, sym, entries);
+			TAILQ_REMOVE(&symhead, sym, entry);
 			free(sym);
 		}
 	}
@@ -1403,7 +1403,7 @@ symset(const char *nam, const char *val, int persist)
 	}
 	sym->used = 0;
 	sym->persist = persist;
-	TAILQ_INSERT_TAIL(&symhead, sym, entries);
+	TAILQ_INSERT_TAIL(&symhead, sym, entry);
 	return (0);
 }
 
@@ -1434,7 +1434,7 @@ symget(const char *nam)
 {
 	struct sym	*sym;
 
-	TAILQ_FOREACH(sym, &symhead, entries)
+	TAILQ_FOREACH(sym, &symhead, entry)
 		if (strcmp(nam, sym->nam) == 0) {
 			sym->used = 1;
 			return (sym->val);
@@ -1654,7 +1654,7 @@ expand_rule(struct filter_rule *rule, struct filter_peers *peer,
 	memcpy(&r->match, match, sizeof(struct filter_match));
 	memcpy(&r->set, set, sizeof(struct filter_set));
 
-	TAILQ_INSERT_TAIL(filter_l, r, entries);
+	TAILQ_INSERT_TAIL(filter_l, r, entry);
 
 	return (0);
 }
