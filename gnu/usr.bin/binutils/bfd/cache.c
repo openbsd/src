@@ -237,6 +237,33 @@ bfd_cache_close (bfd *abfd)
 }
 
 /*
+FUNCTION
+	bfd_cache_close_all
+
+SYNOPSIS
+	bfd_boolean bfd_cache_close_all (void);
+
+DESCRIPTION
+	Remove all BFDs from the cache. If the attached file is open,
+	then close it too.
+
+RETURNS
+	<<FALSE>> is returned if closing one of the file fails, <<TRUE>> is
+	returned if all is well.
+*/
+
+bfd_boolean
+bfd_cache_close_all ()
+{
+  bfd_boolean ret = TRUE;
+
+  while (bfd_last_cache != NULL)
+    ret &= bfd_cache_close (bfd_last_cache);
+
+  return ret;
+}
+
+/*
 INTERNAL_FUNCTION
 	bfd_open_file
 
