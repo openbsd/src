@@ -3412,8 +3412,6 @@
 ./usr/share/man/cat3/idcok.0
 ./usr/share/man/cat3/idlok.0
 ./usr/share/man/cat3/ieee.0
-./usr/share/man/cat3/ieee_test.0
-./usr/share/man/cat3/ieee_testf.0
 ./usr/share/man/cat3/ieeef.0
 ./usr/share/man/cat3/if_freenameindex.0
 ./usr/share/man/cat3/if_indextoname.0
