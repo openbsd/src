@@ -507,6 +507,7 @@
 ./usr/lib/apache/include
 ./usr/lib/apache/include/xml
 ./usr/lib/apache/modules
+./usr/lib/gcc-lib
 ./usr/libdata
 ./usr/libdata/lint
 ./usr/libdata/perl5

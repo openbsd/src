@@ -1272,7 +1272,6 @@
 ./usr/lib/apache/include/xml/xmltok_impl.h
 ./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
-./usr/lib/gcc-lib
 ./usr/lib/gcrt0.o
 ./usr/lib/libacl.a
 ./usr/lib/libacl_p.a
