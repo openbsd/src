@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.27 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.28 2003/07/06 09:02:11 tedu Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -895,6 +895,11 @@ ext2fs_vget(mp, ino, vpp)
 				&ip->i_din, sizeof(struct ext2fs_dinode));
 	ip->i_effnlink = ip->i_e2fs_nlink;
 	brelse(bp);
+
+	/* If the inode was deleted, reset all fields */
+	if (ip->i_e2fs_dtime != 0) {
+		ip->i_e2fs_mode = ip->i_e2fs_size = ip->i_e2fs_nblock = 0;
+	}
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.
