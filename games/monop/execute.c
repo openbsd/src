@@ -1,4 +1,4 @@
-/*	$OpenBSD: execute.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: execute.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: execute.c,v 1.5 2002/02/16 21:27:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: execute.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,6 @@ static char rcsid[] = "$OpenBSD: execute.c,v 1.5 2002/02/16 21:27:10 millert Exp
 #include 	<fcntl.h>
 #include	<stdlib.h>
 #include	<unistd.h>
-
-#define	SEGSIZE	8192
 
 typedef	struct stat	STAT;
 typedef	struct tm	TIME;
@@ -71,9 +69,9 @@ getbuf()
 	char	*sp;
 	int	tmpin, i;
 
-	i = 0;
+	i = 1;
 	sp = buf;
-	while (((tmpin = getchar()) != '\n') && (i < sizeof(buf)) &&
+	while (((tmpin = getchar()) != '\n') && (i < (int)sizeof(buf)) &&
 	    (tmpin != EOF)) {
 		*sp++ = tmpin;
 		i++;
@@ -157,7 +155,7 @@ show_move()
 {
 	SQUARE	*sqp;
 
-	sqp = &board[cur_p->loc];
+	sqp = &board[(int)cur_p->loc];
 	printf("That puts you on %s\n", sqp->name);
 	switch (sqp->type) {
 	case SAFE:
@@ -196,17 +194,20 @@ show_move()
 			rent(sqp);
 	}
 }
+
+
+#define MONOP_TAG "monop(6) save file"
 /*
  *	This routine saves the current game for use at a later date
  */
 void
 save()
 {
-	char		*sp;
-	int		outf, num;
-	time_t		t;
-	struct stat	sb;
-	char		*start, *end;
+	int i, j;
+	time_t t;
+	struct stat sb;
+	char *sp;
+	FILE *outf;
 
 	printf("Which file do you wish to save it in? ");
 	getbuf();
@@ -214,34 +215,64 @@ save()
 	/*
 	 * check for existing files, and confirm overwrite if needed
 	 */
-
 	if (stat(buf, &sb) == 0
 	    && getyn("File exists.  Do you wish to overwrite? ") > 0)
 		return;
 
-	if ((outf=creat(buf, 0644)) < 0) {
+	umask(022);
+	if ((outf = fopen(buf, "w")) == NULL) {
 		warn("%s", buf);
 		return;
 	}
 	printf("\"%s\" ", buf);
 	time(&t);			/* get current time		*/
+	fprintf(outf, "%s\n", MONOP_TAG);
+	fprintf(outf, "# %s", ctime(&t));	/* ctime() has \n */
+	fprintf(outf, "%d %d %d\n", num_play, player, num_doub);
+	for (i = 0; i < num_play; i++)
+		fprintf(outf, "%s\n", name_list[i]);
+	for (i = 0; i < num_play; i++)
+		fprintf(outf, "%d %d %d %d\n", play[i].money, play[i].loc,
+		    play[i].num_gojf, play[i].in_jail);
+	/* Deck status */
+	for (i = 0; i < 2; i++) {
+		fprintf(outf, "%d %d %d\n", (int)(deck[i].num_cards),
+		    (int)(deck[i].top_card), (int)(deck[i].gojf_used));
+		for (j = 0; j < deck[i].num_cards; j++)
+			fprintf(outf, "%ld ", (long)(deck[i].offsets[j]));
+		fprintf(outf, "\n");
+	}
+	/* Ownership */
+	for (i = 0; i < N_SQRS; i++) {
+		if (board[i].owner >= 0) {
+			if (board[i].type == PRPTY)
+				fprintf(outf, "%d %d %d %d\n", i, board[i].owner,
+				    board[i].desc->morg, board[i].desc->houses);
+			else if (board[i].type == RR || board[i].type == UTIL)
+				fprintf(outf, "%d %d %d 0\n", i, board[i].owner,
+				    board[i].desc->morg);
+		}
+	}
+	fclose(outf);
+
 	strcpy(buf, ctime(&t));
 	for (sp = buf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';
-#if 0
-	start = (((int) etext + (SEGSIZE-1)) / SEGSIZE ) * SEGSIZE;
-#else
-	start = 0;
-#endif
-	end = sbrk(0);
-	while (start < end) {		/* write out entire data space */
-		num = start + 16 * 1024 > end ? end - start : 16 * 1024;
-		write(outf, start, num);
-		start += num;
-	}
-	close(outf);
 	printf("[%s]\n", buf);
+}
+/* 
+ * If we are restoring during a game, try not to leak memory.
+ */
+void
+game_restore()
+{
+	int i;
+
+	cfree(play);
+	for (i = 0; i < num_play; i++)
+		free(name_list[i]);
+	restore();
 }
 /*
  *	This routine restores an old game from a file
@@ -251,7 +282,10 @@ restore()
 {
 	printf("Which file do you wish to restore from? ");
 	getbuf();
-	rest_f(buf);
+	if (rest_f(buf) == FALSE) {
+		printf("Restore failed\n");
+		exit(1);
+	}
 }
 /*
  *	This does the actual restoring.  It returns TRUE if the
@@ -261,34 +295,158 @@ int
 rest_f(file)
 	char	*file;
 {
-	char	*sp;
-	int	inf, num;
-	char	*start, *end;
-	STAT	sbuf;
+	char *sp;
+	int  i, j, num;
+	FILE *inf;
+	char *st, *a, *b;
+	size_t len;
+	STAT sbuf;
+	int  t1;
+	short t2, t3, t4;
+	long tl;
 
-	if ((inf = open(file, O_RDONLY)) < 0) {
-		warn("%s", file);
-		return FALSE;
-	}
 	printf("\"%s\" ", file);
-	if (fstat(inf, &sbuf) < 0)		/* get file stats	*/
-		err(1, "%s", file);
-#if 0
-	start = (((int) etext + (SEGSIZE-1)) / SEGSIZE ) * SEGSIZE;
-#else
-	start = 0;
-#endif
-	brk(end = start + sbuf.st_size);
-	while (start < end) {		/* write out entire data space */
-		num = start + 16 * 1024 > end ? end - start : 16 * 1024;
-		read(inf, start, num);
-		start += num;
+	if (stat(file, &sbuf) < 0) {		/* get file stats	*/
+		warn("%s", file);
+		return(FALSE);
 	}
-	close(inf);
+	if ((inf = fopen(file, "r")) == NULL) {
+		warn("%s", file);
+		return(FALSE);
+	}
+
+	num = 1;
+	st = fgetln(inf, &len);
+	if (st == NULL || len != strlen(MONOP_TAG) + 1 ||
+	    strncmp(st, MONOP_TAG, strlen(MONOP_TAG))) {
+badness:
+		warnx("%s line %d", file, num);
+		fclose(inf);
+		return(FALSE);
+	}
+	num++;
+	if (fgetln(inf, &len) == NULL)
+		goto badness;
+	num++;
+	if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+		goto badness;
+	st[len - 1] = '\0';
+	if (sscanf(st, "%d %d %d", &num_play, &player, &num_doub) != 3 ||
+	    num_play > MAX_PL || num_play < 1 ||
+	    player < 0 || player >= num_play ||
+	    num_doub < 0 || num_doub > 2)
+		goto badness;
+	if ((play = (PLAY *)calloc(num_play, sizeof(PLAY))) == NULL)
+		err(1, NULL);
+	cur_p = play + player;
+	/* Names */
+	for (i = 0; i < num_play; i++) {
+		num++;
+		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+			goto badness;
+		st[len - 1] = '\0';
+		if ((name_list[i] = play[i].name = strdup(st)) == NULL)
+			err(1, NULL);
+	}
+	if ((name_list[i++] = strdup("done")) == NULL)
+		err(1, NULL);
+	name_list[i] = NULL;
+	/* Money, location, GOJF cards, turns in jail */
+	for (i = 0; i < num_play; i++) {
+		num++;
+		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+			goto badness;
+		st[len - 1] = '\0';
+		if (sscanf(st, "%d %hd %hd %hd", &(play[i].money), &t2,
+		    &t3, &t4) != 4 ||
+		    t2 < 0 || t2 > N_SQRS || t3 < 0 || t3 > 2 ||
+		    (t2 != JAIL && t4 != 0) || t4 < 0 || t4 > 3)
+			goto badness;
+		play[i].loc = t2;
+		play[i].num_gojf = t3;
+		play[i].in_jail  = t4;
+	}
+	/* Deck status; init_decks() must have been called. */
+	for (i = 0; i < 2; i++) {
+		num++;
+		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+			goto badness;
+		st[len - 1] = '\0';
+		if (sscanf(st, "%d %d %hd", &t1, &j, &t2) != 3 ||
+		    j > t1 || t1 != deck[i].num_cards || j < 0 ||
+		    (t2 != FALSE && t2 != TRUE))
+			goto badness;
+		deck[i].top_card = j;
+		deck[i].gojf_used = t2;
+		num++;
+		if ((st = fgetln(inf, &len)) == NULL || st[len - 1] != '\n')
+			goto badness;
+		st[len - 1] = '\0';
+		a = st;
+		for (j = 0; j < deck[i].num_cards; j++) {
+			if ((tl = strtol(a, &b, 10)) < 0 || tl >= 0x7FFFFFFF ||
+			    b == a)
+			    goto badness;
+			deck[i].offsets[j] = tl;
+			b = a;
+		}
+		/* Ignore anything trailing */
+	}
+	trading = FALSE;
+	while ((st = fgetln(inf, &len)) != NULL) {
+		num++;
+		if (st[len - 1] != '\n')
+			goto badness;
+		st[len - 1] = '\0';
+		/* Location, owner, mortgaged, nhouses */
+		if (sscanf(st, "%d %hd %hd %hd", &t1, &t2, &t3, &t4) != 4 ||
+		    t1 < 0 || t1 >= N_SQRS || (board[t1].type != PRPTY &&
+		    board[t1].type != RR && board[t1].type != UTIL) ||
+		    t2 < 0 || t2 >= num_play ||
+		    (t3 != TRUE && t3 != FALSE) ||
+		    t4 < 0 || t4 > 5 || (t4 > 0 && t3 == TRUE))
+			goto badness;
+		add_list(t2, &(play[t2].own_list), t1);
+		/* No properties on mortgaged lots */
+		if (t3 && t4)
+			goto badness;
+		board[t1].owner = t2;
+		(board[t1].desc)->morg = t3;
+		(board[t1].desc)->houses = t4;
+		/* XXX Should check that number of houses per property are all
+		 * within 1 in each monopoly
+		 */
+	}
+	fclose(inf);
+	/* Check total hotel and house count */
+	t1 = j = 0;
+	for (i = 0; i < N_SQRS; i++) {
+		if (board[i].type == PRPTY) {
+			if ((board[i].desc)->houses == 5)
+				j++;
+			else
+				t1 += (board[i].desc)->houses;
+		}
+	}
+	if (t1 > N_HOUSE || j > N_HOTEL) {
+		warnx("too many buildings");
+		return(FALSE);
+	}
+	/* Check GOJF cards */
+	t1 = 0;
+	for (i = 0; i < num_play; i++)
+		t1 += play[i].num_gojf;
+	for (i = 0; i < 2; i++)
+		t1 -= (deck[i].gojf_used == TRUE);
+	if (t1 != 0) {
+		warnx("can't figure out the Get-out-of-jail-free cards");
+		return(FALSE);
+	}
+
 	strcpy(buf, ctime(&sbuf.st_mtime));
 	for (sp = buf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';
 	printf("[%s]\n", buf);
-	return TRUE;
+	return(TRUE);
 }

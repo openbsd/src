@@ -1,4 +1,4 @@
-/*	$OpenBSD: cards.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: cards.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: cards.c,v 1.3 1995/03/23 08:34:35 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cards.c,v 1.5 2002/02/16 21:27:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cards.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,11 +52,7 @@ static char rcsid[] = "$OpenBSD: cards.c,v 1.5 2002/02/16 21:27:10 millert Exp $
 
 #define	GOJF	'F'	/* char for get-out-of-jail-free cards	*/
 
-#ifndef DEV
 static char	*cardfile	= _PATH_CARDS;
-#else
-static char	*cardfile	= "cards.pck";
-#endif
 
 static FILE	*deckf;
 
@@ -75,21 +71,21 @@ file_err:
 		err(1, "%s", cardfile);
 	if (fread(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, deckf) != 1)
 		goto file_err;
-	if (fread(&deck[0].last_card, sizeof(deck[0].last_card), 1, deckf) != 1)
+	if (fread(&deck[0].top_card, sizeof(deck[0].top_card), 1, deckf) != 1)
 		goto file_err;
 	if (fread(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, deckf) != 1)
 		goto file_err;
 	deck[0].num_cards = ntohs(deck[0].num_cards);
-	deck[0].last_card = ntohs(deck[0].last_card);
+	deck[0].top_card = ntohs(deck[0].top_card);
 
 	if (fread(&deck[1].num_cards, sizeof(deck[1].num_cards), 1, deckf) != 1)
 		goto file_err;
-	if (fread(&deck[1].last_card, sizeof(deck[1].last_card), 1, deckf) != 1)
+	if (fread(&deck[1].top_card, sizeof(deck[1].top_card), 1, deckf) != 1)
 		goto file_err;
 	if (fread(&deck[1].gojf_used, sizeof(deck[1].gojf_used), 1, deckf) != 1)
 		goto file_err;
 	deck[1].num_cards = ntohs(deck[1].num_cards);
-	deck[1].last_card = ntohs(deck[1].last_card);
+	deck[1].top_card = ntohs(deck[1].top_card);
 
 	set_up(&CC_D);
 	set_up(&CH_D);
@@ -105,13 +101,13 @@ set_up(dp)
 	int	i;
 
 	if ((dp->offsets = (int32_t *) calloc(sizeof (int32_t), dp->num_cards)) == NULL)
-		errx(1, "malloc");
+		err(1, NULL);
 	for (i = 0 ; i < dp->num_cards ; i++) {
 		if (fread(&dp->offsets[i], sizeof(dp->offsets[i]), 1, deckf) != 1)
 			err(1, "%s", cardfile);
 		dp->offsets[i] = ntohl(dp->offsets[i]);
 	}
-	dp->last_card = 0;
+	dp->top_card = 0;
 	dp->gojf_used = FALSE;
 	for (i = 0; i < dp->num_cards; i++) {
 		long	temp;
@@ -136,8 +132,8 @@ get_card(dp)
 	OWN	*op;
 
 	do {
-		fseek(deckf, dp->offsets[dp->last_card], 0);
-		dp->last_card = ++(dp->last_card) % dp->num_cards;
+		fseek(deckf, dp->offsets[dp->top_card], SEEK_SET);
+		dp->top_card = ++(dp->top_card) % dp->num_cards;
 		type_maj = getc(deckf);
 	} while (dp->gojf_used && type_maj == GOJF);
 	type_min = getc(deckf);
@@ -224,6 +220,7 @@ get_card(dp)
 	}
 	spec = FALSE;
 }
+
 /*
  *	This routine prints out the message on the card
  */
@@ -238,4 +235,52 @@ printmes()
 		putchar(c);
 	printline();
 	fflush(stdout);
+}
+
+/*
+ *	This routine returns the players get-out-of-jail-free card
+ * to the bottom of a deck.  XXX currently does not return to the correct
+ * deck.
+ */
+void
+ret_card(plr)
+	PLAY	*plr;
+{
+	char	type_maj;
+	int16_t	gojfpos, last_card;
+	int	i;
+	DECK *dp;
+	int32_t temp;
+
+	plr->num_gojf--;
+	if (CC_D.gojf_used)
+		dp = &CC_D;
+	else
+		dp = &CH_D;
+	dp->gojf_used = FALSE;
+
+	/* Put at bottom of deck (top_card - 1) and remove it from wherever else
+	 * it used to be.
+	 */
+	last_card = dp->top_card - 1;
+	if (last_card < 0)
+		last_card += dp->num_cards;
+	gojfpos = dp->top_card;
+	do {
+		gojfpos = (gojfpos + 1) % dp->num_cards;
+		fseek(deckf, dp->offsets[gojfpos], SEEK_SET);
+		type_maj = getc(deckf);
+	} while (type_maj != GOJF);
+	temp = dp->offsets[gojfpos];
+	/* Only one of the next two loops does anything */
+	for (i = gojfpos - 1; i > last_card; i--)
+		dp->offsets[i + 1] = dp->offsets[i];
+	for (i = gojfpos; i < last_card; i++)
+		dp->offsets[i] = dp->offsets[i + 1];
+	if (gojfpos > last_card) {
+		dp->offsets[dp->top_card] = temp;
+		dp->top_card++;
+		dp->top_card %= dp->num_cards;
+	} else
+		dp->offsets[last_card] = temp;
 }

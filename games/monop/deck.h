@@ -1,4 +1,4 @@
-/*	$OpenBSD: deck.h,v 1.3 1998/09/20 23:36:50 pjanzen Exp $	*/
+/*	$OpenBSD: deck.h,v 1.4 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: deck.h,v 1.3 1995/03/23 08:34:36 cgd Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 struct dk_st {			/* deck description structure		*/
 	int16_t	num_cards;		/* number of cards in deck	*/
-	int16_t	last_card;		/* number of last card picked	*/
+	int16_t	top_card;		/* number of last card picked	*/
 	bool	gojf_used;		/* set if gojf card out of deck	*/
 	int32_t	*offsets;		/* offsets for start of cards	*/
 };

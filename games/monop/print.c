@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.4 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: print.c,v 1.3 1995/03/23 08:35:05 cgd Exp $	*/
 
 /*
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.3 2002/02/16 21:27:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: print.c,v 1.4 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include	"monop.ext"
 
-static char	*header	= "Name      Own      Price Mg # Rent";
+static const char	*header	= "Name      Own      Price Mg # Rent";
 
 static void	printmorg(SQUARE *);
 
@@ -120,7 +120,7 @@ printsq(sqn, eoln)
 			if (pp->houses < 5) {
 				if (pp->houses > 0)
 					printf("%d %4d", pp->houses,
-						pp->rent[pp->houses]);
+						pp->rent[(int)pp->houses]);
 				else
 					printf("0 %4d", pp->rent[0] * 2);
 			} else
@@ -137,7 +137,7 @@ printsq(sqn, eoln)
 		}
 		printf(" %d          150", sqp->owner+1);
 		printmorg(sqp);
-		printf("%d", play[sqp->owner].num_util);
+		printf("%d", play[(int)sqp->owner].num_util);
 		if (!eoln)
 			printf("    ");
 		break;
@@ -151,8 +151,12 @@ printsq(sqn, eoln)
 		printf(" %d Railroad 200", sqp->owner+1);
 		printmorg(sqp);
 		rnt = 25;
-		rnt <<= play[sqp->owner].num_rr - 1;
-		printf("%d %4d", play[sqp->owner].num_rr, 25 << (play[sqp->owner].num_rr - 1));
+		rnt <<= play[(int)sqp->owner].num_rr - 1;
+		printf("%d %4d", play[(int)sqp->owner].num_rr,
+		    25 << (play[(int)sqp->owner].num_rr - 1));
+		break;
+	default:
+		printf("Warning: printsq() switch %d\n", sqp->type);
 		break;
 	}
 	if (eoln)

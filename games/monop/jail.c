@@ -1,4 +1,4 @@
-/*	$OpenBSD: jail.c,v 1.2 1998/09/20 23:36:51 pjanzen Exp $	*/
+/*	$OpenBSD: jail.c,v 1.3 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: jail.c,v 1.3 1995/03/23 08:34:44 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)jail.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: jail.c,v 1.2 1998/09/20 23:36:51 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: jail.c,v 1.3 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,20 +62,6 @@ card()
 	ret_card(cur_p);
 	cur_p->loc = 10;			/* just visiting	*/
 	cur_p->in_jail = 0;
-}
-/*
- *	This routine returns the players get-out-of-jail-free card
- * to a deck.
- */
-void
-ret_card(plr)
-	PLAY	*plr;
-{
-	plr->num_gojf--;
-	if (CC_D.gojf_used)
-		CC_D.gojf_used = FALSE;
-	else
-		CH_D.gojf_used = FALSE;
 }
 /*
  *	This routine deals with paying your way out of jail.
@@ -112,8 +98,7 @@ moveit:
 			return TRUE;
 		}
 		return FALSE;
-	}
-	else {
+	} else {
 		printf("Double roll gets you out.\n");
 		goto moveit;
 	}

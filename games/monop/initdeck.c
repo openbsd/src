@@ -1,4 +1,4 @@
-/*	$OpenBSD: initdeck.c,v 1.10 2002/05/31 03:40:01 pjanzen Exp $	*/
+/*	$OpenBSD: initdeck.c,v 1.11 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: initdeck.c,v 1.10 2002/05/31 03:40:01 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: initdeck.c,v 1.11 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,17 +99,17 @@ main(ac, av)
 			sizeof (int32_t))) == NULL ||
 	    (CH_D.offsets = (int32_t *)calloc(CH_D.num_cards + 1,
 			sizeof (int32_t))) == NULL)
-		errx(1, "malloc");
-	fseek(inf, 0L, 0);
+		err(1, NULL);
+	fseek(inf, 0L, SEEK_SET);
 	if ((outf = fopen(outfile, "w")) == NULL)
 		err(1, "%s", outfile);
 
 	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
-	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
+	fwrite(&deck[0].top_card, sizeof(deck[0].top_card), 1, outf);
 	fwrite(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, outf);
 
 	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
-	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
+	fwrite(&deck[0].top_card, sizeof(deck[0].top_card), 1, outf);
 	fwrite(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, outf);
 
 	fwrite(CC_D.offsets, sizeof(CC_D.offsets[0]), CC_D.num_cards, outf);
@@ -117,19 +117,19 @@ main(ac, av)
 	putem();
 
 	fclose(inf);
-	fseek(outf, 0, 0L);
+	fseek(outf, 0L, SEEK_SET);
 
 	deck[0].num_cards = htons(deck[0].num_cards);
 	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
-	deck[0].last_card = htons(deck[0].last_card);
-	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
+	deck[0].top_card = htons(deck[0].top_card);
+	fwrite(&deck[0].top_card, sizeof(deck[0].top_card), 1, outf);
 	fwrite(&deck[0].gojf_used, sizeof(deck[0].gojf_used), 1, outf);
 	deck[0].num_cards = ntohs(deck[0].num_cards);
 
 	deck[1].num_cards = htons(deck[1].num_cards);
 	fwrite(&deck[1].num_cards, sizeof(deck[1].num_cards), 1, outf);
-	deck[1].last_card = htons(deck[1].last_card);
-	fwrite(&deck[1].last_card, sizeof(deck[1].last_card), 1, outf);
+	deck[1].top_card = htons(deck[1].top_card);
+	fwrite(&deck[1].top_card, sizeof(deck[1].top_card), 1, outf);
 	fwrite(&deck[1].gojf_used, sizeof(deck[1].gojf_used), 1, outf);
 	deck[1].num_cards = ntohs(deck[1].num_cards);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $	*/
+/*	$OpenBSD: spec.c,v 1.3 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: spec.c,v 1.3 1995/03/23 08:35:16 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: spec.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.3 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ inc_tax()			/* collect income tax			*/
 {
 	int	worth, com_num;
 
-	com_num = getinp("Do you wish to lose 10%% of your total worth or $200? ", perc);
+	com_num = getinp("Do you wish to lose 10% of your total worth or $200? ", perc);
 	worth = cur_p->money + prop_worth(cur_p);
 	printf("You were worth $%d", worth);
 	worth /= 10;

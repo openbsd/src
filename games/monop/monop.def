@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.def,v 1.3 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: monop.def,v 1.4 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: monop.def,v 1.3 1995/03/23 08:34:54 cgd Exp $	*/
 
 /*-
@@ -39,8 +39,8 @@
 #include	"deck.h"
 #include	"monop.h"
 
-bool	fixing,			/* set if fixing up debt		*/
-	trading,		/* set if in process of trading		*/
+bool	fixing = FALSE,		/* set if fixing up debt		*/
+	trading = FALSE,	/* set if in process of trading		*/
 	told_em,		/* set if told user he's out of debt	*/
 	spec;			/* set if moving by card to RR or UTIL	*/
 
@@ -96,7 +96,7 @@ void (*func[])(void) = {	/* array of function calls for commands	*/
 	trade,			/* trade		|* 11 *|	*/
 	resign,			/* resign		|* 12 *|	*/
 	save,			/* save game		|* 13 *|	*/
-	restore,		/* restore game		|* 14 *|	*/
+	game_restore,		/* restore game		|* 14 *|	*/
 	do_move,		/* roll			|* 15 *|	*/
 	do_move			/* ""			|* 16 *|	*/
 	};

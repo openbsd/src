@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.4 2001/01/17 00:27:21 pjanzen Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/23 08:34:47 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2001/01/17 00:27:21 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: misc.c,v 1.5 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ int
 get_int(prompt)
 	char	*prompt;
 {
-	int	num;
+	int	num, snum;
 	char	*sp;
 	int	c, i;
 	char	buf[257];
@@ -103,14 +103,14 @@ get_int(prompt)
 	for (;;) {
 		printf(prompt);
 		num = 0;
-		i = 0;
+		i = 1;
 		for (sp = buf; (c = getchar()) != '\n';) {
 			if (c == EOF) {
 				printf("user closed input stream, quitting...\n");
 				exit(0);
 			}
 			*sp = c;
-			if (i < sizeof(buf)) {
+			if (i < (int)sizeof(buf)) {
 				i++;
 				sp++;
 			}
@@ -119,9 +119,18 @@ get_int(prompt)
 		if (sp == buf)
 			continue;
 		for (sp = buf; isspace(*sp); sp++)
-			continue;
-		for (; isdigit(*sp); sp++)
+			;
+		for (; isdigit(*sp); sp++) {
+			snum = num;
 			num = num * 10 + *sp - '0';
+			if (num < snum) {
+				printf("Number too large - ");
+				*(sp + 1) = 'X';	/* Force a break */
+			}
+		}
+		/* Be kind to trailing spaces */
+		for (; *sp == ' '; sp++)
+			;
 		if (*sp == '\n')
 			return num;
 		else

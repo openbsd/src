@@ -1,4 +1,4 @@
-/*	$OpenBSD: mon.dat,v 1.2 1998/09/20 23:36:51 pjanzen Exp $	*/
+/*	$OpenBSD: mon.dat,v 1.3 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: mon.dat,v 1.2 1995/03/23 08:34:49 cgd Exp $	*/
 
 /*-
@@ -37,11 +37,19 @@
  */
 
 /* name	owner	num_in	num_own	h_cost	not_m		mon_n	    sq */
-{0,	-1,	2,	0,	1,	"Purple",	"PURPLE",   {1,3}},
-{0,	-1,	3,	0,	1,	"Lt. Blue",	"LT. BLUE", {6,8,9}},
-{0,	-1,	3,	0,	2,	"Violet",	"VIOLET",   {11,13,14}},
-{0,	-1,	3,	0,	2,	"Orange",	"ORANGE",   {16,18,19}},
-{0,	-1,	3,	0,	3,	"Red",		"RED",	    {21,23,24}},
-{0,	-1,	3,	0,	3,	"Yellow",	"YELLOW",   {26,27,29}},
-{0,	-1,	3,	0,	4,	"Green",	"GREEN",    {31,32,34}},
-{0,	-1,	2,	0,	4,	"Dk. Blue",	"DK. BLUE", {37,39}}
+{0,	-1,	2,	0,	1,	"Purple",	"PURPLE",   {1,3},
+{NULL, NULL, NULL}},
+{0,	-1,	3,	0,	1,	"Lt. Blue",	"LT. BLUE", {6,8,9},
+{NULL, NULL, NULL}},
+{0,	-1,	3,	0,	2,	"Violet",	"VIOLET",   {11,13,14},
+{NULL, NULL, NULL}},
+{0,	-1,	3,	0,	2,	"Orange",	"ORANGE",   {16,18,19},
+{NULL, NULL, NULL}},
+{0,	-1,	3,	0,	3,	"Red",		"RED",	    {21,23,24},
+{NULL, NULL, NULL}},
+{0,	-1,	3,	0,	3,	"Yellow",	"YELLOW",   {26,27,29},
+{NULL, NULL, NULL}},
+{0,	-1,	3,	0,	4,	"Green",	"GREEN",    {31,32,34},
+{NULL, NULL, NULL}},
+{0,	-1,	2,	0,	4,	"Dk. Blue",	"DK. BLUE", {37,39},
+{NULL, NULL, NULL}}

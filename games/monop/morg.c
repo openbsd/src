@@ -1,4 +1,4 @@
-/*	$OpenBSD: morg.c,v 1.3 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: morg.c,v 1.4 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: morg.c,v 1.4 1995/03/23 08:35:02 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: morg.c,v 1.3 2002/02/16 21:27:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: morg.c,v 1.4 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ static char	*names[MAX_PRP+2],
 
 static shrt	square[MAX_PRP+2];
 
-static int	num_good,got_houses;
+static int	num_good, got_houses;
 
 static int	set_mlist(void);
 static void	m(int);
@@ -207,15 +207,15 @@ unm(prop)
 }
 /*
  *	This routine forces the indebted player to fix his
- * financial woes.
+ * financial woes.  It is fine to have $0 but not to be in debt.
  */
 void
 force_morg()
 {
 	told_em = fixing = TRUE;
-	while (cur_p->money <= 0) {
+	while (cur_p->money < 0) {
 		told_em = FALSE;
-		(*func[(getinp("How are you going to fix it up? ",morg_coms))])();
+		(*func[(getinp("How are you going to fix it up? ", morg_coms))])();
 		notify();
 	}
 	fixing = FALSE;

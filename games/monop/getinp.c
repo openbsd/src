@@ -1,4 +1,4 @@
-/*	$OpenBSD: getinp.c,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: getinp.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: getinp.c,v 1.4 1995/04/24 12:24:20 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getinp.c,v 1.5 2002/02/16 21:27:10 millert Exp $";
+static const char rcsid[] = "$OpenBSD: getinp.c,v 1.6 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ getinp(prompt, list)
 			printf("user closed input stream, quitting...\n");
 			exit(0);
 		}
-		if (buf[0] == '?' && buf[1] == '\n') {
+		if (buf[0] == '?' /* && buf[1] == '\n' */ ) {
 			printf("Valid inputs are: ");
 			for (i = 0, match = 18; list[i]; i++) {
 				if ((match += (n_match = strlen(list[i]))) > LINE) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: monop.6,v 1.8 2001/11/17 05:27:09 pjanzen Exp $
+.\"	$OpenBSD: monop.6,v 1.9 2002/07/28 08:44:14 pjanzen Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -182,4 +182,10 @@ Ken Arnold
 .Sh BUGS
 No command can be given an argument instead of a response to a query.
 .Pp
-While saving a game works pretty well, restoring one does not.
+Additional cash cannot be generated during an auction by selling buildings
+or by mortgaging property.
+.Pp
+The trading of mortgaged properties is not billed correctly.
+.Pp
+Resigning to the bank should trigger the immediate auction of all
+possessions.

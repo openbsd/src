@@ -1,4 +1,4 @@
-/*	$OpenBSD: prop.c,v 1.4 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: prop.c,v 1.5 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: prop.c,v 1.3 1995/03/23 08:35:06 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: prop.c,v 1.4 2002/02/16 21:27:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: prop.c,v 1.5 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,13 +52,13 @@ static int	value(SQUARE *);
  * appropriate flags.
  */
 void
-buy(player, sqrp)
-	int	player;
+buy(plr, sqrp)
+	int	plr;
 	SQUARE	*sqrp;
 {
 	trading = FALSE;
-	sqrp->owner = player;
-	add_list(player, &(play[player].own_list), cur_p->loc);
+	sqrp->owner = plr;
+	add_list(plr, &(play[plr].own_list), cur_p->loc);
 }
 /*
  *	This routine adds an item to the list.
@@ -74,7 +74,7 @@ add_list(plr, head, op_sqr)
 	OWN	*op;
 
 	if ((op = (OWN *)calloc(1, sizeof (OWN))) == NULL)
-		errx(1, "malloc");
+		err(1, NULL);
 	op->sqr = &board[op_sqr];
 	val = value(op->sqr);
 	last_tp = NULL;
@@ -104,9 +104,9 @@ del_list(plr, head, op_sqr)
 {
 	OWN	*op, *last_op;
 
-	switch (board[op_sqr].type) {
+	switch (board[(int)op_sqr].type) {
 	case PRPTY:
-		board[op_sqr].desc->mon_desc->num_own--;
+		board[(int)op_sqr].desc->mon_desc->num_own--;
 		break;
 	case RR:
 		play[plr].num_rr--;
@@ -117,7 +117,7 @@ del_list(plr, head, op_sqr)
 	}
 	last_op = NULL;
 	for (op = *head; op; op = op->next)
-		if (op->sqr == &board[op_sqr])
+		if (op->sqr == &board[(int)op_sqr])
 			break;
 		else
 			last_op = op;
@@ -156,8 +156,7 @@ value(sqp)
 	}
 }
 /*
- *	This routine accepts bids for the current peice
- * of property.
+ *	This routine accepts bids for the current piece of property.
  */
 void
 bid()
@@ -177,16 +176,19 @@ bid()
 		i = (i + 1) % num_play;
 		if (in[i]) {
 			do {
-				(void)sprintf(buf, "%s: ", name_list[i]);
+				(void)snprintf(buf, sizeof(buf), "%s: ", name_list[i]);
 				cur_bid = get_int(buf);
 				if (cur_bid == 0) {
 					in[i] = FALSE;
 					if (--num_in == 0)
 						break;
-				}
-				else if (cur_bid <= cur_max) {
+				} else if (cur_bid <= cur_max) {
 					printf("You must bid higher than %d to stay in\n", cur_max);
 					printf("(bid of 0 drops you out)\n");
+				} else if (cur_bid > play[i].money) {
+					printf("You can't bid more than your cash ($%d)\n",
+					    play[i].money);
+					cur_bid = -1;
 				}
 			} while (cur_bid != 0 && cur_bid <= cur_max);
 			cur_max = (cur_bid ? cur_bid : cur_max);
@@ -196,7 +198,7 @@ bid()
 		while (!in[i])
 			i = (i + 1) % num_play;
 		printf("It goes to %s (%d) for $%d\n",play[i].name,i+1,cur_max);
-		buy(i, &board[cur_p->loc]);
+		buy(i, &board[(int)cur_p->loc]);
 		play[i].money -= cur_max;
 	}
 	else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: monop.h,v 1.5 2002/02/16 21:27:10 millert Exp $	*/
+/*	$OpenBSD: monop.h,v 1.6 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: monop.h,v 1.4 1995/04/24 12:24:23 cgd Exp $	*/
 
 /*
@@ -57,6 +57,8 @@
 #define	N_SQRS	40	/* number of squares on board		*/
 #define	MAX_PL	9	/* maximum number of players		*/
 #define	MAX_PRP	(N_PROP+N_RR+N_UTIL) /* max # ownable property	*/
+#define	N_HOUSE	32	/* total number of houses available	*/
+#define	N_HOTEL	12	/* total number of hotels available	*/
 
 			/* square type numbers			*/
 #define	PRPTY	0	/* normal property			*/
@@ -139,6 +141,7 @@ typedef struct prp_st	UTIL_S;
 /* cards.c */
 void	init_decks(void);
 void	get_card(DECK *);
+void	ret_card(PLAY *);
 
 /* execute.c */
 void	execute(int);
@@ -146,6 +149,7 @@ void	do_move(void);
 void	move(int);
 void	save(void);
 void	restore(void);
+void	game_restore(void);
 int	rest_f(char *);
 
 /* getinp.c */
@@ -157,7 +161,6 @@ void	sell_houses(void);
 
 /* jail.c */
 void	card(void);
-void	ret_card(PLAY *);
 void	pay(void);
 int	move_jail(int, int );
 void	printturn(void);

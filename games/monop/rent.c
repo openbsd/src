@@ -1,4 +1,4 @@
-/*	$OpenBSD: rent.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $	*/
+/*	$OpenBSD: rent.c,v 1.3 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: rent.c,v 1.3 1995/03/23 08:35:11 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rent.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rent.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: rent.c,v 1.3 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ rent(sqp)
 	PROP	*pp;
 	PLAY	*plp;
 
-	plp = &play[sqp->owner];
+	plp = &play[(int)sqp->owner];
 	printf("Owned by %s\n", plp->name);
 	if (sqp->desc->morg) {
 		lucky("The thing is mortgaged.  ");
@@ -68,11 +68,12 @@ rent(sqp)
 			if (pp->houses == 0)
 				printf("rent is %d\n", rnt = pp->rent[0] * 2);
 			else if (pp->houses < 5)
-				printf("with %d houses, rent is %d\n",
-				    pp->houses, rnt = pp->rent[pp->houses]);
+				printf("with %d house%s, rent is %d\n",
+				    pp->houses, pp->houses == 1 ? "" : "s",
+				    rnt = pp->rent[(int)pp->houses]);
 			else
 				printf("with a hotel, rent is %d\n",
-				    rnt = pp->rent[pp->houses]);
+				    rnt = pp->rent[(int)pp->houses]);
 		} else
 			printf("rent is %d\n", rnt = pp->rent[0]);
 		break;
@@ -93,6 +94,10 @@ rent(sqp)
 			printf("rent is 4 * roll (%d) = %d\n", rnt, rnt * 4);
 			rnt *= 4;
 		}
+		break;
+	default:	/* Should never be reached */
+		rnt = 0;
+		printf("Warning:  rent() property %d\n", sqp->type);
 		break;
 	}
 	cur_p->money -= rnt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trade.c,v 1.3 2002/02/16 21:27:11 millert Exp $	*/
+/*	$OpenBSD: trade.c,v 1.4 2002/07/28 08:44:14 pjanzen Exp $	*/
 /*	$NetBSD: trade.c,v 1.3 1995/03/23 08:35:19 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: trade.c,v 1.3 2002/02/16 21:27:11 millert Exp $";
+static const char rcsid[] = "$OpenBSD: trade.c,v 1.4 2002/07/28 08:44:14 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -245,11 +245,14 @@ resign()
 	SQUARE	*sqp;
 
 	if (cur_p->money <= 0) {
-		switch (board[cur_p->loc].type) {
+		switch (board[(int)cur_p->loc].type) {
 		  case UTIL:
 		  case RR:
 		  case PRPTY:
-			new_own = board[cur_p->loc].owner;
+			new_own = board[(int)cur_p->loc].owner;
+			/* If you ran out of money by buying current location */
+			if (new_own == player)
+				new_own = num_play;
 			break;
 		  default:		/* Chance, taxes, etc */
 			new_own = num_play;
@@ -305,16 +308,20 @@ resign()
 		if (cur_p->num_gojf)
 			ret_card(cur_p);
 	}
+	free(name_list[player]);
 	for (i = player; i < num_play; i++) {
 		name_list[i] = name_list[i+1];
 		if (i + 1 < num_play)
 			play[i] = play[i+1];
 	}
-	name_list[num_play--] = 0;
+	name_list[num_play--] = NULL;
 	for (i = 0; i < N_SQRS; i++)
 		if (board[i].owner > player)
 			--board[i].owner;
-	player = --player < 0 ? num_play - 1 : player;
+	if (player == 0)
+		player = num_play - 1;
+	else
+		player--;
 	next_play();
 	if (num_play < 2) {
 		printf("\nThen %s WINS!!!!!\n", play[0].name);
