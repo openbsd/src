@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.21 2001/08/12 20:18:30 mickey Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.22 2001/08/12 21:00:14 mickey Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
@@ -116,6 +116,17 @@ typedef int		vm_prot_t;
  */
 
 #define VM_PROT_ALL	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
+
+/*
+ *	Enumeration of valid values for vm_inherit_t.
+ */
+
+#define	VM_INHERIT_SHARE	((vm_inherit_t)0)	/* share with child */
+#define	VM_INHERIT_COPY		((vm_inherit_t)1)	/* copy into child */
+#define	VM_INHERIT_NONE		((vm_inherit_t)2)	/* absent from child */
+#define	VM_INHERIT_DONATE_COPY	((vm_inherit_t)3)	/* copy and delete */
+
+#define VM_INHERIT_DEFAULT	VM_INHERIT_COPY
 
 /* advice: matches MADV_* from sys/mman.h */
 #define UVM_ADV_NORMAL	0x0	/* 'normal' */

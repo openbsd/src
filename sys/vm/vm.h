@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.17 2001/08/12 20:18:30 mickey Exp $	*/
+/*	$OpenBSD: vm.h,v 1.18 2001/08/12 21:00:15 mickey Exp $	*/
 /*	$NetBSD: vm.h,v 1.22 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ typedef struct vm_page  *vm_page_t;
 #include <sys/queue.h>
 #include <vm/vm_param.h>
 #include <sys/lock.h>
-#include <vm/vm_inherit.h>
 #include <uvm/uvm_extern.h>
 #include <vm/vm_map.h>
 #include <vm/vm_page.h>
