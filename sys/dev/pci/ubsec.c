@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.98 2002/05/08 23:05:27 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.99 2002/05/13 22:28:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -171,16 +171,20 @@ ubsec_attach(parent, self, aux)
 	SIMPLEQ_INIT(&sc->sc_q2free);
 
 	sc->sc_statmask = BS_STAT_MCR1_DONE | BS_STAT_DMAERR;
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805))
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)
 		sc->sc_flags |= UBS_FLAGS_KEY;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)
+		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5820 ||
 	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5821))
-		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_LONGCTX;
+		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG |
+		    UBS_FLAGS_LONGCTX | UBS_FLAGS_HWNORM | UBS_FLAGS_BIGKEY;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
@@ -278,7 +282,7 @@ ubsec_attach(parent, self, aux)
 	printf(": %s", intrstr);
 
 #ifndef UBSEC_NO_RNG
-	if (sc->sc_flags & UBS_FLAGS_KEY) {
+	if (sc->sc_flags & UBS_FLAGS_RNG) {
 		sc->sc_statmask |= BS_STAT_MCR2_DONE;
 
 		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),

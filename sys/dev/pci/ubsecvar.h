@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.31 2002/05/06 20:53:05 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.32 2002/05/13 22:28:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -125,6 +125,9 @@ struct ubsec_dma {
 
 #define	UBS_FLAGS_KEY		0x01		/* has key accelerator */
 #define	UBS_FLAGS_LONGCTX	0x02		/* uses long ipsec ctx */
+#define	UBS_FLAGS_BIGKEY	0x04		/* 2048bit keys */
+#define	UBS_FLAGS_HWNORM	0x08		/* hardware normalization */
+#define	UBS_FLAGS_RNG		0x10		/* hardware rng */
 
 struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
