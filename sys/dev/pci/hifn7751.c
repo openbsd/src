@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.110 2001/11/14 00:14:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.111 2002/01/08 23:17:24 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -94,8 +94,8 @@ int	hifn_freesession __P((u_int64_t));
 int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_softc *, struct hifn_command *, u_int8_t *));
 int	hifn_crypto __P((struct hifn_softc *, struct hifn_command *, struct cryptop *));
-int	hifn_readramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
-int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *, int));
+int	hifn_readramaddr __P((struct hifn_softc *, int, u_int8_t *));
+int	hifn_writeramaddr __P((struct hifn_softc *, int, u_int8_t *));
 int	hifn_dmamap_aligned __P((bus_dmamap_t));
 int	hifn_dmamap_load_src __P((struct hifn_softc *, struct hifn_command *));
 int	hifn_dmamap_load_dst __P((struct hifn_softc *, struct hifn_command *));
@@ -103,6 +103,7 @@ int	hifn_init_pubrng __P((struct hifn_softc *));
 void	hifn_rng __P((void *));
 void	hifn_tick __P((void *));
 void	hifn_abort __P((struct hifn_softc *));
+void	hifn_alloc_slot __P((struct hifn_softc *, int *, int *, int *, int *));
 
 struct hifn_stats hifnstats;
 
@@ -118,10 +119,8 @@ hifn_probe(parent, match, aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INVERTEX_AEON)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751)
-		return (1);
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811))
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751)
@@ -152,6 +151,10 @@ hifn_attach(parent, self, aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7951)
 		sc->sc_flags = HIFN_HAS_RNG | HIFN_HAS_PUBLIC;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7811)
+		sc->sc_flags |= HIFN_IS_7811 | HIFN_HAS_RNG;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
@@ -243,15 +246,6 @@ hifn_attach(parent, self, aux)
 	    PCI_REVISION(pa->pa_class) == 0x61)
 		sc->sc_ramsize >>= 1;
 
-	/*
-	 * Reinitialize again, since the DRAM/SRAM detection shifted our ring
-	 * pointers and may have changed the value we send to the RAM Config
-	 * Register.
-	 */
-	hifn_reset_board(sc, 0);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
-
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail_mem;
@@ -340,26 +334,45 @@ int
 hifn_init_pubrng(sc)
 	struct hifn_softc *sc;
 {
+	u_int32_t r;
 	int i;
 
-	WRITE_REG_1(sc, HIFN_1_PUB_RESET,
-	    READ_REG_1(sc, HIFN_1_PUB_RESET) | HIFN_PUBRST_RESET);
+	if ((sc->sc_flags & HIFN_IS_7811) == 0) {
+		/* Reset 7951 public key/rng engine */
+		WRITE_REG_1(sc, HIFN_1_PUB_RESET,
+		    READ_REG_1(sc, HIFN_1_PUB_RESET) | HIFN_PUBRST_RESET);
 
-	for (i = 0; i < 100; i++) {
-		DELAY(1000);
-		if ((READ_REG_1(sc, HIFN_1_PUB_RESET) & HIFN_PUBRST_RESET)
-		    == 0)
-			break;
-	}
-	if (i == 100) {
-		printf("%s: public key init failed\n", sc->sc_dv.dv_xname);
-		return (1);
+		for (i = 0; i < 100; i++) {
+			DELAY(1000);
+			if ((READ_REG_1(sc, HIFN_1_PUB_RESET) &
+			    HIFN_PUBRST_RESET) == 0)
+				break;
+		}
+
+		if (i == 100) {
+			printf("%s: public key init failed\n",
+			    sc->sc_dv.dv_xname);
+			return (1);
+		}
 	}
 
 	/* Enable the rng, if available */
 	if (sc->sc_flags & HIFN_HAS_RNG) {
-		WRITE_REG_1(sc, HIFN_1_RNG_CONFIG,
-		    READ_REG_1(sc, HIFN_1_RNG_CONFIG) | HIFN_RNGCFG_ENA);
+		if (sc->sc_flags & HIFN_IS_7811) {
+			r = READ_REG_1(sc, HIFN_1_7811_RNGENA);
+			if (r & HIFN_7811_RNGENA_ENA) {
+				r &= ~HIFN_7811_RNGENA_ENA;
+				WRITE_REG_1(sc, HIFN_1_7811_RNGENA, r);
+			}
+			WRITE_REG_1(sc, HIFN_1_7811_RNGCFG,
+			    HIFN_7811_RNGCFG_DEFL);
+			r |= HIFN_7811_RNGENA_ENA;
+			WRITE_REG_1(sc, HIFN_1_7811_RNGENA, r);
+		} else
+			WRITE_REG_1(sc, HIFN_1_RNG_CONFIG,
+			    READ_REG_1(sc, HIFN_1_RNG_CONFIG) |
+			    HIFN_RNGCFG_ENA);
+
 		sc->sc_rngfirst = 1;
 		if (hz >= 100)
 			sc->sc_rnghz = hz / 100;
@@ -384,14 +397,41 @@ hifn_rng(vsc)
 	void *vsc;
 {
 	struct hifn_softc *sc = vsc;
-	u_int32_t num;
+	u_int32_t num1, sts, num2;
+	int i;
 
-	num = READ_REG_1(sc, HIFN_1_RNG_DATA);
+	if (sc->sc_flags & HIFN_IS_7811) {
+		for (i = 0; i < 5; i++) {
+			sts = READ_REG_1(sc, HIFN_1_7811_RNGSTS);
+			if (sts & HIFN_7811_RNGSTS_UFL) {
+				printf("%s: RNG underflow: disabling\n",
+				    sc->sc_dv.dv_xname);
+				return;
+			}
+			if ((sts & HIFN_7811_RNGSTS_RDY) == 0)
+				break;
 
-	if (sc->sc_rngfirst)
-		sc->sc_rngfirst = 0;
-	else
-		add_true_randomness(num);
+			/*
+			 * There are at least two words in the RNG FIFO
+			 * at this point.
+			 */
+			num1 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			num2 = READ_REG_1(sc, HIFN_1_7811_RNGDAT);
+			if (sc->sc_rngfirst)
+				sc->sc_rngfirst = 0;
+			else {
+				add_true_randomness(num1);
+				add_true_randomness(num2);
+			}
+		}
+	} else {
+		num1 = READ_REG_1(sc, HIFN_1_RNG_DATA);
+
+		if (sc->sc_rngfirst)
+			sc->sc_rngfirst = 0;
+		else
+			add_true_randomness(num1);
+	}
 
 	timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 }
@@ -468,6 +508,16 @@ hifn_reset_board(sc, full)
 	reg = pci_conf_read(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT);
 	reg &= 0xffff0000;
 	pci_conf_write(sc->sc_pci_pc, sc->sc_pci_tag, HIFN_RETRY_TIMEOUT, reg);
+
+	if (sc->sc_flags & HIFN_IS_7811) {
+		for (reg = 0; reg < 1000; reg++) {
+			if (READ_REG_1(sc, 0x94) & 0x4000)
+				break;
+			DELAY(1000);
+		}
+		if (reg == 1000)
+			printf(": cram init timeout\n");
+	}
 }
 
 u_int32_t
@@ -512,6 +562,11 @@ struct pci2id {
 	}, {
 		PCI_VENDOR_INVERTEX,
 		PCI_PRODUCT_INVERTEX_AEON,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
+		PCI_VENDOR_HIFN,
+		PCI_PRODUCT_HIFN_7811,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		  0x00, 0x00, 0x00, 0x00, 0x00 }
 	}, {
@@ -718,6 +773,10 @@ hifn_sessions(sc)
 		sc->sc_maxses = 2048;
 }
 
+/*
+ * Determine ram type (sram or dram).  Board should be just out of a reset
+ * state when this is called.
+ */
 int
 hifn_ramtype(sc)
 	struct hifn_softc *sc;
@@ -725,15 +784,11 @@ hifn_ramtype(sc)
 	u_int8_t data[8], dataexpect[8];
 	int i;
 
-	hifn_reset_board(sc, 0);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
-
 	for (i = 0; i < sizeof(data); i++)
 		data[i] = dataexpect[i] = 0x55;
-	if (hifn_writeramaddr(sc, 0, data, 0))
+	if (hifn_writeramaddr(sc, 0, data))
 		return (-1);
-	if (hifn_readramaddr(sc, 0, data, 1))
+	if (hifn_readramaddr(sc, 0, data))
 		return (-1);
 	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
@@ -742,9 +797,9 @@ hifn_ramtype(sc)
 
 	for (i = 0; i < sizeof(data); i++)
 		data[i] = dataexpect[i] = 0xaa;
-	if (hifn_writeramaddr(sc, 0, data, 2))
+	if (hifn_writeramaddr(sc, 0, data))
 		return (-1);
-	if (hifn_readramaddr(sc, 0, data, 3))
+	if (hifn_readramaddr(sc, 0, data))
 		return (-1);
 	if (bcmp(data, dataexpect, sizeof(data)) != 0) {
 		sc->sc_drammodel = 1;
@@ -768,43 +823,30 @@ hifn_sramsize(sc)
 	for (a = 0; a < sizeof(data); a++)
 		data[a] = dataexpect[a] = 0x5a;
 
-	hifn_reset_board(sc, 0);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
 	end = 1 << 20;	/* 1MB */
 	for (a = 0; a < end; a += 16384) {
-		if (hifn_writeramaddr(sc, a, data, 0) < 0)
+		if (hifn_writeramaddr(sc, a, data) < 0)
 			return (0);
-		if (hifn_readramaddr(sc, a, data, 1) < 0)
+		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
 		if (bcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
-		hifn_reset_board(sc, 0);
-		hifn_init_dma(sc);
-		hifn_init_pci_registers(sc);
 		sc->sc_ramsize = a + 16384;
 	}
 
 	for (a = 0; a < sizeof(data); a++)
 		data[a] = dataexpect[a] = 0xa5;
-	if (hifn_writeramaddr(sc, 0, data, 0) < 0)
+	if (hifn_writeramaddr(sc, 0, data) < 0)
 		return (0);
 
 	end = sc->sc_ramsize;
 	for (a = 0; a < end; a += 16384) {
-		hifn_reset_board(sc, 0);
-		hifn_init_dma(sc);
-		hifn_init_pci_registers(sc);
-		if (hifn_readramaddr(sc, a, data, 0) < 0)
+		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
 		if (a != 0 && bcmp(data, dataexpect, sizeof(data)) == 0)
 			return (0);
 		sc->sc_ramsize = a + 16384;
 	}
-
-	hifn_reset_board(sc, 0);
-	hifn_init_dma(sc);
-	hifn_init_pci_registers(sc);
 
 	return (0);
 }
@@ -826,40 +868,90 @@ hifn_dramsize(sc)
 	return (0);
 }
 
-int
-hifn_writeramaddr(sc, addr, data, slot)
+void
+hifn_alloc_slot(sc, cmdp, srcp, dstp, resp)
 	struct hifn_softc *sc;
-	int addr, slot;
+	int *cmdp, *srcp, *dstp, *resp;
+{
+	struct hifn_dma *dma = sc->sc_dma;
+
+	if (dma->cmdi == HIFN_D_CMD_RSIZE) {
+		dma->cmdi = 0;
+		dma->cmdr[HIFN_D_CMD_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_CMDR_SYNC(sc, HIFN_D_CMD_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	*cmdp = dma->cmdi++;
+	dma->cmdk = dma->cmdi;
+
+	if (dma->srci == HIFN_D_SRC_RSIZE) {
+		dma->srci = 0;
+		dma->srcr[HIFN_D_SRC_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_SRCR_SYNC(sc, HIFN_D_SRC_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	*srcp = dma->srci++;
+	dma->srck = dma->srci;
+
+	if (dma->dsti == HIFN_D_DST_RSIZE) {
+		dma->dsti = 0;
+		dma->dstr[HIFN_D_DST_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_DSTR_SYNC(sc, HIFN_D_DST_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	*dstp = dma->dsti++;
+	dma->dstk = dma->dsti;
+
+	if (dma->resi == HIFN_D_RES_RSIZE) {
+		dma->resi = 0;
+		dma->resr[HIFN_D_RES_RSIZE].l = htole32(HIFN_D_VALID |
+		    HIFN_D_JUMP | HIFN_D_MASKDONEIRQ);
+		HIFN_RESR_SYNC(sc, HIFN_D_RES_RSIZE,
+		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	}
+	*resp = dma->resi++;
+	dma->resk = dma->resi;
+}
+
+int
+hifn_writeramaddr(sc, addr, data)
+	struct hifn_softc *sc;
+	int addr;
 	u_int8_t *data;
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	hifn_base_command_t wc;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
-	int r;
+	int r, cmdi, resi, srci, dsti;
 
 	wc.masks = htole16(3 << 13);
 	wc.session_num = htole16(addr >> 14);
 	wc.total_source_count = htole16(8);
 	wc.total_dest_count = htole16(addr & 0x3fff);
 
+	hifn_alloc_slot(sc, &cmdi, &srci, &dsti, &resi);
+
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
 	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
 	/* build write command */
-	bzero(dma->command_bufs[slot], HIFN_MAX_COMMAND);
-	*(hifn_base_command_t *)dma->command_bufs[slot] = wc;
+	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	*(hifn_base_command_t *)dma->command_bufs[cmdi] = wc;
 	bcopy(data, &dma->test_src, sizeof(dma->test_src));
 
-	dma->srcr[slot].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
+	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
 	    + offsetof(struct hifn_dma, test_src));
-	dma->dstr[slot].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
+	dma->dstr[dsti].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr
 	    + offsetof(struct hifn_dma, test_dst));
 
-	dma->cmdr[slot].l = htole32(16 | masks);
-	dma->srcr[slot].l = htole32(8 | masks);
-	dma->dstr[slot].l = htole32(4 | masks);
-	dma->resr[slot].l = htole32(4 | masks);
+	dma->cmdr[cmdi].l = htole32(16 | masks);
+	dma->srcr[srci].l = htole32(8 | masks);
+	dma->dstr[dsti].l = htole32(4 | masks);
+	dma->resr[resi].l = htole32(4 | masks);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    0, sc->sc_dmamap->dm_mapsize,
@@ -871,12 +963,11 @@ hifn_writeramaddr(sc, addr, data, slot)
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	if (dma->resr[slot].l & htole32(HIFN_D_VALID)) {
+	if (dma->resr[resi].l & htole32(HIFN_D_VALID)) {
 		printf("\n%s: writeramaddr error -- "
 		    "result[%d](addr %d) valid still set\n",
-		    sc->sc_dv.dv_xname, slot, addr);
+		    sc->sc_dv.dv_xname, resi, addr);
 		r = -1;
-		return (-1);
 	} else
 		r = 0;
 
@@ -888,38 +979,40 @@ hifn_writeramaddr(sc, addr, data, slot)
 }
 
 int
-hifn_readramaddr(sc, addr, data, slot)
+hifn_readramaddr(sc, addr, data)
 	struct hifn_softc *sc;
-	int addr, slot;
+	int addr;
 	u_int8_t *data;
 {
 	struct hifn_dma *dma = sc->sc_dma;
 	hifn_base_command_t rc;
 	const u_int32_t masks = HIFN_D_VALID | HIFN_D_LAST | HIFN_D_MASKDONEIRQ;
-	int r;
+	int r, cmdi, srci, dsti, resi;
 
 	rc.masks = htole16(2 << 13);
 	rc.session_num = htole16(addr >> 14);
 	rc.total_source_count = htole16(addr & 0x3fff);
 	rc.total_dest_count = htole16(8);
 
+	hifn_alloc_slot(sc, &cmdi, &srci, &dsti, &resi);
+
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
 	    HIFN_DMACSR_C_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_D_CTRL_ENA | HIFN_DMACSR_R_CTRL_ENA);
 
-	bzero(dma->command_bufs[slot], HIFN_MAX_COMMAND);
-	*(hifn_base_command_t *)dma->command_bufs[slot] = rc;
+	bzero(dma->command_bufs[cmdi], HIFN_MAX_COMMAND);
+	*(hifn_base_command_t *)dma->command_bufs[cmdi] = rc;
 
-	dma->srcr[slot].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+	dma->srcr[srci].p = htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
 	    offsetof(struct hifn_dma, test_src));
 	dma->test_src = 0;
-	dma->dstr[slot].p =  htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
+	dma->dstr[dsti].p =  htole32(sc->sc_dmamap->dm_segs[0].ds_addr +
 	    offsetof(struct hifn_dma, test_dst));
 	dma->test_dst = 0;
-	dma->cmdr[slot].l = htole32(8 | masks);
-	dma->srcr[slot].l = htole32(8 | masks);
-	dma->dstr[slot].l = htole32(8 | masks);
-	dma->resr[slot].l = htole32(HIFN_MAX_RESULT | masks);
+	dma->cmdr[cmdi].l = htole32(8 | masks);
+	dma->srcr[srci].l = htole32(8 | masks);
+	dma->dstr[dsti].l = htole32(8 | masks);
+	dma->resr[resi].l = htole32(HIFN_MAX_RESULT | masks);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    0, sc->sc_dmamap->dm_mapsize,
@@ -931,10 +1024,10 @@ hifn_readramaddr(sc, addr, data, slot)
 	    0, sc->sc_dmamap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	if (dma->resr[slot].l & htole32(HIFN_D_VALID)) {
+	if (dma->resr[resi].l & htole32(HIFN_D_VALID)) {
 		printf("\n%s: readramaddr error -- "
 		    "result[%d](addr %d) valid still set\n",
-		    sc->sc_dv.dv_xname, slot, addr);
+		    sc->sc_dv.dv_xname, resi, addr);
 		r = -1;
 	} else {
 		r = 0;
@@ -1547,7 +1640,7 @@ hifn_intr(arg)
 	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
 	if (restart) {
-		printf("%s: abort, resetting.\n");
+		printf("%s: abort, resetting.\n", sc->sc_dv.dv_xname);
 		hifnstats.hst_abort++;
 		hifn_abort(sc);
 		return (1);

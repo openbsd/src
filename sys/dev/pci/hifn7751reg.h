@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.31 2001/11/04 18:31:42 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.32 2002/01/08 23:17:24 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -188,6 +188,10 @@ typedef struct hifn_desc {
 #define	HIFN_1_DMA_CSR		0x40	/* DMA Status and Control */
 #define	HIFN_1_DMA_IER		0x44	/* DMA Interrupt Enable */
 #define	HIFN_1_DMA_CNFG		0x48	/* DMA Configuration */
+#define	HIFN_1_7811_RNGENA	0x60	/* 7811: rng enable */
+#define	HIFN_1_7811_RNGCFG	0x64	/* 7811: rng config */
+#define	HIFN_1_7811_RNGDAT	0x68	/* 7811: rng data */
+#define	HIFN_1_7811_RNGSTS	0x6c	/* 7811: rng status */
 #define	HIFN_1_REVID		0x98	/* Revision ID */
 
 #define	HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
@@ -272,6 +276,18 @@ typedef struct hifn_desc {
 #define	HIFN_DMACNFG_MODE	0x00000004	/* DMA mode */
 #define	HIFN_DMACNFG_DMARESET	0x00000002	/* DMA Reset # */
 #define	HIFN_DMACNFG_MSTRESET	0x00000001	/* Master Reset # */
+
+/* 7811 RNG Enable Register (HIFN_1_7811_RNGENA) */
+#define	HIFN_7811_RNGENA_ENA	0x00000001	/* enable RNG */
+
+/* 7811 RNG Config Register (HIFN_1_7811_RNGCFG) */
+#define	HIFN_7811_RNGCFG_PRE1	0x00000f00	/* first prescalar */
+#define	HIFN_7811_RNGCFG_OPRE	0x00000080	/* output prescalar */
+#define	HIFN_7811_RNGCFG_DEFL	0x00000f80	/* 2 words/ 1/100 sec */
+
+/* 7811 RNG Status Register (HIFN_1_7811_RNGSTS) */
+#define	HIFN_7811_RNGSTS_RDY	0x00004000	/* two numbers in FIFO */
+#define	HIFN_7811_RNGSTS_UFL	0x00001000	/* rng underflow */
 
 /* Public key reset register (HIFN_1_PUB_RESET) */
 #define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */
