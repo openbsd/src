@@ -33,14 +33,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtok.3,v 1.4 1999/05/23 14:11:03 aaron Exp $
+.\"	$OpenBSD: strtok.3,v 1.5 1999/06/04 19:14:56 aaron Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRTOK 3
 .Os
 .Sh NAME
-.Nm strtok ,
-.Nm strsep
+.Nm strtok
 .Nd string token operations
 .Sh SYNOPSIS
 .Fd #include <string.h>
@@ -104,9 +103,7 @@ if handed a string containing only delimiter characters,
 will not alter the next starting point, so that a call to
 .Fn strtok
 with a different (or empty) delimiter string
-may return a
-.Pf non- Dv NULL
-value.
+may return a non-null value.
 Since this implementation always alters the next starting point,
 such a sequence of calls would always return
 .Dv NULL .
