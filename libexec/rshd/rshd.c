@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.22 1998/05/15 04:28:26 art Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.23 1998/06/03 02:35:20 angelos Exp $";
 #endif /* not lint */
 
 /*
@@ -206,9 +206,9 @@ doit(fromp)
 	struct passwd *pwd;
 	u_short port;
 	fd_set ready, readfrom;
-	int cc, nfd, pv[2], pid, s;
+	int cc, nfd, pv[2], pid, s = 0;
 	int one = 1;
-	char *hostname, *errorstr, *errorhost;
+	char *hostname, *errorstr, *errorhost = (char *) NULL;
 	char *cp, sig, buf[BUFSIZ];
 	char cmdbuf[NCARGS+1], locuser[16], remuser[16];
 	char remotehost[2 * MAXHOSTNAMELEN + 1];
