@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.15 1999/07/14 23:15:50 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.16 1999/07/15 19:26:37 deraadt Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -445,7 +445,7 @@ svr4_sys_systeminfo(p, v, retval)
 	extern char ostype[], hostname[], osrelease[],
 		    version[], machine[], domainname[];
 #ifdef __sparc__
-	extern char cpu_class[];
+	extern char *cpu_class;
 #endif
 
 	u_int rlen = SCARG(uap, len);
