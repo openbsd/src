@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.31 2003/07/07 00:18:30 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.32 2004/01/02 23:46:04 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.57 2002/09/20 21:59:55 itojun Exp $	*/
 
 /*
@@ -52,9 +52,7 @@
 #include <stdarg.h>
 #include <ifaddrs.h>
 #include <util.h>
-#ifdef HAVE_POLL_H
 #include <poll.h>
-#endif
 
 #include "rtsold.h"
 
@@ -111,13 +109,7 @@ main(int argc, char *argv[])
 	int s, ch, once = 0;
 	struct timeval *timeout;
 	char *argv0, *opts;
-#ifdef HAVE_POLL_H
 	struct pollfd set[2];
-#else
-	fd_set *fdsetp, *selectfdp;
-	int fdmasks;
-	int maxfd;
-#endif
 #ifdef USE_RTSOCK
 	int rtsock;
 #endif
@@ -184,11 +176,6 @@ main(int argc, char *argv[])
 			setlogmask(LOG_UPTO(log_upto));
 	}
 
-#ifndef HAVE_ARC4RANDOM
-	/* random value initilization */
-	srandom((u_long)time(NULL));
-#endif
-
 	/* warn if accept_rtadv is down */
 	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
 		warnx("kernel is configured not to accept RAs");
@@ -212,16 +199,10 @@ main(int argc, char *argv[])
 		exit(1);
 		/*NOTREACHED*/
 	}
-#ifdef HAVE_POLL_H
 	set[0].fd = s;
 	set[0].events = POLLIN;
-#else
-	maxfd = s;
-#endif
 
-#ifdef HAVE_POLL_H
 	set[1].fd = -1;
-#endif
 
 #ifdef USE_RTSOCK
 	if ((rtsock = rtsock_open()) < 0) {
@@ -229,25 +210,8 @@ main(int argc, char *argv[])
 		exit(1);
 		/*NOTREACHED*/
 	}
-#ifdef HAVE_POLL_H
 	set[1].fd = rtsock;
 	set[1].events = POLLIN;
-#else
-	if (rtsock > maxfd)
-		maxfd = rtsock;
-#endif
-#endif
-
-#ifndef HAVE_POLL_H
-	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsetp = malloc(fdmasks)) == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
-	if ((selectfdp = malloc(fdmasks)) == NULL) {
-		err(1, "malloc");
-		/*NOTREACHED*/
-	}
 #endif
 
 	/* configuration per interface */
@@ -286,19 +250,9 @@ main(int argc, char *argv[])
 		}
 	}
 
-#ifndef HAVE_POLL_H
-	memset(fdsetp, 0, fdmasks);
-	FD_SET(s, fdsetp);
-#ifdef USE_RTSOCK
-	FD_SET(rtsock, fdsetp);
-#endif
-#endif
 	while (1) {		/* main loop */
 		int e;
 
-#ifndef HAVE_POLL_H
-		memcpy(selectfdp, fdsetp, fdmasks);
-#endif
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
@@ -322,11 +276,7 @@ main(int argc, char *argv[])
 			if (ifi == NULL)
 				break;
 		}
-#ifdef HAVE_POLL_H
 		e = poll(set, 2, timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 1000) : INFTIM);
-#else
-		e = select(maxfd + 1, selectfdp, NULL, NULL, timeout);
-#endif
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
 				warnmsg(LOG_ERR, __func__, "select: %s",
@@ -337,18 +287,10 @@ main(int argc, char *argv[])
 
 		/* packet reception */
 #ifdef USE_RTSOCK
-#ifdef HAVE_POLL_H
 		if (set[1].revents & POLLIN)
-#else
-		if (FD_ISSET(rtsock, selectfdp))
-#endif
 			rtsock_input(rtsock);
 #endif
-#ifdef HAVE_POLL_H
 		if (set[0].revents & POLLIN)
-#else
-		if (FD_ISSET(s, selectfdp))
-#endif
 			rtsol_input(s);
 	}
 	/* NOTREACHED */
@@ -654,11 +596,7 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
-#ifndef HAVE_ARC4RANDOM
-		interval = random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
-#else
 		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
-#endif
 		ifinfo->timer.tv_sec = interval / MILLION;
 		ifinfo->timer.tv_usec = interval % MILLION;
 		break;
