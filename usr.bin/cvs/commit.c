@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.9 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: commit.c,v 1.10 2004/12/08 17:22:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,33 +56,33 @@ int    cvs_commit_file     (CVSFILE *, void *);
 int
 cvs_commit(int argc, char **argv)
 {
-	int i, ch, recurse, flags;
+	int i, ch, flags;
 	char *msg, *mfile;
 	struct cvs_flist cl;
 	struct cvsroot *root;
 
 	flags = CF_RECURSE|CF_IGNORE|CF_SORT;
-	recurse = 1;
 	mfile = NULL;
 	msg = NULL;
 	TAILQ_INIT(&cl);
 
-	while ((ch = getopt(argc, argv, "F:flm:R")) != -1) {
+	while ((ch = getopt(argc, argv, "F:flm:Rr:")) != -1) {
 		switch (ch) {
 		case 'F':
 			mfile = optarg;
 			break;
 		case 'f':
-			recurse = 0;
+			/* XXX half-implemented */
+			flags &= ~CF_RECURSE;
 			break;
 		case 'l':
-			recurse = 0;
+			flags &= ~CF_RECURSE;
 			break;
 		case 'm':
 			msg = optarg;
 			break;
 		case 'R':
-			recurse = 1;
+			flags |= CF_RECURSE;
 			break;
 		default:
 			return (EX_USAGE);
@@ -111,7 +111,7 @@ cvs_commit(int argc, char **argv)
 	cvs_file_examine(cvs_files, cvs_commit_prepare, &cl);
 
 	if (msg == NULL) {
-		msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files), &cl);
+		msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files), NULL, &cl, NULL);
 		if (msg == NULL)
 			return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.8 2004/12/08 17:22:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -42,8 +42,13 @@
 #define CVS_LOGMSG_BIGMSG     32000
 #define CVS_LOGMSG_FTMPL      "/tmp/cvsXXXXXXXXXX"
 #define CVS_LOGMSG_PREFIX     "CVS:"
-#define CVS_LOGMSG_LOGLINE \
+#define CVS_LOGMSG_LINE \
 "----------------------------------------------------------------------"
+
+
+static const char *cvs_logmsg_ops[3] = {
+	"Added", "Modified", "Removed",
+};
 
 
 /*
@@ -140,19 +145,29 @@ cvs_logmsg_open(const char *path)
 /*
  * cvs_logmsg_get()
  *
- * Get a log message by forking and executing the user's editor.
+ * Get a log message by forking and executing the user's editor.  The <dir>
+ * argument is a relative path to the directory for which the log message
+ * applies, and the 3 tail queue arguemnts contains all the files for which the
+ * log message will apply.  Any of these arguments can be set to NULL in the
+ * case where there is no information to display.
  * Returns the message in a dynamically allocated string on success, NULL on
  * failure.
  */
 char*
-cvs_logmsg_get(const char *dir, struct cvs_flist *files)
+cvs_logmsg_get(const char *dir, struct cvs_flist *added,
+    struct cvs_flist *modified, struct cvs_flist *removed)
 {
-	int ret, fd, argc, fds[3], nl;
+	int i, fd, argc, fds[3], nl;
 	size_t len, tlen;
 	char *argv[4], buf[16], path[MAXPATHLEN], fpath[MAXPATHLEN], *msg;
 	FILE *fp;
 	CVSFILE *cvsfp;
 	struct stat st1, st2;
+	struct cvs_flist *files[3];
+
+	files[0] = added;
+	files[1] = modified;
+	files[2] = removed;
 
 	msg = NULL;
 	fds[0] = -1;
@@ -176,20 +191,24 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 		if (unlink(path) == -1)
 			cvs_log(LP_ERRNO, "failed to unlink temporary file");
 		return (NULL);
-	} else {
-		fprintf(fp,
-		    "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
-		    "removed automatically\n%s\n%s Commiting in %s\n"
-		    "%s\n",
-		    CVS_LOGMSG_PREFIX, CVS_LOGMSG_LOGLINE,
-		    CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX,
-		    CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX,
-		    dir, CVS_LOGMSG_PREFIX);
+	}
 
-		/* XXX list files here */
-		fprintf(fp, "%s Modified Files:", CVS_LOGMSG_PREFIX);
+	fprintf(fp, "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
+	    "removed automatically\n%s\n", CVS_LOGMSG_PREFIX, CVS_LOGMSG_LINE,
+	    CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX);
+
+	if (dir != NULL)
+		fprintf(fp, "%s Commiting in %s\n%s\n", CVS_LOGMSG_PREFIX, dir,
+		    CVS_LOGMSG_PREFIX);
+
+	for (i = 0; i < 3; i++) {
+		if (files[i] == NULL)
+			continue;
+
+		fprintf(fp, "%s %s Files:", CVS_LOGMSG_PREFIX,
+		    cvs_logmsg_ops[i]);
 		nl = 1;
-		TAILQ_FOREACH(cvsfp, files, cf_list) {
+		TAILQ_FOREACH(cvsfp, files[i], cf_list) {
 			/* take the space into account */
 			cvs_file_getpath(cvsfp, fpath, sizeof(fpath));
 			len = strlen(fpath) + 1;
@@ -206,8 +225,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 			tlen += len;
 		}
 
-		fprintf(fp, "\n%s %s\n", CVS_LOGMSG_PREFIX,
-		    CVS_LOGMSG_LOGLINE);
+		fprintf(fp, "\n%s %s\n", CVS_LOGMSG_PREFIX, CVS_LOGMSG_LINE);
 	}
 	(void)fflush(fp);
 
@@ -221,9 +239,9 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 	}
 
 	for (;;) {
-		ret = cvs_exec(argc, argv, fds);
-		if (ret == -1)
+		if (cvs_exec(argc, argv, fds) < 0)
 			break;
+
 		if (fstat(fd, &st2) == -1) {
 			cvs_log(LP_ERRNO, "failed to stat log message file");
 			break;
@@ -256,9 +274,9 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 			/* empty message */
 			msg = strdup("");
 			break;
-		} else if (ret == 'e')
+		} else if (buf[0] == 'e')
 			continue;
-		else if (ret == '!') {
+		else if (buf[0] == '!') {
 			/* XXX do something */
 		}
 	}
