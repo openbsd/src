@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.8 1999/10/02 19:18:22 deraadt Exp $
+ *	$Id: scp.c,v 1.9 1999/10/03 20:43:12 deraadt Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.8 1999/10/02 19:18:22 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.9 1999/10/03 20:43:12 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -961,7 +961,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.8 1999/10/02 19:18:22 deraadt Exp $
+ *	$Id: scp.c,v 1.9 1999/10/03 20:43:12 deraadt Exp $
  */
 
 char *
@@ -1066,7 +1066,10 @@ alarmtimer(int wait)
 void
 updateprogressmeter(void)
 {
+	int save_errno = errno;
+
 	progressmeter(0);
+	errno = save_errno;
 }
 
 void
