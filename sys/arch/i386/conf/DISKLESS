@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.49 2004/04/16 22:42:47 deraadt Exp $
+#	$OpenBSD: DISKLESS,v 1.50 2004/04/20 17:06:20 grange Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -58,7 +58,7 @@ option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 option		LKM		# loadable kernel modules
 
 #option		FFS		# UFS
-option		FFS_SOFTUPDATES	# Soft updates
+#option		FFS_SOFTUPDATES	# Soft updates
 #option		QUOTA		# UFS quotas
 option		MFS		# memory file system
 #option		EXT2FS		# Second Extended Filesystem
