@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.19 1997/01/10 18:29:48 etheisen Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.20 1997/07/01 05:59:44 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -287,8 +287,8 @@ __elf_fdnlist(fd, list)
 {
 	register struct nlist *p;
 	register caddr_t strtab;
-	register Elf32_Off symoff = 0, symstroff;
-	register Elf32_Word symsize, symstrsize;
+	register Elf32_Off symoff = 0, symstroff = 0;
+	register Elf32_Word symsize = 0, symstrsize = 0;
 	register Elf32_Sword nent, cc, i;
 	Elf32_Sym sbuf[1024];
 	Elf32_Sym *s;
@@ -454,6 +454,7 @@ static struct nlist_handlers {
 #endif
 };
 
+int
 __fdnlist(fd, list)
 	register int fd;
 	register struct nlist *list;
