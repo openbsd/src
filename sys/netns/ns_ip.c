@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.8 1999/01/11 05:12:34 millert Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.9 2001/03/23 07:35:10 angelos Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
@@ -290,7 +290,9 @@ nsipoutput(ifp, m, dst, rt)
 		m0->m_next = m;
 		m0->m_len = sizeof (struct ip);
 		m0->m_pkthdr.len = m0->m_len + m->m_len;
+		m0->m_pkthdr.tdbi = m->m_pkthdr.tdbi;
 		m->m_flags &= ~M_PKTHDR;
+		m->m_pkthdr.tdbi = NULL;  /* paranoid */
 	} else {
 		M_PREPEND(m, sizeof (struct ip), M_DONTWAIT);
 		if (m == 0)
