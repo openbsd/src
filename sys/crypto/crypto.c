@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.42 2002/11/21 19:34:25 jason Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.43 2003/02/19 03:41:31 jason Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -331,7 +331,7 @@ crypto_register(u_int32_t driverid, int *alg,
 	
 	s = splimp();
 
-	for (i = 0; i < CRYPTO_ALGORITHM_MAX; i++) {
+	for (i = 0; i < CRYPTO_ALGORITHM_ALL; i++) {
 		/*
 		 * XXX Do some performance testing to determine
 		 * placing.  We probably need an auxiliary data
