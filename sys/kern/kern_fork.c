@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.12 1999/01/10 02:20:20 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.13 1999/01/11 20:25:09 niklas Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ again:
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
-	if (rforkflags & RFNOWAIT) {
+	if (forktype == ISRFORK && (rforkflags & RFNOWAIT)) {
 		p2->p_flag |= P_NOZOMBIE;
 	} else {
 		LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
