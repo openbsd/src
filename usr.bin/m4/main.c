@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 1999/11/30 22:19:50 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 1999/11/30 22:24:20 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.21 1999/11/30 22:19:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.22 1999/11/30 22:24:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -417,7 +417,23 @@ macro()
 			break;
 
 		default:
-			chrsave(t);			/* stack the char */
+			if (LOOK_AHEAD(t, scommt)) {
+				char *p;
+				for (p = scommt; *p; p++)
+					chrsave(*p);
+				for(;;) {
+					t = gpbc();
+					if (LOOK_AHEAD(t, ecommt)) {
+						for (p = ecommt; *p; p++)
+							chrsave(*p);
+						break;
+					}
+					if (t == EOF)
+					    break;
+					chrsave(t);
+				}
+			} else
+				chrsave(t);		/* stack the char */
 			break;
 		}
 	}
