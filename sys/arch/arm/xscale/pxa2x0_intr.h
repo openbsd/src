@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.h,v 1.3 2005/01/04 02:08:41 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.h,v 1.4 2005/01/04 23:37:13 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.h,v 1.4 2003/07/05 06:53:08 dogcow Exp $ */
 
 /* Derived from i80321_intr.h */
@@ -49,14 +49,8 @@
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#if 0
-#include <arm/cpu.h>
-#include <machine/atomic.h>
-#endif
 #include <machine/intr.h>
 #include <arm/softintr.h>
-
-#include <arm/xscale/pxa2x0reg.h>
 
 extern vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
 #define read_icu(offset) (*(volatile uint32_t *)(pxaic_base+(offset)))
@@ -183,8 +177,10 @@ void	_setsoftintr(int);
 void pxa2x0_intr_bootstrap(vaddr_t);
 
 void pxa2x0_irq_handler(void *);
-void *pxa2x0_intr_establish(int irqno, int level,
-			    int (*func)(void *), void *cookie, char *name);
+void *pxa2x0_intr_establish(int irqno, int level, int (*func)(void *),
+    void *cookie, char *name);
+void pxa2x0_intr_disestablish(void *cookie);
+
 void pxa2x0_update_intr_masks(int irqno, int level);
 extern __volatile int current_spl_level;
 
