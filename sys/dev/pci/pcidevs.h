@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.449 2001/10/04 20:05:07 gluk Exp 
+ *		OpenBSD: pcidevs,v 1.450 2001/10/04 23:33:39 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1175,10 +1175,13 @@
 #define	PCI_PRODUCT_IBM_0x0017	0x0017		/* CPU */
 #define	PCI_PRODUCT_IBM_0x0018	0x0018		/* Auto LANStreamer */
 #define	PCI_PRODUCT_IBM_GXT150P	0x001b		/* GXT-150P 2D Accelerator */
+#define	PCI_PRODUCT_IBM_82G2675	0x001d		/* 82G2675 */
 #define	PCI_PRODUCT_IBM_0x0020	0x0020		/* MCA */
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI */
+#define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
 #define	PCI_PRODUCT_IBM_0x0036	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Olympic */
+#define	PCI_PRODUCT_IBM_I82557B	0x0057		/* i82557B 10/100 */
 #define	PCI_PRODUCT_IBM_FIREGL2	0x0170		/* FireGL2 */
 
 /* IDT products */

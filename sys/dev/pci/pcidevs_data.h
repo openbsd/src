@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.449 2001/10/04 20:05:07 gluk Exp 
+ *		OpenBSD: pcidevs,v 1.450 2001/10/04 23:33:39 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1831,6 +1831,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "GXT-150P 2D Accelerator",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82G2675,
+	    "82G2675",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0020,
 	    "MCA",
 	},
@@ -1839,12 +1843,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82351 PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
+	    "ServeRAID",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0036,
 	    "Miami/PCI",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
 	    "Olympic",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_I82557B,
+	    "i82557B 10/100",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_FIREGL2,
