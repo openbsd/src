@@ -1,6 +1,24 @@
-/* $OpenBSD: openbsd.h,v 1.18 1999/02/28 15:44:58 espie Exp $	*/
+/* Base configuration file for all OpenBSD targets.
+   Copyright (C) 1999 Free Software Foundation, Inc.
 
-/* common OpenBSD configuration. 
+This file is part of GNU CC.
+
+GNU CC is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
+
+GNU CC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU CC; see the file COPYING.  If not, write to
+the Free Software Foundation, 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.  */
+
+/* Common OpenBSD configuration. 
    All OpenBSD architectures include this file, which is intended as
    a repository for common defines. 
 
@@ -20,24 +38,24 @@
       the corresponding logic for OBJECTS is necessarily coupled.
 
    There are also a few `default' defines such as ASM_WEAKEN_LABEL,
-   intended as common ground for arch that don't provide anything suitable.
- */
+   intended as common ground for arch that don't provide 
+   anything suitable.  */
 
 /* OPENBSD_NATIVE is defined only when gcc is configured as part of
    the OpenBSD source tree, specifically through Makefile.bsd-wrapper.
 
    In such a case the include path can be trimmed as there is no
-   distinction between system includes and gcc includes
- */
+   distinction between system includes and gcc includes.  */
+
 /* This configuration method, namely Makefile.bsd-wrapper and
-   OPENBSD_NATIVE is NOT recommended for building cross-compilers
- */
+   OPENBSD_NATIVE is NOT recommended for building cross-compilers.  */
+
 #ifdef OPENBSD_NATIVE
 
 #undef GCC_INCLUDE_DIR
 #define GCC_INCLUDE_DIR "/usr/include"
 
-/* The compiler is configured with ONLY the gcc/g++ standard headers */
+/* The compiler is configured with ONLY the gcc/g++ standard headers.  */
 #undef INCLUDE_DEFAULTS
 #define INCLUDE_DEFAULTS			\
   {						\
@@ -53,8 +71,8 @@
 #endif
 
 
-/* Controlling the compilation driver 
- * ---------------------------------- */
+/* Controlling the compilation driver.  */
+
 /* CPP_SPEC appropriate for OpenBSD. We deal with -posix and -pthread.
    XXX the way threads are handling currently is not very satisfying,
    since all code must be compiled with -pthread to work. 
@@ -72,7 +90,7 @@
 #ifndef OBSD_NO_DYNAMIC_LIBRARIES
 #undef SWITCH_TAKES_ARG
 #define SWITCH_TAKES_ARG(CHAR) \
-  (DEFAULT_SWITCH_TAKES_ARG(CHAR) \
+  (DEFAULT_SWITCH_TAKES_ARG (CHAR) \
    || (CHAR) == 'R')
 #endif
 
@@ -82,12 +100,12 @@
 #ifdef OBSD_OLD_GAS
 /* ASM_SPEC appropriate for OpenBSD.  For some architectures, OpenBSD 
    still uses a special flavor of gas that needs to be told when generating 
-   pic code. */
+   pic code.  */
 #undef ASM_SPEC
 #define ASM_SPEC "%{fpic:-k} %{fPIC:-k -K} %|"
 #else
 /* Since we use gas, stdin -> - is a good idea, but we don't want to
-   override native specs just for that. */
+   override native specs just for that.  */
 #ifndef ASM_SPEC
 #define ASM_SPEC "%|"
 #endif
@@ -109,45 +127,45 @@
 #endif
 
 
-/* Runtime target specification 
- * ---------------------------- */
-/* You must redefine CPP_PREDEFINES in any arch specific file. */
+/* Runtime target specification.  */
+
+/* You must redefine CPP_PREDEFINES in any arch specific file.  */
 #undef CPP_PREDEFINES
 
-/* Implicit calls to library routines
- * ---------------------------------- */
-/* Use memcpy and memset instead of bcopy and bzero. */
+/* Implicit calls to library routines.  */
+
+/* Use memcpy and memset instead of bcopy and bzero.  */
 #define TARGET_MEM_FUNCTIONS
 
-/* Miscellaneous parameters
- * ------------------------ */
-/* tell libgcc2.c that OpenBSD targets support atexit. */
+/* Miscellaneous parameters.  */
+
+/* Tell libgcc2.c that OpenBSD targets support atexit.  */
 #define HAVE_ATEXIT
 
-/* Controlling debugging info: dbx options 
- * --------------------------------------- */
+/* Controlling debugging info: dbx options.  */
+
 /* Don't use the `xsTAG;' construct in DBX output; OpenBSD systems that
- * use DBX don't support it. */
+   use DBX don't support it.  */
 #define DBX_NO_XREFS
 
 
-/* Support of shared libraries, mostly imported from svr4.h through netbsd. */
+/* Support of shared libraries, mostly imported from svr4.h through netbsd.  */
 /* Two differences from svr4.h:
    - we use . - _func instead of a local label,
    - we put extra spaces in expressions such as 
      .type _func , @function
      This is more readable for a human being and confuses c++filt less.  */
 
-/* Assembler format: output and generation of labels
- * ------------------------------------------------- */
+/* Assembler format: output and generation of labels.  */
+
 /* Define the strings used for the .type and .size directives.
    These strings generally do not vary from one system running OpenBSD
    to another, but if a given system needs to use different pseudo-op
-   names for these, they may be overridden in the arch specific file. */ 
+   names for these, they may be overridden in the arch specific file.  */ 
 
 /* OpenBSD assembler is hacked to have .type & .size support even in a.out
    format object files.  Functions size are supported but not activated 
-   yet (look for GRACE_PERIOD_EXPIRED in gas/config/obj-aout.c). */
+   yet (look for GRACE_PERIOD_EXPIRED in gas/config/obj-aout.c).  */
 
 #undef TYPE_ASM_OP
 #undef SIZE_ASM_OP
@@ -197,7 +215,7 @@
       {									\
 	fprintf (FILE, "\t%s\t", SIZE_ASM_OP);				\
 	assemble_name (FILE, (FNAME));					\
-	fputs(" , . - ", FILE);						\
+	fputs (" , . - ", FILE);					\
 	assemble_name (FILE, (FNAME));					\
 	putc ('\n', FILE);						\
       }									\
@@ -222,14 +240,14 @@
 	assemble_name (FILE, NAME);					\
 	fprintf (FILE, " , %d\n", int_size_in_bytes (TREE_TYPE (DECL)));\
       }									\
-    ASM_OUTPUT_LABEL(FILE, NAME);					\
+    ASM_OUTPUT_LABEL (FILE, NAME);					\
   } while (0)
 
 /* Output the size directive for a decl in rest_of_decl_compilation
    in the case where we did not do so before the initializer.
    Once we find the error_mark_node, we know that the value of
-   size_directive_output was set
-   by ASM_DECLARE_OBJECT_NAME when it was run for the same decl.  */
+   size_directive_output was set by ASM_DECLARE_OBJECT_NAME 
+   when it was run for the same decl.  */
 #undef ASM_FINISH_DECLARE_OBJECT
 #define ASM_FINISH_DECLARE_OBJECT(FILE, DECL, TOP_LEVEL, AT_END)	 \
 do {									 \
@@ -255,14 +273,14 @@ do {									 \
 
 /* Tell the assembler that a symbol is weak.  */
 /* Note: netbsd arm32 assembler needs a .globl here. An override may 
-   be needed when/if we go for arm32 support. */
+   be needed when/if we go for arm32 support.  */
 #ifndef ASM_WEAKEN_LABEL
 #define ASM_WEAKEN_LABEL(FILE,NAME) \
   do { fputs ("\t.weak\t", FILE); assemble_name (FILE, NAME); \
        fputc ('\n', FILE); } while (0)
 #endif
 
-/* Tell the assembler that a symbol is global. */
+/* Tell the assembler that a symbol is global.  */
 #ifndef ASM_GLOBALIZE_LABEL
 #define ASM_GLOBALIZE_LABEL(FILE,NAME) \
   do { fputs ("\t.globl\t", FILE); assemble_name (FILE, NAME); \
@@ -270,15 +288,15 @@ do {									 \
 #endif
 
 
-/* Storage layout 
-   -------------- */
+/* Storage layout.  */
+
 /* We don't have to worry about binary compatibility with older C++ code,
    but there is a big known bug with vtable thunks which has not been
-	fixed yet, so DON'T activate it by default.
- */
+   fixed yet, so DON'T activate it by default.  */
 /* #define DEFAULT_VTABLE_THUNKS 1 */
+
 
 /* Otherwise, since we support weak, gthr.h erroneously tries to use
-   #pragma weak
- */
+   #pragma weak.  */
 #define GTHREAD_USE_WEAK 0
+
