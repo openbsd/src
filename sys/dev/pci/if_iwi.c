@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.17 2004/12/04 19:40:37 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.18 2004/12/06 19:54:05 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -796,7 +796,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 		iwi_fix_channel(ic, m);
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	
+
 	/* Send it up to the upper layer */
 	ieee80211_input(ifp, m, ni, IWI_RSSI2DBM(frame->rssi, frame->agc), 0);
 
@@ -1522,8 +1522,8 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 		goto fail5;
 	}
 
-        /* Copy firmware image to DMA memory */
-        bcopy(fw, virtaddr, size);
+	/* Copy firmware image to DMA memory */
+	bcopy(fw, virtaddr, size);
 
 	/* Make sure the adapter will get up-to-date values */
 	bus_dmamap_sync(sc->sc_dmat, map, 0, size, BUS_DMASYNC_PREWRITE);

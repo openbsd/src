@@ -1,4 +1,4 @@
-/*	$Id: if_iwireg.h,v 1.8 2004/12/04 19:19:24 damien Exp $ */
+/*	$Id: if_iwireg.h,v 1.9 2004/12/06 19:54:06 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -363,13 +363,13 @@ struct iwi_wep_key {
 
 #define IWI_EEPROM_DELAY	1	/* minimum hold time (microsecond) */
 
-#define IWI_EEPROM_C       (1 << 0)        /* Serial Clock */
-#define IWI_EEPROM_S       (1 << 1)        /* Chip Select */
-#define IWI_EEPROM_D       (1 << 2)        /* Serial data input */
-#define IWI_EEPROM_Q       (1 << 4)        /* Serial data output */
+#define IWI_EEPROM_C	(1 << 0)	/* Serial Clock */
+#define IWI_EEPROM_S	(1 << 1)	/* Chip Select */
+#define IWI_EEPROM_D	(1 << 2)	/* Serial data input */
+#define IWI_EEPROM_Q	(1 << 4)	/* Serial data output */
 
-#define IWI_EEPROM_SHIFT_D    2
-#define IWI_EEPROM_SHIFT_Q    4
+#define IWI_EEPROM_SHIFT_D	2
+#define IWI_EEPROM_SHIFT_Q	4
 
 /*
  * control and status registers access macros
