@@ -374,7 +374,7 @@ struct textlist
 #if _OSK_MWC32
 #define	LSIGNAL(sig,func)	os9_signal(sig,func)
 #else
-#define	LSIGNAL(sig,func)	signal(sig,func)
+#define	LSIGNAL(sig,func)	lsignal(sig,func)
 #endif
 
 #if HAVE_SIGPROCMASK

@@ -15,8 +15,6 @@
  * A signal usually merely causes a bit to be set in the "signals" word.
  * At some convenient time, the mainline code checks to see if any
  * signals need processing by calling psignal().
- * If we happen to be reading from a file [in iread()] at the time
- * the signal is received, we call intread to interrupt the iread.
  */
 
 #include "less.h"
@@ -32,7 +30,6 @@ extern int screen_trashed;
 extern int lnloop;
 extern int linenums;
 extern int wscroll;
-extern int reading;
 
 /*
  * Interrupt signal handler.
@@ -45,7 +42,6 @@ u_interrupt(type)
 #if OS2
 	LSIGNAL(SIGINT, SIG_ACK);
 #endif
-	LSIGNAL(SIGINT, u_interrupt);
 	sigs |= S_INTERRUPT;
 #if MSDOS_COMPILER==DJGPPC
 	/*
@@ -56,8 +52,6 @@ u_interrupt(type)
 	if (kbhit())
 		getkey();
 #endif
-	if (reading)
-		intread();
 }
 
 #ifdef SIGTSTP
@@ -69,10 +63,7 @@ u_interrupt(type)
 stop(type)
 	int type;
 {
-	LSIGNAL(SIGTSTP, stop);
 	sigs |= S_STOP;
-	if (reading)
-		intread();
 }
 #endif
 
@@ -85,10 +76,7 @@ stop(type)
 winch(type)
 	int type;
 {
-	LSIGNAL(SIGWINCH, winch);
 	sigs |= S_WINCH;
-	if (reading)
-		intread();
 }
 #else
 #ifdef SIGWIND
@@ -100,10 +88,7 @@ winch(type)
 winch(type)
 	int type;
 {
-	LSIGNAL(SIGWIND, winch);
 	sigs |= S_WINCH;
-	if (reading)
-		intread();
 }
 #endif
 #endif
@@ -267,4 +252,22 @@ psignals()
 		}
 
 	}
+}
+
+/*
+ * Custom version of signal() that causes syscalls to be interrupted.
+ */
+	public void
+(*lsignal(s, a))()
+	int s;
+	void (*a) ();
+{
+	struct sigaction sa, osa;
+
+	sa.sa_handler = a;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;		/* don't restart system calls */
+	if (sigaction(s, &sa, &osa) != 0)
+		return (SIG_ERR);
+	return (osa.sa_handler);
 }
