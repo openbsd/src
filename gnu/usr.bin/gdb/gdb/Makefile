@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 1996/01/12 16:55:47 deraadt Exp $
+# $Id: Makefile,v 1.4 1996/08/26 07:10:34 deraadt Exp $
 
 # Paths to libraries
 #
@@ -21,8 +21,8 @@ PROG=		gdb
 CFLAGS+=	-I$(.CURDIR)/arch/$(MACHINE_ARCH) -I$(.CURDIR)/../bfd \
 		-I$(.CURDIR)/../readline -I$(.CURDIR)/../include \
 		-I$(.CURDIR) \
-		-DHOST_CANONICAL=\"$(MACHINE_ARCH)-netbsd\" \
-		-DTARGET_CANONICAL=\"$(MACHINE_ARCH)-netbsd\"
+		-DHOST_CANONICAL=\"$(MACHINE_ARCH)-openbsd\" \
+		-DTARGET_CANONICAL=\"$(MACHINE_ARCH)-openbsd\"
 
 CFLAGS+=	-DNO_MMALLOC -DKERNEL_DEBUG -DHAVE_TERMIOS
 YFLAGS+=	-p $(.PREFIX:S/-exp/_/:S/ch_/chill_/)
