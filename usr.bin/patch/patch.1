@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.4 1999/06/05 01:21:36 aaron Exp $	-*- nroff -*-
+.\"	$OpenBSD: patch.1,v 1.5 2003/01/06 08:52:05 deraadt Exp $	-*- nroff -*-
 .rn '' }`
 .de Sh
 .br
@@ -65,7 +65,7 @@ or
 switches.
 The extension used for making backup files may also be specified in the
 .B SIMPLE_BACKUP_SUFFIX
-environment variable, which is overridden by above switches.
+environment variable, which is overridden by the above switches.
 .PP
 If the backup file already exists,
 .B patch
@@ -302,7 +302,7 @@ causes the next argument to be interpreted as the output file name.
 .B \-p<number> or \-\-strip <number>
 sets the pathname strip count,
 which controls how pathnames found in the patch file are treated, in case
-the you keep your files in a different directory than the person who sent
+you keep your files in a different directory than the person who sent
 out the patch.
 The strip count specifies how many slashes are to be stripped from
 the front of the pathname.
