@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.9 2000/01/26 15:21:36 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.12 2000/01/25 06:13:15 angelos Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.10 2000/01/27 18:07:16 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.13 2000/01/27 17:14:17 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -800,7 +800,8 @@ ike_phase_1_send_ID (struct message *msg)
 	  break;
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
-	  memcpy (buf + ISAKMP_ID_DATA_OFF, conf_get_str (my_id, "Name"), sz);
+	  memcpy (buf + ISAKMP_ID_DATA_OFF, conf_get_str (my_id, "Name"), 
+		  sz - ISAKMP_ID_DATA_OFF);
 	  break;
 	default:
 	  log_print ("ike_phase_1_send_ID: unsupported ID type %d", id_type);
