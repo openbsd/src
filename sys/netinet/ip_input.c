@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.85 2001/06/24 23:42:40 mickey Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.86 2001/06/25 08:05:24 art Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1381,7 +1381,9 @@ ip_forward(m, srcrt)
 	struct mbuf *mcopy;
 	n_long dest;
 	struct ifnet *destifp;
+#ifdef IPSEC
 	struct ifnet dummyifp;
+#endif
 
 	dest = 0;
 #ifdef DIAGNOSTIC
