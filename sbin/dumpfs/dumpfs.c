@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.4 1996/06/23 14:30:16 deraadt Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.5 1997/02/11 07:01:27 millert Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.11 1996/01/09 21:23:36 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.4 1996/06/23 14:30:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.5 1997/02/11 07:01:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,8 +154,7 @@ dumpfs(name)
 	printf("minfree\t%d%%\toptim\t%s\tmaxcontig %d\tmaxbpg\t%d\n",
 	    afs.fs_minfree, afs.fs_optim == FS_OPTSPACE ? "space" : "time",
 	    afs.fs_maxcontig, afs.fs_maxbpg);
-	printf("rotdelay %dms\theadswitch %dus\ttrackseek %dus\trps\t%d\n",
-	    afs.fs_rotdelay, afs.fs_headswitch, afs.fs_trkseek, afs.fs_rps);
+	printf("rotdelay %dms\trps\t%d\n", afs.fs_rotdelay, afs.fs_rps);
 	printf("ntrak\t%d\tnsect\t%d\tnpsect\t%d\tspc\t%d\n",
 	    afs.fs_ntrak, afs.fs_nsect, afs.fs_npsect, afs.fs_spc);
 	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",

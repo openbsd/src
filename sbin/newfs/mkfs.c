@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.3 1996/08/02 11:00:50 deraadt Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.4 1997/02/11 07:01:37 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.3 1996/08/02 11:00:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.4 1997/02/11 07:01:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,8 +92,6 @@ extern int	sectorsize;	/* bytes/sector */
 extern int	rpm;		/* revolutions/minute of drive */
 extern int	interleave;	/* hardware sector interleave */
 extern int	trackskew;	/* sector 0 skew, per track */
-extern int	headswitch;	/* head switch time, usec */
-extern int	trackseek;	/* track-to-track seek, usec */
 extern int	fsize;		/* fragment size */
 extern int	bsize;		/* block size */
 extern int	cpg;		/* cylinders/cylinder group */
@@ -563,8 +561,6 @@ next:
 	sblock.fs_rotdelay = rotdelay;
 	sblock.fs_minfree = minfree;
 	sblock.fs_maxcontig = maxcontig;
-	sblock.fs_headswitch = headswitch;
-	sblock.fs_trkseek = trackseek;
 	sblock.fs_maxbpg = maxbpg;
 	sblock.fs_rps = rpm / 60;
 	sblock.fs_optim = opt;
@@ -723,9 +719,10 @@ initcg(cylno, utime)
 			setbit(cg_inosused(&acg), i);
 			acg.cg_cs.cs_nifree--;
 		}
-	for (i = 0; i < sblock.fs_ipg / INOPF(&sblock); i += sblock.fs_frag)
+	for (i = 0; i < sblock.fs_ipg / INOPF(&sblock); i += sblock.fs_frag) {
 		wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
 		    sblock.fs_bsize, (char *)zino);
+	}
 	if (cylno > 0) {
 		/*
 		 * In cylno 0, beginning space is reserved
