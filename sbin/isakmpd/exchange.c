@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.60 2001/08/15 13:06:53 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.61 2001/08/22 07:09:03 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1220,10 +1220,13 @@ exchange_free_aux (void *v_exch)
   if (exchange->finalize)
     exchange->finalize (exchange, exchange->finalize_arg, 1);
 
-  /* Remove any SAs that has not been disassociated from us.  */
+  /* Remove any SAs that have not been disassociated from us.  */
   for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = next_sa)
     {
       next_sa = TAILQ_NEXT (sa, next);
+      /* One for the reference in exchange->sa_list.  */
+      sa_release (sa);
+      /* And two more for the expiration and SA linked list.  */
       sa_free (sa);
     }
 
