@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.5 1997/07/25 21:05:32 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.6 1997/12/10 20:24:17 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.5 1997/07/25 21:05:32 mickey Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.6 1997/12/10 20:24:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ char *s2;
  */
 void
 putback(c)
-char c;
+pbent c;
 {
 	if (bp < endpbb)
 		*bp++ = c;
@@ -98,7 +98,7 @@ pbstr(s)
 register char *s;
 {
 	register char *es;
-	register char *zp;
+	pbent *zp;
 
 	es = s;
 	zp = bp;

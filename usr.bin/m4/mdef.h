@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.3 1996/06/26 05:36:14 deraadt Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.4 1997/12/10 20:24:16 deraadt Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -138,6 +138,8 @@ typedef union {			/* stack structure */
 	int	sfra;		/* frame entry  */
 	char 	*sstr;		/* string entry */
 } stae;
+
+typedef short pbent;		/* pushback entry; needs to hold chars + EOF */
 
 /*
  * macros for readibility and/or speed

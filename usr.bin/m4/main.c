@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1997/01/15 23:42:49 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1997/12/10 20:24:15 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.11 1996/01/13 23:25:26 pk Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/01/15 23:42:49 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/12/10 20:24:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,11 +70,11 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/01/15 23:42:49 millert Exp $"
 #include "pathnames.h"
 
 ndptr hashtab[HASHSIZE];	/* hash table for macros etc.  */
-char buf[BUFSIZE];		/* push-back buffer	       */
-char *bufbase = buf;		/* the base for current ilevel */
-char *bbase[MAXINP];		/* the base for each ilevel    */
-char *bp = buf; 		/* first available character   */
-char *endpbb = buf+BUFSIZE;	/* end of push-back buffer     */
+pbent buf[BUFSIZE];		/* push-back buffer	       */
+pbent *bufbase = buf;		/* the base for current ilevel */
+pbent *bbase[MAXINP];		/* the base for each ilevel    */
+pbent *bp = buf; 		/* first available character   */
+pbent *endpbb = buf+BUFSIZE;	/* end of push-back buffer     */
 stae mstack[STACKMAX+1]; 	/* stack of m4 machine         */
 char strspace[STRSPMAX+1];	/* string space for evaluation */
 char *ep = strspace;		/* first free char in strspace */
