@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92 1996/01/08 13:51:38 mycroft Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 1996/02/28 14:38:46 mickey Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -412,7 +412,8 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, SIGSEGV, T_PAGEFLT);
+		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
+		    ? SIGBUS : SIGSEGV, T_PAGEFLT);
 		break;
 	}
 

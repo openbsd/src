@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.15 1995/10/10 04:45:30 mycroft Exp $	*/
+/*	$OpenBSD: math_emulate.c,v 1.2 1996/02/28 14:38:43 mickey Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -908,8 +908,6 @@ void fmul(const temp_real * src1, const temp_real * src2, temp_real * result)
 /*
  * temporary real division routine.
  */
-
-#include "i386/i386/math_emu.h"
 
 static void shift_left(int * c)
 {

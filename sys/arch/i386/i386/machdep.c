@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 1996/01/08 20:12:20 mycroft Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 1996/02/28 14:38:42 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -457,6 +457,7 @@ identifycpu()
 /*  
  * machine dependent system variables.
  */ 
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -913,6 +914,7 @@ dumpsys()
  * /sys/i386/i386/microtime.s is used.  The other code only works
  * for HZ=100.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
@@ -1350,7 +1352,7 @@ pmap_next_page(addrp)
 	return TRUE;
 }
 
-u_int
+int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {

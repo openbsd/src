@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.3 1996/02/28 14:38:45 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -61,6 +61,7 @@ ENTRY(microtime)
 	outb	%al,$TIMER_MODE		# latch timer 0's counter
 
 	# Read counter value into ecx, LSB first
+	xorl	%ecx,%ecx
 	inb	$TIMER_CNTR0,%al
 	movb	%al,%cl
 	inb	$TIMER_CNTR0,%al

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.7 1996/02/26 10:26:48 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.8 1996/02/28 14:38:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -58,8 +58,6 @@ bdev_decl(wt);
 bdev_decl(sd);
 #include "st.h"
 bdev_decl(st);
-#include "ss.h"
-cdev_decl(ss);
 #include "cd.h"
 bdev_decl(cd);
 #include "mcd.h"
@@ -161,6 +159,8 @@ cdev_decl(scd);
 cdev_decl(pc);
 cdev_decl(sd);
 cdev_decl(st);
+#include "ss.h"
+cdev_decl(ss);
 cdev_decl(cd);
 #include "lpt.h"
 cdev_decl(lpt);
