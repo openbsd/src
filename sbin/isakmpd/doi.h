@@ -1,5 +1,5 @@
-/*	$OpenBSD: doi.h,v 1.3 1998/11/17 11:10:10 niklas Exp $	*/
-/*	$EOM: doi.h,v 1.22 1998/10/11 12:01:03 niklas Exp $	*/
+/*	$OpenBSD: doi.h,v 1.4 1999/02/26 03:36:34 niklas Exp $	*/
+/*	$EOM: doi.h,v 1.24 1999/02/25 10:21:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -70,6 +70,7 @@ struct doi {
   struct keystate *(*get_keystate) (struct message *);
   u_int8_t *(*get_spi) (size_t *, u_int8_t, struct message *);
   int (*is_attribute_incompatible) (u_int16_t, u_int8_t *, u_int16_t, void *);
+  void (*proto_init) (struct proto *, char *);
   void (*setup_situation) (u_int8_t *);
   size_t (*situation_size) (void);
   u_int8_t (*spi_size) (u_int8_t);
