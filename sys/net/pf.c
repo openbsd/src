@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.81 2001/06/27 22:41:25 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.82 2001/06/28 10:04:19 hugh Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -580,6 +580,23 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	if (!(flags & FWRITE))
 		return (EACCES);
+
+	if (securelevel > 1)
+		switch (cmd) {
+		case DIOCSTART:
+		case DIOCSTOP:
+		case DIOCBEGINRULES:
+		case DIOCADDRULE:
+		case DIOCCOMMITRULES:
+		case DIOCBEGINNATS:
+		case DIOCADDNAT:
+		case DIOCCOMMITNATS:
+		case DIOCBEGINRDRS:
+		case DIOCADDRDR:
+		case DIOCCOMMITRDRS:
+		case DIOCCLRSTATES:
+			return EPERM;
+		}
 
 	switch (cmd) {
 
