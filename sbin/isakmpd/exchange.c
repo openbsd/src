@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.19 1999/05/01 22:57:14 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.102 1999/05/01 22:35:13 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.20 1999/05/02 19:17:18 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.105 1999/05/02 18:17:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -790,18 +790,22 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
   msg = message_alloc (t, 0, ISAKMP_HDR_SZ);
   msg->exchange = exchange;
 
-  /*
-   * Don't install a transport into this SA as it will be an INADDR_ANY
-   * address in the local end, which is not good at all.  Let the reply
-   * packet install the transport instead.
-   */
-  sa_create (exchange, 0);
-  msg->isakmp_sa = TAILQ_FIRST (&exchange->sa_list);
-  if (!msg->isakmp_sa)
+  /* Do not create SA for an information exchange.  */
+  if (exchange->type != ISAKMP_EXCH_INFO)
     {
-      /* XXX Do something more here?  */
-      exchange_free (exchange);
-      return;
+      /*
+       * Don't install a transport into this SA as it will be an INADDR_ANY
+       * address in the local end, which is not good at all.  Let the reply
+       * packet install the transport instead.
+       */
+      sa_create (exchange, 0);
+      msg->isakmp_sa = TAILQ_FIRST (&exchange->sa_list);
+      if (!msg->isakmp_sa)
+	{
+	  /* XXX Do something more here?  */
+	  exchange_free (exchange);
+	  return;
+	}
     }
 
   msg->extra = args;
@@ -896,19 +900,24 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
   exchange_enter (exchange);
   exchange_dump ("exchange_establish_p2", exchange);
 
-  /* XXX Number of SAs should come from the args structure.  */
-  for (i = 0; i < 1; i++)
-    if (sa_create (exchange, isakmp_sa->transport))
-      {
-	while (TAILQ_FIRST (&exchange->sa_list))
-	  TAILQ_REMOVE (&exchange->sa_list, TAILQ_FIRST (&exchange->sa_list),
-			next);
-	exchange_free (exchange);
-	return;
-      }
+  /* 
+   * Do not create SA's for informational exchanges. 
+   * XXX How to handle new group mode? 
+   */
+  if (exchange->type != ISAKMP_EXCH_INFO)
+    {
+      /* XXX Number of SAs should come from the args structure.  */
+      for (i = 0; i < 1; i++)
+	if (sa_create (exchange, isakmp_sa->transport))
+	  {
+	    exchange_free (exchange);
+	    return;
+	  }
+    }
 
   msg = message_alloc (isakmp_sa->transport, 0, ISAKMP_HDR_SZ);
   msg->isakmp_sa = isakmp_sa;
+  
   msg->extra = args;
 
   /* This needs to be done late or else get_keystate won't work right.  */
@@ -1070,7 +1079,7 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
 {
   char buf[LOG_SIZE];
   /* Don't risk overflowing the final log buffer. */
-  int bufsize_max = LOG_SIZE - strlen(header) - 32; 
+  int bufsize_max = LOG_SIZE - strlen (header) - 32; 
   struct sa *sa;
 
   log_debug (class, level, 
@@ -1090,8 +1099,8 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
     {
       sprintf (buf, "sa_list ");
       for (sa = TAILQ_FIRST (&exchange->sa_list); 
-	   sa && strlen(buf) < bufsize_max; sa = TAILQ_NEXT (sa, next))
-	sprintf (buf + strlen(buf), "%p ", sa);
+	   sa && strlen (buf) < bufsize_max; sa = TAILQ_NEXT (sa, next))
+	sprintf (buf + strlen (buf), "%p ", sa);
       if (sa)
 	strcat (buf, "...");
     }
@@ -1159,18 +1168,15 @@ exchange_free_aux (void *v_exch)
   exchange_free_aca_list (exchange);
   LIST_REMOVE (exchange, link);
 
-  /*
-   * Tell potential finalize routine we never got there.  This also means
-   * any SAs we have need to be torn down as they never got finalized.
-   */
+  /* Tell potential finalize routine we never got there.  */
   if (exchange->finalize)
+    exchange->finalize (exchange, exchange->finalize_arg, 1);
+
+  /* Remove any SAs that has not been dissociated from us.  */
+  for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = next_sa)
     {
-      exchange->finalize (exchange, exchange->finalize_arg, 1);
-      for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = next_sa)
-	{
-	  next_sa = TAILQ_NEXT (sa, next);
-	  sa_free (sa);
-	}
+      next_sa = TAILQ_NEXT (sa, next);
+      sa_free (sa);
     }
 
   free (exchange);
@@ -1283,6 +1289,15 @@ exchange_finalize (struct message *msg)
   if (exchange->finalize)
     exchange->finalize (exchange, exchange->finalize_arg, 0);
   exchange->finalize = 0;
+
+  /*
+   * There is no reason to keep the SAs connected to us anymore, in fact
+   * it can hurt us if we have short lifetimes on the SAs and we try
+   * to call exchange_report, where the SA list will be walked and
+   * references to freed SAs can occur.
+   */
+  while (TAILQ_FIRST (&exchange->sa_list))
+    TAILQ_REMOVE (&exchange->sa_list, TAILQ_FIRST (&exchange->sa_list), next);
 
   /* If we have nothing to retransmit we can safely remove ourselves.  */
   if (!exchange->last_sent)
