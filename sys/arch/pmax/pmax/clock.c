@@ -84,6 +84,11 @@ volatile struct chiptime *Mach_clock_addr;
 #define RATE_1024_HZ	0x6	/* 976.562 us */
 #define RATE_2048_HZ	0x5	/* 488.281 usecs/interrupt */
 
+/* why should this be defined in the config file ? TTTTT */
+#ifndef HZ
+#define HZ 256
+#endif
+
 #undef SELECTED_RATE
 #if (HZ == 64)
 # define SELECTED_RATE RATE_64_HZ	/* 4.4bsd default on pmax */
