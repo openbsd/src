@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.13 2005/02/22 10:41:25 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.14 2005/02/28 17:03:33 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -94,8 +94,12 @@ int		ral_alloc_rx_ring(struct ral_softc *, struct ral_rx_ring *,
 		    int);
 void		ral_reset_rx_ring(struct ral_softc *, struct ral_rx_ring *);
 void		ral_free_rx_ring(struct ral_softc *, struct ral_rx_ring *);
+struct		ieee80211_node *ral_node_alloc(struct ieee80211com *);
+void		ral_node_copy(struct ieee80211com *ic, struct ieee80211_node *,
+		    const struct ieee80211_node *);
 int		ral_media_change(struct ifnet *);
 void		ral_next_scan(void *);
+void		ral_iter_func(void *, struct ieee80211_node *);
 void		ral_rssadapt_updatestats(void *);
 int		ral_newstate(struct ieee80211com *, enum ieee80211_state, int);
 uint16_t	ral_eeprom_read(struct ral_softc *, uint8_t);
@@ -422,6 +426,9 @@ ral_attach(struct ral_softc *sc)
 
 	if_attach(ifp);
 	ieee80211_ifattach(ifp);
+	ic->ic_node_alloc = ral_node_alloc;
+	ic->ic_node_copy = ral_node_copy;
+
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ral_newstate;
@@ -778,6 +785,27 @@ ral_free_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring)
 	}
 }
 
+struct ieee80211_node *
+ral_node_alloc(struct ieee80211com *ic)
+{
+	struct ral_node *rn;
+
+	rn = malloc(sizeof (struct ral_node), M_DEVBUF, M_NOWAIT);
+	if (rn == NULL)
+		return NULL;
+
+	memset(rn, 0, sizeof (struct ral_node));
+
+	return &rn->ni;
+}
+
+void
+ral_node_copy(struct ieee80211com *ic, struct ieee80211_node *dst,
+    const struct ieee80211_node *src)
+{
+	*(struct ral_node *)dst = *(const struct ral_node *)src;
+}
+
 int
 ral_media_change(struct ifnet *ifp)
 {
@@ -809,6 +837,17 @@ ral_next_scan(void *arg)
 }
 
 /*
+ * This function is called for each neighbor node.
+ */
+void
+ral_iter_func(void *arg, struct ieee80211_node *ni)
+{
+	struct ral_node *rn = (struct ral_node *)ni;
+
+	ieee80211_rssadapt_updatestats(&rn->rssadapt);
+}
+
+/*
  * This function is called periodically (every 100ms) in RUN state to update
  * the rate adaptation statistics.
  */
@@ -816,8 +855,9 @@ void
 ral_rssadapt_updatestats(void *arg)
 {
 	struct ral_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
 
-	ieee80211_rssadapt_updatestats(&sc->rssadapt);
+	ieee80211_iterate_nodes(ic, ral_iter_func, arg);
 
 	timeout_add(&sc->rssadapt_ch, hz / 10);
 }
@@ -995,6 +1035,7 @@ ral_tx_intr(struct ral_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
+	struct ral_node *rn;
 
 	for (;;) {
 		desc = &sc->txq.desc[sc->txq.next];
@@ -1009,10 +1050,12 @@ ral_tx_intr(struct ral_softc *sc)
 		    !(letoh32(desc->flags) & RAL_TX_VALID))
 			break;
 
+		rn = (struct ral_node *)data->ni;
+
 		switch (letoh32(desc->flags) & RAL_TX_RESULT_MASK) {
 		case RAL_TX_SUCCESS:
 			DPRINTFN(10, ("data frame sent successfully\n"));
-			ieee80211_rssadapt_raise_rate(ic, &sc->rssadapt,
+			ieee80211_rssadapt_raise_rate(ic, &rn->rssadapt,
 			    &data->id);
 			break;
 
@@ -1020,14 +1063,14 @@ ral_tx_intr(struct ral_softc *sc)
 			DPRINTFN(2, ("data frame sent after %u retries\n",
 			    (letoh32(desc->flags) >> 5) & 0x7));
 			ieee80211_rssadapt_lower_rate(ic, data->ni,
-			    &sc->rssadapt, &data->id);
+			    &rn->rssadapt, &data->id);
 			break;
 
 		case RAL_TX_FAIL_RETRY:
 			DPRINTFN(2, ("sending data frame failed (too much "
 			    "retries)\n"));
 			ieee80211_rssadapt_lower_rate(ic, data->ni,
-			    &sc->rssadapt, &data->id);
+			    &rn->rssadapt, &data->id);
 			break;
 
 		case RAL_TX_FAIL_INVALID:
@@ -1142,6 +1185,7 @@ ral_decryption_intr(struct ral_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ral_rx_desc *desc;
 	struct ral_rx_data *data;
+	struct ral_node *rn;
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m;
@@ -1190,7 +1234,8 @@ ral_decryption_intr(struct ral_softc *sc)
 		ieee80211_input(ifp, m, ni, desc->rssi, 0);
 
 		/* give rssi to the rate adatation algorithm */
-		ieee80211_rssadapt_input(ic, ni, &sc->rssadapt, desc->rssi);
+		rn = (struct ral_node *)ni;
+		ieee80211_rssadapt_input(ic, ni, &rn->rssadapt, desc->rssi);
 
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
@@ -1547,6 +1592,7 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ral_tx_desc *desc;
 	struct ral_tx_data *data;
+	struct ral_node *rn;
 	struct ieee80211_frame *wh;
 	struct ieee80211_frame_rts *rts;
 	struct ieee80211_duration d0, dn;
@@ -1555,7 +1601,8 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
-	ni->ni_txrate = ieee80211_rssadapt_choose(&sc->rssadapt, &ni->ni_rates,
+	rn = (struct ral_node *)ni;
+	ni->ni_txrate = ieee80211_rssadapt_choose(&rn->rssadapt, &ni->ni_rates,
 	    wh, m0->m_pkthdr.len, ic->ic_fixed_rate, NULL, 0);
 	rate = ni->ni_rates.rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL;
 

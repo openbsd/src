@@ -1,4 +1,4 @@
-/*	$OpenBSD: ralvar.h,v 1.2 2005/02/19 09:45:16 damien Exp $  */
+/*	$OpenBSD: ralvar.h,v 1.3 2005/02/28 17:03:33 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -80,6 +80,11 @@ struct ral_rx_ring {
 	int			cur_decrypt;
 };
 
+struct ral_node {
+	struct ieee80211_node		ni;
+	struct ieee80211_rssadapt	rssadapt;
+};
+
 struct ral_softc {
 	struct device			sc_dev;
 
@@ -94,8 +99,6 @@ struct ral_softc {
 	bus_dma_tag_t			sc_dmat;
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
-
-	struct ieee80211_rssadapt	rssadapt;
 
 	struct timeout			scan_ch;
 	struct timeout			rssadapt_ch;
