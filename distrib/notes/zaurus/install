@@ -1,8 +1,29 @@
-dnl	$OpenBSD: install,v 1.1 2005/01/10 03:30:48 drahn Exp $
+dnl	$OpenBSD: install,v 1.2 2005/01/14 02:22:01 deraadt Exp $
 OpenBSDInstallPrelude
 
-MANUALLY
+OpenBSD is installed on the Zaurus by effectively converting
+Linux into a boatloader.  You will need the following files
+from the distribution:
 
+	zbsdmod.o
+	zboot
+	bsd.rd
+
+After starting up some sort of terminal emulator on the Zaurus
+and becoming root, perform the following operation:
+
+	# insmod -f zbsdmod.o
+	# mknod /dev/zboot c 99 0
+	# cp bsd.rd /dev/zboot
+
+A few seconds later, OpenBSD will boot on your Zaurus.
+
+If you already have a bsd.rd or bsd kernel contained in a FFS
+partition on the C3000 hard drive, you can instead use 
+
+	# insmod -f zbsdmod.o
+	# mknod /dev/zboot c 99 0
+	# zboot
 
 OpenBSDInstallPart2
 
@@ -31,12 +52,21 @@ OpenBSDInstallPart4({:- If you have Linux partitions
 	defined on the disk, these will usually show up as partition
 	'h', 'i' and so on.-:})
 
+	One of the three partitions on the Zaurus C3000 hard drive is
+	a 3GB MSDOS filesystem.  It is recommended that you use fdisk
+	to convert this Zaurus partition to an OpenBSD partition by
+	changing the partition ID to 'A5'.
+
 	Note that all OpenBSD partitions in the disk label must have an
 	offset that makes it start within the OpenBSD part of the disk,
 	and a size that keeps it inside of that portion of the disk.  This
 	is within the bounds of the 'c' partition if the disk is not being
 	shared with other operating systems, and within the OpenBSD fdisk
 	partition if the disk is being shared.
+
+	If you have created an 'A5' OpenBSD partition earlier using fdisk,
+	you will be able to use disklabel to cut that partition into at
+	least a root filesystem and swap partition.
 
 OpenBSDInstallPart5(wd0)
 
