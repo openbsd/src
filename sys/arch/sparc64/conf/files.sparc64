@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.43 2003/02/17 01:29:19 henric Exp $
+#	$OpenBSD: files.sparc64,v 1.44 2003/05/06 09:14:39 miod Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -57,6 +57,7 @@ attach creator at upa with creator_upa
 file	arch/sparc64/dev/creator_upa.c		creator_upa
 
 include "dev/pci/files.pci"
+major { wd = 12 }
 
 device psycho: pcibus
 attach psycho at mainbus
