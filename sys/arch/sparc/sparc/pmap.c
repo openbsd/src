@@ -260,7 +260,7 @@ struct mmuhd segm_freelist, segm_lru, segm_locked;
 struct mmuhd region_freelist, region_lru, region_locked;
 
 int	seginval;		/* the invalid segment number */
-#ifdef SUN4
+#ifdef MMU_3L
 int	reginval;		/* the invalid region number */
 #endif
 
@@ -299,7 +299,7 @@ caddr_t	vpage[2];		/* two reserved MD virtual pages */
 caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 caddr_t	vdumppages;		/* 32KB worth of reserved dump pages */
 
-#ifdef SUN4
+#ifdef MMU_3L
 smeg_t		tregion;
 #endif
 struct pmap	kernel_pmap_store;		/* the kernel's pmap */
@@ -655,11 +655,7 @@ setpte4m(va, pte)
 
 /*----------------------------------------------------------------*/
 
-#ifdef SUN4
-extern int mmu_3l;
-#endif
-
-#ifdef SUN4
+#if defined(MMU_3L)
 #define CTX_USABLE(pm,rp)	(CPU_ISSUN4M \
 				    ? ((pm)->pm_ctx != NULL ) \
 				    : ((pm)->pm_ctx != NULL && \
@@ -873,7 +869,7 @@ mmu_reservemon4_4c(nrp, nsp)
 {
 	register u_int va = 0, eva = 0;
 	register int mmuseg, i, nr, ns, vr, lastvr;
-#ifdef SUN4
+#ifdef MMU_3L
 	register int mmureg;
 #endif
 	register struct regmap *rp;
@@ -904,7 +900,7 @@ mmu_reservemon4_4c(nrp, nsp)
 		vr = VA_VREG(va);
 		rp = &pmap_kernel()->pm_regmap[vr];
 
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l && vr != lastvr) {
 			lastvr = vr;
 			mmureg = getregmap(va);
@@ -921,7 +917,7 @@ mmu_reservemon4_4c(nrp, nsp)
 		mmuseg = getsegmap(va);
 		if (mmuseg < ns)
 			ns = mmuseg;
-#ifdef SUN4
+#ifdef MMU_3L
 		if (!mmu_3l)
 #endif
 			for (i = ncontext; --i > 0;)
@@ -1373,7 +1369,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 		va = VSTOVA(me->me_vreg,me->me_vseg);
 	} else {
 		CHANGE_CONTEXTS(ctx, 0);
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l)
 			setregmap(0, tregion);
 #endif
@@ -1466,7 +1462,7 @@ me_free(pm, pmeg)
 #ifdef DEBUG
 if (getcontext() != 0) panic("me_free: ctx != 0");
 #endif
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l)
 			setregmap(0, tregion);
 #endif
@@ -1503,7 +1499,7 @@ if (getcontext() != 0) panic("me_free: ctx != 0");
 	TAILQ_INSERT_TAIL(&segm_freelist, me, me_list);
 }
 
-#ifdef SUN4
+#ifdef MMU_3L
 
 /* XXX - Merge with segm_alloc/segm_free ? */
 
@@ -1673,7 +1669,7 @@ printf("mmu_pagein: kernel wants map at va %x, vr %d, vs %d\n", va, vr, vs);
 	/* return 0 if we have no PMEGs to load */
 	if (rp->rg_segmap == NULL)
 		return (0);
-#ifdef SUN4
+#ifdef MMU_3L
 	if (mmu_3l && rp->rg_smeg == reginval) {
 		smeg_t smeg;
 		unsigned int tva = VA_ROUNDDOWNTOREG(va);
@@ -1865,7 +1861,7 @@ ctx_alloc(pm)
 				/* mustn't re-enter this branch */
 				gap_start = NUREG;
 			}
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l) {
 				setregmap(va, rp++->rg_smeg);
 				va += NBPRG;
@@ -2076,7 +2072,7 @@ if(pm==NULL)panic("pv_changepte 1");
 			} else {
 				/* XXX per-cpu va? */
 				setcontext(0);
-#ifdef SUN4
+#ifdef MMU_3L
 				if (mmu_3l)
 					setregmap(0, tregion);
 #endif
@@ -2146,7 +2142,7 @@ pv_syncflags4_4c(pv0)
 		} else {
 			/* XXX per-cpu va? */
 			setcontext(0);
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l)
 				setregmap(0, tregion);
 #endif
@@ -2637,7 +2633,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 {
 	register union ctxinfo *ci;
 	register struct mmuentry *mmuseg;
-#ifdef SUN4
+#ifdef MMU_3L
 	register struct mmuentry *mmureg;
 #endif
 	struct   regmap *rp;
@@ -2704,7 +2700,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 */
 	seginval = --nsegment;
 
-#ifdef SUN4
+#ifdef MMU_3L
 	if (mmu_3l)
 		reginval = --nregion;
 #endif
@@ -2715,14 +2711,14 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	/* kernel_pmap_store.pm_ctxnum = 0; */
 	simple_lock_init(kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_refcount = 1;
-#ifdef SUN4
+#ifdef MMU_3L
 	TAILQ_INIT(&kernel_pmap_store.pm_reglist);
 #endif
 	TAILQ_INIT(&kernel_pmap_store.pm_seglist);
 
 	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
 	for (i = NKREG; --i >= 0;) {
-#ifdef SUN4
+#ifdef MMU_3L
 		kernel_regmap_store[i].rg_smeg = reginval;
 #endif
 		kernel_regmap_store[i].rg_segmap =
@@ -2740,7 +2736,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 
 	mmu_reservemon4_4c(&nregion, &nsegment);
 
-#ifdef SUN4
+#ifdef MMU_3L
 	/* Reserve one region for temporary mappings */
 	tregion = --nregion;
 #endif
@@ -2753,7 +2749,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	if (esym != 0)
 		theend = p = esym;
 #endif
-#ifdef SUN4
+#ifdef MMU_3L
 	mmuregions = mmureg = (struct mmuentry *)p;
 	p += nregion * sizeof(struct mmuentry);
 #endif
@@ -2768,7 +2764,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #endif
 
 	/* Initialize MMU resource queues */
-#ifdef SUN4
+#ifdef MMU_3L
 	TAILQ_INIT(&region_freelist);
 	TAILQ_INIT(&region_lru);
 	TAILQ_INIT(&region_locked);
@@ -2878,7 +2874,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #endif
 				vr++, rp++;
 			}
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l) {
 				for (i = 1; i < nctx; i++)
 					rom_setmap(i, p, rcookie);
@@ -2897,7 +2893,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 #endif
 		}
 
-#ifdef SUN4
+#ifdef MMU_3L
 		if (!mmu_3l)
 #endif
 			for (i = 1; i < nctx; i++)
@@ -2928,7 +2924,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		for (p += npte << PGSHIFT; npte < NPTESG; npte++, p += NBPG)
 			setpte4(p, 0);
 
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l) {
 			/*
 			 * Unmap the segments, if any, that are not part of
@@ -2941,7 +2937,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		break;
 	}
 
-#ifdef SUN4
+#ifdef MMU_3L
 	if (mmu_3l)
 		for (; rcookie < nregion; rcookie++, mmureg++) {
 			mmureg->me_cookie = rcookie;
@@ -2957,7 +2953,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	/* Erase all spurious user-space segmaps */
 	for (i = 1; i < ncontext; i++) {
 		setcontext(i);
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l)
 			for (p = 0, j = NUREG; --j >= 0; p += NBPRG)
 				setregmap(p, reginval);
@@ -3655,14 +3651,11 @@ pmap_pinit(pm)
 
 	if (CPU_ISSUN4OR4C) {
 		TAILQ_INIT(&pm->pm_seglist);
-#ifdef SUN4
+#ifdef MMU_3L
 		TAILQ_INIT(&pm->pm_reglist);
-		if (mmu_3l) {
-			int i;
-
-			for (i = NUREG; --i >= 0;)
-				pm->pm_regmap[i].rg_smeg = reginval;
-		}
+		if (mmu_3l)
+		    for (i = NUREG; --i >= 0;)
+			pm->pm_regmap[i].rg_smeg = reginval;
 #endif
 	}
 #if defined(SUN4M)
@@ -3740,7 +3733,7 @@ pmap_release(pm)
 #endif
 
 	if (CPU_ISSUN4OR4C) {
-#ifdef SUN4
+#ifdef MMU_3L
 		if (pm->pm_reglist.tqh_first)
 			panic("pmap_release: region list not empty");
 #endif
@@ -3963,7 +3956,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 	 */
 	if ((sp->sg_npte = nleft) == 0) {
 		va = VSTOVA(vr,vs);		/* retract */
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l)
 			setsegmap(va, seginval);
 		else
@@ -3974,7 +3967,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			}
 		me_free(pm, pmeg);
 		if (--rp->rg_nsegmap == 0) {
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l) {
 				for (i = ncontext; --i >= 0;) {
 					setcontext(i);
@@ -4154,7 +4147,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 			if (--rp->rg_nsegmap == 0) {
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
-#ifdef SUN4
+#ifdef MMU_3L
 				if (mmu_3l && rp->rg_smeg != reginval) {
 					if (pm->pm_ctx) {
 						setcontext(pm->pm_ctxnum);
@@ -4187,7 +4180,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	} else {
 		/* no context, use context 0; cache flush unnecessary */
 		setcontext(0);
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l)
 			setregmap(0, tregion);
 #endif
@@ -4232,7 +4225,7 @@ if (pm->pm_ctx == NULL) {
 		va = VSTOVA(vr,vs);		/* retract */
 		if (CTX_USABLE(pm,rp))
 			setsegmap(va, seginval);
-#ifdef SUN4
+#ifdef MMU_3L
 		else if (mmu_3l && rp->rg_smeg != reginval) {
 			/* note: context already set earlier */
 			setregmap(0, rp->rg_smeg);
@@ -4248,7 +4241,7 @@ if (pm->pm_ctx == NULL) {
 			rp->rg_segmap = NULL;
 			GAP_WIDEN(pm,vr);
 
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l && rp->rg_smeg != reginval) {
 				/* note: context already set */
 				if (pm->pm_ctx)
@@ -4445,7 +4438,7 @@ pmap_page_protect4_4c(pa, prot)
 					free(rp->rg_segmap, M_VMPMAP);
 					rp->rg_segmap = NULL;
 					GAP_WIDEN(pm,vr);
-#ifdef SUN4
+#ifdef MMU_3L
 					if (mmu_3l && rp->rg_smeg != reginval) {
 						if (pm->pm_ctx) {
 							setcontext(pm->pm_ctxnum);
@@ -4467,7 +4460,7 @@ pmap_page_protect4_4c(pa, prot)
 		} else {
 			setcontext(0);
 			/* XXX use per-cpu pteva? */
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l)
 				setregmap(0, tregion);
 #endif
@@ -4488,7 +4481,7 @@ pmap_page_protect4_4c(pa, prot)
 #endif
 		} else {
 			if (pm == pmap_kernel()) {
-#ifdef SUN4
+#ifdef MMU_3L
 				if (!mmu_3l)
 #endif
 					for (i = ncontext; --i >= 0;) {
@@ -4497,7 +4490,7 @@ pmap_page_protect4_4c(pa, prot)
 					}
 				me_free(pm, sp->sg_pmeg);
 				if (--rp->rg_nsegmap == 0) {
-#ifdef SUN4
+#ifdef MMU_3L
 					if (mmu_3l) {
 						for (i = ncontext; --i >= 0;) {
 							setcontext(i);
@@ -4511,7 +4504,7 @@ pmap_page_protect4_4c(pa, prot)
 				if (CTX_USABLE(pm,rp))
 					/* `pteva'; we might be using tregion */
 					setsegmap(pteva, seginval);
-#ifdef SUN4
+#ifdef MMU_3L
 				else if (mmu_3l && rp->rg_smeg != reginval) {
 					/* note: context already set earlier */
 					setregmap(0, rp->rg_smeg);
@@ -4523,7 +4516,7 @@ pmap_page_protect4_4c(pa, prot)
 				me_free(pm, sp->sg_pmeg);
 
 				if (--rp->rg_nsegmap == 0) {
-#ifdef SUN4
+#ifdef MMU_3L
 					if (mmu_3l && rp->rg_smeg != reginval) {
 						if (pm->pm_ctx)
 							setregmap(va, reginval);
@@ -4645,7 +4638,7 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 				 */
 				setcontext(0);
 				/* XXX use per-cpu pteva? */
-#ifdef SUN4
+#ifdef MMU_3L
 				if (mmu_3l)
 					setregmap(0, tregion);
 #endif
@@ -4742,7 +4735,7 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 		} else {
 			setcontext(0);
 			/* XXX use per-cpu va? */
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l)
 				setregmap(0, tregion);
 #endif
@@ -5146,7 +5139,7 @@ pmap_enk4_4c(pm, va, prot, wired, pv, pteproto)
 	sp = &rp->rg_segmap[vs];
 	s = splpmap();		/* XXX way too conservative */
 
-#ifdef SUN4
+#ifdef MMU_3L
 	if (mmu_3l && rp->rg_smeg == reginval) {
 		vm_offset_t tva;
 		rp->rg_smeg = region_alloc(&region_locked, pm, vr)->me_cookie;
@@ -5224,7 +5217,7 @@ printf("pmap_enk: changing existing va=>pa entry: va %lx, pteproto %x\n",
 		sp->sg_pmeg = me_alloc(&segm_locked, pm, vr, vs)->me_cookie;
 		rp->rg_nsegmap++;
 
-#ifdef SUN4
+#ifdef MMU_3L
 		if (mmu_3l)
 			setsegmap(va, sp->sg_pmeg);
 		else
@@ -5345,7 +5338,7 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			} else {
 				setcontext(0);
 				/* XXX use per-cpu pteva? */
-#ifdef SUN4
+#ifdef MMU_3L
 				if (mmu_3l)
 					setregmap(0, tregion);
 #endif
@@ -5409,7 +5402,7 @@ curproc->p_comm, curproc->p_pid, va);*/
 		else {
 			setcontext(0);
 			/* XXX use per-cpu pteva? */
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l)
 				setregmap(0, tregion);
 #endif
@@ -5801,7 +5794,7 @@ pmap_extract4_4c(pm, va)
 			tpte = getpte4(va);
 		} else {
 			CHANGE_CONTEXTS(ctx, 0);
-#ifdef SUN4
+#ifdef MMU_3L
 			if (mmu_3l)
 				setregmap(0, tregion);
 #endif
