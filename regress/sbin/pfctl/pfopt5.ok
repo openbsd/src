@@ -1,4 +1,5 @@
 ext_if = "lo0"
+set limit states 100
 set block-policy drop
 set require-order yes
 scrub in all fragment reassemble

@@ -1,4 +1,5 @@
 ext_if = "lo0"
+set limit states 100
 set block-policy drop
 set require-order yes
 rdr on lo0 inet all -> 127.0.0.1
