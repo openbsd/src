@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.27 2003/09/16 20:49:03 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.28 2003/10/03 21:46:24 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -44,6 +44,7 @@
 #include <machine/bugio.h>		/* bug routines		*/
 #include <machine/locore.h>		 
 #include <machine/cpu_number.h>
+#include <machine/m88100.h>
 
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
@@ -85,10 +86,6 @@ int 	db_active = 0;
 int 	db_noisy = 0;
 int	quiet_db_read_bytes = 0;
 
-/************************/
-/* 	DB_REGISTERS ****/
-/************************/
-
 db_regs_t	ddb_regs;
 
 /*
@@ -109,17 +106,8 @@ db_regs_t	ddb_regs;
 
 /* macros for decoding dmt registers */
 
-#define XMEM(x)  ((x) & (1<<12))
-#define XMEM_MODE(x) ((((x)>>2 & 0xf) == 0xf) ? "" : ".bu")
-#define MODE(x) ((x)>>2 & 0xf)
-#define DOUB(x) ((x) & (1<<13))
-#define SIGN(x) ((x) & (1<<6))
-#define DAS(x) (((x) & (1<<14)) ? "" : ".usr")
-#define REG(x) (((x)>>7) & 0x1f)
-#define STORE(x) ((x) & 0x2)
-
 /*
- * return 1 if the printing of the next stage should be surpressed
+ * return 1 if the printing of the next stage should be suppressed
  */
 int
 m88k_dmx_print(t, d, a, no)
@@ -131,55 +119,56 @@ m88k_dmx_print(t, d, a, no)
 	};
 	static char *mode[16]  = {
 		"?", ".b", ".b", ".h", ".b", "?", "?", "?",
-		".b", ".h", "?" , "?" , "?" , "?", "?", ""
+		".b", "?", "?" , "?" , ".h" , "?", "?", ""
 	};
 	static unsigned mask[16] = {
-		0,           0xff,        0xff00,     0xffff,
-		0xff0000,    0,           0,          0,
-		0xff000000U, 0xffff0000U, 0,          0,
-		0,           0,           0,          0xffffffffU
+		0, 0xff, 0xff00, 0xffff,
+		0xff0000, 0, 0, 0,
+		0xff000000, 0, 0, 0,
+		0xffff0000, 0, 0, 0xffffffff
 	};
 	static unsigned shift[16] = {
 		0,  0, 8, 0, 16, 0, 0, 0,
-		24, 16, 0, 0,  0, 0, 0, 0
+		24, 0, 0, 0, 16, 0, 0, 0
 	};
-	int reg = REG(t);
+	int reg = DMT_DREGBITS(t);
 
-	if (XMEM(t)) {
+	if (ISSET(t, DMT_LOCKBAR)) {
 		db_printf("xmem%s%s r%d(0x%x) <-> mem(0x%x),",
-			  XMEM_MODE(t), DAS(t), reg,
+			  DMT_ENBITS(t) == 0x0f ? "" : ".bu", ISSET(t, DMT_DAS) ? "" : ".usr", reg,
 			  (((t)>>2 & 0xf) == 0xf) ? d : (d & 0xff), a);
 		return 1;
 	} else {
-		if (MODE(t) == 0xf) {
+		if (DMT_ENBITS(t) == 0xf) {
 			/* full or double word */
-			if (STORE(t)) {
-				if (DOUB(t) && no == 2)
+			if (ISSET(t, DMT_WRITE)) {
+				if (ISSET(t, DMT_DOUB1) && no == 2)
 					db_printf("st.d%s -> mem(0x%x) (** restart sxip **)",
-						  DAS(t), a);
+						  ISSET(t, DMT_DAS) ? "" : ".usr", a);
 				else
 					db_printf("st%s (0x%x) -> mem(0x%x)",
-						  DAS(t), d, a);
+						  ISSET(t, DMT_DAS) ? "" : ".usr", d, a);
 			} else {
 				/* load */
-				if (DOUB(t) && no == 2)
+				if (ISSET(t, DMT_DOUB1) && no == 2)
 					db_printf("ld.d%s r%d <- mem(0x%x), r%d <- mem(0x%x)",
-						  DAS(t), reg, a, reg+1, a+4);
+						  ISSET(t, DMT_DAS) ? "" : ".usr", reg, a, reg+1, a+4);
 				else
 					db_printf("ld%s r%d <- mem(0x%x)",
-						  DAS(t), reg, a);
+						  ISSET(t, DMT_DAS) ? "" : ".usr", reg, a);
 			}
 		} else {
 			/* fractional word - check if load or store */
-			a += addr_mod[MODE(t)];
-			if (STORE(t))
+			a += addr_mod[DMT_ENBITS(t)];
+			if (ISSET(t, DMT_WRITE))
 				db_printf("st%s%s (0x%x) -> mem(0x%x)",
-					  mode[MODE(t)], DAS(t),
-					  (d & mask[MODE(t)]) >> shift[MODE(t)], a);
+					  mode[DMT_ENBITS(t)], ISSET(t, DMT_DAS) ? "" : ".usr",
+					  (d & mask[DMT_ENBITS(t)]) >> shift[DMT_ENBITS(t)], a);
 			else
 				db_printf("ld%s%s%s r%d <- mem(0x%x)",
-					  mode[MODE(t)], SIGN(t) ? "" : "u",
-					  DAS(t), reg, a);
+				    mode[DMT_ENBITS(t)],
+				    ISSET(t, DMT_SIGNED) ? "" : "u",
+				    ISSET(t, DMT_DAS) ? "" : ".usr", reg, a);
 		}
 	}
 	return 0;
@@ -195,7 +184,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	struct m88100_saved_state *s = (struct m88100_saved_state *)addr;
 	char *name;
 	db_expr_t offset;
-	int surpress1 = 0, surpress2 = 0;
+	int suppress1 = 0, suppress2 = 0;
 	int c, force = 0, help = 0;
 
 	if (!have_addr) {
@@ -255,18 +244,20 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		  R(24), R(25), R(26), R(27), R(28), R(29));
 	db_printf("R30-31: 0x%08x  0x%08x\n", R(30), R(31));
 
-	db_printf("%sxip: 0x%08x ", cputyp == CPU_88110 ? "e" : "s", s->sxip & ~3);
+	db_printf("%cxip: 0x%08x ",
+	    cputyp == CPU_88110 ? 'e' : 's', s->sxip & ~3);
 	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->sxip),
-				    &name, &offset);
-	if (name != 0 && (unsigned)offset <= db_maxoff)
+	    &name, &offset);
+	if (name != NULL && (unsigned)offset <= db_maxoff)
 		db_printf("%s+0x%08x", name, (unsigned)offset);
 	db_printf("\n");
 
 	if (s->snip != s->sxip + 4) {
-		db_printf("%snip: 0x%08x ", cputyp == CPU_88110 ? "e" : "s", s->snip);
+		db_printf("%cnip: 0x%08x ",
+		    cputyp == CPU_88110 ? 'e' : 's', s->snip);
 		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->snip),
-					    &name, &offset);
-		if (name != 0 && (unsigned)offset <= db_maxoff)
+		    &name, &offset);
+		if (name != NULL && (unsigned)offset <= db_maxoff)
 			db_printf("%s+0x%08x", name, (unsigned)offset);
 		db_printf("\n");
 	}
@@ -275,8 +266,8 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		if (s->sfip != s->snip + 4) {
 			db_printf("sfip: 0x%08x ", s->sfip);
 			db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->sfip),
-						    &name, &offset);
-			if (name != 0 && (unsigned)offset <= db_maxoff)
+			    &name, &offset);
+			if (name != NULL && (unsigned)offset <= db_maxoff)
 				db_printf("%s+0x%08x", name, (unsigned)offset);
 			db_printf("\n");
 		}
@@ -307,28 +298,30 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	}
 
 	if (cputyp != CPU_88110) {
-		if (s->vector == /*data*/3 || s->dmt0 & 1) {
+		if (s->vector == /*data*/3 || s->dmt0 & DMT_VALID) {
 			db_printf("dmt,d,a0: 0x%08x  0x%08x  0x%08x ",
-				  s->dmt0, s->dmd0, s->dma0);
+			    s->dmt0, s->dmd0, s->dma0);
 			db_find_xtrn_sym_and_offset((db_addr_t)s->dma0, &name, &offset);
-			if (name != 0 && (unsigned)offset <= db_maxoff)
+			if (name != NULL && (unsigned)offset <= db_maxoff)
 				db_printf("%s+0x%08x", name, (unsigned)offset);
 			db_printf("\n          ");
-			surpress1 = m88k_dmx_print(s->dmt0|0x01, s->dmd0, s->dma0, 0);
+
+			suppress1 = m88k_dmx_print(s->dmt0, s->dmd0, s->dma0, 0);
 			db_printf("\n");
 
-			if ((s->dmt1 & 1) && (!surpress1)) {
+			if ((s->dmt1 & DMT_VALID) && (!suppress1)) {
 				db_printf("dmt,d,a1: 0x%08x  0x%08x  0x%08x ",
-					  s->dmt1, s->dmd1, s->dma1);
+				    s->dmt1, s->dmd1, s->dma1);
 				db_find_xtrn_sym_and_offset((db_addr_t)s->dma1,
-							    &name, &offset);
-				if (name != 0 && (unsigned)offset <= db_maxoff)
+				    &name, &offset);
+				if (name != NULL &&
+				    (unsigned)offset <= db_maxoff)
 					db_printf("%s+0x%08x", name, (unsigned)offset);
 				db_printf("\n          ");
-				surpress2 = m88k_dmx_print(s->dmt1, s->dmd1, s->dma1, 1);
+				suppress2 = m88k_dmx_print(s->dmt1, s->dmd1, s->dma1, 1);
 				db_printf("\n");
 
-				if ((s->dmt2 & 1) && (!surpress2)) {
+				if ((s->dmt2 & DMT_VALID) && (!suppress2)) {
 					db_printf("dmt,d,a2: 0x%08x  0x%08x  0x%08x ",
 						  s->dmt2, s->dmd2, s->dma2);
 					db_find_xtrn_sym_and_offset((db_addr_t)s->dma2,
@@ -340,6 +333,9 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 					db_printf("\n");
 				}
 			}
+
+			db_printf("fault code %d dpfsr %x\n",
+			    (s->dpfsr >> 16) & 0x07, s->dpfsr);
 		}
 	}
 
@@ -365,10 +361,6 @@ m88k_db_registers(addr, have_addr, count, modif)
 {
 	m88k_db_print_frame((db_expr_t)DDB_REGS, TRUE, 0, modif);
 }
-
-/************************/
-/* PAUSE ****************/
-/************************/
 
 /*
  * pause for 2*ticks many cycles
