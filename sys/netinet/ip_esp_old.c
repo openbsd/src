@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.6 1997/09/28 22:57:49 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.7 1997/09/30 03:29:50 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -211,8 +211,8 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 
 	case ALG_ENC_3DES:
 	    des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
-	    des_set_key((caddr_t) rk + 2, (caddr_t) (xd->edx_eks[1]));
-	    des_set_key((caddr_t) rk + 4, (caddr_t) (xd->edx_eks[2]));
+	    des_set_key((caddr_t) (rk + 2), (caddr_t) (xd->edx_eks[1]));
+	    des_set_key((caddr_t) (rk + 4), (caddr_t) (xd->edx_eks[2]));
 	    break;
     }
 
