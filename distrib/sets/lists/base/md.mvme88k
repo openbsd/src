@@ -885,6 +885,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/qsphyreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/rgephyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/sqphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/tlphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/tlphyvar.ph
@@ -1953,6 +1954,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/mtio.ph
@@ -2125,4 +2127,3 @@
 ./usr/mdec/netboot
 ./usr/mdec/stboot
 ./usr/mdec/tftpboot
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/rgephyreg.ph

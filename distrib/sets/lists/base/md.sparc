@@ -450,6 +450,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/qsphyreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/rgephyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/sqphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/tlphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/tlphyvar.ph
@@ -1479,6 +1480,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/mtio.ph
@@ -2159,4 +2161,3 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/mii/rgephyreg.ph

@@ -1993,6 +1993,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/mtio.ph

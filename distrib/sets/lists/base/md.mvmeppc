@@ -961,6 +961,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/qsphyreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/rgephyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/sqphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/tlphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/tlphyvar.ph
@@ -1978,6 +1979,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/mtio.ph
@@ -2149,4 +2151,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/rgephyreg.ph

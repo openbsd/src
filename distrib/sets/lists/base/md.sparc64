@@ -446,6 +446,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/qsphyreg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/rgephyreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/sqphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/tlphyreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/tlphyvar.ph
@@ -1491,6 +1492,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/mtio.ph
@@ -2172,4 +2174,3 @@
 ./usr/sbin/eeprom
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/mii/rgephyreg.ph

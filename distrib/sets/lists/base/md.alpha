@@ -1017,6 +1017,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/qsphyreg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/rgephyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/sqphyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/tlphyreg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/tlphyvar.ph
@@ -1991,6 +1992,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/sys/mtio.ph
@@ -2166,4 +2168,3 @@
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
-./usr/libdata/perl5/site_perl/alpha-openbsd/dev/mii/rgephyreg.ph

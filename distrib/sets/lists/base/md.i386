@@ -962,6 +962,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/qsphyreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/rgephyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/sqphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/tlphyreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/tlphyvar.ph
@@ -1994,6 +1995,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/mtio.ph
@@ -2198,4 +2200,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/i386-openbsd/dev/mii/rgephyreg.ph

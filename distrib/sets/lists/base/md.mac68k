@@ -955,6 +955,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/nsphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/nsphyterreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/qsphyreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/rgephyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/sqphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/tlphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/tlphyvar.ph
@@ -2013,6 +2014,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/mman.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/mount.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/mplock.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/msg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/msgbuf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/mtio.ph
@@ -2179,4 +2181,3 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/zlib.ph
 ./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/rgephyreg.ph

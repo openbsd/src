@@ -1340,6 +1340,7 @@
 ./usr/include/sys/midiio.h
 ./usr/include/sys/mman.h
 ./usr/include/sys/mount.h
+./usr/include/sys/mplock.h
 ./usr/include/sys/msg.h
 ./usr/include/sys/msgbuf.h
 ./usr/include/sys/mtio.h
