@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.17 2000/07/10 17:40:01 mickey Exp $
+$OpenBSD: cpudevs,v 1.18 2001/03/20 08:15:22 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -209,13 +209,13 @@ board	HP782		0x5b5	782/J2240 (SummitHawk U+)
 board	HP800K		0x5b6	800/K380 (DragonHawk U+ 240 DC3)
 #board	HP		0x5b7	(DragonHawk U+ 240 DC3-)
 #board			0x5b8	SPP2250 240MHz processor
-board	HP821		0x5b9	821/D350/R350 (UltraLight 1-way U+/240)
-board	HP800D		0x5ba	800/D390/R390 (UltraLight 2-way U+/240)
+board	HP821		0x5b9	821/D350/R350 (UltraLight 1w U+/240)
+board	HP800D		0x5ba	800/D390/R390 (UltraLight 2w U+/240)
 board	HP785C		0x5bb	785/C3000 (AllegroHigh W)
 board	HP785B		0x5bc	785/B1000 (AllegroLow W)
-board	HP785J		0x5bd	785/J5000 (Forte W 2-way)
+board	HP785J		0x5bd	785/J5000 (Forte W 2w)
 board	HP800N		0x5be	800/N4000-36 (Prelude W)
-#board			0x5bf	(Forte W 4-way)
+#board			0x5bf	(Forte W 4w)
 #board			0x5c0	(M2250)
 #board			0x5c1	(M2500)
 #board			0x5c2	(Sonata 440)
@@ -228,6 +228,23 @@ board	HP785C_1	0x5c6	780/C360 (Raven W 360)
 board	HP800L		0x5c9	800/L1000-44 (Rhapsody DC-440)
 #board			0x5ca	(Rhapsody DC- 360)
 #board			0x5cb	(Crescendo 440)
+#board			0x5cc	(Prelude W 440)
+#board			0x5cd	SPP2600
+#board			0x5ce	M2600
+#board			0x5cf	785 (Allegro)
+#board			0x5d0	(Kazoo W+)
+#board			0x5d1	(Forte W+ 2w)
+#board			0x5d2	(Forte W+ 4w)
+#board			0x5d3	(Prelude W+ 550)
+#board			0x5d4	(Duet W+)
+#board			0x5d5	(Crescendo 550)
+#board			0x5d6	(Crescendo DC-440)
+#board			0x5d7	(Keystone W+)
+#board			0x5d8	(Rhapsody wave 2 W+ DC-)
+#board			0x5d9	(Rhapsody wave 2 W+)
+#board			0x5da	(Marcato W+ DC-)
+#board			0x5db	(Marcato W+)
+#board			0x5de	(Piccolo W+)
 
 board	HITACHIW	0x5ff	(Hitachi W)
 
