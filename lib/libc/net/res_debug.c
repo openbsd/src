@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.13 2002/06/27 10:14:02 itojun Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.14 2002/07/25 21:55:30 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.13 2002/06/27 10:14:02 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.14 2002/07/25 21:55:30 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,6 +104,8 @@ static char rcsid[] = "$OpenBSD: res_debug.c,v 1.13 2002/06/27 10:14:02 itojun E
 
 extern const char *_res_opcodes[];
 extern const char *_res_resultcodes[];
+
+static const char *loc_ntoal(const u_char *binary, char *ascii, int ascii_len);
 
 /* XXX: we should use getservbyport() instead. */
 static const char *
@@ -666,7 +668,7 @@ __p_rr(cp, msg, file)
 	case T_LOC: {
 		char t[255];
 
-		fprintf(file, "\t%s", loc_ntoa(cp, t));
+		fprintf(file, "\t%s", loc_ntoal(cp, t, sizeof t));
 		cp += dlen;
 		break;
 	    }
@@ -1048,8 +1050,10 @@ p_time(value)
 	u_int32_t value;
 {
 	static char nbuf[40];
+	char *ebuf;
 	int secs, mins, hours, days;
 	register char *p;
+	int tmp;
 
 	if (value == 0) {
 		strlcpy(nbuf, "0 secs", sizeof nbuf);
@@ -1067,27 +1071,49 @@ p_time(value)
 
 #define	PLURALIZE(x)	x, (x == 1) ? "" : "s"
 	p = nbuf;
+	ebuf = nbuf + sizeof(nbuf);
 	if (days) {
-		(void)sprintf(p, "%d day%s", PLURALIZE(days));
-		while (*++p);
+		if ((tmp = snprintf(p, ebuf - p, "%d day%s",
+		    PLURALIZE(days))) >= ebuf - nbuf || tmp < 0)
+			goto full;
+		p += tmp;
 	}
 	if (hours) {
 		if (days)
 			*p++ = ' ';
-		(void)sprintf(p, "%d hour%s", PLURALIZE(hours));
-		while (*++p);
+		if (p >= ebuf)
+			goto full;
+		if ((tmp = snprintf(p, ebuf - p, "%d hour%s",
+		    PLURALIZE(hours))) >= ebuf - nbuf || tmp < 0)
+			goto full;
+		p += tmp;
 	}
 	if (mins) {
 		if (days || hours)
 			*p++ = ' ';
-		(void)sprintf(p, "%d min%s", PLURALIZE(mins));
-		while (*++p);
+		if (p >= ebuf)
+			goto full;
+		if ((tmp = snprintf(p, ebuf - p, "%d min%s",
+		    PLURALIZE(mins))) >= ebuf - nbuf || tmp < 0)
+			goto full;
+		p += tmp;
 	}
 	if (secs || ! (days || hours || mins)) {
 		if (days || hours || mins)
 			*p++ = ' ';
-		(void)sprintf(p, "%d sec%s", PLURALIZE(secs));
+		if (p >= ebuf)
+			goto full;
+		if ((tmp = snprintf(p, ebuf - p, "%d sec%s",
+		    PLURALIZE(secs))) >= ebuf - nbuf || tmp < 0)
+			goto full;
 	}
+	return (nbuf);
+full:
+	p = nbuf + sizeof(nbuf) - 4;
+	*p++ = '.';
+	*p++ = '.';
+	*p++ = '.';
+	*p++ = '\0';
 	return (nbuf);
 }
 
@@ -1371,11 +1397,20 @@ loc_aton(ascii, binary)
 	return (16);		/* size of RR in octets */
 }
 
-/* takes an on-the-wire LOC RR and formats it in a human readable format. */
 const char *
 loc_ntoa(binary, ascii)
 	const u_char *binary;
 	char *ascii;
+{
+	return loc_ntoal(binary, ascii, 255);
+}
+
+/* takes an on-the-wire LOC RR and formats it in a human readable format. */
+static const char *
+loc_ntoal(binary, ascii, ascii_len)
+	const u_char *binary;
+	char *ascii;
+	int ascii_len;
 {
 	static char *error = "?";
 	register const u_char *cp = binary;
@@ -1396,7 +1431,7 @@ loc_ntoa(binary, ascii)
 	versionval = *cp++;
 
 	if (versionval) {
-		sprintf(ascii, "; error: unknown LOC RR version");
+		snprintf(ascii, ascii_len, "; error: unknown LOC RR version");
 		return (ascii);
 	}
 
@@ -1458,7 +1493,7 @@ loc_ntoa(binary, ascii)
 	if ((vpstr = strdup(precsize_ntoa(vpval))) == NULL)
 		vpstr = error;
 
-	sprintf(ascii,
+	snprintf(ascii, ascii_len,
 	      "%d %.2d %.2d.%.3d %c %d %.2d %.2d.%.3d %c %d.%.2dm %sm %sm %sm",
 		latdeg, latmin, latsec, latsecfrac, northsouth,
 		longdeg, longmin, longsec, longsecfrac, eastwest,
