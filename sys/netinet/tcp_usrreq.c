@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.42 2000/06/18 04:42:43 beck Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.43 2000/06/18 15:13:33 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/ucred.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -84,10 +85,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef IPSEC
 extern int	check_ipsec_policy __P((struct inpcb *, u_int32_t));
 #endif
-
-#ifdef INET6
-#include <sys/domain.h>
-#endif /* INET6 */
 
 /*
  * TCP protocol interface to socket abstraction.
