@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.1 2000/09/25 05:44:13 d Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.2 2002/06/06 15:43:04 art Exp $	*/
 /* David Leonard, <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -8,11 +8,12 @@
 #define ALIGN(x)	(((x)+15)&~15)
 #define FRAMESIZE	ALIGN(FPOFF(8))
 
+	.set	noreorder
 	.globl	_thread_machdep_switch
 	.ent	_thread_machdep_switch, 2
 _thread_machdep_switch:
 	.frame	sp, FRAMESIZE, ra
-
+	ldgp	gp, 0(pv)
 	lda	sp, -FRAMESIZE(sp)
 
 	stq	ra, INTOFF(0)(sp)
@@ -35,6 +36,7 @@ _thread_machdep_switch:
 	stt	fs7, FPOFF(7)(sp)
 
 	stq	sp, 0(a1)
+	or	a0, zero, pv
 	ldq	sp, 0(a0)
 
 	ldt	fs7, FPOFF(7)(sp)
@@ -57,7 +59,18 @@ _thread_machdep_switch:
 	ldq	ra, INTOFF(0)(sp)
 
 	lda	sp,FRAMESIZE(sp)
-
 	RET
 
 	.end	_thread_machdep_switch
+
+LEAF(_atomic_lock,1)
+        LDGP(pv)
+
+0:      ldq_l   v0, 0(a0)       /* read existing lock value */
+        mov     1, t0           /* locked value to store */
+        stq_c   t0, 0(a0)       /* attempt to store, status in t0 */
+        beq     t0, 1f          /* branch foward to optimise prediction */
+        mb                      /* sync with other processors */
+        RET                     /* return with v0==0 if lock obtained */
+1:      br      0b              /* loop to try again */
+END(_atomic_lock)
