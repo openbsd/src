@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.35 1999/01/11 04:28:24 jason Exp $
+#	$OpenBSD: files.pci,v 1.36 1999/02/19 02:52:25 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -146,3 +146,9 @@ file	dev/pci/if_tx.c			tx
 # NE2000-compatible PCI Ethernet cards
 attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci
+
+# Invertix AEON
+device	aeon: crypto
+attach	aeon at pci
+file	dev/pci/aeon.c			aeon
+
