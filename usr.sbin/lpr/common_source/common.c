@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.28 2004/09/28 20:26:27 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.29 2004/11/17 02:31:30 itojun Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.28 2004/09/28 20:26:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.29 2004/11/17 02:31:30 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -335,11 +335,7 @@ checkremote(void)
 	static char errbuf[128];
 	int error;
 	struct ifaddrs *ifap, *ifa;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 #ifdef __KAME__
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in6 *sin6p;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ncpaddr.c,v 1.6 2002/06/15 08:02:01 brian Exp $
+ * $OpenBSD: ncpaddr.c,v 1.7 2004/11/17 02:31:30 itojun Exp $
  */
 
 #include <sys/types.h>
@@ -380,7 +380,7 @@ ncpaddr_ntowa(const struct ncpaddr *addr)
     sin6.sin6_addr = addr->ncpaddr_ip6addr;
     adjust_linklocal(&sin6);
     if (getnameinfo((struct sockaddr *)&sin6, sizeof sin6, res, sizeof(res),
-                    NULL, 0, NI_WITHSCOPEID | NI_NUMERICHOST) != 0)
+                    NULL, 0, NI_NUMERICHOST) != 0)
       break;
 
     return res;
