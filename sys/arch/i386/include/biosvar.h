@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.30 1999/08/25 00:54:18 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.31 1999/10/26 18:16:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -190,8 +190,10 @@ void bioscninit __P((struct consdev *));
 void bioscnputc __P((dev_t, int));
 int bioscngetc __P((dev_t));
 void bioscnpollc __P((dev_t, int));
+void bios_getopt __P((void));
 
-extern	u_int bootapiver;
+extern u_int bootapiver;
+extern bios_memmap_t *bios_memmap;
 
 #endif /* _KERNEL */
 #endif /* _LOCORE */
