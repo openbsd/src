@@ -393,12 +393,12 @@ main(argc, argv)
 		for (i = 0; i < nfunix; i++) {
 			if (funix[i] != -1 && FD_ISSET(funix[i], &readfds)) {
 				len = sizeof(fromunix);
-				i = recvfrom(funix[i], line, MAXLINE, 0,
+				len = recvfrom(funix[i], line, MAXLINE, 0,
 				    (struct sockaddr *)&fromunix, &len);
-				if (i > 0) {
-					line[i] = '\0';
+				if (len > 0) {
+					line[len] = '\0';
 					printline(LocalHostName, line);
-				} else if (i < 0 && errno != EINTR)
+				} else if (len < 0 && errno != EINTR)
 					logerror("recvfrom unix");
 			}
 		}
