@@ -294,7 +294,7 @@ read_piece(char *input_file)
 	    char *s;
 	    int fd = -1;
 
-	    if (sscanf(line, "CTM_MAIL BEGIN %s %d %d %c",
+	    if (sscanf(line, "CTM_MAIL BEGIN %30s %d %d %c",
 		    delta, &pce, &npieces, junk) != 3)
 		continue;
 
