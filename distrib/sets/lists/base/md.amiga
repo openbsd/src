@@ -3,6 +3,10 @@
 ./sbin/ldconfig
 ./usr/bin/ldd
 ./usr/include/m68k
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.1
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.1/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.16.0
 ./usr/lib/libcurses.so.3.1

@@ -1,5 +1,6 @@
 ./sbin/bim
 ./usr/bin/ldd
+./usr/include/ns32k
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.16.0
 ./usr/lib/libcurses.so.3.1

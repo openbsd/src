@@ -7,6 +7,10 @@
 ./usr/bin/ldd
 ./usr/bin/pctr
 ./usr/include/i386
+./usr/lib/gcc-lib/i386-unknown-openbsd2.1
+./usr/lib/gcc-lib/i386-unknown-openbsd2.1/2.7.2.1
+./usr/lib/gcc-lib/i386-unknown-openbsd2.1/2.7.2.1/include
+./usr/lib/gcc-lib/i386-unknown-openbsd2.1/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.16.1
 ./usr/lib/libcurses.so.3.1
