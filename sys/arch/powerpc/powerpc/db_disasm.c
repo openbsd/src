@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 1998/09/09 04:37:08 rahnds Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -212,7 +212,7 @@ const struct opcode opcodes_1f[] = {
 	{ "cmpl",	0xfc0007fe, 0x7c000040, Op_crfD | Op_L | Op_A | Op_B },
 	{ "subf",	0xfc0007fe, 0x7c000050, Op_D | Op_A | Op_B | Op_OE | Op_Rc },
 	{ "ldux",	0xfc0007fe, 0x7c00006a, Op_D | Op_A | Op_B },
-	{ "dbcst",	0xfc0007fe, 0x7c00006c, Op_A | Op_B },
+	{ "dcbst",	0xfc0007fe, 0x7c00006c, Op_A | Op_B },
 	{ "lwzux",	0xfc0007fe, 0x7c00006e, Op_D | Op_A | Op_B },
 	{ "cntlzd",	0xfc0007fe, 0x7c000074, Op_S | Op_A | Op_Rc },
 	{ "andc",	0xfc0007fe, 0x7c000078, Op_S | Op_A | Op_B | Op_Rc },
