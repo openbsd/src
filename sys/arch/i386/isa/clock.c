@@ -311,8 +311,7 @@ cpu_initclocks()
 	 * XXX If you're doing strange things with multiple clocks, you might
 	 * want to keep track of clock handlers.
 	 */
-	(void)isa_intr_establish(0, ISA_IST_PULSE, ISA_IPL_CLOCK,
-	    clockintr, 0);
+	(void)isa_intr_establish(0, IST_PULSE, IPL_CLOCK, clockintr, 0);
 }
 
 void

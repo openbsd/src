@@ -305,8 +305,8 @@ fdcattach(parent, self, aux)
 	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
 #endif
-	fdc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    fdcintr, fdc);
+	fdc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, fdcintr,
+	    fdc);
 
 	/*
 	 * The NVRAM info only tells us about the first two disks on the

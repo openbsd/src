@@ -44,14 +44,11 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/icu.h>
 
@@ -242,6 +239,8 @@ fakeintr(arg)
 	return 0;
 }
 
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+
 /*
  * Set up an interrupt handler to start being called.
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
@@ -249,12 +248,11 @@ fakeintr(arg)
 void *
 isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	int irq;
-	isa_intrtype type;
-	isa_intrlevel level;
+	int type;
+	int level;
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
-	int mask;
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
 	extern int cold;
@@ -264,20 +262,16 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	if (ih == NULL)
 		panic("isa_intr_establish: can't malloc handler info");
 
-	mask = 1 << irq;
-
-	if (irq < 0 || irq > ICU_LEN || type == ISA_IST_NONE)
+	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
-	if (fastvec & mask)
-		panic("intr_establish: irq is already fast vector");
 
 	switch (intrtype[irq]) {
-	case ISA_IST_EDGE:
-	case ISA_IST_LEVEL:
+	case IST_EDGE:
+	case IST_LEVEL:
 		if (type == intrtype[irq])
 			break;
-	case ISA_IST_PULSE:
-		if (type != ISA_IST_NONE)
+	case IST_PULSE:
+		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
 			    isa_intr_typename(intrtype[irq]),
 			    isa_intr_typename(type));
@@ -297,30 +291,7 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	 * this with interrupts enabled and don't want the real routine called
 	 * until masking is set up.
 	 */
-	switch (level) {
-	case ISA_IPL_NONE:
-		fakehand.ih_level = IPL_NONE;
-		break;
-
-	case ISA_IPL_BIO:
-		fakehand.ih_level = IPL_BIO;
-		break;
-
-	case ISA_IPL_NET:
-		fakehand.ih_level = IPL_NET;
-		break;
-
-	case ISA_IPL_TTY:
-		fakehand.ih_level = IPL_TTY;
-		break;
-
-	case ISA_IPL_CLOCK:
-		fakehand.ih_level = IPL_CLOCK;
-		break;
-
-	default:
-		panic("isa_intr_establish: bad interrupt level %d", level);
-	}
+	fakehand.ih_level = level;
 	*p = &fakehand;
 
 	intr_calculatemasks();
@@ -332,7 +303,7 @@ isa_intr_establish(irq, type, level, ih_fun, ih_arg)
 	ih->ih_arg = ih_arg;
 	ih->ih_count = 0;
 	ih->ih_next = NULL;
-	ih->ih_level = fakehand.ih_level;
+	ih->ih_level = level;
 	ih->ih_irq = irq;
 	*p = ih;
 
@@ -347,16 +318,11 @@ isa_intr_disestablish(arg)
 	void *arg;
 {
 	struct intrhand *ih = arg;
-	int irq, mask;
+	int irq = ih->ih_irq;
 	struct intrhand **p, *q;
 
-	irq = ih->ih_irq;
-	mask = 1 << irq;
-
-	if (irq < 0 || irq > ICU_LEN)
+	if (!LEGAL_IRQ(irq))
 		panic("intr_disestablish: bogus irq");
-	if (fastvec & mask)
-		fastvec &= ~mask;
 
 	/*
 	 * Remove the handler from the chain.
@@ -373,7 +339,7 @@ isa_intr_disestablish(arg)
 	intr_calculatemasks();
 
 	if (intrhand[irq] == NULL)
-		intrtype[irq] = ISA_IST_NONE;
+		intrtype[irq] = IST_NONE;
 }
 
 /*

@@ -335,8 +335,8 @@ pcattach(struct isa_device *dev)
 #if PCVT_NETBSD > 9
 
 #if PCVT_NETBSD > 101
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_TTY,
-				       pcintr, (void *)0);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
+	    (void *)0);
 #else /* PCVT_NETBSD > 100 */
 	vthand.ih_fun = pcrint;
 	vthand.ih_arg = 0;

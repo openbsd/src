@@ -109,8 +109,8 @@ mmsattach(parent, self, aux)
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_PULSE, ISA_IPL_TTY,
-	    mmsintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_PULSE, IPL_TTY, mmsintr,
+	    sc);
 }
 
 int
