@@ -32,12 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: exit.c,v 1.3 1998/11/20 11:18:50 d Exp $";
+static char *rcsid = "$OpenBSD: exit.c,v 1.4 2000/01/06 08:45:50 d Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
 #include <unistd.h>
 #include "atexit.h"
+#include "thread_private.h"
 
 void (*__cleanup)();
 
