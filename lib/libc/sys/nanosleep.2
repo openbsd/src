@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.1 1997/04/20 20:56:20 tholo Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.2 1999/03/04 13:35:28 aaron Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -39,11 +39,17 @@
 .Os 
 .Sh NAME
 .Nm nanosleep
+.Nd high resolution sleep
 .Sh SYNOPSIS
 .Fd #include <time.h>
 .Ft int
 .Fn nanosleep "const struct timespec *rqtp" "struct timespec *rmtp"
-.\" .Sh DESCRIPTION
+.Sh DESCRIPTION
+.Fn nanosleep
+suspends execution of the calling process for the time specified. An unmasked
+signal will cause it to terminate the sleep early, regardless of the
+.Dv SA_RESTART
+value on the interrupting signal.
 .Sh RETURN VALUE
 If the 
 .Fn nanosleep
