@@ -1,3 +1,4 @@
+.\"	$OpenBSD: mlockall.2,v 1.2 2001/03/11 05:23:18 aaron Exp $
 .\"	$NetBSD: mlockall.2,v 1.6 2000/06/26 17:00:02 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,8 +43,6 @@
 .Nm mlockall ,
 .Nm munlockall
 .Nd lock (unlock) the address space of a process
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/mman.h>
@@ -65,17 +64,17 @@ The following flags affect the behavior of
 Lock all pages currently mapped into the process's address space.
 .It Dv MCL_FUTURE
 Lock all pages mapped into the process's address space in the future,
-at the time the mapping is established.  Note that this may cause
-future mappings to fail if those mappings cause resource limits to
-be exceeded.
+at the time the mapping is established.
+Note that this may cause future mappings to fail if those mappings
+cause resource limits to be exceeded.
 .El
-.Pp 
+.Pp
 Since physical memory is a potentially scarce resource, processes are
 limited in how much they can lock down.
 A single process can lock the minimum of a system-wide
 .Dq wired pages
 limit and the per-process
-.Li RLIMIT_MEMLOCK 
+.Dv RLIMIT_MEMLOCK
 resource limit.
 .Pp
 The
@@ -99,7 +98,7 @@ will fail if:
 .It Bq Er EINVAL
 The
 .Ar flags
-argument is zero, or includes unimplemented flags.
+argument is zero or includes unimplemented flags.
 .It Bq Er ENOMEM
 Locking the indicated range would exceed either the system or per-process
 limit for locked memory.
@@ -107,7 +106,7 @@ limit for locked memory.
 Some or all of the memory mapped into the process's address space
 could not be locked when the call was made.
 .It Bq Er EPERM
-The calling process does not have the appropriate privilege to perform
+The calling process does not have the appropriate privileges to perform
 the requested operation.
 .El
 .Sh SEE ALSO
@@ -135,5 +134,5 @@ The per-process resource limit is a limit on the amount of virtual
 memory locked, while the system-wide limit is for the number of locked
 physical pages.
 Hence a process with two distinct locked mappings of the same physical page
-counts as 2 pages against the per-process limit and as only a single page
+counts as 2 pages against the per-process limit and only as a single page
 in the system limit.
