@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons_emul.c,v 1.5 1997/04/08 23:30:26 michaels Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.6 1997/07/10 23:12:19 kstailey Exp $	*/
 /*	$NetBSD: wscons_emul.c,v 1.7 1996/11/19 05:23:13 cgd Exp $	*/
 
 /*
@@ -345,6 +345,26 @@ wscons_emul_docontrol(we, c)
 			    we->ac_crow, we->ac_ccol + copy_ncols,
 			    we->ac_ncol - (we->ac_ccol + copy_ncols));
 			break;
+		}
+		break;
+	case '@':		/* Insert Char */
+		{
+			int copy_src, copy_dst, copy_ncols;
+
+			n = we->ac_args[0] ? we->ac_args[0] : 1;
+			n = min(n, we->ac_ncol - we->ac_ccol);
+
+			copy_src = we->ac_ccol;
+			copy_dst = we->ac_ccol + n;
+			copy_ncols = we->ac_ncol - copy_src - 1;
+			if (copy_ncols > 0)
+				(*we->ac_ef->wef_copycols)(we->ac_efa,
+				    we->ac_crow, copy_src, copy_dst,
+				    copy_ncols);
+
+			(*we->ac_ef->wef_erasecols)(we->ac_efa,
+			    we->ac_crow, we->ac_ccol,
+			    we->ac_ncol - (we->ac_ccol + copy_ncols));
 		}
 		break;
 	}
