@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.45 2001/08/25 21:54:26 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.46 2001/09/02 15:15:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -464,7 +464,7 @@ print_state(struct pf_state *s)
 void
 print_rule(struct pf_rule *r)
 {
-	printf("@%d ", r->nr + 1);
+	printf("@%d ", r->nr);
 	if (r->action == PF_PASS)
 		printf("pass ");
 	else if (r->action == PF_DROP) {
