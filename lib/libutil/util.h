@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.7 1997/11/09 00:29:14 bri Exp $	*/
+/*	$OpenBSD: util.h,v 1.8 1998/06/08 20:28:28 brian Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@ void	login_fbtab __P((char *, uid_t, gid_t));
 char   *readlabelfs __P((char *, int));
 const char *uu_lockerr __P((int _uu_lockresult));
 int     uu_lock __P((const char *_ttyname)); 
+int	uu_lock_txfr __P((const char *_ttyname, pid_t _pid));
 int     uu_unlock __P((const char *_ttyname));
 __END_DECLS
 
@@ -89,5 +90,6 @@ __END_DECLS
 #define UU_LOCK_WRITE_ERR (-4)
 #define UU_LOCK_LINK_ERR (-5)
 #define UU_LOCK_TRY_ERR (-6)
+#define UU_LOCK_OWNER_ERR (-7)
 
 #endif /* !_UTIL_H_ */

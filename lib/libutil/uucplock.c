@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uucplock.c,v 1.2 1997/11/09 04:05:33 bri Exp $
+ * $Id: uucplock.c,v 1.3 1998/06/08 20:28:30 brian Exp $
  *
  */
 
@@ -130,6 +130,28 @@ ret0:
 }
 
 int
+uu_lock_txfr(ttyname, pid)
+	const char *ttyname;
+	pid_t pid;
+{
+	int fd, err;
+	char lckname[sizeof(_PATH_UUCPLOCK) + MAXNAMLEN];
+
+	snprintf(lckname, sizeof(lckname), _PATH_UUCPLOCK LOCKFMT, ttyname);
+
+	if ((fd = open(lckname, O_RDWR)) < 0)
+		return UU_LOCK_OWNER_ERR;
+	if (get_pid(fd, &err) != getpid())
+		return UU_LOCK_OWNER_ERR;
+        lseek(fd, 0, SEEK_SET);
+	if (put_pid(fd, pid))
+		return UU_LOCK_WRITE_ERR;
+	close(fd);
+
+	return UU_LOCK_OK;
+}
+
+int
 uu_unlock(ttyname)
 	const char *ttyname;
 {
@@ -168,6 +190,9 @@ uu_lockerr(uu_lockresult)
 		break;
 	case UU_LOCK_TRY_ERR:
 		fmt = "too many tries: %s";
+		break;
+	case UU_LOCK_OWNER_ERR:
+		fmt = "not locking process: %s";
 		break;
 	default:
 		fmt = "undefined error: %s";

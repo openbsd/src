@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1997/11/09 00:29:13 bri Exp $
+#	$OpenBSD: Makefile,v 1.16 1998/06/08 20:28:23 brian Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
@@ -40,6 +40,7 @@ MLINKS+=scsi.3 scsi_debug_output.3
 MLINKS+=uucplock.3 uu_lock.3
 MLINKS+=uucplock.3 uu_unlock.3
 MLINKS+=uucplock.3 uu_lockerr.3
+MLINKS+=uucplock.3 uu_lock_txfr.3
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
