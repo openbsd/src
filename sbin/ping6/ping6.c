@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.32 2001/07/07 18:26:18 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.33 2001/08/18 20:42:28 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -1348,7 +1348,7 @@ dnsdecode(sp, ep, base, buf, bufsiz)
 			while (i-- > 0 && cp < ep) {
 				l = snprintf(cresult, sizeof(cresult),
 				    isprint(*cp) ? "%c" : "\\%03o", *cp & 0xff);
-				if (l >= sizeof(cresult))
+				if (l >= sizeof(cresult) || l < 0)
 					return NULL;
 				if (strlcat(buf, cresult, bufsiz) >= bufsiz)
 					return NULL;	/*result overrun*/
