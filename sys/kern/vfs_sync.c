@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.10 1999/12/05 07:19:28 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.11 2000/01/14 19:11:50 art Exp $  */
 
 /*
  *  Portions of this code are:
@@ -58,7 +58,7 @@
 /*
  * The workitem queue.
  */ 
-#define SYNCER_MAXDELAY	60		/* maximum sync delay time */
+#define SYNCER_MAXDELAY	32		/* maximum sync delay time */
 #define SYNCER_DEFAULT 30		/* default sync delay time */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
 time_t syncdelay = SYNCER_DEFAULT;	/* time to delay syncing vnodes */
