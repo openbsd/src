@@ -59,8 +59,9 @@ rexec(ahost, rport, name, pass, cmd, fd2p)
 {
 	struct sockaddr_in sin, sin2, from;
 	struct hostent *hp;
+	unsigned timo = 1;
 	u_short port;
-	int s, timo = 1, s3;
+	int s, s3;
 	char c;
 
 	hp = gethostbyname(*ahost);
@@ -79,7 +80,7 @@ retry:
 	sin.sin_family = hp->h_addrtype;
 	sin.sin_len = sizeof(sin);
 	sin.sin_port = rport;
-	bcopy(hp->h_addr, (caddr_t)&sin.sin_addr, hp->h_length);
+	bcopy(hp->h_addr, (char *)&sin.sin_addr, (size_t)hp->h_length);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		if (errno == ECONNREFUSED && timo <= 16) {
 			(void) close(s);

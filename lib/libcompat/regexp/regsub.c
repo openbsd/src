@@ -1,4 +1,4 @@
-/*	$OpenBSD: regsub.c,v 1.2 1996/07/24 05:39:12 downsj Exp $	*/
+/*	$OpenBSD: regsub.c,v 1.3 1996/12/14 07:01:29 tholo Exp $	*/
 
 /*
  * regsub
@@ -22,7 +22,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: regsub.c,v 1.2 1996/07/24 05:39:12 downsj Exp $";
+static char *rcsid = "$OpenBSD: regsub.c,v 1.3 1996/12/14 07:01:29 tholo Exp $";
 #endif /* not lint */
 
 #include <regexp.h>
@@ -45,11 +45,11 @@ const regexp *prog;
 const char *source;
 char *dest;
 {
-	register char *src;
+	register const char *src;
+	register size_t len;
 	register char *dst;
 	register char c;
 	register int no;
-	register int len;
 
 	if (prog == NULL || source == NULL || dest == NULL) {
 		v8_regerror("NULL parm to regsub");
@@ -60,7 +60,7 @@ char *dest;
 		return;
 	}
 
-	src = (char *)source;
+	src = source;
 	dst = dest;
 	while ((c = *src++) != '\0') {
 		if (c == '&')

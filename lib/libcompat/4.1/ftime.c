@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ftime.c,v 1.1.1.1 1995/10/18 08:42:34 deraadt Exp $";
+static char rcsid[] = "$Id: ftime.c,v 1.2 1996/12/14 07:01:27 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ ftime(tbp)
 
         if (gettimeofday(&t, &tz) < 0)
                 return (-1);
-        tbp->millitm = t.tv_usec / 1000;
+        tbp->millitm = (unsigned short)(t.tv_usec / 1000);
         tbp->time = t.tv_sec;
         tbp->timezone = tz.tz_minuteswest;
         tbp->dstflag = tz.tz_dsttime;
