@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.25 2000/05/15 20:57:34 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.26 2000/08/04 16:13:00 aaron Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -64,13 +64,13 @@ id=`basename ${d}`
 ost="OpenBSD"
 osr="2.7"
 
-echo "char ostype[] = \"${ost}\";" > vers.c
-echo "char osrelease[] = \"${osr}\";" >> vers.c
-echo "char osversion[] = \"${id}#${v}\";" >> vers.c
-echo "char sccs[8] = { ' ', ' ', ' ', ' ', '@', '(', '#', ')' };" >> vers.c
-echo \
-  "char version[] = \
-    \"${ost} ${osr}-current (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
-  >> vers.c
+cat >vers.c <<eof
+char ostype[] = "${ost}";
+char osrelease[] = "${osr}";
+char osversion[] = "${id}#${v}";
+char sccs[8] = { ' ', ' ', ' ', ' ', '@', '(', '#', ')' };
+char version[] =
+    "${ost} ${osr}-current (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
+eof
 
-echo `expr ${v} + 1` > version
+expr ${v} + 1 > version
