@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.54 2004/12/08 16:17:52 millert Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.55 2004/12/09 17:41:53 millert Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -533,6 +533,7 @@ workitem_free(item)
  * Workitem queue management
  */
 STATIC struct workhead softdep_workitem_pending;
+STATIC struct worklist *worklist_tail;
 STATIC int num_on_worklist;	/* number of worklist items to be processed */
 STATIC int softdep_worklist_busy; /* 1 => trying to do unmount */
 STATIC int softdep_worklist_req; /* serialized waiters */
@@ -571,7 +572,6 @@ STATIC void
 add_to_worklist(wk)
 	struct worklist *wk;
 {
-	static struct worklist *worklist_tail;
 
 	if (wk->wk_state & ONWORKLIST) {
 #ifdef DEBUG
@@ -723,7 +723,7 @@ process_worklist_item(matchmnt, flags)
 	struct mount *matchmnt;
 	int flags;
 {
-	struct worklist *wk;
+	struct worklist *wk, *wkend;
 	struct dirrem *dirrem;
 	struct mount *mp;
 	struct vnode *vp;
@@ -749,7 +749,20 @@ process_worklist_item(matchmnt, flags)
 		FREE_LOCK(&lk);
 		return (0);
 	}
+	/*
+	 * Remove the item to be processed. If we are removing the last
+	 * item on the list, we need to recalculate the tail pointer.
+	 * As this happens rarely and usually when the list is short,
+	 * we just run down the list to find it rather than tracking it
+	 * in the above loop.
+	 */
 	WORKLIST_REMOVE(wk);
+	if (wk == worklist_tail) {
+		LIST_FOREACH(wkend, &softdep_workitem_pending, wk_list)
+			if (LIST_NEXT(wkend, wk_list) == NULL)
+				break;
+		worklist_tail = wkend;
+	}
 	num_on_worklist -= 1;
 	FREE_LOCK(&lk);
 	switch (wk->wk_type) {
