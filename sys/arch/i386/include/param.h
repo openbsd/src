@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2002/06/26 08:42:39 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.22 2003/04/09 07:53:57 niklas Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -75,7 +75,12 @@
 
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define	KERNBASE	0xd0000000		/* start of kernel virtual space */
+/*
+ * Start of kernel virtual space.  Remember to alter the memory and
+ * page table layout description in pmap.h when changing this.
+ */
+#define	KERNBASE	0xd0000000
+
 #define	KERNTEXTOFF	(KERNBASE+0x100000)	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
