@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.56 2001/03/15 06:30:57 mickey Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.57 2001/03/27 14:45:21 art Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1321,9 +1321,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		int alg;
 
 		/* Create new TDB */
-		MALLOC(freeme, struct tdb *, sizeof(struct tdb),
-		       M_TDB, M_WAITOK);
-		bzero(freeme, sizeof(struct tdb));
+		freeme = tdb_alloc();
 		bzero(&ii, sizeof(struct ipsecinit));
 
 		newsa = (struct tdb *) freeme;
@@ -1431,8 +1429,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    }
 
 	    /* Allocate and initialize new TDB */
-	    MALLOC(freeme, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
-	    bzero(freeme, sizeof(struct tdb));
+	    freeme = tdb_alloc();
 
 	    {
 		struct tdb *newsa = (struct tdb *) freeme;

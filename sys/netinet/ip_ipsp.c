@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.109 2001/03/15 06:30:59 mickey Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.110 2001/03/27 14:45:22 art Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -238,8 +238,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	if (tdbp != (struct tdb *) NULL)
 	  continue;
 
-	MALLOC(tdbp, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
-	bzero((caddr_t) tdbp, sizeof(struct tdb));
+	tdbp = tdb_alloc();
 
 	tdbp->tdb_spi = spi;
 	bcopy(&dst->sa, &tdbp->tdb_dst.sa, SA_LEN(&dst->sa));
@@ -247,15 +246,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 	tdbp->tdb_sproto = sproto;
 	tdbp->tdb_flags |= TDBF_INVALID;       /* Mark SA as invalid for now */
 	tdbp->tdb_satype = SADB_SATYPE_UNSPEC;
-	tdbp->tdb_established = time.tv_sec;
-	tdbp->tdb_epoch = kernfs_epoch - 1;
 	puttdb(tdbp);
-
-	/* Initialize timeouts */
-	timeout_set(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
-	timeout_set(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
-	timeout_set(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
-	timeout_set(&tdbp->tdb_sfirst_tmo, tdb_soft_firstuse, tdbp);
 
 	/* Setup a "silent" expiration (since TDBF_INVALID's set) */
 	if (ipsec_keep_invalid > 0)
@@ -749,28 +740,42 @@ tdb_delete(struct tdb *tdbp)
 }
 
 /*
- * Initialize a TDB structure.
+ * Allocate a TDB and initialize a few basic fields.
+ */
+struct tdb *
+tdb_alloc(void)
+{
+	struct tdb *tdbp;
+
+	MALLOC(tdbp, struct tdb *, sizeof(struct tdb), M_TDB, M_WAITOK);
+	bzero((caddr_t) tdbp, sizeof(struct tdb));
+
+	/* Init Incoming SA-Binding Queues */
+	TAILQ_INIT(&tdbp->tdb_inp);
+
+	TAILQ_INIT(&tdbp->tdb_policy_head);
+
+	/* Record establishment time */
+	tdbp->tdb_established = time.tv_sec;
+	tdbp->tdb_epoch = kernfs_epoch - 1;
+
+	/* Initialize timeouts */
+	timeout_set(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
+	timeout_set(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
+	timeout_set(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
+	timeout_set(&tdbp->tdb_sfirst_tmo, tdb_soft_firstuse, tdbp);
+
+	return tdbp;
+}
+
+/*
+ * Do further initializations of a TDB.
  */
 int
 tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
 {
     struct xformsw *xsp;
     int err;
-
-    /* Record establishment time */
-    tdbp->tdb_established = time.tv_sec;
-    tdbp->tdb_epoch = kernfs_epoch - 1;
-
-    /* Initialize timeouts */
-    timeout_set(&tdbp->tdb_timer_tmo, tdb_timeout, tdbp);
-    timeout_set(&tdbp->tdb_first_tmo, tdb_firstuse, tdbp);
-    timeout_set(&tdbp->tdb_stimer_tmo, tdb_soft_timeout, tdbp);
-    timeout_set(&tdbp->tdb_sfirst_tmo, tdb_soft_firstuse, tdbp);
-
-    /* Init Incoming SA-Binding Queues */
-    TAILQ_INIT(&tdbp->tdb_inp);
-
-    TAILQ_INIT(&tdbp->tdb_policy_head);
 
     for (xsp = xformsw; xsp < xformswNXFORMSW; xsp++)
       if (xsp->xf_type == alg)
