@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.191 2004/09/16 17:36:29 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.192 2004/09/16 17:44:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -264,6 +264,12 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		for (p = peers; p != NULL; p = next) {
 			next = p->next;
 			if (!pending_reconf) {
+				/* cloned peer that idled out? */
+				if (p->state == STATE_IDLE && p->conf.cloned &&
+				    time(NULL) - p->stats.last_updown >=
+				    INTERVAL_HOLD_CLONED)
+					p->conf.reconf_action = RECONF_DELETE;
+
 				/* new peer that needs init? */
 				if (p->state == STATE_NONE)
 					init_peer(p);
@@ -838,14 +844,12 @@ change_state(struct peer *peer, enum session_state state,
 		peer->rbuf = NULL;
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
-		if (event != EVNT_STOP && !peer->conf.cloned) {
+		if (event != EVNT_STOP) {
 			peer->IdleHoldTimer = time(NULL) + peer->IdleHoldTime;
 			if (event != EVNT_NONE &&
 			    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
 				peer->IdleHoldTime *= 2;
 		}
-		if (peer->state != STATE_NONE && peer->conf.cloned)
-			peer->conf.reconf_action = RECONF_DELETE;
 		break;
 	case STATE_CONNECT:
 		break;

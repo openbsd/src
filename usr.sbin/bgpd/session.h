@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.61 2004/08/06 11:51:19 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.62 2004/09/16 17:44:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #define	INTERVAL_HOLD_INITIAL		240
 #define	INTERVAL_HOLD			90
 #define	INTERVAL_IDLE_HOLD_INITIAL	30
+#define	INTERVAL_HOLD_CLONED		3600
 #define	MAX_IDLE_HOLD			3600
 #define	MSGSIZE_HEADER			19
 #define	MSGSIZE_HEADER_MARKER		16
