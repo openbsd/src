@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_prot.h,v 1.2 1997/09/21 10:46:12 niklas Exp $	*/
+/*	$OpenBSD: pmap_prot.h,v 1.3 1998/02/10 06:25:32 deraadt Exp $	*/
 /*	$NetBSD: pmap_prot.h,v 1.4 1994/10/26 00:57:00 cgd Exp $	*/
 
 /*
@@ -52,13 +52,13 @@
  *	TRUE is success, FALSE is failure.  Un-registers pair
  *	[prog, vers].  prot and port are ignored.
  *
- * PMAPPROC_GETPORT(struct pmap) returns (long unsigned).
+ * PMAPPROC_GETPORT(struct pmap) returns (unsigned long).
  *	0 is failure.  Otherwise returns the port number where the pair
  *	[prog, vers] is registered.  It may lie!
  *
  * PMAPPROC_DUMP() RETURNS (struct pmaplist *)
  *
- * PMAPPROC_CALLIT(unsigned, unsigned, unsigned, string<>)
+ * PMAPPROC_CALLIT(unsigned int, unsigned int, unsigned int, string<>)
  * 	RETURNS (port, string<>);
  * usage: encapsulatedresults = PMAPPROC_CALLIT(prog, vers, proc, encapsulatedargs);
  * 	Calls the procedure on the local machine.  If it is not registered,
@@ -87,10 +87,10 @@
 #define PMAPPROC_CALLIT		((u_long)5)
 
 struct pmap {
-	long unsigned pm_prog;
-	long unsigned pm_vers;
-	long unsigned pm_prot;
-	long unsigned pm_port;
+	unsigned long pm_prog;
+	unsigned long pm_vers;
+	unsigned long pm_prot;
+	unsigned long pm_port;
 };
 
 struct pmaplist {

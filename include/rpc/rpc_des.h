@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_des.h,v 1.2 1997/09/21 10:46:14 niklas Exp $	*/
+/*	$OpenBSD: rpc_des.h,v 1.3 1998/02/10 06:25:33 deraadt Exp $	*/
 
 /* crypto/des/rpc_des.h */
 /* Copyright (C) 1995-1997 Eric Young (eay@mincom.oz.au)
@@ -112,7 +112,7 @@ struct desparams {
 	enum desdir des_dir;	/* direction */
 	enum desmode des_mode;	/* mode */
 	unsigned char des_ivec[8];	/* input vector */
-	unsigned des_len;	/* number of bytes to crypt */
+	unsigned int des_len;	/* number of bytes to crypt */
 	union {
 		unsigned char UDES_data[DES_QUICKLEN];
 		unsigned char *UDES_buf;
