@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.10 2003/08/27 20:59:15 mickey Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.11 2004/10/09 19:52:04 brad Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -167,7 +167,8 @@ nbsd_pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 	waddress = (u_int64_t)address1 << 32UL | address;
 	wmask = (u_int64_t)mask1 << 32UL | mask;
 
-	if (PCI_MAPREG_MEM64_SIZE(wmask) == 0) {
+	if ((is64bit && PCI_MAPREG_MEM64_SIZE(wmask) == 0) ||
+	    (!is64bit && PCI_MAPREG_MEM_SIZE(mask) == 0)) {
 		printf("pci_mem_find: void region\n");
 		return (1);
 	}
