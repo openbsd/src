@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.32 1997/08/22 12:54:33 downsj Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.33 1999/09/28 01:24:46 deraadt Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -373,6 +373,7 @@ arc4_init (register u_int8_t *data, int len)
 		arc4_state.s[arc4_state.i] = arc4_state.s[arc4_state.j];
 		arc4_state.s[arc4_state.j] = si;
 	}
+	arc4_state.j = arc4_state.i;
 	arc4_state.cnt = 0;
 }
 

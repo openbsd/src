@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.4 1999/06/29 23:54:05 provos Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.5 1999/09/28 01:24:48 deraadt Exp $	*/
 
 /*
  * Arc4 random number generator for OpenBSD.
@@ -77,6 +77,7 @@ arc4_addrandom(as, dat, datlen)
 		as->s[as->i] = as->s[as->j];
 		as->s[as->j] = si;
 	}
+	as->j = as->i;
 }
 
 static void
