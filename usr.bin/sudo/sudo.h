@@ -192,7 +192,7 @@ int vasprintf		__P((char **, const char *, va_list));
 int strcasecmp		__P((const char *, const char *));
 #endif
 char *sudo_goodpath	__P((const char *));
-int sudo_setenv		__P((char *, char *));
+void sudo_setenv		__P((char *, char *));
 char *tgetpass		__P((const char *, int, int));
 int find_path		__P((char *, char **));
 void check_user		__P((void));

@@ -320,14 +320,19 @@ AC_ARG_WITH(DCE, [  --with-DCE              enable DCE support],
 		;;
 esac])
 
-AC_ARG_WITH(logincap, [  --with-logincap         enable login class support],
+AC_ARG_WITH(logincap, [  --with-logincap         enable BSD login class support],
 [case $with_logincap in
-    yes)	AC_DEFINE(HAVE_LOGINCAP)
-		AC_MSG_CHECKING(whether to try BSD login capabilities database)
-		AC_MSG_RESULT(yes)
+    yes|no)	;;
+    *)		AC_MSG_ERROR(["--with-logincap does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(bsdauth, [  --with-bsdauth          enable BSD authentication support],
+[case $with_bsdauth in
+    yes)	with_logincap=yes
 		;;
     no)		;;
-    *)		AC_MSG_ERROR(["--with-logincap does not take an argument."])
+    *)		AC_MSG_ERROR(["--with-bsdauth does not take an argument."])
 		;;
 esac])
 
@@ -1317,6 +1322,9 @@ case "$host" in
 		fi
 		;;
     *-*-freebsd*)
+		if test "$with_logincap" = "yes"; then
+		    SUDO_LIBS="${SUDO_LIBS} -lutil"
+		fi
 		if test "$with_skey" = "yes"; then
 		     SUDO_LIBS="${SUDO_LIBS} -lmd"
 		fi
@@ -1378,6 +1386,13 @@ if test "$OS" != "ultrix"; then
     AC_CHECK_HEADERS(termio.h)
     AC_CHECK_HEADERS(termios.h, AC_CHECK_FUNCS(tcgetattr))
 fi
+if test "$with_logincap" = "yes"; then
+    AC_CHECK_HEADERS(login_cap.h)
+fi
+if test "$with_bsdauth" = "yes"; then
+    AC_CHECK_HEADER(bsd_auth.h, AC_DEFINE(HAVE_BSD_AUTH_H) [with_passwd=no; AUTH_OBJS=bsdauth.o])
+fi
+
 dnl
 dnl typedef checks
 dnl
@@ -1580,18 +1595,6 @@ dnl
 if test "$with_DCE" = "yes"; then
     DCE_OBJS="${DCE_OBJS} dce_pwent.o"
     SUDO_LIBS="${SUDO_LIBS} -ldce"
-fi
-
-dnl
-dnl extra login capabilities libs and includes
-dnl
-if test "$with_logincap" = "yes"; then
-    SUDO_LIBS="${SUDO_LIBS} -lutil"
-    if test -f /usr/include/login_cap.h -a -f /usr/include/sys/types.h -a -f /usr/lib/libutil.a; then
-	:
-    else
-	echo 'Unable to locate libutil.a and/or login_cap.h, you will have to edit the Makefile and add -L/path/to/libutil to SUDO_LDFLAGS and/or -I/path/to/login_cap.h to CPPFLAGS'
-    fi
 fi
 
 dnl

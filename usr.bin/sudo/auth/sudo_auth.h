@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo_auth.h,v 1.15 1999/10/13 02:34:55 millert Exp $
+ * $Sudo: sudo_auth.h,v 1.17 2000/10/29 22:30:22 millert Exp $
  */
 
 #ifndef SUDO_AUTH_H
@@ -55,7 +55,7 @@ typedef struct sudo_auth {
 
 /* Values for sudo_auth.flags.  */
 /* XXX - these names are too long for my liking */
-#define FLAG_USER	0x01	/* functions must run as root */
+#define FLAG_USER	0x01	/* functions must run as the user, not root */
 #define FLAG_CONFIGURED	0x02	/* method configured ok */
 #define FLAG_ONEANDONLY	0x04	/* one and only auth method */
 
@@ -75,6 +75,9 @@ int sia_setup __P((struct passwd *pw, char **prompt, sudo_auth *auth));
 int sia_verify __P((struct passwd *pw, char *prompt, sudo_auth *auth));
 int sia_cleanup __P((struct passwd *pw, sudo_auth *auth));
 int aixauth_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));
+int bsdauth_init __P((struct passwd *pw, char **prompt, sudo_auth *auth));
+int bsdauth_verify __P((struct passwd *pw, char *prompt, sudo_auth *auth));
+int bsdauth_cleanup __P((struct passwd *pw, sudo_auth *auth));
 
 /* Prototypes for normal methods */
 int passwd_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));
@@ -116,8 +119,12 @@ int securid_verify __P((struct passwd *pw, char *pass, sudo_auth *auth));
 	    NULL, NULL, aixauth_verify, NULL)
 #elif defined(HAVE_FWTK)
 #  define AUTH_STANDALONE \
-	AUTH_ENTRY(0, "fwtk", fwtk_init, \
-	    NULL, fwtk_verify, fwtk_cleanup)
+	AUTH_ENTRY(0, "fwtk", \
+	    fwtk_init, NULL, fwtk_verify, fwtk_cleanup)
+#elif defined(HAVE_BSD_AUTH_H)
+#  define AUTH_STANDALONE \
+	AUTH_ENTRY(0, "bsdauth", \
+	    bsdauth_init, NULL, bsdauth_verify, bsdauth_cleanup)
 #endif
 
 #endif /* SUDO_AUTH_H */

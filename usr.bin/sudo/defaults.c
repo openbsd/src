@@ -731,7 +731,7 @@ store_mode(val, def, op)
 	def->sd_un.mode = (mode_t)0777;
     } else {
 	l = strtol(val, &endp, 8);
-	if (*endp != '\0' || l < 0 || l >= 0777)
+	if (*endp != '\0' || l < 0 || l > 0777)
 	    return(FALSE);
 	def->sd_un.mode = (mode_t)l;
     }

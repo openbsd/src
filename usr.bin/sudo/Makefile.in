@@ -115,8 +115,8 @@ SRCS = alloc.c alloca.c check.c defaults.c fileops.c find_path.c fnmatch.c \
        strerror.c sudo.c sudo.tab.c sudo_setenv.c testsudoers.c tgetpass.c \
        utime.c visudo.c $(AUTH_SRCS)
 
-AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/dce.c auth/fwtk.c auth/kerb4.c \
-	    auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
+AUTH_SRCS = auth/afs.c auth/aix_auth.c auth/bsdauth.c auth/dce.c auth/fwtk.c \
+	    auth/kerb4.c auth/kerb5.c auth/pam.c auth/passwd.c auth/rfc1938.c \
 	    auth/secureware.c auth/securid.c auth/sia.c auth/sudo_auth.c
 
 HDRS = compat.h defaults.h ins_2001.h ins_classic.h ins_csops.h ins_goons.h \
@@ -230,6 +230,8 @@ afs.o: $(authdir)/afs.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/afs.c
 aix_auth.o: $(authdir)/aix_auth.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/aix_auth.c
+bsdauth.o: $(authdir)/bsdauth.c $(AUTHDEP)
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/bsdauth.c
 dce.o: $(authdir)/dce.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/dce.c
 fwtk.o: $(authdir)/fwtk.c $(AUTHDEP)

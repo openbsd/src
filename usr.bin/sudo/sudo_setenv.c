@@ -59,28 +59,33 @@ extern int setenv	__P((char *, char *, int));
 #endif /* !STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_setenv.c,v 1.40 1999/07/31 16:19:48 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo_setenv.c,v 1.41 2000/09/14 20:48:58 millert Exp $";
 #endif /* lint */
 
 
 /*
- * Add a string of the form "var=val" to the environment.  If we are unable
- * to expand the current environent, return -1, else return 0.
+ * Add a string of the form "var=val" to the environment.  Exits if it is
+ * unable to expand the current environent.
  */
-int
+void
 sudo_setenv(var, val)
     char *var;
     char *val;
 {
 
 #ifdef HAVE_SETENV
-    return(setenv(var, val, 1));
+    if (setenv(var, val, 1) == -1) {
+	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
+	exit(1);
+    }
 #else
     char *envstring, *tmp;
 
     envstring = tmp = (char *) malloc(strlen(var) + strlen(val) + 2);
-    if (envstring == NULL)
-	return(-1);
+    if (envstring == NULL) {
+	(void) fprintf(stderr, "%s: cannot allocate memory!\n", Argv[0]);
+	exit(1);
+    }
 
     while ((*tmp++ = *var++))
 	;
@@ -90,6 +95,6 @@ sudo_setenv(var, val)
     while ((*tmp++ = *val++))
 	;
 
-    return(putenv(envstring));
+    putenv(envstring);
 #endif /* HAVE_SETENV */
 }

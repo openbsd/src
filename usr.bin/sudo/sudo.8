@@ -1,7 +1,13 @@
 .rn '' }`
-''' $RCSfile: sudo.8,v $$Revision: 1.4 $$Date: 2000/04/10 02:28:36 $
+''' $RCSfile: sudo.8,v $$Revision: 1.5 $$Date: 2000/11/21 17:58:44 $
 '''
 ''' $Log: sudo.8,v $
+''' Revision 1.5  2000/11/21 17:58:44  millert
+''' A few updates from the sudo developement tree:
+''' - Add bsd authentication support (currently disabled)
+''' - Always check setenv() return value
+''' - Fix umask disabling
+'''
 ''' Revision 1.4  2000/04/10 02:28:36  millert
 ''' Remove extra backslash, noted by marc@snafu.org
 '''
@@ -201,7 +207,8 @@
 sudo \- execute a command as another user
 .SH "SYNOPSIS"
 \fBsudo\fR \fB\-V\fR | \fB\-h\fR | \fB\-l\fR | \fB\-L\fR | \fB\-v\fR | \fB\-k\fR | \fB\-K\fR | \fB\-s\fR |
-[ \fB\-H\fR ] [\fB\-S\fR ] [ \fB\-b\fR ] | [ \fB\-p\fR prompt ]
+[ \fB\-H\fR ] [\fB\-S\fR ] [ \fB\-b\fR ] | [ \fB\-p\fR prompt ] [ \fB\-c\fR \fIclass\fR|\fI-\fR ]
+[ \fB\-a\fR \fIauth_type\fR ]
 [ \fB\-u\fR username/#uid ] \fIcommand\fR
 .SH "DESCRIPTION"
 \fBsudo\fR allows a permitted user to execute a \fIcommand\fR as the
@@ -271,6 +278,27 @@ password prompt and use a custom one.  If the password prompt
 contains the \f(CW%u\fR escape, \f(CW%u\fR will be replaced with the user's
 login name.  Similarly, \f(CW%h\fR will be replaced with the local
 hostname.
+.Ip "\-c" 4
+.IX Item "-c"
+The \fB\-c\fR (\fIclass\fR) option causes \fBsudo\fR to run the specified command
+with resources limited by the specified login class.  The \fIclass\fR
+argument can be either a class name as defined in /etc/login.conf,
+or a single '\-' character.  Specifying a \fIclass\fR of \f(CW\*(C`\-\*(C'\fR indicates
+that the command should be run restricted by the default login
+capibilities for the user the command is run as.  If the \fIclass\fR
+argument specifies an existing user class, the command must be run
+as root, or the \fBsudo\fR command must be run from a shell that is already
+root.  This option is only available on systems with \s-1BSD\s0 login classes
+where \fBsudo\fR has been configured with the \-\-with-logincap option.
+.Ip "\-a" 4
+.IX Item "-a"
+The \fB\-a\fR (\fIauthentication type\fR) option causes \fBsudo\fR to use the
+specified authentication type when validating the user, as allowed
+by /etc/login.conf.  The system administrator may specify a list
+of sudo-specific authentication methods by adding an \*(L"auth-sudo\*(R"
+entry in /etc/login.conf.  This option is only available on systems
+that support \s-1BSD\s0 authentication where \fBsudo\fR has been configured
+with the \-\-with-bsdauth option.
 .Ip "-u" 4
 The \f(CW-u\fR (\fIuser\fR) option causes \fBsudo\fR to run the specified command
 as a user other than \fIroot\fR.  To specify a \fIuid\fR instead of a

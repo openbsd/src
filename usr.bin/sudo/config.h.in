@@ -492,7 +492,10 @@
 #undef HAVE_DCE
 
 /* Define if you use the BSD login capabilities database.  */
-#undef HAVE_LOGINCAP
+#undef HAVE_LOGIN_CAP_H
+
+/* Define if you use BSD authentication.  */
+#undef HAVE_BSD_AUTH_H
 
 /* Define if you use the FWTK authsrv daemon.  */
 #undef HAVE_FWTK

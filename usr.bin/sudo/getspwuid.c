@@ -110,11 +110,9 @@ sudo_getshell(pw)
     if ((pw_shell = getenv("SHELL")) == NULL)
 	pw_shell = pw->pw_shell;
 
-#ifdef _PATH_BSHELL
     /* empty string "" means bourne shell */
     if (*pw_shell == '\0')
 	pw_shell = _PATH_BSHELL;
-#endif /* _PATH_BSHELL */
 
     return(pw_shell);
 }
@@ -207,6 +205,10 @@ sudo_pwdup(pw)
     (void) memcpy(local_pw, pw, sizeof(struct passwd));
     local_pw->pw_name = estrdup(pw->pw_name);
     local_pw->pw_dir = estrdup(pw->pw_dir);
+    local_pw->pw_gecos = estrdup(pw->pw_gecos);
+#ifdef HAVE_LOGIN_CAP_H
+    local_pw->pw_class = estrdup(pw->pw_class);
+#endif
 
     /* pw_shell is a special case since we overide with $SHELL */
     local_pw->pw_shell = estrdup(sudo_getshell(pw));
