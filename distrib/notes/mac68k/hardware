@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.21 2004/12/03 20:42:05 miod Exp $
+dnl	$OpenBSD: hardware,v 1.22 2004/12/05 13:00:55 martin Exp $
 OpenBSD/MACHINE OSREV runs on several of the older Macintosh computers.
 8MB of RAM should be sufficient to boot and a minimal system can probably
 be squeezed onto a 120MB partition by installing just the minimum sets.
@@ -10,7 +10,7 @@ this does not count swap space!).
 A Mac OS partition is also required to install OpenBSD/MACHINE OSREV and boot it,
 see below.
 
-OpenBSD/MACHINE OSREV now runs on most 680x0 MacIntosh's.  Specifically, it
+OpenBSD/MACHINE OSREV now runs on most 680x0 Macintosh's.  Specifically, it
 should work on:
 	68020 with 68851 PMMU and 68881 FPU
 	68030 with 68882 FPU (many Macs do not have this)
