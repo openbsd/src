@@ -1,4 +1,4 @@
-.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.6 1997/01/22 13:20:59 niklas Exp $ (LBL)
+.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.7 1998/07/15 00:06:01 deraadt Exp $ (LBL)
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1156,7 +1156,8 @@ is made to account for the time lag between when the
 ethernet interface removed the packet from the wire and when the kernel
 serviced the `new packet' interrupt.
 .SH "SEE ALSO"
-traffic(1C), nit(4P), bpf(4), pcap(3)
+.\" traffic(1C), nit(4P),
+bpf(4), pcap(3)
 .SH AUTHORS
 Van Jacobson (van@ee.lbl.gov),
 Craig Leres (leres@ee.lbl.gov) and
