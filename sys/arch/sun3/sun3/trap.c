@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 1997/07/25 20:43:27 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 1998/08/19 23:43:28 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -208,6 +208,7 @@ trap(type, code, v, frame)
 	u_int ucode;
 	u_quad_t sticks;
 	int si_type;
+	union sigval sv;
 
 	cnt.v_trap++;
 	p = curproc;
@@ -592,8 +593,10 @@ finish:
 	if ((type & T_USER) == 0)
 		return;
 	/* Post a signal if necessary. */
-	if (sig != 0)
-		trapsignal(p, sig, ucode, si_type, (caddr_t)v);
+	if (sig != 0) {
+		sv.sival_ptr = (void *)v;
+		trapsignal(p, sig, ucode, si_type, sv);
+	}
 douret:
 	userret(p, &frame, sticks);
 }
