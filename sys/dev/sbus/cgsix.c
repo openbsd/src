@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.47 2005/03/01 21:23:36 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.48 2005/03/03 01:41:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -254,7 +254,7 @@ fail_intr:
 fail_fbc:
 	bus_space_unmap(sa->sa_bustag, sc->sc_tec_regs, CGSIX_TEC_SIZE);
 fail_tec:
-	bus_space_unmap(sa->sa_bustag, sc->sc_vid_regs, CGSIX_VID_SIZE);
+	bus_space_unmap(sa->sa_bustag, sc->sc_vid_regs, sc->sc_sunfb.sf_fbsize);
 fail_vid:
 	bus_space_unmap(sa->sa_bustag, sc->sc_thc_regs, CGSIX_THC_SIZE);
 fail_thc:
