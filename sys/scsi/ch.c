@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.13 2002/10/17 17:47:24 mickey Exp $	*/
+/*	$OpenBSD: ch.c,v 1.14 2002/12/30 21:50:28 grange Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -205,6 +205,7 @@ chopen(dev, flags, fmt, p)
 	 * loaded in the drive.
 	 */
 	error = scsi_test_unit_ready(sc->sc_link,
+	    TEST_READY_RETRIES_DEFAULT,
 	    SCSI_IGNORE_NOT_READY|SCSI_IGNORE_MEDIA_CHANGE);
 	if (error)
 		goto bad;

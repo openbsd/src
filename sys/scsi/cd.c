@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.64 2002/06/09 00:01:49 art Exp $	*/
+/*	$OpenBSD: cd.c,v 1.65 2002/12/30 21:50:28 grange Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -353,10 +353,13 @@ cdopen(dev, flag, fmt, p)
 			goto bad3;
 		}
 	} else {
-		/* Check that it is still responding and ok. */
-		error = scsi_test_unit_ready(sc_link,
-		    SCSI_IGNORE_ILLEGAL_REQUEST |
-		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY);
+		/*
+		 * Check that it is still responding and ok.
+		 * Drive can be in progress of loading media so use
+		 * increased retries number and don't ignore NOT_READY.
+		 */
+		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		if (error) {
 			if (part != RAW_PART || fmt != S_IFCHR)
 				goto bad3;

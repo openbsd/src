@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.35 2002/08/03 08:55:35 pvalchev Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.36 2002/12/30 21:50:28 grange Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -309,6 +309,12 @@ struct scsi_xfer {
 #define XS_SHORTSENSE   6	/* Check the ATAPI sense for the error */
 #define XS_RESET	8	/* bus was reset; possible retry command  */
 
+/*
+ * Possible retries numbers for scsi_test_unit_ready()
+ */
+#define TEST_READY_RETRIES_DEFAULT	5
+#define TEST_READY_RETRIES_CD		10
+
 caddr_t scsi_inqmatch(struct scsi_inquiry_data *, caddr_t, int,
 	    int, int *);
 
@@ -318,7 +324,7 @@ struct scsi_xfer *
 void	scsi_free_xs(struct scsi_xfer *, int);
 int	scsi_execute_xs(struct scsi_xfer *);
 u_long	scsi_size(struct scsi_link *, int);
-int	scsi_test_unit_ready(struct scsi_link *, int);
+int	scsi_test_unit_ready(struct scsi_link *, int, int);
 int	scsi_change_def(struct scsi_link *, int);
 int	scsi_inquire(struct scsi_link *, struct scsi_inquiry_data *, int);
 int	scsi_prevent(struct scsi_link *, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.38 2002/11/30 18:46:56 nate Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.39 2002/12/30 21:50:28 grange Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -247,8 +247,9 @@ scsi_size(sc_link, flags)
  * Get scsi driver to send a "are you ready?" command
  */
 int 
-scsi_test_unit_ready(sc_link, flags)
+scsi_test_unit_ready(sc_link, retries, flags)
 	struct scsi_link *sc_link;
+	int retries;
 	int flags;
 {
 	struct scsi_test_unit_ready scsi_cmd;
@@ -257,7 +258,7 @@ scsi_test_unit_ready(sc_link, flags)
 	scsi_cmd.opcode = TEST_UNIT_READY;
 
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, 5, 10000, NULL, flags);
+	    sizeof(scsi_cmd), 0, 0, retries, 10000, NULL, flags);
 }
 
 /*

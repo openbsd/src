@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.32 2002/06/09 00:05:57 art Exp $	*/
+/*	$OpenBSD: st.c,v 1.33 2002/12/30 21:50:29 grange Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -401,7 +401,7 @@ stattach(parent, self, aux)
 	 */
 	printf("\n");
 	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
-	if (scsi_test_unit_ready(sc_link,
+	if (scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
 	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
 	    st_mode_sense(st,
 	    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE))
@@ -530,7 +530,8 @@ stopen(dev, flags, mode, p)
 	/*
 	 * Catch any unit attention errors.
 	 */
-	error = scsi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE |
+	error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
+	    SCSI_IGNORE_MEDIA_CHANGE |
 	    (stmode == CTLMODE ? SCSI_IGNORE_NOT_READY : 0));
 	if (error)
 		goto bad;
@@ -656,7 +657,8 @@ st_mount_tape(dev, flags)
 	 * these after doing a Load instruction.
 	 * (noteably some DAT drives)
 	 */
-	scsi_test_unit_ready(sc_link, SCSI_SILENT);	/* XXX */
+	/* XXX */
+	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT, SCSI_SILENT);
 
 	/*
 	 * Some devices can't tell you much until they have been
