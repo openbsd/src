@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.26 2002/10/07 20:23:06 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.27 2002/12/05 23:45:01 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3860,7 +3860,7 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 	if (setsockopt(s, SOL_SOCKET, SO_ACCEPTFILTER, &af, sizeof(af)) < 0) {
             if (errno == ENOPROTOOPT) {
 	    	ap_log_error(APLOG_MARK, APLOG_INFO | APLOG_NOERRNO, server_conf,
-			 "socket option SO_ACCEPTFILTER unkown on this machine. Continuing.");
+			 "socket option SO_ACCEPTFILTER unknown on this machine. Continuing.");
 	     } else {
 	    	ap_log_error(APLOG_MARK, APLOG_WARNING | APLOG_INFO, server_conf,
 			 "make_sock: for %s, setsockopt: (SO_ACCEPTFILTER)", addr);
