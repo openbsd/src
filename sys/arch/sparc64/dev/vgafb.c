@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.25 2002/08/02 16:13:07 millert Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.26 2002/08/19 20:16:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -78,6 +78,7 @@ struct vgafb_softc {
 	u_int8_t sc_cmap_green[256];
 	u_int8_t sc_cmap_blue[256];
 	struct rasops_info sc_rasops;
+	int *sc_crowp, *sc_ccolp;
 };
 
 struct wsscreen_descr vgafb_stdscreen = {
@@ -111,7 +112,7 @@ int vgafb_getcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 int vgafb_putcmap(struct vgafb_softc *, struct wsdisplay_cmap *);
 void vgafb_setcolor(struct vgafb_softc *, unsigned int,
     u_int8_t, u_int8_t, u_int8_t);
-
+void vgafb_updatecursor(struct rasops_info *ri);
 static int a2int(char *, int);
 
 struct wsdisplay_accessops vgafb_accessops = {
@@ -223,8 +224,6 @@ vgafbattach(parent, self, aux)
 	printf("\n");
 
 	if (sc->sc_console) {
-		int *ccolp, *crowp;
-
 		sc->sc_ofhandle = OF_stdout();
 
 		if (sc->sc_depth == 8) {
@@ -239,12 +238,14 @@ vgafbattach(parent, self, aux)
 			vgafb_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
 		}
 
-		if (romgetcursoraddr(&crowp, &ccolp))
-			ccolp = crowp = NULL;
-		if (ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *ccolp;
-		if (crowp != NULL)
-			sc->sc_rasops.ri_crow = *crowp;
+		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
+			sc->sc_ccolp = sc->sc_crowp = NULL;
+		if (sc->sc_ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
+		if (sc->sc_crowp != NULL)
+			sc->sc_rasops.ri_crow = *sc->sc_crowp;
+		sc->sc_rasops.ri_updatecursor = vgafb_updatecursor;
+
 		wsdisplay_cnattach(&vgafb_stdscreen, &sc->sc_rasops,
 		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
 	}
@@ -546,4 +547,16 @@ fail:
 	if (hasmem)
 		bus_space_unmap(pa->pa_memt, sc->sc_mem_h, sc->sc_mem_size);
 	return (1);
+}
+
+void
+vgafb_updatecursor(ri)
+	struct rasops_info *ri;
+{
+	struct vgafb_softc *sc = ri->ri_hw;
+
+	if (sc->sc_crowp != NULL)
+		*sc->sc_crowp = ri->ri_crow;
+	if (sc->sc_ccolp != NULL)
+		*sc->sc_ccolp = ri->ri_ccol;
 }

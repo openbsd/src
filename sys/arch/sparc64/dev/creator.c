@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.21 2002/08/19 20:16:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -83,9 +83,10 @@ void	creator_ras_init(struct creator_softc *);
 void	creator_ras_copyrows(void *, int, int, int);
 void	creator_ras_erasecols(void *, int, int, int, long int);
 void	creator_ras_eraserows(void *, int, int, long int);
-void	creator_ras_do_cursor(struct rasops_info *);
+void	creator_ras_updatecursor(struct rasops_info *);
 void	creator_ras_fill(struct creator_softc *);
 void	creator_ras_setfg(struct creator_softc *, int32_t);
+void	creator_ras_updatecursor(struct rasops_info *);
 
 struct wsdisplay_accessops creator_accessops = {
 	creator_ioctl,
@@ -159,15 +160,14 @@ creator_attach(struct creator_softc *sc)
 	creator_stdscreen.textops = &sc->sc_rasops.ri_ops;
 
 	if (sc->sc_console) {
-		int *ccolp, *crowp;
 		long defattr;
 
-		if (romgetcursoraddr(&crowp, &ccolp))
-			ccolp = crowp = NULL;
-		if (ccolp != NULL)
-			sc->sc_rasops.ri_ccol = *ccolp;
-		if (crowp != NULL)
-			sc->sc_rasops.ri_crow = *crowp;
+		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
+			sc->sc_ccolp = sc->sc_crowp = NULL;
+		if (sc->sc_ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *sc->sc_ccolp;
+		if (sc->sc_crowp != NULL)
+			sc->sc_rasops.ri_crow = *sc->sc_crowp;
 
 		/* fix color choice */
 		wscol_white = 0;
@@ -177,6 +177,8 @@ creator_attach(struct creator_softc *sc)
 
 		sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops,
 		    0, 0, 0, &defattr);
+		sc->sc_rasops.ri_updatecursor = creator_ras_updatecursor;
+
 		wsdisplay_cnattach(&creator_stdscreen, &sc->sc_rasops,
 		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
 	}
@@ -509,4 +511,16 @@ creator_ras_setfg(sc, fg)
 	sc->sc_fg_cache = fg;
 	FBC_WRITE(sc, FFB_FBC_FG, fg);
 	creator_ras_wait(sc);
+}
+
+void
+creator_ras_updatecursor(ri)
+	struct rasops_info *ri;
+{
+	struct creator_softc *sc = ri->ri_hw;
+
+	if (sc->sc_crowp != NULL)
+		*sc->sc_crowp = ri->ri_crow;
+	if (sc->sc_ccolp != NULL)
+		*sc->sc_ccolp = ri->ri_ccol;
 }
