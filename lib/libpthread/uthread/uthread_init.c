@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.25 2002/11/08 07:53:03 marc Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.26 2003/01/20 19:43:51 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -70,9 +70,9 @@ _stack_list_t	_stackq;
 extern int _thread_autoinit_dummy_decl;
 
 /*
- * All weak references used within libc that are redefined in libc_r
- * or libpthread MUST be in this table.   This is necessary to force the
- * proper version to be used when linking -static.
+ * All weak references used within libc that are redefined in libpthread
+ * MUST be in this table.   This is necessary to force the proper version to
+ * be used when linking -static.
  */
 static void *references[] = {
 	&_exit,
