@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/08/20 05:14:09 tholo Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/08/22 01:36:51 deraadt Exp $
 #	$NetBSD: Makefile,v 1.17 1995/10/24 22:18:34 jtc Exp $
 
 PROG=	gzip
@@ -31,7 +31,7 @@ afterinstall:
 
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "i386")
 match.o: ${.CURDIR}/match.S
-	$(CPP) -D__NetBSD__ ${.CURDIR}/match.S >_match.s
+	$(CPP) -D__OpenBSD__ ${.CURDIR}/match.S >_match.s
 	$(CC) -c _match.s
 	mv _match.o match.o
 	rm -f _match.s
