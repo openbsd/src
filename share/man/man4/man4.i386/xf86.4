@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xf86.4,v 1.11 2000/11/10 20:02:18 todd Exp $
+.\"	$OpenBSD: xf86.4,v 1.12 2000/12/17 21:10:31 matthieu Exp $
 .\"
 .\" Copyright (c) 1998 Matthieu Herrb
 .\" All rights reserved.
@@ -47,11 +47,28 @@ Access to the
 .Pa /dev/xf86
 device is allowed when the sysctl variable
 .Va machdep.allowaperture
-= 1.
+>= 1.
 This variable (which default value is 0)
 can only be manipulated when the security level is <= 0, so it should be
 set in
 .Pa /etc/sysctl.conf .
+The possible values for 
+.Va machdep.allowaperture 
+are:
+.Bl -tag -width Ds
+.It 0
+the aperture driver is disabled. Opening it returns
+.Dv EPERM. 
+.It 1
+the aperture driver allows access to standard VGA framebuffer and
+BIOS.
+.It 2
+the aperture driver allow access to the whole 1st megabyte of physical
+memory, for the use of the int10 emulation in XFree86 4.0.x. 
+Note that this can cause some security problems, since the process that has
+access to the aperture driver can also access part of the kernel
+memory. 
+.El
 .Sh SEE ALSO
 .Xr XF86_Accel 1 ,
 .Xr XF86_SVGA 1 ,
