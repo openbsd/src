@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.67 2001/09/29 03:07:57 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.68 2001/09/29 23:26:07 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -103,7 +103,7 @@
 
 #include "com.h"
 
-#if NCOM_ISA || NCOM_ISAPNP
+#if NCOM_ISAPNP
 #include <dev/isa/isavar.h>	/* XXX */
 #endif
 
@@ -121,12 +121,6 @@ int	comprobe __P((struct device *, void *, void *));
 void	comattach __P((struct device *, struct device *, void *));
 void	compwroff __P((struct com_softc *));
 void	com_raisedtr __P((void *));
-
-#if NCOM_ISA
-struct cfattach com_isa_ca = {
-	sizeof(struct com_softc), comprobe, comattach
-};
-#endif
 
 #if NCOM_ISAPNP
 struct cfattach com_isapnp_ca = {
@@ -148,11 +142,7 @@ struct cfdriver com_cd = {
 #define	CONSPEED B9600
 #endif
 
-#ifdef COMCONSOLE
-int	comdefaultrate = CONSPEED;		/* XXX why set default? */
-#else
 int	comdefaultrate = TTYDEF_SPEED;
-#endif
 int	comconsaddr;
 int	comconsinit;
 int	comconsattached;
@@ -184,13 +174,6 @@ void   com_kgdb_putc __P((void *, int));
 #define	ISSET(t, f)	((t) & (f))
 
 /* Macros for determining bus type. */
-#if NCOM_ISA
-#define IS_ISA(parent) \
-    (strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa") == 0)
-#else
-#define IS_ISA(parent) 0
-#endif
-
 #if NCOM_ISAPNP
 #define IS_ISAPNP(parent) \
     (strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isapnp") == 0)
@@ -319,7 +302,7 @@ comprobe(parent, match, aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int iobase, needioh;
+	int iobase;
 	int rv = 1;
 
 	/*
@@ -327,17 +310,13 @@ comprobe(parent, match, aux)
 	 * XXX for commulti probe, with a helper function that contains
 	 * XXX most of the interesting stuff.
 	 */
-#if NCOM_ISA || NCOM_ISAPNP
-	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
+#if NCOM_ISAPNP
+	if (IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
 		iot = ia->ia_iot;
 		iobase = ia->ia_iobase;
-		if (IS_ISAPNP(parent)) {
-			ioh = ia->ia_ioh;
-			needioh = 0;
-		} else
-			needioh = 1;
+		ioh = ia->ia_ioh;
 	} else
 #endif
 #if NCOM_COMMULTI
@@ -351,7 +330,6 @@ comprobe(parent, match, aux)
 		iot = ca->ca_iot;
 		iobase = ca->ca_iobase;
 		ioh = ca->ca_ioh;
-		needioh = 0;
 	} else
 #endif
 		return(0);			/* This cannot happen */
@@ -364,23 +342,8 @@ comprobe(parent, match, aux)
 	if (iobase == comconsaddr && !comconsattached)
 		goto out;
 
-	if (needioh && bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
-		rv = 0;
-		goto out;
-	}
 	rv = comprobe1(iot, ioh);
-	if (needioh)
-		bus_space_unmap(iot, ioh, COM_NPORTS);
-
 out:
-#if NCOM_ISA
-	if (rv && IS_ISA(parent)) {
-		struct isa_attach_args *ia = aux;
-
-		ia->ia_iosize = COM_NPORTS;
-		ia->ia_msize = 0;
-	}
-#endif
 	return (rv);
 }
 
@@ -391,7 +354,7 @@ comattach(parent, self, aux)
 {
 	struct com_softc *sc = (void *)self;
 	int iobase;
-#if NCOM_ISA || NCOM_ISAPNP || NCOM_COMMULTI
+#if NCOM_ISAPNP || NCOM_COMMULTI
 	int irq;
 #endif
 	bus_space_tag_t iot;
@@ -408,8 +371,8 @@ comattach(parent, self, aux)
 	 */
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-#if NCOM_ISA || NCOM_ISAPNP
-	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
+#if NCOM_ISAPNP
+	if (IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
 		/*
@@ -417,30 +380,8 @@ comattach(parent, self, aux)
 		 */
 		iobase = ia->ia_iobase;
 		iot = ia->ia_iot;
-		if (IS_ISAPNP(parent)) {
-			/* No console support! */
-			ioh = ia->ia_ioh;
-		} else {
-#ifdef KGDB
-			if ((iobase != comconsaddr) &&
-			    (iobase != com_kgdb_addr)) {
-#else
-			if (iobase != comconsaddr) {
-#endif
-				if (bus_space_map(iot, iobase, COM_NPORTS, 0,
-				    &ioh))
-					panic("comattach: io mapping failed");
-			} else
-#ifdef KGDB
-				if (iobase == comconsaddr) {
-					ioh = comconsioh;
-				} else {
-					ioh = com_kgdb_ioh;
-				}
-#else
-				ioh = comconsioh;
-#endif
-		}
+		/* No console support! */
+		ioh = ia->ia_ioh;
 		irq = ia->ia_irq;
 	} else
 #endif
@@ -461,10 +402,10 @@ comattach(parent, self, aux)
 	} else
 #endif
 		panic("comattach: impossible");
-#if NCOM_ISA || NCOM_ISAPNP || NCOM_COMMULTI
+#if NCOM_ISAPNP || NCOM_COMMULTI
         if (irq != IRQUNK) {
-#if NCOM_ISA || NCOM_ISAPNP
-	if (IS_ISA(parent) || IS_ISAPNP(parent)) {
+#if NCOM_ISAPNP
+	if (IS_ISAPNP(parent)) {
 		struct isa_attach_args *ia = aux;
 
 #ifdef KGDB     
@@ -670,7 +611,6 @@ com_attach_subr(sc)
 	}
 #endif /* KGDB */
 
-	/* XXX maybe move up some? */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 		int maj;
 
@@ -701,6 +641,7 @@ com_attach_subr(sc)
 	 */
 	if (!sc->enable)
 		sc->enabled = 1;
+
 }
 
 #ifdef KGDB
@@ -1869,11 +1810,7 @@ comcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, CONUNIT);
-#ifdef	COMCONSOLE
-	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
-#else
 	cp->cn_pri = CN_NORMAL;
-#endif
 }
 
 /*
@@ -2014,8 +1951,8 @@ comcnputc(dev, c)
 		cominit(iot, ioh, comdefaultrate);
 		comconsinit = 1;
 	}
-	com_common_putc(comconsiot, comconsioh, c);
 
+	com_common_putc(comconsiot, comconsioh, c);
 }
 
 void
