@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.15 2000/05/01 19:44:10 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.16 2000/10/16 17:22:18 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.15 2000/05/01 19:44:10 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.16 2000/10/16 17:22:18 espie Exp $";
 #endif
 
 /*
@@ -151,14 +151,16 @@ pkg_do(char *pkg)
 	    where_to = Home;
 	    if (unpack(pkg_fullname, extract)) {
 		warnx(
-	"unable to extract table of contents file from `%s' - not a package?",
+	"unable to extract table of contents from `%s'\n"
+	"Is this a Package, or a simple .tgz archive ?  See tar(1).",
 		pkg_fullname);
 		goto bomb;
 	    }
 	    cfile = fopen(CONTENTS_FNAME, "r");
 	    if (!cfile) {
 		warnx(
-	"unable to open table of contents file `%s' - not a package?",
+	"unable to open table of contents file `%s'\n"
+	"Is this a Package, or a simple .tgz archive ?  See tar(1).",
 		CONTENTS_FNAME);
 		goto bomb;
 	    }
