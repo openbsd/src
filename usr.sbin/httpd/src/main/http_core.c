@@ -349,6 +349,7 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
     if (new->cgi_command_args != AP_FLAG_UNSET) {
         conf->cgi_command_args = new->cgi_command_args;
     }
+    ap_server_strip_chroot(conf->d, 0);
 
     return (void*)conf;
 }
@@ -1205,7 +1206,7 @@ static const char *set_document_root(cmd_parms *cmd, void *dummy, char *arg)
 	    return "DocumentRoot must be a directory";
 	}
     }
-    
+    ap_server_strip_chroot(arg, 1);
     conf->ap_document_root = arg;
     return NULL;
 }
@@ -1216,6 +1217,7 @@ API_EXPORT(void) ap_custom_response(request_rec *r, int status, char *string)
 	ap_get_module_config(r->per_dir_config, &core_module);
     int idx;
 
+    ap_server_strip_chroot(conf->d, 0);
     if(conf->response_code_strings == NULL) {
         conf->response_code_strings = 
 	    ap_pcalloc(r->pool,
@@ -1558,6 +1560,7 @@ static const char *dirsection(cmd_parms *cmd, void *dummy, const char *arg)
     *endp = '\0';
 
     cmd->path = ap_getword_conf(cmd->pool, &arg);
+    ap_server_strip_chroot(cmd->path, 1);
     cmd->override = OR_ALL|ACCESS_CONF;
 
     if (thiscmd->cmd_data) { /* <DirectoryMatch> */
@@ -1565,6 +1568,7 @@ static const char *dirsection(cmd_parms *cmd, void *dummy, const char *arg)
     }
     else if (!strcmp(cmd->path, "~")) {
 	cmd->path = ap_getword_conf(cmd->pool, &arg);
+	ap_server_strip_chroot(cmd->path, 1);
 	r = ap_pregcomp(cmd->pool, cmd->path, REG_EXTENDED|USE_ICASE);
     }
 #if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
@@ -1639,6 +1643,7 @@ static const char *urlsection(cmd_parms *cmd, void *dummy, const char *arg)
     *endp = '\0';
 
     cmd->path = ap_getword_conf(cmd->pool, &arg);
+    ap_server_strip_chroot(cmd->path, 0);
     cmd->override = OR_ALL|ACCESS_CONF;
 
     if (thiscmd->cmd_data) { /* <LocationMatch> */
@@ -1646,6 +1651,7 @@ static const char *urlsection(cmd_parms *cmd, void *dummy, const char *arg)
     }
     else if (!strcmp(cmd->path, "~")) {
 	cmd->path = ap_getword_conf(cmd->pool, &arg);
+	ap_server_strip_chroot(cmd->path, 0);
 	r = ap_pregcomp(cmd->pool, cmd->path, REG_EXTENDED);
     }
 
@@ -1707,6 +1713,7 @@ static const char *filesection(cmd_parms *cmd, core_dir_config *c,
     *endp = '\0';
 
     cmd->path = ap_getword_conf(cmd->pool, &arg);
+    ap_server_strip_chroot(cmd->path, 1);
     /* Only if not an .htaccess file */
     if (!old_path) {
 	cmd->override = OR_ALL|ACCESS_CONF;
@@ -1717,6 +1724,7 @@ static const char *filesection(cmd_parms *cmd, core_dir_config *c,
     }
     else if (!strcmp(cmd->path, "~")) {
 	cmd->path = ap_getword_conf(cmd->pool, &arg);
+	ap_server_strip_chroot(cmd->path, 1);
 	r = ap_pregcomp(cmd->pool, cmd->path, REG_EXTENDED|USE_ICASE);
     }
     else {

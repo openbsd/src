@@ -177,13 +177,17 @@ void ssl_mutex_file_open(server_rec *s, pool *p)
 {
 #ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
+    char mutexfile[MAXPATHLEN];
+
+    strlcpy(mutexfile, mc->szMutexFile, sizeof(mutexfile));
+    ap_server_strip_chroot(mutexfile, 0);
 
     /* open the lockfile (once per child) to get a unique fd */
-    if ((mc->nMutexFD = ap_popenf(p, mc->szMutexFile,
+    if ((mc->nMutexFD = ap_popenf(p, mutexfile,
                                   O_WRONLY, SSL_MUTEX_LOCK_MODE)) < 0) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
                 "Child could not open SSLMutex lockfile %s",
-                mc->szMutexFile);
+                mutexfile);
         ssl_die();
     }
 #endif
@@ -194,9 +198,12 @@ void ssl_mutex_file_remove(void *data)
 {
 #ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
+    char mutexfile[MAXPATHLEN];
+    strlcpy(mutexfile, mc->szMutexFile, sizeof(mutexfile));
+    ap_server_strip_chroot(mutexfile, 0);
 
     /* remove the mutex lockfile */
-    unlink(mc->szMutexFile);
+    unlink(mutexfile);
 #endif
     return;
 }

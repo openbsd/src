@@ -284,6 +284,7 @@
 #define SSL_MUTEX_LOCK_MODE (_S_IREAD|_S_IWRITE )
 #endif
 #if defined(USE_SYSVSEM_SERIALIZED_ACCEPT) ||\
+    defined(__OpenBSD__) ||\
     (defined(__FreeBSD__) && defined(__FreeBSD_version) &&\
      __FreeBSD_version >= 300000) ||\
     (defined(LINUX) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) &&\

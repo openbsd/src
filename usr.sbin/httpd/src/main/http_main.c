@@ -318,6 +318,9 @@ API_VAR_EXPORT array_header *ap_server_pre_read_config=NULL;
 API_VAR_EXPORT array_header *ap_server_post_read_config=NULL;
 API_VAR_EXPORT array_header *ap_server_config_defines=NULL;
 
+API_VAR_EXPORT int ap_server_chroot=1;
+API_VAR_EXPORT int is_chrooted=0;
+
 /* *Non*-shared http_main globals... */
 
 static server_rec *server_conf;
@@ -978,6 +981,7 @@ static void accept_mutex_child_init_flock(pool *p)
 static void accept_mutex_init_flock(pool *p)
 {
     expand_lock_fname(p);
+    ap_server_strip_chroot(ap_lock_fname, 0);
     unlink(ap_lock_fname);
     flock_fd = ap_popenf(p, ap_lock_fname, O_CREAT | O_WRONLY | O_EXCL, 0600);
     if (flock_fd == -1) {
@@ -1384,7 +1388,7 @@ static void usage(char *bin)
     fprintf(stderr, "Usage: %s [-D name] [-d directory] [-f file]\n", bin);
 #endif
     fprintf(stderr, "       %s [-C \"directive\"] [-c \"directive\"]\n", pad);
-    fprintf(stderr, "       %s [-v] [-V] [-h] [-l] [-L] [-S] [-t] [-T]\n", pad);
+    fprintf(stderr, "       %s [-v] [-V] [-h] [-l] [-L] [-S] [-t] [-T] [-u]\n", pad);
     fprintf(stderr, "Options:\n");
 #ifdef SHARED_CORE
     fprintf(stderr, "  -R directory     : specify an alternate location for shared object files\n");
@@ -4285,6 +4289,8 @@ static void child_main(int child_num_arg)
     my_child_num = child_num_arg;
     requests_this_child = 0;
 
+    setproctitle("child");
+
     /* Get a sub pool for global allocations in this child, so that
      * we can have cleanups occur when the child exits.
      */
@@ -5139,6 +5145,38 @@ static void standalone_main(int argc, char **argv)
 	ap_set_version();	/* create our server_version string */
 	ap_init_modules(pconf, server_conf);
 	version_locked++;	/* no more changes to server_version */
+
+	if(!is_graceful && ap_server_chroot) {
+	    if (geteuid()) {
+		ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
+		   "can't run in secure mode if not started with root privs.");
+		exit(1);
+	    }
+
+	    if(chroot(ap_server_root) < 0) {
+		ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
+		    "unable to chroot into %s!", ap_server_root);
+		exit(1);
+	    }
+	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
+		"chrooted in %s", ap_server_root);
+	    chdir("/");
+	    is_chrooted = 1;
+	    setproctitle("parent [chroot %s]", ap_server_root);
+
+	    if ( setgroups(1, &ap_group_id) || setegid(ap_group_id) ||
+		setgid(ap_group_id) || seteuid(ap_user_id) || 
+		setuid(ap_user_id) ) {
+		    ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
+			"can't drop priviliges!");
+		    exit(1);
+	    } else
+		ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
+		    server_conf, "changed to uid %ld, gid %ld",
+		    (long)ap_user_id, (long)ap_group_id);
+	} else
+	    setproctitle("parent");
+
 	SAFE_ACCEPT(accept_mutex_init(pconf));
 	if (!is_graceful) {
 	    reinit_scoreboard(pconf);
@@ -5279,6 +5317,7 @@ static void standalone_main(int argc, char **argv)
 	    {
 		const char *pidfile = NULL;
 		pidfile = ap_server_root_relative (pconf, ap_pid_fname);
+		ap_server_strip_chroot(pidfile, 0);
 		if ( pidfile != NULL && unlink(pidfile) == 0)
 		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
 				 server_conf,
@@ -5407,7 +5446,7 @@ int REALMAIN(int argc, char *argv[])
     ap_setup_prelinked_modules();
 
     while ((c = getopt(argc, argv,
-				    "D:C:c:xXd:f:vVlLR:StTh"
+				    "D:C:c:xXd:f:vVlLR:StThu"
 #ifdef DEBUG_SIGSTOP
 				    "Z:"
 #endif
@@ -5484,6 +5523,9 @@ int REALMAIN(int argc, char *argv[])
 	    break;
 	case 'h':
 	    usage(argv[0]);
+	case 'u':
+	    ap_server_chroot = 0;
+	    break;
 	case '?':
 	    usage(argv[0]);
 	}
@@ -7966,4 +8008,16 @@ const XML_LChar *suck_in_expat(void)
     return XML_ErrorString(XML_ERROR_NONE);
 }
 #endif /* USE_EXPAT */
+
+API_EXPORT(int) ap_server_strip_chroot(char *src, int force)
+{
+    char buf[MAX_STRING_LEN];
+
+    if(src != NULL && ap_server_chroot && (is_chrooted || force)) {
+	if (strncmp(ap_server_root, src, strlen(ap_server_root)) == 0) {
+	    strlcpy(buf, src+strlen(ap_server_root), MAX_STRING_LEN);
+	    strlcpy(src, buf, strlen(src));
+	} 
+    }
+}
 

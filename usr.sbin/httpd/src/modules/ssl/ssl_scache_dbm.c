@@ -120,6 +120,7 @@ void ssl_scache_dbm_kill(server_rec *s)
 
     if ((p = ap_make_sub_pool(NULL)) != NULL) {
         /* the correct way */
+        ap_server_strip_chroot(mc->szSessionCacheDataFile, 0);
         unlink(ap_pstrcat(p, mc->szSessionCacheDataFile, SSL_DBM_FILE_SUFFIX_DIR, NULL));
         unlink(ap_pstrcat(p, mc->szSessionCacheDataFile, SSL_DBM_FILE_SUFFIX_PAG, NULL));
         /* the additional ways to be sure */
@@ -171,6 +172,7 @@ BOOL ssl_scache_dbm_store(server_rec *s, UCHAR *id, int idlen, time_t expiry, SS
 
     /* and store it to the DBM file */
     ssl_mutex_on(s);
+    ap_server_strip_chroot(mc->szSessionCacheDataFile, 0);
     if ((dbm = ssl_dbm_open(mc->szSessionCacheDataFile,
                             O_RDWR, SSL_DBM_FILE_MODE)) == NULL) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
@@ -222,6 +224,7 @@ SSL_SESSION *ssl_scache_dbm_retrieve(server_rec *s, UCHAR *id, int idlen)
 
     /* and fetch it from the DBM file */
     ssl_mutex_on(s);
+    ap_server_strip_chroot(mc->szSessionCacheDataFile);
     if ((dbm = ssl_dbm_open(mc->szSessionCacheDataFile,
                             O_RDONLY, SSL_DBM_FILE_MODE)) == NULL) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
@@ -271,6 +274,7 @@ void ssl_scache_dbm_remove(server_rec *s, UCHAR *id, int idlen)
 
     /* and delete it from the DBM file */
     ssl_mutex_on(s);
+    ap_server_strip_chroot(mc->szSessionCacheDataFile, 0);
     if ((dbm = ssl_dbm_open(mc->szSessionCacheDataFile,
                             O_RDWR, SSL_DBM_FILE_MODE)) == NULL) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
@@ -338,6 +342,7 @@ void ssl_scache_dbm_expire(server_rec *s)
 
         /* pass 1: scan DBM database */
         keyidx = 0;
+	ap_server_strip_chroot(mc->szSessionCacheDataFile, 0);
         if ((dbm = ssl_dbm_open(mc->szSessionCacheDataFile,
                                 O_RDWR, SSL_DBM_FILE_MODE)) == NULL) {
             ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
@@ -412,6 +417,7 @@ void ssl_scache_dbm_status(server_rec *s, pool *p, void (*func)(char *, void *),
     nElem = 0;
     nSize = 0;
     ssl_mutex_on(s);
+    ap_server_strip_chroot(mc->szSessionCacheDataFile, 0);
     if ((dbm = ssl_dbm_open(mc->szSessionCacheDataFile,
                             O_RDONLY, SSL_DBM_FILE_MODE)) == NULL) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
