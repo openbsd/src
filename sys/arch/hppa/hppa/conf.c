@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 1998/12/23 17:55:36 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 1999/04/20 20:38:11 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -86,17 +86,29 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_wscons_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect /* ttpoll */, dev_init(c,n,mmap), D_TTY }
+	dev_init(c,n,tty), ttselect /* ttpoll */, dev_init(c,n,mmap) }
+
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl),(dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
 
 #define mmread  mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
 cdev_decl(sw);
 #include "pty.h"
-#include "wscons.h"
-cdev_decl(wscons);
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
 #include "bpfilter.h"   
 #include "tun.h"
+
+#include "ksyms.h"
+cdev_decl(ksyms);
+
+#include "lpt.h"
+cdev_decl(lpt);
 
 #include "com.h"
 cdev_decl(com);
@@ -131,12 +143,21 @@ struct cdevsw   cdevsw[] =
 	cdev_lkm_init(NLKM,lkm),        /* 19: loadable module driver */
 	cdev_random_init(1,random),     /* 20: random generator */
 	cdev_gen_ipf(NIPF,ipl),         /* 21: ip filtering */
-	cdev_wscons_init(NWSCONS,wscons), /* 22: workstation console */
-	cdev_tty_init(1,pdc),		/* 23: PDC device */
-	cdev_tty_init(NCOM,com),	/* 24: RS232 */
-	cdev_disk_init(NFD,fd),		/* 25: floppy drive */
-	cdev_tape_init(NFT,ft),		/* 26: floppy tape */
-					/* 27 */
+	cdev_tty_init(1,pdc),		/* 22: PDC device */
+	cdev_tty_init(NCOM,com),	/* 23: RS232 */
+	cdev_disk_init(NFD,fd),		/* 24: floppy drive */
+	cdev_tape_init(NFT,ft),		/* 25: floppy tape */
+	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* 26: workstation console */
+	cdev_mouse_init(NWSKBD,wskbd),	/* 27: keyboards */
+	cdev_mouse_init(NWSMOUSE,wsmouse), /* 28: mice */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 29: Kernel symbols device */
+	cdev_lpt_init(NLPT,lpt),	/* 30: parallel printer */
+#ifdef XFS
+	cdev_xfs_init(NXFS,xfs_dev),	/* 31: xfs communication device */
+#else
+	cdev_notdef(),			/* 31 */
+#endif
+					/* 32 */
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
@@ -247,12 +268,12 @@ iskmemdev(dev)
 #include <dev/cons.h>
 
 cons_decl(pdc);
-cons_decl(wscons);
+/*cons_decl(wscons);*/
 cons_decl(com);
 
 struct  consdev constab[] = {
 	cons_init(pdc),		/* XXX you'd better leave it here for pdc.c */
-#if NWSCONS > 0
+#if NWSCONS1 > 0
 	cons_init(wscons),
 #endif
 #if NCOM > 0
