@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.35 1998/09/28 12:34:51 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.36 1998/09/28 13:19:48 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -188,7 +188,7 @@ You will be prompted for the mount point (full path, including the prepending
 partition or "done" when you are finished.
 __get_filesystems_1
 
-		if [ "${DISK}" = "${ROOTDISK}" -a "${ROOTDISK}" != "nfs"]; then
+		if [ "${DISK}" = "${ROOTDISK}" -a "${ROOTDISK}" != "nfs" ]; then
 			echo
 			echo	"The following partitions will be used for the root filesystem and swap:"
 			echo	"	${ROOTDISK}a	/"
