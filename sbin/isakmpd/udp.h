@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.h,v 1.3 1998/11/17 11:10:21 niklas Exp $	*/
-/*	$EOM: udp.h,v 1.3 1998/10/08 20:22:18 niklas Exp $	*/
+/*	$OpenBSD: udp.h,v 1.4 1998/12/22 02:25:15 niklas Exp $	*/
+/*	$EOM: udp.h,v 1.4 1998/12/22 02:23:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,7 @@
 extern in_port_t udp_default_port;
 extern in_port_t udp_bind_port;
 
+extern in_port_t udp_decode_port (char *);
 extern void udp_init (void);
 
 #endif /* _UDP_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.5 1998/12/22 01:46:04 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.24 1998/12/22 01:40:23 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.6 1998/12/22 02:25:15 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.25 1998/12/22 02:23:42 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -224,31 +224,13 @@ udp_create (char *name)
   char *addr_str, *port_str;
   in_addr_t addr;
   in_port_t port;
-  char *port_str_end;
-  long port_long;
-  struct servent *service;
 
   port_str = conf_get_str (name, "Port");
   if (port_str)
     {
-      port_long = strtol (port_str, &port_str_end, 0);
-      if (port_str == port_str_end)
-	{
-	  service = getservbyname (port_str, "udp");
-	  if (!service)
-	    {
-	      log_print ("udp_create: service \"%s\" unknown", port_str);
-	      return 0;
-	    }
-	  port = service->s_port;
-	}
-      else if (port_long < 1 || port_long > 65535)
-	{
-	  log_print ("udp_create: port %l out of range", port_long);
-	  return 0;
-	}
-      else
-	port = port_long;
+      port = udp_decode_port (port_str);
+      if (!port)
+	return 0;
     }
   else
     port = UDP_DEFAULT_PORT;
@@ -421,4 +403,35 @@ udp_get_src (struct transport *t, struct sockaddr **src, int *src_len)
 {
   *src = (struct sockaddr *)&((struct udp_transport *)t)->src;
   *src_len = sizeof ((struct udp_transport *)t)->src;
+}
+
+/*
+ * Take a string containing an ext representation of port and return a
+ * binary port number.  Return zero if anything goes wrong.
+ */
+in_port_t
+udp_decode_port (char *port_str)
+{
+  char *port_str_end;
+  long port_long;
+  struct servent *service;
+
+  port_long = strtol (port_str, &port_str_end, 0);
+  if (port_str == port_str_end)
+    {
+      service = getservbyname (port_str, "udp");
+      if (!service)
+	{
+	  log_print ("udp_decode_port: service \"%s\" unknown", port_str);
+	  return 0;
+	}
+      return service->s_port;
+    }
+  else if (port_long < 1 || port_long > 65535)
+    {
+      log_print ("udp_decode_port: port %ld out of range", port_long);
+      return 0;
+    }
+
+  return port_long;
 }

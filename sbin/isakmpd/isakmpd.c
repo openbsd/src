@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.5 1998/12/21 01:02:25 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.24 1998/12/01 10:18:43 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.6 1998/12/22 02:25:16 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.25 1998/12/22 02:23:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -51,9 +51,6 @@
 #include "transport.h"
 #include "udp.h"
 #include "ui.h"
-
-extern char *optarg;
-extern int optind;
 
 /*
  * Set if -d is given, currently just for running in the foreground and log
@@ -117,10 +114,14 @@ parse_args (int argc, char *argv[])
       app_none++;
       break;
     case 'p':
-      udp_default_port = atoi (optarg);
+      udp_default_port = udp_decode_port (optarg);
+      if (!udp_default_port)
+	exit (1);
       break;
     case 'P':
-      udp_bind_port = atoi (optarg);
+      udp_bind_port = udp_decode_port (optarg);
+      if (!udp_bind_port)
+	exit (1);
       break;
     case 'r':
       srandom (strtoul (optarg, NULL, 0));
