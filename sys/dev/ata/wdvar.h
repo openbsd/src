@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.8 2003/09/28 21:01:42 grange Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.9 2003/10/16 20:03:40 grange Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -52,11 +52,11 @@ struct ata_bio {
     long    bcount; /* total number of bytes */
     char   *databuf; /* data buffer adress */
     volatile int error;
-#define NOERROR 0 /* There was no error (r_error invalid) */
-#define ERROR   1 /* check r_error */
-#define ERR_DF	2 /* Drive fault */
-#define ERR_DMA 3 /* DMA error */
-#define TIMEOUT 4 /* device timed out */
+#define NOERROR   0 /* There was no error (r_error invalid) */
+#define ERROR     1 /* check r_error */
+#define ERR_DF    2 /* Drive fault */
+#define ERR_DMA   3 /* DMA error */
+#define TIMEOUT   4 /* device timed out */
 #define ERR_NODEV 5 /* device bas been detached */
     u_int8_t r_error; /* copy of error register */
     daddr_t badsect[127];    /* 126 plus trailing -1 marker */
@@ -66,7 +66,7 @@ struct ata_bio {
 /* drive states stored in ata_drive_datas */
 #define RECAL          0
 #define RECAL_WAIT     1
-#define PIOMODE	       2
+#define PIOMODE        2
 #define PIOMODE_WAIT   3
 #define DMAMODE        4
 #define DMAMODE_WAIT   5

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atareg.h,v 1.9 2003/10/16 10:02:45 grange Exp $	*/
+/*	$OpenBSD: atareg.h,v 1.10 2003/10/16 20:03:40 grange Exp $	*/
 /*	$NetBSD: atareg.h,v 1.5 1999/01/18 20:06:24 bouyer Exp $	*/
 
 #ifndef __DEV_ATA_ATAREG_H__
@@ -13,10 +13,10 @@
 struct ataparams {
     /* drive info */
     u_int16_t	atap_config;		/* 0: general configuration */
-#define WDC_CFG_ATAPI_MASK    		0xc000
-#define WDC_CFG_ATAPI    		0x8000
-#define	ATA_CFG_REMOVABLE		0x0080
-#define	ATA_CFG_FIXED			0x0040
+#define WDC_CFG_ATAPI_MASK		0xc000
+#define WDC_CFG_ATAPI			0x8000
+#define ATA_CFG_REMOVABLE		0x0080
+#define ATA_CFG_FIXED			0x0040
 #define ATAPI_CFG_TYPE_MASK		0x1f00
 #define ATAPI_CFG_TYPE(x)		(((x) & ATAPI_CFG_TYPE_MASK) >> 8)
 #define ATAPI_CFG_TYPE_DIRECT		0x00
@@ -24,7 +24,7 @@ struct ataparams {
 #define ATAPI_CFG_TYPE_CDROM		0x05
 #define ATAPI_CFG_TYPE_OPTICAL		0x07
 #define ATAPI_CFG_TYPE_NODEVICE		0x1F
-#define	ATAPI_CFG_REMOV			0x0080
+#define ATAPI_CFG_REMOV			0x0080
 #define ATAPI_CFG_DRQ_MASK		0x0060
 #define ATAPI_CFG_STD_DRQ		0x0000
 #define ATAPI_CFG_IRQ_DRQ		0x0020
@@ -50,12 +50,12 @@ struct ataparams {
     u_int16_t	atap_capabilities1;	/* 49: capability flags */
 #define WDC_CAP_IORDY	0x0800
 #define WDC_CAP_IORDY_DSBL 0x0400
-#define	WDC_CAP_LBA	0x0200
-#define	WDC_CAP_DMA	0x0100
+#define WDC_CAP_LBA	0x0200
+#define WDC_CAP_DMA	0x0100
 #define ATA_CAP_STBY	0x2000
 #define ATAPI_CAP_INTERL_DMA	0x8000
 #define ATAPI_CAP_CMD_QUEUE	0x4000
-#define	ATAPI_CAP_OVERLP	0x2000
+#define ATAPI_CAP_OVERLP	0x2000
 #define ATAPI_CAP_ATA_RST	0x1000
     u_int16_t	atap_capabilities2;	/* 50: capability flags (ATA) */
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -81,29 +81,29 @@ struct ataparams {
     u_int16_t	atap_curmulti;		/* 59: current multi-sector setting */
 #define WDC_MULTI_VALID 0x0100
 #define WDC_MULTI_MASK  0x00ff
-    u_int16_t	atap_capacity[2];  	/* 60-61: total capacity (LBA only) */
+    u_int16_t	atap_capacity[2];	/* 60-61: total capacity (LBA only) */
     u_int16_t	__retired4;
 #if BYTE_ORDER == LITTLE_ENDIAN
-    u_int8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
-    u_int8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
-    u_int8_t	atap_piomode_supp;       /* 64: PIO mode supported */
+    u_int8_t	atap_dmamode_supp;	/* 63: multiword DMA mode supported */
+    u_int8_t	atap_dmamode_act;	/*     multiword DMA mode active */
+    u_int8_t	atap_piomode_supp;	/* 64: PIO mode supported */
     u_int8_t	__junk4;
 #else
-    u_int8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
-    u_int8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
+    u_int8_t	atap_dmamode_act;	/*     multiword DMA mode active */
+    u_int8_t	atap_dmamode_supp;	/* 63: multiword DMA mode supported */
     u_int8_t	__junk4;
-    u_int8_t	atap_piomode_supp;       /* 64: PIO mode supported */
+    u_int8_t	atap_piomode_supp;	/* 64: PIO mode supported */
 #endif
     u_int16_t	atap_dmatiming_mimi;	/* 65: minimum DMA cycle time */
     u_int16_t	atap_dmatiming_recom;	/* 66: recomended DMA cycle time */
-    u_int16_t	atap_piotiming;    	/* 67: mini PIO cycle time without FC */
+    u_int16_t	atap_piotiming;		/* 67: mini PIO cycle time without FC */
     u_int16_t	atap_piotiming_iordy;	/* 68: mini PIO cycle time with IORDY FC */
     u_int16_t	__reserved3[2];
 /* words 71-72 are ATAPI only */
     u_int16_t	atap_pkt_br;		/* 71: time (ns) to bus release */
     u_int16_t	atap_pkt_bsyclr;	/* 72: tme to clear BSY after service */
     u_int16_t	__reserved4[2];
-    u_int16_t	atap_queuedepth;   	/* 75: */
+    u_int16_t	atap_queuedepth;	/* 75: */
 #define WDC_QUEUE_DEPTH_MASK 0x1f
     u_int16_t	atap_sata_caps;		/* 76: SATA capabilities */
 #define SATA_SIGNAL_GEN1	0x0002	/* SATA Gen-1 signaling speed */
@@ -116,23 +116,23 @@ struct ataparams {
 #define SATA_DMA_SETUP_AUTO	0x0004	/* DMA setup auto-activate */
 #define SATA_DRIVE_PWR_MGMT	0x0008	/* power management (device) */
     u_int16_t	atap_sata_features_en;	/* 79: SATA features enabled */
-    u_int16_t	atap_ata_major;  	/* 80: Major version number */
-#define	WDC_VER_ATA1	0x0002
-#define	WDC_VER_ATA2	0x0004
-#define	WDC_VER_ATA3	0x0008
-#define	WDC_VER_ATA4	0x0010
-#define	WDC_VER_ATA5	0x0020
-#define	WDC_VER_ATA6	0x0040
-#define	WDC_VER_ATA7	0x0080
-#define	WDC_VER_ATA8	0x0100
-#define	WDC_VER_ATA9	0x0200
-#define	WDC_VER_ATA10	0x0400
-#define	WDC_VER_ATA11	0x0800
-#define	WDC_VER_ATA12	0x1000
-#define	WDC_VER_ATA13	0x2000
-#define	WDC_VER_ATA14	0x4000
-    u_int16_t   atap_ata_minor;  	/* 81: Minor version number */
-    u_int16_t	atap_cmd_set1;    	/* 82: command set supported */
+    u_int16_t	atap_ata_major;		/* 80: Major version number */
+#define WDC_VER_ATA1	0x0002
+#define WDC_VER_ATA2	0x0004
+#define WDC_VER_ATA3	0x0008
+#define WDC_VER_ATA4	0x0010
+#define WDC_VER_ATA5	0x0020
+#define WDC_VER_ATA6	0x0040
+#define WDC_VER_ATA7	0x0080
+#define WDC_VER_ATA8	0x0100
+#define WDC_VER_ATA9	0x0200
+#define WDC_VER_ATA10	0x0400
+#define WDC_VER_ATA11	0x0800
+#define WDC_VER_ATA12	0x1000
+#define WDC_VER_ATA13	0x2000
+#define WDC_VER_ATA14	0x4000
+    u_int16_t	atap_ata_minor;		/* 81: Minor version number */
+    u_int16_t	atap_cmd_set1;		/* 82: command set supported */
 #define WDC_CMD1_NOP	0x4000
 #define WDC_CMD1_RB	0x2000
 #define WDC_CMD1_WB	0x1000
@@ -147,7 +147,7 @@ struct ataparams {
 #define WDC_CMD1_REMOV	0x0004
 #define WDC_CMD1_SEC	0x0002
 #define WDC_CMD1_SMART	0x0001
-    u_int16_t	atap_cmd_set2;    	/* 83: command set supported */
+    u_int16_t	atap_cmd_set2;		/* 83: command set supported */
 #define ATAPI_CMD2_FCE	0x2000 /* Flush Cache Ext supported */
 #define ATAPI_CMD2_FC	0x1000 /* Flush Cache supported */
 #define ATAPI_CMD2_DCO	0x0800 /* Device Configuration Overlay supported */
@@ -172,11 +172,11 @@ struct ataparams {
     u_int16_t	atap_cmd_def;		/* 87: cmd/features default */
 /* bits are NOT the same as atap_cmd_ext */
 #if BYTE_ORDER == LITTLE_ENDIAN
-    u_int8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
-    u_int8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
+    u_int8_t	atap_udmamode_supp;	/* 88: Ultra-DMA mode supported */
+    u_int8_t	atap_udmamode_act;	/*     Ultra-DMA mode active */
 #else
-    u_int8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
-    u_int8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
+    u_int8_t	atap_udmamode_act;	/*     Ultra-DMA mode active */
+    u_int8_t	atap_udmamode_supp;	/* 88: Ultra-DMA mode supported */
 #endif
 /* 89-92 are ATA-only */
     u_int16_t	atap_seu_time;		/* 89: Sec. Erase Unit compl. time */
@@ -195,11 +195,11 @@ struct ataparams {
 #define ATA_HWRES_D0_CSEL  0x0004  /* Device 0 used CSEL for address */
 #define ATA_HWRES_D0_JUMP  0x0002  /* Device 0 jumpered to address */
 #if BYTE_ORDER == LITTLE_ENDIAN
-    u_int8_t	atap_acoustic_val; 	/* 94: Current acoustic level */
-    u_int8_t	atap_acoustic_def; 	/*     recommended level */
+    u_int8_t	atap_acoustic_val;	/* 94: Current acoustic level */
+    u_int8_t	atap_acoustic_def;	/*     recommended level */
 #else
-    u_int8_t	atap_acoustic_def; 	/*     recommended level */
-    u_int8_t	atap_acoustic_val; 	/* 94: Current acoustic level */
+    u_int8_t	atap_acoustic_def;	/*     recommended level */
+    u_int8_t	atap_acoustic_val;	/* 94: Current acoustic level */
 #endif
     u_int16_t	__reserved6[5];		/* 95-99: reserved */
     u_int16_t	atap_max_lba[4];	/* 100-103: Max. user LBA add */
@@ -217,7 +217,7 @@ struct ataparams {
 #define WDC_SEC_SUPP	0x0001
     u_int16_t	__reserved8[31];	/* 129-159: vendor specific */
     u_int16_t	atap_cfa_power;		/* 160: CFA powermode */
-#define	ATAPI_CFA_MAX_MASK 0x0FFF
+#define ATAPI_CFA_MAX_MASK  0x0FFF
 #define ATAPI_CFA_MODE1_DIS 0x1000 /* CFA Mode 1 Disabled */
 #define ATAPI_CFA_MODE1_REQ 0x2000 /* CFA Mode 1 Required */
 #define ATAPI_CFA_WORD160   0x8000 /* Word 160 supported */
@@ -225,11 +225,11 @@ struct ataparams {
     u_int8_t	atap_media_serial[60];	/* 176-205: media serial number */
     u_int16_t	__reserved10[49];	/* 206-254: reserved */
 #if BYTE_ORDER == LITTLE_ENDIAN
-    u_int8_t	atap_signature; 	/* 255: Signature */
-    u_int8_t	atap_checksum; 		/*      Checksum */
+    u_int8_t	atap_signature;		/* 255: Signature */
+    u_int8_t	atap_checksum;		/*      Checksum */
 #else
-    u_int8_t	atap_checksum; 		/*      Checksum */
-    u_int8_t	atap_signature; 	/* 255: Signature */
+    u_int8_t	atap_checksum;		/*      Checksum */
+    u_int8_t	atap_signature;		/* 255: Signature */
 #endif
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.14 2003/09/28 21:01:42 grange Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.15 2003/10/16 20:03:40 grange Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -148,9 +148,9 @@ struct wdc_command {
 #define AT_TIMEOU   0x0080 /* command timed out */
 #define AT_DF       0x0100 /* Drive fault */
 #define AT_READREG  0x0200 /* Read registers on completion */
-    int timeout;	 /* timeout (in ms) */
+    int timeout;         /* timeout (in ms) */
     void *data;          /* Data buffer address */
-    int bcount;           /* number of bytes to transfer */
+    int bcount;          /* number of bytes to transfer */
     void (*callback)(void *); /* command to call once command completed */
     void *callback_arg;  /* argument passed to *callback() */
 };
@@ -158,8 +158,8 @@ struct wdc_command {
 extern int at_poll;
 
 int wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
-#define WDC_COMPLETE 0x01
-#define WDC_QUEUED   0x02
+#define WDC_COMPLETE  0x01
+#define WDC_QUEUED    0x02
 #define WDC_TRY_AGAIN 0x03
 
 void wdc_probe_caps(struct ata_drive_datas*, struct ataparams *);
@@ -173,7 +173,7 @@ void wdc_ata_delref(struct ata_drive_datas *);
 void wdc_ata_kill_pending(struct ata_drive_datas *);
 
 int ata_get_params(struct ata_drive_datas*, u_int8_t,
-	 struct ataparams *);
+	struct ataparams *);
 int ata_set_mode(struct ata_drive_datas*, u_int8_t, u_int8_t);
 /* return code for these cmds */
 #define CMD_OK    0
