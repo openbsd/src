@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2001/07/11 03:02:25 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.8 2001/09/07 20:08:27 jason Exp $
 
 PROG=	config
 BINDIR=	/usr/sbin
@@ -6,7 +6,7 @@ SRCS=	files.c gram.y hash.c main.c mkheaders.c mkioconf.c mkmakefile.c \
 	mkswap.c pack.c scan.l sem.c util.c \
 	ukc.c misc.c ukcutil.c cmd.c exec.c
 .if (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "hppa") || \
-    (${MACHINE_ARCH} == "alpha")
+    (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "sparc64")
 CFLAGS+=-DELF_SUPPORT
 SRCS+=  exec_elf.c
 .else
