@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.33 2002/03/15 22:15:09 art Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.34 2002/05/10 15:50:55 art Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  * aligns the packet after the Ethernet header at a 32-bit
  * boundary.  HOWEVER!  This means that the RFA is misaligned!
  */
-#define	RFA_ALIGNMENT_FUDGE	(2 + sizeof(bus_dmamap_t))
+#define	RFA_ALIGNMENT_FUDGE	(2 + sizeof(bus_dmamap_t *))
 
 /*
  * Inline function to copy a 16-bit aligned 32-bit quantity.
