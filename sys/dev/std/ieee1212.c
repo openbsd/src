@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1212.c,v 1.5 2002/12/30 11:26:48 tdeval Exp $	*/
+/*	$OpenBSD: ieee1212.c,v 1.6 2003/01/12 12:06:28 tdeval Exp $	*/
 /*	$NetBSD: ieee1212.c,v 1.3 2002/05/23 00:10:46 jmc Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 static const char * const p1212_keytype_strings[] = P1212_KEYTYPE_STRINGS;
 static const char * const p1212_keyvalue_strings[] = P1212_KEYVALUE_STRINGS;
 
-u_int16_t p1212_calc_crc(u_int32_t, u_int32_t *, int, int);
+u_int16_t p1212_calc_crc(u_int16_t, u_int32_t *, int, int);
 int p1212_parse_directory(struct p1212_dir *, u_int32_t *, u_int32_t);
 struct p1212_leafdata *p1212_parse_leaf(u_int32_t *);
 int p1212_parse_textdir(struct p1212_com *, u_int32_t *);
@@ -140,7 +140,7 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 	 * within the image stored so far. If not, get those as well.
 	 */
 
-	offset = P1212_ROMFMT_GET_INFOLEN((ntohl(t[0]))) + 1;
+	offset = infolen + 1;
 
 	/*
 	 * Make sure at least the bus info block is in memory + the root dir
@@ -321,7 +321,7 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	u_int16_t crc, romcrc, crc1, crc2;
 	u_int32_t next, check;
 	struct p1212_rom *rom;
-	int i;
+	int i, crclen;
 
 	check = size;
 
@@ -338,15 +338,14 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 
 	/* CRC's are calculated from everything except the first quad. */
 
-	crc = p1212_calc_crc(0, &t[1], P1212_ROMFMT_GET_CRCLEN((ntohl(t[0]))),
-		0);
-
+	crclen = P1212_ROMFMT_GET_CRCLEN((ntohl(t[0])));
 	romcrc = P1212_ROMFMT_GET_CRC((ntohl(t[0])));
+
+	crc = p1212_calc_crc(0, &t[1], crclen, 0);
+
 	if (crc != romcrc) {
-		crc1 = p1212_calc_crc(0, &t[1],
-		    P1212_ROMFMT_GET_CRCLEN((ntohl(t[0]))), 1);
-		crc2 = p1212_calc_crc(0, &t[1],
-		    P1212_ROMFMT_GET_CRCLEN((ntohl(t[0]))), 2);
+		crc1 = p1212_calc_crc(0, &t[1], crclen, 1);
+		crc2 = p1212_calc_crc(0, &t[1], crclen, 2);
 		if ((crc1 != romcrc) && (crc2 != romcrc)) {
 			DPRINTF(("Invalid ROM: CRC: 0x%04hx, Calculated "
 			    "CRC: 0x%04hx, CRC1: 0x%04hx, CRC2: 0x%04hx\n",
@@ -1403,43 +1402,34 @@ p1212_free(struct p1212_rom *rom)
  */
 
 u_int16_t
-p1212_calc_crc(u_int32_t crc, u_int32_t *data, int len, int broke)
+p1212_calc_crc(u_int16_t seed, u_int32_t *data, int len, int broke)
 {
-	int shift;
-	u_int32_t sum;
-	int i;
+	u_int16_t sum, crc = seed;
+	int i, shift;
 
 	for (i = 0; i < len; i++) {
-		for (shift = 28; shift > 0; shift -= 4) {
+		for (shift = 28; shift >= 0; shift -= 4) {
+			/*
+			 * The 1st broken implementation doesn't do the
+			 * last shift.
+			 */
+			if (shift == 0 && broke == 1)
+				break;
+
 			if (broke == 2)
 				sum = ((crc >> 12) ^
-				    (letoh32(data[i]) >> shift)) & 0x0000000f;
+				    (letoh32(data[i]) >> shift)) & 0xF;
 			else
-				sum = ((crc >> 12) ^ (ntohl(data[i]) >> shift))
-				    & 0x0000000f;
+				sum = ((crc >> 12) ^
+				    (ntohl(data[i]) >> shift)) & 0xF;
 			crc = (crc << 4) ^ (sum << 12) ^ (sum << 5) ^ sum;
-		}
-
-
-		/* The broken implementation doesn't do the last shift. */
-		switch (broke) {
-		case 0:
-			sum = ((crc >> 12) ^ ntohl(data[i])) & 0x0000000f;
-			crc = (crc << 4) ^ (sum << 12) ^ (sum << 5) ^ sum;
-			break;
-		case 2:
-			sum = ((crc >> 12) ^ letoh32(data[i])) & 0x0000000f;
-			crc = (crc << 4) ^ (sum << 12) ^ (sum << 5) ^ sum;
-			break;
-		default:
-			break;
 		}
 	}
 
 	if (broke == 2)
-		return swap16((u_int16_t)crc);
+		return swap16(crc);
 	else
-		return (u_int16_t)crc;
+		return (crc);
 }
 
 /*
