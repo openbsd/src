@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.16 1998/11/04 22:36:42 aaron Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.17 1998/11/11 22:19:57 aaron Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -175,8 +175,11 @@ allow you to respecify the host portion.
 Specify the address of the correspondent on the other end
 of a point to point link.
 .It Cm down
-Mark an interface ``down''.  When an interface is
-marked ``down'', the system will not attempt to
+Mark an interface
+.Dq down .
+When an interface is marked
+.Dq down ,
+the system will not attempt to
 transmit messages through that interface. 
 If possible, the interface will be reset to disable reception as well.
 This action does not automatically disable routes using the interface.
@@ -283,7 +286,9 @@ netmasks though OpenBSD implements it internally as a set of netmasks.
 The argument following this specifies the version (phase) of the
 AppleTalk network attached to the interface. Values of 1 or 2 are permitted.
 .It Cm trailers
-Request the use of a ``trailer'' link level encapsulation when
+Request the use of a
+.Dq trailer
+link level encapsulation when
 sending (default).
 If a network interface supports
 .Cm trailers ,
@@ -299,7 +304,9 @@ Similarly, trailer encapsulations will be sent to other
 hosts that have made such requests.
 Currently used by Internet protocols only.
 .It Fl trailers
-Disable the use of a ``trailer'' link level encapsulation.
+Disable the use of a
+.Dq trailer
+link level encapsulation.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect, however,
@@ -311,8 +318,10 @@ for more information.
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
 .It Cm up
-Mark an interface ``up''. 
-This may be used to enable an interface after an ``ifconfig down.''
+Mark an interface
+.Dq up . 
+This may be used to enable an interface after an
+.Dq ifconfig down .
 It happens automatically when setting the first address on an interface.
 If the interface was reset when previously marked down,
 the hardware will be re-initialized.

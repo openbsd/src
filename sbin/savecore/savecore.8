@@ -1,4 +1,4 @@
-.\"	$OpenBSD: savecore.8,v 1.5 1998/09/17 04:15:02 aaron Exp $
+.\"	$OpenBSD: savecore.8,v 1.6 1998/11/11 22:20:00 aaron Exp $
 .\"	$NetBSD: savecore.8,v 1.11 1995/06/27 22:40:46 briggs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -66,7 +66,8 @@ is insufficient disk space.
 .It Fl N Ar system
 Use
 .Ar system
-as the kernel instead of the default ``/bsd''.
+as the kernel instead of the default
+.Pa /bsd .
 .It Fl v
 Prints out some additional debugging information.
 .It Fl z
@@ -88,7 +89,9 @@ and
 respectively, if the
 .Fl z
 option is used).
-The ``#'' is the number from the first line of the file
+The
+.Dq #
+is the number from the first line of the file
 .Ar directory Ns Pa /bounds ,
 and it is incremented and stored back into the file each time
 .Nm savecore

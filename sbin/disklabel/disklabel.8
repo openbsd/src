@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.20 1998/09/23 01:20:22 aaron Exp $
+.\"	$OpenBSD: disklabel.8,v 1.21 1998/11/11 22:19:56 aaron Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -136,7 +136,8 @@ In all cases you can specify
 to operate in no change mode to avoid committing any permanent changes.
 .Pp
 The first form of the command (read) is used to examine the label on the named
-disk drive (e.g. sd0 or /dev/rsd0c).
+disk drive (e.g. sd0 or
+.Pa /dev/rsd0c Ns ).
 It will display all of the parameters associated with the drive
 and its partition layout.
 Unless the
@@ -237,12 +238,23 @@ flag to
 will drop you into a simple initial label editor.  This mode is
 only intended for new disks as it will move partitions around as
 necessary to maintain a contiguous pool of free blocks.  Some commands
-or prompts take an optional unit.  Available units are 'b' for
-bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes, 'g'
+or prompts take an optional unit.  Available units are
+.Dq b
+for bytes,
+.Dq c
+for cylinders,
+.Dq k
+for kilobytes,
+.Dq m
+for megabytes,
+and
+.Dq g
 for gigabytes.  Quantities will be rounded to the nearest
 cylinder when units are specified for sizes (or offsets).  Commands
-may be aborted by entering ^D (Control-D).  Entering ^D at the main '<'
-prompt will exit the editor.  At prompts that request a size, '*'
+may be aborted by entering ^D (Control-D).  Entering ^D at the main
+.Dq \&<
+prompt will exit the editor.  At prompts that request a size,
+.Dq \&*
 may be entered to indicate the rest of the available space.
 The editor commands are as follows:
 .Bl -tag -width "p [unit] "
@@ -272,8 +284,11 @@ Set OpenBSD disk boundaries.  This option tells
 .Nm disklabel
 which parts of the disk it is allowed to modify.  This option is
 probably only useful for ports with fdisk partition tables where the
-ending sector in the MBR is incorrect.  The user may enter '*' at
-the ``Size'' prompt to indicate the entire size of the disk (minus
+ending sector in the MBR is incorrect.  The user may enter
+.Dq \&*
+at the
+.Dq Size
+prompt to indicate the entire size of the disk (minus
 the starting sector).  This is useful for disks larger than 8
 gigabytes where the fdisk partition table is incapable of storing
 the real size.
@@ -288,10 +303,15 @@ one.
 Change the size of an existing partition.  If no partition is
 specified, the user will be prompted for one.  The new size may be
 in terms of the aforementioned units and may also be prefixed with
-\'+' or '-' to change the size by a relative amount.
+.Dq +
+or
+.Dq -
+to change the size by a relative amount.
 .It d Op part
 Delete an existing partition.  If no partition is specified, the
-user will be prompted for one.  You may not delete the ``c'' partition.
+user will be prompted for one.  You may not delete the
+.Dq c
+partition.
 .It m Op part
 Modify parameters for an existing partition.  If no partition is
 specified, the user will be prompted for one.  This option allows
@@ -341,7 +361,10 @@ indicates the primary boot program and
 the secondary boot program.  If the names are not explicitly given,
 standard boot programs will be used.  The boot programs are located in
 .Pa /usr/mdec .
-The names of the programs are taken from the ``b0'' and ``b1''
+The names of the programs are taken from the
+.Dq b0
+and
+.Dq b1
 parameters of the
 .Xr disktab 5
 entry for the disk if
@@ -380,8 +403,9 @@ Display the in-core label for sd0 as obtained via
 .Pp
 .Dl disklabel -w -r /dev/rsd0c sd2212 foo
 .Pp
-Create a label for sd0 based on information for ``sd2212'' found
-in
+Create a label for sd0 based on information for
+.Dq sd2212
+found in
 .Pa /etc/disktab .
 Any existing bootstrap code will be clobbered.  (Normally you do
 not want to use the
@@ -414,7 +438,9 @@ information may be destroyed.  Use with care.
 .Dl disklabel -w -B /dev/rsd0c -b newboot sd2212
 .Pp
 Install a new label and bootstrap.  The label is derived from
-disktab information for ``sd2212'' and installed both in-core and
+disktab information for
+.Dq sd2212
+and installed both in-core and
 on-disk.  The bootstrap code comes from the file
 .Pa /usr/mdec/newboot .
 .Sh SEE ALSO
@@ -425,16 +451,20 @@ The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while
 it is open.  Some device drivers create a label containing only a
 single large partition if a disk is unlabeled; thus, the label must
-be written to the ``a'' partition of the disk while it is open.
+be written to the
+.Dq a
+partition of the disk while it is open.
 This sometimes requires the desired label to be set in two steps,
 the first one creating at least one other partition, and the second
-setting the label on the new partition while shrinking the ``a''
+setting the label on the new partition while shrinking the
+.Dq a
 partition.
 .Pp
 On some machines the bootstrap code may not fit entirely in the
 area allocated for it by some filesystems.  As a result, it may
 not be possible to have filesystems on some partitions of a
-``bootable'' disk.  When installing bootstrap code,
+.Dq bootable
+disk.  When installing bootstrap code,
 .Nm disklabel
 checks for these cases.  If the installed boot code would overlap
 a partition of type FS_UNUSED it is marked as type FS_BOOT.  The
@@ -455,7 +485,10 @@ can still be used to install old style boot code,
 but this usage is deprecated.
 .Sh BUGS
 When a disk name is given without a full pathname, the constructed
-device name uses the ``a'' partition on the tahoe, the ``c''
+device name uses the
+.Dq a
+partition on the tahoe, the
+.Dq c
 partition on all others.  In
 .Fl E
 mode,

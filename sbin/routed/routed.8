@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.16 1998/09/23 01:20:25 aaron Exp $
+.\"	$OpenBSD: routed.8,v 1.17 1998/11/11 22:20:00 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,7 +79,8 @@ When started (or when a network interface is later turned on),
 .Nm
 uses an AF_ROUTE address family facility to find those
 directly connected interfaces configured into the
-system and marked ``up''.
+system and marked
+.Dq up .
 It adds necessary routes for the interfaces
 to the kernel routing table.
 Soon after being first started, and provided there is at least one

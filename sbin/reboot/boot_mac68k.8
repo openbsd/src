@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_mac68k.8,v 1.7 1998/09/23 01:20:25 aaron Exp $
+.\"	$OpenBSD: boot_mac68k.8,v 1.8 1998/11/11 22:19:59 aaron Exp $
 .\"	$NetBSD: boot_mac68k.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -48,7 +48,6 @@
 system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
-.Pp
 Normally, the
 .Ox
 kernel on the mac68k architecture is booted from the native operating
@@ -69,8 +68,12 @@ configured dump device (which will be automatically recovered with
 during the next boot cycle).  After the dump completes (successful
 or not), the system will attempt a reboot.
 .Pp
-On most mac68k machines with "soft-power" after the IIcx, the power
-switch can be physically rotated and locked in the ``on'' position.
+On most mac68k machines with
+.Dq soft-power
+after the IIcx, the power
+switch can be physically rotated and locked in the
+.Dq on
+position.
 The native OS can be configured to automatically start the
 .Ox
 boot program.  Additionally, the OpenBSD boot program can be configured
@@ -81,7 +84,6 @@ or lose power and reboot back to a fully multi-user state without
 any intervention.
 .Pp
 .Ss The boot application
-.Pp
 The boot application runs in the native OS on the system.  It has a
 dialog where booting preferences may be changed and an option whereby
 these options may be saved.  The preferences are stored in the program
@@ -93,12 +95,13 @@ One option that may be specified is a boot to single-user mode.  This
 stops the boot process very early on and allows system maintenence.
 If one wishes to provide some security at this phase of the boot, remove
 the
-.Ql secure
+.Dq secure
 option from ttye0 in the
 .Xr ttys 5
 file.
 .Pp
-Another useful option that may be specified is the "serial console"
+Another useful option that may be specified is the
+.Dq serial console
 option.  This will allow a serial device (terminal or computer) to
 act as a console for the system.  This device must be configured to
 use 9600 baud, eight bits, no parity, and one stop bit (9600-8N1).

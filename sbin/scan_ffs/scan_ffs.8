@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.4 1998/09/17 04:15:02 aaron Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.5 1998/11/11 22:20:01 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -52,7 +52,6 @@ on the disk.  It has various options to make it go faster, and to print out
 information to help in the reconstruction of the disklabel.
 .Pp
 The following options are available:
-.Pp
 .Bl -tag -width "-b begin"
 .It Fl l
 This will make
@@ -95,7 +94,6 @@ whole disk in question.
 .El
 .Pp
 The basic operation of this program is as follows:
-.Pp
 .Bl -enum -width "1111"
 .It
 Panic.  You usually do so anyways, so you might as well get it over with.
@@ -109,7 +107,9 @@ disklabel of the disk.
 .Pp
 .It
 Create a disklabel on the affected disk, which covers the whole disk, and has
-at least one partition which covers the whole disk.  As the ``c'' partition
+at least one partition which covers the whole disk.  As the
+.Dq c
+partition
 usually covers the whole disk anyways, this sounds like a good place to start.
 .Pp
 .It

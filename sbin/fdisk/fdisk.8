@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.17 1998/09/23 01:20:23 aaron Exp $
+.\"	$OpenBSD: fdisk.8,v 1.18 1998/11/11 22:19:56 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -50,7 +50,10 @@ known as BIOS partitions) can be used to break the disk up into several
 pieces.  The BIOS loads sector 0 of the boot disk into memory, verifies
 the magic number, and begins executing the code at the first byte.
 The normal DOS MBR boot code searches the MBR partition table for an
-`active' partition (indicated by a `*' in the first column), and if one
+.Dq active
+partition (indicated by a
+.Dq \&*
+in the first column), and if one
 is found, the boot block from that partition is loaded and executed in
 place of the original (MBR) boot block.
 .Pp
@@ -103,7 +106,9 @@ The first partition overlaps the third partition.  (Used for debugging
 purposes.)
 .Bl -tag -width "start/size"
 .It Em "#"
-Number of partition table entry.  A '*' denotes the bootable partition.
+Number of partition table entry.  A
+.Dq \&*
+denotes the bootable partition.
 .It Em "id"
 System identifier.
 .oS
@@ -119,9 +124,12 @@ These fields provide the starting sector and size in sectors of the
 partition in linear block addresses.
 .El
 .Pp
-.Em "NOTE:"
-Note that the sectors field is `1 based', and the start field is
-`0 based'.  The CHS values will need to be in the BIOS's geometry
+.Em NOTE :
+The sectors field is
+.Dq 1 based ,
+and the start field is
+.Dq 0 based .
+The CHS values will need to be in the BIOS's geometry
 for the system to be able to boot and use the drive correctly.
 .Pp
 The
@@ -138,7 +146,8 @@ partition, that will start at cylinder 0, head 1, sector 1, and extend
 to the end of the disk.
 This mode is designed to initialize an MBR the very first time,
 or when it has been corrupted beyond repair.  It is almost equivalent
-to the DOS command `FDISK /MBR'.
+to the DOS command
+.Dq FDISK /MBR .
 .Pp
 The flag
 .Fl e

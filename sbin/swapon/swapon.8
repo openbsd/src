@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapon.8,v 1.4 1998/09/17 04:15:03 aaron Exp $
+.\"	$OpenBSD: swapon.8,v 1.5 1998/11/11 22:20:01 aaron Exp $
 .\"	$NetBSD: swapon.8,v 1.8 1995/08/18 14:51:35 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -20,7 +20,7 @@
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS `AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 .\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
@@ -61,7 +61,8 @@ activity is interleaved across several devices.
 Normally, the first form is used:
 .Bl -tag -width Ds
 .It Fl a
-All devices marked as ``sw''
+All devices marked as
+.Dq sw
 swap devices in
 .Pa /etc/fstab
 are made available.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.8 1998/09/17 04:15:02 aaron Exp $
+.\"	$OpenBSD: shutdown.8,v 1.9 1998/11/11 22:20:01 aaron Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -167,7 +167,9 @@ not to run fsck when rebooting
 .Xr reboot 8
 .Sh BACKWARD COMPATIBILITY
 The hours and minutes in the second time format may be separated by
-a colon (``:'') for backward compatibility.
+a colon
+.Pq Sq \&:
+for backward compatibility.
 .Sh HISTORY
 The
 .Nm

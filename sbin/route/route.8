@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.9 1998/09/23 01:20:25 aaron Exp $
+.\"	$OpenBSD: route.8,v 1.10 1998/11/11 22:20:00 aaron Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -63,7 +63,6 @@ but a rich command language enables the user to specify
 any arbitrary request that could be delivered via the
 programmatic interface discussed in 
 .Xr route 4 .
-.Pp
 .Bl -tag -width Ds
 .It Fl d
 Run in debug-only mode, i.e. don't actually modify the routing table.
@@ -121,7 +120,9 @@ If the
 .Cm flush
 command is specified, 
 .Nm route
-will ``flush'' the routing tables of all gateway entries.
+will
+.Dq flush
+the routing tables of all gateway entries.
 When the address family may is specified by any of the
 .Fl osi ,
 .Fl xns ,
@@ -156,8 +157,10 @@ and
 force the destination to be interpreted as a network or a host, respectively.
 Otherwise, if the 
 .Ar destination
-has a ``local address part'' of
-INADDR_ANY,
+has a
+.Dq local address part
+of
+.Dv INADDR_ANY ,
 or if the
 .Ar destination
 is the symbolic name of a network, then the route is
@@ -216,7 +219,9 @@ netmasks different from that of the implied network interface
 (as would otherwise be communicated using the OSPF or ISIS routing protocols).
 One specifies an additional ensuing address parameter
 (to be interpreted as a network mask).
-The implicit network mask generated in the AF_INET case
+The implicit network mask generated in the
+.Dv AF_INET
+case
 can be overridden by making sure this option follows the destination parameter.
 .Pp
 Routes have associated flags which influence operation of the protocols

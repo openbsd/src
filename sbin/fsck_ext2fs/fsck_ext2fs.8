@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.5 1998/09/23 01:20:23 aaron Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.6 1998/11/11 22:19:56 aaron Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -78,7 +78,8 @@ Counts in the super-block wrong
 .Pp
 These are the only inconsistencies that
 .Nm fsck_ext2fs
-in ``preen''
+in
+.Dq preen
 mode (with the
 .Fl p
 option) will correct; if it encounters other inconsistencies, it exits
@@ -152,11 +153,13 @@ Assume a
 response to all questions asked by 
 .Nm fsck_ext2fs
 except for
-.Ql CONTINUE? ,
+.Dq CONTINUE? ,
 which is assumed to be affirmative;
 do not open the filesystem for writing.
 .It Fl p
-Specify ``preen'' mode, described above.
+Specify
+.Dq preen
+mode, described above.
 .It Fl y
 Assume a
 .Dq yes

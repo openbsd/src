@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hp300.8,v 1.4 1998/09/17 04:15:00 aaron Exp $
+.\"	$OpenBSD: boot_hp300.8,v 1.5 1998/11/11 22:19:59 aaron Exp $
 .\"	$NetBSD: boot_hp300.8,v 1.3 1995/04/23 10:33:34 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -47,13 +47,11 @@
 system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
-.Pp
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
-.Pp
 On an HP300, the boot procedure uses the boot ROM to load a boot program
 from an
 .Tn LIF
@@ -63,7 +61,9 @@ The
 directory contains a disk boot program which should be placed in a
 new pack automatically by
 .Xr newfs 8
-when the ``a'' partition file system on the pack is created.
+when the
+.Dq a
+partition file system on the pack is created.
 .Pp
 This boot program
 finds the corresponding file on the given device 
@@ -72,7 +72,7 @@ by default),
 loads that file into memory,
 and starts the program at the entry address specified in the program header.
 .Pp
-The boot program can be interrupted by typing `^C' (ctrl-C).
+The boot program can be interrupted by typing ^C (ctrl-C).
 This will force the boot program to interactively prompt for a system to boot.
 If not interrupted, it will boot from the device from which the boot
 program itself was loaded.
@@ -90,14 +90,19 @@ and
 .Ar minor
 is the disk partition or tape file number.
 Normal line editing characters can be used when typing the file specification.
-Currently, ``rd'' and ``sd'' are the only valid
+Currently,
+.Dq rd
+and
+.Dq sd
+are the only valid
 .Ar device
 specifiers.
 .Pp
 For example,
-to boot from the ``a'' file system of unit 0 on HP-IB 2,
-type
-.Ql rd(16, 0)bsd
+to boot from the
+.Dq a
+file system of unit 0 on HP-IB 2, type
+.Dq rd(16, 0)bsd
 at the boot prompt.
 For tapes, the minor device number gives a file offset.
 .Pp

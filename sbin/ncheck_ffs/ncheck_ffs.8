@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.3 1998/09/17 04:14:57 aaron Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.4 1998/11/11 22:19:59 aaron Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -42,7 +42,8 @@
 .Sh DESCRIPTION
 .Nm ncheck_ffs
 generates a list of filenames and inode numbers for the given
-file system.  Names of directories are followed by a `.'.
+file system.  Names of directories are followed by a
+.Dq \&. .
 .Pp
 The report is not sorted.
 .Pp
@@ -53,7 +54,11 @@ are as follows:
 .It Fl i Ar numbers
 Report only those files whose inode numbers follows.
 .It Fl a
-Print the file names `.' and `..', which are ordinarily skipped.
+Print the file names
+.Dq \&.
+and
+.Dq \&.\&. ,
+which are ordinarily skipped.
 .It Fl m
 Give more verbose information on inodes
 .It Fl s

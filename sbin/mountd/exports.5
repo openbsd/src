@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exports.5,v 1.5 1998/09/17 04:14:56 aaron Exp $
+.\"	$OpenBSD: exports.5,v 1.6 1998/11/11 22:19:58 aaron Exp $
 .\"	$NetBSD: exports.5,v 1.9 1996/02/18 11:57:50 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -57,13 +57,16 @@ and
 .%T "NFS: Network File System Version 3 Specification, Appendix I" .
 .Pp
 Each line in the file
-(other than comment lines that begin with a #)
+(other than comment lines that begin with a
+.Dq # )
 specifies the mount point(s) and export flags within one local server
 filesystem for one or more hosts.
 A host may be specified only once for each local filesystem on the
 server and there may be only one default entry for each server
 filesystem that applies to all other hosts.
-The latter exports the filesystem to the ``world'' and should
+The latter exports the filesystem to the
+.Dq world
+and should
 be used only when the filesystem contains public information.
 .Pp
 In a mount entry,
@@ -79,7 +82,11 @@ flag;
 this form allows the host(s) to mount at any point within the filesystem,
 including regular files.
 The pathnames must not have any symbolic links in them and should not have
-any "." or ".." components.
+any
+.Dq \&.
+or
+.Dq \&.\&.
+components.
 Mount points for a filesystem may appear on multiple lines each with
 different sets of hosts and export options.
 .Pp
@@ -161,8 +168,12 @@ in an effort to be backward compatible with older export file formats.
 The third component of a line specifies the host set to which the line applies.
 The set may be specified in three ways.
 The first way is to list the host name(s) separated by white space.
-(Standard internet ``dot'' addresses may be used in place of names.)
-The second way is to specify a ``netgroup'' as defined in the netgroup file (see
+(Standard internet
+.Dq dot
+addresses may be used in place of names.)
+The second way is to specify a
+.Dq netgroup
+as defined in the netgroup file (see
 .Xr netgroup 5 ).
 The third way is to specify an internet subnetwork using a network and
 network mask that is defined as the set of all hosts with addresses within
@@ -173,7 +184,9 @@ large number of clients within an administrative subnet.
 .Pp
 The first two cases are specified by simply listing the name(s) separated
 by whitespace.
-All names are checked to see if they are ``netgroup'' names
+All names are checked to see if they are
+.Dq netgroup
+names
 first and are assumed to be hostnames otherwise.
 Using the full domain specification for a hostname can normally
 circumvent the problem of a host that has the same name as a netgroup.
@@ -214,32 +227,45 @@ where
 is specified in the netgroup file
 with users mapped to their remote credentials and
 root mapped to UID 0 and GID 10.
-It is exported read-write and the hosts in ``friends'' can mount either /usr
-or /usr/local.
+It is exported read-write and the hosts in
+.Dq friends
+can mount either
+.Pa /usr
+or
+.Pa /usr/local .
 It is exported to
 .Em 131.104.48.16
 and
 .Em grumpy.cis.uoguelph.ca
 with users mapped to their remote credentials and
-root mapped to the user and groups associated with ``daemon'';
+root mapped to the user and groups associated with
+.Dq daemon ;
 it is exported to the rest of the world as read-only with
-all users mapped to the user and groups associated with ``nobody''.
+all users mapped to the user and groups associated with
+.Dq nobody .
 .Pp
 .Sy /u
 is exported to all hosts on the subnetwork
 .Em 131.104.48
-with root mapped to the UID for ``bin'' and with no group access.
+with root mapped to the UID for
+.Dq bin
+and with no group access.
 .Pp
 .Sy /u2
-is exported to the hosts in ``friends'' with root mapped to UID and groups
-associated with ``root'';
-it is exported to all hosts on network ``cis-net'' allowing mounts at any
+is exported to the hosts in
+.Dq friends
+with root mapped to UID and groups
+associated with
+.Dq root ;
+it is exported to all hosts on network
+.Dq cis-net
+allowing mounts at any
 directory within /u2 and mapping all UIDs to credentials for the principal
 that is authenticated by a Kerberos ticket.
 .Sh FILES
 .Bl -tag -width /etc/exports -compact
 .It Pa /etc/exports
-The default remote mount-point file.
+default remote mount-point file
 .El
 .Sh SEE ALSO
 .Xr netgroup 5 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.9 1998/09/17 04:15:00 aaron Exp $
+.\"	$OpenBSD: ping.8,v 1.10 1998/11/11 22:19:59 aaron Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -65,12 +65,16 @@ datagram to elicit an
 .Tn ICMP ECHO_RESPONSE
 from a host or gateway.
 .Tn ECHO_REQUEST
-datagrams (``pings'') have an IP and
+datagrams
+.Pq Dq pings
+have an IP and
 .Tn ICMP
 header,
 followed by a
 .Dq struct timeval
-and then an arbitrary number of ``pad'' bytes used to fill out the
+and then an arbitrary number of
+.Dq pad
+bytes used to fill out the
 packet.
 The options are as follows:
 .Bl -tag -width Ds
@@ -93,7 +97,9 @@ Outputs packets as fast as they come back or one hundred times per second,
 whichever is more.
 For every
 .Tn ECHO_REQUEST
-sent a period ``.'' is printed, while for every
+sent a period
+.Dq \&.
+is printed, while for every
 .Tn ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
@@ -124,7 +130,9 @@ mode of behavior. Only root may set a preload value.
 Numeric output only.
 No attempt will be made to lookup symbolic names for host addresses.
 .It Fl p Ar pattern
-You may specify up to 16 ``pad'' bytes to fill out the packet you send.
+You may specify up to 16
+.Dq pad
+bytes to fill out the packet you send.
 This is useful for diagnosing data-dependent problems in a network.
 For example,
 .Dq Li \-p ff
@@ -197,7 +205,8 @@ When using
 .Nm ping
 for fault isolation, it should first be run on the local host to verify
 that the local network interface is up and running.
-Then, hosts and gateways further and further away should be ``pinged''.
+Then, hosts and gateways further and further away should be
+.Dq pinged .
 Round trip times and packet loss statistics are computed.
 If duplicate packets are received, they are not included in the packet
 loss calculation, although the round trip time of these packets is used
@@ -258,7 +267,9 @@ on the data contained in the data portion.
 Unfortunately, data-dependent problems have been known to sneak into
 networks and remain undetected for long periods of time.
 In many cases the particular pattern that will have problems is something
-that doesn't have sufficient ``transitions'', such as all ones or all
+that doesn't have sufficient
+.Dq transitions ,
+such as all ones or all
 zeros, or a pattern right at the edge, such as almost all zeros.
 It isn't necessarily enough to specify a data pattern of all zeros (for
 example) on the command line because the pattern that is of interest is
@@ -303,7 +314,9 @@ the
 field of
 .Tn ICMP ECHO_REQUEST
 packets to 255.
-This is why you will find you can ``ping'' some hosts, but not reach them
+This is why you will find you can
+.Dq ping
+some hosts, but not reach them
 with
 .Xr telnet 1
 or

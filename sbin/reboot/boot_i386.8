@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.8 1998/11/04 22:36:42 aaron Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.9 1998/11/11 22:19:59 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -40,13 +40,11 @@
 system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
-.Pp
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
-.Pp
 The
 .Tn "PC AT"
 clones will perform a POST (Power On Self Test) upon being booted cold.
@@ -63,7 +61,6 @@ drive A (otherwise known as drive 0) first, and failing that, attempt to
 boot the hard disk C (otherwise known as hard disk controller 1, drive 0).
 .Pp
 .Ss Warm starts
-.Pp
 The BIOS loads the first block (at physical location: track 0, head 0,
 sector 1) off the boot device into memory, and if the last two bytes in the
 block match the signature 0x55AA, the BIOS considers the block a valid
@@ -74,7 +71,9 @@ to the boot block in register %dl.
 There are two different types of boot blocks on devices.  There is the
 MBR (master boot record) and the PBR (partition boot record).  A digression
 into a little piece of history will quickly give light as to why this is so.
-In the beginning, the PC ``architecture'' came with a single or dual floppy
+In the beginning, the PC
+.Dq architecture
+came with a single or dual floppy
 drives, and no hard drives.  The only type of bootable sectors on any device
 were the PBRs.  They were responsible for loading the rest of the operating
 system from the correct device.  When hard disks came out, it was felt that
@@ -94,8 +93,9 @@ partition is really an MBR, which will then load the corresponding MBR or PBR
 out of its extended partition's partition table.
 .Sh GEOMETRY TRANSLATION
 .Em WARNING:
-This portion of the ``PC BIOS Architecture'' is a mess, and a compatibility
-nightmare.
+This portion of the
+.Dq PC BIOS Architecture
+is a mess, and a compatibility nightmare.
 .Pp
 The PC BIOS has an API to manipulate any disk that the BIOS happens to
 support.  This interface uses 10 bits to address the cylinder, 8 bits to
@@ -107,7 +107,9 @@ the debut of hard disks on PC computers.
 .Pp
 Many (if not all) newer drives have many more cylinders than the BIOS API
 can support, and likely more sectors per track as well.  To allow the BIOS
-the ability of accessing these large drives, the BIOS would ``re-map'' the
+the ability of accessing these large drives, the BIOS would
+.Dq re-map
+the
 cylinder/head/sector of the real drive geometry into something that would
 allow the applications using the BIOS to access a larger portion of the
 drive, still using the restricted BIOS API.
@@ -142,7 +144,9 @@ system second stage bootstrap
 .Xr reboot 8 ,
 .Xr shutdown 8
 .Sh BUGS
-The ``PC BIOS Architecture'' makes this process very prone to weird and
+The
+.Dq PC BIOS Architecture
+makes this process very prone to weird and
 wonderful interactions between differing operating systems.  There is
 no published standard to the MBR and PBR, which makes coding these a
 nightmare.  Somebody *please* write me a decent BIOS, and make them (the

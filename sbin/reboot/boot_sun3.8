@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sun3.8,v 1.5 1998/09/17 04:15:01 aaron Exp $
+.\"	$OpenBSD: boot_sun3.8,v 1.6 1998/11/11 22:20:00 aaron Exp $
 .\"	$NetBSD: boot_sun3.8,v 1.1 1995/08/08 20:46:20 gwr Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -48,7 +48,6 @@ bootstrapping procedures
 .Op Fl q
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
-.Pp
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed
 as described in
@@ -56,13 +55,16 @@ as described in
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
-.Pp
 A disk-boot program
 .Pq Pa /usr/mdec/ufsboot
 will attempt to load
 .Pa bsd
-from partition ``a'' of the boot device,
-which must currently be an ``sd'' disk.
+from partition
+.Dq a
+of the boot device,
+which must currently be an
+.Dq sd
+disk.
 Alternatively, the network boot program
 .Pq Pa /usr/mdec/netboot
 will load
@@ -84,11 +86,17 @@ Here it waits for a kernel debugger connect; see
 .Xr ddb 8 .
 Other flags are currently ignored.
 .Pp
-At any time you can break back to the ROM by pressing the `L1' and `a'
+At any time you can break back to the ROM by pressing the
+.Dq L1
+and
+.Dq a
 keys at the same time (if the console is a serial port the same is
-achieved by sending a `break').
+achieved by sending a
+.Dq break ) .
 If you do this accidentally you can continue whatever was in progress
-by typing `c' followed by the return key.
+by typing
+.Dq c
+followed by the return key.
 .Pp
 .Sh FILES
 .Bl -tag -width /usr/mdec/installboot -compact

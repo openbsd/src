@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.10 1998/09/23 01:20:25 aaron Exp $
+.\"	$OpenBSD: restore.8,v 1.11 1998/11/11 22:20:00 aaron Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -122,7 +122,8 @@ added to the extraction list
 (unless the
 .Fl h
 flag is specified on the command line).
-Files that are on the extraction list are prepended with a ``*''
+Files that are on the extraction list are prepended with a
+.Dq \&*
 when they are listed by 
 .Ic ls .
 .It Ic \&cd Ar arg
@@ -149,8 +150,10 @@ start with the last volume and work towards the first volume.
 List a summary of the available commands.
 .It Ic \&ls Op Ar arg
 List the current or specified directory.
-Entries that are directories are appended with a ``/''.
-Entries that have been marked for extraction are prepended with a ``*''.
+Entries that are directories are appended with a
+.Dq / .
+Entries that have been marked for extraction are prepended with a
+.Dq \&* .
 If the verbose
 flag is set, the inode number of each entry is also listed.
 .It Ic pwd
@@ -287,7 +290,7 @@ like
 (a disk drive),
 an ordinary file,
 or
-.Ql Fl
+.Dq Fl
 (the standard input).
 If the name of the file is of the form
 .Dq host:file
@@ -330,7 +333,7 @@ Complains if it gets a read error.
 If 
 .Fl y
 has been specified, or the user responds
-.Ql y ,
+.Dq y ,
 .Nm
 will attempt to continue the restore.
 .Pp
@@ -349,7 +352,8 @@ start with the last volume, and work towards the first volume.
 .Pp
 There are numerous consistency checks that can be listed by
 .Nm restore .
-Most checks are self-explanatory or can ``never happen''.
+Most checks are self-explanatory or can
+.Dq never happen .
 Common errors are given below.
 .Pp
 .Bl -tag -width Ds -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_vax.8,v 1.6 1998/09/24 07:08:38 pjanzen Exp $
+.\"	$OpenBSD: boot_vax.8,v 1.7 1998/11/11 22:20:00 aaron Exp $
 .\"	$NetBSD: boot_vax.8,v 1.3 1995/04/23 10:33:39 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -43,14 +43,12 @@
 system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
-.Pp
 Normally, the system will reboot itself at power-up or after crashes.
 Provided the auto-restart is enabled on the machine's front panel,
 an automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
-.Pp
 These are processor-type dependent.
 On an 11/780, there are two floppy files for each disk controller,
 both of which cause boots from unit 0 of the root file system
@@ -159,11 +157,17 @@ of 2 causes the boot program to come up single-user,
 and an
 .Ar n
 of 3 causes both of these actions to occur.
-The ``DM'' specifies RK07, the ``A'' represents the adaptor number
+The
+.Dq DM
+specifies RK07, the
+.Dq A
+represents the adaptor number
 .Pf ( Tn UNIBUS
 or
 .Tn MASSBUS ) ,
-and the ``0'' is the drive unit number.
+and the
+.Dq 0
+is the drive unit number.
 Other disk types which may be used are DB
 .Pq Tn MASSBUS ,
 DD (TU58),
@@ -264,34 +268,34 @@ to boot from a file system which starts at cylinder 0
 of unit 0 of a
 .Tn MASSBUS
 disk, type
-.Ql hp(0,0)bsd
+.Dq hp(0,0)bsd
 at the boot prompt;
-.Ql hp(2,0,1,0)bsd
+.Dq hp(2,0,1,0)bsd
 would specify drive 1 on
 .Tn MASSBUS
 adaptor 2;
-.Ql up(0,0)bsd
+.Dq up(0,0)bsd
 would specify a
 .Tn UNIBUS
 drive,
-.Ql hk(0,0)bsd
+.Dq hk(0,0)bsd
 would specify
 an RK07 disk drive,
-.Ql ra(1,0,0,0)bsd
+.Dq ra(1,0,0,0)bsd
 would specify a
 .Tn UDA50
 disk drive on a second
 .Tn UNIBUS ,
 and
-.Ql rb(0,0)bsd
+.Dq rb(0,0)bsd
 would specify a
 disk on a 730
 .Tn IDC .
 For tapes, the minor device number gives a file offset;
-.Ql mt(1,2,3,4)
+.Dq mt(1,2,3,4)
 would specify the fifth file on slave 3 of the formatter
 at
-.Ql drive
+.Dq drive
 2 on mba 1.
 .Pp
 On an 11/750 with patchable control store,

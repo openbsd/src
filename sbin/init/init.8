@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.11 1998/09/23 01:20:24 aaron Exp $
+.\"	$OpenBSD: init.8,v 1.12 1998/11/11 22:19:57 aaron Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -77,14 +77,16 @@ If the
 .Nm console
 entry in the
 .Xr ttys 5
-file is marked ``insecure'',
+file is marked
+.Dq insecure ,
 then
 .Nm init
 will require that the super-user password be
 entered before the system will start a single-user shell.
 The password check is skipped if the 
 .Nm console
-is marked as ``secure''.
+is marked as
+.Dq secure .
 .Pp
 The kernel runs with four different levels of security.
 Any super-user process can raise the security level, but only 
@@ -126,7 +128,8 @@ it can be set in the startup script
 using
 .Xr sysctl 8 .
 If it is desired to run the system in level 0 mode while multi-user,
-the administrator must build a kernel with ``option INSECURE''
+the administrator must build a kernel with
+.Dq option INSECURE
 in the config file.
 .Pp
 In multi-user operation, 
@@ -244,7 +247,7 @@ automatically.
 If, at bootstrap time, the
 .Nm init
 process cannot be located, the system will panic with the message
-``panic: "init died (signal %d, exit %d)''.
+.Dq panic: "init died (signal %d, exit %d) .
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "getty repeating too quickly on port %s, sleeping"

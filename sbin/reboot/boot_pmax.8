@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_pmax.8,v 1.8 1998/09/24 07:08:38 pjanzen Exp $
+.\"	$OpenBSD: boot_pmax.8,v 1.9 1998/11/11 22:19:59 aaron Exp $
 .\"	$NetBSD: boot_pmax.8,v 1.1 1995/04/25 23:55:11 mellon Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -53,20 +53,22 @@ it is necessary to read it in from disk or tape
 each time it is to be bootstrapped.
 .Pp
 .Ss Power fail and crash recovery
-.Pp
 Normally, the system will boot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
-.Pp
 At power up, all DECstation ROMs consult the
 .Nm haltaction
 environment
 variable in EEPROM to determine whether or not to attempt an automatic
 boot.  If this
-variable is set to ``h'', the ROM prints a prompt on the console and
-waits for user commands.  If set to ``b'', the ROM attempts to autoboot.
+variable is set to
+.Dq h ,
+the ROM prints a prompt on the console and
+waits for user commands.  If set to
+.Dq b ,
+the ROM attempts to autoboot.
 .Pp
 On the DECstation 2100 and 3100, the path used for automatic booting is
 stored in the
@@ -75,9 +77,15 @@ environment variable.  The path is made up of a
 device type specifier (e.g., rz, tz, mop or tftp), followed by
 a triplet in the form (x,y,z), followed by a filename to load.
 .Pp
-Within the triplet, ``x'' is the controller (always 0), ``y'' is the SCSI ID of
+Within the triplet,
+.Dq x
+is the controller (always 0),
+.Dq y
+is the SCSI ID of
 the drive to
-boot from or 0 for net boots, and ``z'' is the partition to boot from
+boot from or 0 for net boots, and
+.Dq z
+is the partition to boot from
 (usually 0 for SCSI devices, always zero for network booting).
 For network boots, () may be specified instead of (0,0,0).
 .Pp
@@ -164,8 +172,11 @@ TurboChannel option by typing
 followed by the slot number of that
 option.
 .Pp
-For SCSI devices, the option-specific device identifier is either ``rz#'' for
-disks or ``tz#'' for tapes, where # is the SCSI ID of the device.  For network
+For SCSI devices, the option-specific device identifier is either
+.Dq rz#
+for disks or
+.Dq tz#
+for tapes, where # is the SCSI ID of the device.  For network
 devices, the option-specific protocol identifier is either mop or tftp.
 Filename requirements are as for the DECstation 2100 and 3100.
 .Pp

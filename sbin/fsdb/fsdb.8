@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsdb.8,v 1.8 1998/09/23 01:20:23 aaron Exp $
+.\"	$OpenBSD: fsdb.8,v 1.9 1998/11/11 22:19:57 aaron Exp $
 .\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,7 +215,9 @@ Exit the program.
 .Xr clri 8 ,
 .Xr fsck 8
 .Sh BUGS
-Manipulation of ``short'' symlinks doesn't work (in particular, don't
+Manipulation of
+.Dq short
+symlinks doesn't work (in particular, don't
 try changing a symlink's type).
 .Pp
 You must specify modes as numbers rather than symbolic names.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_atari.8,v 1.4 1998/09/17 04:15:00 aaron Exp $
+.\"	$OpenBSD: boot_atari.8,v 1.5 1998/11/11 22:19:59 aaron Exp $
 .\"	$NetBSD: boot_atari.8,v 1.1 1996/06/27 11:07:56 leo Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -48,7 +48,6 @@
 system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
-.Pp
 When the
 .Tn OpenBSD
 kernel is booted normally (using one of the two methods discussed below),
@@ -69,7 +68,6 @@ during the next boot cycle).  After the dump completes (successful
 or not), the system will attempt a reboot.
 .Pp
 .Ss Booting OpenBSD using the bootloader
-.Pp
 When a bootable
 .Tn OpenBSD
 partition is created by means of
@@ -134,7 +132,6 @@ Enter the kernel debugger.
 .El
 .Pp
 .Ss Booting using the loadbsd program
-.Pp
 When you want (or have to) start OpenBSD from GEM, you have to use the
 .Xr loadbsd
 program that is supplied on the kernel-floppy. The loadbsd command line
