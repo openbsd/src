@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.26 1998/07/07 07:12:51 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.27 1998/08/16 03:22:55 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ struct ctlname {
 #define	CTL_HW		6		/* generic cpu/io */
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
-#define	CTL_DDB		9		/* DDB user interface, see ddb_var.h */
+#define	CTL_DDB		9		/* DDB user interface, see db_var.h */
 #define CTL_VFS         10              /* VFS sysctl's */
 #define	CTL_MAXID	11		/* number of valid top-level ids */
 
