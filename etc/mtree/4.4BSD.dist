@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.86 2000/04/05 15:18:55 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.87 2000/04/11 20:10:22 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1055,21 +1055,6 @@ amiga
 # ./usr/share/man/cat4/amiga
 ..
 
-# ./usr/share/man/cat4/arc
-arc
-# ./usr/share/man/cat4/arc
-..
-
-# ./usr/share/man/cat4/arm32
-arm32
-# ./usr/share/man/cat4/arm32
-..
-
-# ./usr/share/man/cat4/atari
-atari
-# ./usr/share/man/cat4/atari
-..
-
 # ./usr/share/man/cat4/hp300
 hp300
 # ./usr/share/man/cat4/hp300
@@ -1095,11 +1080,6 @@ mvme88k
 # ./usr/share/man/cat4/mvme88k
 ..
 
-# ./usr/share/man/cat4/pc532
-pc532
-# ./usr/share/man/cat4/pc532
-..
-
 # ./usr/share/man/cat4/pmax
 pmax
 # ./usr/share/man/cat4/pmax
@@ -1113,21 +1093,6 @@ powerpc
 # ./usr/share/man/cat4/sparc
 sparc
 # ./usr/share/man/cat4/sparc
-..
-
-# ./usr/share/man/cat4/sun3
-sun3
-# ./usr/share/man/cat4/sun3
-..
-
-# ./usr/share/man/cat4/vax
-vax
-# ./usr/share/man/cat4/vax
-..
-
-# ./usr/share/man/cat4/x68k
-x68k
-# ./usr/share/man/cat4/x68k
 ..
 
 # ./usr/share/man/cat4
@@ -1161,21 +1126,6 @@ amiga
 # ./usr/share/man/cat8/amiga
 ..
 
-# ./usr/share/man/cat8/arm32
-arm32
-# ./usr/share/man/cat8/arm32
-..
-
-# ./usr/share/man/cat8/arc
-arc
-# ./usr/share/man/cat8/arc
-..
-
-# ./usr/share/man/cat8/atari
-atari
-# ./usr/share/man/cat8/atari
-..
-
 # ./usr/share/man/cat8/hp300
 hp300
 # ./usr/share/man/cat8/hp300
@@ -1201,11 +1151,6 @@ mvme88k
 # ./usr/share/man/cat8/mvme88k
 ..
 
-# ./usr/share/man/cat8/pc532
-pc532
-# ./usr/share/man/cat8/pc532
-..
-
 # ./usr/share/man/cat8/pmax
 pmax
 # ./usr/share/man/cat8/pmax
@@ -1219,21 +1164,6 @@ powerpc
 # ./usr/share/man/cat8/sparc
 sparc
 # ./usr/share/man/cat8/sparc
-..
-
-# ./usr/share/man/cat8/sun3
-sun3
-# ./usr/share/man/cat8/sun3
-..
-
-# ./usr/share/man/cat8/vax
-vax
-# ./usr/share/man/cat8/vax
-..
-
-# ./usr/share/man/cat8/wgrisc
-wgrisc
-# ./usr/share/man/cat8/wgrisc
 ..
 
 # ./usr/share/man/cat8
@@ -1283,21 +1213,6 @@ amiga
 # ./usr/share/man/man4/amiga
 ..
 
-# ./usr/share/man/man4/arc
-arc
-# ./usr/share/man/man4/arc
-..
-
-# ./usr/share/man/man4/arm32
-arm32
-# ./usr/share/man/man4/arm32
-..
-
-# ./usr/share/man/man4/atari
-atari
-# ./usr/share/man/man4/atari
-..
-
 # ./usr/share/man/man4/hp300
 hp300
 # ./usr/share/man/man4/hp300
@@ -1323,11 +1238,6 @@ mvme88k
 # ./usr/share/man/man4/mvme88k
 ..
 
-# ./usr/share/man/man4/pc532
-pc532
-# ./usr/share/man/man4/pc532
-..
-
 # ./usr/share/man/man4/pmax
 pmax
 # ./usr/share/man/man4/pmax
@@ -1341,21 +1251,6 @@ powerpc
 # ./usr/share/man/man4/sparc
 sparc
 # ./usr/share/man/man4/sparc
-..
-
-# ./usr/share/man/man4/sun3
-sun3
-# ./usr/share/man/man4/sun3
-..
-
-# ./usr/share/man/man4/vax
-vax
-# ./usr/share/man/man4/vax
-..
-
-# ./usr/share/man/man4/x68k
-x68k
-# ./usr/share/man/man4/x68k
 ..
 
 # ./usr/share/man/man4
@@ -1389,21 +1284,6 @@ amiga
 # ./usr/share/man/man8/amiga
 ..
 
-# ./usr/share/man/man8/arc
-arc
-# ./usr/share/man/man8/arc
-..
-
-# ./usr/share/man/man8/arm32
-arm32
-# ./usr/share/man/man8/arm32
-..
-
-# ./usr/share/man/man8/atari
-atari
-# ./usr/share/man/man8/atari
-..
-
 # ./usr/share/man/man8/hp300
 hp300
 # ./usr/share/man/man8/hp300
@@ -1429,11 +1309,6 @@ mvme88k
 # ./usr/share/man/man8/mvme88k
 ..
 
-# ./usr/share/man/man8/pc532
-pc532
-# ./usr/share/man/man8/pc532
-..
-
 # ./usr/share/man/man8/pmax
 pmax
 # ./usr/share/man/man8/pmax
@@ -1447,21 +1322,6 @@ powerpc
 # ./usr/share/man/man8/sparc
 sparc
 # ./usr/share/man/man8/sparc
-..
-
-# ./usr/share/man/man8/sun3
-sun3
-# ./usr/share/man/man8/sun3
-..
-
-# ./usr/share/man/man8/vax
-vax
-# ./usr/share/man/man8/vax
-..
-
-# ./usr/share/man/man8/wgrisc
-wgrisc
-# ./usr/share/man/man8/wgrisc
 ..
 
 # ./usr/share/man/man8
