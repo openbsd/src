@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.28 2004/11/06 18:57:59 otto Exp $
+#	$OpenBSD: Makefile,v 1.29 2005/01/13 19:32:01 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 .if (${MACHINE} == "i386") || (${MACHINE} == "amd64") || \
     (${MACHINE} == "macppc") || (${MACHINE} == "alpha") || \
-    (${MACHINE} == "cats")
+    (${MACHINE} == "cats") || (${MACHINE} == "zaurus") 
 PROG=	fdisk
 SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c manual.c
 DPADD=	${LIBUTIL}
@@ -53,6 +53,6 @@ NOPROG=yes
 .endif
 
 MAN=	fdisk.8
-MANSUBDIR=i386 amd64 macppc alpha cats
+MANSUBDIR=i386 amd64 macppc alpha cats zaurus
 
 .include <bsd.prog.mk>
