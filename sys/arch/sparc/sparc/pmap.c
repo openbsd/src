@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.84 2001/05/10 10:39:11 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.85 2001/05/10 12:52:35 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -172,11 +172,6 @@ static __inline struct pvlist *pvalloc __P((void));
 static __inline void pvfree __P((struct pvlist *));
 
 #if defined(SUN4M)
-static __inline int *pt1_alloc __P((void));
-static __inline int *pt23_alloc __P((void));
-static __inline void pt1_free __P((int *));
-static __inline void pt23_free __P((int *));
-
 static u_int	VA2PA __P((caddr_t));
 #endif
 
@@ -265,32 +260,6 @@ pgt_page_free(v, sz, mtype)
         int mtype;
 {
         uvm_km_free(kernel_map, (vaddr_t)v, sz);
-}
-
-static __inline int *
-pt1_alloc()
-{
-	return pool_get(&L1_pool, PR_WAITOK);
-}
-
-static __inline void
-pt1_free(pt)
-	int *pt;
-{
-	pool_put(&L1_pool, pt);
-}
-
-static __inline int *
-pt23_alloc()
-{
-	return pool_get(&L23_pool, PR_WAITOK);
-}
-
-static __inline void
-pt23_free(pt)
-	int *pt;
-{
-	pool_put(&L23_pool, pt);
 }
 #endif /* SUN4M */
 
@@ -3566,7 +3535,7 @@ pmap_pinit(pm)
 		 * need to explicitly mark them as invalid (a null
 		 * rg_seg_ptps pointer indicates invalid for the 4m)
 		 */
-		urp = pt1_alloc();
+		urp = pool_get(&L1_pool, PR_WAITOK);
 		pm->pm_reg_ptps = urp;
 		pm->pm_reg_ptps_pa = VA2PA(urp);
 
@@ -3680,7 +3649,7 @@ if (pmapdebug) {
 				panic("pmap_release: releasing kernel");
 			ctx_free(pm);
 		}
-		pt1_free(pm->pm_reg_ptps);
+		pool_put(&L1_pool, pm->pm_reg_ptps);
 		pm->pm_reg_ptps = NULL;
 		pm->pm_reg_ptps_pa = 0;
 	}
@@ -4222,7 +4191,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		if (pm->pm_ctx)
 			tlb_flush_segment(vr, vs); 	/* Paranoia? */
 		setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-		pt23_free(pte0);
+		pool_put(&L23_pool, pte0);
 		sp->sg_pte = NULL;
 
 		if (--rp->rg_nsegmap == 0) {
@@ -4231,7 +4200,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
-			pt23_free(rp->rg_seg_ptps);
+			pool_put(&L23_pool, rp->rg_seg_ptps);
 		}
 	}
 }
@@ -4747,7 +4716,7 @@ pmap_page_protect4m(pa, prot)
 			if (pm->pm_ctx)
 				tlb_flush_segment(vr, vs);
 			setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-			pt23_free(sp->sg_pte);
+			pool_put(&L23_pool, sp->sg_pte);
 			sp->sg_pte = NULL;
 
 			if (--rp->rg_nsegmap == 0) {
@@ -4756,7 +4725,7 @@ pmap_page_protect4m(pa, prot)
 				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
-				pt23_free(rp->rg_seg_ptps);
+				pool_put(&L23_pool, rp->rg_seg_ptps);
 			}
 		}
 
@@ -5530,12 +5499,12 @@ rgretry:
 		/* Need a segment table */
 		int i, *ptd;
 
-		ptd = pt23_alloc();
+		ptd = pool_get(&L23_pool, PR_WAITOK);
 		if (rp->rg_seg_ptps != NULL) {
 #ifdef DEBUG
 printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 #endif
-			pt23_free(ptd);
+			pool_put(&L23_pool, ptd);
 			goto rgretry;
 		}
 
@@ -5553,10 +5522,10 @@ sretry:
 		/* definitely a new mapping */
 		int i;
 
-		pte = pt23_alloc();
+		pte = pool_get(&L23_pool, PR_WAITOK);
 		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
-			pt23_free(pte);
+			pool_put(&L23_pool, pte);
 			goto sretry;
 		}
 
