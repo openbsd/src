@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipcs.1,v 1.13 2001/09/27 19:22:04 millert Exp $
+.\"	$OpenBSD: ipcs.1,v 1.14 2001/11/09 00:56:24 miod Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -99,19 +99,11 @@ the last attach or detach of a shared memory segment,
 or the last operation on a semaphore.
 .It Fl C Ar core
 Extract values associated with the name list from the specified
-core instead of the default
-.Pa /dev/kmem .
+core instead of the running kernel.
 .It Fl M
 Display system information about shared memory.
 .It Fl N Ar system
-Extract the name list from the specified system instead of the
-default
-.Pa /dev/ksyms
-(or
-.Pa /bsd
-if
-.Pa /dev/ksyms
-is not available).
+Extract the name list from the specified system instead of the running kernel.
 .It Fl Q
 Display system information about messages queues.
 .It Fl S
@@ -136,13 +128,6 @@ System data structures may change while
 is running; the output of
 .Nm
 is not guaranteed to be consistent.
-.Sh FILES
-.Bl -tag -width /etc/passwd -compact
-.It Pa /dev/kmem
-default kernel memory
-.It Pa /dev/ksyms
-default system name list
-.El
 .Sh SEE ALSO
 .Xr ipcrm 1
 .Sh AUTHORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pstat.8,v 1.17 2001/08/03 16:03:02 mpech Exp $
+.\"	$OpenBSD: pstat.8,v 1.18 2001/11/09 00:56:24 miod Exp $
 .\"	$NetBSD: pstat.8,v 1.9.4.1 1996/06/02 09:08:17 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -52,11 +52,9 @@ terminal state, and vnode data structure information.
 If
 .Ar corefile
 is given, the information is sought there, otherwise
-in
+in the running kernel via
 .Pa /dev/kmem .
-The required namelist is taken from
-.Pa /bsd
-unless
+The required namelist is taken from the running kernel unless
 .Ar system
 is specified.
 .Pp
@@ -336,13 +334,6 @@ is set, and the
 .Fl k
 option is not specified, the block counts will be displayed in units of that
 size block.
-.El
-.Sh FILES
-.Bl -tag -width /dev/kmemxxx -compact
-.It Pa /bsd
-namelist
-.It Pa /dev/kmem
-default source of tables
 .El
 .Sh SEE ALSO
 .Xr ps 1 ,

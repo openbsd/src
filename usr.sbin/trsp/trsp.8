@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trsp.8,v 1.10 2000/03/19 17:57:17 aaron Exp $
+.\"	$OpenBSD: trsp.8,v 1.11 2001/11/09 00:56:24 miod Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,13 +94,11 @@ Clear the in-kernel debugging buffers.
 .It Fl M Ar core
 Extract values associated with the name list from
 .Pa core
-instead of the default
-.Pa /dev/kmem .
+instead of the running kernel.
 .It Fl N Ar system
 Extract the name list from
 .Pa system
-instead of the default
-.Pa /bsd .
+instead of the running kernel.
 .El
 .Pp
 The recommended use of
@@ -124,13 +122,6 @@ If there are many sockets using the debugging option, the
 option may be useful in checking to see if
 any trace records are present for the socket in
 question.
-.Sh FILES
-.Bl -tag -width /dev/kmem -compact
-.It Pa /dev/kmem
-default kernel memory
-.It Pa /bsd
-default system namelist
-.El
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr setsockopt 2 ,

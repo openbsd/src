@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.19 2000/11/10 05:10:27 aaron Exp $
+.\"	$OpenBSD: fstat.1,v 1.20 2001/11/09 00:56:24 miod Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,11 +70,9 @@ resides, type
 .Ic fstat -f /usr/src .
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/kmem .
+instead of the running kernel.
 .It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /bsd .
+Extract the name list from the specified system instead of the running kernel.
 .It Fl n
 Numerical format.
 Print the device number (maj,min) of the file system

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trpt.8,v 1.10 2000/03/05 00:28:51 aaron Exp $
+.\"	$OpenBSD: trpt.8,v 1.11 2001/11/09 00:56:24 miod Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,13 +95,11 @@ point in the trace.
 .It Fl M Ar core
 Extract values associated with the name list from
 .Pa core
-instead of the default
-.Pa /dev/kmem .
+instead of the running kernel.
 .It Fl N Ar system
 Extract the name list from
 .Pa system
-instead of the default
-.Pa /bsd .
+instead of the running kernel.
 .El
 .Pp
 The recommended use of
@@ -129,13 +127,6 @@ many sockets using the debugging option, the
 option may be useful in checking to see if
 any trace records are present for the socket in
 question.
-.Sh FILES
-.Bl -tag -width /dev/kmem -compact
-.It Pa /dev/kmem
-default kernel memory
-.It Pa /bsd
-default system namelist
-.El
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr setsockopt 2 ,

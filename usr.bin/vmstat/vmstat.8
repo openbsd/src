@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.21 2001/05/11 06:41:23 angelos Exp $
+.\"	$OpenBSD: vmstat.8,v 1.22 2001/11/09 00:56:24 miod Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -77,11 +77,9 @@ Report on the number of interrupts taken by each device since system
 startup.
 .It Fl M Ar core
 Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/mem .
+instead of the running kernel.
 .It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /bsd .
+Extract the name list from the specified system instead of the running kernel.
 .It Fl m
 Report on the usage of kernel dynamic memory listed first by size of
 allocation and then by type of usage.
@@ -196,13 +194,6 @@ seconds; this is a good choice of printing interval since this is how often
 some of the statistics are sampled in the system.
 Others vary every second and running the output for a while will make it
 apparent which are recomputed every second.
-.Sh FILES
-.Bl -tag -width /dev/mem -compact
-.It Pa /bsd
-default kernel namelist
-.It Pa /dev/mem
-default memory file
-.El
 .Sh SEE ALSO
 .Xr fstat 1 ,
 .Xr netstat 1 ,
