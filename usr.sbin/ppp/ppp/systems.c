@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: systems.c,v 1.12 2000/03/19 10:33:34 brian Exp $
+ * $OpenBSD: systems.c,v 1.13 2000/03/28 15:13:09 brian Exp $
  *
  *  TODO:
  */
@@ -148,12 +148,6 @@ InterpretArg(const char *from, char *to)
           from += len;
         }
         endpwent();
-        break;
-
-      case '#':
-        if (!instring)
-          while (*from != '\0')
-            *to++ = *from++;
         break;
 
       default:
