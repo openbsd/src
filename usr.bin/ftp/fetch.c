@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.17 1998/02/17 23:22:54 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.18 1998/03/26 03:17:08 marc Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.17 1998/02/17 23:22:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.18 1998/03/26 03:17:08 marc Exp $";
 #endif /* not lint */
 
 /*
@@ -238,8 +238,8 @@ url_get(origline, proxyenv, outfile)
 		fprintf(ttyout, "Requesting %s\n", origline);
 	else
 		fprintf(ttyout, "Requesting %s (via %s)\n", origline, proxyenv);
-	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\n\r\n",
-	    proxy ? "" : "/", path);
+	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\nHost: %s\r\n\r\n",
+	    proxy ? "" : "/", path, host);
 	len = strlen(buf);
 	if (write(s, buf, len) < len) {
 		warn("Writing HTTP request");
