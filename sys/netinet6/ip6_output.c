@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.53 2001/11/26 16:50:26 jasoni Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.54 2001/11/28 10:48:13 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1661,21 +1661,21 @@ ip6_ctloutput(op, so, level, optname, mp)
 #else
 				m->m_len = sizeof(int);
 				switch (optname) {
-				case IP_AUTH_LEVEL:
+				case IPV6_AUTH_LEVEL:
 					optval = inp->inp_seclevel[SL_AUTH];
 					break;
 
-				case IP_ESP_TRANS_LEVEL:
+				case IPV6_ESP_TRANS_LEVEL:
 					optval =
 					    inp->inp_seclevel[SL_ESP_TRANS];
 					break;
 
-				case IP_ESP_NETWORK_LEVEL:
+				case IPV6_ESP_NETWORK_LEVEL:
 					optval =
 					    inp->inp_seclevel[SL_ESP_NETWORK];
 					break;
 
-				case IP_IPCOMP_LEVEL:
+				case IPV6_IPCOMP_LEVEL:
 					optval = inp->inp_seclevel[SL_IPCOMP];
 					break;
 				}
