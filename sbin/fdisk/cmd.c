@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.27 2001/01/01 21:05:33 angelos Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.28 2001/01/28 00:56:07 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -240,7 +240,7 @@ Xselect(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
-	static firstoff = 0;
+	static int firstoff = 0;
 	int off;
 	int pn;
 
@@ -428,10 +428,11 @@ Xmanual(cmd, disk, mbr, tt, offset)
 {
 	char *pager = "/usr/bin/less";
 	char *p;
-	sig_t opipe = signal(SIGPIPE, SIG_IGN);
+	sig_t opipe;
 	extern char manpage[];
 	FILE *f;
 
+	opipe = signal(SIGPIPE, SIG_IGN);
 	if ((p = getenv("PAGER")) != NULL && (*p != '\0'))
 		pager = p;
 	f = popen(pager, "w");
@@ -443,3 +444,4 @@ Xmanual(cmd, disk, mbr, tt, offset)
 	(void)signal(SIGPIPE, opipe);
 	return (CMD_CONT);
 }
+
