@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.11 1997/11/10 23:57:06 niklas Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.12 1998/07/20 00:49:21 espie Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -700,10 +700,12 @@ int
 adosfs_print(v)
 	void *v;
 {
+#ifdef DIAGNOSTIC
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct anode *anp = VTOA(ap->a_vp);
+#endif
 
 	/* XXX Fill in more info here.  */
 	printf("tag VT_ADOSFS\n");
