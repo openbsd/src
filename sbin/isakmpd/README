@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.9 1999/04/05 21:03:26 niklas Exp $
-$EOM: README,v 1.19 1999/04/02 01:08:56 niklas Exp $
+$OpenBSD: README,v 1.10 1999/04/19 20:01:04 niklas Exp $
+$EOM: README,v 1.20 1999/04/16 21:32:43 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
@@ -31,7 +31,7 @@ make obj && make depend && make
 
 Then obj/isakmpd will be the daemon.  I suggest you try it by running
 under gdb with args similar to:
-	-d -n -p5000 -D0=99 -D1=99 -D2=99 -D3=99 -D4=99 -D5=99 \
+	-d -n -p5000 -D0=99 -D1=99 -D2=99 -D3=99 -D4=99 -D5=99 -D6=99 -D7=99 \
 	-f/tmp/isakmpd.fifo -csamples/VPN-east.conf
 
 That will run isakmpd in the foreground, not connected to any application
@@ -65,3 +65,4 @@ Happy IKEing!
 
 Niklas Hallqvist <niklas@openbsd.org>
 Niels Provos <provos@openbsd.org>
+Håkan Olsson <ho@netman.se>
