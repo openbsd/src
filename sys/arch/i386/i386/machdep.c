@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 1996/12/05 18:08:06 dm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 1996/12/09 08:36:41 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -376,8 +376,8 @@ allocsys(v)
 			    ((100/BUFCACHEPERCENT) * CLSIZE);
 
 	/* Restrict to at most 70% filled kvm */
-	if (bufpages * MAXBSIZE * 7 / 10 >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS))
+	if (bufpages * MAXBSIZE >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
 		bufpages = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
 		    MAXBSIZE * 7 / 10;
 	if (nbuf == 0) {
