@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.3 1999/04/20 21:17:07 mickey Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.4 1999/08/14 04:39:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -116,17 +116,14 @@ lpt_gsc_probe(parent, match, aux)
 	do {								     \
 		printf("lpt_gsc_probe: mask %x data %x failed\n", mask,	     \
 		    data);						     \
-		goto out;						     \
+		return 0;						     \
 	} while (0)
 #else
-#define	ABORT	goto out
+#define	ABORT	return 0
 #endif
 
-	base = ca->ca_hpa;
-	if (bus_space_map(ca->ca_iot, base, IOMOD_HPASIZE, 0, &ioh))
-		return 0;
-	ioh += LPTGSC_OFFSET;
-	base += LPTGSC_OFFSET;
+	base = ca->ca_hpa + LPTGSC_OFFSET;
+	ioh = ca->ca_hpa + LPTGSC_OFFSET;
 
 	rv = 0;
 	mask = 0xff;
@@ -154,12 +151,7 @@ lpt_gsc_probe(parent, match, aux)
 	bus_space_write_1(ca->ca_iot, ioh, lpt_data, 0);
 	bus_space_write_1(ca->ca_iot, ioh, lpt_control, 0);
 
-	rv = 1;
-
-out:
-	ioh -= LPTGSC_OFFSET;
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
-	return rv;
+	return 1;
 }
 
 void
@@ -175,10 +167,7 @@ lpt_gsc_attach(parent, self, aux)
 	sc->sc_state = 0;
 
 	sc->sc_iot = ga->ga_iot;
-	if (bus_space_map(sc->sc_iot, ga->ga_hpa, IOMOD_HPASIZE,
-			  0, &sc->sc_ioh))
-		panic("lpt_gsc_attach: couldn't map I/O ports");
-	sc->sc_ioh += LPTGSC_OFFSET;
+	sc->sc_ioh = ga->ga_hpa + LPTGSC_OFFSET;
 
 	printf("\n");
 

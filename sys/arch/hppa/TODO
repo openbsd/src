@@ -33,13 +33,12 @@ boots (sys/arch/hppa/stand/*):				mickey@ fries@
 kernel (sys/arch/hppa/*):				mickey@
 * HPPA STACK GROWS UP, major kernel cleanup (diffs mickey@)
 * several harware problems (ie non-functional drivers)
-  (floppy controller, if_ie)
 * user-land support (signal stuff)
 * ddb (breakpoints left)
 * some MI files/changes to integrate into the repo
 * wscons devices (sti, hil/*, pckbc/*) unfinished
-* "original snakes" (700,705,710,...) support
 * 7300lc-based machines, 8k-based machines
+* "original snakes" (700,705,710,...) support
 * advanced audio driver
 * general cleanup (far-east future)
 
@@ -58,7 +57,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.4 1999/07/27 23:36:33 mickey Exp $
+$OpenBSD: TODO,v 1.5 1999/08/14 04:40:59 mickey Exp $
 
 --
 	paranoic mickey
