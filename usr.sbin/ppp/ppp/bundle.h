@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.h,v 1.19 2000/11/28 22:59:53 brian Exp $
+ *	$OpenBSD: bundle.h,v 1.20 2001/04/05 02:24:05 brian Exp $
  */
 
 #define	PHASE_DEAD		0	/* Link is dead */
@@ -152,8 +152,6 @@ extern const char *bundle_PhaseName(struct bundle *);
 extern void bundle_NewPhase(struct bundle *, u_int);
 extern void bundle_LinksRemoved(struct bundle *);
 extern int  bundle_LinkIsUp(const struct bundle *);
-extern int bundle_SetRoute(struct bundle *, int, struct in_addr,
-                           struct in_addr, struct in_addr, int, int);
 extern void bundle_Close(struct bundle *, const char *, int);
 extern void bundle_Down(struct bundle *, int);
 extern void bundle_Open(struct bundle *, const char *, int, int);

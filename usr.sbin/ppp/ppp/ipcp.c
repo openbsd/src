@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ipcp.c,v 1.28 2001/03/24 01:06:00 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.29 2001/04/05 02:24:05 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -744,7 +744,7 @@ static int
 ipcp_SetIPaddress(struct bundle *bundle, struct in_addr myaddr,
                   struct in_addr hisaddr, int silent)
 {
-  struct in_addr mask, oaddr, none = { INADDR_ANY };
+  struct in_addr mask, oaddr;
 
   mask = addr2mask(myaddr);
 
@@ -764,7 +764,7 @@ ipcp_SetIPaddress(struct bundle *bundle, struct in_addr myaddr,
     iface_inDelete(bundle->iface, oaddr);
 
   if (bundle->ncp.ipcp.cfg.sendpipe > 0 || bundle->ncp.ipcp.cfg.recvpipe > 0)
-    bundle_SetRoute(bundle, RTM_CHANGE, hisaddr, myaddr, none, 0, 0);
+    rt_Update(bundle, hisaddr, myaddr);
 
   if (Enabled(bundle, OPT_SROUTES))
     route_Change(bundle, bundle->ncp.ipcp.route, myaddr, hisaddr,
