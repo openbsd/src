@@ -1730,11 +1730,22 @@ _bfd_mips_elf_merge_private_bfd_data (ibfd, obfd)
 	}
 
       /* Warn about any other mismatches */
-      if (new_flags != old_flags)
+      if ((new_flags & ~(EF_MIPS_ARCH | EF_MIPS_NOREORDER)) !=
+	  (old_flags & ~(EF_MIPS_ARCH | EF_MIPS_NOREORDER)))
 	(*_bfd_error_handler)
 	  ("%s: uses different e_flags (0x%lx) fields than previous modules (0x%lx)",
 	   bfd_get_filename (ibfd), (unsigned long) new_flags,
 	   (unsigned long) old_flags);
+
+      /* Warn about ISA LEVEL mismatch */
+      if ((new_flags & EF_MIPS_ARCH) > (old_flags & EF_MIPS_ARCH)) {
+	(*_bfd_error_handler)
+	  ("%s: increases ISA level to ISA%d from ISA%d",
+	   bfd_get_filename (ibfd), (unsigned long) new_flags >> 28,
+	   (unsigned long) old_flags >> 28);
+        elf_elfheader (obfd)->e_flags &= ~EF_MIPS_ARCH;
+        elf_elfheader (obfd)->e_flags |= new_flags & EF_MIPS_ARCH;
+      }
 
       bfd_set_error (bfd_error_bad_value);
       return false;
