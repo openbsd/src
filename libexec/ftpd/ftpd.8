@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.37 2000/12/24 11:15:26 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.38 2001/01/06 18:24:29 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -440,6 +440,11 @@ directory for the user.
 .It Pa ftp-dir
 A path to a directory.
 This value overrides the login directory for the users of this class.
+A leading tilde
+.Pq Ql ~
+in
+.Pa ftp-dir
+will be expanded based on the contents of the password database.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ftpd.pid -compact

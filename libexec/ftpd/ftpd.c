@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.85 2000/12/30 06:08:58 angelos Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.86 2001/01/06 18:24:29 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -246,6 +246,7 @@ static void	 myoob __P((int));
 static int	 checkuser __P((char *, char *));
 static FILE	*dataconn __P((char *, off_t, char *));
 static void	 dolog __P((struct sockaddr *));
+static char	*copy_dir __P((char *, struct passwd *));
 static char	*curdir __P((void));
 static void	 end_login __P((void));
 static FILE	*getdatasock __P((char *));
@@ -954,8 +955,16 @@ skip:
 	dochroot = login_getcapbool(lc, "ftp-chroot", 0) ||
 	    checkuser(_PATH_FTPCHROOT, pw->pw_name);
 	if ((dir = login_getcapstr(lc, "ftp-dir", NULL, NULL))) {
+		char *newdir;
+
+		newdir = copy_dir(dir, pw);
+		if (newdir == NULL) {
+			perror_reply(421, "Local resource failure: malloc");
+			dologout(1);
+			/* NOTREACHED */
+		}
 		free(pw->pw_dir);
-		pw->pw_dir = sgetsave(dir);
+		pw->pw_dir = newdir;
 	}
 	if (guest || dochroot) {
 		if (multihome && guest) {
@@ -2765,3 +2774,58 @@ check_host(sa)
 	return (1);
 }
 #endif	/* TCPWRAPPERS */
+
+/*
+ * Allocate space and return a copy of the specified dir.
+ * If 'dir' begins with a tilde (~), expand it.
+ */
+char *
+copy_dir(dir, pw)
+	char *dir;
+	struct passwd *pw;
+{
+	char *cp;
+	char *newdir;
+	char *user = NULL;
+	size_t dirsiz;
+
+	/* Nothing to expand */
+	if (dir[0] !=  '~')
+		return (strdup(dir));
+
+	/* "dir" is of form ~user/some/dir, lookup user. */
+	if (dir[1] != '/' && dir[1] != '\0') {
+		if ((cp = strchr(dir + 1, '/')) == NULL)
+		    cp = dir + strlen(dir);
+		if ((user = malloc(cp - dir)) == NULL)
+			return (NULL);
+		strlcpy(user, dir + 1, cp - dir);
+
+		/* Only do lookup if it is a different user. */
+		if (strcmp(user, pw->pw_name) != 0) {
+			if ((pw = getpwnam(user)) == NULL) {
+				/* No such user, interpret literally */
+				free(user);
+				return(strdup(dir));
+			}
+		}
+	}
+
+	/*
+	 * If there is no directory separator (/) then it is just pw_dir.
+	 * Otherwise, replace ~foo with  pw_dir.
+	 */
+	if ((cp = strchr(dir + 1, '/')) == NULL) {
+		newdir = strdup(pw->pw_dir);
+	} else {
+		dirsiz = strlen(cp) + strlen(pw->pw_dir) + 1;
+		if ((newdir = malloc(dirsiz)) == NULL)
+			return (NULL);
+		strcpy(newdir, pw->pw_dir);
+		strcat(newdir, cp);
+	}
+
+	if (user)
+		free(user);
+	return(newdir);
+}
