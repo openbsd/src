@@ -1,4 +1,4 @@
-/*	$OpenBSD: mark.c,v 1.1.1.1 1996/09/07 21:40:26 downsj Exp $	*/
+/*	$OpenBSD: mark.c,v 1.2 1996/09/21 06:23:06 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -186,7 +186,7 @@ movemark(count)
 	{
 		if (buflist_getfile(curwin->w_jumplist[curwin->w_jumplistidx].fnum,
 						  curwin->w_jumplist[curwin->w_jumplistidx].mark.lnum,
-															   0) == FAIL)
+															0, FALSE) == FAIL)
 			return (FPOS *)NULL;
 		curwin->w_cursor.col =
 						   curwin->w_jumplist[curwin->w_jumplistidx].mark.col;
@@ -278,7 +278,7 @@ getmark(c, changefile)
 			if (namedfm[c].mark.lnum != 0 && changefile && namedfm[c].fnum)
 			{
 				if (buflist_getfile(namedfm[c].fnum,
-									namedfm[c].mark.lnum, GETF_SETMARK) == OK)
+							 namedfm[c].mark.lnum, GETF_SETMARK, FALSE) == OK)
 				{
 					curwin->w_cursor.col = namedfm[c].mark.col;
 					return (FPOS *)-1;
@@ -677,7 +677,10 @@ read_viminfo_filemark(line, fp, force)
 	/* We only get here (hopefully) if line[0] == '\'' */
 	str = line + 1;
 	if (*str > 127 || (!isdigit(*str) && !isupper(*str)))
-		EMSG2("viminfo: Illegal file mark name in line %s", line);
+	{
+		if (viminfo_error("Illegal file mark name", line))
+			return TRUE;		/* Too many errors, pretend end-of-file */
+	}
 	else
 	{
 		if (isdigit(*str))
@@ -876,7 +879,10 @@ copy_viminfo_marks(line, fp_in, fp_out, count, eof)
 		if (line[0] != '>')
 		{
 			if (line[0] != '\n' && line[0] != '\r' && line[0] != '#')
-				EMSG2("viminfo: Illegal starting char in line %s", line);
+			{
+				if (viminfo_error("Missing '>'", line))
+					return;		/* too many errors, return now */
+			}
 			eof = vim_fgets(line, LSIZE, fp_in);
 			continue;			/* Skip this dud line */
 		}

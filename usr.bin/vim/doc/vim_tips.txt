@@ -1,4 +1,4 @@
-*vim_tips.txt*  For Vim version 4.2.  Last modification: 1996 June 16
+*vim_tips.txt*  For Vim version 4.4.  Last modification: 1996 Aug 30
 
 Contents:
 
@@ -15,6 +15,7 @@ Useful mappings						|useful-mappings|
 Compressing the help files				|gzip-helpfile|
 Executing shell commands in a window			|shell_window|
 Pseudo-Ex mode						|pseudo-Q|
+Using <> notation in autocommands			|autocmd-<>|
 
 
 Editing C programs					*C-editing*
@@ -303,5 +304,24 @@ cabbrev visual cunmap <C-V><CR><NL>
 
 In a following version of Vim the "Q" command will be made Vi compatible.  Use
 "gq" for formatting text.
+
+
+Using <> notation in autocommands			*autocmd-<>*
+=================================
+
+The <> notation is not recognized in the argument for :autocmd.  To avoid
+having to use special characters, you could use a mapping to get the <>
+notation and then call the mapping from the autocmd.  Example:
+
+							*buffer-menu*
+"
+" This is for automatically adding the name of the file to the menu list
+" first we use the normal mode to convert the 'dots' in the filename to
+" \., store that in register '"' and then add that name to the Buffers menu
+" list.  WARNING: this does have some side effects, like overwriting the
+" current register contents.
+"
+nmap _xaddbufmenu O<C-R>%<Esc>:.g/\./s/\./\\./g<CR>0"9y$u:menu Buffers.<C-R>9 :buffer <C-R>%<C-V><C-M><C-M>
+autocmd BufNewFile,BufReadPre * normal _xaddbufmenu
 
  vim:ts=8:sw=8:js:tw=78:

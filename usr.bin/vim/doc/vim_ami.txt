@@ -1,4 +1,4 @@
-*vim_ami.txt*   For Vim version 4.2.  Last modification: 1996 Apr 19
+*vim_ami.txt*   For Vim version 4.4.  Last modification: 1996 Apr 19
 
 This file contains the particularities for the Amiga version of Vim.
 

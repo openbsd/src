@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.1.1.1 1996/09/07 21:40:24 downsj Exp $	*/
+/*	$OpenBSD: window.c,v 1.2 1996/09/21 06:23:27 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -238,7 +238,8 @@ new_win:
 				{
 					setpcmark();
 					if (win_split(0, FALSE) == OK)
-						(void)do_ecmd(0, ptr, NULL, NULL, p_hid, (linenr_t)0, FALSE);
+						(void)do_ecmd(0, ptr, NULL, NULL, (linenr_t)0,
+													   p_hid ? ECMD_HIDE : 0);
 					vim_free(ptr);
 				}
 				break;
@@ -442,6 +443,21 @@ win_split(new_height, redraw)
 }
 
 /*
+ * Check if "win" is a pointer to an existing window.
+ */
+	int
+win_valid(win)
+	WIN		*win;
+{
+	WIN 	*wp;
+
+	for (wp = firstwin; wp != NULL; wp = wp->w_next)
+		if (wp == win)
+			return TRUE;
+	return FALSE;
+}
+
+/*
  * Return the number of windows.
  */
 	int
@@ -490,6 +506,14 @@ make_windows(count)
 		win_new_height(curwin, curwin->w_height - STATUS_HEIGHT);
 	}
 
+#ifdef AUTOCMD
+/*
+ * Don't execute autocommands while creating the windows.  Must do that
+ * when putting the buffers in the windows.
+ */
+	++autocmd_busy;
+#endif
+
 /*
  * set 'splitbelow' off for a moment, don't want that now
  */
@@ -501,6 +525,10 @@ make_windows(count)
 				* STATUS_HEIGHT) / (todo + 1) - STATUS_HEIGHT, FALSE) == FAIL)
 			break;
 	p_sb = p_sb_save;
+
+#ifdef AUTOCMD
+	--autocmd_busy;
+#endif
 
 		/* return actual number of windows */
 	return (count - todo);
@@ -750,12 +778,43 @@ close_window(win, free_buf)
 	int		free_buf;
 {
 	WIN 	*wp;
+#ifdef AUTOCMD
+	int		other_buffer = FALSE;
+#endif
 
 	if (lastwin == firstwin)
 	{
 		EMSG("Cannot close last window");
 		return;
 	}
+
+#ifdef AUTOCMD
+	if (win == curwin)
+	{
+		/*
+		 * Guess which window is going to be the new current window.
+		 * This may change because of the autocommands (sigh).
+		 */
+		if ((!p_sb && win->w_next != NULL) || win->w_prev == NULL)
+			wp = win->w_next;
+		else
+			wp = win->w_prev;
+
+		/*
+		 * Be careful: If autocommands delete the window, return now.
+		 */
+		if (wp->w_buffer != curbuf)
+		{
+			other_buffer = TRUE;
+			apply_autocmds(EVENT_BUFLEAVE, NULL, NULL);
+			if (!win_valid(win))
+				return;
+		}
+		apply_autocmds(EVENT_WINLEAVE, NULL, NULL);
+		if (!win_valid(win))
+			return;
+	}
+#endif
 
 /*
  * Remove the window.
@@ -774,15 +833,6 @@ close_window(win, free_buf)
 		wp = win->w_prev;
 	win_new_height(wp, wp->w_height + win->w_height + win->w_status_height);
 
-#ifdef AUTOCMD
-	if (win == curwin)
-	{
-		if (wp->w_buffer != curbuf)
-			apply_autocmds(EVENT_BUFLEAVE, NULL, NULL);
-		apply_autocmds(EVENT_WINLEAVE, NULL, NULL);
-	}
-#endif
-
 /*
  * Close the link to the buffer.
  */
@@ -794,7 +844,15 @@ close_window(win, free_buf)
 	if (p_ea)
 		win_equal(wp, FALSE);
 	if (curwin == NULL)
+	{
 		win_enter(wp, FALSE);
+#ifdef AUTOCMD
+		if (other_buffer)
+			/* careful: after this wp and win may be invalid! */
+			apply_autocmds(EVENT_BUFENTER, NULL, NULL);
+#endif
+	}
+
 	/*
 	 * if last window has status line now and we don't want one,
 	 * remove the status line
@@ -808,7 +866,7 @@ close_window(win, free_buf)
 	}
 
 	updateScreen(NOT_VALID);
-	if (RedrawingDisabled)
+	if (RedrawingDisabled && win_valid(wp))
 		comp_Botline(wp);			/* need to do this before cursupdate() */
 }
 
@@ -889,7 +947,8 @@ win_init(wp)
 }
 
 /*
- * make window wp the current window
+ * Make window wp the current window.
+ * Can be called when curwin == NULL, if curwin already has been closed.
  */
 	void
 win_enter(wp, undo_sync)
@@ -906,12 +965,19 @@ win_enter(wp, undo_sync)
 #ifdef AUTOCMD
 	if (curwin != NULL)
 	{
+		/*
+		 * Be careful: If autocommands delete the window, return now.
+		 */
 		if (wp->w_buffer != curbuf)
 		{
 			apply_autocmds(EVENT_BUFLEAVE, NULL, NULL);
 			other_buffer = TRUE;
+			if (!win_valid(wp))
+				return;
 		}
 		apply_autocmds(EVENT_WINLEAVE, NULL, NULL);
+		if (!win_valid(wp))
+			return;
 	}
 #endif
 
@@ -920,7 +986,7 @@ win_enter(wp, undo_sync)
 		u_sync();
 		/* may have to copy the buffer options when 'cpo' contains 'S' */
 	if (wp->w_buffer != curbuf)
-		buf_copy_options(curbuf, wp->w_buffer, TRUE);
+		buf_copy_options(curbuf, wp->w_buffer, TRUE, FALSE);
 	if (curwin != NULL)
 		prevwin = curwin;		/* remember for CTRL-W p */
 	curwin = wp;
@@ -1507,7 +1573,8 @@ get_file_name_in_path(ptr, col, options)
 			if (len != 0)
 			{
 								/* Look for file relative to current file */
-				if (file_name[0] == '.' && curr_path_len > 0)
+				if (file_name[0] == '.' && curr_path_len > 0 &&
+										(len == 1 || ispathsep(file_name[1])))
 				{
 					if (len == 1)		/* just a "." */
 						len = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.1.1.1 1996/09/07 21:40:25 downsj Exp $	*/
+/*	$OpenBSD: message.c,v 1.2 1996/09/21 06:23:09 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -16,6 +16,9 @@
 #define MESSAGE			/* don't include prototype for smsg() */
 #include "proto.h"
 #include "option.h"
+#ifdef __QNX__
+# include <stdarg.h>
+#endif
 
 static void msg_screen_outchar __ARGS((int c));
 static int msg_check_screen __ARGS((void));
@@ -48,6 +51,7 @@ msg(s)
  * automatic prototype generation does not understand this function
  */
 #ifndef PROTO
+#ifndef __QNX__
 int smsg __ARGS((char_u *, long, long, long,
 						long, long, long, long, long, long, long));
 
@@ -60,6 +64,16 @@ smsg(s, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 	sprintf((char *)IObuff, (char *)s, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
 	return msg(IObuff);
 }
+#else /* __QNX__ */
+void smsg(char_u *s, ...)
+{
+	va_list arglist;
+	va_start(arglist, s);
+	vsprintf((char *)IObuff, (char *)s, arglist);
+	va_end(arglist);
+	msg(IObuff);
+}
+#endif /* __QNX__ */
 #endif
 
 /*
@@ -162,7 +176,7 @@ emsg2(s, a1)
 	if (a1 == NULL)
 		a1 = (char_u *)"[NULL]";
 	/* Check for very long strings (can happen with ":help ^A<CR>") */
-	if (STRLEN(s) + STRLEN(a1) >= IOSIZE)
+	if (STRLEN(s) + STRLEN(a1) >= (size_t)IOSIZE)
 		a1 = (char_u *)"[string too long]";
 	sprintf((char *)IObuff, (char *)s, (char *)a1);
 	return emsg(IObuff);

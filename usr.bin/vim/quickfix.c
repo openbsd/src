@@ -1,4 +1,4 @@
-/*	$OpenBSD: quickfix.c,v 1.1.1.1 1996/09/07 21:40:25 downsj Exp $	*/
+/*	$OpenBSD: quickfix.c,v 1.2 1996/09/21 06:23:16 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -374,9 +374,10 @@ qf_init_end:
  * else go to entry "errornr"
  */
 	void
-qf_jump(dir, errornr)
+qf_jump(dir, errornr, forceit)
 	int		dir;
 	int		errornr;
+	int		forceit;
 {
 	struct qf_line	*old_qf_ptr;
 	int				old_qf_index;
@@ -463,7 +464,7 @@ qf_jump(dir, errornr)
 	 * read the wanted file if needed, and check autowrite etc.
 	 */
 	if (qf_ptr->qf_fnum == 0 || buflist_getfile(qf_ptr->qf_fnum,
-											 (linenr_t)1, GETF_SETMARK) == OK)
+									(linenr_t)1, GETF_SETMARK, forceit) == OK)
 	{
 		/*
 		 * Go to line with error, unless qf_lnum is 0.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getchar.c,v 1.1.1.1 1996/09/07 21:40:26 downsj Exp $	*/
+/*	$OpenBSD: getchar.c,v 1.2 1996/09/21 06:22:59 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -108,6 +108,7 @@ static int		read_redo __ARGS((int, int));
 static void		copy_redo __ARGS((int));
 static void		init_typebuf __ARGS((void));
 static void		gotchars __ARGS((char_u *, int));
+static void		may_sync_undo __ARGS((void));
 static int		vgetorpeek __ARGS((int));
 static int		inchar __ARGS((char_u *, int, long));
 static void		map_free __ARGS((struct mapblock *));
@@ -805,11 +806,18 @@ gotchars(s, len)
 			add_buff(&recordbuff, buf);
 		}
 	}
+	may_sync_undo();
+}
 
-	/*
-	 * Do not sync in insert mode, unless cursor key has been used.
-	 * Also don't sync while reading a script file.
-	 */
+/*
+ * Sync undo.  Called when typed characters are obtained from the typeahead
+ * buffer, or when a menu is used.
+ * Do not sync in insert mode, unless cursor key has been used.
+ * Also don't sync while reading a script file.
+ */
+	static void
+may_sync_undo()
+{
 	if ((!(State & (INSERT + CMDLINE)) || arrow_used) &&
 												  scriptin[curscript] == NULL)
 		u_sync();
@@ -1230,9 +1238,11 @@ vgetorpeek(advance)
 											  typebuf[typeoff + 1] == KS_MENU)
 							{
 								/*
-								 * Using a menu causes a break in undo!
+								 * Using a menu may cause a break in undo!
+								 * It's like using gotchars(), but without
+								 * recording or writing to a script file.
 								 */
-								u_sync();
+								may_sync_undo();
 								del_typebuf(3, 0);
 								idx = gui_get_menu_index(current_menu,
 																 local_State);
@@ -1279,13 +1289,13 @@ vgetorpeek(advance)
 						/*
 						 * Insert the 'to' part in the typebuf.
 						 * If 'from' field is the same as the start of the
-						 * 'to' field, don't remap this part.
+						 * 'to' field, don't remap the first character.
 						 * If m_noremap is set, don't remap the whole 'to'
 						 * part.
 						 */
 						if (ins_typebuf(mp->m_str, mp->m_noremap ? -1 :
 												  STRNCMP(mp->m_str, mp->m_keys,
-												   (size_t)keylen) ? 0 : keylen,
+													  (size_t)keylen) ? 0 : 1,
 															   0, TRUE) == FAIL)
 						{
 							c = -1;
@@ -1845,15 +1855,15 @@ map_free(mprev)
  * 'abbr' should be FALSE for mappings, TRUE for abbreviations.
  */
 	void
-map_clear(modec, force, abbr)
+map_clear(modec, forceit, abbr)
 	int		modec;
-	int		force;
+	int		forceit;
 	int		abbr;
 {
 	struct mapblock		*mp;
 	int		mode;
 
-	if (force)			/* :mapclear! */
+	if (forceit)			/* :mapclear! */
 		mode = INSERT + CMDLINE;
 	else if (modec == 'i')
 		mode = INSERT;
@@ -2014,7 +2024,7 @@ check_abbr(c, ptr, col, mincol)
 											/* insert the last typed char */
 			(void)ins_typebuf(tb, TRUE, 0, TRUE);
 											/* insert the to string */
-			(void)ins_typebuf(mp->m_str, mp->m_noremap, 0, TRUE);
+			(void)ins_typebuf(mp->m_str, mp->m_noremap ? -1 : 0, 0, TRUE);
 											/* no abbrev. for these chars */
 			no_abbr_cnt += STRLEN(mp->m_str) + j + 1;
 

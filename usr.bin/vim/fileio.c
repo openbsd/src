@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.1.1.1 1996/09/07 21:40:26 downsj Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.2 1996/09/21 06:22:58 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -36,11 +36,12 @@ static void check_marks_read __ARGS((void));
 static void msg_add_fname __ARGS((BUF *, char_u *));
 static int msg_add_textmode __ARGS((int));
 static void msg_add_lines __ARGS((int, long, long));
+static void msg_add_eol __ARGS((void));
 static int  write_buf __ARGS((int, char_u *, int));
 
 static linenr_t	write_no_eol_lnum = 0; 	/* non-zero lnum when last line of
 										   next binary write should not have
-										   an eol */
+										   an end-of-line */
 
 	void
 filemess(buf, name, s)
@@ -100,10 +101,10 @@ readfile(fname, sfname, from, newfile, lines_to_skip, lines_to_read, filtering)
 	long				filesize = 0;
 	int					split = 0;				/* number of split lines */
 #define UNKNOWN		0x0fffffff					/* file size is unknown */
-	linenr_t			linecnt = curbuf->b_ml.ml_line_count;
+	linenr_t			linecnt;
 	int 				error = FALSE;			/* errors encountered */
 	int					tx_error = FALSE;		/* textmode, but no CR */
-	long				linerest = 0;			/* remaining characters in line */
+	long				linerest = 0;			/* remaining chars in line */
 	int					firstpart = TRUE;		/* reading first part */
 #ifdef UNIX
 	int					perm;
@@ -118,6 +119,10 @@ readfile(fname, sfname, from, newfile, lines_to_skip, lines_to_read, filtering)
 												   line of last read was
 												   missing the eol */
 
+
+#ifdef AUTOCMD
+	write_no_eol_lnum = 0;		/* in case it was set by the previous read */
+#endif
 
 	/*
 	 * If there is no file name yet, use the one for the read file.
@@ -306,6 +311,13 @@ readfile(fname, sfname, from, newfile, lines_to_skip, lines_to_read, filtering)
 	{
 		int	m = msg_scroll;
 		int n = msg_scrolled;
+		BUF	*old_curbuf = curbuf;
+
+		/*
+		 * The file must be closed again, the autocommands may want to change
+		 * the file before reading it.
+		 */
+		close(fd);			/* ignore errors */
 
 		/*
 		 * The output from the autocommands should not overwrite anything and
@@ -321,6 +333,22 @@ readfile(fname, sfname, from, newfile, lines_to_skip, lines_to_read, filtering)
 			apply_autocmds(EVENT_FILEREADPRE, fname, fname);
 		if (msg_scrolled == n)
 			msg_scroll = m;
+
+		/*
+		 * Don't allow the autocommands to change the current buffer.
+		 * Try to re-open the file.
+		 */
+		if (curbuf != old_curbuf ||
+						   (fd = open((char *)fname, O_RDONLY | O_EXTRA)) < 0)
+		{
+			--no_wait_return;
+			msg_scroll = msg_save;
+			if (fd < 0)
+				EMSG("*ReadPre autocommands made the file unreadable");
+			else
+				EMSG("*ReadPre autocommands must not change current buffer");
+			return FAIL;
+		}
 	}
 #endif
 
@@ -330,10 +358,11 @@ readfile(fname, sfname, from, newfile, lines_to_skip, lines_to_read, filtering)
 	msg_scroll = FALSE;							/* overwrite the file message */
 
 	/*
-	 * Set textmode now, before the "retry" caused by 'textauto' and after the
-	 * autocommands, that may reset it.
+	 * Set textmode and linecnt now, before the "retry" caused by 'textauto'
+	 * and after the autocommands, which may change them.
 	 */
 	textmode = curbuf->b_p_tx;
+	linecnt = curbuf->b_ml.ml_line_count;
 
 retry:
 	while (!error && !got_int)
@@ -571,8 +600,7 @@ retry:
 			}
 			if (read_no_eol_lnum)
 			{
-				STRCAT(IObuff, shortmess(SHM_LAST) ? "[noeol]" :
-													"[Incomplete last line]");
+				msg_add_eol();
 				c = TRUE;
 			}
 			if (tx_error)
@@ -625,7 +653,7 @@ retry:
 		/*
 		 * Trick: We remember if the last line of the read didn't have
 		 * an eol for when writing it again.  This is required for
-		 * ":autocmd FileReadPost *.gz set bin|%!gunzip" to work.
+		 * ":autocmd FileReadPost *.gz set bin|'[,']!gunzip" to work.
 		 */
 		write_no_eol_lnum = read_no_eol_lnum;
 
@@ -643,8 +671,6 @@ retry:
 			apply_autocmds(EVENT_FILEREADPOST, fname, fname);
 		if (msg_scrolled == n)
 			msg_scroll = m;
-
-		write_no_eol_lnum = 0;
 	}
 #endif
 
@@ -670,7 +696,7 @@ check_marks_read()
 #endif /* VIMINFO */
 
 /*
- * writeit - write to file 'fname' lines 'start' through 'end'
+ * buf_write() - write to file 'fname' lines 'start' through 'end'
  *
  * We do our own buffering here because fwrite() is so slow.
  *
@@ -718,6 +744,7 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 	int					newfile = FALSE;	/* TRUE if file doesn't exist yet */
 	int					msg_save = msg_scroll;
 	int					overwriting;		/* TRUE if writing over original */
+	int					no_eol = FALSE;		/* no end-of-line written */
 #if defined(UNIX) || defined(__EMX__XX) /*XXX fix me sometime? */
 	struct stat			st_old;
 	int					made_writable = FALSE;	/* 'w' bit has been set */
@@ -800,6 +827,7 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 #ifdef AUTOCMD
 	/*
 	 * Apply PRE aucocommands.
+	 * Set curbuf to the buffer to be written.
 	 * Careful: The autocommands may call buf_write() recursively!
 	 */
 	save_buf = curbuf;
@@ -813,8 +841,26 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 		apply_autocmds(EVENT_BUFWRITEPRE, fname, fname);
 	else
 		apply_autocmds(EVENT_FILEWRITEPRE, fname, fname);
-	curbuf = save_buf;
-	curwin->w_buffer = save_buf;
+	/*
+	 * If the autocommands deleted or unloaded the buffer, give an error
+	 * message.
+	 */
+	if (!buf_valid(buf) || buf->b_ml.ml_mfp == NULL)
+	{
+		--no_wait_return;
+		msg_scroll = msg_save;
+		EMSG("Autocommands deleted or unloaded buffer to be written");
+		return FAIL;
+	}
+	/*
+	 * If the autocommands didn't change the current buffer, go back to the
+	 * original current buffer, if it still exists.
+	 */
+	if (curbuf == buf && buf_valid(save_buf))
+	{
+		curbuf = save_buf;
+		curwin->w_buffer = save_buf;
+	}
 	
 	/*
 	 * The autocommands may have changed the number of lines in the file.
@@ -834,6 +880,7 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 			if (end < start)
 			{
 				--no_wait_return;
+				msg_scroll = msg_save;
 				EMSG("Autocommand changed number of lines in unexpected way");
 				return FAIL;
 			}
@@ -919,6 +966,7 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 		int				some_error = FALSE;
 		struct stat		st_new;
 		char_u			*dirp;
+		char_u			*rootname;
 #ifndef SHORT_FNAME
 		int				did_set_shortname;
 #endif
@@ -942,18 +990,16 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 			st_new.st_gid = 0;
 
 			/*
-			 * Isolate one directory name.
+			 * Isolate one directory name, using an entry in 'bdir'.
 			 */
-			len = copy_option_part(&dirp, copybuf, BUFSIZE, ",");
-
-			if (*copybuf == '.')			/* use same dir as file */
-				STRCPY(copybuf, fname);
-			else							/* use dir from 'bdir' option */
+			(void)copy_option_part(&dirp, copybuf, BUFSIZE, ",");
+			rootname = get_file_in_dir(fname, copybuf);
+			if (rootname == NULL)
 			{
-				if (!ispathsep(copybuf[len - 1]))
-					copybuf[len++] = PATHSEP;
-				STRCPY(copybuf + len, gettail(fname));
+				some_error = TRUE;			/* out of memory */
+				goto nobackup;
 			}
+
 
 #ifndef SHORT_FNAME
 			did_set_shortname = FALSE;
@@ -967,10 +1013,11 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 				/*
 				 * Make backup file name.
 				 */
-				backup = buf_modname(buf, copybuf, backup_ext);
+				backup = buf_modname(buf, rootname, backup_ext);
 				if (backup == NULL)
 				{
 					some_error = TRUE;			/* out of memory */
+					vim_free(rootname);
 					goto nobackup;
 				}
 
@@ -1031,6 +1078,7 @@ buf_write(buf, fname, sfname, start, end, append, forceit,
 				}
 				break;
 			}
+			vim_free(rootname);
 
 			/*
 			 * Try to create the backup file
@@ -1123,6 +1171,7 @@ nobackup:
 	{
 		char_u			*dirp;
 		char_u			*p;
+		char_u			*rootname;
 
 		/*
 		 * Form the backup file name - change path/fo.o.h to path/fo.o.h.bak
@@ -1132,23 +1181,18 @@ nobackup:
 		while (*dirp)
 		{
 			/*
-			 * Isolate one directory name.
+			 * Isolate one directory name and make the backup file name.
 			 */
-			len = copy_option_part(&dirp, IObuff, IOSIZE, ",");
-
-#ifdef VMS
-			if (!memcmp(IObuff, "sys$disk:", 9))
-#else
-			if (*IObuff == '.')			/* use same dir as file */
-#endif
-				backup = buf_modname(buf, fname, backup_ext);
-			else						/* use dir from 'bdir' option */
+			(void)copy_option_part(&dirp, IObuff, IOSIZE, ",");
+			rootname = get_file_in_dir(fname, IObuff);
+			if (rootname == NULL)
+				backup = NULL;
+			else
 			{
-				if (!ispathsep(IObuff[len - 1]))
-					IObuff[len++] = PATHSEP;
-				STRCPY(IObuff + len, gettail(fname));
-				backup = buf_modname(buf, IObuff, backup_ext);
+				backup = buf_modname(buf, rootname, backup_ext);
+				vim_free(rootname);
 			}
+
 			if (backup != NULL)
 			{
 				/*
@@ -1338,7 +1382,11 @@ nobackup:
 		if (end == 0 || (lnum == end && buf->b_p_bin &&
 												(lnum == write_no_eol_lnum ||
 						 (lnum == buf->b_ml.ml_line_count && !buf->b_p_eol))))
+		{
+			++lnum;				/* written the line, count it */
+			no_eol = TRUE;
 			break;
+		}
 		if (buf->b_p_tx)		/* write CR-NL */
 		{
 			*s = CR;
@@ -1443,6 +1491,11 @@ nobackup:
 		if (newfile)
 		{
 			STRCAT(IObuff, shortmess(SHM_NEW) ? "[New]" : "[New File]");
+			c = TRUE;
+		}
+		if (no_eol)
+		{
+			msg_add_eol();
 			c = TRUE;
 		}
 		if (msg_add_textmode(buf->b_p_tx))		/* may add [textmode] */
@@ -1552,14 +1605,16 @@ nofail:
 		if (end == 0)
 		{
 			MSG_OUTSTR("\nWARNING: Original file may be lost or damaged\n");
-			MSG_OUTSTR("don't quit the editor until the file is sucessfully written!");
+			MSG_OUTSTR("don't quit the editor until the file is successfully written!");
 		}
 	}
 	msg_scroll = msg_save;
 
 #ifdef AUTOCMD
+	write_no_eol_lnum = 0;		/* in case it was set by the previous read */
+
 	/*
-	 * Apply POST aucocommands.
+	 * Apply POST autocommands.
 	 * Careful: The autocommands may call buf_write() recursively!
 	 */
 	save_buf = curbuf;
@@ -1573,8 +1628,15 @@ nofail:
 		apply_autocmds(EVENT_BUFWRITEPOST, fname, fname);
 	else
 		apply_autocmds(EVENT_FILEWRITEPOST, fname, fname);
-	curbuf = save_buf;
-	curwin->w_buffer = save_buf;
+	/*
+	 * If the autocommands didn't change the current buffer, go back to the
+	 * original current buffer, if it still exists.
+	 */
+	if (curbuf == buf && buf_valid(save_buf))
+	{
+		curbuf = save_buf;
+		curwin->w_buffer = save_buf;
+	}
 #endif
 
 	return retval;
@@ -1639,6 +1701,15 @@ msg_add_lines(insert_space, lnum, nchars)
 		sprintf((char *)p, "%ld line%s, %ld character%s",
 			lnum, plural(lnum),
 			nchars, plural(nchars));
+}
+
+/*
+ * Append message for missing line separator to IObuff.
+ */
+	static void
+msg_add_eol()
+{
+	STRCAT(IObuff, shortmess(SHM_LAST) ? "[noeol]" : "[Incomplete last line]");
 }
 
 /*
@@ -1988,4 +2059,96 @@ buf_check_timestamp(buf)
 			vim_free(path);
 		}
 	}
+}
+
+/*
+ * Adjust the line with missing eol, used for the next write.
+ * Used for do_filter(), when the input lines for the filter are deleted.
+ */
+	void
+write_lnum_adjust(offset)
+	linenr_t	offset;
+{
+	if (write_no_eol_lnum)				/* only if there is a missing eol */
+		write_no_eol_lnum += offset;
+}
+
+#ifdef USE_TMPNAM
+extern char		*tmpnam __ARGS((char *));
+#else
+extern char		*mktemp __ARGS((char *));
+#endif
+
+/*
+ * vim_tempname(): Return a unique name that can be used for a temp file.
+ *
+ * The temp file is NOT created.
+ *
+ * The returned pointer is to allocated memory.
+ * The returned pointer is NULL if no valid name was found.
+ */
+	char_u	*
+vim_tempname(extra_char)
+	int		extra_char;		/* character to use in the name instead of '?' */
+{
+#ifdef USE_TMPNAM
+	char_u			itmp[L_tmpnam];		/* use tmpnam() */
+#else
+	char_u			itmp[TEMPNAMELEN];
+#endif
+	char_u			*p;
+
+#if defined(TEMPDIRNAMES)
+	static char		*(tempdirs[]) = {TEMPDIRNAMES};
+	static int		first_dir = 0;
+	int				first_try = TRUE;
+	int				i;
+
+	/*
+	 * Try a few places to put the temp file.
+	 * To avoid waisting time with non-existing environment variables and
+	 * directories, they are skipped next time.
+	 */
+	for (i = first_dir; i < sizeof(tempdirs) / sizeof(char *); ++i)
+	{
+		/* expand $TMP, leave room for '/', "v?XXXXXX" and NUL */
+		expand_env((char_u *)tempdirs[i], itmp, TEMPNAMELEN - 10);
+		if (mch_isdir(itmp))			/* directory exists */
+		{
+			if (first_try)
+				first_dir = i;			/* start here next time */
+			first_try = FALSE;
+#ifdef BACKSLASH_IN_FILENAME
+			/*
+			 * really want a backslash here, because the filename will
+			 * probably be used in a command line
+			 */
+			STRCAT(itmp, "\\");	
+#else
+			STRCAT(itmp, PATHSEPSTR);
+#endif
+			STRCAT(itmp, TEMPNAME);
+			if ((p = vim_strchr(itmp, '?')) != NULL)
+				*p = extra_char;
+			if (*mktemp((char *)itmp) == NUL)
+				continue;
+			return strsave(itmp);
+		}
+	}
+	return NULL;
+#else
+
+# ifndef USE_TMPNAM		 /* tmpnam() will make its own name */
+	STRCPY(itmp, TEMPNAME);
+# endif
+	if ((p = vim_strchr(itmp, '?')) != NULL)
+		*p = extra_char;
+# ifdef USE_TMPNAM
+	if (*tmpnam((char *)itmp) == NUL)
+# else
+	if (*mktemp((char *)itmp) == NUL)
+# endif
+		return NULL;
+	return strsave(itmp);
+#endif
 }

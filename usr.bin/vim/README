@@ -1,6 +1,6 @@
-$OpenBSD: README,v 1.1 1996/09/07 23:43:01 downsj Exp $
+$OpenBSD: README,v 1.2 1996/09/21 06:22:50 downsj Exp $
 
-README for version 4.2 of Vim: Vi IMproved.
+README for version 4.4 of Vim: Vi IMproved.
 
 Vim is an almost compatible version of the UNIX editor vi.  Only the "Q"
 command is missing.  Many new features have been added: multi level undo,
@@ -24,10 +24,22 @@ read doc/vim_help.txt.  It contains pointers to the other documentation files.
 "tutor/readme" is a one hour training course for beginners.
 
 Copying:
-Vim is Charityware.  You can copy it as much as you like, but you are
+Vim is Charityware.  You can use and copy it as much as you like, but you are
 encouraged to make a donation to orphans in Uganda.  Please read the file
-"doc/vim_kcc.txt" for details.  You are allowed to include Vim on a CD-ROM if
-you send me one.
+"doc/vim_kcc.txt" for details.
+
+If you include Vim on a CD-ROM, I would like to receive a copy.  Just so I
+know which Vim distributions exists in the world (and to show off to my
+friends :-)).
+
+If you distribute a modified version of Vim, you must send me a copy,
+including the source code.  Or make it available to me through ftp; let me
+know where I can find it.  If the number of changes is small (e.g., a modified
+Makefile) e-mailing me the diffs will do.  I preserve the right to include
+any changes in the official version of Vim.  It is not allowed to distribute
+a modified version of Vim without making the source code available to me.
+It is not allowed to remove these restrictions from the distribution of the
+Vim sources.
 
 Compiling:
 All stuff for compiling Vim is in the "src" directory.  See src/INSTALL for

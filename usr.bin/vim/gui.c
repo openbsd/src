@@ -1,4 +1,4 @@
-/*	$OpenBSD: gui.c,v 1.1.1.1 1996/09/07 21:40:28 downsj Exp $	*/
+/*	$OpenBSD: gui.c,v 1.2 1996/09/21 06:23:01 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved			by Bram Moolenaar
@@ -51,12 +51,18 @@ static void gui_update_horiz_scrollbar __ARGS((void));
 gui_start()
 {
 	char_u	*old_term;
+	int		pid;
 
 	old_term = strsave(term_strings[KS_NAME]);
 	mch_setmouse(FALSE);					/* first switch mouse off */
 
-	/* set_termname() will call gui_init() to start the GUI */
+	/*
+	 * Set_termname() will call gui_init() to start the GUI.
+	 * Set the "starting" flag, to indicate that the GUI will start.
+	 */
+	gui.starting = TRUE;
 	termcapinit((char_u *)"builtin_gui");
+	gui.starting = FALSE;
 
 	if (!gui.in_use)						/* failed to start GUI */
 		termcapinit(old_term);
@@ -69,9 +75,24 @@ gui_start()
 	 * Don't do this when Vim was started with "-f" or the 'f' flag is present
 	 * in 'guioptions'.
 	 */
-	if (gui.in_use && gui.dofork &&
-					  vim_strchr(p_guioptions, GO_FORG) == NULL && fork() > 0)
-		exit(0);
+	if (gui.in_use && gui.dofork && vim_strchr(p_guioptions, GO_FORG) == NULL)
+	{
+		pid = fork();
+		if (pid > 0)		/* parent */
+			exit(0);
+#if defined(HAVE_SETSID) || defined(HAVE_SETPGID)
+		/*
+		 * Change our process group.  On some systems/shells a CTRL-C in the
+		 * shell where Vim was started would otherwise kill gvim!
+		 */
+		if (pid == 0)		/* child */
+# if defined(HAVE_SETSID)
+			(void)setsid();
+# else
+			(void)setpgid(0, 0);
+# endif
+#endif
+	}
 }
 
 /*
@@ -360,7 +381,7 @@ gui_resize_window(pixel_width, pixel_height)
 	gui_reset_scroll_region();
 	/*
 	 * At the "more" prompt there is no redraw, put the cursor at the last
-	 * line here (why does it have to be one row too low???).
+	 * line here (why does it have to be one row too low?).
 	 */
 	if (State == ASKMORE)
 		gui.row = gui.num_rows;
@@ -935,9 +956,9 @@ gui_get_menu_index(menu, state)
  * according to whether the command is an "unmenu" command.
  */
 	static int
-gui_get_menu_cmd_modes(cmd, force, noremap, unmenu)
+gui_get_menu_cmd_modes(cmd, forceit, noremap, unmenu)
 	char_u	*cmd;
-	int		force;		/* Was there a "!" after the command? */
+	int		forceit;		/* Was there a "!" after the command? */
 	int		*noremap;
 	int		*unmenu;
 {
@@ -963,7 +984,7 @@ gui_get_menu_cmd_modes(cmd, force, noremap, unmenu)
 		modes |= MENU_CMDLINE_MODE;
 		cmd++;
 	}
-	else if (force)					/* menu!, noremenu! */
+	else if (forceit)					/* menu!, noremenu! */
 		modes |= MENU_INSERT_MODE | MENU_CMDLINE_MODE;
 	else							/* menu, noremenu */
 		modes |= MENU_NORMAL_MODE | MENU_VISUAL_MODE;
@@ -979,10 +1000,10 @@ gui_get_menu_cmd_modes(cmd, force, noremap, unmenu)
  * Do the :menu commands.
  */
 	void
-gui_do_menu(cmd, arg, force)
+gui_do_menu(cmd, arg, forceit)
 	char_u	*cmd;
 	char_u	*arg;
-	int		force;
+	int		forceit;
 {
 	char_u	*menu_path;
 	int		modes;
@@ -991,7 +1012,7 @@ gui_do_menu(cmd, arg, force)
 	int		unmenu;
 	char_u	*map_buf;
 
-	modes = gui_get_menu_cmd_modes(cmd, force, &noremap, &unmenu);
+	modes = gui_get_menu_cmd_modes(cmd, forceit, &noremap, &unmenu);
 	menu_path = arg;
 	if (*menu_path == NUL)
 	{
@@ -1277,7 +1298,9 @@ gui_free_menu(menu)
 {
 	int		i;
 
-	gui_mch_destroy_menu(menu);		/* Free machine specific menu structures */
+	/* Free machine specific menu structures (only when already created) */
+	if (gui.in_use)
+		gui_mch_destroy_menu(menu);
 	vim_free(menu->name);
 	for (i = 0; i < 4; i++)
 		gui_free_menu_string(menu, i);
@@ -1441,10 +1464,10 @@ static int		expand_modes = 0x0;
  * Work out what to complete when doing command line completion of menu names.
  */
 	char_u *
-gui_set_context_in_menu_cmd(cmd, arg, force)
+gui_set_context_in_menu_cmd(cmd, arg, forceit)
 	char_u	*cmd;
 	char_u	*arg;
-	int		force;
+	int		forceit;
 {
 	char_u	*after_dot;
 	char_u	*p;
@@ -1470,7 +1493,7 @@ gui_set_context_in_menu_cmd(cmd, arg, force)
 		 * With :menu though you might want to add a menu with the same name as
 		 * one in another mode, so match menus fom other modes too.
 		 */
-		expand_modes = gui_get_menu_cmd_modes(cmd, force, NULL, &unmenu);
+		expand_modes = gui_get_menu_cmd_modes(cmd, forceit, NULL, &unmenu);
 		if (!unmenu)
 			expand_modes = MENU_ALL_MODES;
 
@@ -1628,7 +1651,7 @@ gui_init_which_components(oldval)
 	int		grey_old, grey_new;
 	char_u	*temp;
 
-	if (oldval != NULL)
+	if (oldval != NULL && gui.in_use)
 	{
 		/*
 		 * Check if the menu's go from grey to non-grey or vise versa.
@@ -1977,6 +2000,7 @@ gui_do_horiz_scroll()
 	int		i;
 	int		vcol;
 	int		ret_val = FALSE;
+	int		width;
 
 	/* no wrapping, no scrolling */
 	if (curwin->w_p_wrap)
@@ -1984,6 +2008,9 @@ gui_do_horiz_scroll()
 
 	curwin->w_leftcol = scrollbar_value;
 
+	width = Columns;
+	if (curwin->w_p_nu)		/* 8 characters of window used by line number */
+		width -= 8;
 	i = 0;
 	vcol = 0;
 	p = ml_get_curline();
@@ -2003,9 +2030,9 @@ gui_do_horiz_scroll()
 	}
 
 	while (p[i] && i <= curwin->w_cursor.col
-									&& vcol <= curwin->w_leftcol + Columns)
+									&& vcol <= curwin->w_leftcol + width)
 		vcol += chartabsize(p[i++], (colnr_t)vcol);
-	if (vcol > curwin->w_leftcol + Columns)
+	if (vcol > curwin->w_leftcol + width)
 	{
 		/*
 		 * Cursor is on a character that is at least partly off the right hand

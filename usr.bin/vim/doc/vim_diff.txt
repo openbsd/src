@@ -1,4 +1,4 @@
-*vim_diff.txt*  For Vim version 4.2.  Last modification: 1996 June 16
+*vim_diff.txt*  For Vim version 4.4.  Last modification: 1996 July 18
 
 This is a summary of the differences between VIM and vi. It is not complete.
 see also |vim_ref.txt|, look for comments in {}, like "{not in Vi}".
@@ -700,7 +700,7 @@ the "-n" option.  Use the 'directory' option for placing the .swp file
 somewhere else.
 
 The 'shortname' (sn) option, when set, tells Vim that ".bak" and ".swp"
-filenames are to be MS-DOS-like: 8 characters plus 3 for extention.  This
+filenames are to be MS-DOS-like: 8 characters plus 3 for extension.  This
 should be used on messydos or crossdos filesystems on the Amiga.  If this
 option is off, Vim tries to guess if MS-DOS filename restrictions are
 effective.

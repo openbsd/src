@@ -1,4 +1,4 @@
-/*	$OpenBSD: gui_at_sb.c,v 1.1.1.1 1996/09/07 21:40:28 downsj Exp $	*/
+/*	$OpenBSD: gui_at_sb.c,v 1.2 1996/09/21 06:23:02 downsj Exp $	*/
 /* vi:set ts=4 sw=4: */
 /* MODIFIED ATHENA SCROLLBAR (USING ARROWHEADS AT ENDS OF TRAVEL) */
 /* Modifications Copyright 1992 by Mitch Trachtenberg             */
@@ -136,7 +136,7 @@ static void MoveThumb __ARGS((Widget, XEvent *, String *, Cardinal *));
 static void NotifyThumb __ARGS((Widget, XEvent *, String *, Cardinal *));
 static void NotifyScroll __ARGS((Widget, XEvent *, String *, Cardinal *));
 static void EndScroll __ARGS((Widget, XEvent *, String *, Cardinal *));
-static void _Xaw3dDrawShadows __ARGS((Widget, XEvent *, Region, Boolean));
+static void _Xaw3dDrawShadows __ARGS((Widget, XEvent *, Region, int));
 static void AllocTopShadowGC __ARGS((Widget));
 static void AllocBotShadowGC __ARGS((Widget));
 
@@ -1063,7 +1063,7 @@ _Xaw3dDrawShadows(gw, event, region, out)
 	Widget	gw;
 	XEvent	*event;
 	Region	region;
-	Boolean	out;
+	int		out;
 {
 	XPoint	pt[6];
 	ScrollbarWidget sbw = (ScrollbarWidget) gw;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: csearch.c,v 1.1.1.1 1996/09/07 21:40:26 downsj Exp $	*/
+/*	$OpenBSD: csearch.c,v 1.2 1996/09/21 06:22:56 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -647,7 +647,12 @@ do_glob(type, lp, up, cmd)
 
 		global_busy = 0;
 
-		must_redraw = CLEAR;
+		/*
+		 * Redraw everything.  Could use CLEAR, which is faster in some
+		 * situations, but when there are few changes this makes the display
+		 * flicker.
+		 */
+		must_redraw = NOT_VALID;
 		cursupdate();
 
 		/* If subsitutes done, report number of substitues, otherwise report

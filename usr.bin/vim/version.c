@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.1.1.1 1996/09/07 21:40:24 downsj Exp $	*/
+/*	$OpenBSD: version.c,v 1.2 1996/09/21 06:23:25 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -16,8 +16,172 @@
  * It has been changed beyond recognition since then.
  *
  * All the remarks about older versions have been removed, they are not very
- * interesting.  Differences between version 3.0 and 4.0 can be found in
+ * interesting.  Differences between version 3.0 and 4.x can be found in
  * "../doc/vim_40.txt".
+ *
+ * Changes between version 4.3 BETA and 4.4 BETA:
+ * - Moved outputting newline from getout() to mch_windexit().  Helps when
+ *   switching display pages in xterm after an error message for ":!".
+ * - Fixed problem: Not executing BufEnter autocommands for first buffer.
+ * - Fixed Makefile: "make shadow" didn't make ctags and xxd directories.  Now
+ *   passes CC and CFLAGS to ctags and xxd makefiles.
+ * - Removed use of #elif, some old compilers don't understand it.
+ * - Included version 1.4 of ctags.  New Makefile.bcc, supports wildcards for
+ *   16 bit DOS version.
+ * - Fixed mouse positioning in wrong column for MSDOS 16 and 32 bit versions.
+ * - Fixed: Delay in updating Visual area when using "/pat".
+ * - Fixed: With some shells gvim could be killed with CTRL-C in the shell
+ *   where it was started.
+ * - Fixed: For abbreviations entered with ":noreab" only the first two
+ *   characters were not re-mapped instead of all.
+ * - Added help tags for search pattern special characters.  Adjusted
+ *   doctags.c to insert a backslash before a backslash.
+ * - Fixed Vi incompatibility: If the rhs of a mapping starts with the lhs,
+ *   remapping is only disabled for the first character, not the whole lhs.
+ * - Fixed: Default padding character was a space, which caused trouble on
+ *   some systems.  Now it's a NUL.
+ * - Fixed: With GUI Athena the scrollbar could get stuck at the bottom.
+ * - Fixed: When using :imenu to insert more than one line of text, only the
+ *   first line could be undone.
+ * - Fixed: Word completion (CTRL-N) in Insert mode, when there was not
+ *   matching word, the "Pattern not found" message was not shown.
+ * - Fixed: Pattern completion (CTRL-X I) in Insert mode; the file name shown
+ *   was overwritten with the mode message.
+ * - Added ":if" and ":endif" commands.  Everything in between them is
+ *   ingored.  Just to allow for future expansion that is backwards compatible.
+ * - Fixed: Starting Vim without a file, then ":e file", ":sp" and ":q"
+ *   unloaded the buffer.
+ * - Fixed: execution of autocommands could not be interrupted.
+ * - Fixed: "ga" on an empty line gave a misleading message, now it prints
+ *   "empty line".
+ * - Fixed: With 'number' set mouse positioning was wrong when lines wrap, and
+ *   in the GUI horizontal scrolling didn't work properly.
+ * - Removed "src/tags" from the source distribution; you can generate it
+ *   yourself now that ctags is included.
+ * - Included "macros/life", macros to run Conway's game of life.
+ * - Fixed using "set go=r" in gvimrc problem for Motif GUI.
+ * - Fixed problems when using autocommands with ":next" et. al..  Made
+ *   "line1", "line2" and "forceit" local variables, instead of global.  Lots
+ *   of function have to pass it as an argument, which is required to avoid
+ *   the vars to get mixed up with recursive Ex commands.
+ * - Removed the use of "want_start" in search.c.  Fixes bug when using a
+ *   search string that starts with "^" and contains "\|".
+ *
+ * Changes between version 4.2 and 4.3 BETA:
+ * - Moved ctags, tee and xxd sources from the binary to the source archive.
+ * - OS/2: Adjusted ExpandWildCards again, fixed alloc/free error.
+ * - Fixed: "Nothing in register ^@", ^@ for buffer 0 is now "
+ * - Fixed: Was outputting CR CR LF instead of CR LF for termios.
+ * - Fixed: cindent didn't handle "} else" and "} while (cond);".
+ * - Fixed: Was using killpg(0, SIGINT) to interrupt external commands in the
+ *   GUI, which isn't documented on all systems.  Use kill(0, SIGINT) instead.
+ * - Updated version number that is compared with for the ":version" command.
+ * - Fixed: ":0put" inserted text below line 1; now it inserts above line 1.
+ * - Fixed: "/t/e" would not find the last character in a line.
+ * - Fixed: Unloading the current buffer could load another unloaded buffer.
+ *   Use a loaded buffer if there is one.
+ * - Improved: ":dis" now shows "^J" at the end of linewise registers.
+ * - Fixed: Using ":q" to close a window didn't execute the BufEnter
+ *   autocommands for the new current window.
+ * - Forbid the reading of a file after *ReadPre autocommands, this could give
+ *   unpredictable results.
+ * - Fixed: ":sball" didn't work correctly with autocommands that contain a
+ *   ":normal" command.
+ * - Fixed: was accepting a mapping after CTRL-W count.
+ * - Fixed: a '[' in a regexp was special, made "/[z[]/" fail.
+ * - Amiga, DICE: included a few patches to amiga.c.
+ * - Fixed: Could crash when completing a setting, e.g. ":set <t_K<Tab>"
+ * - Fixed: Using "new fname" in a vimrc caused a window with a non-existing
+ *   buffer.
+ * - Added support for keypad keys <kHome>, <kEnd>, <kPageUp> and <kPageDown>.
+ *   They only work when they send a different code from <Home>, etc..
+ * - Swapped the arguments to LINKIT in Makefile, was making a link from Vim,
+ *   instead of to Vim.
+ * - Fixed: Not all parts of the swap file were cleared before using them,
+ *   could include any data in the swap file (mostly the password file!).
+ * - Fixed: Could get an extra swap file when using ":au BufLeave xx bd xx".
+ * - Fixed: ":set comment=n:" didn't give an error message; formatting would
+ *   cause a hang.
+ * - Use off_t for lseek; FreeBSD and others use long long instead of long.
+ * - Fixed: ":/pat" didn't match at first column in the next line.
+ * - Fixed: CTRL-F at end of file with 'scrolloff' non-zero would make the
+ *   screen jump up and down and didn't beep when no more scrolling was
+ *   possible.  When last two lines didn't fit on the screen together, the
+ *   last one was never shown.
+ * - When Vim is not compiled with AUTOCMD, "<afile>" is not included.
+ * - Fixed: ":au BufWritePre xx bunload" caused empty file to be written, now
+ *   it gives an error message.
+ * - Added "<Bar>", to be used in mappings where a '|' is needed.
+ * - Moved "Changing readonly file" message, In insert mode, to after the mode
+ *   message, it would otherwise be hidden.
+ * - Fixed: Putting a temp file in current directory for MS-DOS causes
+ *   problems on readonly devices.  Try several directories to put the temp
+ *   file in.
+ * - Changed default for Unix 'errorformat' to include a few more compilers.
+ * - Fixed: When exiting because of a non-existing file after the "-e"
+ *   argument, there was no newline.
+ * - When writing part of a buffer to a file, don't add a end-of-line for the
+ *   last line, if 'binary' is set and the previous read didn't have an
+ *   end-of-line for the same line.  For FileWritePre autocommands that filter
+ *   the lines through gzip.
+ * - Fixed: When not writing the eol for the last line, this was not visible,
+ *   and the line count was one too low.
+ * - Fixed: BufNewFile autocommands that do ":r file" sometimes didn't work,
+ *   because the cursor was in an invalid line.
+ * - Fixed: a *ReadFile autocommand that changed the file to be read didn't
+ *   work, because the file was already opened.
+ * - Fixed: When doing ":bdel", buf_copy_options() could copy options from
+ *   already freed memory.  Would cause any combination of strange settings.
+ * - Check for errors while reading the viminfo file.  When there are more
+ *   than 10 errors, quit reading it.  When there is any error, don't
+ *   overwrite it with a new viminfo file.  Prevents trashing a file when
+ *   accidently doing "vim -i file" instead of "vim -v file".
+ * - Added "ZQ", alias for ":q!".  Elvis compatible.
+ * - Fixed: "vim -g" would crash when .gvimrc contains ":set go=r".
+ * - Fixed: ":set go&" didn't work, the default contained an illegal 'A'.
+ * - Added 'titlelen' option: percentage of 'columns' to use for the title.
+ *   Reduces problems with truncating long path names.
+ * - Added "tee" for OS/2.  Very useful for ":make".
+ * - Fixed: Setting 'title' in the gvimrc messed up the title of the xterm
+ *   where Vim was started when doing ":gui".
+ * - Fixed: When expanding "~/file" with CTRL-X CTRL-F in insert mode, the
+ *   "~/" would get expanded into a full path.  For "~user/file" the problem
+ *   still exists though.
+ * - Fixed: ":set path=../b" didn't work as expected, any path starting with a
+ *   dot would get expanded to the directory of the current file.
+ * - Fixed: Any dir name in 'directory' and 'backupdir' starting with '.' was
+ *   considered to be in the current directory, also "..".  Now using "./dir"
+ *   means using a directory relative to where the file is.
+ * - Fixed: ":all", ":ball" and "-o" command line option would execute
+ *   Buf/Win Enter/Leave autocommands for first buffer a few times.  Now
+ *   they are only done when really entering a buffer/window.
+ * - Fixed: ":all", change in first buffer, ":all" would give an error message
+ *   for not writing the file.
+ * - Added 'shellcmdflag' and 'shellquote' options, mainly for Win32 when
+ *   using different kinds of shell.
+ * - Fixed: "unmenu *" in .gvimrc caused a crash on some machines.
+ * - Fixed: ":buf" (go to current buffer) should not do anything.  It executed
+ *   autocommands and set the previous context mark.
+ * - Fixed: "*``" moved the cursor back to the start of the word, instead of
+ *   where the cursor was within or before the word.
+ * - Fixed: ":e %:p:h" removed the head of the path ("/" for unix, "d:\" for
+ *   DOS, "drive:" for Amiga.
+ * - Fixed: for the Win32 version, 'term' must be "win32", don't init it with
+ *   $TERM.
+ * - Fixed: Filename completion with <Tab>, when there are several matches,
+ *   but only one without ignored suffix, next <Tab> obtained second match,
+ *   not the one after the previous one.  Now the files without matching
+ *   suffix are put in front of the list.
+ * - Fixed: DJGPP version of system() was eating file descriptors, after a few
+ *   filter commands there would be an "Out of file handles" error.
+ * - Fixed: for MS-DOS: ":n doc\*.txt" didn't work, it became "doc*.txt".
+ * - Added: MS-DOS and WIN32 now expand $ENV in a filename. ":e $VIM/_vimrc"
+ *   works now.
+ * - Fixed: MS-DOS: after ":mode 1" mouse didn't move correctly.  Now it
+ *   mostly works for the display modes up to 0x13.
+ * - Fixed: In Insert mode, the message from  "^O:set tw" would be overwritten
+ *   by "--INSERT--".  Now there is a 10 second delay to be able to read the
+ *   message.
  *
  * Changes between version 4.1 and 4.2:
  * - Included ctags version 1.3.
@@ -134,11 +298,13 @@
  * Don't forget to update the numbers in version.h for Win32!!!
  */
 
-char		   *Version = "VIM 4.2";
+#include "version.h"
+
+char		   *Version = "VIM 4.4";
 #ifdef HAVE_DATE_TIME
-char		   *longVersion = "VIM - Vi IMproved 4.2 (1996 June 17, compiled " __DATE__ " " __TIME__ ")";
+char		   *longVersion = "VIM - Vi IMproved 4.4 BETA (1996 Sep 11, compiled " __DATE__ " " __TIME__ ")";
 #else
-char		   *longVersion = "VIM - Vi IMproved 4.2 (1996 June 17)";
+char		   *longVersion = "VIM - Vi IMproved 4.4 BETA (1996 Sep 11)";
 #endif
 
 static void version_msg __ARGS((char *s));
@@ -161,7 +327,7 @@ do_version(arg)
 			else
 				found_version += n;
 		}
-		if (found_version > 400)
+		if (found_version > VIM_VERSION_MAJOR * 100 + VIM_VERSION_MINOR)
 		{
 			MSG("Warning: Found newer version command");
 			if (sourcing_name != NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: undo.c,v 1.1.1.1 1996/09/07 21:40:24 downsj Exp $	*/
+/*	$OpenBSD: undo.c,v 1.2 1996/09/21 06:23:23 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -190,8 +190,7 @@ u_savecommon(top, bot, newbot)
 					   ((curbuf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0);
 
 		/* save named marks for undo */
-		vim_memmove((char *)uhp->uh_namedm, (char *)curbuf->b_namedm,
-													   sizeof(FPOS) * NMARKS); 
+		vim_memmove(uhp->uh_namedm, curbuf->b_namedm, sizeof(FPOS) * NMARKS); 
 		curbuf->b_u_newhead = uhp;
 		if (curbuf->b_u_oldhead == NULL)
 			curbuf->b_u_oldhead = uhp;
@@ -357,8 +356,7 @@ u_undoredo()
 	/*
 	 * save marks before undo/redo
 	 */
-	vim_memmove((char *)namedm, (char *)curbuf->b_namedm, 
-													   sizeof(FPOS) * NMARKS); 
+	vim_memmove(namedm, curbuf->b_namedm, sizeof(FPOS) * NMARKS); 
 	curbuf->b_op_start.lnum = curbuf->b_ml.ml_line_count;
 	curbuf->b_op_start.col = 0;
 	curbuf->b_op_end.lnum = 0;

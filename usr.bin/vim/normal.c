@@ -1,4 +1,4 @@
-/*	$OpenBSD: normal.c,v 1.1.1.1 1996/09/07 21:40:25 downsj Exp $	*/
+/*	$OpenBSD: normal.c,v 1.2 1996/09/21 06:23:11 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -102,6 +102,8 @@ normal()
 	int				ctrl_w = FALSE;			/* got CTRL-W command */
 	int				old_col = 0;
 	int				dont_adjust_op_end = FALSE;
+	static int		search_dont_set_mark = FALSE;	/* for "*" and "#" */
+	FPOS			old_pos;				/* cursor position before command */
 
 	Prenum = 0;
 	/*
@@ -136,10 +138,20 @@ getcount:
 			Prenum = Prenum * 10 + (c - '0');
 		if (Prenum < 0)			/* got too large! */
 			Prenum = 999999999;
+		if (ctrl_w)
+		{
+			++no_mapping;
+			++allow_keys;				/* no mapping for nchar, but keys */
+		}
 		c = vgetc();
 #ifdef HAVE_LANGMAP
 		LANGMAP_ADJUST(c, TRUE);
 #endif
+		if (ctrl_w)
+		{
+			--no_mapping;
+			--allow_keys;
+		}
 		(void)add_to_showcmd(c, FALSE);
 	}
 
@@ -226,6 +238,7 @@ getcount:
 	}
 	msg_didout = FALSE;		/* don't scroll screen up for normal command */
 	msg_col = 0;
+	old_pos = curwin->w_cursor;			/* remember where cursor was */
 
 #ifdef RIGHTLEFT
 	if (curwin->w_p_rl && KeyTyped)		/* invert horizontal operations */
@@ -288,11 +301,13 @@ getcount:
 	  case Ctrl('B'):
 	  case K_S_UP:
 	  case K_PAGEUP:
+	  case K_KPAGEUP:
 		dir = BACKWARD;
 
 	  case Ctrl('F'):
 	  case K_S_DOWN:
 	  case K_PAGEDOWN:
+	  case K_KPAGEDOWN:
 		if (checkclearop())
 			break;
 		(void)onepage(dir, Prenum1);
@@ -530,34 +545,28 @@ dozet:
 			break;
 			/* print full name if count given or :cd used */
 		fileinfo(did_cd | (int)Prenum, FALSE, FALSE);
-
-		/*
-		 * In Visual mode and "^O^G" in Insert mode, the message will be
-		 * overwritten by the mode message.  Wait a bit, until a key is hit.
-		 */
-		if ((VIsual_active || (restart_edit && p_smd)) && KeyTyped)
-		{
-			setcursor();
-			flushbuf();
-			mch_delay(10000L, FALSE);
-		}
 		break;
 
 	  case K_CCIRCM:			/* CTRL-^, short for ":e #" */
 		if (checkclearopq())
 			break;
-		(void)buflist_getfile((int)Prenum, (linenr_t)0, GETF_SETMARK|GETF_ALT);
+		(void)buflist_getfile((int)Prenum, (linenr_t)0,
+												GETF_SETMARK|GETF_ALT, FALSE);
 		break;
 
-	  case 'Z': 		/* write, if changed, and exit */
+		/*
+		 * "ZZ": write if changed, and exit window
+		 * "ZQ": quit window (Elvis compatible)
+		 */
+	  case 'Z':
 		if (checkclearopq())
 			break;
-		if (nchar != 'Z')
-		{
+		if (nchar == 'Z')
+			stuffReadbuff((char_u *)":x\n");
+		else if (nchar == 'Q')
+			stuffReadbuff((char_u *)":q!\n");
+		else
 			clearopbeep();
-			break;
-		}
-		stuffReadbuff((char_u *)":x\n");
 		break;
 
 	  case Ctrl(']'):			/* :ta to current identifier */
@@ -620,9 +629,14 @@ search_word:
 					stuffReadbuff((char_u *)"?");
 
 				/*
-				 * put cursor at start of word, makes search skip the word
-				 * under the cursor
+				 * Put cursor at start of word, makes search skip the word
+				 * under the cursor.
+				 * Call setpcmark() first, so "*``" puts the cursor back where
+				 * it was, and set search_dont_set_mark to avoid doing it
+				 * again when searching.
 				 */
+				setpcmark();
+				search_dont_set_mark = TRUE;
 				curwin->w_cursor.col = ptr - ml_get_curline();
 
 				if (c != 'g' && iswordchar(*ptr))
@@ -670,7 +684,7 @@ search_word:
 	  case Ctrl('T'):		/* backwards in tag stack */
 		if (checkclearopq())
 			break;
-		do_tag((char_u *)"", 2, (int)Prenum1);
+		do_tag((char_u *)"", 2, (int)Prenum1, FALSE);
 		break;
 
 /*
@@ -874,6 +888,7 @@ lineop:
 		break;
 
 	  case K_HOME:
+	  case K_KHOME:
 		if ((mod_mask & MOD_MASK_CTRL))
 			goto goto_line_one;
 		Prenum = 1;
@@ -957,6 +972,7 @@ dowrdcmd:
 		break;
 
 	  case K_END:
+	  case K_KEND:
 		if ((mod_mask & MOD_MASK_CTRL))
 			goto goto_line;
 		/* FALLTHROUGH */
@@ -997,11 +1013,13 @@ dowrdcmd:
 		curwin->w_set_curswant = TRUE;
 
 		n = do_search(c, searchbuff, Prenum1,
-						 SEARCH_MARK | SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG);
+				(search_dont_set_mark ? 0 : SEARCH_MARK) |
+				SEARCH_OPT | SEARCH_ECHO | SEARCH_MSG);
 		if (n == 0)
 			clearop();
 		else if (n == 2)
 			op_motion_type = MLINE;
+		search_dont_set_mark = FALSE;
 		break;
 
 	  case 'N':
@@ -1107,12 +1125,10 @@ docsearch:
 		if ((c == '[' && vim_strchr((char_u *)"{(*/#", nchar) != NULL) ||
 		    (c == ']' && vim_strchr((char_u *)"})*/#", nchar) != NULL))
 		{
-			FPOS old_pos;
 			FPOS new_pos;
 
 			if (nchar == '*')
 				nchar = '/';
-			old_pos = curwin->w_cursor;
 			new_pos.lnum = 0;
 			while (Prenum1--)
 			{
@@ -1912,12 +1928,13 @@ cursormark:
 
 			case '0':
 			case K_HOME:
+			case K_KHOME:
 				op_motion_type = MCHAR;
 				op_inclusive = FALSE;
 				if (curwin->w_p_wrap)
 				{
 					n = ((curwin->w_virtcol + (curwin->w_p_nu ? 8 : 0)) /
-															   Columns) * Columns;
+														   Columns) * Columns;
 					if (curwin->w_p_nu && n > 8)
 						n -= 8;
 				}
@@ -1932,15 +1949,16 @@ cursormark:
 
 			case '$':
 			case K_END:
+			case K_KEND:
 				op_motion_type = MCHAR;
 				op_inclusive = TRUE;
 				if (curwin->w_p_wrap)
 				{
-					curwin->w_curswant = MAXCOL;		/* so we stay at the end */
+					curwin->w_curswant = MAXCOL;	/* so we stay at the end */
 					if (Prenum1 == 1)
 					{
 						n = ((curwin->w_virtcol + (curwin->w_p_nu ? 8 : 0)) /
-													   Columns + 1) * Columns - 1;
+												   Columns + 1) * Columns - 1;
 						if (curwin->w_p_nu && n > 8)
 							n -= 8;
 						coladvance((colnr_t)n);
@@ -2002,10 +2020,10 @@ gotofile:
 				{
 					/* do autowrite if necessary */
 					if (curbuf->b_changed && curbuf->b_nwindows <= 1 && !p_hid)
-						autowrite(curbuf);
+						autowrite(curbuf, FALSE);
 					setpcmark();
-					(void)do_ecmd(0, ptr, NULL, NULL, p_hid, (linenr_t)0,
-																	   FALSE);
+					(void)do_ecmd(0, ptr, NULL, NULL, (linenr_t)0,
+													   p_hid ? ECMD_HIDE : 0);
 					vim_free(ptr);
 				}
 				else
@@ -2178,6 +2196,47 @@ goto_line_one:
 	do_pending_operator(c, nchar, finish_op, searchbuff, 
 					  &command_busy, old_col, FALSE, dont_adjust_op_end);
 
+	/*
+	 * Wait when a message is displayed that will be overwritten by the mode
+	 * message.
+	 * In Visual mode and with "^O" in Insert mode, a short message will be
+	 * overwritten by the mode message.  Wait a bit, until a key is hit.
+	 * In Visual mode, it's more important to keep the Visual area updated
+	 * than keeping a message (e.g. from a /pat search).
+	 * Only do this if the command was typed, not from a mapping.
+	 * Also wait a bit after an error message, e.g. for "^O:".
+	 * Don't redraw the screen, it would remove the message.
+	 */
+	if (((p_smd && ((VIsual_active && old_pos.lnum == curwin->w_cursor.lnum &&
+			old_pos.col == curwin->w_cursor.col) || restart_edit) &&
+			(clear_cmdline || redraw_cmdline) && msg_didany && KeyTyped) ||
+			(restart_edit && !VIsual_active && (msg_scroll || emsg_on_display
+#ifdef SLEEP_IN_EMSG
+										|| need_sleep
+#endif
+														))) &&
+			yankbuffer == 0 && !command_busy && stuff_empty() && op_type == NOP)
+	{
+		++RedrawingDisabled;
+		cursupdate();
+		--RedrawingDisabled;
+		setcursor();
+		flushbuf();
+		if (msg_scroll || emsg_on_display
+#ifdef SLEEP_IN_EMSG
+											|| need_sleep
+#endif
+															)
+			mch_delay(1000L, TRUE);		/* wait at least one second */
+		mch_delay(10000L, FALSE);		/* wait up to ten seconds */
+
+		msg_scroll = FALSE;
+		emsg_on_display = FALSE;
+#ifdef SLEEP_IN_EMSG
+		need_sleep = FALSE;
+#endif
+	}
+
 normal_end:
 	if (op_type == NOP && yankbuffer == 0)
 		clear_showcmd();
@@ -2186,7 +2245,8 @@ normal_end:
 						 && !command_busy && stuff_empty() && yankbuffer == 0)
 		(void)edit(restart_edit, FALSE, 1L);
 
-	checkpcmark();			/* check if we moved since setting pcmark */
+	if (!search_dont_set_mark)
+		checkpcmark();			/* check if we moved since setting pcmark */
 	vim_free(searchbuff);
 
 /*

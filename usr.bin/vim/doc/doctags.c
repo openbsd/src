@@ -1,4 +1,4 @@
-/*	$OpenBSD: doctags.c,v 1.1.1.1 1996/09/07 21:40:30 downsj Exp $	*/
+/*	$OpenBSD: doctags.c,v 1.2 1996/09/21 06:23:31 downsj Exp $	*/
 /* vim:set ts=4 sw=4:
  * this program makes a tags file for vim_ref.txt
  *
@@ -54,7 +54,16 @@ main(argc, argv)
 													characters */
 					{
 						*p2 = '\0';
-						printf("%s\t%s\t/\\*%s\\*\n", p1 + 1, argv[0], p1 + 1);
+						++p1;
+						printf("%s\t%s\t/\\*", p1, argv[0]);
+						while (*p1)
+						{
+							if (*p1 == '\\')	/* insert backslash */
+								putchar('\\');
+							putchar(*p1);
+							++p1;
+						}
+						printf("\\*\n");
 						p2 = strchr(p2 + 1, '*');
 					}
 				}

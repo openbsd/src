@@ -1,4 +1,4 @@
-*vim_idx.txt*   For Vim version 4.2.  Last modification: 1996 June 16
+*vim_idx.txt*   For Vim version 4.4.  Last modification: 1996 Aug 4
 
 This file contains a list of all commands for each mode, with a tag and a
 short description.  The list is sorted on ASCII value.
@@ -38,7 +38,7 @@ tag		char		action
 				line
 |i_CTRL-E|	CTRL-E		insert the character which is below the cursor
 		CTRL-F		not used
-		CTRL-G		not used
+		CTRL-G		reserved for future expansion
 |i_<BS>|	<BS>		delete character before the cursor
 |i_digraph|	{char1}<BS>{char2}
 				enter digraph (only when 'digraph' option set)
@@ -292,6 +292,7 @@ tag		char	      note action in Normal mode
 |Y|		["x]Y		   yank N lines [into buffer x]; synonym for
 				   "yy"
 |ZZ|		ZZ		   store current file if modified, and exit
+|ZQ|		ZQ		   exit current file always
 |[|		[{char}		   square bracket command (see below)
 		\		   not used
 |]|		]{char}		   square bracket command (see below)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.h,v 1.1.1.1 1996/09/07 21:40:27 downsj Exp $	*/
+/*	$OpenBSD: unix.h,v 1.2 1996/09/21 06:23:25 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -90,7 +90,9 @@
 
 #if HAVE_DIRENT_H
 # include <dirent.h>
+# ifndef NAMLEN
 # define NAMLEN(dirent) strlen((dirent)->d_name)
+# endif
 #else
 # define dirent direct
 # define NAMLEN(dirent) (dirent)->d_namlen
@@ -134,6 +136,8 @@
 #if !defined(MAXNAMLEN)
 # define MAXNAMLEN 512				/* for all other Unix */
 #endif
+
+#define BASENAMELEN		(MAXNAMLEN - 5)
 
 #ifdef HAVE_ERRNO_H
 # include <errno.h>
@@ -206,13 +210,15 @@
 #endif
 
 #ifdef OS2
-#define TMPNAME1		"$TMP/viXXXXXX"
-#define TMPNAME2		"$TMP/voXXXXXX"
-#define TMPNAMELEN		128
+/*
+ * Try several directories to put the temp files.
+ */
+#define TEMPDIRNAMES	"$TMP", "$TEMP", "c:\\TMP", "c:\\TEMP", ""
+#define TEMPNAME		"v?XXXXXX"
+#define TEMPNAMELEN		128
 #else
-#define TMPNAME1		"/tmp/viXXXXXX"
-#define TMPNAME2		"/tmp/voXXXXXX"
-#define TMPNAMELEN		15
+#define TEMPNAME		"/tmp/v?XXXXXX"
+#define TEMPNAMELEN		15
 #endif
 
 /*
@@ -231,8 +237,6 @@
 #ifndef MAXMEMTOT
 # define MAXMEMTOT		2048		/* use up to 2048Kbyte for Vim */
 #endif
-
-#define BASENAMELEN		(MAXNAMLEN - 5)
 
 /* memmove is not present on all systems, use memmove, bcopy, memcpy or our
  * own version */

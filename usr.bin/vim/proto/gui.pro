@@ -1,4 +1,4 @@
-/*	$OpenBSD: gui.pro,v 1.1.1.1 1996/09/07 21:40:29 downsj Exp $	*/
+/*	$OpenBSD: gui.pro,v 1.2 1996/09/21 06:23:52 downsj Exp $	*/
 /* gui.c */
 void gui_start __PARMS((void));
 void gui_prepare __PARMS((int *argc, char **argv));
@@ -24,8 +24,8 @@ void gui_copy_selection __PARMS((void));
 void gui_auto_select __PARMS((void));
 void gui_menu_cb __PARMS((GuiMenu *menu));
 int gui_get_menu_index __PARMS((GuiMenu *menu, int state));
-void gui_do_menu __PARMS((char_u *cmd, char_u *arg, int force));
-char_u *gui_set_context_in_menu_cmd __PARMS((char_u *cmd, char_u *arg, int force));
+void gui_do_menu __PARMS((char_u *cmd, char_u *arg, int forceit));
+char_u *gui_set_context_in_menu_cmd __PARMS((char_u *cmd, char_u *arg, int forceit));
 int gui_ExpandMenuNames __PARMS((regexp *prog, int *num_file, char_u ***file));
 void gui_init_which_components __PARMS((char_u *oldval));
 int gui_do_scroll __PARMS((void));

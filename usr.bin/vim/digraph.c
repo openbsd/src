@@ -1,4 +1,4 @@
-/*	$OpenBSD: digraph.c,v 1.1.1.1 1996/09/07 21:40:26 downsj Exp $	*/
+/*	$OpenBSD: digraph.c,v 1.2 1996/09/21 06:22:56 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -490,8 +490,7 @@ putdigraph(str)
 		newtab = (char_u (*)[3])alloc(digraphcount * 3 + 3);
 		if (newtab)
 		{
-			vim_memmove((char *)newtab, (char *)digraphnew, 
-												  (size_t)(digraphcount * 3));
+			vim_memmove(newtab, digraphnew, (size_t)(digraphcount * 3));
 			vim_free(digraphnew);
 			digraphnew = newtab;
 			digraphnew[digraphcount][0] = char1;

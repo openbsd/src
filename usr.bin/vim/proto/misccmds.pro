@@ -1,4 +1,4 @@
-/*	$OpenBSD: misccmds.pro,v 1.1.1.1 1996/09/07 21:40:29 downsj Exp $	*/
+/*	$OpenBSD: misccmds.pro,v 1.2 1996/09/21 06:23:53 downsj Exp $	*/
 /* misccmds.c */
 int get_indent __PARMS((void));
 int get_indent_lnum __PARMS((linenr_t lnum));
@@ -28,7 +28,7 @@ char_u *skip_to_option_part __PARMS((char_u *p));
 char *plural __PARMS((long n));
 void set_Changed __PARMS((void));
 void unset_Changed __PARMS((BUF *buf));
-void change_warning __PARMS((void));
+void change_warning __PARMS((int col));
 int ask_yesno __PARMS((char_u *str, int direct));
 int get_number __PARMS((void));
 void msgmore __PARMS((long n));
@@ -40,6 +40,7 @@ void home_replace __PARMS((BUF *buf, char_u *src, char_u *dst, int dstlen));
 char_u *home_replace_save __PARMS((BUF *buf, char_u *src));
 int fullpathcmp __PARMS((char_u *s1, char_u *s2));
 char_u *gettail __PARMS((char_u *fname));
+char_u *get_past_head __PARMS((char_u *path));
 int ispathsep __PARMS((int c));
 char_u *concat_fnames __PARMS((char_u *fname1, char_u *fname2, int sep));
 char_u *FullName_save __PARMS((char_u *fname));

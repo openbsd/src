@@ -1,4 +1,4 @@
-*vim_40.txt*    For Vim version 4.2.  Last modification: 1996 June 16
+*vim_40.txt*    For Vim version 4.4.  Last modification: 1996 Sep 1
 
 
 Welcome to Vim Version 4.0!
@@ -1405,6 +1405,10 @@ Added setting of previous context mark when changing files (with ":e file" or
 Added list of options that are enabled/disabled at compile time to ":version"
 command (+GUI -digraphs -eindent, etc.).  For Unix, add a line to the
 ":version" command to show how it was compiled.		|:version|
+
+Added ":if" and ":endif" commands.  Everything in between them is ignored.
+This is just for being able to add future commands to vimrc files in a
+backwards compatible way.				|:if|
 
 Made CTRL-N and CTRL-P for command-line completion line cyclic.	|c_CTRL-N|
 

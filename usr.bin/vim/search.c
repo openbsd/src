@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.1.1.1 1996/09/07 21:40:24 downsj Exp $	*/
+/*	$OpenBSD: search.c,v 1.2 1996/09/21 06:23:19 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -69,8 +69,6 @@ static char_u	*last_pattern = NULL;
 static int		last_magic = TRUE;
 static int		last_no_scs = FALSE;
 static char_u	*mr_pattern = NULL;		/* pattern used by myregcomp() */
-
-static int		want_start;				/* looking for start of line? */
 
 /*
  * Type used by find_pattern_in_path() to remember which included files have
@@ -190,7 +188,6 @@ myregcomp(pat, sub_cmd, which_pat, options)
 		}
 	}
 
-	want_start = (*pat == '^');	/* looking for start of line? */
 	set_reg_ic(pat);			/* tell the vim_regexec routine how to search */
 	return vim_regcomp(pat);
 }
@@ -298,15 +295,10 @@ searchit(pos, dir, str, count, options, which_pat)
 			for ( ; lnum > 0 && lnum <= curbuf->b_ml.ml_line_count;
 										   lnum += dir, at_first_line = FALSE)
 			{
-				ptr = ml_get(lnum);
-											/* forward search, first line */
-				if (dir == FORWARD && at_first_line && start_pos.col > 0 &&
-																   want_start)
-					continue;				/* match not possible */
-
 				/*
 				 * Look for a match somewhere in the line.
 				 */
+				ptr = ml_get(lnum);
 				if (vim_regexec(prog, ptr, TRUE))
 				{
 					match = prog->startp[0];
@@ -323,11 +315,10 @@ searchit(pos, dir, str, count, options, which_pat)
 						/*
 						 * When *match == NUL the cursor will be put one back
 						 * afterwards, compare with that position, otherwise
-						 * "/$" will get stuck on end of line.  Same for
-						 * matchend.
+						 * "/$" will get stuck on end of line.
 						 */
 						while ((options & SEARCH_END) ?
-						((int)(matchend - ptr) - 1 - (int)(*matchend == NUL) <
+												 ((int)(matchend - ptr) - 1  <
 											 (int)start_pos.col + extra_col) :
 								  ((int)(match - ptr) - (int)(*match == NUL) <
 											  (int)start_pos.col + extra_col))
@@ -363,7 +354,7 @@ searchit(pos, dir, str, count, options, which_pat)
 						if (!match_ok)
 							continue;
 					}
-					if (dir == BACKWARD && !want_start)
+					if (dir == BACKWARD)
 					{
 						/*
 						 * Now, if there are multiple matches on this line,
@@ -500,6 +491,7 @@ searchit(pos, dir, str, count, options, which_pat)
  *	  If 'options & SEARCH_NOOF': don't add offset to position
  *	  If 'options & SEARCH_MARK': set previous context mark
  *	  If 'options & SEARCH_KEEP': keep previous search pattern
+ *    If 'options & SEARCH_START': accept match at curpos itself
  *
  * Careful: If lastoffline == TRUE and lastoff == 0 this makes the
  * movement linewise without moving the match position.
@@ -699,7 +691,7 @@ do_search(dirc, str, count, options)
 
 		c = searchit(&pos, dirc == '/' ? FORWARD : BACKWARD, searchstr, count,
 				lastend + (options &
-					   (SEARCH_KEEP + SEARCH_HIS + SEARCH_MSG +
+					   (SEARCH_KEEP + SEARCH_HIS + SEARCH_MSG + SEARCH_START +
 						   ((str != NULL && *str == ';') ? 0 : SEARCH_NOOF))),
 				2);
 		if (dircp != NULL)
@@ -2922,7 +2914,7 @@ find_pattern_in_path(ptr, len, whole, skip_comments,
 					}
 					else
 						if (getfile(0, files[depth].name, NULL, TRUE,
-														files[depth].lnum) > 0)
+												files[depth].lnum, FALSE) > 0)
 							break;		/* failed to jump to file */
 				}
 				if (action != ACTION_SHOW)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.1.1.1 1996/09/07 21:40:25 downsj Exp $	*/
+/*	$OpenBSD: option.c,v 1.2 1996/09/21 06:23:14 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -194,10 +194,16 @@ static struct option options[] =
 #else
 # if defined MSDOS  ||  defined WIN32
 							(char_u *)"%*[^\"]\"%f\"%*[^0-9]%l: %m,%f(%l) : %m,%*[^ ] %f %l: %m,%f:%l:%m"},
-# elif defined(__EMX__)	/* put most common here (i.e. gcc format) at front */
-							(char_u *)"%f:%l:%m,%*[^\"]\"%f\"%*[^0-9]%l: %m,\"%f\"%*[^0-9]%l: %m"},
 # else
-							(char_u *)"%*[^\"]\"%f\"%*[^0-9]%l: %m,\"%f\"%*[^0-9]%l: %m,%f:%l:%m"},
+#  if defined(__EMX__)	/* put most common here (i.e. gcc format) at front */
+							(char_u *)"%f:%l:%m,%*[^\"]\"%f\"%*[^0-9]%l: %m,\"%f\"%*[^0-9]%l: %m,%f(%l:%c) : %m"},
+#  else
+#   if defined(__QNX__)
+							(char_u *)"%f(%l):%*[^WE]%t%*[^0123456789]%n:%m"},
+#   else /* Unix, probably */
+							(char_u *)"%*[^\"]\"%f\"%*[^0-9]%l: %m,\"%f\"%*[^0-9]%l: %m,%f:%l:%m,\"%f\"\\, line %l%*[^0-9]%c%*[^ ] %m"},
+#   endif
+#  endif
 # endif
 #endif
 	{"esckeys",		"ek",	P_BOOL,				(char_u *)&p_ek,
@@ -236,9 +242,9 @@ static struct option options[] =
 #ifdef USE_GUI
 												(char_u *)&p_guioptions,
 # ifdef UNIX
-							(char_u *)"aAgmr"},
+							(char_u *)"agmr"},
 # else
-							(char_u *)"Agmr"},
+							(char_u *)"gmr"},
 # endif
 #else
 												(char_u *)NULL,
@@ -395,10 +401,12 @@ static struct option options[] =
 	{"path",		"pa",  	P_STRING|P_EXPAND,	(char_u *)&p_path,
 #if defined AMIGA  ||  defined MSDOS  ||  defined WIN32
 							(char_u *)".,,"},
-#elif defined(__EMX__)
-							(char_u *)".,/emx/include,,"},
 #else
+# if defined(__EMX__)
+							(char_u *)".,/emx/include,,"},
+# else /* Unix, probably */
 							(char_u *)".,/usr/include,,"},
+# endif
 #endif
 	{"prompt",		NULL,	P_BOOL,				(char_u *)NULL,
 							(char_u *)FALSE},
@@ -433,16 +441,28 @@ static struct option options[] =
 	{"secure",		NULL,	P_BOOL,				(char_u *)&p_secure,
 							(char_u *)FALSE},
 	{"shell",		"sh",	P_STRING|P_EXPAND,	(char_u *)&p_sh,
-#if   defined(MSDOS)
+#if defined(MSDOS)
 							(char_u *)"command"},
-#elif defined(WIN32)
-							(char_u *)""},		/* set in set_init_1() */
-#elif defined(__EMX__)
-							(char_u *)"cmd.exe"},
-#elif defined(ARCHIE)
-							(char_u *)"gos"},
 #else
+# if defined(WIN32)
+							(char_u *)""},		/* set in set_init_1() */
+# else
+#  if defined(__EMX__)
+							(char_u *)"cmd.exe"},
+#  else
+#   if defined(ARCHIE)
+							(char_u *)"gos"},
+#   else
 							(char_u *)"sh"},
+#   endif
+#  endif
+# endif
+#endif
+	{"shellcmdflag","shcf", P_STRING,           (char_u *)&p_shcf,
+#if defined(MSDOS) || defined(WIN32)
+							(char_u *)"/c"},
+#else
+							(char_u *)"-c"},
 #endif
 	{"shellpipe",	"sp",	P_STRING,			(char_u *)&p_sp,
 #if defined(UNIX) || defined(OS2)
@@ -454,6 +474,8 @@ static struct option options[] =
 #else
 							(char_u *)">"},
 #endif
+	{"shellquote",  "shq",  P_STRING,           (char_u *)&p_shq,
+							(char_u *)""},
 	{"shellredir",	"srr",	P_STRING,			(char_u *)&p_srr,
 							(char_u *)">"},
 	{"shelltype",	"st",	P_NUM,				(char_u *)&p_st,
@@ -554,6 +576,8 @@ static struct option options[] =
 							(char_u *)1000L},
 	{"title",	 	NULL,	P_BOOL,				(char_u *)&p_title,
 							(char_u *)FALSE},
+	{"titlelen",	NULL,	P_NUM,				(char_u *)&p_titlelen,
+							(char_u *)85L},
 	{"ttimeout", 	NULL,	P_BOOL,				(char_u *)&p_ttimeout,
 							(char_u *)FALSE},
 	{"ttimeoutlen",	"ttm",	P_NUM,				(char_u *)&p_ttm,
@@ -1015,11 +1039,37 @@ set_init_3()
 	}
 #endif
 
+#if defined(MSDOS) || defined(WIN32)
+	/*
+	 * Set 'shellcmdflag and 'shellquote' depending on the 'shell' option.
+	 * This is done after other initializations, where 'shell' might have been
+	 * set, but only if they have not been set before.  Default for p_shcf is
+	 * "/c", for p_shq is "".  For "sh" like  shells it is changed here to
+	 * "-c" and "\"".
+	 */
+	if (strstr((char *)p_sh, "sh") != NULL)
+	{
+		idx1 = findoption((char_u *)"shcf");
+		if (!(options[idx1].flags & P_WAS_SET))
+		{
+			p_shcf = (char_u *)"-c";
+			options[idx1].def_val = p_shcf;
+		}
+
+		idx1 = findoption((char_u *)"shq");
+		if (!(options[idx1].flags & P_WAS_SET))
+		{
+			p_shq = (char_u *)"\"";
+			options[idx1].def_val = p_shq;
+		}
+	}
+#endif
+
 /*
  * 'title' and 'icon' only default to true if they have not been set or reset
  * in .vimrc and we can read the old value.
  * When 'title' and 'icon' have been reset in .vimrc, we won't even check if
- * they can be reset. this reduces startup time when using X on a remote
+ * they can be reset.  This reduces startup time when using X on a remote
  * machine.
  */
 	idx1 = findoption((char_u *)"title");
@@ -1304,8 +1354,11 @@ do_set(arg)
 					else if (varp == (char_u *)&(curbuf->b_p_lisp))
 						init_chartab();		/* ignore errors */
 
-					else if (!starting && ((int *)varp == &p_title ||
-													  (int *)varp == &p_icon))
+					else if (!starting &&
+#ifdef USE_GUI
+								!gui.starting &&
+#endif
+						  ((int *)varp == &p_title || (int *)varp == &p_icon))
 					{
 						/*
 						 * When setting 'title' or 'icon' on, call maketitle()
@@ -1414,6 +1467,8 @@ do_set(arg)
 						/* (re)set last window status line */
 						if ((long *)varp == &p_ls)
 							last_status();
+						if ((long *)varp == &p_titlelen && !starting)
+							maketitle();
 					}
 					else if (opt_idx >= 0)					/* string */
 					{
@@ -1594,7 +1649,7 @@ do_set(arg)
 								}
 								if (*s++ == NUL)
 									errmsg = (char_u *)"Missing colon";
-								else if (*s == ',')
+								else if (*s == ',' || *s == NUL)
 									errmsg = (char_u *)"Zero length string";
 								if (errmsg != NULL)
 									break;
@@ -1810,6 +1865,11 @@ skip:
 			{
 				errmsg = e_positive;
 				p_tm = 0;
+			}
+			if (p_titlelen <= 0)
+			{
+				errmsg = e_positive;
+				p_titlelen = 85;
 			}
 			if ((curwin->w_p_scroll <= 0 ||
 						curwin->w_p_scroll > curwin->w_height) && full_screen)
@@ -2585,125 +2645,133 @@ win_copy_options(wp_from, wp_to)
 
 /*
  * Copy options from one buffer to another.
- * Used when creating a new buffer and when entering a buffer.
- * Only do this once for a new buffer, otherwise allocated memory for the
- * string option will be lost.
+ * Used when creating a new buffer and sometimes when entering a buffer.
  * When "entering" is TRUE we will enter the bp_to buffer.
+ * When "always" is TRUE, always copy the options, but only set
+ * b_p_initialized when appropriate.
  */
 	void
-buf_copy_options(bp_from, bp_to, entering)
+buf_copy_options(bp_from, bp_to, entering, always)
 	BUF		*bp_from;
 	BUF		*bp_to;
 	int		entering;
+	int		always;
 {
+	int		should_copy = TRUE;
+
 	/*
-	 * Don't copy if one of the pointers is NULL or they are the same.
+	 * Don't do anything of the "to" buffer is invalid.
 	 */
-	if (bp_from == NULL || bp_to == NULL || bp_from == bp_to)
+	if (bp_to == NULL || !buf_valid(bp_to))
 		return;
 
 	/*
-	 * Always copy when entering and 'cpo' contains 'S'.
-	 * Don't copy when already initialized.
-	 * Don't copy when 'cpo' contains 's' and not entering.
+	 * Only copy if the "from" buffer is valid and "to" and "from" are
+	 * different.
 	 */
-	if ((vim_strchr(p_cpo, CPO_BUFOPTGLOB) == NULL || !entering) &&
-			(bp_to->b_p_initialized ||
-						(!entering && vim_strchr(p_cpo, CPO_BUFOPT) != NULL)))
+	if (bp_from != NULL && buf_valid(bp_from) && bp_from != bp_to)
 	{
-		check_buf_options(bp_to);		/* make sure we don't have NULLs */
-		return;
-	}
+		/*
+		 * Always copy when entering and 'cpo' contains 'S'.
+		 * Don't copy when already initialized.
+		 * Don't copy when 'cpo' contains 's' and not entering.
+		 * 'S'  entering  initialized   's'  should_copy
+		 * yes    yes          X         X      TRUE
+		 * yes    no          yes        X      FALSE
+		 * no      X          yes        X      FALSE
+		 *  X     no          no        yes     FALSE
+		 *  X     no          no        no      TRUE
+		 * no     yes         no         X      TRUE
+		 */
+		if ((vim_strchr(p_cpo, CPO_BUFOPTGLOB) == NULL || !entering) &&
+				(bp_to->b_p_initialized ||
+				 (!entering && vim_strchr(p_cpo, CPO_BUFOPT) != NULL)))
+			should_copy = FALSE;
 
-	/*
-	 * If already initialized, need to free the allocated strings.
-	 * Copy 'readonly' and 'textmode' only when not initialized.
-	 */
-	if (bp_to->b_p_initialized)
-	{
-		free_string_option(bp_to->b_p_fo);
-		free_string_option(bp_to->b_p_isk);
-		free_string_option(bp_to->b_p_com);
-#ifdef CINDENT
-		free_string_option(bp_to->b_p_cink);
-		free_string_option(bp_to->b_p_cino);
-#endif
-#if defined(CINDENT) || defined(SMARTINDENT)
-		free_string_option(bp_to->b_p_cinw);
-#endif
-	}
-	else
-	{
-		bp_to->b_p_ro = FALSE;				/* don't copy readonly */
-		bp_to->b_p_tx = bp_from->b_p_tx;
-		bp_to->b_p_tx_nobin = bp_from->b_p_tx_nobin;
-	}
+		if (should_copy || always)
+		{
+			/*
+			 * Always free the allocated strings.
+			 * If not already initialized, set 'readonly' and copy 'textmode'.
+			 */
+			free_buf_options(bp_to);
+			if (!bp_to->b_p_initialized)
+			{
+				bp_to->b_p_ro = FALSE;				/* don't copy readonly */
+				bp_to->b_p_tx = bp_from->b_p_tx;
+				bp_to->b_p_tx_nobin = bp_from->b_p_tx_nobin;
+			}
 
-	bp_to->b_p_ai = bp_from->b_p_ai;
-	bp_to->b_p_ai_save = bp_from->b_p_ai_save;
-	bp_to->b_p_sw = bp_from->b_p_sw;
-	bp_to->b_p_tw = bp_from->b_p_tw;
-	bp_to->b_p_tw_save = bp_from->b_p_tw_save;
-	bp_to->b_p_tw_nobin = bp_from->b_p_tw_nobin;
-	bp_to->b_p_wm = bp_from->b_p_wm;
-	bp_to->b_p_wm_save = bp_from->b_p_wm_save;
-	bp_to->b_p_wm_nobin = bp_from->b_p_wm_nobin;
-	bp_to->b_p_bin = bp_from->b_p_bin;
-	bp_to->b_p_et = bp_from->b_p_et;
-	bp_to->b_p_et_nobin = bp_from->b_p_et_nobin;
-	bp_to->b_p_ml = bp_from->b_p_ml;
-	bp_to->b_p_ml_nobin = bp_from->b_p_ml_nobin;
-	bp_to->b_p_inf = bp_from->b_p_inf;
+			bp_to->b_p_ai = bp_from->b_p_ai;
+			bp_to->b_p_ai_save = bp_from->b_p_ai_save;
+			bp_to->b_p_sw = bp_from->b_p_sw;
+			bp_to->b_p_tw = bp_from->b_p_tw;
+			bp_to->b_p_tw_save = bp_from->b_p_tw_save;
+			bp_to->b_p_tw_nobin = bp_from->b_p_tw_nobin;
+			bp_to->b_p_wm = bp_from->b_p_wm;
+			bp_to->b_p_wm_save = bp_from->b_p_wm_save;
+			bp_to->b_p_wm_nobin = bp_from->b_p_wm_nobin;
+			bp_to->b_p_bin = bp_from->b_p_bin;
+			bp_to->b_p_et = bp_from->b_p_et;
+			bp_to->b_p_et_nobin = bp_from->b_p_et_nobin;
+			bp_to->b_p_ml = bp_from->b_p_ml;
+			bp_to->b_p_ml_nobin = bp_from->b_p_ml_nobin;
+			bp_to->b_p_inf = bp_from->b_p_inf;
 #ifndef SHORT_FNAME
-	bp_to->b_p_sn = bp_from->b_p_sn;
+			bp_to->b_p_sn = bp_from->b_p_sn;
 #endif
-	bp_to->b_p_com = strsave(bp_from->b_p_com);
-	bp_to->b_p_fo = strsave(bp_from->b_p_fo);
+			bp_to->b_p_com = strsave(bp_from->b_p_com);
+			bp_to->b_p_fo = strsave(bp_from->b_p_fo);
 #ifdef SMARTINDENT
-	bp_to->b_p_si = bp_from->b_p_si;
-	bp_to->b_p_si_save = bp_from->b_p_si_save;
+			bp_to->b_p_si = bp_from->b_p_si;
+			bp_to->b_p_si_save = bp_from->b_p_si_save;
 #endif
 #ifdef CINDENT
-	bp_to->b_p_cin = bp_from->b_p_cin;
-	bp_to->b_p_cin_save = bp_from->b_p_cin_save;
-	bp_to->b_p_cink = strsave(bp_from->b_p_cink);
-	bp_to->b_p_cino = strsave(bp_from->b_p_cino);
+			bp_to->b_p_cin = bp_from->b_p_cin;
+			bp_to->b_p_cin_save = bp_from->b_p_cin_save;
+			bp_to->b_p_cink = strsave(bp_from->b_p_cink);
+			bp_to->b_p_cino = strsave(bp_from->b_p_cino);
 #endif
 #if defined(SMARTINDENT) || defined(CINDENT)
-	bp_to->b_p_cinw = strsave(bp_from->b_p_cinw);
+			bp_to->b_p_cinw = strsave(bp_from->b_p_cinw);
 #endif
 #ifdef LISPINDENT
-	bp_to->b_p_lisp = bp_from->b_p_lisp;
-	bp_to->b_p_lisp_save = bp_from->b_p_lisp_save;
+			bp_to->b_p_lisp = bp_from->b_p_lisp;
+			bp_to->b_p_lisp_save = bp_from->b_p_lisp_save;
 #endif
-	bp_to->b_p_ta_nobin = bp_from->b_p_ta_nobin;
+			bp_to->b_p_ta_nobin = bp_from->b_p_ta_nobin;
 
-	/*
-	 * Don't copy the options set by do_help(), use the saved values
-	 */
-	if (!keep_help_flag && bp_from->b_help && help_save_isk != NULL)
-	{
-		bp_to->b_p_isk = strsave(help_save_isk);
-		if (bp_to->b_p_isk != NULL)
-			init_chartab();
-		bp_to->b_p_ts = help_save_ts;
-		bp_to->b_help = FALSE;
-	}
-	else
-	{
-		bp_to->b_p_isk = strsave(bp_from->b_p_isk);
-		vim_memmove(bp_to->b_chartab, bp_from->b_chartab, (size_t)256);
-		bp_to->b_p_ts = bp_from->b_p_ts;
-		bp_to->b_help = bp_from->b_help;
-	}
-	check_buf_options(bp_to);
+			/*
+			 * Don't copy the options set by do_help(), use the saved values
+			 */
+			if (!keep_help_flag && bp_from->b_help && help_save_isk != NULL)
+			{
+				bp_to->b_p_isk = strsave(help_save_isk);
+				if (bp_to->b_p_isk != NULL)
+					init_chartab();
+				bp_to->b_p_ts = help_save_ts;
+				bp_to->b_help = FALSE;
+			}
+			else
+			{
+				bp_to->b_p_isk = strsave(bp_from->b_p_isk);
+				vim_memmove(bp_to->b_chartab, bp_from->b_chartab, (size_t)256);
+				bp_to->b_p_ts = bp_from->b_p_ts;
+				bp_to->b_help = bp_from->b_help;
+			}
+		}
 
-	/*
-	 * Set the flag that indicates that the options have been ininitialized.
-	 * Avoids loosing allocated memory.
-	 */
-	bp_to->b_p_initialized = TRUE;
+		/*
+		 * When the options should be copied (ignoring "always"), set the flag
+		 * that indicates that the options have been initialized.
+		 */
+		if (should_copy)
+			bp_to->b_p_initialized = TRUE;
+	}
+
+	check_buf_options(bp_to);		/* make sure we don't have NULLs */
 }
+
 
 static int expand_option_idx = -1;
 static char_u expand_option_name[5] = {'t', '_', NUL, NUL, NUL};
@@ -2856,6 +2924,7 @@ ExpandSettings(prog, num_file, file)
 	int	loop;
 	int is_term_opt;
 	char_u	name_buf[MAX_KEY_NAME_LEN];
+	int	save_reg_ic;
 
 	/* do this loop twice:
 	 * loop == 0: count the number of matching options
@@ -2974,6 +3043,7 @@ ExpandSettings(prog, num_file, file)
 				STRCPY(name_buf + 1, str);
 				STRCAT(name_buf, ">");
 
+				save_reg_ic = reg_ic;
 				reg_ic = TRUE;					/* ignore case here */
 				if (vim_regexec(prog, name_buf, TRUE))
 				{
@@ -2982,6 +3052,7 @@ ExpandSettings(prog, num_file, file)
 					else
 						(*file)[count++] = strsave(name_buf);
 				}
+				reg_ic = save_reg_ic;
 			}
 		}
 		if (loop == 0)
@@ -3243,7 +3314,7 @@ static int event_name2nr __ARGS((char_u *start, char_u **end));
 static char *event_nr2name __ARGS((int event));
 static char_u *find_end_event __ARGS((char_u *arg));
 static int do_autocmd_event __ARGS((int event, char_u *pat,
-													 char_u *cmd, int force));
+												   char_u *cmd, int forceit));
 
 	static void
 show_autocmd(ap, event)
@@ -3412,9 +3483,9 @@ find_end_event(arg)
  * :autocmd * *.c				show all autocommands for *.c files.
  */
 	void
-do_autocmd(arg, force)
+do_autocmd(arg, forceit)
 	char_u	*arg;
-	int		force;
+	int		forceit;
 {
 	char_u	*pat;
 	char_u	*cmd;
@@ -3452,7 +3523,7 @@ do_autocmd(arg, force)
 	/*
 	 * Print header when showing autocommands.
 	 */
-	if (!force && *cmd == NUL)
+	if (!forceit && *cmd == NUL)
 	{
 		set_highlight('t');		/* Highlight title */
 		start_highlight();
@@ -3466,14 +3537,14 @@ do_autocmd(arg, force)
 	if (*arg == '*' || *arg == NUL)
 	{
 		for (event = 0; event < NUM_EVENTS; ++event)
-			if (do_autocmd_event(event, pat, cmd, force) == FAIL)
+			if (do_autocmd_event(event, pat, cmd, forceit) == FAIL)
 				break;
 	}
 	else
 	{
 		while (*arg && !vim_iswhite(*arg))
 			if (do_autocmd_event(event_name2nr(arg, &arg), pat,
-														  cmd, force) == FAIL)
+														cmd, forceit) == FAIL)
 				break;
 	}
 }
@@ -3482,14 +3553,14 @@ do_autocmd(arg, force)
  * do_autocmd() for one event.
  * If *pat == NUL do for all patterns.
  * If *cmd == NUL show entries.
- * If force == TRUE delete entries.
+ * If forceit == TRUE delete entries.
  */
 	static int
-do_autocmd_event(event, pat, cmd, force)
+do_autocmd_event(event, pat, cmd, forceit)
 	int		event;
 	char_u	*pat;
 	char_u	*cmd;
-	int		force;
+	int		forceit;
 {
 	AutoPat		*ap;
 	AutoPat		*ap2;
@@ -3508,12 +3579,12 @@ do_autocmd_event(event, pat, cmd, force)
 		for (ap = first_autopat[event]; ap != NULL; ap = ap2)
 		{
 			ap2 = ap->next;
-			if (force)
+			if (forceit)
 				del_autocmd(ap);
 			else
 				show_autocmd(ap, event);
 		}
-		if (force)
+		if (forceit)
 			first_autopat[event] = NULL;
 	}
 
@@ -3588,7 +3659,7 @@ do_autocmd_event(event, pat, cmd, force)
 		 * If not adding any new autocmd's for this pattern, delete the
 		 * pattern from the autopat list
 		 */
-		else if (force)
+		else if (forceit)
 		{
 			del_autocmd_cmds(ap);
 			if (*cmd == NUL)
@@ -3610,7 +3681,7 @@ do_autocmd_event(event, pat, cmd, force)
 		/*
 		 * Show autocmd's for this autopat
 		 */
-		if (*cmd == NUL && !force)
+		if (*cmd == NUL && !forceit)
 		{
 			show_autocmd(ap, event);
 		}
@@ -3697,11 +3768,21 @@ apply_autocmds(event, fname, fname_io)
 	AutoCmd			*ac;
 	int				temp;
 	int				save_changed = curbuf->b_changed;
+	BUF				*old_curbuf = curbuf;
 	char_u			*save_name;
 	char_u			*full_fname = NULL;
 	int				retval = FALSE;
 
 	if (autocmd_busy)			/* no nesting allowed */
+		return retval;
+	/*
+	 * Check if these autocommands are disabled.  Used when doing ":all" or
+	 * ":ball".
+	 */
+	if (	(autocmd_no_enter &&
+				(event == EVENT_WINENTER || event == EVENT_BUFENTER)) ||
+			(autocmd_no_leave &&
+				(event == EVENT_WINLEAVE || event == EVENT_BUFLEAVE)))
 		return retval;
 
 		/* Don't redraw while doing auto commands. */
@@ -3735,7 +3816,7 @@ apply_autocmds(event, fname, fname_io)
 
 	tail = gettail(fname);
 
-	for (ap = first_autopat[event]; ap != NULL; ap = ap->next)
+	for (ap = first_autopat[event]; ap != NULL && !got_int; ap = ap->next)
 	{
 #ifdef CASE_INSENSITIVE_FILENAME
 		reg_ic = TRUE;		/* Always ignore case */
@@ -3760,6 +3841,7 @@ apply_autocmds(event, fname, fname_io)
 			vim_free(sourcing_name);
 		}
 		vim_free(prog);
+		mch_breakcheck();
 	}
 	RedrawingDisabled = temp;
 	autocmd_busy = FALSE;
@@ -3767,9 +3849,13 @@ apply_autocmds(event, fname, fname_io)
 	autocmd_fname = NULL;
 	vim_free(full_fname);
 
-	/* Some events don't set or reset the Changed flag */
-	if (event == EVENT_BUFREADPOST || event == EVENT_BUFWRITEPOST ||
-					 event == EVENT_FILEAPPENDPOST || event == EVENT_VIMLEAVE)
+	/*
+	 * Some events don't set or reset the Changed flag.
+	 * Check if still in the same buffer!
+	 */
+	if (curbuf == old_curbuf &&
+			(event == EVENT_BUFREADPOST || event == EVENT_BUFWRITEPOST ||
+			event == EVENT_FILEAPPENDPOST || event == EVENT_VIMLEAVE))
 		curbuf->b_changed = save_changed;
 
 	return retval;

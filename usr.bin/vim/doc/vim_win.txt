@@ -1,4 +1,4 @@
-*vim_win.txt*   For Vim version 4.2.  Last modification: 1996 June 16
+*vim_win.txt*   For Vim version 4.4.  Last modification: 1996 Aug 6
 
 Editing with multiple windows and buffers.
 
@@ -50,6 +50,9 @@ be editing empty buffers.
 
 If there are many filenames, the windows will become very small.  You might
 want to set the 'winheight' option to create a workable situation.
+
+Buf/Win Enter/Leave autocommands are not executed when opening the new windows
+and reading the files, that's only done when they are really entered.
 
 							*status_line*
 A status line will be used to separate windows.  The 'laststatus' option tells
@@ -322,6 +325,8 @@ can also get to them with the buffer list commands, like ":bnext".
 :[N]sal[l] [N]	Rearrange the screen to open one window for each argument.
 		All other windows are closed (buffers become hidden).  When a
 		count is given, this is the maximum number of windows to open.
+		Buf/Win Enter/Leave autocommands are not executed for the new
+		windows here, that's only done when they are really entered.
 
 :[N]sa[rgument][!] [N]				*:sa* *:sargument*
 		Short for ":split | argument [N]": split window and go to Nth
@@ -540,7 +545,9 @@ Be careful: there may be more hidden, modified buffers!
 :[N]ba[ll] [N]					*:ba* *:ball* *:sba* *:sball*
 :[N]sba[ll] [N]	Rearrange the screen to open one window for each buffer in
 		the buffer list.  When a count is given, this is the maximum
-		number of windows to open.
+		number of windows to open.  Buf/Win Enter/Leave autocommands
+		are not executed for the new windows here, that's only done
+		when they are really entered.
 
 
 Memory usage limits

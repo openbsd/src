@@ -1,4 +1,4 @@
-/*	$OpenBSD: memline.pro,v 1.1.1.1 1996/09/07 21:40:29 downsj Exp $	*/
+/*	$OpenBSD: memline.pro,v 1.2 1996/09/21 06:23:52 downsj Exp $	*/
 /* memline.c */
 int ml_open __PARMS((void));
 void ml_setname __PARMS((void));
@@ -24,3 +24,4 @@ void ml_setmarked __PARMS((linenr_t lnum));
 linenr_t ml_firstmarked __PARMS((void));
 int ml_has_mark __PARMS((linenr_t lnum));
 void ml_clearmarked __PARMS((void));
+char_u *get_file_in_dir __PARMS((char_u *fname, char_u *dirname));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memline.c,v 1.1.1.1 1996/09/07 21:40:25 downsj Exp $	*/
+/*	$OpenBSD: memline.c,v 1.2 1996/09/21 06:23:08 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -331,8 +331,6 @@ ml_open()
 		goto error;
 	}
 	b0p = (ZERO_BL *)(hp->bh_data);
-
-	(void)vim_memset(b0p, 0, sizeof(ZERO_BL));		/* init all to zero */
 
 	b0p->b0_id[0] = BLOCK0_ID0;
 	b0p->b0_id[1] = BLOCK0_ID1;
@@ -726,7 +724,7 @@ ml_recover()
 	int			idx;
 	int			top;
 	int			txt_start;
-	long		size;
+	off_t		size;
 	int			called_from_main;
 	int			serious_error = TRUE;
 	long		mtime;
@@ -1161,20 +1159,22 @@ recover_names(fname, list, nr)
 		msg_outchar('\n');
 	}
 	expand_interactively = TRUE;
+
 	/*
 	 * Do the loop for every directory in 'directory'.
+	 * First allocate some memory to put the directory name in.
 	 */
+	dir_name = alloc((unsigned)STRLEN(p_dir) + 1);
 	dirp = p_dir;
-	while (*dirp)
+	while (dir_name != NULL && *dirp)
 	{
-		/* find character after directory name */
-		dir_name = dirp;
-		while (*dirp && *dirp != ',')
-			++dirp;
-		dir_name = strnsave(dir_name, (int)(dirp - dir_name));
-		if (dir_name == NULL)		/* out of memory */
-			break;
-		if (*dir_name == '.')		/* check current dir */
+		/*
+		 * Isolate a directory name from *dirp and put it in dir_name.
+		 * Advance dirp to next directory name.
+		 */
+		(void)copy_option_part(&dirp, dir_name, 31000, ",");
+
+		if (dir_name[0] == '.' && dir_name[1] == NUL)	/* check current dir */
 		{
 			if (fname == NULL || *fname == NULL)
 			{
@@ -1264,7 +1264,7 @@ recover_names(fname, list, nr)
 		}
 		else if (list)
 		{
-			if (*dir_name == '.')
+			if (dir_name[0] == '.' && dir_name[1] == NUL)
 			{
 				if (fname == NULL || *fname == NULL)
 					MSG_OUTSTR("   In current directory:\n");
@@ -1300,13 +1300,8 @@ recover_names(fname, list, nr)
 		for (i = 0; i < num_names; ++i)
 			vim_free(names[i]);
 		FreeWild(num_files, files);
-
-		/* advance dirp to next directory name */
-		vim_free(dir_name);
-		if (*dirp == ',')
-			++dirp;
-		dirp = skipwhite(dirp);
 	}
+	vim_free(dir_name);
 	expand_interactively = FALSE;
 	return file_count;
 }
@@ -2900,25 +2895,68 @@ makeswapname(buf, dir_name)
 	BUF		*buf;
 	char_u	*dir_name;
 {
-	char_u		*r, *s, *fname;
+	char_u		*r, *s;
 
 #ifdef VMS
 	r = modname(buf->b_xfilename, (char_u *)"_swp");
 #else
 	r = modname(buf->b_xfilename, (char_u *)".swp");
 #endif
-	/*
-	 * do not use dir_name
-	 * - if dir_name starts with '.' (use current directory)
-	 * - if out of memory
-	 */
-	if (*dir_name == '.' || r == NULL)
-		return r;
+	if (r == NULL)			/* out of memory */
+		return NULL;
 
-	fname = gettail(r);
-	s = concat_fnames(dir_name, fname, TRUE);
+	s = get_file_in_dir(r, dir_name);
 	vim_free(r);
 	return s;
+}
+
+/*
+ * Get file name to use for swap file or backup file.
+ * Use the name of the edited file "fname" and an entry in the 'dir' or 'bdir'
+ * option "dirname".
+ * - If "dirname" is ".", return "fname".
+ * - If "dirname" starts with "./", insert "dirname" in "fname".
+ * - Otherwise, prepend "dirname" to the tail of "fname".
+ *
+ * The return value is an allocated string and can be NULL.
+ */
+	char_u *
+get_file_in_dir(fname, dirname)
+	char_u	*fname;
+	char_u	*dirname;
+{
+	char_u		*t;
+	char_u		*tail;
+	char_u		*retval;
+	int			save_char;
+
+	tail = gettail(fname);
+
+	if (dirname[0] == '.' && dirname[1] == NUL)
+		retval = strsave(fname);
+	else if (dirname[0] == '.' && ispathsep(dirname[1]))
+	{
+		if (tail == fname)			/* no path before file name */
+			retval = concat_fnames(dirname + 2, tail, TRUE);
+		else
+		{
+			save_char = *tail;
+			*tail = NUL;
+			t = concat_fnames(fname, dirname + 2, TRUE);
+			*tail = save_char;
+			if (t == NULL)			/* out of memory */
+				retval = NULL;
+			else
+			{
+				retval = concat_fnames(t, tail, TRUE);
+				vim_free(t);
+			}
+		}
+	}
+	else
+		retval = concat_fnames(dirname, tail, TRUE);
+
+	return retval;
 }
 
 /*
@@ -2926,7 +2964,7 @@ makeswapname(buf, dir_name)
  *
  * Several names are tried to find one that does not exist
  *
- * Note: if MAXNAMLEN is not correct, you will get error messages for
+ * Note: if BASENAMELEN is not correct, you will get error messages for
  *       not being able to open the swapfile
  */
 	static char_u *
@@ -2961,7 +2999,7 @@ findswapname(buf, dirp, old_fname)
 
 /*
  * Isolate a directory name from *dirp and put it in dir_name.
- * First allocate some memore to put the directory name in.
+ * First allocate some memory to put the directory name in.
  */
 	dir_name = alloc((unsigned)STRLEN(*dirp) + 1);
 	if (dir_name != NULL)

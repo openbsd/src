@@ -1,4 +1,4 @@
-*vim_digr.txt*  For Vim version 4.2.  Last modification: 1996 June 8
+*vim_digr.txt*  For Vim version 4.4.  Last modification: 1996 June 8
 
 These are the default digraph characters for Vim.
 

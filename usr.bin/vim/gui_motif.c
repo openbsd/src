@@ -1,4 +1,4 @@
-/*	$OpenBSD: gui_motif.c,v 1.1.1.1 1996/09/07 21:40:28 downsj Exp $	*/
+/*	$OpenBSD: gui_motif.c,v 1.2 1996/09/21 06:23:03 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved			by Bram Moolenaar
@@ -330,6 +330,11 @@ gui_mch_set_winsize()
 		base_height += menu_height;
 	}
 
+	/*
+	 * Need to unmanage vimForm here for a moment, to avoid an error message
+	 * when .gvimrc contains ":set guioptions=r".
+	 */
+	XtUnmanageChild(vimForm);
 	XtVaSetValues(vimShell,
 #ifdef XmNbaseWidth
 		XmNbaseWidth, base_width,
@@ -342,6 +347,7 @@ gui_mch_set_winsize()
 		XmNwidth,	  base_width  + Columns * gui.char_width,
 		XmNheight,	  base_height + Rows * gui.char_height,
 		NULL);
+	XtManageChild(vimForm);
 }
 
 /*

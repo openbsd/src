@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.1.1.1 1996/09/07 21:40:26 downsj Exp $	*/
+/*	$OpenBSD: edit.c,v 1.2 1996/09/21 06:22:57 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -119,7 +119,6 @@ edit(initstr, startln, count)
 	char_u		*complete_pat = NULL;
 	char_u		*tmp_ptr;
 	char_u		*mesg = NULL;				/* Message about completion */
-	char_u		*quick_m;					/* Message without sleep */
 	int			 started_completion = FALSE;
 	colnr_t		 complete_col = 0;			/* init for gcc */
 	int			 complete_direction;
@@ -135,22 +134,6 @@ edit(initstr, startln, count)
 	int			 line_is_white = FALSE;		/* line is empty before insert */
 #endif
 	FPOS		 tpos;
-
-	/* sleep before redrawing, needed for "CTRL-O :" that results in an
-	 * error message */
-	if (msg_scroll || emsg_on_display)	
-	{
-		mch_delay(1000L, TRUE);
-		msg_scroll = FALSE;
-		emsg_on_display = FALSE;
-	}
-#ifdef SLEEP_IN_EMSG
-	if (need_sleep)	
-	{
-		mch_delay(1000L, TRUE);
-		need_sleep = FALSE;
-	}
-#endif
 
 #ifdef USE_MOUSE
 	/*
@@ -236,11 +219,17 @@ edit(initstr, startln, count)
 	can_cindent = TRUE;
 #endif
 
+	/*
+	 * If 'showmode' is set, show the current (insert/replace/..) mode.
+	 * A warning message for changing a readonly file is given here, before
+	 * actually changing anything.  It's put after the mode, if any.
+	 */
+	i = 0;
 	if (p_smd)
-		showmode();
+		i = showmode();
 
 	if (!p_im)
-		change_warning();			/* give a warning if readonly */
+		change_warning(i + 1);
 
 #ifdef DIGRAPHS
 	do_digraph(-1);					/* clear digraphs */
@@ -617,6 +606,10 @@ doESCkey:
 				else if (p_smd)
 					MSG("");
 				old_indent = 0;
+
+				/*
+				 * This is the ONLY return from edit().
+				 */
 				return (c == Ctrl('O'));
 
 			  	/*
@@ -1061,6 +1054,7 @@ redraw:
 				break;
 
 			  case K_HOME:
+			  case K_KHOME:
 				undisplay_dollar();
 				tpos = curwin->w_cursor;
 				if ((mod_mask & MOD_MASK_CTRL))
@@ -1071,6 +1065,7 @@ redraw:
 				break;
 
 			  case K_END:
+			  case K_KEND:
 				undisplay_dollar();
 				tpos = curwin->w_cursor;
 				if ((mod_mask & MOD_MASK_CTRL))
@@ -1146,6 +1141,7 @@ redraw:
 
 			  case K_S_UP:
 			  case K_PAGEUP:
+			  case K_KPAGEUP:
 				undisplay_dollar();
 				tpos = curwin->w_cursor;
 			  	if (onepage(BACKWARD, 1L) == OK)
@@ -1175,6 +1171,7 @@ redraw:
 
 			  case K_S_DOWN:
 			  case K_PAGEDOWN:
+			  case K_KPAGEDOWN:
 				undisplay_dollar();
 				tpos = curwin->w_cursor;
 			  	if (onepage(FORWARD, 1L) == OK)
@@ -1353,7 +1350,7 @@ docomplete:
 					complete_direction = BACKWARD;
 				else
 					complete_direction = FORWARD;
-				quick_m = mesg = NULL;			/* No message by default */
+				mesg = NULL;			/* No message by default */
 				if (!started_completion)
 				{
 					/* First time we hit ^N or ^P (in a row, I mean) */
@@ -1493,8 +1490,8 @@ docomplete:
 						set_reg_ic(complete_pat);
 						prog = vim_regcomp(complete_pat);
 						if (prog != NULL &&
-							find_tags(NULL, prog, &num_matches, &matches, FALSE)
-													== OK && num_matches > 0)
+							find_tags(NULL, prog, &num_matches, &matches,
+									   FALSE, FALSE) == OK && num_matches > 0)
 						{
 							for (i = 0; i < num_matches; i++)
 								if (add_completion(matches[i], -1, NULL,
@@ -1524,6 +1521,10 @@ docomplete:
 						if (ExpandWildCards(1, &complete_pat, &num_matches,
 												&matches, FALSE, FALSE) == OK)
 						{
+							/*
+							 * May change home directory back to "~".
+							 */
+							tilde_replace(complete_pat, num_matches, matches);
 							for (i = 0; i < num_matches; i++)
 								if (add_completion(matches[i], -1, NULL,
 														FORWARD) == RET_ERROR)
@@ -1563,7 +1564,10 @@ docomplete:
 				complete_pos = NULL;
 				if (started_completion && curr_match == NULL &&
 										(p_ws || done_dir == BOTH_DIRECTIONS))
-					quick_m = e_patnotf;
+				{
+					edit_submode_extra = e_patnotf;
+					edit_submode_highl = TRUE;
+				}
 				else if (curr_match != NULL && complete_direction == FORWARD &&
 											curr_match->next != NULL)
 					curr_match = curr_match->next;
@@ -1650,7 +1654,10 @@ docomplete:
 						mesg = IObuff;
 					}
 					else if (tot == 0)
-						quick_m = e_patnotf;
+					{
+						edit_submode_extra = e_patnotf;
+						edit_submode_highl = TRUE;
+					}
 				}
 
 				/* eat the ESC to avoid leaving insert mode */
@@ -1668,17 +1675,21 @@ docomplete:
 				else			/* back to what has been typed */
 					ptr = original_text;
 
-				if (curr_match == NULL || curr_match->original)
+				if (edit_submode_extra == NULL)
 				{
-					edit_submode_extra = (char_u *)"Back at original";
-					edit_submode_highl = TRUE;
-				}
-				else if (first_match != NULL && first_match->next != NULL &&
-										  (first_match->next == first_match ||
-												  first_match->next->original))
-				{
-					edit_submode_extra = (char_u *)"(the only match)";
-					edit_submode_highl = FALSE;
+					if (curr_match == NULL || curr_match->original)
+					{
+						edit_submode_extra = (char_u *)"Back at original";
+						edit_submode_highl = TRUE;
+					}
+					else if (first_match != NULL &&
+							first_match->next != NULL &&
+							(first_match->next == first_match ||
+							 first_match->next->original))
+					{
+						edit_submode_extra = (char_u *)"(the only match)";
+						edit_submode_highl = FALSE;
+					}
 				}
 
 				/*
@@ -1691,19 +1702,19 @@ docomplete:
 
 				started_completion = TRUE;
 				need_redraw = TRUE;
-				(void)set_highlight('r');
-				msg_highlight = TRUE;
+
 				if (mesg != NULL)
 				{
+					(void)set_highlight('r');
+					msg_highlight = TRUE;
 					msg(mesg);
-					mch_delay(1000L, FALSE);
+					mch_delay(2000L, FALSE);
 				}
-				else if (quick_m != NULL)
-					msg(quick_m);
-				else if (edit_submode_extra != NULL)
+				if (edit_submode_extra != NULL)
+				{
 					showmode();
-				edit_submode_extra = NULL;
-				msg_highlight = FALSE;
+					edit_submode_extra = NULL;
+				}
 
 				/*
 				 * If there is a file name for the match, overwrite any
@@ -1712,8 +1723,7 @@ docomplete:
 				 * Truncate the file name to avoid a wait for return.
 				 */
 				if (curr_match != NULL && curr_match->fname != NULL &&
-							(ctrl_x_mode != CTRL_X_DICTIONARY ||
-										   (mesg == NULL && quick_m == NULL)))
+							(ctrl_x_mode != CTRL_X_DICTIONARY || mesg == NULL))
 				{
 					STRCPY(IObuff, "match in file ");
 					i = (strsize(curr_match->fname) + 16) - sc_col;
@@ -1723,7 +1733,9 @@ docomplete:
 						STRCAT(IObuff, "<");
 					STRCAT(IObuff, curr_match->fname + i);
 					msg(IObuff);
+					redraw_cmdline = FALSE;		/* don't overwrite! */
 				}
+
 				break;
 #endif /* INSERT_EXPAND */
 
@@ -2901,7 +2913,7 @@ beginline(flag)
  * oneright oneleft cursor_down cursor_up
  *
  * Move one char {right,left,down,up}.
- * Return OK when sucessful, FAIL when we hit a line of file boundary.
+ * Return OK when successful, FAIL when we hit a line of file boundary.
  */
 
 	int
@@ -3076,8 +3088,16 @@ onepage(dir, count)
 		return FAIL;
 	for ( ; count > 0; --count)
 	{
-		if (dir == FORWARD ? (curwin->w_topline >=
-				   curbuf->b_ml.ml_line_count - 1) : (curwin->w_topline == 1))
+		/*
+		 * It's an error to move a page up when the first line is already on
+		 * the screen.  It's an error to move a page down when the last line
+		 * is on the screen and the topline is 'scrolloff' lines from the
+		 * last line.
+		 */
+		if (dir == FORWARD
+				? ((curwin->w_topline >= curbuf->b_ml.ml_line_count - p_so) &&
+						curwin->w_botline > curbuf->b_ml.ml_line_count)
+				: (curwin->w_topline == 1))
 		{
 			beep_flush();
 			return FAIL;
@@ -3087,12 +3107,21 @@ onepage(dir, count)
 										/* at end of file */
 			if (curwin->w_botline > curbuf->b_ml.ml_line_count)
 				curwin->w_topline = curbuf->b_ml.ml_line_count;
-										/* next line is big */
-										/* or just three lines on screen */
 			else
 			{
-				if (plines(curwin->w_botline) >= curwin->w_height - 2 ||
-								   curwin->w_botline - curwin->w_topline <= 3)
+				/*
+				 * When there are three or less lines on the screen, move them
+				 * all to above the screen.
+				 */
+				if (curwin->w_botline - curwin->w_topline <= 3)
+					off = 0;
+				/*
+				 * Make sure at least w_botline gets onto the screen, also
+				 * when 'scrolloff' is non-zero and with very long lines.
+				 */
+				else if (plines(curwin->w_botline) +
+						plines(curwin->w_botline - 1) +
+						plines(curwin->w_botline - 2) >= curwin->w_height - 2)
 					off = 0;
 				else
 					off = 2;
@@ -3140,6 +3169,11 @@ onepage(dir, count)
 	}
 	cursor_correct();
 	beginline(MAYBE);
+	/*
+	 * Avoid the screen jumping up and down when 'scrolloff' is non-zero.
+	 */
+	if (dir == FORWARD && curwin->w_cursor.lnum < curwin->w_topline + p_so)
+		scroll_cursor_top(1, FALSE);
 	updateScreen(VALID);
 	return OK;
 }

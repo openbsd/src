@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdcmds.c,v 1.1.1.1 1996/09/07 21:40:26 downsj Exp $	*/
+/*	$OpenBSD: cmdcmds.c,v 1.2 1996/09/21 06:22:52 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -16,20 +16,14 @@
 #include "proto.h"
 #include "option.h"
 
-#ifdef USE_TMPNAM
-# define mktemp(a)	tmpnam(a)
-#endif
-
-extern char		*mktemp __ARGS((char *));
-
-#ifdef OS2
-static void check_tmpenv __ARGS((void));
-#endif
-
+static void do_filter __ARGS((linenr_t line1, linenr_t line2,
+									char_u *buff, int do_in, int do_out));
 #ifdef VIMINFO
 static char_u *viminfo_filename __ARGS((char_u 	*));
-static void do_viminfo __ARGS((FILE *fp_in, FILE *fp_out, int want_info, int want_marks, int force_read));
-static int read_viminfo_up_to_marks __ARGS((char_u *line, FILE *fp, int force));
+static void do_viminfo __ARGS((FILE *fp_in, FILE *fp_out, int want_info,
+											 int want_marks, int force_read));
+static int read_viminfo_up_to_marks __ARGS((char_u *line, FILE *fp,
+																int forceit));
 #endif /* VIMINFO */
 
 	void
@@ -41,6 +35,11 @@ do_ascii()
 	char_u	buf3[3];
 
 	c = gchar_cursor();
+	if (c == NUL)
+	{
+		MSG("empty line");
+		return;
+	}
 	if (c == NL)			/* NUL is stored as NL */
 		c = NUL;
 	if (isprintchar(c) && (c < ' ' || c > '~'))
@@ -142,11 +141,11 @@ do_align(start, end, width, type)
 }
 
 	void
-do_retab(start, end, new_ts, force)
+do_retab(start, end, new_ts, forceit)
 	linenr_t	start;
 	linenr_t	end;
 	int			new_ts;
-	int			force;
+	int			forceit;
 {
 	linenr_t	lnum;
 	int			got_tab = FALSE;
@@ -189,7 +188,7 @@ do_retab(start, end, new_ts, force)
 			}
 			else
 			{
-				if (got_tab || (force && num_spaces > 1))
+				if (got_tab || (forceit && num_spaces > 1))
 				{
 					/* Retabulate this string of white-space */
 
@@ -506,20 +505,34 @@ do_bang(addr_count, line1, line2, forceit, arg, do_in, do_out)
 		AppendToRedobuff((char_u *)"\n");
 		bangredo = FALSE;
 	}
+	/*
+	 * Add quotes around the command, for shells that need them.
+	 */
+	if (*p_shq != NUL)
+	{
+		newcmd = alloc((unsigned)(STRLEN(prevcmd) + 2 * STRLEN(p_shq) + 1));
+		if (newcmd == NULL)
+			return;
+		STRCPY(newcmd, p_shq);
+		STRCAT(newcmd, prevcmd);
+		STRCAT(newcmd, p_shq);
+	}
 	if (addr_count == 0)				/* :! */
 	{
 			/* echo the command */
 		msg_start();
 		msg_outchar(':');
 		msg_outchar('!');
-		msg_outtrans(prevcmd);
+		msg_outtrans(newcmd);
 		msg_clr_eos();
 		windgoto(msg_row, msg_col);
 
-		do_shell(prevcmd); 
+		do_shell(newcmd); 
 	}
 	else								/* :range! */
-		do_filter(line1, line2, prevcmd, do_in, do_out);
+		do_filter(line1, line2, newcmd, do_in, do_out);
+	if (newcmd != prevcmd)
+		vim_free(newcmd);
 }
 
 /*
@@ -591,7 +604,9 @@ do_shell(cmd)
 	msg_pos((int)Rows - 1, 0);
 
 #ifdef AUTOCMD
-	if (!autocmd_busy)
+	if (autocmd_busy)
+		must_redraw = CLEAR;
+	else
 #endif
 	{
 		/*
@@ -630,10 +645,6 @@ do_shell(cmd)
 		}
 #endif /* AMIGA */
 	}
-#ifdef AUTOCMD
-	else
-		must_redraw = CLEAR;
-#endif
 }
 
 /*
@@ -649,21 +660,19 @@ do_shell(cmd)
  * We use input redirection if do_in is TRUE.
  * We use output redirection if do_out is TRUE.
  */
-	void
+	static void
 do_filter(line1, line2, buff, do_in, do_out)
 	linenr_t	line1, line2;
 	char_u		*buff;
 	int			do_in, do_out;
 {
-#ifdef USE_TMPNAM
-	char_u		itmp[L_tmpnam];		/* use tmpnam() */
-	char_u		otmp[L_tmpnam];
-#else
-	char_u		itmp[TMPNAMELEN];
-	char_u		otmp[TMPNAMELEN];
-#endif
+	char_u		*itmp = NULL;
+	char_u		*otmp = NULL;
 	linenr_t 	linecount;
 	FPOS		cursor_save;
+#ifdef AUTOCMD
+	BUF			*old_curbuf = curbuf;
+#endif
 
 	/*
 	 * Disallow shell commands from .exrc and .vimrc in current directory for
@@ -700,22 +709,11 @@ do_filter(line1, line2, buff, do_in, do_out)
 	 * 6. Remove the temp files
 	 */
 
-#ifndef USE_TMPNAM		 /* tmpnam() will make its own name */
-# ifdef OS2
-	check_tmpenv();
-	expand_env(TMPNAME1, itmp, TMPNAMELEN);
-	expand_env(TMPNAME2, otmp, TMPNAMELEN);
-# else
-	STRCPY(itmp, TMPNAME1);
-	STRCPY(otmp, TMPNAME2);
-# endif
-#endif
-
-	if ((do_in && *mktemp((char *)itmp) == NUL) ||
-									 (do_out && *mktemp((char *)otmp) == NUL))
+	if ((do_in && (itmp = vim_tempname('i')) == NULL) ||
+							   (do_out && (otmp = vim_tempname('o')) == NULL))
 	{
 		emsg(e_notmp);
-		return;
+		goto filterend;
 	}
 
 /*
@@ -724,13 +722,18 @@ do_filter(line1, line2, buff, do_in, do_out)
  */
 	++no_wait_return;			/* don't call wait_return() while busy */
 	if (do_in && buf_write(curbuf, itmp, NULL, line1, line2,
-											  FALSE, 0, FALSE, TRUE) == FAIL)
+										   FALSE, FALSE, FALSE, TRUE) == FAIL)
 	{
 		msg_outchar('\n');					/* keep message from buf_write() */
 		--no_wait_return;
 		(void)emsg2(e_notcreate, itmp);		/* will call wait_return */
 		goto filterend;
 	}
+#ifdef AUTOCMD
+	if (curbuf != old_curbuf)
+		goto filterend;
+#endif
+
 	if (!do_out)
 		msg_outchar('\n');
 
@@ -754,15 +757,17 @@ do_filter(line1, line2, buff, do_in, do_out)
 	{
 		char_u		*p;
 	/*
-	 * If there is a pipe, we have to put the '<' in front of it
+	 * If there is a pipe, we have to put the '<' in front of it.
+	 * Don't do this when 'shellquote' is not empty, otherwise the redirection
+	 * would be inside the quotes.
 	 */
 		p = vim_strchr(IObuff, '|');
-		if (p)
+		if (p && *p_shq == NUL)
 			*p = NUL;
 		STRCAT(IObuff, " < ");
 		STRCAT(IObuff, itmp);
 		p = vim_strchr(buff, '|');
-		if (p)
+		if (p && *p_shq == NUL)
 			STRCAT(IObuff, p);
 	}
 #endif
@@ -824,6 +829,10 @@ do_filter(line1, line2, buff, do_in, do_out)
 			emsg2(e_notread, otmp);
 			goto error;
 		}
+#ifdef AUTOCMD
+		if (curbuf != old_curbuf)
+			goto filterend;
+#endif
 
 		if (do_in)
 		{
@@ -832,6 +841,8 @@ do_filter(line1, line2, buff, do_in, do_out)
 			dellines(linecount, TRUE, TRUE);
 			curbuf->b_op_start.lnum -= linecount;		/* adjust '[ */
 			curbuf->b_op_end.lnum -= linecount;			/* adjust '] */
+			write_lnum_adjust(-linecount);				/* adjust last line
+														   for next write */
 		}
 		else
 		{
@@ -864,35 +875,26 @@ error:
 	}
 
 filterend:
-	vim_remove(itmp);
-	vim_remove(otmp);
-}
 
-#ifdef OS2
-/*
- * If $TMP is not defined, construct a sensible default.
- * This is required for TMPNAME1 and TMPNAME2 to work.
- */
-	static void
-check_tmpenv()
-{
-	char_u	*envent;
-
-	if (getenv("TMP") == NULL)
+#ifdef AUTOCMD
+	if (curbuf != old_curbuf)
 	{
-		envent = alloc(8);
-		if (envent != NULL)
-		{
-			strcpy(envent, "TMP=C:/");
-			putenv(envent);
-		}
+		--no_wait_return;
+		EMSG("*Filter* Autocommands must not change current buffer");
 	}
+#endif
+	if (itmp != NULL)
+		vim_remove(itmp);
+	if (otmp != NULL)
+		vim_remove(otmp);
+	vim_free(itmp);
+	vim_free(otmp);
 }
-#endif /* OS2 */
 
 #ifdef VIMINFO
 
 static int no_viminfo __ARGS((void));
+static int	viminfo_errcnt;
 
 	static int
 no_viminfo()
@@ -902,15 +904,35 @@ no_viminfo()
 }
 
 /*
+ * Report an error for reading a viminfo file.
+ * Count the number of errors.  When there are more than 10, return TRUE.
+ */
+	int
+viminfo_error(message, line)
+	char	*message;
+	char_u	*line;
+{
+	sprintf((char *)IObuff, "viminfo: %s in line: ", message);
+	STRNCAT(IObuff, line, IOSIZE - STRLEN(IObuff));
+	emsg(IObuff);
+	if (++viminfo_errcnt >= 10)
+	{
+		EMSG("viminfo: Too many errors, skipping rest of file");
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/*
  * read_viminfo() -- Read the viminfo file.  Registers etc. which are already
  * set are not over-written unless force is TRUE. -- webb
  */
 	int
-read_viminfo(file, want_info, want_marks, force)
+read_viminfo(file, want_info, want_marks, forceit)
 	char_u	*file;
 	int		want_info;
 	int		want_marks;
-	int		force;
+	int		forceit;
 {
 	FILE	*fp;
 
@@ -921,7 +943,8 @@ read_viminfo(file, want_info, want_marks, force)
 	if ((fp = fopen((char *)file, READBIN)) == NULL)
 		return FAIL;
 
-	do_viminfo(fp, NULL, want_info, want_marks, force);
+	viminfo_errcnt = 0;
+	do_viminfo(fp, NULL, want_info, want_marks, forceit);
 
 	fclose(fp);
 
@@ -932,33 +955,20 @@ read_viminfo(file, want_info, want_marks, force)
  * write_viminfo() -- Write the viminfo file.  The old one is read in first so
  * that effectively a merge of current info and old info is done.  This allows
  * multiple vims to run simultaneously, without losing any marks etc.  If
- * force is TRUE, then the old file is not read in, and only internal info is
+ * forceit is TRUE, then the old file is not read in, and only internal info is
  * written to the file. -- webb
  */
 	void
-write_viminfo(file, force)
+write_viminfo(file, forceit)
 	char_u	*file;
-	int		force;
+	int		forceit;
 {
 	FILE	*fp_in = NULL;
 	FILE	*fp_out = NULL;
-#ifdef USE_TMPNAM
-	char_u	tmpname[L_tmpnam];		/* use tmpnam() */
-#else
-	char_u	tmpname[TMPNAMELEN];
-#endif
+	char_u	*tempname = NULL;
 
 	if (no_viminfo())
 		return;
-
-#ifndef USE_TMPNAM		 /* tmpnam() will make its own name */
-# ifdef OS2
-	check_tmpenv();
-	expand_env(TMPNAME2, tmpname, TMPNAMELEN);
-# else
-	STRCPY(tmpname, TMPNAME2);
-# endif
-#endif
 
 	file = viminfo_filename(file);		/* may set to default if NULL */
 	file = strsave(file);				/* make a copy, don't want NameBuff */
@@ -967,29 +977,34 @@ write_viminfo(file, force)
 		fp_in = fopen((char *)file, READBIN);
 		if (fp_in == NULL)
 			fp_out = fopen((char *)file, WRITEBIN);
-		else if (*mktemp((char *)tmpname) != NUL)
-			fp_out = fopen((char *)tmpname, WRITEBIN);
+		else if ((tempname = vim_tempname('o')) != NULL)
+			fp_out = fopen((char *)tempname, WRITEBIN);
 	}
 	if (file == NULL || fp_out == NULL)
 	{
 		EMSG2("Can't write viminfo file %s!", file == NULL ? (char_u *)"" :
-											  fp_in == NULL ? file : tmpname);
+											  fp_in == NULL ? file : tempname);
 		if (fp_in != NULL)
 			fclose(fp_in);
-		vim_free(file);
-		return;
+		goto end;
 	}
 
-	do_viminfo(fp_in, fp_out, !force, !force, FALSE);
+	viminfo_errcnt = 0;
+	do_viminfo(fp_in, fp_out, !forceit, !forceit, FALSE);
 
 	fclose(fp_out);			/* errors are ignored !? */
 	if (fp_in != NULL)
 	{
 		fclose(fp_in);
-		if (vim_rename(tmpname, file) == -1)
-			vim_remove(tmpname);
+		/*
+		 * In case of an error, don't overwrite the original viminfo file.
+		 */
+		if (viminfo_errcnt || vim_rename(tempname, file) == -1)
+			vim_remove(tempname);
 	}
+end:
 	vim_free(file);
+	vim_free(tempname);
 }
 
 	static char_u *
@@ -1055,14 +1070,14 @@ do_viminfo(fp_in, fp_out, want_info, want_marks, force_read)
  * are local to a file.  Returns TRUE when end-of-file is reached. -- webb
  */
 	static int
-read_viminfo_up_to_marks(line, fp, force)
+read_viminfo_up_to_marks(line, fp, forceit)
 	char_u	*line;
 	FILE	*fp;
-	int		force;
+	int		forceit;
 {
 	int		eof;
 
-	prepare_viminfo_history(force ? 9999 : 0);
+	prepare_viminfo_history(forceit ? 9999 : 0);
 	eof = vim_fgets(line, LSIZE, fp);
 	while (!eof && line[0] != '>')
 	{
@@ -1075,15 +1090,15 @@ read_viminfo_up_to_marks(line, fp, force)
 				eof = vim_fgets(line, LSIZE, fp);
 				break;
 			case '"':
-				eof = read_viminfo_register(line, fp, force);
+				eof = read_viminfo_register(line, fp, forceit);
 				break;
 			case '/':		/* Search string */
 			case '&':		/* Substitute search string */
 			case '~':		/* Last search string, followed by '/' or '&' */
-				eof = read_viminfo_search_pattern(line, fp, force);
+				eof = read_viminfo_search_pattern(line, fp, forceit);
 				break;
 			case '$':
-				eof = read_viminfo_sub_string(line, fp, force);
+				eof = read_viminfo_sub_string(line, fp, forceit);
 				break;
 			case ':':
 			case '?':
@@ -1093,7 +1108,7 @@ read_viminfo_up_to_marks(line, fp, force)
 				/* How do we have a file mark when the file is not in the
 				 * buffer list?
 				 */
-				eof = read_viminfo_filemark(line, fp, force);
+				eof = read_viminfo_filemark(line, fp, forceit);
 				break;
 #if 0
 			case '+':
@@ -1102,8 +1117,10 @@ read_viminfo_up_to_marks(line, fp, force)
 				break;
 #endif
 			default:
-				EMSG2("viminfo: Illegal starting char in line %s", line);
-				eof = vim_fgets(line, LSIZE, fp);
+				if (viminfo_error("Illegal starting char", line))
+					eof = TRUE;
+				else
+					eof = vim_fgets(line, LSIZE, fp);
 				break;
 		}
 	}
@@ -1197,7 +1214,7 @@ print_line(lnum, use_number)
 }
 
 /*
- * Implementation of ":file [fname]".
+ * Implementation of ":file[!] [fname]".
  */
 	void
 do_file(arg, forceit)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.tab,v 1.1.1.1 1996/09/07 21:40:28 downsj Exp $	*/
+/*	$OpenBSD: cmdtab.tab,v 1.2 1996/09/21 06:22:55 downsj Exp $	*/
 /* vi:ts=4:sw=4
  *
  * VIM - Vi IMproved
@@ -104,6 +104,7 @@ static struct
 	{(char_u *)"dsearch",		BANG+RANGE+DFLALL+EXTRA},
 	{(char_u *)"dsplit",		BANG+RANGE+DFLALL+EXTRA+TRLBAR},
 	{(char_u *)"edit",			BANG+FILE1+EDITCMD+TRLBAR},
+	{(char_u *)"endif",			RANGE+BANG+EXTRA},
 	{(char_u *)"ex",			BANG+FILE1+EDITCMD+TRLBAR},
 	{(char_u *)"exit",			RANGE+BANG+FILE1+DFLALL+TRLBAR},
 	{(char_u *)"file",			BANG+FILE1+TRLBAR},
@@ -116,6 +117,7 @@ static struct
 	{(char_u *)"insert",		BANG+RANGE+TRLBAR},			/* not supported */
 	{(char_u *)"iabbrev",		EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
 	{(char_u *)"iabclear",		TRLBAR},
+	{(char_u *)"if",			RANGE+BANG+EXTRA},
 	{(char_u *)"ijump",			BANG+RANGE+DFLALL+EXTRA},
 	{(char_u *)"ilist",			BANG+RANGE+DFLALL+EXTRA},
 	{(char_u *)"imap",			EXTRA+TRLBAR+NOTRLCOM+USECTRLV},
@@ -167,7 +169,7 @@ static struct
 	{(char_u *)"only",			BANG+TRLBAR},
 	{(char_u *)"print",			RANGE+COUNT+TRLBAR},
 	{(char_u *)"pop",			RANGE+NOTADR+COUNT+TRLBAR+ZEROR},
-	{(char_u *)"put",			RANGE+BANG+REGSTR+TRLBAR},
+	{(char_u *)"put",			RANGE+BANG+REGSTR+TRLBAR+ZEROR},
 	{(char_u *)"preserve",		TRLBAR},
 	{(char_u *)"previous",		EXTRA+RANGE+NOTADR+COUNT+BANG+EDITCMD+TRLBAR},
 	{(char_u *)"pwd",			TRLBAR},

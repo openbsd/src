@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.1.1.1 1996/09/07 21:40:24 downsj Exp $	*/
+/*	$OpenBSD: tables.c,v 1.2 1996/09/21 06:23:20 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -133,6 +133,7 @@ static struct key_name_entry
 	{CR,				(char_u *)"CR"},
 	{CR,				(char_u *)"Return"},	/* Alternative name */
 	{ESC,				(char_u *)"Esc"},
+	{'|',				(char_u *)"Bar"},
 	{K_UP,				(char_u *)"Up"},
 	{K_DOWN,			(char_u *)"Down"},
 	{K_LEFT,			(char_u *)"Left"},
@@ -189,6 +190,11 @@ static struct key_name_entry
 	{K_END,				(char_u *)"End"},
 	{K_PAGEUP,			(char_u *)"PageUp"},
 	{K_PAGEDOWN,		(char_u *)"PageDown"},
+	{K_KHOME,			(char_u *)"kHome"},
+	{K_KEND,			(char_u *)"kEnd"},
+	{K_KPAGEUP,			(char_u *)"kPageUp"},
+	{K_KPAGEDOWN,		(char_u *)"kPageDown"},
+
 	{K_MOUSE,			(char_u *)"Mouse"},
 	{K_LEFTMOUSE,		(char_u *)"LeftMouse"},
 	{K_LEFTDRAG,		(char_u *)"LeftDrag"},

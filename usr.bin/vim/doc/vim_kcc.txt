@@ -1,21 +1,25 @@
 *vim_kcc.txt* *uganda* *copying*
 
-Vim is Charityware.  There are no restrictions on using or copying Vim, but I
-encourage you to make a donation to charity, see below.  If you include Vim on
-a CD-ROM you should send me a copy.
+Vim is Charityware.  You can use and copy it as much as you like, but you are
+encouraged to make a donation to orphans in Uganda.  See below.
+
+If you include Vim on a CD-ROM, I would like to receive a copy.  Just so I
+know which Vim distributions exists in the world (and to show off to my
+friends :-)).
+
+If you distribute a modified version of Vim, you must send me a copy,
+including the source code.  Or make it available to me through ftp; let me
+know where I can find it.  If the number of changes is small (e.g., a modified
+Makefile) e-mailing me the diffs will do.  I preserve the right to include
+any changes in the official version of Vim.  It is not allowed to distribute
+a modified version of Vim without making the source code available to me.
+It is not allowed to remove these restrictions from the distribution of the
+Vim sources.
+
 
 If you are happy with Vim, please express that by reading the rest of this
 file.
 
-
-Summer 1993 I spent my holidays in Uganda, working for Kibaale Children's
-Centre (KCC) with a Dutch team.  I was very impressed with what I experienced
-there.  Of course I knew Africa from books and television, but actually being
-there and talking and working with the people is very different.  January 1994
-I spent another month there, which made me realize that I could be of help to
-these people.  Summer 1994 to summer 1995 I spent a whole year at the centre,
-working as a volunteer.  I have helped to expand the centre and worked in the
-area of water and sanitation.
 
 KCC is located in Kibaale, a small town in the south of Uganda, near Tanzania.
 The area is known as Rakai District.  The population is mostly farmers.
@@ -63,9 +67,11 @@ to travel hours by bicycle, if they have one.  There is no ambulance in the
 area and they don't have money to hire a taxi (if there is one).  For most
 people KCC is the only help they can get.
 
-Now that I'm back in Holland, I would like to continue supporting KCC.  To do
-this I'm raising funds and organizing the sponsorship program.  Please
-consider one of these options:
+Summer 1994 to summer 1995 I spent a whole year at the centre, working as a
+volunteer.  I have helped to expand the centre and worked in the area of water
+and sanitation.  Now that I'm back in Holland, I would like to continue
+supporting KCC.  To do this I'm raising funds and organizing the sponsorship
+program.  Please consider one of these options:
 
 1.  Sponsor a child: $15 a month.  (Holland: fl 25)
 2.  Sponsor a child and the improvement of its environment: $25 a month
@@ -77,13 +83,13 @@ Compared with other organizations that do child sponsorship the amounts are
 very low.  This is because the money goes directly to the centre.  Less than
 5% is used for administration.  This is possible because this is a small
 organization that works with volunteers.  If you would like to sponsor a
-child, you should have the intention to do this for at least a year.
+child, you should have the intention to do this for at least one year.
 
-How do you know that the money will be spent right? First of all you have my
-personal guarantee as the author of Vim.  Further the centre is co-sponsored
-and inspected by World Vision, Save the Children Fund and International Child
-Care Fund.  I have worked with the centre as a volunteer from September 1994
-to August 1995.  I trust the people that are working there.
+How do you know that the money will be spent right?  First of all you have my
+personal guarantee as the author of Vim.  I trust the people that are working
+at the centre, I know them personally.  Further more the centre is
+co-sponsored and inspected by World Vision, Save the Children Fund and
+International Child Care Fund.
 
 If you have any further questions, send me e-mail: mool@oce.nl.
 

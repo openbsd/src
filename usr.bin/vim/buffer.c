@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.1.1.1 1996/09/07 21:40:27 downsj Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.2 1996/09/21 06:22:51 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -31,11 +31,10 @@
 #include "option.h"
 
 static void		enter_buffer __ARGS((BUF *));
-static void		free_buf_options __ARGS((BUF *));
 static char_u	*buflist_match __ARGS((regexp *prog, BUF *buf));
 static void		buflist_setlnum __ARGS((BUF *, linenr_t));
 static linenr_t buflist_findlnum __ARGS((BUF *));
-static void		append_arg_number __ARGS((char_u *, int));
+static int		append_arg_number __ARGS((char_u *, int, int));
 
 /*
  * Open current buffer, that is: open the memfile and read the file into memory
@@ -45,6 +44,10 @@ static void		append_arg_number __ARGS((char_u *, int));
 open_buffer()
 {
 	int		retval = OK;
+#ifdef AUTOCMD
+	BUF		*old_curbuf;
+	BUF		*new_curbuf;
+#endif
 
 	/*
 	 * The 'readonly' flag is only set when b_neverloaded is being reset.
@@ -77,6 +80,11 @@ open_buffer()
 		enter_buffer(curbuf);
 		return FAIL;
 	}
+#ifdef AUTOCMD
+	/* The autocommands in readfile() may change the buffer, but only AFTER
+	 * reading the file. */
+	old_curbuf = curbuf;
+#endif
 	if (curbuf->b_filename != NULL)
 		retval = readfile(curbuf->b_filename, curbuf->b_sfilename,
 							  (linenr_t)0, TRUE, (linenr_t)0, MAXLNUM, FALSE);
@@ -105,11 +113,42 @@ open_buffer()
 
 	if (retval != FAIL)
 	{
-		do_modelines();
-		curbuf->b_neverloaded = FALSE;
+#ifdef AUTOCMD
+		/*
+		 * The autocommands may have changed the current buffer.  Apply the
+		 * modelines to the correct buffer, if it still exists.
+		 */
+		if (buf_valid(old_curbuf))
+		{
+			new_curbuf = curbuf;
+			curbuf = old_curbuf;
+			curwin->w_buffer = old_curbuf;
+#endif
+			do_modelines();
+			curbuf->b_neverloaded = FALSE;
+#ifdef AUTOCMD
+			curbuf = new_curbuf;
+			curwin->w_buffer = new_curbuf;
+		}
+#endif
 	}
 
 	return retval;
+}
+
+/*
+ * Return TRUE if "buf" points to a valid buffer (in the buffer list).
+ */
+	int
+buf_valid(buf)
+	BUF		*buf;
+{
+	BUF		*bp;
+
+	for (bp = firstbuf; bp != NULL; bp = bp->b_next)
+		if (bp == buf)
+			return TRUE;
+	return FALSE;
 }
 
 /*
@@ -152,6 +191,7 @@ close_buffer(win, buf, free_buf, del_buf)
 		else
 			buf->b_next->b_prev = buf->b_prev;
 		free_buf_options(buf);
+		vim_free(buf);
 	}
 	else
 		buf_clear(buf);
@@ -238,7 +278,7 @@ do_bufdel(command, arg, addr_count, start_bnr, end_bnr, forceit)
 			if (bnr == curbuf->b_fnum)
 				do_current = bnr;
 			else if (do_buffer(command, DOBUF_FIRST, FORWARD, (int)bnr,
-					forceit) == OK)
+															   forceit) == OK)
 				++deleted;
 
 			/*
@@ -267,7 +307,7 @@ do_bufdel(command, arg, addr_count, start_bnr, end_bnr, forceit)
 			}
 		}
 		if (!got_int && do_current && do_buffer(command, DOBUF_FIRST,
-				FORWARD, do_current, forceit) == OK)
+										  FORWARD, do_current, forceit) == OK)
 			++deleted;
 
 		if (deleted == 0)
@@ -398,18 +438,20 @@ do_buffer(action, start, dir, count, forceit)
 				EMSG("Cannot unload last buffer");
 				return FAIL;
 			}
-			/* Close any other windows on this buffer */
+
+			/* Close any other windows on this buffer, then make it empty. */
 			close_others(FALSE);
 			buf = curbuf;
 			setpcmark();
-			retval = do_ecmd(0, NULL, NULL, NULL, FALSE, (linenr_t)1, FALSE);
+			retval = do_ecmd(0, NULL, NULL, NULL, (linenr_t)1,
+												  forceit ? ECMD_FORCEIT : 0);
+
 			/*
-			 * The do_ecmd() may create a new buffer, then we have to delete
+			 * do_ecmd() may create a new buffer, then we have to delete
 			 * the old one.  But do_ecmd() may have done that already, check
-			 * if the buffer still exists (it will be the first or second in
-			 * the buffer list).
+			 * if the buffer still exists.
 			 */
-			if (buf != curbuf && (buf == firstbuf || buf == firstbuf->b_next))
+			if (buf != curbuf && buf_valid(buf))
 				close_buffer(NULL, buf, TRUE, TRUE);
 			return retval;
 		}
@@ -427,41 +469,63 @@ do_buffer(action, start, dir, count, forceit)
 		if (buf != curbuf)
 		{
 			close_windows(buf);
-			close_buffer(NULL, buf, TRUE, action == DOBUF_DEL);
+			if (buf_valid(buf))
+				close_buffer(NULL, buf, TRUE, action == DOBUF_DEL);
 			return OK;
 		}
 
 		/*
 		 * Deleting the current buffer: Need to find another buffer to go to.
 		 * There must be another, otherwise it would have been handled above.
+		 * First try to find one that is loaded.
 		 */
-		if (curbuf->b_next != NULL)
-			buf = curbuf->b_next;
-		else
-			buf = curbuf->b_prev;
+		for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+			if (buf != curbuf && buf->b_ml.ml_mfp != NULL)
+				break;
+		if (buf == NULL)		/* No loaded buffers, just take anyone */
+		{
+			if (curbuf->b_next != NULL)
+				buf = curbuf->b_next;
+			else
+				buf = curbuf->b_prev;
+		}
 	}
 
 	/*
 	 * make buf current buffer
 	 */
-	setpcmark();
 	if (action == DOBUF_SPLIT)		/* split window first */
 	{
 		if (win_split(0, FALSE) == FAIL)
 			return FAIL;
 	}
+
+	/* go to current buffer - nothing to do */
+	if (buf == curbuf)
+		return OK;
+
+	setpcmark();
 	curwin->w_alt_fnum = curbuf->b_fnum; /* remember alternate file */
 	buflist_altlnum();					 /* remember curpos.lnum */
 
+	/* close_windows() or apply_autocmds() may change curbuf */
+	delbuf = curbuf;
+
 #ifdef AUTOCMD
 	apply_autocmds(EVENT_BUFLEAVE, NULL, NULL);
+	if (buf_valid(delbuf))
 #endif
-	delbuf = curbuf;		/* close_windows() may change curbuf */
-	if (action == DOBUF_UNLOAD || action == DOBUF_DEL)
-		close_windows(curbuf);
-	close_buffer(NULL, delbuf, action == DOBUF_UNLOAD || action == DOBUF_DEL,
-														 action == DOBUF_DEL);
-	enter_buffer(buf);
+	{
+		if (action == DOBUF_UNLOAD || action == DOBUF_DEL)
+			close_windows(delbuf);
+		if (buf_valid(delbuf))
+			close_buffer(NULL, delbuf, action == DOBUF_UNLOAD ||
+									action == DOBUF_DEL, action == DOBUF_DEL);
+	}
+#ifdef AUTOCMD
+	if (buf_valid(buf))		/* an autocommand may have deleted buf! */
+#endif
+		enter_buffer(buf);
 	return OK;
 }
 
@@ -473,7 +537,7 @@ do_buffer(action, start, dir, count, forceit)
 enter_buffer(buf)
 	BUF		*buf;
 {
-	buf_copy_options(curbuf, buf, TRUE);
+	buf_copy_options(curbuf, buf, TRUE, FALSE);
 	curwin->w_buffer = buf;
 	curbuf = buf;
 	++curbuf->b_nwindows;
@@ -526,7 +590,7 @@ buflist_new(fname, sfname, lnum, use_curbuf)
 			buflist_setlnum(buf, lnum);
 		/* copy the options now, if 'cpo' doesn't have 's' and not done
 		 * already */
-		buf_copy_options(curbuf, buf, FALSE);
+		buf_copy_options(curbuf, buf, FALSE, FALSE);
 		return buf;
 	}
 
@@ -566,6 +630,7 @@ buflist_new(fname, sfname, lnum, use_curbuf)
 		{
 			vim_free(buf->b_winlnum);
 			free_buf_options(buf);
+			vim_free(buf);
 		}
 		return NULL;
 	}
@@ -577,11 +642,6 @@ buflist_new(fname, sfname, lnum, use_curbuf)
 	}
 	else
 	{
-		/*
-		 * Copy the options from the current buffer.
-		 */
-		buf_copy_options(curbuf, buf, FALSE);
-
 		/*
 		 * put new buffer at the end of the buffer list
 		 */
@@ -610,6 +670,11 @@ buflist_new(fname, sfname, lnum, use_curbuf)
 		buf->b_winlnum->wl_next = NULL;
 		buf->b_winlnum->wl_prev = NULL;
 		buf->b_winlnum->wl_win = curwin;
+
+		/*
+		 * Always copy the options from the current buffer.
+		 */
+		buf_copy_options(curbuf, buf, FALSE, TRUE);
 	}
 
 	if (did_cd)
@@ -626,9 +691,9 @@ buflist_new(fname, sfname, lnum, use_curbuf)
 }
 
 /*
- * Free the memory for a BUF structure and its options
+ * Free the memory for the options of a buffer.
  */
-	static void
+	void
 free_buf_options(buf)
 	BUF		*buf;
 {
@@ -642,7 +707,6 @@ free_buf_options(buf)
 #if defined(CINDENT) || defined(SMARTINDENT)
 	free_string_option(buf->b_p_cinw);
 #endif
-	vim_free(buf);
 }
 
 /*
@@ -654,10 +718,11 @@ free_buf_options(buf)
  * return FAIL for failure, OK for success
  */
 	int
-buflist_getfile(n, lnum, options)
+buflist_getfile(n, lnum, options, forceit)
 	int			n;
 	linenr_t	lnum;
 	int			options;
+	int			forceit;
 {
 	BUF		*buf;
 
@@ -679,7 +744,8 @@ buflist_getfile(n, lnum, options)
 	if (lnum == 0)
 		lnum = buflist_findlnum(buf);
 	++RedrawingDisabled;
-	if (getfile(buf->b_fnum, NULL, NULL, (options & GETF_SETMARK), lnum) <= 0)
+	if (getfile(buf->b_fnum, NULL, NULL, (options & GETF_SETMARK),
+														  lnum, forceit) <= 0)
 	{
 		--RedrawingDisabled;
 		return OK;
@@ -1290,7 +1356,7 @@ fileinfo(fullname, shorthelp, dont_truncate)
 				   (int)curwin->w_cursor.col + 1, (int)curwin->w_virtcol + 1);
 	}
 
-	append_arg_number(buffer, !shortmess(SHM_FILE));
+	(void)append_arg_number(buffer, !shortmess(SHM_FILE), IOSIZE);
 
 	if (dont_truncate)
 		msg(buffer);
@@ -1372,24 +1438,40 @@ maketitle()
 {
 	char_u		*t_name;
 	char_u		*i_name;
+	int			maxlen;
+	int			len;
 
 	if (curbuf->b_filename == NULL)
 	{
-		t_name = (char_u *)"";
+		t_name = (char_u *)"VIM -";
 		i_name = (char_u *)"No File";
 	}
 	else
 	{
-		home_replace(curbuf, curbuf->b_filename, IObuff, IOSIZE);
-		append_arg_number(IObuff, FALSE);
+		STRCPY(IObuff, "VIM - ");
+		home_replace(curbuf, curbuf->b_filename, IObuff + 6, IOSIZE - 6);
+		append_arg_number(IObuff, FALSE, IOSIZE);
+		if (p_titlelen > 0)
+		{
+			maxlen = p_titlelen * Columns / 100;
+			if (maxlen < 10)
+				maxlen = 10;
+			len = STRLEN(IObuff);
+			if (len > maxlen)
+			{
+				vim_memmove(IObuff + 6, IObuff + 6 + len - maxlen,
+														  (size_t)maxlen - 5);
+				IObuff[5] = '<';
+			}
+		}
 		t_name = IObuff;
 		i_name = gettail(curbuf->b_filename);	/* use filename only for icon */
 	}
 
 	vim_free(lasttitle);
-	if (p_title && (lasttitle = alloc((unsigned)(strsize(t_name) + 7))) != NULL)
+	if (p_title && (lasttitle = alloc((unsigned)(strsize(t_name) + 1))) != NULL)
 	{
-		STRCPY(lasttitle, "VIM - ");
+		*lasttitle = NUL;
 		while (*t_name)
 			STRCAT(lasttitle, transchar(*t_name++));
 	}
@@ -1410,26 +1492,33 @@ maketitle()
 }
 
 /*
- * Append (file 2 of 8) to 'buf'.
+ * Append (file 2 of 8) to 'buf', if editing more than one file.
+ * Return TRUE if it was appended.
  */
-	static void
-append_arg_number(buf, add_file)
+	static int
+append_arg_number(buf, add_file, maxlen)
 	char_u	*buf;
-	int		add_file;		/* Add "file" before the arg number */
+	int		add_file;			/* Add "file" before the arg number */
+	int		maxlen;				/* maximum nr of chars in buf */
 {
-	if (arg_count <= 1)		/* nothing to do */
-		return;
+	char_u		*p;
 
-	buf += STRLEN(buf);		/* go to the end of the buffer */
-	*buf++ = ' ';
-	*buf++ = '(';
+	if (arg_count <= 1)			/* nothing to do */
+		return FALSE;
+
+	p = buf + STRLEN(buf);		/* go to the end of the buffer */
+	if (p - buf + 35 >= maxlen)	/* getting too long */
+		return FALSE;
+	*p++ = ' ';
+	*p++ = '(';
 	if (add_file)
 	{
-		STRCPY(buf, "file ");
-		buf += 5;
+		STRCPY(p, "file ");
+		p += 5;
 	}
-	sprintf((char *)buf, curwin->w_arg_idx_invalid ? "(%d) of %d)" :
-								 "%d of %d)", curwin->w_arg_idx + 1, arg_count);
+	sprintf((char *)p, curwin->w_arg_idx_invalid ? "(%d) of %d)" :
+							   "%d of %d)", curwin->w_arg_idx + 1, arg_count);
+	return TRUE;
 }
 
 /*
@@ -1501,10 +1590,12 @@ do_arg_all(count)
 		/* EMSG("Argument list contains less than 2 files"); */
 		return;
 	}
+
 	/*
 	 * 1. close all but first window
 	 * 2. make the desired number of windows
-	 * 3. start editing in the windows
+	 * 3. start editing one file in each window
+	 *    arg_count may change while doing this, because of autocommands.
 	 */
 	setpcmark();
 	close_others(FALSE);
@@ -1512,22 +1603,46 @@ do_arg_all(count)
 	if (count > arg_count || count <= 0)
 		count = arg_count;
 	count = make_windows(count);
-	for (i = 0; i < count; ++i)
+
+#ifdef AUTOCMD
+	/*
+	 * Don't execute Win/Buf Enter/Leave autocommands here
+	 */
+	++autocmd_no_enter;
+	++autocmd_no_leave;
+#endif
+	for (i = 0; i < count && i < arg_count && !got_int; ++i)
 	{
-												/* edit file i */
-		(void)do_ecmd(0, arg_files[i], NULL, NULL, TRUE, (linenr_t)1, FALSE);
-		curwin->w_arg_idx = i;
 		if (i == arg_count - 1)
 			arg_had_last = TRUE;
+		curwin->w_arg_idx = i;
+#ifdef AUTOCMD
+		if (i == 0)		/* first window: do autocmd for leaving this buffer */
+			--autocmd_no_leave;
+#endif
+												/* edit file i */
+		(void)do_ecmd(0, arg_files[i], NULL, NULL, (linenr_t)1,
+													 ECMD_HIDE + ECMD_OLDBUF);
+#ifdef AUTOCMD
+		if (i == 0)
+			++autocmd_no_leave;
+#endif
 		if (curwin->w_next == NULL)				/* just checking */
 			break;
 		win_enter(curwin->w_next, FALSE);
+		mch_breakcheck();
 	}
+#ifdef AUTOCMD
+	--autocmd_no_enter;
+#endif
 	win_enter(firstwin, FALSE);					/* back to first window */
+#ifdef AUTOCMD
+	--autocmd_no_leave;
+#endif
 }
 
 /*
- * do_arg_all: open a window for each buffer
+ * do_buffer_all: open a window for each buffer
  *
  * 'count' is the maximum number of windows to open.
  * when 'all' is TRUE, also load inactive buffers
@@ -1559,27 +1674,70 @@ do_buffer_all(count, all)
 	 * 1. close all but first window
 	 * 2. make the desired number of windows
 	 * 3. stuff commands to fill the windows
+	 * Watch out for autocommands that delete buffers or windows.
 	 */
 	close_others(FALSE);
 	curwin->w_arg_idx = 0;
 	if (buf_count > count)
 		buf_count = count;
 	buf_count = make_windows(buf_count);
+
+#ifdef AUTOCMD
+	/*
+	 * Don't execute Win/Buf Enter/Leave autocommands here
+	 */
+	++autocmd_no_enter;
+	++autocmd_no_leave;
+#endif
 	buf = firstbuf;
 	for (i = 0; i < buf_count; ++i)
 	{
+		/* find buffer number to put in this window */
 		for ( ; buf != NULL; buf = buf->b_next)
 			if (all || buf->b_ml.ml_mfp != NULL)
 				break;
 		if (buf == NULL)			/* Cannot happen? */
 			break;
+
+		/* advance to next window */
 		if (i != 0)
-			stuffReadbuff((char_u *)"\n\027\027:");	/* CTRL-W CTRL-W */
-		stuffReadbuff((char_u *)":buf ");			/* edit Nth buffer */
-		stuffnumReadbuff((long)buf->b_fnum);
+		{
+			if (curwin->w_next == NULL)			/* just checking */
+				break;
+			win_enter(curwin->w_next, FALSE);
+		}
+
+#ifdef AUTOCMD
+		if (i == 0)		/* first window: do autocmd for leaving this buffer */
+			--autocmd_no_leave;
+#endif
+
+		/* get buffer for this window */
+		(void)do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, (int)buf->b_fnum, 0);
+#ifdef AUTOCMD
+		if (i == 0)
+			++autocmd_no_leave;
+		if (!buf_valid(buf))		/* autocommands deleted the buffer!!! */
+			break;
+#endif
+
+		mch_breakcheck();
+		if (got_int)
+		{
+			(void)vgetc();		/* only break the file loading, not the rest */
+			break;
+		}
 		buf = buf->b_next;
 	}
-	stuffReadbuff((char_u *)"\n100\027k");		/* back to first window */
+#ifdef AUTOCMD
+	--autocmd_no_enter;
+#endif
+	win_enter(firstwin, FALSE);				/* back to first window */
+#ifdef AUTOCMD
+	--autocmd_no_leave;
+#endif
+	if (buf_count > 1)
+		win_equal(curwin, FALSE);			/* adjust heights */
 }
 
 /*

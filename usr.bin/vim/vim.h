@@ -1,4 +1,4 @@
-/*	$OpenBSD: vim.h,v 1.1.1.1 1996/09/07 21:40:28 downsj Exp $	*/
+/*	$OpenBSD: vim.h,v 1.2 1996/09/21 06:23:27 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -111,14 +111,15 @@
 #endif
 
 /*
- * maximum length of a file name and a path	(for non-unix systems)
+ * Maximum length of a path	(for non-unix systems) Make it a bit long, to stay
+ * on the safe side.  But not too long to put on the stack.
  */
-#ifndef MAXNAMLEN
-# define MAXNAMLEN 31
-#endif
-
 #ifndef MAXPATHL
-# define MAXPATHL	128			/* not too long to put name on stack */
+# ifdef MAXPATHLEN
+#  define MAXPATHL	MAXPATHLEN
+# else
+#  define MAXPATHL	256
+# endif
 #endif
 
 /*
@@ -334,6 +335,13 @@ typedef unsigned long	long_u;
 #define FPC_DIFF   2			/* both exist and are different files. */
 #define FPC_NOTX   3			/* both don't exist. */
 #define FPC_DIFFX  4			/* one of them doesn't exist. */
+
+/* flags for do_ecmd() */
+#define ECMD_HIDE		1		/* don't free the current buffer */
+#define ECMD_SET_HELP	2		/* set b_help flag of (new) buffer before
+								   opening file */
+#define ECMD_OLDBUF		4		/* use existing buffer if it exists */
+#define ECMD_FORCEIT	8		/* ! used in Ex command */
 
 /*
  * Events for autocommands.

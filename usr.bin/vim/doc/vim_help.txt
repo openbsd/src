@@ -1,4 +1,4 @@
-*vim_help.txt*	For Vim version 4.2.  Last modification: 1996 June 16
+*vim_help.txt*	For Vim version 4.4.  Last modification: 1996 Aug 3
 
 			VIM help file
 
@@ -704,7 +704,9 @@ Short explanation of each option:		*option_list*
 |'sections'|	   |'sect'|	nroff macros that separate sections
 |'secure'|			secure mode for reading .vimrc in current dir
 |'shell'|	   |'sh'|	name of shell to use for external commands
+|'shellcmdflag'|   |'shcf'|	flag to shell to execute one command
 |'shellpipe'|	   |'sp'|	string to put output of ":make" in error file
+|'shellquote'|	   |'shq'|	quote character(s) for around shell command
 |'shellredir'|	   |'srr'|	string to put output of filter in a temp file
 |'shelltype'|	   |'st'|	Amiga: influences how to use a shell
 |'shiftround'|	   |'sr'|	round indent to multiple of shiftwidth
@@ -956,6 +958,7 @@ Short explanation of each option:		*option_list*
 |:xit|	  :x[it][!] [file]	Like ":wq" but write only when changes have
 				   been made
 |ZZ|	     ZZ			Same as ":x".
+|ZQ|	     ZQ			Same as ":q!".
 |:xall|	  :xall[!]  or :wqall[!]
 				Write all changed buffers and exit
 
@@ -1089,7 +1092,11 @@ Now that you've jumped here with CTRL-], g<LeftMouse>, or <C-LeftMouse>, you
 can use CTRL-T, g<RightMouse>, or <C-RightMouse> to go back to where you were.
 ------------------------------------------------------------------------------
 
-For the most recent information about Vim:		*www* *faq* *FAQ*
+			*www* *faq* *FAQ* *ftp* *distribution* *download*
+The Vim pages contain the most recent information about Vim.  They also
+contains links to the most recent version of Vim.  The FAQ is a list of
+Frequently Asked Questions, read this if you have problems.
+
 	VIM home page:	<URL:http://www.math.fu-berlin.de/~guckes/vim/>
 	VIM FAQ:	<URL:http://www.grafnetix.com/~laurent/vim/>
 
@@ -1124,7 +1131,7 @@ There are three mailing lists for Vim:
 
 NOTE: You can only send messages to these lists if you have subscribed!  Also:
 you need to send the messages from the same location as the one you subscribed
-from (yes, Majordomo is not flexible).
+from (yes, Majordomo is inflexible).
 
 If you want to join, send a message to
 	<majordomo@prz.tu-berlin.de>
@@ -1151,7 +1158,7 @@ suggestions and discussing what is good and bad in Vim.
 	Tony Andrews		Stevie
 	Gert van Antwerpen	changes for DJGPP on MS-DOS
 	Berkeley DB(3)		ideas for swapfile
-	Keith Bostic		nvi
+	Keith Bostic		Nvi
 	Ralf Brown		SPAWNO library for MS-DOS
 	Robert Colon		many useful remarks
 	Kayhan Demirel		sent me news in Uganda

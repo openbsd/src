@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.1.1.1 1996/09/07 21:40:24 downsj Exp $	*/
+/*	$OpenBSD: unix.c,v 1.2 1996/09/21 06:23:24 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -875,8 +875,6 @@ mch_settitle(title, icon)
 	/*
 	 * Note: if terminal is xterm, title is set with escape sequence rather
 	 * 		 than x11 calls, because the x11 calls don't always work
-	 * Check only if the start of the terminal name is "xterm", also catch
-	 * "xterms".
 	 */
 	if (is_xterm(term_strings[KS_NAME]))
 		type = 2;
@@ -1310,6 +1308,7 @@ mch_windexit(r)
 	exiting = TRUE;
 	mch_settitle(oldtitle, oldicon);	/* restore xterm title */
 	stoptermcap();
+	outchar('\n');
 	flushbuf();
 	ml_close_all(TRUE); 				/* remove all memfiles */
 	may_core_dump();
@@ -1374,6 +1373,9 @@ mch_settmode(raw)
 									/* but it breaks function keys on MINT */
 # endif
 								);
+# ifdef ONLCR		/* don't map NL -> CR NL, we do it ourselves */
+		tnew.c_oflag &= ~ONLCR;
+# endif
 		tnew.c_cc[VMIN] = 1;			/* return after 1 char */
 		tnew.c_cc[VTIME] = 0;			/* don't wait */
 # if defined(HAVE_TERMIOS_H)
@@ -1686,8 +1688,9 @@ call_shell(cmd, options)
 		x = system(p_sh);
 	else
 	{
-		sprintf(newcmd, "%s %s -c \"%s\"", p_sh,
+		sprintf(newcmd, "%s %s %s \"%s\"", p_sh,
 					extra_shell_arg == NULL ? "" : (char *)extra_shell_arg,
+					(char *)p_shcf,
 					(char *)cmd);
 		x = system(newcmd);
 	}
@@ -1787,7 +1790,7 @@ call_shell(cmd, options)
 	{
 		if (extra_shell_arg != NULL)
 			argv[argc++] = (char *)extra_shell_arg;
-		argv[argc++] = "-c";
+		argv[argc++] = (char *)p_shcf;
 		argv[argc++] = (char *)cmd;
 	}
 	argv[argc] = NULL;
@@ -2061,14 +2064,8 @@ call_shell(cmd, options)
 						{
 #ifdef SIGINT
 							if (buffer[0] == Ctrl('C'))
-							{
-								/* Use both kill() and killpg(), in case one
-								 * of the two fails */
-								kill(pid, SIGINT);
-# ifdef HAVE_KILLPG
-								killpg(0, SIGINT);
-# endif
-							}
+								/* send SIGINT to all processes in our group */
+								kill(0, SIGINT);
 #endif
 							if (pty_master_fd < 0 && toshell_fd >= 0 &&
 													   buffer[0] == Ctrl('D'))
@@ -2445,7 +2442,6 @@ RealWaitForChar(fd, msec)
  * list_notfound is ignored
  */
 
-extern char *mktemp __ARGS((char *));
 #ifndef SEEK_SET
 # define SEEK_SET 0
 #endif
@@ -2469,16 +2465,15 @@ ExpandWildCards(num_pat, pat, num_file, file, files_only, list_notfound)
 # define EXPL_ALLOC_INC	16
 	char_u	**expl_files;
 	size_t	files_alloced, files_free;
+	char_u	*buf;
+	int		has_wildcard;
 
 	*num_file = 0;		/* default: no files found */
 	files_alloced = EXPL_ALLOC_INC;	/* how much space is allocated */
 	files_free = EXPL_ALLOC_INC;	/* how much space is not used  */
 	*file = (char_u **) alloc(sizeof(char_u **) * files_alloced);
-	if (!*file)
-	{
-		emsg(e_outofmem);
+	if (*file == NULL)
 		return FAIL;
-	}
 
 	for (; num_pat > 0; num_pat--, pat++)
 	{
@@ -2486,98 +2481,89 @@ ExpandWildCards(num_pat, pat, num_file, file, files_only, list_notfound)
 		if (vim_strchr(*pat, '$') || vim_strchr(*pat, '~'))
 		{
 			/* expand environment var or home dir */
-			char_u	*buf = alloc(1024);
-			if (!buf)
-			{
-				emsg(e_outofmem);
+			buf = alloc(MAXPATHL);
+			if (buf == NULL)
 				return FAIL;
-			}
-			expand_env(*pat, buf, 1024);
-			if (mch_has_wildcard(buf))	/* still wildcards in there? */
-			{
-				expl_files = (char_u **)_fnexplode(buf);
-			}
-			if (expl_files == NULL)
-			{
-				/*
-				 * If no wildcard still remaining, simply add
-				 * the pattern to the results.
-				 * If wildcard did not match, add the pattern to
-				 * the list of results anyway. This way, doing
-				 * :n exist.c notexist*
-				 * will at least edits exist.c and then say
-				 * notexist* [new file]
-				 */
-				expl_files = (char_u **)alloc(sizeof(char_u **) * 2);
-				expl_files[0] = strsave(buf);
-				expl_files[1] = NULL;
-			}
-			vim_free(buf);
+			expand_env(*pat, buf, MAXPATHL);
 		}
 		else
 		{
-			expl_files = (char_u **)_fnexplode(*pat);
-			if (expl_files == NULL)
+			buf = strsave(*pat);
+		}
+        expl_files = NULL;
+		has_wildcard = mch_has_wildcard(buf);  /* (still) wildcards in there? */
+		if (has_wildcard)   /* yes, so expand them */
+			expl_files = (char_u **)_fnexplode(buf);
+        /*
+         * return value of buf if no wildcards left,
+         * OR if no match AND list_notfound is true.
+         */
+		if (!has_wildcard || (expl_files == NULL && list_notfound))
+		{	/* simply save the current contents of *buf */
+			expl_files = (char_u **)alloc(sizeof(char_u **) * 2);
+			if (expl_files != NULL)
 			{
-				/* see above for explanation */
-				expl_files = (char_u **)alloc(sizeof(char_u **) * 2);
-				expl_files[0] = strsave(*pat);
+				expl_files[0] = strsave(buf);
 				expl_files[1] = NULL;
 			}
 		}
-		if (!expl_files)
-		{
-			/* Can't happen */
-			char_u msg[128];
-			sprintf(msg, "%s (unix.c:%d)", e_internal, __LINE__);
-			emsg(msg);
-			*file = (char_u **)"";
-			*num_file = 0;
-			return OK;
-		}
+        vim_free(buf);
+
 		/*
 		 * Count number of names resulting from expansion,
-		 * At the same time add a backslash to the end of names that happen to be
-		 * directories, and replace slashes with backslashes.
+		 * At the same time add a backslash to the end of names that happen to
+		 * be directories, and replace slashes with backslashes.
 		 */
-		for (i = 0; (p = expl_files[i]) != NULL; i++, (*num_file)++)
+		if (expl_files)
 		{
-			if (--files_free == 0)
+			for (i = 0; (p = expl_files[i]) != NULL; i++, (*num_file)++)
 			{
-				/* need more room in table of pointers */
-				files_alloced += EXPL_ALLOC_INC;
-				*file = (char_u **) realloc(*file,
-											sizeof(char_u **) * files_alloced);
-				files_free = EXPL_ALLOC_INC;
-			}
-			slash_adjust(p);
-			if (mch_isdir(p))
-			{
-				len = strlen(p);
-				p = realloc(p, len + 2);
-				if (!p)
+				if (--files_free == 0)
 				{
-					emsg(e_outofmem);
-					return FAIL;
+					/* need more room in table of pointers */
+					files_alloced += EXPL_ALLOC_INC;
+					*file = (char_u **) realloc(*file,
+												sizeof(char_u **) * files_alloced);
+					if (*file == NULL)
+					{
+						emsg(e_outofmem);
+						*num_file = 0;
+						return FAIL;
+					}
+					files_free = EXPL_ALLOC_INC;
 				}
-				(*file)[*num_file] = p;
-				p += len;
-				*p++ = '\\';
-				*p = 0;
+				slash_adjust(p);
+				if (mch_isdir(p))
+				{
+					len = strlen(p);
+					if (((*file)[*num_file] = alloc(len + 2)) != NULL)
+					{
+						strcpy((*file)[*num_file], p);
+						(*file)[*num_file][len] = '\\';
+						(*file)[*num_file][len+1] = 0;
+					}
+				}
+				else
+				{
+					(*file)[*num_file] = strsave(p);
+				}
+
+				/*
+				 * Error message already given by either alloc or strsave.
+				 * Should return FAIL, but returning OK works also.
+				 */
+				if ((*file)[*num_file] == NULL)
+					break;
 			}
-			else
-			{
-				(*file)[*num_file] = strsave(p);
-			}
+		_fnexplodefree((char **)expl_files);
 		}
-		_fnexplodefree(expl_files);
 	}
 	return OK;
 
 #else /* __EMX__ */
 
 	int		dir;
-	char_u	tmpname[TMPNAMELEN];
+	char_u	*tempname;
 	char_u	*command;
 	FILE	*fd;
 	char_u	*buffer;
@@ -2607,8 +2593,7 @@ ExpandWildCards(num_pat, pat, num_file, file, files_only, list_notfound)
 /*
  * get a name for the temp file
  */
-	STRCPY(tmpname, TMPNAME2);
-	if (*mktemp((char *)tmpname) == NUL)
+	if ((tempname = vim_tempname('o')) == NULL)
 	{
 		emsg(e_notmp);
 	    return FAIL;
@@ -2621,17 +2606,20 @@ ExpandWildCards(num_pat, pat, num_file, file, files_only, list_notfound)
 	if ((len = STRLEN(p_sh)) >= 3 && STRCMP(p_sh + len - 3, "csh") == 0)
 		use_glob = TRUE;
 
-	len = TMPNAMELEN + 11;
+	len = STRLEN(tempname) + 12;
 	for (i = 0; i < num_pat; ++i)		/* count the length of the patterns */
 		len += STRLEN(pat[i]) + 3;
 	command = alloc(len);
 	if (command == NULL)
+	{
+		vim_free(tempname);
 		return FAIL;
+	}
 	if (use_glob)
 		STRCPY(command, "glob >");		/* build the shell command */
 	else
 		STRCPY(command, "echo >");		/* build the shell command */
-	STRCAT(command, tmpname);
+	STRCAT(command, tempname);
 	for (i = 0; i < num_pat; ++i)
 	{
 #ifdef USE_SYSTEM
@@ -2658,7 +2646,8 @@ ExpandWildCards(num_pat, pat, num_file, file, files_only, list_notfound)
 	vim_free(command);
 	if (i == FAIL)							/* call_shell failed */
 	{
-		vim_remove(tmpname);
+		vim_remove(tempname);
+		vim_free(tempname);
 		/*
 		 * With interactive completion, the error message is not printed.
 		 * However with USE_SYSTEM, I don't know how to turn off error messages
@@ -2678,10 +2667,11 @@ ExpandWildCards(num_pat, pat, num_file, file, files_only, list_notfound)
 /*
  * read the names from the file into memory
  */
- 	fd = fopen((char *)tmpname, "r");
+ 	fd = fopen((char *)tempname, "r");
 	if (fd == NULL)
 	{
-		emsg2(e_notopen, tmpname);
+		emsg2(e_notopen, tempname);
+		vim_free(tempname);
 		return FAIL;
 	}
 	fseek(fd, 0L, SEEK_END);
@@ -2690,19 +2680,22 @@ ExpandWildCards(num_pat, pat, num_file, file, files_only, list_notfound)
 	buffer = alloc(len + 1);
 	if (buffer == NULL)
 	{
-		vim_remove(tmpname);
+		vim_remove(tempname);
+		vim_free(tempname);
 		fclose(fd);
 		return FAIL;
 	}
 	i = fread((char *)buffer, 1, len, fd);
 	fclose(fd);
-	vim_remove(tmpname);
+	vim_remove(tempname);
 	if (i != len)
 	{
-		emsg2(e_notread, tmpname);
+		emsg2(e_notread, tempname);
+		vim_free(tempname);
 		vim_free(buffer);
 		return FAIL;
 	}
+	vim_free(tempname);
 
 	if (use_glob)		/* file names are separated with NUL */
 	{
