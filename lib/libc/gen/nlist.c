@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.26 1998/08/21 20:33:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.27 1998/08/23 17:48:02 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -130,8 +130,12 @@ __aout_fdnlist(fd, list)
 
 			if (s->n_un.n_strx == 0 || (s->n_type & N_STAB) != 0)
 				continue;
-			for (p = list; !ISLAST(p); p++)
-				if (!strcmp(sname, p->n_un.n_name)) {
+			for (p = list; !ISLAST(p); p++) {
+				char *pname = p->n_un.n_name;
+
+				if (*sname != '_' && *pname == '_')
+					pname++;
+				if (!strcmp(sname, pname)) {
 					p->n_value = s->n_value;
 					p->n_type = s->n_type;
 					p->n_desc = s->n_desc;
@@ -139,6 +143,7 @@ __aout_fdnlist(fd, list)
 					if (--nent <= 0)
 						break;
 				}
+			}
 		}
 	}
 	free(strtab);
