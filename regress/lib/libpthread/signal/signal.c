@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.1.1.1 2001/08/15 14:37:13 fgsch Exp $	*/
+/*	$OpenBSD: signal.c,v 1.2 2001/11/03 04:33:48 marc Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 /*
@@ -12,6 +12,8 @@
 #include <signal.h>
 #include "test.h"
 
+volatile int alarmed;
+
 void *
 sleeper(arg)
 	void *arg;
@@ -21,8 +23,7 @@ sleeper(arg)
 	/* Ignore all signals in this thread */
 	sigfillset(&mask);
 	CHECKe(sigprocmask(SIG_SETMASK, &mask, NULL));
-
-	ASSERT(sleep(2) == 0);
+	ASSERT(sleep(3) == 0);
 	SUCCEED;
 }
 
@@ -30,7 +31,7 @@ void
 handler(sig)
 	int sig;
 {
-	printf("signal handler %d\n", sig);
+	alarmed = 1;
 	alarm(1);
 	signal(SIGALRM, handler);
 }
@@ -44,6 +45,10 @@ main()
 	CHECKe(alarm(1));
 	CHECKr(pthread_create(&slpr, NULL, sleeper, NULL));
 	/* ASSERT(sleep(1) == 0); */
-	for (;;)
-		CHECKe(write(STDOUT_FILENO, ".", 1));
+	for (;;) {
+		if (alarmed) {
+			alarmed = 0;
+			CHECKe(write(STDOUT_FILENO, "!", 1));
+		}
+	}
 }

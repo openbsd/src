@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
+/*	$OpenBSD: pthread_mutex.c,v 1.3 2001/11/03 04:33:48 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -109,7 +109,7 @@ test_debug_double_unlock(mutex)
 	CHECKr(pthread_mutex_lock(mutex));
 	CHECKr(pthread_mutex_unlock(mutex));
 	/* Posix D10 says undefined behaviour? */
-	ASSERTe(pthread_mutex_unlock(mutex), != EPERM);
+	ASSERTe(pthread_mutex_unlock(mutex), != 0);
 }
 
 void
@@ -167,6 +167,7 @@ test_mutex_recursive()
 	pthread_mutexattr_t mutex_recursive_attr; 
 	pthread_mutex_t mutex_recursive; 
 	int i;
+	int j = 9;
 
 	printf("test_mutex_recursive()\n");
 	CHECKr(pthread_mutexattr_init(&mutex_recursive_attr));
@@ -175,13 +176,14 @@ test_mutex_recursive()
 	CHECKr(pthread_mutex_init(&mutex_recursive, &mutex_recursive_attr));
 
 	CHECKr(pthread_mutex_lock(&mutex_recursive));
-	for (i = 0; i < 9; i++)
+	for (i = 0; i < j; i++)
 		CHECKr(pthread_mutex_lock(&mutex_recursive));
-	for (i = 0; i < 9; i++)
+	for (i = 0; i < j; i++)
 		CHECKr(pthread_mutex_unlock(&mutex_recursive));
 	CHECKr(pthread_mutex_unlock(&mutex_recursive));
 	/* Posix D10 says undefined behaviour? */
 	ASSERTe(pthread_mutex_unlock(&mutex_recursive), != 0);
+	CHECKr(pthread_mutex_destroy(&mutex_recursive));
 }
 
 int
