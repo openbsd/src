@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.3 1998/01/14 13:20:50 niklas Exp $	*/
+/*	$OpenBSD: extract.c,v 1.4 1998/01/23 01:15:37 gene Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.3 1998/01/14 13:20:50 niklas Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.4 1998/01/23 01:15:37 gene Exp $";
 #endif
 
 /*
@@ -103,7 +103,7 @@ extract_plist(char *home, Package *pkg)
 		       and run in bulk. */
 		    add_count = snprintf(&perm_args[perm_count],
 					 maxargs - perm_count,
-					 "%s ", p->name);
+					 "'%s' ", p->name);
 		    if (add_count > maxargs - perm_count)
 			barf("oops, miscounted strings!");
 		    perm_count += add_count;
@@ -126,7 +126,7 @@ extract_plist(char *home, Package *pkg)
 		    where_count += add_count;
 		    add_count = snprintf(&perm_args[perm_count],
 					 maxargs - perm_count,
-					 "%s ", p->name);
+					 "'%s' ", p->name);
 		    if (add_count > maxargs - perm_count)
 			barf("oops, miscounted strings!");
 		    perm_count += add_count;
