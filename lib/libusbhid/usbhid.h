@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb.h,v 1.1 2001/09/02 17:50:40 pvalchev Exp $	*/
-/*	$NetBSD: usb.h,v 1.10 2000/09/24 02:13:25 augustss Exp $	*/
+/*	$OpenBSD: usbhid.h,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
+/*	$NetBSD: usbhid.h,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>

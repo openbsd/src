@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.1 2001/09/02 17:50:40 pvalchev Exp $	*/
+/*	$OpenBSD: parse.c,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
 /*	$NetBSD: parse.c,v 1.11 2000/09/24 02:19:54 augustss Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
-#include "usb.h"
+#include "usbhid.h"
 #include "usbvar.h"
 
 #define MAXUSAGE 100

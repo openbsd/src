@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbvar.h,v 1.1 2001/09/02 17:50:40 pvalchev Exp $	*/
+/*	$OpenBSD: usbvar.h,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
 /*	$NetBSD: usbvar.h,v 1.2 1999/05/11 21:15:46 augustss Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: descr.c,v 1.1 2001/09/02 17:50:40 pvalchev Exp $	*/
+/*	$OpenBSD: descr.c,v 1.1 2001/12/30 07:04:38 pvalchev Exp $	*/
 /*	$NetBSD: descr.c,v 1.9 2000/09/24 02:13:24 augustss Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 #include <dev/usb/usb.h>
 
-#include "usb.h"
+#include "usbhid.h"
 #include "usbvar.h"
 
 report_desc_t
