@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 1998/03/04 12:42:30 johns Exp $
+#	$OpenBSD: GENERIC,v 1.23 1998/03/04 19:24:56 johns Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -58,8 +58,8 @@ power0	at obio0
 #       to use proportionally CPU time handling clock interrupts, 
 #       and if set to ridiculously high values may cause problems.
 #
-# Note: sun4 system will only run the clocks at 100 Hz, other values
-#       are ignored. 
+# Note: 4/100 and 4/200 systems will only run the clocks at 100 Hz, 
+#       other values are ignored. 
 #
 # On sparc, 1000000 modulo HZ must == 0.  If not, a warning is printed 
 #       at boot time, and HZ is reset to 100.
