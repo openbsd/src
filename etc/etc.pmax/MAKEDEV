@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 1997/08/20 03:39:32 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 1997/09/07 20:01:16 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -253,9 +253,6 @@ pty*)
 			n="$(( $n + 1 ))"
 		done
 		umask 77
-		if [ $class = 1 ]; then
-			mv ttyqf ttyv0; mv ptyqf ptyv0
-		fi
 		;;
 	esac
 	;;

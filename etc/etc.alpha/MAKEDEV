@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.26 1997/09/07 20:00:40 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1997/09/07 20:01:15 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -299,9 +299,6 @@ pty*)
 			n="$(( $n + 1 ))"
 		done
 		umask 77
-		if [ $class = 1 ]; then
-			mv ttyqf ttyv0; mv ptyqf ptyv0
-		fi
 		;;
 	esac
 	;;
