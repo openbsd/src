@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.13 2001/11/14 14:43:42 hugh Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.14 2002/02/16 18:18:34 millert Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -193,6 +193,8 @@ int	exec_aout_prep_oldomagic __P((struct proc *, struct exec_package *));
 /*
  * MD portion
  */
+#if !defined(cpu_exec_aout_makecmds)
 int cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+#endif
 
 #endif /* _KERNEL */
