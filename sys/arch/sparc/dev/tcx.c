@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.10 2002/09/23 18:13:39 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.11 2002/09/30 18:07:29 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -246,7 +246,7 @@ tcxattach(parent, self, args)
 	if (ISSET(sc->sc_sunfb.sf_flags, FB_FORCELOW))
 		fb_depth = 8;
 	else
-		fb_depth = node_has_property(node, "tcx-8-bit") ?  8 : 32,
+		fb_depth = node_has_property(node, "tcx-8-bit") ?  8 : 32;
 
 	fb_setsize(&sc->sc_sunfb, fb_depth, 1152, 900, node, ca->ca_bustype);
 
