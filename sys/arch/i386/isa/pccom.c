@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.24 1998/05/14 05:54:44 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.25 1998/06/28 01:47:23 angelos Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -252,12 +252,36 @@ struct pcmciadevs pcmcia_com_devs[] = {
   NULL, (void *)&pcmcia_com 
   },
   { "pccom", 0,
+  NULL, "*Modem*", NULL, NULL,
+  NULL, (void *)&pcmcia_com   
+  },
+  { "pccom", 0,
+  NULL, "*modem*", NULL, NULL,
+  NULL, (void *)&pcmcia_com   
+  },
+  { "pccom", 0,
   NULL, NULL, "*MODEM*", NULL,
   NULL, (void *)&pcmcia_com 
   },
   { "pccom", 0,
+  NULL, NULL, "*Modem*", NULL,
+  NULL, (void *)&pcmcia_com   
+  },
+  { "pccom", 0,
+  NULL, NULL, "*modem*", NULL,
+  NULL, (void *)&pcmcia_com   
+  },
+  { "pccom", 0,
   NULL, NULL, NULL, "*MODEM*",
   NULL, (void *)&pcmcia_com 
+  },
+  { "pccom", 0,
+  NULL, NULL, NULL, "*Modem*",
+  NULL, (void *)&pcmcia_com   
+  },
+  { "pccom", 0,
+  NULL, NULL, NULL, "*modem*",
+  NULL, (void *)&pcmcia_com   
   },
   {NULL}
 };
