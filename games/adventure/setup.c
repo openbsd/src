@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.4 1998/08/31 02:29:44 pjanzen Exp $	*/
+/*	$OpenBSD: setup.c,v 1.5 1998/09/02 06:36:07 pjanzen Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.4 1998/08/31 02:29:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.5 1998/09/02 06:36:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ main(argc, argv)
 		errx(1, USAGE);
 
 	if ((infile = fopen(argv[1], "r")) == NULL)
-		err(1, "Can't read file %s.", argv[1]);
+		err(1, "Can't read file %s", argv[1]);
 	puts("/*\n * data.c: created by setup from the ascii data file.");
 	puts(SIG1);
 	puts(SIG2);
@@ -102,7 +102,7 @@ main(argc, argv)
 		if (count++ % LINE == 0)
 			printf("\n\t");
 		if (linestart && c == ' ') { /* Convert first spaces to tab */
-			printf("0x%02x,", ('\t' ^ random()) & 0xFF);
+			printf("0x%02x,", (unsigned int)('\t' ^ random()) & 0xFF);
 			while ((c = getc(infile)) == ' ' && c != EOF);
 			/* Drop the non-whitespace character through */
 			linestart = NO;
@@ -117,7 +117,7 @@ main(argc, argv)
 		}
 		if (count++ % LINE == 0)
 			printf("\n\t");
-		printf("0x%02lx,", (c ^ random()) & 0xFF);
+		printf("0x%02x,", (unsigned int)(c ^ random()) & 0xFF);
 	}
 	puts("\n\t0\n};");
 	fclose(infile);

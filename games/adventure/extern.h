@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.1 1998/08/31 02:31:13 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.2 1998/09/02 06:36:07 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ unsigned long crc __P((const char *, int));
 /* done.c */
 int score __P((void));
 void done __P((int));
-int die __P((int));
+void die __P((int));
 
 /* init.c */
 void init __P((void));
@@ -95,8 +95,8 @@ int march __P((void));
 int mback __P((void));
 int specials __P((void));
 int trbridge __P((void));
-int badmove __P((void));
-int bug __P((int)) __attribute__((__noreturn__));
+void badmove __P((void));
+void bug __P((int));
 void checkhints __P((void));
 int trsay __P((void));
 int trtake __P((void));
@@ -107,8 +107,8 @@ int trkill __P((void));
 int trtoss __P((void));
 int trfeed __P((void));
 int trfill __P((void));
-int closing __P((void));
-int caveclose __P((void));
+void closing __P((void));
+void caveclose __P((void));
 
 /* vocab.c */
 void dstroy __P((int));

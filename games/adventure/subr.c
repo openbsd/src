@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.3 1998/08/31 02:29:45 pjanzen Exp $	*/
+/*	$OpenBSD: subr.c,v 1.4 1998/09/02 06:36:07 pjanzen Exp $	*/
 /*	$NetBSD: subr.c,v 1.2 1995/03/21 12:05:11 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subr.c,v 1.3 1998/08/31 02:29:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.4 1998/09/02 06:36:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -467,7 +467,7 @@ trbridge()			/* 30300		*/
 }
 
 
-int
+void
 badmove()					/* 20			*/
 {
 	spk = 12;
@@ -486,10 +486,9 @@ badmove()					/* 20			*/
 	if (k == 17)
 		spk = 80;
 	rspeak(spk);
-	return (2);
 }
 
-int
+void
 bug(n)
 	int     n;
 {
@@ -999,7 +998,7 @@ trfill()					/* 9220 */
 }
 
 
-int
+void
 closing()				/* 10000 */
 {
 	int i;
@@ -1023,11 +1022,10 @@ closing()				/* 10000 */
 	rspeak(129);
 	clock1 = -1;
 	closng = TRUE;
-	return (19999);
 }
 
 
-int
+void
 caveclose()				/* 11000 */
 {
 	int i;
@@ -1057,5 +1055,4 @@ caveclose()				/* 11000 */
 			dstroy(i);
 	rspeak(132);
 	closed = TRUE;
-	return (2);
 }

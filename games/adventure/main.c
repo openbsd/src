@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1998/08/31 02:29:42 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1998/09/02 06:36:07 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/05/21 21:53:09 mrg Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/08/31 02:29:42 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/09/02 06:36:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -278,10 +278,8 @@ l8:
 		switch (march()) {
 		case 2: continue;		/* i.e. goto l2		*/
 		case 99:
-			switch (die(99)) {
-			case 2000: goto l2000;
-			default: bug(111);
-			}
+			die(99);
+			goto l2000;
 		default: bug(110);
 		}
 
