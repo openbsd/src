@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.19 2004/03/31 20:06:53 mickey Exp 
+ *	OpenBSD: eisadevs,v 1.20 2004/05/05 05:33:56 mickey Exp 
  */
 
 /*
@@ -63,8 +63,8 @@
 #define	EISA_PRODUCT_ACE7010	"ACME Multi-Function Board"
 
 /* Acer products */
-#define	EISA_PRODUCT_ACR1201	"Acer 1200 486/25 EISA System Board"
-#define	EISA_PRODUCT_ACR1211	"Acer AcerFrame 3000SP33 486/33 EISA System Board"
+#define	EISA_PRODUCT_ACR1201	"Acer 1200 486/25 System Board"
+#define	EISA_PRODUCT_ACR1211	"Acer AcerFrame 3000SP33 486/33 System Board"
 #define	EISA_PRODUCT_ACR1341	"Acer M1 486SX/20 CPU Board"
 #define	EISA_PRODUCT_ACR1351	"Acer M1 486SX/20 CPU Board"
 #define	EISA_PRODUCT_ACR1361	"Acer M1 487/20 CPU Board"
@@ -77,7 +77,7 @@
 #define	EISA_PRODUCT_ACR15B1	"Acer M1 486/33 CPU Board"
 #define	EISA_PRODUCT_ACR1701	"Acer AcerFrame 1000"
 #define	EISA_PRODUCT_ACR1711	"Acer AcerFrame 1000 486/33 SYSTEM-2"
-#define	EISA_PRODUCT_ACR1801	"Acer P43WE EISA System Board"
+#define	EISA_PRODUCT_ACR1801	"Acer P43WE System Board"
 #define	EISA_PRODUCT_ACR3211	"Acer AcerFrame 3000MP 486 SYSTEM-1"
 #define	EISA_PRODUCT_ACR3221	"Acer AcerFrame 486 Series SYSTEM-2"
 #define	EISA_PRODUCT_ACR3231	"Acer AcerFrame 486 Series SYSTEM-3"
@@ -102,17 +102,17 @@
 #define	EISA_PRODUCT_ADP7756	"Adaptec AHA-284x SCSI (BIOS enabled)"
 #define	EISA_PRODUCT_ADP7757	"Adaptec AHA-284x SCSI (BIOS disabled)"
 
-#define	EISA_PRODUCT_AEI0401	"486EI EISA System Board"
+#define	EISA_PRODUCT_AEI0401	"486EI System Board"
 
-#define	EISA_PRODUCT_AEO0301	"486EO EISA System Board"
+#define	EISA_PRODUCT_AEO0301	"486EO System Board"
 
 #define	EISA_PRODUCT_AIM0002	"AUVA OPTi/EISA 32-Bit 486 All-in-One System Board"
 
-#define	EISA_PRODUCT_AIR0101	"AIR AIR486SE/25/33 EISA Baby AT-foot print motherboard"
+#define	EISA_PRODUCT_AIR0101	"AIR AIR486SE/25/33 Baby AT-foot print motherboard"
 #define	EISA_PRODUCT_AIR0103	"AIR AIR486SE/25/33/50"
 #define	EISA_PRODUCT_AIR0201	"AIR AIR486LE/25/33/50"
-#define	EISA_PRODUCT_AIR0301	"AIR AIR 486EO EISA System Board"
-#define	EISA_PRODUCT_AIR0401	"AIR 486EI EISA System Board"
+#define	EISA_PRODUCT_AIR0301	"AIR AIR 486EO System Board"
+#define	EISA_PRODUCT_AIR0401	"AIR 486EI System Board"
 #define	EISA_PRODUCT_AIR0501	"AIR AIR 586EP PCI/EISA System Board"
 #define	EISA_PRODUCT_AIR0601	"AIR AIR 54CEP PCI/EISA System Board"
 #define	EISA_PRODUCT_AIR0701	"AIR AIR 54CDP PCI/EISA System Board"
@@ -121,18 +121,18 @@
 #define	EISA_PRODUCT_AIR1001	"AIR AIR P6NDP PCI/EISA Dual-Pentium Processor System Board"
 #define	EISA_PRODUCT_AIR2001	"AIR AIR SCSI-2E"
 #define	EISA_PRODUCT_AIR2101	"AIR AIR SCSI-2V"
-#define	EISA_PRODUCT_AIR3001	"AIR ENET-2E EISA BUS MASTER ETHERNET"
+#define	EISA_PRODUCT_AIR3001	"AIR ENET-2E BUS MASTER ETHERNET"
 #define	EISA_PRODUCT_AIR3101	"AIR ENET-2V LOCAL BUS MASTER ETHERNET"
 
 #define	EISA_PRODUCT_ALR0001	"Power/Business VEISA System Board"
 #define	EISA_PRODUCT_ALR0041	"PowerPro System Board"
 #define	EISA_PRODUCT_ALR0181	"PowerPro System Board"
 #define	EISA_PRODUCT_ALR0241	"Evolution V Pentium Tower System Board"
-#define	EISA_PRODUCT_ALR0341	"EISA PCI base System Board"
+#define	EISA_PRODUCT_ALR0341	"EISA/PCI base System Board"
 #define	EISA_PRODUCT_ALR3000	"80486 Processor Module"
 #define	EISA_PRODUCT_ALR3010	"Pentium Processor Board"
 #define	EISA_PRODUCT_ALR3023	"ALR 16-bit VGA without Parallel port"
-#define	EISA_PRODUCT_ALR8580	"Advanced Disk Array Caching EISA Controller"
+#define	EISA_PRODUCT_ALR8580	"Advanced Disk Array Caching Controller"
 #define	EISA_PRODUCT_ALRA0C1	"System Board"
 #define	EISA_PRODUCT_ALRA301	"Revolution Q-SMP System Board"
 #define	EISA_PRODUCT_ALRA311	"Revolution Q-2SMP System Board"
@@ -142,31 +142,31 @@
 /* AMI products */
 #define	EISA_PRODUCT_AMI15C1	"AMI SCSI Host Adapter"
 #define	EISA_PRODUCT_AMI15D1	"AMI SCSI Host Adapter - Rev 2"
-#define	EISA_PRODUCT_AMI15E1	"AMI Single Ended EISA SCSI"
-#define	EISA_PRODUCT_AMI16B1	"AMI ENTERPRISE EISA system board"
-#define	EISA_PRODUCT_AMI2509	"AMI ENTERPRISE EISA system board"
-#define	EISA_PRODUCT_AMI25B1	"AMI ENTERPRISE EISA system board"
-#define	EISA_PRODUCT_AMI28A1	"AMI EZ-FLEX EISA System Board"
+#define	EISA_PRODUCT_AMI15E1	"AMI Single Ended SCSI"
+#define	EISA_PRODUCT_AMI16B1	"AMI ENTERPRISE System Board"
+#define	EISA_PRODUCT_AMI2509	"AMI ENTERPRISE System Board"
+#define	EISA_PRODUCT_AMI25B1	"AMI ENTERPRISE System Board"
+#define	EISA_PRODUCT_AMI28A1	"AMI EZ-FLEX System Board"
 #define	EISA_PRODUCT_AMI44C1	"AMI SCSI Host Adapter - Series 44"
-#define	EISA_PRODUCT_AMI44D2	"AMI Fast Single Ended EISA SCSI"
+#define	EISA_PRODUCT_AMI44D2	"AMI Fast Single Ended SCSI"
 #define	EISA_PRODUCT_AMI4801	"AMI Series 48 SCSI"
-#define	EISA_PRODUCT_AMI68B1	"AMI Enterprise III 486 EISA System Board"
+#define	EISA_PRODUCT_AMI68B1	"AMI Enterprise III 486 System Board"
 
-#define	EISA_PRODUCT_APS0101	"EISA PIP INTERFACE"
-#define	EISA_PRODUCT_APS0102	"EISA PIP INTERFACE"
-#define	EISA_PRODUCT_APS0103	"EISA PIP INTERFACE"
+#define	EISA_PRODUCT_APS0101	"PIP INTERFACE"
+#define	EISA_PRODUCT_APS0102	"PIP INTERFACE"
+#define	EISA_PRODUCT_APS0103	"PIP INTERFACE"
 
 #define	EISA_PRODUCT_ARC0010	"Alta EtherTPI/Combo"
 #define	EISA_PRODUCT_ARC0020	"Alta TokenCombo-16 S/U"
 
-#define	EISA_PRODUCT_ASU0100	"Asus EISA-SC100 SCSI Cache Host Adapter (CFG file V2.0)"
-#define	EISA_PRODUCT_ASU0500	"Asus EISA-L500 Ethernet"
-#define	EISA_PRODUCT_ASU4001	"Asus EISA-486C Main Board"
-#define	EISA_PRODUCT_ASU4101	"Asus EISA-486E Main Board"
-#define	EISA_PRODUCT_ASU4201	"Asus EISA-486A Main Board"
-#define	EISA_PRODUCT_ASU4301	"Asus EISA-486SI Main Board"
-#define	EISA_PRODUCT_ASU4501	"Asus Mini EISA-486H Main Board"
-#define	EISA_PRODUCT_ASU4701	"Asus Mini EISA-486AS Main Board"
+#define	EISA_PRODUCT_ASU0100	"Asus SC100 SCSI Cache Host Adapter (CFG file V2.0)"
+#define	EISA_PRODUCT_ASU0500	"Asus L500 Ethernet"
+#define	EISA_PRODUCT_ASU4001	"Asus 486C Main Board"
+#define	EISA_PRODUCT_ASU4101	"Asus 486E Main Board"
+#define	EISA_PRODUCT_ASU4201	"Asus 486A Main Board"
+#define	EISA_PRODUCT_ASU4301	"Asus 486SI Main Board"
+#define	EISA_PRODUCT_ASU4501	"Asus Mini 486H Main Board"
+#define	EISA_PRODUCT_ASU4701	"Asus Mini 486AS Main Board"
 #define	EISA_PRODUCT_ASU4901	"Asus VL/EISA-486SV1 Main Board"
 #define	EISA_PRODUCT_ASU5101	"Asus PCI/E-P5MP4 or PCI/E-P54NP4 Main Board V2.3"
 #define	EISA_PRODUCT_ASU5201	"Asus P/E-P55T2P4D Main Board (CFG File V1.2)"
@@ -174,8 +174,8 @@
 /* ATI products */
 #define	EISA_PRODUCT_ATI1500	"ATI AT-1500 Ethernet"
 #define	EISA_PRODUCT_ATI1700	"ATI AT-1700 Ethernet"
-#define	EISA_PRODUCT_ATI4400	"ATI mach32 EISA Graphics"
-#define	EISA_PRODUCT_ATI4402	"ATI mach32 EISA Graphics"
+#define	EISA_PRODUCT_ATI4400	"ATI mach32 Graphics"
+#define	EISA_PRODUCT_ATI4402	"ATI mach32 Graphics"
 #define	EISA_PRODUCT_ATI4410	"ATI mach32 Graphics"
 #define	EISA_PRODUCT_ATI4420	"ATI mach32 Graphics"
 #define	EISA_PRODUCT_ATI4430	"ATI mach32 VLB Graphics"
@@ -200,16 +200,16 @@
 
 /* Cache Computers products */
 #define	EISA_PRODUCT_CCI0000	"Cache Computers, Inc. Memory Refresh Controller"
-#define	EISA_PRODUCT_CCI1001	"Cache Computers, Inc. 486/25 EISA System Board"
-#define	EISA_PRODUCT_CCI2001	"Cache Computers, Inc. 486/33 EISA System Board"
-#define	EISA_PRODUCT_CCI3001	"Cache Computers, Inc. Modular EISA System Board"
-#define	EISA_PRODUCT_CCI3009	"Cache Computers, Inc. Modular EISA System Board"
+#define	EISA_PRODUCT_CCI1001	"Cache Computers, Inc. 486/25 System Board"
+#define	EISA_PRODUCT_CCI2001	"Cache Computers, Inc. 486/33 System Board"
+#define	EISA_PRODUCT_CCI3001	"Cache Computers, Inc. Modular System Board"
+#define	EISA_PRODUCT_CCI3009	"Cache Computers, Inc. Modular System Board"
 #define	EISA_PRODUCT_CCI4000	"Cache Computers, Inc. 486/33 CPU Board"
 #define	EISA_PRODUCT_CCI4001	"Cache Computers, Inc. 486/33 CPU Board"
 #define	EISA_PRODUCT_CCI5001	"Cache Computers, Inc. 486/50 CPU Board"
 #define	EISA_PRODUCT_CCI6001	"Cache Computers, Inc. LAN Adapter"
-#define	EISA_PRODUCT_CCI7001	"Cache Computers, Inc. EISA System Board"
-#define	EISA_PRODUCT_CCI8001	"Cache Computers, Inc. EISA System Board"
+#define	EISA_PRODUCT_CCI7001	"Cache Computers, Inc. System Board"
+#define	EISA_PRODUCT_CCI8001	"Cache Computers, Inc. System Board"
 
 /* Chase products */
 #define	EISA_PRODUCT_CHAA041	"Chase AT4 Intelligent Serial Controller"
@@ -474,11 +474,11 @@
 #define	EISA_PRODUCT_DTI2002	"DeskStation Technology, Inc. ESP2002 Integrated System Processor"
 
 /* DTK products */
-#define	EISA_PRODUCT_DTK0001	"DTK PLM-3300I 80486 EISA Board"
+#define	EISA_PRODUCT_DTK0001	"DTK PLM-3300I 80486 Board"
 #define	EISA_PRODUCT_DTK0003	"DTK PLM-3331P EISACACHE486 33/25/50 MHZ"
 
-#define	EISA_PRODUCT_ECS0580	"DI-580A EISA SCSI"
-#define	EISA_PRODUCT_ECS0590	"DI-590 EISA SCSI"
+#define	EISA_PRODUCT_ECS0580	"DI-580A SCSI"
+#define	EISA_PRODUCT_ECS0590	"DI-590 SCSI"
 
 /* ELSA products */
 #define	EISA_PRODUCT_ELS8041	"ELSA WINNER 1000 Enhanced VGA"
@@ -488,11 +488,11 @@
 
 #define	EISA_PRODUCT_EVX0002	"PN-3000 System Board"
 
-#define	EISA_PRODUCT_FCT0001	"EISA SYSTEM BOARD"
-#define	EISA_PRODUCT_FCT0002	"386 EISA SYSTEM BOARD"
-#define	EISA_PRODUCT_FCT0003	"486 EISA SYSTEM BOARD"
+#define	EISA_PRODUCT_FCT0001	"SYSTEM BOARD"
+#define	EISA_PRODUCT_FCT0002	"386 SYSTEM BOARD"
+#define	EISA_PRODUCT_FCT0003	"486 SYSTEM BOARD"
 
-#define	EISA_PRODUCT_FIC0000	"LEO 486VE EISA Main Board"
+#define	EISA_PRODUCT_FIC0000	"LEO 486VE Main Board"
 
 #define	EISA_PRODUCT_FIX1516	"15-16MB Memory Hole Patch - Netserver LF/LC 5/66"
 
@@ -505,7 +505,7 @@
 #define	EISA_PRODUCT_GDT2001	"GDT GDT2000/GDT2020 Fast-SCSI Cache Controller - Rev. 1.0"
 #define	EISA_PRODUCT_GDT3001	"GDT GDT3000/GDT3020 Dual Channel SCSI Controller - Rev. 1.0"
 #define	EISA_PRODUCT_GDT3002	"GDT GDT30x0A Cache Controller"
-#define	EISA_PRODUCT_GDT3003	"GDT GDT3000B/GDT3010A EISA SCSI Cache Controller - Rev. 1.0"
+#define	EISA_PRODUCT_GDT3003	"GDT GDT3000B/GDT3010A SCSI Cache Controller - Rev. 1.0"
 
 #define	EISA_PRODUCT_GIT0000	"G486PEL EISA & LOCAL Bus Mother Board."
 #define	EISA_PRODUCT_GIT0001	"G486HVL EISA & VESA LOCAL Bus Mother Board."
@@ -539,26 +539,26 @@
 #define	EISA_PRODUCT_HWP1811	"Hewlett-Packard ThinLAN PC Adapter Card (27250A)"
 #define	EISA_PRODUCT_HWP1820	"Hewlett-Packard EtherTwist Adapter Card/8 (27245-60002)"
 #define	EISA_PRODUCT_HWP1832	"Hewlett-Packard EtherTwist PC LAN Adapter/16 TP Plus (27247B)"
-#define	EISA_PRODUCT_HWP1840	"Hewlett-Packard EtherTwist EISA LAN Adapter/32"
+#define	EISA_PRODUCT_HWP1840	"Hewlett-Packard EtherTwist LAN Adapter/32"
 #define	EISA_PRODUCT_HWP1850	"Hewlett-Packard LAN AdapterCard -- 25567A"
 #define	EISA_PRODUCT_HWP1870	"Hewlett-Packard PSI"
 #define	EISA_PRODUCT_HWP18A0	"Hewlett-Packard EtherTwist PC LAN Adapter/16 TL Plus (27252A)"
 #define	EISA_PRODUCT_HWP18C0	"Hewlett-Packard EtherTwist PC LAN Adapter NC/16 TP (J2405A)"
-#define	EISA_PRODUCT_HWP18E0	"Hewlett-Packard 100Mbps EISA ATM Card"
-#define	EISA_PRODUCT_HWP1940	"Hewlett-Packard 10/100VG Selectable EISA LAN Adapter (J2577A)"
+#define	EISA_PRODUCT_HWP18E0	"Hewlett-Packard 100Mbps ATM Card"
+#define	EISA_PRODUCT_HWP1940	"Hewlett-Packard 10/100VG Selectable LAN Adapter (J2577A)"
 #define	EISA_PRODUCT_HWP1980	"Hewlett-Packard ATM Adapter -- J2802A"
 #define	EISA_PRODUCT_HWP1990	"Hewlett-Packard 100VG AnyLAN adapter card"
 #define	EISA_PRODUCT_HWP19A0	"Hewlett-Packard Low-cost PSI"
 #define	EISA_PRODUCT_HWP1C00	"Hewlett-Packard Serial/Parallel Interface Board (24540B)"
 #define	EISA_PRODUCT_HWP2002	"Hewlett-Packard ScanJet II Interface (C1752A)"
-#define	EISA_PRODUCT_HWP2051	"Hewlett-Packard EISA Test Adapter Card"
+#define	EISA_PRODUCT_HWP2051	"Hewlett-Packard Test Adapter Card"
 #define	EISA_PRODUCT_HWP2080	"Hewlett-Packard ScanJet II Interface (C2502A)"
-#define	EISA_PRODUCT_HWPC000	"Hewlett-Packard Series 700 EISA System Board"
-#define	EISA_PRODUCT_HWPC010	"Hewlett-Packard Series 700 EISA System Board"
-#define	EISA_PRODUCT_HWPC051	"Hewlett-Packard Series 700 EISA System Board"
-#define	EISA_PRODUCT_HWPC091	"Hewlett-Packard EISA System Board"
-#define	EISA_PRODUCT_HWPC0D1	"Hewlett-Packard EISA System Board"
-#define	EISA_PRODUCT_HWPC0E1	"Hewlett-Packard EISA System Board"
+#define	EISA_PRODUCT_HWPC000	"Hewlett-Packard Series 700 System Board"
+#define	EISA_PRODUCT_HWPC010	"Hewlett-Packard Series 700 System Board"
+#define	EISA_PRODUCT_HWPC051	"Hewlett-Packard Series 700 System Board"
+#define	EISA_PRODUCT_HWPC091	"Hewlett-Packard System Board"
+#define	EISA_PRODUCT_HWPC0D1	"Hewlett-Packard System Board"
+#define	EISA_PRODUCT_HWPC0E1	"Hewlett-Packard System Board"
 
 /* IBM products */
 #define	EISA_PRODUCT_IBM0001	"Auto 16/4 Token Ring"
@@ -576,7 +576,7 @@
 #define	EISA_PRODUCT_IKN1110	"IKON hardcopy boards: 10092, 10097, or 10111"
 
 /* Integrated Micro Solution Inc. products */
-#define	EISA_PRODUCT_IMS1001	"Integrated Micro Solution Inc. 486 EISA System Board"
+#define	EISA_PRODUCT_IMS1001	"Integrated Micro Solution Inc. 486 System Board"
 
 #define	EISA_PRODUCT_ING2040	"HCL-Hewlett Packard Limited PANTHER System Board"
 
@@ -590,7 +590,7 @@
 #define	EISA_PRODUCT_INT0081	"Intel HP Limited PANTHER System Board"
 #define	EISA_PRODUCT_INT0701	"Intel TokenExpress(tm) ISA 16/4"
 #define	EISA_PRODUCT_INT0703	"Intel TokenExpress(tm) ISA/16s"
-#define	EISA_PRODUCT_INT0902	"Intel TokenExpress(tm) EISA 16/4"
+#define	EISA_PRODUCT_INT0902	"Intel TokenExpress(tm) 16/4"
 #define	EISA_PRODUCT_INT0B01	"Intel TokenExpress(tm) ISA/8"
 #define	EISA_PRODUCT_INT1000	"Intel EtherExpress 16 Family Ethernet"
 #define	EISA_PRODUCT_INT1010	"Intel EtherExpress 32 Flash Ethernet"
@@ -621,14 +621,14 @@
 #define	EISA_PRODUCT_ITK0011	"ixEins Basic S0/Up0 ISDN Version 1.1"
 #define	EISA_PRODUCT_ITK0012	"ixEins Basic S0/Up0 ISDN Version 1.2"
 
-#define	EISA_PRODUCT_KCI3201	"ET32EM EISA 32-bit BUS-MASTER Ethernet"
-#define	EISA_PRODUCT_KCI3202	"ET-32EM 32-bit EISA Bus Master Ethernet"
+#define	EISA_PRODUCT_KCI3201	"ET32EM 32-bit BUS-MASTER Ethernet"
+#define	EISA_PRODUCT_KCI3202	"ET-32EM 32-bit Bus Master Ethernet"
 
 /* LeafNET products */
 #define	EISA_PRODUCT_LEF8000	"LeafNET Ethernet"
 
 /* Madge products */
-#define	EISA_PRODUCT_MDG0002	"Madge Networks Smart 16/4 EISA Ringnode"
+#define	EISA_PRODUCT_MDG0002	"Madge Networks Smart 16/4 Ringnode"
 #define	EISA_PRODUCT_MDG0010	"Madge Networks Smart 16/4 AT Ringnode"
 #define	EISA_PRODUCT_MDG0020	"Madge Networks Smart 16/4 ISA Client Ringnode"
 #define	EISA_PRODUCT_MDG2000	"Madge Networks Blue+ 16/4 ISA Token Ring"
@@ -642,10 +642,10 @@
 #define	EISA_PRODUCT_MET1104	"Metheus UGA 1104 Graphics"
 #define	EISA_PRODUCT_MET1128	"Metheus UGA 1124/1128 Graphics"
 
-#define	EISA_PRODUCT_MIC0001	"Micronics EISA 486 66/50/33/25 System Board"
+#define	EISA_PRODUCT_MIC0001	"Micronics 486 66/50/33/25 System Board"
 #define	EISA_PRODUCT_MIC0004	"Micronics 486 PCI-EISA System Board"
 #define	EISA_PRODUCT_MIC0005	"Micronics M5PE EISA-PCI Pentium System Board"
-#define	EISA_PRODUCT_MIC0021	"Micronics NET3200 EISA Ethernet LAN Adapter"
+#define	EISA_PRODUCT_MIC0021	"Micronics NET3200 Ethernet LAN Adapter"
 #define	EISA_PRODUCT_MIC0054	"Micronics M54Pe Dual Pentium PCI-EISA System Board"
 #define	EISA_PRODUCT_MIC3001	"Micronics EISA3 System Board"
 #define	EISA_PRODUCT_MIC5402	"Micronics M54E2 Dual Pentium PCI-EISA System Board"
@@ -657,27 +657,27 @@ MINIADP	Adaptec 32-bit SCSI Host Adapter (with floppy)
 #define	EISA_PRODUCT_MIR0928	"miroCRYSTAL / miroMAGIC / miroRAINBOW (14-Sep-93)"
 
 /* Mylex Products */
-#define	EISA_PRODUCT_MLX0010	"Mylex LNE390A EISA 32-bit Ethernet"
-#define	EISA_PRODUCT_MLX0011	"Mylex LNE390B EISA 32-bit Ethernet"
-#define	EISA_PRODUCT_MLX0020	"Mylex DCE376 EISA 32-Bit SCSI"
-#define	EISA_PRODUCT_MLX0021	"Mylex DCE376 EISA 32-Bit SCSI"
-#define	EISA_PRODUCT_MLX0022	"Mylex DCE376 EISA 32-Bit SCSI"
+#define	EISA_PRODUCT_MLX0010	"Mylex LNE390A 32-bit Ethernet"
+#define	EISA_PRODUCT_MLX0011	"Mylex LNE390B 32-bit Ethernet"
+#define	EISA_PRODUCT_MLX0020	"Mylex DCE376 32-Bit SCSI"
+#define	EISA_PRODUCT_MLX0021	"Mylex DCE376 32-Bit SCSI"
+#define	EISA_PRODUCT_MLX0022	"Mylex DCE376 32-Bit SCSI"
 #define	EISA_PRODUCT_MLX0030	"Mylex LNI390A ISA 16-Bit Ethernet"
-#define	EISA_PRODUCT_MLX0040	"Mylex GXE020B or GXE020C EISA 32-Bit Graphics"
-#define	EISA_PRODUCT_MLX0050	"Mylex GLE(911) EISA Graphics"
-#define	EISA_PRODUCT_MLX0070	"Mylex DAC960 EISA Disk Array"
-#define	EISA_PRODUCT_MLX0071	"Mylex DAC960 EISA Disk Array (3-channel)"
-#define	EISA_PRODUCT_MLX0072	"Mylex DAC960 EISA Disk Array (3-channel)"
-#define	EISA_PRODUCT_MLX0073	"Mylex DAC960 EISA Disk Array (2-channel)"
-#define	EISA_PRODUCT_MLX0074	"Mylex DAC960 EISA Disk Array (1-channel)"
-#define	EISA_PRODUCT_MLX0075	"Mylex DAC960-A EISA Disk Array (3-channel)"
-#define	EISA_PRODUCT_MLX0076	"Mylex DAC960-A EISA Disk Array (2-channel)"
-#define	EISA_PRODUCT_MLX0077	"Mylex DAC960-A EISA Disk Array (1-channel)"
-#define	EISA_PRODUCT_MLX0101	"Mylex LME596 EISA 32-bit 4 Channel Ethernet"
-#define	EISA_PRODUCT_MLXFD01	"Mylex MDE486 EISA 32-Bit 486 System Board"
-#define	EISA_PRODUCT_MLXFE01	"Mylex MBE486 EISA 32-Bit 486 System Board"
-#define	EISA_PRODUCT_MLXFF01	"Mylex MAE486 EISA 32-Bit 486 System Board"
-#define	EISA_PRODUCT_MLXFF02	"Mylex MDE486 or MNE486 EISA 32-Bit 486 System Board"
+#define	EISA_PRODUCT_MLX0040	"Mylex GXE020B/C 32-Bit Graphics"
+#define	EISA_PRODUCT_MLX0050	"Mylex GLE(911) Graphics"
+#define	EISA_PRODUCT_MLX0070	"Mylex DAC960 Disk Array"
+#define	EISA_PRODUCT_MLX0071	"Mylex DAC960 Disk Array (3-channel)"
+#define	EISA_PRODUCT_MLX0072	"Mylex DAC960 Disk Array (3-channel)"
+#define	EISA_PRODUCT_MLX0073	"Mylex DAC960 Disk Array (2-channel)"
+#define	EISA_PRODUCT_MLX0074	"Mylex DAC960 Disk Array (1-channel)"
+#define	EISA_PRODUCT_MLX0075	"Mylex DAC960-A Disk Array (3-channel)"
+#define	EISA_PRODUCT_MLX0076	"Mylex DAC960-A Disk Array (2-channel)"
+#define	EISA_PRODUCT_MLX0077	"Mylex DAC960-A Disk Array (1-channel)"
+#define	EISA_PRODUCT_MLX0101	"Mylex LME596 32-bit 4 Channel Ethernet"
+#define	EISA_PRODUCT_MLXFD01	"Mylex MDE486 32-Bit 486 System Board"
+#define	EISA_PRODUCT_MLXFE01	"Mylex MBE486 32-Bit 486 System Board"
+#define	EISA_PRODUCT_MLXFF01	"Mylex MAE486 32-Bit 486 System Board"
+#define	EISA_PRODUCT_MLXFF02	"Mylex MDE486/MNE486 32-Bit 486 System Board"
 
 /* Matrox products */
 #define	EISA_PRODUCT_MTX2040	"Matrox IM-1280/EISA"
@@ -731,20 +731,20 @@ MINIADP	Adaptec 32-bit SCSI Host Adapter (with floppy)
 #define	EISA_PRODUCT_OLC0701	"Olicom ISA 16/4 Token-Ring"
 #define	EISA_PRODUCT_OLC0702	"Olicom OC-3117, ISA 16/4 Token-Ring"
 #define	EISA_PRODUCT_OLC0801	"Olicom OC-3118 ISA 16/4 Token-Ring"
-#define	EISA_PRODUCT_OLC0901	"Olicom EISA 16/4 Token-Ring"
-#define	EISA_PRODUCT_OLC0902	"Olicom EISA 16/4 Token-Ring"
+#define	EISA_PRODUCT_OLC0901	"Olicom 16/4 Token-Ring"
+#define	EISA_PRODUCT_OLC0902	"Olicom 16/4 Token-Ring"
 #define	EISA_PRODUCT_OLC0B01	"Olicom PCA 16/4 Token-Ring"
-#define	EISA_PRODUCT_OLC1201	"Olicom 32 Bit EISA 16/4 Token-Ring"
+#define	EISA_PRODUCT_OLC1201	"Olicom 32 Bit 16/4 Token-Ring"
 
 /* OPTi products */
-#define	EISA_PRODUCT_OPT0000	"OPTi HUNTER EISA 32-Bit 486 System Board"
-#define	EISA_PRODUCT_OPT0200	"OPTi LOW_COST EISA 32-Bit 486 System Board"
+#define	EISA_PRODUCT_OPT0000	"OPTi HUNTER 32-Bit 486 System Board"
+#define	EISA_PRODUCT_OPT0200	"OPTi LOW_COST 32-Bit 486 System Board"
 
 #define	EISA_PRODUCT_OTI0011	"Pro II/EISA"
 
-#define	EISA_PRODUCT_PCI0080	"Pioneer 486WB 8 SLOT EISA SYSTEM BOARD"
-#define	EISA_PRODUCT_PCI0120	"Pioneer 486WB 12 SLOT EISA SYSTEM BOARD"
-#define	EISA_PRODUCT_PCI2080	"Pioneer 486WB 8 SLOT EISA SYSTEM BOARD"
+#define	EISA_PRODUCT_PCI0080	"Pioneer 486WB 8 SLOT SYSTEM BOARD"
+#define	EISA_PRODUCT_PCI0120	"Pioneer 486WB 12 SLOT SYSTEM BOARD"
+#define	EISA_PRODUCT_PCI2080	"Pioneer 486WB 8 SLOT SYSTEM BOARD"
 
 #define	EISA_PRODUCT_PHI8041	"Standard VGA controller"
 
@@ -830,7 +830,7 @@ MINIADP	Adaptec 32-bit SCSI Host Adapter (with floppy)
 #define	EISA_PRODUCT_TCO030D	"Thomas-Conrad TC6042 ARC-Card/CE"
 #define	EISA_PRODUCT_TCO040B	"Thomas-Conrad TC6142 ARC-Card/CE"
 #define	EISA_PRODUCT_TCO050D	"Thomas-Conrad TC4035 TOKEN RING Adapter/AT (Rev D)"
-#define	EISA_PRODUCT_TCO3147	"Thomas-Conrad TC3047 System (TCNS) EISA Adapter"
+#define	EISA_PRODUCT_TCO3147	"Thomas-Conrad TC3047 System (TCNS) Adapter"
 #define	EISA_PRODUCT_TCO345A	"Thomas-Conrad TC3045 Network System (TCNS) AT Adapter"
 #define	EISA_PRODUCT_TCO345B	"Thomas-Conrad TC3045 Network System (TCNS) AT Adapter"
 
@@ -841,11 +841,11 @@ MINIADP	Adaptec 32-bit SCSI Host Adapter (with floppy)
 #define	EISA_PRODUCT_TEC8003	"Tecmar QT PC36 TAPE CONTROLLER"
 
 #define	EISA_PRODUCT_TRM0001	"EISA-486C SYSTEM BOARD"
-#define	EISA_PRODUCT_TRM0320	"DC-320 EISA SCSI Host Adapter"
-#define	EISA_PRODUCT_TRM0620	"DC-620 EISA IDE Cache Controller"
-#define	EISA_PRODUCT_TRM0820	"DC-820 EISA SCSI Cache Host Adapter"
-#define	EISA_PRODUCT_TRM320E	"DC-320E EISA SCSI Host Adapter"
-#define	EISA_PRODUCT_TRM820B	"DC-820B EISA SCSI Cache Host Adapter"
+#define	EISA_PRODUCT_TRM0320	"DC-320 SCSI Host Adapter"
+#define	EISA_PRODUCT_TRM0620	"DC-620 IDE Cache Controller"
+#define	EISA_PRODUCT_TRM0820	"DC-820 SCSI Cache Host Adapter"
+#define	EISA_PRODUCT_TRM320E	"DC-320E SCSI Host Adapter"
+#define	EISA_PRODUCT_TRM820B	"DC-820B SCSI Cache Host Adapter"
 
 /* Truevision products  */
 #define	EISA_PRODUCT_TRU0210	"Truevision Image Capture Board"
@@ -853,7 +853,7 @@ MINIADP	Adaptec 32-bit SCSI Host Adapter (with floppy)
 #define	EISA_PRODUCT_TRU1100	"Truevision DVR"
 
 /* Texas Instruments products  */
-#define	EISA_PRODUCT_TXN0011	"Texas Instruments TACT84500 MODULAR EISA SYSTEM BOARD"
+#define	EISA_PRODUCT_TXN0011	"Texas Instruments TACT84500 MODULAR SYSTEM BOARD"
 
 /* Tyan products */
 #define	EISA_PRODUCT_TYN0000	"Tyan 486 PRO-EISA Board"
