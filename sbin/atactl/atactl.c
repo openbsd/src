@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.32 2004/02/19 21:17:41 grange Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.33 2004/02/19 21:22:07 grange Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -475,7 +475,7 @@ device_dump(int argc, char *argv[])
 	int error;
 	atagettrace_t agt;
 	int total;
-	int p;
+	int p = 0;
 	int type;
 	const char *types[] = { NULL, "status", "error", "ATAPI",
 	    "ATAPI done", "ATA cmd", "ATA", "select slave",
@@ -644,7 +644,7 @@ device_dump(int argc, char *argv[])
 				printf("WRITE DMA");
 				break;
 			default:
-				printf("CMD 0x%x");
+				printf("CMD 0x%x", buf[p + 6]);
 			}
 			printf(" head %d, precomp %d, cyl_hi %d, "
 			    "cyl_lo %d, sec %d, cnt %d",
@@ -704,7 +704,7 @@ device_dump(int argc, char *argv[])
 				printf("WRITE DMA EXT");
 				break;
 			default:
-				printf("CMD 0x%x");
+				printf("CMD 0x%x", buf[p + 8]);
 			}
 			printf(" lba_hi1 %d, lba_hi2 %d, "
 			    "lba_mi1 %d, lba_mi2 %d, lba_lo1 %d, lba_lo2 %d, "
