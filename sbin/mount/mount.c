@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.5 1996/11/12 08:46:13 downsj Exp $	*/
+/*	$OpenBSD: mount.c,v 1.6 1996/11/12 09:09:19 downsj Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.5 1996/11/12 08:46:13 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.6 1996/11/12 09:09:19 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,12 +230,14 @@ main(argc, argv)
 		 * specified ala Sun.  If not, check the disklabel for a
 		 * known filesystem type.
 		 */
-		if (typelist == NULL && strpbrk(argv[0], ":@") != NULL)
-			vfstype = "nfs";
-		else {
-			char *labelfs = readlabelfs(argv[0]);
-			if (labelfs != NULL)
-				vfstype = labelfs;
+		if (typelist == NULL) {
+			if (strpbrk(argv[0], ":@") != NULL)
+				vfstype = "nfs";
+			else {
+				char *labelfs = readlabelfs(argv[0]);
+				if (labelfs != NULL)
+					vfstype = labelfs;
+			}
 		}
 
 		rval = mountfs(vfstype,
