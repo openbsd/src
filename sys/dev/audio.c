@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.10 1997/07/10 23:06:29 provos Exp $	*/
+/*	$OpenBSD: audio.c,v 1.11 1998/04/25 04:57:13 millert Exp $	*/
 /*	$NetBSD: audio.c,v 1.26 1996/05/13 02:26:15 mycroft Exp $	*/
 
 /*
@@ -1255,7 +1255,7 @@ audio_select(dev, rw, p)
 		 * right? Or maybe specific to half-duplex devices?
 		 */
 		if (sc->sc_mode & AUMODE_RECORD ||
-		    sc->pr.nblk < sc->sc_lowat) {
+		    sc->pr.nblk <= sc->sc_lowat) {
 			splx(s);
 			return (1);
 		}
