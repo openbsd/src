@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2002/02/14 13:24:45 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/02/14 14:32:26 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -46,31 +46,36 @@ _DEV(rx, 30, 12)
 _DEV(rl, 32, 14)
 _DEV(hd, 58, 19)
 _DEV(sd, 59, 20)
-_DEV(cd, 58, 22)
-_DEV(ch, 19)
-_DEV(uk, 120)
-_DEV(ss, 121)
+_DEV(cd, 61, 22)
+_DEV(ch, 63)
+_DEV(ss, 64)
+_DEV(uk, 65)
 _DEV(xy, 9, 3)
 _DEV(rd, 106, 23)
 _DEV(xd, 42, 10)
 _DEV(flo, 54, 16)
-_DEV(vnd, 55, 8)
+_DEV(vnd, 55, 18)
 _DEV(ccd, 54, 17)
 _TITLE(pty)
 _DEV(tty, 20)
 _DEV(pty, 21)
 _TITLE(prn)
 _TITLE(term)
-dnl _DEV(ttyS, 34)
+_DEV(dhu, 34)
+_DEV(dh, 12)
+_DEV(dmf, 22)
+_DEV(dmz, 37)
+_DEV(vt, 68)
+_DEV(dz, 1)
 _TITLE(spec)
 _DEV(au, 69)
 _DEV(oppr)
 _DEV(bpf, 56)
 _DEV(pf, 42)
 _DEV(altq, 75)
-_DEV(lkm, 112)
-_DEV(tun, 111)
-_DEV(rnd, 119)
+_DEV(lkm, 28)
+_DEV(tun, 57)
+_DEV(rnd, 67)
 _DEV(mag)
 _DEV(xfs, 51)
 _DEV(raid, 73, 25)
@@ -90,8 +95,8 @@ _std(2, 3, 50, 7, 33)
 	M ttyg2		c 25 2
 	M ttyg3		c 25 3
 	M crl		c 35 0
-	M csa1		c 51 0
-	M csa2		c 51 1
+	M csa1		c 51 0 600
+	M csa2		c 51 1 600
 	M tu0		b 8 0
 	M tu1		b 8 1
 	M kUmem		c 3 3 660
