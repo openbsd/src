@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.40 2000/04/24 15:21:46 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.41 2000/05/29 17:04:39 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.35 2000/04/24 15:20:26 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.36 2000/05/29 17:04:00 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -84,6 +84,7 @@
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
+#define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -247,6 +248,8 @@
 /* NewMedia */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
+#define	PCMCIA_CIS_NEWMEDIA_LANSURFER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_LANSURFER	0x0021
 #define	PCMCIA_CIS_NEWMEDIA_MULTIMEDIA	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_MULTIMEDIA	0x100b
 #define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
@@ -275,6 +278,10 @@
 /* Raylink/WebGear */
 #define	PCMCIA_CIS_RAYTHEON_WLAN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_RAYTHEON_WLAN	0x0000
+
+/* RATOC System Inc. */
+#define	PCMCIA_CIS_RATOC_REX_R280	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_RATOC_REX_R280	0x0001
 
 /* Sandisk */
 #define	PCMCIA_CIS_SANDISK_SDCFB	{ NULL, NULL, NULL, NULL }
