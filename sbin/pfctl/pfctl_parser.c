@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.141 2003/02/09 12:49:48 camield Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.142 2003/02/12 12:48:40 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -301,6 +301,8 @@ print_op(u_int8_t op, const char *a1, const char *a2)
 		printf("> %s ", a1);
 	else if (op == PF_OP_GE)
 		printf(">= %s ", a1);
+	else if (op == PF_OP_RRG)
+		printf("%s:%s ", a1, a2);
 }
 
 void
@@ -477,9 +479,9 @@ print_pool(struct pf_pool *pool, u_int16_t p1, u_int16_t p2,
 		break;
 	case PF_RDR:
 		if (p1) {
-			printf(" port %u", ntohs(p1));
-			if (p2)
-				printf(":%u", ntohs(p2));
+			printf(" port %u", p1);
+			if (p2 && (p2 != p1))
+				printf(":%u", p2);
 		}
 		break;
 	default:
@@ -633,30 +635,7 @@ print_rdr(struct pf_rule *r, int verbose)
 		else
 			printf("proto %u ", r->proto);
 	}
-	printf("from ");
-	if (!PF_AZERO(&r->src.addr.v.a.addr, r->af) ||
-	    !PF_AZERO(&r->src.addr.v.a.mask, r->af)) {
-		if (r->src.not)
-			printf("! ");
-		print_addr(&r->src.addr, r->af, verbose);
-		printf(" ");
-	} else
-		printf("any ");
-	printf("to ");
-	if (!PF_AZERO(&r->dst.addr.v.a.addr, r->af) ||
-	    !PF_AZERO(&r->dst.addr.v.a.mask, r->af)) {
-		if (r->dst.not)
-			printf("! ");
-		print_addr(&r->dst.addr, r->af, verbose);
-		printf(" ");
-	} else
-		printf("any ");
-	if (r->dst.port[0]) {
-		printf("port %u", ntohs(r->dst.port[0]));
-		if (r->dst.port_op & PF_OP_RRG)
-			printf(":%u", ntohs(r->dst.port[1]));
-		printf(" ");
-	}
+	print_fromto(&r->src, &r->dst, r->af, r->proto, verbose);
 	if (!r->anchorname[0] && (r->action == PF_RDR)) {
 		printf("-> ");
 		print_pool(&r->rpool, r->rpool.proxy_port[0],
