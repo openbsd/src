@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.18 1999/12/30 18:21:56 provos Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.19 2000/03/15 14:17:48 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -91,6 +91,7 @@ typedef	int	boolean_t;
  */
 #define	DEFAULT_PAGE_SIZE	4096
 
+#ifdef _KERNEL
 /*
  *	All references to the size of a page should be done with PAGE_SIZE
  *	or PAGE_SHIFT.
@@ -112,8 +113,9 @@ typedef	int	boolean_t;
 #define	PAGE_SIZE	cnt.v_page_size		/* size of page */
 #define	PAGE_MASK	page_mask		/* size of page - 1 */
 #define	PAGE_SHIFT	page_shift		/* bits to shift for pages */
-#endif
+#endif /* UVM */
 #endif /* !PAGE_SIZE */
+#endif /* _KERNEL */
 
 #if defined(_KERNEL) && !defined(UVM)
 extern vsize_t		page_mask;
