@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_file.c,v 1.8 2001/09/04 22:17:45 fgsch Exp $	*/
+/*	$OpenBSD: uthread_file.c,v 1.9 2002/11/07 03:51:21 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -44,13 +44,6 @@
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
-
-/*
- * Weak symbols for externally visible functions in this file:
- */
-#pragma	weak	flockfile=_flockfile
-#pragma	weak	ftrylockfile=_ftrylockfile
-#pragma	weak	funlockfile=_funlockfile
 
 /*
  * The FILE lock structure. The FILE *fp is locked if the owner is
@@ -244,14 +237,14 @@ _flockfile_debug(FILE * fp, char *fname, int lineno)
 }
 
 void
-_flockfile(FILE * fp)
+flockfile(FILE * fp)
 {
 	_flockfile_debug(fp, "?", 1);
 	return;
 }
 
 int
-_ftrylockfile(FILE * fp)
+ftrylockfile(FILE * fp)
 {
 	int	ret = -1;
 	int	idx = file_idx(fp);
@@ -303,7 +296,7 @@ _ftrylockfile(FILE * fp)
 }
 
 void 
-_funlockfile(FILE * fp)
+funlockfile(FILE * fp)
 {
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;

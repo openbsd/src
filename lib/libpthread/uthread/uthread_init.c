@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.23 2002/10/30 20:05:12 marc Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.24 2002/11/07 03:51:21 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -36,21 +36,29 @@
 /* Allocate space for global thread variables here: */
 #define GLOBAL_PTHREAD_PRIVATE
 
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <poll.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
+#include <sys/types.h>
 #include <sys/param.h>
+
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/mount.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/ttycom.h>
-#include <sys/param.h>
 #include <sys/user.h>
-#include <sys/mman.h>
+#include <sys/wait.h>
+
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
+#include <poll.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #ifdef _THREAD_SAFE
 #include <machine/reg.h>
 #include <pthread.h>
@@ -60,6 +68,77 @@
 _stack_list_t	_stackq;
 
 extern int _thread_autoinit_dummy_decl;
+
+/*
+ * All weak references used within libc that are redefined in libc_r
+ * or libpthread MUST be in this table.   This is necessary to force the
+ * proper version to be used when linking -static.
+ */
+static void *references[] = {
+	&_exit,
+	&accept,
+	&bind,
+	&close,
+	&connect,
+	&dup,
+	&dup2,
+	&execve,
+	&fchflags,
+	&fchmod,
+	&fchown,
+	&fcntl,
+	&flock,
+	&fork,
+	&fpathconf,
+	&fstat,
+	&fstatfs,
+	&fsync,
+	&getdirentries,
+	&getpeername,
+	&getsockname,
+	&getsockopt,
+	&ioctl,
+	&kevent,
+	&listen,
+	&msync,
+	&nanosleep,
+	&open,
+	&pipe,
+	&poll,
+	&read,
+	&readv,
+	&recvfrom,
+	&recvmsg,
+	&select,
+	&sendmsg,
+	&sendto,
+	&setsockopt,
+	&shutdown,
+	&sigaction,
+	&sigaltstack,
+	&sigpending,
+	&sigprocmask,
+	&sigsuspend,
+	&socket,
+	&socketpair,
+	&vfork,
+	&wait4,
+	&write,
+	&writev,
+	/* libc thread-safe helper functions */
+	&_thread_fd_lock,
+	&_thread_fd_unlock,
+	&_thread_malloc_init,
+	&_thread_malloc_lock,
+	&_thread_malloc_unlock,
+	&_libc_private_storage,
+	&_libc_private_storage_lock,
+	&_libc_private_storage_unlock,
+	&flockfile,
+	&_flockfile_debug,
+	&ftrylockfile,
+	&funlockfile
+};
 
 /*
  * Threaded process initialization
@@ -79,6 +158,9 @@ _thread_init(void)
 	if (_thread_initial)
 		/* Only initialise the threaded application once. */
 		return;
+
+	if (references[0] == NULL)
+		PANIC("Failed loading mandatory references in _thread_init");
 
 	/*
 	 * Check for the special case of this process running as
