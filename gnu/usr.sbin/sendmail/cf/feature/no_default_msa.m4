@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1999, 2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: no_default_msa.m4,v 8.1 2000/02/01 15:56:30 ca Exp $')
+VERSIONID(`$Id: no_default_msa.m4,v 1.1.1.2 2001/01/15 20:52:29 millert Exp $')
 divert(-1)
 
 define(`_NO_MSA_', `1')

@@ -51,7 +51,7 @@ POPDIVERT
 ###   Cyrus Mailer specification               ###
 ##################################################
 
-VERSIONID(`$Sendmail: cyrus.m4,v 8.21 1999/10/18 04:57:52 gshapiro Exp $ (Carnegie Mellon)')
+VERSIONID(`$Id: cyrus.m4,v 1.1.1.2 2001/01/15 20:52:32 millert Exp $ (Carnegie Mellon)')
 
 Mcyrus,		P=CYRUS_MAILER_PATH, F=_MODMF_(CONCAT(`lsDFMnPq', CYRUS_MAILER_FLAGS), `CYRUS'), S=EnvFromL, R=EnvToL/HdrToL,
 		ifdef(`CYRUS_MAILER_MAX', `M=CYRUS_MAILER_MAX, ')U=CYRUS_MAILER_USER, T=DNS/RFC822/X-Unix,

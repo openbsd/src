@@ -20,7 +20,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Sendmail: generic-sunos4.1.mc,v 8.11 1999/02/07 07:26:03 gshapiro Exp $')
+VERSIONID(`$Id: generic-sunos4.1.mc,v 1.1.1.2 2001/01/15 20:52:25 millert Exp $')
 OSTYPE(sunos4.1)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl

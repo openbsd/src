@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: strl.c,v 8.5 1999/12/29 22:13:46 ca Exp $";
+static char id[] = "@(#)$Id: strl.c,v 1.1.1.2 2001/01/15 20:52:07 millert Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -77,7 +77,7 @@ strlcat(dst, src, len)
 
 	o = strlen(dst);
 	if (len < o + 1)
-	  return o + strlen(src);
+		return o + strlen(src);
 	len -= o + 1;
 	for (i = 0, j = o; i < len && (dst[j] = src[i]) != 0; i++, j++)
 		continue;

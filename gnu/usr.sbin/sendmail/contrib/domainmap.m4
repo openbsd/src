@@ -58,7 +58,7 @@ divert(-1)changequote(<<, >>)<<
 ifdef(`_DOMAIN_MAP_',`',`dnl
 LOCAL_RULE_0
 # do mapping for domains where applicable
-R$* $=O $* <@ $={MappedDomain} .>	$@ $>97 $1 $2 $3	Strip extraneous routing
+R$* $=O $* <@ $={MappedDomain} .>	$@ $>Recurse $1 $2 $3	Strip extraneous routing
 R$+ <@ $={MappedDomain} .>		$>DomainMapLookup $1 <@ $2 .>	domain mapping
 
 LOCAL_RULESETS
@@ -69,22 +69,35 @@ LOCAL_RULESETS
 SDomainMapLookup
 R $=L <@ $=w .>		$@ $1 <@ $2 .>		weed out local users, in case
 #						Cw contains a mapped domain
-R $+ <@ $+ .>		$1 <@ $2 >		strip trailing dot
-R $+ <@ $+ . $+ >	$1 <@ $(dequote $2 "_" $3 $) >
+ifdef(`DOMAINMAP_NO_REGEX',`dnl
+R $+ <@ $+>		$: $1 <@ $2> <$2>	find domain
+R $+ <$+> <$+ . $+>	$1 <$2> < $(dequote $3 "_" $4 $) >
 #						change "." to "_"
-R $+ <@ $+ >		$: $1 <@ $(dequote "domain_" $2 $) >
+R $+ <$+> <$+ .>	$: $1 <$2> < $(dequote "domain_" $3 $) >
 #						prepend "domain_"
-R $+ + $+ <@ $*>	$1 <@ $3 > <+> $2	handle user+list syntax
-R $+ <@ $* > $*		$( $2 $1 $: <ERROR> $) $3
+dnl',`dnl
+R $+ <@ $+>		$: $1 <@ $2> <$2 :NOTDONE:>	find domain
+R $+ <$+> <$+ . :NOTDONE:>	$1 <$2> < $(domainmap_regex $3 $: $3 $) >
+#						change "." and "-" to "_"
+R $+ <$+> <$+>		$: $1 <$2> < $(dequote "domain_" $3 $) >
+#						prepend "domain_"
+dnl')
+R $+ <$+> <$+>		$: $1 <$2> <$3> $1	find user name
+R $+ <$+> <$+> $+ + $*	$: $1 <$2> <$3> $4	handle user+detail syntax
+R $+ <$+> <$+> $+	$: $1 <$2> $( $3 $4 $: <ERROR> $)
 #						do actual domain map lookup
-R <ERROR> $*		$#error $@ 5.1.1 $: "550 email address lookup in domain map failed"
-R $* <TEMP> $*		$#error $@ 4.3.0 $: "450 domain map temporarily unavailable"
-R $+ @ $+ <+> $+	$1 + $3 @ $2		reset original user+list
-R $+ <+> $*		$1			paranoid check - remove <+>
-R $+ @ $+ .		$1 @ $2			strip trailing dot
-R $+ @ $+		$@ $>97 $1 @ $2		recanonify
-define(`_DOMAIN_MAP_',`1')')
+R $+ <$+> <ERROR>	$#error $@ 5.1.1 $: "550 email address lookup in domain map failed"
+R $+ <@ $+> $* <TEMP> $*	$#dsmtp $@ localhost $: $1 @ $2
+#						queue it up for later delivery
+R $+ + $* <$+> $+ @ $+		$: $1 + $2 <$3> $4 + $2 @ $5
+#						reset original user+detail
+R $+ <$+> $+		$@ $>Recurse $3		recanonify
+
+ifdef(`DOMAINMAP_NO_REGEX',`',`dnl
+LOCAL_CONFIG
+K domainmap_regex regex -a.:NOTDONE: -s1,2 -d_ (.*)[-\.]([^-\.]*)$
+')define(`_DOMAIN_MAP_',`1')')
 
 LOCAL_CONFIG
 C{MappedDomain} _ARG_
-K `domain_'translit(_ARG_, `.', `_') _ARG2_ -T<TEMP>
+K `domain_'translit(_ARG_, `.-', `__') _ARG2_ -T<TEMP>

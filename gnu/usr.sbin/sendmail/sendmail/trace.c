@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: trace.c,v 8.20 1999/08/02 21:44:36 ca Exp $";
+static char id[] = "@(#)$Id: trace.c,v 1.1.1.2 2001/01/15 20:52:19 millert Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -63,7 +63,7 @@ void
 tTflag(s)
 	register char *s;
 {
-	unsigned int first, last;
+	int first, last;
 	register unsigned int i;
 
 	if (*s == '\0')

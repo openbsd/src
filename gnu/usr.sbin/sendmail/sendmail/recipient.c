@@ -12,10 +12,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: recipient.c,v 8.231 2000/01/05 01:40:53 gshapiro Exp $";
+static char id[] = "@(#)$Id: recipient.c,v 1.1.1.2 2001/01/15 20:52:16 millert Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 static void	includetimeout __P((void));
 static ADDRESS	*self_reference __P((ADDRESS *));
@@ -509,8 +510,18 @@ recipient(a, sendq, aliaslevel, e)
 					q->q_state = QS_DUPLICATE;
 				q->q_flags |= a->q_flags;
 			}
-			else if (bitset(QSELFREF, q->q_flags))
+			else if (bitset(QSELFREF, q->q_flags)
+#if _FFR_MILTER
+				 || q->q_state == QS_REMOVED
+#endif /* _FFR_MILTER */
+				 )
 			{
+#if _FFR_MILTER
+				/*
+				**  If an earlier milter removed the address,
+				**  a later one can still add it back.
+				*/
+#endif /* _FFR_MILTER */
 				q->q_state = a->q_state;
 				q->q_flags |= a->q_flags;
 			}
@@ -677,11 +688,13 @@ recipient(a, sendq, aliaslevel, e)
 		pw = finduser(buf, &fuzzy);
 		if (pw == NULL || strlen(pw->pw_name) > MAXNAME)
 		{
-			a->q_state = QS_BADADDR;
-			a->q_status = "5.1.1";
-			a->q_rstatus = newstr("550 5.1.1 User unknown");
-			giveresponse(EX_NOUSER, a->q_status, m, NULL,
-				     a->q_alias, (time_t) 0, e);
+			{
+				a->q_state = QS_BADADDR;
+				a->q_status = "5.1.1";
+				a->q_rstatus = newstr("550 5.1.1 User unknown");
+				giveresponse(EX_NOUSER, a->q_status, m, NULL,
+					     a->q_alias, (time_t) 0, e);
+			}
 		}
 		else
 		{
@@ -705,7 +718,9 @@ recipient(a, sendq, aliaslevel, e)
 				(void) strlcpy(buf, pw->pw_name, buflen);
 				goto trylocaluser;
 			}
-			if (strcmp(pw->pw_dir, "/") == 0)
+			if (*pw->pw_dir == '\0')
+				a->q_home = NULL;
+			else if (strcmp(pw->pw_dir, "/") == 0)
 				a->q_home = "";
 			else
 				a->q_home = newstr(pw->pw_dir);
@@ -923,7 +938,7 @@ finduser(name, fuzzyp)
 # endif /* 0 */
 
 		buildfname(pw->pw_gecos, pw->pw_name, buf, sizeof buf);
-		if (strchr(buf, ' ') != NULL && !strcasecmp(buf, name))
+		if (strchr(buf, ' ') != NULL && strcasecmp(buf, name) == 0)
 		{
 			if (tTd(29, 4))
 				dprintf("fuzzy matches %s\n", pw->pw_name);
@@ -975,9 +990,9 @@ writable(filename, ctladdr, flags)
 	ADDRESS *ctladdr;
 	long flags;
 {
-	uid_t euid;
-	gid_t egid;
-	char *user;
+	uid_t euid = 0;
+	gid_t egid = 0;
+	char *user = NULL;
 
 	if (tTd(44, 5))
 		dprintf("writable(%s, 0x%lx)\n", filename, flags);
@@ -1093,8 +1108,10 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	int mode;
 	volatile bool maxreached = FALSE;
 	register ADDRESS *ca;
-	volatile uid_t saveduid, uid;
-	volatile gid_t savedgid, gid;
+	volatile uid_t saveduid;
+	volatile gid_t savedgid;
+	volatile uid_t uid;
+	volatile gid_t gid;
 	char *volatile user;
 	int rval = 0;
 	volatile long sfflags = SFF_REGONLY;
@@ -1118,6 +1135,23 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 	if (tTd(27, 9))
 		dprintf("include: old uid = %d/%d\n",
 			(int) getuid(), (int) geteuid());
+
+#if _FFR_UNSAFE_WRITABLE_INCLUDE
+	if (forwarding)
+	{
+		if (!bitnset(DBS_GROUPWRITABLEFORWARDFILE, DontBlameSendmail))
+			sfflags |= SFF_NOGWFILES;
+		if (!bitnset(DBS_WORLDWRITABLEFORWARDFILE, DontBlameSendmail))
+			sfflags |= SFF_NOWWFILES;
+	}
+	else
+	{
+		if (!bitnset(DBS_GROUPWRITABLEINCLUDEFILE, DontBlameSendmail))
+			sfflags |= SFF_NOGWFILES;
+		if (!bitnset(DBS_WORLDWRITABLEINCLUDEFILE, DontBlameSendmail))
+			sfflags |= SFF_NOWWFILES;
+	}
+#endif /* _FFR_UNSAFE_WRITABLE_INCLUDE */
 
 	if (forwarding)
 		sfflags |= SFF_MUSTOWN|SFF_ROOTOK|SFF_NOWLINK;
@@ -1158,8 +1192,12 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 		if (!DontInitGroups)
 		{
 			if (initgroups(user, gid) == -1)
+			{
+				rval = EAGAIN;
 				syserr("include: initgroups(%s, %d) failed",
 					user, gid);
+				goto resetuid;
+			}
 		}
 		else
 		{
@@ -1167,22 +1205,38 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 
 			gidset[0] = gid;
 			if (setgroups(1, gidset) == -1)
+			{
+				rval = EAGAIN;
 				syserr("include: setgroups() failed");
+				goto resetuid;
+			}
 		}
 
 		if (gid != 0 && setgid(gid) < -1)
+		{
+			rval = EAGAIN;
 			syserr("setgid(%d) failure", gid);
+			goto resetuid;
+		}
 		if (uid != 0)
 		{
 # if MAILER_SETUID_METHOD == USE_SETEUID
 			if (seteuid(uid) < 0)
+			{
+				rval = EAGAIN;
 				syserr("seteuid(%d) failure (real=%d, eff=%d)",
 					uid, getuid(), geteuid());
+				goto resetuid;
+			}
 # endif /* MAILER_SETUID_METHOD == USE_SETEUID */
 # if MAILER_SETUID_METHOD == USE_SETREUID
 			if (setreuid(0, uid) < 0)
+			{
+				rval = EAGAIN;
 				syserr("setreuid(0, %d) failure (real=%d, eff=%d)",
 					uid, getuid(), geteuid());
+				goto resetuid;
+			}
 # endif /* MAILER_SETUID_METHOD == USE_SETREUID */
 		}
 	}
@@ -1210,6 +1264,7 @@ include(fname, forwarding, ctladdr, sendq, aliaslevel, e)
 		ev = setevent(TimeOuts.to_fileopen, includetimeout, 0);
 	else
 		ev = NULL;
+
 
 	/* check for writable parent directory */
 	p = strrchr(fname, '/');
@@ -1309,18 +1364,20 @@ resetuid:
 		{
 # if USESETEUID
 			if (seteuid(0) < 0)
-				syserr("seteuid(0) failure (real=%d, eff=%d)",
+				syserr("!seteuid(0) failure (real=%d, eff=%d)",
 					getuid(), geteuid());
 # else /* USESETEUID */
 			if (setreuid(-1, 0) < 0)
-				syserr("setreuid(-1, 0) failure (real=%d, eff=%d)",
+				syserr("!setreuid(-1, 0) failure (real=%d, eff=%d)",
 					getuid(), geteuid());
 			if (setreuid(RealUid, 0) < 0)
-				syserr("setreuid(%d, 0) failure (real=%d, eff=%d)",
+				syserr("!setreuid(%d, 0) failure (real=%d, eff=%d)",
 					RealUid, getuid(), geteuid());
 # endif /* USESETEUID */
 		}
-		(void) setgid(savedgid);
+		if (setgid(savedgid) < 0)
+			syserr("!setgid(%d) failure (real=%d eff=%d)",
+			       savedgid, getgid(), getegid());
 	}
 #endif /* HASSETREUID || USESETEUID */
 
@@ -1459,7 +1516,11 @@ resetuid:
 			    isascii(p[-1]) && isspace(p[-1]) &&
 			    (p[3] == '\0' || (isascii(p[3]) && isspace(p[3]))))
 			{
-				p[-1] = '\0';
+				--p;
+				while (p > buf && isascii(p[-1]) &&
+				       isspace(p[-1]))
+					--p;
+				p[0] = '\0';
 				break;
 			}
 		}

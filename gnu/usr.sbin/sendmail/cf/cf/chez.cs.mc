@@ -24,7 +24,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Sendmail: chez.cs.mc,v 8.14 1999/02/07 07:25:59 gshapiro Exp $')
+VERSIONID(`$Id: chez.cs.mc,v 1.1.1.2 2001/01/15 20:52:22 millert Exp $')
 OSTYPE(bsd4.4)dnl
 DOMAIN(CS.Berkeley.EDU)dnl
 define(`LOCAL_RELAY', vangogh.CS.Berkeley.EDU)dnl

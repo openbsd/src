@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: accept_unqualified_senders.m4,v 8.6 1999/02/07 07:26:07 gshapiro Exp $')
+VERSIONID(`$Id: accept_unqualified_senders.m4,v 1.1.1.2 2001/01/15 20:52:27 millert Exp $')
 divert(-1)
 
 define(`_ACCEPT_UNQUALIFIED_SENDERS_', 1)

@@ -11,9 +11,12 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: bf_portable.c,v 8.25 2000/02/26 01:32:25 gshapiro Exp $";
+static char id[] = "@(#)$Id: bf_portable.c,v 1.1.1.2 2001/01/15 20:52:11 millert Exp $";
 #endif /* ! lint */
 
+#if SFIO
+# include <sfio/stdio.h>
+#endif /* SFIO */
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -22,7 +25,9 @@ static char id[] = "@(#)$Sendmail: bf_portable.c,v 8.25 2000/02/26 01:32:25 gsha
 #include <string.h>
 #include <sys/uio.h>
 #include <errno.h>
+#if !SFIO
 # include <stdio.h>
+#endif /* !SFIO */
 #ifndef BF_STANDALONE
 # include "sendmail.h"
 #endif /* ! BF_STANDALONE */
@@ -120,7 +125,7 @@ bfopen(filename, fmode, bsize, flags)
 
 	/* Fill in the other fields, then add it to the list */
 	bfp->bf_key = retval;
-	bfp->bf_committed = 0;
+	bfp->bf_committed = FALSE;
 	bfp->bf_refcount = 1;
 
 	bfinsert(bfp);

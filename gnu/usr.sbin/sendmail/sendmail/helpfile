@@ -1,6 +1,6 @@
 #vers	2
 cpyr
-cpyr	Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+cpyr	Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 cpyr	    All rights reserved.
 cpyr	Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
 cpyr	Copyright (c) 1988, 1993
@@ -11,13 +11,14 @@ cpyr	By using this file, you agree to the terms and conditions set
 cpyr	forth in the LICENSE file which can be found at the top level of
 cpyr	the sendmail distribution.
 cpyr
-cpyr	$$Sendmail: helpfile,v 8.31 1999/11/14 21:42:03 gshapiro Exp $$
+cpyr	$$Id: helpfile,v 1.1.1.2 2001/01/15 20:52:14 millert Exp $$
 cpyr
 smtp	This is sendmail version $v
 smtp	Topics:
 smtp		HELO	EHLO	MAIL	RCPT	DATA
 smtp		RSET	NOOP	QUIT	HELP	VRFY
 smtp		EXPN	VERB	ETRN	DSN	AUTH
+smtp		STARTTLS
 smtp	For more info use "HELP <topic>".
 smtp	To report bugs in the implementation send email to
 smtp		sendmail-bugs@sendmail.org.
@@ -44,7 +45,10 @@ ehlo		BINARYMIME	Binary MIME			[RFC1830]
 ehlo		PIPELINING	Command Pipelining		[RFC1854]
 ehlo		DSN		Delivery Status Notification	[RFC1891]
 ehlo		ETRN		Remote Message Queue Starting	[RFC1985]
+ehlo		STARTTLS	Secure SMTP			[RFC2487]
+ehlo		AUTH		Authentication			[RFC2554]
 ehlo		XUSR		Initial (user) submission	[Allman]
+ehlo		ENHANCEDSTATUSCODES	Enhanced status codes	[RFC2034]
 mail	MAIL FROM: <sender> [ <parameters> ]
 mail		Specifies the sender.  Parameters are ESMTP extensions.
 mail		See "HELP DSN" for details.
@@ -60,6 +64,8 @@ quit	QUIT
 quit		Exit sendmail (SMTP).
 auth	AUTH mechanism [initial-response]
 auth		Start authentication.
+starttls	STARTTLS
+starttls		Start TLS negotiation.
 verb	VERB
 verb		Go into verbose mode.  This sends 0xy responses that are
 verb		not RFC821 standard (but should be)  They are recognized

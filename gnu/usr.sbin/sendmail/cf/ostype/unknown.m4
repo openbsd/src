@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: unknown.m4,v 8.9 1999/02/07 07:26:24 gshapiro Exp $')
+VERSIONID(`$Id: unknown.m4,v 1.1.1.2 2001/01/15 20:52:38 millert Exp $')
 errprint(`*** ERROR: You have not specified a valid operating system type.')
 errprint(`	Use the OSTYPE macro to select a valid system type.  This')
 errprint(`	is necessary in order to get the proper pathnames and flags')

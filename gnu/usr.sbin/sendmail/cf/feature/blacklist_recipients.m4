@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: blacklist_recipients.m4,v 8.13 1999/04/02 02:25:13 gshapiro Exp $')
+VERSIONID(`$Id: blacklist_recipients.m4,v 1.1.1.2 2001/01/15 20:52:28 millert Exp $')
 divert(-1)
 
 ifdef(`_ACCESS_TABLE_',

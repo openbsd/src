@@ -9,26 +9,28 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: pathnames.h,v 8.16 2000/02/01 05:49:50 gshapiro Exp $
+ *	$Id: pathnames.h,v 1.1.1.2 2001/01/15 20:52:20 millert Exp $
  */
 
-#ifndef _PATH_SENDMAILCF
-# if defined(USE_VENDOR_CF_PATH) && defined(_PATH_VENDOR_CF)
-#  define _PATH_SENDMAILCF	_PATH_VENDOR_CF
-# else /* defined(USE_VENDOR_CF_PATH) && defined(_PATH_VENDOR_CF) */
-#  define _PATH_SENDMAILCF	"/etc/mail/sendmail.cf"
-# endif /* defined(USE_VENDOR_CF_PATH) && defined(_PATH_VENDOR_CF) */
-#endif /* ! _PATH_SENDMAILCF */
 
-#ifndef _PATH_SENDMAILPID
-# ifdef BSD4_4
-#  define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
-# else /* BSD4_4 */
-#  define _PATH_SENDMAILPID	"/etc/mail/sendmail.pid"
-# endif /* BSD4_4 */
-#endif /* ! _PATH_SENDMAILPID */
+# ifndef _PATH_SENDMAILCF
+#  if defined(USE_VENDOR_CF_PATH) && defined(_PATH_VENDOR_CF)
+#   define _PATH_SENDMAILCF	_PATH_VENDOR_CF
+#  else /* defined(USE_VENDOR_CF_PATH) && defined(_PATH_VENDOR_CF) */
+#   define _PATH_SENDMAILCF	"/etc/mail/sendmail.cf"
+#  endif /* defined(USE_VENDOR_CF_PATH) && defined(_PATH_VENDOR_CF) */
+# endif /* ! _PATH_SENDMAILCF */
 
-#ifndef _PATH_HOSTS
-# define _PATH_HOSTS		"/etc/hosts"
-#endif /* ! _PATH_HOSTS */
+# ifndef _PATH_SENDMAILPID
+#  ifdef BSD4_4
+#   define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
+#  else /* BSD4_4 */
+#   define _PATH_SENDMAILPID	"/etc/mail/sendmail.pid"
+#  endif /* BSD4_4 */
+# endif /* ! _PATH_SENDMAILPID */
+
+# ifndef _PATH_HOSTS
+#  define _PATH_HOSTS		"/etc/hosts"
+# endif /* ! _PATH_HOSTS */
+
 

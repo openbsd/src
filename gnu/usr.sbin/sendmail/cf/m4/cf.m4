@@ -26,4 +26,4 @@ ifdef(`_CF_DIR_', `',
 divert(0)dnl
 ifdef(`OSTYPE', `dnl',
 `include(_CF_DIR_`'m4/cfhead.m4)dnl
-VERSIONID(`$Sendmail: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp $')')
+VERSIONID(`$Id: cf.m4,v 1.1.1.2 2001/01/15 20:52:32 millert Exp $')')

@@ -162,7 +162,7 @@ sub munge_status
 	my $cooked = "";
 	my $daemonStatus = "";
 
-	if ($raw =~ /^(\d+)\/(\d+)\/(\d+)\/(\d+)$/mg)
+	if ($raw =~ /^(\d+)\/(\d+)\/(\d+)\/(\d+)/mg)
 	{
 		$cooked .= "Current number of children: $1";
 		if ($2 > 0)

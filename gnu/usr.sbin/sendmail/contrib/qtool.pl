@@ -1,9 +1,9 @@
 #!/usr/bin/env perl
 ##
-## Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+## Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 ##       All rights reserved.
 ##
-## $Sendmail: qtool.pl,v 8.15 1999/08/30 19:18:37 peterh Exp $
+## $Id: qtool.pl,v 1.1.1.2 2001/01/15 20:52:41 millert Exp $
 ##
 use strict;
 use File::Basename;
@@ -133,13 +133,12 @@ while (@ARGV)
 	if ($result)
 	{
 		print("$result.\n");
+		exit;
 	}
 }
 
 if (keys(%sources) == 0)
 {
-	print("You must at least specify at least one source.\n");
-	usage();
 	exit;
 }
 
@@ -164,7 +163,7 @@ sub usage
 	print("    -b                   Bounce the messages specified by source.\n");
 	print("    -d                   Delete the messages specified by source.\n");
 	print("    -e [perl expression] Move only messages for which perl expression returns true.\n");
-	print("    -s [seconds]         Move only messages older than seconds.\n");
+	print("    -s [seconds]         Move only messages whose qf file is older than seconds.\n");
 }
 
 ##
@@ -705,6 +704,14 @@ sub initialize
 	}
 }
 
+sub last_modified_time
+{
+	my $self = shift;
+	my @result;
+	@result = stat($self->{data_file}->{file_name});
+	return $result[9];
+}
+
 sub TIEHASH
 {
 	my $this = shift;
@@ -914,7 +921,7 @@ sub read
 	}
 
 	@control_files = grep { /^qf.*/ && -f "$control_dir/$_" } readdir(QUEUE_DIR);
-	closedir(DIR);
+	closedir(QUEUE_DIR);
 	foreach $file_name (@control_files)
 	{
 		$id = substr($file_name, 2);

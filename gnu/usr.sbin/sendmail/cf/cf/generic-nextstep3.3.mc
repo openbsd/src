@@ -20,7 +20,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Sendmail: generic-nextstep3.3.mc,v 8.10 1999/02/07 07:26:02 gshapiro Exp $')
+VERSIONID(`$Id: generic-nextstep3.3.mc,v 1.1.1.2 2001/01/15 20:52:24 millert Exp $')
 OSTYPE(nextstep)dnl
 DOMAIN(generic)dnl
 MAILER(local)dnl

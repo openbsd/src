@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: local_procmail.m4,v 8.21 1999/11/18 05:06:23 ca Exp $')
+VERSIONID(`$Id: local_procmail.m4,v 1.1.1.2 2001/01/15 20:52:29 millert Exp $')
 divert(-1)
 
 ifdef(`_MAILER_local_',

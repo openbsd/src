@@ -17,7 +17,7 @@ divert(-1)
 
 
 divert(0)
-VERSIONID(`$Sendmail: solaris2.pre5.m4,v 1.1 1999/09/25 01:17:44 ca Exp $')
+VERSIONID(`$Id: solaris2.pre5.m4,v 1.1.1.2 2001/01/15 20:52:37 millert Exp $')
 divert(-1)
 
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `SnE9')

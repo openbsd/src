@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: nouucp.m4,v 8.13 1999/11/24 18:37:07 ca Exp $')
+VERSIONID(`$Id: nouucp.m4,v 1.1.1.2 2001/01/15 20:52:30 millert Exp $')
 divert(-1)
 
 ifelse(defn(`_ARG_'), `', 

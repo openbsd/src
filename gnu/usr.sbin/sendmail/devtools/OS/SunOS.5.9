@@ -1,0 +1,20 @@
+#	$Id: SunOS.5.9,v 1.1.1.1 2001/01/15 20:52:03 millert Exp $
+define(`confCC', `gcc')
+define(`confLDOPTS_SO', `-G')
+define(`confBEFORE', `sysexits.h')
+define(`confMAPDEF', `-DNDBM -DNIS -DNISPLUS -DMAP_REGEX -DLDAPMAP')
+define(`confENVDEF', `-DSOLARIS=20900 -DNETINET6')
+define(`confLIBS', `-lsocket -lnsl -lldap')
+define(`confMTLDOPTS', `-lpthread')
+define(`confMBINDIR', `/usr/lib')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `sys')
+define(`confINSTALL', `${BUILDBIN}/install.sh')
+define(`confDEPEND_TYPE', `CC-M')
+PUSHDIVERT(3)
+sysexits.h:
+	if [ -r /usr/include/sysexits.h ]; \
+	then \
+		ln -s /usr/include/sysexits.h; \
+	fi
+POPDIVERT

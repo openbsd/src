@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: clock.c,v 8.52 1999/10/13 22:16:42 ca Exp $";
+static char id[] = "@(#)$Id: clock.c,v 1.1.1.2 2001/01/15 20:52:11 millert Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -22,6 +22,7 @@ static char id[] = "@(#)$Sendmail: clock.c,v 8.52 1999/10/13 22:16:42 ca Exp $";
 #endif /* ! sigmask */
 
 static void	endsleep __P((void));
+
 
 /*
 **  SETEVENT -- set an event to happen at a specific time.
@@ -278,6 +279,7 @@ tick(sig)
 **		waits for intvl time.  However, other events can
 **		be run during that interval.
 */
+
 
 static bool	SleepDone;
 

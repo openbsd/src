@@ -12,12 +12,14 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: safefile.c,v 8.81 2000/02/26 01:32:17 gshapiro Exp $";
+static char id[] = "@(#)$Id: safefile.c,v 1.1.1.2 2001/01/15 20:52:07 millert Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
+
 /*
-**  SAFEFILE -- return true if a file exists and is safe for a user.
+**  SAFEFILE -- return 0 if a file exists and is safe for a user.
 **
 **	Parameters:
 **		fn -- filename to check.
@@ -77,12 +79,12 @@ safefile(fn, uid, gid, user, flags, mode, st)
 		flags &= ~SFF_SAFEDIRPATH;
 
 	/* first check to see if the file exists at all */
-#if HASLSTAT
+# if HASLSTAT
 	if ((bitset(SFF_NOSLINK, flags) ? lstat(fn, st)
 					: stat(fn, st)) < 0)
-#else /* HASLSTAT */
+# else /* HASLSTAT */
 	if (stat(fn, st) < 0)
-#endif /* HASLSTAT */
+# endif /* HASLSTAT */
 	{
 		file_errno = errno;
 	}
@@ -96,21 +98,21 @@ safefile(fn, uid, gid, user, flags, mode, st)
 		**  soon here!
 		*/
 
-#ifdef SUID_ROOT_FILES_OK
+# ifdef SUID_ROOT_FILES_OK
 		if (bitset(S_ISUID, st->st_mode))
-#else /* SUID_ROOT_FILES_OK */
+# else /* SUID_ROOT_FILES_OK */
 		if (bitset(S_ISUID, st->st_mode) && st->st_uid != 0 &&
 		    st->st_uid != TrustedUid)
-#endif /* SUID_ROOT_FILES_OK */
+# endif /* SUID_ROOT_FILES_OK */
 		{
 			uid = st->st_uid;
 			user = NULL;
 		}
-#ifdef SUID_ROOT_FILES_OK
+# ifdef SUID_ROOT_FILES_OK
 		if (bitset(S_ISGID, st->st_mode))
-#else /* SUID_ROOT_FILES_OK */
+# else /* SUID_ROOT_FILES_OK */
 		if (bitset(S_ISGID, st->st_mode) && st->st_gid != 0)
-#endif /* SUID_ROOT_FILES_OK */
+# endif /* SUID_ROOT_FILES_OK */
 			gid = st->st_gid;
 	}
 
@@ -141,7 +143,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 		}
 		else
 		{
-#if HASLSTAT
+# if HASLSTAT
 			/* Need lstat() information if called stat() before */
 			if (!bitset(SFF_NOSLINK, flags) && lstat(fn, st) < 0)
 			{
@@ -150,7 +152,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 					dprintf("\t%s\n", errstring(ret));
 				return ret;
 			}
-#endif /* HASLSTAT */
+# endif /* HASLSTAT */
 			/* directory is writable: disallow links */
 			flags |= SFF_NOLINK;
 		}
@@ -216,7 +218,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 				if (stbuf.st_gid == gid)
 					/* EMPTY */
 					;
-#ifndef NO_GROUP_SET
+# ifndef NO_GROUP_SET
 				else if (user != NULL && !DontInitGroups &&
 					 ((gr != NULL &&
 					   gr->gr_gid == stbuf.st_gid) ||
@@ -230,7 +232,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 					if (*gp == NULL)
 						md >>= 3;
 				}
-#endif /* ! NO_GROUP_SET */
+# endif /* ! NO_GROUP_SET */
 				else
 					md >>= 3;
 			}
@@ -248,7 +250,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 		return ret;
 	}
 
-#ifdef S_ISLNK
+# ifdef S_ISLNK
 	if (bitset(SFF_NOSLINK, flags) && S_ISLNK(st->st_mode))
 	{
 		if (tTd(44, 4))
@@ -256,7 +258,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 				(u_long) st->st_mode);
 		return E_SM_NOSLINK;
 	}
-#endif /* S_ISLNK */
+# endif /* S_ISLNK */
 	if (bitset(SFF_REGONLY, flags) && !S_ISREG(st->st_mode))
 	{
 		if (tTd(44, 4))
@@ -328,7 +330,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 		if (st->st_gid == gid)
 			/* EMPTY */
 			;
-#ifndef NO_GROUP_SET
+# ifndef NO_GROUP_SET
 		else if (user != NULL && !DontInitGroups &&
 			 ((gr != NULL && gr->gr_gid == st->st_gid) ||
 			  (gr = getgrgid(st->st_gid)) != NULL))
@@ -341,7 +343,7 @@ safefile(fn, uid, gid, user, flags, mode, st)
 			if (*gp == NULL)
 				mode >>= 3;
 		}
-#endif /* ! NO_GROUP_SET */
+# endif /* ! NO_GROUP_SET */
 		else
 			mode >>= 3;
 	}
@@ -463,18 +465,18 @@ safedirpath(fn, uid, gid, user, flags, level, offset)
 		if (tTd(44, 20))
 			dprintf("\t[dir %s]\n", s);
 
-#if HASLSTAT
+# if HASLSTAT
 		ret = lstat(s, &stbuf);
-#else /* HASLSTAT */
+# else /* HASLSTAT */
 		ret = stat(s, &stbuf);
-#endif /* HASLSTAT */
+# endif /* HASLSTAT */
 		if (ret < 0)
 		{
 			ret = errno;
 			break;
 		}
 
-#ifdef S_ISLNK
+# ifdef S_ISLNK
 		/* Follow symlinks */
 		if (S_ISLNK(stbuf.st_mode))
 		{
@@ -619,7 +621,7 @@ safedirpath(fn, uid, gid, user, flags, level, offset)
 		if (stbuf.st_gid == gid &&
 		    bitset(S_IXGRP, stbuf.st_mode))
 			continue;
-#ifndef NO_GROUP_SET
+# ifndef NO_GROUP_SET
 		if (user != NULL && !DontInitGroups &&
 		    ((gr != NULL && gr->gr_gid == stbuf.st_gid) ||
 		     (gr = getgrgid(stbuf.st_gid)) != NULL))
@@ -633,7 +635,7 @@ safedirpath(fn, uid, gid, user, flags, level, offset)
 			    bitset(S_IXGRP, stbuf.st_mode))
 				continue;
 		}
-#endif /* ! NO_GROUP_SET */
+# endif /* ! NO_GROUP_SET */
 		if (!bitset(S_IXOTH, stbuf.st_mode))
 		{
 			ret = EACCES;
@@ -830,13 +832,13 @@ filechanged(fn, fd, stb)
 
 	if (stb->st_mode == ST_MODE_NOFILE)
 	{
-#if HASLSTAT && BOGUS_O_EXCL
+# if HASLSTAT && BOGUS_O_EXCL
 		/* only necessary if exclusive open follows symbolic links */
 		if (lstat(fn, stb) < 0 || stb->st_nlink != 1)
 			return TRUE;
-#else /* HASLSTAT && BOGUS_O_EXCL */
+# else /* HASLSTAT && BOGUS_O_EXCL */
 		return FALSE;
-#endif /* HASLSTAT && BOGUS_O_EXCL */
+# endif /* HASLSTAT && BOGUS_O_EXCL */
 	}
 	if (fstat(fd, &sta) < 0)
 		return TRUE;
@@ -844,9 +846,9 @@ filechanged(fn, fd, stb)
 	if (sta.st_nlink != stb->st_nlink ||
 	    sta.st_dev != stb->st_dev ||
 	    sta.st_ino != stb->st_ino ||
-#if HAS_ST_GEN && 0		/* AFS returns garbage in st_gen */
+# if HAS_ST_GEN && 0		/* AFS returns garbage in st_gen */
 	    sta.st_gen != stb->st_gen ||
-#endif /* HAS_ST_GEN && 0 */
+# endif /* HAS_ST_GEN && 0 */
 	    sta.st_uid != stb->st_uid ||
 	    sta.st_gid != stb->st_gid)
 	{
@@ -868,10 +870,10 @@ filechanged(fn, fd, stb)
 				dprintf(" ino	= %lu/%lu\n",
 					(unsigned long) stb->st_ino,
 					(unsigned long) sta.st_ino);
-#if HAS_ST_GEN
+# if HAS_ST_GEN
 			dprintf(" gen	= %ld/%ld\n",
 				(long) stb->st_gen, (long) sta.st_gen);
-#endif /* HAS_ST_GEN */
+# endif /* HAS_ST_GEN */
 			dprintf(" uid	= %ld/%ld\n",
 				(long) stb->st_uid, (long) sta.st_uid);
 			dprintf(" gid	= %ld/%ld\n",

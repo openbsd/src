@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -7,7 +7,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: milter.h,v 8.24 1999/11/28 05:54:20 gshapiro Exp $
+ *	$Id: milter.h,v 1.1.1.2 2001/01/15 20:52:21 millert Exp $
  */
 
 /*
@@ -17,10 +17,13 @@
 #ifndef _LIBMILTER_MILTER_H
 # define _LIBMILTER_MILTER_H	1
 
+#include "libmilter/mfapi.h"
+#include "sendmail.h"
+
 /* Shared protocol constants */
 # define MILTER_LEN_BYTES	4	/* length of 32 bit integer in bytes */
+# define MILTER_OPTLEN	(MILTER_LEN_BYTES * 3) /* length of options */
 # define MILTER_CHUNK_SIZE	65535	/* body chunk size */
-# define SMFI_VERSION		1	/* version number */
 
 /* address families */
 # define SMFIA_UNKNOWN		'U'	/* unknown */
@@ -49,22 +52,56 @@
 # define SMFIR_REPLBODY		'b'	/* replace body (chunk) */
 # define SMFIR_CONTINUE		'c'	/* continue */
 # define SMFIR_DISCARD		'd'	/* discard */
+# define SMFIR_CHGHEADER	'm'	/* change header */
 # define SMFIR_PROGRESS		'p'	/* progress */
 # define SMFIR_REJECT		'r'	/* reject */
 # define SMFIR_TEMPFAIL		't'	/* tempfail */
 # define SMFIR_ADDHEADER	'h'	/* add header */
 # define SMFIR_REPLYCODE	'y'	/* reply code etc */
 
-/* values for filter negotiation flags */
-# define SMFIF_MODHDRS	0x00000001L	/* filter may add headers */
-# define SMFIF_MODBODY	0x00000002L	/* filter may replace body */
-# define SMFIF_ADDRCPT	0x00000004L	/* filter may add recipients */
-# define SMFIF_DELRCPT	0x00000008L	/* filter may delete recipients */
-# define SMFIF_NOCONNECT 0x00000010L	/* MTA should not send connect info */
-# define SMFIF_NOHELO	0x00000020L	/* MTA should not send HELO info */
-# define SMFIF_NOMAIL	0x00000040L	/* MTA should not send MAIL info */
-# define SMFIF_NORCPT	0x00000080L	/* MTA should not send RCPT info */
-# define SMFIF_NOBODY	0x00000100L	/* MTA should not send body */
-# define SMFIF_NOHDRS	0x00000200L	/* MTA should not send headers */
+/* What the MTA can send/filter wants in protocol */
+# define SMFIP_NOCONNECT 0x00000001L	/* MTA should not send connect info */
+# define SMFIP_NOHELO	0x00000002L	/* MTA should not send HELO info */
+# define SMFIP_NOMAIL	0x00000004L	/* MTA should not send MAIL info */
+# define SMFIP_NORCPT	0x00000008L	/* MTA should not send RCPT info */
+# define SMFIP_NOBODY	0x00000010L	/* MTA should not send body */
+# define SMFIP_NOHDRS	0x00000020L	/* MTA should not send headers */
+# define SMFIP_NOEOH	0x00000040L	/* MTA should not send EOH */
+
+# define SMFI_V1_PROT	0x0000003FL	/* The protocol of V1 filter */
+# define SMFI_V2_PROT	0x0000007FL	/* The protocol of V2 filter */
+# define SMFI_CURR_PROT	SMFI_V2_PROT	/* The current version */
+
+/* socket and thread portability */
+# include <pthread.h>
+typedef pthread_t	sthread_t;
+typedef int		socket_t;
+
+# define MAX_MACROS_ENTRIES	4	/* max size of macro pointer array */
+
+/*
+**  context for milter
+**  implementation hint:
+**  macros are stored in mac_buf[] as sequence of:
+**  macro_name \0 macro_value
+**  (just as read from the MTA)
+**  mac_ptr is a list of pointers into mac_buf to the beginning of each
+**  entry, i.e., macro_name, macro_value, ...
+*/
+
+struct smfi_str
+{
+	sthread_t	ctx_id;		/* thread id */
+	socket_t	ctx_sd;		/* socket descriptor */
+	int		ctx_dbg;	/* debug level */
+	time_t		ctx_timeout;	/* timeout */
+	int		ctx_state;	/* state */
+	smfiDesc_ptr	ctx_smfi;	/* filter description */
+	u_long		ctx_pflags;	/* protocol flags */
+	char		**ctx_mac_ptr[MAX_MACROS_ENTRIES];
+	char		*ctx_mac_buf[MAX_MACROS_ENTRIES];
+	char		*ctx_reply;	/* reply code */
+	void		*ctx_privdata;	/* private data */
+};
 
 #endif /* !_LIBMILTER_MILTER_H */

@@ -9,29 +9,21 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: signal.c,v 8.10 2000/02/26 01:32:14 gshapiro Exp $";
+static char id[] = "@(#)$Id: signal.c,v 1.1.1.2 2001/01/15 20:52:43 millert Exp $";
 #endif /* ! lint */
 
 #if _FFR_MILTER
 #include "libmilter.h"
 
 /*
-** thread to handle signals
+**  thread to handle signals
 */
-
-typedef pthread_mutex_t smutex_t;
-#define smutex_init(mp)		(pthread_mutex_init(mp, NULL) == 0)
-#define smutex_destroy(mp)	(pthread_mutex_destroy(mp) == 0)
-#define smutex_lock(mp)		(pthread_mutex_lock(mp) == 0)
-#define smutex_unlock(mp)	(pthread_mutex_unlock(mp) == 0)
-#define smutex_trylock(mp)	(pthread_mutex_trylock(mp) == 0)
 
 static smutex_t M_Mutex;
 
 static int MilterStop = MILTER_CONT;
 
-
-/*
+/*
 **  MI_STOP -- return value of MilterStop
 **
 **	Parameters:
@@ -44,11 +36,9 @@ static int MilterStop = MILTER_CONT;
 int
 mi_stop()
 {
-	return(MilterStop);
+	return MilterStop;
 }
-
-
-/*
+/*
 **  MI_STOP_MILTERS -- set value of MilterStop
 **
 **	Parameters:
@@ -65,10 +55,12 @@ mi_stop_milters(v)
 	(void) smutex_lock(&M_Mutex);
 	if (MilterStop < v)
 		MilterStop = v;
+
+	/* close listen socket */
+	mi_closener();
 	(void) smutex_unlock(&M_Mutex);
 }
-
-/*
+/*
 **  MI_CLEAN_SIGNALS -- clean up signal handler thread
 **
 **	Parameters:
@@ -83,9 +75,8 @@ mi_clean_signals()
 {
 	(void) smutex_destroy(&M_Mutex);
 }
-
-/*
-**  MI -- thread to deal with signals
+/*
+**  MI_SIGNAL_THREAD -- thread to deal with signals
 **
 **	Parameters:
 **		name -- name of milter
@@ -147,8 +138,7 @@ mi_signal_thread(name)
 		}
 	}
 }
-
-/*
+/*
 **  MI_SPAWN_SIGNAL_THREAD -- spawn thread to handle signals
 **
 **	Parameters:
@@ -162,8 +152,8 @@ static int
 mi_spawn_signal_thread(name)
 	char *name;
 {
+	sthread_t tid;
 	sigset_t set;
-	pthread_t tid;
 
 	/* Mask HUP and KILL signals */
 	sigemptyset(&set);
@@ -177,8 +167,8 @@ mi_spawn_signal_thread(name)
 			"%s: Couldn't mask HUP and KILL signals", name);
 		return MI_FAILURE;
 	}
-	if (pthread_create(&tid, NULL, mi_signal_thread, (void *)name)
-	    != MI_SUCCESS)
+	if (thread_create(&tid, mi_signal_thread,
+			  (void *)name) != MI_SUCCESS)
 	{
 		smi_log(SMI_LOG_ERR,
 			"%s: Couldn't start signal thread", name);
@@ -186,8 +176,7 @@ mi_spawn_signal_thread(name)
 	}
 	return MI_SUCCESS;
 }
-
-/*
+/*
 **  MI_CONTROL_STARTUP -- startup for thread to handle signals
 **
 **	Parameters:

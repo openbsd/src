@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -11,8 +11,12 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: bf_torek.c,v 8.19 1999/10/11 23:37:26 ca Exp $";
+static char id[] = "@(#)$Id: bf_torek.c,v 1.1.1.2 2001/01/15 20:52:11 millert Exp $";
 #endif /* ! lint */
+
+#if SFIO
+   ERROR README: Can not use bf_torek.c with SFIO.
+#endif /* SFIO */
 
 #include <sys/types.h>
 #include <sys/uio.h>

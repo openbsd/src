@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: snprintf.c,v 8.27 1999/10/13 03:27:08 ca Exp $";
+static char id[] = "@(#)$Id: snprintf.c,v 1.1.1.2 2001/01/15 20:52:07 millert Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -44,14 +44,20 @@ void	sm_dopr();
 char	*DoprEnd;
 int	SnprfOverflow;
 
-#if !HASSNPRINTF
+#if !HASSNPRINTF && !SNPRINTF_IS_BROKEN
+# define sm_snprintf	snprintf
+# ifndef luna2
+#  define sm_vsnprintf	vsnprintf
+extern int	vsnprintf __P((char *, size_t, const char *, va_list));
+# endif /* ! luna2 */
+#endif /* !HASSNPRINTF && !SNPRINTF_IS_BROKEN */
 
 /* VARARGS3 */
 int
 # ifdef __STDC__
-snprintf(char *str, size_t count, const char *fmt, ...)
+sm_snprintf(char *str, size_t count, const char *fmt, ...)
 # else /* __STDC__ */
-snprintf(str, count, fmt, va_alist)
+sm_snprintf(str, count, fmt, va_alist)
 	char *str;
 	size_t count;
 	const char *fmt;
@@ -62,15 +68,13 @@ snprintf(str, count, fmt, va_alist)
 	VA_LOCAL_DECL
 
 	VA_START(fmt);
-	len = vsnprintf(str, count, fmt, ap);
+	len = sm_vsnprintf(str, count, fmt, ap);
 	VA_END;
 	return len;
 }
 
-
-# ifndef luna2
 int
-vsnprintf(str, count, fmt, args)
+sm_vsnprintf(str, count, fmt, args)
 	char *str;
 	size_t count;
 	const char *fmt;
@@ -87,9 +91,6 @@ vsnprintf(str, count, fmt, args)
 			(long) count, shortenstring(str, MAXSHORTSTR));
 	return strlen(str);
 }
-
-# endif /* ! luna2 */
-#endif /* !HASSNPRINTF */
 
 /*
  * sm_dopr(): poor man's version of doprintf

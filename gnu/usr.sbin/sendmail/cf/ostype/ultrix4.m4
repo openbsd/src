@@ -13,6 +13,6 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: ultrix4.m4,v 8.11 1999/02/07 07:26:24 gshapiro Exp $')
+VERSIONID(`$Id: ultrix4.m4,v 1.1.1.2 2001/01/15 20:52:38 millert Exp $')
 
 define(`confEBINDIR', `/usr/lib')dnl

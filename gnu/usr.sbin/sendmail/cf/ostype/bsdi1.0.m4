@@ -13,6 +13,6 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: bsdi1.0.m4,v 8.11 1999/11/19 05:18:14 gshapiro Exp $')
+VERSIONID(`$Id: bsdi1.0.m4,v 1.1.1.2 2001/01/15 20:52:34 millert Exp $')
 errprint(`NOTE: OSTYPE(bsdi1.0) is deprecated.  Use OSTYPE(bsdi) instead.')
 include(_CF_DIR_`'ostype/bsdi.m4)dnl

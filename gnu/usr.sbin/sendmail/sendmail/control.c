@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -9,10 +9,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: control.c,v 8.44 1999/11/29 22:03:49 ca Exp $";
+static char id[] = "@(#)$Id: control.c,v 1.1.1.2 2001/01/15 20:52:12 millert Exp $";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 int ControlSocket = -1;
 
@@ -76,16 +77,26 @@ opencontrolsocket()
 		return -1;
 	}
 
-	if (geteuid() == 0 && TrustedUid != 0)
+	if (geteuid() == 0)
 	{
-		if (chown(ControlSocketName, TrustedUid, -1) < 0)
+		uid_t u = 0;
+
+		if (RunAsUid != 0)
+			u = RunAsUid;
+		else if (TrustedUid != 0)
+			u = TrustedUid;
+
+		if (u != 0 &&
+		    chown(ControlSocketName, u, -1) < 0)
 		{
 			save_errno = errno;
 			sm_syslog(LOG_ALERT, NOQID,
-				  "ownership change on %s failed: %s",
-				  ControlSocketName, errstring(save_errno));
-			message("050 ownership change on %s failed: %s",
-				ControlSocketName, errstring(save_errno));
+				  "ownership change on %s to uid %d failed: %s",
+				  ControlSocketName, (int) u,
+				  errstring(save_errno));
+			message("050 ownership change on %s to uid %d failed: %s",
+				ControlSocketName, (int) u,
+				errstring(save_errno));
 			closecontrolsocket(TRUE);
 			errno = save_errno;
 			return -1;
@@ -140,8 +151,8 @@ closecontrolsocket(fullclose)
 			ControlSocket = -1;
 		}
 
-		rval = safefile(ControlSocketName, RunAsUid, RunAsGid, RunAsUserName,
-				sff, S_IRUSR|S_IWUSR, NULL);
+		rval = safefile(ControlSocketName, RunAsUid, RunAsGid,
+				RunAsUserName, sff, S_IRUSR|S_IWUSR, NULL);
 
 		/* if not safe, don't unlink */
 		if (rval != 0)
@@ -300,7 +311,7 @@ control_command(sock, e)
 	/* decode command */
 	for (c = CmdTab; c->cmd_name != NULL; c++)
 	{
-		if (!strcasecmp(c->cmd_name, cmdbuf))
+		if (strcasecmp(c->cmd_name, cmdbuf) == 0)
 			break;
 	}
 
@@ -328,8 +339,23 @@ control_command(sock, e)
 
 	  case CMDSTATUS:	/* daemon status */
 		proc_list_probe();
-		fprintf(s, "%d/%d/%ld/%d\r\n", CurChildren, MaxChildren,
-			freediskspace(QueueDir, NULL), sm_getla(NULL));
+		{
+			long bsize;
+			long free;
+
+			free = freediskspace(QueueDir, &bsize);
+
+			/*
+			**  Prevent overflow and don't lose
+			**  precision (if bsize == 512)
+			*/
+
+			free = (long)((double)free * ((double)bsize / 1024));
+
+			fprintf(s, "%d/%d/%ld/%d\r\n",
+				CurChildren, MaxChildren,
+				free, sm_getla(NULL));
+		}
 		proc_list_display(s);
 		break;
 
@@ -343,3 +369,4 @@ control_command(sock, e)
 	exit(exitstat);
 }
 #endif /* ! NOT_SENDMAIL */
+

@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	$Sendmail: useful.h,v 8.18 1999/07/13 15:05:57 ca Exp $
+ *	$Id: useful.h,v 1.1.1.2 2001/01/15 20:52:21 millert Exp $
  */
 
 #ifndef _USEFUL_H

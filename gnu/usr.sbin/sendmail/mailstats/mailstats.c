@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,14 +14,14 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: mailstats.c,v 8.53 1999/10/13 05:43:54 gshapiro Exp $";
+static char id[] = "@(#)$Id: mailstats.c,v 1.1.1.2 2001/01/15 20:52:08 millert Exp $";
 #endif /* ! lint */
 
 #include <unistd.h>
@@ -39,7 +39,9 @@ static char id[] = "@(#)$Sendmail: mailstats.c,v 8.53 1999/10/13 05:43:54 gshapi
 #include <sendmail/mailstats.h>
 #include <sendmail/pathnames.h>
 
+
 #define MNAMELEN	20	/* max length of mailer name */
+
 
 int
 main(argc, argv)
@@ -66,11 +68,12 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 
+
 	cfile = _PATH_SENDMAILCF;
 	sfile = NULL;
 	mnames = TRUE;
 	progmode = FALSE;
-	while ((ch = getopt(argc, argv, "C:f:op")) != EOF)
+	while ((ch = getopt(argc, argv, "C:f:op")) != -1)
 	{
 		switch (ch)
 		{
@@ -93,7 +96,7 @@ main(argc, argv)
 		  case '?':
 		  default:
   usage:
-			(void) fputs("usage: mailstats [-C cffile] [-f stfile] -o -p\n",
+			(void) fputs("usage: mailstats [-C cffile] [-f stfile] [-o] [-p]\n",
 				     stderr);
 			exit(EX_USAGE);
 		}
@@ -202,8 +205,8 @@ main(argc, argv)
 		exit (EX_OSFILE);
 	}
 
-	if ((fd = open(sfile, O_RDONLY)) < 0 ||
-	    (i = read(fd, &stats, sizeof stats)) < 0)
+	fd = open(sfile, O_RDONLY);
+	if ((fd < 0) || (i = read(fd, &stats, sizeof stats)) < 0)
 	{
 		save_errno = errno;
 		(void) fputs("mailstats: ", stderr);

@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: dgux.m4,v 8.14 1999/04/12 17:34:37 ca Exp $')
+VERSIONID(`$Id: dgux.m4,v 1.1.1.2 2001/01/15 20:52:35 millert Exp $')
 _DEFIFNOT(`LOCAL_MAILER_FLAGS', `m9')dnl
 define(`confTIME_ZONE', `USE_TZ')dnl
 define(`confEBINDIR', `/usr/lib')dnl

@@ -51,7 +51,7 @@ char **argv;
 {
     int opt;
 
-    while ((opt = getopt(argc, argv, "o:")) != EOF) {
+    while ((opt = getopt(argc, argv, "o:")) != -1) {
 	switch (opt) {
 	case 'o':
 	    if (!freopen(optarg, "w", stdout)) {
@@ -187,7 +187,7 @@ char *domainlen;
 	    case NO_DATA:
 		err = "registered in DNS, but not mailable";
 		break;
-		
+
 	    default:
 		err = "unknown nameserver error";
 		break;
@@ -210,7 +210,7 @@ valhost(host, hbsize)
 	int hbsize;
 {
 	register u_char *eom, *ap;
-	register int n; 
+	register int n;
 	HEADER *hp;
 	querybuf answer;
 	int ancount, qdcount;
@@ -406,4 +406,4 @@ finish()
 	}
     }
 }
-	    
+

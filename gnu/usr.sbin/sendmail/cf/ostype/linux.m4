@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -13,7 +13,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: linux.m4,v 8.11 1999/03/12 22:21:25 ca Exp $')
+VERSIONID(`$Id: linux.m4,v 1.1.1.2 2001/01/15 20:52:36 millert Exp $')
+define(`confEBINDIR', `/usr/sbin')
 ifdef(`PROCMAIL_MAILER_PATH',,
 	define(`PROCMAIL_MAILER_PATH', `/usr/bin/procmail'))
 FEATURE(local_procmail)

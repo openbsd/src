@@ -26,7 +26,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Sendmail: uucpproto.mc,v 8.15 1999/02/07 07:26:05 gshapiro Exp $')
+VERSIONID(`$Id: uucpproto.mc,v 1.1.1.2 2001/01/15 20:52:26 millert Exp $')
 OSTYPE(unknown)
 FEATURE(promiscuous_relay)dnl
 FEATURE(accept_unresolvable_domains)dnl

@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: smfi.c,v 8.28 2000/02/26 01:32:15 gshapiro Exp $";
+static char id[] = "@(#)$Id: smfi.c,v 1.1.1.2 2001/01/15 20:52:43 millert Exp $";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -40,9 +40,9 @@ smfi_addheader(ctx, headerf, headerv)
 	char *buf;
 	struct timeval timeout;
 
-	if (headerf == NULL || headerv == NULL)
+	if (headerf == NULL || *headerf == '\0' || headerv == NULL)
 		return MI_FAILURE;
-	if (!mi_sendok(ctx, SMFIF_MODHDRS))
+	if (!mi_sendok(ctx, SMFIF_ADDHDRS))
 		return MI_FAILURE;
 	timeout.tv_sec = ctx->ctx_timeout;
 	timeout.tv_usec = 0;
@@ -54,7 +54,59 @@ smfi_addheader(ctx, headerf, headerv)
 		return MI_FAILURE;
 	(void) memcpy(buf, headerf, l1 + 1);
 	(void) memcpy(buf + l1 + 1, headerv, l2 + 1);
-	r = mi_wr_cmd(ctx->ctx_fd, &timeout, SMFIR_ADDHEADER, buf, len);
+	r = mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_ADDHEADER, buf, len);
+	free(buf);
+	return r;
+}
+
+/*
+**  SMFI_CHGHEADER -- send a changed header to the MTA
+**
+**	Parameters:
+**		ctx -- Opaque context structure
+**		headerf -- Header field name
+**		hdridx -- Header index value
+**		headerv -- Header field value
+**
+**	Returns:
+**		MI_SUCCESS/MI_FAILURE
+*/
+
+int
+smfi_chgheader(ctx, headerf, hdridx, headerv)
+	SMFICTX *ctx;
+	char *headerf;
+	mi_int32 hdridx;
+	char *headerv;
+{
+	/* do we want to copy the stuff or have a special mi_wr_cmd call? */
+	size_t len, l1, l2;
+	int r;
+	mi_int32 v;
+	char *buf;
+	struct timeval timeout;
+
+	if (headerf == NULL || *headerf == '\0')
+		return MI_FAILURE;
+	if (hdridx < 0)
+		return MI_FAILURE;
+	if (!mi_sendok(ctx, SMFIF_CHGHDRS))
+		return MI_FAILURE;
+	timeout.tv_sec = ctx->ctx_timeout;
+	timeout.tv_usec = 0;
+	if (headerv == NULL)
+		headerv = "";
+	l1 = strlen(headerf);
+	l2 = strlen(headerv);
+	len = l1 + l2 + 2 + MILTER_LEN_BYTES;
+	buf = malloc(len);
+	if (buf == NULL)
+		return MI_FAILURE;
+	v = htonl(hdridx);
+	(void) memcpy(&(buf[0]), (void *) &v, MILTER_LEN_BYTES);
+	(void) memcpy(buf + MILTER_LEN_BYTES, headerf, l1 + 1);
+	(void) memcpy(buf + MILTER_LEN_BYTES + l1 + 1, headerv, l2 + 1);
+	r = mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_CHGHEADER, buf, len);
 	free(buf);
 	return r;
 }
@@ -77,14 +129,14 @@ smfi_addrcpt(ctx, rcpt)
 	size_t len;
 	struct timeval timeout;
 
-	if (rcpt == NULL)
+	if (rcpt == NULL || *rcpt == '\0')
 		return MI_FAILURE;
 	if (!mi_sendok(ctx, SMFIF_ADDRCPT))
 		return MI_FAILURE;
 	timeout.tv_sec = ctx->ctx_timeout;
 	timeout.tv_usec = 0;
 	len = strlen(rcpt) + 1;
-	return mi_wr_cmd(ctx->ctx_fd, &timeout, SMFIR_ADDRCPT, rcpt, len);
+	return mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_ADDRCPT, rcpt, len);
 }
 /*
 **  SMFI_DELRCPT -- send a recipient to be removed to the MTA
@@ -105,14 +157,14 @@ smfi_delrcpt(ctx, rcpt)
 	size_t len;
 	struct timeval timeout;
 
-	if (rcpt == NULL)
+	if (rcpt == NULL || *rcpt == '\0')
 		return MI_FAILURE;
 	if (!mi_sendok(ctx, SMFIF_DELRCPT))
 		return MI_FAILURE;
 	timeout.tv_sec = ctx->ctx_timeout;
 	timeout.tv_usec = 0;
 	len = strlen(rcpt) + 1;
-	return mi_wr_cmd(ctx->ctx_fd, &timeout, SMFIR_DELRCPT, rcpt, len);
+	return mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_DELRCPT, rcpt, len);
 }
 /*
 **  SMFI_REPLACEBODY -- send a body chunk to the MTA
@@ -137,7 +189,7 @@ smfi_replacebody(ctx, bodyp, bodylen)
 
 	if (bodyp == NULL && bodylen > 0)
 		return MI_FAILURE;
-	if (!mi_sendok(ctx, SMFIF_MODBODY))
+	if (!mi_sendok(ctx, SMFIF_CHGBODY))
 		return MI_FAILURE;
 	timeout.tv_sec = ctx->ctx_timeout;
 	timeout.tv_usec = 0;
@@ -148,7 +200,7 @@ smfi_replacebody(ctx, bodyp, bodylen)
 	{
 		len = (bodylen >= MILTER_CHUNK_SIZE) ? MILTER_CHUNK_SIZE :
 						       bodylen;
-		if ((r = mi_wr_cmd(ctx->ctx_fd, &timeout, SMFIR_REPLBODY,
+		if ((r = mi_wr_cmd(ctx->ctx_sd, &timeout, SMFIR_REPLBODY,
 				(char *) (bodyp + off), len)) != MI_SUCCESS)
 			return r;
 		off += len;
@@ -302,9 +354,28 @@ smfi_getsymval(ctx, symname)
 {
 	int i;
 	char **s;
+	char one[2];
+	char braces[4];
 
 	if (ctx == NULL || symname == NULL || *symname == '\0')
 		return NULL;
+
+	if (strlen(symname) == 3 && symname[0] == '{' && symname[2] == '}')
+	{
+		one[0] = symname[1];
+		one[1] = '\0';
+	}
+	else
+		one[0] = '\0';
+	if (strlen(symname) == 1)
+	{
+		braces[0] = '{';
+		braces[1] = *symname;
+		braces[2] = '}';
+		braces[3] = '\0';
+	}
+	else
+		braces[0] = '\0';
 
 	/* search backwards through the macro array */
 	for (i = MAX_MACROS_ENTRIES - 1 ; i >= 0; --i)
@@ -315,6 +386,10 @@ smfi_getsymval(ctx, symname)
 		while (s != NULL && *s != NULL)
 		{
 			if (strcmp(*s, symname) == 0)
+				return *++s;
+			if (one[0] != '\0' && strcmp(*s, one) == 0)
+				return *++s;
+			if (braces[0] != '\0' && strcmp(*s, braces) == 0)
 				return *++s;
 			++s;	/* skip over macro value */
 			++s;	/* points to next macro name */

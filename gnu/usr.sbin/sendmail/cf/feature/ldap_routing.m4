@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: ldap_routing.m4,v 8.5 2000/02/26 01:32:03 gshapiro Exp $')
+VERSIONID(`$Id: ldap_routing.m4,v 1.1.1.2 2001/01/15 20:52:28 millert Exp $')
 divert(-1)
 
 # Check first two arguments.  If they aren't set, may need to warn in proto.m4
@@ -25,10 +25,10 @@ ifelse(len(X`'_ARG3_), `1', `define(`_LDAP_ROUTING_', `_PASS_THROUGH_')',
 
 LOCAL_CONFIG
 # LDAP routing maps
-Kldap_mailhost ifelse(len(X`'_ARG1_), `1',
-		      `ldap -1 -v mailHost -k (&(objectClass=inetLocalMailRecipient)(mailLocalAddress=%0))',
-		      `_ARG1_')
+Kldapmh ifelse(len(X`'_ARG1_), `1',
+	       `ldap -1 -v mailHost -k (&(objectClass=inetLocalMailRecipient)(mailLocalAddress=%0))',
+	       `_ARG1_')
 
-Kldap_mailroutingaddress ifelse(len(X`'_ARG2_), `1',
-				`ldap -1 -v mailRoutingAddress -k (&(objectClass=inetLocalMailRecipient)(mailLocalAddress=%0))',
-				`_ARG2_')
+Kldapmra ifelse(len(X`'_ARG2_), `1',
+		`ldap -1 -v mailRoutingAddress -k (&(objectClass=inetLocalMailRecipient)(mailLocalAddress=%0))',
+		`_ARG2_')

@@ -11,11 +11,15 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)$Sendmail: shmticklib.c,v 8.6 2000/02/26 01:32:27 gshapiro Exp $";
+static char id[] = "@(#)$Id: shmticklib.c,v 1.1.1.2 2001/01/15 20:52:17 millert Exp $";
 #endif /* ! lint */
 
 #if _FFR_SHM_STATUS
+# if SFIO
+#  include <sfio/stdio.h>
+# else /* !SFIO */
 #  include <stdio.h>
+# endif /* SFIO */
 # include <sys/types.h>
 # include <sys/ipc.h>
 # include <sys/shm.h>

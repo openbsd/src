@@ -25,7 +25,7 @@ POPDIVERT
 ###   POP Mailer specification   ###
 ####################################
 
-VERSIONID(`$Sendmail: pop.m4,v 8.20 1999/10/18 04:57:54 gshapiro Exp $')
+VERSIONID(`$Id: pop.m4,v 1.1.1.2 2001/01/15 20:52:33 millert Exp $')
 
 Mpop,		P=POP_MAILER_PATH, F=_MODMF_(CONCAT(`lsDFMq', POP_MAILER_FLAGS), `POP'), S=EnvFromL, R=EnvToL/HdrToL,
 		T=DNS/RFC822/X-Unix,
