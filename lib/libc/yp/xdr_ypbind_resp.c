@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_ypbind_resp.c,v 1.3 1996/08/19 08:35:01 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_ypbind_resp.c,v 1.4 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -46,9 +46,7 @@ static char *rcsid = "$OpenBSD: xdr_ypbind_resp.c,v 1.3 1996/08/19 08:35:01 thol
 #include <rpcsvc/ypclnt.h>
 
 bool_t
-xdr_ypbind_resp(xdrs, objp)
-XDR *xdrs;
-struct ypbind_resp *objp;
+xdr_ypbind_resp(XDR *xdrs, struct ypbind_resp *objp)
 {
 	if (!xdr_ypbind_resptype(xdrs, &objp->ypbind_status)) {
 		return FALSE;
@@ -59,7 +57,7 @@ struct ypbind_resp *objp;
 		return xdr_u_int(xdrs,
 		    (u_int *)&objp->ypbind_resp_u.ypbind_error);
 	case YPBIND_SUCC_VAL:
-		return xdr_ypbind_binding(xdrs, 
+		return xdr_ypbind_binding(xdrs,
 		    &objp->ypbind_resp_u.ypbind_bindinfo);
 	default:
 		return FALSE;

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_bind.c,v 1.12 2002/01/02 20:18:32 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yp_bind.c,v 1.13 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -55,9 +55,7 @@ char _yp_domain[MAXHOSTNAMELEN];
 int _yplib_timeout = 10;
 
 int
-_yp_dobind(dom, ypdb)
-	const char     *dom;
-	struct dom_binding **ypdb;
+_yp_dobind(const char *dom, struct dom_binding **ypdb)
 {
 	static pid_t	pid = -1;
 	char            path[MAXPATHLEN];
@@ -215,7 +213,7 @@ gotdata:
 				free(ysd);
 			return YPERR_YPBIND;
 		}
-		(void)memset(&ysd->dom_server_addr, 0, 
+		(void)memset(&ysd->dom_server_addr, 0,
 		    sizeof ysd->dom_server_addr);
 		ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
 		ysd->dom_server_addr.sin_family = AF_INET;
@@ -254,8 +252,7 @@ gotdata:
 }
 
 void
-_yp_unbind(ypb)
-	struct dom_binding *ypb;
+_yp_unbind(struct dom_binding *ypb)
 {
 	clnt_destroy(ypb->dom_client);
 	ypb->dom_client = NULL;
@@ -263,15 +260,13 @@ _yp_unbind(ypb)
 }
 
 int
-yp_bind(dom)
-	const char     *dom;
+yp_bind(const char *dom)
 {
 	return _yp_dobind(dom, NULL);
 }
 
 void
-yp_unbind(dom)
-	const char     *dom;
+yp_unbind(const char *dom)
 {
 	struct dom_binding *ypb, *ypbp;
 

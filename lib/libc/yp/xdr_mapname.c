@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_mapname.c,v 1.3 1996/08/19 08:34:59 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_mapname.c,v 1.4 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -46,9 +46,7 @@ static char *rcsid = "$OpenBSD: xdr_mapname.c,v 1.3 1996/08/19 08:34:59 tholo Ex
 #include <rpcsvc/ypclnt.h>
 
 bool_t
-xdr_mapname(xdrs, objp)
-XDR *xdrs;
-mapname *objp;
+xdr_mapname(XDR *xdrs, mapname *objp)
 {
 	return xdr_string(xdrs, objp, YPMAXMAP);
 }

@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_first.c,v 1.5 1996/12/03 08:20:03 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yp_first.c,v 1.6 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,13 +50,8 @@ static char *rcsid = "$OpenBSD: yp_first.c,v 1.5 1996/12/03 08:20:03 deraadt Exp
 #include "ypinternal.h"
 
 int
-yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
-	const char     *indomain;
-	const char     *inmap;
-	char          **outkey;
-	int            *outkeylen;
-	char          **outval;
-	int            *outvallen;
+yp_first(const char *indomain, const char *inmap, char **outkey, int *outkeylen,
+    char **outval, int *outvallen)
 {
 	struct ypresp_key_val yprkv;
 	struct ypreq_nokey yprnk;

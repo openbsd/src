@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_all.c,v 1.6 2002/01/02 20:58:37 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yp_all.c,v 1.7 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,9 +50,7 @@ static char *rcsid = "$OpenBSD: yp_all.c,v 1.6 2002/01/02 20:58:37 deraadt Exp $
 #include "ypinternal.h"
 
 bool_t
-xdr_ypresp_all_seq(xdrs, objp)
-XDR *xdrs;
-u_long *objp;
+xdr_ypresp_all_seq(XDR *xdrs, u_long *objp)
 {
 	struct ypresp_all out;
 	u_long status;
@@ -117,10 +115,7 @@ u_long *objp;
 }
 
 int
-yp_all(indomain, inmap, incallback)
-	const char     *indomain;
-	const char     *inmap;
-	struct ypall_callback *incallback;
+yp_all(const char *indomain, const char *inmap, struct ypall_callback *incallback)
 {
 	struct ypreq_nokey yprnk;
 	struct dom_binding *ysd;

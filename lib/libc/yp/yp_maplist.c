@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_maplist.c,v 1.5 1996/12/03 08:20:04 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yp_maplist.c,v 1.6 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,9 +50,7 @@ static char *rcsid = "$OpenBSD: yp_maplist.c,v 1.5 1996/12/03 08:20:04 deraadt E
 #include "ypinternal.h"
 
 int
-yp_maplist(indomain, outmaplist)
-	const char     *indomain;
-	struct ypmaplist **outmaplist;
+yp_maplist(const char *indomain, struct ypmaplist **outmaplist)
 {
 	struct dom_binding *ysd;
 	struct ypresp_maplist ypml;

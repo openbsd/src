@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypinternal.h,v 1.4 2002/02/17 19:42:24 millert Exp $	 */
+/*	$OpenBSD: ypinternal.h,v 1.5 2002/07/20 01:35:35 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -65,11 +65,11 @@ static bool_t ypmatch_add(const char *, const char *, u_int, char *, u_int);
 static bool_t ypmatch_find(const char *, const char *, u_int, char **, u_int *);
 
 static struct ypmatch_ent {
-	struct ypmatch_ent 	*next;
-	char     		*map, *key;
-	char           		*val;
-	int             	 keylen, vallen;
-	time_t          	 expire_t;
+	struct ypmatch_ent	*next;
+	char			*map, *key;
+	char			*val;
+	int			 keylen, vallen;
+	time_t			 expire_t;
 } *ypmc;
 extern int _yplib_cache;
 

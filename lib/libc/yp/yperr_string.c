@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yperr_string.c,v 1.3 1996/08/19 08:35:12 tholo Exp $";
+static char *rcsid = "$OpenBSD: yperr_string.c,v 1.4 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -49,8 +49,7 @@ static char *rcsid = "$OpenBSD: yperr_string.c,v 1.3 1996/08/19 08:35:12 tholo E
 #include <rpcsvc/ypclnt.h>
 
 char *
-yperr_string(incode)
-	int             incode;
+yperr_string(int incode)
 {
 	static char     err[80];
 

@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_master.c,v 1.5 1996/12/03 08:20:05 deraadt Exp $";
+static char *rcsid = "$OpenBSD: yp_master.c,v 1.6 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,10 +50,7 @@ static char *rcsid = "$OpenBSD: yp_master.c,v 1.5 1996/12/03 08:20:05 deraadt Ex
 #include "ypinternal.h"
 
 int
-yp_master(indomain, inmap, outname)
-	const char     *indomain;
-	const char     *inmap;
-	char          **outname;
+yp_master(const char *indomain, const char *inmap, char **outname)
 {
 	struct dom_binding *ysd;
 	struct ypresp_master yprm;

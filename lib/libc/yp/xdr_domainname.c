@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_domainname.c,v 1.3 1996/08/19 08:34:58 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_domainname.c,v 1.4 2002/07/20 01:35:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -46,9 +46,7 @@ static char *rcsid = "$OpenBSD: xdr_domainname.c,v 1.3 1996/08/19 08:34:58 tholo
 #include <rpcsvc/ypclnt.h>
 
 bool_t
-xdr_domainname(xdrs, objp)
-XDR *xdrs;
-domainname *objp;
+xdr_domainname(XDR *xdrs, domainname *objp)
 {
 	return xdr_string(xdrs, objp, YPMAXDOMAIN);
 }
