@@ -65,7 +65,6 @@ include "../../../dev/ofw/files.ofw"
 file	arch/powerpc/powerpc/opendev.c ofcons | ofnet | ofdisk | ofrtc
 major	{ ofdisk = 4 }
 
-#pseudo-device rd
 file	arch/powerpc/powerpc/rd_root.c			ramdisk_hooks
 major   {rd = 17}
 
