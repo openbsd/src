@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.4 1996/04/21 23:46:50 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.5 1996/05/08 08:53:03 niklas Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12 1996/04/13 01:31:43 jtc Exp $	*/
 
 /*
@@ -587,14 +587,15 @@ getnfsargs(spec, nfsargsp)
 		if ((nfsargsp->flags & NFSMNT_KERB)) {
 			if ((hp = gethostbyaddr((char *)&saddr.sin_addr.s_addr,
 			    sizeof (u_long), AF_INET)) == (struct hostent *)0) {
-				warnx("can't reverse resolve net address");
+				warnx("can't resolve hostname for address %s",
+				    hostp);
 				return (0);
 			}
 		}
 	} else {
 		hp = gethostbyname(hostp);
 		if (hp == NULL) {
-			warnx("can't get net id for host");
+			warnx("can't resolve address for host %s", hostp);
 			return (0);
 		}
 		memcpy(&saddr.sin_addr, hp->h_addr, hp->h_length);
