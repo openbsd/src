@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.36 2004/02/27 17:36:13 deraadt Exp $
+# $OpenBSD: Makefile,v 1.37 2005/02/07 20:34:54 beck Exp $
 
 LIB=	crypto
 
@@ -143,7 +143,8 @@ SRCS+= ec_err.c ec_mult.c ecp_nist.c ecp_smpl.c
 	${LCRYPTO_SRC}/comp ${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}/md4 \
 	${LCRYPTO_SRC}/engine ${LCRYPTO_SRC}/dso ${LCRYPTO_SRC}/ui \
 	${LCRYPTO_SRC}/ocsp ${LCRYPTO_SRC}/ec ${LCRYPTO_SRC}/aes ${LCRYPTO_SRC} \
-	${LCRYPTO_SRC}/acss ${.CURDIR}/arch/${MACHINE_ARCH}
+	${LCRYPTO_SRC}/acss ${.CURDIR}/arch/${MACHINE_ARCH} \
+	${LCRYPTO_SRC}/bn/asm
 
 HDRS=\
 	crypto/acss/acss.h \
@@ -283,9 +284,15 @@ SRCS+= bf_enc.c
 SRCS+= bn_asm_vax.S
 SRCS+= rc4_enc.c	
 .else
+.if (${MACHINE_ARCH} == "amd64")
+SRCS+= bf_enc.c
+SRCS+= x86_64-gcc.c
+SRCS+= rc4_enc.c	
+.else
 SRCS+= bf_enc.c	
 SRCS+= bn_asm.c
 SRCS+= rc4_enc.c	
+.endif
 .endif
 .endif
 
