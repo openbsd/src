@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.2 1996/09/23 14:19:00 mickey Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.3 1996/10/29 08:08:51 mickey Exp $	*/
 /*	$NetBSD: nfs.h,v 1.4 1995/09/18 21:19:39 pk Exp $	*/
 
 /*-
@@ -43,4 +43,4 @@ ssize_t	nfs_write __P((struct open_file *f, void *buf,
 off_t	nfs_seek __P((struct open_file *f, off_t offset, int where));
 int	nfs_stat __P((struct open_file *f, struct stat *sb));
 int	nfs_mount __P((int, struct in_addr, char *));
-
+int	nfs_readdir __P((struct open_file *f, char *name));
