@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.1 1997/02/03 08:11:54 downsj Exp $	*/
+/*	$OpenBSD: hd.c,v 1.2 1997/02/07 03:22:16 dima Exp $	*/
 /*	$NetBSD: rd.c,v 1.27 1997/01/30 09:14:17 thorpej Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ void	hdrestart __P((void *));
 struct buf *hdfinish __P((struct hd_softc *, struct buf *));
 
 void	hdstart __P((void *));
-void	hdintr __P((void *));
+void	hdinterupt __P((void *));
 void	hdgo __P((void *));
 
 bdev_decl(hd);
@@ -300,7 +300,7 @@ hdattach(parent, self, aux)
 	sc->sc_hq.hq_slave = sc->sc_slave;
 	sc->sc_hq.hq_start = hdstart;
 	sc->sc_hq.hq_go = hdgo;
-	sc->sc_hq.hq_intr = hdintr;
+	sc->sc_hq.hq_intr = hdinterupt;
 
 	sc->sc_flags = HDF_ALIVE;
 #ifdef DEBUG
@@ -832,7 +832,7 @@ hdgo(arg)
 
 /* ARGSUSED */
 void
-hdintr(arg)
+hdinterupt(arg)
 	void *arg;
 {
 	register struct hd_softc *rs = arg;
@@ -846,7 +846,7 @@ hdintr(arg)
 
 #ifdef DEBUG
 	if (hddebug & HDB_FOLLOW)
-		printf("hdintr(%d): bp %x, %c, flags %x\n", unit, bp,
+		printf("hdinterupt(%d): bp %x, %c, flags %x\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W', rs->sc_flags);
 	if (bp == NULL) {
 		printf("%s: bp == NULL\n", rs->sc_dev.dv_xname);
@@ -882,7 +882,7 @@ hdintr(arg)
 	if (rv != 1 || stat) {
 #ifdef DEBUG
 		if (hddebug & HDB_ERROR)
-			printf("hdintr: recv failed or bad stat %d\n", stat);
+			printf("hdinterupt: recv failed or bad stat %d\n", stat);
 #endif
 		restart = hderror(unit);
 #ifdef DEBUG
