@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.425 2001/08/05 10:05:36 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.426 2001/08/05 10:11:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1753,6 +1753,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951,
 	    "7951",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_VXPRO_II_HOST,
+	    "Host",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_VXPRO_II_ISA,
+	    "ISA",
+	},
+	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_VXPRO_II_EIDE,
+	    "EIDE",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0002,
@@ -6637,6 +6649,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TEKRAM2,
 	    "Tekram Technology",
+	},
+	{
+	    PCI_VENDOR_HINT,
+	    "Hint",
 	},
 	{
 	    PCI_VENDOR_3DLABS,

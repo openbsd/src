@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.425 2001/08/05 10:05:36 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.426 2001/08/05 10:11:39 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -550,6 +550,7 @@
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology */
+#define	PCI_VENDOR_HINT	0x3388		/* Hint */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic */
 #define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron */
@@ -1148,6 +1149,11 @@
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
 #define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
 #define	PCI_PRODUCT_HIFN_7951	0x0012		/* 7951 */
+
+/* Hint */
+#define	PCI_PRODUCT_HINT_VXPRO_II_HOST	0x8011		/* Host */
+#define	PCI_PRODUCT_HINT_VXPRO_II_ISA	0x8012		/* ISA */
+#define	PCI_PRODUCT_HINT_VXPRO_II_EIDE	0x8013		/* EIDE */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_0x0002	0x0002		/* MCA */
