@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.7 1999/07/20 14:13:32 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.8 1999/08/14 03:34:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -99,34 +99,34 @@ struct trapframe {
 	u_int	tf_ret1;	/* r29 */
 	u_int	tf_sp;		/* r30 */
 	u_int	tf_r31;
-	u_int	tf_sar;		/* cr11 */
-	u_int	tf_iioq_head;
-	u_int	tf_iisq_head;
-	u_int	tf_iioq_tail;
-	u_int	tf_iisq_tail;
-	u_int	tf_eiem;	/* cr15 */
-	u_int	tf_iir;		/* cr19 */
-	u_int	tf_isr;		/* cr20 */
-	u_int	tf_ior;		/* cr21 */
-	u_int	tf_ipsw;	/* cr22 */
-	u_int	tf_sr4;
 	u_int	tf_sr0;
 	u_int	tf_sr1;
 	u_int	tf_sr2;
 	u_int	tf_sr3;
+	u_int	tf_sr4;
 	u_int	tf_sr5;
 	u_int	tf_sr6;
 	u_int	tf_sr7;
-	u_int	tf_rctr;	/* cr0 */
 	u_int	tf_pidr1;	/* cr8 */
 	u_int	tf_pidr2;	/* cr9 */
-	u_int	tf_ccr;		/* cr10 */
 	u_int	tf_pidr3;	/* cr12 */
 	u_int	tf_pidr4;	/* cr13 */
-	u_int	tf_hptm;	/* cr24 */
-	u_int	tf_vtop;	/* cr25 */
-	u_int	tf_tr2;		/* cr26 */
-	u_int	tf_cr28;
+	u_int	tf_rctr;	/* cr0 */
+	u_int	tf_eiem;	/* cr15 */
+	u_int	tf_ccr;		/* cr10 */
+	u_int	tf_sar;		/* cr11 */
+	u_int	tf_iisq_head;	/* cr17 */
+	u_int	tf_iisq_tail;
+	u_int	tf_iioq_head;	/* cr18 */
+	u_int	tf_iioq_tail;
+	u_int	tf_iir;		/* cr19 */
+	u_int	tf_isr;		/* cr20 */
+	u_int	tf_ior;		/* cr21 */
+	u_int	tf_ipsw;	/* cr22 */
+	u_int	tf_eirr;	/* cr23 - DDB */
+	u_int	tf_hptm;	/* cr24 - DDB */
+	u_int	tf_vtop;	/* cr25 - DDB */
+	u_int	tf_cr28;	/*      - DDB */
 
 	u_int	tf_pad[4];	/* pad to 256 bytes */
 };
