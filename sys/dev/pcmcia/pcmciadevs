@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.96 2002/11/10 18:52:02 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.97 2002/11/20 14:58:53 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -74,6 +74,7 @@ vendor DAYNA			0x0194	Dayna
 vendor RAYTHEON			0x01a6	Raytheon
 vendor BAY			0x01eb	Bay Networks
 vendor IODATA			0x01bf	I-O DATA
+vendor BELKIN			0x01bf	Belkin
 vendor FARALLON			0x0200	Farallon Communications
 vendor TELECOMDEVICE		0x021b	Telecom Device
 vendor NOKIA			0x023d	Nokia Communications
@@ -140,6 +141,9 @@ product	ARCHOS ARC_ATAPI	0x0043 MiniCD
 product BAY STACK_650		0x0804 BayStack 650
 product BAY SURFER_PRO		0x0806 AirSurfer Pro
 product BAY STACK_660		0x0807 BayStack 660
+
+/* Belkin */
+product BELKIN F5D5020		0x2328 F5D5020
 
 /* BreezeCOM */
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
