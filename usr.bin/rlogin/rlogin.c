@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.8 1996/08/11 19:20:01 tholo Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.9 1996/11/11 05:59:47 mickey Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.8 1996/08/11 19:20:01 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.9 1996/11/11 05:59:47 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static char rcsid[] = "$OpenBSD: rlogin.c,v 1.8 1996/08/11 19:20:01 tholo Exp $"
 #include <kerberosIV/krb.h>
 
 CREDENTIALS cred;
-Key_schedule schedule;
+des_key_schedule schedule;
 int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm = NULL;
 #endif
@@ -140,6 +140,7 @@ void		writeroob __P((int));
 
 #ifdef	KERBEROS
 void		warning __P((const char *, ...));
+void		desrw_set_key __P((des_cblock *, des_key_schedule *));
 #endif
 #ifdef OLDSUN
 int		get_window_size __P((int, struct winsize *));
@@ -214,7 +215,7 @@ main(argc, argv)
 #ifdef KERBEROS
 		case 'x':
 			doencrypt = 1;
-			desrw_set_key(&cred.session, schedule);
+			desrw_set_key(&cred.session, &schedule);
 			break;
 #endif
 		case '?':

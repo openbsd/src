@@ -1,4 +1,4 @@
-/*	$OpenBSD: des_rw.c,v 1.4 1996/06/26 05:38:30 deraadt Exp $	*/
+/*	$OpenBSD: des_rw.c,v 1.5 1996/11/11 05:59:44 mickey Exp $	*/
 /*	$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)des_rw.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: des_rw.c,v 1.4 1996/06/26 05:38:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: des_rw.c,v 1.5 1996/11/11 05:59:44 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,8 +54,8 @@ static char rcsid[] = "$OpenBSD: des_rw.c,v 1.4 1996/06/26 05:38:30 deraadt Exp 
 #include <unistd.h>
 
 static unsigned char	des_inbuf[10240], storage[10240], *store_ptr;
-static bit_64		*key;
-static u_char		*key_schedule;
+static des_cblock 	*key;
+static des_key_schedule	*key_schedule;
 
 /*
  * NB: These routines will not function properly if NBIO
@@ -75,8 +75,8 @@ static int nstored = 0;
 
 void
 desrw_set_key(inkey, insched)
-	bit_64		*inkey;
-	u_char		*insched;
+	des_cblock 	*inkey;
+	des_key_schedule*insched;
 {
 	key = inkey;
 	key_schedule = insched;
@@ -135,8 +135,8 @@ des_read(fd, buf, len)
 	(void) des_pcbc_encrypt((des_cblock *)des_inbuf,	/* inbuf */
 			    (des_cblock *)storage,		/* outbuf */
 			    rd_len,				/* length */
-			    key_schedule,			/* DES key */
-			    (des_cblock *)key,			/* IV */
+			    *key_schedule,			/* DES key */
+			    key,				/* IV */
 			    DECRYPT);				/* direction */
 
 	if(net_len < 8)
@@ -187,8 +187,8 @@ des_write(fd, buf, len)
 	(void) des_pcbc_encrypt((des_cblock *)((len < 8) ? garbage_buf : buf),
 			    (des_cblock *)des_outbuf,
 			    (len < 8) ? 8 : len,
-			    key_schedule,		/* DES key */
-			    (des_cblock *)key,		/* IV */
+			    *key_schedule,		/* DES key */
+			    key,			/* IV */
 			    ENCRYPT);
 
 	/* tell the other end the real amount, but send an 8-byte padded

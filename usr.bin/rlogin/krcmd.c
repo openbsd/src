@@ -1,4 +1,4 @@
-/*	$OpenBSD: krcmd.c,v 1.5 1996/08/11 19:19:58 tholo Exp $	*/
+/*	$OpenBSD: krcmd.c,v 1.6 1996/11/11 05:59:46 mickey Exp $	*/
 /*	$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: krcmd.c,v 1.5 1996/08/11 19:19:58 tholo Exp $";
+static char rcsid[] = "$OpenBSD: krcmd.c,v 1.6 1996/11/11 05:59:46 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ krcmd(ahost, rport, remuser, cmd, fd2p, realm)
 		SERVICE_NAME,
 		realm,
 		(CREDENTIALS *)  NULL,		/* credentials not used */
-		(bit_64 *) NULL,		/* key schedule not used */
+		(void *) NULL,		/* key schedule not used */
 		(MSG_DAT *) NULL,		/* MSG_DAT not used */
 		(struct sockaddr_in *) NULL,	/* local addr not used */
 		(struct sockaddr_in *) NULL,	/* foreign addr not used */
