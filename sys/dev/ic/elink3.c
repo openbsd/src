@@ -580,7 +580,7 @@ epread(sc)
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header eh;
+	struct ether_header *eh;
 	int len;
 
 	len = bus_io_read_2(bc, ioh, EP_W1_RX_STATUS);
@@ -628,6 +628,8 @@ again:
 
 	++ifp->if_ipackets;
 
+	eh = mtod(m, struct ether_header *);
+
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
@@ -642,18 +644,17 @@ again:
 		 * mode, we have to check if this packet is really ours.
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh.ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh.ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh.ether_dhost)) != 0) {
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
 		}
 	}
 #endif
 
-	bcopy(m->m_data, &eh, sizeof(struct ether_header));
 	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, &eh, m);
+	ether_input(ifp, eh, m);
 
 	/*
 	 * In periods of high traffic we can actually receive enough
