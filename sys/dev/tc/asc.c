@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.19.2.2 1996/06/04 21:21:44 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.19.2.3 1996/06/11 05:19:49 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -843,6 +843,13 @@ asc_startcmd(asc, target)
 	}
 #endif
 
+	/* Try to avoid reselect collisions */
+	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
+	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
+/*		printf("asc_startcmd: possible reselect in progress\n"); */
+		return;
+	}
+
 	/*
 	 * Init the chip and target state.
 	 */
@@ -912,11 +919,41 @@ asc_startcmd(asc, target)
 	regs->asc_syn_o = state->sync_offset;
 	readback(regs->asc_syn_o);
 
+	/* Try to avoid reselect collisions */
+	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
+	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
+/*		printf("asc_startcmd: reselect in progress (before select)\n");*/
+		return;
+	}
+
 	if (state->flags & TRY_SYNC)
-		regs->asc_cmd = ASC_CMD_SEL_ATN_STOP;
+		regs->asc_cmd = len = ASC_CMD_SEL_ATN_STOP;
 	else
-		regs->asc_cmd = ASC_CMD_SEL_ATN | ASC_CMD_DMA;
+		regs->asc_cmd = len = ASC_CMD_SEL_ATN | ASC_CMD_DMA;
 	readback(regs->asc_cmd);
+
+	/* Try to avoid reselect collisions */
+	if ((regs->asc_status & (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) ==
+	    (ASC_CSR_INT|SCSI_PHASE_MSG_IN)) {
+/*		printf("asc_startcmd: reselect in progress after select\n");*/
+		return;
+	} else {
+		/*
+		 * Here's a potentially nasty but infrequent problem:  a
+		 * reselect may have occurred, but did not interrupt.
+		 */
+		if (regs->asc_cmd != len &&
+		    regs->asc_cmd == (ASC_CMD_NOP|ASC_CMD_DMA)) {
+		    	if ((regs->asc_status & ASC_CSR_INT) == 0) {
+		    		delay(250);
+		    		if (regs->asc_status == SCSI_PHASE_MSG_IN) {
+		    			printf("asc_startcmd: reselect failed to interrupt?\n");
+		    			/* XXXX THIS NEEDS FIXING */
+		    		}
+		    	}
+		}
+	}
+
 }
 
 /*
@@ -966,6 +1003,12 @@ again:
 			status, ss, ir, scpt - asc_scripts, scpt->condition);
 #endif
 
+	/* This must be done withing 250msec of disconnect */
+	if (ir & ASC_INT_DISC) {
+		regs->asc_cmd = ASC_CMD_ENABLE_SEL;
+		readback(regs->asc_cmd);
+	}
+
 	/* check the expected state */
 	if (SCRIPT_MATCH(ir, status) == scpt->condition) {
 		/*
@@ -1007,6 +1050,21 @@ again:
 		state = &asc->st[asc->target];
 		switch (ASC_PHASE(status)) {
 		case SCSI_PHASE_DATAI:
+			if ((asc->script - asc_scripts) == SCRIPT_GET_STATUS) {
+			    	/*
+			    	 * From the Mach driver:
+			    	 * After a reconnect and restart dma in, we
+			    	 * seem to have gotten an interrupt even though
+			    	 * the DMA is running.  The Mach driver just
+			    	 * ignores this interrupt.
+			    	 */
+				ASC_TC_GET(regs, len);
+				fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
+			    	printf("asc_intr: ignoring strange interrupt");
+			    	printf(" tc %d fifo residue\n", len, fifo);
+			    	goto done;
+			}
+			/* FALLTHROUGH */
 		case SCSI_PHASE_DATAO:
 			ASC_TC_GET(regs, len);
 			fifo = regs->asc_flags & ASC_FLAGS_FIFO_CNT;
@@ -1184,10 +1242,6 @@ again:
 		return 0 ; /* XXX ??? */
 	}
 
-	/* check for command errors */
-	if (ir & ASC_INT_ILL)
-		goto abort;
-
 	/* check for disconnect */
 	if (ir & ASC_INT_DISC) {
 		state = &asc->st[asc->target];
@@ -1244,6 +1298,13 @@ again:
 			readback(regs->asc_cmd);
 			return 0 ; /* XXX ??? */
 		}
+	}
+
+	/* mhitch - debug - check select/reselect collision */
+	if ((ir & ASC_INT_ILL) && (regs->asc_cmd & ASC_CMD_SEL_ATN)) {
+		printf("asc_intr: Illegal command status %x ir %x\n",
+		    status, ir);
+		/* Should process reselect? */
 	}
 
 	/* check for reselect */
