@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.13 2000/09/26 05:03:31 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.14 2000/09/26 05:16:00 ericj Exp $ */
 
 /* Netcat 1.10 RELEASE 960320
  *
@@ -487,21 +487,21 @@ doconnect(rad, rp, lad, lp)
 	struct in_addr     *lad;
 	u_short  lp;
 {
-	int nnetfd;
+	int nnetfd = 0;
 	int rr;
 	int     x, y;
 	errno = 0;
 
 	/* grab a socket; set opts */
-newskt:
-	if (o_udpmode)
-		nnetfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	else
-		nnetfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (nnetfd < 0)
-		nlog(1, "Can't get socket");
-	if (nnetfd == 0)	/* if stdin was closed this might *be* 0, */
-		goto newskt;	/* so grab another.  See text for why... */
+	while (nnetfd == 0) {
+		if (o_udpmode)
+			nnetfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+		else
+			nnetfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if (nnetfd < 0)
+			nlog(1, "Can't get socket");
+	}
+
 	x = 1;
 	rr = setsockopt(nnetfd, SOL_SOCKET, SO_REUSEADDR, &x, sizeof(x));
 	if (rr == -1)
@@ -1365,21 +1365,21 @@ main(argc, argv)
  */
 void
 nlog(doexit, fmt)
-        char *fmt;
+	char *fmt;
 {
-        va_list args;
+	va_list args;
 
-        if (o_verbose || doexit) {
-                va_start(args, fmt);
-                vfprintf(stderr, fmt, args);
-                if (h_errno)
+	if (o_verbose || doexit) {
+		va_start(args, fmt);
+		vfprintf(stderr, fmt, args);
+		if (h_errno)
                         herror(NULL);
-                else
-                        putc('\n', stderr);
-        }
+		else
+			putc('\n', stderr);
+	}
  
-        if (doexit)
-                exit(1);
+	if (doexit)
+		exit(1);
 }
 
 void
