@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.81 2000/11/23 16:50:51 itojun Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.82 2000/11/26 19:52:56 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -839,7 +839,7 @@ end_login()
 	}
 	pw = NULL;
 	setusercontext(NULL, getpwuid(0), (uid_t)0,
-	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES|LOGIN_SETUMASK);
+	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
 	logged_in = 0;
 	guest = 0;
 	dochroot = 0;
@@ -922,9 +922,9 @@ skip:
 		reply(550, "Can't set gid.");
 		return;
 	}
-	(void) umask(defumask);		/* may be overridden by login.conf */
+	(void) umask(defumask);
 	setusercontext(lc, pw, (uid_t)0,
-	    LOGIN_SETGROUP|LOGIN_SETPRIORITY|LOGIN_SETRESOURCES|LOGIN_SETUMASK);
+	    LOGIN_SETGROUP|LOGIN_SETPRIORITY|LOGIN_SETRESOURCES);
 
 	/* open wtmp before chroot */
 	ftpdlogwtmp(ttyline, pw->pw_name, remotehost);
