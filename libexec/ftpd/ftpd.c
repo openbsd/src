@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.122 2002/03/12 02:15:39 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.123 2002/03/12 02:22:33 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.122 2002/03/12 02:15:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.123 2002/03/12 02:22:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,6 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.122 2002/03/12 02:15:39 millert Exp 
 #include <arpa/inet.h>
 #include <arpa/telnet.h>
 
-#include <bsd_auth.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -119,6 +118,7 @@ static char rcsid[] = "$OpenBSD: ftpd.c,v 1.122 2002/03/12 02:15:39 millert Exp 
 #include <unistd.h>
 #include <util.h>
 #include <utmp.h>
+#include <bsd_auth.h>
 
 #if defined(TCPWRAPPERS)
 #include <tcpd.h>
