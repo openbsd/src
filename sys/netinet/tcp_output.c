@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.68 2004/05/31 20:04:44 brad Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.69 2004/06/05 11:56:50 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -765,6 +765,7 @@ send:
 		m->m_len = hdrlen;
 	}
 	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m->m_pkthdr.len = hdrlen + len;
 
 	if (!tp->t_template)
 		panic("tcp_output");
@@ -1009,7 +1010,6 @@ send:
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		m->m_pkthdr.len = hdrlen + len;
 		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
 			hdrlen - sizeof(struct ip6_hdr) + len);
 		break;
@@ -1101,7 +1101,6 @@ send:
 	 * to handle ttl and tos; we could keep them in
 	 * the template, but need a way to checksum without them.
 	 */
-	m->m_pkthdr.len = hdrlen + len;
 
 #ifdef TCP_ECN
 	/*
