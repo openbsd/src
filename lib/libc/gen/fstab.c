@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fstab.c,v 1.3 1996/08/19 08:22:51 tholo Exp $";
+static char rcsid[] = "$OpenBSD: fstab.c,v 1.4 1997/06/13 13:01:29 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -102,7 +102,8 @@ fstabscan()
 			if ((cp = strtok((char *)NULL, " \t\n")) != NULL)
 				_fs_fstab.fs_passno = atoi(cp);
 		}
-		strcpy(subline, _fs_fstab.fs_mntops);
+		stnrcpy(subline, _fs_fstab.fs_mntops, sizeof subline-1);
+		subline[sizeof subline-1] = '\0';
 		for (typexx = 0, cp = strtok(subline, ","); cp;
 		     cp = strtok((char *)NULL, ",")) {
 			if (strlen(cp) != 2)
