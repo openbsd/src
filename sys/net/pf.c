@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.21 2001/06/25 01:52:55 mickey Exp $ */
+/*	$OpenBSD: pf.c,v 1.22 2001/06/25 05:28:03 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -342,11 +342,11 @@ insert_state(struct state *state)
 	key.port[1] = state->ext.port;
 	/* sanity checks can be removed later, should never occur */
 	if (find_state(tree_lan_ext, &key) != NULL)
-		printf("packetfilter: ERROR! insert invalid\n");
+		printf("pf: ERROR! insert invalid\n");
 	else {
 		tree_insert(&tree_lan_ext, &key, state);
 		if (find_state(tree_lan_ext, &key) != state)
-			printf("packetfilter: ERROR! insert failed\n");
+			printf("pf: ERROR! insert failed\n");
 	}
 
 	key.proto   = state->proto;
@@ -355,11 +355,11 @@ insert_state(struct state *state)
 	key.addr[1] = state->gwy.addr;
 	key.port[1] = state->gwy.port;
 	if (find_state(tree_ext_gwy, &key) != NULL)
-		printf("packetfilter: ERROR! insert invalid\n");
+		printf("pf: ERROR! insert invalid\n");
 	else {
 		tree_insert(&tree_ext_gwy, &key, state);
 		if (find_state(tree_ext_gwy, &key) != state)
-			printf("packetfilter: ERROR! insert failed\n");
+			printf("pf: ERROR! insert failed\n");
 	}
 
 	state->next = statehead;
@@ -384,20 +384,20 @@ purge_expired_states(void)
 			key.port[1] = cur->ext.port;
 			/* sanity checks can be removed later */
 			if (find_state(tree_lan_ext, &key) != cur)
-				printf("packetfilter: ERROR! remove invalid\n");
+				printf("pf: ERROR! remove invalid\n");
 			tree_remove(&tree_lan_ext, &key);
 			if (find_state(tree_lan_ext, &key) != NULL)
-				printf("packetfilter: ERROR! remove failed\n");
+				printf("pf: ERROR! remove failed\n");
 			key.proto   = cur->proto;
 			key.addr[0] = cur->ext.addr;
 			key.port[0] = cur->ext.port;
 			key.addr[1] = cur->gwy.addr;
 			key.port[1] = cur->gwy.port;
 			if (find_state(tree_ext_gwy, &key) != cur)
-				printf("packetfilter: ERROR! remove invalid\n");
+				printf("pf: ERROR! remove invalid\n");
 			tree_remove(&tree_ext_gwy, &key);
 			if (find_state(tree_ext_gwy, &key) != NULL)
-				printf("packetfilter: ERROR! remove failed\n");
+				printf("pf: ERROR! remove failed\n");
 			(prev ? prev->next : statehead) = cur->next;
 			pool_put(&pf_state_pl, cur);
 			cur = (prev ? prev->next : statehead);
@@ -545,7 +545,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			status.running = 1;
 			status.states = states;
 			status.since = pftv.tv_sec;
-			printf("packetfilter: started\n");
+			printf("pf: started\n");
 		}
 		break;
 
@@ -554,7 +554,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		else {
 			status.running = 0;
-			printf("packetfilter: stopped\n");
+			printf("pf: stopped\n");
 		}
 		break;
 
@@ -1015,7 +1015,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, int off, struct ip *h,
 		u_int32_t seq = ntohl(th->th_seq);
 		u_int16_t len = h->ip_len - off - (th->th_off << 2);
 
-		printf("packetfilter: @%u", mnr);
+		printf("pf: @%u", mnr);
 		printf(" %s %s", rm->action ? "block" : "pass",
 		    direction ? "in" : "out");
 		printf(" on %s proto tcp", ifp->if_xname);
@@ -1154,7 +1154,7 @@ pf_test_udp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	}
 
 	if (rm != NULL && rm->log) {
-		printf("packetfilter: @%u", mnr);
+		printf("pf: @%u", mnr);
 		printf(" %s %s", rm->action ? "block" : "pass", direction ? "in" :
 		    "out");
 		printf(" on %s proto udp", ifp->if_xname);
@@ -1261,7 +1261,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, int off, struct ip *h,
 	}
 
 	if (rm != NULL && rm->log) {
-		printf("packetfilter: @%u", mnr);
+		printf("pf: @%u", mnr);
 		printf(" %s %s", rm->action ? "block" : "pass", direction ? "in" :
 		    "out");
 		printf(" on %s proto icmp", ifp->if_xname);
@@ -1413,7 +1413,7 @@ pf_test_state_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			}
 
 		} else {
-			printf("packetfilter: BAD state: ");
+			printf("pf: BAD state: ");
 			print_state(direction, s);
 			print_flags(th->th_flags);
 			printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
@@ -1548,7 +1548,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 		off += 8;	/* offset of h2 in mbuf chain */
 		h2 = pull_hdr(ifp, m, 0, off, sizeof(*h2), h, &dummy);
 		if (!h2) {
-			printf("packetfilter: ICMP error message too short\n");
+			printf("pf: ICMP error message too short\n");
 			return (NULL);
 		}
 
@@ -1566,7 +1566,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			th = pull_hdr(ifp, m, off, off2, sizeof(*th), h2,
 			    &dummy);
 			if (!th) {
-				printf("packetfilter: "
+				printf("pf: "
 				    "ICMP error message too short\n");
 				return NULL;
 			}
@@ -1588,7 +1588,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			if ((src->seqhi >= src->seqlo ?
 			    (seq < src->seqlo) || (seq > src->seqhi) :
 			    (seq < src->seqlo) && (seq > src->seqhi))) {
-				printf("packetfilter: BAD ICMP state: ");
+				printf("pf: BAD ICMP state: ");
 				print_state(direction, s);
 				print_flags(th->th_flags);
 				printf(" seq=%lu\n", seq);
@@ -1622,8 +1622,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			uh = pull_hdr(ifp, m, off, off2, sizeof(*uh), h2,
 			    &dummy);
 			if (!uh) {
-				printf("packetfilter: "
-				    "ICMP error message too short\n");
+				printf("pf: ICMP error message too short\n");
 				return NULL;
 			}
 
@@ -1658,7 +1657,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 			break;
 		}
 		default:
-			printf("packetfilter: ICMP error message for bad proto\n");
+			printf("pf: ICMP error message for bad proto\n");
 			return (NULL);
 		}
 		return (NULL);
@@ -1680,7 +1679,7 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
 
 	/* sanity check */
 	if (ipoff > off) {
-		printf("packetfilter: assumption failed on header location");
+		printf("pf: assumption failed on header location");
 		*action = PF_DROP;
 		return NULL;
 	}
@@ -1689,14 +1688,14 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
 			*action = PF_PASS;
 		else {
 			*action = PF_DROP;
-			printf("packetfilter: dropping following fragment");
+			printf("pf: dropping following fragment");
 			print_ip(ifp, h);
 		}
 		return (NULL);
 	}
 	if ((*m)->m_pkthdr.len < off + len || ipoff + h->ip_len < off + len) {
 		*action = PF_DROP;
-		printf("packetfilter: dropping short packet");
+		printf("pf: dropping short packet");
 		print_ip(ifp, h);
 		return (NULL);
 	}
@@ -1706,7 +1705,7 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
 	 */
 	n = m_pulldown((*m), off, len, &newoff);
 	if (!n) {
-		printf("packetfilter: pullup proto header failed\n");
+		printf("pf: pullup proto header failed\n");
 		*action = PF_DROP;
 		*m = NULL;
 		return (NULL);
@@ -1741,7 +1740,7 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf **m)
 	/* ensure we have at least the complete ip header pulled up */
 	if ((*m)->m_len < off)
 		if ((*m = m_pullup(*m, off)) == NULL) {
-			printf("packetfilter: pullup ip header failed\n");
+			printf("pf: pullup ip header failed\n");
 			action = PF_DROP;
 			goto done;
 		}
