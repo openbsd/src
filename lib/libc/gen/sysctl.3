@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.78 2002/02/10 22:09:24 nate Exp $
+.\"	$OpenBSD: sysctl.3,v 1.79 2002/02/23 07:07:37 millert Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -304,6 +304,7 @@ information.
 .It Dv KERN_SECURELVL No "	integer	raise only"
 .It Dv KERN_SOMINCONN No "	integer	yes"
 .It Dv KERN_SOMAXCONN No "	integer	yes"
+.It Dv KERN_SYSVIPC_INFO No "	node	not applicable"
 .It Dv KERN_SYSVMSG No "	integer	no"
 .It Dv KERN_SYSVSEM No "	integer	no"
 .It Dv KERN_SYSVSHM No "	integer	no"
@@ -531,6 +532,33 @@ Lower bound on the number of half-open connections a process can allow
 to be associated with a socket, using
 .Xr listen 2 .
 The default value is 80.
+.It Li KERN_SYSVIPC_INFO
+Return System V style IPC configuration and run-time information.
+The third level name selects the System V style IPC facility.
+.Bl -column "KERN_SYSVIPC_MSG_INFOXXX" "struct shm_sysctl_infoXXX" -offset indent
+.It Sy Pa Third level name	Type
+.It KERN\_SYSVIPC\_MSG\_INFO	struct msg_sysctl_info
+.It KERN\_SYSVIPC\_SEM\_INFO	struct sem_sysctl_info
+.It KERN\_SYSVIPC\_SHM\_INFO	struct shm_sysctl_info
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li KERN_SYSVIPC_MSG_INFO
+Return information on the System V style message facility.  The
+.Sy msg_sysctl_info
+structure is defined in
+.Aq Pa sys/msg.h .
+.It Li KERN_SYSVIPC_SEM_INFO
+Return information on the System V style semaphore facility.  The
+.Sy sem_sysctl_info
+structure is defined in
+.Aq Pa sys/sem.h .
+.It Li KERN_SYSVIPC_SHM_INFO
+Return information on the System V style shared memory facility.  The
+.Sy shm_sysctl_info
+structure is defined in
+.Aq Pa sys/shm.h .
+.El
 .It Dv KERN_SYSVMSG
 Returns 1 if System V style message queue functionality is available on this
 system, otherwise 0.
