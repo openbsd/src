@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.21 1998/08/17 21:33:05 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.22 1998/08/18 23:03:32 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.21 1998/08/17 21:33:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.22 1998/08/18 23:03:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -531,6 +531,6 @@ bread(rfd, off, buf, cnt)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: df [-iklnP] [-t type] [file | file_system ...]\n");
+	(void)fprintf(stderr, "usage: df [-hiklnP] [-t type] [file | file_system ...]\n");
 	exit(1);
 }
