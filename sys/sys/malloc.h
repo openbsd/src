@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.31 2001/01/02 17:22:46 angelos Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.32 2001/01/03 19:19:52 angelos Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -38,6 +38,26 @@
 
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
+
+#define KERN_MALLOC_BUCKETS   1
+#define KERN_MALLOC_CALLS     2
+#define KERN_MALLOC_ALLOC     3
+#define KERN_MALLOC_FREE      4
+#define KERN_MALLOC_ELEMENTS  5
+#define KERN_MALLOC_HIWAT     6
+#define KERN_MALLOC_COULDFREE 7
+#define KERN_MALLOC_MAXID     8
+
+#define CTL_KERN_MALLOC_NAMES { \
+           {0, 0 }, \
+           { "buckets", CTLTYPE_STRING }, \
+           { "calls", CTLTYPE_QUAD }, \
+           { "total_allocated", CTLTYPE_QUAD }, \
+           { "total_free", CTLTYPE_QUAD }, \
+           { "elements", CTLTYPE_QUAD }, \
+           { "high_watermark", CTLTYPE_QUAD }, \
+           { "could_free", CTLTYPE_QUAD }, \
+}
 
 /*
  * flags to malloc
@@ -327,14 +347,14 @@ struct kmemusage {
  * Set of buckets for each size of memory block that is retained
  */
 struct kmembuckets {
-	caddr_t kb_next;	/* list of free blocks */
-	caddr_t kb_last;	/* last free block */
-	u_long	kb_calls;	/* total calls to allocate this size */
-	long	kb_total;	/* total number of blocks allocated */
-	long	kb_totalfree;	/* # of free elements in this bucket */
-	long	kb_elmpercl;	/* # of elements in this sized allocation */
-	long	kb_highwat;	/* high water mark */
-	long	kb_couldfree;	/* over high water mark and could free */
+	caddr_t   kb_next;	/* list of free blocks */
+	caddr_t   kb_last;	/* last free block */
+	u_int64_t kb_calls;	/* total calls to allocate this size */
+	u_int64_t kb_total;	/* total number of blocks allocated */
+	u_int64_t kb_totalfree;	/* # of free elements in this bucket */
+	u_int64_t kb_elmpercl;	/* # of elements in this sized allocation */
+	u_int64_t kb_highwat;	/* high water mark */
+	u_int64_t kb_couldfree;	/* over high water mark and could free */
 };
 
 #ifdef _KERNEL
@@ -426,6 +446,6 @@ extern struct kmembuckets bucket[];
 
 extern void *malloc __P((unsigned long size, int type, int flags));
 extern void free __P((void *addr, int type));
-
+extern int sysctl_malloc __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */
