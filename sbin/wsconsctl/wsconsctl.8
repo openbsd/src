@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.16 2003/11/07 09:00:43 jmc Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.17 2004/06/23 07:37:23 david Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,11 +50,9 @@
 .Ar name ...
 .Nm wsconsctl
 .Op Fl n
-.Fl w
 .Ar name=value ...
 .Nm wsconsctl
 .Op Fl n
-.Fl w
 .Ar name+=value ...
 .Sh DESCRIPTION
 The
@@ -70,7 +68,7 @@ The options are as follows:
 Print all device variables and their current values.
 .It Fl n
 Suppress printing of the variable name in the output.
-.It Fl w Ar name=value
+.It Ar name=value
 Attempt to set the specified variable
 .Ar name
 to
@@ -132,7 +130,7 @@ keyboard/mouse/display definitions
 .Sh EXAMPLES
 Set a UK keyboard encoding:
 .Pp
-.Dl # wsconsctl -w keyboard.encoding=uk
+.Dl # wsconsctl keyboard.encoding=uk
 .Pp
 Modify the current keyboard encoding so that, when the
 .Ar Caps Lock
@@ -144,13 +142,13 @@ to the
 .Ar /usr/include/dev/wscons/wsksymdef.h
 file.
 .Pp
-.Dl # wsconsctl -w keyboard.map+="keysym Caps_Lock = Control_L"
+.Dl # wsconsctl keyboard.map+="keysym Caps_Lock = Control_L"
 .Pp
 Assign the
 .Ar Right Alt
 key to be the group modifier (layout is changed while the key is pressed):
 .Pp
-.Dl # wsconsctl -w keyboard.map+="keycode 184=Mode_switch"
+.Dl # wsconsctl keyboard.map+="keycode 184=Mode_switch"
 .Pp
 Assign the
 .Ar Right Control
@@ -165,7 +163,7 @@ and
 .Ar Shift
 behaviour.
 .Pp
-.Dl # wsconsctl -w keyboard.map+="keycode 157=Mode_Lock"
+.Dl # wsconsctl keyboard.map+="keycode 157=Mode_Lock"
 .Pp
 Set a US keyboard encoding, with the
 .Ar Caps Lock
@@ -180,15 +178,15 @@ by the
 .Ar Caps Lock
 key is enough \- see the previous example for details.
 .Pp
-.Dl # wsconsctl -w keyboard.encoding=us.swapctrlcaps
+.Dl # wsconsctl keyboard.encoding=us.swapctrlcaps
 .Pp
 Set the bell pitch to be 1200:
 .Pp
-.Dl # wsconsctl -w keyboard.bell.pitch=1200
+.Dl # wsconsctl keyboard.bell.pitch=1200
 .Pp
 Add 200 to the current pitch of the bell:
 .Pp
-.Dl # wsconsctl -w keyboard.bell.pitch+=200
+.Dl # wsconsctl keyboard.bell.pitch+=200
 .Sh SEE ALSO
 .Xr pckbd 4 ,
 .Xr wscons 4 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.13 2003/07/10 00:00:58 david Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.14 2004/06/23 07:37:23 david Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -83,7 +83,7 @@ usage(char *msg)
 
 	fprintf(stderr,
 	    "usage: %s [-n] name ...\n"
-	    "       %s [-n] -w name=value ...\n"
+	    "       %s [-n] name=value ...\n"
 	    "       %s [-n] -a\n", __progname,
 		__progname, __progname);
 
@@ -94,13 +94,13 @@ int
 main(int argc, char *argv[])
 {
 	int i, ch, error;
-	int aflag, wflag;
+	int aflag;
 	char *sep, *p;
 	struct vartypesw *sw;
 	struct field *f;
 	int do_merge;
 
-	error = aflag = wflag = 0;
+	error = aflag = 0;
 	sw = NULL;
 	sep = "=";
 
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 			sep = NULL;
 			break;
 		case 'w':
-			wflag = 1;
+			/* compat */
 			break;
 		default:
 			usage(NULL);
@@ -125,8 +125,6 @@ main(int argc, char *argv[])
 
 	if (argc > 0 && aflag != 0)
 		usage("excess arguments after -a");
-	if (aflag != 0 && wflag != 0)
-		usage("only one of -a or -w may be given");
 
 	if (aflag != 0) {
 		for (sw = typesw; sw->name; sw++) {
@@ -151,52 +149,9 @@ main(int argc, char *argv[])
 					pr_field(sw->name, f, sep);
 		}
 	} else if (argc > 0) {
-		if (wflag != 0)
-			for (i = 0; i < argc; i++) {
-				p = strchr(argv[i], '=');
-				if (p == NULL) {
-					warnx("'=' not found");
-					continue;
-				}
-				if (p > argv[i] &&
-				    (*(p - 1) == '+' || *(p - 1) == '-')) {
-					do_merge = *(p - 1);
-					*(p - 1) = '\0';
-				} else
-					do_merge = 0;
-				*p++ = '\0';
-				sw = tab_by_name(argv[i]);
-				if (!sw)
-					continue;
-				if (sw->fd < 0 &&
-				    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
-				    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
-					warn("open: %s", sw->file);
-					error = 1;
-					continue;
-				}
-				f = field_by_name(sw->field_tab, argv[i]);
-				if (f->flags & FLG_DEAD)
-					continue;
-				if ((f->flags & FLG_RDONLY) != 0) {
-					warnx("%s: read only", argv[i]);
-					continue;
-				}
-				if (do_merge || f->flags & FLG_INIT) {
-					if ((f->flags & FLG_MODIFY) == 0)
-						errx(1, "%s: can only be set",
-						     argv[i]);
-					f->flags |= FLG_GET;
-					(*sw->getval)(sw->name, sw->fd);
-					f->flags &= ~FLG_GET;
-				}
-				rd_field(f, p, do_merge);
-				f->flags |= FLG_SET;
-				(*sw->putval)(sw->name, sw->fd);
-				f->flags &= ~FLG_SET;
-			}
-		else
-			for (i = 0; i < argc; i++) {
+		for (i = 0; i < argc; i++) {
+			p = strchr(argv[i], '=');
+			if (p == NULL) {
 				sw = tab_by_name(argv[i]);
 				if (!sw)
 					continue;
@@ -217,7 +172,45 @@ main(int argc, char *argv[])
 				f->flags |= FLG_GET;
 				(*sw->getval)(sw->name, sw->fd);
 				pr_field(sw->name, f, sep);
+				continue;
 			}
+			if (p > argv[i] &&
+			    (*(p - 1) == '+' || *(p - 1) == '-')) {
+				do_merge = *(p - 1);
+				*(p - 1) = '\0';
+			} else
+				do_merge = 0;
+			*p++ = '\0';
+			sw = tab_by_name(argv[i]);
+			if (!sw)
+				continue;
+			if (sw->fd < 0 &&
+			    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
+			    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
+				warn("open: %s", sw->file);
+				error = 1;
+				continue;
+			}
+			f = field_by_name(sw->field_tab, argv[i]);
+			if (f->flags & FLG_DEAD)
+				continue;
+			if ((f->flags & FLG_RDONLY) != 0) {
+				warnx("%s: read only", argv[i]);
+				continue;
+			}
+			if (do_merge || f->flags & FLG_INIT) {
+				if ((f->flags & FLG_MODIFY) == 0)
+					errx(1, "%s: can only be set",
+					     argv[i]);
+				f->flags |= FLG_GET;
+				(*sw->getval)(sw->name, sw->fd);
+				f->flags &= ~FLG_GET;
+			}
+			rd_field(f, p, do_merge);
+			f->flags |= FLG_SET;
+			(*sw->putval)(sw->name, sw->fd);
+			f->flags &= ~FLG_SET;
+		}
 	} else
 		usage(NULL);
 
