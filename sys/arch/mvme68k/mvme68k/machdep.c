@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2001/08/12 22:59:37 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.48 2001/08/12 23:18:37 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1169,24 +1169,6 @@ int len;
 	}
 	return (nbuf);
 }
-
-#ifdef STACKCHECK
-char oflowmsg[] = "k-stack overflow";
-char uflowmsg[] = "k-stack underflow";
-
-badkstack(oflow, fr)
-int oflow;
-struct frame fr;
-{
-	extern char kstackatbase[];
-
-	printf("%s: sp should be %x\n", 
-			 oflow ? oflowmsg : uflowmsg,
-			 kstackatbase - (exframesize[fr.f_format] + 8));
-	regdump(&fr, 0);
-	panic(oflow ? oflowmsg : uflowmsg);
-}
-#endif
 
 /*
  * cpu_exec_aout_makecmds():
