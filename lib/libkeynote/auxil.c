@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.1 2000/01/25 09:08:11 angelos Exp $ */
+/* $OpenBSD: auxil.c,v 1.2 2000/01/30 06:32:02 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -505,9 +505,6 @@ keynote_free_assertion(struct assertion *as)
     free(as);
 }
 
-/*
- * Taken from "Compiler Design in C" by Aho.
- */
 u_int 
 keynote_stringhash(char *name, u_int size)
 {
@@ -520,8 +517,8 @@ keynote_stringhash(char *name, u_int size)
     for (; *name; name++) 
     {
         hash_val = (hash_val << 2) + *name;
-        if ((i = hash_val & 0x3fff))
-	  hash_val = ((hash_val ^ (i >> 12)) & ~0x3fff);
+        if (i = hash_val & 0x3fff)
+	  hash_val = ((hash_val ^ (i >> 12)) & 0x3fff);
     }
 
     return hash_val % size;
