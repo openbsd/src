@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.39 2003/03/28 15:03:41 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.40 2003/05/31 21:01:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -55,6 +55,7 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <dev/sbus/cgsixreg.h>
+#include <dev/ic/bt458reg.h>
 
 struct wsscreen_descr cgsix_stdscreen = {
 	"std",
@@ -529,15 +530,21 @@ int
 cgsix_updatecursor(struct cgsix_softc *sc, u_int which)
 {
 	if (which & WSDISPLAY_CURSOR_DOCMAP) {
-		BT_WRITE(sc, BT_ADDR, 1 << 24);
-		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_fg & 0x00ff0000)>> 16) << 24);
-		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_fg & 0x0000ff00)>> 8) << 24);
-		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_fg & 0x000000ff)>> 0) << 24);
+		BT_WRITE(sc, BT_ADDR, BT_OV1 << 24);
+		BT_WRITE(sc, BT_OMAP,
+		    ((sc->sc_curs_fg & 0x00ff0000) >> 16) << 24);
+		BT_WRITE(sc, BT_OMAP,
+		    ((sc->sc_curs_fg & 0x0000ff00) >> 8) << 24);
+		BT_WRITE(sc, BT_OMAP,
+		    ((sc->sc_curs_fg & 0x000000ff) >> 0) << 24);
 
-		BT_WRITE(sc, BT_ADDR, 3 << 24);
-		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_bg & 0x00ff0000)>> 16) << 24);
-		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_bg & 0x0000ff00)>> 8) << 24);
-		BT_WRITE(sc, BT_OMAP, ((sc->sc_curs_bg & 0x000000ff)>> 0) << 24);
+		BT_WRITE(sc, BT_ADDR, BT_OV3 << 24);
+		BT_WRITE(sc, BT_OMAP,
+		    ((sc->sc_curs_bg & 0x00ff0000) >> 16) << 24);
+		BT_WRITE(sc, BT_OMAP,
+		    ((sc->sc_curs_bg & 0x0000ff00) >> 8) << 24);
+		BT_WRITE(sc, BT_OMAP,
+		    ((sc->sc_curs_bg & 0x000000ff) >> 0) << 24);
 	}
 
 	if (which & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOHOT)) {
@@ -552,15 +559,16 @@ cgsix_updatecursor(struct cgsix_softc *sc, u_int which)
 	if (which & WSDISPLAY_CURSOR_DOCUR) {
 		u_int32_t c;
 
+		/* Enable or disable the cursor overlay planes */
 		if (sc->sc_curs_enabled) {
-			BT_WRITE(sc, BT_ADDR, 6 << 24);
+			BT_WRITE(sc, BT_ADDR, BT_CR << 24);
 			c = BT_READ(sc, BT_CTRL);
-			c |= 3 << 24;
+			c |= (BTCR_DISPENA_OV0 | BTCR_DISPENA_OV1) << 24;
 			BT_WRITE(sc, BT_CTRL, c);
 		} else {
-			BT_WRITE(sc, BT_ADDR, 6 << 24);
+			BT_WRITE(sc, BT_ADDR, BT_CR << 24);
 			c = BT_READ(sc, BT_CTRL);
-			c &= ~(3 << 24);
+			c &= ~((BTCR_DISPENA_OV0 | BTCR_DISPENA_OV1) << 24);
 			BT_WRITE(sc, BT_CTRL, c);
 			THC_WRITE(sc, CG6_THC_CURSXY, THC_CURSOFF);
 		}
@@ -821,9 +829,10 @@ cgsix_reset(sc, fhcrev)
 		FHC_WRITE(sc, fhc);
 	}
 
-	/* enable cursor in brooktree DAC */
-	BT_WRITE(sc, BT_ADDR, 0x6 << 24);
-	BT_WRITE(sc, BT_CTRL, BT_READ(sc, BT_CTRL) | (0x3 << 24));
+	/* enable cursor overlays in brooktree DAC */
+	BT_WRITE(sc, BT_ADDR, BT_CR << 24);
+	BT_WRITE(sc, BT_CTRL, BT_READ(sc, BT_CTRL) |
+	    ((BTCR_DISPENA_OV1 | BTCR_DISPENA_OV0) << 24));
 }
 
 void
@@ -832,27 +841,33 @@ cgsix_hardreset(sc)
 {
 	u_int32_t fhc, rev;
 
-	/* setup brooktree */
-	BT_WRITE(sc, BT_ADDR, 0x04 << 24);
+	/* enable all of the bit planes */
+	BT_WRITE(sc, BT_ADDR, BT_RMR << 24);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
 	BT_WRITE(sc, BT_CTRL, 0xff << 24);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 
-	BT_WRITE(sc, BT_ADDR, 0x05 << 24);
+	/* no bit planes should blink */
+	BT_WRITE(sc, BT_ADDR, BT_BMR << 24);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
 	BT_WRITE(sc, BT_CTRL, 0x00 << 24);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 
-	BT_WRITE(sc, BT_ADDR, 0x06 << 24);
+	/*
+	 * enable the RAMDAC, disable blink, disable overlay 0 and 1,
+	 * use 4:1 multiplexor.
+	 */
+	BT_WRITE(sc, BT_ADDR, BT_CR << 24);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
-	BT_WRITE(sc, BT_CTRL, 0x70 << 24);
+	BT_WRITE(sc, BT_CTRL,
+	    (BTCR_MPLX_4 | BTCR_RAMENA | BTCR_BLINK_6464) << 24);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 
-	BT_WRITE(sc, BT_ADDR, 0x07 << 24);
+	/* disable the D/A read pins */
+	BT_WRITE(sc, BT_ADDR, BT_CTR << 24);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
 	BT_WRITE(sc, BT_CTRL, 0x00 << 24);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
-
 
 	/* configure thc */
 	THC_WRITE(sc, CG6_THC_MISC, THC_MISC_RESET | THC_MISC_INTR |

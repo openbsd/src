@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.28 2003/03/28 03:18:03 jason Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.29 2003/05/31 21:01:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -54,6 +54,7 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
+#include <dev/ic/bt458reg.h>
 
 #define	CGTHREE_CTRL_OFFSET	0x400000
 #define	CGTHREE_CTRL_SIZE	(sizeof(u_int32_t) * 8)
@@ -618,24 +619,32 @@ cgthree_reset(sc)
 		}
 	}
 
-	BT_WRITE(sc, BT_ADDR, 0x04);
+	/* enable all the bit planes */
+	BT_WRITE(sc, BT_ADDR, BT_RMR);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
 	BT_WRITE(sc, BT_CTRL, 0xff);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 
-	BT_WRITE(sc, BT_ADDR, 0x05);
+	/* no plane should blink */
+	BT_WRITE(sc, BT_ADDR, BT_BMR);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
 	BT_WRITE(sc, BT_CTRL, 0x00);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 
-	BT_WRITE(sc, BT_ADDR, 0x06);
+	/*
+	 * enable the RAMDAC, disable blink, disable overlay 0 and 1,
+	 * use 4:1 multiplexor.
+	 */
+	BT_WRITE(sc, BT_ADDR, BT_CR);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
-	BT_WRITE(sc, BT_CTRL, 0x70);
+	BT_WRITE(sc, BT_CTRL,
+	    (BTCR_MPLX_4 | BTCR_RAMENA | BTCR_BLINK_6464) << 24);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 
-	BT_WRITE(sc, BT_ADDR, 0x07);
+	/* disable the D/A read pins */
+	BT_WRITE(sc, BT_ADDR, BT_CTR << 24);
 	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
-	BT_WRITE(sc, BT_CTRL, 0x00);
+	BT_WRITE(sc, BT_CTRL, 0x00 << 24);
 	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
 }
 
