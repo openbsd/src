@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.36 2003/11/26 22:42:02 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.37 2003/12/20 08:59:03 jmc Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -339,7 +339,7 @@ Invoke the serial console at every boot:
 .Pp
 Boot the kernel named
 .Pa /bsd
-from the second IDE disk in
+from the second hard disk in
 .Dq User Kernel Configuration
 mode (see
 .Xr boot_config 8 ) .
@@ -356,6 +356,7 @@ option.
 .Xr gzip 1 ,
 .Xr autoconf 4 ,
 .Xr ddb 4 ,
+.Xr biosboot 8 ,
 .Xr boot_config 8 ,
 .Xr boot_i386 8 ,
 .Xr fdisk 8 ,
@@ -365,7 +366,7 @@ option.
 RFC 1950 describes the zlib library interface.
 .Pp
 The official home page for the version of zlib used in this
-operating system see http://quest.jpl.nasa.gov/zlib/.
+operating system is at http://quest.jpl.nasa.gov/zlib/.
 .Sh HISTORY
 This program was written by Michael Shalayeff for
 .Ox 2.1 .
