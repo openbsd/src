@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.20 2003/06/08 20:11:45 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.21 2003/06/08 22:42:27 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -436,7 +436,11 @@ dopatsubst(const char *argv[], int argc)
 	/* special case: empty regexp */
 	if (argv[3][0] == '\0') {
 		const char *s;
-		size_t len = strlen(argv[4]);
+		size_t len;
+		if (argv[4] && argc > 4) 
+			len = strlen(argv[4]);
+		else
+			len = 0;
 		for (s = argv[2]; *s != '\0'; s++) {
 			addchars(argv[4], len);
 			addchar(*s);
@@ -453,7 +457,7 @@ dopatsubst(const char *argv[], int argc)
 		
 		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1));
 		do_subst(argv[2], &re, 
-		    argc != 4 && argv[4] != NULL ? argv[4] : "", pmatch);
+		    argc > 4 && argv[4] != NULL ? argv[4] : "", pmatch);
 		free(pmatch);
 		regfree(&re);
 	}
