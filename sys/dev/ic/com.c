@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.24 1996/10/22 01:11:50 downsj Exp $	*/
+/*	$OpenBSD: com.c,v 1.25 1996/10/30 15:01:49 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -165,8 +165,6 @@ struct cfattach com_commulti_ca = {
 struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
 };
-
-void cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
 
 #ifndef CONSPEED
 #define	CONSPEED B9600

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.3 1996/05/10 12:37:14 deraadt Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.4 1996/10/30 15:01:50 niklas Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ struct commulti_attach_args {
 };
 
 int comprobe1 __P((bus_chipset_tag_t, bus_io_handle_t, int));
+void cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
 int comintr __P((void *));
 
 extern int comconsaddr;
