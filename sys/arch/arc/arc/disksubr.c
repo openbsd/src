@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.7 1997/01/14 00:46:42 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.8 1997/01/24 11:17:12 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -161,6 +161,8 @@ readdisklabel(dev, strat, lp, osdep)
 		 * a fake label in which m/n/o/p are MBR partitions 0/1/2/3
 		 */
 		for (dp2=dp, i=0; i < NDOSPART; i++, dp2++) {
+			if (dp2->dp_start + dp2->dp_size > lp->d_nsectors)
+				continue;
 			lp->d_partitions[12+i].p_size = dp2->dp_size;
 			lp->d_partitions[12+i].p_offset = dp2->dp_start;
 			for (ip = fat_types; *ip != -1; ip++) {
