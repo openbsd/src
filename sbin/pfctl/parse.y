@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.69 2002/05/23 09:47:20 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.70 2002/05/24 13:48:44 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -543,35 +543,48 @@ address		: '(' STRING ')'		{
 					YYERROR;
 				}
 			} else {
-				struct hostent *hp;
-				char **a;
 				struct node_host *h = NULL, *n;
+				struct addrinfo hints, *res0, *res;
+				int error;
 
-				hp = gethostbyname2($1, AF_INET);
-				if (hp == NULL) {
-					hp = gethostbyname2($1, AF_INET6);
-					if (hp == NULL) {
-						yyerror("cannot resolve %s", $1);
-						YYERROR;
-					}
+				memset(&hints, 0, sizeof(hints));
+				hints.ai_family = PF_UNSPEC;
+				hints.ai_socktype = SOCK_STREAM; /* DUMMY */
+				error = getaddrinfo($1, NULL, &hints, &res0);
+				if (error) {
+					yyerror("cannot resolve %s: %s",
+					    $1, gai_strerror(error));
+					YYERROR;
 				}
-				for (a = hp->h_addr_list; *a; ++a) {
-					if (!((hp->h_addrtype == AF_INET &&
-					    hp->h_length == 4) ||
-					    (hp->h_addrtype == AF_INET6 &&
-					    hp->h_length == 16)))
-						err(1, "address: invalid");
+				for (res = res0; res; res = res->ai_next) {
+					if (res->ai_family != AF_INET &&
+					    res->ai_family != AF_INET6)
+						continue;
 					n = calloc(1, sizeof(struct node_host));
 					if (n == NULL)
 						err(1, "address: calloc");
-					n->af = hp->h_addrtype;
+					n->af = res->ai_family;
 					n->addr.addr_dyn = NULL;
-					memcpy(&n->addr.addr, *a, hp->h_length);
+					if (res->ai_family == AF_INET)
+						memcpy(&n->addr.addr,
+						&((struct sockaddr_in *)
+						    res->ai_addr)
+						    ->sin_addr.s_addr,
+						sizeof(struct in_addr));
+					else
+						memcpy(&n->addr.addr,
+						&((struct sockaddr_in6 *)
+						    res->ai_addr)
+						    ->sin6_addr.s6_addr,
+						sizeof(struct in6_addr));
 					n->next = h;
 					h = n;
 				}
-				if (h == NULL)
-					err(1, "address: empty list");
+				freeaddrinfo(res0);
+				if (h == NULL) {
+					yyerror("no IP address found for %s", $1);
+					YYERROR;
+				}
 				$$ = h;
 			}
 		}
@@ -1567,7 +1580,9 @@ struct keywords {
 	do { \
 		T *n = r; \
 		while (n != NULL) { \
-			C; \
+			do { \
+				C; \
+			} while (0); \
 			n = n->next; \
 		} \
 	} while (0)
@@ -1580,7 +1595,7 @@ expand_rule(struct pf_rule *r,
     struct node_uid *uids, struct node_gid *gids,
     struct node_icmp *icmp_types)
 {
-	int nomatch = 0;
+	int af = r->af, nomatch = 0, added = 0;
 
 	CHECK_ROOT(struct node_if, interfaces);
 	CHECK_ROOT(struct node_proto, protos);
@@ -1601,6 +1616,17 @@ expand_rule(struct pf_rule *r,
 	LOOP_THROUGH(struct node_port, dst_port, dst_ports,
 	LOOP_THROUGH(struct node_uid, uid, uids,
 	LOOP_THROUGH(struct node_gid, gid, gids,
+
+		r->af = af;
+		if ((r->af && src_host->af && r->af != src_host->af) ||
+		    (r->af && dst_host->af && r->af != dst_host->af) ||
+		    (src_host->af && dst_host->af &&
+		    src_host->af != dst_host->af))
+			continue;
+		if (!r->af && src_host->af)
+			r->af = src_host->af;
+		else if (!r->af && dst_host->af)
+			r->af = dst_host->af;
 
 		memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 		r->proto = proto->proto;
@@ -1627,29 +1653,6 @@ expand_rule(struct pf_rule *r,
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;
 
-		if ((src_host->af && dst_host->af && r->af) &&
-		    (src_host->af != dst_host->af || src_host->af != r->af ||
-			    dst_host->af != r->af)) {
-			yyerror("address family mismatch");
-			nomatch++;
-		} else if ((src_host->af && dst_host->af) &&
-		    (src_host->af != dst_host->af)) {
-			yyerror("address family mismatch");
-			nomatch++;
-		} else if ((src_host->af && r->af) &&
-		    (src_host->af != r->af)) {
-			yyerror("address family mismatch");
-			nomatch++;
-		} else if ((dst_host->af && r->af) &&
-		    (dst_host->af != r->af)) {
-			yyerror("address family mismatch");
-			nomatch++;
-		} else if (src_host->af && !r->af) {
-			r->af = src_host->af;
-		} else if (dst_host->af && !r->af) {
-			r->af= dst_host->af;
-		}
-
 		if (icmp_type->proto && r->proto != icmp_type->proto) {
 			yyerror("icmp-type mismatch");
 			nomatch++;
@@ -1660,6 +1663,7 @@ expand_rule(struct pf_rule *r,
 		else {
 			r->nr = pf->rule_nr++;
 			pfctl_add_rule(pf, r);
+			added++;
 		}
 
 	)))))))));
@@ -1673,6 +1677,9 @@ expand_rule(struct pf_rule *r,
 	FREE_LIST(struct node_uid, uids);
 	FREE_LIST(struct node_gid, gids);
 	FREE_LIST(struct node_icmp, icmp_types);
+
+	if (!added)
+		yyerror("rule expands to no valid address family combination");
 }
 
 #undef FREE_LIST
