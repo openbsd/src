@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.10 2000/01/11 19:45:01 fgsch Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.11 2000/01/15 09:23:14 fgsch Exp $	*/
 
 /*-
  *
@@ -307,8 +307,8 @@ int spxrexmtthresh = 3;
  */
 int
 spx_reass(cb, si)
-register struct spxpcb *cb;
-register struct spx *si;
+	register struct spxpcb *cb;
+	register struct spx *si;
 {
 	register struct spx_q	*q;
 	register struct mbuf	*m;
@@ -653,7 +653,7 @@ spx_quench(ipxp)
 #ifdef notdef
 int
 spx_fixmtu(ipxp)
-register struct ipxpcb *ipxp;
+	register struct ipxpcb *ipxp;
 {
 	register struct spxpcb *cb = (struct spxpcb *)(ipxp->ipxp_ppcb);
 	register struct mbuf *m;
@@ -1088,7 +1088,8 @@ send:
 			spx_trace(SA_OUTPUT, cb->s_state, cb, si, 0);
 
 		if (so->so_options & SO_DONTROUTE)
-			error = ipx_outputfl(m, (struct route *)0, IPX_ROUTETOIF);
+			error = ipx_outputfl(m, (struct route *)0,
+			    IPX_ROUTETOIF);
 		else
 			error = ipx_outputfl(m, &cb->s_ipxpcb->ipxp_route, 0);
 	}
@@ -1132,7 +1133,7 @@ spx_setpersist(cb)
 		cb->s_rxtshift++;
 }
 
-/*ARGSUSED*/
+/* ARGSUSED */
 int
 spx_ctloutput(req, so, level, name, value)
 	int req;
@@ -1241,8 +1242,8 @@ spx_ctloutput(req, so, level, name, value)
 
 		case SO_DEFAULT_HEADERS:
 			{
-				register struct spxhdr *sp
-						= mtod(*value, struct spxhdr *);
+				register struct spxhdr *sp =
+				    mtod(*value, struct spxhdr *);
 				cb->s_dt = sp->spx_dt;
 				cb->s_cc = sp->spx_cc & SPX_EM;
 			}
@@ -1258,7 +1259,7 @@ spx_ctloutput(req, so, level, name, value)
 		return (error);
 }
 
-/*ARGSUSED*/
+/* ARGSUSED */
 int
 spx_usrreq(so, req, m, nam, controlp)
 	struct socket *so;
