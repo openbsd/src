@@ -1223,7 +1223,9 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ctlreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/db_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/disklabel.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/dlfcn.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/eeprom.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/elf_abi.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/endian.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/exec.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/float.ph
@@ -1237,6 +1239,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/intr.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/kcore.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/limits.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/link.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/loadfile_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/netbsd_machdep.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/openfirm.ph
