@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.113 1999/01/08 03:15:54 jason Exp $
+$OpenBSD: pcidevs,v 1.114 1999/01/10 22:26:53 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1200,8 +1200,8 @@ product VIATECH VT83C572	0x3038	VT83C572 USB
 product VIATECH VT82C586_PWR	0x3040	VT82C586 (Apollo VP) Power Management
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) PCI-AGP
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) PCI-AGP
-product VIATECH RHINE		0x3043	RHINE
-product VIATECH RHINEII		0x6100	RHINEII
+product VIATECH RHINE		0x3043	Rhine/RhineII
+product VIATECH RHINEII		0x6100	RhineII
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_6000B	0x0001	GDT 6000b
