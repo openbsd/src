@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.31 2004/11/22 18:59:39 dhartmei Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.32 2004/11/28 02:14:55 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -204,6 +204,7 @@ Static usbd_status kue_ctl(struct kue_softc *, int, u_int8_t,
 			   u_int16_t, void *, u_int32_t);
 Static usbd_status kue_setword(struct kue_softc *, u_int8_t, u_int16_t);
 Static int kue_load_fw(struct kue_softc *);
+void kue_attachhook(void *xsc);
 
 Static usbd_status
 kue_setword(struct kue_softc *sc, u_int8_t breq, u_int16_t word)
@@ -427,39 +428,18 @@ USB_MATCH(kue)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-/*
- * Attach the interface. Allocate softc structures, do
- * setup and ethernet/BPF attach.
- */
-USB_ATTACH(kue)
+void
+kue_attachhook(void *xsc)
 {
-	USB_ATTACH_START(kue, sc, uaa);
-	char			devinfo[1024];
+	struct kue_softc *sc = xsc;
 	int			s;
 	struct ifnet		*ifp;
-	usbd_device_handle	dev = uaa->device;
+	usbd_device_handle	dev = sc->kue_udev;
 	usbd_interface_handle	iface;
 	usbd_status		err;
 	usb_interface_descriptor_t	*id;
 	usb_endpoint_descriptor_t	*ed;
 	int			i;
-
-	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
-
-	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
-	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfo);
-
-	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
-	if (err) {
-		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->kue_dev));
-		USB_ATTACH_ERROR_RETURN;
-	}
-
-	sc->kue_udev = dev;
-	sc->kue_product = uaa->product;
-	sc->kue_vendor = uaa->vendor;
 
 	/* Load the firmware into the NIC. */
 	if (kue_load_fw(sc)) {
@@ -554,6 +534,41 @@ USB_ATTACH(kue)
 
 	sc->kue_attached = 1;
 	splx(s);
+
+}
+
+/*
+ * Attach the interface. Allocate softc structures, do
+ * setup and ethernet/BPF attach.
+ */
+USB_ATTACH(kue)
+{
+	USB_ATTACH_START(kue, sc, uaa);
+	char			devinfo[1024];
+	usbd_device_handle	dev = uaa->device;
+	usbd_status		err;
+
+	DPRINTFN(5,(" : kue_attach: sc=%p, dev=%p", sc, dev));
+
+	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
+	USB_ATTACH_SETUP;
+	printf("%s: %s\n", USBDEVNAME(sc->kue_dev), devinfo);
+
+	err = usbd_set_config_no(dev, KUE_CONFIG_NO, 1);
+	if (err) {
+		printf("%s: setting config no failed\n",
+		    USBDEVNAME(sc->kue_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
+
+	sc->kue_udev = dev;
+	sc->kue_product = uaa->product;
+	sc->kue_vendor = uaa->vendor;
+
+	if (rootvp == NULL)
+		mountroothook_establish(kue_attachhook, sc);
+	else
+		kue_attachhook(sc);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev,
 			   USBDEV(sc->kue_dev));
