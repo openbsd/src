@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_port.h,v 1.35 2002/05/06 23:07:26 nate Exp $ */
-/*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.36 2002/05/07 18:08:04 nate Exp $ */
+/*	$NetBSD: usb_port.h,v 1.54 2002/03/28 21:49:19 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
+#define UHIDEV_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -65,26 +66,36 @@
 #define ULPT_DEBUG 1
 #define UCOM_DEBUG 1
 #define UPLCOM_DEBUG 1
+#define UMCT_DEBUG 1
 #define UMODEM_DEBUG 1
 #define UAUDIO_DEBUG 1
 #define AUE_DEBUG 1
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
+#define URL_DEBUG 1
 #define UMASS_DEBUG 1
 #define UVISOR_DEBUG 1
 #define UPL_DEBUG 1
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
-#define UMCT_DEBUG 1
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
+#define EHCI_DEBUG 1
+#define UIRDA_DEBUG 1
+#define USTIR_DEBUG 1
+#define UISDATA_DEBUG 1
+#define UDSBR_DEBUG 1
 #define Static
 #else
 #define Static static
 #endif
 
-#define SCSI_MODE_SENSE			MODE_SENSE
+#define SCSI_MODE_SENSE		MODE_SENSE
+
+#define UMASS_ATAPISTR		"atapibus"
+
+typedef struct proc *usb_proc_ptr;
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -104,7 +115,10 @@ typedef struct device *device_ptr_t;
 typedef struct callout usb_callout_t;
 #define usb_callout_init(h)	callout_init(&(h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
+#define usb_callout_pending(h)	callout_pending(&(h))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
+
+#define usb_lockmgr(l, f, sl, p) lockmgr((l), (f), (sl))
 
 #define usb_kthread_create1	kthread_create1
 #define usb_kthread_create	kthread_create
@@ -133,21 +147,13 @@ struct cfattach __CONCAT(dname,_ca) = { \
 }
 
 #define USB_MATCH(dname) \
-int \
-__CONCAT(dname,_match)(parent, match, aux) \
-	struct device *parent; \
-	struct cfdata *match; \
-	void *aux;
+int __CONCAT(dname,_match)(struct device *parent, struct cfdata *match, void *aux)
 
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
 #define USB_ATTACH(dname) \
-void \
-__CONCAT(dname,_attach)(parent, self, aux) \
-	struct device *parent; \
-	struct device *self; \
-	void *aux;
+void __CONCAT(dname,_attach)(struct device *parent, struct device *self, void *aux)
 
 #define USB_ATTACH_START(dname, sc, uaa) \
 	struct __CONCAT(dname,_softc) *sc = \
@@ -161,10 +167,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USB_ATTACH_SETUP printf("\n")
 
 #define USB_DETACH(dname) \
-int \
-__CONCAT(dname,_detach)(self, flags) \
-	struct device *self; \
-	int flags;
+int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define USB_DETACH_START(dname, sc) \
 	struct __CONCAT(dname,_softc) *sc = \
@@ -184,12 +187,17 @@ __CONCAT(dname,_detach)(self, flags) \
 	(config_found_sm(parent, args, print, sub))
 
 #elif defined(__OpenBSD__)
-#include <sys/timeout.h>
 /*
  * OpenBSD
  */
+#include <sys/timeout.h>
+
+#define USB_USE_SOFTINTR
+
+#define USB_DEBUG
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
+#define UHIDEV_DEBUG 1
 #define UHID_DEBUG 1
 #define OHCI_DEBUG 1
 #define UGEN_DEBUG 1
@@ -197,6 +205,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #define UHUB_DEBUG 1
 #define ULPT_DEBUG 1
 #define UCOM_DEBUG 1
+#define UPLCOM_DEBUG 1
+#define UMCT_DEBUG 1
 #define UMODEM_DEBUG 1
 #define UAUDIO_DEBUG 1
 #define AUE_DEBUG 1
@@ -208,33 +218,49 @@ __CONCAT(dname,_detach)(self, flags) \
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1
 #define UFTDI_DEBUG 1
-#define UMCT_DEBUG 1
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
+#define EHCI_DEBUG 1
+#define UISDATA_DEBUG 1
+#define UDSBR_DEBUG 1
 #endif
 
 #define Static
 
+#define UMASS_ATAPISTR		"atapiscsi"
+
+/* periph_quirks */
+#define	PQUIRK_AUTOSAVE		0x00000001	/* do implicit SAVE POINTERS */
+#define	PQUIRK_NOSYNC		0x00000002	/* does not grok SDTR */
+#define	PQUIRK_NOWIDE		0x00000004	/* does not grok WDTR */
+#define	PQUIRK_NOTAG		0x00000008	/* does not grok tagged cmds */
+#define	PQUIRK_NOLUNS		0x00000010	/* DTWT with LUNs */
+#define	PQUIRK_FORCELUNS	0x00000020	/* prehistoric device groks
+						   LUNs */
+#define	PQUIRK_NOMODESENSE	0x00000040	/* device doesn't do MODE SENSE
+						   properly */
+#define	PQUIRK_NOSTARTUNIT	0x00000080	/* do not issue START UNIT */
+#define	PQUIRK_NOSYNCCACHE	0x00000100	/* do not issue SYNC CACHE */
+#define	PQUIRK_CDROM		0x00000200	/* device is a CD-ROM, no
+						   matter what else it claims */
+#define	PQUIRK_LITTLETOC	0x00000400	/* audio TOC is little-endian */
+#define	PQUIRK_NOCAPACITY	0x00000800	/* no READ CD CAPACITY */
+#define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
+#define	PQUIRK_NODOORLOCK	0x00002000	/* can't lock door */
+#define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
+#define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
+#define PQUIRK_BYTE5_ZERO	0x00010000	/* byte5 in capacity is wrong */
+#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom
+						   page */
+#define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
+#define PQUIRK_CAP_SYNC		0x00080000	/* SCSI1 device with sync op */
+
+typedef struct proc *usb_proc_ptr;
+
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
-
-#define SCSI_MODE_SENSE		MODE_SENSE
-#define XS_STS_DONE		ITSDONE
-#define XS_CTL_POLL		SCSI_POLL
-#define XS_CTL_DATA_IN		SCSI_DATA_IN
-#define XS_CTL_DATA_OUT		SCSI_DATA_OUT
-#define scsipi_adapter		scsi_adapter
-#define scsipi_cmd		scsi_cmd
-#define scsipi_device		scsi_device
-#define scsipi_done		scsi_done
-#define scsipi_link		scsi_link
-#define scsipi_minphys		scsi_minphys
-#define scsipi_sense		scsi_sense
-#define scsipi_xfer		scsi_xfer
-#define show_scsipi_xs          show_scsi_xs
-#define show_scsipi_cmd         show_scsi_cmd
-#define xs_control		flags
-#define xs_status		status
+#define UHIDBUSCF_REPORTID		-1
+#define UHIDBUSCF_REPORTID_DEFAULT	-1
 
 #define bswap32(x)		swap32(x)
 #define bswap16(x)		swap16(x)
@@ -301,6 +327,7 @@ typedef struct timeout usb_callout_t;
 #define usb_callout_init(h)
 #define usb_callout(h, t, f, d) \
 	{ timeout_set(&(h), (f), (d)); timeout_add(&(h), (t)); }
+#define usb_callout_pending(h)	timeout_pending(&(h))
 #define usb_uncallout(h, f, d) timeout_del(&(h))
 
 #define usb_lockmgr(l, f, sl, p) lockmgr((l), (f), (sl), (p))
@@ -381,6 +408,15 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #include "opt_usb.h"
 
+#if defined(_KERNEL)
+#include <sys/malloc.h>
+
+MALLOC_DECLARE(M_USB);
+MALLOC_DECLARE(M_USBDEV);
+MALLOC_DECLARE(M_USBHC);
+
+#endif
+
 #define Static
 
 #define USBVERBOSE
@@ -395,14 +431,15 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define DECLARE_USB_DMA_T typedef void * usb_dma_t
 
+typedef struct proc *usb_proc_ptr;
+
 /* XXX Change this when FreeBSD has memset
  */
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define usb_kthread_create1(function, sc, priv, string, name)
-#define usb_kthread_create(create_function, sc)
-#define usb_kthread_exit(err)
+#define kthread_create1(f, s, p, a0, a1) \
+		kthread_create((f), (s), (p), RFHIGHPID, (a0), (a1))
 
 typedef struct callout_handle usb_callout_t;
 #define usb_callout_init(h) callout_handle_init(&(h))
@@ -415,6 +452,8 @@ typedef struct callout_handle usb_callout_t;
 #define powerhook_establish(fn, sc) (fn)
 #define powerhook_disestablish(hdl)
 #define PWR_RESUME 0
+
+#define config_detach(dev, flag) device_delete_child(device_get_parent(dev), dev)
 
 typedef struct malloc_type *usb_malloc_type;
 

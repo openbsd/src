@@ -1,5 +1,5 @@
-/*	$OpenBSD: ulpt.c,v 1.9 2001/10/31 04:24:44 nate Exp $ */
-/*	$NetBSD: ulpt.c,v 1.43 2001/10/19 15:30:25 nathanw Exp $	*/
+/*	$OpenBSD: ulpt.c,v 1.10 2002/05/07 18:08:04 nate Exp $ */
+/*	$NetBSD: ulpt.c,v 1.49 2002/02/25 22:39:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,8 @@
  */
 
 /*
- * Printer Class spec: http://www.usb.org/developers/data/devclass/usbprint11.pdf
+ * Printer Class spec:
+ *   http://www.usb.org/developers/data/devclass/usbprint11.pdf
  */
 
 #include <sys/param.h>
@@ -147,7 +148,9 @@ Static struct cdevsw ulpt_cdevsw = {
 	/* dump */	nodump,
 	/* psize */	nopsize,
 	/* flags */	0,
+#if !defined(__FreeBSD__) || (__FreeBSD__ < 5)
 	/* bmaj */	-1
+#endif
 };
 #endif
 
@@ -307,8 +310,8 @@ USB_ATTACH(ulpt)
 	USETW(req.wValue, cd->bConfigurationValue);
 	USETW2(req.wIndex, id->bInterfaceNumber, id->bAlternateSetting);
 	USETW(req.wLength, sizeof devinfo - 1);
-	err = usbd_do_request_flags(dev, &req, devinfo,USBD_SHORT_XFER_OK,
-		  &alen);
+	err = usbd_do_request_flags(dev, &req, devinfo, USBD_SHORT_XFER_OK,
+		  &alen, USBD_DEFAULT_TIMEOUT);
 	if (err) {
 		printf("%s: cannot get device id\n", USBDEVNAME(sc->sc_dev));
 	} else if (alen <= 2) {
@@ -366,11 +369,11 @@ USB_DETACH(ulpt)
 	int s;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	int maj, mn;
-
-	DPRINTF(("ulpt_detach: sc=%p flags=%d\n", sc, flags));
 #elif defined(__FreeBSD__)
-	DPRINTF(("ulpt_detach: sc=%p\n", sc));
+	struct vnode *vp;
 #endif
+
+	DPRINTF(("ulpt_detach: sc=%p\n", sc));
 
 	sc->sc_dying = 1;
 	if (sc->sc_out_pipe != NULL)
@@ -396,7 +399,12 @@ USB_DETACH(ulpt)
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
 #elif defined(__FreeBSD__)
-	/* XXX not implemented yet */
+	vp = SLIST_FIRST(&sc->dev->si_hlist);
+	if (vp)
+		VOP_REVOKE(vp, REVOKEALL);
+	vp = SLIST_FIRST(&sc->dev_noprime->si_hlist);
+	if (vp)
+		VOP_REVOKE(vp, REVOKEALL);
 
 	destroy_dev(sc->dev);
 	destroy_dev(sc->dev_noprime);
@@ -434,7 +442,6 @@ ulpt_reset(struct ulpt_softc *sc)
 	usb_device_request_t req;
 
 	DPRINTFN(1, ("ulpt_reset\n"));
-	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	req.bRequest = UR_SOFT_RESET;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_ifaceno);
@@ -446,6 +453,7 @@ ulpt_reset(struct ulpt_softc *sc)
 	 * UT_WRITE_CLASS_INTERFACE.  Many printers use the old one,
 	 * so we try both.
 	 */
+	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	if (usbd_do_request(sc->sc_udev, &req, 0)) {	/* 1.0 */
 		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 		(void)usbd_do_request(sc->sc_udev, &req, 0); /* 1.1 */
@@ -471,7 +479,7 @@ int ulptusein = 1;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev_t dev, int flag, int mode, struct proc *p)
+ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
@@ -546,8 +554,18 @@ ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_in_xfer2 = usbd_alloc_xfer(sc->sc_udev);
 		if (sc->sc_in_xfer1 == NULL || sc->sc_in_xfer2 == NULL) {
 			error = ENOMEM;
+			if (sc->sc_in_xfer1 != NULL) {
+				usbd_free_xfer(sc->sc_in_xfer1);
+				sc->sc_in_xfer1 = NULL;
+			}
+			if (sc->sc_in_xfer2 != NULL) {
+				usbd_free_xfer(sc->sc_in_xfer2);
+				sc->sc_in_xfer2 = NULL;
+			}
 			usbd_close_pipe(sc->sc_out_pipe);
 			sc->sc_out_pipe = NULL;
+			usbd_close_pipe(sc->sc_in_pipe);
+			sc->sc_in_pipe = NULL;
 			sc->sc_state = 0;
 			goto done;
 		}
@@ -590,7 +608,7 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 }
 
 int
-ulptclose(dev_t dev, int flag, int mode, struct proc *p)
+ulptclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ulpt_softc *sc;
 
@@ -680,7 +698,7 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+ulptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	int error = 0;
 

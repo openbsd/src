@@ -1,5 +1,5 @@
-/*	$OpenBSD: uftdi.c,v 1.3 2001/05/03 02:20:33 aaron Exp $ 	*/
-/*	$NetBSD: uftdi.c,v 1.6 2001/01/23 21:56:17 augustss Exp $	*/
+/*	$OpenBSD: uftdi.c,v 1.4 2002/05/07 18:08:04 nate Exp $ 	*/
+/*	$NetBSD: uftdi.c,v 1.9 2001/12/17 14:34:37 ichiro Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -95,15 +95,19 @@ struct uftdi_softc {
 	device_ptr_t		sc_subdev;
 
 	u_char			sc_dying;
+
+	u_int			last_lcr;
 };
 
 Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
 Static void	uftdi_set(void *, int, int, int);
 Static int	uftdi_param(void *, int, struct termios *);
 Static int	uftdi_open(void *sc, int portno);
-Static void	uftdi_read(void *sc, int portno, u_char **ptr,u_int32_t *count);
+Static void	uftdi_read(void *sc, int portno, u_char **ptr,
+			   u_int32_t *count);
 Static void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
 			    u_int32_t *count);
+Static void	uftdi_break(void *sc, int portno, int onoff);
 
 struct ucom_methods uftdi_methods = {
 	uftdi_get_status,
@@ -376,7 +380,7 @@ uftdi_set(void *vsc, int portno, int reg, int onoff)
 		ctl = onoff ? FTDI_SIO_SET_RTS_HIGH : FTDI_SIO_SET_RTS_LOW;
 		break;
 	case UCOM_SET_BREAK:
-		/* XXX how do we set break? */
+		uftdi_break(sc, portno, onoff);
 		return;
 	default:
 		return;
@@ -456,6 +460,8 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		data |= FTDI_SIO_SET_DATA_BITS(8);
 		break;
 	}
+	sc->last_lcr = data;
+
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_DATA;
 	USETW(req.wValue, data);
@@ -483,4 +489,28 @@ uftdi_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 		*msr = sc->sc_msr;
 	if (lsr != NULL)
 		*lsr = sc->sc_lsr;
+}
+
+void
+uftdi_break(void *vsc, int portno, int onoff)
+{
+	struct uftdi_softc *sc = vsc;
+	usb_device_request_t req;
+	int data;
+
+	DPRINTF(("uftdi_break: sc=%p, port=%d onoff=%d\n", vsc, portno,
+		  onoff)); 
+
+	if (onoff) {
+		data = sc->last_lcr | FTDI_SIO_SET_BREAK;
+	} else {
+		data = sc->last_lcr;
+	}
+
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = FTDI_SIO_SET_DATA;
+	USETW(req.wValue, data);
+	USETW(req.wIndex, portno);
+	USETW(req.wLength, 0);
+	(void)usbd_do_request(sc->sc_udev, &req, NULL);
 }

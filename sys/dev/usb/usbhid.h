@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbhid.h,v 1.4 2000/11/08 18:10:39 aaron Exp $ */
-/*	$NetBSD: usbhid.h,v 1.9 2000/09/03 19:09:14 augustss Exp $	*/
+/*	$OpenBSD: usbhid.h,v 1.5 2002/05/07 18:08:05 nate Exp $ */
+/*	$NetBSD: usbhid.h,v 1.11 2001/12/28 00:20:24 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbhid.h,v 1.7 1999/11/17 22:33:51 n_hibma Exp $ */
 
 /*
@@ -165,11 +165,24 @@ typedef struct usb_hid_descriptor {
 #define HUD_ERASER		0x0045
 #define HUD_TABLET_PICK		0x0046
 
-#define HID_USAGE2(p,u) (((p) << 16) | u)
+/* Usages LEDs */
+#define HUD_LED_NUM_LOCK	0x0001
+#define HUD_LED_CAPS_LOCK	0x0002
+#define HUD_LED_SCROLL_LOCK	0x0003
+#define HUD_LED_COMPOSE		0x0004
+#define HUD_LED_KANA		0x0005
+
+#define HID_USAGE2(p, u) (((p) << 16) | u)
+#define HID_GET_USAGE(u) ((u) & 0xffff)
+#define HID_GET_USAGE_PAGE(u) (((u) >> 16) & 0xffff)
 
 #define UHID_INPUT_REPORT 0x01
 #define UHID_OUTPUT_REPORT 0x02
 #define UHID_FEATURE_REPORT 0x03
+
+#define HCOLL_PHYSICAL		0
+#define HCOLL_APPLICATION	1
+#define HCOLL_LOGICAL		2
 
 /* Bits in the input/output/feature items */
 #define HIO_CONST	0x001

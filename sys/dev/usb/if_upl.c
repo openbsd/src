@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_upl.c,v 1.5 2002/03/12 09:51:20 kjc Exp $ */
-/*	$NetBSD: if_upl.c,v 1.15 2001/06/14 05:44:27 itojun Exp $	*/
+/*	$OpenBSD: if_upl.c,v 1.6 2002/05/07 18:08:04 nate Exp $ */
+/*	$NetBSD: if_upl.c,v 1.17 2002/03/05 04:12:59 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -78,26 +78,18 @@
 #include <net/bpf.h>
 #endif
 
-#if defined(__NetBSD__)
 #ifdef INET
 #include <netinet/in.h> 
 #include <netinet/in_var.h> 
+#if defined(__NetBSD__)
 #include <netinet/if_inarp.h>
-#else
-#error upl without INET?
-#endif
-#endif
-
-#if defined(__OpenBSD__)
-#ifdef INET
-#include <netinet/in.h>
+#elif defined(__OpenBSD__)
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#endif
 #else
 #error upl without INET?
-#endif
 #endif
 
 #ifdef NS
@@ -333,19 +325,21 @@ USB_ATTACH(upl)
 	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = 0;
 	ifp->if_output = upl_output;
+	ifp->if_baudrate = 12000000;
 #if defined(__NetBSD__)
 	ifp->if_input = upl_input;
+	ifp->if_dlt = DLT_RAW;
 #endif
-	ifp->if_baudrate = 12000000;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);
-
-#if NBPFILTER > 0
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-	bpfattach(ifp, DLT_RAW, 0);
+#if defined(__NetBSD__)
+	if_alloc_sadl(ifp);
 #endif
+
+#if defined(__NetBSD__) && NBPFILTER > 0
+	bpfattach(ifp, DLT_RAW, 0);
 #endif
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, USBDEVNAME(sc->sc_dev),

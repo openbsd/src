@@ -1,8 +1,8 @@
-/*	$OpenBSD: ukbdmap.c,v 1.9 2002/05/05 21:52:16 nate Exp $ */
-/*	$NetBSD: ukbdmap.c,v 1.6 2001/04/04 05:31:57 toshii Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.10 2002/05/07 18:08:04 nate Exp $ */
+/*	$NetBSD: ukbdmap.c,v 1.10 2002/03/17 18:01:07 augustss Exp $	*/
 
 /*
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -94,7 +94,7 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(47), 			KS_bracketleft,	KS_braceleft,
     KC(48), 			KS_bracketright,KS_braceright,
     KC(49), 			KS_backslash,	KS_bar,
-    KC(50),			KS_numbersign,	KS_asciitilde,
+    KC(50), 			KS_backslash,	KS_bar,
     KC(51), 			KS_semicolon,	KS_colon,
     KC(52), 			KS_apostrophe,	KS_quotedbl,
     KC(53), 			KS_grave,	KS_asciitilde,
@@ -256,6 +256,7 @@ Static const keysym_t ukbd_keydesc_sv[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(45),  KS_plus,		KS_question,	KS_backslash,
     KC(48),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(50),  KS_comma,		KS_asterisk,
     KC(51),  KS_odiaeresis,
     KC(52),  KS_adiaeresis,
     KC(53),  KS_paragraph,	KS_onehalf,
@@ -273,6 +274,7 @@ Static const keysym_t ukbd_keydesc_no[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(46),  KS_backslash,	KS_dead_grave,	KS_dead_acute,
     KC(48),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(50),  KS_comma,		KS_asterisk,
     KC(51),  KS_oslash,
     KC(52),  KS_ae,
     KC(53),  KS_bar,		KS_paragraph,
@@ -358,6 +360,7 @@ Static const keysym_t ukbd_keydesc_uk[] = {
     KC(45),  KS_minus,          KS_underscore,  KS_hyphen,      KS_ssharp,
     KC(46),  KS_equal,          KS_plus,        KS_onehalf,    KS_guillemotleft,
     KC(49),  KS_numbersign,     KS_asciitilde,  KS_sterling,    KS_thorn,
+    KC(50),  KS_numbersign,	KS_asciitilde,
     KC(52),  KS_apostrophe,     KS_at,          KS_section,     KS_Agrave,
     KC(53),  KS_grave,          KS_grave,       KS_agrave,      KS_agrave,
     KC(100), KS_backslash,      KS_bar,         KS_Udiaeresis,

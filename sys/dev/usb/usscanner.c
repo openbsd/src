@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.3 2001/05/03 02:20:35 aaron Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.4 2002/05/07 18:08:05 nate Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -89,6 +89,22 @@ int	usscannerdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
+#define XS_CTL_DATA_IN		SCSI_DATA_IN
+#define XS_CTL_DATA_OUT		SCSI_DATA_OUT
+#define scsipi_adapter		scsi_adapter
+#define scsipi_cmd		scsi_cmd
+#define scsipi_device		scsi_device
+#define scsipi_done		scsi_done
+#define scsipi_link		scsi_link
+#define scsipi_minphys		scsi_minphys
+#define scsipi_sense		scsi_sense
+#define scsipi_xfer		scsi_xfer
+#define show_scsipi_xs          show_scsi_xs
+#define show_scsipi_cmd         show_scsi_cmd
+#define xs_control		flags
+#define xs_status		status
+#define XS_STS_DONE		ITSDONE
+#define XS_CTL_POLL		SCSI_POLL
 
 #define USSCANNER_CONFIG_NO		1
 #define USSCANNER_IFACE_IDX		0

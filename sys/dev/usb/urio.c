@@ -1,5 +1,5 @@
-/*	$OpenBSD: urio.c,v 1.6 2001/10/31 04:24:44 nate Exp $	*/
-/*	$NetBSD: urio.c,v 1.6 2001/09/25 21:08:44 jdolecek Exp $	*/
+/*	$OpenBSD: urio.c,v 1.7 2002/05/07 18:08:04 nate Exp $	*/
+/*	$NetBSD: urio.c,v 1.11 2002/02/11 15:11:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -126,6 +126,13 @@ struct urio_softc {
 
 #define URIO_RW_TIMEOUT 4000	/* ms */
 
+static const struct usb_devno urio_devs[] = {
+	{ USB_VENDOR_DIAMOND, USB_PRODUCT_DIAMOND_RIO500USB},
+	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO600USB},
+	{ USB_VENDOR_DIAMOND2, USB_PRODUCT_DIAMOND2_RIO800USB},
+};
+#define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
+
 USB_DECLARE_DRIVER(urio);
 
 USB_MATCH(urio)
@@ -137,15 +144,8 @@ USB_MATCH(urio)
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	if ( ( uaa->vendor == USB_VENDOR_DIAMOND &&
-	      uaa->product == USB_PRODUCT_DIAMOND_RIO500USB ) ||
-	     ( uaa->vendor == USB_VENDOR_DIAMOND2 &&
-	       ( uaa->product == USB_PRODUCT_DIAMOND2_RIO600USB ||
-	         uaa->product == USB_PRODUCT_DIAMOND2_RIO800USB ) )
-	   )
-		return (UMATCH_VENDOR_PRODUCT);
-	else
-		return (UMATCH_NONE);
+	return (urio_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 USB_ATTACH(urio)
@@ -293,7 +293,7 @@ urio_activate(device_ptr_t self, enum devact act)
 #endif
 
 int
-urioopen(dev_t dev, int flag, int mode, struct proc *p)
+urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct urio_softc *sc;
 	usbd_status err;
@@ -326,7 +326,7 @@ urioopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, struct proc *p)
+urioclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
@@ -379,7 +379,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	while ((n = min(URIO_BSIZE, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("urioread: start transfer %d bytes\n", n));
 		tn = n;
-		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe, 0,
+		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe, USBD_NO_COPY,
 			  URIO_RW_TIMEOUT, bufp, &tn, "uriors");
 		if (err) {
 			if (err == USBD_INTERRUPTED)
@@ -441,7 +441,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 		DPRINTFN(1, ("uriowrite: transfer %d bytes\n", n));
 
-		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, 0, 
+		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
 			  URIO_RW_TIMEOUT, bufp, &n, "uriowr");
 		DPRINTFN(2, ("uriowrite: err=%d\n", err));
 		if (err) {
@@ -468,7 +468,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 {
 	struct urio_softc * sc;
 	int unit = URIOUNIT(dev);
@@ -544,7 +544,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc->sc_refcnt++;
 
 	err = usbd_do_request_flags(sc->sc_udev, &req, ptr, req_flags,
-				    &req_actlen);
+		  &req_actlen, USBD_DEFAULT_TIMEOUT);
 
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
@@ -563,7 +563,7 @@ ret:
 }
 
 int
-uriopoll(dev_t dev, int events, struct proc *p)
+uriopoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	return (0);
 }

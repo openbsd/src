@@ -85,6 +85,8 @@ Get rid of hcpriv.
 
 Keyspan serial driver
 
+Clean up umass driver
+
 
 Documentation:
 --------------

@@ -1,0 +1,488 @@
+/*	$OpenBSD: umass_scsi.c,v 1.1 2002/05/07 18:08:04 nate Exp $	*/
+/*
+ * Copyright (c) 2001 Nathan L. Binkert
+ * All rights reserved.
+ *
+ * Permission to redistribute, use, copy, and modify this software
+ * without fee is hereby granted, provided that the following
+ * conditions are met:
+ *
+ * 1. This entire notice is included in all source code copies of any
+ *    software which is or includes a copy or modification of this
+ *    software.
+ * 2. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (lennart@augustsson.net) at
+ * Carlstedt Research & Technology.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include "atapiscsi.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/malloc.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdevs.h>
+
+#include <dev/usb/umassvar.h>
+#include <dev/usb/umass_scsi.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+#include <scsi/scsi_disk.h>
+#include <machine/bus.h>
+
+struct umass_scsi_softc {
+	struct umassbus_softc	base;
+	struct scsi_link	sc_link;
+	struct scsi_adapter	sc_adapter;
+
+	usbd_status		sc_sync_status;
+	struct scsi_sense	sc_sense_cmd;
+};
+
+
+#define SHORT_INQUIRY_LENGTH    36 /* XXX */
+
+#define UMASS_SCSIID_HOST	0x00
+#define UMASS_SCSIID_DEVICE	0x01
+
+#define UMASS_ATAPI_DRIVE	0
+
+int umass_scsi_cmd(struct scsi_xfer *);
+void umass_scsi_minphys(struct buf *);
+int umass_scsi_ioctl(struct scsi_link *, u_long cmd, caddr_t addrp, int flag,
+		     struct proc *p);
+
+void umass_scsi_cb(struct umass_softc *sc, void *priv, int residue,
+		   int status);
+void umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
+			 int status);
+struct umass_scsi_softc *umass_scsi_setup(struct umass_softc *);
+
+struct scsi_device umass_scsi_dev = { NULL, NULL, NULL, NULL, };
+
+int
+umass_scsi_attach(struct umass_softc *sc)
+{
+	struct umass_scsi_softc *scbus;
+
+	scbus = umass_scsi_setup(sc);
+	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
+	scbus->sc_link.luns = sc->maxlun + 1;
+
+	scbus->sc_adapter.scsi_cmd = umass_scsi_cmd;
+	scbus->sc_adapter.scsi_minphys = umass_scsi_minphys;
+	scbus->sc_adapter.ioctl = umass_scsi_ioctl;
+
+	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
+			     "sc = 0x%x, scbus = 0x%x\n",
+			     USBDEVNAME(sc->sc_dev), sc, scbus));
+
+	scbus->base.sc_child =
+	  config_found((struct device *)sc, &scbus->sc_link, scsiprint);
+
+	return (0);
+}
+
+#if NATAPISCSI > 0
+int
+umass_atapi_attach(struct umass_softc *sc)
+{
+	struct umass_scsi_softc *scbus;
+
+	scbus = umass_scsi_setup(sc);
+	scbus->sc_link.adapter_target = UMASS_SCSIID_HOST;
+	scbus->sc_link.luns = 1;
+
+	scbus->sc_adapter.scsi_cmd = umass_scsi_cmd;
+	scbus->sc_adapter.scsi_minphys = umass_scsi_minphys;
+	scbus->sc_adapter.ioctl = umass_scsi_ioctl;
+
+	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
+			     "sc = 0x%x, scbus = 0x%x\n",
+			     USBDEVNAME(sc->sc_dev), sc, scbus));
+
+	scbus->base.sc_child =
+	  config_found((struct device *)sc, &scbus->sc_link, scsiprint);
+
+	return (0);
+}
+#endif
+
+struct umass_scsi_softc *
+umass_scsi_setup(struct umass_softc *sc)
+{
+	struct umass_scsi_softc *scbus;
+
+	scbus = malloc(sizeof(struct umass_scsi_softc), M_DEVBUF, M_WAITOK);
+	memset(&scbus->sc_link, 0, sizeof(struct scsi_link));
+	memset(&scbus->sc_adapter, 0, sizeof(struct scsi_adapter));
+
+	sc->bus = (struct umassbus_softc *)scbus;
+
+	scbus->sc_link.adapter_buswidth = 2;
+	scbus->sc_link.openings = 1;
+	scbus->sc_link.flags &= ~SDEV_ATAPI;
+	scbus->sc_link.device = &umass_scsi_dev;
+	scbus->sc_link.adapter = &scbus->sc_adapter;
+	scbus->sc_link.adapter_softc = sc;
+	scbus->sc_link.openings = 1;
+
+	return (scbus);
+}
+
+int
+umass_scsi_cmd(struct scsi_xfer *xs)
+{
+	struct scsi_link *sc_link = xs->sc_link;
+	struct umass_softc *sc = sc_link->adapter_softc;
+	struct umass_scsi_softc *scbus = (struct umass_scsi_softc *)sc->bus;
+
+	struct scsi_generic *cmd, trcmd;
+	int cmdlen, dir;
+
+#ifdef UMASS_DEBUG
+	microtime(&sc->tv);
+#endif
+
+	memset(&trcmd, 0, sizeof(trcmd));
+
+	DIF(UDMASS_UPPER, sc_link->flags |= SCSIDEBUG_LEVEL);
+
+	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd: at %lu.%06lu: %d:%d "
+		"xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
+		USBDEVNAME(sc->sc_dev), sc->tv.tv_sec, sc->tv.tv_usec,
+		sc_link->target, sc_link->lun, xs, xs->cmd->opcode,
+		xs->datalen, sc_link->quirks, xs->flags & SCSI_POLL));
+
+#if defined(USB_DEBUG) && defined(SCSIDEBUG)
+	if (umassdebug & UDMASS_SCSI)
+		show_scsi_xs(xs);
+	else if (umassdebug & ~UDMASS_CMD)
+		show_scsi_cmd(xs);
+#endif
+
+	if (sc->sc_dying) {
+		xs->error = XS_DRIVER_STUFFUP;
+		goto done;
+	}
+
+#if defined(UMASS_DEBUG)
+	if (sc_link->target != UMASS_SCSIID_DEVICE) {
+		DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
+			USBDEVNAME(sc->sc_dev), sc_link->target));
+		xs->error = XS_DRIVER_STUFFUP;
+		goto done;
+	}
+#endif
+
+	cmd = xs->cmd;
+	cmdlen = xs->cmdlen;
+
+	if (cmd->opcode == MODE_SENSE &&
+	    (sc_link->quirks & SDEV_NOMODESENSE)) {
+		xs->error = XS_TIMEOUT;
+		goto done;
+	}
+
+	if (cmd->opcode == START_STOP &&
+	    (sc->sc_quirks & UMASS_QUIRK_NO_START_STOP)) {
+		xs->error = XS_NOERROR;
+		goto done;
+	}
+
+	if (cmd->opcode == INQUIRY &&
+	    (sc->sc_quirks & UMASS_QUIRK_FORCE_SHORT_INQUIRY)) {
+		memcpy(&trcmd, cmd, sizeof(trcmd));
+		trcmd.bytes[4] = SHORT_INQUIRY_LENGTH;
+		cmd = &trcmd;
+	}
+
+	dir = DIR_NONE;
+	if (xs->datalen) {
+		switch (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
+		case SCSI_DATA_IN:
+			dir = DIR_IN;
+			break;
+		case SCSI_DATA_OUT:
+			dir = DIR_OUT;
+			break;
+		}
+	}
+
+	if (xs->datalen > UMASS_MAX_TRANSFER_SIZE) {
+		printf("umass_cmd: large datalen, %d\n", xs->datalen);
+		xs->error = XS_DRIVER_STUFFUP;
+		goto done;
+	}
+
+	if (xs->flags & SCSI_POLL) {
+		/* Use sync transfer. XXX Broken! */
+		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: sync dir=%d\n", dir));
+		sc->sc_xfer_flags = USBD_SYNCHRONOUS;
+		scbus->sc_sync_status = USBD_INVAL;
+		sc->sc_methods->wire_xfer(sc, sc_link->lun, cmd, cmdlen,
+					  xs->data, xs->datalen, dir,
+					  xs->timeout, 0, xs);
+		sc->sc_xfer_flags = 0;
+		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n", 
+				      scbus->sc_sync_status));
+		switch (scbus->sc_sync_status) {
+		case USBD_NORMAL_COMPLETION:
+			xs->error = XS_NOERROR;
+			break;
+		case USBD_TIMEOUT:
+			xs->error = XS_TIMEOUT;
+			break;
+		default:
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+		}
+		goto done;
+	} else {
+		DPRINTF(UDMASS_SCSI,
+			("umass_scsi_cmd: async dir=%d, cmdlen=%d"
+			 " datalen=%d\n",
+			 dir, cmdlen, xs->datalen));
+		sc->sc_methods->wire_xfer(sc, sc_link->lun, cmd, cmdlen,
+					  xs->data, xs->datalen, dir,
+					  xs->timeout, umass_scsi_cb, xs);
+		return (SUCCESSFULLY_QUEUED);
+	}
+
+	/* Return if command finishes early. */
+ done:
+	xs->flags |= ITSDONE;
+	
+	scsi_done(xs);
+	if (xs->flags & SCSI_POLL)
+		return (COMPLETE);
+	else
+		return (SUCCESSFULLY_QUEUED);
+}
+
+void
+umass_scsi_minphys(struct buf *bp)
+{
+	if (bp->b_bcount > UMASS_MAX_TRANSFER_SIZE)
+		bp->b_bcount = UMASS_MAX_TRANSFER_SIZE;
+
+	minphys(bp);
+}
+
+int
+umass_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t arg, int flag,
+		 struct proc *p)
+{
+#if 0
+	struct umass_softc *sc = link->adapter_softc;
+#endif
+
+	switch (cmd) {
+#if 0
+	case SCBUSIORESET:
+		ccb->ccb_h.status = CAM_REQ_INPROG;
+		umass_reset(sc, umass_cam_cb, (void *) ccb);
+		return (0);
+#endif
+	default:
+		return (ENOTTY);
+	}
+}
+
+void
+umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
+{
+	struct umass_scsi_softc *scbus = (struct umass_scsi_softc *)sc->bus;
+	struct scsi_xfer *xs = priv;
+	struct scsi_link *link = xs->sc_link;
+	int cmdlen;
+	int s;
+#ifdef UMASS_DEBUG
+	struct timeval tv;
+	u_int delta;
+	microtime(&tv);
+	delta = (tv.tv_sec - sc->tv.tv_sec) * 1000000 +
+		tv.tv_usec - sc->tv.tv_usec;
+#endif
+
+	DPRINTF(UDMASS_CMD,
+		("umass_scsi_cb: at %lu.%06lu, delta=%u: xs=%p residue=%d"
+		 " status=%d\n", tv.tv_sec, tv.tv_usec, delta, xs, residue,
+		 status));
+
+	xs->resid = residue;
+
+	switch (status) {
+	case STATUS_CMD_OK:
+		xs->error = XS_NOERROR;
+		break;
+
+	case STATUS_CMD_UNKNOWN:
+		/* we can't issue REQUEST SENSE */
+		if (xs->sc_link->quirks & PQUIRK_NOSENSE) {
+			/*
+			 * If no residue and no other USB error,
+			 * command succeeded.
+			 */
+			if (residue == 0) {
+				xs->error = XS_NOERROR;
+				break;
+			}
+
+			/*
+			 * Some devices return a short INQUIRY
+			 * response, omitting response data from the
+			 * "vendor specific data" on...
+			 */
+			if (xs->cmd->opcode == INQUIRY &&
+			    residue < xs->datalen) {
+				xs->error = XS_NOERROR;
+				break;
+			}
+
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+		}
+		/* FALLTHROUGH */
+	case STATUS_CMD_FAILED:
+		/* fetch sense data */
+		memset(&scbus->sc_sense_cmd, 0, sizeof(scbus->sc_sense_cmd));
+		scbus->sc_sense_cmd.opcode = REQUEST_SENSE;
+		scbus->sc_sense_cmd.byte2 = link->lun << SCSI_CMD_LUN_SHIFT;
+		scbus->sc_sense_cmd.length = sizeof(xs->sense);
+
+		cmdlen = sizeof(scbus->sc_sense_cmd);
+		if (sc->sc_cmd == UMASS_CPROTO_UFI) /* XXX */
+			cmdlen = UFI_COMMAND_LENGTH;
+		sc->sc_methods->wire_xfer(sc, link->lun,
+					  &scbus->sc_sense_cmd, cmdlen,
+					  &xs->sense, sizeof(xs->sense),
+					  DIR_IN, xs->timeout,
+					  umass_scsi_sense_cb, xs);
+		return;
+
+	case STATUS_WIRE_FAILED:
+		xs->error = XS_RESET;
+		break;
+
+	default:
+		panic("%s: Unknown status %d in umass_scsi_cb\n",
+		      USBDEVNAME(sc->sc_dev), status);
+	}
+
+	DPRINTF(UDMASS_CMD,("umass_scsi_cb: at %lu.%06lu: return error=%d, "
+			    "status=0x%x resid=%d\n",
+			    tv.tv_sec, tv.tv_usec,
+			    xs->error, xs->status, xs->resid));
+
+	s = splbio();
+	scsi_done(xs);
+	splx(s);
+}
+
+/* 
+ * Finalise a completed autosense operation
+ */
+void
+umass_scsi_sense_cb(struct umass_softc *sc, void *priv, int residue,
+		    int status)
+{
+	struct scsi_xfer *xs = priv;
+	int s;
+
+	DPRINTF(UDMASS_CMD,("umass_scsi_sense_cb: xs=%p residue=%d "
+		"status=%d\n", xs, residue, status));
+
+	switch (status) {
+	case STATUS_CMD_OK:
+	case STATUS_CMD_UNKNOWN:
+		/* getting sense data succeeded */
+		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen ||
+		    (sc->sc_quirks & UMASS_QUIRK_RS_NO_CLEAR_UA /* XXX */))) {
+			/*
+			 * Some drivers return SENSE errors even after INQUIRY.
+			 * The upper layer doesn't like that.
+			 */
+			xs->error = XS_NOERROR;
+			break;
+		}
+		/* XXX look at residue */
+		if (residue == 0 || residue == 14)/* XXX */
+			xs->error = XS_SENSE;
+		else
+			xs->error = XS_SHORTSENSE;
+		break;
+	default:
+		DPRINTF(UDMASS_SCSI, ("%s: Autosense failed, status %d\n",
+			USBDEVNAME(sc->sc_dev), status));
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+	}
+
+	xs->status |= ITSDONE;
+
+	DPRINTF(UDMASS_CMD,("umass_scsi_sense_cb: return xs->error=%d, "
+		"xs->status=0x%x xs->resid=%d\n", xs->error, xs->status,
+		xs->resid));
+
+	s = splbio();
+	scsi_done(xs);
+	splx(s);
+}
