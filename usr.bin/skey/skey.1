@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.1,v 1.25 2004/06/06 11:19:16 otto Exp $
+.\" $OpenBSD: skey.1,v 1.26 2004/06/06 21:23:20 jmc Exp $
 .\"	@(#)skey.1	1.1 	10/28/93
 .\"
 .Dd October 28, 1993
@@ -85,19 +85,19 @@ Selects SHA-1 (NIST Secure Hash Algorithm Revision 1) as the hash algorithm.
 Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
 .El
 .Sh EXAMPLES
-.Bd -literal
-    $ skey 99 th91334
-    Reminder - Do not use this program while logged in via telnet.
-    Enter secret passphrase: <your secret passphrase is entered here>
-    OMEN US HORN OMIT BACK AHOY
-    $
+.Bd -literal -offset indent
+$ skey 99 th91334
+Reminder - Do not use this program while logged in via telnet.
+Enter secret passphrase: <your secret passphrase is entered here>
+OMEN US HORN OMIT BACK AHOY
+$
 .Ed
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr skeyaudit 1 ,
 .Xr skeyinfo 1 ,
 .Xr skeyinit 1 ,
-.Xr skeyprune 1
+.Xr skeyprune 8
 .Pp
 .Em RFC 2289
 .Sh TRADEMARKS AND PATENTS
