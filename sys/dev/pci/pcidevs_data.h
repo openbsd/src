@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.614 2003/04/20 22:03:23 grange Exp 
+ *		OpenBSD: pcidevs,v 1.615 2003/04/24 15:15:13 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4479,6 +4479,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CSB5 SouthBridge",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_PCI,
+	    "CSB6 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_OSB4_IDE,
 	    "OSB4 IDE",
 	},
@@ -4493,6 +4497,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_USB,
 	    "OSB4/CSB5 USB",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_USB,
+	    "CSB6 USB",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB5BRIDGE,
