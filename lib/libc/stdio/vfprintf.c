@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.10 2001/04/20 00:10:11 millert Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.11 2001/05/31 18:11:38 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -278,7 +278,7 @@ vfprintf(fp, fmt0, ap)
 	       int hold = nextarg; \
 		 if (argtable == NULL) { \
 			 argtable = statargtable; \
-			 __find_arguments (fmt0, orgap, &argtable); \
+			 __find_arguments(fmt0, orgap, &argtable); \
 		 } \
 		 nextarg = n2; \
 		 val = GETARG(int); \
@@ -417,7 +417,7 @@ reswitch:	switch (ch) {
 				nextarg = n;
 			   	if (argtable == NULL) {
 			   		argtable = statargtable;
-			   		__find_arguments (fmt0, orgap,
+			   		__find_arguments(fmt0, orgap,
 					    &argtable);
 			  	}
 				goto rflag; 
@@ -765,8 +765,8 @@ number:			if ((dprec = prec) >= 0)
 done:
 	FLUSH();
 error:
-	if ((argtable != NULL) && (argtable != statargtable))
-		free (argtable);
+	if (argtable != NULL && argtable != statargtable)
+		free(argtable);
 	return (__sferror(fp) ? EOF : ret);
 	/* NOTREACHED */
 }
@@ -799,7 +799,7 @@ error:
  * It will be replaces with a malloc-ed on if it overflows.
  */ 
 static void
-__find_arguments (fmt0, ap, argtable)
+__find_arguments(fmt0, ap, argtable)
 	const char *fmt0;
 	va_list ap;
 	va_list **argtable;
@@ -845,18 +845,18 @@ __find_arguments (fmt0, ap, argtable)
 	if (*cp == '$') { \
 		int hold = nextarg; \
 		nextarg = n2; \
-		ADDTYPE (T_INT); \
+		ADDTYPE(T_INT); \
 		nextarg = hold; \
 		fmt = ++cp; \
 	} else { \
-		ADDTYPE (T_INT); \
+		ADDTYPE(T_INT); \
 	}
 	fmt = (char *)fmt0;
 	typetable = stattypetable;
 	tablesize = STATIC_ARG_TBL_SIZE;
 	tablemax = 0; 
 	nextarg = 1;
-	memset (typetable, T_UNUSED, STATIC_ARG_TBL_SIZE);
+	memset(typetable, T_UNUSED, STATIC_ARG_TBL_SIZE);
 
 	/*
 	 * Scan the format for conversions (`%' character).
@@ -876,14 +876,14 @@ reswitch:	switch (ch) {
 		case '#':
 			goto rflag;
 		case '*':
-			ADDASTER ();
+			ADDASTER();
 			goto rflag;
 		case '-':
 		case '+':
 			goto rflag;
 		case '.':
 			if ((ch = *fmt++) == '*') {
-				ADDASTER ();
+				ADDASTER();
 				goto rflag;
 			}
 			while (is_digit(ch)) {
@@ -997,7 +997,7 @@ done:
 	 */
 	if (tablemax >= STATIC_ARG_TBL_SIZE) {
 		*argtable = (va_list *)
-		    malloc (sizeof (va_list) * (tablemax + 1));
+		    malloc(sizeof (va_list) * (tablemax + 1));
 	}
 
 #if 0
@@ -1005,64 +1005,64 @@ done:
 	(*argtable) [0] = NULL;
 #endif
 	for (n = 1; n <= tablemax; n++) {
-		(*argtable) [n] = ap;
-		switch (typetable [n]) {
-		    case T_UNUSED:
-			(void) va_arg (ap, int);
+		(*argtable)[n] = ap;
+		switch (typetable[n]) {
+		case T_UNUSED:
+			(void) va_arg(ap, int);
 			break;
-		    case T_SHORT:
-			(void) va_arg (ap, int);
+		case T_SHORT:
+			(void) va_arg(ap, int);
 			break;
-		    case T_U_SHORT:
-			(void) va_arg (ap, int);
+		case T_U_SHORT:
+			(void) va_arg(ap, int);
 			break;
-		    case TP_SHORT:
-			(void) va_arg (ap, short *);
+		case TP_SHORT:
+			(void) va_arg(ap, short *);
 			break;
-		    case T_INT:
-			(void) va_arg (ap, int);
+		case T_INT:
+			(void) va_arg(ap, int);
 			break;
-		    case T_U_INT:
-			(void) va_arg (ap, unsigned int);
+		case T_U_INT:
+			(void) va_arg(ap, unsigned int);
 			break;
-		    case TP_INT:
-			(void) va_arg (ap, int *);
+		case TP_INT:
+			(void) va_arg(ap, int *);
 			break;
-		    case T_LONG:
-			(void) va_arg (ap, long);
+		case T_LONG:
+			(void) va_arg(ap, long);
 			break;
-		    case T_U_LONG:
-			(void) va_arg (ap, unsigned long);
+		case T_U_LONG:
+			(void) va_arg(ap, unsigned long);
 			break;
-		    case TP_LONG:
-			(void) va_arg (ap, long *);
+		case TP_LONG:
+			(void) va_arg(ap, long *);
 			break;
-		    case T_QUAD:
-			(void) va_arg (ap, quad_t);
+		case T_QUAD:
+			(void) va_arg(ap, quad_t);
 			break;
-		    case T_U_QUAD:
-			(void) va_arg (ap, u_quad_t);
+		case T_U_QUAD:
+			(void) va_arg(ap, u_quad_t);
 			break;
-		    case TP_QUAD:
-			(void) va_arg (ap, quad_t *);
+		case TP_QUAD:
+			(void) va_arg(ap, quad_t *);
 			break;
-		    case T_DOUBLE:
-			(void) va_arg (ap, double);
+		case T_DOUBLE:
+			(void) va_arg(ap, double);
 			break;
-		    case T_LONG_DOUBLE:
-			(void) va_arg (ap, long double);
+		case T_LONG_DOUBLE:
+			(void) va_arg(ap, long double);
 			break;
-		    case TP_CHAR:
-			(void) va_arg (ap, char *);
+		case TP_CHAR:
+			(void) va_arg(ap, char *);
 			break;
-		    case TP_VOID:
-			(void) va_arg (ap, void *);
+		case TP_VOID:
+			(void) va_arg(ap, void *);
 			break;
 		}
 	}
 
-	if ((typetable != NULL) && (typetable != stattypetable))
-		free (typetable);
+	if (typetable != NULL && typetable != stattypetable)
+		free(typetable);
 }
 
 /*
@@ -1078,15 +1078,15 @@ __grow_type_table(typetable, tablesize)
 
 	if (*tablesize == STATIC_ARG_TBL_SIZE) {
 		*typetable = (unsigned char *)
-		    malloc (sizeof (unsigned char) * newsize);
+		    malloc(sizeof (unsigned char) * newsize);
 		/* XXX unchecked */
-		bcopy (oldtable, *typetable, *tablesize);
+		bcopy(oldtable, *typetable, *tablesize);
 	} else {
 		*typetable = (unsigned char *)
-		    realloc (*typetable, sizeof (unsigned char) * newsize);
+		    realloc(*typetable, sizeof (unsigned char) * newsize);
 		/* XXX unchecked */
 	}
-	memset (*typetable + *tablesize, T_UNUSED, (newsize - *tablesize));
+	memset(*typetable + *tablesize, T_UNUSED, (newsize - *tablesize));
 
 	*tablesize = newsize;
 	return(0);
