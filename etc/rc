@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.186 2001/10/29 18:17:03 deraadt Exp $
+#	$OpenBSD: rc,v 1.187 2001/12/30 16:34:50 markus Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -399,7 +399,7 @@ if [ ! -f /etc/ssh_host_rsa_key ]; then
 	fi
 fi
 if [ ! -f /etc/ssh_host_key ]; then
-	echo -n "ssh-keygen: generating new RSA host key... "
+	echo -n "ssh-keygen: generating new RSA1 host key... "
 	if /usr/bin/ssh-keygen -q -t rsa1 -f /etc/ssh_host_key -N ''; then
 		echo done.
 	else
