@@ -210,6 +210,7 @@ usysdep_initialize (puuconf,iflags)
   if (iuuconf == UUCONF_NOT_FOUND)
     {
 #if HAVE_GETHOSTNAME
+#include <sys/param.h>
       char ab[MAXHOSTNAMELEN];
 
       if (gethostname (ab, sizeof ab - 1) < 0)
