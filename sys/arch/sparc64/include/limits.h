@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.1.1.1 2001/08/18 04:16:37 jason Exp $	*/
+/*	$OpenBSD: limits.h,v 1.2 2001/08/23 16:12:40 art Exp $	*/
 /*	$NetBSD: limits.h,v 1.8 2000/08/08 22:31:14 tshiozak Exp $ */
 
 /*
@@ -79,6 +79,8 @@
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
      defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
+#define UID_MAX		UINT_MAX		/* max value for uid_t */
+#define GID_MAX		UINT_MAX		/* max value for gid_t */
 #define	ULLONG_MAX	0xffffffffffffffffULL	/* max unsigned long long */
 #define	LLONG_MAX	0x7fffffffffffffffLL	/* max signed long long */
 #define	LLONG_MIN	(-0x7fffffffffffffffLL-1) /* min signed long long */
