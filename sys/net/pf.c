@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.127 2001/08/19 17:03:00 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.128 2001/08/19 18:19:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -823,6 +823,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 		} else
 			rule->ifp = NULL;
+		rule->packets = rule->evaluations = 0;
 		TAILQ_INSERT_TAIL(pf_rules_inactive, rule, entries);
 		break;
 	}
@@ -925,6 +926,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					break;
 				}
 			}
+			newrule->packets = newrule->evaluations = 0;
 		}
 
 		s = splsoftnet();
@@ -1806,6 +1808,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			r = TAILQ_NEXT(r, entries);
 			continue;
 		}
+		r->evaluations++;
 		if (r->proto && r->proto != h->ip_p)
 			r = r->skip[0];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
@@ -1835,6 +1838,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	}
 
 	if (rm != NULL) {
+		rm->packets++;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -1987,6 +1991,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			r = TAILQ_NEXT(r, entries);
 			continue;
 		}
+		r->evaluations++;
 		if (r->proto && r->proto != h->ip_p)
 			r = r->skip[0];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
@@ -2014,6 +2019,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	}
 
 	if (rm != NULL) {
+		rm->packets++;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -2130,6 +2136,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			r = TAILQ_NEXT(r, entries);
 			continue;
 		}
+		r->evaluations++;
 		if (r->proto && r->proto != h->ip_p)
 			r = r->skip[0];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
@@ -2155,6 +2162,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	}
 
 	if (rm != NULL) {
+		rm->packets++;
 		REASON_SET(&reason, PFRES_MATCH);
 
 		/* XXX will log packet before rewrite */
@@ -2228,6 +2236,7 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 			r = TAILQ_NEXT(r, entries);
 			continue;
 		}
+		r->evaluations++;
 		if (r->proto && r->proto != h->ip_p)
 			r = r->skip[0];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
@@ -2251,6 +2260,7 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 	if (rm != NULL) {
 		u_short reason;
 
+		rm->packets++;
 		REASON_SET(&reason, PFRES_MATCH);
 		if (rm->log)
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
@@ -2928,6 +2938,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		pf_status.bcounters[dir] += h->ip_len;
 		pf_status.pcounters[dir][action]++;
 	}
+	if (r != NULL)
+		r->packets++;
 
 done:
 	if (log) {
