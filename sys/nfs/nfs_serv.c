@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.20 1999/03/15 15:58:09 deraadt Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.21 2001/03/25 08:26:17 csapuntz Exp $	*/
 /*	$NetBSD: nfs_serv.c,v 1.25 1996/03/02 15:55:52 jtk Exp $	*/
 
 /*
@@ -956,8 +956,8 @@ nfsrv_writegather(ndp, slp, procp, mrq)
 		mp = mp->m_next;
 	    }
 	    if (len > NFS_MAXDATA || len < 0  || i < len) {
-nfsmout:
 		m_freem(mrep);
+nfsmout:
 		error = EIO;
 		nfsm_writereply(2 * NFSX_UNSIGNED, v3);
 		if (v3)
@@ -1347,7 +1347,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
-				return (error);
+				return (0);
 			} else
 				va.va_rdev = (dev_t)rdev;
 			nqsrv_getl(nd.ni_dvp, ND_WRITE);
@@ -1355,7 +1355,9 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			    &va);
 			if (error) {
 				vrele(nd.ni_startdir);
+				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 				nfsm_reply(0);
+				return (0);
 			}
 			nd.ni_cnd.cn_nameiop = LOOKUP;
 			nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART);
@@ -1364,7 +1366,9 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			if ((error = lookup(&nd)) != 0) {
 				free(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 				nfsm_reply(0);
+				return (0);
 			}
+			
 			FREE(nd.ni_cnd.cn_pnbuf, M_NAMEI);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
@@ -1372,6 +1376,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				error = EINVAL;
 				nfsm_reply(0);
+				return (0);
 			}
 		} else {
 			vrele(nd.ni_startdir);
