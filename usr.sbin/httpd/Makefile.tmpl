@@ -1,7 +1,7 @@
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
-## Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+## Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
 ## reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -612,10 +612,12 @@ install-config:
 			-e "s;logs/referer_log;$(logfiledir)/$${target_prefix}referer_log;" \
 			-e "s;logs/agent_log;$(logfiledir)/$${target_prefix}agent_log;" \
 			-e 's;conf/magic;$(sysconfdir)/magic;' \
+			-e 's;conf/srm.conf;$(sysconfdir)/srm.conf;' \
+			-e 's;conf/access.conf;$(sysconfdir)/access.conf;' \
 			-e 's;conf/mime\.types;$(sysconfdir)/mime.types;' \
 			-e 's;User nobody;User $(conf_user);' \
 			-e 's;Group #-1;Group $(conf_group);' \
-			-e 's;Group "#-1";Group $(conf_group);' \
+			-e 's;^Group "#-1";Group $(conf_group);' \
 			-e 's;Port 80;Port $(conf_port);' \
 			-e 's;Listen 80;Listen $(conf_port);' \
 			-e 's;Listen 443;Listen $(conf_port_ssl);' \

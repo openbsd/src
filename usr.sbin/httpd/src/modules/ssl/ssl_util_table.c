@@ -1752,7 +1752,8 @@ int table_adjust(table_t * table_p, const int bucket_n)
     if (buck_n == table_p->ta_bucket_n)
         return TABLE_ERROR_NONE;
     /* allocate a new bucket list */
-    buckets = (table_entry_t **) table_p->ta_calloc(buck_n, sizeof(table_entry_t *));
+    if ((buckets = (table_entry_t **) table_p->ta_calloc(buck_n, sizeof(table_entry_t *))) == NULL)
+        return TABLE_ERROR_ALLOC;
     if (table_p->ta_buckets == NULL)
         return TABLE_ERROR_ALLOC;
     /*

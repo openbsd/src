@@ -18,7 +18,7 @@ void ap_is_not_here(void) {}
  * to 4.3. Use the native DSO code for 4.3 and later.
  */
 #if defined(AIX) && !defined(NO_DL_NEEDED)
-#if AIX < 43
+#if AIX < 430
 #include "os-aix-dso.c"
 #endif
 #endif
@@ -102,7 +102,7 @@ void *ap_os_dso_load(const char *path)
 {
 #if defined(HPUX) || defined(HPUX10) || defined(HPUX11)
     shl_t handle;
-    handle = shl_load(path, BIND_IMMEDIATE|BIND_VERBOSE|BIND_NOSTART, 0L);
+    handle = shl_load(path, BIND_IMMEDIATE|BIND_VERBOSE, 0L);
     return (void *)handle;
 
 #elif defined(HAVE_DYLD)

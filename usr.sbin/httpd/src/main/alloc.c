@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -234,6 +234,7 @@ static union block_hdr *malloc_block(int size)
 #endif
 {
     union block_hdr *blok;
+    int request_size;
 
 #ifdef ALLOC_DEBUG
     /* make some room at the end which we'll fill and expect to be
@@ -245,14 +246,16 @@ static union block_hdr *malloc_block(int size)
     ++num_malloc_calls;
     num_malloc_bytes += size + sizeof(union block_hdr);
 #endif
+    request_size = size + sizeof(union block_hdr);
 #if defined(EAPI) && defined(EAPI_MM)
     if (is_shm)
-        blok = (union block_hdr *)ap_mm_malloc(mm, size + sizeof(union block_hdr));
+        blok = (union block_hdr *)ap_mm_malloc(mm, request_size);
     else
 #endif
-    blok = (union block_hdr *) malloc(size + sizeof(union block_hdr));
+    blok = (union block_hdr *) malloc(request_size);
     if (blok == NULL) {
-	fprintf(stderr, "Ouch!  malloc failed in malloc_block()\n");
+	fprintf(stderr, "Ouch!  malloc(%d) failed in malloc_block()\n",
+                request_size);
 	exit(1);
     }
     debug_fill(blok, size + sizeof(union block_hdr));
@@ -1916,15 +1919,34 @@ struct cleanup {
     struct cleanup *next;
 };
 
-API_EXPORT(void) ap_register_cleanup(pool *p, void *data, void (*plain_cleanup) (void *),
-				  void (*child_cleanup) (void *))
+API_EXPORT(void) ap_register_cleanup_ex(pool *p, void *data,
+				      void (*plain_cleanup) (void *),
+				      void (*child_cleanup) (void *),
+				      int (*magic_cleanup) (void *))
 {
-    struct cleanup *c = (struct cleanup *) ap_palloc(p, sizeof(struct cleanup));
-    c->data = data;
-    c->plain_cleanup = plain_cleanup;
-    c->child_cleanup = child_cleanup;
-    c->next = p->cleanups;
-    p->cleanups = c;
+    struct cleanup *c;
+    if (p) {
+	c = (struct cleanup *) ap_palloc(p, sizeof(struct cleanup));
+	c->data = data;
+	c->plain_cleanup = plain_cleanup;
+	c->child_cleanup = child_cleanup;
+	c->next = p->cleanups;
+	p->cleanups = c;
+    }
+    /* attempt to do magic even if not passed a pool. Allows us
+     * to perform the magic, therefore, "whenever" we want/need */
+    if (magic_cleanup) {
+	if (!magic_cleanup(data)) 
+	   ap_log_error(APLOG_MARK, APLOG_WARNING, NULL,
+		 "exec() may not be safe");
+    }
+}
+
+API_EXPORT(void) ap_register_cleanup(pool *p, void *data,
+				     void (*plain_cleanup) (void *),
+				     void (*child_cleanup) (void *))
+{
+    ap_register_cleanup_ex(p, data, plain_cleanup, child_cleanup, NULL);
 }
 
 API_EXPORT(void) ap_kill_cleanup(pool *p, void *data, void (*cleanup) (void *))
@@ -1978,9 +2000,9 @@ static void cleanup_pool_for_exec(pool *p)
 
 API_EXPORT(void) ap_cleanup_for_exec(void)
 {
-#if !defined(WIN32) && !defined(OS2)
+#if !defined(WIN32) && !defined(OS2) && !defined(NETWARE)
     /*
-     * Don't need to do anything on NT or OS/2, because I
+     * Don't need to do anything on NT, NETWARE or OS/2, because I
      * am actually going to spawn the new process - not
      * exec it. All handles that are not inheritable, will
      * be automajically closed. The only problem is with
@@ -1992,6 +2014,9 @@ API_EXPORT(void) ap_cleanup_for_exec(void)
     cleanup_pool_for_exec(permanent_pool);
     ap_unblock_alarms();
 #endif /* ndef WIN32 */
+#ifdef EAPI
+    ap_kill_alloc_shared();
+#endif
 }
 
 API_EXPORT_NONSTD(void) ap_null_cleanup(void *data)
@@ -2005,14 +2030,84 @@ API_EXPORT_NONSTD(void) ap_null_cleanup(void *data)
  * generic cleanup interface.
  */
 
+#if defined(WIN32)
+/* Provided by service.c, internal to the core library (not exported) */
+BOOL isWindowsNT(void);
+
+int ap_close_handle_on_exec(HANDLE nth)
+{
+    /* Protect the fd so that it will not be inherited by child processes */
+    if (isWindowsNT()) {
+        DWORD hinfo;
+        if (!GetHandleInformation(nth, &hinfo)) {
+	    ap_log_error(APLOG_MARK, APLOG_ERR, NULL, "GetHandleInformation"
+                         "(%08x) failed", nth);
+	    return 0;
+        }
+        if ((hinfo & HANDLE_FLAG_INHERIT)
+                && !SetHandleInformation(nth, HANDLE_FLAG_INHERIT, 0)) {
+	    ap_log_error(APLOG_MARK, APLOG_ERR, NULL, "SetHandleInformation"
+                         "(%08x, HANDLE_FLAG_INHERIT, 0) failed", nth);
+	    return 0;
+        }
+        return 1;
+    }
+    else /* Win9x */ {
+        /* XXX: This API doesn't work... you can't change the handle by just
+         * 'touching' it... you must duplicat to a second handle and close
+         * the original.
+         */
+        return 0;
+    }
+}
+
+int ap_close_fd_on_exec(int fd)
+{
+    return ap_close_handle_on_exec((HANDLE)_get_osfhandle(fd));
+}
+
+#else
+
+int ap_close_fd_on_exec(int fd)
+{
+#if defined(F_SETFD) && defined(FD_CLOEXEC)
+    /* Protect the fd so that it will not be inherited by child processes */
+    if(fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
+	ap_log_error(APLOG_MARK, APLOG_ERR, NULL,
+		     "fcntl(%d, F_SETFD, FD_CLOEXEC) failed", fd);
+	return 0;
+    }
+
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+#endif /* ndef(WIN32) */
+
 static void fd_cleanup(void *fdv)
 {
     close((int) (long) fdv);
 }
 
+static int fd_magic_cleanup(void *fdv)
+{
+    return ap_close_fd_on_exec((int) (long) fdv);
+}
+
+API_EXPORT(void) ap_note_cleanups_for_fd_ex(pool *p, int fd, int domagic)
+{
+#if defined(NETWARE)
+    domagic = 0; /* skip magic for NetWare, at least for now */
+#endif
+    ap_register_cleanup_ex(p, (void *) (long) fd, fd_cleanup, fd_cleanup,
+                           domagic ? fd_magic_cleanup : NULL);
+}
+
 API_EXPORT(void) ap_note_cleanups_for_fd(pool *p, int fd)
 {
-    ap_register_cleanup(p, (void *) (long) fd, fd_cleanup, fd_cleanup);
+    ap_note_cleanups_for_fd_ex(p, fd, 0);
 }
 
 API_EXPORT(void) ap_kill_cleanups_for_fd(pool *p, int fd)
@@ -2020,7 +2115,8 @@ API_EXPORT(void) ap_kill_cleanups_for_fd(pool *p, int fd)
     ap_kill_cleanup(p, (void *) (long) fd, fd_cleanup);
 }
 
-API_EXPORT(int) ap_popenf(pool *a, const char *name, int flg, int mode)
+API_EXPORT(int) ap_popenf_ex(pool *a, const char *name, int flg, int mode,
+                             int domagic)
 {
     int fd;
     int save_errno;
@@ -2030,11 +2126,16 @@ API_EXPORT(int) ap_popenf(pool *a, const char *name, int flg, int mode)
     save_errno = errno;
     if (fd >= 0) {
 	fd = ap_slack(fd, AP_SLACK_HIGH);
-	ap_note_cleanups_for_fd(a, fd);
+	ap_note_cleanups_for_fd_ex(a, fd, domagic);
     }
     ap_unblock_alarms();
     errno = save_errno;
     return fd;
+}
+
+API_EXPORT(int) ap_popenf(pool *a, const char *name, int flg, int mode)
+{
+    return ap_popenf_ex(a, name, flg, mode, 0);
 }
 
 API_EXPORT(int) ap_pclosef(pool *a, int fd)
@@ -2052,14 +2153,27 @@ API_EXPORT(int) ap_pclosef(pool *a, int fd)
 }
 
 #ifdef WIN32
-static void h_cleanup(void *fdv)
+static void h_cleanup(void *nth)
 {
-    CloseHandle((HANDLE) fdv);
+    CloseHandle((HANDLE) nth);
 }
 
-API_EXPORT(void) ap_note_cleanups_for_h(pool *p, HANDLE hDevice)
+static int h_magic_cleanup(void *nth)
 {
-    ap_register_cleanup(p, (void *) hDevice, h_cleanup, h_cleanup);
+    /* Set handle not-inherited
+     */
+    return ap_close_handle_on_exec((HANDLE) nth);
+}
+
+API_EXPORT(void) ap_note_cleanups_for_h_ex(pool *p, HANDLE nth, int domagic)
+{
+    ap_register_cleanup_ex(p, (void *) nth, h_cleanup, h_cleanup,
+                           domagic ? h_magic_cleanup : NULL);
+}
+
+API_EXPORT(void) ap_note_cleanups_for_h(pool *p, HANDLE nth)
+{
+    ap_note_cleanups_for_h_ex(p, nth, 0);
 }
 
 API_EXPORT(int) ap_pcloseh(pool *a, HANDLE hDevice)
@@ -2090,14 +2204,29 @@ static void file_cleanup(void *fpv)
 {
     fclose((FILE *) fpv);
 }
+
 static void file_child_cleanup(void *fpv)
 {
     close(fileno((FILE *) fpv));
 }
 
+static int file_magic_cleanup(void *fpv)
+{
+    return ap_close_fd_on_exec(fileno((FILE *) fpv));
+}
+
+API_EXPORT(void) ap_note_cleanups_for_file_ex(pool *p, FILE *fp, int domagic)
+{
+#if defined(NETWARE)
+    domagic = 0; /* skip magic for NetWare, at least for now */
+#endif
+    ap_register_cleanup_ex(p, (void *) fp, file_cleanup, file_child_cleanup,
+                           domagic ? file_magic_cleanup : NULL);
+}
+
 API_EXPORT(void) ap_note_cleanups_for_file(pool *p, FILE *fp)
 {
-    ap_register_cleanup(p, (void *) fp, file_cleanup, file_child_cleanup);
+    ap_note_cleanups_for_file_ex(p, fp, 0);
 }
 
 API_EXPORT(FILE *) ap_pfopen(pool *a, const char *name, const char *mode)
@@ -2209,9 +2338,28 @@ static void socket_cleanup(void *fdv)
     closesocket((int) (long) fdv);
 }
 
+static int socket_magic_cleanup(void *fpv)
+{
+#ifdef WIN32
+    return ap_close_handle_on_exec((HANDLE) fpv);
+#else
+    return ap_close_fd_on_exec((int) (long) fpv);
+#endif
+}
+
+API_EXPORT(void) ap_note_cleanups_for_socket_ex(pool *p, int fd, int domagic)
+{
+#if defined(TPF) || defined(NETWARE)
+    domagic = 0; /* skip magic (fcntl) for TPF sockets, at least for now */
+#endif
+    ap_register_cleanup_ex(p, (void *) (long) fd, socket_cleanup,
+                           socket_cleanup,
+                           domagic ? socket_magic_cleanup : NULL);
+}
+
 API_EXPORT(void) ap_note_cleanups_for_socket(pool *p, int fd)
 {
-    ap_register_cleanup(p, (void *) (long) fd, socket_cleanup, socket_cleanup);
+    ap_note_cleanups_for_socket_ex(p, fd, 0);
 }
 
 API_EXPORT(void) ap_kill_cleanups_for_socket(pool *p, int sock)
@@ -2219,7 +2367,8 @@ API_EXPORT(void) ap_kill_cleanups_for_socket(pool *p, int sock)
     ap_kill_cleanup(p, (void *) (long) sock, socket_cleanup);
 }
 
-API_EXPORT(int) ap_psocket(pool *p, int domain, int type, int protocol)
+API_EXPORT(int) ap_psocket_ex(pool *p, int domain, int type, int protocol,
+                              int domagic)
 {
     int fd;
 
@@ -2231,9 +2380,14 @@ API_EXPORT(int) ap_psocket(pool *p, int domain, int type, int protocol)
 	errno = save_errno;
 	return -1;
     }
-    ap_note_cleanups_for_socket(p, fd);
+    ap_note_cleanups_for_socket_ex(p, fd, domagic);
     ap_unblock_alarms();
     return fd;
+}
+
+API_EXPORT(int) ap_psocket(pool *p, int domain, int type, int protocol)
+{
+    return ap_psocket_ex(p, domain, type, protocol, 0);
 }
 
 API_EXPORT(int) ap_pclosesocket(pool *a, int sock)
@@ -2768,7 +2922,7 @@ API_EXPORT(int) ap_bspawn_child(pool *p, int (*func) (void *, child_info *), voi
             *pipe_out = ap_bcreate(p, B_RD);
 
 	    /* Setup the cleanup routine for the handle */
-            ap_note_cleanups_for_h(p, hPipeOutputRead);   
+            ap_note_cleanups_for_h_ex(p, hPipeOutputRead, 1);   
 
 	    /* Associate the handle with the new buffer */
             ap_bpushh(*pipe_out, hPipeOutputRead);
@@ -2783,7 +2937,7 @@ API_EXPORT(int) ap_bspawn_child(pool *p, int (*func) (void *, child_info *), voi
             *pipe_in = ap_bcreate(p, B_WR);             
 
 	    /* Setup the cleanup routine for the handle */
-            ap_note_cleanups_for_h(p, hPipeInputWrite);
+            ap_note_cleanups_for_h_ex(p, hPipeInputWrite, 1);
 
 	    /* Associate the handle with the new buffer */
             ap_bpushh(*pipe_in, hPipeInputWrite);
@@ -2799,7 +2953,7 @@ API_EXPORT(int) ap_bspawn_child(pool *p, int (*func) (void *, child_info *), voi
             *pipe_err = ap_bcreate(p, B_RD);
 
 	    /* Setup the cleanup routine for the handle */
-            ap_note_cleanups_for_h(p, hPipeErrorRead);
+            ap_note_cleanups_for_h_ex(p, hPipeErrorRead, 1);
 
 	    /* Associate the handle with the new buffer */
             ap_bpushh(*pipe_err, hPipeErrorRead);
@@ -2837,19 +2991,19 @@ API_EXPORT(int) ap_bspawn_child(pool *p, int (*func) (void *, child_info *), voi
 
     if (pipe_out) {
 	*pipe_out = ap_bcreate(p, B_RD);
-	ap_note_cleanups_for_fd(p, fd_out);
+	ap_note_cleanups_for_fd_ex(p, fd_out, 0);
 	ap_bpushfd(*pipe_out, fd_out, fd_out);
     }
 
     if (pipe_in) {
 	*pipe_in = ap_bcreate(p, B_WR);
-	ap_note_cleanups_for_fd(p, fd_in);
+	ap_note_cleanups_for_fd_ex(p, fd_in, 0);
 	ap_bpushfd(*pipe_in, fd_in, fd_in);
     }
 
     if (pipe_err) {
 	*pipe_err = ap_bcreate(p, B_RD);
-	ap_note_cleanups_for_fd(p, fd_err);
+	ap_note_cleanups_for_fd_ex(p, fd_err, 0);
 	ap_bpushfd(*pipe_err, fd_err, fd_err);
     }
 #endif
@@ -2858,16 +3012,30 @@ API_EXPORT(int) ap_bspawn_child(pool *p, int (*func) (void *, child_info *), voi
     return pid;
 }
 
+
+/* 
+ * Timing constants for killing subprocesses
+ * There is a total 3-second delay between sending a SIGINT 
+ * and sending of the final SIGKILL.
+ * TIMEOUT_INTERVAL should be set to TIMEOUT_USECS / 64
+ * for the exponential timeout algorithm.
+ */
+#define TIMEOUT_USECS    3000000
+#define TIMEOUT_INTERVAL   46875
+
 static void free_proc_chain(struct process_chain *procs)
 {
     /* Dispose of the subprocesses we've spawned off in the course of
      * whatever it was we're cleaning up now.  This may involve killing
      * some of them off...
      */
-
     struct process_chain *p;
     int need_timeout = 0;
     int status;
+#if !defined(WIN32) && !defined(NETWARE)
+    int timeout_interval;
+    struct timeval tv;
+#endif
 
     if (procs == NULL)
 	return;			/* No work.  Whew! */
@@ -2928,18 +3096,49 @@ static void free_proc_chain(struct process_chain *procs)
 	if ((p->kill_how == kill_after_timeout)
 	    || (p->kill_how == kill_only_once)) {
 	    /* Subprocess may be dead already.  Only need the timeout if not. */
-	    if (ap_os_kill(p->pid, SIGTERM) != -1)
+	    if (ap_os_kill(p->pid, SIGTERM) == -1) {
+                p->kill_how = kill_never;
+            }
+            else {
 		need_timeout = 1;
+            }
 	}
 	else if (p->kill_how == kill_always) {
 	    kill(p->pid, SIGKILL);
 	}
     }
 
-    /* Sleep only if we have to... */
+    /* Sleep only if we have to. The sleep algorithm grows
+     * by a factor of two on each iteration. TIMEOUT_INTERVAL
+     * is equal to TIMEOUT_USECS / 64.
+     */
+    if (need_timeout) {
+        timeout_interval = TIMEOUT_INTERVAL;
+        tv.tv_sec = 0;
+        tv.tv_usec = timeout_interval;
+        ap_select(0, NULL, NULL, NULL, &tv);
 
-    if (need_timeout)
-	sleep(3);
+        do {
+            need_timeout = 0;
+            for (p = procs; p; p = p->next) {
+                if (p->kill_how == kill_after_timeout) {
+                    if (waitpid(p->pid, (int *) 0, WNOHANG | WUNTRACED) > 0)
+                        p->kill_how = kill_never;
+                    else
+                        need_timeout = 1;
+                }
+            }
+            if (need_timeout) {
+                if (timeout_interval >= TIMEOUT_USECS) {
+                    break;
+                }
+                tv.tv_sec = timeout_interval / 1000000;
+                tv.tv_usec = timeout_interval % 1000000;
+                ap_select(0, NULL, NULL, NULL, &tv);
+                timeout_interval *= 2;
+            }
+        } while (need_timeout);
+    }
 
     /* OK, the scripts we just timed out for have had a chance to clean up
      * --- now, just get rid of them, and also clean up the system accounting
@@ -2947,12 +3146,11 @@ static void free_proc_chain(struct process_chain *procs)
      */
 
     for (p = procs; p; p = p->next) {
-
 	if (p->kill_how == kill_after_timeout)
 	    kill(p->pid, SIGKILL);
 
 	if (p->kill_how != kill_never)
 	    waitpid(p->pid, &status, 0);
     }
-#endif /* WIN32 */
+#endif /* !WIN32 && !NETWARE*/
 }

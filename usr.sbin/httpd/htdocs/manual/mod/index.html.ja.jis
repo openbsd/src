@@ -231,7 +231,7 @@
       <dt><a href="mod_unique_id.html">mod_unique_id</a>
       Apache 1.3 以降</dt>
 
-      <dd>リクエスト毎に、一意なリクエスト ID を生成する</dd>
+      <dd>リクエストごとに、一意なリクエスト ID を生成する</dd>
 
       <dt><a href="mod_usertrack.html">mod_usertrack</a>
       Apache 1.2 以降</dt>

@@ -111,7 +111,7 @@
     </blockquote>
     とした場合、<code>index.html</code> と <code>index.txt</code>
     のどちらもディレクトリ内で存在しない場合、CGI スクリプト
-    <code>/cgi-bin/index.pl</code> が実行されます。</p>
+    <code>/cgi-bin/index.pl</code> が実行されます。
 
         <hr />
 

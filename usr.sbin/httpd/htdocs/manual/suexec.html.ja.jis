@@ -7,7 +7,7 @@
     <title>Apache suEXEC Support</title>
 
   </head>
-  <!-- English revision:1.25 -->
+  <!-- English revision: 1.28 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -386,7 +386,7 @@
       <dd>このオプションは、デフォルトではインストールされず、
       有効にはならない suEXEC 機能を有効にします。
       suEXEC を使うように APACI に要求するには、--enable-suexec
-      オプションにあわせて少なくとも一つは --suexec-xxxxx
+      オプションとあわせて少なくとも一つは --suexec-xxxxx
       オプションが指定されなければなりません。</dd>
 
       <dt><code>--suexec-caller=<em>UID</em></code></dt>
@@ -399,7 +399,7 @@
 
       <dd>Apache のドキュメントルートを設定します。これが suEXEC
       の動作で使用する唯一のディレクトリ階層になります (UserDir
-      の指定は別)。デフォルトでは --datedir に "/htdocs"
+      の指定は別)。デフォルトでは --datadir に "/htdocs"
       というサフィックスをつけたものです。
       "<code>--datadir=/home/apache</code>" として設定すると、
       suEXEC wrapper にとって "/home/apache/htdocs"
@@ -557,7 +557,7 @@
 
     <p align="left"><strong>注意!</strong>
     この章は完全ではありません。この章の最新改訂版については、
-    Apache グループの<a href="http://www.apache.org/docs/suexec.html">
+    Apache グループの<a href="http://httpd.apache.org/docs/suexec.html">
     オンラインドキュメント</a>版を参照してください。
     </p>
 

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -163,7 +163,12 @@ API_EXPORT(struct hostent *) ap_pduphostent(pool *p, const struct hostent *hp)
  */
 API_EXPORT(struct hostent *) ap_pgethostbyname(pool *p, const char *hostname)
 {
+#ifdef TPF
+    /* get rid of compilation warning on TPF */
+    struct hostent *hp = gethostbyname((char *)hostname);
+#else
     struct hostent *hp = gethostbyname(hostname);
+#endif
     return (hp == NULL) ? NULL : ap_pduphostent(p, hp);
 }
 

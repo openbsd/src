@@ -51,6 +51,9 @@
     "Off" (the default is "On") or lowering the Timeout value from
     the default 300 seconds (5 minutes) in order to reduce the
     number of active ECBs on your system.<br />
+
+    <p>Apache on TPF does not support listening on multiple ports.</p>
+
      <a id="whats_available" name="whats_available"></a> 
 
     <center>
@@ -114,7 +117,7 @@
 
       <li>mod_access.c <em>(Use of mod_access directives
       "<tt>allow&nbsp;from</tt>" &amp; "<tt>deny&nbsp;from</tt>"
-      with host <u>names</u> (verses ip addresses) requires
+      with host <u>names</u> (versus ip addresses) requires
       PUT10)&nbsp;</em></li>
 
       <li>mod_actions.c&nbsp;</li>

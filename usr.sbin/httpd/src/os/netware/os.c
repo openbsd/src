@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -501,4 +501,9 @@ char *ap_os_http_method(void *r)
     if (!WSAIoctl(s, SO_SSL_GET_FLAGS, NULL, 0, &optParam, sizeof(optParam), NULL, NULL, NULL))
         if (optParam & (SO_SSL_ENABLE | SO_SSL_SERVER)) return "https";
     return "http";
+}
+
+unsigned short ap_os_default_port(void *r)
+{
+  return ap_default_port_for_scheme(ap_os_http_method(r));
 }

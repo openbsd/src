@@ -1,9 +1,9 @@
-/*	$OpenBSD: mod_auth_dbm.c,v 1.10 2003/07/18 21:16:37 david Exp $ */
+/*	$OpenBSD: mod_auth_dbm.c,v 1.11 2003/08/21 13:11:36 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -665,7 +665,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
     if (err != NULL)
         return ap_proxyerror(r, HTTP_INTERNAL_SERVER_ERROR, err);
 
-    sock = ap_psocket(p, PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    sock = ap_psocket_ex(p, PF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
     if (sock == -1) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
                       "proxy: error creating socket");
@@ -944,7 +944,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
     }
 
 /* try to set up PASV data connection first */
-    dsock = ap_psocket(p, PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    dsock = ap_psocket_ex(p, PF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
     if (dsock == -1) {
         return ftp_cleanup_and_return(r, ctrl, data, sock, dsock,
                                 ap_proxyerror(r, HTTP_INTERNAL_SERVER_ERROR,
@@ -1032,7 +1032,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
                                     "proxy: error getting socket address"));
         }
 
-        dsock = ap_psocket(p, PF_INET, SOCK_STREAM, IPPROTO_TCP);
+        dsock = ap_psocket_ex(p, PF_INET, SOCK_STREAM, IPPROTO_TCP, 1);
         if (dsock == -1) {
             return ftp_cleanup_and_return(r, ctrl, data, sock, dsock,
                                 ap_proxyerror(r, HTTP_INTERNAL_SERVER_ERROR,

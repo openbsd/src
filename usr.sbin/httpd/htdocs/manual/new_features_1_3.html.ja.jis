@@ -7,7 +7,7 @@
     <title>New features with Apache 1.3</title>
 
   </head>
-  <!-- English revision: 1.88 -->
+  <!-- English revision: 1.91 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -226,7 +226,7 @@
       これを達成するために、APACI は Apache の C のヘッダファイルを
       <code>apxs</code> と一緒にインストールします。</dd>
 
-      <dt><a href="install.html#install"><strong>Apache
+      <dt><a href="install.html#installing"><strong>Apache
       のデフォルトディレクトリパスを <code>/usr/local/apache/</code>
       へ変更</strong></a><br />
       </dt>
@@ -458,7 +458,7 @@
           と同じ効果になるようになりました。</li>
 
           <li>1.3.15 からは、IndexOptions に <a
-          href="mod/mod_autoindex.html#trackmodified"><samp>TrackModified</samp
+          href="mod/mod_autoindex.html#indexoptions:trackmodified"><samp>TrackModified</samp
           ></a> ディレクティブが含まれている場合は、サーバはディレクトリの
           リクエストを受けたときに、キャッシュを制御する ETag と LastModified
           を付けて返します。そのリクエストが変更されていないとクライアント

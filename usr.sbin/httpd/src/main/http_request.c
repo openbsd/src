@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -288,8 +288,13 @@ static int get_path_info(request_rec *r)
         }
         else {
 #if defined(EACCES)
-            if (errno != EACCES)
-#endif
+            if (errno == EACCES)
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
+                            "access to %s failed because search "
+                            "permissions are missing on a component "
+                            "of the path", r->uri);
+            else
+#endif 
                 ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
                             "access to %s failed", r->uri);
             return HTTP_FORBIDDEN;
@@ -822,6 +827,13 @@ API_EXPORT(request_rec *) ap_sub_req_method_uri(const char *method,
         ap_parse_uri(rnew, ap_make_full_path(rnew->pool, udir, new_file));
     }
 
+    /* We cannot return NULL without violating the API. So just turn this
+     * subrequest into a 500 to indicate the failure. */
+    if (ap_is_recursion_limit_exceeded(r)) {
+        rnew->status = HTTP_INTERNAL_SERVER_ERROR;
+        return rnew;
+    }
+
     res = ap_unescape_url(rnew->uri);
     if (res) {
         rnew->status = res;
@@ -897,6 +909,13 @@ API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
 
     ap_set_sub_req_protocol(rnew, r);
     fdir = ap_make_dirstr_parent(rnew->pool, r->filename);
+
+    /* We cannot return NULL without violating the API. So just turn this
+     * subrequest into a 500. */
+    if (ap_is_recursion_limit_exceeded(r)) {
+        rnew->status = HTTP_INTERNAL_SERVER_ERROR;
+        return rnew;
+    }
 
     /*
      * Check for a special case... if there are no '/' characters in new_file
@@ -1267,12 +1286,9 @@ static void process_request_internal(request_rec *r)
         }
         break;
     case SATISFY_ANY:
-        if (((access_status = ap_check_access(r)) != 0) || !ap_auth_type(r)) {
+        if (((access_status = ap_check_access(r)) != 0)) {
             if (!ap_some_auth_required(r)) {
-                decl_die(access_status ? access_status :
-			 HTTP_INTERNAL_SERVER_ERROR,
-			 ap_auth_type(r) ? "check access"
-		    : "perform authentication. AuthType not set!", r);
+                decl_die(access_status, "check access", r);
                 return;
             }
             if (((access_status = ap_check_user_id(r)) != 0) || !ap_auth_type(r)) {
@@ -1361,7 +1377,14 @@ static table *rename_original_env(pool *p, table *t)
 static request_rec *internal_internal_redirect(const char *new_uri, request_rec *r)
 {
     int access_status;
-    request_rec *new = (request_rec *) ap_pcalloc(r->pool, sizeof(request_rec));
+    request_rec *new;
+
+    if (ap_is_recursion_limit_exceeded(r)) {
+        ap_die(HTTP_INTERNAL_SERVER_ERROR, r);
+        return NULL;
+    }
+
+    new = (request_rec *) ap_pcalloc(r->pool, sizeof(request_rec));
 
     new->connection = r->connection;
     new->server     = r->server;
@@ -1437,7 +1460,10 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
 API_EXPORT(void) ap_internal_redirect(const char *new_uri, request_rec *r)
 {
     request_rec *new = internal_internal_redirect(new_uri, r);
-    process_request_internal(new);
+
+    if (new) {
+        process_request_internal(new);
+    }
 }
 
 /* This function is designed for things like actions or CGI scripts, when
@@ -1447,9 +1473,12 @@ API_EXPORT(void) ap_internal_redirect(const char *new_uri, request_rec *r)
 API_EXPORT(void) ap_internal_redirect_handler(const char *new_uri, request_rec *r)
 {
     request_rec *new = internal_internal_redirect(new_uri, r);
-    if (r->handler)
-        new->content_type = r->content_type;
-    process_request_internal(new);
+
+    if (new) {
+        if (r->handler)
+            new->content_type = r->content_type;
+        process_request_internal(new);
+    }
 }
 
 /*

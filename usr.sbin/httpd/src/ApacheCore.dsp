@@ -42,8 +42,8 @@ RSC=rc.exe
 # PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MD /W3 /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FD /c
-# ADD CPP /nologo /MD /W3 /O2 /I ".\include" /I ".\os\win32" /I ".\os\win32\win9xconhook" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /Fd"Release\ApacheCore" /FD /c
+# ADD BASE CPP /nologo /MD /W3 /O2 /Zi /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FD /c
+# ADD CPP /nologo /MD /W3 /O2 /Zi /I ".\include" /I ".\os\win32" /I ".\os\win32\win9xconhook" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /Fd"Release\ApacheCore_src" /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "NDEBUG"
@@ -52,8 +52,13 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib /nologo /subsystem:windows /dll /incremental:no /map /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore
-# ADD LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib /nologo /subsystem:windows /dll /incremental:no /map /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore
+# ADD BASE LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib "Release\buildmark.obj" /nologo /subsystem:windows /dll /incremental:no /debug /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore /opt:ref
+# ADD LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib "Release\buildmark.obj" /nologo /subsystem:windows /dll /incremental:no /debug /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore /opt:ref
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PreLink_Desc=Compiling buildmark
+PreLink_Cmds=cl.exe /nologo /MD /W3 /O2 /Zi /I "./include" /I ".\os\win32" /I ".\os\win32\win9xconhook" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /Fd"Release\ApacheCore_src" /FD /c .\buildmark.c /Fo"Release\buildmark.obj"
+# End Special Build Tool
 
 !ELSEIF  "$(CFG)" == "ApacheCore - Win32 Debug"
 
@@ -69,7 +74,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MDd /W3 /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /c
-# ADD CPP /nologo /MDd /W3 /GX /Zi /Od /I ".\include" /I ".\os\win32" /I ".\os\win32\win9xconhook" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /Fd"Debug\ApacheCore" /FD /c
+# ADD CPP /nologo /MDd /W3 /GX /Zi /Od /I ".\include" /I ".\os\win32" /I ".\os\win32\win9xconhook" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /Fd"Debug\ApacheCore_src" /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x809 /d "_DEBUG"
@@ -78,8 +83,13 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib /nologo /subsystem:windows /dll /incremental:no /map /debug /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore
-# ADD LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib /nologo /subsystem:windows /dll /incremental:no /map /debug /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore
+# ADD BASE LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib "Debug\buildmark.obj" /nologo /subsystem:windows /dll /incremental:no /debug /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore
+# ADD LINK32 kernel32.lib user32.lib advapi32.lib ws2_32.lib "Debug\buildmark.obj" /nologo /subsystem:windows /dll /incremental:no /debug /machine:I386 /base:@"os\win32\BaseAddr.ref",ApacheCore
+# Begin Special Build Tool
+SOURCE="$(InputPath)"
+PreLink_Desc=Compiling buildmark
+PreLink_Cmds=cl.exe /nologo /MDd /W3 /GX /Zi /Od /I ".\include" /I ".\os\win32" /I ".\os\win32\win9xconhook" /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "WIN32_LEAN_AND_MEAN" /Fd"Debug\ApacheCore_src" /FD /c .\buildmark.c /Fo"Debug\buildmark.obj"
+# End Special Build Tool
 
 !ENDIF 
 
@@ -101,10 +111,6 @@ SOURCE=.\ApacheCore.def
 # Begin Source File
 
 SOURCE=.\main\buff.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\buildmark.c
 # End Source File
 # Begin Source File
 
@@ -382,6 +388,64 @@ SOURCE=.\include\util_uri.h
 # Begin Group "Generated Files"
 
 # PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\main\gen_test_char.exe
+
+!IF  "$(CFG)" == "ApacheCore - Win32 Release"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Generating test_char.h from gen_test_char.exe
+InputPath=.\main\gen_test_char.exe
+
+".\main\test_char.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	.\main\gen_test_char.exe >.\main\test_char.h
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "ApacheCore - Win32 Debug"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Generating test_char.h from gen_test_char.exe
+InputPath=.\main\gen_test_char.exe
+
+".\main\test_char.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	.\main\gen_test_char.exe >.\main\test_char.h
+
+# End Custom Build
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\main\gen_uri_delims.exe
+
+!IF  "$(CFG)" == "ApacheCore - Win32 Release"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Generating uri_delims.h from gen_uri_delims.exe
+InputPath=.\main\gen_uri_delims.exe
+
+".\main\uri_delims.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	.\main\gen_uri_delims.exe >.\main\uri_delims.h
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "ApacheCore - Win32 Debug"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Generating uri_delims.h from gen_uri_delims.exe
+InputPath=.\main\gen_uri_delims.exe
+
+".\main\uri_delims.h" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	.\main\gen_uri_delims.exe >.\main\uri_delims.h
+
+# End Custom Build
+
+!ENDIF 
+
+# End Source File
 # Begin Source File
 
 SOURCE=.\main\test_char.h

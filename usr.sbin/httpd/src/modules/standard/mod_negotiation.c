@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -926,7 +926,11 @@ static int read_types_multi(negotiation_state *neg)
         request_rec *sub_req;
 
         /* Do we have a match? */
+#ifdef CASE_BLIND_FILESYSTEM
+        if (strncasecmp(dir_entry->d_name, filp, prefix_len)) {
+#else
         if (strncmp(dir_entry->d_name, filp, prefix_len)) {
+#endif
             continue;
         }
         if (dir_entry->d_name[prefix_len] != '.') {

@@ -110,7 +110,7 @@
     from Apache 1.3.20 and later. Pre-compiled binaries for the
     Cygwin platform (without the <code>cygwin1.dll</code>) will be
     supplied at <a
-    href="http://www.apache.org/httpd">http://www.apache.org/httpd</a>
+    href="http://httpd.apache.org/">http://httpd.apache.org/</a>
     for each released version.</p>
 
     <h2><a id="diff" name="diff">Differences from Apache for
@@ -169,7 +169,7 @@
     <p><strong>What are the differences in the configuration
     files?</strong><br />
      While the Apache for Windows port uses Windows native path
-    names to refer files and directorys, like</p>
+    names to refer files and directories, like</p>
 <pre>
   # httpd.conf (for Windows)
   DocumentRoot "c:/apache/htdocs"
@@ -201,7 +201,7 @@
 
     <p>Cygwin 1.x is required to compile and run this version.
     Cygwin 1.3.9 and 1.3.10 have been tested and approved on both
-    supported OSes. We suggest to use Cygwin 1.3.9-2 and higher.</p> 
+    supported OSes. We suggest using Cygwin 1.3.9-2 and higher.</p> 
 
     <p><strong>Note:</strong>If you want to compile shared DLL
     modules using <a
@@ -275,7 +275,7 @@
 </pre>
 
         <p>This will produce the required extra libraries or object
-        files which hold all static linked code. Then
+        files that hold all static linked code. Then
         <code>dllwrap</code> and <code>dlltool</code> will export
         all of those (including any additional module code) to the
         shared <code>cyghttpd.dll</code> and create the
@@ -330,11 +330,11 @@
             trying to link the shared DLL modules
             <code>mod_foo.dll</code>.</p>
 
-            <p>Unfortunatly while Apache's build process the shared
+            <p>Unfortunately, during Apache's build process, the shared
             modules are linked before the shared core import
             library <code>src/cyghttpd.dll</code> has been made.
             The shared modules depend on this import library, so
-            they can not link for the first time you run
+            they cannot link for the first time you run
             <code>make</code>.</p>
           </li>
 
@@ -350,8 +350,8 @@
             <p>All shared modules are placed into
             <code>libexec</code>, including the shared core DLL
             <code>cyghttpd.dll</code>. When Apache's
-            <code>/bin/httpd</code> is started it has to dynamicly
-            link <code>cyghttpd.dll</code> while runtime. That is
+            <code>/bin/httpd</code> is started, it has to dynamically
+            link <code>cyghttpd.dll</code> during runtime; that is
             why you have to place the shared core DLL
             <code>cyghttpd.dll</code> to the same directory where
             <code>httpd.exe</code> resides, i.e.
@@ -421,7 +421,7 @@
     </ul>
 	 
     
-	 <h2><a id="inst" name="inst">Using Win32 native socket 
+	 <h2><a id="winsock" name="winsock">Using Win32 native socket 
 	 implementation instead</a></h2>
 
     <p>Apache for Cygwin supports an option to use the Win32 native 

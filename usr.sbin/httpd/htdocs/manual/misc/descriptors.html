@@ -126,7 +126,18 @@
 
       <dd>AIX version 3.2?? appears to have a hard limit of 128
       descriptors. End of story. Version 4.1.5 has a hard limit of
-      2000.</dd>
+      2000.  Version 4.3.3 and 5.1 say
+      <pre>
+/*
+ * Select uses bit masks of file descriptors.
+ * These macros manipulate such bit fields.
+ * FD_SETSIZE may be defined by the user to the maximum valued file
+ * descriptor to be selected; the default here should be == OPEN_MAX
+ */
+#ifndef FD_SETSIZE
+#define FD_SETSIZE     32767    /* must be == OPEN_MAX in <limits.h> */
+#endif
+</pre></dd>
 
       <dt><strong>SCO OpenServer</strong></dt>
 

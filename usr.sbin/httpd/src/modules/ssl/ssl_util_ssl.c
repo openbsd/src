@@ -362,7 +362,7 @@ BOOL SSL_X509_getBC(X509 *cert, int *ca, int *pathlen)
         if ((cp = BN_bn2dec(bn)) == NULL)
             return FALSE;
         *pathlen = atoi(cp);
-        free(cp);
+        OPENSSL_free(cp);
         BN_free(bn);
     }
     BASIC_CONSTRAINTS_free(bc);

@@ -19,12 +19,12 @@
 <h1 align="center">Authentication, Authorization, and Access
 Control</h1>
 
-    <a name="TOC"></a> 
+    <a name="TOC"></a>
 
     <ul>
       <li><a href="#intro">Introduction</a></li>
       <li>
-        <a href="#basic">Basic authentication</a> 
+        <a href="#basic">Basic authentication</a>
 
         <ul>
           <li><a href="#basicworks">How basic
@@ -32,13 +32,13 @@ Control</h1>
 
           <li>
             <a href="#basicconfig">Configuration:
-            Protecting content with basic authentication</a> 
+            Protecting content with basic authentication</a>
 
           </li>
 
           <li>
             <a href="#basicfaq">Frequently asked
-            questions about basic auth</a> 
+            questions about basic auth</a>
           </li>
 
           <li><a href="#basiccaveat">Security
@@ -48,7 +48,7 @@ Control</h1>
       </li>
 
       <li>
-        <a href="#digest">Digest authentication</a> 
+        <a href="#digest">Digest authentication</a>
 
         <ul>
           <li><a href="#digestworks">How digest auth
@@ -56,7 +56,7 @@ Control</h1>
 
           <li>
             <a href="#digestconfig">Configuration:
-            Protecting content with digest authentication</a> 
+            Protecting content with digest authentication</a>
           </li>
 
           <li><a href="#digestcaveat">Caveats</a></li>
@@ -66,7 +66,7 @@ Control</h1>
 
       <li>
         <a href="#database">Database authentication
-        modules</a> 
+        modules</a>
 
         <ul>
           <li><a href="#modauthdb">mod_auth_db and
@@ -78,14 +78,14 @@ Control</h1>
 
           <li>
             <a href="#authdbconfig">Protecting a
-            directory with mod_auth_db</a> 
+            directory with mod_auth_db</a>
           </li>
         </ul>
         <br />
       </li>
 
       <li>
-        <a href="#access">Access control</a> 
+        <a href="#access">Access control</a>
 
         <ul>
           <li><a href="#allowdeny">Allow and Deny</a></li>
@@ -191,8 +191,8 @@ Control</h1>
     <p>Along with the <tt>401</tt> response, certain other
     information will be passed back to the client. In particular,
     it sends a name which is associated with the protected area of
-    the web site. This is called the <i>realm</i><a id="11257"
-    name="11257"></a>, or just the authentication name. The client
+    the web site. This is called the <i>realm</i>, or just the
+    authentication name. The client
     browser caches the username and password that you supplied, and
     stores it along with the authentication realm, so that if other
     resources are requested from the same realm, the same username
@@ -630,7 +630,7 @@ Require group authors
     Additional information and resources about MD5 can be found at
     <tt>http://userpages.umbc.edu/&nbsp;mabzug1/cs/md5/md5.html</tt></p>
 
-    <h2><a name="digestconfig"></a>Configuration: 
+    <h2><a name="digestconfig"></a>Configuration:
     Protecting content with digest authentication</h2>
 
     <p>The steps for configuring your server for digest
@@ -724,7 +724,7 @@ htdigest -c /usr/local/apache/passwd/digest realm username
       </tr>
     </table>
 
-    <p>These directives may be places in a <tt>.htaccess</tt> file
+    <p>These directives may be placed in a <tt>.htaccess</tt> file
     in the particular directory being protected, or may go in the
     main server configuration file, in a <tt>&lt;Directory&gt;</tt>
     section, or another scope container.</p>
@@ -792,8 +792,9 @@ Require group admins
     not use it on a web site on which you cannot control the
     browsers that people will be using, such as on your intranet
     site. In particular, Opera 4.0 or later, Microsoft Internet
-    Explorer 5.0 or later, and Amaya support digest authentication,
-    while Netscape, Mozilla, and various other browsers do not.</p>
+    Explorer 5.0 or later, Mozilla 1.0.1 and Netscape 7 or later
+    as well as Amaya support digest authentication, while various
+    other browsers do not.</p>
 
     <p>Next, with regard to security considerations, you should
     understand two things. Although your password is not passed in
@@ -864,8 +865,7 @@ Require group admins
     pick whichever of the two modules makes the most sense on your
     particular platform of choice. If you do not have DB support on
     your platform, you may need to install it. You download an
-    implementation of DB at <tt>http://www.sleepycat.com/</tt>. <a
-    id="11415" name="11415"></a></p>
+    implementation of DB at <tt>http://www.sleepycat.com/</tt>.
 
     <h2><a name="dbfiles"></a>Berkeley DB files</h2>
 
@@ -876,12 +876,11 @@ Require group admins
     name of a variable, and the value of that variable. While other
     databases allow the storage of many fields in a given record, a
     DB file allows only this pairing of key and value.<a
-    name="foot1_return" href="#foot1"><sup>21.1</sup></a> This is ideal for
+    name="foot1_return" href="#foot1"><sup>1</sup></a> This is ideal for
     authentication, which requires only the pair of a username and
     password.</p>
 
     <h2><a name="installauthdb">Installing mod_auth_db</a></h2>
-    <tt>mod_auth_db!installing</tt> 
 
     <p>For the purposes of this tutorial, we'll talk about
     installing and configuring <tt>mod_auth_db</tt>. However,
@@ -932,7 +931,7 @@ Require group admins
 
     <p>The user file for authentication is, this time, not a flat
     text file, but is a DB file<a name="foot2_return"
-    href="#foot2"><sup>21.2</sup></a>. Fortunately, once again,
+    href="#foot2"><sup>2</sup></a>. Fortunately, once again,
     Apache provides us with a simple utility for the purpose of
     managing this user file. This time, the utility is called
     <tt>dbmmanage</tt>, and will be located in the <tt>bin</tt>
@@ -943,7 +942,7 @@ Require group admins
     simple. The syntax which you will usually be using is as
     follows:</p>
 <pre>
-dbmmanage passwords.db adduser montressor
+dbmmanage passwords.dat adduser montressor
 </pre>
 
     <p>As with <tt>htpasswd</tt>, you will at this point be
@@ -975,7 +974,7 @@ tie %database, 'DB_File', "passwords.dat"
 $username = 'rbowen';
 $password = 'mypassword';
 @chars=(0..9,'a'..'z');
-$salt = '', map { $chars[int rand @chars] } (0..1);
+$salt = $chars[int rand @chars] . $chars[int rand @chars];
 
 $crypt = crypt($password, $salt);
 $database{$username} = $crypt;
@@ -996,7 +995,7 @@ untie %database;
     when the data structure is changed, the file is automatically
     modified at the same time.</p>
 
-    <h3><a name="authdbuserfile"></a>Configuration Apache
+    <h3><a name="authdbuserfile"></a>Configuring Apache
     to use this password file</h3>
 
     <p>Once you have created the password file, you need to tell
@@ -1090,15 +1089,15 @@ allow from address
 
     <p>For example, if you have someone spamming your message
     board, and you want to keep them out, you could do the
-    following: <a id="11494" name="11494"></a></p>
+    following:</p>
 <pre>
 deny from 11.22.33.44
 </pre>
 
     <p>Visitors coming from that address will not be able to see
     the content behind this directive. If, instead, you have a
-    machine name, rather than an IP address, you can use that. <a
-    id="11497" name="11497"></a></p>
+    machine name, rather than an IP address, you can use that.
+    </p>
 <pre>
 deny from hostname.example.com
 </pre>
@@ -1152,6 +1151,7 @@ Allow from hostname.example.com
   AuthUserFile /www/passwd/users
   AuthGroupFile /www/passwd/groups
   Require group customers
+  Order allow,deny
   Allow from internal.com
   Satisfy any
 &lt;/Directory&gt;
@@ -1178,7 +1178,7 @@ Allow from hostname.example.com
 
     <dl>
       <dt><a name="foot1">... value.</a><a
-      href="#foot1_return"><sup>21.1</sup></a></dt>
+      href="#foot1_return"><sup>1</sup></a></dt>
 
       <dd>There are actually a number of implementations that get
       around this limitation. MLDBM is one of them, for example.
@@ -1187,7 +1187,7 @@ Allow from hostname.example.com
       with whatever operating system you are already running.</dd>
 
       <dt><a name="foot2">... file</a><a
-      href="#foot2_return"><sup>21.2</sup></a></dt>
+      href="#foot2_return"><sup>2</sup></a></dt>
 
       <dd>Or, if you are using mod_auth_dbm, a DBM file.</dd>
     </dl>
@@ -1195,4 +1195,3 @@ Allow from hostname.example.com
 
   </body>
 </html>
-

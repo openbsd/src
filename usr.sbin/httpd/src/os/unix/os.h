@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@ extern int ap_os_is_path_absolute(const char *file);
  * to 4.3. 
  */
 #ifdef AIX
-#if AIX < 43
+#if AIX < 430
 #undef HAVE_DLFCN_H
 #endif
 #endif

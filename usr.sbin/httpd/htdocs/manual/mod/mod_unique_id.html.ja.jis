@@ -31,7 +31,7 @@
      <a href="module-dict.html#moduleidentifier"
     rel="help"><strong>モジュール識別子:</strong></a>
     unique_id_module<br />
-     <a href="module-dict.html#compatibility"
+     <a href="module-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a> Apache 1.3
     以降で使用可能。</p>
 
@@ -68,7 +68,7 @@
     この宇宙の中でそれぞれのリクエストに一意な識別子を生成できることを示します。
     </p>
 
-    <p>クラスタにあるマシンは以下の要求を見たさなければなりません。
+    <p>クラスタにあるマシンは以下の要求を満たさなければなりません。
     (マシンが一つだけだとしても、NTP で時計を合わせる方が良いです。)</p>
 
     <ul>

@@ -18,10 +18,10 @@
     <hr />
 
     <center>
-      [ <a href="#download">Download</a>&nbsp; | <a
-      href="#compilation">Compilation</a>&nbsp; | <a
-      href="#installation">Installation</a>&nbsp; | <a
-      href="#visualage">VisualAge</a> ]
+      [ <a href="#download">Download</a>
+      | <a href="#compilation">Compilation</a>
+      | <a href="#installation">Installation</a>
+      | <a href="#visualage">VisualAge</a>&nbsp;]
     </center>
     <hr />
 
@@ -50,7 +50,7 @@
       <li>Download the compressed Apache files (the "tarball") to
       your PC. The file name on the web site will be something like
       <tt>apache_1.3.<i>xx</i>.tar.Z</tt>.<br />
-       <font color="#FF0000"><font size="+1">TIP:</font></font> Be
+       <font color="#cc6600"><font size="+1">TIP:</font></font> Be
       sure to keep the <tt>.tar.Z</tt> extension when choosing the
       name of the PC file.&nbsp;<br />
        &nbsp;</li>
@@ -58,7 +58,7 @@
       <li>
         Decompress the tarball on your PC using WinZip or some
         other PC decompression tool.<br />
-         <font color="#FF0000"><font size="+1">TIP:</font></font>
+         <font color="#cc6600"><font size="+1">TIP:</font></font>
         If you are using WinZip verify that the <i>"TAR File Smart
         CR/LF Conversion"</i> option (under Options, Configuration)
         is NOT checked.<br />
@@ -100,7 +100,7 @@
           <li>exit FTP: <b><tt>bye</tt></b>&nbsp;</li>
         </ul>
 
-        <p><font color="#FF0000"><font size="+1">TIP:</font></font>
+        <p><font color="#cc6600"><font size="+1">TIP:</font></font>
         UNIX file names are case sensitive. If you use an NFS
         client to transfer files from your PC to OS/390 UNIX
         (instead of using FTP as described above) verify that the
@@ -145,7 +145,7 @@
     modify src/os/tpf/TPFExport and src/Configure to match your
     environment.<br />
     <br />
-     <font color="#FF0000"><font size="+1">TIP:</font></font>
+     <font color="#cc6600"><font size="+1">TIP:</font></font>
     Editing files on your PC prior to moving them to OS/390 UNIX
     may result in the loss/addition of unprintable characters.
     Files of concern include shell scripts and src/Configuration.
@@ -287,6 +287,31 @@
         shutdown of Apache.</p>
       </li>
 
+
+      <li><a id="syslog" name="syslog"></a>
+        Indicate if you have the Syslog Daemon message logging facility.
+
+        <p>If you are on a PUT13 or higher system, or have PJ27214 installed,
+           you can use syslog for Apache's ErrorLog.<br />
+           To have the option of using syslog you must do <em>one</em> of the following:<br />
+        </p>
+
+        <ul>
+          <li>add "<tt>#define&nbsp;HAVE_SYSLOG</tt>" to
+          <tt>src/os/tpf/os.h</tt>&nbsp;&nbsp;&nbsp;<em>or</em></li>
+
+          <li>add "<tt>-DHAVE_SYSLOG</tt>" to the
+          <tt>_C89_OPTIONS</tt> export in src/os/tpf/TPFExport</li>
+
+        </ul>
+        <br />
+
+        <p>You also need to add "<tt>INCLUDE OBJLIB(CSYLOG40)</tt>" to your link JCL.</p>
+        <p>See <em>TPF Transmission Control Protocol/Internet Protocol</em> for more information
+           about the Syslog Daemon:
+           <a href="http://www.ibm.com/tpf/pubs/tpfpubs.htm">http://www.ibm.com/tpf/pubs/tpfpubs.htm</a>.</p>
+      </li>
+
       <li>
         Indicate if you would like to use the TCP/IP network services database.
         (This only applies if you are using TCP/IP native stack.)
@@ -315,7 +340,7 @@
       Set the TPF environment variables:
       <b><tt>.&nbsp;os/tpf/TPFExport</tt></b>&nbsp;<br />
       <br />
-       <font color="#FF0000"><font size="+1">TIP:</font></font> The
+       <font color="#cc6600"><font size="+1">TIP:</font></font> The
       initial period and blank on the command are required to
       ensure the environment variables exist beyond the scope of
       the shell script.<br />
@@ -393,6 +418,18 @@
       </li>
 
       <li>
+        Edit include/ap_config.h if you want to use the <tt>sigaction()</tt> function.<br />
+
+        <p>The <tt>sigaction()</tt> function supersedes the <tt>signal()</tt> interface and should be used in preference.
+        This function was implemented with APAR PJ26188 which shipped with PUT10.</p>
+     
+        <p>To use <tt>sigaction()</tt> remove <tt>#define NO_USE_SIGACTION</tt> in the TPF section of ap_config.h.</p>
+
+        <p>The change will only take effect after Apache is (re)compiled.</p>
+
+      </li>
+
+      <li>
         Edit include/ap_config.h if you do <em>not</em> want the
         scoreboard kept in shared memory.<br />
          
@@ -402,22 +439,16 @@
         maintaining the scoreboard (which holds current Apache
         children status). The default behavior for Apache on TPF is
         to use shared memory. This reduces file activity for the
-        parent Apache ECB and improves performance. If you are on a
-        pre-PUT10 system you must change ap_config.h to use either
-        system heap or the file system.</p>
-        To use system heap for the scoreboard replace
-        <tt>#define&nbsp;USE_SHMGET_SCOREBOARD</tt> with
-        <tt>#define&nbsp;USE_TPF_SCOREBOARD</tt> in the TPF section
-        of ap_config.h.<br />
-        <br />
-         If you prefer instead to use the file system, remove both
-        <tt>#define&nbsp;USE_SHMGET_SCOREBOARD</tt> and
-        <tt>#define&nbsp;USE_TPF_SCOREBOARD</tt> from the TPF
-        section of ap_config.h<br />
-        <br />
-         The change will only take effect after Apache is
-        (re)compiled.<br />
-         &nbsp;
+        parent Apache ECB and improves performance.</p>
+
+        <p>If you are on a pre-PUT10 system, or for some reason
+        you do not want to use shared memory for the scoreboard,
+        you must remove &quot;<tt>#define&nbsp;USE_SHMGET_SCOREBOARD</tt>&quot; from the TPF
+        section of ap_config.h</p>
+
+        <p>The change will only take effect after Apache is
+        (re)compiled.</p>
+
       </li>
 
       <li>
@@ -431,22 +462,26 @@
 
         <ul>
           <li>
-            The following compilation warning is expected and can
-            be ignored:<br />
+            The following two compilation warnings may or may not occur.
+            They should be ignored:<br />
             <br />
-             
-
               util_uri.c:&nbsp;&nbsp;&nbsp;<tt>Function argument
               assignment between types "unsigned char*" and "const
               unsigned char*" is not allowed.</tt>
             <br />
             <br />
+              main/http_main.c:&nbsp;&nbsp;&nbsp;
+              <tt>Infinite loop detected in function child_main.
+              Program may not stop.</tt>
+            <br />
+            <br />
+
           </li>
 
           <li>If during compilation you get a warning about a
           missing 'regex.h', set <tt>WANTHSREGEX=yes</tt> in the
           src/Configuration file and start back at the <a
-          href="#configure"><tt><b>Configure</b></tt></a>
+          href="#run-configure"><tt><b>Configure</b></tt></a>
           step.<br />
            &nbsp;</li>
 
@@ -480,20 +515,25 @@
           src/Configuration file.&nbsp;</li>
         </ul>
         <br />
-         <font color="#FF0000"><font size="+1">TIP:</font></font>
+         <font color="#cc6600"><font size="+1">TIP:</font></font>
         Do NOT include gen_test_char.o or gen_uri_delims.o in the
         link JCL since these files are only used during the
         <tt>make</tt> step.&nbsp;<br /><br />
-
 
         If you receive an "Unresolved references" error for "<tt>XML_ErrorString</tt>"
         you probably need to <a href="#delete-expat">remove the expat-lite directory</a>
         and start back at the "<a href="#run-configure">Run the Configure script" step</a><br /><br />
 
-  
         If you receive an "unable to open" error  for <tt>lib/expat-lite/hashtable.o</tt>"
         you probably need to remove all of the expat-lite .o's from your link JCL<br />
-         &nbsp;
+         &nbsp;<br />
+
+         <font color="#cc6600"><font size="+1">TIP:</font></font>
+        Apache uses cinet6, which is part of the Internet Daemon (ZINET).
+        Ensure that you link Apache with the proper version of cinet6 for your system.
+        If&nbsp;you apply changes to cinet6 you should re-link Apache to prevent the
+        <code>inetd_getServer</code> and/or <code>inetd_getServerStatus</code> functions
+        from failing.<br /><br />
 
       </li>
 
@@ -503,6 +543,10 @@
       <br />
        A JCL condition code of 4 is expected since the C load
       module will contain no link map data.<br />
+
+       If you require a link map refer to the
+       <a href="#visualage">instructions below</a> on
+       creating one with VisualAge TPF.<br />
        &nbsp;</li>
 
       <li>Load (<tt>ZOLDR LOAD</tt>) and activate (<tt>ZOLDR
@@ -601,7 +645,7 @@
           instead: <tt><b>ZINET&nbsp;ADD&nbsp;S-APACHE&nbsp;PGM-<em>chta</em>&nbsp;MODEL-NOLISTEN</b></tt></li>
         </ul>
         <br />
-         <font color="red" size="4">TIP:</font> Logic changes
+         <font color="#cc6600" size="4">TIP:</font> Logic changes
         implemented with PUT11 cause ZINET to <i>not</i> restart
         NOLISTEN servers after <tt>ZOLDR&nbsp;ACT</tt> and
         <tt>ZOLDR&nbsp;DEACT</tt> entries. This means that Apache
@@ -626,44 +670,40 @@
       <tt><b>http://<i>xx.xx.xx.xx</i></b></tt>
       &nbsp;&nbsp;&nbsp;(where <i>xx.xx.xx.xx</i> is your IP
       address)</li>
+
     </ol>
     <a id="visualage" name="visualage"></a> 
 
     <center>
-      <h2>Compiling with VisualAge TPF</h2>
+      <h2>Using VisualAge TPF</h2>
     </center>
-    It is not required that <tt>make</tt> be used to compile Apache
-    for TPF: Individual programs may be compiled using IBM's
-    VisualAge TPF product. This is particularly useful when
-    compiling selected programs for the Debug Tool.&nbsp; 
-
-    <p>The following VisualAge compile settings are required:</p>
-
-    <ul>
-      <li><i>"DEFINE - Define preprocessor macro name(s)"</i> must
-      include <b><tt>TPF, CHARSET_EBCDIC, _POSIX_SOURCE,</tt></b>
-      and <b><tt>USE_HSREGEX</tt></b>
-       &nbsp;</li>
-
-      <li><i>"LSEARCH - Path for user include files"</i> must
-      include <b><tt>../src/include</tt></b> and
-      <b><tt>../src/os/tpf</tt></b>
-       &nbsp;</li>
-
-      <li><i>"DLL - Generate DLL code"</i> must be checked
-       &nbsp;</li>
-
-      <li><i>"LONGNAME - Support long names"</i> must be checked
-       &nbsp;</li>
-    </ul>
+    VisualAge TPF can be used to generate link maps for Apache:
+    <ol>
+    <li>Copy the sample <tt>linkhttp.dlm</tt> file from the <tt>src/os/tpf/samples</tt>
+        directory to your Apache <tt>src</tt> directory on OS/390 UNIX.
+    </li>
+    <li>This sample file contains the components for the default
+        configuration of Apache.  Add and delete components (such as modules)
+        as necessary so it matches your configuration of Apache.
+        Basically, it should match your link JCL with the "<tt>.../apache/src</tt>"
+        portion of the filenames removed.
+    </li>
+    <li>Change items in angle brackets (&lt; &gt;) to also match your JCL.
+        Be sure to remove the angle brackets as well.
+    </li>
+    <li>In VisualAge TPF create a container with your modified dlm file as its sole contents.
+    </li>
+    <li>Right click on the dlm file in your new container and choose "Build DLM".
+    </li>
+    </ol>
 
     <hr />
     <center>
-      [ <a href="#top">top</a>&nbsp; | <a
-      href="#download">Download</a>&nbsp; | <a
-      href="#compilation">Compilation</a>&nbsp; | <a
-      href="#installation">Installation</a>&nbsp; | <a
-      href="#visualage">VisualAge</a> ]
+      [ <a href="#top">top</a>
+      | <a href="#download">Download</a>
+      | <a href="#compilation">Compilation</a>
+      | <a href="#installation">Installation</a>
+      | <a href="#visualage">VisualAge</a>&nbsp;]
     </center>
   </body>
 </html>

@@ -92,7 +92,7 @@
     href="mod/core.html#documentroot">DocumentRoot</a> specified in
     your configuration files. Therefore, the files and directories
     underneath the <code>DocumentRoot</code> make up the basic
-    document tree which will be visible from the web.</p>
+    document tree that will be visible from the web.</p>
 
     <p>Apache is also capable of <a href="vhosts/">Virtual
     Hosting</a>, where the server receives requests for more than
@@ -237,12 +237,12 @@
       http://www.example.com/startpage.html</code>
     </blockquote>
 
-    <p>Alternatively, to temporarily redirect all pages on a site
-    to one particular page, use the following:</p>
+    <p>Alternatively, to temporarily redirect all pages on one site
+    to a particular page on another site, use the following:</p>
 
     <blockquote>
       <code>RedirectMatch temp .*
-      http://www.example.com/startpage.html</code>
+      http://othersite.example.com/startpage.html</code>
     </blockquote>
 
     <h2><a id="rewrite" name="rewrite">Rewriting Engine</a></h2>
@@ -283,7 +283,7 @@
     <p>An especially useful feature of mod_speling, is that it will
     compare filenames without respect to case. This can help
     systems where users are unaware of the case-sensitive nature of
-    URLs and the unix filesystem. But using mod_speling for
+    URLs and the Unix filesystem. But using mod_speling for
     anything more than the occasional URL correction can place
     additional load on the server, since each "incorrect" request
     is followed by a URL redirection and a new request from the

@@ -425,7 +425,7 @@
     directive</h2>
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> ForceType
-    <em>media-type</em><br />
+    <em>media-type</em>|None<br />
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> directory,
     .htaccess<br />
@@ -450,6 +450,21 @@
     <p>Note that this will override any filename extensions that
     might determine the media type.</p>
 
+    <p>You can override any <directive>ForceType</directive> setting
+    by using the value of <code>none</code>:</p>
+
+<pre>
+    # force all files to be image/gif:
+    &lt;Location /images&gt;
+      ForceType image/gif
+    &lt;/Location&gt;
+
+    # but normal mime-type associations here:
+    &lt;Location /images/mixed&gt;
+      ForceType none
+    &lt;/Location&gt;
+</pre>
+
     <p><strong>See also</strong>: <a
     href="#addtype">AddType</a></p>
 
@@ -461,7 +476,7 @@
     rel="Help"><strong>Syntax:</strong></a> RemoveEncoding
     <em>extension</em> [<em>extension</em>] ...<br />
      <a href="directive-dict.html#Context"
-    rel="Help"><strong>Context:</strong></a> directory,
+    rel="Help"><strong>Context:</strong></a> virtual host, directory,
     .htaccess<br />
      <a href="directive-dict.html#Status"
     rel="Help"><strong>Status:</strong></a> Base<br />
@@ -508,7 +523,7 @@
     rel="Help"><strong>Syntax:</strong></a> RemoveHandler
     <em>extension</em> [<em>extension</em>] ...<br />
      <a href="directive-dict.html#Context"
-    rel="Help"><strong>Context:</strong></a> directory,
+    rel="Help"><strong>Context:</strong></a> virtual host, directory,
     .htaccess<br />
      <a href="directive-dict.html#Status"
     rel="Help"><strong>Status:</strong></a> Base<br />
@@ -550,7 +565,7 @@
     rel="Help"><strong>Syntax:</strong></a> RemoveType
     <em>extension</em> [<em>extension</em>] ...<br />
      <a href="directive-dict.html#Context"
-    rel="Help"><strong>Context:</strong></a> directory,
+    rel="Help"><strong>Context:</strong></a> virtual host, directory,
     .htaccess<br />
      <a href="directive-dict.html#Status"
     rel="Help"><strong>Status:</strong></a> Base<br />
@@ -590,7 +605,7 @@
     directive</h2>
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> SetHandler
-    <em>handler-name</em><br />
+    <em>handler-name</em>|None<br />
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> directory,
     .htaccess<br />
@@ -624,6 +639,9 @@
     SetHandler server-status
     &lt;/Location&gt;
 </pre>
+
+    <p>You can override an earlier defined <code>SetHandler</code>
+    directive by using the value <code>None</code>.</p>
 
     <p><strong>See also</strong>: <a href="#addhandler">AddHandler</a></p>
     <hr />

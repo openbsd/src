@@ -314,12 +314,18 @@ static char *ssl_var_lookup_ssl(pool *p, conn_rec *c, char *var)
         result = ssl_var_lookup_ssl_cert_verify(p, c);
     }
     else if (ssl != NULL && strlen(var) > 7 && strcEQn(var, "CLIENT_", 7)) {
-        if ((xs = SSL_get_peer_certificate(ssl)) != NULL)
+        if ((xs = SSL_get_peer_certificate(ssl)) != NULL) {
             result = ssl_var_lookup_ssl_cert(p, xs, var+7);
+            X509_free(xs);
+        }
     }
     else if (ssl != NULL && strlen(var) > 7 && strcEQn(var, "SERVER_", 7)) {
-        if ((xs = SSL_get_certificate(ssl)) != NULL)
+        if ((xs = SSL_get_certificate(ssl)) != NULL) {
             result = ssl_var_lookup_ssl_cert(p, xs, var+7);
+            /* SSL_get_certificate() as of OpenSSL 0.9.7a does not increment
+               the reference count the same way SSL_get_peer_certificate does,
+               so no need to X509_free(xs) the stuff here. */
+        }
     }
     return result;
 }
@@ -352,7 +358,7 @@ static char *ssl_var_lookup_ssl_cert(pool *p, X509 *xs, char *var)
         xsname = X509_get_subject_name(xs);
         cp = X509_NAME_oneline(xsname, NULL, 0);
         result = ap_pstrdup(p, cp);
-        free(cp);
+        OPENSSL_free(cp);
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "S_DN_", 5)) {
@@ -364,7 +370,7 @@ static char *ssl_var_lookup_ssl_cert(pool *p, X509 *xs, char *var)
         xsname = X509_get_issuer_name(xs);
         cp = X509_NAME_oneline(xsname, NULL, 0);
         result = ap_pstrdup(p, cp);
-        free(cp);
+        OPENSSL_free(cp);
         resdup = FALSE;
     }
     else if (strlen(var) > 5 && strcEQn(var, "I_DN_", 5)) {
@@ -543,6 +549,10 @@ static char *ssl_var_lookup_ssl_cert_verify(pool *p, conn_rec *c)
     else
         /* client verification failed */
         result = ap_psprintf(p, "FAILED:%s", verr);
+
+    if (xs != NULL)
+        X509_free(xs);
+
     return result;
 }
 

@@ -234,11 +234,13 @@ void ssl_io_suck(request_rec *r, SSL *ssl)
 
             /* suck trailing data (usually CR LF) which 
                is still in the Apache BUFF layer */
+            ap_hard_timeout("SSL I/O request trailing data pre-sucking", r);
             while (ap_bpeekc(r->connection->client) != EOF) {
                 c = ap_bgetc(r->connection->client);
                 ssl_io_suck_record(r, &c, 1);
                 sucked++;
             }
+            ap_kill_timeout(r);
 
             ssl_log(r->server, SSL_LOG_TRACE, 
                     "I/O: sucked %d bytes of input data from SSL/TLS I/O layer "

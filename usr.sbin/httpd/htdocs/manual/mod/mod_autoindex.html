@@ -117,7 +117,7 @@
     directory listing. The query options are of the form
     <samp>X=Y</samp>, where <samp>X</samp> is one of <samp>N</samp>
     (file <em>N</em>ame), <samp>M</samp> (file last
-    <em>M</em>odified date), <samp>S</samp> (file <em>S</em>ize, or
+    <em>M</em>odified date), <samp>S</samp> (file <em>S</em>ize), or
     <samp>D</samp> (file <em>D</em>escription), and <samp>Y</samp>
     is one of <samp>A</samp> (<em>A</em>scending) or <samp>D</samp>
     (<em>D</em>escending).</p>
@@ -253,7 +253,7 @@
 
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> AddDescription
-    <em>string file</em> [<em>file</em>] ...<br />
+    <em>"string" file|directory</em> [<em>file|directory</em>] ...<br />
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> server config, virtual
     host, directory, .htaccess<br />
@@ -264,10 +264,11 @@
      <a href="directive-dict.html#Module"
     rel="Help"><strong>Module:</strong></a> mod_autoindex 
 
-    <p>This sets the description to display for a file, for <a
-    href="#fancyindexing">FancyIndexing</a>. <em>File</em> is a
-    file extension, partial filename, wild-card expression or full
-    filename for files to describe. <em>String</em> is enclosed in
+    <p>This sets the description to display for a file or directory, for <a
+    href="#indexoptions">IndexOptions FancyIndexing</a>. 
+    <em>file|directory</em> is a file extension, partial filename or 
+    directory name, wild-card expression or full filename or directory name, 
+    for files or directories to describe. <em>String</em> is enclosed in 
     double quotes (<code>"</code>). Example:</p>
 
     <blockquote>
@@ -495,15 +496,21 @@
     </blockquote>
 
     <blockquote>
-      <strong>Apache versions after 1.3.6:</strong>
+      <p><strong>Apache versions after 1.3.6:</strong>
       <em>Filename</em> is treated as a URI path relative to the
-      one used to access the directory being indexed, and must
+      one used to access the directory being indexed. Note that this
+      means that if <em>Filemame</em> starts with a slash, it will be
+      taken to be relative to the <a
+      href="core.html#documentroot">DocumentRoot</a>.</p>
+      
+      <p><em>Filename</em> must
       resolve to a document with a major content type of
       "<samp>text</samp>" (<em>e.g.</em>, <samp>text/html</samp>,
       <samp>text/plain</samp>, <em>etc.</em>). This means that
       <em>filename</em> may refer to a CGI script if the script's
       actual file type (as opposed to its output) is marked as
-      <samp>text/html</samp> such as with a directive like: 
+      <samp>text/html</samp> such as with a directive like: </p>
+
 <pre>
     AddType text/html .cgi
 </pre>
@@ -680,7 +687,8 @@
       software.</dd>
 
       <dt><a id="indexoptions:ignorecase"
-      name="indexoptions:ignorecase">IgnoreCase</a></dt>
+      name="indexoptions:ignorecase">IgnoreCase</a>
+      (<em>Apache 1.3.24 and later</em>)</dt>
 
       <dd>
       If this option is enabled, names are sorted in case-insensitive

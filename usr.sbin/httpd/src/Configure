@@ -1,9 +1,9 @@
 #!/bin/sh
-# $OpenBSD: Configure,v 1.21 2002/10/07 20:23:06 henning Exp $
+# $OpenBSD: Configure,v 1.22 2003/08/21 13:11:33 henning Exp $
 ## ====================================================================
 ## The Apache Software License, Version 1.1
 ##
-## Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+## Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
 ## reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -302,39 +302,8 @@ case "$PLAT" in
 	;;
     i386-ibm-aix*)
 	OS='IBM AIX PS/2'
-	CFLAGS="$CFLAGS -DAIX=1 -U__STR__ -DUSEBCOPY"
+	CFLAGS="$CFLAGS -DAIX=100 -U__STR__ -DUSEBCOPY"
 	DEF_WANTHSREGEX=no
-	;;
-    *-ibm-aix[1-2].*)
-	OS='IBM AIX 1.x/2.x'
-	CFLAGS="$CFLAGS -DAIX=1 -DNEED_RLIM_T -U__STR__"
-	;;
-    *-ibm-aix3.*)
-	OS='IBM AIX 3.x'
-	CFLAGS="$CFLAGS -DAIX=30 -DNEED_RLIM_T -U__STR__"
-	;;
-    *-ibm-aix4.1)
-	OS='IBM AIX 4.1'
-	CFLAGS="$CFLAGS -DAIX=41 -DNEED_RLIM_T -U__STR__"
-	;;
-    *-ibm-aix4.2)
-	OS='IBM AIX 4.2'
-	CFLAGS="$CFLAGS -DAIX=42 -U__STR__"
-	LDFLAGS="$LDFLAGS -lm"
-	;;
-    *-ibm-aix4.3)
-	OS='IBM AIX 4.3'
-	CFLAGS="$CFLAGS -DAIX=43 -DUSE_PTHREAD_SERIALIZED_ACCEPT -U__STR__"
-	LDFLAGS="$LDFLAGS -lm -lpthread"
-	RULE_SHARED_CORE=no
-	DEF_SHARED_CORE=no
-	;;
-    *-ibm-aix5.1)
-	OS='IBM AIX 5.1'
-	CFLAGS="$CFLAGS -DAIX=51 -DUSE_PTHREAD_SERIALIZED_ACCEPT -U__STR__"
-	LDFLAGS="$LDFLAGS -lm -lpthread"
-	RULE_SHARED_CORE=no
-	DEF_SHARED_CORE=no
 	;;
     ia64-ibm-aix*)
        OS='IBM AIX IA64'
@@ -343,9 +312,40 @@ case "$PLAT" in
        RULE_SHARED_CORE=no
        DEF_SHARED_CORE=no
        ;;
+    *-ibm-aix[1-2].*)
+	OS='IBM AIX 1.x/2.x'
+	CFLAGS="$CFLAGS -DAIX=100 -DNEED_RLIM_T -U__STR__"
+	;;
+    *-ibm-aix3.*)
+	OS='IBM AIX 3.x'
+	CFLAGS="$CFLAGS -DAIX=300 -DNEED_RLIM_T -U__STR__"
+	;;
+    *-ibm-aix[45678].*)
+        PLATOSVERS=`echo $PLAT | sed 's/^.*ibm-aix//'`
+        OS="AIX $PLATOSVERS"
+        PLATOSVERSNUM=`echo $PLATOSVERS | sed 's/\.//'`
+        if test $PLATOSVERSNUM -ge 43; then
+            PLATOSVERSNUM=`oslevel | sed 's/\.//g' | sed 's/.$//'`
+        else
+            PLATOSVERSNUM="$PLATOSVERSNUM"0
+        fi
+        # PLATOSVERSNUM is a three digit number at this point
+        CFLAGS="$CFLAGS -DAIX=$PLATOSVERSNUM -U__STR__"
+        if test $PLATOSVERSNUM -lt 420; then
+            CFLAGS="$CFLAGS -DNEED_RLIM_T"
+        fi
+        if test $PLATOSVERSNUM -ge 420; then
+            LDFLAGS="$LDFLAGS -lm"
+        fi
+        if test $PLATOSVERSNUM -ge 430; then
+            LDFLAGS="$LDFLAGS -lpthread"
+            RULE_SHARED_CORE=no
+            DEF_SHARED_CORE=no
+        fi
+        ;;
     *-ibm-aix*)
 	OS='IBM AIX'
-	CFLAGS="$CFLAGS -DAIX=1 -U__STR__"
+	CFLAGS="$CFLAGS -DAIX=100 -U__STR__"
 	LDFLAGS="$LDFLAGS -lm"
 	;;
     *-apollo-*)
@@ -1007,6 +1007,13 @@ echo "" >>$AP_CONFIG_AUTO_H
 echo "#ifndef AP_CONFIG_AUTO_H" >>$AP_CONFIG_AUTO_H
 echo "#define AP_CONFIG_AUTO_H" >>$AP_CONFIG_AUTO_H
 
+for uppercase in "tr [a-z] [A-Z]" "tr [:lower:] [:upper:]" "sed y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/"
+do
+  case `echo Apache | $uppercase` in
+    APACHE) break;;
+  esac
+done
+echo " + using \"$uppercase\" to uppercase"
 echo " + checking for system header files"
 CHECK_FOR_HEADERS="dlfcn.h dl.h bstring.h crypt.h unistd.h sys/resource.h sys/select.h sys/processor.h sys/param.h"
 (
@@ -1014,7 +1021,7 @@ export CPP
 for header in $CHECK_FOR_HEADERS; do
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* check: #include <$header> */" >>$AP_CONFIG_AUTO_H
-    name="`echo $header | sed -e 's:/:_:g' -e 's:\.:_:g' | tr '[a-z]' '[A-Z]'`"
+    name="`echo $header | sed -e 's:/:_:g' -e 's:\.:_:g' | $uppercase`"
     ${SHELL} ./helpers/checkheader.sh $header
     if [ $? -eq 0 ]; then
 	echo "#ifndef HAVE_${name}" >>$AP_CONFIG_AUTO_H
@@ -1388,7 +1395,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 		*/cc|cc   ) CFLAGS_SHLIB="" ;;
 	    esac
 	    case $PLAT in
-		*-ibm-aix4*)
+		*-ibm-aix[45678]*)
 		    LDFLAGS_SHLIB="-H512 -T512 -bhalt:4 -bM:SRE -bnoentry"
 		    ;;
 		*-ibm-aix*)
@@ -2021,7 +2028,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=27
+	V=1 R=3 P=28
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi
@@ -2060,7 +2067,8 @@ if [ "x$using_shlib" = "x1" ] ; then
 	echo "LD_SHLIB=$LD_SHLIB" >> Makefile.config
     fi
     if [ "x$TLDFLAGS_SHLIB" = "x" ]; then
-	echo "LDFLAGS_SHLIB=$LDFLAGS_SHLIB" >> Makefile.config
+	echo "EXTRA_LDFLAGS_SHLIB=$EXTRA_LDFLAGS_SHLIB" >> Makefile.config
+	echo "LDFLAGS_SHLIB=$LDFLAGS_SHLIB $EXTRA_LDFLAGS_SHLIB" >> Makefile.config
     fi
     if [ "x$TLDFLAGS_SHLIB_EXPORT" = "x" ]; then
 	echo "LDFLAGS_SHLIB_EXPORT=$LDFLAGS_SHLIB_EXPORT" >> Makefile.config

@@ -32,6 +32,8 @@
 
       <li><a href="#cgi">CGI in General</a></li>
 
+      <li><a href="#dynamic">Other sources of dynamic content</a></li>
+
       <li><a href="#systemsettings">Protecting System
       Settings</a></li>
 
@@ -54,8 +56,8 @@
     directive to serve hits. As is the case with any command that
     root executes, you must take care that it is protected from
     modification by non-root users. Not only must the files
-    themselves be writable only by root, but so must the
-    directories, and parents of all directories. For example, if
+    themselves be writeable only by root, but also the
+    directories and parents of all directories. For example, if
     you choose to place ServerRoot in
     <code>/usr/local/apache</code> then it is suggested that you
     create that directory as root, with commands like these:</p>
@@ -91,11 +93,11 @@
     either executes or writes on then you open your system to root
     compromises. For example, someone could replace the httpd
     binary so that the next time you start it, it will execute some
-    arbitrary code. If the logs directory is writable (by a
+    arbitrary code. If the logs directory is writeable (by a
     non-root user), someone could replace a log file with a symlink
     to some other system file, and then root might overwrite that
     file with arbitrary data. If the log files themselves are
-    writable (by a non-root user), then someone may be able to
+    writeable (by a non-root user), then someone may be able to
     overwrite the log itself with bogus data.</p>
     <hr />
 
@@ -133,13 +135,13 @@
     of risk.</p>
 
     <p>Another solution is to disable the ability to run scripts
-    and programs from SSI pages. To do this replace
+    and programs from SSI pages. To do this, replace
     <code>Includes</code> with <code>IncludesNOEXEC</code> in the
     <a href="../mod/core.html#options">Options</a> directive. Note
     that users may still use &lt;--#include virtual="..." --&gt; to
     execute CGI scripts if these scripts are in directories
-    desginated by a <a
-    href="../mod/mod_alias.html#ScriptAlias">ScriptAlias</a>
+    designated by a <a
+    href="../mod/mod_alias.html#scriptalias">ScriptAlias</a>
     directive.</p>
     <hr />
 
@@ -193,6 +195,18 @@
     code. Another popular way of doing this is with <a
     href="http://wwwcgi.umr.edu/~cgiwrap/">CGIWrap</a>.</p>
     <hr />
+
+    <h2><a id="dynamic" name="dynamic">Other sources of dynamic
+    content</a></h2>
+
+<p>Embedded scripting options which run as part of the server itself, such
+as mod_php, mod_perl, mod_tcl, and mod_python, run under the identity of
+the server itself (see the <a href="../mod/core.html#user">User</a>
+directive), and therefore scripts executed by these engines
+potentially can access anything the server user can. Some scripting
+engines may provide restrictions, but it is better to be safe and assume
+not.</p>
+<hr />
 
     <h2><a id="systemsettings" name="systemsettings">Protecting
     System Settings</a></h2>

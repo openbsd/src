@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -237,6 +237,12 @@
  *                        structure
  * 19990320.12		- add ap_getline(), ap_get_chunk_size()
  * 19990320.13          - add ap_strtol()
+ * 19990320.14          - add ap_register_cleanup_ex(),
+ *                        ap_note_cleanups_for_fd_ex(),
+ *                        ap_note_cleanups_for_socket_ex(),
+ *                        ap_note_cleanups_for_file_ex(),
+ *                        ap_popenf_ex() and ap_psocket_ex().
+ * 19990320.15          - ap_is_recursion_limit_exceeded()
  */
 
 /* 
@@ -260,7 +266,7 @@
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
 #define MODULE_MAGIC_NUMBER_MAJOR 19990320
 #endif
-#define MODULE_MAGIC_NUMBER_MINOR 13                    /* 0...n */
+#define MODULE_MAGIC_NUMBER_MINOR 15                    /* 0...n */
 
 /* Useful for testing for features. */
 #define AP_MODULE_MAGIC_AT_LEAST(major,minor)		\

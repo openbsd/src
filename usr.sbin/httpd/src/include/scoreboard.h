@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -185,10 +185,6 @@ typedef struct {
 } scoreboard;
 
 #define SCOREBOARD_SIZE		sizeof(scoreboard)
-#ifdef TPF
-#define SCOREBOARD_NAME		"SCOREBRD"
-#define SCOREBOARD_FRAMES		SCOREBOARD_SIZE/4095 + 1
-#endif
 
 API_EXPORT(void) ap_sync_scoreboard_image(void);
 API_EXPORT(int) ap_exists_scoreboard_image(void);

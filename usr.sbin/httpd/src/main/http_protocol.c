@@ -1,8 +1,8 @@
-/*	$OpenBSD: http_protocol.c,v 1.22 2003/07/08 09:51:23 david Exp $ */
+/*	$OpenBSD: http_protocol.c,v 1.23 2003/08/21 13:11:35 henning Exp $ */
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1089,10 +1089,9 @@ static int read_request_line(request_rec *r)
         r->proto_num = HTTP_VERSION(r->protocol[5] - '0', r->protocol[7] - '0');
     }
     else {
-        char *lint;
+        char lint[2];
         char http[5];
-	lint = ap_palloc(r->pool, strlen(r->protocol)+1);
-	if (3 == sscanf(r->protocol, "%4s/%u.%u%s", http, &major, &minor, lint)
+	if (3 == sscanf(r->protocol, "%4s/%u.%u%1s", http, &major, &minor, lint)
             && (strcasecmp("http", http) == 0)
 	    && (minor < HTTP_VERSION(1,0)) ) /* don't allow HTTP/0.1000 */
 	    r->proto_num = HTTP_VERSION(major, minor);

@@ -7,7 +7,7 @@
     <title>Microsoft Windows での Apache の使用</title>
 
   </head>
-  <!-- English revision: 1.56 -->
+  <!-- English revision: 1.57 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
@@ -319,9 +319,9 @@
     httpd.conf ファイルの方が管理や検査が簡単なことに気づくでしょう。</p>
 
 
-    <p>開始後は Apache は設定ファイルで <samp>Port</samp>,
+    <p>開始後は Apache は(設定ファイルで <samp>Port</samp>,
     <samp>Listen</samp> または <samp>BindAddress</samp>
-    ディレクティブを変更していなければ
+    ディレクティブを変更していなければ)
     (コンソールウィンドウでもサービスでも) 80 番ポートを Listen
     して実行されます。ブラウザを起動し、この URL</p>
 <pre>

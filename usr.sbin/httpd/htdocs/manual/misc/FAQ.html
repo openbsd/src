@@ -810,22 +810,23 @@
         <a id="name" name="name"><strong>Why the name
         "Apache"?</strong></a> 
 
-        <p>A cute name which stuck. Apache is "<strong>A
+        <p>The name 'Apache' was chosen from respect for
+        the Native American Indian tribe of Apache (Ind&eacute;),
+        <a href="http://www.indians.org/welker/apache.htm">well-known
+        for their superior skills in warfare strategy and their
+        inexhaustible endurance</a>. For more information on the
+        Apache Nation, we suggest searching
+        <a href="http://www.google.com/search?q=Apache+Nation">Google</a>,
+        <a href="http://www.northernlight.com/nlquery.fcg?qr=Apache+Nation"
+          >Northernlight</a>, or
+        <a href="http://www.alltheweb.com/cgi-bin/asearch?query=Apache+Nation"
+          >AllTheWeb</a>.</p>
+
+        <p>Secondarily, and more popularly (though incorrectly) accepted,
+        it's a considered cute name which stuck. Apache is "<strong>A
         PA</strong>t<strong>CH</strong>y server". It was based on
         some existing code and a series of "patch files".</p>
 
-        <p>For many developers it is also a reverent connotation to
-        the Native American Indian tribe of Apache, <a
-        href="http://www.indians.org/welker/apache.htm">well-known
-        for their superior skills in warfare strategy and
-        inexhaustible endurance</a>. For more information on the
-        Apache Nation, we suggest searching <a
-        href="http://www.google.com/search?q=Apache+Nation">Google</a>,
-        <a
-        href="http://www.northernlight.com/nlquery.fcg?qr=Apache+Nation">
-        Northernlight</a>, or <a
-        href="http://www.alltheweb.com/cgi-bin/asearch?query=Apache+Nation">
-        AllTheWeb</a>.</p>
         <hr />
       </li>
 
@@ -1205,7 +1206,7 @@
         <p>Be prepared to respond to any questions about your
         patches and possibly defend your code. If your patch
         results in a lot of discussion, you may be asked to submit
-        an updated patch that incorporate all changes and
+        an updated patch that incorporates all changes and
         suggestions.</p>
         <hr />
       </li>
@@ -1573,8 +1574,8 @@
         connection before it had been completely set up - such as
         by the end-user pressing the "Stop" button. People's
         patience being what it is, sites with response-time
-        problems or slow network links may experiences this more
-        than high-capacity ones or those with large pipes to the
+        problems or slow network links may experience this more
+        than high capacity ones or those with large pipes to the
         network.</p>
         <hr />
       </li>
@@ -1821,18 +1822,9 @@
         <p>The shim is not unloaded when Aventail Connect is shut
         down. Once observed, the problem persists until the shim is
         either explicitly unloaded or the machine is rebooted.
-        Instructions for temporarily removing the Aventail Connect
-        V3.x shim can be found here: "<a
-        href="http://support.aventail.com/akb/article00386.html">How
-        to Remove Aventail Connect v3.x from the LSP Order for
-        Testing Purposes</a>."</p>
-
-        <p>Another potential solution (not tested) is to add
+        Another potential solution (not tested) is to add
         <code>apache.exe</code> to the Aventail "Connect Exclusion
-        List". See this link for details: "<a
-        href="http://support.aventail.com/akb/article00586.html">How
-        to Add an Application to Aventail Connect's Application
-        Exclusion List</a>."</p>
+        List".</p>
 
         <p>Apache is affected in a similar way by <em>any</em>
         firewall program that isn't correctly configured. Assure
@@ -1916,7 +1908,7 @@
 </pre>
 
           <p>Check your cron jobs to see when/if your server logs are being
-          rotated. Compare the time of rotation to the error menage time.
+          rotated. Compare the time of rotation to the error message time.
           If they are the same, you can somewhat safely assume that the 
           restart is due to your server logs being rotated.</p><hr />
      </li>
@@ -1929,7 +1921,7 @@
           source that is associated with binary compatibility of
           modules. It is changed when internal Apache structures,
           function calls and other significant parts of API change in
-          such a way that binary compatiblity cannot be guaranteed any
+          such a way that binary compatibility cannot be guaranteed any
           more. On MMN change, all third party modules have to be at
           least recompiled, sometimes even slightly changed in order
           to work with the new version of Apache.</p>
@@ -2283,6 +2275,34 @@
         href="../mod/core.html#servername">ServerName</a> directive
         to the config file to tell it what the domain name of the
         server is.</p>
+
+        <p>The other thing that can occasionally cause this symptom is a
+        misunderstanding of the <a
+        href="../mod/mod_alias.html#alias">Alias</a> directive,
+        resulting in an alias working with a trailing slash, and not 
+        without one. The <code>Alias</code> directive is very literal,
+        and aliases what you tell it to. Consider the following
+        example:</p>
+
+        <pre>
+        Alias /example/ /home/www/example/
+        </pre>
+
+        <p>The above directive creates an alias for URLs starting with
+        <code>/example/</code>, but does <em>not</em> alias URLs
+        starting with <code>/example</code>. That is to say, a URL such
+        as <code>http://servername.com/example/</code> will get the
+        desired content, but a URL such as
+        <code>http://servername.com/example</code> will result in a
+        "file not found" error.</p>
+
+        <p>The following <code>Alias</code>, on the other hand, will
+        work for both cases:</p>
+
+        <pre>
+        Alias /example /home/www/example
+        </pre>
+
         <hr />
       </li>
 
@@ -2606,7 +2626,7 @@ Options Includes ExecCGI<br />
        <hr /></li>
 
 
-       <li><a id="serverheader" name="servername"><strong>How can I change
+       <li><a id="serverheader" name="serverheader"><strong>How can I change
        the information that Apache returns about itself in the
        headers?</strong></a>
 
@@ -3280,7 +3300,9 @@ NameVirtualHost *
         href="http://www.apacheweek.com/features/userauth"><cite>Using
         User Authentication</cite></a> or <a
         href="http://www.apacheweek.com/features/dbmauth"><cite>DBM
-        User Authentication</cite></a>.</p>
+        User Authentication</cite></a>, or see the <a
+        href="../howto/auth.html">authentication tutorial</a> in the
+        Apache documentation.</p>
         <hr />
       </li>
 
@@ -3891,7 +3913,7 @@ href="../env.html#examples">Environment Variables</a> documentation.</p>
         program which does whatever you want. However, Apache does
         offer the ability to prevent requests from ever appearing
         in the log files. You can do this by using the <a
-        href="../mod/mod_setenvif.html#SetEnvIf"><code>SetEnvIf</code></a>
+        href="../mod/mod_setenvif.html#setenvif"><code>SetEnvIf</code></a>
         directive to set an environment variable for certain
         requests and then using the conditional <a
         href="../mod/mod_log_config.html#customlog-conditional"><code>

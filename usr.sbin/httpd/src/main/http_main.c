@@ -1,9 +1,9 @@
-/* $OpenBSD: http_main.c,v 1.30 2003/07/08 09:51:23 david Exp $ */
+/* $OpenBSD: http_main.c,v 1.31 2003/08/21 13:11:35 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -384,6 +384,7 @@ static pool *pconf;		/* Pool for config stuff */
 static pool *plog;		/* Pool for error-logging files */
 static pool *ptrans;		/* Pool for per-transaction stuff */
 static pool *pchild;		/* Pool for httpd child stuff */
+static pool *pmutex;            /* Pool for accept mutex in child */
 static pool *pcommands;	/* Pool for -C and -c switches */
 
 #ifndef NETWARE
@@ -394,6 +395,7 @@ static int my_child_num;
 #endif
 
 #ifdef TPF
+pid_t tpf_parent_pid;
 int tpf_child = 0;
 char tpf_server_name[INETD_SERVNAME_LENGTH+1];
 char tpf_mutex_key[TPF_MUTEX_KEY_SIZE];
@@ -550,6 +552,14 @@ static void clean_child_exit(int code) __attribute__ ((noreturn));
 static void clean_child_exit(int code)
 {
     if (pchild) {
+        /* make sure the accept mutex is released before calling child
+         * exit hooks and cleanups...  otherwise, modules can segfault
+         * in such code and, depending on the mutex mechanism, leave
+         * the server deadlocked...  even if the module doesn't segfault,
+         * if it performs extensive processing it can temporarily prevent
+         * the server from accepting new connections
+         */
+        ap_clear_pool(pmutex);
 	ap_child_exit_modules(pchild, server_conf);
 	ap_destroy_pool(pchild);
     }
@@ -685,6 +695,49 @@ static void accept_mutex_cleanup_pthread(void *foo)
     accept_mutex = (void *)(caddr_t)-1;
 }
 
+/* remove_sync_sigs() is from APR 0.9.4
+ *
+ * It is invalid to block synchronous signals, as such signals must
+ * be delivered on the thread that generated the original error
+ * (e.g., invalid storage reference).  Blocking them interferes
+ * with proper recovery.
+ */
+static void remove_sync_sigs(sigset_t *sig_mask)
+{
+#ifdef SIGABRT
+    sigdelset(sig_mask, SIGABRT);
+#endif
+#ifdef SIGBUS
+    sigdelset(sig_mask, SIGBUS);
+#endif
+#ifdef SIGEMT
+    sigdelset(sig_mask, SIGEMT);
+#endif
+#ifdef SIGFPE
+    sigdelset(sig_mask, SIGFPE);
+#endif
+#ifdef SIGILL
+    sigdelset(sig_mask, SIGILL);
+#endif
+#ifdef SIGIOT
+    sigdelset(sig_mask, SIGIOT);
+#endif
+#ifdef SIGPIPE
+    sigdelset(sig_mask, SIGPIPE);
+#endif
+#ifdef SIGSEGV
+    sigdelset(sig_mask, SIGSEGV);
+#endif
+#ifdef SIGSYS
+    sigdelset(sig_mask, SIGSYS);
+#endif
+#ifdef SIGTRAP
+    sigdelset(sig_mask, SIGTRAP);
+#endif
+
+/* APR logic to remove SIGUSR2 not copied */
+}
+
 static void accept_mutex_init_pthread(pool *p)
 {
     pthread_mutexattr_t mattr;
@@ -724,6 +777,7 @@ static void accept_mutex_init_pthread(pool *p)
     sigdelset(&accept_block_mask, SIGHUP);
     sigdelset(&accept_block_mask, SIGTERM);
     sigdelset(&accept_block_mask, SIGUSR1);
+    remove_sync_sigs(&accept_block_mask);
     ap_register_cleanup(p, NULL, accept_mutex_cleanup_pthread, ap_null_cleanup);
 }
 
@@ -912,7 +966,7 @@ static void accept_mutex_init_fcntl(pool *p)
     unlock_it.l_pid = 0;		/* pid not actually interesting */
 
     expand_lock_fname(p);
-    lock_fd = ap_popenf(p, ap_lock_fname, O_CREAT | O_WRONLY | O_EXCL, 0644);
+    lock_fd = ap_popenf_ex(p, ap_lock_fname, O_CREAT | O_WRONLY | O_EXCL, 0644, 1);
     if (lock_fd == -1) {
 	perror("open");
 	fprintf(stderr, "Cannot open lock file: %s\n", ap_lock_fname);
@@ -979,7 +1033,7 @@ static void accept_mutex_cleanup_flock(void *foo)
 static void accept_mutex_child_init_flock(pool *p)
 {
 
-    flock_fd = ap_popenf(p, ap_lock_fname, O_WRONLY, 0600);
+    flock_fd = ap_popenf_ex(p, ap_lock_fname, O_WRONLY, 0600, 1);
     if (flock_fd == -1) {
 	ap_log_error(APLOG_MARK, APLOG_EMERG, server_conf,
 		    "Child cannot open lock file: %s", ap_lock_fname);
@@ -996,7 +1050,7 @@ static void accept_mutex_init_flock(pool *p)
     expand_lock_fname(p);
     ap_server_strip_chroot(ap_lock_fname, 0);
     unlink(ap_lock_fname);
-    flock_fd = ap_popenf(p, ap_lock_fname, O_CREAT | O_WRONLY | O_EXCL, 0600);
+    flock_fd = ap_popenf_ex(p, ap_lock_fname, O_CREAT | O_WRONLY | O_EXCL, 0600, 1);
     if (flock_fd == -1) {
 	ap_log_error(APLOG_MARK, APLOG_EMERG, server_conf,
 		    "Parent cannot open lock file: %s", ap_lock_fname);
@@ -2426,37 +2480,6 @@ static void reopen_scoreboard(pool *p)
 {
 }
 
-#elif defined(USE_TPF_SCOREBOARD)
-
-static void cleanup_scoreboard_heap()
-{
-    int rv;
-    rv = rsysc(ap_scoreboard_image, SCOREBOARD_FRAMES, SCOREBOARD_NAME);
-    if(rv == RSYSC_ERROR) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, server_conf,
-            "rsysc() could not release scoreboard system heap");
-    }
-}
-
-static void setup_shared_mem(pool *p)
-{
-    cinfc(CINFC_WRITE, CINFC_CMMCTK2);
-    ap_scoreboard_image = (scoreboard *) gsysc(SCOREBOARD_FRAMES, SCOREBOARD_NAME);
-
-    if (!ap_scoreboard_image) {
-        fprintf(stderr, "httpd: Could not create scoreboard system heap storage.\n");
-        exit(APEXIT_INIT);
-    }
-
-    ap_register_cleanup(p, NULL, cleanup_scoreboard_heap, ap_null_cleanup);
-    ap_scoreboard_image->global.running_generation = 0;
-}
-
-static void reopen_scoreboard(pool *p)
-{
-    cinfc(CINFC_WRITE, CINFC_CMMCTK2);
-}
-
 #else
 #define SCOREBOARD_FILE
 static scoreboard _scoreboard_image;
@@ -2508,7 +2531,7 @@ void reopen_scoreboard(pool *p)
 #ifdef TPF
     ap_scoreboard_fname = ap_server_root_relative(p, ap_scoreboard_fname);
 #endif /* TPF */
-    scoreboard_fd = ap_popenf(p, ap_scoreboard_fname, O_CREAT | O_BINARY | O_RDWR, 0666);
+    scoreboard_fd = ap_popenf_ex(p, ap_scoreboard_fname, O_CREAT | O_BINARY | O_RDWR, 0666, 1);
     if (scoreboard_fd == -1) {
 	perror(ap_scoreboard_fname);
 	fprintf(stderr, "Cannot open scoreboard file:\n");
@@ -2534,7 +2557,7 @@ static void reinit_scoreboard(pool *p)
     ap_scoreboard_image = &_scoreboard_image;
     ap_scoreboard_fname = ap_server_root_relative(p, ap_scoreboard_fname);
 
-    scoreboard_fd = ap_popenf(p, ap_scoreboard_fname, O_CREAT | O_BINARY | O_RDWR, 0644);
+    scoreboard_fd = ap_popenf_ex(p, ap_scoreboard_fname, O_CREAT | O_BINARY | O_RDWR, 0644, 1);
     if (scoreboard_fd == -1) {
 	perror(ap_scoreboard_fname);
 	fprintf(stderr, "Cannot open scoreboard file:\n");
@@ -2661,6 +2684,11 @@ API_EXPORT(int) ap_update_child_status(int child_num, int status, request_rec *r
 	    ss->conn_count = (unsigned short) 0;
 	    ss->conn_bytes = (unsigned long) 0;
 	}
+        else if (status == SERVER_STARTING) {
+            /* clean out the start_time so that mod_status will print Req=0 */
+            /* Use memset to be independent from the type (struct timeval vs. clock_t) */
+            memset (&ss->start_time, '\0', sizeof ss->start_time);
+        }
 	if (r) {
 	    conn_rec *c = r->connection;
 	    ap_cpystrn(ss->client, ap_get_remote_host(c, r->per_dir_config,
@@ -3315,6 +3343,9 @@ static void sig_term(int sig)
 
 static void restart(int sig)
 {
+#ifdef TPF
+    signal(sig, restart);
+#endif
 #if !defined (WIN32) && !defined(NETWARE)
     ap_start_restart(sig == SIGUSR1);
 #else
@@ -3659,7 +3690,7 @@ static conn_rec *new_connection(pool *p, server_rec *server, BUFF *inout,
 }
 
 #if defined(TCP_NODELAY) && !defined(MPE) && !defined(TPF)
-static void sock_disable_nagle(int s)
+static void sock_disable_nagle(int s, struct sockaddr_in *sin_client)
 {
     /* The Nagle algorithm says that we should delay sending partial
      * packets in hopes of getting more data.  We don't want to do
@@ -3677,13 +3708,20 @@ static void sock_disable_nagle(int s)
 #ifdef NETWARE
         errno = WSAGetLastError();
 #endif
-	ap_log_error(APLOG_MARK, APLOG_WARNING, server_conf,
-		    "setsockopt: (TCP_NODELAY)");
+        if (sin_client) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, server_conf,
+                         "setsockopt: (TCP_NODELAY), client %pA probably "
+                         "dropped the connection", &sin_client->sin_addr);
+        }
+        else {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, server_conf,
+                         "setsockopt: (TCP_NODELAY)");
+        }
     }
 }
 
 #else
-#define sock_disable_nagle(s)	/* NOOP */
+#define sock_disable_nagle(s, c)	/* NOOP */
 #endif
 
 static int make_sock(pool *p, const struct sockaddr_in *server)
@@ -3732,14 +3770,14 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
     s = ap_slack(s, AP_SLACK_HIGH);
 #endif
 
-    ap_note_cleanups_for_socket(p, s);	/* arrange to close on exec or restart */
+    ap_note_cleanups_for_socket_ex(p, s, 1);	/* arrange to close on exec or restart */
 #ifdef TPF
     os_note_additional_cleanups(p, s);
 #endif /* TPF */
 #endif
 
-#ifndef _OSD_POSIX
     if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(int)) < 0) {
+#ifndef _OSD_POSIX
 	ap_log_error(APLOG_MARK, APLOG_CRIT, server_conf,
 		    "make_sock: for %s, setsockopt: (SO_REUSEADDR)", addr);
 #ifdef BEOS
@@ -3749,8 +3787,8 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 #endif
 	ap_unblock_alarms();
 	exit(1);
-    }
 #endif /*_OSD_POSIX*/
+    }
     one = 1;
 #if defined(SO_KEEPALIVE) && !defined(MPE)
     if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, (char *) &one, sizeof(int)) < 0) {
@@ -3767,7 +3805,7 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
     }
 #endif
 
-    sock_disable_nagle(s);
+    sock_disable_nagle(s, NULL);
     sock_enable_linger(s);
 
     /*
@@ -3873,7 +3911,7 @@ static int make_sock(pool *p, const struct sockaddr_in *server)
 #ifdef WORKAROUND_SOLARIS_BUG
     s = ap_slack(s, AP_SLACK_HIGH);
 
-    ap_note_cleanups_for_socket(p, s);	/* arrange to close on exec or restart */
+    ap_note_cleanups_for_socket_ex(p, s, 1);	/* arrange to close on exec or restart */
 #endif
     ap_unblock_alarms();
 
@@ -3980,7 +4018,7 @@ static void setup_listeners(pool *p)
 	    fd = make_sock(p, &lr->local_addr);
 	}
 	else {
-	    ap_note_cleanups_for_socket(p, fd);
+	    ap_note_cleanups_for_socket_ex(p, fd, 1);
 	}
 	/* if we get here, (fd >= 0) && (fd < FD_SETSIZE) */
 	FD_SET(fd, &listenfds);
@@ -4172,6 +4210,7 @@ static void show_compile_settings(void)
 	printf(" -D PIPE_BUF=%ld\n",(long)PIPE_BUF);
 #endif
 #endif
+    printf(" -D DYNAMIC_MODULE_LIMIT=%ld\n",(long)DYNAMIC_MODULE_LIMIT);
     printf(" -D HARD_SERVER_LIMIT=%ld\n",(long)HARD_SERVER_LIMIT);
 #ifdef MULTITHREAD
     printf(" -D MULTITHREAD\n");
@@ -4329,10 +4368,15 @@ static void child_main(int child_num_arg)
      * we can have cleanups occur when the child exits.
      */
     pchild = ap_make_sub_pool(pconf);
+    /* associate accept mutex cleanup with a subpool of pchild so we can
+     * make sure the mutex is released before calling module code at
+     * termination
+     */
+    pmutex = ap_make_sub_pool(pchild);
 
     /* needs to be done before we switch UIDs so we have permissions */
     reopen_scoreboard(pchild);
-    SAFE_ACCEPT(accept_mutex_child_init(pchild));
+    SAFE_ACCEPT(accept_mutex_child_init(pmutex));
 
     set_group_privs();
 #ifdef MPE
@@ -4578,13 +4622,16 @@ static void child_main(int child_num_arg)
 
 #ifdef TPF
 		case EINACT:
-		    ap_log_error(APLOG_MARK, APLOG_EMERG, server_conf,
-			"offload device inactive");
-		    clean_child_exit(APEXIT_CHILDFATAL);
+                    ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO,
+                                 server_conf, "offload device inactive");
+                    clean_child_exit(APEXIT_CHILDFATAL); 
 		    break;
 		default:
-		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, server_conf,
-			"select/accept error (%u)", errno);
+                    if (getppid() != 1) {
+                        ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO,
+                                     server_conf, "select/accept error (%u)",
+                                     errno);
+                    }
 		    clean_child_exit(APEXIT_CHILDFATAL);
 #else
 		default:
@@ -4622,7 +4669,7 @@ static void child_main(int child_num_arg)
 	 */
 	signal(SIGUSR1, SIG_IGN);
 
-	ap_note_cleanups_for_fd(ptrans, csd);
+	ap_note_cleanups_for_socket_ex(ptrans, csd, 1);
 
 	/* protect various fd_sets */
 #ifdef CHECK_FD_SETSIZE
@@ -4642,11 +4689,14 @@ static void child_main(int child_num_arg)
 
 	clen = sizeof(sa_server);
 	if (getsockname(csd, &sa_server, &clen) < 0) {
-	    ap_log_error(APLOG_MARK, APLOG_ERR, server_conf, "getsockname");
+	    ap_log_error(APLOG_MARK, APLOG_DEBUG, server_conf, 
+                         "getsockname, client %pA probably dropped the "
+                         "connection", 
+                         &((struct sockaddr_in *)&sa_client)->sin_addr);
 	    continue;
 	}
 
-	sock_disable_nagle(csd);
+	sock_disable_nagle(csd, (struct sockaddr_in *)&sa_client);
 
 	(void) ap_update_child_status(my_child_num, SERVER_BUSY_READ,
 				   (request_rec *) NULL);
@@ -4670,7 +4720,7 @@ static void child_main(int child_num_arg)
 			"dup: couldn't duplicate csd");
 	    dupped_csd = csd;	/* Oh well... */
 	}
-	ap_note_cleanups_for_fd(ptrans, dupped_csd);
+	ap_note_cleanups_for_socket_ex(ptrans, dupped_csd, 1);
 
 	/* protect various fd_sets */
 #ifdef CHECK_FD_SETSIZE
@@ -5033,6 +5083,9 @@ static void perform_idle_server_maintenance(void)
 	 */
 	kill(ap_scoreboard_image->parent[to_kill].pid, SIG_IDLE_KILL);
 	idle_spawn_rate = 1;
+#ifdef TPF
+        ap_update_child_status(to_kill, SERVER_DEAD, (request_rec *)NULL);
+#endif
     }
     else if (idle_count < ap_daemons_min_free) {
 	/* terminate the free list */
@@ -5094,6 +5147,14 @@ static void process_child_status(int pid, ap_wait_t status)
 	*/
     if ((WIFEXITED(status)) &&
 	WEXITSTATUS(status) == APEXIT_CHILDFATAL) {
+        /* cleanup pid file -- it is useless after our exiting */
+        const char *pidfile = NULL;
+        pidfile = ap_server_root_relative (pconf, ap_pid_fname);
+        if ( pidfile != NULL && unlink(pidfile) == 0)
+            ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
+                         server_conf,
+                         "removed PID file %s (pid=%ld)",
+                         pidfile, (long)getpid());
 	ap_log_error(APLOG_MARK, APLOG_ALERT|APLOG_NOERRNO, server_conf,
 			"Child %d returned a Fatal error... \n"
 			"Apache is exiting!",
@@ -5248,7 +5309,7 @@ static void standalone_main(int argc, char **argv)
 #ifdef SCOREBOARD_FILE
 	else {
 	    ap_scoreboard_fname = ap_server_root_relative(pconf, ap_scoreboard_fname);
-	    ap_note_cleanups_for_fd(pconf, scoreboard_fd);
+	    ap_note_cleanups_for_fd_ex(pconf, scoreboard_fd, 1); /* close on exec */
 	}
 #endif
 
@@ -5302,6 +5363,11 @@ static void standalone_main(int argc, char **argv)
 	     * to start up and get into IDLE state then we may spawn an
 	     * extra child
 	     */
+#ifdef TPF
+            if (shutdown_pending += os_check_server(tpf_server_name)) {
+                break;
+            }
+#endif
 	    if (pid >= 0) {
 		process_child_status(pid, status);
 		/* non-fatal death... note that it's gone in the scoreboard. */
@@ -5355,17 +5421,6 @@ static void standalone_main(int argc, char **argv)
 	    }
 
 	    perform_idle_server_maintenance();
-#ifdef TPF
-            ap_check_signals();
-            if (!shutdown_pending) {
-                if (os_check_server(tpf_server_name)) {
-                    shutdown_pending++;
-                } else {
-                    sleep(1);
-                    ap_check_signals();
-                }
-            }
-#endif /*TPF */
 	}
 
 	if (shutdown_pending) {
@@ -5645,6 +5700,7 @@ int REALMAIN(int argc, char *argv[])
                INETD_SERVNAME_LENGTH);
         tpf_server_name[INETD_SERVNAME_LENGTH + 1] = '\0';
         snprintf(tpf_mutex_key, sizeof(tpf_mutex_key), "%.*x", TPF_MUTEX_KEY_SIZE - 1, getpid());
+        tpf_parent_pid = getppid();
         ap_open_logs(server_conf, plog);
         ap_tpf_zinet_checks(ap_standalone, tpf_server_name, server_conf);
         ap_tpf_save_argv(argc, argv);    /* save argv parms for children */
@@ -5665,9 +5721,8 @@ int REALMAIN(int argc, char *argv[])
             copy_listeners(pconf);
             reset_tpf_listeners(&input_parms.child);
 #ifdef SCOREBOARD_FILE
-            scoreboard_fd = input_parms.child.scoreboard_fd;
             ap_scoreboard_image = &_scoreboard_image;
-#else /* must be USE_TPF_SCOREBOARD or USE_SHMGET_SCOREBOARD */
+#else /* must be USE_SHMGET_SCOREBOARD */
             ap_scoreboard_image =
                 (scoreboard *)input_parms.child.scoreboard_heap;
 #endif
@@ -6071,7 +6126,7 @@ static void child_sub_main(int child_num)
 
 	requests_this_child++;
 
-	ap_note_cleanups_for_socket(ptrans, csd);
+	ap_note_cleanups_for_socket_ex(ptrans, csd, 1);
 
 	/*
 	 * We now have a connection, so set it up with the appropriate
@@ -6090,7 +6145,7 @@ static void child_sub_main(int child_num)
 	    memset(&sa_client, '\0', sizeof(sa_client));
 	}
 
-	sock_disable_nagle(csd);
+	sock_disable_nagle(csd, (struct sockaddr_in *)&sa_client);
 
 	(void) ap_update_child_status(child_num, SERVER_BUSY_READ,
 				   (request_rec *) NULL);
@@ -6103,7 +6158,7 @@ static void child_sub_main(int child_num)
 			"dup: couldn't duplicate csd");
 	    dupped_csd = csd;	/* Oh well... */
 	}
-	ap_note_cleanups_for_socket(ptrans, dupped_csd);
+	ap_note_cleanups_for_socket_ex(ptrans, dupped_csd, 1);
 #endif
 	ap_bpushfd(conn_io, csd, dupped_csd);
 
@@ -6325,7 +6380,7 @@ static void setup_inherited_listeners(pool *p)
             if (fd > listenmaxfd)
                 listenmaxfd = fd;
         }
-        ap_note_cleanups_for_socket(p, fd);
+        ap_note_cleanups_for_socket_ex(p, fd, 1);
         lr->fd = fd;
         if (lr->next == NULL) {
             /* turn the list into a ring */

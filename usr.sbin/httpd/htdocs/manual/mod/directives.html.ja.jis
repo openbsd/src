@@ -7,7 +7,7 @@
     <title>Apache ディレクティブ</title>
 
   </head>
-  <!-- English revision: 1.75 -->
+  <!-- English revision: 1.79 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -193,11 +193,17 @@
       <li><a href="mod_usertrack.html#cookieexpires"
       >CookieExpires</a></li>
 
+      <li><a
+      href="mod_usertrack.html#cookieformat">CookieFormat</a></li>
+
       <li><a href="mod_cookies.html#cookielog">CookieLog</a>
       (mod_cookies)</li>
 
       <li><a href="mod_log_config.html#cookielog">CookieLog</a>
       (mod_log_config)</li>
+
+      <li><a
+      href="mod_usertrack.html#cookieprefix">CookiePrefix</a></li>
 
       <li><a href="mod_usertrack.html#cookiestyle">CookieStyle</a></li>
 
@@ -238,6 +244,8 @@
       <li><a href="core.html#ebcdickludge">EBCDICKludge</a></li>
 
       <li><a href="core.html#errordocument">ErrorDocument</a></li>
+
+      <li><a href="mod_headers.html#errorheader">ErrorHeader</a></li>
 
       <li><a href="core.html#errorlog">ErrorLog</a></li>
 
@@ -534,6 +542,8 @@
       >SetEnvIfNoCase</a></li>
 
       <li><a href="mod_mime.html#sethandler">SetHandler</a></li>
+
+      <li><a href="core.html#shmemuidisuser">ShmemUIDisUser</a></li>
 
       <li><a href="core.html#startservers">StartServers</a></li>
 

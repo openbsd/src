@@ -398,7 +398,8 @@
       rel="Help"><strong>Syntax:</strong></a> RewriteOptions
       <em>Option</em><br />
        <a href="directive-dict.html#Default"
-      rel="Help"><strong>Default:</strong></a> <em>None</em><br />
+      rel="Help"><strong>Default:</strong></a> <code>RewriteOptions
+      MaxRedirects=10</code><br />
        <a href="directive-dict.html#Context"
       rel="Help"><strong>Context:</strong></a> server config,
       virtual host, directory, .htaccess<br />
@@ -410,23 +411,32 @@
       rel="Help"><strong>Module:</strong></a> mod_rewrite.c<br />
        <a href="directive-dict.html#Compatibility"
       rel="Help"><strong>Compatibility:</strong></a> Apache
-      1.2<br />
-       
+      1.2; <code>MaxRedirects</code> is available in Apache 1.3.28 and
+      later<br />
+
 
       <p>The <code>RewriteOptions</code> directive sets some
       special options for the current per-server or per-directory
       configuration. The <em>Option</em> strings can be one of the
       following:</p>
 
-      <ul>
-        <li>'<strong><code>inherit</code></strong>'<br />
-         This forces the current configuration to inherit the
-        configuration of the parent. In per-virtual-server context
-        this means that the maps, conditions and rules of the main
-        server are inherited. In per-directory context this means
-        that conditions and rules of the parent directory's
-        <code>.htaccess</code> configuration are inherited.</li>
-      </ul>
+      <dl>
+      <dt><code>inherit</code></dt>
+      <dd>This forces the current configuration to inherit the
+      configuration of the parent. In per-virtual-server context
+      this means that the maps, conditions and rules of the main
+      server are inherited. In per-directory context this means
+      that conditions and rules of the parent directory's
+      <code>.htaccess</code> configuration are inherited.</dd>
+
+      <dt><code>MaxRedirects=<var>number</var></code></dt>
+      <dd>In order to prevent endless loops of internal redirects
+      issued by per-directory <code>RewriteRule</code>s,
+      <code>mod_rewrite</code> aborts the request after reaching a
+      maximum number of such redirects and responds with an 500 Internal
+      Server Error. If you really need more internal redirects than 10
+      per request, you may increase the default to the desired value.</dd>
+      </dl>
       <hr noshade="noshade" size="1" />
 
       <h3><a id="RewriteLog" name="RewriteLog">RewriteLog</a></h3>
@@ -462,7 +472,7 @@
         <tr>
           <td><strong>Note</strong>: To disable the logging of
           rewriting actions it is not recommended to set
-          <em>Filename</em> to <code>/dev/null</code>, because
+          <em>file-path</em> to <code>/dev/null</code>, because
           although the rewriting engine does not then output to a
           logfile it still creates the logfile output internally.
           <strong>This will slow down the server with no advantage

@@ -73,11 +73,10 @@ is today more widely used than all other web servers combined.
 Current Apache Group in alphabetical order as of 18 December 2001:
 
    Greg Ames              IBM Corporation, Research Triangle Park, NC, USA
-   Aaron Bannert          Covalent Technologies, California
+   Aaron Bannert          California
    Brian Behlendorf       Collab.Net, California 
-   Ryan Bloom             Covalent Technologies, California 
    Ken Coar               IBM Corporation, Research Triangle Park, NC, USA
-   Mark J. Cox            Red Hat, England
+   Mark J. Cox            Red Hat, UK
    Lars Eilebrecht        Freelance Consultant, Munich, Germany 
    Ralf S. Engelschall    Cable & Wireless Deutschland, Munich, Germany
    Justin Erenkrantz      University of California, Irvine
@@ -93,7 +92,7 @@ Current Apache Group in alphabetical order as of 18 December 2001:
    Alexei Kosut           Stanford University, California 
    Martin Kraemer         Munich, Germany
    Ben Laurie             Freelance Consultant, UK 
-   Rasmus Lerdorf         Linuxcare, California
+   Rasmus Lerdorf         Yahoo!, California
    Daniel Lopez Ridruejo  Covalent Technologies, California
    Doug MacEachern        Covalent Technologies, California
    Aram W. Mirzadeh       CableVision, New York 
@@ -114,6 +113,7 @@ Current Apache Group in alphabetical order as of 18 December 2001:
 
 Apache Emeritus (old group members now off doing other things)
 
+   Ryan Bloom             California 
    Rob Hartill            Internet Movie DB, UK 
    David Robinson         Cambridge University, UK
    Robert S. Thau         MIT, Massachusetts

@@ -106,7 +106,7 @@
          <a href="../mod/mod_mime.html#addtype">AddType</a><br />
          <a
         href="../mod/mod_mime.html#addhandler">AddHandler</a><br />
-         <a href="../mod/mod_setenvif.html#BrowserBatchBoCase"
+         <a href="../mod/mod_setenvif.html#browsermatchnocase"
         >BrowserMatchNoCase</a><br />
          </td>
       </tr>

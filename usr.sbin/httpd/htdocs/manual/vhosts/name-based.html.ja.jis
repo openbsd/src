@@ -6,7 +6,7 @@
     <title>名前ベースのバーチャルホスト</title>
   </head>
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-  <!-- English revision: 1.18 -->
+  <!-- English revision: 1.21 -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
         <div align="CENTER">
@@ -42,17 +42,18 @@
     <p>初期のバージョンの HTTP では (他の多くのプロトコル、例えば FTP
     と同様) 一つのサーバ上でのバーチャルホストごとに異なった IP
     アドレスが必要でした。いくつかのプラットフォームでは、このことが
-    実行可能なバーチャルホストの数を限定してしまうことになりました。
-    また、IP アドレスの数には限りがあるということについての懸念から、
-    レジストラ (ARIN, RIPE, APNIC) はバーチャルホストごとに
+    実行可能なバーチャルホストの数を限定してしまうことになりました。また、
+    IP アドレスの数には限りがあるということについての懸念から、レジストラ
+    (ARIN, RIPE, APNIC) はバーチャルホストごとに
     IP を割り当てるようなことは避けるよう強く要請しています。</p>
 
-    <p>名前ベースのバーチャルホストは通常単純で、それぞれのホスト名と
-    それに対応する正確な IP アドレスを DNS で設定し、異なる
-    ホスト名を区別出来るように Apache HTTP サーバを設定するだけです。
-    さらに、名前ベースのバーチャルホストは不足する IP
-    アドレスの需要を緩和します。したがって、IP ベースのバーチャルホストを
-    選択すべき特定の理由がなければ名前ベースのバーチャルホストを使うべきです。
+    <p>名前ベースのバーチャルホストは通常単純で、
+    それぞれのホスト名とそれに対応する正確な IP アドレスを DNS
+    で設定し、異なるホスト名を区別出来るように Apache HTTP
+    サーバを設定するだけです。さらに、名前ベースのバーチャルホストは不足する
+    IP アドレスの需要を緩和します。したがって、IP
+    ベースのバーチャルホストを選択すべき特定の理由がなければ名前ベースの
+    バーチャルホストを使うべきです。
     IP ベースのバーチャルホストを使用することを考慮する理由として、</p>
 
     <ul> 
@@ -68,8 +69,8 @@
       <li>名前ベースのバーチャルホストは SSL プロトコルの特徴により、
       SSL セキュアサーバには使えません。</li>
 
-      <li>オペレーティングシステムやネットワーク装置のなかには、
-      別の IP アドレス上でない場合、複数のホストを別扱いできないような
+      <li>オペレーティングシステムやネットワーク装置のなかには、別の IP
+      アドレス上でない場合、複数のホストを別扱いできないような
       帯域管理の方法を実装しているものがあります。</li>
     </ul>
 
@@ -96,30 +97,40 @@
     を指定する必要があります。
     これは <a href="../mod/core.html#namevirtualhost">NameVirtualHost</a>
     ディレクティブで設定します。通常、<code>NameVirtualHost</code> で
-    <code>*</code> の属性を使ってサーバの全ての IP アドレスを使います。
+    <code>*</code> の属性を使ってサーバのすべての IP アドレスを使います。
     (<code>NameVirtualHost *</code> はバージョン 1.3.13 以降のみで動作します。)
     <code>NameVirtualHost</code> ディレクティブで IP アドレスを書いても、
     自動的にサーバがその IP アドレスをリッスンするということはないことに
     注意してください。詳細は <a href="../bind.html">Apache の使うアドレスと
     ポートを設定する</a> を読んでください。さらに、ここで指定された
-    IP アドレスは全てサーバのネットワークインターフェースと関連付けられて
+    IP アドレスはすべてサーバのネットワークインターフェースと関連付けられて
     いなければなりません。</p>
 
     <p>次は、扱いたいそれぞれのホストに対して <a
-    href="../mod/core.html#virtualhost">&lt;VirtualHost&gt;</a> ブロックを
-    作成してください。<code>&lt;VirtualHost&gt</code> ディレクティブの
-    引数は <code>NameVirtualHost</code> ディレクティブの引数と
-    同じにしてください (すなわち、IP アドレス一つや全てのアドレスのための
-    <code>*</code>)。それぞれの <code>&lt;VirtualHost&gt</code> ディレクティブ
-    の中には、最低限、どのホストが扱われるかを示す <a
+    href="../mod/core.html#virtualhost">&lt;VirtualHost&gt;</a>
+    ブロックを作成してください。<code>&lt;VirtualHost&gt;</code>
+    ディレクティブの引数は <code>NameVirtualHost</code>
+    ディレクティブの引数と同じにしてください (すなわち、IP
+    アドレス一つやすべてのアドレスを表す <code>*</code>)。それぞれの
+    <code>&lt;VirtualHost&gt;</code> ディレクティブの中には、最低限、
+    どのホストが扱われるかを示す <a
     href="../mod/core.html#servername">ServerName</a> ディレクティブと、
     そのホスト用のコンテンツがファイルシステム上のどこにあるかを示す
-    <a href="../mod/core.html#documentroot">DocumentRoot</a> ディレクティブを
-    書く必要があります。</p>
+    <a href="../mod/core.html#documentroot">DocumentRoot</a>
+    ディレクティブを書く必要があります。</p>
 
-    <p>たとえば、<samp>www.domain.tld</samp> と
-    <samp>www.otherdomain.tld</samp> の両方が 1つの IP
-    アドレスを指しているとしましょう。そのような場合は、
+    <p>既に存在するウェブサーバにバーチャルホストを追加する場合、
+    存在するホスト用の &lt;VirtualHost&gt; ブロックを作らなければなりません。
+    <code>ServerName</code> と <code>DocumentRoot</code>
+    はこのバーチャルホストも含めて、それぞれグローバルな
+    <code>ServerName</code> 及び <code>DocumentRoot</code>
+    と同じものにするべきです。設定ファイル中で最初に記述した
+    このバーチャルホストは
+    デフォルトのバーチャルホストとしても振る舞います。
+    </p>
+    <p>例えば、ドメイン <samp>www.domain.tld</samp> を運用しているところに
+    バーチャルホスト <samp>www.otherdomain.tld</samp> を追加する場合で、
+    両方が同じ IP アドレスを指しているとします。そのような場合は、
     <code>httpd.conf</code> に以下のようなコードを追加するだけです</p>
 <pre>
     NameVirtualHost *
@@ -149,18 +160,18 @@
     ServerAlias domain.tld *.domain.tld
 </pre>
 
-    <p><code>domain.tld</code> ドメインへの全てのホストへのリクエストは
+    <p><code>domain.tld</code> ドメインへのすべてのホストへのリクエストは
     <code>www.domain.tld</code> のバーチャルホストが処理します。
-    * や ? をワイルドカード文字として使用できます。
-  Of course,you can't just make up names and place them in <code>ServerName</code>
-  or <code>ServerAlias</code>.
-    第一に DNS のホスト名と IP アドレスをサーバにあわせて適切に設定する事が必要です</p>
+    * や ? をワイルドカード文字として使用できますが、当然ながらそれだけで
+    <code>ServerName</code> や <code>ServerAlias</code>
+    の名前や場所を構成することはできません。まず最初に DNS のホスト名と
+    IP アドレスをサーバにあわせて適切に設定する事が必要です</p>
 
     <p>最後に、<code>&lt;VirtualHost&gt;</code> コンテナの中に
     他のディレクティブを書くことで、バーチャルホストの設定を細かく変更
     することができます。どのディレクティブを書くことができるかは、
     ディレクティブの <a
-    href="../mod/directive-dist.html#context">コンテキスト</a> を
+    href="../mod/directive-dict.html#context">コンテキスト</a> を
     調べてください。<em>主サーバコンテキスト</em>
     (<code>&lt;VirtualHost&gt;</code> コンテナの外) の
     設定用ディレクティブはバーチャルホストでの設定で上書きされていない

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="iso-2022-jp"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
   <head>
 
     <title>Apache module mod_cgi</title>
 
   </head>
-  <!-- English revision: 1.24 -->
+  <!-- English revision: 1.25 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -36,7 +36,7 @@
     であるか、ハンドラ <code>cgi-script</code> (Apache 1.1 以降)
     が指定されているファイルは CGI スクリプトとして扱われ、
     サーバにより実行され、その出力がクライアントに返されます。
-    ファイルは、<a href="#mod_mime.html#addtype">AddType</a>
+    ファイルは、<a href="mod_mime.html#addtype">AddType</a>
     ディレクティブに指定された 拡張子を名前に含むか、
     <a href="mod_alias.html#scriptalias">ScriptAlias</a>
     ディレクトリに存在することによりこのタイプになります。
@@ -164,7 +164,7 @@
     サーバルートからの相対パスとして扱われます。</p>
 
     <p>このログは子プロセスが実行されているユーザとしてオープンされます。
-    すなわち、<a href="core.html#User">User</a> ディレクティブで指定された
+    すなわち、<a href="core.html#user">User</a> ディレクティブで指定された
     ユーザです。これは、スクリプトログが書かれるディレクトリがそのユーザで
     書き込み可能か、スクリプトファイルが手動で作成され、そのユーザで
     書き込み可能になっている必要があるということです。スクリプトログを

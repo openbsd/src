@@ -164,7 +164,7 @@
 
     <p>This log will be opened as the user the child processes run
     as, ie. the user specified in the main <a
-    href="core.html#User">User</a> directive. This means that
+    href="core.html#user">User</a> directive. This means that
     either the directory the script log is in needs to be writable
     by that user or the file needs to be manually created and set
     to be writable by that user. If you place the script log in

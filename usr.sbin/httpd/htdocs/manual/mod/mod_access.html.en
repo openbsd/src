@@ -184,7 +184,7 @@ SetEnvIf User-Agent ^KnockKnock/2.0 let_me_in
 
     <p>See also <a href="#deny">Deny</a>, <a
     href="#order">Order</a> and <a
-    href="mod_setenvif.html#SetEnvIf">SetEnvIf</a>.</p>
+    href="mod_setenvif.html#setenvif">SetEnvIf</a>.</p>
     <hr />
 
     <h2><a id="deny" name="deny">Deny</a> <a id="denyfromenv"
@@ -212,7 +212,7 @@ SetEnvIf User-Agent ^KnockKnock/2.0 let_me_in
 
     <p>See also <a href="#allow">Allow</a>, <a
     href="#order">Order</a> and <a
-    href="mod_setenvif.html#SetEnvIf">SetEnvIf</a>.</p>
+    href="mod_setenvif.html#setenvif">SetEnvIf</a>.</p>
     <hr />
 
     <h2><a id="order" name="order">Order directive</a></h2>

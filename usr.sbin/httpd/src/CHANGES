@@ -1,3 +1,196 @@
+Changes with Apache 1.3.28
+
+  *) SECURITY: CAN-2003-0460 (cve.mitre.org)
+     Fix the rotatelogs support program on Win32 and OS/2 to ignore
+     special control characters received over the pipe.  Previously
+     such characters could cause it to quit logging and exit.
+     [André Malo]
+
+  *) Prevent the server from crashing when entering infinite loops. The
+     new LimitInternalRecursion directive configures limits of subsequent
+     internal redirects and nested subrequests, after which the request
+     will be aborted.  PR 19753 (and probably others).
+     [William Rowe, Jeff Trawick, Jim Jagielski, André Malo]
+
+  *) Fix NULL-pointer issue in ab when parsing an incomplete or non-HTTP
+     response. PR 21085. [Glenn Nielsen <glenn@apache.org>, André Malo]
+
+  *) Removed BIND_NOSTART from HP/UX shl_load() logic for loadable
+     Apache modules, so that statics are initialized when the module
+     is loaded (especially critical for c++ modules on HPUX.)
+     [William Rowe, Noah Arliss <narliss@netegrity.com>]
+
+  *) Win32 build system changes; always recompile buildmark.c (used for
+     Apache -v 'server built' messages) even when Apache is built from
+     within the IDE; build test_char.h and uri_delims.h from within the
+     ApacheCore.dsp project.  PR 12706.  [William Rowe]
+
+  *) Introduce Win32 .pdb diagnostic symbols into the Apache 1.3 build
+     (as created in Apache 2.0.45 and later.)  Makes debugging and
+     analysis of crash dumps and Dr. Watson logs trivial.  Requires the
+     Win32 binary builder to set aside the exact .pdb files that match
+     the released binaries (.exe/.so files) for reference by users and 
+     developers.  [William Rowe]
+
+  *) Make sure the accept mutex is released before calling child exit
+     hooks and cleanups.  Otherwise, modules can segfault in such code
+     and, with pthread mutexes, leave the server deadlocked.  Even if
+     the module doesn't segfault, if it performs extensive processing
+     it can temporarily prevent the server from accepting new
+     connections.  [Jeff Trawick]
+
+  *) Fix mod_rewrite's handling of absolute URIs. The escaping routines
+     now work scheme dependent and the query string will only be
+     appended if supported by the particular scheme.  [André Malo]
+
+  *) Use appropriate language codes for Czech (cs) and Traditional Chinese
+     (zh-tw) in default config files. PR 9427.  [André Malo]
+
+  *) Don't block synchronous signals (e.g., SIGSEGV) while waiting for
+     and holding a pthread accept mutex.  [Jeff Trawick]
+
+  *) AIX: Change the default accept mechanism from pthread back to
+     fcntl.  Idle child cleanup doesn't work when the child selected
+     for termination by the parent is waiting on a pthread mutex, and 
+     because the AIX kernel's notion of hot process is apparently the 
+     same as Apache's, it is common for the Apache parent to continually
+     select a child for termination that the kernel will leave waiting
+     on the mutex for extended periods of time.  There are other 
+     concerns with pthread mutexes as well, such as the ability to 
+     deadlock the server if a child process segfaults while holding the 
+     mutex.  [Jeff Trawick]
+
+  *) Fix a pair of potential buffer overflows in htdigest
+     [Martin Schulze <joey@infodrom.org>, Thom May]
+
+  *) A newly created child now has a start_time of 0, to prevent
+     mod_status from displaying a bogus value for the "time to
+     process most recent request" column for freshly-started children
+     in a previously-used scoreboard slot. [Martin Kraemer]
+
+  *) When using Redirect in directory context, append requested query
+     string if there's no one supplied by configuration. PR 10961.
+     [André Malo]
+
+  *) Fix path handling of mod_rewrite, especially on non-unix systems.
+     There was some confusion between local paths and URL paths.
+     PR 12902.  [André Malo]
+
+  *) backport from 2.x series: Prevent endless loops of internal redirects
+     in mod_rewrite by aborting after exceeding a limit of internal redirects.
+     The limit defaults to 10 and can be changed using the RewriteOptions
+     directive. PR 17462.  [André Malo]
+
+  *) Use the correct locations of srm.conf and access.conf when tailoring
+     the httpd.conf during the install process. PR 9446.
+     [Stanislav Brabec <utx@penguin.cz>]
+
+  *) suexec: Be more pedantic when cleaning environment. Clean it
+     immediately after startup. PR 2790, 10449.
+     [Jeff Stewart <jws@purdue.edu>, André Malo]
+
+  *) Fix apxs to insert LoadModule/AddModule directives only outside of
+     sections. PR 8712, 9012.  [André Malo]
+
+  *) Fix suexec compile error under SUNOS4, where strerror() doesn't
+     exist. PR 5913, 9977.
+     [Jonathan W Miner <Jonathan.W.Miner@lmco.com>]
+
+  *) Unix build: Add support for environment variable 
+     EXTRA_LDFLAGS_SHLIB, which allows the user to add to the hard-coded 
+     ld flags specified for DSOs.  Compare with the existing LDFLAGS_SHLIB 
+     environment variable, which allows the user to completely replace the 
+     hard-coded ld flags specified for DSOs.  [Jeff Trawick]
+
+  *) mod_auth_digest no longer tries to guess AuthDigestDomain, if it's
+     not specified. Now it assumes "/" as already documented. PR 16937.
+     [André Malo]
+
+  *) In configure always assume suexec-umask to be an octal value by
+     prepending a "0". PR 16984.  [André Malo]
+
+  *) Fix typo in suexec -V output. PR 9034.
+     [Youichirou Koga <y-koga@apache.or.jp>]
+
+  *) Fix bug where 'Satisfy Any' without an AuthType resulted in an
+     "Internal Server Error" response. PR 9076.  [André Malo]
+
+  *) mod_rewrite: Allow "RewriteEngine Off" even if no
+     "Options FollowSymlinks" (or SymlinksIfOwnermatch) is set.
+     PR 12395.  [André Malo]
+
+  *) Change the log messages for setsockopt(TCP_NODELAY) and
+     getsockname() failures to log the client IP address and to
+     change the log level to debug.  [Jeff Trawick]
+
+  *) Correction to mod_negotation for Win32, OS2, Netware etc, where
+     case insensitive requests such as the HEADER or README search
+     from autoindex would fail to match HEADER.html (because the
+     system internally looked for the case-sensitive header.* pattern.)
+     PR 7300 [William Rowe]
+
+  *) Correction to mod_autoindex so that only text/* files (prefering
+     /html, then /plain, then some other flavor) can be recovered
+     from a multiview-based HEADER or README subrequest.
+     [William Rowe]
+
+  *) Improvements to mod_usertrack that allows for a regular (verbose)
+     as well as "compact" version of the tracking cookie (the new
+     'CookieFormat' directive), and the ability to prepend a string
+     to the cookie via the 'CookiePrefix' directive.
+     [Pål Løberg <pallo@initio.no>, with cleanup by Jim Jagielski]
+
+  *) Certain 3rd party modules would bypass the Apache API and not
+     invoke ap_cleanup_for_exec() before creating sub-processes.
+     To such a child process, Apache's file descriptors (lock
+     fd's, log files, sockets) were accessible, allowing them
+     direct access to Apache log file etc.  Where the OS allows,
+     we now add proactive close functions to prevent these file
+     descriptors from leaking to the child processes.
+     [Jim Jagielski, Martin Kraemer]
+
+  *) Prevent obscenely large values of precision in ap_vformatter
+     from clobbering a buffer. [Sander Striker, Jim Jagielski]
+
+  *) NetWare: implemented ap_os_default_port() to resolve the 
+     correct default port based on the request method. This fixes
+     a URL reconstruction problem on a redirect. 
+     [Pavel Novy (novy@feld.cvut.cz)]
+     
+  *) Added new ap_register_cleanup_ex() API function which allows
+     for a "magic" cleanup function to be run at register time
+     rather than at cleanup time. Also added the
+     ap_note_cleanups_for_(socket|fd|file)_ex() API functions
+     which allows for control over whether that magic cleanup
+     should be called or not. This does not change the default
+     behavior of the non-"ex" function (eg: ap_register_cleanup).
+     [Jim Jagielski, concept by Ben Laurie]
+
+  *) PORT: Take advantage of OpenBSD's arc4random() function for the
+     initial secret [Henning Brauer <hb-apache-dev at bsws.de>]
+
+  *) If Listen directive is not a port, but just an IP, emit an
+     error condition as this case is ambiguous.
+     [Rich Bowen, Justin Erenkrantz, Cliff Woolley]
+
+  *) Update timeout algorithm in free_proc_chain. If a subprocess
+     did not exit immediately, the thread would sleep for 3 seconds
+     before checking the subprocess exit status again. In a very
+     common case when the subprocess was an HTTP server CGI script,
+     the CGI script actually exited a fraction of a second into the 3
+     second sleep, which effectively limited the server to serving one 
+     CGI request every 3 seconds across a persistent connection.
+     PRs 6961, 8664 [Bill Stoddard]
+
+  *) mod_setenvif: Add SERVER_ADDR special keyword to allow
+     envariable setting according to the server IP address
+     which received the request.  [Ken Coar]
+
+  *) PORT: Enable SINGLE_LISTEN_UNSERIALIZED_ACCEPT for AIX 4.3.2
+     and above.  Update AIX configure logic to allow higher AIX 
+     release numbers without having to change Apache.
+     [Jeff Trawick]
+
 Changes with Apache 1.3.27
 
   *) SECURITY: CAN-2002-0840 (cve.mitre.org)
@@ -6,7 +199,7 @@ Changes with Apache 1.3.27
      UseCanonicalName is set to Off and a server is being run at
      a domain that allows wildcard DNS.  [Matthew Murphy]
 
-  *) SECURITY CAN-2002-0843 (cve.mitre.org)
+  *) SECURITY: CAN-2002-0843 (cve.mitre.org)
      Fix some possible overflows in ab.c that could be exploited by
      a malicious server. Reported by David Wagner. [Jim Jagielski]
 
@@ -25,7 +218,7 @@ Changes with Apache 1.3.27
      cruft. This patch allows us to tailor/control this properly by
      allowing simple wildcards such as *.conf. [Dirk-Willem van Gulik]
 
-  *) SECURITY CAN-2002-0839 (cve.mitre.org)
+  *) SECURITY: CAN-2002-0839 (cve.mitre.org)
      Add the new directive 'ShmemUIDisUser'. By default, Apache
      will no longer set the uid/gid of SysV shared memory scoreboard
      to User/Group, and it will therefore stay the uid/gid of
@@ -122,7 +315,7 @@ Changes with Apache 1.3.26
 
 Changes with Apache 1.3.25
 
-  *) SECURITY: CAN-2002-0392 (cve.mitre.org) [CERT VU#944335]
+  *) SECURITY: CVE-2002-0392 (cve.mitre.org) [CERT VU#944335]
      Code changes required to address and close chunked 
      encoding security issues.  To support this, we utilize the ANSI 
      functionality of strtol, and provide ap_strtol for completeness.
@@ -227,7 +420,7 @@ Changes with Apache 1.3.24
   *) Fixed a segfault in mod_include when #if, #elif, #else, or #endif
      directives were improperly terminated.  [Cliff Woolley]
 
-  *) Win32 SECURITY: CAN-2002-0061 (cve.mitre.org)
+  *) Win32 SECURITY: CVE-2002-0061 (cve.mitre.org)
      Introduce proper escaping of command.com and cmd.exe for Win32.
      These patches close vulnerability CAN-2002-0061, identified and
      reported by Ory Segal <ory.segal@sanctuminc>, by which any CGI
@@ -617,7 +810,7 @@ Changes with Apache 1.3.21
      just happened to be  index.html.zh.Big5.
      [Bill Stoddard, Bill Rowe] PR #8130
 
-  *) SECURITY: CAN-2001-0731 (cve.mitre.org)
+  *) SECURITY: CVE-2001-0731 (cve.mitre.org)
      Close autoindex /?M=D directory listing hole reported
      in bugtraq id 3009.  In some configurations where multiviews and 
      indexes are enabled for a directory, requesting URI /?M=D could
@@ -729,7 +922,7 @@ Changes with Apache 1.3.21
      before contacting the next proxy, and was thus unusable for
      SSL proxying.  [Martin Kraemer]
 
-  *) SECURITY: CAN-2001-0730 (cve.mitre.org)
+  *) SECURITY: CVE-2001-0730 (cve.mitre.org)
      Make support/split-logfile use the default log file if
      "/" or "\" are present in the virtual host name.  This prevents
      the possible use of specially crafted virtual host names in
@@ -804,7 +997,7 @@ Changes with Apache 1.3.20
   *) Autodetect if platforms have isnan() and/or isinf() for use in
      ap_snprintf.c. [Jim Jagielski]
 
-  *) SECURITY DoS: CAN-2001-1342 (cve.mitre.org)
+  *) SECURITY DoS: CVE-2001-1342 (cve.mitre.org)
      Correct a vulnerability in the Win32 and OS2 ports, by which a 
      client submitting a carefully constructed URI could cause a GP
      (segment) fault in the child process, which would have to be
@@ -2474,7 +2667,7 @@ Changes with Apache 1.3.7 [not released]
      b) the Content-MD5 header value (ContentDigest directive) was wrong
      when the returned file was not converted from EBCDIC, but was a
      binary (e.g., image file) in the first place.
-     [David McCreedy <mccreedy@us.ibm.com>]
+     [David McCreedy at IBM]
 
   *) support/htpasswd now permits the password to be specified on the
      command line with the '-b' switch.  This is useful when passwords
@@ -3668,11 +3861,11 @@ Changes with Apache 1.3.2
      run-time configurable using the ExtendedStatus directive.
      [Jim Jagielski]
 
-  *) SECURITY: Eliminate O(n^2) space DoS attacks (and other O(n^2)
+  *) SECURITY: CAN-1999-1199 (cve.mitre.org)
+     Eliminate O(n^2) space DoS attacks (and other O(n^2)
      cpu time attacks) in header parsing.  Add ap_overlap_tables(),
      a function which can be used to perform bulk update operations
-     on tables in a more efficient manner.  CAN-1999-1199 (cve.mitre.org)
-     [Dean Gaudet]
+     on tables in a more efficient manner.  [Dean Gaudet]
 
   *) SECURITY: Added compile-time and configurable limits for
      various aspects of reading a client request to avoid some simple

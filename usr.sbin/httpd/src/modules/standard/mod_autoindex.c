@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1000,6 +1000,18 @@ static void emit_head(request_rec *r, char *header_fname, int suppress_amble,
     request_rec *rr = NULL;
     int emit_amble = 1;
     int emit_H1 = 1;
+    const char *r_accept;
+    const char *r_accept_enc;
+    table *hdrs = r->headers_in;
+
+    /*
+     * If there's a header file, send a subrequest to look for it.  If it's
+     * found and html do the subrequest, otherwise handle it
+     */
+    r_accept = ap_table_get(hdrs, "Accept");
+    r_accept_enc = ap_table_get(hdrs, "Accept-Encoding");
+    ap_table_setn(hdrs, "Accept", "text/html, text/plain;q=.5, text/*;q=.1");
+    ap_table_unset(hdrs, "Accept-Encoding");
 
     /*
      * If there's a header file, send a subrequest to look for it.  If it's
@@ -1061,6 +1073,17 @@ static void emit_head(request_rec *r, char *header_fname, int suppress_amble,
 	}
     }
 
+    if (r_accept) {
+        ap_table_setn(hdrs, "Accept", r_accept);
+    }
+    else {
+        ap_table_unset(hdrs, "Accept");
+    }
+
+    if (r_accept_enc) {
+        ap_table_setn(hdrs, "Accept-Encoding", r_accept_enc);
+    }
+
     if (emit_amble) {
 	emit_preamble(r, title);
     }
@@ -1088,6 +1111,18 @@ static void emit_tail(request_rec *r, char *readme_fname, int suppress_amble)
     request_rec *rr = NULL;
     int suppress_post = 0;
     int suppress_sig = 0;
+    const char *r_accept;
+    const char *r_accept_enc;
+    table *hdrs = r->headers_in;
+
+    /*
+     * If there's a readme file, send a subrequest to look for it.  If it's
+     * found and html do the subrequest, otherwise handle it
+     */
+    r_accept = ap_table_get(hdrs, "Accept");
+    r_accept_enc = ap_table_get(hdrs, "Accept-Encoding");
+    ap_table_setn(hdrs, "Accept", "text/html, text/plain;q=.5, text/*;q=.1");
+    ap_table_unset(hdrs, "Accept-Encoding");
 
     /*
      * If there's a readme file, send a subrequest to look for it.  If it's
@@ -1132,6 +1167,17 @@ static void emit_tail(request_rec *r, char *readme_fname, int suppress_amble)
 	}
     }
     
+    if (r_accept) {
+        ap_table_setn(hdrs, "Accept", r_accept);
+    }
+    else {
+        ap_table_unset(hdrs, "Accept");
+    }
+
+    if (r_accept_enc) {
+        ap_table_setn(hdrs, "Accept-Encoding", r_accept_enc);
+    }
+
     if (!suppress_sig) {
 	ap_rputs(ap_psignature("", r), r);
     }

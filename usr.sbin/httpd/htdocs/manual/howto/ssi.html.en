@@ -107,15 +107,10 @@
          <a
         href="../mod/mod_mime.html#addhandler">AddHandler</a><br />
          <a
-        href="../mod/mod_setenvif.html#BrowserMatchNoCase">BrowserMatchNoCase</a><br />
+        href="../mod/mod_setenvif.html#browsermatchnocase">BrowserMatchNoCase</a><br />
          </td>
       </tr>
     </table>
-
-    <p>This HOWTO first appeared in Apache Today
-    (http://www.apachetoday.com/) as a series of three articles.
-    They appear here by arrangement with ApacheToday and
-    Internet.com.</p>
 
     <p>This article deals with Server Side Includes, usually called
     simply SSI. In this article, I'll talk about configuring your
@@ -149,7 +144,9 @@
     name="configuringyourservertopermitssi">Configuring your server
     to permit SSI</a></h2>
 
-    <p>To permit SSI on your server, you must have the following
+    <p>To permit SSI on your server, you must have <a
+    href="../mod/mod_include.html">mod_include</a> installed and
+    enabled. Additionally, you must have the following
     directive either in your <code>httpd.conf</code> file, or in a
     <code>.htaccess</code> file:</p>
 <pre>

@@ -63,7 +63,7 @@
 
     <p>Si vous avez t&eacute;l&eacute;charg&eacute; une
     distribution compos&eacute;e des binaires, passez directement
-    &agrave; l'<a href="#install">installation d'Apache</a>. Sinon
+    &agrave; l'<a href="#installing">installation d'Apache</a>. Sinon
     lisez la section suivante afin de savoir comment compiler le
     serveur.</p>
 
@@ -168,7 +168,7 @@ make
     Des instructions sont fournies sur cette page pour lier ces
     modules au noyau d'Apache. 
 
-    <h2><a id="install" name="install">Installation
+    <h2><a id="installing" name="installing">Installation
     d'Apache</a></h2>
     Vous devez avoir un ex&eacute;cutable appel&eacute;
     <code>httpd</code> dans le r&eacute;pertoire <code>src</code>.

@@ -1,9 +1,9 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.18 2003/07/18 21:16:37 david Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.19 2003/08/21 13:11:37 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -256,6 +256,7 @@ static void *config_server_create(pool *p, server_rec *s)
     a->rewriteconds    = ap_make_array(p, 2, sizeof(rewritecond_entry));
     a->rewriterules    = ap_make_array(p, 2, sizeof(rewriterule_entry));
     a->server          = s;
+    a->redirect_limit  = 0; /* unset (use default) */
 
     return (void *)a;
 }
@@ -271,6 +272,9 @@ static void *config_server_merge(pool *p, void *basev, void *overridesv)
     a->state   = overrides->state;
     a->options = overrides->options;
     a->server  = overrides->server;
+    a->redirect_limit = overrides->redirect_limit
+                          ? overrides->redirect_limit
+                          : base->redirect_limit;
 
     if (a->options & OPTION_INHERIT) {
         /*
@@ -327,6 +331,7 @@ static void *config_perdir_create(pool *p, char *path)
     a->baseurl         = NULL;
     a->rewriteconds    = ap_make_array(p, 2, sizeof(rewritecond_entry));
     a->rewriterules    = ap_make_array(p, 2, sizeof(rewriterule_entry));
+    a->redirect_limit  = 0; /* unset (use server config) */
 
     if (path == NULL) {
         a->directory = NULL;
@@ -357,6 +362,9 @@ static void *config_perdir_merge(pool *p, void *basev, void *overridesv)
     a->options   = overrides->options;
     a->directory = overrides->directory;
     a->baseurl   = overrides->baseurl;
+    a->redirect_limit = overrides->redirect_limit
+                          ? overrides->redirect_limit
+                          : base->redirect_limit;
 
     if (a->options & OPTION_INHERIT) {
         a->rewriteconds = ap_append_arrays(p, overrides->rewriteconds,
@@ -399,36 +407,50 @@ static const char *cmd_rewriteengine(cmd_parms *cmd,
 }
 
 static const char *cmd_rewriteoptions(cmd_parms *cmd,
-                                      rewrite_perdir_conf *dconf, char *option)
+                                      void *in_dconf, const char *option)
 {
-    rewrite_server_conf *sconf;
-    const char *err;
+    int options = 0, limit = 0;
+    char *w;
 
-    sconf = (rewrite_server_conf *)
-            ap_get_module_config(cmd->server->module_config, &rewrite_module);
+    while (*option) {
+        w = ap_getword_conf(cmd->pool, &option);
 
+        if (!strcasecmp(w, "inherit")) {
+            options |= OPTION_INHERIT;
+        }
+        else if (!strncasecmp(w, "MaxRedirects=", 13)) {
+            limit = atoi(&w[13]);
+            if (limit <= 0) {
+                return "RewriteOptions: MaxRedirects takes a number greater "
+                       "than zero.";
+            }
+        }
+        else if (!strcasecmp(w, "MaxRedirects")) { /* be nice */
+            return "RewriteOptions: MaxRedirects has the format MaxRedirects"
+                   "=n.";
+        }
+        else {
+            return ap_pstrcat(cmd->pool, "RewriteOptions: unknown option '",
+                              w, "'", NULL);
+        }
+    }
+
+    /* put it into the appropriate config */
     if (cmd->path == NULL) { /* is server command */
-        err = cmd_rewriteoptions_setoption(cmd->pool,
-                                           &(sconf->options), option);
+        rewrite_server_conf *conf =
+            ap_get_module_config(cmd->server->module_config,
+                                 &rewrite_module);
+
+        conf->options |= options;
+        conf->redirect_limit = limit;
     }
-    else {                 /* is per-directory command */
-        err = cmd_rewriteoptions_setoption(cmd->pool,
-                                           &(dconf->options), option);
+    else {                  /* is per-directory command */
+        rewrite_perdir_conf *conf = in_dconf;
+
+        conf->options |= options;
+        conf->redirect_limit = limit;
     }
 
-    return err;
-}
-
-static const char *cmd_rewriteoptions_setoption(pool *p, int *options,
-                                                char *name)
-{
-    if (strcasecmp(name, "inherit") == 0) {
-        *options |= OPTION_INHERIT;
-    }
-    else {
-        return ap_pstrcat(p, "RewriteOptions: unknown option '",
-                          name, "'\n", NULL);
-    }
     return NULL;
 }
 
@@ -1026,9 +1048,7 @@ static int hook_uri2file(request_rec *r)
     const char *thisurl;
     char buf[512];
     char docroot[512];
-    char *cp, *cp2;
     const char *ccp;
-    struct stat finfo;
     unsigned int port;
     int rulestatus;
     int n;
@@ -1116,6 +1136,7 @@ static int hook_uri2file(request_rec *r)
      */
     rulestatus = apply_rewrite_list(r, conf->rewriterules, NULL);
     if (rulestatus) {
+        unsigned skip;
 
         if (strlen(r->filename) > 6 &&
             strncmp(r->filename, "proxy:", 6) == 0) {
@@ -1153,40 +1174,21 @@ static int hook_uri2file(request_rec *r)
                        r->filename);
             return OK;
         }
-        else if (is_absolute_uri(r->filename)) {
+        else if ((skip = is_absolute_uri(r->filename)) > 0) {
             /* it was finally rewritten to a remote URL */
 
-            /* skip 'scheme:' */
-            for (cp = r->filename; *cp != ':' && *cp != '\0'; cp++)
-                ;
-            /* skip '://' */
-            cp += 3;
-            /* skip host part */
-            for ( ; *cp != '/' && *cp != '\0'; cp++)
-                ;
-            if (*cp != '\0') {
-                if (rulestatus != ACTION_NOESCAPE) {
-                    rewritelog(r, 1, "escaping %s for redirect", r->filename);
-                    cp2 = ap_escape_uri(r->pool, cp);
-                }
-                else {
-                    cp2 = ap_pstrdup(r->pool, cp);
-                }
-                *cp = '\0';
-                r->filename = ap_pstrcat(r->pool, r->filename, cp2, NULL);
+            if (rulestatus != ACTION_NOESCAPE) {
+                rewritelog(r, 1, "escaping %s for redirect", r->filename);
+                r->filename = escape_absolute_uri(r->pool, r->filename, skip);
             }
 
             /* append the QUERY_STRING part */
-            if (r->args != NULL) {
-                char *args;
-                if (rulestatus == ACTION_NOESCAPE) {
-                    args = r->args;
-                }
-                else {
-                    args = ap_escape_uri(r->pool, r->args);
-                }
-                r->filename = ap_pstrcat(r->pool, r->filename, "?", 
-                                         args, NULL);
+            if (r->args) {
+                r->filename = ap_pstrcat(r->pool, r->filename, "?",
+                                         (rulestatus == ACTION_NOESCAPE)
+                                           ? r->args
+                                           : ap_escape_uri(r->pool, r->args),
+                                         NULL);
             }
 
             /* determine HTTP redirect response code */
@@ -1235,8 +1237,11 @@ static int hook_uri2file(request_rec *r)
 #endif
             rewritelog(r, 2, "local path result: %s", r->filename);
 
-            /* the filename has to start with a slash! */
-            if (!ap_os_is_path_absolute(r->filename)) {
+            /* the filename must be either an absolute local path or an
+             * absolute local URL.
+             */
+            if (   *r->filename != '/'
+                && !ap_os_is_path_absolute(r->filename)) {
                 return BAD_REQUEST;
             }
 
@@ -1260,7 +1265,7 @@ static int hook_uri2file(request_rec *r)
              * because we only do stat() on the first directory
              * and this gets cached by the kernel for along time!
              */
-            n = prefix_stat(r->filename, &finfo);
+            n = prefix_stat(r->filename, r->pool);
             if (n == 0) {
                 if ((ccp = ap_document_root(r)) != NULL) {
                     l = ap_cpystrn(docroot, ccp, sizeof(docroot)) - docroot;
@@ -1366,6 +1371,14 @@ static int hook_fixup(request_rec *r)
      *  only do something under runtime if the engine is really enabled,
      *  for this directory, else return immediately!
      */
+    if (dconf->state == ENGINE_DISABLED) {
+        return DECLINED;
+    }
+
+    /*
+     *  Do the Options check after engine check, so
+     *  the user is able to explicitely turn RewriteEngine Off.
+     */
     if (!(ap_allow_options(r) & (OPT_SYM_LINKS | OPT_SYM_OWNER))) {
         /* FollowSymLinks is mandatory! */
         ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
@@ -1373,14 +1386,6 @@ static int hook_fixup(request_rec *r)
                      "which implies that RewriteRule directive is forbidden: "
                      "%s", r->filename);
         return FORBIDDEN;
-    }
-    else {
-        /* FollowSymLinks is given, but the user can
-         * still turn off the rewriting engine
-         */
-        if (dconf->state == ENGINE_DISABLED) {
-            return DECLINED;
-        }
     }
 
     /*
@@ -1395,6 +1400,7 @@ static int hook_fixup(request_rec *r)
      */
     rulestatus = apply_rewrite_list(r, dconf->rewriterules, dconf->directory);
     if (rulestatus) {
+        unsigned skip;
 
         if (strlen(r->filename) > 6 &&
             strncmp(r->filename, "proxy:", 6) == 0) {
@@ -1418,7 +1424,7 @@ static int hook_fixup(request_rec *r)
                        "%s [OK]", dconf->directory, r->filename);
             return OK;
         }
-        else if (is_absolute_uri(r->filename)) {
+        else if ((skip = is_absolute_uri(r->filename)) > 0) {
             /* it was finally rewritten to a remote URL */
 
             /* because we are in a per-dir context
@@ -1426,19 +1432,42 @@ static int hook_fixup(request_rec *r)
              * if there is a base-URL available
              */
             if (dconf->baseurl != NULL) {
-                /* skip 'scheme:' */
-                for (cp = r->filename; *cp != ':' && *cp != '\0'; cp++)
-                    ;
-                /* skip '://' */
-                cp += 3;
-                if ((cp = strchr(cp, '/')) != NULL) {
+                /* skip 'scheme://' */
+                cp = r->filename + skip;
+
+                if ((cp = strchr(cp, '/')) != NULL && *(++cp)) {
                     rewritelog(r, 2,
                                "[per-dir %s] trying to replace "
                                "prefix %s with %s",
                                dconf->directory, dconf->directory,
                                dconf->baseurl);
-                    cp2 = subst_prefix_path(r, cp, dconf->directory,
-                                            dconf->baseurl);
+
+                    /* I think, that hack needs an explanation:
+                     * well, here is it:
+                     * mod_rewrite was written for unix systems, were
+                     * absolute file-system paths start with a slash.
+                     * URL-paths _also_ start with slashes, so they
+                     * can be easily compared with system paths.
+                     *
+                     * the following assumes, that the actual url-path
+                     * may be prefixed by the current directory path and
+                     * tries to replace the system path with the RewriteBase
+                     * URL.
+                     * That assumption is true if we use a RewriteRule like
+                     *
+                     * RewriteRule ^foo bar [R]
+                     *
+                     * (see apply_rewrite_rule function)
+                     * However on systems that don't have a / as system
+                     * root this will never match, so we skip the / after the
+                     * hostname and compare/substitute only the stuff after it.
+                     *
+                     * (note that cp was already increased to the right value)
+                     */
+                    cp2 = subst_prefix_path(r, cp, (*dconf->directory == '/')
+                                                   ? dconf->directory + 1
+                                                   : dconf->directory,
+                                            dconf->baseurl + 1);
                     if (strcmp(cp2, cp) != 0) {
                         *cp = '\0';
                         r->filename = ap_pstrcat(r->pool, r->filename,
@@ -1448,39 +1477,19 @@ static int hook_fixup(request_rec *r)
             }
 
             /* now prepare the redirect... */
-
-            /* skip 'scheme:' */
-            for (cp = r->filename; *cp != ':' && *cp != '\0'; cp++)
-                ;
-            /* skip '://' */
-            cp += 3;
-            /* skip host part */
-            for ( ; *cp != '/' && *cp != '\0'; cp++)
-                ;
-            if (*cp != '\0') {
-                if (rulestatus != ACTION_NOESCAPE) {
-                    rewritelog(r, 1, "[per-dir %s] escaping %s for redirect",
-                               dconf->directory, r->filename);
-                    cp2 = ap_escape_uri(r->pool, cp);
-                }
-                else {
-                    cp2 = ap_pstrdup(r->pool, cp);
-                }
-                *cp = '\0';
-                r->filename = ap_pstrcat(r->pool, r->filename, cp2, NULL);
+            if (rulestatus != ACTION_NOESCAPE) {
+                rewritelog(r, 1, "[per-dir %s] escaping %s for redirect",
+                           dconf->directory, r->filename);
+                r->filename = escape_absolute_uri(r->pool, r->filename, skip);
             }
 
             /* append the QUERY_STRING part */
-            if (r->args != NULL) {
-                char *args;
-                if (rulestatus == ACTION_NOESCAPE) {
-                    args = r->args;
-                }
-                else {
-                    args = ap_escape_uri(r->pool, r->args);
-                }
-                r->filename = ap_pstrcat(r->pool, r->filename, "?", 
-                                         args, NULL);
+            if (r->args) {
+                r->filename = ap_pstrcat(r->pool, r->filename, "?",
+                                         (rulestatus == ACTION_NOESCAPE)
+                                           ? r->args
+                                           : ap_escape_uri(r->pool, r->args),
+                                         NULL);
             }
 
             /* determine HTTP redirect response code */
@@ -1520,8 +1529,11 @@ static int hook_fixup(request_rec *r)
                 r->filename = ap_pstrdup(r->pool, r->filename+12);
             }
 
-            /* the filename has to start with a slash! */
-            if (!ap_os_is_path_absolute(r->filename)) {
+            /* the filename must be either an absolute local path or an
+             * absolute local URL.
+             */
+            if (   *r->filename != '/'
+                && !ap_os_is_path_absolute(r->filename)) {
                 return BAD_REQUEST;
             }
 
@@ -1609,12 +1621,75 @@ static int handler_redirect(request_rec *r)
         return DECLINED;
     }
 
+    if (is_redirect_limit_exceeded(r)) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r,
+                      "mod_rewrite: maximum number of internal redirects "
+                      "reached. Assuming configuration error. Use "
+                      "'RewriteOptions MaxRedirects' to increase the limit "
+                      "if neccessary.");
+        return HTTP_INTERNAL_SERVER_ERROR;
+    }
+
     /* now do the internal redirect */
     ap_internal_redirect(ap_pstrcat(r->pool, r->filename+9,
                                     r->args ? "?" : NULL, r->args, NULL), r);
 
     /* and return gracefully */
     return OK;
+}
+
+/*
+ * check whether redirect limit is reached
+ */
+static int is_redirect_limit_exceeded(request_rec *r)
+{
+    request_rec *top = r;
+    rewrite_request_conf *reqc;
+    rewrite_perdir_conf *dconf;
+
+    /* we store it in the top request */
+    while (top->main) {
+        top = top->main;
+    }
+    while (top->prev) {
+        top = top->prev;
+    }
+
+    /* fetch our config */
+    reqc = (rewrite_request_conf *) ap_get_module_config(top->request_config,
+                                                         &rewrite_module);
+
+    /* no config there? create one. */
+    if (!reqc) {
+        rewrite_server_conf *sconf;
+
+        reqc = ap_palloc(top->pool, sizeof(rewrite_request_conf));
+        sconf = ap_get_module_config(r->server->module_config, &rewrite_module);
+
+        reqc->redirects = 0;
+        reqc->redirect_limit = sconf->redirect_limit
+                                 ? sconf->redirect_limit
+                                 : REWRITE_REDIRECT_LIMIT;
+
+        /* associate it with this request */
+        ap_set_module_config(top->request_config, &rewrite_module, reqc);
+    }
+
+    /* allow to change the limit during redirects. */
+    dconf = (rewrite_perdir_conf *)ap_get_module_config(r->per_dir_config,
+                                                        &rewrite_module);
+
+    /* 0 == unset; take server conf ... */
+    if (dconf->redirect_limit) {
+        reqc->redirect_limit = dconf->redirect_limit;
+    }
+
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, r,
+                  "mod_rewrite's internal redirect status: %d/%d.",
+                  reqc->redirects, reqc->redirect_limit);
+
+    /* and now give the caller a hint */
+    return (reqc->redirects++ >= reqc->redirect_limit);
 }
 
 
@@ -1994,12 +2069,12 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
     splitout_queryargs(r, p->flags & RULEFLAG_QSAPPEND);
 
     /*
-     *   Again add the previously stripped per-directory location
-     *   prefix if the new URI is not a new one for this
-     *   location, i.e. if it's not starting with either a slash
-     *   or a fully qualified URL scheme.
+     *  Add the previously stripped per-directory location
+     *  prefix if the new URI is not a new one for this
+     *  location, i.e. if it's not an absolute URL (!) path nor
+     *  a fully qualified URL scheme.
      */
-    if (prefixstrip && !ap_os_is_path_absolute(r->filename)
+    if (prefixstrip && *r->filename != '/'
 	&& !is_absolute_uri(r->filename)) {
         rewritelog(r, 3, "[per-dir %s] add per-dir prefix: %s -> %s%s",
                    perdir, r->filename, perdir, r->filename);
@@ -2077,19 +2152,6 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
         }
         r->status = p->forced_responsecode;
         return 1;
-    }
-
-    /*
-     *  Now we are sure it is not a fully qualified URL.  But
-     *  there is still one special case left: A local rewrite in
-     *  per-directory context, i.e. a substitution URL which does
-     *  not start with a slash. Here we add again the initially
-     *  stripped per-directory prefix.
-     */
-    if (prefixstrip && !ap_os_is_path_absolute(r->filename)) {
-        rewritelog(r, 3, "[per-dir %s] add per-dir prefix: %s -> %s%s",
-                   perdir, r->filename, perdir, r->filename);
-        r->filename = ap_pstrcat(r->pool, perdir, r->filename, NULL);
     }
 
     /*
@@ -2443,6 +2505,16 @@ static void splitout_queryargs(request_rec *r, int qsappend)
     char *q;
     char *olduri;
 
+    /* don't touch, unless it's an http or mailto URL.
+     * See RFC 1738 and RFC 2368.
+     */
+    if (   is_absolute_uri(r->filename)
+        && strncasecmp(r->filename, "http", 4)
+        && strncasecmp(r->filename, "mailto", 6)) {
+        r->args = NULL; /* forget the query that's still flying around */
+        return;
+    }
+
     q = strchr(r->filename, '?');
     if (q != NULL) {
         olduri = ap_pstrdup(r->pool, r->filename);
@@ -2466,6 +2538,7 @@ static void splitout_queryargs(request_rec *r, int qsappend)
                        r->filename, r->args);
         }
     }
+
     return;
 }
 
@@ -2591,29 +2664,148 @@ static void fully_qualify_uri(request_rec *r)
 }
 
 
-/*
-**
-**  return non-zero if the URI is absolute (includes a scheme etc.)
-**
-*/
-
-static int is_absolute_uri(char *uri)
+/* return number of chars of the scheme (incl. '://')
+ * if the URI is absolute (includes a scheme etc.)
+ * otherwise 0.
+ *
+ * NOTE: If you add new schemes here, please have a
+ *       look at escape_absolute_uri and splitout_queryargs.
+ *       Not every scheme takes query strings and some schemes
+ *       may be handled in a special way.
+ *
+ * XXX: we should consider a scheme registry, perhaps with
+ *      appropriate escape callbacks to allow other modules
+ *      to extend mod_rewrite at runtime.
+ */
+static unsigned is_absolute_uri(char *uri)
 {
-    int i = strlen(uri);
-    if (   (i > 7 && strncasecmp(uri, "http://",   7) == 0)
-        || (i > 8 && strncasecmp(uri, "https://",  8) == 0)
-        || (i > 9 && strncasecmp(uri, "gopher://", 9) == 0)
-        || (i > 6 && strncasecmp(uri, "ftp://",    6) == 0)
-        || (i > 5 && strncasecmp(uri, "ldap:",     5) == 0)
-        || (i > 5 && strncasecmp(uri, "news:",     5) == 0)
-        || (i > 7 && strncasecmp(uri, "mailto:",   7) == 0) ) {
-	return 1;
+    /* fast exit */
+    if (*uri == '/' || strlen(uri) <= 5) {
+        return 0;
     }
-    else {
-	return 0;
+
+    switch (*uri++) {
+    case 'f':
+    case 'F':
+        if (!strncasecmp(uri, "tp://", 5)) {        /* ftp://    */
+            return 6;
+        }
+        break;
+
+    case 'g':
+    case 'G':
+        if (!strncasecmp(uri, "opher://", 8)) {     /* gopher:// */
+            return 9;
+        }
+        break;
+
+    case 'h':
+    case 'H':
+        if (!strncasecmp(uri, "ttp://", 6)) {       /* http://   */
+            return 7;
+        }
+        else if (!strncasecmp(uri, "ttps://", 7)) { /* https://  */
+            return 8;
+        }
+        break;
+
+    case 'l':
+    case 'L':
+        if (!strncasecmp(uri, "dap://", 6)) {       /* ldap://   */
+            return 7;
+        }
+        break;
+
+    case 'm':
+    case 'M':
+        if (!strncasecmp(uri, "ailto:", 6)) {       /* mailto:   */
+            return 7;
+        }
+        break;
+
+    case 'n':
+    case 'N':
+        if (!strncasecmp(uri, "ews:", 4)) {         /* news:     */
+            return 5;
+        }
+        else if (!strncasecmp(uri, "ntp://", 6)) {  /* nntp://   */
+            return 7;
+        }
+        break;
     }
+
+    return 0;
 }
 
+
+/* escape absolute uri, which may or may not be path oriented.
+ * So let's handle them differently.
+ */
+static char *escape_absolute_uri(ap_pool *p, char *uri, unsigned scheme)
+{
+    char *cp;
+
+    /* be safe.
+     * NULL should indicate elsewhere, that something's wrong
+     */
+    if (!scheme || strlen(uri) < scheme) {
+        return NULL;
+    }
+
+    cp = uri + scheme;
+
+    /* scheme with authority part? */
+    if (cp[-1] == '/') {
+        /* skip host part */
+        while (*cp && *cp != '/') {
+            ++cp;
+        }
+
+        /* nothing after the hostpart. ready! */
+        if (!*cp || !*++cp) {
+            return ap_pstrdup(p, uri);
+        }
+
+        /* remember the hostname stuff */
+        scheme = cp - uri;
+
+        /* special thing for ldap.
+         * The parts are separated by question marks. From RFC 2255:
+         *     ldapurl = scheme "://" [hostport] ["/"
+         *               [dn ["?" [attributes] ["?" [scope]
+         *               ["?" [filter] ["?" extensions]]]]]]
+         */
+        if (!strncasecmp(uri, "ldap", 4)) {
+            char *token[5];
+            int c = 0;
+
+            token[0] = cp = ap_pstrdup(p, cp);
+            while (*cp && c < 5) {
+                if (*cp == '?') {
+                    token[++c] = cp + 1;
+                    *cp = '\0';
+                }
+                ++cp;
+            }
+
+            return ap_pstrcat(p, ap_pstrndup(p, uri, scheme),
+                                         ap_escape_uri(p, token[0]),
+                              (c >= 1) ? "?" : NULL,
+                              (c >= 1) ? ap_escape_uri(p, token[1]) : NULL,
+                              (c >= 2) ? "?" : NULL,
+                              (c >= 2) ? ap_escape_uri(p, token[2]) : NULL,
+                              (c >= 3) ? "?" : NULL,
+                              (c >= 3) ? ap_escape_uri(p, token[3]) : NULL,
+                              (c >= 4) ? "?" : NULL,
+                              (c >= 4) ? ap_escape_uri(p, token[4]) : NULL,
+                              NULL);
+        }
+    }
+
+    /* Nothing special here. Apply normal escaping. */
+    return ap_pstrcat(p, ap_pstrndup(p, uri, scheme),
+                      ap_escape_uri(p, cp), NULL);
+}
 
 /*
 **
@@ -3120,8 +3312,8 @@ static void open_rewritelog(server_rec *s, pool *p)
 		conf->rewritelogfp = fdcache_open(fname, rewritelog_flags,
 		    rewritelog_mode);
 	} else {
-		conf->rewritelogfp = ap_popenf(p, fname, rewritelog_flags,
-		    rewritelog_mode);
+		conf->rewritelogfp = ap_popenf_ex(p, fname, rewritelog_flags,
+		    rewritelog_mode, 1);
 	}
         if (conf->rewritelogfp < 0) {
             ap_log_error(APLOG_MARK, APLOG_ERR, s, 
@@ -3270,8 +3462,8 @@ static void rewritelock_create(server_rec *s, pool *p)
 
     /* create the lockfile */
     unlink(lockname);
-    if ((lockfd = ap_popenf(p, lockname, O_WRONLY|O_CREAT,
-                                         REWRITELOCK_MODE)) < 0) {
+    if ((lockfd = ap_popenf_ex(p, lockname, O_WRONLY|O_CREAT,
+                                         REWRITELOCK_MODE, 1)) < 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, s,
                      "mod_rewrite: Parent could not create RewriteLock "
                      "file %s", lockname);
@@ -3298,8 +3490,8 @@ static void rewritelock_open(server_rec *s, pool *p)
     }
 
     /* open the lockfile (once per child) to get a unique fd */
-    if ((lockfd = ap_popenf(p, lockname, O_WRONLY,
-                                         REWRITELOCK_MODE)) < 0) {
+    if ((lockfd = ap_popenf_ex(p, lockname, O_WRONLY,
+                                         REWRITELOCK_MODE, 1)) < 0) {
         ap_log_error(APLOG_MARK, APLOG_ERR, s,
                      "mod_rewrite: Child could not open RewriteLock "
                      "file %s", lockname);
@@ -3963,8 +4155,8 @@ static char *subst_prefix_path(request_rec *r, char *input, char *match,
     output = input;
 
     /* first create a match string which always has a trailing slash */
-    l = ap_cpystrn(matchbuf, match, sizeof(matchbuf)) - matchbuf;
-    if (matchbuf[l-1] != '/') {
+    l = ap_cpystrn(matchbuf, match, sizeof(matchbuf) - 1) - matchbuf;
+    if (!l || matchbuf[l-1] != '/') {
        matchbuf[l] = '/';
        matchbuf[l+1] = '\0';
        l++;
@@ -3975,8 +4167,8 @@ static char *subst_prefix_path(request_rec *r, char *input, char *match,
         output = ap_pstrdup(r->pool, output+l);
 
         /* and now add the base-URL as replacement prefix */
-        l = ap_cpystrn(substbuf, subst, sizeof(substbuf)) - substbuf;
-        if (substbuf[l-1] != '/') {
+        l = ap_cpystrn(substbuf, subst, sizeof(substbuf) - 1) - substbuf;
+        if (!l || substbuf[l-1] != '/') {
            substbuf[l] = '/';
            substbuf[l+1] = '\0';
            l++;
@@ -4118,24 +4310,68 @@ static int subreq_ok(request_rec *r)
 **
 */
 
-static int prefix_stat(const char *path, struct stat *sb)
+static int prefix_stat(const char *path, ap_pool *pool)
 {
-    char curpath[LONG_STRING_LEN];
-    char *cp;
+    const char *curpath = path;
+    char *root;
+    char *slash;
+    char *statpath;
+    struct stat sb;
 
-    ap_cpystrn(curpath, path, sizeof(curpath));
-    if (curpath[0] != '/') {
+    if (!ap_os_is_path_absolute(curpath)) {
         return 0;
     }
-    if ((cp = strchr(curpath+1, '/')) != NULL) {
-        *cp = '\0';
-    }
-    if (stat(curpath, sb) == 0) {
-        return 1;
+
+    /* need to be a bit tricky here.
+     * Actually we're looking for the first path segment ...
+     */
+    if (*curpath != '/') {
+        /* be safe: +1 = '\0'; +1 = possible additional '\0'
+         * from ap_make_dirstr_prefix
+         */
+        root = ap_palloc(pool, strlen(curpath) + 2);
+        slash = ap_make_dirstr_prefix(root, curpath, 1);
+        curpath += strlen(root);
     }
     else {
-        return 0;
+#if defined(HAVE_UNC_PATHS)
+    /* Check for UNC names. */
+        if (curpath[1] == '/') {
+            slash = strchr(curpath + 2, '/');
+
+            /* XXX not sure here. Be safe for now */
+            if (!slash) {
+                return 0;
+            }
+            root = ap_pstrndup(pool, curpath, slash - curpath + 1);
+            curpath += strlen(root);
+        }
+        else {
+#endif /* UNC */
+            root = "/";
+            ++curpath;
+#if defined(HAVE_UNC_PATHS)
+        }
+#endif
     }
+
+    /* let's recognize slashes only, the mod_rewrite semantics are opaque
+     * enough.
+     */
+    if ((slash = strchr(curpath, '/')) != NULL) {
+        statpath = ap_pstrcat(pool, root,
+                              ap_pstrndup(pool, curpath, slash - curpath),
+                              NULL);
+    }
+    else {
+        statpath = ap_pstrcat(pool, root, curpath, NULL);
+    }
+
+    if (stat(statpath, &sb) == 0) {
+        return 1;
+    }
+
+    return 0;
 }
 
 

@@ -84,6 +84,13 @@
 #define SSL_set_state(ssl,val) (ssl)->state = val
 
 /*
+ * Backward compatibility.
+ */
+#if SSL_LIBRARY_VERSION < 0x00906100
+#define OPENSSL_free free
+#endif
+
+/*
  *  Maximum length of a DER encoded session.
  *  FIXME: There is no define in OpenSSL, but OpenSSL uses 1024*10,
  *         so this value should be ok. Although we have no warm feeling.

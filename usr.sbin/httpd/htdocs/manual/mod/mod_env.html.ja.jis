@@ -30,7 +30,7 @@
      <a href="module-dict.html#moduleidentifier"
     rel="help"><strong>モジュール識別子:</strong></a>
     env_module<br />
-     <a href="module-dict.html#compatibility"
+     <a href="module-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a>
     Apache 1.1 以降で使用可能。</p>
 
@@ -70,7 +70,7 @@
     rel="help"><strong>ステータス:</strong></a> Base<br />
      <a href="directive-dict.html#module"
     rel="help"><strong>モジュール:</strong></a> mod_env<br />
-     <a href="directive-dict.html#compatibility"
+     <a href="directive-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a> PassEnv は Apache 1.1
     以降でのみ使用可能。ディレクトリ、.htaccess での使用は
     Apache 1.3.7 以降で使用可能。<br />
@@ -96,7 +96,7 @@
     rel="help"><strong>ステータス:</strong></a> Base<br />
      <a href="directive-dict.html#module"
     rel="help"><strong>モジュール:</strong></a> mod_env<br />
-     <a href="directive-dict.html#compatibility"
+     <a href="directive-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a> SetEnv は Apache 1.1
     以降でのみ使用可能。ディレクトリ、.htaccess での使用は
     Apache 1.3.7 以降で使用可能。<br />
@@ -122,7 +122,7 @@
     rel="help"><strong>ステータス:</strong></a> Base<br />
      <a href="directive-dict.html#module"
     rel="help"><strong>モジュール:</strong></a> mod_env<br />
-     <a href="directive-dict.html#compatibility"
+     <a href="directive-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a> UnsetEnv は Apache 1.1
     以降でのみ使用可能。ディレクトリ、.htaccess での使用は
     Apache 1.3.7 以降で使用可能。<br />

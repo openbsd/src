@@ -32,7 +32,7 @@
      <a href="module-dict.html#moduleidentifier"
     rel="help"><strong>モジュール識別子:</strong></a>
     speling_module<br />
-     <a href="module-dict.html#compatibility"
+     <a href="module-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a> Apache 1.3
     以降で使用可能。Apache 1.1 以降では外部モジュールとして使用可能。
     </p>
@@ -46,8 +46,9 @@
     リクエストに合うドキュメントを見つけようとすることによりこの問題の
     解決を試みます。このモジュールはリクエストされたディレクトリにある
     それぞれのドキュメントの名前と、リクエストされたドキュメントの名前とを
-    <strong>大文字小文字の区別を無視し</strong>、<strong>一文字までの
-    綴りの間違い</strong> (文字の挿入/省略/隣合う文字の置換、間違った文字)
+    <strong>大文字小文字の区別を無視し</strong>、
+    <strong>一文字までの綴りの間違い</strong>
+    (文字の挿入/省略/隣合う文字の置換、間違った文字)
     を許可して比較することにより、目的を達成しようとします。
     この方法でリクエストに合うドキュメントの一覧が作成されます。</p>
 
@@ -91,7 +92,7 @@
     rel="help"><strong>ステータス:</strong></a> Base<br />
      <a href="directive-dict.html#module"
     rel="help"><strong>モジュール:</strong></a> mod_speling<br />
-     <a href="directive-dict.html#compatibility"
+     <a href="directive-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a> CheckSpelling は
     Apache 1.1 では外部のモジュールとして使用可能でしたが、
     大文字小文字の違いを修正する機能のみでした。Apache 1.3 では
@@ -105,8 +106,8 @@
 
     <ul>
       <li>同時にたくさんの綴りの訂正を行なわなければならないときは、
-      そのために行なわれるディレクトリのスキャンがサーバの性能に
-      影響を与えます。</li>
+      そのために行なわれるディレクトリのスキャンが
+      サーバの性能に影響を与えます。</li>
 
       <li>ドキュメントの中に綴りの「訂正」により
       意図せず合ってしまうような重要なファイルがないようにしてください。

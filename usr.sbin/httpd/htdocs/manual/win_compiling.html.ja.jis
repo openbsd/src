@@ -8,7 +8,7 @@
 
   </head>
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
-  <!-- English revision: 1.14 -->
+  <!-- English revision: 1.16 -->
   <body bgcolor="#FFFFFF" text="#000000" link="#0000FF"
   vlink="#000080" alink="#FF0000">
         <div align="CENTER">
@@ -21,40 +21,46 @@
 
     <h1 align="center">Microsoft Windows での Apache のコンパイル</h1>
 
-    <p>Apache のコンパイルをはじめる前に、多くの重要なポイントがあります。
+    <p>Apache のコンパイルを始めるにあたって、多くの重要なポイントがあります。
     始める前に、<a href="windows.html">Microsoft Windows での Apache
     の使用</a>を見てください。</p>
 
-    <p>Apache をコンパイルするには Microsoft Visual
-    C++ 5.0 または 6.0 が適切にインストールされていることが必要です。
-    ビルドはコマンドラインツール、
-    または Visual Studio 環境で可能です。インストールの方法は、
-    VC++ のマニュアルを参考にしてください。コマンドラインでのビルド
-    (たとえば nmake の使用)では、コマンドラインツールの準備に
-    Program Files/DevStudio/VC/bin
-    フォルダにある vcvars32.bat 及び Platform SDK の setenv.bat
-    のファイルが必要になるであろうことについて、
+    <p>Apache をコンパイルするには Microsoft Visual C++ 5.0
+    または 6.0 が適切にインストールされていることが必要です。
+    ビルドはコマンドラインツール、または Visual Studio
+    環境で可能です。インストールの方法は、VC++
+    のマニュアルを参考にしてください。コマンドラインでのビルド
+    (例えば nmake の使用)では、コマンドラインツールの準備に Program
+    Files/DevStudio/VC/bin フォルダにある vcvars32.bat 及び Platform
+    SDK の setenv.bat のファイルが必要になるであろうことについて、
     特に注意してください。Makefile.win や Visual Studio IDE の
     InstallBin プロジェクトを使って Apache をインストールする場合は、
-    awk ユーティリティも必要になります。</p>
+    awk ユーティリティも必要になります。Visual Studio 7.0 (.net)
+    を使う場合は、Apache.dsw を読み込み .msproj
+    フォーマットに変換してください。プロジェクトファイル (.dsp)
+    に変更があった場合は Apache.dsw
+    を一から変換し直さなければなりません。</p>
 
-    <p>まず、IDE を使うつもりならパスが通り、 DevStudio
+    <p>まず、IDE を使うつもりならパスが通り、DevStudio
     環境が解釈できるところに awk.exe をインストールしてください。
-    Windowsで利用可能な awk は様々なバージョンがあります。
-    一番インストールしやすいものは Brian Kernighan の<a
-    href="http://cm.bell-labs.com/cm/cs/who/bwk/">
-    http://cm.bell-labs.com/cm/cs/who/bwk/</a>サイトから入手可能です。
-    このサイトから<a href="http://cm.bell-labs.com/cm/cs/who/bwk/awk95.exe"
+    Windows で利用可能な awk は様々なバージョンがあります。
+    一番インストールしやすいものは Brian Kernighan の <a
+    href="http://cm.bell-labs.com/cm/cs/who/bwk/"
+    >http://cm.bell-labs.com/cm/cs/who/bwk/</a> サイトから入手可能です。
+    このサイトから <a href="http://cm.bell-labs.com/cm/cs/who/bwk/awk95.exe"
     >http://cm.bell-labs.com/cm/cs/who/bwk/awk95.exe</a>
     をダウンロードした場合は、awk95.exe を awk.exe
     という名前で保存しなければなりません。</p>
-    <p>DevStudio はツール(<u>T</u>)メニューのオプション(<u>O</u>)以下の、
-    ディレクトリの実行可能ファイルにリストされた場所にある場合にのみ、
-    awk.exe を見つけられることに注意してください。必要に応じ、awk.exe
-    のパスをこのリストに追加してください。</p>
+
+    <p>Developer Studio IDE はツール (<u>T</u>) メニューのオプション
+    (<u>O</u>) 以下の、ディレクトリタブ (Developer Studio 7.0 では
+    Projects - VC++ Directories)
+    の実行可能ファイルにリストされた場所にある場合にのみ、awk.exe
+    を見つけられることに注意してください。必要に応じ、awk.exe
+    へのパスをこのリスト、システムの環境変数 PATH に追加してください。</p>
 
     <p>それから、適切なディレクトリに Apache の配布を展開してください。
-    コマンドラインプロンプトを開き、Apache 配布サブディレクトリ
+    コマンドプロンプトを開き、Apache 配布サブディレクトリ
     <code>src</code> に移動してください</p>
 
     <p><code>Makefile.win</code> ファイルには Apache の makefile
@@ -120,7 +126,7 @@
     唯一の例外、デバッグシンボル用のフラグである /ZI
     フラグを除いてこのフォーマットを認識します。
     VC 5.0 では /Zi フラグがこれに相当します。
-    Visual Studio 5.0 (97) の .dspファイルをすぐに準備するには、
+    Visual Studio 5.0 (97) の .dsp ファイルをすぐに準備するには、
     <code>src\helpers</code> フォルダにて配布されている perl
     スクリプトを使うことができます</p>
 <pre>
@@ -188,7 +194,7 @@
       <li><code>support\rotatelogs.dsp</code></li>
     </ul>
 
-    <p>Apache がコンパイルできたらサーバールートディレクトリにインストール
+    <p>Apache がコンパイルできたらサーバルートディレクトリにインストール
     する必要があります。デフォルトは現在のハードディスクのディレクトリ
     <code>\Apache</code> です。</p>
 

@@ -386,7 +386,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
         if ((xs = SSL_get_peer_certificate(ssl)) != NULL) {
             cp = X509_NAME_oneline(X509_get_subject_name(xs), NULL, 0);
             ap_ctx_set(fb->ctx, "ssl::client::dn", ap_pstrdup(conn->pool, cp));
-            free(cp);
+            OPENSSL_free(cp);
+            X509_free(xs);
         }
 
         /*
@@ -855,7 +856,7 @@ int ssl_hook_Access(request_rec *r)
         SSL_set_verify(ssl, nVerify, ssl_callback_SSLVerify);
         SSL_set_verify_result(ssl, X509_V_OK);
         /* determine whether we've to force a renegotiation */
-        if (nVerify != nVerifyOld) {
+        if (!renegotiate && nVerify != nVerifyOld) {
             if (   (   (nVerifyOld == SSL_VERIFY_NONE)
                     && (nVerify    != SSL_VERIFY_NONE))
                 || (  !(nVerifyOld &  SSL_VERIFY_PEER)
@@ -866,8 +867,10 @@ int ssl_hook_Access(request_rec *r)
                 /* optimization */
                 if (   dc->nOptions & SSL_OPT_OPTRENEGOTIATE
                     && nVerifyOld == SSL_VERIFY_NONE
-                    && SSL_get_peer_certificate(ssl) != NULL)
+                    && (cert = SSL_get_peer_certificate(ssl)) != NULL) {
                     renegotiate_quick = TRUE;
+                    X509_free(cert);
+                }
                 ssl_log(r->server, SSL_LOG_TRACE,
                         "Changed client verification type will force %srenegotiation",
                         renegotiate_quick ? "quick " : "");
@@ -995,6 +998,7 @@ int ssl_hook_Access(request_rec *r)
                 /* created by us, so free it */
                 sk_X509_pop_free(certstack, X509_free);
             }
+            X509_free(cert);
         }
         else {
             /* do a full renegotiation */
@@ -1030,7 +1034,8 @@ int ssl_hook_Access(request_rec *r)
             cp = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
             ap_ctx_set(r->connection->client->ctx, "ssl::client::dn", 
                        ap_pstrdup(r->connection->pool, cp));
-            free(cp);
+            OPENSSL_free(cp);
+            X509_free(cert);
         }
 
         /*
@@ -1043,12 +1048,15 @@ int ssl_hook_Access(request_rec *r)
                         "Re-negotiation handshake failed: Client verification failed");
                 return FORBIDDEN;
             }
+            cert = SSL_get_peer_certificate(ssl);
             if (   dc->nVerifyClient == SSL_CVERIFY_REQUIRE
-                && SSL_get_peer_certificate(ssl) == NULL   ) {
+                && cert == NULL) {
                 ssl_log(r->server, SSL_LOG_ERROR,
                         "Re-negotiation handshake failed: Client certificate missing");
                 return FORBIDDEN;
             }
+            if (cert != NULL)
+                X509_free(cert);
         }
     }
 
@@ -1499,9 +1507,9 @@ int ssl_callback_SSLVerify(int ok, X509_STORE_CTX *ctx)
             errdepth, cp != NULL ? cp : "-unknown-",
             cp2 != NULL ? cp2 : "-unknown");
     if (cp)
-        free(cp);
+        OPENSSL_free(cp);
     if (cp2)
-        free(cp2);
+        OPENSSL_free(cp2);
 
     /*
      * Check for optionally acceptable non-verifiable issuer situation
@@ -1522,6 +1530,7 @@ int ssl_callback_SSLVerify(int ok, X509_STORE_CTX *ctx)
                 "Certificate Verification: Verifiable Issuer is configured as "
                 "optional, therefore we're accepting the certificate");
         ap_ctx_set(conn->client->ctx, "ssl::verify::info", "GENEROUS");
+        SSL_set_verify_result(ssl, X509_V_OK);
         ok = TRUE;
     }
 
@@ -1578,6 +1587,7 @@ int ssl_callback_SSLVerify_CRL(
     X509 *xs;
     X509_CRL *crl;
     X509_REVOKED *revoked;
+    EVP_PKEY *pubkey;
     long serial;
     BIO *bio;
     int i, n, rc;
@@ -1656,19 +1666,24 @@ int ssl_callback_SSLVerify_CRL(
             BIO_free(bio);
             cp2 = X509_NAME_oneline(subject, NULL, 0);
             ssl_log(s, SSL_LOG_TRACE, "CA CRL: Issuer: %s, %s", cp2, cp);
-            free(cp2);
+            OPENSSL_free(cp2);
             free(cp);
         }
 
         /*
          * Verify the signature on this CRL
          */
-        if (X509_CRL_verify(crl, X509_get_pubkey(xs)) <= 0) {
+        pubkey = X509_get_pubkey(xs);
+        if (X509_CRL_verify(crl, pubkey) <= 0) {
             ssl_log(s, SSL_LOG_WARN, "Invalid signature on CRL");
             X509_STORE_CTX_set_error(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE);
             X509_OBJECT_free_contents(&obj);
+            if (pubkey != NULL)
+                EVP_PKEY_free(pubkey);
             return FALSE;
         }
+        if (pubkey != NULL)
+            EVP_PKEY_free(pubkey);
 
         /*
          * Check date of CRL to make sure it's not expired
@@ -1720,7 +1735,7 @@ int ssl_callback_SSLVerify_CRL(
                         "Certificate with serial %ld (0x%lX) "
                         "revoked per CRL from issuer %s",
                         serial, serial, cp);
-                free(cp);
+                OPENSSL_free(cp);
 
                 X509_STORE_CTX_set_error(ctx, X509_V_ERR_CERT_REVOKED);
                 X509_OBJECT_free_contents(&obj);

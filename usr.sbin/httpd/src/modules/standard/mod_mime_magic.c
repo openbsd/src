@@ -1,7 +1,7 @@
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -880,6 +880,7 @@ static int magic_process(request_rec *r)
      * try looking at the first HOWMANY bytes
      */
     if ((nbytes = read(fd, (char *) buf, sizeof(buf) - 1)) == -1) {
+        (void) ap_pclosef(r->pool, fd);
 	ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
 		    MODNAME ": read failed: %s", r->filename);
 	return HTTP_INTERNAL_SERVER_ERROR;

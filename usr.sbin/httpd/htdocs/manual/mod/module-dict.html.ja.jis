@@ -32,7 +32,7 @@
        <a href="#moduleidentifier"
       rel="help"><strong>モジュール識別子:</strong></a>
       <em>module-identifier</em><br />
-       <a href="#compatibility"
+       <a href="#Compatibility"
       rel="help"><strong>互換性:</strong></a>
       <em>compatibility notes</em></dd>
     </dl>
@@ -48,7 +48,7 @@
 
       <li><a href="#moduleidentifier">モジュール識別子</a></li>
 
-      <li><a href="#compatibility">互換性</a></li>
+      <li><a href="#Compatibility">互換性</a></li>
     </ul>
     <hr />
 
@@ -63,7 +63,7 @@
       <dt><strong>Base</strong></dt>
 
       <dd>ステータスが &quot;Base&quot;
-      のモジュールは、デフォルトでコンパイルされてわざわざ設定から
+      のモジュールは、デフォルトでコンパイルされて、わざわざ設定から
       モジュールを削除していない限り、通常は利用可能です。
       </dd>
 
@@ -109,7 +109,7 @@
     </p>
     <hr />
 
-    <h2><a id="compatibility" name="compatibility">互換性</a></h2>
+    <h2><a id="Compatibility" name="Compatibility">互換性</a></h2>
 
     <p>あるモジュールが Apache バージョン 1
     の配布に含まれていなかった場合、

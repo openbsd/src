@@ -226,7 +226,7 @@
       APACI installs the Apache C header files together with the
       <code>apxs</code> tool.</dd>
 
-      <dt><a href="install.html#install"><strong>Default Apache
+      <dt><a href="install.html#installing"><strong>Default Apache
       directory path changed to
       <code>/usr/local/apache/</code></strong></a><br />
       </dt>
@@ -307,9 +307,9 @@
       </dt>
 
       <dd>The addition of <a
-      href="mod/mod_setenvif.html#SetEnvIf"><code>SetEnvIf</code></a>
+      href="mod/mod_setenvif.html#setenvif"><code>SetEnvIf</code></a>
       and <a
-      href="mod/mod_setenvif.html#SetEnvIfNoCase"><code>SetEnvIfNoCase</code></a>.
+      href="mod/mod_setenvif.html#setenvifnocase"><code>SetEnvIfNoCase</code></a>.
       These allow you to set environment variables for server and
       CGI use based upon attributes of the request.</dd>
 
@@ -459,7 +459,7 @@
           <li>Starting with 1.3.15, the server will satisfy
           directory requests with the cache controls ETag and
           LastModified, if IndexOptions includes the <a
-          href="mod/mod_autoindex.html#trackmodified"><samp>TrackModified</samp></a>
+          href="mod/mod_autoindex.html#indexoptions:trackmodified"><samp>TrackModified</samp></a>
           directive. The server will not need to generate the
           listing if the client determines the request has not
           changed, improving performance. Due to its experimental

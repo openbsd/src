@@ -1,9 +1,9 @@
-/* $OpenBSD: http_core.c,v 1.14 2002/10/07 20:23:06 henning Exp $ */
+/* $OpenBSD: http_core.c,v 1.15 2003/08/21 13:11:35 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
- * Copyright (c) 2000-2002 The Apache Software Foundation.  All rights
+ * Copyright (c) 2000-2003 The Apache Software Foundation.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -369,7 +369,12 @@ static void *create_core_server_config(pool *a, server_rec *s)
     conf->ap_document_root = is_virtual ? NULL : DOCUMENT_LOCATION;
     conf->sec = ap_make_array(a, 40, sizeof(void *));
     conf->sec_url = ap_make_array(a, 40, sizeof(void *));
-    
+
+    /* recursion stopper */
+    conf->redirect_limit = 0;
+    conf->subreq_limit = 0;
+    conf->recursion_limit_set = 0;
+
     return (void *)conf;
 }
 
@@ -389,6 +394,14 @@ static void *merge_core_server_configs(pool *p, void *basev, void *virtv)
     }
     conf->sec = ap_append_arrays(p, base->sec, virt->sec);
     conf->sec_url = ap_append_arrays(p, base->sec_url, virt->sec_url);
+
+    conf->redirect_limit = virt->recursion_limit_set
+                           ? virt->redirect_limit
+                           : base->redirect_limit;
+
+    conf->subreq_limit = virt->recursion_limit_set
+                         ? virt->subreq_limit
+                         : base->subreq_limit;
 
     return conf;
 }
@@ -1267,7 +1280,7 @@ static const char *set_error_document(cmd_parms *cmd, core_dir_config *conf,
     if (error_number == 401 &&
 	line[0] != '/' && line[0] != '"') { /* Ignore it... */
 	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, cmd->server,
-		     "cannot use a full URL in a 401 ErrorDocument "
+		     "cannot use a full or relative URL in a 401 ErrorDocument "
 		     "directive --- ignoring!");
     }
     else { /* Store it... */
@@ -2644,8 +2657,8 @@ static const char *set_acceptfilter(cmd_parms *cmd, void *dummy, int flag)
 static const char *set_listener(cmd_parms *cmd, void *dummy, char *ips)
 {
     listen_rec *new;
-    char *ports;
-    unsigned short port;
+    char *ports, *endptr;
+    long port;
     
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
@@ -2674,11 +2687,15 @@ static const char *set_listener(cmd_parms *cmd, void *dummy, char *ips)
     else {
 	new->local_addr.sin_addr.s_addr = ap_get_virthost_addr(ips, NULL);
     }
-    port = atoi(ports);
-    if (!port) {
-	return "Port must be numeric";
+    errno = 0; /* clear errno before calling strtol */
+    port = ap_strtol(ports, &endptr, 10);
+    if (errno /* some sort of error */
+       || (endptr && *endptr) /* make sure no trailing characters */
+       || port < 1 || port > 65535) /* underflow/overflow */
+    {
+	return "Missing, invalid, or non-numeric port";
     }
-    new->local_addr.sin_port = htons(port);
+    new->local_addr.sin_port = htons((unsigned short)port);
     new->fd = -1;
     new->used = 0;
     new->next = ap_listeners;
@@ -3240,6 +3257,134 @@ static const char *set_etag_bits(cmd_parms *cmd, void *mconfig,
     return NULL;
 }
 
+static const char *set_recursion_limit(cmd_parms *cmd, void *dummy,
+                                       const char *arg1, const char *arg2)
+{
+    core_server_config *conf = ap_get_module_config(cmd->server->module_config,
+                                                    &core_module);
+    int limit = atoi(arg1);
+
+    if (limit < 0) {
+        return "The redirect recursion limit cannot be less than zero.";
+    }
+    if (limit && limit < 4) {
+        ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, cmd->server,
+                     "Limiting internal redirects to very low numbers may "
+                     "cause normal requests to fail.");
+    }
+
+    conf->redirect_limit = limit;
+
+    if (arg2) {
+        limit = atoi(arg2);
+
+        if (limit < 0) {
+            return "The subrequest recursion limit cannot be less than zero.";
+        }
+        if (limit && limit < 4) {
+            ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, cmd->server,
+                         "Limiting the subrequest depth to a very low level may"
+                         " cause normal requests to fail.");
+        }
+    }
+
+    conf->subreq_limit = limit;
+    conf->recursion_limit_set = 1;
+
+    return NULL;
+}
+
+static void log_backtrace(const request_rec *r)
+{
+    const request_rec *top = r;
+
+    ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, r,
+                  "r->uri = %s", r->uri ? r->uri : "(unexpectedly NULL)");
+
+    while (top && (top->prev || top->main)) {
+        if (top->prev) {
+            top = top->prev;
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, r,
+                          "redirected from r->uri = %s",
+                          top->uri ? top->uri : "(unexpectedly NULL)");
+        }
+
+        if (!top->prev && top->main) {
+            top = top->main;
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG|APLOG_NOERRNO, r,
+                          "subrequested from r->uri = %s",
+                          top->uri ? top->uri : "(unexpectedly NULL)");
+        }
+    }
+}
+
+/*
+ * check whether redirect limit is reached
+ */
+API_EXPORT(int) ap_is_recursion_limit_exceeded(const request_rec *r)
+{
+    core_server_config *conf = ap_get_module_config(r->server->module_config,
+                                                    &core_module);
+    const request_rec *top = r;
+    int redirects = 0, subreqs = 0;
+    int rlimit = conf->recursion_limit_set
+                 ? conf->redirect_limit
+                 : AP_DEFAULT_MAX_INTERNAL_REDIRECTS;
+    int slimit = conf->recursion_limit_set
+                 ? conf->subreq_limit
+                 : AP_DEFAULT_MAX_SUBREQ_DEPTH;
+
+    /* fast exit (unlimited) */
+    if (!rlimit && !slimit) {
+        return 0;
+    }
+
+    while (top->prev || top->main) {
+        if (top->prev) {
+            if (rlimit && ++redirects >= rlimit) {
+                /* uuh, too much. */
+                ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r,
+                              "Request exceeded the limit of %d internal "
+                              "redirects due to probable configuration error. "
+                              "Use 'LimitInternalRecursion' to increase the "
+                              "limit if necessary. Use 'LogLevel debug' to get "
+                              "a backtrace.", rlimit);
+
+                /* post backtrace */
+                log_backtrace(r);
+
+                /* return failure */
+                return 1;
+            }
+
+            top = top->prev;
+        }
+
+        if (!top->prev && top->main) {
+            if (slimit && ++subreqs >= slimit) {
+                /* uuh, too much. */
+                ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r,
+                              "Request exceeded the limit of %d subrequest "
+                              "nesting levels due to probable confguration "
+                              "error. Use 'LimitInternalRecursion' to increase "
+                              "the limit if necessary. Use 'LogLevel debug' to "
+                              "get a backtrace.", slimit);
+
+                /* post backtrace */
+                log_backtrace(r);
+
+                /* return failure */
+                return 1;
+            }
+
+            top = top->main;
+        }
+    }
+
+    /* recursion state: ok */
+    return 0;
+}
+
 /* Note --- ErrorDocument will now work from .htaccess files.  
  * The AllowOverride of Fileinfo allows webmasters to turn it off
  */
@@ -3539,6 +3684,10 @@ static const command_rec core_cmds[] = {
 
 { "FileETag", set_etag_bits, NULL, OR_FILEINFO, RAW_ARGS,
   "Specify components used to construct a file's ETag"},
+
+{ "LimitInternalRecursion", set_recursion_limit, NULL, RSRC_CONF, TAKE12,
+  "maximum recursion depth of internal redirects and subrequests"},
+
 { NULL }
 };
 

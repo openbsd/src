@@ -165,7 +165,7 @@
      <a href="directive-dict.html#module"
     rel="help"><strong>モジュール:</strong></a>
      mod_negotiation<br />
-     <a href="directive-dict.html#compatibility"
+     <a href="directive-dict.html#Compatibility"
     rel="help"><strong>互換性:</strong></a>
     CacheNegotiatedDocs は Apache 1.1 以降でのみ使用可能。<br />
     <p>このディレクティブが設定されていると、コンテントネゴシエーション

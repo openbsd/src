@@ -51,7 +51,11 @@
 
       <li><a href="#cookieexpires">CookieExpires</a></li>
 
+      <li><a href="#cookieformat">CookieFormat</a></li>
+
       <li><a href="#cookiename">CookieName</a></li>
+
+      <li><a href="#cookieprefix">CookiePrefix</a></li>
 
       <li><a href="#cookiestyle">CookieStyle</a></li>
 
@@ -164,6 +168,29 @@ time late in the year "37".
     current browser session.</p>
     <hr />
 
+    <h2><a id="cookieformat"
+    name="cookieformat">CookieFormat</a> directive</h2>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> CookieFormat
+    <em>Normal | Compact</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual host, directory,
+    .htaccess<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> optional<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_usertrack <a
+    href="directive-dict.html#Compatibility" 
+    rel="Help"><strong>Compatibility:</strong></a> Apache 1.3.28
+    and later 
+
+    <p>When used, this directive determines whether the cookie
+    used for user tracking is created using the default ("normal")
+    format (eg: decimal values for items like the PID) or
+    using a more compact format (eg: hexidecimal values).</p>
+
+    <hr />
+
     <h2><a id="cookiename" name="cookiename">CookieName</a>
     directive</h2>
     <a href="directive-dict.html#Syntax"
@@ -189,6 +216,29 @@ time late in the year "37".
     <p>You must specify a valid cookie name; results are
     unpredictable if you use a name containing unusual characters.
     Valid characters include A-Z, a-z, 0-9, "_", and "-".</p>
+    <hr />
+
+    <h2><a id="cookieprefix"
+    name="cookieprefix">CookiePrefix</a> directive</h2>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> CookiePrefix
+    <em>"string"</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual host, directory,
+    .htaccess<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> optional<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_usertrack <a
+    href="directive-dict.html#Compatibility" 
+    rel="Help"><strong>Compatibility:</strong></a> Apache 1.3.28
+    and later 
+
+    <p>When used, this directive allows for the <em>"string"</em>
+    to be prepended to the user tracking cookie. Care must be
+    taken not to prepend a string that would result in a bogus
+    cookie.</p>
+
     <hr />
 
     <h2><a id="cookiestyle" name="cookiestyle">CookieStyle</a>

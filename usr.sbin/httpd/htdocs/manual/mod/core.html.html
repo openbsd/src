@@ -20,7 +20,7 @@
     </div>
 
 
-    <h1 align="CENTER">Apache Core Features</h1>
+    <h1 align="center">Apache Core Features</h1>
 
     <p>These configuration parameters control the core Apache
     features, and are always available.</p>
@@ -49,6 +49,8 @@
       <li><a href="#bindaddress">BindAddress</a></li>
 
       <li><a href="#bs2000account">BS2000Account</a></li>
+
+      <li><a href="#cgicommandargs">CGICommandArgs</a></li>
 
       <li><a href="#clearmodulelist">ClearModuleList</a></li>
 
@@ -100,6 +102,8 @@
       <li><a href="#limit">&lt;Limit&gt;</a></li>
 
       <li><a href="#limitexcept">&lt;LimitExcept&gt;</a></li>
+
+      <li><a href="#limitinternalrecursion">LimitInternalRecursion</a></li>
 
       <li><a href="#limitrequestbody">LimitRequestBody</a></li>
 
@@ -252,7 +256,7 @@
     method Apache will use. Not all methods are available on all
     platforms, since the suite of methods is determined at
     compile-time. For a list of which methods are available for
-    your particular build, the <code>httpd -L</code> command line
+    your particular build, the <code>httpd -V</code> command line
     option will list them out.</p>
 
     <p>The compile time flags <code>-D
@@ -317,10 +321,10 @@
     <p>Alternatively you can use a wildcard to limit the scope; i.e
     to only *.conf files.
     </p>
-    <p>Note that by default <emph>any</emph> file in the specified 
+    <p>Note that by default <em>any</em> file in the specified 
     directory will be loaded as a configuration file.
-    <p>
     </p>
+    <p>
     So make sure that you don't have stray files in
     this directory by mistake, such as temporary files created by your
     editor, for example.</p>
@@ -438,8 +442,18 @@
     <code>AddModule mod_include.c</code>
     </blockquote>
 
+    <p>The ordering of <code>AddModule</code> lines is important.
+    Modules are listed in reverse priority order --- the ones that come
+    later can override the behavior of those that come earlier.  This
+    can have visible effects; for instance, if UserDir followed Alias,
+    you couldn't alias out a particular user's home directory.  For
+    more information and a recommended ordering, see 
+    <code>src/Configuration.tmpl</code> in the Apache source
+    distribution.</p>
+
     <p><strong>See also</strong>: <a
-    href="#clearmodulelist">ClearModuleList</a>, 
+    href="#clearmodulelist">ClearModuleList</a> and <a
+    href="mod_so.html#loadmodule">LoadModule</a></p>
     <hr />
 
     <h2><a id="allowoverride" name="allowoverride">AllowOverride
@@ -461,6 +475,11 @@
     href="#accessfilename">AccessFileName</a>) it needs to know
     which directives declared in that file can override earlier
     access information.</p>
+
+    <p><strong>Note:</strong> <code>AllowOverride</code> is only
+    valid in &lt;Directory&gt; sections, not in &lt;Location&gt; or
+    &lt;Files&gt; sections, as implied by the <strong>Context</strong>
+    section above.</p>
 
     <p>When this directive is set to <code>None</code>, then
     .htaccess files are completely ignored. In this case, the
@@ -690,6 +709,39 @@
     EBCDIC port</a></p>
     <hr />
 
+    <h2><a id="cgicommandargs" name="cgicommandargs">CGICommandArgs
+    directive</a></h2>
+
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> CGICommandArgs On|Off<br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a> CGICommandArgs On<br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> directory, .htaccess<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>Override:</strong></a> Options<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> core<br />
+     <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a> Available in Apache
+       1.3.24 and later.
+
+    <p>Way back when the internet was a safer, more naive place, it
+    was convenient for the server to take a query string that did not
+    contain an '=' sign and to parse and pass it to a CGI program as
+    command line args.  For example, <code>&lt;IsIndex&gt;</code>
+    generated searches often work in this way.  The default behavior
+    in Apache is to maintain this behavior for backwards
+    compatibility, although it is generally regarded as unsafe
+    practice today.  Most CGI programs do not take command line
+    parameters, but among those that do, many are unaware of this
+    method of passing arguments and are therefore vulnerable to
+    malicious clients passing unsafe material in this way. Setting
+    <code>CGICommandArgs Off</code> is recommended to protect such
+    scripts with little loss in functionality.</p>
+
+    <hr />
+
     <h2><a id="clearmodulelist"
     name="clearmodulelist">ClearModuleList directive</a></h2>
 
@@ -707,6 +759,11 @@
     This directive clears the list. It is assumed that the list
     will then be re-populated using the <a
     href="#addmodule">AddModule</a> directive.</p>
+
+    <p><strong>See also</strong>: <a
+    href="#addmodule">AddModule</a> and <a
+    href="mod_so.html#loadmodule">LoadModule</a></p>
+ 
     <hr />
 
     <h2><a id="contentdigest" name="contentdigest">ContentDigest
@@ -842,7 +899,7 @@
     <em>Directory-path</em> is either the full path to a directory,
     or a wild-card string. In a wild-card string, `?' matches any
     single character, and `*' matches any sequences of characters.
-    As of Apache 1.3, you may also use `[]' character ranges like
+    As of Apache 1.3, you may also use `[ ]' character ranges like
     in the shell. Also as of Apache 1.3 none of the wildcards match
     a `/' character, which more closely mimics the behavior of
     Unix shells. Example:</p>
@@ -1312,8 +1369,11 @@
 
     <p>Examples</p>
 
-    <code>ErrorLog logs/vhost1.error</code><br />
-    <code>ErrorLog |/usr/local/bin/errorlog.pl</code>
+    <p><code>ErrorLog logs/vhost1.error</code></p>
+
+    or
+
+    <p><code>ErrorLog |/usr/local/bin/errorlog.pl</code></p>
 
     <p><strong>Apache 1.3 and above:</strong> Using
     <code>syslog</code> instead of a filename enables logging via
@@ -1325,7 +1385,11 @@
 
     <p>For example:</p>
 
-    <code>ErrorLog syslog</code>
+    <p><code>ErrorLog syslog</code></p>
+
+    or
+
+    <p><code>ErrorLog syslog:user</code></p>
 
     <p>SECURITY: See the <a
     href="../misc/security_tips.html#serverroot">security tips</a>
@@ -1360,7 +1424,7 @@
     bandwidth.)  In Apache 1.3.22 and earlier, the ETag value was
     <i>always</i> formed from the file's inode, size, and last-modified
     time (mtime).  The FileETag directive allows you to choose
-    which of these -- if any -- should be used.  The recognised
+    which of these -- if any -- should be used.  The recognized
     keywords are:
     </p>
     <dl compact="compact">
@@ -1453,7 +1517,7 @@
     subdirectories, unless specifically overridden.</p>
 
     <p>(See <a href="#require">Require</a> for details on using the
-    <code>Require</code> directive</a>)</p>
+    <code>Require</code> directive)</p>
 
     <p><strong>See also</strong>: <a href="../sections.html">How
     Directory, Location and Files sections work</a> for an
@@ -1518,9 +1582,13 @@
 
       <dd>Refers to a group by its number.</dd>
     </dl>
-    It is recommended that you set up a new group specifically for
+    <p>It is recommended that you set up a new group specifically for
     running the server. Some admins use user <code>nobody</code>,
-    but this is not always possible or desirable. 
+    but this is not always possible or desirable.</p>
+
+    <p>Example:</p>
+
+    <code>Group www-group</code>
 
     <p>Note: if you start the server as a non-root user, it will
     fail to change to the specified group, and will instead
@@ -1774,7 +1842,7 @@
     directives, which may cause the server to fail on start up.
     Running <code>apachectl configtest</code> will give you a list of
     the files that are being processed during the configuration  
-    check:<p>
+    check:</p>
 
 <pre>
 root@host# apachectl configtest
@@ -1898,10 +1966,10 @@ Syntax OK
        &lt;/Limit&gt;</code>
     </blockquote>
     The method names listed can be one or more of: GET, POST, PUT,
-    DELETE, CONNECT, OPTIONS, TRACE, PATCH, PROPFIND, PROPPATCH,
+    DELETE, CONNECT, OPTIONS, PATCH, PROPFIND, PROPPATCH,
     MKCOL, COPY, MOVE, LOCK, and UNLOCK. <strong>The method name is
     case-sensitive.</strong> If GET is used it will also restrict
-    HEAD requests. 
+    HEAD requests. The TRACE method cannot be limited.
     <hr />
 
     <h2><a id="limitexcept" name="limitexcept">&lt;LimitExcept&gt;
@@ -1934,6 +2002,50 @@ Syntax OK
     &lt;LimitExcept POST GET&gt;
     Require valid-user
     &lt;/LimitExcept&gt;
+    </pre>
+
+    <hr />
+
+    <h2><a id="limitinternalrecursion"
+    name="limitinternalrecursion">LimitInternalRecursion directive</a></h2>
+
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> LimitInternalRecursion
+    <em>number</em> [<em>number</em>]<br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a> <code>LimitInternalRecursion
+    20</code><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual host<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> core<br />
+     <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a> LimitInternalRecursion
+    is only available in Apache 1.3.28 and later. 
+
+    <p>An internal redirect happens, for example, when using the <a
+    href="mod_actions.html#action">Action</a> directive, which internally
+    redirects the original request to a CGI script. A subrequest is Apache's
+    mechanism to find out what would happen for some URI if it were requested.
+    For example, <a href="mod_dir.html">mod_dir</a> uses subrequests to look
+    for the files listed in the <a
+    href="mod_dir.html#directoryindex">DirectoryIndex</a>
+    directive.</p>
+
+    <p><code>LimitInternalRecursion</code> prevents the server
+    from crashing when entering an infinite loop of internal redirects or
+    subrequests. Such loops are usually caused by misconfigurations.</p>
+
+    <p>The directive stores two different limits, which are evaluated on
+    per-request basis. The first <em>number</em> is the maximum number of
+    internal redirects, that may follow each other. The second <em>number</em>
+    determines, how deep subrequests may be nested. If you specify only one
+    <em>number</em>, it will be assigned to both limits. A value of
+    <code>0</code> means "unlimited".</p>
+
+    <p><strong>Example</strong></p>
+    <pre>
+    LimitInternalRecursion 5
     </pre>
 
     <hr />
@@ -2388,10 +2500,10 @@ Syntax OK
 
     <table>
       <tr>
-        <th align="LEFT"><strong>Level</strong> </th>
+        <th align="left"><strong>Level</strong> </th>
 
-        <th align="LEFT"><strong>Description</strong> </th>
-        <th align="LEFT"><strong>Example</strong> </th>
+        <th align="left"><strong>Description</strong> </th>
+        <th align="left"><strong>Example</strong> </th>
       </tr>
 
       <tr>
@@ -2968,13 +3080,13 @@ Syntax OK
     rel="Help"><strong>Status:</strong></a> core 
 
     <p>This directive selects which authenticated users can access
-    a directory. The allowed syntaxes are:</p>
+    a resource. The allowed syntaxes are:</p>
 
     <ul>
       <li>
         Require user <em>userid</em> [<em>userid</em>] ... 
 
-        <p>Only the named users can access the directory.</p>
+        <p>Only the named users can access the resource.</p>
       </li>
 
       <li>
@@ -2982,13 +3094,23 @@ Syntax OK
         
 
         <p>Only users in the named groups can access the
-        directory.</p>
+        resource.</p>
       </li>
 
       <li>
         Require valid-user 
 
-        <p>All valid users can access the directory.</p>
+        <p>All valid users can access the resource.</p>
+      </li>
+      <li>file-owner
+        <p>Only the user, whose name matches the system's name for 
+	the file owner, can access the resource.<br>
+	[Available after Apache 1.3.20]</p>
+      </li>
+      <li>file-group
+        <p>Only the members of the group, whose name matches the
+	system's name of the file owner group, can access the 
+	resource.<br>[Available after Apache 1.3.20]</p>
       </li>
     </ul>
 
@@ -3066,14 +3188,12 @@ Syntax OK
     <p>Alternatively you can use a wildcard to limit the scope; i.e
     to only *.conf files.
     </p>
-    <p>Note that by default <emph>any</emph> file in the specified 
+    <p>Note that by default <em>any</em> file in the specified
     directory will be loaded as a configuration file.
-    <p>
     </p>
-    So make sure that you don't have stray files in
+    <p>So make sure that you don't have stray files in
     this directory by mistake, such as temporary files created by your
     editor, for example.</p>
-
 
     <p>See also <a href="#accessconfig">AccessConfig</a>.</p>
     <hr />
@@ -3781,7 +3901,7 @@ Syntax OK
     <code>9090</code>, then the <em>canonical name</em> of the server is
     <code>www.example.com:9090</code>. In the event that
     <code>Port</code> has its default value of <code>80</code>, the
-    <code>:80</code> is ommitted from the <em>canonical name</em>.
+    <code>:80</code> is omitted from the <em>canonical name</em>.</p>
 
     <p>With <code>UseCanonicalName off</code> Apache will form
     self-referential URLs using the hostname and port supplied by

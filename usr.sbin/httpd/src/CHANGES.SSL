@@ -23,6 +23,45 @@
       / __/ | (_) |
   __ |_____(_)___/ ___________________________________________
               
+  Changes with mod_ssl 2.8.15 (21-Mar-2003 to 18-Jul-2003)
+
+   *) Upgraded to Apache 1.3.28
+
+   *) Take over security fix from Apache 2.0 related
+      to per-directory renogotiations.
+
+  Changes with mod_ssl 2.8.14 (18-Mar-2003 to 21-Mar-2003)
+
+   *) Fixed logic in the destruction of a temporary certificate
+      structure and this way avoid a crash due to freeing NULL object.
+
+   *) Removed one newly introduced X509_free() call in the context of
+      SSL_get_certificate(), because this function does not increment a
+      reference count (although SSL_get_peer_certificate() does).
+
+   *) Fixed hash-table based shared memory session cache (shmht)
+      implementation by making sure that the underlying hash table
+      library does not crash if memory cannot be allocated.
+
+  Changes with mod_ssl 2.8.13 (23-Oct-2002 to 18-Mar-2003)
+
+   *) Always enforce RSA blinding on RSA private keys in order to be
+      resistent to timing attacks.
+
+   *) Added timeout also to the "pre-sucking" of the trailing data in
+      POST request handling.
+
+   *) Correctly shutdown shared memory pools on fork+exec situations.
+
+   *) Bugfix SSL client certificate verification: OpenSSL was not
+      informed with SSL_set_verify_result(ssl, X509_V_OK) in case
+      mod_ssl forced the verification to be ok.
+
+   *) Consistently use OPENSSL_free() instead of plain free() to
+      deallocate memory chunks allocated inside OpenSSL.
+
+   *) Fixed various memory leaks related to X509 certificates.
+
   Changes with mod_ssl 2.8.12 (04-Oct-2002 to 23-Oct-2002)
 
    *) Fixed potential Cross-Site-Scripting bug.
