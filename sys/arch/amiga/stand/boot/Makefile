@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.5 1999/07/08 20:11:52 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/02/12 15:29:06 espie Exp $
 
 NOPROG=	installboot
 MAN=installboot.8
 MANSUBDIR=/amiga
+
+.if ${MACHINE}== "amiga"
 
 SUBDIR=aout2bb txlt libsa
 
@@ -105,6 +107,8 @@ xxtest: xxboot
 
 fdtest: fdboot
 	dd if=$? of=/dev/rfd0a bs=8192 count=1
+
+.endif
 
 .include <bsd.prog.mk>
 .include "Makefile.txlt"

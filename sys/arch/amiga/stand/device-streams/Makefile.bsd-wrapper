@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/09/27 08:39:08 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.2 2000/02/12 15:29:06 espie Exp $
 
+.if ${ARCH} == "amiga"
 BINPROG= devtostream rdbinfo streamtodev xdevtostream xstreamtodev
 BINLIB=getopt.lib unixemul.lib
 BINARIES=${BINPROG} ${BINLIB}
@@ -23,5 +24,9 @@ ${I}.gz: ${I}.gz.uu
 .endfor
 
 CLEANFILES=${BINARIES} ${BINARIES:S/$/.gz/} ${ARCHIVE}
+.else
+NOPROG=Yes
+NOMAN=Yes
+.endif
 
 .include <bsd.prog.mk>

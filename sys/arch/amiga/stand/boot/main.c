@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: main.c,v 1.3 1997/05/13 16:15:55 niklas Exp $
+ * $OpenBSD: main.c,v 1.4 2000/02/12 15:29:06 espie Exp $
  * $NetBSD: main.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
  *
  *
@@ -349,15 +349,15 @@ pain()
 		goto err;
 	}
 
-	printf("%ld", eh->a_text);
+	printf("%lu", (unsigned long)eh->a_text);
 	if (read(io, kp, eh->a_text) != eh->a_text)
 		goto err;
 
-	printf("+%ld", eh->a_data);
+	printf("+%lu", (unsigned long)eh->a_data);
 	if (read(io, kp + textsz, eh->a_data) != eh->a_data)
 		goto err;
 
-	printf("+%ld", eh->a_bss);
+	printf("+%lu", (unsigned long)eh->a_bss);
 
 	kvers = (u_short *)(kp + eh->a_entry - 2);
 
@@ -375,11 +375,11 @@ pain()
         nkcd = (int *)(kp + textsz + eh->a_data + eh->a_bss);
         if (*kvers != 0x4e73 && *kvers > 1 && S_flag && eh->a_syms) {
                 *nkcd++ = eh->a_syms;
-		printf("+[%ld", eh->a_syms);
+		printf("+[%lu", (unsigned long)eh->a_syms);
                 if (read(io, (char *)nkcd, eh->a_syms) != eh->a_syms)
 			goto err;
                 nkcd = (int *)((char *)nkcd + eh->a_syms);
-		printf("+%ld]", stringsz);
+		printf("+%lu]", (unsigned long)stringsz);
                 if (read(io, (char *)nkcd, stringsz) != stringsz)
 			goto err;
                 nkcd = (int*)((char *)nkcd + ((stringsz + 3) & ~3));
