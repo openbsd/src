@@ -1,4 +1,4 @@
-.\"	$OpenBSD: myname.5,v 1.1 2003/07/26 07:07:08 jmc Exp $
+.\"	$OpenBSD: myname.5,v 1.2 2004/12/20 15:40:00 jaredy Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -68,7 +68,9 @@ in dotted quad notation
 is processed after all interfaces have been configured.
 It will therefore override any DHCP-supplied default route information.
 .Pp
-Neither file may contain comments.
+Empty lines and lines beginning with
+.Sq #
+in either file are ignored.
 .Sh FILES
 .Bl -tag -width "/etc/myname" -compact
 .It Pa /etc/myname

@@ -1,4 +1,4 @@
-.\" $OpenBSD: defaultdomain.5,v 1.1 2004/07/23 17:27:39 jaredy Exp $
+.\" $OpenBSD: defaultdomain.5,v 1.2 2004/12/20 15:40:00 jaredy Exp $
 .\" Written by Jared Yanovich
 .\" This file belongs to the public domain.
 .Dd July 23, 2004
@@ -18,10 +18,12 @@ at system startup time.
 It is used to set the YP domain name of the host machine (see
 .Xr yp 8 ) .
 .Pp
-This file should contain one line consisting of the system domain name, as
+This file should contain a single line specifying the system domain name as
 supplied to
 .Xr domainname 1 .
-It may not contain comments.
+Empty lines and lines beginning with
+.Sq #
+in the file are ignored.
 .Sh FILES
 .Bl -tag -width "/etc/defaultdomain" -compact
 .It Pa /etc/defaultdomain
