@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getlogin.c,v 1.2 1996/08/19 08:23:41 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getlogin.c,v 1.3 1997/07/09 00:28:21 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -43,6 +43,7 @@ static char rcsid[] = "$OpenBSD: getlogin.c,v 1.2 1996/08/19 08:23:41 tholo Exp 
 #include <unistd.h>
 
 int	__logname_valid;		/* known to setlogin() */
+int	_getlogin __P((char *, size_t));
 
 char *
 getlogin()

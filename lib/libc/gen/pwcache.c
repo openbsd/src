@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pwcache.c,v 1.2 1996/08/19 08:25:29 tholo Exp $";
+static char rcsid[] = "$OpenBSD: pwcache.c,v 1.3 1997/07/09 00:28:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ static char rcsid[] = "$OpenBSD: pwcache.c,v 1.2 1996/08/19 08:25:29 tholo Exp $
 #include <utmp.h>
 
 #define	NCACHE	64			/* power of 2 */
-#define	MASK	NCACHE - 1		/* bits to store with */
+#define	MASK	(NCACHE - 1)		/* bits to store with */
 
 char *
 user_from_uid(uid, nouser)

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: unvis.c,v 1.4 1996/09/15 09:31:10 tholo Exp $";
+static char rcsid[] = "$OpenBSD: unvis.c,v 1.5 1997/07/09 00:28:26 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -230,7 +230,7 @@ strunvis(dst, src)
 	char *start = dst;
 	int state = 0;
 
-	while (c = *src++) {
+	while ((c = *src++)) {
 	again:
 		switch (unvis(dst, c, &state, 0)) {
 		case UNVIS_VALID:

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.2 1996/08/19 08:26:33 tholo Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.3 1997/07/09 00:28:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -177,7 +177,7 @@ vsyslog(pri, fmt, ap)
 	 * We wouldn't need this mess if printf handled %m, or if 
 	 * strerror() had been invented before syslog().
 	 */
-	for (t = fmt_cpy, fmt_left = FMT_LEN; ch = *fmt; ++fmt) {
+	for (t = fmt_cpy, fmt_left = FMT_LEN; (ch = *fmt); ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
 			++fmt;
 			prlen = snprintf(t, fmt_left, "%s",

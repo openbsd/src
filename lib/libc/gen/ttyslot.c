@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ttyslot.c,v 1.2 1996/08/19 08:27:04 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ttyslot.c,v 1.3 1997/07/09 00:28:26 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -50,13 +50,13 @@ ttyslot()
 	char *name;
 
 	setttyent();
-	for (cnt = 0; cnt < 3; ++cnt) 
-		if (name = ttyname(cnt)) {
-			if (p = strrchr(name, '/')) 
+	for (cnt = 0; cnt < 3; ++cnt)
+		if ((name = ttyname(cnt))) {
+			if ((p = strrchr(name, '/')))
 				++p;
 			else
 				p = name;
-			for (slot = 1; ttyp = getttyent(); ++slot)
+			for (slot = 1; (ttyp = getttyent()); ++slot)
 				if (!strcmp(ttyp->ty_name, p)) {
 					endttyent();
 					return(slot);

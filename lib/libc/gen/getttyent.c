@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getttyent.c,v 1.3 1996/09/15 09:31:03 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getttyent.c,v 1.4 1997/07/09 00:28:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ttyent.h>
@@ -53,7 +53,7 @@ getttynam(tty)
 	register struct ttyent *t;
 
 	setttyent();
-	while (t = getttyent())
+	while ((t = getttyent()))
 		if (!strcmp(tty, t->ty_name))
 			break;
 	endttyent();
@@ -130,7 +130,7 @@ getttyent()
 	tty.ty_comment = p;
 	if (*p == 0)
 		tty.ty_comment = 0;
-	if (p = strchr(p, '\n'))
+	if ((p = strchr(p, '\n')))
 		*p = '\0';
 	return (&tty);
 }
@@ -190,7 +190,7 @@ setttyent()
 	if (tf) {
 		rewind(tf);
 		return (1);
-	} else if (tf = fopen(_PATH_TTYS, "r"))
+	} else if ((tf = fopen(_PATH_TTYS, "r")))
 		return (1);
 	return (0);
 }

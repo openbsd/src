@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpass.c,v 1.4 1996/12/04 23:02:13 chuck Exp $";
+static char rcsid[] = "$OpenBSD: getpass.c,v 1.5 1997/07/09 00:28:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <termios.h>
@@ -74,7 +74,7 @@ getpass(prompt)
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	(void)tcgetattr(fileno(fp), &term);
-	if (echo = (term.c_lflag & ECHO)) {
+	if ((echo = (term.c_lflag & ECHO))) {
 		term.c_lflag &= ~ECHO;
 		(void)tcsetattr(fileno(fp), TCSAFLUSH|TCSASOFT, &term);
 	}

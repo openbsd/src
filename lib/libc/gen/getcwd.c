@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcwd.c,v 1.3 1996/11/27 22:00:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: getcwd.c,v 1.4 1997/07/09 00:28:20 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,7 +47,7 @@ static char rcsid[] = "$OpenBSD: getcwd.c,v 1.3 1996/11/27 22:00:45 millert Exp 
 
 #define	ISDOT(dp) \
 	(dp->d_name[0] == '.' && (dp->d_name[1] == '\0' || \
-	    dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
+	    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 
 char *
 getcwd(pt, size)

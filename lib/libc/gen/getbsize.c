@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getbsize.c,v 1.3 1996/08/19 08:23:04 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getbsize.c,v 1.4 1997/07/09 00:28:19 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -84,6 +84,7 @@ getbsize(headerlenp, blocksizep)
 		default:
 fmterr:			_warnx("%s: unknown blocksize", p);
 			n = 512;
+			max = MAXB;
 			mul = 1;
 			break;
 		}
@@ -99,7 +100,7 @@ underflow:		_warnx("%s: minimum blocksize is 512", p);
 	} else
 		blocksize = n = 512;
 
-	*headerlenp = snprintf(header, sizeof(header), "%d%s-blocks", n, form);
+	*headerlenp = snprintf(header, sizeof(header), "%ld%s-blocks", n, form);
 	*blocksizep = blocksize;
 	return (header);
 }

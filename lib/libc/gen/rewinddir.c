@@ -32,11 +32,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rewinddir.c,v 1.2 1996/08/19 08:25:37 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rewinddir.c,v 1.3 1997/07/09 00:28:24 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <dirent.h>
+
+void __seekdir __P((DIR *, long));
 
 void
 rewinddir(dirp)
