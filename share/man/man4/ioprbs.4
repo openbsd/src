@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ioprbs.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: ioprbs.4,v 1.6 2002/03/30 21:51:50 mickey Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -18,9 +18,11 @@ The
 driver provides support for I2O random block storages, like RAID-sets.
 So far only the following adapters has been tested:
 .Pp
-.Bl -tag -width -offset indent -compact
-.Tn Adaptec 2100S ,
-.Tn Adaptec 3200S .
+.Bl -item -offset indent -compact
+.It
+.Tn Adaptec 2100S
+.It
+.Tn Adaptec 3200S
 .El
 .Pp
 Although only those two adapters have been tested, the I2O interface is
