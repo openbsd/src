@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#--Interrupt Controllers--
+ *	#	OpenBSD: pnpdevs,v 1.2 1997/11/07 08:07:07 niklas Exp 
  */
 
 struct pnp_knowndev pnp_knowndevs[] = {

@@ -2,8 +2,10 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp 
+ *	OpenBSD: pcidevs,v 1.21 1997/11/07 08:07:30 niklas Exp 
  */
+
+/*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
