@@ -1,3 +1,4 @@
+/*	$OpenBSD: uvm_pmap.h,v 1.13 2002/03/18 07:42:45 hugh Exp $	*/
 /*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
 
 /* 
