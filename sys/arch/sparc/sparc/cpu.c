@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 1998/10/09 13:12:43 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.17 1999/03/03 21:58:28 jason Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -785,7 +785,7 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	noop_pcache_flush_line
+	viking_pcache_flush_line
 };
 
 void
@@ -802,15 +802,20 @@ void
 viking_hotfix(sc)
 	struct cpu_softc *sc;
 {
+	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
+
 	/* Test if we're directly on the MBus */
-	if (!(lda(SRMMU_PCR, ASI_SRMMU) & VIKING_PCR_MB)) {
+	if ((pcr & VIKING_PCR_MB) == 0) {
 		sc->mxcc = 1;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
 		/*
 		 * Ok to cache PTEs; set the flag here, so we don't
 		 * uncache in pmap_bootstrap().
 		 */
-		sc->flags |= CPUFLG_CACHEPAGETABLES;
+		if ((pcr & VIKING_PCR_TC) == 0)
+			printf("[viking: PCR_TC is off]");
+		else
+			sc->flags |= CPUFLG_CACHEPAGETABLES;
 	} else {
 		sc->cache_flush = viking_cache_flush;
 		sc->pcache_flush_line = viking_pcache_flush_line;
@@ -830,9 +835,12 @@ viking_mmu_enable()
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
-	if (cpuinfo.mxcc)
+	if (cpuinfo.mxcc) {
+		if ((pcr & VIKING_PCR_TC) == 0) {
+			printf("[viking: turn on PCR_TC]");
+		}
 		pcr |= VIKING_PCR_TC;
-	else
+	} else
 		pcr &= ~VIKING_PCR_TC;
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 }
