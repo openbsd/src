@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.91 2002/06/27 10:17:48 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.92 2002/07/01 05:28:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -584,9 +584,9 @@ print_status(struct pf_status *s)
 		    s->bcounters[0][PF_IN], s->bcounters[1][PF_IN]);
 		printf("  %-25s %14llu %16llu\n", "Bytes Out",
 		    s->bcounters[0][PF_OUT], s->bcounters[1][PF_OUT]);
-		printf("  Packets In\n"); 
+		printf("  Packets In\n");
 		printf("    %-23s %14llu %16llu\n", "Passed",
-		    s->pcounters[0][PF_IN][PF_PASS], 
+		    s->pcounters[0][PF_IN][PF_PASS],
 		    s->pcounters[1][PF_IN][PF_PASS]);
 		printf("    %-23s %14llu %16llu\n", "Blocked",
 		    s->pcounters[0][PF_IN][PF_DROP],
@@ -608,7 +608,7 @@ print_status(struct pf_status *s)
 			printf("%14.1f/s\n",
 			    (double)s->fcounters[i] / (double)runtime);
 		else
-			printf("%14s\n", "");	
+			printf("%14s\n", "");
 	}
 	printf("Counters\n");
 	for (i = 0; i < PFRES_MAX; i++) {
@@ -618,7 +618,7 @@ print_status(struct pf_status *s)
 			printf("%14.1f/s\n",
 			    (double)s->counters[i] / (double)runtime);
 		else
-			printf("%14s\n", "");	
+			printf("%14s\n", "");
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.81 2002/06/25 08:13:26 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.82 2002/07/01 05:28:22 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -77,7 +77,7 @@ char	*showopt;
 char	*debugopt;
 int	 state_killers;
 char	*state_kill[2];
-int 	 loadopt = PFCTL_FLAG_ALL;
+int	 loadopt = PFCTL_FLAG_ALL;
 
 char	*infile;
 
@@ -732,7 +732,7 @@ pfctl_set_optimization(struct pfctl *pf, const char *opt)
 		}
 
 		for (i = 0; hint[i].name; i++)
-			if ((r = pfctl_set_timeout(pf, hint[i].name, 
+			if ((r = pfctl_set_timeout(pf, hint[i].name,
 			    hint[i].timeout)))
 				return (r);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.108 2002/06/28 19:29:45 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.109 2002/07/01 05:28:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -60,7 +60,7 @@ static int rulestate = 0;
 enum {PFCTL_STATE_NONE=0, PFCTL_STATE_OPTION=1,
       PFCTL_STATE_SCRUB=2, PFCTL_STATE_NAT=3,
       PFCTL_STATE_FILTER=4};
- 
+
 struct node_if {
 	char			 ifname[IFNAMSIZ];
 	u_int8_t		 not;
@@ -274,7 +274,7 @@ option		: SET OPTIMIZATION STRING
 				yyerror("error setting loginterface %s", $3);
 				YYERROR;
 			}
-		}		
+		}
 		;
 
 varset		: STRING PORTUNARY STRING
@@ -291,7 +291,7 @@ varset		: STRING PORTUNARY STRING
 scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 		{
 			struct pf_rule r;
-			
+
 			if (check_rulestate(PFCTL_STATE_SCRUB))
 				YYERROR;
 
@@ -336,7 +336,7 @@ pfrule		: action dir log quick interface route af proto fromto
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
-			
+
 			memset(&r, 0, sizeof(r));
 
 			r.action = $1.b1;
@@ -1255,7 +1255,7 @@ natrule		: no NAT interface af proto fromto redirection
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
-			
+
 			memset(&nat, 0, sizeof(nat));
 
 			nat.no = $1;
@@ -1306,7 +1306,7 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
-			
+
 			memset(&binat, 0, sizeof(binat));
 
 			binat.no = $1;
@@ -1412,7 +1412,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
-			
+
 			memset(&rdr, 0, sizeof(rdr));
 
 			rdr.no = $1;
