@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.29 1999/09/22 05:10:04 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.30 1999/12/08 12:30:17 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.29 1999/09/22 05:10:04 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.30 1999/12/08 12:30:17 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ static char *rcsid = "$OpenBSD: route.c,v 1.29 1999/09/22 05:10:04 deraadt Exp $
 #include <netatalk/at.h>
 
 #include <sys/sysctl.h>
+
+#include <arpa/inet.h>
 
 #include <limits.h>
 #include <netdb.h>
@@ -167,7 +169,7 @@ routepr(rtree)
 				pr_family(i);
 				do_rtent = 1;
 				if (i != PF_KEY)
-					pr_rthdr();
+					pr_rthdr(i);
 				else
 					pr_encaphdr();
 				p_tree(head.rnh_treetop);
@@ -189,6 +191,11 @@ pr_family(af)
 	case AF_INET:
 		afname = "Internet";
 		break;
+#ifdef INET6
+	case AF_INET6:
+		afname = "Internet6";
+		break;
+#endif 
 	case AF_NS:
 		afname = "XNS";
 		break;
@@ -218,21 +225,35 @@ pr_family(af)
 }
 
 /* column widths; each followed by one space */
-#define	WID_DST		18	/* width of destination column */
-#define	WID_GW		18	/* width of gateway column */
+#ifndef INET6
+#define	WID_DST(af)	18	/* width of destination column */
+#define	WID_GW(af)	18	/* width of gateway column */
+#else
+/* width of destination/gateway column */
+#ifdef KAME_SCOPEID
+/* strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4 */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 34 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
+#else
+/* strlen("fe80::aaaa:bbbb:cccc:dddd") == 25, strlen("/128") == 4 */
+#define	WID_DST(af)	((af) == AF_INET6 ? (nflag ? 29 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 25 : 18) : 18)
+#endif
+#endif /* INET6 */
 
 /*
  * Print header for routing table columns.
  */
 void
-pr_rthdr()
+pr_rthdr(af)
+	int af;
 {
 
 	if (Aflag)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
 	printf("%-*.*s %-*.*s %-6.6s  %6.6s  %6.6s %6.6s  %s\n",
-		WID_DST, WID_DST, "Destination",
-		WID_GW, WID_GW, "Gateway",
+		WID_DST(af), WID_DST(af), "Destination",
+		WID_GW(af), WID_GW(af), "Gateway",
 		"Flags", "Refs", "Use", "Mtu", "Interface");
 }
 
@@ -425,6 +446,36 @@ p_sockaddr(sa, mask, flags, width)
 		break;
 	    }
 
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+#ifdef KAME_SCOPEID
+		struct in6_addr *in6 = &sa6->sin6_addr;
+
+		/*
+		 * XXX: This is a special workaround for KAME kernels.
+		 * sin6_scope_id field of SA should be set in the future.
+		 */
+		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(in6)) {
+		    /* XXX: override is ok? */
+		    sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)&in6->s6_addr[2]);
+		    *(u_short *)&in6->s6_addr[2] = 0;
+		}
+#endif
+
+		if (flags & RTF_HOST)
+			cp = routename6(sa6);
+		else if (mask) {
+			cp = netname6(sa6,
+				&((struct sockaddr_in6 *)mask)->sin6_addr);
+		} else
+			cp = netname6(sa6, NULL);
+		break;
+	    }
+#endif 
+
 	case AF_NS:
 		cp = ns_print(sa);
 		break;
@@ -532,23 +583,28 @@ p_rtentry(rt)
 	register struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
-	struct sockaddr sock1, sock2;
-	struct sockaddr *sa = &sock1, *mask = &sock2;
+	struct sockaddr_storage sock1, sock2;
+	struct sockaddr *sa = (struct sockaddr *)&sock1;
+	struct sockaddr *mask = (struct sockaddr *)&sock2;
 	
 	bcopy(kgetsa(rt_key(rt)), sa, sizeof(struct sockaddr));
+	if (sa->sa_len > sizeof(struct sockaddr))
+		bcopy(kgetsa(rt_key(rt)), sa, sa->sa_len);
 
 	if (sa->sa_family == PF_KEY) {
 		encap_print(rt);
 		return;
 	}
 
-	if (rt_mask(rt))
+	if (rt_mask(rt)) {
 		bcopy(kgetsa(rt_mask(rt)), mask, sizeof(struct sockaddr));
-	else
+		if (sa->sa_len > sizeof(struct sockaddr))
+			bcopy(kgetsa(rt_mask(rt)), mask, sa->sa_len);
+	} else
 		mask = 0;
 	
-	p_sockaddr(sa, mask, rt->rt_flags, WID_DST);
-	p_sockaddr(kgetsa(rt->rt_gateway), 0, RTF_HOST, WID_GW);
+	p_sockaddr(sa, mask, rt->rt_flags, WID_DST(sa->sa_family));
+	p_sockaddr(kgetsa(rt->rt_gateway), 0, RTF_HOST, WID_GW(sa->sa_family));
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
@@ -618,13 +674,12 @@ netname(in, mask)
 	char *cp = 0;
 	static char line[MAXHOSTNAMELEN];
 	struct netent *np = 0;
-	in_addr_t net, subnetshift;
 	int mbits;
 
 	in = ntohl(in);
 	mask = ntohl(mask);
 	if (!nflag && in != INADDR_ANY) {
-		if (np = getnetbyaddr(in, AF_INET))
+		if ((np = getnetbyaddr(in, AF_INET)) != NULL)
 			cp = np->n_name;
 	}
 	mbits = mask ? 33 - ffs(mask) : 0;
@@ -644,6 +699,110 @@ netname(in, mask)
 			C(in >> 16), C(in >> 8), C(in), mbits);
 	return (line);
 }
+
+#ifdef INET6
+char *
+netname6(sa6, mask)
+	struct sockaddr_in6 *sa6;
+	struct in6_addr *mask;
+{
+	static char line[MAXHOSTNAMELEN + 1];
+	struct in6_addr net6;
+	u_char *p;
+	u_char *lim;
+	int masklen, final = 0, illegal = 0;
+	int i;
+	char hbuf[NI_MAXHOST];
+#ifdef NI_WITHSCOPEID
+	int flag = NI_WITHSCOPEID;
+#else
+	int flag = 0;
+#endif
+
+	net6 = sa6->sin6_addr;
+	for (i = 0; i < sizeof(net6); i++)
+		net6.s6_addr[i] &= mask->s6_addr[i];
+	
+	masklen = 0;
+	lim = (u_char *)mask + 16;
+	for (p = (u_char *)mask; p < lim; p++) {
+		if (final && *p) {
+			illegal++;
+			continue;
+		}
+
+		switch (*p & 0xff) {
+		case 0xff:
+			masklen += 8;
+			break;
+		case 0xfe:
+			masklen += 7;
+			final++;
+			break;
+		case 0xfc:
+			masklen += 6;
+			final++;
+			break;
+		case 0xf8:
+			masklen += 5;
+			final++;
+			break;
+		case 0xf0:
+			masklen += 4;
+			final++;
+			break;
+		case 0xe0:
+			masklen += 3;
+			final++;
+			break;
+		case 0xc0:
+			masklen += 2;
+			final++;
+			break;
+		case 0x80:
+			masklen += 1;
+			final++;
+			break;
+		case 0x00:
+			final++;
+			break;
+		default:
+			final++;
+			illegal++;
+			break;
+		}
+	}
+
+	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sa6->sin6_addr))
+		return("default");
+
+	if (illegal)
+		fprintf(stderr, "illegal prefixlen\n");
+
+	if (nflag)
+		flag |= NI_NUMERICHOST;
+	getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, hbuf, sizeof(hbuf),
+		    NULL, 0, flag);
+	snprintf(line, sizeof(line), "%s/%d", hbuf, masklen);
+	return line;
+}
+
+char *
+routename6(sa6)
+	struct sockaddr_in6 *sa6;
+{
+	static char line[NI_MAXHOST];
+#ifdef NI_WITHSCOPEID
+	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflag = NI_NUMERICHOST;
+#endif
+	if (getnameinfo((struct sockaddr *)sa6, sa6->sin6_len,
+			line, sizeof(line), NULL, 0, niflag) != 0)
+		strcpy(line, "");
+	return line;
+}
+#endif /*INET6*/
 
 /*
  * Print routing statistics
@@ -826,7 +985,7 @@ encap_print(rt)
 					   sen2.sen_ip_dst.s_addr),
 	       sen1.sen_dport, sen1.sen_proto);
 	
-	printf("%s/%08x/%-lu\n", inet_ntoa(sen3.sen_ipsp_dst),
+	printf("%s/%08x/%-u\n", inet_ntoa(sen3.sen_ipsp_dst),
 	       ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_sproto);
 }
 

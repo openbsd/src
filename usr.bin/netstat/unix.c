@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.5 1997/06/29 21:46:06 millert Exp $	*/
+/*	$OpenBSD: unix.c,v 1.6 1999/12/08 12:30:17 itojun Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.5 1997/06/29 21:46:06 millert Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.6 1999/12/08 12:30:17 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ unixdomainpr(so, soaddr)
 {
 	struct unpcb unpcb, *unp = &unpcb;
 	struct mbuf mbuf, *m;
-	struct sockaddr_un *sa;
+	struct sockaddr_un *sa = NULL;
 	static int first = 1;
 
 	if (kread((u_long)so->so_pcb, (char *)unp, sizeof (*unp)))
@@ -137,7 +137,7 @@ unixdomainpr(so, soaddr)
 	    PLEN, unp->unp_refs, PLEN, unp->unp_nextref);
 	if (m)
 		printf(" %.*s",
-		    m->m_len - (int)(sizeof(*sa) - sizeof(sa->sun_path)),
+		    (int)(m->m_len - (int)(sizeof(*sa) - sizeof(sa->sun_path))),
 		    sa->sun_path);
 	putchar('\n');
 }

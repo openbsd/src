@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.37 1999/12/06 11:17:26 niklas Exp $	*/
+/*	$OpenBSD: inet.c,v 1.38 1999/12/08 12:30:17 itojun Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.37 1999/12/06 11:17:26 niklas Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.38 1999/12/08 12:30:17 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,10 @@ struct	socket sockb;
 
 char	*inetname __P((struct in_addr *));
 void	inetprint __P((struct in_addr *, int, char *, int));
+#ifdef INET6
+char	*inet6name __P((struct in6_addr *));
+void	inet6print __P((struct in6_addr *, int, char *, int));
+#endif
 
 /*
  * Print a summary of connections related to an Internet
@@ -110,7 +114,10 @@ protopr(off, name)
 	struct inpcb inpcb;
 	int istcp;
 	static int first = 1;
+	char *name0;
+	char namebuf[20];
 
+	name0 = name;
 	if (off == 0)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
@@ -153,15 +160,36 @@ protopr(off, name)
 				    "(state)");
 			first = 0;
 		}
-		if (Aflag)
+		if (Aflag) {
 			if (istcp)
 				printf("%*p ", PLEN, inpcb.inp_ppcb);
 			else
 				printf("%*p ", PLEN, prev);
+		}
+#ifdef INET6
+		if (inpcb.inp_flags & INP_IPV6) {
+			strcpy(namebuf, name0);
+			strcat(namebuf, "6");
+			name = namebuf;
+		} else
+			name = name0;
+#endif
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
-		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name, 1);
-		inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport, name, 0);
+#ifdef INET6
+		if (inpcb.inp_flags & INP_IPV6) {
+			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
+				name, 1);
+			inet6print(&inpcb.inp_faddr6, (int)inpcb.inp_fport,
+				name, 0);
+		} else
+#endif
+		{
+			inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport,
+				name, 1);
+			inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport,
+				name, 0);
+		}
 		if (istcp) {
 			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
 				printf(" %d", tcpcb.t_state);
@@ -189,65 +217,71 @@ tcp_stats(off, name)
 
 #define	p(f, m) if (tcpstat.f || sflag <= 1) \
     printf(m, tcpstat.f, plural(tcpstat.f))
+#define	p1(f, m) if (tcpstat.f || sflag <= 1) \
+    printf(m, tcpstat.f)
 #define	p2(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
     printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2, plural(tcpstat.f2))
+#define	p2a(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
+    printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2)
 #define	p3(f, m) if (tcpstat.f || sflag <= 1) \
     printf(m, tcpstat.f, plurales(tcpstat.f))
 
-	p(tcps_sndtotal, "\t%ld packet%s sent\n");
+	p(tcps_sndtotal, "\t%u packet%s sent\n");
 	p2(tcps_sndpack,tcps_sndbyte,
-		"\t\t%ld data packet%s (%qd byte%s)\n");
+		"\t\t%u data packet%s (%qd byte%s)\n");
 	p2(tcps_sndrexmitpack, tcps_sndrexmitbyte,
-		"\t\t%ld data packet%s (%qd byte%s) retransmitted\n");
+		"\t\t%u data packet%s (%qd byte%s) retransmitted\n");
 	p(tcps_sndrexmitfast, "\t\t%qd fast retransmitted packet%s\n");
-	p2(tcps_sndacks, tcps_delack,
-		"\t\t%ld ack-only packet%s (%ld delayed)\n");
-	p(tcps_sndurg, "\t\t%ld URG only packet%s\n");
-	p(tcps_sndprobe, "\t\t%ld window probe packet%s\n");
-	p(tcps_sndwinup, "\t\t%ld window update packet%s\n");
-	p(tcps_sndctrl, "\t\t%ld control packet%s\n");
-	p(tcps_rcvtotal, "\t%ld packet%s received\n");
-	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%ld ack%s (for %qd byte%s)\n");
-	p(tcps_rcvdupack, "\t\t%ld duplicate ack%s\n");
-	p(tcps_rcvacktoomuch, "\t\t%ld ack%s for unsent data\n");
+	p2a(tcps_sndacks, tcps_delack,
+		"\t\t%u ack-only packet%s (%u delayed)\n");
+	p(tcps_sndurg, "\t\t%u URG only packet%s\n");
+	p(tcps_sndprobe, "\t\t%u window probe packet%s\n");
+	p(tcps_sndwinup, "\t\t%u window update packet%s\n");
+	p(tcps_sndctrl, "\t\t%u control packet%s\n");
+	p(tcps_rcvtotal, "\t%u packet%s received\n");
+	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %qd byte%s)\n");
+	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
+	p(tcps_rcvacktoomuch, "\t\t%u ack%s for unsent data\n");
 	p2(tcps_rcvpack, tcps_rcvbyte,
-		"\t\t%ld packet%s (%qd byte%s) received in-sequence\n");
+		"\t\t%u packet%s (%qu byte%s) received in-sequence\n");
 	p2(tcps_rcvduppack, tcps_rcvdupbyte,
-		"\t\t%ld completely duplicate packet%s (%qd byte%s)\n");
-	p(tcps_pawsdrop, "\t\t%ld old duplicate packet%s\n");
+		"\t\t%u completely duplicate packet%s (%qd byte%s)\n");
+	p(tcps_pawsdrop, "\t\t%u old duplicate packet%s\n");
 	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
-		"\t\t%ld packet%s with some dup. data (%qd byte%s duped)\n");
+		"\t\t%u packet%s with some dup. data (%qd byte%s duped)\n");
 	p2(tcps_rcvoopack, tcps_rcvoobyte,
-		"\t\t%ld out-of-order packet%s (%qd byte%s)\n");
+		"\t\t%u out-of-order packet%s (%qd byte%s)\n");
 	p2(tcps_rcvpackafterwin, tcps_rcvbyteafterwin,
-		"\t\t%ld packet%s (%qd byte%s) of data after window\n");
-	p(tcps_rcvwinprobe, "\t\t%ld window probe%s\n");
-	p(tcps_rcvwinupd, "\t\t%ld window update packet%s\n");
-	p(tcps_rcvafterclose, "\t\t%ld packet%s received after close\n");
-	p(tcps_rcvbadsum, "\t\t%ld discarded for bad checksum%s\n");
-	p(tcps_rcvbadoff, "\t\t%ld discarded for bad header offset field%s\n");
-	p(tcps_rcvshort, "\t\t%ld discarded because packet too short\n");
-	p(tcps_rcvnosec, "\t\t%ld discarded for missing IPSec protection\n");
-	p(tcps_connattempt, "\t%ld connection request%s\n");
-	p(tcps_accepts, "\t%ld connection accept%s\n");
-	p(tcps_connects, "\t%ld connection%s established (including accepts)\n");
+		"\t\t%u packet%s (%qd byte%s) of data after window\n");
+	p(tcps_rcvwinprobe, "\t\t%u window probe%s\n");
+	p(tcps_rcvwinupd, "\t\t%u window update packet%s\n");
+	p(tcps_rcvafterclose, "\t\t%u packet%s received after close\n");
+	p(tcps_rcvbadsum, "\t\t%u discarded for bad checksum%s\n");
+	p(tcps_rcvbadoff, "\t\t%u discarded for bad header offset field%s\n");
+	p1(tcps_rcvshort, "\t\t%u discarded because packet too short\n");
+	p1(tcps_rcvnosec, "\t\t%u discarded for missing IPSec protection\n");
+	p(tcps_connattempt, "\t%u connection request%s\n");
+	p(tcps_accepts, "\t%u connection accept%s\n");
+	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
 	p2(tcps_closed, tcps_drops,
-		"\t%ld connection%s closed (including %ld drop%s)\n");
-	p(tcps_conndrops, "\t%ld embryonic connection%s dropped\n");
+		"\t%u connection%s closed (including %u drop%s)\n");
+	p(tcps_conndrops, "\t%u embryonic connection%s dropped\n");
 	p2(tcps_rttupdated, tcps_segstimed,
-		"\t%ld segment%s updated rtt (of %ld attempt%s)\n");
-	p(tcps_rexmttimeo, "\t%ld retransmit timeout%s\n");
-	p(tcps_timeoutdrop, "\t\t%ld connection%s dropped by rexmit timeout\n");
-	p(tcps_persisttimeo, "\t%ld persist timeout%s\n");
-	p(tcps_keeptimeo, "\t%ld keepalive timeout%s\n");
-	p(tcps_keepprobe, "\t\t%ld keepalive probe%s sent\n");
-	p(tcps_keepdrops, "\t\t%ld connection%s dropped by keepalive\n");
-	p(tcps_predack, "\t%ld correct ACK header prediction%s\n");
-	p(tcps_preddat, "\t%ld correct data packet header prediction%s\n");
-	p3(tcps_pcbhashmiss, "\t%ld PCB cache miss%s\n");
-	p(tcps_badsyn, "\t%ld SYN packet%s received with same src/dst address/port\n");
+		"\t%u segment%s updated rtt (of %u attempt%s)\n");
+	p(tcps_rexmttimeo, "\t%u retransmit timeout%s\n");
+	p(tcps_timeoutdrop, "\t\t%u connection%s dropped by rexmit timeout\n");
+	p(tcps_persisttimeo, "\t%u persist timeout%s\n");
+	p(tcps_keeptimeo, "\t%u keepalive timeout%s\n");
+	p(tcps_keepprobe, "\t\t%u keepalive probe%s sent\n");
+	p(tcps_keepdrops, "\t\t%u connection%s dropped by keepalive\n");
+	p(tcps_predack, "\t%u correct ACK header prediction%s\n");
+	p(tcps_preddat, "\t%u correct data packet header prediction%s\n");
+	p3(tcps_pcbhashmiss, "\t%u PCB cache miss%s\n");
+	p(tcps_badsyn, "\t%u SYN packet%s received with same src/dst address/port\n");
 #undef p
+#undef p1
 #undef p2
+#undef p2a
 #undef p3
 }
 
@@ -268,15 +302,17 @@ udp_stats(off, name)
 	printf("%s:\n", name);
 #define	p(f, m) if (udpstat.f || sflag <= 1) \
     printf(m, udpstat.f, plural(udpstat.f))
+#define	p1(f, m) if (udpstat.f || sflag <= 1) \
+    printf(m, udpstat.f)
 	p(udps_ipackets, "\t%lu datagram%s received\n");
-	p(udps_hdrops, "\t%lu with incomplete header\n");
-	p(udps_badlen, "\t%lu with bad data length field\n");
-	p(udps_badsum, "\t%lu with bad checksum\n");
-	p(udps_nosum, "\t%lu with no checksum\n");
-	p(udps_noport, "\t%lu dropped due to no socket\n");
+	p1(udps_hdrops, "\t%lu with incomplete header\n");
+	p1(udps_badlen, "\t%lu with bad data length field\n");
+	p1(udps_badsum, "\t%lu with bad checksum\n");
+	p1(udps_nosum, "\t%lu with no checksum\n");
+	p1(udps_noport, "\t%lu dropped due to no socket\n");
 	p(udps_noportbcast, "\t%lu broadcast/multicast datagram%s dropped due to no socket\n");
-	p(udps_nosec, "\t%lu dropped due to missing IPSec protection\n");
-	p(udps_fullsock, "\t%lu dropped due to full socket buffers\n");
+	p1(udps_nosec, "\t%lu dropped due to missing IPSec protection\n");
+	p1(udps_fullsock, "\t%lu dropped due to full socket buffers\n");
 	delivered = udpstat.udps_ipackets -
 		    udpstat.udps_hdrops -
 		    udpstat.udps_badlen -
@@ -287,8 +323,9 @@ udp_stats(off, name)
 	if (delivered || sflag <= 1)
 		printf("\t%lu delivered\n", delivered);
 	p(udps_opackets, "\t%lu datagram%s output\n");
-	p(udps_pcbhashmiss, "\t%lu missed PCB cache\n");
+	p1(udps_pcbhashmiss, "\t%lu missed PCB cache\n");
 #undef p
+#undef p1
 }
 
 /*
@@ -308,15 +345,17 @@ ip_stats(off, name)
 
 #define	p(f, m) if (ipstat.f || sflag <= 1) \
     printf(m, ipstat.f, plural(ipstat.f))
+#define	p1(f, m) if (ipstat.f || sflag <= 1) \
+    printf(m, ipstat.f)
 
 	p(ips_total, "\t%lu total packet%s received\n");
 	p(ips_badsum, "\t%lu bad header checksum%s\n");
-	p(ips_toosmall, "\t%lu with size smaller than minimum\n");
-	p(ips_tooshort, "\t%lu with data size < data length\n");
-	p(ips_badhlen, "\t%lu with header length < data size\n");
-	p(ips_badlen, "\t%lu with data length < header length\n");
-	p(ips_badoptions, "\t%lu with bad options\n");
-	p(ips_badvers, "\t%lu with incorrect version number\n");
+	p1(ips_toosmall, "\t%lu with size smaller than minimum\n");
+	p1(ips_tooshort, "\t%lu with data size < data length\n");
+	p1(ips_badhlen, "\t%lu with header length < data size\n");
+	p1(ips_badlen, "\t%lu with data length < header length\n");
+	p1(ips_badoptions, "\t%lu with bad options\n");
+	p1(ips_badvers, "\t%lu with incorrect version number\n");
 	p(ips_fragments, "\t%lu fragment%s received\n");
 	p(ips_fragdropped, "\t%lu fragment%s dropped (dup or out of space)\n");
 	p(ips_badfrags, "\t%lu malformed fragment%s dropped\n");
@@ -334,8 +373,9 @@ ip_stats(off, name)
 	p(ips_fragmented, "\t%lu output datagram%s fragmented\n");
 	p(ips_ofragments, "\t%lu fragment%s created\n");
 	p(ips_cantfrag, "\t%lu datagram%s that can't be fragmented\n");
-	p(ips_rcvmemdrop, "\t%lu fragment floods\n");
+	p1(ips_rcvmemdrop, "\t%lu fragment floods\n");
 #undef p
+#undef p1
 }
 
 static	char *icmpnames[] = {
@@ -525,7 +565,6 @@ inetprint(in, port, proto, local)
 {
 	struct servent *sp = 0;
 	char line[80], *cp, *nam;
-	int proton;
 	int width;
 
 	snprintf(line, sizeof line, "%.*s.", (Aflag && !nflag) ? 12 : 16,
@@ -621,9 +660,11 @@ ah_stats(off, name)
 
 #define p(f, m) if (ahstat.f || sflag <= 1) \
     printf(m, ahstat.f, plural(ahstat.f))
+#define p1(f, m) if (ahstat.f || sflag <= 1) \
+    printf(m, ahstat.f)
 
-	p(ahs_input, "\t%u input AH packets\n");
-	p(ahs_output, "\t%u output AH packets\n");
+	p1(ahs_input, "\t%u input AH packets\n");
+	p1(ahs_output, "\t%u output AH packets\n");
         p(ahs_hdrops, "\t%u packet%s shorter than header shows\n");
         p(ahs_pdrops, "\t%u packet%s dropped due to policy\n");
         p(ahs_notdb, "\t%u packet%s for which no TDB was found\n");
@@ -640,6 +681,7 @@ ah_stats(off, name)
 	p(ahs_obytes, "\t%qu output byte%s\n");
 
 #undef p
+#undef p1
 }
 
 /*
@@ -693,8 +735,8 @@ esp_stats(off, name)
 #define p(f, m) if (espstat.f || sflag <= 1) \
     printf(m, espstat.f, plural(espstat.f))
 
-	p(esps_input, "\t%u input ESP packets\n");
-	p(esps_output, "\t%u output ESP packets\n");
+	p(esps_input, "\t%u input ESP packet%s\n");
+	p(esps_output, "\t%u output ESP packet%s\n");
         p(esps_hdrops, "\t%u packet%s shorter than header shows\n");
         p(esps_pdrops, "\t%u packet%s dropped due to policy\n");
         p(esps_notdb, "\t%u packet%s for which no TDB was found\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.12 1999/10/29 03:26:40 angelos Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.13 1999/12/08 12:30:17 itojun Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@ int	aflag;		/* show all sockets (including servers) */
 int	dflag;		/* show i/f dropped packets */
 int	gflag;		/* show group (multicast) routing or stats */
 int	iflag;		/* show interfaces */
+int	lflag;		/* show routing table with use and ref */
 int	mflag;		/* show memory stats */
 int	nflag;		/* show addresses numerically */
 int	pflag;		/* show given protocol */
@@ -86,13 +87,28 @@ void	impstats __P((u_long, u_long));
 
 void	intpr __P((int, u_long));
 
-void	pr_rthdr __P(());
+void	pr_rthdr __P((int));
 void	pr_encaphdr __P(());
 void	pr_family __P((int));
 void	rt_stats __P((u_long));
 char	*ns_phost __P((struct sockaddr *));
 char	*ipx_phost __P((struct sockaddr *));
 void	upHex __P((char *));
+
+#ifdef INET6
+struct in6_addr;
+struct sockaddr_in6;
+void	ip6protopr __P((u_long, char *));
+void	ip6_stats __P((u_long, char *));
+void	ip6_ifstats __P((char *));
+void	icmp6_stats __P((u_long, char *));
+void	icmp6_ifstats __P((char *));
+void	pim6_stats __P((u_long, char *));
+void	mroute6pr __P((u_long, u_long, u_long));
+void	mrt6_stats __P((u_long, u_long));
+char	*routename6 __P((struct sockaddr_in6 *));
+char	*netname6 __P((struct sockaddr_in6 *, struct in6_addr *));
+#endif /*INET6*/
 
 char	*routename __P((in_addr_t));
 char	*netname __P((in_addr_t, in_addr_t));
