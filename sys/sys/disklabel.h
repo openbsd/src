@@ -70,7 +70,7 @@
 
 #define DISKMAGIC	((u_int32_t)0x82564557)	/* The disk magic number */
 
-#ifndef _LOCORE
+#ifndef LOCORE
 struct disklabel {
 	u_int32_t d_magic;		/* the magic number */
 	u_int16_t d_type;		/* drive type */
@@ -167,7 +167,7 @@ struct disklabel {
 #define	p_sgs	__partition_u1.sgs
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
 };
-#else /* _LOCORE */
+#else /* LOCORE */
 	/*
 	 * offsets for asm boot files.
 	 */
@@ -178,7 +178,7 @@ struct disklabel {
 	.set	d_secpercyl,56
 	.set	d_secperunit,60
 	.set	d_end_,276		/* size of disk label */
-#endif /* _LOCORE */
+#endif /* LOCORE */
 
 /* d_type values: */
 #define	DTYPE_SMD		1		/* SMD, XSMD; VAX hp/up */
@@ -287,7 +287,7 @@ static char *fstypenames[] = {
  */
 #define	d_blind		d_drivedata[0]
 
-#ifndef _LOCORE
+#ifndef LOCORE
 /*
  * Structure used to perform a format or other raw operation, returning
  * data and/or register values.  Register identification and format
@@ -321,9 +321,9 @@ char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
 #endif
-#endif /* _LOCORE */
+#endif /* LOCORE */
 
-#if !defined(_KERNEL) && !defined(_LOCORE)
+#if !defined(_KERNEL) && !defined(LOCORE)
 
 #include <sys/cdefs.h>
 
