@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.12 1997/06/17 05:53:44 millert Exp $
+.\"	$OpenBSD: find.1,v 1.13 1997/08/27 08:57:55 deraadt Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -428,7 +428,7 @@ utility syntax is a superset of the syntax specified by the
 .St -p1003.2
 standard.
 .Pp
-The options and the
+The options and primaries
 .Ic -empty ,
 .Ic -follow ,
 .Ic -fstype ,
@@ -436,10 +436,11 @@ The options and the
 .Ic -links ,
 .Ic -ls ,
 .Ic -maxdepth ,
-.Ic -mindepth
+.Ic -mindepth ,
+.Ic -execdir ,
 and
 .Ic -print0
-primaries are extensions to
+are extensions to
 .St -p1003.2 .
 .Pp
 Historically, the
