@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.5 2004/07/05 03:07:45 deraadt Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.6 2004/07/05 03:08:56 deraadt Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.14 2003/10/13 00:05:10 enami Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #define  EHCI_HCS_P_INDICATOR(x) ((x) & 0x10000)
 #define  EHCI_HCS_N_CC(x)	(((x) >> 12) & 0xf) /* # of companion ctlrs */
 #define  EHCI_HCS_N_PCC(x)	(((x) >> 8) & 0xf) /* # of ports per comp. */
+#define  EHCI_HCS_PRR(x)	((x) & 0x80) /* port routing rules */
 #define  EHCI_HCS_PPC(x)	((x) & 0x10) /* port power control */
 #define  EHCI_HCS_N_PORTS(x)	((x) & 0xf) /* # of ports */
 
@@ -230,6 +231,7 @@ typedef struct {
 #define EHCI_QTD_GET_BYTES(x)	(((x) >> 16) &  0x7fff)
 #define EHCI_QTD_SET_BYTES(x)	((x) << 16)
 #define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
+#define EHCI_QTD_SET_TOGGLE(x)	((x) << 31)
 #define EHCI_QTD_TOGGLE		0x80000000
 	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
 	ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
@@ -259,7 +261,7 @@ typedef struct {
 #define EHCI_QH_GET_MPL(x)	(((x) >> 16) & 0x7ff) /* max packet len */
 #define EHCI_QH_SET_MPL(x)	((x) << 16)
 #define EHCI_QH_MPLMASK		0x07ff0000
-#define EHCI_QH_GET_CTL(x)	(((x) >> 26) & 0x01) /* control endpoint */
+#define EHCI_QH_GET_CTL(x)	(((x) >> 27) & 0x01) /* control endpoint */
 #define EHCI_QH_CTL		0x08000000
 #define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
 #define EHCI_QH_SET_NRL(x)	((x) << 28)
