@@ -1,10 +1,10 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.11 2000/09/28 17:56:00 mickey Exp $
+#	$OpenBSD: protocols,v 1.12 2000/12/21 14:48:26 reinhard Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
-# See also http://www.iana.org/in-notes/iana/assignments/protocol-numbers
+# See also http://www.isi.edu/in-notes/iana/assignments/protocol-numbers
 #
 ip	0	IP		# internet protocol, pseudo protocol number
 icmp	1	ICMP		# internet control message protocol
