@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.3 2004/08/10 07:48:45 mickey Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -121,6 +121,7 @@ struct confargs {
 	struct abus	*ca_bus;	/* Bus device resides on. */
 	bus_space_tag_t ca_iot;
 	bus_space_tag_t ca_memt;
+	bus_dma_tag_t	ca_dmat;
 	u_int32_t	ca_num;		/* which system */
 	u_int32_t	ca_sys;		/* which system */
 	int		ca_nreg;

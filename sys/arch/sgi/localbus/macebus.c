@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.1 2004/08/06 21:12:19 pefo Exp $ */
+/*	$OpenBSD: macebus.c,v 1.2 2004/08/10 07:48:45 mickey Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -108,6 +108,23 @@ bus_space_t crimebus_tag = {
 bus_space_handle_t crime_h;
 bus_space_handle_t mace_h;
 
+struct machine_bus_dma_tag mace_bus_dma_tag = {
+	NULL,			/* _cookie */ 
+	_dmamap_create,
+	_dmamap_destroy,
+	_dmamap_load,
+	_dmamap_load_mbuf,
+	_dmamap_load_uio,
+	_dmamap_load_raw,
+	_dmamap_unload,
+	_dmamap_sync,
+	_dmamem_alloc,
+	_dmamem_free,
+	_dmamem_map,
+	_dmamem_unmap,
+	_dmamem_mmap,
+	NULL
+};
 
 /*
  *  Match bus only to targets which have this bus.
@@ -170,6 +187,7 @@ macebusscan(struct device *parent, void *child, void *args)
 	lba.ca_num = dev->dv_unit;
 	lba.ca_iot = &macebus_tag;
 	lba.ca_memt = &macebus_tag;
+	lba.ca_dmat = &mace_bus_dma_tag;
 
 	return (*cf->cf_attach->ca_match)(parent, cf, &lba);
 }
@@ -242,6 +260,7 @@ macebusattach(parent, self, aux)
 	lba.ca_bus->ab_matchname = NULL;
 	lba.ca_iot = &macebus_tag;
 	lba.ca_memt = &macebus_tag;
+	lba.ca_dmat = &mace_bus_dma_tag;
 
 	/*
 	 *  On O2 systems all interrupts are handled by the
