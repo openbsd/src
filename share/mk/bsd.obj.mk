@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.obj.mk,v 1.4 1996/08/23 17:45:10 niklas Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.5 1996/08/23 22:42:41 niklas Exp $
 #	$NetBSD: bsd.obj.mk,v 1.9 1996/04/10 21:08:05 thorpej Exp $
 
 .if !target(obj)
@@ -6,10 +6,16 @@
 obj:
 .else
 
-.if defined(OBJMACHINE)
-__objdir=	obj.${MACHINE}
+.if defined(MAKEOBJDIR)
+__baseobjdir=	${MAKEOBJDIR}
 .else
-__objdir=	obj
+__baseobjdir=	obj
+.endif
+
+.if defined(OBJMACHINE)
+__objdir=	${__baseobjdir}.${MACHINE}
+.else
+__objdir=	${__baseobjdir}
 .endif
 
 .if defined(USR_OBJMACHINE)
@@ -24,7 +30,7 @@ __usrobjdirpf=
 .endif
 .endif
 
-obj: _SUBDIRUSE
+obj! _SUBDIRUSE
 	@cd ${.CURDIR}; rm -f ${__objdir} > /dev/null 2>&1 || true; \
 	here=`/bin/pwd`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \
