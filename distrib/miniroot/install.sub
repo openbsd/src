@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.191 2002/03/30 00:55:32 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.192 2002/03/30 00:56:10 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -2084,7 +2084,7 @@ munge_fstab() {
 		fi
 
 		echo $_dev /mnt$_mp $_fstype $_opt $_rest
-	    done > /etc/fstab
+	done > /etc/fstab
 }
 
 mount_fs() {
