@@ -1,5 +1,4 @@
 PROG	= pts
-MAN	=
 SRCS	= pts.c arlalib.c fs_lib.c
 LDADD	+= -lkafs
 DPADD	+= ${LIBKAFS}

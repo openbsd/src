@@ -1,0 +1,253 @@
+.Dd March 25, 2000
+.Dt PTS 1
+.Os
+.Sh NAME
+.Nm pts
+.Nd Manage AFS protection database
+.Sh SYNOPSIS
+.Nm pts
+.Op Ar command
+.Op Ar args
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to manipulate the contents of the AFS Protection Database,
+which contains information about users and groups and is handled by the
+Protection Server.
+Note that the
+.Nm
+utility does 
+.Em not
+modify the traditional
+.Ux
+user and group database, only the AFS specific information.
+.Pp
+The
+.Nm
+utility provides several commands:
+.Pp
+.Bl -tag -width Fl -compact
+.It Cm adduser
+add a user to a group
+.It Cm chown
+change owner of user or group
+.It Cm creategroup / cg
+create a new group
+.It Cm createuser
+create a new user
+.It Cm dump
+dump pts database
+.It Cm delete
+delete user or group
+.It Cm examine
+examine a user or a group
+.It Cm help Cm ?
+get help on
+.Nm
+.It Cm listmax
+print largest uid and gid
+.It Cm listowned
+list groups owned by a user or group, or orphaned groups
+.It Cm membership Cm groups
+list group or user membership
+.It Cm removeuser
+remove a user from a group
+.It Cm rename
+rename user/group
+.It Cm setfields
+not yet implemented
+.It Cm setmax
+not yet implemented
+.It Cm syncdb
+not yet implemented
+.El
+.Pp
+Most
+.Nm
+commands accept the following general arguments:
+.Pp
+.Bd -filled -offset indent -compact
+.Op Fl cell Ar cellname
+Specifies which AFS cell to use, if the default cell is not to be used.
+.Pp
+.Op Fl noauth
+Specifies that
+.Nm
+should not try to authenticate the connection to the server. This may be
+useful with shell scripts, or if there is a problem with the AFS cell.
+Note that the server will reject many commands if
+.Fl noauth
+is specified.
+.Ed
+.Pp
+The syntax of the
+.Nm
+commands:
+.Pp
+.Nm pts adduser
+.Op Fl name
+.Ar user
+.Op Fl group
+.Ar group
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Add the specified user to the specified group.
+.Ed
+.Pp
+.Nm pts chown
+.Op Fl name
+.Ar user/group
+.Op Fl owner
+.Ar owner
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Change owner of a group or user.
+.Ed
+.Pp
+.Nm pts creategroup
+.Op Fl name
+.Ar name
+.Op Fl id Ar idnumber
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Create a new group. If
+.Fl id
+is not specified, a new idnumber is taken automatically.
+.Ed
+.Pp
+.Nm pts cg
+.Bd -filled -offset indent -compact
+.Nm pts cg
+is an alias for the
+.Nm pts creategroup
+command.
+.Ed
+.Pp
+.Nm pts createuser
+.Op Fl name
+.Ar name
+.Op Fl id Ar idnumber
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Create a new user. If
+.Fl id
+is not specified, a new idnumber is taken automatically.
+.Ed
+.Pp
+.Nm pts dump
+.Ar server
+.Op Fl cell cellname
+.Bd -filled -offset indent -compact
+Dump the Protection Database in a human readable form. The database is read
+from the given database server.
+.Ed
+.Pp
+.Nm pts delete
+.Op Fl name
+.Ar name/group
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Delete a user or group from the database.
+.Ed
+.Pp
+.Nm pts examine
+.Ar user/group
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Print verbose information about a user or a group.
+.Ed
+.Pp
+.Nm pts help
+or
+.Nm pts ?
+.Bd -filled -offset indent -compact
+Print help about
+.Nm
+.Ed
+.Pp
+.Nm pts listmax
+.Op Fl cell Ar cellname
+.Bd -filled -offset indent -compact
+Print the largest uid and gid.
+.Ed
+.Pp
+.Nm pts listowned
+.Op Fl id
+.Ar user/group
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+List the groups owned by a user or group.
+.Ed
+.Pp
+.Nm pts membership
+.Op Fl nameorid Ar user/group
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+List the members of a group, or the groups a user is a member of.
+.Ed
+.Pp
+.Nm pts groups
+.Bd -filled -offset indent -compact
+.Nm pts groups
+is an alias for the
+.Nm pts membership
+command.
+.Ed
+.Pp
+.Nm pts removeuser
+.Op Fl user
+.Ar user
+.Op Fl group
+.Ar group
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Remove a users membership from a group.
+.Ed
+.Pp
+.Nm pts rename
+.Op Fl from
+.Ar "old name"
+.Op Fl to
+.Ar "new name"
+.Op Fl cell Ar cellname
+.Op Fl noauth
+.Bd -filled -offset indent -compact
+Rename a user or group.
+.Ed
+.Pp
+.Nm pts setfields
+.Bd -filled -offset indent -compact
+This command is available in the original AFS client, but has not been
+implemented yet.
+.Ed
+.Pp
+.Nm pts setmax
+.Bd -filled -offset indent -compact
+This command is available in the original AFS client, but has not been
+implemented yet.
+.Ed
+.Pp
+.Nm pts syncdb
+.Bd -filled -offset indent -compact
+This command has not been implemented yet.
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr fs 1 ,
+.Xr vos 1
+.Sh STANDARDS
+The Arla authors are trying to mimic the behaviour of the original AFS
+utilities.
+.Sh AUTHORS
+The Arla project <http://www.stacken.kth.se/project/arla/>.
+.Sh BUGS
+Some commands are not implemented yet.
