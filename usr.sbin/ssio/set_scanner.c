@@ -1,4 +1,4 @@
-static char *rcs_id = "$Id: set_scanner.c,v 1.1 1997/03/11 03:23:17 kstailey Exp $";
+static char *rcs_id = "$Id: set_scanner.c,v 1.2 1997/08/30 07:55:17 matthieu Exp $";
 /*
  * Copyright (c) 1995 Kenneth Stailey
  * All rights reserved.
@@ -43,7 +43,7 @@ static char *rcs_id = "$Id: set_scanner.c,v 1.1 1997/03/11 03:23:17 kstailey Exp
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
 #endif
 #include <sys/scanio.h>
