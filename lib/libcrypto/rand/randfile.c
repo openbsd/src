@@ -218,6 +218,7 @@ const char *RAND_file_name(char *buf, int size)
 	{
 	char *s;
 	char *ret=NULL;
+	struct stat sb;
 
 	s=getenv("RANDFILE");
 	if (s != NULL)
@@ -229,15 +230,31 @@ const char *RAND_file_name(char *buf, int size)
 	else
 		{
 		s=getenv("HOME");
-		if (s == NULL) return(RFILE);
-		if (((int)(strlen(s)+strlen(RFILE)+2)) > size)
-			return(RFILE);
-		strcpy(buf,s);
+		if (s == NULL) 
+		  ret = RFILE;
+		if (((int)(strlen(s)+strlen(RFILE)+2)) > size) 
+			ret=RFILE;
+		else 
+			{
+			 strlcpy(buf,s,size);
 #ifndef VMS
-		strcat(buf,"/");
+			 strcat(buf,"/");
 #endif
-		strcat(buf,RFILE);
-		ret=buf;
+			 strlcat(buf,RFILE,size);
+			 ret=buf;
+			}
 		}
+#ifdef DEVRANDOM
+	/* given that all random loads just fail if the file can't be 
+	 * seen on a stat, we stat the file we're returning, if it
+	 * fails, use DEVRANDOM instead. the allows the user to 
+	 * use their own source for good random data, but defaults
+	 * to something hopefully decent if that isn't available. 
+	 */
+
+	if (stat(ret,&sb) == -1)
+	  ret = DEVRANDOM;
+#endif
 	return(ret);
 	}
+
