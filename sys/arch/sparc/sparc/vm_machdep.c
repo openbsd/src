@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2000/02/15 16:32:41 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2000/02/17 20:18:00 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -248,20 +248,21 @@ dvma_mapout(kva, va, len)
 {
 	int s, off;
 	int error;
+	int klen;
 
 	off = (int)kva & PGOFSET;
 	kva -= off;
-	len = round_page(len + off);
+	klen = round_page(len + off);
 
 #if defined(SUN4M)
 	if (cputyp == CPU_SUN4M)
-		iommu_remove(kva, len);
+		iommu_remove(kva, klen);
 	else
 #endif
-		pmap_remove(pmap_kernel(), kva, kva + len);
+		pmap_remove(pmap_kernel(), kva, kva + klen);
 
 	s = splhigh();
-	error = extent_free(dvmamap_extent, kva, len, EX_NOWAIT);
+	error = extent_free(dvmamap_extent, kva, klen, EX_NOWAIT);
 	if (error)
 		printf("dvma_mapout: extent_free failed\n");
 	splx(s);
