@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.20 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.21 2005/01/27 21:17:50 miod Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -325,12 +325,14 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		panic("couldn't malloc intrhand");
+	memset(ih, 0, sizeof(struct intrhand));
 	ih->ih_map = &sysio->therm_int_map;
 	ih->ih_clr = NULL; /* &sysio->therm_clr_int; */
 	ih->ih_fun = sbus_overtemp;
 	ipl = 1;
 	ih->ih_pil = (1 << ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
+	strlcpy(ih->ih_name, sc->sc_dev.dv_xname, sizeof(ih->ih_name));
 	intr_establish(ipl, ih);
 	*(ih->ih_map) |= INTMAP_V;
 	

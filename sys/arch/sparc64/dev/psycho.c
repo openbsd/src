@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.39 2004/12/18 03:05:24 brad Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.40 2005/01/27 21:17:50 miod Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ pci_chipset_tag_t psycho_alloc_chipset(struct psycho_pbm *, int,
 void psycho_get_bus_range(int, int *);
 void psycho_get_ranges(int, struct psycho_ranges **, int *);
 void psycho_set_intr(struct psycho_softc *, int, void *, 
-    u_int64_t *, u_int64_t *);
+    u_int64_t *, u_int64_t *, const char *);
 bus_space_tag_t _psycho_alloc_bus_tag(struct psycho_pbm *,
     const char *, int, int, int);
 
@@ -398,25 +398,27 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		psycho_set_intr(sc, 15, psycho_ue,
 		    psycho_psychoreg_vaddr(sc, ue_int_map),
-		    psycho_psychoreg_vaddr(sc, ue_clr_int));
+		    psycho_psychoreg_vaddr(sc, ue_clr_int), "ue");
 		psycho_set_intr(sc, 1, psycho_ce,
 		    psycho_psychoreg_vaddr(sc, ce_int_map),
-		    psycho_psychoreg_vaddr(sc, ce_clr_int));
+		    psycho_psychoreg_vaddr(sc, ce_clr_int), "ce");
 		psycho_set_intr(sc, 15, psycho_bus_a,
 		    psycho_psychoreg_vaddr(sc, pciaerr_int_map),
-		    psycho_psychoreg_vaddr(sc, pciaerr_clr_int));
+		    psycho_psychoreg_vaddr(sc, pciaerr_clr_int), "bus_a");
 #if 0
 		psycho_set_intr(sc, 15, psycho_powerfail,
 		    psycho_psychoreg_vaddr(sc, power_int_map),
-		    psycho_psychoreg_vaddr(sc, power_clr_int));
+		    psycho_psychoreg_vaddr(sc, power_clr_int), "powerfail");
 #endif
 		if (sc->sc_mode == PSYCHO_MODE_PSYCHO) {
 			psycho_set_intr(sc, 15, psycho_bus_b,
 			    psycho_psychoreg_vaddr(sc, pciberr_int_map),
-			    psycho_psychoreg_vaddr(sc, pciberr_clr_int));
+			    psycho_psychoreg_vaddr(sc, pciberr_clr_int),
+			    "bus_b");
 			psycho_set_intr(sc, 1, psycho_wakeup,
 			    psycho_psychoreg_vaddr(sc, pwrmgt_int_map),
-			    psycho_psychoreg_vaddr(sc, pwrmgt_clr_int));
+			    psycho_psychoreg_vaddr(sc, pwrmgt_clr_int),
+			    "wakeup");
 		}
 
 		/*
@@ -602,7 +604,7 @@ psycho_print(void *aux, const char *p)
 
 void
 psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
-    u_int64_t *mapper, u_int64_t *clearer)
+    u_int64_t *mapper, u_int64_t *clearer, const char *suffix)
 {
 	struct intrhand *ih;
 
@@ -610,12 +612,15 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	    M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		panic("couldn't malloc intrhand");
+	memset(ih, 0, sizeof(struct intrhand));
 	ih->ih_arg = sc;
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;
 	ih->ih_fun = handler;
 	ih->ih_pil = (1 << ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
+	snprintf(ih->ih_name, sizeof(ih->ih_name),
+	    "%s_%s", sc->sc_dev.dv_xname, suffix);
 
 	DPRINTF(PDB_INTR, (
 	    "\ninstalling handler %p arg %p for %s with number %x pil %u",
