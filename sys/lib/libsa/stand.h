@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.6 1996/09/23 14:19:04 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.7 1996/10/15 09:41:56 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
 
 /*-
@@ -125,12 +125,14 @@ __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
+void	*memset __P((void *, int, size_t));
 void	exec __P((char *, char *, int));
 int	open __P((const char *, int));
 int	close __P((int));
 void	closeall __P((void));
 ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
+ssize_t	zread __P((int, void *, size_t));	/* for execz */
     
 int	nodev __P((void));
 int	noioctl __P((struct open_file *, u_long, void *));

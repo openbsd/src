@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1996/09/23 14:18:44 mickey Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/10/15 09:41:54 mickey Exp $
 #	$NetBSD: Makefile,v 1.10 1995/10/01 06:00:32 phil Exp $
 
 LIB=	sa
@@ -13,9 +13,12 @@ AFLAGS+=${XAFLAGS}
 CFLAGS+=${XCFLAGS} -D_STANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
 CPPFLAGS+=${XCPPFLAGS}
 
+all:
+	echo ${S}/arch/${MACHINE_ARCH}/stand/Makefile.inc
+
 # stand routines
 SRCS+=	alloc.c bcopy.c memcpy.c exit.c exec.c getfile.c gets.c globals.c \
-	printf.c strerror.c strcmp.c
+	printf.c strerror.c strcmp.c memset.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
