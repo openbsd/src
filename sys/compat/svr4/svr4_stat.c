@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stat.c,v 1.10 1997/11/13 06:16:27 deraadt Exp $	 */
+/*	$OpenBSD: svr4_stat.c,v 1.11 1998/02/09 04:32:13 tholo Exp $	 */
 /*	$NetBSD: svr4_stat.c,v 1.21 1996/04/22 01:16:07 christos Exp $	 */
 
 /*
@@ -577,7 +577,7 @@ svr4_sys_utime(p, v, retval)
 		tbuf[1].tv_sec = ub.modtime;
 		tbuf[1].tv_usec = 0;
 		SCARG(&ap, tptr) = stackgap_alloc(&sg, sizeof(tbuf));
-		error = copyout(tbuf, SCARG(&ap, tptr), sizeof(tbuf));
+		error = copyout(tbuf, (struct timeval *)SCARG(&ap, tptr), sizeof(tbuf));
 		if (error)
 			return error;
 	}
