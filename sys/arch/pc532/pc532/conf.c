@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1996/10/19 13:26:11 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 1996/11/11 23:10:34 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -46,18 +46,15 @@
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "sd.h"
-bdev_decl(sd);
 bdev_decl(sw);
 #include "st.h"
-bdev_decl(st);
+#include "cd.h"
+#include "ss.h"
+#include "uk.h"
 #include "rd.h"
 bdev_decl(rd);
-#include "cd.h"
-bdev_decl(cd);
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -78,36 +75,19 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0}
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
-cdev_decl(sd);
 cdev_decl(sw);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 #include "scn.h"
 cdev_decl(scn);
 cdev_decl(rd);
-cdev_decl(st);
 cdev_decl(fd);
-cdev_decl(cd);
-cdev_decl(vnd);
-cdev_decl(ccd);
 #include "bpfilter.h"
-cdev_decl(bpf);
 #include "tun.h"
-cdev_decl(tun);
 #include "lpt.h"
 cdev_decl(lpt);
-cdev_decl(random);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -140,6 +120,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_gen_ipf(NIPF,ipl),         /* 19: IP filter log */
 	cdev_random_init(1,random),	/* 20: random data source */
+	cdev_uk_init(NUK,uk),		/* 21: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 22: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

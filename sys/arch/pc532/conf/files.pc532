@@ -54,6 +54,8 @@ device	uk at scsibus: disk
 file	scsi/uk.c			uk needs-flag
 device	su at scsibus: disk
 file	scsi/su.c			su needs-flag
+device	ss at scsibus: tape
+file	scsi/ss.c			ss needs-flag
 
 file	dev/cons.c
 file	dev/cninit.c
