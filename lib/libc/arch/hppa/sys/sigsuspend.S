@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.4 2000/01/12 00:08:42 mickey Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.5 2001/03/29 01:43:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -34,9 +34,8 @@
 #include "SYS.h"
 
 #ifdef SYSLIBC_SCCS
-	.space .text
-	.subspa $code$
-	.asciz "$OpenBSD: sigsuspend.S,v 1.4 2000/01/12 00:08:42 mickey Exp $"
+	.text
+	.asciz "$OpenBSD: sigsuspend.S,v 1.5 2001/03/29 01:43:53 mickey Exp $"
 	.align	4
 #endif
 

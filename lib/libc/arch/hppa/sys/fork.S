@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.S,v 1.5 2000/01/24 20:43:04 mickey Exp $	*/
+/*	$OpenBSD: fork.S,v 1.6 2001/03/29 01:43:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -34,17 +34,16 @@
 #include "SYS.h"
 
 #ifdef SYSLIBC_SCCS
-	.space .text
-	.subspa $code$
-	.asciz "$OpenBSD: fork.S,v 1.5 2000/01/24 20:43:04 mickey Exp $"
+	.text
+	.asciz "$OpenBSD: fork.S,v 1.6 2001/03/29 01:43:52 mickey Exp $"
 	.align	4
 #endif
 
 ENTRY(fork)
 	SYSCALL(fork)
-	ldo	-1(ret1), ret1
+	addi	-1, ret1, ret1
 	bv	r0(rp)
-	and	ret1, ret0, ret0
+	and	ret0, ret1, ret0
 EXIT(fork)
 
 	.end
