@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.33 2001/07/10 05:55:57 millert Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.34 2001/07/11 21:30:14 csapuntz Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -59,7 +59,7 @@ char		*next_word (char **);
 int		 next_addr (char **, u_int32_t *);
 u_int16_t	 next_number (char **);
 u_int8_t	 next_flags (char **);
-u_int16_t	 rule_port (char *, u_int8_t);
+int              rule_port (char *, u_int8_t, u_int16_t *);
 u_int32_t	 rule_mask (u_int8_t);
 
 char *tcpflags = "FSRPAU";
@@ -659,8 +659,8 @@ next_flags(char **s)
 	return (f ? f : 63);
 }
 
-u_int16_t
-rule_port(char *w, u_int8_t p)
+int
+rule_port(char *w, u_int8_t p, u_int16_t *result)
 {
 	struct servent *s;
 	u_long ul;
@@ -672,7 +672,9 @@ rule_port(char *w, u_int8_t p)
 		s = getservbyname(w, p == IPPROTO_TCP ? "tcp" : "udp");
 		if (s == NULL)
 			return (0);
-		return (s->s_port);
+		
+		*result = s->s_port;
+		return (1);
 	}
 	if (errno == ERANGE && ul == ULONG_MAX)
 		return (0);
@@ -680,7 +682,9 @@ rule_port(char *w, u_int8_t p)
 		errno = ERANGE;
 		return (0);
 	}
-	return (htons(ul));
+
+	*result = htons(ul);
+	return (1);
 }
 
 u_int32_t
@@ -849,7 +853,10 @@ parse_rule(int n, char *l, struct pf_rule *r)
 				r->src.port_op = PF_OP_GL;
 			if (r->src.port_op != 1)
 				w = next_word(&l);
-			r->src.port[0] = rule_port(w, r->proto);
+			if (!rule_port(w, r->proto, &r->src.port[0])) {
+				error(n, "invalid port '%s'\n", w);
+				return (0);
+			}
 			w = next_word(&l);
 			if (r->src.port_op == PF_OP_GL) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
@@ -858,7 +865,10 @@ parse_rule(int n, char *l, struct pf_rule *r)
 					return (0);
 				}
 				w = next_word(&l);
-				r->src.port[1] = rule_port(w, r->proto);
+				if (!rule_port(w, r->proto, &r->src.port[1])) {
+					error(n, "invalid port '%s'\n", w);
+					return (0);
+				}
 				w = next_word(&l);
 			}
 		}
@@ -916,7 +926,10 @@ parse_rule(int n, char *l, struct pf_rule *r)
 				r->dst.port_op = PF_OP_GL;
 			if (r->dst.port_op != PF_OP_GL)
 				w = next_word(&l);
-			r->dst.port[0] = rule_port(w, r->proto);
+ 			if (!rule_port(w, r->proto, &r->dst.port[0])) {
+ 				error(n, "invalid port '%s'\n", w);
+				return (0);
+			}
 			w = next_word(&l);
 			if (r->dst.port_op == PF_OP_GL) {
 				if (strcmp(w, "<>") && strcmp(w, "><")) {
@@ -925,7 +938,10 @@ parse_rule(int n, char *l, struct pf_rule *r)
 					return (0);
 				}
 				w = next_word(&l);
-				r->dst.port[1] = rule_port(w, r->proto);
+				if (!rule_port(w, r->proto, &r->dst.port[1])) {
+					error(n, "invalid port '%s'\n", w);
+					return (0);
+				}
 				w = next_word(&l);
 			}
 		}
@@ -1252,12 +1268,21 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 	w = next_word(&l);
 	/* check for port range */
 	if ((s = strchr(w, ':')) == NULL) {
-		rdr->dport = rule_port(w, rdr->proto);
+		if (!rule_port(w, rdr->proto, &rdr->dport)) {
+			error(n, "invalid destination port '%s'\n", w);
+			return (0);
+		}
 		rdr->dport2 = rdr->dport;
 	} else {
 		*s++ = '\0';
-		rdr->dport = rule_port(w, rdr->proto);
-		rdr->dport2 = rule_port(s, rdr->proto);
+		if (!rule_port(w, rdr->proto, &rdr->dport)) {
+			error(n, "invalid destination port '%s'\n", w);
+			return (0);
+		}
+		if (!rule_port(s, rdr->proto, &rdr->dport2)) {
+			error(n, "invalid destination port '%s'\n", s);
+			return (0);
+		}
 		rdr->opts |= PF_DPORT_RANGE;
 	}
 	w = next_word(&l);
@@ -1287,7 +1312,10 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 	        rdr->opts |= PF_RPORT_RANGE;
 	}
 		
-	rdr->rport = rule_port(w, rdr->proto);
+	if (!rule_port(w, rdr->proto, &rdr->rport)) {
+		error(n, "invalid port '%s'\n", w);
+		return (0);
+	}
 	w = next_word(&l);
 
 	/* no further options expected */
