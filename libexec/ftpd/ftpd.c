@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.160 2004/12/03 23:57:40 moritz Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.161 2004/12/04 18:00:43 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.160 2004/12/03 23:57:40 moritz Exp $";
+    "$OpenBSD: ftpd.c,v 1.161 2004/12/04 18:00:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1907,27 +1907,27 @@ fatal(char *s)
 void
 reply(int n, const char *fmt, ...)
 {
-	char *p, *next;
-	char msg[BUFSIZ];
-	char buf[BUFSIZ];
+	char *buf, *p, *next;
+	int rval;
 	va_list ap;
-	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 	va_start(ap, fmt);
-	vsnprintf(msg, sizeof(msg), fmt, ap);
+	rval = vasprintf(&buf, fmt, ap);
 	va_end(ap);
-
-	next = msg;
-
-	while ((p = strsep(&next, "\n\r"))) {
-		snprintf(buf, sizeof(buf), "%d%s %s\r\n", n,
-		    (next != '\0') ? "-" : "", p);
-		write(STDOUT_FILENO, buf, strlen(buf));
-		if (debug) {
-			buf[strlen(buf) - 2] = '\0';
-			syslog_r(LOG_DEBUG, &sdata, "<--- %s", buf);
-		}
+	if (rval == -1 || buf == NULL) {
+		printf("412 Local resource failure: malloc\r\n");
+		fflush(stdout);
+		dologout(1);
 	}
+	next = buf;
+	while ((p = strsep(&next, "\n\r"))) {
+		printf("%d%s %s\r\n", n, (next != '\0') ? "-" : "", p);
+		if (debug)
+			syslog(LOG_DEBUG, "<--- %d%s %s", n,
+			    (next != '\0') ? "-" : "", p);
+	}
+	(void)fflush(stdout);
+	free(buf);
 }
 
 void
