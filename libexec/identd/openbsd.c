@@ -75,7 +75,6 @@ k_open()
 	return 0;
 }
 
-
 /*
  * Get a piece of kernel memory with error handling.
  * Returns 1 if call succeeded, else 0 (zero).
@@ -96,8 +95,6 @@ getbuf(addr, buf, len, what)
 	}
 	return 1;
 }
-
-
 
 /*
  * Traverse the inpcb list until a match is found.
@@ -128,8 +125,6 @@ getlist(tcbtablep, ktcbtablep, faddr, fport, laddr, lport)
 	}
 	return (NULL);
 }
-
-
 
 /*
  * Return the user number for the connection owner

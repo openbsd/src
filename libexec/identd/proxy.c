@@ -18,7 +18,6 @@
 #include <ident.h>
 #endif
 
-
 /*
  * This function should establish a connection to a remote IDENT
  * server and query it for the information associated with the

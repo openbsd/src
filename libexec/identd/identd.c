@@ -99,7 +99,8 @@ main(argc, argv)
 	struct sockaddr_in sin;
 	struct in_addr laddr, faddr;
 	struct timeval tv;
-
+	struct passwd *pwd;
+	struct group *grp;
 	int     background_flag = 0;
 	int     timeout = 0;
 	char   *portno = "113";
@@ -117,98 +118,76 @@ main(argc, argv)
 		case 'b':	/* Start as standalone daemon */
 			background_flag = 1;
 			break;
-
 		case 'w':	/* Start from Inetd, wait mode */
 			background_flag = 2;
 			break;
-
 		case 'i':	/* Start from Inetd, nowait mode */
 			background_flag = 0;
 			break;
-
 		case 't':
 			timeout = atoi(argv[i] + 2);
 			break;
-
 		case 'p':
 			portno = argv[i] + 2;
 			break;
-
 		case 'a':
 			bind_address = argv[i] + 2;
 			break;
-
 		case 'u':
-			if (isdigit(argv[i][2]))
+			if (isdigit(argv[i][2])) {
 				set_uid = atoi(argv[i] + 2);
+				break;
+			}
+			pwd = getpwnam(argv[i] + 2);
+			if (!pwd)
+				ERROR1("no such user (%s) for -u option", argv[i] + 2);
 			else {
-				struct passwd *pwd;
-
-				pwd = getpwnam(argv[i] + 2);
-				if (!pwd)
-					ERROR1("no such user (%s) for -u option", argv[i] + 2);
-				else {
-					set_uid = pwd->pw_uid;
-					set_gid = pwd->pw_gid;
-				}
+				set_uid = pwd->pw_uid;
+				set_gid = pwd->pw_gid;
 			}
 			break;
-
 		case 'g':
-			if (isdigit(argv[i][2]))
+			if (isdigit(argv[i][2])) {
 				set_gid = atoi(argv[i] + 2);
-			else {
-				struct group *grp;
-
-				grp = getgrnam(argv[i] + 2);
-				if (!grp)
-					ERROR1("no such group (%s) for -g option", argv[i] + 2);
-				else
-					set_gid = grp->gr_gid;
+				break;
 			}
+			grp = getgrnam(argv[i] + 2);
+			if (!grp)
+				ERROR1("no such group (%s) for -g option", argv[i] + 2);
+			else
+				set_gid = grp->gr_gid;
 			break;
-
 		case 'c':
 			charset_name = argv[i] + 2;
 			break;
-
 		case 'r':
 			indirect_host = argv[i] + 2;
 			break;
-
 		case 'l':	/* Use the Syslog daemon for logging */
 			syslog_flag++;
 			break;
-
 		case 'o':
 			other_flag = 1;
 			break;
-
 		case 'e':
 			unknown_flag = 1;
 			break;
-
 		case 'n':
 			number_flag = 1;
 			break;
-
 		case 'V':	/* Give version of this daemon */
 			printf("[in.identd, version %s]\r\n", version);
 			exit(0);
 			break;
-
 		case 'v':	/* Be verbose */
 			verbose_flag++;
 			break;
-
 		case 'd':	/* Enable debugging */
 			debug_flag++;
 			break;
-
 		case 'm':	/* Enable multiline queries */
 			multi_flag++;
 			break;
-
 		case 'N':	/* Enable users ".noident" files */
 			noident_flag++;
 			break;
@@ -240,7 +219,6 @@ main(argc, argv)
 		struct sockaddr_in addr;
 		struct servent *sp;
 		int     fd;
-
 
 		if (fork())
 			exit(0);
@@ -310,7 +288,6 @@ main(argc, argv)
 	if (background_flag) {
 		int     nfds, fd;
 		fd_set  read_set;
-
 
 		/*
 		 * Loop and dispatch client handling processes
@@ -399,7 +376,6 @@ main(argc, argv)
 	}
 	faddr = sin.sin_addr;
 
-
 	/*
 	 * Open the connection to the Syslog daemon if requested
 	 */
@@ -409,7 +385,6 @@ main(argc, argv)
 #else
 		openlog("identd", LOG_PID);
 #endif
-
 		syslog(LOG_INFO, "Connection from %s", gethost(&faddr));
 	}
 	/*
