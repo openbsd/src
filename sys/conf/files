@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.208 2001/06/25 20:48:15 provos Exp $
+#	$OpenBSD: files,v 1.209 2001/06/27 05:10:55 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -747,46 +747,29 @@ file xfs/xfs_vfsops-openbsd.c		xfs
 file xfs/xfs_vnodeops-bsd.c		xfs
 file xfs/xfs_vnodeops-common.c		xfs
 file xfs/xfs_syscalls-dummy.c		!xfs
-file vm/device_pager.c			!uvm & devpager
-file vm/swap_pager.c			!uvm & swappager
-file vm/vm_fault.c			!uvm
-file vm/vm_glue.c			!uvm
-file vm/vm_init.c			!uvm
-file vm/vm_kern.c			!uvm
-file vm/vm_map.c			!uvm
-file vm/vm_meter.c			!uvm
-file vm/vm_mmap.c			!uvm
-file vm/vm_object.c			!uvm
-file vm/vm_page.c			!uvm
-file vm/vm_pageout.c			!uvm
-file vm/vm_pager.c			!uvm
-file vm/vm_swap.c			!uvm
-file vm/vm_unix.c			!uvm
-file vm/vm_user.c			!uvm
-file vm/vnode_pager.c			!uvm
-file uvm/uvm_amap.c			uvm
-file uvm/uvm_anon.c			uvm
-file uvm/uvm_aobj.c			uvm
-file uvm/uvm_device.c			uvm
-file uvm/uvm_fault.c			uvm
-file uvm/uvm_glue.c			uvm
-file uvm/uvm_init.c			uvm
-file uvm/uvm_io.c			uvm
-file uvm/uvm_km.c			uvm
-file uvm/uvm_loan.c			uvm
-file uvm/uvm_map.c			uvm
-file uvm/uvm_meter.c			uvm
-file uvm/uvm_mmap.c			uvm
-file uvm/uvm_page.c			uvm
-file uvm/uvm_pager.c			uvm
-file uvm/uvm_pdaemon.c			uvm
-file uvm/uvm_pglist.c			uvm
-file uvm/uvm_stat.c			uvm
-file uvm/uvm_swap.c			uvm
-file uvm/uvm_swap_encrypt.c		uvm & uvm_swap_encrypt
-file uvm/uvm_unix.c			uvm
-file uvm/uvm_user.c			uvm
-file uvm/uvm_vnode.c			uvm
+file uvm/uvm_amap.c
+file uvm/uvm_anon.c
+file uvm/uvm_aobj.c
+file uvm/uvm_device.c
+file uvm/uvm_fault.c
+file uvm/uvm_glue.c
+file uvm/uvm_init.c
+file uvm/uvm_io.c
+file uvm/uvm_km.c
+file uvm/uvm_loan.c
+file uvm/uvm_map.c
+file uvm/uvm_meter.c
+file uvm/uvm_mmap.c
+file uvm/uvm_page.c
+file uvm/uvm_pager.c
+file uvm/uvm_pdaemon.c
+file uvm/uvm_pglist.c
+file uvm/uvm_stat.c
+file uvm/uvm_swap.c
+file uvm/uvm_swap_encrypt.c		uvm_swap_encrypt
+file uvm/uvm_unix.c
+file uvm/uvm_user.c
+file uvm/uvm_vnode.c
 file dev/rd.c				ramdisk_hooks
 
 # ... NRL IPv6
