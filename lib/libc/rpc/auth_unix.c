@@ -49,6 +49,7 @@ static char *rcsid = "$NetBSD: auth_unix.c,v 1.2 1995/02/25 03:01:35 cgd Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -84,7 +85,7 @@ struct audata {
 };
 #define	AUTH_PRIVATE(auth)	((struct audata *)auth->ah_private)
 
-static bool_t marshal_new_auth();
+static void marshal_new_auth();
 
 
 /*
@@ -174,9 +175,9 @@ authunix_create_default()
 {
 	register int len;
 	char machname[MAX_MACHINE_NAME + 1];
-	register int uid;
-	register int gid;
-	int gids[NGRPS];
+	register uid_t uid;
+	register gid_t gid;
+	gid_t gids[NGRPS];
 
 	if (gethostname(machname, MAX_MACHINE_NAME) == -1)
 		abort();
@@ -305,7 +306,7 @@ authunix_destroy(auth)
  * Marshals (pre-serializes) an auth struct.
  * sets private data, au_marshed and au_mpos
  */
-static bool_t
+static void
 marshal_new_auth(auth)
 	register AUTH *auth;
 {

@@ -56,6 +56,7 @@ static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -253,7 +254,7 @@ call_again:
 	ct->ct_error.re_status = RPC_SUCCESS;
 	x_id = ntohl(--(*msg_x_id));
 	if ((! XDR_PUTBYTES(xdrs, ct->ct_mcall, ct->ct_mpos)) ||
-	    (! XDR_PUTLONG(xdrs, &proc)) ||
+	    (! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(h->cl_auth, xdrs)) ||
 	    (! (*xdr_args)(xdrs, args_ptr))) {
 		if (ct->ct_error.re_status == RPC_SUCCESS)
@@ -409,7 +410,7 @@ readtcp(ct, buf, len)
 	FD_SET(ct->ct_sock, &mask);
 	while (TRUE) {
 		readfds = mask;
-		switch (select(ct->ct_sock+1, &readfds, (int*)NULL, (int*)NULL,
+		switch (select(ct->ct_sock+1, &readfds, NULL, NULL,
 			       &(ct->ct_wait))) {
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;

@@ -53,6 +53,7 @@ static char *rcsid = "$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <netinet/in.h>
@@ -302,7 +303,7 @@ xdrrec_getpos(xdrs)
 	register RECSTREAM *rstrm = (RECSTREAM *)xdrs->x_private;
 	register long pos;
 
-	pos = lseek((off_t)(long)rstrm->tcp_handle, 0, 1);
+	pos = lseek((int)(long)rstrm->tcp_handle, (off_t)0, 1);
 	if (pos != -1)
 		switch (xdrs->x_op) {
 
@@ -315,7 +316,7 @@ xdrrec_getpos(xdrs)
 			break;
 
 		default:
-			pos = (u_int) -1;
+			pos = -1;
 			break;
 		}
 	return ((u_int) pos);

@@ -43,6 +43,7 @@ static char *rcsid = "$NetBSD: clnt_udp.c,v 1.4 1995/02/25 03:01:42 cgd Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -248,7 +249,7 @@ call_again:
 	 * the transaction is the first thing in the out buffer
 	 */
 	(*(u_short *)(cu->cu_outbuf))++;
-	if ((! XDR_PUTLONG(xdrs, &proc)) ||
+	if ((! XDR_PUTLONG(xdrs, (long *)&proc)) ||
 	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp)))
 		return (cu->cu_error.re_status = RPC_CANTENCODEARGS);
@@ -280,8 +281,8 @@ send_again:
 	FD_SET(cu->cu_sock, &mask);
 	for (;;) {
 		readfds = mask;
-		switch (select(cu->cu_sock+1, &readfds, (int *)NULL, 
-			       (int *)NULL, &(cu->cu_wait))) {
+		switch (select(cu->cu_sock+1, &readfds, NULL, 
+			       NULL, &(cu->cu_wait))) {
 
 		case 0:
 			time_waited.tv_sec += cu->cu_wait.tv_sec;

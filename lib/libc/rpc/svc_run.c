@@ -41,6 +41,7 @@ static char *rcsid = "$NetBSD: svc_run.c,v 1.6 1995/02/25 03:02:00 cgd Exp $";
  */
 #include <rpc/rpc.h>
 #include <sys/errno.h>
+#include <unistd.h>
 
 void
 svc_run()
@@ -49,7 +50,7 @@ svc_run()
 
 	for (;;) {
 		readfds = svc_fdset;
-		switch (select(svc_maxfd+1, &readfds, (int *)0, (int *)0,
+		switch (select(svc_maxfd+1, &readfds, 0, 0,
 			       (struct timeval *)0)) {
 		case -1:
 			if (errno == EINTR) {

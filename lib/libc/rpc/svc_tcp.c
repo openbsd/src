@@ -48,6 +48,7 @@ static char *rcsid = "$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -304,7 +305,7 @@ readtcp(xprt, buf, len)
 	FD_SET(sock, &mask);
 	do {
 		readfds = mask;
-		if (select(sock+1, &readfds, (int*)NULL, (int*)NULL, 
+		if (select(sock+1, &readfds, NULL, NULL, 
 			   &wait_per_try) <= 0) {
 			if (errno == EINTR) {
 				continue;

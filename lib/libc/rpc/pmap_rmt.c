@@ -49,6 +49,7 @@ static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp 
 #include <rpc/pmap_rmt.h>
 #include <sys/socket.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <net/if.h>
@@ -172,7 +173,7 @@ getbroadcastnets(addrs, sock, buf)
         struct ifreq ifreq, *ifr;
 	struct sockaddr_in *sin;
         char *cp, *cplim;
-        int n, i = 0;
+        int i = 0;
 
         ifc.ifc_len = UDPMSGSIZE;
         ifc.ifc_buf = buf;
@@ -322,8 +323,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		msg.acpted_rply.ar_results.where = (caddr_t)&r;
                 msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
 		readfds = mask;
-		switch (select(sock+1, &readfds, (int *)NULL, 
-			       (int *)NULL, &t)) {
+		switch (select(sock+1, &readfds, NULL, NULL, &t)) {
 
 		case 0:  /* timed out */
 			stat = RPC_TIMEDOUT;
