@@ -47,6 +47,7 @@
 .Op Fl d
 .Op Fl D
 .Op Fl g Ar gateway_addr
+.Op Fl l
 .Op Fl m Ar max_ttl
 .Op Fl n
 .Op Fl p Ar port
@@ -87,6 +88,9 @@ Add
 .Ar gateway_addr
 to the list of addresses in the IP Loose Source Record Route (LSRR)
 option.  If no gateways are specified, the LSRR option is omitted.
+.It Fl l
+Display the ttl value of the returned packet.  This is useful for
+checking for assymetric routing.
 .It Fl m Ar max_ttl
 Set the max time-to-live (max number of hops) used in outgoing probe
 packets.  The default is 30 hops (the same default used for

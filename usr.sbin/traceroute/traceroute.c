@@ -301,7 +301,7 @@ main(argc, argv)
 	struct hostent *hp;
 	struct protoent *pe;
 	struct sockaddr_in from, to;
-	int ch, i, lsrr, on, probe, seq, tos, ttl;
+	int ch, i, lsrr, on, probe, seq, tos, ttl, ttl_flag;
 	struct ip *ip;
 
 	if ((pe = getprotobyname("icmp")) == NULL) {
@@ -317,10 +317,11 @@ main(argc, argv)
 	seteuid(getuid());
 	setuid(getuid());
 
+	ttl_flag = 0;
 	lsrr = 0;
 	on = 1;
 	seq = tos = 0;
-	while ((ch = getopt(argc, argv, "dDg:m:np:q:rs:t:w:v")) != -1)
+	while ((ch = getopt(argc, argv, "dDg:m:np:q:rs:t:w:vl")) != -1)
 		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
@@ -340,6 +341,9 @@ main(argc, argv)
 			if (++lsrr == 1)
 				lsrrlen = 4;
 			lsrrlen += 4;
+			break;
+		case 'l':
+			ttl_flag++;
 			break;
 		case 'm':
 			max_ttl = atoi(optarg);
@@ -507,7 +511,10 @@ main(argc, argv)
 						print(packet, cc, &from);
 						lastaddr = from.sin_addr.s_addr;
 					}
+					ip = (struct ip *)packet;
 					Printf("  %g ms", deltaT(&t1, &t2));
+					if (ttl_flag)
+						Printf(" (%d)", ip->ip_ttl);
 					switch(i - 1) {
 					case ICMP_UNREACH_PORT:
 #ifndef ARCHAIC
