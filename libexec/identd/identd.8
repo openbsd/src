@@ -1,4 +1,4 @@
-.\"	$OpenBSD: identd.8,v 1.19 2002/09/13 01:31:39 djm Exp $
+.\"	$OpenBSD: identd.8,v 1.20 2003/02/03 17:46:56 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -42,6 +42,7 @@
 .Nd TCP/IP IDENT protocol server
 .Sh SYNOPSIS
 .Nm identd
+.Bk -words
 .Op Fl i | w | b
 .Op Fl t Ar seconds
 .Op Fl u Ar uid
@@ -50,6 +51,7 @@
 .Op Fl a Ar address
 .Op Fl c Ar charset
 .Op Fl noelvmNUdh
+.Ek
 .Sh DESCRIPTION
 .Nm
 is a server which implements the
@@ -100,7 +102,7 @@ operation due to the initial overhead of parsing the kernel nlist.
 This version does not use kmem or nlist parsing, so this reasoning
 is no longer valid.
 .It Fl b
-Specify operation as a stand alone daemon.
+Specify operation as a stand-alone daemon.
 .It Fl h
 Hide the actual information about the user by providing an opaque
 token instead.
@@ -121,21 +123,21 @@ Specify a user ID number or user name which the
 server should
 switch to after binding itself to the
 .Tn TCP/IP
-port if running as a stand alone daemon.
+port if running as a stand-alone daemon.
 .It Fl g Ar gid
 Specify a group ID number or group name which the
 .Nm
 server should
 switch to after binding itself to the
 .Tn TCP/IP
-port if running as a stand alone daemon
+port if running as a stand-alone daemon.
 .It Fl p Ar port
 Specify an alternative port number or service name
-on which to listen when running as a stand alone daemon
+on which to listen when running as a stand-alone daemon.
 Default is "auth" (113).
 .It Fl a Ar address
 Specify a local IP address in dotted quad format
-to bind the listen socket to if running as a standalone daemon.
+to bind the listen socket to if running as a stand-alone daemon.
 By default the daemon listens on all local IP addresses.
 .It Fl l
 Use
@@ -210,7 +212,7 @@ this version uses
 .Xr sysctl 3
 to obtain information from the kernel instead of parsing kmem.
 This version does not require privilege beyond what is needed to bind
-the listen port if running as a standalone daemon.
+the listen port if running as a stand-alone daemon.
 .Sh BUGS
 Since
 .Nm identd

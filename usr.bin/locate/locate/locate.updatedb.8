@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.updatedb.8,v 1.13 2000/11/10 05:10:32 aaron Exp $
+.\"	$OpenBSD: locate.updatedb.8,v 1.14 2003/02/03 17:46:57 jmc Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -38,11 +38,13 @@
 .Nd update locate database
 .Sh SYNOPSIS
 .Nm locate.updatedb
+.Bk -words
 .Op Fl -tmpdir=dir
 .Op Fl -fcodes=dbfile
 .Op Fl -searchpaths='dir1 dir2...'
 .Op Fl -prunepaths='dir1 dir2...'
 .Op Fl -filesystems='type1 type2...'
+.Ek
 .Sh DESCRIPTION
 .Nm
 updates the database used by
@@ -67,7 +69,7 @@ is given, the database will be sent to standard output.
 .It Fl -searchpaths
 Sets the list of directories to be put in the database.
 .It Fl -prunepaths
-Sets the list of parent directories that should not be go in
+Sets the list of parent directories that should not go in
 the database.
 .It Fl -filesystems
 A list of filesystem types to be traversed by

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login_token.8,v 1.7 2002/07/16 12:38:40 jufi Exp $
+.\"	$OpenBSD: login_token.8,v 1.8 2003/02/03 17:46:57 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -45,7 +45,7 @@
 .Sh DESCRIPTION
 The
 .Nm login_token
-program implements a X9.9 token card challenge response authentication
+program implements an X9.9 token card challenge response authentication
 mechanism (see
 .Xr login.conf 5 ) .
 It must be invoked by one of the names:
@@ -70,7 +70,7 @@ This option and its value are ignored.
 .Nm login_token
 will look up
 .Ar user
-in the the appropriate database file, depending on what name it was called as:
+in the appropriate database file, depending on what name it was called as:
 .Pa /etc/activ.db ,
 .Pa /etc/crypto.db ,
 or

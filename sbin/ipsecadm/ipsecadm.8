@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.54 2003/01/15 16:02:09 markus Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.55 2003/02/03 17:46:57 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -70,7 +70,7 @@ provided by IPsec.
 The possible commands are:
 .Bl -tag -width new_esp
 .It new esp
-Setup a Security Association (SA) which uses the new esp transforms.
+Set up a Security Association (SA) which uses the new esp transforms.
 A SA consists of the destination address,
 a Security Parameter Index (SPI) and a security protocol.
 Encryption and authentication algorithms can be applied.
@@ -94,7 +94,7 @@ modifiers are:
 and
 .Fl keyfile .
 .It old esp
-Setup a SA which uses the old esp transforms.
+Set up an SA which uses the old esp transforms.
 Only encryption algorithms can be applied.
 Allowed modifiers are:
 .Fl dst ,
@@ -112,7 +112,7 @@ Allowed modifiers are:
 and
 .Fl keyfile .
 .It new ah
-Setup a SA which uses the new ah transforms.
+Set up an SA which uses the new ah transforms.
 Authentication will be done with HMAC using the specified hash algorithm.
 Allowed modifiers are:
 .Fl dst ,
@@ -129,7 +129,7 @@ Allowed modifiers are:
 and
 .Fl keyfile .
 .It old ah
-Setup a SA which uses the old ah transforms.
+Set up an SA which uses the old ah transforms.
 Simple keyed hashes will be used for authentication.
 Allowed modifiers are:
 .Fl dst ,
@@ -162,7 +162,7 @@ Allowed modifiers are:
 and
 .Fl proto2 .
 .It ip4
-Setup an SA which uses the IP-in-IP encapsulation protocol.
+Set up an SA which uses the IP-in-IP encapsulation protocol.
 This mode
 offers no security services by itself, but can be used to route other
 (experimental or otherwise) protocols over an IP network.
@@ -290,7 +290,7 @@ and
 Default action is to flush all types of security associations
 from the kernel.
 .It ipcomp
-Setup an IP Compression Association (IPCA) which will use the IPcomp
+Set up an IP Compression Association (IPCA) which will use the IPcomp
 transforms.
 Just like an SA, an IPCA consists of the destination
 address, a Compression Parameter Index (CPI) and a protocol (which is
@@ -305,7 +305,7 @@ and
 .Fl forcetunnel .
 To create an IPsec SA using compression, an IPCA and an SA must first
 be created.
-After this a IPCA/SA bundle must be created using the
+After this an IPCA/SA bundle must be created using the
 .Nm group
 keyword.
 The IPCA must be applied first.
@@ -393,7 +393,7 @@ See
 CAST encryption is available only in new esp.
 .It Nm skipjack
 SKIPJACK encryption is available only in new esp.
-This algorithm designed by the NSA and is faster than 3DES.
+This algorithm was designed by the NSA and is faster than 3DES.
 However, since it was designed by the NSA
 it is a poor choice.
 .El
@@ -430,7 +430,7 @@ The
 should be given in hexadecimal digits.
 The
 .Nm key
-should be chosen in random (ideally, using some true-random source like
+should be chosen at random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
 One practical way of generating 160-bit (20-byte) keys is as follows:
@@ -453,7 +453,7 @@ The
 should be given in hexadecimal digits.
 The
 .Nm key
-should be chosen in random (ideally, using some true-random source like
+should be chosen at random (ideally, using some true-random source like
 coin flipping).
 It is very important that the key is not guessable.
 One practical way of generating 160-bit (20-byte) keys is as follows:
@@ -603,7 +603,7 @@ For
 .Nm flow ,
 specify that packets matching this flow must use IPsec.
 If such SAs are not present, simply drop the packets.
-Such a policy may be used to demand peers to establish SAs before they
+Such a policy may be used to demand peers establish SAs before they
 can communicate with us, without going through the burden of
 initiating the SA ourselves (thus allowing for some denial of service
 attacks).
@@ -638,7 +638,7 @@ For
 only flush SAs of type ip4.
 .El
 .Sh EXAMPLES
-Setup a SA which uses new esp with 3des encryption and HMAC-SHA1
+Set up an SA which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
 .Bd -literal
 # ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \\
@@ -647,19 +647,19 @@ authentication:
 	-authkey 1234123412341234123412341234123412341234
 .Ed
 .Pp
-Setup a SA for authentication with old ah only:
+Set up an SA for authentication with old ah only:
 .Bd -literal
 # ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \\ 
 	-key 12341234deadbeef
 .Ed
 .Pp
-Setup a flow requiring use of AH:
+Set up a flow requiring use of AH:
 .Bd -literal
 # ipsecadm flow -dst 169.20.12.2 -proto ah \\
-	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0 -out -require
+	-addr 10.1.1.0/24 10.0.0.0/24 -out -require
 .Ed
 .Pp
-Setup an inbound SA:
+Set up an inbound SA:
 .Bd -literal
 # ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \\
 	-src 169.20.12.2 \\
@@ -667,16 +667,16 @@ Setup an inbound SA:
 	-authkey 12349876432167890192837465098273
 .Ed
 .Pp
-Setup an ingress flow on for the inbound SA:
+Set up an ingress flow for the inbound SA:
 .Bd -literal
-# ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \\
+# ipsecadm flow -addr 10.0.0.0/8 10.1.1.0/24 \\
 	-dst 169.20.12.2 -proto esp -in -require
 .Ed
 .Pp
-Setup a bypass flow:
+Set up a bypass flow:
 .Bd -literal
 # ipsecadm flow -bypass -out \\
-	-addr 10.1.1.0 255.255.255.0 10.1.1.0 255.255.255.0
+	-addr 10.1.1.0/24 10.1.1.0/24
 .Ed
 .Pp
 Delete all esp SAs and their flows and routing information:

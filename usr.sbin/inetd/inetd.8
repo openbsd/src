@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.21 2003/01/18 23:40:58 deraadt Exp $
+.\"	$Id: inetd.8,v 1.22 2003/02/03 17:46:56 jmc Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -83,7 +83,6 @@ Comments are denoted by a
 .Dq #
 at the beginning
 of a line.
-There must be an entry for each field.
 The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
@@ -145,7 +144,7 @@ interpreted in the traditional manner, with all services listened for
 on all local addresses.
 .Pp
 The
-.Em service-name
+.Em service name
 entry is the name of a valid service in
 the file
 .Pa /etc/services .
@@ -168,7 +167,7 @@ A range is bounded by the low version to the high version -
 .Dq rusers/1-3 .
 .Pp
 The
-.Em socket-type
+.Em socket type
 should be one of
 .Dq stream ,
 .Dq dgram ,
@@ -284,7 +283,7 @@ is specified and user is not root, the supplementary groups associated with
 that user will still be set.
 .Pp
 The
-.Em server-program
+.Em server program
 entry should contain the pathname of the program which is to be
 executed by
 .Nm inetd
@@ -343,7 +342,7 @@ for
 and
 .Dq tcp6 .
 .Pp
-Under various combination of IPv4/v6 daemon settings,
+Under various combinations of IPv4/v6 daemon settings,
 .Nm
 will behave as follows:
 .Bl -bullet -compact
