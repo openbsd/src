@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.136 2004/06/21 23:50:36 tholo Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.137 2004/08/18 11:07:47 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2275,9 +2275,9 @@ bridge_ipsec(int dir, int af, int hlen, struct mbuf *m)
 			splx(s);
 			return (1);
 		} else {
+			splx(s);
  skiplookup:
 			/* XXX do an input policy lookup */
-			splx(s);
 			return (0);
 		}
 	} else { /* Outgoing from the bridge. */
