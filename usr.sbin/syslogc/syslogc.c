@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.6 2004/06/25 19:11:38 djm Exp $ */
+/* $OpenBSD: syslogc.c,v 1.7 2004/07/15 20:46:00 mpf Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -65,7 +65,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-Ccq] [-s ctlsock] logname\n", __progname);
+	fprintf(stderr, "Usage: %s [-Ccoq] [-s ctlsock] logname\n", __progname);
 	exit(1);
 }
 
