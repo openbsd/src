@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.32 2004/01/20 13:11:39 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.33 2004/01/21 23:45:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -31,68 +31,16 @@
 #include "bgpd.h"
 #include "session.h"
 #include "log.h"
-
-enum actions {
-	NONE,
-	SHOW,
-	SHOW_SUMMARY,
-	SHOW_NEIGHBOR,
-	SHOW_NEIGHBOR_TIMERS,
-	SHOW_FIB,
-	SHOW_NEXTHOP,
-	SHOW_INTERFACE,
-	RELOAD,
-	FIB,
-	FIB_COUPLE,
-	FIB_DECOUPLE,
-	NEIGHBOR,
-	NEIGHBOR_UP,
-	NEIGHBOR_DOWN
-};
+#include "parser.h"
 
 enum neighbor_views {
 	NV_DEFAULT,
 	NV_TIMERS
 };
 
-struct keywords {
-	const char	*keyword;
-	int		 value;
-};
-
-static const struct keywords keywords_main[] = {
-	{ "reload",	RELOAD},
-	{ "show",	SHOW},
-	{ "fib",	FIB},
-	{ "neighbor",	NEIGHBOR}
-};
-
-static const struct keywords keywords_show[] = {
-	{ "neighbor",	SHOW_NEIGHBOR},
-	{ "summary",	SHOW_SUMMARY},
-	{ "fib",	SHOW_FIB},
-	{ "nexthop",	SHOW_NEXTHOP},
-	{ "interfaces",	SHOW_INTERFACE}
-};
-
-static const struct keywords keywords_show_neighbor[] = {
-	{ "timers",	SHOW_NEIGHBOR_TIMERS},
-	{ "messages",	SHOW_NEIGHBOR}
-};
-
-static const struct keywords keywords_fib[] = {
-	{ "couple",	FIB_COUPLE},
-	{ "decouple",	FIB_DECOUPLE}
-};
-
-static const struct keywords keywords_neighbor[] = {
-	{ "up",		NEIGHBOR_UP},
-	{ "down",	NEIGHBOR_DOWN}
-};
 
 void		 usage(void);
 int		 main(int, char *[]);
-int		 match_keyword(const char *, const struct keywords [], size_t);
 void		 show_summary_head(void);
 int		 show_summary_msg(struct imsg *);
 int		 show_neighbor_msg(struct imsg *, enum neighbor_views);
@@ -101,7 +49,6 @@ void		 print_neighbor_timers(struct peer *);
 void		 print_timer(const char *, time_t, u_int);
 static char	*fmt_timeframe(time_t t);
 static char	*fmt_timeframe_core(time_t t);
-int		 parse_addr(const char *, struct bgpd_addr *);
 void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
 void		 show_nexthop_head(void);
@@ -120,7 +67,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s <command> [arg [...]]\n", __progname);
-	exit (1);
+	exit(1);
 }
 
 int
@@ -128,10 +75,11 @@ main(int argc, char *argv[])
 {
 	struct sockaddr_un	 sun;
 	int			 fd, n, done;
-	int			 i, flags;
 	struct imsg		 imsg;
-	enum actions		 action = NONE;
-	struct bgpd_addr	 addr;
+	struct parse_result	*res;
+
+	if ((res = parse(argc, argv)) == NULL)
+		exit(1);
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		err(1, "control_init: socket");
@@ -149,49 +97,22 @@ main(int argc, char *argv[])
 	imsg_init(&ibuf, fd);
 	done = 0;
 
-	if (argc >= 2)
-		action = match_keyword(argv[1], keywords_main,
-		    sizeof(keywords_main)/sizeof(keywords_main[0]));
-
-again:
-	switch (action) {
+	switch (res->action) {
 	case NONE:
 		usage();
 		/* not reached */
 	case SHOW:
-		if (argc >= 3) {
-			action = match_keyword(argv[2], keywords_show,
-			    sizeof(keywords_show)/sizeof(keywords_show[0]));
-			goto again;
-		}
-		/* fallthrough */
 	case SHOW_SUMMARY:
-		if (argc >= 4)
-			errx(1, "\"show summary\" does not take arguments");
 		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
 		show_summary_head();
 		break;
 	case SHOW_FIB:
-		flags = 0;
-		bzero(&addr, sizeof(addr));
-		for (i = 3; i < argc; i++)
-			if (!strncmp(argv[i], "connected", strlen(argv[i])))
-				flags |= F_CONNECTED;
-			else if (!strncmp(argv[i], "static", strlen(argv[i])))
-				flags |= F_STATIC;
-			else if (!strncmp(argv[i], "bgp", strlen(argv[i])))
-				flags |= F_BGPD_INSERTED;
-			else if (!strncmp(argv[i], "nexthop", strlen(argv[i])))
-				flags |= F_NEXTHOP;
-			else if (!parse_addr(argv[i], &addr))
-				errx(1, "usage: \"show fib connected|static|"
-				    "bgp|nexthop|[address]");
-		if (!addr.af)
-			imsg_compose(&ibuf, IMSG_CTL_KROUTE, 0, &flags,
-			    sizeof(flags));
+		if (!res->addr.af)
+			imsg_compose(&ibuf, IMSG_CTL_KROUTE, 0, &res->flags,
+			    sizeof(res->flags));
 		else
-			imsg_compose(&ibuf, IMSG_CTL_KROUTE_ADDR, 0, &addr,
-			    sizeof(addr));
+			imsg_compose(&ibuf, IMSG_CTL_KROUTE_ADDR, 0, &res->addr,
+			    sizeof(res->addr));
 		show_fib_head();
 		break;
 	case SHOW_NEXTHOP:
@@ -204,68 +125,42 @@ again:
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
-		/* get ip address of neighbor, limit query to that */
-		if (argc >= 4) {
-			if (!parse_addr(argv[3], &addr))
-				errx(1, "%s: not an IP address", argv[3]);
+		if (res->addr.af)
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0,
-			    &addr, sizeof(addr));
-		} else
+			    &res->addr, sizeof(res->addr));
+		else
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
-
-		if (argc >= 5)
-			action = match_keyword(argv[4], keywords_show_neighbor,
-			    sizeof(keywords_show_neighbor)/
-			    sizeof(keywords_show_neighbor[0]));
 		break;
 	case RELOAD:
-		if (argc >= 3)
-			errx(1, "\"reload\" takes no options");
 		imsg_compose(&ibuf, IMSG_CTL_RELOAD, 0, NULL, 0);
 		printf("reload request sent.\n");
 		done = 1;
 		break;
 	case FIB:
-		if (argc >= 3) {
-			action = match_keyword(argv[2], keywords_fib,
-			    sizeof(keywords_fib)/sizeof(keywords_fib[0]));
-			goto again;
-		} else
-			errx(1, "fib [couple|decouple]");
+		errx(1, "action==FIB");
 		break;
 	case FIB_COUPLE:
-		if (argc >= 4)
-			errx(1, "\"fib couple\" takes no options");
 		imsg_compose(&ibuf, IMSG_CTL_FIB_COUPLE, 0, NULL, 0);
 		printf("couple request sent.\n");
 		done = 1;
 		break;
 	case FIB_DECOUPLE:
-		if (argc >= 4)
-			errx(1, "\"fib decouple\" takes no options");
 		imsg_compose(&ibuf, IMSG_CTL_FIB_DECOUPLE, 0, NULL, 0);
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
 	case NEIGHBOR:
-		if (argc < 4)
-			errx(1, "usage: neighbor address command");
-		if (!parse_addr(argv[2], &addr))
-			errx(1, "%s: not an IP address", argv[2]);
-		action = match_keyword(argv[3], keywords_neighbor,
-			    sizeof(keywords_neighbor)/
-			    sizeof(keywords_neighbor[0]));
-		goto again;
+		errx(1, "action==NEIGHBOR");
 		break;
 	case NEIGHBOR_UP:
 		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_UP, 0,
-		    &addr, sizeof(addr));
+		    &res->addr, sizeof(res->addr));
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NEIGHBOR_DOWN:
 		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_DOWN, 0,
-		    &addr, sizeof(addr));
+		    &res->addr, sizeof(res->addr));
 		printf("request sent.\n");
 		done = 1;
 		break;
@@ -286,7 +181,7 @@ again:
 				errx(1, "imsg_get error");
 			if (n == 0)
 				break;
-			switch (action) {
+			switch (res->action) {
 			case SHOW:
 			case SHOW_SUMMARY:
 				done = show_summary_msg(&imsg);
@@ -320,28 +215,6 @@ again:
 		}
 	}
 	close(fd);
-}
-
-int
-match_keyword(const char *word, const struct keywords table[], size_t cnt)
-{
-	u_int	match, res, i;
-
-	match = res = 0;
-
-	for (i = 0; i < cnt; i++)
-		if (strncmp(word, table[i].keyword,
-		    strlen(word)) == 0) {
-			match++;
-			res = table[i].value;
-		}
-
-	if (match > 1)
-		errx(1, "ambigous command: %s", word);
-	if (match < 1)
-		errx(1, "unknown command: %s", word);
-
-	return (res);
 }
 
 void
@@ -529,23 +402,6 @@ fmt_timeframe_core(time_t t)
 		snprintf(buf, TF_LEN, "%02u:%02u:%02u", hrs, min, sec);
 
 	return (buf);
-}
-
-int
-parse_addr(const char *word, struct bgpd_addr *addr)
-{
-	struct in_addr	ina;
-
-	bzero(addr, sizeof(struct bgpd_addr));
-	bzero(&ina, sizeof(ina));
-
-	if (inet_pton(AF_INET, word, &ina)) {
-		addr->af = AF_INET;
-		addr->v4 = ina;
-		return (1);
-	}
-
-	return (0);
 }
 
 void
