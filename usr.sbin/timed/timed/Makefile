@@ -2,6 +2,8 @@
 #
 # optional flags are: MEASURE TESTING DEBUG
 
+.include <bsd.own.mk>
+
 .if (${YP} == "yes")
 CFLAGS+=-DHAVENIS
 .endif
