@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.46 2004/12/08 15:47:38 mickey Exp $ */
+/*	$OpenBSD: client.c,v 1.47 2004/12/09 20:24:46 mickey Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -256,7 +256,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	p->state = STATE_REPLY_RECEIVED;
 
 	/* every received reply which we do not discard increases trust */
-	if (p->trustlevel < 10) {
+	if (p->trustlevel < TRUSTLEVEL_MAX) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER &&
 		    p->trustlevel + 1 >= TRUSTLEVEL_BADPEER)
 			log_info("peer %s now valid",

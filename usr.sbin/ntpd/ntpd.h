@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.46 2004/12/06 20:57:17 mickey Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.47 2004/12/09 20:24:46 mickey Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,7 @@
 #define	TRUSTLEVEL_BADPEER		6
 #define	TRUSTLEVEL_PATHETIC		2
 #define	TRUSTLEVEL_AGRESSIVE		8
+#define	TRUSTLEVEL_MAX			10
 
 #define	QSCALE_OFF_MIN			0.05
 #define	QSCALE_OFF_MAX			0.50
