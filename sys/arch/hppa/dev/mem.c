@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.15 2002/10/25 18:46:35 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.16 2003/01/22 00:21:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -151,7 +151,7 @@ memattach(parent, self, aux)
 	if (ca->ca_hpa == (hppa_hpa_t)VIPER_HPA) {
 
 		sc->sc_vp = (struct vi_trs *)
-			&((struct iomod *)ca->ca_hpa)->priv_trs;
+		    &((struct iomod *)ca->ca_hpa)->priv_trs;
 
 		printf(" viper rev %x,", sc->sc_vp->vi_status.hw_rev);
 #if 0
@@ -176,13 +176,13 @@ memattach(parent, self, aux)
 		sc->sc_vp = NULL;
 
 	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_IODC, PDC_IODC_NINIT,
-			    &pdc_minit, ca->ca_hpa, PAGE0->imm_spa_size)) < 0)
+	    &pdc_minit, ca->ca_hpa, PAGE0->imm_spa_size)) < 0)
 		pdc_minit.max_spa = PAGE0->imm_max_mem;
 
-	printf (" size %d", pdc_minit.max_spa / (1024*1024));
+	printf("size %d", pdc_minit.max_spa / (1024*1024));
 	if (pdc_minit.max_spa % (1024*1024))
-		printf (".%d", pdc_minit.max_spa % (1024*1024));
-	printf ("MB\n");
+		printf(".%d", pdc_minit.max_spa % (1024*1024));
+	printf("MB\n");
 }
 
 void
