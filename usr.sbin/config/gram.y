@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.9 1997/11/13 08:21:54 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.10 2000/01/04 14:23:43 angelos Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ static	void	check_maxpart __P((void));
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DISABLE
 %token	DUMPS ENDFILE XFILE XOBJECT FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP
-%token	WITH NEEDS_COUNT NEEDS_FLAG
+%token	WITH NEEDS_COUNT NEEDS_FLAG RMOPTIONS
 %token	<val> NUMBER
 %token	<str> PATHNAME WORD EMPTY
 
@@ -331,6 +331,7 @@ config_spec:
 	object |
 	include |
 	OPTIONS opt_list |
+	RMOPTIONS ropt_list |
 	MAKEOPTIONS mkopt_list |
 	MAXUSERS NUMBER			{ setmaxusers($2); } |
 	CONFIG conf sysparam_list	{ addconf(&conf); } |
@@ -348,6 +349,10 @@ mkoption:
 opt_list:
 	opt_list ',' option |
 	option;
+
+ropt_list:
+	ropt_list ',' WORD { removeoption($3); } |
+	WORD { removeoption($1); };
 
 option:
 	WORD				{ addoption($1, NULL); } |

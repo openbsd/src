@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 1999/11/27 03:49:13 d Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2000/01/04 14:23:43 angelos Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -343,6 +343,47 @@ defoption(name)
 	 * to speed lookups when creating the Makefile.
 	 */
 	(void)ht_insert(defopttab, name, (void *)name);
+}
+
+/*
+ * Remove an option.
+ */
+void
+removeoption(name)
+        const char *name;
+{
+	register struct nvlist *nv, *nvt;
+	register const char *n;
+	register char *p, c;
+	char low[500];
+
+	if ((nv = ht_lookup(opttab, name)) != NULL) {
+		if (options == nv)
+		{
+			options = nv->nv_next;
+			nvfree(nv);
+		} else {
+			nvt = options;
+			while (nvt->nv_next != NULL) {
+				if (nvt->nv_next == nv) {
+					nvt->nv_next = nvt->nv_next->nv_next;
+					nvfree(nv);
+					break;
+				}
+				else
+					nvt = nvt->nv_next;
+			}
+		}
+	}
+
+	(void)ht_remove(opttab, name);
+
+	/* make lowercase, then add to select table */
+	for (n = name, p = low; (c = *n) != '\0'; n++)
+		*p++ = isupper(c) ? tolower(c) : c;
+	*p = 0;
+	n = intern(low);
+	(void)ht_remove(selecttab, n);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.6 1997/08/07 10:36:57 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.7 2000/01/04 14:23:43 angelos Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -247,6 +247,39 @@ ht_new()
 	ht = emalloc(sizeof *ht);
 	ht_init(ht, 8);
 	return (ht);
+}
+
+/*
+ * Remove.
+ */
+int
+ht_remove(ht, nam)
+	register struct hashtab *ht;
+	register const char *nam;
+{
+	register struct hashent *hp, *thp;
+	register u_int h;
+
+	h = hash(nam);
+	hp = ht->ht_tab[h & ht->ht_mask];
+	while (hp && hp->h_name == nam)	{
+	        ht->ht_tab[h & ht->ht_mask] = hp->h_next;
+		/* XXX Free hp ? */
+		hp = ht->ht_tab[h & ht->ht_mask];
+	}
+
+	if ((hp = ht->ht_tab[h & ht->ht_mask]) == NULL)
+	        return (0);
+
+	for (thp = hp->h_next; thp != NULL; thp = hp->h_next) {
+	        if (thp->h_name == nam) {
+		        hp->h_next = thp->h_next;
+			/* XXX Free hp ? */
+		} else
+		        hp = thp;
+	}
+
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.13 1999/10/04 20:00:50 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.14 2000/01/04 14:23:43 angelos Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -338,6 +338,7 @@ void	addobject __P((const char *, struct nvlist *, int));
 /* hash.c */
 struct	hashtab *ht_new __P((void));
 int	ht_insrep __P((struct hashtab *, const char *, void *, int));
+int     ht_remove __P((struct hashtab *, const char *));
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
 void	*ht_lookup __P((struct hashtab *, const char *));
@@ -346,6 +347,7 @@ const char *intern __P((const char *));
 
 /* main.c */
 void	addoption __P((const char *name, const char *value));
+void	removeoption __P((const char *name));
 void	addmkoption __P((const char *name, const char *value));
 void	defoption __P((const char *name));
 int	devbase_has_instances __P((struct devbase *, int));
