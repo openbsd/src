@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.1 2005/02/15 20:51:20 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.2 2005/02/17 17:26:30 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -514,6 +514,7 @@ ral_alloc_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring, int count)
 		goto fail;
 	}
 
+	memset(ring->data, 0, count * sizeof (struct ral_tx_data));
 	for (i = 0; i < count; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    RAL_MAX_SCATTER, MCLBYTES, 0, BUS_DMA_NOWAIT,
@@ -661,6 +662,7 @@ ral_alloc_rx_ring(struct ral_softc *sc, struct ral_rx_ring *ring, int count)
 	/*
 	 * Pre-allocate Rx buffers and populate Rx ring
 	 */
+	memset(ring->data, 0, count * sizeof (struct ral_rx_data));
 	for (i = 0; i < count; i++) {
 		desc = &sc->rxq.desc[i];
 		data = &sc->rxq.data[i];
