@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.5 2003/06/02 21:19:03 maja Exp $ */
+/*	$OpenBSD: exec.c,v 1.6 2003/08/16 14:45:46 henning Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -29,7 +29,7 @@
 #include <stdio.h>
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: exec.c,v 1.5 2003/06/02 21:19:03 maja Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.6 2003/08/16 14:45:46 henning Exp $";
 #endif
 
 #ifdef AOUT_SUPPORT
@@ -83,7 +83,6 @@ adjust(caddr_t x)
 #endif
 	default:
 		errx(1, "no supported exec type");
-		return(x);
 	}
 }
 
@@ -108,7 +107,6 @@ readjust(caddr_t x)
 #endif
 	default:
 		errx(1, "no supported exec type");
-		return(x);
 	}
 }
 
