@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.4 2004/03/30 15:29:44 mickey Exp $	*/
+/*	$OpenBSD: elf.c,v 1.5 2004/03/30 15:35:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -180,7 +180,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 			} else if (!strcmp(sn, ELF_DATA))
 				np->n_type = N_DATA;
 			else if (!strcmp(sn, ELF_BSS))
-				np->n_type = N_BSS | N_EXT;
+				np->n_type = N_BSS;
 			else if (!strcmp(sn, ELF_SBSS))
 				np->n_type = N_BSS;
 			else
@@ -211,7 +211,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr, struct nlist 
 		else if (!strcmp(sn, ELF_SBSS))
 			np->n_type = N_BSS;
 		else if (!strcmp(sn, ELF_BSS))
-			np->n_type = N_BSS | N_EXT;
+			np->n_type = N_BSS;
 		else if (!strcmp(sn, ELF_RODATA))
 			np->n_other = 'r';
 		break;
