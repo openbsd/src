@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.31 2001/12/07 09:18:08 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.32 2002/02/16 00:18:09 tdeval Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.31 2001/12/07 09:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.32 2002/02/16 00:18:09 tdeval Exp $";
 #endif /* not lint */
 
 /*
@@ -182,13 +182,7 @@ static struct nlist namelist[] = {
 #define DISKROW		18	/* uses 5 rows and 50 cols (for 9 drives) */
 #define DISKCOL		 0
 
-#define	DRIVESPACE	 9	/* max # for space */
-
-#if DK_NDRIVE > DRIVESPACE
-#define	MAXDRIVES	DRIVESPACE	 /* max # to display */
-#else
-#define	MAXDRIVES	DK_NDRIVE	 /* max # to display */
-#endif
+#define	DRIVESPACE	45	/* max space for drives */
 
 int
 initkre()
@@ -289,7 +283,7 @@ fetchkre()
 void
 labelkre()
 {
-	int i, j;
+	int i, j, l;
 
 	clear();
 	mvprintw(STATROW, STATCOL + 4, "users    Load");
@@ -342,12 +336,12 @@ labelkre()
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
 	mvprintw(DISKROW + 3, DISKCOL, "Kbyte");
 	mvprintw(DISKROW + 4, DISKCOL, "  sec");
-	j = 0;
-	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
-		if (dk_select[i]) {
-			mvprintw(DISKROW, DISKCOL + 5 + 5 * j,
-			    " %4.4s", dr_name[j]);
-			j++;
+	for (i = 0, j = 0; i < dk_ndrive && j < DRIVESPACE; i++)
+		if (dk_select[i] && (j + strlen(dr_name[i])) < DRIVESPACE) {
+			l = MAX(4, strlen(dr_name[i]));
+			mvprintw(DISKROW, DISKCOL + 5 + j,
+			    " %*s", l, dr_name[i]);
+			j += 1 + l;
 		}
 	for (i = 0; i < nintr; i++) {
 		if (intrloc[i] == 0)
@@ -508,12 +502,19 @@ showkre()
 	PUTRATE(uvmexp.softs, GENSTATROW + 1, GENSTATCOL + 24, 6);
 	PUTRATE(uvmexp.faults, GENSTATROW + 1, GENSTATCOL + 30, 5);
 	mvprintw(DISKROW, DISKCOL + 5, "                              ");
-	for (i = 0, c = 0; i < dk_ndrive && c < MAXDRIVES; i++)
-		if (dk_select[i]) {
-			mvprintw(DISKROW, DISKCOL + 5 + 5 * c,
-			    " %4.4s", dr_name[i]);
-			dinfo(i, ++c);
+	for (i = 0, c = 0; i < dk_ndrive && c < DRIVESPACE; i++)
+		if (dk_select[i] && (c + strlen(dr_name[i])) < DRIVESPACE) {
+			l = MAX(4, strlen(dr_name[i]));
+			mvprintw(DISKROW, DISKCOL + 5 + c,
+			    " %*s", l, dr_name[i]);
+			c += 1 + l;
+			dinfo(i, c);
 		}
+	/* and pad the DRIVESPACE */ 
+	l = DRIVESPACE - c;
+	for (i = 0; i < 5; i++)
+		mvprintw(DISKROW + i, DISKCOL + 5 + c, "%*s", l, "");
+
 	putint(s.nchcount, NAMEIROW + 2, NAMEICOL, 9);
 	putint(nchtotal.ncs_goodhits, NAMEIROW + 2, NAMEICOL + 10, 8);
 #define nz(x)	((x) ? (x) : 1)
@@ -711,7 +712,7 @@ dinfo(dn, c)
 {
 	double words, atime;
 
-	c = DISKCOL + c * 5;
+	c += DISKCOL;
 
 	/* time busy in disk activity */
 	atime = (double)cur.dk_time[dn].tv_sec +
