@@ -87,7 +87,7 @@ Boston, MA 02111-1307, USA.  */
 #define MACHINE_TYPE "OpenBSD/alpha"
 #endif
 
-#define TARGET_DEFAULT MASK_GAS
+#define TARGET_DEFAULT (MASK_GAS | 3)
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 #define LOCAL_LABEL_PREFIX	"."
