@@ -1068,4 +1068,48 @@ bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 #endif
 
+/*
+ *	void bus_space_read_raw_region_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_int8_t *addr, size_t count);
+ *
+ * Read `count' bytes in 2, 4 or 8 byte wide quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.  The buffer must have proper alignment for the N byte
+ * wide entities.  Furthermore possible byte-swapping should be done by
+ * these functions.
+ */
+
+#define	bus_space_read_raw_region_2(t, h, o, a, c) \
+    bus_space_read_region_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
+#define	bus_space_read_raw_region_4(t, h, o, a, c) \
+    bus_space_read_region_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+
+#if 0	/* Cause a link error for bus_space_read_raw_region_8 */
+#define	bus_space_read_raw_region_8 \
+    !!! bus_space_read_raw_region_8 unimplemented !!!
+#endif
+
+/*
+ *	void bus_space_write_raw_region_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    const u_int8_t *addr, size_t count);
+ *
+ * Write `count' bytes in 2, 4 or 8 byte wide quantities to bus space
+ * described by tag/handle and starting at `offset' from the
+ * buffer provided.  The buffer must have proper alignment for the N byte
+ * wide entities.  Furthermore possible byte-swapping should be done by
+ * these functions.
+ */
+
+#define	bus_space_write_raw_region_2(t, h, o, a, c) \
+    bus_space_write_region_2((t), (h), (o), (const u_int16_t *)(a), (c) >> 1)
+#define	bus_space_write_raw_region_4(t, h, o, a, c) \
+    bus_space_write_region_4((t), (h), (o), (const u_int32_t *)(a), (c) >> 2)
+
+#if 0	/* Cause a link error for bus_space_write_raw_region_8 */
+#define	bus_space_write_raw_region_8 \
+    !!! bus_space_write_raw_region_8 unimplemented !!!
+#endif
+
 #endif /* _ARM32_BUS_H_ */
