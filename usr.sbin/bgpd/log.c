@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2003/12/26 14:27:58 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.8 2003/12/26 16:37:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -160,7 +160,7 @@ vlog(int pri, const char *fmt, va_list ap)
 
 
 void
-log_err(struct peer *peer, const char *emsg, ...)
+log_peer_err(struct peer *peer, const char *emsg, ...)
 {
 	char	*p, *nfmt;
 	va_list	 ap;
@@ -181,7 +181,7 @@ log_err(struct peer *peer, const char *emsg, ...)
 }
 
 void
-log_errx(struct peer *peer, const char *emsg, ...)
+log_peer_errx(struct peer *peer, const char *emsg, ...)
 {
 	char	*p, *nfmt;
 	va_list	 ap;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.43 2003/12/25 14:28:49 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.44 2003/12/26 16:37:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -210,7 +210,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 				/* deletion due? */
 				if (p->conf.reconf_action == RECONF_DELETE) {
 					bgp_fsm(p, EVNT_STOP);
-					log_errx(p, "removed");
+					log_peer_errx(p, "removed");
 					if (last != NULL)
 						last->next = next;
 					else
@@ -681,7 +681,7 @@ session_connect(struct peer *peer)
 		return (-1);
 
 	if ((peer->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-		log_err(peer, "session_connect socket");
+		log_peer_err(peer, "session_connect socket");
 		bgp_fsm(peer, EVNT_CON_OPENFAIL);
 		return (-1);
 	}
@@ -692,7 +692,7 @@ session_connect(struct peer *peer)
 	if (peer->conf.local_addr.sin_addr.s_addr)
 		if (bind(peer->sock, (struct sockaddr *)&peer->conf.local_addr,
 		    sizeof(peer->conf.local_addr))) {
-			log_err(peer, "session_connect bind");
+			log_peer_err(peer, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
@@ -707,7 +707,7 @@ session_connect(struct peer *peer)
 	if ((n = connect(peer->sock, (struct sockaddr *)&peer->conf.remote_addr,
 	    sizeof(peer->conf.remote_addr))) == -1)
 		if (errno != EINPROGRESS) {
-			log_err(peer, "connect");
+			log_peer_err(peer, "connect");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
@@ -729,20 +729,20 @@ session_setup_socket(struct peer *p)
 		/* set TTL to foreign router's distance - 1=direct n=multihop */
 		if (setsockopt(p->sock, IPPROTO_IP, IP_TTL, &ttl,
 		    sizeof(ttl)) == -1) {
-			log_err(p, "session_setup_socket setsockopt TTL");
+			log_peer_err(p, "session_setup_socket setsockopt TTL");
 			return (-1);
 		}
 
 	/* set TCP_NODELAY */
 	if (setsockopt(p->sock, IPPROTO_TCP, TCP_NODELAY, &nodelay,
 	    sizeof(nodelay)) == -1) {
-		log_err(p, "session_setup_socket setsockopt TCP_NODELAY");
+		log_peer_err(p, "session_setup_socket setsockopt TCP_NODELAY");
 		return (-1);
 	}
 
 	/* set precedence, see rfc1771 appendix 5 */
 	if (setsockopt(p->sock, IPPROTO_IP, IP_TOS, &pre, sizeof(pre)) == -1) {
-		log_err(p, "session_setup_socket setsockopt TOS");
+		log_peer_err(p, "session_setup_socket setsockopt TOS");
 		return (-1);
 	}
 
@@ -801,9 +801,9 @@ session_open(struct peer *peer)
 	if (errs == 0) {
 		if ((n = buf_close(&peer->wbuf, buf)) < 0) {
 			if (n == -2)
-				log_errx(peer, "Connection closed");
+				log_peer_errx(peer, "Connection closed");
 			else
-				log_err(peer, "Write error");
+				log_peer_err(peer, "Write error");
 			buf_free(buf);
 			bgp_fsm(peer, EVNT_CON_FATAL);
 		}
@@ -841,9 +841,9 @@ session_keepalive(struct peer *peer)
 
 	if ((n = buf_close(&peer->wbuf, buf)) < 0) {
 		if (n == -2)
-			log_errx(peer, "Connection closed");
+			log_peer_errx(peer, "Connection closed");
 		else
-			log_err(peer, "Write error");
+			log_peer_err(peer, "Write error");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
@@ -891,9 +891,9 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 
 	if ((n = buf_close(&peer->wbuf, buf)) < 0) {
 		if (n == -2)
-			log_errx(peer, "Connection closed");
+			log_peer_errx(peer, "Connection closed");
 		else
-			log_err(peer, "Write error");
+			log_peer_err(peer, "Write error");
 		buf_free(buf);
 		bgp_fsm(peer, EVNT_CON_FATAL);
 	}
@@ -918,7 +918,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 					logit(LOG_CRIT, "unknown socket error");
 				else {
 					errno = error;
-					log_err(peer, "socket error");
+					log_peer_err(peer, "socket error");
 				}
 				bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			} else
@@ -948,9 +948,9 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 	if (pfd->revents & POLLOUT && peer->wbuf.queued) {
 		if ((error = msgbuf_write(&peer->wbuf)) < 0) {
 			if (error == -2)
-				log_errx(peer, "Connection closed");
+				log_peer_errx(peer, "Connection closed");
 			else
-				log_err(peer, "Write error");
+				log_peer_err(peer, "Write error");
 			bgp_fsm(peer, EVNT_CON_FATAL);
 		}
 		if (!(pfd->revents & POLLIN))
@@ -962,7 +962,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 			    sizeof(peer->rbuf->buf) - peer->rbuf->wpos)) ==
 			    -1) {
 				if (errno != EINTR) {
-					log_err(peer, "read error");
+					log_peer_err(peer, "read error");
 					bgp_fsm(peer, EVNT_CON_FATAL);
 				}
 				return (1);
@@ -1030,7 +1030,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 	p = data;
 	for (i = 0; i < 16; i++) {
 		if (memcmp(p, &one, 1)) {
-			log_errx(peer, "received message: sync error");
+			log_peer_errx(peer, "received message: sync error");
 			session_notification(peer, ERR_HEADER, ERR_HDR_SYNC,
 			    NULL, 0);
 			bgp_fsm(peer, EVNT_CON_FATAL);
@@ -1044,7 +1044,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 	memcpy(type, p, 1);
 
 	if (*len < MSGSIZE_HEADER || *len > MAX_PKTSIZE) {
-		log_errx(peer, "received message: illegal length: %u byte",
+		log_peer_errx(peer, "received message: illegal length: %u byte",
 		    *len);
 		session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 		    &olen, sizeof(olen));
@@ -1054,7 +1054,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 	switch (*type) {
 	case OPEN:
 		if (*len < MSGSIZE_OPEN_MIN) {
-			log_errx(peer,
+			log_peer_errx(peer,
 			    "received OPEN: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
@@ -1063,7 +1063,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		break;
 	case NOTIFICATION:
 		if (*len < MSGSIZE_NOTIFICATION_MIN) {
-			log_errx(peer,
+			log_peer_errx(peer,
 			    "received NOTIFICATION: illegal len: %u byte",
 			    *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
@@ -1073,7 +1073,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		break;
 	case UPDATE:
 		if (*len < MSGSIZE_UPDATE_MIN) {
-			log_errx(peer,
+			log_peer_errx(peer,
 			    "received UPDATE: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
@@ -1082,7 +1082,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		break;
 	case KEEPALIVE:
 		if (*len != MSGSIZE_KEEPALIVE) {
-			log_errx(peer,
+			log_peer_errx(peer,
 			    "received KEEPALIVE: illegal len: %u byte", *len);
 			session_notification(peer, ERR_HEADER, ERR_HDR_LEN,
 			    &olen, sizeof(olen));
@@ -1090,7 +1090,7 @@ parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
 		}
 		break;
 	default:
-		log_errx(peer, "received msg with unknown type %u", *type);
+		log_peer_errx(peer, "received msg with unknown type %u", *type);
 		session_notification(peer, ERR_HEADER, ERR_HDR_TYPE,
 		    type, 1);
 		return (-1);
@@ -1116,8 +1116,8 @@ parse_open(struct peer *peer)
 
 	if (version != BGP_VERSION) {
 		if (version > BGP_VERSION)
-			log_errx(peer, "peer wants unrecognized version %u",
-			    version);
+			log_peer_errx(peer,
+			    "peer wants unrecognized version %u", version);
 			session_notification(peer, ERR_OPEN,
 			    ERR_OPEN_VERSION, &version, sizeof(version));
 		return (-1);
@@ -1127,7 +1127,7 @@ parse_open(struct peer *peer)
 	p += sizeof(as);
 
 	if (peer->conf.remote_as != ntohs(as)) {
-		log_errx(peer, "peer AS %u unacceptable", ntohs(as));
+		log_peer_errx(peer, "peer AS %u unacceptable", ntohs(as));
 		session_notification(peer, ERR_OPEN, ERR_OPEN_AS, NULL, 0);
 		return (-1);
 	}
@@ -1137,7 +1137,7 @@ parse_open(struct peer *peer)
 
 	holdtime = ntohs(oholdtime);
 	if (holdtime && holdtime < conf->min_holdtime) {
-		log_errx(peer, "peer requests unacceptable holdtime %u",
+		log_peer_errx(peer, "peer requests unacceptable holdtime %u",
 		    holdtime);
 		session_notification(peer, ERR_OPEN, ERR_OPEN_HOLDTIME,
 		    NULL, 0);
@@ -1153,7 +1153,8 @@ parse_open(struct peer *peer)
 
 	/* check bgpid for validity, must be a valid ip address - HOW? */
 	/* if ( bgpid invalid ) {
-		log_errx(peer, "peer BGPID %lu unacceptable", ntohl(bgpid));
+		log_peer_errx(peer, "peer BGPID %lu unacceptable",
+		    ntohl(bgpid));
 		session_notification(peer, ERR_OPEN, ERR_OPEN_BGPID,
 		    NULL, 0);
 		return (-1);
