@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.54 2004/01/13 13:26:14 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.55 2004/01/14 13:38:21 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -268,6 +268,7 @@ struct syn_cache {
 #define	SCF_DEAD		0x0004		/* this entry to be released */
 #define	SCF_SACK_PERMIT		0x0008		/* permit sack */
 #define	SCF_ECN_PERMIT		0x0010		/* permit ecn */
+#define	SCF_SIGNATURE		0x0020		/* enforce tcp signatures */
 
 	struct mbuf *sc_ipopts;			/* IP options */
 	u_int16_t sc_peermaxseg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.59 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.60 2004/01/14 13:38:21 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -100,6 +100,7 @@
 
 #ifdef INET6
 #include <netinet6/tcpipv6.h>
+#include <netinet6/in6_var.h>
 #endif /* INET6 */
 
 #ifdef TCP_SIGNATURE
@@ -934,29 +935,44 @@ send:
 				ippseudo.ippseudo_dst = ipovly->ih_dst;
 				ippseudo.ippseudo_pad = 0;
 				ippseudo.ippseudo_p   = IPPROTO_TCP;
-				ippseudo.ippseudo_len = ipovly->ih_len + len +
+				ippseudo.ippseudo_len = ntohs(ipovly->ih_len) + len +
 				    optlen;
+				ippseudo.ippseudo_len = htons(ippseudo.ippseudo_len);
 				MD5Update(&ctx, (char *)&ippseudo,
 					sizeof(struct ippseudo));
-				MD5Update(&ctx, mtod(m, caddr_t) +
-					sizeof(struct ip),
-					sizeof(struct tcphdr));
 			}
 			break;
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
 			{
-				static int printed = 0;
+				struct ip6_hdr_pseudo ip6pseudo;
+				struct ip6_hdr *ip6;
 
-				if (!printed) {
-					printf("error: TCP MD5 support for "
-						"IPv6 not yet implemented.\n");
-					printed = 1;
-				}
+				ip6 = mtod(m, struct ip6_hdr *);
+				bzero(&ip6pseudo, sizeof(ip6pseudo));
+				ip6pseudo.ip6ph_src = ip6->ip6_src;
+				ip6pseudo.ip6ph_dst = ip6->ip6_dst;
+				in6_clearscope(&ip6pseudo.ip6ph_src);
+				in6_clearscope(&ip6pseudo.ip6ph_dst);
+				ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
+				ip6pseudo.ip6ph_len =
+				    htonl(sizeof(struct tcphdr) + len + optlen);
+ 
+				MD5Update(&ctx, (char *)&ip6pseudo,
+				    sizeof(ip6pseudo));
 			}
 			break;
 #endif /* INET6 */
+		}
+
+		{
+			u_int16_t thsum = th->th_sum;
+
+			/* RFC 2385 requires th_sum == 0 */
+			th->th_sum = 0;
+			MD5Update(&ctx, (char *)th, sizeof(struct tcphdr));
+			th->th_sum = thsum;
 		}
 
 		if (len && m_apply(m, hdrlen, len, tcp_signature_apply,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.143 2004/01/13 13:26:14 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.144 2004/01/14 13:38:21 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2190,6 +2190,9 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 	caddr_t sigp = NULL;
 #endif /* TCP_SIGNATURE */
 
+#ifdef TCP_SIGNATURE
+	if (cp)
+#endif /* TCP_SIGNATURE */
 	for (; cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[0];
 		if (opt == TCPOPT_EOL)
@@ -2290,16 +2293,18 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 
 		switch (tp->pf) {
 			case 0:
+#ifdef INET
 			case AF_INET:
 				sa.sa.sa_len = sizeof(struct sockaddr_in);
 				sa.sa.sa_family = AF_INET;
-				sa.sin.sin_addr = tp->t_inpcb->inp_laddr;
+				sa.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
 				break;
+#endif
 #ifdef INET6
 			case AF_INET6:
 				sa.sa.sa_len = sizeof(struct sockaddr_in6);
 				sa.sa.sa_family = AF_INET6;
-				sa.sin6.sin6_addr = tp->t_inpcb->inp_laddr6;
+				sa.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
 				break;
 #endif /* INET6 */
 		}
@@ -2321,9 +2326,9 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 					struct ippseudo ippseudo;
 
 					ippseudo.ippseudo_src =
-						tp->t_inpcb->inp_faddr;
+					    mtod(m, struct ip *)->ip_src;
 					ippseudo.ippseudo_dst =
-						tp->t_inpcb->inp_laddr;
+					    mtod(m, struct ip *)->ip_dst;
 					ippseudo.ippseudo_pad = 0;
 					ippseudo.ippseudo_p = IPPROTO_TCP;
 					ippseudo.ippseudo_len = htons(
@@ -2337,14 +2342,21 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 #ifdef INET6
 			case AF_INET6:
 				{
-					static int printed = 0;
-
-					if (!printed) {
-						printf("error: TCP MD5 support"
-							" for IPv6 not yet"
-							" implemented.\n");
-						printed = 1;
-					}
+					struct ip6_hdr_pseudo ip6pseudo;
+	 
+					bzero(&ip6pseudo, sizeof(ip6pseudo));
+					ip6pseudo.ip6ph_src =
+					    mtod(m, struct ip6_hdr *)->ip6_src;
+					ip6pseudo.ip6ph_dst =
+					    mtod(m, struct ip6_hdr *)->ip6_dst;
+					in6_clearscope(&ip6pseudo.ip6ph_src);
+					in6_clearscope(&ip6pseudo.ip6ph_dst);
+					ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
+					ip6pseudo.ip6ph_len = htonl(m->m_pkthdr.len -
+					    iphlen);
+	    
+					MD5Update(&ctx, (char *)&ip6pseudo,
+					    sizeof(ip6pseudo));
 				}
 				break;
 #endif /* INET6 */
@@ -3765,6 +3777,10 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	if (sc->sc_flags & SCF_SACK_PERMIT)
 		tp->t_flags |= TF_SACK_PERMIT;
 #endif
+#ifdef TCP_SIGNATURE
+	if (sc->sc_flags & SCF_SIGNATURE)
+		tp->t_flags |= TF_SIGNATURE;
+#endif
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
 	tp->t_rcvtime = tcp_now;
@@ -3929,6 +3945,34 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
 
+#ifdef TCP_SIGNATURE
+	if (optp || (tp->t_flags & TF_SIGNATURE)) {
+#else
+	if (optp) {
+#endif
+		tb.t_inpcb = tp->t_inpcb; /* XXX */
+		tb.pf = tp->pf;
+#ifdef TCP_SACK
+		tb.sack_disable = tcp_do_sack ? 0 : 1;
+#endif
+		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
+#ifdef TCP_SIGNATURE
+		if (tp->t_flags & TF_SIGNATURE)
+			tb.t_flags |= TF_SIGNATURE;
+#endif
+
+		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi))
+			return (0);
+
+		if (optp) {
+			/* Update t_maxopd and t_maxseg after all options are processed */
+			(void) tcp_mss(tp, oi->maxseg);	/* sets t_maxseg */
+			if (oi->maxseg)
+				tcp_mss_update(tp);
+		}
+	} else
+		tb.t_flags = 0;
+
 	switch (src->sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -3941,24 +3985,6 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 	default:
 		ipopts = NULL;
 	}
-
-	if (optp) {
-		tb.t_inpcb = tp->t_inpcb; /* XXX */
-		tb.pf = tp->pf;
-#ifdef TCP_SACK
-		tb.sack_disable = tcp_do_sack ? 0 : 1;
-#endif
-		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
-		if (tcp_dooptions(&tb, optp, optlen, th, m, iphlen, oi))
-			return (0);
-
-		/* Update t_maxopd and t_maxseg after all options are processed */
-		(void) tcp_mss(tp, oi->maxseg);	/* sets t_maxseg */
-		if (oi->maxseg)
-			tcp_mss_update(tp);
-
-	} else
-		tb.t_flags = 0;
 
 	/*
 	 * See if we already have an entry for this connection.
@@ -4045,6 +4071,10 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 	if (!tb.sack_disable && (tb.t_flags & TF_SACK_PERMIT))
 		sc->sc_flags |= SCF_SACK_PERMIT;
 #endif
+#ifdef TCP_SIGNATURE
+	if (tb.t_flags & TF_SIGNATURE)
+		sc->sc_flags |= SCF_SIGNATURE;
+#endif
 	sc->sc_tp = tp;
 	if (syn_cache_respond(sc, m) == 0) {
 		syn_cache_insert(sc, tp);
@@ -4095,6 +4125,9 @@ syn_cache_respond(sc, m)
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
 #ifdef TCP_SACK
 	    ((sc->sc_flags & SCF_SACK_PERMIT) ? 4 : 0) +
+#endif
+#ifdef TCP_SIGNATURE
+	    ((sc->sc_flags & SCF_SIGNATURE) ? TCPOLEN_SIGNATURE + 2 : 0) +
 #endif
 	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
 
@@ -4197,8 +4230,95 @@ syn_cache_respond(sc, m)
 	}
 
 #ifdef TCP_SIGNATURE
-	/* XXX */
-#endif
+	if (sc->sc_flags & SCF_SIGNATURE) {
+		MD5_CTX ctx;
+		union sockaddr_union sa;
+		struct tdb *tdb;
+
+		bzero(&sa, sizeof(union sockaddr_union));
+		sa.sa.sa_len = sc->sc_dst.sa.sa_len;
+		sa.sa.sa_family = sc->sc_dst.sa.sa_family;
+
+		switch (sc->sc_src.sa.sa_family) {
+		case 0:	/*default to PF_INET*/
+#ifdef INET
+		case AF_INET:
+			sa.sin.sin_addr = mtod(m, struct ip *)->ip_dst;
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			sa.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
+			break;
+#endif /* INET6 */
+		}
+
+		tdb = gettdb(0, &sa, IPPROTO_TCP);
+		if (tdb == NULL) {
+			if (m)
+				m_freem(m);
+			return (EPERM);
+		}
+
+		MD5Init(&ctx);
+
+		switch (sc->sc_src.sa.sa_family) {
+		case 0:	/*default to PF_INET*/
+#ifdef INET
+		case AF_INET:
+			{
+				struct ippseudo ippseudo;
+
+				ippseudo.ippseudo_src = ip->ip_src;
+				ippseudo.ippseudo_dst = ip->ip_dst;
+				ippseudo.ippseudo_pad = 0;
+				ippseudo.ippseudo_p   = IPPROTO_TCP;
+				ippseudo.ippseudo_len = htons(tlen - hlen);
+
+				MD5Update(&ctx, (char *)&ippseudo,
+				    sizeof(struct ippseudo));
+
+			}
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
+			{
+				struct ip6_hdr_pseudo ip6pseudo;
+
+				bzero(&ip6pseudo, sizeof(ip6pseudo));
+				ip6pseudo.ip6ph_src = ip6->ip6_src;
+				ip6pseudo.ip6ph_dst = ip6->ip6_dst;
+				in6_clearscope(&ip6pseudo.ip6ph_src);
+				in6_clearscope(&ip6pseudo.ip6ph_dst);
+				ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
+				ip6pseudo.ip6ph_len = htonl(tlen - hlen);
+
+				MD5Update(&ctx, (char *)&ip6pseudo,
+				    sizeof(ip6pseudo));
+			}
+			break;
+#endif /* INET6 */
+		}
+
+		th->th_sum = 0;
+		MD5Update(&ctx, (char *)th, sizeof(struct tcphdr));
+		MD5Update(&ctx, tdb->tdb_amxkey, tdb->tdb_amxkeylen);
+
+		/* Send signature option */
+		*(optp++) = TCPOPT_SIGNATURE;
+		*(optp++) = TCPOLEN_SIGNATURE;
+
+		MD5Final(optp, &ctx);
+		optp += 16;
+
+		/* Pad options list to the next 32 bit boundary and
+		 * terminate it.
+		 */
+		*optp++ = TCPOPT_NOP;
+		*optp++ = TCPOPT_EOL;
+	}
+#endif /* TCP_SIGNATURE */
 
 	/* Compute the packet's checksum. */
 	switch (sc->sc_src.sa.sa_family) {
