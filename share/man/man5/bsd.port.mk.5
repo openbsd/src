@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.96 2003/07/09 10:37:51 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.97 2003/07/09 20:23:34 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -602,7 +602,7 @@ Display the errors before making any target, and if any error starts with
 .Qq Fatal: ,
 do not make anything.
 For instance:
-.Bd -literal -indent
+.Bd -literal -offset indent
 \&.if !defined(COMMENT)
 ERRORS+="Fatal: Missing comment"
 \&.endif
@@ -614,7 +614,7 @@ is not empty), this is the contents of a case statement, used to extract files.
 Fragments are automatically appended to extract tar and zip
 archives, so that the default case is equivalent to the following shell
 fragment:
-.Bd -literal -indent
+.Bd -literal
 set -e
 cd ${WRKDIR}
 for archive in ${EXTRACT_ONLY}
@@ -873,7 +873,7 @@ distribution patches.
 Fragments are automatically appended to handle gzip'ed and bzip'ed
 patches, so that the default case is equivalent to the following shell
 fragment:
-.Bd -literal -indent
+.Bd -literal
 set -e
 cd ${FULLDISTDIR}
 for patchfile in ${_PATCHFILES}
@@ -1521,10 +1521,10 @@ be taken care of by the package itself (for instance, ldconfig, or
 texinfo's install-info).
 .Pp
 If no do-install override is present, the port is installed using
-.Bd -literal -indent offset
-    env -i ${MAKE_ENV}
-    PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
-    ${MAKE_PROGRAM} ${FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
+.Bd -literal -offset 2n
+env -i ${MAKE_ENV}
+PREFIX=${WRKINST}${PREFIX} ${DESTDIRNAME}=${WRKINST} TRUEPREFIX=${PREFIX}
+${MAKE_PROGRAM} ${FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
 .Ed
 .Pp
 Note that this does set both PREFIX and ${DESTDIRNAME}.
@@ -1551,14 +1551,14 @@ When building the port, set
 .Li "FLAVOR='option1 option2...'"
 to build a specific flavor of the port.
 The Makefile should test the value of FLAVOR as follows:
-.Bd -literal
-    FLAVOR?=
-    .if ${FLAVOR:L:Moption1}
-    # what to do if option1
-    .endif
-    .if ${FLAVOR:L:Moption2}
-    # what to do if option2
-    .endif
+.Bd -literal -offset indent
+FLAVOR?=
+\&.if ${FLAVOR:L:Moption1}
+# what to do if option1
+\&.endif
+\&.if ${FLAVOR:L:Moption2}
+# what to do if option2
+\&.endif
 .Ed
 .Pp
 .Pa bsd.port.mk
@@ -1658,7 +1658,7 @@ in the packing-list template trigger the inclusion of the
 .Pa ${PKGDIR}/PFRAG.shared${SUBPACKAGE}
 or
 .Pa ${PKGDIR}/PFRAG.no-shared${SUBPACKAGE} .
-.br
+.Pp
 Similarly, if FLAVORS lists flav1, then the line
 .Li "%%flav1%%"
 (resp.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.9 2003/06/06 13:28:13 jmc Exp $
+.\"	$OpenBSD: elf.5,v 1.10 2003/07/09 20:23:33 jmc Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -127,7 +127,6 @@ typedef struct {
         Elf32_Half      e_shstrndx;
 } Elf32_Ehdr;
 .Ed
-.Pp
 .Bd -literal -offset indent
 typedef struct {
 	unsigned char   e_ident[EI_NIDENT];
@@ -160,7 +159,7 @@ and may contain values which start with the prefix
 .Sy ELF .
 The following macros are defined:
 .Pp
-.Bl -tag -width "EI_VERSION" -compact .\" EI_ABIVERSION
+.Bl -tag -width "EI_VERSION" -compact \" EI_ABIVERSION
 .It Dv EI_MAG0
 The first byte of the magic number.
 It must be filled with
@@ -452,7 +451,6 @@ and
 members.
 As with the ELF executable header, the program header
 also has different versions depending on the architecture:
-.Pp
 .Bd -literal -offset indent
 typedef struct {
         Elf32_Word      p_type;
@@ -465,7 +463,6 @@ typedef struct {
         Elf32_Word      p_align;
 } Elf32_Phdr;
 .Ed
-.Pp
 .Bd -literal -offset indent
 typedef struct {
         Elf64_Half      p_type;
@@ -674,7 +671,6 @@ typedef struct {
 	Elf32_Word      sh_entsize;
 } Elf32_Shdr;
 .Ed
-.Pp
 .Bd -literal -offset indent
 typedef struct {
 	Elf64_Half      sh_name;
@@ -1119,7 +1115,6 @@ An object file's symbol table holds information needed to locate and
 relocate a program's symbolic definitions and references.
 A symbol table
 index is a subscript into this array.
-.Pp
 .Bd -literal -offset indent
 typedef struct {
 	Elf32_Word      st_name;
@@ -1130,7 +1125,6 @@ typedef struct {
 	Elf32_Half      st_shndx;
 } Elf32_Sym;
 .Ed
-.Pp
 .Bd -literal -offset indent
 typedef struct {
 	Elf64_Half      st_name;
@@ -1258,7 +1252,6 @@ program image.
 Relocation entries are these data.
 .Pp
 Relocation structures that do not need an addend:
-.Pp
 .Bd -literal -offset indent
 typedef struct {
 	Elf32_Addr      r_offset;
@@ -1273,7 +1266,6 @@ typedef struct {
 .Ed
 .Pp
 Relocation structures that need an addend:
-.Pp
 .Bd -literal -offset indent
 typedef struct {
 	Elf32_Addr      r_offset;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: files.conf.5,v 1.6 2003/05/10 21:27:58 jmc Exp $
+.\"	$OpenBSD: files.conf.5,v 1.7 2003/07/09 20:23:34 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat.
 .\" All rights reserved.
@@ -43,7 +43,7 @@ The
 .Pa files.*
 rules base are simple, human-readable, text files.
 Empty lines, as well as text prefixed by the
-.Dq \&#
+.Dq #
 character, are ignored.
 .\"
 .Ss Device tree concept
@@ -64,7 +64,7 @@ which is itself reported as attached to a fictitious
 node.
 There is no restriction on the
 .Dq children
-a device node may have ;
+a device node may have;
 some device drivers can attach themselves to different kinds of parent devices.
 For example, the logical
 .Xr scsibus 4
@@ -294,7 +294,7 @@ Dependencies are based upon attributes and device names.
 Multiple dependencies can be written using the
 .Dq \&|
 and
-.Dq \&&
+.Dq &
 operators.
 For example, the line
 .Bl -item -offset indent -compact
@@ -362,7 +362,7 @@ rule, even if it is never referenced from the kernel configuration file.
 .\"
 .Pa sys/arch/machine/conf/files.machine
 must also supply the following special commands:
-.Bl -tag -width maxpartitions .\" -compact
+.Bl -tag -width maxpartitions \" -compact
 .It Ar maxpartitions
 Defines how many partitions are available on disk block devices, usually 16.
 This value is used by
@@ -380,7 +380,7 @@ in the kernel configuration file does not fit in the specified range.
 .El
 .\"
 .Sh FILES
-.Bl -tag -width XXX -compact .\" deliberately small width
+.Bl -tag -width XXX -compact \" deliberately small width
 .It Pa sys/arch/machine/conf/files.machine
 Rules for architecture-dependent files, for the
 .Dq machine
