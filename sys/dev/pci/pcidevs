@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.384 2001/03/29 17:29:37 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.385 2001/04/08 17:31:34 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1627,6 +1627,7 @@ product SIS 5595		0x0009	5595 PCI System I/O Chipset
 product SIS 5597VGA		0x0200	5597/5598 VGA
 product SIS 6215		0x0204	6215
 product SIS 86C205_2		0x0205	86C205
+product SIS 300			0x0300	300/305/630 VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 85C596		0x0496	85C596
