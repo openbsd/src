@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.9 2002/03/25 19:48:49 mickey Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.10 2002/05/09 21:26:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -504,6 +504,7 @@ struct an_ltv_caps {
 	u_int16_t		an_softcaps;		/* 0x7C */
 	u_int16_t		an_bootblockrev;	/* 0x7E */
 	u_int16_t		an_req_hw_support;	/* 0x80 */
+	u_int16_t		an_rsvd1;		/* 0x82 */
 };
 
 /*
