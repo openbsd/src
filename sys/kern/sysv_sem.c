@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.27 2004/03/17 18:04:08 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.28 2004/03/17 19:54:24 millert Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -663,7 +663,7 @@ sys_semop(struct proc *p, void *v, register_t *retval)
 
 		/*
 		 * Is it really morning, or was our sleep interrupted?
-		 * Delayed check of tsleep() return code because we
+		 * (Delayed check of tsleep() return code because we
 		 * need to decrement sem[nz]cnt either way.)
 		 */
 		if (error != 0) {
