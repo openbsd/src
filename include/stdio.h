@@ -1,3 +1,4 @@
+/*	$OpenBSD: stdio.h,v 1.5 1996/07/25 05:47:59 downsj Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -233,6 +234,12 @@ size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));
 char	*gets __P((char *));
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(__SYS_ERRLIST)
+#define __SYS_ERRLIST
+
+extern int sys_nerr;			/* perror(3) external variables */
+extern const char *const sys_errlist[];
+#endif
 void	 perror __P((const char *));
 int	 printf __P((const char *, ...));
 int	 putc __P((int, FILE *));
