@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.1 1997/05/07 12:46:57 niklas Exp $
+#	$OpenBSD: install.sub,v 1.2 1997/05/09 03:42:57 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ if [ X$EDITOR = X ]; then
 	else
 		EDITOR=ed
 	fi
+	export EDITOR
 fi
 
 getresp() {
