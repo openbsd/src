@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.3 2004/07/29 18:23:25 jfb Exp $	*/
+/*	$OpenBSD: server.c,v 1.4 2004/07/30 23:12:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -66,6 +66,7 @@ cvs_server(int argc, char **argv)
 {
 	ssize_t ret;
 	char reqbuf[128];
+	struct cvsroot *root;
 
 	if (argc != 1) {
 		return (EX_USAGE);
@@ -81,7 +82,7 @@ cvs_server(int argc, char **argv)
 	}
 
 
-	if (cvs_sock_connect(cvs_root->cr_dir) < 0) {
+	if (cvs_sock_connect(root->cr_dir) < 0) {
 		cvs_log(LP_ERR, "failed to connect to CVS server socket");
 		return (-1);
 	}
