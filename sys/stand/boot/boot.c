@@ -1,6 +1,7 @@
-/*	$OpenBSD: boot.c,v 1.23 2000/12/29 19:24:44 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.24 2003/04/17 12:06:05 mickey Exp $	*/
 
 /*
+ * Copyright (c) 2003 Dale Rahn
  * Copyright (c) 1997,1998 Michael Shalayeff
  * All rights reserved.
  *
@@ -36,7 +37,10 @@
 #include <sys/reboot.h>
 #include <sys/stat.h>
 #include <libsa.h>
+#include <lib/libsa/loadfile.h>
+
 #include "cmd.h"
+
 
 static const char *const kernels[] = {
 	"/bsd",
@@ -54,6 +58,7 @@ boot(bootdev)
 {
 	register const char *bootfile = kernels[0];
 	register int i = 0, try = 0, st;
+	u_long marks[MARK_MAX];
 
 	machdep();
 
@@ -76,7 +81,9 @@ boot(bootdev)
 		st = 0;
 
 		printf("booting %s: ", cmd.path);
-		exec(cmd.path, cmd.addr, cmd.boothowto);
+		marks[MARK_START] = cmd.addr;
+		if (loadfile(cmd.path, marks, LOAD_ALL) >= 0)
+			break;
 
 		if (kernels[++i] == NULL) {
 			try += 1;
@@ -94,6 +101,9 @@ boot(bootdev)
 			cmd.timeout = 0;
 		}
 	}
+
+	/* exec */
+	run_loadfile(marks, cmd.boothowto);
 }
 
 #ifdef _TEST
