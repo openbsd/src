@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.22 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.23 2004/12/27 15:53:13 miod Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -678,7 +678,7 @@ osiop_scsidone(acb, status)
 		    ~(1 << periph->lun);
 		sc->sc_active--;
 		OSIOP_TRACE('d', 'a', status, 0);
-	} else if (sc->ready_list.tqh_last == TAILQ_NEXT(acb, chain)) {
+	} else if (sc->ready_list.tqh_last == &TAILQ_NEXT(acb, chain)) {
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
 		OSIOP_TRACE('d', 'r', status, 0);
 	} else {
