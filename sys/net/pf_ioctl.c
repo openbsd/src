@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.73 2003/06/30 10:50:16 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.74 2003/06/30 17:45:01 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1195,6 +1195,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
+	case DIOCGETSTATUS: {
+		struct pf_status *s = (struct pf_status *)addr;
+		bcopy(&pf_status, s, sizeof(struct pf_status));
+		break;
+	}
+
 	case DIOCSETSTATUSIF: {
 		struct pfioc_if	*pi = (struct pfioc_if *)addr;
 		struct ifnet	*ifp;
@@ -1202,21 +1208,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pi->ifname[0] == 0) {
 			status_ifp = NULL;
 			bzero(pf_status.ifname, IFNAMSIZ);
-		} else
-			if ((ifp = ifunit(pi->ifname)) == NULL)
-				error = EINVAL;
-			else {
-				status_ifp = ifp;
-				strlcpy(pf_status.ifname, ifp->if_xname,
-				    IFNAMSIZ);
-			}
-		break;
-	}
-
-	case DIOCGETSTATUS: {
-		struct pf_status *s = (struct pf_status *)addr;
-		bcopy(&pf_status, s, sizeof(struct pf_status));
-		break;
+			break;
+		}
+		if ((ifp = ifunit(pi->ifname)) == NULL) {
+			error = EINVAL;
+			break;
+		} else if (ifp == status_ifp)
+			break;
+		status_ifp = ifp;
+		/* fallthrough into DIOCCLRSTATUS */
 	}
 
 	case DIOCCLRSTATUS: {
