@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.25 1999/10/29 14:06:16 art Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.26 2000/01/17 16:26:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.25 1999/10/29 14:06:16 art Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.26 2000/01/17 16:26:19 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,6 +79,12 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.25 1999/10/29 14:06:16 art Exp $";
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
+
+#include <netdb.h>
 #include <arpa/inet.h>
 
 #include <sys/pipe.h>
@@ -749,6 +755,38 @@ bad:
 	printf("* error\n");
 }
 
+#ifdef INET6
+const char *
+inet6_addrstr(p)
+	struct in6_addr *p;
+{
+	struct sockaddr_in6 sin6;
+	static char hbuf[NI_MAXHOST];
+#ifdef NI_WITHSCOPEID
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST
+#endif
+
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_addr = *p;
+	if (IN6_IS_ADDR_LINKLOCAL(p) &&
+	    *(u_int16_t *)&sin6.sin6_addr.s6_addr[2] != 0) {
+		sin6.sin6_scope_id =
+			ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
+		sin6.sin6_addr.s6_addr[2] = sin6.sin6_addr.s6_addr[3] = 0;
+	}
+
+	if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
+			hbuf, sizeof(hbuf), NULL, 0, niflags))
+		return "invalid";
+
+	return hbuf;
+}
+#endif
+
 void
 socktrans(sock, i)
 	struct socket *sock;
@@ -770,6 +808,9 @@ socktrans(sock, i)
 	struct unpcb	unpcb;
 	int len;
 	char dname[32];
+#ifdef INET6
+	char xaddrbuf[NI_MAXHOST + 2];
+#endif
 
 	PREFIX(i);
 
@@ -861,6 +902,61 @@ socktrans(sock, i)
 		} else if (so.so_pcb)
 			printf(" %p", so.so_pcb);
 		break;
+#ifdef INET6
+	case AF_INET6:
+		getinetproto(proto.pr_protocol);
+		if (proto.pr_protocol == IPPROTO_TCP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+			    sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+				dprintf("can't read inpcb at %p", so.so_pcb);
+				goto bad;
+			}
+			printf(" %p", inpcb.inp_ppcb);
+			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+			    inet6_addrstr(&inpcb.inp_laddr6));
+			printf(" %s:%d",
+			    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_laddr6) ? "*" :
+			    xaddrbuf,
+			    ntohs(inpcb.inp_lport));
+			if (inpcb.inp_fport) {
+				if (so.so_state & SS_CONNECTOUT)
+					printf(" --> ");
+				else
+					printf(" <-- ");
+				snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+				    inet6_addrstr(&inpcb.inp_faddr6));
+				printf("%s:%d",
+				    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_faddr6) ? "*" :
+				    xaddrbuf,
+				    ntohs(inpcb.inp_fport));
+			}
+		} else if (proto.pr_protocol == IPPROTO_UDP) {
+			if (so.so_pcb == NULL)
+				break;
+			if (kvm_read(kd, (u_long)so.so_pcb, (char *)&inpcb,
+			    sizeof(struct inpcb)) != sizeof(struct inpcb)) {
+				dprintf("can't read inpcb at %p", so.so_pcb);
+				goto bad;
+			}
+			snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+			    inet6_addrstr(&inpcb.inp_laddr6));
+			printf(" %s:%d",
+			    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_laddr6) ? "*" :
+			    xaddrbuf,
+			    ntohs(inpcb.inp_lport));
+			if (inpcb.inp_fport)
+				snprintf(xaddrbuf, sizeof(xaddrbuf), "[%s]",
+				    inet6_addrstr(&inpcb.inp_faddr6));
+				printf(" <-> %s:%d",
+				    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_faddr6) ? "*" :
+				    xaddrbuf,
+				    ntohs(inpcb.inp_fport));
+		} else if (so.so_pcb)
+			printf(" %p", so.so_pcb);
+		break;
+#endif
 	case AF_UNIX:
 		/* print address of pcb and connected pcb */
 		if (so.so_pcb) {
