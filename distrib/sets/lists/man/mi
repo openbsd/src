@@ -1267,6 +1267,7 @@
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipsend.0
 ./usr/share/man/cat5/isakmpd.conf.0
+./usr/share/man/cat5/isakmpd.policy.0
 ./usr/share/man/cat5/keynote.0
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
