@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.171 2001/07/30 14:15:59 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.172 2001/08/23 11:06:27 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -354,7 +354,7 @@ cpu_startup()
 
 	/*
 	 * Initialize error message buffer (at end of core).
-	 * (space reserved in /boot)
+	 * (space reserved in pmap_bootstrap)
 	 */
 	pa = avail_end;
 	for (i = 0; i < btoc(MSGBUFSIZE); i++, pa += NBPG)
