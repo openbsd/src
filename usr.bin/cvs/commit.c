@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.6 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.7 2004/12/02 19:23:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -42,16 +42,9 @@
 #include "proto.h"
 
 
-LIST_HEAD(ci_list, ci_file);
-
-struct ci_file {
-	char   *ci_path;
-	RCSNUM *ci_rev;
-	LIST_ENTRY(ci_file) ci_link;
-};
 
 
-
+int    cvs_commit_prepare  (CVSFILE *, void *);
 int    cvs_commit_file     (CVSFILE *, void *);
 
 
@@ -64,15 +57,16 @@ int    cvs_commit_file     (CVSFILE *, void *);
 int
 cvs_commit(int argc, char **argv)
 {
-	int ch, recurse, flags;
+	int i, ch, recurse, flags;
 	char *msg, *mfile;
-	struct ci_list cl;
+	struct cvs_flist cl;
+	struct cvsroot *root;
 
-	flags = 0;
+	flags = CF_RECURSE|CF_IGNORE|CF_SORT;
 	recurse = 1;
 	mfile = NULL;
 	msg = NULL;
-	LIST_INIT(&cl);
+	TAILQ_INIT(&cl);
 
 	while ((ch = getopt(argc, argv, "F:flm:R")) != -1) {
 		switch (ch) {
@@ -107,18 +101,62 @@ cvs_commit(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0)
+	if (argc == 0) {
 		cvs_files = cvs_file_get(".", flags);
+	}
 	else {
 		cvs_files = cvs_file_getspec(argv, argc, flags);
 	}
 	if (cvs_files == NULL)
 		return (EX_DATAERR);
 
+	cvs_file_examine(cvs_files, cvs_commit_prepare, &cl);
+
+	if (msg == NULL) {
+		msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files), &cl);
+		if (msg == NULL)
+			return (1);
+	}
+
+	root = CVS_DIR_ROOT(cvs_files);
+	cvs_connect(root);
+	cvs_logmsg_send(root, msg);
+
 	cvs_file_examine(cvs_files, cvs_commit_file, &cl);
 
-	cvs_senddir(cvs_files->cf_ddat->cd_root, cvs_files);
-	cvs_sendreq(cvs_files->cf_ddat->cd_root, CVS_REQ_CI, NULL);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		cvs_senddir(root, cvs_files);
+		if (argc > 0) {
+			for (i = 0; i < argc; i++)
+				cvs_sendarg(root, argv[i], 0);
+		}
+		cvs_sendreq(root, CVS_REQ_CI, NULL);
+	}
+
+	return (0);
+}
+
+
+/*
+ * cvs_commit_prepare()
+ *
+ * Examine the file <cf> to see if it will be part of the commit, in which
+ * case it gets added to the list passed as second argument.
+ */
+
+int
+cvs_commit_prepare(CVSFILE *cf, void *arg)
+{
+	CVSFILE *copy;
+	struct cvs_flist *clp = (struct cvs_flist *)arg;
+
+	if ((cf->cf_type == DT_REG) && (cf->cf_cvstat == CVS_FST_MODIFIED)) {
+		copy = cvs_file_copy(cf);
+		if (copy == NULL)
+			return (-1);
+
+		TAILQ_INSERT_TAIL(clp, copy, cf_list);
+	}
 
 	return (0);
 }
@@ -137,14 +175,14 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 	RCSFILE *rf;
 	struct cvsroot *root;
 	struct cvs_ent *entp;
-	struct ci_list *cl;
 
-	cl = (struct ci_list *)arg;
+	rf = NULL;
+	repo = NULL;
 
 	if (cf->cf_type == DT_DIR) {
 		if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-			root = cf->cf_ddat->cd_root;
-			if ((cf->cf_parent == NULL) ||
+			root = CVS_DIR_ROOT(cf);
+			if ((cf->cf_parent != NULL) &&
 			    (root != cf->cf_parent->cf_ddat->cd_root)) {
 				cvs_connect(root);
 			}
@@ -154,16 +192,13 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 
 		return (0);
 	}
-	else
-		root = cf->cf_parent->cf_ddat->cd_root;
 
-	rf = NULL;
-	if (cf->cf_parent != NULL) {
+
+	root = CVS_DIR_ROOT(cf);
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
+	if (cf->cf_parent != NULL)
 		repo = cf->cf_parent->cf_ddat->cd_repo;
-	}
-	else {
-		repo = NULL;
-	}
 
 	entp = cvs_ent_getent(fpath);
 	if (entp == NULL)
