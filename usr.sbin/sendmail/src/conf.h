@@ -512,6 +512,7 @@ typedef int		pid_t;
 */
 
 #if defined(BSD4_4) && !defined(__bsdi__)
+# include <paths.h>
 # define HASUNSETENV	1	/* has unsetenv(3) call */
 # define USESETEUID	1	/* has useable seteuid(2) call */
 # define HASFCHMOD	1	/* has fchmod(2) syscall */
