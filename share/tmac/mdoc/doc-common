@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.14 1999/07/10 02:04:28 aaron Exp $
+.\"	$OpenBSD: doc-common,v 1.15 1999/07/10 02:21:18 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,9 @@
 .nr Pc 3
 .nr Po 12n
 .nr Pq 12n
+.nr Qc 3
 .nr Ql 16n
+.nr Qo 12n
 .nr Sc 3
 .nr So 12n
 .nr Sq 12n
@@ -302,6 +304,13 @@
 .\}
 ..
 .de lM
+.\" We may still have a partial line in the enviroment.  If this is the case,
+.\" and we happen to be on the last line of the page, the .fl will cause the
+.\" page to be ejected and troff will immediately exit.  If we're in nroff
+.\" mode, this would be unfortunate, since we would never get a chance to
+.\" output the footer.  So we fudge the page length, to make sure that the
+.\" last page is never ejected until we want it to be.
+.if \\n(cR .pl +3v
 .fl
 .if \\n(cR \{\
 '	sp
@@ -311,7 +320,7 @@
 ..
 .de Pp
 .sp \\n(Ppu
-.ne 2
+.if !\\n(cR .ne 2
 .ns
 ..
 .de Lp
@@ -331,7 +340,7 @@
 ..
 .de Ss
 .sp
-.ne 2
+.if !\\n(cR .ne 3
 .ti -.25i
 \&\\*(sH\\$1 \|\\$2 \|\\$3 \|\\$4 \|\\$5 \|\\$6 \|\\$7 \|\\$8 \|\\$9
 \&\fP\s0
