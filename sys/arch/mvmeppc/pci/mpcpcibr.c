@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.3 2001/08/17 22:26:58 mickey Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.4 2001/09/02 19:41:40 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -261,13 +261,13 @@ const char *pnp;
 }
 
 /*
- *  Get PCI physical address from given viritual address.
- *  XXX Note that cross page boundarys are *not* garantueed to work!
+ *  Get PCI physical address from given virtual address.
+ *  XXX Note that cross page boundaries are *not* guaranteed to work!
  */
 #if 0
 vm_offset_t
 vtophys(p)
-void *p;
+vaddr_t p;
 {
 	vm_offset_t pa;
 	vm_offset_t va;
@@ -284,7 +284,7 @@ void *p;
 #else 
 vm_offset_t
 vtophys(p)
-void *p;
+vaddr_t p;
 {
 	vm_offset_t pa;
 	vm_offset_t va;
