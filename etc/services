@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.21 1999/09/21 07:38:26 jakob Exp $
+#	$OpenBSD: services,v 1.22 2000/04/16 10:25:24 espie Exp $
 #
 # Network services, Internet style
 #
@@ -221,6 +221,7 @@ radius		1645/udp		# radius authentication
 radacct		1646/udp		# radius accounting
 webster		2627/tcp		# Network dictionary
 webster		2627/udp
+canna		5680/tcp		# Kana->Kanji server
 icb		7326/tcp		# Internet Citizen's Band
 hunt		26740/udp		# hunt(6)
 #
