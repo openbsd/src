@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2004/02/27 21:55:49 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 2004/02/27 22:10:01 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -171,6 +171,8 @@ paddr_t	idt_paddr;
 
 vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
+
+int kbd_reset;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -663,6 +665,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_BIOS:
 		return bios_sysctl(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen, p);
+	case CPU_CPUVENDOR:
+		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_vendor));
+	case CPU_CPUFEATURE:
+		return (sysctl_rdint(oldp, oldlenp, newp, cpu_feature));
+	case CPU_KBDRESET:
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    kbd_reset));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &kbd_reset));
 	case CPU_ALLOWAPERTURE:
 		if (namelen != 1)
 			return (ENOTDIR);		/* overloaded */
