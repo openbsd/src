@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.16 1999/07/11 16:26:07 niklas Exp $
+	$OpenBSD: pcmciadevs,v 1.17 1999/07/20 15:57:10 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -80,11 +80,11 @@ product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET IEEE 802.11 FHSS
 /* 3COM Products */
 product 3COM 3CXEM556		0x0035 3Com/Megahertz 3CXEM556 Ethernet/Modem
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
-product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
-product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
+product 3COM 3C589		0x0589 3Com 3c589
+product 3COM 3C574		0x0574 3Com 3c574-TX
 
 /* Compex Products */
-product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B Ethernet
+product COMPEX LINKPORT_ENET_B	0x0100 Compex Linkport ENET-B
 
 /* Dayna Products */
 product DAYNA COMMUNICARD_E_1	0x002d Dayna CommuniCard E
@@ -94,17 +94,17 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
 
 /* Fujitsu Products */
-product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
-product FUJITSU LA501		0x2000 Fujitsu Towa LA501 Ethernet
+product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600
+product FUJITSU LA501		0x2000 Fujitsu Towa LA501
 
 /* Motorola Products */
-product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
-product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD Modem
-product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6 Fax/Modem
+product MOTOROLA POWER144	0x0105 Motorola Power 14.4
+product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD
+product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6
 
 /* IBM Products */
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
-product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
+product IBM HOME_AND_AWAY	0x002e IBM Home and Away
 product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry
 
 /* I-O DATA */
@@ -117,7 +117,7 @@ product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 product KINGSTON KNE_PC2	0x0100 Kingston KNE-PC2
 
 /* Lasat Products */
-product LASAT CREDIT_288	0x2811 Lasat Credit 288 Modem
+product LASAT CREDIT_288	0x2811 Lasat Credit 288
 
 /* Linksys corporation */
 product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
@@ -129,16 +129,16 @@ product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LUCENT WAVELAN		0x0002 Lucent WaveLAN IEEE 802.11 DSSS
 
 /* Megahertz Products */
-product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
-product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
-product MEGAHERTZ2 XJEM1144	0x0101 Megahertz XJEM1144 Ethernet
-product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
+product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288
+product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK
+product MEGAHERTZ2 XJEM1144	0x0101 Megahertz XJEM1144
+product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK
 
 /* Quatech Products */
 product QUATECH DSP_225		0x0008 Quatech Dual Serial Port
 
 /* US Robotics Products */
-product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
+product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4
 
 /* Sandisk Products */
 product SANDISK SDCFB		0x0401 Sandisk CompactFlash Card
@@ -154,23 +154,23 @@ product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 product SYMBOL SPECTRUM24	0x0801 Spectrum24 WLAN IEEE 802.11 FHSS
 
 /* TDK Products */
-product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
-product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
+product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX
+product TDK DFL9610		0x0d0a TDK DFL9610
 
 /* TDK Vendor ID also used by Xircom! */
-product XIRCOM XIR_CE_10	0x0108 Xircom CreditCard Ethernet
-product XIRCOM XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
+product XIRCOM XIR_CE_10	0x0108 Xircom CreditCard
+product XIRCOM XIR_PS_CE2_10	0x010b Xircom CreditCard CE2
 product XIRCOM XIR_CNW		0x0802 Xircom CreditCard Netwave
-product XIRCOM XIR_CEM_10	0x110a Xircom CreditCard Ethernet + Modem
-product XIRCOM XIR_CEM_28	0x110b Xircom CreditCard Ethernet + Modem
+product XIRCOM XIR_CEM_10	0x110a Xircom CreditCard CEM-10
+product XIRCOM XIR_CEM_28	0x110b Xircom CreditCard CEM-28
 
 /* NewMedia Products */
-product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
+product NEWMEDIA BASICS		0x0019 NewMedia BASICS
 product NEWMEDIA MULTIMEDIA	0x100b NewMedia Multimedia Sound/SCSI
-product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster SCSI Host Adapter
+product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster SCSI
 
 /* Standard Microsystems Corporation Products */
-product SMC 8016		0x0105 SMC 8016 EtherCard
+product SMC 8016		0x0105 SMC 8016
 product SMC EZCARD		0x8022 SMC EXCard 10 PCMCIA
 
 /* Cards we know only by their cis */
@@ -184,7 +184,7 @@ vendor DIGITAL			-1 	Digital
 vendor TEAC			-1	TEAC
 vendor SVEC			-1	SVEC/Hawking Technology
 
-product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
+product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
 product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL } Planet SmartCOM 2000
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL } D-Link DE-650
