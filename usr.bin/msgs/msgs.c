@@ -76,6 +76,7 @@ static char rcsid[] = "$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $";
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <ctype.h>
@@ -139,7 +140,6 @@ int	Lpp = 0;
 time_t	t;
 time_t	keep;
 
-char	*mktemp();
 char	*nxtfld();
 void	onintr();
 void	onsusp();
@@ -717,7 +717,7 @@ ask(prompt)
 char *prompt;
 {
 	char	inch;
-	int	n, cmsg;
+	int	n, cmsg, fd;
 	off_t	oldpos;
 	FILE	*cpfrom, *cpto;
 
@@ -768,8 +768,10 @@ char *prompt;
 			sprintf(cmdbuf, _PATH_MAIL, fname);
 			mailing = YES;
 		}
-		cpto = fopen(fname, "a");
-		if (!cpto) {
+		if ((fd = open(fname, O_RDWR|O_EXCL|O_CREAT|O_APPEND)) == -1 ||
+		    (cpto = fdopen(fd, "a")) == NULL) {
+			if (fd == -1)
+				close(fd);
 			perror(fname);
 			mailing = NO;
 			fseek(newmsg, oldpos, 0);
