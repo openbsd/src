@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.6 2001/08/10 18:32:46 pjanzen Exp $	*/
+/*	$OpenBSD: score.c,v 1.7 2001/08/17 22:28:55 pjanzen Exp $	*/
 /*	$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.6 2001/08/10 18:32:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.7 2001/08/17 22:28:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,7 @@ quit(from_intrpt)
 	char buf[128];
 	short i, orow, ocol;
 	boolean mc;
+	short ch;
 
 	md_ignore_signals();
 
@@ -176,7 +177,7 @@ quit(from_intrpt)
 	}
 	check_message();
 	message("really quit?", 1);
-	if (rgetchar() != 'y') {
+	if ((ch = rgetchar()) != 'y' && ch != 'Y') {
 		md_heed_signals();
 		check_message();
 		if (from_intrpt) {
