@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_disp.c,v 1.8 1999/03/03 20:43:30 millert Exp $	*/
+/*	$OpenBSD: init_disp.c,v 1.9 1999/03/23 02:19:32 millert Exp $	*/
 /*	$NetBSD: init_disp.c,v 1.6 1994/12/09 02:14:17 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-static char rcsid[] = "$OpenBSD: init_disp.c,v 1.8 1999/03/03 20:43:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: init_disp.c,v 1.9 1999/03/23 02:19:32 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,8 @@ init_display()
 	clear();
 	refresh();
 	noecho();
-	crmode();
+	cbreak();
+	nl();
 	signal(SIGINT, sig_sent);
 	signal(SIGPIPE, sig_sent);
 	/* curses takes care of ^Z */
