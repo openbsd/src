@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.25 1997/12/28 23:26:25 deraadt Exp $
+#	$OpenBSD: security,v 1.26 1998/02/25 16:00:29 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -45,7 +45,7 @@ awk -F: '{
 		printf("Login %s has no password.\n", $1);
 	if ($2 != "" && length($2) != 13 && ($10 ~ /.*sh$/ || $10 == "") &&
            ($2 !~ /^\$[0-9a-f]+\$/) && ($2 != "skey")) {
-		if (system("grep -q \"^"$1" \" /etc/skeykeys") == 0)
+		if (system("test -s /etc/skeykeys && grep -q \"^"$1" \" /etc/skeykeys") == 0)
 			printf("Login %s is off but still has a valid shell and an entry in /etc/skeykeys.\n", $1);
 		if (system("test -d "$9" -a ! -r "$9"") == 0)
 			printf("Login %s if off but still has valid shell and home directory is unreadable\n\t by root; cannot check for existance of alternate access files.\n", $1);
