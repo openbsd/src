@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.40 2001/06/27 04:51:49 art Exp $	*/
+/*	$OpenBSD: systm.h,v 1.41 2001/07/27 09:55:07 niklas Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #ifndef __SYSTM_H__
 #define __SYSTM_H__
 
+#include <sys/queue.h>
 #include <machine/stdarg.h>
 
 /*
@@ -230,15 +231,41 @@ void	stopprofclock __P((struct proc *));
 void	setstatclockrate __P((int));
 
 /*
- * Shutdown hooks.  Functions to be run with all interrupts disabled
- * immediately before the system is halted or rebooted.
+ * Startup/shutdown hooks.  Startup hooks are functions running after
+ * the scheduler has started but before any threads have been created
+ * or root has been mounted The shutdown hooks are functions to be run
+ * with all interrupts disabled immediately before the system is
+ * halted or rebooted.
  */
-void	*shutdownhook_establish __P((void (*)(void *), void *));
-void	shutdownhook_disestablish __P((void *));
-void	doshutdownhooks __P((void));
+
+struct hook_desc {
+	TAILQ_ENTRY(hook_desc) hd_list;
+	void	(*hd_fn) __P((void *));
+	void	*hd_arg;
+};
+TAILQ_HEAD(hook_desc_head, hook_desc);
+
+extern struct hook_desc_head shutdownhook_list, startuphook_list;
+
+void	*hook_establish __P((struct hook_desc_head *, int, void (*)(void *),
+    void *));
+void	hook_disestablish __P((struct hook_desc_head *, void *));
+void	dohooks __P((struct hook_desc_head *));
+
+#define startuphook_establish(fn, arg) \
+	hook_establish(&startuphook_list, 1, (fn), (arg))
+#define startuphook_disestablish(vhook) \
+	hook_disestablish(&startuphook_list, (vhook))
+#define dostartuphooks() dohooks(&startuphook_list)
+
+#define shutdownhook_establish(fn, arg) \
+	hook_establish(&shutdownhook_list, 0, (fn), (arg))
+#define shutdownhook_disestablish(vhook) \
+	hook_disestablish(&shutdownhook_list, (vhook))
+#define doshutdownhooks() dohooks(&shutdownhook_list)
 
 /*
- * Power managment hooks.
+ * Power management hooks.
  */
 void	*powerhook_establish __P((void (*)(int, void *), void *));
 void	powerhook_disestablish __P((void *));

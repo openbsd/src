@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.72 2001/07/05 10:12:24 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.73 2001/07/27 09:55:07 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -359,6 +359,8 @@ main(framep)
 
 	/* Start the scheduler */
 	scheduler_start();
+
+	dostartuphooks();
 
 	/* Configure root/swap devices */
 	if (md_diskconf)

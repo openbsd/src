@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdownhook_establish.9,v 1.9 2000/10/12 18:06:02 aaron Exp $
+.\"	$OpenBSD: shutdownhook_establish.9,v 1.10 2001/07/27 09:55:07 niklas Exp $
 .\"	$NetBSD: shutdownhook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -73,6 +73,10 @@ Because of the environment in which they are run, shutdown hooks cannot
 rely on many system services (including file systems, timeouts,
 and other interrupt-driven services) or even basic system
 integrity (because the system could be rebooting after a crash).
+.Pp
+Shutdown hooks are, like startup hooks, implemented via the more general
+.Xr dohooks 9
+API.
 .Sh RETURN VALUES
 If successful,
 .Fn shutdownhook_establish
@@ -90,6 +94,8 @@ It may be appropriate to use a shutdown hook to
 inform watchdog timer hardware that the operating system
 is no longer running.
 .Sh SEE ALSO
-.Xr doshutdownhooks 9
+.Xr dohooks 9 ,
+.Xr doshutdownhooks 9 ,
+.Xr dostartuphooks 9
 .Sh BUGS
 The names are clumsy, at best.

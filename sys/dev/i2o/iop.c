@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.17 2001/06/29 05:40:32 niklas Exp $	*/
+/*	$OpenBSD: iop.c,v 1.18 2001/07/27 09:55:08 niklas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -402,6 +402,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 
 	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", hz * 30, 0);
 
+	startuphook_establish((void (*)(void *))iop_config_interrupts, sc);
 	kthread_create_deferred(iop_create_reconf_thread, sc);
 	return;
 
@@ -559,8 +560,6 @@ iop_create_reconf_thread(void *cookie)
 
 	sc = cookie;
 	sc->sc_flags |= IOP_ONLINE;
-
-	iop_config_interrupts(cookie);
 
 	rv = kthread_create(iop_reconf_thread, sc, &sc->sc_reconf_proc,
  	    "%s", sc->sc_dv.dv_xname);

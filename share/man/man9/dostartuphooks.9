@@ -1,7 +1,6 @@
-.\"	$OpenBSD: doshutdownhooks.9,v 1.6 2001/07/27 09:55:07 niklas Exp $
-.\"	$NetBSD: doshutdownhooks.9,v 1.1 1995/11/25 21:24:49 perry Exp $
+.\"	$OpenBSD: dostartuphooks.9,v 1.1 2001/07/27 09:55:07 niklas Exp $
 .\"
-.\" Copyright (c) 1994 Christopher G. Demetriou
+.\" Copyright (c) 2001 Niklas Hallqvist.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -12,10 +11,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"      This product includes software developed by Christopher G. Demetriou
-.\"      for the NetBSD Project.
 .\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
@@ -30,36 +25,43 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 13, 1995
-.Dt DOSHUTDOWNHOOKS 9
+.Dd July 27 2001
+.Dt DOSTARTUPHOOKS 9
 .Os
 .Sh NAME
-.Nm doshutdownhooks
-.Nd run all shutdown hooks
+.Nm dostartuphooks
+.Nd run all startup hooks
 .Sh SYNOPSIS
 .Ft void
-.Fn doshutdownhooks "void"
+.Fn dostartuphooks "void"
 .Sh DESCRIPTION
 The
-.Fn doshutdownhooks
-function invokes all shutdown hooks established using the
-.Xr shutdownhook_establish 9
+.Fn dostartuphooks
+function invokes all startup hooks established using the
+.Xr startuphook_establish 9
 function.
-Shutdown hooks are called in reverse order, i.e.,
-the shutdown hook established last will be called first.
+Startup hooks are called in order, i.e.,
+the startup hook established first will be called first.
 .Pp
 This function is called from
-.Xr boot 9
-with interrupts turned off.
-It is called immediately before the system is halted or rebooted,
-after file systems have been unmounted, after the clock has been updated,
-and after a system dump has been done (if necessary).
+.Fn main
+with interrupts turned on.
+It is called immediately before the system configures its root and swap
+devices, but fully after all normal autoconfiguration.  This can be used
+to let device subsystems needing delayed configuration (e.g., due to very long
+initialization times) still provide the root device.  The
+I2O system, implemented by the
+.Xr iop 4
+and
+.Xr ioprbs 4
+drivers, is a good example.
 .Pp
-Shutdown hooks are, like startup hooks, implemented via the more general
+Startup hooks are, like shutdown hooks, implemented via the more general
 .Xr dohooks 9
 API.
 .Sh SEE ALSO
-.Xr boot 9 ,
-.Xr dohooks 9 ,
-.Xr dostartuphooks 9 ,
-.Xr shutdownhook_establish 9
+.Xr dohooks 4 ,
+.Xr doshutdownhooks 4 ,
+.Xr iop 4 ,
+.Xr ioprbs 4 ,
+.Xr startuphook_establish 9

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.19 2001/06/27 04:49:45 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.20 2001/07/27 09:55:07 niklas Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -183,72 +183,71 @@ hashinit(elements, type, flags, hashmask)
 }
 
 /*
- * "Shutdown hook" types, functions, and variables.
+ * "Shutdown/startup hook" types, functions, and variables.
  */
 
-struct shutdownhook_desc {
-	LIST_ENTRY(shutdownhook_desc) sfd_list;
-	void	(*sfd_fn) __P((void *));
-	void	*sfd_arg;
-};
-
-LIST_HEAD(, shutdownhook_desc) shutdownhook_list;
-
-int shutdownhooks_done;
+struct hook_desc_head startuphook_list =
+    TAILQ_HEAD_INITIALIZER(startuphook_list);
+struct hook_desc_head shutdownhook_list =
+    TAILQ_HEAD_INITIALIZER(shutdownhook_list);
 
 void *
-shutdownhook_establish(fn, arg)
+hook_establish(head, tail, fn, arg)
+	struct hook_desc_head *head;
+	int tail;
 	void (*fn) __P((void *));
 	void *arg;
 {
-	struct shutdownhook_desc *ndp;
+	struct hook_desc *hdp;
 
-	ndp = (struct shutdownhook_desc *)
-	    malloc(sizeof (*ndp), M_DEVBUF, M_NOWAIT);
-	if (ndp == NULL)
-		return NULL;
+	hdp = (struct hook_desc *)malloc(sizeof (*hdp), M_DEVBUF, M_NOWAIT);
+	if (hdp == NULL)
+		return (NULL);
 
-	ndp->sfd_fn = fn;
-	ndp->sfd_arg = arg;
-	LIST_INSERT_HEAD(&shutdownhook_list, ndp, sfd_list);
+	hdp->hd_fn = fn;
+	hdp->hd_arg = arg;
+	if (tail)
+		TAILQ_INSERT_TAIL(head, hdp, hd_list);
+	else
+		TAILQ_INSERT_HEAD(head, hdp, hd_list);
 
-	return (ndp);
+	return (hdp);
 }
 
 void
-shutdownhook_disestablish(vhook)
+hook_disestablish(head, vhook)
+	struct hook_desc_head *head;
 	void *vhook;
 {
 #ifdef DIAGNOSTIC
-	struct shutdownhook_desc *dp;
+	struct hook_desc *hdp;
 
-	for (dp = shutdownhook_list.lh_first; dp != NULL;
-	    dp = dp->sfd_list.le_next)
-                if (dp == vhook)
+	for (hdp = TAILQ_FIRST(head); hdp != NULL;
+	    hdp = TAILQ_NEXT(hdp, hd_list))
+                if (hdp == vhook)
 			break;
-	if (dp == NULL)
-		panic("shutdownhook_disestablish: hook not established");
+	if (hdp == NULL)
+		panic("hook_disestablish: hook not established");
 #endif
 
-	LIST_REMOVE((struct shutdownhook_desc *)vhook, sfd_list);
+	TAILQ_REMOVE(head, (struct hook_desc *)vhook, hd_list);
 }
 
 /*
- * Run shutdown hooks.  Should be invoked immediately before the
+ * Run hooks.  Startup hooks are invoked right after scheduler_start but
+ * before root is mounted.  Shutdown hooks are invoked immediately before the
  * system is halted or rebooted, i.e. after file systems unmounted,
  * after crash dump done, etc.
  */
 void
-doshutdownhooks()
+dohooks(head)
+	struct hook_desc_head *head;
 {
-	struct shutdownhook_desc *dp;
+	struct hook_desc *hdp;
 
-	if (shutdownhooks_done)
-		return;
-
-	for (dp = shutdownhook_list.lh_first; dp != NULL; dp =
-	    dp->sfd_list.le_next)
-		(*dp->sfd_fn)(dp->sfd_arg);
+	for (hdp = TAILQ_FIRST(head); hdp != NULL;
+	    hdp = TAILQ_NEXT(hdp, hd_list))
+		(*hdp->hd_fn)(hdp->hd_arg);
 }
 
 /*
