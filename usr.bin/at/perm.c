@@ -1,4 +1,4 @@
-/*	$OpenBSD: perm.c,v 1.2 2002/02/16 21:27:44 millert Exp $	*/
+/*	$OpenBSD: perm.c,v 1.3 2002/05/11 23:16:44 millert Exp $	*/
 
 /* 
  * perm.c - check user permission for at(1)
@@ -46,7 +46,7 @@
 /* File scope variables */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: perm.c,v 1.2 2002/02/16 21:27:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: perm.c,v 1.3 2002/05/11 23:16:44 millert Exp $";
 #endif
 
 /* Function declarations */
@@ -56,9 +56,7 @@ static int check_for_user(FILE *, const char *);
 /* Local functions */
 
 static int
-check_for_user(fp, name)
-	FILE *fp;
-	const char *name;
+check_for_user(FILE *fp, const char *name)
 {
 	char *buffer;
 	size_t len;
@@ -83,7 +81,7 @@ check_for_user(fp, name)
 /* Global functions */
 
 int
-check_permission()
+check_permission(void)
 {
 	FILE *fp;
 	uid_t uid = geteuid();
@@ -97,20 +95,20 @@ check_permission()
 		exit(EXIT_FAILURE);
 	}
 
-	PRIV_START
+	PRIV_START;
 
 	fp = fopen(_PATH_AT_ALLOW, "r");
 
-	PRIV_END
+	PRIV_END;
 
 	if (fp != NULL) {
 		return (check_for_user(fp, pentry->pw_name));
 	} else {
-		PRIV_START
+		PRIV_START;
 
 		fp = fopen(_PATH_AT_DENY, "r");
 
-		PRIV_END
+		PRIV_END;
 
 		if (fp != NULL)
 			return (!check_for_user(fp, pentry->pw_name));

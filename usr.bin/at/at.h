@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.h,v 1.4 2002/05/11 23:02:33 millert Exp $	*/
+/*	$OpenBSD: at.h,v 1.5 2002/05/11 23:16:44 millert Exp $	*/
 /*	$NetBSD: at.h,v 1.2 1995/03/25 18:13:32 glass Exp $	*/
 
 /*
@@ -32,7 +32,6 @@ extern char atfile[];
 extern char atverify;
 
 #define AT_MAXJOBS	255	/* max jobs outstanding per user */
-#define AT_VERSION	2.9	/* our version number */
 
 #define DEFAULT_BATCH_QUEUE	'E'
 #define DEFAULT_AT_QUEUE	'c'

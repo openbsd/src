@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.4 2002/05/11 18:41:20 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 2002/05/11 23:16:44 millert Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/03/25 18:13:38 glass Exp $	*/
 
 /*
@@ -43,4 +43,4 @@
 #define _PATH_AT_ALLOW	"/var/at/at.allow"
 #define _PATH_AT_DENY	"/var/at/at.deny"
 
-#endif				/* !_PATHNAMES_H_ */
+#endif /* _PATHNAMES_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: privs.h,v 1.4 1997/03/01 23:40:12 millert Exp $	*/
+/*	$OpenBSD: privs.h,v 1.5 2002/05/11 23:16:44 millert Exp $	*/
 /*	$NetBSD: privs.h,v 1.3 1995/03/25 18:13:41 glass Exp $	*/
 
 /* 
@@ -66,32 +66,32 @@ extern
 #endif
 gid_t real_gid, effective_gid;
 
-#define RELINQUISH_PRIVS { \
-      real_uid = getuid(); \
-      effective_uid = geteuid(); \
-      real_gid = getgid(); \
-      effective_gid = getegid(); \
-      setegid(real_gid); \
-      seteuid(real_uid); \
-}
+#define RELINQUISH_PRIVS do {			\
+      real_uid = getuid();			\
+      effective_uid = geteuid();		\
+      real_gid = getgid();			\
+      effective_gid = getegid();		\
+      setegid(real_gid);			\
+      seteuid(real_uid);			\
+} while (0)
 
-#define RELINQUISH_PRIVS_ROOT(a, b) { \
-	real_uid = (a); \
-	effective_uid = geteuid(); \
-	real_gid = (b); \
-	effective_gid = getegid(); \
-	setegid(real_gid); \
-	seteuid(real_uid); \
-}
+#define RELINQUISH_PRIVS_ROOT(a, b) do {	\
+	real_uid = (a);				\
+	effective_uid = geteuid();		\
+	real_gid = (b);				\
+	effective_gid = getegid();		\
+	setegid(real_gid);			\
+	seteuid(real_uid);			\
+} while (0)
 
-#define PRIV_START { \
-	seteuid(effective_uid); \
-	setegid(effective_gid); \
-}
+#define PRIV_START do {				\
+	seteuid(effective_uid);			\
+	setegid(effective_gid);			\
+} while (0)
 
-#define PRIV_END { \
-	setegid(real_gid); \
-	seteuid(real_uid); \
-}
+#define PRIV_END do {				\
+	setegid(real_gid);			\
+	seteuid(real_uid);			\
+} while (0)
 
-#endif
+#endif /* _PRIVS_H */

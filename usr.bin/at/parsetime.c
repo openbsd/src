@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.9 2000/01/05 08:06:25 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.10 2002/05/11 23:16:44 millert Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -151,7 +151,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: parsetime.c,v 1.9 2000/01/05 08:06:25 millert Exp $";
+static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.10 2002/05/11 23:16:44 millert Exp $";
 #endif
 
 /* Local functions */
@@ -160,8 +160,7 @@ static char rcsid[] = "$OpenBSD: parsetime.c,v 1.9 2000/01/05 08:06:25 millert E
  * parse a token, checking if it's something special to us
  */
 static int
-parse_token(arg)
-	char *arg;
+parse_token(char *arg)
 {
 	int i;
 
@@ -181,9 +180,7 @@ parse_token(arg)
  * init_scanner() sets up the scanner to eat arguments
  */
 static void
-init_scanner(argc, argv)
-	int argc;
-	char **argv;
+init_scanner(int argc, char **argv)
 {
 	scp = argv;
 	scc = argc;
@@ -200,11 +197,11 @@ init_scanner(argc, argv)
  * token() fetches a token from the input stream
  */
 static int
-token()
+token(void)
 {
 	int idx;
 
-	while (1) {
+	for (;;) {
 		(void)memset(sc_token, 0, sc_len);
 		sc_tokid = EOF;
 		sc_tokplur = 0;
@@ -270,8 +267,7 @@ token()
  * plonk() gives an appropriate error message if a token is incorrect
  */
 static void
-plonk(tok)
-	int tok;
+plonk(int tok)
 {
 	panic((tok == EOF) ? "incomplete time" : "garbled time");
 } /* plonk */
@@ -281,8 +277,7 @@ plonk(tok)
  * expect() gets a token and dies most horribly if it's not the token we want
  */
 static void
-expect(desired)
-	int desired;
+expect(int desired)
 {
 	if (token() != desired)
 		plonk(sc_tokid);	/* and we die here... */
@@ -295,9 +290,7 @@ expect(desired)
  * work properly
  */
 static void
-dateadd(minutes, tm)
-	int minutes;
-	struct tm *tm;
+dateadd(int minutes, struct tm *tm)
 {
 	/* increment days */
 
@@ -338,8 +331,7 @@ dateadd(minutes, tm)
  *
  */
 static void
-plus(tm)
-	struct tm *tm;
+plus(struct tm *tm)
 {
 	int delay;
 	int expectplur;
@@ -372,8 +364,7 @@ plus(tm)
  *     [NUMBER [DOT NUMBER] [AM|PM]]
  */
 static void
-tod(tm)
-	struct tm *tm;
+tod(struct tm *tm)
 {
 	int hour, minute = 0;
 	size_t tlen;
@@ -439,9 +430,7 @@ tod(tm)
  * assign_date() assigns a date, wrapping to next year if needed
  */
 static void
-assign_date(tm, mday, mon, year)
-	struct tm *tm;
-	int mday, mon, year;
+assign_date(struct tm *tm, int mday, int mon, int year)
 {
 
 	/*
@@ -484,8 +473,7 @@ assign_date(tm, mday, mon, year)
  *  \PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS/
  */
 static void
-month(tm)
-	struct tm *tm;
+month(struct tm *tm)
 {
 	int year = (-1);
 	int mday, wday, mon;
@@ -593,9 +581,7 @@ month(tm)
 /* Global functions */
 
 time_t
-parsetime(argc, argv)
-	int argc;
-	char **argv;
+parsetime(int argc, char **argv)
 {
 	/*
 	 * Do the argument parsing, die if necessary, and return the

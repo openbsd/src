@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.25 2002/05/11 23:02:33 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.26 2002/05/11 23:16:44 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.25 2002/05/11 23:02:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.26 2002/05/11 23:16:44 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -104,22 +104,20 @@ static time_t ttime(const char *);
 /* Signal catching functions */
 
 static void 
-sigc(signo)
-	int signo;
+sigc(int signo)
 {
 	/* If the user presses ^C, remove the spool file and exit. */
 	if (fcreated) {
-		PRIV_START
+		PRIV_START;
 		(void)unlink(atfile);
-		PRIV_END
+		PRIV_END;
 	}
 
 	_exit(EXIT_FAILURE);
 }
 
 static void 
-alarmc(signo)
-	int signo;
+alarmc(int signo)
 {
 	char buf[1024];
 
@@ -128,9 +126,9 @@ alarmc(signo)
 	strlcat(buf, ": File locking timed out\n", sizeof(buf));
 	write(STDERR_FILENO, buf, strlen(buf));
 	if (fcreated) {
-		PRIV_START
+		PRIV_START;
 		unlink(atfile);
-		PRIV_END
+		PRIV_END;
 	}
 	_exit(EXIT_FAILURE);
 }
@@ -138,7 +136,7 @@ alarmc(signo)
 /* Local functions */
 
 static char *
-cwdname()
+cwdname(void)
 {
 	/*
 	 * Read in the current directory; the name will be overwritten on
@@ -150,7 +148,7 @@ cwdname()
 }
 
 static int
-nextjob()
+nextjob(void)
 {
 	int jobno;
 	FILE *fid;
@@ -171,9 +169,7 @@ nextjob()
 }
 
 static void
-writefile(runtimer, queue)
-	time_t runtimer;
-	char queue;
+writefile(time_t runtimer, char queue)
 {
 	/*
 	 * This does most of the work if at or batch are invoked for
@@ -214,7 +210,7 @@ writefile(runtimer, queue)
 	 * to make sure we're alone when doing this.
 	 */
 
-	PRIV_START
+	PRIV_START;
 
 	/*
 	 * Set an alarm so we don't sleep forever waiting on the lock.
@@ -261,7 +257,7 @@ writefile(runtimer, queue)
 	if (fchown(fd2, real_uid, real_gid) != 0)
 		perr("Cannot give away file");
 
-	PRIV_END
+	PRIV_END;
 
 	/*
 	 * We've successfully created the file; let's set the flag so it
@@ -408,7 +404,7 @@ writefile(runtimer, queue)
 }
 
 static void
-list_jobs()
+list_jobs(void)
 {
 	/*
 	 * List all a user's jobs in the queue, by looping through
@@ -426,7 +422,7 @@ list_jobs()
 	char timestr[TIMESIZE];
 	int first = 1;
 
-	PRIV_START
+	PRIV_START;
 
 	if (chdir(_PATH_ATJOBS) != 0)
 		perr2("Cannot change to ", _PATH_ATJOBS);
@@ -470,14 +466,11 @@ list_jobs()
 		    (S_IXUSR & buf.st_mode) ? "" : "(done)",
 		    jobno);
 	}
-	PRIV_END
+	PRIV_END;
 }
 
 static void
-process_jobs(argc, argv, what)
-	int argc;
-	char **argv;
-	int what;
+process_jobs(int argc, char **argv, int what)
 {
 	/* Delete every argument (job - ID) given */
 	int i;
@@ -488,7 +481,7 @@ process_jobs(argc, argv, what)
 	char queue;
 	int jobno;
 
-	PRIV_START
+	PRIV_START;
 
 	if (chdir(_PATH_ATJOBS) != 0)
 		perr2("Cannot change to ", _PATH_ATJOBS);
@@ -496,15 +489,15 @@ process_jobs(argc, argv, what)
 	if ((spool = opendir(".")) == NULL)
 		perr2("Cannot open ", _PATH_ATJOBS);
 
-	PRIV_END
+	PRIV_END;
 
 	/* Loop over every file in the directory */
 	while((dirent = readdir(spool)) != NULL) {
 
-		PRIV_START
+		PRIV_START;
 		if (stat(dirent->d_name, &buf) != 0)
 			perr2("Cannot stat in ", _PATH_ATJOBS);
-		PRIV_END
+		PRIV_END;
 
 		if (sscanf(dirent->d_name, "%c%5x%8lx", &queue, &jobno, &ctm) !=3)
 			continue;
@@ -516,12 +509,12 @@ process_jobs(argc, argv, what)
 					     "%s: Not owner\n", argv[i]);
 				switch (what) {
 				case ATRM:
-					PRIV_START
+					PRIV_START;
 
 					if (unlink(dirent->d_name) != 0)
 						perr(dirent->d_name);
 
-					PRIV_END
+					PRIV_END;
 
 					break;
 
@@ -530,11 +523,11 @@ process_jobs(argc, argv, what)
 						FILE *fp;
 						int ch;
 
-						PRIV_START
+						PRIV_START;
 
 						fp = fopen(dirent->d_name, "r");
 
-						PRIV_END
+						PRIV_END;
 
 						if (!fp)
 							perr("Cannot open file");
@@ -629,9 +622,7 @@ ttime(const char *arg)
 /* Global functions */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int c;
 	char queue = DEFAULT_AT_QUEUE;
@@ -641,7 +632,7 @@ main(argc, argv)
 	time_t timer;
 	int tflag = 0;
 
-	RELINQUISH_PRIVS
+	RELINQUISH_PRIVS;
 
 	/* find out what this program is supposed to do */
 	if (strcmp(__progname, "atq") == 0) {
