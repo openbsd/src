@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.41 2001/05/11 07:55:32 deraadt Exp $
+#	$OpenBSD: files.amiga,v 1.42 2001/08/19 14:42:06 espie Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -127,7 +127,7 @@ file	arch/amiga/dev/grf_ul.c		grful needs-flag
 file	arch/amiga/dev/ite_ul.c		grful & ite
 file	arch/amiga/dev/grf_ultms.g	grful
 
-# CyberVison 64 grf (ite5 grf5)
+# CyberVision 64 grf (ite5 grf5)
 device	grfcv: grfbus
 attach	grfcv at zbus
 file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
@@ -169,7 +169,7 @@ device	qn:	ifnet, ether
 attach	qn at zbus
 file	arch/amiga/dev/if_qn.c		qn needs-flag
 
-# Ariadne ethernet card (will merge into le soon)
+# Ariadne ethernet card
 device	ae:	ifnet, ether
 attach	ae at zbus
 file	arch/amiga/dev/if_ae.c		ae needs-count
@@ -384,7 +384,7 @@ major	{rd = 16}
 include "../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 
-# PCIC pcmcia contoller
+# PCIC pcmcia controller
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
@@ -409,6 +409,6 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
 include "dev/pcmcia/files.pcmcia"
 
 #
-# Media Indepedent Interface (mii)
+# Media Independent Interface (mii)
 #
 include "../../../dev/mii/files.mii"
