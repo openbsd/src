@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.15 1999/09/14 08:21:36 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.16 1999/09/14 08:23:09 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.15 1999/09/14 08:21:36 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.16 1999/09/14 08:23:09 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -298,8 +298,15 @@ register int td;
 	/*
 	 * dotemp - create a temporary file
 	 */
-		if (argc > 2)
-			pbstr(mktemp(argv[2]));
+		if (argc > 2) {
+			int fd;
+			
+			fd = mkstemp(argv[2]);
+			if (fd == -1)
+				err(1, "couldn't make temp file %s", argv[2]);
+			close(fd);
+			pbstr(argv[2]);
+		}
 		break;
 
 	case TRNLTYPE:
