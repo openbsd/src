@@ -4690,7 +4690,7 @@ different encodings.
 
 @xref{Equivalence Versus Equality}, for more information.
 
-@include f/install.texi
+@include install.texi
 
 @node Debugging and Interfacing
 @chapter Debugging and Interfacing
