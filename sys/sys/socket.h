@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.28 1999/02/25 03:31:34 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.29 1999/06/06 23:19:08 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -139,6 +139,18 @@ struct sockaddr {
 	u_int8_t    sa_len;		/* total length */
 	sa_family_t sa_family;		/* address family */
 	char	    sa_data[14];	/* actually longer; address value */
+};
+
+/*
+ * Sockaddr type which can hold any sockaddr type available
+ * in the system.
+ */
+struct sockaddr_storage {
+	u_int8_t    ss_len;		/* total length */
+	sa_family_t ss_family;		/* address family */
+	u_char	    __ss_pad1[6];	/* align to quad */
+	u_int64_t   __ss_pad2;		/* force alignment for stupid compilers */
+	u_char      __ss_pad3[240];	/* pad to a total of 256 bytes */
 };
 
 /*
