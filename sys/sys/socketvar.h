@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.3 1996/03/03 12:12:20 niklas Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.4 1996/04/28 18:57:18 mickey Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -277,9 +277,3 @@ int	recvit __P((struct proc *, int, struct msghdr *, caddr_t,
 		    register_t *));
 
 #endif /* _KERNEL */
-/*###282 [cc] macro `__P' used with too many (33) args%%%*/
-/*###283 [cc] macro `__P' used with too many (34) args%%%*/
-/*###284 [cc] macro `__P' used with too many (10) args%%%*/
-/*###285 [cc] macro `__P' used with too many (15) args%%%*/
-/*###286 [cc] macro `__P' used with too many (22) args%%%*/
-/*###289 [cc] empty #if expression%%%*/
