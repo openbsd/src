@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 2004/01/25 21:36:00 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2004/01/26 14:50:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -48,7 +48,7 @@
 
 static int	linesqueued;
 static int	procline(str_t *l, int);
-static int	grep_search(fastgrep_t *, unsigned char *, int, regmatch_t *pmatch);
+static int	grep_search(fastgrep_t *, unsigned char *, size_t, regmatch_t *pmatch);
 static int	grep_cmp(const unsigned char *, const unsigned char *, size_t);
 static void	grep_revstr(unsigned char *, int);
 
@@ -377,7 +377,7 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	((s == 0 || !isword(d[s-1])) && (e == l || !isword(d[e])))
 
 static int
-grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch)
+grep_search(fastgrep_t *fg, unsigned char *data, size_t dataLen, regmatch_t *pmatch)
 {
 	int j;
 	int rtrnVal = REG_NOMATCH;
