@@ -706,7 +706,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/emuxkivar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/esovar.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/fmsradio.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/hifn7751reg.ph

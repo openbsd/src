@@ -399,7 +399,6 @@
 ./usr/include/dev/pci/esavar.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
-./usr/include/dev/pci/fmsradio.h
 ./usr/include/dev/pci/fmsreg.h
 ./usr/include/dev/pci/fmsvar.h
 ./usr/include/dev/pci/hifn7751reg.h

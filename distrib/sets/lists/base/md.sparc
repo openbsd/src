@@ -447,7 +447,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/esavar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/esovar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsradio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751reg.ph
