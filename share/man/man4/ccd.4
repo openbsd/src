@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.5 1997/06/18 13:05:18 deraadt Exp $
+.\"	$OpenBSD: ccd.4,v 1.6 1997/08/27 18:01:09 deraadt Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -58,7 +58,7 @@ partitions of the disks
 be combined.  Each component partition should be offset at least one
 cylinder from the beginning of the component disk.  This avoids potential
 conflicts between the component disk's disklabel and the
-.Nm ccd's
+.Nm ccd Ns 's
 disklabel.  The kernel will only allow component partitions of type FS_BSDFFS.
 .Pp
 In order to compile in support for the ccd, you must add a line similar
