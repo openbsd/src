@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.12 2004/12/07 23:44:56 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.13 2004/12/08 00:08:18 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -119,6 +119,22 @@ Although adding a file does not involve a log message, it is possible to
 specify one to include with the action, using the
 .Fl m
 option.
+.Pp
+Aliases:
+.Ic ad ,
+.Ic new .
+.It Ic admin
+Administration front-end for
+.Xr rcs 1 .
+.Pp
+Aliases:
+.Ic adm ,
+.Ic rcs .
+.It Ic annotate
+Show last revision where each line was modified.
+.Pp
+Aliases:
+.Ic ann .
 .It Xo Ic checkout
 .Op Fl c
 .Op Ar module ...
@@ -128,6 +144,10 @@ The
 .Ic checkout
 command is used to create a local copy of one or more modules present on the
 target CVS repository.
+.Pp
+Aliases:
+.Ic co ,
+.Ic get .
 .It Xo Ic commit
 .Op Fl flnR
 .Op Fl F Ar logfile
@@ -140,6 +160,10 @@ The
 .Ic commit
 command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
+.Pp
+Aliases:
+.Ic ci ,
+.Ic com .
 .It Xo Ic diff Op Fl cilu
 .Op Fl D Ar date
 .Op Fl r Ar rev
@@ -152,6 +176,77 @@ command is very similar to the
 .Xr diff 1
 program, except that the differential comparisons that it generates are
 between local or remote revisions of files stored in the CVS repository.
+.Pp
+Aliases:
+.Ic di ,
+.Ic dif .
+.It Ic edit
+Get ready to edit a watched file.
+.It Ic editors
+See who is editing a watched file.
+.It Ic export
+Export sources from CVS;
+similar to
+.Ic checkout .
+.Pp
+Aliases:
+.Ic ex ,
+.Ic exp .
+.It Ic history
+Show repository access history.
+.Pp
+Aliases:
+.Ic hi ,
+.Ic his .
+.It Ic import
+Import sources into CVS using vendor branches.
+.Pp
+Aliases:
+.Ic im ,
+.Ic imp .
+.It Ic init
+Create a CVS repository if it doesn't exist.
+.It Ic kserver
+Start a Kerberos authentication server.
+.It Ic log
+Print out history information for files.
+.Pp
+Aliases:
+.Ic lo .
+.It Ic login
+Prompt for password for authenticating server.
+.It Ic logout
+Remove entry in .cvspass for remote repository.
+.It Ic rdiff
+Create
+.Xr patch 1
+format diffs between releases.
+.It Ic release
+Indicate that a module is no longer in use.
+.It Ic remove
+Remove an entry from the repository.
+.It Ic rlog
+Print out history information for a module.
+.It Ic rtag
+Add a symbolic link to a module.
+.It Ic server
+Server mode.
+.It Ic status
+Display status information on checked out files.
+.Pp
+Aliases:
+.Ic st ,
+.Ic stat .
+.It Ic tag
+Add a symbolic tag to checked out version of files.
+.Pp
+Aliases:
+.Ic ta ,
+.Ic freeze .
+.It Ic unedit
+Undo an
+.Ic edit
+command.
 .It Xo Ic update
 .Op Fl ACdP
 .Op Ar file ...
@@ -174,6 +269,10 @@ The
 flag causes
 .Nm
 to prune any directories that have become empty as a result of the update.
+.Pp
+Aliases:
+.Ic up ,
+.Ic upd .
 .It Ic version
 Causes
 .Nm
@@ -182,6 +281,14 @@ If this command is issued within a local copy of a repository located on
 another machine,
 .Nm
 will also connect to the server and ask it to print its version information.
+.Pp
+Aliases:
+.Ic ve ,
+.Ic ver .
+.It Ic watch
+Set watches.
+.It Ic watchers
+See who is watching a file.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width CVS_CLIENT_LOG
