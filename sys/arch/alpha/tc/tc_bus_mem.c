@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.7 1997/04/02 22:08:10 niklas Exp $	*/
+/*	$OpenBSD: tc_bus_mem.c,v 1.8 1997/04/10 03:01:05 millert Exp $	*/
 /*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
 
 /*
@@ -41,6 +41,8 @@
 
 #include <machine/bus.h>
 #include <dev/tc/tcvar.h>
+
+#define __C(A,B)	__CONCAT(A,B)                              
 
 /* mapping/unmapping */
 int		tc_mem_map __P((void *, bus_addr_t, bus_size_t, int,
