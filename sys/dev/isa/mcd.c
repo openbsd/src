@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.26 1998/10/04 21:25:41 millert Exp $ */
+/*	$OpenBSD: mcd.c,v 1.27 1998/10/05 00:39:27 millert Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -608,14 +608,8 @@ mcdioctl(dev, cmd, addr, flag, p)
 		return EIO;
 
 	switch (cmd) {
-	case DIOCGPDINFO: {
-			struct cpu_disklabel osdep;
-
-			mcdgetdisklabel(dev, sc, (struct disklabel *)addr,
-			    &osdep, 1);
-			return 0;
-		}
 	case DIOCGDINFO:
+	case DIOCGPDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		return 0;
 
