@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ep.4,v 1.28 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: ep.4,v 1.29 2005/02/05 23:58:17 jsg Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
 .\" All rights reserved.
@@ -40,6 +40,7 @@
 .Cd "ep* at pci?"
 .Cd "ep* at pcmcia?"
 .Cd "ep* at isapnp?"
+.Cd "tqphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -161,6 +162,7 @@ Erase the pencil mark and reboot.
 .Xr isapnp 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
+.Xr tqphy 4 ,
 .Xr xl 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8

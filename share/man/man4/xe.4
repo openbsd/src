@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xe.4,v 1.9 2004/09/30 19:59:26 mickey Exp $
+.\"	$OpenBSD: xe.4,v 1.10 2005/02/05 23:58:17 jsg Exp $
 .\"
 .\" Copyright (c) 1999 Niklas Hallqvist
 .\" All rights reserved.
@@ -30,6 +30,7 @@
 .Nd Xircom-based 16-bit PCMCIA Ethernet driver
 .Sh SYNOPSIS
 .Cd "xe* at pcmcia?"
+.Cd "icsphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -47,6 +48,7 @@ interface are:
 However, most 16-bit Xircom Ethernet cards should work.
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr icsphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vr.4,v 1.18 2005/01/04 10:12:18 jmc Exp $
+.\"	$OpenBSD: vr.4,v 1.19 2005/02/05 23:58:17 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -40,6 +40,8 @@
 .Nd VIA Technologies VT3043, VT86C100A, VT6105/VT6105M Ethernet driver
 .Sh SYNOPSIS
 .Cd "vr* at pci?"
+.Cd "amphy* at mii?"
+.Cd "sqphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -140,11 +142,13 @@ If the system is powered down prior to booting
 the card should be configured correctly.
 .El
 .Sh SEE ALSO
+.Xr amphy 4 ,
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr sqphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs

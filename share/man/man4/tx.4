@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tx.4,v 1.14 2004/09/30 19:59:25 mickey Exp $
+.\"     $OpenBSD: tx.4,v 1.15 2005/02/05 23:58:17 jsg Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -32,6 +32,7 @@
 .Nd SMC 9432 10/100 Mbps Ethernet driver
 .Sh SYNOPSIS
 .Cd "tx* at pci?"
+.Cd "qsphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -113,6 +114,7 @@ While resetting, the driver failed to stop the device correctly.
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr qsphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY

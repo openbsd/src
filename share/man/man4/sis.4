@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sis.4,v 1.21 2005/02/01 21:56:18 jmc Exp $
+.\"	$OpenBSD: sis.4,v 1.22 2005/02/05 23:58:17 jsg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -40,6 +40,9 @@
 .Nd "SiS 900, SiS 7016, and NS DP83815/6 Fast Ethernet driver"
 .Sh SYNOPSIS
 .Cd "sis* at pci?"
+.Cd "icsphy* at mii?"
+.Cd "nsphyter* at mii?"
+.Cd "rlphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -145,10 +148,13 @@ the card should be configured correctly.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr icsphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
+.Xr nsphyter 4 ,
 .Xr pci 4 ,
+.Xr rlphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Rs
