@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mppe.c,v 1.15 2002/07/01 11:14:35 brian Exp $
+ * $OpenBSD: mppe.c,v 1.16 2002/07/02 00:48:30 brian Exp $
  */
 
 #include <sys/param.h>
@@ -691,7 +691,8 @@ MPPEInitInput(struct bundle *bundle, struct fsm_opt *o)
 
 #ifndef NORADIUS
   if (*bundle->radius.cfg.file && bundle->radius.mppe.recvkey) {
-    mip->keylen = bundle->radius.mppe.recvkeylen;
+    if (mip->keylen > bundle->radius.mppe.recvkeylen)
+      mip->keylen = bundle->radius.mppe.recvkeylen;
     if (mip->keylen > sizeof mip->mastkey)
       mip->keylen = sizeof mip->mastkey;
     memcpy(mip->mastkey, bundle->radius.mppe.recvkey, mip->keylen);
@@ -746,7 +747,8 @@ MPPEInitOutput(struct bundle *bundle, struct fsm_opt *o)
 
 #ifndef NORADIUS
   if (*bundle->radius.cfg.file && bundle->radius.mppe.sendkey) {
-    mop->keylen = bundle->radius.mppe.sendkeylen;
+    if (mop->keylen > bundle->radius.mppe.sendkeylen)
+      mop->keylen = bundle->radius.mppe.sendkeylen;
     if (mop->keylen > sizeof mop->mastkey)
       mop->keylen = sizeof mop->mastkey;
     memcpy(mop->mastkey, bundle->radius.mppe.sendkey, mop->keylen);
