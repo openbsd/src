@@ -83,31 +83,31 @@ distribution:
 		j=`dirname $$i`; \
 		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
 	done
 	@-for i in ${HTDOCS}; do \
 		j=`dirname $$i`; \
 		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
 	done
 	@-for i in ${MANUALFILES}; do \
 		j=`dirname $$i`; \
 		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		${.CURDIR}/htdocs/$$i ${DESTDIR}${WWWROOT}/htdocs/$$j/; \
+		    ${.CURDIR}/htdocs/$$i ${DESTDIR}${WWWROOT}/htdocs/$$j/; \
 	done
 	@-for i in ${CGIFILES}; do \
 		j=`dirname $$i`; \
 		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 000 \
-		${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
 	done
 	@-for i in ${ICONFILES}; do \
 		j=`dirname $$i`; \
 		echo "Installing ${DESTDIR}${WWWROOT}/$$i"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
-		${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
+		    ${.CURDIR}/$$i ${DESTDIR}${WWWROOT}/$$j/; \
 	done
 
 .include<bsd.subdir.mk>
