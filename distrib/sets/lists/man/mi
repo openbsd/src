@@ -1315,6 +1315,7 @@
 ./usr/share/man/cat4/macppc/ki2c.0
 ./usr/share/man/cat4/macppc/kmem.0
 ./usr/share/man/cat4/macppc/macobio.0
+./usr/share/man/cat4/macppc/mediabay.0
 ./usr/share/man/cat4/macppc/mem.0
 ./usr/share/man/cat4/macppc/snapper.0
 ./usr/share/man/cat4/macppc/zs.0
