@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.48 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.49 2002/02/11 12:34:30 art Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ sys_sendmsg(p, v, retval)
 	error = copyin(SCARG(uap, msg), (caddr_t)&msg, sizeof (msg));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > IOV_MAX)
+	if (msg.msg_iovlen < 0 || msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
 		iov = malloc(sizeof(struct iovec) * msg.msg_iovlen,
@@ -600,13 +600,13 @@ sys_recvmsg(p, v, retval)
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
-	register int error;
+	int error;
 
 	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
 	    sizeof (msg));
 	if (error)
 		return (error);
-	if (msg.msg_iovlen <= 0 || msg.msg_iovlen > IOV_MAX)
+	if (msg.msg_iovlen < 0 || msg.msg_iovlen > IOV_MAX)
 		return (EMSGSIZE);
 	if (msg.msg_iovlen > UIO_SMALLIOV)
 		iov = malloc(sizeof(struct iovec) * msg.msg_iovlen,
@@ -618,12 +618,14 @@ sys_recvmsg(p, v, retval)
 #else
 	msg.msg_flags = SCARG(uap, flags);
 #endif
+	if (msg.msg_iovlen > 0) {
+		error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
+		    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+		if (error)
+			goto done;
+	}
 	uiov = msg.msg_iov;
 	msg.msg_iov = iov;
-	error = copyin((caddr_t)uiov, (caddr_t)iov,
-	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
-	if (error)
-		goto done;
 	if ((error = recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval)) == 0) {
 		msg.msg_iov = uiov;
 		error = copyout((caddr_t)&msg, (caddr_t)SCARG(uap, msg),
