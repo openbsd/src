@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.30 2000/02/25 16:55:06 hin Exp $
+#	$OpenBSD: bsd.own.mk,v 1.31 2000/03/31 18:03:54 espie Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -109,3 +109,5 @@ NOPROFILE=
 
 # No lint, for now.
 NOLINT=
+
+BSD_OWN_MK=Done
