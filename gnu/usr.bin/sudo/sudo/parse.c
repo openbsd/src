@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.3 1997/11/23 07:15:46 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.4 1998/01/13 04:01:31 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.3
@@ -220,7 +220,7 @@ int command_matches(cmnd, user_args, path, sudoers_args)
     static char *c;
 
     /* don't bother with pseudo commands like "validate" */
-    if (*cmnd != '/')
+    if (*cmnd != '/' && *cmnd != '.')
 	return(FALSE);
 
     /* only need to stat cmnd once since it never changes */
