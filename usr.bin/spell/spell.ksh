@@ -1,8 +1,8 @@
 #!/bin/ksh -
 #
-# $OpenBSD: spell.ksh,v 1.6 2003/06/17 21:56:25 millert Exp $
+# $OpenBSD: spell.ksh,v 1.7 2003/07/10 02:25:38 millert Exp $
 #
-# Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
+# Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,10 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+#
+# Sponsored in part by the Defense Advanced Research Projects
+# Agency (DARPA) and Air Force Research Laboratory, Air Force
+# Materiel Command, USAF, under agreement number F39502-99-1-0512.
 #
 SPELLPROG=/usr/libexec/spellprog
 DICT=/usr/share/dict/words
@@ -33,6 +37,9 @@ TMP=`mktemp /tmp/spell.XXXXXXXX` || exit 1
 VTMP=
 USAGE="usage: spell [-biltvx] [-d list] [-h spellhist] [-s stop] [+extra_list] [file ...]"
 
+set -o posix		# set POSIX mode to prevent +foo in getopts
+OPTIND=1		# force getopts to reset itself
+
 trap "rm -f $TMP $VTMP; exit 0" 0
 
 # Use local word/stop lists if they exist
@@ -43,11 +50,7 @@ if [ -f $LOCAL_STOP ]; then
 	STOP="$STOP $LOCAL_STOP"
 fi
 
-# getopts will treat +foo the same as -foo so we have to make a copy
-# of the args and quit the loop when we find something starting with '+'
-set -A argv $0 "$@"
-while test "${argv[$OPTIND]#+}" = "${argv[$OPTIND]}" && \
-    getopts "biltvxd:h:m:s:" c; do
+while getopts "biltvxd:h:m:s:" c; do
 	case $c in
 	b)	LANG=$BRITISH
 		STOP_LANG=$AMERICAN
