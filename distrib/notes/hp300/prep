@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.18 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: prep,v 1.19 2005/02/27 22:13:44 miod Exp $
 Most MACHINE machines don't generally need any specific preparation.
 
 On series 400, you will wish to configure the PROM as ``HP-UX compatible''
@@ -9,6 +9,8 @@ to make this setting Permanent with ``P'', then validate your changes with
 
 If you plan to use a serial console, you might have to flip a switch
 on series 300, or configure the RS-232 interface as ``remote'' from the
-Configuration menu, on series 400.  Please refer to the OpenBSD/MACHINE
-FAQ at http://www.OpenBSD.org/hp300/hp300faq.html for more information
-about this process.
+Configuration menu, on series 400, except on the 425e where serial console
+is selected by setting the ``service/normal'' switch in the ``service''
+position.  Please refer to the OpenBSD/MACHINE FAQ at
+http://www.OpenBSD.org/hp300/hp300faq.html for more information about this
+process.
