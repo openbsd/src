@@ -22,6 +22,7 @@
 #   FallBackToRsh yes
 #   UseRsh no
 #   BatchMode no
+#   CheckHostIP yes
 #   StrictHostKeyChecking no
 #   IdentityFile ~/.ssh/identity
 #   Port 22
