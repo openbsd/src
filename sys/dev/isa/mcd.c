@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.16 1996/06/10 00:48:05 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.17 1996/09/20 06:08:10 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -825,9 +825,11 @@ mcdprobe(parent, match, aux)
 		sc->readcmd = MCD_CMDREADDOUBLESPEED;
 		break;
 	default:
+#ifdef MCDDEBUG
 		printf("%s: unrecognized drive version %c%02x; will try to use it anyway\n",
 		    sc->sc_dev.dv_xname,
 		    mbx.res.data.continfo.code, mbx.res.data.continfo.version);
+#endif
 		sc->type = 0;
 		break;
 	}
