@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 1999/07/21 07:37:19 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.18 1999/08/03 15:48:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -358,7 +358,7 @@ $bsd_syscall
 	be,n    R%$syscall(sr1,r1)
 	nop
 
-	.export	gateway_page_end, code
+	.export	gateway_page_end, entry
 gateway_page_end
 
 	.import	syscall,code
@@ -548,7 +548,7 @@ $syscall_end
 	nop ! .word 0, 0, 0
 
 	.align NBPG
-	.export $ivaaddr, code
+	.export $ivaaddr, entry
 $ivaaddr
 	ATRAP(nexist,T_NONEXIST)/*  0. invalid interrupt vector */
 	CTRAP(hpmc,T_HPMC)	/*  1. high priority machine check */
@@ -596,14 +596,14 @@ $ivaaddr
 	.align	32*32
 
 
-	.export	TLABEL(hpmc), code
+	.export	TLABEL(hpmc), entry
 TLABEL(hpmc)
 	copy	%r0, arg0
 	b	boot
 	addi,tr 0,r0,arg0		; Skip first instr at target.
 	break	0,0
 
-	.export TLABEL(emu)
+	.export TLABEL(emu), entry
 TLABEL(emu)
 	/* restore %r1 from CTRAP() */
 	mfctl	tr7, r1
@@ -718,11 +718,12 @@ $fpusw_nosave
 $fpusw_done
 	mfctl	tr4, t3
 	mfctl	tr3, t2
-	rfi
 	mfctl	tr2, t1
+	rfi
+	nop
 
 #ifdef notyet
-	.export TLABEL(excpt)
+	.export TLABEL(excpt), entry
 	/*
 	 * Emulate FPU/SFU if none/disabled
 	 *
@@ -793,11 +794,12 @@ TLABEL(excpt)
 	comb,<>	r0, ret0, TLABEL(all)
 	mfctl	tr4, ret0
 
-	rfi
 	mfctl	tr7, r1
+	rfi
+	nop
 #endif
 	
-	.export	$sfu_emu, code
+	.export	$sfu_emu, entry
 $sfu_emu
 	rfi
 	ldo	1(r0), ret0	/* none supported by now */
@@ -815,14 +817,13 @@ $sfu_emu
 
 	/* Construct the virtual address tag. */
 #define	VTAG ! \
-	extru	r9,14,15,r16		   /* r16 = off[0..14] */	! \
-	zdep	r16,15,15,r16		   /* r16 = tag[1..15] */	! \
-	dep	r8,31,16,r16		   /* put in the space id */	! \
-	depi	1,0,1,r16		   /* and set the valid bit */
+	shd	r0, r9, 1, r16		/* r16[1..15] = off[0..14] */	! \
+	dep	r8, 31, 16, r16		/* put in the space id */	! \
+	depi	1, 0, 1, r16		/* and set the valid bit */
 
 
 	.align	64
-	.export	TLABEL(tlbd), code
+	.export	TLABEL(tlbd), entry
 TLABEL(tlbd)
 	mfctl	ior, r9		/* Offset */
 	mfctl	isr, r8		/* Space  */
@@ -852,13 +853,12 @@ $hash_loop_tlbd
 	VTAG	/* (r8,r9) -> r16 */
 #endif
 	/* Set the dirty bit for this physical page. */
-	ldw	pv_tlbpage(r24), r17
 	ldw	pv_tlbprot(r24), r25
 	b	$tlb_inshpt
 	depi	1, TLB_DIRTY_POS, 1, r25
 	
 	.align	32
-	.export	TLABEL(itlb), code
+	.export	TLABEL(itlb), entry
 TLABEL(itlb)
 	mfctl	pcoq,r9		/* Offset */
 	mfctl	pcsq,r8		/* Space  */
@@ -867,10 +867,11 @@ TLABEL(itlb)
 #if USECR28
 	HPTENT	/* will update cr28 */
 #endif
-	b,n	$tlbmiss
+	b	$tlbmiss
+	depi	1, 0, 1, r1	/* mark for ITLB insert */
 
 	.align	32
-	.export	TLABEL(dtlb), code
+	.export	TLABEL(dtlb), entry
 TLABEL(dtlb)
 	mfctl	ior, r9		/* Offset */
 	mfctl	isr, r8		/* Space  */
@@ -891,8 +892,8 @@ $tlbmiss
 #if ! USECR28
 	HPTENT	/* will update cr28 */
 	
-	ldw	hpt_tag(r24),r17
 	VTAG	/* (r8,r9) -> r16 */
+	ldw	hpt_tag(r24),r17
 
 	/* Compare the tag against the HPT entry.
 	   If it matches, then do the TLB insertion. */
@@ -919,7 +920,6 @@ $hash_loop
 	ldw	pv_hash(r24),r24
 
 	/* Now set things up to enter the real mapping that we want */
-	ldw	pv_tlbpage(r24),r17
 	ldw	pv_tlbprot(r24),r25
 	depi	1, TLB_REF_POS, 1, r25
 
@@ -932,6 +932,7 @@ $tlb_inshpt
 #if USECR28
 	VTAG	/* (r8,r9) -> r16 */
 #endif
+	ldw	pv_tlbpage(r24),r17
 	mfctl	cr28, r24
 
 	stw	r16, hpt_tag(r24)
@@ -940,25 +941,26 @@ $tlb_inshpt
 
 $tlb_gothpt
 	mfsp	sr1, r16
+	bb,<	r1, 0, $tlb_itlb
 	mtsp	r8, sr1
-	
-	comib,=,n T_ITLBMISS, r1, $itlb
 
 	idtlba	r17,(sr1, r9)
-	b	$tlbret
 	idtlbp	r25,(sr1, r9)
-$itlb
-	iitlba	r17,(sr1, r9)
-	iitlbp	r25,(sr1, r9)
-
-	/* And return ... */
-$tlbret
 	mtsp	r16, sr1
 	rfir
 	nop
+
+$tlb_itlb
+	iitlba	r17,(sr1, r9)
+	iitlbp	r25,(sr1, r9)
+	mtsp	r16, sr1
+	rfir
+	nop
+	.export	$tlb_missend, entry
 $tlb_missend
 
-	.export	TLABEL(ibreak), code
+	.align	32
+	.export	TLABEL(ibreak), entry
 TLABEL(ibreak)
 	mtctl	t1, tr6
 	mtctl	t2, tr5
@@ -1011,11 +1013,12 @@ $ibreak_exit
 	mfctl	tr4, t3
 	mfctl	tr5, t2
 	mfctl	tr6, t1
-	rfi
 	mfctl	tr7, r1
+	rfi
+	nop
 
 	.align	64
-	.export	TLABEL(all), code
+	.export	TLABEL(all), entry
 TLABEL(all)
 	/* r1 still has trap type */
 
@@ -1035,7 +1038,7 @@ TLABEL(all)
 	ldil	L%intr_recurse, t1
 	ldw	R%intr_recurse(t1), t2
 	addi	1, t2, t3
-	comb,=	r0, t2, $trap_recurse
+	comb,<>	r0, t2, $trap_recurse
 	stw	t3, R%intr_recurse(t1)
 
 	ldil	L%intr_stack, sp
@@ -1131,10 +1134,13 @@ $trap_trap
 	mtsp	r0,sr7
 
 	/*
-	 * save the protection ID registers. We will keep the first one
+	 * save the protection ID registers. We will keep the last one
 	 * with the protection of the user's area and set the remaining
 	 * ones to be the kernel.
 	 */
+
+	mfctl	pidr1,t1
+	stw	t1,TF_CR8(t2)
 
 	mfctl	pidr2,t1
 	stw	t1,TF_CR9(t2)
@@ -1142,18 +1148,12 @@ $trap_trap
 	mfctl	pidr3,t1
 	stw	t1,TF_CR12(t2)
 
-	mfctl	pidr4,t1
-	stw	t1,TF_CR13(t2)
-
 	ldi	HPPA_PID_KERNEL,t1
 	mtctl	t1,pidr1
 	mtctl	t1,pidr2
 	mtctl	t1,pidr3
 
-	/*
-	 * load the space queue
-	 */
-
+	/* load the space queue */
 	mtctl	r0,pcsq
 	mtctl	r0,pcsq
 
@@ -1173,17 +1173,11 @@ $trap_trap
 	ldi	INT_NONE,t1
 	mtctl	t1,eiem
 
-	/*
-	 * load in the address to "return" to with the rfir instruction
-	 */
-
+	/* load in the address to "return" to with the rfir instruction */
 	ldil	L%$trapnowvirt,t1
 	ldo	R%$trapnowvirt(t1),t1
 
-	/*
-	 * load the offset queue
-	 */
-
+	/* load the offset queue */
 	mtctl	t1,pcoq
 	ldo	4(t1),t1
 	mtctl	t1,pcoq
@@ -1267,9 +1261,6 @@ $trapnowvirt
 	mfctl	rctr,t1
 	stw	t1,TF_CR0(t2)
 
-	mfctl	pidr1,t1
-	stw	t1,TF_CR8(t2)
-
 	mfctl	sar,t1
 	stw	t1,TF_CR11(t2)
 
@@ -1311,6 +1302,7 @@ $trapnowvirt
 	.call
 	blr	r0,rp
 	bv,n	r0(t1)
+	nop
 
 	/* see if context really changed */
 	ldil	L%curproc, t1
@@ -1404,14 +1396,14 @@ $trapnowvirt
 	 * restore the protection ID registers
 	 */
 
+	ldw	TF_CR8(t3),t1
+	mtctl	t1,pidr1
+
 	ldw	TF_CR9(t3),t1
 	mtctl	t1,pidr2
 
 	ldw	TF_CR12(t3),t1
 	mtctl	t1,pidr3
-
-	ldw	TF_CR13(t3),t1
-	mtctl	t1,pidr4
 
 	/*
 	 * restore the space registers
@@ -1461,8 +1453,10 @@ $trapnowvirt
 
 	rfi
 	nop
+	.export	$trap$all$end, entry
+$trap$all$end
 
-	.align NBPG	
+	.align 32
 
 ENTRY(setjmp)
 /*
@@ -1901,7 +1895,6 @@ ENTRY(switch_exit)
 	mtctl	t4, pidr1
 	mtctl	t4, pidr2
 	mtctl	t4, pidr3
-	mtctl	t4, pidr4
 
 	b	switch_search
 	nop
