@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.14 1999/03/04 02:03:05 millert Exp $
+#  $OpenBSD: Makefile,v 1.15 1999/03/07 01:19:12 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -142,6 +142,18 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	ieee_test.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3
 
+MLINKS+=erf.3 erfc.3
+MLINKS+=exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
+MLINKS+=hypot.3 cabs.3
+MLINKS+=ieee.3 copysign.3 ieee.3 finite.3 ieee.3 ilogb.3 \
+	ieee.3 nextafter.3 ieee.3 remainder.3 ieee.3 scalbn.3
+MLINKS+=ieee_test.3 logb.3
+MLINKS+=ieee_test.3 scalb.3
+MLINKS+=ieee_test.3 significand.3
+MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
+MLINKS+=lgamma.3 gamma.3
+MLINKS+=sqrt.3 cbrt.3
+
 .include <bsd.lib.mk>
 
 .if (${MACHINE_ARCH} == "i386")
@@ -156,14 +168,3 @@ LINKS+= ${LIBDIR}/libm_pic.a ${LIBDIR}/libm_i387_pic.a
 .endif
 .endif
 
-MLINKS+=erf.3 erfc.3
-MLINKS+=exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
-MLINKS+=hypot.3 cabs.3
-MLINKS+=ieee.3 copysign.3 ieee.3 finite.3 ieee.3 ilogb.3 \
-	ieee.3 nextafter.3 ieee.3 remainder.3 ieee.3 scalbn.3
-MLINKS+=ieee_test.3 logb.3
-MLINKS+=ieee_test.3 scalb.3
-MLINKS+=ieee_test.3 significand.3
-MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
-MLINKS+=lgamma.3 gamma.3
-MLINKS+=sqrt.3 cbrt.3
