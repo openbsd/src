@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: sudo.h,v 1.168 2000/01/17 23:46:26 millert Exp $
+ * $Sudo: sudo.h,v 1.172 2000/03/07 04:29:46 millert Exp $
  */
 
 #ifndef _SUDO_SUDO_H
@@ -56,6 +56,7 @@ struct sudo_user {
     char *cmnd_safe;
     char *cmnd;
     char *cmnd_args;
+    char *class_name;
 };
 
 /*
@@ -129,6 +130,7 @@ struct sudo_user {
 #define user_host		(sudo_user.host)
 #define user_shost		(sudo_user.shost)
 #define safe_cmnd		(sudo_user.cmnd_safe)
+#define login_class		(sudo_user.class_name)
 
 /*
  * We used to use the system definition of PASS_MAX or _PASSWD_LEN,
@@ -156,6 +158,12 @@ struct sudo_user {
 #define PWCHECK_ALL	0x02
 #define PWCHECK_ANY	0x04
 #define PWCHECK_ALWAYS	0x08
+
+/*
+ * Flags for tgetpass()
+ */
+#define TGP_ECHO	0x01		/* leave echo on when reading passwd */
+#define TGP_STDIN	0x02		/* read from stdin, not /dev/tty */
 
 /*
  * Function prototypes
@@ -206,7 +214,9 @@ void dump_defaults	__P((void));
 void dump_auth_methods	__P((void));
 int lock_file		__P((int, int));
 int touch		__P((char *, time_t));
+int user_is_exempt	__P((void));
 void set_fqdn		__P((void));
+char *sudo_getepw	__P((struct passwd *));
 YY_DECL;
 
 /* Only provide extern declarations outside of sudo.c. */
@@ -216,6 +226,7 @@ extern struct sudo_user sudo_user;
 extern int Argc;
 extern char **Argv;
 extern FILE *sudoers_fp;
+extern int tgetpass_flags;
 #endif
 extern int errno;
 

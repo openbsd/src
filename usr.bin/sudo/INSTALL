@@ -1,4 +1,4 @@
-Installation instructions for Sudo 1.6.2
+Installation instructions for Sudo 1.6.3
 ========================================
 
 Sudo uses a `configure' script to probe the capabilities and type
@@ -186,6 +186,14 @@ Special features/options:
 	`configure' changes; you should check to see if your platform can 
 	access DCE via PAM before using this option.
 
+  --with-logincap
+	Enable support for BSD login classes on FreeBSD and BSD/OS.  This
+	adds support for the login classes specified in /etc/login.conf.
+	By default, a login class is not applied unless the 'use_loginclass'
+	option is defined in sudoers or the user specifies a class on the
+	command line.  It does *not*, however cause sudo to use BSD
+	authentication.
+
   --disable-sia
 	Disable SIA support.  This is the "Security Integration Architecture"
 	on Digital UNIX. If you disable SIA sudo will use its own
@@ -228,17 +236,6 @@ Special features/options:
 	This option authentication via the passwd (or shadow) file.
 	It should only be used when another, alternate, authentication
 	scheme is in use.
-
-  --with-editor=path
-	Specify the default editor used by visudo (and the only editor used
-	unless --with-env-editor is specified).  The default is the path
-	to vi on your system.
-
-  --with-env-editor
-	Makes visudo consult the EDITOR and VISUAL environment variables before
-	falling back on the default editor.  Note that this may create a
-	security hole as most editors allow a user to get a shell (which would
-	be a root shell and hence, no logging).
 
   --with-otp-only
 	This option is now just an alias for --without-passwd.
@@ -415,6 +412,17 @@ The following options are also configurable at runtime:
   --without-lecture
 	Don't print the lecture the first time a user runs sudo.
 
+  --with-editor=path
+	Specify the default editor used by visudo (and the only editor used
+	unless --with-env-editor is specified).  The default is the path
+	to vi on your system.
+
+  --with-env-editor
+	Makes visudo consult the EDITOR and VISUAL environment variables before
+	falling back on the default editor.  Note that this may create a
+	security hole as most editors allow a user to get a shell (which would
+	be a root shell and hence, no logging).
+
   --disable-authentication
         By default, sudo requires the user to authenticate via a
         password or similar means.  This options causes sudo to
@@ -562,8 +570,10 @@ Linux:
 
     It is not possible to access the sudoers file via NFS on Linux.
     This is due to a bug in the Linux client-side NFS implementation.
-    It has been fixed in the developement kernel but, as of Aug 27, 1999,
-    the fixes have not made it into the mainstream kernel.
+    It has been fixed in the developement kernel but, as of Aug 27,
+    1999, the fixes have not made it into the mainstream kernel.
+    There is a workaround on the sudo ftp site, linux_nfs.patch,
+    if you need to NFS-mount sudoers on Linux.
 
 Mac OS X:
     It has been reported that for sudo to work on Mac OS X it must
@@ -577,3 +587,10 @@ SCO ODT:
     You'll probably need libcrypt_i.a available via anonymous ftp
     from sosco.sco.com.  The necessary files are /SLS/lng225b.Z
     and /SLS/lng225b.ltr.Z.
+
+Dynix:
+    Some people have experienced problems building sudo with gcc
+    on Dynix.  If you experience problems compiling sudo using gcc
+    on Dynix, try using the native compiler (cc).  You can do so
+    by removing the config.cache file and then re-running configure
+    with the --with-CC=cc option.

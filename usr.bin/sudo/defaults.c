@@ -53,7 +53,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: defaults.c,v 1.17 2000/01/17 23:46:24 millert Exp $";
+static const char rcsid[] = "$Sudo: defaults.c,v 1.23 2000/03/22 23:40:09 millert Exp $";
 #endif /* lint */
 
 /*
@@ -182,6 +182,24 @@ struct sudo_defs_types sudo_defs_table[] = {
 	"requiretty", T_FLAG,
 	"Only allow the user to run sudo if they have a tty"
     }, {
+	"env_editor", T_FLAG,
+	"Visudo will honor the EDITOR environment variable"
+    }, {
+	"rootpw", T_FLAG,
+	"Prompt for root's password, not the users's"
+    }, {
+	"runaspw", T_FLAG,
+	"Prompt for the runas_default user's password, not the users's"
+    }, {
+	"targetpw", T_FLAG,
+	"Prompt for the target user's password, not the users's"
+    }, {
+	"use_loginclass", T_FLAG,
+	"Apply defaults in the target user's login class if there is one"
+    }, {
+	"set_logname", T_FLAG,
+	"Set the LOGNAME and USER environment variables"
+    }, {
 	"loglinelen", T_INT|T_BOOL,
 	"Length at which to wrap log file lines (0 for no wrap): %d"
     }, {
@@ -229,6 +247,9 @@ struct sudo_defs_types sudo_defs_table[] = {
     }, {
 	"secure_path", T_STR|T_BOOL,
 	"Value to override user's $PATH with: %s"
+    }, {
+	"editor", T_STR|T_PATH,
+	"Path to the editor for use by visudo: %s"
     }, {
 	"listpw_i", T_INT, NULL
     }, {
@@ -279,12 +300,6 @@ dump_defaults()
 	    }
 	}
     }
-
-#ifdef ENV_EDITOR
-    (void) printf("Default editor for visudo: %s\n", EDITOR);
-#else
-    (void) printf("Editor for visudo: %s\n", EDITOR);
-#endif
 }
 
 /*
@@ -533,6 +548,10 @@ init_defaults()
 #ifdef USE_INSULTS
     def_flag(I_INSULTS) = TRUE;
 #endif
+#ifdef ENV_EDITOR
+    def_flag(I_ENV_EDITOR) = TRUE;
+#endif
+    def_flag(I_LOGNAME) = TRUE;
 
     /* Syslog options need special care since they both strings and ints */
 #if (LOGGING & SLOG_SYSLOG)
@@ -576,6 +595,7 @@ init_defaults()
 #ifdef SECURE_PATH
     def_str(I_SECURE_PATH) = estrdup(SECURE_PATH);
 #endif
+    def_str(I_EDITOR) = estrdup(EDITOR);
 
     /*
      * The following depend on the above values.
@@ -653,7 +673,7 @@ store_syslogfac(val, def, op)
 	free(def->sd_un.str);
 	closelog();
     }
-    openlog("sudo", 0, fac->num);
+    openlog(Argv[0], 0, fac->num);
     def->sd_un.str = estrdup(fac->name);
     sudo_defs_table[I_LOGFAC].sd_un.ival = fac->num;
 #else
@@ -661,7 +681,7 @@ store_syslogfac(val, def, op)
 	free(def->sd_un.str);
 	closelog();
     }
-    openlog("sudo", 0);
+    openlog(Argv[0], 0);
     def->sd_un.str = estrdup("default");
 #endif /* LOG_NFACILITIES */
     return(TRUE);

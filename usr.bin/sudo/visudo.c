@@ -81,7 +81,7 @@ extern int stat		__P((const char *, struct stat *));
 #endif /* POSIX_SIGNALS && !SA_RESETHAND */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: visudo.c,v 1.121 2000/01/19 19:07:24 millert Exp $";
+static const char rcsid[] = "$Sudo: visudo.c,v 1.126 2000/03/23 04:38:22 millert Exp $";
 #endif /* lint */
 
 /*
@@ -93,6 +93,7 @@ static RETSIGTYPE Exit		__P((int));
 static void setup_signals	__P((void));
 int command_matches		__P((char *, char *, char *, char *));
 int addr_matches		__P((char *));
+int hostname_matches		__P((char *, char *, char *));
 int netgr_matches		__P((char *, char *, char *, char *));
 int usergr_matches		__P((char *, char *));
 void init_parser		__P((void));
@@ -121,7 +122,7 @@ main(argc, argv)
     char **argv;
 {
     char buf[MAXPATHLEN*2];		/* buffer used for copying files */
-    char *Editor = EDITOR;		/* editor to use (default is EDITOR */
+    char *Editor;			/* editor to use */
     int sudoers_fd;			/* sudoers file descriptor */
     int stmp_fd;			/* stmp file descriptor */
     int n;				/* length parameter */
@@ -158,15 +159,8 @@ main(argc, argv)
 	exit(1);
     }
 
-#ifdef ENV_EDITOR
-    /*
-     * If we are allowing EDITOR and VISUAL envariables set Editor
-     * base on whichever exists...
-     */
-    if (!(Editor = getenv("EDITOR")))
-	if (!(Editor = getenv("VISUAL")))
-	    Editor = EDITOR;
-#endif /* ENV_EDITOR */
+    /* Setup defaults data structures. */
+    init_defaults();
 
     /*
      * Open sudoers, lock it and stat it.  
@@ -216,8 +210,27 @@ main(argc, argv)
 
 	(void) close(stmp_fd);
 	(void) touch(stmp, sudoers_sb.st_mtime);
+
+	/* Parse sudoers to pull in editor and env_editor conf values. */
+	if ((yyin = fopen(stmp, "r"))) {
+	    yyout = stdout;
+	    init_defaults();
+	    init_parser();
+	    yyparse();
+	    parse_error = FALSE;
+	    yyrestart(yyin);
+	    fclose(yyin);
+	}
     } else
 	(void) close(stmp_fd);
+
+    /*
+     * If we are allowing EDITOR and VISUAL envariables set Editor
+     * base on whichever exists...
+     */
+    if (!def_flag(I_ENV_EDITOR) ||
+	(!(Editor = getenv("EDITOR")) && !(Editor = getenv("VISUAL"))))
+	Editor = def_str(I_EDITOR);
 
     /*
      * Edit the temp file and parse it (for sanity checking)
@@ -389,6 +402,13 @@ command_matches(cmnd, cmnd_args, path, sudoers_args)
 int
 addr_matches(n)
     char *n;
+{
+    return(TRUE);
+}
+
+int
+hostname_matches(s, l, p)
+    char *s, *l, *p;
 {
     return(TRUE);
 }

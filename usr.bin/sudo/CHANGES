@@ -1252,3 +1252,48 @@ Sudo 1.6.2 released.
 
 395) Fixed a bug that caused an infinite loop when the password
      timeout was disabled.
+
+396) It is now possible to set the path to the editor for visudo as well
+     as the flag that determines whether or not visudo will look at
+     $EDITOR in the sudoers file.
+
+397) configure now pulls in the values of LIBS, LDFLAGS, CPPFLAGS, etc
+     as the documentation says it ought to.
+
+398) Added rootpw, runaspw, and targetpw to prompt for the root, runas_default
+     and target user's passwords respectively (instead of the invoking user's
+     password).
+
+399) Added -S flag to force password read from stdin.
+
+400) Restore coredumpsize resource limit before exec'ing the child
+     process (sudo sets it to 0 internally).
+
+401) Truncate unencrypted password to 8 chars if encrypted password is exactly
+     13 characters (indicateing standard a DES password).  Many versions
+     of crypt() do this for you, but not all (like HP-UX's).
+
+402) Fixed a typo/thinko that broke secureware support for long passwords.
+
+403) Added a new command line switch '-c' to support BSD login classes.
+     The '-c' option can be used to sudo a command with specific resource
+     limits in the login.conf database.  This feature is optionally enabled
+     via the --with-logincap configure switch.  Based on a patch from
+     Michael D. Marchionna.
+
+404) Fixed a bug where sudo would hang around and consume CPU if we spawn
+     a long-running process.
+
+405) Deal with HP-UX password aging info tacked on to the end of the
+     encrypted password.
+
+406) Added set_logname run-time option.  When unset, sudo will not set
+     the USER and LOGNAME environment variables.
+
+407) Wildcards are now allowed in the hostnames specified in sudoers.
+     The 'fqdn' option is often required for this to be useful.
+
+408) Fixed a bug where host and user qualifiers in a Defaults entry were
+     not being used correctly and the entry was being applied globally.
+
+Sudo 1.6.3 released.

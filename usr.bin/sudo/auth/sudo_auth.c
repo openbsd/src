@@ -57,7 +57,7 @@
 #include "insults.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.17 1999/12/06 06:47:19 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo_auth.c,v 1.19 2000/03/06 19:42:21 millert Exp $";
 #endif /* lint */
 
 sudo_auth auth_switch[] = {
@@ -67,7 +67,7 @@ sudo_auth auth_switch[] = {
 #  ifndef WITHOUT_PASSWD
     AUTH_ENTRY(0, "passwd", NULL, NULL, passwd_verify, NULL)
 #  endif
-#  if defined(HAVE_SECUREWARE) && !defined(WITHOUT_PASSWD)
+#  if defined(HAVE_GETPRPWNAM) && !defined(WITHOUT_PASSWD)
     AUTH_ENTRY(0, "secureware", secureware_init, NULL, secureware_verify, NULL)
 #  endif
 #  ifdef HAVE_AFS
@@ -155,7 +155,8 @@ verify_user(prompt)
 #ifdef AUTH_STANDALONE
 	p = prompt;
 #else
-	p = (char *) tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, 1);
+	p = (char *) tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60,
+	    tgetpass_flags);
 	if (!p || *p == '\0')
 	    nil_pw = 1;
 #endif /* AUTH_STANDALONE */

@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.300 2000/01/27 20:01:37 millert Exp $
+dnl $Sudo: configure.in,v 1.310 2000/03/24 20:14:04 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -9,45 +9,47 @@ AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-echo "Configuring Sudo version 1.6.2"
+echo "Configuring Sudo version 1.6.3"
 dnl
 dnl Variables that get substituted in the Makefile
 dnl
-AC_SUBST(CFLAGS)dnl must not initialize CFLAGS, it is magic
-PROGS="sudo visudo"
+AC_SUBST(CFLAGS)dnl
 AC_SUBST(PROGS)dnl
-CPPFLAGS=""
 AC_SUBST(CPPFLAGS)dnl
-LDFLAGS=""
 AC_SUBST(LDFLAGS)dnl
-SUDO_LDFLAGS=""
 AC_SUBST(SUDO_LDFLAGS)dnl
-LIBS=""
 AC_SUBST(LIBS)dnl
-SUDO_LIBS=""
 AC_SUBST(SUDO_LIBS)dnl
-NET_LIBS=""
 AC_SUBST(NET_LIBS)dnl
-AFS_LIBS=""
 AC_SUBST(AFS_LIBS)dnl
-OSDEFS=""
 AC_SUBST(OSDEFS)dnl
-AUTH_OBJS=""
 AC_SUBST(AUTH_OBJS)dnl
-LIBOBJS=""
 AC_SUBST(LIBOBJS)dnl
-MANTYPE="man"
 AC_SUBST(MANTYPE)dnl
-MAN_POSTINSTALL=""
 AC_SUBST(MAN_POSTINSTALL)dnl
-SUDOERS_MODE=0440
 AC_SUBST(SUDOERS_MODE)dnl
-SUDOERS_UID=0
 AC_SUBST(SUDOERS_UID)dnl
-SUDOERS_GID=0
 AC_SUBST(SUDOERS_GID)dnl
-DEV="#"
+AC_SUBST(TIMEDIR)
 AC_SUBST(DEV)
+AC_SUBST(mansectsu)
+AC_SUBST(mansectform)
+AC_SUBST(mansrcdir)
+dnl
+dnl Initial values for Makefile variables listed above
+dnl Some may be overridden by environment variables..
+dnl
+PROGS="sudo visudo"
+test -n "$MANTYPE" || MANTYPE="man"
+test -n "$mansrcdir" || mansrcdir="."
+test -n "$SUDOERS_MODE" || SUDOERS_MODE=0440
+test -n "$SUDOERS_UID" || SUDOERS_UID=0
+test -n "$SUDOERS_GID" || SUDOERS_GID=0
+DEV="#"
+
+dnl
+dnl Other vaiables
+dnl
 CHECKSHADOW=true
 CHECKSIA=true
 
@@ -146,7 +148,7 @@ AC_ARG_WITH(devel, [  --with-devel            add developement options],
 		DEV=""
 		;;
     no)		;;
-    *)		echo "Ignoring unknown argument to --with-devel: $with_csops"
+    *)		echo "Ignoring unknown argument to --with-devel: $with_devel"
 		;;
 esac])
 
@@ -315,6 +317,17 @@ AC_ARG_WITH(DCE, [  --with-DCE              enable DCE support],
 		;;
     no)		;;
     *)		AC_MSG_ERROR(["--with-DCE does not take an argument."])
+		;;
+esac])
+
+AC_ARG_WITH(logincap, [  --with-logincap         enable login class support],
+[case $with_logincap in
+    yes)	AC_DEFINE(HAVE_LOGINCAP)
+		AC_MSG_CHECKING(whether to try BSD login capabilities database)
+		AC_MSG_RESULT(yes)
+		;;
+    no)		;;
+    *)		AC_MSG_ERROR(["--with-logincap does not take an argument."])
 		;;
 esac])
 
@@ -957,6 +970,7 @@ AC_CHECK_PROG(SEDPROG, sed, sed, )
 AC_CHECK_PROG(NROFFPROG, nroff, nroff, )
 if test -z "$NROFFPROG"; then
     MANTYPE="cat"
+    mansrcdir='$(srcdir)'
 fi
 
 dnl
@@ -1015,6 +1029,8 @@ case "$host" in
 		if test "$with_AFS" = "yes"; then
 		    AFS_LIBS="-lc -lucb"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-aix*)
 		# To get all prototypes (so we pass -Wall)
@@ -1027,6 +1043,8 @@ case "$host" in
 		    AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"; SECUREWARE=1], AC_CHECK_LIB(security, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) [SUDO_LIBS="${SUDO_LIBS} -lsecurity"; LIBS="${LIBS} -lsecurity"; SECUREWARE=1]))
 		    CHECKSHADOW="false"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-hpux1[[0-9]]*)
 		# uncomment this for a statically linked sudo
@@ -1062,6 +1080,8 @@ case "$host" in
 		if test "$with_AFS" = "yes"; then
 		    AFS_LIBS="-lc -lBSD"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-hpux9*)
 		# uncomment this for a statically linked sudo
@@ -1107,6 +1127,8 @@ case "$host" in
 		if test "$with_AFS" = "yes"; then
 		    AFS_LIBS="-lc -lBSD"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-hpux*)
 
@@ -1123,6 +1145,8 @@ case "$host" in
 		if test "$with_AFS" = "yes"; then
 		    AFS_LIBS="-lc -lBSD"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-dec-osf*)
 		# ignore envariables wrt dynamic lib path
@@ -1177,6 +1201,8 @@ case "$host" in
 		    with_passwd=no
 		    AUTH_OBJS="sia.o"
 		fi
+		mansectsu=8
+		mansectform=4
 		;;
     *-*-irix*)
 		# configure may not think irix has stdc headers
@@ -1205,6 +1231,8 @@ case "$host" in
 		if test "$OSREV" -le 4; then
 		    AC_CHECK_LIB(sun, getpwnam, [LIBS="${LIBS} -lsun"])
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-linux*)
 		# To get crypt(3) and vasprintf() prototypes (so we pass -Wall)
@@ -1238,6 +1266,8 @@ case "$host" in
 		LIBS="${LIBS} -lsun -lbsd"
 		CPPFLAGS="${CPPFLAGS} -I/usr/include -I/usr/include/bsd"
 		OSDEFS="${OSDEFS} -D_MIPS"
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-isc*)
 		OSDEFS="${OSDEFS} -D_ISC"
@@ -1249,6 +1279,8 @@ case "$host" in
 		    AC_CHECK_LIB(sec, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"])
 		    CHECKSHADOW="false"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-sco*)
 		if test "$CHECKSHADOW" = "true"; then
@@ -1256,24 +1288,40 @@ case "$host" in
 		    AC_CHECK_LIB(gen, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lgen"; LIBS="${LIBS} -lgen"])
 		    CHECKSHADOW="false"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-sequent-sysv*)
 		if test "$CHECKSHADOW" = "true"; then
 		    AC_CHECK_LIB(sec, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"])
 		    CHECKSHADOW="false"
 		fi
+		mansectsu=1m
+		mansectform=4
 		;;
     *-ccur-sysv4|*-ccur-sysvr4)
 		LIBS="${LIBS} -lgen"
 		SUDO_LIBS="${SUDO_LIBS} -lgen"
+		mansectsu=1m
+		mansectform=4
 		;;
     *-*-bsdi*)
-		# Use shlicc for BSD/OS 2.x unless asked to do otherwise
-		if test "$OSREV" -ge 2 -a "${with_CC+set}" != set -a \
-			"$ac_cv_prog_CC" = "gcc"; then
-		    echo 'using shlicc as CC'
-		    ac_cv_prog_CC=shlicc
-		    CC="$ac_cv_prog_CC"
+		# Use shlicc for BSD/OS [23].x unless asked to do otherwise
+		if test "${with_CC+set}" != set -a "$ac_cv_prog_CC" = gcc; then
+		    case "$OSREV" in
+			2|3)	echo 'using shlicc as CC'
+				ac_cv_prog_CC=shlicc
+				CC="$ac_cv_prog_CC"
+				;;
+		    esac
+		fi
+		;;
+    *-*-freebsd*)
+		if test "$with_skey" = "yes"; then
+		     SUDO_LIBS="${SUDO_LIBS} -lmd"
+		fi
+		if test "$CHECKSHADOW" = "true"; then
+		    CHECKSHADOW="false"
 		fi
 		;;
     *-*-*bsd*)
@@ -1281,7 +1329,17 @@ case "$host" in
 		    CHECKSHADOW="false"
 		fi
 		;;
+    *-*-sysv*)
+		mansectsu=1m
+		mansectform=4
+		;;
 esac
+
+dnl
+dnl Use BSD-style man sections by default
+dnl
+test -n "$mansectsu" || mansectsu=8
+test -n "$mansectform" || mansectform=5
 
 dnl
 dnl Check for shadow password routines if we have not already done so.
@@ -1389,8 +1447,8 @@ dnl
 dnl If inet_addr(3) not in libc, check -lnsl and -linet
 dnl May need to link with *both* -lnsl and -lsocket due to unresolved symbols
 dnl
-AC_CHECK_FUNC(inet_addr, ,AC_CHECK_LIB(nsl, inet_addr, [NET_LIBS="${NET_LIBS} -lnsl"; LIBS="${LIBS} -lnsl"], AC_CHECK_LIB(inet, inet_addr, [NET_LIBS="${NET_LIBS} -linet"; LIBS="${LIBS} -linet"], AC_MSG_WARN(unable to find socket() trying -lsocket -lnsl)
-AC_CHECK_LIB(socket, inet_addr, [NET_LIBS="${NET_LIBS} -lsocket -lnsl"; LIBS="${LIBS} -lsocket -lnsl"], , -lnsl))))
+AC_CHECK_FUNC(inet_addr, , AC_CHECK_FUNC(__inet_addr, , AC_CHECK_LIB(nsl, inet_addr, [NET_LIBS="${NET_LIBS} -lnsl"; LIBS="${LIBS} -lnsl"], AC_CHECK_LIB(inet, inet_addr, [NET_LIBS="${NET_LIBS} -linet"; LIBS="${LIBS} -linet"], AC_MSG_WARN(unable to find inet_addr() trying -lsocket -lnsl)
+AC_CHECK_LIB(socket, inet_addr, [NET_LIBS="${NET_LIBS} -lsocket -lnsl"; LIBS="${LIBS} -lsocket -lnsl"], , -lnsl)))))
 dnl
 dnl If syslog(3) not in libc, check -lsocket, -lnsl and -linet
 dnl
@@ -1525,6 +1583,18 @@ if test "$with_DCE" = "yes"; then
 fi
 
 dnl
+dnl extra login capabilities libs and includes
+dnl
+if test "$with_logincap" = "yes"; then
+    SUDO_LIBS="${SUDO_LIBS} -lutil"
+    if test -f /usr/include/login_cap.h -a -f /usr/include/sys/types.h -a -f /usr/lib/libutil.a; then
+	:
+    else
+	echo 'Unable to locate libutil.a and/or login_cap.h, you will have to edit the Makefile and add -L/path/to/libutil to SUDO_LDFLAGS and/or -I/path/to/login_cap.h to CPPFLAGS'
+    fi
+fi
+
+dnl
 dnl extra S/Key lib and includes
 dnl
 if test "$with_skey" = "yes"; then
@@ -1630,9 +1700,9 @@ dnl
 test "$exec_prefix" = "NONE" && exec_prefix='$(prefix)'
 
 dnl
-dnl Substitute into the Makefiles
+dnl Substitute into the Makefile and man pages
 dnl
-AC_OUTPUT(Makefile)
+AC_OUTPUT([Makefile sudo.man visudo.man sudoers.man])
 
 dnl
 dnl Spew any text the user needs to know about

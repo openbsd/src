@@ -91,7 +91,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.127 2000/01/17 23:46:25 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.130 2000/03/23 04:38:19 millert Exp $";
 #endif /* lint */
 
 /*
@@ -386,6 +386,28 @@ addr_matches(n)
 }
 
 /*
+ * Returns 0 if the hostname matches the pattern and non-zero otherwise.
+ */
+int
+hostname_matches(shost, lhost, pattern)
+    char *shost;
+    char *lhost;
+    char *pattern;
+{
+    if (has_meta(pattern)) {
+	if (strchr(pattern, '.'))
+	    return(fnmatch(pattern, lhost, FNM_CASEFOLD));
+	else
+	    return(fnmatch(pattern, shost, FNM_CASEFOLD));
+    } else {
+	if (strchr(pattern, '.'))
+	    return(strcasecmp(lhost, pattern));
+	else
+	    return(strcasecmp(shost, pattern));
+    }
+}
+
+/*
  *  Returns TRUE if the given user belongs to the named group,
  *  else returns FALSE.
  */
@@ -473,7 +495,7 @@ static int
 has_meta(s)
     char *s;
 {
-    register char *t;
+    char *t;
     
     for (t = s; *t; t++) {
 	if (*t == '\\' || *t == '?' || *t == '*' || *t == '[' || *t == ']')

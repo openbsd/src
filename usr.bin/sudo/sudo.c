@@ -76,6 +76,12 @@
 # endif /* __hpux */
 # include <prot.h>
 #endif /* HAVE_GETPRPWNAM && HAVE_SET_AUTH_PARAMETERS */
+#ifdef HAVE_LOGINCAP
+# include <login_cap.h>
+# ifndef LOGIN_DEFROOTCLASS
+#  define LOGIN_DEFROOTCLASS	"daemon"
+# endif
+#endif
 
 #include "sudo.h"
 #include "interfaces.h"
@@ -86,7 +92,7 @@ extern char *getenv	__P((char *));
 #endif /* STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.268 2000/01/17 23:46:25 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.278 2000/03/24 20:13:12 millert Exp $";
 #endif /* lint */
 
 /*
@@ -105,10 +111,11 @@ static void usage			__P((int));
 static void usage_excl			__P((int));
 static void check_sudoers		__P((void));
 static int init_vars			__P((int));
+static int set_loginclass		__P((struct passwd *));
 static void add_env			__P((int));
 static void clean_env			__P((char **, struct env_table *));
 static void initial_setup		__P((void));
-extern int  user_is_exempt		__P((void));
+static void update_epasswd		__P((void));
 extern struct passwd *sudo_getpwuid	__P((uid_t));
 extern void list_matches		__P((void));
 
@@ -121,10 +128,14 @@ int NewArgc = 0;
 char **NewArgv = NULL;
 struct sudo_user sudo_user;
 FILE *sudoers_fp = NULL;
-static char *runas_homedir = NULL;	/* XXX */
 struct interface *interfaces;
 int num_interfaces;
+int tgetpass_flags;
 extern int errorlineno;
+static char *runas_homedir = NULL;	/* XXX */
+#if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
+static struct rlimit corelimit;
+#endif /* RLIMIT_CORE */
 
 /*
  * Table of "bad" envariables to remove and len for strncmp()
@@ -305,6 +316,9 @@ main(argc, argv)
 	    (void) close(fd);
     }
 
+    /* Update encrypted password in user_password if sudoers said to.  */
+    update_epasswd();
+
     /* Require a password unless the NOPASS tag was set.  */
     if (!(validated & FLAG_NOPASS))
 	check_user();
@@ -327,9 +341,6 @@ main(argc, argv)
 	    list_matches();
 	    exit(0);
 	}
-
-	/* Become specified user or root. */
-	set_perms(PERM_RUNAS, sudo_mode);
 
 	/* Set $HOME for `sudo -H' */
 	if ((sudo_mode & MODE_RESET_HOME) && runas_homedir)
@@ -364,6 +375,14 @@ main(argc, argv)
 		    Argv[0]);
 		exit(1);
 	    }
+
+	/* Restore coredumpsize resource limit. */
+#if defined(RLIMIT_CORE) && !defined(SUDO_DEVEL)
+	(void) setrlimit(RLIMIT_CORE, &corelimit);
+#endif /* RLIMIT_CORE */
+
+	/* Become specified user or root. */
+	set_perms(PERM_RUNAS, sudo_mode);
 
 #ifndef PROFILING
 	if ((sudo_mode & MODE_BACKGROUND) && fork() > 0)
@@ -582,6 +601,20 @@ parse_args()
 		NewArgc--;
 		NewArgv++;
 		break;
+#ifdef HAVE_LOGINCAP
+	    case 'c':
+		/* Must have an associated login class. */
+		if (NewArgv[1] == NULL)
+		    usage(1);
+
+		login_class = NewArgv[1];
+		def_flag(I_LOGINCLASS) = TRUE;
+
+		/* Shift Argv over and adjust Argc. */
+		NewArgc--;
+		NewArgv++;
+		break;
+#endif
 	    case 'b':
 		rval |= MODE_BACKGROUND;
 		break;
@@ -635,6 +668,9 @@ parse_args()
 		break;
 	    case 'H':
 		rval |= MODE_RESET_HOME;
+		break;
+	    case 'S':
+		tgetpass_flags |= TGP_STDIN;
 		break;
 	    case '-':
 		NewArgc--;
@@ -910,17 +946,28 @@ set_perms(perm, sudo_mode)
 				    }
 
 				    /* Set $USER and $LOGNAME to target user */
-				    if (sudo_setenv("USER", pw->pw_name)) {
-					(void) fprintf(stderr,
-					    "%s: cannot allocate memory!\n",
-					    Argv[0]);
-					exit(1);
+				    if (def_flag(I_LOGNAME)) {
+					if (sudo_setenv("USER", pw->pw_name)) {
+					    (void) fprintf(stderr,
+						"%s: cannot allocate memory!\n",
+						Argv[0]);
+					    exit(1);
+					}
+					if (sudo_setenv("LOGNAME", pw->pw_name)) {
+					    (void) fprintf(stderr,
+						"%s: cannot allocate memory!\n",
+						Argv[0]);
+					    exit(1);
+					}
 				    }
-				    if (sudo_setenv("LOGNAME", pw->pw_name)) {
-					(void) fprintf(stderr,
-					    "%s: cannot allocate memory!\n",
-					    Argv[0]);
-					exit(1);
+
+				    if (def_flag(I_LOGINCLASS)) {
+					/*
+					 * setusercontext() will set uid/gid/etc
+					 * for us so no need to do it below.
+					 */
+					if (set_loginclass(pw) > 0)
+					    break;
 				    }
 
 				    if (setgid(pw->pw_gid)) {
@@ -1002,6 +1049,7 @@ initial_setup()
     /*
      * Turn off core dumps.
      */
+    (void) getrlimit(RLIMIT_CORE, &corelimit);
     rl.rlim_cur = rl.rlim_max = 0;
     (void) setrlimit(RLIMIT_CORE, &rl);
 #endif /* RLIMIT_CORE */
@@ -1034,6 +1082,61 @@ initial_setup()
 #endif /* POSIX_SIGNALS */
 }
 
+#ifdef HAVE_LOGINCAP
+static int
+set_loginclass(pw)
+    struct passwd *pw;
+{
+    login_cap_t *lc;
+    int errflags;
+
+    /*
+     * Don't make it a fatal error if the user didn't specify the login
+     * class themselves.  We do this because if login.conf gets
+     * corrupted we want the admin to be able to use sudo to fix it.
+     */
+    if (login_class)
+	errflags = NO_MAIL|MSG_ONLY;
+    else
+	errflags = NO_MAIL|MSG_ONLY|NO_EXIT;
+
+    if (login_class && strcmp(login_class, "-") != 0) {
+	if (strcmp(*user_runas, "root") != 0 && user_uid != 0) {
+	    (void) fprintf(stderr, "%s: only root can use -c %s\n",
+		Argv[0], login_class);
+	    exit(1);
+	}
+    } else {
+	login_class = pw->pw_class;
+	if (!login_class || !*login_class)
+	    login_class =
+		(pw->pw_uid == 0) ? LOGIN_DEFROOTCLASS : LOGIN_DEFCLASS;
+    }
+
+    lc = login_getclass(login_class);
+    if (!lc || !lc->lc_class || strcmp(lc->lc_class, login_class) != 0) {
+	log_error(errflags, "unknown login class: %s", login_class);
+	return(0);
+    }
+    
+    /* Set everything except the environment and umask.  */
+    if (setusercontext(lc, pw, pw->pw_uid,
+	LOGIN_SETUSER|LOGIN_SETGROUP|LOGIN_SETRESOURCES|LOGIN_SETPRIORITY) < 0)
+	log_error(NO_MAIL|USE_ERRNO|MSG_ONLY,
+	    "setusercontext() failed for login class %s", login_class);
+
+    login_close(lc);
+    return(1);
+}
+#else
+static int
+set_loginclass(pw)
+    struct passwd *pw;
+{
+    return(0);
+}
+#endif /* HAVE_LOGINCAP */
+
 /*
  * Look up the fully qualified domain name and set user_host and user_shost.
  */
@@ -1064,6 +1167,42 @@ set_fqdn()
 }
 
 /*
+ * If the sudoers file says to prompt for a different user's password,
+ * update the encrypted password in user_passwd accordingly.
+ */
+static void
+update_epasswd()
+{
+    struct passwd *pw;
+
+    /* We may be configured to prompt for a password other than the user's */
+    if (def_ival(I_ROOTPW)) {
+	if ((pw = getpwuid(0)) == NULL)
+	    log_error(0, "uid 0 does not exist in the passwd file!");
+	free(user_passwd);
+	user_passwd = estrdup(sudo_getepw(pw));
+    } else if (def_ival(I_RUNASPW)) {
+	if ((pw = getpwnam(def_str(I_RUNAS_DEF))) == NULL)
+	    log_error(0, "user %s does not exist in the passwd file!",
+		def_str(I_RUNAS_DEF));
+	free(user_passwd);
+	user_passwd = estrdup(sudo_getepw(pw));
+    } else if (def_ival(I_TARGETPW)) {
+	if (**user_runas == '#') {
+	    if ((pw = getpwuid(atoi(*user_runas + 1))) == NULL)
+		log_error(0, "uid %s does not exist in the passwd file!",
+		    user_runas);
+	} else {
+	    if ((pw = getpwnam(*user_runas)) == NULL)
+		log_error(0, "user %s does not exist in the passwd file!",
+		    user_runas);
+	}
+	free(user_passwd);
+	user_passwd = estrdup(sudo_getepw(pw));
+    }
+}
+
+/*
  * Tell which options are mutually exclusive and exit.
  */
 static void
@@ -1083,8 +1222,12 @@ usage(exit_val)
     int exit_val;
 {
     (void) fprintf(stderr,
-	"usage: %s -V | -h | -L | -l | -v | -k | -K | -H | [-b] [-p prompt]\n%*s",
+	"usage: %s -V | -h | -L | -l | -v | -k | -K | [-H] [-S] [-b]\n%*s",
 	Argv[0], (int) strlen(Argv[0]) + 8, " ");
-    (void) fprintf(stderr, "[-u username/#uid] -s | <command>\n");
+#ifdef HAVE_LOGINCAP
+    (void) fprintf(stderr, "[-p prompt] [-u username/#uid] [-c class] -s | <command>\n");
+#else
+    (void) fprintf(stderr, "[-p prompt] [-u username/#uid] -s | <command>\n");
+#endif
     exit(exit_val);
 }

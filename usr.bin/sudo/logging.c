@@ -59,7 +59,7 @@
 #include "sudo.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: logging.c,v 1.139 1999/10/09 05:01:48 millert Exp $";
+static const char rcsid[] = "$Sudo: logging.c,v 1.140 2000/03/13 16:05:05 millert Exp $";
 #endif /* lint */
 
 static void do_syslog		__P((int, char *));
@@ -403,103 +403,109 @@ send_mail(line)
 {
     FILE *mail;
     char *p;
-    int pfd[2], pid;
+    int pfd[2], pid, status;
+#ifdef POSIX_SIGNALS
+    sigset_t set, oset;
+#else
+    int omask;
+#endif /* POSIX_SIGNALS */
 
     /* Just return if mailer is disabled. */
     if (!def_str(I_MAILERPATH) || !def_str(I_MAILTO))
 	return;
 
-    if ((pid = fork()) > 0) {	/* Child. */
+#ifdef POSIX_SIGNALS
+    (void) sigemptyset(&set);
+    (void) sigaddset(&set, SIGCHLD);
+    (void) sigprocmask(SIG_BLOCK, &set, &oset);
+#else
+    omask = sigblock(sigmask(SIGCHLD));
+#endif /* POSIX_SIGNALS */
 
-	/* We do an explicit wait() later on... */
-	(void) signal(SIGCHLD, SIG_IGN);
+    if (pipe(pfd) == -1) {
+	(void) fprintf(stderr, "%s: cannot open pipe: %s\n",
+	    Argv[0], strerror(errno));
+	exit(1);
+    }
 
-	if (pipe(pfd) == -1) {
-	    (void) fprintf(stderr, "%s: cannot open pipe: %s\n",
-		Argv[0], strerror(errno));
-	    exit(1);
-	}
-
-	switch (pid = fork()) {
-	    case -1:
-		/* Error. */
-		/* XXX - parent will continue, return an exit val to
-		   let parent know and abort? */
-		(void) fprintf(stderr, "%s: cannot fork: %s\n",
-		    Argv[0], strerror(errno));
-		exit(1);
-		break;
-	    case 0:
-		{
-		    char *argv[MAX_MAILFLAGS + 1];
-		    char *mpath, *mflags;
-		    int i;
-
-		    /* Grandchild. */
-		    (void) close(pfd[1]);
-		    (void) dup2(pfd[0], STDIN_FILENO);
-		    (void) close(pfd[0]);
-
-		    /* Build up an argv based the mailer path and flags */
-		    mflags = estrdup(def_str(I_MAILERFLAGS));
-		    mpath = estrdup(def_str(I_MAILERPATH));
-		    if ((argv[0] = strrchr(mpath, ' ')))
-			argv[0]++;
-		    else
-			argv[0] = mpath;
-
-		    i = 1;
-		    if ((p = strtok(mflags, " \t"))) {
-			do {
-			    argv[i] = p;
-			} while (++i < MAX_MAILFLAGS && (p = strtok(NULL, " \t")));
-		    }
-		    argv[i] = NULL;
-
-		    /* Run mailer as root so user cannot kill it. */
-		    set_perms(PERM_ROOT, 0);
-		    execv(mpath, argv);
-		    _exit(127);
-		}
-		break;
-	}
-
-	mail = fdopen(pfd[1], "w");
-	(void) close(pfd[0]);
-
-	/* Pipes are all setup, send message via sendmail. */
-	(void) fprintf(mail, "To: %s\nFrom: %s\nSubject: ",
-	    def_str(I_MAILTO), user_name);
-	for (p = def_str(I_MAILSUB); *p; p++) {
-	    /* Expand escapes in the subject */
-	    if (*p == '%' && *(p+1) != '%') {
-		switch (*(++p)) {
-		    case 'h':
-			(void) fputs(user_host, mail);
-			break;
-		    case 'u':
-			(void) fputs(user_name, mail);
-			break;
-		    default:
-			p--;
-			break;
-		}
-	    } else
-		(void) fputc(*p, mail);
-	}
-	(void) fprintf(mail, "\n\n%s : %s : %s : %s\n\n", user_host,
-	    get_timestr(), user_name, line);
-	fclose(mail);
-	reapchild(0);
-	_exit(0);
-    } else {
-	/* Parent, just return unless there is an error. */
-	if (pid == -1) {
+    switch (pid = fork()) {
+	case -1:
+	    /* Error. */
 	    (void) fprintf(stderr, "%s: cannot fork: %s\n",
 		Argv[0], strerror(errno));
 	    exit(1);
-	}
+	    break;
+	case 0:
+	    {
+		char *argv[MAX_MAILFLAGS + 1];
+		char *mpath, *mflags;
+		int i;
+
+		/* Child. */
+		(void) close(pfd[1]);
+		(void) dup2(pfd[0], STDIN_FILENO);
+		(void) close(pfd[0]);
+
+		/* Build up an argv based the mailer path and flags */
+		mflags = estrdup(def_str(I_MAILERFLAGS));
+		mpath = estrdup(def_str(I_MAILERPATH));
+		if ((argv[0] = strrchr(mpath, ' ')))
+		    argv[0]++;
+		else
+		    argv[0] = mpath;
+
+		i = 1;
+		if ((p = strtok(mflags, " \t"))) {
+		    do {
+			argv[i] = p;
+		    } while (++i < MAX_MAILFLAGS && (p = strtok(NULL, " \t")));
+		}
+		argv[i] = NULL;
+
+		/* Run mailer as root so user cannot kill it. */
+		set_perms(PERM_ROOT, 0);
+		execv(mpath, argv);
+		_exit(127);
+	    }
+	    break;
     }
+
+    mail = fdopen(pfd[1], "w");
+    (void) close(pfd[0]);
+
+    /* Pipes are all setup, send message via sendmail. */
+    (void) fprintf(mail, "To: %s\nFrom: %s\nSubject: ",
+	def_str(I_MAILTO), user_name);
+    for (p = def_str(I_MAILSUB); *p; p++) {
+	/* Expand escapes in the subject */
+	if (*p == '%' && *(p+1) != '%') {
+	    switch (*(++p)) {
+		case 'h':
+		    (void) fputs(user_host, mail);
+		    break;
+		case 'u':
+		    (void) fputs(user_name, mail);
+		    break;
+		default:
+		    p--;
+		    break;
+	    }
+	} else
+	    (void) fputc(*p, mail);
+    }
+    (void) fprintf(mail, "\n\n%s : %s : %s : %s\n\n", user_host,
+	get_timestr(), user_name, line);
+    fclose(mail);
+
+    /* If mailer is done, wait for it now.  If not reapchild will get it.  */
+#ifdef sudo_waitpid
+    (void) sudo_waitpid(pid, &status, WNOHANG);
+#endif
+#ifdef POSIX_SIGNALS
+    (void) sigprocmask(SIG_SETMASK, &oset, NULL);
+#else
+    (void) sigsetmask(omask);
+#endif /* POSIX_SIGNALS */
 }
 
 /*
@@ -540,7 +546,7 @@ reapchild(sig)
     int status, serrno = errno;
 
 #ifdef sudo_waitpid
-    while (sudo_waitpid(-1, &status, WNOHANG) != -1)
+    while (sudo_waitpid(-1, &status, WNOHANG) != -1 && errno == EINTR)
 	;
 #else
     (void) wait(&status);

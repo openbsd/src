@@ -62,7 +62,7 @@
 #include "sudo.tab.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.lex,v 1.110 1999/12/06 00:05:53 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.lex,v 1.111 2000/03/23 04:38:20 millert Exp $";
 #endif /* lint */
 
 #undef yywrap		/* guard against a yywrap macro */
@@ -210,12 +210,6 @@ PASSWD[[:blank:]]*:	{
 			    fill(yytext, yyleng);
 			    LEXTRACE("NTWKADDR ");
 			    return(NTWKADDR);
-			}
-
-[[:alpha:]][[:alnum:]_-]*(\.{HOSTNAME})+ {
-			    fill(yytext, yyleng);
-			    LEXTRACE("FQHOST ");
-			    return(FQHOST);
 			}
 
 <INITIAL>\(		{

@@ -57,7 +57,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: pam.c,v 1.14 2000/01/24 03:23:40 millert Exp $";
+static const char rcsid[] = "$Sudo: pam.c,v 1.15 2000/02/27 03:49:06 millert Exp $";
 #endif /* lint */
 
 static int sudo_conv __P((int, PAM_CONST struct pam_message **,
@@ -135,7 +135,6 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     struct pam_response *pr;
     PAM_CONST struct pam_message *pm;
     const char *p = def_prompt;
-    int echo = 0;
     extern int nil_pw;
 
     if ((*response = malloc(num_msg * sizeof(struct pam_response))) == NULL)
@@ -145,7 +144,7 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
     for (pr = *response, pm = *msg; num_msg--; pr++, pm++) {
 	switch (pm->msg_style) {
 	    case PAM_PROMPT_ECHO_ON:
-		echo = 1;
+		tgetpass_flags |= TGP_ECHO;
 	    case PAM_PROMPT_ECHO_OFF:
 		/* Only override PAM prompt if it matches /^Password: ?/ */
 		if (strncmp(pm->msg, "Password:", 9) || (pm->msg[9] != '\0'
@@ -153,7 +152,7 @@ sudo_conv(num_msg, msg, response, appdata_ptr)
 		    p = pm->msg;
 		/* Read the password. */
 		pr->resp = estrdup((char *) tgetpass(p,
-		    def_ival(I_PW_TIMEOUT) * 60, !echo));
+		    def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags));
 		if (*pr->resp == '\0')
 		    nil_pw = 1;		/* empty password */
 		break;

@@ -73,13 +73,37 @@
 
 #include "sudo.h"
 
+#ifndef lint
+static const char rcsid[] = "$Sudo: tgetpass.c,v 1.95 2000/02/27 03:48:56 millert Exp $";
+#endif /* lint */
+
 #ifndef TCSASOFT
 #define TCSASOFT	0
 #endif /* TCSASOFT */
 
-#ifndef lint
-static const char rcsid[] = "$Sudo: tgetpass.c,v 1.93 2000/01/17 23:46:26 millert Exp $";
-#endif /* lint */
+/*
+ * Abstract method of getting at the term flags.
+ */
+#undef TERM
+#undef tflags
+#ifdef HAVE_TERMIOS_H
+# define TERM			termios
+# define tflags			c_lflag
+# define term_getattr(f, t)	tcgetattr(f, t)
+# define term_setattr(f, t)	tcsetattr(f, TCSAFLUSH|TCSASOFT, t)
+#else
+# ifdef HAVE_TERMIO_H
+# define TERM			termio
+# define tflags			c_lflag
+# define term_getattr(f, t)	ioctl(f, TCGETA, t)
+# define term_setattr(f, t)	ioctl(f, TCSETA, t)
+# else
+#  define TERM			sgttyb
+#  define tflags		sg_flags
+#  define term_getattr(f, t)	ioctl(f, TIOCGETP, t)
+#  define term_setattr(f, t)	ioctl(f, TIOCSETP, t)
+# endif /* HAVE_TERMIO_H */
+#endif /* HAVE_TERMIOS_H */
 
 static char *tgetline __P((int, char *, size_t, int));
 
@@ -87,25 +111,18 @@ static char *tgetline __P((int, char *, size_t, int));
  * Like getpass(3) but with timeout and echo flags.
  */
 char *
-tgetpass(prompt, timeout, echo_off)
+tgetpass(prompt, timeout, flags)
     const char *prompt;
     int timeout;
-    int echo_off;
+    int flags;
 {
-#ifdef HAVE_TERMIOS_H
-    struct termios term;
-#else
-#ifdef HAVE_TERMIO_H
-    struct termio term;
-#else
-    struct sgttyb ttyb;
-#endif /* HAVE_TERMIO_H */
-#endif /* HAVE_TERMIOS_H */
+    struct TERM term, oterm;
     int input, output;
     static char buf[SUDO_PASS_MAX + 1];
 
     /* Open /dev/tty for reading/writing if possible else use stdin/stderr. */
-    if ((input = output = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1) {
+    if ((flags & TGP_STDIN) ||
+	(input = output = open(_PATH_TTY, O_RDWR|O_NOCTTY)) == -1) {
 	input = STDIN_FILENO;
 	output = STDERR_FILENO;
     }
@@ -113,53 +130,22 @@ tgetpass(prompt, timeout, echo_off)
     if (prompt)
 	(void) write(output, prompt, strlen(prompt) + 1);
 
-    if (echo_off) {
-#ifdef HAVE_TERMIOS_H
-	(void) tcgetattr(input, &term);
-	if ((echo_off = (term.c_lflag & ECHO))) {
-	    term.c_lflag &= ~ECHO;
-	    (void) tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
-	}
-#else
-#ifdef HAVE_TERMIO_H
-	(void) ioctl(input, TCGETA, &term);
-	if ((echo_off = (term.c_lflag & ECHO))) {
-	    term.c_lflag &= ~ECHO;
-	    (void) ioctl(input, TCSETA, &term);
-	}
-#else
-	(void) ioctl(input, TIOCGETP, &ttyb);
-	if ((echo_off = (ttyb.sg_flags & ECHO))) {
-	    ttyb.sg_flags &= ~ECHO;
-	    (void) ioctl(input, TIOCSETP, &ttyb);
-	}
-#endif /* HAVE_TERMIO_H */
-#endif /* HAVE_TERMIOS_H */
-    }
+    /* Turn echo off/on as specified by flags.  */
+    (void) term_getattr(input, &oterm);
+    (void) memcpy(&term, &oterm, sizeof(term));
+    if ((flags & TGP_ECHO) && !(term.tflags & ECHO))
+	term.tflags |= ECHO;
+    else if (!(flags & TGP_ECHO) && (term.tflags & ECHO))
+	term.tflags &= ~ECHO;
+    (void) term_setattr(input, &term);
 
     buf[0] = '\0';
     tgetline(input, buf, sizeof(buf), timeout);
 
-#ifdef HAVE_TERMIOS_H
-    if (echo_off) {
-	term.c_lflag |= ECHO;
-	(void) tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
-    }
-#else
-#ifdef HAVE_TERMIO_H
-    if (echo_off) {
-	term.c_lflag |= ECHO;
-	(void) ioctl(input, TCSETA, &term);
-    }
-#else
-    if (echo_off) {
-	ttyb.sg_flags |= ECHO;
-	(void) ioctl(input, TIOCSETP, &ttyb);
-    }
-#endif /* HAVE_TERMIO_H */
-#endif /* HAVE_TERMIOS_H */
+    /* Restore old tty flags.  */
+    (void) term_setattr(input, &oterm);
 
-    if (echo_off)
+    if (!(flags & TGP_ECHO))
 	(void) write(output, "\n", 1);
 
     if (input != STDIN_FILENO)

@@ -81,4 +81,6 @@ TODO list (most will be addressed in sudo 2.0)
 
 30) Add support for: Default:user@host
 
-31) Add -S flag to force password read from stdin
+31) Do login-style -sh hack for sudo -s?
+
+32) Make visudo rcs-aware

@@ -1,12 +1,13 @@
 .rn '' }`
-''' $RCSfile: sudoers.5,v $$Revision: 1.4 $$Date: 2000/01/28 01:10:20 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.5 $$Date: 2000/03/27 03:44:39 $
 '''
 ''' $Log: sudoers.5,v $
-''' Revision 1.4  2000/01/28 01:10:20  millert
-''' 1.6.2p1
+''' Revision 1.5  2000/03/27 03:44:39  millert
+''' sudo 1.6.3; see http://www.courtesan.com/sudo/current.html for a list
+''' of changes.
 '''
-''' Revision 1.23  2000/01/26 21:21:28  millert
-''' Expanded docs on sudoers 'defaults' options based on INSTALL file info.
+''' Revision 1.5  2000/03/27 03:26:23  millert
+''' Use 8 and 5 in the man page bodies as well.
 '''
 '''
 .de Sh
@@ -99,7 +100,7 @@
 .nr % 0
 .rr F
 .\}
-.TH sudoers 5 "1.6.2" "26/Jan/2000" "FILE FORMATS"
+.TH sudoers 5 "1.6.3" "26/Mar/2000" "FILE FORMATS"
 .UC
 .if n .hy 0
 .if n .na
@@ -318,7 +319,11 @@ Again, the value of an item may be negated with the \*(L'!\*(R' operator.
 If you do not specify a netmask with a network number, the netmask
 of the host's ethernet \fIinterface\fR\|(s) will be used when matching.
 The netmask may be specified either in dotted quad notation (eg.
-255.255.255.0) or \s-1CIDR\s0 notation (number of bits, eg. 24).
+255.255.255.0) or \s-1CIDR\s0 notation (number of bits, eg. 24).  A hostname
+may include shell-style wildcards (see `Wildcards\*(R' section below),
+but unless the \f(CWhostname\fR command on your machine returns the fully
+qualified hostname, you'll need to use the \fIfqdn\fR option for wildcards
+to be useful.
 .PP
 .Vb 2
 \& Cmnd_List ::= Cmnd |
@@ -335,7 +340,7 @@ The netmask may be specified either in dotted quad notation (eg.
 \&          '!'* Cmnd_Alias
 .Ve
 A \f(CWCmnd_List\fR is a list of one or more commandnames, directories, and other
-aliases.  A commandname is a fully-qualified filename which may include
+aliases.  A commandname is a fully qualified filename which may include
 shell-style wildcards (see `Wildcards\*(R' section below).  A simple
 filename allows the user to run the command with any arguments he/she
 wishes.  However, you may also command line arguments (including wildcards).
@@ -387,7 +392,7 @@ some people find it more convenient.  This flag is off by default.
 If set, \fBsudo\fR will ignore \*(L'.\*(R' or \*(L'\*(R' (current dir) in \f(CW$PATH\fR;
 the \f(CW$PATH\fR itself is not modified.  This flag is off by default.
 .Ip "mail_always" 12
-Send mail to the \fImailto\fR user every time a users runs sudo.
+Send mail to the \fImailto\fR user every time a users runs \fBsudo\fR.
 This flag is off by default.
 .Ip "mail_no_user" 12
 If set, mail will be sent to the \fImailto\fR user if the invoking
@@ -398,7 +403,7 @@ user exists in the \fIsudoers\fR file, but is not allowed to run
 commands on the current host.  This flag is off by default.
 .Ip "mail_no_perms" 12
 If set, mail will be sent to the \fImailto\fR user if the invoking
-user allowed to use sudo but the command they are trying is not
+user allowed to use \fBsudo\fR but the command they are trying is not
 listed in their \fIsudoers\fR file entry.  This flag is off by default.
 .Ip "tty_tickets" 12
 If set, users must authenticate on a per-tty basis.  Normally,
@@ -415,8 +420,8 @@ means of authentication) before they may run commands.  This default
 may be overridden via the \f(CWPASSWD\fR and \f(CWNOPASSWD\fR tags.
 This flag is on by default.
 .Ip "root_sudo" 12
-If set, root is allowed to run sudo too.  Disabling this prevents users
-from \*(L"chaining\*(R" sudo commands to get a root shell by doing something
+If set, root is allowed to run \fBsudo\fR too.  Disabling this prevents users
+from \*(L"chaining\*(R" \fBsudo\fR commands to get a root shell by doing something
 like \f(CW"sudo sudo /bin/sh"\fR.
 This flag is on by default.
 .Ip "log_host" 12
@@ -448,7 +453,7 @@ be confusing.  This flag is off by default.
 Set this flag if you want to put fully qualified hostnames in the
 \fIsudoers\fR file.  Ie: instead of myhost you would use myhost.mydomain.edu.
 You may still use the short form if you wish (and even mix the two).
-Beware that turning on \fIfqdn\fR requires sudo to make \s-1DNS\s0 lookups
+Beware that turning on \fIfqdn\fR requires \fBsudo\fR to make \s-1DNS\s0 lookups
 which may make \fBsudo\fR unusable if \s-1DNS\s0 stops working (for example
 if the machine is not plugged into the network).  Also note that
 you must use the host's official name as \s-1DNS\s0 knows it.  That is,
@@ -458,20 +463,42 @@ issues and the fact that there is no way to get all aliases from
 command) is already fully qualified you shouldn't need to set
 \fIfqfn\fR.  This flag is off by default.
 .Ip "insults" 12
-If set, sudo will insult users when they enter an incorrect
+If set, \fBsudo\fR will insult users when they enter an incorrect
 password.  This flag is off by default.
 .Ip "requiretty" 12
-If set, sudo will only run when the user is logged in to a real
+If set, \fBsudo\fR will only run when the user is logged in to a real
 tty.  This will disallow things like \f(CW"rsh somehost sudo ls"\fR since
 \fIrsh\fR\|(1) does not allocate a tty.  Because it is not possible to turn
 of echo when there is no tty present, some sites may with to set
 this flag to prevent a user from entering a visible password.  This
 flag is off by default.
+.Ip "env_editor" 12
+If set, \fBvisudo\fR will use the value of the \s-1EDITOR\s0 or \s-1VISUAL\s0 environment
+falling back on the default editor.  Note that this may create a
+security hole as most editors allow a user to get a shell (which
+would be a root shell and not be logged).
+.Ip "rootpw" 12
+If set, \fBsudo\fR will prompt for the root password instead of the password
+of the invoking user.
+.Ip "runaspw" 12
+If set, \fBsudo\fR will prompt for the password of the user defined by the
+\fIrunas_default\fR option (defaults to root) instead of the password
+of the invoking user.
+.Ip "targetpw" 12
+If set, \fBsudo\fR will prompt for the password of the user specified by
+the \f(CW-u\fR flag (defaults to root) instead of the password of the
+invoking user.
+.Ip "set_logname" 12
+Normally, \fBsudo\fR will set the \f(CWLOGNAME\fR and \f(CWUSER\fR environment variables
+to the name of the target user (usually root unless the \f(CW-u\fR flag is given).
+However, since some programs (including the \s-1RCS\s0 revision control system)
+use \f(CWLOGNAME\fR to determine the real identity of the user, it may be desirable
+to change this behavior.  This can be done by negating the set_logname option.
 .PP
 \fBIntegers\fR:
 .Ip "passwd_tries" 12
 The number of tries a user gets to enter his/her password before
-sudo logs the failure and exits.  The default is 3.
+\fBsudo\fR logs the failure and exits.  The default is 3.
 .PP
 \fBIntegers that can be used in a boolean context\fR:
 .Ip "loglinelen" 12
@@ -483,7 +510,7 @@ effect on the syslog log file, only the file log.  The default is
 Number of minutes that can elapse before \fBsudo\fR will ask for a passwd
 again.  The default is 5, set this to 0 to always prompt for a password.
 .Ip "passwd_timeout" 12
-Number of minutes before the sudo password prompt times out.
+Number of minutes before the \fBsudo\fR password prompt times out.
 The default is 5, set this to 0 for no password timeout.
 .Ip "umask" 12
 Umask to use when running the root command.  Set this to 0777 to
@@ -499,7 +526,7 @@ Message that is displayed if a user enters an incorrect password.
 The default is \*(L"Sorry, try again.\*(R" unless insults are enabled.
 .Ip "timestampdir" 12
 The directory in which \fBsudo\fR stores its timestamp files.
-The default is either \f(CW/var/run/sudo\fR or \f(CW/tmp/sudo\fR.
+The default is \fI@\s-1TIMEDIR\s0@\fR.
 .Ip "passprompt" 12
 The default prompt to use when asking for a password; can be overridden
 via the \f(CW-p\fR option or the \f(CWSUDO_PROMPT\fR environment variable. Supports
@@ -514,8 +541,14 @@ Defaults to \*(L"notice\*(R".
 .Ip "syslog_badpri" 12
 Syslog priority to use when user authenticates unsuccessfully.
 Defaults to \*(L"alert\*(R".
+.Ip "editor" 12
+Path to the editor to be used by \fBvisudo\fR.  The default is the path
+to vi on your system.
 .PP
 \fBStrings that can be used in a boolean context\fR:
+.Ip "logfile" 12
+Path to the \fBsudo\fR log file (not the syslog log file).  Setting a path
+turns on logging to a file, negating this option turns it off.
 .Ip "syslog" 12
 Syslog facility if syslog is being used for logging (negate to
 disable syslog logging).  Defaults to \*(L"local2\*(R".
@@ -531,12 +564,12 @@ Users in this group are exempt from password and \s-1PATH\s0 requirements.
 This is not set by default.
 .Ip "secure_path" 12
 Path used for every command run from \fBsudo\fR.  If you don't trust the
-people running sudo to have a sane \f(CWPATH\fR environment variable you may
+people running \fBsudo\fR to have a sane \f(CWPATH\fR environment variable you may
 want to use this.  Another use is if you want to have the \*(L"root path\*(R"
 be separate from the \*(L"user path.\*(R"  This is not set by default.
 .Ip "verifypw" 12
 This option controls when a password will be required when a
-user runs sudo with the \fB\-v\fR.  It has the following possible values:
+user runs \fBsudo\fR with the \fB\-v\fR.  It has the following possible values:
 .Sp
 .Vb 3
 \&    all         All the user's I<sudoers> entries for the
@@ -560,7 +593,7 @@ user runs sudo with the \fB\-v\fR.  It has the following possible values:
 The default value is `all\*(R'.
 .Ip "listpw" 12
 This option controls when a password will be required when a
-user runs sudo with the \fB\-l\fR.  It has the following possible values:
+user runs \fBsudo\fR with the \fB\-l\fR.  It has the following possible values:
 .Sp
 .Vb 3
 \&    all         All the user's I<sudoers> entries for the
@@ -583,7 +616,7 @@ user runs sudo with the \fB\-l\fR.  It has the following possible values:
 .Ve
 The default value is `any\*(R'.
 .PP
-When logging via \fIsyslog\fR\|(3), sudo accepts the following values for the syslog
+When logging via \fIsyslog\fR\|(3), \fBsudo\fR accepts the following values for the syslog
 facility (the value of the \fBsyslog\fR Parameter): \fBauthpriv\fR (if your \s-1OS\s0
 supports it), \fBauth\fR, \fBdaemon\fR, \fBuser\fR, \fBlocal0\fR, \fBlocal1\fR, \fBlocal2\fR,
 \fBlocal3\fR, \fBlocal4\fR, \fBlocal5\fR, \fBlocal6\fR, and \fBlocal7\fR.  The following
@@ -766,7 +799,7 @@ these are a bit contrived.  First, we define our \fIaliases\fR:
 \& Cmnd_Alias     SU = /usr/bin/su
 .Ve
 Here we override some of the compiled in default values.  We want
-sudo to log via \fIsyslog\fR\|(3) using the \fIauth\fR facility in all cases.
+\fBsudo\fR to log via \fIsyslog\fR\|(3) using the \fIauth\fR facility in all cases.
 We don't want to subject the full time staff to the \fBsudo\fR lecture,
 and user \fBmillert\fR need not give a password.  In addition, on the
 machines in the \fISERVERS\fR \f(CWHost_Alias\fR, we keep an additional
@@ -932,8 +965,8 @@ imperative that \fIsudoers\fR be free of syntax errors since \fBsudo\fR
 will not run with a syntactically incorrect \fIsudoers\fR file.
 .PP
 When using netgroups of machines (as opposed to users), if you
-store fully-qualified hostnames in the netgroup (as is usually the
-case), you either need to have the machine's hostname be fully-qualified
+store fully qualified hostnames in the netgroup (as is usually the
+case), you either need to have the machine's hostname be fully qualified
 as returned by the \f(CWhostname\fR command or use the \fIfqdn\fR option in
 \fIsudoers\fR.
 .SH "FILES"
@@ -1002,6 +1035,16 @@ as returned by the \f(CWhostname\fR command or use the \fIfqdn\fR option in
 
 .IX Item "requiretty"
 
+.IX Item "env_editor"
+
+.IX Item "rootpw"
+
+.IX Item "runaspw"
+
+.IX Item "targetpw"
+
+.IX Item "set_logname"
+
 .IX Item "passwd_tries"
 
 .IX Item "loglinelen"
@@ -1025,6 +1068,10 @@ as returned by the \f(CWhostname\fR command or use the \fIfqdn\fR option in
 .IX Item "syslog_goodpri"
 
 .IX Item "syslog_badpri"
+
+.IX Item "editor"
+
+.IX Item "logfile"
 
 .IX Item "syslog"
 

@@ -139,14 +139,15 @@ AC_DEFUN(SUDO_TIMEDIR, [AC_MSG_CHECKING(for timestamp file location)
 if test -n "$with_timedir"; then
     AC_MSG_RESULT($with_timedir)
     AC_DEFINE_UNQUOTED(_PATH_SUDO_TIMEDIR, "$with_timedir")
+    TIMEDIR="$with_timedir"
 elif test -d "/var/run"; then
     AC_MSG_RESULT(/var/run/sudo)
     AC_DEFINE(_PATH_SUDO_TIMEDIR, "/var/run/sudo")
-elif test -d "/tmp"; then
+    TIMEDIR="/var/run/sudo"
+else
     AC_MSG_RESULT(/tmp/.odus)
     AC_DEFINE(_PATH_SUDO_TIMEDIR, "/tmp/.odus")
-else
-    AC_MSG_RESULT(unknown, you will have to set _PATH_SUDO_TIMEDIR by hand)
+    TIMEDIR="/tmp/.odus"
 fi
 ])dnl
 
@@ -232,11 +233,11 @@ dnl
 dnl check for working fnmatch(3)
 dnl
 AC_DEFUN(SUDO_FUNC_FNMATCH,
-[AC_MSG_CHECKING(for working fnmatch)
+[AC_MSG_CHECKING(for working fnmatch with FNM_CASEFOLD)
 AC_CACHE_VAL(sudo_cv_func_fnmatch,
 [rm -f conftestdata; > conftestdata
 AC_TRY_RUN([#include <fnmatch.h>
-main() { exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", 0)); }
+main() { exit(fnmatch("/*/bin/echo *", "/usr/bin/echo just a test", FNM_CASEFOLD)); }
 ], sudo_cv_func_fnmatch=yes, sudo_cv_func_fnmatch=no,
   sudo_cv_func_fnmatch=no)
 rm -f core core.* *.core])dnl

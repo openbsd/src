@@ -55,8 +55,11 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: passwd.c,v 1.4 1999/08/14 15:36:46 millert Exp $";
+static const char rcsid[] = "$Sudo: passwd.c,v 1.7 2000/03/23 00:27:41 millert Exp $";
 #endif /* lint */
+
+#define DESLEN			13
+#define HAS_AGEINFO(p, l)	(l == 18 && p[DESLEN] == ',')
 
 int
 passwd_verify(pw, pass, auth)
@@ -64,16 +67,38 @@ passwd_verify(pw, pass, auth)
     char *pass;
     sudo_auth *auth;
 {
+    char sav, *epass;
+    size_t pw_len;
+    int error;
+
+    pw_len = strlen(pw->pw_passwd);
 
 #ifdef HAVE_GETAUTHUID
     /* Ultrix shadow passwords may use crypt16() */
-    if (!strcmp(pw->pw_passwd, (char *) crypt16(pass, pw->pw_passwd)))
+    error = strcmp(pw->pw_passwd, (char *) crypt16(pass, pw->pw_passwd));
+    if (!error)
 	return(AUTH_SUCCESS);
 #endif /* HAVE_GETAUTHUID */
 
-    /* Normal UN*X password check */
-    if (!strcmp(pw->pw_passwd, (char *) crypt(pass, pw->pw_passwd)))
-	return(AUTH_SUCCESS);
+    /*
+     * Truncate to 8 chars if standard DES since not all crypt()'s do this.
+     * If this turns out not to be safe we will have to use OS #ifdef's (sigh).
+     */
+    sav = pass[8];
+    if (pw_len == DESLEN || HAS_AGEINFO(pw->pw_passwd, pw_len))
+	pass[8] = '\0';
 
-    return(AUTH_FAILURE);
+    /*
+     * Normal UN*X password check.
+     * HP-UX may add aging info (separated by a ',') at the end so
+     * only compare the first DESLEN characters in that case.
+     */
+    epass = (char *) crypt(pass, pw->pw_passwd);
+    pass[8] = sav;
+    if (HAS_AGEINFO(pw->pw_passwd, pw_len) && strlen(epass) == DESLEN)
+	error = strncmp(pw->pw_passwd, epass, DESLEN);
+    else
+	error = strcmp(pw->pw_passwd, epass);
+
+    return(error ? AUTH_FAILURE : AUTH_SUCCESS);
 }

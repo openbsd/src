@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: parse.h,v 1.7 2000/01/17 23:46:25 millert Exp $
+ * $Sudo: parse.h,v 1.9 2000/03/23 04:38:20 millert Exp $
  */
 
 #ifndef _SUDO_PARSE_H
@@ -109,6 +109,7 @@ extern int top;
  */
 int addr_matches	__P((char *));
 int command_matches	__P((char *, char *, char *, char *));
+int hostname_matches	__P((char *, char *, char *));
 int netgr_matches	__P((char *, char *, char *, char *));
 int usergr_matches	__P((char *, char *));
 

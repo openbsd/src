@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.194 2000/01/24 15:48:46 millert Exp $
+# $Sudo: Makefile.in,v 1.200 2000/03/27 02:57:52 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -85,12 +85,11 @@ visudodir = $(sbindir)
 sudoersdir = $(sysconfdir)
 
 # Directory in which to install the man page
-# set mansect5 to 4 on sysV machines.
 mantype = @MANTYPE@
-mansect8 = 8
-mansect5 = 5
-mandir8 = $(mandir)/$(mantype)$(mansect8)
-mandir5 = $(mandir)/$(mantype)$(mansect5)
+mansectsu = @mansectsu@
+mansectform = @mansectform@
+mandirsu = $(mandir)/$(mantype)$(mansectsu)
+mandirform = $(mandir)/$(mantype)$(mansectform)
 
 # User and group ids the installed files should be "owned" by
 install_uid = 0
@@ -138,15 +137,16 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.2
+VERSION = 1.6.3
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES FAQ HISTORY INSTALL INSTALL.configure \
 	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
 	    UPGRADE acsite.m4 aixcrypt.exp config.guess config.h.in config.sub \
 	    configure configure.in fnmatch.3 indent.pro install-sh \
 	    mkinstalldirs pathnames.h.in sample.pam sample.syslog.conf \
-	    sample.sudoers sudo.cat sudo.man sudo.pod sudoers sudoers.cat \
-	    sudoers.man sudoers.pod visudo.cat visudo.man visudo.pod auth/API
+	    sample.sudoers sudo.cat sudo.man.in sudo.pod sudoers sudoers.cat \
+	    sudoers.man.in sudoers.pod visudo.cat visudo.man.in visudo.pod \
+	    auth/API
 
 BINFILES= BUGS CHANGES HISTORY LICENSE README TODO TROUBLESHOOTING \
 	  UPGRADE install-sh mkinstalldirs sample.syslog.conf sample.sudoers \
@@ -178,7 +178,7 @@ sudo: $(SUDOBJS) $(LIBOBJS)
 	$(CC) -o $@ $(SUDOBJS) $(LIBOBJS) $(SUDO_LDFLAGS) $(SUDO_LIBS)
 
 visudo: $(VISUDOBJS) $(LIBOBJS)
-	$(CC) -o $@ $(VISUDOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS)
+	$(CC) -o $@ $(VISUDOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
 
 testsudoers: $(TESTOBJS) $(LIBOBJS)
 	$(CC) -o $@ $(TESTOBJS) $(LIBOBJS) $(LDFLAGS) $(LIBS) $(NET_LIBS)
@@ -251,35 +251,44 @@ securid.o: $(authdir)/securid.c $(AUTHDEP)
 sia.o: $(authdir)/sia.c $(AUTHDEP)
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $(DEFS) $(OPTIONS) $(authdir)/sia.c
 
-sudo.man: $(srcdir)/sudo.pod
+sudo.man.in: $(srcdir)/sudo.pod
 	@rm -f $(srcdir)/$@
-	(cd $(srcdir); pod2man --section=$(mansect8) --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudo.pod > $(srcdir)/$@)
+	(cd $(srcdir); pod2man --section=`echo @MANSECTSU@|tr A-Z a-z` --release=$(VERSION) --center="MAINTENANCE COMMANDS" sudo.pod > $(srcdir)/$@)
+
+sudo.man: sudo.man.in
+	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
 
 sudo.cat: sudo.man
 
-visudo.man: $(srcdir)/visudo.pod
+visudo.man.in: $(srcdir)/visudo.pod
 	@rm -f $(srcdir)/$@
-	(cd $(srcdir); pod2man --section=$(mansect8) --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod > $(srcdir)/$@)
+	(cd $(srcdir); pod2man --section=`echo @MANSECTSU@|tr A-Z a-z` --release=$(VERSION) --center="MAINTENANCE COMMANDS" visudo.pod > $(srcdir)/$@)
+
+visudo.man: visudo.man.in
+	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
 
 visudo.cat: visudo.man
 
-sudoers.man: $(srcdir)/sudoers.pod
+sudoers.man.in: $(srcdir)/sudoers.pod
 	@rm -f $(srcdir)/$@
-	(cd $(srcdir); pod2man --section=$(mansect5) --release=$(VERSION) --center="FILE FORMATS" sudoers.pod > $(srcdir)/$@)
+	(cd $(srcdir); pod2man --section=`echo @MANSECTFORM@|tr A-Z a-z` --release=$(VERSION) --center="FILE FORMATS" sudoers.pod | sed 's/"\\f(CW""\\fR"/\\f(CW""\\fR/' > $(srcdir)/$@)
+
+sudoers.man:: sudoers.man.in
+	CONFIG_FILES=$@ CONFIG_HEADERS= sh ./config.status
 
 sudoers.cat: sudoers.man
 
 install: install-dirs install-binaries install-sudoers install-man
 
 install-dirs:
-	$(SHELL) $(srcdir)/mkinstalldirs $(sudodir) $(visudodir) $(sudoersdir) $(mandir8) $(mandir5)
+	$(SHELL) $(srcdir)/mkinstalldirs $(sudodir) $(visudodir) $(sudoersdir) $(mandirsu) $(mandirform)
 
 install-binaries: $(PROGS)
 	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 4111 -s sudo $(sudodir)/sudo
 	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0111 -s visudo $(visudodir)/visudo
 
 install-sudoers:
-	@ if [ -f $(sudoersdir)/sudoers ]; then  \
+	@if [ -f $(sudoersdir)/sudoers ]; then \
 	    echo "Setting user/group and mode on existing $(sudoersdir)/sudoers file."; \
 	    chown $(sudoers_uid) $(sudoersdir)/sudoers; \
 	    chgrp $(sudoers_gid) $(sudoersdir)/sudoers; \
@@ -290,9 +299,9 @@ install-sudoers:
 	fi
 
 install-man:
-	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/sudo.$(mantype) $(mandir8)/sudo.$(mansect8)
-	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/visudo.$(mantype) $(mandir8)/visudo.$(mansect8)
-	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/sudoers.$(mantype) $(mandir5)/sudoers.$(mansect5)
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 @mansrcdir@/sudo.$(mantype) $(mandirsu)/sudo.$(mansectsu)
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 @mansrcdir@/visudo.$(mantype) $(mandirsu)/visudo.$(mansectsu)
+	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 @mansrcdir@/sudoers.$(mantype) $(mandirform)/sudoers.$(mansectform)
 @MAN_POSTINSTALL@
 
 check:
@@ -311,7 +320,7 @@ clean:
 mostlyclean: clean
 
 distclean: clean
-	-rm -f Makefile pathnames.h config.h config.status config.cache \
+	-rm -f Makefile *.man pathnames.h config.h config.status config.cache \
 	       config.log $(PARSESRCS)
 
 clobber: distclean
@@ -321,7 +330,7 @@ realclean: distclean
 
 cleandir: realclean
 
-dist: $(DISTFILES)
+dist:
 	rm -f ../sudo-$(VERSION).tar.gz
 	( cd .. ; TF="/tmp/sudo.dist$$$$" ; rm -f $$TF ; for i in $(DISTFILES) ; \
 	  do echo sudo-$(VERSION)/$$i >> $$TF ; done ; \

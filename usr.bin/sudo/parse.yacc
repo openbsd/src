@@ -79,7 +79,7 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.yacc,v 1.170 2000/01/17 23:46:25 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.yacc,v 1.173 2000/03/24 23:58:58 millert Exp $";
 #endif /* lint */
 
 /*
@@ -215,7 +215,6 @@ yyerror(s)
 %token <command> COMMAND		/* absolute pathname w/ optional args */
 %token <string>  ALIAS			/* an UPPERCASE alias name */
 %token <string>  NTWKADDR		/* w.x.y.z */
-%token <string>  FQHOST			/* foo.bar.com */
 %token <string>  NETGROUP		/* a netgroup (+NAME) */
 %token <string>  USERGROUP		/* a usergroup (%NAME) */
 %token <string>  WORD			/* a word */
@@ -292,14 +291,16 @@ defaults_list	:	defaults_entry
 		|	defaults_entry ',' defaults_list
 
 defaults_entry	:	WORD {
-			    if (defaults_matches && !set_default($1, NULL, 1)) {
+			    if (defaults_matches == TRUE &&
+				!set_default($1, NULL, 1)) {
 				yyerror(NULL);
 				YYERROR;
 			    }
 			    free($1);
 			}
 		|	'!' WORD {
-			    if (defaults_matches && !set_default($2, NULL, 0)) {
+			    if (defaults_matches == TRUE &&
+				!set_default($2, NULL, 0)) {
 				yyerror(NULL);
 				YYERROR;
 			    }
@@ -307,7 +308,8 @@ defaults_entry	:	WORD {
 			}
 		|	WORD '=' WORD {
 			    /* XXX - need to support quoted values */
-			    if (defaults_matches && !set_default($1, $3, 1)) {
+			    if (defaults_matches == TRUE &&
+				!set_default($1, $3, 1)) {
 				yyerror(NULL);
 				YYERROR;
 			    }
@@ -361,14 +363,7 @@ host		:	ALL {
 			    free($1);
 			}
 		|	WORD {
-			    if (strcasecmp(user_shost, $1) == 0)
-				$$ = TRUE;
-			    else
-				$$ = -1;
-			    free($1);
-			}
-		|	FQHOST {
-			    if (strcasecmp(user_host, $1) == 0)
+			    if (hostname_matches(user_shost, user_host, $1) == 0)
 				$$ = TRUE;
 			    else
 				$$ = -1;

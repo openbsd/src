@@ -55,7 +55,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: aix_auth.c,v 1.7 1999/10/07 21:21:07 millert Exp $";
+static const char rcsid[] = "$Sudo: aix_auth.c,v 1.8 2000/02/27 03:49:05 millert Exp $";
 #endif /* lint */
 
 int
@@ -67,7 +67,7 @@ aixauth_verify(pw, prompt, auth)
     char *message, *pass;
     int reenter = 1;
 
-    pass = tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, 1);
+    pass = tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags);
     if (authenticate(pw->pw_name, pass, &reenter, &message) == 0)
 	return(AUTH_SUCCESS);
     else

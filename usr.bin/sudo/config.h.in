@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: config.h.in,v 1.143 2000/01/19 19:07:23 millert Exp $
+ * $Sudo: config.h.in,v 1.144 2000/03/07 04:29:42 millert Exp $
  */
 
 /*
@@ -490,6 +490,9 @@
 
 /* Define if you use OSF DCE.  */
 #undef HAVE_DCE
+
+/* Define if you use the BSD login capabilities database.  */
+#undef HAVE_LOGINCAP
 
 /* Define if you use the FWTK authsrv daemon.  */
 #undef HAVE_FWTK

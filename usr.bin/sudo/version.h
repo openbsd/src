@@ -31,12 +31,12 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: version.h,v 1.57 2000/01/17 23:46:26 millert Exp $
+ * $Sudo: version.h,v 1.58 2000/02/16 00:07:28 millert Exp $
  */
 
 #ifndef _SUDO_VERSION_H
 #define _SUDO_VERSION_H
 
-static const char version[] = "1.6.2p2";
+static const char version[] = "1.6.3";
 
 #endif /* _SUDO_VERSION_H */

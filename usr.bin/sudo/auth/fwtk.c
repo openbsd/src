@@ -58,7 +58,7 @@
 #include "sudo_auth.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: fwtk.c,v 1.9 1999/10/12 00:53:41 millert Exp $";
+static const char rcsid[] = "$Sudo: fwtk.c,v 1.10 2000/02/27 03:49:06 millert Exp $";
 #endif /* lint */
 
 int
@@ -118,9 +118,10 @@ fwtk_verify(pw, prompt, auth)
     /* Get the password/response from the user. */
     if (strncmp(resp, "challenge ", 10) == 0) {
 	(void) snprintf(buf, sizeof(buf), "%s\nResponse: ", &resp[10]);
-	pass = tgetpass(buf, def_ival(I_PW_TIMEOUT) * 60, 0);
+	pass = tgetpass(buf, def_ival(I_PW_TIMEOUT) * 60,
+	    tgetpass_flags | TGP_ECHO);
     } else if (strncmp(resp, "password", 8) == 0) {
-	pass = tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, 1);
+	pass = tgetpass(prompt, def_ival(I_PW_TIMEOUT) * 60, tgetpass_flags);
     } else {
 	(void) fprintf(stderr, "%s: %s\n", Argv[0], resp);
 	return(AUTH_FATAL);
