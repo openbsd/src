@@ -1,4 +1,4 @@
-.\"	$OpenBSD: date.1,v 1.6 1997/06/23 19:34:55 deraadt Exp $
+.\"	$OpenBSD: date.1,v 1.7 1997/08/21 20:35:35 deraadt Exp $
 .\"	$NetBSD: date.1,v 1.12 1996/03/12 04:32:37 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -83,8 +83,8 @@ The
 option stops
 .Nm date
 from setting the time for other than the current machine.
-.It Fl r
-Print out the date and time in
+.It Fl r Ar seconds
+Print out (in specified format) the date and time represented by
 .Ar seconds
 from the Epoch.
 .It Fl t
