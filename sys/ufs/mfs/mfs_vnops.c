@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.13 1999/08/30 18:05:52 art Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.14 2000/02/08 16:39:03 niklas Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ mfs_strategy(v)
 		else
 			bcopy(bp->b_data, base, bp->b_bcount);
 		biodone(bp);
-	} else if (mfsp->mfs_pid == p->p_pid) {
+	} else if (p !=  NULL && mfsp->mfs_pid == p->p_pid) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else {
 		bp->b_actf = mfsp->mfs_buflist;
