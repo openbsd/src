@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 1998/08/07 17:29:25 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 1998/08/11 20:00:14 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -107,7 +107,7 @@ main(argc, argv)
 	register ino_t ino;
 	register int dirty;
 	register struct dinode *dp;
-	register struct	fstab *dt;
+	register struct	fstab *dt = NULL;
 	register char *map;
 	register int ch;
 	struct tm then;
