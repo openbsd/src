@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.11 2004/12/04 23:36:15 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.12 2004/12/04 23:56:50 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.11 2004/12/04 23:36:15 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.12 2004/12/04 23:56:50 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -165,12 +165,12 @@
 /*
  * According to the 802.11 spec (7.1.2) the frame body can be up to 2312 bytes
  */
-#define ATU_RX_BUFSZ		(sizeof(struct at76c503_rx_buffer) +	\
+#define ATU_RX_BUFSZ		(ATU_RX_HDRLEN + \
 				 sizeof(struct wi_80211_hdr) + 2312 + 4)
 /* BE CAREFULL! should add ATU_TX_PADDING */
-#define ATU_TX_BUFSZ		(sizeof(struct at76c503_tx_buffer) +	\
+#define ATU_TX_BUFSZ		(ATU_TX_HDRLEN + \
 				 sizeof(struct wi_80211_hdr) + 2312)
-#define ATU_MGMT_BUFSZ	(sizeof(struct at76c503_tx_buffer) + 300)
+#define ATU_MGMT_BUFSZ	(ATU_TX_HDRLEN + 300)
 
 #define ATU_MIN_FRAMELEN	60
 
@@ -569,24 +569,6 @@ struct atu_rx_hdr {
 };
 #define ATU_RX_HDRLEN sizeof(struct atu_rx_hdr)
 
-struct at76c503_rx_buffer {
-	u_int16_t		wlength;
-	u_int8_t		rx_rate;
-	u_int8_t		newbss;
-	u_int8_t		fragmentation;
-	u_int8_t		rssi;
-	u_int8_t		link_quality;
-	u_int8_t		noise_level;
-	u_int32_t		rx_time;
-};
-
-/* The total packet the AT76c503 spits out looks like this */
-struct atu_rxpkt {
-	struct at76c503_rx_buffer	AtHeader;
-	struct wi_80211_hdr		WiHeader;
-	u_int8_t			Packet[2312 + 4];
-};
-
 /*
  * The header we have to put in front of a TX packet before sending it to the
  * AT76c503
@@ -598,67 +580,6 @@ struct atu_tx_hdr {
 	u_int8_t			reserved[4];
 };
 #define ATU_TX_HDRLEN sizeof(struct atu_tx_hdr)
-
-struct at76c503_tx_buffer {
-	u_int16_t			wlength;
-	u_int8_t			tx_rate;
-	u_int8_t			padding;
-	u_int8_t			reserved[4];
-};
-
-/* The total packet we send to the AT76c503 looks like this */
-struct atu_txpkt {
-	struct at76c503_tx_buffer	AtHeader;
-	struct wi_80211_hdr		WiHeader;
-	/* TODO - change this to a more correct value */
-	u_int8_t			Packet[2312];
-};
-
-/* Managment packet */
-struct atu_mgmt_packet {
-	struct at76c503_tx_buffer	athdr;
-	struct wi_mgmt_hdr		mgmt_hdr;
-	
-	u_int8_t			payload[0];
-};
-
-/* Authentication packet */
-struct atu_auth_packet {
-	struct at76c503_tx_buffer	athdr;
-	struct wi_mgmt_hdr		mgmt_hdr;
-	struct wi_mgmt_auth_hdr		auth_hdr;
-	
-	u_int8_t			challenge[0];
-};
-
-/* Association packet */
-struct atu_assoc_packet {
-	struct at76c503_tx_buffer	athdr;
-	struct wi_mgmt_hdr		mgmt_hdr;
-	u_int16_t			capability;
-	u_int16_t			listen_interval;
-	
-	u_int8_t			data[0];
-};
-
-
-struct wi_80211_beacon {
-	u_int8_t		timestamp[8];
-	u_int16_t		interval;
-	u_int16_t		flags;
-	u_int8_t		data[1500];
-};
-
-struct tlv {
-	u_int8_t		type;
-	u_int8_t		length;
-	u_int8_t		value[255];
-};
-
-#define TYPE_MASK		0x000c
-
-
-
 
 #define NR(x)		(void *)((long)x)
 
