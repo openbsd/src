@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.55 2001/08/18 03:32:16 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.56 2001/08/25 20:37:06 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -669,7 +669,7 @@ copyargs(pack, arginfo, stack, argp)
 	char *dp, *sp;
 	size_t len;
 	void *nullp = NULL;
-	int argc = arginfo->ps_nargvstr;
+	long argc = arginfo->ps_nargvstr;
 	int envc = arginfo->ps_nenvstr;
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
