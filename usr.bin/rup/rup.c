@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.4 1996/09/04 23:43:57 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.5 1996/12/10 19:00:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.4 1996/09/04 23:43:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.5 1996/12/10 19:00:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -238,17 +238,20 @@ onehost(host)
 	CLIENT *rstat_clnt;
 	statstime host_stat;
 	static struct timeval timeout = {25, 0};
+	extern char *__progname;
 	
 	rstat_clnt = clnt_create(host, RSTATPROG, RSTATVERS_TIME, "udp");
 	if (rstat_clnt == NULL) {
-		warnx("%s", clnt_spcreateerror(host));
+		fprintf(stderr, "%s: %s", __progname,
+		    clnt_spcreateerror(host));
 		return;
 	}
 
 	bzero((char *)&host_stat, sizeof(host_stat));
 	if (clnt_call(rstat_clnt, RSTATPROC_STATS, xdr_void, NULL,
 	    xdr_statstime, &host_stat, timeout) != RPC_SUCCESS) {
-		warnx("%s",  clnt_sperror(rstat_clnt, host));
+		fprintf(stderr, "%s: %s", __progname,
+		    clnt_sperror(rstat_clnt, host));
 		return;
 	}
 
@@ -261,6 +264,7 @@ allhosts()
 {
 	statstime host_stat;
 	enum clnt_stat clnt_stat;
+	extern char *__progname;
 	size_t i;
 
 	if (sort_type != SORT_NONE) {
@@ -271,7 +275,7 @@ allhosts()
 	clnt_stat = clnt_broadcast(RSTATPROG, RSTATVERS_TIME, RSTATPROC_STATS,
 	    xdr_void, NULL, xdr_statstime, &host_stat, rstat_reply);
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT) {
-		warnx("%s", clnt_sperrno(clnt_stat));
+		fprintf(stderr, "%s: %s", __progname, clnt_sperrno(clnt_stat));
 		exit(1);
 	}
 
