@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.92 2003/11/03 06:54:26 david Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.93 2003/12/14 22:06:39 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -112,15 +112,14 @@ int pmap_con_dbg = 0;
 /*
  * Alignment checks for pages (must lie on page boundaries).
  */
-
 #define PAGE_ALIGNED(ad)	(((vaddr_t)(ad) & PAGE_MASK) == 0)
-#define	CHECK_PAGE_ALIGN(ad,who) \
+#define	CHECK_PAGE_ALIGN(ad, who) \
 	if (!PAGE_ALIGNED(ad)) \
 		printf("%s: addr %x not page aligned.\n", who, ad)
 
 #else	/* DEBUG */
 
-#define	CHECK_PAGE_ALIGN(ad,who)
+#define	CHECK_PAGE_ALIGN(ad, who)
 
 #endif	/* DEBUG */
 
@@ -1037,10 +1036,10 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 			 */
 			pte = pmap_pte(kernel_pmap,
 			    phys_map_vaddr1 + (i << PAGE_SHIFT));
-			*pte = PG_NV;
+			invalidate_pte(pte);
 			pte = pmap_pte(kernel_pmap,
 			    phys_map_vaddr2 + (i << PAGE_SHIFT));
-			*pte = PG_NV;
+			invalidate_pte(pte);
 			/* Load supervisor pointer to segment table. */
 			cmmu_remote_set_sapr(i, apr_data);
 #ifdef DEBUG
@@ -1115,13 +1114,15 @@ pmap_zero_page(struct vm_page *pg)
 	int cpu;
 	pt_entry_t *srcpte;
 
+	CHECK_PAGE_ALIGN(pa, "pmap_zero_page");
+
 	cpu = cpu_number();
 	srcva = (vaddr_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
 	srcpte = pmap_pte(kernel_pmap, srcva);
 
 	SPLVM(spl);
 	cmmu_flush_tlb(TRUE, srcva, PAGE_SIZE);
-	*srcpte = trunc_page(pa) |
+	*srcpte = pa |
 	    m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
 	    CACHE_GLOBAL | PG_V;
 	SPLX(spl);
@@ -1382,7 +1383,7 @@ void
 pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 {
 	pt_entry_t opte;
-	pv_entry_t prev, cur, pvl = PV_ENTRY_NULL;
+	pv_entry_t prev, cur, pvl;
 	struct vm_page *pg;
 	paddr_t pa;
 	u_int users;
@@ -1426,58 +1427,54 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	if (pg != NULL) {
-		/*
-		 * Remove the mapping from the pvlist for
-		 * this physical page.
-		 */
-		pvl = pg_to_pvh(pg);
-
-#ifdef DIAGNOSTIC
-		if (pvl->pv_pmap == PMAP_NULL)
-			panic("pmap_remove_pte: null pv_list");
-#endif
-
-		prev = PV_ENTRY_NULL;
-		for (cur = pvl; cur != PV_ENTRY_NULL;
-		    cur = cur->pv_next) {
-			if (cur->pv_va == va && cur->pv_pmap == pmap)
-				break;
-			prev = cur;
-		}
-		if (cur == PV_ENTRY_NULL) {
-			panic("pmap_remove_pte: mapping for va "
-			    "0x%x (pa 0x%x) not in pv list at 0x%p",
-			    va, pa, pvl);
-		}
-
-		if (prev == PV_ENTRY_NULL) {
-			/*
-			 * Hander is the pv_entry. Copy the next one
-			 * to hander and free the next one (we can't
-			 * free the hander)
-			 */
-			cur = cur->pv_next;
-			if (cur != PV_ENTRY_NULL) {
-				cur->pv_flags = pvl->pv_flags;
-				*pvl = *cur;
-				pool_put(&pvpool, cur);
-			} else {
-				pvl->pv_pmap = PMAP_NULL;
-			}
-		} else {
-			prev->pv_next = cur->pv_next;
-			pool_put(&pvpool, cur);
-		}
-	} /* if (pg != NULL) */
+	/* If this isn't a managed page, just return. */
+	if (pg == NULL)
+		return;
 
 	/*
-	 * Reflect modify bits to pager.
+	 * Remove the mapping from the pvlist for
+	 * this physical page.
 	 */
+	pvl = pg_to_pvh(pg);
 
-	if (opte != 0 && pvl != PV_ENTRY_NULL) {
-		pvl->pv_flags |= opte;
+#ifdef DIAGNOSTIC
+	if (pvl->pv_pmap == PMAP_NULL)
+		panic("pmap_remove_pte: null pv_list");
+#endif
+
+	prev = PV_ENTRY_NULL;
+	for (cur = pvl; cur != PV_ENTRY_NULL; cur = cur->pv_next) {
+		if (cur->pv_va == va && cur->pv_pmap == pmap)
+			break;
+		prev = cur;
 	}
+	if (cur == PV_ENTRY_NULL) {
+		panic("pmap_remove_pte: mapping for va "
+		    "0x%x (pa 0x%x) not in pv list at 0x%p",
+		    va, pa, pvl);
+	}
+
+	if (prev == PV_ENTRY_NULL) {
+		/*
+		 * Hander is the pv_entry. Copy the next one
+		 * to hander and free the next one (we can't
+		 * free the hander)
+		 */
+		cur = cur->pv_next;
+		if (cur != PV_ENTRY_NULL) {
+			cur->pv_flags = pvl->pv_flags;
+			*pvl = *cur;
+			pool_put(&pvpool, cur);
+		} else {
+			pvl->pv_pmap = PMAP_NULL;
+		}
+	} else {
+		prev->pv_next = cur->pv_next;
+		pool_put(&pvpool, cur);
+	}
+
+	/* Update saved attributes for managed page */
+	pvl->pv_flags |= opte;
 }
 
 /*
@@ -1943,7 +1940,7 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	int spl;
-	pt_entry_t *pte, ap, template;
+	pt_entry_t *pte, template;
 	paddr_t old_pa;
 	pv_entry_t pv_e, pvl;
 	u_int users;
@@ -1951,8 +1948,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	struct vm_page *pg;
 
-	CHECK_PAGE_ALIGN(va, "pmap_entry - VA");
-	CHECK_PAGE_ALIGN(pa, "pmap_entry - PA");
+	CHECK_PAGE_ALIGN(va, "pmap_entry - va");
+	CHECK_PAGE_ALIGN(pa, "pmap_entry - pa");
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ENT) {
@@ -1963,7 +1960,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	}
 #endif
 
-	ap = m88k_protection(pmap, prot);
+	template = m88k_protection(pmap, prot);
 
 	PMAP_LOCK(pmap, spl);
 	users = pmap->pm_cpus;
@@ -1984,8 +1981,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 	}
 	/*
-	 *	Special case if the physical page is already mapped
-	 *	at this address.
+	 * Special case if the physical page is already mapped at this address.
 	 */
 	old_pa = ptoa(PG_PFNUM(*pte));
 #ifdef DEBUG
@@ -2008,34 +2004,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		else if (!wired && pmap_pte_w(pte))
 			pmap->pm_stats.wired_count--;
 
-		if ((unsigned long)pa >= MAXPHYSMEM)
-			template = CACHE_INH | PG_V;
-		else
-			template = CACHE_GLOBAL | PG_V;
-		if (wired)
-			template |= PG_W;
-
-		/*
-		 * If there is a same mapping, we have nothing to do.
-		 */
-		if (!PDT_VALID(pte) || pmap_pte_w_chg(pte, template & PG_W) ||
-		    (pmap_pte_prot_chg(pte, ap & PG_PROT))) {
-
-			/*
-			 * Invalidate pte temporarily to avoid being written
-			 * back the modified bit and/or the reference bit by
-			 * any other cpu.
-			 */
-			template |= (invalidate_pte(pte) & (PG_M | PG_U));
-			*pte = template | ap | trunc_page(pa);
-			flush_atc_entry(users, va, kflush);
-#ifdef DEBUG
-	if (pmap_con_dbg & CD_ENT)
-		printf("(pmap_enter) update pte to %x\n", *pte);
-#endif
-		}
-
 	} else { /* if ( pa == old_pa) */
+
 		/*
 		 * Remove old mapping from the PV list if necessary.
 		 */
@@ -2068,7 +2038,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			}
 #endif
 			/*
-			 *	Enter the mappimg in the PV list for this
+			 *	Enter the mapping in the PV list for this
 			 *	physical page.
 			 */
 			pvl = pg_to_pvh(pg);
@@ -2122,26 +2092,42 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pmap->pm_stats.resident_count++;
 		if (wired)
 			pmap->pm_stats.wired_count++;
+	} /* if (pa == old_pa) ... else */
 
-		if ((unsigned long)pa >= MAXPHYSMEM)
-			template = CACHE_INH | PG_V;
-		else
-			template = CACHE_GLOBAL | PG_V;
-		if (wired)
-			template |= PG_W;
+	template |= PG_V;
+	if (wired)
+		template |= PG_W;
 
-		if (flags & VM_PROT_WRITE)
-			template |= PG_U | PG_M;
-		else if (flags & VM_PROT_ALL)
-			template |= PG_U;
+	if ((unsigned long)pa >= MAXPHYSMEM)
+		template |= CACHE_INH;
+	else
+		template |= CACHE_GLOBAL;
 
-		*pte = template | ap | trunc_page(pa);
+	if (flags & VM_PROT_WRITE)
+		template |= PG_U | PG_M;
+	else if (flags & VM_PROT_ALL)
+		template |= PG_U;
+
+	/*
+	 * Invalidate pte temporarily to avoid being written
+	 * back the modified bit and/or the reference bit by
+	 * any other cpu.
+	 */
+	template |= invalidate_pte(pte) & (PG_U | PG_M);
+	*pte = template | pa;
+	flush_atc_entry(users, va, kflush);
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ENT)
 		printf("(pmap_enter) set pte to %x\n", *pte);
 #endif
 
-	} /* if (pa == old_pa) ... else */
+	/*
+	 * Cache attribute flags
+	 */
+	if (pg != NULL) {
+		pvl = pg_to_pvh(pg);
+		pvl->pv_flags |= (template & (PG_U | PG_M));
+	}
 
 	PMAP_UNLOCK(pmap, spl);
 
@@ -2497,6 +2483,9 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	pt_entry_t template, *dstpte, *srcpte;
 	int cpu = cpu_number();
 
+	CHECK_PAGE_ALIGN(src, "pmap_copy_page - src");
+	CHECK_PAGE_ALIGN(dst, "pmap_copy_page - dst");
+
 	template = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE) |
 	    CACHE_GLOBAL | PG_V;
 
@@ -2511,13 +2500,13 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 
 	SPLVM(spl);
 	cmmu_flush_tlb(TRUE, srcva, PAGE_SIZE);
-	*srcpte = template | trunc_page(src);
+	*srcpte = template | src;
 
 	/*
 	 * Map destination physical address.
 	 */
 	cmmu_flush_tlb(TRUE, dstva, PAGE_SIZE);
-	*dstpte = template | trunc_page(dst);
+	*dstpte = template | dst;
 	SPLX(spl);
 
 	bcopy((void *)srcva, (void *)dstva, PAGE_SIZE);
@@ -2611,7 +2600,7 @@ changebit_Retry:
 		/*
 		 * Update bits
 		 */
-		opte = invalidate_pte(pte);
+		opte = *pte;
 		npte = (opte | set) & mask;
 
 		/*
@@ -2620,8 +2609,9 @@ changebit_Retry:
 		 * Invalidate pte temporarily to avoid the modified bit
 		 * and/or the reference being written back by any other cpu.
 		 */
-		*pte = npte;
 		if (npte != opte) {
+			invalidate_pte(pte);
+			*pte = npte;
 			flush_atc_entry(users, va, kflush);
 		}
 next:
@@ -2847,7 +2837,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		template |= CACHE_INH | PG_V | PG_W;
 	else
 		template |= CACHE_GLOBAL | PG_V | PG_W;
-	*pte = template | trunc_page(pa);
+	*pte = template | pa;
 	flush_atc_entry(users, va, TRUE);
 
 	PMAP_UNLOCK(kernel_pmap, spl);
