@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.4 1997/01/19 17:25:14 millert Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.5 1997/07/06 20:23:00 mickey Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$OpenBSD: zopen.c,v 1.4 1997/01/19 17:25:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: zopen.c,v 1.5 1997/07/06 20:23:00 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,8 @@ static char rcsid[] = "$OpenBSD: zopen.c,v 1.4 1997/01/19 17:25:14 millert Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include "compress.h"
 
 #define	BITS		16		/* Default bits. */
 #define	HSIZE		69001		/* 95% occupancy */
@@ -86,8 +88,7 @@ static char rcsid[] = "$OpenBSD: zopen.c,v 1.4 1997/01/19 17:25:14 millert Exp $
 typedef long code_int;
 typedef long count_int;
 
-typedef u_char char_type;
-static char_type magic_header[] =
+static u_char z_magic[] =
 	{'\037', '\235'};		/* 1F 9D */
 
 #define	BIT_MASK	0x1f		/* Defines for third byte of header. */
@@ -102,7 +103,7 @@ static char_type magic_header[] =
 #define	MAXCODE(n_bits)	((1 << (n_bits)) - 1)
 
 struct s_zstate {
-	FILE *zs_fp;			/* File stream for I/O */
+	int zs_fd;			/* File stream for I/O */
 	char zs_mode;			/* r or w */
 	enum {
 		S_START, S_MIDDLE, S_EOF
@@ -126,8 +127,8 @@ struct s_zstate {
 	int zs_offset;
 	long zs_in_count;		/* Length of input. */
 	long zs_bytes_out;		/* Length of compressed output. */
-	long zs_out_count;		/* # of codes output (for debugging). */
-	char_type zs_buf[BITS];
+	long zs_out_count;		/* # of codes output (for debugging).*/
+	u_char zs_buf[BITS];
 	union {
 		struct {
 			long zs_fcode;
@@ -136,48 +137,26 @@ struct s_zstate {
 			int zs_hshift;
 		} w;			/* Write paramenters */
 		struct {
-			char_type *zs_stackp;
+			u_char *zs_stackp;
 			int zs_finchar;
 			code_int zs_code, zs_oldcode, zs_incode;
 			int zs_roffset, zs_size;
-			char_type zs_gbuf[BITS];
 		} r;			/* Read parameters */
 	} u;
 };
 
 /* Definitions to retain old variable names */
-#define	fp		zs->zs_fp
-#define	zmode		zs->zs_mode
-#define	state		zs->zs_state
-#define	n_bits		zs->zs_n_bits
-#define	maxbits		zs->zs_maxbits
-#define	maxcode		zs->zs_maxcode
-#define	maxmaxcode	zs->zs_maxmaxcode
-#define	htab		zs->zs_htab
-#define	codetab		zs->zs_codetab
-#define	hsize		zs->zs_hsize
-#define	free_ent	zs->zs_free_ent
-#define	block_compress	zs->zs_block_compress
-#define	clear_flg	zs->zs_clear_flg
-#define	ratio		zs->zs_ratio
-#define	checkpoint	zs->zs_checkpoint
-#define	offset		zs->zs_offset
-#define	in_count	zs->zs_in_count
-#define	bytes_out	zs->zs_bytes_out
-#define	out_count	zs->zs_out_count
-#define	buf		zs->zs_buf
-#define	fcode		zs->u.w.zs_fcode
-#define	hsize_reg	zs->u.w.zs_hsize_reg
-#define	ent		zs->u.w.zs_ent
-#define	hshift		zs->u.w.zs_hshift
-#define	stackp		zs->u.r.zs_stackp
-#define	finchar		zs->u.r.zs_finchar
-#define	code		zs->u.r.zs_code
-#define	oldcode		zs->u.r.zs_oldcode
-#define	incode		zs->u.r.zs_incode
-#define	roffset		zs->u.r.zs_roffset
-#define	size		zs->u.r.zs_size
-#define	gbuf		zs->u.r.zs_gbuf
+#define zs_fcode	u.w.zs_fcode
+#define zs_ent		u.w.zs_ent
+#define zs_hsize_reg	u.w.zs_hsize_reg
+#define zs_hshift	u.w.zs_hshift
+#define zs_stackp	u.r.zs_stackp
+#define zs_finchar	u.r.zs_finchar
+#define zs_code		u.r.zs_code
+#define zs_oldcode	u.r.zs_oldcode
+#define zs_incode	u.r.zs_incode
+#define zs_roffset	u.r.zs_roffset
+#define zs_size		u.r.zs_size
 
 /*
  * To save much memory, we overlay the table used by compress() with those
@@ -188,12 +167,12 @@ struct s_zstate {
  * (stack used to be 8000 characters).
  */
 
-#define	htabof(i)	htab[i]
-#define	codetabof(i)	codetab[i]
+#define	htabof(i)	zs->zs_htab[i]
+#define	codetabof(i)	zs->zs_codetab[i]
 
 #define	tab_prefixof(i)	codetabof(i)
-#define	tab_suffixof(i)	((char_type *)(htab))[i]
-#define	de_stack	((char_type *)&tab_suffixof(1 << BITS))
+#define	tab_suffixof(i)	((u_char *)(zs->zs_htab))[i]
+#define	de_stack	((u_char *)&tab_suffixof(1 << BITS))
 
 #define	CHECK_GAP 10000		/* Ratio check interval. */
 
@@ -204,13 +183,10 @@ struct s_zstate {
 #define	FIRST	257		/* First free entry. */
 #define	CLEAR	256		/* Table clear output code. */
 
-static int	cl_block __P((struct s_zstate *));
-static void	cl_hash __P((struct s_zstate *, count_int));
-static code_int	getcode __P((struct s_zstate *));
-static int	output __P((struct s_zstate *, code_int));
-static int	zclose __P((void *));
-static int	zread __P((void *, char *, int));
-static int	zwrite __P((void *, const char *, int));
+static int	cl_block __P((register struct s_zstate *));
+static void	cl_hash __P((register struct s_zstate *, register count_int));
+static code_int	getcode __P((register struct s_zstate *));
+static int	output __P((register struct s_zstate *, code_int));
 
 /*-
  * Algorithm from "A Technique for High Performance Data Compression",
@@ -238,7 +214,7 @@ static int	zwrite __P((void *, const char *, int));
  * file size for noticeable speed improvement on small files.  Please direct
  * questions about this implementation to ames!jaw.
  */
-static int
+int
 zwrite(cookie, wbp, num)
 	void *cookie;
 	const char *wbp;
@@ -257,71 +233,74 @@ zwrite(cookie, wbp, num)
 	zs = cookie;
 	count = num;
 	bp = (u_char *)wbp;
-	if (state == S_MIDDLE)
+	if (zs->zs_state == S_MIDDLE)
 		goto middle;
-	state = S_MIDDLE;
+	zs->zs_state = S_MIDDLE;
 
-	maxmaxcode = 1L << maxbits;
-	if (fwrite(magic_header,
-	    sizeof(char), sizeof(magic_header), fp) != sizeof(magic_header))
+	zs->zs_maxmaxcode = 1L << zs->zs_maxbits;
+	if (write(zs->zs_fd, z_magic, sizeof(z_magic)) != sizeof(z_magic))
 		return (-1);
-	tmp = (u_char)(maxbits | block_compress);
-	if (fwrite(&tmp, sizeof(char), sizeof(tmp), fp) != sizeof(tmp))
+	tmp = (u_char)(zs->zs_maxbits | zs->zs_block_compress);
+	if (write(zs->zs_fd, &tmp, sizeof(tmp)) != sizeof(tmp))
 		return (-1);
 
-	offset = 0;
-	bytes_out = 3;		/* Includes 3-byte header mojo. */
-	out_count = 0;
-	clear_flg = 0;
-	ratio = 0;
-	in_count = 1;
-	checkpoint = CHECK_GAP;
-	maxcode = MAXCODE(n_bits = INIT_BITS);
-	free_ent = ((block_compress) ? FIRST : 256);
+	zs->zs_offset = 0;
+	zs->zs_bytes_out = 3;		/* Includes 3-byte header mojo. */
+	zs->zs_out_count = 0;
+	zs->zs_clear_flg = 0;
+	zs->zs_ratio = 0;
+	zs->zs_in_count = 1;
+	zs->zs_checkpoint = CHECK_GAP;
+	zs->zs_maxcode = MAXCODE(zs->zs_n_bits = INIT_BITS);
+	zs->zs_free_ent = ((zs->zs_block_compress) ? FIRST : 256);
 
-	ent = *bp++;
+	zs->zs_ent = *bp++;
 	--count;
 
-	hshift = 0;
-	for (fcode = (long)hsize; fcode < 65536L; fcode *= 2L)
-		hshift++;
-	hshift = 8 - hshift;	/* Set hash code range bound. */
+	zs->zs_hshift = 0;
+	for (zs->zs_fcode = (long)zs->zs_hsize; zs->zs_fcode < 65536L;
+	     zs->zs_fcode *= 2L)
+		zs->zs_hshift++;
+	zs->zs_hshift = 8 - zs->zs_hshift; /* Set hash code range bound. */
 
-	hsize_reg = hsize;
-	cl_hash(zs, (count_int)hsize_reg);	/* Clear hash table. */
+	zs->zs_hsize_reg = zs->zs_hsize;
+	cl_hash(zs, (count_int)zs->zs_hsize_reg);	/* Clear hash table. */
 
 middle:	for (i = 0; count--;) {
 		c = *bp++;
-		in_count++;
-		fcode = (long)(((long)c << maxbits) + ent);
-		i = ((c << hshift) ^ ent);	/* Xor hashing. */
+		zs->zs_in_count++;
+		zs->zs_fcode = (long)(((long)c << zs->zs_maxbits) +
+				      zs->zs_ent);
+		i = ((c << zs->zs_hshift) ^ zs->zs_ent); /* Xor hashing. */
 
-		if (htabof(i) == fcode) {
-			ent = codetabof(i);
+		if (htabof(i) == zs->zs_fcode) {
+			zs->zs_ent = codetabof(i);
 			continue;
 		} else if ((long)htabof(i) < 0)	/* Empty slot. */
 			goto nomatch;
-		disp = hsize_reg - i;	/* Secondary hash (after G. Knott). */
+		/* Secondary hash (after G. Knott). */
+		disp = zs->zs_hsize_reg - i;
 		if (i == 0)
 			disp = 1;
 probe:		if ((i -= disp) < 0)
-			i += hsize_reg;
+			i += zs->zs_hsize_reg;
 
-		if (htabof(i) == fcode) {
-			ent = codetabof(i);
+		if (htabof(i) == zs->zs_fcode) {
+			zs->zs_ent = codetabof(i);
 			continue;
 		}
 		if ((long)htabof(i) >= 0)
 			goto probe;
-nomatch:	if (output(zs, (code_int) ent) == -1)
+nomatch:	if (output(zs, (code_int) zs->zs_ent) == -1)
 			return (-1);
-		out_count++;
-		ent = c;
-		if (free_ent < maxmaxcode) {
-			codetabof(i) = free_ent++;	/* code -> hashtable */
-			htabof(i) = fcode;
-		} else if ((count_int)in_count >=
-		    checkpoint && block_compress) {
+		zs->zs_out_count++;
+		zs->zs_ent = c;
+		if (zs->zs_free_ent < zs->zs_maxmaxcode) {
+			/* code -> hashtable */
+			codetabof(i) = zs->zs_free_ent++;
+			htabof(i) = zs->zs_fcode;
+		} else if ((count_int)zs->zs_in_count >=
+		    zs->zs_checkpoint && zs->zs_block_compress) {
 			if (cl_block(zs) == -1)
 				return (-1);
 		}
@@ -329,7 +308,7 @@ nomatch:	if (output(zs, (code_int) ent) == -1)
 	return (num);
 }
 
-static int
+int
 zclose(cookie)
 	void *cookie;
 {
@@ -337,20 +316,20 @@ zclose(cookie)
 	int rval;
 
 	zs = cookie;
-	if (zmode == 'w') {		/* Put out the final code. */
-		if (output(zs, (code_int) ent) == -1) {
-			(void)fclose(fp);
+	if (zs->zs_mode == 'w') {		/* Put out the final code. */
+		if (output(zs, (code_int) zs->zs_ent) == -1) {
+			(void)close(zs->zs_fd);
 			free(zs);
 			return (-1);
 		}
-		out_count++;
+		zs->zs_out_count++;
 		if (output(zs, (code_int) - 1) == -1) {
-			(void)fclose(fp);
+			(void)close(zs->zs_fd);
 			free(zs);
 			return (-1);
 		}
 	}
-	rval = fclose(fp) == EOF ? -1 : 0;
+	rval = close(zs->zs_fd);
 	free(zs);
 	return (rval);
 }
@@ -370,22 +349,22 @@ zclose(cookie)
  * code in turn.  When the buffer fills up empty it and start over.
  */
 
-static char_type lmask[9] =
+static u_char lmask[9] =
 	{0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80, 0x00};
-static char_type rmask[9] =
+static u_char rmask[9] =
 	{0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
 static int
 output(zs, ocode)
-	struct s_zstate *zs;
+	register struct s_zstate *zs;
 	code_int ocode;
 {
 	register int bits, r_off;
-	register char_type *bp;
+	register u_char *bp;
 
-	r_off = offset;
-	bits = n_bits;
-	bp = buf;
+	r_off = zs->zs_offset;
+	bits = zs->zs_n_bits;
+	bp = zs->zs_buf;
 	if (ocode >= 0) {
 		/* Get to the first byte. */
 		bp += (r_off >> 3);
@@ -398,7 +377,7 @@ output(zs, ocode)
 		bp++;
 		bits -= (8 - r_off);
 		ocode >>= 8 - r_off;
-		/* Get any 8 bit parts in the middle (<=1 for up to 16 bits). */
+		/* Get any 8 bit parts in the middle (<=1 for up to 16 bits) */
 		if (bits >= 8) {
 			*bp++ = ocode;
 			ocode >>= 8;
@@ -407,53 +386,58 @@ output(zs, ocode)
 		/* Last bits. */
 		if (bits)
 			*bp = ocode;
-		offset += n_bits;
-		if (offset == (n_bits << 3)) {
-			bp = buf;
-			bits = n_bits;
-			bytes_out += bits;
-			if (fwrite(bp, sizeof(char), bits, fp) != bits)
+		zs->zs_offset += zs->zs_n_bits;
+		if (zs->zs_offset == (zs->zs_n_bits << 3)) {
+			bp = zs->zs_buf;
+			bits = zs->zs_n_bits;
+			zs->zs_bytes_out += bits;
+			if (write(zs->zs_fd, bp, bits) != bits)
 				return (-1);
 			bp += bits;
 			bits = 0;
-			offset = 0;
+			zs->zs_offset = 0;
 		}
 		/*
 		 * If the next entry is going to be too big for the ocode size,
 		 * then increase it, if possible.
 		 */
-		if (free_ent > maxcode || (clear_flg > 0)) {
+		if (zs->zs_free_ent > zs->zs_maxcode ||
+		    (zs->zs_clear_flg > 0)) {
 		       /*
 			* Write the whole buffer, because the input side won't
-			* discover the size increase until after it has read it.
+			* discover the size increase until after it has read it
 			*/
-			if (offset > 0) {
-				if (fwrite(buf, 1, n_bits, fp) != n_bits)
+			if (zs->zs_offset > 0) {
+				if (write(zs->zs_fd, zs->zs_buf, zs->zs_n_bits)
+				    != zs->zs_n_bits)
 					return (-1);
-				bytes_out += n_bits;
+				zs->zs_bytes_out += zs->zs_n_bits;
 			}
-			offset = 0;
+			zs->zs_offset = 0;
 
-			if (clear_flg) {
-				maxcode = MAXCODE(n_bits = INIT_BITS);
-				clear_flg = 0;
+			if (zs->zs_clear_flg) {
+				zs->zs_maxcode =
+					MAXCODE(zs->zs_n_bits = INIT_BITS);
+				zs->zs_clear_flg = 0;
 			} else {
-				n_bits++;
-				if (n_bits == maxbits)
-					maxcode = maxmaxcode;
+				zs->zs_n_bits++;
+				if (zs->zs_n_bits == zs->zs_maxbits)
+					zs->zs_maxcode = zs->zs_maxmaxcode;
 				else
-					maxcode = MAXCODE(n_bits);
+					zs->zs_maxcode =
+						MAXCODE(zs->zs_n_bits);
 			}
 		}
 	} else {
 		/* At EOF, write the rest of the buffer. */
-		if (offset > 0) {
-			offset = (offset + 7) / 8;
-			if (fwrite(buf, 1, offset, fp) != offset)
+		if (zs->zs_offset > 0) {
+			zs->zs_offset = (zs->zs_offset + 7) / 8;
+			if (write(zs->zs_fd, zs->zs_buf, zs->zs_offset)
+			    != zs->zs_offset)
 				return (-1);
-			bytes_out += offset;
+			zs->zs_bytes_out += zs->zs_offset;
 		}
-		offset = 0;
+		zs->zs_offset = 0;
 	}
 	return (0);
 }
@@ -464,7 +448,7 @@ output(zs, ocode)
  * compressed file.  The tables used herein are shared with those of the
  * compress() routine.  See the definitions above.
  */
-static int
+int
 zread(cookie, rbp, num)
 	void *cookie;
 	char *rbp;
@@ -480,9 +464,9 @@ zread(cookie, rbp, num)
 	zs = cookie;
 	count = num;
 	bp = (u_char *)rbp;
-	switch (state) {
+	switch (zs->zs_state) {
 	case S_START:
-		state = S_MIDDLE;
+		zs->zs_state = S_MIDDLE;
 		break;
 	case S_MIDDLE:
 		goto middle;
@@ -491,80 +475,80 @@ zread(cookie, rbp, num)
 	}
 
 	/* Check the magic number */
-	if (fread(header,
-	    sizeof(char), sizeof(header), fp) != sizeof(header) ||
-	    memcmp(header, magic_header, sizeof(magic_header)) != 0) {
+	if (read(zs->zs_fd, header, sizeof(header)) != sizeof(header) ||
+	    memcmp(header, z_magic, sizeof(z_magic)) != 0) {
 		errno = EFTYPE;
 		return (-1);
 	}
-	maxbits = header[2];	/* Set -b from file. */
-	block_compress = maxbits & BLOCK_MASK;
-	maxbits &= BIT_MASK;
-	maxmaxcode = 1L << maxbits;
-	if (maxbits > BITS) {
+	zs->zs_maxbits = header[2];	/* Set -b from file. */
+	zs->zs_block_compress = zs->zs_maxbits & BLOCK_MASK;
+	zs->zs_maxbits &= BIT_MASK;
+	zs->zs_maxmaxcode = 1L << zs->zs_maxbits;
+	if (zs->zs_maxbits > BITS) {
 		errno = EFTYPE;
 		return (-1);
 	}
 	/* As above, initialize the first 256 entries in the table. */
-	maxcode = MAXCODE(n_bits = INIT_BITS);
-	for (code = 255; code >= 0; code--) {
-		tab_prefixof(code) = 0;
-		tab_suffixof(code) = (char_type) code;
+	zs->zs_maxcode = MAXCODE(zs->zs_n_bits = INIT_BITS);
+	for (zs->zs_code = 255; zs->zs_code >= 0; zs->zs_code--) {
+		tab_prefixof(zs->zs_code) = 0;
+		tab_suffixof(zs->zs_code) = (u_char) zs->zs_code;
 	}
-	free_ent = block_compress ? FIRST : 256;
+	zs->zs_free_ent = zs->zs_block_compress ? FIRST : 256;
 
-	finchar = oldcode = getcode(zs);
-	if (oldcode == -1)	/* EOF already? */
+	zs->zs_finchar = zs->zs_oldcode = getcode(zs);
+	if (zs->zs_oldcode == -1)	/* EOF already? */
 		return (0);	/* Get out of here */
 
 	/* First code must be 8 bits = char. */
-	*bp++ = (u_char)finchar;
+	*bp++ = (u_char)zs->zs_finchar;
 	count--;
-	stackp = de_stack;
+	zs->zs_stackp = de_stack;
 
-	while ((code = getcode(zs)) > -1) {
+	while ((zs->zs_code = getcode(zs)) > -1) {
 
-		if ((code == CLEAR) && block_compress) {
-			for (code = 255; code >= 0; code--)
-				tab_prefixof(code) = 0;
-			clear_flg = 1;
-			free_ent = FIRST - 1;
-			if ((code = getcode(zs)) == -1)	/* O, untimely death! */
+		if ((zs->zs_code == CLEAR) && zs->zs_block_compress) {
+			for (zs->zs_code = 255; zs->zs_code >= 0;
+			     zs->zs_code--)
+				tab_prefixof(zs->zs_code) = 0;
+			zs->zs_clear_flg = 1;
+			zs->zs_free_ent = FIRST - 1;
+			if ((zs->zs_code = getcode(zs)) == -1)	/* O, untimely death! */
 				break;
 		}
-		incode = code;
+		zs->zs_incode = zs->zs_code;
 
 		/* Special case for KwKwK string. */
-		if (code >= free_ent) {
-			*stackp++ = finchar;
-			code = oldcode;
+		if (zs->zs_code >= zs->zs_free_ent) {
+			*zs->zs_stackp++ = zs->zs_finchar;
+			zs->zs_code = zs->zs_oldcode;
 		}
 
 		/* Generate output characters in reverse order. */
-		while (code >= 256) {
-			*stackp++ = tab_suffixof(code);
-			code = tab_prefixof(code);
+		while (zs->zs_code >= 256) {
+			*zs->zs_stackp++ = tab_suffixof(zs->zs_code);
+			zs->zs_code = tab_prefixof(zs->zs_code);
 		}
-		*stackp++ = finchar = tab_suffixof(code);
+		*zs->zs_stackp++ = zs->zs_finchar = tab_suffixof(zs->zs_code);
 
 		/* And put them out in forward order.  */
 middle:		do {
 			if (count-- == 0)
 				return (num);
-			*bp++ = *--stackp;
-		} while (stackp > de_stack);
+			*bp++ = *--zs->zs_stackp;
+		} while (zs->zs_stackp > de_stack);
 
 		/* Generate the new entry. */
-		if ((code = free_ent) < maxmaxcode) {
-			tab_prefixof(code) = (u_short) oldcode;
-			tab_suffixof(code) = finchar;
-			free_ent = code + 1;
+		if ((zs->zs_code = zs->zs_free_ent) < zs->zs_maxmaxcode) {
+			tab_prefixof(zs->zs_code) = (u_short) zs->zs_oldcode;
+			tab_suffixof(zs->zs_code) = zs->zs_finchar;
+			zs->zs_free_ent = zs->zs_code + 1;
 		}
 
 		/* Remember previous code. */
-		oldcode = incode;
+		zs->zs_oldcode = zs->zs_incode;
 	}
-	state = S_EOF;
+	zs->zs_state = S_EOF;
 eof:	return (num - count);
 }
 
@@ -577,39 +561,40 @@ eof:	return (num - count);
  */
 static code_int
 getcode(zs)
-	struct s_zstate *zs;
+	register struct s_zstate *zs;
 {
 	register code_int gcode;
 	register int r_off, bits;
-	register char_type *bp;
+	register u_char *bp;
 
-	bp = gbuf;
-	if (clear_flg > 0 || roffset >= size || free_ent > maxcode) {
+	bp = zs->zs_buf;
+	if (zs->zs_clear_flg > 0 || zs->zs_roffset >= zs->zs_size ||
+	    zs->zs_free_ent > zs->zs_maxcode) {
 		/*
 		 * If the next entry will be too big for the current gcode
 		 * size, then we must increase the size.  This implies reading
 		 * a new buffer full, too.
 		 */
-		if (free_ent > maxcode) {
-			n_bits++;
-			if (n_bits == maxbits)	/* Won't get any bigger now. */
-				maxcode = maxmaxcode;
+		if (zs->zs_free_ent > zs->zs_maxcode) {
+			zs->zs_n_bits++;
+			if (zs->zs_n_bits == zs->zs_maxbits)	/* Won't get any bigger now. */
+				zs->zs_maxcode = zs->zs_maxmaxcode;
 			else
-				maxcode = MAXCODE(n_bits);
+				zs->zs_maxcode = MAXCODE(zs->zs_n_bits);
 		}
-		if (clear_flg > 0) {
-			maxcode = MAXCODE(n_bits = INIT_BITS);
-			clear_flg = 0;
+		if (zs->zs_clear_flg > 0) {
+			zs->zs_maxcode = MAXCODE(zs->zs_n_bits = INIT_BITS);
+			zs->zs_clear_flg = 0;
 		}
-		size = fread(gbuf, 1, n_bits, fp);
-		if (size <= 0)			/* End of file. */
+		zs->zs_size = read(zs->zs_fd, zs->zs_buf, zs->zs_n_bits);
+		if (zs->zs_size <= 0)			/* End of file. */
 			return (-1);
-		roffset = 0;
+		zs->zs_roffset = 0;
 		/* Round size down to integral number of codes. */
-		size = (size << 3) - (n_bits - 1);
+		zs->zs_size = (zs->zs_size << 3) - (zs->zs_n_bits - 1);
 	}
-	r_off = roffset;
-	bits = n_bits;
+	r_off = zs->zs_roffset;
+	bits = zs->zs_n_bits;
 
 	/* Get to the first byte. */
 	bp += (r_off >> 3);
@@ -629,34 +614,34 @@ getcode(zs)
 
 	/* High order bits. */
 	gcode |= (*bp & rmask[bits]) << r_off;
-	roffset += n_bits;
+	zs->zs_roffset += zs->zs_n_bits;
 
 	return (gcode);
 }
 
 static int
 cl_block(zs)			/* Table clear for block compress. */
-	struct s_zstate *zs;
+	register struct s_zstate *zs;
 {
 	register long rat;
 
-	checkpoint = in_count + CHECK_GAP;
+	zs->zs_checkpoint = zs->zs_in_count + CHECK_GAP;
 
-	if (in_count > 0x007fffff) {	/* Shift will overflow. */
-		rat = bytes_out >> 8;
+	if (zs->zs_in_count > 0x007fffff) {	/* Shift will overflow. */
+		rat = zs->zs_bytes_out >> 8;
 		if (rat == 0)		/* Don't divide by zero. */
 			rat = 0x7fffffff;
 		else
-			rat = in_count / rat;
+			rat = zs->zs_in_count / rat;
 	} else
-		rat = (in_count << 8) / bytes_out;	/* 8 fractional bits. */
-	if (rat > ratio)
-		ratio = rat;
+		rat = (zs->zs_in_count << 8) / zs->zs_bytes_out;	/* 8 fractional bits. */
+	if (rat > zs->zs_ratio)
+		zs->zs_ratio = rat;
 	else {
-		ratio = 0;
-		cl_hash(zs, (count_int) hsize);
-		free_ent = FIRST;
-		clear_flg = 1;
+		zs->zs_ratio = 0;
+		cl_hash(zs, (count_int) zs->zs_hsize);
+		zs->zs_free_ent = FIRST;
+		zs->zs_clear_flg = 1;
 		if (output(zs, (code_int) CLEAR) == -1)
 			return (-1);
 	}
@@ -665,14 +650,14 @@ cl_block(zs)			/* Table clear for block compress. */
 
 static void
 cl_hash(zs, cl_hsize)			/* Reset code table. */
-	struct s_zstate *zs;
+	register struct s_zstate *zs;
 	register count_int cl_hsize;
 {
 	register count_int *htab_p;
 	register long i, m1;
 
 	m1 = -1;
-	htab_p = htab + cl_hsize;
+	htab_p = zs->zs_htab + cl_hsize;
 	i = cl_hsize - 16;
 	do {			/* Might use Sys V memset(3) here. */
 		*(htab_p - 16) = m1;
@@ -698,12 +683,31 @@ cl_hash(zs, cl_hsize)			/* Reset code table. */
 }
 
 FILE *
-zdopen(fd, mode, bits)
+zopen(name, mode, bits)
+	const char *name;
+	const char *mode;
+	int bits;
+{
+	int fd;
+	void *cookie;
+	if ((fd = open(name, (*mode=='r'? O_RDONLY:O_WRONLY|O_CREAT),
+		       S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
+		return NULL;
+	if ((cookie = z_open(fd, mode, bits)) == NULL) {
+		close(fd);
+		return NULL;
+	}
+	return funopen(cookie, (*mode == 'r'?zread:NULL),
+		       (*mode == 'w'?zwrite:NULL), NULL, zclose);
+}
+
+void *
+z_open(fd, mode, bits)
 	int fd;
 	const char *mode;
 	int bits;
 {
-	struct s_zstate *zs;
+	register struct s_zstate *zs;
 
 	if ((mode[0] != 'r' && mode[0] != 'w') || mode[1] != '\0' ||
 	    bits < 0 || bits > BITS) {
@@ -714,84 +718,41 @@ zdopen(fd, mode, bits)
 	if ((zs = calloc(1, sizeof(struct s_zstate))) == NULL)
 		return (NULL);
 
-	maxbits = bits ? bits : BITS;	/* User settable max # bits/code. */
-	maxmaxcode = 1 << maxbits;	/* Should NEVER generate this code. */
-	hsize = HSIZE;			/* For dynamic table sizing. */
-	free_ent = 0;			/* First unused entry. */
-	block_compress = BLOCK_MASK;
-	clear_flg = 0;
-	ratio = 0;
-	checkpoint = CHECK_GAP;
-	in_count = 1;			/* Length of input. */
-	out_count = 0;			/* # of codes output (for debugging). */
-	state = S_START;
-	roffset = 0;
-	size = 0;
+	/* User settable max # bits/code. */
+	zs->zs_maxbits = bits ? bits : BITS;
+	/* Should NEVER generate this code. */
+	zs->zs_maxmaxcode = 1 << zs->zs_maxbits;
+	zs->zs_hsize = HSIZE;		/* For dynamic table sizing. */
+	zs->zs_free_ent = 0;		/* First unused entry. */
+	zs->zs_block_compress = BLOCK_MASK;
+	zs->zs_clear_flg = 0;
+	zs->zs_ratio = 0;
+	zs->zs_checkpoint = CHECK_GAP;
+	zs->zs_in_count = 1;		/* Length of input. */
+	zs->zs_out_count = 0;		/* # of codes output (for debugging).*/
+	zs->zs_state = S_START;
+	zs->zs_roffset = 0;
+	zs->zs_size = 0;
+	zs->zs_mode = mode[0];
 
-	/*
-	 * Layering compress on top of stdio in order to provide buffering,
-	 * and ensure that reads and write work with the data specified.
-	 */
-	if ((fp = fdopen(fd, mode)) == NULL) {
-		free(zs);
-		return (NULL);
-	}
-	switch (*mode) {
-	case 'r':
-		zmode = 'r';
-		return (funopen(zs, zread, NULL, NULL, zclose));
-	case 'w':
-		zmode = 'w';
-		return (funopen(zs, NULL, zwrite, NULL, zclose));
-	}
-	/* NOTREACHED */
+	zs->zs_fd = fd;
+	return zs;
 }
 
-FILE *
-zopen(fname, mode, bits)
-	const char *fname, *mode;
-	int bits;
+int
+z_check_header(fd, sb, ofn)
+	int fd;
+	struct stat *sb;
+	const char *ofn;
 {
-	struct s_zstate *zs;
+	int f;
+	u_char buf[sizeof(z_magic)];
+	off_t off = lseek(fd, 0, SEEK_CUR);
 
-	if ((mode[0] != 'r' && mode[0] != 'w') || mode[1] != '\0' ||
-	    bits < 0 || bits > BITS) {
-		errno = EINVAL;
-		return (NULL);
-	}
+	f = (read(fd, buf, sizeof(buf)) == sizeof(buf) &&
+	     !memcmp(buf, z_magic, sizeof(buf)));
 
-	if ((zs = calloc(1, sizeof(struct s_zstate))) == NULL)
-		return (NULL);
+	lseek (fd, off, SEEK_SET);
 
-	maxbits = bits ? bits : BITS;	/* User settable max # bits/code. */
-	maxmaxcode = 1 << maxbits;	/* Should NEVER generate this code. */
-	hsize = HSIZE;			/* For dynamic table sizing. */
-	free_ent = 0;			/* First unused entry. */
-	block_compress = BLOCK_MASK;
-	clear_flg = 0;
-	ratio = 0;
-	checkpoint = CHECK_GAP;
-	in_count = 1;			/* Length of input. */
-	out_count = 0;			/* # of codes output (for debugging). */
-	state = S_START;
-	roffset = 0;
-	size = 0;
-
-	/*
-	 * Layering compress on top of stdio in order to provide buffering,
-	 * and ensure that reads and write work with the data specified.
-	 */
-	if ((fp = fopen(fname, mode)) == NULL) {
-		free(zs);
-		return (NULL);
-	}
-	switch (*mode) {
-	case 'r':
-		zmode = 'r';
-		return (funopen(zs, zread, NULL, NULL, zclose));
-	case 'w':
-		zmode = 'w';
-		return (funopen(zs, NULL, zwrite, NULL, zclose));
-	}
-	/* NOTREACHED */
+	return f;
 }
