@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sandrv.c,v 1.9 2005/03/13 10:47:24 brad Exp $	*/
+/*	$OpenBSD: if_sandrv.c,v 1.10 2005/04/01 21:42:36 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -231,13 +231,12 @@ san_match(struct device *parent, void *match, void *aux)
 	u_int16_t		vendor_id = PCI_VENDOR(pa->pa_id);
 	u_int16_t		device_id = PCI_DEVICE(pa->pa_id);
 
-	if (!(vendor_id == SANGOMA_PCI_VENDOR &&
-	    device_id == SANGOMA_PCI_DEVICE) ||
-	    (vendor_id == SANGOMA_PCI_VENDOR_OLD &&
-	    device_id == SANGOMA_PCI_DEVICE)) {
-		return (0);
+	if ((vendor_id == SANGOMA_PCI_VENDOR ||
+	    vendor_id == SANGOMA_PCI_VENDOR_OLD) &&
+	    device_id == SANGOMA_PCI_DEVICE) {
+		return (1);
 	}
-	return (1);
+	return (0);
 }
 
 #define PCI_CBIO	0x10
@@ -337,7 +336,7 @@ sdladrv_init(void)
 	for (i=0; i<MAX_S514_CARDS; i++)
 		pci_slot_ar[i] = 0xFF;
 
-	memset(&sdla_adapter_cnt,0,sizeof(sdla_hw_type_cnt_t));
+	bzero(&sdla_adapter_cnt, sizeof(sdla_hw_type_cnt_t));
 
 	return (0);
 }
@@ -359,9 +358,8 @@ sdladrv_exit(void)
 	while (elm_hw) {
 		sdlahw_t	*tmp = elm_hw;
 		elm_hw = LIST_NEXT(elm_hw, next);
-		if (sdla_hw_unregister(tmp->hwcard, tmp->cpu_no) == -EBUSY){
-			return -EBUSY;
-		}
+		if (sdla_hw_unregister(tmp->hwcard, tmp->cpu_no) == EBUSY)
+			return EBUSY;
 	}
 	LIST_INIT(&sdlahw_head);
 
@@ -372,9 +370,8 @@ sdladrv_exit(void)
 		if (sdla_card_unregister(tmp->hw_type,
 					 tmp->slot_no,
 					 tmp->bus_no,
-					 tmp->ioport) == -EBUSY){
-			return -EBUSY;
-		}
+					 tmp->ioport) == EBUSY)
+			return EBUSY;
 	}
 	LIST_INIT(&sdlahw_card_head);
 
@@ -385,7 +382,7 @@ sdladrv_exit(void)
 		if (tmp->used){
 			log(LOG_INFO, "HW probe info is in used (%s)\n",
 					elm_hw_probe->hw_info);
-			return -EBUSY;
+			return EBUSY;
 		}
 		LIST_REMOVE(tmp, next);
 		free(tmp, M_DEVBUF);
@@ -400,10 +397,10 @@ sdla_save_hw_probe(sdlahw_t *hw, int port)
 	sdla_hw_probe_t *tmp_hw_probe;
 
 	tmp_hw_probe = malloc(sizeof(sdla_hw_probe_t), M_DEVBUF, M_NOWAIT);
-	if (!tmp_hw_probe)
+	if (tmp_hw_probe == NULL)
 		return;
 
-	memset(tmp_hw_probe,0,sizeof(sdla_hw_probe_t));
+	bzero(tmp_hw_probe, sizeof(sdla_hw_probe_t));
 
 	snprintf(tmp_hw_probe->hw_info, sizeof(tmp_hw_probe->hw_info),
 		"%s : SLOT=%d : BUS=%d : IRQ=%d : CPU=%c : PORT=%s",
@@ -492,21 +489,21 @@ sdla_pci_probe(int atype, struct pci_attach_args *pa)
 	irq = (u_int8_t)pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_INTLINE);
 
 	/* Map and establish the interrupt */
-	if (pci_intr_map(pa,&ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
-		return (-EINVAL);
+		return (EINVAL);
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	if (intrstr != NULL) {
+	if (intrstr != NULL)
 		printf(" %s\n", intrstr);
-	}
+
 	Sangoma_cards_no ++;
 reg_new_card:
 	Sangoma_PCI_cards_no ++;
 	hwcard = sdla_card_register(atype, slot, bus);
-	if (hwcard == NULL) {
-		return (-EINVAL);
-	}
+	if (hwcard == NULL)
+		return (EINVAL);
+
 	hwcard->memt	= pa->pa_memt;
 	hwcard->ih	= ih;
 	hwcard->pa	= *pa;
@@ -517,16 +514,17 @@ reg_new_card:
 	case A101_ADPTR_2TE1:
 		hw = sdla_aft_hw_select(hwcard, cpu, irq, pa);
 		sdla_adapter_cnt.AFT_adapters++;
-		if (atype == A101_ADPTR_2TE1) dual_cpu = 1;
+		if (atype == A101_ADPTR_2TE1)
+			dual_cpu = 1;
 		break;
 
 	}
 
 	if (hw == NULL)
-	    return (-EINVAL);
-	if (san_dev_attach(hw, hw->devname)) {
-		return (-EINVAL);
-	}
+	    return (EINVAL);
+	if (san_dev_attach(hw, hw->devname, sizeof(hw->devname)))
+		return (EINVAL);
+
 	hw->used++;
 
 	if (dual_cpu && cpu == SDLA_CPU_A) {
@@ -538,7 +536,7 @@ reg_new_card:
 }
 
 int
-sdla_intr_establish(void *phw, int(*intr_func)(void*), void* intr_arg)
+sdla_intr_establish(void *phw, int (*intr_func)(void*), void* intr_arg)
 {
 	sdlahw_t	*hw = (sdlahw_t*)phw;
 	sdlahw_card_t	*hwcard;
@@ -546,9 +544,9 @@ sdla_intr_establish(void *phw, int(*intr_func)(void*), void* intr_arg)
 	WAN_ASSERT(hw == NULL);
 	hwcard = hw->hwcard;
 	if (pci_intr_establish(hwcard->pa.pa_pc, hwcard->ih, IPL_NET,
-	    intr_func, intr_arg, "san") == NULL) {
-		return (-EINVAL);
-	}
+	    intr_func, intr_arg, "san") == NULL)
+		return (EINVAL);
+
 	return 0;
 }
 
@@ -559,7 +557,7 @@ sdla_intr_disestablish(void *phw)
 
 	log(LOG_INFO, "%d: Disestablish interrupt is not defined!\n",
 	    hw->devname);
-	return (-EINVAL);
+	return (EINVAL);
 }
 
 int
@@ -568,8 +566,8 @@ sdla_get_hw_devices(void)
 	return (Sangoma_devices_no);
 }
 
-void
-*sdla_get_hw_adptr_cnt(void)
+void*
+sdla_get_hw_adptr_cnt(void)
 {
 	return (&sdla_adapter_cnt);
 }
@@ -580,15 +578,14 @@ sdla_card_register(u_int16_t atype, int slot_no, int bus_no)
 	sdlahw_card_t	*new_hwcard, *last_hwcard;
 
 	new_hwcard = sdla_card_search(atype, slot_no, bus_no);
-	if (new_hwcard) {
+	if (new_hwcard)
 		return (new_hwcard);
-	}
-	new_hwcard = malloc(sizeof(sdlahw_card_t), M_DEVBUF, M_NOWAIT);
-	if (!new_hwcard) {
-		return (NULL);
-	}
 
-	memset(new_hwcard,0,sizeof(sdlahw_card_t));
+	new_hwcard = malloc(sizeof(sdlahw_card_t), M_DEVBUF, M_NOWAIT);
+	if (!new_hwcard)
+		return (NULL);
+
+	bzero(new_hwcard, sizeof(sdlahw_card_t));
 
 	new_hwcard->atype	= atype;
 	new_hwcard->slot_no	= slot_no;
@@ -599,15 +596,15 @@ sdla_card_register(u_int16_t atype, int slot_no, int bus_no)
 		sdladrv_init();
 	}
 	LIST_FOREACH(last_hwcard, &sdlahw_card_head, next) {
-		if (!LIST_NEXT(last_hwcard, next)) {
+		if (!LIST_NEXT(last_hwcard, next))
 			break;
-		}
 	}
-	if (last_hwcard) {
+
+	if (last_hwcard)
 		LIST_INSERT_AFTER(last_hwcard, new_hwcard, next);
-	} else {
+	else
 		LIST_INSERT_HEAD(&sdlahw_card_head, new_hwcard, next);
-	}
+
 	return (new_hwcard);
 }
 
@@ -630,13 +627,13 @@ sdla_card_unregister(u_int16_t atype, int slot_no, int bus_no, int ioport)
 		log(LOG_INFO,
 		"Error: Card didn't find %04X card (slot=%d, bus=%d)\n"
 				atype, slot_no, bus_no);
-		return -EFAULT;
+		return (EFAULT)
 	}
 	if (tmp_card->used){
 		log(LOG_INFO,
 		"Error: Card is still in used (slot=%d,bus=%d,used=%d)\n",
 				slot_no, bus_no, tmp_card->used);
-		return -EBUSY;
+		return (EBUSY);
 	}
 	LIST_REMOVE(tmp_card, next);
 	free(tmp_card, M_DEVBUF);
@@ -650,13 +647,12 @@ sdla_card_search(u_int16_t atype, int slot_no, int bus_no)
 	sdlahw_card_t*	tmp_card;
 
 	LIST_FOREACH(tmp_card, &sdlahw_card_head, next) {
-		if (tmp_card->atype != atype) {
+		if (tmp_card->atype != atype)
 			continue;
-		}
+
 		if (tmp_card->slot_no == slot_no &&
-		    tmp_card->bus_no == bus_no) {
+		    tmp_card->bus_no == bus_no)
 			return (tmp_card);
-		}
 	}
 	return (NULL);
 }
@@ -668,14 +664,14 @@ sdla_hw_register(sdlahw_card_t *card, int cpu_no, int irq, void *dev)
 
 	new_hw = sdla_hw_search(card->atype, card->slot_no,
 	    card->bus_no, cpu_no);
-	if (new_hw) {
+	if (new_hw)
 		return (new_hw);
-	}
+
 	new_hw = malloc(sizeof(sdlahw_t), M_DEVBUF, M_NOWAIT);
 	if (!new_hw)
 		return (NULL);
 
-	memset(new_hw,0,sizeof(sdlahw_t));
+	bzero(new_hw, sizeof(sdlahw_t));
 
 	new_hw->cpu_no	= cpu_no;
 	new_hw->irq	= irq;
@@ -687,15 +683,14 @@ sdla_hw_register(sdlahw_card_t *card, int cpu_no, int irq, void *dev)
 	card->used++;
 
 	LIST_FOREACH(last_hw, &sdlahw_head, next) {
-		if (!LIST_NEXT(last_hw, next)) {
+		if (!LIST_NEXT(last_hw, next))
 			break;
-		}
 	}
-	if (last_hw) {
+	if (last_hw)
 		LIST_INSERT_AFTER(last_hw, new_hw, next);
-	}else{
+	else
 		LIST_INSERT_HEAD(&sdlahw_head, new_hw, next);
-	}
+
 	return (new_hw);
 }
 
@@ -706,28 +701,28 @@ sdla_hw_unregister(sdlahw_card_t* hwcard, int cpu_no)
 	sdlahw_t*	tmp_hw;
 	int		i;
 
-	LIST_FOREACH(tmp_hw, &sdlahw_head, next){
-		if (tmp_hw->hwcard != hwcard){
+	LIST_FOREACH(tmp_hw, &sdlahw_head, next) {
+		if (tmp_hw->hwcard != hwcard)
 			continue;
-		}
-		if (tmp_hw->cpu_no == cpu_no){
+
+		if (tmp_hw->cpu_no == cpu_no)
 			break;
-		}
 	}
-	if (tmp_hw == NULL){
+
+	if (tmp_hw == NULL) {
 		log(LOG_INFO,
 		"Error: Failed to find device (slot=%d,bus=%d,cpu=%c)\n",
 		hwcard->slot_no, hwcard->bus_no, SDLA_GET_CPU(cpu_no));
-		return -EFAULT;
+		return (EFAULT);
 	}
-	if (tmp_hw->used){
+	if (tmp_hw->used) {
 		log(LOG_INFO,
 		"Error: Device is still in used (slot=%d,bus=%d,cpu=%c,%d)\n",
 				hwcard->slot_no,
 				hwcard->bus_no,
 				SDLA_GET_CPU(cpu_no),
 				hwcard->used);
-		return -EBUSY;
+		return (EBUSY);
 	}
 
 	tmp_hw->hwprobe = NULL;
@@ -735,7 +730,8 @@ sdla_hw_unregister(sdlahw_card_t* hwcard, int cpu_no)
 	hwcard->used--;			/* Decrement card usage */
 	LIST_REMOVE(tmp_hw, next);
 	free(tmp_hw, M_DEVBUF);
-	return 0;
+
+	return (0);
 }
 #endif
 
@@ -744,24 +740,27 @@ sdla_hw_search(u_int16_t atype, int slot_no, int bus_no, int cpu_no)
 {
 	sdlahw_t*	tmp_hw;
 
+	
 	LIST_FOREACH(tmp_hw, &sdlahw_head, next) {
 		if (tmp_hw->hwcard == NULL) {
 			log(LOG_INFO,
 			"Critical Error: sdla_cpu_search: line %d\n",
 					__LINE__);
+			// XXX REMOVE in LIST_FOREACH
 			LIST_REMOVE(tmp_hw, next);
 			continue;
 		}
 		if (tmp_hw->hwcard->atype != atype) {
+			// XXX why ???
 			LIST_REMOVE(tmp_hw, next);
 			continue;
 		}
 		if (tmp_hw->hwcard->slot_no == slot_no &&
 		    tmp_hw->hwcard->bus_no == bus_no &&
-		    tmp_hw->cpu_no == cpu_no) {
+		    tmp_hw->cpu_no == cpu_no)
 			return (tmp_hw);
-		}
 	}
+
 	return (NULL);
 }
 
@@ -792,7 +791,7 @@ sdla_setup(void *phw)
 	default:
 		log(LOG_INFO, "%s: Invalid card type %x\n",
 				hw->devname, hw->hwcard->type);
-		return (-EINVAL);
+		return (EINVAL);
 	}
 
 	hw->dpmsize = SDLA_WINDOWSIZE;
@@ -827,7 +826,7 @@ sdla_down(void *phw)
 		break;
 
 	default:
-		return (-EINVAL);
+		return (EINVAL);
 	}
 	return (0);
 }
@@ -946,7 +945,7 @@ sdla_peek(void *phw, unsigned long addr, void *buf, unsigned len)
 	WAN_ASSERT(hw->hwcard == NULL);
 	card = hw->hwcard;
 	if (addr + len > hw->memory)	/* verify arguments */
-		return (-EINVAL);
+		return (EINVAL);
 
 	switch (card->type) {
 	case SDLA_AFT:
@@ -956,7 +955,7 @@ sdla_peek(void *phw, unsigned long addr, void *buf, unsigned len)
 	default:
 		log(LOG_INFO, "%s: Invalid card type 0x%X\n",
 			__FUNCTION__,card->type);
-		err = -EINVAL;
+		err = (EINVAL);
 		break;
 	}
 	return (err);
@@ -1015,7 +1014,7 @@ sdla_poke(void *phw, unsigned long addr, void *buf, unsigned len)
 	WAN_ASSERT(hw->hwcard == NULL);
 	card = hw->hwcard;
 	if (addr + len > hw->memory) {	/* verify arguments */
-		return (-EINVAL);
+		return (EINVAL);
 	}
 
 	switch (card->type) {
@@ -1026,7 +1025,7 @@ sdla_poke(void *phw, unsigned long addr, void *buf, unsigned len)
 	default:
 		log(LOG_INFO, "%s: Invalid card type 0x%X\n",
 			__FUNCTION__,card->type);
-		err = -EINVAL;
+		err = (EINVAL);
 		break;
 	}
 	return (err);
@@ -1129,7 +1128,7 @@ sdla_detect_aft(sdlahw_t *hw)
 			printf("%s: No PCI memory allocated to card\n",
 					hw->devname);
 		}
-		return (-EINVAL);
+		return (EINVAL);
 	}
 #ifdef DEBUG
 	log(LOG_INFO,  "%s: AFT PCI memory at 0x%lX\n",
@@ -1138,7 +1137,7 @@ sdla_detect_aft(sdlahw_t *hw)
 	sdla_pci_read_config_byte(hw, PCI_INTLINE, (u_int8_t*)&hw->irq);
 	if (hw->irq == PCI_IRQ_NOT_ALLOCATED) {
 		printf("%s: IRQ not allocated to AFT adapter\n", hw->devname);
-		return (-EINVAL);
+		return (EINVAL);
 	}
 
 #ifdef DEBUG
@@ -1153,7 +1152,7 @@ sdla_detect_aft(sdlahw_t *hw)
 	    0, &hw->dpmbase);
 	if (!hw->dpmbase) {
 		printf("%s: couldn't map memory\n", hw->devname);
-		return (-EINVAL);
+		return (EINVAL);
 	}
 	hw->status |= SDLA_MEM_MAPPED;
 
@@ -1188,9 +1187,9 @@ sdla_detect(sdlahw_t *hw)
 		err = sdla_detect_aft(hw);
 		break;
 	}
-	if (err) {
+	if (err)
 		sdla_down(hw);
-	}
+
 	return (err);
 }
 
@@ -1233,18 +1232,18 @@ sdla_check_mismatch(void *phw, unsigned char media)
 			log(LOG_INFO, "%s: Error: Card type mismatch: "
 			    "User=T1/E1 Actual=%s\n", hw->devname,
 			    SDLA_ADPTR_DECODE(hwcard->atype));
-			return (-EIO);
+			return (EIO);
 		}
 		hwcard->atype = S5144_ADPTR_1_CPU_T1E1;
 
-	}else if (media == WAN_MEDIA_56K) {
+	} else if (media == WAN_MEDIA_56K) {
 		if (hwcard->atype != S5145_ADPTR_1_CPU_56K) {
 			log(LOG_INFO, "%s: Error: Card type mismatch: "
 			    "User=56K Actual=%s\n", hw->devname,
 			    SDLA_ADPTR_DECODE(hwcard->atype));
-			return (-EIO);
+			return (EIO);
 		}
-	}else{
+	} else {
 		if (hwcard->atype == S5145_ADPTR_1_CPU_56K ||
 		    hwcard->atype == S5144_ADPTR_1_CPU_T1E1 ||
 		    hwcard->atype == S5147_ADPTR_2_CPU_T1E1 ||
@@ -1252,9 +1251,10 @@ sdla_check_mismatch(void *phw, unsigned char media)
 			log(LOG_INFO, "%s: Error: Card type mismatch: "
 			    "User=S514(1/2/3) Actual=%s\n", hw->devname,
 			    SDLA_ADPTR_DECODE(hwcard->atype));
-			return (-EIO);
+			return (EIO);
 		}
 	}
+
 	return (0);
 }
 
@@ -1335,9 +1335,9 @@ sdla_get_hwprobe(void *phw, void **str)
 	WAN_ASSERT(hw == NULL);
 	SDLA_MAGIC(hw);
 
-	if (hw->hwprobe) {
+	if (hw->hwprobe)
 		*str = hw->hwprobe->hw_info;
-	}
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_te1.h,v 1.4 2004/12/07 06:10:24 mcbride Exp $	*/
+/*	$OpenBSD: if_san_te1.h,v 1.5 2005/04/01 21:42:36 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -946,7 +946,7 @@ typedef struct {
 
 
 EXTERN int sdla_te_defcfg(void *);
-EXTERN int sdla_te_setcfg(void *, struct ifmedia *);
+EXTERN int sdla_te_setcfg(struct ifnet *, struct ifmedia *);
 EXTERN void sdla_te_settimeslot(void *, unsigned long);
 EXTERN unsigned long sdla_te_gettimeslot(void *);
 EXTERN short sdla_te_config(void *);

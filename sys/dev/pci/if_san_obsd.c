@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.8 2005/03/02 15:39:47 claudio Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.9 2005/04/01 21:42:36 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -74,6 +74,8 @@
 #define	STATIC		static
 #endif
 
+#define PPP_HEADER_LEN 4		/* should be globaly defined by sppp */
+
 
 static sdla_t *wanpipe_generic_getcard(struct ifnet *);
 static int wanpipe_generic_ioctl(struct ifnet *, u_long, caddr_t);
@@ -105,16 +107,11 @@ wanpipe_generic_getcard(struct ifnet *ifp)
 }
 
 int
-wanpipe_generic_name(sdla_t *card, char *ifname)
+wanpipe_generic_name(sdla_t *card, char *ifname, int len)
 {
 	static int	ifunit = 0;
-#if 0
-	char		if_name[IFNAMSIZ+1];
 
-	snprintf(if_name, strlen(if_name), ifname_format, ifunit++);
-	bcopy(if_name, ifname, strlen(if_name));
-#endif
-	snprintf(ifname, IFNAMSIZ+1, san_ifname_format, ifunit++);
+	snprintf(ifname, len, san_ifname_format, ifunit++);
 	return (0);
 }
 
@@ -123,17 +120,20 @@ wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 {
 	wanpipe_common_t*	common = WAN_IFP_TO_COMMON(ifp);
 
-	if (ifname == NULL || strlen(ifname) > IFNAMSIZ) {
-		return (-EINVAL);
-	} else {
+	if (ifname == NULL || strlen(ifname) > IFNAMSIZ)
+		return (EINVAL);
+	else
 		bcopy(ifname, ifp->if_xname, strlen(ifname));
-	}
+
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_mtu = PP_MTU;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	common->protocol = IF_PROTO_CISCO;
+
 	((struct sppp *)ifp)->pp_flags |= PP_CISCO;
 	((struct sppp *)ifp)->pp_flags |= PP_KEEPALIVE;
+	((struct sppp *)ifp)->pp_framebytes = 3;
+
 	ifp->if_ioctl = wanpipe_generic_ioctl;	/* Will set from new_if() */
 	ifp->if_start = wanpipe_generic_start;
 	ifp->if_watchdog = wanpipe_generic_watchdog;
@@ -141,17 +141,19 @@ wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 	sppp_attach(ifp);
+
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_NULL, 4);
+	bpfattach(&ifp->if_bpf, ifp, DLT_PPP, PPP_HEADER_LEN);
 #endif /* NBPFILTER > 0 */
+
 	return (0);
 }
 
 void
 wanpipe_generic_unregister(struct ifnet *ifp)
 {
-	log(LOG_INFO, "%s: Unregister interface!\n",
-	    ifp->if_xname);
+	log(LOG_INFO, "%s: Unregister interface!\n", ifp->if_xname);
+
 	sppp_detach(ifp);
 	if_free_sadl(ifp);
 	if_detach(ifp);
@@ -163,16 +165,10 @@ wanpipe_generic_start(struct ifnet *ifp)
 	sdla_t		*card;
 	struct mbuf	*opkt;
 	int		 err = 0;
-#if NBPFILTER > 0
-#if 0
-	struct mbuf	m0;
-	u_int32_t	af = AF_INET;
-#endif
-#endif /* NBPFILTER > 0 */
 
-	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
+	if ((card = wanpipe_generic_getcard(ifp)) == NULL)
 		return;
-	}
+
 	while (1) {
 		if (sppp_isempty(ifp)) {
 			/* No more packets in send queue */
@@ -189,28 +185,19 @@ wanpipe_generic_start(struct ifnet *ifp)
 		}
 		/* report the packet to BPF if present and attached */
 #if NBPFILTER > 0
-		if (ifp->if_bpf) {
-#if 0
-			m0.m_next = opkt;
-			m0.m_len = 4;
-			m0.m_data = (char*)&af;
-			bpf_mtap(ifp->if_bpf, &m0);
-#endif
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, opkt);
-		}
 #endif /* NBPFILTER > 0 */
 
-		if (wan_mbuf_to_buffer(&opkt)){
+		if (wan_mbuf_to_buffer(&opkt)) {
 			m_freem(opkt);
 			break;
 		}
 
 		err = card->iface_send(opkt, ifp);
-		if (err) {
+		if (err)
 			break;
-		}
 	}
-	return;
 }
 
 
@@ -225,12 +212,19 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	unsigned long		ts_map;
 	int			err = 0, s;
 
-	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
-		return (-EINVAL);
-	}
+	if ((card = wanpipe_generic_getcard(ifp)) == NULL)
+		return (EINVAL);
+
 	s = splnet();
+
 	switch (cmd) {
 	case SIOCSIFADDR:
+		// XXX because sppp does an implicit setflags
+		log(LOG_INFO, "%s: Bringing interface up.\n",
+		    ifp->if_xname);
+		if (card->iface_up)
+			card->iface_up(ifp);
+		wanpipe_generic_start(ifp);
 		err = 1;
 		break;
 
@@ -239,15 +233,14 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (card->state != WAN_DISCONNECTED) {
 			log(LOG_INFO, "%s: Unable to change media type!\n",
 			    ifp->if_xname);
-			err = -EINVAL;
-			goto ioctl_out;
-		}
-		err = ifmedia_ioctl(ifp, ifr, &common->ifm, cmd);
-		break;
+			err = EINVAL;
+		} else
+			err = ifmedia_ioctl(ifp, ifr, &common->ifm, cmd);
+		goto ioctl_out;
 
 	case SIOCGIFMEDIA:
 		err = ifmedia_ioctl(ifp, ifr, &common->ifm, cmd);
-		break;
+		goto ioctl_out;
 
 	case SIOCSIFTIMESLOT:
 		if ((err = suser(p, p->p_acflag)) != 0)
@@ -255,21 +248,20 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (card->state != WAN_DISCONNECTED) {
 			log(LOG_INFO, "%s: Unable to change timeslot map!\n",
 			    ifp->if_xname);
-			err = -EINVAL;
+			err = EINVAL;
 			goto ioctl_out;
 		}
+
 		err = copyin(ifr->ifr_data, &ts_map, sizeof(ts_map));
-		if (err)
-			goto ioctl_out;
-		sdla_te_settimeslot(card, ts_map);
-		break;
+		if (err == 0)
+			sdla_te_settimeslot(card, ts_map);
+
+		goto ioctl_out;
 
 	case SIOCGIFTIMESLOT:
 		ts_map = sdla_te_gettimeslot(card);
 		err = copyout(ifr->ifr_data, &ts_map, sizeof(ts_map));
-		if (err)
-			goto ioctl_out;
-		break;
+		goto ioctl_out;
 
 	case SIOCSIFFLAGS:
 	    	/*
@@ -277,48 +269,45 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	     	** If down - disable communications.  IFF_UP is taken 
 		** care of before entering this function.
 	     	*/
+		err = 1;
 		if ((ifp->if_flags & IFF_UP) == 0) {
+			if ((ifp->if_flags & IFF_RUNNING) == 0)
+				break;
 			/* bring it down */
 			log(LOG_INFO, "%s: Bringing interface down.\n",
 			    ifp->if_xname);
-			if (!(((struct sppp *)ifp)->pp_flags & PP_CISCO)){
-				((struct sppp*)ifp)->pp_down((struct sppp*)ifp);
-			}
-			if (card->iface_down) {
+			if (card->iface_down)
 				card->iface_down(ifp);
-			}
-		}else{ /* bring it up */ 
+		} else { /* bring it up */ 
+			if (ifp->if_flags & IFF_RUNNING)
+				break;
 			log(LOG_INFO, "%s: Bringing interface up.\n",
 			    ifp->if_xname);
-			if (card->iface_up) {
+			if (card->iface_up)
 				card->iface_up(ifp);
-			}
-			if (!(((struct sppp *)ifp)->pp_flags & PP_CISCO)){
-				((struct sppp*)ifp)->pp_up((struct sppp*)ifp);
-			}
 			wanpipe_generic_start(ifp);
 		}
-		err = 1;
 		break;
 
 	case SIOC_WANPIPE_DEVICE:
-		err = copyin(ifr->ifr_data,
-				&ifsettings,
-				sizeof(struct if_settings));
+		err = copyin(ifr->ifr_data, &ifsettings,
+		    sizeof(struct if_settings));
+
 		if (err) {
 			log(LOG_INFO, "%s: Failed to copy from user space!\n",
 						card->devname);
 			goto ioctl_out;
 		}
+
 		switch (ifsettings.type) {
 		case IF_GET_PROTO:
 			ifsettings.type = common->protocol;
 			err = copyout(&ifsettings, ifr->ifr_data,
 			    sizeof(struct if_settings));
-			if (err) {
-				log(LOG_INFO, "%s: Failed to copy to uspace!\n",
+			if (err)
+				log(LOG_INFO,
+				    "%s: Failed to copy to uspace!\n",
 				    card->devname);
-			}
 			break;
 
 		case IF_PROTO_CISCO:
@@ -334,14 +323,14 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				goto ioctl_out;
 			err = wp_lite_set_te1_cfg(ifp, (struct ifreq*)data);
 			break;
+
 		default:
-			if (card->iface_ioctl) {
+			if (card->iface_ioctl)
 				err = card->iface_ioctl(ifp, cmd,
 				    (struct ifreq*)data);
-			}
 			break;
 		}
-		break;
+		goto ioctl_out;
 
 	default:
 		if (card->iface_ioctl) {
@@ -351,9 +340,9 @@ wanpipe_generic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	}
 
-	if (err) {
+	if (err)
 		err = sppp_ioctl(ifp, cmd, data);
-	}
+
 ioctl_out:
 	splx(s);
 	return (err);
@@ -382,10 +371,6 @@ wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 {
 	sdla_t		*card;
 #if NBPFILTER > 0
-#if 0
-	struct mbuf	m0;
-	u_int32_t	af = AF_INET;
-#endif
 #endif /* NBPFILTER > 0 */
 
 	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
@@ -393,15 +378,8 @@ wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 	}
 	m->m_pkthdr.rcvif = ifp;
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
-#if 0
-		m0.m_next = m;
-		m0.m_len = 4;
-		m0.m_data = (char*)&af;
-		bpf_mtap(ifp->if_bpf, &m0);
-#endif
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-	}
 #endif /* NBPFILTER > 0 */
 	ifp->if_ipackets ++;
 	ifp->if_ibytes += m->m_len;
@@ -409,7 +387,8 @@ wanpipe_generic_input(struct ifnet *ifp, struct mbuf *m)
 	return (0);
 }
 
-int wp_lite_set_proto(struct ifnet *ifp, struct ifreq *ifr)
+int
+wp_lite_set_proto(struct ifnet *ifp, struct ifreq *ifr)
 {
 	wanpipe_common_t	*common;
 	struct if_settings	*ifsettings;
@@ -418,50 +397,55 @@ int wp_lite_set_proto(struct ifnet *ifp, struct ifreq *ifr)
 	if ((common = ifp->if_softc) == NULL) {
 		log(LOG_INFO, "%s: Private structure is null!\n",
 				ifp->if_xname);
-		return (-EINVAL);
+		return (EINVAL);
 	}
-	ifsettings = (struct if_settings*)ifr->ifr_data;
+
+	ifsettings = (struct if_settings*) ifr->ifr_data;
+	
 	switch (ifsettings->type) {
 	case IF_PROTO_CISCO:
+		if (common->protocol == IF_PROTO_CISCO)
+			return 0;
 		((struct sppp *)ifp)->pp_flags |= PP_CISCO;
 		((struct sppp *)ifp)->pp_flags |= PP_KEEPALIVE;
 		common->protocol = IF_PROTO_CISCO;
 		break;
 	case IF_PROTO_PPP:
+		if (common->protocol == IF_PROTO_PPP)
+			return 0;
 		((struct sppp *)ifp)->pp_flags &= ~PP_CISCO;
-		((struct sppp *)ifp)->pp_flags &= ~PP_KEEPALIVE;
+		((struct sppp *)ifp)->pp_flags |= PP_KEEPALIVE;
 		common->protocol = IF_PROTO_PPP;
 		break;
 	}
+
 	err = sppp_ioctl(ifp, SIOCSIFFLAGS, ifr);
 	return (err);
 }
 
-int wp_lite_set_te1_cfg(struct ifnet *ifp, struct ifreq *ifr)
+int
+wp_lite_set_te1_cfg(struct ifnet *ifp, struct ifreq *ifr)
 {
 	sdla_t			*card;
 	struct if_settings	*ifsettings;
 	sdla_te_cfg_t		te_cfg;
 	int			 err = 0;
 
-	if ((card = wanpipe_generic_getcard(ifp)) == NULL) {
-		return (-EINVAL);
-	}
-	ifsettings = (struct if_settings*)ifr->ifr_data;
-	err = copyin(ifsettings->ifs_te1,
-			&te_cfg,
-			sizeof(sdla_te_cfg_t));
+	if ((card = wanpipe_generic_getcard(ifp)) == NULL)
+		return (EINVAL);
 
-	if (ifsettings->flags & SANCFG_CLOCK_FLAG){
+	ifsettings = (struct if_settings*)ifr->ifr_data;
+	err = copyin(ifsettings->ifs_te1, &te_cfg, sizeof(sdla_te_cfg_t));
+
+	if (ifsettings->flags & SANCFG_CLOCK_FLAG)
 		card->fe_te.te_cfg.te_clock = te_cfg.te_clock;
-	}
+
 	switch (ifsettings->type) {
 	case IF_IFACE_T1:
-		if (ifsettings->flags & SANCFG_LBO_FLAG){
+		if (ifsettings->flags & SANCFG_LBO_FLAG)
 			card->fe_te.te_cfg.lbo = te_cfg.lbo;
-		}
 		break;
 	}
+
 	return (err);
 }
-

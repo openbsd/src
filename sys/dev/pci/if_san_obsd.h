@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.h,v 1.4 2004/12/07 06:10:24 mcbride Exp $	*/
+/*	$OpenBSD: if_san_obsd.h,v 1.5 2005/04/01 21:42:36 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -92,7 +92,7 @@ typedef struct {
 # if defined(_KERNEL)
 struct ifnet	*wanpipe_generic_alloc (sdla_t *);
 void		 wanpipe_generic_free (struct ifnet *);
-int		 wanpipe_generic_name (sdla_t *, char *);
+int		 wanpipe_generic_name (sdla_t *, char *, int);
 int		 wanpipe_generic_register(sdla_t *, struct ifnet *, char *);
 void		 wanpipe_generic_unregister(struct ifnet *);
 int		 wanpipe_generic_open(struct ifnet *);
