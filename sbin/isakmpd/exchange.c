@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.109 2005/03/04 13:33:32 markus Exp $	 */
+/* $OpenBSD: exchange.c,v 1.110 2005/03/05 12:25:12 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -190,8 +190,11 @@ exchange_script(struct exchange *exchange)
 		return script_transaction;
 #endif
 	default:
-		if (exchange->type >= ISAKMP_EXCH_DOI_MIN &&
-		    exchange->type <= ISAKMP_EXCH_DOI_MAX)
+		if (exchange->type >= ISAKMP_EXCH_DOI_MIN 
+#if 0 /* always true; silence GCC3 warning */
+		    && exchange->type <= ISAKMP_EXCH_DOI_MAX
+#endif
+		    )
 			return exchange->doi->exchange_script(exchange->type);
 	}
 	return 0;

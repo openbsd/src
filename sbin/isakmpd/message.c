@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.96 2005/02/27 13:12:12 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.97 2005/03/05 12:25:12 ho Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1473,7 +1473,9 @@ message_recv(struct message *msg)
 	 * DOI-specific exchange types are definitely wrong.
          */
 	if (exch_type >= ISAKMP_EXCH_DOI_MIN
+#if 0 /* always true; silence GCC3 warning */
 	    && exch_type <= ISAKMP_EXCH_DOI_MAX
+#endif
 	    && msg->exchange->doi->validate_exchange(exch_type)) {
 		log_print("message_recv: invalid DOI exchange type %d",
 		    exch_type);
