@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.20 2003/01/05 00:27:55 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.21 2003/01/06 20:47:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.20 2003/01/05 00:27:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.21 2003/01/06 20:47:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,9 @@ static const char rcsid[] = "$OpenBSD: whois.c,v 1.20 2003/01/05 00:27:55 miller
 #define	PNICHOST	"whois.apnic.net"
 #define	RUNICHOST	"whois.ripn.net"
 #define	MNICHOST	"whois.ra.net"
+#define NNICHOST	"whois.networksolutions.com"
 #define LNICHOST	"whois.lacnic.net"
 #define SNICHOST	"whois.6bone.net"
-#define VNICHOST	"whois.networksolutions.com"
 #define	QNICHOST_TAIL	".whois-servers.net"
 #define	WHOIS_PORT	43
 
@@ -276,7 +276,7 @@ choose_server(const char *name, const char *country)
 		qhead = country;
 	else if ((qhead = strrchr(name, '.')) == NULL) {
 		if (*name == '!')
-			return (VNICHOST);
+			return (NNICHOST);
 		else if ((strncasecmp(name, "COCO-", 5) == 0 ||
 		    strncasecmp(name, "COHO-", 5) == 0) &&
 		    strtol(name + 5, &ep, 10) > 0 && *ep == '\0')
