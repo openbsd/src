@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.30 2005/02/10 05:28:58 itojun Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.31 2005/02/10 14:25:08 itojun Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -73,9 +73,6 @@ void	ip6protopr(u_long, char *);
 #endif
 void	tcp_stats(u_long, char *);
 void	udp_stats(u_long, char *);
-#ifdef DCCP
-void	dccp_stats(u_long, char *);
-#endif
 void	ip_stats(u_long, char *);
 void	icmp_stats(u_long, char *);
 void	igmp_stats(u_long, char *);
