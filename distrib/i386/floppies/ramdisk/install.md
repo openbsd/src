@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.md,v 1.4 1997/04/22 01:05:18 deraadt Exp $
+#	$OpenBSD: install.md,v 1.5 1997/04/22 10:34:41 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -37,7 +37,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=2.0
+VERSION=2.1
 FSTAB=${FSTABDIR}/fstab
 
 # XXX turn into a loop which understands ! for a subshell.  Also,
@@ -50,44 +50,41 @@ getresp() {
 	fi
 }
 
-echo	"Welcome to the OpenBSD ${VERSION} installation program."
-echo	""
-echo	"This program is will put OpenBSD on your hard disk.  It is not"
-echo	"painless, but it could be worse.  You'll be asked several questions,"
-echo	"and it would probably be useful to have your disk's hardware"
-echo	"manual, the installation notes, and a calculator handy."
-echo	""
-echo	"In particular, you will need to know some reasonably detailed"
-echo	"information about your disk's geometry, because there is currently"
-echo	"no way this this program can figure that information out."
-echo	""
-echo	"As with anything which modifies your hard drive's contents, this"
-echo	"program can cause SIGNIFICANT data loss, and you are advised"
-echo	"to make sure your hard drive is backed up before beginning the"
-echo	"installation process."
-echo	""
-echo	"Default answers are displyed in brackets after the questions."
-echo	"You can hit Control-C at any time to quit, but if you do so at a"
-echo	"prompt, you may have to hit return.  Also, quitting in the middle of"
-echo	"installation may leave your system in an inconsistent state."
-echo	""
+echo "Welcome to the OpenBSD ${VERSION} installation program."
+echo ""
+echo "This program is will put OpenBSD on your hard disk.  It is not painless"
+echo "but it could be worse.  You'll be asked several questions, and it would"
+echo "probably be useful to have your disk's hardware manual, the installation"
+echo "notes, and a calculator handy."
+echo ""
+echo "In particular, you will need to know some reasonably detailed information"
+echo "about your disk's geometry, because this program does not know everything."
+echo ""
+echo "As with anything which modifies your hard drive's contents, this program"
+echo "can cause SIGNIFICANT data loss, and you are advised to make sure your"
+echo "hard drive is backed up before beginning the installation process."
+echo ""
+echo "Default answers are displyed in brackets after the questions.  You can"
+echo "hit Control-C at any time to quit.  Also, quitting towards the latter
+echo "part of the installation may leave your system in an inconsistent state."
+echo ""
 echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
 y*|Y*)
-	echo	"Cool!  Let's get to it..."
+	echo "Cool!  Let's get to it..."
 	;;
 *)
-	echo	"OK, reset the machine at any time."
+	echo "OK, simply reset the machine at any time."
 	exit
 	;;
 esac
 
-echo	""
-echo	"To do the installation, you'll need to provide some information about"
-echo	"your disk."
+echo ""
+echo "To do the installation, you'll need to provide some information about"
+echo "your disk."
 
-echo	"OpenBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
+echo "OpenBSD can be installed on ST506, ESDI, IDE, or SCSI disks."
 echo -n	"What kind of disk will you be installing on? [SCSI] "
 getresp "SCSI"
 case "$resp" in
@@ -119,45 +116,42 @@ esac
 # find out what units are possible for that disk, and query the user.
 driveunits=`ls /dev/${drivetype}?a | sed -e 's,/dev/\(...\)a,\1,g'`
 if [ "X${driveunits}" = "X" ]; then
-	echo	"FATAL ERROR:"
-	echo	"No devices for disks of type '${drivetype}'."
-	echo	"This is probably a bug in the install disks."
-	echo	"Exiting install program."
+	echo "FATAL ERROR:"
+	echo "No devices for disks of type '${drivetype}'."
+	echo "This is probably a bug in the install disks."
+	echo "Exiting install program."
 	exit
 fi
 prefdrive=${drivetype}0
 
-echo	"The following ${drivetype}-type disks are supported by this"
-echo	"installation procedure:"
-echo	"${driveunits}"
-echo	"Note that they may not exist in _your_ machine; the list of"
-echo	"disks in your machine was printed when the system was booting."
+echo "The following ${drivetype}-type disks are supported by this"
+echo "installation procedure:"
+echo "${driveunits}"
+echo "Note that they may not exist in _your_ machine; the list of"
+echo "disks in your machine was printed when the system was booting."
 while [ "X${drivename}" = "X" ]; do
 	echo -n	"Which disk would like to install on? [${prefdrive}] "
 	getresp ${prefdrive}
 	otherdrives=`echo "${driveunits}" | sed -e s,${resp},,`
 	if [ "X${driveunits}" = "X${otherdrives}" ]; then
-		echo	"\"${resp}\" is an invalid drive name.  Valid choices"
-		echo	"are: "${driveunits}
+		echo "\"${resp}\" is an invalid drive name.  Valid choices"
+		echo "are: "${driveunits}
 	else
 		drivename=${resp}
 	fi
 done
 
-echo	""
-echo	"Using disk ${drivename}."
+echo "Using disk ${drivename}."
 echo -n	"What kind of disk is it? (one word please) [my${drivetype}] "
 getresp "my${drivetype}"
 labelname=$resp
 
-echo	""
-echo	"You will now need to provide some information about your disk's"
-echo	"geometry.  This should either be in the User's Manual for your disk,"
-echo	"or you should have written down what OpenBSD printed when booting."
-echo	"(Note that he geometry that's printed at boot time is preferred.)"
-echo	""
-echo    "You may choose to view the initial boot messages for your system"
-echo    "again right now if you like."
+echo ""
+echo "You will now need to provide some information about your disk's geometry."
+echo "This should either be in the User's Manual for your disk, or you should"
+echo "have written down what OpenBSD printed when booting.  Note that the"
+echo "geometry that's printed at boot time is preferred.)  You may choose to"
+echo "view the initial boot messages for your system again right now if you like."
 echo -n "View the boot messages again? [n] "
 getresp "n"
 case "$resp" in
@@ -165,12 +159,11 @@ y*|Y*)
 	less -rsS /kern/msgbuf
 	;;
 *)
-	echo	""
+	echo ""
 	;;
 esac
 
-echo	"You will now enter the disk geometry information"
-echo	""
+echo "You will now enter the disk geometry information:"
 
 bytes_per_sect=`cat /kern/msgbuf |\
     sed -n -e /^${drivename}:/p -e /^${drivename}:/q |\
@@ -204,11 +197,11 @@ cylindersize=`expr $sects_per_track \* $tracks_per_cyl`
 cylbytes=`expr $cylindersize \* $bytes_per_sect`
 disksize=`expr $cylindersize \* $cyls_per_disk`
 
-echo	""
-echo	"Your disk has a total of $disksize $bytes_per_sect byte sectors,"
-echo	"arranged as $cyls_per_disk cylinders which contain $cylindersize "
-echo	"sectors ($cylbytes bytes) each."
-echo	"You can specify partition sizes in cylinders ('c') or sectors ('s')."
+echo ""
+echo "Your disk has a total of $disksize $bytes_per_sect byte sectors,"
+echo "arranged as $cyls_per_disk cylinders which contain $cylindersize "
+echo "sectors ($cylbytes bytes) each."
+echo "You can specify partition sizes in cylinders ('c') or sectors ('s')."
 while [ "X${sizemult}" = "X" ]; do
 	echo -n	"What units would you like to use? [cylinders] "
 	getresp cylinders
@@ -224,7 +217,7 @@ while [ "X${sizemult}" = "X" ]; do
 		maxdisk=$disksize;
 		;;
 	*)
-		echo	"Enter cylinders ('c') or sectors ('s')."
+		echo "Enter cylinders ('c') or sectors ('s')."
 		;;
 	esac
 done
@@ -252,16 +245,16 @@ if [ "$sect_fwd" = "sf:" ]; then
 	badspacecyl=`expr $badspacecyl + $cylindersize - 1`
 	badspacecyl=`expr $badspacecyl / $cylindersize`
 	badspacesec=`expr $badspacecyl \* $cylindersize`
-	echo	""
+	echo ""
 	echo -n "Using $badspacesec sectors ($badspacecyl cylinders) for the "
-	echo	"bad144 bad block table"
+	echo "bad144 bad block table"
 fi
 
 sects_left=`expr $partition_sects - $badspacesec`
 units_left=`expr $sects_left / $sizemult`
-echo	""
-echo	"There are $units_left $sizeunit left to allocate."
-echo	""
+echo ""
+echo "There are $units_left $sizeunit left to allocate."
+echo ""
 root=0
 while [ $root -eq 0 ]; do
 	echo -n "Root partition size (in $sizeunit)? "
@@ -271,7 +264,7 @@ while [ $root -eq 0 ]; do
 		total=$resp
 		if [ $total -gt $units_left ]; then
 			echo -n	"Root size is greater than remaining "
-			echo	"free space on disk."
+			echo "free space on disk."
 		else
 			root=$resp
 		fi
@@ -281,18 +274,18 @@ done
 root_offset=$part_offset
 part_used=`expr $root + $badspacesec / $sizemult`
 units_left=`expr $partition - $part_used`
-echo	""
+echo ""
 
 swap=0
 while [ $swap -eq 0 ]; do 
-	echo	"$units_left $sizeunit remaining in OpenBSD portion of disk."
+	echo "$units_left $sizeunit remaining in OpenBSD portion of disk."
 	echo -n	"Swap partition size (in $sizeunit)? "
 	getresp
 	case $resp in
 	[1-9]*)
 		if [ $swap -gt $units_left ]; then
 			echo -n	"Swap size is greater than remaining "
-			echo	"free space on disk."
+			echo "free space on disk."
 		else
 			swap=$resp
 		fi
@@ -301,38 +294,37 @@ while [ $swap -eq 0 ]; do
 done
 swap_offset=`expr $root_offset + $root`
 part_used=`expr $part_used + $swap`
-echo	""
+echo ""
 
 fragsize=1024
 blocksize=8192
 cat /etc/disktab.preinstall > $DT
-echo	"" >> $DT
-echo	"$labelname|OpenBSD installation generated:\\" >> $DT
-echo	"	:dt=${type}:ty=winchester:\\" >> $DT
+echo "" >> $DT
+echo "$labelname|OpenBSD installation generated:\\" >> $DT
+echo "	:dt=${type}:ty=winchester:\\" >> $DT
 echo -n	"	:nc#${cyls_per_disk}:ns#${sects_per_track}" >> $DT
-echo	":nt#${tracks_per_cyl}:\\" >> $DT
-echo	"	:se#${bytes_per_sect}:${sect_fwd}\\" >> $DT
+echo ":nt#${tracks_per_cyl}:\\" >> $DT
+echo "	:se#${bytes_per_sect}:${sect_fwd}\\" >> $DT
 _size=`expr $root \* $sizemult`
 _offset=`expr $root_offset \* $sizemult`
 echo -n	"	:pa#${_size}:oa#${_offset}" >> $DT
-echo	":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
+echo ":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
 _size=`expr $swap \* $sizemult`
 _offset=`expr $swap_offset \* $sizemult`
-echo	"	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
-echo	"	:pc#${disksize}:oc#0:\\" >> $DT
+echo "	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
+echo "	:pc#${disksize}:oc#0:\\" >> $DT
 
-echo	"You will now have to enter information about any other partitions"
-echo	"to be created in the OpenBSD portion of the disk.  This process will"
-echo	"be complete when you've filled up all remaining space in the OpenBSD"
-echo	"portion of the disk."
+echo "You now must enter information about any other partitions to be created in"
+echo "the OpenBSD portion of the disk.  This process will be complete when you've"
+echo "filled up all remaining space in the OpenBSD portion of the disk."
 
 while [ $part_used -lt $partition ]; do
 	part_size=0
 	units_left=`expr $partition - $part_used`
 	while [ $part_size -eq 0 ]; do
-		echo	""
+		echo ""
 		echo -n	"$units_left $sizeunit remaining in OpenBSD portion of "
-		echo	"the disk"
+		echo "the disk"
 		echo -n "Next partition size (in $sizeunit) [$units_left] ? "
 		getresp "$units_left"
 		case $resp in
@@ -443,19 +435,18 @@ done
 echo "" >> $DT
 sync
 
-echo	""
-echo	"THIS IS YOUR LAST CHANCE!!!"
+echo ""
+echo "THIS IS YOUR LAST CHANCE!!!"
 echo -n	"Are you SURE you want OpenBSD installed on your hard drive? (yes/no) "
 answer=""
 while [ "$answer" = "" ]; do
 	getresp
 	case $resp in
 	yes|YES)
-		echo	""
 		answer=yes
 		;;
 	no|NO)
-		echo	"OK, then.  Turn the machine off."
+		echo "OK, then.  Simply reset your machine at any time."
 		exit
 		;;
 	*)
@@ -467,7 +458,7 @@ done
 umount -f /mnt > /dev/null 2>&1
 umount -f /mnt2 > /dev/null 2>&1
 
-echo	""
+echo ""
 echo "Labeling disk $drivename..."
 # XXX add fdisk support
 $DONTDOIT disklabel -w -B $drivename $labelname
@@ -477,83 +468,83 @@ if [ "$sect_fwd" = "sf:" ]; then
 	$DONTDOIT bad144 $drivename 0
 fi
 
-echo	"Initializing root filesystem, and mounting..."
+echo "Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
 if [ "$ename" != "" ]; then
-	echo	"Initializing $ename filesystem, and mounting..."
+	echo "Initializing $ename filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}e $name
 	$DONTDOIT mkdir -p /mnt/$ename
 	$DONTDOIT mount -v /dev/${drivename}e /mnt/$ename
 fi
 if [ "$fname" != "" ]; then
-	echo	"Initializing $fname filesystem, and mounting..."
+	echo "Initializing $fname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}f $name
 	$DONTDOIT mkdir -p /mnt/$fname
 	$DONTDOIT mount -v /dev/${drivename}f /mnt/$fname
 fi
 if [ "$gname" != "" ]; then
-	echo	"Initializing $gname filesystem, and mounting..."
+	echo "Initializing $gname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}g $name
 	$DONTDOIT mkdir -p /mnt/$gname
 	$DONTDOIT mount -v /dev/${drivename}g /mnt/$gname
 fi
 if [ "$hname" != "" ]; then
-	echo	"Initializing $hname filesystem, and mounting..."
+	echo "Initializing $hname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}h $name
 	$DONTDOIT mkdir -p /mnt/$hname
 	$DONTDOIT mount -v /dev/${drivename}h /mnt/$hname
 fi
 if [ "$iname" != "" ]; then
-	echo	"Initializing $iname filesystem, and mounting..."
+	echo "Initializing $iname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}i $name
 	$DONTDOIT mkdir -p /mnt/$iname
 	$DONTDOIT mount -v /dev/${drivename}i /mnt/$iname
 fi
 if [ "$jname" != "" ]; then
-	echo	"Initializing $jname filesystem, and mounting..."
+	echo "Initializing $jname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}j $name
 	$DONTDOIT mkdir -p /mnt/$jname
 	$DONTDOIT mount -v /dev/${drivename}j /mnt/$jname
 fi
 if [ "$kname" != "" ]; then
-	echo	"Initializing $kname filesystem, and mounting..."
+	echo "Initializing $kname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}k $name
 	$DONTDOIT mkdir -p /mnt/$kname
 	$DONTDOIT mount -v /dev/${drivename}k /mnt/$kname
 fi
 if [ "$lname" != "" ]; then
-	echo	"Initializing $lname filesystem, and mounting..."
+	echo "Initializing $lname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}l $name
 	$DONTDOIT mkdir -p /mnt/$lname
 	$DONTDOIT mount -v /dev/${drivename}l /mnt/$lname
 fi
 if [ "$mname" != "" ]; then
-	echo	"Initializing $mname filesystem, and mounting..."
+	echo "Initializing $mname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}m $name
 	$DONTDOIT mkdir -p /mnt/$mname
 	$DONTDOIT mount -v /dev/${drivename}m /mnt/$mname
 fi
 if [ "$nname" != "" ]; then
-	echo	"Initializing $nname filesystem, and mounting..."
+	echo "Initializing $nname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}n $name
 	$DONTDOIT mkdir -p /mnt/$nname
 	$DONTDOIT mount -v /dev/${drivename}n /mnt/$nname
 fi
 if [ "$oname" != "" ]; then
-	echo	"Initializing $oname filesystem, and mounting..."
+	echo "Initializing $oname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}o $name
 	$DONTDOIT mkdir -p /mnt/$oname
 	$DONTDOIT mount -v /dev/${drivename}o /mnt/$oname
 fi
 if [ "$pname" != "" ]; then
-	echo	"Initializing $pname filesystem, and mounting..."
+	echo "Initializing $pname filesystem, and mounting..."
 	$DONTDOIT newfs /dev/r${drivename}p $name
 	$DONTDOIT mkdir -p /mnt/$pname
 	$DONTDOIT mount -v /dev/${drivename}p /mnt/$pname
 fi
 
-echo	"Populating filesystems with bootstrapping binaries and config files"
+echo "Populating filesystems with bootstrapping binaries and config files"
 $DONTDOIT tar -cXf - . | (cd /mnt ; tar -xpf - )
 
 echo -n	"Creating an fstab..."
@@ -597,11 +588,11 @@ fi
 
 sync
 
-echo	"OK!  The preliminary work of setting up your disk is now complete."
-echo	"Currently the hard drive's root filesystem is mounted on /mnt"
+echo "OK!  The preliminary work of setting up your disk is now complete."
+echo "Currently the hard drive's root filesystem is mounted on /mnt"
 
 echo 	""
-echo	"How would you like to install the distribution and kernels?"
+echo "How would you like to install the distribution and kernels?"
 echo -n	"ftp, http, msdos, ext2fs, tape, nfs, cd9660, local? [ftp] "
 getresp "ftp"
 method=${resp}
@@ -682,3 +673,8 @@ for i in bin.tar.gz dev.tar.gz etc.tar.gz sbin.tar.gz usr.bin.tar.gz \
 	$DONTDOIT eval ${fetch}/${i} | tar xvfzp -
 done
 cd /
+
+Configure
+echo ""
+echo "Your hard drive is still mounted.  Be sure to halt or reboot the"
+echo "machine instead of simply turning it off."
