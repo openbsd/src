@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.15 2001/11/08 19:53:28 mickey Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.16 2001/11/18 20:43:35 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -571,6 +571,19 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+	    },
+	},
+
+	/*
+	 * VScom PCI-200H uses a 14.7456 Mhz crystal instead of the standard
+	 * 1.8432Mhz.
+	 */
+	{   /* "VScom PCI-200H with 2 x 16950 UARTS" */
+	    {	PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI200H,	0, 0	},
+	    {	0xffff, 0xffff,					    	0, 0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
 	    },
 	},
 
