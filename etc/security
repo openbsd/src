@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
-#	$Id: security,v 1.1.1.1 1995/10/18 08:37:57 deraadt Exp $
+#	$Id: security,v 1.2 1995/12/18 16:56:37 deraadt Exp $
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -26,7 +26,11 @@ awk -F: '{
 	}
 	if (NF != 10)
 		printf("Line %d has the wrong number of fields.\n", NR);
-	if ($1 !~ /^[A-Za-z0-9]*$/)
+	if ($1 ~ /^[+-].*$/)
+		next;
+	if ($1 == "")
+		printf("Line %d has an empty login field.\n",NR);
+	else if ($1 !~ /^[A-Za-z0-9][A-Za-z0-9_-]*$/)
 		printf("Login %s has non-alphanumeric characters.\n", $1);
 	if (length($1) > 8)
 		printf("Login %s has more than 8 characters.\n", $1);
@@ -52,7 +56,7 @@ if [ -s $OUTPUT ] ; then
 	column $OUTPUT
 fi
 
-awk -F: '{ print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
+awk -F: '$1 != "toor" { print $1 " " $3 }' $MP | sort -n +1 | tee $TMP1 |
 uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 if [ -s $TMP2 ] ; then
 	printf "\n$MP has duplicate user id's.\n"
@@ -64,6 +68,10 @@ fi
 # Backup the master password file; a special case, the normal backup
 # mechanisms also print out file differences and we don't want to do
 # that because this file has encrypted passwords in it.
+if [ ! -d /var/backups ] ; then
+	mkdir /var/backups
+	chmod 755 /var/backups
+fi
 CUR=/var/backups/`basename $MP`.current
 BACK=/var/backups/`basename $MP`.backup
 if [ -s $CUR ] ; then
@@ -86,6 +94,8 @@ awk -F: '{
 		printf("Line %d is a blank line.\n", NR);
 		next;
 	}
+	if ($1 ~ /^[+-].*$/)
+		next;
 	if (NF != 4)
 		printf("Line %d has the wrong number of fields.\n", NR);
 	if ($1 !~ /^[A-za-z0-9]*$/)
@@ -214,44 +224,59 @@ if egrep 'uudecode|decode' /etc/aliases; then
 fi
 
 # Files that should not have + signs.
-list="/etc/hosts.equiv /etc/hosts.lpd"
+list="/etc/hosts.equiv /etc/shosts.equiv /etc/hosts.lpd"
 for f in $list ; do
-	if egrep '\+' $f > /dev/null ; then
-		printf "\nPlus sign in $f file.\n"
+	if [ -f $f ] ; then
+		awk '{
+			if ($0 ~ /^+@.*$/ )
+				next;
+			if ($0 ~ /^+.*$/ )
+				printf("\nPlus sign in %s file.\n", FILENAME);
+		}' $f
 	fi
 done
 
-# Check for special users with .rhosts files.  Only root and toor should
-# have a .rhosts files.  Also, .rhosts files should not plus signs.
-awk -F: '$1 != "root" && $1 != "toor" && \
+# Check for special users with .rhosts/.shosts files.  Only root and
+# toor should have .rhosts/.shosts files.  Also, .rhosts/.shosts files
+# should not have plus signs.
+awk -F: '$1 != "root" && $1 != "toor" && $1 !~ /^[+-].*$/ && \
 	($3 < 100 || $1 == "ftp" || $1 == "uucp") \
 		{ print $1 " " $6 }' /etc/passwd |
 while read uid homedir; do
-	if [ -f ${homedir}/.rhosts ] ; then
-		rhost=`ls -ldgT ${homedir}/.rhosts`
-		printf "$uid: $rhost\n"
-	fi
+	for j in .rhosts .shosts; do
+		if [ -f ${homedir}/$j ] ; then
+			rhost=`ls -ldgT ${homedir}/$j`
+			printf "$uid: $rhost\n"
+		fi
+	done
 done > $OUTPUT
 if [ -s $OUTPUT ] ; then
-	printf "\nChecking for special users with .rhosts files.\n"
+	printf "\nChecking for special users with .rhosts/.shosts files.\n"
 	cat $OUTPUT
 fi
 
 awk -F: '{ print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
-	if [ -f ${homedir}/.rhosts ] && \
-	    egrep '\+' ${homedir}/.rhosts > /dev/null ; then
-		printf "$uid: + in .rhosts file.\n"
-	fi
+	for j in .rhosts .shosts; do
+		if [ -f ${homedir}/$j ] ; then
+			awk '{
+				if ($0 ~ /^+@.*$/ )
+					next;
+				if ($0 ~ /^+.*$/ )
+					printf("%s has + sign in it.\n",
+					    FILENAME);
+			}' ${homedir}/$j
+		fi
+	done
 done > $OUTPUT
 if [ -s $OUTPUT ] ; then
-	printf "\nChecking .rhosts files syntax.\n"
+	printf "\nChecking .rhosts/.shosts files syntax.\n"
 	cat $OUTPUT
 fi
 
 # Check home directories.  Directories should not be owned by someone else
 # or writeable.
-awk -F: '{ print $1 " " $6 }' /etc/passwd | \
+awk -F: '{ if ( $1 !~ /^[+-].*$/ ) print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	if [ -d ${homedir}/ ] ; then
 		file=`ls -ldgT ${homedir}`
@@ -270,7 +295,7 @@ if [ -s $OUTPUT ] ; then
 fi
 
 # Files that should not be owned by someone else or readable.
-list=".netrc .rhosts"
+list=".netrc .rhosts .shosts"
 awk -F: '{ print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
@@ -282,8 +307,6 @@ while read uid homedir; do
 done |
 awk '$1 != $5 && $5 != "root" \
 	{ print "user " $1 " " $2 " file is owned by " $5 }
-     $3 ~ /^-...r/ \
-	{ print "user " $1 " " $2 " file is group readable" }
      $3 ~ /^-......r/ \
 	{ print "user " $1 " " $2 " file is other readable" }
      $3 ~ /^-....w/ \
@@ -325,8 +348,9 @@ if [ -s $OUTPUT ] ; then
 	cat $OUTPUT
 fi
 
-# File systems should not be globally exported.
-awk '{
+if [ -f /etc/exports ]; then
+    # File systems should not be globally exported.
+    awk '{
 	readonly = 0;
 	for (i = 2; i <= NF; ++i) {
 		if ($i ~ /-ro/)
@@ -338,23 +362,25 @@ awk '{
 		print "File system " $1 " globally exported, read-only."
 	else
 		print "File system " $1 " globally exported, read-write."
-}' < /etc/exports > $OUTPUT
-if [ -s $OUTPUT ] ; then
+    }' < /etc/exports > $OUTPUT
+    if [ -s $OUTPUT ] ; then
 	printf "\nChecking for globally exported file systems.\n"
 	cat $OUTPUT
+    fi
 fi
 
 # Display any changes in setuid files and devices.
-printf "\nChecking setuid files and devices:\n"
+pending="\nChecking setuid files and devices:\n"
 (find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
 		-o -fstype procfs \) -a -prune -o \
-    \( -perm -u+s -o -perm -g+s -o ! -type d -a ! -type f -a ! -type l -a \
-       ! -type s \) | \
+	-type f -a \( -perm -u+s -o -perm -g+s \) -print -o \
+	! -type d -a ! -type f -a ! -type l -a ! -type s -print | \
 sort | sed -e 's/^/ls -ldgT /' | sh > $LIST) 2> $OUTPUT
 
 # Display any errors that occurred during system file walk.
 if [ -s $OUTPUT ] ; then
-	printf "Setuid/device find errors:\n"
+	printf "${pending}Setuid/device find errors:\n"
+	pending=
 	cat $OUTPUT
 	printf "\n"
 fi
@@ -364,7 +390,8 @@ egrep -v '^[bc]' $LIST > $TMP1
 if [ -s $TMP1 ] ; then
 	# Check to make sure uudecode isn't setuid.
 	if grep -w uudecode $TMP1 > /dev/null ; then
-		printf "\nUudecode is setuid.\n"
+		printf "${pending}\nUudecode is setuid.\n"
+		pending=
 	fi
 
 	CUR=/var/backups/setuid.current
@@ -377,14 +404,16 @@ if [ -s $TMP1 ] ; then
 			> $TMP2
 			join -110 -210 -v2 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
-				printf "Setuid additions:\n"
+				printf "${pending}Setuid additions:\n"
+				pending=
 				tee -a $TMP2 < $OUTPUT
 				printf "\n"
 			fi
 
 			join -110 -210 -v1 $CUR $TMP1 > $OUTPUT
 			if [ -s $OUTPUT ] ; then
-				printf "Setuid deletions:\n"
+				printf "${pending}Setuid deletions:\n"
+				pending=
 				tee -a $TMP2 < $OUTPUT
 				printf "\n"
 			fi
@@ -392,7 +421,8 @@ if [ -s $TMP1 ] ; then
 			sort +9 $TMP2 $CUR $TMP1 | \
 			    sed -e 's/[	 ][	 ]*/ /g' | uniq -u > $OUTPUT
 			if [ -s $OUTPUT ] ; then
-				printf "Setuid changes:\n"
+				printf "${pending}Setuid changes:\n"
+				pending=
 				column -t $OUTPUT
 				printf "\n"
 			fi
@@ -401,7 +431,8 @@ if [ -s $TMP1 ] ; then
 			cp $TMP1 $CUR
 		fi
 	else
-		printf "Setuid additions:\n"
+		printf "${pending}Setuid additions:\n"
+		pending=
 		column -t $TMP1
 		printf "\n"
 		cp $TMP1 $CUR
@@ -411,7 +442,7 @@ fi
 # Check for block and character disk devices that are readable or writeable
 # or not owned by root.operator.
 >$TMP1
-DISKLIST="dk fd hd hk hp jb kra ra rb rd rl rx rz sd up wd"
+DISKLIST="dk fd hd hk hp jb kra ra rb rd rl rx xd rz sd up wd vnd ccd"
 for i in $DISKLIST; do
 	egrep "^b.*/${i}[0-9][0-9]*[a-h]$"  $LIST >> $TMP1
 	egrep "^c.*/r${i}[0-9][0-9]*[a-h]$"  $LIST >> $TMP1
@@ -481,14 +512,15 @@ fi
 # Create the mtree tree specifications using:
 #
 #	mtree -cx -pDIR -kcksum,gid,mode,nlink,size,link,time,uid > DIR.secure
-#	chown root.wheel DIR.SECURE
-#	chmod 600 DIR.SECURE
+#	chown root.wheel DIR.secure
+#	chmod 600 DIR.secure
 #
 # Note, this is not complete protection against Trojan horsed binaries, as
 # the hacker can modify the tree specification to match the replaced binary.
 # For details on really protecting yourself against modified binaries, see
 # the mtree(8) manual page.
-if cd /etc/mtree; then
+if [ -d /etc/mtree ]; then
+	cd /etc/mtree
 	mtree -e -p / -f /etc/mtree/special > $OUTPUT
 	if [ -s $OUTPUT ] ; then
 		printf "\nChecking special files and directories.\n"
@@ -497,6 +529,7 @@ if cd /etc/mtree; then
 
 	> $OUTPUT
 	for file in *.secure; do
+		[ $file = '*.secure' ] && continue
 		tree=`sed -n -e '3s/.* //p' -e 3q $file`
 		mtree -f $file -p $tree > $TMP1
 		if [ -s $TMP1 ]; then
@@ -508,6 +541,8 @@ if cd /etc/mtree; then
 		printf "\nChecking system binaries:\n"
 		cat $OUTPUT
 	fi
+else
+	echo /etc/mtree is missing
 fi
 
 # List of files that get backed up and checked for any modifications.  Each
