@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.10 2000/05/17 12:09:00 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.11 2000/05/31 18:38:30 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -50,7 +50,7 @@ sub write_uniques
     local $_;
 
     my ($out, $tempname);
-    ($out, $tempname) = tempfile() or die "$0: Can't open temporary file";
+    ($out, $tempname) = tempfile('/tmp/makewhatis.XXXXXXXXXX') or die "$0: Can't open temporary file";
 
     my @sorted = sort @$list;
     my $last;
@@ -69,7 +69,8 @@ sub write_uniques
 	    chmod 0444, $f;
 	    chown 0, (getgrnam 'bin')[2], $f;
 	} else {
-	    print STDERR "$0: Can't create $f ($!), temporary result is in $tempname\n";
+	    print STDERR "$0: Can't create $f ($!)\n";
+	    unlink($tempname);
 	    exit 1;
 	}
     }
