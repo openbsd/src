@@ -1,8 +1,8 @@
 # 	$NetBSD: GENERIC,v 1.19 1995/10/08 11:45:39 pk Exp $
 
 machine		sparc
-options		"SUN4", "SUN4C"
-#options	MMU_3L
+options		SUN4, SUN4C, SUN4M
+options		MMU_3L
 #options	DDB,DEBUG,DIAGNOSTIC
 
 # obsolete timezone spec
@@ -16,7 +16,7 @@ options		KTRACE			# system call tracing support
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RASTERCONSOLE		# fast rasterop console
 options		SYSVMSG,SYSVSEM,SYSVSHM
-options		"COMPAT_09", "COMPAT_10"
+options		COMPAT_09, COMPAT_10
 
 # Filesystem options
 options		FFS
@@ -130,6 +130,12 @@ cgthree0 at sbus? slot ? offset ?
 cgthree* at sbus? slot ? offset ?
 cgsix0 at sbus? slot ? offset ?
 cgsix* at sbus? slot ? offset ?
+
+pfour0	at obio0 addr 0xfb000000
+pfour0	at obio0 addr 0x0b000000                        # 4/100
+cgfour0	at pfour0
+cgeight0 at pfour0
+cgsix0	at pfour0
 
 scsibus* at esp?
 scsibus* at si?
