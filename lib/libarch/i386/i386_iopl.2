@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_iopl.2,v 1.9 2000/04/15 11:46:01 aaron Exp $
+.\"	$OpenBSD: i386_iopl.2,v 1.10 2003/02/25 08:26:38 jmc Exp $
 .\"	$NetBSD: i386_iopl.2,v 1.3 1996/02/27 22:57:25 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,10 @@ The caller was not the superuser.
 .Xr i386_get_ioperm 2 ,
 .Xr i386_set_ioperm 2
 .Sh REFERENCES
-i386 Microprocessor Programmer's Reference Manual, Intel
+.Rs
+.%A Intel
+.%T i386 Microprocessor Programmer's Reference Manual
+.Re
 .Sh WARNING
 You can really hose your machine if you enable user-level I/O and
 write to hardware ports without care.

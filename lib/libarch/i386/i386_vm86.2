@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_vm86.2,v 1.7 2001/08/06 10:42:25 mpech Exp $
+.\"	$OpenBSD: i386_vm86.2,v 1.8 2003/02/25 08:26:38 jmc Exp $
 .\"	$NetBSD: i386_vm86.2,v 1.1 1996/02/21 00:21:52 jtk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,20 +67,20 @@ and
 .Ar vmcp->int21_byuser
 for fast virtual interrupt handling.
 If the
-.Ar n th
+.Ar n Ns Li th
 bit is clear in the first of
 these arrays, then the kernel may directly emulate the real-mode x86 INT
 .Ar n
 instruction handling.
 If the
-.Ar n
-th bit is set, then the process is
+.Ar n Ns Li th
+bit is set, then the process is
 delivered a signal when an INT instruction is executed.
 .Pp
 Since MS-DOS puts many DOS functions onto interrupt 21, it is handled
 specially:  the
-.Ar k
-th bit in the
+.Ar k Ns Li th
+bit in the
 .Ar vmcp->int21_byuser
 array is checked when INT
 .Ar 21
@@ -105,4 +105,7 @@ The state at
 was not readable to the user process.
 .El
 .Sh REFERENCES
-i386 Microprocessor Programmer's Reference Manual, Intel
+.Rs
+.%A Intel
+.%T i386 Microprocessor Programmer's Reference Manual
+.Re

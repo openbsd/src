@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.25 2002/08/11 16:50:26 aaron Exp $
+.\"	$OpenBSD: intro.2,v 1.26 2003/02/25 08:26:38 jmc Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -168,7 +168,7 @@ or
 function).
 .It Er 23 ENFILE Em "Too many open files in system" .
 Maximum number of file descriptors allowable on the system
-has been reached and a requests for an open cannot be satisfied
+has been reached and a request for an open cannot be satisfied
 until at least one has been closed.
 .It Er 24 EMFILE Em "Too many open files" .
 (As released, the limit on the number of
@@ -204,7 +204,7 @@ An
 function was issued on a socket, pipe or
 .Tn FIFO .
 .It Er 30 EROFS Em "Read-only file system" .
-An attempt was made to modify a file or directory was made
+An attempt was made to modify a file or create a directory
 on a file system that was read-only at the time.
 .It Er 31 EMLINK Em "Too many links" .
 Maximum allowable hard links to a single file has been exceeded (limit
@@ -304,7 +304,7 @@ or
 request on a connected socket specified a destination
 when already connected.
 .It Er 57 ENOTCONN Em "Socket is not connected" .
-An request to send or receive data was disallowed because
+A request to send or receive data was disallowed because
 the socket was not connected and (when sending on a datagram socket)
 no address was supplied.
 .It Er 58 ESHUTDOWN Em "Cannot send after socket shutdown" .
@@ -399,7 +399,7 @@ An authentication ticket must be obtained before the given
 .Tn NFS
 filesystem may be mounted.
 .It Er 82 EIPSEC Em "IPsec processing failure" .
-IPsec subsystem error,
+IPsec subsystem error.
 Not used in
 .Ox .
 .It Er 83 ENOATTR Em "Attribute not found" .

@@ -1,4 +1,4 @@
-.\" $OpenBSD: inb.2,v 1.1 2002/07/12 22:30:25 deraadt Exp $
+.\" $OpenBSD: inb.2,v 1.2 2003/02/25 08:26:38 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Matthieu Herrb
 .\" All rights reserved.
@@ -94,7 +94,7 @@ The
 functions write data to the specified I/O port. 
 .Pp
 .Fn ioperm
-enables the access to to the specified  port numbers if 
+enables access to the specified port numbers if 
 .Fa on
 is 
 .Dv TRUE
@@ -119,7 +119,7 @@ functions read data from device memory previously mapped by
 .Pp
 The 
 .Fn write*
-functions write datz to the device memory previously mapped by
+functions write data to the device memory previously mapped by
 .Fn map_memory .
 .\" .Sh EXAMPLES
 .\" TBW

@@ -55,17 +55,17 @@ LDT.
 will set a list of i386 descriptors for the current process in its
 LDT.
 Both routines accept a starting selector number
-.Fa start_sel
-, an array of memory that
+.Fa start_sel ,
+an array of memory that
 will contain the descriptors to be set or returned
-.Fa descs
-, and the number of entries to set or return
+.Fa descs ,
+and the number of entries to set or return
 .Fa num_sels .
 .Pp
 The argument
 .Fa descs
-can be either segment_descriptor or gate_descriptor and are defined in
-.Fd <i386/segments.h> .
+can be either segment_descriptor or gate_descriptor, as defined in
+.Ao Pa i386/segments.h Ac .
 These structures are defined by the architecture
 as disjoint bit-fields, so care must be taken in constructing them.
 .Sh RETURN VALUES
@@ -94,6 +94,9 @@ The caller attempted to use a descriptor that would
 circumvent protection or cause a failure.
 .El
 .Sh REFERENCES
-i386 Microprocessor Programmer's Reference Manual, Intel
+.Rs
+.%A Intel
+.%T i386 Microprocessor Programmer's Reference Manual
+.Re
 .Sh WARNING
 You can really hose your process using this.
