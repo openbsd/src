@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.17 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: mii.4,v 1.18 2004/10/11 07:13:04 brad Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,30 +44,31 @@
 .Nd IEEE 802.3 Media Independent Interface
 .Sh SYNOPSIS
 .Cd "acphy* at mii?"
-.Cd "amphy* at mii? phy ?"
-.Cd "bmtphy* at mii? phy ?"
-.Cd "brgphy* at mii? phy ?"
-.Cd "dcphy* at mii? phy ?"
-.Cd "eephy* at mii? phy ?"
-.Cd "exphy* at mii? phy ?"
-.Cd "icsphy* at mii? phy ?"
-.Cd "inphy* at mii? phy ?"
-.Cd "iophy* at mii? phy ?"
-.Cd "lxtphy* at mii? phy ?"
-.Cd "mtdphy* at mii? phy ?"
-.Cd "nsgphy* at mii? phy ?"
-.Cd "nsphy* at mii? phy ?"
-.Cd "nsphyter* at mii? phy ?"
-.Cd "qsphy* at mii? phy ?"
-.Cd "rgephy* at mii? phy ?"
-.Cd "rlphy* at mii? phy ?"
-.Cd "sqphy* at mii? phy ?"
-.Cd "tlphy* at mii? phy ?"
-.Cd "tqphy* at mii? phy ?"
-.Cd "txphy* at mii? phy ?"
-.Cd "ukphy* at mii? phy ?"
-.Cd "urlphy* at mii? phy ?"
-.Cd "xmphy* at mii? phy ?"
+.Cd "amphy* at mii?"
+.Cd "bmtphy* at mii?"
+.Cd "brgphy* at mii?"
+.Cd "dcphy* at mii?"
+.Cd "eephy* at mii?"
+.Cd "exphy* at mii?"
+.Cd "gentbi* at mii?"
+.Cd "icsphy* at mii?"
+.Cd "inphy* at mii?"
+.Cd "iophy* at mii?"
+.Cd "lxtphy* at mii?"
+.Cd "mtdphy* at mii?"
+.Cd "nsgphy* at mii?"
+.Cd "nsphy* at mii?"
+.Cd "nsphyter* at mii?"
+.Cd "qsphy* at mii?"
+.Cd "rgephy* at mii?"
+.Cd "rlphy* at mii?"
+.Cd "sqphy* at mii?"
+.Cd "tlphy* at mii?"
+.Cd "tqphy* at mii?"
+.Cd "txphy* at mii?"
+.Cd "ukphy* at mii?"
+.Cd "urlphy* at mii?"
+.Cd "xmphy* at mii?"
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
 connecting MACs (network controllers) to PHYs (physical media
@@ -107,6 +108,7 @@ program.
 .Xr dcphy 4 ,
 .Xr eephy 4 ,
 .Xr exphy 4 ,
+.Xr gentbi 4 ,
 .Xr icsphy 4 ,
 .Xr ifmedia 4 ,
 .Xr inphy 4 ,
