@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.5 1998/08/08 20:56:28 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.6 1999/05/19 03:17:15 alex Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -86,7 +86,8 @@ ino_t curinum;
 static void 
 usage()
 {
-	errx(1, "usage: %s [-d] -f <fsname>", __progname);
+	fprintf(stderr, "usage: %s [-d] -f <fsname>\n", __progname);
+	exit(1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.7 1997/06/17 21:03:40 kstailey Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.8 1999/05/19 03:17:15 alex Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -52,7 +52,9 @@ char buffer[_PASSWORD_LEN];
 
 void usage()
 {
-    errx(1, "usage: %s [-k] [-b rounds] [-m] [-s salt] [string]", progname);
+    fprintf(stderr, "usage: %s [-k] [-b rounds] [-m] [-s salt] [string]\n",
+	progname);
+    exit(1);
 }
 
 char *trim(line)
