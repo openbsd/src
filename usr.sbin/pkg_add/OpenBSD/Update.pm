@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.39 2004/12/12 11:26:16 espie Exp $
+# $OpenBSD: Update.pm,v 1.40 2004/12/15 01:07:10 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -361,7 +361,6 @@ sub walk_depends_closure
 			push(@todo, $pkg2);
 			print "\t$pkg2\n" if $state->{beverbose};
 			$done->{$pkg2} = 1;
-			next if $state->{not};
 			$write->add($pkg2);
 			my $l = OpenBSD::Requiring->new($pkg2);
 			if (!$l->list()) {

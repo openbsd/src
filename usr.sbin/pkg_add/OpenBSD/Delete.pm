@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.15 2004/12/12 11:26:16 espie Exp $
+# $OpenBSD: Delete.pm,v 1.16 2004/12/15 01:07:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -135,7 +135,7 @@ sub delete_plist
 		    if $state->{very_verbose} or $state->{not};
 		local $@;
 		try { 
-			OpenBSD::RequiredBy->new($name)->delete($pkgname) unless $state->{not}; 
+			OpenBSD::RequiredBy->new($name)->delete($pkgname);
 		} catchall {
 			print STDERR "$_\n";
 		};

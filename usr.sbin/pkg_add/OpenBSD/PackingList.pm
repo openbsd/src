@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.41 2004/11/18 21:46:07 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.42 2004/12/15 01:07:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -366,8 +366,10 @@ sub to_installation
 
 	require OpenBSD::PackageInfo;
 
-	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname()));
 	$self->to_cache();
+	return if $main::not;
+
+	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname()));
 }
 
 

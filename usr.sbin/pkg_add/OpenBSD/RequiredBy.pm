@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.6 2004/12/14 12:22:47 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.7 2004/12/15 01:07:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -50,6 +50,8 @@ sub fill_entries($)
 sub synch
 {
 	my $self = shift;
+	return if $main::not;
+
 	if (!unlink $self->{filename}) {
 		if ($self->{nonempty}) {
 		    die "Can't erase $self->{filename}: $!";

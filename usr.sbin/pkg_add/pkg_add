@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.141 2004/12/13 21:28:08 espie Exp $
+# $OpenBSD: pkg_add,v 1.142 2004/12/15 01:07:10 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -36,6 +36,7 @@ use OpenBSD::SharedLibs;
 our %forced = ();
 
 package main;
+our $not;
 
 sub fill_conflict_lists
 {
@@ -396,15 +397,15 @@ sub really_add($$)
 		if (!$state->{replace}) {
 			$plist->forget();
 		}
-		if (defined $handle->{solved_dependencies}) {
-			require OpenBSD::RequiredBy;
+	}
+	if (defined $handle->{solved_dependencies}) {
+		require OpenBSD::RequiredBy;
 
-			my $r = OpenBSD::Requiring->new($pkgname);
+		my $r = OpenBSD::Requiring->new($pkgname);
 
-			for my $dep (keys %{$handle->{solved_dependencies}}) {
-				OpenBSD::RequiredBy->new($dep)->add($pkgname);
-				$r->add($dep);
-			}
+		for my $dep (keys %{$handle->{solved_dependencies}}) {
+			OpenBSD::RequiredBy->new($dep)->add($pkgname);
+			$r->add($dep);
 		}
 	}
 	add_installed($pkgname);
@@ -421,8 +422,8 @@ sub really_add($$)
 		my $d = OpenBSD::RequiredBy->new($pkgname);
 		for my $dep (@{$plist->{replacing}->{wantlist}}) {
 			print "\t$dep\n" if $state->{beverbose};
-			$d->add($dep) unless $state->{not};
-			OpenBSD::Update::adjust_dependency($dep, $plist->{replacing}->pkgname(), $pkgname) unless $state->{not};
+			$d->add($dep);
+			OpenBSD::Update::adjust_dependency($dep, $plist->{replacing}->pkgname(), $pkgname);
 		}
 	}
 }
@@ -666,6 +667,7 @@ if (defined $state->{destdir}) {
 
 $state->{conflict_list} = {};
 $state->{not} = $opt_n;
+$not = $opt_n;
 $state->{quick} = $opt_q;
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
