@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.11 1997/08/05 05:09:33 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.12 1997/11/04 07:40:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.11 1997/08/05 05:09:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.12 1997/11/04 07:40:52 deraadt Exp $";
 #endif
 
 #include "yp.h"
@@ -452,6 +452,10 @@ char *argv[];
 			_msgout("cannot create udp service.");
 			exit(1);
 		}
+		if (transp->xp_port >= IPPORT_RESERVED) {
+			_msgout("cannot allocate udp privileged port.");
+			exit(1);
+		}
 		if (!_rpcpmstart)
 			proto = IPPROTO_UDP;
 		if (allowv1) {
@@ -473,6 +477,10 @@ char *argv[];
 			transp = svctcp_create(sock, 0, 0);
 		if (transp == NULL) {
 			_msgout("cannot create tcp service.");
+			exit(1);
+		}
+		if (transp->xp_port >= IPPORT_RESERVED) {
+			_msgout("cannot allocate tcp privileged port.");
 			exit(1);
 		}
 		if (!_rpcpmstart)
