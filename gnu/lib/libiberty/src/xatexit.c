@@ -27,7 +27,7 @@ failure.  If you use @code{xatexit} to register functions, you must use
 
 #include <stdio.h>
 
-#ifdef ANSI_PROTOTYPES
+#ifdef __STDC__
 #include <stddef.h>
 #else
 #define size_t unsigned long

@@ -15,7 +15,7 @@ returned.
 */
 
 #include <ansidecl.h>
-#ifdef ANSI_PROTOTYPES
+#ifdef __STDC__
 #include <stddef.h>
 #else
 #define size_t unsigned long

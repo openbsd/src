@@ -15,13 +15,13 @@ nonstandard but common function @code{_doprnt}.
 
 */
 
-#include <ansidecl.h>
-#ifdef ANSI_PROTOTYPES
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 #include <stdio.h>
+#include <ansidecl.h>
 #undef vprintf
 int
 vprintf (format, ap)

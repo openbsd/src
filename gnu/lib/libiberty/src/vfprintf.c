@@ -3,8 +3,7 @@
    Copyright (C) 1998 Free Software Foundation, Inc.
  */
 
-#include "ansidecl.h"
-#ifdef ANSI_PROTOTYPES
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>

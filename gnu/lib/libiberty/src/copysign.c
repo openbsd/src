@@ -131,9 +131,7 @@ typedef union
 
 #if defined(__IEEE_BIG_ENDIAN) || defined(__IEEE_LITTLE_ENDIAN)
 
-double
-copysign (x, y)
-     double x, y;
+double DEFUN(copysign, (x, y), double x AND double y)
 {
   __ieee_double_shape_type a,b;
   b.value = y;  
@@ -144,9 +142,7 @@ copysign (x, y)
 
 #else
 
-double
-copysign (x, y)
-     double x, y;
+double DEFUN(copysign, (x, y), double x AND double y)
 {
   if ((x < 0 && y > 0) || (x > 0 && y < 0))
     return -x;
