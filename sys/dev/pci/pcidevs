@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.767 2004/09/25 18:40:27 grange Exp $
+$OpenBSD: pcidevs,v 1.768 2004/09/25 18:43:33 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1479,6 +1479,7 @@ product LAVA QUATTRO_AB2	0x0120	Dual Serial
 product LAVA QUATTRO_CD2	0x0121	Dual Serial
 product LAVA OCTOPUS550_0	0x0180	Quad Serial
 product LAVA OCTOPUS550_1	0x0181	Quad Serial
+product LAVA LAVAPORT_2		0x0200	Serial
 product LAVA LAVAPORT_0		0x0201	Serial
 product LAVA LAVAPORT_1		0x0202	Serial
 product LAVA 650		0x0600	Serial
