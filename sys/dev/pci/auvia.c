@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.17 2002/05/30 15:13:20 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.18 2002/05/31 20:28:38 mickey Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -665,7 +665,9 @@ auvia_getdev(void *addr, struct audio_device *retp)
 	struct auvia_softc *sc = addr;
 
 	if (retp) {
-		strncpy(retp->name, "VIA VT82C686A", sizeof(retp->name));
+		strncpy(retp->name,
+		    sc->sc_flags & AUVIA_FLAGS_VT8233? "VIA VT8233" :
+		    "VIA VT82C686A", sizeof(retp->name));
 		strncpy(retp->version, sc->sc_revision, sizeof(retp->version));
 		strncpy(retp->config, "auvia", sizeof(retp->config));
 	}
