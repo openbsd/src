@@ -1963,12 +1963,6 @@
 ./usr/share/sendmail/siteconfig/uucp.old.arpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbarpa.m4
 ./usr/share/sendmail/siteconfig/uucp.ucbvax.m4
-./usr/share/skel
-./usr/share/skel/dot.cshrc
-./usr/share/skel/dot.login
-./usr/share/skel/dot.mailrc
-./usr/share/skel/dot.profile
-./usr/share/skel/dot.rhosts
 ./usr/share/smtpd
 ./usr/share/smtpd/example.antispam
 ./usr/share/smtpd/example.features

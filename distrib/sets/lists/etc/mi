@@ -97,6 +97,12 @@
 ./etc/security
 ./etc/services
 ./etc/shells
+./etc/skel
+./etc/skel/.cshrc
+./etc/skel/.login
+./etc/skel/.mailrc
+./etc/skel/.profile
+./etc/skel/.rhosts
 ./etc/skeykeys
 ./etc/sliphome/slip.hosts
 ./etc/sliphome/slip.login
@@ -123,7 +129,10 @@
 ./root/.login
 ./root/.profile
 ./var/at/at.deny
+./var/crash/minfree
+./var/cron/log
 ./var/cron/tabs/root
+./var/db/locate.database
 ./var/games/rogue.scores
 ./var/games/tetris.scores
 ./var/log/authlog
@@ -472,6 +481,3 @@
 ./var/www/icons/uuencoded.gif
 ./var/www/icons/world1.gif
 ./var/www/icons/world2.gif
-./var/crash/minfree
-./var/cron/log
-./var/db/locate.database
