@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.4 2004/03/08 22:31:13 miod Exp $
+dnl	$OpenBSD: hardware,v 1.5 2004/03/15 22:01:03 grange Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based designs.
 
 OpenBSD does not currently support multiple processors (SMP), but will
@@ -19,30 +19,32 @@ Supported hardware {:-include-:}:
 		YENTA-compatible PCI-CardBus bridges
 	Entropy Sources
 		Interrupt latency collection from many devices
-	PCI IDE Controllers
-		Acard ATP850, ATP860
+	PCI IDE and Serial ATA Controllers
+		Acard ATP850U, ATP860, ATP860-A, ATP865-A, ATP865-R
 		Acer Labs M5229
-		Advanced Micro Devices 756, 766
-		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, PCI0649 and PCI0680
-		Contaq Microsytems/Cypress CY82C693
+		Advanced Micro Devices AMD-756, AMD-766, AMD-768, AMD-8111
+		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, PCI0649, PCI0680
+		Contaq Microsystems/Cypress CY82C693
 		HighPoint HPT366, HPT370, HPT372, HPT302, HPT371, HPT374
 		    (RAID mode is not supported)
 		Intel PIIX, PIIX3, and PIIX4
 		Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH4-M/ICH5/ICH5R)
+		ITE IT8212F (RAID mode is not supported)
 		National Semiconductor PC87415
-		NVIDIA nForce/nForce2
+		National Semiconductor SCx200 (found on SC1100 SoC)
+		NVIDIA nForce/nForce2 (SATA controllers are not supported)
 		Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268,
-		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276, PDC20277
-		    (RAID mode is not supported)
-		ServerWorks OSB4, CSB5, CSB6
-		Silicon Integrated Systems 5513 (5597/5598)
-		VIA Technologies VT82C586A/B, VT82C596A/B, VT82C686A/B,
-		    VT8231, VT8366, VT8233, VT8235
-		(Other PCI IDE-compliant controllers should work, but
-		 those not listed above may not be capable of DMA modes)
-	SATA Controllers
-		Promise PDC20376 (only parallel ATA mode tested)
+		    PDC20268R, PDC20269, PDC20271, PDC20275, PDC20276,
+		    PDC20277, PDC20376 (RAID mode is not supported)
+		ServerWorks OSB4, CSB5, CSB6 (including support for the third
+		    channel)
 		Silicon Image SiI3112
+		Silicon Integrated System 5513 (5597/5598), 540, 550, 620,
+		    630, 630S, 633, 635, 640, 645, 645DX, 648, 650, 651,
+		    652, 655, 658, 730, 733, 735, 740, 745, 746, 748, 750,
+		    751, 752, 755, 962, 963
+		VIA Technologies VT82C586/A/B, VT82C596A/B, VT82C686A/B,
+		    VT8231, VT8366, VT8233, VT8235, VT8237
 	SCSI Host Adapters
 		Adaptec AIC-6260 and AIC-6360 based boards, including:
 		    the Adaptec AHA-152x and the SoundBlaster SCSI host adapter.
