@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.18 1997/10/25 19:50:08 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.19 1997/10/26 09:32:47 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -143,23 +143,25 @@ biosattach(parent, self, aux)
 		q->ba_next = (bootarg_t *)((caddr_t)q + q->ba_size);
 		switch (q->ba_type) {
 		case BOOTARG_MEMMAP:
-			printf(" memmap");
+			printf(" memmap %p", q->ba_arg);
 			break;
 		case BOOTARG_DISKINFO:
-			printf(" diskinfo");
 			bios_diskinfo = (bios_diskinfo_t *)q->ba_arg;
+			printf(" diskinfo %p", bios_diskinfo);
 			break;
 		case BOOTARG_APMINFO:
-			printf(" apminfo");
+			printf(" apminfo %p", q->ba_arg);
 #if NAPM > 0 || defined(DEBUG)
 			apm = (bios_apminfo_t *)q->ba_arg;
 #endif
 			break;
 		case BOOTARG_CKSUMLEN:
-			printf(" cksumlen");
-			bios_cksumlen = (u_int32_t)q->ba_arg;
+			bios_cksumlen = *(u_int32_t *)q->ba_arg;
+			printf(" cksumlen %d", bios_cksumlen);
 			break;
 		default:
+			printf(" unsupported arg (%d) %p", q->ba_type,
+			    q->ba_arg);
 		}
 	}
 	printf("\n");
@@ -311,7 +313,7 @@ bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	bios_diskinfo_t *pdi;
 	int biosdev;
 
-	/* all sysctl names at this level are terminal */
+	/* all sysctl names at this level except diskinfo are terminal */
 	if (namelen != 1 && name[0] != BIOS_DISKINFO)
 		return (ENOTDIR);		/* overloaded */
 
