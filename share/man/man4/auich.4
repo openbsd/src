@@ -1,4 +1,4 @@
-.\" $OpenBSD: auich.4,v 1.6 2001/09/05 03:10:52 provos Exp $
+.\" $OpenBSD: auich.4,v 1.7 2001/10/28 08:39:40 mickey Exp $
 .\"
 .\" Copyright (c) 2000-2001 Michael Shalayeff
 .\" All rights reserved
@@ -32,7 +32,7 @@
 .Os
 .Sh NAME
 .Nm auich
-.Nd Intel 82801AA/AB/BA and 440MX PCI audio driver
+.Nd Intel 82801AA/AB/BA/CA and 82440MX PCI audio driver
 .Sh SYNOPSIS
 .Cd "auich* at pci? dev ? function ?"
 .Cd "audio* at auich?"
@@ -57,3 +57,5 @@ The
 .Nm
 device driver appeared in
 .Ox 2.8 .
+.Sh CAVEATS
+Some hardware implementations only support 48kHz sampling rates.
