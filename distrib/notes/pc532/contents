@@ -1,11 +1,11 @@
-The pc532-specific portion of the OpenBSD 2.1 release is found in the
+The pc532-specific portion of the OpenBSD 2.2 release is found in the
 "pc532" subdirectory of the distribution.  That subdirectory contains
 the files as follows:
 
-.../2.1/pc532/
+.../2.2/pc532/
 
 	INSTALL.pc532		Installation notes; this file.
-	inst-21.fs.gz		Installation file system.
+	inst-22.fs.gz		Installation file system.
 	download.c.gz		Source for a pc532 ROM compat download pgm
 	bsd.default.gz		Upgrade kernel
 	base.tar.gz		base distribution
@@ -20,7 +20,7 @@ the files as follows:
 The binary distribution consists of the following files:
 
 	base.tar.gz
-		The OpenBSD/pc532 2.1 base binary distribution.  You
+		The OpenBSD/pc532 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -78,12 +78,12 @@ is supported by the following files:
 	Initial file system used via SCSI floppy or downloaded into 
 	memory:
 
-	inst-21.fs	-- file system containing boot loader 
+	inst-22.fs	-- file system containing boot loader 
 			   and install kernel with 2MB
 			   ram root file system.
 
 	download.c	-- source for the program to download
-			   inst-21.fs into memory via the
+			   inst-22.fs into memory via the
 			   pc532 ROM monitor.
 
 

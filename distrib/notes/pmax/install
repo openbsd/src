@@ -28,7 +28,7 @@ onto the pmax which allows you to write to the raw disk - i.e. on all
 UN*X like operatingsystems it should work using "dd". On OpenBSD
 as well as SunOS you use a command like:
 
-	# dd if=simpleroot21.fs of=/dev/rsd0c bs=20b conv=sync
+	# dd if=simpleroot22.fs of=/dev/rsd0c bs=20b conv=sync
 
 Especially on OpenBSD/pmax you'll have to use /dev/rrz0c or something
 like that instead of /dev/rsd0c.
@@ -83,7 +83,7 @@ documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
 One part of the distribution of OpenBSD/pmax is a file called
-simpleroot21.tar.gz which is a good start for the rootfilesystem area on
+simpleroot22.tar.gz which is a good start for the rootfilesystem area on
 the NFS server then you want to install via network.
 
 A few configuration files need to be edited:
@@ -102,7 +102,7 @@ A few configuration files need to be edited:
 
 Now you must populate the the `/dev' directory for your client. If you
 have an intelligent tar command on the NFS server the /dev directory
-inside the simpleroot21.tar.gz should be usable (i.e. containing
+inside the simpleroot22.tar.gz should be usable (i.e. containing
 special devices and not only files) - else you'll have to remake the
 devices on the server using
 
@@ -172,7 +172,7 @@ Ok - now let's see what to do to set up the server:
     
     mkdir /export/root
     cd /export/root
-    tar xvpzf /some_path/simpleroot21.tar.gz
+    tar xvpzf /some_path/simpleroot22.tar.gz
     vi /etc/exports (to add the above line)
     kill -HUP `cat /var/run/mountd.pid` (so that mountd rereads exports)
 
@@ -414,13 +414,13 @@ incarnation to make the root filesystem writable is
 
 assuming your rootdisk is rz0.
 
-Congratulations, you have successfully installed OpenBSD 2.1.  When you
+Congratulations, you have successfully installed OpenBSD 2.2.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the OpenBSD 2.1 distribution might need to be
+Some of the files in the OpenBSD 2.2 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like

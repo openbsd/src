@@ -1,15 +1,15 @@
-The sparc-specific portion of the OpenBSD 2.1 release is found in the
+The sparc-specific portion of the OpenBSD 2.2 release is found in the
 "sparc" subdirectory of the distribution.  That subdirectory is organized
 as follows:
 
-.../2.1/sparc/
+.../2.2/sparc/
 		INSTALL.sparc	Installation notes; this file
 
-                kc21.fs		The sparc boot floppy; see below.
-		inst21.fs	The sparc installation floppy; see below.
-		upgr21.fs	The sparc upgrade floppy; see below.
-		miniroot21.fs	The sparc miniroot filesystem; see below.
-                floppy21.fs     The sparc compressed ramdisk boot floppy
+                kc22.fs		The sparc boot floppy; see below.
+		inst22.fs	The sparc installation floppy; see below.
+		upgr22.fs	The sparc upgrade floppy; see below.
+		miniroot22.fs	The sparc miniroot filesystem; see below.
+                floppy22.fs     The sparc compressed ramdisk boot floppy
                                   
 		*.gz		sparc binary distribution sets;
 				see below.
@@ -29,18 +29,18 @@ Please note that there are multiple bootable images and kernels, intended
 to allow installing OpenBSD/sparc in a variety of situations without
 requiring a pre-existing working operating system.
 
-The "kc21.fs" image is a bootable floppy image, which is used in conjunction
-with "inst21.fs" or "upgr21.fs", to allow installing or upgrading systems
+The "kc22.fs" image is a bootable floppy image, which is used in conjunction
+with "inst22.fs" or "upgr22.fs", to allow installing or upgrading systems
 with supported floppy disk drives (not Sun4m at this time).
 
-The "miniroot21.fs" is a small bootable root filesystem that can be used
+The "miniroot22.fs" is a small bootable root filesystem that can be used
 for installtion or upgrade where there is some means to copy the miniroot
 image into a swap or unused partition on the system, and also for diskless
 or netbooting.  This can be convenient if you have a exsting installation
 of OpenBSD, NetBSD, SunOS, or Solaris and wish to test or upgrade the
 existing system to OpenBSD.
 
-The "floppy21.fs" is a new bootable floppy image, with contents similar
+The "floppy22.fs" is a new bootable floppy image, with contents similar
 to a miniroot stored in a compressed kernel with pre-loaded ramdisk.  As
 of release time, this version has not received adequate testing and may
 not work reliably on many systems, but is provided as a convenience for
@@ -57,43 +57,43 @@ Sun bootblocks require a separate kernel image and root filesystem.
 
 Bootable installation/upgrade floppies:
   
-  kc21.fs
+  kc22.fs
  	This disk is bootable, and only contains the boot loader and
         kernel.
 
-  inst21.fs
+  inst22.fs
 	This disk contains an installation file system, and has enough 
 	utilities on board to prepare your hard disk drive for OpenBSD.
 
-  upgr21.fs
+  upgr22.fs
 	This disk contains a file system, and has holds the utilities 
 	needed in order to upgrade an existing OpenBSD (or NetBSD) system
-	to a minimal working OpenBSD 2.1 system.
+	to a minimal working OpenBSD 2.2 system.
 
-  floppy21.fs
+  floppy22.fs
 	This disk contains a compressed ramdisk filesystem, and holds
-        all utilities needed to install or upgrade to OpenBSD 2.1
+        all utilities needed to install or upgrade to OpenBSD 2.2
   
-  miniroot21.fs
+  miniroot22.fs
 	This is a miniroot filesystem image which can be copied to the
 	swap partition of an existing OpenBSD, NetBSD, SunOS, or Solaris
-	installation to allow upgrading to OpenBSD 2.1
+	installation to allow upgrading to OpenBSD 2.2
 
 
 The OpenBSD/sparc binary distribution sets contain the binaries which
-comprise the OpenBSD 2.1 release for the sparc.  There are seven binary
+comprise the OpenBSD 2.2 release for the sparc.  There are seven binary
 distribution sets.  These binary distribution sets can be found in
-"sparc" subdirectory of the OpenBSD 2.1 distribution tree, and are as
+"sparc" subdirectory of the OpenBSD 2.2 distribution tree, and are as
 follows:
 
-	base21	The OpenBSD/sparc 2.1 base binary distribution.  You
+	base22	The OpenBSD/sparc 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the system
 		to run and be minimally functional.  It includes shared
 		library support, and excludes everything described below.
 		[ 13.1M gzipped, 41.7M uncompressed ]
 
-	etc21	This distribution set contains the system configuration
+	etc22	This distribution set contains the system configuration
 		files that reside in /etc and in several other places.
 		This set MUST be installed if you are installing the
 		system from scratch, but should NOT be used if you are
@@ -102,7 +102,7 @@ follows:
 		configuration files by hand.)
 		[ 95K gzipped, 460K uncompressed ]
 
-	comp21	The OpenBSD/sparc Compiler tools.  All of the tools
+	comp22	The OpenBSD/sparc Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN.
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -113,22 +113,22 @@ follows:
 		call and library manual pages.
 		[ 8.7M gzipped, 28.8M uncompressed ]
 
-	game21	This set includes the games and their manual pages.
+	game22	This set includes the games and their manual pages.
 		[ 2.9M gzipped, 7.3M uncompressed ]
 
-	man21	This set includes all of the manual pages for the
+	man22	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 2.5M gzipped, 9.4M uncompressed ]
 
-	misc21	This set includes the system dictionaries (which are
+	misc22	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.8M gzipped, 6.2M uncompressed ]
 
-	text21	This set includes OpenBSD's text processing tools,
+	text22	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 1.0M gzipped, 3.9M uncompressed ]

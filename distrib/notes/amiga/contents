@@ -1,15 +1,15 @@
-The amiga-specific portion of the OpenBSD 2.1 release is found in the
+The amiga-specific portion of the OpenBSD 2.2 release is found in the
 "amiga" subdirectory of the distribution.  That subdirectory is layed
 out as follows:
 
-.../2.1/amiga/
+.../2.2/amiga/
 		INSTALL.amiga	This file.
 
 		CKSUM		Output of the cksum(1) and md5(1) programs
 		MD5		usable for verification of the correctness
 				of downloaded files.
 
-		X11/		The X window system for OpenBSD/amiga 2.1
+		X11/		The X window system for OpenBSD/amiga 2.2
 
 		bsd		A generic OpenBSD kernel used both for
 				miniroot installation and as the first
@@ -19,7 +19,7 @@ out as follows:
 		bsd.rd		A ramdisk OpenBSD kernel used for simple
 				installation.
 
-		miniroot21.fs	A miniroot filesystem image to be used
+		miniroot22.fs	A miniroot filesystem image to be used
 				if you for some reason can't or don't
 				want to use the ramdisk installation
 				method.
@@ -44,17 +44,17 @@ Installation/upgrade miniroot file system:
 	NFS file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing AmigaDOS partitions.
 
-	This file is named "miniroot21.fs".
+	This file is named "miniroot22.fs".
 
 
 The OpenBSD/amiga binary distribution sets contain the binaries which
-comprise the OpenBSD 2.1 release for the amiga.  There are seven binary
+comprise the OpenBSD 2.2 release for the amiga.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "amiga/" subdirectory of the OpenBSD 2.1
+subdirectories of the "amiga/" subdirectory of the OpenBSD 2.2
 distribution tree, and are as follows (all have ".tar.gz" appended to
 the name given in the table below):
 
-	base21	The OpenBSD/amiga 2.1 base binary distribution.  You
+	base22	The OpenBSD/amiga 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -62,7 +62,7 @@ the name given in the table below):
 		everything described below.
 		[ 12M gzipped, 36M uncompressed ]
 
-	comp21	The OpenBSD/amiga Compiler tools.  The C, C++, and
+	comp22	The OpenBSD/amiga Compiler tools.  The C, C++, and
 		FORTRAN language environments are supported.  This set
 		includes the system include files (/usr/include), the
 		linker, the compiler tool chain, and the various system
@@ -73,7 +73,7 @@ the name given in the table below):
 		pages.
 		[ 7M gzipped, 24M uncompressed ]
 
-	etc21	This distribution set contains the system configuration
+	etc22	This distribution set contains the system configuration
 		files that reside in /etc and in several other places.
 		This set MUST be installed if you are installing the
 		system from scratch, but should NOT be used if you are
@@ -82,22 +82,22 @@ the name given in the table below):
 		configuration files by hand.)
 		[ 90K gzipped, 450K uncompressed ]
 
-	game21	This set includes the games and their manual pages.
+	game22	This set includes the games and their manual pages.
 		[ 3M gzipped, 7M uncompressed ]
 
-	man21	This set includes all of the manual pages for the
+	man22	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 2M gzipped, 9M uncompressed ]
 
-	misc21	This set includes the system dictionaries (which are
+	misc22	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 2M gzipped, 6M uncompressed ]
 
-	text21	This set includes OpenBSD's text processing tools,
+	text22	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 1M gzipped, 4M uncompressed ]

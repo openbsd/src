@@ -45,8 +45,8 @@ accomplish the same thing, but the install/upgrade scripts and procedures
 are quite different between the old and new version.
 
 The other difference bewtween the the two forms are in their bootblocks,
-and filesystems.  The "floppy21.fs" image is the compressed ramdisk form,
-the "kc21.fs" paired with either "inst21.fs" or "upgr21.fs" comprise a
+and filesystems.  The "floppy22.fs" image is the compressed ramdisk form,
+the "kc22.fs" paired with either "inst22.fs" or "upgr22.fs" comprise a
 bootable kernel floppy and associated install/upgrade filesystem floppy.
 
 The CD-ROM, miniroot and netboot install scripts are essentially the
@@ -334,11 +334,11 @@ may be a better option.
 		       ftp if you are using a proxy.
 		    3) The IP address (or hostname if you enabled
 		       DNS earlier in the install) of an ftp server
-		       carrying the OpenBSD 2.1 distribution.
+		       carrying the OpenBSD 2.2 distribution.
 		       If you don't know, just hit return when
 		       asked if you want to see a list of such hosts.
 		    4) The ftp directory holding the distribution sets.
-		       The default value of pub/OpenBSD/2.1/sparc
+		       The default value of pub/OpenBSD/2.2/sparc
 		       is almost always correct.
 		    5) The login and password for the ftp account.
 		       The default will be correct unless you are
@@ -357,7 +357,7 @@ may be a better option.
 		       (assuming you have a proxy available to use).
 		    3) The IP address (or hostname if you enabled
 		       DNS earlier in the install) of an http server
-		       carrying the OpenBSD 2.1 distribution.
+		       carrying the OpenBSD 2.2 distribution.
 		       If you don't know, just hit return when
 		       asked if you want to see a list of such hosts.
 		    4) The directory holding the distribution sets.
@@ -401,7 +401,7 @@ may be a better option.
 
 		You will also have to provide the relative path to the
 		directory on the CD which holds the distribution, for the
-		sparc this is "2.1/sparc".
+		sparc this is "2.2/sparc".
 
 		For instructions on how to complete the installation from
 		the CD-ROM distribution, see the section named "Common
@@ -493,7 +493,7 @@ may be a better option.
 	using, all the device nodes needed by the installed system will
 	be created for you and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
-	at least the "base21" and "etc21" distribution sets.
+	at least the "base22" and "etc22" distribution sets.
 
 
 
@@ -553,13 +553,13 @@ On version 2 OpenBOOT ROMs:
 On sun4 systems, you may not need to specify the boot file, as 
 the OpenBSD boot blocks will look for "bsd" on the boot device by default.
 
-Congratulations, you have successfully installed OpenBSD 2.1.  When you
+Congratulations, you have successfully installed OpenBSD 2.2.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the OpenBSD 2.1 distribution might need to be
+Some of the files in the OpenBSD 2.2 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you will be running your OpenBSD 
@@ -652,10 +652,10 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tar.gz files onto your disk.
 
     sunos# ls -FC
-    base21.tar.gz      etc21.tar.gz       man21.tar.gz       secr21.tar.gz
-    comp21.tar.gz      games21.tar.gz     misc21.tar.gz      text21.tar.gz
+    base22.tar.gz      etc22.tar.gz       man22.tar.gz       secr22.tar.gz
+    comp22.tar.gz      games22.tar.gz     misc22.tar.gz      text22.tar.gz
     bsd                bsd.scsi3
-    sunos# gunzip < base21.tar.gz | (cd /mnt; gtar xvpf -)
+    sunos# gunzip < base22.tar.gz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
 And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
@@ -734,7 +734,7 @@ handle corresponding to the root filesystem. If successful, the boot
 rogram starts reading from the remote root filesystem in search of the
 kernel which is then read into memory.
 
-You will want export the miniroot21.fs filesystem to the client.  You
+You will want export the miniroot22.fs filesystem to the client.  You
 can dd this filesystem image to some spare partition, mount and export
 tat partition or use tar to copy the contents to a more convenient spot.
 

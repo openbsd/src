@@ -1,11 +1,11 @@
-OpenBSD/sparc 2.1 runs on the following classes of machines:
+OpenBSD/sparc 2.2 runs on the following classes of machines:
 	- sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
 	- sun4 (e.g. the 4/100, 4/200, and 4/300.   note that support
 		for the 4/400 processor is incomplete)
 	- sun4m (e.g. sparc classic, 4, 5, 10, and 20) *** See Notes Below
 	- faithful clones of the above Sun systems (e.g. Integrix)
 
-OpenBSD/sparc 2.1 does NOT run on these machines (yet):
+OpenBSD/sparc 2.2 does NOT run on these machines (yet):
 	- Sun 4/400 --  Lacking support for the I/O cache, and related
 			ethernet problems.
 	- sun4m 4/6XX (e.g Sparcserver 600MP) -- Different registers (auxio
@@ -82,7 +82,7 @@ about:
 
 *** Note: sun4m and general sparc caveats
 
-As of of the OpenBSD 2.1 release there are still some outstanding problems
+As of of the OpenBSD 2.2 release there are still some outstanding problems
 with OpenBSD on the various Sparc architectures.  The sun4m architecture,
 particularly the Viking/SuperSPARC implementations, is probably the least
 stable and is also lacking useful floppy/audio support.  
@@ -94,7 +94,7 @@ GENERIC is your best bet for a stable sun4m kernel.
 
 There are a number of people actively working on improving the stability
 of OpenBSD/sparc in the sun4m area.  If you have problems with the
-OpenBSD 2.1 kernel in this distribution, please visit the OpenBSD web
+OpenBSD 2.2 kernel in this distribution, please visit the OpenBSD web
 page (http://www.openbsd.org) and the mailing lists to review the current
 status and check for updates.
 

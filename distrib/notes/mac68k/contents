@@ -1,31 +1,31 @@
-The mac68k-specific portion of the OpenBSD 2.1 release is found in the
+The mac68k-specific portion of the OpenBSD 2.2 release is found in the
 "mac68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.1/mac68k/
+.../2.2/mac68k/
 		INSTALL.mac68k	This file
 		utils/		The mac68k installation utilities for MacOS.
 
 The OpenBSD/mac68k binary distribution sets contain all the binaries which
-are need to run the OpenBSD 2.1 release for the mac68k.  There are eight binary
+are need to run the OpenBSD 2.2 release for the mac68k.  There are eight binary
 distribution sets.  The binary distribution sets can be found in the
-"mac68k/" of the OpenBSD 2.1 distribution tree, and
+"mac68k/" of the OpenBSD 2.2 distribution tree, and
 are as follows:
 
-	bsd21	The OpenBSD/mac68k 2.1 kernel binary.  You MUST
+	bsd22	The OpenBSD/mac68k 2.2 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
 		to boot the system.
 		[ 1.2MB uncompressed ]
 
-	bsd21-genericsbc The OpenBSD/mac68k kernel binary.  This is
-		identical in every way to bsd21.tar.gz accept that
+	bsd22-genericsbc The OpenBSD/mac68k kernel binary.  This is
+		identical in every way to bsd22.tar.gz accept that
 		it enables a different SCSI driver which may allow
 		some otherwise incompatible SCSI disks to function
 		with OpenBSD/mac68k.  You must install either this
-		or bsd21.tar.gz.
+		or bsd22.tar.gz.
 		[ 1.2MB uncompressed ]
 
-	base21.tar.gz	The OpenBSD/mac68k 2.1 base binary distribution.  You
+	base22.tar.gz	The OpenBSD/mac68k 2.2 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -33,7 +33,7 @@ are as follows:
 		everything described below.
 		[ 11.6MB gzipped, 35.8MB uncompressed ]
 
-	comp21.tar.gz	The OpenBSD/mac68k Compiler tools.  All of the tools
+	comp22.tar.gz	The OpenBSD/mac68k Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system header files
 		(/usr/include), the linker, the compiler tool chain,
@@ -46,7 +46,7 @@ are as follows:
 		functional system.
 		[ 7.4MB gzipped, 23.8MB uncompressed ]
 
-	etc21.tar.gz	This distribution set contains the system
+	etc22.tar.gz	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -55,18 +55,18 @@ are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 90K gzipped, 450K uncompressed ]
 
-	game21.tar.gz	This set includes the BSD games and their manual pages.
+	game22.tar.gz	This set includes the BSD games and their manual pages.
 		It's installation is optional.
 		[ 2.8MB gzipped, 6.9MB uncompressed ]
 
-	man21.tar.gz	This set includes all of the manual pages for the
+	man22.tar.gz	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.  Installation of
 		this set is completely optional but is highly recommended.
 		[ 2.4MB gzipped, 9.3MB uncompressed ]
 
-	misc21.tar.gz	This set includes the system dictionaries (which are
+	misc22.tar.gz	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default as well as
@@ -75,14 +75,14 @@ are as follows:
 		of many system programs.
 		[ 1.7MB gzipped, 6.1MB uncompressed ]
 
-	text21.tar.gz	This set includes OpenBSD's text processing tools,
+	text22.tar.gz	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.  This set is highly recommended as
 		these programs are depended upon for such basic 
 		system functions as reading manual pages.
 		[ 0.9MB gzipped, 3.6MB uncompressed ]
 
-The directory '../2.1/mac68k/utils' contains a number of utilities for the
+The directory '../2.2/mac68k/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in
 this directory are as follows:
 
