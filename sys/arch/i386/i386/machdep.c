@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 1996/12/09 08:36:41 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 1996/12/09 09:54:04 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -152,6 +152,24 @@ vm_map_t buffer_map;
 extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
+
+/*
+ * Extent maps to manage I/O and ISA memory hole space.  Allocate
+ * storage for 8 regions in each, initially.  Later, ioport_malloc_safe
+ * will indicate that it's safe to use malloc() to dynamically allocate
+ * region descriptors.
+ *
+ * N.B. At least two regions are _always_ allocated from the iomem
+ * extent map; (0 -> ISA hole) and (end of ISA hole -> end of RAM).
+ *
+ * The extent maps are not static!  Machine-dependent ISA and EISA
+ * routines need access to them for bus address space allocation.
+ */
+static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+struct	extent *ioport_ex;
+struct	extent *iomem_ex;
+static	ioport_malloc_safe;
 
 caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
@@ -1128,6 +1146,24 @@ init386(first_avail)
 
 	proc0.p_addr = proc0paddr;
 
+	/*
+	 * Initialize the I/O port and I/O mem extent maps.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, the two
+	 * extents of RAM are allocated from the map (0 -> ISA hole
+	 * and end of ISA hole -> end of RAM).
+	 */
+	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
+	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
+
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 
 	/* make gdt gates and memory segments */
@@ -1204,6 +1240,24 @@ init386(first_avail)
 		printf("Note:  Overriding BIOS memsize of %d.\n", biosextmem);
 	biosextmem = EXTMEM_SIZE;
 #endif
+
+	/*
+	 * Allocate the physical addresses used by RAM from the iomem
+	 * extent map.  This is done before the addresses are
+	 * page rounded just to make sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, 0, IOM_BEGIN, EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
+	}
+	avail_end = biosextmem ? IOM_END + biosextmem * 1024
+	    : biosbasemem * 1024;	/* just temporary use */
+
+	if (avail_end > IOM_END && extent_alloc_region(iomem_ex, IOM_END,
+	    (avail_end - IOM_END), EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM IOMEM EXTENT MAP!\n");
+	}
 
 	/* Round down to whole pages. */
 	biosbasemem &= -(NBPG / 1024);
@@ -1471,6 +1525,32 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	bus_space_handle_t *bshp;
 {
 	int error;
+	struct extent *ex;
+
+	/*
+	 * Pick the appropriate extent map.
+	 */
+	switch (t) {
+	case I386_BUS_SPACE_IO:
+		ex = ioport_ex;
+		break;
+
+	case I386_BUS_SPACE_MEM:
+		ex = iomem_ex;
+		break;
+
+	default:
+		panic("bus_space_map: bad bus space tag");
+	}
+
+	/*
+	 * Before we go any further, let's make sure that this
+	 * region is available.
+	 */
+	error = extent_alloc_region(ex, bpa, size,
+	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0));
+	if (error)
+		return (error);
 
 	/*
 	 * For I/O space, that's all she wrote.
@@ -1485,6 +1565,15 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	 * a kernel virtual address.
 	 */
 	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
+		if (extent_free(ex, bpa, size, EX_NOWAIT |
+		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_map: can't free region\n");
+		}
+	}
+
 	return (error);
 }
 
@@ -1499,8 +1588,41 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
+	struct extent *ex;
 	u_long bpa;
 	int error;
+
+	/*
+	 * Pick the appropriate extent map.
+	 */
+	switch (t) {
+	case I386_BUS_SPACE_IO:
+		ex = ioport_ex;
+		break;
+
+	case I386_BUS_SPACE_MEM:
+		ex = iomem_ex;
+		break;
+
+	default:
+		panic("bus_space_alloc: bad bus space tag");
+	}
+
+	/*
+	 * Sanity check the allocation against the extent's boundaries.
+	 */
+	if (rstart < ex->ex_start || rend > ex->ex_end)
+		panic("bus_space_alloc: bad region start/end");
+
+	/*
+	 * Do the requested allocation.
+	 */
+	error = extent_alloc_subregion(ex, rstart, rend, size, alignment,
+	    boundary, EX_NOWAIT | (ioport_malloc_safe ?  EX_MALLOCOK : 0),
+	    &bpa);
+
+	if (error)
+		return (error);
 
 	/*
 	 * For I/O space, that's all she wrote.
@@ -1515,6 +1637,14 @@ bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	 * a kernel virtual address.
 	 */
 	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	if (error) {
+		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
+			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
+			    bpa, size);
+			printf("bus_space_alloc: can't free region\n");
+		}
+	}
 
 	*bpap = bpa;
 
@@ -1563,18 +1693,21 @@ bus_space_unmap(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
+	struct extent *ex;
 	u_long va, endva;
 	bus_addr_t bpa;
 
 	/*
-	 * Find the correct bus physical address.
+	 * Find the correct extent and bus physical address.
 	 */
 	switch (t) {
 	case I386_BUS_SPACE_IO:
+		ex = ioport_ex;
 		bpa = bsh;
 		break;
 
 	case I386_BUS_SPACE_MEM:
+		ex = iomem_ex;
 		va = i386_trunc_page(bsh);
 		endva = i386_round_page((bsh + size) - 1);
 
@@ -1593,6 +1726,13 @@ bus_space_unmap(t, bsh, size)
 
 	default:
 		panic("bus_space_unmap: bad bus space tag");
+	}
+
+	if (extent_free(ex, bpa, size,
+	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
+		printf("bus_space_unmap: %s 0x%lx, size 0x%lx\n",
+		    (t == I386_BUS_SPACE_IO) ? "port" : "pa", bpa, size);
+		printf("bus_space_unmap: can't free region\n");
 	}
 }
 
