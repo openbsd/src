@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.31 2001/06/29 06:55:36 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.32 2001/07/09 02:51:05 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -81,7 +81,10 @@ void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
             int, int (*func)(void *), void *, char *));
 void     mpc_intr_disestablish __P((void *, void *));
 int      mpc_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
-int      of_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
+u_int32_t mpc_gen_config_reg __P((void *cpv, pcitag_t tag, int offset));
+int	of_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
+int	find_node_intr __P((int node, u_int32_t *addr, u_int32_t *intr));
+u_int32_t pci_iack __P((void));
 
 struct cfattach mpcpcibr_ca = {
         sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
@@ -663,21 +666,18 @@ mpcpcibrprint(aux, pnp)
  *  XXX Note that cross page boundarys are *not* guarantee to work!
  */
 
-vm_offset_t
-vtophys(p)
-	void * p;
-{
+paddr_t
+vtophys(pa)
 	paddr_t pa;
-	vaddr_t va;
+{
+	vaddr_t va = (vaddr_t) pa;
 
-	va = (vaddr_t) p;
-	if((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
+	if(va < VM_MIN_KERNEL_ADDRESS)
 		pa = va;
-	}
-	else {
+	else
 		pmap_extract(vm_map_pmap(phys_map), va, &pa);
-	}
-	return(pa | ((pci_map_a == 1) ? MPC106_PCI_CPUMEM : 0 ));
+
+	return (pa | ((pci_map_a == 1) ? MPC106_PCI_CPUMEM : 0 ));
 }
 
 void
@@ -770,7 +770,7 @@ mpc_decompose_tag(cpv, tag, busp, devp, fncp)
 		*fncp = (tag >> FNC_SHIFT) & 0x7;
 }
 
-static u_int32_t
+u_int32_t
 mpc_gen_config_reg(cpv, tag, offset)
 	void *cpv;
 	pcitag_t tag;
@@ -991,6 +991,7 @@ mpc_print_pci_stat()
 	printf("pci: status 0x%04x.\n", stat);
 }
 #endif
+
 u_int32_t
 pci_iack()
 {
