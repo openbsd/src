@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.8 2001/05/14 16:43:18 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.9 2001/06/08 17:24:41 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -586,6 +586,13 @@ static const keysym_t pckbd_keydesc_sg_nodead[] = {
     KC(27),  KS_diaeresis,	KS_exclam,	KS_bracketright
 };
 
+static const keysym_t pckbd_keydesc_sf[] = {
+/*  pos      normal            shifted         altgr           shift-altgr */
+    KC(26),  KS_egrave,        KS_udiaeresis,  KS_bracketleft,
+    KC(39),  KS_eacute,        KS_odiaeresis,
+    KC(40),  KS_agrave,        KS_adiaeresis,  KS_braceleft
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -619,6 +626,8 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_RU,			KB_US,	pckbd_keydesc_ru),
 	KBD_MAP(KB_SG,			KB_US,	pckbd_keydesc_sg),
 	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	pckbd_keydesc_sg_nodead),
+	KBD_MAP(KB_SF,			KB_SG,	pckbd_keydesc_sf),
+	KBD_MAP(KB_SF | KB_NODEAD,	KB_SF,	pckbd_keydesc_sg_nodead),
 	{0, 0, 0, 0}
 };
 
