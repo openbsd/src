@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.100 2003/10/17 21:04:57 mcbride Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.101 2004/01/05 15:26:18 markus Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.100 2003/10/17 21:04:57 mcbride Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.101 2004/01/05 15:26:18 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -894,8 +894,8 @@ parse(char *string, int flags)
 			switch (s->type) {
 			case SENSOR_TEMP:
 				printf("temp, %.2f degC / %.2f degF",
-				    (s->value / 1000000.0) - 273.16,
-				    ((s->value / 1000000.0) - 273.16) * 9 / 5 +
+				    (s->value - 273150000) / 1000000.0,
+				    (s->value - 273150000) / 1000000.0 * 9 / 5 +
 				    32);
 				break;
 			case SENSOR_FANRPM:
