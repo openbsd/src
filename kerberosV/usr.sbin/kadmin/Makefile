@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2001/07/18 20:24:18 deraadt Exp $
+# $OpenBSD: Makefile,v 1.6 2001/09/12 05:09:52 jason Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -26,11 +26,11 @@ SRCS=	ank.c \
 
 .PATH:	${KRB5SRC}/kadmin
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5
-LDADD+=	${LIBSL} -lreadline -lcurses -lkrb -lhdb -lkadm5srv \
-	-lkadm5clnt -lkrb5 ${LIBROKEN} -lasn1 -lcrypto -lcom_err -lkafs
+LDADD+=	${LIBSL} -lreadline -lcurses -lhdb -lkadm5srv \
+	-lkadm5clnt -lkrb5 ${LIBROKEN} -lkrb -lasn1 -lcrypto -lcom_err -lkafs
 
 .include <bsd.prog.mk>
 
-.if (${ELF_TOOLCHAIN:L} == "yes")
+.if (${ELF_TOOLCHAIN:L} == "yes" && ${MACHINE_ARCH} != "sparc64")
 LDADD+= -ldl
 .endif
