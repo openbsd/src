@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.21 1998/05/30 05:45:24 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.22 1998/07/08 19:24:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Michael Shalayeff
@@ -63,7 +63,7 @@ boot(bootdev)
 	strncpy(cmd.image, bootfile, sizeof(cmd.image));
 	cmd.boothowto = 0;
 	cmd.conf = "/etc/boot.conf";
-	cmd.addr = (void *)0x100000;
+	cmd.addr = (void *)DEFAULT_KERNEL_ADDRESS;
 	cmd.timeout = 5;
 
 	st = read_conf();
