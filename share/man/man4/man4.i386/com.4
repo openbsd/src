@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.4 1998/03/07 22:27:49 millert Exp $
+.\"	$OpenBSD: com.4,v 1.5 1998/03/07 23:13:47 millert Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -50,15 +50,14 @@ serial communications interface
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for NS8250-, NS16450-, NS16550-, ST16650-, ST16650V2-,
-and TI16750-based
+driver provides support for NS8250-, NS16450-, NS16550- and ST16650-based
 .Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-communications interfaces.  The NS8250, NS16450, and ST16650 have single
-character buffers.  The NS16550 and ST16650V2 have 16 character buffers
-while the TI16750 has a 64 character buffer.
+communications interfaces.  The NS8250 and NS16450 have single
+character buffers, the NS16550 has a 16 character buffer, while
+the ST16650 has a 32 character buffer.
 .Pp
 Input and output for each line may set to one of following baud rates;
 50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
