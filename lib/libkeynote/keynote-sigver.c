@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sigver.c,v 1.1.1.1 1999/05/23 22:11:06 angelos Exp $ */
+/* $OpenBSD: keynote-sigver.c,v 1.2 1999/05/24 01:29:22 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -31,15 +31,15 @@
 #ifdef WIN32
 #include <ctype.h>
 #include <io.h>
-#else
+#else /* WIN32 */
 #include <unistd.h>
-#endif
+#endif /* WIN32 */
 
 #include "assertion.h"
 #include "signature.h"
 
 void
-usage(void)
+sigverusage(void)
 {
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "\t<AssertionFile>\n");
@@ -47,10 +47,10 @@ usage(void)
 
 #ifdef WIN32
 void
-#else
+#else /* WIN32 */
 int
-#endif
-main(int argc, char *argv[])
+#endif /* WIN32 */
+keynote_sigver(int argc, char *argv[])
 {
     struct stat sb;
     int fd, i;
@@ -58,7 +58,7 @@ main(int argc, char *argv[])
 
     if (argc != 2)
     {
-	usage();
+	sigverusage();
 	exit(0);
     }
 

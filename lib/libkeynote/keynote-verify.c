@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.1.1.1 1999/05/23 22:11:04 angelos Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.2 1999/05/24 01:29:22 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -31,12 +31,12 @@
 #ifdef WIN32
 #include <io.h>
 #include "getopt.h"
-#else
+#else /* WIN32 */
 #include <unistd.h>
 #ifdef NEED_GETOPT
 #include "getopt.h"
-#endif
-#endif
+#endif /* NEED_GETOPT */
+#endif /* WIN32 */
 
 #include "keynote.h"
 
@@ -46,7 +46,7 @@ extern void parse_key(char *);
 int sessid;
 
 void
-usage(void)
+verifyusage(void)
 {
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "\t-h:             This message\n");
@@ -61,10 +61,10 @@ usage(void)
 
 #ifdef WIN32
 void
-#else
+#else /* WIN32 */
 int
-#endif
-main(int argc, char *argv[])
+#endif /* WIN32 */
+keynote_verify(int argc, char *argv[])
 {
 #ifdef LoopTesting
     int loopvar = 1000;
@@ -76,7 +76,7 @@ main(int argc, char *argv[])
 
     if (argc == 1)
     {
-	usage();
+	verifyusage();
 	exit(-1);
     }
 
@@ -178,7 +178,7 @@ main(int argc, char *argv[])
 		break;
 
 	    case 'h':
-		usage();
+		verifyusage();
 		exit(0);
 
 	    case 'r':
@@ -289,7 +289,7 @@ main(int argc, char *argv[])
 
 	    case '?':
 	    default:
-		usage();
+		verifyusage();
 		exit(-1);
 	}
     }

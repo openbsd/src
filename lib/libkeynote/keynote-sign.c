@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.2 1999/05/24 00:51:25 angelos Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.3 1999/05/24 01:29:22 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -31,9 +31,9 @@
 #ifdef WIN32
 #include <ctype.h>
 #include <io.h>
-#else
+#else /* WIN32 */
 #include <unistd.h>
-#endif
+#endif /* WIN32 */
 
 #include "assertion.h"
 #include "signature.h"
@@ -41,63 +41,23 @@
 #define SIG_PRINT_OFFSET      12
 #define SIG_PRINT_LENGTH      50
 
+extern void print_space(FILE *, int), print_key(FILE *, char *, int, int);
+
 void
-usage(void)
+signusage(void)
 {
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "\t[-v] <AlgorithmName> <AssertionFile> "
 	    "<PrivateKeyFile>\n");
 }
 
-/*
- * Print the specified number of spaces.
- */
-void
-print_space(FILE *fp, int n)
-{
-    while (n--)
-      fprintf(fp, " ");
-}
-
-/*
- * Output a signature, properly formatted.
- */
-void
-print_sig(FILE *fp, char *sig, int start, int length)
-{
-    int i, k;
-
-    print_space(fp, start);
-    fprintf(fp, "\"");
-
-    for (i = 0, k = 2; i < strlen(sig); i++, k++)
-    {
-	if (k == length)
-	{
-	    if (i == strlen(sig))
-	    {
-		fprintf(fp, "\"\n");
-		return;
-	    }
-
-	    fprintf(fp, "\\\n");
-	    print_space(fp, start);
-	    i--;
-	    k = 0;
-	}
-	else
-	  fprintf(fp, "%c", sig[i]);
-    }
-
-    fprintf(fp, "\"\n");
-}
 
 #ifdef WIN32
 void
-#else
+#else /* WIN32 */
 int
-#endif
-main(int argc, char *argv[])
+#endif /* WIN32 */
+keynote_sign(int argc, char *argv[])
 {
     int begin = SIG_PRINT_OFFSET, prlen = SIG_PRINT_LENGTH;
     char *buf, *buf2, *sig, *algname;
@@ -107,7 +67,7 @@ main(int argc, char *argv[])
     if ((argc != 4) &&
 	(argc != 5))
     {
-	usage();
+	signusage();
 	exit(-1);
     }
 
@@ -240,7 +200,7 @@ main(int argc, char *argv[])
     }
 
     /* Print signature string */
-    print_sig(stdout, sig, begin, prlen);
+    print_key(stdout, sig, begin, prlen);
 
     free(sig);   /* Just a reminder that the result is malloc'ed */
 

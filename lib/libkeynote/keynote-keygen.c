@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.1.1.1 1999/05/23 22:11:06 angelos Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.2 1999/05/24 01:29:22 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -30,16 +30,16 @@
 #ifdef WIN32
 #include <ctype.h>
 #include <io.h>
-#else
+#else /* WIN32 */
 #include <unistd.h>
-#endif
+#endif /* WIN32 */
 
 #include "signature.h"
 
 #define DEFAULT_PUBLIC    0x10001
 
 void
-usage(void)
+keygenusage(void)
 {
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "\t<AlgorithmName> <keysize> "
@@ -98,10 +98,10 @@ print_key(FILE *fp, char *algname, char *key, int start, int length)
 
 #ifdef WIN32
 void
-#else
+#else /* WIN32 */
 int
-#endif
-main(int argc, char *argv[])
+#endif /* WIN32 */
+keynote_keygen(int argc, char *argv[])
 {
     int begin = KEY_PRINT_OFFSET, prlen = KEY_PRINT_LENGTH;
 #if defined(CRYPTO) || defined(PGPLIB)
@@ -120,7 +120,7 @@ main(int argc, char *argv[])
 
     if ((argc != 5) && (argc != 6) && (argc != 7))
     {
-	usage();
+	keygenusage();
 	exit(0);
     }
 
