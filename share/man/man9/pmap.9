@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.1 2002/09/02 03:52:38 wcobb Exp $
+.\"	$OpenBSD: pmap.9,v 1.2 2002/09/02 06:01:01 wcobb Exp $
 .\"
 .\" Copyright (c) 2001, 2002 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -51,7 +51,6 @@ The
 .Nm
 interface is consistent across all platforms and hides the way page mappings
 are stored.
-.Pp
 .Sh INITIALIZATION
 .nr nS 1
 .Ft void
@@ -121,7 +120,7 @@ in the target physical map
 .Fa pmap
 with protection specified by
 .Fa prot :
-.Bl -tag -width "VM_PROT_EXECUTE  " -indent
+.Bl -tag -width "VM_PROT_EXECUTE" -indent
 .It VM_PROT_READ
 The mapping must allow reading.
 .It VM_PROT_WRITE
@@ -135,20 +134,22 @@ The
 .Fa flags
 argument contains protection bits (the same bits used in the
 .Fa prot
-argument) indicating the type of access that caused hte mapping to
-be created. This information may be used to seed modified/referenced
+argument) indicating the type of access that caused the mapping to
+be created.
+This information may be used to seed modified/referenced
 information for the page being mapped, possibly avoiding redundant
 faults on platforms that track modified/referenced information in
 software.
 Other information provided by
 .Fa flags :
-.Bl -tag -width "PMAP_CANFAIL   " -indent
+.Bl -tag -width "PMAP_CANFAIL" -indent
 .It PMAP_WIRED
 The mapping being created is a wired mapping.
 .It PMAP_CANFAIL
 The call to
 .Fn pmap_enter
-is allowed to fail. If this flag is not set, and the
+is allowed to fail.
+If this flag is not set, and the
 .Fn pmap_enter
 call is unable to create the mapping, perhaps due to insufficient
 resources, the
@@ -397,8 +398,8 @@ is called during a
 operation to give the child process an initial set of low-level
 mappings.
 .Sh SEE ALSO
-.Xr uvm 9 ,
-.Xr fork 2
+.Xr fork 2 ,
+.Xr uvm 9
 .Sh BUGS
 Ifdefs must be documented.
 .Pp
