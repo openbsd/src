@@ -9,12 +9,12 @@ OpenBSDfloppy
 				  ``Noname'', UDB, Multia
 				- EB164 based machines, including
 				  PC164, 164SX and 164LX
+				- Personal Workstation (Miata)
 
 		floppyB{:--:}OSrev.fs	Another MACHINE boot and installation floppy;
 				see below.
 				This floppy image will boot on the following
 				MACHINE models:
-				- Personal Workstation (Miata)
     				- Alpha Processor, Inc. UP1000
 				- XP1000, 264DP, DS10, DS20
 
