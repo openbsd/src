@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.5 1997/04/04 18:27:07 deraadt Exp $	*/
+/*	$OpenBSD: nm.c,v 1.6 1997/05/31 08:26:19 deraadt Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: nm.c,v 1.5 1997/04/04 18:27:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nm.c,v 1.6 1997/05/31 08:26:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -155,7 +155,7 @@ process_file(fname)
 	char magic[SARMAG];
     
 	if (!(fp = fopen(fname, "r"))) {
-		warnx("cannot read %s", fname);
+		warn("cannot read %s", fname);
 		return(1);
 	}
 
