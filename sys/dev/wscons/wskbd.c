@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.8 2001/02/10 19:42:06 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.9 2001/02/11 19:14:06 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1381,6 +1381,8 @@ internal_command(sc, type, ksym, ksym2)
 	case KS_Cmd_Screen7:
 	case KS_Cmd_Screen8:
 	case KS_Cmd_Screen9:
+	case KS_Cmd_Screen10:
+	case KS_Cmd_Screen11:
 		wsdisplay_switch(sc->sc_displaydv, ksym - KS_Cmd_Screen0, 0);
 		return (1);
 	case KS_Cmd_ResetEmul:

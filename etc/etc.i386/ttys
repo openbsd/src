@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.15 2001/02/08 02:55:43 aaron Exp $
+#	$OpenBSD: ttys,v 1.16 2001/02/11 19:14:05 aaron Exp $
 #
 # name	getty				type	status		comments
 #
@@ -12,6 +12,10 @@ ttyC4	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC5	"/usr/libexec/getty Pc"		vt220	on  secure
 ttyC6	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC7	"/usr/libexec/getty Pc"		vt220	off secure
+ttyC8	"/usr/libexec/getty Pc"		vt220	off secure
+ttyC9	"/usr/libexec/getty Pc"		vt220	off secure
+ttyCa	"/usr/libexec/getty Pc"		vt220	off secure
+ttyCb	"/usr/libexec/getty Pc"		vt220	off secure
 tty00	"/usr/libexec/getty std.9600"	unknown off
 tty01	"/usr/libexec/getty std.9600"	unknown off
 tty02	"/usr/libexec/getty std.9600"	unknown off

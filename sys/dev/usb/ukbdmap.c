@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.3 2001/02/04 01:26:07 aaron Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.4 2001/02/11 19:14:06 aaron Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.5 2000/04/27 15:26:49 augustss Exp $	*/
 
 /*
@@ -112,8 +112,8 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(65),  KS_Cmd_Screen7,	KS_f8,
     KC(66),  KS_Cmd_Screen8,	KS_f9,
     KC(67),  KS_Cmd_Screen9,	KS_f10,
-    KC(68), 			KS_f11,
-    KC(69), 			KS_f12,
+    KC(68),  KS_Cmd_Screen10,	KS_f11,
+    KC(69),  KS_Cmd_Screen11,	KS_f12,
     KC(70),			KS_Print_Screen,
     KC(71), 			KS_Hold_Screen,
     KC(72),			KS_Pause,

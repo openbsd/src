@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.6 2001/02/10 19:42:06 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.7 2001/02/11 19:14:06 aaron Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -423,6 +423,8 @@
 #define KS_Cmd_Screen7		0xf407
 #define KS_Cmd_Screen8		0xf408
 #define KS_Cmd_Screen9		0xf409
+#define KS_Cmd_Screen10		0xf40a
+#define KS_Cmd_Screen11		0xf40b
 #define KS_Cmd_Debugger		0xf420
 #define KS_Cmd_ResetEmul	0xf421
 #define KS_Cmd_ResetClose	0xf422
