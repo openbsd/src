@@ -1,0 +1,131 @@
+.\"	$OpenBSD: rln.4,v 1.1 1999/06/21 23:40:43 d Exp $
+.Dd 2 April, 1999
+.Os
+.Dt RLN 4
+.Sh NAME
+.Nm rln
+.Nd device driver for RangeLAN2-based wireless network cards
+.Sh SYNOPSIS
+.\" .Cd "rln0 at isa? port ? irq ? flags ?"
+.\" .Cd "rln* at isapnp? flags ?"
+.Cd "rln* at pcmcia? function ? flags ?"
+.Sh DESCRIPTION
+The
+.Nm
+device driver supports at least the following cards:
+.Bl -bullet -compact
+.\" .It
+.\" RangeLAN2 ISA
+.\" .It
+.\" RangeLAN2 630x series Mini ISA
+.\" .It
+.\" RangeLAN2 633x series Micro design-in module
+.\" .It
+.\" RangeLAN2 and Symphony PC Cards
+.\" .It
+.\" Symphony PnP ISA Card
+.It
+Digital RoamAbout FH 2400 PC-Card
+.El
+.Pp
+The Proxim RangeLAN2 air protocol is incompatible with the older 
+RangeLAN(1) cards, Lucent Technologies' WaveLan cards, and with
+the newer 802.11 cards in general.
+.Pp
+The RangeLAN2 cards communicate using radio signals near the 2.4GHz 
+part of the spectrum.
+This frequency happens to co-incide with that of strong harmonics emitted 
+by common consumer microwave ovens. You can guess the rest.
+.\" .Sh CONFIGURATION
+.\" Because there is no reliable way to determine between 
+.\" the different types of cards listed above, 
+.\" the following flags can be specified in the kernel config file:
+.\" .Pp
+.\" .Bl -tag -offset indent -width 10n -compact
+.\" .It RangeLAN2 630x series (Mini ISA)
+.\" .Cd flags 1
+.\" .It RangeLAN2 633x series (Micro ISA)
+.\" .Cd flags 3
+.\" .It Symphony PnP ISA
+.\" .Cd flags 3
+.\" .El
+.\" .Pp
+.\" Flags can be omitted for devices not listed here, and PC-Card devices.
+.Pp
+In the event of errors, the card can be reset by using
+.Xr ifconfig 8
+to bring the card down, then up.
+.Sh MEDIA SELECTION
+Not supported.
+The medium used by the device is always air.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "rln0: hardware fault"
+The card reported a hardware fault condition. Check the antenna.
+The interface is automatically marked down.
+.It "rln0: synchronised to ? (?) channel ?/?"
+The card has successfully synchronised with a nearby unit.
+Packets are only transmitted when the unit has synchronisation with
+another.
+.It "rln0: lost sync"
+Synchronisation was lost. Check for microwave ovens being used.
+.It "rln0: nothing to sync to; now master"
+The card was unsuccessful in (re-)synchronising with any other unit, 
+and was configured as an alternate master.
+.It "rln0: packet too big (? > ?)"
+The card generate a message bigger than the maximum size allowable for Ethernet.
+.It "rln0: command error 0x?? command ??"
+The card reported an error condition in the host-card protocol.
+.It "rln0: reset timeout"
+An attempt to hard reset the card failed. This is either a serious hardware
+fault, or a bus conflict.
+.It "rln0: tx_request timed out, status 0x??"
+The host-to-card message transfer protocol timed out. This could mean
+a duplex transfer is in progress and the interrupt service routine has not
+run. Check the cpu load.
+.It "rln0: lost message ?? seq ?"
+An expected response to the command did not appear within a reasonable time.
+.It "rln0: unknown RangeLAN2 wireless network card"
+The card model was not matched in the known-card tables. 
+Please send output of
+.Xr dmesg 8
+and a description of your card in using
+.Xr sendbug 1
+so that this can be rectified.
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.\" .Xr isa 4 ,
+.\" .Xr isapnp 4 ,
+.Xr pcmcia 4 ,
+.Xr cnw 4 ,
+.Xr ifconfig 8 ,
+.Pa "http://www.proxim.com/"
+.Sh AUTHOR
+David Leonard, 
+Dept Computer Science and Electrical Engineering, University of Queensland
+.Pa "<david.leonard@csee.uq.edu.au>"
+.Pp
+Information and ideas gleaned from disassembly of Dave Koberstein's 
+.Pa "<davek@komacke.com>"
+Linux driver (which apparently uses Proxim code),
+from Yoichi Shinoda's
+.Pa "<shinoda@cs.washington.edu>"
+BSDI driver, and
+Geoff Voelker's
+.Pa "<voelker@cs.washington.edu>"
+Linux port of the same.
+.Sh BUGS
+This driver has not been tested with lots of cards, so there are bound
+to be subtle timing problems with different hardware. 
+It should also work with the Symphony PC cards.
+.Pp
+I couldn't figure out how to make roaming work, nor how to interpret
+the RSSI link quality values.
+.Pp
+There is no way to change the channel or security ID on the card, or
+to make it a master, except through source code. 
+This is because it is currently impossible under
+OpenBSD to trigger such changes through calls to
+.Xr ioctl 2
+on the interface.
