@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.16 2003/06/30 20:02:46 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.17 2003/07/03 09:13:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -473,7 +473,7 @@ pfr_buf_add(struct pfr_buffer *b, const void *e)
 	if (b->pfrb_size == b->pfrb_msize)
 		if (pfr_buf_grow(b, 0))
 			return (-1);
-	memcpy(b->pfrb_caddr + bs * b->pfrb_size, e, bs);
+	memcpy(((caddr_t)b->pfrb_caddr) + bs * b->pfrb_size, e, bs);
 	b->pfrb_size++;
 	return (0);
 }
@@ -494,7 +494,7 @@ pfr_buf_next(struct pfr_buffer *b, const void *prev)
 	if (prev == NULL)
 		return (b->pfrb_caddr);
 	bs = buf_esize[b->pfrb_type];
-	if ((((caddr_t)prev) - b->pfrb_caddr) / bs >= b->pfrb_size - 1)
+	if ((((caddr_t)prev)-((caddr_t)b->pfrb_caddr)) / bs >= b->pfrb_size-1)
 		return (NULL); 
 	return (((caddr_t)prev) + bs);
 }
@@ -538,7 +538,8 @@ pfr_buf_grow(struct pfr_buffer *b, int minsize)
 		b->pfrb_caddr = realloc(b->pfrb_caddr, b->pfrb_msize * bs);
 		if (b->pfrb_caddr == NULL)
 			return (-1);
-		bzero(b->pfrb_caddr + omsize * bs, (b->pfrb_msize-omsize) * bs);
+		bzero(((caddr_t)b->pfrb_caddr) + omsize * bs,
+		    (b->pfrb_msize-omsize) * bs);
 	}
 	return (0);
 }
@@ -557,25 +558,31 @@ pfr_buf_clear(struct pfr_buffer *b)
 	b->pfrb_size = b->pfrb_msize = 0;
 }
 
-void
-pfr_buf_load(char *file, int nonetwork, void (*append_addr)(char *, int))
+int
+pfr_buf_load(struct pfr_buffer *b, char *file, int nonetwork,
+    int (*append_addr)(struct pfr_buffer *, char *, int))
 {
 	FILE	*fp;
 	char	 buf[BUF_SIZE];
+	int	 rv;
 
 	if (file == NULL)
-		return;
+		return (0);
 	if (!strcmp(file, "-"))
 		fp = stdin;
 	else {
 		fp = fopen(file, "r");
 		if (fp == NULL)
-			err(1, "%s", file);
+			return (-1);
 	}
-	while (pfr_next_token(buf, fp))
-		append_addr(buf, nonetwork);
+	while ((rv = pfr_next_token(buf, fp)) == 1)
+		if (append_addr(b, buf, nonetwork)) {
+			rv = -1;
+			break;
+		}
 	if (fp != stdin)
 		fclose(fp);
+	return (rv);
 }
 
 int
@@ -607,8 +614,10 @@ pfr_next_token(char buf[BUF_SIZE], FILE *fp)
 			buf[i++] = next_ch;
 		next_ch = fgetc(fp);
 	} while (!feof(fp) && !isspace(next_ch));
-	if (i >= BUF_SIZE)
-		errx(1, "address too long (%d bytes)", i);
+	if (i >= BUF_SIZE) {
+		errno = EINVAL;
+		return (-1);
+	}
 	buf[i] = '\0';
 	return (1);
 }

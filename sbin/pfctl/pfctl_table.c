@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.45 2003/06/29 12:22:39 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.46 2003/07/03 09:13:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -51,31 +51,19 @@
 #include "pfctl_parser.h"
 #include "pfctl.h"
 
-#define BUF_SIZE 256
-
 extern void	usage(void);
 static int	pfctl_table(int, char *[], char *, const char *, char *,
 		    const char *, const char *, int);
-static void	grow_buffer(size_t, int);
 static void	print_table(struct pfr_table *, int, int);
 static void	print_tstats(struct pfr_tstats *, int);
-static void	load_addr(int, char *[], char *, int);
-static void	append_addr(char *, int);
+static int	load_addr(struct pfr_buffer *, int, char *[], char *, int);
 static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
 static void	radix_perror(void);
 static void	inactive_cleanup(void);
 static void	xprintf(int, const char *, ...);
 
-static union {
-	caddr_t			 caddr;
-	struct pfr_table	*tables;
-	struct pfr_addr		*addrs;
-	struct pfr_tstats	*tstats;
-	struct pfr_astats	*astats;
-} buffer, buffer2;
-
-static int	 size, msize, ticket, inactive;
+static int	 ticket, inactive;
 extern char	*__progname;
 
 static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
@@ -88,7 +76,7 @@ static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 		    (opts & PF_OPT_DUMMYACTION)) &&	\
 		    (fct)) {				\
 			radix_perror();			\
-			return (1);			\
+			goto _error;			\
 		}					\
 	} while (0)
 
@@ -131,13 +119,19 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
     char *file, const char *anchor, const char *ruleset, int opts)
 {
 	struct pfr_table  table;
+	struct pfr_buffer b, b2;
+	struct pfr_addr	 *a, *a2;
 	int		  nadd = 0, ndel = 0, nchange = 0, nzero = 0;
-	int		  i, flags = 0, nmatch = 0;
+	int		  rv = 0, flags = 0, nmatch = 0;
+	void		 *p;
 
 	if (command == NULL)
 		usage();
 	if (opts & PF_OPT_NOACTION)
 		flags |= PFR_FLAG_DUMMY;
+
+	bzero(&b, sizeof(b));
+	bzero(&b2, sizeof(b2));
 	bzero(&table, sizeof(table));
 	if (tname != NULL) {
 		if (strlen(tname) >= PF_TABLE_NAME_SIZE)
@@ -151,36 +145,34 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 	    strlcpy(table.pfrt_ruleset, ruleset,
 	    sizeof(table.pfrt_ruleset)) >= sizeof(table.pfrt_ruleset))
 		errx(1, "pfctl_table: strlcpy");
+
 	if (!strcmp(command, "-F")) {
 		if (argc || file != NULL)
 			usage();
 		RVTEST(pfr_clr_tables(&table, &ndel, flags));
 		xprintf(opts, "%d tables deleted", ndel);
 	} else if (!strcmp(command, "-s")) {
+		b.pfrb_type = (opts & PF_OPT_VERBOSE2) ?
+		    PFRB_TSTATS : PFRB_TABLES;
 		if (argc || file != NULL)
 			usage();
 		for (;;) {
-			if (opts & PF_OPT_VERBOSE2) {
-				grow_buffer(sizeof(struct pfr_tstats), size);
-				size = msize;
-				RVTEST(pfr_get_tstats(&table, buffer.tstats,
-				    &size, flags));
-			} else {
-				grow_buffer(sizeof(struct pfr_table), size);
-				size = msize;
-				RVTEST(pfr_get_tables(&table, buffer.tables,
-				    &size, flags));
-			}
-			if (size <= msize)
+			pfr_buf_grow(&b, b.pfrb_size);
+			b.pfrb_size = b.pfrb_msize;
+			if (opts & PF_OPT_VERBOSE2)
+				RVTEST(pfr_get_tstats(&table,
+				    b.pfrb_caddr, &b.pfrb_size, flags));
+			else
+				RVTEST(pfr_get_tables(&table,
+				    b.pfrb_caddr, &b.pfrb_size, flags));
+			if (b.pfrb_size <= b.pfrb_msize)
 				break;
 		}
-		for (i = 0; i < size; i++)
+		PFRB_FOREACH(p, &b)
 			if (opts & PF_OPT_VERBOSE2)
-				print_tstats(buffer.tstats+i,
-				    opts & PF_OPT_DEBUG);
+				print_tstats(p, opts & PF_OPT_DEBUG);
 			else
-				print_table(buffer.tables+i,
-				    opts & PF_OPT_VERBOSE,
+				print_table(p, opts & PF_OPT_VERBOSE,
 				    opts & PF_OPT_DEBUG);
 	} else if (!strcmp(command, "kill")) {
 		if (argc || file != NULL)
@@ -193,47 +185,51 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		RVTEST(pfr_clr_addrs(&table, &ndel, flags));
 		xprintf(opts, "%d addresses deleted", ndel);
 	} else if (!strcmp(command, "add")) {
-		load_addr(argc, argv, file, 0);
+		b.pfrb_type = PFRB_ADDRS;
+		if (load_addr(&b, argc, argv, file, 0))
+			goto _error;
 		CREATE_TABLE;
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
-		RVTEST(pfr_add_addrs(&table, buffer.addrs, size, &nadd,
-		    flags));
-		xprintf(opts, "%d/%d addresses added", nadd, size);
+		RVTEST(pfr_add_addrs(&table, b.pfrb_caddr, b.pfrb_size,
+		    &nadd, flags));
+		xprintf(opts, "%d/%d addresses added", nadd, b.pfrb_size);
 		if (opts & PF_OPT_VERBOSE)
-			for (i = 0; i < size; i++)
-				if ((opts & PF_OPT_VERBOSE2) ||
-				    buffer.addrs[i].pfra_fback)
-					print_addrx(buffer.addrs+i, NULL,
+			PFRB_FOREACH(a, &b)
+				if ((opts & PF_OPT_VERBOSE2) || a->pfra_fback)
+					print_addrx(a, NULL,
 					    opts & PF_OPT_USEDNS);
 	} else if (!strcmp(command, "delete")) {
-		load_addr(argc, argv, file, 0);
+		b.pfrb_type = PFRB_ADDRS;
+		if (load_addr(&b, argc, argv, file, 0))
+			goto _error;
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
-		RVTEST(pfr_del_addrs(&table, buffer.addrs, size, &nadd,
-		    flags));
-		xprintf(opts, "%d/%d addresses deleted", nadd, size);
+		RVTEST(pfr_del_addrs(&table, b.pfrb_caddr, b.pfrb_size,
+		    &ndel, flags));
+		xprintf(opts, "%d/%d addresses deleted", ndel, b.pfrb_size);
 		if (opts & PF_OPT_VERBOSE)
-			for (i = 0; i < size; i++)
-				if ((opts & PF_OPT_VERBOSE2) ||
-				    buffer.addrs[i].pfra_fback)
-					print_addrx(buffer.addrs+i, NULL,
+			PFRB_FOREACH(a, &b)
+				if ((opts & PF_OPT_VERBOSE2) || a->pfra_fback)
+					print_addrx(a, NULL,
 					    opts & PF_OPT_USEDNS);
 	} else if (!strcmp(command, "replace")) {
-		load_addr(argc, argv, file, 0);
+		b.pfrb_type = PFRB_ADDRS;
+		if (load_addr(&b, argc, argv, file, 0))
+			goto _error;
 		CREATE_TABLE;
 		if (opts & PF_OPT_VERBOSE)
 			flags |= PFR_FLAG_FEEDBACK;
 		for (;;) {
-			int size2 = msize;
+			int sz2 = b.pfrb_msize;
 
-			RVTEST(pfr_set_addrs(&table, buffer.addrs, size,
-			    &size2, &nadd, &ndel, &nchange, flags));
-			if (size2 <= msize) {
-				size = size2;
+			RVTEST(pfr_set_addrs(&table, b.pfrb_caddr, b.pfrb_size,
+			    &sz2, &nadd, &ndel, &nchange, flags));
+			if (sz2 <= b.pfrb_msize) {
+				b.pfrb_size = sz2;
 				break;
 			} else
-				grow_buffer(sizeof(struct pfr_addr), size2);
+				pfr_buf_grow(&b, sz2);
 		}
 		if (nadd)
 			xprintf(opts, "%d addresses added", nadd);
@@ -244,63 +240,61 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		if (!nadd && !ndel && !nchange)
 			xprintf(opts, "no changes");
 		if (opts & PF_OPT_VERBOSE)
-			for (i = 0; i < size; i++)
-				if ((opts & PF_OPT_VERBOSE2) ||
-				    buffer.addrs[i].pfra_fback)
-					print_addrx(buffer.addrs+i, NULL,
+			PFRB_FOREACH(a, &b)
+				if ((opts & PF_OPT_VERBOSE2) || a->pfra_fback)
+					print_addrx(a, NULL,
 					    opts & PF_OPT_USEDNS);
 	} else if (!strcmp(command, "show")) {
+		b.pfrb_type = (opts & PF_OPT_VERBOSE) ?
+		    PFRB_ASTATS : PFRB_ADDRS;
 		if (argc || file != NULL)
 			usage();
 		for (;;) {
-			if (opts & PF_OPT_VERBOSE) {
-				grow_buffer(sizeof(struct pfr_astats), size);
-				size = msize;
-				RVTEST(pfr_get_astats(&table, buffer.astats,
-				    &size, flags));
-			} else {
-				grow_buffer(sizeof(struct pfr_addr), size);
-				size = msize;
-				RVTEST(pfr_get_addrs(&table, buffer.addrs,
-				    &size, flags));
-			}
-			if (size <= msize)
+			pfr_buf_grow(&b, b.pfrb_size);
+			b.pfrb_size = b.pfrb_msize;
+			if (opts & PF_OPT_VERBOSE)
+				RVTEST(pfr_get_astats(&table, b.pfrb_caddr,
+				    &b.pfrb_size, flags));
+			else
+				RVTEST(pfr_get_addrs(&table, b.pfrb_caddr,
+				    &b.pfrb_size, flags));
+			if (b.pfrb_size <= b.pfrb_msize)
 				break;
 		}
-		for (i = 0; i < size; i++)
-			if (opts & PF_OPT_VERBOSE) {
-				print_astats(buffer.astats+i,
-				    opts & PF_OPT_USEDNS);
-			} else {
-				print_addrx(buffer.addrs+i, NULL,
-				    opts & PF_OPT_USEDNS);
-			}
+		PFRB_FOREACH(p, &b)
+			if (opts & PF_OPT_VERBOSE)
+				print_astats(p, opts & PF_OPT_USEDNS);
+			else
+				print_addrx(p, NULL, opts & PF_OPT_USEDNS);
 	} else if (!strcmp(command, "test")) {
-		load_addr(argc, argv, file, 1);
+		b.pfrb_type = PFRB_ADDRS;
+		b2.pfrb_type = PFRB_ADDRS;
+
+		if (load_addr(&b, argc, argv, file, 1))
+			goto _error;
 		if (opts & PF_OPT_VERBOSE2) {
 			flags |= PFR_FLAG_REPLACE;
-			buffer2.caddr = calloc(sizeof(buffer.addrs[0]), size);
-			if (buffer2.caddr == NULL)
-				err(1, "calloc");
-			memcpy(buffer2.addrs, buffer.addrs, size *
-			    sizeof(buffer.addrs[0]));
+			PFRB_FOREACH(a, &b)
+				if (pfr_buf_add(&b2, a))
+					err(1, "duplicate buffer");
 		}
-		RVTEST(pfr_tst_addrs(&table, buffer.addrs, size, &nmatch,
-		    flags));
-		xprintf(opts, "%d/%d addresses match", nmatch, size);
+		RVTEST(pfr_tst_addrs(&table, b.pfrb_caddr, b.pfrb_size,
+		    &nmatch, flags));
+		xprintf(opts, "%d/%d addresses match", nmatch, b.pfrb_size);
 		if (opts & PF_OPT_VERBOSE && !(opts & PF_OPT_VERBOSE2))
-			for (i = 0; i < size; i++)
-				if (buffer.addrs[i].pfra_fback == PFR_FB_MATCH)
-					print_addrx(buffer.addrs+i, NULL,
+			PFRB_FOREACH(a, &b)
+				if (a->pfra_fback == PFR_FB_MATCH)
+					print_addrx(a, NULL,
 					    opts & PF_OPT_USEDNS);
 		if (opts & PF_OPT_VERBOSE2) {
-			for (i = 0; i < size; i++)
-				print_addrx(buffer2.addrs+i, buffer.addrs+i,
-				    opts & PF_OPT_USEDNS);
-			free(buffer2.addrs);
+			a2 = NULL;
+			PFRB_FOREACH(a, &b) {
+				a2 = pfr_buf_next(&b2, a2);
+				print_addrx(a2, a, opts & PF_OPT_USEDNS);
+			}
 		}
-		if (nmatch < size)
-			return (2);
+		if (nmatch < b.pfrb_size)
+			rv = 2;
 	} else if (!strcmp(command, "zero")) {
 		if (argc || file != NULL)
 			usage();
@@ -309,39 +303,14 @@ pfctl_table(int argc, char *argv[], char *tname, const char *command,
 		xprintf(opts, "%d table/stats cleared", nzero);
 	} else
 		warnx("pfctl_table: unknown command '%s'", command);
-	if (buffer.caddr)
-		free(buffer.caddr);
-	size = msize = 0;
-	return (0);
-}
+	goto _cleanup;
 
-void
-grow_buffer(size_t bs, int minsize)
-{
-	if (minsize != 0 && minsize <= msize) {
-		warnx("grow_buffer: superfluous call");
-		return;
-	}
-	if (!msize) {
-		msize = minsize;
-		if (msize < 64)
-			msize = 64;
-		buffer.caddr = calloc(bs, msize);
-		if (buffer.caddr == NULL)
-			err(1, "calloc");
-	} else {
-		int omsize = msize;
-		if (minsize == 0)
-			msize *= 2;
-		else
-			msize = minsize;
-		if (msize < 0 || msize >= SIZE_T_MAX / bs)
-			errx(1, "msize overflow");
-		buffer.caddr = realloc(buffer.caddr, msize * bs);
-		if (buffer.caddr == NULL)
-			err(1, "realloc");
-		bzero(buffer.caddr + omsize * bs, (msize-omsize) * bs);
-	}
+_error:
+	rv = -1;
+_cleanup:
+	pfr_buf_clear(&b);
+	pfr_buf_clear(&b2);
+	return (rv);
 }
 
 void
@@ -391,73 +360,27 @@ print_tstats(struct pfr_tstats *ts, int debug)
 			    ts->pfrts_bytes[dir][op]);
 }
 
-void
-load_addr(int argc, char *argv[], char *file, int nonetwork)
+int
+load_addr(struct pfr_buffer *b, int argc, char *argv[], char *file,
+    int nonetwork)
 {
 	while (argc--)
-		append_addr(*argv++, nonetwork);
-	pfr_buf_load(file, nonetwork, append_addr);
-}
-
-void
-append_addr(char *s, int test)
-{
-	char			 buf[BUF_SIZE], *r;
-	int			 not = 0;
-	struct node_host	*n, *h;
-
-	for (r = s; *r == '!'; r++)
-		not = !not;
-	if (strlcpy(buf, r, sizeof(buf)) >= sizeof(buf))
-		errx(1, "address too long");
-
-	if ((n = host(buf)) == NULL)
-		exit (1);
-
-	do {
-		if (size >= msize)
-			grow_buffer(sizeof(struct pfr_addr), 0);
-		buffer.addrs[size].pfra_not = not;
-		switch (n->af) {
-		case AF_INET:
-			buffer.addrs[size].pfra_af = AF_INET;
-			buffer.addrs[size].pfra_ip4addr.s_addr =
-			    n->addr.v.a.addr.addr32[0];
-			buffer.addrs[size].pfra_net =
-			    unmask(&n->addr.v.a.mask, AF_INET);
-			if (test && (not || buffer.addrs[size].pfra_net != 32))
-				errx(1, "illegal test address");
-			if (buffer.addrs[size].pfra_net > 32)
-				errx(1, "illegal netmask %d",
-				    buffer.addrs[size].pfra_net);
-			break;
-		case AF_INET6:
-			buffer.addrs[size].pfra_af = AF_INET6;
-			memcpy(&buffer.addrs[size].pfra_ip6addr,
-			    &n->addr.v.a.addr.v6, sizeof(struct in6_addr));
-			buffer.addrs[size].pfra_net =
-			    unmask(&n->addr.v.a.mask, AF_INET6);
-			if (test && (not || buffer.addrs[size].pfra_net != 128))
-				errx(1, "illegal test address");
-			if (buffer.addrs[size].pfra_net > 128)
-				errx(1, "illegal netmask %d",
-				    buffer.addrs[size].pfra_net);
-			break;
-		default:
-			errx(1, "unknown address family %d", n->af);
-			break;
+		if (append_addr(b, *argv++, nonetwork)) {
+			if (errno)
+				warn("cannot decode %s", argv[-1]);
+			return (-1);
 		}
-		size++;
-		h = n;
-		n = n->next;
-		free(h);
-	} while (n != NULL);
+	if (pfr_buf_load(b, file, nonetwork, append_addr)) {
+		warn("cannot load %s", file);
+		return (-1);
+	}
+	return (0);
 }
 
 void
 print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 {
-	char		ch, buf[BUF_SIZE] = "{error}";
+	char		ch, buf[256] = "{error}";
 	char		fb[] = { ' ', 'M', 'A', 'D', 'C', 'Z', 'X', ' ', 'Y' };
 	unsigned int	fback, hostnet;
 
@@ -536,41 +459,12 @@ pfctl_begin_table(void)
 	}
 }
 
-void
-pfctl_append_addr(char *addr, int net, int neg)
-{
-	char *p = NULL;
-	int rval;
-
-	if (net < 0 && !neg) {
-		append_addr(addr, 0);
-		return;
-	}
-	if (net >= 0 && !neg)
-		rval = asprintf(&p, "%s/%d", addr, net);
-	else if (net < 0)
-		rval = asprintf(&p, "!%s", addr);
-	else
-		rval = asprintf(&p, "!%s/%d", addr, net);
-	if (rval == -1 || p == NULL) {
-		radix_perror();
-		exit(1);
-	}
-	append_addr(p, 0);
-	free(p);
-}
-
-void
-pfctl_append_file(char *file)
-{
-	load_addr(0, NULL, file, 0);
-}
-
-void
+int
 pfctl_define_table(char *name, int flags, int addrs, int noaction,
-    const char *anchor, const char *ruleset)
+    const char *anchor, const char *ruleset, struct pfr_buffer *ab)
 {
 	struct pfr_table tbl;
+	int rv = 0;
 
 	if (!noaction) {
 		bzero(&tbl, sizeof(tbl));
@@ -584,14 +478,13 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction,
 		tbl.pfrt_flags = flags;
 
 		inactive = 1;
-		if (pfr_ina_define(&tbl, buffer.addrs, size, NULL, NULL,
-		    ticket, addrs ? PFR_FLAG_ADDRSTOO : 0) != 0) {
-			radix_perror();
-			exit(1);
+		if (pfr_ina_define(&tbl, ab->pfrb_caddr, ab->pfrb_size, NULL,
+		    NULL, ticket, addrs ? PFR_FLAG_ADDRSTOO : 0) != 0) {
+			rv = -1;
 		}
 	}
-	bzero(buffer.addrs, size * sizeof(buffer.addrs[0]));
-	size = 0;
+	pfr_buf_clear(ab);
+	return (rv);
 }
 
 void

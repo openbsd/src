@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.393 2003/06/19 22:08:35 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.394 2003/07/03 09:13:05 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -855,10 +855,14 @@ tabledef	: TABLE '<' STRING '>' table_opts {
 				    PF_TABLE_NAME_SIZE - 1);
 				YYERROR;
 			}
-			pfctl_define_table($3, $5.flags, $5.init_addr,
+			if (pfctl_define_table($3, $5.flags, $5.init_addr,
 			    (pf->opts & PF_OPT_NOACTION) || !(pf->loadopt &
 				(PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)),
-				pf->anchor, pf->ruleset);
+				pf->anchor, pf->ruleset, pf->ab)) {
+				yyerror("cannot define table %s: %s", $3,
+				    pfr_strerror(errno));
+				YYERROR;				
+			}
 		}
 		;
 
@@ -889,7 +893,12 @@ table_opt	: STRING
 		}
 		| '{' tableaddrs '}'	{ table_opts.init_addr = 1; }
 		| FILENAME STRING	{
-			pfctl_append_file($2);
+			if(pfr_buf_load(pf->ab, $2, 0, append_addr)) {
+				if (errno)
+                        		yyerror("cannot load %s: %s", $2,
+                        		    pfr_strerror(errno));
+                        	YYERROR;
+			}
 			table_opts.init_addr = 1;
 		}
 		;
@@ -898,10 +907,29 @@ tableaddrs	: /* empty */
 		| tableaddrs tableaddr comma
 
 tableaddr	: not STRING {
-			pfctl_append_addr($2, -1, $1);
+			if (append_addr_not(pf->ab, $2, 0, $1)) {
+				if (errno)
+					yyerror("cannot add %s: %s", $2,
+					    pfr_strerror(errno));
+				YYERROR;
+			}
 		}
 		| not STRING '/' number {
-			pfctl_append_addr($2, $4, $1);
+			char *buf = NULL;
+                        
+			if (asprintf(&buf, "%s/%d", $2, $4) < 0) {
+				if (errno)
+					yyerror("cannot add %s/%d: %s", $2, $4,
+					    strerror(errno));
+                                YYERROR;
+			} else if (append_addr_not(pf->ab, buf, 0, $1)) {
+				if (errno)
+					yyerror("cannot add %s: %s", buf,
+					    pfr_strerror(errno));
+				free(buf);
+				YYERROR;
+			}
+			free(buf);
 		}
 		;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.21 2003/06/30 20:02:46 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.22 2003/07/03 09:13:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -38,7 +38,7 @@ struct pfr_buffer {
 	int	 pfrb_type;	/* type of content, see enum above */
 	int	 pfrb_size;	/* number of objects in buffer */
 	int	 pfrb_msize;	/* maximum number of objects in buffer */
-	caddr_t	 pfrb_caddr;	/* malloc'ated memory area */
+	void	*pfrb_caddr;	/* malloc'ated memory area */
 };
 #define PFRB_FOREACH(var, buf)				\
 	for((var) = pfr_buf_next((buf), NULL);		\
@@ -71,7 +71,8 @@ void	 pfr_buf_clear(struct pfr_buffer *);
 int	 pfr_buf_add(struct pfr_buffer *, const void *);
 void	*pfr_buf_next(struct pfr_buffer *, const void *);
 int	 pfr_buf_grow(struct pfr_buffer *, int);
-void	 pfr_buf_load(char *, int, void (*)(char *, int));
+int	 pfr_buf_load(struct pfr_buffer *, char *, int,
+	    int (*)(struct pfr_buffer *, char *, int));
 char	*pfr_strerror(int);
 
 int	 pfctl_clear_tables(const char *, const char *, int);

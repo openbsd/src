@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.164 2003/06/12 09:40:33 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.165 2003/07/03 09:13:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1169,4 +1169,72 @@ host_dns(const char *s, int v4mask, int v6mask)
 	freeaddrinfo(res0);
 
 	return (h);
+}
+
+/*
+ * convert a hostname to a list of addresses and put them in the given buffer.
+ * test:
+ *	if set to 1, only simple addresses are accepted (no netblock, no "!").
+ */
+int
+append_addr(struct pfr_buffer *b, char *s, int test) 
+{
+	return append_addr_not(b, s, test, 0);
+}
+
+/*
+ * same as previous function, but with the ability to "negate" the result.
+ * not:
+ *	setting it to 1 is equivalent to adding "!" in front of parameter s.
+ */
+int
+append_addr_not(struct pfr_buffer *b, char *s, int test, int not)
+{
+	char			 buf[256], *r;
+	int			 bits;
+	struct node_host	*n, *h;
+	struct pfr_addr		 addr;
+
+	for (r = s; *r == '!'; r++)
+		not = !not;
+	if (strlcpy(buf, r, sizeof(buf)) >= sizeof(buf)) {
+		errno = EINVAL;
+		return (-1);
+	}
+	if ((n = host(buf)) == NULL) {
+		errno = 0;
+		return (-1);
+	}
+	do {
+		bzero(&addr, sizeof(addr));
+		addr.pfra_not = not;
+		addr.pfra_af = n->af;
+		addr.pfra_net = unmask(&n->addr.v.a.mask, n->af);
+		switch (n->af) {
+		case AF_INET:
+			addr.pfra_ip4addr.s_addr = n->addr.v.a.addr.addr32[0];
+			bits = 32;
+			break;
+		case AF_INET6:
+			memcpy(&addr.pfra_ip6addr, &n->addr.v.a.addr.v6,
+			    sizeof(struct in6_addr));
+			bits = 128;
+			break;
+		default:
+			errno = EINVAL;
+			return (-1);
+		}
+		if ((test && (not || addr.pfra_net != bits)) ||
+		    addr.pfra_net > bits) {
+			errno = EINVAL;
+			return (-1);
+		}
+		if (pfr_buf_add(b, &addr))
+			return (-1);
+		h = n;
+		n = n->next;
+		free(h);
+	} while (n != NULL);
+
+	return (0);
 }

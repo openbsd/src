@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.61 2003/05/19 20:21:53 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.62 2003/07/03 09:13:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -65,6 +65,7 @@ struct pfctl {
 	struct pfioc_rule *prule[PF_RULESET_MAX];
 	struct pfioc_altq *paltq;
 	struct pfioc_queue *pqueue;
+	struct pfr_buffer *ab;		/* address buffer */
 	const char *anchor;
 	const char *ruleset;
 };
@@ -154,9 +155,8 @@ void	 print_queue(const struct pf_altq *, unsigned, struct node_queue_bw *,
 	     int, struct node_queue_opt *);
 
 void	pfctl_begin_table(void);
-void	pfctl_append_addr(char *, int, int);
-void	pfctl_append_file(char *);
-void	pfctl_define_table(char *, int, int, int, const char *, const char *);
+int	pfctl_define_table(char *, int, int, int, const char *, const char *,
+	    struct pfr_buffer *);
 void	pfctl_commit_table(void);
 
 struct icmptypeent {
@@ -195,5 +195,8 @@ void			 ifa_load(void);
 struct node_host	*ifa_exists(const char *);
 struct node_host	*ifa_lookup(const char *, enum pfctl_iflookup_mode);
 struct node_host	*host(const char *);
+
+int			 append_addr(struct pfr_buffer *, char *, int);
+int			 append_addr_not(struct pfr_buffer *, char *, int, int);
 
 #endif /* _PFCTL_PARSER_H_ */
