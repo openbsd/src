@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 1996/07/29 22:58:27 niklas Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.5 1996/10/18 14:47:07 niklas Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.2.4.2 1996/06/13 18:35:23 cgd Exp $	*/
 
 /*
@@ -81,9 +81,10 @@ struct bootdev_data {
 	char	*ctrl_dev_type;
 };
 
+void	device_register __P((struct device *, void *));
 void	set_clockintr __P((void));
 void	set_iointr __P((void (*)(void *, int)));
-int	badaddr			__P((void *, u_int64_t));
+int	badaddr __P((void *, u_int64_t));
 
 #ifdef EVCNT_COUNTERS
 extern struct evcnt clock_intr_evcnt;
