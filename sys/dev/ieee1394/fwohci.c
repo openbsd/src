@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.2 2002/06/26 15:52:13 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.3 2002/07/07 13:41:27 tdeval Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*-
@@ -2347,8 +2347,13 @@ fwohci_configrom_init(struct fwohci_softc *sc)
 	CFR_START_UNIT(&cfr, 2);
 	CFR_PUT_VALUE(&cfr, 0, 0);		/* textual descriptor */
 	CFR_PUT_DATA1(&cfr, 0);			/* minimal ASCII */
+#ifdef	__NetBSD__
 	CFR_PUT_DATA4(&cfr, 'N', 'e', 't', 'B');
 	CFR_PUT_DATA4(&cfr, 'S', 'D', 0x00, 0x00);
+#else
+	CFR_PUT_DATA4(&cfr, 'O', 'p', 'e', 'n');
+	CFR_PUT_DATA4(&cfr, 'B', 'S', 'D', 0x00);
+#endif
 	CFR_END_UNIT(&cfr);
 
 #ifdef INET
