@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 1999/12/08 12:30:17 itojun Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2000/01/11 01:14:26 fgsch Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.19 1999/12/08 12:30:17 itojun Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.20 2000/01/11 01:14:26 fgsch Exp $";
 #endif
 #endif /* not lint */
 
@@ -222,8 +222,6 @@ struct protox ipxprotox[] = {
 	  ipx_stats,	"ipx" },
 	{ N_IPX,	N_SPXSTAT,	1,	ipxprotopr,
 	  spx_stats,	"spx" },
-	{ -1,		N_IPXERR,	1,	0,
-	  ipxerr_stats,	"ipx_err" },
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
