@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.1 2000/05/30 19:42:02 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.2 2000/06/13 18:36:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -31,7 +31,7 @@
  */
 /*
  * These cards has to be known to work so far:
- *	- HPA1991AC19  rev 0.0  (715/33) w/ weird hack to align sti rom ptrs
+ *	- HPA1991AC19  rev 0.02 (715/33) (byte-wide)
  *	- HPA208LC1280 rev 8.04 (712/80) just works
  */
 
