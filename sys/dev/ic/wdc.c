@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.75 2003/10/31 11:46:53 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.76 2003/11/05 20:45:18 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -100,6 +100,7 @@
 struct pool wdc_xfer_pool;
 
 void  __wdcerror(struct channel_softc *, char *);
+void  __wdcdo_reset(struct channel_softc *);
 int   __wdcwait_reset(struct channel_softc *, int);
 void  __wdccommand_done(struct channel_softc *, struct wdc_xfer *);
 void  __wdccommand_start(struct channel_softc *, struct wdc_xfer *);
@@ -657,10 +658,7 @@ wdcprobe(chp)
 	}
 
 	/* reset the channel */
-	CHP_WRITE_REG(chp,wdr_ctlr, WDCTL_RST | WDCTL_4BIT);
-	delay(10);
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
-	delay(2000);
+	__wdcdo_reset(chp);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
 	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
@@ -1034,10 +1032,7 @@ wdcreset(chp, verb)
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_RST | WDCTL_4BIT);
-	delay(10);
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
-	delay(2000);
+	__wdcdo_reset(chp);
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
@@ -1053,6 +1048,17 @@ wdcreset(chp, verb)
 	}
 
 	return (drv_mask1 != drv_mask2) ? 1 : 0;
+}
+
+void
+__wdcdo_reset(struct channel_softc *chp)
+{
+	wdc_set_drive(chp, 0);
+	DELAY(10);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT | WDCTL_RST);
+	delay(10000);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
+	delay(10000);
 }
 
 int
