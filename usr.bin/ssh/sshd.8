@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.15 1999/10/14 19:56:02 markus Exp $
+.\" $Id: sshd.8,v 1.16 1999/10/14 20:17:23 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -118,6 +118,8 @@ intended for debugging for the server.
 .It Fl f Ar configuration_file
 Specifies the name of the configuration file.  The default is
 .Pa /etc/sshd_config .
+.Nm
+refuses to start if there is no configuration file.
 .It Fl g Ar login_grace_time
 Gives the grace time for clients to authenticate themselves (default
 300 seconds).  If the client fails to authenticate the user within
