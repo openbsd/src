@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rd.c,v 1.1.1.1 1995/10/18 08:51:18 deraadt Exp $
+ *	$Id: rd.c,v 1.2 1996/01/12 20:20:38 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -36,9 +36,15 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/disk.h>
 
 static int rdmatch(struct device *parent, void *cf, void *aux);
 static void rdattach(struct device *parent, struct device *self, void *aux);
+
+struct rdsoftc {
+	struct	device sc_dev;		/* generic device glue */
+	struct	disk sc_dkdev;		/* generic disk glue */
+};
 
 struct cfdriver rdcd = {
 	NULL,
@@ -46,10 +52,14 @@ struct cfdriver rdcd = {
 	rdmatch,
 	rdattach,
 	DV_DISK,
-	sizeof(struct device),
+	sizeof(struct rdsoftc),
 	NULL,
 	0
 };
+
+void rdstrategy __P((struct buf *));
+
+struct dkdriver rddkdriver = { rdstrategy };
 
 #if !defined(RD_SIZE)
 #  define RD_SIZE	0x200000
@@ -70,7 +80,17 @@ rdattach(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
 {
+	struct rdsoftc *sc = (struct rdsoftc *)self;
+
 	printf(" addr 0x%x, size 0x%x\n", ram_disk, RD_SIZE);
+
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
+	sc->sc_dkdev.dk_driver = &rddkdriver;
+	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
+	disk_attach(&sc->sc_dkdev);
 }
 
 

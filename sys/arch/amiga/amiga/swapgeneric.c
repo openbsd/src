@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.19 1995/04/19 13:02:57 chopps Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.20 1996/01/07 22:01:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -133,7 +133,8 @@ getgenconf(bp)
 
 setconf()
 {
-	struct dkdevice *dkp;
+	struct disk *dkp;
+	struct device **devpp;
 	struct partition *pp;
 	struct genericconf *gc;
 	struct bdevsw *bdp;
@@ -157,16 +158,20 @@ setconf()
 		unit &= 0x7;
 		goto found;
 	}
+
 	for (gc = genericconf; gc->gc_driver; gc++) {
 		for (unit = gc->gc_driver->cd_ndevs - 1; unit >= 0; unit--) { 
 			if (gc->gc_driver->cd_devs[unit] == NULL)
 				continue;
+
 			/*
-			 * this is a hack these drivers should use
-			 * dk_dev and not another instance directly above.
+			 * Find the disk corresponding to the current
+			 * device.
 			 */
-			dkp = (struct dkdevice *)
-			   ((struct device *)gc->gc_driver->cd_devs[unit] + 1);
+			devpp = (struct device **)gc->gc_driver->cd_devs;
+			if ((dkp = disk_find(devpp[unit]->dv_xname)) == NULL)
+				continue;
+
 			if (dkp->dk_driver == NULL ||
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
@@ -179,7 +184,7 @@ setconf()
 				continue;
 			bdp->d_close(MAKEDISKDEV(major(gc->gc_root), unit, 
 			    0), FREAD | FNONBLOCK, 0, curproc);
-			pp = &dkp->dk_label.d_partitions[0];
+			pp = &dkp->dk_label->d_partitions[0];
 			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
 				continue;
 			goto found;

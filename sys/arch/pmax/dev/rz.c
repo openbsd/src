@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.12 1995/09/13 19:35:56 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.13 1996/01/07 22:02:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,9 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/dkstat.h>
+#include <sys/dkstat.h>		/* XXX */
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
@@ -139,16 +140,18 @@ struct rzstats {
 struct	rz_softc {
 	struct	pmax_scsi_device *sc_sd;	/* physical unit info */
 	pid_t	sc_format_pid;		/* process using "format" mode */
-	u_long	sc_openpart;		/* partitions open */
-	u_long	sc_bopenpart;		/* block partitions open */
-	u_long	sc_copenpart;		/* character partitions open */
 	short	sc_flags;		/* see below */
 	short	sc_type;		/* drive type from INQUIRY cmd */
 	u_int	sc_blks;		/* number of blocks on device */
 	int	sc_blksize;		/* device block size in bytes */
-	int	sc_bshift;		/* convert device blocks to DEV_BSIZE */
+	struct	disk sc_dkdev;		/* generic disk device info */
+#define	sc_label	sc_dkdev.dk_label	/* XXX compat */
+#define	sc_openpart	sc_dkdev.dk_openmask	/* XXX compat */
+#define	sc_bopenpart	sc_dkdev.dk_bopenmask	/* XXX compat */
+#define	sc_copenpart	sc_dkdev.dk_copenmask	/* XXX compat */
+#define	sc_bshift	sc_dkdev.dk_blkshift	/* XXX compat */
+	char	sc_xname[8];		/* XXX external name */
 	u_int	sc_wpms;		/* average xfer rate in 16bit wds/sec */
-	struct	disklabel sc_label;	/* disk label for this disk */
 	struct	rzstats sc_stats;	/* statisic counts */
 	struct	buf sc_tab;		/* queue of pending operations */
 	struct	buf sc_buf;		/* buf for doing I/O */
@@ -242,6 +245,7 @@ rzready(sc)
 		else
 			sc->sc_cmd.flags = 0;
 
+		disk_busy(&sc->sc_dkdev);	/* XXX */
 		(*sc->sc_sd->sd_cdriver->d_start)(&sc->sc_cmd);
 		if (!biowait(&sc->sc_buf))
 			break;
@@ -335,6 +339,14 @@ rzprobe(sd)
 	sc->sc_cmd.unit = sd->sd_unit;
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
 
+	/* XXX set up the external name */
+	bzero(sc->sc_xname, sizeof(sc->sc_xname));	/* XXX */
+	sprintf(sc->sc_xname, "rz%d", sd->sd_unit);	/* XXX */
+
+	/* Initialize the disk structure. */
+	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
+	sc->sc_dkdev.dk_name = sc->sc_xname;
+
 	/* try to find out what type of device this is */
 	sc->sc_format_pid = 1;		/* force use of sc_cdb */
 	sc->sc_flags = RZF_NOERR;	/* don't print SCSI errors */
@@ -407,7 +419,13 @@ rzprobe(sd)
 			goto bad;
 		}
 	}
-	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
+
+	/* XXX Support old-style instrumentation for now. */
+	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);
+
+	/* Attach the disk. */
+	disk_attach(&sc->sc_dkdev);
+
 	sc->sc_format_pid = 0;
 	sc->sc_flags |= RZF_ALIVE;
 	if (inqbuf.rmb)
@@ -528,7 +546,7 @@ rzstrategy(bp)
 	register int unit = rzunit(bp->b_dev);
 	register int part = rzpart(bp->b_dev);
 	register struct rz_softc *sc = &rz_softc[unit];
-	register struct partition *pp = &sc->sc_label.d_partitions[part];
+	register struct partition *pp = &sc->sc_label->d_partitions[part];
 	register daddr_t bn;
 	register long sz, s;
 
@@ -633,6 +651,8 @@ rzstart(unit)
 				unit, bp->b_bcount);
 #endif
 		sc->sc_stats.rztransfers++;
+
+		/* XXX Support old-style instrumentation for now. */
 		if ((n = sc->sc_sd->sd_dk) >= 0) {
 			dk_busy |= 1 << n;
 			++dk_seek[n];
@@ -640,6 +660,11 @@ rzstart(unit)
 			dk_wds[n] += bp->b_bcount >> 6;
 		}
 	}
+
+
+	/* Instrumentation. */
+	disk_busy(&sc->sc_dkdev);
+	sc->sc_dkdev.dk_seek++;		/* XXX */
 
 	/* tell controller to start this command */
 	(*sc->sc_sd->sd_cdriver->d_start)(&sc->sc_cmd);
@@ -663,8 +688,13 @@ rzdone(unit, error, resid, status)
 		printf("rz%d: bp == NULL\n", unit);
 		return;
 	}
+
+	/* XXX Support old-style instrumentation for now. */
 	if (sd->sd_dk >= 0)
 		dk_busy &= ~(1 << sd->sd_dk);
+
+	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid));
+
 	if (sc->sc_flags & RZF_SENSEINPROGRESS) {
 		sc->sc_flags &= ~RZF_SENSEINPROGRESS;
 		sc->sc_tab.b_actf = bp = bp->b_actf;	/* remove sc_errbuf */
@@ -745,7 +775,7 @@ rzgetinfo(dev)
 {
 	register int unit = rzunit(dev);
 	register struct rz_softc *sc = &rz_softc[unit];
-	register struct disklabel *lp = &sc->sc_label;
+	register struct disklabel *lp = sc->sc_label;
 	register int i;
 	char *msg;
 	int part;
@@ -834,7 +864,7 @@ rzopen(dev, flags, mode, p)
 	register struct disklabel *lp;
 	register int i;
 	int part;
-	u_long mask;
+	int mask;
 
 	if (unit >= NRZ || !(sc->sc_flags & RZF_ALIVE))
 		return (ENXIO);
@@ -850,7 +880,7 @@ rzopen(dev, flags, mode, p)
 	if (!(sc->sc_flags & RZF_HAVELABEL))
 		rzgetinfo(dev);
 
-	lp = &sc->sc_label;
+	lp = sc->sc_label;
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0)
 	{
 		printf("rzopen: ENXIO on rz%d%c unit %d part %d\n",
@@ -894,8 +924,11 @@ rzopen(dev, flags, mode, p)
 		break;
 	}
 	sc->sc_openpart |= mask;
+
+	/* XXX Support old-style instrumentation for now. */
 	if (sc->sc_sd->sd_dk >= 0)
 		dk_wpms[sc->sc_sd->sd_dk] = sc->sc_wpms;
+
 	return (0);
 }
 
@@ -904,7 +937,7 @@ rzclose(dev, flags, mode)
 	int flags, mode;
 {
 	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
-	u_long mask = (1 << rzpart(dev));
+	int mask = (1 << rzpart(dev));
 	int s;
 
 	switch (mode) {
@@ -1019,14 +1052,14 @@ rzioctl(dev, cmd, data, flag, p)
 
 	case DIOCGDINFO:
 		/* get the current disk label */
-		*(struct disklabel *)data = sc->sc_label;
+		*(struct disklabel *)data = *(sc->sc_label);
 		return (0);
 
 	case DIOCSDINFO:
 		/* set the current disk label */
 		if (!(flag & FWRITE))
 			return (EBADF);
-		error = setdisklabel(&sc->sc_label,
+		error = setdisklabel(sc->sc_label,
 				     (struct disklabel *)data,
 				     (sc->sc_flags & RZF_WLABEL) ? 0 :
 				     sc->sc_openpart, &cd);
@@ -1034,9 +1067,9 @@ rzioctl(dev, cmd, data, flag, p)
 
 	case DIOCGPART:
 		/* return the disk partition data */
-		((struct partinfo *)data)->disklab = &sc->sc_label;
+		((struct partinfo *)data)->disklab = sc->sc_label;
 		((struct partinfo *)data)->part =
-			&sc->sc_label.d_partitions[rzpart(dev)];
+			&sc->sc_label->d_partitions[rzpart(dev)];
 		return (0);
 
 	case DIOCWLABEL:
@@ -1052,7 +1085,7 @@ rzioctl(dev, cmd, data, flag, p)
 		/* write the disk label to disk */
 		if (!(flag & FWRITE))
 			return (EBADF);
-		error = setdisklabel(&sc->sc_label,
+		error = setdisklabel(sc->sc_label,
 				     (struct disklabel *)data,
 				     (sc->sc_flags & RZF_WLABEL) ? 0 :
 				     sc->sc_openpart,
@@ -1063,7 +1096,7 @@ rzioctl(dev, cmd, data, flag, p)
 		/* simulate opening partition 0 so write succeeds */
 		flags = sc->sc_flags;
 		sc->sc_flags = RZF_ALIVE | RZF_WLABEL;
-		error = writedisklabel(dev, rzstrategy, &sc->sc_label, &cd);
+		error = writedisklabel(dev, rzstrategy, sc->sc_label, &cd);
 		sc->sc_flags = flags;
 		return (error);
 	}
@@ -1089,9 +1122,9 @@ rzsize(dev)
 	if (!(sc->sc_flags & RZF_HAVELABEL))
 		rzgetinfo(dev);
 
-	if (part >= sc->sc_label.d_npartitions)
+	if (part >= sc->sc_label->d_npartitions)
 		return (-1);
-	return (sc->sc_label.d_partitions[part].p_size);
+	return (sc->sc_label->d_partitions[part].p_size);
 }
 
 /*
@@ -1123,12 +1156,12 @@ rzdump(dev)
 	if (unit >= NRZ || (sc->sc_flags & RZF_ALIVE) == 0)
 		return (ENXIO);
 	/* dump parameters in range? */
-	if (dumplo < 0 || dumplo >= sc->sc_label.d_partitions[part].p_size)
+	if (dumplo < 0 || dumplo >= sc->sc_label->d_partitions[part].p_size)
 		return (EINVAL);
-	if (dumplo + ctod(pages) > sc->sc_label.d_partitions[part].p_size)
-		pages = dtoc(sc->sc_label.d_partitions[part].p_size - dumplo);
+	if (dumplo + ctod(pages) > sc->sc_label->d_partitions[part].p_size)
+		pages = dtoc(sc->sc_label->d_partitions[part].p_size - dumplo);
 	maddr = lowram;
-	baddr = dumplo + sc->sc_label.d_partitions[part].p_offset;
+	baddr = dumplo + sc->sc_label->d_partitions[part].p_offset;
 
 #ifdef notdef	/*XXX -- bogus code, from Mach perhaps? */
 	/* scsi bus idle? */

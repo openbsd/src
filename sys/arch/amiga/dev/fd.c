@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.21 1995/08/12 20:30:45 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.22 1996/01/07 22:01:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -110,7 +110,8 @@ struct fdtype {
  * floppy disk device data
  */
 struct fd_softc {
-	struct dkdevice dkdev;
+	struct device sc_dv;	/* generic device info; must come first */
+	struct disk dkdev;	/* generic disk info */
 	struct buf bufq;	/* queue of buf's */
 	struct fdtype *type;
 	void *cachep;		/* cached track data (write through) */
@@ -336,11 +337,17 @@ fdattach(pdp, dp, auxp)
 	sc->hwunit = ap->unit;
 	sc->unitmask = 1 << (3 + ap->unit);
 	sc->retries = FDRETRIES;
-	sc->dkdev.dk_driver = &fddkdriver;
 	sc->stepdelay = FDSTEPDELAY;
 	printf(": %s %d cyl, %d head, %d sec [%d sec], 512 bytes/sec\n",
 	    sc->type->desc, sc->type->ncylinders, FDNHEADS,
 	    sc->type->amiga_nsectors, sc->type->msdos_nsectors);
+
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	sc->dkdev.dk_name = sc->sc_dv.dv_xname;
+	sc->dkdev.dk_driver = &fddkdriver;
+	disk_attach(&sc->dkdev);
 
 	/*
 	 * calibrate the drive
@@ -491,15 +498,15 @@ fdioctl(dev, cmd, addr, flag, p)
 	case DIOCSSTEP:
 		if (*(int *)addr < FDSTEPDELAY)
 			return(EINVAL);
-		sc->dkdev.dk_label.d_trkseek = sc->stepdelay = *(int *)addr;
+		sc->dkdev.dk_label->d_trkseek = sc->stepdelay = *(int *)addr;
 		return(0);
 	case DIOCGDINFO:
-		*(struct disklabel *)addr = sc->dkdev.dk_label;
+		*(struct disklabel *)addr = *(sc->dkdev.dk_label);
 		return(0);
 	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = &sc->dkdev.dk_label;
+		((struct partinfo *)addr)->disklab = sc->dkdev.dk_label;
 		((struct partinfo *)addr)->part =
-		    &sc->dkdev.dk_label.d_partitions[FDPART(dev)];
+		    &sc->dkdev.dk_label->d_partitions[FDPART(dev)];
 		return(0);
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
@@ -582,7 +589,7 @@ fdstrategy(bp)
 	/*
 	 * check for valid partition and bounds
 	 */
-	lp = &sc->dkdev.dk_label;
+	lp = sc->dkdev.dk_label;
 	if ((sc->flags & FDF_HAVELABEL) == 0) {
 		bp->b_error = EIO;
 		goto bad;
@@ -667,8 +674,8 @@ fdgetdisklabel(sc, dev)
 	printf("fdgetdisklabel()\n");
 #endif
 	part = FDPART(dev);
-	lp = &sc->dkdev.dk_label;
-	clp =  &sc->dkdev.dk_cpulabel;
+	lp = sc->dkdev.dk_label;
+	clp =  sc->dkdev.dk_cpulabel;
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
 
@@ -748,7 +755,7 @@ fdsetdisklabel(sc, lp)
 	 */
 	if ((sc->flags & FDF_HAVELABEL) == 0)
 		return(EINVAL);
-	clp = &sc->dkdev.dk_label;
+	clp = sc->dkdev.dk_label;
 	/*
 	 * make sure things check out and we only have one valid
 	 * partition
@@ -814,7 +821,7 @@ fdputdisklabel(sc, dev)
 	/*
 	 * get buf and read in sector 0
 	 */
-	lp = &sc->dkdev.dk_label;
+	lp = sc->dkdev.dk_label;
 	bp = (void *)geteblk((int)lp->d_secsize);
 	bp->b_dev = FDMAKEDEV(major(dev), FDUNIT(dev), RAW_PART);
 	bp->b_blkno = 0;
@@ -1163,6 +1170,9 @@ fdstart(sc)
 	 */
 	trk = bp->b_blkno / sc->nsectors;
 
+	/* Instrumentation. */
+	disk_busy(&sc->dkdev);
+
 	/*
 	 * check to see if same as currently cached track
 	 * if so we need to do no dma read.
@@ -1377,7 +1387,7 @@ fddmadone(sc, timeo)
 		sc->flags &= ~FDF_DIRTY;
 		if (timeo)
 			printf("%s: write of track cache timed out.\n",
-			    sc->dkdev.dk_dev.dv_xname);
+			    sc->dv.dv_xname);
 		if (sc->flags & FDF_JUSTFLUSH) {
 			sc->flags &= ~FDF_JUSTFLUSH;
 			/*
@@ -1406,7 +1416,7 @@ fddmadone(sc, timeo)
 #ifdef FDDEBUG
 		if (timeo)
 			printf("%s: fddmadone: cache load timed out.\n",
-			    sc->dkdev.dk_dev.dv_xname);
+			    sc->sc_dv.dv_xname);
 #endif
 		if (sc->retried >= sc->retries) {
 			sc->retried = 0;
@@ -1484,9 +1494,12 @@ fddone(sc)
 	 * remove from queue.
 	 */
 	dp->b_actf = bp->b_actf;
+
+	disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
+
 	biodone(bp);
 nobuf:
-	fdfindwork(sc->dkdev.dk_dev.dv_unit);
+	fdfindwork(sc->sc_dv.dv_unit);
 }
 
 void
@@ -1684,7 +1697,7 @@ again:
 	if (doagain == 0 || (rp = srp = fdfindsync(srp, erp)) == NULL) {
 #ifdef DIAGNOSTIC
 		printf("%s: corrupted track (%d) data.\n",
-		    sc->dkdev.dk_dev.dv_xname, sc->cachetrk);
+		    sc->sc_dv.dv_xname, sc->cachetrk);
 #endif
 		return(-1);
 	}
@@ -1707,7 +1720,7 @@ again:
 		if (((info >> 16) & 0xff) != sc->cachetrk) {
 #ifdef DEBUG
 			printf("%s: incorrect track found: 0x%0x %d\n",
-			    sc->dkdev.dk_dev.dv_xname, info, sc->cachetrk);
+			    sc->sc_dv.dv_xname, info, sc->cachetrk);
 #endif
 			goto again;
 		}

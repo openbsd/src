@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.14 1995/10/05 12:41:22 chopps Exp $	*/
+/*	$NetBSD: idesc.c,v 1.15 1996/01/07 22:01:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -528,6 +528,10 @@ ide_scsidone(dev, stat)
 		panic("ide_scsidone");
 #endif
 #if 1
+	/*
+	 * XXX Support old-style instrumentation for now.
+	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
+	 */
 	if (xs->sc_link && xs->sc_link->device_softc &&
 	    ((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
 		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];

@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.14 1995/09/29 13:52:02 chopps Exp $	*/
+/*	$NetBSD: sci.c,v 1.15 1996/01/07 22:01:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -215,6 +215,10 @@ sci_scsidone(dev, stat)
 	if (xs == NULL)
 		panic("sci_scsidone");
 #endif
+	/*
+	 * XXX Support old-style instrumentation for now.
+	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
+	 */
 	if (xs->sc_link->device_softc &&
 	    ((struct device *)(xs->sc_link->device_softc))->dv_unit < dk_ndrive)
 		++dk_xfer[((struct device *)(xs->sc_link->device_softc))->dv_unit];

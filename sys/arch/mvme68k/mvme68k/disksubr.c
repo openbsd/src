@@ -32,6 +32,7 @@
 #include <sys/buf.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 
 #define b_cylin b_resid
 
@@ -50,7 +51,9 @@ static void printclp __P((struct cpu_disklabel *clp, char *str));
 #endif
 
 int
-dk_establish()
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
 {
 	return(-1);
 }

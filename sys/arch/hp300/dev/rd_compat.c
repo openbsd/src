@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_compat.c,v 1.4 1995/11/19 19:07:20 thorpej Exp $	*/
+/*	$NetBSD: rd_compat.c,v 1.5 1996/01/07 22:02:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <hp300/dev/device.h>
 #include <hp300/dev/rdreg.h>
 #include <hp300/dev/rdvar.h>

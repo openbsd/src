@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.83 1995/12/07 21:54:24 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.84 1996/01/07 22:04:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -77,7 +77,7 @@
 
 struct sd_softc {
 	struct device sc_dev;
-	struct dkdevice sc_dk;
+	struct disk sc_dk;
 
 	int flags;
 #define	SDF_LOCKED	0x01
@@ -107,6 +107,7 @@ void sdgetdisklabel __P((struct sd_softc *));
 int sd_get_parms __P((struct sd_softc *, int));
 void sdstrategy __P((struct buf *));
 void sdstart __P((struct sd_softc *));
+int sddone __P((struct scsi_xfer *));
 void sdminphys __P((struct buf *));
 
 struct dkdriver sddkdriver = { sdstrategy };
@@ -115,7 +116,7 @@ struct scsi_device sd_switch = {
 	NULL,			/* Use default error handler */
 	sdstart,		/* have a queue, served by this */
 	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
+	sddone,			/* deal with stats at interrupt time */
 };
 
 struct scsi_inquiry_pattern sd_patterns[] = {
@@ -170,15 +171,22 @@ sdattach(parent, self, aux)
 		sc_link->openings = SDOUTSTANDING;
 
 	/*
+	 * Initialize and attach the disk structure.
+	 */
+	sd->sc_dk.dk_driver = &sddkdriver;
+	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
+	disk_attach(&sd->sc_dk);
+
+	sd->sc_dk.dk_driver = &sddkdriver;
+#if !defined(i386) || defined(NEWCONFIG)
+	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
+#endif
+
+	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
 	if ((sa->sa_inqbuf->version & SID_ANSII) == 0)
 		sd->flags |= SDF_ANCIENT;
-
-	sd->sc_dk.dk_driver = &sddkdriver;
-#if !defined(i386) || defined(NEWCONFIG)
-	dk_establish(&sd->sc_dk, &sd->sc_dev);
-#endif
 
 	/*
 	 * Use the subdriver to request information regarding
@@ -307,8 +315,8 @@ sdopen(dev, flag, fmt)
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
-	    (part >= sd->sc_dk.dk_label.d_npartitions ||
-	     sd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
+	    (part >= sd->sc_dk.dk_label->d_npartitions ||
+	     sd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
@@ -399,7 +407,7 @@ sdstrategy(bp)
 	/*
 	 * The transfer must be a whole number of blocks.
 	 */
-	if ((bp->b_bcount % sd->sc_dk.dk_label.d_secsize) != 0) {
+	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -421,7 +429,7 @@ sdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (SDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, &sd->sc_dk.dk_label,
+	    bounds_check_with_label(bp, sd->sc_dk.dk_label,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 
@@ -523,12 +531,12 @@ sdstart(sd)
 		 * of the logical blocksize of the device.
 		 */
 		blkno =
-		    bp->b_blkno / (sd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
+		    bp->b_blkno / (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 		if (SDPART(bp->b_dev) != RAW_PART) {
-			p = &sd->sc_dk.dk_label.d_partitions[SDPART(bp->b_dev)];
-			blkno += p->p_offset;
+		     p = &sd->sc_dk.dk_label->d_partitions[SDPART(bp->b_dev)];
+		     blkno += p->p_offset;
 		}
-		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label.d_secsize);
+		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize);
 
 		/*
 		 *  Fill out the scsi command.  If the transfer will
@@ -565,6 +573,9 @@ sdstart(sd)
 			cmdp = (struct scsi_generic *)&cmd_big;
 		}
 
+		/* Instrumentation. */
+		disk_busy(&sd->sc_dk);
+
 		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
@@ -575,6 +586,18 @@ sdstart(sd)
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT)))
 			printf("%s: not queued", sd->sc_dev.dv_xname);
 	}
+}
+
+int
+sddone(xs)
+	struct scsi_xfer *xs;
+{
+	struct sd_softc *sd = xs->sc_link->device_softc;
+
+	if (xs->bp != NULL)
+		disk_unbusy(&sd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid));
+
+	return (0);
 }
 
 void
@@ -596,7 +619,7 @@ sdminphys(bp)
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
 	if (sd->flags & SDF_ANCIENT) {
-		max = sd->sc_dk.dk_label.d_secsize * 0xff;
+		max = sd->sc_dk.dk_label->d_secsize * 0xff;
 
 		if (bp->b_bcount > max)
 			bp->b_bcount = max;
@@ -648,13 +671,13 @@ sdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		*(struct disklabel *)addr = sd->sc_dk.dk_label;
+		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
 		return 0;
 
 	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = &sd->sc_dk.dk_label;
+		((struct partinfo *)addr)->disklab = sd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &sd->sc_dk.dk_label.d_partitions[SDPART(dev)];
+		    &sd->sc_dk.dk_label->d_partitions[SDPART(dev)];
 		return 0;
 
 	case DIOCWDINFO:
@@ -666,14 +689,14 @@ sdioctl(dev, cmd, addr, flag, p)
 			return error;
 		sd->flags |= SDF_LABELLING;
 
-		error = setdisklabel(&sd->sc_dk.dk_label,
+		error = setdisklabel(sd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sd->sc_dk.dk_openmask : */0,
-		    &sd->sc_dk.dk_cpulabel);
+		    sd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(SDLABELDEV(dev),
-				    sdstrategy, &sd->sc_dk.dk_label,
-				    &sd->sc_dk.dk_cpulabel);
+				    sdstrategy, sd->sc_dk.dk_label,
+				    sd->sc_dk.dk_cpulabel);
 		}
 
 		sd->flags &= ~SDF_LABELLING;
@@ -707,11 +730,11 @@ void
 sdgetdisklabel(sd)
 	struct sd_softc *sd;
 {
-	struct disklabel *lp = &sd->sc_dk.dk_label;
+	struct disklabel *lp = sd->sc_dk.dk_label;
 	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(&sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	bzero(sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sd->params.blksize;
 	lp->d_ntracks = sd->params.heads;
@@ -745,7 +768,7 @@ sdgetdisklabel(sd)
 	 * Call the generic disklabel extraction routine
 	 */
 	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit,
-	    RAW_PART), sdstrategy, lp, &sd->sc_dk.dk_cpulabel)) {
+	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel)) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
 	}
@@ -910,10 +933,10 @@ sdsize(dev)
 		return -1;
 	sd = sdcd.cd_devs[SDUNIT(dev)];
 	part = SDPART(dev);
-	if (sd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
+	if (sd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = sd->sc_dk.dk_label.d_partitions[part].p_size;
+		size = sd->sc_dk.dk_label->d_partitions[part].p_size;
 	if (sdclose(dev, 0, S_IFBLK) != 0)
 		return -1;
 	return size;
@@ -966,7 +989,7 @@ sddump(dev, blkno, va, size)
 		return ENXIO;
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
-	lp = &sd->sc_dk.dk_label;
+	lp = sd->sc_dk.dk_label;
 	sectorsize = lp->d_secsize;
 	if ((size % sectorsize) != 0)
 		return EFAULT;

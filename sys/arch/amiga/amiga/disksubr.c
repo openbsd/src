@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 1995/09/29 13:51:33 chopps Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21 1996/01/07 22:01:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -80,7 +80,7 @@ struct rdbmap *getrdbmap __P((dev_t, void (*)(), struct disklabel *,
 /* XXX unknown function but needed for /sys/scsi to link */
 int
 dk_establish(dk, dev)
-	struct dkdevice *dk;
+	struct disk *dk;
 	struct device *dev;
 {
 	return(-1);

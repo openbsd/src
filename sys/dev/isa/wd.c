@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.142 1995/08/05 23:50:23 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.145 1996/01/08 21:21:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -31,8 +31,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +76,7 @@
 
 struct wd_softc {
 	struct device sc_dev;
-	struct dkdevice sc_dk;
+	struct disk sc_dk;
 
 	/* Information about the current transfer: */
 	daddr_t sc_blkno;	/* starting block number */
@@ -290,6 +288,13 @@ wdattach(parent, self, aux)
 
 	wd->sc_drive = wa->wa_drive;
 
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	wd->sc_dk.dk_driver = &wddkdriver;
+	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
+	disk_attach(&wd->sc_dk);
+
 	wd_get_parms(wd);
 	for (blank = 0, p = wd->sc_params.wdp_model, q = buf, i = 0;
 	     i < sizeof(wd->sc_params.wdp_model); i++) {
@@ -338,8 +343,6 @@ wdattach(parent, self, aux)
 		printf(" lba addressing\n");
 	else
 		printf(" chs addressing\n");
-
-	wd->sc_dk.dk_driver = &wddkdriver;
 }
 
 /*
@@ -355,8 +358,8 @@ wdstrategy(bp)
     
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
-	    (bp->b_bcount % wd->sc_dk.dk_label.d_secsize) != 0 ||
-	    (bp->b_bcount / wd->sc_dk.dk_label.d_secsize) >= (1 << NBBY)) {
+	    (bp->b_bcount % wd->sc_dk.dk_label->d_secsize) != 0 ||
+	    (bp->b_bcount / wd->sc_dk.dk_label->d_secsize) >= (1 << NBBY)) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -376,7 +379,7 @@ wdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (WDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, &wd->sc_dk.dk_label,
+	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
     
@@ -419,6 +422,8 @@ wdstart(wd)
 	wd->sc_q.b_active = 1;
 	TAILQ_INSERT_TAIL(&wdc->sc_drives, wd, sc_drivechain);
     
+	disk_busy(&wd->sc_dk);
+
 	/* If controller not already active, start it. */
 	if (!active)
 		wdcstart(wdc);
@@ -451,6 +456,15 @@ wdfinish(wd, bp)
 	bp->b_resid = wd->sc_bcount;
 	wd->sc_skip = 0;
 	wd->sc_q.b_actf = bp->b_actf;
+
+	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
+
+	if (!wd->sc_q.b_actf) {
+		TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
+		wd->sc_q.b_active = 0;
+	} else
+		disk_busy(&wd->sc_dk);
+
 	biodone(bp);
 }
 
@@ -510,11 +524,6 @@ loop:
     
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
 	bp = wd->sc_q.b_actf;
-	if (bp == NULL) {
-		TAILQ_REMOVE(&wdc->sc_drives, wd, sc_drivechain);
-		wd->sc_q.b_active = 0;
-		goto loop;
-	}
     
 	if (wdc->sc_errors >= WDIORETRIES) {
 		wderror(wd, bp, "hard error");
@@ -550,7 +559,7 @@ loop:
 		}
 	}
 
-	lp = &wd->sc_dk.dk_label;
+	lp = wd->sc_dk.dk_label;
 
 	/* When starting a transfer... */
 	if (wd->sc_skip == 0) {
@@ -915,8 +924,8 @@ wdopen(dev, flag, fmt)
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
-	    (part >= wd->sc_dk.dk_label.d_npartitions ||
-	     wd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
+	    (part >= wd->sc_dk.dk_label->d_npartitions ||
+	     wd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
@@ -984,11 +993,11 @@ void
 wdgetdisklabel(wd)
 	struct wd_softc *wd;
 {
-	struct disklabel *lp = &wd->sc_dk.dk_label;
+	struct disklabel *lp = wd->sc_dk.dk_label;
 	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(&wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	bzero(wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = wd->sc_params.wdp_heads;
@@ -1021,7 +1030,7 @@ wdgetdisklabel(wd)
 	if (wd->sc_state > RECAL)
 		wd->sc_state = RECAL;
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-	    wdstrategy, lp, &wd->sc_dk.dk_cpulabel);
+	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -1032,7 +1041,7 @@ wdgetdisklabel(wd)
 		if (wd->sc_state > GEOMETRY)
 			wd->sc_state = GEOMETRY;
 		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-		    wdstrategy, lp, &wd->sc_dk.dk_cpulabel);
+		    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
 		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
@@ -1150,8 +1159,8 @@ wdcommand(wd, command, cylin, head, sector, count)
 		return -1;
     
 	/* Load parameters. */
-	if (wd->sc_dk.dk_label.d_type == DTYPE_ST506)
-		outb(iobase+wd_precomp, wd->sc_dk.dk_label.d_precompcyl / 4);
+	if (wd->sc_dk.dk_label->d_type == DTYPE_ST506)
+		outb(iobase+wd_precomp, wd->sc_dk.dk_label->d_precompcyl / 4);
 	else
 		outb(iobase+wd_features, 0);
 	outb(iobase+wd_cyl_lo, cylin);
@@ -1198,13 +1207,13 @@ wdsetctlr(wd)
 
 #ifdef WDDEBUG
 	printf("wd(%d,%d) C%dH%dS%d\n", wd->sc_dev.dv_unit, wd->sc_drive,
-	    wd->sc_dk.dk_label.d_ncylinders, wd->sc_dk.dk_label.d_ntracks,
-	    wd->sc_dk.dk_label.d_nsectors);
+	    wd->sc_dk.dk_label->d_ncylinders, wd->sc_dk.dk_label->d_ntracks,
+	    wd->sc_dk.dk_label->d_nsectors);
 #endif
     
-	if (wdcommand(wd, WDCC_IDP, wd->sc_dk.dk_label.d_ncylinders,
-	    wd->sc_dk.dk_label.d_ntracks - 1, 0, wd->sc_dk.dk_label.d_nsectors)
-	    != 0) {
+	if (wdcommand(wd, WDCC_IDP, wd->sc_dk.dk_label->d_ncylinders,
+	    wd->sc_dk.dk_label->d_ntracks - 1, 0,
+	    wd->sc_dk.dk_label->d_nsectors) != 0) {
 		wderror(wd, NULL, "wdsetctlr: geometry upload failed");
 		return -1;
 	}
@@ -1249,9 +1258,9 @@ wd_get_parms(wd)
 		 * This geometry is only used to read the MBR and print a
 		 * (false) attach message.
 		 */
-		strncpy(wd->sc_dk.dk_label.d_typename, "ST506",
-		    sizeof wd->sc_dk.dk_label.d_typename);
-		wd->sc_dk.dk_label.d_type = DTYPE_ST506;
+		strncpy(wd->sc_dk.dk_label->d_typename, "ST506",
+		    sizeof wd->sc_dk.dk_label->d_typename);
+		wd->sc_dk.dk_label->d_type = DTYPE_ST506;
 
 		strncpy(wd->sc_params.wdp_model, "unknown",
 		    sizeof wd->sc_params.wdp_model);
@@ -1263,9 +1272,9 @@ wd_get_parms(wd)
 		wd->sc_params.wdp_usedmovsd = 0;
 		wd->sc_params.wdp_capabilities = 0;
 	} else {
-		strncpy(wd->sc_dk.dk_label.d_typename, "ESDI/IDE",
-		    sizeof wd->sc_dk.dk_label.d_typename);
-		wd->sc_dk.dk_label.d_type = DTYPE_ESDI;
+		strncpy(wd->sc_dk.dk_label->d_typename, "ESDI/IDE",
+		    sizeof wd->sc_dk.dk_label->d_typename);
+		wd->sc_dk.dk_label->d_type = DTYPE_ESDI;
 
 		/* Read in parameter block. */
 		insw(wdc->sc_iobase+wd_data, tb, sizeof(tb) / sizeof(short));
@@ -1307,19 +1316,19 @@ wdioctl(dev, cmd, addr, flag, p)
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		wd->sc_dk.dk_cpulabel.bad = *(struct dkbad *)addr;
-		wd->sc_dk.dk_label.d_flags |= D_BADSECT;
+		wd->sc_dk.dk_cpulabel->bad = *(struct dkbad *)addr;
+		wd->sc_dk.dk_label->d_flags |= D_BADSECT;
 		bad144intern(wd);
 		return 0;
 
 	case DIOCGDINFO:
-		*(struct disklabel *)addr = wd->sc_dk.dk_label;
+		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
 		return 0;
 	
 	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = &wd->sc_dk.dk_label;
+		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &wd->sc_dk.dk_label.d_partitions[WDPART(dev)];
+		    &wd->sc_dk.dk_label->d_partitions[WDPART(dev)];
 		return 0;
 	
 	case DIOCWDINFO:
@@ -1331,16 +1340,16 @@ wdioctl(dev, cmd, addr, flag, p)
 			return error;
 		wd->sc_flags |= WDF_LABELLING;
 
-		error = setdisklabel(&wd->sc_dk.dk_label,
+		error = setdisklabel(wd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*wd->sc_dk.dk_openmask : */0,
-		    &wd->sc_dk.dk_cpulabel);
+		    wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (wd->sc_state > GEOMETRY)
 				wd->sc_state = GEOMETRY;
 			if (cmd == DIOCWDINFO)
 				error = writedisklabel(WDLABELDEV(dev),
-				    wdstrategy, &wd->sc_dk.dk_label,
-				    &wd->sc_dk.dk_cpulabel);
+				    wdstrategy, wd->sc_dk.dk_label,
+				    wd->sc_dk.dk_cpulabel);
 		}
 
 		wd->sc_flags &= ~WDF_LABELLING;
@@ -1373,7 +1382,7 @@ wdioctl(dev, cmd, addr, flag, p)
 		auio.uio_resid = fop->df_count;
 		auio.uio_segflg = 0;
 		auio.uio_offset =
-		    fop->df_startblk * wd->sc_dk.dk_label.d_secsize;
+		    fop->df_startblk * wd->sc_dk.dk_label->d_secsize;
 		auio.uio_procp = p;
 		error = physio(wdformat, NULL, dev, B_WRITE, minphys,
 		    &auio);
@@ -1415,10 +1424,10 @@ wdsize(dev)
 		return -1;
 	wd = wdcd.cd_devs[WDUNIT(dev)];
 	part = WDPART(dev);
-	if (wd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
+	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = wd->sc_dk.dk_label.d_partitions[part].p_size;
+		size = wd->sc_dk.dk_label->d_partitions[part].p_size;
 	if (wdclose(dev, 0, S_IFBLK) != 0)
 		return -1;
 	return size;
@@ -1467,7 +1476,7 @@ wddump(dev, blkno, va, size)
 	wdc = (void *)wd->sc_dev.dv_parent;
 
         /* Convert to disk sectors.  Request must be a multiple of size. */
-	lp = &wd->sc_dk.dk_label;
+	lp = wd->sc_dk.dk_label;
 	if ((size % lp->d_secsize) != 0)
 		return EFAULT;
 	nblks = size / lp->d_secsize;
@@ -1579,8 +1588,8 @@ void
 bad144intern(wd)
 	struct wd_softc *wd;
 {
-	struct dkbad *bt = &wd->sc_dk.dk_cpulabel.bad;
-	struct disklabel *lp = &wd->sc_dk.dk_label;
+	struct dkbad *bt = &wd->sc_dk.dk_cpulabel->bad;
+	struct disklabel *lp = wd->sc_dk.dk_label;
 	int i = 0;
 
 	for (; i < 126; i++) {
@@ -1701,8 +1710,15 @@ wdctimeout(arg)
 
 	s = splbio();
 	if ((wdc->sc_flags & WDCF_ACTIVE) != 0) {
+		struct wd_softc *wd = wdc->sc_drives.tqh_first;
+		struct buf *bp = wd->sc_q.b_actf;
+
 		wdc->sc_flags &= ~WDCF_ACTIVE;
 		wderror(wdc, NULL, "lost interrupt");
+		printf("%s: lost interrupt: %sing %d@%s:%d\n",
+		    wdc->sc_dev.dv_xname,
+		    (bp->b_flags & B_READ) ? "read" : "writ",
+		    wd->sc_nblks, wd->sc_dev.dv_xname, wd->sc_blkno);
 		wdcunwedge(wdc);
 	} else
 		wderror(wdc, NULL, "missing untimeout");
@@ -1720,7 +1736,7 @@ wderror(dev, bp, msg)
 
 	if (bp) {
 		diskerr(bp, "wd", msg, LOG_PRINTF, wd->sc_skip / DEV_BSIZE,
-		    &wd->sc_dk.dk_label);
+		    wd->sc_dk.dk_label);
 		printf("\n");
 	} else
 		printf("%s: %s: status %b error %b\n", wdc->sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 1995/12/10 14:25:12 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.13 1996/01/07 22:02:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -125,7 +125,8 @@ static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
  * Private per device data
  */
 struct fd_softc {
-	struct dkdevice dkdev;
+	struct device	sc_dv;		/* generic device info		*/
+	struct disk	dkdev;		/* generic disk info		*/
 	struct buf	bufq;		/* queue of buf's		*/
 	int		unit;		/* unit for atari controlling hw*/
 	int		nheads;		/* number of heads in use	*/
@@ -315,7 +316,12 @@ void		*auxp;
 
 	printf("\n");
 
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	sc->dkdev.dk_name = sc->sc_dv.dv_xname;
 	sc->dkdev.dk_driver = &fddkdriver;
+	disk_attach(&sc->dkdev);
 }
 
 fdioctl(dev, cmd, addr, flag, p)
@@ -337,13 +343,13 @@ struct proc	*p;
 		case DIOCSBAD:
 			return(EINVAL);
 		case DIOCGDINFO:
-			*(struct disklabel *)addr = sc->dkdev.dk_label;
+			*(struct disklabel *)addr = *(sc->dkdev.dk_label);
 			return(0);
 		case DIOCGPART:
 			((struct partinfo *)addr)->disklab =
-				&sc->dkdev.dk_label;
+				sc->dkdev.dk_label;
 			((struct partinfo *)addr)->part =
-				&sc->dkdev.dk_label.d_partitions[DISKPART(dev)];
+			      &sc->dkdev.dk_label->d_partitions[DISKPART(dev)];
 			return(0);
 #ifdef notyet /* XXX LWP */
 		case DIOCSRETRIES:
@@ -497,7 +503,7 @@ struct buf	*bp;
 	/*
 	 * check for valid partition and bounds
 	 */
-	lp = &sc->dkdev.dk_label;
+	lp = sc->dkdev.dk_label;
 	if ((sc->flags & FLPF_HAVELAB) == 0) {
 		bp->b_error = EIO;
 		goto bad;
@@ -599,6 +605,9 @@ struct fd_softc	*sc;
 	sc->errcnt   = 0;		/* No errors yet		*/
 	fd_state     = FLP_XFER;	/* Yes, we're going to transfer	*/
 
+	/* Instrumentation. */
+	disk_busy(&sc->dkdev);
+
 	fd_xfer(sc);
 }
 
@@ -638,6 +647,9 @@ register struct fd_softc	*sc;
 								sc->io_bytes);
 #endif
 		bp->b_resid = sc->io_bytes;
+
+		disk_unbusy(&sc->dkdev, (bp->b_bcount - bp->b_resid));
+
 		biodone(bp);
 	}
 	fd_state = FLP_MON;
@@ -1219,7 +1231,7 @@ dev_t			dev;
 #endif
 
 	part = DISKPART(dev);
-	lp   = &sc->dkdev.dk_label;
+	lp   = sc->dkdev.dk_label;
 	bzero(lp, sizeof(struct disklabel));
 
 	lp->d_secsize     = SECTOR_SIZE;

@@ -1,6 +1,7 @@
-/*	$NetBSD: subr_disk.c,v 1.14 1995/12/28 19:16:39 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.15 1996/01/07 22:03:49 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -42,10 +43,21 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/time.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/dkstat.h>		/* XXX */
+
+/*
+ * A global list of all disks attached to the system.  May grow or
+ * shrink over time.
+ */
+struct	disklist_head disklist;	/* TAILQ_HEAD */
+int	disk_count;		/* number of drives in global disklist */
 
 /*
  * Old-style disk instrumentation structures.  These will go away
@@ -57,7 +69,7 @@ long	dk_wds[DK_NDRIVE];
 long	dk_wpms[DK_NDRIVE];
 long	dk_xfer[DK_NDRIVE];
 int	dk_busy;
-int	dk_ndrive = DK_NDRIVE;
+int	dk_ndrive;
 int	dkn;			/* number of slots filled so far */
 
 /*
@@ -230,4 +242,170 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 		sn %= lp->d_secpercyl;
 		(*pr)(" tn %d sn %d)", sn / lp->d_nsectors, sn % lp->d_nsectors);
 	}
+}
+
+/*
+ * Initialize the disklist.  Called by main() before autoconfiguration.
+ */
+void
+disk_init()
+{
+
+	TAILQ_INIT(&disklist);
+	disk_count = 0;
+	dk_ndrive = DK_NDRIVE;		/* XXX */
+}
+
+/*
+ * Searches the disklist for the disk corresponding to the
+ * name provided.
+ */
+struct disk *
+disk_find(name)
+	char *name;
+{
+	struct disk *diskp;
+
+	if ((name == NULL) || (disk_count <= 0))
+		return (NULL);
+
+	for (diskp = disklist.tqh_first; diskp != NULL;
+	    diskp = diskp->dk_link.tqe_next)
+		if (strcmp(diskp->dk_name, name) == 0)
+			return (diskp);
+
+	return (NULL);
+}
+
+/*
+ * Attach a disk.
+ */
+void
+disk_attach(diskp)
+	struct disk *diskp;
+{
+	int s;
+
+	/*
+	 * Allocate and initialize the disklabel structures.  Note that
+	 * it's not safe to sleep here, since we're probably going to be
+	 * called during autoconfiguration.
+	 */
+	diskp->dk_label = malloc(sizeof(struct disklabel), M_DEVBUF, M_NOWAIT);
+	diskp->dk_cpulabel = malloc(sizeof(struct cpu_disklabel), M_DEVBUF,
+	    M_NOWAIT);
+	if ((diskp->dk_label == NULL) || (diskp->dk_cpulabel == NULL))
+		panic("disk_attach: can't allocate storage for disklabel");
+
+	bzero(diskp->dk_label, sizeof(struct disklabel));
+	bzero(diskp->dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	/*
+	 * Set the attached timestamp.
+	 */
+	s = splclock();
+	diskp->dk_attachtime = mono_time;
+	splx(s);
+
+	/*
+	 * Link into the disklist.
+	 */
+	TAILQ_INSERT_TAIL(&disklist, diskp, dk_link);
+	++disk_count;
+}
+
+/*
+ * Detatch a disk.
+ */
+void
+disk_detatch(diskp)
+	struct disk *diskp;
+{
+
+	/*
+	 * Free the space used by the disklabel structures.
+	 */
+	free(diskp->dk_label, M_DEVBUF);
+	free(diskp->dk_cpulabel, M_DEVBUF);
+
+	/*
+	 * Remove from the disklist.
+	 */
+	TAILQ_REMOVE(&disklist, diskp, dk_link);
+	if (--disk_count < 0)
+		panic("disk_detatch: disk_count < 0");
+}
+
+/*
+ * Increment a disk's busy counter.  If the counter is going from
+ * 0 to 1, set the timestamp.
+ */
+void
+disk_busy(diskp)
+	struct disk *diskp;
+{
+	int s;
+
+	/*
+	 * XXX We'd like to use something as accurate as microtime(),
+	 * but that doesn't depend on the system TOD clock.
+	 */
+	if (diskp->dk_busy++ == 0) {
+		s = splclock();
+		diskp->dk_timestamp = mono_time;
+		splx(s);
+	}
+}
+
+/*
+ * Decrement a disk's busy counter, increment the byte count, total busy
+ * time, and reset the timestamp.
+ */
+void
+disk_unbusy(diskp, bcount)
+	struct disk *diskp;
+	long bcount;
+{
+	int s;
+	struct timeval dv_time, diff_time;
+
+	if (diskp->dk_busy-- == 0)
+		panic("disk_unbusy: %s: dk_busy < 0", diskp->dk_name);
+
+	s = splclock();
+	dv_time = mono_time;
+	splx(s);
+
+	timersub(&dv_time, &diskp->dk_timestamp, &diff_time);
+	timeradd(&diskp->dk_time, &diff_time, &diskp->dk_time);
+
+	diskp->dk_timestamp = dv_time;
+	if (bcount > 0) {
+		diskp->dk_bytes += bcount;
+		diskp->dk_xfer++;
+	}
+}
+
+/*
+ * Reset the metrics counters on the given disk.  Note that we cannot
+ * reset the busy counter, as it may case a panic in disk_unbusy().
+ * We also must avoid playing with the timestamp information, as it
+ * may skew any pending transfer results.
+ */
+void
+disk_resetstat(diskp)
+	struct disk *diskp;
+{
+	int s = splbio(), t;
+
+	diskp->dk_xfer = 0;
+	diskp->dk_bytes = 0;
+
+	t = splclock();
+	diskp->dk_attachtime = mono_time;
+	splx(t);
+
+	timerclear(&diskp->dk_time);
+
+	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.3 1995/11/19 19:07:21 thorpej Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.4 1996/01/07 22:02:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,22 +52,16 @@ struct	rdidentinfo {
 	int	ri_nblocks;		/* DEV_BSIZE blocks on disk */
 };
 
-struct	rdinfo {
-	struct	disklabel ri_label;	/* label */
-	int	ri_bopen;		/* mask of open block devs */
-	int	ri_copen;		/* mask of open char devs */
-	int	ri_open;		/* composite mask of open devs */
-};
-
 struct	rd_softc {
 	struct	hp_device *sc_hd;
+	struct	disk sc_dkdev;
+	char	sc_xname[8];
 	int	sc_flags;
 	short	sc_type;
 	short	sc_punit;
 	char	*sc_addr;
 	int	sc_resid;
 	u_int	sc_wpms;
-	struct	rdinfo sc_info;
 	struct	rd_describe sc_rddesc;
 	struct	devqueue sc_dq;
 	struct	rd_iocmd sc_ioc;

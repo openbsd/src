@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.22 1995/11/06 20:28:09 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.23 1996/01/07 22:03:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,7 +66,6 @@
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
@@ -113,7 +112,8 @@ struct vnd_softc {
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
 	struct buf	 sc_tab;	/* transfer queue */
-	struct dkdevice  sc_dkdev;	/* generic disk device info */
+	char		 sc_xname[8];	/* XXX external name */
+	struct disk	 sc_dkdev;	/* generic disk device info */
 };
 
 /* sc_flags */
@@ -400,6 +400,10 @@ vndstart(vnd)
 		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 		    bp->b_bcount);
 #endif
+
+	/* Instrumentation. */
+	disk_busy(&vnd->sc_dkdev);
+
 	if ((bp->b_flags & B_READ) == 0)
 		bp->b_vp->v_numoutput++;
 	VOP_STRATEGY(bp);
@@ -420,6 +424,7 @@ vndiodone(vbp)
 		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 #endif
+
 	if (vbp->vb_buf.b_error) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
@@ -431,6 +436,7 @@ vndiodone(vbp)
 	}
 	pbp->b_resid -= vbp->vb_buf.b_bcount;
 	putvndbuf(vbp);
+	disk_unbusy(&vnd->sc_dkdev, (pbp->b_bcount - pbp->b_resid));
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
@@ -567,6 +573,12 @@ vndioctl(dev, cmd, data, flag, p)
 			    vnd->sc_vp, vnd->sc_size);
 #endif
 
+		/* Attach the disk. */
+		bzero(vnd->sc_xname, sizeof(vnd->sc_xname));	/* XXX */
+		sprintf(vnd->sc_xname, "vnd%d", unit);		/* XXX */
+		vnd->sc_dkdev.dk_name = vnd->sc_xname;
+		disk_attach(&vnd->sc_dkdev);
+
 		vndunlock(vnd);
 
 		break;
@@ -597,6 +609,9 @@ vndioctl(dev, cmd, data, flag, p)
 		if (vnddebug & VDB_INIT)
 			printf("vndioctl: CLRed\n");
 #endif
+
+		/* Detatch the disk. */
+		disk_detatch(&vnd->sc_dkdev);
 
 		/* This must be atomic. */
 		s = splhigh();

@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.2 1995/11/30 21:55:01 leo Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.3 1996/01/07 22:02:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -259,7 +259,8 @@ int	*rv_unit;
 {
 	struct genericconf	*gc;
 	struct partition	*pp;
-	struct dkdevice		*dkp;
+	struct disk		*dkp;
+	struct device		**devpp;
 	struct bdevsw		*bdp;
 	int			unit;
 
@@ -267,13 +268,17 @@ int	*rv_unit;
 	     for (unit = 0; unit < gc->gc_driver->cd_ndevs; unit++) {
 		if (gc->gc_driver->cd_devs[unit] == NULL)
 			continue;
+
 		/*
-		 * this is a hack these drivers should use
-		 * dk_dev and not another instance directly above.
+		 * Find the disk corresponding to the current
+		 * device.
 		 */
-		dkp = (struct dkdevice *)
-		   ((struct device *)gc->gc_driver->cd_devs[unit] + 1);
-		if (dkp->dk_driver==NULL || dkp->dk_driver->d_strategy==NULL)
+		devpp = (struct device **)gc->gc_driver->cd_devs;
+		if ((dkp = disk_find(devpp[unit]->dv_xname)) == NULL)
+			continue;
+
+		if ((dkp->dk_driver == NULL) ||
+		    (dkp->dk_driver->d_strategy == NULL))
 			continue;
 		for (bdp = bdevsw; bdp < (bdevsw + nblkdev); bdp++)
 			if (bdp->d_strategy == dkp->dk_driver->d_strategy)
@@ -284,12 +289,12 @@ int	*rv_unit;
 		bdp->d_close(MAKEDISKDEV(major(gc->gc_root), unit, 3),
 			    FREAD | FNONBLOCK, 0, curproc);
 		if (search_root) {
-			pp = &dkp->dk_label.d_partitions[0];
+			pp = &dkp->dk_label->d_partitions[0];
 			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
 				continue;
 		}
 		else { /* must be swap */
-			pp = &dkp->dk_label.d_partitions[1];
+			pp = &dkp->dk_label->d_partitions[1];
 			if (pp->p_size == 0 || pp->p_fstype != FS_SWAP)
 				continue;
 		}

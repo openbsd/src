@@ -1,4 +1,4 @@
-/*	$NetBSD: ramdisk.c,v 1.1.2.1 1995/11/17 23:34:25 gwr Exp $	*/
+/*	$NetBSD: ramdisk.c,v 1.4 1996/01/07 22:03:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -86,6 +87,7 @@ extern vm_offset_t	 kmem_alloc __P((vm_map_t, vm_size_t));
 
 struct rd_softc {
 	struct device sc_dev;	/* REQUIRED first entry */
+	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct rd_conf sc_rd;
 	struct buf *sc_buflist;
 	int sc_flags;
@@ -104,6 +106,10 @@ static void rd_attach(struct device *, struct device *self, void *);
 struct cfdriver rdcd = {
 	NULL, "rd", rd_match, rd_attach,
 	DV_DULL, sizeof(struct rd_softc), NULL, 0 };
+
+void rdstrategy __P((struct buf *bp));
+
+struct dkdriver rddkdriver = { rdstrategy };
 
 static int
 rd_match(parent, self, aux)
@@ -131,6 +137,14 @@ rd_attach(parent, self, aux)
 	rd_attach_hook(sc->sc_dev.dv_unit, &sc->sc_rd);
 #endif
 	printf("\n");
+
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
+	sc->sc_dkdev.dk_driver = &rddkdriver;
+	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
+	disk_attach(&sc->sc_dkdev);
 }
 
 /*
@@ -138,8 +152,6 @@ rd_attach(parent, self, aux)
  * open, close, read, write, strategy,
  * ioctl, dump, size
  */
-
-void rdstrategy __P((struct buf *bp));
 
 #if RAMDISK_SERVER
 static int rd_server_loop __P((struct rd_softc *sc));

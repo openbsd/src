@@ -165,7 +165,8 @@ struct fd_type fd_types[] = {
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
-	struct dkdevice sc_dk;
+	struct device	sc_dv;		/* generic device info */
+	struct disk	sc_dk;		/* generic disk info */
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
@@ -411,6 +412,8 @@ fdcattach(parent, self, aux)
 	fa.fa_deftype = &fd_types[0];		/* XXX */
 		(void)config_found(self, (void *)&fa, fdprint);
 	}
+
+	bootpath_store(1, NULL);
 }
 
 int
@@ -505,16 +508,22 @@ fdattach(parent, self, aux)
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
+
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	fd->sc_dk.dk_name = fd->sc_dv.dv_xname;
 	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_attach(&fd->sc_dk);
 
 	/*
 	 * We're told if we're the boot device in fdcattach().
 	 */
 	if (fa->fa_bootdev)
-		bootdv = &fd->sc_dk.dk_dev;
+		bootdv = &fd->sc_dv;
 
 	/* XXX Need to do some more fiddling with sc_dk. */
-	dk_establish(&fd->sc_dk, &fd->sc_dk.dk_dev);
+	dk_establish(&fd->sc_dk, &fd->sc_dv);
 }
 
 inline struct fd_type *
@@ -585,7 +594,7 @@ fdstrategy(bp)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
-		struct fdc_softc *fdc = (void *)fd->sc_dk.dk_dev.dv_parent;
+		struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 		if (fdc->sc_state == DEVIDLE) {
 			printf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
@@ -606,12 +615,15 @@ void
 fdstart(fd)
 	struct fd_softc *fd;
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dk.dk_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
 	fd->sc_q.b_active = 1;
 	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
+
+	/* Instrumentation. */
+	disk_busy(&fd->sc_dk);
 
 	/* If controller not already active, start it. */
 	if (!active)
@@ -623,7 +635,7 @@ fdfinish(fd, bp)
 	struct fd_softc *fd;
 	struct buf *bp;
 {
-	struct fdc_softc *fdc = (void *)fd->sc_dk.dk_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
@@ -642,6 +654,9 @@ fdfinish(fd, bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
+
+	disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+
 	biodone(bp);
 	/* turn off motor 5s from now */
 	timeout(fd_motor_off, fd, 5 * hz);
@@ -705,7 +720,7 @@ fd_motor_off(arg)
 
 	s = splbio();
 	fd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
-	fd_set_motor((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent);
+	fd_set_motor((struct fdc_softc *)fd->sc_dv.dv_parent);
 	splx(s);
 }
 
@@ -714,7 +729,7 @@ fd_motor_on(arg)
 	void *arg;
 {
 	struct fd_softc *fd = arg;
-	struct fdc_softc *fdc = (void *)fd->sc_dk.dk_dev.dv_parent;
+	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
 	int s;
 
 	s = splbio();
@@ -896,7 +911,7 @@ fdctimeout(arg)
 	int s;
 
 	s = splbio();
-	fdcstatus(&fd->sc_dk.dk_dev, 0, "timeout");
+	fdcstatus(&fd->sc_dv, 0, "timeout");
 
 	if (fd->sc_q.b_actf)
 		fdc->sc_state++;
@@ -1176,7 +1191,7 @@ loop:
 		    cyl != bp->b_cylin * fd->sc_type->step) {
 #ifdef FD_DEBUG
 			if (fdc_debug)
-				fdcstatus(&fd->sc_dk.dk_dev, 2, "seek failed");
+				fdcstatus(&fd->sc_dv, 2, "seek failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1200,7 +1215,7 @@ loop:
 		if (fdc->sc_nstat != 7 || (st0 & 0xf8) != 0 || st1 != 0) {
 #ifdef FD_DEBUG
 			if (fdc_debug) {
-				fdcstatus(&fd->sc_dk.dk_dev, 7,
+				fdcstatus(&fd->sc_dv, 7,
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
 				printf("blkno %d nblks %d tc %d\n",
@@ -1304,7 +1319,7 @@ loop:
 		if (fdc->sc_nstat != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 #ifdef FD_DEBUG
 			if (fdc_debug)
-				fdcstatus(&fd->sc_dk.dk_dev, 2, "recalibrate failed");
+				fdcstatus(&fd->sc_dv, 2, "recalibrate failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1318,7 +1333,7 @@ loop:
 		goto doseek;
 
 	default:
-		fdcstatus(&fd->sc_dk.dk_dev, 0, "stray interrupt");
+		fdcstatus(&fd->sc_dv, 0, "stray interrupt");
 		return 1;
 	}
 #ifdef DIAGNOSTIC
@@ -1404,18 +1419,18 @@ fdioctl(dev, cmd, addr, flag)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bzero(&fd->sc_dk.dk_label, sizeof(struct disklabel));
+		bzero(fd->sc_dk.dk_label, sizeof(struct disklabel));
 		
-		fd->sc_dk.dk_label.d_secpercyl = fd->sc_type->seccyl;
-		fd->sc_dk.dk_label.d_type = DTYPE_FLOPPY;
-		fd->sc_dk.dk_label.d_secsize = FDC_BSIZE;
+		fd->sc_dk.dk_label->d_secpercyl = fd->sc_type->seccyl;
+		fd->sc_dk.dk_label->d_type = DTYPE_FLOPPY;
+		fd->sc_dk.dk_label->d_secsize = FDC_BSIZE;
 
 		if (readdisklabel(dev, fdstrategy,
-				  &fd->sc_dk.dk_label,
-				  &fd->sc_dk.dk_cpulabel) != NULL)
+				  fd->sc_dk.dk_label,
+				  fd->sc_dk.dk_cpulabel) != NULL)
 			return EINVAL;
 
-		*(struct disklabel *)addr = fd->sc_dk.dk_label;
+		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
 		return 0;
 
 	case DIOCWLABEL:
@@ -1428,15 +1443,15 @@ fdioctl(dev, cmd, addr, flag)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		error = setdisklabel(&fd->sc_dk.dk_label,
+		error = setdisklabel(fd->sc_dk.dk_label,
 				    (struct disklabel *)addr, 0,
-				    &fd->sc_dk.dk_cpulabel);
+				    fd->sc_dk.dk_cpulabel);
 		if (error)
 			return error;
 
 		error = writedisklabel(dev, fdstrategy,
-				       &fd->sc_dk.dk_label,
-				       &fd->sc_dk.dk_cpulabel);
+				       fd->sc_dk.dk_label,
+				       fd->sc_dk.dk_cpulabel);
 		return error;
 
 	case MTIOCTOP:
@@ -1454,7 +1469,7 @@ fdioctl(dev, cmd, addr, flag)
 		{
 		int i;
 		struct fdc_softc *fdc = (struct fdc_softc *)
-					fd->sc_dk.dk_dev.dv_parent;
+					fd->sc_dv.dv_parent;
 
 		out_fdc(fdc, NE7CMD_DUMPREG);
 		fdcresult(fdc);
@@ -1466,17 +1481,17 @@ fdioctl(dev, cmd, addr, flag)
 
 		return 0;
 	case _IOW('f', 101, int):
-		((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent)->sc_cfg &=
+		((struct fdc_softc *)fd->sc_dv.dv_parent)->sc_cfg &=
 			~CFG_THRHLD_MASK;
-		((struct fdc_softc *)fd->sc_dk.dk_dev.dv_parent)->sc_cfg |=
+		((struct fdc_softc *)fd->sc_dv.dv_parent)->sc_cfg |=
 			(*(int *)addr & CFG_THRHLD_MASK);
-		fdconf(fd->sc_dk.dk_dev.dv_parent);
+		fdconf(fd->sc_dv.dv_parent);
 		return 0;
 	case _IO('f', 102):
 		{
 		int i;
 		struct fdc_softc *fdc = (struct fdc_softc *)
-					fd->sc_dk.dk_dev.dv_parent;
+					fd->sc_dv.dv_parent;
 		out_fdc(fdc, NE7CMD_SENSEI);
 		fdcresult(fdc);
 		printf("sensei(%d regs): <", fdc->sc_nstat);

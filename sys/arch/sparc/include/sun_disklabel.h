@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_disklabel.h,v 1.4 1995/03/28 18:20:12 jtc Exp $ */
+/*	$NetBSD: sun_disklabel.h,v 1.6 1996/01/07 22:03:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,5 +107,9 @@ struct sun_disklabel {			/* total size = 512 bytes */
 #define SUN_LABELOFFSET	128
 
 #ifdef _KERNEL
-int	sunos_dkioctl __P((struct dkdevice *, u_long, caddr_t, int));
+/* reads sun label in sector at [cp..cp+511] and sets *lp to BSD label */
+int	sunos_disklabel __P((caddr_t, struct disklabel *)); /* true on success */
+
+/* compatability dk ioctl's */
+int	sunos_dkioctl __P((struct disk *, u_long, caddr_t, int));
 #endif

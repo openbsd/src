@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.7.2.1 1995/10/12 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.9 1996/01/07 22:03:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -90,7 +90,6 @@ struct ccddevice {
 	int		ccd_unit;	/* logical unit of this ccd */
 	int		ccd_interleave;	/* interleave (DEV_BSIZE blocks) */
 	int		ccd_flags;	/* misc. information */
-	int		ccd_dk;		/* disk number */
 	struct vnode	**ccd_vpp;	/* array of component vnodes */
 	char		**ccd_cpp;	/* array of component pathnames */
 	int		ccd_ndev;	/* number of component devices */
@@ -182,10 +181,9 @@ struct ccd_softc {
 	int		 sc_nccdisks;		/* number of components */
 	struct ccdcinfo	 *sc_cinfo;		/* component info */
 	struct ccdiinfo	 *sc_itable;		/* interleave table */
-	int		 sc_nactive;		/* number of requests active */
-	int		 sc_dk;			/* disk index */
 	struct ccdgeom   sc_geom;		/* pseudo geometry info */
-	struct dkdevice	 sc_dkdev;		/* generic disk device info */
+	char		 sc_xname[8];		/* XXX external name */
+	struct disk	 sc_dkdev;		/* generic disk device info */
 };
 
 /* sc_flags */

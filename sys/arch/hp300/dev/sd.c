@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.20 1995/12/09 07:31:03 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.21 1996/01/07 22:02:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -48,8 +48,9 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/stat.h>
-#include <sys/dkstat.h>
+#include <sys/dkstat.h>		/* XXX */
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -326,6 +327,14 @@ sdmatch(hd)
 {
 	register struct sd_softc *sc = &sd_softc[hd->hp_unit];
 
+	/* XXX set up external name */
+	bzero(sc->sc_xname, sizeof(sc->sc_xname));
+	sprintf(sc->sc_xname, "sd%d", hd->hp_unit);
+
+	/* Initialize the disk structure. */
+	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
+	sc->sc_dkdev.dk_name = sc->sc_xname;
+
 	sc->sc_hd = hd;
 	sc->sc_flags = 0;
 	/*
@@ -353,6 +362,9 @@ sdattach(hd)
 	sc->sc_dq.dq_unit = hd->hp_unit;
 	sc->sc_dq.dq_slave = hd->hp_slave;
 	sc->sc_dq.dq_driver = &sddriver;
+
+	/* Attach the disk. */
+	disk_attach(&sc->sc_dkdev);
 
 	sc->sc_flags |= SDF_ALIVE;
 }
@@ -474,7 +486,7 @@ sdgetinfo(dev)
 {
 	int unit = sdunit(dev);
 	register struct sd_softc *sc = &sd_softc[unit];
-	register struct disklabel *lp = &sc->sc_info.si_label;
+	register struct disklabel *lp = sc->sc_dkdev.dk_label;
 	register struct partition *pi;
 	char *msg, *readdisklabel();
 #ifdef COMPAT_NOLABEL
@@ -584,7 +596,7 @@ sdopen(dev, flags, mode, p)
 	 * We may block reading the label, so be careful
 	 * to stop any other opens.
 	 */
-	if (sc->sc_info.si_open == 0) {
+	if (sc->sc_dkdev.dk_openmask == 0) {
 		sc->sc_flags |= SDF_OPENING;
 		error = sdgetinfo(dev);
 		sc->sc_flags &= ~SDF_OPENING;
@@ -592,15 +604,17 @@ sdopen(dev, flags, mode, p)
 		if (error)
 			return(error);
 	}
+
+	/* XXX Support old-style instrumentation for now. */
 	if (sc->sc_hd->hp_dk >= 0)
 		dk_wpms[sc->sc_hd->hp_dk] = sc->sc_wpms;
 
 	mask = 1 << sdpart(dev);
 	if (mode == S_IFCHR)
-		sc->sc_info.si_copen |= mask;
+		sc->sc_dkdev.dk_copenmask |= mask;
 	else
-		sc->sc_info.si_bopen |= mask;
-	sc->sc_info.si_open |= mask;
+		sc->sc_dkdev.dk_bopenmask |= mask;
+	sc->sc_dkdev.dk_openmask |= mask;
 	return(0);
 }
 
@@ -612,15 +626,15 @@ sdclose(dev, flag, mode, p)
 {
 	int unit = sdunit(dev);
 	register struct sd_softc *sc = &sd_softc[unit];
-	register struct sdinfo *si = &sc->sc_info;
+	register struct disk *dk = &sc->sc_dkdev;
 	int mask, s;
 
 	mask = 1 << sdpart(dev);
 	if (mode == S_IFCHR)
-		si->si_copen &= ~mask;
+		dk->dk_copenmask &= ~mask;
 	else
-		si->si_bopen &= ~mask;
-	si->si_open = si->si_bopen | si->si_copen;
+		dk->dk_bopenmask &= ~mask;
+	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 	/*
 	 * On last close, we wait for all activity to cease since
 	 * the label/parition info will become invalid.  Since we
@@ -628,7 +642,7 @@ sdclose(dev, flag, mode, p)
 	 * Note we don't have to about other closes since we know
 	 * we are the last one.
 	 */
-	if (si->si_open == 0) {
+	if (dk->dk_openmask == 0) {
 		sc->sc_flags |= SDF_CLOSING;
 		s = splbio();
 		while (sdtab[unit].b_active) {
@@ -765,7 +779,7 @@ sdstrategy(bp)
 		}
 		bn = bp->b_blkno;
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
-		pinfo = &sc->sc_info.si_label.d_partitions[sdpart(bp->b_dev)];
+		pinfo = &sc->sc_dkdev.dk_label->d_partitions[sdpart(bp->b_dev)];
 		if (bn < 0 || bn + sz > pinfo->p_size) {
 			sz = pinfo->p_size - bn;
 			if (sz == 0) {
@@ -982,13 +996,19 @@ sdgo(unit)
 	if (inledcontrol == 0)
 		ledcontrol(0, 0, LED_DISK);
 #endif
-	if (scsigo(hp->hp_ctlr, hp->hp_slave, sc->sc_punit, bp, cmd, pad) == 0) {
+	if (scsigo(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
+	    bp, cmd, pad) == 0) {
+		/* XXX Support old-style instrumentation for now. */
 		if (hp->hp_dk >= 0) {
 			dk_busy |= 1 << hp->hp_dk;
 			++dk_seek[hp->hp_dk];
 			++dk_xfer[hp->hp_dk];
 			dk_wds[hp->hp_dk] += bp->b_bcount >> 6;
 		}
+
+		/* Instrumentation. */
+		disk_busy(&sc->sc_dkdev);
+		sc->sc_dkdev.dk_seek++;		/* XXX */
 		return;
 	}
 #ifdef DEBUG
@@ -1018,8 +1038,13 @@ sdintr(unit, stat)
 		printf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
 		return;
 	}
+
+	/* XXX Support old-style instrumentation for now. */
 	if (hp->hp_dk >= 0)
 		dk_busy &=~ (1 << hp->hp_dk);
+
+	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid));
+
 	if (stat) {
 #ifdef DEBUG
 		if (sddebug & SDB_ERROR)
@@ -1087,7 +1112,7 @@ sdioctl(dev, cmd, data, flag, p)
 {
 	int unit = sdunit(dev);
 	register struct sd_softc *sc = &sd_softc[unit];
-	register struct disklabel *lp = &sc->sc_info.si_label;
+	register struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
 	switch (cmd) {
@@ -1118,7 +1143,7 @@ sdioctl(dev, cmd, data, flag, p)
 			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
 				     (sc->sc_flags & SDF_WLABEL) ? 0
-				     : sc->sc_info.si_open,
+				     : sc->sc_dkdev.dk_openmask,
 				     (struct cpu_disklabel *)0);
 		return (error);
 
@@ -1127,7 +1152,7 @@ sdioctl(dev, cmd, data, flag, p)
 			return (EBADF);
 		error = setdisklabel(lp, (struct disklabel *)data,
 				     (sc->sc_flags & SDF_WLABEL) ? 0
-				     : sc->sc_info.si_open,
+				     : sc->sc_dkdev.dk_openmask,
 				     (struct cpu_disklabel *)0);
 		if (error)
 			return (error);
@@ -1196,12 +1221,12 @@ sdsize(dev)
 	 * without the device being open so we may need
 	 * to handle it here.
 	 */
-	if (sc->sc_info.si_open == 0) {
+	if (sc->sc_dkdev.dk_openmask == 0) {
 		if (sdopen(dev, FREAD|FWRITE, S_IFBLK, NULL))
 			return(-1);
 		didopen = 1;
 	}
-	psize = sc->sc_info.si_label.d_partitions[sdpart(dev)].p_size;
+	psize = sc->sc_dkdev.dk_label->d_partitions[sdpart(dev)].p_size;
 	if (didopen)
 		(void) sdclose(dev, FREAD|FWRITE, S_IFBLK, NULL);
 	return (psize);
@@ -1228,7 +1253,7 @@ sddump(dev)
 	/* is drive ok? */
 	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
 		return (ENXIO);
-	pinfo = &sc->sc_info.si_label.d_partitions[part];
+	pinfo = &sc->sc_dkdev.dk_label->d_partitions[part];
 	/* dump parameters in range? */
 	if (dumplo < 0 || dumplo >= pinfo->p_size ||
 	    pinfo->p_fstype != FS_SWAP)

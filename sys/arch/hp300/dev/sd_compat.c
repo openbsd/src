@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_compat.c,v 1.3 1994/10/26 07:25:08 cgd Exp $	*/
+/*	$NetBSD: sd_compat.c,v 1.4 1996/01/07 22:02:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <hp300/dev/device.h>
 #include <hp300/dev/sdvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1995/11/01 04:59:31 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1996/01/07 22:02:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -239,7 +239,7 @@ extern	struct cfdriver		scsibuscd;
 
 /* swiped from sparc/sparc/autoconf.c */
 static int
-findblkmajor(register struct dkdevice *dv)
+findblkmajor(register struct disk *dv)
 {
 	register int	i;
 
@@ -258,6 +258,7 @@ void
 findbootdev()
 {
 	register struct device *dv;
+	register struct disk *diskp;
 	register int unit;
 	int major;
 
@@ -271,12 +272,22 @@ findbootdev()
 	unit = target_to_unit(-1, unit, 0);
 	bootdev |= (unit << B_UNITSHIFT);
 
+	if (disk_count <= 0)
+		return;
+
 	for (dv = alldevs ; dv ; dv = dv->dv_next) {
-		if (   (dv->dv_class == DV_DISK)
-		    && (unit == dv->dv_unit)
-		    && (major == findblkmajor((struct dkdevice *) (dv+1)))) {
-			bootdv = dv;
-			return;
+		if ((dv->dv_class == DV_DISK) && (unit == dv->dv_unit)) {
+			/*
+			 * Find the disk corresponding to the current
+			 * device.
+			 */
+			if ((diskp = disk_find(dv->dv_xname)) == NULL)
+				continue;
+
+			if (major == findblkmajor(diskp)) {
+				bootdv = dv;
+				return;
+			}
 		}
 	}
 }

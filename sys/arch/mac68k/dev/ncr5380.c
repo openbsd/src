@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.14 1995/12/04 02:10:44 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.17 1996/01/06 15:56:12 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -50,8 +50,14 @@
 #	define DBG_INFPRINT(a,b,c)
 #endif
 #ifdef DBG_PID
-	static	char	*last_hit = NULL, *olast_hit = NULL;
-#	define	PID(a)	olast_hit = last_hit; last_hit = a; 
+	/* static	char	*last_hit = NULL, *olast_hit = NULL; */
+	static char *last_hit[DBG_PID];
+#	define	PID(a)	\
+	{ int i; \
+	  for (i=0; i< DBG_PID-1; i++) \
+		last_hit[i] = last_hit[i+1]; \
+	  last_hit[DBG_PID-1] = a; } \
+		/* olast_hit = last_hit; last_hit = a; */
 #else
 #	define	PID(a)
 #endif
@@ -1315,7 +1321,8 @@ struct ncr_softc *sc;
 		phase = PH_MSGOUT;
 
 		SET_5380_REG(NCR5380_ICOM, SC_A_ATN);
-		transfer_pio(&phase, &msg, &len, 0);
+		if (transfer_pio(&phase, &msg, &len, 0) || len)
+			scsi_reset(sc);
 	}
 	else {
 		connected = tmp;
@@ -1483,12 +1490,12 @@ dma_ready()
 	 */
 	if (!is_edma && !(dmstat & (SC_END_DMA|SC_BSY_ERR))
 		     && (dmstat & SC_PHS_MTCH) ) {
-		ncr_tprint(reqp, "dma_ready: spurious call"
+		ncr_tprint(reqp, "dma_ready: spurious call "
 				 "(dm:%x,last_hit: %s)\n",
 #ifdef DBG_PID
-							dmstat, last_hit);
+					dmstat, last_hit[DBG_PID-1]);
 #else
-							dmstat, "unknown");
+					dmstat, "unknown");
 #endif
 		return (0);
 	}
@@ -1585,6 +1592,7 @@ int	linked;
 	if (reqp->dr_flag & DRIVER_LINKCHK) {
 		if (linked)
 			ncr_will_link |= 1<<reqp->targ_id;
+		else ncr_tprint(reqp, "Does not support linked commands\n");
 		return (0);
 	}
 	/*
@@ -1934,8 +1942,8 @@ char	*qtxt;
 	printf("REQ-%s: %d %x[%d] cmd[0]=%x S=%x M=%x R=%x resid=%d dr_flag=%x %s\n",
 			qtxt, reqp->targ_id, reqp->xdata_ptr, reqp->xdata_len,
 			reqp->xcmd.opcode, reqp->status, reqp->message,
-			reqp->dr_flag,
-			reqp->xs->error, reqp->xs->resid, reqp->link ? "L":"");
+			reqp->xs->error, reqp->xs->resid, reqp->dr_flag,
+			reqp->link ? "L":"");
 	if (reqp->status == SCSCHKC)
 		show_data_sense(reqp->xs);
 }
@@ -1971,11 +1979,7 @@ scsi_show()
 	SC_REQ	*tmp;
 	int	sps = splhigh();
 	u_char	idstat, dmstat;
-
-#ifndef DBG_PID
-	#define	last_hit	""
-	#define	olast_hit	""
-#endif
+	int	i;
 
 	for (tmp = issue_q; tmp; tmp = tmp->next)
 		show_request(tmp, "ISSUED");
@@ -1988,8 +1992,11 @@ scsi_show()
 	show_signals(dmstat, idstat);
 	if (connected)
 		printf("phase = %d, ", connected->phase);
-	printf("busy:%x, last_hit:%s, olast_hit:%s spl:%04x\n", busy,
-						last_hit, olast_hit, sps);
+	printf("busy:%x, spl:%04x\n", busy, sps);
+#ifdef	DBG_PID
+	for (i=0; i<DBG_PID; i++)
+		printf("\t%d\t%s\n", i, last_hit[i]);
+#endif
 
 	splx(sps);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: xyvar.h,v 1.1 1995/10/30 20:58:23 gwr Exp $ */
+/* $NetBSD: xyvar.h,v 1.2 1996/01/07 22:03:22 thorpej Exp $ */
 
 /*
  *
@@ -101,7 +101,7 @@ struct xy_iorq {
 
 struct xy_softc {
   struct device sc_dev;            /* device struct, reqd by autoconf */
-  struct dkdevice sc_dk;           /* dkdevice: hook for iostat */
+  struct disk sc_dk;               /* generic disk info */
   struct xyc_softc *parent;        /* parent */
   u_short flags;                   /* flags */
   u_short state;                   /* device state */

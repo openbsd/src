@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1995/09/01 17:19:50 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.11 1996/01/07 22:03:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -68,7 +68,7 @@ extern struct device *bootdv;
 
 int
 dk_establish(dk, dev)
-	struct dkdevice *dk;
+	struct disk *dk;
 	struct device *dev;
 {
 	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
@@ -487,8 +487,8 @@ disklabel_bsd_to_sun(lp, cp)
 
 /* move this to compat/sunos */
 int
-sun_dkioctl(dk, cmd, data, partition)
-	struct dkdevice *dk;
+sunos_dkioctl(dk, cmd, data, partition)
+	struct disk *dk;
 	u_long cmd;
 	caddr_t data;
 	int partition;
@@ -499,15 +499,15 @@ sun_dkioctl(dk, cmd, data, partition)
 	case SUNOS_DKIOCGGEOM:
 #define geom	((struct sun_dkgeom *)data)
 		bzero(data, sizeof(*geom));
-		geom->sdkc_ncylinders = dk->dk_label.d_ncylinders;
-		geom->sdkc_acylinders = dk->dk_label.d_acylinders;
-		geom->sdkc_ntracks = dk->dk_label.d_ntracks;
-		geom->sdkc_nsectors = dk->dk_label.d_nsectors;
-		geom->sdkc_interleave = dk->dk_label.d_interleave;
-		geom->sdkc_sparespercyl = dk->dk_label.d_sparespercyl;
-		geom->sdkc_rpm = dk->dk_label.d_rpm;
+		geom->sdkc_ncylinders = dk->dk_label->d_ncylinders;
+		geom->sdkc_acylinders = dk->dk_label->d_acylinders;
+		geom->sdkc_ntracks = dk->dk_label->d_ntracks;
+		geom->sdkc_nsectors = dk->dk_label->d_nsectors;
+		geom->sdkc_interleave = dk->dk_label->d_interleave;
+		geom->sdkc_sparespercyl = dk->dk_label->d_sparespercyl;
+		geom->sdkc_rpm = dk->dk_label->d_rpm;
 		geom->sdkc_pcylinders =
-			dk->dk_label.d_ncylinders + dk->dk_label.d_acylinders;
+			dk->dk_label->d_ncylinders + dk->dk_label->d_acylinders;
 #undef geom
 		break;
 	case SUNOS_DKIOCINFO:
@@ -515,13 +515,13 @@ sun_dkioctl(dk, cmd, data, partition)
 		bzero(data, sizeof(struct sun_dkctlr));
 		break;
 	case SUNOS_DKIOCGPART:
-		if (dk->dk_label.d_secpercyl == 0)
+		if (dk->dk_label->d_secpercyl == 0)
 			return (ERANGE);	/* XXX */
-		p = &dk->dk_label.d_partitions[partition];
-		if (p->p_offset % dk->dk_label.d_secpercyl != 0)
+		p = &dk->dk_label->d_partitions[partition];
+		if (p->p_offset % dk->dk_label->d_secpercyl != 0)
 			return (ERANGE);	/* XXX */
 #define part	((struct sun_dkpart *)data)
-		part->sdkp_cyloffset = p->p_offset / dk->dk_label.d_secpercyl;
+		part->sdkp_cyloffset = p->p_offset / dk->dk_label->d_secpercyl;
 		part->sdkp_nsectors = p->p_size;
 #undef part
 		break;

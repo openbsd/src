@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.78 1995/12/07 19:11:32 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.79 1996/01/07 22:03:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -54,7 +54,6 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -78,7 +77,7 @@
 
 struct cd_softc {
 	struct device sc_dev;
-	struct dkdevice sc_dk;
+	struct disk sc_dk;
 
 	int flags;
 #define	CDF_LOCKED	0x01
@@ -104,6 +103,7 @@ void cdgetdisklabel __P((struct cd_softc *));
 int cd_get_parms __P((struct cd_softc *, int));
 void cdstrategy __P((struct buf *));
 void cdstart __P((struct cd_softc *));
+int cddone __P((struct scsi_xfer *));
 
 struct dkdriver cddkdriver = { cdstrategy };
 
@@ -111,7 +111,7 @@ struct scsi_device cd_switch = {
 	NULL,			/* use default error handler */
 	cdstart,		/* we have a queue, which is started by this */
 	NULL,			/* we do not have an async handler */
-	NULL,			/* use default 'done' routine */
+	cddone,			/* deal with stats at interrupt time */
 };
 
 struct scsi_inquiry_pattern cd_patterns[] = {
@@ -163,9 +163,15 @@ cdattach(parent, self, aux)
 	if (sc_link->openings > CDOUTSTANDING)
 		sc_link->openings = CDOUTSTANDING;
 
+	/*
+	 * Initialize and attach the disk structure.
+	 */
 	cd->sc_dk.dk_driver = &cddkdriver;
+	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
+	disk_attach(&cd->sc_dk);
+
 #if !defined(i386) || defined(NEWCONFIG)
-	dk_establish(&cd->sc_dk, &cd->sc_dev);
+	dk_establish(&cd->sc_dk, &cd->sc_dev);		/* XXX */
 #endif
 
 	printf("\n");
@@ -248,14 +254,12 @@ cdopen(dev, flag, fmt)
 	} else {
 		/* Check that it is still responding and ok. */
 		if (error = scsi_test_unit_ready(sc_link,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_IGNORE_NOT_READY))
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY))
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
 		if (error = scsi_start(sc_link, SSS_START,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_SILENT))
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
 			goto bad3;
 
 		sc_link->flags |= SDEV_OPEN;
@@ -285,8 +289,8 @@ cdopen(dev, flag, fmt)
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
-	    (part >= cd->sc_dk.dk_label.d_npartitions ||
-	     cd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
+	    (part >= cd->sc_dk.dk_label->d_npartitions ||
+	     cd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
@@ -377,7 +381,7 @@ cdstrategy(bp)
 	/*
 	 * The transfer must be a whole number of blocks.
 	 */
-	if ((bp->b_bcount % cd->sc_dk.dk_label.d_secsize) != 0) {
+	if ((bp->b_bcount % cd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -400,7 +404,7 @@ cdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (CDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, &cd->sc_dk.dk_label,
+	    bounds_check_with_label(bp, cd->sc_dk.dk_label,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 
@@ -502,12 +506,12 @@ cdstart(cd)
 		 * of the logical blocksize of the device.
 		 */
 		blkno =
-		    bp->b_blkno / (cd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
+		    bp->b_blkno / (cd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 		if (CDPART(bp->b_dev) != RAW_PART) {
-			p = &cd->sc_dk.dk_label.d_partitions[CDPART(bp->b_dev)];
-			blkno += p->p_offset;
+		      p = &cd->sc_dk.dk_label->d_partitions[CDPART(bp->b_dev)];
+		      blkno += p->p_offset;
 		}
-		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label.d_secsize);
+		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label->d_secsize);
 
 		/*
 		 *  Fill out the scsi command.  If the transfer will
@@ -544,6 +548,9 @@ cdstart(cd)
 			cmdp = (struct scsi_generic *)&cmd_big;
 		}
 
+		/* Instrumentation. */
+		disk_busy(&cd->sc_dk);
+
 		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
@@ -554,6 +561,18 @@ cdstart(cd)
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT)))
 			printf("%s: not queued", cd->sc_dev.dv_xname);
 	}
+}
+
+int
+cddone(xs)
+	struct scsi_xfer *xs;
+{
+	struct cd_softc *cd = xs->sc_link->device_softc;
+
+	if (xs->bp != NULL)
+		disk_unbusy(&cd->sc_dk, (xs->bp->b_bcount - xs->bp->b_resid));
+
+	return (0);
 }
 
 int
@@ -603,13 +622,13 @@ cdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		*(struct disklabel *)addr = cd->sc_dk.dk_label;
+		*(struct disklabel *)addr = *(cd->sc_dk.dk_label);
 		return 0;
 
 	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = &cd->sc_dk.dk_label;
+		((struct partinfo *)addr)->disklab = cd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &cd->sc_dk.dk_label.d_partitions[CDPART(dev)];
+		    &cd->sc_dk.dk_label->d_partitions[CDPART(dev)];
 		return 0;
 
 	case DIOCWDINFO:
@@ -621,9 +640,9 @@ cdioctl(dev, cmd, addr, flag, p)
 			return error;
 		cd->flags |= CDF_LABELLING;
 
-		error = setdisklabel(&cd->sc_dk.dk_label,
+		error = setdisklabel(cd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0,
-		    &cd->sc_dk.dk_cpulabel);
+		    cd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 		}
 
@@ -817,9 +836,6 @@ cdioctl(dev, cmd, addr, flag, p)
 		return scsi_start(cd->sc_link, SSS_START, 0);
 	case CDIOCSTOP:
 		return scsi_start(cd->sc_link, SSS_STOP, 0);
-	case MTIOCTOP:
-		if (((struct mtop *)addr)->mt_op != MTOFFL)
-			return EIO;
 	case CDIOCEJECT:
 		return scsi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0);
 	case CDIOCALLOW:
@@ -857,10 +873,10 @@ void
 cdgetdisklabel(cd)
 	struct cd_softc *cd;
 {
-	struct disklabel *lp = &cd->sc_dk.dk_label;
+	struct disklabel *lp = cd->sc_dk.dk_label;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(&cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	bzero(cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = cd->params.blksize;
 	lp->d_ntracks = 1;

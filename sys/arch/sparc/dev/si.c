@@ -323,15 +323,17 @@ si_attach(parent, self, args)
 	int i;
 
 	/* Pull in the options flags. */
-	sc->sc_options =
-	 ((ncr_sc->sc_dev.dv_cfdata->cf_flags | si_options) & SI_OPTIONS_MASK);
-
+	if (ca->ca_bustype == BUS_OBIO) {
 	/*
 	 * XXX Interrupts and reselect don't work on the "sw".
-	 * I don't know why (yet).  -- thorpej
+		 * I don't know why (yet).  Disable DMA by default, too.
+		 * It's still a little dangerous.
 	 */
-	if (ca->ca_bustype == BUS_OBIO)
-		sc->sc_options &= ~(SI_DMA_INTR|SI_DO_RESELECT);
+		sc->sc_options = ncr_sc->sc_dev.dv_cfdata->cf_flags &
+		    SI_OPTIONS_MASK;
+	} else
+		sc->sc_options =
+	 ((ncr_sc->sc_dev.dv_cfdata->cf_flags | si_options) & SI_OPTIONS_MASK);
 
 	/* Map the controller registers. */
 	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,

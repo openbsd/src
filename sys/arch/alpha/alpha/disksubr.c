@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1995/04/22 12:43:22 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 1996/01/07 22:01:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -45,7 +45,7 @@ extern struct device *bootdv;
 /* was this the boot device ? */
 int
 dk_establish(dk, dev)
-	struct dkdevice *dk;
+	struct disk *dk;
 	struct device *dev;
 {
 #ifdef NOTDEF

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.79 1995/08/21 06:56:14 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.82 1996/01/07 22:02:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -149,7 +149,7 @@ struct fd_type fd_types[] = {
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
 	struct device sc_dev;
-	struct dkdevice sc_dk;
+	struct disk sc_dk;
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
@@ -405,7 +405,14 @@ fdattach(parent, self, aux)
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
+
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
 	fd->sc_dk.dk_driver = &fddkdriver;
+	disk_attach(&fd->sc_dk);
+
 #ifdef NEWCONFIG
 	/* XXX Need to do some more fiddling with sc_dk. */
 	dk_establish(&fd->sc_dk, &fd->sc_dev);
@@ -542,6 +549,9 @@ fdstart(fd)
 	fd->sc_q.b_active = 1;
 	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 
+	/* Instrumentation. */
+	disk_busy(&fd->sc_dk);
+
 	/* If controller not already active, start it. */
 	if (!active)
 		fdcstart(fdc);
@@ -571,6 +581,9 @@ fdfinish(fd, bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
+
+	disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
+
 	biodone(bp);
 	/* turn off motor 5s from now */
 	timeout(fd_motor_off, fd, 5 * hz);

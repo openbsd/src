@@ -1,4 +1,4 @@
-/* $NetBSD: xd.c,v 1.1 1995/10/30 20:58:17 gwr Exp $ */
+/* $NetBSD: xd.c,v 1.2 1996/01/07 22:03:17 thorpej Exp $ */
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xd.c,v 1.1 1995/11/01 17:24:22 deraadt Exp $
+ * id: $Id: xd.c,v 1.2 1996/01/12 20:21:04 deraadt Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -295,35 +295,35 @@ xdgetdisklabel(xd, b)
 	xd_labeldata = b;
 
 	/* Required parameter for readdisklabel() */
-	xd->sc_dk.dk_label.d_secsize = XDFM_BPS;
+	xd->sc_dk.dk_label->d_secsize = XDFM_BPS;
 
 	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
 			    xddummystrat,
-			    &xd->sc_dk.dk_label, &xd->sc_dk.dk_cpulabel);
+			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
 	if (err) {
 		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
 		return(XD_ERR_FAIL);
 	}
 
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
-	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel.cd_block;
+	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel->cd_block;
 	if (sdl->sl_magic == SUN_DKMAGIC)
 		xd->pcyl = sdl->sl_pcyl;
 	else {
 		printf("%s: WARNING: no `pcyl' in disk label.\n", 
 							xd->sc_dev.dv_xname);
-		xd->pcyl = xd->sc_dk.dk_label.d_ncylinders +
-			xd->sc_dk.dk_label.d_acylinders;
+		xd->pcyl = xd->sc_dk.dk_label->d_ncylinders +
+			xd->sc_dk.dk_label->d_acylinders;
 		printf("%s: WARNING: guessing pcyl=%d (ncyl+acyl)\n", 
 			xd->sc_dev.dv_xname, xd->pcyl);
 	}
 
-	xd->ncyl = xd->sc_dk.dk_label.d_ncylinders;
-	xd->acyl = xd->sc_dk.dk_label.d_acylinders;
-	xd->nhead = xd->sc_dk.dk_label.d_ntracks;
-	xd->nsect = xd->sc_dk.dk_label.d_nsectors;
+	xd->ncyl = xd->sc_dk.dk_label->d_ncylinders;
+	xd->acyl = xd->sc_dk.dk_label->d_acylinders;
+	xd->nhead = xd->sc_dk.dk_label->d_ntracks;
+	xd->nsect = xd->sc_dk.dk_label->d_nsectors;
 	xd->sectpercyl = xd->nhead * xd->nsect;
-	xd->sc_dk.dk_label.d_secsize = XDFM_BPS; /* not handled by
+	xd->sc_dk.dk_label->d_secsize = XDFM_BPS; /* not handled by
 						  * sun->bsd */
 	return(XD_ERR_AOK);
 }
@@ -525,6 +525,14 @@ xdattach(parent, self, aux)
 	struct dkbad *dkb;
 	struct bootpath *bp;
 
+	/*
+	 * Always re-initialize the disk structure.  We want statistics
+	 * to start with a clean slate.
+	 */
+	bzero(&xd->sc_dk, sizeof(xd->sc_dk));
+	xd->sc_dk.dk_driver = &xddkdriver;
+	xd->sc_dk.dk_name = xd->sc_dev.dv_xname;
+
 	/* if booting, init the xd_softc */
 
 	if (xa->booting) {
@@ -683,9 +691,8 @@ xdattach(parent, self, aux)
 		bcopy(xa->dvmabuf, &xd->dkb, XDFM_BPS);
 	}
 
-	if (xa->booting) {
-		xd->sc_dk.dk_driver = &xddkdriver;	/* link in dkdriver */
-	}
+	/* Attach the disk. */
+	disk_attach(&xd->sc_dk);
 
 	/* XXX - Where is this and what does it do? -gwr */
 	dk_establish(&xd->sc_dk, &xd->sc_dev);
@@ -803,21 +810,21 @@ xdioctl(dev, command, addr, flag, p)
 		return 0;
 
 	case DIOCGDINFO:	/* get disk label */
-		bcopy(&xd->sc_dk.dk_label, addr, sizeof(struct disklabel));
+		bcopy(xd->sc_dk.dk_label, addr, sizeof(struct disklabel));
 		return 0;
 
 	case DIOCGPART:	/* get partition info */
-		((struct partinfo *) addr)->disklab = &xd->sc_dk.dk_label;
+		((struct partinfo *) addr)->disklab = xd->sc_dk.dk_label;
 		((struct partinfo *) addr)->part =
-		    &xd->sc_dk.dk_label.d_partitions[DISKPART(dev)];
+		    &xd->sc_dk.dk_label->d_partitions[DISKPART(dev)];
 		return 0;
 
 	case DIOCSDINFO:	/* set disk label */
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		error = setdisklabel(&xd->sc_dk.dk_label,
+		error = setdisklabel(xd->sc_dk.dk_label,
 		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0,
-		    &xd->sc_dk.dk_cpulabel);
+		    xd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (xd->state == XD_DRIVE_NOLABEL)
 				xd->state = XD_DRIVE_ONLINE;
@@ -836,9 +843,9 @@ xdioctl(dev, command, addr, flag, p)
 	case DIOCWDINFO:	/* write disk label */
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		error = setdisklabel(&xd->sc_dk.dk_label,
+		error = setdisklabel(xd->sc_dk.dk_label,
 		    (struct disklabel *) addr, /* xd->sc_dk.dk_openmask : */ 0,
-		    &xd->sc_dk.dk_cpulabel);
+		    xd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (xd->state == XD_DRIVE_NOLABEL)
 				xd->state = XD_DRIVE_ONLINE;
@@ -846,8 +853,8 @@ xdioctl(dev, command, addr, flag, p)
 			/* Simulate opening partition 0 so write succeeds. */
 			xd->sc_dk.dk_openmask |= (1 << 0);
 			error = writedisklabel(MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART),
-			    xdstrategy, &xd->sc_dk.dk_label,
-			    &xd->sc_dk.dk_cpulabel);
+			    xdstrategy, xd->sc_dk.dk_label,
+			    xd->sc_dk.dk_cpulabel);
 			xd->sc_dk.dk_openmask =
 			    xd->sc_dk.dk_copenmask | xd->sc_dk.dk_bopenmask;
 		}
@@ -900,8 +907,8 @@ xdopen(dev, flag, fmt)
 	/* check for partition */
 
 	if (part != RAW_PART &&
-	    (part >= xd->sc_dk.dk_label.d_npartitions ||
-		xd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
+	    (part >= xd->sc_dk.dk_label->d_npartitions ||
+		xd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		return (ENXIO);
 	}
 	/* set open masks */
@@ -959,10 +966,10 @@ xdsize(dev)
 
 	xdsc = xdcd.cd_devs[DISKUNIT(dev)];
 	part = DISKPART(dev);
-	if (xdsc->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
+	if (xdsc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
 	else
-		size = xdsc->sc_dk.dk_label.d_partitions[part].p_size;
+		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size;
 	if (xdclose(dev, 0, S_IFBLK) != 0)
 		return -1;
 	return size;
@@ -988,7 +995,7 @@ xdstrategy(bp)
 
 	if (unit >= xdcd.cd_ndevs || (xd = xdcd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
-	    (bp->b_bcount % xd->sc_dk.dk_label.d_secsize) != 0) {
+	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
@@ -1021,7 +1028,7 @@ xdstrategy(bp)
 	 * partition. Adjust transfer if needed, and signal errors or early
 	 * completion. */
 
-	if (bounds_check_with_label(bp, &xd->sc_dk.dk_label,
+	if (bounds_check_with_label(bp, xd->sc_dk.dk_label,
 		(xd->flags & XD_WLABEL) != 0) <= 0)
 		goto done;
 
@@ -1059,6 +1066,10 @@ xdstrategy(bp)
 	if (xdc_startbuf(parent, xd, bp) != XD_ERR_AOK) {
 		return;
 	}
+
+	/* Instrumentation. */
+	disk_busy(&xd->sc_dk);
+
 	/* done! */
 
 	splx(s);
@@ -1392,7 +1403,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	 */
 
 	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
-	    xdsc->sc_dk.dk_label.d_partitions[partno].p_offset);
+	    xdsc->sc_dk.dk_label->d_partitions[partno].p_offset);
 
 	dbuf = dvma_mapin(bp->b_data, bp->b_bcount);
 	if (dbuf == NULL) {	/* out of DVMA space */
@@ -1694,6 +1705,8 @@ xdc_reset(xdcsc, quiet, blastmode, error, xdsc)
 				/* Sun3: map/unmap regardless of B_PHYS */
 				dvma_mapout(iorq->dbufbase,
 				            iorq->buf->b_bcount);
+			    disk_unbusy(&iorq->xd->sc_dk,
+				(iorq->buf->b_bcount - iorq->buf->b_resid));
 			    biodone(iorq->buf);
 			    XDC_FREE(xdcsc, lcv);	/* add to free list */
 			    break;
@@ -1899,6 +1912,8 @@ xdc_remove_iorq(xdcsc)
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
 			XDC_FREE(xdcsc, rqno);
+			disk_unbusy(&iorq->xd->sc_dk,
+			    (bp->b_bcount - bp->b_resid));
 			biodone(bp);
 			break;
 		case XD_SUB_WAIT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.42 1995/08/05 23:47:52 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.44 1996/01/07 22:03:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -107,7 +107,7 @@ struct mcd_mbx {
 
 struct mcd_softc {
 	struct	device sc_dev;
-	struct	dkdevice sc_dk;
+	struct	disk sc_dk;
 	void *sc_ih;
 
 	int	iobase;
@@ -207,6 +207,13 @@ mcdattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct mcd_mbox mbx;
 
+	/*
+	 * Initialize and attach the disk structure.
+	 */
+	sc->sc_dk.dk_driver = &mcddkdriver;
+	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
+	disk_attach(&sc->sc_dk);
+
 	printf(": model %s\n", sc->type != 0 ? sc->type : "unknown");
 
 	(void) mcd_setlock(sc, MCD_LK_UNLOCK);
@@ -219,8 +226,6 @@ mcdattach(parent, self, aux)
 	(void) mcd_send(sc, &mbx, 0);
 
 	mcd_soft_reset(sc);
-
-	sc->sc_dk.dk_driver = &mcddkdriver;
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, mcdintr,
 	    sc);
@@ -332,8 +337,8 @@ mcdopen(dev, flag, fmt, p)
 	
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
-	    (part >= sc->sc_dk.dk_label.d_npartitions ||
-	     sc->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
+	    (part >= sc->sc_dk.dk_label->d_npartitions ||
+	     sc->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
@@ -439,7 +444,7 @@ mcdstrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (MCDPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, &sc->sc_dk.dk_label,
+	    bounds_check_with_label(bp, sc->sc_dk.dk_label,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
 		goto done;
 	
@@ -492,12 +497,17 @@ loop:
 
 	dp->b_active = 1;
 
+	/* Instrumentation. */
+	s = splbio();
+	disk_busy(&sc->sc_dk);
+	splx(s);
+
 	sc->mbx.retry = MCD_RDRETRIES;
 	sc->mbx.bp = bp;
 	sc->mbx.blkno = bp->b_blkno / (sc->blksize / DEV_BSIZE);
 	if (MCDPART(bp->b_dev) != RAW_PART) {
 		struct partition *p;
-		p = &sc->sc_dk.dk_label.d_partitions[MCDPART(bp->b_dev)];
+		p = &sc->sc_dk.dk_label->d_partitions[MCDPART(bp->b_dev)];
 		sc->mbx.blkno += p->p_offset;
 	}
 	sc->mbx.nblk = bp->b_bcount / sc->blksize;
@@ -547,13 +557,13 @@ mcdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		*(struct disklabel *)addr = sc->sc_dk.dk_label;
+		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
 		return 0;
 
 	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = &sc->sc_dk.dk_label;
+		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &sc->sc_dk.dk_label.d_partitions[MCDPART(dev)];
+		    &sc->sc_dk.dk_label->d_partitions[MCDPART(dev)];
 		return 0;
 
 	case DIOCWDINFO:
@@ -565,9 +575,9 @@ mcdioctl(dev, cmd, addr, flag, p)
 			return error;
 		sc->flags |= MCDF_LABELLING;
 
-		error = setdisklabel(&sc->sc_dk.dk_label,
+		error = setdisklabel(sc->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0,
-		    &sc->sc_dk.dk_cpulabel);
+		    sc->sc_dk.dk_cpulabel);
 		if (error == 0) {
 		}
 
@@ -639,10 +649,10 @@ void
 mcdgetdisklabel(sc)
 	struct mcd_softc *sc;
 {
-	struct disklabel *lp = &sc->sc_dk.dk_label;
+	struct disklabel *lp = sc->sc_dk.dk_label;
 	
 	bzero(lp, sizeof(struct disklabel));
-	bzero(&sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sc->blksize;
 	lp->d_ntracks = 1;
@@ -1111,6 +1121,7 @@ mcdintr(arg)
 
 		/* Return buffer. */
 		bp->b_resid = 0;
+		disk_unbusy(&sc->sc_dk, bp->b_bcount);
 		biodone(bp);
 
 		mcdstart(sc);
@@ -1143,6 +1154,7 @@ harderr:
 	/* Invalidate the buffer. */
 	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount - mbx->skip;
+	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid));
 	biodone(bp);
 
 	mcdstart(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.79 1995/12/09 04:07:41 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.80 1996/01/07 22:03:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -144,6 +144,7 @@ main(framep)
 	extern struct pdevinit pdevinit[];
 	extern void roundrobin __P((void *));
 	extern void schedcpu __P((void *));
+	extern void disk_init __P((void));
 
 	/*
 	 * Initialize the current process pointer (curproc) before
@@ -160,6 +161,7 @@ main(framep)
 
 	vm_mem_init();
 	kmeminit();
+	disk_init();		/* must come before autoconfiguration */
 	cpu_startup();
 
 	/*
