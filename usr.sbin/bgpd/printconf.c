@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.11 2004/03/12 20:57:22 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.12 2004/03/17 12:40:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -114,6 +114,8 @@ void
 print_network(struct network_config *n)
 {
 	printf("network %s/%u", log_addr(&n->prefix), n->prefixlen);
+	if (n->attrset.flags)
+		printf(" ");
 	print_set(&n->attrset);
 	printf("\n");
 }
