@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.38 2001/02/28 16:45:25 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.39 2002/02/21 18:38:44 tdeval Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -75,7 +75,7 @@ struct bios_romheader {
 	u_int8_t	len;		/* length in pages (512 bytes) */
 	u_int32_t	entry;		/* initialization entry point */
 	u_int8_t	reserved[19];
-	u_int16_t	pnpheaader;	/* offset to PnP expansion header */
+	u_int16_t	pnpheader;	/* offset to PnP expansion header */
 } *bios_romheader_t;
 
 /*
