@@ -41,15 +41,11 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#define DO_AOUT			/* always do a.out */
 #if defined(__alpha__) || defined(pica)
-#define		DO_ECOFF
-#else
-#define		DO_AOUT
+#define DO_ECOFF
 #endif
-
-#if defined(DO_AOUT) + defined(DO_ECOFF) != 1
-	ERROR: NOT PROPERLY CONFIGURED
-#endif
+#define	DO_ELF
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -61,30 +57,18 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $";
 #ifdef DO_ECOFF
 #include <sys/exec_ecoff.h>
 #endif
+#ifdef DO_ELF
+#include <sys/exec_elf.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
-int
-nlist(name, list)
-	const char *name;
-	struct nlist *list;
-{
-	int fd, n;
-
-	fd = open(name, O_RDONLY, 0);
-	if (fd < 0)
-		return (-1);
-	n = __fdnlist(fd, list);
-	(void)close(fd);
-	return (n);
-}
 
 #define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
 
 #ifdef DO_AOUT
 int
-__fdnlist(fd, list)
+__aout_fdnlist(fd, list)
 	register int fd;
 	register struct nlist *list;
 {
@@ -175,7 +159,7 @@ __fdnlist(fd, list)
 #define	BADUNMAP		do { rv = -1; goto unmap; } while (0)
 
 int
-__fdnlist(fd, list)
+__ecoff_fdnlist(fd, list)
 	register int fd;
 	register struct nlist *list;
 {
@@ -271,3 +255,48 @@ out:
 	return (rv);
 }
 #endif /* DO_ECOFF */
+
+#ifdef DO_ELF
+int
+__elf_fdnlist(fd, list)
+	register int fd;
+	register struct nlist *list;
+{
+	return (-1);
+}
+#endif /* DO_ELF */
+
+
+static struct nlist_handlers {
+	int	(*fn) __P((int fd, struct nlist *list));
+} nlist_fn[] = {
+#ifdef DO_ELF
+	{ __elf_fdnlist },
+#endif
+#ifdef DO_ECOFF
+	{ __ecoff_fdnlist },
+#endif
+#ifdef DO_AOUT
+	{ __aout_fdnlist },
+#endif
+};
+
+int
+nlist(name, list)
+	const char *name;
+	struct nlist *list;
+{
+	int fd, n;
+	int i;
+
+	fd = open(name, O_RDONLY, 0);
+	if (fd < 0)
+		return (-1);
+	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
+		n = (nlist_fn[i].fn)(fd, list);
+		if (n != -1)
+			break;
+	}
+	(void)close(fd);
+	return (n);
+}
