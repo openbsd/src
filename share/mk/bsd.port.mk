@@ -1,5 +1,5 @@
 # -*- mode: Fundamental; tab-width: 4; -*-
-#	$OpenBSD: bsd.port.mk,v 1.3 1996/06/10 11:23:16 niklas Exp $
+#	$OpenBSD: bsd.port.mk,v 1.4 1996/06/11 10:38:02 deraadt Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -257,7 +257,7 @@ DO_NADA?=		echo -n
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
 XMKMF?=			xmkmf -a
-MD5?=			/sbin/md5
+MD5?=			/bin/md5
 MD5_FILE?=		${FILESDIR}/md5
 
 MAKE_FLAGS?=	-f

@@ -1,4 +1,4 @@
-/*	$OpenBSD: global.h,v 1.1 1996/06/03 22:08:26 niklas Exp $	*/
+/*	$OpenBSD: global.h,v 1.1 1996/06/11 10:37:35 deraadt Exp $	*/
 
 /* GLOBAL.H - RSAREF types and constants
  */
