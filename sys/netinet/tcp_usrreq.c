@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.35 1999/07/06 20:17:53 cmetz Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.36 1999/09/01 21:38:21 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -316,7 +316,7 @@ tcp_usrreq(so, req, m, nam, control)
 #ifdef TCP_COMPAT_42
 		tcp_iss += TCP_ISSINCR/2;
 #else /* TCP_COMPAT_42 */
-		tcp_iss += arc4random() % (TCP_ISSINCR / 2) + 1;
+		tcp_iss += arc4random() % TCP_ISSINCR + 1;
 #endif /* !TCP_COMPAT_42 */
 		tcp_sendseqinit(tp);
 #if defined(TCP_SACK) || defined(TCP_NEWRENO)
