@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.7 1997/04/20 20:45:34 tholo Exp $
+.\"	$OpenBSD: doc-syms,v 1.8 1997/04/22 21:11:29 etheisen Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -156,10 +156,12 @@
 .if \\n(.$==2 \{\
 .	if "\\$1"1.2"  \&\\*(tNOpenBSD\\*(aa 1.2\\*(aa\\$2
 .	if "\\$1"2.0"  \&\\*(tNOpenBSD\\*(aa 2.0\\*(aa\\$2
+.	if "\\$1"2.1"  \&\\*(tNOpenBSD\\*(aa 2.1\\*(aa\\$2
 .\}
 .if \\n(.$==1 \{\
 .	if "\\$1"1.2"  \&\\*(tNOpenBSD\\*(aa 1.2\\*(aa
 .	if "\\$1"2.0"  \&\\*(tNOpenBSD\\*(aa 2.0\\*(aa
+.	if "\\$1"2.1"  \&\\*(tNOpenBSD\\*(aa 2.1\\*(aa
 .\}
 ..
 .\" Ns At macro - AT&T UNIX (this macro does not handle punctuation)
