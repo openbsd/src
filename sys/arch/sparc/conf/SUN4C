@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.37 2003/01/31 22:00:22 miod Exp $
+#	$OpenBSD: SUN4C,v 1.38 2003/03/05 14:34:39 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -124,6 +124,10 @@ wsdisplay* at cgtwelve?
 # Vigra VS10 or VS12 framebuffer.
 vigra*	at sbus? slot ? offset ?
 wsdisplay* at vigra?
+
+# Parallax XVideo and PowerVideo
+tvtwo* at sbus? slot ? offset ?
+wsdisplay* at tvtwo?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.

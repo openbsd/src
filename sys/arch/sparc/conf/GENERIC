@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.59 2003/03/03 18:51:47 mjacob Exp $
+#	$OpenBSD: GENERIC,v 1.60 2003/03/05 14:34:39 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -276,6 +276,10 @@ wsdisplay* at vigra?
 # Weitek p9100 found on Tadpole 3GS/3GX
 pnozz0	at sbus? slot ? offset ?
 wsdisplay* at pnozz?
+
+# Parallax XVideo and PowerVideo
+tvtwo* at sbus? slot ? offset ?
+wsdisplay* at tvtwo?
 
 # Microcontroller found on Tadpole
 tctrl0	at obio0
