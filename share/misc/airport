@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.6 2001/07/13 23:02:09 matthieu Exp $
+#	$OpenBSD: airport,v 1.7 2001/07/14 04:45:01 pvalchev Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -49,6 +49,7 @@ BMI:Bloomington, Illinois, USA
 BNA:Nashville Metro, Tennessee, USA
 BOD:Bordeaux,France
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
+BOJ:Burgas, Bulgaria
 BOS:Boston Logan International, Massachusetts, USA
 BPT:Beaumont, Texas, USA
 BRE:Bremen,Germany
@@ -65,6 +66,7 @@ BWI:Baltimore-Washington International, Maryland, USA
 CAE:Columbia Metropolitan, South Carolina, USA
 CAK:Akron/Canton Regional, Ohio, USA
 CDG:Charles de Gaulle, Paris, France
+CFU:Corfu, Greece
 CGN:Konrad Adenauer Airport Koln/Bonn, Germany
 CGX:Chicago Merrill C. Meigs Field, Chicago, Illinois, USA
 CHI:All Airports around Chicago, Illinois, USA
@@ -92,6 +94,7 @@ DEN:Denver International, Colorado, USA
 DET:Detroit City, Michigan, USA
 DFW:Dallas-Ft. Worth International, Texas, USA
 DRS:Dresden, Germany
+DRM:Drama, Greece
 DSM:Des Moines International, Iowa, USA
 DTT:All Airports around Detroit, Michigan, USA
 DTW:Detroit Metropolitan/Wayne County, Michigan, USA
@@ -124,6 +127,7 @@ GLA:Glasgow International, Scotland
 GND:Grenada, GD
 GOA:Cristoforo Colombo Genova, Italy
 GOT:Landvetter, Goteborg, Sweden
+GOZ:Gorna Orechovitsa, Bulgaria
 GRR:Grand Rapids/Kent County International, Michigan, USA
 GRU:Sao Paulo, Brazil
 GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
@@ -131,7 +135,9 @@ GVA:Cointrin Geneva,Switzerland
 HAJ:Hannover, Germany
 HAM:Fuhlsbuettel Hamburg, Germany
 HEL:Helsinki-Vantaa, Finland
+HER:Heraklion, Greece
 HKG:Hong Kong
+HKV:Haskovo, Bulgaria
 HNL:Honolulu International, Hawaii, USA
 HOT:Hot Springs Memorial Field
 HOU:Houston William P. Hobby, Texas, USA
@@ -145,6 +151,7 @@ ICT:Wichita Mid-Continent, Kansas, USA
 ILG:Wilmington/New Castle County, Delaware, USA
 IND:Indianapolis International, Indiana, USA
 INT:Winston-Salem Smith Reynolds, North Carolina, USA
+IOA:Ioannina, Greece
 IST:Ataturk International Istanbul, Turkey
 ITH:Ithaca Tompkins County, New York, USA
 ITO:Hilo General Lyman Field, Hawaii, USA
@@ -152,12 +159,25 @@ JAN:Jackson Municipal/Thompson Field, Missippi, USA
 JAX:Jacksonville International, Florida, USA
 JER:Jersey
 JFK:New York John F. Kennedy International, New York, USA
+JKH:Chios, Greece
 JKT:All Airports around Jakarta, Indonesia
+JMK:Mikonos, Greece
+JSI:Skiathos, Greece
+JSS:Spetsai, Greece
+JSY:Syros Island, Greece
+JTR:Santorini, Thira Is., Greece
 JNU:Juneau International, Alaska, USA
 KCK:All Airports around Kansas City, Kansas, USA
+KDG:Kardjali, Bulgaria
 KIN:Kingston, Jamaica
+KIT:Kithira, Greece
 KIX:Osaka, Japan
+KLX:Kalamata, Greece
 KOA:Kailua-Kona Keahole, HI
+KSJ:Kasos Island, Greece
+KSO:Kastoria, Greece
+KZI:Kozani, Greece
+KZS:Kastelorizo, Greece
 LAN:Lansing Capital City, Michigan, USA
 LAS:Las Vegas McCarran International, Nevada, USA
 LAX:Los Angeles International, California, USA
@@ -175,9 +195,12 @@ LIT:Little Rock Regional, Arkansas, USA
 LNK:Lincoln Municipal, Nebraska, USA
 LON:All Airports around London, United Kingdom
 LPA:Gran Canaria, Spain
+LRA:Larisa, Greece
 LRD:Laredo, Texas, USA
+LRS:Leros, Greece
 LUG:Lugano, Switzerland
 LUX:Luxemburg, Luxemburg
+LXS:Lemnos, Greece
 LYS:Lyon, France
 MAD:Madrid, Spain
 MAN:Manchester, UK
@@ -232,7 +255,9 @@ OSL:All Airports around Oslo, Norway
 PAO:Palo Alto Municipal, California, USA
 PAP:Port-au-Prince, Haiti
 PAR:All Airports around Paris, France
+PAS:Paros, Greece
 PBI:Palm Beach International, Florida, USA
+PDV:Plovdiv, Bulgaria
 PDX:Portland International, Oregon, USA
 PHF:Newport News Patrick Henry International, Virginia, USA
 PHL:Philadelphia International, Pennsylvania, USA
@@ -246,6 +271,7 @@ PRG:Prague, CZ
 PSP:Palm Springs Municipal, California, USA
 PTP:Pointe-a-Pitre, GP
 PVD:Providence Theodore Francis Green State, Rhode Island, USA
+PVN:Pleven, Bulgaria
 PWM:Portland International Jetport, Maine, USA
 QDV:All Airports around Denver, Colorado, USA
 QLA:All Airports around Los Angeles, California, USA
@@ -254,8 +280,10 @@ RDU:Raleigh-Durham, North Carolina, USA
 RIC:Richmond International/Byrd Field, Virginia, USA
 RIO:All Airports around Rio de Janeiro, RJ, Brazil
 RNO:Reno Cannon International, Nevada, USA
+RHO:Rhodes, Greece
 ROC:Rochester International, New York, USA
 ROM:All Airports around Roma, Italy
+ROU:Rousse, Bulgaria
 RSW:Ft. Meyers Southwest Florida Regional, Florida, USA
 SAN:San Diego International/Lindbergh Field, California, USA
 SAO:All Airports around Sao Paulo, SP, Brazil
@@ -275,10 +303,12 @@ SJJ:Sarajevo, Bosnia
 SKB:Saint Kitts, Leeward Islands
 SKG:Thessaloniki, Greece
 SLC:Salt Lake City International, Utah, USA
+SLS:Silistra, Bulgaria
 SLU:St. Lucia, LC
 SMF:Sacramento Metro, California, USA
 SNA:Santa Ana/Orange County/John Wayne, California, USA
 SOF:Sofia, Bulgaria
+SPJ:Sparta, Greece
 SPS:Wichita Falls, Texas, USA
 SQL:San Carlos Municipal, California, USA
 SRQ:Sarasota, Florida, USA
@@ -292,6 +322,7 @@ SVQ:Sevilla, Spain
 SXM:Saint Maarten, NL AN
 SYD:Sydney, Australia
 SYR:Syracuse Hancock International, New York, USA
+SZR:Stara Zagora, Bulgaria
 TAB:Tobago
 TIA:Tirana, Albany
 TLS:Toulouse Blagnac, France
@@ -308,6 +339,7 @@ TYO:All Airports around Tokyo, Japan
 TYS:Knoxville McGhee Tyson, Tennessee, USA
 UCA:Utica/Oneida County, New York, USA
 UVF:St. Lucia, LC
+VAR:Varna, Bulgaria
 VCE:Venezia, Italy
 VIE:Wien, Austria
 VLC:Valencia, Spain
@@ -402,3 +434,4 @@ ZBF:Bathurst, New Brunswick, Canada
 ZGS:Gethsemani, Quebec, Canada
 ZKG:Kegaska, Quebec, Canada
 ZRH:Zurich, Switzerland
+ZTH:Zakinthos, Greece
