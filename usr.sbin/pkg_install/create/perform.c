@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.10 2000/03/24 00:24:18 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.11 2000/04/04 15:12:02 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.10 2000/03/24 00:24:18 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.11 2000/04/04 15:12:02 espie Exp $";
 #endif
 
 /*
@@ -76,6 +76,13 @@ pkg_perform(char **pkgs)
     else
 	suffix = "tgz";
 
+    /* If a SrcDir override is set, add it now */
+    if (SrcDir) {
+	if (Verbose && !PlistOnly)
+	    printf("Using SrcDir value of %s\n", SrcDir);
+	add_plist(&plist, PLIST_SRC, SrcDir);
+    }
+
     /* Stick the dependencies, if any, at the top */
     if (Pkgdeps) {
 	if (Verbose && !PlistOnly)
@@ -106,13 +113,6 @@ pkg_perform(char **pkgs)
 	}
 	if (Verbose && !PlistOnly)
 	    printf(".\n");
-    }
-
-    /* If a SrcDir override is set, add it now */
-    if (SrcDir) {
-	if (Verbose && !PlistOnly)
-	    printf("Using SrcDir value of %s\n", SrcDir);
-	add_plist(&plist, PLIST_SRC, SrcDir);
     }
 
     /* Slurp in the packing list */
