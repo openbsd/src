@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.383 2001/03/28 23:52:23 chris Exp 
+ *		OpenBSD: pcidevs,v 1.384 2001/03/29 17:29:37 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4420,7 +4420,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_COMPAQ2,
-	    "Compaq(2)",
+	    "Compaq",
 	},
 	{
 	    PCI_VENDOR_NEC,
@@ -5040,7 +5040,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_FUJITSU2,
-	    "Fujitsu(2)",
+	    "Fujitsu",
 	},
 	{
 	    PCI_VENDOR_FUTUREPLUS,
@@ -5684,7 +5684,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2,
-	    "Toshiba(2)",
+	    "Toshiba",
 	},
 	{
 	    PCI_VENDOR_ATREND,
@@ -5732,7 +5732,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MATSUSHITA2,
-	    "Matsushita Electronics(2)",
+	    "Matsushita",
 	},
 	{
 	    PCI_VENDOR_HILEVEL,
@@ -5804,7 +5804,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_FUJITSU3,
-	    "Fujitsu(3)",
+	    "Fujitsu",
 	},
 	{
 	    PCI_VENDOR_BULL,
@@ -5820,7 +5820,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SIERRA2,
-	    "Sierra Research & Technology(2)",
+	    "Sierra Research & Technology",
 	},
 	{
 	    PCI_VENDOR_BARCO,
@@ -5896,7 +5896,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MOT2,
-	    "Motorola(2)",
+	    "Motorola",
 	},
 	{
 	    PCI_VENDOR_XPOINT,
@@ -5932,7 +5932,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NEC2,
-	    "NEC(2)",
+	    "NEC",
 	},
 	{
 	    PCI_VENDOR_DOCTECH,
@@ -6196,11 +6196,11 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_SYMPHONY2,
-	    "Symphony Labs(2)",
+	    "Symphony Labs",
 	},
 	{
 	    PCI_VENDOR_TEKRAM2,
-	    "Tekram Technology(2)",
+	    "Tekram Technology",
 	},
 	{
 	    PCI_VENDOR_3DLABS,
@@ -6208,7 +6208,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_AVANCE2,
-	    "Avance Logic(2)",
+	    "Avance Logic",
 	},
 	{
 	    PCI_VENDOR_ADDTRON,
@@ -6224,7 +6224,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_BUSLOGIC2,
-	    "Buslogic(2)",
+	    "Buslogic",
 	},
 	{
 	    PCI_VENDOR_S3,
@@ -6232,7 +6232,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_NETPOWER2,
-	    "NetPower(2)",
+	    "NetPower",
 	},
 	{
 	    PCI_VENDOR_C4T,
@@ -6248,11 +6248,11 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_TRIGEM2,
-	    "Trigem Computer(2)",
+	    "Trigem Computer",
 	},
 	{
 	    PCI_VENDOR_WINBOND2,
-	    "Winbond(2)",
+	    "Winbond",
 	},
 	{
 	    PCI_VENDOR_COMPUTONE,
@@ -6268,7 +6268,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ADP2,
-	    "Adaptec(2)",
+	    "Adaptec",
 	},
 	{
 	    PCI_VENDOR_ATRONICS,
