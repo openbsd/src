@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.2 2002/06/03 15:44:17 mpech Exp $
+.\"	$OpenBSD: systrace.4,v 1.3 2002/07/22 15:18:00 wcobb Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -145,6 +145,24 @@ struct systrace_answer {
 	                       (will return EPERM if zero) */
 	int stra_flags;
 #define	SYSTR_FLAGS_RESULT 0x0001    /* Report syscall result */
+};
+.Ed
+.It Dv STRIOCREPORT Fa "pid_t"
+Report the current emulation a process is using inside the
+.Va msg_emul
+structure.
+.It Dv STRIOCREPLACE Fa "struct systrace_replace"
+Arrange for system call arguments to be replaced by arguments
+supplied by the monitoring process.
+.Bd -literal
+struct systrace_replace {
+	pid_t strr_pid;
+	int strr_nrepl;		/* # of arguments to replace */
+	caddr_t	strr_base;		/* Base user memory */
+	size_t strr_len;		/* Length of memory */
+	int strr_argind[SYSTR_MAXARGS];	/* Argument indexes */
+	size_t strr_off[SYSTR_MAXARGS];	/* Argument offsets */
+	size_t strr_offlen[SYSTR_MAXARGS]; /* Argument sizes */
 };
 .Ed
 .It Dv STRIOCIO Fa "struct systrace_io"
