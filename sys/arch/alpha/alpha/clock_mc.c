@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.3 1995/11/23 02:33:45 cgd Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.4 1995/12/20 00:38:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,9 +53,11 @@
 #include <alpha/alpha/clockvar.h>
 #include <dev/ic/mc146818reg.h>
 
-#include "tc.h"
-#if NTC
-	/* XXX */
+#include "ioasic.h"
+#if NIOASIC
+#include <dev/tc/tcreg.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
 #endif
 
 #include "isa.h"
@@ -86,7 +88,7 @@ struct mcclockdata {
 #define	mc146818_read(sc, reg)						\
 	    (*((struct mcclockdata *)sc->sc_data)->mc_read)(sc, reg)
 
-#if NTC
+#if NIOASIC
 static void	mc_write_tc __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 static u_int	mc_read_tc __P((struct clock_softc *csc, u_int reg));
@@ -109,10 +111,6 @@ mcclock_attach(parent, self, aux)
 	struct clock_softc *csc = (struct clock_softc *)self;
 	struct isadev_attach_args *ida = aux;
 	register volatile struct chiptime *c;
-	struct confargs *ca = aux;
-#if NTC
-	extern struct cfdriver asiccd;				/* XXX */
-#endif
 
 	printf(": mc146818 or compatible");
 
@@ -120,14 +118,16 @@ mcclock_attach(parent, self, aux)
 	csc->sc_get = mcclock_get;
 	csc->sc_set = mcclock_set;
 
-#if NTC
-	if (parent->dv_cfdata->cf_driver == &asiccd) {
+#if NIOASIC
+	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+		struct ioasicdev_attach_args *ioasicdev = aux;
+
 		/* 
 		 * XXX should really allocate a new one and copy, or
 		 * something.  unlikely we'll have more than one...
 		 */
 		csc->sc_data = &mcclockdata_tc;
-		mcclockdata_tc.mc_addr = BUS_CVTADDR(ca);
+		mcclockdata_tc.mc_addr = (void *)ioasicdev->iada_addr;
 	} else
 #endif
 #if NISA
@@ -214,7 +214,7 @@ mcclock_set(csc, ct)
 }
 
 
-#if NTC
+#if NIOASIC
 struct tc_clockdatum {
 	u_char	datum;
 	char	pad[3];
@@ -247,7 +247,7 @@ mc_read_tc(csc, reg)
 
 	return (dp[reg].datum);
 }
-#endif /* NTC */
+#endif /* NIOASIC */
 
 
 #if NISA

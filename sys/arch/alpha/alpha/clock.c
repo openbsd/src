@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1995/11/23 02:33:41 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1995/12/20 00:38:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,13 +48,14 @@
 #include <sys/device.h>
 
 #include <machine/rpb.h>
-#include <machine/autoconf.h>
 
 #include <alpha/alpha/clockvar.h>
 
-#include "asic.h"
-#if NASIC
-#include <alpha/tc/asic.h>			/* XXX */
+#include "ioasic.h"
+#if NIOASIC
+#include <dev/tc/tcreg.h>
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>			/* XXX */
 #endif
 
 #include "isa.h"
@@ -91,38 +92,26 @@ clockmatch(parent, cfdata, aux)
 {
 	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
-#if NASIC
-	extern struct cfdriver asiccd;
 
-	if (parent->dv_cfdata->cf_driver == &asiccd) {
-		/* make sure that we're looking for this type of device. */
-		if (!BUS_MATCHNAME(ca, "dallas_rtc"))
-			return (0);
+#if NIOASIC
+	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+		struct ioasicdev_attach_args *d = aux;
 
-		if (cf->cf_unit >= 1)
+		if (strncmp("TOY_RTC ", d->iada_modname, TC_ROM_LLEN))
 			return (0);
 	} else
 #endif
 #if NISA
 	if ((parent->dv_cfdata->cf_driver == &isacd)) {
-
-		/* Just say yes.  XXX */
-
-		if (cf->cf_unit >= 1)
-			return 0;
+		struct isadev_attach_args *ida = aux;
 
 		/* XXX XXX XXX */
-		{
-			struct isadev_attach_args *ida = aux;
+		if (ida->ida_port[0] != 0x70 && ida->ida_port[0] != -1)
+			return (0);
 
-			if (ida->ida_port[0] != 0x70 &&		/* XXX */
-			    ida->ida_port[0] != -1)		/* XXX */
-				return (0);
-
-			ida->ida_port[0] = 0x70;		/* XXX */
-			ida->ida_nports[0] = 2;			/* XXX */
-			ida->ida_iosiz[0] = 0;
-		}
+		ida->ida_port[0] = 0x70;		/* XXX */
+		ida->ida_nports[0] = 2;			/* XXX */
+		ida->ida_iosiz[0] = 0;
 	} else
 #endif
 		return (0);
@@ -341,9 +330,11 @@ resettodr()
 /*
  * Wait "n" microseconds.  This doesn't belong here.  XXX.
  */
-void
 delay(n)
 	int n;
 {
-	DELAY(n);
+	register long N = cycles_per_usec * (n);
+
+	while (N > 0)
+		N -= 3;
 }
