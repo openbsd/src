@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2001/05/09 15:31:25 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2001/06/08 02:47:39 aaron Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 1999/04/22 04:24:53 chs Exp $	*/
 
 /*
@@ -1262,7 +1262,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (pmap != pmap_kernel())
 #if defined(UVM)
 		(void)uvm_map_pageable(pt_map, trunc_page((vaddr_t)pte),
-		    round_page((vaddr_t)(pte+1)), FALSE);
+		    round_page((vaddr_t)(pte+1)), FALSE, FALSE);
 #else
 		(void)vm_map_pageable(pt_map, trunc_page((vaddr_t)pte),
 		    round_page((vaddr_t)(pte+1)), FALSE);
@@ -1922,7 +1922,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	if (pmap != pmap_kernel()) {
 #if defined(UVM)
 		(void)uvm_map_pageable(pt_map, trunc_page((vaddr_t)pte),
-		    round_page((vaddr_t)(pte+1)), TRUE);
+		    round_page((vaddr_t)(pte+1)), TRUE, FALSE);
 #else
 		(void)vm_map_pageable(pt_map, trunc_page((vaddr_t)pte),
 		    round_page((vaddr_t)(pte+1)), TRUE);
