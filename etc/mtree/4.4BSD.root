@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.root,v 1.5 1997/06/10 20:04:29 deraadt Exp $
+#	$OpenBSD: 4.4BSD.root,v 1.6 1998/05/14 16:09:47 niklas Exp $
 #	$NetBSD: 4.4BSD.root,v 1.2 1996/05/12 23:30:32 thorpej Exp $
 #
 #	   user: bostic
@@ -104,6 +104,7 @@ namedb           type=dir mode=0755
 /set type=file gname=wheel uname=root mode=0600
 tmp           type=dir mode=0755
 # ./etc/namedb/tmp
+..
 
 # ./etc/namedb
 ..
