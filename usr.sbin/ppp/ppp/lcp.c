@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.29 2001/07/26 11:36:51 brian Exp $
+ * $OpenBSD: lcp.c,v 1.30 2001/07/30 18:59:20 brian Exp $
  */
 
 #include <sys/param.h>
@@ -408,7 +408,7 @@ LcpSendConfigReq(struct fsm *fp)
                fp->link->name, lcp->want_mru, maxmru);
     lcp->want_mru = maxmru;
   }
-  if (!REJECTED(lcp, TY_MRU) || lcp->want_mru < DEF_MRU) {
+  if (!REJECTED(lcp, TY_MRU)) {
     ua_htons(&lcp->want_mru, o->data);
     INC_LCP_OPT(TY_MRU, 4, o);
   }
