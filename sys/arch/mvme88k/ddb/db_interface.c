@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.35 2004/01/07 16:22:17 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.36 2004/01/07 17:52:30 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -64,8 +64,6 @@ int ddb_nmi_trap(int, db_regs_t *);
 void ddb_error_trap(char *, db_regs_t *);
 void db_putc(int);
 int db_getc(void);
-void cpu_interrupt_to_db(int);
-char *db_task_name(void);
 int m88k_dmx_print(unsigned, unsigned, unsigned, unsigned);
 void m88k_db_pause(unsigned);
 void m88k_db_print_frame(db_expr_t, int, db_expr_t, char *);
@@ -90,7 +88,7 @@ db_regs_t	ddb_regs;
  * If you really feel like understanding the following procedure and
  * macros, see pages 6-22 to 6-30 (Section 6.7.3) of
  *
- * MC881000 RISC Microprocessor User's Manual Second Edition
+ * MC88100 RISC Microprocessor User's Manual Second Edition
  * (Motorola Order: MC88100UM/AD REV 1)
  *
  * and ERRATA-5 (6-23, 6-24, 6-24) of
@@ -101,6 +99,7 @@ db_regs_t	ddb_regs;
  *
  */
 
+#ifdef M88100
 /* macros for decoding dmt registers */
 
 /*
@@ -110,21 +109,21 @@ int
 m88k_dmx_print(t, d, a, no)
 	unsigned t, d, a, no;
 {
-	static unsigned addr_mod[16] = {
+	static const unsigned addr_mod[16] = {
 		0, 3, 2, 2, 1, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0
 	};
-	static char *mode[16]  = {
+	static const char *mode[16]  = {
 		"?", ".b", ".b", ".h", ".b", "?", "?", "?",
 		".b", "?", "?" , "?" , ".h" , "?", "?", ""
 	};
-	static unsigned mask[16] = {
+	static const unsigned mask[16] = {
 		0, 0xff, 0xff00, 0xffff,
 		0xff0000, 0, 0, 0,
 		0xff000000, 0, 0, 0,
 		0xffff0000, 0, 0, 0xffffffff
 	};
-	static unsigned shift[16] = {
+	static const unsigned shift[16] = {
 		0,  0, 8, 0, 16, 0, 0, 0,
 		24, 0, 0, 0, 16, 0, 0, 0
 	};
@@ -170,6 +169,7 @@ m88k_dmx_print(t, d, a, no)
 	}
 	return 0;
 }
+#endif	/* M88100 */
 
 void
 m88k_db_print_frame(addr, have_addr, count, modif)
@@ -294,6 +294,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		return;
 	}
 
+#ifdef M88100
 	if (cputyp != CPU_88110) {
 		if (s->vector == /*data*/3 || s->dmt0 & DMT_VALID) {
 			db_printf("dmt,d,a0: 0x%08x  0x%08x  0x%08x ",
@@ -335,16 +336,19 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 			    (s->dpfsr >> 16) & 0x07, s->dpfsr);
 		}
 	}
+#endif	/* M88100 */
 
 	if (s->fpecr & 255) { /* floating point error occurred */
 		db_printf("fpecr: 0x%08x fpsr: 0x%08x fpcr: 0x%08x\n",
 			  s->fpecr, s->fpsr, s->fpcr);
+#ifdef M88100
 		if (cputyp != CPU_88110) {
 			db_printf("fcr1-4: 0x%08x  0x%08x  0x%08x  0x%08x\n",
 				  s->fphs1, s->fpls1, s->fphs2, s->fpls2);
 			db_printf("fcr5-8: 0x%08x  0x%08x  0x%08x  0x%08x\n",
 				  s->fppt, s->fprh, s->fprl, s->fpit);
 		}
+#endif
 	}
 	db_printf("\n");
 }
@@ -799,11 +803,6 @@ m88k_db_cmmucfg(addr, have_addr, count, modif)
 	cmmu_dump_config();
 }
 
-void cpu_interrupt_to_db(cpu_no)
-	int cpu_no;
-{
-}
-
 void
 m88k_db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t addr;
@@ -818,88 +817,28 @@ m88k_db_prom_cmd(addr, have_addr, count, modif)
 /* COMMAND TABLE / INIT */
 /************************/
 
-struct db_command m88k_cache_cmds[] =
-{
-	{ "iflush",    m88k_db_iflush, 0, 0},
-	{ "dflush",    m88k_db_dflush, 0, 0},
-	{ "peek",      m88k_db_peek, 0, 0},
-	{ (char *) 0,}
+struct db_command m88k_cache_cmds[] = {
+	{ "iflush",	m88k_db_iflush,	0,	NULL },
+	{ "dflush",	m88k_db_dflush,	0,	NULL },
+	{ "peek",	m88k_db_peek,	0,	NULL },
+	{ NULL,		NULL,		0,	NULL }
 };
 
-struct db_command db_machine_cmds[] =
-{
-	{"cache",           0,                      0, m88k_cache_cmds},
-	{"frame",           m88k_db_print_frame,    0, 0},
-	{"regs",            m88k_db_registers,      0, 0},
-	{"noise",           m88k_db_noise,          0, 0},
-	{"searchframe",     m88k_db_frame_search,   0, 0},
-	{"translate",       m88k_db_translate,      0, 0},
-	{"cmmucfg",         m88k_db_cmmucfg,        0, 0},
-	{"where",           m88k_db_where,          0, 0},
-	{"prom",            m88k_db_prom_cmd,       0, 0},
-	{(char  *) 0,}
+struct db_command db_machine_cmds[] = {
+	{ "cache",	NULL,			0,	m88k_cache_cmds },
+	{ "frame",	m88k_db_print_frame,	0,	NULL },
+	{ "regs",	m88k_db_registers,	0,	NULL },
+	{ "noise",	m88k_db_noise,		0,	NULL },
+	{ "searchframe",m88k_db_frame_search,	0,	NULL },
+	{ "translate",	m88k_db_translate,	0,	NULL },
+	{ "cmmucfg",	m88k_db_cmmucfg,	0,	NULL },
+	{ "where",	m88k_db_where,		0,	NULL },
+	{ "prom",	m88k_db_prom_cmd,	0,	NULL },
+	{ NULL,		NULL,			0,	NULL }
 };
 
-/*
- * Called from "m88k/m1x7_init.c"
- */
 void
 db_machine_init()
 {
 	db_machine_commands_install(db_machine_cmds);
 }
-
-/*
- * Attempt to figure out the UX name of the task.
- * This is kludgy at best... we can't even be sure the task is a UX task...
- */
-#define TOP_OF_USER_STACK USRSTACK
-#define MAX_DISTANCE_TO_LOOK (1024 * 10)
-
-#define DB_TASK_NAME_LEN 50
-
-char *
-db_task_name()
-{
-	static unsigned buffer[(DB_TASK_NAME_LEN + 5) / sizeof(unsigned)];
-	vaddr_t ptr = (vaddr_t)(TOP_OF_USER_STACK - 4);
-	vaddr_t limit = ptr - MAX_DISTANCE_TO_LOOK;
-	unsigned word;
-	int i;
-
-	/* skip zeros at the end */
-	while (ptr > limit &&
-	       (i = db_trace_get_val(ptr, &word)) && (word == 0)) {
-		ptr -= 4; /* continue looking for a non-null word */
-	}
-
-	if (ptr <= limit) {
-		db_printf("bad name at line %d\n", __LINE__);
-		return "<couldn't find 1>";
-	} else if (i != 1) {
-		return "<nostack>";
-	}
-
-	/* skip looking for null before all the text */
-	while (ptr > limit &&
-	       (i = db_trace_get_val(ptr, &word)) && (word != 0)) {
-		ptr -= 4; /* continue looking for a null word */
-	}
-
-	if (ptr <= limit) {
-		db_printf("bad name at line %d\n", __LINE__);
-		return "<couldn't find 2>";
-	} else if (i != 1) {
-		db_printf("bad name read of %lx at line %d\n", ptr, __LINE__);
-		return "<bad read 2>";
-	}
-
-	ptr += 4; /* go back to the non-null word after this one */
-
-	for (i = 0; i < sizeof(buffer); i++, ptr += 4) {
-		buffer[i] = 0; /* just in case it's not read */
-		db_trace_get_val(ptr, &buffer[i]);
-	}
-	return (char *)buffer;
-}
-

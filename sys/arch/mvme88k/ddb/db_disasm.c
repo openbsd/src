@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.12 2003/10/05 20:25:06 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.13 2004/01/07 17:52:30 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -40,15 +40,15 @@
 #include <ddb/db_output.h>	/* db_printf() */
 #include <ddb/db_interface.h>
 
-static char *instwidth[4] = {
+static const char *instwidth[4] = {
 	".d", "  ", ".h", ".b"
 };
 
-static char *condname[6] = {
+static const char *condname[6] = {
 	"gt0 ", "eq0 ", "ge0 ", "lt0 ", "ne0 ", "le0 "
 };
 
-static char *m88100_ctrlreg[64] = {
+static const char *m88100_ctrlreg[64] = {
 	"cr0(PID)   ",
 	"cr1(PSR)   ",
 	"cr2(EPSR)  ",
@@ -79,26 +79,29 @@ static char *m88100_ctrlreg[64] = {
 	"fcr6(FPRH) ",
 	"fcr7(FPRL) ",
 	"fcr8(FPIT) ",
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	"fcr62(FPSR)",
 	"fcr63(FPCR)"
 };
 
-static char *m88110_ctrlreg[64] = {
+static const char *m88110_ctrlreg[64] = {
 	"cr0(PID)   ",
 	"cr1(PSR)   ",
 	"cr2(EPSR)  ",
-	0,
+	NULL,
 	"cr4(EXIP)  ",
 	"cr5(ENIP)  ",
-	0,
+	NULL,
 	"cr7(VBR)   ",
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	"cr14(RES1) ",
 	"cr15(RES2) ",
 	"cr16(SR0)  ",
@@ -107,9 +110,9 @@ static char *m88110_ctrlreg[64] = {
 	"cr19(SR3)  ",
 	"cr20(SR4)  ",
 	"fcr0(FPECR)",
-	0,
-	0,
-	0,
+	NULL,
+	NULL,
+	NULL,
 	"cr25(ICMD) ",
 	"cr26(ICTL) ",
 	"cr27(ISAR) ",
@@ -122,7 +125,9 @@ static char *m88110_ctrlreg[64] = {
 	"cr34(ISR)  ",
 	"cr35(ILAR) ",
 	"cr36(IPAR) ",
-	0,0,0,
+	NULL,
+	NULL,
+	NULL,
 	"cr40(DCMD) ",
 	"cr41(DCTL) ",
 	"cr42(DSAR) ",
@@ -135,7 +140,8 @@ static char *m88110_ctrlreg[64] = {
 	"cr49(DSR)  ",
 	"cr50(DLAR) ",
 	"cr51(DPAR) ",
-	0,0,0,0,0,0,0,0,0,0,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL,
 	"fcr62(FPSR)",
 	"fcr63(FPCR)"
 };
@@ -149,26 +155,26 @@ static char *m88110_ctrlreg[64] = {
 	} while (0)
 
 /* prototypes */
-void oimmed(int, char *, long);
-void ctrlregs(int, char *, long);
+void oimmed(int, const char *, long);
+void ctrlregs(int, const char *, long);
 void printsod(int);
-void sindou(int, char *, long);
-void jump(int, char *, long);
-void instset(int, char *, long);
+void sindou(int, const char *, long);
+void jump(int, const char *, long);
+void instset(int, const char *, long);
 void symofset(int, int, int);
-void obranch(int, char *, long);
-void brcond(int, char *, long);
-void otrap(int, char *, long);
-void obit(int, char *, long);
-void bitman(int, char *, long);
-void immem(int, char *, long);
-void nimmem(int, char *, long);
-void lognim(int, char *, long);
-void onimmed(int, char *, long);
+void obranch(int, const char *, long);
+void brcond(int, const char *, long);
+void otrap(int, const char *, long);
+void obit(int, const char *, long);
+void bitman(int, const char *, long);
+void immem(int, const char *, long);
+void nimmem(int, const char *, long);
+void lognim(int, const char *, long);
+void onimmed(int, const char *, long);
 
 /* Handlers immediate integer arithmetic instructions */
 void
-oimmed(int inst, char  *opcode, long iadr)
+oimmed(int inst, const char  *opcode, long iadr)
 {
 	int Linst = inst & 0177777;
 	int Hinst = inst >> 16;
@@ -189,7 +195,7 @@ oimmed(int inst, char  *opcode, long iadr)
 
 /* Handles instructions dealing with control registers */
 void
-ctrlregs(int inst, char *opcode, long iadr)
+ctrlregs(int inst, const char *opcode, long iadr)
 {
 	int L6inst = (inst >> 11) & 037;
 	int creg = (inst >> 5) & 077;
@@ -221,7 +227,7 @@ printsod(int t)
 
 /* Handles floating point instructions */
 void
-sindou(int inst, char *opcode, long iadr)
+sindou(int inst, const char *opcode, long iadr)
 {
 	int rs2 = inst & 037;
 	int td = ( inst >> 5 ) & 03;
@@ -248,7 +254,7 @@ sindou(int inst, char *opcode, long iadr)
 
 
 void
-jump(int inst, char *opcode, long iadr)
+jump(int inst, const char *opcode, long iadr)
 {
 	int rs2 = inst & 037;
 	int Nbit = ( inst >> 10 ) & 01;
@@ -264,7 +270,7 @@ jump(int inst, char *opcode, long iadr)
 
 /* Handles ff1, ff0, tbnd and rte instructions */
 void
-instset(int inst, char *opcode, long iadr)
+instset(int inst, const char *opcode, long iadr)
 {
 	int rs2 = inst & 037;
 	int rs1 = ( inst >> 16 ) & 037;
@@ -298,7 +304,7 @@ symofset(int  disp, int  bit, int iadr)
 }
 
 void
-obranch(int inst, char *opcode, long iadr)
+obranch(int inst, const char *opcode, long iadr)
 {
 	int cond = ( inst >> 26 ) & 01;
 	int disp = inst &0377777777;
@@ -315,7 +321,7 @@ obranch(int inst, char *opcode, long iadr)
 
 /* Handles branch on conditions instructions */
 void
-brcond(int inst, char *opcode, long iadr)
+brcond(int inst, const char *opcode, long iadr)
 {
 	int cond = ( inst >> 26 ) & 1;
 	int match = ( inst >> 21 ) & 037;
@@ -347,7 +353,7 @@ brcond(int inst, char *opcode, long iadr)
 
 
 void
-otrap(int inst, char *opcode, long iadr)
+otrap(int inst, const char *opcode, long iadr)
 {
 	int vecno = inst & 0777;
 	int match = ( inst >> 21 ) & 037;
@@ -375,7 +381,7 @@ otrap(int inst, char *opcode, long iadr)
 
 /* Handles 10 bit immediate bit field operations */
 void
-obit(int inst, char *opcode, long iadr)
+obit(int inst, const char *opcode, long iadr)
 {
 	int rs = ( inst >> 16 ) & 037;
 	int rd = ( inst >> 21 ) & 037;
@@ -398,7 +404,7 @@ obit(int inst, char *opcode, long iadr)
 
 /* Handles triadic mode bit field instructions */
 void
-bitman(int inst, char *opcode, long iadr)
+bitman(int inst, const char *opcode, long iadr)
 {
 
 	int rs1 = ( inst >> 16 ) & 037;
@@ -411,7 +417,7 @@ bitman(int inst, char *opcode, long iadr)
 
 /* Handles immediate load/store/exchange instructions */
 void
-immem(int inst, char *opcode, long iadr)
+immem(int inst, const char *opcode, long iadr)
 {
 	int immed  = inst & 0xFFFF;
 	int rd     = (inst >> 21) & 037;
@@ -441,7 +447,7 @@ immem(int inst, char *opcode, long iadr)
 
 /* Handles triadic mode load/store/exchange instructions */
 void
-nimmem(int inst, char *opcode, long iadr)
+nimmem(int inst, const char *opcode, long iadr)
 {
 	int scaled  = (inst >> 9) & 01;
 	int rd      = (inst >> 21) & 037;
@@ -499,7 +505,7 @@ nimmem(int inst, char *opcode, long iadr)
 
 /* Handles triadic mode logical instructions */
 void
-lognim(int inst, char *opcode, long iadr)
+lognim(int inst, const char *opcode, long iadr)
 {
 	int rd   = (inst >> 21) & 037;
 	int rs1  = (inst >> 16) & 037;
@@ -516,7 +522,7 @@ lognim(int inst, char *opcode, long iadr)
 
 /* Handles triadic mode arithmetic instructions */
 void
-onimmed(int inst, char *opcode, long iadr)
+onimmed(int inst, const char *opcode, long iadr)
 {
 	int rd   = (inst >> 21) & 037;
 	int rs1  = (inst >> 16) & 037;
@@ -549,16 +555,16 @@ onimmed(int inst, char *opcode, long iadr)
 		  tab, rd, rs1, rs2);
 }
 
-static struct opdesc {
+static const struct opdesc {
 	unsigned mask, match;
-	void (*opfun)(int, char *, long);
-	char *farg;
+	void (*opfun)(int, const char *, long);
+	const char *farg;
 } opdecode[] = {
 
 	/* ORDER IS IMPORTANT BELOW */
 
-	{   0xF0000000U, 0x00000000U, immem, 0,},
-	{   0xF0000000U, 0x10000000U, immem, 0,},
+	{   0xF0000000U, 0x00000000U, immem, NULL},
+	{   0xF0000000U, 0x10000000U, immem, NULL},
 	{   0xF0000000U, 0x20000000U, immem, "st"},
 	{   0xF0000000U, 0x30000000U, immem, "lda"},
 
@@ -610,10 +616,10 @@ static struct opdesc {
 	{   0xFC00FE00U, 0xF000D800U, otrap, "tb1"},
 	{   0xFC00FE00U, 0xF000E800U, otrap, "tcnd"},
 
-	{   0xFC00F2E0U, 0xF4000000U, nimmem, 0,},
-	{   0xFC00F2E0U, 0xF4000200U, nimmem, 0,},
-	{   0xFC00F2E0U, 0xF4001000U, nimmem, 0,},
-	{   0xFC00F2E0U, 0xF4001200U, nimmem, 0,},
+	{   0xFC00F2E0U, 0xF4000000U, nimmem, NULL},
+	{   0xFC00F2E0U, 0xF4000200U, nimmem, NULL},
+	{   0xFC00F2E0U, 0xF4001000U, nimmem, NULL},
+	{   0xFC00F2E0U, 0xF4001200U, nimmem, NULL},
 	{   0xFC00F2E0U, 0xF4002000U, nimmem, "st"},
 	{   0xFC00F2E0U, 0xF4002200U, nimmem, "st"},
 	{   0xFC00F2E0U, 0xF4003000U, nimmem, "lda"},
@@ -647,15 +653,15 @@ static struct opdesc {
 	{   0xFC00FFE0U, 0xF400F800U, instset, "tbnd"},
 	{   0xFC00FFE0U, 0xF400FC00U, instset, "rte"},
 	{   0xFC000000U, 0xF8000000U, instset, "tbnd"},
-	{   0,0,0,0}
+	{   0, 0, NULL, NULL}
 };
 
-static char *badop = "\t???";
+static const char *badop = "\t???";
 
 int
 m88k_print_instruction(unsigned iadr, long inst)
 {
-	struct opdesc *p;
+	const struct opdesc *p;
 
 	/* this messes up "orb" instructions ever so slightly, */
 	/* but keeps us in sync between routines... */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.22 2004/01/07 16:22:17 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.23 2004/01/07 17:52:30 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -116,7 +116,7 @@ unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
 /* st r1, r31, IMM */
 #define ST_R1_R31_IMM(I)    (((I) & 0xffff0000U) == 0x243f0000U)
 
-static int trace_flags = 0;
+static int trace_flags;
 #define TRACE_DEBUG_FLAG		0x01
 #define TRACE_SHOWCALLPRESERVED_FLAG	0x02
 #define TRACE_SHOWADDRESS_FLAG		0x04
@@ -201,7 +201,7 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 static unsigned
 m88k_instruction_info(unsigned instruction)
 {
-	static struct {
+	static const struct {
 		unsigned mask, value, flags;
 	} *ptr, control[] = {
 		/* runs in the same order as 2nd Ed 88100 manual Table 3-14 */
@@ -1144,4 +1144,3 @@ db_stack_trace_print(db_expr_t addr,
 	}
 	db_stack_trace_cmd2(regs, pr);
 }
-
