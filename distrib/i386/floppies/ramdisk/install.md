@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.16 1997/09/30 17:52:42 deraadt Exp $
+#	$OpenBSD: install.md,v 1.17 1997/10/02 16:01:39 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -118,38 +118,21 @@ md_prep_fdisk()
 	local _done
 
 	_disk=$1
-	echo "This disk has not previously been used with OpenBSD.  Do you wish"
-	echo "to share this disk with other operating systems (such as Windows"
-	echo -n "95, MS-DOS, Linux etc.)? [y]"
-	getresp "y"
-	case "$resp" in
-	n*|N*)	return ;;
-	*) ;;
-	esac
-
-	echo "WARNING: Wrong information in the BIOS partition table might"
-	echo "render the disk unusable."
-
-	echo
-	echo "Current partition information is:"
-	fdisk ${_disk}
-	echo -n "Press [Enter] to continue "
-	getresp ""
 
 	_done=0
 	while [ $_done = 0 ]; do
 		echo
 		cat << \__md_prep_fdisk_1
 
-An OpenBSD partition should have type 166 (A6), and should be the only
-partition marked as active.  Furthermore, the partitions must NOT
-overlap each others.  fdisk will be started in update mode, and you
-will be able to add this information as needed.  If you make a mistake,
-exit fdisk without storing the new information, and you will be allowed
-to start over.
+A single OpenBSD partition with id "A6" should exist in the MBR.
+It should be the only partition marked as active.  Furthermore, the
+partitions must NOT overlap each others.  fdisk will be started in
+edit mode, and you will be able to add this information as needed.
+If you make a mistake, exit fdisk without storing the new information,
+and you will be allowed to start over.
 __md_prep_fdisk_1
-		echo -n "Press [Enter] to continue "
-		getresp ""
+		echo "Current partition information is:"
+		fdisk ${_disk}
 
 		fdisk -e ${_disk}
 
@@ -179,6 +162,8 @@ md_prep_disklabel()
 	local _disk
 
 	_disk=$1
+	md_prep_fdisk ${_disk}
+
 	md_checkfordisklabel $_disk
 	case $? in
 	0)
@@ -228,10 +213,6 @@ Do not change any parameters except the partition layout and the label name.
 __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
-	disklabel -W ${_disk}
-	disklabel ${_disk} >/tmp/label.$$
-	disklabel -r -R ${_disk} /tmp/label.$$
-	rm -f /tmp/label.$$
 	disklabel -E ${_disk}
 }
 
