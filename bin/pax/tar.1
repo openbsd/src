@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.35 2001/10/25 16:59:03 niklas Exp $
+.\"	$OpenBSD: tar.1,v 1.36 2002/01/02 06:19:59 nordin Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.35 2001/10/25 16:59:03 niklas Exp $
+.\"	$OpenBSD: tar.1,v 1.36 2002/01/02 06:19:59 nordin Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -96,11 +96,11 @@ Set blocking factor to use for the archive.
 .Nm
 uses 512 byte blocks.
 The default is 20, the maximum is 126.
-Archives with a blocking factor larger 63 violate the
+Archives with a blocking factor larger than 63 violate the
 .Tn POSIX
 standard and will not be portable to all systems.
 .It Fl e
-Stop after first error.
+Stop after the first error.
 .It Fl f Ar archive
 Filename where the archive is stored.
 Defaults to
