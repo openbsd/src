@@ -957,7 +957,7 @@ parseopts(root)
 
 	    if (!strncmp(buf, "tag=", 4)) {
 		char *RCS_citag = strdup(buf+4);
-		char *what = malloc(sizeof("RCSLOCALID")+1+strlen(RCS_citag));
+		char *what = malloc(sizeof("RCSLOCALID")+1+strlen(RCS_citag)+1);
 		
 		sprintf(what, "RCSLOCALID=%s", RCS_citag);
 		putenv(what);
