@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.31 2002/02/11 19:08:30 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.32 2002/04/18 21:41:02 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -532,7 +532,7 @@ Lstploaddone:
 	movc	d0,cacr			| turn on both caches
 	jmp	Lenab1
 Lchache040:
-        movl	#0x80008000,d0
+        movl	#CACHE40_ON,d0
 	movc	d0,cacr			| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
@@ -1321,7 +1321,7 @@ Lsw2:
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
 #ifdef M68060
-	cmpl	#MMU_68060,_C_LABEL(mmutype) | is 68060?
+	cmpl	#FPU_68060,_C_LABEL(fputype) | is 68060?
 	jeq	Lsavfp60                | yes, goto Lsavfp60
 #endif  /* M68060 */
 	tstb	a2@			| null state frame?
@@ -1377,7 +1377,7 @@ Lresnonofpatall:
 #endif
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 #ifdef M68060
-	cmpl	#MMU_68060,_C_LABEL(mmutype) | is 68060?
+	cmpl	#FPU_68060,_C_LABEL(fputype) | is 68060?
 	jeq	Lresfp60rest1           | yes, goto Lresfp60rest1
 #endif /* M68060 */
 	tstb	a0@			| null state frame?
@@ -1423,7 +1423,7 @@ ENTRY(savectx)
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
 #ifdef M68060
-	cmpl	#MMU_68060,_mmutype     | is 68060?
+	cmpl	#FPU_68060,_C_LABEL(fputype) | is 68060?
 	jeq	Lsavctx60               | yes, goto Lsavctx60
 #endif
 	tstb	a0@			| null state frame?
@@ -1746,7 +1746,7 @@ Lldustp060:
 	movc	d1,cacr
 #endif
 Lldustp040:
-	.word	0xf518			| pflusha XXX TDR
+	.word	0xf518			| pflusha
 	.long	0x4e7b0806		| movec d0,URP
 	rts
 
@@ -1784,7 +1784,7 @@ ENTRY(m68881_save)
 	movl	sp@(4),a0		| save area pointer
 	fsave	a0@			| save state
 #ifdef M68060
-	cmpl	#MMU_68060,_C_LABEL(mmutype) | 68040 or 68060?
+	cmpl	#FPU_68060,_C_LABEL(fputype) | is 68060?
 	jeq	Lm68060fpsave		| yes, goto Lm68060fpsave
 #endif
 	tstb	a0@			| null state frame?
@@ -1809,7 +1809,7 @@ Lm68060sdone:
 ENTRY(m68881_restore)
 	movl	sp@(4),a0		| save area pointer
 #ifdef M68060
-	cmpl	#MMU_68060,_C_LABEL(mmutype) | 68040 or 68060?
+	cmpl	#FPU_68060,_C_LABEL(fputype) | is 68060?
 	jeq	Lm68060fprestore	| yes, goto Lm68060fprestore
 #endif
 	tstb	a0@			| null state frame?

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.14 2001/11/17 21:35:12 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.15 2002/04/18 21:41:01 miod Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -106,6 +106,7 @@ export	CACHE_OFF
 export	CACHE_CLR
 export	IC_CLEAR
 export	DC_CLEAR
+export	CACHE40_ON
 export	CACHE60_ON
 export	IC60_CUBC
 export	IC60_CABC
