@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.11 2000/03/23 21:10:15 aaron Exp $
+.\"	$OpenBSD: compress.1,v 1.12 2001/06/17 16:34:47 mickey Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -55,6 +55,9 @@
 .Op Fl cftoqv
 .Op Fl o Ar filename
 .Op Ar
+.Nm zcat
+.Op Fl fq
+.Op Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -77,6 +80,13 @@ utility restores compressed files to their original form, renaming the
 files by removing the
 .Dq .Z
 extension.
+.Pp
+The
+.Nm zcat
+is equivalent, by it's functionality, to
+.Nm uncompress
+.Fl c
+command.
 .Pp
 If renaming the files would cause files to be overwritten and the standard
 input device is a terminal, the user is prompted (on the standard error
