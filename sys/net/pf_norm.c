@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.59 2003/05/14 23:46:45 frantzen Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.60 2003/06/28 07:27:20 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -115,8 +115,6 @@ struct mbuf		*pf_reassemble(struct mbuf **, struct pf_fragment *,
 struct mbuf		*pf_fragcache(struct mbuf **, struct ip*,
 			    struct pf_fragment *, int, int, int *);
 u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
-int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
-			    int, int, void *, struct pf_pdesc *);
 int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 			    struct tcphdr *, int);
 
