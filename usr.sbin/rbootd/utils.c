@@ -1,3 +1,4 @@
+/*	$OpenBSD: utils.c,v 1.4 2001/01/17 00:33:04 pjanzen Exp $	*/
 /*	$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $	*/
 
 /*
@@ -48,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)utils.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: utils.c,v 1.5.2.1 1995/11/14 08:45:46 thorpej Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.4 2001/01/17 00:33:04 pjanzen Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rmp.h,v 1.2 2001/01/17 00:33:04 pjanzen Exp $	*/
 /*	$NetBSD: rmp.h,v 1.4 1995/10/06 05:12:18 thorpej Exp $	*/
 
 /*
