@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.3 1997/08/04 05:37:04 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.4 1998/04/26 10:26:45 deraadt Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.3 1997/08/04 05:37:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.4 1998/04/26 10:26:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,10 +62,8 @@ struct	nlist psnl[] = {
 #define	X_FSCALE	0
 	{"_ccpu"},
 #define	X_CCPU		1
-	{"_avail_start"},
-#define	X_AVAILSTART	2
-	{"_avail_end"},
-#define	X_AVAILEND	3
+	{"_physmem"},
+#define	X_PHYSMEM	2
 	{NULL}
 };
 
@@ -83,7 +81,6 @@ int
 donlist()
 {
 	int rval;
-	int tmp;
 
 	rval = 0;
 	nlistread = 1;
@@ -96,16 +93,10 @@ donlist()
 		warnx("fscale: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
-	if (kread(X_AVAILEND, mempages)) {
+	if (kread(X_PHYSMEM, mempages)) {
 		warnx("avail_start: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
-	if (kread(X_AVAILSTART, tmp)) {
-		warnx("avail_end: %s", kvm_geterr(kd));
-		eval = rval = 1;
-	}
-	mempages -= tmp;
-	mempages /= getpagesize();
 	if (kread(X_CCPU, ccpu)) {
 		warnx("ccpu: %s", kvm_geterr(kd));
 		eval = rval = 1;
