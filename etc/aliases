@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.10 2002/07/15 23:47:57 deraadt Exp $
+#	$OpenBSD: aliases,v 1.11 2002/07/25 17:07:47 marc Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -36,6 +36,18 @@ _fingerd: root
 # root:
 # manager:
 # dumper:
+
+# RFC 2142: NETWORK OPERATIONS MAILBOX NAMES
+abuse:		root
+# noc:		root
+security:	root
+
+# RFC 2142: SUPPORT MAILBOX NAMES FOR SPECIFIC INTERNET SERVICES
+# hostmaster:	root
+# usenet:	root
+# news:		usenet
+# webmaster:	root
+# ftp:		root
 
 # uncomment this for msgs:
 # msgs: "|/usr/bin/msgs -s"
