@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_isa.c,v 1.5 1997/10/07 04:47:32 deraadt Exp $	*/
+/*	$OpenBSD: lpt_isa.c,v 1.6 1997/10/07 05:33:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -165,7 +165,6 @@ lpt_isa_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int iosz;
 
 	if (ia->ia_irq != IRQUNK)
 		printf("\n");
@@ -177,8 +176,9 @@ lpt_isa_attach(parent, self, aux)
 	sc->sc_state = 0;
 
 	iot = sc->sc_iot = ia->ia_iot;
-	iosz = (ia->ia_iosize == -1) ? LPT_NPORTS : ia->ia_iosize;
-	if (bus_space_map(iot, ia->ia_iobase, iosz, 0, &ioh))
+	if (ia->ia_iosize == -1)
+		ia->ia_iosize = LPT_NPORTS;
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
 		panic("lpt_isa_attach: couldn't map I/O ports");
 	sc->sc_ioh = ioh;
 
