@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.18 2002/04/22 23:10:09 deraadt Exp $	*/
+/*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -317,8 +317,8 @@ cast5_decrypt(caddr_t key, u_int8_t *blk)
 void
 cast5_setkey(u_int8_t **sched, u_int8_t *key, int len)
 {
-	MALLOC(*sched, u_int8_t *, sizeof(blf_ctx), M_CRYPTO_DATA, M_WAITOK);
-	bzero(*sched, sizeof(blf_ctx));
+	MALLOC(*sched, u_int8_t *, sizeof(cast_key), M_CRYPTO_DATA, M_WAITOK);
+	bzero(*sched, sizeof(cast_key));
 	cast_setkey((cast_key *)*sched, key, len);
 }
 
