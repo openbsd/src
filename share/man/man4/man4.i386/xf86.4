@@ -1,0 +1,81 @@
+.\"	$OpenBSD: xf86.4,v 1.1 1998/02/21 10:20:22 matthieu Exp $
+.\"
+.\" Copyright (c) 1998 Matthieu Herrb
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 20, 1998
+.Os OpenBSD 2.3
+.Dt XF86 4 i386
+.Sh NAME
+.Nm xf86
+.Nd
+XFree86 aperture driver
+.Sh SYNOPSIS
+.Cd "option APERTURE"
+.Sh DESCRIPTION
+The 
+.Pa /dev/xf86
+driver provides access to the memory of a VGA board for
+use by the XFree86 X servers 
+when running with a kernel security level > 0 (ie. when using 
+.Pa /dev/mem
+is prohibited).
+.Pp
+Some X servers (
+.Xr XF86_P9000 1 ,
+.Xr XF86_Mach64 1 ,
+.Xr XF86_AGX 1 ,
+the Matrox driver in 
+.Xr XF86_SVGA 1
+)
+require the use of this driver, while the other can make use of it if
+it's available, but will work without it.
+.Ss ACCESS CONTROL
+Access to the 
+.Pa /dev/xf86 
+device is allowed when the sysctl variable
+.Va machdep.allowaperture 
+= 1. This variable (which default value is 0) 
+can only be manipulated when the security level is <= 0, so it should be
+set in 
+.Pa /etc/sysctl.conf .
+.Sh SEE ALSO
+.Xr XF86_Accel 1 ,
+.Xr XF86_SVGA 1 ,
+.\" XXX .Xr sysctl.conf 5 ,
+.Xr config 8 ,
+.Xr sysctl 8 .
+.Sh HISTORY
+.Pa /dev/xf86 
+was introduced as a loadable kernel module for NetBSD 0.9C
+with XFree86 3.1. It was integrated as an in-kernel device on OpenBSD
+2.3. 
+.Sh AUTHOR
+The aperture driver was written by Matthieu Herrb.
+.Sh BUGS
+This driver allows access to all addresses above
+.Va physmem . 
+It should be restricted to the actual address range of the video
+memory. 
