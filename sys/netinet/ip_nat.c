@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.c,v 1.9 1997/02/12 15:16:02 kstailey Exp $	*/
+/*	$OpenBSD: ip_nat.c,v 1.10 1997/02/13 18:13:31 kstailey Exp $	*/
 /*
  * (C)opyright 1995-1996 by Darren Reed.
  *
@@ -22,7 +22,9 @@ static	char	rcsid[] = "Id: ip_nat.c,v 2.0.1.10 1997/02/08 06:38:49 darrenr Exp";
 # include <stdlib.h>
 #endif
 #include <sys/errno.h>
-#include <sys/types.h>
+#ifndef __OpenBSD__
+# include <sys/types.h>
+#endif
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -903,9 +905,11 @@ ip_natexpire()
 
 	MUTEX_ENTER(&ipf_nat);
 	SPLNET(s);
-	for (natp = &nat_instances; (nat = *natp); natp = &nat->nat_next) {
-		if (--nat->nat_age)
+	for (natp = &nat_instances; (nat = *natp); ) {
+		if (--nat->nat_age) {
+			natp = &nat->nat_next;
 			continue;
+		}
 		*natp = nat->nat_next;
 		nat_delete(nat);
 		nat_stats.ns_expire++;
