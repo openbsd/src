@@ -599,6 +599,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/spifreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/spifvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/stp4020reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/stp4020var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/std

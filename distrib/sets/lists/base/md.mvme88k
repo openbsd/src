@@ -933,6 +933,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/spifreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/spifvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/stp4020reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/stp4020var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/std

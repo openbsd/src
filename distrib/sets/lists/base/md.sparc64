@@ -657,6 +657,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sbus/spifreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sbus/spifvar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sbus/stp4020reg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sbus/stp4020var.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sbus/uperf_sbusreg.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/sequencervar.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/std
