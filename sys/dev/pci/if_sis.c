@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.38 2004/04/26 05:16:41 deraadt Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.39 2004/06/06 04:34:33 mcbride Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -143,7 +143,6 @@ void sis_miibus_statchg(struct device *);
 
 void sis_setmulti_sis(struct sis_softc *);
 void sis_setmulti_ns(struct sis_softc *);
-u_int32_t sis_crc(struct sis_softc *, caddr_t);
 void sis_reset(struct sis_softc *);
 int sis_list_rx_init(struct sis_softc *);
 int sis_list_tx_init(struct sis_softc *);
@@ -677,40 +676,6 @@ sis_miibus_statchg(self)
 	return;
 }
 
-u_int32_t sis_crc(sc, addr)
-	struct sis_softc	*sc;
-	caddr_t			addr;
-{
-	u_int32_t		crc, carry; 
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/*
-	 * return the filter bit position
-	 *
-	 * The NatSemi chip has a 512-bit filter, which is
-	 * different than the SiS, so we special-case it.
-	 */
-	if (sc->sis_type == SIS_TYPE_83815)
-		return((crc >> 23) & 0x1FF);
-
-	return((crc >> 25) & 0x0000007F);
-}
-
 void sis_setmulti_ns(sc)
 	struct sis_softc	*sc;
 {
@@ -723,6 +688,7 @@ void sis_setmulti_ns(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		SIS_CLRBIT(sc, SIS_RXFILT_CTL, NS_RXFILTCTL_MCHASH);
 		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLMULTI);
@@ -746,7 +712,12 @@ void sis_setmulti_ns(sc)
 
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = sis_crc(sc, enm->enm_addrlo);
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 23;
 		index = h >> 3;
 		bit = h & 0x1F;
 		CSR_WRITE_4(sc, SIS_RXFILT_CTL, NS_FILTADDR_FMEM_LO + index);
@@ -772,6 +743,7 @@ void sis_setmulti_sis(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		SIS_SETBIT(sc, SIS_RXFILT_CTL, SIS_RXFILTCTL_ALLMULTI);
 		return;
@@ -790,7 +762,13 @@ void sis_setmulti_sis(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = sis_crc(sc, enm->enm_addrlo);
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+
+		h = (ether_crc32_be(enm->enm_addrlo,
+		    ETHER_ADDR_LEN) >> 25) & 0x0000007F;
 		CSR_WRITE_4(sc, SIS_RXFILT_CTL, (4 + (h >> 4)) << 16);
 		SIS_SETBIT(sc, SIS_RXFILT_DATA, (1 << (h & 0xF)));
 		ETHER_NEXT_MULTI(step, enm);
