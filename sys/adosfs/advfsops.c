@@ -45,6 +45,22 @@
 #include <sys/buf.h>
 #include <adosfs/adosfs.h>
 
+void adosfs_init __P((void));
+int adosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+		      struct proc *));
+int adosfs_start __P((struct mount *, int, struct proc *));
+int adosfs_unmount __P((struct mount *, int, struct proc *));
+int adosfs_root __P((struct mount *, struct vnode **));
+int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
+int adosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
+		       struct vnode **, int *, struct ucred **));
+int adosfs_vptofh __P((struct vnode *, struct fid *));
+
+int adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
+
 int
 adosfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
@@ -60,7 +76,8 @@ adosfs_mount(mp, path, data, ndp, p)
 	int error;
 	mode_t accessmode;
 
-	if (error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args)))
+	error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args));
+	if (error)
 		return(error);
 	
 #if 0
@@ -83,7 +100,7 @@ adosfs_mount(mp, path, data, ndp, p)
 	 * and verify that it refers to a sensible block device.
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-	if (error = namei(ndp))
+	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
 
@@ -104,14 +121,15 @@ adosfs_mount(mp, path, data, ndp, p)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		VOP_LOCK(devvp);
-		if (error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p)) {
+		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
+		if (error) {
 			vput(devvp);
 			return (error);
 		}
 		VOP_UNLOCK(devvp);
 	}
 /* MNT_UPDATE? */
-	if (error = adosfs_mountfs(devvp, mp, p)) {
+	if ((error = adosfs_mountfs(devvp, mp, p)) != 0) {
 		vrele(devvp);
 		return (error);
 	}
@@ -148,19 +166,20 @@ adosfs_mountfs(devvp, mp, p)
 	 * (except for root, which might share swap device for miniroot).
 	 * Flush out any old buffers remaining from a previous use.
 	 */
-	if (error = vfs_mountedon(devvp))
+	if ((error = vfs_mountedon(devvp)) != 0)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if (error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0))
+	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
 		return (error);
 
 	/* 
 	 * open blkdev and read root block
 	 */
-	if (error = VOP_OPEN(devvp, FREAD, NOCRED, p))
+	if ((error = VOP_OPEN(devvp, FREAD, NOCRED, p)) != 0)
 		return (error);
-	if (error = VOP_IOCTL(devvp, DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p))
+	error = VOP_IOCTL(devvp, DIOCGDINFO,(caddr_t)&dl, FREAD, NOCRED, p);
+	if (error)
 		goto fail;
 
 	parp = &dl.d_partitions[part];
@@ -190,7 +209,7 @@ adosfs_mountfs(devvp, mp, p)
 	/*
 	 * get the root anode, if not a valid fs this will fail.
 	 */
-	if (error = VFS_ROOT(mp, &rvp))
+	if ((error = VFS_ROOT(mp, &rvp)) != 0)
 		goto fail;
 	vput(rvp);
 
@@ -225,7 +244,7 @@ adosfs_unmount(mp, mntflags, p)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	if (error = vflush(mp, NULLVP, flags))
+	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	amp = VFSTOADOSFS(mp);
 	amp->devvp->v_specflags &= ~SI_MOUNTEDON;
@@ -245,7 +264,7 @@ adosfs_root(mp, vpp)
 	struct vnode *nvp;
 	int error;
 
-	if (error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp))
+	if ((error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -300,10 +319,11 @@ adosfs_vget(mp, an, vpp)
 	/* 
 	 * check hash table. we are done if found
 	 */
-	if (*vpp = adosfs_ahashget(mp, an))
+	if ((*vpp = adosfs_ahashget(mp, an)) != NULL)
 		return (0);
 
-	if (error = getnewvnode(VT_ADOSFS, mp, adosfs_vnodeop_p, &vp))
+	error = getnewvnode(VT_ADOSFS, mp, adosfs_vnodeop_p, &vp);
+	if (error)
 		return (error);
 
 	/*
@@ -317,7 +337,7 @@ adosfs_vget(mp, an, vpp)
 	ap->nwords = amp->nwords;
 	adosfs_ainshash(amp, ap);
 
-	if (error = bread(amp->devvp, an, amp->bsize, NOCRED, &bp)) {
+	if ((error = bread(amp->devvp, an, amp->bsize, NOCRED, &bp)) != 0) {
 		vput(vp);
 		return (error);
 	}
@@ -495,7 +515,9 @@ adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 	struct adosfsmount *amp = VFSTOADOSFS(mp);
+#if 0
 	struct anode *ap;
+#endif
 	struct netcred *np;
 	struct vnode *nvp;
 	int error;
@@ -511,7 +533,7 @@ adosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	if (np == NULL)
 		return (EACCES);
 
-	if (error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) {
+	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -561,9 +583,11 @@ adosfs_quotactl(mp, cmds, uid, arg, p)
 }
 
 int
-adosfs_sync(mp, waitfor)
+adosfs_sync(mp, waitfor, uc, p)
 	struct mount *mp;
 	int waitfor;
+	struct ucred *uc;
+	struct proc *p;
 {
 #ifdef ADOSFS_DIAGNOSTIC
 	printf("ad_sync(%x, %x)\n", mp, waitfor);
@@ -571,10 +595,9 @@ adosfs_sync(mp, waitfor)
 	return(0);
 }
 
-int
+void
 adosfs_init()
 {
-	return(0);
 }
 
 /*

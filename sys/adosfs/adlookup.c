@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.10 1995/08/18 15:14:33 chopps Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.12 1996/02/13 17:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,26 +42,8 @@
 #define strmatch(s1, l1, s2, l2) \
     ((l1) == (l2) && bcmp((s1), (s2), (l1)) == 0)
 #else
-int
-strmatch(s1, l1, s2, l2)
-	char *s1, *s2;
-	int l1, l2;
-{
-	if (l1 != l2)
-		return 0;
-	while (--l1 >= 0) {
-		char c;
-		c = *s1++;
-		if (c != *s2) {
-			if (c >= 'A' && c <= 'Z' && c + ('a' - 'A') != *s2)
-				return 0;
-			if (c >= 'a' && c <= 'z' && c + ('A' - 'a') != *s2)
-				return 0;
-		}
-		++s2;
-	}
-	return 1;
-}
+#define strmatch(s1, l1, s2, l2) \
+    ((l1) == (l2) && strncasecmp((s1), (s2), (l1)) == 0)
 #endif
 
 /*
@@ -76,13 +58,14 @@ strmatch(s1, l1, s2, l2)
  *	LOOKUP always unlocks parent if last element. (not now!?!?)
  */
 int
-adosfs_lookup(sp)
+adosfs_lookup(v)
+	void *v;
+{
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
-	} */ *sp;
-{
+	} */ *sp = v;
 	int nameiop, last, lockp, wantp, flags, error, vpid, nocache, i;
 	struct componentname *cnp;
 	struct vnode **vpp;	/* place to store result */
@@ -117,13 +100,13 @@ adosfs_lookup(sp)
 	 */
 	if (vdp->v_type != VDIR)
 		return (ENOTDIR);
-	if (error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc))
+	if ((error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc)) != 0)
 		return (error);
 	/*
 	 * cache lookup algorithm borrowed from ufs_lookup()
 	 * its not consistent with otherthings in this function..
 	 */
-	if (error = cache_lookup(vdp, vpp, cnp)) {
+	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
 		if (error == ENOENT)
 			return (error);
 
@@ -150,7 +133,7 @@ adosfs_lookup(sp)
 				VOP_UNLOCK(vdp);
 		}
 		*vpp = NULL;
-		if (error = VOP_LOCK(vdp))
+		if ((error = VOP_LOCK(vdp)) != 0)
 			return (error);
 	}
 
@@ -185,7 +168,8 @@ adosfs_lookup(sp)
 		 * 
 		 */
 		VOP_UNLOCK(vdp); /* race */
-		if (error = VFS_VGET(vdp->v_mount, (ino_t)adp->pblock, vpp))
+		if ((error = VFS_VGET(vdp->v_mount, 
+				      (ino_t)adp->pblock, vpp)) != 0)
 			VOP_LOCK(vdp);
 		else if (last && lockp && (error = VOP_LOCK(vdp)))
 			vput(*vpp);
@@ -205,7 +189,7 @@ adosfs_lookup(sp)
 	bn = adp->tab[hval];
 	i = min(adp->tabi[hval], 0);
 	while (bn != 0) {
-		if (error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp)) {
+		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp)) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[aget] %d)", error);
 #endif
@@ -238,7 +222,7 @@ adosfs_lookup(sp)
 	 * not found
 	 */
 	if ((nameiop == CREATE || nameiop == RENAME) && last) {
-		if (error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[VOP_ACCESS] %d)", error);
 #endif
@@ -261,7 +245,7 @@ adosfs_lookup(sp)
 
 found:
 	if (nameiop == DELETE && last)  {
-		if (error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
 			if (vdp != *vpp)
 				vput(*vpp);
 			*vpp = NULL;
@@ -272,7 +256,7 @@ found:
 	if (nameiop == RENAME && wantp && last) {
 		if (vdp == *vpp)
 			return(EISDIR);
-		if (error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
 			vput(*vpp);
 			*vpp = NULL;
 			return (error);

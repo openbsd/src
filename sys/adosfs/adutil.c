@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.7 1995/01/18 09:17:33 mycroft Exp $	*/
+/*	$NetBSD: adutil.c,v 1.8 1996/02/09 19:06:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,6 +33,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -43,6 +44,7 @@
  * look for anode in the mount's hash table, return locked.
  */
 #define AHASH(an) ((an) & (ANODEHASHSZ - 1))
+static int toupper __P((int));
 
 struct vnode * 
 adosfs_ahashget(mp, an)
@@ -143,9 +145,9 @@ adunixprot(adprot)
 	}
 }
 
-static char
+static int
 toupper(ch)
-	char ch;
+	int ch;
 {
 	if (ch >= 'a' && ch <= 'z')
 		return(ch & ~(0x20));
@@ -180,6 +182,7 @@ adoshash(nam, namlen, nelt)
 	return(val % nelt);
 }
 
+#ifdef notyet
 /*
  * datestamp is local time, tv is to be UTC
  */
@@ -199,6 +202,7 @@ tvtods(tvp, dsp)
 	struct datestamp *dsp;
 {
 }
+#endif
 
 long
 adoswordn(bp, wn)
