@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.19 2003/02/18 13:14:43 jmc Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.20 2003/09/04 03:46:48 avsm Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -291,8 +291,7 @@ sm_pcmcia_ascii_enaddr(cisstr, myla)
 		/* Bogus address! */
 		return (0);
 	}
-	bcopy(cisstr, enaddr_str, 12);
-	bzero(myla, sizeof(myla));
+	bcopy(cisstr, enaddr_str, sizeof enaddr_str);
 	for (i = 0; i < 6; i++) {
 		for (j = 0; j < 2; j++) {
 			/* Convert to upper case. */
