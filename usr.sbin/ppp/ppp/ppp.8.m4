@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.12 2003/03/14 10:47:46 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.13 2003/04/23 07:05:33 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -5773,9 +5773,9 @@ to get online information about what's available.
 The following URLs contain useful information:
 .Bl -bullet -compact
 .It
-http://www.FreeBSD.org/FAQ/userppp.html
+http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/faq/ppp.html
 .It
-http://www.FreeBSD.org/handbook/userppp.html
+http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/handbook/userppp.html
 .El
 .Pp
 .El
