@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.11 2002/02/16 21:27:06 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.12 2003/05/14 20:47:32 jsyn Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.11 2002/02/16 21:27:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.12 2003/05/14 20:47:32 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,9 @@ static int	 getint(int *);
 static int	 getlong(long *);
 static char	*getstr(void);
 static char	*mklong(char *, int);
+#ifdef BUILTIN
+int		 progprintf(int, char **);
+#endif /* BUILTIN */
 static void	 usage(void);
 
 static char **gargv;
