@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.18 2001/09/07 19:26:03 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.19 2001/09/18 20:38:19 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -124,7 +124,7 @@ unt()
 }
 dodisk()
 {
-	n=$(($((${5}*16))+${6})) count=0
+	n=$(($((${5}*${7:-8}))+${6})) count=0
 	RMlist="$RMlist $1$2? r$1$2?"
 	for d in a b c d e f g h i j k l m n o p
 	do
@@ -136,8 +136,7 @@ dodisk()
 }
 dodisk2()
 {
-	[ "$7" ] && fac=$7 || fac=16
-	n=$(($(($5*$fac))+$6))
+	n=$(($(($5*${7:-8}))+$6))
 	M $1$2a b $3 $n 640 operator
 	M r$1$2a c $4 $n 640 operator
 	n=$(($n+2))
