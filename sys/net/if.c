@@ -580,15 +580,23 @@ ifconf(cmd, data)
 	register char *cp, *ep;
 	struct ifreq ifr, *ifrp;
 	int space = ifc->ifc_len, error = 0;
+	int i, ndig;
 
 	ifrp = ifc->ifc_req;
-	ep = ifr.ifr_name + sizeof (ifr.ifr_name) - 2;
+	ep = ifr.ifr_name + sizeof (ifr.ifr_name);
 	for (ifp = ifnet.tqh_first;
 	    space > sizeof (ifr) && ifp != 0; ifp = ifp->if_list.tqe_next) {
 		strncpy(ifr.ifr_name, ifp->if_name, sizeof(ifr.ifr_name) - 2);
 		for (cp = ifr.ifr_name; cp < ep && *cp; cp++)
 			continue;
-		*cp++ = '0' + ifp->if_unit; *cp = '\0';
+		for (i = ifp->if_unit, ndig = 0; i; i /= 10)
+			ndig++;
+		cp += ndig;
+		if (cp >= ep)
+			continue;
+		*cp = '\0';
+		for (i = ifp->if_unit; i; i /= 10)
+			*--cp = '0' + (i % 10);
 		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
