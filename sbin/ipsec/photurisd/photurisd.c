@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.7 1998/05/24 14:17:10 provos Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.8 1998/06/24 01:13:08 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -171,7 +171,7 @@ main(int argc, char **argv)
      init_server();
 
      /* Startup preconfigured exchanges */
-     if( !ignore)
+     if( !ignore && !vpn_mode)
 	  init_startup();
 
 #ifndef DEBUG
