@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)localtime.c	7.76";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.23 2003/10/06 00:17:13 millert Exp $";
+static char elsieid[] = "@(#)localtime.c	7.78";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.24 2004/06/28 14:47:41 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1064,6 +1064,10 @@ struct tm * const	tmp;
 #endif /* defined TM_ZONE */
 }
 
+/*
+** Re-entrant version of localtime.
+*/
+
 struct tm *
 localtime_r(timep, p_tm)
 const time_t * const	timep;
@@ -1129,6 +1133,10 @@ struct tm * const	tmp;
 	}
 #endif /* defined TM_ZONE */
 }
+
+/*
+** Re-entrant version of gmtime.
+*/
 
 struct tm *
 gmtime_r(timep, p_tm)
@@ -1531,6 +1539,11 @@ const long		offset;
 	register time_t			t;
 	register const struct state *	sp;
 	register int			samei, otheri;
+	register int			sameind, otherind;
+	register int			i;
+	register int			nseen;
+	int				seen[TZ_MAX_TYPES];
+	int				types[TZ_MAX_TYPES];
 	int				okay;
 
 	if (tmp->tm_isdst > 1)
@@ -1564,10 +1577,20 @@ const long		offset;
 	if (sp == NULL)
 		return WRONG;
 #endif /* defined ALL_STATE */
-	for (samei = sp->typecnt - 1; samei >= 0; --samei) {
+	for (i = 0; i < sp->typecnt; ++i)
+		seen[i] = FALSE;
+	nseen = 0;
+	for (i = sp->timecnt - 1; i >= 0; --i)
+		if (!seen[sp->types[i]]) {
+			seen[sp->types[i]] = TRUE;
+			types[nseen++] = sp->types[i];
+		}
+	for (sameind = 0; sameind < nseen; ++sameind) {
+		samei = types[sameind];
 		if (sp->ttis[samei].tt_isdst != tmp->tm_isdst)
 			continue;
-		for (otheri = sp->typecnt - 1; otheri >= 0; --otheri) {
+		for (otherind = 0; otherind < nseen; ++otherind) {
+			otheri = types[otherind];
 			if (sp->ttis[otheri].tt_isdst == tmp->tm_isdst)
 				continue;
 			tmp->tm_sec += sp->ttis[otheri].tt_gmtoff -

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zic.8,v 1.16 2004/04/01 11:37:02 jmc Exp $
+.\"	$OpenBSD: zic.8,v 1.17 2004/06/28 14:47:41 millert Exp $
 .Dd May 23, 1999
 .Dt ZIC 8
 .Os
@@ -57,6 +57,10 @@ Complain if a year that appears in a data file is outside the range
 of years representable by
 .Xr time 3
 values.
+Also complain if a time of 24:00
+(which cannot be handled by pre-1998 versions of
+.Nm zic )
+appears in the input.
 .It Fl y Ar command
 Use the given
 .Ar command

@@ -1,5 +1,5 @@
-$OpenBSD: Theory,v 1.8 2002/04/04 19:12:09 millert Exp $
-@(#)Theory	7.13
+$OpenBSD: Theory,v 1.9 2004/06/28 14:47:41 millert Exp $
+@(#)Theory	7.15
 
 
 ----- Outline -----
@@ -8,12 +8,13 @@ $OpenBSD: Theory,v 1.8 2002/04/04 19:12:09 millert Exp $
 	Names of time zone regions
 	Time zone abbreviations
 	Calendrical issues
+	Time and time zones on Mars
 
 
 ----- Time and date functions -----
 
 These time and date functions are upwards compatible with POSIX.1,
-an international standard for Unix-like systems.
+an international standard for UNIX-like systems.
 As of this writing, the current edition of POSIX.1 is:
 
   Information technology --Portable Operating System Interface (POSIX (R))
@@ -145,7 +146,7 @@ Points of interest to folks with other systems:
 	since the format of zic's input changed slightly in late 1994,
 	and many vendors still do not support the new input format.
 
-*	The Unix Version 7 "timezone" function is not present in this package;
+*	The UNIX Version 7 "timezone" function is not present in this package;
 	it's impossible to reliably map timezone's arguments (a "minutes west
 	of GMT" value and a "daylight saving time in effect" flag) to a
 	time zone abbreviation, and we refuse to guess.
@@ -505,3 +506,48 @@ convert to the Gregorian calendar until the Soviet revolution of 1917.
 Source:  H. Grotefend, _Taschenbuch der Zeitrechnung des deutschen
 Mittelalters und der Neuzeit_, herausgegeben von Dr. O. Grotefend
 (Hannover:  Hahnsche Buchhandlung, 1941), pp. 26-28.
+
+
+----- Time and time zones on Mars -----
+
+Some people have adjusted their work schedules to fit Mars time.
+Dozens of special Mars watches were built for Jet Propulsion
+Laboratory workers who kept Mars time during the Mars Exploration
+Rovers mission (2004).  These timepieces look like normal Seikos and
+Citizens but use Mars seconds rather than terrestrial seconds.
+
+A Mars solar day is called a "sol" and has a mean period equal to
+about 24 hours 39 minutes 35.244 seconds in terrestrial time.  It is
+divided into a conventional 24-hour clock, so each Mars second equals
+about 1.02749125 terrestrial seconds.
+
+The prime meridian of Mars goes through the center of the crater
+Airy-0, named in honor of the British astronomer who built the
+Greenwich telescope that defines Earth's prime meridian.  Mean solar
+time on the Mars prime meridian is called Mars Coordinated Time (MTC).
+
+Each landed mission on Mars has adopted a different reference for
+solar time keeping, so there is no real standard for Mars time zones.
+For example, the Mars Exploration Rover project (2004) defined two
+time zones "Local Solar Time A" and "Local Solar Time B" for its two
+missions, each zone designed so that its time equals local true solar
+time at approximately the middle of the nominal mission.  Such a "time
+zone" is not particularly suited for any application other than the
+mission itself.
+
+Many calendars have been proposed for Mars, but none have achieved
+wide acceptance.  Astronomers often use Mars Sol Date (MSD) which is a
+sequential count of Mars solar days elapsed since about 1873-12-29
+12:00 GMT.
+
+The tz database does not currently support Mars time, but it is
+documented here in the hopes that support will be added eventually.
+
+Sources:
+
+Michael Allison and Robert Schmunk,
+"Technical Notes on Mars Solar Time as Adopted by the Mars24 Sunclock"
+<http://www.giss.nasa.gov/tools/mars24/help/notes.html> (2004-03-15).
+
+Jia-Rui Chong, "Workdays Fit for a Martian", Los Angeles Times
+(2004-01-14), pp A1, A20-A21.
