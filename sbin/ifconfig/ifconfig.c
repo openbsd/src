@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.20 1998/09/03 23:08:09 jason Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.21 1999/02/24 21:24:47 deraadt Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.20 1998/09/03 23:08:09 jason Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.21 1999/02/24 21:24:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ int	ipx_type = ETHERTYPE_II;
 char	name[30];
 int	flags, metric, mtu, setaddr, setipdst, doalias;
 int	clearaddr, s;
-int	newaddr = 1;
+int	newaddr = 0;
 int	nsellength = 1;
 int	af = AF_INET;
 int     dflag, mflag, lflag, uflag;
@@ -557,6 +557,7 @@ setifaddr(addr, param)
 	 * and the flags may change when the address is set.
 	 */
 	setaddr++;
+	newaddr = 1;
 	if (doalias == 0)
 		clearaddr = 1;
 	(*afp->af_getaddr)(addr, (doalias >= 0 ? ADDR : RIDADDR));
