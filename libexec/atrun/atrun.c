@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.19 2002/05/11 22:05:53 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.20 2002/05/11 23:11:59 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -71,15 +71,13 @@
 
 /* File scope variables */
 
-static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.19 2002/05/11 22:05:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.20 2002/05/11 23:11:59 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
 
 static void
-perr(a)
-	const char *a;
+perr(const char *a)
 {
 	if (debug)
 		perror(a);
@@ -90,8 +88,7 @@ perr(a)
 }
 
 static void
-perr2(a, b)
-	char *a, *b;
+perr2(char *a, char *b)
 {
 	if (debug) {
 		(void)fputs(a, stderr);
@@ -103,18 +100,13 @@ perr2(a, b)
 }
 
 static int
-write_string(fd, a)
-	int fd;
-	const char *a;
+write_string(int fd, const char *a)
 {
 	return(write(fd, a, strlen(a)));
 }
 
 static void
-run_file(filename, uid, gid)
-	const char *filename;
-	uid_t uid;
-	gid_t gid;
+run_file(const char *filename, uid_t uid, gid_t gid)
 {
 	/*
 	 * Run a file by spawning off a process which redirects I/O,
@@ -137,12 +129,12 @@ run_file(filename, uid, gid)
 	login_cap_t *lc;
 	auth_session_t *as;
 
-	PRIV_START
+	PRIV_START;
 
 	if (chmod(filename, S_IRUSR) != 0)
 		perr("Cannot change file permissions");
 
-	PRIV_END
+	PRIV_END;
 
 	pid = fork();
 	if (pid == -1)
@@ -176,11 +168,11 @@ run_file(filename, uid, gid)
 		exit(EXIT_FAILURE);
 	}
 
-	PRIV_START
+	PRIV_START;
 
 	fd_in = open(filename, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0);
 
-	PRIV_END
+	PRIV_END;
 
 	if (fd_in < 0)
 		perr("Cannot open input file");
@@ -188,12 +180,12 @@ run_file(filename, uid, gid)
 	if (fstat(fd_in, &buf) == -1)
 		perr("Error in fstat of input file descriptor");
 
-	PRIV_START
+	PRIV_START;
 
 	if (lstat(filename, &lbuf) == -1)
 		perr("Error in lstat of input file");
 
-	PRIV_END
+	PRIV_END;
 
 	if (S_ISLNK(lbuf.st_mode)) {
 		syslog(LOG_ERR, "Symbolic link encountered in job %s - aborting",
@@ -248,7 +240,7 @@ run_file(filename, uid, gid)
 		exit(EXIT_FAILURE);
 	}
 
-	PRIV_START
+	PRIV_START;
 
 	if (chdir(_PATH_ATSPOOL) < 0)
 		perr2("Cannot chdir to ", _PATH_ATSPOOL);
@@ -262,7 +254,7 @@ run_file(filename, uid, gid)
 		    O_WRONLY | O_CREAT | O_EXCL, S_IWUSR | S_IRUSR)) < 0)
 		perr("Cannot create output file");
 
-	PRIV_END
+	PRIV_END;
 
 	write_string(fd_out, "To: ");
 	write_string(fd_out, mailname);
@@ -304,7 +296,7 @@ run_file(filename, uid, gid)
 		(void)close(fd_in);
 		(void)close(fd_out);
 
-		PRIV_START
+		PRIV_START;
 
 		if (chdir(_PATH_ATJOBS) < 0)
 			perr2("Cannot chdir to ", _PATH_ATJOBS);
@@ -332,7 +324,7 @@ run_file(filename, uid, gid)
 		if (execle(_PATH_BSHELL, "sh", (char *)NULL, nenvp) != 0)
 			perr("Exec failed for /bin/sh");
 
-		PRIV_END
+		PRIV_END;
 	}
 	/* We're the parent.  Let's wait. */
 	(void)close(fd_in);
@@ -343,7 +335,7 @@ run_file(filename, uid, gid)
 	 * Send mail.  Unlink the output file first, so it is deleted
 	 * after the run.
 	 */
-	PRIV_START
+	PRIV_START;
 
 	if (stat(filename, &buf) == -1)
 		perr("Error in stat of output file");
@@ -352,12 +344,12 @@ run_file(filename, uid, gid)
 
 	(void)unlink(filename);
 
-	PRIV_END
+	PRIV_END;
 
 	if ((buf.st_size != size) || send_mail) {
 		/* Fork off a child for sending mail */
 
-		PRIV_START
+		PRIV_START;
 
 		if (setusercontext(0, pw, pw->pw_uid, LOGIN_SETALL) < 0)
 			perr("Cannot set user context");
@@ -369,7 +361,7 @@ run_file(filename, uid, gid)
 		    "-odi", "-oem", "-t", (char *)NULL);
 		perr("Exec failed for mail command");
 
-		PRIV_END
+		PRIV_END;
 	}
 	exit(EXIT_SUCCESS);
 }
@@ -377,9 +369,7 @@ run_file(filename, uid, gid)
 /* Global functions */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	/*
 	 * Browse through  _PATH_ATJOBS, checking all the jobfiles wether
@@ -413,7 +403,7 @@ main(argc, argv)
 	 * We don't need root privileges all the time; running under uid
 	 * and gid nobody is fine except for priviledged operations.
 	 */
-	RELINQUISH_PRIVS_ROOT(NOBODY_UID, NOBODY_GID)
+	RELINQUISH_PRIVS_ROOT(NOBODY_UID, NOBODY_GID);
 
 	openlog("atrun", LOG_PID, LOG_CRON);
 
@@ -441,9 +431,7 @@ main(argc, argv)
 		}
 	}
 
-	namep = argv[0];
-
-	PRIV_START
+	PRIV_START;
 
 	if (chdir(_PATH_ATJOBS) != 0)
 		perr2("Cannot change to ", _PATH_ATJOBS);
@@ -464,7 +452,7 @@ main(argc, argv)
 	if ((spool = opendir(".")) == NULL)
 		perr2("Cannot read ", _PATH_ATJOBS);
 
-	PRIV_END
+	PRIV_END;
 
 	now = time(NULL);
 	run_batch = 0;
@@ -472,12 +460,12 @@ main(argc, argv)
 	batch_gid = (gid_t) -1;
 
 	while ((dirent = readdir(spool)) != NULL) {
-		PRIV_START
+		PRIV_START;
 
 		if (stat(dirent->d_name, &buf) != 0)
 			perr2("Cannot stat in ", _PATH_ATJOBS);
 
-		PRIV_END
+		PRIV_END;
 
 		/* We don't want directories */
 		if (!S_ISREG(buf.st_mode))
@@ -506,11 +494,11 @@ main(argc, argv)
 		/* Delete older files */
 		if ((run_time < now) && !(S_IXUSR & buf.st_mode) &&
 		    (S_IRUSR & buf.st_mode)) {
-			PRIV_START
+			PRIV_START;
 
 			(void)unlink(dirent->d_name);
 
-			PRIV_END
+			PRIV_END;
 		}
 	}
 
