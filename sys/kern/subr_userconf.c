@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.29 2002/05/02 12:59:58 miod Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.30 2002/07/25 01:26:01 nordin Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -1108,13 +1108,13 @@ userconf_add(dev, len, unit, state)
 		/* Fix indexs in pv */
 		for (i = 0; i < pv_size; i++) {
 			if (pv[i] != -1 && pv[i] >= val)
-				pv[i] = pv[i]++;
+				pv[i]++;
 		}
 
 		/* Fix indexs in cfroots */
 		for (i = 0; i < cfroots_size; i++) {
 			if (cfroots[i] != -1 && cfroots[i] >= val)
-				cfroots[i] = cfroots[i]++;
+				cfroots[i]++;
 		}
 
 		userconf_maxdev++;
