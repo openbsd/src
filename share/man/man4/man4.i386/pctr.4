@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.15 2001/08/03 14:30:26 mpech Exp $
+.\"	$OpenBSD: pctr.4,v 1.16 2002/10/01 07:14:14 miod Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -14,7 +14,7 @@
 .Nm pctr
 .Nd driver for CPU performance counters
 .Sh SYNOPSIS
-.Cd pseudo-device pctr
+.Cd pseudo-device pctr 1
 .Sh DESCRIPTION
 The
 .Nm
@@ -492,7 +492,8 @@ not open for writing.
 .It Pa /dev/pctr
 .El
 .Sh SEE ALSO
-.Xr pctr 1
+.Xr pctr 1 ,
+.Xr ioctl 2
 .Sh HISTORY
 A
 .Nm
@@ -501,8 +502,8 @@ device first appeared in
 .Sh AUTHORS
 The
 .Nm
-device was written by David Mazieres
-.Aq dm@lcs.mit.edu .
+device was written by
+.An David Mazieres Aq dm@lcs.mit.edu .
 .Sh BUGS
 Not all counter functions are completely accurate.
 Some of the functions don't seem to make any sense at all.

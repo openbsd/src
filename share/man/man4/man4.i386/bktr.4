@@ -1,18 +1,18 @@
-.\" $OpenBSD: bktr.4,v 1.9 2002/01/23 18:48:23 mickey Exp $
+.\" $OpenBSD: bktr.4,v 1.10 2002/10/01 07:14:14 miod Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
-.Dt BKTR 4
+.Dt BKTR 4 i386
 .Os
 .Sh NAME
 .Nm bktr
 .Nd video capture driver
 .Sh SYNOPSIS
-.Cd option BROOKTREE_ALLOC_PAGES=nnn
-.Cd option BROOKTREE_SYSTEM_DEFAULT=XXX
-.Pp
 .Cd bktr* at pci? dev ? function ?
 .Cd radio* at bktr?
+.Pp
+.Cd option BROOKTREE_ALLOC_PAGES=nnn
+.Cd option BROOKTREE_SYSTEM_DEFAULT=XXX
 .Sh DESCRIPTION
 The
 .Nm
@@ -59,6 +59,7 @@ One of these options can be used to set the default video format for the driver.
 This fixed random hangs and lockups with the VideoLogic Captivator PCI card.
 .El
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr pci 4 ,
 .Xr radio 4
 .Sh AUTHORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.7 2001/02/01 03:14:05 jason Exp $
+.\"	$OpenBSD: le.4,v 1.8 2002/10/01 07:14:14 miod Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Nm le
 .Nd Lance Ethernet driver
 .Sh SYNOPSIS
-.Cd "le0 at isa? port 0x320 irq 10 drq 7"
+.Cd "le0 at isa? port 0x360 irq 15 drq 6"
 .Cd "le* at pci? dev ? function ?"
 .Cd "le* at isapnp?"
 .Sh DESCRIPTION
@@ -49,9 +49,12 @@ This includes the following models:
 .It Novell NE2100
 .El
 .Sh SEE ALSO
-.Xr ed 4 ,
-.Xr eg 4 ,
-.Xr ep 4 ,
-.Xr ie 4 ,
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
 .Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
+.Xr netintro 4 ,
+.Xr pci 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8

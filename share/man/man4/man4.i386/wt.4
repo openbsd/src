@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wt.4,v 1.7 2001/08/03 14:30:26 mpech Exp $
+.\"	$OpenBSD: wt.4,v 1.8 2002/10/01 07:14:14 miod Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Nm wt
 .Nd Archive/Wangtek cartrige tape driver
 .Sh SYNOPSIS
-.Cd "wt0 at isa? port 0x300 irq 5 drq 1"
+.Cd "wt0 at isa? port 0x308 irq 5 drq 1"
 .Sh DESCRIPTION
 The
 .Nm
@@ -41,4 +41,6 @@ driver provides support for the following Archive and Wangtek boards:
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr isa 4 ,
+.Xr mtio 4 ,
 .Xr st 4

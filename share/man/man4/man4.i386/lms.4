@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lms.4,v 1.6 2001/08/03 14:30:26 mpech Exp $
+.\"	$OpenBSD: lms.4,v 1.7 2002/10/01 07:14:14 miod Exp $
 .\" $NetBSD: lms.4,v 1.13 2000/07/05 16:13:48 msaitoh Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -42,14 +42,17 @@
 .Sh SYNOPSIS
 .Cd lms0 at isa? port 0x23c irq 5
 .Cd lms1 at isa? port 0x238 irq 5
-.Cd wsmouse* at lms?
+.Cd wsmouse* at lms? mux 0
 .Sh DESCRIPTION
 This driver provides an interface to a Logitech-style bus mouse.
 Mouse related data are accessed by
 .Xr wsmouse 4
 devices.
 .Sh SEE ALSO
+.Xr intro 4 ,
+.Xr isa 4 ,
 .Xr mms 4 ,
 .Xr pms 4 ,
+.Xr pmsi 4 ,
 .Xr ums 4 ,
 .Xr wsmouse 4

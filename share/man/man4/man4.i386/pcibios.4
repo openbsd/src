@@ -1,7 +1,7 @@
-.\" $OpenBSD: pcibios.4,v 1.13 2002/08/29 07:34:31 wcobb Exp $
+.\" $OpenBSD: pcibios.4,v 1.14 2002/10/01 07:14:14 miod Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
-.\" Copyright (c) 2000 Michale Shalayeff, All rights reserved.
+.\" Copyright (c) 2000 Michael Shalayeff, All rights reserved.
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -44,8 +44,8 @@
 .Nd introduction to PCI BIOS support
 .Sh SYNOPSIS
 .Cd "pcibios0 at bios0 flags 0x0000"
-.\" .Cd "#options  PCIBIOS_IRQS_HINT=0x0a00 #IRQ 9,11"
-.\" .Cd "#options  PCIBIOS_INTR_FIXUP_FORCE"
+.\" .Cd "#option  PCIBIOS_IRQS_HINT=0x0a00 #IRQ 9,11"
+.\" .Cd "#option  PCIBIOS_INTR_FIXUP_FORCE"
 .Sh INTRODUCTION
 .Ox
 provides support for setting up PCI controllers, bridges, and devices
@@ -160,7 +160,7 @@ Make the PCI interrupt routing fixup procedure verbose.
 .\" .It    "\& 3 0x0008"    "\t 7 0x0080"    "\t11 0x0800"    "\t15 0x8000"
 .\" .El
 .\" For example,
-.\" .Qq Sy options PCIBIOS_IRQS_HINT=0x0a00
+.\" .Qq Sy option PCIBIOS_IRQS_HINT=0x0a00
 .\" allows IRQ 9 and IRQ 11.
 .\"
 .\" The kernel global variable
@@ -173,7 +173,7 @@ Make the PCI interrupt routing fixup procedure verbose.
 .\" To specify this value on the fly, type the following command
 .\" at the boot prompt to drop into DDB (the in-kernel debugger;
 .\" you have to specify
-.\" .Qq Sy options DDB
+.\" .Qq Sy option DDB
 .\" to make kernel with DDB):
 .\" .Dl Ic boot -d
 .\" And type the following command on
@@ -221,8 +221,8 @@ Make the PCI interrupt routing fixup procedure verbose.
 .\" option is worth preserving, please report it with send-pr.
 .\"
 .Sh SEE ALSO
-.Xr autoconf 4 ,
-.Xr cardbus 4 ,
+.Xr bios 4 ,
+.Xr intro 4 ,
 .Xr pci 4
 .Sh HISTORY
 The

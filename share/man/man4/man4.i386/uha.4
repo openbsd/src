@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uha.4,v 1.7 2002/01/24 23:01:36 mickey Exp $
+.\"	$OpenBSD: uha.4,v 1.8 2002/10/01 07:14:14 miod Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -31,7 +31,8 @@
 .Nd Ultrastor SCSI adapter driver
 .Sh SYNOPSIS
 .Cd "uha0 at isa? port 0x330 irq ? drq ?"
-.Cd "uha* at eisa? slot ? irq ?"
+.Cd "uha1 at isa? port 0x334 irq ? drq ?"
+.Cd "uha* at eisa? slot ?"
 .Cd "scsibus* at uha?"
 .Sh DESCRIPTION
 The
@@ -49,5 +50,8 @@ driver provides support for the following SCSI adapters:
 .Xr eisa 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
+.Xr scsi 4 ,
 .Xr sd 4 ,
-.Xr st 4
+.Xr ss 4 ,
+.Xr st 4 ,
+.Xr uk 4

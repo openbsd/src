@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iy.4,v 1.11 2002/08/29 07:34:31 wcobb Exp $
+.\"	$OpenBSD: iy.4,v 1.12 2002/10/01 07:14:14 miod Exp $
 .\"	$NetBSD: iy.4,v 1.2 1996/05/23 16:52:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Herb Peyerl
@@ -36,12 +36,18 @@
 .Nm iy
 .Nd Intel i82595 Ethernet driver
 .Sh SYNOPSIS
-.Cd "iy0 at isa? port {port} irq ?"
+.Cd "iy0 at isa? port 0x360 irq 7"
 .Sh DESCRIPTION
 The
 .Nm iy
 device driver supports the Ether-Express PRO/10 card, and might support
 other ISA cards using the same chip.
+.Pp
+Other models of Intel network cards are supported by the
+.Xr fxp 4
+and
+.Xr ie 4
+drivers.
 .Pp
 Various models of these cards come with a different assortment of
 connectors:
@@ -60,7 +66,9 @@ The default port to use is the port the card autodetects at
 time.
 To choose an alternative port, use the following flag combinations with
 .Xr ifconfig 8
-or in your /etc/hostname.iy? file.
+or in the appropriate
+.Xr hostname.if 5
+file.
 .Pp
 .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
 .It -link0 -link1
@@ -73,15 +81,16 @@ Use the AUI port.
 Use the UTP port.
 .El
 .Sh NOTES
-The Etherexpress PRO card has no jumpers to set the address.
+The EtherExpress PRO card has no jumpers to set the address.
 Intel supplies software to set the address of the card in software.
 You have to hardwire this address in your kernel configuration file.
 .Sh SEE ALSO
-.Xr ed 4 ,
-.Xr eg 4 ,
-.Xr el 4 ,
-.Xr ep 4 ,
+.Xr arp 4 ,
+.Xr fxp 4 ,
 .Xr ie 4 ,
+.Xr ifmedia 4 ,
 .Xr intro 4 ,
-.Xr le 4 ,
+.Xr isa 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8

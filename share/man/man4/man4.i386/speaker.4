@@ -1,4 +1,4 @@
-.\"	$OpenBSD: speaker.4,v 1.12 2001/08/03 14:30:26 mpech Exp $
+.\"	$OpenBSD: speaker.4,v 1.13 2002/10/01 07:14:14 miod Exp $
 .\"	$NetBSD: speaker.4,v 1.9 1998/08/18 08:16:56 augustss Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -213,10 +213,12 @@ melody sections.
 .Bl -tag -width Pa -compact
 .It Pa /dev/speaker
 .El
-.\" .Sh SEE ALSO
-.\" .Xr pcppi 4 .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr pcppi 4 .
 .Sh AUTHORS
-Eric S. Raymond (esr@snark.thyrsus.com) Feb 1990
+.An Eric S. Raymond Aq esr@snark.thyrsus.com ,
+Feb 1990
 .Sh BUGS
 Due to roundoff in the pitch tables and slop in the tone-generation and timer
 hardware (neither of which was designed for precision), neither pitch accuracy

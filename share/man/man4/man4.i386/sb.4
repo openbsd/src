@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sb.4,v 1.9 2001/08/03 14:30:26 mpech Exp $
+.\"	$OpenBSD: sb.4,v 1.10 2002/10/01 07:14:14 miod Exp $
 .\"	$NetBSD: sb.4,v 1.13 1997/10/31 15:02:33 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,13 +42,16 @@
 .Nm sb
 .Nd SoundBlaster family (and compatibles) audio device driver
 .Sh SYNOPSIS
-.Cd "sb0 at isa? port 0x220 irq 5 drq 1 drq2 5"
+.Cd "sb0 at isa? port 0x220 irq 5 drq 1"
 .Cd "sb1 at isa? port 0x240 irq 7 drq 1 flags 1"
 .Cd "sb* at isapnp?"
 .Cd "audio* at sb?"
+.Cd "midi* at sb?" Pq "MPU401 port"
+.Cd "opl* at sb?"
 .Sh DESCRIPTION
 The
 .Nm
+driver supports the
 SoundBlaster 16, Jazz 16, SoundBlaster AWE 32, SoundBlaster AWE 64,
 and hardware register-level compatible audio cards.
 .Pp
@@ -67,15 +70,27 @@ For the SoundBlaster 16, the IRQ and DRQ channels are set by this driver
 to the values specified in the config file.
 The IRQ must be selected from the set {5,7,9,10}.
 .Pp
-The configuration file must use 1
+The configuration file must set the value of
 .Cm flags
-specification to enable the Jazz16 support.
+to 1 to enable the Jazz16 support.
 This is to avoid potential conflicts with other devices when probing the
 Jazz 16 because it requires use of extra I/O ports not in the base port range.
+.Pp
+The joystick interface (if enabled by a jumper) is handled by the
+.Xr joy 4
+driver, and the optional SCSI CD-ROM interface is handled by the
+.Xr aic 4
+driver.
 .Sh SEE ALSO
 .Xr aic 4 ,
 .Xr audio 4 ,
-.Xr joy 4
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4 ,
+.Xr joy 4 ,
+.Xr midi 4 ,
+.Xr opl 4 ,
+.Xr wss 4
 .Sh HISTORY
 The
 .Nm
@@ -88,11 +103,4 @@ It does so by extending
 the output 8 bit samples to 16 bits and using the 8 bit DMA channel
 for input and the 16 bit channel for output.
 .Pp
-The joystick interface (if enabled by a jumper) is handled by the
-.Xr joy 4
-driver, and the optional SCSI CD-ROM interface is handled by the
-.Xr aic 4
-driver.
-.Pp
-The FM synthesizer, MIDI port, and non-SCSI CD-ROM interfaces are not
-supported.
+The non-SCSI CD-ROM interfaces found on some older cards are not supported.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.9 2000/10/18 02:38:25 aaron Exp $
+.\"	$OpenBSD: ie.4,v 1.10 2002/10/01 07:14:14 miod Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -30,6 +30,7 @@
 .Nd Intel i82586 Ethernet driver
 .Sh SYNOPSIS
 .Cd "ie0 at isa? port 0x360 irq 7 iomem 0xd0000"
+.Cd "ie1 at isa? port 0x300 irq 10"
 .Sh DESCRIPTION
 The
 .Nm
@@ -66,6 +67,7 @@ To view a list of media types and options supported by your card try
 For example,
 .Dq ifconfig -m ie0 .
 .Sh SEE ALSO
+.Xr arp 4 ,
 .Xr ec 4 ,
 .Xr ef 4 ,
 .Xr eg 4 ,
@@ -73,6 +75,9 @@ For example,
 .Xr ep 4 ,
 .Xr fxp 4 ,
 .Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr iy 4 ,
+.Xr netintro 4 ,
 .Xr xl 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8

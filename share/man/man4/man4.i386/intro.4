@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.35 2002/06/02 03:34:35 mickey Exp $
+.\"	$OpenBSD: intro.4,v 1.36 2002/10/01 07:14:14 miod Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nm intro
 .Nd introduction to special files and hardware support
 .Sh DESCRIPTION
-The manual pages in section 4 describe the special files, 
+The manual pages in section 4 describe the special files,
 related driver functions, and networking support
 available in the system.
 In this part of the manual, the
@@ -113,6 +113,8 @@ Adaptec 1742 EISA SCSI adapter boards.
 Adaptec 2xxx and 3xxx series PCI/VLB/EISA SCSI adapter boards.
 .It Xr aic 4
 Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
+.It Xr amdpm 4
+AMD768 Power Management.
 .It Xr ami 4
 American Megatrends Inc.  MegaRAID Controllers.
 .It Xr an 4
@@ -135,12 +137,12 @@ BayStack 650 PCMCIA wireless network adapter.
 Aztech/PackardBell FM Radio card.
 .It Xr bge 4
 Broadcom BCM570x (Tigon3) Gigabit Ethernet boards.
+.It Xr bha 4
+Buslogic BT-445, BT-74x, and BT-9xx SCSI boards.
 .It Xr bktr 4
 Brooktree video capture.
 .It Xr boca 4
 BOCA serial cards.
-.It Xr bt 4
-Buslogic BT-445, BT-74x, and BT-9xx SCSI boards.
 .It Xr cac 4
 Compaq Smart ARRAY RAID controllers.
 .It Xr clcs 4
@@ -149,9 +151,8 @@ Cirrus Logic CS4280 audio.
 Cirrus Logic CS4281 audio.
 .It Xr cmpci 4
 C-Media CMI8x38 audio.
-.It Xr com 4
-NS8250-, NS16450-, NS16550-, ST16550- and TI16750-based asynchronous
-serial communications.
+.It Xr cnw 4
+Xircom CreditCard Netwave wireless network adapter.
 .It Xr cue 4
 CATC USB-EL1201A based USB Ethernet adapters.
 .It Xr cy 4
@@ -174,6 +175,8 @@ Ensoniq AudioPCI (ES137x) audio.
 3Com EtherLink Plus Ethernet (3C505).
 .It Xr el 4
 3Com EtherLink Ethernet (3C501).
+.It Xr em 4
+Intel i82542, i82543, and i82544 Pro/1000 Gigabit Ethernet.
 .It Xr emu 4
 Creative Labs SBLive! and PCI 512 audio.
 .It Xr ep 4
@@ -201,16 +204,14 @@ DEFPA PCI FDDI controller.
 EtherExpress PRO/100 Ethernet.
 .It Xr gdt 4
 ICP-Vortex GDT RAID controllers.
+.It Xr gtp 4
+Gemtek PCI FM radio adapter.
 .It Xr gus 4
 Gravis UltraSound and UltraSound/MAX audio.
-.It Xr gx 4
-Intel i82542, i82543, and i82544 Pro/1000 Gigabit Ethernet.
 .It Xr hifn 4
-Hi/Fn 7751 Encryption Accelerator.
+Hifn 7751 crypto accelerator.
 .It Xr hsq 4
 Hostess multiplexing serial communications boards.
-.It Xr iop 4
-I2O adapters.
 .It Xr ie 4
 .At StarLAN 10 ,
 EN100, StarLan Fiber, and 3Com 3c507 Ethernet.
@@ -239,6 +240,8 @@ Level 1 LXT1001 NetCellerator PCI gigabit ethernet.
 Lan Media Corporation SS1/DS1/HSSI/DS3 PCI WAN adapters.
 .It Xr lms 4
 Logitech-style bus mouse.
+.It Xr lofn 4
+Hifn 6500 crypto accelerator.
 .It Xr lpt 4
 Parallel port.
 .It Xr maestro 4
@@ -255,8 +258,12 @@ Novell NE1000 and 2000 Ethernet interface.
 NeoMagic 256AV/ZX audio.
 .It Xr nge 4
 National Semiconductor PCI Gigabit Ethernet.
+.It Xr nofn 4
+Hifn 7814/7851/7854 HIPP1 crypto processor.
 .It Xr npx 4
 Numeric Processing Extension coprocessor and emulator.
+.It Xr opl 4
+Yamaha OPL2 and OPL3 FM synthesizer.
 .It Xr pas 4
 ProAudio spectrum audio.
 .It Xr pccom 4
@@ -274,23 +281,28 @@ PS/2 auxiliary port mouse, for generic mice.
 PS/2 auxiliary port mouse, for wheel mice.
 .It Xr pss 4
 Personal Sound System audio.
+.It Xr puc 4
+PCI ``universal'' communications card driver.
 .It Xr ray 4
 Raytheon Raylink/WebGear Aviator wireless network adapter.
 .It Xr rl 4
 RealTek 8129/8139 Ethernet.
+.It Xr rt 4
+AIMS Lab Radiotrack FM radio adapter.
 .It Xr rtfps 4
 Another multiplexing serial communications card.
 .It Xr sb 4
 Sound Blaster card.
 .It Xr sea 4
 Seagate/Future Domain SCSI cards.
-ST01/02, Future Domain TMC-885, and Future Domain TMC-950.
 .It Xr sf 4
 Adaptec AIC-6915 Starfire PCI Fast Ethernet.
 .It Xr sf2r 4
 SoundForte RadioLink SF16-FMR2 FM radio adapter.
 .It Xr sf4r 4
 SoundForte RadioLink SF64-PCR FM radio adapter.
+.It Xr sfr 4
+SoundForte RadioLink SF16-FMR FM radio adapter.
 .It Xr siop 4
 LSI/Symbios Logic/NCR 53c8xx SCSI adapter boards.
 .It Xr sis 4
@@ -301,8 +313,12 @@ SysKonnect 984x Gigabit Ethernet (9841/9842/9843/9844).
 SMC91C9x Ethernet.
 .It Xr speaker 4
 Console speaker.
+.It Xr ste 4
+Sundance Technologies ST201 Fast Ethernet.
 .It Xr stge 4
 Sundance/Tamarack TC9021 Gigabit Ethernet.
+.It Xr sv 4
+S3 SonicVibes cards.
 .It Xr tcic 4
 Databook PCMCIA controllers.
 .It Xr ti 4
@@ -311,25 +327,50 @@ Alteon Tigon I & II Gigabit ethernet (3COM 3C985, Netgear GA620, etc).
 Texas Instruments ThunderLAN ethernet.
 .It Xr tr 4
 IBM TROPIC Token-Ring adapters.
+.It Xr trm 4
+TRM-S1040 based PCI SCSI Host Adapters.
 .It Xr twe 4
 3ware Escalade RAID controller.
 .It Xr tx 4
 SMC 9432 10/100 Mbps Ethernet cards.
 .It Xr txp 4
 3Com 3XP Typhoon/Sidewinder (3CR990) Ethernet.
+.It Xr uaudio 4
+USB audio devices.
 .It Xr ubsec 4
 Broadcom Bluesteelnet uBsec 5501, 5601, 5805, and 5820.
+.It Xr udsbr 4
+D-Link DSB-R100 USB radio adapter.
 .It Xr uftdi 4
 FTDI FT8U100AX-based USB serial adapters.
 .It Xr uha 4
 Ultrastor ISA and EISA SCSI adapter cards.
-Ultrastor 14f, Ultrastor 34f, and Ultrastor 24f.
+.It Xr ukbd 4
+USB keyboard.
+.It Xr ulpt 4
+USB printers.
+.It Xr umass 4
+USB mass storage.
+.It Xr umct 4
+MCT USB-RS232 serial adapter.
+.It Xr umodem 4
+USB modems.
+.It Xr umidi 4
+USB midi devices.
+.It Xr ums 4
+USB mouse.
 .It Xr upl 4
 Prolific PL2301/PL2302-based host-to-host USB connectors.
 .It Xr uplcom 4
 I/O Data USB-RSAQ2 USB serial adapters.
 .It Xr urio 4
 Diamond Multimedia Rio MP3 device interface.
+.It Xr url 4
+Realtek RTL8150L USB ethernet adapter.
+.It Xr uscanner 4
+USB scanners.
+.It Xr usscanner 4
+SCSI-over-USB scanners.
 .It Xr uvisor 4
 Handspring Visor device interface.
 .It Xr uyap 4
@@ -366,7 +407,157 @@ Yamaha DS-XG audio.
 Yamaha OPL3-SAx audio.
 .El
 .Sh SEE ALSO
+.Xr aac 4 ,
+.Xr addcom 4 ,
+.Xr adv 4 ,
+.Xr adw 4 ,
+.Xr aha 4 ,
+.Xr ahb 4 ,
+.Xr ahc 4 ,
+.Xr aic 4 ,
+.Xr amdpm 4 ,
+.Xr ami 4 ,
+.Xr an 4 ,
+.Xr apm 4 ,
+.Xr aria 4 ,
+.Xr ast 4 ,
+.Xr aue 4 ,
+.Xr auich 4 ,
 .Xr autoconf 4 ,
+.Xr auvia 4 ,
+.Xr awi 4 ,
+.Xr az 4 ,
+.Xr bge 4 ,
+.Xr bha 4 ,
+.Xr bktr 4 ,
+.Xr boca 4 ,
+.Xr cac 4 ,
+.Xr clcs 4 ,
+.Xr clct 4 ,
+.Xr cmpci 4 ,
+.Xr cnw 4 ,
+.Xr cue 4 ,
+.Xr cy 4 ,
+.Xr cz 4 ,
+.Xr dc 4 ,
+.Xr de 4 ,
+.Xr dpt 4 ,
+.Xr eap 4 ,
+.Xr ec 4 ,
+.Xr ef 4 ,
+.Xr eg 4 ,
+.Xr el 4 ,
+.Xr em 4 ,
+.Xr emu 4 ,
+.Xr ep 4 ,
+.Xr esa 4 ,
+.Xr eso 4 ,
+.Xr ess 4 ,
+.Xr ex 4 ,
+.Xr fdc 4 ,
+.Xr fea 4 ,
+.Xr fms 4 ,
+.Xr fpa 4 ,
+.Xr fxp 4 ,
+.Xr gdt 4 ,
+.Xr gtp 4 ,
+.Xr gus 4 ,
+.Xr hifn 4 ,
+.Xr hsq 4 ,
+.Xr ie 4 ,
+.Xr iha 4 ,
+.Xr intro 4 ,
+.Xr iop 4 ,
+.Xr ises 4 ,
+.Xr isp 4 ,
+.Xr iy 4 ,
+.Xr joy 4 ,
+.Xr kue 4 ,
+.Xr lc 4 ,
+.Xr le 4 ,
+.Xr lge 4 ,
+.Xr lmc 4 ,
+.Xr lms 4 ,
+.Xr lofn 4 ,
+.Xr lpt 4 ,
+.Xr maestro 4 ,
+.Xr mcd 4 ,
+.Xr mms 4 ,
+.Xr ncr 4 ,
+.Xr ne 4 ,
+.Xr neo 4 ,
+.Xr nge 4 ,
+.Xr nofn 4 ,
+.Xr npx 4 ,
+.Xr opl 4 ,
+.Xr pas 4 ,
+.Xr pccom 4 ,
+.Xr pcdisplay 4 ,
+.Xr pckbc 4 ,
+.Xr pctr 4 ,
+.Xr pms 4 ,
+.Xr pmsi 4 ,
+.Xr pss 4 ,
+.Xr puc 4 ,
+.Xr ray 4 ,
+.Xr rl 4 ,
+.Xr rt 4 ,
+.Xr rtfps 4 ,
+.Xr sb 4 ,
+.Xr sea 4 ,
+.Xr sf 4 ,
+.Xr sf2r 4 ,
+.Xr sf4r 4 ,
+.Xr sfr 4 ,
+.Xr siop 4 ,
+.Xr sis 4 ,
+.Xr sk 4 ,
+.Xr sm 4 ,
+.Xr speaker 4 ,
+.Xr stge 4 ,
+.Xr sv 4 ,
+.Xr tcic 4 ,
+.Xr ti 4 ,
+.Xr tl 4 ,
+.Xr tr 4 ,
+.Xr trm 4 ,
+.Xr twe 4 ,
+.Xr tx 4 ,
+.Xr txp 4 ,
+.Xr uaudio 4 ,
+.Xr ubsec 4 ,
+.Xr udsbr 4 ,
+.Xr uftdi 4 ,
+.Xr uha 4 ,
+.Xr ukbd 4 ,
+.Xr ulpt 4 ,
+.Xr umass 4 ,
+.Xr umct 4 ,
+.Xr umodem 4 ,
+.Xr umidi 4 ,
+.Xr ums 4 ,
+.Xr upl 4 ,
+.Xr uplcom 4 ,
+.Xr urio 4 ,
+.Xr url 4 ,
+.Xr uscanner 4 ,
+.Xr usscanner 4 ,
+.Xr uvisor 4 ,
+.Xr uyap 4 ,
+.Xr vga 4 ,
+.Xr vr 4 ,
+.Xr wb 4 ,
+.Xr wdc 4 ,
+.Xr wds 4 ,
+.Xr wdt 4 ,
+.Xr we 4 ,
+.Xr wi 4 ,
+.Xr wss 4 ,
+.Xr wt 4 ,
+.Xr xe 4 ,
+.Xr xl 4 ,
+.Xr yds 4 ,
+.Xr ym 4 ,
 .Xr config 8
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gus.4,v 1.11 2001/08/03 14:30:26 mpech Exp $
+.\"	$OpenBSD: gus.4,v 1.12 2002/10/01 07:14:14 miod Exp $
 .\"	$NetBSD: gus.4,v 1.7 1997/10/08 21:59:55 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm gus
 .Nd Gravis UltraSound/UltraSound MAX device driver
 .Sh SYNOPSIS
-.Cd "gus0 at isa? port 0xPPP irq X drq Y drq2 Z"
+.Cd "gus0 at isa? port 0x220 irq 7 drq 1 drq2 6"
 .Cd "gus* at isapnp?"
 .Cd "audio* at gus?"
 .Sh DESCRIPTION
@@ -74,7 +74,10 @@ The Gravis UltraSound MAX has an additional CODEC onboard which is
 addressed with four ports at an offset of 0x10C from the base ports
 (0x31C-0x36C).
 .Sh SEE ALSO
-.Xr audio 4
+.Xr audio 4 ,
+.Xr intro 4 ,
+.Xr isa 4 ,
+.Xr isapnp 4
 .Sh REFERENCES
 Gravis UltraSound Low-Level Toolkit, Revision 2.01, 20 May 1993,
 published by Advanced Gravis and Forte Technologies.
