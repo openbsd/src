@@ -77,7 +77,7 @@ char *strdup (const char *str)
 
     if (!(dup = (char *) malloc(strlen(str) + 1)))
 	return NULL;
-    dup = strcpy(dup, str);
+    dup = strlcpy(dup, str, strlen(str) + 1);
 
     return dup;
 }
