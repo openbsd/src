@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.2 2001/09/30 20:58:16 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.3 2001/09/30 21:03:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -684,8 +684,6 @@ cs4231_commit_settings(addr)
 	r = sc->sc_speed_bits | (sc->sc_format_bits << 5);
 	if (sc->sc_channels == 2)
 		r |= CS_FSPB_SM_STEREO;
-
-	printf("commit: %02x\n", r);
 
 	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_IAR_FSPB);
 	CS_WRITE(sc, CS4231_IDR, r);
