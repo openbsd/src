@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_xlate.h,v 1.1 1997/08/19 11:48:07 kstailey Exp $	*/
+/*	$OpenBSD: kbd_xlate.h,v 1.2 1997/08/19 23:09:32 kstailey Exp $	*/
 /*	$NetBSD: kbd_xlate.h,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  * This defines the interface provided by kbd_xlate()
  */
 
-#include <dev/sun/kbd_tables.h>
+#include "kbd_tables.h"
 
 #define	KEY_CODE(c)	((c) & KBD_KEYMASK)	/* keyboard code index */
 #define	KEY_UP(c)	((c) & KBD_UP)		/* true => key went up */

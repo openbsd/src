@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.c,v 1.3 1997/08/19 11:48:08 kstailey Exp $	*/
+/*	$OpenBSD: ms.c,v 1.4 1997/08/19 23:09:34 kstailey Exp $	*/
 /*	$NetBSD: ms.c,v 1.6 1996/05/17 19:32:09 gwr Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #include <machine/z8530var.h>
 #include <machine/vuid_event.h>
 
-#include "event_var.h"
+#include "../../../dev/sun/event_var.h"
 
 /*
  * How many input characters we can buffer.
