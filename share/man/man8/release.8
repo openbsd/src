@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.10 2000/09/27 00:24:25 marc Exp $
+.\"	$OpenBSD: release.8,v 1.11 2000/10/21 23:25:36 marc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -320,9 +320,16 @@ the build process is:
 .Pp
 .Sy Note :
 .Pa SuperProbe ,
-built and installed above, requires the
+built and installed above, requires version 8.0 of the
 .Pa tcl/tk
-libraries.   They must be installed to do a proper build.
+libraries.   They must be installed to do a proper build. Version 8.0 of
+.Pa tcl/tk
+can be found in the ports tree at
+.Pa /usr/ports/lang/tcl/8.0/
+and
+.Pa /usr/ports/x11/tk/8.0/ .
+Version 8.0 is required to build X11.   Version 8.0 may coexist with
+version 8.3.
 .Pp
 The above method mimics a
 .Ic "make build"
@@ -415,11 +422,6 @@ That's all there is to it.
 .Xr pkg_add 1 ,
 .Xr ports 7 ,
 .Xr sudo 8
-.Sh AUTHORS
-Written by Marco S. Hyman using information gleaned from the various
-.Ox
-mailing lists and e-mail conversations with Theo de Raadt, Niklas Hallqvist,
-Todd T. Fries, and Todd C. Miller.
 .Sh HISTORY
 This document first appeared in
 .Ox 2.8 .
