@@ -1,4 +1,4 @@
-.\"	$OpenBSD: write.2,v 1.5 1998/07/28 04:13:33 millert Exp $
+.\"	$OpenBSD: write.2,v 1.6 1998/07/28 19:47:11 millert Exp $
 .\"	$NetBSD: write.2,v 1.6 1995/02/27 12:39:43 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)write.2	8.5 (Berkeley) 4/2/94
 .\"
-.Dd April 2, 1994
+.Dd July 28, 1998
 .Dt WRITE 2
 .Os BSD 4
 .Sh NAME
@@ -177,7 +177,17 @@ The file was marked for non-blocking I/O,
 and no data could be written immediately.
 .El
 .Pp
-In addition, 
+In addition,
+.Fn write
+may return following error:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa nbytes
+was larger than
+.Ev SSIZE_MAX .
+.El
+.Pp
+Also,
 .Fn writev
 may return one of the following errors:
 .Bl -tag -width Er
@@ -190,7 +200,8 @@ The sum of the
 .Fa iov_len
 values in the
 .Fa iov
-array overflowed an unsigned 32-bit integer.
+array overflowed an
+.Em ssize_t .
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.7 1998/07/28 04:49:31 millert Exp $
+.\"	$OpenBSD: recv.2,v 1.8 1998/07/28 19:47:14 millert Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -259,7 +259,19 @@ The receive buffer pointer(s) point outside the process's
 address space.
 .El
 .Pp
-In addition, 
+In addition,
+.Fn recv
+and
+.Fn recvfrom
+may return following error:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa len   
+was larger than
+.Ev SSIZE_MAX .
+.El
+.Pp
+Also,
 .Fn recvmsg
 may return following error:
 .Bl -tag -width Er
@@ -268,7 +280,8 @@ The sum of the
 .Fa iov_len
 values in the
 .Fa msg_iov
-array overflowed an unsigned 32-bit integer.
+array overflowed an
+.Em ssize_t .
 .El
 .Sh SEE ALSO
 .Xr fcntl 2 ,
