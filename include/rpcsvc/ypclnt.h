@@ -83,6 +83,7 @@ int	yp_all		__P((const char *, const char *,
 			     struct ypall_callback *));
 char *	yperr_string	__P((int));
 int	ypprot_err	__P((unsigned int));
+struct ypmaplist;
 int	yp_maplist	__P((const char *, struct ypmaplist **));
 __END_DECLS
 
