@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.65 2002/02/28 00:02:48 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.66 2002/03/09 23:37:09 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -784,9 +784,11 @@ scsi_probedev(scsi, target, lun)
 	/*
 	 * Tell drivers that are paying attention to avoid
 	 * sync/wide/tags until INQUIRY data and quirks information
-	 * are available.
+	 * are available. Since bits in quirks may have already been
+	 * set by some drivers (e.g. NOLUNS for atapiscsi), just add
+	 * NOTAGS, NOWIDE and NOSYNC.
 	 */
-	sc_link->quirks = SDEV_NOSYNC | SDEV_NOWIDE | SDEV_NOTAGS;
+	sc_link->quirks |= SDEV_NOSYNC | SDEV_NOWIDE | SDEV_NOTAGS;
 
 	/*
 	 * Ask the device what it is
