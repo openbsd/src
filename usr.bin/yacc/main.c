@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2003/06/19 16:34:53 pvalchev Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.17 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.18 2003/06/19 16:34:53 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,8 +121,7 @@ void open_files(void);
 volatile sig_atomic_t sigdie;
 
 void
-done(k)
-int k;
+done(int k)
 {
     if (action_file)
 	unlink(action_file_name);
@@ -137,8 +136,7 @@ int k;
 
 
 void
-onintr(signo)
-	int signo;
+onintr(int signo)
 {
     sigdie = 1;
     done(1);
@@ -146,7 +144,7 @@ onintr(signo)
 
 
 void
-set_signals()
+set_signals(void)
 {
 #ifdef SIGINT
     if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -164,7 +162,7 @@ set_signals()
 
 
 void
-usage()
+usage(void)
 {
     fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-o outputfile] [-p symbol_prefix] filename\n", __progname);
     exit(1);
@@ -172,9 +170,7 @@ usage()
 
 
 void
-getargs(argc, argv)
-int argc;
-char *argv[];
+getargs(int argc, char *argv[])
 {
     int i;
     char *s;
@@ -287,8 +283,7 @@ no_more_options:;
 
 
 char *
-allocate(n)
-unsigned n;
+allocate(unsigned int n)
 {
     char *p;
 
@@ -305,7 +300,7 @@ unsigned n;
 	(asprintf(&(s), "%.*s/yacc.%xXXXXXXXXXX", (int)(l), (d), (c)))
 
 void
-create_file_names()
+create_file_names(void)
 {
     size_t len;
     char *tmpdir;
@@ -384,9 +379,7 @@ create_file_names()
 
 
 FILE *
-fsopen(name, mode)
-    char *name;
-    char *mode;
+fsopen(char *name, char *mode)
 {
     FILE *fp = NULL;
     int fd, mod = O_RDONLY;
@@ -402,7 +395,7 @@ fsopen(name, mode)
 }
 
 void
-open_files()
+open_files(void)
 {
     int fd;
 
@@ -456,9 +449,7 @@ open_files()
 
 
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
 {
     set_signals();
     getargs(argc, argv);

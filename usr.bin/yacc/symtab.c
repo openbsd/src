@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.8 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.9 2003/06/19 16:34:53 pvalchev Exp $	*/
 /*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.8 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.9 2003/06/19 16:34:53 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,8 +57,7 @@ int hash(char *);
 
 
 int
-hash(name)
-char *name;
+hash(char *name)
 {
     char *s;
     int c, k;
@@ -74,8 +73,7 @@ char *name;
 
 
 bucket *
-make_bucket(name)
-char *name;
+make_bucket(char *name)
 {
     bucket *bp;
 
@@ -98,8 +96,7 @@ char *name;
 
 
 bucket *
-lookup(name)
-char *name;
+lookup(char *name)
 {
     bucket *bp, **bpp;
 
@@ -122,7 +119,7 @@ char *name;
 
 
 void
-create_symbol_table()
+create_symbol_table(void)
 {
     int i;
     bucket *bp;
@@ -143,7 +140,7 @@ create_symbol_table()
 
 
 void
-free_symbol_table()
+free_symbol_table(void)
 {
     FREE(symbol_table);
     symbol_table = 0;
@@ -151,7 +148,7 @@ free_symbol_table()
 
 
 void
-free_symbols()
+free_symbols(void)
 {
     bucket *p, *q;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.6 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: closure.c,v 1.7 2003/06/19 16:34:53 pvalchev Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)closure.c	5.3 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: closure.c,v 1.6 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: closure.c,v 1.7 2003/06/19 16:34:53 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static unsigned *EFF;
 
 
 void
-set_EFF()
+set_EFF(void)
 {
     unsigned *row;
     int symbol;
@@ -89,7 +89,7 @@ set_EFF()
 
 
 void
-set_first_derives()
+set_first_derives(void)
 {
     unsigned *rrow;
     unsigned *vrow;
@@ -145,9 +145,7 @@ set_first_derives()
 
 
 void
-closure(nucleus, n)
-short *nucleus;
-int n;
+closure(short *nucleus, int n)
 {
     int ruleno;
     unsigned word;
@@ -216,7 +214,7 @@ int n;
 
 
 void
-finalize_closure()
+finalize_closure(void)
 {
   FREE(itemset);
   FREE(ruleset);
@@ -226,8 +224,8 @@ finalize_closure()
 
 #ifdef	DEBUG
 
-print_closure(n)
-int n;
+void
+print_closure(int n)
 {
   short *isp;
 
@@ -236,8 +234,8 @@ int n;
     printf("   %d\n", *isp);
 }
 
-
-print_EFF()
+void
+print_EFF(void)
 {
     int i, j;
     unsigned *rowp;
@@ -267,8 +265,8 @@ print_EFF()
     }
 }
 
-
-print_first_derives()
+void
+print_first_derives(void)
 {
     int i;
     int j;

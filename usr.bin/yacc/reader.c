@@ -1,5 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.14 2003/06/03 02:56:24 millert Exp $	*/
-
+/*	$OpenBSD: reader.c,v 1.15 2003/06/19 16:34:53 pvalchev Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -116,8 +115,7 @@ void print_grammar(void);
 char line_format[] = "#line %d \"%s\"\n";
 
 void
-cachec(c)
-int c;
+cachec(int c)
 {
     assert(cinc >= 0);
     if (cinc >= cache_size)
@@ -132,7 +130,7 @@ int c;
 
 
 void
-get_line()
+get_line(void)
 {
     FILE *f = input_file;
     int c;
@@ -179,7 +177,7 @@ get_line()
 
 
 char *
-dup_line()
+dup_line(void)
 {
     char *p, *s, *t;
 
@@ -197,7 +195,7 @@ dup_line()
 
 
 void
-skip_comment()
+skip_comment(void)
 {
     char *s;
 
@@ -228,7 +226,7 @@ skip_comment()
 
 
 int
-nextc()
+nextc(void)
 {
     char *s;
 
@@ -290,7 +288,7 @@ nextc()
 
 
 int
-keyword()
+keyword(void)
 {
     int c;
     char *t_cptr = cptr;
@@ -356,7 +354,7 @@ keyword()
 
 
 void
-copy_ident()
+copy_ident(void)
 {
     int c;
     FILE *f = output_file;
@@ -386,7 +384,7 @@ copy_ident()
 
 
 void
-copy_text()
+copy_text(void)
 {
     int c;
     int quote;
@@ -518,7 +516,7 @@ loop:
 
 
 void
-copy_union()
+copy_union(void)
 {
     int c;
     int quote;
@@ -659,8 +657,7 @@ loop:
 
 
 int
-hexval(c)
-int c;
+hexval(int c)
 {
     if (c >= '0' && c <= '9')
 	return (c - '0');
@@ -673,7 +670,7 @@ int c;
 
 
 bucket *
-get_literal()
+get_literal(void)
 {
     int c, quote;
     int i;
@@ -812,8 +809,7 @@ get_literal()
 
 
 int
-is_reserved(name)
-char *name;
+is_reserved(char *name)
 {
     char *s;
 
@@ -834,7 +830,7 @@ char *name;
 
 
 bucket *
-get_name()
+get_name(void)
 {
     int c;
 
@@ -850,7 +846,7 @@ get_name()
 
 
 int
-get_number()
+get_number(void)
 {
     int c;
     int n;
@@ -864,7 +860,7 @@ get_number()
 
 
 char *
-get_tag()
+get_tag(void)
 {
     int c;
     int i;
@@ -915,8 +911,7 @@ get_tag()
 
 
 void
-declare_tokens(assoc)
-int assoc;
+declare_tokens(int assoc)
 {
     int c;
     bucket *bp;
@@ -983,8 +978,7 @@ int assoc;
  * grammar only a flag for yacc proper.
  */
 void
-declare_expect(assoc)
-int assoc;
+declare_expect(int assoc)
 {
     int c;
 
@@ -1023,7 +1017,7 @@ int assoc;
 
 
 void
-declare_types()
+declare_types(void)
 {
     int c;
     bucket *bp;
@@ -1052,7 +1046,7 @@ declare_types()
 
 
 void
-declare_start()
+declare_start(void)
 {
     int c;
     bucket *bp;
@@ -1071,7 +1065,7 @@ declare_start()
 
 
 void
-read_declarations()
+read_declarations(void)
 {
     int c, k;
 
@@ -1125,7 +1119,7 @@ read_declarations()
 
 
 void
-initialize_grammar()
+initialize_grammar(void)
 {
     nitems = 4;
     maxitems = 300;
@@ -1157,7 +1151,7 @@ initialize_grammar()
 
 
 void
-expand_items()
+expand_items(void)
 {
     maxitems += 300;
     pitem = (bucket **) REALLOC(pitem, maxitems*sizeof(bucket *));
@@ -1166,7 +1160,7 @@ expand_items()
 
 
 void
-expand_rules()
+expand_rules(void)
 {
     maxrules += 100;
     plhs = (bucket **) REALLOC(plhs, maxrules*sizeof(bucket *));
@@ -1179,7 +1173,7 @@ expand_rules()
 
 
 void
-advance_to_start()
+advance_to_start(void)
 {
     int c;
     bucket *bp;
@@ -1230,9 +1224,7 @@ advance_to_start()
 
 
 void
-start_rule(bp, s_lineno)
-bucket *bp;
-int s_lineno;
+start_rule(bucket *bp, int s_lineno)
 {
     if (bp->class == TERM)
 	terminal_lhs(s_lineno);
@@ -1246,7 +1238,7 @@ int s_lineno;
 
 
 void
-end_rule()
+end_rule(void)
 {
     int i;
 
@@ -1266,7 +1258,7 @@ end_rule()
 
 
 void
-insert_empty_rule()
+insert_empty_rule(void)
 {
     bucket *bp, **bpp;
 
@@ -1296,7 +1288,7 @@ insert_empty_rule()
 
 
 void
-add_symbol()
+add_symbol(void)
 {
     int c;
     bucket *bp;
@@ -1328,7 +1320,7 @@ add_symbol()
 
 
 void
-copy_action()
+copy_action(void)
 {
     int c;
     int i, n;
@@ -1554,7 +1546,7 @@ loop:
 
 
 int
-mark_symbol()
+mark_symbol(void)
 {
     int c;
     bucket *bp;
@@ -1598,7 +1590,7 @@ mark_symbol()
 
 
 void
-read_grammar()
+read_grammar(void)
 {
     int c;
 
@@ -1632,7 +1624,7 @@ read_grammar()
 
 
 void
-free_tags()
+free_tags(void)
 {
     int i;
 
@@ -1648,7 +1640,7 @@ free_tags()
 
 
 void
-pack_names()
+pack_names(void)
 {
     bucket *bp;
     char *p, *s, *t;
@@ -1674,7 +1666,7 @@ pack_names()
 
 
 void
-check_symbols()
+check_symbols(void)
 {
     bucket *bp;
 
@@ -1693,7 +1685,7 @@ check_symbols()
 
 
 void
-pack_symbols()
+pack_symbols(void)
 {
     bucket *bp;
     bucket **v;
@@ -1818,7 +1810,7 @@ pack_symbols()
 
 
 void
-pack_grammar()
+pack_grammar(void)
 {
     int i, j;
     int assoc, prec;
@@ -1878,7 +1870,7 @@ pack_grammar()
 
 
 void
-print_grammar()
+print_grammar(void)
 {
     int i, j, k;
     int spacing;
@@ -1915,7 +1907,7 @@ print_grammar()
 
 
 void
-reader()
+reader(void)
 {
     write_section(banner);
     create_symbol_table();

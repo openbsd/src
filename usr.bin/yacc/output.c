@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.10 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: output.c,v 1.11 2003/06/19 16:34:53 pvalchev Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.10 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.11 2003/06/19 16:34:53 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ void free_shifts(void);
 void free_reductions(void);
 
 void
-output()
+output(void)
 {
     free_itemsets();
     free_shifts();
@@ -110,7 +110,7 @@ output()
 
 
 void
-output_prefix()
+output_prefix(void)
 {
     if (symbol_prefix == NULL)
 	symbol_prefix = "yy";
@@ -175,7 +175,7 @@ output_prefix()
 
 
 void
-output_rule_data()
+output_rule_data(void)
 {
     int i;
     int j;
@@ -234,7 +234,7 @@ output_rule_data()
 
 
 void
-output_yydefred()
+output_yydefred(void)
 {
     int i, j;
 
@@ -268,7 +268,7 @@ output_yydefred()
 
 
 void
-output_actions()
+output_actions(void)
 {
     nvectors = 2*nstates + nvars;
 
@@ -297,7 +297,7 @@ output_actions()
 
 
 void
-token_actions()
+token_actions(void)
 {
     int i, j;
     int shiftcount, reducecount;
@@ -382,7 +382,7 @@ token_actions()
 }
 
 void
-goto_actions()
+goto_actions(void)
 {
     int i, j, k;
 
@@ -421,8 +421,7 @@ goto_actions()
 }
 
 int
-default_goto(symbol)
-int symbol;
+default_goto(int symbol)
 {
     int i;
     int m;
@@ -458,9 +457,7 @@ int symbol;
 
 
 void
-save_column(symbol, default_state)
-int symbol;
-int default_state;
+save_column(int symbol, int default_state)
 {
     int i;
     int m;
@@ -501,7 +498,7 @@ int default_state;
 }
 
 void
-sort_actions()
+sort_actions(void)
 {
   int i;
   int j;
@@ -537,7 +534,7 @@ sort_actions()
 
 
 void
-pack_table()
+pack_table(void)
 {
     int i;
     int place;
@@ -600,8 +597,7 @@ pack_table()
 /*  order.								*/
 
 int
-matching_vector(vector)
-int vector;
+matching_vector(int vector)
 {
     int i;
     int j;
@@ -641,8 +637,7 @@ int vector;
 
 
 int
-pack_vector(vector)
-int vector;
+pack_vector(int vector)
 {
     int i, j, k, l;
     int t;
@@ -719,7 +714,7 @@ int vector;
 
 
 void
-output_base()
+output_base(void)
 {
     int i, j;
 
@@ -802,9 +797,8 @@ output_base()
 }
 
 
-
 void
-output_table()
+output_table(void)
 {
     int i;
     int j;
@@ -840,9 +834,8 @@ output_table()
 }
 
 
-
 void
-output_check()
+output_check(void)
 {
     int i;
     int j;
@@ -877,8 +870,7 @@ output_check()
 
 
 int
-is_C_identifier(name)
-char *name;
+is_C_identifier(char *name)
 {
     char *s;
     int c;
@@ -910,7 +902,7 @@ char *name;
 
 
 void
-output_defines()
+output_defines(void)
 {
     int c, i;
     char *s;
@@ -963,7 +955,7 @@ output_defines()
 
 
 void
-output_stored_text()
+output_stored_text(void)
 {
     int c;
     FILE *in, *out;
@@ -991,7 +983,7 @@ output_stored_text()
 
 
 void
-output_debug()
+output_debug(void)
 {
     int i, j, k, max;
     char **symnam, *s;
@@ -1219,7 +1211,7 @@ output_debug()
 
 
 void
-output_stype()
+output_stype(void)
 {
     if (!unionized && ntags == 0)
     {
@@ -1230,7 +1222,7 @@ output_stype()
 
 
 void
-output_trailing_text()
+output_trailing_text(void)
 {
     int c, last;
     FILE *in, *out;
@@ -1288,7 +1280,7 @@ output_trailing_text()
 
 
 void
-output_semantic_actions()
+output_semantic_actions(void)
 {
     int c, last;
     FILE *out;
@@ -1326,7 +1318,7 @@ output_semantic_actions()
 
 
 void
-free_itemsets()
+free_itemsets(void)
 {
     core *cp, *next;
 
@@ -1340,7 +1332,7 @@ free_itemsets()
 
 
 void
-free_shifts()
+free_shifts(void)
 {
     shifts *sp, *next;
 
@@ -1355,7 +1347,7 @@ free_shifts()
 
 
 void
-free_reductions()
+free_reductions(void)
 {
     reductions *rp, *next;
 

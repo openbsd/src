@@ -1,4 +1,4 @@
-/*	$OpenBSD: verbose.c,v 1.7 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: verbose.c,v 1.8 2003/06/19 16:34:53 pvalchev Exp $	*/
 /*	$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$OpenBSD: verbose.c,v 1.7 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: verbose.c,v 1.8 2003/06/19 16:34:53 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ void print_reductions(action *, int);
 void print_gotos(int);
 
 void
-verbose()
+verbose(void)
 {
     int i;
 
@@ -82,7 +82,7 @@ verbose()
 
 
 void
-log_unused()
+log_unused(void)
 {
     int i;
     short *p;
@@ -102,7 +102,7 @@ log_unused()
 
 
 void
-log_conflicts()
+log_conflicts(void)
 {
     int i;
 
@@ -131,8 +131,7 @@ log_conflicts()
 
 
 void
-print_state(state)
-int state;
+print_state(int state)
 {
     if (state)
 	fprintf(verbose_file, "\n\n");
@@ -146,8 +145,7 @@ int state;
 
 
 void
-print_conflicts(state)
-int state;
+print_conflicts(int state)
 {
     int symbol, act, number;
     action *p;
@@ -195,8 +193,7 @@ int state;
 
 
 void
-print_core(state)
-int state;
+print_core(int state)
 {
     int i;
     int k;
@@ -232,8 +229,7 @@ int state;
 
 
 void
-print_nulls(state)
-int state;
+print_nulls(int state)
 {
     action *p;
     int i, j, k, nnulls;
@@ -277,8 +273,7 @@ int state;
 
 
 void
-print_actions(stateno)
-int stateno;
+print_actions(int stateno)
 {
     action *p;
     shifts *sp;
@@ -305,8 +300,7 @@ int stateno;
 
 
 void
-print_shifts(p)
-action *p;
+print_shifts(action *p)
 {
     int count;
     action *q;
@@ -331,9 +325,7 @@ action *p;
 
 
 void
-print_reductions(p, defred)
-action *p;
-int defred;
+print_reductions(action *p, int defred)
 {
     int k, anyreds;
     action *q;
@@ -370,8 +362,7 @@ int defred;
 
 
 void
-print_gotos(stateno)
-int stateno;
+print_gotos(int stateno)
 {
     int i, k;
     int as;

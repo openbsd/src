@@ -1,4 +1,4 @@
-/*	$OpenBSD: warshall.c,v 1.7 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: warshall.c,v 1.8 2003/06/19 16:34:53 pvalchev Exp $	*/
 /*	$NetBSD: warshall.c,v 1.4 1996/03/19 03:21:51 jtc Exp $	*/
 
 /*
@@ -37,18 +37,16 @@
 #if 0
 static char sccsid[] = "@(#)warshall.c	5.4 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: warshall.c,v 1.7 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: warshall.c,v 1.8 2003/06/19 16:34:53 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
 #include "defs.h"
 
-void transitive_closure(unsigned *, int);
+void transitive_closure(unsigned int *, int);
 
 void
-transitive_closure(R, n)
-unsigned *R;
-int n;
+transitive_closure(unsigned int *R, int n)
 {
     int rowsize;
     unsigned i;
@@ -99,9 +97,7 @@ int n;
 }
 
 void
-reflexive_transitive_closure(R, n)
-unsigned *R;
-int n;
+reflexive_transitive_closure(unsigned int *R, int n)
 {
     int rowsize;
     unsigned i;
