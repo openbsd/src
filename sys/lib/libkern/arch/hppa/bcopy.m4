@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.12 2002/08/13 05:24:22 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.13 2002/08/27 16:29:22 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -101,7 +101,7 @@ L($1, cleanup)
 	addib,=,n 4, $6, L($1, done)
 	ldws	0($2, $3), t1
 	add	$5, $6, $5
-	bv	r0(rp)
+	b	L($1, done)
 	stbys,E	t1, 0($4, $5)
 ')
 dnl
@@ -175,7 +175,7 @@ L($1, cleanup_un)
 	sub,<=	$6, t4, r0
 	ldws,M	F`'4($2, $3), t1
 	vshd	ret1, t1, t2
-	bv	r0(rp)
+	b	L($1, done)
 	stbys,E	t2, 0($4, $5)
 
 L($1, cleanup1_un)
@@ -215,10 +215,10 @@ ALTENTRY(ovbcopy)
 ALTENTRY(bcopy)
 	comb,>,n arg1, arg0, L(bcopy, reverse)
 	hppa_copy(bcopy_f, sr0, arg0, sr0, arg1, arg2, `+')
-	b,n	L(bcopy, ret)
+	bv	0(rp)
+	nop
 L(bcopy, reverse)
 	hppa_copy(bcopy_r, sr0, arg0, sr0, arg1, arg2, `-')
-L(bcopy, ret)
 	bv	0(rp)
 	nop
 EXIT(memcpy)
@@ -239,29 +239,33 @@ ifelse(NAME, `spcopy',
 	.import	curproc, data
 	.import	copy_on_fault, code
 LEAF_ENTRY(spcopy)
-	ldw	HPPA_FRAME_ARG(4)(sp), ret1
-	comb,>=,n r0, ret1, L(spcopy, ret)
+	ldw	HPPA_FRAME_ARG(4)(sp), ret0
+	sub,<>	r0, ret0, r0
+	bv	r0(rp)
+	nop
 `
+	ldo	64(sp), sp
+	stw	rp, HPPA_FRAME_CRP(sp)
 	/* setup fault handler */
-	ldil	L%curproc, r31
-	ldw	R%curproc(r31), r31
+	ldil	L%curproc, t1
+	ldw	R%curproc(t1), t3
 	ldil	L%copy_on_fault, t2
-	ldw	P_ADDR(r31), t4
+	ldw	P_ADDR(t3), r2
 	ldo	R%copy_on_fault(t2), t2
-	ldw	PCB_ONFAULT+U_PCB(t4), r1
-	stw	t2, PCB_ONFAULT+U_PCB(t4)
+	ldw	PCB_ONFAULT+U_PCB(r2), r1
+	stw	t2, PCB_ONFAULT+U_PCB(r2)
 '
-	mfsp	sr2, ret0	/* XXX need this?, sr1 is scratchable */
 	mtsp	arg0, sr1
 	mtsp	arg2, sr2
-	copy	ret1, arg0	/* ret1 is used in hppa`'_blcopy() */
 
-	hppa_copy(spcopy, sr1, arg1, sr2, arg3, ret1, `+')
+	hppa_copy(spcopy, sr1, arg1, sr2, arg3, ret0, `+')
 
+	mtsp	r0, sr1
+	mtsp	r0, sr2
 	/* reset fault handler */
-	stw	r1, PCB_ONFAULT+U_PCB(r31)
-	mtsp	ret0, sr2
-L(spcopy, ret)
+	stw	r1, PCB_ONFAULT+U_PCB(r2)
+	ldw	HPPA_FRAME_CRP(sp), rp
+	ldo	-64(sp), sp
 	bv	0(rp)
 	copy	r0, ret0
 EXIT(spcopy)

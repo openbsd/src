@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.80 2002/08/13 05:27:44 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.81 2002/08/27 16:29:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2220,6 +2220,7 @@ LEAF_ENTRY(name)				! \
 #define	FUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	0(sr1, arg0), ret0		! \
+	mtsp	r0, sr1				! \
 	bv	r0(rp)				! \
 	stw	r1, U_PCB+PCB_ONFAULT(t1)	! \
 EXIT(name)
@@ -2227,11 +2228,13 @@ EXIT(name)
 #define	SUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	arg1, 0(sr1, arg0)		! \
+	mtsp	r0, sr1				! \
 	bv	r0(rp)				! \
 	stw	r1, U_PCB+PCB_ONFAULT(t1)	! \
 EXIT(name)
 
 LEAF_ENTRY(fusufault)
+	mtsp	r0, sr1
 	stw	r1, U_PCB+PCB_ONFAULT(t1)
 ALTENTRY(fusubadaddr)
 	bv	0(rp)
@@ -2250,7 +2253,11 @@ SUX(suswintr, sth)
 	.align	64
 
 LEAF_ENTRY(copy_on_fault)
-	stw	r1, PCB_ONFAULT+U_PCB(t4)
+	mtsp	r0, sr1
+	mtsp	r0, sr2
+	stw	r1, PCB_ONFAULT+U_PCB(r2)
+	ldw	HPPA_FRAME_CRP(sp), rp
+	ldo	-64(sp), sp
 	bv	0(rp)
 	ldi	EFAULT, %ret0
 EXIT(copy_on_fault)
@@ -2261,40 +2268,42 @@ EXIT(copy_on_fault)
  * do a space to space strncpy, return actual copy size in the rsize;
  */
 LEAF_ENTRY(spstrcpy)
+	ldw	HPPA_FRAME_ARG(4)(sp), t2
+	ldo	64(sp), sp
+	add	t2, arg1, t2
+	stw	rp, HPPA_FRAME_CRP(sp)
 	/* setup fault handler */
-	ldil	L%curproc, t4
-	ldw	R%curproc(t4), t4
-	ldil	L%copy_on_fault, t2
-	ldw	P_ADDR(t4), t4
-	ldo	R%copy_on_fault(t2), t2
-	ldw	PCB_ONFAULT+U_PCB(t4), r1
-	stw	t2, PCB_ONFAULT+U_PCB(t4)
+	ldil	L%curproc, t1
+	ldw	R%curproc(t1), t3
+	ldil	L%copy_on_fault, t4
+	ldw	P_ADDR(t3), r2
+	ldo	R%copy_on_fault(t4), t4
+	ldw	PCB_ONFAULT+U_PCB(r2), r1
+	stw	t4, PCB_ONFAULT+U_PCB(r2)
 
-	ldw	HPPA_FRAME_ARG(4)(sp), ret1
-	mfsp	sr1, ret0	/* XXX need this? */
-	mfsp	sr2, ret1	/* XXX need this? */
 	mtsp	arg0, sr1
 	mtsp	arg2, sr2
-	add	ret1, arg1, ret1
 	copy	arg1, arg0
 
 $spstrcpy_loop
 	ldbs,ma	1(sr1, arg1), t1
-	comb,=	ret1, arg1, $spstrcpy_exit
+	comb,=	t2, arg1, $spstrcpy_exit
 	stbs,ma	t1, 1(sr2, arg3)
 	comb,<>,n r0, t1, $spstrcpy_loop
 	nop
 
 $spstrcpy_exit
+	mtsp	r0, sr1
+	mtsp	r0, sr2
+	stw	r1, PCB_ONFAULT+U_PCB(r2)
+	ldw	HPPA_FRAME_CRP(sp), rp
 	sub	arg1, arg0, arg1
-	mtsp	ret0, sr1
-	mtsp	ret1, sr2	/* XXX need this? */
+	ldo	-64(sp), sp
 	ldw	HPPA_FRAME_ARG(5)(sp), arg0
-	copy	r0, ret0
 	sub,=	r0, arg0, r0
 	stw	arg1, 0(arg0)
 	bv	0(rp)
-	stw	r1, PCB_ONFAULT+U_PCB(t4)
+	copy	r0, ret0
 EXIT(spstrcpy)
 
 
