@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.13 1999/02/25 18:56:48 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.14 1999/07/05 20:17:05 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
 
-extern struct ifnet enc_softc; 
+extern struct ifnet encif; 
 #endif
 
 #define	SA(p) ((struct sockaddr *)(p))
@@ -87,7 +87,7 @@ static int okaytoclone __P((u_int, int));
 static struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
-	return enc_softc.if_addrlist.tqh_first;
+	return encif.if_addrlist.tqh_first;
 }
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.23 1999/05/16 21:48:30 niklas Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.24 1999/07/05 20:17:06 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -75,7 +75,7 @@
 
 #include "bpfilter.h"
 
-extern struct ifnet enc_softc;
+extern struct ifnet encif;
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -173,7 +173,7 @@ ah_input(m, va_alist)
 	return;
     }
 
-    m->m_pkthdr.rcvif = &enc_softc;
+    m->m_pkthdr.rcvif = &encif;
 
     /* Register first use, setup expiration timer */
     if (tdbp->tdb_first_use == 0)
@@ -269,7 +269,7 @@ ah_input(m, va_alist)
     m->m_flags |= M_AUTH;
 
 #if NBPFILTER > 0
-    if (enc_softc.if_bpf) 
+    if (encif.if_bpf) 
     {
         /*
          * We need to prepend the address family as
@@ -289,7 +289,7 @@ ah_input(m, va_alist)
         m0.m_len = ENC_HDRLEN;
         m0.m_data = (char *) &hdr;
         
-        bpf_mtap(enc_softc.if_bpf, &m0);
+        bpf_mtap(encif.if_bpf, &m0);
     }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.10 1999/05/16 21:35:54 niklas Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.11 1999/07/05 20:17:05 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -71,7 +71,7 @@ extern struct ifqueue nsintrq;
 
 #include "bpfilter.h"
 
-struct ifnet enc_softc;
+struct ifnet encif;
 
 void	encattach __P((int));
 int	encoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -82,35 +82,26 @@ void	encrtrequest __P((int, struct rtentry *, struct sockaddr *));
 void
 encattach(int nenc)
 {
-	struct ifaddr *ifa;
-
-	bzero(&enc_softc, sizeof(struct ifnet));
+	bzero(&encif, sizeof(encif));
 
 	/* We only need one interface anyway under the new mode of operation */
-	enc_softc.if_index = 0;
+	encif.if_index = 0;
 
-	sprintf(enc_softc.if_xname, "enc0");
-	enc_softc.if_list.tqe_next = NULL;
-	enc_softc.if_mtu = ENCMTU;
-	enc_softc.if_flags = 0;
-	enc_softc.if_type = IFT_ENC;
-	enc_softc.if_ioctl = encioctl;
-	enc_softc.if_output = encoutput;
-	enc_softc.if_hdrlen = ENC_HDRLEN;
-	enc_softc.if_addrlen = 0;
-	if_attach(&enc_softc);
+	encif.if_softc = &encif;
+	sprintf(encif.if_xname, "enc0");
+	encif.if_list.tqe_next = NULL;
+	encif.if_mtu = ENCMTU;
+	encif.if_flags = 0;
+	encif.if_type = IFT_ENC;
+	encif.if_ioctl = encioctl;
+	encif.if_output = encoutput;
+	encif.if_hdrlen = ENC_HDRLEN;
+	encif.if_addrlen = 0;
+	if_attach(&encif);
 
 #if NBPFILTER > 0
-	bpfattach(&enc_softc.if_bpf, &enc_softc, DLT_ENC, ENC_HDRLEN);
+	bpfattach(&encif.if_bpf, &encif, DLT_ENC, ENC_HDRLEN);
 #endif
-
-	/* Just a bogus entry */
-	ifa = (struct ifaddr *) malloc(sizeof(struct ifaddr) + 
-	    sizeof(struct sockaddr), M_IFADDR, M_WAITOK);
-	bzero(ifa, sizeof(struct ifaddr) + sizeof(struct sockaddr));
-	ifa->ifa_addr = ifa->ifa_dstaddr = (struct sockaddr *) (ifa + 1);
-	ifa->ifa_ifp = &enc_softc;
-	TAILQ_INSERT_HEAD(&(enc_softc.if_addrlist), ifa, ifa_list);
 }
 
 /*
