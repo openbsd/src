@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2001/09/01 16:50:19 drahn Exp $
+#	$OpenBSD: Makefile,v 1.15 2001/09/24 19:34:22 miod Exp $
 
 NOPROG=
 NOMAN=
@@ -25,8 +25,9 @@ allarchs:
 	    ${MAKE} M=macppc  M_A=powerpc; \
 	    ${MAKE} M=mvme68k M_A=m68k; \
 	    ${MAKE} M=sparc   M_A=sparc; \
+	    ${MAKE} M=sparc64 M_A=sparc64; \
 	    ${MAKE} M=sun3    M_A=m68k; \
-	    ${MAKE} M=vax     M_A=vax ;
+	    ${MAKE} M=vax     M_A=vax;
 
 $(TARG): $(DEP)
 	m4 -DOSREV=$(OSREV) -DOSrev=$(OSrev) -DINCLUDE=$(.CURDIR)/$M \
