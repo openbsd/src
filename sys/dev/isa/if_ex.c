@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.4 1999/02/28 03:23:38 jason Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.5 1999/04/19 07:10:06 fgsch Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -191,23 +191,19 @@ ex_probe(parent, match, aux)
 {
 	struct ex_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh;
-
-	int iobase;
 	u_short eaddr_tmp;
 	int tmp;
 
 	DODEBUG(Start_End, printf("ex_probe: start\n"););
 
-	iobase = ia->ia_iobase;
-
-	if ((iobase >= 0x200) && (iobase <= 0x3a0)) {
-		if(bus_space_map(iot, iobase, EX_IOSIZE, 0, &ioh))
+	if ((ia->ia_iobase >= 0x200) && (ia->ia_iobase <= 0x3a0)) {
+		sc->sc_iot = ia->ia_iot;
+		if(bus_space_map(sc->sc_iot, ia->ia_iobase, EX_IOSIZE, 0,
+		    &sc->sc_ioh))
 			return(0);
 
 		if (!look_for_card(ia, sc)) {
-			bus_space_unmap(iot, ioh, EX_IOSIZE);
+			bus_space_unmap(sc->sc_iot, sc->sc_ioh, EX_IOSIZE);
 			return(0); 
 		}
 	} else
@@ -229,7 +225,7 @@ ex_probe(parent, match, aux)
 	 *	  EEPROM).
 	 *	- Connector type.
 	 */
-	sc->iobase = iobase;
+	sc->iobase = ia->ia_iobase;
 	eaddr_tmp = eeprom_read(sc, EE_Eth_Addr_Lo);
 	sc->arpcom.ac_enaddr[5] = eaddr_tmp & 0xff;
 	sc->arpcom.ac_enaddr[4] = eaddr_tmp >> 8;
