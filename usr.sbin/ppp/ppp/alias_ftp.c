@@ -35,7 +35,7 @@
 
     See HISTORY file for record of revisions.
 
-    $Id: alias_ftp.c,v 1.3 2000/01/07 03:26:52 brian Exp $
+    $OpenBSD: alias_ftp.c,v 1.4 2000/02/27 01:38:24 brian Exp $
 */
 
 /* Includes */

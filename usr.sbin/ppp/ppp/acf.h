@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: acf.h,v 1.1 1999/05/08 11:06:33 brian Exp $
+ *	$OpenBSD: acf.h,v 1.2 2000/02/27 01:38:24 brian Exp $
  */
 
 struct lcp;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: deflate.h,v 1.2 1999/02/06 03:22:35 brian Exp $
+ *	$OpenBSD: deflate.h,v 1.3 2000/02/27 01:38:25 brian Exp $
  */
 
 extern const struct ccp_algorithm PppdDeflateAlgorithm;

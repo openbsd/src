@@ -20,7 +20,7 @@
              local/global/function naming conventions
              withing the packet alising module.
 
-    $Id: alias_irc.c,v 1.2 2000/01/07 03:26:52 brian Exp $
+    $OpenBSD: alias_irc.c,v 1.3 2000/02/27 01:38:24 brian Exp $
 */
 
 /* Includes */

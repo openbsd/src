@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: throughput.c,v 1.6 1999/08/09 23:01:53 brian Exp $
+ *	$OpenBSD: throughput.c,v 1.7 2000/02/27 01:38:29 brian Exp $
  */
 
 #include <sys/types.h>

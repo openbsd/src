@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tcp.c,v 1.7 2000/01/07 03:26:55 brian Exp $
+ *	$OpenBSD: tcp.c,v 1.8 2000/02/27 01:38:29 brian Exp $
  */
 
 #include <sys/types.h>

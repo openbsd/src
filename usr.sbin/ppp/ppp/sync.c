@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sync.c,v 1.4 2000/01/07 03:26:55 brian Exp $
+ *	$OpenBSD: sync.c,v 1.5 2000/02/27 01:38:28 brian Exp $
  */
 
 #include <sys/types.h>

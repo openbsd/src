@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.4 2000/01/07 03:26:53 brian Exp $
+ *	$OpenBSD: exec.h,v 1.5 2000/02/27 01:38:26 brian Exp $
  */
 
 struct physical;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ua.h,v 1.3 1999/02/06 03:22:49 brian Exp $
+ *	$OpenBSD: ua.h,v 1.4 2000/02/27 01:38:29 brian Exp $
  */
 
 #ifdef __i386__		/* Do any other archs not care about alignment ? */

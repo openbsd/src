@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: server.c,v 1.5 2000/02/27 00:21:09 brian Exp $
+ *	$OpenBSD: server.c,v 1.6 2000/02/27 01:38:28 brian Exp $
  */
 
 #include <sys/types.h>

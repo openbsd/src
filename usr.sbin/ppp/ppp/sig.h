@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sig.h,v 1.3 1999/03/30 00:45:31 brian Exp $
+ *	$OpenBSD: sig.h,v 1.4 2000/02/27 01:38:28 brian Exp $
  */
 
 typedef void (*sig_type)(int);

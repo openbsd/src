@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: cbcp.c,v 1.12 2000/02/27 00:21:06 brian Exp $
+ *	$OpenBSD: cbcp.c,v 1.13 2000/02/27 01:38:24 brian Exp $
  */
 
 #include <sys/param.h>

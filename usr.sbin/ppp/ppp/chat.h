@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: chat.h,v 1.5 2000/02/27 00:21:06 brian Exp $
+ *	$OpenBSD: chat.h,v 1.6 2000/02/27 01:38:25 brian Exp $
  */
 
 #define CHAT_EXPECT 0

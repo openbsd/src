@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: throughput.h,v 1.4 1999/08/05 10:32:14 brian Exp $
+ *	$OpenBSD: throughput.h,v 1.5 2000/02/27 01:38:29 brian Exp $
  */
 
 #define SAMPLE_PERIOD 5		/* Default sample period */

@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: filter.c,v 1.11 2000/01/07 03:26:53 brian Exp $
+ * $OpenBSD: filter.c,v 1.12 2000/02/27 01:38:26 brian Exp $
  *
  *	TODO: Should send ICMP error message when we discard packets.
  */

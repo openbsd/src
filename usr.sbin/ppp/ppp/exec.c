@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.c,v 1.10 2000/01/07 03:26:53 brian Exp $
+ *	$OpenBSD: exec.c,v 1.11 2000/02/27 01:38:25 brian Exp $
  */
 
 #include <sys/param.h>
