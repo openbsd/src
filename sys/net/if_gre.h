@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.2 2000/01/07 23:25:22 angelos Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.3 2001/06/05 23:43:46 maja Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -138,11 +138,12 @@ struct mobip_h {
  */
 
 #ifdef _KERNEL
-extern	struct gre_softc gre_softc[];
+extern	struct gre_softc *gre;
+extern	int ngre;
 extern  int gre_allow;   
 extern  int ip_mobile_allow;
 
-void	greattach __P((void));
+void	greattach __P((int));
 int     gre_ioctl __P((struct ifnet *, u_long, caddr_t));
 int     gre_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *rt));

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.11 2001/05/27 11:54:32 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.12 2001/06/05 23:43:45 maja Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -101,7 +101,9 @@
 
 #define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
 
-struct gre_softc gre_softc[NGRE];
+struct gre_softc *gre = 0;
+
+int ngre = 0;
 
 /*
  * We can control the acceptance of GRE and MobileIP packets by
@@ -114,12 +116,16 @@ int ip_mobile_allow = 0;
 static void gre_compute_route(struct gre_softc *sc);
 
 void
-greattach(void)
+greattach(n)
+	int n;
 {
 	struct gre_softc *sc;
 	int i;
 
-	for (i = 0, sc = gre_softc ; i < NGRE ; sc++ ) {
+	ngre = n;
+	gre = sc = malloc(ngre * sizeof(struct gre_softc), M_DEVBUF, M_WAIT);
+	bzero(sc, ngre * sizeof(struct gre_softc));
+	for (i = 0; i < ngre ; sc++) {
 		snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
 			 "gre%d", i++);
 		sc->sc_if.if_softc = sc;
