@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.8 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: init.c,v 1.9 2005/01/05 18:34:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -87,6 +87,14 @@ cvs_init(int argc, char **argv)
 		return (EX_USAGE);
 
 	root = cvsroot_get(".");
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
+
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (cvs_connect(root) < 0)
 			return (EX_DATAERR);
