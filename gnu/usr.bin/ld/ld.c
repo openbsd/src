@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.1.1.1 1995/10/18 08:40:55 deraadt Exp $
+ *	$Id: ld.c,v 1.2 1995/12/30 08:13:47 deraadt Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -2734,7 +2734,6 @@ copy_data(entry)
  * relocation info, in core. NRELOC says how many there are.
  */
 
-/* HACK: md.c may need access to this */
 int	pc_relocation;
 
 void
@@ -2754,9 +2753,9 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 	int data_relocation = entry->data_start_address - entry->header.a_text;
 	int bss_relocation = entry->bss_start_address -
 				entry->header.a_text - entry->header.a_data;
-	pc_relocation = dataseg?
-			entry->data_start_address - entry->header.a_text:
-			entry->text_start_address;
+	pc_relocation = dataseg
+			? entry->data_start_address - entry->header.a_text
+			: entry->text_start_address;
 
 	for (; r < end; r++) {
 		int	addr = RELOC_ADDRESS(r);
@@ -3120,18 +3119,6 @@ coptxtrel(entry)
 				RELOC_SYMBOL(r) = (sp->defined & N_TYPE);
 			} else
 				RELOC_SYMBOL(r) = sp->symbolnum;
-#ifdef RELOC_ADD_EXTRA
-			/*
-			 * If we aren't going to be adding in the
-			 * value in memory on the next pass of the
-			 * loader, then we need to add it in from the
-			 * relocation entry, unless the symbol remains
-			 * external in our output. Otherwise the work we
-			 * did in this pass is lost.
-			 */
-			if (!RELOC_MEMORY_ADD_P(r) && !RELOC_EXTERN_P(r))
-				RELOC_ADD_EXTRA(r) += sp->value;
-#endif
 		} else
 			/*
 			 * Global symbols come first.
