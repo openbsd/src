@@ -33,7 +33,7 @@ DGEN=	conf \
 	hp hp/dev hp/hpux \
 	kern libkern \
 	miscfs miscfs/deadfs miscfs/fdesc miscfs/fifofs miscfs/kernfs \
-	miscfs/lofs miscfs/nullfs miscfs/portal miscfs/procfs \
+	miscfs/nullfs miscfs/portal miscfs/procfs \
 	miscfs/specfs miscfs/umapfs miscfs/union \
 	net netccitt netinet netiso netns nfs scripts sys \
 	ufs ufs/ffs ufs/lfs ufs/mfs ufs/ufs \
