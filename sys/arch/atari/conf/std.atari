@@ -24,3 +24,5 @@ ite0		at grf0			# console
 sd*	at scsibus? target ? lun ?
 st0	at scsibus? target ? lun 0
 cd0	at scsibus? target ? lun 0
+ss0	at scsibus? target ? lun 0
+uk*	at scsibus? target ? lun ?

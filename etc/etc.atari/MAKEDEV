@@ -80,6 +80,8 @@
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	*random	random data source
+#	uk*	unknown SCSI
+#	ss*	SCSI scanners
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -93,7 +95,7 @@ all)
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 random local
+	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 random uk0 uk1 ss0 local
 	;;
 
 floppy)
@@ -406,6 +408,25 @@ random|srandom|urandom|prandom|arandom)
 	mknod arandom c 30 4
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
+	;;
+
+uk*)
+	unit=`expr $i : 'uk\(.*\)'`
+	rm -f uk$unit
+	mknod uk$unit c 31 $unit
+	chown root.operator uk$unit
+	chmod 640 uk$unit
+	;;
+
+ss*)
+	unit=`expr $i : 'ss\(.*\)'`
+	rm -f ss$unit
+	mknod ss$unit c 32 $unit
+	chown root.operator ss$unit
+	chmod 440 ss$unit
+#	backwards compatibility with older PINTs
+	rm -f scan$unit
+	ln -s ss$unit scan$unit
 	;;
 
 local)

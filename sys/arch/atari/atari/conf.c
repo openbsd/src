@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 1996/10/19 13:26:06 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 1996/11/11 19:20:43 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -55,7 +55,6 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	dev_init(c,n,ioctl), (dev_type_dump((*))) enxio, dev_size_init(c,n), 0 }
 
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ramd.h"
 bdev_decl(rd);
 #include "fd.h"
@@ -64,13 +63,9 @@ bdev_decl(fd);
 #undef	fdopen
 bdev_decl(sw);
 #include "sd.h"
-bdev_decl(sd);
 #include "st.h"
-bdev_decl(st);
 #include "cd.h"
-bdev_decl(cd);
 #include "ccd.h"
-bdev_decl(ccd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -107,25 +102,15 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
 	dev_init(c,n,select), dev_init(c,n,mmap) }
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
 cdev_decl(sw);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 #include "zs.h"
 cdev_decl(zs);
-cdev_decl(sd);
-cdev_decl(cd);
-cdev_decl(st);
+#include "ss.h"
+#include "uk.h"
 #include "grf.h"
 cdev_decl(grf);
 #include "ite.h"
@@ -139,20 +124,9 @@ cdev_decl(ms);
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 cdev_decl(fd);
 #undef	fdopen
-cdev_decl(vnd);
-cdev_decl(ccd);
 dev_decl(fd,open);
 #include "bpfilter.h"
-cdev_decl(bpf);
 #include "tun.h"
-cdev_decl(tun);
-#ifdef LKM
-#define NLKM 1
-#else
-#define NLKM 0
-#endif
-cdev_decl(lkm);
-cdev_decl(random);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -197,6 +171,8 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
 	cdev_gen_ipf(NIPF,ipl),         /* 29: IP filter log */
 	cdev_random_init(1,random),	/* 30: random data source */
+	cdev_uk_init(NUK,uk),		/* 31: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 32: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
