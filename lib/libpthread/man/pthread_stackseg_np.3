@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_stackseg_np.3,v 1.1 2004/01/15 23:17:19 marc Exp $
+.\" $OpenBSD: pthread_stackseg_np.3,v 1.2 2004/01/16 05:34:18 jmc Exp $
 .\"
 .\" PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org>
 .\"
@@ -21,8 +21,8 @@ A
 .Fa stack_t
 is the same as a
 .Fa struct sigaltstack
-[see
-.Xr sigaltstack 3 ]
+(see
+.Xr sigaltstack 2 )
 except the
 .Fa ss_sp
 variable points to the top of the stack instead of the base.
@@ -42,8 +42,8 @@ There is no guarantee that the current thread's stack information will ever
 become available.
 .El
 .Sh SEE ALSO
-.Xr pthreads 3 ,
-.Xr sigaltstack 3
+.Xr sigaltstack 2 ,
+.Xr pthreads 3
 .Sh STANDARDS
 .Fn pthread_stackseg_np
 is a non-portable extension to
