@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.2 1997/09/29 23:33:39 mickey Exp $	*/
+/*	$OpenBSD: part.c,v 1.3 1997/10/02 02:10:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -59,8 +59,8 @@ static struct part_type {
 	{ 0x08, "AIX filesystem"},
 	{ 0x09, "AIX boot partition or Coherent"},
 	{ 0x0A, "OS/2 Boot Manager or OPUS"},
-	{ 0x0B, "Primary Windows 95 with 32 bit FAT"},
-	{ 0x0E, "Primary DOS with 16-bit FAT, CHS-mapped"},
+	{ 0x0B, "Prim Win95 w/ 32-bit FAT"},
+	{ 0x0E, "Prim DOS w/ 16-bit FAT, CHS-mapped"},
 	{ 0x10, "OPUS"},
 	{ 0x12, "Compaq Diagnostics"},
 	{ 0x40, "VENIX 286"},
