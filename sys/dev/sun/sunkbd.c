@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.6 2002/08/05 21:23:40 jason Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.7 2002/08/26 20:42:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -89,7 +89,7 @@ const keysym_t sunkbd_keydesc_us[] = {
     KC(0x28),				KS_minus,	KS_underscore,
     KC(0x29),				KS_equal,	KS_plus,
     KC(0x2a),				KS_grave,	KS_asciitilde,
-    KC(0x2b),				KS_BackSpace,
+    KC(0x2b),				KS_Delete,
     KC(0x2c),				KS_Insert,
     KC(0x2d),				KS_KP_Equal,
     KC(0x2e),				KS_KP_Divide,
