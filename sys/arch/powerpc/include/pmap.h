@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.25 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.26 2002/07/12 20:28:55 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -60,7 +60,6 @@ typedef u_int sr_t;
  */
 #ifndef _LOCORE
 /* V->P mapping data */
-typedef struct pmapvp pmapvp_t;
 #define VP_SR_SIZE	16
 #define VP_SR_MASK	(VP_SR_SIZE-1)
 #define VP_SR_POS 	28
@@ -84,7 +83,7 @@ void pmap_kenter_cache( vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
  */
 struct pmap {
 	sr_t pm_sr[16];		/* segments used in this pmap */
-	pmapvp_t *pm_vp[VP_SR_SIZE];	/* virtual to physical table */
+	struct pmapvp *pm_vp[VP_SR_SIZE];	/* virtual to physical table */
 	int pm_refs;		/* ref count */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
