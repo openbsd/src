@@ -1,4 +1,4 @@
-/*	$OpenBSD: timed.c,v 1.16 2002/06/19 15:45:39 ericj Exp $	*/
+/*	$OpenBSD: timed.c,v 1.17 2002/06/19 18:54:31 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -147,6 +147,8 @@ main(int argc, char **argv)
 	iflag = 0;
 
 	TAILQ_INIT(&nets);
+	TAILQ_INIT(&goodhosts);
+
 	opterr = 0;
 	while ((ch = getopt(argc, argv, "F:G:Mdi:n:t")) != -1) {
 		switch (ch) {
