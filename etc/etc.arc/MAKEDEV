@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.22 1998/01/26 04:19:37 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.23 1998/05/05 05:54:50 imp Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -44,6 +44,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	joy*	joystick driver
 #	*random	random data source
 #
 # Platform-specific devices:
@@ -75,7 +76,15 @@ all)
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 tty00 tty01 tty02 tty03 pty0 pty1
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV ipl tun0 tun1 tun2
-	sh MAKEDEV ttyC0 lpt0 pms0 random uk0 uk1 local
+	sh MAKEDEV ttyC0 lpt0 pms0 random uk0 uk1 local joy0 joy1
+	;;
+
+joy*)
+	unit=`expr $i : 'joy\(.*\)'`
+	rm -f joy$unit
+	mknod joy$unit c 26 $unit
+	chown root.wheel joy$unit
+	chmod 666 joy$unit
 	;;
 
 ramdisk)
