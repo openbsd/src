@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.4 2000/11/07 20:15:53 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.5 2000/11/08 20:44:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
@@ -366,6 +366,9 @@ twe_attach(sc)
 		    i, sc->sc_hdr[i].hd_size, sc->sc_hdr[i].hd_secs,
 		    sc->sc_hdr[i].hd_heads));
 	}
+
+	if (!nunits)
+		nunits++;
 
 	/* TODO: fetch & print cache params? */
 
