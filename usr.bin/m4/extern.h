@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 1999/09/06 13:20:40 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.8 1999/09/06 13:29:32 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -70,6 +70,8 @@ void	pbstr __P((char *));
 void	putback __P((int));
 void	remhash __P((char *, int));
 void	usage __P((void));
+void initspaces __P((void));
+char *compute_prevep __P((void));
 
 extern ndptr hashtab[];		/* hash table for macros etc. */
 extern stae mstack[];		/* stack of m4 machine */
@@ -81,12 +83,10 @@ extern int ilevel;		/* input file stack pointer */
 extern int oindex;		/* diversion index. */
 extern int sp;			/* current m4 stack pointer */
 extern pbent *bp;		/* first available character */
-extern pbent buf[];		/* push-back buffer */
+extern pbent *buf;		/* push-back buffer */
 extern pbent *bufbase;		/* buffer base for this ilevel */
 extern pbent *bbase[];		/* buffer base per ilevel */
 extern char ecommt[];		/* end character for comment */
-extern char *endest;		/* end of string space */
-extern pbent *endpbb;		/* end of push-back buffer */
 extern char *ep;		/* first free char in strspace */
 extern char lquote[];		/* left quote character (`) */
 extern char *m4wraps;		/* m4wrap string default. */

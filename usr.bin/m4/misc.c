@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.8 1999/09/06 13:20:40 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.9 1999/09/06 13:29:32 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.8 1999/09/06 13:20:40 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.9 1999/09/06 13:29:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,23 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.8 1999/09/06 13:20:40 espie Exp $";
 #include "extern.h"
 #include "pathnames.h"
 
+
+char *ep;		/* first free char in strspace */
+static char *strspace;	/* string space for evaluation */
+static char *endest;	/* end of string space	       */
+static size_t strsize = STRSPMAX;
+static size_t bufsize = BUFSIZE;
+static int low_sp = 0;
+
+pbent *buf;			/* push-back buffer	       */
+pbent *bufbase;			/* the base for current ilevel */
+pbent *bbase[MAXINP];		/* the base for each ilevel    */
+pbent *bp; 			/* first available character   */
+static pbent *endpbb;			/* end of push-back buffer     */
+
+
+static void enlarge_bufspace();
+static void enlarge_strspace();
 /*
  * find the index of second str in the first str.
  */
@@ -81,10 +98,9 @@ void
 putback(c)
 pbent c;
 {
-	if (bp < endpbb)
-		*bp++ = c;
-	else
-		errx(1, "too many characters pushed back");
+	if (bp >= endpbb)
+		enlarge_bufspace();
+	*bp++ = c;
 }
 
 /*
@@ -96,20 +112,13 @@ void
 pbstr(s)
 register char *s;
 {
-	register char *es;
-	pbent *zp;
+	size_t n;
 
-	es = s;
-	zp = bp;
-
-	while (*es)
-		es++;
-	es--;
-	while (es >= s)
-		if (zp < endpbb)
-			*zp++ = *es--;
-	if ((bp = zp) == endpbb)
-		errx(1, "too many characters pushed back");
+	n = strlen(s);
+	while (endpbb - bp < n)
+		enlarge_bufspace();
+	while (n > 0)
+		*bp++ = s[--n];
 }
 
 /*
@@ -131,6 +140,66 @@ int n;
 		putback('-');
 }
 
+
+void 
+initspaces()
+{
+	int i;
+
+	strspace = xalloc(strsize+1);
+	ep = strspace;
+	endest = strspace+strsize;
+	buf = (pbent *)xalloc(bufsize * sizeof(pbent));
+	bufbase = buf;
+	bp = buf;
+	endpbb = buf + bufsize;
+	for (i = 0; i < MAXINP; i++)
+		bbase[i] = buf;
+}
+
+/* XXX when chrsave is called, the current argument is
+ * always topmost on the stack.  We make use of this to
+ * duplicate it transparently, and to reclaim the correct
+ * space when the stack is unwound.
+ */
+static
+void enlarge_strspace()
+{
+	char *newstrspace;
+
+	low_sp = sp;
+	strsize *= 2;
+	newstrspace = malloc(strsize + 1);
+	if (!newstrspace)
+		errx(1, "string space overflow");
+	memcpy(newstrspace, strspace, strsize/2);
+		/* reclaim memory in the easy, common case. */
+	if (ep == strspace)
+		free(strspace);
+	mstack[sp].sstr = (mstack[sp].sstr-strspace) + newstrspace;
+	ep = (ep-strspace) + newstrspace;
+	strspace = newstrspace;
+	endest = strspace + strsize;
+}
+
+static
+void enlarge_bufspace()
+{
+	pbent *newbuf;
+	int i;
+
+	bufsize *= 2;
+	newbuf = realloc(buf, bufsize*sizeof(pbent));
+	if (!newbuf)
+		errx(1, "too many characters pushed back");
+	for (i = 0; i < MAXINP; i++)
+		bbase[i] = (bbase[i]-buf)+newbuf;
+	bp = (bp-buf)+newbuf;
+	bufbase = (bufbase-buf)+newbuf;
+	buf = newbuf;
+	endpbb = buf+strsize;
+}
+
 /*
  *  chrsave - put single char on string space
  */
@@ -138,10 +207,25 @@ void
 chrsave(c)
 char c;
 {
-	if (ep < endest)
-		*ep++ = c;
+	if (ep >= endest) 
+		enlarge_strspace();
+	*ep++ = c;
+}
+
+/* 
+ * so we reclaim what string space we can
+ */
+char * 
+compute_prevep()
+{
+	if (fp+3 <= low_sp)
+		{
+		return strspace;
+		}
 	else
-		errx(1, "string space overflow");
+		{
+		return mstack[fp+3].sstr;
+		}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1999/09/06 13:24:59 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1999/09/06 13:29:32 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 1999/09/06 13:24:59 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 1999/09/06 13:29:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,15 +72,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.13 1999/09/06 13:24:59 espie Exp $";
 #include "pathnames.h"
 
 ndptr hashtab[HASHSIZE];	/* hash table for macros etc.  */
-pbent buf[BUFSIZE];		/* push-back buffer	       */
-pbent *bufbase = buf;		/* the base for current ilevel */
-pbent *bbase[MAXINP];		/* the base for each ilevel    */
-pbent *bp = buf; 		/* first available character   */
-pbent *endpbb = buf+BUFSIZE;	/* end of push-back buffer     */
 stae mstack[STACKMAX+1]; 	/* stack of m4 machine         */
-char strspace[STRSPMAX+1];	/* string space for evaluation */
-char *ep = strspace;		/* first free char in strspace */
-char *endest= strspace+STRSPMAX;/* end of string space	       */
 int sp; 			/* current m4  stack pointer   */
 int fp; 			/* m4 call frame pointer       */
 FILE *infile[MAXINP];		/* input file stack (0=stdin)  */
@@ -164,6 +156,7 @@ main(argc,argv)
 		signal(SIGINT, onintr);
 
 	initkwds();
+	initspaces();
 
 	while ((c = getopt(argc, argv, "tD:U:o:")) != -1)
 		switch(c) {
