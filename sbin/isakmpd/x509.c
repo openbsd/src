@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.56 2001/06/07 04:46:45 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.57 2001/06/07 07:35:15 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -718,7 +718,7 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
       LC (BIO_free, (certh));
       if (cert == NULL)
 	{
-	  log_error ("x509_read_from_dir: PEM_read_bio_X509 failed for %s",
+	  log_print ("x509_read_from_dir: PEM_read_bio_X509 failed for %s",
 		     file->d_name);
 	  continue;
 	}
