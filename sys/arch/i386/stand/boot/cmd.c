@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.21 1997/08/12 22:10:43 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.22 1997/08/13 03:49:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -37,9 +37,6 @@
 #include <debug.h>
 #include <sys/reboot.h>
 #include "cmd.h"
-#ifndef _TEST0
-#include <biosdev.h>
-#endif
 
 extern int debug;
 
@@ -75,7 +72,7 @@ struct cmd_table {
 	int (*cmd_exec) __P((void));
 };
 
-static struct cmd_table cmd_set[] = {
+static const struct cmd_table cmd_set[] = {
 	{"addr",   CMDT_VAR, Xaddr},
 	{"howto",  CMDT_VAR, Xhowto},
 #ifdef DEBUG	
@@ -87,7 +84,7 @@ static struct cmd_table cmd_set[] = {
 	{NULL,0}
 };
 
-static struct cmd_table cmd_table[] = {
+static const struct cmd_table cmd_table[] = {
 	{"boot",   CMDT_CMD, Xboot}, /* XXX must be first */
 	{"cd",     CMDT_CMD, Xcd},
 	{"cp",     CMDT_CMD, Xcp},
