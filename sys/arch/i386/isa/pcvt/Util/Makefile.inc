@@ -24,7 +24,7 @@ MAN3EXT	=	3
 MAN4EXT	=	4
 MAN5EXT	=	5
 MAN8EXT	=	8
-MANDIR	=	/usr/local/man/cat
+MANDIR	=	/usr/share/man/cat
 
 MAN = ${MAN1} ${MAN3} ${MAN4} ${MAN5} ${MAN8}
 
