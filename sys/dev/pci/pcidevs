@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.688 2003/11/06 07:21:26 mickey Exp $
+	$OpenBSD: pcidevs,v 1.689 2003/11/17 20:51:41 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -258,6 +258,7 @@ vendor	ADP		0x9004	Adaptec
 vendor	ADP2		0x9005	Adaptec
 vendor	ATRONICS	0x907f	Atronics
 vendor	NETMOS		0x9710	NetMos
+vendor	TIGERJET	0xe159	TigerJet Network
 vendor	ENDACE		0xeace	Endace Measurement Systems
 vendor	ARC		0xedd8	ARC Logic
 vendor	INVALID		0xffff	INVALID VENDOR ID
@@ -2143,6 +2144,9 @@ product TI PCI1421		0xac53	PCI1421 PCI-CardBus
 product TI PCI1520		0xac55	PCI1520 PCI-CardBus
 product TI PCI1510		0xac56	PCI1510 PCI-CardBus
 product TI PCI2040		0xac60	PCI2040 PCI-DSP
+
+/* TigerJet Network products */
+product TIGERJET TIGER320	0x0001	PCI interface
 
 /* Topic */
 product TOPIC 5634PCV		0x0000	5634PCV SurfRider
