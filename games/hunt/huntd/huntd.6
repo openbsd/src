@@ -1,5 +1,5 @@
 .\"	$NetBSD: huntd.6,v 1.3 1998/01/09 08:03:42 perry Exp $
-.\"	$OpenBSD: huntd.6,v 1.9 1999/08/30 23:37:28 d Exp $
+.\"	$OpenBSD: huntd.6,v 1.10 1999/12/12 15:15:36 d Exp $
 .\"
 .\"  Hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -20,6 +20,9 @@
 .Op Fl s
 .Op Fl p Ar port
 .Op Fl a Ar addr
+.Oo
+.Fl D Ns Ar var Ns = Ns value ...
+.Oc
 .Sh DESCRIPTION
 .Nm
 controls the multi-player
@@ -34,33 +37,37 @@ forever (server mode).
 This is similar to running it under the control of
 .Xr inetd 8
 (see below),
-but it consumes a process table entry when no one is playing.
+but it consumes a process table entry when no one is playing,
+and monitor clients are not disconnected.
 .Pp
 The
 .Fl p Ar port
-option changes the udp port number used to rendezvous with the player
+option changes the UDP port number used to rendezvous with the player
 process and thus allows for private games of
 .Xr hunt 6 .
 .Pp
 The
 .Fl a Ar addr
-option is used to cause the server to bind to a specific interface address.
+option is used to cause the server to listen only on a 
+specific interface address.
 The
 .Ar addr
-must be given as an IP address.
-.Sh INETD
+argument must be given as an IP address.
 .Pp
+Options given with
+.Fl D
+override those read from configuration files (see
+.Sx CONFIGURATION ,
+below).
+.Ss INETD
 To run
 .Nm
 from
 .Xr inetd 8 ,
-you'll need to put the
-.Sq hunt
-service in
-.Pa /etc/services :
-.Dl hunt 26740/udp		# multi-player/multi-host mazewars
-and add a line in
+you'll need to 
+add this line to
 .Pa /etc/inetd.conf :
+.Pp
 .Dl hunt dgram udp wait nobody /usr/games/huntd HUNT
 .Pp
 Do not use any of the command line options \(em if you want
@@ -69,11 +76,12 @@ to start up
 .Nm huntd
 on a private port, change the port listed in
 .Pa /etc/services .
-.Sh "NETWORK RENDEZVOUS"
+.Ss "NETWORK RENDEZVOUS"
 When
 .Xr hunt 6
-starts up, it broadcasts on the local area net
-(using the broadcast address for each interface) to find a
+starts up, it broadcasts on attached networks
+(using the broadcast or point-to-point destination address for each interface)
+to find a
 .Nm hunt
 game in progress.
 If a
@@ -88,7 +96,7 @@ is started, it always checks incoming connections with
 .Xr host_access 5 ,
 using a service name of
 .Sq huntd .
-.Sh "CONFIGURATION"
+.Ss "CONFIGURATION"
 When
 .Nm
 starts, it looks for configuration files that determine
@@ -104,97 +112,106 @@ and
 .Pp
 Many of these variables require intimate knowledge of the
 driver source code.
-The complete list of configurable variables is:
+The complete list of configurable variables is as follows.
+.Pp
 .Bl -tag -width pdroneabsorb -compact
-.It random
+.It Va random
 enable dispersion doors (default 1)
-.It reflect
+.It Va reflect
 enable generation of reflection walls (default 1)
-.It monitor
+.It Va monitor
 enable monitors (default 1)
-.It ooze
+.It Va ooze
 enable slime shots (default 1)
-.It fly
+.It Va fly
 enable flight (default 1)
-.It volcano
+.It Va volcano
 enable volcanoes (default 1)
-.It drone
+.It Va drone
 enable drone (default 1)
-.It boots
+.It Va boots
 enable boots (default 1)
-.It scan
+.It Va scan
 enable scanning (default 1)
-.It cloak
+.It Va cloak
 enable cloaking (default 1)
-.It logerr
+.It Va logerr
 errors to stderr (default 1)
-.It syslog
-errors to syslog(8) (default 0)
-.It scoredecay
+.It Va syslog
+errors to
+.Xr syslog 8
+(default 0)
+.It Va scoredecay
 nr deaths before nr kills begins to decay (default 15)
-.It maxremove
+.It Va maxremove
 Maximum number of holes in the maze wall (default 40)
-.It linger
+.It Va linger
 Seconds to keep game open with no players. \&-1 means forever. (default 90)
-.It flytime
+.It Va flytime
 max time flying (default 20)
-.It flystep
+.It Va flystep
 max displacement each flying time unit (default 5)
-.It volcano_max
+.It Va volcano_max
 max size of volcano (default 50)
-.It ptrip_face
+.It Va ptrip_face
 percentage chance of tripping a grenade on pickup (default 2)
-.It ptrip_back
+.It Va ptrip_back
 percentage chance of same when backing onto it (default 95)
-.It ptrip_side
+.It Va ptrip_side
 percentage chance of same when walking sideways into it (default 50)
-.It prandom
+.It Va prandom
 percentage of time dispersion doors appear (default 1)
-.It preflect
+.It Va preflect
 percentage of time reflection walls appear (default 1)
-.It pshot_coll
+.It Va pshot_coll
 percentage chance of shots colliding (default 5)
-.It pgren_coll
+.It Va pgren_coll
 percentage chance of grenades colliding (default 10)
-.It pgren_catch
+.It Va pgren_catch
 facing player chance of catching grenade (default 10)
-.It pmiss
+.It Va pmiss
 percentage chance of bullet missing player (default 5)
-.It pdroneabsorb
+.It Va pdroneabsorb
 percentage chance of absorbing a drone (default 1)
-.It fall_frac
+.It Va fall_frac
 divisor of damage used for fall damage (default 5)
-.It bulspd
+.It Va bulspd
 speed of bullets (default 5)
-.It ishots
+.It Va ishots
 initial ammo for player (default 15)
-.It nshots
+.It Va nshots
 ammo boost for all when new player joins (default 5)
-.It maxncshot
+.It Va maxncshot
 max number of simultaneous shots per player (default 2)
-.It maxdam
+.It Va maxdam
 the initial shield for each player (default 10)
-.It mindam
+.It Va mindam
 minimum damage from one unit of ammo (default 5)
-.It stabdam
+.It Va stabdam
 damage from stabbing (default 2)
-.It killgain
+.It Va killgain
 shield gained from killing someone (default 2)
-.It slimefactor
+.It Va slimefactor
 charge multiplier for slime (default 3)
-.It slimespeed
+.It Va slimespeed
 speed of slime (default 5)
-.It lavaspeed
+.It Va lavaspeed
 speed of volcano lava (default 1)
-.It cloaklen
+.It Va cloaklen
 duration of a cloak (default 20)
-.It scanlen
+.It Va scanlen
 duration of a scan (default 20)
-.It mindshot
+.It Va mindshot
 minimum shot class needed to make a drone (default 2)
-.It simstep
-minimum simulation step in microseconds. Zero means traditional blocking
+.It Va simstep
+maximum simulation step in microseconds. Zero means traditional blocking
 behaviour. Try 55000 for something reasonable (default 0)
+.El
+.Sh "FILES"
+.Bl -tag -width Pa -compact
+.It Pa /etc/hunt.conf
+.It Pa "$HOME/.hunt.conf"
+.It Pa ./.hunt.conf
 .El
 .Sh "SEE ALSO"
 .Xr hunt 6 ,
