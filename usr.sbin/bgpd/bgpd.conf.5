@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.32 2004/07/13 18:27:57 jaredy Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.33 2004/07/30 22:50:49 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -291,14 +291,19 @@ There are several neighbor properties:
 .Bl -tag -width Ds -compact
 .It Xo
 .Ic announce
-.Po Ic all Ns \&| Ns
-.Ic none Ns \&| Ns Ic self Pc
+.Sm off
+.Po Ic all \*(Ba none \*(Ba
+.Ic self \*(Ba default-route Pc
+.Sm on
 .Xc
 If set to
 .Ic none ,
 no
 .Em UPDATE
 messages will be sent to the neighbor.
+If set to
+.Ic default-route ,
+only the default route will be announced to the neighbor.
 If set to
 .Ic all ,
 all generated
