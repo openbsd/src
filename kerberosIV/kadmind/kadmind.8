@@ -13,7 +13,7 @@
 .\" the suitability of this software for any purpose.  It is
 .\" provided "as is" without express or implied warranty.
 .\" 
-.\"	$Id: kadmind.8,v 1.1.1.1 1995/12/14 06:52:49 tholo Exp $
+.\"	$OpenBSD: kadmind.8,v 1.2 1997/05/30 03:11:20 gene Exp $
 .TH KADMIND 8 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 kadmind \- Kerberos database administration daemon
@@ -104,19 +104,19 @@ in the database.
 A principal is always granted authorization to change its own password.
 .SH FILES
 .TP 20n
-/kerberos/admin_server.syslog
+/var/log/admin_server.log
 Default log file.
 .TP 
-/kerberos
+/etc/kerberosIV
 Default access control list directory.
 .TP
 admin_acl.{add,get,mod}
 Access control list files (within the directory)
 .TP
-/kerberos/principal.pag, /kerberos/principal.dir
+/etc/kerberosIV/principal.pag, /etc/kerberosIV/principal.dir
 Default DBM files containing database
 .TP
-/.k
+/etc/kerberosIV/master_key
 Master key cache file.
 .SH "SEE ALSO"
 kerberos(1), kpasswd(1), kadmin(8), acl_check(3)

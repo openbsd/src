@@ -3,7 +3,7 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$Id: acl_check.3,v 1.1.1.1 1995/12/14 06:52:36 tholo Exp $
+.\"	$OpenBSD: acl_check.3,v 1.2 1997/05/30 03:11:15 gene Exp $
 .TH ACL_CHECK 3 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 acl_canonicalize_principal, acl_check, acl_exact_match, acl_add,
@@ -15,7 +15,7 @@ acl_delete, acl_initialize \- Access control list routines
 cc <files> \-lacl \-lkrb
 .PP
 .ft B
-#include <krb.h>
+#include <kerberosIV/kerberosIV/krb.h>
 .PP
 .ft B
 acl_canonicalize_principal(principal, buf)
@@ -97,7 +97,7 @@ must contain enough
 space to store a principal, given the limits on the sizes of name,
 instance, and realm specified as ANAME_SZ, INST_SZ, and REALM_SZ,
 respectively, in
-.IR /usr/include/krb.h .
+.IR /usr/include/kerberosIV/kerberosIV/krb.h .
 .PP
 .I acl_check
 returns nonzero if

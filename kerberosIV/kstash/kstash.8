@@ -3,7 +3,7 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$Id: kstash.8,v 1.1.1.1 1995/12/14 06:52:41 tholo Exp $
+.\"	$OpenBSD: kstash.8,v 1.2 1997/05/30 03:11:33 gene Exp $
 .TH KSTASH 8 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 kstash \- stash Kerberos key distribution center database master key
@@ -33,8 +33,8 @@ system call returned an error while
 was attempting to write the key to the file.
 .SH FILES
 .TP 20n
-/kerberos/principal.pag, /kerberos/principal.dir
+/etc/kerberosIV/principal.pag, /etc/kerberosIV/principal.dir
 DBM files containing database
 .TP
-/.k
+/etc/kerberosIV/master_key
 Master key cache file.

@@ -3,7 +3,7 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$Id: ext_srvtab.8,v 1.1.1.1 1995/12/14 06:52:41 tholo Exp $
+.\"	$OpenBSD: ext_srvtab.8,v 1.2 1997/05/30 03:11:17 gene Exp $
 .TH EXT_SRVTAB 8 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 ext_srvtab \- extract service key files from Kerberos key distribution center database
@@ -53,10 +53,10 @@ The master key string entered was incorrect.
 Service key file generated for
 .I hostname
 .TP
-/kerberos/principal.pag, /kerberos/principal.dir
+/etc/kerberosIV/principal.pag, /etc/kerberosIV/principal.dir
 DBM files containing database
 .TP
-/.k
+/etc/kerberosIV/master_key
 Master key cache file.
 .SH SEE ALSO
 read_service_key(3), krb_get_phost(3)

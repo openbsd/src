@@ -3,7 +3,7 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$Id: kdb_edit.8,v 1.1.1.1 1995/12/14 06:52:42 tholo Exp $
+.\"	$OpenBSD: kdb_edit.8,v 1.2 1997/05/30 03:11:21 gene Exp $
 .TH KDB_EDIT 8 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 kdb_edit \-  Kerberos key distribution center database editing utility
@@ -47,8 +47,8 @@ printed.
 The master key string entered was incorrect.
 .SH FILES
 .TP 20n
-/kerberos/principal.pag, /kerberos/principal.dir
+/etc/kerberosIV/principal.pag, /etc/kerberosIV/principal.dir
 DBM files containing database
 .TP
-/.k
+/etc/kerberosIV/master_key
 Master key cache file.

@@ -1,4 +1,4 @@
-/*	$Id: kadm_locl.h,v 1.1.1.1 1995/12/14 06:52:34 tholo Exp $	*/
+/*	$Id: kadm_locl.h,v 1.2 1997/05/30 03:11:18 gene Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -50,10 +50,10 @@
 
 #include <kerberosIV/des.h>
 #include <kerberosIV/krb.h>
-#include "krb_err.h"
+#include <kerberosIV/krb_err.h>
 #include <kerberosIV/krb_db.h>
 #include <kerberosIV/kadm.h>
-#include "kadm_err.h"
+#include <kerberosIV/kadm_err.h>
 #include "kerberosIV/acl.h"
 
 #include "kadm_server.h"

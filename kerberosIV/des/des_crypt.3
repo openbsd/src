@@ -1,3 +1,4 @@
+.\"	$OpenBSD: des_crypt.3,v 1.4 1997/05/30 03:11:16 gene Exp $
 .TH DES_CRYPT 3 
 .SH NAME
 des_read_password, des_read_2password,
@@ -13,7 +14,7 @@ des_is_weak_key, crypt \- (non USA) DES encryption
 .nf
 .nj
 .ft B
-#include <des.h>
+#include <kerberosIV/des.h>
 .PP
 .B int des_read_password(key,prompt,verify)
 des_cblock *key;
@@ -461,7 +462,7 @@ is a replacement for the normal system crypt.
 It is much faster than the system crypt.
 .PP
 .SH FILES
-/usr/include/des.h
+/usr/include/kerberosIV/des.h
 .br
 /usr/lib/libdes.a
 .PP

@@ -1,11 +1,9 @@
-.\" $Source: /home/cvs/src/kerberosIV/krb/Attic/kerberos.3,v $
-.\" $Author: tholo $
-.\" $Header: /home/cvs/src/kerberosIV/krb/Attic/kerberos.3,v 1.1.1.1 1995/12/14 06:52:41 tholo Exp $
 .\" Copyright 1989 by the Massachusetts Institute of Technology.
 .\"
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
+.\" 	$OpenBSD: kerberos.3,v 1.2 1997/05/30 03:11:28 gene Exp $
 .TH KERBEROS 3 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 krb_mk_req, krb_rd_req, krb_kntoln, krb_set_key, krb_get_cred,
@@ -15,8 +13,8 @@ krb_rd_err, krb_ck_repl \- Kerberos authentication library
 .nf
 .nj
 .ft B
-#include <des.h>
-#include <krb.h>
+#include <kerberosIV/des.h>
+#include <kerberosIV/krb.h>
 .PP
 .ft B
 extern char *krb_err_txt[];
@@ -432,22 +430,21 @@ is passed.  The structure is
 filled in with data obtained from Kerberos.
 .PP
 .SH FILES
-/usr/include/krb.h
+/usr/include/kerberosIV/krb.h
 .br
 /usr/lib/libkrb.a
 .br
-/usr/include/des.h
+/usr/include/kerberosIV/des.h
 .br
 /usr/lib/libdes.a
 .br
 /etc/aname
 .br
-/etc/srvtab
+/etc/kerberosIV/srvtab
 .br
 /tmp/tkt[uid]
 .SH "SEE ALSO"
 kerberos(1), des_crypt(3)
-.SH DIAGNOSTICS
 .SH BUGS
 The caller of
 .I krb_rd_req, krb_rd_priv, and krb_rd_safe

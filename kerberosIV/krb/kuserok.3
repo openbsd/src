@@ -1,11 +1,9 @@
-.\" $Source: /home/cvs/src/kerberosIV/krb/Attic/kuserok.3,v $
-.\" $Author: tholo $
-.\" $Header: /home/cvs/src/kerberosIV/krb/Attic/kuserok.3,v 1.1.1.1 1995/12/14 06:52:40 tholo Exp $
 .\" Copyright 1989 by the Massachusetts Institute of Technology.
 .\"
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
+.\"	$OpenBSD: kuserok.3,v 1.2 1997/05/30 03:11:30 gene Exp $
 .TH KUSEROK 3 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 kuserok \- Kerberos version of ruserok
@@ -13,7 +11,7 @@ kuserok \- Kerberos version of ruserok
 .nf
 .nj
 .ft B
-#include <krb.h>
+#include <kerberosIV/krb.h>
 .PP
 .ft B
 kuserok(kdata, localuser)
@@ -28,7 +26,7 @@ determines whether a Kerberos principal described by the structure
 is authorized to login as user
 .I localuser
 according to the authorization file
-("~\fIlocaluser\fR/.klogin" by default).  It returns 0 (zero) if authorized,
+("~\fIlocaluser\fR/etc/kerberosIV/master_keylogin" by default).  It returns 0 (zero) if authorized,
 1 (one) if not authorized.
 .PP
 If there is no account for 
@@ -60,5 +58,5 @@ with one entry per line.
 kerberos(3), ruserok(3), krb_kntoln(3)
 .SH FILES
 .TP 20n
-~\fIlocaluser\fR/.klogin
+~\fIlocaluser\fR/etc/kerberosIV/master_keylogin
 authorization list

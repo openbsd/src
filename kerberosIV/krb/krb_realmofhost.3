@@ -1,11 +1,9 @@
-.\" $Source: /home/cvs/src/kerberosIV/krb/Attic/krb_realmofhost.3,v $
-.\" $Author: tholo $
-.\" $Header: /home/cvs/src/kerberosIV/krb/Attic/krb_realmofhost.3,v 1.1.1.1 1995/12/14 06:52:41 tholo Exp $
 .\" Copyright 1989 by the Massachusetts Institute of Technology.
 .\"
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
+.\"	$OpenBSD: krb_realmofhost.3,v 1.2 1997/05/30 03:11:28 gene Exp $
 .TH KRB_REALMOFHOST 3 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 krb_realmofhost, krb_get_phost, krb_get_krbhst, krb_get_admhst,
@@ -14,9 +12,9 @@ krb_get_lrealm \- additional Kerberos utility routines
 .nf
 .nj
 .ft B
-#include <krb.h>
-#include <des.h>
-#include <netinet/in.h>
+#include <kerberosIV/krb.h>
+#include <kerberosIV/des.h>
+#include <kerberosIV/netinet/in.h>
 .PP
 .ft B
 char *krb_realmofhost(host)

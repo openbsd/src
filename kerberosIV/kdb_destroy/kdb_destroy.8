@@ -3,7 +3,7 @@
 .\" For copying and distribution information,
 .\" please see the file <mit-copyright.h>.
 .\"
-.\"	$Id: kdb_destroy.8,v 1.1.1.1 1995/12/14 06:52:43 tholo Exp $
+.\"	$OpenBSD: kdb_destroy.8,v 1.2 1997/05/30 03:11:20 gene Exp $
 .TH KDB_DESTROY 8 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 kdb_destroy \- destroy Kerberos key distribution center database
@@ -18,7 +18,7 @@ response beginning with `y' or `Y' confirms deletion.
 Any other response aborts deletion.
 .SH DIAGNOSTICS
 .TP 20n
-"Database cannot be deleted at /kerberos/principal"
+"Database cannot be deleted at /etc/kerberosIV/principal"
 The attempt to delete the database failed (probably due to a system or
 access permission error).
 .TP
@@ -26,7 +26,7 @@ access permission error).
 The user aborted the deletion.
 .SH FILES
 .TP 20n
-/kerberos/principal.pag, /kerberos/principal.dir
+/etc/kerberosIV/principal.pag, /etc/kerberosIV/principal.dir
 DBM files containing database
 .SH SEE ALSO
 kdb_init(8)
