@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.28 2002/12/25 20:56:59 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.29 2003/04/06 15:28:25 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -446,20 +446,20 @@ sdgetinfo(dev, sc, lp, spoofonly)
 
 		switch (sc->sc_type) {
 		case 4:	
-			strcpy(lp->d_typename, "SCSI WORM");
+			strncpy(lp->d_typename, "SCSI WORM", sizeof lp->d_typename);
 			break;
 		case 5:
-			strcpy(lp->d_typename, "SCSI CD-ROM");
+			strncpy(lp->d_typename, "SCSI CD-ROM", sizeof lp->d_typename);
 			break;
 		case 7:
-			strcpy(lp->d_typename, "SCSI optical");
+			strncpy(lp->d_typename, "SCSI optical", sizeof lp->d_typename);
 			break;
 		default:
-			strcpy(lp->d_typename, "SCSI disk");
+			strncpy(lp->d_typename, "SCSI disk", sizeof lp->d_typename);
 			break;
 		}
 		lp->d_type = DTYPE_SCSI;
-		strcpy(lp->d_packname, "fictitious");
+		strncpy(lp->d_packname, "fictitious", sizeof lp->d_packname);
 		lp->d_secsize = sc->sc_blksize;
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 		lp->d_rpm = 3600;

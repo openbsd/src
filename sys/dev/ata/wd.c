@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.27 2003/02/21 20:10:33 grange Exp $ */
+/*	$OpenBSD: wd.c,v 1.28 2003/04/06 15:28:25 krw Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -864,13 +864,13 @@ wdgetdefaultlabel(wd, lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 	if (wd->drvp->ata_vers == -1) {
 		lp->d_type = DTYPE_ST506;
-		strncpy(lp->d_typename, "ST506/MFM/RLL", 16);
+		strncpy(lp->d_typename, "ST506/MFM/RLL", sizeof lp->d_typename);
 	} else {
 		lp->d_type = DTYPE_ESDI;
-		strncpy(lp->d_typename, "ESDI/IDE disk", 16);
+		strncpy(lp->d_typename, "ESDI/IDE disk", sizeof lp->d_typename);
 	}
 	/* XXX - user viscopy() like sd.c */
-	strncpy(lp->d_packname, wd->sc_params.atap_model, 16);
+	strncpy(lp->d_packname, wd->sc_params.atap_model, sizeof lp->d_packname);
 	lp->d_secperunit = wd->sc_capacity;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.45 2002/05/24 13:31:10 art Exp $	*/
+/*	$OpenBSD: fd.c,v 1.46 2003/04/06 15:28:25 krw Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -987,9 +987,9 @@ fdioctl(dev, cmd, addr, flag, p)
 		lp->d_nsectors = fd->sc_type->sectrac;
 		lp->d_ncylinders = fd->sc_type->tracks;
 
-		strncpy(lp->d_typename, "floppy disk", 16);
+		strncpy(lp->d_typename, "floppy disk", sizeof lp->d_typename);
 		lp->d_type = DTYPE_FLOPPY;
-		strncpy(lp->d_packname, "fictitious", 16);
+		strncpy(lp->d_packname, "fictitious", sizeof lp->d_packname);
 		lp->d_secperunit = fd->sc_type->size;
 		lp->d_rpm = 300;
 		lp->d_interleave = 1;

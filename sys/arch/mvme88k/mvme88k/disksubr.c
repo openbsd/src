@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.18 2003/04/06 03:02:44 krw Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.19 2003/04/06 15:28:26 krw Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -602,8 +602,8 @@ cputobsdlabel(lp, clp)
 		lp->d_magic = clp->magic1;
 		lp->d_type = clp->type;
 		lp->d_subtype = clp->subtype;
-		strncpy(lp->d_typename, clp->vid_vd, 16);
-		strncpy(lp->d_packname, clp->packname, 16);
+		strncpy(lp->d_typename, clp->vid_vd, sizeof lp->d_typename);
+		strncpy(lp->d_packname, clp->packname, sizeof lp->d_packname);
 		lp->d_secsize = clp->cfg_psm;
 		lp->d_nsectors = clp->cfg_spt;
 		lp->d_ncylinders = clp->cfg_trk; /* trk is really num of cyl! */
@@ -666,8 +666,8 @@ cputobsdlabel(lp, clp)
 		lp->d_magic = clp->magic1;
 		lp->d_type = clp->type;
 		lp->d_subtype = clp->subtype;
-		strncpy(lp->d_typename, clp->vid_vd, 16);
-		strncpy(lp->d_packname, clp->packname, 16);
+		strncpy(lp->d_typename, clp->vid_vd, sizeof lp->d_typename);
+		strncpy(lp->d_packname, clp->packname, sizeof lp->d_packname);
 		lp->d_secsize = clp->cfg_psm;
 		lp->d_nsectors = clp->cfg_spt;
 		lp->d_ncylinders = clp->cfg_trk; /* trk is really num of cyl! */
