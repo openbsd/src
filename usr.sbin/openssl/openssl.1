@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.4 2003/03/18 12:58:22 david Exp $
+.\" $OpenBSD: openssl.1,v 1.5 2003/03/22 08:02:03 david Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -1330,7 +1330,7 @@ Including 40 and 56 bits algorithms.
 40 bit export encryption algorithms
 .It Ar EXPORT56
 56 bit export encryption algorithms.
-.It Ar eNULL, NULL
+.It Ar eNULL , NULL
 The "NULL" ciphers; that is those offering no encryption.
 Because these offer no encryption at all and are a security risk
 they are disabled unless explicitly included.
@@ -4337,7 +4337,7 @@ is an equivalent option.
 .It Ar default_md
 This option specifies the digest algorithm to use.
 Possible values include
-.Ar md5, sha1
+.Ar md5 , sha1
 and
 .Ar mdc2 .
 If not present then MD5 is used.
