@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.12 2003/10/23 18:31:34 jmc Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.13 2004/02/05 14:25:52 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .Dt VOP_LOOKUP 9
 .Os
 .Sh NAME
-.Nm VOP functions
+.Nm VOP_LOOKUP
 .Nd vnode operations
 .Sh SYNOPSIS
 .Fd #include <sys/vnode.h>
@@ -157,7 +157,7 @@
 .\" and many more
 .Sh DESCRIPTION
 The
-.Nm
+.Nm VOP
 functions implement a generic way to perform operations on vnodes.
 The VOP function called passes the arguments to the correct file system
 specific function.
@@ -408,18 +408,18 @@ The rules for locking and referencing vnodes are enforced by each
 file system implementation, not the VOP stubs.
 .Sh RETURN VALUES
 The
-.Nm
+.Nm VOP
 functions return 0 to indicate success and a non-zero error code
 to indicate failure.
 .Sh FILES
 .Bl -tag -width sys/kern/vnode_if.src -compact
 .It Pa sys/kern/vnode_if.src
 source file containing
-.Nm
+.Nm VOP
 definitions
 .It Pa sys/kern/vnode_if.c
 C file with implementations of each
-.Nm
+.Nm VOP
 stub call
 .El
 .Sh SEE ALSO
