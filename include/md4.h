@@ -1,4 +1,4 @@
-/*	$OpenBSD: md4.h,v 1.14 2004/05/03 17:30:14 millert Exp $	*/
+/*	$OpenBSD: md4.h,v 1.15 2004/06/22 01:57:30 jfb Exp $	*/
 
 /*
  * This code implements the MD4 message-digest algorithm.
@@ -40,9 +40,9 @@ void	 MD4Transform(u_int32_t [4], const u_int8_t [MD4_BLOCK_LENGTH])
 		__attribute__((__bounded__(__minbytes__,2,MD4_BLOCK_LENGTH)));
 char	*MD4End(MD4_CTX *, char *)
 		__attribute__((__bounded__(__minbytes__,2,MD4_DIGEST_STRING_LENGTH)));
-char	*MD4File(char *, char *)
+char	*MD4File(const char *, char *)
 		__attribute__((__bounded__(__minbytes__,2,MD4_DIGEST_STRING_LENGTH)));
-char	*MD4FileChunk(char *, char *, off_t, off_t)
+char	*MD4FileChunk(const char *, char *, off_t, off_t)
 		__attribute__((__bounded__(__minbytes__,2,MD4_DIGEST_STRING_LENGTH)));
 char	*MD4Data(const u_int8_t *, size_t, char *)
 		__attribute__((__bounded__(__string__,1,2)))

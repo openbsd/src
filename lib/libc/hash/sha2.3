@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.10 2004/05/16 18:29:09 otto Exp $
+.\"	$OpenBSD: sha2.3,v 1.11 2004/06/22 01:57:29 jfb Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -50,9 +50,9 @@
 .Ft "char *"
 .Fn SHA256_End "SHA256_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA256_File "char *filename" "char *buf"
+.Fn SHA256_File "const char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA256_FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
+.Fn SHA256_FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA256_Data "u_int8_t *data" "size_t len" "char *buf"
 .Ft void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.h,v 1.22 2004/05/05 17:09:45 millert Exp $	*/
+/*	$OpenBSD: sha1.h,v 1.23 2004/06/22 01:57:30 jfb Exp $	*/
 
 /*
  * SHA-1 in C
@@ -33,9 +33,9 @@ void SHA1Final(u_int8_t [SHA1_DIGEST_LENGTH], SHA1_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA1_DIGEST_LENGTH)));
 char *SHA1End(SHA1_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH)));
-char *SHA1File(char *, char *)
+char *SHA1File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH)));
-char *SHA1FileChunk(char *, char *, off_t, off_t)
+char *SHA1FileChunk(const char *, char *, off_t, off_t)
 	__attribute__((__bounded__(__minbytes__,2,SHA1_DIGEST_STRING_LENGTH)));
 char *SHA1Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))

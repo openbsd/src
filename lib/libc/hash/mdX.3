@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.6 2004/05/16 18:29:09 otto Exp $
+.\" 	$OpenBSD: mdX.3,v 1.7 2004/06/22 01:57:29 jfb Exp $
 .\"
 .Dd April 29, 2004
 .Dt MDX 3
@@ -38,9 +38,9 @@
 .Ft "char *"
 .Fn MDXEnd "MDX_CTX *context" "char *buf"
 .Ft "char *"
-.Fn MDXFile "char *filename" "char *buf"
+.Fn MDXFile "const char *filename" "char *buf"
 .Ft "char *"
-.Fn MDXFileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
+.Fn MDXFileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn MDXData "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION

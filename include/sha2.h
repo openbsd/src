@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.h,v 1.5 2004/05/05 17:39:47 millert Exp $	*/
+/*	$OpenBSD: sha2.h,v 1.6 2004/06/22 01:57:30 jfb Exp $	*/
 
 /*
  * FILE:	sha2.h
@@ -76,9 +76,9 @@ void SHA256_Final(u_int8_t [SHA256_DIGEST_LENGTH], SHA256_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA256_DIGEST_LENGTH)));
 char *SHA256_End(SHA256_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
-char *SHA256_File(char *, char *)
+char *SHA256_File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
-char *SHA256_FileChunk(char *, char *, off_t, off_t)
+char *SHA256_FileChunk(const char *, char *, off_t, off_t)
 	__attribute__((__bounded__(__minbytes__,2,SHA256_DIGEST_STRING_LENGTH)));
 char *SHA256_Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))
@@ -93,9 +93,9 @@ void SHA384_Final(u_int8_t [SHA384_DIGEST_LENGTH], SHA384_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA384_DIGEST_LENGTH)));
 char *SHA384_End(SHA384_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
-char *SHA384_File(char *, char *)
+char *SHA384_File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
-char *SHA384_FileChunk(char *, char *, off_t, off_t)
+char *SHA384_FileChunk(const char *, char *, off_t, off_t)
 	__attribute__((__bounded__(__minbytes__,2,SHA384_DIGEST_STRING_LENGTH)));
 char *SHA384_Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))
@@ -110,9 +110,9 @@ void SHA512_Final(u_int8_t [SHA512_DIGEST_LENGTH], SHA512_CTX *)
 	__attribute__((__bounded__(__minbytes__,1,SHA512_DIGEST_LENGTH)));
 char *SHA512_End(SHA512_CTX *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
-char *SHA512_File(char *, char *)
+char *SHA512_File(const char *, char *)
 	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
-char *SHA512_FileChunk(char *, char *, off_t, off_t)
+char *SHA512_FileChunk(const char *, char *, off_t, off_t)
 	__attribute__((__bounded__(__minbytes__,2,SHA512_DIGEST_STRING_LENGTH)));
 char *SHA512_Data(const u_int8_t *, size_t, char *)
 	__attribute__((__bounded__(__string__,1,2)))

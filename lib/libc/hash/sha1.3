@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.33 2004/05/16 18:29:09 otto Exp $
+.\"	$OpenBSD: sha1.3,v 1.34 2004/06/22 01:57:29 jfb Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -47,9 +47,9 @@
 .Ft "char *"
 .Fn SHA1End "SHA1_CTX *context" "char *buf"
 .Ft "char *"
-.Fn SHA1File "char *filename" "char *buf"
+.Fn SHA1File "const char *filename" "char *buf"
 .Ft "char *"
-.Fn SHA1FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
+.Fn SHA1FileChunk "const char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA1Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
