@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.3 2000/03/23 11:07:34 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.4 2000/05/08 01:28:59 mickey Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -175,7 +175,14 @@ timeout_del(to)
 int
 timeout_hardclock_update()
 {
-	return (TAILQ_FIRST(&timeout_todo)->to_time - ticks <= 0);
+	struct timeout *to;
+
+	to = TAILQ_FIRST(&timeout_todo);
+
+	if (to == NULL)
+		return 0;
+
+	return (to->to_time - ticks <= 0);
 }
 
 void
