@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.79 2002/02/16 21:27:38 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.80 2002/05/26 07:55:01 matthieu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.79 2002/02/16 21:27:38 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.80 2002/05/26 07:55:01 matthieu Exp $";
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,9 @@ int sysctl_forkstat(char *, char **, int *, int, int *);
 int sysctl_tty(char *, char **, int *, int, int *);
 int sysctl_nchstats(char *, char **, int *, int, int *);
 int sysctl_malloc(char *, char **, int *, int, int *);
+#ifdef CPU_CHIPSET
+int sysctl_chipset(char *, char **, int *, int, int *);
+#endif
 void vfsinit(void);
 
 int
@@ -548,6 +551,14 @@ parse(string, flags)
 				special |= BIOSDEV;
 			if (mib[2] == BIOS_DISKINFO)
 				special |= BIOSGEO;
+			break;
+		}
+#endif
+#ifdef CPU_CHIPSET
+		if (mib[1] == CPU_CHIPSET) {
+			len = sysctl_chipset(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
 			break;
 		}
 #endif
@@ -1602,6 +1613,66 @@ sysctl_malloc(string, bufpp, mib, flags, typep)
 	return(-1);
 }
 
+#ifdef CPU_CHIPSET
+/*
+ * handle machdep.chipset requests
+ */
+struct ctlname chipsetname[] = CTL_CHIPSET_NAMES;
+struct list chipsetlist = { chipsetname, CPU_CHIPSET_MAXID };
+
+int
+sysctl_chipset(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	int indx, bwx;
+	static void *q;
+	size_t len;
+	char *p;
+
+	if (*bufpp == NULL) {
+		listall(string, &chipsetlist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &chipsetlist)) == -1)
+		return(-1);
+	mib[2] = indx;
+	if (!nflag) 
+		printf("%s = ", string);
+	switch(mib[2]) {
+	case CPU_CHIPSET_MEM:
+	case CPU_CHIPSET_DENSE:
+	case CPU_CHIPSET_PORTS:
+	case CPU_CHIPSET_HAE_MASK:
+		len = sizeof(void *);
+		if (sysctl(mib, 3, &q, &len, NULL, 0) < 0)
+			return (-1);
+		printf("%p\n", q);
+		break;
+	case CPU_CHIPSET_BWX:
+		len = sizeof(int);
+		if (sysctl(mib, 3, &bwx, &len, NULL, 0) < 0) 
+			return (-1);
+		printf("%d\n", bwx);
+		break;
+	case CPU_CHIPSET_TYPE:
+		if (sysctl(mib, 3, NULL, &len, NULL, 0) < 0)
+			return (-1);
+		p = malloc(len + 1);
+		if (p == NULL)
+			return (-1);
+		if (sysctl(mib, 3, p, &len, NULL, 0) < 0)
+			return (-1);
+		p[len] = '\0';
+		printf("%s\n", p);
+		break;
+	}
+	return (-1);
+}
+#endif
 /*
  * handle internet requests
  */

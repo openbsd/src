@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.16 2002/04/28 20:55:14 pvalchev Exp $ */
+/* $OpenBSD: cpu.h,v 1.17 2002/05/26 07:55:01 matthieu Exp $ */
 /* $NetBSD: cpu.h,v 1.45 2000/08/21 02:03:12 thorpej Exp $ */
 
 /*-
@@ -332,8 +332,8 @@ do {									\
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
-#define	CPU_MAXID		8	/* 7 valid machdep IDs */
-#define CPU_CHIPSET		9	/* chipset information */
+#define CPU_CHIPSET		8	/* chipset information */
+#define	CPU_MAXID		9	/* 7 valid machdep IDs */
 
 #define CPU_CHIPSET_MEM		1	/* PCI memory address */
 #define CPU_CHIPSET_BWX		2	/* PCI supports BWX */
@@ -341,6 +341,7 @@ do {									\
 #define CPU_CHIPSET_DENSE	4	/* PCI chipset dense memory addr */
 #define CPU_CHIPSET_PORTS	5	/* PCI port address */
 #define CPU_CHIPSET_HAE_MASK	6	/* PCI chipset mask for HAE register */
+#define CPU_CHIPSET_MAXID	7
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -350,8 +351,18 @@ do {									\
 	{ "unaligned_fix", CTLTYPE_INT }, \
 	{ "unaligned_sigbus", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "chipset", CTLTYPE_NODE }, \
 	{ "fp_sync_complete", CTLTYPE_INT }, \
+	{ "chipset", CTLTYPE_NODE }, \
+}
+
+#define CTL_CHIPSET_NAMES { \
+	{ 0, 0 }, \
+	{ "memory", CTLTYPE_QUAD }, \
+	{ "bwx", CTLTYPE_INT }, \
+	{ "type", CTLTYPE_STRING }, \
+	{ "dense_base", CTLTYPE_QUAD }, \
+	{ "ports_base", CTLTYPE_QUAD }, \
+	{ "hae_mask", CTLTYPE_QUAD }, \
 }
 
 #ifdef _KERNEL
