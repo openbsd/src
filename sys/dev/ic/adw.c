@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.18 2001/05/16 12:51:48 ho Exp $ */
+/*	$OpenBSD: adw.c,v 1.19 2001/05/16 19:19:28 mickey Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -221,7 +221,10 @@ adw_alloc_carriers(sc)
          */
 	sc->sc_control->carriers = 
 		malloc(sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, M_DEVBUF, 
-		       M_WAITOK);
+		       M_NOWAIT);
+	if (sc->sc_control->carriers == NULL)
+		return (ENOMEM);
+
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
