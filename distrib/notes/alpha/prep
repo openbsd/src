@@ -4,6 +4,15 @@ fairly simple to replace the ARC firmware with the SRM version.
 You can get replacement firmware either from a firmware update
 CD or via ftp from ftp://ftp.digital.com/pub/DEC/Alpha/firmware/.
 
+AXPPCI33 Motherboard notes:
+    The 1994 version of the OEM guide has an incorrect pinout
+    for the serial ports.  The newer version from
+    ftp://ftp.digital.com/pub/Digital/axppci/design_guide.ps.Z
+    has a corrected pinout (as well as more information than
+    the 1994 edition).  Note that there are two flavors
+    of PC serial connectors.  If you have the wrong kind,
+    you won't get any output from the serial console.
+
 Acquiring and updating firmware:
     As of May, 1997, the latest firmware version available for
     ftp is version 3.9.  To update an alpha with an axppci33
