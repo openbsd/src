@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.19 2004/03/12 17:39:46 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.20 2004/03/12 20:23:01 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd December 23, 2003
+.Dd March 10, 2004
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ messages in
 format.
 Dumping the
 .Em RIB
-is normally an expensive operation but it should not influence the session
+is normally an expensive operation, but it should not influence the session
 handling.
 Dumping too often may result in a slow update speed.
 .Pp
@@ -258,7 +258,7 @@ If set to
 all generated
 .Em UPDATE
 messages will be sent to the neighbor.
-This is normally only necessary for transit
+This is usually used for transit
 .Em AS's
 and
 .Em IBGP
@@ -271,8 +271,7 @@ peers is
 which limits the sent
 .Em UPDATE
 messages to announcements of the local
-.Em AS
-only.
+.Em AS .
 The default for
 .Em IBGP
 peers is
@@ -326,14 +325,14 @@ If a local-address is given it binds
 to this address before.
 .It Ar max-prefix
 Limit amount of prefixes received.
-The default is unlimited.
+No such limit is imposed by default.
 .It Ar multihop
-Normally neighbors that are not in the same AS as the local
+Neighbors not in the same AS as the local
 .Ar bgpd
-have to be directly connected to the local machine.
-If this is not the case the
+normally have to be directly connected to the local machine.
+If this is not the case, the
 .Ar multihop
-statement defines the maximum hops the neighbor is away.
+statement defines the maximum hops the neighbor may be away.
 .It Ar passive
 Do not attempt to actively open a TCP connection to the neighbor system.
 .It Ar remote-as
@@ -397,7 +396,7 @@ The
 .Em UPDATE
 is passed.
 .It Ar match
-Apply only the filter attribute set without influencing the action to be taken.
+Apply the filter attribute set without influencing the filter decision.
 .El
 .Sh PARAMETERS
 The rule parameters specify the
@@ -439,7 +438,7 @@ for the specified prefix.
 This rule applies only to
 .Em UPDATES
 for prefixes where the prefixlen matches.
-Ranges of prefix length are specified by using these operators:
+Prefix length ranges are specified by using these operators:
 .Bd -literal -offset indent
 =	(equal)
 !=	(unequal)
@@ -473,12 +472,6 @@ This will match all prefixes in the 10.0.0.0/8 netblock with netmasks longer
 than 16:
 .Bd -literal -offset indent
 prefix 10.0.0.0/8 prefixlen > 16
-.Ed
-.Pp
-The following two examples are alike:
-.Bd -literal -offset indent
-prefix 10.0.0.0/8
-prefix 10.0.0.0/8 prefixlen = 8
 .Ed
 .Pp
 .It Ar <astype> <asnum>
