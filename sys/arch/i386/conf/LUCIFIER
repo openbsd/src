@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.11 1998/02/21 06:26:15 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.12 1998/03/15 14:56:21 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -49,6 +49,7 @@ option		COMPAT_43	# and 4.3BSD
 option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
+option		FFS_SOFTUPDATES	# enable ffs softupdates
 option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
 option		EXT2FS		# Second Extended Filesystem
