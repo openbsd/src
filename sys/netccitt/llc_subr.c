@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc_subr.c,v 1.4 1997/01/27 07:57:03 deraadt Exp $	*/
+/*	$OpenBSD: llc_subr.c,v 1.5 1998/03/03 06:41:11 millert Exp $	*/
 /*	$NetBSD: llc_subr.c,v 1.5 1996/05/07 02:36:08 thorpej Exp $	*/
 
 /* 
@@ -349,7 +349,7 @@ llc_seq2slot(linkp, seqn)
 	struct llc_linkcb *linkp;
 	short seqn;
 {
-	register        sn = 0;
+	register int sn = 0;
 
 	sn = (linkp->llcl_freeslot + linkp->llcl_window -
 	      (linkp->llcl_projvs + LLC_MAX_SEQUENCE - seqn) %
@@ -1155,7 +1155,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 
 	switch (frame_kind + cmdrsp) {
 	case NL_DATA_REQUEST:
-		if (LLC_GETFLAG(linkp,REMOTE_BUSY) == 0)
+		if (LLC_GETFLAG(linkp,REMOTE_BUSY) == 0) {
 			if (LLC_GETFLAG(linkp,P) == 0) {
 				llc_send(linkp, LLCFT_INFO, LLC_CMD, 1);
 				LLC_START_P_TIMER(linkp);
@@ -1170,6 +1170,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 					LLC_START_ACK_TIMER(linkp);
 				action = 0;
 			}
+		}
 		break;
 	case LLC_LOCAL_BUSY_CLEARED:{
 			register int    p = LLC_GETFLAG(linkp,P);
@@ -1375,7 +1376,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 		break;
 	case LLC_REJ_TIMER_EXPIRED:
-		if (linkp->llcl_retry < llc_n2)
+		if (linkp->llcl_retry < llc_n2) {
 			if (LLC_GETFLAG(linkp,P) == 0) {
 				/* multiple possibilities */
 				llc_send(linkp, LLCFT_RNR, LLC_CMD, 1);
@@ -1389,7 +1390,7 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 				LLC_NEWSTATE(linkp,BUSY);
 				action = 0;
 			}
-
+		}
 		break;
 	}
 	if (action == LLC_PASSITON)
@@ -2323,7 +2324,7 @@ llc_dellink(linkp)
 	register struct mbuf *m;
 	register struct mbuf *n;
 	register struct npaidbentry *sapinfo = linkp->llcl_sapinfo;
-	register        i;
+	register int    i;
 
 	/* notify upper layer of imminent death */
 	if (linkp->llcl_nlnext && sapinfo->si_ctlinput)
