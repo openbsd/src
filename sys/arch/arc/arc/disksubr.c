@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.2 1996/08/26 11:01:34 pefo Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.3 1995/04/22 12:43:22 cgd Exp $	*/
 
 /*
@@ -168,15 +168,6 @@ setdisklabel(olp, nlp, openmask, clp)
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
 		return(EINVAL);
 
-#ifdef notdef
-	/* XXX WHY WAS THIS HERE?! */
-	/* special case to allow disklabel to be invalidated */
-	if (nlp->d_magic == 0xffffffff) { 
-		*olp = *nlp;
-		return (0);
-	}
-#endif
-
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 		dkcksum(nlp) != 0)
 		return (EINVAL);
@@ -283,7 +274,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	struct disklabel *lp;
 	int wlabel;
 {
-#define dkpart(dev) (minor(dev) & 7)
+#define dkpart(dev) (minor(dev) % MAXPARTITIONS )
 
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
 	int labelsect = lp->d_partitions[RAW_PART].p_offset;

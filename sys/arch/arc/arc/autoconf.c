@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 1996/08/26 11:01:33 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $
+ *      $Id: autoconf.c,v 1.2 1996/08/26 11:01:33 pefo Exp $
  */
 
 /*
@@ -124,9 +124,6 @@ static	char devname[][2] = {
 	'x','x',	/* 6 = unused */
 	'f','d',	/* 7 = floppy */
 };
-
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
 
 /*
  * Attempt to find the device from which we were booted.
