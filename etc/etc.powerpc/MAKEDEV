@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.29 2000/03/22 07:34:30 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 2000/09/06 02:54:26 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -54,6 +54,14 @@
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
 #		Cirrus boards (grf3), A2410 (grf4) video or
 #		CyberVision 64 (grf5)
+#
+# USB devices:
+#	usb*	Bus control devices used by usbd for attach/detach
+#	uhid*	Generic HID devices
+#	ulpt*	Printer devices
+#	urio*	Diamond Multimedia Rio 500
+#	ugen*	Generic device
+#	utty*	Serial ports
 #
 # Special purpose devices:
 #	ch*	SCSI media changer
@@ -134,8 +142,6 @@ all)
 	sh $this std fd
 	sh $this wd0 wd1 wd2 wd3 
 	sh $this sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh $this ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4 
-	sh $this ofdisk5 ofdisk6 ofdisk7 ofdisk8 ofdisk9 
 	sh $this vnd0 vnd1 vnd2 vnd3
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this rd0 ipl
@@ -146,6 +152,7 @@ all)
 	sh $this random uk0 uk1 ss0 ss1
 	sh $this kbd mouse
 	sh $this lkm xfs0
+	sh $this usbs
 	sh $this local
 	;;
 
@@ -153,7 +160,6 @@ ramdisk)
 	sh $this std
 	sh $this wd0 wd1 wd2 wd3 
 	sh $this sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
-	sh $this ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4 
 	sh $this rd0
 	sh $this ttyo0 ttyE0
 	sh $this random
@@ -176,6 +182,14 @@ std)
 	mknod stdout		c 21 1	; chmod 666 stdout
 	mknod stderr		c 21 2	; chmod 666 stderr
 #	mknod ksyms		c 43 0  ; chmod 640 ksyms ; chown root.kmem ksyms
+	;;
+
+usbs)
+	sh $this usb0 usb1
+	sh $this uhid0 uhid1 uhid2 uhid3
+	sh $this ulpt0 ulpt1
+	sh $this urio0
+	sh $this utty0 utty1
 	;;
 
 fd)
@@ -423,11 +437,56 @@ cd*)
 	umask 77
 	;;
 
+usb*)
+	rm -f usb$unit
+	mknod usb$unit c 61 $unit
+	chown root.wheel usb$unit
+	chmod 660 usb$unit
+	;;
+
+uhid*)
+	rm -f uhid$unit
+	mknod uhid$unit c 62 $unit
+	chown root.wheel uhid$unit
+	chmod 660 uhid$unit
+	;;
+
+ugen*)
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	do
+		rm -f ugen$unit.$j
+		mknod ugen$unit.$j c 63 $(( $unit * 16 + $j ))
+		chown root.wheel ugen$unit.$j
+		chmod 660 ugen$unit.$j
+	done
+	;;
+
+ulpt*)
+	rm -f ulpt$unit
+	mknod ulpt$unit c 64 $unit
+	chown root.wheel ulpt$unit
+	chmod 660 ulpt$unit
+	;;
+
+urio*)
+	rm -f urio$unit
+	mknod urio$unit c 65 $unit
+	chown root.wheel urio$unit
+	chmod 660 urio$unit
+	;;
+
+utty*)
+	rm -f utty$unit
+	mknod utty$unit c 66 $unit
+	chown root.wheel utty$unit
+	chmod 660 utty$unit
+	;;
+
 ttyE*)
 		  type=E
 		  unit=${i##ttyE}
 	case $type in
-	E)	major=25; minor=$unit ;;
+	E)	major=67; minor=$unit ;;
 	esac
         rm -f tty$type$unit
         mknod tty$type$unit c $major $minor
