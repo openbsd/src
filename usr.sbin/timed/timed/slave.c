@@ -1,3 +1,5 @@
+/*	$OpenBSD: slave.c,v 1.3 1996/07/28 06:04:10 downsj Exp $	*/
+
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +38,7 @@ static char sccsid[] = "@(#)slave.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.2 $"
+#ident "$Revision: 1.3 $"
 #endif
 
 #include "globals.h"
@@ -298,7 +300,7 @@ loop:
 				tmptv.tv_sec = msg->tsp_time.tv_sec;
 				tmptv.tv_usec = msg->tsp_time.tv_usec;
 				(void)settimeofday(&tmptv, 0);
-				logwtmp("}", "date", "");
+				logwtmp("{", "date", "");
 #endif /* sgi */
 				syslog(LOG_NOTICE,
 				       "date changed by %s from %s",
