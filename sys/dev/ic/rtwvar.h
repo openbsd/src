@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.7 2005/02/19 03:33:30 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.8 2005/03/02 11:14:12 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -203,7 +203,7 @@ struct rtw_txsoft_blk {
 	u_int			tsb_ndesc;
 	int			tsb_tx_timer;
 	struct rtw_txsoft	*tsb_desc;
-	uint8_t			tsb_poll;
+	u_int8_t			tsb_poll;
 };
 
 struct rtw_descs {
@@ -220,23 +220,31 @@ struct rtw_descs {
 
 /* Radio capture format for RTL8180. */
 
-#define RTW_RX_RADIOTAP_PRESENT	\
-	((1 << IEEE80211_RADIOTAP_FLAGS) | (1 << IEEE80211_RADIOTAP_RATE) | \
-	 (1 << IEEE80211_RADIOTAP_CHANNEL) | \
-	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL))
+#define RTW_RX_RADIOTAP_PRESENT					\
+	((1 << IEEE80211_RADIOTAP_TSFT)			|	\
+	 (1 << IEEE80211_RADIOTAP_FLAGS)		|	\
+	 (1 << IEEE80211_RADIOTAP_RATE)			|	\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL)		|	\
+	 (1 << IEEE80211_RADIOTAP_LOCK_QUALITY)		|	\
+	 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)		|	\
+	 0)
 
 struct rtw_rx_radiotap_header {
 	struct ieee80211_radiotap_header	rr_ihdr;
+	u_int64_t				rr_tsft;
 	u_int8_t				rr_flags;
 	u_int8_t				rr_rate;
 	u_int16_t				rr_chan_freq;
 	u_int16_t				rr_chan_flags;
+	u_int16_t				rr_barker_lock;
 	u_int8_t				rr_antsignal;
 } __attribute__((__packed__));
 
-#define RTW_TX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
-				 (1 << IEEE80211_RADIOTAP_RATE) | \
-				 (1 << IEEE80211_RADIOTAP_CHANNEL))
+#define RTW_TX_RADIOTAP_PRESENT				\
+	((1 << IEEE80211_RADIOTAP_FLAGS)	|	\
+	 (1 << IEEE80211_RADIOTAP_RATE)		|	\
+	 (1 << IEEE80211_RADIOTAP_CHANNEL)	|	\
+	 0)
 
 struct rtw_tx_radiotap_header {
 	struct ieee80211_radiotap_header	rt_ihdr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.21 2005/02/27 09:32:46 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.22 2005/03/02 11:14:12 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -200,7 +200,6 @@ void rtw_set80211props(struct ieee80211com *);
 void rtw_set80211methods(struct rtw_mtbl *, struct ieee80211com *);
 void rtw_establish_hooks(struct rtw_hooks *, const char *, void *);
 void rtw_disestablish_hooks(struct rtw_hooks *, const char *, void *);
-void rtw_init_radiotap(struct rtw_softc *);
 int rtw_txsoft_blk_setup(struct rtw_txsoft_blk *, u_int);
 void rtw_rxdesc_init_all(struct rtw_rxdesc_blk *, struct rtw_rxsoft *, int);
 int rtw_txring_choose(struct rtw_softc *, struct rtw_txsoft_blk **,
@@ -1399,6 +1398,36 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			    rate, rssi);
 		}
 #endif /* RTW_DEBUG */
+
+#if NBPFILTER > 0
+		if (sc->sc_radiobpf != NULL) {
+			struct mbuf mb;
+			struct ieee80211com *ic = &sc->sc_ic;
+			struct rtw_rx_radiotap_header *rr = &sc->sc_rxtap;
+
+			rr->rr_tsft =
+			    htole64(((uint64_t)htsfth << 32) | htsftl);
+
+			if ((hstat & RTW_RXSTAT_SPLCP) != 0)
+				rr->rr_flags = IEEE80211_RADIOTAP_F_SHORTPRE;
+
+			rr->rr_flags = 0;
+			rr->rr_rate = rate;
+			rr->rr_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			rr->rr_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+			rr->rr_antsignal = rssi;
+			rr->rr_barker_lock = htole16(sq);
+
+			M_DUP_PKTHDR(&mb, m);
+			mb.m_data = (caddr_t)rr;
+			mb.m_len = sizeof(sc->sc_rxtapu);
+			mb.m_next = m;
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_radiobpf, &mb);
+		}
+#endif /* NPBFILTER > 0 */
 
 		ieee80211_input(&sc->sc_if, m, ni, rssi, htsftl);
 		ieee80211_release_node(&sc->sc_ic, ni);
@@ -3101,6 +3130,31 @@ rtw_start(struct ifnet *ifp)
 
 		KASSERT(ts->ts_first < tdb->tdb_ndesc);
 
+#if NBPFILTER > 0
+		if (ic->ic_rawbpf != NULL)
+			bpf_mtap((caddr_t)ic->ic_rawbpf, m0);
+
+		if (sc->sc_radiobpf != NULL) {
+			struct mbuf mb;
+			struct rtw_tx_radiotap_header *rt = &sc->sc_txtap;
+
+			rt->rt_flags = 0;
+			rt->rt_rate = rate;
+			rt->rt_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			rt->rt_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+
+			M_DUP_PKTHDR(&mb, m0);
+			mb.m_data = (caddr_t)rt;
+			mb.m_len = sizeof(sc->sc_txtapu);
+			mb.m_next = m0;
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_radiobpf, &mb);
+
+		}
+#endif /* NPBFILTER > 0 */
+
 		for (i = 0, lastdesc = desc = ts->ts_first;
 		     i < dmamap->dm_nsegs;
 		     i++, desc = RTW_NEXT_IDX(tdb, desc)) {
@@ -3582,18 +3636,6 @@ rtw_disestablish_hooks(struct rtw_hooks *hooks, const char *dvname,
 		powerhook_disestablish(hooks->rh_power);
 }
 
-void
-rtw_init_radiotap(struct rtw_softc *sc)
-{
-	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
-	sc->sc_rxtap.rr_ihdr.it_len = sizeof(sc->sc_rxtapu);
-	sc->sc_rxtap.rr_ihdr.it_present = RTW_RX_RADIOTAP_PRESENT;
-
-	memset(&sc->sc_txtapu, 0, sizeof(sc->sc_txtapu));
-	sc->sc_txtap.rt_ihdr.it_len = sizeof(sc->sc_txtapu);
-	sc->sc_txtap.rt_ihdr.it_present = RTW_TX_RADIOTAP_PRESENT;
-}
-
 int
 rtw_txsoft_blk_setup(struct rtw_txsoft_blk *tsb, u_int qlen)
 {
@@ -3933,13 +3975,19 @@ rtw_attach(struct rtw_softc *sc)
 	timeout_set(&sc->sc_scan_to, rtw_next_scan, sc);
 
 #if NBPFILTER > 0
+	bzero(&sc->sc_rxtapu, sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.rr_ihdr.it_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.rr_ihdr.it_present = RTW_RX_RADIOTAP_PRESENT;
+
+	bzero(&sc->sc_txtapu, sizeof(sc->sc_txtapu));
+	sc->sc_txtap.rt_ihdr.it_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.rt_ihdr.it_present = RTW_TX_RADIOTAP_PRESENT;
+
 	bpfattach(&sc->sc_radiobpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64);
 #endif
 
 	rtw_establish_hooks(&sc->sc_hooks, sc->sc_dev.dv_xname, (void*)sc);
-
-	rtw_init_radiotap(sc);
 
 	NEXT_ATTACH_STATE(sc, FINISHED);
 
