@@ -1,4 +1,4 @@
-/*	$OpenBSD: nologin.c,v 1.3 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: nologin.c,v 1.4 2003/06/04 02:57:30 jolan Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -38,8 +39,9 @@
 /*ARGSUSED*/
 int main(int argc, char *argv[])
 {
-	int nfd, nrd;
-	char nbuf[128];
+	int nfd;
+	ssize_t nrd;
+	char nbuf[BUFSIZ];
 
 	nfd = open(_PATH_NOLOGIN_TXT, O_RDONLY);
 	if (nfd < 0) {
@@ -47,7 +49,7 @@ int main(int argc, char *argv[])
 		exit (1);
 	}
 
-	while ((nrd = read(nfd, nbuf, sizeof(nbuf))) > 0)
+	while ((nrd = read(nfd, nbuf, sizeof(nbuf))) != -1 && nrd != 0)
 		write(STDOUT_FILENO, nbuf, nrd);
 	close (nfd);
 
