@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.9 2001/02/19 09:49:54 camield Exp $	*/
+/*	$OpenBSD: proto.h,v 1.10 2003/04/16 23:11:52 tdeval Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -62,7 +62,7 @@ char *	substitute	ARGS((const char *cp, int f));
 char **	eval		ARGS((char **ap, int f));
 char *	evalstr		ARGS((char *cp, int f));
 char *	evalonestr	ARGS((char *cp, int f));
-char	*debunk		ARGS((char *dp, const char *sp));
+char	*debunk		ARGS((char *dp, const char *sp, size_t dlen));
 void	expand		ARGS((char *cp, XPtrV *wp, int f));
 int glob_str		ARGS((char *cp, XPtrV *wp, int markdirs));
 /* exec.c */

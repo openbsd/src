@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.18 2003/02/28 09:45:09 jmc Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.19 2003/04/16 23:11:52 tdeval Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -886,9 +886,9 @@ x_load_hist(hp)
 	}
 	x_histp = hp;
 	oldsize = x_size_str(xbuf);
-	(void)strcpy(xbuf, *hp);
+	strlcpy(xbuf, *hp, xend - xbuf);
 	xbp = xbuf;
-	xep = xcp = xbuf + strlen(*hp);
+	xep = xcp = xbuf + strlen(xbuf);
 	xlp_valid = FALSE;
 	if (xep > x_lastcp())
 	  x_goto(xep);
@@ -1022,7 +1022,7 @@ x_del_line(c)
 	int	i, j;
 
 	*xep = 0;
-	i = xep- xbuf;
+	i = xep - xbuf;
 	j = x_size_str(xbuf);
 	xcp = xbuf;
 	x_push(i);

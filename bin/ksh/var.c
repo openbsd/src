@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.13 2003/03/13 09:03:07 deraadt Exp $	*/
+/*	$OpenBSD: var.c,v 1.14 2003/04/16 23:11:52 tdeval Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -1132,6 +1132,7 @@ arraysearch(vp, val)
 	int val;
 {
 	struct tbl *prev, *curr, *new;
+	size_t namelen = strlen(vp->name) + 1;
 
 	vp->flag |= ARRAY|DEFINED;
 
@@ -1152,9 +1153,9 @@ arraysearch(vp, val)
 		else
 			new = curr;
 	} else
-		new = (struct tbl *)alloc(sizeof(struct tbl)+strlen(vp->name)+1,
+		new = (struct tbl *)alloc(sizeof(struct tbl) + namelen,
 		    vp->areap);
-	strcpy(new->name, vp->name);
+	strlcpy(new->name, vp->name, namelen);
 	new->flag = vp->flag & ~(ALLOC|DEFINED|ISSET|SPECIAL);
 	new->type = vp->type;
 	new->areap = vp->areap;
