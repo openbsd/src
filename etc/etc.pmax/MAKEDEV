@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.22 1998/01/29 15:50:24 graichen Exp $
+#	$OpenBSD: MAKEDEV,v 1.23 1998/05/10 04:02:08 millert Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -144,24 +144,40 @@ rz*|ccd*)
 	esac
 	case $unit in
 	0|1|2|3|4|5|6|8|9|10|11|12|13|14)
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + 0`
+		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + 1`
+		mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + 2`
+		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + 3`
+		mknod ${name}${unit}e	b $blk `expr $unit '*' 16 + 4`
+		mknod ${name}${unit}f	b $blk `expr $unit '*' 16 + 5`
+		mknod ${name}${unit}g	b $blk `expr $unit '*' 16 + 6`
+		mknod ${name}${unit}h	b $blk `expr $unit '*' 16 + 7`
+		mknod ${name}${unit}i	b $blk `expr $unit '*' 16 + 8`
+		mknod ${name}${unit}j	b $blk `expr $unit '*' 16 + 9`
+		mknod ${name}${unit}k	b $blk `expr $unit '*' 16 + 10`
+		mknod ${name}${unit}l	b $blk `expr $unit '*' 16 + 11`
+		mknod ${name}${unit}m	b $blk `expr $unit '*' 16 + 12`
+		mknod ${name}${unit}n	b $blk `expr $unit '*' 16 + 13`
+		mknod ${name}${unit}o	b $blk `expr $unit '*' 16 + 14`
+		mknod ${name}${unit}p	b $blk `expr $unit '*' 16 + 15`
+		mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + 0`
+		mknod r${name}${unit}b	c $chr `expr $unit '*' 16 + 1`
+		mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + 2`
+		mknod r${name}${unit}d	c $chr `expr $unit '*' 16 + 3`
+		mknod r${name}${unit}e	c $chr `expr $unit '*' 16 + 4`
+		mknod r${name}${unit}f	c $chr `expr $unit '*' 16 + 5`
+		mknod r${name}${unit}g	c $chr `expr $unit '*' 16 + 6`
+		mknod r${name}${unit}h	c $chr `expr $unit '*' 16 + 7`
+		mknod r${name}${unit}i	c $chr `expr $unit '*' 16 + 8`
+		mknod r${name}${unit}j	c $chr `expr $unit '*' 16 + 9`
+		mknod r${name}${unit}k	c $chr `expr $unit '*' 16 + 10`
+		mknod r${name}${unit}l	c $chr `expr $unit '*' 16 + 11`
+		mknod r${name}${unit}m	c $chr `expr $unit '*' 16 + 12`
+		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + 13`
+		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + 14`
+		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + 15`
+		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 		;;
 	*)
 		echo bad unit for disk in: $i
@@ -179,24 +195,40 @@ vnd*)
 		svnd)	off=128;;
 		esac
 		rm -f $name$unit? r$name$unit?
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + $off + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + $off + 1`
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + $off + 2`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + $off + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + $off + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + $off + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + $off + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + $off + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + $off + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + $off + 1`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + $off + 2`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + $off + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + $off + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + $off + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + $off + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + $off + 7`
-		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
+		mknod ${name}${unit}a	b $blk `expr $unit '*' 16 + $off + 0`
+		mknod ${name}${unit}b	b $blk `expr $unit '*' 16 + $off + 1`
+		mknod ${name}${unit}c	b $blk `expr $unit '*' 16 + $off + 2`
+		mknod ${name}${unit}d	b $blk `expr $unit '*' 16 + $off + 3`
+		mknod ${name}${unit}e	b $blk `expr $unit '*' 16 + $off + 4`
+		mknod ${name}${unit}f	b $blk `expr $unit '*' 16 + $off + 5`
+		mknod ${name}${unit}g	b $blk `expr $unit '*' 16 + $off + 6`
+		mknod ${name}${unit}h	b $blk `expr $unit '*' 16 + $off + 7`
+		mknod ${name}${unit}i	b $blk `expr $unit '*' 16 + $off + 8`
+		mknod ${name}${unit}j	b $blk `expr $unit '*' 16 + $off + 9`
+		mknod ${name}${unit}k	b $blk `expr $unit '*' 16 + $off + 10`
+		mknod ${name}${unit}l	b $blk `expr $unit '*' 16 + $off + 11`
+		mknod ${name}${unit}m	b $blk `expr $unit '*' 16 + $off + 12`
+		mknod ${name}${unit}n	b $blk `expr $unit '*' 16 + $off + 13`
+		mknod ${name}${unit}o	b $blk `expr $unit '*' 16 + $off + 14`
+		mknod ${name}${unit}p	b $blk `expr $unit '*' 16 + $off + 15`
+		mknod r${name}${unit}a	c $chr `expr $unit '*' 16 + $off + 0`
+		mknod r${name}${unit}b	c $chr `expr $unit '*' 16 + $off + 1`
+		mknod r${name}${unit}c	c $chr `expr $unit '*' 16 + $off + 2`
+		mknod r${name}${unit}d	c $chr `expr $unit '*' 16 + $off + 3`
+		mknod r${name}${unit}e	c $chr `expr $unit '*' 16 + $off + 4`
+		mknod r${name}${unit}f	c $chr `expr $unit '*' 16 + $off + 5`
+		mknod r${name}${unit}g	c $chr `expr $unit '*' 16 + $off + 6`
+		mknod r${name}${unit}h	c $chr `expr $unit '*' 16 + $off + 7`
+		mknod r${name}${unit}i	c $chr `expr $unit '*' 16 + $off + 8`
+		mknod r${name}${unit}j	c $chr `expr $unit '*' 16 + $off + 9`
+		mknod r${name}${unit}k	c $chr `expr $unit '*' 16 + $off + 10`
+		mknod r${name}${unit}l	c $chr `expr $unit '*' 16 + $off + 11`
+		mknod r${name}${unit}m	c $chr `expr $unit '*' 16 + $off + 12`
+		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + $off + 13`
+		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + $off + 14`
+		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + $off + 15`
+		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	done
 	umask 77
 	;;
