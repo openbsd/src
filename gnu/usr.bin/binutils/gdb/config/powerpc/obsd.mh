@@ -1,10 +1,15 @@
-# Host: PowerPC, running Linux
+# Host: PowerPC, running OpenBSD
 
-XM_FILE= xm-obsd.h
+XM_FILE= ../xm-obsd.h
 XDEPFILES= ser-tcp.o
 XM_CLIBS=
 
 NAT_FILE= nm-obsd.h
-NATDEPFILES= obsdsolib.o corelow.o core-aout.o core-regset.o # infptrace.o inftarg.o fork-child.o
+NATDEPFILES= ppcobsd-nat.o corelow.o infptrace.o fork-child.o core-aout.o inftarg.o #core-regset.o
 
-#GDBSERVER_DEPFILES= low-linux.o
+GDBSERVER_DEPFILES= 
+
+# SVR4 comes standard with terminfo, and in some implementations, the
+# old termcap descriptions are incomplete.  So ensure that we use the
+# new terminfo interface and latest terminal descriptions.
+TERMCAP=-lcurses
