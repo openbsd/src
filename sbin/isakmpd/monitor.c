@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.15 2004/03/29 16:32:47 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.16 2004/03/29 17:07:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -548,7 +548,7 @@ monitor_loop (int debugging)
   maxfd = m_state.s + 1;
 
   fdsn = howmany (maxfd, NFDBITS) * sizeof (fd_mask);
-  fds = (fd_set *)calloc (fdsn);
+  fds = (fd_set *)malloc (fdsn);
   if (!fds)
     {
       kill (m_state.pid, SIGTERM);
