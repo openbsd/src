@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.10 1997/09/24 18:45:26 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.11 1997/11/04 09:13:41 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -73,7 +73,8 @@ typedef struct {
 }       transform;
 
 int xf_esp_new __P((struct in_addr, struct in_addr, u_int32_t, int, int, 
-		    u_char *, u_char *, struct in_addr, struct in_addr, int));
+		    u_char *, u_char *, u_char *, struct in_addr, 
+		    struct in_addr, int));
 int xf_esp_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
 		    u_char *, struct in_addr, struct in_addr)); 
 int xf_ah_new __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
@@ -87,6 +88,8 @@ int xf_grp __P((struct in_addr, u_int32_t, int, struct in_addr, u_int32_t, int))
 transform xf[] = {
 	{"des", ALG_ENC_DES,   XF_ENC |ESP_OLD|ESP_NEW},
 	{"3des", ALG_ENC_3DES, XF_ENC |ESP_OLD|ESP_NEW},
+	{"blf", ALG_ENC_BLF,   XF_ENC |        ESP_NEW},
+	{"cast", ALG_ENC_CAST, XF_ENC |        ESP_NEW},
 	{"md5", ALG_AUTH_MD5,  XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
 	{"sha1", ALG_AUTH_SHA1,XF_AUTH|AH_OLD|AH_NEW|ESP_NEW},
 };
@@ -132,10 +135,11 @@ usage()
 	      "\t\t-dst <ip>\t destination address to be used\n"
 	      "\t\t-spi <val>\t SPI to be used\n"
 	      "\t\t-key <val>\t key material to be used\n"
+	      "\t\t-authkey <val>\t key material for auth in new esp\n"
 	      "\t\t-iv <val>\t iv to be used\n"
 	      "\t\t-proto <val>\t security protocol\n"
 	      "\t\t-chain\t\t SPI chain delete\n"
-	      "\t\t-oldpadding\told style padding for new ESP\n"
+	      "\t\t-oldpadding\t old style padding for new ESP\n"
 	      "\talso: dst2, spi2, proto2\n"
 	  );
 }
@@ -147,12 +151,12 @@ main(argc, argv)
 {
 	int i;
 	int mode = ESP_NEW, new = 1, flag = 0, oldpadding = 0;
-	int auth = 0, enc = 0, ivlen = 0, klen = 0;
+	int auth = 0, enc = 0, ivlen = 0, klen = 0, alen = 0;
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
 	int chain = 0; 
 	u_int32_t spi = 0, spi2 = 0;
 	struct in_addr src, dst, dst2, osrc, odst;
-	u_char *ivp = NULL, *keyp = NULL;
+	u_char *ivp = NULL, *keyp = NULL, *authp = NULL;
 
 	osrc.s_addr = odst.s_addr = src.s_addr = dst.s_addr = dst2.s_addr = 0;
 
@@ -210,6 +214,14 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i]+1, "key") && keyp == NULL && i+1 < argc) {
 		  keyp = argv[++i];
 		  klen = strlen(keyp);
+	     } else if (!strcmp(argv[i]+1, "authkey") && authp == NULL && i+1 < argc) {
+		  if (!(mode & ESP_NEW)) {
+		       fprintf(stderr, "%s: Invalid option %s for selected mode\n",
+			       argv[0], argv[i]);
+		       exit(1);
+		  }
+		  authp = argv[++i];
+		  alen = strlen(keyp);
 	     } else if (!strcmp(argv[i]+1, "iv") && ivp == NULL && i+1 < argc) {
 		  if (mode & (AH_OLD|AH_NEW)) {
 		       fprintf(stderr, "%s: Invalid option %s with auth\n",
@@ -279,6 +291,9 @@ main(argc, argv)
 	} else if (isencauth(mode) && keyp == NULL) {
 	     fprintf(stderr, "%s: No key material specified\n", argv[0]);
 	     exit(1);
+	} else if ((mode & ESP_NEW) && auth & authp == NULL) {
+	     fprintf(stderr, "%s: No auth key material specified\n", argv[0]);
+	     exit(1);
 	} else if (spi == 0) {
 	     fprintf(stderr, "%s: No SPI specified\n", argv[0]);
 	     exit(1);
@@ -309,8 +324,8 @@ main(argc, argv)
 	if (isencauth(mode)) {
 	     switch(mode) {
 	     case ESP_NEW:
-		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, osrc, odst,
-			     oldpadding);
+		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, authp, 
+			     osrc, odst, oldpadding);
 		  break;
 	     case ESP_OLD:
 		  xf_esp_old(src, dst, spi, enc, ivp, keyp, osrc, odst);

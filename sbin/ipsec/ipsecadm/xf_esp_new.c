@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_esp_new.c,v 1.3 1997/09/24 18:39:44 angelos Exp $ */
+/* $OpenBSD: xf_esp_new.c,v 1.4 1997/11/04 09:13:42 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -58,25 +58,29 @@ int xf_set __P(( struct encap_msghdr *));
 int x2i __P((char *));
 
 int
-xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, osrc, odst, oldpadding)
+xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, authp, 
+	   osrc, odst, oldpadding)
 struct in_addr src, dst;
 u_int32_t spi;
 int enc, auth;
-u_char *ivp, *keyp;
+u_char *ivp, *keyp, *authp;
 struct in_addr osrc, odst;
 int oldpadding;
 {
-	int i, klen, ivlen;
+	int i, klen, alen, ivlen;
 
 	struct encap_msghdr *em;
 	struct esp_new_xencap *xd;
 
 	klen = strlen(keyp)/2;
+	alen = authp == NULL ? 0 : strlen(authp)/2;
 	ivlen = ivp == NULL ? 0 : strlen(ivp)/2;
 
 	em = (struct encap_msghdr *)&buf[0];
 	
-	em->em_msglen = EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + ivlen + klen;
+	em->em_msglen = EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN + 
+	     ivlen + klen + alen;
+
 	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
 	em->em_spi = spi;
@@ -92,7 +96,8 @@ int oldpadding;
 	xd->edx_enc_algorithm = enc;
 	xd->edx_hash_algorithm = auth;
 	xd->edx_ivlen = ivlen;
-	xd->edx_keylen = klen;
+	xd->edx_confkeylen = klen;
+	xd->edx_authkeylen = alen;
 	xd->edx_wnd = -1;	/* Manual keying -- no seq */
 	xd->edx_flags = auth ? ESP_NEW_FLAG_AUTH : 0;
 	
@@ -102,8 +107,11 @@ int oldpadding;
 	for (i = 0; i < ivlen; i++)
 	     xd->edx_data[i] = x2i(ivp+2*i);
 
-	for (i = 0; i < xd->edx_keylen; i++)
+	for (i = 0; i < klen; i++)
 	     xd->edx_data[i+ivlen] = x2i(keyp+2*i);
+
+	for (i = 0; i < alen; i++)
+	     xd->edx_data[i+ivlen+klen] = x2i(keyp+2*i);
 
 	return xf_set(em);
 }
