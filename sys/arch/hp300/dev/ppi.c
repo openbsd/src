@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppi.c,v 1.7 2000/07/06 15:42:48 ho Exp $	*/
+/*	$OpenBSD: ppi.c,v 1.8 2001/05/01 16:51:10 millert Exp $	*/
 /*	$NetBSD: ppi.c,v 1.13 1997/04/02 22:37:33 scottr Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/timeout.h>
 #include <sys/uio.h>
 
 #include <hp300/dev/hpibvar.h>
@@ -64,6 +65,8 @@ struct	ppi_softc {
 #define sc_delay sc_param.delay
 	int	sc_sec;
 	int	sc_slave;		/* HP-IB slave address */
+	struct timeout sc_to;		/* ppitimo timeout */
+	struct timeout sc_start_to;	/* ppistart timeout */
 };
 
 /* sc_flags values */
@@ -151,6 +154,10 @@ ppiattach(parent, self, aux)
 	sc->sc_hq.hq_intr = ppinoop;
 
 	sc->sc_flags = PPIF_ALIVE;
+
+	/* Initialize timeout structures */
+	timeout_set(&sc->sc_to, ppitimo, sc);
+	timeout_set(&sc->sc_to, ppistart, sc);
 }
 
 void
@@ -293,7 +300,7 @@ ppirw(dev, uio)
 	sc->sc_flags |= PPIF_UIO;
 	if (sc->sc_timo > 0) {
 		sc->sc_flags |= PPIF_TIMO;
-		timeout(ppitimo, sc, sc->sc_timo);
+		timeout_add(&sc->sc_to, sc->sc_timo);
 	}
 	len = cnt = 0;
 	while (uio->uio_resid > 0) {
@@ -320,7 +327,7 @@ again:
 				       sc->sc_flags);
 #endif
 			if (sc->sc_flags & PPIF_TIMO) {
-				untimeout(ppitimo, sc);
+				timeout_del(&sc->sc_to);
 				sc->sc_flags &= ~PPIF_TIMO;
 			}
 			splx(s);
@@ -374,7 +381,7 @@ again:
 		 */
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PPIF_DELAY;
-			timeout(ppistart, sc, sc->sc_delay);
+			timeout_add(&sc->sc_start_to, sc->sc_delay);
 			error = tsleep(sc, (PCATCH|PZERO) + 1, "hpib", 0);
 			if (error) {
 				splx(s);
@@ -395,11 +402,11 @@ again:
 	}
 	s = splsoftclock();
 	if (sc->sc_flags & PPIF_TIMO) {
-		untimeout(ppitimo, sc);
+		timeout_del(&sc->sc_to);
 		sc->sc_flags &= ~PPIF_TIMO;
 	}
 	if (sc->sc_flags & PPIF_DELAY) {
-		untimeout(ppistart, sc);
+		timeout_del(&sc->sc_start_to);
 		sc->sc_flags &= ~PPIF_DELAY;
 	}
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.6 1997/04/16 11:56:13 downsj Exp $	*/
+/*	$OpenBSD: mt.c,v 1.7 2001/05/01 16:51:10 millert Exp $	*/
 /*	$NetBSD: mt.c,v 1.8 1997/03/31 07:37:29 scottr Exp $	*/
 
 /* 
@@ -78,6 +78,8 @@ struct	mt_softc {
 	tpr_t	sc_ttyp;
 	struct buf sc_tab;	/* buf queue */
 	struct buf sc_bufstore;	/* XXX buffer storage */
+	struct timeout sc_start_to; /* spl_mtstart timeout */
+	struct timeout sc_intr_to; /* spl_mtintr timeout */
 };
 
 #ifdef DEBUG
@@ -157,6 +159,10 @@ mtattach(parent, self, aux)
 	sc->sc_hq.hq_start = mtstart;
 	sc->sc_hq.hq_go = mtgo;
 	sc->sc_hq.hq_intr = mtintr;
+
+	/* Initialize timeout structures */
+	timeout_set(&sc->sc_start_to, spl_mtstart, sc);
+	timeout_set(&sc->sc_intr_to, spl_mtintr, sc);
 }
 
 int
@@ -551,7 +557,7 @@ mtstart(arg)
 			 * but not otherwise.
 			 */
 			if (sc->sc_flags & (MTF_DSJTIMEO | MTF_STATTIMEO)) {
-				timeout(spl_mtstart, sc, hz >> 5);
+				timeout_add(&sc->sc_start_to, hz >> 5);
 				return;
 			}
 		    case 2:
@@ -637,7 +643,7 @@ mtstart(arg)
 				break;
 
 			    case -2:
-				timeout(spl_mtstart, sc, hz >> 5);
+				timeout_add(&sc->sc_start_to, hz >> 5);
 				return;
 			}
 
@@ -652,7 +658,7 @@ mtstart(arg)
 				    sc->sc_dev.dv_xname);
 				goto fatalerror;
 			}
-			timeout(spl_mtintr, sc, 4 * hz);
+			timeout_add(&sc->sc_intr_to, 4 * hz);
 			hpibawait(sc->sc_hpibno);
 			return;
 
@@ -791,7 +797,7 @@ mtintr(arg)
 		 * to the request for DSJ.  It's probably just "busy" figuring
 		 * it out and will know in a little bit...
 		 */
-		timeout(spl_mtintr, sc, hz >> 5);
+		timeout_add(&sc->sc_intr_to, hz >> 5);
 		return;
 
 	    default:
@@ -809,7 +815,7 @@ mtintr(arg)
 			sc->sc_stat3, sc->sc_stat5);
 
 		if ((bp->b_flags & B_CMD) && bp->b_cmd == MTRESET)
-			untimeout(spl_mtintr, sc);
+			timeout_del(&sc->sc_intr_to);
 		if (sc->sc_stat3 & SR3_POWERUP)
 			sc->sc_flags &= MTF_OPEN | MTF_EXISTS;
 		goto error;
@@ -861,7 +867,7 @@ mtintr(arg)
 				sc->sc_flags |= MTF_HITBOF;
 		}
 		if (bp->b_cmd == MTRESET) {
-			untimeout(spl_mtintr, sc);
+			timeout_del(&sc->sc_intr_to);
 			sc->sc_flags |= MTF_ALIVE;
 		}
 	} else {

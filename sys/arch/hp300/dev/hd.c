@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.11 1998/10/04 01:02:26 millert Exp $	*/
+/*	$OpenBSD: hd.c,v 1.12 2001/05/01 16:51:09 millert Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -313,6 +313,9 @@ hdattach(parent, self, aux)
 	if (hddebug & HDB_ERROR)
 		hderrthresh = 0;
 #endif
+
+	/* Initialize timeout structure */
+	timeout_set(&sc->sc_timeout, hdrestart, sc);
 
 	dk_establish(&sc->sc_dkdev, &sc->sc_dev);	/* XXX */
 }
@@ -708,7 +711,7 @@ done:
 }
 
 /*
- * Called from timeout() when handling maintenance releases
+ * Called via timeout(9) when handling maintenance releases
  */
 void
 hdrestart(arg)
@@ -1014,7 +1017,7 @@ hderror(unit)
 		rs->sc_stats.hdtimeouts++;
 #endif
 		hpibfree(rs->sc_dev.dv_parent, &rs->sc_hq);
-		timeout(hdrestart, rs, hdtimo * hz);
+		timeout_add(&rs->sc_timeout, hdtimo * hz);
 		return(0);
 	}
 	/*

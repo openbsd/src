@@ -1,4 +1,4 @@
-/*	$OpenBSD: nhpib.c,v 1.8 1997/07/06 08:01:54 downsj Exp $	*/
+/*	$OpenBSD: nhpib.c,v 1.9 2001/05/01 16:51:10 millert Exp $	*/
 /*	$NetBSD: nhpib.c,v 1.17 1997/05/05 21:06:41 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
@@ -113,6 +114,8 @@ struct nhpib_softc {
 	struct device sc_dev;		/* generic device glue */
 	struct nhpibdevice *sc_regs;	/* device registers */
 	struct hpibbus_softc *sc_hpibbus; /* XXX */
+	struct timeout sc_read_to;	/* nhpibreadtimo timeout */
+	struct timeout sc_watch_to;	/* nhpibppwatch timeout */
 };
 
 int	nhpibmatch __P((struct device *, void *, void *));
@@ -178,6 +181,10 @@ nhpibattach(parent, self, aux)
 
 	/* Establish the interrupt handler. */
 	(void) dio_intr_establish(nhpibintr, sc, ipl, IPL_BIO);
+
+	/* Initialize timeout structures */
+	timeout_set(&sc->sc_read_to, nhpibreadtimo, &sc->sc_hpibbus);
+	timeout_set(&sc->sc_watch_to, nhpibppwatch, &sc->sc_hpibbus);
 
 	ha.ha_ops = &nhpib_controller;
 	ha.ha_type = type;			/* XXX */
@@ -425,7 +432,7 @@ nhpibdone(hs)
 	if (hs->sc_flags & HPIBF_READ) {
 		if ((hs->sc_flags & HPIBF_TIMO) &&
 		    (hd->hpib_ids & IDS_IR) == 0)
-			timeout(nhpibreadtimo, hs, hz >> 2);
+			timeout_add(&sc->sc_read_to, hz >> 2);
 	} else {
 		if (hs->sc_count == 1) {
 			(void) nhpibwait(hd, MIS_BO);
@@ -467,7 +474,7 @@ nhpibintr(arg)
 			hs->sc_flags &= ~HPIBF_TIMO;
 			dmastop(hs->sc_dq->dq_chan);
 		} else if (hs->sc_flags & HPIBF_TIMO)
-			untimeout(nhpibreadtimo, hs);
+			timeout_del(&sc->sc_read_to);
 		hd->hpib_acr = AUX_TCA;
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 
@@ -544,5 +551,5 @@ again:
 		/* timeouts not working yet */
 		goto again;
 	else
-		timeout(nhpibppwatch, hs, 1);
+		timeout_add(&sc->sc_watch_to, 1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.3 1997/09/14 03:43:01 downsj Exp $	*/
+/*	$OpenBSD: apci.c,v 1.4 2001/05/01 16:51:08 millert Exp $	*/
 /*	$NetBSD: apci.c,v 1.1 1997/05/12 08:12:36 thorpej Exp $	*/
 
 /*      
@@ -69,6 +69,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>       
+#include <sys/timeout.h>       
     
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -89,6 +90,7 @@ struct apci_softc {
 	struct	device sc_dev;		/* generic device glue */
 	struct	apciregs *sc_apci;	/* device registers */
 	struct	tty *sc_tty;		/* tty glue */
+	struct	timeout sc_timeout;	/* timeout */
 	int	sc_ferr,
 		sc_perr,
 		sc_oflow,
@@ -226,6 +228,9 @@ apciattach(parent, self, aux)
 	/* Establish out interrupt handler. */
 	frodo_intr_establish(parent, apciintr, sc, fa->fa_line,
 	    (sc->sc_flags & APCI_HASFIFO) ? IPL_TTY : IPL_TTYNOBUF);
+
+	/* Initialize timeout structure */
+	timeout_set(&sc->sc_timeout, apcitimeout, sc);
 
 	/* Set soft carrier if requested by operator. */
 	if (self->dv_cfdata->cf_flags)
@@ -368,7 +373,7 @@ apciopen(dev, flag, mode, p)
 	if (error == 0) {
 		/* clear errors, start timeout */
 		sc->sc_ferr = sc->sc_perr = sc->sc_oflow = sc->sc_toterr = 0;
-		timeout(apcitimeout, sc, hz);
+		timeout_add(&sc->sc_timeout, hz);
 	}
 
 	return (error);
@@ -876,7 +881,7 @@ apcitimeout(arg)
 		    sc->sc_dev.dv_xname, ferr, perr, oflow, sc->sc_toterr);
 	}
 
-	timeout(apcitimeout, sc, hz);
+	timeout_add(&sc->sc_timeout, hz);
 }
 
 int

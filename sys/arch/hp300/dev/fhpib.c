@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhpib.c,v 1.8 1997/07/06 08:01:50 downsj Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.9 2001/05/01 16:51:09 millert Exp $	*/
 /*	$NetBSD: fhpib.c,v 1.18 1997/05/05 21:04:16 thorpej Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
@@ -109,6 +110,10 @@ struct	hpib_controller fhpib_controller = {
 struct fhpib_softc {
 	struct device sc_dev;		/* generic device glue */
 	struct fhpibdevice *sc_regs;	/* device registers */
+	struct timeout sc_dma_to;	/* DMA done timeout */
+#ifdef DEBUG
+	struct timeout sc_watch_to;	/* fhpibppwatch timeout */
+#endif
 	int	sc_cmd;
 	struct hpibbus_softc *sc_hpibbus; /* XXX */
 };
@@ -156,6 +161,12 @@ fhpibattach(parent, self, aux)
 
 	ipl = DIO_IPL(sc->sc_regs);
 	printf(" ipl %d: %s\n", ipl, DIO_DEVICE_DESC_FHPIB);
+
+	/* Initialize timeout structures */
+	timeout_set(&sc->sc_dma_to, fhpibdmadone, sc);
+#ifdef DEBUG
+	timeout_set(&sc->sc_watch_to, fhpibppwatch, sc);
+#endif
 
 	/* Establish the interrupt handler. */
 	(void) dio_intr_establish(fhpibintr, sc, ipl, IPL_BIO);
@@ -480,7 +491,7 @@ fhpibdone(hs)
 	if (hs->sc_flags & HPIBF_READ) {
 		hd->hpib_imask = IM_IDLE | IM_BYTE;
 		if (hs->sc_flags & HPIBF_TIMO)
-			timeout(fhpibdmadone, hs, hz >> 2);
+			timeout_add(&sc->sc_dma_to, hz >> 2);
 	} else {
 		cnt = hs->sc_count;
 		if (cnt) {
@@ -536,7 +547,7 @@ fhpibintr(arg)
 	hq = hs->sc_queue.tqh_first;
 	if (hs->sc_flags & HPIBF_IO) {
 		if (hs->sc_flags & HPIBF_TIMO)
-			untimeout(fhpibdmadone, hs);
+			timeout_del(&sc->sc_dma_to);
 		stat0 = hd->hpib_cmd;
 		hd->hpib_cmd = sc->sc_cmd & ~CT_8BIT;
 		hd->hpib_stat = 0;
@@ -645,7 +656,7 @@ fhpibppwatch(arg)
 			hd->hpib_stat = ST_IENAB;
 			hd->hpib_imask = IM_IDLE | IM_ROOM;
 		} else
-			timeout(fhpibppwatch, sc, 1);
+			timeout_add(&sc->sc_watch_to, 1);
 		return;
 	}
 	if ((fhpibdebug & FDB_PPOLL) && sc->sc_dev.dv_unit == fhpibdebugunit)

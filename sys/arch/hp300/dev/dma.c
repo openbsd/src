@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.8 1997/07/06 08:01:49 downsj Exp $	*/
+/*	$OpenBSD: dma.c,v 1.9 2001/05/01 16:51:08 millert Exp $	*/
 /*	$NetBSD: dma.c,v 1.19 1997/05/05 21:02:39 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <machine/frame.h>
 #include <machine/cpu.h>
@@ -85,6 +86,9 @@ struct dma_channel {
 struct dma_softc {
 	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
 	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
+#ifdef DEBUG
+	struct	timeout sc_timeout;		/* DMA timeout */
+#endif
 	TAILQ_HEAD(, dmaqueue) sc_queue;	/* job queue */
 	char	sc_type;			/* A, B, or C */
 	int	sc_ipl;				/* our interrupt level */
@@ -177,7 +181,8 @@ dmainit()
 
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout(dmatimeout, sc, 30 * hz);
+	timeout_set(&sc->sc_timeout, dmatimeout, sc);
+	timeout_add(&sc->sc_timeout, 30 * hz);
 #endif
 
 	printf("98620%c, 2 channels, %d bit DMA\n",
@@ -588,6 +593,6 @@ dmatimeout(arg)
 		}
 		splx(s);
 	}
-	timeout(dmatimeout, sc, 30 * hz);
+	timeout_add(&sc->sc_timeout, 30 * hz);
 }
 #endif

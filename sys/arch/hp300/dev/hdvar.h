@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdvar.h,v 1.2 1997/02/10 01:33:56 downsj Exp $	*/
+/*	$OpenBSD: hdvar.h,v 1.3 2001/05/01 16:51:09 millert Exp $	*/
 /*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct	hd_softc {
 	struct	hd_clearcmd sc_clear;
 	struct	buf sc_tab;		/* buffer queue */
 	struct	hdstats sc_stats;
+	struct	timeout sc_timeout;
 };
 
 /* sc_flags values */
