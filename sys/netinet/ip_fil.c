@@ -1,4 +1,4 @@
-/*    $OpenBSD: ip_fil.c,v 1.23 1999/04/22 16:12:40 niklas Exp $    */
+/*    $OpenBSD: ip_fil.c,v 1.24 1999/06/07 22:00:32 deraadt Exp $    */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.23 1999/04/22 16:12:40 niklas Exp $";
+static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.24 1999/06/07 22:00:32 deraadt Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -1028,11 +1028,9 @@ frdest_t *fdp;
 	 * If small enough for interface, can just send directly.
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
-# ifndef sparc
 		ip->ip_id = htons(ip->ip_id);
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
-# endif
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 # if	BSD >= 199306
@@ -1098,9 +1096,7 @@ frdest_t *fdp;
 			error = ENOBUFS;	/* ??? */
 			goto sendorfree;
 		}
-# ifndef sparc
 		mhip->ip_off = htons((u_short)mhip->ip_off);
-# endif
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		*mnext = m;
