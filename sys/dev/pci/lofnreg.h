@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofnreg.h,v 1.3 2001/06/26 03:41:01 jason Exp $	*/
+/*	$OpenBSD: lofnreg.h,v 1.4 2001/06/26 05:16:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -68,4 +68,3 @@
 #define	LOFN_CFG2_PRCENA	0x00000002	/* Processor enable */
 
 #define	LOFN_CHIPID_MASK	0x0000ffff	/* Chip ID */
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.2 2001/06/26 03:54:31 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.3 2001/06/26 05:16:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -135,7 +135,13 @@ lofn_attach(parent, self, aux)
 		goto fail_io;
 	}
 
-	printf("\n");
+	/* Enable RNG */
+	WRITE_REG_0(sc, LOFN_REL_IER,
+	    READ_REG_0(sc, LOFN_REL_IER) | LOFN_IER_RDY);
+	WRITE_REG_0(sc, LOFN_REL_CFG2,
+	    READ_REG_0(sc, LOFN_REL_CFG2) | LOFN_CFG2_RNGENA);
+
+	printf(": %s\n", intrstr);
 
 	return;
 
@@ -145,8 +151,30 @@ fail_io:
 }
 
 int 
-lofn_intr(arg)
-	void *arg;
+lofn_intr(vsc)
+	void *vsc;
 {
-	return (0);
+	struct lofn_softc *sc = vsc;
+	u_int32_t sr;
+	int r = 0, i;
+
+	sr = READ_REG_0(sc, LOFN_REL_SR);
+
+	if (sr & LOFN_SR_RNG_UF) {
+		r = 1;
+		printf("%s: rng underflow (disabling)\n", sc->sc_dv.dv_xname);
+		WRITE_REG_0(sc, LOFN_REL_CFG2,
+		    READ_REG_0(sc, LOFN_REL_CFG2) & (~LOFN_CFG2_RNGENA));
+		WRITE_REG_0(sc, LOFN_REL_IER,
+		    READ_REG_0(sc, LOFN_REL_IER) & (~LOFN_IER_RDY));
+	} else if (sr & LOFN_SR_RNG_RDY) {
+		r = 1;
+
+		bus_space_read_region_4(sc->sc_st, sc->sc_sh, 0x1080,
+		    sc->sc_rngbuf, LOFN_RNGBUF_SIZE);
+		for (i = 0; i < LOFN_RNGBUF_SIZE; i++)
+			add_true_randomness(sc->sc_rngbuf[i]);
+	}
+
+	return (r);
 }
