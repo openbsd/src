@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.6 2005/02/09 14:39:56 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.7 2005/02/09 17:41:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -173,6 +173,7 @@ struct area {
 
 /* interface events */
 enum iface_event {
+	IF_EVT_NOTHING,
 	IF_EVT_UP,
 	IF_EVT_WTIMER,
 	IF_EVT_BACKUP_SEEN,
@@ -183,6 +184,7 @@ enum iface_event {
 };
 
 static const char * const if_event_names[] = {
+	"NOTHING",
 	"UP",
 	"WAITTIMER",
 	"BACKUPSEEN",
@@ -194,6 +196,7 @@ static const char * const if_event_names[] = {
 
 /* interface actions */
 enum iface_action {
+	IF_ACT_NOTHING,
 	IF_ACT_STRT,
 	IF_ACT_ELECT,
 	IF_ACT_RST

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.6 2005/02/09 16:37:29 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.7 2005/02/09 17:41:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -59,16 +59,17 @@ struct {
     {IF_STA_DOWN,	IF_EVT_UP,		IF_ACT_STRT,	0},
     {IF_STA_WAITING,	IF_EVT_BACKUP_SEEN,	IF_ACT_ELECT,	0},
     {IF_STA_WAITING,	IF_EVT_WTIMER,		IF_ACT_ELECT,	0},
-    {IF_STA_WAITING,	IF_EVT_NBR_CHNG,	0,		0},
+    {IF_STA_WAITING,	IF_EVT_NBR_CHNG,	IF_ACT_NOTHING,	0},
     {IF_STA_MULTI,	IF_EVT_NBR_CHNG,	IF_ACT_ELECT,	0},
-    {IF_STA_ANY,	IF_EVT_NBR_CHNG,	0,		0},
+    {IF_STA_ANY,	IF_EVT_NBR_CHNG,	IF_ACT_NOTHING,	0},
     {IF_STA_ANY,	IF_EVT_DOWN,		IF_ACT_RST,	IF_STA_DOWN},
     {IF_STA_ANY,	IF_EVT_LOOP,		IF_ACT_RST,	IF_STA_LOOPBACK},
-    {IF_STA_LOOPBACK,	IF_EVT_UNLOOP,		0,		IF_STA_DOWN},
-    {-1,		0,			-1,		0},
+    {IF_STA_LOOPBACK,	IF_EVT_UNLOOP,		IF_ACT_NOTHING,	IF_STA_DOWN},
+    {-1,		IF_EVT_NOTHING,		IF_ACT_NOTHING,	0},
 };
 
 const char * const if_action_names[] = {
+	"NOTHING",
 	"START",
 	"ELECT",
 	"RESET"
@@ -122,7 +123,7 @@ if_fsm(struct iface *iface, enum iface_event event)
 	case IF_ACT_RST:
 		ret = if_act_reset(iface);
 		break;
-	default:
+	case IF_ACT_NOTHING:
 		/* do nothing */
 		break;
 	}
@@ -361,8 +362,7 @@ if_act_start(struct iface *iface)
 	}
 
 	/* init the dummy local neighbor */
-	if (iface->self == NULL)
-		iface->self = nbr_new(ospfe_router_id(), iface, 1);
+	iface->self = nbr_new(ospfe_router_id(), iface, 1);
 
 	/* up interface */
 		/* ... */
@@ -371,6 +371,7 @@ if_act_start(struct iface *iface)
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_POINTOMULTIPOINT:
 	case IF_TYPE_VIRTUALLINK:
+	case IF_TYPE_NBMA:
 		log_debug("if_act_start: type %s not supported, interface %s",
 		    if_type_name(iface->type), iface->name);
 		return (-1);
@@ -379,6 +380,7 @@ if_act_start(struct iface *iface)
 		if (if_join_group(iface, &addr)) {
 			log_warnx("if_act_start: error joining group %s, "
 			    "interface %s", inet_ntoa(addr), iface->name);
+			return (-1);
 		}
 		if (iface->priority == 0) {
 			iface->state = IF_STA_DROTHER;
@@ -392,10 +394,6 @@ if_act_start(struct iface *iface)
 				    "timer, interface %s", iface->name);
 		}
 		break;
-	case IF_TYPE_NBMA:
-		log_debug("if_act_start: type %s not supported, interface %s",
-		    if_type_name(iface->type), iface->name);
-		return (-1);
 	default:
 		fatalx("if_act_start: unknown interface type");
 	}
