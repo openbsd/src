@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcvar.h>
 
-#include <macppc/mac/dbdma.h>
+#include <macppc/dev/dbdma.h>
 
 #define WDC_REG_NPORTS		8
 #define WDC_AUXREG_OFFSET	0x16

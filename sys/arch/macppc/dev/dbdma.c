@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include <vm/vm.h>
 
 #include <machine/pio.h>
-#include <macppc/mac/dbdma.h>
+#include <macppc/dev/dbdma.h>
 
 
 

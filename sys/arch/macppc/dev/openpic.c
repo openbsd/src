@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -55,7 +55,7 @@
 #include <machine/psl.h>
 #include <machine/pio.h>
 #include <machine/powerpc.h>
-#include <macppc/mac/openpicreg.h>
+#include <macppc/dev/openpicreg.h>
 #include <dev/ofw/openfirm.h>
 
 #define ICU_LEN 128

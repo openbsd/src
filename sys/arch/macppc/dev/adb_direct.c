@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.2 2001/09/01 17:43:08 drahn Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
@@ -70,10 +70,10 @@
 #include <machine/cpu.h>
 #include <machine/adbsys.h>
 
-#include <macppc/mac/viareg.h>
-#include <macppc/mac/adbvar.h>
-#include <macppc/mac/adb_direct.h>
-#include <macppc/mac/pm_direct.h>
+#include <macppc/dev/viareg.h>
+#include <macppc/dev/adbvar.h>
+#include <macppc/dev/adb_direct.h>
+#include <macppc/dev/pm_direct.h>
 
 #define printf_intr printf
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: adb.c,v 1.2 2001/09/01 17:43:08 drahn Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -42,9 +42,9 @@
 
 #include <machine/autoconf.h>
 
-#include <macppc/mac/adbvar.h>
-#include <macppc/mac/akbdvar.h>
-#include <macppc/mac/viareg.h>
+#include <macppc/dev/adbvar.h>
+#include <macppc/dev/akbdvar.h>
+#include <macppc/dev/viareg.h>
 
 #include "aed.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aed.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: aed.c,v 1.2 2001/09/01 17:43:08 drahn Exp $	*/
 /*	$NetBSD: aed.c,v 1.5 2000/03/23 06:40:33 thorpej Exp $	*/
 
 /*
@@ -43,10 +43,10 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
-#include <macppc/mac/keyboard.h>
-#include <macppc/mac/adbvar.h>
-#include <macppc/mac/aedvar.h>
-#include <macppc/mac/akbdvar.h>
+#include <macppc/dev/keyboard.h>
+#include <macppc/dev/adbvar.h>
+#include <macppc/dev/aedvar.h>
+#include <macppc/dev/akbdvar.h>
 
 #define spladb splhigh
 

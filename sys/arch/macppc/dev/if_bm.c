@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -57,8 +57,8 @@
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 
-#include <macppc/mac/dbdma.h>
-#include <macppc/mac/if_bmreg.h>
+#include <macppc/dev/dbdma.h>
+#include <macppc/dev/if_bmreg.h>
 
 #define BMAC_TXBUFS 2
 #define BMAC_RXBUFS 16

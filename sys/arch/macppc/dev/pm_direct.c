@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.2 2001/09/01 17:43:09 drahn Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -48,9 +48,9 @@
 #include <machine/adbsys.h>
 #include <machine/cpu.h>
 
-#include <macppc/mac/adbvar.h>
-#include <macppc/mac/pm_direct.h>
-#include <macppc/mac/viareg.h>
+#include <macppc/dev/adbvar.h>
+#include <macppc/dev/pm_direct.h>
+#include <macppc/dev/viareg.h>
 
 extern int adb_polling;		/* Are we polling?  (Debugger mode) */
 
