@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.310 2000/09/12 00:27:05 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.311 2000/09/14 07:58:59 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -637,6 +637,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec(2)",
 	    "AHA-3960D Ultra160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622,
+	    0,
+	    "Adaptec(2)",
+	    "AAC-2622",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364,
+	    0,
+	    "Adaptec(2)",
+	    "AAC-364",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622,
+	    0,
+	    "Adaptec(2)",
+	    "AAC-3642",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_2QC,
+	    0,
+	    "Adaptec(2)",
+	    "Dell PERC 2/QC",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_3QC,
+	    0,
+	    "Adaptec(2)",
+	    "Dell PERC 3/QC",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
@@ -1629,6 +1659,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "GXm PCI-ISA",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DELL_PERC_2SI,
+	    0,
+	    "Dell Computer",
+	    "PERC 2/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DELL_PERC_3DI,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_DELL_PERC_3SI,
+	    0,
+	    "Dell Computer",
+	    "PERC 3/Si",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX,
 	    0,
 	    "D-Link Systems",
@@ -1891,6 +1939,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hewlett-Packard",
 	    "J2585A",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,
+	    0,
+	    "Hewlett-Packard",
+	    "NetRaid-4M",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,

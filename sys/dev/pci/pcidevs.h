@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.310 2000/09/12 00:27:05 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.311 2000/09/14 07:58:59 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -685,6 +685,11 @@
 #define	PCI_PRODUCT_ADP2_AIC7896	0x005f		/* AIC-7896/7 Ultra2 */
 #define	PCI_PRODUCT_ADP2_AIC7899	0x00CF		/* AIC-7899 Ultra160 */
 #define	PCI_PRODUCT_ADP2_3960D	0x00C0		/* AHA-3960D Ultra160 */
+#define	PCI_PRODUCT_ADP2_AAC2622	0x0282		/* AAC-2622 */
+#define	PCI_PRODUCT_ADP2_AAC364	0x0364		/* AAC-364 */
+#define	PCI_PRODUCT_ADP2_AAC2622	0x0365		/* AAC-3642 */
+#define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
+#define	PCI_PRODUCT_ADP2_PERC_3QC	0x1365		/* Dell PERC 3/QC */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100		/* 1200A */
@@ -917,6 +922,11 @@
 #define	PCI_PRODUCT_CYRIX_GXMPCI	0x0001		/* GXm Host-PCI */
 #define	PCI_PRODUCT_CYRIX_GXMISA	0x0002		/* GXm PCI-ISA */
 
+/* Dell Computer */
+#define	PCI_PRODUCT_DELL_DELL_PERC_2SI	0x0001		/* PERC 2/Si */
+#define	PCI_PRODUCT_DELL_DELL_PERC_3DI	0x0002		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
+
 /* D-Link products */
 #define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
 
@@ -996,6 +1006,8 @@
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_J2585A	0x1030		/* J2585A */
+/* XXX guess */
+#define	PCI_PRODUCT_HP_NETRAID_4M	0x10c2		/* NetRaid-4M */
 
 /* Hi/Fn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
