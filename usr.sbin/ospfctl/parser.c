@@ -1,7 +1,7 @@
-/*	$OpenBSD: parser.c,v 1.1 2005/01/28 14:18:46 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.2 2005/01/28 17:26:05 norby Exp $ */
 
 /*
- * Copyright (c) 2004 Esben Norby <esben.norby@ericsson.com>
+ * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
