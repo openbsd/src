@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.3 2001/09/04 15:25:52 jason Exp $	*/
+/*	$OpenBSD: intr.c,v 1.4 2001/09/20 21:29:26 jason Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -88,7 +88,6 @@ strayintr(fp, vectored)
 {
 	static int straytime, nstray;
 	int timesince;
-	char buf[256];
 #if 0
 	extern int swallow_zsintrs;
 #endif
@@ -102,11 +101,10 @@ strayintr(fp, vectored)
 	/* If we're in polled mode ignore spurious interrupts */
 	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
-	snprintf(buf, sizeof(buf), "%b", fp->tf_tstate>>TSTATE_PSTATE_SHIFT,
-		PSTATE_BITS);
-	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%s vecttored=%d\n",
+	printf("stray interrupt ipl %u pc=%llx npc=%llx pstate=%b vecttored=%d\n",
 	    fp->tf_pil, (unsigned long long)fp->tf_pc,
-	    (unsigned long long)fp->tf_npc, buf, vectored);
+	    (unsigned long long)fp->tf_npc, fp->tf_tstate>>TSTATE_PSTATE_SHIFT,
+	    PSTATE_BITS, vectored);
 
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
