@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.9 2001/03/09 14:20:51 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.10 2001/03/15 10:30:57 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.56 1999/06/16 19:34:24 thorpej Exp $	*/
 
 /* 
@@ -1369,7 +1369,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	 * step 1: reserve space in the target map for the extracted area
 	 */
 
-	dstaddr = *dstaddrp;
+	dstaddr = vm_map_min(dstmap);
 	if (uvm_map_reserve(dstmap, len, start, &dstaddr) == FALSE)
 		return(ENOMEM);
 	*dstaddrp = dstaddr;	/* pass address back to caller */
