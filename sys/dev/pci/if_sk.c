@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.52 2004/12/08 01:45:04 krw Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.53 2004/12/08 04:26:53 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2287,7 +2287,7 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 	    XM_MODE_RX_GIANTS|XM_MODE_RX_RUNTS|XM_MODE_RX_CRCERRS|
 	    XM_MODE_RX_INRANGELEN);
 
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > ETHER_MAX_LEN)
 		SK_XM_SETBIT_2(sc_if, XM_RXCMD, XM_RXCMD_BIGPKTOK);
 	else
 		SK_XM_CLRBIT_2(sc_if, XM_RXCMD, XM_RXCMD_BIGPKTOK);

@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.32 2004/11/16 14:39:14 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.33 2004/12/08 04:28:40 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -546,7 +546,7 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	 * sized frames
 	 */
 	sc->hw.max_frame_size = 
-	    ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN;
+	    ETHER_MAX_LEN;
 
 	sc->hw.min_frame_size = 
 	    MINIMUM_ETHERNET_PACKET_SIZE + ETHER_CRC_LEN;
