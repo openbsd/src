@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.9 1996/08/22 10:47:47 downsj Exp $
+#	$OpenBSD: INST,v 1.10 1996/08/31 17:35:37 deraadt Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #       Install kernels no longer support X.
@@ -44,6 +44,8 @@ option		FIFO		# FIFOs; RECOMMENDED
 option		KERNFS		# /kern
 
 option		INET		# IP + ICMP + TCP + UDP
+
+option		BOOT_CONFIG	# boot-time kernel config
 
 config		bsd	swap generic
 
