@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.22 1997/10/24 00:08:24 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.23 1997/10/24 02:44:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.22 1997/10/24 00:08:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.23 1997/10/24 02:44:07 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,10 @@ static char rcsid[] = "$OpenBSD: editor.c,v 1.22 1997/10/24 00:08:24 millert Exp
 /* flags for getuint() */
 #define	DO_CONVERSIONS	0x00000001
 #define	DO_ROUNDING	0x00000002
+
+#ifndef NUMBOOT
+#define NUMBOOT 0
+#endif
 
 /* structure to describe a portion of a disk */
 struct diskchunk {
@@ -146,6 +150,13 @@ editor(lp, f)
 
 #ifdef CYLCHECK
 	puts("This platform requires that partition offsets/sizes be on cylinder boundaries.\nPartition offsets/sizes will be rounded to the nearest cylinder automatically.");
+#endif
+
+#if defined(OLD_SCSI)
+	/* Some ports use the old scsi system that doesn't get the geom right */
+	if (strcmp(label.d_typename, "fictitious") == 0)
+		puts("Warning, driver-generated label.  Disk parameters may be "
+		    "incorrect.");
 #endif
 
 	puts("\nInitial label editor (enter '?' for help at any prompt)");
@@ -405,6 +416,13 @@ editor_add(lp, freep, p)
 	pp->p_cpg = 16;
 	pp->p_size = *freep;
 	pp->p_offset = next_offset(lp, pp);	/* must be computed last */
+#if NUMBOOT == 1
+	/* Don't clobber boot blocks */
+	if (pp->p_offset == 0) {
+		pp->p_offset = pp->d_secpercyl;
+		pp->p_size -= pp->d_secpercyl;
+	}
+#endif
 	old_offset = pp->p_offset;
 	old_size = pp->p_size;
 
@@ -423,12 +441,14 @@ getoff1:
 			fputs("Invalid entry\n", stderr);
 		else if (ui < starting_sector)
 			fprintf(stderr, "The OpenBSD portion of the disk starts"
-			    " at sector %u, you tried to add a partition at %u\n"
-			    , starting_sector, ui);
+			    " at sector %u, you tried to add a partition at %u."
+			    "  You can use the 'b' command to change the size "
+			    "of the OpenBSD portion.\n" , starting_sector, ui);
 		else if (ui >= ending_sector)
 			fprintf(stderr, "The OpenBSD portion of the disk ends "
-			    "at sector %u, you tried to add a partition at %u\n",
-			    ending_sector, ui);
+			    "at sector %u, you tried to add a partition at %u."
+			    "  You can use the 'b' command to change the size "
+			    "of the OpenBSD portion.\n", ending_sector, ui);
 		else
 			break;
 	}
@@ -466,7 +486,8 @@ getoff1:
 		else if (pp->p_offset + ui > ending_sector)
 			fprintf(stderr, "The OpenBSD portion of the disk ends "
 			    "at sector %u, you tried to add a partition ending "
-			    "at sector %u\n",
+			    "at sector %u.  You can use the 'b' command to "
+			    "change the size of the OpenBSD portion.\n",
 			    ending_sector, pp->p_offset + ui);
 		else
 			break;
@@ -697,8 +718,9 @@ getoff2:
 			fputs("Invalid entry\n", stderr);
 		else if (partno != 2 && ui + ui < starting_sector) {
 			fprintf(stderr, "The OpenBSD portion of the disk starts"
-			    " at sector %u, you tried to start at %u\n",
-			    starting_sector, ui);
+			    " at sector %u, you tried to start at %u."
+			    "  You can use the 'b' command to change the size "
+			    "of the OpenBSD portion.\n", starting_sector, ui);
 		} else
 			break;
 	}
@@ -742,6 +764,8 @@ getoff2:
 			}
 		}
 	}
+	/* XXX - if (ui % lp->d_secpercyl == 0) make ui + offset on cyl bound */
+	pp->p_size = ui;
 	if (pp->p_size == 0)
 		return;
 
@@ -854,7 +878,8 @@ editor_delete(lp, freep, p)
 	    lp->d_partitions[c].p_offset < starting_sector)
 		fprintf(stderr, "The OpenBSD portion of the disk ends at sector"
 		    " %u.\nYou can't remove a partition outside the OpenBSD "
-		    "part of the disk.\n", ending_sector);
+		    "part of the disk.  You can use the 'b' command to change "
+		    "the size of the OpenBSD portion.\n", ending_sector);
 	else {
 		/* Update free sector count. */
 		if (lp->d_partitions[c].p_fstype != FS_UNUSED &&
@@ -960,12 +985,6 @@ next_offset(lp, pp)
 		/* XXX - should do something intelligent if new_size == 0 */
 		pp->p_size = new_size;
 	}
-
-#if 0
-	/* If we ran out of space, use an offset of zero */
-	if (new_offset >= ending_sector)
-		new_offset = 0;
-#endif
 
 	(void)free(spp);
 	return(new_offset);
@@ -1454,7 +1473,8 @@ edit_parms(lp, freep)
 		    ending_sector == lp->d_secperunit) {
 			/* grow free count */
 			*freep += ui - lp->d_secperunit;
-			puts("You may want to increase the 'c' partition.");
+			puts("You may want to increase the size of the 'c' "
+			    "partition.");
 			break;
 		} else if (ui < lp->d_secperunit &&
 		    ending_sector == lp->d_secperunit) {
@@ -1607,14 +1627,15 @@ set_bounds(lp)
 
 	/* Size */
 	do {
-		ui = getuint(lp, 0, "Size",
-		  "The size of the OpenBSD portion of the disk.",
-		  ending_sector - starting_sector, lp->d_secperunit, 0);
+		ui = getuint(lp, 0, "Size ('*' for entire disk)",
+		  "The size of the OpenBSD portion of the disk ('*' for the "
+		  "entire disk).", ending_sector - starting_sector,
+		  lp->d_secperunit - start_temp, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return;
 		}
-	} while (ui > lp->d_secperunit);
+	} while (ui > lp->d_secperunit - start_temp);
 	ending_sector = start_temp + ui;
 	starting_sector = start_temp;
 }
@@ -1682,6 +1703,7 @@ void
 find_bounds(lp)
 	struct disklabel *lp;
 {
+	struct  partition *pp = &lp->d_partitions[2];
 
 	/* Defaults */
 	/* XXX - reserve a cylinder for hp300? */
@@ -1690,13 +1712,17 @@ find_bounds(lp)
 
 #ifdef DOSLABEL
 	/* If we have an MBR, use values from the OpenBSD/386BSD parition. */
-	if (dosdp && lp->d_partitions[2].p_size &&
-	    (dosdp->dp_typ == DOSPTYP_OPENBSD || dosdp->dp_typ == DOSPTYP_386BSD)) {
+	if (dosdp && pp->p_size && (dosdp->dp_typ == DOSPTYP_OPENBSD ||
+	    dosdp->dp_typ == DOSPTYP_386BSD)) {
 		starting_sector = get_le(&dosdp->dp_start);
 		ending_sector = starting_sector + get_le(&dosdp->dp_size);
 		printf("Treating sectors %u-%u as the OpenBSD portion of the "
 		    "disk.\nYou can use the 'b' command to change this.\n",
 		    starting_sector, ending_sector);
+		/*
+		 * XXX - check to see if any BSD/SWAP partitions go beyond
+		 *	 ending_sector and prompt to extend ending_sector if so.
+		 */
 	}
 #endif
 }
