@@ -1,4 +1,4 @@
-/*	$Id: krb.h,v 1.2 1995/12/14 08:43:42 tholo Exp $	*/
+/*	$Id: krb.h,v 1.3 1996/06/02 05:04:16 tholo Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -331,9 +331,6 @@ struct tm *k_localtime __P((u_int32_t *));
 
 /* --- Random prototypes */
 #include <sys/types.h> /* to get u_char */
-
-/* Host address comparison */
-int krb_equiv __P((u_int32_t, u_int32_t));
 
 /* Password conversion */
 void mit_string_to_key __P((char *str, char *cell, des_cblock *key));
