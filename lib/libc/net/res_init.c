@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.9 1996/09/22 05:14:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.10 1996/09/22 11:52:07 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -406,7 +406,7 @@ net_mask(in)		/* XXX - should really use system's version of this */
 	return (htonl(IN_CLASSC_NET));
 }
 
-static u_int16_t
+u_int16_t
 res_randomid()
 {
 	struct timeval now;
