@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.18 2001/05/29 21:34:23 millert Exp $
+#	$OpenBSD: Makefile,v 1.19 2001/06/13 12:46:06 art Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SUBDIR+=login_passwd login_skey login_kerberos login_krb-or-pwd login_reject \
 .if (${YP:L} == "yes")
 SUBDIR+=rpc.yppasswdd
 .endif
-.if (${MACHINE_ARCH} == "powerpc")
+.if (${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "alpha")
 SUBDIR+=ld.so
 .endif
 
