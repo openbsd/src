@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.1.1.1 1998/06/23 18:46:42 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.2 1998/07/14 17:19:33 mickey Exp $	*/
 /*	$NOWHERE: time.c,v 2.2 1998/06/23 05:26:53 mickey Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ getsecs()
 		tt = ((struct pdc_tod *)pdcbuf)->sec;
 #ifdef DEBUG
 		if (debug && tt < 800000000)
-			printf("getsecs: got %lu seconds\n", tt);
+			printf("getsecs: got %u seconds\n", tt);
 #endif
 	}
 
