@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.7 1999/01/03 17:55:13 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 1999/02/25 17:32:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -43,14 +43,21 @@ typedef u_long bus_size_t;
 typedef u_long bus_space_tag_t;
 typedef u_long bus_space_handle_t;
 
+/* we are trying to avoid using bus.h interface whenever we can to avoid
+   overheads because of different bus access types */
+#define	HPPA_BUS_TAG_CORE	(0x000)
+#define	HPPA_BUS_TAG_ISA	(0x001)
+#define	HPPA_BUS_TAG_EISA	(0x002)
+#define	HPPA_BUS_TAG_PCI	(0x003)
+#define	HPPA_BUS_TAG_VME	(0x004)
+#define	HPPA_BUS_TAG_BUSMASK	(0x00f)
+#define	HPPA_BUS_TAG_MASK	(0xfff)
 #define	HPPA_BUS_TAG_SET_BASE(tag,base)	\
-		((((tag) & 0x00000fff)) | ((base) & 0xfffff000))
-#define	HPPA_BUS_TAG_BASE(tag)		((tag) & 0xfffff000)
+		((((tag) & HPPA_BUS_TAG_MASK)) | ((base) & ~HPPA_BUS_TAG_MASK))
+#define	HPPA_BUS_TAG_BASE(tag)		((tag) & ~HPPA_BUS_TAG_MASK)
 
 /* bus access routines */
-#define DCIAS(pa) \
-	__asm __volatile ("rsm %1, %%r0\n\tfdc %%r0(%0)\n\tssm %1, %%r0" \
-			  :: "r" (pa), "i" (PSW_D));
+#define DCIAS(pa)	((void)(pa))
 
 int bus_space_map __P((bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 		       int cacheable, bus_space_handle_t *bshp));
@@ -256,8 +263,10 @@ bus_space_write_multi_8(bus_space_tag_t t, bus_space_handle_t h,
 #define	BUS_SPACE_BARRIER_READ	0
 #define	BUS_SPACE_BARRIER_WRITE	1
 
-void bus_space_barrier __P((bus_space_tag_t tag, bus_space_handle_t h,
-	bus_addr_t off, bus_size_t len, int op));
+#define	bus_space_barrier(t,h,o,l,op)	{			\
+	((void)(t),(void)(h),(void)(o),(void)(l),(void)(op));	\
+	sync_caches();						\
+}
 
 #define	BUS_DMA_WAITOK		0x00
 #define	BUS_DMA_NOWAIT		0x01
@@ -304,32 +313,30 @@ struct hppa_bus_dma_tag {
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
+	int	(*_dmamap_create) __P((void *, bus_size_t, int,
 		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
-	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
+	void	(*_dmamap_destroy) __P((void *, bus_dmamap_t));
+	int	(*_dmamap_load) __P((void *, bus_dmamap_t, void *,
 		    bus_size_t, struct proc *, int));
-	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
+	int	(*_dmamap_load_mbuf) __P((void *, bus_dmamap_t,
 		    struct mbuf *, int));
-	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
+	int	(*_dmamap_load_uio) __P((void *, bus_dmamap_t,
 		    struct uio *, int));
-	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
+	int	(*_dmamap_load_raw) __P((void *, bus_dmamap_t,
 		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dmasync_op_t));
+	void	(*_dmamap_unload) __P((void *, bus_dmamap_t));
+	void	(*_dmamap_sync) __P((void *, bus_dmamap_t, bus_dmasync_op_t));
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
+	int	(*_dmamem_alloc) __P((void *, bus_size_t, bus_size_t,
 		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*_dmamem_free) __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
-	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
+	void	(*_dmamem_free) __P((void *, bus_dma_segment_t *, int));
+	int	(*_dmamem_map) __P((void *, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
-	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
+	void	(*_dmamem_unmap) __P((void *, caddr_t, size_t));
+	int	(*_dmamem_mmap) __P((void *, bus_dma_segment_t *,
 		    int, int, int, int));
 };
 
@@ -352,15 +359,35 @@ struct hppa_bus_dma_tag {
 	    (*(t)->_dmamap_sync)((t), (p), (o)) : (void)0)
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
-	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
+	(*(t)->_dmamem_alloc)((t)->_cookie, (s), (a), (b), (sg), (n), (r), (f))
 #define	bus_dmamem_free(t, sg, n)				\
-	(*(t)->_dmamem_free)((t), (sg), (n))
+	(*(t)->_dmamem_free)((t)->_cookie, (sg), (n))
 #define	bus_dmamem_map(t, sg, n, s, k, f)			\
-	(*(t)->_dmamem_map)((t), (sg), (n), (s), (k), (f))
+	(*(t)->_dmamem_map)((t)->_cookie, (sg), (n), (s), (k), (f))
 #define	bus_dmamem_unmap(t, k, s)				\
-	(*(t)->_dmamem_unmap)((t), (k), (s))
+	(*(t)->_dmamem_unmap)((t)->_cookie, (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
-	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+	(*(t)->_dmamem_mmap)((t)->_cookie, (sg), (n), (o), (p), (f))
+
+int	_dmamap_create __P((void *, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+void	_dmamap_destroy __P((void *, bus_dmamap_t));
+int	_dmamap_load __P((void *, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int));
+int	_dmamap_load_mbuf __P((void *, bus_dmamap_t, struct mbuf *, int));
+int	_dmamap_load_uio __P((void *, bus_dmamap_t, struct uio *, int));
+int	_dmamap_load_raw __P((void *, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int));
+void	_dmamap_unload __P((void *, bus_dmamap_t));
+void	_dmamap_sync __P((void *, bus_dmamap_t, bus_dmasync_op_t));
+
+int	_dmamem_alloc __P((void *, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int));
+void	_dmamem_free __P((void *, bus_dma_segment_t *, int));
+int	_dmamem_map __P((void *, bus_dma_segment_t *,
+	    int, size_t, caddr_t *, int));
+void	_dmamem_unmap __P((void *, caddr_t, size_t));
+int	_dmamem_mmap __P((void *, bus_dma_segment_t *, int, int, int, int));
 
 /*
  *	bus_dmamap_t
@@ -369,7 +396,7 @@ struct hppa_bus_dma_tag {
  */
 struct hppa_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
