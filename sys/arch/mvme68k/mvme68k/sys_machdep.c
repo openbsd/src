@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.10 2001/06/08 08:09:09 art Exp $ */
+/*	$OpenBSD: sys_machdep.c,v 1.11 2001/06/10 14:54:46 miod Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -79,7 +79,8 @@ int len;
 #if defined(M68040) || defined(M68060)
 	if (mmutype <= MMU_68040) {
 		register int inc = 0;
-		int pa = 0, doall = 0;
+		paddr_t pa = 0;
+		int doall = 0;
 		caddr_t end;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2001/06/08 08:09:10 art Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.24 2001/06/10 14:54:46 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -165,7 +165,7 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 #ifdef DEBUG
 	if ((size & PAGE_MASK) != 0)
@@ -278,7 +278,7 @@ vmapbuf(bp, siz)
 	struct proc *p;
 	int off;
 	vm_offset_t kva;
-	register vm_offset_t pa;
+	vm_offset_t pa;
 
 	if ((flags & B_PHYS) == 0)
 		panic("vmapbuf");
