@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.13 2001/08/26 02:37:07 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.14 2001/08/31 01:05:44 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -41,15 +41,23 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/device.h>
+#include <sys/syslog.h>
+
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/psl.h>
+
 #include <dev/cons.h>
 #include <mvme88k/dev/clreg.h>
-#include <sys/syslog.h>
+
 #include "cl.h"
 #include "pcctwo.h"
 #include <mvme88k/dev/pcctworeg.h>
-#include <machine/psl.h>
+
+#ifdef	DDB
+#include <ddb/db_var.h>
+#endif
+
 #define splcl()	splx(IPL_TTY)
 
 /* min timeout 0xa, what is a good value */
@@ -70,7 +78,6 @@
 #ifdef DEBUG
 #undef DEBUG
 #endif
-#define DEBUG_KERN 1
 struct cl_cons {
 	void	*cl_paddr;
 	volatile struct clreg *cl_vaddr;
@@ -1641,7 +1648,7 @@ cl_rxintr(arg)
 	int i;
 	u_char reoir;
 	u_char buffer[CL_FIFO_MAX +1];
-#ifdef CONSOLEBREAKDDB
+#ifdef DDB
 	int wantddb = 0;
 #endif
 	
@@ -1676,7 +1683,7 @@ cl_rxintr(arg)
 		reoir = 0x08;
 	} else
 	if (risrl & 0x01) {
-#ifdef CONSOLEBREAKDDB
+#ifdef DDB
 		if (sc->sc_cl[channel].cl_consio)
 			wantddb = 1;
 #endif
@@ -1803,8 +1810,8 @@ log(LOG_WARNING, "cl_txintr: DMAMODE channel %x dmabsts %x risrl %x risrh %x\n",
 		reoir = 0x08;
 		sc->cl_reg->cl_reoir = reoir;
 	}
-#ifdef CONSOLEBREAKDDB
-	if (wantddb)
+#ifdef DDB
+	if (wantddb != 0 && db_console != 0)
 		Debugger();
 #endif
 	return 1;
@@ -1850,8 +1857,9 @@ cl_break (sc, channel)
 	struct clsoftc *sc;
 	int channel;
 {
-#ifdef DEBUG_KERN
-	Debugger();
+#ifdef DDB
+	if (db_console != 0)
+		Debugger();
 #else
 	log(LOG_WARNING, "%s%d[%d]: break detected\n", cl_cd.cd_name, 0, channel);
 #endif

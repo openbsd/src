@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.10 2001/08/26 02:37:07 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.11 2001/08/31 01:05:44 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,24 +36,24 @@
 #include <sys/time.h>
 #include <sys/device.h>
 #include <sys/simplelock.h>
-#include <machine/cpu.h>
-#include <machine/autoconf.h>
-#include <machine/cpu_number.h>
+#include <sys/syslog.h>
+
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
+#include <machine/cpu_number.h>
+#include <machine/psl.h>
+
 #include <dev/cons.h>
+
 #include <mvme88k/dev/sysconreg.h>
 #include <mvme88k/dev/dartreg.h>
-#include <sys/syslog.h>
+
 #include "dart.h"
-#include <machine/psl.h>
 #define spldart()	splx(IPL_TTY)
 
-#if defined(DDB)
-#include <machine/db_machdep.h>		/* for details on entering kdb */
-#define DDB_ENTER_BREAK 0x1
-#define DDB_ENTER_CHAR  0x2
-unsigned char ddb_break_mode = DDB_ENTER_BREAK;
-unsigned char ddb_break_char = 0;
+#ifdef	DDB
+#include <db_variables.h>
 #endif
 
 #ifdef DEBUG
@@ -983,9 +983,9 @@ dartrint(sc, port)
 			ptaddr->write.wr_cr = ERRRESET;
 
 #if defined(DDB)
-			if (ddb_break_mode & DDB_ENTER_BREAK) {
+			if (db_console != 0) {
 				dprintf(("dartrint: break detected - entering debugger\n"));
-				gimmeabreak();
+				Debugger();
 			}
 #endif
 		} else {
@@ -1001,13 +1001,7 @@ dartrint(sc, port)
 				ptaddr->write.wr_cr = ERRRESET;
 			} else {
 				/* no errors */
-#if defined(DDB)
-				if ((ddb_break_mode & DDB_ENTER_CHAR) && (ddb_break_char == data)) {
-					dprintf(("dartrint: ddb_break_char detected - entering debugger\n"));
-					gimmeabreak();
-				} else
-#endif
-					(*linesw[tp->t_line].l_rint)(data,tp);
+				(*linesw[tp->t_line].l_rint)(data,tp);
 #if 0
 				{
 					if (tp->t_ispeed == B134) /* CS6 */

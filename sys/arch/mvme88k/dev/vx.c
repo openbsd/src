@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.9 2001/08/26 02:37:07 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.10 2001/08/31 01:05:44 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -43,6 +43,7 @@
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/psl.h>
 
 #include <dev/cons.h>
 
@@ -54,13 +55,15 @@
 #include <mvme88k/dev/vme.h>
 #endif
 
-#include <machine/psl.h>
+#ifdef	DDB
+#include <ddb/db_variables.h>
+#endif
+
 #define splvx()	spltty()
 
 #ifdef DEBUG
 #undef DEBUG
 #endif
-#define DEBUG_KERN 1
 
 struct vx_info {
 	struct   tty *tty;
@@ -1295,8 +1298,9 @@ vx_break (sc, port)
 	struct vxsoftc *sc;
 	int port;
 {
-#ifdef DEBUG_KERN
-	Debugger();
+#ifdef DDB
+	if (db_console != 0)
+		Debugger();
 #else
 	log(LOG_WARNING, "%s port %d: break detected\n", sc->sc_dev.dv_xname, port);
 #endif
