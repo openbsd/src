@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.22 2004/03/23 21:05:06 jmc Exp $
+dnl	$OpenBSD: prep,v 1.23 2005/03/18 13:31:13 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -124,8 +124,11 @@ OpenBSD/MACHINE console device restrictions:
     Currently, only the TURBOchannel MACHINE computers (DEC 3000) require
     use of a serial console.
 
-    If booting using the regular console aborts with ``not configured to
-    use display && keyboard console'', then you need to use a serial
-    console.
+dnl XXX This only affects kernels built without pckbc on machines configured
+dnl XXX for glass console. Not worth keeping at the moment... -- miod
+dnl    If booting using the regular console aborts with ``not configured to
+dnl    use display && keyboard console'', then you need to use a serial
+dnl    console.
+dnl
     If your machine was not listed in the list above, please report this
     to <alpha@OpenBSD.org>.

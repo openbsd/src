@@ -1,9 +1,7 @@
-dnl	$OpenBSD: install,v 1.24 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: install,v 1.25 2005/03/18 13:31:13 miod Exp $
 OpenBSDInstallPrelude
 
-dnl XXX document mopbooting from the SRM console.
-dnl XXX check if recent SRM console still can netboot, and if so, if they
-dnl XXX still use mop or a more recent protocol.
+dnl XXX document mopbooting, and bootp netbooting from the SRM console.
 There are several ways to install OpenBSD onto a disk.  The easiest way is
 to boot from the bootable CD-ROM mini image, then install from your favorite
 source. You can also use one of the OpenBSD installation floppies, if your

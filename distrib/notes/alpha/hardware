@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.55 2005/03/18 03:44:41 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.56 2005/03/18 13:31:13 miod Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -139,16 +139,14 @@ Supported hardware:
 		TURBOchannel DEFTA FDDI cards (PMAF-FA).
 	  Unsupported devices:
 		Built-in ISDN/audio chip.
-		Built-in framebuffer.
+		Built-in framebuffer (when applicable).
 		Other TURBOchannel cards.
 
     At this time none of the following systems are supported:
 	API UP2000, UP2000+ (mostly because we don't have any to test on)
 	DECpc AXP150 (2000/300) systems (EISA-bus PC-like systems)
-dnl update when AS400/500 support is back
-dnl	AlphaServer systems, other than models 400 and 500, which seem to
-dnl	  be disguised AlphaStation machines
-	AlphaServer systems, other than model 400, which seem to
+	AlphaServer systems, other than models 400 and 500, which seem to
+	  be disguised AlphaStation machines
 	  be disguised AlphaStation machines
 	Alpha XL systems
 	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus based)
@@ -162,9 +160,7 @@ Supported Peripherals:
 	PCI IDE Controllers (pciide)
 		Acer Labs M5229
 		CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, and PCI0649
-B
 		Contaq Microsystems/Cypress CY82C693
-A
 		Any other PCI IDE-compliant controller should work, but are
 		  untested at this point
 	SCSI Host Adapters

@@ -1,12 +1,11 @@
-dnl	$OpenBSD: contents,v 1.38 2004/09/10 19:41:35 miod Exp $
+dnl	$OpenBSD: contents,v 1.39 2005/03/18 13:31:13 miod Exp $
 TopPart
 
 OpenBSDfloppy
 			This floppy image will boot on the following MACHINE
 			models:
 			- AlphaStation 200, 250, 255, 400
-dnl uncomment when it works again
-dnl			- AlphaStation 500, 600
+			- AlphaStation 500, 600
 			- AlphaServer 800, 1000, 1000A
 			- AXPpci33 based machines, including ``Noname'',
 			  UDB, Multia
