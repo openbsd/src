@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.18 2002/09/16 04:34:46 itojun Exp $	*/
+/*	$OpenBSD: policy.c,v 1.19 2002/09/17 05:10:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -50,8 +50,12 @@ static int psccompare(struct policy_syscall *, struct policy_syscall *);
 static int policycompare(struct policy *, struct policy *);
 static int polnrcompare(struct policy *, struct policy *);
 static char *systrace_policyfilename(char *, const char *);
+static char *systrace_policyline(char *line);
+static int systrace_policyprocess(struct policy *, char *);
 static int systrace_predicatematch(char *);
 static int systrace_writepolicy(struct policy *);
+
+int systrace_templatedir(void);
 
 static int
 psccompare(struct policy_syscall *a, struct policy_syscall *b)
@@ -372,16 +376,113 @@ systrace_predicatematch(char *p)
 	return (res);
 }
 
+/* Removes trailing whitespace and comments from the input line */
+
+static char *
+systrace_policyline(char *line)
+{
+	char *p;
+
+	if ((p = strchr(line, '\n')) == NULL)
+		return (NULL);
+	*p = '\0';
+
+	/* Remove comments from the input line */
+	p = strchr(line, '#');
+	if (p != NULL) {
+		if (p != line && *(p-1) == '-')
+			p = strchr(p + 1, '#');
+		if (p != NULL)
+			*p = '\0';
+	}
+
+	/* Remove trailing white space */
+	p = line + strlen(line) - 1;
+	while (p > line) {
+		if (!isspace(*p))
+			break;
+		*p-- = '\0';
+	}
+
+	/* Ignore white space at start of line */
+	p = line;
+	p += strspn(p, " \t");
+
+	return (p);
+}
+
+/*
+ * Parse a single line from a policy and convert it into a policy filter.
+ * Predicates are matched.
+ */
+
+static int
+systrace_policyprocess(struct policy *policy, char *p)
+{
+	char *name, *emulation, *rule;
+	struct filter *filter, *parsed;
+	short action, future;
+
+	emulation = strsep(&p, "-");
+	if (p == NULL || *p == '\0')
+		return (-1);
+
+	if (strcmp(emulation, policy->emulation))
+		return (-1);
+
+	name = strsep(&p, ":");
+	if (p == NULL || *p != ' ')
+		return (-1);
+	p++;
+	rule = p;
+
+	if ((p = strrchr(p, ',')) != NULL && !strncasecmp(p, ", if", 4)) {
+		int match;
+
+		*p = '\0';
+
+		/* Process predicates */
+		p += 4;
+		p += strspn(p, " \t");
+
+		match = systrace_predicatematch(p);
+		if (match == -1)
+			return (-1);
+		/* If the predicate does not match skip rule */
+		if (!match)
+			return (0);
+	}
+
+	if (filter_parse_simple(rule, &action, &future) == -1) {
+		if (parse_filter(rule, &parsed) == -1)
+			return (-1);
+		filter_free(parsed);
+	}
+
+	filter = calloc(1, sizeof(struct filter));
+	if (filter == NULL)
+		err(1, "%s:%d: calloc", __func__, __LINE__);
+
+	filter->rule = strdup(rule);
+	if (filter->rule == NULL)
+		err(1, "%s:%d: strdup", __func__, __LINE__);
+
+	strlcpy(filter->name, name, sizeof(filter->name));
+	strlcpy(filter->emulation,  emulation, sizeof(filter->emulation));
+
+	TAILQ_INSERT_TAIL(&policy->prefilters, filter, policy_next);
+
+	return (0);
+}
+
 int
 systrace_readpolicy(char *filename)
 {
 	FILE *fp;
 	struct policy *policy;
 	char line[_POSIX2_LINE_MAX], *p;
+	char *emulation, *name;
 	int linenumber = 0;
-	char *name, *emulation, *rule;
-	struct filter *filter, *parsed;
-	short action, future;
 	int res = -1;
 
 	if ((fp = fopen(filename, "r")) == NULL)
@@ -390,30 +491,13 @@ systrace_readpolicy(char *filename)
 	policy = NULL;
 	while (fgets(line, sizeof(line), fp)) {
 		linenumber++;
-		if ((p = strchr(line, '\n')) == NULL) {
+
+		if ((p = systrace_policyline(line)) == NULL) {
 			fprintf(stderr, "%s:%d: input line too long.\n",
 			    filename, linenumber);
 			goto out;
 		}
-		*p = '\0';
 
-		p = strchr(line, '#');
-		if (p != NULL) {
-			if (p != line && *(p-1) == '-')
-				p = strchr(p + 1, '#');
-			if (p != NULL)
-				*p = '\0';
-		}
-
-		p = line + strlen(line) - 1;
-		while (p > line) {
-			if (!isspace(*p))
-				break;
-			*p-- = '\0';
-		}
-
-		p = line;
-		p += strspn(p, " \t");
 		if (strlen(p) == 0)
 			continue;
 
@@ -442,55 +526,8 @@ systrace_readpolicy(char *filename)
 			continue;
 		}
 
-		emulation = strsep(&p, "-");
-		if (p == NULL || *p == '\0')
+		if (systrace_policyprocess(policy, p) == -1)
 			goto error;
-
-		if (strcmp(emulation, policy->emulation))
-			goto error;
-
-		name = strsep(&p, ":");
-		if (p == NULL || *p != ' ')
-			goto error;
-		p++;
-		rule = p;
-
-		if ((p = strrchr(p, ',')) != NULL &&
-		    !strncasecmp(p, ", if", 4)) {
-			int match;
-
-			*p = '\0';
-
-			/* Process predicates */
-			p += 4;
-			p += strspn(p, " \t");
-
-			match = systrace_predicatematch(p);
-			if (match == -1)
-				goto error;
-			/* If the predicate does not match skip rule */
-			if (!match)
-				continue;
-		}
-
-		if (filter_parse_simple(rule, &action, &future) == -1) {
-			if (parse_filter(rule, &parsed) == -1)
-				goto error;
-			filter_free(parsed);
-		}
-
-		filter = calloc(1, sizeof(struct filter));
-		if (filter == NULL)
-			err(1, "%s:%d: calloc", __func__, __LINE__);
-
-		filter->rule = strdup(rule);
-		if (filter->rule == NULL)
-			err(1, "%s:%d: strdup", __func__, __LINE__);
-
-		strlcpy(filter->name, name, sizeof(filter->name));
-		strlcpy(filter->emulation,emulation,sizeof(filter->emulation));
-
-		TAILQ_INSERT_TAIL(&policy->prefilters, filter, policy_next);
 	}
 	res = 0;
 
@@ -499,8 +536,7 @@ systrace_readpolicy(char *filename)
 	return (res);
 
  error:
-	fprintf(stderr, "%s:%d: syntax error.\n",
-	    filename, linenumber);
+	fprintf(stderr, "%s:%d: syntax error.\n", filename, linenumber);
 	goto out;
 }
 
