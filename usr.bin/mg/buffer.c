@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.10 2001/05/23 15:46:25 art Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.11 2001/05/23 15:50:27 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -8,7 +8,6 @@
 #include "kbd.h"		/* needed for modes */
 #include <stdarg.h>
 
-static RSIZE    itor		__P((char *, int, RSIZE));
 static BUFFER  *makelist	__P((void));
 
 /*
@@ -207,15 +206,9 @@ listbuffers(f, n)
 static BUFFER *
 makelist()
 {
-	char   *cp1;
-	char   *cp2;
-	int     c;
-	BUFFER *bp;
+	int	w = ncol / 2;
+	BUFFER *bp, *blp;
 	LINE   *lp;
-	RSIZE   nbytes;
-	BUFFER *blp;
-	char    b[6 + 1];
-	char    line[NBUFN+128];
 
 	if ((blp = bfind("*Buffer List*", TRUE)) == NULL)
 		return NULL;
@@ -223,32 +216,13 @@ makelist()
 		return NULL;
 	blp->b_flag &= ~BFCHG;		/* Blow away old.	 */
 
-	(VOID) strcpy(line, " MR Buffer");
-	cp1 = line + 10;
-	while (cp1 < line + 4 + NBUFN + 1)
-		*cp1++ = ' ';
-	(VOID) strcpy(cp1, "Size   File");
-	if (addline(blp, line) == FALSE)
+	if (addlinef(blp, "%-*s%s", w, " MR Buffer", "Size   File") == FALSE ||
+	    addlinef(blp, "%-*s%s", w, " -- ------", "----   ----") == FALSE)
 		return NULL;
-	(VOID) strcpy(line, " -- ------");
-	cp1 = line + 10;
-	while (cp1 < line + 4 + NBUFN + 1)
-		*cp1++ = ' ';
-	(VOID) strcpy(cp1, "----   ----");
-	if (addline(blp, line) == FALSE)
-		return NULL;
-	bp = bheadp;				/* For all buffers	 */
-	while (bp != NULL) {
-		cp1 = &line[0];			/* Start at left edge	 */
-		*cp1++ = (bp == curbp) ? '.' : ' ';
-		*cp1++ = ((bp->b_flag & BFCHG) != 0) ? '*' : ' ';
-		*cp1++ = ' ';			/* Gap.			 */
-		*cp1++ = ' ';
-		cp2 = &bp->b_bname[0];		/* Buffer name		 */
-		while ((c = *cp2++) != 0)
-			*cp1++ = c;
-		while (cp1 < &line[4 + NBUFN + 1])
-			*cp1++ = ' ';
+
+	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
+		RSIZE nbytes;
+
 		nbytes = 0;			/* Count bytes in buf.	 */
 		if (bp != blp) {
 			lp = lforw(bp->b_linep);
@@ -259,51 +233,22 @@ makelist()
 			if (nbytes)
 				nbytes--;	/* no bonus newline	 */
 		}
-		(VOID) itor(b, 6, nbytes);	/* 6 digit buffer size. */
-		cp2 = &b[0];
-		while ((c = *cp2++) != 0)
-			*cp1++ = c;
-		*cp1++ = ' ';			/* Gap..		 */
-		cp2 = &bp->b_fname[0];		/* File name		 */
-		if (*cp2 != 0) {
-			while ((c = *cp2++) != 0) {
-				if (cp1 < &line[128 - 1])
-					*cp1++ = c;
-			}
-		}
-		*cp1 = 0;	/* Add to the buffer.	 */
-		if (addline(blp, line) == FALSE)
+
+		if (addlinef(blp, "%c%c%c %-*s%-6d %-*s",
+		    (bp == curbp) ? '.' : ' ',	/* current buffer ? */
+		    ((bp->b_flag & BFCHG) != 0) ? '*' : ' ',	/* changed ? */
+		    ' ',			/* no readonly buffers yet */
+		    w - 4,		/* four chars already written */
+		    bp->b_bname,	/* buffer name */
+		    nbytes,		/* buffer size */
+		    w - 7,		/* seven chars already written */
+		    bp->b_fname) == FALSE)
 			return NULL;
-		bp = bp->b_bufp;
 	}
 	blp->b_dotp = lforw(blp->b_linep);	/* put dot at beginning of
 						 * buffer */
 	blp->b_doto = 0;
 	return blp;				/* All done		 */
-}
-
-/*
- * Used above.
- */
-static RSIZE 
-itor(buf, width, num)
-	char  *buf;
-	int    width;
-	RSIZE  num;
-{
-	RSIZE  r;
-
-	if (num / 10 == 0) {
-		buf[0] = (num % 10) + '0';
-		for (r = 1; r < width; buf[r++] = ' ');
-		buf[width] = '\0';
-		return 1;
-	} else {
-		buf[r = itor(buf, width, num / (RSIZE) 10)] =
-			(num % (RSIZE) 10) + '0';
-		return r + 1;
-	}
-	/* NOTREACHED */
 }
 
 /*
