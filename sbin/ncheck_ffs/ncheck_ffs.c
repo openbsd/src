@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.7 2001/11/05 07:39:16 mpech Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.8 2001/12/01 19:05:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.7 2001/11/05 07:39:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.8 2001/12/01 19:05:39 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -301,7 +301,8 @@ scanonedir(ino, path)
 	filesize = dp->di_size;
 	for (i = 0; filesize > 0 && i < NDADDR; i++) {
 		if (dp->di_db[i])
-			searchdir(ino, dp->di_db[i], dblksize(sblock, dp, i), filesize, path);
+			searchdir(ino, dp->di_db[i], dblksize(sblock, dp, i),
+			    filesize, path);
 		filesize -= sblock->fs_bsize;
 	}
 	for (i = 0; filesize > 0 && i < NIADDR; i++) {
@@ -331,7 +332,8 @@ dirindir(ino, blkno, ind_level, filesize, path)
 		for (i = 0; *filesize > 0 && i < NINDIR(sblock); i++) {
 			blkno = idblk[i];
 			if (blkno)
-				searchdir(ino, blkno, sblock->fs_bsize, *filesize, path);
+				searchdir(ino, blkno, sblock->fs_bsize,
+				    *filesize, path);
 		}
 		return;
 	}
@@ -417,10 +419,10 @@ rawname(name)
 	if ((p = strrchr(name, '/')) == NULL)
 		return name;
 	*p = '\0';
-	strcpy(newname, name);
+	strlcpy(newname, name, sizeof newname - 2);
 	*p++ = '/';
-	strcat(newname, "/r");
-	strcat(newname, p);
+	strlcat(newname, "/r", sizeof newname);
+	strlcat(newname, p, sizeof newname);
 	return(newname);
 }
 
@@ -438,30 +440,49 @@ main(argc, argv)
 {
 	struct stat stblock;
 	struct fstab *fsp;
+	u_long ulval;
+	char *ep;
 	int c;
-	ino_t ino;
 
 	while ((c = getopt(argc, argv, "ai:ms")) != -1)
 		switch (c) {
-			case 'a':
-				aflag++;
-				break;
-			case 'i':
-				iflag++;
-				addinode(strtoul(optarg, NULL, 10));
-				while (optind < argc && (ino = strtoul(argv[optind], NULL, 10)) != 0) {
-					addinode(ino);
-					optind++;
-				}
-				break;
-			case 'm':
-				mflag++;
-				break;
-			case 's':
-				sflag++;
-				break;
-			case '?':
-				exit(2);
+		case 'a':
+			aflag++;
+			break;
+		case 'i':
+			iflag++;
+
+			errno = 0;
+			ulval = strtoul(optarg, &ep, 10);
+			if (optarg[0] == '\0' || *ep != '\0')
+				errx(1, "%s is not a number",
+				    optarg);
+			if (errno == ERANGE && ulval == ULONG_MAX)
+				errx(1, "%s is out or range",
+				    optarg);
+			addinode((ino_t)ulval);
+
+			while (optind < argc) {	
+				errno = 0;
+				ulval = strtoul(argv[optind], &ep, 10);
+				if (argv[optind][0] == '\0' || *ep != '\0')
+					break;
+				if (errno == ERANGE && ulval == ULONG_MAX)
+					errx(1, "%s is out or range",
+					    argv[optind]);
+				addinode((ino_t)ulval);
+				optind++;
+			}
+			break;
+		case 'm':
+			mflag++;
+			break;
+		case 's':
+			sflag++;
+			break;
+		default:
+			usage();
+			exit(2);
 		}
 	if (optind != argc - 1)
 		usage();

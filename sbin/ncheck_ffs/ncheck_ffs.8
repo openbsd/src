@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncheck_ffs.8,v 1.13 2001/08/02 18:37:34 mpech Exp $
+.\"	$OpenBSD: ncheck_ffs.8,v 1.14 2001/12/01 19:05:39 deraadt Exp $
 .\"
 .\" Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nd generate names from inode-numbers
 .Sh SYNOPSIS
 .Nm ncheck_ffs
-.Op Fl i Ar numbers
+.Op Fl i Ar number Op Ar ...
 .Op Fl ams
 .Ar filesystem
 .Sh DESCRIPTION
@@ -48,8 +48,8 @@ Names of directories are followed by a
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl i Ar numbers
-Report only those files whose inode numbers follows.
+.It Fl i Ar number Op Ar ...
+Report only those files whose inode numbers are as listed.
 .It Fl a
 Print the file names
 .Dq \&.
