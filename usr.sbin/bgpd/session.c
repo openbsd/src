@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.185 2004/08/06 11:51:19 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.186 2004/08/10 14:06:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2185,11 +2185,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				close(mrt->fd);
 				mrt->fd = xmrt.fd;
 			}
-
-			/* tell parent to close fd */
-			if (imsg_compose(&ibuf_main, IMSG_MRT_CLOSE, 0,
-			    &xmrt, sizeof(struct mrt)) == -1)
-				log_warn("session_dispatch_imsg: mrt close");
 			break;
 		case IMSG_MRT_CLOSE:
 			if (imsg.hdr.len > IMSG_HEADER_SIZE +

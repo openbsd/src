@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.140 2004/08/10 13:02:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.141 2004/08/10 14:06:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -473,11 +473,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((xmrt->fd = imsg_get_fd(ibuf)) == -1)
 				log_warnx("expected to receive fd for mrt dump "
 				    "but didn't receive any");
-
-			/* tell parent to close fd */
-			if (imsg_compose(&ibuf_main, IMSG_MRT_CLOSE, 0,
-			    xmrt, sizeof(struct mrt)) == -1)
-				log_warn("rde_dispatch_imsg_parent: mrt close");
 
 			if (xmrt->type == MRT_TABLE_DUMP) {
 				/* do not dump if a other is still running */
