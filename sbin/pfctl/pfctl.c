@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.33 2001/08/18 21:09:13 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.34 2001/08/19 18:20:46 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -60,7 +60,7 @@ int	 pfctl_clear_stats(int, int);
 int	 pfctl_clear_rules(int, int);
 int	 pfctl_clear_nat(int, int);
 int	 pfctl_clear_states(int, int);
-int	 pfctl_show_rules(int);
+int	 pfctl_show_rules(int, int);
 int	 pfctl_show_nat(int);
 int	 pfctl_show_states(int, u_int8_t);
 int	 pfctl_show_status(int);
@@ -172,7 +172,7 @@ pfctl_clear_states(int dev, int opts)
 }
 
 int
-pfctl_show_rules(int dev)
+pfctl_show_rules(int dev, int opts)
 {
 	struct pfioc_rule pr;
 	u_int32_t nr, mnr;
@@ -185,6 +185,9 @@ pfctl_show_rules(int dev)
 		if (ioctl(dev, DIOCGETRULE, &pr))
 			err(1, "DIOCGETRULE");
 		print_rule(&pr.rule);
+		if (opts & PF_OPT_VERBOSE)
+			printf("[ Evaluations: %-10llu  Packets: %-10llu ]\n\n",
+			    pr.rule.evaluations, pr.rule.packets);
 	}
 	return (0);
 }
@@ -538,7 +541,7 @@ main(int argc, char *argv[])
 	if (showopt != NULL) {
 		switch (*showopt) {
 		case 'r':
-			pfctl_show_rules(dev);
+			pfctl_show_rules(dev, opts);
 			break;
 		case 'n':
 			pfctl_show_nat(dev);
@@ -550,7 +553,7 @@ main(int argc, char *argv[])
 			pfctl_show_status(dev);
 			break;
 		case 'a':
-			pfctl_show_rules(dev);
+			pfctl_show_rules(dev, opts);
 			pfctl_show_nat(dev);
 			pfctl_show_states(dev, 0);
 			pfctl_show_status(dev);
