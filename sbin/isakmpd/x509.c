@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.13 1999/08/26 22:28:15 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.21 1999/08/26 11:21:49 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.14 1999/10/01 14:08:40 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.24 1999/09/30 13:40:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -108,7 +108,11 @@ x509_generate_kn (X509 *cert)
   char *ikey, *skey, *buf;
   X509_STORE_CTX csc;
   X509 *icert;
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  STACK_OF (X509) *sk;
+#else
   STACK *sk;
+#endif
   RSA *key;
 
   issuer = LC (X509_get_issuer_name, (cert));
@@ -139,9 +143,17 @@ x509_generate_kn (X509 *cert)
 
   /* Now find issuer's certificate so we can get the public key */
   LC (X509_STORE_CTX_init, (&csc, x509_cas, NULL, NULL));
-  sk = sk_new_null ();
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  sk = LC (sk_X509_new_null, ());
+#else
+  sk = LC (sk_new_null, ());
+#endif
   icert = LC (X509_find_by_subject, (sk, issuer));
-  sk_free (sk);
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  LC (sk_X509_free, (sk));
+#else
+  LC (sk_free, (sk));
+#endif
   LC (X509_STORE_CTX_cleanup, (&csc));
 
   if (icert == NULL)
@@ -354,7 +366,11 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 	  continue;
 	}
 
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+      cert = LC (PEM_read_bio_X509, (certh, NULL, NULL, NULL));
+#else
       cert = LC (PEM_read_bio_X509, (certh, NULL, NULL));
+#endif
       LC (BIO_free, (certh));
       if (cert == NULL)
 	{
@@ -845,6 +861,41 @@ x509_cert_get_subject (void *scert, u_int8_t **id, u_int32_t *id_len)
 
   switch (type)
     {
+    case X509v3_DNS_NAME:
+    case X509v3_RFC_NAME:
+      {
+	char *buf;
+	  
+	buf = malloc (altlen + ISAKMP_ID_DATA_OFF);
+	if (!buf)
+	  {
+	    log_print ("x509_cert_get_subject: malloc (%d) failed",
+		       altlen + ISAKMP_ID_DATA_OFF);
+	    return 0;
+	  }
+
+	if (type == X509v3_DNS_NAME)
+	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_FQDN);
+	else
+	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_USER_FQDN);
+
+	SET_IPSEC_ID_PROTO (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
+	SET_IPSEC_ID_PORT (buf + ISAKMP_ID_DOI_DATA_OFF, 0);
+	memcpy (buf + ISAKMP_ID_DATA_OFF, altname, altlen);
+
+	*id_len = ISAKMP_ID_DATA_OFF + altlen - ISAKMP_GEN_SZ;
+	*id = malloc (*id_len);
+	if (!*id) 
+	  {
+	    log_print ("x509_cert_get_subject: malloc (%d) failed", *id_len);
+	    free (buf);
+	    return 0;
+	  }
+	memcpy (*id, buf + ISAKMP_GEN_SZ, *id_len);
+	free (buf);
+      }
+      break;
+	 
     case X509v3_IPV4_ADDR:
       {
 	char buf[ISAKMP_ID_DATA_OFF + 4];
