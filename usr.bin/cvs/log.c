@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.14 2005/04/06 18:39:35 jfb Exp $	*/
+/*	$OpenBSD: log.c,v 1.15 2005/04/06 21:42:32 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -282,6 +282,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 }
 
 
+#ifdef CVS
 /*
  * cvs_printf()
  *
@@ -325,3 +326,4 @@ cvs_printf(const char *fmt, ...)
 	va_end(vap);
 	return (ret);
 }
+#endif
