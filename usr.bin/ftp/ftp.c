@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.40 2001/06/23 22:48:44 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.41 2001/06/26 23:44:00 lebel Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.40 2001/06/23 22:48:44 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.41 2001/06/26 23:44:00 lebel Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,10 +174,9 @@ hookup(host, port)
 	}
 
 	if (res0->ai_canonname)
-		strncpy(hostnamebuf, res0->ai_canonname, sizeof(hostnamebuf));
+		strlcpy(hostnamebuf, res0->ai_canonname, sizeof(hostnamebuf));
 	else
-		strncpy(hostnamebuf, host, sizeof(hostnamebuf));
-	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
+		strlcpy(hostnamebuf, host, sizeof(hostnamebuf));
 	hostname = hostnamebuf;
 	
 	s = -1;
@@ -453,8 +452,7 @@ getreply(expecteof)
 			if (len > sizeof(reply_string))
 				len = sizeof(reply_string);
 
-			(void)strncpy(reply_string, current_line, len);
-			reply_string[len] = '\0';
+			(void)strlcpy(reply_string, current_line, len + 1);
 		}
 		if (continuation && code != originalcode) {
 			if (originalcode == 0)
@@ -1638,8 +1636,7 @@ pswitch(flag)
 	ip->connect = connected;
 	connected = op->connect;
 	if (hostname) {
-		(void)strncpy(ip->name, hostname, sizeof(ip->name) - 1);
-		ip->name[sizeof(ip->name) - 1] = '\0';
+		(void)strlcpy(ip->name, hostname, sizeof(ip->name));
 	} else
 		ip->name[0] = '\0';
 	hostname = op->name;
@@ -1665,19 +1662,15 @@ pswitch(flag)
 	mcase = op->mcse;
 	ip->ntflg = ntflag;
 	ntflag = op->ntflg;
-	(void)strncpy(ip->nti, ntin, sizeof(ip->nti) - 1);
-	(ip->nti)[sizeof(ip->nti) - 1] = '\0';
+	(void)strlcpy(ip->nti, ntin, sizeof(ip->nti));
 	(void)strcpy(ntin, op->nti);
-	(void)strncpy(ip->nto, ntout, sizeof(ip->nto) - 1);
-	(ip->nto)[sizeof(ip->nto) - 1] = '\0';
+	(void)strlcpy(ip->nto, ntout, sizeof(ip->nto));
 	(void)strcpy(ntout, op->nto);
 	ip->mapflg = mapflag;
 	mapflag = op->mapflg;
-	(void)strncpy(ip->mi, mapin, sizeof(ip->mi) - 1);
-	(ip->mi)[sizeof(ip->mi) - 1] = '\0';
+	(void)strlcpy(ip->mi, mapin, sizeof(ip->mi));
 	(void)strcpy(mapin, op->mi);
-	(void)strncpy(ip->mo, mapout, sizeof(ip->mo) - 1);
-	(ip->mo)[sizeof(ip->mo) - 1] = '\0';
+	(void)strlcpy(ip->mo, mapout, sizeof(ip->mo));
 	(void)strcpy(mapout, op->mo);
 	(void)signal(SIGINT, oldintr);
 	if (abrtflag) {

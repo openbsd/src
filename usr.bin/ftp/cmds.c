@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.35 2000/12/24 00:29:00 aaron Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.36 2001/06/26 23:43:59 lebel Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.35 2000/12/24 00:29:00 aaron Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.36 2001/06/26 23:43:59 lebel Exp $";
 #endif
 #endif /* not lint */
 
@@ -937,8 +937,7 @@ setgate(argc, argv)
 				gateport = strdup(argv[2]);
 #endif
 			}
-			strncpy(gsbuf, argv[1], sizeof(gsbuf) - 1);
-			gsbuf[sizeof(gsbuf) - 1] = '\0';
+			strlcpy(gsbuf, argv[1], sizeof(gsbuf));
 			gateserver = gsbuf;
 			gatemode = 1;
 		}
@@ -1286,8 +1285,7 @@ shell(argc, argv)
 		if (namep == NULL)
 			namep = shell;
 		shellnam[0] = '-';
-		(void)strncpy(shellnam + 1, ++namep, sizeof(shellnam) - 2);
-		shellnam[sizeof(shellnam) - 1] = '\0';
+		(void)strlcpy(shellnam + 1, ++namep, sizeof(shellnam) - 1);
 		if (strcmp(namep, "sh") != 0)
 			shellnam[0] = '+';
 		if (debug) {
@@ -1496,8 +1494,7 @@ quote1(initial, argc, argv)
 	int i, len;
 	char buf[BUFSIZ];		/* must be >= sizeof(line) */
 
-	(void)strncpy(buf, initial, sizeof(buf) - 1);
-	buf[sizeof(buf) - 1] = '\0';
+	(void)strlcpy(buf, initial, sizeof(buf));
 	if (argc > 1) {
 		for (i = 1, len = strlen(buf); i < argc && len < sizeof(buf)-1; i++) {
 
@@ -1514,8 +1511,7 @@ quote1(initial, argc, argv)
 				break;
 
 			/* Copy next argument, NUL terminate always */
-			strncpy(&buf[len], argv[i], sizeof(buf) - len - 1);
-			buf[sizeof(buf) - 1] = '\0';
+			strlcpy(&buf[len], argv[i], sizeof(buf) - len);
 
 			/* Update string length */
 			len = strlen(buf);
@@ -1761,14 +1757,12 @@ setntrans(argc, argv)
 	}
 	ntflag++;
 	code = ntflag;
-	(void)strncpy(ntin, argv[1], sizeof(ntin) - 1);
-	ntin[sizeof(ntin) - 1] = '\0';
+	(void)strlcpy(ntin, argv[1], sizeof(ntin));
 	if (argc == 2) {
 		ntout[0] = '\0';
 		return;
 	}
-	(void)strncpy(ntout, argv[2], sizeof(ntout) - 1);
-	ntout[sizeof(ntout) - 1] = '\0';
+	(void)strlcpy(ntout, argv[2], sizeof(ntout));
 }
 
 char *
@@ -2111,9 +2105,8 @@ macdef(argc, argv)
 	if (interactive)
 		fputs(
 "Enter macro line by line, terminating it with a null line.\n", ttyout);
-	(void)strncpy(macros[macnum].mac_name, argv[1],
-	    sizeof(macros[macnum].mac_name) - 1);
-	macros[macnum].mac_name[sizeof(macros[macnum].mac_name) - 1] = '\0';
+	(void)strlcpy(macros[macnum].mac_name, argv[1],
+	    sizeof(macros[macnum].mac_name));
 	if (macnum == 0)
 		macros[macnum].mac_start = macbuf;
 	else
