@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.154 2004/12/20 12:32:01 espie Exp $
+# $OpenBSD: pkg_add,v 1.155 2004/12/20 12:56:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -146,7 +146,7 @@ sub pre_add($$)
 		$errors++;
 		return undef;
 	}
-	my $pkgname = $plist->pkgname();
+	my $pkgname = $handle->{pkgname} = $plist->pkgname();
 	if ($pkg ne '-') {
 		if (OpenBSD::PackageName::url2pkgname($pkg) ne $pkgname) {
 			print "Package name is not consistent ???\n";
@@ -564,6 +564,10 @@ sub install_package
 		return () unless defined $handle;
 	}
 
+	if (defined $state->{installed}->{$handle->{pkgname}}) {
+		return ();
+	}
+
 	my $plist = $handle->{plist};
 
 	if (is_installed($plist->pkgname()) && !$state->{forced}->{installed}) {
@@ -576,9 +580,6 @@ sub install_package
 			$handle->close();
 			return ();
 		}
-	}
-	if (defined $state->{installed}->{$plist->pkgname()}) {
-		return ();
 	}
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
@@ -628,7 +629,8 @@ sub install_package
 	}
 	really_add($handle, $state);
 	OpenBSD::PkgCfl::register($plist, $state);
-	$state->{installed}->{$plist->pkgname()} = 1;
+	delete $handle->{plist};
+	$state->{installed}->{$handle->{pkgname}} = 1;
 	return ();
 }
 
