@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.13 1998/09/29 02:22:14 millert Exp $ */
+/*	$OpenBSD: arp.c,v 1.14 1999/05/16 00:43:44 ho Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -227,10 +227,23 @@ set(argc, argv)
 			struct timeval time;
 			(void)gettimeofday(&time, 0);
 			expire_time = time.tv_sec + 20 * 60;
+			if (flags & RTF_PERMANENT_ARP) {
+			        /* temp or permanent, not both */
+				usage();
+				return (0);
+			}
 		}
 		else if (strncmp(argv[0], "pub", 3) == 0) {
 			flags |= RTF_ANNOUNCE;
 			doing_proxy = SIN_PROXY;
+		}	
+		else if (strncmp(argv[0], "permanent", 9) == 0) {
+			flags |= RTF_PERMANENT_ARP;
+			if (expire_time != 0) {
+			        /* temp or permanent, not both */
+				usage();
+				return (0);
+			}
 		} else if (strncmp(argv[0], "trail", 5) == 0) {
 			(void)printf(
 			    "%s: Sending trailers is no longer supported\n",
@@ -410,8 +423,10 @@ dump(addr)
 			ether_print(LLADDR(sdl));
 		else
 			(void)printf("(incomplete)");
+		if (rtm->rtm_flags & RTF_PERMANENT_ARP)
+		        (void)printf(" permanent");
 		if (rtm->rtm_rmx.rmx_expire == 0)
-			(void)printf(" permanent");
+			(void)printf(" static");
 		if (sin->sin_other & SIN_PROXY)
 			(void)printf(" published (proxy only)");
 		if (rtm->rtm_addrs & RTA_NETMASK) {
@@ -441,7 +456,7 @@ usage()
 	(void)fprintf(stderr, "usage: arp [-n] -a\n");
 	(void)fprintf(stderr, "usage: arp -d hostname\n");
 	(void)fprintf(stderr,
-	    "usage: arp -s hostname ether_addr [temp] [pub]\n");
+	    "usage: arp -s hostname ether_addr [temp | permanent] [pub]\n");
 	(void)fprintf(stderr, "usage: arp -f filename\n");
 	exit(1);
 }
