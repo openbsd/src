@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2003/12/25 14:28:49 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.14 2003/12/25 17:35:53 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -573,6 +573,9 @@ parse_config(char *filename, struct bgpd_config *xconf,
 
 	errors += merge_config(xconf, conf);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
+
+	free(conf);
+	free(mrtconf);
 
 	return (errors ? -1 : 0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.10 2003/12/24 13:28:02 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.11 2003/12/25 17:35:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -425,7 +425,6 @@ mrt_mergeconfig(struct mrt_config *xconf, struct mrt_config *conf)
 		xm = LIST_NEXT(m, list);
 		free(m);
 	}
-	free(conf);
 
 	if (interval != INT_MAX)
 		alarm(interval);
