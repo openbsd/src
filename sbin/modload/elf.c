@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.4 2002/12/11 18:28:22 deraadt Exp $	*/
+/*	$OpenBSD: elf.c,v 1.5 2003/07/21 03:55:35 tedu Exp $	*/
 /*	$NetBSD: elf.c,v 1.8 2002/01/03 21:45:58 jdolecek Exp $	*/
 
 /*
@@ -316,8 +316,8 @@ elf_mod_sizes(int fd, size_t *modsize, int *strtablen,
  * -Tdata	address to link data segment to in hex
  * <target>	object file */
 
-#define	LINKCMD		"ld -R %s -e %s -o %s -Ttext %p %s"
-#define	LINKCMD2	"ld -R %s -e %s -o %s -Ttext %p -Tdata %p %s"
+#define	LINKCMD		"ld -Z -R %s -e %s -o %s -Ttext %p %s"
+#define	LINKCMD2	"ld -Z -R %s -e %s -o %s -Ttext %p -Tdata %p %s"
 
 /* make a link command; XXX if data_offset above is non-zero, force
    data address to be at start of text + offset */
