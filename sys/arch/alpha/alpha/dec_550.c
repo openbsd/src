@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_550.c,v 1.4 2000/11/16 23:32:20 ericj Exp $ */
+/* $OpenBSD: dec_550.c,v 1.5 2001/09/29 03:20:46 millert Exp $ */
 /* $NetBSD: dec_550.c,v 1.10 2000/06/20 03:48:53 matt Exp $ */
 
 /*
@@ -64,9 +64,7 @@
 /* Write this to Pyxis General Purpose Output to turn off the power. */
 #define	DEC_550_PYXIS_GPO_POWERDOWN	0x00000400
 
-#ifdef notyet
 #include "pckbd.h"
-#endif
 
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
@@ -110,7 +108,7 @@ dec_550_cons_init()
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
-	case 2: 
+	case CTB_PRINTERPORT: 
 		/* serial console ... */
 		/* XXX */
 		{
@@ -129,7 +127,7 @@ dec_550_cons_init()
 			break;
 		}
 
-	case 3:
+	case CTB_GRAPHICS:
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
