@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.11 2001/03/30 11:09:00 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.12 2002/05/29 01:45:52 itojun Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -434,7 +434,6 @@ in6_recoverscope(sin6, in6, ifp)
 
 /*
  * just clear the embedded scope identifer.
- * XXX: currently used for bsdi4 only as a supplement function.
  */
 void
 in6_clearscope(addr)
