@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.17 2004/02/24 14:36:17 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.18 2004/02/24 14:49:08 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -289,7 +289,7 @@ main(int argc, char *argv[])
 		add_protocol("AF_ROUTE", routefd, routehandler, interfaces);
 
 	/* set up the interfaces. */
-	discover_interfaces(DISCOVER_REQUESTED);
+	discover_interfaces();
 
 	/* Make up a seed for the random number generator from current
 	   time plus the sum of the last four bytes of each

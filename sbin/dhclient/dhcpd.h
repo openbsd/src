@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.14 2004/02/24 13:36:13 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.15 2004/02/24 14:49:08 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -201,14 +201,6 @@ struct lease_state {
 #define SUBNET_DECL	3
 #define CLASS_DECL	4
 #define GROUP_DECL	5
-
-/* Possible modes in which discover_interfaces can run. */
-
-#define DISCOVER_RUNNING	0
-#define DISCOVER_SERVER		1
-#define DISCOVER_UNCONFIGURED	2
-#define DISCOVER_RELAY		3
-#define DISCOVER_REQUESTED	4
 
 /* Group of declarations that share common parameters. */
 struct group {
@@ -574,7 +566,7 @@ extern int quiet_interface_discovery;
 extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 extern struct timeout *timeouts;
-void discover_interfaces(int);
+void discover_interfaces(void);
 struct interface_info *setup_fallback(void);
 void reinitialize_interfaces(void);
 void dispatch(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.12 2004/02/24 11:35:39 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.13 2004/02/24 14:49:08 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -71,11 +71,10 @@ int quiet_interface_discovery;
  * what subnet it's on, and add it to the list of interfaces.
  */
 void
-discover_interfaces(int state)
+discover_interfaces(void)
 {
 	struct interface_info *tmp;
 	struct interface_info *last, *next;
-	struct subnet *subnet;
 	struct sockaddr_in foo;
 	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
@@ -83,30 +82,16 @@ discover_interfaces(int state)
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
 
-	/* Cycle through the list of interfaces looking for IP addresses. */
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-		/*
-		 * See if this is the sort of interface we want to deal
-		 * with.  Skip loopback, point-to-point and down
-		 * interfaces, except don't skip down interfaces if
-		 * we're trying to get a list of configurable
-		 * interfaces.
-		 */
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
-		    (!(ifa->ifa_flags & IFF_UP) &&
-		    state != DISCOVER_UNCONFIGURED))
+		    (!(ifa->ifa_flags & IFF_UP)))
 			continue;
 
-		/* See if we've seen an interface that matches this one. */
 		for (tmp = interfaces; tmp; tmp = tmp->next)
 			if (!strcmp(tmp->name, ifa->ifa_name))
 				break;
 
-		/*
-		 * If there isn't already an interface by this name,
-		 * allocate one.
-		 */
 		if (!tmp) {
 			tmp = dmalloc(sizeof(*tmp), "discover_interfaces");
 			if (!tmp)
@@ -134,18 +119,9 @@ discover_interfaces(int state)
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct iaddr addr;
 
-			/* Get a pointer to the address... */
 			bcopy(ifa->ifa_addr, &foo, sizeof(foo));
-
-			/* We don't want the loopback interface. */
 			if (foo.sin_addr.s_addr == htonl(INADDR_LOOPBACK))
 				continue;
-
-			/*
-			 * If this is the first real IP address we've
-			 * found, keep a pointer to ifreq structure in
-			 * which we found it.
-			 */
 			if (!tmp->ifp) {
 				int len = IFNAMSIZ + ifa->ifa_addr->sa_len;
 				tif = malloc(len);
@@ -157,8 +133,6 @@ discover_interfaces(int state)
 				tmp->ifp = tif;
 				tmp->primary_address = foo.sin_addr;
 			}
-
-			/* Grab the address... */
 			addr.len = 4;
 			memcpy(addr.iabuf, &foo.sin_addr.s_addr, addr.len);
 		}
@@ -169,21 +143,10 @@ discover_interfaces(int state)
 	 * hardware addresses.
 	 */
 
-	/*
-	 * If we're just trying to get a list of interfaces that we might
-	 * be able to configure, we can quit now.
-	 */
-	if (state == DISCOVER_UNCONFIGURED)
-		return;
-
 	/* Weed out the interfaces that did not have IP addresses. */
 	last = NULL;
 	for (tmp = interfaces; tmp; tmp = next) {
 		next = tmp->next;
-		if ((tmp->flags & INTERFACE_AUTOMATIC) &&
-		    state == DISCOVER_REQUESTED)
-			tmp->flags &=
-			    ~(INTERFACE_AUTOMATIC | INTERFACE_REQUESTED);
 		if (!tmp->ifp || !(tmp->flags & INTERFACE_REQUESTED)) {
 			if ((tmp->flags & INTERFACE_REQUESTED))
 				error("%s: not found", tmp->name);
@@ -203,29 +166,6 @@ discover_interfaces(int state)
 		last = tmp;
 
 		memcpy(&foo, &tmp->ifp->ifr_addr, sizeof(tmp->ifp->ifr_addr));
-
-		/* We must have a subnet declaration for each interface. */
-		if (!tmp->shared_network && (state == DISCOVER_SERVER)) {
-			warn("No subnet declaration for %s (%s).",
-			    tmp->name, inet_ntoa(foo.sin_addr));
-			warn("Please write a subnet declaration in your %s",
-			    "dhcpd.conf file for the");
-			error("network segment to which interface %s %s",
-			    tmp->name, "is attached.");
-		}
-
-		/* Find subnets that don't have valid interface
-		   addresses... */
-		for (subnet = (tmp->shared_network ?
-		    tmp->shared_network->subnets : NULL);
-		     subnet; subnet = subnet->next_sibling)
-			if (!subnet->interface_address.len) {
-				/* Set the interface address for this subnet
-				   to the first address we found. */
-				subnet->interface_address.len = 4;
-				memcpy(subnet->interface_address.iabuf,
-					&foo.sin_addr.s_addr, 4);
-			}
 
 		/* Register the interface... */
 		if_register_receive(tmp);
