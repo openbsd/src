@@ -1,5 +1,5 @@
-/*	$OpenBSD: gmp_util.h,v 1.5 2000/04/07 22:10:30 niklas Exp $	*/
-/*	$EOM: gmp_util.h,v 1.3 2000/04/07 22:05:57 niklas Exp $	*/
+/*	$OpenBSD: gmp_util.h,v 1.6 2000/06/08 20:49:08 niklas Exp $	*/
+/*	$EOM: gmp_util.h,v 1.4 2000/05/08 13:42:11 ho Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -41,7 +41,7 @@
 #include "math_mp.h"
 
 u_int32_t mpz_sizeinoctets (math_mp_t);
-void mpz_getraw (u_int8_t *, BIGNUM *, u_int32_t);
+void mpz_getraw (u_int8_t *, math_mp_t, u_int32_t);
 void mpz_setraw (math_mp_t, u_int8_t *, u_int32_t);
 
 #endif /* _GMP_UTIL_H_ */
