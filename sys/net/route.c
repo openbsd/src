@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.45 2004/07/20 23:40:27 art Exp $	*/
+/*	$OpenBSD: route.c,v 1.46 2004/07/28 13:13:41 markus Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -111,6 +111,7 @@
 #include <sys/protosw.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -137,6 +138,9 @@ struct	radix_node_head *rt_tables[AF_MAX+1];
 
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
+
+struct	pool rtentry_pool;	/* pool for rtentry structures */
+struct	pool rttimer_pool;	/* pool for rttimer structures */
 
 static int okaytoclone(u_int, int);
 static int rtdeletemsg(struct rtentry *);
@@ -167,6 +171,8 @@ rtable_init(table)
 void
 route_init()
 {
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
+	    NULL);
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
 }
@@ -327,7 +333,7 @@ rtfree(rt)
 		if (ifa)
 			IFAFREE(ifa);
 		Free(rt_key(rt));
-		Free(rt);
+		pool_put(&rtentry_pool, rt);
 	}
 }
 
@@ -735,14 +741,14 @@ rtrequest1(req, info, ret_nrt)
 			senderr(error);
 		ifa = info->rti_ifa;
 	makeroute:
-		R_Malloc(rt, struct rtentry *, sizeof(*rt));
+		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
 		Bzero(rt, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
 		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, dst, gateway)) {
-			Free(rt);
+			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
 		}
 		ndst = rt_key(rt);
@@ -757,7 +763,7 @@ rtrequest1(req, info, ret_nrt)
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
 			Free(rt_key(rt));
-			Free(rt);
+			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
 #endif
@@ -791,7 +797,7 @@ rtrequest1(req, info, ret_nrt)
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
 			Free(rt_key(rt));
-			Free(rt);
+			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
 		if (ifa->ifa_rtrequest)
@@ -998,10 +1004,8 @@ rt_timer_init()
 
 	KASSERT(rt_init_done == 0);
 
-#if 0
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
 	    NULL);
-#endif
 
 	LIST_INIT(&rttimer_queue_head);
 	timeout_set(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
@@ -1052,11 +1056,7 @@ rt_timer_queue_destroy(rtq, destroy)
 		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 		if (destroy)
 			RTTIMER_CALLOUT(r);
-#if 0
 		pool_put(&rttimer_pool, r);
-#else
-		free(r, M_RTABLE);
-#endif
 		if (rtq->rtq_count > 0)
 			rtq->rtq_count--;
 		else
@@ -1091,11 +1091,7 @@ rt_timer_remove_all(rt)
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
-#if 0
 		pool_put(&rttimer_pool, r);
-#else
-		free(r, M_RTABLE);
-#endif
 	}
 }
 
@@ -1123,20 +1119,12 @@ rt_timer_add(rt, func, queue)
 				r->rtt_queue->rtq_count--;
 			else
 				printf("rt_timer_add: rtq_count reached 0\n");
-#if 0
 			pool_put(&rttimer_pool, r);
-#else
-			free(r, M_RTABLE);
-#endif
 			break;  /* only one per list, so we can quit... */
 		}
 	}
 
-#if 0
 	r = pool_get(&rttimer_pool, PR_NOWAIT);
-#else
-	r = (struct rttimer *)malloc(sizeof(*r), M_RTABLE, M_NOWAIT);
-#endif
 	if (r == NULL)
 		return (ENOBUFS);
 	Bzero(r, sizeof(*r));
@@ -1173,11 +1161,7 @@ rt_timer_timer(arg)
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 			RTTIMER_CALLOUT(r);
-#if 0
 			pool_put(&rttimer_pool, r);
-#else
-			free(r, M_RTABLE);
-#endif
 			if (rtq->rtq_count > 0)
 				rtq->rtq_count--;
 			else
