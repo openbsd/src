@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.14 2003/04/26 00:39:28 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.15 2003/06/02 20:06:15 millert Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.14 2003/04/26 00:39:28 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.15 2003/06/02 20:06:15 millert Exp $";
 #endif
 #endif /* not lint */
 

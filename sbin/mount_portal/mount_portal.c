@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.22 2002/09/06 21:16:34 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.23 2003/06/02 20:06:16 millert Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.22 2002/09/06 21:16:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.23 2003/06/02 20:06:16 millert Exp $";
 #endif
 #endif /* not lint */
 

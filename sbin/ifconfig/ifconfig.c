@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.74 2003/05/14 02:02:56 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.75 2003/06/02 20:06:15 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -81,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.74 2003/05/14 02:02:56 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.75 2003/06/02 20:06:15 millert Exp $";
 #endif
 #endif /* not lint */
 

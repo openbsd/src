@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.13 2002/09/06 21:12:52 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.14 2003/06/02 20:06:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.13 2002/09/06 21:12:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.14 2003/06/02 20:06:17 millert Exp $";
 #endif
 
 #include "defs.h"
