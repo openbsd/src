@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 2001/07/17 02:23:59 pvalchev Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 2001/07/31 14:32:15 mpech Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 2001/07/17 02:23:59 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 2001/07/31 14:32:15 mpech Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -149,7 +149,7 @@ struct cmd cmdtab[] = {
 	{ "rexmt",	xhelp,		setrexmt },
 	{ "timeout",	ihelp,		settimeout },
 	{ "?",		hhelp,		help },
-	{ 0 }
+	{ NULL,		NULL,		NULL }
 };
 
 struct	cmd *getcmd();
@@ -245,7 +245,7 @@ struct	modes {
 	{ "image",      "octet" },
 	{ "octet",     "octet" },
 /*      { "mail",       "mail" },       */
-	{ 0,		0 }
+	{ NULL,		NULL }
 };
 
 void
@@ -261,7 +261,7 @@ modecmd(argc, argv)
 		return;
 	}
 	if (argc == 2) {
-		for (p = modes; p->m_name; p++)
+		for (p = modes; p->m_name != NULL; p++)
 			if (strcmp(argv[1], p->m_name) == 0)
 				break;
 		if (p->m_name) {
@@ -274,7 +274,7 @@ modecmd(argc, argv)
 
 	printf("usage: %s [", argv[0]);
 	sep = " ";
-	for (p = modes; p->m_name; p++) {
+	for (p = modes; p->m_name != NULL; p++) {
 		printf("%s%s", sep, p->m_name);
 		if (*sep == ' ')
 			sep = " | ";
@@ -710,7 +710,7 @@ help(argc, argv)
 
 	if (argc == 1) {
 		printf("Commands may be abbreviated.  Commands are:\n\n");
-		for (c = cmdtab; c->name; c++)
+		for (c = cmdtab; c->name != NULL; c++)
 			printf("%-*s\t%s\n", (int)HELPINDENT, c->name, c->help);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.7 2001/03/22 01:34:01 mickey Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.8 2001/07/31 14:32:15 mpech Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tftp.c,v 1.7 2001/03/22 01:34:01 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tftp.c,v 1.8 2001/07/31 14:32:15 mpech Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -336,7 +336,7 @@ struct errmsg {
 	{ EBADID,	"Unknown transfer ID" },
 	{ EEXISTS,	"File already exists" },
 	{ ENOUSER,	"No such user" },
-	{ -1,		0 }
+	{ -1,		NULL }
 };
 
 /*
@@ -363,8 +363,9 @@ nak(error)
 		pe->e_msg = strerror(error - 100);
 		tp->th_code = EUNDEF;
 	}
-	strcpy(tp->th_msg, pe->e_msg);
-	length = strlen(pe->e_msg) + 4;
+	length = strlcpy(tp->th_msg, pe->e_msg, sizeof(ackbuf)) + 5;
+	if (length > sizeof(ackbuf))
+		length = sizeof(ackbuf);
 	if (trace)
 		tpacket("sent", tp, length);
 	if (sendto(f, ackbuf, length, 0, (struct sockaddr *)&peeraddr,
