@@ -1,5 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 1998/08/30 22:58:01 downsj Exp $
+#	$OpenBSD: Makefile,v 1.4 2000/05/25 19:09:08 deraadt Exp $
 
 PROG=	pctr
+MANSUBDIR=i386
 
 .include <bsd.prog.mk>
