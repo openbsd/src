@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.6 1996/12/14 12:17:54 mickey Exp $	*/
+/*	$OpenBSD: io.c,v 1.7 1997/02/01 12:03:07 tholo Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.6 1996/12/14 12:17:54 mickey Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.7 1997/02/01 12:03:07 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ get_stream_line(fp)
 	register int i = 0;
 
 	while (((c = des ? get_des_char(fp) : getc(fp)) != EOF || (!feof(fp) &&
-	    !ferror(fp) && c != '\n'))) {
+	    !ferror(fp))) && c != '\n') {
 		REALLOC(sbuf, sbufsz, i + 1, ERR);
 		if (!(sbuf[i++] = c))
 			isbinary = 1;
