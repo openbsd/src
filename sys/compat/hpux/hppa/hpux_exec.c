@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.1 2004/07/09 21:48:21 mickey Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.2 2005/03/12 18:38:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff.  All rights reserved.
@@ -62,7 +62,7 @@
 #include <machine/hpux_machdep.h>
 
 const char hpux_emul_path[] = "/emul/hpux";
-extern char sigcode[], esigcode[];
+extern char hpux_sigcode[], hpux_esigcode[];
 extern struct sysent hpux_sysent[];
 #ifdef SYSCALL_DEBUG
 extern char *hpux_syscallnames[];
@@ -89,8 +89,8 @@ struct emul emul_hpux = {
 	copyargs,
 	hpux_setregs,
 	NULL,
-	sigcode,
-	esigcode,
+	hpux_sigcode,
+	hpux_esigcode,
 };
 
 int
