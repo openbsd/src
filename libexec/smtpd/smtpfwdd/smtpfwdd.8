@@ -1,4 +1,4 @@
-.\"	$Id: smtpfwdd.8,v 1.1 1997/12/12 20:44:39 beck Exp $
+.\"	$Id: smtpfwdd.8,v 1.2 1997/12/12 20:52:14 deraadt Exp $
 .Dd Dec 10, 1997
 .Dt SMTPFWDD 8
 .Os OpenBSD
@@ -79,7 +79,9 @@ queued messages are retried for eventual delivery, alternatively sendmail
 may be run standalone, but not listening to the network if your version
 of sendmail supports doing this correctly.
 .Pp
-There are many different variations of sendmail. smtpfwdd will check
+There are many different variations of sendmail.
+.Nm smtpfwdd
+will check
 and pay attention to the exit status of the sendmail processes it
 invokes, possibly retrying an invocation of sendmail. If you aren't
 using real unadulterated Berkeley sendmail of a recent vintage, you may
