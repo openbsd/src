@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2002/03/05 00:49:51 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.47 2002/03/18 17:50:31 provos Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -13,7 +13,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
 	auth.c auth1.c auth2.c auth-options.c session.c \
 	auth-chall.c auth2-chall.c groupaccess.c \
-	auth-skey.c auth-bsdauth.c
+	auth-skey.c auth-bsdauth.c monitor_mm.c monitor.c
 
 .include <bsd.own.mk> # for KERBEROS and AFS
 

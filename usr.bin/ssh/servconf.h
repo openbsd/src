@@ -1,4 +1,4 @@
-/*	$OpenBSD: servconf.h,v 1.54 2002/03/04 17:27:39 stevesk Exp $	*/
+/*	$OpenBSD: servconf.h,v 1.55 2002/03/18 17:50:31 provos Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -130,6 +130,9 @@ typedef struct {
 	char   *authorized_keys_file;	/* File containing public keys */
 	char   *authorized_keys_file2;
 
+	int	unprivileged_user;	/* User unprivileged child uses */
+	int	unprivileged_group;	/* Group unprivileged child uses */
+	char   *unprivileged_dir;	/* Chroot dir for unprivileged user */
 }       ServerOptions;
 
 void	 initialize_server_options(ServerOptions *);

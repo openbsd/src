@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.37 2002/03/18 01:12:14 provos Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.38 2002/03/18 17:50:31 provos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -26,6 +26,7 @@ RCSID("$OpenBSD: auth1.c,v 1.37 2002/03/18 01:12:14 provos Exp $");
 #include "session.h"
 #include "misc.h"
 #include "uidswap.h"
+#include "monitor_wrap.h"
 
 /* import */
 extern ServerOptions options;
@@ -84,7 +85,7 @@ do_authloop(Authctxt *authctxt)
 #if defined(KRB4) || defined(KRB5)
 	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif
-	    auth_password(authctxt, "")) {
+	    PRIVSEP(auth_password(authctxt, ""))) {
 		auth_log(authctxt, 1, "without authentication", "");
 		return;
 	}
@@ -243,7 +244,7 @@ do_authloop(Authctxt *authctxt)
 			packet_check_eom();
 
 			/* Try authentication with the password. */
-			authenticated = auth_password(authctxt, password);
+			authenticated = PRIVSEP(auth_password(authctxt, password));
 
 			memset(password, 0, strlen(password));
 			xfree(password);
@@ -322,7 +323,7 @@ Authctxt *
 do_authentication(void)
 {
 	Authctxt *authctxt;
-	struct passwd *pw;
+	struct passwd *pw = NULL, *pwent;
 	u_int ulen;
 	char *p, *user, *style = NULL;
 
@@ -345,23 +346,28 @@ do_authentication(void)
 	authctxt->style = style;
 
 	/* Verify that the user is a valid user. */
-	pw = getpwnamallow(user);
-	if (pw) {
+	pwent = PRIVSEP(getpwnamallow(user));
+	if (pwent) {
 		authctxt->valid = 1;
-		pw = pwcopy(pw);
+		pw = pwcopy(pwent);
 	} else {
 		debug("do_authentication: illegal user %s", user);
 		pw = NULL;
 	}
+	/* Free memory */
+	if (use_privsep && pwent != NULL)
+		pwfree(pwent);
+
 	authctxt->pw = pw;
 
-	setproctitle("%s", pw ? user : "unknown");
+	setproctitle("%s%s", pw ? user : "unknown",
+	    use_privsep ? " [net]" : "");
 
 	/*
 	 * If we are not running as root, the user must have the same uid as
 	 * the server.
 	 */
-	if (getuid() != 0 && pw && pw->pw_uid != getuid())
+	if (!use_privsep && getuid() != 0 && pw && pw->pw_uid != getuid())
 		packet_disconnect("Cannot change user when server not running as root.");
 
 	/*
