@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.27 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.28 2002/11/13 19:41:53 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -106,7 +106,7 @@ extern	int kgdb_debug_panic;
 #endif
 
 static	int rootnode;
-char platform_type[32];
+char platform_type[64];
 
 static	char *str2hex(char *, int *);
 static	int mbprint(void *, const char *);
@@ -1028,7 +1028,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
-	OF_getprop(findroot(), "name", platform_type, sizeof(platform_type));
+	if (OF_getprop(findroot(), "banner-name", platform_type,
+	    sizeof(platform_type)) <= 0)
+		OF_getprop(findroot(), "name", platform_type,
+		    sizeof(platform_type));
 	printf(": %s\n", platform_type);
 
 
