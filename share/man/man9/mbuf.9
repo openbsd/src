@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.16 2004/11/27 00:59:14 pvalchev Exp $
+.\"     $OpenBSD: mbuf.9,v 1.17 2005/01/10 05:44:40 jsg Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -109,7 +109,7 @@ struct m_hdr {
         caddr_t mh_data;
         u_int   mh_len;
         short   mh_type;
-        short   mh_flags;
+        u_short mh_flags;
 };
 
 struct  pkthdr {
@@ -117,7 +117,6 @@ struct  pkthdr {
         SLIST_HEAD(packet_tags, m_tag) tags;
         int     len;
         int     csum;
-
 };
 
 struct m_ext {
