@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.30 2003/07/14 22:08:20 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.31 2003/12/05 19:42:34 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -174,6 +174,7 @@ Lucent WaveLAN:Hermes:PCMCIA
 NANOSPEED ROOT-RZ2000:Prism-2:PCMCIA
 NDC/Sohoware NCP130:Prism-2:PCI
 NEC CMZ-RT-WP:Prism-2:PCMCIA
+Netgear MA311:Prism-2.5:PCI
 Netgear MA401:Prism-2:PCMCIA
 Netgear MA401RA:Prism-2.5:PCMCIA
 Nokia C020 Wireless LAN:Prism-I:PCMCIA
