@@ -1,3 +1,4 @@
+/* $OpenBSD: pfkeyv2.c,v 1.36 2000/03/26 06:40:50 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
