@@ -1,4 +1,4 @@
-/*	$OpenBSD: lms.c,v 1.12 1999/08/22 08:16:20 downsj Exp $	*/
+/*	$OpenBSD: lms.c,v 1.13 1999/11/22 07:25:38 matthieu Exp $	*/
 /*	$NetBSD: lms.c,v 1.30 1996/10/21 22:27:41 thorpej Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
 
@@ -64,6 +65,8 @@ struct lms_softc {		/* driver status information */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
+	struct proc *sc_io;	/* process that opened lms (can get SIGIO) */
+	char sc_async;		/* send SIGIO on input ready */
 	u_char sc_state;	/* mouse driver state */
 #define	LMS_OPEN	0x01	/* device is open */
 #define	LMS_ASLP	0x02	/* waiting for mouse data */
@@ -170,6 +173,8 @@ lmsopen(dev, flag, mode, p)
 	sc->sc_state |= LMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_x = sc->sc_y = 0;
+	sc->sc_async = 0;
+	sc->sc_io = p;
 
 	/* Enable interrupts. */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMS_CNTRL, 0);
@@ -190,6 +195,7 @@ lmsclose(dev, flag, mode, p)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMS_CNTRL, 0x10);
 
 	sc->sc_state &= ~LMS_OPEN;
+	sc->sc_io = NULL;
 
 	clfree(&sc->sc_q);
 
@@ -258,6 +264,18 @@ lmsioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	switch (cmd) {
+	case FIONBIO:		/* we will remove this someday (soon???) */
+		return (0);
+		
+	case FIOASYNC:
+		sc->sc_async = *(int *)addr != 0;
+		break;
+		
+	case TIOCSPGRP:
+		if (*(int *)addr != sc->sc_io->p_pgid)
+			return (EPERM);
+		break;
+		
 	case MOUSEIOCREAD:
 		s = spltty();
 
@@ -357,6 +375,10 @@ lmsintr(arg)
 			wakeup((caddr_t)sc);
 		}
 		selwakeup(&sc->sc_rsel);
+		if (sc->sc_async) {
+			psignal(sc->sc_io, SIGIO); 
+		}
+
 	}
 
 	return -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mms.c,v 1.10 1999/08/22 08:16:20 downsj Exp $	*/
+/*	$OpenBSD: mms.c,v 1.11 1999/11/22 07:26:04 matthieu Exp $	*/
 /*	$NetBSD: mms.c,v 1.24 1996/05/12 23:12:18 mycroft Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 #include <sys/file.h>
 #include <sys/select.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
 
@@ -59,6 +60,8 @@ struct mms_softc {		/* driver status information */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
+	struct proc *sc_io;     /* process that opened mms (can get SIGIO) */
+	char   sc_async;        /* send SIGIO on input ready */
 	int sc_iobase;		/* I/O port base */
 	u_char sc_state;	/* mouse driver state */
 #define	MMS_OPEN	0x01	/* device is open */
@@ -145,6 +148,8 @@ mmsopen(dev, flag, mode, p)
 	sc->sc_state |= MMS_OPEN;
 	sc->sc_status = 0;
 	sc->sc_x = sc->sc_y = 0;
+	sc->sc_async = 0;
+	sc->sc_io = p;
 
 	/* Enable interrupts. */
 	outb(sc->sc_iobase + MMS_ADDR, 0x07);
@@ -166,6 +171,7 @@ mmsclose(dev, flag, mode, p)
 	outb(sc->sc_iobase + MMS_ADDR, 0x87);
 
 	sc->sc_state &= ~MMS_OPEN;
+	sc->sc_io = NULL;
 
 	clfree(&sc->sc_q);
 
@@ -234,6 +240,18 @@ mmsioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	switch (cmd) {
+	case FIONBIO:           /* we will remove this someday (soon???) */
+		return (0);
+
+	case FIOASYNC:
+		sc->sc_async = *(int *)addr != 0;
+		break;
+
+	case TIOCSPGRP:
+		if (*(int *)addr != sc->sc_io->p_pgid)
+			return (EPERM);
+		break;
+
 	case MOUSEIOCREAD:
 		s = spltty();
 
@@ -336,6 +354,10 @@ mmsintr(arg)
 			wakeup((caddr_t)sc);
 		}
 		selwakeup(&sc->sc_rsel);
+		if (sc->sc_async) {
+			psignal(sc->sc_io, SIGIO); 
+		}
+
 	}
 
 	return -1;
