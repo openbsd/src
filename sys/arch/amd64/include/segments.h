@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.2 2004/01/29 13:21:10 mickey Exp $	*/
+/*	$OpenBSD: segments.h,v 1.3 2004/07/15 17:46:44 deraadt Exp $	*/
 /*	$NetBSD: segments.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*-
@@ -118,17 +118,17 @@ struct sys_segment_descriptor {
  * Below is used for cs, ds, etc.
  */
 struct mem_segment_descriptor {
-	unsigned sd_lolimit:16;         /* segment extent (lsb) */
-	unsigned sd_lobase:24;          /* segment base address (lsb) */
-	unsigned sd_type:5;             /* segment type */
-	unsigned sd_dpl:2;              /* segment descriptor priority level */
-	unsigned sd_p:1;                /* segment descriptor present */
-	unsigned sd_hilimit:4;          /* segment extent (msb) */
-	unsigned sd_avl:1;		/* available */
-	unsigned sd_long:1;		/* long mode */
-	unsigned sd_def32:1;            /* default 32 vs 16 bit size */
-	unsigned sd_gran:1;             /* limit granularity (byte/page) */
-	unsigned sd_hibase:8;           /* segment base address (msb) */
+	unsigned int sd_lolimit:16;         /* segment extent (lsb) */
+	unsigned int sd_lobase:24;          /* segment base address (lsb) */
+	unsigned int sd_type:5;             /* segment type */
+	unsigned int sd_dpl:2;              /* segment descriptor priority level */
+	unsigned int sd_p:1;                /* segment descriptor present */
+	unsigned int sd_hilimit:4;          /* segment extent (msb) */
+	unsigned int sd_avl:1;		/* available */
+	unsigned int sd_long:1;		/* long mode */
+	unsigned int sd_def32:1;            /* default 32 vs 16 bit size */
+	unsigned int sd_gran:1;             /* limit granularity (byte/page) */
+	unsigned int sd_hibase:8;           /* segment base address (msb) */
 } __attribute__((packed));
 
 /*
