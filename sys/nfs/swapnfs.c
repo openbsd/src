@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapnfs.c,v 1.2 1996/04/17 04:50:43 mickey Exp $	*/
+/*	$OpenBSD: swapnfs.c,v 1.3 2002/02/04 19:38:20 miod Exp $	*/
 /*	$NetBSD: swapnfs.c,v 1.9 1995/04/30 07:03:13 cgd Exp $	*/
 
 /*
@@ -46,13 +46,9 @@
 
 #include <sys/param.h>
 #include <sys/conf.h>
-#include <sys/socket.h>
-#include <sys/mount.h>
-
-#include <net/if.h>
+#include <sys/systm.h>
 
 dev_t	rootdev = NODEV;
-dev_t	argdev  = NODEV;
 dev_t	dumpdev = NODEV;
 
 struct	swdevt swdevt[] = {
@@ -60,5 +56,4 @@ struct	swdevt swdevt[] = {
         { NODEV, 0, 0 }
 };
 
-extern int nfs_mountroot();
-int (*mountroot)() = nfs_mountroot;
+int (*mountroot) __P((void)) = nfs_mountroot;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.21 2002/01/16 20:51:45 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.22 2002/02/04 19:38:18 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -537,15 +537,12 @@ setroot()
 	register int len;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128], *rootdevname;
-	extern int (*mountroot) __P((void));
 	dev_t temp;
 	struct device *bootdv, *rootdv, *swapdv;
 	int bootpartition = 0;
 #ifdef NFSCLIENT
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void));
 #endif
-	extern int dk_mountroot __P((void));
 
 	bootdv = booted_device;
 
