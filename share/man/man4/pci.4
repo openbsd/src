@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.94 2004/06/05 07:26:17 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.95 2004/06/23 00:12:51 miod Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 3, 2000
+.Dd June 22, 2004
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -176,6 +176,8 @@ controllers.
 .Bl -tag -width 10n -offset ind -compact
 .It Xr an 4
 Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
+.It Xr atw 4
+ADMtek ADM8211 802.11 wireless network adapter.
 .It Xr bce 4
 Broadcom BCM4401 Ethernet.
 .It Xr bge 4
