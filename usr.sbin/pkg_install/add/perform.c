@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.19 2001/04/08 16:45:46 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.20 2001/04/19 16:54:05 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.19 2001/04/08 16:45:46 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.20 2001/04/19 16:54:05 espie Exp $";
 #endif
 
 /*
@@ -227,7 +227,7 @@ pkg_do(char *pkg)
     /* See if we're already registered */
     (void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
     if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
-	pwarnx("package `%s' already recorded as installed", PkgName);
+	pwarnx("package already recorded as installed");
 	code = 1;
 	goto success;	/* close enough for government work */
     }
