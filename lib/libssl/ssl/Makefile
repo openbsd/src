@@ -38,7 +38,7 @@ SRCS=	bio_ssl.c s2_clnt.c s3_both.c s3_srvr.c ssl_err2.c ssl_txt.c	\
 	t1_lib.c s23_srvr.c s2_srvr.c s3_pkt.c ssl_err.c \
 	t1_meth.c 
 
-HDRS=	ssl.h ssl2.h ssl3.h ssl23.h ssl_locl.h tls1.h kssl.h kssl_lcl.h
+HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h kssl.h 
 
 .PATH:	${LSSL_SRC}
 
@@ -58,8 +58,3 @@ includes:
 	rm -rf $$d
 
 .include <bsd.lib.mk>
-
-
-
-
-
