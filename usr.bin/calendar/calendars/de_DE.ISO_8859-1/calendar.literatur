@@ -1,7 +1,7 @@
 /*
  * Literatur
  *
- * $OpenBSD: calendar.literatur,v 1.1 1996/12/05 06:04:54 millert Exp $
+ * $OpenBSD: calendar.literatur,v 1.2 1997/08/27 10:48:31 provos Exp $
  */
 
 #ifndef _de_DE_ISO_8859_1_literatur_
@@ -9,21 +9,25 @@
 
 LANG=de_DE.ISO_8859-1
 
-/* Schriftsteller 
-
-	Fontane
-	Goethe
-	Grass
-	Hegel
-	Heine
-	Schiller
- */
+/* Schriftsteller */
 
 01/04   Jakob Grimm geboren, 1785
-04/22   Kant geboren, 1724
+02/12	Immanuel Kant in Königsberg gestorben, 1804
+02/17	Heinrich Heine in Paris gestorben, 1856
+03/22	Johann Wolfgang von Goethe in Weimar gestorben, 1832
+04/22   Immanuel Kant in Königsberg geboren, 1724
+05/09	Friedrich von Schiller in Weimar gestorben, 1805
+06/06	Thomas Mann in Lübeck geboren, 1875
 07/03   Franz Kafka geboren, 1883
-08/12   Thomas Mann gestorben, 1955
-
+08/12   Thomas Mann in Kilchberg bei Zürich gestorben, 1955
+08/27	Georg Wilhelm Friedrich Hegel in Stuttgart geboren, 1770
+08/28	Johann Wolfgang von Goethe in Frankfurt am Main geboren, 1749
+09/20	Theodor Fontane in Berlin gestorben, 1898
+10/16	Günter Grass in Danzig geboren, 1927
+11/10	Friedrich von Schiller in Marbach geboren, 1759
+11/14	Georg Wilhelm Friedrich Hegel in Berlin gestorben, 1831
+12/13	Heinrich Heine in Düsseldorf geboren, 1797
+12/30	Theodor Fontane in Neuruppin geboren, 1819
 
 /* Verlage */
 03/09	"die tageszeitung" als erste täglich aktualisierte deutsche 
@@ -31,6 +35,6 @@ LANG=de_DE.ISO_8859-1
 05/05	Schweriner Volkszeitung als erste deutsche Tageszeitung im WWW, 1995
 05/12	"die tageszeitung" offiziell im WWW, 1995
 08/31	Hitler stellt Frankfurter Zeitung ein, 1943
-11/01	Frankfurter Allgemeine Zeitung in Leben gerufen, 1949
+11/01	Frankfurter Allgemeine Zeitung ins Leben gerufen, 1949
 
 #endif /* !_de_DE_ISO_8859_1_literatur_ */
