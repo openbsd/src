@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.198 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.199 2002/03/14 16:52:11 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1195,6 +1195,8 @@ identifycpu()
 			if (family > CPU_MAXFAMILY)
 				family = CPU_MAXFAMILY;
 			class = family - 3;
+			if (class > CPUCLASS_686)
+				class = CPUCLASS_686;
 			modifier = "";
 			name = "";
 			token = "";
@@ -1217,8 +1219,11 @@ identifycpu()
 				name = intel686_cpu_name(model);
 			} else
 				name = cpup->cpu_family[i].cpu_models[model];
-			if (name == NULL)
+			if (name == NULL) {
 				name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
+				if (name == NULL)
+					name = "";
+			}
 			class = cpup->cpu_family[i].cpu_class;
 			cpu_setup = cpup->cpu_family[i].cpu_setup;
 		}
