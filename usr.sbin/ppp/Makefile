@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1997/11/23 20:27:32 brian Exp $
+#	$Id: Makefile,v 1.2 1997/11/26 01:37:32 brian Exp $
 
 PROG=	ppp
 SRCS=	arp.c async.c auth.c ccp.c chap.c chap_ms.c chat.c \
@@ -14,7 +14,7 @@ BINMODE=4550
 BINOWN=	root
 BINGRP=	network
 
-.if exists(/usr/include/alias.h)
+.if defined(HAVE_LIBALIAS)
 SRCS+=	alias_cmd.c loadalias.c
 .else
 CFLAGS+=-DNOALIAS
