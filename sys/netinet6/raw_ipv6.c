@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.19 2000/06/18 18:41:36 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.20 2000/06/18 18:59:12 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.19 2000/06/18 18:41:36 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.20 2000/06/18 18:59:12 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -241,7 +241,8 @@ rip6_input(mp, offp, proto)
 
   if (nexthdr == IPPROTO_ICMPV6) {
     if (m->m_len < extra + sizeof(struct icmp6_hdr)) {
-      if (!(m = m_pullup2(m, extra + sizeof(struct icmp6_hdr))))
+      m = m_pullup2(m, extra + sizeof(struct icmp6_hdr));
+      if (!m)
         goto ret;
 
       ip6 = mtod(m, struct ip6_hdr *);
@@ -454,9 +455,9 @@ int rip6_output(struct mbuf *m, ...)
   }
 
   /* source address selection */
-  if ((in6a = in6_selectsrc(dst, optp, inp->inp_moptions6,
-			     &inp->inp_route6, &inp->inp_laddr6,
-			    &error)) == 0) {
+  in6a = in6_selectsrc(dst, optp, inp->inp_moptions6, &inp->inp_route6,
+    &inp->inp_laddr6, &error);
+  if (in6a == NULL) {
     if (error == 0)
       error = EADDRNOTAVAIL;
     goto bad;
