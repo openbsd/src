@@ -1,4 +1,4 @@
-/*	$OpenBSD: noexec.c,v 1.1 2002/08/31 22:56:01 mickey Exp $	*/
+/*	$OpenBSD: noexec.c,v 1.2 2002/09/03 15:29:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -179,9 +179,11 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			func = &noexec_mmap;
+			strcat(label, "-mmap");
 			break;
 		case 'p':
 			func = &noexec_mprotect;
+			strcat(label, "-mprotect");
 			break;
 		default:
 			usage();
