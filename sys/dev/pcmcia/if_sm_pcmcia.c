@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.7 1999/08/16 07:57:33 fgsch Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.8 1999/08/16 10:25:18 fgsch Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -52,9 +52,6 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#endif
 #include <net/if_media.h>
 
 #ifdef INET
@@ -62,11 +59,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#ifdef __NetBSD__
-#include <netinet/if_inarp.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #endif
 
 #ifdef NS
