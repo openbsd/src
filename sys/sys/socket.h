@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.7 1996/12/12 13:39:47 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.8 1996/12/12 13:50:53 mickey Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -323,7 +323,6 @@ struct omsghdr {
 
 #include <sys/cdefs.h>
 
-struct sockaddr_in;
 __BEGIN_DECLS
 int	accept __P((int, struct sockaddr *, int *));
 int	bind __P((int, const struct sockaddr *, int));
