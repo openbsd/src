@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.5 1998/02/17 12:44:16 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.6 1998/11/16 00:52:32 jason Exp $	*/
 
 /* expr.c -operands, expressions-
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: expr.c,v 1.5 1998/02/17 12:44:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.6 1998/11/16 00:52:32 jason Exp $";
 #endif
 
 #include <ctype.h>
@@ -847,7 +847,9 @@ segT expr(rank, resultP)
  * expression is given the segment of right expression (always a DIFFERENCE,
  * which should get resolved by fixup_segment())
  */
-				if (resultP->X_got_symbol) {
+				if (resultP->X_got_symbol &&
+				    right.X_add_symbol != NULL &&
+				    right.X_subtract_symbol != NULL) {
 					resultP->X_add_symbol = right.X_add_symbol;
 					resultP->X_subtract_symbol = right.X_subtract_symbol;
 					seg1 = S_GET_SEGMENT(right.X_add_symbol);
