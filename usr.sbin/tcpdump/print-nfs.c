@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.8 2000/10/03 14:31:58 ho Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.9 2000/12/05 08:17:45 jakob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -75,24 +75,9 @@ nfsreply_print(register const u_char *bp, u_int length,
 	rp = (const struct rpc_msg *)bp;
 	ip = (const struct ip *)bp2;
 
-	if (!nflag)
-		(void)printf("%s.nfs > %s.%x: reply %s %d",
-			     ipaddr_string(&ip->ip_src),
-			     ipaddr_string(&ip->ip_dst),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ntohl(rp->rm_reply.rp_stat) == MSG_ACCEPTED?
-				     "ok":"ERR",
-			     length);
-	else
-		(void)printf("%s.%x > %s.%x: reply %s %d",
-			     ipaddr_string(&ip->ip_src),
-			     NFS_PORT,
-			     ipaddr_string(&ip->ip_dst),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ntohl(rp->rm_reply.rp_stat) == MSG_ACCEPTED?
-			     	"ok":"ERR",
-			     length);
-
+	printf("xid 0x%x reply %s %d", (u_int32_t)ntohl(rp->rm_xid),
+		ntohl(rp->rm_reply.rp_stat) == MSG_ACCEPTED ? "ok":"ERR",
+		length);
 	if (xid_map_find(rp, ip, &proc))
 		interp_reply(rp, proc, length);
 }
@@ -198,19 +183,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 	nfserr = 0;		/* assume no error */
 	rp = (const struct rpc_msg *)bp;
 	ip = (const struct ip *)bp2;
-	if (!nflag)
-		(void)printf("%s.%x > %s.nfs: %d",
-			     ipaddr_string(&ip->ip_src),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ipaddr_string(&ip->ip_dst),
-			     length);
-	else
-		(void)printf("%s.%x > %s.%x: %d",
-			     ipaddr_string(&ip->ip_src),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ipaddr_string(&ip->ip_dst),
-			     NFS_PORT,
-			     length);
+	printf("xid 0x%x %d", (u_int32_t)ntohl(rp->rm_xid), length);
 
 	xid_map_enter(rp, ip);	/* record proc number for later on */
 

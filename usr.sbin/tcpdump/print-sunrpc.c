@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.9 2000/10/03 14:31:58 ho Exp $	*/
+/*	$OpenBSD: print-sunrpc.c,v 1.10 2000/12/05 08:17:45 jakob Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.9 2000/10/03 14:31:58 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.10 2000/12/05 08:17:45 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -80,19 +80,7 @@ sunrpcrequest_print(register const u_char *bp, register u_int length,
 	rp = (struct rpc_msg *)bp;
 	ip = (struct ip *)bp2;
 
-	if (!nflag)
-		(void)printf("%s.%x > %s.sunrpc: %d",
-			     ipaddr_string(&ip->ip_src),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ipaddr_string(&ip->ip_dst),
-			     length);
-	else
-		(void)printf("%s.%x > %s.%x: %d",
-			     ipaddr_string(&ip->ip_src),
-			     (u_int32_t)ntohl(rp->rm_xid),
-			     ipaddr_string(&ip->ip_dst),
-			     PMAPPORT,
-			     length);
+	printf("xid 0x%x %d", (u_int32_t)ntohl(rp->rm_xid), length);
 	printf(" %s", tok2str(proc2str, " proc #%u",
 	    (u_int32_t)ntohl(rp->rm_call.cb_proc)));
 	x = ntohl(rp->rm_call.cb_rpcvers);

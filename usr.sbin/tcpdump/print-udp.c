@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.14 2000/10/03 14:21:57 ho Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.15 2000/12/05 08:17:45 jakob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.14 2000/10/03 14:21:57 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.15 2000/12/05 08:17:45 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -423,6 +423,11 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			break;
 
 		case PT_RPC:
+			(void)printf("%s.%s > %s.%s: ",
+				ipaddr_string(&ip->ip_src),
+				udpport_string(sport),
+				ipaddr_string(&ip->ip_dst),
+				udpport_string(dport));
 			rp = (struct rpc_msg *)(up + 1);
 			direction = (enum msg_type)ntohl(rp->rm_direction);
 			if (direction == CALL)
@@ -466,17 +471,32 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 		if (TTEST(rp->rm_direction)) {
 			direction = (enum msg_type)ntohl(rp->rm_direction);
 			if (dport == NFS_PORT && direction == CALL) {
+				(void)printf("%s.%s > %s.%s: ",
+					ipaddr_string(&ip->ip_src),
+					udpport_string(sport),
+					ipaddr_string(&ip->ip_dst),
+					udpport_string(dport));
 				nfsreq_print((u_char *)rp, length,
 				    (u_char *)ip);
 				return;
 			}
 			if (sport == NFS_PORT && direction == REPLY) {
+				(void)printf("%s.%s > %s.%s: ",
+					ipaddr_string(&ip->ip_src),
+					udpport_string(sport),
+					ipaddr_string(&ip->ip_dst),
+					udpport_string(dport));
 				nfsreply_print((u_char *)rp, length,
 				    (u_char *)ip);
 				return;
 			}
 #ifdef notdef
 			if (dport == SUNRPC_PORT && direction == CALL) {
+				(void)printf("%s.%s > %s.%s: ",
+					ipaddr_string(&ip->ip_src),
+					udpport_string(sport),
+					ipaddr_string(&ip->ip_dst),
+					udpport_string(dport));
 				sunrpcrequest_print((u_char *)rp, length, (u_char *)ip);
 				return;
 			}
