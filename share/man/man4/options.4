@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.132 2003/09/18 09:34:45 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.133 2003/12/08 11:24:27 jmc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -1028,6 +1028,11 @@ panic.
 These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
+.It Cd option DUMMY_NOPS
+This option is supported on the i386 architecture.
+When enabled, it speeds up interrupt processing by removing delays
+while accessing the interrupt controller.
+Care should be taken when using this option.
 .It Cd option APM_NOPRINT
 This option is supported on the i386 architecture.
 When enabled, kernel messages regarding the status of the automatic power
