@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.5 2001/06/26 06:33:51 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.6 2001/06/26 23:21:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -143,7 +143,7 @@ lofn_attach(parent, self, aux)
 	WRITE_REG_0(sc, LOFN_REL_CFG2,
 	    READ_REG_0(sc, LOFN_REL_CFG2) | LOFN_CFG2_RNGENA);
 
-	printf(": %s [XXX bar 0x%08x]\n", intrstr, sc->sc_sh);
+	printf(": %s\n", intrstr, sc->sc_sh);
 
 	return;
 
