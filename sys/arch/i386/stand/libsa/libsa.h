@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.25 1998/05/25 19:20:56 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.26 1998/07/08 19:28:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -35,6 +35,8 @@
 #include <lib/libsa/stand.h>
 #include <machine/biosvar.h>
 
+#define	DEFAULT_KERNEL_ADDRESS	0x100000
+
 void gateA20 __P((int));
 
 void smpprobe __P((void));
@@ -46,7 +48,6 @@ void pciprobe __P((void));
 void devboot __P((dev_t, char *));
 void *alloca __P((size_t));
 void machdep __P((void));
-void time_print __P((void));
 
 extern const char bdevs[][4];
 extern const int nbdevs;
