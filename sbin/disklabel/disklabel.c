@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.26 1996/12/13 16:58:25 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.27 1997/02/16 07:42:52 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.26 1996/12/13 16:58:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.27 1997/02/16 07:42:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -960,7 +960,6 @@ editit()
 	int pid, xpid;
 	int stat;
 	extern char *getenv();
-	sigset_t sigset, osigset;
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 
@@ -974,24 +973,20 @@ editit()
 	sprintf(p, "%s %s", ed, tmpfil);
 	argp[2] = p;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGINT);
-	sigaddset(&sigset, SIGQUIT);
-	sigaddset(&sigset, SIGHUP);
-	sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	/* Turn off signals. */
+	(void)signal(SIGHUP, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
 	while ((pid = fork()) < 0) {
 		if (errno != EAGAIN) {
-			sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 			warn("fork");
 			free(p);
-			return (0);
+			stat = 1;
+			goto bail;
 		}
 		sleep(1);
 	}
 	if (pid == 0) {
-		sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
-		setgid(getgid());
-		setuid(getuid());
 		execv(_PATH_BSHELL, argp);
 		_exit(127);
 	}
@@ -1003,7 +998,10 @@ editit()
 		else if (WIFEXITED(stat))
 			break;
 	}
-	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
+bail:
+	(void)signal(SIGHUP, SIG_DFL);
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
 	return (!stat);
 }
 
