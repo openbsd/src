@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.4 1996/05/21 21:32:40 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.5 1996/05/24 09:15:39 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.4 1996/05/21 21:32:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.5 1996/05/24 09:15:39 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -78,9 +78,9 @@ char *inval;
 int invallen;
 char *indata;
 {
-	if(instatus != YP_TRUE)
+	if (instatus != YP_TRUE)
 		return instatus;
-	if(key)
+	if (key)
 		printf("%*.*s ", inkeylen, inkeylen, inkey);
 	printf("%*.*s\n", invallen, invallen, inval);
 	return 0;
@@ -99,13 +99,12 @@ char **argv;
 	int c, r, i;
 
 	notrans = key = 0;
-	while( (c=getopt(argc, argv, "xd:kt")) != -1)
-		switch(c) {
+	while ((c=getopt(argc, argv, "xd:kt")) != -1)
+		switch (c) {
 		case 'x':
-			for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+			for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 				printf("Use \"%s\" for \"%s\"\n",
-					ypaliases[i].alias,
-					ypaliases[i].name);
+				    ypaliases[i].alias, ypaliases[i].name);
 			exit(0);
 		case 'd':
 			domain = optarg;
@@ -120,24 +119,23 @@ char **argv;
 			usage();
 		}
 
-	if(optind + 1 != argc )
+	if (optind + 1 != argc )
 		usage();
 
-	if (!domainname) {
-		yp_get_default_domain(&domainname);
-	}
+	if (!domain)
+		yp_get_default_domain(&domain);
 
 	inmap = argv[optind];
 	if (!notrans) {
-		for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
-			if( strcmp(inmap, ypaliases[i].alias) == 0)
+		for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+			if (strcmp(inmap, ypaliases[i].alias) == 0)
 				inmap = ypaliases[i].name;
 	}
 	ypcb.foreach = printit;
 	ypcb.data = NULL;
 
 	r = yp_all(domain, inmap, &ypcb);
-	switch(r) {
+	switch (r) {
 	case 0:
 		break;
 	case YPERR_YPBIND:
@@ -145,7 +143,7 @@ char **argv;
 		exit(1);
 	default:
 		fprintf(stderr, "No such map %s. Reason: %s\n",
-			inmap, yperr_string(r));
+		    inmap, yperr_string(r));
 		exit(1);
 	}
 	exit(0);
