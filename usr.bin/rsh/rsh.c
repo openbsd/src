@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.16 1997/08/06 06:43:41 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.17 1998/03/25 19:53:21 art Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.16 1997/08/06 06:43:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.17 1998/03/25 19:53:21 art Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,6 +55,8 @@ static char rcsid[] = "$OpenBSD: rsh.c,v 1.16 1997/08/06 06:43:41 deraadt Exp $"
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #ifdef __STDC__
@@ -74,7 +76,18 @@ int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm;
 
 void warning __P((const char *, ...));
+void desrw_set_key __P((des_cblock *, des_key_schedule *));
+int des_read __P((int, char *, int));
+int des_write __P((int, char *, int));
+
+int krcmd __P((char **, u_short, char *, char *, int *, char *));
+int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
+		      CREDENTIALS *, Key_schedule));
 #endif
+
+void usage __P((void));
+
+void talk __P((int, int, int, register int));
 
 /*
  * rsh - remote shell
@@ -82,6 +95,7 @@ void warning __P((const char *, ...));
 extern int errno;
 int rfd2;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -91,7 +105,7 @@ main(argc, argv)
 	struct passwd *pw;
 	struct servent *sp;
 	int omask;
-	int argoff, asrsh, ch, dflag, nflag, one, pid, rem, uid;
+	int argoff, asrsh, ch, dflag, nflag, one, pid = 0, rem, uid;
 	register char *p;
 	char *args, *host, *user, *copyargs();
 	void sendsig();
@@ -101,7 +115,7 @@ main(argc, argv)
 	host = user = NULL;
 
 	/* if called as something other than "rsh", use it as the host name */
-	if (p = strrchr(argv[0], '/'))
+	if ((p = strrchr(argv[0], '/')))
 		++p;
 	else
 		p = argv[0];
@@ -151,7 +165,7 @@ main(argc, argv)
 #ifdef KERBEROS
 		case 'x':
 			doencrypt = 1;
-			desrw_set_key(&cred.session, schedule);
+			desrw_set_key(&cred.session, &schedule);
 			break;
 #endif
 		case '?':
@@ -306,9 +320,11 @@ try_connect:
 
 	if (!nflag)
 		(void)kill(pid, SIGKILL);
-	exit(0);
+
+	return 0;
 }
 
+void
 talk(nflag, omask, pid, rem)
 	int nflag, pid;
 	int omask;
@@ -316,7 +332,7 @@ talk(nflag, omask, pid, rem)
 {
 	register int cc, wc;
 	register char *bp;
-	int readfrom, ready, rembits;
+	fd_set readfrom, ready, rembits;
 	char buf[BUFSIZ];
 
 	if (!nflag && pid == 0) {
@@ -327,7 +343,8 @@ reread:		errno = 0;
 			goto done;
 		bp = buf;
 
-rewrite:	rembits = 1 << rem;
+rewrite:	FD_ZERO(&rembits);
+                FD_SET(rem, &rembits);
 		if (select(rem + 1, 0, &rembits, 0, 0) < 0) {
 			if (errno != EINTR) {
 				(void)fprintf(stderr,
@@ -336,7 +353,7 @@ rewrite:	rembits = 1 << rem;
 			}
 			goto rewrite;
 		}
-		if ((rembits & (1 << rem)) == 0)
+		if (!FD_ISSET(rem, &rembits))
 			goto rewrite;
 #ifdef KERBEROS
 		if (doencrypt)
@@ -360,9 +377,11 @@ done:
 	}
 
 	(void)sigsetmask(omask);
-	readfrom = (1 << rfd2) | (1 << rem);
+	FD_ZERO(&readfrom);
+	FD_SET(rfd2, &readfrom);
+	FD_SET(rem, &readfrom);
 	do {
-		ready = readfrom;
+		FD_COPY(&readfrom, &ready);
 		if (select(MAX(rfd2, rem) + 1, &ready, 0, 0, 0) < 0) {
 			if (errno != EINTR) {
 				(void)fprintf(stderr,
@@ -371,7 +390,7 @@ done:
 			}
 			continue;
 		}
-		if (ready & (1 << rfd2)) {
+		if (FD_ISSET(rfd2, &ready)) {
 			errno = 0;
 #ifdef KERBEROS
 			if (doencrypt)
@@ -381,11 +400,11 @@ done:
 				cc = read(rfd2, buf, sizeof buf);
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK)
-					readfrom &= ~(1 << rfd2);
+					FD_CLR(rfd2, &readfrom);
 			} else
 				(void)write(2, buf, cc);
 		}
-		if (ready & (1 << rem)) {
+		if (FD_ISSET(rem, &ready)) {
 			errno = 0;
 #ifdef KERBEROS
 			if (doencrypt)
@@ -395,11 +414,11 @@ done:
 				cc = read(rem, buf, sizeof buf);
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK)
-					readfrom &= ~(1 << rem);
+					FD_CLR(rem, &readfrom);
 			} else
 				(void)write(1, buf, cc);
 		}
-	} while (readfrom);
+	} while (FD_ISSET(rem, &readfrom) || FD_ISSET(rfd2, &readfrom));
 }
 
 void
@@ -472,7 +491,8 @@ copyargs(argv)
 	return(args);
 }
 
-usage()
+void
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: rsh [-nd%s]%s[-l login] host [command]\n",
