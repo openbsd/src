@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $	*/
+/*	$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /* This is OpenBSD pkg_install, based on:
@@ -84,7 +84,7 @@ pkg_do(char *pkg)
 
 	if (isURL(pkg)) {
 		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
-			strcpy(fname, cp);
+			strlcpy(fname, cp, sizeof(fname));
 			isTMP = TRUE;
 		}
 	} else if (fexists(pkg) && isfile(pkg)) {
@@ -97,7 +97,7 @@ pkg_do(char *pkg)
 			len = strlen(fname);
 			snprintf(&fname[len], FILENAME_MAX - len, "/%s", pkg);
 		} else
-			strcpy(fname, pkg);
+			strlcpy(fname, pkg, sizeof(fname));
 		cp = fname;
 	} else {
 		if ((cp = fileFindByPath(NULL, pkg)) != NULL) {
@@ -115,7 +115,7 @@ pkg_do(char *pkg)
 	if (cp) {
 		if (isURL(pkg)) {
 			/* file is already unpacked by fileGetURL() */
-			strcpy(PlayPen, cp);
+			strlcpy(PlayPen, cp, PlayPenSize);
 		} else {
 			/*
 			 * Apply a crude heuristic to see how much space the package will
@@ -219,7 +219,7 @@ bail:
 
 /* fn to be called for pkgs found */
 static int
-foundpkg(const char *found, char *data)
+foundpkg(const char *found, char *data, int unused)
 {
     if(!Quiet)
 	printf("%s\n", found);
@@ -235,7 +235,7 @@ check4pkg(char *pkgspec, char *dbdir)
 	    /* expensive (pattern) match */
 	    int found;
 
-	    found=findmatchingname(dbdir, pkgspec, foundpkg, NULL);
+	    found=findmatchingname(dbdir, pkgspec, foundpkg, NULL, 0);
 	    return !found;
 	} else {
 		/* simple match */

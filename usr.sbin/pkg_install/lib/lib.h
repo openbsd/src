@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.11 2001/11/07 20:57:24 espie Exp $ */
+/* $OpenBSD: lib.h,v 1.12 2003/04/04 08:56:01 avsm Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -132,7 +132,7 @@ enum {
 
 /* type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
-typedef int (*matchfn)(const char *found, char *data);
+typedef int (*matchfn)(const char *found, char *data, int len);
 
 /* Prototypes */
 /* Misc */
@@ -155,7 +155,7 @@ char		*basename_of(char *);
 char		*dirname_of(const char *);
 char		*strconcat(char *, char *);
 int		pmatch(const char *, const char *);
-int		findmatchingname(const char *, const char *, matchfn, char *); /* doesn't really belong here */
+int		findmatchingname(const char *, const char *, matchfn, char *, int); /* doesn't really belong here */
 char		*findbestmatchingname(const char *, const char *); /* neither */
 int		ispkgpattern(const char *);
 char		*strnncpy(char *to, size_t tosize, char *from, size_t cc);

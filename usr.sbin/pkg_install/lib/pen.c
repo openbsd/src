@@ -1,7 +1,7 @@
-/*	$OpenBSD: pen.c,v 1.11 2002/02/18 00:18:07 millert Exp $	*/
+/*	$OpenBSD: pen.c,v 1.12 2003/04/04 08:56:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pen.c,v 1.11 2002/02/18 00:18:07 millert Exp $";
+static const char *rcsid = "$OpenBSD: pen.c,v 1.12 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /*
@@ -53,8 +53,8 @@ save_dirs(char **c, char **p)
 void
 restore_dirs(char *c, char *p)
 {
-    strcpy(Current, c);  free(c);
-    strcpy(Previous, p); free(p);
+    strlcpy(Current, c, sizeof(Current));  free(c);
+    strlcpy(Previous, p, sizeof(Previous)); free(p);
 }
 
 char *
@@ -77,11 +77,11 @@ find_play_pen(char *pen, size_t pensize, size_t sz)
     else if ((cp = getenv("TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
 	(void) snprintf(pen, pensize, "%s/instmp.XXXXXXXXXX", cp);
     else if (stat("/var/tmp", &sb) != FAIL && min_free("/var/tmp") >= sz)
-	strcpy(pen, "/var/tmp/instmp.XXXXXXXXXX");
+	strlcpy(pen, "/var/tmp/instmp.XXXXXXXXXX", pensize);
     else if (stat("/tmp", &sb) != FAIL && min_free("/tmp") >= sz)
-	strcpy(pen, "/tmp/instmp.XXXXXXXXXX");
+	strlcpy(pen, "/tmp/instmp.XXXXXXXXXX", pensize);
     else if ((stat("/usr/tmp", &sb) == SUCCESS || mkdir("/usr/tmp", 01777) == SUCCESS) && min_free("/usr/tmp") >= sz)
-	strcpy(pen, "/usr/tmp/instmp.XXXXXXXXXX");
+	strlcpy(pen, "/usr/tmp/instmp.XXXXXXXXXX", pensize);
     else {
 	cleanup(0);
 	errx(2,
@@ -119,7 +119,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 	     "with more space and\ntry the command again", pen);
     }
     if (Current[0])
-	strcpy(Previous, Current);
+	strlcpy(Previous, Current, sizeof(Previous));
     else if (!getcwd(Previous, FILENAME_MAX)) {
 	cleanup(0);
 	err(1, "fatal error during execution: getcwd");
@@ -128,7 +128,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 	cleanup(0);
 	errx(2, "can't chdir to '%s'", pen);
     }
-    strcpy(Current, pen);
+    strlcpy(Current, pen, sizeof(Current));
     return Previous;
 }
 
@@ -153,10 +153,10 @@ leave_playpen(char *save)
         }
 	if (vsystem("rm -rf %s", Current))
 	    pwarnx("couldn't remove temporary dir '%s'", Current);
-	strcpy(Current, Previous);	/* XXX */
+	strlcpy(Current, Previous, sizeof(Current));	/* XXX */
     }
     if (save)
-	strcpy(Previous, save);		/* XXX */
+	strlcpy(Previous, save, sizeof(Previous));		/* XXX */
     else
 	Previous[0] = '\0';
     signal(SIGINT, oldsig);

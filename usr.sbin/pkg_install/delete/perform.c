@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $	*/
+/*	$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.12 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /*
@@ -32,7 +32,7 @@ static const char *rcsid = "$OpenBSD: perform.c,v 1.11 2001/11/26 05:04:33 deraa
 
 static int pkg_do(char *);
 static void sanity_check(char *);
-static int undepend(const char *, char *);
+static int undepend(const char *, char *, int);
 static char LogDir[FILENAME_MAX];
 
 
@@ -238,7 +238,7 @@ try_again:
 	if (Verbose)
 	    printf("Attempting to remove dependency on package `%s'\n", p->name);
 	if (!Fake)
-	    findmatchingname(dbdir, p->name, undepend, pkg);
+	    findmatchingname(dbdir, p->name, undepend, pkg, 0);
     }
     return 0;
 }
@@ -263,7 +263,7 @@ cleanup(int sig)
  * findmatchingname(), deppkgname is expanded from a (possible) pattern.
  */
 int
-undepend(const char *deppkgname, char *pkg2delname)
+undepend(const char *deppkgname, char *pkg2delname, int unused)
 {
      char fname[FILENAME_MAX], ftmp[FILENAME_MAX];
      char fbuf[FILENAME_MAX];

@@ -1,7 +1,7 @@
-/*	$OpenBSD: show.c,v 1.10 2001/11/07 20:57:23 espie Exp $	*/
+/*	$OpenBSD: show.c,v 1.11 2003/04/04 08:56:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: show.c,v 1.10 2001/11/07 20:57:23 espie Exp $";
+static const char *rcsid = "$OpenBSD: show.c,v 1.11 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /*
@@ -85,7 +85,7 @@ show_index(char *title, char *fname)
 	FILE *fp;
 	char line[MAXINDEXSIZE+2];
 
-	strcpy(line, "???\n");
+	strlcpy(line, "???\n", sizeof(line));
 
 	if (!Quiet) {
 		printf("%s%-18s ", InfoPrefix, title);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.15 2001/07/09 07:05:03 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.16 2003/04/04 08:56:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.15 2001/07/09 07:05:03 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.16 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /*
@@ -374,7 +374,7 @@ fileFindByPath(char *base, char *fname)
 
 	if (ispkgpattern(fname)) {
 		if ((cp=findbestmatchingname(".",fname)) != NULL) {
-			strcpy (tmp, cp);
+			strlcpy(tmp, cp, sizeof(tmp));
 			return tmp;
 		}
 	} else {
@@ -385,7 +385,7 @@ fileFindByPath(char *base, char *fname)
 	}
     
 	if (base) {
-		strcpy(tmp, base);
+		strlcpy(tmp, base, sizeof(tmp));
 
 		cp = strrchr(tmp, '/');
 		if (cp) {
@@ -601,14 +601,14 @@ unpack(char *pkg, char *flist)
     if (strcmp(pkg, "-")) {
 	cp = strrchr(pkg, '.');
 	if (cp) {
-	    strcpy(suff, cp + 1);
+	    strlcpy(suff, cp + 1, sizeof(suff));
 	    if (strchr(suff, 'z') || strchr(suff, 'Z'))
-		strcpy(args, "-z");
+		strlcpy(args, "-z", sizeof(args));
 	}
     }
     else
-	strcpy(args, "z");
-    strcat(args, "xpf");
+	strlcpy(args, "z", sizeof(args));
+    strlcat(args, "xpf", sizeof(args));
     if (vsystem("tar %s %s %s", args, pkg, flist ? flist : "")) {
 	pwarnx("tar extract of %s failed!", pkg);
 	return 1;

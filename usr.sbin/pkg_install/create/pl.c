@@ -1,7 +1,7 @@
-/*	$OpenBSD: pl.c,v 1.7 2001/06/06 20:03:08 espie Exp $	*/
+/*	$OpenBSD: pl.c,v 1.8 2003/04/04 08:56:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pl.c,v 1.7 2001/06/06 20:03:08 espie Exp $";
+static const char *rcsid = "$OpenBSD: pl.c,v 1.8 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /*
@@ -98,14 +98,14 @@ trylink(const char *from, const char *to)
 #define TOOBIG(str) strlen(str) + 6 + strlen(home) + where_count > maxargs
 #define PUSHOUT() /* push out string */					\
 	if (where_count > sizeof(STARTSTRING)-1) {			\
-		    strcat(where_args, "|tar xpf -");			\
+		    strlcat(where_args, "|tar xpf -", maxargs);		\
 		    if (system(where_args)) {				\
 			cleanup(0);					\
 			errx(2, "can't invoke tar pipeline");		\
 		    }							\
 		    memset(where_args, 0, maxargs);			\
  		    last_chdir = NULL;					\
-		    strcpy(where_args, STARTSTRING);			\
+		    strlcpy(where_args, STARTSTRING, maxargs);		\
 		    where_count = sizeof(STARTSTRING)-1;		\
 	}
 
@@ -134,7 +134,7 @@ copy_plist(char *home, package_t *plist)
     }
 
     memset(where_args, 0, maxargs);
-    strcpy(where_args, STARTSTRING);
+    strlcpy(where_args, STARTSTRING, maxargs);
     where_count = sizeof(STARTSTRING)-1;
     last_chdir = 0;
 

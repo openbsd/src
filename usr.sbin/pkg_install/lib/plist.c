@@ -1,6 +1,6 @@
-/*	$OpenBSD: plist.c,v 1.13 2001/11/07 20:57:24 espie Exp $	*/
+/*	$OpenBSD: plist.c,v 1.14 2003/04/04 08:56:01 avsm Exp $	*/
 #ifndef lint
-static const char *rcsid = "$OpenBSD: plist.c,v 1.13 2001/11/07 20:57:24 espie Exp $";
+static const char *rcsid = "$OpenBSD: plist.c,v 1.14 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /*
@@ -210,7 +210,7 @@ plist_cmd(char *s, char **arg)
 	char	*cp;
 	char	*sp;
 
-	(void) strcpy(cmd, s);
+	(void) strlcpy(cmd, s, sizeof(cmd));
 	str_lowercase(cmd);
 	for (cp = cmd, sp = s ; *cp ; cp++, sp++) {
 		if (isspace(*cp)) {

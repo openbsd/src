@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.23 2003/04/03 19:42:53 avsm Exp $	*/
+/*	$OpenBSD: perform.c,v 1.24 2003/04/04 08:56:01 avsm Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.23 2003/04/03 19:42:53 avsm Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.24 2003/04/04 08:56:01 avsm Exp $";
 #endif
 
 /*
@@ -61,9 +61,9 @@ static char *Home;
 /* called to see if pkg is already installed as some other version */
 /* note found version in "note" */
 static int
-check_if_installed(const char *found, char *note)
+check_if_installed(const char *found, char *note, int len)
 {
-    strcpy(note, found);
+    strlcpy(note, found, len);
     return 0;
 }
 
@@ -256,7 +256,7 @@ pkg_do(char *pkg)
 	    }
 	    strlcpy(buf+(s-PkgName+1), isdigit(s[1]) ? "[0-9]*" : "*", sizeof(buf)-(s-PkgName+1));
 
-            if (findmatchingname(dbdir, buf, check_if_installed, installed)) {
+            if (findmatchingname(dbdir, buf, check_if_installed, installed, sizeof(installed))) {
 		pwarnx("other version '%s' already installed", installed);
 	    	if (find_plist_option(&Plist, "no-default-conflict") != NULL) {
 		    pwarnx("proceeding with installation anyway");
@@ -279,7 +279,7 @@ pkg_do(char *pkg)
 	
 	/* was: */
         /* if (!vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) {*/
-	if(findmatchingname(dbdir, p->name, check_if_installed, installed)){
+	if(findmatchingname(dbdir, p->name, check_if_installed, installed, sizeof(installed))){
 	    pwarnx("Conflicting package installed, please use\n\t\"pkg_delete %s\" first to remove it!\n",  installed); 
 	    ++code;
 	}
@@ -294,7 +294,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("Package `%s' depends on `%s'\n", PkgName, p->name);
 	/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
-	if (!findmatchingname(dbdir, p->name, check_if_installed, installed)) {
+	if (!findmatchingname(dbdir, p->name, check_if_installed, installed, sizeof(installed))) {
 	    char path[FILENAME_MAX], *cp = NULL;
 
 	    if (!Fake) {
