@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.2 2004/11/08 16:39:31 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.3 2004/11/09 12:01:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -66,11 +66,13 @@
 
 void	m188_reset(void);
 u_int	safe_level(u_int mask, u_int curlevel);
-void	setlevel(unsigned int);
 
 void	m188_bootstrap(void);
 void	m188_ext_int(u_int, struct trapframe *);
+u_int	m188_getipl(void);
 vaddr_t	m188_memsize(void);
+u_int	m188_raiseipl(u_int);
+u_int	m188_setipl(u_int);
 void	m188_setupiackvectors(void);
 void	m188_startup(void);
 
@@ -151,6 +153,9 @@ m188_bootstrap()
 
 	cmmu = &cmmu8820x;
 	md_interrupt_func_ptr = &m188_ext_int;
+	md_getipl = &m188_getipl;
+	md_setipl = &m188_setipl;
+	md_raiseipl = &m188_raiseipl;
 
 	/* clear and disable all interrupts */
 	*int_mask_reg[0] = 0;
@@ -222,19 +227,46 @@ safe_level(u_int mask, u_int curlevel)
 	/* NOTREACHED */
 }
 
-void
-setlevel(unsigned int level)
+u_int
+m188_getipl(void)
 {
-	unsigned int mask;
+	return m188_curspl[cpu_number()];
+}
+
+u_int
+m188_setipl(u_int level)
+{
+	u_int mask, curspl;
 	int cpu = cpu_number();
 
-	mask = int_mask_val[level];
+	curspl = m188_curspl[cpu];
 
+	mask = int_mask_val[level];
 	if (cpu != master_cpu)
 		mask &= SLAVE_MASK;
 
 	*int_mask_reg[cpu] = mask;
 	m188_curspl[cpu] = level;
+
+	return curspl;
+}
+
+u_int
+m188_raiseipl(u_int level)
+{
+	u_int mask, curspl;
+	int cpu = cpu_number();
+
+	curspl = m188_curspl[cpu];
+	if (curspl < level) {
+		mask = int_mask_val[level];
+		if (cpu != master_cpu)
+			mask &= SLAVE_MASK;
+
+		*int_mask_reg[cpu] = mask;
+		m188_curspl[cpu] = level;
+	}
+	return curspl;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.2 2004/11/08 16:39:31 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.3 2004/11/09 12:01:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -64,7 +64,10 @@
 
 void	m187_bootstrap(void);
 void	m187_ext_int(u_int, struct trapframe *);
+u_int	m187_getipl(void);
 vaddr_t	m187_memsize(void);
+u_int	m187_raiseipl(u_int);
+u_int	m187_setipl(u_int);
 void	m187_setupiackvectors(void);
 void	m187_startup(void);
 
@@ -157,7 +160,7 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 	u_char vec;
 
 	/* get level and mask */
-	mask = *md_intr_mask & 0x07;
+	mask = *(u_int8_t *)M187_IMASK & 0x07;
 	level = *(u_int8_t *)M187_ILEVEL & 0x07;
 
 #ifdef DIAGNOSTIC
@@ -254,6 +257,33 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 	setipl(mask);
 }
 
+u_int
+m187_getipl(void)
+{
+	return *(u_int8_t *)M187_IMASK & 0x07;
+}
+
+u_int
+m187_setipl(u_int level)
+{
+	unsigned curspl;
+
+	curspl = *(u_int8_t *)M187_IMASK & 0x07;
+	*(u_int8_t *)M187_IMASK = level;
+	return curspl;
+}
+
+u_int
+m187_raiseipl(u_int level)
+{
+	unsigned curspl;
+
+	curspl = *(u_int8_t *)M187_IMASK & 0x07;
+	if (curspl < level)
+		*(u_int8_t *)M187_IMASK = level;
+	return curspl;
+}
+
 void
 m187_bootstrap()
 {
@@ -261,5 +291,7 @@ m187_bootstrap()
 
 	cmmu = &cmmu8820x;
 	md_interrupt_func_ptr = &m187_ext_int;
-	md_intr_mask = (u_int8_t *)M187_IMASK;
+	md_getipl = &m187_getipl;
+	md_setipl = &m187_setipl;
+	md_raiseipl = &m187_raiseipl;
 }

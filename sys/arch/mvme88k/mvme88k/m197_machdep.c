@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.2 2004/11/08 16:39:31 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.3 2004/11/09 12:01:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -63,7 +63,10 @@
 
 void	m197_bootstrap(void);
 void	m197_ext_int(u_int, struct trapframe *);
+u_int	m197_getipl(void);
 vaddr_t	m197_memsize(void);
+u_int	m197_raiseipl(u_int);
+u_int	m197_setipl(u_int);
 void	m197_setupiackvectors(void);
 void	m197_startup(void);
 
@@ -173,7 +176,7 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 	u_char vec;
 
 	/* get src and mask */
-	mask = *md_intr_mask & 0x07;
+	mask = *(u_int8_t *)M197_IMASK & 0x07;
 	src = *(u_int8_t *)M197_ISRC;
 
 	if (v == T_NON_MASK) {
@@ -268,6 +271,33 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 	}
 }
 
+u_int
+m197_getipl(void)
+{
+	return *(u_int8_t *)M197_IMASK & 0x07;
+}
+
+u_int
+m197_setipl(u_int level)
+{
+	u_int curspl;
+
+	curspl = *(u_int8_t *)M197_IMASK & 0x07;
+	*(u_int8_t *)M197_IMASK = level;
+	return curspl;
+}
+
+u_int
+m197_raiseipl(u_int level)
+{
+	u_int curspl;
+
+	curspl = *(u_int8_t *)M197_IMASK & 0x07;
+	if (curspl < level)
+		*(u_int8_t *)M197_IMASK = level;
+	return curspl;
+}
+
 void
 m197_bootstrap()
 {
@@ -276,6 +306,9 @@ m197_bootstrap()
 
 	cmmu = &cmmu88110;
 	md_interrupt_func_ptr = &m197_ext_int;
-	md_intr_mask = (u_char *)M197_IMASK;
+	md_getipl = &m197_getipl;
+	md_setipl = &m197_setipl;
+	md_raiseipl = &m197_raiseipl;
+
 	set_tcfp(); /* Set Time Critical Floating Point Mode */
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.160 2004/11/08 16:39:31 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.161 2004/11/09 12:01:19 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -140,9 +140,11 @@ intrhand_t intr_handlers[NVMEINTR];
 vaddr_t interrupt_stack[MAX_CPUS];
 
 /* board dependent pointers */
-volatile u_int8_t *md_intr_mask;
 void (*md_interrupt_func_ptr)(u_int, struct trapframe *);
 void (*md_init_clocks)(void);
+u_int (*md_getipl)(void);
+u_int (*md_setipl)(u_int);
+u_int (*md_raiseipl)(u_int);
 
 volatile u_int8_t *ivec[8];
 
@@ -1325,24 +1327,11 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 unsigned
 getipl(void)
 {
-	unsigned curspl;
+	u_int curspl;
 	m88k_psr_type psr;
 
 	psr = disable_interrupts_return_psr();
-	switch (brdtyp) {
-#ifdef MVME188
-	case BRD_188:
-		curspl = m188_curspl[cpu_number()];
-		break;
-#endif /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
-	case BRD_187:
-	case BRD_8120:
-	case BRD_197:
-		curspl = *md_intr_mask & 0x07;
-		break;
-#endif /* defined(MVME187) || defined(MVME197) */
-	}
+	curspl = (*md_getipl)();
 	set_psr(psr);
 	return curspl;
 }
@@ -1350,29 +1339,14 @@ getipl(void)
 unsigned
 setipl(unsigned level)
 {
-	unsigned curspl;
+	u_int curspl;
 	m88k_psr_type psr;
 
 	psr = disable_interrupts_return_psr();
-	switch (brdtyp) {
-#ifdef MVME188
-	case BRD_188:
-		curspl = m188_curspl[cpu_number()];
-		setlevel(level);
-		break;
-#endif /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
-	case BRD_187:
-	case BRD_8120:
-	case BRD_197:
-		curspl = *md_intr_mask & 0x07;
-		*md_intr_mask = level;
-		break;
-#endif /* defined(MVME187) || defined(MVME197) */
-	}
+	curspl = (*md_setipl)(level);
 
 	/*
-	 * The flush pipeline is required to make sure the above write gets
+	 * The flush pipeline is required to make sure the above change gets
 	 * through the data pipe and to the hardware; otherwise, the next
 	 * bunch of instructions could execute at the wrong spl protection.
 	 */
@@ -1385,31 +1359,14 @@ setipl(unsigned level)
 unsigned
 raiseipl(unsigned level)
 {
-	unsigned curspl;
+	u_int curspl;
 	m88k_psr_type psr;
 
 	psr = disable_interrupts_return_psr();
-	switch (brdtyp) {
-#ifdef MVME188
-	case BRD_188:
-		curspl = m188_curspl[cpu_number()];
-		if (curspl < level)
-			setlevel(level);
-		break;
-#endif /* MVME188 */
-#if defined(MVME187) || defined(MVME197)
-	case BRD_187:
-	case BRD_8120:
-	case BRD_197:
-		curspl = *md_intr_mask & 0x07;
-		if (curspl < level)
-			*md_intr_mask = level;
-		break;
-#endif /* defined(MVME187) || defined(MVME197) */
-	}
+	curspl = (*md_raiseipl)(level);
 
 	/*
-	 * The flush pipeline is required to make sure the above write gets
+	 * The flush pipeline is required to make sure the above change gets
 	 * through the data pipe and to the hardware; otherwise, the next
 	 * bunch of instructions could execute at the wrong spl protection.
 	 */
