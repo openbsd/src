@@ -768,7 +768,6 @@
 ./usr/share/man/cat4/advansys.0
 ./usr/share/man/cat4/adw.0
 ./usr/share/man/cat4/ahc.0
-./usr/share/man/cat4/al.0
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/alpha/com.0
 ./usr/share/man/cat4/alpha/cy.0
@@ -832,7 +831,6 @@
 ./usr/share/man/cat4/atari/floppy.0
 ./usr/share/man/cat4/atari/ms.0
 ./usr/share/man/cat4/audio.0
-./usr/share/man/cat4/ax.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bridge.0
 ./usr/share/man/cat4/ccd.0
@@ -1664,3 +1662,11 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
+./usr/share/man/cat5/krb.conf.0
+./usr/share/man/cat5/krb.realms.0
+./usr/share/man/cat4/aue.0
+./usr/share/man/cat4/cue.0
+./usr/share/man/cat4/kue.0
+./usr/share/man/cat4/ohci.0
+./usr/share/man/cat4/uhci.0
+./usr/share/man/cat4/ulpt.0

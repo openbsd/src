@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.234 2000/03/28 01:20:14 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.235 2000/03/29 21:00:35 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1040,6 +1040,11 @@
 #define	PCI_PRODUCT_INTEL_82440BX_AGP	0x71a1		/* 82440BX AGP (PAC) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 450 PCIset (Orion) Host-PCI */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 450 PCIset (Orion) Memory */
+#define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
+#define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
+#define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */
+#define	PCI_PRODUCT_INTEL_82806AA	0x1360		/* 82806AA PCI64 */
+#define	PCI_PRODUCT_INTEL_82806AA_APIC	0x1161		/* 82806AA PCI64 APIC */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
