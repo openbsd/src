@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.27 1998/05/18 21:11:02 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.28 1998/05/19 18:42:01 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -830,7 +830,9 @@ ip_ctloutput(op, so, level, optname, mp)
 	register struct inpcb *inp = sotoinpcb(so);
 	register struct mbuf *m = *mp;
 	register int optval = 0;
+#ifdef IPSEC
 	struct proc *p = curproc; /* XXX */
+#endif
 	int error = 0;
 
 	if (level != IPPROTO_IP) {
