@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.4 1997/04/01 07:35:35 todd Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.5 1997/09/16 10:42:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -75,7 +75,7 @@ prtime ()
 	time_t twhen;
 
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease)
-		(void) sprintf (relsufix,".%s",thisC->Crelease);
+		(void) snprintf (relsufix,sizeof relsufix,".%s",thisC->Crelease);
 	else
 		relsufix[0] = '\0';
 	if (chdir (thisC->Cbase) < 0)
@@ -260,13 +260,15 @@ va_dcl
 		return;
 	}
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease) 
-		(void) sprintf (collrelname,"%s-%s",collname,thisC->Crelease);
+		(void) snprintf (collrelname,sizeof collrelname,
+			"%s-%s",collname,thisC->Crelease);
 	else
 		(void) strcpy (collrelname,collname);
 	
 	if (noteF == NULL) {
 		if ((thisC->Cflags&CFMAIL) && thisC->Cnotify) {
-			(void) sprintf (buf,"mail -s \"SUP Upgrade of %s\" %s >/dev/null",
+			(void) snprintf (buf,sizeof buf,
+				"mail -s \"SUP Upgrade of %s\" %s >/dev/null",
 				collrelname,thisC->Cnotify);
 			noteF = popen (buf,"w");
 			if (noteF == NULL) {

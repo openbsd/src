@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.6 1997/04/01 07:35:20 todd Exp $	*/
+/*	$OpenBSD: scan.c,v 1.7 1997/09/16 10:42:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -283,7 +283,7 @@ char *release;
 		release = salloc (DEFRELEASE);
 	listTL = NULL;
 
-	(void) sprintf (buf,FILERELEASES,collname);
+	(void) snprintf (buf,sizeof buf,FILERELEASES,collname);
 	f = fopen (buf,"r");
 	if (f != NULL) {
 		rewound = TRUE;
@@ -338,7 +338,7 @@ makescanlists ()
 	char *saveprefix = prefix;
 	int count = 0;
 
-	(void) sprintf (buf,FILERELEASES,collname);
+	(void) snprintf (buf,sizeof buf,FILERELEASES,collname);
 	f = fopen (buf,"r");
 	if (f != NULL) {
 		while ((p = fgets (buf,sizeof(buf),f)) != NULL) {
@@ -439,7 +439,7 @@ doscan (listfile)
 	rsymT = NULL;
 	if (listfile == NULL)
 		listfile = FILELISTDEF;
-	(void) sprintf (buf,FILELIST,collname,listfile);
+	(void) snprintf (buf,sizeof buf,FILELIST,collname,listfile);
 	readlistfile (buf);		/* get contents of list file */
 	(void) Tprocess (upgT,listone, NULL); /* build list of files specified */
 	cdprefix ((char *)NULL);
@@ -565,7 +565,7 @@ char *exec;
 		newt = Tinsert (t,speclist[i],TRUE);
 		newt->Tflags |= flags;
 		if (exec) {
-			(void) sprintf (buf,exec,speclist[i]);
+			(void) snprintf (buf,sizeof buf,exec,speclist[i]);
 			(void) Tinsert (&newt->Texec,buf,FALSE);
 		}
 		free (speclist[i]);
@@ -633,14 +633,16 @@ int always;
                 int status;
                 if (rcs_branch != NULL)
 #ifdef CVS
-                        sprintf(rcs_release, "-r %s", rcs_branch);
+                        snprintf(rcs_release,sizeof rcs_release,
+				"-r %s", rcs_branch);
 #else
-                        sprintf(rcs_release, "-r%s", rcs_branch);
+                        snprintf(rcs_release,sizeof rcs_release,
+				"-r%s", rcs_branch);
 #endif
                 else
                         rcs_release[0] = '\0';
 #ifdef CVS
-                sprintf(sys_com, "cvs -d %s -r -l -Q co -p %s %s > %s\n", cvs_root, rcs_release, name, rcs_file);
+                snprintf(sys_com, sizeof sys_com, "cvs -d %s -r -l -Q co -p %s %s > %s\n", cvs_root, rcs_release, name, rcs_file);
 #else
                 status = runp("rcsstat", "rcsstat", "-q", rcs_release, name, 0);
 #endif
@@ -718,7 +720,7 @@ int always;
 			ename[i] = dentry->d_name[i];
 		ename[i] = 0;
 		if (*newname)
-			(void) sprintf (filename,"%s/%s",newname,ename);
+			(void) snprintf (filename,sizeof filename,"%s/%s",newname,ename);
 		else
 			(void) strcpy (filename,ename);
 		listentry(ename,filename,newname,always);
@@ -820,7 +822,7 @@ char *scanfile;
         
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
-	(void) sprintf (buf,FILESCAN,collname,scanfile);
+	(void) snprintf (buf,sizeof buf,FILESCAN,collname,scanfile);
 	if (stat(buf,&sbuf) < 0)
 		return (FALSE);
 	if ((f = fopen (buf,"r")) == NULL)
@@ -915,8 +917,8 @@ char *scanfile;
 
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
-	(void) sprintf (fname,FILESCAN,collname,scanfile);
-	(void) sprintf (tname,"%s.temp",fname);
+	(void) snprintf (fname,sizeof fname,FILESCAN,collname,scanfile);
+	(void) snprintf (tname,sizeof tname,"%s.temp",fname);
 	if (NULL == (f = fopen (tname, "w")))
 		goaway ("Can't test scan file temp %s for %s",tname,collname);
 	else {
@@ -934,8 +936,8 @@ char *scanfile;
 
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
-	(void) sprintf (fname,FILESCAN,collname,scanfile);
-	(void) sprintf (tname,"%s.temp",fname);
+	(void) snprintf (fname,sizeof fname,FILESCAN,collname,scanfile);
+	(void) snprintf (tname,sizeof tname,"%s.temp",fname);
 	scanF = fopen (tname,"w");
 	if (scanF == NULL)
 		goaway ("Can't write scan file temp %s for %s",tname,collname);

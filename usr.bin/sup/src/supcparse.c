@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcparse.c,v 1.3 1997/04/01 07:35:38 todd Exp $	*/
+/*	$OpenBSD: supcparse.c,v 1.4 1997/09/16 10:42:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -224,7 +224,7 @@ getwhen(collection, relsuffix)
 	FILE *fp;
 	time_t tstamp;
 
-	(void) sprintf (buf,FILEWHEN,collection,relsuffix);
+	(void) snprintf (buf,sizeof buf,FILEWHEN,collection,relsuffix);
 
 	if ((fp = fopen(buf, "r")) == NULL)
 		return 0;

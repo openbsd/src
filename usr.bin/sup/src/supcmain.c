@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.5 1997/04/01 07:35:32 todd Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.6 1997/09/16 10:42:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -603,11 +603,12 @@ char **argv;
 		rpauseflag = TRUE;
 	(void) signal (SIGSYS,oldsigsys);
 #endif	/* MACH */
-	if (sysflag)
-		(void) sprintf (supfname = buf,
-				    timeflag?FILESUPTDEFAULT:FILESUPDEFAULT,
-				    DEFDIR);
-	else {
+	if (sysflag) {
+		(void) snprintf (buf,sizeof buf,
+			timeflag?FILESUPTDEFAULT:FILESUPDEFAULT,
+			DEFDIR);
+		supfname = buf;
+	} else {
 		supfname = argv[1];
 		if (strcmp (supfname,"-") == 0)
 			supfname = "";
@@ -672,7 +673,8 @@ char **argv;
 				c->Cnotify = salloc (username);
 		}
 		if (c->Cbase == NULL) {
-			(void) sprintf (buf,FILEBASEDEFAULT,c->Cname);
+			(void) snprintf (buf,sizeof buf,
+				FILEBASEDEFAULT,c->Cname);
 			c->Cbase = salloc (buf);
 		}
 	}
@@ -686,8 +688,10 @@ char **argv;
 		p = "standard input";
 	else if (sysflag)
 		p = "system software";
-	else
-		(void) sprintf (p = buf,"file %s",supfname);
+	else {
+		(void) snprintf (buf,sizeof buf,"file %s",supfname);
+		p = buf;
+	}
 	if (!silent)
 	    loginfo ("SUP %d.%d (%s) for %s at %s",PROTOVERSION,PGMVERSION,
 		    scmversion,p,fmttime (timenow));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcname.c,v 1.4 1997/04/01 07:35:36 todd Exp $	*/
+/*	$OpenBSD: supcname.c,v 1.5 1997/09/16 10:42:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -72,7 +72,7 @@ void getnams ()
 
 	for (c = firstC; c && c->Chtree != NULL; c = c->Cnext);
 	if (c == NULL) return;
-	(void) sprintf (buf,FILEHOSTS,DEFDIR);
+	(void) snprintf (buf,sizeof buf,FILEHOSTS,DEFDIR);
 	f = fopen (buf,"r");
 	if (f == NULL)  logquit (1,"Can't open %s",buf);
 	while ((p = fgets (buf,STRINGLENGTH,f)) != NULL) {
