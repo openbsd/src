@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.83 2004/08/10 20:04:55 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.84 2004/10/28 19:22:52 mcbride Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -182,7 +182,6 @@ tcp_init()
 	    NULL);
 #endif /* TCP_SACK */
 	in_pcbinit(&tcbtable, tcbhashsize);
-	tcp_now = arc4random() / 2;
 
 #ifdef INET6
 	/*

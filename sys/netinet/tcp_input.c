@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.176 2004/09/22 21:33:53 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.177 2004/10/28 19:22:52 mcbride Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -931,6 +931,10 @@ after_listen:
 #endif
 		if (tcp_dooptions(tp, optp, optlen, th, m, iphlen, &opti))
 			goto drop;
+
+	/* subtract out the tcp timestamp modulator */
+	if (opti.ts_present)
+		opti.ts_ecr -= tp->ts_modulate;
 
 #ifdef TCP_SACK
 	if (tp->sack_enable) {
@@ -3235,7 +3239,7 @@ do {									\
 	timeout_add(&(sc)->sc_timer, (sc)->sc_rxtcur * (hz / PR_SLOWHZ)); \
 } while (/*CONSTCOND*/0)
 
-#define	SYN_CACHE_TIMESTAMP(sc)	tcp_now
+#define	SYN_CACHE_TIMESTAMP(sc)	tcp_now + (sc)->sc_modulate
 
 void
 syn_cache_init()
@@ -3659,6 +3663,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	tp->sack_enable = sc->sc_flags & SCF_SACK_PERMIT;
 #endif
 
+	tp->ts_modulate = sc->sc_modulate;
 	tp->iss = sc->sc_iss;
 	tp->irs = sc->sc_irs;
 	tcp_sendseqinit(tp);
@@ -4114,6 +4119,7 @@ syn_cache_respond(sc, m)
 		u_int32_t *lp = (u_int32_t *)(optp);
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
+		sc->sc_modulate = arc4random();
 		*lp++ = htonl(SYN_CACHE_TIMESTAMP(sc));
 		*lp   = htonl(sc->sc_timestamp);
 		optp += TCPOLEN_TSTAMP_APPA;

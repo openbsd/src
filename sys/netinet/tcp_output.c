@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.73 2004/10/06 14:33:07 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.74 2004/10/28 19:22:52 mcbride Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -594,7 +594,7 @@ send:
 
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
-		*lp++ = htonl(tcp_now);
+		*lp++ = htonl(tcp_now + tp->ts_modulate);
 		*lp   = htonl(tp->ts_recent);
 		optlen += TCPOLEN_TSTAMP_APPA;
 	}

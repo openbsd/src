@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.66 2004/09/16 13:14:28 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.67 2004/10/28 19:22:52 mcbride Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -170,6 +170,7 @@ struct tcpcb {
 	u_char	request_r_scale;	/* pending window scaling */
 	u_char	requested_s_scale;
 	u_int32_t ts_recent;		/* timestamp echo data */
+	u_int32_t ts_modulate;		/* modulation on timestamp */
 	u_int32_t ts_recent_age;		/* when last updated */
 	tcp_seq	last_ack_sent;
 
@@ -249,6 +250,7 @@ struct syn_cache {
 	int sc_bucketidx;			/* our bucket index */
 	u_int32_t sc_hash;
 	u_int32_t sc_timestamp;			/* timestamp from SYN */
+	u_int32_t sc_modulate;			/* our timestamp modulator */
 #if 0
 	u_int32_t sc_timebase;			/* our local timebase */
 #endif
