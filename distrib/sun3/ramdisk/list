@@ -1,0 +1,96 @@
+#	$OpenBSD: list,v 1.1 1998/08/23 18:09:06 kstailey Exp $
+
+COPY	${OBJDIR}/raminst		raminst
+LINK	raminst			bin/cat
+LINK	raminst			bin/chmod
+LINK	raminst			bin/cp
+LINK	raminst			bin/df
+LINK	raminst			bin/dd
+LINK	raminst			bin/ed
+LINK	raminst			bin/expr
+LINK	raminst			bin/ln
+LINK	raminst			bin/ls
+LINK	raminst			bin/kill
+LINK	raminst			bin/hostname
+LINK	raminst			bin/mkdir
+LINK	raminst			bin/mv
+LINK	raminst			bin/pwd
+LINK	raminst			bin/rm
+LINK	raminst			bin/sh
+LINK	bin/sh			bin/-sh
+LINK	raminst			bin/sleep
+LINK	raminst			bin/stty
+LINK	raminst			bin/sync
+LINK	raminst			bin/test
+LINK	raminst			bin/[
+LINK	raminst			sbin/disklabel
+LINK	raminst			sbin/fsck
+LINK	raminst			sbin/halt
+LINK	raminst			sbin/ifconfig
+LINK	raminst			sbin/init
+LINK	raminst			sbin/mknod
+LINK	raminst			usr/bin/more
+LINK	raminst			sbin/mount
+LINK	raminst			sbin/mount_cd9660
+LINK	raminst			sbin/mount_ffs
+LINK	raminst			sbin/mount_kernfs
+LINK	raminst			sbin/mount_nfs
+LINK	raminst			sbin/mount_mfs
+LINK	raminst			sbin/newfs
+LINK	raminst			sbin/reboot
+LINK	raminst			sbin/route
+LINK	raminst			sbin/slattach
+LINK	raminst			sbin/umount
+LINK	raminst			usr/bin/awk
+LINK	raminst			usr/bin/chgrp
+LINK	raminst			usr/bin/cut
+LINK	raminst			usr/bin/ftp
+LINK	raminst			usr/bin/egrep
+LINK	raminst			usr/bin/grep
+LINK	raminst			usr/bin/gzip
+LINK	raminst			usr/bin/less
+LINK	raminst			usr/bin/sed
+LINK	raminst			usr/bin/sort
+LINK	raminst			bin/pax
+LINK	raminst			usr/bin/tar
+LINK	raminst			usr/bin/tip
+LINK	raminst			usr/sbin/chat
+LINK	raminst			usr/sbin/chown
+LINK	raminst			usr/sbin/pppd
+LINK	raminst			usr/bin/vi
+SPECIAL	/bin/rm raminst
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV raminst
+
+# we need the contents of /usr/mdec (XXX)
+COPY	${DESTDIR}/usr/mdec/uboot.lif	usr/mdec/uboot.lif
+LINK	usr/mdec/uboot.lif	usr/mdec/bootct
+LINK	usr/mdec/uboot.lif	usr/mdec/boothd
+LINK	usr/mdec/uboot.lif	usr/mdec/bootsd
+LINK	usr/mdec/uboot.lif	usr/mdec/ctboot
+LINK	usr/mdec/uboot.lif	usr/mdec/hdboot
+LINK	usr/mdec/uboot.lif	usr/mdec/sdboot
+
+# various files that we need in /etc for the install
+COPY	rd.group		etc/group
+COPY	rd.master.passwd	etc/master.passwd
+COPY	rd.disktab		etc/disktab
+SPECIAL	cd etc; pwd_mkdb -p -d . ./master.passwd
+
+# and the common installation tools
+COPY	${TOPDIR}/common/dot.commonutils	.commonutils
+COPY	${TOPDIR}/common/termcap.hp-vt	usr/share/misc/termcap
+
+# and the installation tools
+COPY	dot.profile			.profile
+COPY	dot.instutils			.instutils
+COPY	install.md			install.md
+COPY	${CURDIR}/../../miniroot/install.sh	install
+COPY	${CURDIR}/../../miniroot/upgrade.sh	upgrade
+SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
+SPECIAL	chmod 755 install upgrade
+
+# so DNS can work
+SYMLINK /tmp/resolv.conf.shadow		etc/resolv.conf

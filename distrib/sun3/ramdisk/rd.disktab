@@ -1,0 +1,16 @@
+#	$OpenBSD: rd.disktab,v 1.1 1998/08/23 18:09:08 kstailey Exp $
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=ramdisk:se#512:nt#2:ns#128:nc#16:\
+	:pa#4046:oa#0:ta=4.2BSD:ba#4096:fa#512:\
+	:pb#0:ob#0:tb=swap:\
+	:pc#4046:oc#0:
+wren7|Seagate Wren 7:\
+	:dt=SCSI:ty=winchester:\
+	:nc#1632:ns#52:nt#15:\
+	:se#512:\
+	:rm#3600:\
+	:pa#65520:oa#0:ta=4.2BSD:\
+	:pb#65520:ob#65520:tb=swap:\
+	:pc#1272960:oc#0:\
+	:pd#65520:od#131040:td=4.2BSD:\
+	:pg#1076400:og#196560:tg=4.2BSD:
