@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.10 2003/02/17 01:29:20 henric Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.11 2003/03/06 08:26:08 henric Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -105,17 +105,6 @@ static int _ebus_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
 static void *ebus_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int,
     int, int (*)(void *), void *);
-static int ebus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
-    struct proc *, int);
-static void ebus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-static void ebus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-    bus_size_t, int);
-int ebus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
-    bus_dma_segment_t *, int, int *, int);
-void ebus_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
-int ebus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
-    caddr_t *, int);
-void ebus_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 bus_space_tag_t ebus_alloc_mem_tag(struct ebus_softc *, bus_space_tag_t);
 bus_space_tag_t ebus_alloc_io_tag(struct ebus_softc *, bus_space_tag_t);
 bus_space_tag_t _ebus_alloc_bus_tag(struct ebus_softc *sc, const char *,
@@ -421,21 +410,6 @@ ebus_alloc_dma_tag(struct ebus_softc *sc, bus_dma_tag_t pdt)
 	bzero(dt, sizeof *dt);
 	dt->_cookie = sc;
 	dt->_parent = pdt;
-#define PCOPY(x)	dt->x = pdt->x
-	PCOPY(_dmamap_create);
-	PCOPY(_dmamap_destroy);
-	dt->_dmamap_load = ebus_dmamap_load;
-	PCOPY(_dmamap_load_mbuf);
-	PCOPY(_dmamap_load_uio);
-	PCOPY(_dmamap_load_raw);
-	dt->_dmamap_unload = ebus_dmamap_unload;
-	dt->_dmamap_sync = ebus_dmamap_sync;
-	dt->_dmamem_alloc = ebus_dmamem_alloc;
-	dt->_dmamem_free = ebus_dmamem_free;
-	dt->_dmamem_map = ebus_dmamem_map;
-	dt->_dmamem_unmap = ebus_dmamem_unmap;
-	PCOPY(_dmamem_mmap);
-#undef	PCOPY
 	sc->sc_dmatag = dt;
 	return (dt);
 }
@@ -549,53 +523,3 @@ ebus_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int pri, int level,
 	    handler, arg));
 }
 
-/*
- * bus dma support
- */
-int
-ebus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
-    bus_size_t buflen, struct proc *p, int flags)
-{
-	return (bus_dmamap_load(t->_parent, map, buf, buflen, p, flags));
-}
-
-void
-ebus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
-{
-	bus_dmamap_unload(t->_parent, map);
-}
-
-void
-ebus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
-    bus_size_t len, int ops)
-{
-	bus_dmamap_sync(t->_parent, map, offset, len, ops);
-}
-
-int
-ebus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
-    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
-    int flags)
-{
-	return (bus_dmamem_alloc(t->_parent, size, alignment, boundary, segs,
-	    nsegs, rsegs, flags));
-}
-
-void
-ebus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
-{
-	bus_dmamem_free(t->_parent, segs, nsegs);
-}
-
-int
-ebus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
-{
-	return (bus_dmamem_map(t->_parent, segs, nsegs, size, kvap, flags));
-}
-
-void
-ebus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
-{
-	return (bus_dmamem_unmap(t->_parent, kva, size));
-}
