@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.h,v 1.5 2001/02/07 20:32:55 todd Exp $	*/
+/*	$OpenBSD: dkstats.h,v 1.6 2001/05/14 07:09:59 angelos Exp $	*/
 /*	$NetBSD: dkstats.h,v 1.1 1996/05/10 23:19:28 thorpej Exp $	*/
 
 /*
@@ -44,8 +44,8 @@ struct _disk {
 	u_int64_t	 *dk_seek;	/* # of seeks (currently unused). */
 	u_int64_t	 *dk_bytes;	/* # of bytes transferred. */
 	struct timeval	 *dk_time;	/* Time spent in disk i/o. */
-	long	tk_nin;			/* TTY Chars in. */
-	long	tk_nout;		/* TTY Chars out. */
+	int64_t	tk_nin;			/* TTY Chars in. */
+	int64_t	tk_nout;		/* TTY Chars out. */
 	long	cp_time[CPUSTATES];	/* System timer ticks. */
 };
 
