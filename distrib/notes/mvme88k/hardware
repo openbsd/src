@@ -1,30 +1,49 @@
-dnl	$OpenBSD: hardware,v 1.4 2003/09/06 23:34:01 miod Exp $
-OpenBSD/MACHINE OSREV runs on the following classes of machines:
-	- MVME187 - Single board computer with 88100 processor
-	- Motorola 8120 - non expandable MVME187
+dnl	$OpenBSD: hardware,v 1.5 2003/12/30 10:45:45 miod Exp $
+OpenBSD/MACHINE OSREV runs on the following MVME boards:
+
+	- MVME187 (Single board computer with 88100 processor)
+	- MVME188 (HYPERmodule-based systems with up to 4 88100 processors)
+
+OpenBSD/MACHINE OSREV also runs on the Motorola M8120 system, which is a
+non-expandable MVME187.
 
 The minimal configuration requires 16MB of RAM and ~250M of disk space.
 To install the entire system requires much more disk space, and to
 compile the system, more RAM is recommended.
 
+Supported HYPERmodules: (for MVME188 systems)
+	2P64 (2 88100 processors, 4 88200 CMMUs)
+	2P256 (2 88100 processors, 4 88204 CMMUs)
+	4P128 (4 88100 processors, 8 88200 CMMUs)
+	4P512 (4 88100 processors, 8 88204 CMMUs)
+
+The 1P64, 1P128, 2P128 and 2P512 HYPERmodules are not currently supported.
+
 Supported devices {:-include-:}:
 
-MVME187, Motorola 8120:
+MVME187:
 	serial ports:
-		on-board tty00 - tty03 - Cirrus Logic CD2401
+		on-board Cirrus Logic CD2401 tty00-tty03 (cl)
 	ethernet:
-		on-board Intel 82596CA ethernet ("ie0")
+		on-board Intel 82596CA ethernet (ie)
 	SCSI:
-		on-board SCSI controller NCR53c710
+		on-board SCSI controller NCR53c710 (ssh)
 	SRAM:
 		supported
 	VMEbus:
-		supported (on MVME187 only, the 8120 does not have VME)
+		supported
+
+MVME188:
+	serial ports:
+		on-board (SYSCON) serial ports ttya-ttyb (dart)
+	VMEbus:
+		supported
 
 Additional VMEbus devices supported by the OpenBSD/MACHINE port {:-include-:}:
 
-	MVME328 SCSI controller (vs)
+	MVME328 High Performance SCSI Controller (vs)
 
-	MVME332 Serial controller (vx)
+	MVME332XT High Performance Serial I/O Controller (vx)
 
-	MVME376 Ethernet controller (ve)
+	MVME376 Ethernet Communications Controller (le)
+

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.10 2003/09/06 23:34:01 miod Exp $
+dnl	$OpenBSD: install,v 1.11 2003/12/30 10:45:45 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -32,15 +32,13 @@ system is completely halted).
 
 Booting from SCSI tape:
 
-dnl XXX 188 does not have built-in devices - will need slight changes once
-dnl 188 support is back.
 Bootable tapes can be booted with the following command at the prompt:
 
     187-Bug> BO xx yy
 
 Where `xx' is the SCSI controller number (00 for the built-in SCSI
-controller), and `yy' is the encoding for the SCSI device ID, which varies
-between controllers.
+controller on MVME187), and `yy' is the encoding for the SCSI device ID,
+which varies between controllers.
 
 Recent BUG can list the available disk and tape controllers, using the
 "IOT;H" command:
@@ -55,7 +53,7 @@ In this example, the built-in controller, as well as an external MVME328
 controller, are available.
 
 The encoding for the drive ID is as follows:
-- built-in controller and MVME327 SCSI controller:
+- MVME187 built-in controller and MVME327 SCSI controller:
     'yy' is ten times the device ID.
 - MVME328 SCSI controller:
     'yy' is eight times the devic ID, written in hexadecimal
@@ -64,7 +62,7 @@ The encoding for the drive ID is as follows:
 
 For example, booting from a tape drive using SCSI ID #5 will be done with:
     187-Bug> BO 00 50
-using the built-in controller, but with:
+using the MVME187 built-in controller, but with:
     187-Bug> BO 06 28
 using an MVME328 board.
 
@@ -106,16 +104,15 @@ network controllers is available with the "NIOT;A" command. For example:
       15     0  VME374    $FF500000
 
 The "NIOT;H" lists only the available controllers in the machine. For
-example, if no external network card is present, only the built-in
-controller will be reported:
+example, on an MVME187 system with no external network card:
 
     187-Bug> NIOT;A
     Network Controllers/Nodes Available
     CLUN  DLUN  Name      Address
        0     0  VME187    $FFF46000
 
-If the BUG does not support the NIOT command (most MVME187 don't), then
-it has no support for netbooting.
+If the BUG does not support the NIOT command (MVME187 BUG prior to version
+1.3 doesn't), then it has no support for netbooting.
 
 Before netbooting, enter "NIOT" and fill the parametrs. Be sure to provide
 the correct values for Controller LUN and Device LUN (as listed in the
