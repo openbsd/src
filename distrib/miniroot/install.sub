@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.78 1998/06/25 16:35:26 millert Exp $
+#	$OpenBSD: install.sub,v 1.79 1998/07/09 00:02:34 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -739,6 +739,9 @@ glob_selection() {
 
 	# Major hack to allow the user to select globbing patterns
 	set -o noglob
+	if [ X"$_selection" = X"all" ]; then
+		_selection=*
+	fi
 	_tfile=/tmp/install_case.$$	# safe in single user mode
 	cat >$_tfile << OOF
 	case \$_f in
@@ -1003,10 +1006,6 @@ while : ; do
 		eval echo "\$_${_url_type}_server_dir:"
 		echo "${_file_list}"
 		continue
-	elif [ "X${resp}" = X"all" ]; then
-		_get_files="$_sets $_kernel"
-		_setsdone="$_sets $_kernel"
-		break
 	fi
 
 	eval glob_selection \"$resp\" \$_${_url_type}_server_dir \"$_sets $_kernel\"
@@ -1166,10 +1165,6 @@ while : ; do
 		echo "${1}:"
 		( cd $1 && ls )
 		continue
-	elif [ "X${resp}" = X"all" ]; then
-		_get_files="$_sets $_kernel"
-		_setsdone="$_sets $_kernel"
-		break
 	fi
 
 	glob_selection "$resp" "$1" "$_sets $_kernel"
