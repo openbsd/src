@@ -1,4 +1,4 @@
-.\" $OpenBSD: 3.t,v 1.3 2002/06/08 01:53:43 millert Exp $
+.\" $OpenBSD: 3.t,v 1.4 2002/06/11 22:47:07 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,11 +45,10 @@ spooling areas is as follows:
 The spooling area is writable only by \fIroot\fP and
 and the \fIdaemon\fP group.
 .IP \(bu 3
-The \fIlpr\fP program runs set-user-id to user \fIdaemon\fP and
+The \fIlpr\fP and \fIlprm\fP programs run set-user-id to user \fIdaemon\fP and
 set-group-id to group \fIdaemon\fP.
 .IP \(bu 3
-The utility programs,
-\fIlpc\fP, \fIlpq\fP and \fIlprm\fP run set-group-id to group \fIdaemon\fP
+The \fIlpc\fP and \fIlpq\fP programs run set-group-id to group \fIdaemon\fP
 to access spool files.
 .IP \(bu 3
 Control and data files in a spooling area are made with \fIdaemon\fP
