@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.9 1997/08/27 18:01:08 deraadt Exp $
+.\"	$Id: mail.local.8,v 1.10 1998/02/06 15:48:08 gene Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -61,8 +61,9 @@ The options are as follows:
 Specify the sender's name.
 .It Fl l
 For compatibility, request that
+files named 
 .Nm username.lock
-files be used for locking.  (This done by default anyway.)
+be used for locking.  (This is the default behavior.)
 .It Fl L
 Request that
 .Fn flock
@@ -89,16 +90,16 @@ A blank line is appended to each message.
 A greater-than character (``>'') is prepended to any line in the message
 which could be mistaken for a ``From '' delimiter line.
 .Pp
-Efforts have been made so that
+Significant efforts have been made to ensure that
 .Nm mail.local
-act as securely as possible if the spool directory modes are 1777 or 755.
-The default of 755 is more secure, but prevents mail clients from using all
-styles of locking.  The use of 1777 is more flexible in an NFS shared-spool
+acts as securely as possible if the spool directory is mode 1777 or 755.
+The default of mode 755 is more secure, but it prevents mail clients from using
+all styles of locking.  The use of 1777 is more flexible in an NFS shared-spool
 environment, thus many sites use it.  However it does carry some risks, such
-as attackers filling it up.  Some of these problems may be alleviated by
-making the spool a seperate filesystem, and placing quotas on it.
-The use of any mode besides 1777 and 755 for the spool directory is
-recommended against, but may work properly.
+as attackers filling the spool disk.  Some of these problems may be alleviated
+by making the spool a seperate filesystem, and placing quotas on it.
+The use of any mode other than 1777 and 755 for the spool directory is
+recommended against but may work properly.
 .Pp
 By default, mailbox locking is done with
 .Nm username.lock
