@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)repquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: repquota.c,v 1.19 2002/09/06 21:49:21 deraadt Exp $";
+static char *rcsid = "$Id: repquota.c,v 1.20 2003/03/30 20:47:42 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -364,7 +364,7 @@ addid(id, type, name)
 	if (name) {
 		bcopy(name, fup->fu_name, len + 1);
 	} else {
-		sprintf(fup->fu_name, "%u", id);
+		snprintf(fup->fu_name, len, "%u", id);
 	}
 	return (fup);
 }
