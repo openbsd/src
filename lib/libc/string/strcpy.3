@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.3 1998/11/28 14:51:34 espie Exp $
+.\"	$OpenBSD: strcpy.3,v 1.4 1999/03/05 23:16:05 millert Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCPY 3
@@ -96,15 +96,47 @@ The following sets
 to
 .Dq Li abc\e0\e0\e0 :
 .Bd -literal -offset indent
-(void)strncpy(chararray, "abc", 6).
+(void)strncpy(chararray, "abc", 6);
 .Ed
 .Pp
 The following sets
 .Dq Li chararray
 to
-.Dq Li abcdef :
+.Dq Li abcdef
+and does
+.Em not
+NUL-terminate chararray because the source string is >= the length parameter.
+.Fn strncpy
+.Em only
+NUL-terminates the destination string when then length of the source
+string is less than the length parameter.
 .Bd -literal -offset indent
 (void)strncpy(chararray, "abcdefgh", 6);
+.Ed
+.Pp
+The following copies as many characters from
+.Dq Li input
+to
+.Dq Li buf
+as will fit and NUL-terminates the result.  Because
+.Fn strncpy
+does
+.Em not
+guarantee to NUL-terminate the string itself, we must do this by hand.
+.Bd -literal -offset indent
+char buf[BUFSIZ];
+
+(void)strncpy(buf, input, sizeof(buf) - 1);
+buf[sizeof(buf) - 1] = '\\0';
+.Ed
+.Pp
+Note that
+.Xr strlcpy 3
+is a better choice for this kind of operation.  The equivalent using
+.Xr strlcpy 3
+is simply:
+.Bd -literal -offset indent
+(void)strncpy(buf, input, sizeof(buf));
 .Ed
 .Sh SEE ALSO
 .Xr bcopy 3 ,
