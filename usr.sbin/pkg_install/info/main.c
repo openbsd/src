@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.11 1998/10/13 23:09:51 marc Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1999/02/28 18:55:25 deraadt Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.11 1998/10/13 23:09:51 marc Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.12 1999/02/28 18:55:25 deraadt Exp $";
 #endif
 
 /*
@@ -156,9 +156,8 @@ main(int argc, char **argv)
 static void
 usage()
 {
-    fprintf(stderr, "%s\n%s\n%s\n",
-	"usage: pkg_info [-cDdfIikLmpqRrvh] [-e package] [-l prefix]",
-	"                pkg-name [pkg-name ...]",
-	"       pkg_info -a [flags]");
+    fprintf(stderr, "usage: %s\nusage: %s\n",
+	"pkg_info [-cDdfIikLmpqRrvh] [-e package] [-l prefix] pkg-name ...",
+	"pkg_info -a [flags]");
     exit(1);
 }
