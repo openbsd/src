@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg.pl,v 1.4 2001/07/14 14:20:11 espie Exp $
+# $OpenBSD: pkg.pl,v 1.5 2001/11/07 21:00:29 espie Exp $
 #
 # Copyright (c) 2001 Marc Espie.
 # 
@@ -265,6 +265,13 @@ sub solve_dependencies
 			}
 			push(@{$verify{$name}}, [$pattern, $def]);
 			push(@lines, "\@comment newdepend $name:$pattern:$def");
+		} elsif (m/^\@libdepend\s+/) {
+			my ($libspec, $name, $pattern, $def) = split(/\:/, $');
+			unless (defined $verify{$name}) {
+				$verify{$name} = [];
+			}
+			push(@{$verify{$name}}, [$pattern, $def]);
+			push(@lines, "\@comment libdepend $libspec:$name:$pattern:$def");
 		} else {
 			push(@lines, $_);
 		}
