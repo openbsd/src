@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.80 2003/02/19 23:11:57 henning Exp $
+# $OpenBSD: Makefile,v 1.81 2003/02/19 23:15:51 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -12,7 +12,7 @@
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50
-PFTESTS+=51 52
+PFTESTS+=51 52 53
 PFFAIL=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
 PFSIMPLE=1
 PFSETUP=1
@@ -23,7 +23,7 @@ PFLOAD+=30 31 32 34 36 38 39 40 44 46 47 49
 # disabled; no table def in anchors
 # PFLOAD+=48
 # only testing parser, load test would be useless
-# PFLOAD+=6 22 41 50 52
+# PFLOAD+=6 22 41 50 52 53
 PFTABLE=1 2 3 4 5 6 7 8 9 10 11 12
 PFOPT=1 2 3 4 5
 
