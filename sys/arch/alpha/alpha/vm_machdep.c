@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1997/01/24 19:56:47 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 1998/03/01 16:12:12 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
 
 /*
@@ -70,14 +70,14 @@ cpu_coredump(p, vp, cred, chdr)
 
 	cpustate.md_tf = *p->p_md.md_tf;
 	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
-	if (p->p_md.md_flags & MDP_FPUSED)
+	if (p->p_md.md_flags & MDP_FPUSED) {
 		if (p == fpcurproc) {
 			alpha_pal_wrfen(1);
 			savefpstate(&cpustate.md_fpstate);
 			alpha_pal_wrfen(0);
 		} else
 			cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
-	else
+	} else
 		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ALPHA, CORE_CPU);
