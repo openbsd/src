@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.17 2000/03/17 22:24:26 jakob Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.18 2000/03/23 15:55:52 art Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -486,10 +486,11 @@ sys_setitimer(p, v, retval)
 		return (EINVAL);
 	s = splclock();
 	if (SCARG(uap, which) == ITIMER_REAL) {
-		untimeout(realitexpire, (void *)p);
+		timeout_del(&p->p_realit_to);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout(realitexpire, (void *)p, hzto(&aitv.it_value));
+			timeout_set(&p->p_realit_to, realitexpire, p);
+			timeout_add(&p->p_realit_to, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;
 	} else
@@ -524,8 +525,8 @@ realitexpire(arg)
 		timeradd(&p->p_realtimer.it_value,
 		    &p->p_realtimer.it_interval, &p->p_realtimer.it_value);
 		if (timercmp(&p->p_realtimer.it_value, &time, >)) {
-			timeout(realitexpire, (void *)p,
-			    hzto(&p->p_realtimer.it_value));
+			timeout_add(&p->p_realit_to,
+				    hzto(&p->p_realtimer.it_value));
 			splx(s);
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.40 2000/03/22 21:35:37 mickey Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.41 2000/03/23 15:55:52 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -566,7 +566,7 @@ sys_execve(p, v, retval)
 	if (p->p_flag & P_SUGIDEXEC) {
 		int i, s = splclock();
 
-		untimeout(realitexpire, (void *)p);
+		timeout_del(&p->p_realit_to);
 		timerclear(&p->p_realtimer.it_interval);
 		timerclear(&p->p_realtimer.it_value);
 		for (i = 0; i < sizeof(p->p_stats->p_timer) /
