@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.160 2004/02/02 19:38:43 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.161 2004/02/07 19:27:24 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -6308,8 +6308,6 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	modectl &= ~IT_MODE_RAID1;
 	/* Disable CPU firmware mode */
 	modectl &= ~IT_MODE_CPU;
-	/* Select 66 MHz bus */
-	modectl &= ~(IT_MODE_50MHZ(0) | IT_MODE_50MHZ(1));
 
 	pci_conf_write(sc->sc_pc, sc->sc_tag, IT_MODE, modectl);
 
@@ -6318,15 +6316,8 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_map_compat_intr(pa, cp, channel, interface);
-		if (cp->hw_ok == 0)
-			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
-		if (cp->hw_ok == 0) {
-			pciide_unmap_compat_intr(pa, cp, channel, interface);
-			continue;
-		}
 		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
 	}
 
@@ -6376,7 +6367,8 @@ ite_setup_channel(struct channel_softc *chp)
 			drvp->drive_flags &= ~DRIVE_DMA;
 			modectl &= ~IT_MODE_DMA(channel, drive);
 
-			/* Check cable */
+#if 0
+			/* Check cable, works only in CPU firmware mode */
 			if (drvp->UDMA_mode > 2 &&
 			    (cfg & IT_CFG_CABLE(channel, drive)) == 0) {
 				WDCDEBUG_PRINT(("%s(%s:%d:%d): "
@@ -6386,6 +6378,7 @@ ite_setup_channel(struct channel_softc *chp)
 				    channel, drive), DEBUG_PROBE);
 				drvp->UDMA_mode = 2;
 			}
+#endif
 
 			if (drvp->UDMA_mode >= 5)
 				tim |= IT_TIM_UDMA5(drive);
