@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 2004/12/15 06:11:40 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -94,6 +94,9 @@ cvs_log_init(u_int dest, u_int flags)
 	memset(cvs_log_filters, 0, sizeof(cvs_log_filters));
 	cvs_log_filters[LP_DEBUG] = 1;
 	cvs_log_filters[LP_INFO] = 1;
+
+	/* traces are enabled with the -t command-line option */
+	cvs_log_filters[LP_TRACE] = 1;
 
 	if (dest & LD_SYSLOG) {
 		slopt = 0;
@@ -212,7 +215,6 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 	if (level > LP_MAX)
 		return (-1);
 
-
 	/* apply any filters */
 	if (cvs_log_filters[level] != 0)
 		return (0);
@@ -224,7 +226,11 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 
 #ifdef CVS
 	/* The cvs program appends the command name to the program name */
-	if (cvs_command != NULL) {
+	if (level == LP_TRACE) {
+		strlcpy(prefix, " -> ", sizeof(prefix));
+		if (cvs_cmdop == CVS_OP_SERVER)
+			prefix[0] = 'S';
+	} else if (cvs_command != NULL) {
 		if (level == LP_ABORT)
 			snprintf(prefix, sizeof(prefix), "%s [%s aborted]",
 			    __progname, cvs_command);
@@ -235,7 +241,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 #endif
 		strlcpy(prefix, __progname, sizeof(prefix));
 
-	if (cvs_log_flags & LF_PID) {
+	if ((cvs_log_flags & LF_PID) && (level != LP_TRACE)) {
 		snprintf(buf, sizeof(buf), "[%d]", (int)getpid());
 		strlcat(prefix, buf, sizeof(prefix));
 	}
@@ -262,7 +268,11 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		}
 #endif
 
-		fprintf(out, "%s: %s\n", prefix, buf);
+		fputs(prefix, out);
+		if (level != LP_TRACE)
+			fputs(": ", out);
+		fputs(buf, out);
+		fputc('\n', out);
 	}
 
 	if (cvs_log_dest & LD_SYSLOG)
