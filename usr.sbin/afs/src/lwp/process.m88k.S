@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.m88k.S,v 1.2 2004/03/02 23:36:45 miod Exp $	*/
+/*	$OpenBSD: process.m88k.S,v 1.3 2004/03/08 20:52:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -37,7 +37,7 @@
 ENTRY(savecontext)
 	/* save all registers but r0, r2, r3 and r31 on stack - we could
 	   skip r4 but saving it allows us to use it as a temporary below. */
-	sub	r31, r31, 4 * 30
+	subu	r31, r31, 4 * 30
 	st.d	r4,  r31, 4 * 0
 	st.d	r6,  r31, 4 * 2
 	st.d	r8,  r31, 4 * 4
@@ -59,11 +59,9 @@ ENTRY(savecontext)
 
 	/* set preemption lock */
 	or.u	r4,  r0,  hi16(_C_LABEL(PRE_Block))
-	or	r4,  r4,  lo16(_C_LABEL(PRE_Block))
-	add	r1,  r0,  1		/* use ext or mak */
-	st.b	r1,  r4,  0
+	set	r1,  r0,  1<0>
+	st.b	r1,  r4,  lo16(_C_LABEL(PRE_Block))
 	ld.d	r4,  r31, 4 * 0
-
 
 	/* save stack pointer, and fetch the new one if non NULL */
 	bcnd.n	eq0, r4,  1f
@@ -73,12 +71,12 @@ ENTRY(savecontext)
 
 	/* invoke function */
 	jsr.n	r2
-	 sub	r31, r31, 32
+	 subu	r31, r31, 32
 
-	/* should not return. Arla invokes abort() if this happens */
+	/* should not return, invoke abort() if this happens */
 	bsr	_C_LABEL(abort)
 	/* NOTREACHED */
-	add	r31, r31, 32
+	addu	r31, r31, 32
 	
 /*
  * returnto(struct savearea *a2)
@@ -106,10 +104,9 @@ ENTRY(returnto)
 	ld.d	r28, r31, 4 * 24
 	ld	r30, r31, 4 * 26
 	ld	r1,  r31, 4 * 27
-	add	r31, r31, 4 * 30
+	addu	r31, r31, 4 * 30
 
 	/* clear preemption lock and return */
 	or.u	r2,  r0,  hi16(_C_LABEL(PRE_Block))
-	or	r2,  r2,  lo16(_C_LABEL(PRE_Block))
 	jmp.n	r1
-	 st.b	r0,  r2,  0
+	 st.b	r0,  r2,  lo16(_C_LABEL(PRE_Block))
