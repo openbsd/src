@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhcreg.h,v 1.2 2004/09/27 18:15:32 jason Exp $	*/
+/*	$OpenBSD: fhcreg.h,v 1.3 2004/09/28 16:26:03 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -66,6 +66,8 @@
 
 struct fhc_intr_reg {
 	u_int64_t imap;
+	u_int64_t unused_0;
 	u_int64_t iclr;
+	u_int64_t unused_1;
 };
 
