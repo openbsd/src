@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.4 1996/08/02 12:10:21 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.5 1996/12/16 20:04:39 tholo Exp $	*/
 /*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$OpenBSD: key.c,v 1.4 1996/08/02 12:10:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: key.c,v 1.5 1996/12/16 20:04:39 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ void	f_dec __P((struct info *));
 void	f_everything __P((struct info *));
 void	f_extproc __P((struct info *));
 void	f_ispeed __P((struct info *));
+void	f_lcase __P((struct info *));
 void	f_nl __P((struct info *));
 void	f_ospeed __P((struct info *));
 void	f_raw __P((struct info *));
@@ -89,6 +90,7 @@ static struct key {
 	{ "everything",	f_everything,	0 },
 	{ "extproc",	f_extproc,	F_OFFOK },
 	{ "ispeed",	f_ispeed,	F_NEEDARG },
+	{ "lcase", 	f_lcase,	0 },
 	{ "new",	f_tty,		0 },
 	{ "nl",		f_nl,		F_OFFOK },
 	{ "old",	f_tty,		0 },
@@ -217,6 +219,22 @@ f_ispeed(ip)
 {
 
 	cfsetispeed(&ip->t, atoi(ip->arg));
+	ip->set = 1;
+}
+
+void
+f_lcase(ip)
+	struct info *ip;
+{
+	if (ip->off) {
+		ip.t_iflag &= ~IUCLC;
+		ip.t_oflag &= ~OLCUC;
+		ip.t_lflag &= ~XCASE;
+	} else {
+		ip.t_iflag |= IUCLC;
+		ip.t_oflag |= OLCUC;
+		ip.t_lflag |= XCASE;
+	}
 	ip->set = 1;
 }
 

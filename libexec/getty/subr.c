@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.5 1996/12/16 17:14:03 deraadt Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.6 1996/12/16 20:04:45 tholo Exp $";
 #endif /* not lint */
 
 /*
@@ -388,15 +388,27 @@ register long flags;
 		SET(oflag, OXTABS);
 	else
 		CLR(oflag, OXTABS);
+	if (ISSET(flags, LCASE))
+		SET(iflag, IUCLC);
+		SET(oflag, OLCUC);
+		SET(lflag, XCASE);
+	}
+	else {
+		CLR(iflag, IUCLC);
+		CLR(oflag, OLCUC);
+		CLR(lflag, XCASE);
+	}
 
 
 	if (ISSET(flags, RAW)) {
 		iflag &= IXOFF;
-		CLR(lflag, ISIG|ICANON|IEXTEN);
+		CLR(lflag, ISIG|ICANON|IEXTEN|XCASE);
 		CLR(cflag, PARENB);
 	} else {
 		SET(iflag, BRKINT|IXON|IMAXBEL);
 		SET(lflag, ISIG|IEXTEN);
+		if (ISSET(iflag, IUCLC) && ISSET(oflag, OLCUC))
+			SET(lflag, XCASE);
 		if (ISSET(flags, CBREAK))
 			CLR(lflag, ICANON);
 		else

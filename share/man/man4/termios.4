@@ -793,6 +793,8 @@ following masks:
 /* any char will restart after stop */
 .It Dv IMAXBEL
 /* ring bell on input queue full */
+.It Dv IUCLC
+/* translate upper case to lower case */
 .El
 .Pp
 In the context of asynchronous serial data transmission, a break
@@ -960,6 +962,11 @@ is set and the input queue is full, subsequent input shall cause an
 character to be transmitted to
 the output queue.
 .Pp
+If
+.Dv IUCLC
+is set, characters will be translated from upper to lower case on
+input.
+.Pp
 The initial input control value after open() is implementation defined.
 .Ss Output Modes
 Values of the
@@ -981,6 +988,14 @@ and are composed of the following masks:
 .Dv EOT Ns 's
 .Ql \&^D
 on output) */
+.It Dv OCRNL
+/* map CR to NL */
+.It Dv OLCUC
+/* translate lower case to upper case */
+.It Dv ONOCR
+/* No CR output at column 0 */
+.It Dv ONLRET
+/* NL performs CR function */
 .El
 .Pp
 If
@@ -1003,6 +1018,23 @@ is set,
 .Tn ASCII
 .Dv EOT NS 's
 are discarded on output.
+.Pp
+If
+.Dv OCRNL
+is set, carriage returns are translated to newlines.
+.Pp
+If
+.Dv OLCUC
+is set, lower case is translated to upper case on output.
+.Pp
+If
+.Dv ONOCR
+is set, no CR character is output when at column 0.
+.Pp
+If
+.Dv ONLRET
+is set, NL also performs CR on output, and reset current
+column to 0.
 .Ss Control Modes
 Values of the
 .Fa c_cflag
@@ -1181,6 +1213,8 @@ and
 /* XXX retype pending input (state) */
 .It Dv NOFLSH
 /* don't flush after interrupt */
+.It Dv XCASE
+/* canonical upper/lower case */
 .El
 .Pp
 If
@@ -1334,6 +1368,26 @@ and
 .Dv SUSP
 characters
 are not be done.
+.Pp
+If
+.Dv XCASE
+and
+.Dv ICANON
+is set, an upper case character is preserved on input if prefixed by
+a \\ character.  In addition, this prefix is added to upper case
+characters on output.
+.Pp
+In addition, the following special character translations are in effect:
+.Pp
+.Bl -column "for:" "use:" -offset indent -compact
+.It Em "for:    use:"
+.It Dv ` Ta \&\e'
+.It Dv | Ta \&\e!
+.It Dv ~ Ta \&\e^
+.It Dv { Ta \&\e(
+.It Dv } Ta \&\e)
+.It Dv \&\e Ta \&\e\e
+.El
 .Pp
 If
 .Dv TOSTOP

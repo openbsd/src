@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.20 1996/12/08 14:25:48 niklas Exp $	*/
+/*	$OpenBSD: tty.c,v 1.21 1996/12/16 20:04:54 tholo Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -157,6 +157,12 @@ u_char const char_type[] = {
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~((unsigned)(f))
 #define	ISSET(t, f)	((t) & (f))
+
+#define	islower(c)	((c) >= 'a' && (c) <= 'z')
+#define	isupper(c)	((c) >= 'A' && (c) <= 'Z')
+
+#define	tolower(c)	((c) - 'A' + 'a')
+#define	toupper(c)	((c) - 'a' + 'A')
 
 struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
@@ -397,6 +403,39 @@ parmrk:				(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
 		 * processing takes place.
 		 */
 		/*
+		 * upper case or specials with IUCLC and XCASE
+		 */
+		if (ISSET(lflag, XCASE) && ISSET(iflag, IUCLC)) {
+			if (ISSET(tp->t_state, TS_BKSL)) {
+				CLR(tp->t_state, TS_BKSL);
+				switch (c) {
+				case '\'':
+					c = '`';
+					break;
+				case '!':
+					c = '|';
+					break;
+				case '^':
+					c = '~';
+					break;
+				case '(':
+					c = '{';
+					break;
+				case ')':
+					c = '}';
+					break;
+				}
+			}
+			else if (c == '\\') {
+				SET(tp->t_state, TS_BKSL);
+				goto endcase;
+			}
+			else if (isupper(c))
+				c = tolower(c);
+		}
+		else if (ISSET(iflag, IUCLC) && isupper(c))
+			c = tolower(c);
+		/*
 		 * erase (^H / ^?)
 		 */
 		if (CCEQ(cc[VERASE], c)) {
@@ -555,7 +594,7 @@ ttyoutput(c, tp)
 	register struct tty *tp;
 {
 	register long oflag;
-	register int col, notout, s;
+	register int col, notout, s, c2;
 
 	oflag = tp->t_oflag;
 	if (!ISSET(oflag, OPOST)) {
@@ -595,7 +634,8 @@ ttyoutput(c, tp)
 
 	/*
 	 * Newline translation: if ONLCR is set,
-	 * translate newline into "\r\n".
+	 * translate newline into "\r\n".  If OCRNL
+	 * is set, translate '\r' into '\n'.
 	 */
 	if (c == '\n' && ISSET(tp->t_oflag, ONLCR)) {
 		tk_nout++;
@@ -603,6 +643,41 @@ ttyoutput(c, tp)
 		if (putc('\r', &tp->t_outq))
 			return (c);
 	}
+	else if (c == '\r' && ISSET(tp->t_oflag, OCRNL))
+		c = '\n';
+
+	if (ISSET(tp->t_oflag, OLCUC) && islower(c))
+		c = toupper(c);
+	else if (ISSET(tp->t_oflag, OLCUC) && ISSET(tp->t_lflag, XCASE)) {
+		c2 = c;
+		switch (c) {
+		case '`':
+			c2 = '\'';
+			break;
+		case '|':
+			c2 = '!';
+			break;
+		case '~':
+			c2 = '^';
+			break;
+		case '{':
+			c2 = '(';
+			break;
+		case '}':
+			c2 = ')';
+			break;
+		}
+		if (c == '\\' || isupper(c) || c != c2) {
+			tk_nout++;
+			tp->t_outcc++;
+			if (putc('\\', &tp->t_outq))
+				return (c);
+			c = c2;
+		}
+	}
+	if (ISSET(tp->t_oflag, ONOCR) && c == '\r' && tp->t_column == 0)
+		return (-1);
+
 	tk_nout++;
 	tp->t_outcc++;
 	if (!ISSET(tp->t_lflag, FLUSHO) && putc(c, &tp->t_outq))
@@ -617,6 +692,9 @@ ttyoutput(c, tp)
 	case CONTROL:
 		break;
 	case NEWLINE:
+		if (ISSET(tp->t_oflag, ONLRET))
+			col = 0;
+		break;
 	case RETURN:
 		col = 0;
 		break;

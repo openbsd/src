@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.4 1996/12/10 09:06:01 deraadt Exp $
+.\"	$OpenBSD: stty.1,v 1.5 1996/12/16 20:04:42 tholo Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -189,6 +189,9 @@ Map (do not map)
 to
 .Dv NL
 on input.
+.It Cm iuclc Pq Fl iuclc
+Translate (do not translate) upper case to lower case
+on input.
 .It Cm ixon Pq Fl ixon
 Enable (disable)
 .Dv START/STOP
@@ -241,6 +244,14 @@ Map (do not map)
 to
 .Dv CR-NL
 on output.
+.It Cm ocrnl Pq Fl ocrnl
+Translate (do not translate) carriage return to newline on output.
+.It Cm onocr Pq Fl onocr
+Carriage return is output (is not output) at column 0.
+.It Cm onlret Pq Fl onlret
+Newline performs (does not perform) carriage return on output.
+.It Cm olcuc Pq Fl olcuc
+Translate (do not translate) lower case to upper case on output.
 .It Cm oxtabs Pq Fl oxtabs
 Expand (do not expand) tabs to spaces on output.
 .El
@@ -351,6 +362,12 @@ Indicates output is (is not) being discarded.
 Indicates input is (is not) pending after a switch from non-canonical
 to canonical mode and will be re-input when a read becomes pending
 or more input arrives.
+.It Cm xcase Pq Fl xcase
+Upper and lower case is (is not) handled canonically on input and output
+with
+.Cm iuclc
+and
+.Cm olcuc .
 .El
 .Ss Control Characters:
 .Bl -tag -width Fl
@@ -553,6 +570,12 @@ Same as
 .It Cm prterase Pq Fl prterase
 Same as
 .Cm echoprt .
+.It Cm lcase Pq Fl lcase
+Same as
+.Cm iuclc ,
+.Cm olcuc
+and
+.Cm xcase .
 .It Cm litout Pq Fl litout
 The converse of
 .Cm opost .

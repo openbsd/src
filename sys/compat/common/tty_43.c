@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_43.c,v 1.4 1996/05/23 08:32:23 deraadt Exp $	*/
+/*	$OpenBSD: tty_43.c,v 1.5 1996/12/16 20:04:52 tholo Exp $	*/
 /*	$NetBSD: tty_43.c,v 1.5 1996/05/20 14:29:17 mark Exp $	*/
 
 /*-
@@ -307,6 +307,8 @@ ttcompatgetflags(tp)
 		SET(flags, MDMBUF);
 	if (!ISSET(cflag, HUPCL))
 		SET(flags, NOHANG);
+	if (ISSET(cflag, XCASE) && ISSET(iflag, IUCLC) && ISSET(oflag, OLCUC))
+		SET(flags, LCASE);
 	if (ISSET(oflag, OXTABS))
 		SET(flags, XTABS);
 	if (ISSET(lflag, ECHOE))
@@ -355,10 +357,20 @@ ttcompatsetflags(tp, t)
 		SET(oflag, OXTABS);
 	else
 		CLR(oflag, OXTABS);
+	if (ISSET(flags, LCASE)) {
+		SET(iflag, IUCLC);
+		SET(oflag, OLCUC);
+		SET(cflag, XCASE);
+	}
+	else {
+		CLR(iflag, IUCLC);
+		CLR(oflag, OLCUC);
+		CLR(cflag, XCASE);
+	}
 
 
 	if (ISSET(flags, RAW)) {
-		iflag &= IXOFF;
+		iflag &= IXOFF|IXANY;
 		CLR(lflag, ISIG|ICANON|IEXTEN);
 		CLR(cflag, PARENB);
 	} else {
@@ -390,7 +402,7 @@ ttcompatsetflags(tp, t)
 	}
 
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE);
+		CLR(cflag, CSIZE|XCASE);
 		SET(cflag, CS8);
 		if (!ISSET(flags, RAW|PASS8))
 			SET(iflag, ISTRIP);
@@ -403,6 +415,8 @@ ttcompatsetflags(tp, t)
 	} else {
 		CLR(cflag, CSIZE);
 		SET(cflag, CS7);
+		if (ISSET(iflag, IUCLC) && ISSET(oflag, OLCUC))
+			SET(cflag, XCASE);
 		SET(iflag, ISTRIP);
 		SET(oflag, OPOST);
 	}
@@ -454,6 +468,11 @@ ttcompatsetlflags(tp, t)
 		SET(iflag, IXANY);
 	else
 		CLR(iflag, IXANY);
+	if (ISSET(flags, LCASE)) {
+		SET(oflag, OLCUC);
+		SET(iflag, IUCLC);
+		SET(cflag, XCASE);
+	}
 	CLR(lflag, TOSTOP|FLUSHO|PENDIN|NOFLSH);
 	SET(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
@@ -466,13 +485,17 @@ ttcompatsetlflags(tp, t)
 			CLR(iflag, ISTRIP);
 		if (!ISSET(flags, RAW|LITOUT))
 			SET(oflag, OPOST);
-		else
+		else {
 			CLR(oflag, OPOST);
+			CLR(cflag, XCASE);
+		}
 	} else {
 		CLR(cflag, CSIZE);
 		SET(cflag, CS7);
 		SET(iflag, ISTRIP);
 		SET(oflag, OPOST);
+		if (ISSET(oflag, OLCUC) && ISSET(iflag, IUCLC))
+			SET(cflag, XCASE);
 	}
 
 	t->c_iflag = iflag;

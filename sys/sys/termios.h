@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.h,v 1.5 1996/10/26 06:54:42 tholo Exp $	*/
+/*	$OpenBSD: termios.h,v 1.6 1996/12/16 20:04:56 tholo Exp $	*/
 /*	$NetBSD: termios.h,v 1.14 1996/04/09 20:55:41 cgd Exp $	*/
 
 /*
@@ -102,6 +102,7 @@
 #define	IXOFF		0x00000400	/* enable input flow control */
 #ifndef _POSIX_SOURCE
 #define	IXANY		0x00000800	/* any char will restart after stop */
+#define	IUCLC		0x00001000	/* translate upper to lower case */
 #define IMAXBEL		0x00002000	/* ring bell on input queue full */
 #endif  /*_POSIX_SOURCE */
 
@@ -113,6 +114,10 @@
 #define ONLCR		0x00000002	/* map NL to CR-NL (ala CRMOD) */
 #define OXTABS		0x00000004	/* expand tabs to spaces */
 #define ONOEOT		0x00000008	/* discard EOT's (^D) on output) */
+#define OCRNL		0x00000010	/* map CR to NL */
+#define OLCUC		0x00000020	/* translate lower case to upper case */
+#define ONOCR		0x00000040	/* No CR output at column 0 */
+#define ONLRET		0x00000080	/* NL performs the CR function */
 #endif  /*_POSIX_SOURCE */
 
 /*
@@ -170,6 +175,7 @@
 #define TOSTOP		0x00400000	/* stop background jobs from output */
 #ifndef _POSIX_SOURCE
 #define FLUSHO		0x00800000	/* output being flushed (state) */
+#define XCASE		0x01000000	/* canonical upper/lower case */
 #define	NOKERNINFO	0x02000000	/* no kernel output from VSTATUS */
 #define PENDIN		0x20000000	/* XXX retype pending input (state) */
 #endif  /*_POSIX_SOURCE */
