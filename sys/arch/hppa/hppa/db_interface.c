@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.3 1999/04/20 21:02:28 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.4 1999/06/22 17:58:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#define DDB_DEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +127,8 @@ int db_active = 0;
 void
 Debugger()
 {
-	__asm("break 0,0");
+	__asm __volatile ("break	%0, %1"
+			  :: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
 }
 
 void
@@ -180,6 +183,10 @@ kdb_trap(type, code, regs)
 
 	/* XXX Should switch to kdb`s own stack here. */
 
+	/* skip break instruction */
+	regs->tf_iioq_head += 4;
+	regs->tf_iioq_tail += 4;
+
 	ddb_regs = *regs;
 
 	s = splhigh();
@@ -191,6 +198,7 @@ kdb_trap(type, code, regs)
 	splx(s);
 
 	*regs = ddb_regs;
+	
 	return (1);
 }
 
@@ -212,5 +220,72 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char		*modif;
 {
+	register_t fp, pc, rp, nargs, *argp;
+	db_sym_t sym;
+	db_expr_t off;
+	char *name, **argnp, *argnames[HPPA_FRAME_NARGS];
+
+	if (USERMODE(pc))
+		return;
+
+	if (count < 0)
+		count = 65536;
+
+	if (!have_addr) {
+		fp = ddb_regs.tf_r3;
+		pc = ddb_regs.tf_iioq_head;
+		rp = ddb_regs.tf_rp;
+	} else {
+		fp = addr;
+		pc = 0;
+		rp = ((register_t *)fp)[-5];
+	}
+
+#ifdef DDB_DEBUG
+	/* db_printf (">> %x, %x, %x\t", fp, pc, rp); */
+#endif
+	while (fp && count--) {
+
+		sym = db_search_symbol(pc, DB_STGY_ANY, &off);
+		db_symbol_values (sym, &name, NULL);
+
+		db_printf("%s(", name);
+
+		/* args */
+		nargs = HPPA_FRAME_NARGS;
+		argnp = NULL;
+		if (db_sym_numargs(sym, &nargs, argnames))
+			argnp = argnames;
+		else
+			nargs = 4;
+		/*
+		 * XXX first four args are passed on registers, and may not
+		 * be stored on stack, dunno how to recover their values yet
+		 */
+		for (argp = &((register_t *)fp)[-9]; nargs--; argp--) {
+			if (argnp)
+				db_printf("%s=", *argnp++);
+			db_printf("%x%s", db_get_value((int)argp, 4, FALSE),
+				  nargs? ",":"");
+		}
+		db_printf(") at ");
+		db_printsym(pc, DB_STGY_PROC);
+		db_printf("\n");
+
+		/* TODO: print locals */
+
+		/* next frame */
+		pc = rp;
+		rp = ((register_t *)fp)[-5];
+		fp = ((register_t *)fp)[0];
+#ifdef DDB_DEBUG
+		/* db_printf (">> %x, %x, %x\t", fp, pc, rp); */
+#endif
+	}
+
+	if (count) {
+		db_printsym(pc, DB_STGY_XTRN);
+		db_printf(":\n");
+	}
 }
 
