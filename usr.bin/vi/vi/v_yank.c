@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_yank.c	10.8 (Berkeley) 5/18/96";
+static const char sccsid[] = "@(#)v_yank.c	10.9 (Berkeley) 5/19/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,15 +46,37 @@ v_yank(sp, vp)
 	SCR *sp;
 	VICMD *vp;
 {
+	size_t len;
+
 	if (cut(sp,
 	    F_ISSET(vp, VC_BUFFER) ? &vp->buffer : NULL, &vp->m_start,
 	    &vp->m_stop, F_ISSET(vp, VM_LMODE) ? CUT_LINEMODE : 0))
 		return (1);
-
-	/* Cursor movements reset the relative cursor position. */
-	F_CLR(vp, VM_RCM_MASK);
-	F_SET(vp, VM_RCM_SET);
-
 	sp->rptlines[L_YANKED] += (vp->m_stop.lno - vp->m_start.lno) + 1;
+
+	/*
+	 * One special correction, in case we've deleted the current line or
+	 * character.  We check it here instead of checking in every command
+	 * that can be a motion component.
+	 */
+	if (db_get(sp, vp->m_final.lno, DBG_FATAL, NULL, &len))
+		return (1);
+
+	/*
+	 * !!!
+	 * Cursor movements, other than those caused by a line mode command
+	 * moving to another line, historically reset the relative position.
+	 *
+	 * This currently matches the check made in v_delete(), I'm hoping
+	 * that they should be consistent...
+	 */  
+	if (!F_ISSET(vp, VM_LMODE)) {
+		F_CLR(vp, VM_RCM_MASK);
+		F_SET(vp, VM_RCM_SET);
+
+		/* Make sure the set cursor position exists. */
+		if (vp->m_final.cno >= len)
+			vp->m_final.cno = len ? len - 1 : 0;
+	}
 	return (0);
 }
