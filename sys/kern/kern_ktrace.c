@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.9 1998/02/03 19:06:23 deraadt Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.10 1998/06/02 14:50:47 csapuntz Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -310,8 +310,7 @@ sys_ktrace(curp, v, retval)
 				if (ktrcanset(curp, p)) {
 					p->p_tracep = NULL;
 					p->p_traceflag = 0;
-					(void) vn_close(vp, FREAD|FWRITE,
-						p->p_ucred, p);
+				        vrele(vp);
 				} else
 					error = EPERM;
 			}
