@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.172 2005/03/15 18:13:42 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.173 2005/04/01 15:27:45 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1098,6 +1098,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1171,6 +1173,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1217,6 +1221,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1257,6 +1263,8 @@ cats
 hp300
 ..
 hppa
+..
+hppa64
 ..
 i386
 ..
@@ -1309,6 +1317,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1350,6 +1360,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1390,6 +1402,8 @@ cats
 hp300
 ..
 hppa
+..
+hppa64
 ..
 i386
 ..
@@ -1445,6 +1459,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1491,6 +1507,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1531,6 +1549,8 @@ cats
 hp300
 ..
 hppa
+..
+hppa64
 ..
 i386
 ..
@@ -1583,6 +1603,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1624,6 +1646,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1664,6 +1688,8 @@ cats
 hp300
 ..
 hppa
+..
+hppa64
 ..
 i386
 ..
@@ -1721,6 +1747,8 @@ hp300
 ..
 hppa
 ..
+hppa64
+..
 i386
 ..
 luna88k
@@ -1776,6 +1804,8 @@ cats
 hp300
 ..
 hppa
+..
+hppa64
 ..
 i386
 ..
