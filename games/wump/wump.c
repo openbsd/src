@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.12 1999/09/25 15:52:21 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.13 2000/04/11 02:55:18 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.12 1999/09/25 15:52:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.13 2000/04/11 02:55:18 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -858,7 +858,7 @@ wump_walk_kill()
 "Oh dear.  All the commotion has managed to awaken the evil Wumpus, who\n\
 has chosen to walk into this very room!  Your eyes open wide as they behold\n\
 the great sucker-footed bulk that is the Wumpus; the mouth of the Wumpus\n\
-also opens wide as the the evil beast beholds dinner.\n\
+also opens wide as the evil beast beholds dinner.\n\
 *ROAR* *chomp* *snurfle* *chomp*!\n");
 }
 
