@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 1997/03/26 22:14:41 niklas Exp $ */
+/*	$OpenBSD: machdep.c,v 1.22 1997/06/11 10:32:11 grr Exp $ */
 /*	$NetBSD: machdep.c,v 1.64 1996/05/19 04:12:56 mrg Exp $ */
 
 /*
@@ -703,6 +703,7 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
+/* XXX - dumpmag not eplicitly used, savecore may search for it to get here */
 u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
@@ -710,46 +711,39 @@ long	dumplo = 0;
 void
 dumpconf()
 {
-	register int nblks, nmem;
-	register struct memarr *mp;
-	extern struct memarr pmemarr[];	/* XXX */
-	extern int npmemarr;		/* XXX */
+	register int nblks, dumpblks;
 
-	dumpsize = 0;
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++)
-		dumpsize += btoc(mp->len);
+	if (dumpdev == NODEV || bdevsw[major(dumpdev)].d_psize == 0)
+		/* No usable dump device */
+		return;
 
-	/*
-	 * savecore views the image in units of pages (i.e., dumpsize is in
-	 * pages) so we round the two mmu entities into page-sized chunks.
-	 * The PMEGs (32kB) and the segment table (512 bytes plus padding)
-	 * are appending to the end of the crash dump.
-	 */
-	dumpsize += pmap_dumpsize();
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+
+	dumpblks = ctod(physmem) + ctod(pmap_dumpsize());
+	if (dumpblks > (nblks - ctod(1)))
 		/*
-		 * Don't dump on the first CLBYTES (why CLBYTES?)
-		 * in case the dump device includes a disk label.
+		 * dump size is too big for the partition.
+		 * Note, we safeguard a click at the front for a
+		 * possible disk label.
 		 */
-		if (dumplo < btodb(CLBYTES))
-			dumplo = btodb(CLBYTES);
+		return;
+
+	/* Put the dump at the end of the partition */
+	dumplo = nblks - dumpblks;
 
 		/*
-		 * If dumpsize is too big for the partition, truncate it.
-		 * Otherwise, put the dump at the end of the partition
-		 * by making dumplo as large as possible.
-		 */
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo + ctod(dumpsize) > nblks)
-			dumplo = nblks - ctod(dumpsize);
-	}
+	 * savecore(8) expects dumpsize to be the number of pages
+	 * of actual core dumped (i.e. excluding the MMU stuff).
+	 */
+	dumpsize = physmem;
 }
 
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
 static vm_offset_t dumpspace;
 
+/*
+ * Allocate the dump i/o buffer area during kernel memory allocation
+ */
 caddr_t
 reserve_dumppages(p)
 	caddr_t p;
@@ -766,7 +760,7 @@ void
 dumpsys()
 {
 	register int psize;
-	register daddr_t blkno;
+	daddr_t blkno;
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
 	register struct memarr *mp;
@@ -787,9 +781,10 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		dumpconf();
-	if (dumplo < 0)
+	if (dumplo <= 0)
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	printf("\ndumping to dev(%d,%d), at offset %ld blocks\n",
+		major(dumpdev), minor(dumpdev), dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -800,10 +795,16 @@ dumpsys()
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
 
-	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
+	printf("mmu ");
+	error = pmap_dumpmmu(dump, blkno);
+	blkno += ctod(pmap_dumpsize());
+
+	printf("memory ");
+	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
 		register unsigned i = 0, n;
 		register maddr = mp->addr;
 
+		/* XXX - what's so special about PA 0 that we can't dump it? */
 		if (maddr == 0) {
 			/* Skip first page at physical address 0 */
 			maddr += NBPG;
@@ -811,13 +812,15 @@ dumpsys()
 			blkno += btodb(NBPG);
 		}
 
+		printf("@%p:",maddr);
+
 		for (; i < mp->len; i += n) {
 			n = mp->len - i;
 			if (n > BYTES_PER_DUMP)
 				 n = BYTES_PER_DUMP;
 
-			/* print out how many MBs we have dumped */
-			if (i && (i % (1024*1024)) == 0)
+			/* print out which MBs we are dumping */
+			if (i % (1024*1024) <= NBPG)
 				printf("%d ", i / (1024*1024));
 
 			(void) pmap_map(dumpspace, maddr, maddr + n,
@@ -831,8 +834,6 @@ dumpsys()
 			blkno += btodb(n);
 		}
 	}
-	if (!error)
-		error = pmap_dumpmmu(dump, blkno);
 
 	switch (error) {
 

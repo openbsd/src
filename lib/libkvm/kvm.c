@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.7 1997/06/02 17:06:53 dm Exp $ */
+/*	$OpenBSD: kvm.c,v 1.8 1997/06/11 10:32:15 grr Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.7 1997/06/02 17:06:53 dm Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.8 1997/06/11 10:32:15 grr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,7 +75,7 @@ static char *rcsid = "$OpenBSD: kvm.c,v 1.7 1997/06/02 17:06:53 dm Exp $";
 
 #include "kvm_private.h"
 
-static int	kvm_dbopen __P((kvm_t *, const char *));
+static int	kvm_dbopen __P((kvm_t *));
 static int	_kvm_get_header __P((kvm_t *));
 static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
@@ -221,6 +221,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	char *errout;
 {
 	struct stat st;
+	int ufgiven;
 
 	kd->db = 0;
 	kd->pmfd = -1;
@@ -240,7 +241,8 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->cpu_data = 0;
 	kd->dump_off = 0;
 
-	if (uf == 0)
+	ufgiven = (uf != NULL);
+	if (!ufgiven)
 		uf = _PATH_UNIX;
 	else if (strlen(uf) >= MAXPATHLEN) {
 		_kvm_err(kd, kd->program, "exec file name too long");
@@ -284,14 +286,13 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 			goto failed;
 		}
 		/*
-		 * Open kvm nlist database.  We go ahead and do this
-		 * here so that we don't have to hold on to the vmunix
-		 * path name.  Since a kvm application will surely do
-		 * a kvm_nlist(), this probably won't be a wasted effort.
-		 * If the database cannot be opened, open the namelist
-		 * argument so we revert to slow nlist() calls.
+		 * Open kvm nlist database.  We only try to use
+		 * the pre-built database if the namelist file name
+		 * pointer is NULL.  If the database cannot or should
+		 * not be opened, open the namelist argument so we
+		 * revert to slow nlist() calls.
 		 */
-		if (kvm_dbopen(kd, uf) < 0 && 
+		if ((ufgiven || kvm_dbopen(kd) < 0) && 
 		    (kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
@@ -324,7 +325,7 @@ failed:
 	 * Copy out the error if doing sane error semantics.
 	 */
 	if (errout != 0)
-		strcpy(errout, kd->errbuf);
+		(void)strncpy(errout, kd->errbuf, _POSIX2_LINE_MAX - 1);
 	(void)kvm_close(kd);
 	return (0);
 }
@@ -471,10 +472,11 @@ off_t	dump_off;
 	sz = Read(kd, kd->pmfd, &cpu_hdr, sizeof(cpu_hdr));
 	if (sz != sizeof(cpu_hdr))
 		return (-1);
-	if (CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
-		return (-1);
-	if (CORE_GETMID(cpu_hdr) != MID_MACHINE)
-		return (-1);
+	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
+		|| (CORE_GETMID(cpu_hdr) != MID_MACHINE)) {
+		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
+		return (0);
+	}
 	hdr_size = ALIGN(sizeof(cpu_hdr));
 
 	/*
@@ -513,9 +515,9 @@ off_t	dump_off;
 	/*
 	 * Now that we have a valid header, enable translations.
 	 */
-	_kvm_initvtop(kd);
-
-	return(hdr_size);
+	if (_kvm_initvtop(kd) == 0)
+		/* Success */
+		return (hdr_size);
 
 fail:
 	if (kd->kcore_hdr != NULL) {
@@ -630,7 +632,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 	register kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
-		(void)strcpy(errout, strerror(errno));
+		(void)strncpy(errout, strerror(errno), _POSIX2_LINE_MAX - 1);
 		return (0);
 	}
 	kd->program = 0;
@@ -700,23 +702,16 @@ kvm_close(kd)
  * Only called for live kernels.  Return 0 on success, -1 on failure.
  */
 static int
-kvm_dbopen(kd, uf)
+kvm_dbopen(kd)
 	kvm_t *kd;
-	const char *uf;
 {
-	char *cp;
 	DBT rec;
 	int dbversionlen;
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];
 	char kversion[_POSIX2_LINE_MAX];
-	char dbname[MAXPATHLEN];
 
-	if ((cp = strrchr(uf, '/')) != 0)
-		uf = cp + 1;
-
-	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
-	kd->db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL);
+	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (kd->db == 0)
 		return (-1);
 	/*
@@ -765,14 +760,18 @@ kvm_nlist(kd, nl)
 	struct nlist *nl;
 {
 	register struct nlist *p;
-	register int nvalid;
+	register int nvalid, rv;
 
 	/*
 	 * If we can't use the data base, revert to the 
 	 * slow library call.
 	 */
-	if (kd->db == 0)
-		return (__fdnlist(kd->nlfd, nl));
+	if (kd->db == 0) {
+		rv = __fdnlist(kd->nlfd, nl);
+		if (rv == -1)
+			_kvm_err(kd, 0, "bad namelist");
+		return (rv);
+	}
 
 	/*
 	 * We can use the kvm data base.  Go through each nlist entry

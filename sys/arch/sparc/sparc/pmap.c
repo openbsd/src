@@ -62,6 +62,9 @@
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
+#include <sys/kcore.h>
+#include <sys/core.h>
+#include <sys/exec_aout.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -73,6 +76,7 @@
 #include <machine/oldmon.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
+#include <machine/kcore.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -6544,38 +6548,93 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 int
 pmap_dumpsize()
 {
-	if (CPU_ISSUN4M) /* No need to dump on 4m; its in-core. */
-		return (0);
+	long	sz;
+
+	sz = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	sz += npmemarr * sizeof(phys_ram_seg_t);
 
 	if (CPU_ISSUN4OR4C)
-		return btoc(((seginval + 1) * NPTESG * sizeof(int)) +
-			    sizeof(seginval) +
-			    sizeof(pmemarr) +
-			    sizeof(kernel_segmap_store));
-	return 0;
+		sz += (seginval + 1) * NPTESG * sizeof(int);
+
+	return (btoc(sz));
 }
 
 /*
- * Write the mmu contents to the dump device.
- * This gets appended to the end of a crash dump since
- * there is no in-core copy of kernel memory mappings on a 4/4c machine.
+ * Write the dump header and memory mapping information at the front
+ * of the dumpfile to make life easy for savecore and libkvm.  Also
+ * dump the MMU contents for Sun 4/4c systems since they don't have
+ * a separate incore copy of the kernel memory mappings.
  */
 int
 pmap_dumpmmu(dump, blkno)
 	register daddr_t blkno;
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 {
-#if defined(SUN4C) || defined(SUN4)
-	register int pmeg;
-	register int i;
-	register int *pte, *ptend;
+	kcore_seg_t	*ksegp;
+	cpu_kcore_hdr_t	*kcpup;
+	phys_ram_seg_t	memseg;
 	register int error = 0;
-	register int *kp;
+	register int	i, memsegoffset, pmegoffset;
 	int buffer[dbtob(1) / sizeof(int)];
+	int		*bp, *ep;
+#if defined(SUN4C) || defined(SUN4)
+	register int	pmeg;
 #endif
 
-	if (CPU_ISSUN4M) /* No need to dump on 4m; its in-core. */
-		return (0);
+#define EXPEDITE(p,n) do {						\
+	int *sp = (int *)(p);						\
+	int sz = (n);							\
+	while (sz > 0) {						\
+		*bp++ = *sp++;						\
+		if (bp >= ep) {						\
+			error = (*dump)(dumpdev, blkno,			\
+					(caddr_t)buffer, dbtob(1));	\
+			if (error != 0)					\
+				return (error);				\
+			++blkno;					\
+			bp = buffer;					\
+		}							\
+		sz -= sizeof *sp;					\
+	}								\
+} while (0)
+
+	setcontext(0);
+
+	/* Setup bookkeeping pointers */
+	bp = buffer;
+	ep = &buffer[sizeof(buffer) / sizeof(buffer[0])];
+
+	/* Fill in MI segment header */
+	ksegp = (kcore_seg_t *)bp;
+	CORE_SETMAGIC(*ksegp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	ksegp->c_size = ctob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
+
+	/* Fill in MD segment header (interpreted by MD part of libkvm) */
+	kcpup = (cpu_kcore_hdr_t *)((int)bp + ALIGN(sizeof(kcore_seg_t)));
+	kcpup->cputype = cputyp;
+	kcpup->nmemseg = npmemarr;
+	kcpup->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
+	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0; 
+	kcpup->pmegoffset = pmegoffset =
+		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
+
+	/* Note: we have assumed everything fits in buffer[] so far... */
+	bp = (int *)&kcpup->segmap_store;
+	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));
+
+	/* Align storage for upcoming quad-aligned segment array */
+	while (bp != (int *)ALIGN(bp)) {
+		int dummy = 0;
+		EXPEDITE(&dummy, sizeof dummy);
+	}
+	for (i = 0; i < npmemarr; i++) {
+		memseg.start = pmemarr[i].addr;
+		memseg.size = pmemarr[i].len;
+		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
+	}
+
+	if (CPU_ISSUN4M)
+		goto out;
 
 #if defined(SUN4C) || defined(SUN4)
 	/*
@@ -6588,67 +6647,28 @@ pmap_dumpmmu(dump, blkno)
 	 * address argument to getpte().
 	 */
 
-	setcontext(0);
-
 	/*
 	 * Go through the pmegs and dump each one.
 	 */
-	pte = buffer;
-	ptend = &buffer[sizeof(buffer) / sizeof(buffer[0])];
 	for (pmeg = 0; pmeg <= seginval; ++pmeg) {
 		register int va = 0;
 
 		setsegmap(va, pmeg);
 		i = NPTESG;
 		do {
-			*pte++ = getpte4(va);
-			if (pte >= ptend) {
-				/*
-				 * Note that we'll dump the last block
-				 * the last time through the loops because
-				 * all the PMEGs occupy 32KB which is
-				 * a multiple of the block size.
-				 */
-				error = (*dump)(dumpdev, blkno,
-						(caddr_t)buffer,
-						dbtob(1));
-				if (error != 0)
-					return (error);
-				++blkno;
-				pte = buffer;
-			}
+			int pte = getpte4(va);
+			EXPEDITE(&pte, sizeof(pte));
 			va += NBPG;
 		} while (--i > 0);
 	}
 	setsegmap(0, seginval);
+#endif
 
-	/*
-	 * Next, dump # of pmegs, the physical memory table and the
-	 * kernel's segment map.
-	 */
-	pte = buffer;
-	*pte++ = seginval;
-	*pte++ = npmemarr;
-	bcopy((char *)pmemarr, (char *)pte, sizeof(pmemarr));
-	pte = (int *)((int)pte + sizeof(pmemarr));
-	kp = (int *)kernel_segmap_store;
-	i = sizeof(kernel_segmap_store) / sizeof(int);
-	do {
-		*pte++ = *kp++;
-		if (pte >= ptend) {
-			error = (*dump)(dumpdev, blkno, (caddr_t)buffer,
-					dbtob(1));
-			if (error != 0)
-				return (error);
-			++blkno;
-			pte = buffer;
-		}
-	} while (--i > 0);
-	if (pte != buffer)
+out:
+	if (bp != buffer)
 		error = (*dump)(dumpdev, blkno++, (caddr_t)buffer, dbtob(1));
 
 	return (error);
-#endif
 }
 
 #ifdef EXTREME_DEBUG

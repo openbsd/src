@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 1997/03/25 17:06:42 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.21 1997/06/11 10:32:14 grr Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libcom_err libcompat libcurses libedit \
@@ -12,6 +12,7 @@ SUBDIR=	csu libarch libc libcom_err libcompat libcurses libedit \
 	(${MACHINE} == "atari") || \
 	(${MACHINE} == "powerpc") || \
 	(${MACHINE} == "mvme88k") || \
+	(${MACHINE} == "sparc") || \
 	(${MACHINE} == "sun3")
 SUBDIR+=        libkvm
 .else
