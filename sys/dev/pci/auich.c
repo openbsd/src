@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.9 2001/05/16 06:29:15 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.10 2001/05/16 23:38:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -110,10 +110,6 @@
 #define		AUICH_GSTS_BITS	"\020\01gsci\02miict\03moint\06piint\07point\010mint\011pcr\012scr\013pri\014sri\015b1s12\016b2s12\017b3s12\020rcs\021ad3\022md3"
 #define	AUICH_CAS		0x34	/* 1/8 bit */
 #define	AUICH_SEMATIMO		1000	/* us */
-
-#define	AUICH_PM_PCMI		0x100
-#define	AUICH_PM_PCMO		0x200
-#define	AUICH_PM_MICI		0x400
 
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
@@ -524,7 +520,7 @@ auich_set_params(v, setmode, usemode, play, rec)
 	struct audio_params *play, *rec;
 {
 	struct auich_softc *sc = v;
-	u_int16_t val, rate;
+	int error;
 
 	if (setmode & AUMODE_PLAY) {
 		play->factor = 1;
@@ -557,18 +553,11 @@ auich_set_params(v, setmode, usemode, play, rec)
 				play->sw_code = change_sign16_swap_bytes;
 			break;
 		default:
-			return EINVAL;
+			return (EINVAL);
 		}
 
-		auich_read_codec(sc, AC97_REG_POWER, &val);
-		auich_write_codec(sc, AC97_REG_POWER, val | AUICH_PM_PCMO);
-
-		auich_write_codec(sc, AC97_REG_FRONT_DAC_RATE,
-		    play->sample_rate);
-		auich_read_codec(sc, AC97_REG_FRONT_DAC_RATE, &rate);
-		play->sample_rate = rate;
-
-		auich_write_codec(sc, AC97_REG_POWER, val);
+		if ((error = ac97_set_rate(sc->codec_if, play, AUMODE_PLAY)))
+			return (error);
 	}
 
 	if (setmode & AUMODE_RECORD) {
@@ -590,30 +579,24 @@ auich_set_params(v, setmode, usemode, play, rec)
 			rec->sw_code = ulinear8_to_alaw;
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = swap_bytes;
+			if (rec->precision == 16)
+				rec->sw_code = swap_bytes;
 			else
-				play->sw_code = change_sign8;
+				rec->sw_code = change_sign8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (play->precision == 16)
-				play->sw_code = swap_bytes_change_sign16;
+			if (rec->precision == 16)
+				rec->sw_code = swap_bytes_change_sign16;
 			break;
 		default:
-			return EINVAL;
+			return (EINVAL);
 		}
 
-		auich_read_codec(sc, AC97_REG_POWER, &val);
-		auich_write_codec(sc, AC97_REG_POWER, val | AUICH_PM_PCMI);
-
-		auich_write_codec(sc, AC97_REG_PCM_DAC_RATE, play->sample_rate);
-		auich_read_codec(sc, AC97_REG_PCM_DAC_RATE, &rate);
-		play->sample_rate = rate;
-
-		auich_write_codec(sc, AC97_REG_POWER, val);
+		if ((error = ac97_set_rate(sc->codec_if, rec, AUMODE_RECORD)))
+			return (error);
 	}
 
-	return 0;
+	return (0);
 }
 
 int
