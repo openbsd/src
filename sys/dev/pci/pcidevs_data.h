@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.775 2004/10/02 00:23:57 brad Exp 
+ *	OpenBSD: pcidevs,v 1.776 2004/10/07 00:52:56 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1505,6 +1505,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280,
 	    "Radeon 9200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9PLUS,
+	    "Radeon Mobility 9200 (M9+)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS200_AGP,
