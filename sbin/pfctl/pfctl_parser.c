@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.199 2004/05/19 17:50:51 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.200 2004/05/27 11:48:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1444,8 +1444,10 @@ host_dns(const char *s, int v4mask, int v6mask)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
 	error = getaddrinfo(ps, NULL, &hints, &res0);
-	if (error)
+	if (error) {
+		free(ps);
 		return (h);
+	}
 
 	for (res = res0; res; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
