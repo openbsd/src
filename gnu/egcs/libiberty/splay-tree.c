@@ -1,5 +1,5 @@
 /* A splay-tree datatype.  
-   Copyright (C) 1998 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999 Free Software Foundation, Inc.
    Contributed by Mark Mitchell (mark@markmitchell.com).
 
 This file is part of GNU CC.
@@ -235,7 +235,7 @@ splay_tree_new (compare_fn, delete_key_fn, delete_value_fn)
      splay_tree_delete_key_fn delete_key_fn;
      splay_tree_delete_value_fn delete_value_fn;
 {
-  splay_tree sp = (splay_tree) xmalloc (sizeof (struct splay_tree));
+  splay_tree sp = (splay_tree) xmalloc (sizeof (struct splay_tree_s));
   sp->root = 0;
   sp->comp = compare_fn;
   sp->delete_key = delete_key_fn;
@@ -256,15 +256,15 @@ splay_tree_delete (sp)
 
 /* Insert a new node (associating KEY with DATA) into SP.  If a
    previous node with the indicated KEY exists, its data is replaced
-   with the new value.  */
+   with the new value.  Returns the new node.  */
 
-void 
+splay_tree_node
 splay_tree_insert (sp, key, value)
      splay_tree sp;
      splay_tree_key key;
      splay_tree_value value;
 {
-  int comparison;
+  int comparison = 0;
 
   splay_tree_splay (sp, key);
 
@@ -284,7 +284,7 @@ splay_tree_insert (sp, key, value)
       /* Create a new node, and insert it at the root.  */
       splay_tree_node node;
       
-      node = (splay_tree_node) xmalloc (sizeof (struct splay_tree_node));
+      node = (splay_tree_node) xmalloc (sizeof (struct splay_tree_node_s));
       node->key = key;
       node->value = value;
       
@@ -305,6 +305,8 @@ splay_tree_insert (sp, key, value)
 
     sp->root = node;
   }
+
+  return sp->root;
 }
 
 /* Lookup KEY in SP, returning VALUE if present, and NULL 
