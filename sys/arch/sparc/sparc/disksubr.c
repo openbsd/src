@@ -1,3 +1,4 @@
+/*	$OpenBSD: disksubr.c,v 1.6 1996/09/12 04:33:29 downsj Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -285,14 +286,15 @@ bounds_check_with_label(bp, lp, wlabel)
 #define dkpart(dev) (minor(dev) & 7)
 
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
-	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+	/* XXX this assumes everything <=LABELSECTOR is label! */
+	/*     But since LABELSECTOR is 0, that's ok for now. */
+	if ((bp->b_blkno + p->p_offset <= LABELSECTOR) &&
+	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0)) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
@@ -330,7 +332,7 @@ bad:
 
 /* What partition types to assume for Sun disklabels: */
 static u_char
-sun_fstypes[8] = {
+sun_fstypes[16] = {
 	FS_BSDFFS,	/* a */
 	FS_SWAP,	/* b */
 	FS_OTHER,	/* c - whole disk */
@@ -339,8 +341,37 @@ sun_fstypes[8] = {
 	FS_BSDFFS,	/* f */
 	FS_BSDFFS,	/* g */
 	FS_BSDFFS,	/* h */
+	FS_BSDFFS,	/* i */
+	FS_BSDFFS,	/* j */
+	FS_BSDFFS,	/* k */
+	FS_BSDFFS,	/* l */
+	FS_BSDFFS,	/* m */
+	FS_BSDFFS,	/* n */
+	FS_BSDFFS,	/* o */
+	FS_BSDFFS	/* p */
 };
 
+/*
+ * Given a struct sun_disklabel, assume it has an extended partition
+ * table and compute the correct value for sl_xpsum.
+ */
+static __inline u_long
+sun_extended_sum(sl)
+	struct sun_disklabel *sl;
+{
+	u_long lsum;
+	u_long *xp;
+	u_long *ep;
+
+	xp = (u_long *) &sl->sl_xpmag;
+	ep = (u_long *) &sl->sl_xxx1[0];
+
+	lsum = 0;
+	for (; xp < ep; xp++)
+		lsum += *xp;
+	return(lsum);
+}
+	
 /*
  * Given a SunOS disk label, set lp to a BSD disk label.
  * Returns NULL on success, else an error string.
@@ -388,7 +419,7 @@ disklabel_sun_to_bsd(cp, lp)
 	lp->d_rpm          = sl->sl_rpm;
 	lp->d_interleave   = sl->sl_interleave;
 
-	lp->d_npartitions = 8;
+	lp->d_npartitions = MAXPARTITIONS;
 	/* These are as defined in <ufs/ffs/fs.h> */
 	lp->d_bbsize = 8192;	/* XXX */
 	lp->d_sbsize = 8192;	/* XXX */
@@ -413,6 +444,45 @@ disklabel_sun_to_bsd(cp, lp)
 			}
 		}
 	}
+
+#if SUNXPART > 0
+
+	/* Clear "extended" partition info, tentatively */
+	for (i = 0; i < SUNXPART; i++) {
+		npp = &lp->d_partitions[i+8];
+		npp->p_offset = 0;
+		npp->p_size = 0;
+		npp->p_fstype = FS_UNUSED;
+	}
+
+	/* Check to see if there's an "extended" partition table */
+	if (sl->sl_xpmag == SL_XPMAG) {	/* probably... */
+		if (sun_extended_sum(sl) == sl->sl_xpsum) {	/* ...yes! */
+			/*
+			 * There is.  Copy over the "extended" partitions.
+			 * This code parallels the loop for partitions a-h.
+			 *
+			 * XXX Abstract the common code?
+			 */
+			for (i = 0; i < SUNXPART; i++) {
+				spp = &sl->sl_xpart[i];
+				npp = &lp->d_partitions[i+8];
+				npp->p_offset = spp->sdkp_cyloffset * secpercyl;
+				npp->p_size = spp->sdkp_nsectors;
+				if (npp->p_size == 0) {
+					npp->p_fstype = FS_UNUSED;
+				} else {
+					npp->p_fstype = sun_fstypes[i+8];
+					if (npp->p_fstype == FS_BSDFFS) {
+						npp->p_fsize = 1024;
+						npp->p_frag = 8;
+						npp->p_cpg = 16;
+					}
+				}
+			}
+		}
+	}
+#endif	/* if SUNXPART > 0 */
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
@@ -463,6 +533,42 @@ disklabel_bsd_to_sun(lp, cp)
 		spp->sdkp_nsectors = npp->p_size;
 	}
 	sl->sl_magic = SUN_DKMAGIC;
+
+#if SUNXPART > 0
+	/*
+	 * The reason we load the extended table stuff only conditionally
+	 * is so that a label that doesn't need it will have NULs there, like
+	 * a "traditional" Sun label.  Since Suns seem to ignore everything
+	 * between sl_text and sl_rpm, this probably doesn't matter, but it
+	 * certainly doesn't hurt anything and it's easy to do.
+	 */
+
+	/* Do we need to load the extended table? */
+	for (i = 0; i < SUNXPART; i++) {
+		if (lp->d_partitions[i+8].p_offset ||
+		    lp->d_partitions[i+8].p_size)
+			break;
+	}
+	if (i < SUNXPART) { /* we do */
+		sl->sl_xpmag = SL_XPMAG;
+		for (i = 0; i < SUNXPART; i++) {
+			spp = &sl->sl_xpart[i];
+			npp = &lp->d_partitions[i+8];
+			if (npp->p_offset % secpercyl)
+				return(EINVAL);
+			sl->sl_xpart[i].sdkp_cyloffset = npp->p_offset / secpercyl;
+			sl->sl_xpart[i].sdkp_nsectors = npp->p_size;
+		}
+		sl->sl_xpsum = sun_extended_sum(sl);
+	} else {
+		sl->sl_xpmag = 0;
+		for (i = 0; i < SUNXPART; i++) {
+			sl->sl_xpart[i].sdkp_cyloffset = 0;
+			sl->sl_xpart[i].sdkp_nsectors = 0;
+		}
+		sl->sl_xpsum = 0;
+	}
+#endif	/* if SUNXPART > 0 */
 
 	/* Correct the XOR check. */
 	sp1 = (u_short *)sl;

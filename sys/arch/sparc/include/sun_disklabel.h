@@ -1,3 +1,4 @@
+/*	$OpenBSD: sun_disklabel.h,v 1.5 1996/09/12 04:33:28 downsj Exp $	*/
 /*	$NetBSD: sun_disklabel.h,v 1.6 1996/01/07 22:03:09 thorpej Exp $ */
 
 /*
@@ -88,7 +89,17 @@ struct sun_dkpart {
 
 struct sun_disklabel {			/* total size = 512 bytes */
 	char	sl_text[128];
+#if MAXPARTITIONS > 8
+#define SUNXPART (MAXPARTITIONS-8)
+	u_long	sl_xpsum;		/* additive cksum, [sl_xpmag,sl_xxx1) */
+	u_long	sl_xpmag;		/* "extended" magic number */
+#define SL_XPMAG (0x199d1fe2+SUNXPART)
+	struct sun_dkpart sl_xpart[SUNXPART];	/* "extended" partitions, i through p */
+	char	sl_xxx1[292-8-(8*SUNXPART)];	/* [292] including sl_x* */
+#else
+#define SUNXPART 0
 	char	sl_xxx1[292];
+#endif
 	u_short sl_rpm;			/* rotational speed */
 	u_short	sl_pcylinders;		/* number of physical cyls */
 	u_short sl_sparespercyl;	/* spare sectors per cylinder */
