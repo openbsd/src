@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtsold.8,v 1.4 1999/12/16 03:13:45 deraadt Exp $
+.\"	$OpenBSD: rtsold.8,v 1.5 2000/01/02 04:36:24 itojun Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: rtsold.8,v 1.4 1999/09/30 00:57:15 jinmei Exp
+.\"     KAME Id: rtsold.8,v 1.7 2000/01/02 04:34:11 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt RTSOLD 8
@@ -54,7 +54,21 @@ If a node (re)attaches to a link,
 sends some Router Solicitations on the link destined to the link-local scope
 all-routers multicast address to discover new routers
 and to get non link-local addresses.
-.Lp
+.Pp
+If you invoke the program as
+.Nm rtsol ,
+it will transmit probes from specified
+.Ar interface ,
+without becoming a daemon.
+In other words,
+.Nm rtsol
+behave as
+.Do
+.Nm
+.Fl f1
+.Ar interfaces
+.Dc .
+.Pp
 Specifically,
 .Nm
 sends at most 3 Router Solicitations on an interface
@@ -138,15 +152,6 @@ Perform only one probe.
 Transmit Router Solicitation packet until valid Router Advertisement packet
 arrives all the interfaces more than once, then exit.
 .El
-.Pp
-If you invoke the program as
-.Nm rtsol ,
-it will behave as
-.Do
-.Nm
-.Fl f1
-.Ar interfaces
-.Dc .
 .Sh RETURN VALUES
 The program exits with 0 on success, non-zero on failures.
 .\"
