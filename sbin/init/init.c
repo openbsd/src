@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.18 2000/01/22 20:24:58 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.19 2000/08/06 00:19:31 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.18 2000/01/22 20:24:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.19 2000/08/06 00:19:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,10 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.18 2000/01/22 20:24:58 deraadt Exp $
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
 
+#ifndef DEFAULT_STATE
+#define DEFAULT_STATE		runcom
+#endif
+
 void handle __P((sig_t, ...));
 void delset __P((sigset_t *, ...));
 
@@ -119,7 +123,7 @@ state_func_t nice_death __P((void));
 enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
 
 void transition __P((state_t));
-state_t requested_transition = runcom;
+state_t requested_transition = DEFAULT_STATE;
 
 void setctty __P((char *));
 
