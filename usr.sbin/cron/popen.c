@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.10 2001/06/03 01:30:04 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.11 2001/10/01 19:19:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.10 2001/06/03 01:30:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.11 2001/10/01 19:19:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,9 +155,9 @@ cron_popen(program, type, e)
 		if (*type == 'r') {
 			if (pdes[1] != STDOUT_FILENO) {
 				dup2(pdes[1], STDOUT_FILENO);
-				dup2(pdes[1], STDERR_FILENO); /* stderr too! */
 				(void)close(pdes[1]);
 			}
+			dup2(STDOUT_FILENO, STDERR_FILENO); /* stderr too! */
 			(void)close(pdes[0]);
 		} else {
 			if (pdes[0] != STDIN_FILENO) {
