@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.10 2002/10/04 15:25:01 mickey Exp $
+ * $OpenBSD: calendar.music,v 1.11 2002/12/23 19:41:37 mickey Exp $
  */
 
 #ifndef _calendar_music_
@@ -128,6 +128,7 @@
 08/15	Beatles replace drummer Pete Best with Richard Starkey
 08/15	The Beatles play Shea Stadium in New York, 1965
 08/15	Woodstock Festival, Max Yasgur's farm, 1969
+08/21	Joe Strummer (The Clash), born John Mellor in Ankara, Turkey, 1952
 08/26	Jimi Hendrix gives his last performance at the Isle of Wight, 1970
 08/26	Jimi Hendrix's Electric Ladyland Studios opens in New York, 1970
 09/07	Keith Moon (The Who) dies in London of a drug overdose, 1978
@@ -194,6 +195,7 @@
 12/16	Ludwig von Beethoven born or christened in Bonn, Germany, 1770
 12/21	Frank Zappa is born in Baltimore, 1940
 12/23	First G&S collaboration, Thespis, 1871
+12/23	Joe Strummer (born John Mellor) died in Broomfield, England, 2002
 12/28	Edgar Winter is born in Beaumont, Texas, 1946
 12/31	Jimi Hendrix introduces the Band of Gypsies at the Fillmore East, 1969
 
