@@ -1,4 +1,4 @@
-.\"     $OpenBSD: lock.9,v 1.6 2003/03/07 06:21:37 david Exp $
+.\"     $OpenBSD: lock.9,v 1.7 2003/03/18 09:57:53 avsm Exp $
 .\"     $NetBSD: lock.9,v 1.12 2001/11/01 01:13:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -179,24 +179,12 @@ Processes should sleep, then return failure when acquiring the lock.
 Processes can acquire the lock recursively.
 .El
 .El
-.It Fn lockmgr "lock" "flags" "slock"
+.It Fn lockmgr "lock" "flags" "slock" "p"
 Set, change or release a lock according to the parameters provided.
 Arguments are as follows:
 .Bl -tag -width compact
 .It Fa lock
 The lock.
-.It Fa slock
-Simplelock interlock.
-If the flag LK_INTERLOCK is set in
-.Fa flags ,
-.Fa slock
-is a simplelock held by the caller.
-When the lock
-.Fa lock
-is acquired, the simplelock is released.
-If the flag LK_INTERLOCK is not set,
-.Fa slock
-is ignored.
 .It Fa flags
 Flags to specify the lock request type.
 In addition to the flags specified above, the following flags are valid:
@@ -255,6 +243,21 @@ Unlock the simplelock
 .Fa slock
 when the lock is acquired.
 .El
+.It Fa slock
+Simplelock interlock.
+If the flag LK_INTERLOCK is set in
+.Fa flags ,
+.Fa slock
+is a simplelock held by the caller.
+When the lock
+.Fa lock
+is acquired, the simplelock is released.
+If the flag LK_INTERLOCK is not set,
+.Fa slock
+is ignored.
+.It Fa p
+Should always point to the current process
+.Va curproc .
 .El
 .It Fn lockstatus "lock"
 Determine the status of lock
