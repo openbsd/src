@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.9 1996/05/06 11:31:09 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.10 1996/06/10 19:52:48 niklas Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -373,7 +373,6 @@ cdev_decl(log);
 # define	lkmenodev	enodev
 #else
 # define	NLKM	1
-int	lkmenodev();
 #endif
 cdev_decl(lkm);
 
