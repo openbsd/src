@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.94 2004/06/20 20:49:56 miod Exp $
+#	$OpenBSD: GENERIC,v 1.95 2004/06/20 21:28:04 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -272,6 +272,9 @@ wsdisplay*	at zx?
 
 rfx*		at sbus?			# RasterFlex framebuffer series
 wsdisplay*	at rfx?
+
+mgx*		at sbus?			# SMS MGX/MGXPlus framebuffer
+wsdisplay*	at mgx?
 
 audiocs*	at sbus?
 
