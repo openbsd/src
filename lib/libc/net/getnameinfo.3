@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.16 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.17 2001/11/15 06:53:09 itojun Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -181,12 +181,7 @@ flags are defined in
 The implementation allows experimental numeric IPv6 address notation with
 scope identifier.
 IPv6 link-local address will appear as string like
-.Dq Li fe80::1%ne0 ,
-if
-.Dv NI_WITHSCOPEID
-bit is enabled in
-.Ar flags
-argument.
+.Dq Li fe80::1%ne0 .
 Refer to
 .Xr getaddrinfo 3
 for the notation.
