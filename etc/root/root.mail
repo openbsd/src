@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Sat May  1 11:48:48 MST 2003
+From deraadt@do-not-reply.openbsd.org Sat Nov  1 11:48:48 MDT 2003
 Return-Path: root
-Date: May 1 11:48:48 MST 2003
+Date: Nov 1 11:48:48 MDT 2003
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 3.3!  Secure by Default!
+Subject: Welcome to OpenBSD 3.4!  Secure by Default!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -26,7 +26,7 @@ further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
 for most architectures.  If you installed from a CD-ROM the packages
-are on the same CD-ROM you installed from in the directory 3.3/packages.
+are on the same CD-ROM you installed from in the directory 3.4/packages.
 
 CD-ROM Space permitted us to include a subset of the following packages
 for the most common architectures.  Please see the FTP sites if you find
