@@ -159,10 +159,6 @@ extern char *choose_temp_base PARAMS ((void)) ATTRIBUTE_MALLOC;
 
 extern char *make_temp_file PARAMS ((const char *)) ATTRIBUTE_MALLOC;
 
-/* Return a temporary file name or NULL if unable to create one.  */
-
-extern char *make_temp_file PARAMS ((const char *));
-
 /* Allocate memory filled with spaces.  Allocates using malloc.  */
 
 extern const char *spaces PARAMS ((int count));
@@ -249,10 +245,6 @@ extern PTR xmemdup PARAMS ((const PTR, size_t, size_t)) ATTRIBUTE_MALLOC;
 /* Physical memory routines.  Return values are in BYTES.  */
 extern double physmem_total PARAMS ((void));
 extern double physmem_available PARAMS ((void));
-
-/* Copy an existing memory buffer to a new memory buffer without fail.  */
-
-extern PTR xmemdup PARAMS ((const PTR, size_t, size_t));
 
 /* hex character manipulation routines */
 
