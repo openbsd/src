@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.98 2001/06/24 22:50:58 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.99 2001/07/04 23:14:56 espie Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2677,7 +2677,7 @@ tcp_sack_partialack(tp, th)
 	}
 	return 0;
 }
-#endif TCP_SACK
+#endif /* TCP_SACK */
 
 /*
  * Pull out of band byte out of a segment so
