@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.130 2001/09/01 16:15:19 drahn Exp $
+#	$OpenBSD: Makefile,v 1.131 2001/09/20 22:17:41 hin Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -114,6 +114,8 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/kerberosIV)
 	(cd kerberosV; \
 		${INSTALL} -c -o root -g wheel -m 644 README \
+		    ${DESTDIR}/etc/kerberosV; \
+		${INSTALL} -c -o root -g wheel -m 644 krb5.conf.example \
 		    ${DESTDIR}/etc/kerberosV)
 	(cd amd; \
 		${INSTALL} -c -o root -g wheel -m 644 master.sample \
