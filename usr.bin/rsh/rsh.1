@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsh.1,v 1.14 2003/07/25 09:49:02 jmc Exp $
+.\"	$OpenBSD: rsh.1,v 1.15 2004/10/16 16:49:47 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -89,10 +89,7 @@ section of this manual page).
 If no
 .Ar command
 is specified, you will be logged in on the remote host using
-.Nm rlogin
-if it exists on the system or
-.Xr telnet 1
-if not.
+.Xr ssh 1 .
 .Pp
 If
 .Nm
@@ -130,7 +127,7 @@ to
 .It Pa /etc/hosts
 .El
 .Sh SEE ALSO
-.Xr telnet 1 ,
+.Xr ssh 1 ,
 .Xr rcmd 3
 .Sh HISTORY
 The
@@ -151,17 +148,6 @@ to
 using the
 .Fl n
 option.
-.Pp
-You cannot run an interactive command
-(like
-.Xr rogue 6
-or
-.Xr vi 1 )
-using
-.Nm rsh ;
-use
-.Xr telnet 1
-instead.
 .Pp
 Stop signals stop the local
 .Nm
