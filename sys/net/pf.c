@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.148 2001/09/11 22:20:48 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.149 2001/09/14 20:22:18 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2778,6 +2778,23 @@ int
 pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 {
 	struct pf_rule *r, *rm = NULL;
+	struct pf_binat *binat = NULL;
+
+	if (direction == PF_OUT) {
+		/* check outgoing packet for BINAT */
+		if ((binat = pf_get_binat(PF_OUT, ifp, NULL, h->ip_src.s_addr,
+		     h->ip_dst.s_addr)) != NULL) {
+			pf_change_a(&h->ip_src.s_addr, &h->ip_sum,
+			    binat->raddr, 0);
+		}
+	} else {
+		/* check incoming packet for BINAT */
+		if ((binat = pf_get_binat(PF_IN, ifp, NULL, h->ip_dst.s_addr, 
+		     h->ip_src.s_addr)) != NULL) {
+			pf_change_a(&h->ip_dst.s_addr, &h->ip_sum,
+			    binat->saddr, 0);
+		}
+	}
 
 	r = TAILQ_FIRST(pf_rules_active);
 	while (r != NULL) {
