@@ -1,4 +1,4 @@
-#	$OpenBSD: JURA,v 1.9 1997/07/08 21:26:29 deraadt Exp $
+#	$OpenBSD: JURA,v 1.10 1999/01/08 03:16:16 niklas Exp $
 #	$NetBSD: JURA,v 1.11 1996/11/25 04:16:18 cgd Exp $
 #
 # Kernel for jura.pdl.cs.cmu.edu.
@@ -53,9 +53,9 @@ jcombo* at	ibus?				# the VLSI combo chip
 isa*	at	jcombo?
 
 mcclock0 at      isa? port 0x70
-pcppi*	at	isa?				# PC prog. periph. interface
-pckbd*	at	pcppi?				# PC keyboard (kbd port)
-pms*	at	pcppi?				# PS/2-style mouse (aux port)
+pckbc*	at	isa?				# PC keyboard controller
+pckbd*	at	pckbc?				# PC keyboard (kbd port)
+pms*	at	pckbc?				# PS/2-style mouse (aux port)
 com0    at      isa? port 0x3f8 irq 4           # standard serial ports
 com1    at      isa? port 0x2f8 irq 3
 lpt0    at      isa? port 0x3bc irq 7           # standard parallel port

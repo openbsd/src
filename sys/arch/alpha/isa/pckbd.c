@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbd.c,v 1.14 1998/02/05 22:57:51 deraadt Exp $	*/
+/*	$OpenBSD: pckbd.c,v 1.15 1999/01/08 03:16:15 niklas Exp $	*/
 /*	$NetBSD: pckbd.c,v 1.14 1996/12/05 01:39:30 cgd Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
 #include <alpha/isa/spkrreg.h>
 #include <alpha/isa/timerreg.h>
 #include <machine/wsconsio.h>
-#include <alpha/isa/pcppivar.h>
+#include <alpha/isa/pckbcvar.h>
 
 #include <dev/wscons/wsconsvar.h>
 #include <dev/wscons/kbd.h>
@@ -323,10 +323,10 @@ pckbdprobe(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct pcppi_attach_args *pa = aux;
+	struct pckbc_attach_args *pa = aux;
 	u_int i, rv;
 
-	if (pa->pa_slot != PCPPI_KBD_SLOT)
+	if (pa->pa_slot != PCKBC_KBD_SLOT)
 		return 0;
 
 	rv = 0;
@@ -418,7 +418,7 @@ pckbdattach(parent, self, aux)
 	void *aux;
 {
 	struct pckbd_softc *sc = (void *)self;
-	struct pcppi_attach_args *pa = aux;
+	struct pckbc_attach_args *pa = aux;
 
 	pckbd_iot = pa->pa_iot;
 	pckbd_ic = pa->pa_ic;

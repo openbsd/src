@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcppi.c,v 1.2 1997/11/10 15:53:10 niklas Exp $	*/
-/*	$NetBSD: pcppi.c,v 1.3 1996/12/05 01:39:31 cgd Exp $	*/
+/*	$OpenBSD: pckbc.c,v 1.1 1999/01/08 03:16:14 niklas Exp $	*/
+/*	$NetBSD: pckbc.c,v 1.3 1996/12/05 01:39:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -38,9 +38,9 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <alpha/isa/pcppivar.h>
+#include <alpha/isa/pckbcvar.h>
 
-struct pcppi_softc {
+struct pckbc_softc {
 	struct device sc_dv;
 
 	bus_space_tag_t sc_iot;
@@ -48,24 +48,24 @@ struct pcppi_softc {
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	pcppi_match __P((struct device *, void *, void *));
+int	pckbc_match __P((struct device *, void *, void *));
 #else
-int	pcppi_match __P((struct device *, struct cfdata *, void *));
+int	pckbc_match __P((struct device *, struct cfdata *, void *));
 #endif
-void	pcppi_attach __P((struct device *, struct device *, void *));
+void	pckbc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach pcppi_ca = {
-	sizeof(struct pcppi_softc), pcppi_match, pcppi_attach,
+struct cfattach pckbc_ca = {
+	sizeof(struct pckbc_softc), pckbc_match, pckbc_attach,
 };
 
-struct cfdriver pcppi_cd = {
-	NULL, "pcppi", DV_DULL,
+struct cfdriver pckbc_cd = {
+	NULL, "pckbc", DV_DULL,
 };
 
-int	pcppiprint __P((void *, const char *));
+int	pckbcprint __P((void *, const char *));
 
 int
-pcppi_match(parent, match, aux)
+pckbc_match(parent, match, aux)
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
 	void *match;
@@ -134,59 +134,59 @@ lose:
 }
 
 void
-pcppi_attach(parent, self, aux)
+pckbc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcppi_softc *sc = (struct pcppi_softc *)self;
+	struct pckbc_softc *sc = (struct pckbc_softc *)self;
 	struct isa_attach_args *ia = aux;
-	struct pcppi_attach_args pa;
+	struct pckbc_attach_args pa;
 	bus_space_tag_t iot;
 
 	sc->sc_iot = iot = ia->ia_iot;
 	if (bus_space_map(iot, 0x40, 4, 0, &sc->sc_pit1_ioh) ||		/*XXX*/
 	    bus_space_map(iot, 0x60, 5, 0, &sc->sc_ppi_ioh))		/*XXX*/
-		panic("pcppi_attach: couldn't map");
+		panic("pckbc_attach: couldn't map");
 
 	printf("\n");
 
-	pa.pa_slot = PCPPI_KBD_SLOT;
+	pa.pa_slot = PCKBC_KBD_SLOT;
 	pa.pa_iot = iot;				/* XXX */
 	pa.pa_ioh = sc->sc_ppi_ioh;			/* XXX */
 	pa.pa_pit_ioh = sc->sc_pit1_ioh;		/* XXX */
 	pa.pa_delaybah = ia->ia_delaybah;		/* XXX */
 	pa.pa_ic = ia->ia_ic;				/* XXX */
-	config_found(self, &pa, pcppiprint);
+	config_found(self, &pa, pckbcprint);
 
 	/* XXX SHOULD ONLY ATTACH IF SOMETHING IS THERE */
-	pa.pa_slot = PCPPI_AUX_SLOT;
+	pa.pa_slot = PCKBC_AUX_SLOT;
 	pa.pa_iot = iot;				/* XXX */
 	pa.pa_ioh = sc->sc_ppi_ioh;			/* XXX */
 	pa.pa_pit_ioh = sc->sc_pit1_ioh;		/* XXX */
 	pa.pa_delaybah = ia->ia_delaybah;		/* XXX */
 	pa.pa_ic = ia->ia_ic;				/* XXX */
-	config_found(self, &pa, pcppiprint);
+	config_found(self, &pa, pckbcprint);
 }
 
 int
-pcppiprint(aux, pnp)
+pckbcprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct pcppi_attach_args *pa = aux;
+	struct pckbc_attach_args *pa = aux;
 	const char *type;
 
 	switch (pa->pa_slot) {
-	case PCPPI_KBD_SLOT:
+	case PCKBC_KBD_SLOT:
 		type = "pckbd";
 		break;
-	case PCPPI_AUX_SLOT:
+	case PCKBC_AUX_SLOT:
 		type = "pms";
 		/* XXX XXX XXX should make sure it's there before configuring */
 		return (QUIET);
 		break;
 	default:
-		panic("pcppiprint: bad slot");
+		panic("pckbcprint: bad slot");
 	}
 
         if (pnp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pms.c,v 1.6 1997/11/06 12:27:03 niklas Exp $	*/
+/*	$OpenBSD: pms.c,v 1.7 1999/01/08 03:16:15 niklas Exp $	*/
 /*	$NetBSD: pms.c,v 1.7 1996/12/05 01:39:31 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/wscons/wsconsvar.h>
 #include <dev/wscons/ms.h>
-#include <alpha/isa/pcppivar.h>
+#include <alpha/isa/pckbcvar.h>
 
 #define	PMS_DATA	0x0	/* offset for data port, read-write */
 #define	PMS_CNTRL	0x4	/* offset for control port, write-only */
@@ -187,10 +187,10 @@ pmsprobe(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct pcppi_attach_args *pa = aux;
+	struct pckbc_attach_args *pa = aux;
 	u_char x;
 
-	if (pa->pa_slot != PCPPI_AUX_SLOT)
+	if (pa->pa_slot != PCKBC_AUX_SLOT)
 		return 0;
 
 	pms_iot = pa->pa_iot;
@@ -213,7 +213,7 @@ pmsattach(parent, self, aux)
 	void *aux;
 {
 	struct pms_softc *sc = (void *)self;
-	struct pcppi_attach_args *pa = aux;
+	struct pckbc_attach_args *pa = aux;
 
 	pms_iot = pa->pa_iot;
 	pms_ioh = pa->pa_ioh;

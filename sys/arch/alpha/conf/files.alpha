@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.23 1998/09/22 20:43:33 jason Exp $
+#	$OpenBSD: files.alpha,v 1.24 1999/01/08 03:16:16 niklas Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -143,16 +143,16 @@ major { wd = 0 }
 file	arch/alpha/isa/isa_machdep.c	isa
 file     arch/alpha/pci/pciide_machdep.c  pci
 
-device	pcppi { }
-attach	pcppi at isa
-file	arch/alpha/isa/pcppi.c		pcppi
+device	pckbc { }
+attach	pckbc at isa
+file	arch/alpha/isa/pckbc.c		pckbc
 
 device	pckbd
-attach	pckbd at pcppi
+attach	pckbd at pckbc
 file	arch/alpha/isa/pckbd.c		pckbd
 
 device	pms
-attach	pms at pcppi
+attach	pms at pckbc
 file	arch/alpha/isa/pms.c		pms
 
 # National Semiconductor DS8390/WD83C690-based boards

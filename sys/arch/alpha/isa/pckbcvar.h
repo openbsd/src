@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcppivar.h,v 1.2 1997/11/10 15:53:10 niklas Exp $	*/
-/*	$NetBSD: pcppivar.h,v 1.1 1996/11/25 03:26:37 cgd Exp $	*/
+/*	$OpenBSD: pckbcvar.h,v 1.1 1999/01/08 03:16:15 niklas Exp $	*/
+/*	$NetBSD: pckbcvar.h,v 1.1 1996/11/25 03:26:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-struct pcppi_attach_args {
+struct pckbc_attach_args {
 	unsigned int	pa_slot;
 	/* XXX should have a device type number */
 	/* XXX should have a cookie to be passed to callbacks */
@@ -41,5 +41,5 @@ struct pcppi_attach_args {
 	isa_chipset_tag_t pa_ic;
 };
 
-#define	PCPPI_KBD_SLOT	0
-#define	PCPPI_AUX_SLOT	1
+#define	PCKBC_KBD_SLOT	0
+#define	PCKBC_AUX_SLOT	1

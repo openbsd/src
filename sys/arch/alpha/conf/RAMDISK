@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.22 1998/12/28 03:50:37 jason Exp $
+#	$OpenBSD: RAMDISK,v 1.23 1999/01/08 03:16:16 niklas Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -140,9 +140,9 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pcppi*	at	isa?				# PC prog. periph. interface
-pckbd*	at	pcppi?				# PC keyboard (kbd port)
-#pms*	at	pcppi?				# PS/2-style mouse (aux port)
+pckbc*	at	isa?				# PC keyboard controller
+pckbd*	at	pckbc?				# PC keyboard (kbd port)
+#pms*	at	pckbc?				# PS/2-style mouse (aux port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #lpt*	at	isa? port 0x3bc irq 7		# standard parallel port

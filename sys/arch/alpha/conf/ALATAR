@@ -1,4 +1,4 @@
-#	$OpenBSD: ALATAR,v 1.3 1997/07/08 21:26:26 deraadt Exp $
+#	$OpenBSD: ALATAR,v 1.4 1999/01/08 03:16:15 niklas Exp $
 #
 # AXPpci 33 kernel.  Enough to get booted, etc., but not much more.
 
@@ -75,8 +75,8 @@ isa*	at	sio?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pcppi*	at	isa?				# PC prog. periph. interface
-pckbd*	at	pcppi?				# PC keyboard (kbd port)
+pckbc*	at	isa?				# PC keyboard controller
+pckbd*	at	pckbc?				# PC keyboard (kbd port)
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
