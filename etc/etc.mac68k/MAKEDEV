@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.15 1997/05/25 18:50:16 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.16 1997/06/10 00:01:31 gene Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -37,7 +37,7 @@
 #	st*	scsi tapes
 #
 # Disks:
-#	fd*	floppy disk drives (3 1/2") (unimp.)
+#	fd*	floppy disk drives (3 1/2") (not yet available)
 #	sd*	SCSI disks
 #	cd*	SCSI compact discs
 #	ch*	SCSI changers
@@ -86,7 +86,7 @@ all)
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV adb grf0 grf1 grf2 grf3 ttye0
+	sh MAKEDEV adb asc0 grf0 grf1 grf2 grf3 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh MAKEDEV bpf8 bpf9 bpfa bpfb ipl
@@ -101,7 +101,7 @@ all)
 raminst)
 	sh MAKEDEV std
 	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh MAKEDEV adb grf0 grf1 ttye0
+	sh MAKEDEV adb asc0 grf0 grf1 ttye0
 	sh MAKEDEV tty00 tty01 pty0
 	;;
 
@@ -346,6 +346,13 @@ adb)
 	mknod adb c 23 0 ; chmod 666 adb
 	;;
 
+asc*)
+        unit=${i#asc}
+        rm -f asc$unit
+        mknod asc$unit c 36 $unit
+        chmod 666 asc$unit
+        ;;
+
 bpf*)
 	unit=`expr $i : 'bpf\(.*\)'`
 	rm -f bpf${unit}
@@ -354,7 +361,7 @@ bpf*)
 	;;
 
 ipl)
-	mknod ipl c 32 0
+	mknod ipl c 35 0
 	chown root.wheel ipl
 	;;
 
@@ -395,7 +402,7 @@ uk*)
 ss*)
 	unit=`expr $i : 'ss\(.*\)'`
 	rm -f ss$unit
-	mknod ss$unit c 35 $unit
+	mknod ss$unit c 33 $unit
 	chown root.operator ss$unit
 	chmod 440 ss$unit
 #	backwards compatibility with older PINTs
