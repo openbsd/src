@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.4 1999/10/09 03:42:04 csapuntz Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.5 2000/07/20 19:15:22 csapuntz Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -107,6 +107,7 @@ wdc_isa_probe(parent, match, aux)
 {
 	struct channel_softc ch;
 	struct isa_attach_args *ia = aux;
+	struct cfdata *cf = match;
 	int result = 0;
 
 	bzero(&ch, sizeof ch);
@@ -119,6 +120,9 @@ wdc_isa_probe(parent, match, aux)
 	if (bus_space_map(ch.ctl_iot, ia->ia_iobase + WDC_ISA_AUXREG_OFFSET,
 	    WDC_ISA_AUXREG_NPORTS, 0, &ch.ctl_ioh))
 		goto outunmap;
+
+	if (cf->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+		ch.ch_flags |= WDCF_VERBOSE_PROBE;
 
 	result = wdcprobe(&ch);
 	if (result) {

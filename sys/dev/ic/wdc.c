@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.19 2000/07/20 07:40:32 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.20 2000/07/20 19:15:23 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -369,7 +369,9 @@ wdcprobe(chp)
 		chp->_vtbl = &wdc_default_vtbl;
 
 #ifdef WDCDEBUG
-	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+	if ((chp->ch_flags & WDCF_VERBOSE_PROBE) ||
+	    (chp->wdc &&
+	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
 		wdcdebug_mask |= DEBUG_PROBE;
 #endif
 	/*
@@ -454,7 +456,9 @@ wdcprobe(chp)
 	}
 
 #ifdef WDCDEBUG
-	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+	if ((chp->ch_flags & WDCF_VERBOSE_PROBE) ||
+	    (chp->wdc &&
+	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
 		wdcdebug_mask &= ~DEBUG_PROBE;
 #endif
 	return (ret_value);	
