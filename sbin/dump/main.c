@@ -434,8 +434,9 @@ main(argc, argv)
 	if (pipeout)
 		msg("DUMP: %ld tape blocks\n",spcl.c_tapea);
 	else
-		msg("DUMP: %ld tape blocks on %d volumes(s)\n",
-		    spcl.c_tapea, spcl.c_volume);
+		msg("DUMP: %ld tape blocks on %d volume%s\n",
+		    spcl.c_tapea, spcl.c_volume,
+		    spcl.c_volume > 1 ? "s" : "");
 	putdumptime();
 	trewind();
 	broadcast("DUMP IS DONE!\7\7\n");
