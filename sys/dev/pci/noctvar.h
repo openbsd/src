@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctvar.h,v 1.2 2002/06/21 03:26:40 jason Exp $	*/
+/*	$OpenBSD: noctvar.h,v 1.3 2002/06/21 17:45:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -43,16 +43,24 @@ struct noct_softc {
 	bus_dma_tag_t sc_dmat;
 	void *sc_ih;
 	u_int sc_ramsize;
+
 	u_int64_t *sc_rngbuf;
-	union noct_pkh_cmd *sc_pkhcmd;
 	bus_dmamap_t sc_rngmap;
-	bus_dmamap_t sc_pkhmap;
 	struct timeout sc_rngto;
 	int sc_rngtick;
-	struct timeout sc_pkhto;
-	int sc_pkhtick;
-	int sc_pkhbusy;
+
+	bus_dmamap_t sc_pkhmap;		/* pkh buffer map */
+	union noct_pkh_cmd *sc_pkhcmd;	/* pkh command buffers */
+	struct timeout sc_pkhto;	/* debug */
+	int sc_pkhtick;			/* debug */
+	int sc_pkhbusy;			/* debug */
 	u_int32_t sc_pkhwp;		/* pkh write pointer */
+
+	bus_dmamap_t sc_eamap;		/* ea buffer map */
+	struct timeout sc_eato;		/* debug */
+	int sc_eatick;			/* debug */
+	u_int32_t sc_eawp;		/* ea write pointer */
+	struct noct_ea_cmd *sc_eacmd;	/* ea command buffers */
 };
 
 #define	NOCT_READ_4(sc,r) \
@@ -70,3 +78,7 @@ struct noct_softc {
 #define	NOCT_PKH_QLEN		15
 #define	NOCT_PKH_ENTRIES	(1 << NOCT_PKH_QLEN)
 #define	NOCT_PKH_BUFSIZE	(NOCT_PKH_ENTRIES * sizeof(union noct_pkh_cmd))
+
+#define	NOCT_EA_QLEN		15
+#define	NOCT_EA_ENTRIES		(1 << NOCT_EA_QLEN)
+#define	NOCT_EA_BUFSIZE		(NOCT_EA_ENTRIES * sizeof(struct noct_ea_cmd))

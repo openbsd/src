@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctreg.h,v 1.3 2002/06/21 03:26:40 jason Exp $	*/
+/*	$OpenBSD: noctreg.h,v 1.4 2002/06/21 17:45:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -62,10 +62,10 @@
 #define	NOCT_PKH_BNCACHE_END	0x5fff		/* pkh bigbumber cache end */
 #define	NOCT_EA_TEST_1		0x8000		/* e/a test 1 */
 #define	NOCT_EA_TEST_0		0x8004		/* e/a test 0 */
-#define	NOCT_EA_CMDQ_LEN	0x8008		/* e/a cmd queue len */
-#define	NOCT_EA_CMDQ_PTR	0x800c		/* e/a cmd queue ptr */
-#define	NOCT_EA_CMDQ_BAR1	0x8010		/* e/a cmd queue bar 1 */
-#define	NOCT_EA_CMDQ_BAR0	0x8014		/* e/a cmd queue bar 0 */
+#define	NOCT_EA_Q_LEN		0x8008		/* e/a cmd queue len */
+#define	NOCT_EA_Q_PTR		0x800c		/* e/a cmd queue ptr */
+#define	NOCT_EA_Q_BASE_HI	0x8010		/* e/a cmd queue bar 1 */
+#define	NOCT_EA_Q_BASE_LO	0x8014		/* e/a cmd queue bar 0 */
 #define	NOCT_EA_IER		0x8018		/* e/a intr enable */
 #define	NOCT_EA_CSR		0x801c		/* e/a control/status */
 #define	NOCT_EA_CTX_DAT_1	0x8020		/* e/a context data 1 */
@@ -92,14 +92,9 @@
 #define	NOCT_RNG_TEST_0		0xd004		/* rng test 0 */
 #define	NOCT_RNG_Q_LEN		0xd008		/* rng queue length */
 #define	NOCT_RNG_Q_PTR		0xd00c		/* rng queue pointer */
-#define	NOCT_RNG_BAR1		0xd010		/* rng bar1 */
-#define	NOCT_RNG_BAR0		0xd014		/* rng bar0 */
+#define	NOCT_RNG_Q_BASE_HI	0xd010		/* rng bar1 */
+#define	NOCT_RNG_Q_BASE_LO	0xd014		/* rng bar0 */
 #define	NOCT_RNG_CSR		0xd018		/* rng control/status */
-
-/* NOCT_EA_CTX_ADDR */
-#define	CTXADDR_READPEND	0x80000000	/* read pending/start */
-#define	CTXADDR_WRITEPEND	0x40000000	/* write pending/start */
-#define	CTXADDR_MASK		0x00ffffff	/* address mask */
 
 /* NOCT_BRDG_STAT */
 #define	BRDGSTS_PKP_INT		0x80000000	/* pkp interrupt */
@@ -131,45 +126,6 @@
 #define	BRDGCTL_BIRQ_ENA	0x10000000	/* bridge interrupt enable */
 #define	BRDGCTL_TIRQ_ENA	0x08000000	/* timer interrupt enable */
 #define	BRDGCTL_TIMER_ENA	0x00000001	/* enable timer */
-
-/* NOCT_RNG_CTL */
-#define	RNGCTL_RNG_ENA		0x80000000	/* rng enable */
-#define	RNGCTL_TOD_ENA		0x40000000	/* enable tod counter */
-#define	RNGCTL_EXTCLK_ENA	0x20000000	/* external clock enable */
-#define	RNGCTL_DIAG		0x10000000	/* diagnostic mode */
-#define	RNGCTL_BUFSRC_M		0x0c000000	/* buffer source: */
-#define	RNGCTL_BUFSRC_X917	0x00000000	/*  X9.17 expander */
-#define	RNGCTL_BUFSRC_SEED	0x04000000	/*  seed generator */
-#define	RNGCTL_BUFSRC_HOST	0x08000000	/*  host data */
-#define	RNGCTL_SEEDSRC_M	0x03000000	/* seed source: */
-#define	RNGCTL_SEEDSRC_INT	0x00000000	/*  internal seed generator */
-#define	RNGCTL_SEEDSRC_EXT	0x01000000	/*  external seed generator */
-#define	RNGCTL_SEEDSRC_HOST	0x02000000	/*  host seed */
-#define	RNGCTL_SEED_ERR		0x00008000	/* seed error */
-#define	RNGCTL_X917_ERR		0x00004000	/* X9.17 error */
-#define	RNGCTL_KEY1PAR_ERR	0x00002000	/* key 1 parity error */
-#define	RNGCTL_KEY2PAR_ERR	0x00001000	/* key 2 parity error */
-#define	RNGCTL_HOSTSEEDVALID	0x00000400	/* host seed not consumed */
-#define	RNGCTL_BUF_RDY		0x00000200	/* buffer ready for write */
-#define	RNGCTL_ITERCNT		0x000000ff	/* iteration count */
-
-/* NOCT_RNG_CSR */
-#define	RNGCSR_XFER_ENABLE	0x80000000	/* enable xfer queue */
-#define	RNGCSR_XFER_BUSY	0x40000000	/* xfer in progress */
-#define	RNGCSR_ERR_KEY		0x00800000	/* key error */
-#define	RNGCSR_ERR_BUS		0x00400000	/* pci bus error */
-#define	RNGCSR_ERR_DUP		0x00200000	/* duplicate block generated */
-#define	RNGCSR_ERR_ACCESS	0x00100000	/* access error */
-#define	RNGCSR_INT_KEY		0x00080000	/* intr ena: key error */
-#define	RNGCSR_INT_BUS		0x00040000	/* intr ena: pci error */
-#define	RNGCSR_INT_DUP		0x00020000	/* intr ena: dup error */
-#define	RNGCSR_INT_ACCESS	0x00010000	/* intr ena: access error */
-
-/* NOCT_RNG_Q_PTR */
-#define	RNGQPTR_READ_M		0x00007fff	/* read mask */
-#define	RNGQPTR_READ_S		0		/* read shift */
-#define	RNGQPTR_WRITE_M		0x7fff0000	/* write mask */
-#define	RNGQPTR_WRITE_S		16		/* write shift */
 
 /* NOCT_PKH_Q_LEN */
 #define	PKHQLEN_MASK		0x0000000f	/* queue length, 2^n */
@@ -234,6 +190,10 @@
 #define	PKHSKS_LOC_CACHEONLY	0x00001000
 #define	PKHSKS_ADDR		0x00000fff	/* address mask */
 
+/*
+ * public key structures
+ */
+/* opcodes/flags */
 #define	PKH_OP_CODE_MOD		0x00000000	/* a mod m */
 #define	PKH_OP_CODE_RMOD	0x10000000	/* R mod m */
 #define	PKH_OP_CODE_ADD		0x20000000	/* (a + b) mod m */
@@ -298,3 +258,151 @@ union noct_pkh_cmd {
 	struct noct_pkh_cmd_dsasign	dsasign;
 	struct noct_pkh_cmd_nop		nop;
 };
+
+/* NOCT_EA_Q_LEN */
+#define	EAQLEN_MASK		0x0000000f	/* queue length, 2^n */
+
+/* NOCT_EA_Q_PTR */
+#define EAQPTR_READ_M		0x7fff0000	/* read mask */
+#define	EAQPTR_READ_S		16		/* read shift */
+#define	EAQPTR_WRITE_M		0x00007fff	/* write mask */
+#define	EAQPTR_WRITE_S		0		/* write shift */
+
+/* NOCT_EA_IER */
+#define	EAIER_QALIGN		0x00008000	/* queue alignment */
+#define	EAIER_CMDCMPL		0x00004000	/* command complete */
+#define	EAIER_OPERR		0x00002000	/* opcode error */
+#define	EAIER_CMDREAD		0x00001000	/* command read error */
+#define	EAIER_CMDWRITE		0x00000800	/* command write error */
+#define	EAIER_DATAREAD		0x00000400	/* data read error */
+#define	EAIER_DATAWRITE		0x00000200	/* data write error */
+#define	EAIER_INTRNLLEN		0x00000100	/* internal data length err */
+#define	EAIER_EXTRNLLEN		0x00000080	/* external data length err */
+#define	EAIER_DESBLOCK		0x00000040	/* des block size error */
+#define	EAIER_DESKEY		0x00000020	/* des key error */
+#define	EAIER_ILL		0x00000001	/* illegal access */
+
+/* NOCT_EA_CSR */
+#define	EACSR_ENABLE		0x80000000	/* e/a enable */
+#define	EACSR_BUSY		0x40000000	/* e/a busy */
+#define	EACSR_QALIGN		0x00008000	/* queue alignment */
+#define	EACSR_CMDCMPL		0x00004000	/* command complete */
+#define	EACSR_OPERR		0x00002000	/* opcode error */
+#define	EACSR_CMDREAD		0x00001000	/* command read error */
+#define	EACSR_CMDWRITE		0x00000800	/* command write error */
+#define	EACSR_DATAREAD		0x00000400	/* data read error */
+#define	EACSR_DATAWRITE		0x00000200	/* data write error */
+#define	EACSR_INTRNLLEN		0x00000100	/* internal data length err */
+#define	EACSR_EXTRNLLEN		0x00000080	/* external data length err */
+#define	EACSR_DESBLOCK		0x00000040	/* des block size error */
+#define	EACSR_DESKEY		0x00000020	/* des key error */
+#define	EACSR_ILL		0x00000001	/* illegal access */
+
+/* NOCT_EA_CTX_ADDR */
+#define	EACTXADDR_READPEND	0x80000000	/* read pending/start */
+#define	EACTXADDR_WRITEPEND	0x40000000	/* write pending/start */
+#define	EACTXADDR_MASK		0x00ffffff	/* address mask */
+
+/* NOCT_EA_SDRAM_CFG */
+#define	EASDRC_8KREFRESH	0x00000080	/* 8K refreshes/64ms */
+#define	EASDRC_FREQ		0x0000003f	/* in Mhz */
+
+/* NOCT_RNG_CTL */
+#define	RNGCTL_RNG_ENA		0x80000000	/* rng enable */
+#define	RNGCTL_TOD_ENA		0x40000000	/* enable tod counter */
+#define	RNGCTL_EXTCLK_ENA	0x20000000	/* external clock enable */
+#define	RNGCTL_DIAG		0x10000000	/* diagnostic mode */
+#define	RNGCTL_BUFSRC_M		0x0c000000	/* buffer source: */
+#define	RNGCTL_BUFSRC_X917	0x00000000	/*  X9.17 expander */
+#define	RNGCTL_BUFSRC_SEED	0x04000000	/*  seed generator */
+#define	RNGCTL_BUFSRC_HOST	0x08000000	/*  host data */
+#define	RNGCTL_SEEDSRC_M	0x03000000	/* seed source: */
+#define	RNGCTL_SEEDSRC_INT	0x00000000	/*  internal seed generator */
+#define	RNGCTL_SEEDSRC_EXT	0x01000000	/*  external seed generator */
+#define	RNGCTL_SEEDSRC_HOST	0x02000000	/*  host seed */
+#define	RNGCTL_SEED_ERR		0x00008000	/* seed error */
+#define	RNGCTL_X917_ERR		0x00004000	/* X9.17 error */
+#define	RNGCTL_KEY1PAR_ERR	0x00002000	/* key 1 parity error */
+#define	RNGCTL_KEY2PAR_ERR	0x00001000	/* key 2 parity error */
+#define	RNGCTL_HOSTSEEDVALID	0x00000400	/* host seed not consumed */
+#define	RNGCTL_BUF_RDY		0x00000200	/* buffer ready for write */
+#define	RNGCTL_ITERCNT		0x000000ff	/* iteration count */
+
+/* NOCT_RNG_CSR */
+#define	RNGCSR_XFER_ENABLE	0x80000000	/* enable xfer queue */
+#define	RNGCSR_XFER_BUSY	0x40000000	/* xfer in progress */
+#define	RNGCSR_ERR_KEY		0x00800000	/* key error */
+#define	RNGCSR_ERR_BUS		0x00400000	/* pci bus error */
+#define	RNGCSR_ERR_DUP		0x00200000	/* duplicate block generated */
+#define	RNGCSR_ERR_ACCESS	0x00100000	/* access error */
+#define	RNGCSR_INT_KEY		0x00080000	/* intr ena: key error */
+#define	RNGCSR_INT_BUS		0x00040000	/* intr ena: pci error */
+#define	RNGCSR_INT_DUP		0x00020000	/* intr ena: dup error */
+#define	RNGCSR_INT_ACCESS	0x00010000	/* intr ena: access error */
+
+/* NOCT_RNG_Q_PTR */
+#define	RNGQPTR_READ_M		0x00007fff	/* read mask */
+#define	RNGQPTR_READ_S		0		/* read shift */
+#define	RNGQPTR_WRITE_M		0x7fff0000	/* write mask */
+#define	RNGQPTR_WRITE_S		16		/* write shift */
+
+#define	EA_CMD_WORDS		32
+struct noct_ea_cmd {
+	volatile u_int32_t	buf[EA_CMD_WORDS];
+};
+
+
+#define	EA_0_CP			0x80000000	/* context block */
+#define	EA_0_SI			0x40000000	/* set interrupt */
+#define	EA_0_CTXIDX		0x0003ffff	/* context index */
+
+#define	EA_1_OPCODE		0xff000000	/* opcode */
+#define	EA_1_ITERCNT		0x000f0000	/* iteration count */
+#define	EA_1_DATALEN		0x0000ffff	/* data length (bytes) */
+
+#define	EA_OP_NOP		0x00000000	/* nop */
+#define	EA_OP_WCTX		0x01000000	/* write context mem */
+#define	EA_OP_RCTX		0x02000000	/* read context mem */
+#define	EA_OP_3DESCBCE		0x03000000	/* 3DES, CBC, encrypt */
+#define	EA_OP_3DESCBCD		0x04000000	/* 3DES, CBC, decrypt */
+#define	EA_OP_ARC4		0x05000000	/* ARC4 transform */
+#define	EA_OP_MD5		0x10000000	/* simple MD5 hash */
+#define	EA_OP_MD5_APP		0x11000000	/* MD5 hash w/append */
+#define	EA_OP_MD5_CMDIV		0x12000000	/* MD5 hash, IV from cmd */
+#define	EA_OP_MD5_LSTIV		0x13000000	/* MD5 hash, IV from last */
+#define	EA_OP_MD5_LSTCMD	0x14000000	/* MD5 hashlast;iv from cmd */
+#define	EA_OP_MD5_LSTLST	0x15000000	/* MD5 hashlast;iv from last */
+#define	EA_OP_MD5_KEYMAT	0x16000000	/* MD5 KEYMAT expansion */
+#define	EA_OP_MD5_SKEYID	0x17000000	/* MD5 SKEYID expansion */
+#define	EA_OP_MD5_IKEKEY	0x18000000	/* MD5 IKE KEYMAT */
+#define	EA_OP_SHA1		0x20000000	/* simple SHA1 hash */
+#define	EA_OP_SHA1_APP		0x21000000	/* SHA1 hash w/append */
+#define	EA_OP_SHA1_CMDIV	0x22000000	/* SHA1 hash, IV from cmd */
+#define	EA_OP_SHA1_LSTIV	0x23000000	/* SHA1 hash, IV from last */
+#define	EA_OP_SHA1_LSTCMD	0x24000000	/* SHA1 hashlast;iv from cmd */
+#define	EA_OP_SHA1_LSTLST	0x25000000	/* SHA1 hashlast;iv from lst */
+#define	EA_OP_SHA1_KEYMAT	0x26000000	/* SHA1 KEYMAT expansion */
+#define	EA_OP_SHA1_SKEYID	0x27000000	/* SHA1 SKEYID expansion */
+#define	EA_OP_SHA1_IKEKEY	0x28000000	/* SHA1 IKE KEYMAT */
+#define	EA_OP_MASTER_HASH	0x30000000	/* master secret hash */
+#define	EA_OP_NULL_NULL		0x80000000	/* packet level null/null */
+#define	EA_OP_SSL3_ARC4_MD5_E	0x81000000	/* ssl 3.0 arc4/md5 enc */
+#define	EA_OP_SSL3_DES_MD5_E	0x82000000	/* ssl 3.0 des/md5 enc */
+#define	EA_OP_SSL3_ARC4_SHA1_E	0x83000000	/* ssl 3.0 arc4/sha1 enc */
+#define	EA_OP_SSL3_DES_SHA1_E	0x84000000	/* ssl 3.0 des/sha1 enc */
+#define	EA_OP_SSL3_ARC4_MD5_D	0x91000000	/* ssl 3.0 arc4/md5 dec */
+#define	EA_OP_SSL3_DES_MD5_D	0x92000000	/* ssl 3.0 des/md5 dec */
+#define	EA_OP_SSL3_ARC4_SHA1_D	0x93000000	/* ssl 3.0 arc4/sha1 dec */
+#define	EA_OP_SSL3_DES_SHA1_D	0x94000000	/* ssl 3.0 des/sha1 dec */
+#define	EA_OP_TLS1_ARC4_MD5_E	0xa1000000	/* tls 1.0 arc4/md5 enc */
+#define	EA_OP_TLS1_DES_MD5_E	0xa2000000	/* tls 1.0 des/md5 enc */
+#define	EA_OP_TLS1_ARC4_SHA1_E	0xa3000000	/* tls 1.0 arc4/sha1 enc */
+#define	EA_OP_TLS1_DES_SHA1_E	0xa4000000	/* tls 1.0 des/sha1 enc */
+#define	EA_OP_TLS1_ARC4_MD5_D	0xb1000000	/* tls 1.0 arc4/md5 dec */
+#define	EA_OP_TLS1_DES_MD5_D	0xb2000000	/* tls 1.0 des/md5 dec */
+#define	EA_OP_TLS1_ARC4_SHA1_D	0xb3000000	/* tls 1.0 arc4/sha1 dec */
+#define	EA_OP_TLS1_DES_SHA1_D	0xb4000000	/* tls 1.0 des/sha1 dec */
+#define	EA_OP_IPS_DES_MD5_E	0xc1000000	/* ipsec des/md5 enc */
+#define	EA_OP_IPS_DES_SHA1_E	0xc2000000	/* ipsec des/sha1 enc */
+#define	EA_OP_IPS_DES_MD5_D	0xd1000000	/* ipsec des/md5 dec */
+#define	EA_OP_IPS_DES_SHA1_D	0xd2000000	/* ipsec des/sha1 dec */

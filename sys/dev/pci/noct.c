@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.3 2002/06/21 03:26:40 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.4 2002/06/21 17:45:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -79,6 +79,12 @@ void noct_pkh_disable(struct noct_softc *);
 void noct_pkh_init(struct noct_softc *);
 void noct_pkh_intr(struct noct_softc *);
 void noct_pkh_tick(void *);
+
+void noct_ea_enable(struct noct_softc *);
+void noct_ea_disable(struct noct_softc *);
+void noct_ea_init(struct noct_softc *);
+void noct_ea_intr(struct noct_softc *);
+void noct_ea_tick(void *);
 
 u_int64_t noct_read_8(struct noct_softc *, u_int32_t);
 void noct_write_8(struct noct_softc *, u_int32_t, u_int64_t);
@@ -163,6 +169,7 @@ noct_attach(parent, self, aux)
 
 	noct_rng_init(sc);
 	noct_pkh_init(sc);
+	noct_ea_init(sc);
 
 	return;
 
@@ -189,6 +196,11 @@ noct_intr(vsc)
 	if (reg & BRDGSTS_PKP_INT) {
 		r = 1;
 		noct_pkh_intr(sc);
+	}
+
+	if (reg & BRDGSTS_CCH_INT) {
+		r = 1;
+		noct_ea_intr(sc);
 	}
 
 	return (r);
@@ -227,7 +239,7 @@ noct_ram_write(sc, adr, dat)
 	/* wait for pending writes to finish */
 	for (;;) {
 		reg = NOCT_READ_4(sc, NOCT_EA_CTX_ADDR);
-		if ((reg & CTXADDR_WRITEPEND) == 0)
+		if ((reg & EACTXADDR_WRITEPEND) == 0)
 			break;
 	}
 
@@ -237,7 +249,7 @@ noct_ram_write(sc, adr, dat)
 
 	for (;;) {
 		reg = NOCT_READ_4(sc, NOCT_EA_CTX_ADDR);
-		if ((reg & CTXADDR_WRITEPEND) == 0)
+		if ((reg & EACTXADDR_WRITEPEND) == 0)
 			break;
 	}
 }
@@ -253,15 +265,15 @@ noct_ram_read(sc, adr)
 	/* wait for pending reads to finish */
 	for (;;) {
 		reg = NOCT_READ_4(sc, NOCT_EA_CTX_ADDR);
-		if ((reg & CTXADDR_READPEND) == 0)
+		if ((reg & EACTXADDR_READPEND) == 0)
 			break;
 	}
 
-	NOCT_WRITE_4(sc, NOCT_EA_CTX_ADDR, adr | CTXADDR_READPEND);
+	NOCT_WRITE_4(sc, NOCT_EA_CTX_ADDR, adr | EACTXADDR_READPEND);
 
 	for (;;) {
 		reg = NOCT_READ_4(sc, NOCT_EA_CTX_ADDR);
-		if ((reg & CTXADDR_READPEND) == 0)
+		if ((reg & EACTXADDR_READPEND) == 0)
 			break;
 	}
 
@@ -281,8 +293,8 @@ noct_pkh_disable(sc)
 	NOCT_WRITE_4(sc, NOCT_BRDG_CTL,
 	    NOCT_READ_4(sc, NOCT_BRDG_CTL) & ~(BRDGCTL_PKIRQ_ENA));
 
-	/* Turn of PK interrupts */
-	NOCT_READ_4(sc, NOCT_PKH_IER);
+	/* Turn off PK interrupts */
+	r = NOCT_READ_4(sc, NOCT_PKH_IER);
 	r &= ~(PKHIER_CMDSI | PKHIER_SKSWR | PKHIER_SKSOFF | PKHIER_PKHLEN |
 	    PKHIER_PKHOPCODE | PKHIER_BADQBASE | PKHIER_LOADERR |
 	    PKHIER_STOREERR | PKHIER_CMDERR | PKHIER_ILL | PKHIER_PKERESV |
@@ -457,7 +469,7 @@ noct_pkh_tick(vsc)
 	if (sc->sc_pkhbusy)
 		goto out;
 	nop = &sc->sc_pkhcmd[sc->sc_pkhwp].nop;
-	nop->op = PKH_OP_SI | PKH_OP_CODE_NOP;
+	nop->op = htole32(PKH_OP_SI | PKH_OP_CODE_NOP);
 	nop->unused[0] = nop->unused[1] = nop->unused[2] = nop->unused[3] = 0;
 	nop->unused[4] = nop->unused[5] = nop->unused[6] = 0;
 	sc->sc_pkhbusy = 1;
@@ -512,9 +524,9 @@ noct_rng_enable(sc)
 	u_int32_t r;
 
 	adr = sc->sc_rngmap->dm_segs[0].ds_addr;
-	NOCT_WRITE_4(sc, NOCT_RNG_BAR1, (adr >> 32) & 0xffffffff);
+	NOCT_WRITE_4(sc, NOCT_RNG_Q_BASE_HI, (adr >> 32) & 0xffffffff);
 	NOCT_WRITE_4(sc, NOCT_RNG_Q_LEN, NOCT_RNG_QLEN);
-	NOCT_WRITE_4(sc, NOCT_RNG_BAR0, (adr >> 0 ) & 0xffffffff);
+	NOCT_WRITE_4(sc, NOCT_RNG_Q_BASE_LO, (adr >> 0 ) & 0xffffffff);
 
 	NOCT_WRITE_8(sc, NOCT_RNG_CTL,
 	    RNGCTL_RNG_ENA |
@@ -652,6 +664,183 @@ noct_rng_tick(vsc)
 	if (cons != 0)
 		NOCT_WRITE_4(sc, NOCT_RNG_Q_PTR, rd);
 	timeout_add(&sc->sc_rngto, sc->sc_rngtick);
+}
+
+void
+noct_ea_disable(sc)
+	struct noct_softc *sc;
+{
+	u_int32_t r;
+
+	/* Turn off EA irq */
+	NOCT_WRITE_4(sc, NOCT_BRDG_CTL,
+	    NOCT_READ_4(sc, NOCT_BRDG_CTL) & ~(BRDGCTL_EAIRQ_ENA));
+
+	/* Turn off EA interrupts */
+	r = NOCT_READ_4(sc, NOCT_EA_IER);
+	r &= ~(EAIER_QALIGN | EAIER_CMDCMPL | EAIER_OPERR | EAIER_CMDREAD |
+	    EAIER_CMDWRITE | EAIER_DATAREAD | EAIER_DATAWRITE |
+	    EAIER_INTRNLLEN | EAIER_EXTRNLLEN | EAIER_DESBLOCK |
+	    EAIER_DESKEY | EAIER_ILL);
+	NOCT_WRITE_4(sc, NOCT_EA_IER, r);
+
+	/* Disable EA unit */
+	r = NOCT_READ_4(sc, NOCT_EA_CSR);
+	r &= ~EACSR_ENABLE;
+	NOCT_WRITE_4(sc, NOCT_EA_CSR, r);
+	for (;;) {
+		r = NOCT_READ_4(sc, NOCT_EA_CSR);
+		if ((r & EACSR_BUSY) == 0)
+			break;
+	}
+
+	/* Clear status bits */
+	r = NOCT_READ_4(sc, NOCT_EA_CSR);
+	r |= EACSR_QALIGN | EACSR_CMDCMPL | EACSR_OPERR | EACSR_CMDREAD |
+	    EACSR_CMDWRITE | EACSR_DATAREAD | EACSR_DATAWRITE |
+	    EACSR_INTRNLLEN | EACSR_EXTRNLLEN | EACSR_DESBLOCK |
+	    EACSR_DESKEY | EACSR_ILL;
+	NOCT_WRITE_4(sc, NOCT_EA_CSR, r);
+}
+
+void
+noct_ea_enable(sc)
+	struct noct_softc *sc;
+{
+	u_int64_t adr;
+
+	sc->sc_eawp = 0;
+
+	adr = sc->sc_eamap->dm_segs[0].ds_addr;
+	NOCT_WRITE_4(sc, NOCT_EA_Q_BASE_HI, (adr >> 32) & 0xffffffff);
+	NOCT_WRITE_4(sc, NOCT_EA_Q_LEN, NOCT_EA_QLEN);
+	NOCT_WRITE_4(sc, NOCT_EA_Q_BASE_LO, (adr >> 0) & 0xffffffff);
+
+	NOCT_WRITE_4(sc, NOCT_EA_IER,
+	    EAIER_QALIGN | EAIER_CMDCMPL | EAIER_OPERR | EAIER_CMDREAD |
+	    EAIER_CMDWRITE | EAIER_DATAREAD | EAIER_DATAWRITE |
+	    EAIER_INTRNLLEN | EAIER_EXTRNLLEN | EAIER_DESBLOCK |
+	    EAIER_DESKEY | EAIER_ILL);
+
+	NOCT_WRITE_4(sc, NOCT_EA_CSR,
+	    NOCT_READ_4(sc, NOCT_EA_CSR) | EACSR_ENABLE);
+
+	NOCT_WRITE_4(sc, NOCT_BRDG_CTL,
+	    NOCT_READ_4(sc, NOCT_BRDG_CTL) | BRDGCTL_EAIRQ_ENA);
+}
+
+void
+noct_ea_init(sc)
+	struct noct_softc *sc;
+{
+	bus_dma_segment_t seg;
+	int rseg;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, NOCT_EA_BUFSIZE,
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
+		printf("%s: failed ea buf alloc\n", sc->sc_dv.dv_xname);
+		goto fail;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, NOCT_EA_BUFSIZE,
+	    (caddr_t *)&sc->sc_eacmd, BUS_DMA_NOWAIT)) {
+		printf("%s: failed ea buf map\n", sc->sc_dv.dv_xname);
+		goto fail_1;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, NOCT_EA_BUFSIZE, rseg,
+	    NOCT_EA_BUFSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_eamap)) {
+		printf("%s: failed ea map create\n", sc->sc_dv.dv_xname);
+		goto fail_2;
+	}
+	if (bus_dmamap_load_raw(sc->sc_dmat, sc->sc_eamap,
+	    &seg, rseg, NOCT_EA_BUFSIZE, BUS_DMA_NOWAIT)) {
+		printf("%s: failed ea buf load\n", sc->sc_dv.dv_xname);
+		goto fail_3;
+	}
+
+	noct_ea_disable(sc);
+	noct_ea_enable(sc);
+
+	if (hz > 100)
+		sc->sc_eatick = hz/100;
+	else
+		sc->sc_eatick = 1;
+	timeout_set(&sc->sc_eato, noct_ea_tick, sc);
+	timeout_add(&sc->sc_eato, sc->sc_eatick);
+
+	return;
+
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_eamap);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->sc_eacmd, NOCT_EA_BUFSIZE);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+fail:
+	sc->sc_eacmd = NULL;
+	sc->sc_eamap = NULL;
+}
+
+void
+noct_ea_tick(vsc)
+	void *vsc;
+{
+	struct noct_softc *sc = vsc;
+	struct noct_ea_cmd *nop;
+	int s, i;
+
+	s = splnet();
+	nop = &sc->sc_eacmd[sc->sc_eawp];
+	for (i = 0; i < EA_CMD_WORDS; i++)
+		nop->buf[i] = 0;
+	nop->buf[0] = htole32(EA_0_SI);
+	nop->buf[1] = htole32(EA_OP_NOP);
+	if (++sc->sc_eawp == NOCT_EA_ENTRIES)
+		sc->sc_eawp = 0;
+	NOCT_WRITE_4(sc, NOCT_EA_Q_PTR, sc->sc_eawp);
+	splx(s);
+	timeout_add(&sc->sc_eato, sc->sc_eatick);
+}
+
+void
+noct_ea_intr(sc)
+	struct noct_softc *sc;
+{
+	u_int32_t csr;
+
+	csr = NOCT_READ_4(sc, NOCT_EA_CSR);
+	NOCT_WRITE_4(sc, NOCT_EA_CSR, csr |
+	    EACSR_QALIGN | EACSR_CMDCMPL | EACSR_OPERR | EACSR_CMDREAD |
+	    EACSR_CMDWRITE | EACSR_DATAREAD | EACSR_DATAWRITE |
+	    EACSR_INTRNLLEN | EACSR_EXTRNLLEN | EACSR_DESBLOCK |
+	    EACSR_DESKEY | EACSR_ILL);
+
+	if (csr & EACSR_CMDCMPL) {
+		/* command completed... */
+	}
+
+	if (csr & EACSR_QALIGN)
+		printf("%s: ea bad queue alignment\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_OPERR)
+		printf("%s: ea bad opcode\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_CMDREAD)
+		printf("%s: ea command read error\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_CMDWRITE)
+		printf("%s: ea command write error\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_DATAREAD)
+		printf("%s: ea data read error\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_DATAWRITE)
+		printf("%s: ea data write error\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_INTRNLLEN)
+		printf("%s: ea bad internal len\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_EXTRNLLEN)
+		printf("%s: ea bad external len\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_DESBLOCK)
+		printf("%s: ea bad des block\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_DESKEY)
+		printf("%s: ea bad des key\n", sc->sc_dv.dv_xname);
+	if (csr & EACSR_ILL)
+		printf("%s: ea illegal access\n", sc->sc_dv.dv_xname);
 }
 
 void
