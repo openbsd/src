@@ -1,8 +1,8 @@
-/*	$OpenBSD: init.c,v 1.13 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: init.c,v 1.22 2000/01/31 22:33:46 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.14 2000/02/19 19:32:53 niklas Exp $	*/
+/*	$EOM: init.c,v 1.24 2000/02/19 07:58:55 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
 #include "udp.h"
 #include "ui.h"
 
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_POLICY
 #include "policy.h"
 #endif
 
@@ -81,7 +81,7 @@ init ()
   connection_init ();
   cookie_init ();
 
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_POLICY
   /* policy_init depends on conf_init having run.  */
   policy_init ();
 #endif

@@ -1,9 +1,9 @@
-/*	$OpenBSD: math_group.c,v 1.9 1999/07/13 15:46:43 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.20 1999/07/13 15:43:21 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.10 2000/02/19 19:32:54 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.22 2000/02/19 07:58:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,6 +123,7 @@ struct modp_dscr oakley_modp[] =
   }
 };
 
+#ifdef USE_EC
 /* Describe preconfigured EC2N groups */
 
 /*
@@ -142,6 +143,7 @@ struct ec2n_dscr oakley_ec2n[] = {
     "0x00",
     "0x1ee9" },
 };
+#endif /* USE_EC */
 
 /* XXX I want to get rid of the casting here.  */
 struct group groups[] = {
@@ -161,6 +163,7 @@ struct group groups[] = {
     (int (*) (struct group *, void *))modp_setrandom,
     (int (*) (struct group *, void *, void *, void *))modp_operation
   },
+#ifdef USE_EC
   {
     EC2N, OAKLEY_GRP_3, 0, &oakley_ec2n[0], 0, 0, 0, 0, 0,
     (int (*) (struct group *))ec2n_getlen,
@@ -177,6 +180,7 @@ struct group groups[] = {
     (int (*) (struct group *, void *))ec2n_setrandom,
     (int (*) (struct group *, void *, void *, void *))ec2n_operation
   },
+#endif /* USE_EC */
   {
     MODP, OAKLEY_GRP_5, 0, &oakley_modp[2], 0, 0, 0, 0, 0,
     (int (*) (struct group *))modp_getlen,
@@ -200,9 +204,11 @@ group_init (void)
   for (i = sizeof (groups) / sizeof (groups[0]) - 1; i >= 0; i--)
     switch (groups[i].type)
       {
+#ifdef USE_EC
       case EC2N:		/* Initalize an Elliptic Curve over GF(2**n) */
 	ec2n_init (&groups[i]);
 	break;
+#endif
 
       case MODP:		/* Initalize an over GF(p) */
 	modp_init (&groups[i]);
@@ -237,9 +243,11 @@ group_get (int id)
 
   switch (clone->type)
     {
+#ifdef USE_EC
     case EC2N:
       new = ec2n_clone (new, clone);
       break;
+#endif
     case MODP:
       new = modp_clone (new, clone);
       break;
@@ -258,9 +266,11 @@ group_free (struct group *grp)
 {
   switch (grp->type)
     {
+#ifdef USE_EC
     case EC2N:
       ec2n_free (grp);
       break;
+#endif
     case MODP:
       modp_free (grp);
       break;
@@ -345,6 +355,7 @@ modp_init (struct group *group)
   group->group = grp;
 }
 
+#ifdef USE_EC
 struct group *
 ec2n_clone (struct group *new, struct group *clone)
 {
@@ -452,6 +463,7 @@ ec2n_init (struct group *group)
  fail:
   log_fatal ("ec2n_init: general failure");
 }
+#endif /* USE_EC */
 
 int
 modp_getlen (struct group *group)
@@ -503,6 +515,7 @@ modp_operation (struct group *group, mpz_ptr d, mpz_ptr a, mpz_ptr e)
   return 0;
 }
 
+#ifdef USE_EC
 int
 ec2n_getlen (struct group *group)
 {
@@ -590,3 +603,4 @@ ec2n_operation (struct group *grp, ec2np_ptr d, ec2np_ptr a, ec2np_ptr e)
 
   return ec2np_mul (d, a, ex, group->grp);
 }
+#endif /* USE_EC */

@@ -1,8 +1,8 @@
-/*	$OpenBSD: ike_auth.c,v 1.20 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.41 2000/01/31 22:33:45 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.21 2000/02/19 19:32:53 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.43 2000/02/19 07:58:54 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
  *
@@ -70,7 +70,7 @@ static int rsa_sig_decode_hash (struct message *);
 static int pre_shared_encode_hash (struct message *);
 static int rsa_sig_encode_hash (struct message *);
 
-#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef USE_X509
 static int ike_auth_hash (struct exchange *, u_int8_t *);
 #endif
 
@@ -116,7 +116,7 @@ static void *
 ike_auth_get_key (int type, char *id, size_t *keylen)
 {
   char *key, *buf;
-#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef USE_X509
   char *keyfile;
   BIO *keyh;
   RSA *rsakey;
@@ -156,7 +156,7 @@ ike_auth_get_key (int type, char *id, size_t *keylen)
       break;
 
     case IKE_AUTH_RSA_SIG:
-#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef USE_X509
 #ifdef HAVE_DLOPEN
       if (!libcrypto)
 	return 0;
@@ -418,7 +418,7 @@ pre_shared_decode_hash (struct message *msg)
 static int
 rsa_sig_decode_hash (struct message *msg)
 {
-#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef USE_X509
   struct cert_handler *handler;
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
@@ -623,13 +623,13 @@ rsa_sig_decode_hash (struct message *msg)
   return 0;
 #else
   return -1;
-#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
+#endif /* USE_X509 */
 }
 
 static int
 pre_shared_encode_hash (struct message *msg)
 {
-#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef USE_X509
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   size_t hashsize = ie->hash->hashsize;
@@ -657,7 +657,7 @@ pre_shared_encode_hash (struct message *msg)
 static int
 rsa_sig_encode_hash (struct message *msg)
 {
-#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef USE_X509
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   size_t hashsize = ie->hash->hashsize;
@@ -774,10 +774,10 @@ rsa_sig_encode_hash (struct message *msg)
   return 0;
 #else 
   return -1;
-#endif /* USE_LIBCRYPTO || HAVE_DLOPEN */
+#endif /* USE_X509 */
 }
 
-#if defined (USE_LIBCRYPTO) || defined (HAVE_DLOPEN)
+#ifdef USE_X509
 int
 ike_auth_hash (struct exchange *exchange, u_int8_t *buf)
 {

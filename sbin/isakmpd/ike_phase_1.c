@@ -1,8 +1,8 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.13 2000/02/11 10:22:25 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.19 2000/02/07 02:08:13 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.14 2000/02/19 19:32:53 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.21 2000/02/19 07:58:55 niklas Exp $	*/
 
 /*
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -233,6 +233,16 @@ ike_phase_1_initiator_send_SA (struct message *msg)
 			 "differing group descriptions in a proposal");
 	      goto bail_out;
 	    }
+	}
+
+      /* We need to check that we actually support our configuration.  */
+      if (attribute_map (transform[i] + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+			 transform_len[i] - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
+			 exchange->doi->is_attribute_incompatible, msg))
+	{
+	  log_error ("ike_phase_1_initiator_send_SA: "
+		     "section [%s] has unsupported attribute(s)");
+	  goto bail_out;
 	}
     }
 

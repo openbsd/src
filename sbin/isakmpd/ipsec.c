@@ -1,8 +1,8 @@
-/*	$OpenBSD: ipsec.c,v 1.23 2000/01/26 15:23:32 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.115 1999/12/20 10:12:17 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.24 2000/02/19 19:32:53 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.117 2000/02/19 07:58:55 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -683,25 +683,23 @@ ipsec_initiator (struct message *msg)
     
   switch (exchange->type)
     {
-    case ISAKMP_EXCH_BASE:
-      break;
     case ISAKMP_EXCH_ID_PROT:
       script = ike_main_mode_initiator;
       break;
-    case ISAKMP_EXCH_AUTH_ONLY:
-      log_print ("ipsec_initiator: unuspported exchange type %d",
-		 exchange->type);
-      return -1;
+#ifdef USE_AGGRESSIVE
     case ISAKMP_EXCH_AGGRESSIVE:
       script = ike_aggressive_initiator;
       break;
+#endif
     case ISAKMP_EXCH_INFO:
       return message_send_info (msg);
     case IKE_EXCH_QUICK_MODE:
       script = ike_quick_mode_initiator;
       break;
-    case IKE_EXCH_NEW_GROUP_MODE:
-      break;
+    default:
+      log_print ("ipsec_initiator: unuspported exchange type %d",
+		 exchange->type);
+      return -1;
     }
 
   /* Run the script code for this step.  */
@@ -734,18 +732,15 @@ ipsec_responder (struct message *msg)
 	     exchange->type, exchange->step);
   switch (exchange->type)
     {
-    case ISAKMP_EXCH_BASE:
-    case ISAKMP_EXCH_AUTH_ONLY:
-      message_drop (msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 1, 0);
-      return -1;
-
     case ISAKMP_EXCH_ID_PROT:
       script = ike_main_mode_responder;
       break;
 
+#ifdef USE_AGGRESSIVE
     case ISAKMP_EXCH_AGGRESSIVE:
       script = ike_aggressive_responder;
       break;
+#endif
 
     case ISAKMP_EXCH_INFO:
       for (p = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_NOTIFY]); p;
@@ -769,9 +764,9 @@ ipsec_responder (struct message *msg)
       script = ike_quick_mode_responder;
       break;
 
-    case IKE_EXCH_NEW_GROUP_MODE:
-      /* XXX Not implemented yet.  */
-      break;
+    default:
+      message_drop (msg, ISAKMP_NOTIFY_UNSUPPORTED_EXCHANGE_TYPE, 0, 1, 0);
+      return -1;
     }
 
   /* Run the script code for this step.  */

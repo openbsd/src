@@ -1,8 +1,8 @@
-/*	$OpenBSD: isakmpd.c,v 1.18 2000/02/01 02:46:18 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.42 2000/01/31 22:33:46 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.19 2000/02/19 19:32:53 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.44 2000/02/19 07:58:56 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
 #include "util.h"
 #include "cert.h"
 
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_POLICY
 #include "policy.h"
 #endif
 
@@ -182,7 +182,7 @@ reinit (void)
   /* Set timezone */
   tzset ();
 
-#if defined (USE_KEYNOTE) || defined (HAVE_DLOPEN)
+#ifdef USE_POLICY
   /* Reread the policies. */
   policy_init ();
 #endif

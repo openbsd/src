@@ -1,9 +1,9 @@
-/*	$OpenBSD: cert.c,v 1.11 1999/08/26 22:30:46 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.12 1999/08/12 22:34:26 niklas Exp $	*/
+/*	$OpenBSD: cert.c,v 1.12 2000/02/19 19:32:53 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.14 2000/02/19 07:58:54 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
- * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,7 +50,7 @@
 #include "x509.h"
 
 struct cert_handler cert_handler[] = {
-#if defined (USE_LIBCRYPTO) || defined (USE_DLOPEN)
+#ifdef USE_X509
   {
     ISAKMP_CERTENC_X509_SIG, 
     x509_cert_init, x509_cert_get, x509_cert_validate, 
