@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.17 1999/05/19 06:01:30 fgsch Exp $
+.\" $OpenBSD: vpn.8,v 1.18 1999/06/07 01:51:21 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -232,12 +232,12 @@ c9fff55b501206a6607fb45c392c5e1568db2aaf
 Create the Security Associations (on both endpoints):
 .Pp
 .Bd -literal
-# /sbin/ipsecadm new esp -src 198.168.2.1 -dst 198.168.1.254 \e\ 
+# /sbin/ipsecadm new esp -src 192.168.2.1 -dst 192.168.1.254 \e\ 
    -forcetunnel -spi 1000 -enc 3des -auth sha1 \e\ 
    -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
    -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
 
-# /sbin/ipsecadm new esp -src 198.168.1.254 -dst 198.168.2.1  \e\ 
+# /sbin/ipsecadm new esp -src 192.168.1.254 -dst 192.168.2.1  \e\ 
    -forcetunnel -spi 1001 -enc 3des -auth sha1 \e\ 
    -key 596a96cc7bf9108cd896f33c44aedc8aa8acf0b8c74acd62 \e\ 
    -authkey c9fff55b501206a6607fb45c392c5e1568db2aaf
