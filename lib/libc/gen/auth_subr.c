@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.24 2004/01/08 04:07:54 brad Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.25 2004/01/10 16:45:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -177,14 +177,6 @@ auth_clean(auth_session_t *as)
 		as->rmlist = rm->next;
 		unlink(rm->file);
 		free(rm);
-	}
-
-	/*
-	 * Clean out the opt list
-	 */
-	while ((opt = as->optlist) != NULL) {
-		as->optlist = opt->next;
-		free(opt);
 	}
 
 	/*
