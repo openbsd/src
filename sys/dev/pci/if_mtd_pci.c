@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.2 2003/08/19 04:45:04 mickey Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.3 2003/08/19 04:52:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin
@@ -82,7 +82,7 @@ mtd_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
-#ifdef MTD_USE_MEMIO
+#ifndef MTD_USE_IO
 	if (pci_mapreg_map(pa, MTD_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->bus_tag, &sc->bus_handle, NULL, &iosize, 0)) {
 		printf(": can't map mem space\n");
