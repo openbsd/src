@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.49 2000/05/06 17:45:37 markus Exp $
+.\" $Id: sshd.8,v 1.50 2000/05/08 17:12:16 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -277,7 +277,7 @@ By default login is allowed regardless of the user name.
 Specifies the ciphers allowed for protocol version 2.
 Multiple ciphers must be comma-separated.
 The default is
-.Dq blowfish-cbc,3des-cbc,arcfour,cast128-cbc .
+.Dq 3des-cbc,blowfish-cbc,arcfour,cast128-cbc .
 .It Cm CheckMail
 Specifies whether
 .Nm

@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.30 2000/05/06 17:45:36 markus Exp $");
+RCSID("$Id: readconf.c,v 1.31 2000/05/08 17:12:15 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -475,7 +475,7 @@ parse_int:
 	case oCiphers:
 		cp = strtok(NULL, WHITESPACE);
 		if (!ciphers_valid(cp))
-			fatal("%.200s line %d: Bad cipher spec '%s'.",
+			fatal("%.200s line %d: Bad SSH2 cipher spec '%s'.",
 			      filename, linenum, cp ? cp : "<NONE>");
 		if (*activep && options->ciphers == NULL)
 			options->ciphers = xstrdup(cp);
@@ -745,6 +745,7 @@ fill_default_options(Options * options)
 	/* Selected in ssh_login(). */
 	if (options->cipher == -1)
 		options->cipher = SSH_CIPHER_NOT_SET;
+	/* options->ciphers, default set in myproposals.h */
 	if (options->protocol == SSH_PROTO_UNKNOWN)
 		options->protocol = SSH_PROTO_1|SSH_PROTO_2|SSH_PROTO_1_PREFERRED;
 	if (options->num_identity_files == 0) {

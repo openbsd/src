@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.8 2000/05/07 18:23:32 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.9 2000/05/08 17:12:16 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -96,13 +96,14 @@ ssh_kex2(char *host, struct sockaddr *hostaddr)
 	if (options.ciphers != NULL) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
 		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
-	} else if (
-	    options.cipher == SSH_CIPHER_ARCFOUR ||
-	    options.cipher == SSH_CIPHER_3DES_CBC ||
-	    options.cipher == SSH_CIPHER_CAST128_CBC ||
-	    options.cipher == SSH_CIPHER_BLOWFISH_CBC) {
+	} else if (options.cipher == SSH_CIPHER_3DES) {
 		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-		myproposal[PROPOSAL_ENC_ALGS_STOC] = cipher_name(options.cipher);
+		myproposal[PROPOSAL_ENC_ALGS_STOC] =
+		    cipher_name(SSH_CIPHER_3DES_CBC);
+	} else if (options.cipher == SSH_CIPHER_BLOWFISH) {
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
+		myproposal[PROPOSAL_ENC_ALGS_STOC] =
+		    cipher_name(SSH_CIPHER_BLOWFISH_CBC);
 	}
 	if (options.compression) {
 		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "zlib";

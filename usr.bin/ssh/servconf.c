@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.39 2000/05/06 17:45:36 markus Exp $");
+RCSID("$Id: servconf.c,v 1.40 2000/05/08 17:12:15 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -589,7 +589,7 @@ parse_flag:
 		case sCiphers:
 			cp = strtok(NULL, WHITESPACE);
 			if (!ciphers_valid(cp))
-				fatal("%s line %d: Bad cipher spec '%s'.",
+				fatal("%s line %d: Bad SSH2 cipher spec '%s'.",
 				    filename, linenum, cp ? cp : "<NONE>");
 			if (options->ciphers == NULL)
 				options->ciphers = xstrdup(cp);

@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.50 2000/04/28 08:10:20 markus Exp $");
+RCSID("$Id: ssh.c,v 1.51 2000/05/08 17:12:15 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -359,6 +359,7 @@ main(int ac, char **av)
 			if (ciphers_valid(optarg)) {
 				/* SSH2 only */
 				options.ciphers = xstrdup(optarg);
+				options.cipher = SSH_CIPHER_ILLEGAL;
 			} else {
 				/* SSH1 only */
 				options.cipher = cipher_number(optarg);
