@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 1997/02/08 23:23:57 tholo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 1997/02/09 03:53:58 tholo Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -288,24 +288,27 @@ trap(frame)
 			goto out;
 		}
 #endif
-	case T_SEGNPFLT|T_USER:
 		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, (caddr_t)rcr2());
+		goto out;
+
+	case T_SEGNPFLT|T_USER:
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, frame.tf_eip);
 		goto out;
 
 	case T_STKFLT|T_USER:
-		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, (caddr_t)rcr2());
+		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, frame.tf_eip);
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
-		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, (caddr_t)rcr2());
+		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, frame.tf_eip);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
-		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, (caddr_t)rcr2());
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, frame.tf_eip);
 		goto out;
 
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, (caddr_t)rcr2());
+		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, frame.tf_eip);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -324,28 +327,28 @@ trap(frame)
 				goto trace;
 			return;
 		}
-		trapsignal(p, rv, type &~ T_USER, FPE_FLTINV, (caddr_t)rcr2());
+		trapsignal(p, rv, type &~ T_USER, FPE_FLTINV, frame.tf_eip);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		trapsignal(p, SIGKILL, type &~ T_USER, FPE_FLTINV, (caddr_t)rcr2());
+		trapsignal(p, SIGKILL, type &~ T_USER, FPE_FLTINV, frame.tf_eip);
 		goto out;
 #endif
 	}
 
 	case T_BOUND|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, (caddr_t)rcr2());
+		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, frame.tf_eip);
 		goto out;
 	case T_OFLOW|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, (caddr_t)rcr2());
+		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, frame.tf_eip);
 		goto out;
 	case T_DIVIDE|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, (caddr_t)rcr2());
+		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, frame.tf_eip);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		trapsignal(p, SIGFPE, frame.tf_err, FPE_INTOVF, (caddr_t)rcr2());
+		trapsignal(p, SIGFPE, frame.tf_err, FPE_INTOVF, frame.tf_eip);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
