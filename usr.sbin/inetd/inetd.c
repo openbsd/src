@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.119 2004/07/28 13:08:19 millert Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.120 2004/09/06 07:03:08 otto Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.119 2004/07/28 13:08:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.120 2004/09/06 07:03:08 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -493,7 +493,7 @@ main(int argc, char *argv[])
 				} else
 					ctrl = sep->se_fd;
 				(void) sigprocmask(SIG_BLOCK, &blockmask, NULL);
-				spawn(sep, ctrl);
+				spawn(sep, ctrl);	/* spawn will unblock */
 			}
 		}
 	}
@@ -629,9 +629,11 @@ doreap(void)
 		fprintf(stderr, "reaping asked for\n");
 
 	for (;;) {
-		pid = wait3(&status, WNOHANG, NULL);
-		if (pid <= 0)
+		if ((pid = wait3(&status, WNOHANG, NULL)) <= 0) {
+			if (pid == -1 && errno == EINTR)
+				continue;
 			break;
+		}
 		if (debug)
 			fprintf(stderr, "%ld reaped, status %x\n",
 			    (long)pid, status);
@@ -1886,6 +1888,8 @@ spawn(struct servtab *sep, int ctrl)
 					 * Simply ignore the connection.
 					 */
 					--sep->se_count;
+					sigprocmask(SIG_SETMASK, &emptymask,
+					    NULL);
 					return;
 				}
 				syslog(LOG_ERR,
