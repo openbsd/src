@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_termios.c,v 1.4 1996/10/16 12:25:37 deraadt Exp $	*/
+/*	$OpenBSD: linux_termios.c,v 1.5 1997/12/10 13:35:53 provos Exp $	*/
 /*	$NetBSD: linux_termios.c,v 1.3 1996/04/05 00:01:54 christos Exp $	*/
 
 /*
@@ -622,6 +622,9 @@ linux_ioctl_termios(p, uap, retval)
 		break;
 	case LINUX_TIOCNXCL:
 		SCARG(&ia, com) = TIOCNXCL;
+		break;
+	case LINUX_TIOCSCTTY:
+		SCARG(&ia, com) = TIOCSCTTY;
 		break;
 	case LINUX_TIOCCONS:
 		SCARG(&ia, com) = TIOCCONS;
