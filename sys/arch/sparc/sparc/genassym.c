@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.15 1995/06/28 04:31:23 cgd Exp $ */
+/*	$NetBSD: genassym.c,v 1.14 1995/05/04 19:42:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,6 +114,8 @@ main()
 	def("CPU_SUN4", CPU_SUN4);
 	def("CPU_SUN4C", CPU_SUN4C);
 	def("CPU_SUN4M", CPU_SUN4M);
+
+	def("SUN4_400", SUN4_400);
 
 	/* proc fields and values */
 	off("P_ADDR", struct proc, p_addr);
