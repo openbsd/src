@@ -1,4 +1,4 @@
-/*	$OpenBSD: cread.c,v 1.4 1997/02/06 22:57:03 downsj Exp $	*/
+/*	$OpenBSD: cread.c,v 1.5 1997/02/15 21:38:26 mickey Exp $	*/
 /*	$NetBSD: cread.c,v 1.2 1997/02/04 18:38:20 thorpej Exp $	*/
 
 /*
@@ -196,7 +196,11 @@ open(fname, mode)
 	  if(!s) goto errout;
 	  bzero(s, sizeof(struct sd));
 
+#ifdef SAVE_MEMORY
+	  if(inflateInit2(&(s->stream), -11) != Z_OK)
+#else
 	  if(inflateInit2(&(s->stream), -15) != Z_OK)
+#endif
 	      goto errout;
 
 	  s->stream.next_in  = s->inbuf = (unsigned char*)alloc(Z_BUFSIZE);
