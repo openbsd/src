@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: aliases,v 1.5 1998/08/12 13:25:26 kstailey Exp $
+#	$OpenBSD: aliases,v 1.6 1998/08/12 13:35:41 kstailey Exp $
 #
 #  Aliases in this file will NOT be expanded in the header from
 #  Mail, but WILL be visible over networks or from /bin/mail.
@@ -16,9 +16,11 @@ postmaster: root
 # General redirections for pseudo accounts
 bin:	root
 daemon:	root
+named:	root
 nobody:	root
-system:	root
+operator: root
 uucp:	root
+www:	root
 ftp-bugs: root
 
 # Well-known aliases -- these should be filled in!
