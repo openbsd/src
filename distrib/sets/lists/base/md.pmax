@@ -426,3 +426,4 @@
 ./usr/mipsel-unknown-openbsd2.5/bin
 ./usr/mipsel-unknown-openbsd2.5/lib
 ./usr/mipsel-unknown-openbsd2.5/lib/ldscripts
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_sppp.ph

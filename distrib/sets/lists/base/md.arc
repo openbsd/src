@@ -409,6 +409,7 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/zlib.ph
 ./usr/lib/scrt0.o
 ./usr/libdata/perl5/site_perl/mips-openbsd/keynote.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/net/if_sppp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/termcap.ph
 ./usr/libexec/ld.so

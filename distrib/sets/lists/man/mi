@@ -1,9 +1,3 @@
-./usr/include/dev/ic/rtl80x9reg.h
-./usr/include/dev/ic/rtl80x9var.h
-./usr/include/dev/mii/icsphyreg.h
-./usr/include/dev/mii/lxtphyreg.h
-./usr/include/dev/mii/sqphyreg.h
-./usr/include/dev/pci/if_rlreg.h
 ./usr/share/doc/html
 ./usr/share/doc/html/curses
 ./usr/share/doc/html/curses/hackguide.html
@@ -1592,3 +1586,5 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
+./usr/share/man/cat4/lmc.0
+./usr/share/man/cat4/sppp.0

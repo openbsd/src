@@ -602,3 +602,4 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
+./usr/libdata/perl5/site_perl/i386-openbsd/net/if_sppp.ph

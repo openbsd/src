@@ -1936,7 +1936,6 @@
 ./usr/share/zoneinfo/Asia/Harbin
 ./usr/share/zoneinfo/Asia/Hong_Kong
 ./usr/share/zoneinfo/Asia/Irkutsk
-./usr/share/zoneinfo/Asia/Ishigaki
 ./usr/share/zoneinfo/Asia/Istanbul
 ./usr/share/zoneinfo/Asia/Jakarta
 ./usr/share/zoneinfo/Asia/Jayapura
@@ -2616,3 +2615,7 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/share/zoneinfo/America/Araguaina
+./usr/share/zoneinfo/America/Belem
+./usr/share/zoneinfo/America/Porto_Velho
+./usr/share/zoneinfo/Antarctica/Syowa

@@ -661,3 +661,4 @@
 ./usr/mdec/uboot.raw
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_sppp.ph

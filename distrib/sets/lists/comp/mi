@@ -138,6 +138,8 @@
 ./usr/include/dev/ic/rl2cmd.h
 ./usr/include/dev/ic/rl2reg.h
 ./usr/include/dev/ic/rl2var.h
+./usr/include/dev/ic/rtl80x9reg.h
+./usr/include/dev/ic/rtl80x9var.h
 ./usr/include/dev/ic/s3_617.h
 ./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc91cxxreg.h
@@ -162,6 +164,7 @@
 ./usr/include/dev/isa/fdlink.h
 ./usr/include/dev/isa/fdreg.h
 ./usr/include/dev/isa/gusreg.h
+./usr/include/dev/isa/gusvar.h
 ./usr/include/dev/isa/i82365_isavar.h
 ./usr/include/dev/isa/ics2101var.h
 ./usr/include/dev/isa/if_ecreg.h
@@ -212,13 +215,16 @@
 ./usr/include/dev/midisynvar.h
 ./usr/include/dev/midivar.h
 ./usr/include/dev/mii
+./usr/include/dev/mii/icsphyreg.h
 ./usr/include/dev/mii/inphyreg.h
+./usr/include/dev/mii/lxtphyreg.h
 ./usr/include/dev/mii/mii.h
 ./usr/include/dev/mii/miidevs.h
 ./usr/include/dev/mii/miivar.h
 ./usr/include/dev/mii/mtdphyreg.h
 ./usr/include/dev/mii/nsphyreg.h
 ./usr/include/dev/mii/qsphyreg.h
+./usr/include/dev/mii/sqphyreg.h
 ./usr/include/dev/mii/tlphyreg.h
 ./usr/include/dev/mii/tlphyvar.h
 ./usr/include/dev/mulaw.h
@@ -232,8 +238,12 @@
 ./usr/include/dev/pci/if_fxpreg.h
 ./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
+./usr/include/dev/pci/if_lmc_types.h
+./usr/include/dev/pci/if_lmcioctl.h
+./usr/include/dev/pci/if_lmcvar.h
 ./usr/include/dev/pci/if_mxreg.h
 ./usr/include/dev/pci/if_pnreg.h
+./usr/include/dev/pci/if_rlreg.h
 ./usr/include/dev/pci/if_tlreg.h
 ./usr/include/dev/pci/if_txvar.h
 ./usr/include/dev/pci/if_vrreg.h
@@ -616,6 +626,7 @@
 ./usr/include/net/if_ppp.h
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_slvar.h
+./usr/include/net/if_sppp.h
 ./usr/include/net/if_stripvar.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
@@ -1829,6 +1840,7 @@
 ./usr/share/man/cat3/fputs.0
 ./usr/share/man/cat3/fread.0
 ./usr/share/man/cat3/free.0
+./usr/share/man/cat3/freeaddrinfo.0
 ./usr/share/man/cat3/freopen.0
 ./usr/share/man/cat3/frexp.0
 ./usr/share/man/cat3/fropen.0
@@ -1847,9 +1859,11 @@
 ./usr/share/man/cat3/funopen.0
 ./usr/share/man/cat3/fwopen.0
 ./usr/share/man/cat3/fwrite.0
+./usr/share/man/cat3/gai_strerror.0
 ./usr/share/man/cat3/gamma.0
 ./usr/share/man/cat3/gammaf.0
 ./usr/share/man/cat3/get_myaddress.0
+./usr/share/man/cat3/getaddrinfo.0
 ./usr/share/man/cat3/getbegyx.0
 ./usr/share/man/cat3/getbsize.0
 ./usr/share/man/cat3/getc.0
@@ -1881,6 +1895,7 @@
 ./usr/share/man/cat3/getmntinfo.0
 ./usr/share/man/cat3/getmode.0
 ./usr/share/man/cat3/getmouse.0
+./usr/share/man/cat3/getnameinfo.0
 ./usr/share/man/cat3/getnetbyaddr.0
 ./usr/share/man/cat3/getnetbyname.0
 ./usr/share/man/cat3/getnetent.0
@@ -1948,6 +1963,10 @@
 ./usr/share/man/cat3/ieee_test.0
 ./usr/share/man/cat3/ieee_testf.0
 ./usr/share/man/cat3/ieeef.0
+./usr/share/man/cat3/if_freenameindex.0
+./usr/share/man/cat3/if_indextoname.0
+./usr/share/man/cat3/if_nameindex.0
+./usr/share/man/cat3/if_nametoindex.0
 ./usr/share/man/cat3/ilogb.0
 ./usr/share/man/cat3/ilogbf.0
 ./usr/share/man/cat3/immedok.0
@@ -2187,6 +2206,7 @@
 ./usr/share/man/cat3/napms.0
 ./usr/share/man/cat3/ncurses.0
 ./usr/share/man/cat3/ndbm.0
+./usr/share/man/cat3/net_addrcmp.0
 ./usr/share/man/cat3/network.0
 ./usr/share/man/cat3/newpad.0
 ./usr/share/man/cat3/newterm.0
