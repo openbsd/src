@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 1996/08/07 17:49:49 downsj Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 1996/08/30 11:39:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.3 1996/08/07 17:49:49 downsj Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.4 1996/08/30 11:39:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,7 +81,8 @@ userinfo(pn, pw)
 	register char *p, *t;
 	struct stat sb;
 	extern int errno;
-	char *bp, name[1024];
+	char *mbp, *bp, *name;
+	int len;
 
 	pn->realname = pn->office = pn->officephone = pn->homephone = NULL;
 
@@ -91,22 +92,31 @@ userinfo(pn, pw)
 	pn->shell = strdup(pw->pw_shell);
 
 	/* why do we skip asterisks!?!? */
-	(void)strcpy(bp = tbuf, pw->pw_gecos);
+	mbp = bp = (char *)malloc(strlen(pw->pw_gecos)+1);
+	strcpy(bp, pw->pw_gecos);
 	if (*bp == '*')
 		++bp;
 
 	/* ampersands get replaced by the login name */
-	if (!(p = strsep(&bp, ",")))
+	if (!(p = strsep(&bp, ","))) {
+		free(mbp);
 		return;
-	for (t = name; *t = *p; ++p)
+	}
+	for (len = 0, t = p; *p; ++p) {
+		len++;
+		if (*p == '&')
+			len += strlen(pw->pw_name);
+	}
+	name = (char *)malloc(len + 1);
+	for (p = t, t = name; *t = *p; ++p)
 		if (*t == '&') {
 			(void)strcpy(t, pw->pw_name);
 			if (islower(*t))
 				*t = toupper(*t);
 			while (*++t);
-		}
-		else
+		} else
 			++t;
+	*t = '\0';
 	pn->realname = strdup(name);
 	pn->office = ((p = strsep(&bp, ",")) && *p) ?
 	    strdup(p) : NULL;
@@ -120,12 +130,16 @@ userinfo(pn, pw)
 		if (errno != ENOENT) {
 			(void)fprintf(stderr,
 			    "finger: %s: %s\n", tbuf, strerror(errno));
+			free(name);
+			free(mbp);
 			return;
 		}
 	} else if (sb.st_size != 0) {
 		pn->mailrecv = sb.st_mtime;
 		pn->mailread = sb.st_atime;
 	}
+	free(name);
+	free(mbp);
 }
 
 match(pw, user)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.2 1996/06/26 05:33:16 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.3 1996/08/30 11:39:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$OpenBSD: finger.c,v 1.2 1996/06/26 05:33:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: finger.c,v 1.3 1996/08/30 11:39:36 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -74,6 +74,10 @@ time_t now;
 int lflag, sflag, mflag, pplan;
 char tbuf[1024];
 
+int	loginlist __P((void));
+void	userlist __P((int, char **));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -137,6 +141,7 @@ main(argc, argv)
 	exit(0);
 }
 
+int
 loginlist()
 {
 	register PERSON *pn;
@@ -164,6 +169,7 @@ loginlist()
 		enter_lastlog(pn);
 }
 
+void
 userlist(argc, argv)
 	register argc;
 	register char **argv;
