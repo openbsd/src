@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.7 1999/12/04 01:01:07 provos Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 1999/12/04 01:04:14 provos Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.7 1999/12/04 01:01:07 provos Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.8 1999/12/04 01:04:14 provos Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -361,7 +361,7 @@ bool striplast;
 	if (stat(tmpbuf, &sbuf) && errno == ENOENT) {
 	    while (*s) s++;
 	    *s++ = ' ';
-	    strlcpy(s, tmpbuf, strlen(s) + 1);
+	    strcpy(s, tmpbuf);
 	}
 	*dirv[i] = '/';
     }
