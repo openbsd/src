@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.5 2002/06/05 23:13:55 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.6 2002/07/07 08:54:50 jufi Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -113,7 +113,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
  *	is referenced by other relocations than CALL16 and 26 it
  *	should not be given a stub and have a zero value in the
  *	symbol table. By not doing so, we can't use pointers to
- *	external functions and use them in comparitions...
+ *	external functions and use them in comparisons...
  */
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)

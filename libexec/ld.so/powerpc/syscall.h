@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.7 2002/05/24 04:17:01 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.8 2002/07/07 08:54:50 jufi Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -48,7 +48,7 @@
 
 /*
  *  Inlined system call functions that can be used before
- *  any dynamic address resoving has been done.
+ *  any dynamic address resolving has been done.
  */
 
 static inline int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2002/05/28 00:22:01 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 2002/07/07 08:54:50 jufi Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -38,7 +38,7 @@
 #include "archdep.h"
 
 /*
- * Static vars usable after bootsrapping.
+ * Static vars usable after bootstrapping.
  */
 static void *_dl_malloc_base;
 static void *_dl_malloc_pool = 0;

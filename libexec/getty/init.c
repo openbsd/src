@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.4 2001/01/28 19:34:28 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.5 2002/07/07 08:54:50 jufi Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: init.c,v 1.4 2001/01/28 19:34:28 niklas Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.5 2002/07/07 08:54:50 jufi Exp $";
 #endif /* not lint */
 
 /*
@@ -57,10 +57,10 @@ struct	gettystrs gettystrs[] = {
 	{ "lm", "login: " },		/* login message */
 	{ "er", &tmode.c_cc[VERASE] },	/* erase character */
 	{ "kl", &tmode.c_cc[VKILL] },	/* kill character */
-	{ "et", &tmode.c_cc[VEOF] },	/* eof chatacter (eot) */
+	{ "et", &tmode.c_cc[VEOF] },	/* eof character (eot) */
 	{ "pc", "" },			/* pad character */
 	{ "tt" },			/* terminal type */
-	{ "ev" },			/* enviroment */
+	{ "ev" },			/* environment */
 	{ "lo", _PATH_LOGIN },		/* login program */
 	{ "hn", hostname },		/* host name */
 	{ "he" },			/* host name edit */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.8 2002/05/27 20:32:08 deraadt Exp $	*/
+/*	$OpenBSD: library.c,v 1.9 2002/07/07 08:54:50 jufi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";*/
-static char rcsid[] = "$OpenBSD: library.c,v 1.8 2002/05/27 20:32:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: library.c,v 1.9 2002/07/07 08:54:50 jufi Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,9 +66,9 @@ int	 get_superblock(FS_INFO *, struct lfs *);
 int	 pseg_valid(FS_INFO *, SEGSUM *);
 
 /*
- * This function will get information on a a filesystem which matches
+ * This function will get information on a filesystem which matches
  * the name and type given.  If a "name" is in a filesystem of the given
- * type, then buf is filled with that filesystem's info, and the
+ * type, then buf is filled with that filesystem's info, and 
  * a non-zero value is returned.
  */
 int
@@ -231,7 +231,7 @@ redo_read:
 	fsp->fi_ifilep  = (IFILE *)((caddr_t)fsp->fi_segusep + SEGTABSIZE(fsp));
 
 	/*
-	 * The number of ifile entries is equal to the number of blocks
+	 * The number of ifile entries is equal to the number of 
 	 * blocks in the ifile minus the ones allocated to cleaner info
 	 * and segment usage table multiplied by the number of ifile
 	 * entries per page.
@@ -304,7 +304,7 @@ lfs_segmapv(fsp, seg, seg_buf, blocks, bcount)
 		timestamp = ((SEGSUM*)s)->ss_create;
 
 #ifdef DIAGNOSTIC
-		/* Verfiy size of summary block */
+		/* Verifiy size of summary block */
 		sumsize = sizeof(SEGSUM) +
 		    (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);
 		for (i = 0, fip = (FINFO *)(sp + 1); i < sp->ss_nfinfo; ++i) {
@@ -362,7 +362,7 @@ add_blocks (fsp, bip, countp, sp, seg_buf, segaddr, psegaddr)
 	FS_INFO *fsp;		/* pointer to super block */
 	BLOCK_INFO *bip;	/* Block info array */
 	int *countp;		/* IN/OUT: number of blocks in array */
-	SEGSUM	*sp;		/* segment summmary pointer */
+	SEGSUM	*sp;		/* segment summary pointer */
 	caddr_t seg_buf;	/* buffer containing segment */
 	daddr_t segaddr;	/* address of this segment */
 	daddr_t psegaddr;	/* address of this partial segment */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.13 2002/05/21 23:51:28 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.14 2002/07/07 08:54:50 jufi Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.13 2002/05/21 23:51:28 deraadt Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.14 2002/07/07 08:54:50 jufi Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ announce(request, remote_machine)
  * Build a block of characters containing the message. 
  * It is sent blank filled and in a single block to
  * try to keep the message in one piece if the recipient
- * in in vi at the time
+ * is in vi at the time
  */
 static void
 print_mesg(tf, request, remote_machine)

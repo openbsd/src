@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2002/05/24 04:17:01 deraadt Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2002/07/07 08:54:50 jufi Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -75,7 +75,7 @@ ENTRY(_dl_start)
 	rlwinm 18,18,0,8,30	# mask off the offset portion of the instr.
 
 	/*
-	 * these adds effectively calculates the value the
+	 * these adds effectively calculate the value the
 	 * bl _GLOBAL_OFFSET_TABLE_@local-4
 	 * operation that would be below would calulate.
 	 */

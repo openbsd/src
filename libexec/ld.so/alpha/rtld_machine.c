@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2002/06/05 23:13:55 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2002/07/07 08:54:50 jufi Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -80,7 +80,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	/*
 	 * unprotect some segments if we need it.
-	 * XXX - we unprotect waay to much. only the text can have cow
+	 * XXX - we unprotect way to much. only the text can have cow
 	 * relocations.
 	 */
 	if ((rel == DT_REL || rel == DT_RELA)) {

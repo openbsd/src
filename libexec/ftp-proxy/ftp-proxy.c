@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.23 2002/07/03 23:39:03 deraadt Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.24 2002/07/07 08:54:50 jufi Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -61,7 +61,7 @@
  * TODO:
  * Plenty, this is very basic, with the idea to get it in clean first.
  *
- * - Ipv6 and EPASV support
+ * - IPv6 and EPASV support
  * - Content filter support
  * - filename filter support
  * - per-user rules perhaps.
@@ -727,7 +727,7 @@ out:
 		 * resorting to using a dynamic rdr rule we have to add in
 		 * for the reply to this connection, and take away afterwards.
 		 * so this will wait until we have the right solution for rule
-		 * addtions/deletions in pf.
+		 * additions/deletions in pf.
 		 *
 		 * in the meantime we just tell the client we don't do it,
 		 * and most clients should fall back to using PASV.

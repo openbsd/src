@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.36 2002/06/05 23:13:55 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.37 2002/07/07 08:54:50 jufi Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -69,7 +69,8 @@ _dl_debug_state(void)
 }
 
 /*
- * Routine to walk thru all of the objects except the first (main executable).
+ * Routine to walk through all of the objects except the first 
+ * (main executable).
  */
 void
 _dl_run_dtors(elf_object_t *object)
@@ -93,7 +94,7 @@ _dl_dtors(void)
  * This is the dynamic loader entrypoint. When entering here, depending
  * on architecture type, the stack and registers are set up according
  * to the architectures ABI specification. The first thing required
- * to do is to dig out all information we need to accomplish out task.
+ * to do is to dig out all information we need to accomplish our task.
  */
 unsigned long
 _dl_boot(const char **argv, char **envp, const long loff,
@@ -166,7 +167,7 @@ _dl_boot(const char **argv, char **envp, const long loff,
 
 	/*
 	 * Now, pick up and 'load' all libraries requierd. Start
-	 * With the first on the list and then do whatever gets
+	 * with the first on the list and then do whatever gets
 	 * added along the tour.
 	 */
 	dynobj = _dl_objects;
@@ -215,7 +216,7 @@ _dl_boot(const char **argv, char **envp, const long loff,
 
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
-	 * cannot call atexit directly from ld.so?
+	 * Cannot call atexit directly from ld.so?
 	 * Do not schedule destructors if run from ldd.
 	 */
 	if (_dl_traceld == NULL) {
