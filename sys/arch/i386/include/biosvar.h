@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.8 1997/08/22 20:10:21 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.9 1997/09/03 04:33:57 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,8 +47,10 @@
 #define BOOTC_PUTC 0x11
 #define BOOTC_POLL 0x12
 
-#define	BIOSNHEADS(d)	(((d)>>8)+1)
-#define	BIOSNSECTS(d)	((d)&0xff)	/* sectors are 1-based */
+#define BIOSNHEADS(d)	(((d)>>24)+1)
+#define BIOSNSECTS(d)	((d)&0x3f)	/* sectors are 1-based */
+#define BIOSNDRIVES(d)	((((d)>>16)&0x0f)+1)
+#define BIOSNTRACKS(d)	(( (((d)>>8)&0xff) | (((d)&0xc0)<<2) ) +1)
 
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
