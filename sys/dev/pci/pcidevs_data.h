@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.628 2003/05/24 08:39:43 markus Exp 
+ *		OpenBSD: pcidevs,v 1.629 2003/05/28 16:36:34 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1039,6 +1039,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "AX88140A/88141",
 	},
 	{
+	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
+	    "ISDN",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
 	    "Mach32",
 	},
@@ -1381,6 +1385,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALS4000,
 	    "ALS4000",
+	},
+	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD,
+	    "Fritz ISDN",
+	},
+	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN,
+	    "Fritz v2.0 ISDN",
+	},
+	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
+	    "BRI ISDN",
+	},
+	{
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
+	    "PRI T1 ISDN",
 	},
 	{
 	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
@@ -1971,78 +1991,6 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Cx5530 Video",
 	},
 	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
-	    "PERC 2/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
-	    "PERC 3/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2,
-	    "PERC 3/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI,
-	    "PERC 4/Di i960",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI_2,
-	    "PERC 4/Di Verde",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2_SUB,
-	    "PERC 3/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB2,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB2,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX,
-	    "550TX",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS,
-	    "530TX+",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550T,
-	    "DGE-550T",
-	},
-	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100,
 	    "DM9100",
 	},
@@ -2135,6 +2083,66 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Compaq SMART RAID 42xx",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
+	    "PERC 2/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2,
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI,
+	    "PERC 4/Di i960",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI_2,
+	    "PERC 4/Di Verde",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2_SUB,
+	    "PERC 3/Si",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB2,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB2,
+	    "PERC 3/Di",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
+	    "PERC 3/Di",
+	},
+	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
 	    "8139",
 	},
@@ -2145,6 +2153,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
 	    "Viper/PCI",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX,
+	    "550TX",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS,
+	    "530TX+",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550T,
+	    "DGE-550T",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
@@ -2175,6 +2195,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "DMX3194U SCSI",
 	},
 	{
+	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH,
+	    "IS64PH ISDN",
+	},
+	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PF,
 	    "155P-MF1 ATM (FPGA)",
 	},
@@ -2189,6 +2213,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_SS1023,
 	    "SpeedStream 1023",
+	},
+	{
+	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
+	    "QuickStep 1000 ISDN",
 	},
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPPFC,
@@ -6599,6 +6627,22 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Linksys EtherPCI II",
 	},
 	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_0,
+	    "W83C553F PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_1,
+	    "W83C553F IDE Controller",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F_1,
+	    "W89C940F Ethernet",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692,
+	    "W6692 ISDN",
+	},
+	{
 	    PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940,
 	    "Linksys EtherPCI",
 	},
@@ -6675,12 +6719,20 @@ static const struct pci_known_product pci_known_products[] = {
 
 static const struct pci_known_vendor pci_known_vendors[] = {
 	{
+	    PCI_VENDOR_PEAK,
+	    "Peak",
+	},
+	{
 	    PCI_VENDOR_MARTINMARIETTA,
 	    "Martin-Marietta",
 	},
 	{
 	    PCI_VENDOR_HAUPPAUGE,
 	    "Hauppauge Computer Works Inc",
+	},
+	{
+	    PCI_VENDOR_DYNALINK,
+	    "Dynalink",
 	},
 	{
 	    PCI_VENDOR_COMPAQ,
@@ -8469,6 +8521,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_CCUBE,
 	    "C-Cube",
+	},
+	{
+	    PCI_VENDOR_AVM,
+	    "AVM",
 	},
 	{
 	    PCI_VENDOR_STALLION,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.628 2003/05/24 08:39:43 markus Exp 
+ *		OpenBSD: pcidevs,v 1.629 2003/05/28 16:36:34 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -57,8 +57,10 @@
  * List of known PCI vendors
  */
 
+#define	PCI_VENDOR_PEAK	0x001c		/* Peak */
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta */
 #define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works Inc */
+#define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI */
@@ -506,6 +508,7 @@
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube */
+#define	PCI_VENDOR_AVM	0x1244		/* AVM */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX */
@@ -915,6 +918,9 @@
 /* ASIX Electronics products */
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A/88141 */
 
+/* Asustek products */
+#define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
+
 /* ATI Technologies */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
 #define	PCI_PRODUCT_ATI_R200_BB	0x4242		/* Radeon 8500 BB */
@@ -1010,6 +1016,12 @@
 #define	PCI_PRODUCT_AVANCE2_ALG2301	0x2301		/* ALG2301 */
 #define	PCI_PRODUCT_AVANCE2_ALG2302	0x2302		/* ALG2302 */
 #define	PCI_PRODUCT_AVANCE2_ALS4000	0x4000		/* ALS4000 */
+
+/* AVM products */
+#define	PCI_PRODUCT_AVM_FRITZ_CARD	0x0a00		/* Fritz ISDN */
+#define	PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN	0x0e00		/* Fritz v2.0 ISDN */
+#define	PCI_PRODUCT_AVM_B1	0x0700		/* BRI ISDN */
+#define	PCI_PRODUCT_AVM_T1	0x1200		/* PRI T1 ISDN */
 
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME 617 */
@@ -1202,28 +1214,6 @@
 #define	PCI_PRODUCT_CYRIX_CX5530_AUDIO	0x0103		/* Cx5530 XpressAUDIO */
 #define	PCI_PRODUCT_CYRIX_CX5530_VIDEO	0x0104		/* Cx5530 Video */
 
-/* Dell Computer products */
-#define	PCI_PRODUCT_DELL_PERC_2SI	0x0001		/* PERC 2/Si */
-#define	PCI_PRODUCT_DELL_PERC_3DI	0x0002		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
-#define	PCI_PRODUCT_DELL_PERC_3SI_2	0x0004		/* PERC 3/Si */
-#define	PCI_PRODUCT_DELL_PERC_3DI_2	0x0008		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3DI_3	0x000a		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_4DI	0x000e		/* PERC 4/Di i960 */
-#define	PCI_PRODUCT_DELL_PERC_4DI_2	0x000f		/* PERC 4/Di Verde */
-#define	PCI_PRODUCT_DELL_PERC_3DI_2_SUB	0x00cf		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3SI_2_SUB	0x00d0		/* PERC 3/Si */
-#define	PCI_PRODUCT_DELL_PERC_3DI_SUB2	0x00d1		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3DI_SUB3	0x00d9		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB	0x0106		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB2	0x011b		/* PERC 3/Di */
-#define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB3	0x0121		/* PERC 3/Di */
-
-/* D-Link products */
-#define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
-#define	PCI_PRODUCT_DLINK_530TXPLUS	0x1300		/* 530TX+ */
-#define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
-
 /* Davicom Technologies */
 #define	PCI_PRODUCT_DAVICOM_DM9100	0x9100		/* DM9100 */
 #define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* DM9102 */
@@ -1252,12 +1242,34 @@
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* 21154 PCI-PCI */
 #define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
 
+/* Dell Computer products */
+#define	PCI_PRODUCT_DELL_PERC_2SI	0x0001		/* PERC 2/Si */
+#define	PCI_PRODUCT_DELL_PERC_3DI	0x0002		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3SI	0x0003		/* PERC 3/Si */
+#define	PCI_PRODUCT_DELL_PERC_3SI_2	0x0004		/* PERC 3/Si */
+#define	PCI_PRODUCT_DELL_PERC_3DI_2	0x0008		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3DI_3	0x000a		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_4DI	0x000e		/* PERC 4/Di i960 */
+#define	PCI_PRODUCT_DELL_PERC_4DI_2	0x000f		/* PERC 4/Di Verde */
+#define	PCI_PRODUCT_DELL_PERC_3DI_2_SUB	0x00cf		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3SI_2_SUB	0x00d0		/* PERC 3/Si */
+#define	PCI_PRODUCT_DELL_PERC_3DI_SUB2	0x00d1		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3DI_SUB3	0x00d9		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB	0x0106		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB2	0x011b		/* PERC 3/Di */
+#define	PCI_PRODUCT_DELL_PERC_3DI_3_SUB3	0x0121		/* PERC 3/Di */
+
 /* Delta Electronics products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 */
 #define	PCI_PRODUCT_DELTA_RHINEII	0x1320		/* RhineII */
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
+
+/* D-Link products */
+#define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
+#define	PCI_PRODUCT_DLINK_530TXPLUS	0x1300		/* 530TX+ */
+#define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
 
 /* Distributed Processing Technology products */
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/Raid */
@@ -1272,11 +1284,17 @@
 /* DTC Technology Corp products */
 #define	PCI_PRODUCT_DTCTECH_DMX3194U	0x0002		/* DMX3194U SCSI */
 
+/* Dynalink products */
+#define	PCI_PRODUCT_DYNALINK_IS64PH	0x1702		/* IS64PH ISDN */
+
 /* Efficient Networks products */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PF	0x0000		/* 155P-MF1 ATM (FPGA) */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PA	0x0002		/* 155P-MF1 ATM (ASIC) */
 #define	PCI_PRODUCT_EFFICIENTNETS_EFSS25	0x0005		/* 25SS-3010 ATM (ASIC) */
 #define	PCI_PRODUCT_EFFICIENTNETS_SS1023	0x1023		/* SpeedStream 1023 */
+
+/* ELSA products */
+#define	PCI_PRODUCT_ELSA_QS1PCI	0x1000		/* QuickStep 1000 ISDN */
 
 /* Emulex products */
 #define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* Light Pulse FibreChannel */
@@ -2638,6 +2656,10 @@
 #define	PCI_PRODUCT_WINBOND_W83769F	0x0001		/* W83769F */
 #define	PCI_PRODUCT_WINBOND_W89C840F	0x0840		/* W89C840F 10/100 */
 #define	PCI_PRODUCT_WINBOND_W89C940F	0x0940		/* Linksys EtherPCI II */
+#define	PCI_PRODUCT_WINBOND_W83C553F_0	0x0565		/* W83C553F PCI-ISA Bridge */
+#define	PCI_PRODUCT_WINBOND_W83C553F_1	0x0105		/* W83C553F IDE Controller */
+#define	PCI_PRODUCT_WINBOND_W89C940F_1	0x5a5a		/* W89C940F Ethernet */
+#define	PCI_PRODUCT_WINBOND_W6692	0x6692		/* W6692 ISDN */
 
 /* Winbond Electronics products (PCI products set 2) */
 #define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI */
