@@ -1,0 +1,8 @@
+version: 2
+serialnumber: 0
+issuer1: SE
+issuer2: We, our grandmother and God himself
+subject1: SE
+subject2: We, our grandmother and God himself
+start: 980101000000Z
+end: 990101000000Z
