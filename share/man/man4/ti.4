@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ti.4,v 1.22 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: ti.4,v 1.23 2004/11/22 04:32:14 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -184,6 +184,14 @@ and has firmware only for those devices.
 .It "ti%d: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
+.El
+.Sh FILES
+Two firmware files are neccessary, for Tigon 1 and Tigon 2 devices.
+These are loaded on demand.
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/tigon1
+.It Pa /etc/firmware/tigon2
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
