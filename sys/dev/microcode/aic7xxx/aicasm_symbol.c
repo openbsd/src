@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm_symbol.c,v 1.6 2002/11/19 18:36:18 jason Exp $ */
+/* $OpenBSD: aicasm_symbol.c,v 1.7 2003/08/28 02:24:04 krw Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table implementation
  *
@@ -474,8 +474,7 @@ symtable_dump(ofile)
 		
 		fprintf(ofile, "\n\n/* Downloaded Constant Definitions */\n");
 
-		while (SLIST_FIRST(&download_constants) !=
-		    SLIST_END(&download_constants)) {
+		for (i = 0; SLIST_FIRST(&download_constants) != NULL; i++) {
 			symbol_node_t *curnode;
 
 			curnode = SLIST_FIRST(&download_constants);
