@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.4 2001/04/12 20:09:36 stevesk Exp $	*/
+/*	$OpenBSD: misc.h,v 1.5 2001/05/03 23:09:52 mouring Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -28,3 +28,7 @@ struct passwd * pwcopy(struct passwd *pw);
  * Return 0 if invalid.
  */
 int a2port(const char *s);
+
+/* code from scp.c/rcp.c */
+char *cleanhostname(char *host);
+char *colon(char *cp);
