@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.6 1996/07/04 21:17:14 deraadt Exp $
+.\"	$OpenBSD: ypserv.8,v 1.7 1996/12/07 12:18:40 deraadt Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -97,6 +97,11 @@ Use Internet Domain Name System. If a query to map
 or
 .Ar hosts.byaddr
 fails, make a DNS query and return the result if successful.
+Alternately, if these maps were built on the YP master using
+.Nm makedbm
+.Fl b
+then DNS queries will be done without needing to specify
+.Fl d . 
 .It Fl x
 Terminate the server after processing
 .Ar aclfile
