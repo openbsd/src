@@ -1,15 +1,11 @@
-#	$OpenBSD: Makefile.inc,v 1.12 2001/05/11 15:23:07 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 2002/02/10 22:50:48 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		mr.fs
 CBIN?=		instbin
-.if (${KERBEROS:L} == "yes")
 CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}.conf
-.else
-CRUNCHCONF?=    ${.CURDIR}/../common/${CBIN}-nokrb.conf
-.endif
 LISTS?=		${.CURDIR}/../common/list ${.CURDIR}
 
 MOUNT_POINT=	/mnt
