@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.52 2004/01/06 17:38:13 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.53 2004/01/07 19:20:14 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -451,8 +451,8 @@ struct	tcpstat {
 	{ "rstppslimit",	CTLTYPE_INT }, \
 	{ "ackonpush",	CTLTYPE_INT }, \
 	{ "ecn", 	CTLTYPE_INT }, \
-	{ "syn_cache_limit", 	CTLTYPE_INT }, \
-	{ "syn_bucket_limit", 	CTLTYPE_INT }, \
+	{ "syncachelimit", 	CTLTYPE_INT }, \
+	{ "synbucketlimit", 	CTLTYPE_INT }, \
 }
 
 struct tcp_ident_mapping {
