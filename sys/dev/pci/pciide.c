@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.83 2002/05/03 13:25:30 espie Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.84 2002/06/08 23:04:07 chris Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3271,22 +3271,10 @@ acer_chip_map(sc, pa)
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 
 	/* From linux: enable "Cable Detection" */
-	if (rev >= 0xC2) {
+	if (rev >= 0xC2)
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B)
 		    | ACER_0x4B_CDETECT);
-		/* set south-bridge's enable bit, m1533, 0x79 */
-		if (rev == 0xC2)
-			/* 1543C-B0 (m1533, 0x79, bit 2) */
-			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
-			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
-			    | ACER_0x79_REVC2_EN);
-		else
-			/* 1553/1535 (m1533, 0x79, bit 1) */
-			pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x79,
-			    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x79)
-			    | ACER_0x79_EN);
-	}
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
@@ -3639,8 +3627,7 @@ hpt_pci_intr(arg)
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
-		if((dmastat & ( IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
-		    IDEDMA_CTL_INTR)
+		if((dmastat & IDEDMA_CTL_INTR) == 0)
 		    continue;
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;	       
