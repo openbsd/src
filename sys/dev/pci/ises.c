@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.1 2001/01/29 08:45:58 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.2 2001/01/29 23:36:43 ho Exp $	*/
 
 /*
  * Copyright (c) 2000 Håkan Olsson (ho@crt.se)
@@ -99,10 +99,10 @@ void    ubsec_mcopy __P((struct mbuf *, struct mbuf *, int, int));
 #  define DPRINTF(x)
 #endif
 
-/* For HRNG entropy collection, these values gather 5KB/s */
+/* For HRNG entropy collection, these values gather 1600 bytes/s */
 #ifndef ISESRNGBITS
-#define ISESRNGBITS	4096		/* Bits per iteration */
-#define ISESRNGIPS	10		/* Iterations per second */
+#define ISESRNGBITS	128		/* Bits per iteration (mult. of 32) */
+#define ISESRNGIPS	100		/* Iterations per second */
 #endif
 
 struct cfattach ises_ca = {
