@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 1999/07/09 21:40:20 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 1999/09/29 13:54:03 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -710,14 +710,17 @@ clockintr(cap)
 		goto forward;
 	}
 #endif
+#if defined(SUN4M)
 	/* read the limit register to clear the interrupt */
 	if (CPU_ISSUN4M) {
 		discard = timerreg_4m->t_limit;
 	}
-
+#endif
+#if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C) {
 		discard = timerreg4->t_c10.t_limit;
 	}
+#endif
 #if defined(SUN4)
 forward:
 #endif
