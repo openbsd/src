@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.23 1999/07/23 19:45:21 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.24 1999/08/05 17:41:44 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -95,6 +95,16 @@ int autoconf_verbose = AUTOCONF_VERBOSE;	/* trace probe calls */
 static char *number __P((char *, int));
 static void mapply __P((struct matchinfo *, struct cfdata *));
 
+struct deferred_config {
+	TAILQ_ENTRY(deferred_config) dc_queue;
+	struct device *dc_dev;
+	void (*dc_func) __P((struct device *));
+};
+
+TAILQ_HEAD(, deferred_config) deferred_config_queue;
+
+void config_process_deferred_children __P((struct device *));
+
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
 
@@ -106,7 +116,7 @@ struct evcntlist allevents;		/* list of all event counters */
 void
 config_init()
 {
-
+	TAILQ_INIT(&deferred_config_queue);
 	TAILQ_INIT(&alldevs);
 	TAILQ_INIT(&allevents);
 	TAILQ_INIT(&allcftables);
@@ -117,7 +127,7 @@ config_init()
  * Apply the matching function and choose the best.  This is used
  * a few times and we want to keep the code small.
  */
-static void
+void
 mapply(m, cf)
 	register struct matchinfo *m;
 	register struct cfdata *cf;
@@ -335,7 +345,7 @@ config_rootfound(rootname, aux)
 }
 
 /* just like sprintf(buf, "%d") except that it works from the end */
-static char *
+char *
 number(ep, n)
 	register char *ep;
 	register int n;
@@ -418,6 +428,7 @@ config_attach(parent, match, aux, print)
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
+	config_process_deferred_children(dev);
 	return (dev);
 }
 
@@ -497,6 +508,56 @@ config_make_softc(parent, cf)
 		panic("config_make_softc: duplicate %s", dev->dv_xname);
 
 	return (dev);
+}
+
+/*
+ * Defer the configuration of the specified device until all
+ * of its parent's devices have been attached.
+ */
+void
+config_defer(dev, func)
+	struct device *dev;
+	void (*func) __P((struct device *));
+{
+	struct deferred_config *dc;
+
+	if (dev->dv_parent == NULL)
+		panic("config_defer: can't defer config of a root device");
+
+#ifdef DIAGNOSTIC
+	for (dc = TAILQ_FIRST(&deferred_config_queue); dc != NULL;
+	     dc = TAILQ_NEXT(dc, dc_queue)) {
+		if (dc->dc_dev == dev)
+			panic("config_defer: deferred twice");
+	}
+#endif
+
+	if ((dc = malloc(sizeof(*dc), M_DEVBUF, M_NOWAIT)) == NULL)
+		panic("config_defer: can't allocate defer structure");
+
+	dc->dc_dev = dev;
+	dc->dc_func = func;
+	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
+}
+
+/*
+ * Process the deferred configuration queue for a device.
+ */
+void
+config_process_deferred_children(parent)
+	struct device *parent;
+{
+	struct deferred_config *dc, *ndc;
+
+	for (dc = TAILQ_FIRST(&deferred_config_queue);
+	     dc != NULL; dc = ndc) {
+		ndc = TAILQ_NEXT(dc, dc_queue);
+		if (dc->dc_dev->dv_parent == parent) {
+			TAILQ_REMOVE(&deferred_config_queue, dc, dc_queue);
+			(*dc->dc_func)(dc->dc_dev);
+			free(dc, M_DEVBUF);
+		}
+	}
 }
 
 /*
