@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.25 2001/12/21 11:41:50 mpech Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.26 2002/06/15 19:27:06 angelos Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -383,6 +383,12 @@ Set to
 or
 .Va transport ,
 based on the AH, ESP, and compression proposal.
+.It ah_ecn, esp_ecn, comp_ecn
+Set to
+.Va yes
+or
+.Va no ,
+based on whether ECN was requested for the IPsec tunnel.
 .It comp_dict_size
 Specifies the log2 maximum size of the dictionary, according to the
 compression proposal.

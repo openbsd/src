@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.54 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.55 2002/06/15 19:27:06 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -148,6 +148,7 @@ policy_callback (char *name)
   static char *comp_alg, ah_life_kbytes[PMAX], ah_life_seconds[PMAX];
   static char esp_life_kbytes[PMAX], esp_life_seconds[PMAX];
   static char comp_life_kbytes[PMAX];
+  static char *ah_ecn, *esp_ecn, *comp_ecn;
   static char comp_life_seconds[PMAX], *ah_encapsulation, *esp_encapsulation;
   static char *comp_encapsulation, ah_key_length[PMAX], esp_key_length[PMAX];
   static char ah_key_rounds[PMAX], esp_key_rounds[PMAX], comp_dict_size[PMAX];
@@ -180,6 +181,7 @@ policy_callback (char *name)
       esp_present = ah_present = comp_present = pfs = "no";
       ah_hash_alg = ah_auth_alg = phase_1 = "";
       esp_auth_alg = esp_enc_alg = comp_alg = ah_encapsulation = "";
+      ah_ecn = esp_ecn = comp_ecn = "no";
       esp_encapsulation = comp_encapsulation = remote_filter_type = "";
       local_filter_type = remote_id_type = initiator = "";
       remote_filter_proto = local_filter_proto = remote_id_proto = "";
@@ -471,6 +473,23 @@ policy_callback (char *name)
 		      break;
 		    }
 		  break;
+
+		case IPSEC_ATTR_ECN_TUNNEL:
+		  if (decode_16 (value))
+		    switch (proto->proto)
+		      {
+		      case IPSEC_PROTO_IPSEC_AH:
+			ah_ecn = "yes";
+			break;
+
+		      case IPSEC_PROTO_IPSEC_ESP:
+			esp_ecn = "yes";
+			break;
+
+		      case IPSEC_PROTO_IPCOMP:
+			comp_ecn = "yes";
+			break;
+		      }
 
 		case IPSEC_ATTR_ENCAPSULATION_MODE:
 		  if (decode_16 (value) == IPSEC_ENCAP_TUNNEL)
@@ -1530,6 +1549,9 @@ policy_callback (char *name)
       LOG_DBG ((LOG_POLICY, 80, "ah_group_desc == %s", ah_group_desc));
       LOG_DBG ((LOG_POLICY, 80, "esp_group_desc == %s", esp_group_desc));
       LOG_DBG ((LOG_POLICY, 80, "comp_group_desc == %s", comp_group_desc));
+      LOG_DBG ((LOG_POLICY, 80, "ah_ecn == %s", ah_ecn));
+      LOG_DBG ((LOG_POLICY, 80, "esp_ecn == %s", esp_ecn));
+      LOG_DBG ((LOG_POLICY, 80, "comp_ecn == %s", comp_ecn));
       LOG_DBG ((LOG_POLICY, 80, "remote_filter_type == %s",
 		remote_filter_type));
       LOG_DBG ((LOG_POLICY, 80, "remote_filter_addr_upper == %s",
@@ -1748,6 +1770,15 @@ policy_callback (char *name)
 
   if (strcmp (name, "comp_group_desc") == 0)
     return comp_group_desc;
+
+  if (strcmp (name, "comp_ecn") == 0)
+    return comp_ecn;
+
+  if (strcmp (name, "ah_ecn") == 0)
+    return ah_ecn;
+
+  if (strcmp (name, "esp_ecn") == 0)
+    return esp_ecn;
 
   return "";
 
