@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.11 2001/06/26 20:25:51 art Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.12 2001/06/26 21:13:43 art Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
@@ -124,7 +124,10 @@ alpha_sysctl_chipset(int *name, u_int namelen, char *where, size_t *sizep)
 		    alpha_pci_chipset->pc_bwx));
 	case CPU_CHIPSET_MEM:
 		return (sysctl_rdquad(where, sizep, NULL,
-		    alpha_pci_chipset->pc_bwx));
+		    alpha_pci_chipset->pc_mem));
+	case CPU_CHIPSET_DENSE:
+		return (sysctl_rdquad(where, sizep, NULL,
+		    alpha_pci_chipset->pc_dense));
 	default:
 		return (EOPNOTSUPP);
 	}

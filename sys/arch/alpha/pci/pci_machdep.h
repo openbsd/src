@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.13 2001/06/26 20:25:51 art Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.14 2001/06/26 21:13:44 art Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ struct alpha_pci_chipset {
 			    void *));
 	char 		*pc_name;	/* PCI chipset name */
 	vaddr_t		pc_mem;		/* PCI memory address */
+	vaddr_t		pc_dense;	/* PCI dense memory address */
 	int		pc_bwx;		/* chipset supports BWX */
 };
 

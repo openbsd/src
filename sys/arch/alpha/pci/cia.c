@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.13 2001/06/26 20:46:18 art Exp $ */
+/* $OpenBSD: cia.c,v 1.14 2001/06/26 21:13:43 art Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -248,8 +248,14 @@ cia_init(ccp, mallocsafe)
 	cia_pci_init(&ccp->cc_pc, ccp);
 	alpha_pci_chipset = &ccp->cc_pc;
 	alpha_pci_chipset->pc_name = "cia";
-	alpha_pci_chipset->pc_mem = CIA_EV56_BWMEM;
-	alpha_pci_chipset->pc_bwx = pci_use_bwx;
+	alpha_pci_chipset->pc_dense = CIA_PCI_DENSE;
+	if (ccp->cc_flags & CCF_BUS_USE_BWX) {
+		alpha_pci_chipset->pc_mem = CIA_EV56_BWMEM;
+		alpha_pci_chipset->pc_bwx = 1;
+	} else {
+		alpha_pci_chipset->pc_mem = CIA_PCI_SMEM1;
+		alpha_pci_chipset->pc_bwx = 0;
+	}
 
 	ccp->cc_initted = 1;
 }
