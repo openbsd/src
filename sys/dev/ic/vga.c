@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.17 2001/02/08 02:47:10 aaron Exp $ */
+/* $OpenBSD: vga.c,v 1.18 2001/02/28 16:48:28 mickey Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -94,10 +94,6 @@ struct vga_config {
 	struct vgascreen *active; /* current display */
 	const struct wsscreen_descr *currenttype;
 	int currentfontset1, currentfontset2;
-
-	int vc_biosmapped;
-	bus_space_tag_t vc_biostag;
-	bus_space_handle_t vc_bioshdl;
 
 	struct vgafont *vc_fonts[8];
 
@@ -496,14 +492,6 @@ vga_init(vc, iot, memt)
 				(vh->vh_mono ? 0x10000 : 0x18000), 0x8000,
 				&vh->vh_memh))
                 panic("vga_common_setup: mem subrange failed");
-
-	/* should only reserve the space (no need to map - save KVM) */
-	vc->vc_biostag = memt;
-	if (bus_space_map(vc->vc_biostag, 0xc0000, 0x8000, 0,
-			  &vc->vc_bioshdl))
-		vc->vc_biosmapped = 0;
-	else
-		vc->vc_biosmapped = 1;
 
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
