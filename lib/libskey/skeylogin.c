@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.11 1996/11/03 18:57:29 millert Exp $
+ * $Id: skeylogin.c,v 1.12 1997/07/10 21:11:11 millert Exp $
  */
 
 #include <sys/param.h>
@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
