@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.5 1999/12/30 08:54:20 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.6 2000/01/17 08:15:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,20 +47,10 @@
  *   in ai_flags?
  */
 
-#if 0
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif 
-#else
-#define HAVE_SOCKADDR_SA_LEN
 #define INET6
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
-#if 0
-#include <sys/sysctl.h>
-#endif
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>
@@ -75,28 +65,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
-
-#if 0
-#ifndef HAVE_PORTABLE_PROTOTYPE
-#include "cdecl_ext.h"
-#endif 
-
-#ifndef HAVE_U_INT32_T
-#include "bittypes.h"
-#endif 
-
-#ifndef HAVE_SOCKADDR_STORAGE
-#include "sockstorage.h"
-#endif 
-
-#ifndef HAVE_ADDRINFO
-#include "addrinfo.h"
-#endif
-
-#if defined(__KAME__) && defined(INET6)
-# define FAITH
-#endif
-#endif
 
 #define SUCCESS 0
 #define ANY 0
@@ -197,26 +165,6 @@ static struct addrinfo *get_ai __P((const struct addrinfo *,
 static int get_portmatch __P((const struct addrinfo *, const char *));
 static int get_port __P((struct addrinfo *, const char *, int));
 static const struct afd *find_afd __P((int));
-
-#if 0
-static char *ai_errlist[] = {
-	"Success",
-	"Address family for hostname not supported",	/* EAI_ADDRFAMILY */
-	"Temporary failure in name resolution",		/* EAI_AGAIN      */
-	"Invalid value for ai_flags",		       	/* EAI_BADFLAGS   */
-	"Non-recoverable failure in name resolution", 	/* EAI_FAIL       */
-	"ai_family not supported",			/* EAI_FAMILY     */
-	"Memory allocation failure", 			/* EAI_MEMORY     */
-	"No address associated with hostname", 		/* EAI_NODATA     */
-	"hostname nor servname provided, or not known",	/* EAI_NONAME     */
-	"servname not supported for ai_socktype",	/* EAI_SERVICE    */
-	"ai_socktype not supported", 			/* EAI_SOCKTYPE   */
-	"System error returned in errno", 		/* EAI_SYSTEM     */
-	"Invalid value for hints",			/* EAI_BADHINTS	  */
-	"Resolved protocol is unknown",			/* EAI_PROTOCOL   */
-	"Unknown error", 				/* EAI_MAX        */
-};
-#endif
 
 /* XXX macros that make external reference is BAD. */
 
@@ -977,9 +925,7 @@ get_ai(pai, afd, addr)
 	memcpy(ai, pai, sizeof(struct addrinfo));
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
 	memset(ai->ai_addr, 0, afd->a_socklen);
-#ifdef HAVE_SOCKADDR_SA_LEN
 	ai->ai_addr->sa_len = afd->a_socklen;
-#endif
 	ai->ai_addrlen = afd->a_socklen;
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(ai->ai_addr);
