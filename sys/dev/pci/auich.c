@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.24 2002/03/14 03:16:06 millert Exp $	*/
+/*	$OpenBSD: auich.c,v 1.25 2002/03/19 15:27:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -205,7 +205,7 @@ static const struct auich_devtype {
 	{ PCI_PRODUCT_INTEL_82801AA_ACA, 0, "ICH" },
 	{ PCI_PRODUCT_INTEL_82801AB_ACA, 0, "ICH0" },
 	{ PCI_PRODUCT_INTEL_82801BA_ACA, 0, "ICH2" },
-	{ PCI_PRODUCT_INTEL_82801CA_CAM, 0, "ICH3" },
+	{ PCI_PRODUCT_INTEL_82801CA_ACA, 0, "ICH3" },
 	{ PCI_PRODUCT_INTEL_82440MX_ACA, 0, "440MX" },
 };
 
