@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.41 2002/04/27 23:13:59 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.42 2002/05/08 22:04:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -476,25 +476,25 @@ cryptodev_key(struct crypt_kop *kop)
 	case CRK_MOD_EXP:
 		if (in == 3 && out == 1)
 			break;
-		goto fail;
+		return (EINVAL);
 	case CRK_MOD_EXP_CRT:
 		if (in == 6 && out == 1)
 			break;
-		goto fail;
+		return (EINVAL);
 	case CRK_DSA_SIGN:
 		if (in == 5 && out == 2)
 			break;
-		goto fail;
+		return (EINVAL);
 	case CRK_DSA_VERIFY:
 		if (in == 7 && out == 0)
 			break;
-		goto fail;
+		return (EINVAL);
 	case CRK_DH_COMPUTE_KEY:
 		if (in == 3 && out == 1)
 			break;
-		goto fail;
+		return (EINVAL);
 	default:
-		goto fail;
+		return (EINVAL);
 	}
 
 	krp = (struct cryptkop *)malloc(sizeof *krp, M_XDATA, M_WAITOK);
@@ -541,8 +541,8 @@ cryptodev_key(struct crypt_kop *kop)
 	}
 
 fail:
-	kop->crk_status = krp->krp_status;
 	if (krp) {
+		kop->crk_status = krp->krp_status;
 		for (i = 0; i < CRK_MAXPARAM; i++) {
 			if (krp->krp_param[i].crp_p)
 				FREE(krp->krp_param[i].crp_p, M_XDATA);
