@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_compat.c,v 1.26 1995/10/10 01:27:00 mycroft Exp $	*/
+/*	$NetBSD: tty_compat.c,v 1.27 1995/12/07 00:53:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -275,12 +275,6 @@ ttcompatgetflags(tp)
 		} else
 			SET(flags, ANYP);
 	}
-	if (ISSET(cflag, CSIZE) == CS8) {
-		if (!ISSET(iflag, ISTRIP))
-			SET(flags, PASS8);
-		if (!ISSET(oflag, OPOST))
-			SET(flags, LITOUT);
-	}
 
 	if (!ISSET(lflag, ICANON)) {
 		/* fudge */
@@ -290,6 +284,16 @@ ttcompatgetflags(tp)
 		else
 			SET(flags, RAW);
 	}
+
+	if (ISSET(flags, RAW))
+		SET(flags, ISSET(tp->t_flags, LITOUT|PASS8));
+	else if (ISSET(cflag, CSIZE) == CS8) {
+		if (!ISSET(oflag, OPOST))
+			SET(flags, LITOUT);
+		if (!ISSET(iflag, ISTRIP))
+			SET(flags, PASS8);
+	}
+
 	if (ISSET(cflag, MDMBUF))
 		SET(flags, MDMBUF);
 	if (!ISSET(cflag, HUPCL))
