@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2002/02/06 19:28:18 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2002/02/07 13:54:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -357,7 +357,6 @@ trap(type, frame)
 
 		if (ret != 0) {
 			if (type & T_USER) {
-printf("trapsignal: uvm_fault\n");
 				sv.sival_int = frame->tf_ior;
 				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 			} else {
