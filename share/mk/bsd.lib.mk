@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.21 2000/05/15 06:10:21 niklas Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.22 2000/05/16 06:15:00 niklas Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -118,7 +118,7 @@ PICFLAG+=-fno-function-cse
 .endif
 
 _LIBS=lib${LIB}.a
-.if defined(DEBUGLIBS)
+.if (${DEBUGLIBS} == "yes")
 _LIBS+=lib${LIB}_g.a
 .endif
 .if !defined(NOPROFILE)
@@ -228,7 +228,7 @@ realinstall:
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.if defined(DEBUGLIBS)
+.if (${DEBUGLIBS} == "yes")
 #	ranlib lib${LIB}_g.a
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_g.a ${DESTDIR}${LIBDIR}/debug/lib${LIB}.a
