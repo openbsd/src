@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep_pcap.c,v 1.4 2004/04/14 09:14:19 otto Exp $ */
+/*	$OpenBSD: privsep_pcap.c,v 1.5 2004/04/28 20:05:07 canacar Exp $ */
 
 /*
  * Copyright (c) 2004 Can Erkin Acar
@@ -350,8 +350,8 @@ swap_hdr(struct pcap_file_header *hp)
 pcap_t *
 priv_pcap_offline(const char *fname, char *errbuf)
 {
-	register pcap_t *p;
-	register FILE *fp;
+	pcap_t *p;
+	FILE *fp = NULL;
 	struct pcap_file_header hdr;
 	int linklen, err;
 
@@ -382,6 +382,8 @@ priv_pcap_offline(const char *fname, char *errbuf)
 
 		fp = fdopen(p->fd, "r");
 		if (fp == NULL) {
+			close(p->fd);
+			p->fd = -1;
 			snprintf(errbuf, PCAP_ERRBUF_SIZE, "%s: %s", fname,
 			    pcap_strerror(errno));
 			goto bad;
@@ -449,6 +451,8 @@ priv_pcap_offline(const char *fname, char *errbuf)
 
 	return (p);
  bad:
+	if (fp != NULL && p->fd != -1)
+		fclose(fp);
 	free(p);
 	return (NULL);
 }
@@ -498,6 +502,7 @@ priv_pcap_dump_open(pcap_t *p, char *fname)
 		}
 		f = fdopen(fd, "w");
 		if (f == NULL) {
+			close(fd);
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 			    fname, pcap_strerror(errno));
 			return (NULL);
