@@ -1,4 +1,4 @@
-/*	$OpenBSD: twereg.h,v 1.5 2001/03/30 21:50:57 mickey Exp $	*/
+/*	$OpenBSD: twereg.h,v 1.6 2001/04/29 20:45:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -135,15 +135,21 @@
 #define	TWE_PARAM_DIR	0xffff	/* param table directory */
 
 #define	TWE_AEN_QEMPTY	0x0000
-#define	TWE_AEN_SRST	0x0001
+#define	TWE_AEN_SRST	0x0001	/* soft reset */
 #define	TWE_AEN_DMIRROR	0x0002	/* degraded mirror */
 #define	TWE_AEN_CERROR	0x0003	/* controller error */
 #define	TWE_AEN_RBFAIL	0x0004	/* rebuild failed */
-#define	TWE_AEN_RBDONE	0x0005
-/*	TWE_AEN_	0x0009	 * dunno what this is (yet) */
+#define	TWE_AEN_RBDONE	0x0005	/* rebuild done */
+#define	TWE_AEN_ILLUN	0x0006	/* incompatible unit */
+#define	TWE_AEN_INDONE	0x0007	/* init done */
+#define	TWE_AEN_DSHUT	0x0008	/* unclean shutdown */
+#define	TWE_AEN_APORT	0x0009	/* aport timeout */
+#define	TWE_AEN_DRVERR	0x000a	/* drive error */
+#define	TWE_AEN_RBSTART	0x000b	/* rebuild start */
 #define	TWE_AEN_ISTART	0x000c	/* init started */
-#define	TWE_AEN_QFULL	0x00ff
 #define	TWE_AEN_TUN	0x0015	/* table undefined */
+/*	TWE_AEN_	0x0000	 * dunno what this is (yet) */
+#define	TWE_AEN_QFULL	0x00ff
 
 #pragma pack(1)
 
