@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.h,v 1.7 2004/07/12 23:57:14 marco Exp $	*/
+/*	$OpenBSD: mpt_openbsd.h,v 1.8 2004/07/13 00:03:29 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.h,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
@@ -93,8 +93,8 @@
  * ZOOM International, s.r.o.
  */
 
-#ifndef _DEV_IC_MPT_NETBSD_H_
-#define	_DEV_IC_MPT_NETBSD_H_
+#ifndef _DEV_IC_MPT_OPENBSD_H_
+#define	_DEV_IC_MPT_OPENBSD_H_
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,4 +302,4 @@ do {								\
 		(*(mpt)->sc_set_config_regs)((mpt));		\
 } while (/*CONSTCOND*/0)
 
-#endif /* _DEV_IC_MPT_NETBSD_H_ */
+#endif /* _DEV_IC_MPT_OPENBSD_H_ */
