@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.7 2004/08/10 15:59:10 ho Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.8 2004/09/24 13:31:04 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -386,8 +386,12 @@ udp_encap_handle_message(struct transport *t)
 		return;
 	}
 
-	msg = message_alloc(t, buf + sizeof (u_int32_t),
-	    n - sizeof (u_int32_t));
+	/* NAT-Keepalive messages should not be processed further.  */
+	n -= sizeof(u_int32_t);
+	if (n == 1 && buf[sizeof(u_int32_t)] == 0xFF)
+		return;
+
+	msg = message_alloc(t, buf + sizeof (u_int32_t), n);
 	if (!msg) {
 		log_error("failed to allocate message structure, dropping "
 		    "packet received on transport %p", u);
