@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.101 2002/05/16 02:54:02 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.102 2002/05/16 16:34:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1883,16 +1883,24 @@ ubsec_kprocess_modexp(sc, krp)
 	    krp->krp_param[UBS_MODEXP_PAR_M].crp_p, mbits,
 	    me->me_M.dma_vaddr, normbits);
 
-	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_E, 0)) {
-		err = ENOMEM;
-		goto errout;
-	}
-
 	if (ubsec_dma_malloc(sc, normbits / 8, &me->me_C, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
 	bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+
+	ebits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_E]);
+	if (ebits > nbits) {
+		err = E2BIG;
+		goto errout;
+	}
+	if (ubsec_dma_malloc(sc, normbits / 8, &me->me_E, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	ubsec_kshift_r(shiftbits,
+	    krp->krp_param[UBS_MODEXP_PAR_E].crp_p, ebits,
+	    me->me_E.dma_vaddr, normbits);
 
 	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_pktbuf),
 	    &me->me_epb, 0)) {
@@ -1900,17 +1908,9 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 	epb = (struct ubsec_pktbuf *)me->me_epb.dma_vaddr;
-
-	ebits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_E]);
-	if (ebits > nbits) {
-		err = E2BIG;
-		goto errout;
-	}
-	bcopy(krp->krp_param[UBS_MODEXP_PAR_E].crp_p,
-	    me->me_E.dma_vaddr, (ebits + 7) / 8);
 	epb->pb_addr = htole32(me->me_E.dma_paddr);
 	epb->pb_next = 0;
-	epb->pb_len = htole32((ebits + 7) / 8);
+	epb->pb_len = htole32(normbits / 8);
 
 #ifdef UBSEC_DEBUG
 	printf("Epb ");
@@ -1948,7 +1948,7 @@ ubsec_kprocess_modexp(sc, krp)
 	    ctx->me_N, normbits);
 	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
-	ctx->me_E_len = htole16(ebits);
+	ctx->me_E_len = htole16(normbits - shiftbits);
 	ctx->me_N_len = htole16(normbits - shiftbits);
 
 #ifdef UBSEC_DEBUG
