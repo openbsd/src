@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.10 1998/04/16 07:36:41 deraadt Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.11 1999/02/04 00:04:18 deraadt Exp $       */
 
 /*
  *
@@ -33,6 +33,18 @@
  */
 
 /*
+%%% portions-copyright-nrl-95
+Portions of this software are Copyright 1995-1998 by Randall Atkinson,
+Ronald Lee, Daniel McDonald, Bao Phan, and Chris Winters. All Rights
+Reserved. All rights under this copyright have been assigned to the US
+Naval Research Laboratory (NRL). The NRL Copyright Notice and License
+Agreement Version 1.1 (January 17, 1995) applies to these portions of the
+software.
+You should have received a copy of the license with this software. If you
+didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
+*/
+
+/*
  * if_atmsubr.c
  */
 
@@ -65,6 +77,10 @@
 #ifdef NATM
 #include <netnatm/natm.h>
 #endif
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/in6_var.h>
+#endif /* INET6 */
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -146,6 +162,29 @@ atm_output(ifp, m0, dst, rt0)
 			etype = ETHERTYPE_IP;
 			break;
 #endif
+#ifdef INET6
+		case AF_INET6:
+			/*
+			 * The bottom line here is to either queue the
+			 * outgoing packet in the discovery engine, or fill
+			 * in edst with something that'll work.
+			 */
+			if (m->m_flags & M_MCAST) {
+				/*
+				 * If multicast dest., then use IPv6 -> Ethernet
+				 * mcast mapping.  Really simple.
+				 */
+				ETHER_MAP_IN6_MULTICAST(
+				    ((struct sockaddr_in6 *)dst)->sin6_addr,
+				    edst);
+			} else {
+				/* Do unicast neighbor discovery stuff. */
+				if (!ipv6_discov_resolve(ifp, rt, m, dst, edst))
+	 				return 0;
+			}
+			type = htons(ETHERTYPE_IPV6);
+			break;
+#endif /* INET6 */
 
 		default:
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -269,6 +308,12 @@ atm_input(ifp, ah, m, rxhand)
 		  inq = &ipintrq;
 		  break;
 #endif
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		schednetisr(NETISR_IPV6);
+		inq = &ipv6intrq;
+		break;
+#endif /* INET6 */
 	  default:
 	      m_freem(m);
 	      return;
