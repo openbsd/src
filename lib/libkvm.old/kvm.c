@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.8 1998/06/29 23:25:44 angelos Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.9 1998/08/19 18:54:48 millert Exp $	*/
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
 /*-
@@ -371,6 +371,9 @@ kvm_dbopen(kd, uf)
 	{
 		switch (errno)
 		{
+			case ENOENT:
+				/* No kvm_bsd.db, fall back to /bsd silently */
+				break;
 			case EFTYPE:
 				_kvm_err(kd, kd->program,
 					 "file %s is incorrectly formatted",
@@ -436,14 +439,18 @@ kvm_nlist(kd, nl)
 	struct nlist *nl;
 {
 	register struct nlist *p;
-	register int nvalid;
+	register int nvalid, rv;
 
 	/*
 	 * If we can't use the data base, revert to the 
 	 * slow library call.
 	 */
-	if (kd->db == 0)
-		return (__fdnlist(kd->nlfd, nl));
+	if (kd->db == 0) {
+		rv = __fdnlist(kd->nlfd, nl);
+		if (rv == -1)
+			_kvm_err(kd, 0, "bad namelist");
+		return (rv);
+	}
 
 	/*
 	 * We can use the kvm data base.  Go through each nlist entry
@@ -461,6 +468,12 @@ kvm_nlist(kd, nl)
 		}
 		rec.data = p->n_name;
 		rec.size = len;
+
+		/*
+		 * Make sure that n_value = 0 when the symbol isn't found
+		 */
+		p->n_value = 0;
+
 		if ((kd->db->get)(kd->db, (DBT *)&rec, (DBT *)&rec, 0))
 			continue;
 		if (rec.data == 0 || rec.size != sizeof(struct nlist))
