@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.3 2004/01/03 14:06:42 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.4 2004/01/03 16:13:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -27,6 +27,8 @@
 #include "bgpd.h"
 
 int	main(int, char *[]);
+void	print_summary_head(void);
+void	print_summary(struct peer *);
 
 struct imsgbuf	ibuf;
 
@@ -63,6 +65,7 @@ main(int argc, char *argv[])
 
 	imsg_init(&ibuf, fd);
 	imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
+	print_summary_head();
 	done = 0;
 
 	while (!done) {
@@ -84,9 +87,7 @@ main(int argc, char *argv[])
 			switch (imsg.hdr.type) {
 			case IMSG_CTL_SHOW_NEIGHBOR:
 				p = imsg.data;
-				printf("%s: %s\n",
-				    inet_ntoa(p->conf.remote_addr.sin_addr),
-				    statenames[p->state]);
+				print_summary(p);
 				break;
 			case IMSG_CTL_END:
 				done = 1;
@@ -97,4 +98,17 @@ main(int argc, char *argv[])
 		}
 	}
 	close(fd);
+}
+
+void
+print_summary_head(void)
+{
+	printf("%-15s %-5s %s\n", "Neighbor", "AS", "Status");
+}
+
+void
+print_summary(struct peer *p)
+{
+	printf("%-15s %5u %s\n", inet_ntoa(p->conf.remote_addr.sin_addr),
+	    p->conf.remote_as, statenames[p->state]);
 }
