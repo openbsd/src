@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.42 1998/06/02 18:46:34 deraadt Exp $
+#	$OpenBSD: files.i386,v 1.43 1998/07/03 08:15:08 deraadt Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -85,6 +85,11 @@ file	arch/i386/pci/pci_compat.c	pci	# XXX compatibility
 device	pchb:	pcibus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
+
+# PCI-ISA bridge chipsets
+device	pcib:	pcibus
+attach	pcib at pci
+file	arch/i386/pci/pcib.c		pcib
 
 #
 # Pcmcia, before ISA (to define device stuff)
