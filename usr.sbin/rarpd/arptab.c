@@ -78,12 +78,10 @@ static int s = -1;
 void
 getsocket()
 {
+	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
-		s = socket(PF_ROUTE, SOCK_RAW, 0);
-		if (s < 0) {
-			perror("arp: socket");
-			exit(1);
-		}
+		perror("arp: socket");
+		exit(1);
 	}
 }
 
@@ -122,6 +120,8 @@ arptab_set(eaddr, host)
 tryagain:
 	if (rtmsg(RTM_GET) < 0) {
 		syslog(LOG_ERR,"%s: %m", inet_ntoa(sin->sin_addr));
+		close(s);
+		s = -1;
 		return (1);
 	}
 	sin = (struct sockaddr_inarp *)(rtm + 1);
@@ -137,11 +137,15 @@ tryagain:
 		if (doing_proxy == 0) {
 			syslog(LOG_ERR, "arptab_set: can only proxy for %s\n",
 			    inet_ntoa(sin->sin_addr));
+			close(s);
+			s = -1;
 			return (1);
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
 			syslog(LOG_ERR,
 			    "arptab_set: proxy entry exists for non 802 device\n");
+			close(s);
+			s = -1;
 			return(1);
 		}
 		sin_m.sin_other = SIN_PROXY;
@@ -153,10 +157,14 @@ overwrite:
 		syslog(LOG_ERR,
 		    "arptab_set: cannot intuit interface index and type for %s\n",
 		    inet_ntoa(sin->sin_addr));
+		close(s);
+		s = -1;
 		return (1);
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
+	close(s);
+	s = -1;
 	return (rtmsg(RTM_ADD));
 }
 
