@@ -1,4 +1,4 @@
-.\"	$OpenBSD: autoconf.4,v 1.4 1999/07/02 20:11:51 aaron Exp $
+.\"	$OpenBSD: autoconf.4,v 1.5 2000/07/05 13:46:52 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -36,12 +36,12 @@
 .Nd diagnostics from the autoconfiguration code
 .Sh DESCRIPTION
 When
-.Tn OpenBSD
+.Ox
 bootstraps it probes the innards of the machine
 on which it is running
 and locates controllers, drives, and other devices, printing out
-what it finds on the console.  This procedure is driven by a system
-configuration table which is processed by
+what it finds on the console.
+This procedure is driven by a system configuration table which is processed by
 .Xr config 8
 and compiled into each kernel.
 Devices which exist in the machine but are not configured into the
@@ -50,12 +50,12 @@ kernel are not detected.
 .Bl -diag
 .It CPU class not configured.
 You tried to boot
-.Tn OpenBSD
+.Ox
 on a class of
 .Tn CPU
 type which it doesn't
 (or at least this compiled version of
-.Tn OpenBSD
+.Ox
 doesn't) understand.
 .El
 .Sh SEE ALSO

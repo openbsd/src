@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mem.4,v 1.3 2000/04/27 00:35:57 deraadt Exp $
+.\"	$OpenBSD: mem.4,v 1.4 2000/07/05 13:46:53 aaron Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -42,19 +42,19 @@
 .Nd memory files
 .Sh DESCRIPTION
 The special file
-.Nm /dev/mem
+.Pa /dev/mem
 is an interface to the physical memory of the computer.
 Byte offsets in this file are interpreted as physical memory addresses.
 Reading and writing this file is equivalent to reading and writing
 memory itself.
 Only offsets within the bounds of
-.Nm /dev/mem
+.Pa /dev/mem
 are allowed.
 .Pp
 Kernel virtual memory is accessed through the interface
-.Nm /dev/kmem
+.Pa /dev/kmem
 in the same manner as
-.Nm /dev/mem .
+.Pa /dev/mem .
 Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Pp
 On
@@ -72,7 +72,7 @@ is
 long, and ends at virtual
 address 0xfe000000.
 .Pp
-Writeability of these devices is controlled by the system
+Writability of these devices is controlled by the system
 .Xr securelevel 7 .
 .Sh FILES
 .Bl -tag -width Pa -compact
@@ -83,7 +83,8 @@ Writeability of these devices is controlled by the system
 .Xr securelevel 7
 .Sh HISTORY
 The
-.Nm mem ,
-.Nm kmem
+.Pa /dev/mem
+and
+.Pa /dev/kmem
 files appeared in
 .At v6 .

@@ -1,10 +1,8 @@
 .\"
-.\"	$OpenBSD: bktr.4,v 1.3 1999/07/09 13:35:43 aaron Exp $
+.\"	$OpenBSD: bktr.4,v 1.4 2000/07/05 13:46:52 aaron Exp $
 .\"	$FreeBSD: bktr.4,v 1.1 1998/03/09 10:56:22 jkh Exp $
 .\"
 .Dd January 28, 1998
-.br
-.in +0.5i
 .Dt BKTR 4 i386
 .Os
 .Sh NAME
@@ -15,45 +13,40 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCI
-.Em video
-capture on low cost, high performance boards.  The driver is heavily based on
-the Matrox Meteor driver.  The bktr driver should support most video cards
-based on the
+driver provides support for PCI video capture on low cost, high performance
+boards.
+The driver is heavily based on the Matrox Meteor driver.
+The
+.Nm
+driver should support most video cards based on the
 .Em Brooktree Bt848 Video Capture Chip.
 .Pp
 Specifically, the following cards are known to work:
-.br
-.Em Hauppage Wincast TV
-.br
-.Em STB TV PCI Television Tuner
-.br
-.Em Miro PC TV
-.br
-.Em Intel Smart Video Recorder III
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Hauppage Wincast TV
+.It STB TV PCI Television Tuner
+.It Miro PC TV
+.It MIntel Smart Video Recorder III
+.El
 .Pp
 The driver currently supports the following features:
-.br
-.in +0.5i
-PCI to PCI dma transfer
-.br
-clipping
-.br
-yuv
-.br
-rgb16
-.br
-rgb24
-.br
-rgb32
-.in -0.5i
+.Pp
+.Bl -tag -width -offset indent -compact
+.It PCI-to-PCI DMA transfer
+.It Clipping
+.It YUV
+.It RGB16, RGB24, RGB32
+.El
 .Pp
 The following kernel parameters may be used to further configure the driver:
 .Pp
-.Em options "BROOKTREE_ALLOC_PAGES=xxx"
-specifies the number of contiguous pages to allocate when successfully
-probed.  The default number of pages allocated by the kernel is 216.
+.Bl -ohang
+.It Cd option "BROOKTREE_ALLOC_PAGES=xxx"
+Specifies the number of contiguous pages to allocate when successfully probed.
+The default number of pages allocated by the kernel is 216.
 This means that there are (216*4096) bytes available for use.
+.El
 .Sh AUTHOR
 This driver is based on the work of
 .An Jim Lowe Aq james@miller.cs.uwm.edu ,

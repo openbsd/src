@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrr.4,v 1.4 2000/04/03 21:19:38 aaron Exp $
+.\"	$OpenBSD: mtrr.4,v 1.5 2000/07/05 13:46:53 aaron Exp $
 .\"
 .\" Pentium MTRR  driver for OpenBSD.
 .\" Copyright 1999 Matthieu Herrb <matthieu@openbsd.org>
@@ -24,7 +24,8 @@ MTRRs on Pentiums.
 .Pp
 .Ss IOCTL INTERFACE
 Several architectures allow attributes to be associated with ranges of physical
-memory.  These attributes can be manipulated via
+memory.
+These attributes can be manipulated via
 .Fn ioctl
 calls performed on
 .Pa /dev/mem
@@ -34,17 +35,18 @@ Declarations and data types are to be found in
 .Aq Pa memrange.h
 .Pp
 The specific attributes, and number of programmable ranges may vary between
-architectures.  The full set of supported attributes is:
+architectures.
+The full set of supported attributes is:
 .Bl -tag -width MDF_WRITECOMBINE
-.It MDF_UNCACHEABLE
+.It Dv MDF_UNCACHEABLE
 The region is not cached.
-.It MDF_WRITECOMBINE
+.It Dv MDF_WRITECOMBINE
 Writes to the region may be combined or performed out of order.
-.It MDF_WRITETHROUGH
+.It Dv MDF_WRITETHROUGH
 Writes to the region are committed synchronously.
-.It MDF_WRITEBACK
+.It Dv MDF_WRITEBACK
 Writes to the region are committed asynchronously.
-.It MDF_WRITEPROTECT
+.It Dv MDF_WRITEPROTECT
 The region cannot be written to.
 .El
 .Pp
@@ -63,19 +65,19 @@ may also be set in the
 .Fa mr_flags
 field:
 .Bl -tag -width MDF_FIXACTIVE
-.It MDF_FIXBASE
+.It Dv MDF_FIXBASE
 The region's base address cannot be changed.
-.It MDF_FIXLEN
+.It Dv MDF_FIXLEN
 The region's length cannot be changed.
-.It MDF_FIRMWARE
-The region is believed to have been established by the system firmare.
-.It MDF_ACTIVE
+.It Dv MDF_FIRMWARE
+The region is believed to have been established by the system firmware.
+.It Dv MDF_ACTIVE
 The region is currently active.
-.It MDF_BOGUS
+.It Dv MDF_BOGUS
 We believe the region to be invalid or otherwise erroneous.
-.It MDF_FIXACTIVE
+.It Dv MDF_FIXACTIVE
 The region cannot be disabled.
-.It MDF_BUSY
+.It Dv MDF_BUSY
 The region is currently owned by another process and may not be
 altered.
 .El
@@ -90,18 +92,23 @@ struct mem_range_op {
 .Pp
 The
 .Fa MEMRANGE_GET
-ioctl is used to retrieve current memory range attributes. If
+ioctl is used to retrieve current memory range attributes.
+If
 .Fa mo_arg[0]
 is set to 0, it will be updated with the total number of memory range
-descriptors.  If greater than 0, the array at
+descriptors.
+If greater than 0, the array at
 .Fa mo_desc
 will be filled with a corresponding number of descriptor structures,
 or the maximum, whichever is less.
 .Pp
 The
 .Fa MEMRANGE_SET
-ioctl is used to add, alter and remove memory range attributes.  A range
-with the MDF_FIXACTIVE flag may not be removed; a range with the MDF_BUSY
+ioctl is used to add, alter and remove memory range attributes.
+A range with the
+.Dv MDF_FIXACTIVE
+flag may not be removed; a range with the
+.Dv MDF_BUSY
 flag may not be removed or updated.
 .Pp
 .Fa mo_arg[0]
@@ -113,7 +120,7 @@ or establish a new range, or to MEMRANGE_SET_REMOVE to remove a range.
 .It Bq Er EOPNOTSUPP
 Memory range operations are not supported on this architecture.
 .It Bq Er ENXIO
-No memory range descriptors are available (eg. firmware has not enabled
+No memory range descriptors are available (e.g., firmware has not enabled
 any).
 .It Bq Er EINVAL
 The memory range supplied as an argument is invalid or overlaps another
@@ -122,7 +129,7 @@ range in a fashion not supported by this architecture.
 An attempt to remove or update a range failed because the range is busy.
 .It Bq Er ENOSPC
 An attempt to create a new range failed due to a shortage of hardware
-resources (eg. descriptor slots).
+resources (e.g., descriptor slots).
 .It Bq Er ENOENT
 An attempt to remove a range failed because no range matches the descriptor
 base/length supplued.

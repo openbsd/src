@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sb.4,v 1.7 1998/05/12 09:29:50 provos Exp $
+.\"	$OpenBSD: sb.4,v 1.8 2000/07/05 13:46:53 aaron Exp $
 .\"	$NetBSD: sb.4,v 1.13 1997/10/31 15:02:33 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,32 +60,19 @@ the particular model).
 The base I/O port address is usually jumper-selected to either 0x220 or
 0x240 (newer cards may provide software configuration, but this driver
 does not directly support them--you must configure the card for its I/O
-addresses with other software).  The SoundBlaster takes 16 I/O ports.
+addresses with other software).
+The SoundBlaster takes 16 I/O ports.
 For the SoundBlaster and SoundBlaster Pro, the IRQ and DRQ channels are
-jumper-selected.  For the SoundBlaster 16, the IRQ and DRQ channels are
-set by this driver to the values specified in the config file.  The IRQ
-must be selected from the set {5,7,9,10}.
+jumper-selected.
+For the SoundBlaster 16, the IRQ and DRQ channels are set by this driver
+to the values specified in the config file.
+The IRQ must be selected from the set {5,7,9,10}.
 .Pp
 The configuration file must use 1
 .Cm flags
-specification to enable the Jazz16 support.  This is to avoid potential
-conflicts with other devices when probing the Jazz 16 because it requires
-use of extra I/O ports not in the base port range.
-.Pp
-.Sh BUGS
-With a SoundBlaster 16 card the device is full duplex, but it can
-only sensibly handle a precision of 8 bits.  It does so by extending
-the output 8 bit samples to 16 bits and using the 8 bit DMA channel
-for input and the 16 bit channel for output.
-.Pp
-The joystick interface (if enabled by a jumper) is handled by the
-.Xr joy 4
-driver, and the optional SCSI CD-ROM interface is handled by the
-.Xr aic 4
-driver.
-.Sh BUGS
-The FM synthesizer, MIDI port, and non-SCSI CD-ROM interfaces are not
-supported.
+specification to enable the Jazz16 support.
+This is to avoid potential conflicts with other devices when probing the
+Jazz 16 because it requires use of extra I/O ports not in the base port range.
 .Sh SEE ALSO
 .Xr aic 4 ,
 .Xr audio 4 ,
@@ -95,3 +82,18 @@ The
 .Nm sb
 device driver appeared in
 .Nx 1.0 .
+.Sh BUGS
+With a SoundBlaster 16 card the device is full duplex, but it can
+only sensibly handle a precision of 8 bits.
+It does so by extending
+the output 8 bit samples to 16 bits and using the 8 bit DMA channel
+for input and the 16 bit channel for output.
+.Pp
+The joystick interface (if enabled by a jumper) is handled by the
+.Xr joy 4
+driver, and the optional SCSI CD-ROM interface is handled by the
+.Xr aic 4
+driver.
+.Pp
+The FM synthesizer, MIDI port, and non-SCSI CD-ROM interfaces are not
+supported.

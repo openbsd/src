@@ -1,4 +1,4 @@
-.\"   $OpenBSD: wss.4,v 1.7 2000/03/31 15:23:26 espie Exp $
+.\"   $OpenBSD: wss.4,v 1.8 2000/07/05 13:46:54 aaron Exp $
 .\"   $NetBSD: wss.4,v 1.8 1998/01/19 20:22:30 augustss Exp $
 .\"
 .\" Copyright (c) 1995 Michael Long.
@@ -52,9 +52,9 @@ the DMA channel may be set to 0, 1, or 3.
 .Pp
 The configuration file must have bit 1 set in
 .Cm flags
-to enable the MAD16 support.  This is to avoid potential
-conflicts with other devices when probing the MAD16 because it requires
-use of extra I/O ports not in the base port range.
+to enable the MAD16 support.
+This is to avoid potential conflicts with other devices when probing the
+MAD16 because it requires use of extra I/O ports not in the base port range.
 Bit 2 in
 .Cm flags
 disables the joystick port on MAD16 hardware.

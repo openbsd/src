@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mcd.4,v 1.5 1999/07/09 13:35:44 aaron Exp $
+.\"	$OpenBSD: mcd.4,v 1.6 2000/07/05 13:46:53 aaron Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -37,7 +37,10 @@ The
 driver provides support for Mitsumi CD-ROM drives and controllers.
 .Pp
 .Sh FILES
-.Xr /dev/mcd*
-.Xr /dev/rmcd*
+.Bl -tag -width /dev/rmcdx -compact
+.It Pa /dev/mcd*
+.It Pa /dev/rmcd*
 .Sh SEE ALSO
-.Xr intro 4
+.Xr cd 4 ,
+.Xr intro 4 ,
+.Xr scd 4

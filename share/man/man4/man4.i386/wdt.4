@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: wdt.4,v 1.1 1999/04/28 23:20:56 alex Exp $
+.\"	$OpenBSD: wdt.4,v 1.2 2000/07/05 13:46:53 aaron Exp $
 .\"
 .Dd April 25, 1999
 .Dt WDT 4 i386
@@ -42,14 +42,16 @@ PCI-WDT500 and PCI-WDT501 boards.
 For PCI-WDT500 boards, basic watchdog timer functionality is supported.
 For PCI-WDT501 boards, additional access to the onboard buzzer,
 isolated inputs, temperature, and power supply monitors is provided.
-To disable the onboard buzzer on PCI-WDT501 boards, add the
-.Em WDT_DISABLE_BUZZER
-option to your kernel configuration.
+To disable the onboard buzzer on PCI-WDT501 boards, add
+.Ic option WDT_DISABLE_BUZZER
+to your kernel configuration.
 .Pp
 By default the watchdog timer is set to 30 seconds and is refreshed
-by the kernel's timeout processing.  If the kernel crashes, the watchdog
+by the kernel's timeout processing.
+If the kernel crashes, the watchdog
 timer is not reset and the system will reboot (assuming a proper connection
-is made between the WDT50x and motherboard).  Alternatively, the watchdog
+is made between the WDT50x and motherboard).
+Alternatively, the watchdog
 can be reinitialized via a userland process which insures that process
 scheduling, not just kernel timeout processing, is still taking place.
 See the
@@ -74,11 +76,13 @@ See
 for the definition of the wdt_state structure and state bits.
 .It Dv WIOCSCHED
 Places the process into an infinite loop (interrupted only via a signal)
-to guarantee process scheduling.  The driver utilizes the process'
-context to reinitialize the watchdog timeout.  Should process
-scheduling fail, the timeout will not be reinitialized and the system
-will be rebooted.  Note that it is possible to force a reboot by sending
-a SIGSTOP signal to a process in
+to guarantee process scheduling.
+The driver utilizes the process' context to reinitialize the watchdog timeout.
+Should process scheduling fail, the timeout will not be reinitialized and the
+system will be rebooted.
+Note that it is possible to force a reboot by sending a
+.Dv SIGSTOP
+signal to a process in
 .Dv WIOCSCHED
 and waiting for the watchdog timer to expire.
 Since
@@ -90,11 +94,9 @@ processes regardless of the permissions on
 .Sh FILES
 .Bl -tag -width /usr/include/dev/pci/wdt50x.h -compact
 .It Pa /dev/wdt0
-Watchdog control device.
+watchdog control device
 .It Pa /usr/include/dev/pci/wdt50x.h
-Structure and ioctl definitions to interface with the
-.Nm
-driver.
+structure and ioctl definitions
 .El
 .Sh SEE ALSO
 .Xr ioctl 2

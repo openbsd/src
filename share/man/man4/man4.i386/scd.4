@@ -1,5 +1,4 @@
-.\"
-.\" $OpenBSD: scd.4,v 1.3 1999/07/09 13:35:44 aaron Exp $
+.\" $OpenBSD: scd.4,v 1.4 2000/07/05 13:46:53 aaron Exp $
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,12 +30,16 @@
 .Cd "scd0 at isa? port 0x340"
 .Sh DESCRIPTION
 The
-.Nm scd
+.Nm
 driver provides support for Sony CD-ROM drives and controllers.
 Supported drives are CDU-31A and CDU-33A.
 .Pp
 .Sh FILES
-.Xr /dev/scd*
-.Xr /dev/rscd*
+.Bl -tag -width /dev/rscd* -compact
+.It Pa /dev/scd*
+.It Pa /dev/rscd*
+.El
 .Sh SEE ALSO
-.Xr intro 4
+.Xr cd 4 ,
+.Xr intro 4 ,
+.Xr mcd 4

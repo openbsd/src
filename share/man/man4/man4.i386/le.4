@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.4 1999/07/09 13:35:44 aaron Exp $
+.\"	$OpenBSD: le.4,v 1.5 2000/07/05 13:46:52 aaron Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -35,11 +35,10 @@
 The
 .Nm
 interface provides access to a 10 Mb/s Ethernet network via the
-Lance Ethernet chips.  The Ethernet cards supported by the
-.Nm
-interface are:
+Lance Ethernet chips.
+This includes the following models:
 .Pp
-.Bl -tag -width -offset indet -compact
+.Bl -tag -width -offset indent -compact
 .It BICC Isolan
 .It Novell NE2100
 .It Digital DEPCA
@@ -50,4 +49,4 @@ interface are:
 .Xr ep 4 ,
 .Xr ie 4 ,
 .Xr intro 4 ,
-.Xr ifconfig 8 ,
+.Xr ifconfig 8

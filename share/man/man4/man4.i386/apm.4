@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.10 2000/07/03 15:10:57 mickey Exp $
+.\"	$OpenBSD: apm.4,v 1.11 2000/07/05 13:46:52 aaron Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -24,8 +24,8 @@ The
 driver provides an interface to the Advanced Power Management
 .Pq Tn APM
 .Tn BIOS
-functions.  The driver supports versions 1.0, 1.1, and 1.2 interface
-specifications.
+functions.
+The driver supports versions 1.0, 1.1, and 1.2 interface specifications.
 .Pp
 The low two bytes of the flags specify the version of the specification
 driver should conform to in binary decimal notation.
@@ -35,7 +35,8 @@ specification to be used.
 The value of 0x10000 specifies whether to leave interrupts enabled
 when calling
 .Tn APM BIOS
-routines. This is needed for some
+routines.
+This is needed for some
 .Tn IBM
 laptops, the symptoms are
 hangs and freezes on suspend, stand by, and hibernation activities.
@@ -55,7 +56,8 @@ The
 .Nm
 driver implements the following
 .Xr ioctl 2
-calls.  They are defined in
+calls.
+They are defined in
 .Aq Pa machine/apmvar.h .
 .Pp
 .Bl -tag -width Ds
@@ -73,7 +75,8 @@ Request
 mode.
 .It Dv APM_IOC_GETPOWER
 .Pq Li "struct apm_power_info"
-Request the current power state. The argument structure is as follows:
+Request the current power state.
+The argument structure is as follows:
 .Bd -literal -offset indent
 struct apm_power_info {
 	u_char battery_state;
@@ -130,13 +133,14 @@ The
 .Tn APM
 driver stores up to
 .Dv APM_NEVENTS
-events. This was defined as 16 at the time this documentation was written.
-If the event list is full when a new event is detected the new event is
-lost.
+events.
+This was defined as 16 at the time this documentation was written.
+If the event list is full when a new event is detected the new event is lost.
 .Dv APM_IOC_NEXTEVENT
 ioctl returns the next event on the list or
 .Er EAGAIN
-if the event list is empty.  The format of the returned event is:
+if the event list is empty.
+The format of the returned event is:
 .Bd -literal -offset indent
 struct apm_event_info {
 	u_int type;
@@ -167,7 +171,8 @@ is one of:
 .Pq Li "struct apm_ctl"
 Allows an application to directly set the
 .Tm APM
-operating mode.   The argument structure is as follows:
+operating mode.
+The argument structure is as follows:
 .Bd -literal -offset indent
 struct apm_ctl {
 	u_int dev;
@@ -180,7 +185,8 @@ indicates the device, typically
 .Dv APM_DEV_ALLDEVS .
 .Pp
 .Va mode
-indicates the desired operating mode.  Possible values are
+indicates the desired operating mode.
+Possible values are
 .Bl -tag -compact -offset indent
 .It Dv APM_SYS_READY
 .It Dv APM_SYS_STANDBY
@@ -195,12 +201,12 @@ This
 .Xr ioctl 2
 controls message output by the
 .Tn APM
-driver when a power change event is detected.  The integer parameter is one
-of:
+driver when a power change event is detected.
+The integer parameter is one of:
 .Bl -tag -width Ds
 .It Dv APM_PRINT_ON
-All power change events result in a message.  This is the normal
-operating mode for the driver.
+All power change events result in a message.
+This is the normal operating mode for the driver.
 .It Dv APM_PRINT_OFF
 Power change event messages are suppressed.
 .It Dv APM_PRINT_PCT
@@ -223,13 +229,15 @@ setting.
 .Bl -tag -width /dev/apmctl -compat
 .It Pa /dev/apm
 .Tn APM
-data device.  May only be opened read-only.  May be opened by multiple
-concurrent users.
+data device.
+May only be opened read-only.
+May be opened by multiple concurrent users.
 .It Pa /dev/apmctl
 .Tn APM
-control device.  May be opened read-write or write-only.  May only be
-opened by one user at a time.  An attempt to open the file when in
-use will fail, returning
+control device.
+May be opened read-write or write-only.
+May only be opened by one user at a time.
+An attempt to open the file when in use will fail, returning
 .Er EBUSY .
 .El
 .Sh SEE ALSO
@@ -241,10 +249,12 @@ http://developer.intel.com/ial/powermgm/apmv12.pdf
 The
 .Nm
 driver source code contains these copyrights:
+.Pp
 .Bl -item -compact
 .It
 .Li Copyright (c) 1995 John T. Kohl.  All rights reserved.
 .It
 .Li Copyright (C) 1994 by HOSOKAWA Tatsumi <hosokawa@mt.cs.keio.ac.jp>
 .El
-and has been hacked on by many others since.
+.Pp
+\&...and has been hacked on by many others since.
