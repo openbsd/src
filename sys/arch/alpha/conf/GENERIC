@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.118 2002/09/26 21:44:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.119 2002/11/05 00:42:19 miod Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -36,7 +36,10 @@ option		TCVERBOSE		# recognize "unknown" TC devices
 option		USBVERBOSE
 
 # Wscons options
-option		WSDISPLAY_COMPAT_RAWKBD # can get raw scancodes
+option		WSDISPLAY_COMPAT_USL		# VT handling
+option		WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+option		WSDISPLAY_DEFAULTSCREENS=6
+option		WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
 option		APERTURE		# in-kernel aperture driver for XFree86
 option		USER_PCICONF		# user-space PCI configuration
