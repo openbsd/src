@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.1 1998/01/28 11:14:49 pefo Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.2 1998/05/08 16:32:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,7 +42,7 @@
  */
 
 /*
- * ARC process control block
+ * MIPS process control block
  */
 struct pcb
 {
@@ -54,7 +54,7 @@ struct pcb
 
 /*
  * The pcb is augmented with machine-dependent additional data for
- * core dumps. For the PICA, there is nothing to add.
+ * core dumps. For the MIPS, there is nothing to add.
  */
 struct md_coredump {
 	long	md_pad[8];
