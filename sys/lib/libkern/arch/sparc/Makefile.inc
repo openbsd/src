@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1998/06/02 20:38:26 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1999/12/07 00:49:10 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.12 1996/04/23 23:05:22 christos Exp $
 
 SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -7,8 +7,8 @@ SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	strncpy.c htonl.S htons.S ntohl.S ntohs.S scanc.c skpc.c \
 	strncasecmp.c
 
-SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S umul.S urem.S
-SRCS+=	mul.S saveregs.S umul.S
+SRCS+=	rem.S sdiv.S udiv.S urem.S
+SRCS+=	saveregs.S
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
