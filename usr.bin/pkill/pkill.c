@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.7 2004/12/29 19:40:36 deraadt Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.8 2005/02/11 17:17:45 millert Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.7 2004/12/29 19:40:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.8 2005/02/11 17:17:45 millert Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -107,8 +107,8 @@ struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 
 int	main(int, char **);
 void	usage(void);
-int	killact(struct kinfo_proc2 *);
-int	grepact(struct kinfo_proc2 *);
+int	killact(struct kinfo_proc2 *, int);
+int	grepact(struct kinfo_proc2 *, int);
 void	makelist(struct listhead *, enum listtype, char *);
 
 extern char *__progname;
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 	extern int optind;
 	char buf[_POSIX2_LINE_MAX], *mstr, **pargv, *p, *q;
 	int i, j, ch, bestidx, rv, criteria;
-	int (*action)(struct kinfo_proc2 *);
+	int (*action)(struct kinfo_proc2 *, int);
 	struct kinfo_proc2 *kp;
 	struct list *li;
 	u_int32_t bestsec, bestusec;
@@ -388,7 +388,8 @@ main(int argc, char **argv)
 	/*
 	 * Take the appropriate action for each matched process, if any.
 	 */
-	for (i = 0, rv = STATUS_NOMATCH, kp = plist; i < nproc; i++, kp++) {
+	rv = STATUS_NOMATCH;
+	for (i = 0, j = 0, kp = plist; i < nproc; i++, kp++) {
 		if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 			continue;
 		if (selected[i]) {
@@ -397,11 +398,13 @@ main(int argc, char **argv)
 		} else if (!inverse)
 			continue;
 
-		if ((*action)(kp) == -1)
+		if ((*action)(kp, j++) == -1)
 			rv = STATUS_ERROR;
 		else if (rv != STATUS_ERROR)
 			rv = STATUS_MATCH;
 	}
+	if (pgrep)
+		putchar('\n');
 
 	exit(rv);
 }
@@ -423,7 +426,7 @@ usage(void)
 }
 
 int
-killact(struct kinfo_proc2 *kp)
+killact(struct kinfo_proc2 *kp, int dummy)
 {
 
 	if (kill(kp->p_pid, signum) == -1 && errno != ESRCH) {
@@ -434,10 +437,12 @@ killact(struct kinfo_proc2 *kp)
 }
 
 int
-grepact(struct kinfo_proc2 *kp)
+grepact(struct kinfo_proc2 *kp, int printdelim)
 {
 	char **argv;
 
+	if (printdelim)
+		fputs(delim, stdout);
 	if (longfmt && matchargs) {
 		if ((argv = kvm_getargv2(kd, kp, 0)) == NULL)
 			return (-1);
@@ -453,7 +458,6 @@ grepact(struct kinfo_proc2 *kp)
 	else
 		printf("%d", (int)kp->p_pid);
 
-	printf("%s", delim);
 	return (0);
 }
 
