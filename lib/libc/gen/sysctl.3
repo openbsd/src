@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.106 2003/06/29 07:23:19 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.107 2003/07/29 14:53:11 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -919,6 +919,33 @@ This value may only be changed if the kernel security
 level is less than 1.
 .It Li ip.directed-broadcast
 Returns 1 if directed broadcast behavior is enabled for the host.
+.It Li ip.portfirst
+Minimum registered port number for TCP/UDP port allocation.
+Registered ports can be used by ordinary user processes
+or programs executed by ordinary users.
+Cannot be less than 1024 or greater than 49151.
+Must be less than ip.portlast.
+.It Li ip.portlast
+Maximum registered port number for TCP/UDP port allocation.
+Registered ports can be used by ordinary user processes
+or programs executed by ordinary users.
+Cannot be less than 1024 or greater than 49151.
+Must be greater than ip.portfirst.
+.It Li ip.porthifirst
+Maximum dynamic/private port number for TCP/UDP port allocation.
+Dynamic/private ports can be used by ordinary user processes
+or programs executed by ordinary users.
+Cannot be less than 49152 or greater than 65535.
+Must be less than ip.porthilast.
+.It Li ip.porthilast
+Maximum dynamic/private port number for TCP/UDP port allocation.
+Dynamic/private ports can be used by ordinary user processes
+or programs executed by ordinary users.
+Cannot be less than 49152 or greater than 65535.
+Must be greater than ip.porthifirst.
+.It Li ip.maxqueue
+Fragment flood protection.
+Sets the maximum number of unassembled IP fragments in the fragment queue.
 .It Li ip.encdebug
 Returns 1 when error message reporting is enabled for the host.
 If the kernel has been compiled with the
