@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.12 2000/11/10 05:10:42 aaron Exp $
+.\" $OpenBSD: units.1,v 1.13 2001/02/04 13:12:33 pjanzen Exp $
 .\" converted to new format by deraadt@openbsd.org
 .Dd July 14, 1993
 .Dt UNITS 1
@@ -37,6 +37,25 @@ It works interactively by prompting the user for input:
             * 0.00026417205
             / 3785.4118
 .fi
+.Pp
+The
+.Nm
+program can handle numbers as well:
+.Pp
+.nf
+    You have: 60 miles/hr
+    You want: km/hr
+            * 96.56064
+            / 0.010356187
+
+    You have: 5 austriaschilling
+    You want: 100 italylira
+            * 7.0357114
+            / 0.14213204
+.fi
+.Pp
+In other words, 60 miles per hour is about 96.6 km/hr, and 5 Austrian
+Schillings will get you seven 100-Lira coins.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
