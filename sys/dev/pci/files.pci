@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.98 2001/03/18 18:22:33 aaron Exp $
+#	$OpenBSD: files.pci,v 1.99 2001/03/28 03:28:33 fgsch Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -229,7 +229,11 @@ file	dev/pci/sv.c			sv
 # Brooktree Bt848 video capture
 device	bktr: pcibus
 attach	bktr at pci
-file	dev/pci/brooktree848.c		bktr	needs-count
+file	dev/pci/bktr/bktr_audio.c	bktr	needs-count
+file	dev/pci/bktr/bktr_card.c	bktr
+file	dev/pci/bktr/bktr_core.c	bktr
+file	dev/pci/bktr/bktr_os.c		bktr
+file	dev/pci/bktr/bktr_tuner.c	bktr
 
 # 3C90x
 attach	xl at pci with xl_pci
