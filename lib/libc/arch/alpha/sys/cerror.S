@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.3 1996/11/13 22:05:11 niklas Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.4 2002/10/06 23:23:18 art Exp $	*/
 /*	$NetBSD: cerror.S,v 1.3 1996/10/17 03:08:17 cgd Exp $	*/
 
 /*
@@ -32,15 +32,15 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: cerror.S,v 1.3 1996/11/13 22:05:11 niklas Exp $"
+	.asciz "$OpenBSD: cerror.S,v 1.4 2002/10/06 23:23:18 art Exp $"
 #endif /* SYSLIBC_SCCS */
 
 IMPORT(errno, 4)
 
-LEAF(cerror, 0)
+LEAF(__cerror, 0)
 	br	t0, L1
 L1:	LDGP(t0)
 	stl	v0, errno
 	ldiq	v0, -1
 	RET
-END(cerror)
+END(__cerror)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.8 2002/01/04 21:37:18 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.9 2002/10/06 23:23:18 art Exp $	*/
 /*	$NetBSD: SYS.h,v 1.4 1996/10/17 03:03:53 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 LLABEL(name,0):							\
 	LDGP(gp);						\
 	beq	a3, LLABEL(name,1);				\
-	jmp	zero, cerror;					\
+	jmp	zero, __cerror;					\
 LLABEL(name,1):
 
 #define __LEAF(p,n,e)						\
