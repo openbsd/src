@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.2 1996/06/24 10:23:21 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.3 1996/06/27 06:48:41 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -640,6 +640,7 @@ ext2_mountfs(devvp, mp, p)
 	ump->um_nindir = EXT2_ADDR_PER_BLOCK(fs);
 	ump->um_bptrtodb = fs->s_es->s_log_block_size + 1;
 	ump->um_seqinc = EXT2_FRAGS_PER_BLOCK(fs);
+	ump->um_dirops = &ext2fs_dirops;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP; 
 		devvp->v_specflags |= SI_MOUNTEDON; 
@@ -886,7 +887,6 @@ ext2_vget(mp, ino, vpp)
 {
 	register struct ext2_sb_info *fs;
 	register struct inode *ip;
-	register struct ext2_inode_info *e2ip;
 	struct ufsmount *ump;
 	struct buf *bp;
 	struct vnode *vp;
@@ -926,17 +926,12 @@ restart:
 	type = ump->um_devvp->v_tag == VT_MFS ? M_MFSNODE : M_FFSNODE; /* XXX */
 	MALLOC(ip, struct inode *, sizeof(struct inode), type, M_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
-	MALLOC(e2ip, struct ext2_inode_info *, sizeof(struct ext2_inode_info),
-		type, M_WAITOK);
-	bzero((caddr_t)e2ip, sizeof(struct ext2_inode_info));
 
 	vp->v_data = ip;
 	ip->i_vnode = vp;
 	ip->i_e2fs = fs = ump->um_e2fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
-	ip->i_dirops = &ext2fs_dirops;
-	ip->i_e2ext = e2ip;
 #if QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
 		ip->i_dquot[i] = NODQUOT;

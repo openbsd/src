@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_extern.h,v 1.1 1996/06/24 03:34:54 downsj Exp $	*/
+/*	$OpenBSD: ext2_extern.h,v 1.2 1996/06/27 06:48:40 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -98,7 +98,7 @@ void	mark_buffer_dirty __P((struct buf *bh));
  * This macro allows the ufs code to distinguish between an EXT2 and a
  * non-ext2(FFS/LFS) vnode.  We shouldn't need this!
  */
-#define	IS_EXT2_VNODE(vp) (VTOI(vp)->i_dirops->dirremove == ext2_dirremove)
+#define	IS_EXT2_VNODE(vp) (VFSTOUFS(vp->v_mount)->um_dirops->dirremove == ext2_dirremove)
 
 #ifdef DIAGNOSTIC
 void	ext2_checkoverlap __P((struct buf *, struct inode *));

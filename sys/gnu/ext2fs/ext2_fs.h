@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_fs.h,v 1.2 1996/06/24 10:23:19 downsj Exp $	*/
+/*	$OpenBSD: ext2_fs.h,v 1.3 1996/06/27 06:48:40 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -36,25 +36,6 @@
 
 #define umode_t mode_t
 #define loff_t  off_t
-
-/* the Linux implementation of EXT2 stores some information about
- * an inode in a ext2_inode_info structure which is part of the incore
- * inode in Linux
- */
-
-struct ext2_inode_info {
-	int32_t		info_block_group;
-	int32_t		info_next_alloc_block;
-	int32_t		info_next_alloc_goal;
-	int32_t		info_prealloc_block;
-	int32_t		info_prealloc_count;
-};
-
-#define i_block_group		i_e2ext->info_block_group
-#define i_next_alloc_block	i_e2ext->info_next_alloc_block
-#define i_next_alloc_goal	i_e2ext->info_next_alloc_goal
-#define i_prealloc_block	i_e2ext->info_prealloc_block
-#define i_prealloc_count	i_e2ext->info_prealloc_count
 
 /*
  * The second extended filesystem constants/structures
