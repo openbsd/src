@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.38 2004/01/13 01:42:08 tedu Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.39 2004/05/13 22:36:39 mickey Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.38 2004/01/13 01:42:08 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.39 2004/05/13 22:36:39 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: mkfs.c,v 1.38 2004/01/13 01:42:08 tedu Exp $";
 #ifndef STANDALONE
 #include <a.out.h>
 #include <stdio.h>
+#include <errno.h>
 #endif
 
 /*
@@ -137,6 +138,23 @@ void		clrblock(struct fs *, unsigned char *, int);
 int		isblock(struct fs *, unsigned char *, int);
 void		rdfs(daddr_t, int, void *);
 void		mkfs(struct partition *pp, char *fsys, int fi, int fo);
+
+#ifndef STANDALONE
+volatile sig_atomic_t cur_cylno;
+volatile const char *cur_fsys;
+
+void
+siginfo(int sig)
+{
+	int save_errno = errno;
+	char buf[128];
+
+	snprintf(buf, sizeof(buf), "%s: initializing cg %ld/%d\n",
+	    cur_fsys, (long)cur_cylno, sblock.fs_ncg);
+	write(STDERR_FILENO, buf, strlen(buf));
+	errno = save_errno;
+}
+#endif
 
 void
 mkfs(struct partition *pp, char *fsys, int fi, int fo)
@@ -617,9 +635,16 @@ next:
 	 */
 	if (!quiet)
 		printf("super-block backups (for fsck -b #) at:\n");
+#ifndef STANDALONE
+	else if (!mfs && isatty(STDIN_FILENO)) {
+		signal(SIGINFO, siginfo);
+		cur_fsys = fsys;
+	}
+#endif
 	i = 0;
 	width = charsperline();
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
+		cur_cylno = (sig_atomic_t)cylno;
 		initcg(cylno, utime);
 		if (quiet)
 			continue;
