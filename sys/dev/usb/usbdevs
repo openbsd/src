@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.121 2004/11/10 13:51:52 dlg Exp $
+$OpenBSD: usbdevs,v 1.122 2004/11/11 14:17:46 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -565,8 +565,8 @@ product ATMEL DWL900AP		0x5601	DWL-900AP Wireless access point
 product ATMEL DWL120		0x7602	DWL-120 Wireless
 product ATMEL BW002		0x7605	BW002
 product ATMEL WL1130		0x7613	WL-1130
-product ATMEL AT76C505A		0x7614	AT76C505A
-product ATMEL DWL_120		0x7603	DWL-120
+product ATMEL AT76C505A		0x7614	AT76c505a
+product ATMEL AT76C503A		0x7603	AT76c503a
 
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
