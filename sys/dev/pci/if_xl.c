@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.35 1999/12/16 22:15:45 deraadt Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.36 1999/12/31 05:17:47 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -184,7 +184,7 @@ void xl_setmode		__P((struct xl_softc *, int));
 u_int8_t xl_calchash	__P((caddr_t));
 void xl_setmulti	__P((struct xl_softc *));
 void xl_setmulti_hash	__P((struct xl_softc *));
-void xl_reset		__P((struct xl_softc *));
+void xl_reset		__P((struct xl_softc *, int));
 int xl_list_rx_init	__P((struct xl_softc *));
 int xl_list_tx_init	__P((struct xl_softc *));
 int xl_list_tx_init_90xB	__P((struct xl_softc *));
@@ -831,13 +831,16 @@ void xl_setmode(sc, media)
 	XL_SEL_WIN(7);
 }
 
-void xl_reset(sc)
+void xl_reset(sc, hard)
 	struct xl_softc		*sc;
 {
 	register int		i;
 
 	XL_SEL_WIN(0);
-	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET);
+	if (hard)
+		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET);
+	else
+		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET | 0x0010);
 	xl_wait(sc);
 
 	for (i = 0; i < XL_TIMEOUT; i++) {
@@ -1456,7 +1459,7 @@ int xl_intr(arg)
 		}
 
 		if (status & XL_STAT_ADFAIL) {
-			xl_reset(sc);
+			xl_reset(sc, 0);
 			xl_init(sc);
 		}
 
@@ -2251,7 +2254,7 @@ void xl_watchdog(ifp)
 	xl_txeoc(sc);
 	xl_txeof(sc);
 	xl_rxeof(sc);
-	xl_reset(sc);
+	xl_reset(sc, 0);
 	xl_init(sc);
 
 	if (ifp->if_snd.ifq_head != NULL)
@@ -2454,7 +2457,7 @@ xl_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
-	xl_reset(sc);
+	xl_reset(sc, 1);
 
 	/*
 	 * Get station address from the EEPROM.
@@ -2561,7 +2564,7 @@ xl_attach(parent, self, aux)
 	 */
 	if (sc->xl_xcvr == XL_XCVR_AUTO) {
 		xl_choose_xcvr(sc, 0);
-		xl_reset(sc);
+		xl_reset(sc, 0);
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
@@ -2660,7 +2663,7 @@ xl_shutdown(v)
 {
 	struct xl_softc	*sc = (struct xl_softc *)v;
 
-	xl_reset(sc);
+	xl_reset(sc, 1);
 	xl_stop(sc);
 }
 
