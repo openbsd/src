@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.h,v 1.10 2003/09/24 10:13:43 markus Exp $	*/
+/*	$OpenBSD: crypto.h,v 1.11 2003/09/24 11:12:31 markus Exp $	*/
 /*	$EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	*/
 
 /*
@@ -54,6 +54,10 @@
 
 #endif /* __APPLE__ */
 
+#ifdef USE_AES
+#include <openssl/aes.h>
+#endif
+
 #define USE_32BIT
 #if defined (USE_64BIT)
 
@@ -85,12 +89,11 @@
 
 /*
  * This is standard for all block ciphers we use at the moment.
- * Theoretically this could increase in future, e.g. for TwoFish.
- * Keep MAXBLK uptodate
+ * Keep MAXBLK uptodate.
  */
 #define BLOCKSIZE	8
 
-#define MAXBLK		BLOCKSIZE
+#define MAXBLK		AES_BLOCK_SIZE
 
 struct keystate {
   struct crypto_xf *xf;			/* Back pointer */
@@ -108,12 +111,16 @@ struct keystate {
 #ifdef USE_CAST
     cast_key castks;
 #endif
+#ifdef USE_AES
+    AES_KEY aesks[2];
+#endif
   } keydata;
 };
 
 #define ks_des	keydata.desks
 #define ks_blf	keydata.blfks
 #define ks_cast	keydata.castks
+#define ks_aes	keydata.aesks
 
 /*
  * Information about the cryptotransform.
@@ -130,7 +137,8 @@ enum transform {
   BLOWFISH_CBC=3,
   RC5_R16_B64_CBC=4,		/* Licensed, DONT use */
   TRIPLEDES_CBC=5,			/* This is a SHOULD */
-  CAST_CBC=6
+  CAST_CBC=6,
+  AES_CBC=7
 };
 
 enum cryptoerr {

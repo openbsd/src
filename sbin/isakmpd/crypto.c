@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.17 2003/09/24 10:13:43 markus Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.18 2003/09/24 11:12:31 markus Exp $	*/
 /*	$EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	*/
 
 /*
@@ -43,6 +43,7 @@ enum cryptoerr des1_init (struct keystate *, u_int8_t *, u_int16_t);
 enum cryptoerr des3_init (struct keystate *, u_int8_t *, u_int16_t);
 enum cryptoerr blf_init (struct keystate *, u_int8_t *, u_int16_t);
 enum cryptoerr cast_init (struct keystate *, u_int8_t *, u_int16_t);
+enum cryptoerr aes_init (struct keystate *, u_int8_t *, u_int16_t);
 void des1_encrypt (struct keystate *, u_int8_t *, u_int16_t);
 void des1_decrypt (struct keystate *, u_int8_t *, u_int16_t);
 void des3_encrypt (struct keystate *, u_int8_t *, u_int16_t);
@@ -51,6 +52,8 @@ void blf_encrypt (struct keystate *, u_int8_t *, u_int16_t);
 void blf_decrypt (struct keystate *, u_int8_t *, u_int16_t);
 void cast1_encrypt (struct keystate *, u_int8_t *, u_int16_t);
 void cast1_decrypt (struct keystate *, u_int8_t *, u_int16_t);
+void aes_encrypt (struct keystate *, u_int8_t *, u_int16_t);
+void aes_decrypt (struct keystate *, u_int8_t *, u_int16_t);
 
 struct crypto_xf transforms[] = {
 #ifdef USE_DES
@@ -79,6 +82,13 @@ struct crypto_xf transforms[] = {
     CAST_CBC, "CAST (CBC-Mode)", 12, 16, BLOCKSIZE, 0,
     cast_init,
     cast1_encrypt, cast1_decrypt
+  },
+#endif
+#ifdef USE_AES
+  {
+    AES_CBC, "AES (CBC-Mode)", 16, 32, AES_BLOCK_SIZE, 0, 
+    aes_init,
+    aes_encrypt, aes_decrypt
   },
 #endif
 };
@@ -250,6 +260,34 @@ cast1_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
 }
 #endif /* USE_CAST */
 
+#ifdef USE_AES
+enum cryptoerr
+aes_init (struct keystate *ks, u_int8_t *key, u_int16_t len)
+{
+  AES_set_encrypt_key (key, len << 3, &ks->ks_aes[0]);
+  AES_set_decrypt_key (key, len << 3, &ks->ks_aes[1]);
+  return EOKAY;
+}
+
+void
+aes_encrypt (struct keystate *ks,  u_int8_t *data, u_int16_t len)
+{
+  u_int8_t iv[MAXBLK];
+
+  memcpy (iv, ks->riv, ks->xf->blocksize);
+  AES_cbc_encrypt (data, data, len, &ks->ks_aes[0], iv, AES_ENCRYPT);
+}
+
+void
+aes_decrypt (struct keystate *ks, u_int8_t *data, u_int16_t len)
+{
+  u_int8_t iv[MAXBLK];
+
+  memcpy (iv, ks->riv, ks->xf->blocksize);
+  AES_cbc_encrypt (data, data, len, &ks->ks_aes[1], iv, AES_DECRYPT);
+}
+#endif /* USE_AES */
+
 struct crypto_xf *
 crypto_get (enum transform id)
 {
@@ -322,7 +360,7 @@ crypto_init_iv (struct keystate *ks, u_int8_t *buf, size_t len)
 {
   memcpy (ks->riv, buf, len);
 
-  LOG_DBG_BUF ((LOG_CRYPTO, 50, "crypto_update_iv: initialized IV", ks->riv,
+  LOG_DBG_BUF ((LOG_CRYPTO, 50, "crypto_init_iv: initialized IV", ks->riv,
 		len));
 }
 
