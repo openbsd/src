@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.76 2002/06/11 06:12:15 kjell Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.77 2002/06/11 08:22:15 kjell Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -67,7 +67,7 @@ int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
 int	 pfctl_rules(int, char *, int);
 int	 pfctl_log(int, char *, int);
-int	 pfctl_timeout(int, char *, int);
+int	 pfctl_timeout(int, char *);
 int	 pfctl_gettimeout(int, const char *);
 int	 pfctl_settimeout(int, const char *, int);
 int	 pfctl_limit(int, char *, int);
@@ -758,7 +758,7 @@ pfctl_setlimit(int dev, const char *opt, unsigned int limit)
 }
 
 int
-pfctl_timeout(int dev, char *opt, int opts)
+pfctl_timeout(int dev, char *opt)
 {
 	char *seconds, *serr = NULL;
 	int setval;
@@ -1064,7 +1064,7 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (timeoutopt != NULL)
-		if (pfctl_timeout(dev, timeoutopt, opts))
+		if (pfctl_timeout(dev, timeoutopt))
 			error = 1;
 
 	if (limitopt != NULL)
