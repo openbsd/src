@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.10 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: aac.c,v 1.11 2002/03/05 06:51:39 niklas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -727,15 +727,11 @@ aac_scsi_cmd(xs)
 			ccb = aac_get_ccb(sc, xs->flags);
 
 			/*
-			 * Are we out of commands, something is wrong.
-			 * 
+			 * We are out of commands, try again in a little while.
 			 */
 			if (ccb == NULL) {
-				printf("%s: no ccb in aac_scsi_cmd",
-				    sc->sc_dev.dv_xname);
 				xs->error = XS_DRIVER_STUFFUP;
-				xs->flags |= ITSDONE;
-				scsi_done(xs);
+				xs->flags |= TRY_AGAIN_LATER;
 				goto ready;
 			}
 
