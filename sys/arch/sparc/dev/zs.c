@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.12 1996/08/12 03:14:49 downsj Exp $	*/
+/*	$OpenBSD: zs.c,v 1.13 1996/08/12 18:54:05 deraadt Exp $	*/
 /*	$NetBSD: zs.c,v 1.37.4.1 1996/06/02 09:07:55 mrg Exp $ */
 
 /*
@@ -304,7 +304,7 @@ zsattach(parent, dev, aux)
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_A]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
-	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
+	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
 		tp = ctp;
 	else {
 		tp = ttymalloc();
@@ -340,7 +340,7 @@ zsattach(parent, dev, aux)
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
-	if ((ctp = zs_checkcons(zi, unit, cs)) != NULL)
+	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
 		tp = ctp;
 	else {
 		tp = ttymalloc();
