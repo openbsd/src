@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: cpp.sh,v 1.6 2003/06/03 02:56:07 millert Exp $
+#	$OpenBSD: cpp.sh,v 1.7 2004/02/10 02:02:22 espie Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -40,11 +40,13 @@
 #	doesn't search gcc-include
 #
 PATH=/usr/bin:/bin
-ALST="-traditional -$ -D__GNUC__"
-NSI=no
+TRAD=-traditional
+DGNUC="-D__GNUC__"
+STDINC="-I/usr/include"
+DOLLAR="@dollaropt@"
 OPTS=""
 INCS="-nostdinc"
-FOUNDFILES=no
+FOUNDFILES=false
 
 CPP=/usr/libexec/cpp
 if [ ! -x $CPP ]; then
@@ -62,15 +64,19 @@ do
 
 	case $A in
 	-nostdinc)
-		NSI=yes
+		STDINC=
 		;;
 	-traditional)
+		TRAD=-traditional
+		;;
+	-notraditional)
+		TRAD=
 		;;
 	-I*)
 		INCS="$INCS $A"
 		;;
 	-U__GNUC__)
-		ALST=`echo $ALST | sed -e s/-D__GNUC__//`
+		DGNUC=
 		;;
 	-imacros|-include|-idirafter|-iprefix|-iwithprefix)
 		INCS="$INCS '$A' '$1'"
@@ -80,25 +86,16 @@ do
 		OPTS="$OPTS '$A'"
 		;;
 	*)
-		FOUNDFILES=yes
-		if [ $NSI = "no" ]
-		then
-			INCS="$INCS -I/usr/include"
-			NSI=skip
-		fi
-		eval $CPP $ALST $INCS $OPTS $A || exit $?
+		FOUNDFILES=true
+		eval $CPP $TRAD $DGNUC $DOLLAR $INCS $STDINC $OPTS $A || exit $?
 		;;
 	esac
 done
 
-if [ $FOUNDFILES = "no" ]
+if ! $FOUNDFILES
 then
 	# read standard input
-	if [ $NSI = "no" ]
-	then
-		INCS="$INCS -I/usr/include"
-	fi
-	eval exec $CPP $ALST $INCS $OPTS
+	eval exec $CPP $TRAD $DGNUC $DOLLAR $INCS $STDINC $OPTS
 fi
 
 exit 0
