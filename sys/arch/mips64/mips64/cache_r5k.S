@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache_r5k.S,v 1.9 2004/09/16 10:13:37 miod Exp $ */
+/*	$OpenBSD: cache_r5k.S,v 1.10 2004/09/20 10:29:57 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB (www.opsycon.se)
@@ -201,7 +201,7 @@ LEAF(Mips5k_ConfigCache, 0)
 	beq	v1, t1, ConfResult		# R4K 2 way, No L2 control
 	li	t1, (MIPS_R5000 << 8)
 	beq	v1, t1, Conf5K			# R5K 2 way, check L2
-	li	t1, (MIPS_RM52XX << 8)
+	li	t1, (MIPS_RM52X0 << 8)
 	beq	v1, t1, Conf52K			# R52K 2 way, check L2
 	li	t1, (MIPS_RM7000 << 8)
 	beq	v1, t1, Conf7K
@@ -514,7 +514,7 @@ LEAF(Mips5k_InvalidateICachePage, 0)
 	NOP10
 #endif
 	j	ra
-	move	v0, zero		# suiword depends on this!!
+	move	v0, zero
 END(Mips5k_InvalidateICachePage)
 
 /*----------------------------------------------------------------------------
@@ -579,7 +579,7 @@ LEAF(Mips5k_InvalidateICache, 0)
 	NOP10
 #endif
 	j	ra
-	move	v0, zero		# suiword depends on this!!
+	move	v0, zero
 END(Mips5k_InvalidateICache)
 
 /*----------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macebus.c,v 1.6 2004/09/09 22:11:39 pefo Exp $ */
+/*	$OpenBSD: macebus.c,v 1.7 2004/09/20 10:31:16 pefo Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -72,6 +72,8 @@ long mace_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 long crime_ext_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
 
 int maceticks;		/* Time tracker for special events */
+
+u_int64_t crimestat;
 
 struct cfattach macebus_ca = {
 	sizeof(struct device), macebusmatch, macebusattach
@@ -671,6 +673,7 @@ macebus_iointr(intrmask_t hwpend, struct trap_frame *cf)
 	u_int64_t intstat, isastat, mask;
 
 	intstat = bus_space_read_8(&crimebus_tag, crime_h, CRIME_INT_STAT);
+crimestat=intstat;
 	intstat &= 0x0000ffff;
 	isastat = bus_space_read_8(&macebus_tag, mace_h, MACE_ISA_INT_STAT);
 	catched = 0;

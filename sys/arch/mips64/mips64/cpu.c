@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2004/09/09 22:11:38 pefo Exp $ */
+/*	$OpenBSD: cpu.c,v 1.8 2004/09/20 10:29:57 pefo Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -84,6 +84,12 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case MIPS_R10000:
 		printf("MIPS R10000 CPU");
 		break;
+	case MIPS_R12000:
+		printf("MIPS R12000 CPU");
+		break;
+	case MIPS_R14000:
+		printf("MIPS R14000 CPU");
+		break;
 	case MIPS_R4200:
 		printf("NEC VR4200 CPU (ICE)");
 		break;
@@ -99,7 +105,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case MIPS_R4700:
 		printf("QED R4700 Orion CPU");
 		break;
-	case MIPS_RM52XX:
+	case MIPS_RM52X0:
 		printf("PMC-Sierra RM52X0 CPU");
 		break;
 	case MIPS_RM7000:
@@ -124,13 +130,19 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case MIPS_SOFT:
 		printf("Software emulation float");
 		break;
-	case MIPS_R4010:
+	case MIPS_R4000:
 		printf("R4010 FPC");
 		break;
-	case MIPS_R10010:
+	case MIPS_R10000:
 		printf("R10000 FPU");
 		break;
-	case MIPS_R4210:
+	case MIPS_R12000:
+		printf("R12000 FPU");
+		break;
+	case MIPS_R14000:
+		printf("R14000 FPU");
+		break;
+	case MIPS_R4200:
 		printf("VR4200 FPC (ICE)");
 		break;
 	case MIPS_R4600:
@@ -142,7 +154,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case MIPS_R5000:
 		printf("R5000 based FPC");
 		break;
-	case MIPS_RM52XX:
+	case MIPS_RM52X0:
 		printf("RM52X0 FPC");
 		break;
 	case MIPS_RM7000:
@@ -151,7 +163,6 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case MIPS_RM9000:
 		printf("RM9000 FPC");
 		break;
-	case MIPS_UNKF1:
 	default:
 		printf("Unknown FPU type (0x%x)", sys_config.cpu[cpuno].fptype);
 		break;
@@ -176,6 +187,11 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 
 	if (CpuSecondaryCacheSize != 0) {
 		switch (sys_config.cpu[cpuno].type) {
+		case MIPS_R10000:
+		case MIPS_R12000:
+		case MIPS_R14000:
+			printf(", L2 %dKB 2 way", CpuSecondaryCacheSize / 1024);
+			break;
 		case MIPS_RM7000:
 		case MIPS_RM9000:
 			printf(", L2 %dKB 4 way", CpuSecondaryCacheSize / 1024);

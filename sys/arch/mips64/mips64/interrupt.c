@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: interrupt.c,v 1.5 2004/09/20 10:29:57 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -553,3 +553,17 @@ generic_iointr(intrmask_t pending, struct trap_frame *cf)
 	}
 	return catched;
 }
+
+#ifndef INLINE_SPLRAISE
+int
+splraise(int newcpl)
+{
+        int oldcpl;
+
+	__asm__ (" .set noreorder\n");
+	oldcpl = cpl;
+	cpl = oldcpl | newcpl;
+	__asm__ (" sync\n .set reorder\n");
+	return (oldcpl);
+}
+#endif

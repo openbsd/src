@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2004/08/10 21:11:42 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.8 2004/09/20 10:31:16 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -56,12 +56,21 @@ struct sys_rec {
 		u_int32_t cfg_reg;
 		u_int32_t stat_reg;
 	} cpu[MAX_CPUS];
+	/* Published Cache OPS */
+	void    (*_SyncCache)(void);
+	void    (*_InvalidateICache)(vaddr_t, int);
+	void    (*_InvalidateICachePage)(vaddr_t);
+	void    (*_SyncDCachePage)(vaddr_t);
+	void    (*_HitSyncDCache)(vaddr_t, int);
+	void    (*_IOSyncDCache)(vaddr_t, int, int);
+	void    (*_HitInvalidateDCache)(vaddr_t, int);
+	/* BUS mappings */
 	struct mips_bus_space local;
 	struct mips_bus_space isa_io;
 	struct mips_bus_space isa_mem;
 	struct mips_bus_space pci_io[2];
 	struct mips_bus_space pci_mem[2];
-
+	/* Console/Serial configuration */
 	int	cons_baudclk;
 	struct mips_bus_space console_io;	/* for stupid map designs */
 	struct mips_bus_space *cons_iot;

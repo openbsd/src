@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2004/09/16 19:38:30 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.12 2004/09/20 10:31:16 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -305,7 +305,6 @@ mips_init(int argc, int32_t *argv)
 		CpuTertiaryCacheSize = 0;
 	}
 
-	sys_config.cpu[0].cfg_reg = Mips_ConfigCache();
 	sys_config.cpu[0].type = (cp0_get_prid() >> 8) & 0xff;
 	sys_config.cpu[0].vers_maj = (cp0_get_prid() >> 4) & 0x0f;
 	sys_config.cpu[0].vers_min = cp0_get_prid() & 0x0f;
@@ -318,6 +317,7 @@ mips_init(int argc, int32_t *argv)
 	 */
 	switch(sys_config.cpu[0].type) {
 	case MIPS_RM7000:
+		/* Rev A (version >= 2) CPU's have 64 TLB entries. */
 		if (sys_config.cpu[0].vers_maj < 2) {
 			sys_config.cpu[0].tlbsize = 48;
 		} else {
@@ -325,8 +325,43 @@ mips_init(int argc, int32_t *argv)
 		}
 		break;
 
+	case MIPS_R10000:
+	case MIPS_R12000:
+	case MIPS_R14000:
+		sys_config.cpu[0].tlbsize = 64;
+		break;
+
 	default:
 		sys_config.cpu[0].tlbsize = 48;
+		break;
+	}
+
+	/*
+	 *  Configure Cache.
+	 */
+	switch(sys_config.cpu[0].type) {
+	case MIPS_R10000:
+	case MIPS_R12000:
+	case MIPS_R14000:
+		sys_config.cpu[0].cfg_reg = Mips10k_ConfigCache();
+		sys_config._SyncCache = Mips10k_SyncCache;
+		sys_config._InvalidateICache = Mips10k_InvalidateICache;
+		sys_config._InvalidateICachePage = Mips10k_InvalidateICachePage;
+		sys_config._SyncDCachePage = Mips10k_SyncDCachePage;
+		sys_config._HitSyncDCache = Mips10k_HitSyncDCache;
+		sys_config._IOSyncDCache = Mips10k_IOSyncDCache;
+		sys_config._HitInvalidateDCache = Mips10k_HitInvalidateDCache;
+		break;
+
+	default:
+		sys_config.cpu[0].cfg_reg = Mips5k_ConfigCache();
+		sys_config._SyncCache = Mips5k_SyncCache;
+		sys_config._InvalidateICache = Mips5k_InvalidateICache;
+		sys_config._InvalidateICachePage = Mips5k_InvalidateICachePage;
+		sys_config._SyncDCachePage = Mips5k_SyncDCachePage;
+		sys_config._HitSyncDCache = Mips5k_HitSyncDCache;
+		sys_config._IOSyncDCache = Mips5k_IOSyncDCache;
+		sys_config._HitInvalidateDCache = Mips5k_HitInvalidateDCache;
 		break;
 	}
 

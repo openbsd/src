@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2004/09/09 22:21:41 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 2004/09/20 10:29:57 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -82,6 +82,7 @@
 #define SR_RP			0x08000000
 #define SR_FR_32		0x04000000
 #define SR_RE			0x02000000
+#define SR_DSD			0x01000000	/* Only on R12000 */
 #define SR_BOOT_EXC_VEC		0x00400000
 #define SR_TLB_SHUTDOWN		0x00200000
 #define SR_SOFT_RESET		0x00100000
@@ -385,6 +386,8 @@ int	want_resched;	/* resched() was called */
 #define	MIPS_R4200	0x0a	/* MIPS R4200 CPU (ICE)		ISA III */
 #define MIPS_R4300	0x0b	/* NEC VR4300 CPU		ISA III */
 #define MIPS_R4100	0x0c	/* NEC VR41xx CPU MIPS-16	ISA III */
+#define	MIPS_R12000	0x0e	/* MIPS R12000			ISA IV  */
+#define	MIPS_R14000	0x0f	/* MIPS R14000			ISA IV  */
 #define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
 #define	MIPS_R4600	0x20	/* PMCS R4600 Orion		ISA III */
 #define	MIPS_R4700	0x21	/* PMCS R4700 Orion		ISA III */
@@ -396,28 +399,10 @@ int	want_resched;	/* resched() was called */
 #define	MIPS_VR5400	0x54	/* NEC Vr5400 CPU		ISA IV+ */
 
 /*
- * MIPS FPU types
+ * MIPS FPU types. Only soft, rest is teh same as cpu type.
  */
 #define	MIPS_SOFT	0x00	/* Software emulation		ISA I   */
-#define	MIPS_R2360	0x01	/* MIPS R2360 FPC		ISA I   */
-#define	MIPS_R2010	0x02	/* MIPS R2010 FPC		ISA I   */
-#define	MIPS_R3010	0x03	/* MIPS R3010 FPC		ISA I   */
-#define	MIPS_R6010	0x04	/* MIPS R6010 FPC		ISA II  */
-#define	MIPS_R4010	0x05	/* MIPS R4000/R4400 FPC		ISA II  */
-#define MIPS_R31LSI	0x06	/* LSI Logic derivate		ISA I	*/
-#define	MIPS_R10010	0x09	/* MIPS R10000/T5 FPU		ISA IV  */
-#define	MIPS_R4210	0x0a	/* MIPS R4200 FPC (ICE)		ISA III */
-#define MIPS_UNKF1	0x0b	/* unnanounced product cpu	ISA III */
-#define	MIPS_R8000	0x10	/* MIPS R8000 Blackbird/TFP	ISA IV  */
-#define	MIPS_R4600	0x20	/* PMCS R4600 Orion		ISA III */
-#define	MIPS_R3SONY	0x21	/* Sony R3000 based FPU		ISA I   */
-#define	MIPS_R3TOSH	0x22	/* Toshiba R3000 based FPU	ISA I	*/
-#define	MIPS_R5010	0x23	/* MIPS R5000 based FPU		ISA IV  */
-#define	MIPS_RM7000	0x27	/* PMCS RM7000 FPU		ISA IV  */
-#define	MIPS_RM5230	0x28	/* PMCS RM52X0 based FPU	ISA IV  */
-#define	MIPS_RM52XX	0x28	/* PMCS RM52X0 based FPU	ISA IV  */
-#define	MIPS_RM9000	0x34	/* PMCS RM9000 based FPU	ISA IV  */
-#define	MIPS_VR5400	0x54	/* NEC Vr5400 FPU		ISA IV+ */
+
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
@@ -448,16 +433,21 @@ u_int	cp0_get_count(void);
 void	cp0_set_compare(u_int);
 
 /*
- *  Defines temporary until soft selected cache functions fixed.
+ *  Define soft selected cache functions.
  */
-#define	Mips_ConfigCache	Mips5k_ConfigCache
-#define	Mips_SyncCache		Mips5k_SyncCache
-#define	Mips_InvalidateICache	Mips5k_InvalidateICache
-#define	Mips_InvalidateICachePage Mips5k_InvalidateICachePage
-#define	Mips_SyncDCachePage	Mips5k_SyncDCachePage
-#define	Mips_HitSyncDCache	Mips5k_HitSyncDCache
-#define	Mips_IOSyncDCache	Mips5k_IOSyncDCache
-#define	Mips_HitInvalidateDCache Mips5k_HitInvalidateDCache
+#define	Mips_SyncCache()	(*(sys_config._SyncCache))()
+#define	Mips_InvalidateICache(a, l)	\
+				(*(sys_config._InvalidateICache))((a), (l))
+#define	Mips_InvalidateICachePage(a)	\
+				(*(sys_config._InvalidateICachePage))((a))
+#define	Mips_SyncDCachePage(a)		\
+				(*(sys_config._SyncDCachePage))((a))
+#define	Mips_HitSyncDCache(a, l)	\
+				(*(sys_config._HitSyncDCache))((a), (l))
+#define	Mips_IOSyncDCache(a, l, h)	\
+				(*(sys_config._IOSyncDCache))((a), (l), (h))
+#define	Mips_HitInvalidateDCache(a, l)	\
+				(*(sys_config._HitInvalidateDCache))((a), (l))
 
 int	Mips5k_ConfigCache(void);
 void	Mips5k_SyncCache(void);
@@ -467,6 +457,15 @@ void	Mips5k_SyncDCachePage(vaddr_t);
 void	Mips5k_HitSyncDCache(vaddr_t, int);
 void	Mips5k_IOSyncDCache(vaddr_t, int, int);
 void	Mips5k_HitInvalidateDCache(vaddr_t, int);
+
+int	Mips10k_ConfigCache(void);
+void	Mips10k_SyncCache(void);
+void	Mips10k_InvalidateICache(vaddr_t, int);
+void	Mips10k_InvalidateICachePage(vaddr_t);
+void	Mips10k_SyncDCachePage(vaddr_t);
+void	Mips10k_HitSyncDCache(vaddr_t, int);
+void	Mips10k_IOSyncDCache(vaddr_t, int, int);
+void	Mips10k_HitInvalidateDCache(vaddr_t, int);
 
 void	tlb_flush(int);
 void	tlb_flush_addr(vaddr_t);

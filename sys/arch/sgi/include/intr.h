@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.3 2004/08/10 19:16:18 deraadt Exp $ */
+/*	$OpenBSD: intr.h,v 1.4 2004/09/20 10:31:16 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -148,7 +148,6 @@ intrmask_t imask[NIPLS];
 
 /* Inlines */
 static __inline void register_pending_int_handler(void (*)(void));
-static __inline int splraise(int newcpl);
 static __inline void splx(int newcpl);
 static __inline int spllower(int newcpl);
 
@@ -163,6 +162,8 @@ register_pending_int_handler(void(*pending)(void))
 
 /*
  */
+#ifdef INLINE_SPLRAISE
+static __inline int splraise(int newcpl);
 static __inline int
 splraise(int newcpl)
 {
@@ -174,6 +175,9 @@ splraise(int newcpl)
 	__asm__ (" sync\n .set reorder\n");
 	return (oldcpl);
 }
+#else
+int splraise(int newcpl);
+#endif
 
 static __inline void
 splx(int newcpl)
