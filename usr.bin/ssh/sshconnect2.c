@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.3 2000/04/27 08:01:27 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.4 2000/04/27 17:54:01 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -330,8 +330,6 @@ ssh2_try_pubkey(char *filename,
 	}
 	dsa_make_key_blob(k, &blob, &bloblen);
 
-//DSA_print_fp(stderr, k->dsa, 8);
-
 	/* data to be signed */
 	buffer_init(&b);
 	buffer_append(&b, session_id2, session_id2_len);
@@ -425,7 +423,8 @@ ssh_userauth2(const char *server_user, char *host)
 		packet_done();
 		if (partial)
 			debug("partial success");
-		if (strstr(auths, "publickey") != NULL) {
+		if (options.rsa_authentication &&
+		    strstr(auths, "publickey") != NULL) {
 			while (i < options.num_identity_files2) {
 				sent = ssh2_try_pubkey(
 				    options.identity_files2[i++],
@@ -435,14 +434,14 @@ ssh_userauth2(const char *server_user, char *host)
 			}
 		}
 		if (!sent) {
-			if (strstr(auths, "password") != NULL) {
+			if (options.password_authentication &&
+			    !options.batch_mode &&
+			    strstr(auths, "password") != NULL) {
 				sent = ssh2_try_passwd(server_user, host, service);
-			} else {
-				fatal("passwd auth not supported: %s", auths);
 			}
-			if (!sent)
-				fatal("no more auths: %s", auths);
 		}
+		if (!sent)
+			fatal("Permission denied (%s).", auths);
 		xfree(auths);
 	}
 	packet_done();
