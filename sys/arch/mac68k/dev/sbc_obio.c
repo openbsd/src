@@ -49,6 +49,7 @@
 
 #include <machine/cpu.h>
 #include <machine/viareg.h>
+#include <machine/macinfo.h>
 
 #include "sbcreg.h"
 #include "sbcvar.h"
@@ -214,9 +215,6 @@ sbc_obio_attach(parent, self, args)
 		via2_register_irq(VIA2_SCSIIRQ, sbc_irq_intr, ncr_sc);
 	} else
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
-
-	if ((sc->sc_options & SBC_RESELECT) == 0)
-		ncr_sc->sc_no_disconnect = 0xff;
 
 	if (sc->sc_options & SBC_INTR)
 		sc->sc_clrintr = sbc_obio_clrintr;
