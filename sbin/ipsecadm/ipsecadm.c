@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.27 1999/12/06 21:58:39 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.28 1999/12/20 05:38:22 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -51,6 +51,10 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#ifdef INET6
+#include <netinet6/in6.h>
+#endif /* INET6 */
+
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -98,6 +102,8 @@ transform xf[] = {
     {"sha1", SADB_X_AALG_SHA1,XF_AUTH|AH_OLD},
     {"rmd160", SADB_X_AALG_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
 };
+
+#define ROUNDUP(x) (x % 8 ? (x + 8) - (x % 8) : x)
 
 void
 xf_set(struct iovec *iov, int cnt, int len)
@@ -211,7 +217,10 @@ main(int argc, char **argv)
     int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
     int dport = -1, sport = -1, tproto = -1, setmask = 0;
     u_int32_t spi = SPI_RESERVED_MIN, spi2 = SPI_RESERVED_MIN;
-    union sockaddr_union src, dst, dst2, osrc, odst, osmask, odmask, proxy;
+    union sockaddr_union *src, *dst, *dst2, *osrc, *odst, *osmask;
+    union sockaddr_union *odmask, *proxy;
+    u_char srcbuf[256], dstbuf[256], dst2buf[256], osrcbuf[256];
+    u_char odstbuf[256], osmaskbuf[256], odmaskbuf[256], proxybuf[256];
     int srcset = 0, dstset = 0, dst2set = 0;
     u_char *keyp = NULL, *authp = NULL;
     struct protoent *tp;
@@ -260,7 +269,25 @@ main(int argc, char **argv)
     bzero(iov, sizeof(iov));
     bzero(realkey, sizeof(realkey));
     bzero(realakey, sizeof(realakey));
-    
+
+    src = (union sockaddr_union *) srcbuf;
+    dst = (union sockaddr_union *) dstbuf;
+    dst2 = (union sockaddr_union *) dst2buf;
+    osrc = (union sockaddr_union *) osrcbuf;
+    odst = (union sockaddr_union *) odstbuf;
+    osmask = (union sockaddr_union *) osmaskbuf;
+    odmask = (union sockaddr_union *) odmaskbuf;
+    proxy = (union sockaddr_union *) proxybuf;
+
+    bzero(srcbuf, sizeof(srcbuf));
+    bzero(dstbuf, sizeof(dstbuf));
+    bzero(dst2buf, sizeof(dst2buf));
+    bzero(osrcbuf, sizeof(osrcbuf));
+    bzero(odstbuf, sizeof(odstbuf));
+    bzero(osmaskbuf, sizeof(osmaskbuf));
+    bzero(odmaskbuf, sizeof(odmaskbuf));
+    bzero(proxybuf, sizeof(proxybuf));
+
     /* Initialize */
     smsg.sadb_msg_version = PF_KEY_V2;
     smsg.sadb_msg_seq = 1;
@@ -278,16 +305,6 @@ main(int argc, char **argv)
     sa2.sadb_sa_len = sizeof(sa2) / 8;
     sa2.sadb_sa_replay = 0;
     sa2.sadb_sa_state = SADB_SASTATE_MATURE;
-
-    /* Initialize */
-    bzero(&src, sizeof(union sockaddr_union));
-    bzero(&dst, sizeof(union sockaddr_union));
-    bzero(&dst2, sizeof(union sockaddr_union));
-    bzero(&osrc, sizeof(union sockaddr_union));
-    bzero(&odst, sizeof(union sockaddr_union));
-    bzero(&osmask, sizeof(union sockaddr_union));
-    bzero(&odmask, sizeof(union sockaddr_union));
-    bzero(&proxy, sizeof(union sockaddr_union));
 
     if (!strcmp(argv[1], "new") && argc > 3)
     {
@@ -546,27 +563,69 @@ main(int argc, char **argv)
 
 	if (!strcmp(argv[i] + 1, "src") && (i + 1 < argc))
 	{
-	    src.sin.sin_family = AF_INET;
-	    src.sin.sin_len = sizeof(struct sockaddr_in);
-	    srcset = inet_aton(argv[i + 1], &src.sin.sin_addr) != -1 ? 1 : 0;
 	    sad1.sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
-	    sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+#ifdef INET6
+	    if (strchr(argv[i + 1], ':'))
+	    {
+		src->sin6.sin6_family = AF_INET6;
+		src->sin6.sin6_len = sizeof(struct sockaddr_in6);
+		srcset = inet_pton(AF_INET6, argv[i + 1],
+				   &src->sin6.sin6_addr) != -1 ? 1 : 0;
+		sad1.sadb_address_len = 1 +
+				       ROUNDUP(sizeof(struct sockaddr_in6)) / 8;
+	    }
+	    else
+#endif /* INET6 */
+	    {
+		src->sin.sin_family = AF_INET;
+		src->sin.sin_len = sizeof(struct sockaddr_in);
+		srcset = inet_pton(AF_INET, argv[i + 1],
+				   &src->sin.sin_addr) != -1 ? 1 : 0;
+		sad1.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+	    }
+
+	    if (srcset == 0)
+	    {
+		fprintf(stderr,
+			"%s: Warning: source address %s is not valid\n",
+			argv[0], argv[i + 1]);
+		exit(1);
+	    }
 	    i++;
 	    continue;
 	}
 
 	if (!strcmp(argv[i] + 1, "proxy") && (i + 1 < argc))
 	{
-	    proxy.sin.sin_family = AF_INET;
-	    proxy.sin.sin_len = sizeof(struct sockaddr_in);
-	    if (!inet_aton(argv[i + 1], &proxy.sin.sin_addr)) {
-		fprintf(stderr,
-		    "%s: Warning: proxy address %s is not valid\n", argv[0],
-		    argv[i + 1]);
-		exit(1);
-	    }
 	    sad3.sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
-	    sad3.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+#ifdef INET6
+	    if (strchr(argv[i + 1], ':'))
+	    {
+		proxy->sin6.sin6_family = AF_INET6;
+		proxy->sin6.sin6_len = sizeof(struct sockaddr_in6);
+		if (!inet_pton(AF_INET6, argv[i + 1], &proxy->sin6.sin6_addr)) {
+		    fprintf(stderr,
+			    "%s: Warning: proxy address %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		sad3.sadb_address_len = 1 +
+				       ROUNDUP(sizeof(struct sockaddr_in6)) / 8;
+	    }
+	    else
+#endif /* INET6 */
+	    {
+		proxy->sin.sin_family = AF_INET;
+		proxy->sin.sin_len = sizeof(struct sockaddr_in);
+		if (!inet_pton(AF_INET, argv[i + 1], &proxy->sin.sin_addr)) {
+		    fprintf(stderr,
+			    "%s: Warning: proxy address %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		sad3.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
+	    }
+
 	    i++;
 	    continue;
 	}
@@ -629,46 +688,125 @@ main(int argc, char **argv)
 	    sad6.sadb_address_exttype = SADB_X_EXT_SRC_MASK;
 	    sad7.sadb_address_exttype = SADB_X_EXT_DST_MASK;
 
-	    sad4.sadb_address_len = (sizeof(sad4) +
-				     sizeof(struct sockaddr_in)) / 8;
-	    sad5.sadb_address_len = (sizeof(sad5) +
-				     sizeof(struct sockaddr_in)) / 8;
-	    sad6.sadb_address_len = (sizeof(sad6) +
-				     sizeof(struct sockaddr_in)) / 8;
-	    sad7.sadb_address_len = (sizeof(sad7) +
-				     sizeof(struct sockaddr_in)) / 8;
+#ifdef INET6
+	    if ((strchr(argv[i + 1], ':') &&
+		 (!strchr(argv[i + 2], ':') || !strchr(argv[i + 3], ':') ||
+		  !strchr(argv[i + 4], ':'))) ||
+		(!strchr(argv[i + 1], ':') &&
+		 (strchr(argv[i + 2], ':') || strchr(argv[i + 3], ':') ||
+		  strchr(argv[i + 4], ':'))))
+	    {
+		fprintf(stderr,
+			"%s: Mixed address families specified in addr\n",
+			argv[0]);
+		exit(1);
+	    }
 
-	    osrc.sin.sin_family = odst.sin.sin_family = AF_INET;
-	    osmask.sin.sin_family = odmask.sin.sin_family = AF_INET;
-	    osrc.sin.sin_len = odst.sin.sin_len = sizeof(struct sockaddr_in);
-	    osmask.sin.sin_len = sizeof(struct sockaddr_in);
-	    odmask.sin.sin_len = sizeof(struct sockaddr_in);
-	    setmask = 1;
+	    if (strchr(argv[i + 1], ':'))
+	    {
+		sad4.sadb_address_len = (sizeof(sad4) +
+					 ROUNDUP(sizeof(struct sockaddr_in6)))
+					 / 8;
+		sad5.sadb_address_len = (sizeof(sad5) +
+					 ROUNDUP(sizeof(struct sockaddr_in6)))
+					 / 8;
+		sad6.sadb_address_len = (sizeof(sad6) +
+					 ROUNDUP(sizeof(struct sockaddr_in6)))
+					 / 8;
+		sad7.sadb_address_len = (sizeof(sad7) +
+					 ROUNDUP(sizeof(struct sockaddr_in6)))
+					 / 8;
 
-	    if (!inet_aton(argv[i + 1], &osrc.sin.sin_addr)) {
-		fprintf(stderr, "%s: source address %s is not valid\n", argv[0],
-		    argv[i + 1]);
-	        exit(1);
+		osrc->sin6.sin6_family = odst->sin6.sin6_family = AF_INET6;
+		osmask->sin6.sin6_family = odmask->sin6.sin6_family = AF_INET6;
+		osrc->sin6.sin6_len = odst->sin6.sin6_len =
+				   sizeof(struct sockaddr_in6);
+		osmask->sin6.sin6_len = sizeof(struct sockaddr_in6);
+		odmask->sin6.sin6_len = sizeof(struct sockaddr_in6);
+		setmask = 1;
+
+		if (!inet_pton(AF_INET6, argv[i + 1], &osrc->sin6.sin6_addr))
+		{
+		    fprintf(stderr, "%s: source address %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
+		if (!inet_pton(AF_INET6, argv[i + 1], &osmask->sin6.sin6_addr))
+		{
+		    fprintf(stderr, "%s: source netmask %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
+		if (!inet_pton(AF_INET6, argv[i + 1], &odst->sin6.sin6_addr))
+		{
+		    fprintf(stderr,
+			    "%s: destination address %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
+		if (!inet_pton(AF_INET6, argv[i + 1], &odmask->sin6.sin6_addr))
+		{
+		    fprintf(stderr,
+			    "%s: destination netmask %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
 	    }
-	    i++;
-	    if (!inet_aton(argv[i + 1], &osmask.sin.sin_addr)) {
-		fprintf(stderr, "%s: source netmask %s is not valid\n", argv[0],
-		    argv[i + 1]);
-	        exit(1);
+	    else
+#endif /* INET6 */
+	    {
+		sad4.sadb_address_len = (sizeof(sad4) +
+					 sizeof(struct sockaddr_in)) / 8;
+		sad5.sadb_address_len = (sizeof(sad5) +
+					 sizeof(struct sockaddr_in)) / 8;
+		sad6.sadb_address_len = (sizeof(sad6) +
+					 sizeof(struct sockaddr_in)) / 8;
+		sad7.sadb_address_len = (sizeof(sad7) +
+					 sizeof(struct sockaddr_in)) / 8;
+
+		osrc->sin.sin_family = odst->sin.sin_family = AF_INET;
+		osmask->sin.sin_family = odmask->sin.sin_family = AF_INET;
+		osrc->sin.sin_len = odst->sin.sin_len =
+				   sizeof(struct sockaddr_in);
+		osmask->sin.sin_len = sizeof(struct sockaddr_in);
+		odmask->sin.sin_len = sizeof(struct sockaddr_in);
+		setmask = 1;
+
+		if (!inet_pton(AF_INET, argv[i + 1], &osrc->sin.sin_addr))
+		{
+		    fprintf(stderr, "%s: source address %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
+		if (!inet_pton(AF_INET, argv[i + 1], &osmask->sin.sin_addr))
+		{
+		    fprintf(stderr, "%s: source netmask %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
+		if (!inet_pton(AF_INET, argv[i + 1], &odst->sin.sin_addr))
+		{
+		    fprintf(stderr,
+			    "%s: destination address %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
+		if (!inet_pton(AF_INET, argv[i + 1], &odmask->sin.sin_addr))
+		{
+		    fprintf(stderr,
+			    "%s: destination netmask %s is not valid\n",
+			    argv[0], argv[i + 1]);
+		    exit(1);
+		}
+		i++;
 	    }
-	    i++;
-	    if (!inet_aton(argv[i + 1], &odst.sin.sin_addr)) {
-		fprintf(stderr, "%s: destination address %s is not valid\n", argv[0],
-		    argv[i + 1]);
-	        exit(1);
-	    }
-	    i++;
-	    if (!inet_aton(argv[i + 1], &odmask.sin.sin_addr)) {
-		fprintf(stderr, "%s: destination netmask %s is not valid\n", argv[0],
-		    argv[i + 1]);
-	        exit(1);
-	    }
-	    i++;
 	    continue;
 	}
 
@@ -684,9 +822,9 @@ main(int argc, char **argv)
 	    sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	    sad2.sadb_address_len = (sizeof(sad2) +
 				     sizeof(struct sockaddr_in)) / 8;
-	    dst.sin.sin_family = AF_INET;
-	    dst.sin.sin_len = sizeof(struct sockaddr_in);
-	    dstset = inet_aton("0.0.0.0", &dst.sin.sin_addr) != -1 ? 1 : 0;
+	    dst->sin.sin_family = AF_INET;
+	    dst->sin.sin_len = sizeof(struct sockaddr_in);
+	    dstset = inet_aton("0.0.0.0", &dst->sin.sin_addr) != -1 ? 1 : 0;
 	    continue;
 	}
 
@@ -742,8 +880,8 @@ main(int argc, char **argv)
 	    else
 	      sport = atoi(argv[i+1]);
 
-	    osrc.sin.sin_port = sport;
-	    osmask.sin.sin_port = 0xffff;
+	    osrc->sin.sin_port = sport;
+	    osmask->sin.sin_port = 0xffff;
 	    i++;
 	    continue;
 	}
@@ -766,8 +904,8 @@ main(int argc, char **argv)
 	    else
 	      dport = atoi(argv[i + 1]);
 
-	    odst.sin.sin_port = dport;
-	    odmask.sin.sin_port = 0xffff;
+	    odst->sin.sin_port = dport;
+	    odmask->sin.sin_port = 0xffff;
 	    i++;
 	    continue;
 	}
@@ -775,11 +913,35 @@ main(int argc, char **argv)
 	if (!strcmp(argv[i] + 1, "dst") && (i + 1 < argc) && !bypass)
 	{
 	    sad2.sadb_address_exttype = SADB_EXT_ADDRESS_DST;
-	    sad2.sadb_address_len = (sizeof(sad2) +
-				     sizeof(struct sockaddr_in)) / 8;
-	    dst.sin.sin_family = AF_INET;
-	    dst.sin.sin_len = sizeof(struct sockaddr_in);
-	    dstset = inet_aton(argv[i + 1], &dst.sin.sin_addr) != -1 ? 1 : 0;
+#ifdef INET6
+	    if (strchr(argv[i + 1], ':'))
+	    {
+		sad2.sadb_address_len = (sizeof(sad2) +
+					 ROUNDUP(sizeof(struct sockaddr_in6)))
+					 / 8;
+		dst->sin6.sin6_family = AF_INET6;
+		dst->sin6.sin6_len = sizeof(struct sockaddr_in6);
+		dstset = inet_pton(AF_INET6, argv[i + 1],
+				   &dst->sin6.sin6_addr) != -1 ? 1 : 0;
+	    }
+	    else
+#endif /* INET6 */
+	    {
+		sad2.sadb_address_len = (sizeof(sad2) +
+					 sizeof(struct sockaddr_in)) / 8;
+		dst->sin.sin_family = AF_INET;
+		dst->sin.sin_len = sizeof(struct sockaddr_in);
+		dstset = inet_pton(AF_INET, argv[i + 1],
+				   &dst->sin.sin_addr) != -1 ? 1 : 0;
+	    }
+
+	    if (dstset == 0)
+	    {
+		fprintf(stderr,
+			"%s: Warning: destination address %s is not valid\n",
+			argv[0], argv[i + 1]);
+		exit(1);
+	    }
 	    i++;
 	    continue;
 	}
@@ -787,12 +949,36 @@ main(int argc, char **argv)
 	if (!strcmp(argv[i] + 1, "dst2") && 
 	    (iscmd(mode, GRP_SPI) || iscmd(mode, BINDSA)) && (i + 1 < argc))
 	{
-	    sad8.sadb_address_len = (sizeof(sad8) +
-				     sizeof(struct sockaddr_in)) / 8;
 	    sad8.sadb_address_exttype = SADB_X_EXT_DST2;
-	    dst2.sin.sin_family = AF_INET;
-	    dst2.sin.sin_len = sizeof(struct sockaddr_in);
-	    dst2set = inet_aton(argv[i + 1], &dst2.sin.sin_addr) != -1 ? 1 : 0;
+#ifdef INET6
+	    if (strchr(argv[i + 1], ':'))
+	    {
+		sad8.sadb_address_len = (sizeof(sad8) +
+					 ROUNDUP(sizeof(struct sockaddr_in6)))
+					 / 8;
+		dst2->sin6.sin6_family = AF_INET6;
+		dst2->sin6.sin6_len = sizeof(struct sockaddr_in6);
+		dst2set = inet_pton(AF_INET6, argv[i + 1],
+				    &dst2->sin6.sin6_addr) != -1 ? 1 : 0;
+	    }
+	    else
+#endif /* INET6 */
+	    {
+		sad8.sadb_address_len = (sizeof(sad8) +
+					 sizeof(struct sockaddr_in)) / 8;
+		dst2->sin.sin_family = AF_INET;
+		dst2->sin.sin_len = sizeof(struct sockaddr_in);
+		dst2set = inet_pton(AF_INET, argv[i + 1],
+				    &dst2->sin.sin_addr) != -1 ? 1 : 0;
+	    }
+
+	    if (dst2set == 0)
+	    {
+		fprintf(stderr,
+			"%s: Warning: destination address2 %s is not valid\n",
+			argv[0], argv[i + 1]);
+		exit(1);
+	    }
 	    i++;
 	    continue;
 	}
@@ -954,7 +1140,9 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (spi == SPI_RESERVED_MIN && !iscmd(mode, FLUSH) && !bypass)
+    if (spi == SPI_RESERVED_MIN && !iscmd(mode, FLUSH) && !bypass &&
+	(!iscmd(mode, FLOW) || (iscmd(mode, FLOW) &&
+			        smsg.sadb_msg_type != SADB_X_DELFLOW)))
     {
 	fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 	exit(1);
@@ -992,7 +1180,9 @@ main(int argc, char **argv)
 	exit(1);
     }
 
-    if (!dstset && !iscmd(mode, FLUSH))
+    if (!dstset && !iscmd(mode, FLUSH) &&
+	(!iscmd(mode, FLOW) || (iscmd(mode, FLOW) &&
+			        smsg.sadb_msg_type != SADB_X_DELFLOW)))
     {
 	fprintf(stderr, "%s: no destination address for the SA specified\n", 
 		argv[0]);
@@ -1006,7 +1196,7 @@ main(int argc, char **argv)
     }
 
     if (iscmd(mode, FLOW) && !bypass && (sprotocol.sadb_protocol_proto == 0) &&
-	(odst.sin.sin_port || osrc.sin.sin_port))
+	(odst->sin.sin_port || osrc->sin.sin_port))
     {
 	fprintf(stderr, "%s: no transport protocol supplied with source/destination ports\n", argv[0]);
 	exit(1);
@@ -1051,29 +1241,29 @@ main(int argc, char **argv)
 	iov[cnt].iov_base = &sad2;
 	iov[cnt++].iov_len = sizeof(sad2);
 	/* Destination address */
-	iov[cnt].iov_base = &dst;
-	iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+	iov[cnt].iov_base = dst;
+	iov[cnt++].iov_len = ROUNDUP(dst->sa.sa_len);
 	smsg.sadb_msg_len += sad2.sadb_address_len;
 
-	if (src.sin.sin_addr.s_addr)
+	if (src->sa.sa_len)
 	{
 	    /* Source address header */
 	    iov[cnt].iov_base = &sad1;
 	    iov[cnt++].iov_len = sizeof(sad1);
 	    /* Source address */
-	    iov[cnt].iov_base = &src;
-	    iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+	    iov[cnt].iov_base = src;
+	    iov[cnt++].iov_len = ROUNDUP(src->sa.sa_len);
 	    smsg.sadb_msg_len += sad1.sadb_address_len;
 	}
 
-	if (proxy.sin.sin_addr.s_addr)
+	if (proxy->sa.sa_len)
 	{
 	    /* Proxy address header */
 	    iov[cnt].iov_base = &sad3;
 	    iov[cnt++].iov_len = sizeof(sad3);
 	    /* Proxy address */
-	    iov[cnt].iov_base = &proxy;
-	    iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+	    iov[cnt].iov_base = proxy;
+	    iov[cnt++].iov_len = ROUNDUP(proxy->sa.sa_len);
 	    smsg.sadb_msg_len += sad3.sadb_address_len;
 	}
 
@@ -1120,8 +1310,8 @@ main(int argc, char **argv)
 		iov[cnt].iov_base = &sad2;
 		iov[cnt++].iov_len = sizeof(sad2);
 		/* Destination address */
-		iov[cnt].iov_base = &dst;
-		iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		iov[cnt].iov_base = dst;
+		iov[cnt++].iov_len = ROUNDUP(dst->sa.sa_len);
 		smsg.sadb_msg_len += sad2.sadb_address_len;
 
 		/* SA header */
@@ -1133,8 +1323,8 @@ main(int argc, char **argv)
 		iov[cnt].iov_base = &sad8;
 		iov[cnt++].iov_len = sizeof(sad8);
 		/* Destination2 address */
-		iov[cnt].iov_base = &dst2;
-		iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		iov[cnt].iov_base = dst2;
+		iov[cnt++].iov_len = ROUNDUP(dst2->sa.sa_len);
 		smsg.sadb_msg_len += sad8.sadb_address_len;
 
 		/* Protocol2 */
@@ -1153,8 +1343,8 @@ main(int argc, char **argv)
 		iov[cnt].iov_base = &sad2;
 		iov[cnt++].iov_len = sizeof(sad2);
 		/* Destination address */
-		iov[cnt].iov_base = &dst;
-		iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		iov[cnt].iov_base = dst;
+		iov[cnt++].iov_len = ROUNDUP(dst->sa.sa_len);
 		smsg.sadb_msg_len += sad2.sadb_address_len;
 		break;
 
@@ -1168,18 +1358,18 @@ main(int argc, char **argv)
 		iov[cnt].iov_base = &sad2;
 		iov[cnt++].iov_len = sizeof(sad2);
 		/* Destination address */
-		iov[cnt].iov_base = &dst;
-		iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		iov[cnt].iov_base = dst;
+		iov[cnt++].iov_len = ROUNDUP(dst->sa.sa_len);
 		smsg.sadb_msg_len += sad2.sadb_address_len;
 
-		if (src.sin.sin_addr.s_addr)
+		if (src->sa.sa_len)
 		{
 		    /* Source address header */
 		    iov[cnt].iov_base = &sad1;
 		    iov[cnt++].iov_len = sizeof(sad1);
 		    /* Source address */
-		    iov[cnt].iov_base = &src;
-		    iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		    iov[cnt].iov_base = src;
+		    iov[cnt++].iov_len = ROUNDUP(src->sa.sa_len);
 		    smsg.sadb_msg_len += sad1.sadb_address_len;
 		}
 		break;
@@ -1191,8 +1381,8 @@ main(int argc, char **argv)
 		     iov[cnt].iov_base = &sad2;
 		     iov[cnt++].iov_len = sizeof(sad2);
 		     /* Destination address */
-		     iov[cnt].iov_base = &dst;
-		     iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		     iov[cnt].iov_base = dst;
+		     iov[cnt++].iov_len = ROUNDUP(dst->sa.sa_len);
 		     smsg.sadb_msg_len += sad2.sadb_address_len;
 		 }
 		 
@@ -1213,32 +1403,32 @@ main(int argc, char **argv)
 		 iov[cnt].iov_base = &sad4;
 		 iov[cnt++].iov_len = sizeof(sad4);
 		 /* Flow source addressaddress */
-		 iov[cnt].iov_base = &osrc;
-		 iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		 iov[cnt].iov_base = osrc;
+		 iov[cnt++].iov_len = ROUNDUP(osrc->sa.sa_len);
 		 smsg.sadb_msg_len += sad4.sadb_address_len;
 
 		 /* Flow destination address header */
 		 iov[cnt].iov_base = &sad5;
 		 iov[cnt++].iov_len = sizeof(sad5);
 		 /* Flow destination address */
-		 iov[cnt].iov_base = &odst;
-		 iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		 iov[cnt].iov_base = odst;
+		 iov[cnt++].iov_len = ROUNDUP(odst->sa.sa_len);
 		 smsg.sadb_msg_len += sad5.sadb_address_len;
 
 		 /* Flow source address mask header */
 		 iov[cnt].iov_base = &sad6;
 		 iov[cnt++].iov_len = sizeof(sad6);
 		 /* Flow source address mask */
-		 iov[cnt].iov_base = &osmask;
-		 iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		 iov[cnt].iov_base = osmask;
+		 iov[cnt++].iov_len = ROUNDUP(osmask->sa.sa_len);
 		 smsg.sadb_msg_len += sad6.sadb_address_len;
 
 		 /* Flow destination address mask header */
 		 iov[cnt].iov_base = &sad7;
 		 iov[cnt++].iov_len = sizeof(sad7);
 		 /* Flow destination address mask */
-		 iov[cnt].iov_base = &odmask;
-		 iov[cnt++].iov_len = sizeof(struct sockaddr_in);
+		 iov[cnt].iov_base = odmask;
+		 iov[cnt++].iov_len = ROUNDUP(odmask->sa.sa_len);
 		 smsg.sadb_msg_len += sad7.sadb_address_len;
 		 break;
 
