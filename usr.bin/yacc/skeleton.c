@@ -1,3 +1,5 @@
+/*	$OpenBSD: skeleton.c,v 1.3 1996/03/27 19:33:21 niklas Exp $	*/
+
 #include "defs.h"
 
 /*  The definition of yysccsid in the banner should be replaced with	*/
@@ -16,7 +18,7 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[] = \"$Id: skeleton.c,v 1.2 1995/12/22 01:41:55 niklas Exp $\";",
+    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.3 1996/03/27 19:33:21 niklas Exp $\";",
     "#endif",
     "#define YYBYACC 1",
     "#define YYMAJOR 1",

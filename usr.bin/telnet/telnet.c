@@ -1,3 +1,6 @@
+/*	$OpenBSD: telnet.c,v 1.2 1996/03/27 19:33:10 niklas Exp $	*/
+/*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)telnet.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: telnet.c,v 1.1.1.1 1995/10/18 08:46:15 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
+static char rcsid[] = "$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: telnet.c,v 1.2 1996/03/27 19:33:10 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,7 +65,7 @@ static char *rcsid = "$Id: telnet.c,v 1.1.1.1 1995/10/18 08:46:15 deraadt Exp $"
 #include "general.h"
 
 
-#define	strip(x)	((x)&0x7f)
+#define	strip(x) ((my_want_state_is_wont(TELOPT_BINARY)) ? ((x)&0x7f) : (x))
 
 static unsigned char	subbuffer[SUBBUFSIZE],
 			*subpointer, *subend;	 /* buffer for sub-options */
@@ -179,7 +186,7 @@ init_telnet()
     ClearArray(options);
 
     connected = In3270 = ISend = localflow = donebinarytoggle = 0;
-#if	defined(AUTHENTICATION) 
+#if	defined(AUTHENTICATION)
     auth_encrypt_connect(connected);
 #endif	/* defined(AUTHENTICATION)  */
     restartany = -1;
@@ -615,7 +622,7 @@ mklist(buf, name)
 	register char c, *cp, **argvp, *cp2, **argv, **avt;
 
 	if (name) {
-		if (strlen(name) > 40) {
+		if ((int)strlen(name) > 40) {
 			name = 0;
 			unknown[0] = name_unknown;
 		} else {
@@ -681,7 +688,7 @@ mklist(buf, name)
 		else if (islower(c))
 			*cp = toupper(c);
 	}
-	
+
 	/*
 	 * Check for an old V6 2 character name.  If the second
 	 * name points to the beginning of the buffer, and is
@@ -774,7 +781,7 @@ gettermname()
 				(setupterm(tname, 1, &err) == 0)) {
 			tnamep = mklist(termbuf, tname);
 		} else {
-			if (tname && (strlen(tname) <= 40)) {
+			if (tname && ((int)strlen(tname) <= 40)) {
 				unknown[0] = tname;
 				upcase(tname);
 			} else
@@ -1749,7 +1756,7 @@ telrcv()
 	case TS_IAC:
 process_iac:
 	    switch (c) {
-	    
+
 	    case WILL:
 		telrcv_state = TS_WILL;
 		continue;
@@ -2135,7 +2142,7 @@ Scheduler(block)
 					ring_full_consecutive(&ttyiring));
 	    if (c) {
 		returnValue = 1;
-	        ring_consumed(&ttyiring, c);
+		ring_consumed(&ttyiring, c);
 	    }
 	} else {
 #   endif /* defined(TN3270) */
@@ -2164,7 +2171,7 @@ telnet(user)
 {
     sys_telnet_init();
 
-#if	defined(AUTHENTICATION) 
+#if	defined(AUTHENTICATION)
     {
 	static char local_host[256] = { 0 };
 
@@ -2342,7 +2349,7 @@ netclear()
 		next = nextitem(next);
 	    } while (wewant(next) && (nfrontp > next));
 	    length = next-thisitem;
-	    memcpy(good, thisitem, length);
+	    memmove(good, thisitem, length);
 	    good += length;
 	    thisitem = next;
 	} else {

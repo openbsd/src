@@ -1,4 +1,5 @@
-/*	$NetBSD: parse.c,v 1.19 1996/02/07 23:04:04 thorpej Exp $	*/
+/*	$OpenBSD: parse.c,v 1.7 1996/03/27 19:32:41 niklas Exp $	*/
+/*	$NetBSD: parse.c,v 1.22 1996/03/15 21:52:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.19 1996/02/07 23:04:04 thorpej Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.22 1996/03/15 21:52:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -170,6 +171,7 @@ typedef enum {
     Order,  	    /* .ORDER */
     Parallel,	    /* .PARALLEL */
     ExPath,	    /* .PATH */
+    Phony,	    /* .PHONY */
     Precious,	    /* .PRECIOUS */
     ExShell,	    /* .SHELL */
     Silent,	    /* .SILENT */
@@ -222,6 +224,7 @@ static struct {
 { ".ORDER", 	  Order,    	0 },
 { ".PARALLEL",	  Parallel,	0 },
 { ".PATH",	  ExPath,	0 },
+{ ".PHONY",	  Phony,	OP_PHONY },
 { ".PRECIOUS",	  Precious, 	OP_PRECIOUS },
 { ".RECURSIVE",	  Attribute,	OP_MAKE },
 { ".SHELL", 	  ExShell,    	0 },
@@ -832,6 +835,7 @@ ParseDoDependency (line)
 		 *	    	    	life easier later, when we'll
 		 *	    	    	use Make_HandleUse to actually
 		 *	    	    	apply the .DEFAULT commands.
+		 *	.PHONY		The list of targets
 		 *	.BEGIN
 		 *	.END
 		 *	.INTERRUPT  	Are not to be considered the

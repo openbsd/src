@@ -1,4 +1,5 @@
-/*	$NetBSD: crc.c,v 1.5 1995/03/26 05:15:18 glass Exp $	*/
+/*	$OpenBSD: crc.c,v 1.2 1996/03/27 19:32:21 niklas Exp $	*/
+/*	$NetBSD: crc.c,v 1.7 1996/02/27 21:29:53 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,15 +40,18 @@
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
+static char rcsid[] = "$NetBSD: crc.c,v 1.7 1996/02/27 21:29:53 jtc Exp $";
 #else
-static char rcsid[] = "$NetBSD: crc.c,v 1.5 1995/03/26 05:15:18 glass Exp $";
+static char rcsid[] = "$OpenBSD: crc.c,v 1.2 1996/03/27 19:32:21 niklas Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <unistd.h>
 
-static u_int32_t crctab[] = {
+#include "extern.h"
+
+static const u_int32_t crctab[] = {
 	0x0,
 	0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b,
 	0x1a864db2, 0x1e475005, 0x2608edb8, 0x22c9f00f, 0x2f8ad6d6,

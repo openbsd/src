@@ -1,3 +1,6 @@
+/*	$OpenBSD: nfsstat.c,v 1.2 1996/03/27 19:32:49 niklas Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,21 +44,19 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nfsstat.c,v 1.1.1.1 1995/10/18 08:45:52 deraadt Exp $";
+#if 0
+static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
+static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
+#else
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.2 1996/03/27 19:32:49 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#if BSD >= 199103
-#define NEWVM
-#endif
-#ifndef NEWVM
-#include <sys/vmmac.h>
-#include <sys/ucred.h>
-#include <machine/pte.h>
-#endif
 #include <sys/mount.h>
-#include <nfs/nfsv2.h>
+#include <sys/sysctl.h>
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -68,6 +69,7 @@ static char *rcsid = "$Id: nfsstat.c,v 1.1.1.1 1995/10/18 08:45:52 deraadt Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <err.h>
 
 struct nlist nl[] = {
 #define	N_NFSSTAT	0
@@ -172,7 +174,7 @@ intpr(nfsstataddr)
 		nfsstats.rpccnt[NFSPROC_REMOVE]);
 	printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
 		"Rename", "Link", "Symlink", "Mkdir", "Rmdir",
-		"Readdir", "Statfs", "RdirLook");
+		"Readdir", "RdirPlus", "Access");
 	printf("%9d %9d %9d %9d %9d %9d %9d %9d\n",
 		nfsstats.rpccnt[NFSPROC_RENAME],
 		nfsstats.rpccnt[NFSPROC_LINK],
@@ -180,11 +182,17 @@ intpr(nfsstataddr)
 		nfsstats.rpccnt[NFSPROC_MKDIR],
 		nfsstats.rpccnt[NFSPROC_RMDIR],
 		nfsstats.rpccnt[NFSPROC_READDIR],
-		nfsstats.rpccnt[NFSPROC_STATFS],
-		nfsstats.rpccnt[NQNFSPROC_READDIRLOOK]);
-	printf("%9.9s %9.9s %9.9s\n",
+		nfsstats.rpccnt[NFSPROC_READDIRPLUS],
+		nfsstats.rpccnt[NFSPROC_ACCESS]);
+	printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
+		"Mknod", "Fsstat", "Fsinfo", "PathConf", "Commit",
 		"GLease", "Vacate", "Evict");
-	printf("%9d %9d %9d\n",
+	printf("%9d %9d %9d %9d %9d %9d %9d %9d\n",
+		nfsstats.rpccnt[NFSPROC_MKNOD],
+		nfsstats.rpccnt[NFSPROC_FSSTAT],
+		nfsstats.rpccnt[NFSPROC_FSINFO],
+		nfsstats.rpccnt[NFSPROC_PATHCONF],
+		nfsstats.rpccnt[NFSPROC_COMMIT],
 		nfsstats.rpccnt[NQNFSPROC_GETLEASE],
 		nfsstats.rpccnt[NQNFSPROC_VACATED],
 		nfsstats.rpccnt[NQNFSPROC_EVICTED]);
@@ -235,7 +243,7 @@ intpr(nfsstataddr)
 		nfsstats.srvrpccnt[NFSPROC_REMOVE]);
 	printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
 		"Rename", "Link", "Symlink", "Mkdir", "Rmdir",
-		"Readdir", "Statfs", "RdirLook");
+		"Readdir", "RdirPlus", "Access");
 	printf("%9d %9d %9d %9d %9d %9d %9d %9d\n",
 		nfsstats.srvrpccnt[NFSPROC_RENAME],
 		nfsstats.srvrpccnt[NFSPROC_LINK],
@@ -243,11 +251,17 @@ intpr(nfsstataddr)
 		nfsstats.srvrpccnt[NFSPROC_MKDIR],
 		nfsstats.srvrpccnt[NFSPROC_RMDIR],
 		nfsstats.srvrpccnt[NFSPROC_READDIR],
-		nfsstats.srvrpccnt[NFSPROC_STATFS],
-		nfsstats.srvrpccnt[NQNFSPROC_READDIRLOOK]);
-	printf("%9.9s %9.9s %9.9s\n",
+		nfsstats.srvrpccnt[NFSPROC_READDIRPLUS],
+		nfsstats.srvrpccnt[NFSPROC_ACCESS]);
+	printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
+		"Mknod", "Fsstat", "Fsinfo", "PathConf", "Commit",
 		"GLease", "Vacate", "Evict");
-	printf("%9d %9d %9d\n",
+	printf("%9d %9d %9d %9d %9d %9d %9d %9d\n",
+		nfsstats.srvrpccnt[NFSPROC_MKNOD],
+		nfsstats.srvrpccnt[NFSPROC_FSSTAT],
+		nfsstats.srvrpccnt[NFSPROC_FSINFO],
+		nfsstats.srvrpccnt[NFSPROC_PATHCONF],
+		nfsstats.srvrpccnt[NFSPROC_COMMIT],
 		nfsstats.srvrpccnt[NQNFSPROC_GETLEASE],
 		nfsstats.srvrpccnt[NQNFSPROC_VACATED],
 		nfsstats.srvrpccnt[NQNFSPROC_EVICTED]);
@@ -270,6 +284,13 @@ intpr(nfsstataddr)
 		nfsstats.srvnqnfs_leases,
 		nfsstats.srvnqnfs_maxleases,
 		nfsstats.srvnqnfs_getleases);
+	printf("Server Write Gathering:\n");
+	printf("%9.9s %9.9s %9.9s\n",
+		"WriteOps", "WriteRPC", "Opsaved");
+	printf("%9d %9d %9d\n",
+		nfsstats.srvvop_writes,
+		nfsstats.srvrpccnt[NFSPROC_WRITE],
+		nfsstats.srvrpccnt[NFSPROC_WRITE] - nfsstats.srvvop_writes);
 }
 
 u_char	signalled;			/* set if alarm goes off "early" */
@@ -304,23 +325,25 @@ sidewaysintpr(interval, off)
 			exit(1);
 		}
 		printf("Client: %8d %8d %8d %8d %8d %8d %8d %8d\n",
-		    nfsstats.rpccnt[1]-lastst.rpccnt[1],
-		    nfsstats.rpccnt[4]-lastst.rpccnt[4],
-		    nfsstats.rpccnt[5]-lastst.rpccnt[5],
-		    nfsstats.rpccnt[6]-lastst.rpccnt[6],
-		    nfsstats.rpccnt[8]-lastst.rpccnt[8],
-		    nfsstats.rpccnt[11]-lastst.rpccnt[11],
-		    nfsstats.rpccnt[12]-lastst.rpccnt[12],
-		    nfsstats.rpccnt[16]-lastst.rpccnt[16]);
+		    nfsstats.rpccnt[NFSPROC_GETATTR]-lastst.rpccnt[NFSPROC_GETATTR],
+		    nfsstats.rpccnt[NFSPROC_LOOKUP]-lastst.rpccnt[NFSPROC_LOOKUP],
+		    nfsstats.rpccnt[NFSPROC_READLINK]-lastst.rpccnt[NFSPROC_READLINK],
+		    nfsstats.rpccnt[NFSPROC_READ]-lastst.rpccnt[NFSPROC_READ],
+		    nfsstats.rpccnt[NFSPROC_WRITE]-lastst.rpccnt[NFSPROC_WRITE],
+		    nfsstats.rpccnt[NFSPROC_RENAME]-lastst.rpccnt[NFSPROC_RENAME],
+		    nfsstats.rpccnt[NFSPROC_ACCESS]-lastst.rpccnt[NFSPROC_ACCESS],
+		    (nfsstats.rpccnt[NFSPROC_READDIR]-lastst.rpccnt[NFSPROC_READDIR])
+		    +(nfsstats.rpccnt[NFSPROC_READDIRPLUS]-lastst.rpccnt[NFSPROC_READDIRPLUS]));
 		printf("Server: %8d %8d %8d %8d %8d %8d %8d %8d\n",
-		    nfsstats.srvrpccnt[1]-lastst.srvrpccnt[1],
-		    nfsstats.srvrpccnt[4]-lastst.srvrpccnt[4],
-		    nfsstats.srvrpccnt[5]-lastst.srvrpccnt[5],
-		    nfsstats.srvrpccnt[6]-lastst.srvrpccnt[6],
-		    nfsstats.srvrpccnt[8]-lastst.srvrpccnt[8],
-		    nfsstats.srvrpccnt[11]-lastst.srvrpccnt[11],
-		    nfsstats.srvrpccnt[12]-lastst.srvrpccnt[12],
-		    nfsstats.srvrpccnt[16]-lastst.srvrpccnt[16]);
+		    nfsstats.srvrpccnt[NFSPROC_GETATTR]-lastst.srvrpccnt[NFSPROC_GETATTR],
+		    nfsstats.srvrpccnt[NFSPROC_LOOKUP]-lastst.srvrpccnt[NFSPROC_LOOKUP],
+		    nfsstats.srvrpccnt[NFSPROC_READLINK]-lastst.srvrpccnt[NFSPROC_READLINK],
+		    nfsstats.srvrpccnt[NFSPROC_READ]-lastst.srvrpccnt[NFSPROC_READ],
+		    nfsstats.srvrpccnt[NFSPROC_WRITE]-lastst.srvrpccnt[NFSPROC_WRITE],
+		    nfsstats.srvrpccnt[NFSPROC_RENAME]-lastst.srvrpccnt[NFSPROC_RENAME],
+		    nfsstats.srvrpccnt[NFSPROC_ACCESS]-lastst.srvrpccnt[NFSPROC_ACCESS],
+		    (nfsstats.srvrpccnt[NFSPROC_READDIR]-lastst.srvrpccnt[NFSPROC_READDIR])
+		    +(nfsstats.srvrpccnt[NFSPROC_READDIRPLUS]-lastst.srvrpccnt[NFSPROC_READDIRPLUS]));
 		lastst = nfsstats;
 		fflush(stdout);
 		oldmask = sigblock(sigmask(SIGALRM));
@@ -338,7 +361,7 @@ printhdr()
 {
 	printf("        %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s\n",
 	    "Getattr", "Lookup", "Readlink", "Read", "Write", "Rename",
-	    "Link", "Readdir");
+	    "Access", "Readdir");
 	fflush(stdout);
 }
 

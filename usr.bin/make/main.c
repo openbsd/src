@@ -1,4 +1,5 @@
-/*	$NetBSD: main.c,v 1.24 1996/02/04 22:20:49 christos Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1996/03/27 19:32:36 niklas Exp $	*/
+/*	$NetBSD: main.c,v 1.26 1996/03/11 13:45:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -47,8 +48,9 @@ char copyright[] =
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91";
+static char rcsid[] = "$NetBSD: main.c,v 1.26 1996/03/11 13:45:33 christos Exp $";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.24 1996/02/04 22:20:49 christos Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1996/03/27 19:32:36 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +88,6 @@ static char rcsid[] = "$NetBSD: main.c,v 1.24 1996/02/04 22:20:49 christos Exp $
 #include <sys/signal.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
-#include <sys/resource.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -454,11 +455,15 @@ main(argc, argv)
 	 * MACHINE_ARCH is always known at compile time.
 	 */
     	if (!machine) {
+#ifndef MACHINE
 	    if (uname(&utsname) == -1) {
 		    perror("make: uname");
 		    exit(2);
 	    }
 	    machine = utsname.machine;
+#else
+	    machine = MACHINE;
+#endif
 	}
 
 	/*

@@ -1,4 +1,5 @@
-/*	$NetBSD: disks.c,v 1.2 1995/01/20 08:51:53 jtc Exp $	*/
+/*	$OpenBSD: disks.c,v 1.2 1996/03/27 19:32:52 niklas Exp $	*/
+/*	$NetBSD: disks.c,v 1.3 1996/03/15 22:19:23 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,8 +37,9 @@
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
+static char rcsid[] = "$NetBSD: disks.c,v 1.3 1996/03/15 22:19:23 ragge Exp $";
 #endif
-static char rcsid[] = "$NetBSD: disks.c,v 1.2 1995/01/20 08:51:53 jtc Exp $";
+static char rcsid[] = "$OpenBSD: disks.c,v 1.2 1996/03/27 19:32:52 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,12 +61,6 @@ static struct nlist namelist[] = {
 	{ "_dk_ndrive" },
 #define	X_DK_WPMS	1
 	{ "_dk_wpms" },
-#ifdef vax
-#define	X_MBDINIT	(X_DK_WPMS+1)
-	{ "_mbdinit" },
-#define	X_UBDINIT	(X_DK_WPMS+2)
-	{ "_ubdinit" },
-#endif
 #ifdef sun
 #define	X_MBDINIT	(X_DK_WPMS+1)
 	{ "_mbdinit" },

@@ -1,3 +1,5 @@
+/*	$OpenBSD: lex.c,v 1.2 1996/03/27 19:32:33 niklas Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)lex.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: lex.c,v 1.1.1.1 1995/10/18 08:45:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.2 1996/03/27 19:32:33 niklas Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -247,7 +249,7 @@ execute(linebuf, contxt)
 {
 	char word[LINESIZE];
 	char *arglist[MAXARGC];
-	struct cmd *com;
+	const struct cmd *com;
 	register char *cp, *cp2;
 	register int c;
 	int muvec[2];
@@ -452,12 +454,12 @@ setmsize(sz)
  * to the passed command "word"
  */
 
-struct cmd *
+const struct cmd *
 lex(word)
 	char word[];
 {
-	register struct cmd *cp;
-	extern struct cmd cmdtab[];
+	extern const struct cmd cmdtab[];
+	register const struct cmd *cp;
 
 	for (cp = &cmdtab[0]; cp->c_name != NOSTR; cp++)
 		if (isprefix(word, cp->c_name))

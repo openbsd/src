@@ -1,3 +1,6 @@
+/*	$OpenBSD: ring.c,v 1.2 1996/03/27 19:33:05 niklas Exp $	*/
+/*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: ring.c,v 1.1.1.1 1995/10/18 08:46:14 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
+static char rcsid[] = "$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: ring.c,v 1.2 1996/03/27 19:33:05 niklas Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -288,7 +295,7 @@ ring_supply_data(ring, buffer, count)
 
     while (count) {
 	i = MIN(count, ring_empty_consecutive(ring));
-	memcpy(ring->supply, buffer, i);
+	memmove(ring->supply, buffer, i);
 	ring_supplied(ring, i);
 	count -= i;
 	buffer += i;
@@ -310,7 +317,7 @@ ring_consume_data(ring, buffer, count)
 
     while (count) {
 	i = MIN(count, ring_full_consecutive(ring));
-	memcpy(buffer, ring->consume, i);
+	memmove(buffer, ring->consume, i);
 	ring_consumed(ring, i);
 	count -= i;
 	buffer += i;

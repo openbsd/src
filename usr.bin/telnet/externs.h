@@ -1,3 +1,6 @@
+/*	$OpenBSD: externs.h,v 1.2 1996/03/27 19:33:01 niklas Exp $	*/
+/*	$NetBSD: externs.h,v 1.8 1996/02/28 21:03:58 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)externs.h	8.1 (Berkeley) 6/6/93
- *	$Id: externs.h,v 1.1.1.1 1995/10/18 08:46:14 deraadt Exp $
+ *	from: @(#)externs.h	8.3 (Berkeley) 5/30/95
  */
 
 #ifndef	BSD
@@ -85,8 +87,9 @@ typedef unsigned char cc_t;
 
 #ifndef	NO_STRING_H
 #include <string.h>
-#endif
+#else
 #include <strings.h>
+#endif
 
 #ifndef	_POSIX_VDISABLE
 # ifdef sun
@@ -105,13 +108,8 @@ typedef unsigned char cc_t;
 extern int errno;		/* outside this world */
 #endif /* !CRAY */
 
-#if	!defined(P)
-# ifdef	__STDC__
-#  define	P(x)	x
-# else
-#  define	P(x)	()
-# endif
-#endif
+#include <sys/cdefs.h>
+#define P __P
 
 extern int
     autologin,		/* Autologin enabled */
@@ -120,12 +118,12 @@ extern int
     flushout,		/* flush output */
     connected,		/* Are we connected to the other side? */
     globalmode,		/* Mode tty should be in */
-    In3270,			/* Are we in 3270 mode? */
+    In3270,		/* Are we in 3270 mode? */
     telnetport,		/* Are we connected to the telnet port? */
     localflow,		/* Flow control handled locally */
     restartany,		/* If flow control, restart output on any character */
     localchars,		/* we recognize interrupt/quit */
-    donelclchars,		/* the user has set "localchars" */
+    donelclchars,	/* the user has set "localchars" */
     showoptions,
     net,		/* Network file descriptor */
     tin,		/* Terminal input file descriptor */
@@ -146,7 +144,7 @@ extern int
 #endif	/* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
 #endif	/* defined(unix) */
-    debug,			/* Debug level */
+    debug,		/* Debug level */
     clienteof;		/* Client received EOF */
 
 extern cc_t escape;	/* Escape to command mode */

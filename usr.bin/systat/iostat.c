@@ -1,4 +1,5 @@
-/*	$NetBSD: iostat.c,v 1.3 1995/05/17 15:51:47 mycroft Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.2 1996/03/27 19:32:54 niklas Exp $	*/
+/*	$NetBSD: iostat.c,v 1.4 1996/03/15 22:19:25 ragge Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -36,8 +37,9 @@
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
+static char rcsid[] = "$NetBSD: iostat.c,v 1.4 1996/03/15 22:19:25 ragge Exp $";
 #endif
-static char rcsid[] = "$NetBSD: iostat.c,v 1.3 1995/05/17 15:51:47 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.2 1996/03/27 19:32:54 niklas Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -64,12 +66,6 @@ static struct nlist namelist[] = {
 	{ "_dk_seek" },
 #define X_CP_TIME	5
 	{ "_cp_time" },
-#ifdef vax
-#define X_MBDINIT	(X_CP_TIME+1)
-	{ "_mbdinit" },
-#define X_UBDINIT	(X_CP_TIME+2)
-	{ "_ubdinit" },
-#endif
 #ifdef tahoe
 #define	X_VBDINIT	(X_CP_TIME+1)
 	{ "_vbdinit" },

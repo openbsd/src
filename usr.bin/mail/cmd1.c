@@ -1,3 +1,5 @@
+/*	$OpenBSD: cmd1.c,v 1.2 1996/03/27 19:32:30 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)cmd1.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: cmd1.c,v 1.1.1.1 1995/10/18 08:45:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.2 1996/03/27 19:32:30 niklas Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -224,9 +226,9 @@ pdot()
 int
 pcmdlist()
 {
-	register struct cmd *cp;
+	extern const struct cmd cmdtab[];
+	register const struct cmd *cp;
 	register int cc;
-	extern struct cmd cmdtab[];
 
 	printf("Commands are:\n");
 	for (cc = 0, cp = cmdtab; cp->c_name != NULL; cp++) {

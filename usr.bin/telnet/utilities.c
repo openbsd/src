@@ -1,3 +1,6 @@
+/*	$OpenBSD: utilities.c,v 1.2 1996/03/27 19:33:15 niklas Exp $	*/
+/*	$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +35,12 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: utilities.c,v 1.1.1.1 1995/10/18 08:46:15 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
+static char rcsid[] = "$NetBSD: utilities.c,v 1.5 1996/02/28 21:04:21 thorpej Exp $";
+#else
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.2 1996/03/27 19:33:15 niklas Exp $";
+#endif
 #endif /* not lint */
 
 #define	TELOPTS
@@ -524,7 +531,7 @@ printsub(direction, pointer, length)
 		    break;
 		}
 		break;
-		
+
 	    case LM_SLC:
 		fprintf(NetTrace, "SLC");
 		for (i = 2; i < length - 2; i += 3) {
@@ -656,7 +663,7 @@ printsub(direction, pointer, length)
 			    fprintf(NetTrace, "\n");
 
 			break;
-				
+
 		    default:
 			fprintf(NetTrace, " %d", pointer[i]);
 			break;

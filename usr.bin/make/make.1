@@ -1,4 +1,5 @@
-.\"	$NetBSD: make.1,v 1.12 1995/12/16 05:03:09 christos Exp $
+.\"	$OpenBSD: make.1,v 1.6 1996/03/27 19:32:37 niklas Exp $
+.\"	$NetBSD: make.1,v 1.14 1996/03/15 21:52:32 christos Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -871,6 +872,11 @@ The sources are directories which are to be searched for files not
 found in the current directory.
 If no sources are specified, any previously specified directories are
 deleted.
+.It Ic .PHONY
+Apply the
+.Ic .PHONY
+attribute to any specified sources. Targets with this attribute are always
+considered to be out of date.
 .It Ic .PRECIOUS
 Apply the
 .Ic .PRECIOUS

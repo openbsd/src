@@ -1,3 +1,6 @@
+/*	$OpenBSD: general.h,v 1.2 1996/03/27 19:33:03 niklas Exp $	*/
+/*	$NetBSD: general.h,v 1.5 1996/02/28 21:04:02 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)general.h	8.1 (Berkeley) 6/6/93
- *	$Id: general.h,v 1.1.1.1 1995/10/18 08:46:14 deraadt Exp $
  */
 
 /*

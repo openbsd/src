@@ -1,4 +1,5 @@
-/*	$NetBSD: rpc_main.c,v 1.8 1995/08/29 23:05:53 cgd Exp $	*/
+/*	$OpenBSD: rpc_main.c,v 1.2 1996/03/27 19:32:51 niklas Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,12 +32,14 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$Id: rpc_main.c,v 1.1.1.1 1995/10/18 08:46:01 deraadt Exp $";
+static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.2 1996/03/27 19:32:51 niklas Exp $";
 #endif
 
 /*
  * rpc_main.c, Top level of the RPC protocol compiler. 
  */
+
+#define RPCGEN_VERSION	"199506"    /* This program's version (year & month) */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -533,6 +536,7 @@ h_output(infile, define, extend, outfile)
 	f_print(fout,"#ifndef _%s\n#define _%s\n\n", guard,
 		guard);
 
+	f_print(fout, "#define RPCGEN_VERSION\t%s\n\n", RPCGEN_VERSION);
 	f_print(fout, "#include <rpc/rpc.h>\n\n");
 
 	tell = ftell(fout);

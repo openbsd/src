@@ -1,3 +1,5 @@
+/*	$OpenBSD: extern.h,v 1.2 1996/03/27 19:32:32 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -156,7 +158,7 @@ int	 ishead __P((char []));
 int	 isign __P((char *, struct ignoretab []));
 int	 isprefix __P((char *, char *));
 void	 istrcpy __P((char *, char *));
-struct cmd *
+const struct cmd *
 	 lex __P((char []));
 void	 load __P((char *));
 struct var *
