@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.6 2003/07/01 01:01:28 avsm Exp $	*/
+/*	$OpenBSD: field.c,v 1.7 2004/07/05 18:47:49 millert Exp $	*/
 /*	$NetBSD: field.c,v 1.3 1995/03/26 04:55:28 glass Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)field.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: field.c,v 1.6 2003/07/01 01:01:28 avsm Exp $";
+static char rcsid[] = "$OpenBSD: field.c,v 1.7 2004/07/05 18:47:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,12 +57,19 @@ static char rcsid[] = "$OpenBSD: field.c,v 1.6 2003/07/01 01:01:28 avsm Exp $";
 int
 p_login(char *p, struct passwd *pw, ENTRY *ep)
 {
+	struct passwd *tpw;
+
 	if (!*p) {
 		warnx("empty login field");
 		return (1);
 	}
 	if (*p == '-') {
 		warnx("login names may not begin with a hyphen");
+		return (1);
+	}
+	/* XXX - what about truncated names? */
+	if (strcmp(pw->pw_name, p) != 0 && (tpw = getpwnam(p)) != NULL) {
+		warnx("login %s already exists", p);
 		return (1);
 	}
 	if (!(pw->pw_name = strdup(p))) {
@@ -98,20 +105,15 @@ int
 p_uid(char *p, struct passwd *pw, ENTRY *ep)
 {
 	uid_t id;
-	char *np;
+	const char *errstr;
 
 	if (!*p) {
 		warnx("empty uid field");
 		return (1);
 	}
-	if (!isdigit(*p)) {
-		warnx("illegal uid");
-		return (1);
-	}
-	errno = 0;
-	id = strtoul(p, &np, 10);
-	if (*np || (id == ULONG_MAX && errno == ERANGE)) {
-		warnx("illegal uid");
+	id = strtonum(p, 0, UID_MAX, &errstr);
+	if (errstr) {
+		warnx("uid is %s", errstr);
 		return (1);
 	}
 	pw->pw_uid = id;
@@ -123,8 +125,8 @@ int
 p_gid(char *p, struct passwd *pw, ENTRY *ep)
 {
 	struct group *gr;
+	const char *errstr;
 	gid_t id;
-	char *np;
 
 	if (!*p) {
 		warnx("empty gid field");
@@ -138,10 +140,9 @@ p_gid(char *p, struct passwd *pw, ENTRY *ep)
 		pw->pw_gid = gr->gr_gid;
 		return (0);
 	}
-	errno = 0;
-	id = strtoul(p, &np, 10);
-	if (*np || (id == ULONG_MAX && errno == ERANGE)) {
-		warnx("illegal gid");
+	id = strtonum(p, 0, GID_MAX, &errstr);
+	if (errstr) {
+		warnx("gid is %s", errstr);
 		return (1);
 	}
 	pw->pw_gid = id;
