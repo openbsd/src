@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.22 2003/10/05 20:27:46 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.23 2003/10/13 18:45:16 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -178,25 +178,14 @@ typedef	u_int32_t	pt_ind_entry_t;
 #define SDT_SHIFT	(PDT_BITS + PG_BITS)
 #define PDT_SHIFT	(PG_BITS)
 
-#define SDT_MASK	(((1<<SDT_BITS)-1) << SDT_SHIFT)
-#define PDT_MASK	(((1<<PDT_BITS)-1) << PDT_SHIFT)
-
-#define SDT_NEXT(va)	(((va) + (1<<SDT_SHIFT)) & SDT_MASK)
-#define PDT_NEXT(va)	(((va) + (1<<PDT_SHIFT)) & (SDT_MASK|PDT_MASK))
+#define SDT_MASK	(((1 << SDT_BITS) - 1) << SDT_SHIFT)
+#define PDT_MASK	(((1 << PDT_BITS) - 1) << PDT_SHIFT)
 
 #define	SDTIDX(va)	(((va) & SDT_MASK) >> SDT_SHIFT)
 #define	PDTIDX(va)	(((va) & PDT_MASK) >> PDT_SHIFT)
 
 /* XXX uses knowledge of pmap structure */
 #define SDTENT(map, va)	((sdt_entry_t *)((map)->pm_stab + SDTIDX(va)))
-
-/*
- * Size of a PDT table group.
- */
-
-#define LOG2_PDT_SIZE			(PDT_BITS + 2)
-#define LOG2_PDT_TABLE_GROUP_SIZE	(PAGE_SHIFT - LOG2_PDT_SIZE)
-#define PDT_TABLE_GROUP_SIZE		(1 << LOG2_PDT_TABLE_GROUP_SIZE)
 
 #define PT_FREE(tbl)	uvm_km_free(kernel_map, (vaddr_t)tbl, PAGE_SIZE)
 
@@ -205,7 +194,6 @@ typedef	u_int32_t	pt_ind_entry_t;
  */
 
 #define PDT_VA_SPACE			(PDT_ENTRIES * PAGE_SIZE)
-#define PDT_TABLE_GROUP_VA_SPACE	(PDT_VA_SPACE * PDT_TABLE_GROUP_SIZE)
 
 /*
  * Number of sdt entries used to map user and kernel space.
@@ -253,4 +241,3 @@ extern vaddr_t kmapva;
 u_int kvtop(vaddr_t);
 
 #endif /* __MACHINE_MMU_H__ */
-
