@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.10 1997/05/03 23:06:02 tholo Exp $
+#	$OpenBSD: install.sub,v 1.11 1997/05/04 03:03:14 tholo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=21
+VERSION=
 export VERSION
 
 ALLSETS="etc base misc comp text man game"	# default install sets
@@ -622,7 +622,7 @@ __install_ftp_2
 		fi
 
 		for _ftp_file in $resp; do
-			if [ "X${resp}" = "Xkernel" ]; then
+			if [ "X${_ftp_file}" = "Xkernel" ]; then
 				echo -n "get " >> /tmp/ftp-script.sh
 				echo "bsd" >> /tmp/ftp-script.sh
 			else
