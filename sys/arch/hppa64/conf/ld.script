@@ -1,0 +1,88 @@
+/* 	$OpenBSD: ld.script,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+
+/*
+ * Copyright (c) 2005 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER IN
+ * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+OUTPUT_FORMAT("elf64-hppa")
+OUTPUT_ARCH(hppa2.0w)
+ENTRY($start)
+SECTIONS
+{
+	. = + SIZEOF_HEADERS;
+	.text :
+	{
+		kernel_text = . ;
+		*(.text) *(.text.*)
+		*(.reginfo)
+		*(.init)
+		*(.stub)
+		/* .gnu.warning sections are handled specially by elf32.em.  */
+		*(.gnu.warning)
+		. = ALIGN(4096);
+		etext = ABSOLUTE(.);
+	} = 0x08000240	/* nop filled */
+	. = 0x400000;
+
+	.rodata :
+	{
+		__rodata_start = .;
+		*(.rodata) *(.rodata1)
+		__unwind_start = .;
+		*(.PARISC.unwind)
+		__unwind_end = .;
+		__rodata_end = .;
+	} = 0
+	__data_start = ABSOLUTE(.);
+
+	.data  :
+	{
+		*(.data)
+		CONSTRUCTORS
+		. = ALIGN(4096);
+		edata = ABSOLUTE(.);
+	} = 0
+	.ctors	: { *(.ctors) }
+	.dtors	: { *(.dtors) }
+
+	.opd	: { *(.opd) }
+	PROVIDE(__gp = .);
+	.plt	: { *(.plt) }
+	.dlt	: { *(.dlt) }
+
+	. = ALIGN(4096);
+
+	__bss_start = .;
+	/* .sbss	: { *(.sbss) *(.scommon) } */
+	.bss :
+	{
+		*(.dynbss) *(.bss)
+		*(COMMON) *($COMMON$)
+		. = ALIGN(4096);
+		__kernel_pagedir = ABSOLUTE(.);
+		. += 5*4096;	/* PIT + 4*PIE */
+	}
+	end = ABSOLUTE(.);
+
+	/DISCARD/ : {
+		*(.exitcall.exit)
+		*(.interp)
+		*(.dynsym)
+		*(.dynstr)
+		*(.dynamic)
+		*(.hash)
+	}
+}

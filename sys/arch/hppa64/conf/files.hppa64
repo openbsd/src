@@ -1,0 +1,133 @@
+#	$OpenBSD: files.hppa64,v 1.1 2005/04/01 10:40:47 mickey Exp $
+#
+# hppa64-specific configuration info
+
+# maxpartitions must be the first item in files.${ARCH}
+maxpartitions 16
+
+maxusers 2 8 64
+
+# 
+# "workstation console" routines
+#
+include "dev/wscons/files.wscons"
+file	arch/hppa64/hppa64/wscons_machdep.c	wsdisplay
+
+#
+# Media Independent Interface (mii)
+#
+include "dev/mii/files.mii"
+
+#
+# Machine-independent SCSI drivers
+#
+include "scsi/files.scsi"
+major	{ sd = 4 }
+major	{ st = 5 }
+major	{ cd = 6 }
+
+# I2O
+include "dev/i2o/files.i2o"
+
+#
+# MI ATAPI drivers
+#
+include "dev/atapiscsi/files.atapiscsi"
+include "dev/ata/files.ata"
+
+#
+# PCI Bus support
+#
+include "dev/pci/files.pci"
+
+#
+# CardBus support
+#
+include	"dev/cardbus/files.cardbus"
+
+#
+# Machine-independent PCMCIA drivers
+#
+include	"dev/pcmcia/files.pcmcia"
+
+#
+# Machine-independent USB drivers
+#
+include "dev/usb/files.usb"
+
+#
+# Mainbus
+#
+
+define	gedoens {}
+device	mainbus: gedoens
+attach	mainbus at root
+file	arch/hppa64/hppa64/mainbus.c	mainbus
+
+device	pdc
+attach	pdc at gedoens
+file	arch/hppa64/dev/pdc.c		pdc
+
+device	power
+attach	power at gedoens
+file	arch/hppa64/dev/power.c		power needs-flag
+
+device	mem
+attach	mem at gedoens
+file	arch/hppa64/dev/mem.c		mem
+
+device	cpu
+attach	cpu at gedoens
+file	arch/hppa64/dev/cpu.c		cpu
+
+# Astro/Pluto, integrated Runway-Ropes bridge, MIOC and IOA
+device	plut: gedoens
+attach	plut at gedoens
+file	arch/hppa64/dev/pluto.c		plut
+
+# Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
+# Mercury; QuickSilver is an AGP also
+device	elroy: pcibus
+attach	elroy at gedoens
+file	arch/hppa64/dev/elroy.c		elroy
+file	arch/hppa64/dev/apic.c		elroy
+
+###
+
+major	{ccd = 1}
+major	{vnd = 2}
+major	{rd = 3}
+
+# PS/2 mouse
+include	"dev/pckbc/files.pckbc"
+
+#
+# Compatibility
+#
+#include "compat/hpux/hppa64/files.hpux"
+#file	arch/hppa64/hppa64/hpux_machdep.c	compat_hpux
+#include "compat/osf1/files.osf1"
+#file	arch/hppa64/hppa64/osf1_machdep.c	compat_osf1
+#include	"compat/linux/files.linux"
+#include "compat/ossaudio/files.ossaudio"
+#file	arch/hppa64/hppa64/linux_machdep.c	compat_linux
+
+#
+# Non-device files
+#
+
+file	arch/hppa64/hppa64/autoconf.c
+file	arch/hppa64/hppa64/conf.c
+file	arch/hppa64/hppa64/db_interface.c	ddb
+file	arch/hppa64/hppa64/db_disasm.c		ddb
+file	arch/hppa64/hppa64/disksubr.c		disk
+file	arch/hppa64/hppa64/machdep.c
+file	arch/hppa64/hppa64/pmap.c
+file	arch/hppa64/hppa64/process_machdep.c
+file	arch/hppa64/hppa64/sys_machdep.c
+file	arch/hppa64/hppa64/trap.c
+file	arch/hppa64/hppa64/vm_machdep.c
+file	arch/hppa64/hppa64/in_cksum.c		inet
+file	arch/hppa64/dev/clock.c
+
+file	dev/cninit.c

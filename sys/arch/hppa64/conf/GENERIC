@@ -1,0 +1,176 @@
+#	$OpenBSD: GENERIC,v 1.1 2005/04/01 10:40:47 mickey Exp $
+
+# Machine architecture; required by config(8)
+machine		hppa64
+
+include "../../../conf/GENERIC"
+option	DEBUG
+
+option		USER_PCICONF	# user-space PCI configuration
+
+# Need to set locally
+maxusers	32
+
+option		TIMEZONE=0	# time zone to adjust RTC time by
+option		DST=0		# daylight saving time used by RTC
+
+#option	COMPAT_HPUX
+#option	COMPAT_LINUX
+
+config	bsd swap generic
+
+mainbus0 at root		# root bus
+
+mem*	at mainbus0 flags 0x00	# /dev/*mem and memory controller
+pdc0	at mainbus0		# PDC/IODC wrapper for boot console
+#power0	at mainbus0		# power/fail manager (iv 30)
+cpu*	at mainbus0		# HP PA-RISC cpu
+plut0	at mainbus0		# Astro Runway-Ropes, MIOC and IOA
+
+elroy*	at plut0
+pci*	at elroy?
+option	PCIVERBOSE
+
+ppb*	at pci?
+pci*	at ppb?
+
+#goofy*	at pci?			# NS87560UBD
+#com*	at goofy?
+#lpt*	at goofy?
+#fdc*	at goofy?
+
+# CardBus bus support
+#cbb*		at pci?
+#cardslot*	at cbb?
+#option		CARDBUS_DEBUG,CARDSLOT_DEBUG,CARDBUS_MAP_DEBUG
+#cardbus*	at cardslot?
+#option		PCMCIADEBUG,PCMCIAVERBOSE
+#pcmcia* 	at cardslot?
+
+# PCI USB Controllers
+#ehci*	at pci?			# Enhanced Host Controller
+#uhci*	at pci?			# Universal Host Controller (Intel)
+#ohci*	at pci?			# Open Host Controller
+
+# USB bus support
+#usb*	at ehci?
+#usb*	at uhci?
+#usb*	at ohci?
+
+# USB devices
+#uhub*	at usb?			# USB Hubs
+#uhub*	at uhub?		# USB Hubs
+#umodem*	at uhub?	# USB Modems/Serial
+#ucom*	at umodem?
+#uvisor*	at uhub?	# Handspring Visor
+#ucom*	at uvisor?
+#uvscom*	at uhub?	# SUNTAC Slipper U VS-10U serial
+#ucom*	at uvscom?
+#ubsa*	at uhub?		# Belkin serial adapter
+#ucom*	at ubsa?
+#uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
+#ucom*	at uftdi?
+#uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+#ucom*	at uplcom?
+#umct*	at uhub?		# MCT USB-RS232 serial adapter
+#ucom*	at umct?
+#uaudio* at uhub?		# USB Audio
+#audio*	at uaudio?
+#umidi*	at uhub?		# USB MIDI
+#midi*	at umidi?
+#ulpt*	at uhub?		# USB Printers
+#umass*	at uhub?		# USB Mass Storage devices
+#scsibus* at umass?
+#uhidev*	at uhub?	# Human Interface Devices
+#ums*	at uhidev?		# USB mouse
+#wsmouse* at ums? mux 0
+#ukbd*	at uhidev?		# USB keyboard
+#wskbd*	at ukbd? mux 1
+#uhid*	at uhidev?		# USB generic HID support
+#aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+#axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+#cue*	at uhub?		# CATC USB-EL1201A based Ethernet
+#kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+#cdce*	at uhub?		# CDC Ethernet
+#udav*	at uhub?		# Davicom DM9601 based Ethernet
+#upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+#url*	at uhub?		# Realtek RTL8150L based adapters
+#wi*	at uhub?		# WaveLAN IEEE 802.11DS
+#urio*	at uhub?		# Diamond Multimedia Rio 500
+#uscanner* at uhub?		# USB Scanners
+#usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
+#scsibus* at usscanner?
+#uyap*	at uhub?		# Y@P firmware loader
+#udsbr*	at uhub?		# D-Link DSB-R100 radio
+#radio*	at udsbr?		# USB radio
+#ugen*	at uhub?		# USB Generic driver
+
+#sti*	at pci?			# EG-PCI, FX*
+#wsdisplay*	at sti?
+
+#com*	at pcmcia?		# PCMCIA modems
+
+#ie*	at pci?
+
+#siop*	at pci?			# NCR 538XX SCSI controllers(new)
+#scsibus* at siop?
+#ahd*	at pci?			# Adaptec 79?? SCSI controllers
+#scsibus* at ahd?
+
+#em*	at pci?			# Intel Pro/1000 ethernet
+#ti*	at pci?			# Alteon Tigon 1Gb ethernet
+#txp*	at pci?			# 3com 3CR990
+#fpa*	at pci?			# DEC DEFPA FDDI
+dc*	at pci?			# 21143, "tulip" clone ethernet
+#dc*	at cardbus?
+#rl*	at pci?			# RealTek 81[23]9 ethernet
+#rl* 	at cardbus?
+#ep*	at pci?			# 3c59x
+#ep*	at cardbus?
+#xl*	at pci?			# 3C9xx ethernet
+#xl*	at cardbus?
+#fxp*	at pci?			# EtherExpress 10/100B ethernet
+#fxp*	at cardbus?
+#ne*	at pci?			# NE2000-compatible Ethernet
+#ne*	at pcmcia?
+#an*	at pci?			# Cisco/Aironet 802.11DS
+#an*	at pcmcia?
+#wi*	at pci?			# WaveLAN IEEE 802.11DS
+#wi*	at pcmcia?
+
+dcphy*		at mii?		# Digital Clone PHYs
+#amphy*		at mii?		# AMD 79C873 PHYs
+#exphy*		at mii?		# 3Com internal PHYs
+#inphy*		at mii?		# Intel 82555 PHYs
+#iophy*		at mii?		# Intel 82553 PHYs
+#icsphy* 	at mii?		# ICS1890 PHYs
+lxtphy*		at mii?		# Level One LXT-970 PHYs
+nsphy*		at mii?		# NS83840 PHYs
+#nsphyter*	at mii?		# NS83843 PHYs
+#mtdphy* 	at mii?		# Myson MTD972 PHYs
+#qsphy*		at mii?		# Quality Semi QS6612 PHYs
+#sqphy*		at mii?		# Seeq 8022[013] PHYs
+#tlphy*		at mii?		# ThunderLAN PHYs
+#tqphy*		at mii?		# TDK Semiconductor PHYs
+#brgphy* 	at mii?		# Broadcom 10/100/1000 PHYs
+#bmtphy* 	at mii?		# Broadcom 10/100 PHYs
+#eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
+ukphy*		at mii?		# generic unknown PHYs
+
+#pciide*	at pci? flags 0x0000
+#wdc*	at pcmcia?
+#wd*	at wdc? flags 0x0000
+#wd*	at pciide? flags 0x0000
+#atapiscsi* at pciide?
+#scsibus* at atapiscsi?
+
+# These entries find devices on all SCSI busses and assign
+# unit numers dynamically.
+#sd*	at scsibus?
+#st*	at scsibus?
+#cd*	at scsibus?
+#ch*	at scsibus?
+#ss*	at scsibus?
+#uk*	at scsibus?
+
+#pseudo-device	wsmux	2	# mouse and keyboard multiplexor

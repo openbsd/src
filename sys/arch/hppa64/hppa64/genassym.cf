@@ -1,0 +1,142 @@
+#	$OpenBSD: genassym.cf,v 1.1 2005/04/01 10:40:47 mickey Exp $
+
+#
+# Copyright (c) 1982, 1990, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	8.3 (Berkeley) 1/4/94
+#
+
+include <sys/param.h>
+include <sys/systm.h>
+include <sys/proc.h>
+include <sys/syscall.h>
+include <sys/user.h>
+
+include <machine/cpu.h>
+include <machine/psl.h>
+include <machine/reg.h>
+include <machine/vmparam.h>
+include <machine/frame.h>
+include <machine/pcb.h>
+
+include <uvm/uvm.h>
+
+# `break' entry points
+export	HPPA_BREAK_KERNEL
+export	HPPA_BREAK_GET_PSW
+export	HPPA_BREAK_SET_PSW
+
+# saved state fields
+struct	trapframe
+member	tf_flags
+member	tf_r1
+member	tf_rp
+member	tf_r3
+member	tf_r4
+member	tf_r5
+member	tf_r6
+member	tf_r7
+member	tf_r8
+member	tf_r9
+member	tf_r10
+member	tf_r11
+member	tf_r12
+member	tf_r13
+member	tf_r14
+member	tf_r15
+member	tf_r16
+member	tf_r17
+member	tf_r18
+member	tf_args
+member	tf_dp
+member	tf_ret0
+member	tf_ret1
+member	tf_sp
+member	tf_r31
+member	tf_sr0
+member	tf_sr1
+member	tf_sr2
+member	tf_sr3
+member	tf_sr4
+member	tf_sr5
+member	tf_sr6
+member	tf_sr7
+member	tf_rctr
+member	tf_ccr
+member	tf_iioq
+member	tf_iisq
+member	tf_pidr1
+member	tf_pidr2
+member	tf_eiem
+member	tf_eirr
+member	tf_isr
+member	tf_ior
+member	tf_iir
+member	tf_ipsw
+member	tf_ci
+member	tf_vtop
+member	tf_cr27
+member	tf_cr30
+member	tf_sar
+
+# proc fields and values
+struct	proc
+member	p_forw
+member	p_back
+member	p_addr
+member	p_priority
+member	p_stat
+member	p_wchan
+member	p_md
+member	P_MD_FLAGS		p_md.md_flags
+member	P_MD_REGS		p_md.md_regs
+
+export	SRUN
+export	SONPROC
+
+struct	user
+member	u_pcb
+
+struct	pcb
+member	pcb_fpregs
+member	pcb_onfault
+member	pcb_uva
+member	pcb_ksp
+member	pcb_space
+
+struct	cpu_info
+member	ci_curproc
+
+struct	uvm
+member	page_idle_zero
+
+# system calls
+export	SYSCALLGATE
+export	SYS_exit
+export	SYS_execve
+export	SYS_sigreturn
