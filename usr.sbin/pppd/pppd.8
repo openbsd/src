@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.29 2003/09/02 18:56:36 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.30 2005/01/31 09:50:29 jmc Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -1288,7 +1288,6 @@ The
 .Pa /etc/ppp/chat-isp
 file contains the script used by chat; it could for example contain
 something like this:
-.Pp
 .Bd -literal -offset indent
 ABORT "NO CARRIER"
 ABORT "NO DIALTONE"
@@ -1551,6 +1550,13 @@ permit non-privileged users to dial out without requiring the peer to
 authenticate, but only to certain trusted peers.
 .El
 .Sh SEE ALSO
+.Xr cua 4 ,
+.Xr ppp 4 ,
+.Xr tty 4 ,
+.Xr chat 8 ,
+.Xr ppp 8 ,
+.Xr syslogd 8 ,
+.Xr tcpdump 8
 .Rs
 .%B RFC 1144
 .%A Jacobson, V.
