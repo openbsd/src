@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: popen.c,v 1.3 1999/08/27 10:13:18 millert Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.4 1999/08/28 20:13:13 millert Exp $";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #endif /* not lint */
 
@@ -44,8 +44,9 @@ static PID_T *pids;
 static int fds;
 
 FILE *
-cron_popen(program, type)
+cron_popen(program, type, e)
 	char *program, *type;
+	entry *e;
 {
 	register char *cp;
 	FILE *iop;
@@ -119,6 +120,10 @@ cron_popen(program, type)
 				(void)close(pdes[0]);
 			}
 			(void)close(pdes[1]);
+		}
+		if (e) {
+			setgid(e->gid);
+			setuid(e->uid);
 		}
 #if WANT_GLOBBING
 		execvp(gargv[0], gargv);
