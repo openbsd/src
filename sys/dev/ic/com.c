@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.84 2002/04/09 15:08:43 pefo Exp $	*/
+/*	$OpenBSD: com.c,v 1.85 2002/06/11 04:54:10 miod Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -102,7 +102,6 @@
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
-bdev_decl(com);
 
 static u_char tiocm_xxx2mcr(int);
 
