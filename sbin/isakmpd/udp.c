@@ -1,8 +1,8 @@
-/*	$OpenBSD: udp.c,v 1.9 1999/03/31 23:47:12 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.32 1999/03/31 23:34:48 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.10 1999/04/05 21:00:08 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.34 1999/04/05 08:09:56 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -277,6 +277,7 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
 	  if (addr.s_addr == if_addr)
 	    break;
 	}
+      conf_free_list (listen_on);
 
       /*
        * If address is zero then we did not find the address among the ones
