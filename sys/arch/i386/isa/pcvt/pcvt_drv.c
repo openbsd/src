@@ -1,3 +1,5 @@
+/*	$OpenBSD: pcvt_drv.c,v 1.9 1996/04/18 17:48:28 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -327,7 +329,7 @@ pcattach(struct isa_device *dev)
 		vs[i].vs_tty = &pccons[i];
 #endif /* !PCVT_NETBSD && !(PCVT_FREEBSD > 110 && PCVT_FREEBSD < 200) */
 
-	async_update(UPDATE_START);	/* start asynchronous updates */
+	async_update();
 
 #if PCVT_FREEBSD > 205
 	/* mark the device busy now if we are the console */
@@ -341,6 +343,16 @@ pcattach(struct isa_device *dev)
 #if PCVT_NETBSD > 101
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
 	    (void *)0, sc->sc_dev.dv_xname);
+
+#if PCVT_NETBSD > 110
+	/*
+ 	 * Look for children of the keyboard controller.
+	 * XXX Really should decouple keyboard controller
+	 * from the console code.
+	 */
+	while (config_found(self, NULL, NULL))
+		/* will break when no more children */ ;
+#endif /* PVCT_NETBSD > 110 */
 #else /* PCVT_NETBSD > 100 */
 	vthand.ih_fun = pcrint;
 	vthand.ih_arg = 0;
@@ -947,7 +959,6 @@ extern void ttrstrt();
 void
 pcstart(register struct tty *tp)
 {
-	register struct clist *rbp;
 	int s, len;
 	u_char buf[PCVT_PCBURST];
 
@@ -956,41 +967,42 @@ pcstart(register struct tty *tp)
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
 
+	if (tp->t_outq.c_cc == 0 &&
+	    tp->t_wsel.si_pid == 0)
+	{
+		async_update();
+		goto low;
+	}
+
 	tp->t_state |= TS_BUSY;
 
 	splx(s);
-
-	async_update(UPDATE_KERN);
 
 	/*
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
 
-	rbp = &tp->t_outq;
-
-	while (len = q_to_b(rbp, buf, PCVT_PCBURST))
+	while (len = q_to_b(&tp->t_outq, buf, PCVT_PCBURST))
 		sput(&buf[0], 0, len, minor(tp->t_dev));
 
 	s = spltty();
 
 	tp->t_state &= ~TS_BUSY;
 
-	if (rbp->c_cc)
-	{
-		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
-	}
+	tp->t_state |= TS_TIMEOUT;
+	timeout(ttrstrt, tp, 1);
 
 #if PCVT_FREEBSD >= 210 && !defined(TS_ASLEEP)
 	ttwakeup(tp);
 #else
-	if (rbp->c_cc <= tp->t_lowat)
+	if (tp->t_outq.c_cc <= tp->t_lowat)
 	{
+low:
 		if (tp->t_state&TS_ASLEEP)
 		{
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)rbp);
+			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -1178,7 +1190,7 @@ pccnputc(Dev_t dev, U_char c)
 
 	sput((char *) &c, 1, 1, 0);
 
- 	async_update(UPDATE_KERN);
+ 	async_update();
 
 #if ((PCVT_NETBSD  &&  (PCVT_NETBSD <= 101)) || \
      (PCVT_FREEBSD && (PCVT_FREEBSD <= 205)))
@@ -1200,7 +1212,7 @@ pccngetc(Dev_t dev)
 	s = spltty();		/* block pcrint while we poll */
 	cp = sgetc(0);
 	splx(s);
-	async_update(UPDATE_KERN);
+	async_update();
 
 #if ! (PCVT_FREEBSD >= 201)
 	/* this belongs to cons.c */
@@ -1286,7 +1298,7 @@ getchar(void)
 
 	sput(">", 1, 1, 0);
 
-	async_update(UPDATE_KERN);
+	async_update();
 
 	thechar = *(sgetc(0));
 

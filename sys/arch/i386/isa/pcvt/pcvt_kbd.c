@@ -1,3 +1,5 @@
+/*	$OpenBSD: pcvt_kbd.c,v 1.4 1996/04/18 17:48:33 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -268,16 +270,40 @@ settpmrate(int rate)
 /*---------------------------------------------------------------------------*
  *	Pass command to keyboard controller (8042)
  *---------------------------------------------------------------------------*/
+static inline int
+kbd_wait_output()
+{
+	u_int i;
+
+	for (i = 100000; i; i--)
+		if ((inb(CONTROLLER_CTRL) & STATUS_INPBF) == 0) {
+			PCVT_KBD_DELAY();
+			return 1;
+		}
+	return 0;
+}
+
+static inline int
+kbd_wait_input()
+{
+	u_int i;
+
+	for (i = 100000; i; i--)
+		if ((inb(CONTROLLER_CTRL) & STATUS_OUTPBF) != 0) {
+			PCVT_KBD_DELAY();
+			return 1;
+		}
+	return 0;
+}
+
 static int
 kbc_8042cmd(int val)
 {
-	unsigned timeo;
 
-	timeo = 100000; 	/* > 100 msec */
-	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
-		if (--timeo == 0)
-			return (-1);
+	if (!kbd_wait_output())
+		return (-1);
 	outb(CONTROLLER_CTRL, val);
+
 	return (0);
 }
 
@@ -287,12 +313,9 @@ kbc_8042cmd(int val)
 int
 kbd_cmd(int val)
 {
-	unsigned timeo;
 
-	timeo = 100000; 	/* > 100 msec */
-	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
-		if (--timeo == 0)
-			return (-1);
+	if (!kbd_wait_output())
+		return (-1);
 	outb(CONTROLLER_DATA, val);
 
 #if PCVT_SHOWKEYS
@@ -310,14 +333,9 @@ int
 kbd_response(void)
 {
 	u_char ch;
-	unsigned timeo;
 
-	timeo = 500000; 	/* > 500 msec (KEYB_R_SELFOK requires 87) */
-	while (!(inb(CONTROLLER_CTRL) & STATUS_OUTPBF))
-		if (--timeo == 0)
-			return (-1);
-
-	PCVT_KBD_DELAY();		/* 7 us delay */
+	if (!kbd_wait_input())
+		return (-1);
 	ch = inb(CONTROLLER_DATA);
 
 #if PCVT_SHOWKEYS
@@ -336,7 +354,7 @@ kbd_setmode(int mode)
 #if PCVT_SCANSET > 1		/* switch only if we are running */
 				/*           keyboard scancode 2 */
 
-	int cmd, timeo = 10000;
+	int cmd;
 
 #if PCVT_USEKBDSEC
 	cmd =                  COMMAND_SYSFLG | COMMAND_IRQEN;
@@ -348,15 +366,8 @@ kbd_setmode(int mode)
 		cmd |= COMMAND_PCSCAN;	/*     yes, setup command */
 
 	kbc_8042cmd(CONTR_WRITE);
+	kbc_cmd(cmd);
 	
-	while (inb(CONTROLLER_CTRL) & STATUS_INPBF)
-	{
-		if (--timeo == 0)
-			break;
-	}
-	
-	outb(CONTROLLER_DATA, cmd);
-
 #endif /* PCVT_SCANSET > 1 */
 
 	if(mode == K_RAW)

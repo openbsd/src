@@ -1,3 +1,5 @@
+/*	$OpenBSD: pcvt_vtf.c,v 1.2 1996/04/18 17:48:37 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -2009,14 +2011,6 @@ roll_up(struct video_state *svsp, int n)
 		{
 			svsp->Crtat += n * svsp->maxcol;
 		}
-
-		if(vsp == svsp && !(vsp->vt_status & VT_GRAFX))
-		{
-			outb(addr_6845, CRTC_STARTADRH);
-			outb(addr_6845+1, (svsp->Crtat - Crtat) >> 8);
-			outb(addr_6845, CRTC_STARTADRL);
-			outb(addr_6845+1, (svsp->Crtat - Crtat));
-		}
 	}
 	else
 #endif
@@ -2070,14 +2064,6 @@ roll_down(struct video_state *svsp, int n)
 		else
 		{
 			svsp->Crtat -= n * svsp->maxcol;
-		}
-
-		if(vsp == svsp && !(vsp->vt_status & VT_GRAFX))
-		{
-			outb(addr_6845, CRTC_STARTADRH);
-			outb(addr_6845+1, (svsp->Crtat - Crtat) >> 8);
-			outb(addr_6845, CRTC_STARTADRL);
-			outb(addr_6845+1, (svsp->Crtat - Crtat));
 		}
 	}
 	else

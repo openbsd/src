@@ -1,3 +1,5 @@
+/*	$OpenBSD: pcvt_hdr.h,v 1.6 1996/04/18 17:48:31 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -693,12 +695,6 @@ in the config file"
 #define SYS_FKL		0	/* in hp mode, sys-fkls are active */
 #define USR_FKL		1	/* in hp mode, user-fkls are active */
 
-/* arguments to async_update() */
-
-#define UPDATE_START	0	/* do cursor update and requeue */
-#define UPDATE_STOP	1	/* suspend cursor updates */
-#define UPDATE_KERN	2	/* do cursor updates for kernel output */
-
 /* variables */
 
 #ifdef EXTERN
@@ -1260,7 +1256,7 @@ void 	pcvt_set_scrnsv_tmo ( int );
 void	vga_move_charset ( unsigned n, unsigned char *b, int save_it);
 #endif /* XSERVER */
 
-void	async_update ( int arg );
+void	async_update ( void );
 void	clr_parms ( struct video_state *svsp );
 void	cons_highlight ( void );
 void	cons_normal ( void );

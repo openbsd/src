@@ -1,3 +1,5 @@
+/*	$OpenBSD: pcvt_conf.h,v 1.3 1996/04/18 17:48:27 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -85,7 +87,7 @@
 #endif
 
 #ifdef NetBSD1_1
-#define PCVT_NETBSD 110
+#define PCVT_NETBSD (110 + (NetBSD1_1 - 1))
 #endif
 
 /*---------------------------------------------------------------------------
@@ -105,8 +107,6 @@
  *
  *	options "PCVT_NSCREENS=x"
  *	options "PCVT_SCANSET=x"
- *	options "PCVT_UPDATEFAST=x"
- *	options "PCVT_UPDATESLOW=x"
  *	options "PCVT_SYSBEEPF=x"
  *
  * which are always numeric!
@@ -333,16 +333,6 @@
 # undef PCVT_BACKUP_FONTS	/* they are needed.			*/
 # define PCVT_BACKUP_FONTS 1
 #endif
-
-#ifndef PCVT_UPDATEFAST		/* this is the rate at which the cursor */
-# define PCVT_UPDATEFAST (hz/10) /* gets updated with it's new position	*/
-#endif				/* see: async_update() in pcvt_sup.c	*/
-
-#ifndef PCVT_UPDATESLOW		/* this is the rate at which the cursor	*/
-# define PCVT_UPDATESLOW 3	/* position display and the system load	*/
-#endif				/* (or the keyboard scancode display)	*/
-				/* is updated. the relation is:		*/
-				/* PCVT_UPDATEFAST/PCVT_UPDATESLOW	*/
 
 #ifndef PCVT_SYSBEEPF		/* timer chip value to be used for the	*/
 # define PCVT_SYSBEEPF 1193182	/* sysbeep frequency value.		*/
