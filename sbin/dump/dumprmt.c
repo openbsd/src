@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.21 2003/06/26 16:35:21 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.22 2003/07/28 06:13:26 tedu Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $";
+static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.22 2003/07/28 06:13:26 tedu Exp $";
 #endif
 #endif /* not lint */
 

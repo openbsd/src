@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.25 2003/06/19 03:49:44 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.26 2003/07/28 06:13:26 tedu Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.22 1996/11/30 18:31:29 cgd Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.26 2003/07/28 06:13:26 tedu Exp $";
 #endif
 #endif /* not lint */
 

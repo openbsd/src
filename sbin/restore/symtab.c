@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.10 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.11 2003/07/28 06:13:26 tedu Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.10 2003/06/02 20:06:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: symtab.c,v 1.11 2003/07/28 06:13:26 tedu Exp $";
 #endif
 #endif /* not lint */
 
