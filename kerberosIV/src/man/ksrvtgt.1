@@ -24,7 +24,7 @@ is not supplied on the command line), decrypts the response using
 the service key found in
 .I srvtab
 (or in 
-.B /etc/srvtab
+.B /etc/kerberosIV/srvtab
 if
 .I srvtab
 is not specified on the command line), and stores the ticket in the
@@ -38,13 +38,13 @@ problems, the most common of which is the inability to read the service
 key file.
 .SH FILES
 .TP 2i
-/etc/krb.conf
+/etc/kerberosIVkrb.conf
 to get the name of the local realm.
 .TP
 /tmp/tkt[uid]
 The default ticket file.
 .TP
-/etc/srvtab
+/etc/kerberosIV/srvtab
 The default service key file.
 .SH SEE ALSO
 .Xr kerberos 1 ,

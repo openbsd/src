@@ -33,10 +33,10 @@ Realm if other than the default.
 is a file created with 
 .Ic kdb_util slave_dump ,
 default is
-.Pa /var/kerberos/slave_dump .
+.Pa /etc/kerberosIV/slave_dump .
 .It slave-file
 Contains the names of the slave servers. Default is
-.Pa /var/kerberos/slaves .
+.Pa /etc/kerberosIV/slaves .
 .El
 
 .Nm
@@ -48,9 +48,9 @@ on the master server.
 
 .Sh FILES
 .Bl -tag -width indent -compact
-.It Pa /var/kerberos/slave_dump
-.It Pa /var/kerberos/slaves
-.It Pa /etc/srvtab
+.It Pa /etc/kerberosIV/slave_dump
+.It Pa /etc/kerberosIV/slaves
+.It Pa /etc/kerberosIV/srvtab
 .El
 .Sh SEE ALSO
 .Xr kpropd 8 ,

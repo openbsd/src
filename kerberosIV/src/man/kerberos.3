@@ -169,7 +169,7 @@ particular problem encountered.  See
 for the list of error codes.
 .PP
 If the last argument is the null string (""), krb_rd_req will use the
-file /etc/srvtab to find its keys.  If the last argument is NULL, it
+file /etc/kerberosIV/srvtab to find its keys.  If the last argument is NULL, it
 will assume that the key has been set by
 .I krb_set_key
 and will not bother looking further.
@@ -440,7 +440,7 @@ filled in with data obtained from Kerberos.
 .br
 /etc/aname
 .br
-/etc/srvtab
+/etc/kerberosIV/srvtab
 .br
 /tmp/tkt[uid]
 .SH "SEE ALSO"

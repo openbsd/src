@@ -34,7 +34,7 @@ been started by
 .Nm inetd .
 .It Fl d
 What database file to use, default is
-.Pa /var/kerberos/principal .
+.Pa /etc/kerberosIV/principal .
 .It Fl l
 Logfile to use, default is
 .Pa /var/log/kpropd.log .
@@ -49,13 +49,13 @@ default is
 Realm if other than the default realm.
 .It Fl s
 Srvtab if other than
-.Pa /etc/srvtab .
+.Pa /etc/kerberosIV/srvtab .
 .El
 .Sh FILES
 .Bl -tag -width indent -compact
-.It Pa /var/kerberos/principal.{db,dir,pag}
+.It Pa /etc/kerberosIV/principal.{db,dir,pag}
 .It Pa /var/log/kpropd.log
-.It Pa /etc/srvtab
+.It Pa /etc/kerberosIV/srvtab
 .El
 .Sh SEE ALSO
 .Xr kprop 8 ,

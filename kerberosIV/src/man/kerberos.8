@@ -75,11 +75,11 @@ getting too stale relative to the master.
 If no 
 .Ar database
 is given a default database will be used, normally
-.Pa /var/kerberos/principal .
+.Pa /etc/kerberosIV/principal .
 .Sh DIAGNOSTICS
 
 The server logs several messages in a log file
-.Pf ( Pa /var/run/kerberos.log
+.Pf ( Pa /var/log/kerberos.log
 by default).  The logging mechanism opens and closes the log file for
 each message, so you can safely rename the log file when the server is
 running.
