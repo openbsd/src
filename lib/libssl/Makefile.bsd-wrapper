@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.12 1999/10/10 21:32:01 maja Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.13 2000/03/19 22:17:05 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -54,7 +54,7 @@ install:
 	cd ${.OBJDIR} && ${MAKE} install
 
 ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h: ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h
-	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl < ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h > ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
+	/usr/bin/perl ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.pl ${.OBJDIR}/${SSL_SRC}/crypto/objects/objects.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h
 
 ${.OBJDIR}/${SSL_SRC}/Makefile.ssl : ${.OBJDIR}/${SSL_SRC}/Makefile.org
 	cd ${.OBJDIR}/${SSL_SRC} && /usr/bin/perl Configure ${SSLCONF}
