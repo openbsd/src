@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.15 1997/02/03 03:04:22 downsj Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.16 1997/11/23 08:22:47 mickey Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -172,21 +172,22 @@ config_search(fn, parent, aux)
 	m.aux = aux;
 	m.indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
 	m.pri = 0;
-	for(t = allcftables.tqh_first; t; t = t->list.tqe_next){
-	  for (cf = t->tab; cf->cf_driver; cf++) {
-	    /*
-	     * Skip cf if no longer eligible, otherwise scan through
-	     * parents for one matching `parent', and try match function.
-	     */
-	    if (cf->cf_fstate == FSTATE_FOUND)
-	      continue;
-	    if (cf->cf_fstate == FSTATE_DNOTFOUND ||
-		cf->cf_fstate == FSTATE_DSTAR)
-	      continue;
-	    for (p = cf->cf_parents; *p >= 0; p++)
-	      if (parent->dv_cfdata == &(t->tab)[*p])
-		mapply(&m, cf);
-	  }
+	for(t = allcftables.tqh_first; t; t = t->list.tqe_next) {
+		for (cf = t->tab; cf->cf_driver; cf++) {
+			/*
+			 * Skip cf if no longer eligible, otherwise scan
+			 * through parents for one matching `parent',
+			 * and try match function.
+			 */
+			if (cf->cf_fstate == FSTATE_FOUND)
+				continue;
+			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
+			    cf->cf_fstate == FSTATE_DSTAR)
+				continue;
+			for (p = cf->cf_parents; *p >= 0; p++)
+				if (parent->dv_cfdata == &(t->tab)[*p])
+					mapply(&m, cf);
+		}
 	}
 	return (m.match);
 }
@@ -212,25 +213,25 @@ config_scan(fn, parent)
 
 	indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
 	for (t = allcftables.tqh_first; t; t = t->list.tqe_next) {
-	  for (cf = t->tab; cf->cf_driver; cf++) {
-	    /*
-	     * Skip cf if no longer eligible, otherwise scan through
-	     * parents for one matching `parent', and try match function.
-	     */
-	    if (cf->cf_fstate == FSTATE_FOUND)
-	      continue;
-	    if (cf->cf_fstate == FSTATE_DNOTFOUND ||
-		cf->cf_fstate == FSTATE_DSTAR)
-	      continue;
-	    for (p = cf->cf_parents; *p >= 0; p++)
-	      if (parent->dv_cfdata == &(t->tab)[*p]) {
-		if (indirect)
-		  match = config_make_softc(parent, cf);
-		else
-		  match = cf;
-		(*fn)(parent, match);
-	      }
-	  }
+		for (cf = t->tab; cf->cf_driver; cf++) {
+			/*
+			 * Skip cf if no longer eligible, otherwise scan
+			 * through parents for one matching `parent',
+			 * and try match function.
+			 */
+			if (cf->cf_fstate == FSTATE_FOUND)
+				continue;
+			if (cf->cf_fstate == FSTATE_DNOTFOUND ||
+			    cf->cf_fstate == FSTATE_DSTAR)
+				continue;
+			for (p = cf->cf_parents; *p >= 0; p++)
+				if (parent->dv_cfdata == &(t->tab)[*p]) {
+					match = indirect?
+					    config_make_softc(parent, cf) :
+					    (void *)cf;
+					(*fn)(parent, match);
+				}
+		}
 	}
 }
 
@@ -374,13 +375,14 @@ config_attach(parent, match, aux, print)
 	 * cfdata for this device.
 	 */
 	for (t = allcftables.tqh_first; t; t = t->list.tqe_next) {
-	  for (cf = t->tab; cf->cf_driver; cf++)
-	    if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit) {
-			if (cf->cf_fstate == FSTATE_NOTFOUND)
-				cf->cf_fstate = FSTATE_FOUND;
-			if (cf->cf_fstate == FSTATE_STAR)
-				cf->cf_unit++;
-	    }
+		for (cf = t->tab; cf->cf_driver; cf++)
+			if (cf->cf_driver == cd &&
+			    cf->cf_unit == dev->dv_unit) {
+				if (cf->cf_fstate == FSTATE_NOTFOUND)
+					cf->cf_fstate = FSTATE_FOUND;
+				if (cf->cf_fstate == FSTATE_STAR)
+					cf->cf_unit++;
+			}
 	}
 #if defined(__alpha__) || defined(hp300)
 	device_register(dev, aux);
@@ -492,9 +494,7 @@ haschild(dev)
 {
 	struct device *d;
 
-	for (d = alldevs.tqh_first;
-	     d != NULL;
-	     d = d->dv_list.tqe_next) {
+	for (d = alldevs.tqh_first; d != NULL; d = d->dv_list.tqe_next) {
 		if (d->dv_parent == dev)
 			return(1);
 	}
