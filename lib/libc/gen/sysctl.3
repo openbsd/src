@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.30 1999/10/28 03:40:08 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.31 1999/12/30 20:56:28 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -738,6 +738,7 @@ privileges may change the value.
 .It Sy Second level name	Type	Changeable
 .It Dv VM_LOADAVG No "	struct loadavg	no"
 .It Dv VM_METER No "	struct vmtotal	no"
+.It Dv VM_SWAPENCRYPT No "	integer	yes"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -749,6 +750,10 @@ The returned data consists of a
 Return the system wide virtual memory statistics.
 The returned data consists of a
 .Li struct vmtotal .
+.It Dv VM_SWAPENCRYPT
+Set to 1 to enable swap encryption for all processes.  A 0
+disables swap encryption.  Pages still on swap receive a
+grandfather clause.
 .El
 .Sh RETURN VALUES
 If the call to
