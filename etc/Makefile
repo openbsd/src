@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.178 2003/03/04 09:49:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.179 2003/03/08 19:03:44 beck Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -19,8 +19,8 @@ BIN1=	bootptab changelist ccd.conf csh.cshrc csh.login csh.logout \
 	myname netstart networks newsyslog.conf \
 	phones printcap protocols rbootd.conf rc rc.conf rc.local \
 	rc.securelevel rc.shutdown remote rpc security services \
-	shells syslog.conf weekly etc.${MACHINE}/disktab dhclient.conf \
-	mailer.conf
+	shells spamd.conf syslog.conf weekly etc.${MACHINE}/disktab \
+	dhclient.conf mailer.conf
 
 .if (${MACHINE} == "alpha" || ${MACHINE} == "hppa" || \
      ${MACHINE} == "i386" || ${MACHINE} == "macppc" || \
