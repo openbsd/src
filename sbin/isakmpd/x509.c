@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.91 2004/06/14 09:55:42 ho Exp $	 */
+/* $OpenBSD: x509.c,v 1.92 2004/06/14 13:53:31 hshoexer Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -620,8 +620,9 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 #endif
 	FILE           *certfp;
 	X509           *cert;
+	struct stat	sb;
 	char            fullname[PATH_MAX];
-	int             off, size;
+	int             fd, off, size;
 
 	if (strlen(name) >= sizeof fullname - 1) {
 		log_print("x509_read_from_dir: directory name too long");
@@ -647,25 +648,35 @@ x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 		if (file->d_type != DT_UNKNOWN) {
 			if (file->d_type != DT_REG && file->d_type != DT_LNK)
 				continue;
-		} else {
-			struct stat     sb;
-
-			if (monitor_stat(fullname, &sb) == -1 ||
-			    !(sb.st_mode & S_IFREG))
-				continue;
 		}
 
 		LOG_DBG((LOG_CRYPTO, 60,
 		    "x509_read_from_dir: reading certificate %s",
 		    file->d_name));
 
-		certfp = monitor_fopen(fullname, "r");
-		if (!certfp) {
-			log_error("x509_read_from_dir: monitor_fopen "
-			    "(\"%s\", \"r\") failed",
-			    fullname);
+		if ((fd = monitor_open(fullname, O_RDONLY, 0)) == -1) {
+			log_error("x509_read_from_dir: monitor_open"
+			    "(\"%s\", O_RDONLY, 0) failed", fullname);
 			continue;
 		}
+
+		if (fstat(fd, &sb) == -1) {
+			log_error("x509_read_from_dir: fstat failed");
+			close(fd);
+			continue;
+		}
+
+		if (!(sb.st_mode & S_IFREG)) {
+			close(fd);
+			continue;
+		}
+
+		if ((certfp = fdopen(fd, "r")) == NULL) {
+			log_error("x509_read_from_dir: fdopen failed");
+			close(fd);
+			continue;
+		}
+
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
 		cert = PEM_read_X509(certfp, NULL, NULL, NULL);
 #else
@@ -714,8 +725,9 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 #endif
 	FILE           *crlfp;
 	X509_CRL       *crl;
+	struct stat	sb;
 	char            fullname[PATH_MAX];
-	int             off, size;
+	int             fd, off, size;
 
 	if (strlen(name) >= sizeof fullname - 1) {
 		log_print("x509_read_crls_from_dir: directory name too long");
@@ -740,30 +752,41 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		if (file->d_type != DT_UNKNOWN) {
 			if (file->d_type != DT_REG && file->d_type != DT_LNK)
 				continue;
-		} else {
-			struct stat     sb;
-
-			if (monitor_stat(fullname, &sb) == -1 ||
-			    !(sb.st_mode & S_IFREG))
-				continue;
-		}
+		} 
 
 		LOG_DBG((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading "
 		    "CRL %s", file->d_name));
 
-		crlfp = monitor_fopen(fullname, "r");
-		if (!crlfp) {
-			log_error("x509_read_crls_from_dir: monitor_fopen "
-			    "(\"%s\", \"r\") failed", fullname);
+		if ((fd = monitor_open(fullname, O_RDONLY, 0)) == -1) {
+			log_error("x509_read_crls_from_dir: monitor_open"
+			    "(\"%s\", O_RDONLY, 0) failed", fullname);
 			continue;
 		}
+
+		if (fstat(fd, &sb) == -1) {
+			log_error("x509_read_crls_from_dir: fstat failed");
+			close(fd);
+			continue;
+		}
+
+		if (!(sb.st_mode & S_IFREG)) {
+			close(fd);
+			continue;
+		}
+
+		if ((crlfp = fdopen(fd, "r")) == NULL) {
+			log_error("x509_read_crls_from_dir: fdopen failed");
+			close(fd);
+			continue;
+		}
+
 		crl = PEM_read_X509_CRL(crlfp, NULL, NULL, NULL);
 
 		fclose(crlfp);
 
 		if (crl == NULL) {
 			log_print("x509_read_crls_from_dir: "
-			    "PEM_read_bio_X509_CRL failed for %s",
+			    "PEM_read_X509_CRL failed for %s",
 			    file->d_name);
 			continue;
 		}

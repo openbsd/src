@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.90 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.91 2004/06/14 13:53:31 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -34,12 +34,14 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <regex.h>
 #if defined (USE_KEYNOTE)
 #include <keynote.h>
@@ -173,7 +175,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 			buf = malloc(*keylen);
 			if (!buf) {
 				log_error("ike_auth_get_key: malloc (%lu) "
-				    "failed", (unsigned long) *keylen);
+				    "failed", (unsigned long)*keylen);
 				return 0;
 			}
 			if (hex2raw(key + 2, (unsigned char *)buf, *keylen)) {
@@ -217,19 +219,20 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 			    local_id, PRIVATE_KEY_FILE);
 			keyfile = privkeyfile;
 
-			if (monitor_stat(keyfile, &sb) < 0) {
+			fd = monitor_open(keyfile, O_RDONLY, 0);
+			if (fd < 0) {
 				free(keyfile);
 				goto ignorekeynote;
 			}
-			size = (size_t) sb.st_size;
 
-			fd = monitor_open(keyfile, O_RDONLY, 0);
-			if (fd < 0) {
-				log_print("ike_auth_get_key: failed opening "
-				    "\"%s\"", keyfile);
+			if (fstat(fd, &sb) < 0) {
+				log_print("ike_auth_get_key: fstat failed");
 				free(keyfile);
+				close(fd);
 				return 0;
 			}
+			size = (size_t)sb.st_size;
+
 			buf = calloc(size + 1, sizeof(char));
 			if (!buf) {
 				log_print("ike_auth_get_key: failed allocating"
@@ -238,7 +241,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 				close(fd);
 				return 0;
 			}
-			if (read(fd, buf, size) != (ssize_t) size) {
+			if (read(fd, buf, size) != (ssize_t)size) {
 				free(buf);
 				log_print("ike_auth_get_key: "
 				    "failed reading %lu bytes from \"%s\"",
@@ -1110,7 +1113,6 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 {
 	char            filename[FILENAME_MAX];
 	char           *fstr;
-	struct stat     st;
 	FILE           *keyfp;
 
 	if (type != IKE_AUTH_RSA_SIG) {	/* XXX More types? */
@@ -1138,15 +1140,14 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	free(fstr);
 
 	/* If the file does not exist, fail silently.  */
-	if (monitor_stat(filename, &st) == 0) {
-		keyfp = monitor_fopen(filename, "r");
-		if (!keyfp) {
-			log_error("get_raw_key_from_file: monitor_fopen "
-			    "(\"%s\", \"r\") failed", filename);
-			return -1;
-		}
+	keyfp = monitor_fopen(filename, "r");
+	if (keyfp) {
 		*rsa = PEM_read_RSA_PUBKEY(keyfp, NULL, NULL, NULL);
 		fclose(keyfp);
+	} else if (errno != ENOENT) {
+		log_error("get_raw_key_from_file: monitor_fopen "
+		    "(\"%s\", \"r\") failed", filename);
+		return -1;
 	} else
 		LOG_DBG((LOG_NEGOTIATION, 50,
 		    "get_raw_key_from_file: file %s not found", filename));

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.69 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: conf.c,v 1.70 2004/06/14 13:53:31 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -374,7 +374,7 @@ conf_load_defaults_mm(int tr, char *mme, char *mmh, char *mma, char *dhg,
 
 	snprintf(sect, sizeof sect, "%s-%s%s%s", mme_p, mmh, dhg_p, mma_p);
 
-	LOG_DBG((LOG_MISC, 90, "conf_load_defaults : main mode %s", sect));
+	LOG_DBG((LOG_MISC, 90, "conf_load_defaults_mm: main mode %s", sect));
 
 	conf_set(tr, sect, "ENCRYPTION_ALGORITHM", mme, 0, 1);
 	if (strcmp(mme, "BLOWFISH_CBC") == 0)
@@ -411,7 +411,7 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 	strlcpy(sect, tmp, CONF_SECT_MAX);
 	strlcat(sect, "-SUITE",	CONF_SECT_MAX);
 
-	LOG_DBG((LOG_MISC, 90, "conf_load_defaults : quick mode %s", sect));
+	LOG_DBG((LOG_MISC, 90, "conf_load_defaults_qm: quick mode %s", sect));
 
 	conf_set(tr, sect, "Protocols", tmp, 0, 1);
 	snprintf(sect, sizeof sect, "IPSEC_%s", PROTO(proto));
@@ -567,18 +567,11 @@ conf_reinit(void)
 	unsigned int i;
 	size_t	 sz;
 	char	*new_conf_addr = 0;
-	struct stat sb;
 
-	if ((monitor_stat(conf_path, &sb) == 0) || (errno != ENOENT)) {
-		if (check_file_secrecy(conf_path, &sz))
-			return;
+	if ((fd = monitor_open(conf_path, O_RDONLY, 0)) != -1) {
+		if (check_file_secrecy_fd(fd, conf_path, &sz))
+			goto fail;
 
-		fd = monitor_open(conf_path, O_RDONLY, 0);
-		if (fd == -1) {
-			log_error("conf_reinit: "
-			    "open (\"%s\", O_RDONLY) failed", conf_path);
-			return;
-		}
 		new_conf_addr = malloc(sz);
 		if (!new_conf_addr) {
 			log_error("conf_reinit: malloc (%lu) failed",
@@ -597,8 +590,13 @@ conf_reinit(void)
 
 		/* XXX Should we not care about errors and rollback?  */
 		conf_parse(trans, new_conf_addr, sz);
-	} else
+	} else {
+		if (errno != ENOENT)
+			log_error("conf_reinit: open(\"%s\", O_RDONLY, 0) "
+			    "failed", conf_path);
+
 		trans = conf_begin();
+	}
 
 	/* Load default configuration values.  */
 	conf_load_defaults(trans);
