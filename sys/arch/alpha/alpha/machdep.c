@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 1995/11/23 02:34:15 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 1995/12/20 00:19:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -95,7 +95,6 @@
 #include "ether.h"
 
 #include "le.h"			/* XXX for le_iomem creation */
-#include "esp.h"		/* XXX for esp_iomem creation */
 
 vm_map_t buffer_map;
 
@@ -166,7 +165,6 @@ u_int64_t	cycles_per_usec;
 
 /* some memory areas for device DMA.  "ick." */
 caddr_t		le_iomem;		/* XXX iomem for LANCE DMA */
-caddr_t		esp_iomem;		/* XXX iomem for SCSI DMA */
 
 /* Interrupt vectors (in locore) */
 extern int XentInt(), XentArith(), XentMM(), XentIF(), XentUna(), XentSys();
@@ -365,7 +363,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 		cpu_modelname = dec_3000_500_modelname;
 		cpu_consinit = dec_3000_500_consinit;
 		cpu_bootdev = dec_3000_500_bootdev;
-		cpu_iobus = "tc";
+		cpu_iobus = "tcasic";
 		break;
 #endif
 
@@ -374,7 +372,7 @@ alpha_init(pfn, ptb, argc, argv, envp)
 		cpu_modelname = dec_3000_300_modelname;
 		cpu_consinit = dec_3000_300_consinit;
 		cpu_bootdev = dec_3000_300_bootdev;
-		cpu_iobus = "tc";
+		cpu_iobus = "tcasic";
 		break;
 #endif
 
@@ -448,19 +446,6 @@ alpha_init(pfn, ptb, argc, argv, envp)
 		le_iomem = (caddr_t)phystok0seg(ctob(lastusablepage + 1));
 	}
 #endif /* NLE */
-#if NESP > 0
-	/*
-	 * Ditto for the scsi chip. There is probably a way to make esp.c
-	 * do dma without these buffers, but it would require major
-	 * re-engineering of the esp driver.
-	 * They must be 8K in size and page aligned.
-	 */
-	if (cputype == ST_DEC_3000_500 ||
-	    cputype == ST_DEC_3000_300) {	/* XXX possibly others? */
-		lastusablepage -= btoc(NESP * 8192);
-		esp_iomem = (caddr_t)phystok0seg(ctob(lastusablepage + 1));
-	}
-#endif /* NESP */
 
 	/*
 	 * Initialize error message buffer (at end of core).
