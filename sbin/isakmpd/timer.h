@@ -1,8 +1,8 @@
-/*	$OpenBSD: timer.h,v 1.3 1998/11/17 11:10:20 niklas Exp $	*/
-/*	$EOM: timer.h,v 1.4 1998/07/29 09:31:01 niklas Exp $	*/
+/*	$OpenBSD: timer.h,v 1.4 1999/04/19 21:02:30 niklas Exp $	*/
+/*	$EOM: timer.h,v 1.6 1999/04/11 22:35:55 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,5 +55,6 @@ extern void timer_handle_expirations (void);
 extern struct event *timer_add_event (char *, void (*) (void *), void *,
 				      struct timeval *);
 extern void timer_remove_event (struct event *);
+extern void timer_report (void);
 
 #endif /* _TIMER_H_ */
