@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.93 2001/05/29 01:12:27 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.94 2001/05/30 10:55:06 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -197,6 +197,7 @@ struct ipsec_policy
     struct ipsec_ref    *ipo_srcid;
     struct ipsec_ref    *ipo_dstid;
     struct ipsec_ref    *ipo_local_cred;
+    struct ipsec_ref    *ipo_local_auth;
 
     TAILQ_ENTRY(ipsec_policy) ipo_tdb_next; /* List of policies on TDB */
     TAILQ_ENTRY(ipsec_policy) ipo_list; /* List of all policy entries */
@@ -220,6 +221,16 @@ struct ipsec_policy
 #define NOTIFY_SATYPE_CONF      1       /* SA should do encryption */
 #define NOTIFY_SATYPE_AUTH      2       /* SA should do authentication */
 #define NOTIFY_SATYPE_TUNNEL    4       /* SA should use tunneling */
+
+/* Authentication types */
+#define IPSP_AUTH_NONE          0
+#define IPSP_AUTH_PASSPHRASE    1
+#define IPSP_AUTH_RSA           2
+
+/* Credential types */
+#define IPSP_CRED_NONE          0
+#define IPSP_CRED_KEYNOTE       1
+#define IPSP_CRED_X509          2
 
 /*
  * For encapsulation routes are possible not only for the destination
@@ -325,6 +336,7 @@ struct tdb				/* tunnel descriptor block */
     struct ipsec_ref *tdb_remote_cred;
     struct ipsec_ref *tdb_srcid;        /* Source ID for this SA */
     struct ipsec_ref *tdb_dstid;        /* Destination ID for this SA */
+    struct ipsec_ref *tdb_local_auth;   /* Local authentication material */
 
     TAILQ_HEAD(tdb_inp_head_in, inpcb) tdb_inp_in;
     TAILQ_HEAD(tdb_inp_head_out, inpcb) tdb_inp_out;
