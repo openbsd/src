@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/perl
 'di ';
 'ds 00 \\"';
 'ig 00 ';
