@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2002/01/31 15:56:34 art Exp $
-#	$NetBSD: Makefile,v 1.2 1995/04/20 22:38:24 cgd Exp $
+#	$OpenBSD: Makefile,v 1.8 2002/02/18 11:02:49 art Exp $
 
-SUBDIR+= libc libc_r csu
+SUBDIR+= libc libc_r csu libssl
 
 regress: _SUBDIRUSE
 
