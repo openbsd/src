@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.141 2005/03/10 02:11:31 dlg Exp $
+$OpenBSD: usbdevs,v 1.142 2005/03/14 04:08:50 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1073,6 +1073,7 @@ product JRC AH_J3001V_J3002V	0x0001	AirH\"PHONE AH-J3001V/J3002V
 
 /* JVC products */
 product JVC MP_XP7250_WL	0x3009  MP-XP7250 Builtin WLAN
+product	JVC MP_PRX1		0x3008	MP-PRX1
 
 /* Kawasaki LSI products */
 product KLSI DUH3E10BT		0x0008	10BT Ethernet
