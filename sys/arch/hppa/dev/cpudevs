@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.29 2003/08/22 18:09:53 mickey Exp $
+$OpenBSD: cpudevs,v 1.30 2003/10/15 03:10:09 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -79,7 +79,7 @@ board	HPDRAGON	0x180	(Dragon)
 board	HP890		0x181	890/990/992 (Chimera)
 board	HP891		0x182	891/T500 (TNT 100)
 board	HP892		0x183	892/T520 (TNT 120)
-board	HP893_T540	0x184	893/T540 (Jade 180 U)
+board	HP893_T540	0x184	893/T540/T600 (Jade 180 U)
 
 board	HPHXPROC	0x1ff	Hitachi X Processor
 
