@@ -1,11 +1,12 @@
-/*	$Id: elf_abi.h,v 1.2 1996/02/15 07:38:14 etheisen Exp $ */
+/*	$Id: elf_abi.h,v 1.3 1996/04/29 00:54:15 etheisen Exp $ */
 /*
- * Copyright (c) 1995 Erik Theisen
+ * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met: * 1. Redistributions of source code must retain the above copyright
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
@@ -170,7 +171,9 @@ typedef struct {
 #define SHT_REL		9		/* relation section without addends */
 #define SHT_SHLIB	10		/* reserved - purpose unknown */
 #define SHT_DYNSYM	11		/* dynamic symbol table section */
-#define SHT_NUM		12		/* number of section types */
+#define SHT_OPENBSD	0xffffffff	/* OpenBSD hack to determine targ OS */
+					/*  - This is NOT ABI compliant!!! */
+#define SHT_NUM		13		/* number of section types */
 #define SHT_LOPROC	0x70000000	/* reserved range for processor */
 #define SHT_HIPROC	0x7fffffff	/*  specific section header types */
 #define SHT_LOUSER	0x80000000	/* reserved range for application */
@@ -198,6 +201,8 @@ typedef struct {
 #define ELF_STRTAB      ".strtab"	/* string table */
 #define ELF_SYMTAB      ".symtab"	/* symbol table */
 #define ELF_TEXT        ".text"		/* code */
+#define ELF_OPENBSD	".openbsd"	/* OpenBSD hack to determine targ OS */
+					/*  - This is NOT ABI compliant!!! */
 
 /* Section Attribute Flags - sh_flags */
 #define SHF_WRITE	0x1		/* Writable */
@@ -293,9 +298,6 @@ typedef struct {
 #define PF_MASKPROC	0xf0000000	/* reserved bits for processor */
 					/*  specific segment flags */
 
-
-#if 0
-#error No ELF RTLD support yet
 /* Dynamic structure */
 typedef struct 
 {
@@ -337,8 +339,8 @@ extern Elf32_Dyn	_DYNAMIC[];
 #define DT_JMPREL	23		/* add. of PLT's relocation entries */
 #define DT_LOPROC	0x70000000	/* reserved range for processor */
 #define DT_HIPROC	0x7fffffff	/*  specific dynamic array tags */
-#endif
-
 	
-#endif /* _ELF_ABI_H_ */
+/* Standard ELF hashing function */
+unsigned long elf_hash(const unsigned char *name);
 
+#endif /* _ELF_ABI_H_ */
