@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.5 1998/09/02 06:39:16 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.6 2000/04/29 16:46:36 millert Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.5 1998/09/02 06:39:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.6 2000/04/29 16:46:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -171,10 +171,10 @@ main(argc, argv)
 	}
 
 	if (exitonsig) {
-		if (signal(exitonsig, SIG_DFL) < 0)
+		if (signal(exitonsig, SIG_DFL) == SIG_ERR)
 			perror("signal");
 		else
-		kill(getpid(), exitonsig);
+			kill(getpid(), exitonsig);
 	}
 	exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
 }
