@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.12 2001/05/14 07:40:39 angelos Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.13 2001/06/03 03:31:30 angelos Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -153,24 +153,25 @@ dkreadstats()
 	struct disk	cur_disk, *p;
 	int		i, mib[3];
 	size_t		size;
+	struct diskstats *q;
 
 	if (nlistf == NULL && memf == NULL) {
-		size = dk_ndrive * sizeof(struct disk);
+		size = dk_ndrive * sizeof(struct diskstats);
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKSTATS;
-		p = malloc(size);
-		if (p == NULL)
+		q = malloc(size);
+		if (q == NULL)
 			err(1, NULL);
-		if (sysctl(mib, 2, p, &size, NULL, 0) < 0) {
+		if (sysctl(mib, 2, q, &size, NULL, 0) < 0) {
 			warn("could not read hw.diskstats");
-			bzero(p, dk_ndrive * sizeof(struct disk));
+			bzero(q, dk_ndrive * sizeof(struct disk));
 		}
 
 		for (i = 0; i < dk_ndrive; i++)	{
-			cur.dk_xfer[i] = p[i].dk_xfer;
-			cur.dk_seek[i] = p[i].dk_seek;
-			cur.dk_bytes[i] = p[i].dk_bytes;
-			timerset(&(p[i].dk_time), &(cur.dk_time[i]));
+			cur.dk_xfer[i] = q[i].ds_xfer;
+			cur.dk_seek[i] = q[i].ds_seek;
+			cur.dk_bytes[i] = q[i].ds_bytes;
+			timerset(&(q[i].ds_time), &(cur.dk_time[i]));
 		}
 
 	 	size = sizeof(cur.cp_time);
