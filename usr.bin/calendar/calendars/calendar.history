@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.34 2004/10/01 02:51:09 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.35 2004/11/30 19:23:29 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -188,8 +188,10 @@
 06/16	"The Blues Brothers" premieres in Chicago, 1980
 06/17	China explodes its first Hydrogen bomb, 1967
 06/17	Watergate Democratic National Committee break-in, 1972
-06/19	Julius and Ethel Rosenberg are executed in Sing-Sing prison, 1953
 06/19	Lizzie Bordon acquitted, 1893
+06/19	Julius and Ethel Rosenberg are executed in Sing-Sing prison, 1953
+06/19	Start of a bus boycott protesting discrimination,
+	Baton Rouge, Louisiana, 1953
 06/20	Victoria crowned, 1837
 06/21	Berlin airlift begins, 1948
 06/21	Sun rises over Heelstone at Stonehenge
@@ -446,7 +448,7 @@
 11/29	King Tut's tomb opened, 1922
 12/01	First national corn-husking championship, Alleman IA, 1924
 12/01	Martin Luther King Jr., leads black boycott of Montgomery buses, 1955
-12/01	Rosa Parks refuses to move to back of the bus (Montgomery, AL), 1953
+12/01	Rosa Parks refuses to move to back of the bus (Montgomery, AL), 1955
 12/03	First neon light display, Paris, 1910
 12/03	First successful human heart transplant led by Dr. Barnard, 1967
 12/03	The Montreux Casino burns down during a Frank Zappa concert, 1971
