@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.37 2005/01/03 16:49:54 miod Exp $
+.\"	$OpenBSD: ddb.4,v 1.38 2005/01/03 22:44:43 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -533,10 +533,7 @@ Hint: the
 .Xr nm 1
 utility might help.
 .\" --------------------
-.It Xo
-.Ic until
-.Op Cm /p
-.Xc
+.It Ic until Op Cm /p
 Stop at the next
 .Qq call
 or
@@ -629,10 +626,7 @@ command.
 .It Ic show extents
 Prints a detailed list of all extents.
 .\" --------------------
-.It Xo
-.Ic show malloc
-.Op Ar addr
-.Xc
+.It Ic show malloc Op Ar addr
 Prints malloc debugging information if available.
 If an optional address is specified, only information about that address
 is printed.
@@ -676,12 +670,10 @@ If the
 .Cm /f
 modifier is specified the complete page is printed.
 .\" --------------------
-.It Xo
-.Ic show panic
-.Xc
+.It Ic show panic
 Prints the
 .Li panic string.
-.\" -------------------- 
+.\" --------------------
 .It Xo
 .Ic show pool
 .Op Cm /clp
@@ -701,10 +693,7 @@ Print the log entries for this pool.
 Print the pagelist for this pool.
 .El
 .\" --------------------
-.It Xo
-.Ic show proc
-.Op Ar addr
-.Xc
+.It Ic show proc Op Ar addr
 Prints the
 .Li struct proc
 at
@@ -713,10 +702,7 @@ If an optional address is not specified
 .Li curproc
 is assumed.
 .\" --------------------
-.It Xo
-.Ic show registers
-.Op Cm /u
-.Xc
+.It Ic show registers Op Cm /u
 Display the register set.
 If the
 .Cm /u
@@ -735,10 +721,7 @@ Displays all watchpoints set with the
 .Ic watch
 command.
 .\" --------------------
-.It Xo
-.Ic show all procs
-.Op Cm /anw
-.Xc
+.It Ic show all procs Op Cm /anw
 Display information on all processes.
 .Pp
 .Bl -tag -width foo -compact
@@ -771,10 +754,7 @@ A synonym for the
 .Ic show all callout
 command.
 .\" --------------------
-.It Xo
-.Ic ps
-.Op Cm /anw
-.Xc
+.It Ic ps Op Cm /anw
 A synonym for
 .Ic show all procs .
 .\" --------------------
