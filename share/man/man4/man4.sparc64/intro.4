@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.7 2002/01/18 21:42:09 jason Exp $
+.\"     $OpenBSD: intro.4,v 1.8 2002/01/29 15:27:19 jason Exp $
 .\"
 .\" Copyright (c) 2001 The OpenBSD Project
 .\" All Rights Reserved.
@@ -72,19 +72,31 @@ Pseudo-devices are not listed.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width le/lebuffer -compact -offset indent
+.Bl -tag -width zs/zstty/zskbd -compact -offset indent
 .It audioce
 EBus CS4231 based audio.
 .It audiocs
 SBus CS4231 based audio.
+.It autri
+PCI Trident 4DWAVE DX/NX, SiS 7018, ALi M5451 audio.
 .It be
 10BaseT/100BaseTX SBus Ethernet controller.
 .It cgsix
 8 bit SBus color graphics frame buffer.
 .It cgthree
 8 bit SBus color graphics frame buffer.
+.It com
+EBUS clones of the NS16550 serial UART.
+.It comkbd
+Sun serial keyboards on
+.Xr com 4
+ports.
+.It dc
+Clones of the DEC Tulip ethernet controller.
 .It esp
 ESP SCSI controller.
+.It hifn
+Hifn 7751/7811/7951 cryptography acclerators.
 .It hme
 SBus HME Ethernet controllers (SunSwift).
 .It isp
@@ -95,6 +107,8 @@ AMD 7990 LANCE ethernet controller.
 MAGMA serial/parallel communication boards.
 .It openprom
 Sun Open boot PROM (what became IEEE 1275) configuration driver.
+.It pcons
+PROM console input/output device.
 .It qe
 Quad 10BaseT SBus Ethernet controller.
 .It qec
@@ -107,8 +121,10 @@ Ethernet controllers.
 Infineon (formerly Siemens) SAB82532 serial controller.
 .It spif
 Sun SUNW,spif serial/parallel communication boards.
-.It zs
-Zilog 8530 serial controller.
+.It ubsec
+Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 crytography accelerators.
+.It zs/zstty/zskbd
+Zilog 8530 serial controller (and serial keyboards).
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
