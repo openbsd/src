@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.68 2004/06/29 11:19:06 mickey Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.69 2004/07/04 22:45:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -1121,7 +1121,7 @@ jail:
 			free(fdsr);
 			fdsr = NULL;
 			free(fdsw);
-			fdsr = NULL;
+			fdsw = NULL;
 			fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsr == NULL)
