@@ -1,5 +1,5 @@
-@1 pass in all 
-@1 pass in all 
-@1 pass in proto tcp from any port <= 1024 to any 
-@1 pass in proto tcp from any to any port = smtp 
-@1 pass in proto tcp from 10.0.0.0/255.0.0.0 port > 1024 to ! 10.1.2.3 port != ssh 
+@0 pass in all 
+@0 pass in all 
+@0 pass in proto tcp from any port <= 1024 to any 
+@0 pass in proto tcp from any to any port = smtp 
+@0 pass in proto tcp from 10.0.0.0/255.0.0.0 port > 1024 to ! 10.1.2.3 port != ssh 

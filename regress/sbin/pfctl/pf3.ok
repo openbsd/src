@@ -1,5 +1,5 @@
-@1 pass in all 
-@1 pass in all 
-@1 block in proto tcp all flags FPU/FSRPAU 
-@1 block in proto tcp all flags FS/FSRA 
-@1 block in proto tcp all flags /FSRA 
+@0 pass in all 
+@0 pass in all 
+@0 block in proto tcp all flags FPU/FSRPAU 
+@0 block in proto tcp all flags FS/FSRA 
+@0 block in proto tcp all flags /FSRA 
