@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.96 2002/11/17 19:21:52 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.97 2002/11/18 11:06:40 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -706,7 +706,7 @@ pciide_attach(parent, self, aux)
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
 
-/* tell wether the chip is enabled or not */
+/* tell whether the chip is enabled or not */
 int
 pciide_chipen(sc, pa)
 	struct pciide_softc *sc;
