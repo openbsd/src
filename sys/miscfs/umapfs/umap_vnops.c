@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.10 1998/08/06 19:34:50 csapuntz Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.11 1998/08/06 23:06:20 csapuntz Exp $	*/
 /*	$NetBSD: umap_vnops.c,v 1.5.4.1 1996/05/25 22:13:35 jtc Exp $	*/
 
 /*
@@ -371,7 +371,7 @@ int
 umap_inactive(v)
 	void *v;
 {
-	struct vop_getattr_args /* {
+	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
@@ -401,11 +401,13 @@ umap_lock(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
+#if 0
 	vop_generic_lock(ap);
+#endif
 	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
 		return (0);
 	ap->a_flags &= ~LK_INTERLOCK;
-	return (null_bypass(ap));
+	return (umap_bypass(ap));
 }
 
 /*
@@ -423,9 +425,11 @@ umap_unlock(v)
 		struct proc *a_p;
 	} */ *ap = v;
 
+#if 0
 	vop_generic_unlock(ap);
+#endif
 	ap->a_flags &= ~LK_INTERLOCK;
-	return (null_bypass(ap));
+	return (umap_bypass(ap));
 }
 
 
