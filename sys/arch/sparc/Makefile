@@ -8,6 +8,8 @@ NOPROG=	noprog
 NOMAN=	noman
 NOOBJ=	noobj
 
+SUBDIR=	stand
+
 DIRS=	conf dev fpu include sparc
 
 links::
@@ -24,5 +26,7 @@ tags:
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> tags
 	sort -o tags tags
+
+obj:	_SUBDIRUSE
 
 .include <bsd.prog.mk>
