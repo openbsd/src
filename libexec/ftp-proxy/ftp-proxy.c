@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.19 2002/01/10 19:35:07 mickey Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.20 2002/03/12 08:01:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -53,7 +53,7 @@
  *
  * supports tcp wrapper lookups/access control with the -w flag using
  * the real destination address - the tcp wrapper stuff is done after
- * the real destination address is retreived from pf
+ * the real destination address is retrieved from pf
  *
  */
 
@@ -164,8 +164,9 @@ static void
 usage()
 {
 	syslog(LOG_NOTICE,
-	    "usage: %s [-ArVw] [-t timeout] [-D debuglevel] %s",
-	    __progname, "[-m min_port] [-M max_port]\n");
+	    "usage: %s [-AnrVw] [-t timeout] [-D debuglevel] %s %s",
+	    __progname, "[-g group] [-u user] [-m min_port]",
+	    "[-M max_port]\n");
 	exit(EX_USAGE);
 }
 
@@ -368,7 +369,7 @@ show_xfer_stats()
 			goto logit;
 		len -= i;
 	}
-	strlcat(tbuf, ")", len);
+	strlcat(tbuf, ")", sizeof(tbuf));
  logit:
 	syslog(LOG_INFO, "%s", tbuf);
 }
