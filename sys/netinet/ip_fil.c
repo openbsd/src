@@ -5,9 +5,11 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+#if 0
 #ifndef	lint
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.5 1996/09/30 14:06:37 deraadt Exp $";
+static	char	rcsid[] = "$OpenBSD: ip_fil.c,v 1.6 1996/10/08 07:33:25 niklas Exp $";
+#endif
 #endif
 
 #ifndef	linux
@@ -39,8 +41,8 @@ static	char	rcsid[] = "$Id: ip_fil.c,v 1.5 1996/09/30 14:06:37 deraadt Exp $";
 #include <netinet/ip_icmp.h>
 #include <syslog.h>
 #endif
-#include "ip_fil.h"
 #include "ip_fil_compat.h"
+#include "ip_fil.h"
 #include "ip_frag.h"
 #include "ip_nat.h"
 #include "ip_state.h"
@@ -50,45 +52,37 @@ static	char	rcsid[] = "$Id: ip_fil.c,v 1.5 1996/09/30 14:06:37 deraadt Exp $";
 
 extern	fr_flags, fr_active;
 extern	struct	protosw	inetsw[];
-extern	int	(*fr_checkp)();
+extern	int	(*fr_checkp) __P((ip_t *, int, struct ifnet *, int,
+    struct mbuf **));
 #if	BSD < 199306
-extern	int	ipfr_slowtimer();
-static	int	(*fr_saveslowtimo)();
+extern	int	ipfr_slowtimer __P((void));
+static	int	(*fr_saveslowtimo) __P((void));
 extern	int	tcp_ttl;
 #else
-extern	void	ipfr_slowtimer();
-static	void	(*fr_saveslowtimo)();
+extern	void	ipfr_slowtimer __P((void));
+static	void	(*fr_saveslowtimo) __P((void));
 #endif
 
 int	ipl_inited = 0;
 int	ipl_unreach = ICMP_UNREACH_FILTER;
-int	send_reset();
 
 #ifdef	IPFILTER_LOG
 # define LOGSIZE	8192
-int	ipllog();
 static	char	iplbuf[LOGSIZE];
 static	caddr_t	iplh = iplbuf, iplt = iplbuf;
 static	int	iplused = 0;
 #endif /* IPFILTER_LOG */
-static	void	frflush();
-static	int	frrequest();
 static	int	iplbusy = 0;
-static	int	(*fr_savep)();
+static	int	(*fr_savep) __P((ip_t *, int, struct ifnet *, int,
+    struct mbuf **));
 
 #if _BSDI_VERSION >= 199510
 # include <sys/device.h>
 # include <sys/conf.h>
 
 int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	iplopen __P((dev_t, int, int, struct proc *));
 int	iplclose __P((dev_t, int, int, struct proc *));
-# ifdef IPFILTER_LOG
-int	iplread __P((dev_t, struct uio *, int));
-# else
-#  define iplread	noread
-# endif
-int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	iplopen __P((dev_t, int, int, struct proc *));
 
 struct cfdriver iplcd = {
 	NULL, "ipl", NULL, NULL, DV_DULL, 0
@@ -100,11 +94,41 @@ struct devsw iplsw = {
 	nostrat, nodump, nopsize, 0,
 	nostop
 };
+#else /* _BSDI_VERSION >= 199510 */
+
+# ifndef linux
+#  ifdef IPFILTER_LOG
+#   if BSD >= 199306
+int	iplread __P((dev_t, struct uio *, int));
+#   else
+int	iplread __P((dev_t, struct uio *));
+#   endif
+#  else
+#   define iplread	noread
+#  endif
+int	iplclose __P((dev_t, int));
+int	iplopen __P((dev_t, int));
+# endif /* linux */
+int	iplioctl __P((dev_t, int, caddr_t, int));
+
 #endif /* _BSDI_VERSION >= 199510 */
 
+int	iplattach __P((void));
+int	ipldetach __P((void));
+void	frzerostats __P((caddr_t));
+void	frflush __P((caddr_t));
+int	frrequest __P((int, caddr_t, int));
+
+#ifndef	IPFILTER_LKM
+void	iplinit __P((void));
+#endif /* !IPFILTER_LKM */
+
 #ifdef	IPFILTER_LKM
-int iplidentify(s)
-char *s;
+int	iplidentify __P((char *));
+
+int
+iplidentify(s)
+	char *s;
 {
 	if (strcmp(s, "ipl") == 0)
 		return 1;
@@ -113,7 +137,8 @@ char *s;
 #endif /* IPFILTER_LKM */
 
 
-int iplattach()
+int
+iplattach()
 {
 	int s;
 
@@ -133,7 +158,8 @@ int iplattach()
 }
 
 
-int ipldetach()
+int
+ipldetach()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -163,8 +189,9 @@ int ipldetach()
 }
 
 
-static	void	frzerostats(data)
-caddr_t	data;
+void
+frzerostats(data)
+	caddr_t	data;
 {
 	struct	friostat	fio;
 
@@ -184,8 +211,9 @@ caddr_t	data;
 }
 
 
-static void frflush(data)
-caddr_t data;
+void
+frflush(data)
+	caddr_t data;
 {
 	struct frentry *f, **fp;
 	int flags = *(int *)data, flushed = 0, set = fr_active;
@@ -225,19 +253,20 @@ caddr_t data;
 /*
  * Filter ioctl interface.
  */
-int iplioctl(dev, cmd, data, mode
+int
+iplioctl(dev, cmd, data, mode
 #if _BSDI_VERSION >= 199510
-, p)
-struct proc *p;
+    , p)
+	struct proc *p;
 #else
-)
+    )
 #endif
-dev_t dev;
-int cmd;
-caddr_t data;
-int mode;
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int mode;
 {
-	int error = 0, s, unit, used;
+	int error = 0, s, unit;
 
 	unit = minor(dev);
 	if (unit != 0)
@@ -366,9 +395,10 @@ int mode;
 }
 
 
-static int frrequest(req, data, set)
-int req, set;
-caddr_t data;
+int
+frrequest(req, data, set)
+	int req, set;
+	caddr_t data;
 {
 	register frentry_t *fp, *f, **fprev;
 	register frentry_t **ftail;
@@ -475,16 +505,17 @@ caddr_t data;
 /*
  * routines below for saving IP headers to buffer
  */
-int iplopen(dev, flags
+int
+iplopen(dev, flags
 #if _BSDI_VERSION >= 199510
-, devtype, p)
-int devtype;
-struct proc *p;
+    , devtype, p)
+	int devtype;
+	struct proc *p;
 #else
-)
+    )
 #endif
-dev_t dev;
-int flags;
+	dev_t dev;
+	int flags;
 {
 	u_int min = minor(dev);
 
@@ -494,16 +525,17 @@ int flags;
 }
 
 
-int iplclose(dev, flags
+int
+iplclose(dev, flags
 #if _BSDI_VERSION >= 199510
-, devtype, p)
-int devtype;
-struct proc *p;
+    , devtype, p)
+	int devtype;
+	struct proc *p;
 #else
-)
+    )
 #endif
-dev_t dev;
-int flags;
+	dev_t dev;
+	int flags;
 {
 	u_int	min = minor(dev);
 
@@ -520,13 +552,15 @@ int flags;
  * the filter lists.
  */
 #  if BSD >= 199306
-int iplread(dev, uio, ioflag)
-int ioflag;
+int
+iplread(dev, uio, ioflag)
+	int ioflag;
 #  else
-int iplread(dev, uio)
+int
+iplread(dev, uio)
 #  endif
-dev_t dev;
-register struct uio *uio;
+	dev_t dev;
+	register struct uio *uio;
 {
 	register int ret, s;
 	register size_t sz, sx;
@@ -576,11 +610,12 @@ register struct uio *uio;
 
 
 #ifdef	IPFILTER_LOG
-int ipllog(flags, ip, fin, m)
-u_int flags;
-ip_t *ip;
-register fr_info_t *fin;
-struct mbuf *m;
+int
+ipllog(flags, ip, fin, m)
+	u_int flags;
+	ip_t *ip;
+	register fr_info_t *fin;
+	struct mbuf *m;
 {
 	struct ipl_ci iplci;
 	register size_t tail = 0;
@@ -692,8 +727,9 @@ struct mbuf *m;
  * send_reset - this could conceivably be a call to tcp_respond(), but that
  * requires a large amount of setting up and isn't any more efficient.
  */
-int send_reset(ti)
-struct tcpiphdr *ti;
+int
+send_reset(ti)
+	struct tcpiphdr *ti;
 {
 	struct tcpiphdr *tp;
 	struct ip *ip;
@@ -753,6 +789,7 @@ struct tcpiphdr *ti;
 
 
 #ifndef	IPFILTER_LKM
+void
 iplinit()
 {
 	/* (void) iplattach(); */
@@ -761,16 +798,17 @@ iplinit()
 #endif
 
 
-void ipfr_fastroute(m0, fin, fdp)
-struct mbuf *m0;
-fr_info_t *fin;
-frdest_t *fdp;
+void
+ipfr_fastroute(m0, fin, fdp)
+	struct mbuf *m0;
+	fr_info_t *fin;
+	frdest_t *fdp;
 {
 	register struct ip *ip, *mhip;
 	register struct mbuf *m = m0;
 	register struct route *ro;
 	struct ifnet *ifp = fdp->fd_ifp;
-	int len, off, error = 0, s;
+	int len, off, error = 0;
 	int hlen = fin->fin_hlen;
 	struct route iproute;
 	struct sockaddr_in *dst;

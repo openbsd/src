@@ -28,6 +28,7 @@ extern	char	*index();
 #include <netinet/in_systm.h>
 #include <net/if.h>
 #include <netinet/ip.h>
+#include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
@@ -36,7 +37,7 @@ extern	char	*index();
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipf.c,v 1.6 1996/07/21 16:40:04 dm Exp $";
+static	char	rcsid[] = "$Id: ipf.c,v 1.7 1996/10/08 07:33:31 niklas Exp $";
 #endif
 
 #if	SOLARIS

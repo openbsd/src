@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $Id: ip_state.h,v 1.2 1996/07/18 05:01:09 dm Exp $
+ * $OpenBSD: ip_state.h,v 1.3 1996/10/08 07:33:30 niklas Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -71,10 +71,11 @@ typedef	struct	ips_stat {
 	ipstate_t **iss_table;
 } ips_stat_t;
 
-extern ips_stat_t *fr_statetstats();
-extern int fr_addstate(), fr_checkstate();
-extern void fr_timeoutstate();
+extern ips_stat_t *fr_statetstats __P((void));
+extern int	fr_addstate __P((ip_t *, fr_info_t *, u_int));
+extern int	fr_checkstate __P((ip_t *, fr_info_t *));
+extern void	fr_timeoutstate __P((void));
 # ifdef	_KERNEL
-extern void fr_stateunload();
+extern void	fr_stateunload __P((void));
 # endif
 #endif /* __IP_STATE_H__ */

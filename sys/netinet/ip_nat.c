@@ -21,9 +21,11 @@
  * Missing from RFC 1631: ICMP header checksum recalculations.
  *
  */
+#if 0
 #ifndef	lint
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_nat.c,v 1.4 1996/07/18 05:01:05 dm Exp $";
+static	char	rcsid[] = "$OpenBSD: ip_nat.c,v 1.5 1996/10/08 07:33:28 niklas Exp $";
+#endif
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -34,6 +36,9 @@ static	char	rcsid[] = "$Id: ip_nat.c,v 1.4 1996/07/18 05:01:05 dm Exp $";
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#if defined(_KERNEL) || defined(KERNEL)
+#include <sys/systm.h>
+#endif
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -63,8 +68,8 @@ static	char	rcsid[] = "$Id: ip_nat.c,v 1.4 1996/07/18 05:01:05 dm Exp $";
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include <syslog.h>
-#include "ip_fil.h"
 #include "ip_fil_compat.h"
+#include "ip_fil.h"
 #include "ip_nat.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
@@ -83,6 +88,9 @@ extern	kmutex_t	ipf_nat;
 # endif
 #endif
 
+int	flush_nattable __P((void));
+int	clear_natlist __P((void));
+nat_t	*nat_new __P((ipnat_t *, ip_t *, int, u_short, int));
 
 /*
  * How the NAT is organised and works.
@@ -108,9 +116,10 @@ extern	kmutex_t	ipf_nat;
 /*
  * Handle ioctls which manipulate the NAT.
  */
-int nat_ioctl(data, cmd, mode)
-caddr_t data;
-int cmd, mode;
+int
+nat_ioctl(data, cmd, mode)
+	caddr_t data;
+	int cmd, mode;
 {
 	register ipnat_t *nat, *n, **np;
 	ipnat_t natd;
@@ -215,7 +224,8 @@ int cmd, mode;
 /*
  * flush_nattable - clear the NAT table of all mapping entries.
  */
-int flush_nattable()
+int
+flush_nattable()
 {
 	nat_t *nat, **natp;
 	int i, j = 0;
@@ -240,7 +250,8 @@ int flush_nattable()
 /*
  * clear_natlist - delete all entries in the active NAT mapping list.
  */
-int clear_natlist()
+int
+clear_natlist()
 {
 	register ipnat_t *n, **np;
 	int i = 0;
@@ -256,12 +267,13 @@ int clear_natlist()
 /*
  * Create a new NAT table entry.
  */
-nat_t *nat_new(np, ip, hlen, flags, direction)
-ipnat_t *np;
-ip_t *ip;
-int hlen;
-u_short flags;
-int direction;
+nat_t *
+nat_new(np, ip, hlen, flags, direction)
+	ipnat_t *np;
+	ip_t *ip;
+	int hlen;
+	u_short flags;
+	int direction;
 {
 	register u_long sum1, sum2, sumd;
 	u_short port = 0, sport = 0, dport = 0, nport = 0;
@@ -412,8 +424,9 @@ int direction;
  * NB: these lookups don't lock access to the list, it assume it has already
  * been done!
  */
-nat_t *nat_lookupredir(np)
-natlookup_t *np;
+nat_t *
+nat_lookupredir(np)
+	natlookup_t *np;
 {
 	nat_t *nat;
 
@@ -428,9 +441,10 @@ natlookup_t *np;
 }
 
 
-nat_t *nat_lookupinip(ipaddr, sport)
-struct in_addr ipaddr;
-u_short sport;
+nat_t *
+nat_lookupinip(ipaddr, sport)
+	struct in_addr ipaddr;
+	u_short sport;
 {
 	nat_t *nat;
 
@@ -446,10 +460,11 @@ u_short sport;
 }
 
 
-nat_t *nat_lookupoutip(np, ip, tcp)
-register ipnat_t *np;
-ip_t *ip;
-tcphdr_t *tcp;
+nat_t *
+nat_lookupoutip(np, ip, tcp)
+	register ipnat_t *np;
+	ip_t *ip;
+	tcphdr_t *tcp;
 {
 	struct in_addr ipaddr;
 	u_short	port = tcp->th_dport;
@@ -478,10 +493,11 @@ tcphdr_t *tcp;
  * Packets going out on the external interface go through this.
  * Here, the source address requires alteration, if anything.
  */
-void ip_natout(ip, hlen, fin)
-ip_t *ip;
-int hlen;
-fr_info_t *fin;
+void
+ip_natout(ip, hlen, fin)
+	ip_t *ip;
+	int hlen;
+	fr_info_t *fin;
 {
 	register ipnat_t *np;
 	register u_long ipa;
@@ -589,10 +605,11 @@ fr_info_t *fin;
  * Packets coming in from the external interface go through this.
  * Here, the destination address requires alteration, if anything.
  */
-void ip_natin(ip, hlen, fin)
-ip_t *ip;
-int hlen;
-fr_info_t *fin;
+void
+ip_natin(ip, hlen, fin)
+	ip_t *ip;
+	int hlen;
+	fr_info_t *fin;
 {
 	register ipnat_t *np;
 	register struct in_addr in;
@@ -694,7 +711,8 @@ fr_info_t *fin;
 /*
  * Free all memory used by NAT structures allocated at runtime.
  */
-void ip_natunload()
+void
+ip_natunload()
 {
 	register struct nat *nat, **natp;
 	register struct ipnat *ipn, **ipnp;
@@ -726,7 +744,8 @@ void ip_natunload()
  * Slowly expire held state for NAT entries.  Timeouts are set in
  * expectation of this being called twice per second.
  */
-void ip_natexpire()
+void
+ip_natexpire()
 {
 	register struct nat *nat, **natp;
 	register int i;

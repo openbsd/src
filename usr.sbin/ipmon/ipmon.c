@@ -40,9 +40,10 @@
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipmon.c,v 1.5 1996/09/30 17:52:41 deraadt Exp $";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.6 1996/10/08 07:33:38 niklas Exp $";
 #endif
 
+#include "ip_fil_compat.h"
 #include "ip_fil.h"
 
 struct	flags {

@@ -50,13 +50,14 @@ tcpdump -nqte
 #include <netinet/tcpip.h>
 #include <net/if.h>
 #include <netdb.h>
+#include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 
 #ifndef lint
 static char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_td.c,v 1.4 1996/07/18 04:59:24 dm Exp $";
+static	char	rcsid[] = "$Id: ipft_td.c,v 1.5 1996/10/08 07:33:36 niklas Exp $";
 #endif
 
 static	int	tcpd_open(), tcpd_close(), tcpd_readip();

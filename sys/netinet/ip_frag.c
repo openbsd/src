@@ -5,9 +5,11 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+#if 0
 #ifndef	lint
 static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_frag.c,v 1.3 1996/07/18 05:01:02 dm Exp $";
+static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.4 1996/10/08 07:33:27 niklas Exp $";
+#endif
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -16,6 +18,9 @@ static	char	rcsid[] = "$Id: ip_frag.c,v 1.3 1996/07/18 05:01:02 dm Exp $";
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
+#if defined(_KERNEL) || defined(KERNEL)
+#include <sys/systm.h>
+#endif
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -46,8 +51,8 @@ static	char	rcsid[] = "$Id: ip_frag.c,v 1.3 1996/07/18 05:01:02 dm Exp $";
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include <syslog.h>
-#include "ip_fil.h"
 #include "ip_fil_compat.h"
+#include "ip_fil.h"
 #include "ip_frag.h"
 #include "ip_nat.h"
 #include "ip_state.h"
@@ -67,8 +72,14 @@ extern	kmutex_t	ipf_frag;
 # endif
 #endif
 
+# if BSD < 199306
+int	ipfr_slowtimer __P((void));
+#else
+void	ipfr_slowtimer __P((void));
+#endif
 
-ipfrstat_t *ipfr_fragstats()
+ipfrstat_t *
+ipfr_fragstats()
 {
 	ipfr_stats.ifs_table = ipfr_heads;
 	ipfr_stats.ifs_inuse = ipfr_inuse;
@@ -80,10 +91,11 @@ ipfrstat_t *ipfr_fragstats()
  * add a new entry to the fragment cache, registering it as having come
  * through this box, with the result of the filter operation.
  */
-int ipfr_newfrag(ip, fin, pass)
-ip_t *ip;
-fr_info_t *fin;
-int pass;
+int
+ipfr_newfrag(ip, fin, pass)
+	ip_t *ip;
+	fr_info_t *fin;
+	int pass;
 {
 	ipfr_t	**fp, *fr, frag;
 	u_int	idx;
@@ -137,9 +149,10 @@ int pass;
  * check the fragment cache to see if there is already a record of this packet
  * with its filter result known.
  */
-int ipfr_knownfrag(ip, fin)
-ip_t *ip;
-fr_info_t *fin;
+int
+ipfr_knownfrag(ip, fin)
+	ip_t *ip;
+	fr_info_t *fin;
 {
 	ipfr_t	*f, frag;
 	u_int	idx;
@@ -204,7 +217,8 @@ fr_info_t *fin;
 /*
  * Free memory in use by fragment state info. kept.
  */
-void ipfr_unload()
+void
+ipfr_unload()
 {
 	ipfr_t	**fp, *fr;
 	int	idx;
@@ -230,10 +244,11 @@ void ipfr_unload()
  * of this being called twice per second.
  */
 # if BSD < 199306
-int ipfr_slowtimer()
+int
 #else
-void ipfr_slowtimer()
+void
 #endif
+ipfr_slowtimer()
 {
 	ipfr_t	**fp, *fr;
 	int	s, idx;

@@ -5,9 +5,11 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+#if 0
 #ifndef	lint
 static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1996/07/18 05:01:08 dm Exp $";
+static	char	rcsid[] = "$OpenBSD: ip_state.c,v 1.4 1996/10/08 07:33:29 niklas Exp $";
+#endif
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -17,6 +19,9 @@ static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1996/07/18 05:01:08 dm Exp $";
 #ifndef	linux
 #include <sys/errno.h>
 #include <sys/types.h>
+#if defined(_KERNEL) || defined(KERNEL)
+#include <sys/systm.h>
+#endif
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -48,8 +53,8 @@ static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1996/07/18 05:01:08 dm Exp $";
 #include <netinet/ip_icmp.h>
 #include <syslog.h>
 #endif
-#include "ip_fil.h"
 #include "ip_fil_compat.h"
+#include "ip_fil.h"
 #include "ip_state.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
@@ -68,7 +73,8 @@ extern	kmutex_t	ipf_state;
 #endif
 
 
-ips_stat_t *fr_statetstats()
+ips_stat_t *
+fr_statetstats()
 {
 	ips_stats.iss_active = ips_num;
 	ips_stats.iss_table = ips_table;
@@ -84,10 +90,11 @@ ips_stat_t *fr_statetstats()
 /*
  * Create a new ipstate structure and hang it off the hash table.
  */
-int fr_addstate(ip, fin, pass)
-ip_t *ip;
-fr_info_t *fin;
-u_int pass;
+int
+fr_addstate(ip, fin, pass)
+	ip_t *ip;
+	fr_info_t *fin;
+	u_int pass;
 {
 	ipstate_t ips;
 	register ipstate_t *is = &ips;
@@ -189,9 +196,10 @@ u_int pass;
 /*
  * Check if a packet has a registered state.
  */
-int fr_checkstate(ip, fin)
-ip_t *ip;
-fr_info_t *fin;
+int
+fr_checkstate(ip, fin)
+	ip_t *ip;
+	fr_info_t *fin;
 {
 	register struct in_addr dst, src;
 	register ipstate_t *is, **isp;
@@ -366,7 +374,8 @@ fr_info_t *fin;
 /*
  * Free memory in use by all state info. kept.
  */
-void fr_stateunload()
+void
+fr_stateunload()
 {
 	register int i;
 	register ipstate_t *is, **isp;
@@ -385,7 +394,8 @@ void fr_stateunload()
  * Slowly expire held state for thingslike UDP and ICMP.  Timeouts are set
  * in expectation of this being called twice per second.
  */
-void fr_timeoutstate()
+void
+fr_timeoutstate()
 {
 	register int i;
 	register ipstate_t *is, **isp;

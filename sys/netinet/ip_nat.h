@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.3 1996/07/18 05:01:06 dm Exp $
+ * $Id: ip_nat.h,v 1.4 1996/10/08 07:33:29 niklas Exp $
  */
 
 #ifndef	__IP_NAT_H_
@@ -98,7 +98,12 @@ typedef	struct	natstat	{
 #define	IPN_UDP		2
 #define	IPN_TCPUDP	3
 
-extern int nat_ioctl();
-extern nat_t *nat_lookupoutip(), *nat_lookupinip(), *nat_lookupredir();
-extern void ip_natout(), ip_natin(), ip_natunload(), ip_natexpire();
+extern int nat_ioctl __P((caddr_t, int, int));
+extern nat_t *nat_lookupoutip __P((ipnat_t *, ip_t *, tcphdr_t *));
+extern nat_t *nat_lookupinip __P((struct in_addr, u_short));
+extern nat_t *nat_lookupredir __P((natlookup_t *));
+extern void ip_natout __P((ip_t *, int, fr_info_t *));
+extern void ip_natin __P((ip_t *, int, fr_info_t *));
+extern void ip_natunload __P((void));
+extern void ip_natexpire __P((void));
 #endif /* __IP_NAT_H__ */

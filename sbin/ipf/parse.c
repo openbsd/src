@@ -23,6 +23,7 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
+#include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
@@ -33,7 +34,7 @@
 
 #ifndef	lint
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: parse.c,v 1.6 1996/07/18 05:11:03 dm Exp $";
+static	char	rcsid[] = "$Id: parse.c,v 1.7 1996/10/08 07:33:32 niklas Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];

@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.5 1996/09/30 14:06:38 deraadt Exp $
+ * $OpenBSD: ip_fil.h,v 1.6 1996/10/08 07:33:26 niklas Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -148,7 +148,8 @@ typedef	struct	frentry {
 	u_short	fr_stop;	/* top port for <> and >< */
 	u_short	fr_dtop;	/* top port for <> and >< */
 	u_long	fr_flags;	/* per-rule flags && options (see below) */
-	int	(*fr_func)();	/* call this function */
+	int	(*fr_func) __P((int, ip_t *, fr_info_t *));
+				/* call this function */
 	char	fr_icode;	/* return ICMP code */
 	char	fr_ifname[IFNAMSIZ];
 	struct	frdest	fr_tif;	/* "to" interface */
@@ -328,15 +329,26 @@ typedef	struct ipl_ci	{
 
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 
-extern	int	fr_check();
 extern	fr_info_t	frcache[];
 
 #ifdef _KERNEL
 
 extern struct frentry *ipfilter[2][2], *ipacct[2][2];
 extern struct filterstats frstats[];
+
+#ifdef IPFILTER_LOG
+extern int	ipllog __P((u_int, ip_t *, fr_info_t *, struct mbuf *));
+#endif
+extern int	send_reset __P((struct tcpiphdr *));
+extern void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
 # if	SOLARIS
+extern	int	fr_check();
 extern	int	ipfsync();
-# endif
+# else /* SOLARIS */
+extern	int	fr_check __P((ip_t *, int, struct ifnet *, int,
+    struct mbuf **));
+# endif /* SOLARIS */
+#else /* _KERNEL */
+extern	int	fr_check __P((ip_t *, int, struct ifnet *, int));
 #endif /* _KERNEL */
 #endif	/* __IP_FIL_H__ */

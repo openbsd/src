@@ -41,13 +41,14 @@ etherfind -n -t
 #include <netinet/tcpip.h>
 #include <net/if.h>
 #include <netdb.h>
+#include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 
 #ifndef lint
 static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_ef.c,v 1.4 1996/07/18 04:59:22 dm Exp $";
+static	char	rcsid[] = "$Id: ipft_ef.c,v 1.5 1996/10/08 07:33:34 niklas Exp $";
 #endif
 
 static	int	etherf_open(), etherf_close(), etherf_readip();

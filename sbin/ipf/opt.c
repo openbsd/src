@@ -17,12 +17,13 @@
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
+#include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include "ipf.h"
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: opt.c,v 1.5 1996/07/18 05:11:02 dm Exp $";
+static	char	rcsid[] = "$Id: opt.c,v 1.6 1996/10/08 07:33:31 niklas Exp $";
 #endif
 
 extern	int	opts;

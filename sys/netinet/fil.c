@@ -5,9 +5,11 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+#if 0
 #ifndef	lint
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fil.c,v 1.5 1996/07/18 05:00:55 dm Exp $";
+static	char	rcsid[] = "$OpenBSD: fil.c,v 1.6 1996/10/08 07:33:24 niklas Exp $";
+#endif
 #endif
 
 #include <sys/errno.h>
@@ -45,8 +47,8 @@ static	char	rcsid[] = "$Id: fil.c,v 1.5 1996/07/18 05:00:55 dm Exp $";
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include "ip_fil.h"
 #include "ip_fil_compat.h"
+#include "ip_fil.h"
 #include "ip_nat.h"
 #include "ip_frag.h"
 #include "ip_state.h"
@@ -72,7 +74,6 @@ extern	void	debug(), verbose();
 #define	FR_IFDEBUG(ex,second,verb_pr)	;
 #define	FR_VERBOSE(verb_pr)
 #define	FR_DEBUG(verb_pr)
-extern	int	send_reset();
 # if SOLARIS
 extern	int	icmp_error();
 extern	kmutex_t	ipf_mutex;
@@ -80,7 +81,7 @@ extern	kmutex_t	ipf_mutex;
 # else
 # define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
 # endif
-extern	int	ipl_unreach, ipllog();
+extern	int	ipl_unreach;
 #endif
 
 #if SOLARIS
@@ -90,7 +91,8 @@ extern	int	ipl_unreach, ipllog();
 			icmp_error(b, ip, t, c, if, src)
 #else
 # define	IPLLOG(fl, ip, fi, m)		ipllog(fl, ip, fi, m)
-# define	SEND_RESET(ip, if, q)		send_reset(ip)
+# define	SEND_RESET(ip, if, q)		send_reset( \
+						    (struct tcpiphdr *)ip)
 # if BSD < 199103
 #  define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(mtod(b, ip_t *), t, c, if, src)
@@ -107,6 +109,13 @@ int	fr_flags = 0, fr_active = 0;
 
 fr_info_t	frcache[2];
  
+void	fr_makefrip __P((int, ip_t *, fr_info_t *));
+int	fr_tcpudpchk __P((frentry_t *, fr_info_t *));
+#if (defined(_KERNEL) || defined(KERNEL)) && !SOLARIS
+int	fr_scanlist __P((int, ip_t *, fr_info_t *, void *));
+#else
+int	fr_scanlist __P((int, ip_t *, fr_info_t *));
+#endif
 
 /*
  * bit values for identifying presence of individual IP options
@@ -153,10 +162,11 @@ struct	optlist	secopt[8] = {
  * compact the IP header into a structure which contains just the info.
  * which is useful for comparing IP headers with.
  */
-void	fr_makefrip(hlen, ip, fin)
-int hlen;
-ip_t *ip;
-fr_info_t *fin;
+void
+fr_makefrip(hlen, ip, fin)
+	int hlen;
+	ip_t *ip;
+	fr_info_t *fin;
 {
 	struct optlist *op;
 	tcphdr_t *tcp;
@@ -272,9 +282,10 @@ getports:
 /*
  * check an IP packet for TCP/UDP characteristics such as ports and flags.
  */
-int fr_tcpudpchk(fr, fin)
-frentry_t *fr;
-fr_info_t *fin;
+int
+fr_tcpudpchk(fr, fin)
+	frentry_t *fr;
+	fr_info_t *fin;
 {
 	register u_short po, tup;
 	register char i;
@@ -365,11 +376,17 @@ fr_info_t *fin;
  * Could be per interface, but this gets real nasty when you don't have
  * kernel sauce.
  */
-int fr_scanlist(pass, ip, fin, m)
-int pass;
-ip_t *ip;
-register fr_info_t *fin;
-void *m;
+int
+fr_scanlist(pass, ip, fin
+#if (defined(_KERNEL) || defined(KERNEL)) && !SOLARIS
+    , m)
+	void *m;
+#else
+    )
+#endif
+	int pass;
+	ip_t *ip;
+	register fr_info_t *fin;
 {
 	register struct frentry *fr;
 	register fr_ip_t *fi = &fin->fin_fi;
@@ -455,7 +472,7 @@ void *m;
                  */
 		pass = fr->fr_flags;
 		if ((pass & FR_CALLNOW) && fr->fr_func)
-			pass = (*fr->fr_func)(ip, fin);
+			pass = (*fr->fr_func)(pass, ip, fin);
 #ifdef  IPFILTER_LOG
 		if ((pass & FR_LOGMASK) == FR_LOG) {
 			if (!IPLLOG(fr->fr_flags, ip, fin, m))
@@ -483,24 +500,25 @@ void *m;
  * check using source and destination addresses/pors in a packet whether
  * or not to pass it on or not.
  */
-int fr_check(ip, hlen, ifp, out
+int
+fr_check(ip, hlen, ifp, out
 #ifdef _KERNEL
 # if SOLARIS
-, qif, q, mb)
-qif_t *qif;
-queue_t *q;
-mblk_t *mb;
+    , qif, q, mb)
+	qif_t *qif;
+	queue_t *q;
+	mblk_t *mb;
 # else
-, mp)
-struct mbuf **mp;
+    , mp)
+	struct mbuf **mp;
 # endif
 #else
-)
+    )
 #endif
-ip_t *ip;
-int hlen;
-struct ifnet *ifp;
-int out;
+	ip_t *ip;
+	int hlen;
+	struct ifnet *ifp;
+	int out;
 {
 	/*
 	 * The above really sucks, but short of writing a diff
@@ -545,7 +563,14 @@ int out;
 
 	if ((pass = ipfr_knownfrag(ip, fin))) {
 		if ((pass & FR_KEEPSTATE)) {
-			if (fr_addstate(ip, hlen, pass) == -1)
+			/*
+			 * XXX I don't know if changing hlen to fin is right,
+			 * but at least that is typesafe.  //niklas@appli.se
+			 *
+			 * old code was:
+			 * if (fr_addstate(ip, hlen, pass) == -1)
+			 */
+			if (fr_addstate(ip, fin, pass) == -1)
 				frstats[out].fr_bads++;
 			else
 				frstats[out].fr_ads++;

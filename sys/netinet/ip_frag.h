@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * $Id: ip_frag.h,v 1.3 1996/07/18 05:01:03 dm Exp $
+ * $OpenBSD: ip_frag.h,v 1.4 1996/10/08 07:33:27 niklas Exp $
  */
 
 #ifndef	__IP_FRAG_H_
@@ -39,9 +39,10 @@ typedef	struct	ipfrstat {
 
 #define	IPFR_CMPSZ	(4 + 4 + 2 + 1 + 1)
 
-extern ipfrstat_t *ipfr_fragstats();
-extern int ipfr_newfrag(), ipfr_knownfrag();
+extern ipfrstat_t *ipfr_fragstats __P((void));
+extern int	ipfr_newfrag __P((ip_t *, fr_info_t *, int));
+extern int	ipfr_knownfrag __P((ip_t *, fr_info_t *));
 # ifdef	_KERNEL
-extern void ipfr_unload();
+extern void	ipfr_unload __P((void));
 # endif
 #endif	/* __IP_FIL_H__ */

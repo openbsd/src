@@ -26,8 +26,8 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if.h>
-#include "ip_fil.h"
 #include "ip_fil_compat.h"
+#include "ip_fil.h"
 #include "ip_nat.h"
 #include "ip_frag.h"
 #include "ip_state.h"
@@ -42,7 +42,7 @@
 
 #ifndef	lint
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fils.c,v 1.6 1996/07/18 05:08:09 dm Exp $";
+static	char	rcsid[] = "$Id: fils.c,v 1.7 1996/10/08 07:33:33 niklas Exp $";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX

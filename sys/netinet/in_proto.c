@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.5 1996/07/18 05:00:57 dm Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.6 1996/10/08 07:33:25 niklas Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -90,7 +90,7 @@
 #endif /* MROUTING */
 
 #ifdef IPFILTER
-void	iplinit();
+void	iplinit __P((void));
 #define ip_init	iplinit
 #endif
 
