@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.14 2002/05/14 20:41:33 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.15 2002/05/20 00:16:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -53,6 +53,7 @@
 #endif
 
 struct timeval time;
+int cpu_clockok;
 
 void startrtclock(void);
 
@@ -65,6 +66,8 @@ cpu_initclocks()
 	/* Start the interval timer. */
 	mfctl(CR_ITMR, time_inval);
 	mtctl(time_inval + cpu_hzticks, CR_ITMR);
+
+	cpu_clockok = 1;
 }
 
 int
@@ -75,6 +78,9 @@ clock_intr (v)
 
 	/* printf ("clock int 0x%x @ 0x%x for %p\n", t,
 	   frame->tf_iioq_head, curproc); */
+
+	if (!cpu_clockok)
+		return (1);
 
 	cpu_initclocks();
 	hardclock(frame);
