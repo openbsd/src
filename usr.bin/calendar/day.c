@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.12 2001/09/26 20:38:55 mickey Exp $	*/
+/*	$OpenBSD: day.c,v 1.13 2001/09/27 18:19:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.12 2001/09/26 20:38:55 mickey Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.13 2001/09/27 18:19:20 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -433,17 +433,22 @@ isnow(endp, bodun)
 			}
 			if ((tmp = malloc(sizeof(struct match))) == NULL)
 				err(1, NULL);
-			tmp->when = f_time + v2 * SECSPERDAY;
+
+			if (bodun && (day - tp->tm_yday) == -1) {
+				tmp->when = f_time - 1 * SECSPERDAY;
+				tmtmp.tm_mday++;
+				tmp->bodun = 1;
+			} else {
+				tmp->when = f_time + v2 * SECSPERDAY;
+				tmp->bodun = 0;
+			}
+
 			(void)mktime(&tmtmp);
 			if (strftime(tmp->print_date,
 			    sizeof(tmp->print_date),
 			/*    "%a %b %d", &tm);  Skip weekdays */
 			    "%b %d", &tmtmp) == 0)
 				tmp->print_date[sizeof(tmp->print_date) - 1] = '\0';
-			if (bodun && (day - tp->tm_yday) == -1)
-				strcpy(tmp->prefix, "Бодун на утро от: ");
-			else
-				tmp->prefix[0] = '\0';
 
 			tmp->var   = varp;
 			tmp->next  = NULL;
@@ -539,11 +544,7 @@ isnow(endp, bodun)
 					/*    "%a %b %d", &tm);  Skip weekdays */
 					    "%b %d", &tmtmp) == 0)
 						tmp->print_date[sizeof(tmp->print_date) - 1] = '\0';
-					if (bodun && tdiff == -1)
-						strcpy(tmp->prefix,
-						    "Bodun na ytpo ot: ");
-					else
-						tmp->prefix[0] = '\0';
+					tmp->bodun = bodun && tdiff == -1;
 					tmp->var   = varp;
 					tmp->next  = NULL;
 					if (tmp2)

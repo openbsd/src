@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.15 2001/09/26 20:38:55 mickey Exp $
+.\"	$OpenBSD: calendar.1,v 1.16 2001/09/27 18:19:20 mickey Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -94,6 +94,13 @@ To handle national Easter names in the calendars,
 (for Catholic Easter) or
 .Dq Paskha=<national_name>
 (for Orthodox Easter) can be used.
+.Pp
+To enforce special date calculation mode for Cyrillic calendars
+you should specify
+.Dq LANG=<local_name>
+and
+.Dq BODUN=Yes
+where <local_name> can be ru_RU.KOI8-R, uk_UA.KOI8-U or by_BY.KOI8-B
 .Pp
 Other lines should begin with a month and day.
 They may be entered in almost any format, either numeric or as character

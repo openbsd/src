@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.16 2001/09/27 02:55:01 mickey Exp $	*/
+/*	$OpenBSD: io.c,v 1.17 2001/09/27 18:19:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.16 2001/09/27 02:55:01 mickey Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.17 2001/09/27 18:19:20 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ cal()
 	FILE *fp;
 	int ch, l, i, bodun = 0, bodun_maybe = 0;
 	int var;
-	char buf[2048 + 1];
+	char buf[2048 + 1], *prefix = NULL;
 	struct event *events, *cur_evt, *ev1, *tmp;
 	struct match *m;
 
@@ -114,13 +114,21 @@ cal()
 			    !strcmp(buf + 5, "uk_UA.KOI8-U") ||
 			    !strcmp(buf + 5, "by_BY.KOI8-B")) {
 				bodun_maybe++;
-				bodun = bodun_always;
+				bodun = 0;
+				if (prefix)
+					free(prefix);
+				prefix = NULL;
 			} else
 				bodun_maybe = 0;
 			continue;
 		}
-		if (bodun_maybe && strncmp(buf, "BODUN=", 6) == 0)
+		if (bodun_maybe && strncmp(buf, "BODUN=", 6) == 0) {
 			bodun++;
+			if (prefix)
+				free(prefix);
+			if ((prefix = strdup(buf + 6)) == NULL)
+				err(1, NULL);
+		}
 		/* User defined names for special events */
 		if ((p = strchr(buf, '='))) {
 			for (i = 0; i < NUMEV; i++) {
@@ -167,14 +175,14 @@ cal()
 					cur_evt->desc = ev1->desc;
 					cur_evt->ldesc = NULL;
 				} else {
-					if (m->prefix[0]) {
-						int l1 = strlen(m->prefix);
+					if (m->bodun && prefix) {
+						int l1 = strlen(prefix);
 						int l2 = strlen(p);
 						if ((cur_evt->ldesc =
 						    malloc(l1 + l2)) == NULL)
-							err(1, "realloc");
-						sprintf(cur_evt->ldesc, "\t%s%s",
-						    m->prefix, p + 1);
+							err(1, "malloc");
+						sprintf(cur_evt->ldesc,
+						    "\t%s %s", prefix, p + 1);
 					} else if ((cur_evt->ldesc =
 					    strdup(p)) == NULL)
 						err(1, NULL);
