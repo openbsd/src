@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.42 2002/06/09 05:08:37 itojun Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.43 2002/06/09 05:25:50 itojun Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -209,7 +209,7 @@ arp_rtrequest(req, rt, info)
 			/*
 			 * linklayers with particular link MTU limitation.
 			 */
-			switch (rt->rt_ifp->if_types) {
+			switch (rt->rt_ifp->if_type) {
 			case IFT_FDDI:
 				if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
 				    (rt->rt_rmx.rmx_mtu > FDDIIPMTU ||
