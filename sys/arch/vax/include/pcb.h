@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8 1995/05/07 16:43:34 ragge Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9 1996/01/28 12:27:19 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -50,9 +50,9 @@ struct pcb {
 	long	FP;		/*  Frame Pointer             */
 	long	PC;		/*  Program Counter           */
 	long	PSL;		/*  Program Status Longword   */
-	void   *P0BR;		/*  Page 0 Base Register      */
+	struct	pte *P0BR;	/*  Page 0 Base Register      */
 	long	P0LR;		/*  Page 0 Length Register    */
-	void   *P1BR;		/*  Page 1 Base Register      */
+	struct	pte *P1BR;	/*  Page 1 Base Register      */
 	long	P1LR;		/*  Page 1 Length Register    */
 
 	/* Software registers, only used by kernel software */
