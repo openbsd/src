@@ -1,5 +1,5 @@
-/*	$OpenBSD: field.c,v 1.4 1998/12/21 01:02:23 niklas Exp $	*/
-/*	$EOM: field.c,v 1.6 1998/11/27 17:12:22 niklas Exp $	*/
+/*	$OpenBSD: field.c,v 1.5 1999/02/26 03:38:56 niklas Exp $	*/
+/*	$EOM: field.c,v 1.8 1999/02/25 11:38:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "constants.h"
 #include "field.h"
@@ -139,7 +141,7 @@ field_debug_mask (u_int8_t *buf, size_t len, struct constant_map **maps)
     return 0;
 
   /* Size for brackets, two spaces and a NUL terminator.  */
-  buf_sz = 5;
+  buf_sz = 4;
   retval = malloc (buf_sz);
   if (!retval)
     return 0;
@@ -150,7 +152,7 @@ field_debug_mask (u_int8_t *buf, size_t len, struct constant_map **maps)
       if (val & bit)
 	{
 	  name = constant_name_maps (maps, bit);
-	  buf_sz += strlen (name);
+	  buf_sz += strlen (name) + 1;
 	  new_buf = realloc (retval, buf_sz);
 	  if (!new_buf)
 	    {
