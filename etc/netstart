@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.51 1999/09/01 18:07:34 deraadt Exp $
+#	$OpenBSD: netstart,v 1.52 1999/12/09 13:59:57 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -36,6 +36,7 @@ else
 fi
 
 # set the address for the loopback interface
+# it will also initialize IPv6 address for lo0 (::1 and others).
 ifconfig lo0 inet localhost
 
 # use loopback, not the wire

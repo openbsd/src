@@ -1905,6 +1905,9 @@ in6_if_up(ifp)
 	}
 
 	switch (ifp->if_type) {
+	case IFT_LOOP:
+		in6_ifattach(ifp, IN6_IFT_LOOP, NULL, 1);
+		break;
 	case IFT_SLIP:
 	case IFT_PPP:
 	case IFT_DUMMY:

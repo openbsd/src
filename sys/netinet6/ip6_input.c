@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.3 1999/12/09 00:40:06 angelos Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.4 1999/12/09 13:59:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -188,17 +188,20 @@ static void
 ip6_init2(dummy)
 	void *dummy;
 {
-	int i, ret;
+	int ret;
 
 	/* get EUI64 from somewhere */
 	ret = in6_ifattach_getifid(NULL);
 
+#if 0
 	/*
 	 * to route local address of p2p link to loopback,
 	 * assign loopback address first. 
 	 */
-	for (i = 0; i < NLOOP; i++)
-		in6_ifattach(&loif[i], IN6_IFT_LOOP, NULL, 0);
+	in6_ifattach(&loif[0], IN6_IFT_LOOP, NULL, 0);
+#else
+	/* you MUST bring lo0 up manually, in rc script. */
+#endif
 
 	/* nd6_timer_init */
 	timeout(nd6_timer, (caddr_t)0, hz);
