@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.16 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.17 2004/02/21 20:08:32 tedu Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -407,8 +407,10 @@ portal_open(v)
 	do {
 		struct mbuf *m = 0;
 		int flags = MSG_WAITALL;
+		fdpunlock(p->p_fd);
 		error = soreceive(so, (struct mbuf **) 0, &auio,
 					&m, &cm, &flags);
+		fdplock(p->p_fd, p);
 		if (error)
 			goto bad;
 
