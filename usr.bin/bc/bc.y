@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.5 2003/09/26 19:06:46 deraadt Exp $	*/
+/*	$OpenBSD: bc.y,v 1.6 2003/09/26 19:26:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.5 2003/09/26 19:06:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.6 2003/09/26 19:26:16 deraadt Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -702,8 +702,7 @@ yywrap(void)
 		if (yyin == NULL)
 			err(1, "cannot open %s", filename);
 		return 0;
-	}
-	else if (optind == sargc) {
+	} else if (optind == sargc) {
 		optind++;
 		yyin = stdin;
 		filename = "stdin";
@@ -794,8 +793,7 @@ main(int argc, char *argv[])
 			dup(p[1]);
 			close(p[0]);
 			close(p[1]);
-		}
-		else {
+		} else {
 			signal(SIGINT, SIG_IGN);
 			close(STDIN_FILENO);
 			dup(p[0]);
