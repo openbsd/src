@@ -1,13 +1,13 @@
-#	$OpenBSD: list,v 1.4 2003/10/01 22:01:28 miod Exp $
+#	$OpenBSD: list,v 1.5 2004/08/25 15:45:07 mickey Exp $
 
 # hppa extra's
+LINK	instbin				sbin/ancontrol
 LINK	instbin				sbin/disklabel
+LINK	instbin				sbin/wicontrol
 LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin				usr/bin/less usr/bin/more
 
 SRCDIRS	sys/arch/hppa/stand
-
-SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
