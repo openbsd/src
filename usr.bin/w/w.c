@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.4 1996/06/26 05:42:45 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.5 1996/08/06 20:41:32 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -76,6 +76,7 @@ static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <limits.h>
 #include <utmp.h>
 #include <vis.h>
 
@@ -125,7 +126,7 @@ main(argc, argv)
 	u_long l;
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
-	char buf[MAXHOSTNAMELEN], errbuf[256];
+	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
 
 	/* Are we w(1) or uptime(1)? */
 	p = __progname;

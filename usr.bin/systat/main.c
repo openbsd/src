@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1996/08/06 18:48:15 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1996/08/06 20:41:19 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1996/08/06 18:48:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1996/08/06 20:41:19 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.5 1996/08/06 18:48:15 deraadt Exp $"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -94,7 +95,7 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
-	char errbuf[80];
+	char errbuf[_POSIX2_LINE_MAX];
 
 	while ((ch = getopt(argc, argv, "M:N:w:")) != EOF)
 		switch(ch) {
