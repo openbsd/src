@@ -1,4 +1,4 @@
-/*	$OpenBSD: zutil.h,v 1.10 2000/03/03 00:54:57 todd Exp $	*/
+/*	$OpenBSD: zutil.h,v 1.11 2000/11/08 15:39:10 art Exp $	*/
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -16,7 +16,7 @@
 #include "zlib.h"
 
 #ifdef _STANDALONE
-#include <stand.h>
+#include <lib/libsa/stand.h>
 #else
 #ifdef STDC
 #  include <stddef.h>
