@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_options.5,v 1.8 2003/06/03 21:09:00 deraadt Exp $
+.\"	$OpenBSD: hosts_options.5,v 1.9 2003/07/08 13:11:26 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -39,9 +39,8 @@ document.
 .\" PROCESS_OPTIONS compile-time option.
 .Pp
 The extensible language uses the following format:
-.Bd -unfilled -offset indent
-daemon_list : client_list : option : option ...
-.Ed
+.Pp
+.Dl daemon_list\ \&: client_list\ \&: option\ \&: option ...
 .Pp
 The first two fields are described in the
 .Xr hosts_access 5
@@ -82,14 +81,12 @@ access control rules within a single file, for example in the
 file.
 .Pp
 To permit access from specific hosts only:
-.Pp
 .Bd -unfilled -offset indent
 ALL: .friendly.domain: ALLOW
 ALL: ALL: DENY
 .Ed
 .Pp
 To permit access from all hosts except a few trouble makers:
-.Pp
 .Bd -unfilled -offset indent
 ALL: .bad.domain: DENY
 ALL: ALL: ALLOW
@@ -106,8 +103,9 @@ The command is executed with stdin, stdout and stderr
 connected to the null device, so that it won\'t mess up the
 conversation with the client host.
 Example:
-.Bd -unfilled -offset indent
-spawn (/some/where/safe_finger -l @%h | /usr/ucb/mail root) &
+.Bd -literal -offset indent
+spawn (/some/where/safe_finger -l @%h | \e
+	/usr/ucb/mail root) &
 .Ed
 .Pp
 executes, in a background child process, the shell command "safe_finger
@@ -130,8 +128,9 @@ This option must appear at the end of a rule.
 .Pp
 To send a customized bounce message to the client instead of
 running the real ftp daemon:
-.Bd -unfilled -offset indent
-ftpd : ... : twist /bin/echo 421 Some bounce message
+.Bd -literal -offset indent
+ftpd : ... : twist /bin/echo 421 \e
+	Some bounce message
 .Ed
 .Pp
 For an alternative way to talk to client processes, see the
@@ -140,8 +139,9 @@ option below.
 .Pp
 To run /some/other/telnetd without polluting its command-line
 array or its process environment:
-.Bd -unfilled -offset indent
-telnetd : ... : twist PATH=/some/other; exec in.telnetd
+.Bd -literal -offset indent
+telnetd : ... : twist PATH=/some/other; \e
+	exec in.telnetd
 .Ed
 .Pp
 Warning:  in case of UDP services, do not twist to commands that use
@@ -226,7 +226,7 @@ and service is denied.
 .Sh SEE ALSO
 .Xr hosts_access 5
 .Sh AUTHORS
-.Bd -unfilled -indent
+.Bd -unfilled -offset indent
 Wietse Venema (wietse@wzv.win.tue.nl)
 Department of Mathematics and Computing Science
 Eindhoven University of Technology

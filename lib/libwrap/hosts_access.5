@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.18 2003/06/03 21:09:00 deraadt Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.19 2003/07/08 13:11:26 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -54,7 +54,7 @@ Network daemon process names are specified in the inetd configuration file.
 .Sh ACCESS CONTROL FILES
 The access control software consults two files.
 The search stops at the first match:
-.Bl -bullet -tag -width XXX
+.Bl -bullet -width XXX
 .It
 Access will be granted when a (daemon,client) pair matches an entry in
 the
@@ -76,7 +76,7 @@ Thus, access control can be turned off by providing no access control files.
 Each access control file consists of zero or more lines of text.
 These lines are processed in order of appearance.
 The search terminates when a match is found.
-.Bl -bullet -tag -width XXX
+.Bl -bullet -width XXX
 .It
 A newline character is ignored when it is preceded by a backslash
 character.
@@ -90,9 +90,8 @@ are easier to read.
 .It
 All other lines should satisfy the following format, things between []
 being optional:
-.Bd -unfilled -offset indent
-daemon_list : client_list [ : shell_command ]
-.Ed
+.Pp
+.Dl daemon_list\ \&: client_list [\ \&: shell_command\ \&]
 .El
 .Pp
 .Ar daemon_list
@@ -120,12 +119,10 @@ With the exception of YP netgroup lookups, all access control
 checks are case insensitive.
 .Sh PATTERNS
 The access control language implements the following patterns:
-.Bl -bullet -tag -width XXX
+.Bl -bullet -width XXX
 .It
 A string that begins with a
-.So
-.Ns .
-.Sc
+.Sq \&.
 character. A host name is matched if
 the last components of its name match the specified pattern.
 For example, the pattern
@@ -134,15 +131,11 @@ matches the host name
 .Sq wzv.win.tue.nl .
 .It
 A string that ends with a
-.So
-.Ns .
-.Sc
+.Sq \&.
 character.
 A host address is matched if its first numeric fields match the given string.
 For example, the pattern
-.So
-131.155.
-.Sc
+.Sq 131.155.
 matches the address of (almost) every host on the Eind\%hoven University
 network (131.155.x.x).
 .It
@@ -217,7 +210,7 @@ what type of network it is talking to.
 .\" Build without -DPARANOID when you want more control over such requests.
 .El
 .Sh OPERATORS
-.IP EXCEPT
+.Ss EXCEPT
 Intended use is of the form:
 .Sq list_1 EXCEPT list_2 ;
 this construct matches anything that matches
@@ -269,7 +262,7 @@ unavailable.
 .It "%n (%N)"
 The client (server) host name (or "unknown" or "paranoid").
 .It %p
-The daemon process id.
+The daemon process ID.
 .It %s
 Server information: daemon@host, daemon@address, or just a daemon name,
 depending on how much information is available.
@@ -286,9 +279,8 @@ underscores.
 .Sh SERVER ENDPOINT PATTERNS
 In order to distinguish clients by the network address that they
 connect to, use patterns of the form:
-.Bd -unfilled -offset indent
-process_name@host_pattern : client_list ...
-.Ed
+.Pp
+.Dl process_name@host_pattern\ \&: client_list ...
 .Pp
 Patterns like these can be used when the machine has different internet
 addresses with different internet hostnames.
@@ -315,9 +307,7 @@ additional information about the owner of a connection.
 Client username information, when available, is logged together with the
 client host name, and can be used to match patterns like:
 .Pp
-.Bd -unfilled -offset indent
-daemon_list : ... user_pattern@host_pattern ...
-.Ed
+.Dl daemon_list\ \&: ... user_pattern@host_pattern ...
 .Pp
 The daemon wrappers can be configured at compile time to perform
 rule-driven username lookups (default) or to always interrogate the
@@ -332,7 +322,7 @@ match.
 A user pattern has the same syntax as a daemon process pattern, so the
 same wildcards apply (netgroup membership is not supported).
 One should not get carried away with username lookups, though.
-.Bl -bullet -tag -width XXX
+.Bl -bullet -width XXX
 .It
 The client username information cannot be trusted when it is needed
 most, i.e., when the client system has been compromised.
@@ -354,9 +344,7 @@ with slow networks, but long enough to irritate PC users.
 Selective username lookups can alleviate the last problem. For example,
 a rule like:
 .Pp
-.Bd -unfilled -offset indent
-daemon_list : @pcnetgroup ALL@ALL
-.Ed
+.Dl daemon_list\ \&: @pcnetgroup ALL@ALL
 .Pp
 would match members of the pc netgroup without doing username lookups,
 but would perform username lookups with all other systems.
@@ -382,7 +370,7 @@ client connection and the IDENT lookup, although doing so is much
 harder than spoofing just a client connection.
 It may also be that the client\'s IDENT server is lying.
 .Pp
-Note: IDENT lookups don\'t work with UDP services.
+Note: IDENT lookups don't work with UDP services.
 .Sh EXAMPLES
 The language is flexible enough that different types of access control
 policy can be expressed with a minimum of fuss.
@@ -406,12 +394,9 @@ Only explicitly authorized hosts are permitted access.
 The default policy (no access) is implemented with a trivial deny
 file:
 .Pp
-.Bd -unfilled -offset indent
-/etc/hosts.deny:
-.Bd -unfilled -offset indent 2
-ALL: ALL
-.Ed
-.Ed
+.Pa /etc/hosts.deny :
+.Pp
+.Dl ALL: ALL
 .Pp
 This denies all services to all hosts, unless they are permitted access
 by entries in the allow file.
@@ -419,18 +404,14 @@ by entries in the allow file.
 The explicitly authorized hosts are listed in the allow file.
 For example:
 .Pp
-.Bd -unfilled -offset indent
-/etc/hosts.allow:
-.Bd -unfilled -offset indent 2
+.Pa /etc/hosts.allow :
+.Bd -literal -offset indent
 ALL: LOCAL @some_netgroup
 ALL: .foobar.edu EXCEPT terminalserver.foobar.edu
 .Ed
-.Ed
 .Pp
 The first rule permits access from hosts in the local domain (no
-.So
-.Ns .
-.Sc
+.Sq \&.
 in the host name) and from members of the
 .Ar some_netgroup
 netgroup.
@@ -447,12 +428,10 @@ that it can be omitted.
 The explicitly non-authorized hosts are listed in the deny file.
 For example:
 .Pp
+.Pa /etc/hosts.deny :
 .Bd -unfilled -offset indent
-/etc/hosts.deny:
-.Bd -unfilled -offset indent 2
 ALL: some.host.name, .some.domain
 ALL EXCEPT in.fingerd: other.host.name, .other.domain
-.Ed
 .Ed
 .Pp
 The first rule denies some hosts and domains all services; the second
@@ -464,19 +443,14 @@ Requests from any other hosts are denied.
 Instead of the requested file, a finger probe is sent to the offending host.
 The result is mailed to the superuser.
 .Pp
-.Bd -unfilled -offset indent
-/etc/hosts.allow:
-.Bd -unfilled -offset indent 2
-tftpd: LOCAL, .my.domain
-.Ed
-.Ed
+.Pa /etc/hosts.allow :
 .Pp
+.Dl tftpd: LOCAL, .my.domain
+.Pp
+.Pa /etc/hosts.deny :
 .Bd -unfilled -offset indent
-/etc/hosts.deny:
-.Bd -unfilled -offset indent 2
-tftpd: ALL: (/some/where/safe_finger -l @%h | \\
+tftpd: ALL: (/some/where/safe_finger -l @%h | \e
 	/usr/bin/mail -s %d-%h root) &
-.Ed
 .Ed
 .Pp
 The
