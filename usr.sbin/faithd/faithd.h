@@ -1,5 +1,5 @@
-/*	$OpenBSD: faithd.h,v 1.3 2000/05/31 03:09:22 itojun Exp $	*/
-/*	$KAME: faithd.h,v 1.2 2000/05/31 03:06:07 itojun Exp $	*/
+/*	$OpenBSD: faithd.h,v 1.4 2000/09/16 10:33:45 itojun Exp $	*/
+/*	$KAME: faithd.h,v 1.5 2000/07/28 07:34:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -39,13 +39,13 @@ extern int ftp_active __P((int, int, int *, int *));
 extern int ftp_passive __P((int, int, int *, int *));
 extern void rsh_relay __P((int, int));
 extern void rsh_dual_relay __P((int, int));
-extern void exit_error __P((const char *fmt, ...));
-extern void exit_success __P((const char *fmt, ...));
-extern void exit_failure __P((const char *fmt, ...));
+extern void exit_success __P((const char *, ...));
+extern void exit_failure __P((const char *, ...));
 
 #define DEFAULT_PORT_NAME	"telnet"
-#define DEFAULT_PATH	"/usr/libexec/telnetd"
+#define DEFAULT_DIR	"/usr/libexec"
 #define DEFAULT_NAME	"telnetd"
+#define DEFAULT_PATH	(DEFAULT_DIR "/" DEFAULT_NAME)
 
 #define FTP_PORT	21
 #define RLOGIN_PORT	513

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcp.c,v 1.3 2000/05/31 03:09:22 itojun Exp $	*/
-/*	$KAME: tcp.c,v 1.2 2000/05/31 03:06:07 itojun Exp $	*/
+/*	$OpenBSD: tcp.c,v 1.4 2000/09/16 10:33:46 itojun Exp $	*/
+/*	$KAME: tcp.c,v 1.4 2000/07/28 08:05:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -92,9 +92,9 @@ sig_child(int sig)
 	pid_t pid;
 
 	pid = wait3(&status, WNOHANG, (struct rusage *)0);
-	if (pid && status)
+	if (pid && WEXITSTATUS(status))
 		syslog(LOG_WARNING, "child %d exit status 0x%x", pid, status);
-	exit_failure("terminate connection due to child termination");
+	exit_success("terminate connection due to child termination");
 }
 
 static void
