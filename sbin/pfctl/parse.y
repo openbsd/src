@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.289 2003/01/14 21:58:11 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.290 2003/01/15 15:14:42 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1147,7 +1147,7 @@ pfrule		: action dir logquick interface route af proto fromto
 						    PF_POOL_ROUNDROBIN;
 					if (r.rpool.opts !=
 					    PF_POOL_ROUNDROBIN) {
-						yyerror("r.rt_pool.opts must "
+						yyerror("r.rpool.opts must "
 						    "be PF_POOL_ROUNDROBIN");
 						YYERROR;
 					}
