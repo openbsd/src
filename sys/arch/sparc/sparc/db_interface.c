@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 1999/07/09 21:30:02 art Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2000/01/01 19:44:24 deraadt Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.18 1997/09/01 00:16:31 pk Exp $ */
 
 /*
@@ -44,6 +44,7 @@
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_var.h>
 
 #if defined(DDB)
 #include <ddb/db_command.h>
@@ -190,6 +191,9 @@ kdb_trap(type, tf)
 	case -1:		/* keyboard interrupt */
 		break;
 	default:
+		if (!db_panic)
+			return (0);
+
 		printf("kernel: %s trap", trap_type[type & 0xff]);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
