@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.830 2005/02/02 19:39:54 brad Exp 
+ *	OpenBSD: pcidevs,v 1.831 2005/02/05 01:44:37 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1613,6 +1613,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_SE_2,
 	    "Radeon 9200 SE 2nd",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300,
+	    "Radeon X300",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_2,
+	    "Radeon X300 Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_M,
@@ -3927,12 +3935,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82875P PCI-CSA",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915G_HB,
+	    "915G/P/GV Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_915G_PCIE,
+	    "915G/P/GV PCIE",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_925X_HB,
 	    "925X MCH Host",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_925X_PCIE,
-	    "925X PCIE Bridge",
+	    "925X PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7221_HB,
@@ -3940,7 +3956,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7221_PCIE,
-	    "E7221 PCIE Bridge",
+	    "E7221 PCIE",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7221_IGD,
