@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.196 2004/06/10 14:22:54 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.197 2004/06/14 20:53:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1210,9 +1210,7 @@ struct pfioc_iface {
 
 #define DIOCSTART	_IO  ('D',  1)
 #define DIOCSTOP	_IO  ('D',  2)
-#define DIOCBEGINRULES	_IOWR('D',  3, struct pfioc_rule)
 #define DIOCADDRULE	_IOWR('D',  4, struct pfioc_rule)
-#define DIOCCOMMITRULES	_IOWR('D',  5, struct pfioc_rule)
 #define DIOCGETRULES	_IOWR('D',  6, struct pfioc_rule)
 #define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule)
 /* XXX cut 8 - 17 */
@@ -1235,9 +1233,7 @@ struct pfioc_iface {
 #define DIOCKILLSTATES	_IOWR('D', 41, struct pfioc_state_kill)
 #define DIOCSTARTALTQ	_IO  ('D', 42)
 #define DIOCSTOPALTQ	_IO  ('D', 43)
-#define DIOCBEGINALTQS	_IOWR('D', 44, u_int32_t)
 #define DIOCADDALTQ	_IOWR('D', 45, struct pfioc_altq)
-#define DIOCCOMMITALTQS	_IOWR('D', 46, u_int32_t)
 #define DIOCGETALTQS	_IOWR('D', 47, struct pfioc_altq)
 #define DIOCGETALTQ	_IOWR('D', 48, struct pfioc_altq)
 #define DIOCCHANGEALTQ	_IOWR('D', 49, struct pfioc_altq)
@@ -1265,8 +1261,6 @@ struct pfioc_iface {
 #define DIOCRCLRASTATS  _IOWR('D', 72, struct pfioc_table)
 #define	DIOCRTSTADDRS	_IOWR('D', 73, struct pfioc_table)
 #define	DIOCRSETTFLAGS	_IOWR('D', 74, struct pfioc_table)
-#define DIOCRINABEGIN	_IOWR('D', 75, struct pfioc_table)
-#define DIOCRINACOMMIT	_IOWR('D', 76, struct pfioc_table)
 #define DIOCRINADEFINE	_IOWR('D', 77, struct pfioc_table)
 #define DIOCOSFPFLUSH	_IO('D', 78)
 #define DIOCOSFPADD	_IOWR('D', 79, struct pf_osfp_ioctl)

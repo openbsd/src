@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.125 2004/06/10 14:22:54 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.126 2004/06/14 20:53:27 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1066,15 +1066,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		break;
 
-	case DIOCBEGINRULES: {
-		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
-
-		pr->anchor[sizeof(pr->anchor) - 1] = 0;
-		error = pf_begin_rules(&pr->ticket, pf_get_ruleset_number(
-		    pr->rule.action), pr->anchor);
-		break;
-	}
-
 	case DIOCADDRULE: {
 		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
 		struct pf_ruleset	*ruleset;
@@ -1198,15 +1189,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		rule->evaluations = rule->packets = rule->bytes = 0;
 		TAILQ_INSERT_TAIL(ruleset->rules[rs_num].inactive.ptr,
 		    rule, entries);
-		break;
-	}
-
-	case DIOCCOMMITRULES: {
-		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
-
-		pr->anchor[sizeof(pr->anchor) - 1] = 0;
-		error = pf_commit_rules(pr->ticket, pf_get_ruleset_number(
-		    pr->rule.action), pr->anchor);
 		break;
 	}
 
@@ -1878,13 +1860,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
-	case DIOCBEGINALTQS: {
-		u_int32_t	*ticket = (u_int32_t *)addr;
-
-		error = pf_begin_altq(ticket);
-		break;
-	}
-
 	case DIOCADDALTQ: {
 		struct pfioc_altq	*pa = (struct pfioc_altq *)addr;
 		struct pf_altq		*altq, *a;
@@ -1927,13 +1902,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		TAILQ_INSERT_TAIL(pf_altqs_inactive, altq, entries);
 		bcopy(altq, &pa->altq, sizeof(struct pf_altq));
-		break;
-	}
-
-	case DIOCCOMMITALTQS: {
-		u_int32_t		ticket = *(u_int32_t *)addr;
-
-		error = pf_commit_altq(ticket);
 		break;
 	}
 
@@ -2469,31 +2437,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		error = pfr_tst_addrs(&io->pfrio_table, io->pfrio_buffer,
 		    io->pfrio_size, &io->pfrio_nmatch, io->pfrio_flags |
-		    PFR_FLAG_USERIOCTL);
-		break;
-	}
-
-	case DIOCRINABEGIN: {
-		struct pfioc_table *io = (struct pfioc_table *)addr;
-
-		if (io->pfrio_esize != 0) {
-			error = ENODEV;
-			break;
-		}
-		error = pfr_ina_begin(&io->pfrio_table, &io->pfrio_ticket,
-		    &io->pfrio_ndel, io->pfrio_flags | PFR_FLAG_USERIOCTL);
-		break;
-	}
-
-	case DIOCRINACOMMIT: {
-		struct pfioc_table *io = (struct pfioc_table *)addr;
-
-		if (io->pfrio_esize != 0) {
-			error = ENODEV;
-			break;
-		}
-		error = pfr_ina_commit(&io->pfrio_table, io->pfrio_ticket,
-		    &io->pfrio_nadd, &io->pfrio_nchange, io->pfrio_flags |
 		    PFR_FLAG_USERIOCTL);
 		break;
 	}
