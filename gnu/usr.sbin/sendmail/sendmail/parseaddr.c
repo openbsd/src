@@ -2576,7 +2576,7 @@ maplocaluser(a, sendq, aliaslevel, e)
 	ENVELOPE *e;
 {
 	register char **pvp;
-	register ADDRESS *a1 = NULL;
+	register ADDRESS *SM_NONVOLATILE a1 = NULL;
 	auto char *delimptr;
 	char pvpbuf[PSBUFSIZE];
 

@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2001/09/11 19:02:47 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2001/10/01 20:18:19 millert Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 
-ENVDEF+= -DNEWDB -DMAP_REGEX
+ENVDEF+= -DSM_OMIT_BOGUS_WARNINGS -DNEWDB -DMAP_REGEX
 ENVDEF+= -DNETINET6 -DNEEDSGETIPNODE
 .if (${YP:L} == "yes")
 ENVDEF+=-DNIS
