@@ -1,11 +1,8 @@
 /*
- * $OpenBSD: md5.c,v 1.4 1997/06/20 20:35:29 flipk Exp $
+ * $OpenBSD: md5.c,v 1.5 1997/07/12 21:09:02 millert Exp $
  *
  * Derived from:
- */
-
-/*
- * MDDRIVER.C - test driver for MD2, MD4 and MD5
+ *	MDDRIVER.C - test driver for MD2, MD4 and MD5
  */
 
 /*
@@ -21,11 +18,15 @@
  *  documentation and/or software.
  */
 
+#include <err.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <string.h>
-#include "global.h"
+
+#include <md4.h>
 #include <md5.h>
+#include <sha1.h>
 
 /*
  * Length of test block, number of test blocks.
@@ -33,21 +34,33 @@
 #define TEST_BLOCK_LEN 10000
 #define TEST_BLOCK_COUNT 10000
 
-static void MDString PROTO_LIST((char *));
-static void MDTimeTrial PROTO_LIST((void));
-static void MDTestSuite PROTO_LIST((void));
-static void MDFilter PROTO_LIST((int));
+extern char *__progname;
 
-int main PROTO_LIST((int, char *[]));
+static void MDString __P((char *));
+static void MDTimeTrial __P((void *));
+static void MDTestSuite __P((void));
+static void MDFilter __P((int, void *));
+
+int main __P((int, char *[]));
+
+/*
+ * Globals for indirection...
+ */
+void (*MDInit)();
+void (*MDUpdate)();
+char * (*MDEnd)();
+char * (*MDFile)();
+char * (*MDData)();
+char *MDType;
 
 /* Main driver.
-
-Arguments (may be any combination):
-  -sstring - digests string
-  -t       - runs time trial
-  -x       - runs test script
-  filename - digests file
-  (none)   - digests standard input
+ *
+ * Arguments (may be any combination):
+ *   -sstring - digests string
+ *   -t       - runs time trial
+ *   -x       - runs test script
+ *   filename - digests file
+ *   (none)   - digests standard input
  */
 int
 main(argc, argv)
@@ -56,29 +69,61 @@ main(argc, argv)
 {
 	int     i;
 	char   *p;
-	char	buf[33];
+	char	buf[41];
+	void   *context;
+
+	/* What were we called as?  Default to md5 */
+	if (strcmp(__progname, "sha1") == 0) {
+		MDType = "SHA1";
+		MDInit = SHA1Init;
+		MDUpdate = SHA1Update;
+		MDEnd = SHA1End;
+		MDFile = SHA1File;
+		MDData = SHA1Data;
+		if ((context = malloc(sizeof(SHA1_CTX))) == NULL)
+			err(1, "malloc");
+	} else if (strcmp(__progname, "md4") == 0) {
+		MDType = "MD4";
+		MDInit = MD4Init;
+		MDUpdate = MD4Update;
+		MDEnd = MD4End;
+		MDFile = MD4File;
+		MDData = MD4Data;
+		if ((context = malloc(sizeof(MD4_CTX))) == NULL)
+			err(1, "malloc");
+	} else {
+		MDType = "MD5";
+		MDInit = MD5Init;
+		MDUpdate = MD5Update;
+		MDEnd = MD5End;
+		MDFile = MD5File;
+		MDData = MD5Data;
+		if ((context = malloc(sizeof(MD5_CTX))) == NULL)
+			err(1, "malloc");
+	}
 
 	if (argc > 1)
 		for (i = 1; i < argc; i++)
 			if (argv[i][0] == '-' && argv[i][1] == 's')
 				MDString(argv[i] + 2);
 			else if (strcmp(argv[i], "-t") == 0)
-				MDTimeTrial();
+				MDTimeTrial(context);
 			else if (strcmp(argv[i], "-p") == 0)
-				MDFilter(1);
+				MDFilter(1, context);
 			else if (strcmp(argv[i], "-x") == 0)
 				MDTestSuite();
 			else {
-				p = MD5File(argv[i],buf);
+				p = MDFile(argv[i], buf);
 				if (!p)
-					perror(argv[i]);
+					warnx(argv[i]);
 				else
-					printf("MD5 (%s) = %s\n", argv[i], p);
+					(void)printf("%s (%s) = %s\n", MDType,
+					    argv[i], p);
 			}
 	else
-		MDFilter(0);
+		MDFilter(0, context);
 
-	return (0);
+	exit(0);
 }
 /*
  * Digests a string and prints the result.
@@ -88,24 +133,24 @@ MDString(string)
 	char   *string;
 {
 	size_t len = strlen(string);
-	char buf[33];
+	char buf[41];
 
-	printf("MD5 (\"%s\") = %s\n", string, MD5Data(string, len, buf));
+	(void)printf("%s (\"%s\") = %s\n", MDType, string,
+	    MDData(string, len, buf));
 }
 /*
  * Measures the time to digest TEST_BLOCK_COUNT TEST_BLOCK_LEN-byte blocks.
  */
 static void
-MDTimeTrial()
+MDTimeTrial(context)
+	void *context;
 {
-	MD5_CTX context;
 	time_t  endTime, startTime;
 	unsigned char block[TEST_BLOCK_LEN];
 	unsigned int i;
-	char   *p, buf[33];
+	char   *p, buf[41];
 
-	printf
-	    ("MD5 time trial. Digesting %d %d-byte blocks ...",
+	(void)printf("%s time trial. Digesting %d %d-byte blocks ...", MDType,
 	    TEST_BLOCK_LEN, TEST_BLOCK_COUNT);
 	fflush(stdout);
 
@@ -117,22 +162,23 @@ MDTimeTrial()
 	time(&startTime);
 
 	/* Digest blocks */
-	MD5Init(&context);
+	MDInit(context);
 	for (i = 0; i < TEST_BLOCK_COUNT; i++)
-		MD5Update(&context, block, (size_t)TEST_BLOCK_LEN);
-	p = MD5End(&context,buf);
+		MDUpdate(context, block, (size_t)TEST_BLOCK_LEN);
+	p = MDEnd(context,buf);
 
 	/* Stop timer */
 	time(&endTime);
 
-	printf(" done\n");
-	printf("Digest = %s", p);
-	printf("\nTime = %ld seconds\n", (long) (endTime - startTime));
-	/* Be careful that endTime-startTime is not zero. (Bug fix from Ric
-	 * Anderson, ric@Artisoft.COM.) */
-	printf
-	    ("Speed = %ld bytes/second\n",
-	    (long) TEST_BLOCK_LEN * (long) TEST_BLOCK_COUNT / ((endTime - startTime) != 0 ? (endTime - startTime) : 1));
+	(void)printf(" done\nDigest = %s", p);
+	(void)printf("\nTime = %ld seconds\n", (long) (endTime - startTime));
+	/*
+	 * Be careful that endTime-startTime is not zero.
+	 * (Bug fix from Ric Anderson <ric@Artisoft.COM>)
+	 */
+	(void)printf("Speed = %ld bytes/second\n",
+	    (long) TEST_BLOCK_LEN * (long) TEST_BLOCK_COUNT /
+	    ((endTime - startTime) != 0 ? (endTime - startTime) : 1));
 }
 /*
  * Digests a reference suite of strings and prints the results.
@@ -140,7 +186,7 @@ MDTimeTrial()
 static void
 MDTestSuite()
 {
-	printf("MD5 test suite:\n");
+	(void)printf("%s test suite:\n", MDType);
 
 	MDString("");
 	MDString("a");
@@ -152,26 +198,26 @@ MDTestSuite()
 	MDString
 	    ("1234567890123456789012345678901234567890\
 1234567890123456789012345678901234567890");
+	MDString("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq");
 }
 
 /*
  * Digests the standard input and prints the result.
  */
 static void
-MDFilter(int pipe)
+MDFilter(pipe, context)
+	int pipe;
+	void *context;
 {
-	MD5_CTX context;
 	size_t	len;
 	unsigned char buffer[BUFSIZ];
-	char buf[33];
+	char buf[41];
 
-	MD5Init(&context);
+	MDInit(context);
 	while ((len = fread(buffer, (size_t)1, (size_t)BUFSIZ, stdin)) > 0) {
-		if(pipe && (len != fwrite(buffer, (size_t)1, len, stdout))) {
-			perror("stdout");
-			exit(1);
-		}
-		MD5Update(&context, buffer, len);
+		if (pipe && (len != fwrite(buffer, (size_t)1, len, stdout)))
+			err(1, "stdout");
+		MDUpdate(context, buffer, len);
 	}
-	printf("%s\n", MD5End(&context,buf));
+	(void)printf("%s\n", MDEnd(context,buf));
 }
