@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.123 2002/04/18 05:44:35 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.124 2002/07/09 18:06:08 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5957,8 +5957,8 @@ pmap_zero_page4m(pa)
 		pv_flushcache(pv);
 	}
 
-	pte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-	       (atop(pa) << SRMMU_PPNSHIFT));
+	pte = (SRMMU_TEPTE | (atop(pa) << SRMMU_PPNSHIFT) | PPROT_N_RWX);
+
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
 		pte |= SRMMU_PG_C;
 	else
@@ -5998,15 +5998,14 @@ pmap_copy_page4m(src, dst)
 	if (pv && CACHEINFO.c_vactype == VAC_WRITEBACK)
 		pv_flushcache(pv);
 
-	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_S |
-		(atop(src) << SRMMU_PPNSHIFT);
+	spte = SRMMU_TEPTE | SRMMU_PG_C | (atop(src) << SRMMU_PPNSHIFT) |
+	    PPROT_N_RX;
 
 	pv = pvhead(atop(dst));
 	if (pv && CACHEINFO.c_vactype != VAC_NONE)
 		pv_flushcache(pv);
 
-	dpte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-	       (atop(dst) << SRMMU_PPNSHIFT));
+	dpte = (SRMMU_TEPTE | (atop(dst) << SRMMU_PPNSHIFT) | PPROT_N_RWX);
 	if (cpuinfo.flags & CPUFLG_CACHE_MANDATORY)
 		dpte |= SRMMU_PG_C;
 	else
