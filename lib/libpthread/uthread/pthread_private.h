@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.18 1999/11/25 07:01:30 d Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.19 2000/01/06 07:13:56 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -49,6 +49,7 @@
 #include <sched.h>
 #include <spinlock.h>
 #include <pthread_np.h>
+#include "thread_private.h"
 #include "uthread_machdep.h"
 
 /*
@@ -168,13 +169,29 @@
 #define _SCHED_SIGNAL		SIGPROF
 #endif
 
+/* Lists with volatile elements */
+#define V_TAILQ_HEAD(name, type)				\
+volatile struct name {						\
+	struct type * tqh_first;				\
+	struct type * volatile * tqh_last; 			\
+}
+
+#define V_TAILQ_ENTRY(type)					\
+volatile struct {						\
+	struct type * tqe_next;					\
+	struct type * volatile * tqe_prev; 			\
+}
+
+/* List of all threads: */
+typedef V_TAILQ_HEAD(, pthread)	_thread_list_t;
+
 /*
  * Priority queues.
  *
  * XXX It'd be nice if these were contained in uthread_priority_queue.[ch].
  */
 typedef struct pq_list {
-	TAILQ_HEAD(, pthread)	pl_head; /* list of threads at this priority */
+	_thread_list_t		pl_head; /* list of threads at this priority */
 	TAILQ_ENTRY(pq_list)	pl_link; /* link for queue of priority lists */
 	int			pl_prio; /* the priority of this list */
 	int			pl_queued; /* is this in the priority queue */
@@ -200,10 +217,11 @@ union pthread_mutex_data {
 	int	m_count;
 };
 
+
 struct pthread_mutex {
 	enum pthread_mutextype		m_type;
 	int				m_protocol;
-	TAILQ_HEAD(mutex_head, pthread)	m_queue;
+	V_TAILQ_HEAD(mutex_head, pthread)	m_queue;
 	struct pthread			*m_owner;
 	union pthread_mutex_data	m_data;
 	long				m_flags;
@@ -226,7 +244,7 @@ struct pthread_mutex {
 	/*
 	 * Link for list of all mutexes a thread currently owns.
 	 */
-	TAILQ_ENTRY(pthread_mutex)	m_qe;
+	V_TAILQ_ENTRY(pthread_mutex volatile)	m_qe;
 
 	/*
 	 * Lock for accesses to this structure.
@@ -266,7 +284,7 @@ enum pthread_cond_type {
 
 struct pthread_cond {
 	enum pthread_cond_type		c_type;
-	TAILQ_HEAD(cond_head, pthread)	c_queue;
+	V_TAILQ_HEAD(cond_head, pthread) c_queue;
 	pthread_mutex_t			c_mutex;
 	void				*c_data;
 	long				c_flags;
@@ -415,8 +433,8 @@ struct fd_table_entry {
 	 * state of the lock on the file descriptor.
 	 */
 	spinlock_t		lock;
-	TAILQ_HEAD(, pthread)	r_queue;	/* Read queue.                        */
-	TAILQ_HEAD(, pthread)	w_queue;	/* Write queue.                       */
+	_thread_list_t		r_queue;	/* Read queue.                        */
+	_thread_list_t		w_queue;	/* Write queue.                       */
 	struct pthread		*r_owner;	/* Ptr to thread owning read lock.    */
 	struct pthread		*w_owner;	/* Ptr to thread owning write lock.   */
 	const char		*r_fname;	/* Ptr to read lock source file name  */
@@ -455,7 +473,7 @@ struct stack {
 	void 			*storage;	/* allocated storage */
 };
 
-typedef TAILQ_ENTRY(pthread) pthread_entry_t;
+typedef V_TAILQ_ENTRY(pthread) pthread_entry_t;
 
 /*
  * Thread structure.
@@ -561,7 +579,7 @@ struct pthread {
 	int	error;
 
 	/* Join queue head and link for waiting threads: */
-	TAILQ_HEAD(join_head, pthread)	join_queue;
+	V_TAILQ_HEAD(join_head, pthread)	join_queue;
 
 	/*
 	 * The current thread can belong to only one scheduling queue at
@@ -659,7 +677,7 @@ struct pthread {
 	/*
 	 * Queue of currently owned mutexes.
 	 */
-	TAILQ_HEAD(, pthread_mutex)	mutexq;
+	V_TAILQ_HEAD(, pthread_mutex volatile)	mutexq;
 
 	void		*ret;
 	const void	**specific_data;
@@ -690,8 +708,6 @@ extern struct pthread   * volatile _last_user_thread;
  */
 extern struct pthread   * volatile _thread_single;
 
-/* List of all threads: */
-typedef TAILQ_HEAD(, pthread)	_thread_list_t;
 extern _thread_list_t		_thread_list;
 
 /*
@@ -699,8 +715,8 @@ extern _thread_list_t		_thread_list;
  * no signals are missed in calls to _select.
  */
 extern int		_thread_kern_pipe[2];
-extern int		volatile _queue_signals;
-extern int              _thread_kern_in_sched;
+extern volatile int	_queue_signals;
+extern volatile int	_thread_kern_in_sched;
 
 /* Last time that an incremental priority update was performed: */
 extern struct timeval   kern_inc_prio_time;
@@ -765,7 +781,7 @@ extern	volatile int	_spinblock_count;
 extern	volatile int	_sigq_check_reqd;
 
 /* Thread switch hook. */
-extern pthread_switch_routine_t _sched_switch_hook;
+extern	pthread_switch_routine_t _sched_switch_hook;
 
 /*
  * Spare stack queue.  Stacks of default size are cached in order to reduce
@@ -778,18 +794,6 @@ extern _stack_list_t		_stackq;
 /* Used for _PTHREADS_INVARIANTS checking. */
 extern int	_thread_kern_new_state;
 
-#ifdef	_LOCK_DEBUG
-#define	_FD_LOCK(_fd,_type,_ts)		_thread_fd_lock_debug(_fd, _type, \
-						_ts, __FILE__, __LINE__)
-#define _FD_UNLOCK(_fd,_type)		_thread_fd_unlock_debug(_fd, _type, \
-						__FILE__, __LINE__)
-#else
-#define	_FD_LOCK(_fd,_type,_ts)		_thread_fd_lock(_fd, _type, _ts)
-#define _FD_UNLOCK(_fd,_type)		_thread_fd_unlock(_fd, _type)
-#endif
-
-extern int __isthreaded;
-
 /*
  * Function prototype definitions.
  */
@@ -797,8 +801,6 @@ __BEGIN_DECLS
 int     _find_dead_thread(pthread_t);
 int     _find_thread(pthread_t);
 int     _thread_create(pthread_t *,const pthread_attr_t *,void *(*start_routine)(void *),void *,pthread_t);
-int     _thread_fd_lock(int, int, struct timespec *);
-int     _thread_fd_lock_debug(int, int, struct timespec *,const char *fname,int lineno);
 void    _dispatch_signals(void);
 void    _thread_signal(pthread_t, int);
 int	_mutex_cv_lock(pthread_mutex_t *);
@@ -819,8 +821,6 @@ void	_waitq_setactive(void);
 void	_waitq_clearactive(void);
 #endif
 __dead void _thread_exit(const char *, int, const char *) __attribute__((noreturn));
-void    _thread_fd_unlock(int, int);
-void    _thread_fd_unlock_debug(int, int, const char *, int);
 void    *_thread_cleanup(pthread_t);
 void    _thread_cleanupspecific(void);
 void    _thread_dump_info(void);
@@ -850,6 +850,7 @@ void	_thread_stack_free(struct stack *);
 
 /* #include <signal.h> */
 #ifdef _USER_SIGNAL_H
+int	_thread_sys_kill(pid_t, int);
 int     _thread_sys_sigaction(int, const struct sigaction *, struct sigaction *);
 int     _thread_sys_sigpending(sigset_t *);
 int     _thread_sys_sigprocmask(int, const sigset_t *, sigset_t *);
@@ -972,6 +973,7 @@ int     _thread_sys_fchown(int, uid_t, gid_t);
 int     _thread_sys_fsync(int);
 int     _thread_sys_ftruncate(int, off_t);
 long	_thread_sys_fpathconf(int, int);
+pid_t	_thread_sys_getpid(void);
 int     _thread_sys_pause(void);
 int     _thread_sys_pipe(int *);
 int     _thread_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
