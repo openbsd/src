@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.16 1997/02/21 08:55:14 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.17 1997/02/22 00:28:57 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
@@ -997,25 +997,27 @@ LisDraco1:
 	movl	d4,a0@
 
 	RELOC(_mmutype, a0)
+	RELOC(_cputype, a1)
 	movl	#AMIGA_68030,d1		| 68030 Attn flag from exec
 	andl	d5,d1
 	jeq	Ltestfor020
-	movl	#-1,a0@			| assume 020 means 851
+	movl	#MMU_68030,a0@		| assume 020 means 851
+	movl	#CPU_68030,a1@		| assume 020 means 851
 	jra	Lsetcpu040		| skip to init.
 Ltestfor020:
 	movl	#AMIGA_68020,d1		| 68020 Attn flag from exec
 	andl	d5,d1
 	jeq	Lsetcpu040
-	movl	#1,a0@
+	movl	#MMU_68851,a0@
+	movl	#CPU_68020,a1@
 Lsetcpu040:
 	movl	#CACHE_OFF,d0		| 68020/030 cache
 	movl	#AMIGA_68040,d1
 	andl	d1,d5
 	jeq	Lstartnot040		| it is not 68040
 	movl	#MMU_68040,a0@		| same as hp300 for compat
-	RELOC(_cputype, a0)
-	movl	#CPU_68040,a0@
-	.word	0xf4f8			| cpusha bc - push and invalidate caches
+	movl	#CPU_68040,a1@
+	.word	0xf4f8			| cpusha bc - push and inval. caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	btst	#7,sp@(3)		| XXX
 	jeq	Lstartnot040
