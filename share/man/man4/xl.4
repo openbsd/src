@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.6 1999/02/27 19:50:35 jason Exp $
+.\"	$OpenBSD: xl.4,v 1.7 1999/03/10 23:17:34 jason Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -82,9 +82,9 @@ Enable autoselection of the media type and options. Note that this
 option is only available with the 3c905 and 3c905B adapters with
 external PHYs or built-in autonegotiation logic. For 3c900 adapters,
 the driver will choose the mode specified in the EEPROM. The user can
-change this by adding media options to the
-.Pa /etc/rc.conf
-fine.
+change this by adding media options to the appropriate
+.Pa /etc/hostname.xlX
+file.
 .It 10baseT/UTP
 Set 10Mbps operation. The
 .Ar mediaopt
@@ -162,7 +162,7 @@ warm boot to have the device properly configured.
 .Pp
 Note that this condition only occurs when warm booting from another
 operating system. If you power down your system prior to booting
-.Fx ,
+.Ox ,
 the card should be configured correctly.
 .It "xl%d: WARNING: no media options bits set in the media options register!"
 This warning may appear when using the driver on some Dell Latitude
