@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.23 1998/06/04 05:01:45 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.24 1998/08/30 07:31:32 downsj Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_vendorname;
 	const char *cpu_name;
 	int cpu_class;
-	void (*cpu_setup) __P((const char *));
+	void (*cpu_setup) __P((const char *, int));
 };
 
 struct cpu_cpuid_nameclass {
@@ -144,7 +144,7 @@ struct cpu_cpuid_nameclass {
 	struct cpu_cpuid_family {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
-		void (*cpu_setup) __P((const char *));
+		void (*cpu_setup) __P((const char *, int));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
