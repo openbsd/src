@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.1,v 1.3 1998/06/12 12:13:35 d Exp $
+.\"	$OpenBSD: printf.1,v 1.4 1998/08/25 13:35:52 deraadt Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -87,6 +87,8 @@ Character escape sequences are in backslash notation as defined in
 The characters and their meanings
 are as follows:
 .Bl -tag -width Ds -offset indent
+.It Cm \ee
+Write an <escape> character.
 .It Cm \ea
 Write a <bell> character.
 .It Cm \eb
