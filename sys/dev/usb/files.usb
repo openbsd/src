@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.19 2001/01/29 00:43:39 aaron Exp $
+#	$OpenBSD: files.usb,v 1.20 2001/02/20 04:11:52 nate Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -114,9 +114,9 @@ file	dev/usb/if_upl.c		upl
 
 # Serial drivers
 # FTDI serial driver
-#device	uftdi: ucombus
-#attach	uftdi at uhub
-#file	dev/usb/uftdi.c			uftdi
+device	uftdi: ucombus
+attach	uftdi at uhub
+file	dev/usb/uftdi.c			uftdi
 
 # Scanners
 device	uscanner
