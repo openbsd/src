@@ -1,4 +1,4 @@
-/* $OpenBSD: psm_intelli.c,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
+/* $OpenBSD: psm_intelli.c,v 1.3 2001/02/19 02:27:06 jbm Exp $ */
 /* $NetBSD: psm_intelli.c,v 1.8 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -270,16 +270,15 @@ pmsi_ioctl(v, cmd, data, flag, p)
 		break;
 		
 	case WSMOUSEIO_SRES:
-		i = (*(u_int *)data - 12) / 25;
-		
+		i = ((int) *(u_int *)data - 12) / 25;		
+		/* valid values are {0,1,2,3} */
 		if (i < 0)
 			i = 0;
-			
 		if (i > 3)
 			i = 3;
 
 		kbcmd[0] = PMS_SET_RES;
-		kbcmd[1] = i;			
+		kbcmd[1] = (unsigned char) i;			
 		i = pckbc_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, kbcmd, 
 		    2, 0, 1, 0);
 		
