@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.65 2001/06/08 03:13:14 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.66 2001/06/13 13:42:02 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -143,7 +143,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
         DPRINTF(("esp_init(): initialized TDB with enc algorithm %s\n",
 	         txform->name));
 
-        tdbp->tdb_ivlen = txform->ivmask;
+        tdbp->tdb_ivlen = txform->blocksize;
         if (tdbp->tdb_flags & TDBF_HALFIV)
           tdbp->tdb_ivlen /= 2;
     }
