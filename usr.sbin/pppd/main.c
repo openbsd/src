@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1996/07/27 12:38:06 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1996/08/20 04:48:27 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1996/07/27 12:38:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 1996/08/20 04:48:27 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -560,7 +560,7 @@ main(argc, argv)
 	}
 
 	if (!persist)
-	    break;
+	    die(1);
 
 	if (demand)
 	    demand_discard();
