@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.33 2000/09/25 09:41:03 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.34 2000/10/10 15:16:02 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -86,6 +86,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifdef TCP_SIGNATURE
 #include <sys/md5k.h>
 #endif /* TCP_SIGNATURE */
+
+#ifndef offsetof
+#define offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif
 
 /* patchable/settable parameters for tcp */
 int	tcp_mssdflt = TCP_MSS;
@@ -809,9 +813,25 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
-	else if (cmd == PRC_MSGSIZE && ip_mtudisc)
+	else if (cmd == PRC_MSGSIZE && ip_mtudisc) {
+		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		/*
+		 * Verify that the packet in the icmp payload refers
+		 * to an existing TCP connection.
+		 */
+		if (in_pcblookup(&tcbtable,
+				 &ip->ip_dst, th->th_dport,
+				 &ip->ip_src, th->th_sport,
+				 INPLOOKUP_WILDCARD)) {
+			struct icmp *icp;
+			icp = (struct icmp *)((caddr_t)ip -
+					      offsetof(struct icmp, icmp_ip));
+
+			/* Calculate new mtu and create corresponding route */
+			icmp_mtudisc(icp);
+		}
 		notify = tcp_mtudisc, ip = 0;
-	else if (cmd == PRC_MTUINC)
+	} else if (cmd == PRC_MTUINC)
 		notify = tcp_mtudisc_increase, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.28 2000/10/10 14:24:33 itojun Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.29 2000/10/10 15:16:02 provos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -71,7 +71,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/icmp_var.h>
-#include <netinet/in_pcb.h>
 
 #include <machine/stdarg.h>
 
@@ -90,7 +89,6 @@ int	icmperrppslim;
 int	icmperrpps_count = 0;
 struct timeval icmperrppslim_last;
 
-void icmp_mtudisc __P((struct icmp *));
 void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 int icmp_ratelimit __P((const struct in_addr *, const int, const int));
 
@@ -402,8 +400,6 @@ icmp_input(m, va_alist)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
-		if (code == PRC_MSGSIZE && ip_mtudisc)
-			icmp_mtudisc(icp);
 		/*
 		 * XXX if the packet contains [IPv4 AH TCP], we can't make a
 		 * notification to TCP layer.
@@ -759,16 +755,12 @@ icmp_mtudisc(icp)
 	struct sockaddr *dst = sintosa(&icmpsrc);
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 	int    error;
-	extern struct inpcbtable tcbtable;
 	
 	/* Table of common MTUs: */
 
 	static u_short mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
 				      4352, 2002, 1492, 1006, 508, 296, 68, 0};
     
-	if (!in_pcbconnected(&tcbtable, sintosa(&icmpsrc)))
-		return;
-
 	rt = rtalloc1(dst, 1);
 	if (rt == 0)
 		return;

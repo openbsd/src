@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.27 2000/10/09 14:39:46 provos Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.28 2000/10/10 15:16:02 provos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -253,7 +253,6 @@ void	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
 	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
 void	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
 	    int, void (*)(struct inpcb *, int)));
-int	 in_pcbconnected __P((struct inpcbtable *, struct sockaddr *));
 void	 in_pcbrehash __P((struct inpcb *));
 void	 in_rtchange __P((struct inpcb *, int));
 void	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));

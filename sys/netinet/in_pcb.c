@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.46 2000/10/09 14:39:46 provos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.47 2000/10/10 15:16:01 provos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -709,38 +709,6 @@ in_pcbnotifyall(table, dst, errno, notify)
 		if (notify)
 			(*notify)(oinp, errno);
 	}
-}
-
-/*
- * Check if we have a socket that talks to the given destination.
- */
-
-int
-in_pcbconnected(table, dst)
-	struct inpcbtable *table;
-	struct sockaddr *dst;
-{
-	struct inpcb *inp;
-	struct in_addr faddr;
-
-	if (dst->sa_family != AF_INET)
-		return (0);
-	faddr = satosin(dst)->sin_addr;
-	if (faddr.s_addr == INADDR_ANY)
-		return (0);
-
-	for (inp = table->inpt_queue.cqh_first;
-	    inp != (struct inpcb *)&table->inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
-#ifdef INET6
-		if (inp->inp_flags & INP_IPV6)
-			continue;
-#endif
-		if (inp->inp_faddr.s_addr == faddr.s_addr && inp->inp_socket)
-			break;
-	}
-
-	return (inp != (struct inpcb *)&table->inpt_queue);
 }
 
 /*
