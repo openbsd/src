@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.47 2000/09/09 15:44:59 ericj Exp $
+#	$OpenBSD: MAKEDEV,v 1.48 2000/09/13 22:12:39 ericj Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -154,7 +154,7 @@ all)
 	sh $this uk0 uk1 ss0 ss1
 	sh $this ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh $this local xfs0
-	sh $this wscons
+	sh $this wscons ttyEcfg 
 	;;
 
 raminst)
@@ -164,13 +164,14 @@ raminst)
 	sh $this rd0 bpf0
 	sh $this ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 pty0
 	sh $this wsmouse0 wskbd0
+	sh $this ttyEcfg
 	;;
 
 wscons)
 	sh $this ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
 	sh $this wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	sh $this wskbd0 wskbd1 wskbd2 wskbd3
-	sh $this wsmux
+	sh $this ttyEcfg wsmux
 	;;
 
 wsmux|wskbd|wsmouse)
@@ -313,6 +314,12 @@ cd*)
 	chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 	chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	umask 77
+	;;
+
+ttyEcfg)
+	rm -f $i
+	mknod $i c 25 255  
+	chown root:wheel $i 
 	;;
 
 ttyE*)
