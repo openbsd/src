@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.443 2004/04/27 18:28:07 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.444 2004/04/28 02:43:08 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -479,7 +479,7 @@ pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 		break;
 	}
 }
-#endif
+#endif /* INET6 */
 
 struct pf_state *
 pf_find_state_byid(struct pf_state *key)
@@ -1308,7 +1308,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif
+#endif /* ALTQ */
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = NULL;
@@ -1423,7 +1423,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 			m_tag_prepend(m0, mtag);
 		}
 	}
-#endif
+#endif /* ALTQ */
 
 	switch (af) {
 #ifdef INET
@@ -1768,20 +1768,27 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	if (rpool->cur->addr.type == PF_ADDR_NOROUTE)
 		return (1);
 	if (rpool->cur->addr.type == PF_ADDR_DYNIFTL) {
-		if (af == AF_INET) {
+		switch (af) {
+#ifdef INET
+		case AF_INET:
 			if (rpool->cur->addr.p.dyn->pfid_acnt4 < 1 &&
 			    (rpool->opts & PF_POOL_TYPEMASK) !=
 			    PF_POOL_ROUNDROBIN)
 				return (1);
 			 raddr = &rpool->cur->addr.p.dyn->pfid_addr4;
 			 rmask = &rpool->cur->addr.p.dyn->pfid_mask4;
-		} else {
+			break;
+#endif /* INET */
+#ifdef INET6
+		case AF_INET6:
 			if (rpool->cur->addr.p.dyn->pfid_acnt6 < 1 &&
 			    (rpool->opts & PF_POOL_TYPEMASK) !=
 			    PF_POOL_ROUNDROBIN)
 				return (1);
 			raddr = &rpool->cur->addr.p.dyn->pfid_addr6;
 			rmask = &rpool->cur->addr.p.dyn->pfid_mask6;
+			break;
+#endif /* INET6 */
 		}
 	} else if (rpool->cur->addr.type == PF_ADDR_TABLE) {
 		if ((rpool->opts & PF_POOL_TYPEMASK) != PF_POOL_ROUNDROBIN)
@@ -2098,7 +2105,9 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 			switch (direction) {
 			case PF_OUT:
 				if (r->rpool.cur->addr.type == PF_ADDR_DYNIFTL){
-					if (pd->af == AF_INET) {
+					switch (pd->af) {
+#ifdef INET
+					case AF_INET:
 						if (r->rpool.cur->addr.p.dyn->
 						    pfid_acnt4 < 1)
 							return (NULL);
@@ -2108,7 +2117,10 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 						    &r->rpool.cur->addr.p.dyn->
 						    pfid_mask4,
 						    saddr, AF_INET);
-					} else {
+						break;
+#endif /* INET */
+#ifdef INET6
+					case AF_INET6:
 						if (r->rpool.cur->addr.p.dyn->
 						    pfid_acnt6 < 1)
 							return (NULL);
@@ -2118,6 +2130,8 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 						    &r->rpool.cur->addr.p.dyn->
 						    pfid_mask6,
 						    saddr, AF_INET6);
+						break;
+#endif /* INET6 */
 					}
 				} else
 					PF_POOLMASK(naddr,
@@ -2127,7 +2141,9 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 				break;
 			case PF_IN:
 				if (r->rpool.cur->addr.type == PF_ADDR_DYNIFTL){
-					if (pd->af == AF_INET) {
+					switch (pd->af) {
+#ifdef INET
+					case AF_INET:
 						if (r->src.addr.p.dyn->
 						    pfid_acnt4 < 1)
 							return (NULL);
@@ -2137,7 +2153,10 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 						    &r->src.addr.p.dyn->
 						    pfid_mask4,
 						    daddr, AF_INET);
-					} else {
+						break;
+#endif /* INET */
+#ifdef INET6
+					case AF_INET6:
 						if (r->src.addr.p.dyn->
 						    pfid_acnt6 < 1)
 							return (NULL);
@@ -2147,6 +2166,8 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 						    &r->src.addr.p.dyn->
 						    pfid_mask6,
 						    daddr, AF_INET6);
+						break;
+#endif /* INET6 */
 					}
 				} else
 					PF_POOLMASK(naddr,
@@ -2222,6 +2243,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 		daddr = pd->src;
 	}
 	switch (pd->af) {
+#ifdef INET
 	case AF_INET:
 		inp = in_pcbhashlookup(tb, saddr->v4, sport, daddr->v4, dport);
 		if (inp == NULL) {
@@ -2230,6 +2252,7 @@ pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, struct pf_pdesc *pd)
 				return (0);
 		}
 		break;
+#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		inp = in6_pcbhashlookup(tb, &saddr->v6, sport, &daddr->v6,
@@ -5184,6 +5207,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 	if (m->m_pkthdr.len < off + len)
 		return (1);
 		switch (af) {
+#ifdef INET
 	case AF_INET:
 		if (p == IPPROTO_ICMP) {
 			if (m->m_len < off)
@@ -5199,6 +5223,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 			sum = in4_cksum(m, p, off, len);
 		}
 		break;
+#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		if (m->m_len < sizeof(struct ip6_hdr))
@@ -5272,7 +5297,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 #ifdef DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("non-M_PKTHDR is passed to pf_test");
-#endif
+#endif /* DIAGNOSTIC */
 
 	memset(&pd, 0, sizeof(pd));
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
@@ -5341,7 +5366,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5375,7 +5400,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5403,7 +5428,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5418,7 +5443,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5456,7 +5481,7 @@ done:
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif
+#endif /* ALTQ */
 
 	/*
 	 * connections redirected to loopback should not match sockets
@@ -5577,7 +5602,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 #ifdef DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("non-M_PKTHDR is passed to pf_test");
-#endif
+#endif /* DIAGNOSTIC */
 
 	memset(&pd, 0, sizeof(pd));
 	if (m->m_pkthdr.len < (int)sizeof(*h)) {
@@ -5668,7 +5693,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5702,7 +5727,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5731,7 +5756,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5746,7 +5771,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		if (action == PF_PASS) {
 #if NPFSYNC
 			pfsync_update_state(s);
-#endif
+#endif /* NPFSYNC */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
 			log = s->log;
@@ -5777,7 +5802,7 @@ done:
 			m_tag_prepend(m, mtag);
 		}
 	}
-#endif
+#endif /* ALTQ */
 
 	if (dir == PF_IN && action == PF_PASS && (pd.proto == IPPROTO_TCP ||
 	    pd.proto == IPPROTO_UDP) && s != NULL && s->nat_rule.ptr != NULL &&

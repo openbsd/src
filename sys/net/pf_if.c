@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.11 2004/03/15 11:38:23 cedric Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.12 2004/04/28 02:43:09 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -430,14 +430,14 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 		}
 		if (af == AF_INET)
 			got4 = 1;
-		else
+		else if (af == AF_INET6)
 			got6 = 1;
 		net2 = net;
 		if (net2 == 128 && (flags & PFI_AFLAG_NETWORK)) {
 			if (af == AF_INET) {
 				net2 = pfi_unmask(&((struct sockaddr_in *)
 				    ia->ifa_netmask)->sin_addr);
-			} else {
+			} else if (af == AF_INET6) {
 				net2 = pfi_unmask(&((struct sockaddr_in6 *)
 				    ia->ifa_netmask)->sin6_addr);
 			}
@@ -816,7 +816,9 @@ pfi_dohooks(struct pfi_kif *p)
 int
 pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 {
-	if (af == AF_INET) {
+	switch (af) {
+#ifdef INET
+	case AF_INET:
 		switch (dyn->pfid_acnt4) {
 		case 0:
 			return (0);
@@ -826,7 +828,10 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		default:
 			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET));
 		}
-	} else {
+		break;
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6:
 		switch (dyn->pfid_acnt6) {
 		case 0:
 			return (0);
@@ -836,5 +841,9 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		default:
 			return (pfr_match_addr(dyn->pfid_kt, a, AF_INET6));
 		}
+		break;
+#endif /* INET6 */
+	default:
+		return (0);
 	}
 }

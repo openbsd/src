@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.116 2004/04/27 02:56:20 kjc Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.117 2004/04/28 02:43:09 pb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1303,7 +1303,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				} else
 					newrule->pqid = newrule->qid;
 			}
-#endif
+#endif /* ALTQ */
 			if (newrule->tagname[0])
 				if ((newrule->tag =
 				    pf_tagname2tag(newrule->tagname)) == 0)
