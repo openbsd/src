@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2005/01/19 02:02:34 uwe Exp $
+#	$OpenBSD: Makefile,v 1.9 2005/02/21 21:59:40 uwe Exp $
 
 
 .if (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
@@ -15,7 +15,7 @@ NOPROG=yes
 .endif
 
 MAN=	apm.8
-MANSUBDIR=i386 macppc
+MANSUBDIR=i386 macppc zaurus
 MLINKS=	apm.8 zzz.8
 
 .include <bsd.prog.mk>
