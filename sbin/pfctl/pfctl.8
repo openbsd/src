@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.106 2004/02/12 02:05:32 beck Exp $
+.\" $OpenBSD: pfctl.8,v 1.107 2004/02/12 11:03:45 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -33,15 +33,16 @@
 .Sh SYNOPSIS
 .Nm pfctl
 .Bk -words
-.Op Fl AdeghnNqrROvz
+.Op Fl AdeghNnOqRrvz
 .Op Fl a Ar anchor Ns Op Ar :ruleset
 .Op Fl D Ar macro=value
-.Op Fl f Ar file
 .Op Fl F Ar modifier
+.Op Fl f Ar file
 .Op Fl k Ar host
+.Op Fl p Ar device
 .Op Fl s Ar modifier
-.Op Fl t Ar table
 .Op Fl T Ar command Op Ar address ...
+.Op Fl t Ar table
 .Op Fl x Ar level
 .Ek
 .Sh DESCRIPTION
@@ -93,6 +94,9 @@ The
 utility provides several commands.
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A
+Load only the queue rules present in the rule file.
+Other rules and options are ignored.
 .It Fl a Ar anchor Ns Op Ar :ruleset
 Apply flags
 .Fl f ,
@@ -134,11 +138,6 @@ This is similar to C rules for variables.
 It is possible to create distinct tables with the same name in the global
 ruleset and in an anchor, but this is often bad design and a warning will be
 issued in that case.
-.It Fl A
-Load only the queue rules present in the rule file.
-Other rules and options are ignored.
-.It Fl d
-Disable the packet filter.
 .It Fl D Ar macro=value
 Define
 .Ar macro
@@ -148,17 +147,10 @@ on the command line.
 Overrides the definition of
 .Ar macro
 in the ruleset.
+.It Fl d
+Disable the packet filter.
 .It Fl e
 Enable the packet filter.
-.It Fl f Ar file
-Load the rules contained in
-.Ar file .
-This
-.Ar file
-may contain macros, tables, options, and normalization, queueing,
-translation, and filtering rules.
-With the exception of macros and tables, the statements must appear in that
-order.
 .It Fl F Ar modifier
 Flush the filter parameters specified by
 .Ar modifier
@@ -184,8 +176,19 @@ Flush the passive operating system fingerprints.
 .It Fl F Ar all
 Flush all of the above.
 .El
+.It Fl f Ar file
+Load the rules contained in
+.Ar file .
+This
+.Ar file
+may contain macros, tables, options, and normalization, queueing,
+translation, and filtering rules.
+With the exception of macros and tables, the statements must appear in that
+order.
 .It Fl g
 Include output helpful for debugging.
+.It Fl h
+Help.
 .It Fl k Ar host
 Kill all of the state entries originating from the specified
 .Ar host .
@@ -209,28 +212,26 @@ to
 .Bd -literal -offset indent
 # pfctl -k host1 -k host2
 .Ed
-.It Fl h
-Help.
-.It Fl n
-Do not actually load rules, just parse them.
 .It Fl N
 Load only the NAT rules present in the rule file.
 Other rules and options are ignored.
-.It Fl q
-Only print errors and warnings.
-.It Fl r
-Perform reverse DNS lookups on states when displaying them.
-.It Fl R
-Load only the filter rules present in the rule file.
-Other rules and options are ignored.
+.It Fl n
+Do not actually load rules, just parse them.
 .It Fl O
 Load only the options present in the rule file.
 Other rules and options are ignored.
 .It Fl p Ar device
-use the device file 
+Use the device file
 .Ar device
 instead of the default
 .Pa /dev/pf .
+.It Fl q
+Only print errors and warnings.
+.It Fl R
+Load only the filter rules present in the rule file.
+Other rules and options are ignored.
+.It Fl r
+Perform reverse DNS lookups on states when displaying them.
 .It Fl s Ar modifier
 Show the filter parameters specified by
 .Ar modifier
@@ -299,8 +300,6 @@ interface statistics are also shown.
 .It Fl s Ar all
 Show all of the above.
 .El
-.It Fl t Ar table
-Specify the name of the table.
 .It Fl T Ar command Op Ar address ...
 Specify the
 .Ar command
@@ -476,6 +475,8 @@ For tables which are referenced (used) by rules.
 This flag is set when a table in the main ruleset is hidden by one or more
 tables of the same name in sub-rulesets (anchors).
 .El
+.It Fl t Ar table
+Specify the name of the table.
 .It Fl v
 Produce more verbose output.
 A second use of
