@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.2 2002/03/14 01:26:53 millert Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.3 2002/04/03 16:47:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -523,16 +523,12 @@ ioprbs_scsi_cmd(xs)
 			ccb = ioprbs_get_ccb(sc, xs->flags);
 
 			/*
-			 * Are we out of commands, something is wrong.
-			 * 
+			 * We are out of commands, try again in a little while.
 			 */
 			if (ccb == NULL) {
-				printf("%s: no ccb in ioprbs_scsi_cmd",
-				    sc->sc_dv.dv_xname);
 				xs->error = XS_DRIVER_STUFFUP;
-				xs->flags |= ITSDONE;
-				scsi_done(xs);
-				goto ready;
+				IOPRBS_UNLOCK(sc, lock);
+				return (TRY_AGAIN_LATER);
 			}
 
 			ccb->ic_blockno = blockno;
