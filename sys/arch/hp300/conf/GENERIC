@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 1997/01/12 15:12:13 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.11 1997/01/18 08:16:56 downsj Exp $
 #	$NetBSD: GENERIC,v 1.16 1996/12/11 09:10:40 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -31,7 +31,7 @@ options         SYSVSHM                 # System V-style shared memory
 options         SYSVSEM                 # System V-style semaphores
 options         SYSVMSG                 # System V-style message queues
 options         KTRACE                  # system call tracing support
-options		"NKMEMCLUSTERS=1024"	# # 4K pages in kernel malloc pool
+options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
@@ -43,13 +43,17 @@ options		UNION		# Union filesystem (req. for FDESC)
 options		KERNFS		# kernel data-structure filesystem
 options		FDESC		# user file descriptor filesystem
 options		PROCFS		# /proc filesystem
+options		PORTAL		# create sockets with open(2)
+options		UMAPFS		# NULLFS + uid and gid remapping
+options		NULLFS		# loopback file system
 options		MFS		# Memory-based filesystem
 
 # Networking options
 options		INET		# Internet protocols
-options		GATEWAY		# IP forwarding + larger mb_map
+#options	GATEWAY		# IP forwarding + larger mb_map
 options		MROUTING	# Multicast routing
-#options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options		IPFILTER	# IP packet filter for security
+#options	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 
 # Options for HP hardware
 options		FPSP		# floating point interface for 68040
