@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.29 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.30 2003/07/30 20:56:19 avsm Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.29 2003/06/02 20:06:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.30 2003/07/30 20:56:19 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -375,7 +375,7 @@ die_you_gravy_sucking_pig_dog(void)
 	if (doreboot) {
 		execle(_PATH_REBOOT, "reboot", "-l",
 		    (nosync ? "-n" : (dodump ? "-d" : NULL)),
-		    (dodump ? "-d" : NULL), NULL, NULL);
+		    (dodump ? "-d" : NULL), (char *)NULL, (char *)NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
 		warn(_PATH_REBOOT);
 	}
@@ -383,7 +383,7 @@ die_you_gravy_sucking_pig_dog(void)
 		execle(_PATH_HALT, "halt", "-l",
 		    (dopower ? "-p" : (nosync ? "-n" : (dodump ? "-d" : NULL))),
 		    (nosync ? "-n" : (dodump ? "-d" : NULL)),
-		    (dodump ? "-d" : NULL), NULL, NULL);
+		    (dodump ? "-d" : NULL), (char *)NULL, (char *)NULL);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		warn(_PATH_HALT);
 	}
