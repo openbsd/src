@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.10 2002/03/05 23:10:42 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.11 2002/03/06 20:20:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -136,7 +136,9 @@ cpuattach(parent, self, aux)
 	printf("MHz, ");
 
 	if (fpu_enable) {
+		const char *name;
 		u_int ver;
+
 		mtctl(fpu_enable, CR_CCR);
 		__asm volatile(
 		    "copr,0,0\n\t"
@@ -144,7 +146,11 @@ cpuattach(parent, self, aux)
 		    :: "r" (&ver) : "memory");
 		mtctl(0, CR_CCR);
 		ver = HPPA_FPUVER(ver);
-		printf("FPU v%d.%02d", ver / 100, ver %100);
+		name = hppa_mod_info(HPPA_TYPE_FPU, (ver >> 5) & 0x1f);
+		if (name)
+			printf("FPU %s rev %d", name, ver & 0x1f);
+		else
+			printf("FPU v%d.%02d", (ver >> 5) & 0x1f, ver & 0x1f);
 	}
 
 	/* if (pdc_model.sh)
@@ -158,10 +164,10 @@ cpuattach(parent, self, aux)
 		p = "D";
 	}
 	/* TODO decode associativity */
-	printf("%uK(%db/l) %s %scoherent %scache\n%s: ",
+	printf("%uK(%db/l) %s %scoherent %scache, ",
 	    pdc_cache.dc_size / 1024, pdc_cache.dc_conf.cc_line * 16,
 	    pdc_cache.dc_conf.cc_wt? "w-thru" : "w-back",
-	    pdc_cache.dc_conf.cc_cst? "" : "in", p, self->dv_xname);
+	    pdc_cache.dc_conf.cc_cst? "" : "in", p);
 
 	p = "";
 	if (!pdc_cache.dt_conf.tc_sh) {
