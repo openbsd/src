@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.118 2004/06/30 07:58:12 otto Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.119 2004/07/28 13:08:19 millert Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.118 2004/06/30 07:58:12 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.119 2004/07/28 13:08:19 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -1961,6 +1961,12 @@ spawn(struct servtab *sep, int ctrl)
 					pwd->pw_gid = grp->gr_gid;
 					tmpint |= LOGIN_SETGROUP;
 				}
+				if (sep->se_family == AF_UNIX &&
+				    chown(sep->se_ctrladdr_un.sun_path,
+				    pwd->pw_uid, pwd->pw_gid) < 0)
+					syslog(LOG_WARNING,
+					    "%s/%s: UNIX domain socket: %m",
+					    sep->se_service, sep->se_proto);
 				if (setusercontext(NULL, pwd, pwd->pw_uid,
 				    tmpint) < 0) {
 					syslog(LOG_ERR,
