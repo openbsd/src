@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 1996/05/07 07:21:34 deraadt Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 1999/12/30 16:36:38 deraadt Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -48,7 +48,7 @@
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
-
+#include <ddb/db_var.h>
 
 extern label_t	*db_recover;
 extern char *trap_type[];
@@ -83,17 +83,16 @@ kdb_trap(type, code, regs)
 {
 	int s;
 
-#if 0
-	if ((boothowto&RB_KDB) == 0)
-		return(0);
-#endif
-
 	switch (type) {
 	case T_BPTFLT:	/* breakpoint */
 	case T_TRCTRAP:	/* single_step */
+	case T_NMI:	/* NMI */
 	case -1:	/* keyboard interrupt */
 		break;
 	default:
+		if (!db_panic)
+			return (0);
+
 		kdbprinttrap(type, code);
 		if (db_recover != 0) {
 			db_error("Faulted in DDB; continuing...\n");
