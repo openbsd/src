@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2002/06/11 09:36:23 hugh Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/08/10 15:51:18 deraadt Exp $
 #	$NetBSD: Makefile,v 1.27 2002/04/07 07:00:25 matt Exp $
 
 S!=	cd ${.CURDIR}/../../../../; pwd
@@ -12,7 +12,7 @@ DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	urem.s udiv.s consio.c consio2.S str.S ${DEVS} findcpu.c
 
-CLEANFILES+=${PROG} ${PROG}.sym
+CLEANFILES+=${PROG} ${PROG}.sym ${PROG}.mop
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_DHCP -D_STANDALONE \
 	-DNO_MID_CHECK
 #CPPFLAGS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DDEV_DEBUG \
@@ -62,7 +62,7 @@ ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 clean::	
 	rm -f a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${LOBJS} \
-		${CLEANFILES}
+	    ${CLEANFILES}
 
 #install:
 #	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \

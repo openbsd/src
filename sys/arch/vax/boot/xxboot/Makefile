@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2002/06/11 09:36:24 hugh Exp $
+#	$OpenBSD: Makefile,v 1.5 2003/08/10 15:51:18 deraadt Exp $
 #	$NetBSD: Makefile,v 1.12 2002/02/24 01:04:25 matt Exp $
 
 S=	${.CURDIR}/../../../../
@@ -40,7 +40,7 @@ machine-links:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
 	@[ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 .NOPATH: machine ${MACHINE_ARCH}
-CLEANFILES+= machine ${MACHINE_ARCH}
+CLEANFILES+= machine ${MACHINE_ARCH} ${PROG}.out
 .endif
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
