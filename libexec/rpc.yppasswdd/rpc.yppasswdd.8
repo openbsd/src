@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.yppasswdd.8,v 1.7 1997/08/19 07:00:50 niklas Exp $
+.\"	$OpenBSD: rpc.yppasswdd.8,v 1.8 1998/07/16 22:30:21 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -60,10 +60,6 @@ To force a change of a YP password when a local one also exists, use
 Other user information can be changed with
 .Xr chpass 1 .
 .Pp
-If the file
-.Nm /var/yp/yppasswdd.log
-exists then messages will be written to the file.
-.Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl d Ar directory
@@ -83,8 +79,7 @@ man page for
 .Ar ypserv.acl .
 .El
 .Sh FILES
-.Bl -tag -width /var/yp/yppasswdd.log -compact
-.It Pa /var/yp/yppasswdd.log
+.Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/passwd
 .It Pa /etc/master.passwd
 .El
