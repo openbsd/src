@@ -1,8 +1,8 @@
-/*	$OpenBSD: renice.c,v 1.4 1998/12/20 01:13:33 deraadt Exp $	*/
+/*	$OpenBSD: renice.c,v 1.5 1999/03/04 16:14:58 millert Exp $	*/
 
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,24 +34,31 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)renice.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: renice.c,v 1.4 1998/12/20 01:13:33 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)renice.c	8.1 (Berkeley) 6/9/93";
+#else
+static char rcsid[] = "$OpenBSD: renice.c,v 1.5 1999/03/04 16:14:58 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pwd.h>
+#include <err.h>
+#include <errno.h>
 
-int donice __P((int, int, int));
+int donice __P((int, uid_t, int));
+void usage __P((void));
 
 /*
  * Change the priority (nice) of processes
@@ -63,15 +70,16 @@ main(argc, argv)
 	char **argv;
 {
 	int which = PRIO_PROCESS;
-	int who = 0, prio, errs = 0;
+	int errs = 0;
+	long prio, who = 0;
+	char *ep;
 
 	argc--, argv++;
-	if (argc < 2) {
-		fprintf(stderr, "usage: renice priority [[-p] pid ...] ");
-		fprintf(stderr, "[[-g] pgrp ...] [[-u] user ...]\n");
-		exit(1);
-	}
-	prio = atoi(*argv);
+	if (argc < 2)
+		usage();
+	prio = strtol(*argv, &ep, 10);
+	if (*ep != NULL)
+		usage();
 	argc--, argv++;
 	if (prio > PRIO_MAX)
 		prio = PRIO_MAX;
@@ -94,42 +102,49 @@ main(argc, argv)
 			register struct passwd *pwd = getpwnam(*argv);
 			
 			if (pwd == NULL) {
-				fprintf(stderr, "renice: %s: unknown user\n",
-					*argv);
+				warnx("%s: unknown user", *argv);
 				continue;
 			}
 			who = pwd->pw_uid;
 		} else {
-			who = atoi(*argv);
-			if (who < 0) {
-				fprintf(stderr, "renice: %s: bad value\n",
-					*argv);
+			who = strtol(*argv, &ep, 10);
+			if (*ep != NULL || who < 0) {
+				warnx("%s: bad value", *argv);
 				continue;
 			}
 		}
-		errs += donice(which, who, prio);
+		errs += donice(which, (uid_t)who, (int)prio);
 	}
 	exit(errs != 0);
 }
 
 int
 donice(which, who, prio)
-	int which, who, prio;
+	int which;
+	uid_t who;
+	int prio;
 {
 	int oldprio;
-	extern int errno;
 
 	errno = 0, oldprio = getpriority(which, who);
 	if (oldprio == -1 && errno) {
-		fprintf(stderr, "renice: %d: ", who);
-		perror("getpriority");
+		warn("getpriority: %d", who);
 		return (1);
 	}
 	if (setpriority(which, who, prio) < 0) {
-		fprintf(stderr, "renice: %d: ", who);
-		perror("setpriority");
+		warn("setpriority: %d", who);
 		return (1);
 	}
 	printf("%d: old priority %d, new priority %d\n", who, oldprio, prio);
 	return (0);
+}
+
+void
+usage()
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s priority [[-p] pid ...] [[-g] pgrp ...] "
+	    "[[-u] user ...]\n", __progname);
+	exit(1);
 }
