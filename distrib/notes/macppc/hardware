@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.42 2005/02/16 20:07:24 martin Exp $
+dnl	$OpenBSD: hardware,v 1.43 2005/02/17 10:29:04 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -71,21 +71,63 @@ Supported devices {:-include-:}:
 		Internal non-USB modems.
 
 	Ethernet adapters
-		Digital DC21x4x-based PCI Ethernet adapters (de), including:
-			Znyx ZX34X
-		Digital DC21x43 clone-based PCI Ethernet adapters (dc)
-		Intel 21145-based PCI Ethernet adapters (dc)
-		HME PCI Fast Ethernet (hme)
-		HME PCI Quad Fast Ethernet (hme)
 		Onboard Older iMac 10-100Mbs (bm) Ethernet
 		Onboard G4/PowerBook/Newer iMac (gem) Ethernet
-		Intel i8255x-based (except the i82556) PCI adapters (fxp),
-		including:
-			Intel EtherExpress PRO/10+
-			Intel EtherExpress PRO/100, PRO/100B, and PRO/100+
-			Intel EtherExpress PRO/100+ "Management Adapter"
-			Intel EtherExpress PRO/100 Dual Port
-			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
+		3Com 3c9xx EtherLink XL adapters (xl), including:
+			3Com 3c900/3c900B PCI adapters
+			3Com 3c905/3c905B/3c905C PCI adapters
+			3Com 3c980/3c980C server adapters
+			3Com 3cSOHO adapter
+			3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
+			3Com 3c555/3c556/3c556B MiniPCI adapters
+		ADMtek AN986-based USB adapters (aue), including:
+			3Com 3c460b
+			Abocom UFE1000
+			Abocom DSB650TX
+			Accton USB320-EC
+			Accton SpeedStream Ethernet
+			Admtek Pegasus
+			Admtek Pegasus II
+			AEI USB Fast Ethernet
+			Allied Telesyn AT-USB100
+			ATEN UC-110T
+			Belkin USB to LAN
+			Billionton Systems USB100
+			Billionton Systems USB100EL
+			Billionton Systems USB100LP
+			Billionton Systems USBE100
+			Corega FEther USB-TX
+			Corega FEther USB-TXS
+			D-Link DSB-650
+			D-Link DSB-650TX
+			D-Link DSB-650TX-PNA
+			ELCON Systemtechnik Goldpfeil P-LAN
+			Elecom LD-USB/TX
+			Elecom LD-USBL/TX
+			Elsa Microlink USB2Ethernet
+			GIGABYTE GN-BR402W
+			Hawking UF100
+			HP HN210E
+			I/O DATA USB ETTX
+			Kingston KNU101TX
+			Laneed LD-USBL/TX
+			LinkSys USB100TX
+			LinkSys USB100H1
+			LinkSys USB10T
+			LinkSys USB10TA
+			LinkSys USB10TX
+			Melco Inc. LUA-TX
+			Melco Inc. LUA2-TX
+			Microsoft MN110
+			Mobility EasiDock Ethernet
+			Netgear FA101
+			Omnidirectional Control Technology USB TO Ethernet
+			Siemens SpeedStream USB
+			Smartbridges smartNIC 2
+			SMC 2202USB
+			SMC EZ Connect USB
+			SOHOware NUB100
+			SOHOware NUB110
 		Alteon Tigon I/II PCI Gigabit Ethernet boards (ti), including:
 			3Com 3c985 and 3c985B
 			Alteon ACEnic V (fiber and copper)
@@ -93,6 +135,43 @@ Supported devices {:-include-:}:
 			Farallon PN9000SX
 			Netgear GA620 and GA620T
 			SGI Tigon
+		ASIX Electronics AX88172 USB Ethernet adapters (axe), including:
+			ATEN UC210T
+			Billionton Systems USB2AR
+			Buffalo(MELCO) LUA-U2-KTX
+			Corega FEther USB2-TX
+			D-Link DUB-E100
+			Hawking UF200
+			Intellinet USB 2.0 to Ethernet (rev A)
+			LinkSys USB200M
+			Netgear FA120
+			Sitecom LN-029
+			SnapPort USB 2.0 LAN Adapter
+			ST Lab USB 2.0 Fast Ethernet
+			Surecom EP-1427X-2
+			System TALKS SGC-X2UL
+			TRENDnet TU2-ET100
+		CATC USB-EL1210A-based USB adapters (cue), including:
+			Belkin F5U111
+			CATC Netmate
+			CATC Netmate II
+			SmartBridges SmartLink
+		Davicom DM9601 USB Ethernet adapters (udav), including:
+			Corega FEther USB-TXC 
+		Digital DC21x4x-based PCI Ethernet adapters (de), including:
+			Znyx ZX34X
+		Digital DC21x43 clone-based PCI Ethernet adapters (dc)
+		HME PCI Fast Ethernet (hme)
+		HME PCI Quad Fast Ethernet (hme)
+		Intel 21145-based PCI Ethernet adapters (dc)
+		Intel i8255x-based (except the i82556) PCI adapters (fxp),
+		including:
+			Intel EtherExpress PRO/10+
+			Intel EtherExpress PRO/100, PRO/100B, and PRO/100+
+			Intel EtherExpress PRO/100+ "Management Adapter"
+			Intel EtherExpress PRO/100 Dual Port
+			Intel PRO/100 VE, PRO/100 VM, and PRO/100 S
+
 		Intel i82540, i82541, i82542, i82543, i82544, i82545, i82546
 		and i82547 based adapters (em), including:
 			Intel PRO/1000 Gigabit Server Adapter (SX Fiber)
@@ -112,19 +191,44 @@ Supported devices {:-include-:}:
 			(PWLA8492MF)
 			Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
 			Intel PRO/1000MT Quad PCI-X Adapter (PWLA8494MT)
-		Realtek 8169/8169S/8110S based PCI adapters, including:
-			Buffalo LGY-PCI-GT (8169S)
-			Corega CG-LAPCIGT (8169S)
-			Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S) 
-			PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
-			Xterasys XN-152 10/100/1000 NIC (8169)
-		3Com 3c9xx EtherLink XL adapters (xl), including:
-			3Com 3c900/3c900B PCI adapters
-			3Com 3c905/3c905B/3c905C PCI adapters
-			3Com 3c980/3c980C server adapters
-			3Com 3cSOHO adapter
-			3Com 3c900B-FL and 3c900B-FL/FX fiber optic adapters
-			3Com 3c555/3c556/3c556B MiniPCI adapters
+		Kawasaki LSI KL5KUSB101B-based USB adapters (kue), including:
+			3Com 3c19250
+			3Com 3c460 HomeConnect
+			AboCom Systems URE450 Ethernet
+			ADS Technologies USB-10BT
+			Aox USB101
+			Asante USB to Ethernet
+			ATen DSB-650C
+			ATen UC10T
+			Corega USB-T
+			D-Link DSB-650C
+			Entrega NET-USB-E45
+			I/O Data USB-ET/T
+			Jaton USB XpressNet
+			Kawasaki USB101
+			Kingston Ethernet
+			LinkSys USB10T
+			Mobility Ethernet
+			Netgear EA101
+			Peracom USB
+			Portgear Ethernet
+			Portsmith Express Ethernet
+			Psion Dacom Gold Port Ethernet
+			Shark Pocket Adapter
+			Silicom U2E
+			SMC 2102USB
+			SMC 2104USB
+		Realtek RTL8150L based USB adapters (url), including:
+			Abocom RTL8151
+			GreenHouse GH-USB100B
+			GreenHouse GH-USB100B with HomePNA
+			Linksys USB100M
+			Longshine LCS-8138TX
+			Melco Inc. LUA-KTX
+			Micronet SP128AR
+			SMC 2208USB/ETH
+			TrendNet TU-ET100C
+			Zt USB10/100
 		RealTek 8129/8139-based adapters (rl), including:
 			Accton MPX 5030/5038
 			Allied Telesyn AT2550
@@ -139,6 +243,12 @@ Supported devices {:-include-:}:
 			Nortel BayStack 21
 			OvisLink LEF-8129TX, LEF-8139TX
 			SMC EZ Card 10/100 PCI 1211-TX
+		Realtek 8169/8169S/8110S based PCI adapters, including:
+			Buffalo LGY-PCI-GT (8169S)
+			Corega CG-LAPCIGT (8169S)
+			Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S) 
+			PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
+			Xterasys XN-152 10/100/1000 NIC (8169)
 
 	Wireless Ethernet Adapters
 		PCMCIA Adapters
