@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile.yp,v 1.7 1997/04/15 22:58:59 maja Exp $
+#	$OpenBSD: Makefile.yp,v 1.8 1997/04/20 10:00:22 maja Exp $
 
 YPDBDIR=/var/yp
 DIR=/etc
+AMDDIR=/etc/amd
 NOPUSH=""
 #
 AWK=/usr/bin/awk
@@ -25,7 +26,7 @@ YPPUSH=/usr/sbin/yppush
 MAKEDBM-S=$(MAKEDBM) -s
 UNSECURE="True"
 
-all: passwd group hosts ethers networks rpc services protocols netid netgroup
+all: passwd group hosts ethers networks rpc services protocols netid netgroup amd.home
 
 passwd.time: $(DIR)/master.passwd
 	-@if [ -f $(>) ]; then \
@@ -241,6 +242,35 @@ netgroup.time: $(DIR)/netgroup
 	fi
 
 
+amd.home.time: $(AMDDIR)/amd.home
+	-@if [ -f $(>) ]; then \
+		$(SED) -e "s/#.*$$//" -e "/^$$/d" $(>) | \
+		$(AWK) '{ \
+			    for (i = 1; i <= NF; i++) \
+				if (i == NF) { \
+				    if (substr($$i, length($$i), 1) == "\\") { \
+					printf("%s", substr($$i, 1, length($$i) - 1)); \
+				    } \
+				    else \
+					printf("%s\n", $$i); \
+				} \
+				else \
+				    printf("%s ", $$i); \
+			}' | \
+		$(MAKEDBM) - amd.home; \
+		$(TOUCH) $(@); \
+		$(ECHO) "updated amd.home"; \
+		if [ ! $(NOPUSH) ]; then \
+			$(YPPUSH) -d $(DOMAIN) amd.home; \
+			$(ECHO) "pushed amd.home"; \
+		else \
+			: ; \
+		fi \
+	else \
+		$(ECHO) "couldn't find $(>)"; \
+	fi
+
+
 passwd: passwd.time
 group: group.time
 hosts: hosts.time
@@ -251,6 +281,7 @@ services: services.time
 protocols: protocols.time
 netid: netid.time
 netgroup: netgroup.time
+amd.home: amd.home.time
 $(DIR)/passwd:
 $(DIR)/group:
 $(DIR)/hosts:
@@ -262,4 +293,4 @@ $(DIR)/protocols:
 $(DIR)/netid:
 $(DIR)/master.passwd:
 $(DIR)/netgroup:
-
+$(AMDDIR)/amd.home:
