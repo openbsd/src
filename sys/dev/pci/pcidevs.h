@@ -656,6 +656,7 @@
 /* ADMtek products */
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 */
 #define	PCI_PRODUCT_ADMTEK_AN983	0x0985		/* AN983 */
+#define	PCI_PRODUCT_ADMTEK_AN985	0x1985		/* AN985 */
 
 /* Adaptec products */
 #define	PCI_PRODUCT_ADP_AIC7810	0x1078		/* AIC-7810 */

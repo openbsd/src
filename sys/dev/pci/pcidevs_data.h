@@ -471,6 +471,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AN983",
 	},
 	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
+	    0,
+	    "ADMtek",
+	    "AN985",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7810,
 	    0,
 	    "Adaptec",
