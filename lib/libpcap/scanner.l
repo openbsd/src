@@ -1,8 +1,8 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.5 1996/07/12 13:19:13 mickey Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.6 1997/07/22 07:42:32 deraadt Exp $	*/
 
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.5 1996/07/12 13:19:13 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.6 1997/07/22 07:42:32 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -129,14 +129,15 @@ outbound	return OUTBOUND;
 ">>"			return RSH;
 {N}			{ yylval.i = stoi((char *)yytext); return NUM; }
 ({N}\.{N})|({N}\.{N}\.{N})|({N}\.{N}\.{N}\.{N})	{
-			yylval.s = sdup((char *)yytext); return HID;
-}
+			yylval.s = sdup((char *)yytext); return HID; }
 {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
 			  return EID; }
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
-[A-Za-z][-_.A-Za-z0-9]*	{ yylval.s = sdup((char *)yytext); return ID; }
+[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
+			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
-[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+    { bpf_error("illegal token: %s\n", yytext); }
+[^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
+			bpf_error("illegal token: %s\n", yytext); }
 .			{ bpf_error("illegal char '%c'", *yytext); }
 %%
 void
