@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.38 2002/12/22 14:19:30 dhartmei Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.39 2002/12/22 16:19:32 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -600,7 +600,7 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	for (i = 0; i < PF_RULESET_MAX; ++i)
 		/*
 		 * ignore EINVAL on removal, it means the anchor was
-                 * already automatically removed by the kernel.
+		 * already automatically removed by the kernel.
 		 */
 		if (ioctl(dev, DIOCCOMMITRULES, &pr[i]) &&
 		    (add || errno != EINVAL)) {
@@ -690,7 +690,7 @@ do_death(int active)
 int
 pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 {
-	struct pfioc_rule *pr;
+	struct pfioc_rule	*pr;
 
 	switch (r->action) {
 	case PF_NAT:
@@ -723,7 +723,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 int
 pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 {
-	struct pf_pooladdr *pa;
+	struct pf_pooladdr	*pa;
 
 	if (ioctl(pf->dev, DIOCBEGINADDRS, &pf->paddr)) {
 		syslog(LOG_ERR, "DIOCBEGINADDRS %m");
@@ -743,7 +743,7 @@ pfctl_add_pool(struct pfctl *pf, struct pf_pool *p, sa_family_t af)
 void
 pfctl_clear_pool(struct pf_pool *pool)
 {
-	struct pf_pooladdr *pa;
+	struct pf_pooladdr	*pa;
 
 	while ((pa = TAILQ_FIRST(&pool->list)) != NULL) {
 		TAILQ_REMOVE(&pool->list, pa, entries);
