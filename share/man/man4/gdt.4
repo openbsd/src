@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.14 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: gdt.4,v 1.15 2002/06/07 02:12:01 niklas Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -8,7 +8,7 @@
 .Os
 .Sh NAME
 .Nm gdt
-.Nd ICP-Vortex GDT RAID driver
+.Nd Intel (and formerly ICP-Vortex) GDT RAID driver
 .Sh SYNOPSIS
 .Cd "gdt* at pci? dev ? function ?"
 .Cd "scsibus* at gdt?"
@@ -24,30 +24,36 @@ driver provides support for all currently known adapters:
 .Tn GDT6120/6520 ,
 .Tn GDT6530 ,
 .Tn GDT6550 ,
-.Tn GDT6117/6517 ,
-.Tn GDT6127/6527 ,
+.Tn GDT6x17 ,
+.Tn GDT6x27 ,
 .Tn GDT6537 ,
-.Tn GDT6557/6557-ECC ,
-.Tn GDT6115/6515 ,
-.Tn GDT6125/6525 ,
+.Tn GDT6557 ,
+.Tn GDT6x15 ,
+.Tn GDT6x25 ,
 .Tn GDT6535 ,
-.Tn GDT6555/6555-ECC ,
-.Tn GDT6[15]17RP ,
-.Tn GDT6[15]27RP ,
+.Tn GDT6555 ,
+.Tn GDT6x17RP ,
+.Tn GDT6x27RP ,
 .Tn GDT6537RP ,
 .Tn GDT6557RP ,
-.Tn GDT6[15]11RP ,
-.Tn GDT6[15]21RP ,
-.Tn GDT6[15]17RD ,
-.Tn GDT6[5]127RD ,
-.Tn GDT6537RD ,
-.Tn GDT6557RD ,
-.Tn GDT6[15]11RD ,
-.Tn GDT6[15]21RD ,
-.Tn GDT6[156]18RD ,
-.Tn GDT6[156]28RD ,
-.Tn GDT6[56]38RD ,
-.Tn GDT6[56]58RD ,
+.Tn GDT6x11RP ,
+.Tn GDT6x21RP ,
+.Tn GDT6x17RP1 ,
+.Tn GDT6x27RP1 ,
+.Tn GDT6537RP1 ,
+.Tn GDT6557RP1 ,
+.Tn GDT6x11RP1 ,
+.Tn GDT6x21RP1 ,
+.Tn GDT6x18RD ,
+.Tn GDT6x28RD ,
+.Tn GDT6x38RD ,
+.Tn GDT6x58RD ,
+.Tn GDT6x17RP2 ,
+.Tn GDT6x27RP2 ,
+.Tn GDT6537RP2 ,
+.Tn GDT6557RP2 ,
+.Tn GDT6x11RP2 ,
+.Tn GDT6x21RP2 ,
 .Tn GDT6513RS ,
 .Tn GDT6523RS ,
 .Tn GDT6518RS ,
@@ -60,11 +66,11 @@ driver provides support for all currently known adapters:
 .Tn GDT6x63RS ,
 .Tn GDT7x13RN ,
 .Tn GDT7x23RN ,
-.Tn GDT7[156]18RN ,
-.Tn GDT7[156]28RN ,
-.Tn GDT7[56]38RN ,
-.Tn GDT7[56]58RN ,
-.Tn GDT7[56]43RN ,
+.Tn GDT7x18RN ,
+.Tn GDT7x28RN ,
+.Tn GDT7x38RN ,
+.Tn GDT7x58RN ,
+.Tn GDT7x43RN ,
 .Tn GDT7x53RN ,
 .Tn GDT7x63RN ,
 .Tn GDT4x13RZ ,
@@ -75,11 +81,13 @@ driver provides support for all currently known adapters:
 .Tn GDT8x43RZ ,
 .Tn GDT8x53RZ ,
 .Tn GDT8x63RZ ,
-.Tn GDT6[56]19RD ,
-.Tn GDT6[56]29RD ,
-.Tn GDT7[56]19RN ,
+.Tn GDT6x19RD ,
+.Tn GDT6x29RD ,
+.Tn GDT7x19RN ,
+.Tn GDT7x29RN ,
+.Tn GDT8x22RZ
 and
-.Tn GDT7[56]29RN .
+.Tn GDT8x23RZ .
 .El
 .Pp
 Although the controllers are actual RAID controllers the driver makes them
