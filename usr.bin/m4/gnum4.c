@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.13 2001/09/27 12:35:20 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.14 2001/09/28 00:46:02 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -207,6 +207,7 @@ static void do_regexpindex __P((const char *, regex_t *, regmatch_t *));
 static void do_regexp __P((const char *, regex_t *, const char *, regmatch_t *));
 static void add_sub __P((int, const char *, regex_t *, regmatch_t *));
 static void add_replace __P((const char *, regex_t *, const char *, regmatch_t *));
+#define addconstantstring(s) addchars((s), sizeof(s)-1)
 
 static void 
 addchars(c, n)
@@ -419,12 +420,33 @@ twiddle(p)
 {
 	/* This could use strcspn for speed... */
 	while (*p != '\0') {
-		if (*p == '\\' && (p[1] == '(' || p[1] == ')')) {
-			addchar(p[1]);
+		if (*p == '\\') {
+			switch(p[1]) {
+			case '(':
+			case ')':
+			case '|':
+				addchar(p[1]);
+				break;
+			case 'w':
+				addconstantstring("[_a-zA-Z0-9]");
+				break;
+			case 'W':
+				addconstantstring("[^_a-zA-Z0-9]");
+				break;
+			case '<':
+				addconstantstring("[[:<:]]");
+				break;
+			case '>':
+				addconstantstring("[[:>:]]");
+				break;
+			default:
+				addchars(p, 2);
+				break;
+			}
 			p+=2;
 			continue;
 		}
-		if (*p == '(' || *p == ')')
+		if (*p == '(' || *p == ')' || *p == '|')
 			addchar('\\');
 
 		addchar(*p);
