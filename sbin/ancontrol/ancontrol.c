@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.6 2000/06/22 22:56:33 todd Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.7 2000/08/17 21:57:38 deraadt Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1121,7 +1121,7 @@ main(argc, argv)
 {
 	int			ch;
 	int			act = 0;
-	char			*iface = NULL;
+	char			*iface = "an0";
 	int			modifier = 0;
 	void			*arg = NULL;
 	char			*p = argv[0];
