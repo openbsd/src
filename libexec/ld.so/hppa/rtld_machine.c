@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2004/05/27 21:59:07 mickey Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.4 2004/06/01 21:07:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -108,6 +108,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if (rela == NULL)
 		return (0);
+
+	/* either it's an ld bug or a wacky hpux abi */
+	if (!object->dyn.pltgot)
+		object->Dyn.info[DT_PLTGOT] += loff;
 
 	if (object->dyn.init && !((Elf_Addr)object->dyn.init & 2)) {
 		Elf_Addr addr = _dl_md_plabel((Elf_Addr)object->dyn.init,
