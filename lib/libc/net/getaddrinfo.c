@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.19 2000/04/26 12:31:44 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.20 2000/04/26 14:41:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -736,18 +736,6 @@ explore_numeric_scope(pai, hostname, servname, res)
 	if (cp == NULL)
 		return explore_numeric(pai, hostname, servname, res);
 
-#if 0
-	/*
-	 * Handle special case of <scope id><delimiter><scoped_address>
-	 */
-	hostname2 = strdup(hostname);
-	if (hostname2 == NULL)
-		return EAI_MEMORY;
-	/* terminate at the delimiter */
-	hostname2[cp - hostname] = '\0';
-	scope = hostname2;
-	addr = cp + 1;
-#else
 	/*
 	 * Handle special case of <scoped_address><delimiter><scope id>
 	 */
@@ -758,7 +746,6 @@ explore_numeric_scope(pai, hostname, servname, res)
 	hostname2[cp - hostname] = '\0';
 	addr = hostname2;
 	scope = cp + 1;
-#endif
 
 	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
