@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.44 2003/01/28 04:58:00 marc Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.45 2003/03/04 00:29:17 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1137,7 +1137,7 @@ getanswer(answer, anslen, qname, qtype, pai)
 				had_error++;
 				continue;
 			}
-			strcpy(bp, tbuf);
+			strlcpy(bp, tbuf, ep - bp);
 			canonname = bp;
 			bp += n;
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.15 2003/01/28 04:58:00 marc Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.16 2003/03/04 00:29:17 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.15 2003/01/28 04:58:00 marc Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.16 2003/03/04 00:29:17 itojun Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -448,10 +448,10 @@ __p_fqnname(cp, msg, msglen, name, namelen)
 		return (NULL);
 	newlen = strlen(name);
 	if (newlen == 0 || name[newlen - 1] != '.') {
-		if (newlen+1 >= namelen)	/* Lack space for final dot */
+		if (newlen + 1 >= namelen)	/* Lack space for final dot */
 			return (NULL);
 		else
-			strcpy(name + newlen, ".");
+			strlcpy(name + newlen, ".", namelen - newlen);
 	}
 	return (cp + n);
 }

@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.54 2003/01/28 04:58:00 marc Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.55 2003/03/04 00:29:17 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -664,7 +664,7 @@ gethostbyaddr(addr, len, af)
 	int n, size, i;
 	querybuf *buf;
 	register struct hostent *hp;
-	char qbuf[MAXDNAME+1], *qp;
+	char qbuf[MAXDNAME+1], *qp, *ep;
 	extern struct hostent *_gethtbyaddr(), *_yp_gethtbyaddr();
 	char lookups[MAXDNSLUS];
 	struct hostent *res;
@@ -706,6 +706,7 @@ gethostbyaddr(addr, len, af)
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
 	}
+	ep = qbuf + sizeof(qbuf);
 	switch (af) {
 	case AF_INET:
 		(void) snprintf(qbuf, sizeof qbuf, "%u.%u.%u.%u.in-addr.arpa",
@@ -715,8 +716,14 @@ gethostbyaddr(addr, len, af)
 	case AF_INET6:
 		qp = qbuf;
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
-			qp += sprintf(qp, "%x.%x.",
+			i = snprintf(qp, ep - qp, "%x.%x.",
 			    uaddr[n] & 0xf, (uaddr[n] >> 4) & 0xf);
+			if (i <= 0) {
+				errno = EINVAL;
+				h_errno = NETDB_INTERNAL;
+				return (NULL);
+			}
+			qp += i;
 		}
 		break;
 	}
@@ -737,14 +744,14 @@ gethostbyaddr(addr, len, af)
 #endif
 		case 'b':
 			if (af == AF_INET6)
-				strcpy(qp, "ip6.arpa");
+				strlcpy(qp, "ip6.arpa", ep - qp);
 			buf = malloc(sizeof(*buf));
 			if (!buf)
 				break;
 			n = res_query(qbuf, C_IN, T_PTR, buf->buf,
 			    sizeof(buf->buf));
 			if (n < 0 && af == AF_INET6) {
-				strcpy(qp, "ip6.int");
+				strlcpy(qp, "ip6.int", ep - qp);
 				n = res_query(qbuf, C_IN, T_PTR,
 				    buf->buf, sizeof(buf->buf));
 			}
