@@ -1,10 +1,10 @@
-.\" $OpenBSD: isakmpd.8,v 1.38 2002/03/17 21:49:26 angelos Exp $
+.\" $OpenBSD: isakmpd.8,v 1.39 2002/04/10 20:56:28 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
 .\" All rights reserved.
 .\" Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
-.\" Copyright (c) 2001 Håkan Olsson.  All rights reserved.
+.\" Copyright (c) 2001, 2002 Håkan Olsson.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -344,6 +344,72 @@ and named and stored after this easy formula:
 /etc/isakmpd/pubkeys/fqdn/foo.bar.org
 .It For UFQDN identities
 /etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
+.El
+.Pp
+.Ss The FIFO user interface
+When
+.Nm
+starts, it creates a FIFO (named pipe) where it listens for user
+requests. All commands start with a single letter, followed by
+command-specific options. Available commands are:
+.Bl -tag -width Ds -compact
+.Pp
+.It Ic "c <name>"
+Start the named connection, if stopped or inactive.
+.Pp
+.It Ic "C set [section]:tag=value"
+.It Ic "C rm  [section]:tag"
+.It Ic "C rms [section]"
+Update the running
+.Nm
+configuration atomically. 'set' sets a configuration value consisting
+of a section, tag and value triplet. 'rm' removes a tag in a
+section. 'rms' removes an entire section.
+.Pp
+.It Ic "d <cookies> <msgid>"
+Delete the specified SA from the system. Specify <msgid> as "-" to match a
+Phase 1 SA.
+.Pp
+.It Ic "D <class> <level>"
+.It Ic "D A <level>"
+.It Ic "D T"
+Set debug class <class> to level <level>. If <class> is specified as
+"A", the level applies to all debug classes.
+"D T" toggles all debug classes to level zero. 
+Another "D T" command will toggle them back to the earlier levels.
+.Pp
+.It Ic "p on[=<path>]"
+.It Ic "p off"
+Enable or disable cleartext IKE packet capture. When enabling,
+optionally specify which file
+.Nm
+should capture the packets to.
+.Pp
+.It Ic "Q"
+Cleanly shutdown of the daemon, as when sent a SIGTERM signal.
+.Pp
+.It Ic "r"
+Report
+.Nm
+internal state to a file. See
+.Fl R
+option. Same as when sent a SIGUSR1 signal. 
+.Pp
+.It Ic "R"
+Reinitialize
+.Nm isakmpd ,
+as when sent a SIGHUP signal.
+.Pp
+.It Ic "S"
+Report information on all known SAs to the
+.Pa /var/run/isakmpd_sa
+file.
+.Pp
+.It Ic "t <name>"
+Tear down the named connection, if active.
+.Pp
+.It Ic "T"
+Tear down all active connections.
 .El
 .Sh BUGS
 The
