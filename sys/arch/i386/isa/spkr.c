@@ -1,5 +1,5 @@
-/*	$OpenBSD: spkr.c,v 1.9 1996/05/28 10:28:15 deraadt Exp $ */
-/*	$NetBSD: spkr.c,v 1.23 1996/05/05 19:31:25 christos Exp $	*/
+/*	$OpenBSD: spkr.c,v 1.10 1996/07/27 11:16:10 deraadt Exp $ */
+/*	$NetBSD: spkr.c,v 1.23.4.1 1996/07/15 22:15:11 fvdl Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -74,7 +74,7 @@ static void endrest __P((void *));
 static void rest __P((int));
 static void playinit __P((void));
 static void playtone __P((int, int, int));
-static void playstring __P((char *, size_t));
+static void playstring __P((char *, int));
 
 static void
 endtone(v)
@@ -201,6 +201,7 @@ static int pitchtab[] =
 /* 5 */ 2093, 2217, 2349, 2489, 2637, 2794, 2960, 3136, 3322, 3520, 3729, 3951,
 /* 6 */ 4186, 4435, 4698, 4978, 5274, 5588, 5920, 6272, 6644, 7040, 7459, 7902,
 };
+#define NOCTAVES (sizeof(pitchtab) / sizeof(pitchtab[0]) / OCTAVE_NOTES)
 
 static void
 playinit()
@@ -250,7 +251,7 @@ static void
 playstring(cp, slen)
 /* interpret and play an item from a notation string */
     char	*cp;
-    size_t	slen;
+    int		slen;
 {
     int		pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
 
@@ -273,13 +274,13 @@ playstring(cp, slen)
 	    pitch = notetab[c - 'A'] + octave * OCTAVE_NOTES;
 
 	    /* this may be followed by an accidental sign */
-	    if (cp[1] == '#' || cp[1] == '+')
+	    if (slen > 0 && (cp[1] == '#' || cp[1] == '+'))
 	    {
 		++pitch;
 		++cp;
 		slen--;
 	    }
-	    else if (cp[1] == '-')
+	    else if (slen > 0 && cp[1] == '-')
 	    {
 		--pitch;
 		++cp;
@@ -314,7 +315,7 @@ playstring(cp, slen)
 		timeval = value;
 
 	    /* ...and/or sustain dots */
-	    for (sustain = 0; cp[1] == '.'; cp++)
+	    for (sustain = 0; slen > 0 && cp[1] == '.'; cp++)
 	    {
 		slen--;
 		sustain++;
@@ -325,13 +326,13 @@ playstring(cp, slen)
 	    break;
 
 	case 'O':
-	    if (cp[1] == 'N' || cp[1] == 'n')
+	    if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n'))
 	    {
 		octprefix = octtrack = FALSE;
 		++cp;
 		slen--;
 	    }
-	    else if (cp[1] == 'L' || cp[1] == 'l')
+	    else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l'))
 	    {
 		octtrack = TRUE;
 		++cp;
@@ -340,14 +341,14 @@ playstring(cp, slen)
 	    else
 	    {
 		GETNUM(cp, octave);
-		if (octave >= sizeof(pitchtab) / OCTAVE_NOTES)
+		if (octave >= NOCTAVES)
 		    octave = DFLT_OCTAVE;
 		octprefix = TRUE;
 	    }
 	    break;
 
 	case '>':
-	    if (octave < sizeof(pitchtab) / OCTAVE_NOTES - 1)
+	    if (octave < NOCTAVES - 1)
 		octave++;
 	    octprefix = TRUE;
 	    break;
@@ -360,7 +361,7 @@ playstring(cp, slen)
 
 	case 'N':
 	    GETNUM(cp, pitch);
-	    for (sustain = 0; cp[1] == '.'; cp++)
+	    for (sustain = 0; slen > 0 && cp[1] == '.'; cp++)
 	    {
 		slen--;
 		sustain++;
@@ -380,7 +381,7 @@ playstring(cp, slen)
 	    GETNUM(cp, timeval);
 	    if (timeval <= 0 || timeval > MIN_VALUE)
 		timeval = value;
-	    for (sustain = 0; cp[1] == '.'; cp++)
+	    for (sustain = 0; slen > 0 && cp[1] == '.'; cp++)
 	    {
 		slen--;
 		sustain++;
@@ -396,19 +397,19 @@ playstring(cp, slen)
 	    break;
 
 	case 'M':
-	    if (cp[1] == 'N' || cp[1] == 'n')
+	    if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n'))
 	    {
 		fill = NORMAL;
 		++cp;
 		slen--;
 	    }
-	    else if (cp[1] == 'L' || cp[1] == 'l')
+	    else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l'))
 	    {
 		fill = LEGATO;
 		++cp;
 		slen--;
 	    }
-	    else if (cp[1] == 'S' || cp[1] == 's')
+	    else if (slen > 0 && (cp[1] == 'S' || cp[1] == 's'))
 	    {
 		fill = STACCATO;
 		++cp;
@@ -506,7 +507,7 @@ spkrwrite(dev, uio, flags)
     struct uio *uio;
     int flags;
 {
-    register unsigned n;
+    register int n;
     char *cp;
     int error;
 #ifdef DEBUG
