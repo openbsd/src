@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.4 2001/01/09 02:47:19 angelos Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.5 2001/02/01 20:14:27 jason Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr) 
@@ -40,7 +40,8 @@ struct etheripstat
     u_int64_t   etherip_obytes;		/* output bytes */
 };
 
-#define ETHERIP_VERSION          0x2
+#define ETHERIP_VERSION		0x02
+#define ETHERIP_VERSION_MASK	0x0f
 
 /*
  * Names for Ether-IP sysctl objects
