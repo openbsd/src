@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/06/03 21:32:56 grr Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/07/06 21:05:10 mickey Exp $
 #	$NetBSD: Makefile,v 1.17 1995/10/24 22:18:34 jtc Exp $
 
 PROG=	gzip
@@ -20,12 +20,11 @@ LDSTATIC= ${STATIC}
 
 MAKEINFO=	makeinfo
 
-MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1 zcat.1
+MLINKS+= gzip.1 gunzip.1 gzip.1 gzcat.1 gzip.1
 MLINKS+= zdiff.1 zcmp.1
 #MLINKS+= gzip.1 uncompress.1
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gunzip
 LINKS+= ${BINDIR}/gzip ${BINDIR}/gzcat
-LINKS+= ${BINDIR}/gzip ${BINDIR}/zcat
 LINKS+=	${BINDIR}/zdiff ${BINDIR}/zcmp
 #LINKS+= ${BINDIR}/gzip ${BINDIR}/uncompress
 
