@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.1 2003/07/10 16:06:07 millert Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.2 2003/07/14 17:43:52 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.1 2003/07/10 16:06:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.2 2003/07/14 17:43:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -126,7 +126,7 @@ int cline[3];		/* # of the last-read line in each file (0-2) */
  */
 int last[4];
 int eflag;
-int oflag;      /* indicates whether to mark overlaps (-E or -X)*/
+int oflag;		/* indicates whether to mark overlaps (-E or -X)*/
 int debug  = 0;
 char f1mark[40], f3mark[40];	/* markers for -E and -X */
 
@@ -152,23 +152,23 @@ main(int argc, char **argv)
 {
 	int ch, i, m, n;
 
-        eflag = 0;
+	eflag = 0;
 	oflag = 0;
 	while ((ch = getopt(argc, argv, "EeXx3")) != -1) {
 		switch (ch) {
-                case 'E':
-                        eflag = 3;
-                        oflag = 1;
-                        break;
+		case 'E':
+			eflag = 3;
+			oflag = 1;
+			break;
 		case 'e':
 			eflag = 3;
 			break;
-                case 'X':
-                        oflag = eflag = 1;
-                        break;
+		case 'X':
+			oflag = eflag = 1;
+			break;
 		case 'x':
 			eflag = 1;
-                        break;
+			break;
 		case '3':
 			eflag = 2;
 			break;
@@ -180,12 +180,12 @@ main(int argc, char **argv)
 	if (argc < 5)
 		usage();
 
-        if (oflag) { 
-                (void)snprintf(f1mark, sizeof(f1mark), "<<<<<<< %s",
+	if (oflag) {
+		(void)snprintf(f1mark, sizeof(f1mark), "<<<<<<< %s",
 		    argc >= 6 ? argv[5] : argv[2]);
-                (void)snprintf(f3mark, sizeof(f3mark), ">>>>>>> %s",
+		(void)snprintf(f3mark, sizeof(f3mark), ">>>>>>> %s",
 		    argc >= 7 ? argv[6] : argv[4]);
-        }
+	}
 
 	m = readin(argv[0], d13);
 	n = readin(argv[1], d23);
@@ -364,7 +364,7 @@ merge(int m1, int m2)
 		 * Overlapping changes from file 1 and 2; extend changes
 		 * appropriately to make them coincide.
 		 */
-		 if (d1->new.from < d2->new.from) {
+		if (d1->new.from < d2->new.from) {
 			d2->old.from -= d2->new.from-d1->new.from;
 			d2->new.from = d1->new.from;
 		} else if (d2->new.from < d1->new.from) {
@@ -497,7 +497,7 @@ repos(int nchar)
 {
 	int i;
 
-	for (i = 0; i < 2; i++) 
+	for (i = 0; i < 2; i++)
 		(void)fseek(fp[i], (long)-nchar, 1);
 }
 
@@ -516,8 +516,8 @@ edit(struct diff *diff, int dup, int j)
 	if (((dup + 1) & eflag) == 0)
 		return (j);
 	j++;
-        overlap[j] = !dup;
-        if (!dup)
+	overlap[j] = !dup;
+	if (!dup)
 		overlapcnt++;
 	de[j].old.from = diff->old.from;
 	de[j].old.to = diff->old.to;
@@ -534,10 +534,10 @@ edscript(int n)
 	char block[BUFSIZ];
 
 	for (n = n; n > 0; n--) {
-                if (!oflag || !overlap[n]) 
-                        prange(&de[n].old);
-                else
-                        printf("%da\n=======\n", de[n].old.to -1);
+		if (!oflag || !overlap[n])
+			prange(&de[n].old);
+		else
+			printf("%da\n=======\n", de[n].old.to -1);
 		(void)fseek(fp[2], (long)de[n].new.from, 0);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
 			j = k > BUFSIZ ? BUFSIZ : k;
@@ -545,14 +545,14 @@ edscript(int n)
 				trouble();
 			(void)fwrite(block, 1, j, stdout);
 		}
-                if (!oflag || !overlap[n]) 
-                        printf(".\n");
-                else {
-                        printf("%s\n.\n", f3mark);
-                        printf("%da\n%s\n.\n", de[n].old.from - 1, f1mark);
-                }
+		if (!oflag || !overlap[n])
+			printf(".\n");
+		else {
+			printf("%s\n.\n", f3mark);
+			printf("%da\n%s\n.\n", de[n].old.from - 1, f1mark);
+		}
 	}
-        exit(overlapcnt);
+	exit(overlapcnt);
 }
 
 __dead void
