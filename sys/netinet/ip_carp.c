@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.56 2004/05/29 08:44:21 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.57 2004/05/30 23:03:34 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -655,7 +655,9 @@ carp_clone_destroy(struct ifnet *ifp)
 	struct carp_softc *sc = ifp->if_softc;
 	struct carp_if *cif;
 	struct ip_moptions *imo = &sc->sc_imo;
+#ifdef INET6
 	struct ip6_moptions *im6o = &sc->sc_im6o;
+#endif
 
 	timeout_del(&sc->sc_ad_tmo);
 	timeout_del(&sc->sc_md_tmo);
@@ -672,6 +674,7 @@ carp_clone_destroy(struct ifnet *ifp)
 			imo->imo_multicast_ifp = NULL;
 
 			/* Clear IPv6 multicast */
+#ifdef INET6
 			while (!LIST_EMPTY(&im6o->im6o_memberships)) {
 				struct in6_multi_mship *imm =
 				    LIST_FIRST(&im6o->im6o_memberships);
@@ -679,6 +682,7 @@ carp_clone_destroy(struct ifnet *ifp)
 				LIST_REMOVE(imm, i6mm_chain);
 				in6_leavegroup(imm);
 			}
+#endif
 
 			sc->sc_ifp->if_carp = NULL;
 			FREE(cif, M_IFADDR);
