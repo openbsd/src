@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.14 1997/11/14 00:23:54 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.15 1998/02/15 21:20:02 niklas Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.14 1997/11/14 00:23:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.15 1998/02/15 21:20:02 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,8 @@ struct child {
 	int status;
 	struct child *link;
 };
-static struct child *child;
-static struct child *findchild __P((int));
+static struct child *child, *child_freelist = NULL;
+static struct child *findchild __P((int, int));
 static void delchild __P((struct child *));
 static int file_pid __P((FILE *));
 static int handle_spool_locks __P((int));
@@ -311,8 +311,9 @@ wait_command(pid)
 }
 
 static struct child *
-findchild(pid)
+findchild(pid, dont_alloc)
 	int pid;
+	int dont_alloc;
 {
 	struct child **cpp;
 
@@ -320,7 +321,13 @@ findchild(pid)
 	     cpp = &(*cpp)->link)
 			;
 	if (*cpp == NULL) {
-		*cpp = (struct child *)malloc(sizeof(struct child));
+		if (dont_alloc)
+			return(NULL);
+		if (child_freelist) {
+			*cpp = child_freelist;
+			child_freelist = (*cpp)->link;
+		} else
+			*cpp = (struct child *)malloc(sizeof(struct child));
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;
 		(*cpp)->link = NULL;
@@ -337,7 +344,8 @@ delchild(cp)
 	for (cpp = &child; *cpp != cp; cpp = &(*cpp)->link)
 		;
 	*cpp = cp->link;
-	(void)free(cp);
+	cp->link = child_freelist;
+	child_freelist = cp;
 }
 
 void
@@ -351,7 +359,9 @@ sigchild(signo)
 
 	while ((pid =
 	    waitpid((pid_t)-1, &status, WNOHANG)) > 0) {
-		cp = findchild(pid);
+		cp = findchild(pid, 1);
+		if (!cp)
+			continue;
 		if (cp->free)
 			delchild(cp);
 		else {
@@ -371,7 +381,7 @@ int
 wait_child(pid)
 	int pid;
 {
-	struct child *cp = findchild(pid);
+	struct child *cp = findchild(pid, 0);
 	sigset_t nset, oset;
 
 	sigemptyset(&nset);
@@ -393,7 +403,7 @@ void
 free_child(pid)
 	int pid;
 {
-	struct child *cp = findchild(pid);
+	struct child *cp = findchild(pid, 0);
 	sigset_t nset, oset;
 
 	sigemptyset(&nset);
