@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.12 2003/09/04 03:42:02 avsm Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.13 2004/01/15 17:51:40 miod Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
@@ -247,6 +247,7 @@ process_write_fpregs(p, regs)
 int
 process_sstep(p, sstep)
 	struct proc *p;
+	int sstep;
 {
 	struct trapframe *tf = process_frame(p);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.21 2003/10/21 18:58:49 jmc Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.22 2004/01/15 17:51:42 miod Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1290,6 +1290,8 @@ int
 ncr53c9x_reselect(sc, message, tagtype, tagid)
 	struct ncr53c9x_softc *sc;
 	int message;
+	int tagtype;
+	int tagid;
 {
 	u_char selid, target, lun;
 	struct ncr53c9x_ecb *ecb = NULL;

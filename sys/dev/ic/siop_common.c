@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.18 2003/10/27 03:07:39 mickey Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.19 2004/01/15 17:51:42 miod Exp $ */
 /*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
 
 /*
@@ -674,6 +674,7 @@ void
 siop_wdtr_msg(siop_cmd, offset, wide)
 	struct siop_common_cmd *siop_cmd;
 	int offset;
+	int wide;
 {
 	siop_cmd->siop_tables->msg_out[offset + 0] = MSG_EXTENDED;
 	siop_cmd->siop_tables->msg_out[offset + 1] = MSG_EXT_WDTR_LEN;

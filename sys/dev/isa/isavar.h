@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.46 2003/12/12 22:56:46 hshoexer Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.47 2004/01/15 17:51:42 miod Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -442,6 +442,7 @@ isapnp_write_reg(sc, r, v)
 static __inline u_char
 isapnp_read_reg(sc, r)
 	struct isapnp_softc *sc;
+	int r;
 {
 	ISAPNP_WRITE_ADDR(sc, r);
 	return ISAPNP_READ_DATA(sc);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.10 2003/10/17 08:14:09 grange Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.11 2004/01/15 17:51:42 miod Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -225,6 +225,7 @@ wdc_isa_dma_setup(sc)
 static int
 wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 	void *v;
+	int channel, drive;
 	void *databuf;
 	size_t datalen;
 	int read;
