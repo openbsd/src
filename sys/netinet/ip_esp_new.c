@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.10 1997/11/04 09:11:11 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.11 1997/11/15 00:07:08 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -441,7 +441,11 @@ esp_new_zeroize(struct tdb *tdbp)
     if (encdebug)
       printf("esp_new_zeroize(): freeing memory\n");
 #endif ENCDEBUG
-    FREE(tdbp->tdb_xdata, M_XDATA);
+    if (tdbp->tdb_xdata)
+    {
+      	FREE(tdbp->tdb_xdata, M_XDATA);
+	tdbp->tdb_xdata = NULL;
+    }
     return 0;
 }
 
