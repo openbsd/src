@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.19 1998/01/10 02:22:56 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.20 1998/03/12 08:13:48 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ THESETS="$ALLSETS $MDSETS"
 
 if [ "`df /`" = "`df /mnt`" ]; then
 	# Good {morning,afternoon,evening,night}.
+	echo ==================================================
 	md_welcome_banner
 	echo -n "Proceed with installation? [n] "
 else
@@ -157,7 +158,8 @@ partition or "done" when you are finished.
 __get_filesystems_1
 
 		if [ "${DISK}" = "${ROOTDISK}" ]; then
-			echo	"The following will be used for the root filesystem and swap:"
+			echo
+			echo	"The following partitions will be used for the root filesystem and swap:"
 			echo	"	${ROOTDISK}a	/"
 			echo	"	${ROOTDISK}b	swap"
 
@@ -190,12 +192,15 @@ __get_filesystems_1
 
 			# Get the mount point from the user
 			while : ; do
-				echo -n "Mount point for ${DISK}${_pp} (size=${_ps}k) [$_mp]? "
+				echo -n "Mount point for ${DISK}${_pp} (size=${_ps}k) [$_mp, RET, none, or done]? "
 				getresp "$_mp"
 				case "X${resp}" in
 					X/*)	_mount_points[${_i}]=$resp
 						break ;;
-					Xdone|Xnone|X)	break ;;
+					Xdone|X)
+						break ;;
+					Xnone)	_mount_points[${_i}]=
+						break;;
 					*)	echo "mount point must be an absolute path!";;
 				esac
 			done
@@ -353,11 +358,12 @@ case "$resp" in
 			echo "The host table is as follows:"
 			echo ""
 			cat /tmp/hosts
-			echo ""
-			echo "You may want to edit the host table in the event that"
-			echo "you are doing an NFS installation or an FTP installation"
-			echo "without a name server and want to refer to the server by"
-			echo "name rather than by its numeric ip address."
+		cat << __hosts_table_1
+
+You may want to edit the host table in the event that you are doing an
+NFS installation or an FTP installation without a name server and want
+to refer to the server by name rather than by its numeric ip address.
+__hosts_table_1
 			echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
 			getresp "n"
 			case "$resp" in

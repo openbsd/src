@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.52 1998/03/01 19:49:03 millert Exp $
+#	$OpenBSD: install.sub,v 1.53 1998/03/12 08:13:52 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -301,8 +301,8 @@ __get_reldir_1
 getanotherdisk() {
 	cat << \__getanotherdisk_1
 
-Now you can select another disk to initialize.
-Available disks are:
+Now you can select another disk to initialize.  (Do not re-select a disk
+you have already entered information for).  Available disks are:
 
 __getanotherdisk_1
 	_DKDEVS=`md_get_diskdevs`
@@ -1511,13 +1511,11 @@ install_sets()
 	# Ask the user which media to load the distribution from.
 	cat << \__install_sets_1
 
-It is now time to extract the installation sets onto the hard disk.
-Make sure the sets are either on a local device (i.e. tape, CD-ROM)
-or on a network server.
-
-You will have the chance to repeat this step or to extract sets from
-several places, so you don't have to try to load all the sets in one
-try and can recover from some errors.
+It is now time to extract the installation sets onto the hard disk.  Make sure
+the sets are either on a local device (i.e. tape, CD-ROM) or on a network
+server.  You will have the chance to repeat this step or to extract sets from
+several places, so you don't have to try to load all the sets in one try and
+can recover from some errors.
 
 __install_sets_1
 
