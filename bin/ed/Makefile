@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2003/07/26 20:22:13 jmc Exp $
+#	$OpenBSD: Makefile,v 1.8 2003/07/29 18:36:30 jmc Exp $
 
 PROG=	ed
 CFLAGS+=-DBACKWARDS -DDES
@@ -9,7 +9,7 @@ SRCS=	 buf.c cbc.c glbl.c io.c main.c re.c sub.c undo.c
 
 # These just get installed verbatim
 .if make(install)
-SUBDIR+= USD.doc/09.edtut
+SUBDIR+= USD.doc/09.edtut USD.doc/10.edadv
 .endif
 
 .include <bsd.prog.mk>

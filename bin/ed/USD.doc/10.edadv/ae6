@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae6,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: ae6,v 1.3 2003/07/29 18:36:30 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -353,11 +353,6 @@ m+
 .P2
 does it.
 It says to move line dot to after one line after line dot.
-If you are positioned on the second line,
-.P1
-m--
-.P2
-does the interchange.
 .PP
 As you can see, the
 .UL m

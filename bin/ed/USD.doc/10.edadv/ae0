@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae0,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: ae0,v 1.3 2003/07/29 18:36:30 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -94,6 +94,5 @@ more easily.
 .AE
 .\" .CS 16 0 16 0 0 3
 .if n .ls 2
-.if t .2C
 .nr PS 9
 .nr VS 11

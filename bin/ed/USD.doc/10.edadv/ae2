@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae2,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: ae2,v 1.3 2003/07/29 18:36:30 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -91,17 +91,11 @@ which gives slightly more information than
 In particular,
 .UL l
 makes visible characters that are normally invisible,
-such as tabs and backspaces.
-If you list a line that contains some of these,
+such as tabs.
+If you list a line that contains tabs,
 .UL l
 will print each tab as
-.UL \z\(mi>
-and each backspace as
-.UL \z\(mi< .\(dg
-.FS
-\(dg These composite characters are created by overstriking a minus
-and a > or <, so they only appear as < or > on display terminals.
-.FE
+.UL \*et.
 This makes it much easier to correct the sort of typing mistake
 that inserts extra spaces adjacent to tabs,
 or inserts a backspace followed by a space.
@@ -719,35 +713,6 @@ The way around this, if it matters, is to specify a pattern like
 .P2
 which says `an x, a space, then as many more spaces as possible, then a y',
 in other words, one or more spaces.
-.PP
-The other startling behavior of `*' is again related to the fact
-that zero is a legitimate number of occurrences of something
-followed by a star. The command
-.P1
-s/x*/y/g
-.P2
-when applied to the line
-.P1
-abcdef
-.P2
-produces
-.P1
-yaybycydyeyfy
-.P2
-which is almost certainly not what was intended.
-The reason for this behavior is that zero is a legal number
-of matches,
-and there are no x's at the beginning of the line
-(so that gets converted into a `y'),
-nor between the `a' and the `b'
-(so that gets converted into a `y'), nor ...
-and so on.
-Make sure you really want zero matches;
-if not, in this case write
-.P1
-s/xx*/y/g
-.P2
-`xx*' is one or more x's.
 .SH
 The Brackets `[ ]'
 .PP

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ae3,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: ae3,v 1.3 2003/07/29 18:36:30 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -98,11 +98,6 @@ prints from three lines before where you are now
 (at line dot)
 to three lines after,
 thus giving you a bit of context.
-By the way, the `+' can be omitted:
-.P1
-\&\*.-3,\*.3p
-.P2
-is absolutely identical in meaning.
 .PP
 Another area in which you can save typing effort
 in specifying lines is to use `\-' and `+' as line numbers
@@ -491,14 +486,3 @@ if you are reading or writing a file or making substitutions or deleting lines, 
 in some clean but unpredictable state in the middle
 (which is why it is not usually wise to stop them).
 Dot may or may not be changed.
-.PP
-Printing is more clear cut.
-Dot is not changed until the printing is done.
-Thus if you print until you see an interesting line,
-then hit delete, you are
-.ul
-not
-sitting on that line or even near it.
-Dot is left where it was when the
-.UL p
-command was started.
