@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2001/11/28 15:34:16 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.51 2001/11/29 16:43:42 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1282,8 +1282,6 @@ pmap_enter_c_pv(pm, va, pa, prot, flags, cacheable, pv)
 	return (0);
 }
 
-#define KERN_MAP_PV TRUE
-
 void
 pmap_kenter_cache(va, pa, prot, cacheable)
 	vaddr_t va;
@@ -1292,7 +1290,7 @@ pmap_kenter_cache(va, pa, prot, cacheable)
 	int cacheable;
 {
 	pmap_enter_c_pv(pmap_kernel(), va, pa, prot, PMAP_WIRED, cacheable,
-		KERN_MAP_PV);
+		FALSE);
 }
 void
 pmap_kenter_pa(va, pa, prot)
@@ -1301,7 +1299,7 @@ pmap_kenter_pa(va, pa, prot)
 	vm_prot_t prot;
 {
 	pmap_enter_c_pv(pmap_kernel(), va, pa, prot, PMAP_WIRED,
-		PMAP_CACHE_DEFAULT, KERN_MAP_PV);
+		PMAP_CACHE_DEFAULT, FALSE);
 }
 
 void pmap_remove_pvl( struct pmap *pm, vm_offset_t va, vm_offset_t endva,
@@ -1312,7 +1310,7 @@ pmap_kremove(va, len)
 	vsize_t len;
 {
 	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove_pvl(pmap_kernel(), va, va + PAGE_SIZE, KERN_MAP_PV);
+		pmap_remove_pvl(pmap_kernel(), va, va + PAGE_SIZE, FALSE);
 	}
 }
 
