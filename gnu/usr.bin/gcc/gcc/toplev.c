@@ -804,7 +804,11 @@ int flag_gnu_linker = 1;
 #endif
 
 /* Nonzero means put zero initialized data in the bss section.  */
+#ifdef OPENBSD_NATIVE
+int flag_zero_initialized_in_bss = 0;
+#else
 int flag_zero_initialized_in_bss = 1;
+#endif
 
 /* Enable SSA.  */
 int flag_ssa = 0;
