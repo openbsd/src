@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 1997/01/07 05:37:32 tholo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 1997/07/28 23:46:10 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1555,11 +1555,13 @@ pmap_pageable(pmap, sva, eva, pageable)
 	 * If we are making a PT page pageable then all valid
 	 * mappings must be gone from that page.  Hence it should
 	 * be all zeros and there is no need to clean it.
-	 * Assumptions:
-	 *	- we are called with only one page at a time
+	 * Assumption:
 	 *	- PT pages have only one pv_table entry
 	 */
-	if (pmap == pmap_kernel() && pageable && sva + NBPG == eva) {
+	if (pmap != pmap_kernel() || !pageable)
+		return;
+
+	for ( ; sva < eva; sva += NBPG) {
 		register vm_offset_t pa;
 		register pt_entry_t *pte;
 
