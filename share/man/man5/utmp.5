@@ -139,7 +139,8 @@ and appends the user's
 record.
 The same
 .Fa utmp
-record, with an updated time stamp is later appended
+record but with an updated ut_time, empty ut_host,
+and empty ut_name is later appended
 to the file when the user logs out. (See
 .Xr init 8 . )
 The
