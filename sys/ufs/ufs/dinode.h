@@ -1,4 +1,4 @@
-/*	$OpenBSD: dinode.h,v 1.4 1999/11/17 09:17:54 art Exp $	*/
+/*	$OpenBSD: dinode.h,v 1.5 1999/12/02 18:38:17 art Exp $	*/
 /*	$NetBSD: dinode.h,v 1.7 1995/06/15 23:22:48 cgd Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct dinode {
 	ufs_daddr_t	di_db[NDADDR];	/*  40: Direct disk blocks. */
 	ufs_daddr_t	di_ib[NIADDR];	/*  88: Indirect disk blocks. */
 	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
-	u_int32_t	di_blocks;	/* 104: Blocks actually held. */
+	int32_t		di_blocks;	/* 104: Blocks actually held. */
 	int32_t		di_gen;		/* 108: Generation number. */
 	u_int32_t	di_uid;		/* 112: File owner. */
 	u_int32_t	di_gid;		/* 116: File group. */
