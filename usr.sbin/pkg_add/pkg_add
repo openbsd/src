@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.160 2004/12/21 01:43:58 espie Exp $
+# $OpenBSD: pkg_add,v 1.161 2004/12/26 14:57:19 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -485,7 +485,8 @@ sub find_old_lib
 		OpenBSD::SharedLibs::add_package_libs($try);
 		if (check_lib_spec($state->{very_verbose},
 		    $state->{destdir}.$base, $lib, {$try => 1})) {
-			Warn "Found library ", $lib, " in old package $try\n";
+			Warn "Found library ", $lib, " in old package $try\n"
+			    if $state->{verbose};
 			$dependencies->{$try} = 1;
 			return 1;
 		}
@@ -534,7 +535,7 @@ sub lookup_library
 			OpenBSD::SharedLibs::add_package_libs($dep);
 			if (check_lib_spec($state->{very_verbose},
 			    $state->{destdir}.$plist->pkgbase(), $lib, {$dep => 1})) {
-				Warn "Found library ", $lib, " in dependent package $dep\n";
+				Warn "Found library ", $lib, " in dependent package $dep\n" if $state->{verbose};
 				$dependencies->{$dep} = 1;
 				return 1;
 			}
