@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.75 2001/05/16 17:14:36 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.76 2001/05/23 13:15:07 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2615,8 +2615,7 @@ getvnode(fdp, fd, fpp)
 {
 	struct file *fp;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (EINVAL);
