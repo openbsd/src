@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.3 1998/05/11 06:20:35 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.4 1998/06/10 08:46:18 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ int	*semu;			/* undo structure pool */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int semctl __P((int, int, int, union semun));
+int semctl __P((int, int, int, ...));
 int __semctl __P((int, int, int, union semun *));
 int semget __P((key_t, int, int));
 int semop __P((int, struct sembuf *, u_int));

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semctl.2,v 1.4 1997/11/24 02:07:31 deraadt Exp $
+.\"	$OpenBSD: semctl.2,v 1.5 1998/06/10 08:46:20 deraadt Exp $
 .\"	$NetBSD: semctl.2,v 1.2 1997/03/27 08:20:40 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -56,9 +56,9 @@ The operation to be performed is specified in
 .Fa arg
 is a union of the following fields:
 .Bd -literal
-    int     val;            /* value for SETVAL */
-    struct  semid_ds *buf;  /* buffer for IPC_{STAT,SET} */
-    u_short *array;         /* array for GETALL & SETALL */
+	int     val;			/* value for SETVAL */
+	struct  semid_ds *buf;		/* buffer for IPC_{STAT,SET} */
+	u_short *array;			/* array for GETALL & SETALL */
 .Ed
 
 The
@@ -70,11 +70,11 @@ as follows in
 .Aq Pa sys/sem.h :
 .Bd -literal
 struct semid_ds {
-    struct ipc_perm sem_perm;  /* operation permissions */
-    struct  sem *sem_base;     /* semaphore set */
-    u_short sem_nsems;         /* number of sems in set */
-    time_t  sem_otime;         /* last operation time */
-    time_t  sem_ctime;         /* last change time */
+	struct ipc_perm sem_perm;	/* operation permissions */
+	struct  sem *sem_base;		/* semaphore set */
+	u_short sem_nsems;		/* number of sems in set */
+	time_t  sem_otime;		/* last operation time */
+	time_t  sem_ctime;		/* last change time */
 };
 .Ed
 
@@ -91,13 +91,13 @@ structure is defined in
 and looks like this:
 .Bd -literal
 struct ipc_perm {
-    ushort cuid; /* creator user id */
-    ushort cgid; /* creator group id */
-    ushort uid;	 /* user id */
-    ushort gid;	 /* group id */
-    ushort mode; /* r/w permission (see chmod(2)) */
-    ushort seq;	 /* sequence # (to generate unique msg/sem/shm id) */
-    key_t key;	 /* user specified msg/sem/shm key */
+	ushort cuid;		/* creator user id */
+	ushort cgid;		/* creator group id */
+	ushort uid;		/* user id */
+	ushort gid;		/* group id */
+	ushort mode;		/* r/w permission (see chmod(2)) */
+	ushort seq;		/* sequence # (to generate unique msg/sem/shm id) */
+	key_t key;		/* user specified msg/sem/shm key */
 };
 .Ed
 
