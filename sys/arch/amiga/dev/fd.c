@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.11 1997/01/16 09:24:03 niklas Exp $	*/
+/*	$OpenBSD: fd.c,v 1.12 1997/08/08 21:46:35 niklas Exp $	*/
 /*	$NetBSD: fd.c,v 1.36 1996/12/23 09:09:59 veego Exp $	*/
 
 /*
@@ -705,7 +705,8 @@ fdstrategy(bp)
 		bp->b_error = EIO;
 		goto bad;
 	}
-	if (bounds_check_with_label(bp, lp, sc->wlabel) <= 0)
+	if (bounds_check_with_label(bp, lp, sc->dkdev.dk_cpulabel, sc->wlabel)
+	    <= 0)
 		goto done;
 
 	/*

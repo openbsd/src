@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.26 1997/07/06 18:10:17 niklas Exp $	*/
+/*	$OpenBSD: wd.c,v 1.27 1997/08/08 21:47:03 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -104,7 +104,7 @@ bdev_decl(wd);
 
 void	wdfinish	__P((struct wd_softc *, struct buf *));
 int	wdsetctlr	__P((struct wd_link *));
-#if !defined(amiga)
+#ifdef DKBAD
 static void bad144intern __P((struct wd_softc *));
 #endif
 int	wdlock		__P((struct wd_link *));
@@ -252,6 +252,7 @@ wdstrategy(bp)
 	 */
 	if (WDPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
+	    wdd->sc_dk.dk_cpulabel,
 	    (d_link->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
     
@@ -572,7 +573,7 @@ wdgetdisklabel(dev, wd)
 
 	if (d_link->sc_state > GEOMETRY)
 		d_link->sc_state = GEOMETRY;
-#if !defined(amiga)
+#ifdef DKBAD
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
 #endif
@@ -613,7 +614,7 @@ wdioctl(dev, xfer, addr, flag, p)
 {
 	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
 	struct wd_link *d_link = wd->d_link;
-#ifndef amiga
+#ifdef DKBAD
 	int error;
 #endif
 
@@ -623,11 +624,11 @@ wdioctl(dev, xfer, addr, flag, p)
 		return EIO;
 
 	switch (xfer) {
-#if !defined(amiga)
+#ifdef DKBAD
 	case DIOCSBAD:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		wd->sc_dk.dk_cpulabel->bad = *(struct dkbad *)addr;
+		DKBAD(wd->sc_dk.dk_cpulabel) = *(struct dkbad *)addr;
 		wd->sc_dk.dk_label->d_flags |= D_BADSECT;
 		bad144intern(wd);
 		return 0;
@@ -643,7 +644,6 @@ wdioctl(dev, xfer, addr, flag, p)
 		    &wd->sc_dk.dk_label->d_partitions[WDPART(dev)];
 		return 0;
 	
-#ifndef amiga
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
@@ -704,7 +704,6 @@ wdioctl(dev, xfer, addr, flag, p)
 		fop->df_reg[1] = wdc->sc_error;
 		return error;
 	}
-#endif
 #endif
 	
 	default:
@@ -908,7 +907,7 @@ wddump(dev, blkno, va, size)
 }
 #endif /* __BDEVSW_DUMP_NEW_TYPE */
 
-#if !defined(amiga)
+#ifdef DKBAD
 /*
  * Internalize the bad sector table.
  */
@@ -916,7 +915,7 @@ void
 bad144intern(wd)
 	struct wd_softc *wd;
 {
-	struct dkbad *bt = &wd->sc_dk.dk_cpulabel->bad;
+	struct dkbad *bt = &DKBAD(wd->sc_dk.dk_cpulabel);
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	struct wd_link *d_link = wd->d_link;
 	int i = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.19 1997/01/04 08:50:25 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.20 1997/08/08 21:47:02 niklas Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -466,6 +466,7 @@ mcdstrategy(bp)
 	 */
 	if (MCDPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, sc->sc_dk.dk_label,
+	    sc->sc_dk.dk_cpulabel,
 	    (sc->flags & (MCDF_WLABEL|MCDF_LABELLING)) != 0) <= 0)
 		goto done;
 	

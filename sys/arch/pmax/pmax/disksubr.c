@@ -306,9 +306,10 @@ dk_establish(dk, dev)
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct buf *bp;
 	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
 	int wlabel;
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))

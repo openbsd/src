@@ -198,7 +198,11 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
+bounds_check_with_label(bp, lp, osdep, wlabel)
+	struct buf *bp;
+	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
+	int wlabel;
 {
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
 	int maxsz = p->p_size,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.5 1997/05/29 00:04:58 niklas Exp $ */
+/*	$OpenBSD: hp.c,v 1.6 1997/08/08 21:46:56 niklas Exp $ */
 /*	$NetBSD: hp.c,v 1.12 1996/10/13 03:34:58 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -178,8 +178,8 @@ hpstrategy(bp)
 	unit = DISKUNIT(bp->b_dev);
 	sc = hp_cd.cd_devs[unit];
 
-	if (bounds_check_with_label(bp, sc->sc_disk.dk_label, sc->sc_wlabel)
-	    <= 0)
+	if (bounds_check_with_label(bp, sc->sc_disk.dk_label,
+	    sc->sc_disk.dk_cpulabel, sc->sc_wlabel) <= 0)
 		goto done;
 	s = splbio();
 

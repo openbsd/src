@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.24 1997/05/08 00:05:51 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.25 1997/08/08 21:46:43 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ readdisklabel(dev, strat, lp, osdep)
 	struct cpu_disklabel *osdep;
 {
 	struct dos_partition *dp = osdep->dosparts, *dp2;
-	struct dkbad *bdp = &osdep->bad;
+	struct dkbad *bdp = &DKBAD(osdep);
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL, *cp;
@@ -462,9 +462,10 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct buf *bp;
 	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
 	int wlabel;
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))

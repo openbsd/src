@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.4 1996/05/26 18:36:16 briggs Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.5 1997/08/08 21:46:45 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1996/05/05 06:18:22 briggs Exp $	*/
 
 /*
@@ -620,9 +620,10 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct buf *bp;
 	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
 	int wlabel;
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.24 1997/07/26 21:07:36 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.25 1997/08/08 21:47:06 niklas Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*
@@ -473,6 +473,7 @@ sdstrategy(bp)
 	 */
 	if (SDPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, sd->sc_dk.dk_label,
+	    sd->sc_dk.dk_cpulabel,
 	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
 		goto done;
 

@@ -508,7 +508,7 @@ struct buf	*bp;
 		bp->b_error = EIO;
 		goto bad;
 	}
-	if (bounds_check_with_label(bp, lp, 0) <= 0)
+	if (bounds_check_with_label(bp, lp, sc->dkdev.dk_cpulabel, 0) <= 0)
 		goto done;
 
 	if (bp->b_bcount == 0)

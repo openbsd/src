@@ -394,6 +394,7 @@ wdstrategy(bp)
 	 */
 	if (WDPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
+	    wd->sc_dk.dk_cpulabel,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
     
@@ -1606,7 +1607,7 @@ void
 bad144intern(wd)
 	struct wd_softc *wd;
 {
-	struct dkbad *bt = &wd->sc_dk.dk_cpulabel->bad;
+	struct dkbad *bt = &DKBAD(wd->sc_dk.dk_cpulabel);
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	int i = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.26 1997/07/07 19:48:46 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.27 1997/08/08 21:47:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -490,6 +490,7 @@ acdstrategy(bp)
 	 */
 	if (CDPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, acd->sc_dk.dk_label,
+	    acd->sc_dk.dk_cpulabel,
 	    (acd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 

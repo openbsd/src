@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 1997/04/16 11:56:22 downsj Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 1997/08/08 21:46:42 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -211,9 +211,10 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct buf *bp;
 	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
 	int wlabel;
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))

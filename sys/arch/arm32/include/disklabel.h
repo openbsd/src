@@ -97,6 +97,8 @@ struct cpu_disklabel {
 	struct dkbad bad;
 };
 
+#define DKBAD(x) ((x)->bad)
+
 struct filecore_bootblock {
 	u_char  padding0[0x1c0];
 	u_char  log2secsize;
@@ -123,11 +125,6 @@ struct filecore_bootblock {
 	u_char partition_cyl_high;
 	u_char checksum;
 };
-
-#ifdef _KERNEL
-struct disklabel;
-int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-#endif /* _KERNEL */
 
 #endif /* _ARM32_DISKLABEL_H_ */
 

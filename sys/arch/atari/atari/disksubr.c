@@ -74,10 +74,11 @@ dk_establish()
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
-struct buf		*bp;
-struct disklabel	*lp;
-int			wlabel;
+bounds_check_with_label(bp, lp, osdep, wlabel)
+	struct buf		*bp;
+	struct disklabel	*lp;
+	struct cpu_disklabel	*osdep;
+	int			wlabel;
 {
 	struct partition	*pp;
 	u_int32_t		maxsz, sz;

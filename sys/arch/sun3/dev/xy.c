@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.9 1997/01/16 04:03:58 kstailey Exp $	*/
+/*	$OpenBSD: xy.c,v 1.10 1997/08/08 21:46:54 niklas Exp $	*/
 /* $NetBSD: xy.c,v 1.11 1996/10/13 03:47:40 christos Exp $ */
 
 /*
@@ -999,7 +999,7 @@ xystrategy(bp)
 	 * completion. */
 
 	if (bounds_check_with_label(bp, xy->sc_dk.dk_label,
-		(xy->flags & XY_WLABEL) != 0) <= 0)
+	    xy->sc_dk.dk_cpulabel, (xy->flags & XY_WLABEL) != 0) <= 0)
 		goto done;
 
 	/*

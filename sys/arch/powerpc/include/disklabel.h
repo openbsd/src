@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.3 1997/05/05 16:43:58 rahnds Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.4 1997/08/08 21:46:49 niklas Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1 1996/09/30 16:34:22 ws Exp $	*/
 
 /*-
@@ -93,10 +93,5 @@ struct cpu_disklabel {
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
-
-#ifdef	_KERNEL
-struct disklabel;
-int bounds_check_with_label __P((struct buf *bp, struct disklabel *lp, int wlabel));
-#endif	/* _KERNEL */
 
 #endif	/* _MACHINE_DISKLABEL_H_ */

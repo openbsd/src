@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.15 1997/06/09 09:41:08 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.16 1997/08/08 21:47:01 niklas Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -391,7 +391,8 @@ vndstrategy(bp)
 		return;
 	}
 	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, vnd->sc_dk.dk_label, 1) == 0) {
+	    bounds_check_with_label(bp, vnd->sc_dk.dk_label,
+	    vnd->sc_dk.dk_cpulabel, 1) == 0) {
 		biodone(bp);
 		return;
 	}

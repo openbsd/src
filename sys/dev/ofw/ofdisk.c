@@ -243,7 +243,8 @@ ofdstrategy(bp)
 	OF_io = bp->b_flags & B_READ ? OF_read : OF_write;
 
 	if (DISKPART(bp->b_dev) != RAW_PART) {
-		if (bounds_check_with_label(bp, of->sc_dk.dk_label, 0) <= 0) {
+		if (bounds_check_with_label(bp, of->sc_dk.dk_label,
+		    of->sc_dk.dk_cpulabel, 0) <= 0) {
 			bp->b_resid = bp->b_bcount;
 			goto done;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.23 1997/04/14 04:09:03 downsj Exp $	*/
+/*	$OpenBSD: cd.c,v 1.24 1997/08/08 21:47:05 niklas Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -486,6 +486,7 @@ cdstrategy(bp)
 	 */
 	if (CDPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(bp, cd->sc_dk.dk_label,
+	    cd->sc_dk.dk_cpulabel,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 

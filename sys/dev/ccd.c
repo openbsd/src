@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.16 1997/02/13 23:33:26 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.17 1997/08/08 21:47:01 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -660,8 +660,9 @@ ccdstrategy(bp)
 	 * error, the bounds check will flag that for us.
 	 */
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
-		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
+	if (DISKPART(bp->b_dev) != RAW_PART &&
+	    bounds_check_with_label(bp, lp, cs->sc_dkdev.dk_cpulabel,
+	    wlabel) <= 0)
 			goto done;
 
 	bp->b_resid = bp->b_bcount;

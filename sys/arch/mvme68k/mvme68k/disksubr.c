@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 1997/04/07 11:21:25 deraadt Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.14 1997/08/08 21:46:46 niklas Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -296,9 +296,10 @@ writedisklabel(dev, strat, lp, clp)
 
 
 int
-bounds_check_with_label(bp, lp, wlabel)
+bounds_check_with_label(bp, lp, osdep, wlabel)
 	struct buf *bp;
 	struct disklabel *lp;
+	struct cpu_disklabel *osdep;
 	int wlabel;
 {
 #define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))

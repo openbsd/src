@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.2 1997/05/29 00:05:02 niklas Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.3 1997/08/08 21:46:56 niklas Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.7 1997/01/11 11:20:32 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -382,7 +382,7 @@ rastrategy(bp)
 		}
 	} else
 		if (bounds_check_with_label(bp, ra->ra_disk.dk_label,
-		    ra->ra_wlabel) <= 0) {
+		    ra->ra_disk.dk_cpulabel, ra->ra_wlabel) <= 0) {
 			bp->b_error = ENXIO;
 			goto bad;
 		}
