@@ -1,5 +1,5 @@
-/*	$OpenBSD: sd.c,v 1.11 1997/07/06 08:01:56 downsj Exp $	*/
-/*	$NetBSD: sd.c,v 1.33 1997/06/24 00:44:05 thorpej Exp $	*/
+/*	$OpenBSD: sd.c,v 1.12 1997/07/13 09:48:00 downsj Exp $	*/
+/*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -59,11 +59,6 @@
 #include <hp300/dev/scsireg.h>
 #include <hp300/dev/scsivar.h>
 #include <hp300/dev/sdvar.h>
-
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
 
 #include "opt_useleds.h"
 

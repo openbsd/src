@@ -1,5 +1,5 @@
-/*	$OpenBSD: hd.c,v 1.5 1997/07/06 08:01:52 downsj Exp $	*/
-/*	$NetBSD: rd.c,v 1.32 1997/06/24 00:44:03 thorpej Exp $	*/
+/*	$OpenBSD: hd.c,v 1.6 1997/07/13 09:47:59 downsj Exp $	*/
+/*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -64,11 +64,6 @@
 
 #include <hp300/dev/hdreg.h>
 #include <hp300/dev/hdvar.h>
-
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
 
 #include "opt_useleds.h"
 
