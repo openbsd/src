@@ -4,7 +4,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: courtesan.mc,v 1.9 2002/01/14 03:21:39 millert Exp $')
+VERSIONID(`$OpenBSD: courtesan.mc,v 1.10 2002/09/15 02:23:35 millert Exp $')
 OSTYPE(openbsd)
 dnl
 dnl First, we override some default values
@@ -12,6 +12,11 @@ define(`confTRY_NULL_MX_LIST', `True')dnl
 define(`confSMTP_LOGIN_MSG', `$m Sendmail $v/$Z/courtesan ready at $b')dnl
 define(`confMAX_HOP', `20')dnl
 define(`confMAX_MIME_HEADER_LENGTH', `256/128')dnl
+dnl
+dnl Deliver interactively so we don't end up with lots of messages
+dnl waiting on a procmail lock.
+define(`confDELIVERY_MODE', `interactive')dnl
+define(`confSAFE_QUEUE', `Interactive')dnl
 dnl
 dnl Some broken nameservers will return SERVFAIL (a temporary failure)
 dnl on T_AAAA (IPv6) lookups.
