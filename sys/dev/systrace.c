@@ -275,7 +275,9 @@ systracef_ioctl(fp, cmd, data, p)
 	if (ret)
 		return (ret);
 	
+	systrace_lock();
 	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, curproc);
+	systrace_unlock();
 	if (pid) {
 		strp = systrace_findpid(fst, pid);
 		if (strp == NULL) {
@@ -396,7 +398,9 @@ systracef_close(fp, p)
 	struct str_process *strp;
 	struct str_policy *strpol;
 
+	systrace_lock();
 	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, curproc);
+	systrace_unlock();
 
 	/* Untrace all processes */
 	for (strp = TAILQ_FIRST(&fst->processes); strp;
