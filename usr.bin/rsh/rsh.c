@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.6 1996/07/24 17:31:08 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.7 1996/08/11 08:46:44 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.6 1996/07/24 17:31:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.7 1996/08/11 08:46:44 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,11 @@ static char rcsid[] = "$OpenBSD: rsh.c,v 1.6 1996/07/24 17:31:08 deraadt Exp $";
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#if __STDC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
+#endif
 #include "pathnames.h"
 
 #ifdef KERBEROS
@@ -68,7 +72,8 @@ CREDENTIALS cred;
 Key_schedule schedule;
 int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm;
-extern char *krb_realmofhost();
+
+void warning __P((const char *, ...));
 #endif
 
 /*
@@ -403,15 +408,29 @@ sendsig(signo)
 
 #ifdef KERBEROS
 /* VARARGS */
+void
+#if __STDC__
+warning(const char *fmt, ...)
+#else
 warning(va_alist)
 va_dcl
+#endif
 {
 	va_list ap;
+#if !__STDC__
 	char *fmt;
+#endif
+	char myrealm[REALM_SZ];
 
+	if (krb_get_lrealm(myrealm, 0) != KSUCCESS)
+		return;
 	(void)fprintf(stderr, "rsh: warning, using standard rsh: ");
+#if __STDC__
+	va_start(ap, fmt);
+#else
 	va_start(ap);
 	fmt = va_arg(ap, char *);
+#endif
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, ".\n");
