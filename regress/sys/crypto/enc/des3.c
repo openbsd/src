@@ -1,4 +1,4 @@
-/*      $OpenBSD: des3.c,v 1.3 2002/04/03 18:42:16 fgsch Exp $  */
+/*      $OpenBSD: des3.c,v 1.4 2002/04/03 21:33:41 markus Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -150,6 +150,7 @@ main(int argc, char **argv)
 	unsigned char iv0[8], iv[8], key[24] = "012345670123456701234567";
 	unsigned char b1[SZ], b2[SZ];
 	int allowed, i, fail = 0;
+	u_int32_t rand;
 
 	if (geteuid() == 0) {
 		allowed = getallowsoft();
@@ -158,10 +159,18 @@ main(int argc, char **argv)
 	}
 
 	/* setup data and iv */
-	for (i = 0; i < sizeof(b1);  i+= sizeof(u_int32_t))
-		*(u_int32_t *)(b1 + i) = arc4random();
-	for (i = 0; i < sizeof(iv0); i+= sizeof(u_int32_t))
-		*(u_int32_t *)(iv0 + 1) = arc4random();
+	for (i = 0; i < sizeof(b1); i++ ) {
+		if (i % 4 == 0)
+                        rand = arc4random();
+		b1[i] = rand;
+		rand >>= 8;
+	}
+	for (i = 0; i < sizeof(iv0); i++ ) {
+		if (i % 4 == 0)
+                        rand = arc4random();
+		iv0[i] = rand;
+		rand >>= 8;
+	}
 	memset(b2, 0, sizeof(b2));
 
 	/* keysetup for software */
