@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.8 2004/04/20 05:35:33 henning Exp $ */
+/*	$OpenBSD: tree.c,v 1.9 2004/05/08 06:12:50 henning Exp $ */
 
 /* Routines for manipulating parse trees... */
 
@@ -44,8 +44,6 @@
 
 static time_t tree_evaluate_recurse(int *, unsigned char **, int *,
     struct tree *);
-static time_t do_host_lookup(int *, unsigned char **, int *,
-    struct dns_host_entry *);
 static void do_data_copy(int *, unsigned char **, int *, unsigned char *, int);
 
 pair
@@ -255,10 +253,6 @@ tree_evaluate_recurse(int *bufix, unsigned char **bufp,
 			return t2;
 		return t1;
 
-	case TREE_HOST_LOOKUP:
-		return do_host_lookup(bufix, bufp, bufcount,
-		    tree->data.host_lookup.host);
-
 	case TREE_CONST:
 		do_data_copy(bufix, bufp, bufcount, tree->data.const_val.data,
 		    tree->data.const_val.len);
@@ -277,109 +271,6 @@ tree_evaluate_recurse(int *bufix, unsigned char **bufp,
 		t1 = MAX_TIME;
 		return t1;
 	}
-}
-
-static time_t
-do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
-    struct dns_host_entry *dns)
-{
-	struct hostent	*h;
-	int		 i;
-	int		 new_len;
-
-#ifdef DEBUG_EVAL
-	debug("time: now = %d  dns = %d %d  diff = %d", cur_time, dns->timeout,
-	    cur_time - dns->timeout);
-#endif
-
-	/* If the record hasn't timed out, just copy the data and return. */
-	if (cur_time <= dns->timeout) {
-#ifdef DEBUG_EVAL
-		debug("easy copy: %x %d %x", dns->data, dns->data_len,
-		    dns->data ? *(int *)(dns->data) : 0);
-#endif
-		do_data_copy(bufix, bufp, bufcount, dns->data, dns->data_len);
-		return dns->timeout;
-	}
-#ifdef DEBUG_EVAL
-	debug("Looking up %s", dns->hostname);
-#endif
-
-	/* Otherwise, look it up... */
-	h = gethostbyname(dns->hostname);
-	if (h == NULL) {
-		switch (h_errno) {
-		case HOST_NOT_FOUND:
-			warn("%s: host unknown.", dns->hostname);
-			break;
-		case TRY_AGAIN:
-			warn("%s: temporary name server failure",
-			    dns->hostname);
-			break;
-		case NO_RECOVERY:
-			warn("%s: name server failed", dns->hostname);
-			break;
-		case NO_DATA:
-			warn("%s: no A record associated with address",
-			    dns->hostname);
-		}
-		/* Okay to try again after a minute. */
-		return cur_time + 60;
-	}
-
-#ifdef DEBUG_EVAL
-	debug("Lookup succeeded; first address is %x", h->h_addr_list[0]);
-#endif
-
-	/* Count the number of addresses we got... */
-	for (i = 0; h->h_addr_list[i]; i++)
-		;
-
-	/* Do we need to allocate more memory? */
-	new_len = i * h->h_length;
-	if (dns->buf_len < i) {
-		unsigned char *buf =
-			(unsigned char *)dmalloc(new_len, "do_host_lookup");
-		/* If we didn't get more memory, use what we have. */
-		if (!buf) {
-			new_len = dns->buf_len;
-			if (!dns->buf_len) {
-				dns->timeout = cur_time + 60;
-				return dns->timeout;
-			}
-		} else {
-			if (dns->data)
-				dfree(dns->data, "do_host_lookup");
-			dns->data = buf;
-			dns->buf_len = new_len;
-		}
-	}
-
-	/*
-	 * Addresses are conveniently stored one to the buffer, so we
-	 * have to copy them out one at a time... :'(
-	 */
-	for (i = 0; i < new_len / h->h_length; i++)
-		memcpy(dns->data + h->h_length * i, h->h_addr_list[i],
-		    h->h_length);
-#ifdef DEBUG_EVAL
-	debug("dns->data: %x  h->h_addr_list[0]: %x",
-	    *(int *)(dns->data), h->h_addr_list[0]);
-#endif
-	dns->data_len = new_len;
-
-	/*
-	 * Set the timeout for an hour from now.
-	 * XXX This should really use the time on the DNS reply.
-	 */
-	dns->timeout = cur_time + 3600;
-
-#ifdef DEBUG_EVAL
-	debug("hard copy: %x %d %x", dns->data, dns->data_len,
-	    *(int *)(dns->data));
-#endif
-	do_data_copy(bufix, bufp, bufcount, dns->data, dns->data_len);
-	return dns->timeout;
 }
 
 static void
