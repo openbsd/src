@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.12 1997/11/13 18:35:26 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.13 1997/11/26 09:18:12 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -503,6 +503,8 @@ linux_sys_mmap(p, v, retval)
 
 	SCARG(&cma,addr) = lmap.lm_addr;
 	SCARG(&cma,len) = lmap.lm_len;
+	if (lmap.lm_prot & VM_PROT_WRITE)	/* XXX */
+		lmap.lm_prot |= VM_PROT_READ;
  	SCARG(&cma,prot) = lmap.lm_prot;
 	SCARG(&cma,flags) = flags;
 	SCARG(&cma,fd) = lmap.lm_fd;
