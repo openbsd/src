@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lesskey.1,v 1.3 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: lesskey.1,v 1.4 2003/07/14 09:11:26 jmc Exp $
 .\"
 .\" Copyright (C) 2000  Mark Nudelman
 .\"
@@ -162,7 +162,6 @@ first character of the extra string is used as its exit status.
 .Sh EXAMPLE
 The following input file describes the set of
 default command keys used by less:
-.Pp
 .Bd -literal -offset indent
 #command
 \er	forw-line
@@ -310,7 +309,6 @@ one per line as in the example below.
 .Sh EXAMPLE
 The following input file describes the set of
 default line-editing keys used by less:
-.Pp
 .Bd -literal -offset indent
 #line-edit
 \et	forw-complete
@@ -359,7 +357,6 @@ is simply to have all less configuration information stored in one file.
 .Sh EXAMPLE
 The following input file sets the -i option whenever less is run,
 and specifies the character set to be "latin1":
-.Pp
 .Bd -literal -offset indent
 #env
 LESS = -i
