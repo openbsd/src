@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.24 2003/12/24 19:59:24 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.25 2003/12/24 20:09:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -47,11 +47,6 @@ volatile sig_atomic_t	quit = 0;
 volatile sig_atomic_t	reconfig = 0;
 struct imsgbuf		ibuf_se;
 struct imsgbuf		ibuf_rde;
-int			se_done = 0;
-int			rde_done = 0;
-
-#define QUIT_REQUESTED		1
-#define QUIT_INPROGRESS		2
 
 void
 sighdlr(int sig)
@@ -60,7 +55,7 @@ sighdlr(int sig)
 	case SIGTERM:
 	case SIGINT:
 	case SIGCHLD:
-		quit = QUIT_REQUESTED;
+		quit = 1;
 		break;
 	case SIGHUP:
 		reconfig = 1;
@@ -199,7 +194,7 @@ main(int argc, char *argv[])
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
 	rfd = kroute_init();
 
-	while (quit != QUIT_INPROGRESS || se_done == 0 || rde_done == 0) {
+	while (quit == 0) {
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
 		if (ibuf_se.w.queued)
@@ -251,14 +246,6 @@ main(int argc, char *argv[])
 			LIST_FOREACH(mconf, &mrtconf, list)
 				mrt_state(mconf, IMSG_NONE, &ibuf_rde);
 			reconfig = 0;
-		}
-
-		if (quit == QUIT_REQUESTED) {
-			imsg_compose(&ibuf_se, IMSG_SHUTDOWN_REQUEST, 0,
-			    NULL, 0);
-			imsg_compose(&ibuf_rde, IMSG_SHUTDOWN_REQUEST, 0,
-			    NULL, 0);
-			quit = QUIT_INPROGRESS;
 		}
 
 		if (mrtdump == 1) {
@@ -364,12 +351,6 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_config *conf)
 				fatal("route request not from RDE", 0);
 			if (kroute_delete(rfd, imsg.data))
 				fatal("kroute_delete error", errno);
-			break;
-		case IMSG_SHUTDOWN_DONE:
-			if (idx == PFD_PIPE_ROUTE)
-				rde_done = 1;
-			else
-				se_done = 1;
 			break;
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.34 2003/12/24 13:28:02 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.35 2003/12/24 20:09:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1297,11 +1297,6 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			nconf = NULL;
 			pending_reconf = 0;
 			logit(LOG_INFO, "SE reconfigured");
-			break;
-		case IMSG_SHUTDOWN_REQUEST:
-			session_terminate();
-			imsg_compose(&ibuf_main, IMSG_SHUTDOWN_DONE, 0,
-			    NULL, 0);
 			break;
 		default:
 		}
