@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.225 2001/01/28 16:31:25 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.226 2001/01/28 17:45:19 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -113,6 +113,9 @@ uaudio* at uhub? port ? configuration ?
 aue*	at uhub? port ?			# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?			# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based adapters
+
+# Prolific PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
