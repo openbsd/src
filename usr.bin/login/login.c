@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.47 2002/07/02 01:15:08 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.48 2002/07/02 01:36:19 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.47 2002/07/02 01:15:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.48 2002/07/02 01:36:19 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -100,7 +100,6 @@ static char rcsid[] = "$OpenBSD: login.c,v 1.47 2002/07/02 01:15:08 deraadt Exp 
 #include <login_cap.h>
 #include <netdb.h>
 #include <pwd.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -808,24 +807,30 @@ rootterm(char *ttyn)
 	return ((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
 }
 
-jmp_buf motdinterrupt;
-
 void
 motd(void)
 {
 	char tbuf[8192], *motd;
 	int fd, nchars;
-	sig_t oldint;
+	struct sigaction sa, osa;
 
 	motd = login_getcapstr(lc, "welcome", _PATH_MOTDFILE, _PATH_MOTDFILE);
 
 	if ((fd = open(motd, O_RDONLY, 0)) < 0)
 		return;
-	oldint = signal(SIGINT, sigint);
-	if (setjmp(motdinterrupt) == 0)
-		while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
-			(void)write(fileno(stdout), tbuf, nchars);
-	(void)signal(SIGINT, oldint);
+
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = sigint;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;		/* don't set SA_RESTART */
+	(void)sigaction(SIGINT, &sa, &osa);
+
+	/* read and spew motd until EOF, error, or SIGINT */
+	while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0 &&
+	    write(STDOUT_FILENO, tbuf, nchars) == nchars)
+		;
+
+	(void)sigaction(SIGINT, &osa, NULL);
 	(void)close(fd);
 }
 
@@ -833,7 +838,7 @@ motd(void)
 void
 sigint(int signo)
 {
-	longjmp(motdinterrupt, 1);
+	return;			/* just interupt syscall */
 }
 
 /* ARGSUSED */
