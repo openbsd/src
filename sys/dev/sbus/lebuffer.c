@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.1 2002/05/13 15:12:12 jason Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.2 2002/05/13 18:16:38 jason Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.12 2002/03/11 16:00:57 pk Exp $ */
 
 /*-
@@ -106,8 +106,8 @@ lebufattach(parent, self, aux)
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot, sa->sa_offset, sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+	    sa->sa_slot, sa->sa_offset, sa->sa_size,
+	    BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
@@ -157,7 +157,7 @@ lebufattach(parent, self, aux)
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, &sa);
+		    sbt, sc->sc_dmatag, node, &sa);
 		(void)config_found(&sc->sc_dev, (void *)&sa, lebufprint);
 		sbus_destroy_attach_args(&sa);
 	}

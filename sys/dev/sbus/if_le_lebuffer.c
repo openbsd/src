@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_lebuffer.c,v 1.1 2002/05/13 15:12:12 jason Exp $	*/
+/*	$OpenBSD: if_le_lebuffer.c,v 1.2 2002/05/13 18:16:38 jason Exp $	*/
 /*	$NetBSD: if_le_lebuffer.c,v 1.10 2002/03/11 16:00:56 pk Exp $	*/
 
 /*-
@@ -82,8 +82,8 @@ struct	le_softc {
 };
 
 
-int	lematch_lebuffer __P((struct device *, void *, void *));
-void	leattach_lebuffer __P((struct device *, struct device *, void *));
+int	lematch_lebuffer(struct device *, void *, void *);
+void	leattach_lebuffer(struct device *, struct device *, void *);
 
 struct cfattach le_lebuffer_ca = {
 	sizeof(struct le_softc), lematch_lebuffer, leattach_lebuffer
@@ -91,20 +91,12 @@ struct cfattach le_lebuffer_ca = {
 
 extern struct cfdriver le_cd;
 
-#if defined(_KERNEL_OPT)
-#include "opt_ddb.h"
-#endif
+struct cfdriver lebuffer_cd = {
+	NULL, "lebuffer", DV_DULL
+};
 
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
-static void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
-static u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
+static void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+static u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
 
 static void
 lewrcsr(sc, port, val)
@@ -125,7 +117,7 @@ lewrcsr(sc, port, val)
 	if (CPU_ISSUN4M) {
 		volatile u_int16_t discard;
 		discard = bus_space_read_2(lesc->sc_bustag, lesc->sc_reg,
-					   LEREG1_RDP);
+		    LEREG1_RDP);
 	}
 #endif
 }
@@ -164,17 +156,15 @@ leattach_lebuffer(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct lebuf_softc *lebuf = (struct lebuf_softc *)parent;
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
+	extern void myetheraddr(u_char *);
 
 	lesc->sc_bustag = sa->sa_bustag;
 	lesc->sc_dmatag = sa->sa_dmatag;
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot,
-			 sa->sa_offset,
-			 sa->sa_size,
-			 0, 0, &lesc->sc_reg)) {
-		printf("%s @ lebuffer: cannot map registers\n", self->dv_xname);
+	    sa->sa_slot, sa->sa_offset, sa->sa_size,
+	    0, 0, &lesc->sc_reg)) {
+		printf(": cannot map registers\n", self->dv_xname);
 		return;
 	}
 
@@ -185,7 +175,7 @@ leattach_lebuffer(parent, self, aux)
 
 	/* That old black magic... */
 	sc->sc_conf3 = getpropint(sa->sa_node, "busmaster-regval",
-				  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
+	    LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 
 	/* Assume SBus is grandparent */
 	lesc->sc_sd.sd_reset = (void *)am7990_reset;
@@ -207,9 +197,5 @@ leattach_lebuffer(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
-					 IPL_NET, 0, am7990_intr, sc);
+		    IPL_NET, 0, am7990_intr, sc);
 }
-
-struct cfdriver lebuffer_cd = {
-	NULL, "lebuffer", DV_DULL
-};
