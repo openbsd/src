@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-nfs.c,v 1.5 1996/12/12 16:22:32 bitblt Exp $ (LBL)";
+    "@(#) Header: print-nfs.c,v 1.64 97/06/30 13:51:16 leres Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -55,7 +55,8 @@ struct rtentry;
 
 static void nfs_printfh(const u_int32_t *);
 static void xid_map_enter(const struct rpc_msg *, const struct ip *);
-static int32_t xid_map_find(const struct rpc_msg *, const struct ip *);
+static u_int32_t xid_map_find(const struct rpc_msg *, const struct ip *,
+    u_int32_t *);
 static void interp_reply(const struct rpc_msg *, u_int32_t, u_int);
 
 static int nfserr;		/* true if we error rather than trunc */
@@ -66,7 +67,7 @@ nfsreply_print(register const u_char *bp, u_int length,
 {
 	register const struct rpc_msg *rp;
 	register const struct ip *ip;
-	int32_t proc;
+	u_int32_t proc;
 
 	nfserr = 0;		/* assume no error */
 	rp = (const struct rpc_msg *)bp;
@@ -90,9 +91,8 @@ nfsreply_print(register const u_char *bp, u_int length,
 			     	"ok":"ERR",
 			     length);
 
-	proc = xid_map_find(rp, ip);
-	if (proc >= 0)
-		interp_reply(rp, (u_int32_t)proc, length);
+	if (xid_map_find(rp, ip, &proc))
+		interp_reply(rp, proc, length);
 }
 
 /*
@@ -457,9 +457,9 @@ xid_map_enter(const struct rpc_msg *rp, const struct ip *ip)
 	xmep->proc = ntohl(rp->rm_call.cb_proc);
 }
 
-/* Returns NFSPROC_xxx or -1 on failure */
-static int32_t
-xid_map_find(const struct rpc_msg *rp, const struct ip *ip)
+/* Returns true and sets proc success or false on failure */
+static u_int32_t
+xid_map_find(const struct rpc_msg *rp, const struct ip *ip, u_int32_t *proc)
 {
 	int i;
 	struct xid_map_entry *xmep;
@@ -475,14 +475,15 @@ xid_map_find(const struct rpc_msg *rp, const struct ip *ip)
 		    xmep->server.s_addr == sip) {
 			/* match */
 			xid_map_hint = i;
-			return ((int32_t)xmep->proc);
+			*proc = xmep->proc;
+			return (1);
 		}
 		if (++i >= XIDMAPSIZE)
 			i = 0;
 	} while (i != xid_map_hint);
 
 	/* search failed */
-	return (-1);
+	return (0);
 }
 
 /*
