@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.4 1996/05/16 11:08:54 pefo Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.5 1996/05/17 15:32:58 mickey Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -427,6 +427,25 @@ writelabel(f, boot, lp)
 			}
 			sectoffset = 0;
 		}
+		/*
+		 * If we are not installing a boot program
+		 * we must read the current bootarea so we don't
+		 * clobber the existing boot.
+		 */
+		if (!installboot) {
+			struct disklabel tlab;
+
+			if (lseek(f, sectoffset, SEEK_SET) < 0) {
+				perror("lseek");
+				return (1);
+			}
+			tlab = *lp;
+			if (read(f, boot, tlab.d_bbsize) != tlab.d_bbsize) {
+				perror("read");
+				return (1);
+			}
+			*lp =tlab;
+		}
 #endif
 
 		/*
@@ -665,11 +684,13 @@ makebootarea(boot, dp, f)
 	 * clobber the existing boot.
 	 */
 	if (!installboot) {
+#ifndef i386
 		if (rflag) {
 			if (read(f, boot, BBSIZE) < BBSIZE)
 				err(4, "%s", specname);
 			memset(lp, 0, sizeof *lp);
 		}
+#endif
 		return (lp);
 	}
 	/*
