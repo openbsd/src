@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.92 2003/05/17 20:58:52 millert Exp $
+#	$OpenBSD: Makefile,v 1.93 2003/10/05 00:12:52 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -308,17 +308,17 @@ cross-lib:	${CROSSGCC}
 	(cd ${.CURDIR}/lib; \
 	    for lib in csu libc; do \
 	    (cd $$lib; \
-	        ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		    ${MAKE} depend all install); \
 	    done; \
-	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR="${NO_CROSS} libocurses/PSD.doc" \
 	        ${MAKE} depend all install)
 .if (${KERBEROS5:L} == "yes")
 	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
 	export MACHINE MACHINE_ARCH; \
 	cd kerberosV/lib; \
-	${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} depend all install
 .endif
 
@@ -327,7 +327,7 @@ cross-bin:	${CROSSOBJ}
 	export MACHINE MACHINE_ARCH; \
 	for i in libexec bin sbin usr.bin usr.sbin; do \
 	(cd ${.CURDIR}/$$i; \
-	    ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	        SKIPDIR="${BINUTILS} ${NO_CROSS}" \
 	        ${MAKE} depend all install); \
 	done
