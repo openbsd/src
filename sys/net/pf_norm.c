@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.56 2003/04/05 20:20:58 cedric Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.57 2003/05/11 20:44:03 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -52,6 +52,10 @@
 #include <netinet/tcp_seq.h>
 #include <netinet/udp.h>
 #include <netinet/ip_icmp.h>
+
+#ifdef INET6
+#include <netinet/ip6.h>
+#endif /* INET6 */
 
 #include <net/pfvar.h>
 
@@ -120,6 +124,7 @@ int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 
 /* Globals */
 struct pool		 pf_frent_pl, pf_frag_pl, pf_cache_pl, pf_cent_pl;
+struct pool		 pf_state_scrub_pl;
 int			 pf_nfrents, pf_ncache;
 
 void
@@ -133,6 +138,8 @@ pf_normalize_init(void)
 	    "pffrcache", NULL);
 	pool_init(&pf_cent_pl, sizeof(struct pf_frcache), 0, 0, 0, "pffrcent",
 	    NULL);
+	pool_init(&pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
+	    "pfstscr", NULL);
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
@@ -1083,6 +1090,9 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	if (rewrite)
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 
+	/* Inform the state code to do stateful normalizations */
+	pd->flags |= PFDESC_TCP_NORM;
+
 	return (PF_PASS);
 
  tcp_drop:
@@ -1092,6 +1102,87 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	return (PF_DROP);
 }
 
+int
+pf_normalize_tcp_init(struct mbuf *m, struct pf_pdesc *pd,
+    struct tcphdr *th, struct pf_state_peer *src, struct pf_state_peer *dst)
+{
+	KASSERT(src->scrub == NULL);
+
+	src->scrub = pool_get(&pf_state_scrub_pl, PR_NOWAIT);
+	if (src->scrub == NULL)
+		return (1);
+
+	switch (pd->af) {
+#ifdef INET
+	case AF_INET: {
+		struct ip *h = mtod(m, struct ip *);
+		src->scrub->pfss_ttl = h->ip_ttl;
+		break;
+	}
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6: {
+		struct ip6_hdr *h = mtod(m, struct ip6_hdr *);
+		src->scrub->pfss_ttl = h->ip6_hlim;
+		break;
+	}
+#endif /* INET6 */
+	}
+	return (0);
+}
+
+void
+pf_normalize_tcp_cleanup(struct pf_state *state)
+{
+	if (state->src.scrub)
+		pool_put(&pf_state_scrub_pl, state->src.scrub);
+	if (state->dst.scrub)
+		pool_put(&pf_state_scrub_pl, state->dst.scrub);
+
+	/* Someday... flush the TCP segment reassembly descriptors. */
+}
+
+int
+pf_normalize_tcp_stateful(struct mbuf *m, struct pf_pdesc *pd, u_short *reason,
+    struct tcphdr *th, struct pf_state_peer *src, struct pf_state_peer *dst)
+{
+	KASSERT(src->scrub || dst->scrub);
+
+
+	/*
+	 * Enforce the minimum TTL seen for this connection.  Negate a common
+	 * technique to evade an intrusion detection system and confuse
+	 * firewall state code.
+	 */
+	switch (pd->af) {
+#ifdef INET
+	case AF_INET: {
+		if (src->scrub) {
+			struct ip *h = mtod(m, struct ip *);
+			if (h->ip_ttl > src->scrub->pfss_ttl)
+				src->scrub->pfss_ttl = h->ip_ttl;
+			h->ip_ttl = src->scrub->pfss_ttl;
+		}
+		break;
+	}
+#endif /* INET */
+#ifdef INET6
+	case AF_INET6: {
+		if (dst->scrub) {
+			struct ip6_hdr *h = mtod(m, struct ip6_hdr *);
+			if (h->ip6_hlim > src->scrub->pfss_ttl)
+				src->scrub->pfss_ttl = h->ip6_hlim;
+			h->ip6_hlim = src->scrub->pfss_ttl;
+		}
+		break;
+	}
+#endif /* INET6 */
+	}
+
+
+	/* I have a dream....  TCP segment reassembly.... */
+	return (0);
+}
 int
 pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
     int off)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.142 2003/04/30 12:30:27 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.143 2003/05/11 20:44:03 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -399,6 +399,13 @@ struct pf_rule {
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 
+
+struct pf_state_scrub {
+	u_int8_t	pfss_ttl;	/* stashed TTL			*/
+	u_int8_t	pad;
+	u_int16_t	pad2;
+};
+
 struct pf_state_host {
 	struct pf_addr	addr;
 	u_int16_t	port;
@@ -409,9 +416,10 @@ struct pf_state_peer {
 	u_int32_t	seqlo;		/* Max sequence number sent	*/
 	u_int32_t	seqhi;		/* Max the other end ACKd + win	*/
 	u_int32_t	seqdiff;	/* Sequence number modulator	*/
-	u_int16_t	max_win;
-	u_int8_t	state;
-	u_int8_t	wscale;
+	u_int16_t	max_win;	/* largest window (pre scaling)	*/
+	u_int8_t	state;		/* active state level		*/
+	u_int8_t	wscale;		/* window scaling factor	*/
+	struct pf_state_scrub	*scrub;	/* state is scrubbed		*/
 };
 
 struct pf_state {
@@ -591,6 +599,7 @@ struct pf_pdesc {
 	u_int32_t	 p_len;		/* total length of payload */
 	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
 					 * state code. Easier than tags */
+#define PFDESC_TCP_NORM	0x0001		/* TCP was normalized */
 	sa_family_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 tos;
@@ -977,6 +986,7 @@ extern u_int32_t		 pf_qname_to_qid(char *);
 extern void			 pf_update_anchor_rules(void);
 extern struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 extern struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
+extern struct pool		 pf_state_scrub_pl;
 extern void			 pf_purge_timeout(void *);
 extern void			 pf_purge_expired_states(void);
 extern int			 pf_insert_state(struct pf_state *);
@@ -1009,6 +1019,13 @@ int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);
+int	pf_normalize_tcp(int, struct ifnet *, struct mbuf *, int, int, void *,
+	    struct pf_pdesc *);
+void	pf_normalize_tcp_cleanup(struct pf_state *);
+int	pf_normalize_tcp_init(struct mbuf *, struct pf_pdesc *, struct tcphdr *,
+	    struct pf_state_peer *, struct pf_state_peer *);
+int	pf_normalize_tcp_stateful(struct mbuf *, struct pf_pdesc *, u_short *,
+	    struct tcphdr *, struct pf_state_peer *, struct pf_state_peer *);
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
 void	pfr_initialize(void);

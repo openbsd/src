@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.344 2003/05/11 01:17:15 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.345 2003/05/11 20:44:03 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -166,7 +166,7 @@ int			 pf_test_fragment(struct pf_rule **, int,
 			    struct pf_pdesc *, struct pf_rule **);
 int			 pf_test_state_tcp(struct pf_state **, int,
 			    struct ifnet *, struct mbuf *, int, int,
-			    void *, struct pf_pdesc *);
+			    void *, struct pf_pdesc *, u_short *);
 int			 pf_test_state_udp(struct pf_state **, int,
 			    struct ifnet *, struct mbuf *, int, int,
 			    void *, struct pf_pdesc *);
@@ -195,8 +195,6 @@ int			 pf_map_addr(u_int8_t, struct pf_pool *,
 int			 pf_get_sport(sa_family_t, u_int8_t, struct pf_pool *,
 			    struct pf_addr *, struct pf_addr *, u_int16_t,
 			    struct pf_addr *, u_int16_t*, u_int16_t, u_int16_t);
-int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
-			    int, int, void *, struct pf_pdesc *);
 void			 pf_route(struct mbuf **, struct pf_rule *, int,
 			    struct ifnet *, struct pf_state *);
 void			 pf_route6(struct mbuf **, struct pf_rule *, int,
@@ -480,6 +478,7 @@ pf_purge_expired_states(void)
 				if (--cur->state->anchor.ptr->states <= 0)
 					pf_rm_rule(NULL,
 					    cur->state->anchor.ptr);
+			pf_normalize_tcp_cleanup(cur->state);
 			pool_put(&pf_state_pl, cur->state);
 			pool_put(&pf_tree_pl, cur);
 			pool_put(&pf_tree_pl, peer);
@@ -2126,7 +2125,15 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->expire = s->creation + TIMEOUT(r, PFTM_TCP_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
+
+		if ((pd->flags & PFDESC_TCP_NORM) && pf_normalize_tcp_init(m,
+		    pd, th, &s->src, &s->dst)) {
+			REASON_SET(&reason, PFRES_MEMORY);
+			pool_put(&pf_state_pl, s);
+			return (PF_DROP);
+		}
 		if (pf_insert_state(s)) {
+			pf_normalize_tcp_cleanup(s);
 			REASON_SET(&reason, PFRES_MEMORY);
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
@@ -2878,7 +2885,8 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 int
 pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
-    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd)
+    struct mbuf *m, int ipoff, int off, void *h, struct pf_pdesc *pd,
+    u_short *reason)
 {
 	struct pf_tree_node	 key;
 	struct tcphdr		*th = pd->hdr.tcp;
@@ -2920,6 +2928,14 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	seq = ntohl(th->th_seq);
 	if (src->seqlo == 0) {
 		/* First packet from this end. Set its state */
+
+		if ((pd->flags & PFDESC_TCP_NORM || dst->scrub) &&
+		    src->scrub == NULL) {
+			if (pf_normalize_tcp_init(m, pd, th, src, dst)) {
+				REASON_SET(reason, PFRES_MEMORY);
+				return (PF_DROP);
+			}
+		}
 
 		/* Deferred generation of sequence number modulator */
 		if (dst->seqdiff) {
@@ -3147,6 +3163,11 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW) ?' ' :'6');
 		}
 		return (PF_DROP);
+	}
+
+	if ((pd->flags & PFDESC_TCP_NORM) && (dst->scrub || src->scrub)) {
+		if (pf_normalize_tcp_stateful(m, pd, reason, th, src, dst))
+			return (PF_DROP);
 	}
 
 	/* Any packets which have gotten here are to be passed */
@@ -4391,7 +4412,8 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			break;
-		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd);
+		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd,
+		    &reason);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			log = s->log;
@@ -4622,7 +4644,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		action = pf_normalize_tcp(dir, ifp, m, 0, off, h, &pd);
 		if (action == PF_DROP)
 			break;
-		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd);
+		action = pf_test_state_tcp(&s, dir, ifp, m, 0, off, h, &pd,
+		    &reason);
 		if (action == PF_PASS) {
 			r = s->rule.ptr;
 			log = s->log;
