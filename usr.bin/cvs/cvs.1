@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.10 2004/12/07 23:01:43 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.11 2004/12/07 23:07:42 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -69,7 +69,7 @@ diff -u
 specify that
 .Nm
 should always run in quiet mode and the
-.Sy diff
+.Ic diff
 command should always produce unified output.
 .Pp
 The following options are supported:
@@ -100,7 +100,7 @@ Display version information and exit.
 The following commands are supported by
 .Nm .
 .Bl -tag -width "xxxxxxxxxxxx"
-.It Xo Sy add Op Fl m Ar msg
+.It Xo Ic add Op Fl m Ar msg
 .Ar file Op ...
 .Xc
 .Pp
@@ -108,27 +108,27 @@ Before a file is known to CVS, it must be added to the repository using
 this command.
 Adding a file does not actually publish the contents of the
 file, so you must
-.Sy commit
+.Ic commit
 the first revision in order to let other users see the file with the
-.Sy update
+.Ic update
 or
-.Sy checkout
+.Ic checkout
 commands.
 .Pp
 Although adding a file does not involve a log message, it is possible to
 specify one to include with the action, using the
 .Fl m
 option.
-.It Xo Sy checkout
+.It Xo Ic checkout
 .Op Fl c
 .Op Ar module ...
 .Xc
 .Pp
 The
-.Sy checkout
+.Ic checkout
 command is used to create a local copy of one or more modules present on the
 target CVS repository.
-.It Xo Sy commit
+.It Xo Ic commit
 .Op Fl flnR
 .Op Fl F Ar logfile
 .Op Fl m Ar msg
@@ -137,28 +137,28 @@ target CVS repository.
 .Xc
 .Pp
 The
-.Sy commit
+.Ic commit
 command is used to send local changes back to the server and update the
 repository's information to reflect the changes.
-.It Xo Sy diff Op Fl cilu
+.It Xo Ic diff Op Fl cilu
 .Op Fl D Ar date
 .Op Fl r Ar rev
 .Op Ar file ...
 .Xc
 .Pp
 The
-.Sy diff
+.Ic diff
 command is very similar to the
 .Xr diff 1
 program, except that the differential comparisons that it generates are
 between local or remote revisions of files stored in the CVS repository.
-.It Xo Sy update
+.It Xo Ic update
 .Op Fl ACdP
 .Op Ar file ...
 .Xc
 .Pp
 The
-.Sy update
+.Ic update
 command is used to merge any of the changes that have occured on the remote
 repository into the local one where the command was run.
 .Pp
@@ -174,7 +174,7 @@ The
 flag causes
 .Nm
 to prune any directories that have become empty as a result of the update.
-.It Sy version
+.It Ic version
 Causes
 .Nm
 to print its version information.
