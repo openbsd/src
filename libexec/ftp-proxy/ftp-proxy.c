@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.17 2001/10/10 15:32:39 beck Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.18 2001/12/14 18:12:41 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -889,15 +889,18 @@ do_server_reply(struct csiob *server, struct csiob *client)
 
 		tailptr = strchr((char *)server->line_buffer, '(');
 		if (tailptr == NULL) {
-			syslog(LOG_NOTICE, "malformed 227 reply");
-			exit(EX_DATAERR);
+			tailptr = strrchr((char *)server->line_buffer, ' ');
+			if (tailptr == NULL) {
+				syslog(LOG_NOTICE, "malformed 227 reply");
+				exit(EX_DATAERR);
+			}
 		}
+		tailptr++; /* skip past space or ( */ 
 
 		byte_number = 0;
 		values[0] = 0;
 
-
-		i = sscanf(tailptr, "(%u,%u,%u,%u,%u,%u)", &values[0],
+		i = sscanf(tailptr, "%u,%u,%u,%u,%u,%u", &values[0],
 		    &values[1], &values[2], &values[3], &values[4],
 		    &values[5]);
 		if (i != 6) {
