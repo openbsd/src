@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.21 2004/09/23 17:25:03 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.22 2004/09/28 19:21:58 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -125,7 +125,6 @@ struct cfdriver clock_cd = {
 /* XXX fix comment to match value */
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
-int timerok;
 
 static long tick_increment;
 int schedintr(void *);
@@ -613,7 +612,6 @@ timerattach(parent, self, aux)
 	       (u_long)level14.ih_number);
 
 	printf("\n");
-	timerok = 1;
 }
 
 void
