@@ -314,9 +314,10 @@ htpasswd /usr/local/apache/passwd/passwords sungo
     that the web server itself can read the file. For example, if
     your server is configured to run as user <tt>nobody</tt> and
     group <tt>nogroup</tt>, then you should set permissions on the
-    file so that only that user can read the file:</p>
+    file so that only the webserver can read the file and only
+    root can write to it:</p>
 <pre>
-chown nobody.nogroup /usr/local/apache/passwd/passwords
+chown root.nogroup /usr/local/apache/passwd/passwords
 chmod 640 /usr/local/apache/passwd/passwords
 </pre>
 

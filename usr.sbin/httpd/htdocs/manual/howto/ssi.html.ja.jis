@@ -7,7 +7,7 @@
     <title>Apache チュートリアル: Server Side Includes 入門</title>
 
   </head>
-  <!-- English revision: 1.9 -->
+  <!-- English revision: 1.11 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
 
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
@@ -157,7 +157,12 @@
 </pre>
 
     <p>この指定は、ファイルを SSI ディレクティブで解析させることを許可する
-    ということを Apache に伝えます。</p>
+    ということを Apache に伝えます。
+    ほとんどの設定ではお互いを上書きできる、複数の
+    <a href="../mod/core.html#options">Options</a> があることに
+    注意してください。おそらく、設定が最後に評価されることを
+    保証されるために、SSI を使用したいディレクトリに <code>Options</code>
+    ディレクティブを適用する必要があるでしょう。</p>
 
     <p>全てのファイルが SSI ディレクティブで解析されるというわけではありません。
     どのファイルが解析されるかを Apache に伝える必要があります。
@@ -320,7 +325,7 @@
 
     <p><code>timefmt</code>
     書式についてのより詳細については、お好みの検索サイトに行き、
-    <code>ctime</code> で検索してみてください。文法は同じです。</p>
+    <code>strftime</code> で検索してみてください。文法は同じです。</p>
     <hr />
 
     <h2><a id="includingastandardfooter"

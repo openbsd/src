@@ -43,6 +43,7 @@
 
     <ul>
       <li><a href="#header">Header</a></li>
+      <li><a href="#errorheader">ErrorHeader</a></li>
     </ul>
     <hr />
 
@@ -61,10 +62,14 @@
      <a href="directive-dict.html#Status"
     rel="Help"><strong>Status:</strong></a> Extension<br />
      <a href="directive-dict.html#Module"
-    rel="Help"><strong>Module:</strong></a> mod_header 
+    rel="Help"><strong>Module:</strong></a> mod_headers 
 
     <p>This directive can replace, merge or remove HTTP response
-    headers. The action it performs is determined by the first
+    headers during 1xx and 2xx series replies. For 3xx, 4xx and 5xx
+    use the ErrorHeader directive.
+    </p>
+     <p>
+     The action it performs is determined by the first
     argument. This can be one of the following values:</p>
 
     <ul>
@@ -132,6 +137,32 @@ Header unset Author
     added just before the response is sent cannot be unset or
     overridden. This includes headers such as "Date" and
     "Server".</p>
+
+    <h2><a id="errorheader" name="errorheader">ErrorHeader</a> directive</h2>
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> ErrorHeader set|append|add
+    <em>header</em> <em>value</em><br />
+     <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> ErrorHeader unset
+    <em>header</em><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config, virtual
+    host, access.conf, .htaccess<br />
+     <a href="directive-dict.html#Override"
+    rel="Help"><strong>Override:</strong></a> FileInfo<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> Extension<br />
+     <a href="directive-dict.html#Module"
+    rel="Help"><strong>Module:</strong></a> mod_headers 
+
+    <p>This directive can replace, merge or remove HTTP response
+    headers during 3xx, 4xx and 5xx replies. For normal replies
+    use the Header directive.
+    </p>
+    <p>This directive is identical to the <a href="#header">Header</a> 
+    directive in all other respects. Consult this directive for
+    more information on the syntax.
+    </P>
 
     <p>    <hr />
 

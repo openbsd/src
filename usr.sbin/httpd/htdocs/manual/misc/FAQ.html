@@ -320,6 +320,10 @@
           messages periodically, when I did not restart the
           server?</a></li>
 
+          <li><a href="#modulemagic">Why am I getting &quot;module
+          <em>module-name</em> is not compatible with this version of
+          Apache&quot; messages in my error log?</a></li>
+
         </ol>
       </li>
       
@@ -418,6 +422,11 @@
          <li><a href="#options">Why do my Options directives not have
          the desired effect?</a></li>
 
+         <li><a href="#serverheader">How can I change the information
+         that Apache returns about itself in the headers?</a></li>
+
+         <li><a href="#proxyscan">Why do I see requests for other sites
+         appearing in my log files?</a></li>
 
         </ol>
       </li>
@@ -1891,10 +1900,10 @@
           can safely ignore these error messages as they do not affect
           Apache.  ApacheWeek has an <a
           href="http://www.apacheweek.com/features/codered">article</a>
-          with more information.</p>
+          with more information.</p><hr />
      </li>
 
-    <li<a id="restart" name="restart"><b>Why am I getting server restart
+    <li><a id="restart" name="restart"><b>Why am I getting server restart
     messages periodically, when I did not restart the server?</b></a>
 
           <p>Problem: You are noticing restart messages in your error log,
@@ -1909,7 +1918,26 @@
           <p>Check your cron jobs to see when/if your server logs are being
           rotated. Compare the time of rotation to the error menage time.
           If they are the same, you can somewhat safely assume that the 
-          restart is due to your server logs being rotated.</p>
+          restart is due to your server logs being rotated.</p><hr />
+     </li>
+
+     <li><a id="modulemagic" name="modulemagic"><b>Why am I getting
+          &quot;module <em>module-name</em> is not compatible with this version
+          of Apache&quot; messages in my error log?</b></a>
+      
+          <p>Module Magic Number (MMN) is a constant defined in Apache
+          source that is associated with binary compatibility of
+          modules. It is changed when internal Apache structures,
+          function calls and other significant parts of API change in
+          such a way that binary compatiblity cannot be guaranteed any
+          more. On MMN change, all third party modules have to be at
+          least recompiled, sometimes even slightly changed in order
+          to work with the new version of Apache.</p>
+
+          <p>If you're getting the above error messages, contact the
+          vendor of the module for the new binary, or compile it if
+          you have access to the source code.</p><hr />
+     </li>
 
     </ol>
     
@@ -2520,9 +2548,25 @@ NameVirtualHost *<br />
          <p>To turn on automatic directory indexing, find the 
          <a href="../mod/core.html#options">Options</a> directive that
          applies to the directory and add the <code>Indexes</code>
-         keyword.  To turn off automatic directory indexing, remove
+         keyword. For example:</p>
+
+         <blockquote><code>
+         &lt;Directory /path/to/directory&gt;<br />
+         &nbsp;&nbsp;&nbsp;Options +Indexes<br />
+         &lt;/Directory&gt;
+         </code></blockquote>
+         
+         <p>To turn off automatic directory indexing, remove
          the <code>Indexes</code> keyword from the appropriate 
-         <code>Options</code> line.</p>
+         <code>Options</code> line. To turn off directory listing
+         for a particular subdirectory, you can use 
+         <code>Options -Indexes</code>. For example:</p>
+
+         <blockquote><code>
+         &lt;Directory /path/to/directory&gt;<br />
+         &nbsp;&nbsp;&nbsp;Options -Indexes<br />
+         &lt;/Directory&gt;
+         </code></blockquote>
 
        <hr /></li>
 
@@ -2560,6 +2604,132 @@ Options Includes ExecCGI<br />
          <code>&lt;Directory&gt;</code> section.</p>
 
        <hr /></li>
+
+
+       <li><a id="serverheader" name="servername"><strong>How can I change
+       the information that Apache returns about itself in the
+       headers?</strong></a>
+
+    <p>When a client connects to Apache, part of the information returned in
+    the headers is the name "Apache" Additional information that can be sent
+    is the version number, such as "1.3.26", the operating system, and a
+    list of non-standard modules you have installed.</p>
+
+    <p>For example:</p>
+
+<blockquote><code>
+Server: Apache/1.3.26 (Unix) mod_perl/1.26
+</code></blockquote>
+
+    <p>Frequently, people want to remove this information, under the mistaken
+    understanding that this will make the system more secure. This is
+    probably not the case, as the same exploits will likely be attempted
+    regardless of the header information you provide.</p>
+
+    <p>There are, however, two answers to this question: the correct answer,
+    and the answer that you are probably looking for.</p>
+
+    <p>The correct answer to this question is that you should use the
+    ServerTokens directive to alter the quantity of information which is
+    passed in the headers. Setting this directive to <code>Prod</code> will
+    pass the least possible amount of information:</p>
+
+<blockquote><code>
+Server: Apache
+</code></blockquote>
+
+    <p>The answer you are probably looking for is how to make Apache lie 
+    about what what it is, ie send something like:</p>
+
+<blockquote><code>
+Server: Bob's Happy HTTPd Server
+</code></blockquote>
+
+    <p>In order to do this, you will need to modify the Apache source code and
+    rebuild Apache. This is not advised, as it is almost certain not to
+    provide you with the added security you think that you are gaining. The
+    exact method of doing this is left as an exercise for the reader, as we
+    are not keen on helping you do something that is intrinsically a bad
+    idea.</p>
+
+    <hr /></li>
+
+         <li><a id="proxyscan" name="proxyscan"><strong>Why do I see requests
+         for other sites appearing in my log files?</strong></a>
+
+         <p>A an access_log entry showing this situation could look
+         like this:</p> 
+
+         <blockquote><code> 63.251.56.142 - -
+         [25/Jul/2002:12:48:04 -0700] "GET http://www.yahoo.com/
+         HTTP/1.0" 200 1456 </code></blockquote>
+
+         <p>The question is: why did a request for
+         <code>www.yahoo.com</code> come to your server instead of
+         Yahoo's server?  And why does the response have a status 
+         code of 200 (success)?</p>
+
+         <p>This is usually the result of malicious clients trying to
+         exploit open proxy servers to access a website without
+         revealing their true location.  If you find entries like this
+         in your log, the first thing to do is to make sure you have
+         properly configured your server not to proxy for unknown
+         clients.  If you don't need to provide a proxy server at all,
+         you should simply assure that the <a
+         href="../mod/mod_proxy.html#proxyrequests">ProxyRequests</a>
+         directive is <strong>not</strong> set <code>on</code>.
+         If you do need to run a proxy server, then you must ensure
+         that you <a href="../mod/mod_proxy.html#access">secure your
+         server properly</a> so that only authorized clients can use
+         it.</p>
+
+         <p>If your server is configured properly, then the attempt to
+         proxy through your server will fail.  If you see a status
+         code of <code>404</code> (file not found) in the log, then
+         you know that the request failed.  If you see a status code
+         of <code>200</code> (success), that does not necessarily mean
+         that the attempt to proxy succeeded.  RFC2616 section 5.1.2
+         mandates that Apache must accept requests with absolute URLs
+         in the request-URI, even for non-proxy requests.  Since
+         Apache has no way to know all the different names that your
+         server may be known under, it cannot simply reject hostnames
+         it does not recognize.  Instead, it will serve requests for
+         unknown sites locally by stripping off the hostname and using
+         the default server or virtual host.  Therefore you can
+         compare the size of the file (1456 in the above example) to
+         the size of the corresponding file in your default server.
+         If they are the same, then the proxy attempt failed, since a
+         document from your server was delivered, not a document from
+         <code>www.yahoo.com</code>.</p>
+
+         <p>If you wish to prevent this type of request entirely, then
+         you need to let Apache know what hostnames to accept and what
+         hostnames to reject.  You do this by configuring name-virtual
+         hosts, where the first listed host is the default host that
+         will catch and reject unknown hostnames.  For example:</p>
+
+<blockquote>
+<pre>
+NameVirtualHost *
+
+&lt;VirtualHost *&gt;
+  ServerName default.only
+  &lt;Location /&gt;
+    Order allow,deny
+    Deny from all
+  &lt;/Location&gt;
+&lt;/VirtualHost&gt;
+
+&lt;VirtualHost *&gt;
+  ServerName realhost1.example.com
+  ServerAlias alias1.example.com alias2.example.com
+  DocumentRoot /path/to/site1
+&lt;/VirtualHost&gt;
+
+...
+</pre>
+</blockquote>
+    <hr /></li>
 
     </ol>
     

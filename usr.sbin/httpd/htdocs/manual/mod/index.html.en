@@ -101,6 +101,10 @@
       <dd>Support for Netscape-like cookies. Replaced in Apache 1.2
       by mod_usertrack</dd>
 
+      <dt><a href="mod_define.html">mod_define</a></dt>
+
+      <dd>Variable Definition for Arbitrary Directives</dd>
+
       <dt><a href="mod_digest.html">mod_digest</a> Apache 1.1 and
       up</dt>
 
@@ -214,6 +218,11 @@
 
       <dt><a href="mod_speling.html">mod_speling</a> Apache 1.3 and
       up</dt>
+
+      <dt><a href="mod_ssl/index.html">mod_ssl</a> Apache 1.3 with mod_ssl
+      applied</dt>
+      
+      <dd>Apache SSL interface to OpenSSL</dd>
 
       <dd>Automatically correct minor typos in URLs</dd>
 

@@ -254,6 +254,11 @@
 
       <dd>Experimental file caching, mapping files into memory to
       improve performace</dd>
+
+      <dt><a href="mod_ssl/index.html">mod_ssl</a> Apache 1.3 with mod_ssl
+      applied</dt>
+      
+      <dd>Apache SSL interface to OpenSSL</dd>
     </dl>
 
     <h2>Development</h2>

@@ -142,6 +142,8 @@
 
       <li><a href="#port">Port</a></li>
 
+      <li><a href="#protocolreqcheck">ProtocolReqCheck</a></li>
+
       <li><a href="#require">Require</a></li>
 
       <li><a href="#resourceconfig">ResourceConfig</a></li>
@@ -176,6 +178,8 @@
       <li><a href="#servertokens">ServerTokens</a></li>
 
       <li><a href="#servertype">ServerType</a></li>
+
+      <li><a href="#shmemuidisuser">ShmemUIDisUser</a></li>
 
       <li><a href="#startservers">StartServers</a></li>
 
@@ -269,7 +273,7 @@
 
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> AccessConfig
-    <em>file-path</em>|<em>directory-path</em><br />
+    <em>file-path</em>|<em>directory-path</em>|<em>wildcard-path</em><br />
      <a href="directive-dict.html#Default"
     rel="Help"><strong>Default:</strong></a> <code>AccessConfig
     conf/access.conf</code><br />
@@ -308,9 +312,16 @@
 
     <p>If <code>AccessConfig</code> points to a directory, rather than a
     file, Apache will read all files in that directory, and any
-    subdirectory, and parse those as configuration files. Note that
-    <emph>any</emph> file in the specified directory will be loaded as a
-    configuration file, so make sure that you don't have stray files in
+    subdirectory, and parse those as configuration files. 
+    </p>
+    <p>Alternatively you can use a wildcard to limit the scope; i.e
+    to only *.conf files.
+    </p>
+    <p>Note that by default <emph>any</emph> file in the specified 
+    directory will be loaded as a configuration file.
+    <p>
+    </p>
+    So make sure that you don't have stray files in
     this directory by mistake, such as temporary files created by your
     editor, for example.</p>
 
@@ -391,6 +402,13 @@
     <blockquote>
     <code>AddDefaultCharset utf-8</code>
     </blockquote>
+
+    <p><b>Note:</b> This will <b>not</b> have any effect on the
+    Content-Type and character set for default Apache-generated
+    status pages (such as '404 Not Found' or '301 Moved Permanently')
+    because those have an <i>actual</i> character set (that in which the
+    hard-coded page content is written) and don't need to have a default
+    applied.</p>
 
     <hr />
 
@@ -555,7 +573,7 @@
 
     <blockquote><code>AuthName "Top Secret"</code></blockquote>
 
-    <p>The string provided for the <code>AuthRealm</code> is what will
+    <p>The string provided for the <code>AuthName</code> is what will
     appear in the password dialog provided by most browsers.</p>
 
     <p><strong>See also:</strong> <a
@@ -1372,7 +1390,7 @@
     subdirectory's includes '<code>FileETag&nbsp;-INode</code>',
     the setting for that subdirectory (which will be inherited by
     any sub-subdirectories that don't override it) will be equivalent to
-    '<code>FileETag&nbspMTime&nbsp;Size</code>'.
+    '<code>FileETag&nbsp;MTime&nbsp;Size</code>'.
     </p>
     <hr />
 
@@ -1594,8 +1612,7 @@
     <p>This directive enables RFC1413-compliant logging of the
     remote user name for each connection, where the client machine
     runs identd or something similar. This information is logged in
-    the access log. <em>Boolean</em> is either <code>on</code> or
-    <code>off</code>.</p>
+    the access log.</p>
 
     <p>The information should not be trusted in any way except for
     rudimentary usage tracking.</p>
@@ -1712,7 +1729,7 @@
 
     <h2><a id="include" name="include">Include directive</a></h2>
     <strong>Syntax:</strong> Include
-    <em>file-path</em>|<em>directory-path</em><br />
+    <em>file-path</em>|<em>directory-path</em>|<em>wildcard-path</em><br />
      <a href="directive-dict.html#Context"
     rel="Help"><strong>Context:</strong></a> server config<br />
      <a href="directive-dict.html#Status"
@@ -1732,9 +1749,10 @@
     <code>Include</code> points to a directory, rather than a file,
     Apache will read all files in that directory, and any
     subdirectory, and parse those as configuration files.</p>
-
+    <p>By using a wildcard this can be further limited to, say,
+    just the '*.conf' files.
+    </p>
     <p>Examples:</p>
-
     <blockquote>
     <code>Include /usr/local/apache/conf/ssl.conf<br />
     Include /usr/local/apache/conf/vhosts/
@@ -2160,7 +2178,7 @@ Syntax OK
      <strong>See Also:</strong> <a href="../bind.html">Setting
     which addresses and ports Apache uses</a><br />
      <strong>See Also:</strong> <a
-    href="http://www.apache.org/info/known_bugs.html#listenbug">Known
+    href="http://httpd.apache.org/info/known_bugs.html#listenbug">Known
     Bugs</a></p>
     <hr />
 
@@ -2908,6 +2926,34 @@ Syntax OK
     major security attack.</p>
     <hr />
 
+    <h2><a id="protocolreqcheck" name="protocolreqcheck">ProtocolReqCheck
+    directive</a></h2>
+
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> ProtocolReqCheck
+    on|off<br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a> <code>ProtocolReqCheck
+    on</code><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config
+    <br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> core<br />
+    <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a>
+    ProtocolReqCheck is only available in Apache 1.3.27 and later.
+
+    <p>This directive enables strict checking of the Protocol field
+    in the Request line. Versions of Apache prior to 1.3.26 would
+    silently accept bogus Protocols (such as <code>HTTP-1.1</code>)
+    and assume <code>HTTP/1.0</code>. Instead, now the Protocol field
+    must be valid. If the pre-1.3.26 behavior is desired or required,
+    it can be enabled via setting <code>ProtocolReqCheck off</code>.
+    </p>
+
+    <hr />
+
     <h2><a id="require" name="require">Require directive</a></h2>
 
     <a href="directive-dict.html#Syntax"
@@ -2977,7 +3023,7 @@ Syntax OK
 
     <a href="directive-dict.html#Syntax"
     rel="Help"><strong>Syntax:</strong></a> ResourceConfig
-    <em>file-path</em>|<em>directory-path</em><br />
+    <em>file-path</em>|<em>directory-path</em>|<em>wildcard-path</em><br />
      <a href="directive-dict.html#Default"
     rel="Help"><strong>Default:</strong></a> <code>ResourceConfig
     conf/srm.conf</code><br />
@@ -3015,11 +3061,19 @@ Syntax OK
 
     <p>If <code>ResourceConfig</code> points to a directory, rather than
     a file, Apache will read all files in that directory, and any
-    subdirectory, and parse those as configuration files. Note that
-    <emph>any</emph> file in the specified directory will be loaded as a
-    configuration file, so make sure that you don't have any stray files
-    in this directory by mistake, such as temporary files created by
-    your editor, for example.</p>
+    subdirectory, and parse those as configuration files. 
+    </p>
+    <p>Alternatively you can use a wildcard to limit the scope; i.e
+    to only *.conf files.
+    </p>
+    <p>Note that by default <emph>any</emph> file in the specified 
+    directory will be loaded as a configuration file.
+    <p>
+    </p>
+    So make sure that you don't have stray files in
+    this directory by mistake, such as temporary files created by your
+    editor, for example.</p>
+
 
     <p>See also <a href="#accessconfig">AccessConfig</a>.</p>
     <hr />
@@ -3548,6 +3602,39 @@ Syntax OK
     only option.</p>
     <hr />
 
+    <h2><a id="shmemuidisuser" name="shmemuidisuser">ShmemUIDisUser
+    directive</a></h2>
+
+    <a href="directive-dict.html#Syntax"
+    rel="Help"><strong>Syntax:</strong></a> ShmemUIDisUser
+    <em>on|off</em><br />
+     <a href="directive-dict.html#Default"
+    rel="Help"><strong>Default:</strong></a> <code>ShmemUIDisUser
+    off</code><br />
+     <a href="directive-dict.html#Context"
+    rel="Help"><strong>Context:</strong></a> server config<br />
+     <a href="directive-dict.html#Status"
+    rel="Help"><strong>Status:</strong></a> core<br />
+    <a href="directive-dict.html#Compatibility"
+    rel="Help"><strong>Compatibility:</strong></a>
+    ShmemUIDisUser directive is only available in Apache 1.3.27 and later.
+
+    <p>The ShmemUIDisUser directive controls whether Apache will change
+    the <code>uid</code> and <code>gid</code> ownership of System V shared memory
+    based scoreboards to the server settings of <a href="#user">User</a> and
+    <a href="#group">Group</a>. Releases of Apache up to 1.3.26 would do
+    this by default. Since the child processes are already attached to the
+    shared memory segment, this is not required for normal usage of Apache and
+    so to prevent possible abuse, Apache will no longer do that. The old
+    behavior may be required for special cases, however, which can be implemented
+    by setting this directive to <code>on</code>.</p>
+
+    <p>This directive has no effect on non-System V based scoreboards, such as
+       <code>mmap</code>.
+    </p>
+    
+    <hr />
+
     <h2><a id="startservers" name="startservers">StartServers
     directive</a></h2>
 
@@ -3684,20 +3771,27 @@ Syntax OK
     to the same server. With <code>UseCanonicalName on</code> (and
     in all versions prior to 1.3) Apache will use the <a
     href="#servername">ServerName</a> and <a href="#port">Port</a>
-    directives to construct a canonical name for the server. This
+    directives to construct the canonical name for the server. This
     name is used in all self-referential URLs, and for the values
     of <code>SERVER_NAME</code> and <code>SERVER_PORT</code> in
     CGIs.</p>
 
+    <p>For example, if <a href="#servername">ServerName</a> is set to
+    <code>www.example.com</code> and <a href="#port">Port</a> is set to
+    <code>9090</code>, then the <em>canonical name</em> of the server is
+    <code>www.example.com:9090</code>. In the event that
+    <code>Port</code> has its default value of <code>80</code>, the
+    <code>:80</code> is ommitted from the <em>canonical name</em>.
+
     <p>With <code>UseCanonicalName off</code> Apache will form
     self-referential URLs using the hostname and port supplied by
     the client if any are supplied (otherwise it will use the
-    canonical name). These values are the same that are used to
-    implement <a href="../vhosts/name-based.html">name based
-    virtual hosts</a>, and are available with the same clients. The
-    CGI variables <code>SERVER_NAME</code> and
-    <code>SERVER_PORT</code> will be constructed from the client
-    supplied values as well.</p>
+    canonical name, as defined above). These values are the same
+    that are used to implement <a 
+    href="../vhosts/name-based.html">name based virtual hosts</a>,
+    and are available with the same clients. The CGI variables
+    <code>SERVER_NAME</code> and <code>SERVER_PORT</code> will be
+    constructed from the client supplied values as well.</p>
 
     <p>An example where this may be useful is on an intranet server
     where you have users connecting to the machine using short
@@ -3707,10 +3801,12 @@ Syntax OK
     slash</em> then Apache will redirect them to
     <code>http://www.domain.com/splat/</code>. If you have
     authentication enabled, this will cause the user to have to
-    reauthenticate twice (once for <code>www</code> and once again
-    for <code>www.domain.com</code>). But if
-    <code>UseCanonicalName</code> is set off, then Apache will
-    redirect to <code>http://www/splat/</code>.</p>
+    authenticate twice (once for <code>www</code> and once again
+    for <code>www.domain.com</code> -- see <a 
+    href="../misc/FAQ.html#prompted-twice">the FAQ on this subject for
+    more information</a>). But if <code>UseCanonicalName</code>
+    is set off, then Apache will redirect to 
+    <code>http://www/splat/</code>.</p>
 
     <p>There is a third option, <code>UseCanonicalName DNS</code>,
     which is intended for use with mass IP-based virtual hosting to

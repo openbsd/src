@@ -7,7 +7,7 @@
     <title>Module mod_actions</title>
 
   </head>
-  <!-- English revision: 1.18 -->
+  <!-- English revision: 1.19 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -30,7 +30,7 @@
     mod_actions.c<br />
      <a href="module-dict.html#moduleidentifier"
     rel="help"><strong>モジュール識別子:</strong></a>
-    actions_module<br />
+    action_module<br />
      <a href="module-dict.html#compatibility"
     rel="help"><strong>互換性:</strong></a>
     Apache 1.1 以降でのみ使用可能。</p>

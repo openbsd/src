@@ -7,7 +7,7 @@
     <title>Apache ディレクティブ</title>
 
   </head>
-  <!-- English revision: 1.74 -->
+  <!-- English revision: 1.75 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -397,6 +397,8 @@
       <li><a href="core.html#pidfile">PidFile</a></li>
 
       <li><a href="core.html#port">Port</a></li>
+
+      <li><a href="core.html#protocolreqcheck">ProtocolReqCheck</a></li>
 
       <li><a href="mod_proxy.html#proxyblock">ProxyBlock</a></li>
 

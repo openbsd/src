@@ -17,11 +17,12 @@
     <hr />
 
     <center>
-      [ <a href="#configuration_files">Configuration
-      Files</a>&nbsp; | <a href="#whats_available">What's
-      Available</a>&nbsp; | <a href="#cgi">CGI Scripts</a>&nbsp; |
-      <a href="#options">Options</a>&nbsp; | <a
-      href="#porting_notes">Porting Notes</a>&nbsp; ]
+      [ <a href="#configuration_files">Configuration&nbsp;Files</a>
+      | <a href="#whats_available">What's&nbsp;Available</a>
+      | <a href="#cgi">CGI&nbsp;Scripts</a>
+      | <a href="#options">Options</a>
+      | <a href="#syslog">Syslog</a>
+      | <a href="#porting_notes">Porting&nbsp;Notes</a>&nbsp;]
     </center>
     <hr />
 
@@ -207,6 +208,9 @@
 
       <li>rotatelogs.c <em>(requires PUT10; if PJ27214 implemented be sure to apply PJ28367)&nbsp;</em></li>
 
+      <li>syslog <em>(requires PUT13; see <a href="install-tpf.html#syslog">install</a>
+         and <a href="#syslog">usage</a> instructions)&nbsp;</em></li>
+
       <li>util.c&nbsp;</li>
 
       <li>util_date.c&nbsp;</li>
@@ -224,6 +228,8 @@
       <li>htdigest.c&nbsp;</li>
 
       <li>lib/expat-lite&nbsp;</li>
+
+      <li>lib/sdbm&nbsp;</li>
 
       <li>mod_auth_digest.c&nbsp;</li>
 
@@ -350,65 +356,106 @@
     <a id="options" name="options"></a> 
 
     <center>
-      <h2>How to Use Apache Command Line Options</h2>
+      <h2>How to Use Apache's "Dash" Options</h2>
     </center>
 
-    <p>You cannot run Apache from the command line on TPF. However
-    you can use those Apache command line options which don't
-    actually start the server. This requires PJ27277 which shipped
-    on PUT13.</p>
+    <h3>Overview of Apache's "dash" options:</h3>
 
-    <h3>Supported Apache options:</h3>
+    <p>Apache can be invoked with various options, such as "-f".
+       Some of these options display information about the server or perform syntax checks
+       but they don't actually start the server.
+       These "information only" options are useful with TPF's ZFILE command line feature:
+       -h, -l, -L, -S, -t, -T, -v, and -V.
+       </p>
+
+    <p>Another option, -X, is used when actually running the server.
+       It is passed to Apache through the ZINET XPARM field since ZINET is the only way to start the server on TPF.</p>
+
+    <p>A third group of options apply to both the informational displays (ZFILE) and
+       running the server (ZINET XPARM): -d, -D and -f.</p>
+
+    <p>The rest of Apache's options are either not applicable or are not supported on TPF.</p>
+
+    <p>Using dash options requires PJ27277 which shipped on PUT13.</p>
+
+    <h3>Table of supported Apache options</h3>
 
     <div style="margin-left: 2em">
-      <p>-d <i>directory</i><br />
-       Specify an alternate initial ServerRoot <i>directory</i>.
-      Default is <tt>/usr/local/apache</tt>.</p>
+    <table border="1" cellpadding="5">
+    <tr><td><b>Option&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b>
+        </td><td><b>ZFILE</b></td>
+        <td><b>ZINET</b>
+        </td><td><b>Description</b></td></tr>
 
-      <p>-f <i>file</i><br />
-       Specify an alternate server configuration <i>file</i>.
-      Default is <tt>conf/httpd.conf</tt>.</p>
+    <tr><td valign="top"><b>-d</b> <i>path</i></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">ZINET</td>
+        <td valign="top">Set the initial value for the ServerRoot directive.</td></tr>
 
-      <p>-h<br />
-       List a short summary of available command line options.
-      (Note that this outputs all options, not just those supported
-      on TPF.)</p>
+    <tr><td valign="top"><b>-D</b> <i>define</i></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">ZINET</td>
+        <td valign="top">Set a configuration parameter which can be used with &lt;IfDefine&gt;...&lt;/IfDefine&gt; sections in the configuration file to conditionally skip or process commands.</td></tr>
 
-      <p>-l<br />
-       List modules compiled into the server.</p>
+    <tr><td valign="top"><b>-f</b> <i>filename</i></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">ZINET</td>
+        <td valign="top">Use an alternate configuration file instead of the default conf/httpd.conf file.</td></tr>
 
-      <p>-L<br />
-       List available configuration directives. (Note that this
-      outputs all configuration directives, not just those
-      supported on TPF.)</p>
+    <tr><td valign="top"><b>-h</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">List a short summary of available command line options then exit.
+            Note that this outputs all options, not just those supported on TPF.</td></tr>
 
-      <p>-S<br />
-       Show the settings as parsed from the configuration file.
-      Currently only shows the virtualhost settings.</p>
+    <tr><td valign="top"><b>-l</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">List modules compiled into the server then exit.</td></tr>
 
-      <p>-t<br />
-       Run syntax tests for configuration files (with document root
-      checks)</p>
+    <tr><td valign="top"><b>-L</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">List available configuration directives then exit. Note that this outputs all configuration directives, not just those supported on TPF.</td></tr>
 
-      <p>-T<br />
-       Run syntax tests for configuration files (without document
-      root checks)</p>
+    <tr><td valign="top"><b>-S</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">Show the settings as parsed from the configuration file then exit.  Currently Apache only shows the virtual host settings.</td></tr>
 
-      <p>-v<br />
-       Show the version number.</p>
+    <tr><td valign="top"><b>-t</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">Run syntax tests for configuration files with document root checks then exit.</td></tr>
 
-      <p>-V<br />
-       Show the version number and various compile settings.</p>
+    <tr><td valign="top"><b>-T</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">Run syntax tests for configuration files <i>without</i> document root checks then exit.</td></tr>
 
-      <p>See <a
-      href="http://httpd.apache.org/docs/programs/httpd.html">http://httpd.apache.org/docs/programs/httpd.html</a>
-      for more information about these command line options.</p>
+    <tr><td valign="top"><b>-v</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">Show the version number then exit.</td></tr>
 
-      <p>Note: On TPF Apache arguments are supported only on the
-      command line, not through the ZINET XPARM field.</p>
+    <tr><td valign="top"><b>-V</b></td>
+        <td valign="top">ZFILE</td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">Show the version number and various compile settings then exit.</td></tr>
+
+    <tr><td valign="top"><b>-X</b></td>
+        <td valign="top">&nbsp;</td>
+        <td valign="top">ZINET</td>
+        <td valign="top">Run in single-process mode for internal debugging purposes only.
+                       The parent process does not fork any children.</td></tr>
+
+    </table>
+
+    <p>See <a href="http://httpd.apache.org/docs/programs/httpd.html">http://httpd.apache.org/docs/programs/httpd.html</a>
+       for more information about these command line options.</p>
     </div>
 
-    <h3>Setup</h3>
+    <h3>Setup for ZFILE examples</h3>
 
     <div style="margin-left: 2em">
       <p>Ensure Apache (CHTA) is loaded</p>
@@ -431,7 +478,6 @@
         <tt>zfile chmod 755 /bin/httpd</tt>
       </div>
       <br />
-      <br />
        
 
       <p>(See "<em>ZFILE-Activate a TPF Segment or Script</em>" in
@@ -439,7 +485,7 @@
       href="http://www.ibm.com/tpf/pubs/tpfpubs.htm">http://www.ibm.com/tpf/pubs/tpfpubs.htm</a>.)</p>
     </div>
 
-    <h3>Example 1</h3>
+    <h3>ZFILE example 1</h3>
 
     <div style="margin-left: 2em">
       <p><tt>zfile httpd -v</tt></p>
@@ -451,17 +497,75 @@
        END OF DISPLAY</tt></p>
     </div>
 
-    <h3>Example 2</h3>
+    <h3>ZFILE example 2</h3>
 
     <div style="margin-left: 2em">
       <p><tt>zfile httpd -t -f
-      /usr/local/apache/conf/httpd.conf.new</tt></p>
+      /usr/local/apache/conf/alt.conf</tt></p>
 
       <p><tt>FILE0002I 11.47.26 START OF ERROR DISPLAY FROM httpd
       -t ...<br />
        Syntax OK<br />
        END OF DISPLAY</tt></p>
     </div>
+
+    <h3>ZINET XPARM example</h3>
+    <div style="margin-left: 2em">
+
+       This example uses an alternate configuration file called /usr/local/apache/conf/alt.conf.<br />
+       Transfer the alternate configuration file to your TPF test system.<br />
+       <tt>zinet add s-apache pgm-chta model-daemon user-root xparm--f conf/alt.conf</tt><br />
+       <tt>zinet start s-apache</tt>
+
+      <p>(See "<em>ZINET ADD-Add an Internet Server Application Entry</em>" and
+          "<em>ZINET ALTER-Change an Internet Server Application Entry</em>" in
+          the <em>Operations</em> guide for more information about using the XPARM field:
+          <a href="http://www.ibm.com/tpf/pubs/tpfpubs.htm">http://www.ibm.com/tpf/pubs/tpfpubs.htm</a>.)</p>
+    </div>
+
+
+    <a id="syslog" name="syslog"></a> 
+
+    <center>
+      <h2>Syslog Daemon</h2>
+    </center>
+
+    <h3>Syslog overview:</h3>
+
+ <p>The syslog daemon is a server process that provides a message logging facility for application and system processes.
+    It can be used to write messages to log files or to tapes.
+    See <em>TPF Transmission Control Protocol/Internet Protocol</em> for detailed information about using the syslog daemon on TPF:
+    <a href="http://www.ibm.com/tpf/pubs/tpfpubs.htm">http://www.ibm.com/tpf/pubs/tpfpubs.htm</a>.
+    And see the Apache <a href="http://httpd.apache.org/docs/mod/core.html#errorlog">ErrorLog directive documentation</a>
+    for details on how to use syslog with Apache.</p>
+
+ <p>Syslog capabilities were added with PJ27214 which shipped with PUT13.
+    You must follow the <a href="install-tpf.html#syslog">syslog specific installation instructions</a>
+    in order to have the option of using syslog with Apache.</p>
+
+
+    <h3>Tips on using syslog with your Apache error log:</h3>
+
+ <p>This section provides some tips on using syslog with Apache.
+    It is not meant to replace the syslog documentation in the TPF TCP/IP publication.</p>
+ 
+ <ul>
+<li>The syslog daemon will not create files.  If you are logging to a file (as specified in the <tt>syslog.conf</tt> configuration file) that file must already exist and
+    have permissions that allow the syslog daemon to write to it.</li>
+<li>You must restart the syslog daemon for it to recognize changes to its <tt>syslog.conf</tt> configuration file.</li>
+<li>The syslog daemon must be active prior to starting Apache.</li>
+<li>To indicate you want to use syslog with your Apache error log add the following directive to your <tt>httpd.conf</tt> file:
+    "<tt>ErrorLog&nbsp;syslog:</tt><i>facility</i>" where <i>facility</i> is "local0" through "local7".</li>
+<li>Apache will default the facility to "local7" if you omit the facility name from the ErrorLog directive (that is "<tt>ErrorLog&nbsp;syslog</tt>").</li>
+<li>The syslog facility name must be one that is recognized by both Apache and the syslog.h header file.
+    The facility names "local0" through "local7" are explicitly set aside for your use.</li>
+<li>Although "local0" through "local7" are recommended user facility names, here is the complete list of names recognized
+    by both Apache and TPF's syslog.h:  auth, cron, daemon, kern, local0, local1, local2, local3, local4, local5, local6, local7,
+    lpr, mail, news, syslog, user, and uucp.</li>
+<li>You won't see the normal Apache startup/shutdown messages when you use syslog with your Apache error log.</li>
+<li>Syslog does not support TCP/IP Offload devices (ZCLAW)</li>
+</ul>
+
     <a id="porting_notes" name="porting_notes"></a> 
 
     <center>
@@ -514,12 +618,13 @@
     <hr />
 
     <center>
-      [ <a href="#top">top</a>&nbsp; | <a
-      href="#configuration_files">Configuration Files</a>&nbsp; |
-      <a href="#whats_available">What's Available</a>&nbsp; | <a
-      href="#cgi">CGI Scripts</a>&nbsp; | <a
-      href="#options">Options</a>&nbsp; | <a
-      href="#porting_notes">Porting Notes</a> ]
+      [ <a href="#top">top</a>
+      | <a href="#configuration_files">Configuration&nbsp;Files</a>
+      | <a href="#whats_available">What's&nbsp;Available</a>
+      | <a href="#cgi">CGI&nbsp;Scripts</a>
+      | <a href="#options">Options</a>
+      | <a href="#syslog">Syslog</a>
+      | <a href="#porting_notes">Porting&nbsp;Notes</a>&nbsp;]
     </center>
   </body>
 </html>

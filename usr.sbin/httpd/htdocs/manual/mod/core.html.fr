@@ -2114,7 +2114,7 @@ Listen 192.170.2.5:8000
      <strong>Voir aussi:</strong> <a href="../bind.html">Configurer
     les ports et adresses utilis&eacute;e par Apache</a><br />
      <strong>Voir aussi :</strong> <a
-    href="http://www.apache.org/info/known_bugs.html#listenbug">Bogues
+    href="http://httpd.apache.org/info/known_bugs.html#listenbug">Bogues
     connus</a></p>
     <hr />
 
