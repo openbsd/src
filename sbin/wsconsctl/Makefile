@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.15 2004/01/29 02:55:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.16 2004/01/29 07:25:34 deraadt Exp $
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "macppc" || \
     ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "pegasos" || ${MACHINE} == "alpha" ||
+    ${MACHINE} == "pegasos" || ${MACHINE} == "alpha" || \
     ${MACHINE} == "cats"
 
 PROG=	wsconsctl
