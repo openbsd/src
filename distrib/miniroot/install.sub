@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.237 2002/07/04 16:01:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.238 2002/07/04 17:23:42 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -158,11 +158,11 @@ __EOT
 }
 
 get_diskdevs() {
-	bsort `sed -ne "${MDDISKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}" /tmp/dmesg.boot`
+	bsort `sed -ne "${MDDISKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}" /var/run/dmesg.boot`
 }
 
 get_cddevs() {
-	bsort `sed -ne "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}" /tmp/dmesg.boot`
+	bsort `sed -ne "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}" /var/run/dmesg.boot`
 }
 
 # Ask for a password, saving the input in $resp.
@@ -2140,9 +2140,9 @@ VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
 
 # Extract and save one boot's worth of dmesg
-dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /tmp/dmesg.boot
+dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
 
-# Scan /tmp/dmesg.boot for disks and cds
+# Scan /var/run/dmesg.boot for disks and cds
 _DKDEVS=`get_diskdevs`
 _CDDEVS=`get_cddevs`
 
