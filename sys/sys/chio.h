@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.h,v 1.6 1994/06/29 06:43:43 cgd Exp $	*/
+/*	$NetBSD: chio.h,v 1.7 1996/02/19 18:29:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -82,10 +82,18 @@ struct chop {
 			struct {
 				u_char elema_1;
 				u_char elema_0;
+#if BYTE_ORDER == LITTLE_ENDIAN
 				u_char full:1;
 				u_char rsvd:1;
 				u_char except:1;
 				u_char :5;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+				u_char :5;
+				u_char except:1;
+				u_char rsvd:1;
+				u_char full:1;
+#endif
 				u_char rsvd2;
 				union {
 					struct {
@@ -99,9 +107,16 @@ struct chop {
 #define CH_CTS_CLOSED	0x0490	/* CTS door is closed */
 				} ch_add_sense;
 				u_char rsvd3[3];
+#if BYTE_ORDER == BIG_ENDIAN
 				u_char :6;
 				u_char invert:1;
 				u_char svalid:1;
+#endif
+#if BYTE_ORDER == LITTLE_ENDIAN
+				u_char svalid:1;
+				u_char invert:1;
+				u_char :6;
+#endif
 				u_char source_1;
 				u_char source_0;
 				u_char rsvd4[4];
