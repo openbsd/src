@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.5 1998/12/21 01:02:22 niklas Exp $
-$EOM: README,v 1.12 1998/12/19 09:18:18 niklas Exp $
+$OpenBSD: README,v 1.6 1999/02/26 03:30:11 niklas Exp $
+$EOM: README,v 1.15 1999/02/25 14:18:33 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
@@ -23,7 +23,6 @@ then the makefile support assumes a BSD environment.
 Assuming you have an OpenBSD /usr/share/mk and use the OpenBSD (or
 similar) make(1), you build isakmpd this way:
 
-ln -s sysdep-openbsd.c sysdep.c
 make obj && make depend && make
 
 Then obj/isakmpd will be the daemon.  I suggest you try it by running
