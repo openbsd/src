@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 1999/03/01 04:56:05 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 1999/04/22 18:51:49 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -91,6 +91,10 @@
 #include <sparc/sparc/cache.h>
 #include <sparc/sparc/vaddrs.h>
 
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
+
 #ifdef SUN4M
 #include <sparc/dev/power.h>
 #include "power.h"
@@ -103,7 +107,13 @@
 #include "led.h"
 #endif
 
+#if defined(UVM)
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#else
 vm_map_t buffer_map;
+#endif
 extern vm_offset_t avail_end;
 
 /*
@@ -177,7 +187,7 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-#ifndef MACHINE_NONCONTIG
+#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
 	physmem = btoc(avail_end);
 #endif
 	printf("real mem = %d\n", ctob(physmem));
@@ -188,12 +198,63 @@ cpu_startup()
 	 */
 	sz = (int)allocsys((caddr_t)0);
 
+#if defined(UVM)
+	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
+#else
 	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
+#endif
 		panic("startup: no room for tables");
 
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
+#if defined(UVM)
+        /*
+         * allocate virtual and physical memory for the buffers.
+         */
+        size = MAXBSIZE * nbuf;         /* # bytes for buffers */
+
+        /* allocate VM for buffers... area is not managed by VM system */
+        if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+                    NULL, UVM_UNKNOWN_OFFSET,
+                    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+                                UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+        	panic("cpu_startup: cannot allocate VM for buffers");
+
+        minaddr = (vaddr_t) buffers;
+        if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+        	bufpages = btoc(MAXBSIZE) * nbuf; /* do not overallocate RAM */
+        }
+        base = bufpages / nbuf;
+        residual = bufpages % nbuf;
+
+        /* now allocate RAM for buffers */
+	for (i = 0 ; i < nbuf ; i++) {
+		vaddr_t curbuf;
+		vsize_t curbufsize;
+		struct vm_page *pg;
+
+		/*
+		 * each buffer has MAXBSIZE bytes of VM space allocated.  of
+		 * that MAXBSIZE space we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
+		 */
+		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL);
+			if (pg == NULL)
+				panic("cpu_startup: "
+				    "not enough RAM for buffer cache");
+			pmap_enter(kernel_map->pmap, curbuf,
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
+	}
+#else
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -227,13 +288,18 @@ cpu_startup()
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
-
+#endif
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
+#if defined(UVM)
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				 16*NCARGS, TRUE, FALSE, NULL);
+#else
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
+#endif
 
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
@@ -242,7 +308,11 @@ cpu_startup()
 	 */
 	dvma_base = CPU_ISSUN4M ? DVMA4M_BASE : DVMA_BASE;
 	dvma_end = CPU_ISSUN4M ? DVMA4M_END : DVMA_END;
+#if defined(UVM)
+	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
+#else
 	phys_map = vm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
+#endif
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 	/*
@@ -250,8 +320,13 @@ cpu_startup()
 	 * resource map for double mappings which is usable from
 	 * interrupt contexts.
 	 */
+#if defined(UVM)
+	if (uvm_km_valloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
+		panic("unable to allocate from DVMA map");
+#else
 	if (kmem_alloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
 		panic("unable to allocate from DVMA map");
+#endif
 	rminit(dvmamap, btoc((dvma_end-dvma_base)),
 		vtorc(dvma_base), "dvmamap", ndvmamap);
 
@@ -262,8 +337,13 @@ cpu_startup()
 	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
 				   M_MBUF, M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+#if defined(UVM)
+	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
+#else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
+#endif
 	/*
 	 * Initialize callouts
 	 */
@@ -275,7 +355,11 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
+#if defined(UVM)
+	printf("avail mem = %ld\n", ptoa(uvmexp.free));
+#else
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
+#endif
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -375,7 +459,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	/*
 	 * Allocate DVMA slots for 1/4 of the number of i/o buffers
@@ -666,8 +752,13 @@ sys_sigreturn(p, v, retval)
 		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
 #endif
 	scp = SCARG(uap, sigcntxp);
+#if defined(UVM)
+	if ((int)scp & 3 || uvm_useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
+		return (EINVAL);
+#else
 	if ((int)scp & 3 || useracc((caddr_t)scp, sizeof *scp, B_WRITE) == 0)
 		return (EINVAL);
+#endif
 	tf = p->p_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
@@ -1019,10 +1110,15 @@ oldmon_w_trace(va)
 		printf("curproc = %p, pid %d\n", curproc, curproc->p_pid);
 	else
 		printf("no curproc\n");
-
+#if defined(UVM)
+	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
+	       uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
+	       uvmexp.softs, uvmexp.faults);
+#else
 	printf("cnt: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
 	    cnt.v_swtch, cnt.v_trap, cnt.v_syscall, cnt.v_intr, cnt.v_soft,
 	    cnt.v_faults);
+#endif
 	write_user_windows();
 
 #define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
