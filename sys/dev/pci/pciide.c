@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.37 2000/11/20 14:24:29 deraadt Exp $     */
+/*      $OpenBSD: pciide.c,v 1.38 2000/12/06 22:45:41 deraadt Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -1425,7 +1425,8 @@ piix_chip_map(sc, pa)
 			    DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1475,7 +1476,8 @@ piix_chip_map(sc, pa)
 			        DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			DEBUG_PROBE);
@@ -1634,10 +1636,12 @@ piix3_4_setup_channel(chp)
 			goto pio;
 
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 		    ideconf |= PIIX_CONFIG_PINGPONG;
 		}
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) {
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 			/* setup Ultra/66 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
