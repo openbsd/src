@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.39 1998/03/28 04:29:11 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.40 1998/03/28 09:29:30 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -787,6 +787,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Diamond Computer Systems",
 	    "Viper/PCI",
+	},
+	{
+	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_MONSTER,
+	    0,
+	    "Diamond Computer Systems",
+	    "Monster",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
