@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.77 2003/01/13 06:04:16 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.78 2003/01/15 23:41:56 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -143,7 +143,7 @@ sys___sysctl(p, v, retval)
 	 */
 	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 2)
 		return (EINVAL);
-	error = copyin(SCARG(uap, name), &name,
+	error = copyin(SCARG(uap, name), name,
 		       SCARG(uap, namelen) * sizeof(int));
 	if (error)
 		return (error);
@@ -202,7 +202,7 @@ sys___sysctl(p, v, retval)
 		}
 		savelen = oldlen;
 	}
-	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
+	error = (*fn)(&name[1], SCARG(uap, namelen) - 1, SCARG(uap, old),
 	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		if (dolock)
