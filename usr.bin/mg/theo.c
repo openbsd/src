@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.62 2004/05/10 03:30:20 jolan Exp $	*/
+/*	$OpenBSD: theo.c,v 1.63 2004/06/07 22:31:19 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -145,7 +145,8 @@ static const char *talk[] = {
 	"gprs sucks camel dick dryer than the gobi desert",
 	"I AM NEVER SATISFIED",
 	"don't they recognize their moral responsibility to entertain me?",
-	"#ifdef is for emacs developers."
+	"#ifdef is for emacs developers.",
+	"Many well known people become net-kooks in their later life, because they lose touch with reality."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
