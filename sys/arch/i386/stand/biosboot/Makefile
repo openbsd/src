@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:27 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/04/29 00:10:05 mickey Exp $
 
 PROG=	biosboot
 SRCS=	biosboot.S
-# AFLAGS+=-Wa,-a
-CPPFLAGS+=-DSTART=$(START) -DBOOTMAGIC=$(BOOTMAGIC) -DBOOTREL=$(BOOTREL)
 LD=ld
 LDFLAGS=-nostdlib -Ttext 0 -N -x -Bstatic
 INSTALL_STRIP=
@@ -22,3 +20,5 @@ ${PROG}: $(OBJS) $(DPADD)
 
 .include <bsd.prog.mk>
 
+CPPFLAGS+=-DSTART=$(START) -DBOOTMAGIC=$(BOOTMAGIC) -DBOOTREL=$(BOOTREL)
+# AFLAGS+=-Wa,-a
