@@ -751,7 +751,7 @@ static void
 rtl_epilogue (insn)
      rtx insn;
 {
-  rtx if_false_label;
+  rtx if_false_label, end_label = 0;
   rtx _val;
   rtx funcname;
   tree funcstr;
@@ -869,7 +869,18 @@ rtl_epilogue (insn)
 	emit_move_insn (current_function_return_rtx, return_reg);
 	emit_insn (gen_rtx_USE (VOIDmode, current_function_return_rtx));
       }
+
+      end_label = gen_label_rtx ();
+      emit_jump (end_label);
     }
+
+  /* Mark the end of the function body.
+     If control reaches this insn, the function can drop through
+     without returning a value.  */
+  emit_note (NULL_PTR, NOTE_INSN_FUNCTION_END);
+  
+  if (end_label)
+    emit_label (end_label);
 
 #ifdef HAVE_return
   if (HAVE_return && flag_have_return)
