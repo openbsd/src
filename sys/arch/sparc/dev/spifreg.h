@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifreg.h,v 1.6 2000/06/02 15:53:22 jason Exp $	*/
+/*	$OpenBSD: spifreg.h,v 1.7 2002/01/13 01:54:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -310,8 +310,8 @@ struct stcregs {
  * The register map for the SUNW,spif looks something like:
  *    Offset:		Function:
  *	0000 - 03ff	Boot ROM
- *	0400 - 0408	dtr latches (one per port)
- *	0409 - 07ff	unused
+ *	0400 - 0407	dtr latches (one per port)
+ *	0408 - 07ff	unused
  *	0800 - 087f	CD180 registers (normal mapping)
  *	0880 - 0bff	unused
  *	0c00 - 0c7f	CD180 registers (*iack mapping)
@@ -334,7 +334,7 @@ struct stcregs {
 struct spifregs {
 	volatile u_int8_t	_unused1[1024];	/* 0x000-0x3ff unused */
 	volatile u_int8_t	dtrlatch[8];	/* per port dtr latch */
-	volatile u_int8_t	_unused2[1016];	/* 0x409-0x7ff unused */
+	volatile u_int8_t	_unused2[1016];	/* 0x408-0x7ff unused */
 	struct stcregs		stc;		/* regular cd-180 regs */
 	volatile u_int8_t	_unused3[896];	/* 0x880-0xbff unused */
 	struct stcregs		istc;		/* *iack cd-180 regs */
