@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.15 2003/06/16 00:45:16 krw Exp $
+# $OpenBSD: dhclient-script,v 1.16 2004/01/09 07:49:07 deraadt Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -72,6 +72,7 @@ delete_old_routes() {
 }
 
 add_new_routes() {
+	route delete default >/dev/null 2>&1
 	for router in $new_routers; do
 		route add default $router >/dev/null 2>&1
 		# 2nd and subsequent default routers error out, so explicitly
