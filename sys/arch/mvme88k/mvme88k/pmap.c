@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.75 2003/09/16 20:52:22 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.76 2003/09/19 23:12:22 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -2593,7 +2593,7 @@ void
 pmap_changebit(struct vm_page *pg, int set, int mask)
 {
 	pv_entry_t pvl, pvep;
-	pt_entry_t *pte, npte;
+	pt_entry_t *pte, npte, opte;
 	pmap_t pmap;
 	int spl;
 	vaddr_t va;
@@ -2651,8 +2651,8 @@ changebit_Retry:
 		/*
 		 * Update bits
 		 */
-		*pte = invalidate_pte(pte);
-		npte = (*pte | set) & mask;
+		opte = invalidate_pte(pte);
+		npte = (opte | set) & mask;
 
 		/*
 		 * Flush TLB of which cpus using pmap.
@@ -2660,8 +2660,8 @@ changebit_Retry:
 		 * Invalidate pte temporarily to avoid the modified bit
 		 * and/or the reference being written back by any other cpu.
 		 */
-		if (npte != *pte) {
-			*pte = npte;
+		*pte = npte;
+		if (npte != opte) {
 			flush_atc_entry(users, va, kflush);
 		}
 
