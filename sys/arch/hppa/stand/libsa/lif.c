@@ -1,4 +1,4 @@
-/*	$OpenBSD: lif.c,v 1.1 1998/07/30 16:01:48 mickey Exp $	*/
+/*	$OpenBSD: lif.c,v 1.2 1998/09/29 07:17:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -173,6 +173,7 @@ lif_read(f, buf, size, resid)
 #endif
 
 	for (p = bbuf; size; fp->f_seek += bsize, p += bsize) {
+		twiddle();
 		foff = fp->f_off + fp->f_seek;
 		if (fp->f_seek >= fp->f_count ||
 		    (err = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
