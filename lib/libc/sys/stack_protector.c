@@ -1,4 +1,4 @@
-/*	$OpenBSD: stack_protector.c,v 1.2 2002/12/02 09:02:57 deraadt Exp $	*/
+/*	$OpenBSD: stack_protector.c,v 1.3 2002/12/10 08:53:42 etoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Hiroaki Etoh, Federico G. Schwindt, and Miodrag Vallat.
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(list)
-static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.2 2002/12/02 09:02:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stack_protector.c,v 1.3 2002/12/10 08:53:42 etoh Exp $";
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ __stack_smash_handler(char func[], int damaged)
 	/* this may fail on a chroot jail, though luck */
 	syslog_r(LOG_CRIT, &sdata, message, func);
 
-	bzero(sa, sizeof(struct sigaction));
+	bzero(&sa, sizeof(struct sigaction));
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_DFL;
