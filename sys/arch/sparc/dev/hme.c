@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.18 1999/02/23 23:44:48 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.19 1999/04/18 03:13:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -217,12 +217,12 @@ hmeattach(parent, self, aux)
 	 * Otherwise, use the machine's builtin MAC.
 	 */
 	if (getprop(ca->ca_ra.ra_node, "local-mac-address",
-			sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0) {
+	    sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN) <= 0) {
 		myetheraddr(sc->sc_arpcom.ac_enaddr);
 	}
 
 	printf(" pri %d: address %s rev %d\n", pri,
-		ether_sprintf(sc->sc_arpcom.ac_enaddr), sc->sc_rev);
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr), sc->sc_rev);
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = hme_mii_read;
@@ -1061,7 +1061,7 @@ hme_mii_write(self, phy, reg, val)
 			DELAY(200);
 		}
 		if (!tries)
-			printf("%s: mii_read failed\n", sc->sc_dev.dv_xname);
+			printf("%s: mii_write failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
