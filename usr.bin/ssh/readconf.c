@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.9 1999/10/03 22:01:39 provos Exp $");
+RCSID("$Id: readconf.c,v 1.10 1999/10/06 20:07:42 dugsong Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -100,7 +100,7 @@ typedef enum
   oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
   oGlobalKnownHostsFile, oUserKnownHostsFile, oConnectionAttempts,
   oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
-  oCompressionLevel, oKeepAlives, oTISAuthentication
+  oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts, oTISAuthentication
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -146,6 +146,7 @@ static struct
   { "compression", oCompression },
   { "compressionlevel", oCompressionLevel },
   { "keepalive", oKeepAlives },
+  { "numberofpasswordprompts", oNumberOfPasswordPrompts },
   { "tisauthentication", oTISAuthentication },
   { NULL, 0 }
 };
@@ -336,6 +337,10 @@ void process_config_line(Options *options, const char *host,
       intptr = &options->keepalives;
       goto parse_flag;
 
+    case oNumberOfPasswordPrompts:
+      intptr = &options->number_of_password_prompts;
+      goto parse_int;
+      
     case oTISAuthentication:
       cp = strtok(NULL, WHITESPACE);
       if (cp != 0 && (strcmp(cp, "yes") == 0 || strcmp(cp, "true") == 0))
@@ -584,6 +589,7 @@ void initialize_options(Options *options)
   options->compression_level = -1;
   options->port = -1;
   options->connection_attempts = -1;
+  options->number_of_password_prompts = -1;
   options->cipher = -1;
   options->num_identity_files = 0;
   options->hostname = NULL;
@@ -645,6 +651,8 @@ void fill_default_options(Options *options)
     options->port = 0; /* Filled in ssh_connect. */
   if (options->connection_attempts == -1)
     options->connection_attempts = 4;
+  if (options->number_of_password_prompts == -1)
+    options->number_of_password_prompts = 3;
   if (options->cipher == -1)
     options->cipher = SSH_CIPHER_NOT_SET; /* Selected in ssh_login(). */
   if (options->num_identity_files == 0)

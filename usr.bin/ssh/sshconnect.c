@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.15 1999/10/06 04:22:20 provos Exp $");
+RCSID("$Id: sshconnect.c,v 1.16 1999/10/06 20:07:42 dugsong Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1449,20 +1449,21 @@ void ssh_login(int host_key_valid,
       debug("Doing password authentication.");
       if (options->cipher == SSH_CIPHER_NONE)
 	log("WARNING: Encryption is disabled! Password will be transmitted in clear text.");
-      password = read_passphrase(prompt, 0);
-      packet_start(SSH_CMSG_AUTH_PASSWORD);
-      packet_put_string(password, strlen(password));
-      memset(password, 0, strlen(password));
-      xfree(password);
-      packet_send();
-      packet_write_wait();
-  
-      type = packet_read(&payload_len);
-      if (type == SSH_SMSG_SUCCESS)
-	return; /* Successful connection. */
-      if (type != SSH_SMSG_FAILURE)
-	packet_disconnect("Protocol error: got %d in response to passwd auth",
-			  type);
+      for (i = 0; i < options->number_of_password_prompts; i++) {
+	password = read_passphrase(prompt, 0);
+	packet_start(SSH_CMSG_AUTH_PASSWORD);
+	packet_put_string(password, strlen(password));
+	memset(password, 0, strlen(password));
+	xfree(password);
+	packet_send();
+	packet_write_wait();
+	
+	type = packet_read(&payload_len);
+	if (type == SSH_SMSG_SUCCESS)
+	  return; /* Successful connection. */
+	if (type != SSH_SMSG_FAILURE)
+	  packet_disconnect("Protocol error: got %d in response to passwd auth", type);
+      }
     }
 
   /* All authentication methods have failed.  Exit with an error message. */

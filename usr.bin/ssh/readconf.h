@@ -13,7 +13,7 @@ Functions for reading the configuration file.
 
 */
 
-/* RCSID("$Id: readconf.h,v 1.5 1999/10/03 21:50:03 provos Exp $"); */
+/* RCSID("$Id: readconf.h,v 1.6 1999/10/06 20:07:42 dugsong Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -56,6 +56,7 @@ typedef struct
 
   int port;			/* Port to connect. */
   int connection_attempts;	/* Max attempts (seconds) before giving up */
+  int number_of_password_prompts; /* Max number of password prompts. */
   int cipher;			/* Cipher to use. */
   char *hostname;		/* Real host to connect. */
   char *proxy_command;		/* Proxy command for connecting the host. */
