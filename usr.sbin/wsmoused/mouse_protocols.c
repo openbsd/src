@@ -1,4 +1,4 @@
-/* $OpenBSD: mouse_protocols.c,v 1.3 2001/08/13 06:32:18 pvalchev Exp $ */
+/* $OpenBSD: mouse_protocols.c,v 1.4 2001/09/20 21:22:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -179,12 +179,13 @@ gettoken(symtab_t *tab, char *s, int len)
 char *
 mouse_name(int type)
 {
-    return ((type == P_UNKNOWN) 
+    return (type == P_UNKNOWN
 	|| (type > sizeof(mouse_names)/sizeof(mouse_names[0]) - 1))
 	? "unknown" : mouse_names[type];
 }
 
-void SetMouseSpeed(int old, int new, unsigned int cflag)
+void
+SetMouseSpeed(int old, int new, unsigned int cflag)
 {
 	struct termios tty;
 	char *c;
@@ -247,8 +248,7 @@ void SetMouseSpeed(int old, int new, unsigned int cflag)
 	}
 
 	if (tcsetattr(mouse.mfd, TCSADRAIN, &tty) < 0) {
-		printf("Unable to get mouse status. Exiting...\n");
-		exit(1);
+		logerr(1, "unable to get mouse status. Exiting...\n");
 	}
 	
 	switch (new)
@@ -278,15 +278,13 @@ void SetMouseSpeed(int old, int new, unsigned int cflag)
 	if (mouse.proto == P_LOGIMAN || mouse.proto == P_LOGI)
 	{
 		if (write(mouse.mfd, c, 2) != 2) {
-			printf("Unable to write to mouse. Exiting...\n");
-			exit(1);
+			logerr(1, "unable to write to mouse. Exiting...\n");
 		}
 	}
 	usleep(100000);
 
 	if (tcsetattr(mouse.mfd, TCSADRAIN, &tty) < 0) {
-		printf("Unable to get mouse status. Exiting...\n");
-		exit(1);
+		logerr(1, "unable to get mouse status. Exiting...\n");
 	}
 }
 

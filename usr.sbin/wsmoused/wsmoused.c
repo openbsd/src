@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.4 2001/08/31 22:34:54 jbm Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.5 2001/09/20 21:22:16 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -73,8 +73,6 @@
 #include "mouse_protocols.h"
 #include "wsmoused.h"
  
-extern char *optarg;
-extern int optind;
 extern char *__progname;
 extern char *mouse_names[];
  
@@ -92,8 +90,8 @@ mouse_t mouse = {
     old_baudrate : 1200,
     rate : MOUSE_RATE_UNKNOWN,
     resolution : MOUSE_RES_UNKNOWN, 
-    zmap: 0,
-    wmode: 0,
+    zmap : 0,
+    wmode : 0,
     mfd : -1,
     clickthreshold : 500,	/* 0.5 sec */
 };
@@ -104,45 +102,44 @@ wsmouse_identify(void)
 {
 	unsigned int type;
 	
-	if (mouse.mfd) {
-		ioctl(mouse.mfd, WSMOUSEIO_GTYPE, &type);
+	if (mouse.mfd != -1) {
+		if (ioctl(mouse.mfd, WSMOUSEIO_GTYPE, &type) == -1)
+			err(1, "can't detect mouse type");
 	       	printf("wsmouse supported mouse: ");
 		switch (type) {
-			case WSMOUSE_TYPE_VSXXX:
-				printf("DEC serial\n");
-				break;
-			case WSMOUSE_TYPE_PS2:
-				printf("PS/2 compatible\n");
-				break;
-			case WSMOUSE_TYPE_USB:
-				printf("USB \n");
-				break;
-			case WSMOUSE_TYPE_LMS:
-				printf("Logitech busmouse\n");
-				break;
-			case WSMOUSE_TYPE_MMS:
-				printf("Microsoft InPort mouse\n");
-				break;
-			case WSMOUSE_TYPE_TPANEL:
-				printf("Generic Touch Panel\n");
-				break;
-			case WSMOUSE_TYPE_NEXT:
-				printf("NeXT\n");
-				break;
-			case WSMOUSE_TYPE_ARCHIMEDES:
-				printf("Archimedes\n");
-				break;
-			default:
-				printf("Unknown\n");
-				break;
+		case WSMOUSE_TYPE_VSXXX:
+			printf("DEC serial\n");
+			break;
+		case WSMOUSE_TYPE_PS2:
+			printf("PS/2 compatible\n");
+			break;
+		case WSMOUSE_TYPE_USB:
+			printf("USB\n");
+			break;
+		case WSMOUSE_TYPE_LMS:
+			printf("Logitech busmouse\n");
+			break;
+		case WSMOUSE_TYPE_MMS:
+			printf("Microsoft InPort mouse\n");
+			break;
+		case WSMOUSE_TYPE_TPANEL:
+			printf("Generic Touch Panel\n");
+			break;
+		case WSMOUSE_TYPE_NEXT:
+			printf("NeXT\n");
+			break;
+		case WSMOUSE_TYPE_ARCHIMEDES:
+			printf("Archimedes\n");
+			break;
+		default:
+			printf("Unknown\n");
+			break;
 		}
-	}
-	else
-		printf("Unable to open %s \n", mouse.portname);
+	} else
+		warnx("unable to open %s\n", mouse.portname);
 }
 				
 
-	
 
 /* wsmouse_init : init a wsmouse compatible mouse */
 void
@@ -162,52 +159,52 @@ wsmouse_init(void)
 
 /* physical to logical button mapping */
 static int p2l[MOUSE_MAXBUTTON] = {
-    MOUSE_BUTTON1, MOUSE_BUTTON2, MOUSE_BUTTON3, MOUSE_BUTTON4, 
-    MOUSE_BUTTON5, MOUSE_BUTTON6, MOUSE_BUTTON7, MOUSE_BUTTON8, 
+	MOUSE_BUTTON1,	MOUSE_BUTTON2,	MOUSE_BUTTON3,	MOUSE_BUTTON4,
+	MOUSE_BUTTON5,	MOUSE_BUTTON6,	MOUSE_BUTTON7,	MOUSE_BUTTON8,
 };
     
 static char *
 skipspace(char *s)
 {
-    while(isspace(*s))
-	++s;
-    return s;
+	while(isspace(*s))
+		++s;
+	return s;
 }
 
 /* mouse_installmap : install a map between physical and logical buttons */
 static int
 mouse_installmap(char *arg)
 {
-    int pbutton;
-    int lbutton;
-    char *s;
+	int pbutton;
+	int lbutton;
+	char *s;
 
-    while (*arg) {
-	arg = skipspace(arg);
-	s = arg;
-	while (isdigit(*arg))
-	    ++arg;
-	arg = skipspace(arg);
-	if ((arg <= s) || (*arg != '='))
-	    return FALSE;
-	lbutton = atoi(s);
+	while (*arg) {
+		arg = skipspace(arg);
+		s = arg;
+		while (isdigit(*arg))
+			++arg;
+		arg = skipspace(arg);
+		if ((arg <= s) || (*arg != '='))
+			return FALSE;
+		lbutton = atoi(s);
 
-	arg = skipspace(++arg);
-	s = arg;
-	while (isdigit(*arg))
-	    ++arg;
-	if ((arg <= s) || (!isspace(*arg) && (*arg != '\0')))
-	    return FALSE;
-	pbutton = atoi(s);
+		arg = skipspace(++arg);
+		s = arg;
+		while (isdigit(*arg))
+			++arg;
+		if (arg <= s || (!isspace(*arg) && *arg != '\0'))
+			return FALSE;
+		pbutton = atoi(s);
 
-	if ((lbutton <= 0) || (lbutton > MOUSE_MAXBUTTON))
-	    return FALSE;
-	if ((pbutton <= 0) || (pbutton > MOUSE_MAXBUTTON))
-	    return FALSE;
-	p2l[pbutton - 1] = lbutton - 1;
-    }
+		if (lbutton <= 0 || lbutton > MOUSE_MAXBUTTON)
+			return FALSE;
+		if (pbutton <= 0 || pbutton > MOUSE_MAXBUTTON)
+			return FALSE;
+		p2l[pbutton - 1] = lbutton - 1;
+	}
 
-    return TRUE;
+	return TRUE;
 }
 
 /* mouse_map : converts physical buttons to logical buttons */
@@ -239,8 +236,8 @@ terminate(int sig)
 
 /* buttons status (for multiple click detection) */
 static struct {
-    int count;		/* 0: up, 1: single click, 2: double click,... */
-    struct timeval tv;	/* timestamp on the last `up' event */
+	int count;		/* 0: up, 1: single click, 2: double click,... */
+	struct timeval tv;	/* timestamp on the last `up' event */
 } buttonstate[MOUSE_MAXBUTTON];
 
 /* 
@@ -250,46 +247,44 @@ static struct {
 static void
 mouse_click(struct wscons_event *event)
 {
-    struct timeval max_date;
-    struct timeval now;
-    struct timeval delay;
-    struct timezone tz;
-    int i = event->value; /* button number */
+	struct timeval max_date;
+	struct timeval now;
+	struct timeval delay;
+	struct timezone tz;
+	int i = event->value; /* button number */
     
-    gettimeofday(&now, &tz); 
-    delay.tv_sec = mouse.clickthreshold / 1000;
-    delay.tv_usec = (mouse.clickthreshold % 1000) * 1000;
-    timersub(&now, &delay, &max_date); 
+	gettimeofday(&now, &tz); 
+	delay.tv_sec = mouse.clickthreshold / 1000;
+	delay.tv_usec = (mouse.clickthreshold % 1000) * 1000;
+	timersub(&now, &delay, &max_date); 
     
-    if (event->type == WSCONS_EVENT_MOUSE_DOWN) {
-	    if (timercmp(&max_date, &buttonstate[i].tv, >)) {
-		    buttonstate[i].tv.tv_sec = 0;
-		    buttonstate[i].tv.tv_usec = 0;
-		    buttonstate[i].count = 1;
-	    } 
-	    else {
-		    buttonstate[i].count++;
-	    }
-    } else {
-	    /* button is up */
-	    buttonstate[i].tv.tv_sec = now.tv_sec;
-	    buttonstate[i].tv.tv_usec = now.tv_usec;
-    }	    
+	if (event->type == WSCONS_EVENT_MOUSE_DOWN) {
+		if (timercmp(&max_date, &buttonstate[i].tv, >)) {
+			buttonstate[i].tv.tv_sec = 0;
+			buttonstate[i].tv.tv_usec = 0;
+			buttonstate[i].count = 1;
+		} else {
+			buttonstate[i].count++;
+		}
+	} else {
+		/* button is up */
+		buttonstate[i].tv.tv_sec = now.tv_sec;
+		buttonstate[i].tv.tv_usec = now.tv_usec;
+	}
 	    
-    /* 
-     * we use the time field of wscons_event structure to put the number
-     * of multiple clicks 
-     */
-    if (event->type == WSCONS_EVENT_MOUSE_DOWN) {
-	    event->time.tv_sec = buttonstate[i].count;
-	    event->time.tv_nsec = 0;
-    }
-    else {
-	   /* button is up */
-	   event->time.tv_sec = 0;
-	   event->time.tv_nsec = 0;
-    }
-    ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, event);
+	/* 
+	 * we use the time field of wscons_event structure to put the number
+	 * of multiple clicks 
+	 */
+	if (event->type == WSCONS_EVENT_MOUSE_DOWN) {
+		event->time.tv_sec = buttonstate[i].count;
+		event->time.tv_nsec = 0;
+	} else {
+		/* button is up */
+		event->time.tv_sec = 0;
+		event->time.tv_nsec = 0;
+	}
+	ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, event);
 }
 
 
@@ -303,17 +298,16 @@ normalize_event(struct wscons_event *event)
 /* 2: normal speed, 3: slower cursor, 1: faster cursor */
 #define NORMALIZE_DIVISOR 3
 
-	if (event->type == WSCONS_EVENT_MOUSE_DELTA_X) {
+	switch (event->type) {
+	case WSCONS_EVENT_MOUSE_DELTA_X:
 		dx = abs(event->value);
 		while (dx > 2) {
 			two_power++; 
 			dx = dx / 2;
 		}
 		event->value = event->value / (NORMALIZE_DIVISOR * two_power);
-		return ;
-	}
-	
-	if (event->type == WSCONS_EVENT_MOUSE_DELTA_Y) {
+		break;
+	case WSCONS_EVENT_MOUSE_DELTA_Y:
 		two_power = 1;
 		dy = abs(event->value);
 		while (dy > 2) {
@@ -321,8 +315,8 @@ normalize_event(struct wscons_event *event)
 			dy = dy / 2;
 		}
 		event->value = event->value / (NORMALIZE_DIVISOR * two_power);
+		break;
 	}
-	return ;
 }
 
 /* send a wscons_event to the kernel */
@@ -333,14 +327,10 @@ treat_event(struct wscons_event *event)
 
 	if (IS_MOTION_EVENT(event->type)) {
 		ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, event);
-		return ;
-	}
-	if (IS_BUTTON_EVENT(event->type)) {
+	} else if (IS_BUTTON_EVENT(event->type)) {
 		mouse_map(event, &mapped_event);
 		mouse_click(&mapped_event);
-		return ;
 	}
-	return ;
 }
 
 
@@ -378,18 +368,10 @@ split_event(mousestatus_t *act)
 	button = MOUSE_BUTTON1DOWN;
 	for (i = 0; (i < MOUSE_MAXBUTTON) && (mask != 0); i++) {
 		if (mask & 1) {
-			if (act->button & button) {
-				/* button is down */
-				event.type = WSCONS_EVENT_MOUSE_DOWN;
-				event.value = i;
-				treat_event(&event);
-			}
-			else {
-				/* button is up */
-				event.type = WSCONS_EVENT_MOUSE_UP;
-				event.value = i;
-				treat_event(&event);
-			}
+			event.type = (act->button & button) ?
+			    WSCONS_EVENT_MOUSE_DOWN : WSCONS_EVENT_MOUSE_UP;
+			event.value = i;
+			treat_event(&event);
 		}
 		button <<= 1;
 		mask >>= 1;
@@ -401,76 +383,72 @@ split_event(mousestatus_t *act)
 static void
 wsmoused(void)
 {
-    mousestatus_t action;
-    struct wscons_event event; /* original wscons_event */
-    struct pollfd pfd[1];
-    int res;
-    u_char b;
-    FILE *fp;
+	mousestatus_t action;
+	struct wscons_event event; /* original wscons_event */
+	struct pollfd pfd[1];
+	int res;
+	u_char b;
+	FILE *fp;
 
-    if ((mouse.cfd = open("/dev/ttyCcfg", O_RDWR, 0)) == -1)
-	logerr(1, "cannot open /dev/ttyCcfg");
+	if ((mouse.cfd = open("/dev/ttyCcfg", O_RDWR, 0)) == -1)
+		logerr(1, "cannot open /dev/ttyCcfg");
 
-    if (!nodaemon && !background) {
-	if (daemon(0, 0)) {
-	    logerr(1, "failed to become a daemon");
-	} else {
-	  background = TRUE;
-	    fp = fopen(pidfile, "w");
-	    if (fp != NULL) {
-		fprintf(fp, "%d\n", getpid());
-		fclose(fp);
-	    }
+	if (!nodaemon && !background) {
+		if (daemon(0, 0)) {
+			logerr(1, "failed to become a daemon");
+		} else {
+			background = TRUE;
+			fp = fopen(pidfile, "w");
+			if (fp != NULL) {
+				fprintf(fp, "%d\n", getpid());
+				fclose(fp);
+			}
+		}
 	}
-    }
 
-    /* initialization */
+	/* initialization */
     
-    event.type = WSCONS_EVENT_WSMOUSED_ON;
-    res = ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
-    if (res != 0) {
-	/* the display driver has no getchar() method */
-	fprintf(stderr, 
-		"Error: this display driver has no support for wsmoused\n");
-	exit(1);    
-    }
-    
-    bzero(&action, sizeof(action));
-    bzero(&event, sizeof(event));
-    bzero(&buttonstate, sizeof(buttonstate));
-    
-    pfd[0].fd = mouse.mfd;
-    pfd[0].events = POLLIN;
-
-    /* process mouse data */
-    for (;;) {
-
-	if (poll(pfd, 1, INFTIM) <= 0)
-		logwarn("failed to read from mouse");
-	if (IS_WSMOUSE_DEV(mouse.portname))  {
-		/* wsmouse supported mouse */
-		read(mouse.mfd, &event, sizeof(event));
-		treat_event(&event);	
+	event.type = WSCONS_EVENT_WSMOUSED_ON;
+	res = ioctl(mouse.cfd, WSDISPLAYIO_WSMOUSED, &event);
+	if (res != 0) {
+		/* the display driver has no getchar() method */
+		errx(1, "this display driver has no support for wsmoused\n");
 	}
-	else {	
-		/* serial mouse (not wsmouse supported) */
-		res = read(mouse.mfd, &b, 1);
+    
+	bzero(&action, sizeof(action));
+	bzero(&event, sizeof(event));
+	bzero(&buttonstate, sizeof(buttonstate));
+    
+	pfd[0].fd = mouse.mfd;
+	pfd[0].events = POLLIN;
+
+	/* process mouse data */
+	for (;;) {
+		if (poll(pfd, 1, INFTIM) <= 0)
+			logwarn("failed to read from mouse");
+		if (IS_WSMOUSE_DEV(mouse.portname)) {
+			/* wsmouse supported mouse */
+			read(mouse.mfd, &event, sizeof(event));
+			treat_event(&event);	
+		} else {
+			/* serial mouse (not wsmouse supported) */
+			res = read(mouse.mfd, &b, 1);
 	
-		/* if we have a full mouse event */
-		if (mouse_protocol(b, &action))
-			/* split it as multiple wscons_event */
-			split_event(&action);
-	}	
-    }
+			/* if we have a full mouse event */
+			if (mouse_protocol(b, &action))
+				/* split it as multiple wscons_event */
+				split_event(&action);
+		}
+	}
 }
 	
 
 static void 
 usage(void)
 {
-	printf("usage: %s [-2df] [-t protocol] [-C threshold] [-I file] \
-[-M N=M] [-p port]",__progname);
-	printf("       %s -i [-p port] \n",__progname);
+	fprintf(stderr, "usage: %s [-2df] [-t protocol] [-C threshold] [-I file] \
+[-M N=M] [-p port]", __progname);
+	fprintf(stderr, "       %s -i [-p port]\n", __progname);
 	exit(1);
 }
 
@@ -483,70 +461,68 @@ main(int argc, char **argv)
 #define GETOPT_STRING "2dfhip:t:C:I:M:"
 	while ((opt = (getopt(argc, argv, GETOPT_STRING))) != -1) {
 		switch (opt) {
-			case '2':
-				/* on two button mice, right button pastes */
-				p2l[MOUSE_BUTTON3] = MOUSE_BUTTON2;
+		case '2':
+			/* on two button mice, right button pastes */
+			p2l[MOUSE_BUTTON3] = MOUSE_BUTTON2;
+			break;
+		case 'd':
+			++debug;
+			break;
+		case 'f':
+			nodaemon = TRUE;
+			break;
+		case 'h':
+			usage();
+			break;
+		case 'i':
+			identify = TRUE;
+			break;
+		case 'p':
+			mouse.portname = strdup(optarg);
+			break;
+		case 't':
+			if (strcmp(optarg, "auto") == 0) {
+				mouse.proto = P_UNKNOWN;
+				mouse.flags &= ~NoPnP;
 				break;
-			case 'd':
-				++debug;
-				break;
-			case 'f':
-				nodaemon = TRUE;
-				break;
-			case 'h':
-				usage();
-				return 1;
-				break;
-			case 'i':
-				identify = TRUE;	
-				break;
-			case 'p':
-				mouse.portname = strdup(optarg);
-				break;
-			case 't':
-				if (strcmp(optarg, "auto") == 0) {
-					mouse.proto = P_UNKNOWN;
-					mouse.flags &= ~NoPnP;
+			}
+			for (i = 0; mouse_names[i] != NULL; i++)
+				if (strcmp(optarg,mouse_names[i]) == 0) {
+					mouse.proto = i;
+					mouse.flags |= NoPnP;
 					break;
 				}
-				for (i = 0; mouse_names[i]; i++)
-					if (strcmp(optarg,mouse_names[i]) == 0){
-						mouse.proto = i;
-						mouse.flags |= NoPnP;
-						break;
-					}
-				if (mouse_names[i])
-					break;
-				printf("no such mouse protocol `%s'\n", optarg);
-				usage();
+			if (mouse_names[i] != NULL)
 				break;
-			case 'C':
+			warnx("no such mouse protocol `%s'\n", optarg);
+			usage();
+			break;
+		case 'C':
 #define MAX_CLICKTHRESHOLD 2000 /* max delay for double click */
-				
-				mouse.clickthreshold = atoi(optarg);
-				if ((mouse.clickthreshold < 0) || 
-				(mouse.clickthreshold > MAX_CLICKTHRESHOLD)) {
-					printf("invalid threshold `%s': max value is %d\n"
-						, optarg,MAX_CLICKTHRESHOLD);
-					usage();
-				}
-				break;
-			case 'I':
-				pidfile = optarg;
-				break;
-			case 'M':
-				if (!mouse_installmap(optarg)) {
-					warnx("invalid mapping `%s'\n", optarg);
-					usage();
-				}
-				break;
-			default:
+			mouse.clickthreshold = atoi(optarg);
+			if (mouse.clickthreshold < 0 || 
+			    mouse.clickthreshold > MAX_CLICKTHRESHOLD) {
+				warnx("invalid threshold `%s': max value is %d\n",
+				    optarg, MAX_CLICKTHRESHOLD);
 				usage();
+			}
+			break;
+		case 'I':
+			pidfile = optarg;
+			break;
+		case 'M':
+			if (!mouse_installmap(optarg)) {
+				warnx("invalid mapping `%s'\n", optarg);
+				usage();
+			}
+			break;
+		default:
+			usage();
 		}
 	}
-	if (!mouse.portname)
+	if (mouse.portname == NULL)
 		/* default is /dev/wsmouse */
-		mouse.portname = "/dev/wsmouse";
+		mouse.portname = WSMOUSE_DEV;
 		
 	for (;;) {
 		signal(SIGINT , terminate);
@@ -554,13 +530,13 @@ main(int argc, char **argv)
 		signal(SIGTERM, terminate);
 		signal(SIGKILL, terminate);
 		if ((mouse.mfd = open(mouse.portname, 
-					O_RDONLY | O_NONBLOCK, 0)) == -1) 
+		    O_RDONLY | O_NONBLOCK, 0)) == -1) 
 			logerr(1, "unable to open %s", mouse.portname);
 		if (IS_SERIAL_DEV(mouse.portname)) {
 			if (mouse_identify() == P_UNKNOWN) {
-				logwarn("cannot determine mouse type on %s", mouse.portname);
 				close(mouse.mfd);
-				mouse.mfd = -1;
+				logerr(1, "cannot determine mouse type on %s",
+				    mouse.portname);
 			}
 		}
 
@@ -569,17 +545,11 @@ main(int argc, char **argv)
 				wsmouse_identify();
 			else 
 				printf("serial mouse: %s type\n",
-						(char *)mouse_name(mouse.proto));
-			return (0);
+				    (char *)mouse_name(mouse.proto));
+			exit(0);
 		}
 
-		if (mouse.mfd == -1) {
-			exit(1);
-		}		
-		
 		mouse_init(); 
 		wsmoused();
-		
 	}
 }
-
