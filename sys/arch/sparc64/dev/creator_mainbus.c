@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator_mainbus.c,v 1.3 2002/07/25 19:40:33 jason Exp $	*/
+/*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net),
@@ -49,6 +49,7 @@
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 
+#include <sparc64/dev/creatorreg.h>
 #include <sparc64/dev/creatorvar.h>
 
 int	creator_mainbus_match(struct device *, void *, void *);
@@ -92,8 +93,15 @@ creator_mainbus_attach(parent, self, aux)
 	}
 
 	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_DFB24].ur_paddr,
-	    ma->ma_reg[FFB_REG_DFB24].ur_len, 0, &sc->sc_pixel_h)) {
+	    ma->ma_reg[FFB_REG_DFB24].ur_len, BUS_SPACE_MAP_LINEAR,
+	    &sc->sc_pixel_h)) {
 		printf(": failed to map dfb24\n");
+		goto fail;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_FBC].ur_paddr,
+	    ma->ma_reg[FFB_REG_FBC].ur_len, 0, &sc->sc_fbc_h)) {
+		printf(": failed to map fbc\n");
 		goto fail;
 	}
 
@@ -114,6 +122,9 @@ creator_mainbus_attach(parent, self, aux)
 	return;
 
 fail:
+	if (sc->sc_fbc_h != 0)
+		bus_space_unmap(sc->sc_bt, sc->sc_fbc_h,
+		    ma->ma_reg[FFB_REG_FBC].ur_len);
 	if (sc->sc_pixel_h != 0)
 		bus_space_unmap(sc->sc_bt, sc->sc_pixel_h,
 		    ma->ma_reg[FFB_REG_DFB24].ur_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorvar.h,v 1.2 2002/06/15 01:32:01 fgsch Exp $	*/
+/*	$OpenBSD: creatorvar.h,v 1.3 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net),
@@ -60,6 +60,7 @@ struct creator_softc {
 	struct device sc_dv;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_pixel_h;
+	bus_space_handle_t sc_fbc_h;
 	bus_addr_t sc_addrs[FFB_NREGS];
 	bus_size_t sc_sizes[FFB_NREGS];
 	int sc_height, sc_width, sc_linebytes, sc_depth;
@@ -70,5 +71,10 @@ struct creator_softc {
 	u_int sc_mode;
 	struct rasops_info sc_rasops;
 };
+
+#define	FBC_WRITE(sc,r,v) \
+    bus_space_write_4((sc)->sc_bt, (sc)->sc_fbc_h, (r), (v))
+#define	FBC_READ(sc,r) \
+    bus_space_read_4((sc)->sc_bt, (sc)->sc_fbc_h, (r))
 
 void	creator_attach(struct creator_softc *);

@@ -1,0 +1,167 @@
+/*	$OpenBSD: creatorreg.h,v 1.1 2002/07/26 16:39:04 jason Exp $	*/
+
+/*
+ * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Jason L. Wright
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/* Number of register sets */
+#define	FFB_NREGS		24
+
+/* Register set numbers */
+#define	FFB_REG_PROM		0
+#define	FFB_REG_DAC		1
+#define	FFB_REG_FBC		2
+#define	FFB_REG_DFB8R		3
+#define	FFB_REG_DFB8G		4
+#define	FFB_REG_DFB8B		5
+#define	FFB_REG_DFB8X		6
+#define	FFB_REG_DFB24		7
+#define	FFB_REG_DFB32		8
+#define	FFB_REG_SFB8R		9
+#define	FFB_REG_SFB8G		10
+#define	FFB_REG_SFB8B		11
+#define	FFB_REG_SFB8X		12
+#define	FFB_REG_SFB32		13
+#define	FFB_REG_SFB64		14
+#define	FFB_REG_DFB422A		15
+
+#define	FFB_FBC_ALPHA		0x00c
+#define	FFB_FBC_RED		0x010
+#define	FFB_FBC_GREEN		0x014
+#define	FFB_FBC_BLUE		0x018
+#define	FFB_FBC_DEPTH		0x01c
+#define	FFB_FBC_Y		0x020
+#define	FFB_FBC_X		0x024
+#define	FFB_FBC_RYF		0x030
+#define	FFB_FBC_RXF		0x034
+#define	FFB_FBC_DMYF		0x040
+#define	FFB_FBC_DMXF		0x044
+#define	FFB_FBC_EBYI		0x050
+#define	FFB_FBC_EBXI		0x054
+#define	FFB_FBC_BY		0x060
+#define	FFB_FBC_BX		0x064
+#define	FFB_FBC_DY		0x068
+#define	FFB_FBC_DX		0x06c
+#define	FFB_FBC_BH		0x070
+#define	FFB_FBC_BW		0x074
+#define	FFB_FBC_SUVTX		0x100
+#define	FFB_FBC_PPC		0x200
+#define	FFB_FBC_WID		0x204
+#define	FFB_FBC_FG		0x208
+#define	FFB_FBC_BG		0x20c
+#define	FFB_FBC_CONSTY		0x210
+#define	FFB_FBC_CONSTZ		0x214
+#define	FFB_FBC_XCLIP		0x218
+#define	FFB_FBC_DCSS		0x21c
+#define	FFB_FBC_VCLIPMIN	0x220
+#define	FFB_FBC_VCLIPMAX	0x224
+#define	FFB_FBC_VCLIPZMIN	0x228
+#define	FFB_FBC_VCLIPZMAX	0x22c
+#define	FFB_FBC_DCSF		0x230
+#define	FFB_FBC_DCSB		0x234
+#define	FFB_FBC_DCZF		0x238
+#define	FFB_FBC_DCZB		0x23c
+#define	FFB_FBC_BLENDC		0x244
+#define	FFB_FBC_BLENDC1		0x248
+#define	FFB_FBC_BLENDC2		0x24c
+#define	FFB_FBC_FBRAMITC	0x250
+#define	FFB_FBC_FBC		0x254
+#define	FFB_FBC_ROP		0x258
+#define	FFB_FBC_CMP		0x25c
+#define	FFB_FBC_MATCHAB		0x260
+#define	FFB_FBC_MATCHC		0x264
+#define	FFB_FBC_MAGNAB		0x268
+#define	FFB_FBC_MAGNC		0x26c
+#define	FFB_FBC_FBCFG0		0x270
+#define	FFB_FBC_FBCFG1		0x274
+#define	FFB_FBC_FBCFG2		0x278
+#define	FFB_FBC_FBCFG3		0x27c
+#define	FFB_FBC_PPCFG		0x280
+#define	FFB_FBC_PICK		0x284
+#define	FFB_FBC_FILLMODE	0x288
+#define	FFB_FBC_FBRAMWAC	0x28c
+#define	FFB_FBC_PMASK		0x290
+#define	FFB_FBC_XPMASK		0x294
+#define	FFB_FBC_YPMASK		0x298
+#define	FFB_FBC_ZPMASK		0x29c
+#define	FFB_FBC_CLIP0MIN	0x2a0
+#define	FFB_FBC_CLIP0MAX	0x2a4
+#define	FFB_FBC_CLIP1MIN	0x2a8
+#define	FFB_FBC_CLIP1MAX	0x2ac
+#define	FFB_FBC_CLIP2MIN	0x2b0
+#define	FFB_FBC_CLIP2MAX	0x2b4
+#define	FFB_FBC_CLIP3MIN	0x2b8
+#define	FFB_FBC_CLIP3MAX	0x2bc
+#define	FFB_FBC_RAWBLEND2	0x2c0
+#define	FFB_FBC_RAWPREBLEND	0x2c4
+#define	FFB_FBC_RAWSTENCIL	0x2c8
+#define	FFB_FBC_RAWSTENCILCTL	0x2cc
+#define	FFB_FBC_THREEDRAM1	0x2d0
+#define	FFB_FBC_THREEDRAM2	0x2d4
+#define	FFB_FBC_PASSIN		0x2d8
+#define	FFB_FBC_RAWCLRDEPTH	0x2dc
+#define	FFB_FBC_RAWPMASK	0x2e0
+#define	FFB_FBC_RAWCSRC		0x2e4
+#define	FFB_FBC_RAWMATCH	0x2e8
+#define	FFB_FBC_RAWMAGN		0x2ec
+#define	FFB_FBC_RAWROPBLEND	0x2f0
+#define	FFB_FBC_RAWCMP		0x2f4
+#define	FFB_FBC_RAWWAC		0x2f8
+#define	FFB_FBC_FBRAMID		0x2fc
+#define	FFB_FBC_DRAWOP		0x300
+#define	FFB_FBC_FONTLPAT	0x30c
+#define	FFB_FBC_FONTXY		0x314
+#define	FFB_FBC_FONTW		0x318
+#define	FFB_FBC_FONTINC		0x31c
+#define	FFB_FBC_FONT		0x320
+#define	FFB_FBC_BLEND2		0x330
+#define	FFB_FBC_PREBLEND	0x334
+#define	FFB_FBC_STENCIL		0x338
+#define	FFB_FBC_STENCILCTL	0x33c
+#define	FFB_FBC_DCSS1		0x350
+#define	FFB_FBC_DCSS2		0x354
+#define	FFB_FBC_DCSS3		0x358
+#define	FFB_FBC_WIDPMASK	0x35c
+#define	FFB_FBC_DCS2		0x360
+#define	FFB_FBC_DCS3		0x364
+#define	FFB_FBC_DCS4		0x368
+#define	FFB_FBC_DCD2		0x370
+#define	FFB_FBC_DCD3		0x374
+#define	FFB_FBC_DCD4		0x378
+#define	FFB_FBC_PATTERN		0x380
+#define	FFB_FBC_DEVID		0x800
+#define	FFB_FBC_UCSR		0x900
+#define	FFB_FBC_MER		0x980
+
+#define	FBC_UCSR_FIFO_MASK	0x00000fff
+#define	FBC_UCSR_FB_BUSY	0x01000000
+#define	FBC_UCSR_RP_BUSY	0x02000000
+#define	FFB_UCSR_READ_ERR	0x40000000
+#define	FFB_UCSR_FIFO_OVFL	0x80000000
