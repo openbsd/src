@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)diskpart.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: diskpart.c,v 1.1.1.1 1995/10/18 08:47:32 deraadt Exp $";
+static char rcsid[] = "$Id: diskpart.c,v 1.2 1996/07/10 04:13:39 ccappuc Exp $";
 #endif /* not lint */
 
 /*
@@ -362,18 +362,18 @@ promptfordisk(name)
 	register struct disklabel *dp = &disk;
 	register struct field *fp;
 	register i;
-	char buf[BUFSIZ], **tp, *cp, *gets();
+	char buf[BUFSIZ], **tp, *cp;
 
 	strncpy(dp->d_typename, name, sizeof(dp->d_typename));
 	fprintf(stderr,
 		"%s: unknown disk type, want to supply parameters (y/n)? ",
 		name);
-	(void) gets(buf);
+	(void) fgets(buf, BUFSIZ, stdin);
 	if (*buf != 'y')
 		return ((struct disklabel *)0);
 	for (;;) {
 		fprintf(stderr, "Disk/controller type (%s)? ", dktypenames[1]);
-		(void) gets(buf);
+		(void) fgets(buf, BUFSIZ, stdin);
 		if (buf[0] == 0)
 			dp->d_type = 1;
 		else
@@ -389,7 +389,7 @@ promptfordisk(name)
 gettype:
 	dp->d_flags = 0;
 	fprintf(stderr, "type (winchester|removable|simulated)? ");
-	(void) gets(buf);
+	(void) fgets(buf, BUFSIZ, stdin);
 	if (strcmp(buf, "removable") == 0)
 		dp->d_flags = D_REMOVABLE;
 	else if (strcmp(buf, "simulated") == 0)
@@ -403,7 +403,7 @@ gettype:
 	if (dp->d_type == DTYPE_SMD)
 	   fprintf(stderr, "Do %ss support bad144 bad block forwarding (yes)? ",
 		dp->d_typename);
-	(void) gets(buf);
+	(void) fgets(buf, BUFSIZ, stdin);
 	if (*buf != 'n')
 		dp->d_flags |= D_BADSECT;
 	for (fp = fields; fp->f_name != NULL; fp++) {
@@ -412,7 +412,7 @@ again:
 		if (fp->f_defaults != NULL)
 			fprintf(stderr, "(%s)", fp->f_defaults);
 		fprintf(stderr, "? ");
-		cp = gets(buf);
+		cp = fgets(buf, BUFSIZ, stdin);
 		if (*cp == '\0') {
 			if (fp->f_defaults == NULL) {
 				fprintf(stderr, "no default value\n");
@@ -428,7 +428,7 @@ again:
 	}
 	fprintf(stderr, "sectors/cylinder (%d)? ",
 	    dp->d_nsectors * dp->d_ntracks);
-	(void) gets(buf);
+	(void) fgets(buf, BUFSIZ, stdin);
 	if (buf[0] == 0)
 		dp->d_secpercyl = dp->d_nsectors * dp->d_ntracks;
 	else
@@ -436,7 +436,7 @@ again:
 	fprintf(stderr, "Drive-type-specific parameters, <cr> to terminate:\n");
 	for (i = 0; i < NDDATA; i++) {
 		fprintf(stderr, "d%d? ", i);
-		(void) gets(buf);
+		(void) fgets(buf, BUFSIZ, stdin);
 		if (buf[0] == 0)
 			break;
 		dp->d_drivedata[i] = atol(buf);
