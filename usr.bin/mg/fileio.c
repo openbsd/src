@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.14 2001/05/23 22:36:14 art Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.15 2001/05/24 00:59:38 mickey Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -245,8 +245,7 @@ adjustname(fn)
 		fn++;
 		cp = getenv("HOME");
 		if (cp != NULL && *cp != '\0' && (*fn == '/' || *fn == '\0')) {
-			(void) strcpy(fnb, cp);
-			cp = fnb + strlen(fnb);
+			cp = fnb + strlcpy(fnb, cp, sizeof(fnb));
 			if (*fn)
 				fn++;
 			break;
@@ -256,8 +255,7 @@ adjustname(fn)
 				*cp++ = *fn++;
 			*cp = '\0';
 			if ((pwent = getpwnam(fnb)) != NULL) {
-				(void) strcpy(fnb, pwent->pw_dir);
-				cp = fnb + strlen(fnb);
+				cp = fnb + strlcpy(fnb, pwent->pw_dir, sizeof(fnb));
 				break;
 			} else {
 				fn -= strlen(fnb) + 1;
@@ -266,8 +264,7 @@ adjustname(fn)
 		}
 	default:
 #ifndef	NODIR
-		strcpy(fnb, wdir);
-		cp = fnb + strlen(fnb);
+		cp = fnb + strlcpy(fnb, wdir, sizeof(fnb));
 		break;
 #else
 		return fn;	/* punt */
@@ -419,27 +416,34 @@ dired_(dirname)
 	BUFFER *bp;
 	FILE   *dirpipe;
 	char    line[256];
+	int	len;
 
 	if ((dirname = adjustname(dirname)) == NULL) {
 		ewprintf("Bad directory name");
 		return NULL;
 	}
-	if (dirname[strlen(dirname) - 1] != '/')
-		(void) strcat(dirname, "/");
+	/* this should not be done, instead adjustname() should get a flag */
+	len = strlen(dirname);
+	if (dirname[len - 1] != '/') {
+		dirname[len++] = '/';
+		dirname[len] = '\0';
+	}
 	if ((bp = findbuffer(dirname)) == NULL) {
 		ewprintf("Could not create buffer");
 		return NULL;
 	}
 	if (bclear(bp) != TRUE)
 		return FALSE;
-	(void) strcpy(line, "ls -al ");
-	(void) strcpy(&line[7], dirname);
+	if (snprintf(line, sizeof(line), "ls -al %s", dirname) >= sizeof(line)){
+		ewprintf("Path too long");
+		return NULL;
+	}
 	if ((dirpipe = popen(line, "r")) == NULL) {
 		ewprintf("Problem opening pipe to ls");
 		return NULL;
 	}
 	line[0] = line[1] = ' ';
-	while (fgets(&line[2], 254, dirpipe) != NULL) {
+	while (fgets(&line[2], sizeof(line) - 2, dirpipe) != NULL) {
 		line[strlen(line) - 1] = '\0';	/* remove ^J	 */
 		(void) addline(bp, line);
 	}
@@ -578,17 +582,15 @@ make_file_list(buf)
 		if (current == NULL)
 			break;
 		if (snprintf(current->fl_name, sizeof(current->fl_name),
-		    "%s%s", prefixx, dent->d_name) > sizeof(current->fl_name)) {
+		    "%s%s%s", prefixx, dent->d_name, dent->d_type == DT_DIR?
+		    "/" : "") >= sizeof(current->fl_name)) {
 			free(current);
 			continue;
 		}
 		current->fl_l.l_next = last;
 		current->fl_l.l_name = current->fl_name;
 		last = (LIST *) current;
-		if (dent->d_type == DT_DIR) {
-			strcat(current->fl_name, "/");
-			continue;
-		} else if (dent->d_type != DT_UNKNOWN)
+		if (dent->d_type != DT_UNKNOWN)
 			continue;
 
 		statbuf.st_mode = 0;
@@ -598,7 +600,7 @@ make_file_list(buf)
 		}
 		if (stat(statname, &statbuf) < 0)
 			continue;
-		if (statbuf.st_mode & 040000)
+		if (statbuf.st_mode & S_IFDIR)
 			strcat(current->fl_name, "/");
 	}
 	closedir(dirp);
