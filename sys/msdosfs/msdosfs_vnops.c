@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.50 2005/03/01 14:24:33 tom Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.51 2005/03/01 14:29:01 tom Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -425,10 +425,10 @@ msdosfs_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	int error = 0;
-	int diff;
+	uint32_t diff;
 	int blsize;
 	int isadir;
-	long n;
+	uint32_t n;
 	long on;
 	daddr_t lbn;
 	daddr_t rablock;
@@ -449,14 +449,22 @@ msdosfs_read(v)
 
 	isadir = dep->de_Attributes & ATTR_DIRECTORY;
 	do {
+		if (uio->uio_offset >= dep->de_FileSize)
+			return (0);
+
 		lbn = de_cluster(pmp, uio->uio_offset);
 		on = uio->uio_offset & pmp->pm_crbomask;
 		n = min((uint32_t) (pmp->pm_bpcluster - on), uio->uio_resid);
-		diff = dep->de_FileSize - uio->uio_offset;
-		if (diff <= 0)
-			return (0);
+
+		/*
+		 * de_FileSize is uint32_t, and we know that uio_offset <
+		 * de_FileSize, so uio->uio_offset < 2^32.  Therefore
+		 * the cast to uint32_t on the next line is safe.
+		 */
+		diff = dep->de_FileSize - (uint32_t)uio->uio_offset;
 		if (diff < n)
 			n = diff;
+
 		/* convert cluster # to block # if a directory */
 		if (isadir) {
 			error = pcbmap(dep, lbn, &lbn, 0, &blsize);
