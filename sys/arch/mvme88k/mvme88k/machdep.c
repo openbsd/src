@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.43 2001/06/27 06:19:50 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.44 2001/07/01 23:27:52 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -168,6 +168,10 @@ volatile vm_offset_t kernelva;
 volatile vm_offset_t utilva;
 volatile vm_offset_t sramva;
 volatile vm_offset_t obiova;
+
+int ssir;
+int want_ast;
+int want_resched;
 
 int physmem;	  /* available physical memory, in pages */
 vm_offset_t avail_end, avail_start, avail_next;
