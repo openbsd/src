@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.16 2001/06/09 06:23:06 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.17 2001/06/09 06:27:08 angelos Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -36,23 +36,16 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
 #include <sys/syslog.h>
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
 
 #ifdef	INET
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
 #include <netinet/in_var.h>
-#include <netinet/ip.h>
 #include <netinet/in_gif.h>
 #endif	/* INET */
 
@@ -60,9 +53,6 @@
 #ifndef INET
 #include <netinet/in.h>
 #endif
-#include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>
 #endif /* INET6 */
 
