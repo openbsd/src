@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.1 2000/08/20 18:37:21 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.2 2000/08/20 19:11:01 millert Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd February 23, 1995
@@ -90,18 +90,12 @@ warn the user of this.
 Maximum file size limit.
 .\"
 .sp
-.It harduserlimit Ta bool Ta Dv false Ta
-Do not allow the user to log in if this session will be beyond
-the licensed number of simultaneous users.
-.\"
-.sp
 .It hushlogin Ta bool Ta Dv false Ta
 Same as having a
 .Pa $HOME/.hushlogin
 file.
 See
 .Xr login 8 .
-.\"
 .\"
 .sp
 .It ignorenologin Ta bool Ta Dv false Ta
