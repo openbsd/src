@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 
 #include <stdio.h>
