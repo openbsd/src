@@ -2,4 +2,3 @@
 #  XXX A Configure test is needed.
 
 $self->{CCFLAGS} = $Config{ccflags} . ' -DSTRUCT_TM_HASZONE' ;
-$self->{OPTIMIZE} = '-O1';
