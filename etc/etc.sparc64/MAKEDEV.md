@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.21 2002/05/16 21:11:21 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.22 2002/06/13 02:19:27 jason Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -100,7 +100,7 @@ divert(7)dnl
 dnl
 ramdisk)
 	_recurse std fd0 wd0 wd1 wd2 sd0 sd1 sd2 rd0
-	_recurse st0 cd0 random
+	_recurse st0 cd0 bpf0 random
 	;;
 
 _std(2, 3, 76, 7, 16)
