@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2000/06/30 02:37:21 rahnds Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2001/03/10 23:14:32 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -180,6 +180,12 @@ _C_LABEL(idle):
 	bne-	_C_LABEL(sw1)			/* at least one queue non-empty */
 	
 	ori	3,3,PSL_EE		/* reenable ints again */
+	mtmsr	3
+	isync
+	sync
+	/* low power mode */
+	mfmsr	3
+	oris	3, 3, PSL_POW@h
 	mtmsr	3
 	isync
 	

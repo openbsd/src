@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2001/03/04 05:10:57 brad Exp $ */
+/*	$OpenBSD: cpu.c,v 1.8 2001/03/10 23:14:32 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -41,6 +41,22 @@
 
 #include <machine/autoconf.h>
 
+#define MPC601          1
+#define MPC603          3
+#define MPC604          4
+#define MPC603e         6
+#define MPC603ev        7
+#define MPC750          8
+#define MPC604ev        9
+#define MPC7400         12
+#define MPC7400v         0x800c
+
+/* only valid on 603(e,ev) and G3, G4 */
+#define HID0_DOZE	(1 << (31-8))
+#define HID0_NAP	(1 << (31-9))
+#define HID0_SLEEP	(1 << (31-10))
+#define HID0_DPM	(1 << (31-11))
+
 char cpu_model[80];
 char machine[] = "powerpc";	/* cpu architecture */
 
@@ -77,7 +93,7 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	int cpu, pvr;
+	unsigned int cpu, pvr, hid0;
 	char name[32];
 	int qhandle, phandle;
 	unsigned int clock_freq = 0;
@@ -85,35 +101,32 @@ cpuattach(parent, dev, aux)
 	__asm__ ("mfpvr %0" : "=r"(pvr));
 	cpu = pvr >> 16;
 	switch (cpu) {
-	case 1:
+	case MPC601:
 		sprintf(cpu_model, "601");
 		break;
-	case 3:
+	case MPC603:
 		sprintf(cpu_model, "603");
 		break;
-	case 4:
+	case MPC604:
 		sprintf(cpu_model, "604");
 		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
+	case MPC603e:
 		sprintf(cpu_model, "603e");
 		break;
-	case 7:
+	case MPC603ev:
 		sprintf(cpu_model, "603ev");
 		break;
-	case 8:
+	case MPC750:
 		sprintf(cpu_model, "750");
 		break;
-	case 9:
+	case MPC604ev:
 		sprintf(cpu_model, "604ev");
 		break;
-	case 12:
+	case MPC7400:
 		sprintf(cpu_model, "7400(G4)");
 		break;
-	case 20:
-		sprintf(cpu_model, "620");
+	case MPC7400v:
+		sprintf(cpu_model, "7400v(G4?)");
 		break;
 	default:
 		sprintf(cpu_model, "Version %x", cpu);
@@ -147,8 +160,25 @@ cpuattach(parent, dev, aux)
 		printf(": %d Mhz", clock_freq);
 
 	}
+	/* power savings mode */
+	asm ("mfspr %0,1008" : "=r" (hid0));
+	switch (cpu) {
+	case MPC603:
+	case MPC603e:
+	case MPC750:
+	case MPC7400:
+	case MPC7400v:
+		/* select DOZE mode */
+		hid0 &= ~(HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_DOZE | HID0_DPM; 
+	}
+	printf("hid0 %x:",hid0);
+	asm ("mtspr %0,1008" : "=r" (hid0));
+
 	/* if processor is G3 or G4, configure l2 cache */ 
-	if  ( (cpu == 8) || (cpu == 12) ) {
+	if  ( (cpu == MPC750) || (cpu == MPC7400) 
+		|| (cpu == MPC7400v) )
+	{
 		config_l2cr();
 	}
 	printf("\n");
