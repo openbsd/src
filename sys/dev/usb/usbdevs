@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.111 2004/10/16 01:11:56 jsg Exp $
+$OpenBSD: usbdevs,v 1.112 2004/10/17 22:29:48 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -356,6 +356,7 @@ vendor DMI		0x0c0b	DMI
 vendor EASYDISK		0x0c76	EasyDisk
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
+vendor ABC		0x0d8c	ABC
 vendor MSI		0x0db0	Micro Star International
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology Inc.
@@ -624,8 +625,8 @@ product COREGA WLAN_USB_USB_11	0x000c	WirelessLAN USB-11
 product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 product COREGA WLANUSB		0x0012	Wireless LAN Stick-11
 product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
+product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
 product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
-
 /* Creative Labs products */
 product CREATIVE NOMAD_II	0x1002	Nomad II
 product CREATIVE NOMAD_IIMG	0x4004	Nomad II MG
