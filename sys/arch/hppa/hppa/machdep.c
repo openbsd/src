@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 2003/08/07 19:26:19 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.110 2003/08/07 19:54:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -175,7 +175,6 @@ void delay_init(void);
 static __inline void fall(int, int, int, int, int);
 void dumpsys(void);
 void hpmc_dump(void);
-void hppa_user2frame(struct trapframe *sf, struct trapframe *tf);
 
 /*
  * wide used hardware params
