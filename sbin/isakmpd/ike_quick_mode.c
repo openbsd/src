@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.88 2005/02/10 13:01:01 ho Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.89 2005/03/05 12:32:58 ho Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1038,7 +1038,6 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	struct sa      *isakmp_sa = msg->isakmp_sa;
 	struct ipsec_sa *isa = isakmp_sa->data;
 	struct hash    *hash = hash_get(isa->hash);
-	size_t          hashsize = hash->hashsize;
 	u_int8_t       *rest;
 	size_t          rest_len;
 	struct sockaddr *src, *dst;
@@ -1071,9 +1070,9 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 	prf_free(prf);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 80,
 	    "initiator_recv_HASH_SA_NONCE: computed HASH(2)", hash->digest,
-	    hashsize));
-	if (memcmp(hashp->p + ISAKMP_HASH_DATA_OFF, hash->digest, hashsize)
-	    != 0) {
+	    hash->hashsize));
+	if (memcmp(hashp->p + ISAKMP_HASH_DATA_OFF, hash->digest,
+	    hash->hashsize) != 0) {
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1,
 		    0);
 		return -1;
@@ -1276,20 +1275,19 @@ initiator_send_HASH(struct message *msg)
 	struct prf     *prf;
 	u_int8_t       *buf;
 	struct hash    *hash = hash_get(isa->hash);
-	size_t          hashsize = hash->hashsize;
 
 	/*
 	 * We want a HASH payload to start with.  XXX Share with
 	 * ike_main_mode.c?
 	 */
-	buf = malloc(ISAKMP_HASH_SZ + hashsize);
+	buf = malloc(ISAKMP_HASH_SZ + hash->hashsize);
 	if (!buf) {
 		log_error("initiator_send_HASH: malloc (%lu) failed",
-			  ISAKMP_HASH_SZ + (unsigned long)hashsize);
+			  ISAKMP_HASH_SZ + (unsigned long)hash->hashsize);
 		return -1;
 	}
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_HASH, buf,
-	    ISAKMP_HASH_SZ + hashsize, 1)) {
+	    ISAKMP_HASH_SZ + hash->hashsize, 1)) {
 		free(buf);
 		return -1;
 	}
@@ -1315,7 +1313,7 @@ initiator_send_HASH(struct message *msg)
 	prf->Final(buf + ISAKMP_GEN_SZ, prf->prfctx);
 	prf_free(prf);
 	LOG_DBG_BUF((LOG_NEGOTIATION, 90, "initiator_send_HASH: HASH(3)",
-	    buf + ISAKMP_GEN_SZ, hashsize));
+	    buf + ISAKMP_GEN_SZ, hash->hashsize));
 
 	if (ie->group)
 		message_register_post_send(msg, gen_g_xy);
@@ -1784,7 +1782,6 @@ responder_send_HASH_SA_NONCE(struct message *msg)
 	struct ipsec_sa *isa = isakmp_sa->data;
 	struct prf     *prf;
 	struct hash    *hash = hash_get(isa->hash);
-	size_t          hashsize = hash->hashsize;
 	size_t          nonce_sz = exchange->nonce_i_len;
 	u_int8_t       *buf;
 	int             initiator = exchange->initiator;
@@ -1797,14 +1794,14 @@ responder_send_HASH_SA_NONCE(struct message *msg)
 	 * We want a HASH payload to start with.  XXX Share with
 	 * ike_main_mode.c?
 	 */
-	buf = malloc(ISAKMP_HASH_SZ + hashsize);
+	buf = malloc(ISAKMP_HASH_SZ + hash->hashsize);
 	if (!buf) {
 		log_error("responder_send_HASH_SA_NONCE: malloc (%lu) failed",
-			  ISAKMP_HASH_SZ + (unsigned long)hashsize);
+			  ISAKMP_HASH_SZ + (unsigned long)hash->hashsize);
 		return -1;
 	}
 	if (message_add_payload(msg, ISAKMP_PAYLOAD_HASH, buf,
-				ISAKMP_HASH_SZ + hashsize, 1)) {
+	    ISAKMP_HASH_SZ + hash->hashsize, 1)) {
 		free(buf);
 		return -1;
 	}
@@ -1889,7 +1886,7 @@ responder_send_HASH_SA_NONCE(struct message *msg)
 	snprintf(header, sizeof header, "responder_send_HASH_SA_NONCE: "
 	    "HASH_%c", initiator ? 'I' : 'R');
 	LOG_DBG_BUF((LOG_NEGOTIATION, 80, header, buf + ISAKMP_HASH_DATA_OFF,
-		     hashsize));
+	    hash->hashsize));
 
 	if (ie->group)
 		message_register_post_send(msg, gen_g_xy);
