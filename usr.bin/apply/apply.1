@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.4 1996/09/27 13:52:47 deraadt Exp $
+.\"	$OpenBSD: apply.1,v 1.5 1998/04/28 07:42:59 deraadt Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -103,11 +103,14 @@ If this variable is not defined, the Bourne shell is used.
 .Sh EXAMPLES
 .Bl -tag -width apply -compact
 .It Li "apply echo a*"
-is similar to ls(1);
+is similar to
+.Xr ls 1 ;
 .It Li "apply \-2 cmp a1 b1 a2 b2 a3 b3"
 compares the `a' files to the `b' files;
 .It Li "apply \-0 who 1 2 3 4 5"
-runs who(1) 5 times; and
+runs
+.Xr who 1
+5 times; and
 .It Li "apply \'ln %1 /usr/joe\'" *
 links all files in the current directory to the directory
 .Pa /usr/joe .
