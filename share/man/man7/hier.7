@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.24 2001/05/30 03:08:50 millert Exp $
+.\"	$OpenBSD: hier.7,v 1.25 2001/05/31 02:50:46 millert Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -241,6 +241,12 @@ Archive libraries.
 Miscellaneous utility data files.
 .It Li libexec/
 System daemons and utilities (executed by other programs).
+.Pp
+.Bl -tag -width "auth/" -compact
+.It Li auth/
+Login scripts used to authenticate users (for BSD authentication).
+.El
+.Pp
 .It Li lkm/
 .It Li mdec/
 .It Li local/
