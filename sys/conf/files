@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.305 2004/06/20 17:19:26 itojun Exp $
+#	$OpenBSD: files,v 1.306 2004/06/22 22:53:51 millert Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -693,7 +693,15 @@ file net/slcompress.c			sl | ppp | strip
 file net/if_enc.c			enc			needs-count
 file net/if_gre.c			gre			needs-count
 #file net/if_ieee1394subr.c		ieee1394
-file net/if_ieee80211subr.c		wlan
+file net80211/ieee80211.c		wlan
+file net80211/ieee80211_compat.c	wlan
+file net80211/ieee80211_crypto.c	wlan
+file net80211/ieee80211_input.c		wlan
+file net80211/ieee80211_ioctl.c		wlan
+file net80211/ieee80211_node.c		wlan
+file net80211/ieee80211_output.c	wlan
+file net80211/ieee80211_proto.c		wlan
+file net80211/ieee80211_rssadapt.c	wlan
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
