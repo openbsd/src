@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.145 2003/05/12 17:49:03 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.146 2003/05/12 22:11:18 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,6 +51,10 @@ enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC };
 enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
 	  PF_CHANGE_ADD_BEFORE, PF_CHANGE_ADD_AFTER,
 	  PF_CHANGE_REMOVE, PF_CHANGE_GET_TICKET };
+/*
+ * Note about PFTM_*: real indices into pf_rule.timeout[] come before
+ * PFTM_MAX, special cases afterwards. See pf_state_expires().
+ */
 enum	{ PFTM_TCP_FIRST_PACKET, PFTM_TCP_OPENING, PFTM_TCP_ESTABLISHED,
 	  PFTM_TCP_CLOSING, PFTM_TCP_FIN_WAIT, PFTM_TCP_CLOSED,
 	  PFTM_UDP_FIRST_PACKET, PFTM_UDP_SINGLE, PFTM_UDP_MULTIPLE,
