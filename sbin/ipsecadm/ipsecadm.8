@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.15 1999/11/04 11:29:35 ho Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.16 1999/12/04 23:26:27 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -157,7 +157,6 @@ Association. Allowed modifiers are:
 .Fl transport ,
 .Fl sport ,
 .Fl dport ,
-.Fl local ,
 .Fl delete ,
 and
 .Fl bypass .
@@ -173,7 +172,6 @@ flows, additional modifiers are restricted to:
 .Fl transport ,
 .Fl sport ,
 .Fl dport ,
-.Fl local ,
 and
 .Fl delete .
 These flows always have SPI 0, destination 0.0.0.0 and protocol 0.
@@ -217,15 +215,8 @@ The modifiers have the following meanings:
 .It src
 The source IP address for the SA. This is necessary for incoming
 SAs to avoid source address spoofing between mutually
-suspicious hosts that have established SAs with us. For outgoing SAs, this
-field is used to slightly speedup packet processing. If this field is
-zero (0.0.0.0), no spoofing check will be done for incoming SAs, and an
-extra routing lookup may be necessary for certain classes of packets that
-originate from the local machine and make use of the SA. If present, the
-value of this field is used when doing IP-in-IP encapsulation (e.g., when
-the
-.Nm forcetunnel
-option has been specified.
+suspicious hosts that have established SAs with us. For outgoing SAs,
+this field is not currently used, however it must still be specified.
 .It dst
 The destination IP address for the SA.
 .It proxy
@@ -386,12 +377,6 @@ By default the source port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
-.It local
-The
-.Nm flow
-command also creates a flow which matches local packets. This is equivalent
-to using a source address of 0.0.0.0 and a source network mask of
-255.255.255.255.
 .It delete
 Instead of creating a flow, an existing flow is deleted.
 .It bypass
@@ -441,13 +426,13 @@ ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\
 .Pp
 Setup a flow using the above SA:
 .Bd -literal
-ipsecadm flow -dst 169.20.12.2 -spi 1001 -proto ah -local \e\ 
+ipsecadm flow -dst 169.20.12.2 -spi 1001 -proto ah \e\ 
 	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0.0
 .Ed
 .Pp
 Setup a bypass flow:
 .Bd -literal
-ipsecadm flow -bypass -local \e\ 
+ipsecadm flow -bypass \e\ 
 	-addr 10.1.1.0 255.255.255.0 10.1.1.0 255.255.255.0
 .Ed
 .Pp

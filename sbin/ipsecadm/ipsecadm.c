@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.25 1999/11/04 11:29:35 ho Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.26 1999/12/04 23:26:27 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -196,7 +196,6 @@ usage()
 	    "\t  -transport <val>\t\t protocol number for flow\n"
 	    "\t  -addr <ip> <net> <ip> <net>\t subnets for flow\n"
 	    "\t  -delete\t\t\t delete specified flow\n"
-	    "\t  -local\t\t\t also create a local flow\n"
 	    "\t  -bypass\t\t\t create/delete a bypass flow\n"
 	    "\t  -sport\t\t\t source port for flow\n"
 	    "\t  -dport\t\t\t destination port for flow\n"
@@ -608,7 +607,8 @@ main(int argc, char **argv)
 
 	if (!strcmp(argv[i] + 1, "local") && iscmd(mode, FLOW))
 	{
-	    sa.sadb_sa_flags |= SADB_X_SAFLAGS_LOCALFLOW;
+	    fprintf(stderr,
+		    "%s: Warning: option local has been deprecated\n", argv[0]);
 	    continue;
 	}
 
