@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.9 2003/01/07 09:00:33 kjc Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.10 2003/05/01 06:13:00 itojun Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ token_output(ifp, m0, dst, rt0)
 				rif = &bcastrif;
 				riflen = sizeof(rif->tr_rcf);
 			}
-			bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
+			bcopy((caddr_t)tokenbroadcastaddr, (caddr_t)edst,
 			    sizeof(edst));
 		}
 /*
@@ -238,7 +238,7 @@ token_output(ifp, m0, dst, rt0)
 				rif = &bcastrif;
 				riflen = sizeof(rif->tr_rcf);
 			}
-			bcopy((caddr_t)etherbroadcastaddr, (caddr_t)edst,
+			bcopy((caddr_t)tokenbroadcastaddr, (caddr_t)edst,
 			    sizeof(edst));
 		}
 		else {
