@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.18 2000/02/02 20:12:11 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.19 2000/02/05 02:22:54 deraadt Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -359,7 +359,6 @@ struct ifbrlconf {
 #define ifbrl_req ifbrl_ifbrlu.ifbrlu_req
 };
 .Ed
-=======
 .It Dv SIOCBRDGARL
 .Pq Li "struct ifbrlreq"
 Add a filtering rule to the bridge named in
