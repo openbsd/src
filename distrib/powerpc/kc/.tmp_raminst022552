@@ -1,6 +1,0 @@
-.include "/proj/openbsd/src/usr.sbin/chroot/Makefile"
-.if defined(PROG) && !defined(OBJS)
-OBJS=${PROG}.o
-.endif
-crunchgen_objs:
-	@echo 'OBJS= '${OBJS}

@@ -40,9 +40,6 @@ echo 'erase ^?, werase ^H, kill ^U, intr ^C'
 stty newcrt werase ^H intr ^C kill ^U erase ^? 9600
 echo ''
 
-# start running update, so that installed software is written as it goes.
-update
-
 # pull in the function definitions that people will use from the shell prompt.
 . /.commonutils
 . /.instutils

@@ -17,9 +17,7 @@ LINK	raminst			sbin/init
 LINK	raminst			sbin/mount
 LINK	raminst			sbin/mount_ffs
 LINK	raminst			sbin/reboot
-LINK	raminst			sbin/shutdown
 LINK	raminst			sbin/umount
-LINK	raminst			usr/bin/printf
 SPECIAL	/bin/rm raminst
 
 # copy the MAKEDEV script and make some devices
