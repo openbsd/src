@@ -1,11 +1,11 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * bit = ffs(value)
  */
 LEAF(ffs)
+	.set	noreorder
 	beq	a0, zero, 2f
 	move	v0, zero
 1:

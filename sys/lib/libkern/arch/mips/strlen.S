@@ -1,11 +1,11 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * strlen(str)
  */
 LEAF(strlen)
+	.set	noreorder
 	addu	v1, a0, 1
 1:
 	lb	v0, 0(a0)		# get byte from string

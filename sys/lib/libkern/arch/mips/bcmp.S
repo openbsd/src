@@ -1,11 +1,11 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * bcmp(s1, s2, n)
  */
 LEAF(bcmp)
+	.set	noreorder
 	blt	a2, 16, smallcmp	# is it worth any trouble?
 	xor	v0, a0, a1		# compare low two bits of addresses
 	and	v0, v0, 3
@@ -16,9 +16,8 @@ LEAF(bcmp)
 	beq	a3, zero, 1f
 	subu	a2, a2, a3		# subtract from remaining count
 	move	v0, v1			# init v0,v1 so unmodified bytes match
-/*XXX FIXME Endian dependent */
-	LWLO	v0, 0(a0)		# read 1, 2, or 3 bytes
-	LWLO	v1, 0(a1)
+	LWHI	v0, 0(a0)		# read 1, 2, or 3 bytes
+	LWHI	v1, 0(a1)
 	addu	a1, a1, a3
 	bne	v0, v1, nomatch
 	addu	a0, a0, a3
@@ -53,9 +52,8 @@ unalignedcmp:
 	subu	a2, a2, a3		#   which has to be >= (16-3) & ~3
 	addu	a3, a3, a0		# compute ending address
 3:
-/*XXX FIXME Endian dependent */
-	LWLO	v0, 0(a0)		# compare words a0 unaligned, a1 aligned
-	LWHI	v0, 3(a0)
+	LWHI	v0, 0(a0)		# compare words a0 unaligned, a1 aligned
+	LWLO	v0, 3(a0)
 	lw	v1, 0(a1)
 	addu	a0, a0, 4
 	bne	v0, v1, nomatch
@@ -78,5 +76,5 @@ match:
 	 move	v0, zero
 nomatch:
 	j	ra
-	 li	v0, 1
+	li	v0, 1
 END(bcmp)

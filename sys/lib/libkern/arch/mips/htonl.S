@@ -1,6 +1,5 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * netorder = htonl(hostorder)
@@ -8,6 +7,7 @@
  */
 LEAF(htonl)				# a0 = 0x11223344, return 0x44332211
 ALEAF(ntohl)
+	.set	noreorder
 	srl	v1, a0, 24		# v1 = 0x00000011
 	sll	v0, a0, 24		# v0 = 0x44000000
 	or	v0, v0, v1
@@ -17,5 +17,5 @@ ALEAF(ntohl)
 	srl	v1, a0, 8
 	and	v1, v1, 0xff00		# v1 = 0x00002200
 	j	ra
-	 or	v0, v0, v1
+	or	v0, v0, v1
 END(htonl)

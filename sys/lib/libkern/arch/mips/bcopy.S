@@ -1,17 +1,18 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * memcpy(to, from, len)
  * {ov}bcopy(from, to, len)
  */
 LEAF(memcpy)
+	.set	noreorder
 	move	v0, a0			# swap from and to
 	move	a0, a1
 	move	a1, v0
 ALEAF(bcopy)
 ALEAF(ovbcopy)
+	.set	noreorder
 	addu	t0, a0, a2		# t0 = end of s1 region
 	sltu	t1, a1, t0
 	sltu	t2, a0, a1
@@ -40,11 +41,10 @@ forward:
 
 	beq	a3, zero, 1f
 	subu	a2, a2, a3		# subtract from remaining count
-/*XXX FIXME Endian dependent */
-	LWLO	v1, 0(a0)		# get next 4 bytes (unaligned)
-	LWHI	v1, 3(a0)
+	LWHI	v1, 0(a0)		# get next 4 bytes (unaligned)
+	LWLO	v1, 3(a0)
 	addu	a0, a0, a3
-	SWLO	v1, 0(a1)		# store 1, 2, or 3 bytes to align a1
+	SWHI	v1, 0(a1)		# store 1, 2, or 3 bytes to align a1
 	addu	a1, a1, a3
 1:
 	and	v1, a2, 3		# compute number of words left
@@ -52,9 +52,8 @@ forward:
 	move	a2, v1
 	addu	a3, a3, a0		# compute ending address
 2:
-/*XXX FIXME Endian dependent */
-	LWLO	v1, 0(a0)		# copy words a0 unaligned, a1 aligned
-	LWHI	v1, 3(a0)
+	LWHI	v1, 0(a0)		# copy words a0 unaligned, a1 aligned
+	LWLO	v1, 3(a0)
 	addu	a0, a0, 4
 	sw	v1, 0(a1)
 	addu	a1, a1, 4
@@ -65,9 +64,9 @@ forward:
 aligned:
 	beq	a3, zero, 1f
 	subu	a2, a2, a3		# subtract from remaining count
-	LWLO	v1, 0(a0)		# copy 1, 2, or 3 bytes to align
+	LWHI	v1, 0(a0)		# copy 1, 2, or 3 bytes to align
 	addu	a0, a0, a3
-	SWLO	v1, 0(a1)
+	SWHI	v1, 0(a1)
 	addu	a1, a1, a3
 1:
 	and	v1, a2, 3		# compute number of whole words left
@@ -87,9 +86,8 @@ smallcpy:
 	lbu	v1, 0(a0)		# copy bytes
 	addu	a0, a0, 1
 	sb	v1, 0(a1)
-	addu	a1, a1, 1
 	bne	a0, a3, 1b
-	nop			# MMU BUG ? can't do -1(a1) at 0x80000000!!
+	addu	a1, a1, 1	# MMU BUG ? can't do -1(a1) at 0x80000000!!
 2:
 	j	ra
 	nop

@@ -1,11 +1,11 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
  */
 LEAF(strcmp)
+	.set	noreorder
 1:
 	lbu	t0, 0(a0)		# get two bytes and compare them
 	lbu	t1, 0(a1)

@@ -1,6 +1,5 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * netorder = htons(hostorder)
@@ -8,6 +7,7 @@
  */
 LEAF(htons)
 ALEAF(ntohs)
+	.set	noreorder
 	srl	v0, a0, 8
 	and	v0, v0, 0xff
 	sll	v1, a0, 8

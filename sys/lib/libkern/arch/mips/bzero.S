@@ -1,18 +1,18 @@
 #include "DEFS.h"
 
-	.set	noreorder
 
 /*
  * bzero(s1, n)
  */
 LEAF(bzero)
 ALEAF(blkclr)
+	.set	noreorder
 	blt	a1, 12, smallclr	# small amount to clear?
 	subu	a3, zero, a0		# compute # bytes to word align address
 	and	a3, a3, 3
 	beq	a3, zero, 1f		# skip if word aligned
 	subu	a1, a1, a3		# subtract from remaining count
-	SWLO	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
+	SWHI	zero, 0(a0)		# clear 1, 2, or 3 bytes to align
 	addu	a0, a0, a3
 1:
 	and	v0, a1, 3		# compute number of words left
