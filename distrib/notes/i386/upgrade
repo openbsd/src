@@ -121,7 +121,7 @@ To upgrade your system, follow the following instructions:
 	it is complete, you should use "halt" to halt the system.
 
 	When the system is halted, remove the "upgr22" floppy from
-	the floppy drive, and replace it with the OpenBSD 2.2
+	the floppy drive, and replace it with the OpenBSD 2.3
 	kernel-copy floppy that you previously booted from. Reboot
 	with that floppy.
 
@@ -150,10 +150,10 @@ To upgrade your system, follow the following instructions:
 	Once the system is halted, remove the kernel-copy floppy from
 	the floppy disk drive, and hit any key to reboot.
 
-Your system has now been upgraded to OpenBSD 2.2.
+Your system has now been upgraded to OpenBSD 2.3.
 
         After a new kernel has been copied to your hard disk, your
-	machine is a complete OpenBSD 2.2 system.  However, that
+	machine is a complete OpenBSD 2.3 system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.

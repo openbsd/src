@@ -22,7 +22,7 @@ following string at the "Run a program" prompt:
 to boot from an existing MSDOS FAT partition to which the ramdisk kernel
 have been copied. Or from the CD-ROM:
 
-	CD:\2.2\arc\bsd.rd
+	CD:\2.3\arc\bsd.rd
 
 Exact input to describe the device path varies. Consult your ARC-Bios manual
 for more information about the particular system.
@@ -83,13 +83,13 @@ So to boot the system to multiuser mode set:
 	OSLOADOPTIONS=Na
 
 
-Congratulations, you have successfully installed OpenBSD 2.2.  When you
+Congratulations, you have successfully installed OpenBSD 2.3.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the OpenBSD 2.2 distribution might need to be
+Some of the files in the OpenBSD 2.3 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like

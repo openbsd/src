@@ -1,15 +1,15 @@
-The ARC specific portion of the OpenBSD 2.2 release is found in the
+The ARC specific portion of the OpenBSD 2.3 release is found in the
 "arc" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.2/arc/
+.../2.3/arc/
 		INSTALL.arc	Installation notes; this file.
 
 		CKSUM		Output of the cksum(1) and md5(1) programs
 		MD5		usable for verification of the correctness
 				of downloaded files.
 
-		X11/		The X window system for OpenBSD/arc 2.2
+		X11/		The X window system for OpenBSD/arc 2.3
 
 		*.gz		ARC binary distribution sets;
 				see below.
@@ -30,12 +30,12 @@ The ARC ramdisk image is a bootable kernel+rootimage. This kernel is used
 when a system is installed for the first time. The file is in ECOFF format.
 
 The OpenBSD/arc binary distribution sets contain the binaries which
-comprise the OpenBSD 2.2 release for ARC systems. There are seven binary
+comprise the OpenBSD 2.3 release for ARC systems. There are seven binary
 distribution sets.  The binary distribution sets can be found in
-the "arc" subdirectory of the OpenBSD 2.2 distribution tree,
+the "arc" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	base22	The OpenBSD/arc 2.2 base binary distribution.  You
+	base22	The OpenBSD/arc 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It

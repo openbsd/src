@@ -104,13 +104,13 @@ to a long-standing bug, the preferences will not be saved unless you
 quit.
 
 If the system comes up, congratulations, you have successfully
-installed OpenBSD 2.2.  When you reboot into OpenBSD, you should log
+installed OpenBSD 2.3.  When you reboot into OpenBSD, you should log
 in as "root" at the login prompt.  There is no initial password, but
 if you're using the machine in a networked environment, you should
 create yourself an account and protect it and the "root" account with
 good passwords.
 
-Some of the files in the OpenBSD 2.2 distribution might need to be
+Some of the files in the OpenBSD 2.3 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with

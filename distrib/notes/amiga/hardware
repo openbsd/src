@@ -1,4 +1,4 @@
-OpenBSD/amiga 2.2 runs on any amiga that has a 68020, 68030, 68040 or
+OpenBSD/amiga 2.3 runs on any amiga that has a 68020, 68030, 68040 or
 68060 CPU with some form of FPU and MMU.  It should also run on
 MacroSystem's DraCo computer.  The minimal configuration requires 4M of
 RAM and about 55M of disk space.  To install the entire system requires

@@ -1,4 +1,4 @@
-To upgrade to OpenBSD 2.2 from a previous version, you should follow the
+To upgrade to OpenBSD 2.3 from a previous version, you should follow the
 instructions on installing the system beginning with using the MacBSD
 Install Utility.  All you need do is copy each of the distribution sets in
 over your current system from the MacOS.

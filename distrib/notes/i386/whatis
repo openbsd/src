@@ -1,3 +1,3 @@
-For the i386, OpenBSD 2.2 brings greater stability and security.  As a
+For the i386, OpenBSD 2.3 brings greater stability and security.  As a
 side effect of the full security audit, many userland programs have
 been significantly cleaned up and debugged.

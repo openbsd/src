@@ -47,6 +47,6 @@ ftp://lager.ucs.ualberta.ca/pub/OpenBSD ==
 ftp://obsd.compmore.net/pub/OpenBSD ==
 	ftp://ftp2.ca.openbsd.org/pub/OpenBSD
 
-As well, the file ftp://ftp.openbsd.org/pub/OpenBSD/2.2/ftplist
+As well, the file ftp://ftp.openbsd.org/pub/OpenBSD/2.3/ftplist
 contains a list which is continually updated.  If you wish to become a
 distribution site for OpenBSD, contact deraadt@cvs.openbsd.org.

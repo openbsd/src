@@ -202,11 +202,11 @@ process again from scratch.
 		       ftp if you are using a proxy.
 		    3) The IP address (or hostname if you enabled
 		       DNS earlier in the install) of an ftp server
-		       carrying the OpenBSD 2.2 distribution.
+		       carrying the OpenBSD 2.3 distribution.
 		       If you don't know, just hit return when
 		       asked if you want to see a list of such hosts.
 		    4) The ftp directory holding the distribution sets.
-		       The default value of pub/OpenBSD/2.2/i386
+		       The default value of pub/OpenBSD/2.3/i386
 		       is almost always correct.
 		    5) The login and password for the ftp account.
 		       The default will be correct unless you are
@@ -225,7 +225,7 @@ process again from scratch.
 		       (assuming you have a proxy available to use).
 		    3) The IP address (or hostname if you enabled
 		       DNS earlier in the install) of an http server
-		       carrying the OpenBSD 2.2 distribution.
+		       carrying the OpenBSD 2.3 distribution.
 		       If you don't know, just hit return when
 		       asked if you want to see a list of such hosts.
 		    4) The directory holding the distribution sets.
@@ -268,7 +268,7 @@ process again from scratch.
 
 		You will also have to provide the relative path to the
 		directory on the CD which holds the distribution, for the
-		i386 this is "2.2/i386".
+		i386 this is "2.3/i386".
 
 		For instructions on how to complete the installation from
 		the CD-ROM distribution, see the section named "Common
@@ -362,13 +362,13 @@ process again from scratch.
 	at least the "base22" and "etc22" distribution sets.
 
 
-Congratulations, you have successfully installed OpenBSD 2.2.  When you
+Congratulations, you have successfully installed OpenBSD 2.3.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the OpenBSD 2.2 distribution might need to be
+Some of the files in the OpenBSD 2.3 distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with

@@ -1,5 +1,5 @@
-The upgrade to OpenBSD 2.2 is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 2.2 sources, and
+The upgrade to OpenBSD 2.3 is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the 2.3 sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.
 
@@ -32,7 +32,7 @@ To upgrade your system, follow the following instructions:
 	partition used by OpenBSD for swapping, as described in the
 	"Preparing your System for OpenBSD Installation" section above.
 
-	Now boot up OpenBSD using the 2.2 kernel using the loadbsd
+	Now boot up OpenBSD using the 2.3 kernel using the loadbsd
 	command:
 
 		loadbsd -b bsd
@@ -48,7 +48,7 @@ To upgrade your system, follow the following instructions:
 
 	Ramdisk installation:
 
-	Now boot up OpenBSD using the 2.2 kernel using the loadbsd
+	Now boot up OpenBSD using the 2.3 kernel using the loadbsd
 	command:
 
 		loadbsd bsd.rd
@@ -95,9 +95,9 @@ To upgrade your system, follow the following instructions:
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS).
 
-Your system has now been upgraded to OpenBSD 2.2.
+Your system has now been upgraded to OpenBSD 2.3.
 
-	After all this, your machine is a complete OpenBSD 2.2 system.
+	After all this, your machine is a complete OpenBSD 2.3 system.
 	However, that doesn't mean that you're finished with the upgrade
 	process.  There are several things that you should do, or might
 	have to do, to insure that the system works properly.

@@ -1,4 +1,4 @@
-OpenBSD/mvme68k 2.2 runs on the following classes of machines:
+OpenBSD/mvme68k 2.3 runs on the following classes of machines:
 	- MVME147 - Motorola with 68030 and 68881
 	- MVME162 - Motorola with 68040
 	- MVME167 - Motorola with 68040

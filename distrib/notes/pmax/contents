@@ -1,8 +1,8 @@
-The pmax-specific portion of the OpenBSD 2.2 release is found in the
+The pmax-specific portion of the OpenBSD 2.3 release is found in the
 "pmax" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.2/pmax/
+.../2.3/pmax/
 		INSTALL.pmax	Installation notes; this file.
 
 		*.gz		pmax binary distribution sets;
@@ -13,19 +13,19 @@ out as follows:
 
 There is a pmax simpleroot image named simpleroot22.fs (it is usually
 compressed using gzip - simpleroot22.fs.gz - so you need gunzip first
-to uncompress it) subdirectory of the OpenBSD 2.2 distribution.  This
+to uncompress it) subdirectory of the OpenBSD 2.3 distribution.  This
 file you can dump onto a disk and boot from it to start the installation
 of OpenBSD/pmax. Also there is a simpleroot22.tar.gz file there.  It
 can be used as root area on the NFS server if you plan to install via
 network.
 
 The OpenBSD/pmax binary distribution sets contain the binaries which
-comprise the OpenBSD 2.2 release for the pmax.  There are seven binary
+comprise the OpenBSD 2.3 release for the pmax.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-subdirectories of the "pmax/bins" subdirectory of the OpenBSD 2.2
+subdirectories of the "pmax/bins" subdirectory of the OpenBSD 2.3
 distribution tree, and are as follows:
 
-	base22	The OpenBSD/pmax 2.2 base binary distribution.  You
+	base22	The OpenBSD/pmax 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It

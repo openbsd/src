@@ -1,9 +1,9 @@
-OpenBSD/arc 2.2 runs on the following classes of machines:
+OpenBSD/arc 2.3 runs on the following classes of machines:
 	- Acer PICA61 (RISC-PC) Systems.
 	- Deskstation rPC44.
 	- Deskstation Tyne.
 
-OpenBSD/pmax 2.2 does *not* (yet) run on these machines:
+OpenBSD/pmax 2.3 does *not* (yet) run on these machines:
 	- Mips Magnum
 	- Olivetti systems.
 	- SNI RMxxx machines.

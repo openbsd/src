@@ -1,4 +1,4 @@
-To upgrade to OpenBSD 2.2 from a previous version start with the general
+To upgrade to OpenBSD 2.3 from a previous version start with the general
 instructions in the section "Installing OpenBSD".
 
 If you are upgrading with the miniroot or the new single floppy image,

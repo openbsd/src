@@ -1,12 +1,12 @@
-OpenBSD/sparc 2.2 is brought to you by the same people who did the first
+OpenBSD/sparc 2.3 is brought to you by the same people who did the first
 free BSD sparc port (based on Chris Torek's 4.4BSD work).  Many more sparc
 models and devices are now supported.
 
-In addition to the providing SunOS 4.1 compatibility, OpenBSD 2.2 will
+In addition to the providing SunOS 4.1 compatibility, OpenBSD 2.3 will
 also run some number of SunOS 5 (SVR4) executables in binary emulation mode.
 
 OpenBSD/sparc has gone though several development cycles since it's origin,
-but the OpenBSD/sparc 2.2 release should be considered as "under active
+but the OpenBSD/sparc 2.3 release should be considered as "under active
 development" rather than a production ready release.  There are still known
 problems with the kernel and missing support for some common devices.
 

@@ -1,8 +1,8 @@
-The mvme68k-specific portion of the OpenBSD 2.2 release is found in the
+The mvme68k-specific portion of the OpenBSD 2.3 release is found in the
 "mvme68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.2/mvme68k/
+.../2.3/mvme68k/
 		INSTALL.mvme68k	this document
 
 		CKSUM		Output of the cksum(1) and md5(1) programs
@@ -20,12 +20,12 @@ out as follows:
 				installation.
 
 The OpenBSD/mvme68k binary distribution sets contain the binaries which
-comprise the OpenBSD 2.2 release for the mvme68k.  There are seven binary
+comprise the OpenBSD 2.3 release for the mvme68k.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-the "mvme68k" subdirectory of the OpenBSD 2.2 distribution tree,
+the "mvme68k" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	base22	The OpenBSD/mvme68k 2.2 base binary distribution.  You
+	base22	The OpenBSD/mvme68k 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It

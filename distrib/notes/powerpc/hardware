@@ -1,4 +1,4 @@
-OpenBSD/powerpc 2.2 runs on ISA (AT-Bus), and PCI buses
+OpenBSD/powerpc 2.3 runs on ISA (AT-Bus), and PCI buses
 with 603, 603e, 604, 604e processors.
 Only systems with openfirmware are supported.
 Has been tested on various Motorola (MCG) boards:

@@ -1,8 +1,8 @@
-The sparc-specific portion of the OpenBSD 2.2 release is found in the
+The sparc-specific portion of the OpenBSD 2.3 release is found in the
 "sparc" subdirectory of the distribution.  That subdirectory is organized
 as follows:
 
-.../2.2/sparc/
+.../2.3/sparc/
 		INSTALL.sparc	Installation notes; this file
 
                 kc22.fs		The sparc boot floppy; see below.
@@ -15,7 +15,7 @@ as follows:
 		MD5		usable for verification of the correctness
 				of downloaded files.
 
-		X11/		The X window system for OpenBSD/sparc 2.2
+		X11/		The X window system for OpenBSD/sparc 2.3
                                   
 		*.tar.gz	sparc binary distribution sets;
 				see below.
@@ -74,25 +74,25 @@ Bootable installation/upgrade floppies:
   upgr22.fs
 	This disk contains a file system, and has holds the utilities 
 	needed in order to upgrade an existing OpenBSD (or NetBSD) system
-	to a minimal working OpenBSD 2.2 system.
+	to a minimal working OpenBSD 2.3 system.
 
   floppy22.fs
 	This disk contains a compressed ramdisk filesystem, and holds
-        all utilities needed to install or upgrade to OpenBSD 2.2
+        all utilities needed to install or upgrade to OpenBSD 2.3
   
   miniroot22.fs
 	This is a miniroot filesystem image which can be copied to the
 	swap partition of an existing OpenBSD, NetBSD, Linux, SunOS, 
-	or Solaris installation to allow upgrading to OpenBSD 2.2
+	or Solaris installation to allow upgrading to OpenBSD 2.3
 
 
 The OpenBSD/sparc binary distribution sets contain the binaries which
-comprise the OpenBSD 2.2 release for the sparc.  There are seven binary
+comprise the OpenBSD 2.3 release for the sparc.  There are seven binary
 distribution sets.  These binary distribution sets can be found in
-the "sparc" subdirectory of the OpenBSD 2.2 distribution tree,
+the "sparc" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	base22	The OpenBSD/sparc 2.2 base binary distribution.  You
+	base22	The OpenBSD/sparc 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the system
 		to run and be minimally functional.  It includes shared

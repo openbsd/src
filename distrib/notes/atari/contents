@@ -1,8 +1,8 @@
-The Atari-specific portion of the OpenBSD 2.2 release is found in the
+The Atari-specific portion of the OpenBSD 2.3 release is found in the
 "atari" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.2/atari/
+.../2.3/atari/
 		INSTALL.atari	This file.
 
 		bins/		atari binary distribution sets;
@@ -17,7 +17,7 @@ out as follows:
 				installation section, below.
 
 There are three atari floppy images to be found in the "atari/floppies"
-subdirectory of the OpenBSD 2.2 distribution.  One of them is a
+subdirectory of the OpenBSD 2.3 distribution.  One of them is a
 bootable TOS kernel floppy and the other two are installation floppy's.
 They are described in more detail below.  There are gzipped versions
 of each available, for easier downloading.  (The gzipped version
@@ -45,12 +45,12 @@ Installation floppy:
 	This floppy's are named "inst-22.fs.1" and "inst-22.fs.2".
 
 The OpenBSD/atari binary distribution sets contain the binaries which
-comprise the OpenBSD 2.2 release for the atari.  There are seven binary
+comprise the OpenBSD 2.3 release for the atari.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "atari/bins"
-subdirectory of the OpenBSD 2.2 distribution tree, and are as follows:
+subdirectory of the OpenBSD 2.3 distribution tree, and are as follows:
 
-	base22	The OpenBSD/atari 2.2 base binary distribution.  You
+	base22	The OpenBSD/atari 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It

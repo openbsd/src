@@ -1,8 +1,8 @@
-The pc532-specific portion of the OpenBSD 2.2 release is found in the
+The pc532-specific portion of the OpenBSD 2.3 release is found in the
 "pc532" subdirectory of the distribution.  That subdirectory contains
 the files as follows:
 
-.../2.2/pc532/
+.../2.3/pc532/
 
 	INSTALL.pc532		Installation notes; this file.
 
@@ -10,7 +10,7 @@ the files as follows:
 	MD5			usable for verification of the correctness
 				of downloaded files.
 
-	X11/			The X window system for OpenBSD/pc532 2.2
+	X11/			The X window system for OpenBSD/pc532 2.3
 
 	floppy22.fs		The pc532 boot and installation floppy;
 				see below.
@@ -24,13 +24,13 @@ the files as follows:
 
 
 The OpenBSD/pc532 binary distribution sets contain the binaries which
-comprise the OpenBSD 2.2 release for the pc532.  There are seven binary
+comprise the OpenBSD 2.3 release for the pc532.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-the "pc532" subdirectory of the OpenBSD 2.2 distribution tree,
+the "pc532" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
 	base22
-		The OpenBSD/pc532 2.2 base binary distribution.  You
+		The OpenBSD/pc532 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It

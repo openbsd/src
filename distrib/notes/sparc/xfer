@@ -40,7 +40,7 @@ Creating a bootable floppy disk using DOS/Windows:
 
 	First you need to get access to the OpenBSD Bootable floppy
 	images.  If you can access the CD-ROM distribution under DOS
-	the bootable disks are in the 2.2/sparc directory, otherwise
+	the bootable disks are in the 2.3/sparc directory, otherwise
 	you you will have to download them from one of the OpenBSD
 	ftp or http mirror sites, using ftp or a web-viewer.  In either
 	case, take care to do "binary" transfers, since these are
@@ -228,7 +228,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 
 	And then:
 
-	cd .../2.2/sparc
+	cd .../2.3/sparc
 	sh -x /tmp/maketape
 
 

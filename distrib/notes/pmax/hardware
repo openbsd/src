@@ -1,11 +1,11 @@
-OpenBSD/pmax 2.2 runs on the following classes of machines:
+OpenBSD/pmax 2.3 runs on the following classes of machines:
 	- Decstation 2100 and 3100, also known as "pmin" and  "pmax" 
 	- Personal Decstations (5000/20, and /25)  also known as "MAXINE"
 	- Decstation 5000/120, /125, and /133, also known as "3MIN"
 	- Decstation 5000/200, also known as "3MAX"
 	- Decstation 5000/240, also known as "3MAXPLUS"
 
-OpenBSD/pmax 2.2 does *not* (yet) run on these machines:
+OpenBSD/pmax 2.3 does *not* (yet) run on these machines:
 	- Decstation 5100 (an r2000-based cousin of the Decstation 3100)
 	- Decsystem 5400 and 5500 (Qbus-based systems, similar to a
 	  Vax 'Mayfair' and 'Mayfair II', but with an r2000a or r3000

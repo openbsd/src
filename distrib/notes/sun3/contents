@@ -1,8 +1,8 @@
-The sun3-specific portion of the OpenBSD 2.2 release is found in the
+The sun3-specific portion of the OpenBSD 2.3 release is found in the
 "sun3" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.2/sun3/
+.../2.3/sun3/
 		INSTALL.sun3	Installation notes; this file.
 
 		install/	Boot programs, a GENERIC kernel,
@@ -40,12 +40,12 @@ to support installation "over the network".  See the section "Getting
 the OpenBSD System onto Useful Media" for instructions on either method.
 
 The OpenBSD/sun3 binary distribution sets contain the binaries which
-comprise the OpenBSD 2.2 release for the sun3.  There are seven binary
+comprise the OpenBSD 2.3 release for the sun3.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-the "sun3" subdirectory of the OpenBSD 2.2 distribution tree,
+the "sun3" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	base22	The OpenBSD/sun3 2.2 base binary distribution.  You
+	base22	The OpenBSD/sun3 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It

@@ -1,4 +1,4 @@
-INSTALLATION NOTES for OpenBSD/MACHINE 2.2
+INSTALLATION NOTES for OpenBSD/MACHINE 2.3
 
 
 What is OpenBSD?
@@ -21,7 +21,7 @@ information-gathering problems.  Tools like ipf, ipnat, and nc have
 been added to the tree because security conscious people often need
 them.
 
-OpenBSD 2.2 has significantly enhanced the binary emulation subsystem
+OpenBSD 2.3 has significantly enhanced the binary emulation subsystem
 (which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
 compatibility) and several kernel subsystems have been generalized to
 support this more readily.  The binary emulation strategy is aimed at
@@ -34,7 +34,7 @@ has entered US.  Because of this, take care NOT to get the distrib-
 ution from an FTP server in the US if you are outside of Canada and
 the US.
 
-Many new user programs have been added in OpenBSD 2.2, as well,
+Many new user programs have been added in OpenBSD 2.3, as well,
 bringing it closer to our goal of supplying a complete and modern
 UN*X-like environment.  Tools like perl and ksh are standard, as are
 numerous other useful tools.
@@ -46,12 +46,12 @@ Sources of OpenBSD:
 
 #include "mirrors"
 
-OpenBSD 2.2 Release Contents:
+OpenBSD 2.3 Release Contents:
 -----------------------------
 
-The OpenBSD 2.2 release is organized in the following way.  In the
-.../2.2 directory, there is one sub-directory per architecture, for
-each of the architectures that OpenBSD 2.2 has a binary distribution
+The OpenBSD 2.3 release is organized in the following way.  In the
+.../2.3 directory, there is one sub-directory per architecture, for
+each of the architectures that OpenBSD 2.3 has a binary distribution
 for.  That is described further along in this document).
 
 #include "contents"

@@ -73,22 +73,22 @@ see the welcome screen as shown in the "tape boot" section
 above.  You must configure the network interface before you
 can use any network resources.  For example the command:
 
-	ssh> ifconfig le0 inet 192.233.20.198 up
+	ssh> ifconfig le0 inet 192.333.20.198 up
 
 will bring up the network interface with that address.  The next
 step is to copy the miniroot from your server.  This can be done
 using either NFS or remote shell.  (In the examples that follow,
-the server has IP address 192.233.20.195)
+the server has IP address 192.333.20.195)
 
 To load the miniroot from an NFS file:
 
-	ssh> mount -r 192.233.20.195:/server/path /mnt
+	ssh> mount -r 192.333.20.195:/server/path /mnt
 	ssh> dd if=/mnt/miniroot of=/dev/rsd0b bs=8k
 
 To load the miniroot using rsh to the server:
 
 	ssh> run -b dd if=/dev/pipe of=/dev/rsd0b bs=8k
-	ssh> run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz
+	ssh> run -o /dev/pipe rsh 192.333.20.195 zcat miniroot.gz
 
 Note that "ssh" does not use "sh" syntax.  It is a very small
 shell designed for the ramdisk kernel.  The first command of the

@@ -32,7 +32,7 @@ following:
 	minimum installation to a new disk), you would do the
 	following:
 
-		cd .../2.2		# the top of the tree
+		cd .../2.3		# the top of the tree
 		cd hp300
 		tar cf <tape_device> base22.tar.gz etc22.tar.gz
 

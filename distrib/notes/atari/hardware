@@ -1,4 +1,4 @@
-OpenBSD/atari 2.2 runs on a TT030 and a Falcon. Currently an FPU is
+OpenBSD/atari 2.3 runs on a TT030 and a Falcon. Currently an FPU is
 required, although this might change in the (near) future. The
 minimum amount of RAM required is 4Mb.
 

@@ -1,4 +1,4 @@
-OpenBSD/i386 2.2 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
+OpenBSD/i386 2.3 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
 does NOT support MCA systems, such as some IBM PS/2 systems.  The
 minimal configuration is said to require 4M of RAM and 50M of disk space,

@@ -1,8 +1,8 @@
-The mac68k-specific portion of the OpenBSD 2.2 release is found in the
+The mac68k-specific portion of the OpenBSD 2.3 release is found in the
 "mac68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../2.2/mac68k/
+.../2.3/mac68k/
 		INSTALL.mac68k	This file
 
 		CKSUM		Output of the cksum(1) and md5(1) programs
@@ -17,12 +17,12 @@ out as follows:
 		utils/		The mac68k installation utilities for MacOS.
 
 The OpenBSD/mac68k binary distribution sets contain all the binaries which
-comprise the OpenBSD 2.2 release for the mac68k.  There are seven binary
+comprise the OpenBSD 2.3 release for the mac68k.  There are seven binary
 distribution sets.  The binary distribution sets can be found in
-the "mac68k" subdirectory of the OpenBSD 2.2 distribution tree,
+the "mac68k" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	bsd-generic.tar.gz	The OpenBSD/mac68k 2.2 kernel binary.  You MUST
+	bsd-generic.tar.gz	The OpenBSD/mac68k 2.3 kernel binary.  You MUST
 		install this file.  It is the kernel that you need
 		to boot the system.
 		[ 1.4M uncompressed ]
@@ -35,7 +35,7 @@ and are as follows:
 		or bsd22.tar.gz.
 		[ 1.4M uncompressed ]
 
-	base22.tar.gz	The OpenBSD/mac68k 2.2 base binary distribution.  You
+	base22.tar.gz	The OpenBSD/mac68k 2.3 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -92,7 +92,7 @@ and are as follows:
 		system functions as reading manual pages.
 		[ 946K gzipped, 3.5M uncompressed ]
 
-The directory '../2.2/mac68k/utils' contains a number of utilities for the
+The directory '../2.3/mac68k/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in
 this directory are as follows:
 
