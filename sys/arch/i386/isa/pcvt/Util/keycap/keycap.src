@@ -567,6 +567,16 @@ s2|sweden2|Swedish 8bit mapping ISO 8859-1:\
 	:A45=|:\
 	:C61=\000:
 
+# from codrv, untested
+# Swedish keyboard map with national characters.
+# Paul Pries, 5322@msg.abc.se
+# Corrected by Mats O Jansson, moj@stacken.kth.se (Some national was CP850
+# and not ISO 8859-1 as said).
+s8|sweden8|Swedish 8bit mapping ISO 8859-1 and not CP850 national characters:\
+	:A8={:A9=[:A10=]:A11=}:A12=\\:\
+	:K40=\366:S40=\326:K41=\344:S41=\304:K27=\345:S27=\305:\
+	:tc=sweden2:
+
 #
 # tg: my idiosyncratic mappings (thomas@ghpc8.ihf.rwth-aachen.de)
 #
