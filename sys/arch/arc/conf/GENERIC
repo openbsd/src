@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 1997/04/29 05:16:41 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.16 1997/04/29 08:13:40 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -105,8 +105,8 @@ lpt0		at algor?
 
 pci*		at pbcpcibr?
 
-ncr*		at pci? dev ? function ?
-scsibus* 	at ncr?
+#ncr*		at pci? dev ? function ?
+#scsibus* 	at ncr?
 de*		at pci? dev ? function ?
 
 #### ISA Bus.
