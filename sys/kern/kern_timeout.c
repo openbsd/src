@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.16 2003/04/13 21:04:52 tedu Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -177,7 +177,7 @@ timeout_add(struct timeout *new, int to_ticks)
 	 * and let it be rescheduled later.
 	 */
 	if (new->to_flags & TIMEOUT_ONQUEUE) {
-		if (new->to_time < old_time) {
+		if (new->to_time - ticks < old_time - ticks) {
 			CIRCQ_REMOVE(&new->to_list);
 			CIRCQ_INSERT(&new->to_list, &timeout_todo);
 		}
