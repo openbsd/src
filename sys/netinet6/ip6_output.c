@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.38 2001/05/28 05:28:22 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.39 2001/05/28 06:45:32 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -526,48 +526,6 @@ skip_ipsec2:;
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_addr = ip6->ip6_dst;
 	}
-#if 0 /*KAME IPSEC*/
-	if (needipsec && needipsectun) {
-		struct ipsec_output_state state;
-
-		bzero(&exthdrs, sizeof(exthdrs));
-		exthdrs.ip6e_ip6 = m;
-
-		bzero(&state, sizeof(state));
-		state.m = m;
-		state.ro = (struct route *)ro;
-		state.dst = (struct sockaddr *)dst;
-
-		error = ipsec6_output_tunnel(&state, sp, flags);
-
-		m = state.m;
-		ro = (struct route_in6 *)state.ro;
-		dst = (struct sockaddr_in6 *)state.dst;
-		if (error) {
-			/* mbuf is already reclaimed in ipsec6_output_tunnel. */
-			m0 = m = NULL;
-			m = NULL;
-			switch (error) {
-			case EHOSTUNREACH:
-			case ENETUNREACH:
-			case EMSGSIZE:
-			case ENOBUFS:
-			case ENOMEM:
-				break;
-			default:
-				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
-			case ENOENT:
-				/* don't show these error codes to the user */
-				error = 0;
-				break;
-			}
-			goto bad;
-		}
-
-		exthdrs.ip6e_ip6 = m;
-	}
-#endif /*IPSEC*/
 #ifdef IPSEC
 	/*
 	 * Check if the packet needs encapsulation.
@@ -589,8 +547,8 @@ skip_ipsec2:;
 				ip6->ip6_hlim = opt->ip6po_hlim & 0xff;
 
 			/*
-			 * XXX what should we do if ip6_hlim == 0 and the packet
-			 * gets tunnelled?
+			 * XXX what should we do if ip6_hlim == 0 and the
+			 * packet gets tunnelled?
 			 */
 		}
 
