@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2004/02/07 17:00:12 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -124,8 +124,6 @@
 #include <sys/syscall.h>
 
 #include <machine/param.h>
-#include <machine/pte.h>
-#include <machine/pmap.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>

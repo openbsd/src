@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 2004/01/28 01:39:38 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2004/02/07 17:00:12 miod Exp $
 
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
@@ -12,11 +12,13 @@ include <uvm/uvm.h>
 
 include <machine/trap.h>
 include <machine/pmap.h>
+include <machine/pte.h>
 include <machine/vmparam.h>
 include <machine/intr.h>
 
 export	SRUN
 
+export	L4_SLOT_KERNBASE
 define	L3_SLOT_KERNBASE	pl3_pi(KERNBASE)
 define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
 define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
@@ -120,3 +122,16 @@ member	ih_arg
 member	ih_next
 member	ih_level
 
+# pte fields
+export	PG_V
+export	PG_KR
+export	PG_KW
+export	PG_N
+export	PG_NX
+
+# pmap constants
+export	PDIR_SLOT_PTE
+
+export	NKL4_KIMG_ENTRIES
+export	NKL3_KIMG_ENTRIES
+export	NKL2_KIMG_ENTRIES

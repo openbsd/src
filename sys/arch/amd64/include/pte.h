@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.2 2004/02/06 00:23:21 deraadt Exp $	*/
+/*	$OpenBSD: pte.h,v 1.3 2004/02/07 17:00:15 miod Exp $	*/
 /*	$NetBSD: pte.h,v 1.1 2003/04/26 18:39:47 fvdl Exp $	*/
 
 /*
@@ -87,10 +87,10 @@ typedef u_int64_t pt_entry_t;		/* PTE */
 #define	NBPD_L3		(1ULL << L3_SHIFT) /* # bytes mapped by L3 ent (1G) */
 #define	NBPD_L4		(1ULL << L4_SHIFT) /* # bytes mapped by L4 ent (512G) */
 
-#define L4_MASK		0x0000ff8000000000
-#define L3_MASK		0x0000007fc0000000
-#define L2_MASK		0x000000003fe00000
-#define L1_MASK		0x00000000001ff000
+#define L4_MASK		0x0000ff8000000000UL
+#define L3_MASK		0x0000007fc0000000UL
+#define L2_MASK		0x000000003fe00000UL
+#define L1_MASK		0x00000000001ff000UL
 
 #define L4_FRAME	L4_MASK
 #define L3_FRAME	(L4_FRAME|L3_MASK)
@@ -101,30 +101,30 @@ typedef u_int64_t pt_entry_t;		/* PTE */
  * PDE/PTE bits. These are no different from their i386 counterparts.
  */
 
-#define	PG_V		0x0000000000000001	/* valid */
-#define	PG_RO		0x0000000000000000	/* read-only */
-#define	PG_RW		0x0000000000000002	/* read-write */
-#define	PG_u		0x0000000000000004	/* user accessible */
-#define	PG_PROT		0x0000000000000006
-#define	PG_N		0x0000000000000018	/* non-cacheable */
-#define	PG_U		0x0000000000000020	/* used */
-#define	PG_M		0x0000000000000040	/* modified */
-#define PG_PS		0x0000000000000080	/* 2MB page size */
-#define PG_G		0x0000000000000100	/* not flushed */
-#define PG_AVAIL1	0x0000000000000200
-#define PG_AVAIL2	0x0000000000000400
-#define PG_AVAIL3	0x0000000000000800
-#define PG_NX		0x8000000000000000	/* non-executable */
-#define	PG_FRAME	0xfffffffffffff000
+#define	PG_V		0x0000000000000001UL	/* valid */
+#define	PG_RO		0x0000000000000000UL	/* read-only */
+#define	PG_RW		0x0000000000000002UL	/* read-write */
+#define	PG_u		0x0000000000000004UL	/* user accessible */
+#define	PG_PROT		0x0000000000000006UL
+#define	PG_N		0x0000000000000018UL	/* non-cacheable */
+#define	PG_U		0x0000000000000020UL	/* used */
+#define	PG_M		0x0000000000000040UL	/* modified */
+#define PG_PS		0x0000000000000080UL	/* 2MB page size */
+#define PG_G		0x0000000000000100UL	/* not flushed */
+#define PG_AVAIL1	0x0000000000000200UL
+#define PG_AVAIL2	0x0000000000000400UL
+#define PG_AVAIL3	0x0000000000000800UL
+#define PG_NX		0x8000000000000000UL	/* non-executable */
+#define	PG_FRAME	0xfffffffffffff000UL
 
-#define	PG_LGFRAME	0xffffffffffc00000	/* large (2M) page frame mask */
+#define	PG_LGFRAME	0xffffffffffc00000UL	/* large (2M) page frame mask */
 
 /*
  * short forms of protection codes
  */
 
-#define	PG_KR		0x0000000000000000	/* kernel read-only */
-#define	PG_KW		0x0000000000000002	/* kernel read-write */
+#define	PG_KR		0x0000000000000000UL	/* kernel read-only */
+#define	PG_KW		0x0000000000000002UL	/* kernel read-write */
 
 /*
  * page protection exception bits
