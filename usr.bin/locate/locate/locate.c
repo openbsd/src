@@ -1,5 +1,5 @@
 /*
- *	$OpenBSD: locate.c,v 1.13 2002/03/14 06:51:42 mpech Exp $
+ *	$OpenBSD: locate.c,v 1.14 2002/07/07 09:02:30 jufi Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      $Id: locate.c,v 1.13 2002/03/14 06:51:42 mpech Exp $
+ *      $Id: locate.c,v 1.14 2002/07/07 09:02:30 jufi Exp $
  */
 
 #ifndef lint
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)locate.c    8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: locate.c,v 1.13 2002/03/14 06:51:42 mpech Exp $";
+static char rcsid[] = "$OpenBSD: locate.c,v 1.14 2002/07/07 09:02:30 jufi Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ main(argc, argv)
 
         /* no (valid) database as argument */
         if (dbv == NULL || *dbv == NULL) {
-                /* try to read database from enviroment */
+                /* try to read database from environment */
                 if ((path_fcodes = getenv("LOCATE_PATH")) == NULL ||
 		     *path_fcodes == '\0')
                         /* use default database */

@@ -4567,7 +4567,7 @@ relink_command=\"$relink_command\""
 	eval "export $shlibpath_var"
       fi
 
-      # Restore saved enviroment variables
+      # Restore saved environment variables
       if test "${save_LC_ALL+set}" = set; then
 	LC_ALL="$save_LC_ALL"; export LC_ALL
       fi
