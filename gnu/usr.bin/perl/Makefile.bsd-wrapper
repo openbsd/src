@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 1997/11/30 20:17:41 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 1998/04/25 06:56:25 niklas Exp $
 #
 # Build wrapper for Perl 5.003.
 #
@@ -192,12 +192,14 @@ maninstall:
 	@echo NOMAN is set
 .endif
 
-install: ${MANALL} maninstall
-	(cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
-	 INSTALL_STRIP=${INSTALL_STRIP} ${MAKE} install.perl)
+install: install.perl ${MANALL} maninstall
 	(cd ${DESTDIR}/usr/include; ${H2PH} *.h arpa/*.h machine/*.h net/*.h \
 			  protocols/*.h sys/*.h)
 	-chmod -R a+rX ${DESTDIR}/usr/lib/perl5
+
+install.perl:
+	(cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
+	 INSTALL_STRIP=${INSTALL_STRIP} ${MAKE} install.perl)
 
 test:
 	-@if [ -e Makefile ]; then ${MAKE} test; fi
