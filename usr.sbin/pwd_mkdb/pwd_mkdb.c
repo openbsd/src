@@ -1,3 +1,4 @@
+/*	$OpenBSD: pwd_mkdb.c,v 1.7 1996/09/28 05:44:33 downsj Exp $	*/
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";*/
-static char *rcsid = "$Id: pwd_mkdb.c,v 1.6 1996/08/30 14:24:48 deraadt Exp $";
+static char *rcsid = "$Id: pwd_mkdb.c,v 1.7 1996/09/28 05:44:33 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,11 +102,15 @@ main(argc, argv)
 	char *p, *t;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024];
 	int hasyp = 0;
+	int cflag = 0;
 	DBT ypdata, ypkey;
 
 	makeold = 0;
-	while ((ch = getopt(argc, argv, "pvd:")) != EOF)
+	while ((ch = getopt(argc, argv, "cpvd:")) != EOF)
 		switch(ch) {
+		case 'c':			/* verify only */
+			cflag = 1;
+			break;
 		case 'p':			/* create V7 "file.orig" */
 			makeold = 1;
 			break;
@@ -145,6 +150,12 @@ main(argc, argv)
 	/* Open the original password file */
 	if (!(fp = fopen(pname, "r")))
 		error(pname);
+
+	/* check only if password database is valid */
+	if (cflag) {
+		for (cnt = 1; scan(fp, &pwd, &flags); ++cnt);
+		exit(0);
+	}
 
 	/* Open the temporary insecure password database. */
 	(void)snprintf(buf, sizeof(buf), "%s.tmp",
@@ -442,7 +453,7 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: pwd_mkdb [-p] [-d basedir] file\n");
+	(void)fprintf(stderr, "usage: pwd_mkdb [-cp] [-d basedir] file\n");
 	exit(1);
 }
 
