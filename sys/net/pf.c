@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.281 2002/12/22 02:37:58 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.282 2002/12/23 13:15:18 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -94,7 +94,7 @@ struct pf_state_tree;
 struct pf_anchorqueue	 pf_anchors;
 struct pf_ruleset	 pf_main_ruleset;
 struct pf_altqqueue	 pf_altqs[2];
-struct pf_palist	 pf_pabuf[2];
+struct pf_palist	 pf_pabuf;
 struct pf_altqqueue	*pf_altqs_active;
 struct pf_altqqueue	*pf_altqs_inactive;
 struct pf_status	 pf_status;

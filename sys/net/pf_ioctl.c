@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.30 2002/12/19 16:25:51 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.31 2002/12/23 13:15:18 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -109,8 +109,7 @@ pfattach(int num)
 	pf_init_ruleset(&pf_main_ruleset);
 	TAILQ_INIT(&pf_altqs[0]);
 	TAILQ_INIT(&pf_altqs[1]);
-	TAILQ_INIT(&pf_pabuf[0]);
-	TAILQ_INIT(&pf_pabuf[1]);
+	TAILQ_INIT(&pf_pabuf);
 	pf_altqs_active = &pf_altqs[0];
 	pf_altqs_inactive = &pf_altqs[1];
 
@@ -576,7 +575,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_rm_rule(NULL, rule);
 			break;
 		}
-		pf_mv_pool(&pf_pabuf[0], &rule->rpool.list);
+		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
 		rule->rpool.cur = TAILQ_FIRST(&rule->rpool.list);
 		rule->evaluations = rule->packets = rule->bytes = 0;
 		TAILQ_INSERT_TAIL(ruleset->rules[rs_num].inactive.ptr,
@@ -771,11 +770,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_rm_rule(NULL, newrule);
 				break;
 			}
-			pf_mv_pool(&pf_pabuf[0], &newrule->rpool.list);
+			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
 			newrule->evaluations = newrule->packets = 0;
 			newrule->bytes = 0;
 		}
-		pf_empty_pool(&pf_pabuf[0]);
+		pf_empty_pool(&pf_pabuf);
 
 		s = splsoftnet();
 
@@ -1404,7 +1403,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCBEGINADDRS: {
 		struct pfioc_pooladdr	*pp = (struct pfioc_pooladdr *)addr;
 
-		pf_empty_pool(&pf_pabuf[1]);
+		pf_empty_pool(&pf_pabuf);
 		pp->ticket = ++ticket_pabuf;
 		break;
 	}
@@ -1444,7 +1443,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		TAILQ_INSERT_TAIL(&pf_pabuf[0], pa, entries);
+		TAILQ_INSERT_TAIL(&pf_pabuf, pa, entries);
 		break;
 	}
 
