@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/08/22 06:43:14 art Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/08/22 10:53:28 art Exp $
 #	$NetBSD: Makefile,v 1.1 2000/08/20 14:58:45 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -8,9 +8,6 @@ S=	${CURDIR}/../../../..
 # Override normal settings
 #
 
-PROG=	
-SRCS=		bootblk.fth
-OBJS=
 CLEANFILES=	assym.fth.h assym.fth.h.tmp machine sparc \
 		bootblk bootblk.text bootblk.text.tmp
 
@@ -56,6 +53,10 @@ bootblk: bootblk.fth assym.fth.h
 
 beforedepend:
 	@touch .depend
+
+beforeinstall:
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    bootblk ${DESTDIR}/usr/mdec
 
 #
 # The following are if you grab the fakeboot program from the Sun website
