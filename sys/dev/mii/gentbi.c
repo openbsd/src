@@ -1,4 +1,4 @@
-/*	$OpenBSD: gentbi.c,v 1.1 2004/10/07 22:24:31 brad Exp $	*/
+/*	$OpenBSD: gentbi.c,v 1.2 2004/10/08 00:37:55 brad Exp $	*/
 /*	$NetBSD: gentbi.c,v 1.12 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
@@ -173,13 +173,9 @@ gentbiattach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
-	printf("%s: ", sc->mii_dev.dv_xname);
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		printf("no media present");
-	else
+	if ((sc->mii_capabilities & BMSR_MEDIAMASK) ||
+	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK))
 		mii_phy_add_media(sc);
-	printf("\n");
 }
 
 int
