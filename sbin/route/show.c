@@ -193,7 +193,7 @@ p_rtentry(rtm)
 	else {
 		p_sockaddr(sa, rtm->rtm_flags, 16);
 		if (sa->sa_len == 0)
-			sa->sa_len = sizeof(long);
+			sa->sa_len = sizeof(in_addr_t);
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
 		p_sockaddr(sa, 0, 18);
 	}

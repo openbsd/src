@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.19 1997/06/04 10:36:16 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.20 1997/06/24 03:15:23 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.19 1997/06/04 10:36:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.20 1997/06/24 03:15:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ quit(s)
 }
 
 #define ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(in_addr_t) - 1))) : sizeof(in_addr_t))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 int
@@ -368,8 +368,8 @@ routename(sa)
 		if (in.s_addr == INADDR_ANY || sa->sa_len < 4)
 			cp = "default";
 		if (!cp && !nflag) {
-			if ((hp = gethostbyaddr((char *)&in,
-			    sizeof (struct in_addr), AF_INET))) {
+			if ((hp = gethostbyaddr((char *)&in.s_addr,
+			    sizeof (in.s_addr), AF_INET)) != NULL) {
 				if ((cp = strchr(hp->h_name, '.')) &&
 				    !strcmp(cp + 1, domain))
 					*cp = 0;
@@ -414,16 +414,16 @@ netname(sa)
 	char *cp = NULL;
 	static char line[MAXHOSTNAMELEN];
 	struct netent *np = 0;
-	long net, mask;
-	int subnetshift;
+	in_addr_t net;
+	int mask, subnetshift;
 	char *ns_print();
 	char *ipx_print();
 
 	switch (sa->sa_family) {
 
 	case AF_INET:
-	    {	struct in_addr in;
-		in = ((struct sockaddr_in *)sa)->sin_addr;
+	    {
+		struct in_addr in = ((struct sockaddr_in *)sa)->sin_addr;
 
 		in.s_addr = ntohl(in.s_addr);
 		if (in.s_addr == 0)
@@ -1004,7 +1004,7 @@ ns_print(sns)
 		*cport = '\0';
 
 	(void) snprintf(mybuf, sizeof mybuf, "0x%x.%s%s",
-	    (u_int32_t)ntohl(net.long_e), host, cport);
+	    ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
 
@@ -1052,7 +1052,7 @@ ipx_print(sipx)
 		*cport = 0;
 
 	(void) snprintf(mybuf, sizeof mybuf, "%XH.%s%s",
-	    (u_int32_t)ntohl(net.long_e), host, cport);
+	    ntohl(net.long_e), host, cport);
 	return (mybuf);
 }
 

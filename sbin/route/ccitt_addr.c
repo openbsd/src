@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccitt_addr.c,v 1.2 1996/06/23 14:32:21 deraadt Exp $	*/
+/*	$OpenBSD: ccitt_addr.c,v 1.3 1997/06/24 03:15:22 millert Exp $	*/
 /*	$NetBSD: ccitt_addr.c,v 1.8 1995/04/23 10:33:41 cgd Exp $	*/
 
 /*
@@ -53,12 +53,15 @@
  * Copyright (c) 1984
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netccitt/x25.h>
 
 static char *copychar ();
 
+int
 ccitt_addr (addr, xp)
 char *addr;
 register struct sockaddr_x25 *xp;
