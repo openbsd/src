@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.31 2002/03/14 01:27:00 millert Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.32 2002/06/20 17:37:14 fgsch Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*
@@ -121,8 +121,6 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/isa/isavar.h>
-
 #include "com.h"
 #ifdef i386
 #include "pccom.h"
@@ -130,6 +128,7 @@
 
 #include <dev/ic/comreg.h>
 #if NPCCOM > 0
+#include <dev/isa/isavar.h>
 #include <i386/isa/pccomvar.h>
 #endif
 #if NCOM > 0
