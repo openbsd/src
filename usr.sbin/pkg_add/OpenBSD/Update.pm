@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.23 2004/11/11 12:45:15 espie Exp $
+# $OpenBSD: Update.pm,v 1.24 2004/11/11 13:54:48 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -34,7 +34,7 @@ sub validate_depend
 {
 }
 
-sub updatable($) { 1 }
+sub updatable($$) { 1 }
 
 sub extract
 {
@@ -109,19 +109,31 @@ sub extract
 }
 
 package OpenBSD::PackingElement::ScriptFile;
-sub updatable($) { 0 }
+sub updatable($$) { 0 }
 
 package OpenBSD::PackingElement::FINSTALL;
-sub updatable($) { !$_[0] }
+sub updatable($$) { !$_[1] }
 
 package OpenBSD::PackingElement::FDEINSTALL;
-sub updatable($) { $_[0] }
+sub updatable($$) { $_[1] }
 
 package OpenBSD::PackingElement::Exec;
-sub updatable($) { !$_[0] }
+sub updatable($$) { !$_[1] }
 
 package OpenBSD::PackingElement::Unexec;
-sub updatable($) { $_[0] }
+sub updatable($$) 
+{ 
+	return 1 if $_[1];
+	my $self = $_[0];
+
+	# those are deemed innocuous
+	if ($self->{expanded} =~ m|^/sbin/ldconfig\s+\-R\b| or
+	    $self->{expanded} =~ m|^install-info\s+\-\-delete\b|) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 package OpenBSD::PackingElement::LibDepend;
 use OpenBSD::Error;
