@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1998/09/22 02:54:57 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.6 1998/10/20 23:23:49 rahnds Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -32,7 +32,8 @@ all ${IMAGE}:
 	@false
 .else
 
-all:	${BSD_RD} ${BSDOFW_RD} ${BSDMIX_RD}
+# mix config is not needed.
+all:	${BSD_RD} ${BSDOFW_RD} # ${BSDMIX_RD}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
