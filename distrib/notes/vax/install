@@ -1,6 +1,6 @@
 OpenBSDInstallPrelude
 
-For most systems, the easiest way to install OpenBSD/vax OSREV is via
+For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
 diskless booting over an Ethernet network.  You will need both the
 "boot.mop" image and the "bsd.rd" kernel to boot.  You will also need a
 machine configured as a rarp, MOP, bootparam, and NFS server.
@@ -19,19 +19,18 @@ rpc.bootparamd(8), bootparams(5), and diskless(8). These pages are
 available online at: <http://www.openbsd.org/cgi-bin/man.cgi>
 
 Brian Chase <bdc@world.std.com> has written a guide for booting a VAX
-off of a network.  It was written for NetBSD/vax, but the procedure is
+off of a network.  It was written for NetBSD/MACHINE, but the procedure is
 virtually identical on OpenBSD, and the document covers the use of
 several different platforms as servers.
  
 The guide is available at:
 <http://world.std.com/~bdc/projects/vaxen/VAX-netboot-HOWTO>
  
-And finally, there is an OpenBSD/vax mailing list at <vax@openbsd.org>
+And finally, there is an OpenBSD/MACHINE mailing list at <vax@openbsd.org>
 whose readers would generally be pleased to help.
 
 
-Configuring the Server:
------------------------
+Booting from Network:
 
 When you turn on your VAX, it will run a set of self-diagnostic ROM routines.
 Depending on the model of VAX you have, it may take quite a while.  When 
@@ -40,10 +39,10 @@ console.  Typing "show dev" or "show ethernet" to get the VAX ethernet
 device's MAC address usually works; also try "TEST 50" on MicroVAXen 2000
 and 3100.
 
-You will need to create an /etc/ethers file.  This file is used by rarpd to 
-answer rarp (ethernet address->IP address) requests.  The format of this file 
-is the ethernet address followed by the machine name or address.  Here is an 
-example:
+You will need to create an /etc/ethers file on the bootserver.  This file
+will be used by rarpd to answer rarp (ethernet address->IP address) requests.
+The format of this file is the ethernet address followed by the machine
+name or address.  Here is an example:
 
 08:00:2b:24:72:00		quickvax
 
@@ -66,25 +65,39 @@ Make a separate directory for your VAX's /, make sure it is exported via NFS,
 and place "bsd.rd" there.
 
 Typing "B <DEVICE>", where <DEVICE> is your VAX's ethernet device, at the 
-chevron prompt should then load the OpenBSD booter.  A countdown should begin;
-type any key on the console and type "boot bsd.rd".  
+chevron prompt should then load the OpenBSD booter.
 
 OpenBSDInstallPart2
 
+	After setting up your bootserver, boot from it as described above.
+
+	The OpenBSD bootloader will appear, and a countdown should begin;
+	type any key on the console and type "boot bsd.rd".  
+
+	It will take a while to load the kernel especially on a slow
+	machine, or from a slow network connection, most likely more than
+	a minute.  If some action doesn't eventually happen, or the
+	spinning cursor has stopped and nothing further has happened,
+	either your diskless setup is incorrect, or you may have a
+	hardware or configuration problem.
+
+
 OpenBSDBootMsgs
 
-	You will next be asked for your terminal type.  If you are
-	installing from a keyboard/monitor console, choose vt220.
+	You will next be asked for your terminal type.
 	If you are installing from a serial console you should choose
 	the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).
 
-	After entering the terminal type you will be greeted by a
-	welcome message and asked if you really want to continue.
-	Assuming you answered yes, the install program will then tell
-	you which disks of that type it can install on, and ask you
-	which it should use.  The name of the disk is typically "sd0".
-	Reply with the name of your disk.
+	After entering the terminal type you will be asked whether you
+	wish to do an "(I)nstall" or an "(U)pgrade".  Enter 'I' for a
+	fresh install or 'U' to upgrade an existing installation.
+	
+	You will be presented with a welcome message and asked if
+	you really want to continue. Assuming you answered yes, the
+	install program will then tell you which disks of that type
+	it can install on, and ask you which it should use.  The name
+	of the disk is typically "sd0". Reply with the name of your disk.
 
 	Next you will have to edit or create a disklabel for the disk
 	OpenBSD is being installed on.  The installation script will
@@ -155,6 +168,10 @@ OpenBSDBootMsgs
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
+
+OpenBSDTAPEInstall
+
+OpenBSDCDROMInstall
 
 OpenBSDNFSInstall
 

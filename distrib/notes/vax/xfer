@@ -1,53 +1,95 @@
 Installation is supported from several media types, including:
 
 	FFS partitions
+	Tape
 	Remote NFS partition
+	CD-ROM
 	FTP
 	HTTP
 
-To install or upgrade OpenBSD using a remote partition, mounted via
+
+The steps necessary to prepare the distribution sets for installation
+depend on which method of installation you choose.  Some methods
+require a bit of setup first that is explained below.
+
+
+To install or upgrade OpenBSD using a tape, you need to do the following:
+
+	To install OpenBSD from a tape, you need to make a tape that
+	contains the distribution set files, each in "tar" format or
+	in "gzipped tar format".  First you will need to transfer the
+	distribution sets to your local system, using ftp or by mounting
+	the CD-ROM containing the release.  Then you need to make a tape
+	containing the files.
+
+	If you're making the tape on a UN*X-like system, the easiest way
+	to do so is make a shell script along the following lines, call it
+	"/tmp/maketape".
+
+	#! /bin/sh
+	tape=/dev/nrst0
+	mt -f ${tape} rewind
+	for file in base etc comp game man misc xbase xfont xserv xshare
+	do
+		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
+	done
+	tar cf ${tape} bsd
+	mt -f ${tape} offline
+	# end of script
+
+
+	And then:
+
+	cd .../OSREV/sparc
+	sh -x /tmp/maketape
+
+	If you're using a system other than OpenBSD or SunOS, the tape
+	name and other requirements may change.
+
+
+To install OpenBSD using a remote partition, mounted via
 NFS, you must do the following:
 
-    NOTE:   This method of installation is recommended only for
-        those already familiar with using BSD network
-        configuration and management commands.  If you aren't,
-        this documentation should help, but is not intended to
-        be all-encompassing.
+	NOTE:	This method of installation is recommended only for
+		those already familiar with using BSD network
+		configuration and management commands.  If you aren't,
+		this documentation should help, but is not intended to
+		be all-encompassing.
 
-    Place the OpenBSD distribution sets you wish to install into a
-    directory on an NFS server, and make that directory mountable
-    by the machine on which you are installing or upgrading OpenBSD.
-    This will probably require modifying the /etc/exports file on
-    of the NFS server and resetting its mount daemon (mountd).
-    (Both of these actions will probably require superuser
-    privileges on the server.)
+	Place the OpenBSD distribution sets you wish to install into a
+	directory on an NFS server, and make that directory mountable
+	by the machine on which you are installing or upgrading OpenBSD.
+	This will probably require modifying the /etc/exports file on
+	of the NFS server and resetting its mount daemon (mountd).
+	(Both of these actions will probably require superuser
+	privileges on the server.)
 
-    You need to know the numeric IP address of the NFS server,
-    and, if the server is not on a network directly connected to
-    the machine on which you're installing or upgrading OpenBSD,
-    you need to know the numeric IP address of the router closest
-    to the OpenBSD machine.  Finally, you need to know the numeric
-    IP address of the OpenBSD machine itself.
+	You need to know the numeric IP address of the NFS server,
+	and, if the server is not on a network directly connected to
+	the machine on which you're installing or upgrading OpenBSD,
+	you need to know the numeric IP address of the router closest
+	to the OpenBSD machine.  Finally, you need to know the numeric
+	IP address of the OpenBSD machine itself.
 
-    Once the NFS server is set up properly and you have the
-    information mentioned above, you can proceed to the next step
-    in the installation or upgrade process.  If you're installing
-    OpenBSD from scratch, go to the section on preparing your hard
-    disk, below.  If you're upgrading an existing installation, go
-    directly to the section on upgrading.	
+	Once the NFS server is set up properly and you have the
+	information mentioned above, you can proceed to the next step
+	in the installation or upgrade process.  If you're installing
+	OpenBSD from scratch, go to the section on preparing your hard
+	disk, below.  If you're upgrading an existing installation, go
+	directly to the section on upgrading.
 
 If you are upgrading OpenBSD, you also have the option of installing
 OpenBSD by putting the new distribution sets somewhere in your existing
 file system, and using them from there.  To do that, you must do the
 following:
 
-    Place the distribution sets you wish to upgrade somewhere in
-    your current file system tree.  At a bare minimum, you must
-    upgrade the "base" binary distribution, and so must put the
-    "base{:--:}OSrev" set somewhere in your file system.  If you wish,
-    you can do the other sets, as well, but you should NOT upgrade
-    the "etc" distribution; the "etc" distribution contains system
-    configuration files that you should review and update by hand.
+	Place the distribution sets you wish to upgrade somewhere in
+	your current file system tree.  At a bare minimum, you must
+	upgrade the "base" binary distribution, and so must put the
+	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
+	you can do the other sets, as well, but you should NOT upgrade
+	the "etc" distribution; the "etc" distribution contains system
+	configuration files that you should review and update by hand.
 
-    Once you have done this, you can proceed to the next step in
-    the upgrade process, actually upgrading your system.
+	Once you have done this, you can proceed to the next step in
+	the upgrade process, actually upgrading your system.

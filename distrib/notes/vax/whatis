@@ -1,9 +1,5 @@
-OpenBSD/vax OSREV is a port to the VAX series of machines, formerly
+OpenBSD/MACHINE OSREV is a port to the VAX series of machines, formerly
 manufactured by Digital Equipment Corporation.
-
-This port is still fairly recent, and for this reason it is still quite
-"rough", although many areas are greatly improved since the previous
-release.
 
 Development is ongoing, and support for a greater variety of hardware
 as well as new features is in the works.

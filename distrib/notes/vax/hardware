@@ -1,10 +1,11 @@
-OpenBSD/vax OSREV runs on a wide variety of VAX hardware, although only
+OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware, although only
 the following systems have been tested:
 	- VAXstation/MicroVAX 2000
 	- VAXstation 3100/{30,40}
 	- VAXstation 3100/{38,48}
 	- VAXstation 3100/76
 	- VAXstation 4000/60
+	- VAXstation 4000/VLC
 	- MicroVAX 3100/{10,20}{,e}
 	- MicroVAX 3100/80
 	- MicroVAX 3100/90
@@ -28,6 +29,6 @@ Serial ports:
 The lowest amount of memory tested is 6M; however, more is recommended.
 At the moment, the only supported console is a serial console.
 
-Currently, your only storage options for using OpenBSD/vax are SCSI 
+Currently, your only storage options for using OpenBSD/MACHINE are SCSI 
 disks or tapes on one of the supported controllers, or a NFS root and 
 swap.  Please see below for details.

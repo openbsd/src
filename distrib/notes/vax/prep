@@ -1,4 +1,4 @@
 VAX machines don't generally need any specific preparation. It's worth
-noting, however, that OpenBSD/vax currently requires a serial console,
+noting, however, that OpenBSD/MACHINE currently requires a serial console,
 so on systems with graphics support (such as VAXstations), you may have
 to flip a switch in order to yield this behaviour.
