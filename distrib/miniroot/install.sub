@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.118 1999/04/02 05:51:16 millert Exp $
+#	$OpenBSD: install.sub,v 1.119 1999/04/02 17:50:01 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -288,7 +288,7 @@ ftp_list_files() {
 
 	shift; shift; shift; shift
 
-	ftp ${_ftp_active} -V -n $_host  <<__ptf
+	ftp ${_ftp_active} -V -n $_host  << __ptf
 user $_user $_pass
 cd $_dir
 ls
@@ -324,10 +324,10 @@ get_localdir() {
 		local_sets_dir="$_mp/$_dir"
 		break
 	    else
-		cat << __get_reldir_1
+		cat << __EOT
 The directory \"$local_sets_dir\" does not exist, or does not hold any of the
 upgrade sets.
-__get_reldir_1
+__EOT
 		echo -n "Re-enter pathname? [y] "
 		getresp "y"
 		case "$resp" in
@@ -343,12 +343,12 @@ __get_reldir_1
 }
 
 getanotherdisk() {
-	cat << \__getanotherdisk_1
+	cat << __EOT
 
 Now you can select another disk to initialize.  (Do not re-select a disk
 you have already entered information for).  Available disks are:
 
-__getanotherdisk_1
+__EOT
 	_DKDEVS=`md_get_diskdevs`
 	echo	"$_DKDEVS"
 	echo	""
@@ -368,14 +368,14 @@ __getanotherdisk_1
 }
 
 getrootdisk() {
-	cat << \__getrootdisk_1
+	cat << __EOT
 
 The installation program needs to know which disk to consider the root disk.
 Note the unit number may be different than the unit number you used in the
 boot program (especially on a PC with multiple disk controllers).
 Available disks are:
 
-__getrootdisk_1
+__EOT
 	local _defdsk;
 
 	_DKDEVS=`md_get_diskdevs`
@@ -437,12 +437,12 @@ configurenetwork() {
 	resp=""		# force at least one iteration
 	while [ "X${resp}" != X"done" ]; do
 		if [ $_reprompt = 1 ]; then
-			cat << \__configurenetwork_1
+			cat << __EOT
 
 You may configure the following network interfaces (the interfaces
 marked with [X] have been succesfully configured):
 
-__configurenetwork_1
+__EOT
 
 			for _ifs in $_IFS; do
 				if [ "X${_ouranswer}" = "X" ]; then
@@ -562,12 +562,12 @@ configure_ifs() {
 	# network configuration info.
 	if [ "$_if_ip" = "dhcp" ]; then
 		ifconfig ${_if_name} down ${_if_extra}
-cat > /etc/dhclient.conf << __dhclientedit1
+cat > /etc/dhclient.conf << __EOT
 initial-interval 1;
 send host-name "$_hostname";
 request subnet-mask, broadcast-address, routers,
        domain-name, domain-name-servers, host-name;
-__dhclientedit1
+__EOT
 		dhclient -1 ${_if_name}
 
 		set -- `ifconfig $_if_name | sed -n '
@@ -584,11 +584,11 @@ __dhclientedit1
 			echo "hostname-associated DHCP attempt for $_if_name failed..."
 			ifconfig $_if_name delete down
 
-			cat > /etc/dhclient.conf << __dhclientedit2
+			cat > /etc/dhclient.conf << __EOT
 initial-interval 1;
 request subnet-mask, broadcast-address, routers,
        domain-name, domain-name-servers, host-name;
-__dhclientedit2
+__EOT
 			dhclient -1 ${_if_name}
 			set -- `ifconfig $_if_name | sed -n '
 				1s/.*<UP,.*$/UP/p
@@ -837,13 +837,18 @@ if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 fi
 
 # Provide a list of possible servers
-echo -n "Do you want a list of potential ${_url_type} servers? [y] "
+case "${_ftp_getlist}" in
+	n*|N*)	resp=n ;;
+	*)	resp=y ;;
+esac
+echo -n "Do you want a list of potential ${_url_type} servers? [${resp}] "
 getresp "y"
 case "$resp" in
-n*|N*) ;;
+n*|N*)	_ftp_getlist=n
+	;;
 *)
-
-	ftphost=129.128.76.52
+	_ftp_getlist=y
+	ftphost=129.128.5.191
 	if [ "X${_resolver_enabled}" = X"TRUE" ]; then
 		ftphost=ftp.openbsd.org
 	fi
@@ -864,7 +869,7 @@ while [ "X${resp}" = X"" ]; do
 	if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
 		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 		resp=""
-	elif [ "X${resp}" != X"" -a `isnumeric $resp` -eq 1 -a $resp -ge 1 \
+	elif [ -n "$resp" -a `isnumeric $resp` -eq 1 -a $resp -ge 1 \
 	    -a -f /tmp/ftplist ]; then
 		maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
 		    sed -n -e '$p' | cutword 1`
@@ -1270,12 +1275,12 @@ install_cdrom() {
 local _drive _partition_range _partition _fstype _directory
 
 # Get the cdrom device info
-cat << \__install_cdrom_1
+cat << __EOT
 
 The following CD-ROM devices are installed on your system; please select
 the CD-ROM device containing the partition with the installation sets:
 
-__install_cdrom_1
+__EOT
 _CDDEVS=`md_get_cddevs`
 echo    "$_CDDEVS"
 echo	""
@@ -1318,16 +1323,16 @@ while [ "X${resp}" = X"" ]; do
 done
 
 # Ask for filesystem type
-cat << \__install_cdrom_2
+cat << __EOT
 
 There are two CD-ROM filesystem types currently supported by this program:
 cd9660		ISO-9660
 ffs		Berkeley Fast Filesystem
 
-__install_cdrom_2
+__EOT
 resp=""		# force one iteration
 while [ "X${resp}" = X"" ]; do
-	echo -n "Which filesystem type (Official OpenBSD CDROM are cd9660)? [cd9660] "
+	echo -n "Which filesystem type (Official OpenBSD CDROM is cd9660)? [cd9660] "
 	getresp "cd9660"
 	case "$resp" in
 		cd9660|ffs)
@@ -1392,11 +1397,11 @@ case "$resp" in
 esac
 
 # Get partition
-cat <<__mount_a_disk_1
+cat << __EOT
 
 The following partitions have been found on $_drive:
 
-__mount_a_disk_1
+__EOT
 disklabel $_drive 2>/dev/null | grep '^  .:'
 echo
 _likely_partition_range=`disklabel $_drive 2>/dev/null | \
@@ -1433,12 +1438,12 @@ while [ "X${resp}" = X"" ]; do
 done
 
 # Ask for filesystem type
-cat << \__mount_a_disk_2
+cat << __EOT
 
 The following filesystem types are supported:
 default		(deduced from the disklabel)
 ffs
-__mount_a_disk_2
+__EOT
 _md_fstype=`md_native_fstype`
 _md_fsopts=`md_native_fsopts`
 if [ ! -z "$_md_fstype" ]; then
@@ -1481,12 +1486,12 @@ return 1
 install_disk() {
 local _directory
 
-cat << \__install_disk_1
+cat << __EOT
 
 The following disk devices are installed on your system; please select
 the disk device containing the partition with the installation sets:
 
-__install_disk_1
+__EOT
 _DKDEVS=`md_get_diskdevs`
 echo    "$_DKDEVS"
 echo	""
@@ -1564,12 +1569,12 @@ install_tape() {
 local _xcmd
 
 # Get the name of the tape from the user.
-cat << \__install_tape_1
+cat << __EOT
 
 The installation program needs to know which tape device to use.  Make
 sure you use a "no rewind on close" device.
 
-__install_tape_1
+__EOT
 _tape=`basename $TAPE`
 resp=""		# force one iteration
 while [ "X${resp}" = X"" ]; do
@@ -1621,14 +1626,14 @@ if [ "X${_nskip}" != X"0" ]; then
 fi
 echo "done."
 
-cat << \__install_tape_2
+cat << __EOT
 
 There are 2 different ways the file can be stored on tape:
 
 1) an image of a gzipped tar file
 2) a standard tar image
 
-__install_tape_2
+__EOT
 resp=""		# force one iteration
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which way is it? [1] "
@@ -1669,7 +1674,7 @@ else
 	_zonepath=""
 fi
 	
-cat << \__get_timezone_1
+cat << __EOT
 
 Select a time zone for your location. Timezones are represented on the system
 by a directory structure rooted in "/usr/share/timezone". Most timezones can
@@ -1680,7 +1685,7 @@ a slash ("/"), e.g. "US/Pacific" or "Canada/Mountain".
 To get a listing of what's available in /usr/share/zoneinfo, enter "?"
 at the prompts below.
 
-__get_timezone_1
+__EOT
 if [ X$TZ = X ]; then
 	TZ=`ls -l /mnt/etc/localtime 2>/dev/null | cutlast`
 	TZ=${TZ#/usr/share/zoneinfo/}
@@ -1724,12 +1729,11 @@ while : ; do
 done
 }
 
-install_sets()
-{
+install_sets() {
 local _yup="FALSE"
 
 # Ask the user which media to load the distribution from.
-cat << \__install_sets_1
+cat << __EOT
 
 It is now time to extract the installation sets onto the hard disk.  Make sure
 the sets are either on a local device (i.e. tape, CD-ROM) or on a network
@@ -1737,7 +1741,7 @@ server.  You will have the chance to repeat this step or to extract sets from
 several places, so you don't have to try to load all the sets in one try and
 can recover from some errors.
 
-__install_sets_1
+__EOT
 
 if [ "X$local_sets_dir" != "X" ]; then
 	install_from_mounted_fs ${local_sets_dir}
@@ -1790,21 +1794,21 @@ while [ X"${resp}" = X ]; do
 	fi
 
 	if [ ! -f /mnt/bsd ]; then
-		cat << \__install_sets_2
+		cat << __EOT
 
 You still do not have a /bsd in your filesystem (ie. the kernel), which
 seems to indicate that you are still missing important distribution files.
 So please continue installing...
-__install_sets_2
+__EOT
 		resp=""
 	fi
 	if [ ! -f /mnt/bin/cat ]; then
-		cat << \__install_sets_3
+		cat << __EOT
 
 You still do not have a /bin/cat in your filesystem (ie. a sample random file
 which you probably want). This seems to indicate that you are still missing
 important distribution files. So please continue installing...
-__install_sets_3
+__EOT
 		resp=""
 	fi
 
@@ -1825,8 +1829,7 @@ __install_sets_3
 done
 }
 
-munge_fstab()
-{
+munge_fstab() {
 local _fstab _fstab_shadow _dev _mp _fstype _rest
 
 # Now that the 'real' fstab is configured, we munge it into a 'shadow'
@@ -1853,8 +1856,7 @@ _fstab_shadow=$2
     done ) < $_fstab > $_fstab_shadow
 }
 
-mount_fs()
-{
+mount_fs() {
 # Must mount filesystems manually, one at a time, so we can make
 # sure the mount points exist.
 # $1 is a file in fstab format
@@ -1883,17 +1885,16 @@ local _fstab=$1
 done ) < $_fstab
 
 if [ "X${?}" != X"0" ]; then
-	cat << \__mount_filesystems_1
+	cat << __EOT
 
 FATAL ERROR:  Cannot mount filesystems.  Double-check your configuration
 and restart the installation process.
-__mount_filesystems_1
+__EOT
 	exit
 fi
 }
 
-unmount_fs()
-{
+unmount_fs() {
 # Unmount all filesystems and check their integrity.
 # Usage: [-check] <fstab file>
 local _check _fstab _pid
@@ -1938,8 +1939,7 @@ fi
 ) < $_fstab
 }
 
-check_fs()
-{
+check_fs() {
 # Check filesystem integrity.
 # $1 is a file in fstab format
 local _fstab=$1
