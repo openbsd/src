@@ -103,6 +103,7 @@ obio_attach(parent, self, aux)
 	u_int32_t reg[20];
 	int32_t intr[5];
 	char name[32];
+	int need_interrupt_controller = 0;
 
 	printf("obio ver %x", (PCI_PRODUCT(pa->pa_id)));
 
@@ -111,10 +112,12 @@ obio_attach(parent, self, aux)
 	/* XXX should not use name */
 	case 0x02:
 		node = OF_finddevice("/bandit/gc");
+		need_interrupt_controller = 1;
 		break;
 
 	case 0x07:
 		node = OF_finddevice("/bandit/ohare");
+		need_interrupt_controller = 1;
 		break;
 
 	case 0x10:	/* heathrow */
@@ -154,6 +157,24 @@ obio_attach(parent, self, aux)
 	ca.ca_iot = &sc->sc_membus_space;
 
 	printf(": addr 0x%x\n", ca.ca_baseaddr);
+
+	/*
+	 * This might be a hack, but it makes the interrupt controller 
+	 * attach as expected if a device node existed in the OF tree.
+	 */
+	if (need_interrupt_controller) {
+		/* force attachment of legacy interrupt controllers */
+		ca.ca_name = "interrupt-controller";
+		ca.ca_node = 0;
+
+		ca.ca_nreg  = 0;
+		ca.ca_nintr = 0;
+
+		ca.ca_reg = 0;
+		ca.ca_intr = 0;
+
+		config_found(self, &ca, obio_print);
+	}
 
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));

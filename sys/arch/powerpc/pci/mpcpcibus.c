@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.18 2000/07/08 19:36:01 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.19 2000/07/28 13:06:15 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -109,6 +109,7 @@ struct {
 	int config_type;
 } config_offsets[] = {
 	{"grackle",		0x00c00cf8, 0x00e00cfc, 0 },
+	{"bandit",		0x00c00cf8, 0x00e00cfc, 0 },
 	{"uni-north",		0x00800000, 0x00c00000, 3 },
 	{"legacy",		0x00000cf8, 0x00000cfc, 0 },
 	{"IBM,27-82660",	0x00000cf8, 0x00000cfc, 0 },
@@ -356,11 +357,21 @@ mpcpcibrattach(parent, self, aux)
 			len=OF_getprop(ca->ca_node, "compatible", compat,
 				sizeof (compat));
 			if (len <= 0 ) {
-				printf(" compatible not found\n");
-				return;
+				len=OF_getprop(ca->ca_node, "name", compat,
+					sizeof (compat));
+				if (len <= 0) {
+					printf(" compatible and name not"
+						" found\n");
+					return;
+				}
+				compat[len] = 0; 
+				if (strcmp (compat, "bandit") != 0) {
+					printf(" compatible not found and name"
+						" %s found\n", compat);
+					return;
+				}
 			}
 			compat[len] = 0; 
-
 			if ((rangelen = OF_getprop(ca->ca_node, "ranges",
 				range_store,
 				sizeof (range_store))) <= 0)
@@ -462,28 +473,28 @@ mpcpcibrattach(parent, self, aux)
 				panic("mpcpcibus: unable to map self\n");
 			}
 			of_node = ca->ca_node;
+
+
+			lcp->lc_pc.pc_conf_v = lcp;
+			lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
+			lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
+			lcp->lc_pc.pc_make_tag = mpc_make_tag;
+			lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
+			lcp->lc_pc.pc_conf_read = mpc_conf_read;
+			lcp->lc_pc.pc_conf_write = mpc_conf_write;
+			lcp->lc_pc.pc_ether_hw_addr = mpc_ether_hw_addr;
+			lcp->lc_iot = &sc->sc_iobus_space;
+			lcp->lc_memt = &sc->sc_membus_space;
+
+			lcp->lc_pc.pc_intr_v = lcp;
+			lcp->lc_pc.pc_intr_map = mpc_intr_map;
+			lcp->lc_pc.pc_intr_string = mpc_intr_string;
+			lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
+			lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
+
+			printf(": %s, Revision %x. ", compat, 
+				mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 		}
-
-
-		lcp->lc_pc.pc_conf_v = lcp;
-		lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
-		lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
-		lcp->lc_pc.pc_make_tag = mpc_make_tag;
-		lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
-		lcp->lc_pc.pc_conf_read = mpc_conf_read;
-		lcp->lc_pc.pc_conf_write = mpc_conf_write;
-		lcp->lc_pc.pc_ether_hw_addr = mpc_ether_hw_addr;
-		lcp->lc_iot = &sc->sc_iobus_space;
-		lcp->lc_memt = &sc->sc_membus_space;
-
-	        lcp->lc_pc.pc_intr_v = lcp;
-		lcp->lc_pc.pc_intr_map = mpc_intr_map;
-		lcp->lc_pc.pc_intr_string = mpc_intr_string;
-		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
-		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
-
-		printf(": %s, Revision %x. ", bridge, 
-			mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
 		break;
 
 	default:
