@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.36 2005/03/06 05:12:00 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.37 2005/03/06 05:18:34 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -495,7 +495,7 @@ ehci_init(ehci_softc_t *sc)
 
 	/* Turn on controller */
 	EOWRITE4(sc, EHCI_USBCMD,
-		 EHCI_CMD_ITC_2 | /* 8 microframes */
+		 EHCI_CMD_ITC_2 | /* 2 microframes */
 		 (EOREAD4(sc, EHCI_USBCMD) & EHCI_CMD_FLS_M) |
 		 EHCI_CMD_ASE |
 		 EHCI_CMD_PSE |
