@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.12 2003/10/18 19:15:43 jmc Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.13 2004/05/08 07:05:19 deraadt Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -40,7 +40,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.12 2003/10/18 19:15:43 jmc Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.13 2004/05/08 07:05:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,12 +51,6 @@ static char rcsid[] = "$OpenBSD: cbc.c,v 1.12 2003/10/18 19:15:43 jmc Exp $";
 
 #include "ed.h"
 
-
-/*
- * Define a divisor for rand() that yields a uniform distribution in the
- * range 0-255.
- */
-#define	RAND_DIV (((unsigned) RAND_MAX + 1) >> 8)
 
 /*
  * BSD and System V systems offer special library calls that do
@@ -120,10 +114,8 @@ init_des_cipher(void)
 	/* initialize the initialization vector */
 	MEMZERO(ivec, 8);
 
-	/* initialize the padding vector */
-	srand((unsigned) time(NULL));
 	for (i = 0; i < 8; i++)
-		CHAR(pvec, i) = (char) (rand()/RAND_DIV);
+		CHAR(pvec, i) = (char) arc4random();
 #endif
 }
 
