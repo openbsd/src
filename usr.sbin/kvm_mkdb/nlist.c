@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.33 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.34 2003/06/26 21:36:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: nlist.c,v 1.33 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: nlist.c,v 1.34 2003/06/26 21:36:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,7 @@ static char *fmterr;
 static u_long get_kerntext(char *kfn, u_int magic);
 
 int
-__aout_knlist(fd, db, ksyms)
-	int fd;
-	DB *db;
-	int ksyms;
+__aout_knlist(int fd, DB *db, int ksyms)
 {
 	int nsyms;
 	struct exec ebuf;
@@ -269,9 +266,7 @@ __aout_knlist(fd, db, ksyms)
 #endif
 
 static u_long
-get_kerntext(name, magic)
-	char *name;
-	u_int magic;
+get_kerntext(char *name, u_int magic)
 {
 	NLIST nl[2];
 
@@ -288,10 +283,7 @@ get_kerntext(name, magic)
 
 #ifdef _NLIST_DO_ELF
 int
-__elf_knlist(fd, db, ksyms)
-	int fd;
-	DB *db;
-	int ksyms;
+__elf_knlist(int fd, DB *db, int ksyms)
 {
 	caddr_t strtab;
 	off_t symstroff, symoff;
@@ -539,10 +531,7 @@ __elf_knlist(fd, db, ksyms)
 				 (p) < (e)->a.data_start + (e)->a.dsize)
 
 int
-__ecoff_knlist(fd, db, ksyms)
-	int fd;
-	DB *db;
-	int ksyms;
+__ecoff_knlist(int fd, DB *db, int ksyms)
 {
 	struct ecoff_exechdr *exechdrp;
 	struct ecoff_symhdr *symhdrp;
@@ -677,10 +666,7 @@ static struct knlist_handlers {
 };
 
 int
-create_knlist(name, fd, db)
-	char *name;
-	int fd;
-	DB *db;
+create_knlist(char *name, int fd, DB *db)
 {
 	int i, error, ksyms;
 

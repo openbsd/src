@@ -1,4 +1,4 @@
-/*	$OpenBSD: testdb.c,v 1.5 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: testdb.c,v 1.6 2003/06/26 21:36:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: testdb.c,v 1.5 2003/06/02 23:36:53 millert Exp $";
+static char *rcsid = "$OpenBSD: testdb.c,v 1.6 2003/06/26 21:36:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,7 @@ static char *rcsid = "$OpenBSD: testdb.c,v 1.5 2003/06/02 23:36:53 millert Exp $
 
 /* Return true if the db file is valid, else false */
 int
-testdb(dbname)
-	char *dbname;
+testdb(char *dbname)
 {
 	DB *db;
 	int cc, kd, ret, dbversionlen;

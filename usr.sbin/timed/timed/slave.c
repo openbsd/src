@@ -1,4 +1,4 @@
-/*	$OpenBSD: slave.c,v 1.9 2003/06/12 21:09:48 deraadt Exp $	*/
+/*	$OpenBSD: slave.c,v 1.10 2003/06/26 21:36:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -69,7 +69,6 @@ slave(void)
 	struct timeval ntime, wait, tmptv;
 	time_t tmpt;
 	struct tsp *answer;
-	int timeout();
 	char olddate[32];
 	char newdate[32];
 	struct netinfo *ntp;

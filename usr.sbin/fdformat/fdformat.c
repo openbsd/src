@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdformat.c,v 1.11 2003/03/08 11:49:32 matthieu Exp $	*/
+/*	$OpenBSD: fdformat.c,v 1.12 2003/06/26 21:36:39 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
@@ -57,9 +57,8 @@
 extern const char *__progname;
 
 static void
-format_track(fd, cyl, secs, head, rate, gaplen, secsize, fill, interleave)
-	int fd, cyl, secs, head, rate, gaplen, secsize;
-	int fill, interleave;
+format_track(int fd, int cyl, int secs, int head, int rate, int gaplen,
+    int secsize, int fill, int interleave)
 {
 	struct fd_formb f;
 	int i,j;
@@ -93,8 +92,7 @@ format_track(fd, cyl, secs, head, rate, gaplen, secsize, fill, interleave)
 }
 
 static int
-verify_track(fd, track, tracksize)
-	int fd, track, tracksize;
+verify_track(int fd, int track, int tracksize)
 {
 	static char *buf = 0;
 	static int bufsz = 0;
@@ -132,7 +130,7 @@ verify_track(fd, track, tracksize)
 }
 
 static void
-usage ()
+usage(void)
 {
 	printf("Usage:\n\t%s [-q] [-n | -v] [-c #] [-s #] [-h #]\n",
 		__progname);
@@ -156,7 +154,7 @@ usage ()
 }
 
 static int
-yes ()
+yes(void)
 {
 	char reply [256], *p;
 
@@ -176,9 +174,7 @@ yes ()
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int cyls = -1, secs = -1, heads = -1, intleave = -1;
 	int rate = -1, gaplen = -1, secsize = -1, steps = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.15 2002/06/18 17:29:02 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.16 2003/06/26 21:36:39 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.15 2002/06/18 17:29:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.16 2003/06/26 21:36:39 deraadt Exp $";
 #endif
 
 #define INET
@@ -83,9 +83,7 @@ void	intpr(void);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct ifreq ifr;
 	int ch;
@@ -145,8 +143,7 @@ usage()
 volatile sig_atomic_t	signalled; 	/* set if alarm goes off "early" */
 
 static void
-get_sl_stats(curp)
-	struct sl_stats *curp;
+get_sl_stats(struct sl_stats *curp)
 {
 	struct ifslstatsreq req;
 
@@ -169,7 +166,7 @@ get_sl_stats(curp)
  * First line printed at top of screen is always cumulative.
  */
 void
-intpr()
+intpr(void)
 {
 	struct sl_stats cur, old;
 	sigset_t mask, oldmask;
@@ -179,7 +176,7 @@ intpr()
 	while (1) {
 		get_sl_stats(&cur);
 
-		(void)signal(SIGALRM, (void (*)())catchalarm);
+		(void)signal(SIGALRM, (void (*)(int))catchalarm);
 		signalled = 0;
 		(void)alarm(interval);
 

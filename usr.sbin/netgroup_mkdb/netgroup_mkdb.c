@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.10 2002/02/17 19:42:38 millert Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.11 2003/06/26 21:36:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.10 2002/02/17 19:42:38 millert Exp $";
+static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.11 2003/06/26 21:36:39 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -96,9 +96,7 @@ static const char ng_empty[] = "";
 static char    *dbname = _PATH_NETGROUP_DB;
 
 int
-main(argc, argv)
-	int		  argc;
-	char		**argv;
+main(int argc, char *argv[])
 {
 	DB		 *db, *ndb, *hdb, *udb;
 	int               ch;
@@ -185,9 +183,10 @@ main(argc, argv)
  * cleanup(): Remove temporary files upon exit
  */
 static void
-cleanup()
+cleanup(void)
 {
 	char buf[MAXPATHLEN];
+
 	(void) snprintf(buf, sizeof(buf), "%s.tmp", dbname);
 	(void) unlink(buf);
 }
@@ -198,8 +197,7 @@ cleanup()
  * ng_load(): Load the netgroup database from a file
  */
 static DB *
-ng_load(fname)
-	const char     *fname;
+ng_load(const char *fname)
 {
 	FILE           *fp;
 	DB             *db;
@@ -303,9 +301,7 @@ ng_load(fname)
  * string database
  */
 static DB *
-ng_insert(db, name)
-	DB             *db;
-	const char     *name;
+ng_insert(DB *db, const char *name)
 {
 	DB             *xdb = NULL;
 	DBT             key, data;
@@ -356,12 +352,8 @@ ng_insert(db, name)
  * ng_reventry(): Recursively add all the netgroups to the group entry.
  */
 static void
-ng_reventry(db, udb, fe, name, s, ss)
-	DB             *db, *udb;
-	struct nentry  *fe;
-	char           *name;
-	size_t          s;
-	struct stringlist *ss;
+ng_reventry(DB *db, DB *udb, struct nentry *fe, char *name, size_t s,
+    struct stringlist *ss)
 {
 	DBT             key, data;
 	struct nentry  *e;
@@ -436,9 +428,7 @@ ng_reventry(db, udb, fe, name, s, ss)
  * ng_reverse(): Reverse the database
  */
 static DB *
-ng_reverse(db, s)
-	DB             *db;
-	size_t          s;
+ng_reverse(DB *db, size_t s)
 {
 	int             pos;
 	struct stringlist *sl;
@@ -475,9 +465,7 @@ ng_reverse(db, s)
  * ng_print(): Pretty print a netgroup entry
  */
 static void
-ng_print(e, str)
-	struct nentry  *e;
-	struct string  *str;
+ng_print(struct nentry *e, struct string *str)
 {
 	char           *ptr = emalloc(e->n_size);
 
@@ -513,9 +501,7 @@ ng_print(e, str)
  * ng_rprint(): Pretty print all reverse netgroup mappings in the given entry
  */
 static void
-ng_rprint(db, str)
-	DB             *db;
-	struct string  *str;
+ng_rprint(DB *db, struct string *str)
 {
 	int             pos;
 	DBT             key, data;
@@ -541,8 +527,7 @@ ng_rprint(db, str)
  * ng_dump(): Pretty print all netgroups in the given database
  */
 static void
-ng_dump(db)
-	DB             *db;
+ng_dump(DB *db)
 {
 	int             pos;
 	DBT             key, data;
@@ -576,8 +561,7 @@ ng_dump(db)
  * ng_rdump(): Pretty print all reverse mappings in the given database
  */
 static void
-ng_rdump(db)
-	DB             *db;
+ng_rdump(DB *db)
 {
 	int             pos;
 	DBT             key, data;
@@ -611,9 +595,7 @@ ng_rdump(db)
  * ng_write(): Dump the database into a file.
  */
 static void
-ng_write(odb, idb, k)
-	DB             *odb, *idb;
-	int             k;
+ng_write(DB *odb, DB *idb, int k)
 {
 	int             pos;
 	DBT             key, data;
@@ -667,10 +649,7 @@ ng_write(odb, idb, k)
  * ng_rwrite(): Write the database
  */
 static void
-ng_rwrite(odb, idb, k)
-	DB             *odb;
-	DB             *idb;
-	int             k;
+ng_rwrite(DB *odb, DB *idb, int k)
 {
 	int             pos;
 	DBT             key, data;
@@ -723,7 +702,7 @@ ng_rwrite(odb, idb, k)
  * usage(): Print usage message and exit
  */
 static void
-usage()
+usage(void)
 {
 	extern const char *__progname;
 	fprintf(stderr, "usage: %s [-o db] file\n", __progname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timedc.h,v 1.4 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: timedc.h,v 1.5 2003/06/26 21:36:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -57,7 +57,7 @@ extern int errno;
 struct	cmd {
 	char	*c_name;		/* command name */
 	char	*c_help;		/* help message */
-	void	(*c_handler)();		/* routine to do the work */
+	void	(*c_handler)(int, char **);	/* routine to do the work */
 	int	c_priv;			/* privileged command */
 };
 

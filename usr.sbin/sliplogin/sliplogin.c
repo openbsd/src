@@ -35,7 +35,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.22 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.23 2003/06/26 21:36:39 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -102,8 +102,7 @@ char	loginfile[MAXPATHLEN];
 char	loginname[BUFSIZ];
 
 void
-findid(name)
-	char *name;
+findid(char *name)
 {
 	FILE *fp;
 	static char slopt[5][16];
@@ -160,8 +159,7 @@ findid(name)
 }
 
 const char *
-sigstr(s)
-	int s;
+sigstr(int s)
 {
 	if (s > 0 && s < NSIG)
 		return(sys_signame[s]);
@@ -175,16 +173,13 @@ sigstr(s)
 volatile sig_atomic_t die;
 
 void
-hup_handler(s)
-	int s;
+hup_handler(int s)
 {
 	die = 1;
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int fd, s, ldisc, odisc;
 	char *name;

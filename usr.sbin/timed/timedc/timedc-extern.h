@@ -1,4 +1,4 @@
-/*	$OpenBSD: timedc-extern.h,v 1.5 2003/06/02 23:36:55 millert Exp $	*/
+/*	$OpenBSD: timedc-extern.h,v 1.6 2003/06/26 21:36:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ void	clockdiff(int, char *[]);
 void	help(int, char *[]);
 void	makeargv(void);
 void	msite(int, char *[]);
-void	quit(void);
+void	quit(int, char *[]);
 void	testing(int, char *[]);
 void	tracing(int, char *[]);
 
