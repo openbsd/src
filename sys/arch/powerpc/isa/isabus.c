@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.7 1998/08/25 08:37:24 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.8 1998/08/25 14:28:58 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -456,7 +456,6 @@ static int processing;
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-		ipending &= ~(1L << vector);
 	}
 	if((ipending & SINT_CLOCK) & ~pcpl) {
 		ipending &= ~SINT_CLOCK;
@@ -504,8 +503,10 @@ isabr_iointr(mask, cf)
 	evirq[0].ev_count++;
 
 	o_imen = imen;
-	r_imen = 1 << (isa_vector & (ICU_LEN - 1));
+	r_imen = 1 << isa_vector;
 	imen |= r_imen;
+	isa_outb(IO_ICU1 + 1, imen);
+	isa_outb(IO_ICU2 + 1, imen >> 8);
 
 	if((pcpl & r_imen) != 0) {
 		ipending |= r_imen;	/* Masked! Mark this as pending */
@@ -525,8 +526,16 @@ isabr_iointr(mask, cf)
 	}
 	isa_outb(IO_ICU1 + 1, imen);
 	isa_outb(IO_ICU2 + 1, imen >> 8);
+
+#ifdef NO_SPECIAL_MASK_MODE
 	isa_outb(IO_ICU1, 0x20);
 	isa_outb(IO_ICU2, 0x20);
+#else
+	if(isa_vector > 7) {
+		isa_outb(IO_ICU2, 0x60 | isa_vector & 0x07);
+	}
+	isa_outb(IO_ICU1, 0x60 | (isa_vector > 7 ? 2 : isa_vector));
+#endif
 
 	splx(pcpl);	/* Process pendings. */
 }
@@ -539,7 +548,7 @@ void
 isabr_initicu()
 {  
 	int i;
-	int elcr = 0;
+
 	for (i= 0; i < ICU_LEN; i++) {
 		switch (i) {
 		case 0:
@@ -548,30 +557,33 @@ isabr_initicu()
 		case 8:
 		case 13:
 			intrtype[i] = IST_EDGE;
-			elcr |=  (1 << i);
 			break;
 		default:
 			intrtype[i] = IST_NONE;
 		}
 	}
 
-	isa_outb(IO_ELCR1, elcr);		/* always keep irq as edge */
-	isa_outb(IO_ELCR2, elcr >> 8);		/* Clear level int mask 8-15 */
+	isa_outb(IO_ELCR1, 0);			/* Init IRQ's as edge */
+	isa_outb(IO_ELCR2, 0);	
 
 	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */
 	isa_outb(IO_ICU1+1, 1 << IRQ_SLAVE);	/* slave on line 2 */
 	isa_outb(IO_ICU1+1, 1);			/* 8086 mode */
 	isa_outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
+#ifndef NO_SPECIAL_MASK_MODE
 	isa_outb(IO_ICU1, 0x68);		/* special mask mode  */
+#endif
 	isa_outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
 
 	isa_outb(IO_ICU2, 0x11);		/* program device, four bytes */
-	isa_outb(IO_ICU2+1, 8);			/* staring at this vector */
+	isa_outb(IO_ICU2+1, 8);			/* starting at this vector */
 	isa_outb(IO_ICU2+1, IRQ_SLAVE);
 	isa_outb(IO_ICU2+1, 1);			/* 8086 mode */
 	isa_outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
+#ifndef NO_SPECIAL_MASK_MODE
 	isa_outb(IO_ICU2, 0x68);		/* special mask mode */
+#endif
 	isa_outb(IO_ICU2, 0x0a);		/* Read IRR by default */
 }	       
 
