@@ -531,6 +531,8 @@ boolean	tempfileopen = FALSE;
 boolean edit(name)
 	char	*name;
 {
+	int fd;
+
 	o_name = name;
 	if ( (o_touchedfile = fopen(name, "r")) == NULL){
 		fprintf(stderr, "%s: Can't open file \"%s\" to touch (read).\n",
@@ -538,8 +540,10 @@ boolean edit(name)
 		return(TRUE);
 	}
 	(void)strcpy(n_name, canon_name);
-	(void)mktemp(n_name);
-	if ( (n_touchedfile = fopen(n_name, "w")) == NULL){
+	if ((fd = mkstemp(n_name)) == -1 ||
+	    (n_touchedfile = fdopen(fd, "w")) == NULL) {
+		if (fd != -1)
+			close(fd);
 		fprintf(stderr,"%s: Can't open file \"%s\" to touch (write).\n",
 			processname, name);
 		return(TRUE);
