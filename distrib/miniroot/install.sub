@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.333 2004/03/09 03:58:34 krw Exp $
+#	$OpenBSD: install.sub,v 1.334 2004/03/14 20:55:02 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1382,33 +1382,25 @@ sane_install() {
 		_insane=y
 		DEFAULTSETS=$(addel bsd $DEFAULTSETS)
 		cat << __EOT
-
-*** /bsd is not present in the installed system, or is 0 bytes long. OpenBSD
-    cannot boot without a valid kernel! 'bsd' must be (re)installed.
++*** 'bsd' must be (re)installed: no kernel found.
 __EOT
 	fi
 
 	# Check if baseXX is installed.
-	if [[ ! -x /mnt/bin/cat || ! -x /mnt/dev/MAKEDEV ]]; then
+	if [[ ! -d /mnt/sbin || ! -d /mnt/dev ]]; then
 		_insane=y
 		DEFAULTSETS=$(addel base${VERSION}.tgz $DEFAULTSETS)
 		cat << __EOT
-
-*** One or both of the executable files /bin/cat and /dev/MAKEDEV are not
-    present in the installed system. This indicates that executable files
-    OpenBSD requires are missing. 'base${VERSION}' must be (re)installed.
++*** 'base${VERSION}.tgz' must be (re)installed: /sbin or /dev is missing.
 __EOT
 	fi
 
 	# Check if etcXX is installed.
-	if [[ ! -d /mnt/etc || ! -d /mnt/usr/share/zoneinfo || ! -d /mnt/dev ]]; then
+	if [[ ! -s /mnt/etc/rc ]]; then
 		_insane=y
 		DEFAULTSETS=$(addel etc${VERSION}.tgz $DEFAULTSETS)
 		cat << __EOT
-
-*** One or more of the directories /etc, /usr/share/zoneinfo and /dev are not
-    present in the installed system. This indicates that directories OpenBSD
-    requires are missing. 'etc${VERSION}' must be (re)installed.
++*** 'etc${VERSION}.tgz' must be (re)installed: /etc/rc is missing.
 __EOT
 	fi
 
@@ -1604,7 +1596,7 @@ donetconfig() {
 		for _ns in $resp; do
 			echo "nameserver $_ns" >> /tmp/resolv.conf
 		done
-		ask_yn "Use the nameserver now?" y
+		ask_yn "Use the nameserver now?" yes
 		[[ $resp == y ]] && cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 	fi
 
