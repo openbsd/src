@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.4 2001/11/19 19:02:17 mpech Exp $	*/
+/*	$OpenBSD: utils.c,v 1.5 2002/06/03 20:41:22 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -346,7 +346,7 @@ time_t seconds;
     /* sanity protection */
     if (seconds < 0 || seconds > (99999l * 360l))
     {
-	strcpy(result, "   ???");
+	strlcpy(result, "   ???", sizeof result);
     }
     else if (seconds >= (1000l * 60l))
     {
