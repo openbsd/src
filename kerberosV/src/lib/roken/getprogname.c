@@ -38,9 +38,7 @@ RCSID("$KTH: getprogname.c,v 1.1 2001/07/09 14:56:51 assar Exp $");
 
 #include "roken.h"
 
-#ifndef HAVE___PROGNAME
-const char *__progname;
-#endif
+extern char *__progname;
 
 #ifndef HAVE_GETPROGNAME
 const char *

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2002/02/06 09:13:34 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2002/05/30 20:06:23 hin Exp $
 
 KRBDEPTH=	../..
 .include <${.CURDIR}/${KRBDEPTH}/Makefile.inc>
@@ -7,7 +7,7 @@ PROG=	asn1_compile
 NOMAN=
 SRCS=	parse.c lex.l main.c hash.c symbol.c gen.c \
         gen_encode.c gen_decode.c gen_free.c gen_length.c gen_copy.c \
-        gen_glue.c getprogname.c setprogname.c
+        gen_glue.c
 
 CLEANFILES=	parse.[ch] lex.[ch]
 

@@ -44,6 +44,8 @@ RCSID("$KTH: getarg.c,v 1.42 2001/07/23 04:30:11 assar Exp $");
 
 #define ISFLAG(X) ((X).type == arg_flag || (X).type == arg_negative_flag)
 
+extern char *__progname;
+
 static size_t
 print_arg (char *string, size_t len, int mdoc, int longp, struct getargs *arg)
 {
@@ -211,7 +213,7 @@ arg_printusage (struct getargs *args,
     struct winsize ws;
 
     if (progname == NULL)
-	progname = getprogname();
+	progname = __progname;
 
     if(getenv("GETARGMANDOC")){
 	mandoc_template(args, num_args, progname, extra_string);
