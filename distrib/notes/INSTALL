@@ -5,40 +5,61 @@ INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 What is OpenBSD?
 ----------------
 
-OpenBSD is a Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite
--derived Operating System.  It is a fully functional UN*X-like system
-which runs on many architectures and is being ported to more.
+OpenBSD is a fully functional, multi-platform UN*X-like Operating
+System based on Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite.
+There are several operating systems in this family, but OpenBSD
+differentiates itself by putting security and correctness first. The
+OpenBSD team strives to achieve what is called 'a secure by default'
+status.  This means that an OpenBSD user should feel safe that their
+newly installed machine will not be compromised.  This 'secure by
+default' goal is achieved by taking a proactive stance on security.
 
-Continuing the multi-platform tradition, OpenBSD has added ports to
-mvme68k, powerpc and arc machines.  Kernel interfaces have continued
-to be refined, and now several subsystems and device drivers are
-shared among the different ports.  You can look for this trend to
-continue.
+Since security flaws are esentially mistakes in design or implement-
+ation, the OpenBSD team puts as much importance on finding and fixing
+existing design flaws and implementation bugs as it does writing new
+code.  This means that an OpenBSD system will not only be more secure,
+but it will be more stable.  The source code for all critical system
+components has been checked for remote-access, local-access, denial-
+of-service, data destruction, and information-gathering problems.
 
-Security of the system as a whole has been significantly improved.
-Source code for all critical system components has been checked for
-remote-access, local-access, denial-of-service, data destruction, or
-information-gathering problems.  Tools like ssl, ssh, ipf, ipnat, and
-nc have been added to the tree because security conscious people often
-need them.
+In addition to bug fixing, OpenBSD has integrated strong cryptography
+into the base system.  A fully functional IPSEC implementation is
+provided as well as support for common protocols such as SSL and SSH.
+Network filtering and monitoring tools such as ipf, ipnat, and
+bridging are also standard.  For high performance demands, support for
+hardware cryptography has also been added to the base system.  Because
+security is often seen as a tradeoff with useability, OpenBSD provides
+as many security options as possible to allow the user to enjoy secure
+computing without feeling burdened by it.
 
-OpenBSD OSREV has significantly enhanced the binary emulation subsystem
-(which includes iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix
-compatibility) and several kernel subsystems have been generalized to
-support this more readily.  The binary emulation strategy is aimed at
-making the emulation as accurate as possible.
+Though security is the primary goal, OpenBSD continues the multi-
+platform tradition.  Ports to mvme68k, powerpc and arc machines have
+been added to the system.  To further this work, kernel interfaces
+have continued to be refined and several subsystems and device drivers
+are shared in a machine independent fashion among the different ports.
+You can look for this trend to continue as newer architectures become
+available.
 
-Cryptography components are part of OpenBSD.  OpenBSD is from Canada,
-and export of these pieces (such as kerberosIV) to the world is not
-restricted.  Note that it can not be re-exported from the US once it
-has entered the US.  Because of this, take care NOT to get the distrib-
-ution from an FTP server in the US if you are outside of Canada and
-the US.
+To integrate more smoothly in other environments, OpenBSD OSREV has
+significantly enhanced the binary emulation subsystem (which includes
+iBCS2, Linux, OSF/1, SunOS, SVR4, Solaris and Ultrix compatibility)
+and several kernel subsystems have been generalized to support this
+more readily.  The binary emulation strategy is aimed at making the
+emulation as accurate as possible so that it is transparent to the
+user.
 
 Many new user programs have been added in OpenBSD OSREV, as well,
 bringing it closer to our goal of supplying a complete and modern
 UN*X-like environment.  Tools like perl and ksh are standard, as are
 numerous other useful tools.
+
+Because OpenBSD is from Canada, the export of Cryptography pieces
+(such as SSH, IPSEC, and kerberosIV) to the world is not restricted.
+
+(NOTE: OpenBSD can not be re-exported from the US once it has entered
+the US.  Because of this, take care NOT to get the distribution from
+an FTP server in the US if you are outside of Canada and the US.)
+
 
 includeit(whatis)dnl
 
