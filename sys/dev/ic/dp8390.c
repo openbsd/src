@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.13 2001/06/23 21:54:43 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.14 2001/06/23 22:57:13 fgsch Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -924,7 +924,6 @@ dp8390_read(sc, buf, len)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	/* Pull packet off interface. */
 	m = dp8390_get(sc, buf, len);
@@ -935,9 +934,6 @@ dp8390_read(sc, buf, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fits entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
@@ -947,9 +943,7 @@ dp8390_read(sc, buf, len)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
-	/* Fix up data start offset in mbuf to point past ether header. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	ether_input_mbuf(ifp, m);
 }
 
 
