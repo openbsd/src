@@ -2493,9 +2493,9 @@ sparc-*-netbsd*)
 use_collect2=yes
 	;;
 sparc-*-openbsd*)
-	# we need collect2 until our bug is fixed...
-	use_collect2=yes
 	tmake_file="t-libc-ok t-openbsd sparc/t-openbsd"
+	gas=yes gnu_ld=yes
+	use_collect2=no
 	;;
 sparc64-*-openbsd*)
 	tm_file=sparc/openbsd64.h

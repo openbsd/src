@@ -18,14 +18,30 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <sparc/sparc.h>
+#include <sparc/elf.h>
 
 /* Get generic OpenBSD definitions.  */
-#define OBSD_OLD_GAS
 #include <openbsd.h>
 
 /* Run-time target specifications.  */
-#define CPP_PREDEFINES "-D__unix__ -D__sparc__ -D__OpenBSD__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(sparc) -Amachine(sparc)"
+#define CPP_PREDEFINES "-D__unix__ -D__sparc__ -D__OpenBSD__ -D__ELF__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(sparc) -Amachine(sparc)"
+
+#undef LINK_SPEC
+#define LINK_SPEC \
+  "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
+   %{shared:-shared} %{R*} \
+   %{static:-Bstatic} \
+   %{!static:-Bdynamic} \
+   %{assert*} \
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+
+/* As an elf system, we need crtbegin/crtend stuff.  */
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC "\
+        %{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} %{!p:crt0%O%s}} \
+        crtbegin%O%s} %{shared:crtbeginS%O%s}"
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
 
 /* Layout of source language data types */
 
@@ -42,27 +58,10 @@ Boston, MA 02111-1307, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* Specific options for DBX Output.  */
-
-/* This is BSD, so it wants DBX format.  */
-#define DBX_DEBUGGING_INFO
-
-/* This is the char to use for continuation */
-#define DBX_CONTIN_CHAR '?'
-
 /* Stack & calling: aggregate returns.  */
 
 /* Don't default to pcc-struct-return, because gcc is the only compiler, and
    we want to retain compatibility with older gcc versions.  */
 #undef DEFAULT_PCC_STRUCT_RETURN
 #define DEFAULT_PCC_STRUCT_RETURN 0
-
-/* Assembler format: exception region output.  */
-
-/* All configurations that don't use elf must be explicit about not using
-   dwarf unwind information. egcs doesn't try too hard to check internal
-   configuration files...  */
-#define DWARF2_UNWIND_INFO 0
-
-/* Default sparc.h does already define ASM_OUTPUT_MI_THUNK */
 
