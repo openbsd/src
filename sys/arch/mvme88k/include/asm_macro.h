@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.12 2001/07/26 22:30:21 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.13 2001/08/07 22:18:04 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -118,7 +118,7 @@ static __inline__ unsigned long stack_pointer(void)
  */
 static __inline__ unsigned ff1(register unsigned val)
 {
-	__asm__ ("ff1 %0, %0" : "=r" (val) : "0" (val));
+	__asm__ __volatile__ ("ff1 %0, %0" : "=r" (val) : "0" (val));
 	return val;
 }
 

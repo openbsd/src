@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.11 2001/05/20 05:53:10 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.12 2001/08/07 22:18:07 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -66,7 +66,7 @@
 #define DMT_WORD	4
 
 extern volatile unsigned int * int_mask_reg[MAX_CPUS]; /* in machdep.c */
-extern u_char *int_mask_level;   /* in machdep.c */
+extern volatile u_char *int_mask_level;   /* in machdep.c */
 extern unsigned master_cpu;      /* in cmmu.c */
 
 static struct {
