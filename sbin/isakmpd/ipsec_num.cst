@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.9 2002/06/07 20:50:12 ho Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.10 2002/06/14 12:43:11 ho Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -53,6 +53,7 @@ IPSEC_ATTR
   KEY_ROUNDS				7
   COMPRESS_DICTIONARY_SIZE		8
   COMPRESS_PRIVATE_ALGORITHM		9
+  ECN_TUNNEL				10
 .
 
 # IPSEC SA duration.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.65 2002/06/11 18:56:07 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.66 2002/06/14 12:43:11 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -702,6 +702,11 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 						IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM,
 						value);
 		}
+
+	      value = conf_get_num (xf->field, "ECN_TUNNEL", 0);
+	      if (value)
+		attr = attribute_set_basic (attr, IPSEC_ATTR_ECN_TUNNEL,
+					    value);
 
 	      /* Record the real transform size.  */
 	      transforms_len[prop_no] += (transform_len[prop_no][xf_no]

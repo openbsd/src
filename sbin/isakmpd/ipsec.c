@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.67 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.68 2002/06/14 12:43:11 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -329,7 +329,7 @@ ipsec_finalize_exchange (struct message *msg)
 
 	      if (exchange->initiator)
 		{
-		/* Initiator is source, responder is destination.  */
+		  /* Initiator is source, responder is destination.  */
 		  if (ipsec_set_network (ie->id_ci, ie->id_cr, isa))
 		    {
 		      log_error ("ipsec_finalize_exchange: "
@@ -747,7 +747,7 @@ ipsec_validate_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 	   || type > IKE_ATTR_GROUP_ORDER))
       || (msg->exchange->phase == 2
 	  && (type < IPSEC_ATTR_SA_LIFE_TYPE
-	      || type > IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM)))
+	      || type > IPSEC_ATTR_ECN_TUNNEL)))
     return -1;
   return 0;
 }
@@ -1220,6 +1220,8 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	  return 1;
 	case IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM:
 	  return 1;
+	case IPSEC_ATTR_ECN_TUNNEL:
+	  return 1;
 	}
     }
   /* XXX Silence gcc.  */
@@ -1410,6 +1412,8 @@ ipsec_decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 	case IPSEC_ATTR_COMPRESS_DICTIONARY_SIZE:
 	  break;
 	case IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM:
+	  break;
+	case IPSEC_ATTR_ECN_TUNNEL:
 	  break;
 	}
     }
