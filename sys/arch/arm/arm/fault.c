@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.2 2004/02/01 06:10:33 drahn Exp $	*/
+/*	$OpenBSD: fault.c,v 1.3 2004/02/03 15:42:19 drahn Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -235,8 +235,6 @@ data_abort_handler(trapframe_t *tf)
 	if (__predict_false(data_aborts[fsr & FAULT_TYPE_MASK].func != NULL)) {
 		if ((data_aborts[fsr & FAULT_TYPE_MASK].func)(tf, fsr, far, p,
 		    &sd)) {
-			printf("data abort trap fsr %x far %x pc %x\n",
-			fsr, far, tf->tf_pc);
 			goto do_trapsignal;
 		}
 		goto out;
