@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.15 1996/12/19 12:58:14 mickey Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.16 1997/01/02 20:45:49 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -79,15 +79,13 @@
 #include <netiso/iso_snpac.h>
 #endif
 
-#ifdef LLC
 #include <netccitt/x25.h>
 #include <netccitt/pk.h>
 #include <netccitt/pk_extern.h>
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
-#endif
 
-#if defined(LLC) && defined(CCITT)
+#if defined(CCITT)
 #include <sys/socketvar.h>
 #endif
 
@@ -103,18 +101,17 @@ ether_ioctl(ifp, arp, cmd, data)
 	caddr_t data;
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *) data;
 	int	error = 0;
 
 	switch (cmd) {
 
-#if	defined(CCITT) && defined(LLC)
+#if defined(CCITT)
 	case SIOCSIFCONF_X25:
 		ifp->if_flags |= IFF_UP;
 		ifa->ifa_rtrequest = cons_rtrequest;
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
 		break;
-#endif /* CCITT && LLC */
+#endif /* CCITT */
 	case SIOCSIFADDR:
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef IPX
@@ -148,13 +145,6 @@ ether_ioctl(ifp, arp, cmd, data)
 #endif /* NS */
 		}
 		break;
-
-	case SIOCGIFADDR:
-		bcopy((caddr_t) arp->ac_enaddr,
-		      (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		      ETHER_ADDR_LEN);
-		break;
-
 	default:
 		break;
 	}
@@ -291,7 +281,6 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 		} break;
 #endif /* ISO */
-#ifdef	LLC
 /*	case AF_NSAP: */
 	case AF_CCITT: {
 		register struct sockaddr_dl *sdl = 
@@ -329,7 +318,6 @@ ether_output(ifp, m0, dst, rt0)
 		}
 #endif /* LLC_DEBUG */
 		} break;
-#endif /* LLC */	
 
 	case AF_UNSPEC:
 		eh = (struct ether_header *)dst->sa_data;
@@ -398,9 +386,9 @@ ether_input(ifp, eh, m)
 {
 	register struct ifqueue *inq;
 	u_int16_t etype;
-	int s;
-#if defined (ISO) || defined (LLC)
+	int s, llcfound = 0;
 	register struct llc *l;
+#if defined(ISO)
 	struct arpcom *ac = (struct arpcom *)ifp;
 #endif
 
@@ -420,6 +408,7 @@ ether_input(ifp, eh, m)
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
 
+decapsulate:
 	etype = ntohs(eh->ether_type);
 	switch (etype) {
 #ifdef INET
@@ -436,6 +425,7 @@ ether_input(ifp, eh, m)
 	case ETHERTYPE_REVARP:
 		revarpinput(m);	/* XXX queue? */
 		return;
+
 #endif
 #ifdef IPX
 	case ETHERTYPE_II:
@@ -450,11 +440,28 @@ ether_input(ifp, eh, m)
 		break;
 #endif
 	default:
-#if defined (ISO) || defined (LLC)
-		if (etype > ETHERMTU)
+		if (llcfound || etype > ETHERMTU)
 			goto dropanyway;
+		llcfound = 1;
 		l = mtod(m, struct llc *);
 		switch (l->llc_dsap) {
+		case LLC_SNAP_LSAP:
+			if (l->llc_control == LLC_UI &&
+			    l->llc_dsap == LLC_SNAP_LSAP &&
+			    l->llc_ssap == LLC_SNAP_LSAP) {
+				/* SNAP */
+				if (m->m_pkthdr.len > etype)
+					m_adj(m, etype - m->m_pkthdr.len);
+				m->m_data += 6;		/* XXX */
+				m->m_len -= 6;		/* XXX */
+				m->m_pkthdr.len -= 6;	/* XXX */
+				M_PREPEND(m, sizeof *eh, M_DONTWAIT);
+				if (m == 0)
+					return;
+				*mtod(m, struct ether_header *) = *eh;
+				goto decapsulate;
+			}
+			goto dropanyway;
 #ifdef	ISO
 		case LLC_ISO_LSAP: 
 			switch (l->llc_control) {
@@ -516,42 +523,33 @@ ether_input(ifp, eh, m)
 				ifp->if_output(ifp, m, &sa, NULL);
 				return;
 			}
-			default:
-				m_freem(m);
-				return;
-			}
 			break;
+			}
 #endif /* ISO */
-#ifdef LLC
+#ifdef CCITT
 		case LLC_X25_LSAP:
-		{
 			if (m->m_pkthdr.len > etype)
 				m_adj(m, etype - m->m_pkthdr.len);
 			M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
 			if (m == 0)
 				return;
-			if ( !sdl_sethdrif(ifp, eh->ether_shost, LLC_X25_LSAP,
-					    eh->ether_dhost, LLC_X25_LSAP, 6, 
-					    mtod(m, struct sdl_hdr *)))
+			if (!sdl_sethdrif(ifp, eh->ether_shost, LLC_X25_LSAP,
+			    eh->ether_dhost, LLC_X25_LSAP, 6,
+			    mtod(m, struct sdl_hdr *)))
 				panic("ETHER cons addr failure");
 			mtod(m, struct sdl_hdr *)->sdlhdr_len = etype;
 #ifdef LLC_DEBUG
-				printf("llc packet\n");
+			printf("llc packet\n");
 #endif /* LLC_DEBUG */
 			schednetisr(NETISR_CCITT);
 			inq = &llcintrq;
 			break;
-		}
-#endif /* LLC */
+#endif /* CCITT */
 		dropanyway:
 		default:
 			m_freem(m);
 			return;
 		}
-#else /* ISO || LLC */
-	    m_freem(m);
-	    return;
-#endif /* ISO || LLC */
 	}
 
 	s = splimp();

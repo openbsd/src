@@ -91,12 +91,10 @@
 
 #include "bpfilter.h"
 
-#ifdef LLC
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
-#endif
 
-#if defined(LLC) && defined(CCITT)
+#if defined(CCITT)
 extern struct ifqueue pkintrq;
 #endif
 
@@ -245,7 +243,7 @@ fddi_output(ifp, m0, dst, rt0)
 #endif
 		} break;
 #endif /* ISO */
-#ifdef	LLC
+#ifdef	CCITT
 /*	case AF_NSAP: */
 	case AF_CCITT: {
 		register struct sockaddr_dl *sdl = 
@@ -284,7 +282,7 @@ fddi_output(ifp, m0, dst, rt0)
 		}
 #endif /* LLC_DEBUG */
 		} break;
-#endif /* LLC */	
+#endif /* CCITT */	
 
 	case AF_UNSPEC:
 	{
@@ -542,7 +540,7 @@ fddi_input(ifp, fh, m)
 		}
 		break;
 #endif /* ISO */
-#ifdef LLC
+#ifdef CCITT
 	case LLC_X25_LSAP:
 	{
 		M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
@@ -560,7 +558,7 @@ fddi_input(ifp, fh, m)
 		inq = &llcintrq;
 		break;
 	}
-#endif /* LLC */
+#endif /* CCITT */
 		
 	default:
 		/* printf("fddi_input: unknown dsap 0x%x\n", l->llc_dsap); */
