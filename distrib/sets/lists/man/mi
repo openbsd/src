@@ -1787,6 +1787,7 @@
 ./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/cats
+./usr/share/man/cat8/cats/fdisk.0
 ./usr/share/man/cat8/cats/kbd.0
 ./usr/share/man/cat8/cats/wsconscfg.0
 ./usr/share/man/cat8/cats/wsfontload.0
