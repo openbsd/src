@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.4 2005/01/04 03:49:49 drahn Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.5 2005/01/05 00:46:28 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -116,14 +116,13 @@
 #define PXA2X0_USBHC_BASE	0x4c000000 /* USB Host Controller */
 #define PXA2X0_USBHC_SIZE	0x70
 
-
 /* width of interrupt controller */
 #define ICU_LEN			32   /* but [0..7,15,16] is not used */
 #define ICU_INT_HWMASK		0xffffff00
-#define PXA2X0_IRQ_MIN 1
+#define PXA2X0_IRQ_MIN		1
 
 #define PXA2X0_INT_USBH2	2
-#define PXA2X0_INT_USBH1	3
+#define PXA2X0_INT_USBH1	3	/* OHCI */
 #define PXA2X0_INT_GPIO0	8
 #define PXA2X0_INT_GPIO1	9
 #define PXA2X0_INT_GPION	10	/* irq from GPIO[2..80] */
@@ -248,7 +247,8 @@ struct pxa2x0_dma_desc {
 #define CKEN_FFUART	(1<<6)
 #define CKEN_BTUART	(1<<7)
 #define CKEN_I2S	(1<<8)
-#define CKEN_USB	(1<<11)
+#define CKEN_USBHC	(1<<10)
+#define CKEN_USBDC	(2<<11)
 #define CKEN_MMC	(1<<12)
 #define CKEN_FICP	(1<<13)
 #define CKEN_I2C	(1<<14)
@@ -632,4 +632,64 @@ struct pxa2x0_dma_desc {
 #define USBDC_UDDR13	0x0C00  /* UDC Endpoint 13 Data Register  */
 #define USBDC_UDDR14	0x0E00  /* UDC Endpoint 14 Data Register  */
 #define USBDC_UDDR15	0x00E0  /* UDC Endpoint 15 Data Register  */
+
+/*
+ * USB Host Controller
+ */
+#define USBHC_STAT	0x0060	/* UHC Status Register */
+#define  USBHC_STAT_RWUE	(1<<7)	/* HCI Remote Wake-Up Event */
+#define  USBHC_STAT_HBA		(1<<8)	/* HCI Buffer Acrive */
+#define  USBHC_STAT_HTA		(1<<10)	/* HCI Transfer Abort */
+#define  USBHC_STAT_UPS1	(1<<11)	/* USB Power Sense Port 1 */
+#define  USBHC_STAT_UPS2	(1<<12)	/* USB Power Sense Port 2 */
+#define  USBHC_STAT_UPRI	(1<<13)	/* USB Port Resume Interrupt */
+#define  USBHC_STAT_SBTAI	(1<<14)	/* System Bus Target Abort Interrupt */
+#define  USBHC_STAT_SBMAI	(1<<15)	/* System Bus Master Abort Interrupt */
+#define  USBHC_STAT_UPS3	(1<<16)	/* USB Power Sense Port 3 */
+#define  USBHC_STAT_MASK	(USBHC_STAT_RWUE | USBHC_STAT_HBA | \
+    USBHC_STAT_HTA | USBHC_STAT_UPS1 | USBHC_STAT_UPS2 | USBHC_STAT_UPRI | \
+    USBHC_STAT_SBTAI | USBHC_STAT_SBMAI USBHC_STAT_UPS3 | USBHC_STAT_MASK)
+#define USBHC_HR	0x0064	/* UHC Reset Register */
+#define  USBHC_HR_FSBIR		(1<<0)	/* Force System Bus Interface Reset */
+#define  USBHC_HR_FHR		(1<<1)	/* Force Host Controller Reset */
+#define  USBHC_HR_CGR		(1<<2)	/* Clock Generation Reset */
+#define  USBHC_HR_SSDC		(1<<3)	/* Simulation Scale Down Clock */
+#define  USBHC_HR_UIT		(1<<4)	/* USB Interrupt Test */
+#define  USBHC_HR_SSE		(1<<5)	/* Sleep Standby Enable */
+#define  USBHC_HR_PSPL		(1<<6)	/* Power Sense Polarity Low */
+#define  USBHC_HR_PCPL		(1<<7)	/* Power Control Polarity Low */
+#define  USBHC_HR_SSEP1		(1<<9)	/* Sleep Standby Enable for Port 1 */
+#define  USBHC_HR_SSEP2		(1<<10)	/* Sleep Standby Enable for Port 2 */
+#define  USBHC_HR_SSEP3		(1<<11)	/* Sleep Standby Enable for Port 3 */
+#define  USBHC_HR_MASK		(USBHC_HR_FSBIR | USBHC_HR_FHR | \
+    USBHC_HR_CGR | USBHC_HR_SSDC | USBHC_HR_UIT | USBHC_HR_SSE | \
+    USBHC_HR_PSPL | USBHC_HR_PCPL | USBHC_HR_SSEP1 | USBHC_HR_SSEP2 | \
+    USBHC_HR_SSEP3)
+#define USBHC_HIE	0x0068	/* UHC Interrupt Enable Register */
+#define  USBHC_HIE_RWIE		(1<<7)	/* HCI Remote Wake-Up */
+#define  USBHC_HIE_HBAIE	(1<<8)	/* HCI Buffer Active */
+#define  USBHC_HIE_TAIE		(1<<10)	/* HCI Interface Transfer Abort */
+#define  USBHC_HIE_UPS1IE	(1<<11)	/* USB Power Sense Port 1 */
+#define  USBHC_HIE_UPS2IE	(1<<12)	/* USB Power Sense Port 2 */
+#define  USBHC_HIE_UPRIE	(1<<13)	/* USB Port Resume */
+#define  USBHC_HIE_UPS3IE	(1<<14)	/* USB Power Sense Port 3 */
+#define  USBHC_HIE_MASK		(USBHC_HIE_RWIE | USBHC_HIE_HBAIE | \
+    USBHC_HIE_TAIE | USBHC_HIE_UPS1IE | USBHC_HIE_UPS2IE | USBHC_HIE_UPRIE | \
+    USBHC_HIE_UPS3IE)
+#define USBHC_HIT	0x006C	/* UHC Interrupt Test Register */
+#define  USBHC_HIT_RWUT		(1<<7)	/* HCI Remote Wake-Up */
+#define  USBHC_HIT_BAT		(1<<8)	/* HCI Buffer Active */
+#define  USBHC_HIT_IRQT		(1<<9)	/* Normal OHC */
+#define  USBHC_HIT_TAT		(1<<10)	/* HCI Interface Transfer Abort */
+#define  USBHC_HIT_UPS1T	(1<<11)	/* USB Power Sense Port 1 */
+#define  USBHC_HIT_UPS2T	(1<<12)	/* USB Power Sense Port 2 */
+#define  USBHC_HIT_UPRT		(1<<13)	/* USB Port Resume */
+#define  USBHC_HIT_STAT		(1<<14)	/* System Bus Target Abort */
+#define  USBHC_HIT_SMAT		(1<<15)	/* System Bus Master Abort */
+#define  USBHC_HIT_UPS3T	(1<<16)	/* USB Power Sense Port 3 */
+#define  USBHC_HIT_MASK		(USBHC_HIT_RWUT | USBHC_HIT_BAT | \
+    USBHC_HIT_IRQT | USBHC_HIT_TAT | USBHC_HIT_UPS1T | USBHC_HIT_UPS2T | \
+    USBHC_HIT_UPRT | USBHC_HIT_STAT | USBHC_HIT_SMAT | USBHC_HIT_UPS3T)
+#define USBHC_RST_WAIT	10	/* ms to wait for reset */
+
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */
