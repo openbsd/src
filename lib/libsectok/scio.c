@@ -1,4 +1,4 @@
-/* $Id: scio.c,v 1.8 2001/07/20 15:51:45 rees Exp $ */
+/* $Id: scio.c,v 1.9 2001/07/30 15:51:16 rees Exp $ */
 
 /*
 copyright 1997
@@ -55,6 +55,10 @@ such damages.
 #include "sectok.h"
 #include "sc7816.h"
 #include "todos_scrw.h"
+
+#ifndef howmany
+#define howmany(x, y) (((x) + ((y) - 1)) / (y))
+#endif
 
 static int todos_scfdopen(int ttyn, int fd, int flags, int *ep);
 static int todos_sccts(int ttyn);
@@ -382,7 +386,7 @@ scgetc(int ttyn, unsigned char *cp, int ms)
 #ifdef BYTECOUNT
     num_getc++;
 #endif /* BYTECOUNT */
-    
+
     fdset = (fd_set *)calloc(howmany(fd + 1, NFDBITS), sizeof(fd_mask));
     if (fdset == NULL)
 	return SCENOMEM;
