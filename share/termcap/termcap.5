@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
-.\"	$Id: termcap.5,v 1.1.1.1 1995/10/18 08:44:48 deraadt Exp $
+.\"	$Id: termcap.5,v 1.2 1997/01/11 18:35:53 pefo Exp $
 .\"
 .Dd March 6, 1993
 .Dt TERMCAP 5
@@ -461,6 +461,18 @@ when the end of a line is reached) is indicated by the Boolean capability
 .Sy \&am .
 Hence the description of the Concept includes
 .Sy \&am .
+.Pp
+Boolean capabilities are defined by their name,
+.Sy \&fo .
+They have no argument. The presens of a boolean capability name sets its
+value to
+.Sy \&true .
+A capability value will be reverted to
+.Sy \&false ,
+by appending a
+.Sy \&@
+char after the name, such as
+.Sy \&fo@ .
 .Pp
 Numeric capabilities are followed by the character `#' then the value.
 In the example above
