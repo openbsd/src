@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2001/04/20 11:01:55 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2001/05/05 21:26:34 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -814,7 +814,7 @@ pmap_free_pv(pv)
 {
 	struct pv_page *pvp;
 
-	pvp = (struct pv_page *)trunc_page(pv);
+	pvp = (struct pv_page *)trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -1326,7 +1326,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-		pmap_ptpage_addref(trunc_page(pte));
+		pmap_ptpage_addref(trunc_page((vaddr_t)pte));
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -1486,7 +1486,7 @@ validate:
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel()) {
 		va -= PAGE_SIZE;
-		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
+		pmap_check_wiring("enter", trunc_page((vaddr_t)pmap_pte(pmap, va)));
 	}
 #endif
 }
@@ -2025,7 +2025,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * the PT page.
 	 */
 	if (pmap != pmap_kernel()) {
-		vaddr_t ptpva = trunc_page(pte);
+		vaddr_t ptpva = trunc_page((vaddr_t)pte);
 		int refs = pmap_ptpage_delref(ptpva);
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
@@ -2165,7 +2165,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 					ptpmap->pm_stab,
 					ptpmap->pm_sref - 1);
 			if ((pmapdebug & PDB_PARANOIA) &&
-			    ptpmap->pm_stab != (st_entry_t *)trunc_page(ste))
+			    ptpmap->pm_stab != (st_entry_t *)trunc_page((vaddr_t)ste))
 				panic("remove: bogus ste");
 #endif
 			if (--(ptpmap->pm_sref) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mappedcopy.c,v 1.2 1999/09/03 18:01:04 art Exp $	*/
+/*	$OpenBSD: mappedcopy.c,v 1.3 2001/05/05 21:26:37 art Exp $	*/
 /*	$NetBSD: mappedcopy.c,v 1.1 1997/02/02 06:54:10 thorpej Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ mappedcopyin(fromp, top, count)
 		/*
 		 * Map in the page and bcopy data in from it
 		 */
-		upa = pmap_extract(upmap, trunc_page(fromp));
+		upa = pmap_extract(upmap, trunc_page((vaddr_t)fromp));
 		if (upa == 0)
 			panic("mappedcopyin: null page frame");
 		len = min(count, (PAGE_SIZE - off));
@@ -158,7 +158,7 @@ mappedcopyout(fromp, top, count)
 		/*
 		 * Map in the page and bcopy data out to it
 		 */
-		upa = pmap_extract(upmap, trunc_page(top));
+		upa = pmap_extract(upmap, trunc_page((vaddr_t)top));
 		if (upa == 0)
 			panic("mappedcopyout: null page frame");
 		len = min(count, (PAGE_SIZE - off));

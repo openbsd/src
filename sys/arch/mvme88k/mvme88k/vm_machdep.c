@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.22 2001/05/05 20:56:47 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.23 2001/05/05 21:26:39 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -251,7 +251,7 @@ vmapbuf(bp, len)
 		panic("vmapbuf");
 #endif
 
-	addr = (caddr_t)trunc_page(bp->b_saveaddr = bp->b_data);
+	addr = (caddr_t)trunc_page((vaddr_t)(bp->b_saveaddr = bp->b_data));
 	off = (vm_offset_t)bp->b_saveaddr & PGOFSET;
 	len = round_page(off + len);
 	pmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -306,7 +306,7 @@ vunmapbuf(bp, len)
 		panic("vunmapbuf");
 #endif
 
-	addr = trunc_page(bp->b_data);
+	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vm_offset_t)bp->b_data & PGOFSET;
 	len = round_page(off + len);
 #if defined(UVM)
@@ -434,7 +434,7 @@ mapiospace(caddr_t pa, int len)
 	int off = (u_long)pa & PGOFSET;
 	extern vm_offset_t phys_map_vaddr1;
 
-	pa = (caddr_t)trunc_page(pa);
+	pa = (caddr_t)trunc_page((paddr_t)pa);
 
 	pmap_enter(kernel_pmap, phys_map_vaddr1, (vm_offset_t)pa,
 		   VM_PROT_READ|VM_PROT_WRITE, 1, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.37 2001/03/22 20:44:59 niklas Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.38 2001/05/05 21:26:36 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -413,7 +413,7 @@ pmap_free_pv(pv)
 {
 	register struct pv_page *pvp;
 
-	pvp = (struct pv_page *) trunc_page(pv);
+	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -470,7 +470,7 @@ pmap_collect_pv()
 			continue;
 		s = splimp();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
-			pvp = (struct pv_page *) trunc_page(pv);
+			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
@@ -1176,7 +1176,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		/* our guess about the vm_map was good!  fault it in.  */
 
 		vmap = &curproc->p_vmspace->vm_map;
-		v = trunc_page(vtopte(va));
+		v = trunc_page((vaddr_t)vtopte(va));
 #ifdef DEBUG
 		printf("faulting in a pt page map %x va %x\n", vmap, v);
 #endif
@@ -1815,7 +1815,7 @@ pmap_prefault(map, v, l)
 
 	for (pv = v; pv < v + l ; pv += ~PD_MASK + 1) {
 		if (!pmap_pde_v(pmap_pde(map->pmap, pv))) {
-			pv2 = trunc_page(vtopte(pv));
+			pv2 = trunc_page((vaddr_t)vtopte(pv));
 #if defined(UVM)
 			uvm_fault(map, pv2, 0, VM_PROT_READ);
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.9 2001/05/05 20:57:03 art Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.10 2001/05/05 21:26:46 art Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.8 1999/03/25 18:48:56 mrg Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ sys_obreak(p, v, retval)
 	long diff;
 
 	old = (vaddr_t)vm->vm_daddr;
-	new = round_page(SCARG(uap, nsize));
+	new = round_page((vaddr_t)SCARG(uap, nsize));
 	if ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return(ENOMEM);
 

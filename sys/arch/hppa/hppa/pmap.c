@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2001/04/29 20:58:55 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.43 2001/05/05 21:26:36 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -409,7 +409,7 @@ pmap_free_pv(struct pv_entry *pv)
 		printf("pmap_free_pv(%p)\n", pv);
 #endif
 
-	pvp = (struct pv_page *) trunc_page(pv);
+	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_list);

@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.8 2001/01/25 03:50:46 todd Exp $  */
+/*    $OpenBSD: sfas.c,v 1.9 2001/05/05 21:26:35 art Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ sfas_scsicmd(struct scsi_xfer *xs)
 		sva = (vm_offset_t)xs->data & PG_FRAME;
 
 		pendp->vm_link_data.offset = (vm_offset_t)xs->data & PGOFSET;
-		pendp->vm_link_data.pages  = round_page(xs->data+xs->datalen-
+		pendp->vm_link_data.pages  = round_page((vaddr_t)xs->data+xs->datalen-
 							sva)/NBPG;
 
 		for(n=0; n<pendp->vm_link_data.pages; n++)

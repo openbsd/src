@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2001/04/10 06:59:13 niklas Exp $ */
+/*	$OpenBSD: pmap.c,v 1.14 2001/05/05 21:26:41 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -717,7 +717,7 @@ if (startpmapdebug)
 			panic("pmap_enter: bad index %d", index);
 #endif
 		if (pmap->pm_refcnt[index] == 0) {
-			vaddr_t ptaddr = trunc_page(&patch[i]);
+			vaddr_t ptaddr = trunc_page((vaddr_t)&patch[i]);
 			paddr_t phys;
 			struct vm_page *pg;
 #ifdef DEBUG

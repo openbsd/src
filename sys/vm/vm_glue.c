@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.36 2001/04/02 21:43:12 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.37 2001/05/05 21:26:46 art Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -94,8 +94,8 @@ kernacc(addr, len, rw)
 	vm_offset_t saddr, eaddr;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-	saddr = trunc_page(addr);
-	eaddr = round_page(addr+len);
+	saddr = trunc_page((vaddr_t)addr);
+	eaddr = round_page((vaddr_t)addr+len);
 	rv = vm_map_check_protection(kernel_map, saddr, eaddr, prot);
 	/*
 	 * XXX there are still some things (e.g. the buffer cache) that
@@ -132,7 +132,7 @@ useracc(addr, len, rw)
 #endif
 
 	rv = vm_map_check_protection(&curproc->p_vmspace->vm_map,
-	    trunc_page(addr), round_page(addr+len), prot);
+	    trunc_page((vaddr_t)addr), round_page((vaddr_t)addr+len), prot);
 	return (rv == TRUE);
 }
 
@@ -158,8 +158,8 @@ chgkprot(addr, len, rw)
 	vm_offset_t pa, sva, eva;
 
 	prot = rw == B_READ ? VM_PROT_READ : VM_PROT_READ|VM_PROT_WRITE;
-	eva = round_page(addr + len);
-	for (sva = trunc_page(addr); sva < eva; sva += PAGE_SIZE) {
+	eva = round_page((vaddr_t)addr + len);
+	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
 		/*
 		 * Extract physical address for the page.
 		 * We use a cheezy hack to differentiate physical
@@ -182,8 +182,9 @@ vslock(addr, len)
 #ifdef __i386__
 	pmap_prefault(&curproc->p_vmspace->vm_map, (vm_offset_t)addr, len);
 #endif
-	return (vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-	    round_page(addr+len), FALSE));
+	return (vm_map_pageable(&curproc->p_vmspace->vm_map,
+	    trunc_page((vaddr_t)addr),
+	    round_page((vaddr_t)addr+len), FALSE));
 }
 
 int
@@ -191,8 +192,9 @@ vsunlock(addr, len)
 	caddr_t	addr;
 	u_int	len;
 {
-	return (vm_map_pageable(&curproc->p_vmspace->vm_map, trunc_page(addr),
-	    round_page(addr+len), TRUE));
+	return (vm_map_pageable(&curproc->p_vmspace->vm_map,
+	    trunc_page((vaddr_t)addr),
+	    round_page((vaddr_t)addr+len), TRUE));
 }
 
 /*

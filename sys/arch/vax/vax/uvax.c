@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvax.c,v 1.4 1999/01/11 05:12:08 millert Exp $ */
+/*	$OpenBSD: uvax.c,v 1.5 2001/05/05 21:26:42 art Exp $ */
 /*	$NetBSD: uvax.c,v 1.4 1997/02/19 10:04:27 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -93,7 +93,7 @@ uvax_phys2virt(phys)
 	for (p = dep_call->cpu_map; p->um_base != 0; p++) {
 		if (p->um_base > phys || p->um_end < phys)
 			continue;
-		virt = p->um_virt + (phys - trunc_page(p->um_base));
+		virt = p->um_virt + (phys - trunc_page((vaddr_t)p->um_base));
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.15 2001/05/05 20:57:00 art Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.16 2001/05/05 21:26:44 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -264,7 +264,8 @@ sys_shmat(p, v, retval)
 	} else {
 		/* This is just a hint to vm_mmap() about where to put it. */
 		attach_va =
-		    round_page(p->p_vmspace->vm_taddr + MAXTSIZ + MAXDSIZ);
+		    round_page((vaddr_t)p->p_vmspace->vm_taddr + MAXTSIZ +
+			       MAXDSIZ);
 	}
 	shm_handle = shmseg->shm_internal;
 #ifdef UVM

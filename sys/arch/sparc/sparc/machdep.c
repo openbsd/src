@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 2001/05/05 20:56:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.55 2001/05/05 21:26:41 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -1067,7 +1067,7 @@ mapdev(phys, virt, offset, size)
 	ret = (void *)(v | (((u_long)phys->rr_paddr + offset) & PGOFSET));
 			/* note: preserve page offset */
 
-	pa = trunc_page(phys->rr_paddr + offset);
+	pa = trunc_page((vaddr_t)phys->rr_paddr + offset);
 	pmtype = PMAP_IOENC(phys->rr_iospace);
 
 	do {

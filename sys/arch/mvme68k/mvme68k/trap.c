@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2001/05/05 20:56:45 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.29 2001/05/05 21:26:39 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -724,7 +724,7 @@ int docachepush;
 		 */
 		if (docachepush) {
 			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
-						  trunc_page(f->f_fa), VM_PROT_WRITE, TRUE, VM_PROT_WRITE);
+						  trunc_page((vaddr_t)f->f_fa), VM_PROT_WRITE, TRUE, VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			DCFL(pmap_extract(pmap_kernel(), (vm_offset_t)fa));

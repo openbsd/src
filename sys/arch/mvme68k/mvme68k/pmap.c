@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 2001/04/05 20:39:40 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.18 2001/05/05 21:26:38 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -677,7 +677,7 @@ pmap_free_pv(pv)
 	register struct pv_page *pvp;
 	register int i;
 
-	pvp = (struct pv_page *) trunc_page(pv);
+	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -724,7 +724,7 @@ pmap_collect_pv()
 			continue;
 		s = splimp();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
-			pvp = (struct pv_page *) trunc_page(pv);
+			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
@@ -1286,8 +1286,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	 * is a valid mapping in the page.
 	 */
 	if (pmap != pmap_kernel())
-		(void) vm_map_pageable(pt_map, trunc_page(pte),
-				       round_page(pte+1), FALSE);
+		(void) vm_map_pageable(pt_map, trunc_page((vaddr_t)pte),
+				       round_page((vaddr_t)(pte+1)), FALSE);
 
 	/*
 	 * Enter on the PV list if part of our managed memory
@@ -1408,7 +1408,7 @@ validate:
 		TBIS(va);
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
-		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
+		pmap_check_wiring("enter", trunc_page((vaddr_t)pmap_pte(pmap, va)));
 #endif
 }
 
@@ -2024,11 +2024,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * PT page.
 	 */
 	if (pmap != pmap_kernel()) {
-		(void) vm_map_pageable(pt_map, trunc_page(pte),
-				       round_page(pte+1), TRUE);
+		(void) vm_map_pageable(pt_map, trunc_page((vaddr_t)pte),
+				       round_page((vaddr_t)(pte+1)), TRUE);
 #ifdef DEBUG
 		if (pmapdebug & PDB_WIRING)
-			pmap_check_wiring("remove", trunc_page(pte));
+			pmap_check_wiring("remove", trunc_page((vaddr_t)pte));
 #endif
 	}
 	/*
@@ -2117,7 +2117,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				printf("remove: stab %x, refcnt %d\n",
 				       ptpmap->pm_stab, ptpmap->pm_sref - 1);
 			if ((pmapdebug & PDB_PARANOIA) &&
-			    ptpmap->pm_stab != (st_entry_t *)trunc_page(ste))
+			    ptpmap->pm_stab != (st_entry_t *)trunc_page((vaddr_t)ste))
 				panic("remove: bogus ste");
 #endif
 			if (--(ptpmap->pm_sref) == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2001/05/05 20:56:38 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2001/05/05 21:26:37 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -493,7 +493,7 @@ trap(frame)
 #ifndef PMAP_NEW
 		/* check if page table is mapped, if not, fault it first */
 		if ((PTD[pdei(va)] & PG_V) == 0) {
-			v = trunc_page(vtopte(va));
+			v = trunc_page((vaddr_t)vtopte(va));
 #if defined(UVM)
 			rv = uvm_fault(map, v, 0, ftype);
 #else

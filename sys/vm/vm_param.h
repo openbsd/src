@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.20 2000/06/14 16:51:55 provos Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.21 2001/05/05 21:26:47 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -188,11 +188,13 @@ struct _ps_strings {
  * for either addresses or counts (i.e., 1 byte rounds to 1 page).
  */
 #define	round_page(x) \
-	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) & ~PAGE_MASK))
+	(((x) + PAGE_MASK) & ~PAGE_MASK)
 #define	trunc_page(x) \
-	((vaddr_t)(((vaddr_t)(x)) & ~PAGE_MASK))
+	((x) & ~PAGE_MASK)
+#if !defined(UVM)
 #define	num_pages(x) \
 	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) >> PAGE_SHIFT))
+#endif
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2001/04/18 06:26:12 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.28 2001/05/05 21:26:40 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1069,7 +1069,7 @@ pmap_free_pv(pv)
 {
 	struct pv_page *pvp;
 	
-	pvp = (struct pv_page *)trunc_page(pv);
+	pvp = (struct pv_page *)trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		LIST_INSERT_HEAD(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -1143,7 +1143,7 @@ pofree(po, freepage)
 {
 	struct po_page *pop;
 	
-	pop = (struct po_page *)trunc_page(po);
+	pop = (struct po_page *)trunc_page((vaddr_t)po);
 	switch (++pop->pop_pgi.pgi_nfree) {
 	case NPOPPG:
 		if (!freepage)
