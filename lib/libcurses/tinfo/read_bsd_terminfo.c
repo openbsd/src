@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_bsd_terminfo.c,v 1.2 1999/01/22 04:50:43 millert Exp $	*/
+/*	$OpenBSD: read_bsd_terminfo.c,v 1.3 1999/01/23 18:31:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.2 1999/01/22 04:50:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.3 1999/01/23 18:31:02 millert Exp $";
 #endif
 
 #include <curses.priv.h>
@@ -40,8 +40,10 @@ static char rcsid[] = "$OpenBSD: read_bsd_terminfo.c,v 1.2 1999/01/22 04:50:43 m
 #include <term.h>	/* lines, columns, cur_term */
 #include <term_entry.h>
 
-#define PVECSIZ 3 * 2
 #define	_PATH_TERMINFO	"/usr/share/misc/terminfo"
+
+/* Function prototypes for private functions, */
+static int _nc_lookup_bsd_terminfo_entry __P((const char *const, const char *const, TERMTYPE *));
 
 /*
  * Look up ``tn'' in the BSD terminfo.db file and fill in ``tp''
@@ -54,108 +56,150 @@ _nc_read_bsd_terminfo_entry(tn, filename, tp)
     char *const filename;
     TERMTYPE *const tp;
 {
-    char  *p;
-    char  *capbuf;
-    char **fname;
-    int    i, pathcnt;
+    char **fname, *p;
     char   envterm[PATH_MAX];		/* local copy of $TERMINFO */
     char   hometerm[PATH_MAX];		/* local copy of $HOME/.terminfo */
-    char  *pathvec[PVECSIZ];		/* list of possible terminfo files */
-    char   namecpy[MAX_NAME_SIZE+1];
-    long   num;
+    char  *pathvec[4];			/* list of possible terminfo files */
     size_t len;
 
     fname = pathvec;
-    pathcnt = 1;
     /* $TERMINFO may hold a path to a terminfo file */
     if (!issetugid() && (p = getenv("TERMINFO")) != NULL) {
 	len = strlcpy(envterm, p, sizeof(envterm));
 	if (len < sizeof(envterm))
-	    pathcnt++;
 	    *fname++ = envterm;
-	    *fname++ = NULL;
     }
 
     /* Also check $HOME/.terminfo if it exists */
     if (!issetugid() && (p = getenv("HOME")) != NULL) {
 	len = snprintf(hometerm, sizeof(hometerm), "%s/.terminfo", p);
 	if (len < sizeof(hometerm))
-	    pathcnt++;
 	    *fname++ = hometerm;
-	    *fname++ = NULL;
     }
 
     /* Finally we check the system terminfo file */
     *fname++ = _PATH_TERMINFO;
     *fname = NULL;
 
+    /*
+     * Lookup ``tn'' in each possible terminfo file until
+     * we find it or reach the end.
+     */
+    for (fname = pathvec; *fname; fname++) {
+	if (_nc_lookup_bsd_terminfo_entry(tn, *fname, tp) == 1) {
+	    /* Set copyout parameter and return */
+	    (void)strlcpy(filename, *fname, PATH_MAX);
+	    return (1);
+	}
+    }
+    return(0);
+}
+
+/*
+ * Given a path /path/to/terminfo/X/termname, look up termname
+ * /path/to/terminfo.db and fill in ``tp'' with the info we find there.
+ * Returns 1 on success, 0 on failure.
+ */
+int
+_nc_read_bsd_terminfo_file(filename, tp)
+    const char *const filename;
+    TERMTYPE *const tp;
+{
+    char path[PATH_MAX];		/* path to terminfo.db */
+    char *tname;			/* name of terminal to look up */
+    char *p;
+
+    (void)strlcpy(path, filename, sizeof(path));
+
+    /* Split filename into path and term name components. */
+    if ((tname = strrchr(path, '/')) == NULL)
+	return (0);
+    *tname++ = '\0';
+    if ((p = strrchr(path, '/')) == NULL)
+	return (0);
+    *p = '\0';
+
+    return (_nc_lookup_bsd_terminfo_entry(tname, path, tp));
+}
+
+/*
+ * Look up ``tn'' in the BSD terminfo file ``filename'' and fill in
+ * ``tp'' with the info we find there.
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+_nc_lookup_bsd_terminfo_entry(tn, filename, tp)
+    const char *const tn;
+    const char *const filename;
+    TERMTYPE *const tp;
+{
+    char  *pathvec[2];
+    char  *capbuf, *p;
+    char   namecpy[MAX_NAME_SIZE+1];
+    long   num;
+    int    i;
+
+    capbuf = NULL;
+    pathvec[0] = (char *)filename;
+    pathvec[1] = NULL;
+
     /* Don't prepent any hardcoded entries. */
     (void) cgetset(NULL);
 
-    /*
-     * We can't pass a normal vector in to cgetent(3) because
-     * we need to know which of the paths in pathvec we actually
-     * used (for the filename copyout parameter).
-     * Therefore, we kludge things a bit...
-     */
-    for (fname = pathvec, i = 1; fname != pathvec + pathcnt * 2 && i != 0; ) {
-	capbuf = NULL;
-	i = cgetent(&capbuf, fname, (char *)tn);      
-	    
-	if (i == 0) {
-	    /* Set copyout parameter and init term description */
-	    (void)strlcpy(filename, *fname, PATH_MAX);
-	    _nc_init_entry(tp);
+    /* Lookup tn in filename */
+    i = cgetent(&capbuf, pathvec, (char *)tn);      
+    if (i == 0) {
+	_nc_init_entry(tp);
 
-	    /* Set terminal name(s) */
-	    if ((p = strchr(capbuf, ':')) != NULL)
-		*p = '\0';
-	    if ((tp->str_table = tp->term_names = strdup(capbuf)) == NULL)
-		return (0);
-	    _nc_set_type(_nc_first_name(tp->term_names));
-	    if (p)
-		*p = ':';
-
-	    /* Truncate overly-long names and aliases */
-	    (void)strlcpy(namecpy, tp->term_names, sizeof(namecpy));
-	    if ((p = strrchr(namecpy, '|')) != (char *)NULL)
-		*p = '\0';
-	    p = strtok(namecpy, "|");
-	    if (strlen(p) > MAX_ALIAS)
-		_nc_warning("primary name may be too long");
-	    while ((p = strtok((char *)NULL, "|")) != (char *)NULL)
-		if (strlen(p) > MAX_ALIAS)
-		    _nc_warning("alias `%s' may be too long", p);
-
-	    /* Copy capabilities */
-	    for (i = 0 ; i < BOOLCOUNT ; i++) {
-		if (cgetcap(capbuf, (char *)boolnames[i], ':') == NULL)
-		    tp->Booleans[i] = FALSE;
-		else
-		    tp->Booleans[i] = TRUE;
-	    }
-	    for (i = 0 ; i < NUMCOUNT ; i++) {
-		if (cgetnum(capbuf, (char *)numnames[i], &num) < 0)
-		    tp->Numbers[i] = 0;
-		else
-		    tp->Numbers[i] = (int)num;
-	    }
-	    for (i = 0 ; i < STRCOUNT ; i++) {
-		if (cgetstr(capbuf, (char *)strnames[i], &p) < 0)
-		    tp->Strings[i] = NULL;
-		else
-		    tp->Strings[i] = p;
-	    }
-	    i = 0;
+	/* Set terminal name(s) */
+	if ((p = strchr(capbuf, ':')) != NULL)
+	    *p = '\0';
+	if ((tp->str_table = tp->term_names = strdup(capbuf)) == NULL) {
+	    if (capbuf)
+		free(capbuf);
+	    return (0);
 	}
-	/* Increment by two since we have that NULL in there */
-	fname += 2;
+	_nc_set_type(_nc_first_name(tp->term_names));
+	if (p)
+	    *p = ':';
 
-	/* We are done with the returned getcap buffer now; free it */
-	cgetclose();
-	if (capbuf)
-	    free(capbuf);
+	/* Check for overly-long names and aliases */
+	(void)strlcpy(namecpy, tp->term_names, sizeof(namecpy));
+	if ((p = strrchr(namecpy, '|')) != (char *)NULL)
+	    *p = '\0';
+	p = strtok(namecpy, "|");
+	if (strlen(p) > MAX_ALIAS)
+	    _nc_warning("primary name may be too long");
+	while ((p = strtok((char *)NULL, "|")) != (char *)NULL)
+	    if (strlen(p) > MAX_ALIAS)
+		_nc_warning("alias `%s' may be too long", p);
+
+	/* Copy capabilities */
+	for (i = 0 ; i < BOOLCOUNT ; i++) {
+	    if (cgetcap(capbuf, (char *)boolnames[i], ':') == NULL)
+		tp->Booleans[i] = FALSE;
+	    else
+		tp->Booleans[i] = TRUE;
+	}
+	for (i = 0 ; i < NUMCOUNT ; i++) {
+	    if (cgetnum(capbuf, (char *)numnames[i], &num) < 0)
+		tp->Numbers[i] = 0;
+	    else
+		tp->Numbers[i] = (int)num;
+	}
+	for (i = 0 ; i < STRCOUNT ; i++) {
+	    if (cgetstr(capbuf, (char *)strnames[i], &p) < 0)
+		tp->Strings[i] = NULL;
+	    else
+		tp->Strings[i] = p;
+	}
+	i = 0;
     }
+
+    /* We are done with the returned getcap buffer now; free it */
+    cgetclose();
+    if (capbuf)
+	free(capbuf);
 
     return ((i == 0));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term_entry.h,v 1.3 1999/01/22 04:50:43 millert Exp $	*/
+/*	$OpenBSD: term_entry.h,v 1.4 1999/01/23 18:31:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -92,6 +92,7 @@ extern void _nc_free_entries(ENTRY *);
 
 /* read_bsd_terminfo.c: terminfo.db reading */
 extern int _nc_read_bsd_terminfo_entry(const char * const, char * const, TERMTYPE *const);
+extern int _nc_read_bsd_terminfo_file(const char * const, TERMTYPE *const);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.2 1999/01/22 04:50:43 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.3 1999/01/23 18:31:02 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -113,6 +113,11 @@ int _nc_read_file_entry(const char *const filename, TERMTYPE *ptr)
     int		name_size, bool_count, num_count, str_count, str_size;
     int		i, fd, numread;
     char	buf[MAX_ENTRY_SIZE];
+
+#ifdef __OpenBSD__
+    if (_nc_read_bsd_terminfo_file(filename, ptr) == 1)
+	return(1);
+#endif /* __OpenBSD__ */
 
     if (_nc_access(filename, R_OK) < 0
      || (fd = open(filename, O_RDONLY|O_BINARY)) < 0) {
