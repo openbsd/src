@@ -1,5 +1,5 @@
-/*	$OpenBSD: apecs_bus_mem.c,v 1.4 2001/02/16 08:23:38 jason Exp $	*/
-/*	$NetBSD: apecs_bus_mem.c,v 1.1 1996/11/25 03:42:11 cgd Exp $	*/
+/*	$OpenBSD: apecs_bus_mem.c,v 1.5 2001/02/16 09:07:20 jason Exp $	*/
+/* $NetBSD: apecs_bus_mem.c,v 1.8 1997/09/02 13:19:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -72,4 +72,4 @@
 #define	CHIP_S_MEM_W2_SYS_END(v)					\
     (APECS_PCI_SPARSE + (0x08000000UL << 5) - 1)
 
-#include "pci_swiz_bus_mem_chipdep.c"
+#include <alpha/pci/pci_swiz_bus_mem_chipdep.c>
