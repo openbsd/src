@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.9 1995/10/05 12:41:09 chopps Exp $	*/
+/*	$NetBSD: afsc.c,v 1.10 1996/01/28 19:23:24 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -114,7 +114,7 @@ afscmatch(pdp, cdp, auxp)
 	rp->siop_scratch = 0xdeadbeef;
 	rp->siop_temp = 0xaaaa5555;
 #ifdef DEBUG
-	printf("afscmatch: probe %x %x %x %X\n", scratch, temp,
+	printf("afscmatch: probe %x %x %x %x\n", scratch, temp,
 	    rp->siop_scratch, rp->siop_temp);
 #endif
 	if (rp->siop_scratch != 0xdeadbeef || rp->siop_temp != 0xaaaa5555)
