@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$OpenBSD: ugen.c,v 1.2 1999/08/16 22:08:48 fgsch Exp $	*/
 /*	$NetBSD: ugen.c,v 1.13 1999/08/02 19:32:56 augustss Exp $	*/
 
 /*
@@ -67,8 +67,8 @@
 #include <dev/usb/usbdi_util.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (ugendebug) printf x
-#define DPRINTFN(n,x)	if (ugendebug>(n)) printf x
+#define DPRINTF(x)	if (ugendebug) logprintf x
+#define DPRINTFN(n,x)	if (ugendebug>(n)) logprintf x
 int	ugendebug = 0;
 #else
 #define DPRINTF(x)
@@ -105,12 +105,41 @@ struct ugen_softc {
 	u_char sc_dying;
 };
 
-int ugenopen __P((dev_t, int, int, struct proc *));
-int ugenclose __P((dev_t, int, int, struct proc *));
-int ugenread __P((dev_t, struct uio *, int));
-int ugenwrite __P((dev_t, struct uio *, int));
-int ugenioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int ugenpoll __P((dev_t, int, struct proc *));
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+cdev_decl(ugen);
+#elif defined(__FreeBSD__)
+d_open_t  ugenopen;
+d_close_t ugenclose;
+d_read_t  ugenread;
+d_write_t ugenwrite;
+d_ioctl_t ugenioctl;
+d_poll_t  ugenpoll;
+
+#define UGEN_CDEV_MAJOR	114
+
+static struct cdevsw ugen_cdevsw = {
+	/* open */	ugenopen,
+	/* close */	ugenclose,
+	/* read */	ugenread,
+	/* write */	ugenwrite,
+	/* ioctl */	ugenioctl,
+	/* stop */	nostop,
+	/* reset */	noreset,
+	/* devtotty */	nodevtotty,
+	/* poll */	ugenpoll,
+	/* mmap */	nommap,
+	/* strategy */	nostrategy,
+	/* name */	"ugen",
+	/* parms */	noparms,
+	/* maj */	UGEN_CDEV_MAJOR,
+	/* dump */	nodump,
+	/* psize */	nopsize,
+	/* flags */	0,
+	/* maxio */	0,
+	/* bmaj */	-1
+};
+#endif
+
 void ugenintr __P((usbd_request_handle reqh, usbd_private_handle addr, 
 		   usbd_status status));
 
@@ -1084,5 +1113,5 @@ ugenpoll(dev, events, p)
 }
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(ugen, usb, ugen_driver, ugen_devclass, usbd_driver_load, 0);
+DEV_DRIVER_MODULE(ugen, uhub, ugen_driver, ugen_devclass, ugen_cdevsw, usbd_driver_load, 0);
 #endif

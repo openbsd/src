@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.2 1999/08/13 08:26:29 fgsch Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.3 1999/08/16 22:08:49 fgsch Exp $	*/
 /*	$NetBSD: usb_port.h,v 1.7 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -56,6 +56,8 @@ typedef struct device bdevice;			/* base device */
 
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
+
+#define logprintf printf
 
 #define USB_DECLARE_DRIVER_NAME_INIT(_1, dname, _2)  \
 int __CONCAT(dname,_match) __P((struct device *, struct cfdata *, void *)); \
@@ -120,7 +122,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
  * OpenBSD
  */
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
-#define memset(d, v, l)		bzero((d),(l))
+#define	memset(d, v, l)		bzero((d),(l))
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect

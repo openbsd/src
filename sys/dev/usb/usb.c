@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$OpenBSD: usb.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
 /*	$NetBSD: usb.c,v 1.15 1999/08/02 19:36:48 augustss Exp $	*/
 
 /*
@@ -78,8 +78,8 @@ MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
 #include <dev/usb/usb_quirks.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) printf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
+#define DPRINTF(x)	if (usbdebug) logprintf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 int	usbdebug = 0;
 int	uhcidebug;
 int	ohcidebug;

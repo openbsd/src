@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$OpenBSD: uhub.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
 /*	$NetBSD: uhub.c,v 1.18 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -60,8 +60,8 @@
 #include <dev/usb/usbdivar.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) printf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
+#define DPRINTF(x)	if (usbdebug) logprintf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int	usbdebug;
 extern char 	*usbd_error_strs[];
 #else
@@ -82,7 +82,7 @@ void uhub_disconnect_port __P((struct usbd_port *up));
 usbd_status uhub_explore __P((usbd_device_handle hub));
 void uhub_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
-USB_DECLARE_DRIVER_NAME(usb, uhub); 
+USB_DECLARE_DRIVER_NAME(usb, uhub);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 struct cfattach uhub_uhub_ca = {
@@ -258,6 +258,11 @@ uhub_init_port(up)
 		/* First let the device go through a good power cycle, */
 		usbd_delay_ms(dev, USB_PORT_POWER_DOWN_TIME);
 
+#if 0
+usbd_clear_hub_feature(dev, UHF_C_HUB_OVER_CURRENT);
+usbd_clear_port_feature(dev, port, UHF_C_PORT_OVER_CURRENT);
+#endif
+
 		/* then turn the power on. */
 		r = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
 		if (r != USBD_NORMAL_COMPLETION)
@@ -273,6 +278,17 @@ uhub_init_port(up)
 		r = usbd_get_port_status(dev, port, &up->status);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (r);
+		DPRINTF(("usb_init_port: after power on status=0x%04x "
+			 "change=0x%04x\n",
+			 UGETW(up->status.wPortStatus),
+			 UGETW(up->status.wPortChange)));
+
+#if 0
+usbd_clear_hub_feature(dev, UHF_C_HUB_OVER_CURRENT);
+usbd_clear_port_feature(dev, port, UHF_C_PORT_OVER_CURRENT);
+usbd_get_port_status(dev, port, &up->status);
+#endif
+
 		pstatus = UGETW(up->status.wPortStatus);
 		if ((pstatus & UPS_PORT_POWER) == 0)
 			printf("%s: port %d did not power up\n",
@@ -538,5 +554,6 @@ uhub_intr(reqh, addr, status)
 }
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(uhub, usb, uhub_driver, uhub_devclass, usbd_driver_load, 0);
+DRIVER_MODULE(uhub, usb, uhubroot_driver, uhubroot_devclass, 0, 0);
+DRIVER_MODULE(uhub, uhub, uhub_driver, uhub_devclass, usbd_driver_load, 0);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
 /*	$NetBSD: uhid.c,v 1.18 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -73,8 +73,8 @@
 #include <dev/usb/usb_quirks.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (uhiddebug) printf x
-#define DPRINTFN(n,x)	if (uhiddebug>(n)) printf x
+#define DPRINTF(x)	if (uhiddebug) logprintf x
+#define DPRINTFN(n,x)	if (uhiddebug>(n)) logprintf x
 int	uhiddebug = 0;
 #else
 #define DPRINTF(x)
@@ -116,12 +116,41 @@ struct uhid_softc {
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
 
-int uhidopen __P((dev_t, int, int, struct proc *));
-int uhidclose __P((dev_t, int, int, struct proc *p));
-int uhidread __P((dev_t, struct uio *uio, int));
-int uhidwrite __P((dev_t, struct uio *uio, int));
-int uhidioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int uhidpoll __P((dev_t, int, struct proc *));
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+cdev_decl(uhid);
+#elif defined(__FreeBSD__)
+d_open_t	uhidopen;
+d_close_t	uhidclose;
+d_read_t	uhidread;
+d_write_t	uhidwrite;
+d_ioctl_t	uhidioctl;
+d_poll_t	uhidpoll;
+
+#define		UHID_CDEV_MAJOR 122
+
+static struct cdevsw uhid_cdevsw = {
+	/* open */	uhidopen,
+	/* close */	uhidclose,
+	/* read */	uhidread,
+	/* write */	uhidwrite,
+	/* ioctl */	uhidioctl,
+	/* stop */	nostop,
+	/* reset */	noreset,
+	/* devtotty */	nodevtotty,
+	/* poll */	uhidpoll,
+	/* mmap */	nommap,
+	/* strategy */	nostrategy,
+	/* name */	"uhid",
+	/* parms */	noparms,
+	/* maj */	UHID_CDEV_MAJOR,
+	/* dump */	nodump,
+	/* psize */	nopsize,
+	/* flags */	0,
+	/* maxio */	0,
+	/* bmaj */	-1
+};
+#endif
+
 void uhid_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
 int uhid_do_read __P((struct uhid_softc *, struct uio *uio, int));
@@ -621,5 +650,6 @@ uhidpoll(dev, events, p)
 }
 
 #if defined(__FreeBSD__)
-DRIVER_MODULE(uhid, usb, uhid_driver, uhid_devclass, usbd_driver_load, 0);
+DEV_DRIVER_MODULE(uhid, uhub, uhid_driver, uhid_devclass, 
+		  uhid_cdevsw, usbd_driver_load, 0);
 #endif

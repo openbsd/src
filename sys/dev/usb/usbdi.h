@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.1 1999/08/13 05:28:05 fgsch Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
 /*	$NetBSD: usbdi.h,v 1.20 1999/06/30 06:44:23 augustss Exp $	*/
 
 /*
@@ -130,8 +130,7 @@ usbd_status usbd_open_pipe_intr
 usbd_status usbd_open_pipe_iso
 	__P((usbd_interface_handle iface, u_int8_t address,
 	     u_int8_t flags, usbd_pipe_handle *pipe,
-	     usbd_private_handle priv, u_int32_t bufsize, u_int32_t nbuf,
-	     usbd_callback));
+	     usbd_private_handle priv, u_int32_t bufsize, u_int32_t nbuf));
 usbd_status usbd_do_request 
 	__P((usbd_device_handle pipe, usb_device_request_t *req, void *data));
 usbd_status usbd_do_request_async

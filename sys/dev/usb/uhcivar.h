@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhcivar.h,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
+/*	$OpenBSD: uhcivar.h,v 1.2 1999/08/16 22:08:49 fgsch Exp $	*/
 /*	$NetBSD: uhcivar.h,v 1.7 1999/06/26 08:30:18 augustss Exp $	*/
 
 /*
@@ -117,16 +117,13 @@ struct uhci_vframe {
 
 typedef struct uhci_softc {
 	struct usbd_bus sc_bus;		/* base device */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	void *sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	void *sc_ih;			/* interrupt vectoring */
 
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
 	/* XXX should keep track of all DMA memory */
-#elif defined(__FreeBSD__)
-	int		sc_iobase;
-	int		unit;
 #endif /* defined(__FreeBSD__) */
 
 	uhci_physaddr_t *sc_pframes;
