@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.30 2001/08/08 03:11:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.31 2001/08/08 03:46:44 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -120,10 +120,10 @@ struct hifn_softc {
 	int sc_flags;
 #define	HIFN_HAS_RNG		1
 #define	HIFN_HAS_PUBLIC		2
-	struct timeout sc_rngto;
+	struct timeout sc_rngto, sc_tickto;
 	int sc_rngfirst;
 	int sc_rnghz;
-	int sc_c_busy, sc_s_busy, sc_d_busy, sc_r_busy;
+	int sc_c_busy, sc_s_busy, sc_d_busy, sc_r_busy, sc_active;
 	struct hifn_session sc_sessions[2048];
 };
 

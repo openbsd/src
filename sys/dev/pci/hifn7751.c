@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.89 2001/08/08 03:11:46 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.90 2001/08/08 03:46:44 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -102,6 +102,7 @@ void	hifn_dmamap_load __P((bus_dmamap_t, int *, struct hifn_desc *, int,
     volatile int *));
 int	hifn_init_pubrng __P((struct hifn_softc *));
 void	hifn_rng __P((void *));
+void	hifn_tick __P((void *));
 
 struct hifn_stats {
 	u_int64_t hst_ibytes;
@@ -310,6 +311,9 @@ hifn_attach(parent, self, aux)
 
 	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG))
 		hifn_init_pubrng(sc);
+
+	timeout_set(&sc->sc_tickto, hifn_tick, sc);
+	timeout_add(&sc->sc_tickto, hz);
 
 	return;
 
@@ -1299,6 +1303,7 @@ hifn_crypto(sc, cmd, crp)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+	sc->sc_active = 5;
 	splx(s);
 	return 0;		/* success */
 
@@ -1313,6 +1318,43 @@ err_srcmap:
 err_srcmap1:
 	bus_dmamap_destroy(sc->sc_dmat, cmd->src_map);
 	return (-1);
+}
+
+void
+hifn_tick(vsc)
+	void *vsc;
+{
+	struct hifn_softc *sc = vsc;
+	int s;
+
+	s = splnet();
+	if (sc->sc_active == 0) {
+		struct hifn_dma *dma = sc->sc_dma;
+		u_int32_t r = 0;
+
+		if (dma->cmdu == 0 && sc->sc_c_busy) {
+			sc->sc_c_busy = 0;
+			r |= HIFN_DMACSR_C_CTRL_DIS;
+		}
+		if (dma->srcu == 0 && sc->sc_s_busy) {
+			sc->sc_s_busy = 0;
+			r |= HIFN_DMACSR_S_CTRL_DIS;
+		}
+		if (dma->dstu == 0 && sc->sc_d_busy) {
+			sc->sc_d_busy = 0;
+			r |= HIFN_DMACSR_D_CTRL_DIS;
+		}
+		if (dma->resu == 0 && sc->sc_r_busy) {
+			sc->sc_r_busy = 0;
+			r |= HIFN_DMACSR_R_CTRL_DIS;
+		}
+		if (r)
+			WRITE_REG_1(sc, HIFN_1_DMA_CSR, r);
+	}
+	else
+		sc->sc_active--;
+	splx(s);
+	timeout_add(&sc->sc_tickto, hz);
 }
 
 int 
@@ -1416,23 +1458,6 @@ hifn_intr(arg)
 		u--;
 	}
 	dma->cmdk = i; dma->cmdu = u;
-
-	if (dma->cmdu == 0) {
-		rings |= HIFN_DMACSR_C_CTRL_DIS;
-		sc->sc_c_busy = 0;
-	}
-	if (dma->srcu == 0) {
-		rings |= HIFN_DMACSR_S_CTRL_DIS;
-		sc->sc_s_busy = 0;
-	}
-	if (dma->dstu == 0) {
-		rings |= HIFN_DMACSR_D_CTRL_DIS;
-		sc->sc_d_busy = 0;
-	}
-	if (dma->resu == 0) {
-		rings |= HIFN_DMACSR_R_CTRL_DIS;
-		sc->sc_r_busy = 0;
-	}
 
 	/*
 	 * Clear "result done" and "command wait" flags in status register.
