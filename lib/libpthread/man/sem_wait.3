@@ -1,4 +1,5 @@
-.\" $OpenBSD: sem_wait.3,v 1.1 2002/01/28 19:24:03 fgsch Exp $
+.\" $OpenBSD: sem_wait.3,v 1.2 2002/02/19 00:57:09 fgsch Exp $
+.\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
 .\"
@@ -58,7 +59,7 @@ function decrements (locks) the semaphore pointed to by
 only if the value is non-zero.  Otherwise, the semaphore is not decremented and
 an error is returned.
 .Sh RETURN VALUES
-.Rv -std
+.Rv -std sem_wait
 .Sh ERRORS
 .Fn sem_wait
 and
