@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.59 1999/07/30 18:27:47 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.60 1999/12/06 07:28:06 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -412,6 +412,10 @@ sys_unmount(p, v, retval)
 		return (EINVAL);
 	}
 	vput(vp);
+
+	if (vfs_busy(mp, 0, NULL, p))
+		return (EBUSY);
+
 	return (dounmount(mp, SCARG(uap, flags), p));
 }
 
@@ -428,13 +432,8 @@ dounmount(mp, flags, p)
 	int error;
 
 	simple_lock(&mountlist_slock);
-	if (mp->mnt_flag & MNT_UNMOUNT) {
-		mp->mnt_flag |= MNT_MWAIT;
-		simple_unlock(&mountlist_slock);
-		sleep(mp, PVFS);
-		return ENOENT;
-	}
 	mp->mnt_flag |= MNT_UNMOUNT;
+	vfs_unbusy(mp, p);
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock, p);
  	mp->mnt_flag &=~ MNT_ASYNC;
 #if !defined(UVM)
