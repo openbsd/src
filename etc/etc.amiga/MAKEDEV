@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.amiga/MAKEDEV.md,v 1.4 2002/02/09 16:59:50 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.28 2002/02/14 04:41:32 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.29 2002/02/14 05:38:22 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.54 2002/02/14 04:43:08 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.55 2002/02/14 05:55:08 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -43,7 +43,7 @@
 #	sd*	SCSI disks
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	concatenated disk devices
-#	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
 #	cd*	SCSI cdrom drives
 #	vnd*	"file" pseudo-disks
 # Console ports:

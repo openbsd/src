@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.16 2002/02/10 21:55:53 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.28 2002/02/14 04:41:32 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.29 2002/02/14 05:38:22 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.6 2002/02/14 05:50:37 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.53 2002/02/14 04:43:09 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.54 2002/02/14 05:55:09 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -41,7 +41,7 @@
 #	st*	SCSI tapes
 #	ch*	SCSI media changer
 # Disks:
-#	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
