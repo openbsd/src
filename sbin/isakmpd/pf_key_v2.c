@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.33 2000/10/16 23:26:20 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.34 2000/10/30 16:04:00 angelos Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.59 2000/10/16 18:16:59 provos Exp $	*/
 
 /*
@@ -1987,7 +1987,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     }
   dmask = (struct sockaddr *)(((struct sadb_address *)ext->seg) + 1);
 
-  ext = pf_key_v2_find_ext (pmsg, SADB_X_EXT_FLOW_TYPE);
+  ext = pf_key_v2_find_ext (ret, SADB_X_EXT_FLOW_TYPE);
   if (!ext)
     {
       log_print ("pf_key_v2_acquire: no flow type extension found");
@@ -2067,6 +2067,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
   dstaddr = (struct sockaddr *)(dst + 1);
   bzero (dstbuf, sizeof dstbuf);
+  bzero (srcbuf, sizeof srcbuf);
 
   switch (dstaddr->sa_family)
     {
@@ -2096,7 +2097,6 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   if (src)
     {
       srcaddr = (struct sockaddr *)(src + 1);
-      bzero (srcbuf, sizeof srcbuf);
 
       switch (srcaddr->sa_family)
         {
@@ -2264,7 +2264,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   /*
    * Set the IPsec connection entry. In particular, the following fields:
    * - Phase
-   * - ISAKMPD-peer
+   * - ISAKMP-peer
    * - Local-ID/Remote-ID (if provided)
    *
    * Also set the following section:
@@ -2279,8 +2279,9 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
    *                  exists -- otherwise use the defaults)
    */
 
-  peer = malloc (strlen (dstbuf) + strlen (srcbuf) + srcid ? strlen (srcid) : 0
-		 + dstid ? strlen (dstid) : 0 + strlen ("Peer-/-/") + 1);
+  peer = malloc (strlen (dstbuf) + strlen (srcbuf) +
+                 (srcid ? strlen (srcid) : 0) +
+                (dstid ? strlen (dstid) : 0) + strlen ("Peer-/-/") + 1);
   if (!peer)
     goto fail;
 
@@ -2418,7 +2419,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
       /* XXX Default transform set should be settable */
       /* Phase 1 configuration */
-      if (!conf_get_str (confname, "exchange_type"))
+      if (!conf_get_str (confname, "Exchange_Type"))
         {
 	  if (conf_set (af, confname, "exchange_type", "ID_PROT", 0, 0)
 	      || conf_set (af, confname, "DOI", "IPSEC", 0, 0)
