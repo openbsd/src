@@ -7,7 +7,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.38 2002/06/27 19:49:08 stevesk Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.39 2002/07/06 01:01:26 deraadt Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -164,14 +164,16 @@ Linebuf_lineno(Linebuf * lb)
 static char *
 Linebuf_getline(Linebuf * lb)
 {
+	u_int size;
 	int n = 0;
+	void *p;
 
 	lb->lineno++;
 	for (;;) {
 		/* Read a line */
 		if (!fgets(&lb->buf[n], lb->size - n, lb->stream)) {
 			if (ferror(lb->stream) && lb->errfun)
-				(*lb->errfun) ("%s: %s\n", lb->filename,
+				(*lb->errfun)("%s: %s\n", lb->filename,
 				    strerror(errno));
 			return (NULL);
 		}
@@ -184,17 +186,20 @@ Linebuf_getline(Linebuf * lb)
 		}
 		if (n != lb->size - 1) {
 			if (lb->errfun)
-				(*lb->errfun) ("%s: skipping incomplete last line\n",
+				(*lb->errfun)("%s: skipping incomplete last line\n",
 				    lb->filename);
 			return (NULL);
 		}
 		/* Double the buffer if we need more space */
-		if (!(lb->buf = realloc(lb->buf, (lb->size *= 2)))) {
+		lb->size *= 2;
+		if ((p = realloc(lb->buf, lb->size)) == NULL) {
+			lb->size /= 2;
 			if (lb->errfun)
-				(*lb->errfun) ("linebuf (%s): realloc failed\n",
+				(*lb->errfun)("linebuf (%s): realloc failed\n",
 				    lb->filename);
 			return (NULL);
 		}
+		lb->buf = p;
 	}
 }
 
@@ -215,6 +220,7 @@ static int
 fdlim_set(int lim)
 {
 	struct rlimit rlfd;
+
 	if (lim <= 0)
 		return (-1);
 	if (getrlimit(RLIMIT_NOFILE, &rlfd) < 0)
@@ -393,8 +399,8 @@ tcpconnect(char *host)
 static int
 conalloc(char *iname, char *oname, int keytype)
 {
-	int s;
 	char *namebase, *name, *namelist;
+	int s;
 
 	namebase = namelist = xstrdup(iname);
 
@@ -458,8 +464,8 @@ contouch(int s)
 static int
 conrecycle(int s)
 {
-	int ret;
 	con *c = &fdcon[s];
+	int ret;
 
 	ret = conalloc(c->c_namelist, c->c_output_name, c->c_keytype);
 	confree(s);
@@ -469,10 +475,10 @@ conrecycle(int s)
 static void
 congreet(int s)
 {
+	int remote_major, remote_minor, n = 0;
 	char buf[256], *cp;
 	char remote_version[sizeof buf];
 	size_t bufsiz;
-	int remote_major, remote_minor, n = 0;
 	con *c = &fdcon[s];
 
 	bufsiz = sizeof(buf);
@@ -536,8 +542,8 @@ congreet(int s)
 static void
 conread(int s)
 {
-	int n;
 	con *c = &fdcon[s];
+	int n;
 
 	if (c->c_status == CS_CON) {
 		congreet(s);
@@ -576,10 +582,10 @@ conread(int s)
 static void
 conloop(void)
 {
-	fd_set *r, *e;
 	struct timeval seltime, now;
-	int i;
+	fd_set *r, *e;
 	con *c;
+	int i;
 
 	gettimeofday(&now, NULL);
 	c = TAILQ_FIRST(&tq);
@@ -646,6 +652,7 @@ void
 fatal(const char *fmt,...)
 {
 	va_list args;
+
 	va_start(args, fmt);
 	do_log(SYSLOG_LEVEL_FATAL, fmt, args);
 	va_end(args);
@@ -658,16 +665,9 @@ fatal(const char *fmt,...)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [options] host ...\n",
+	fprintf(stderr, "usage: %s [-v46] [-p port] [-T timeout] [-f file]\n"
+	    "\t\t   [host | addrlist namelist] [...]\n",
 	    __progname);
-	fprintf(stderr, "Options:\n");
-	fprintf(stderr, "  -f file     Read hosts or addresses from file.\n");
-	fprintf(stderr, "  -p port     Connect to the specified port.\n");
-	fprintf(stderr, "  -t keytype  Specify the host key type.\n");
-	fprintf(stderr, "  -T timeout  Set connection timeout.\n");
-	fprintf(stderr, "  -v          Verbose; display verbose debugging messages.\n");
-	fprintf(stderr, "  -4          Use IPv4 only.\n");
-	fprintf(stderr, "  -6          Use IPv6 only.\n");
 	exit(1);
 }
 
