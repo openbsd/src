@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.12 2003/08/24 12:23:57 fgsch Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.13 2004/06/19 16:01:42 deraadt Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -220,6 +220,31 @@ int	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_MONITOR	0x1000	/* Operate in Monitor mode */
 
 /*
+ * Digitally multiplexed "Carrier" Serial Interfaces
+ */
+#define	IFM_TDM		0x000000a0
+#define IFM_TDM_T1		3	/* T1 B8ZS+ESF 24 ts  */
+#define IFM_TDM_T1_AMI		4	/* T1 AMI+SF 24 ts */
+#define IFM_TDM_E1		5	/* E1 HDB3+G.703 clearchannel 32 ts */
+#define IFM_TDM_E1_G704		6	/* E1 HDB3+G.703+G.704 channelized 31 ts */
+#define IFM_TDM_E1_AMI		7	/* E1 AMI+G.703 32 ts */
+#define IFM_TDM_E1_AMI_G704	8	/* E1 AMI+G.703+G.704 31 ts */
+#define IFM_TDM_T3		9	/* T3 B3ZS+C-bit 672 ts */
+#define IFM_TDM_T3_M13		10	/* T3 B3ZS+M13 672 ts */
+#define IFM_TDM_E3		11	/* E3 HDB3+G.751 512? ts */
+#define IFM_TDM_E3_G751		12	/* E3 G.751 512 ts */
+#define IFM_TDM_E3_G832		13	/* E3 G.832 512 ts */
+/*
+ * 6 major ways that networks talk: Drivers enforce independent selection,
+ * meaning, a driver will ensure that only one of these is set at a time.
+ */
+#define IFM_TDM_HDLC_CRC16	0x0100	/* Use 16-bit CRC for HDLC instead */
+#define IFM_TDM_PPP		0x0200	/* SPPP (dumb) */
+#define IFM_TDM_FR_ANSI		0x0400	/* Frame Relay + LMI ANSI "Annex D" */
+#define IFM_TDM_FR_CISCO	0x0800	/* Frame Relay + LMI Cisco */
+#define IFM_TDM_FR_ITU		0x1000	/* Frame Relay + LMI ITU "Q933A" */
+
+/*
  * Shared media sub-types
  */
 #define	IFM_AUTO	0		/* Autoselect best media */
@@ -307,6 +332,7 @@ struct ifmedia_description {
 	{ IFM_TOKEN,			"token" },			\
 	{ IFM_FDDI,			"FDDI" },			\
 	{ IFM_IEEE80211,		"IEEE802.11" },			\
+	{ IFM_TDM,			"TDM" },			\
 	{ 0, NULL },							\
 }
 
@@ -383,6 +409,18 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11" },		\
 									\
+	{ IFM_TDM|IFM_TDM_T1,		"t1" },				\
+	{ IFM_TDM|IFM_TDM_T1_AMI,	"t1-ami" },			\
+	{ IFM_TDM|IFM_TDM_E1,		"e1" },				\
+	{ IFM_TDM|IFM_TDM_E1_G704,	"e1-g.704" },			\
+	{ IFM_TDM|IFM_TDM_E1_AMI,	"e1-ami" },			\
+	{ IFM_TDM|IFM_TDM_E1_AMI_G704,	"e1-ami-g.704" },		\
+	{ IFM_TDM|IFM_TDM_T3,		"t3" },				\
+	{ IFM_TDM|IFM_TDM_T3_M13,	"t3-m13" },			\
+	{ IFM_TDM|IFM_TDM_E3,		"e3" },				\
+	{ IFM_TDM|IFM_TDM_E3_G751,	"e3-g.751" },			\
+	{ IFM_TDM|IFM_TDM_E3_G832,	"e3-g.832" },			\
+									\
 	{ 0, NULL },							\
 }
 
@@ -413,6 +451,12 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_IBSS,	"ibss" },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_IBSSMASTER, "ibss-master" },	\
 	{ IFM_IEEE80211|IFM_IEEE80211_MONITOR,	"monitor" },		\
+									\
+	{ IFM_TDM|IFM_TDM_HDLC_CRC16,	"hdlc-crc16" },			\
+	{ IFM_TDM|IFM_TDM_PPP,		"ppp" },			\
+	{ IFM_TDM|IFM_TDM_FR_ANSI,	"framerelay-ansi" },		\
+	{ IFM_TDM|IFM_TDM_FR_CISCO,	"framerelay-cisco" },		\
+	{ IFM_TDM|IFM_TDM_FR_ANSI,	"framerelay-itu" },		\
 									\
 	{ 0, NULL },							\
 }
@@ -458,6 +502,18 @@ struct ifmedia_baudrate {
 	{ IFM_IEEE80211|IFM_IEEE80211_DS11, IF_Mbps(11) },		\
 	{ IFM_IEEE80211|IFM_IEEE80211_DS1, IF_Mbps(1) },		\
 									\
+	{ IFM_TDM|IFM_TDM_T1,		IF_Kbps(1536) },		\
+	{ IFM_TDM|IFM_TDM_T1_AMI,	IF_Kbps(1536) },		\
+	{ IFM_TDM|IFM_TDM_E1,		IF_Kbps(2048) },		\
+	{ IFM_TDM|IFM_TDM_E1_G704,	IF_Kbps(2048) },		\
+	{ IFM_TDM|IFM_TDM_E1_AMI,	IF_Kbps(2048) },		\
+	{ IFM_TDM|IFM_TDM_E1_AMI_G704,	IF_Kbps(2048) },		\
+	{ IFM_TDM|IFM_TDM_T3,		IF_Kbps(44736) },		\
+	{ IFM_TDM|IFM_TDM_T3_M13,	IF_Kbps(44736) },		\
+	{ IFM_TDM|IFM_TDM_E3,		IF_Kbps(34368) },		\
+	{ IFM_TDM|IFM_TDM_E3_G751,	IF_Kbps(34368) },		\
+	{ IFM_TDM|IFM_TDM_E3_G832,	IF_Kbps(34368) },		\
+									\
 	{ 0, 0 },							\
 }
 
@@ -483,6 +539,8 @@ struct ifmedia_status_description {
 	    { "no ring", "inserted" } },				\
 	{ IFM_IEEE80211,	IFM_AVALID,	IFM_ACTIVE,		\
 	    { "no network", "active" } },				\
+	{ IFM_TDM,		IFM_AVALID,	IFM_ACTIVE,		\
+	    { "no carrier", "active" } },				\
 	{ 0,			0,		0,			\
 	    { NULL, NULL } }						\
 }
