@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.8 2003/04/06 01:33:32 hugh Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.9 2003/04/06 01:34:56 hugh Exp $	*/
 /*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
@@ -56,8 +56,6 @@
 
 #include <arch/vax/qbus/ubavar.h>
 #include <arch/vax/qbus/dhureg.h>
-
-/* A DHU-11 has 16 ports while a DHV-11 has only 8. We use 16 by default */
 
 #define	NDHULINE 	16
 
