@@ -1,4 +1,4 @@
-\	$OpenBSD: bootblk.fth,v 1.1.1.1 2001/08/18 04:16:37 jason Exp $
+\	$OpenBSD: bootblk.fth,v 1.2 2003/08/26 19:55:21 drahn Exp $
 \	$NetBSD: bootblk.fth,v 1.3 2001/08/15 20:10:24 eeh Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
@@ -213,7 +213,7 @@ struct
    8		field	>f_ihandle	\ device handle
    8 		field 	>f_seekp	\ seek pointer
    8 		field 	>f_fs		\ pointer to super block
-   dinode_SIZEOF 	field 	>f_di	\ copy of on-disk inode
+   ufs1_dinode_SIZEOF 	field 	>f_di	\ copy of on-disk inode
    8		field	>f_buf		\ buffer for data block
    4		field 	>f_buf_size	\ size of data block
    4		field	>f_buf_blkno	\ block number of data block
@@ -222,7 +222,7 @@ constant file_SIZEOF
 file_SIZEOF buffer: the-file
 sb-buf the-file >f_fs x!
 
-dinode_SIZEOF buffer: cur-inode
+ufs1_dinode_SIZEOF buffer: cur-inode
 h# 2000 buffer: indir-block
 -1 value indir-addr
 
@@ -339,8 +339,8 @@ h# 2000 buffer: indir-block
    <>  if ." read-inode - residual" cr abort then
    dup 2over				( inode fs buffer -- inode fs buffer buffer inode fs )
    ino-to-fsbo				( inode fs buffer -- inode fs buffer buffer fsbo )
-   dinode_SIZEOF * +			( inode fs buffer buffer fsbo -- inode fs buffer dinop )
-   cur-inode dinode_SIZEOF move 	( inode fs buffer dinop -- inode fs buffer )
+   ufs1_dinode_SIZEOF * +			( inode fs buffer buffer fsbo -- inode fs buffer dinop )
+   cur-inode ufs1_dinode_SIZEOF move 	( inode fs buffer dinop -- inode fs buffer )
 	\ clear out the old buffers
    drop					( inode fs buffer -- inode fs )
    2drop
