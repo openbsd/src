@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_es.c,v 1.10 1997/01/16 09:24:43 niklas Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.11 1999/05/13 15:44:48 jason Exp $	*/
 /*	$NetBSD: if_es.c,v 1.16 1996/12/23 09:10:17 veego Exp $	*/
 
 /*
@@ -714,22 +714,8 @@ esrint(sc)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
+	if (sc->sc_arpcom.ac_if.if_bpf)
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, top);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(top);
-			return;
-		}
-	}
 #endif
 	top->m_pkthdr.len -= sizeof (*eh);
 	top->m_len -= sizeof (*eh);

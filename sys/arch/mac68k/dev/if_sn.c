@@ -1126,18 +1126,11 @@ sonic_read(sc, pkt, len)
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a bpf filter listening on this interface.
-	 * If so, hand off the raw packet to enet, then discard things
-	 * not destined for us (but be sure to keep broadcast/multicast).
+	 * If so, hand off the raw packet to enet.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_tap(ifp->if_bpf, pkt,
 		    len + sizeof(struct ether_header));
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, &sc->sc_enaddr,
-		    sizeof(et->ether_dhost)) != 0)
-			return (0);
-	}
 #endif
 	m = sonic_get(sc, et, len);
 	if (m == NULL)

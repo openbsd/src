@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.11 1999/01/11 05:11:09 millert Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -1174,15 +1174,9 @@ sonic_read(sc, rxp)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (sc->sc_if.if_bpf) {
+	if (sc->sc_if.if_bpf)
 		bpf_tap(sc->sc_if.if_bpf, pkt,
 		    len + sizeof(struct ether_header));
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, sc->sc_enaddr,
-			    sizeof(et->ether_dhost)) != 0)
-			return(0);
-	}
 #endif
 	m = sonic_get(sc, et, len);
 	if (m == NULL)

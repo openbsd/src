@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.2 1999/01/11 05:12:10 millert Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.3 1999/05/13 15:44:50 jason Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -1201,18 +1201,11 @@ sonic_read(sc, rxp)
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a bpf filter listening on this interface.
-	 * If so, hand off the raw packet to enet, then discard things
-	 * not destined for us (but be sure to keep broadcast/multicast).
+	 * If so, hand off the raw packet to enet.
 	 */
-	if (sc->sc_if.if_bpf) {
+	if (sc->sc_if.if_bpf)
 		bpf_tap(sc->sc_if.if_bpf, pkt,
 		    len + sizeof(struct ether_header));
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, sc->sc_enaddr,
-			    sizeof(et->ether_dhost)) != 0)
-			return;
-	}
 #endif
 	m = sonic_get(sc, et, len);
 	if (m == NULL)

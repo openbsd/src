@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.11 1997/09/18 13:39:56 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.26 1997/03/17 17:51:42 is Exp $	*/
 
 /*
@@ -1014,22 +1014,8 @@ ed_get_packet(sc, buf, len)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (sc->sc_arpcom.ac_if.if_bpf) {
+	if (sc->sc_arpcom.ac_if.if_bpf)
 		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Fix up data start offset in mbuf to point past ether header. */

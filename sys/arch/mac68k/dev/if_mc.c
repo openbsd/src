@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.1 1998/05/08 22:15:31 gene Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.2 1999/05/13 15:44:49 jason Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.4 1998/01/12 19:22:09 thorpej Exp $	*/
 
 /*-
@@ -638,16 +638,10 @@ mace_read(sc, pkt, len)
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a bpf filter listening on this interface.
-	 * If so, hand off the raw packet to enet, then discard things
-	 * not destined for us (but be sure to keep broadcast/multicast).
+	 * If so, hand off the raw packet to enet.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_tap(ifp->if_bpf, pkt, len);
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_enaddr))
-			return;
-	}
 #endif
 	m = mace_get(sc, pkt, len);
 	if (m == NULL) {

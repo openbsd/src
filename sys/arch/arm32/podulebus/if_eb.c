@@ -1356,18 +1356,6 @@ ebread(sc, buf, len)
 		bpf_tap(sc->sc_arpcom.ac_if.if_bpf, buf, len + sizeof(struct ether_header));
 /*		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);*/
 
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
 	}
 #endif
 

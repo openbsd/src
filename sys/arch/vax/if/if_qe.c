@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.9 1997/09/10 08:28:41 maja Exp $ */
+/*	$OpenBSD: if_qe.c,v 1.10 1999/05/13 15:44:50 jason Exp $ */
 /*	$NetBSD: if_qe.c,v 1.22 1997/05/02 17:11:24 ragge Exp $ */
 
 /*
@@ -1037,19 +1037,6 @@ if (m) {
  
 		/* Pass it up */
 		bpf_mtap(sc->qe_if.if_bpf, &m0);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.	And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->qe_addr,
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
 	}
 #endif /* NBPFILTER > 0 */
 

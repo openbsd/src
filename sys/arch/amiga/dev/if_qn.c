@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qn.c,v 1.11 1998/03/01 14:18:02 niklas Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 /*	$NetBSD: if_qn.c,v 1.10 1996/12/23 09:10:19 veego Exp $	*/
 
 /*
@@ -623,23 +623,8 @@ qn_get_packet(sc, len)
 	}
 
 #if NBPFILTER > 0
-	if (sc->sc_bpf) {
+	if (sc->sc_bpf)
 		bpf_mtap(sc->sc_bpf, head);
-
-		/*
-		 * The interface cannot be in promiscuous mode if there are
-		 * no BPF listeners. And in prom. mode we have to check
-		 * if the packet is really ours...
-		 */
-		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* not bcast or mcast */
-		    bcmp(eh->ether_dhost,
-        	        sc->sc_arpcom.ac_enaddr,
-		        ETHER_ADDR_LEN) != 0) {
-			m_freem(head);
-			return;
-		}
-	}
 #endif
 
 	m_adj(head, sizeof(struct ether_header));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.11 1998/01/07 00:33:45 niklas Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.12 1999/05/13 15:44:47 jason Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.14 1997/03/18 18:44:53 veego Exp $	*/
 
 /*
@@ -732,22 +732,8 @@ aeread(sc, buf, len)
 	 * If so, hand off the raw packet to bpf, which must deal with
 	 * trailers in its own way.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no bpf listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			sizeof(eh->ether_dhost)) != 0) {
-			    m_freem(m);
-			    return;
-		    }
-	}
 #endif
 
 	/* We assume that the header fit entirely in one mbuf. */
