@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbdreg.h,v 1.1 1998/01/28 11:14:43 pefo Exp $	*/
+/*	$OpenBSD: kbdreg.h,v 1.2 1999/01/27 04:46:05 imp Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -30,8 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _KBDREG_H_
-#define	_KBDREG_H_
+#ifndef _MIPS_KBDREG_H_
+#define	_MIPS_KBDREG_H_
 
 /*
  * Keyboard controller definitions
@@ -159,4 +159,4 @@ kb_put8042(v)
 
 #endif /* _KERNEL */
 
-#endif /* _KBDREG_H_ */
+#endif /* _MIPS_KBDREG_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips_opcode.h,v 1.1 1998/01/28 11:14:48 pefo Exp $	*/
+/*      $OpenBSD: mips_opcode.h,v 1.2 1999/01/27 04:46:05 imp Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,8 +38,8 @@
  *	from: @(#)mips_opcode.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MACHINE_MIPS_OPCODE_H
-#define _MACHINE_MIPS_OPCODE_H
+#ifndef _MIPS_MIPS_OPCODE_H
+#define _MIPS_MIPS_OPCODE_H
 /*
  * Define the instruction formats and opcode values for the
  * MIPS instruction set.
@@ -293,4 +293,4 @@ typedef union {
 #define COPz_BCL_TRUE	0x02
 #define COPz_BCL_FALSE	0x00
 
-#endif /* _MACHINE_MIPS_OPCODE_H */
+#endif /* !_MIPS_MIPS_OPCODE_H */

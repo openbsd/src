@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdbparam.h,v 1.1 1998/01/28 11:14:45 pefo Exp $	*/
+/*	$OpenBSD: kdbparam.h,v 1.2 1999/01/27 04:46:05 imp Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,6 +38,9 @@
  *	@(#)kdbparam.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_KDBPARAM_H_
+#define _MIPS_KDBPARAM_H_
+
 /*
  * Machine dependent definitions for kdb.
  */
@@ -72,3 +75,5 @@ void	kdbwrite __P((char *, int));
 void	kdbprintins __P((int, long));
 void	kdbstacktrace __P((int));
 char	*kdbmalloc __P((int));
+
+#endif /* !_MIPS_KDBPARAM_H_ */

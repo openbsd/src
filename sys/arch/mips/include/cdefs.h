@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.1 1998/01/28 11:14:37 pefo Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.2 1999/01/27 04:46:04 imp Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.3 1995/05/03 06:04:54 mellon Exp $	*/
 
 /*
@@ -28,12 +28,12 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _MACHINE_CDEFS_H_
-#define	_MACHINE_CDEFS_H_
+#ifndef _MIPS_CDEFS_H_
+#define	_MIPS_CDEFS_H_
 
 #define	_C_LABEL(x)	_STRING(x)
 
 #define	__indr_references(sym,msg)	/* nothing */
 #define	__warn_references(sym,msg)	/* nothing */
 
-#endif /* !_MACHINE_CDEFS_H_ */
+#endif /* !_MIPS_CDEFS_H_ */

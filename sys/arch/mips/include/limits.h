@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.2 1998/03/22 21:15:16 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.3 1999/01/27 04:46:05 imp Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,8 +35,8 @@
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
 
-#ifndef _MACHINE_LIMITS_H_
-#define _MACHINE_LIMITS_H_
+#ifndef _MIPS_LIMITS_H_
+#define _MIPS_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
@@ -105,4 +105,4 @@
 #define FLT_MIN		1.17549435E-38F
 #endif
 
-#endif /* _MACHINE_LIMITS_H_ */
+#endif /* !_MIPS_LIMITS_H_ */

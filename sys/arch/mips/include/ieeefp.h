@@ -1,12 +1,12 @@
-/*	$OpenBSD: ieeefp.h,v 1.1 1998/01/28 11:14:43 pefo Exp $	*/
+/*	$OpenBSD: ieeefp.h,v 1.2 1999/01/27 04:46:05 imp Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 11, 1995
  * Public domain.
  */
 
-#ifndef _MACHINE_IEEEFP_H_
-#define _MACHINE_IEEEFP_H_
+#ifndef _MIPS_IEEEFP_H_
+#define _MIPS_IEEEFP_H_
 
 typedef int fp_except;
 #define FP_X_IMP	0x01	/* imprecise (loss of precision) */
@@ -22,4 +22,4 @@ typedef enum {
     FP_RM=3			/* round toward negative infinity */
 } fp_rnd;
 
-#endif /* _MACHINE_IEEEFP_H_ */
+#endif /* !_MIPS_IEEEFP_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.1 1998/01/28 11:14:51 pefo Exp $ */
+/*      $OpenBSD: pmap.h,v 1.2 1999/01/27 04:46:05 imp Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -39,8 +39,8 @@
  *	from: @(#)pmap.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_MACHINE_PMAP_H_
-#define	_MACHINE_PMAP_H_
+#ifndef	_MIPS_PMAP_H_
+#define	_MIPS_PMAP_H_
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -117,4 +117,4 @@ void pmap_page_cache __P((vm_offset_t, int));;
 
 #endif	/* _KERNEL */
 
-#endif	/* _MACHINE_PMAP_H_ */
+#endif	/* !_MIPS_PMAP_H_ */

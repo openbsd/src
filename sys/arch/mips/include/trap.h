@@ -1,4 +1,4 @@
-/*      $OpenBSD: trap.h,v 1.2 1998/05/08 16:45:10 millert Exp $	*/
+/*      $OpenBSD: trap.h,v 1.3 1999/01/27 04:46:06 imp Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *	from: @(#)trap.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_TRAP_H_
+#define _MIPS_TRAP_H_
+
 /*
  * Trap codes also known in trap.c for name strings.
  * Used for indexing so modify with care.
@@ -66,3 +69,5 @@
 #define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
+
+#endif /* !_MIPS_TRAP_H_ */

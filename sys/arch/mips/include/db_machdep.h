@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 1998/10/15 21:30:14 imp Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.4 1999/01/27 04:46:05 imp Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef	_MACHINE_DB_MACHDEP_H_
-#define	_MACHINE_DB_MACHDEP_H_
+#ifndef	_MIPS_DB_MACHDEP_H_
+#define	_MIPS_DB_MACHDEP_H_
 
 #include <machine/regnum.h>
 #include <machine/frame.h>
@@ -77,4 +77,4 @@ db_addr_t	next_instr_address __P((db_addr_t, boolean_t));
 #define	inst_store(i)	(db_inst_type(i) == IT_STORE)
 
 int db_inst_type __P((int));
-#endif	/* _MACHINE_DB_MACHDEP_H_ */
+#endif	/* !_MIPS_DB_MACHDEP_H_ */

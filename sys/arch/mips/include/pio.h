@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.3 1998/10/15 21:30:14 imp Exp $	*/
+/*	$OpenBSD: pio.h,v 1.4 1999/01/27 04:46:05 imp Exp $	*/
 
 /*
  * Copyright (c) 1995 Per Fogelstrom.  All rights reserved.
@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_PIO_H_
-#define _MACHINE_PIO_H_
+#ifndef _MIPS_PIO_H_
+#define _MIPS_PIO_H_
 
 /*
  * I/O macros.
@@ -54,4 +54,4 @@ void outsb __P((u_int8_t *, const u_int8_t *,int));
 void outsw __P((u_int16_t *, const u_int16_t *,int));
 void outsl __P((u_int32_t *, const u_int32_t *,int));
 
-#endif /*_MACHINE_PIO_H_*/
+#endif /* !_MIPS_PIO_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.3 1998/02/24 04:22:39 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.4 1999/01/27 04:46:05 imp Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -31,8 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_DISKLABEL_H_
-#define _MACHINE_DISKLABEL_H_
+#ifndef _MIPS_DISKLABEL_H_
+#define _MIPS_DISKLABEL_H_
 
 #define	LABELSECTOR	1		/* sector containing label */
 #define	LABELOFFSET	0		/* offset of label in sector */
@@ -84,4 +84,4 @@ struct cpu_disklabel {
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
-#endif /* _MACHINE_DISKLABEL_H_ */
+#endif /* !_MIPS_DISKLABEL_H_ */

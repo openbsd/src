@@ -1,4 +1,4 @@
-/*	$OpenBSD: regnum.h,v 1.2 1998/03/16 09:03:14 pefo Exp $	*/
+/*	$OpenBSD: regnum.h,v 1.3 1999/01/27 04:46:06 imp Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,9 @@
  *	from: Utah Hdr: reg.h 1.1 90/07/09
  *	@(#)reg.h	8.2 (Berkeley) 1/11/94
  */
+
+#ifndef _MIPS_REGNUM_H_
+#define _MIPS_REGNUM_H_
 
 #define STAND_ARG_SIZE		16
 #define STAND_FRAME_SIZE	24
@@ -138,3 +141,4 @@ int ipcreg[NIPCREG] = {
 	F24, F25, F26, F27, F28, F29, F30, F31, FSR,
 };
 #endif
+#endif /* !_MIPS_REGNUM_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pcb.h,v 1.4 1998/10/15 21:30:14 imp Exp $	*/
+/*      $OpenBSD: pcb.h,v 1.5 1999/01/27 04:46:05 imp Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_PCB_H_
+#define _MIPS_PCB_H_
+
 /*
  * MIPS process control block
  */
@@ -59,3 +62,4 @@ struct pcb
 struct md_coredump {
 	long	md_pad[8];
 };
+#endif /* !_MIPS_PCB_H_ */

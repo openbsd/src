@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.1 1998/01/28 11:14:53 pefo Exp $	*/
+/*	$OpenBSD: reg.h,v 1.2 1999/01/27 04:46:06 imp Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,8 @@
  *	@(#)reg.h	8.2 (Berkeley) 1/11/94
  */
 
-#ifndef _MACHINE_REG_H_
-#define _MACHINE_REG_H_
+#ifndef _MIPS_REG_H_
+#define _MIPS_REG_H_
 /*
  * Location of the users' stored
  * registers relative to ZERO.
@@ -58,4 +58,4 @@
 struct reg {
         int     r_regs[71];	/* numbered as above */
 };
-#endif /*_MACHINE_REG_H_*/
+#endif /*_MIPS_REG_H_*/

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ptrace.h,v 1.1 1998/01/28 11:14:52 pefo Exp $	*/
+/*      $OpenBSD: ptrace.h,v 1.2 1999/01/27 04:46:06 imp Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,6 +35,9 @@
  *	from: @(#)ptrace.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _MIPS_PTRACE_H_
+#define _MIPS_PTRACE_H_
+
 /*
  * Machine dependent trace commands.
  *
@@ -43,3 +46,5 @@
 #define	PT_GETREGS	 (PT_FIRSTMACH+0)
 #define	PT_SETREGS	 (PT_FIRSTMACH+1)
 #define	PT_STEP		 (PT_FIRSTMACH+2)
+
+#endif /* !_MIPS_PTRACE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.1 1998/01/28 11:14:46 pefo Exp $ */
+/*	$OpenBSD: link.h,v 1.2 1999/01/27 04:46:05 imp Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef _MACHINE_LINK_H
-#define _MACHINE_LINK_H
+#ifndef _MIPS_LINK_H
+#define _MIPS_LINK_H
  
 #include <elf_abi.h>
 #include <machine/elf_abi.h>
@@ -122,4 +122,4 @@ struct link_map
     unsigned int l_init_running:1; /* Nonzero while DT_INIT function runs.  */
   };
 
-#endif /* _MACHINE_LINK_H */
+#endif /* !_MIPS_LINK_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.5 1999/01/08 03:04:08 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.6 1999/01/27 04:46:06 imp Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,8 +38,8 @@
  *	@(#)types.h	8.3 (Berkeley) 1/5/94
  */
 
-#ifndef	_MACHINE_TYPES_H_
-#define	_MACHINE_TYPES_H_
+#ifndef	_MIPS_TYPES_H_
+#define	_MIPS_TYPES_H_
 
 #include <sys/cdefs.h>
 
@@ -82,4 +82,4 @@ typedef int32_t			register_t;
 #define	__SWAP_BROKEN
 #define __FORK_BRAINDAMAGE
 
-#endif	/* _MACHINE_TYPES_H_ */
+#endif	/* _MIPS_TYPES_H_ */

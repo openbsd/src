@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 1998/10/15 21:30:14 imp Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 1999/01/27 04:46:04 imp Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,8 +46,8 @@
  *	from: @(#)cpu.h	8.4 (Berkeley) 1/4/94
  */
 
-#ifndef _CPU_H_
-#define _CPU_H_
+#ifndef _MIPS_CPU_H_
+#define _MIPS_CPU_H_
 
 #include <machine/psl.h>
 
@@ -443,4 +443,4 @@ extern u_int32_t cpu_counter_last;      /* Last compare value loaded    */
 #define	enablertclock()
 #endif /* _KERNEL */
 
-#endif /* _CPU_H_ */
+#endif /* !_MIPS_CPU_H_ */

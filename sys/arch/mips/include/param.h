@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.1 1998/01/28 11:14:49 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.2 1999/01/27 04:46:05 imp Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,8 @@
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MACHINE_PARAM_H_
-#define _MACHINE_PARAM_H_
+#ifndef _MIPS_PARAM_H_
+#define _MIPS_PARAM_H_
 
 #ifdef _KERNEL
 #ifdef _LOCORE
@@ -157,4 +157,4 @@
 
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 
-#endif /* _MACHINE_PARAM_H_ */
+#endif /* !_MIPS_PARAM_H_ */

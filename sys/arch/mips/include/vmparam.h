@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 1998/10/15 21:30:14 imp Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 1999/01/27 04:46:06 imp Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -41,6 +41,9 @@
  *	from: Utah Hdr: vmparam.h 1.16 91/01/18
  *	@(#)vmparam.h	8.2 (Berkeley) 4/22/94
  */
+
+#ifndef _MIPS_VMPARAM_H_
+#define _MIPS_VMPARAM_H_
 
 /*
  * Machine dependent constants mips processors.
@@ -235,3 +238,4 @@ struct vm_map;
 vm_offset_t  kmem_alloc_upage __P((struct vm_map *, vm_size_t));
 vm_offset_t  vtophys __P((vm_offset_t, vm_size_t));
 
+#endif /* !_MIPS_VMPARAM_H_ */

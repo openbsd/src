@@ -1,4 +1,4 @@
-/*	$OpenBSD: archtype.h,v 1.5 1998/10/15 21:30:14 imp Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.6 1999/01/27 04:46:04 imp Exp $	*/
 /*
  * Copyright (c) 1997 Per Fogelstrom
  * 
@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef _MACHINE_ARCHTYPE_H_
-#define _MACHINE_ARCHTYPE_H_
+#ifndef _MIPS_ARCHTYPE_H_
+#define _MIPS_ARCHTYPE_H_
 /*
  * Define architectural identitys for the different Mips machines.
  */
@@ -61,4 +61,4 @@
 
 extern int system_type;		/* Global system type indicator */
 
-#endif /* _MACHINE_ARCHTYPE_H_ */
+#endif /* !_MIPS_ARCHTYPE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.1 1998/01/28 11:14:57 pefo Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.2 1999/01/27 04:46:06 imp Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,8 +35,8 @@
  *	@(#)stdarg.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef _MACHINE_STDARG_H_
-#define	_MACHINE_STDARG_H_
+#ifndef _MIPS_STDARG_H_
+#define	_MIPS_STDARG_H_
 
 #include <machine/ansi.h>
 
@@ -61,4 +61,4 @@ typedef _BSD_VA_LIST_	va_list;
 
 #define	va_end(ap)	((void) 0)
 
-#endif /* !_MACHINE_STDARG_H_ */
+#endif /* !_MIPS_STDARG_H_ */

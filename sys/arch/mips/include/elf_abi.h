@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_abi.h,v 1.1 1998/01/28 11:14:41 pefo Exp $ */
+/*	$OpenBSD: elf_abi.h,v 1.2 1999/01/27 04:46:05 imp Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef _MACHINE_ELF_ABI_H
-#define _MACHINE_ELF_ABI_H
+#ifndef _MIPS_ELF_ABI_H
+#define _MIPS_ELF_ABI_H
 
 /* From MIPS ABI supplemental */
 
@@ -60,4 +60,4 @@
 
 #define DT_PROCNUM (DT_MIPS_HIPAGENO - DT_LOPROC + 1)
 
-#endif /* _MACHINE_ELF_ABI_H */
+#endif /* _MIPS_ELF_ABI_H */

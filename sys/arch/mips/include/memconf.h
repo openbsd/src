@@ -1,4 +1,4 @@
-/*	$OpenBSD: memconf.h,v 1.1 1998/01/28 11:14:48 pefo Exp $	*/
+/*	$OpenBSD: memconf.h,v 1.2 1999/01/27 04:46:05 imp Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -34,8 +34,8 @@
  * Memory config list used by pmap_bootstrap.
  */
 
-#ifndef _MACHINE_MEMCONF_H_
-#define _MACHINE_MEMCONF_H_
+#ifndef _MIPS_MEMCONF_H_
+#define _MIPS_MEMCONF_H_
 
 struct mem_descriptor {
 	vm_offset_t	mem_start;
@@ -47,4 +47,4 @@ struct mem_descriptor {
 extern struct mem_descriptor mem_layout[];
 #endif
 
-#endif /* _MACHINE_MEMCONF_H_ */
+#endif /* !_MIPS_MEMCONF_H_ */
