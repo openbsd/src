@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.9 1997/04/10 16:29:28 pefo Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.10 1997/04/11 21:18:02 maja Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -504,6 +504,10 @@ sysbeep(pitch, period)
 {
 	static int last_pitch, last_period;
 	int s;
+	extern int cold;
+
+	if (cold)
+		return;		/* Can't beep yet. */
 
 	if (beeping)
 		untimeout(sysbeepstop, 0);

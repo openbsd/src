@@ -299,6 +299,10 @@ sysbeep(pitch, period)
 	int pitch, period;
 {
 	static int last_pitch;
+	extern int cold;
+
+	if (cold)
+		return;		/* Can't beep yet. */
 
 	if (beeping)
 		untimeout(sysbeepstop, 0);
