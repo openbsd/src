@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.h,v 1.9 2003/08/01 17:38:33 avsm Exp $	*/
+/*	$OpenBSD: vis.h,v 1.10 2004/10/17 20:25:31 otto Exp $	*/
 /*	$NetBSD: vis.h,v 1.4 1994/10/26 00:56:41 cgd Exp $	*/
 
 /*-
@@ -81,6 +81,9 @@ int	strvisx(char *, const char *, size_t, int)
 		__attribute__ ((__bounded__(__string__,1,3)));
 int	strunvis(char *, const char *);
 int	unvis(char *, char, int *, int);
+ssize_t strnunvis(char *, const char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
+
 __END_DECLS
 
 #endif /* !_VIS_H_ */

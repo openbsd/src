@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unvis.3,v 1.13 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: unvis.3,v 1.14 2004/10/17 20:25:31 otto Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,8 @@
 .Os
 .Sh NAME
 .Nm unvis ,
-.Nm strunvis
+.Nm strunvis ,
+.Nm strnunvis
 .Nd decode a visual representation of characters
 .Sh SYNOPSIS
 .Fd #include <vis.h>
@@ -40,11 +41,14 @@
 .Fn unvis "char *cp" "char c" "int *astate" "int flag"
 .Ft int
 .Fn strunvis "char *dst" "char *src"
+.Ft ssize_t
+.Fn strnunvis "char *dst" "char *src" "size_t size"
 .Sh DESCRIPTION
 The
-.Fn unvis
-and
+.Fn unvis ,
 .Fn strunvis
+and
+.Fn strnunvis
 functions are used to decode a visual representation of characters,
 as produced by the
 .Xr vis 3
@@ -63,6 +67,14 @@ decodes the characters pointed to by
 into the buffer pointed to by
 .Fa dst .
 .Pp
+.Fn strnunvis
+decodes the characters pointed to by
+.Fa src
+into the buffer pointed to by
+.Fa dst ,
+writing a maximum of
+.Fa size
+bytes.
 The
 .Fn strunvis
 function simply copies
@@ -80,6 +92,12 @@ should be
 equal to the size of
 .Fa src
 (that is, no expansion takes place during decoding).
+.Fn strunvis
+terminates the destination string with a trailing NUL byte;
+.Fn strnunvis
+does so if
+.Fa size
+is larger than 0.
 .Pp
 The
 .Fn unvis
@@ -95,6 +113,7 @@ Call
 .Fn unvis
 with each successive byte, along with a pointer
 to this integer, and a pointer to a destination character.
+.Sh RETURN VALUES
 The
 .Fn unvis
 function has several return codes that must be handled properly.
@@ -125,6 +144,17 @@ When all bytes in the stream have been processed, call
 one more time with flag set to
 .Dv UNVIS_END
 to extract any remaining character (the character passed in is ignored).
+.Pp
+The
+.Fn strunvis
+function returns the number of bytes written (not counting
+the trailing NUL byte) or \-1 if an error occurred.
+.Pp
+The
+.Fn strnunvis
+function returns the number of bytes (not counting the trailing NUL byte),
+that would be needed to fully convert the input string, or \-1 if an
+error occurred.
 .Sh EXAMPLES
 The following code fragment illustrates a proper use of
 .Fn unvis .

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: unvis.c,v 1.9 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: unvis.c,v 1.10 2004/10/17 20:25:31 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -230,6 +230,7 @@ strunvis(char *dst, const char *src)
 		case UNVIS_NOCHAR:
 			break;
 		default:
+			*dst = '\0';
 			return (-1);
 		}
 	}
@@ -238,3 +239,45 @@ strunvis(char *dst, const char *src)
 	*dst = '\0';
 	return (dst - start);
 }
+
+ssize_t
+strnunvis(char *dst, const char *src, size_t sz)
+{
+	char c, p;
+	char *start = dst, *end = dst + sz - 1;
+	int state = 0;
+
+	if (sz > 0)
+		*end = '\0';
+	while ((c = *src++)) {
+	again:
+		switch (unvis(&p, c, &state, 0)) {
+		case UNVIS_VALID:
+			if (dst < end)
+				*dst = p;
+			dst++;
+			break;
+		case UNVIS_VALIDPUSH:
+			if (dst < end)
+				*dst = p;
+			dst++;
+			goto again;
+		case 0:
+		case UNVIS_NOCHAR:
+			break;
+		default:
+			if (dst <= end)
+				*dst = '\0';
+			return (-1);
+		}
+	}
+	if (unvis(&p, c, &state, UNVIS_END) == UNVIS_VALID) {
+		if (dst < end)
+			*dst = p;
+		dst++;
+	}
+	if (dst <= end)
+		*dst = '\0';
+	return (dst - start);
+}
+
