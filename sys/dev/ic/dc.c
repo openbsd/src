@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.59 2003/05/17 01:55:28 jason Exp $	*/
+/*	$OpenBSD: dc.c,v 1.60 2003/05/20 18:48:43 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1046,7 +1046,10 @@ dc_setfilt_admtek(sc)
 	/* now program new ones */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = dc_crc_be(enm->enm_addrlo);
+		if (DC_IS_CENTAUR(sc))
+			h = dc_crc_le(sc, enm->enm_addrlo);
+		else
+			h = dc_crc_be(enm->enm_addrlo);
 		if (h < 32)
 			hashes[0] |= (1 << h);
 		else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.29 2003/05/17 01:55:28 jason Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.30 2003/05/20 18:48:43 henning Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -94,6 +94,9 @@
 #define DC_IS_ADMTEK(x)				\
 	(x->dc_type == DC_TYPE_AL981 ||		\
 	 x->dc_type == DC_TYPE_AN983)
+
+#define DC_IS_CENTAUR(x)			\
+	(x->dc_type == DC_TYPE_AN983)
 
 #define DC_IS_INTEL(x)				\
 	(x->dc_type == DC_TYPE_21143 ||		\
