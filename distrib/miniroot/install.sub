@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.122 1999/04/10 04:39:50 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.123 1999/05/30 08:34:51 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -809,7 +809,7 @@ echo
 if [ "X${_proxy_host}" = X"" ]; then
 	_proxy_host=none
 fi
-echo -n "HTTP/FTP proxy URL? (if you use a proxy) [${_proxy_host}] "
+echo -n "HTTP/FTP proxy URL? (ie. \"http://proxy:8080\", or \"none\") [${_proxy_host}] "
 getresp "${_proxy_host}"
 if [ "X${resp}" = X"none" ]; then
 	unset _proxy_host ftp_proxy http_proxy
