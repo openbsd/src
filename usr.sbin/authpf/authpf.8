@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.19 2002/12/22 14:19:30 dhartmei Exp $
+.\" $OpenBSD: authpf.8,v 1.20 2002/12/29 22:23:37 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -110,6 +110,9 @@ the macro
 which is assigned the connecting ip address whenever
 .Nm
 is run.
+Additionally, the macro
+.Em user_id
+is assigned the user name.
 .Pp
 Filter and nat rules will first be searched for in
 .Pa /etc/authpf/users/$USER/
