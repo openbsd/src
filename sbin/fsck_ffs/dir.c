@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.3 1996/10/20 08:36:30 tholo Exp $	*/
+/*	$OpenBSD: dir.c,v 1.4 1997/02/20 06:03:04 tholo Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.3 1996/10/20 08:36:30 tholo Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.4 1997/02/20 06:03:04 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -504,8 +504,17 @@ linkup(orphan, parentdir)
 		inodirty();
 		lncntp[lfdir]++;
 		pwarn("DIR I=%u CONNECTED. ", orphan);
-		if (parentdir != (ino_t)-1)
+		if (parentdir != (ino_t)-1) {
 			printf("PARENT WAS I=%u\n", parentdir);
+			/*
+			 * The parent directory, because of the ordering
+			 * guarantees, has had the link count incremented
+			 * for the child, but no entry was made.  This
+			 * fixes the parent link count so that fsck does
+			 * not need to be rerun.
+			 */
+			lncntp[parentdir]++;
+		}
 		if (preen == 0)
 			printf("\n");
 	}
