@@ -1,3 +1,6 @@
+/*	$OpenBSD: htons.S,v 1.3 1996/11/13 22:05:04 niklas Exp $	*/
+/*	$NetBSD: htons.S,v 1.1 1996/04/17 22:36:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: htons.S,v 1.2 1996/08/19 08:10:53 tholo Exp $"
+	.asciz "$OpenBSD: htons.S,v 1.3 1996/11/13 22:05:04 niklas Exp $"
 #endif
 
 #define	NAME	htons

@@ -1,3 +1,6 @@
+/*	$OpenBSD: ntohs.S,v 1.3 1996/11/13 22:05:05 niklas Exp $	*/
+/*	$NetBSD: ntohs.S,v 1.1 1996/04/17 22:37:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: ntohs.S,v 1.2 1996/08/19 08:10:55 tholo Exp $"
+	.asciz "$OpenBSD: ntohs.S,v 1.3 1996/11/13 22:05:05 niklas Exp $"
 #endif
 
 #define	NAME	ntohs

@@ -1,3 +1,6 @@
+/*	$OpenBSD: sigprocmask.S,v 1.3 1996/11/13 22:05:15 niklas Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.2 1996/10/17 03:08:21 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +32,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigprocmask.S,v 1.2 1996/08/19 08:11:18 tholo Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.3 1996/11/13 22:05:15 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 LEAF(sigprocmask, 3)
@@ -37,11 +40,10 @@ LEAF(sigprocmask, 3)
 	cmoveq	a1, 1, a0		/* if set == NULL, how = SIG_BLOCK */
 	beq	a1, Ldoit		/* and set = 0, and do it. */
 	ldl	a1, 0(a1)		/* load the set from *set */
-Ldoit:	SYSCALL_NOLABEL(sigprocmask)
+Ldoit:	CALLSYS_ERROR(sigprocmask)
 	beq	a5, Lret		/* if they don't want old mask, done */	
 	stl	v0, 0(a5)		/* otherwise, give it to them. */
 Lret:	mov	zero, v0
 	RET
 
 	END(sigprocmask)
-

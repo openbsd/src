@@ -1,3 +1,6 @@
+/*	$OpenBSD: Ovfork.S,v 1.3 1996/11/13 22:05:10 niklas Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.1 1995/02/10 17:50:29 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +32,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: Ovfork.S,v 1.2 1996/08/19 08:11:04 tholo Exp $"
+	.asciz "$OpenBSD: Ovfork.S,v 1.3 1996/11/13 22:05:10 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSCALL(vfork)

@@ -1,3 +1,6 @@
+/*	$OpenBSD: pipe.S,v 1.3 1996/11/13 22:05:12 niklas Exp $	*/
+/*	$NetBSD: pipe.S,v 1.1 1995/02/10 17:50:35 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +32,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: pipe.S,v 1.2 1996/08/19 08:11:10 tholo Exp $"
+	.asciz "$OpenBSD: pipe.S,v 1.3 1996/11/13 22:05:12 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 SYSCALL(pipe)

@@ -1,3 +1,6 @@
+/*	$OpenBSD: ptrace.S,v 1.3 1996/11/13 22:05:12 niklas Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.3 1996/10/17 03:08:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,13 +32,14 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: ptrace.S,v 1.2 1996/08/19 08:11:11 tholo Exp $"
+	.asciz "$OpenBSD: ptrace.S,v 1.3 1996/11/13 22:05:12 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 IMPORT(errno, 4)
 
 LEAF(ptrace, 4)
+	LDGP(pv)
 	stl	zero, errno
-	SYSCALL_NOLABEL(ptrace)
+	CALLSYS_ERROR(ptrace)
 	RET
 END(ptrace)

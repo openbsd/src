@@ -1,3 +1,6 @@
+/*	$OpenBSD: brk.S,v 1.4 1996/11/13 22:05:10 niklas Exp $	*/
+/*	$NetBSD: brk.S,v 1.4 1996/10/17 03:08:15 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,7 +32,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.3 1996/08/19 08:11:05 tholo Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.4 1996/11/13 22:05:10 niklas Exp $"
 #endif /* SYSLIBC_SCCS */
 
 	.globl	_end
@@ -41,12 +44,12 @@ EXPORT(minbrk)
 
 	.text
 LEAF(brk, 1)
-	br	pv, 1f				/* XXX profiling */
-1:	SETGP(pv)
+	br	pv, L1				/* XXX profiling */
+L1:	LDGP(pv)
 	ldq	v0, minbrk
 	cmpult  a0, v0, t0
 	cmovne  t0, v0, a0
-	SYSCALL_NOLABEL(break)
+	CALLSYS_ERROR(break)
 	stq	a0, curbrk
 	mov	zero, v0
 	RET
