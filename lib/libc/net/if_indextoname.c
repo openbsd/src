@@ -111,7 +111,7 @@ if_indextoname(unsigned int index, char *name)
 			struct sockaddr_dl *sd = p;
 
 			if (sd->sdl_index == index) {
-				strlcpy(name, lastname, sizeof(name));
+				strlcpy(name, lastname, IFNAMSIZ);
 				retname = name;
 				goto ret;
 			}
@@ -127,7 +127,7 @@ if_indextoname(unsigned int index, char *name)
 		strlcpy(iname, lastname, sizeof(iname));
 
 	if (iname[0]) {
-		strlcpy(name, iname, sizeof(name));
+		strlcpy(name, iname, IFNAMSIZ);
 		retname = name;
 	}
 ret:
