@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.34 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.35 2004/10/20 12:40:14 pefo Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct com_softc {
 
 	int sc_halt;
 
-	int sc_iobase;
+	bus_addr_t sc_iobase;
 	int sc_frequency;
 
 	bus_space_handle_t sc_ioh;
@@ -147,7 +147,7 @@ void	comstart(struct tty *);
 void	comsoft(void *);
 
 struct consdev;
-int	comcnattach(bus_space_tag_t, int, int, int, tcflag_t);
+int	comcnattach(bus_space_tag_t, bus_addr_t, int, int, tcflag_t);
 void	comcnprobe(struct consdev *);
 void	comcninit(struct consdev *);
 int	comcngetc(dev_t);
@@ -165,7 +165,7 @@ int	kgdbintr(void *);
 void com_attach_subr(struct com_softc *);
 
 extern int comdefaultrate;
-extern int comconsaddr;
+extern bus_addr_t comconsaddr;
 extern int comconsinit;
 extern int comconsattached;
 extern bus_space_tag_t comconsiot;

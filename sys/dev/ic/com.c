@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.98 2004/08/09 22:24:29 pefo Exp $	*/
+/*	$OpenBSD: com.c,v 1.99 2004/10/20 12:40:14 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ struct cfdriver com_cd = {
 
 int	comdefaultrate = TTYDEF_SPEED;
 int	comconsinit;
-int	comconsaddr;
+bus_addr_t comconsaddr;
 int	comconsattached;
 bus_space_tag_t comconsiot;
 bus_space_handle_t comconsioh;
@@ -118,7 +118,7 @@ int	commajor;
 #ifdef KGDB
 #include <sys/kgdb.h>
 
-int com_kgdb_addr;
+bus_addr_t com_kgdb_addr;
 bus_space_tag_t com_kgdb_iot;
 bus_space_handle_t com_kgdb_ioh;
 
@@ -1520,7 +1520,7 @@ comcninit(cp)
 int
 comcnattach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
-	int iobase;
+	bus_addr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 {
@@ -1575,7 +1575,7 @@ comcnpollc(dev, on)
 int
 com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	bus_space_tag_t iot;
-	int iobase;
+	bus_addr_t iobase;
 	int rate, frequency;
 	tcflag_t cflag;
 {
