@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2001/08/06 20:46:33 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.47 2001/08/12 22:59:37 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -247,11 +247,6 @@ cpu_startup()
 	
 	vaddr_t minaddr, maxaddr;
 	vm_size_t size;
-#ifdef BUFFERS_UNMANAGED
-	vm_offset_t bufmemp;
-	caddr_t buffermem;
-	int ix;
-#endif
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -337,11 +332,6 @@ again:
 		firstaddr = (caddr_t) uvm_km_zalloc(kernel_map, round_page(size));
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
-#ifdef BUFFERS_UNMANAGED
-		buffermem = (caddr_t) uvm_km_zalloc(kernel_map, bufpages*PAGE_SIZE);
-		if (buffermem == 0)
-			panic("startup: no room for buffers");
-#endif
 		goto again;
 	}
 	/*
