@@ -1,4 +1,4 @@
-/*	$OpenBSD: daadioio.h,v 1.1 2002/07/09 15:27:59 jason Exp $	*/
+/*	$OpenBSD: daadioio.h,v 1.2 2002/07/12 19:50:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -55,5 +55,4 @@ struct daadio_dac {
 #define	DIOGOPIO	_IOWR('D', 0x02, struct daadio_pio) /* get outp sts */
 #define	DIOSOPIO	 _IOW('D', 0x02, struct daadio_pio) /* set to outp */
 #define	DIOGADC		_IOWR('D', 0x03, struct daadio_adc) /* get adc val */
-#define	DIOSADC		 _IOW('D', 0x03, struct daadio_adc) /* set adc val */
 #define	DIOSDAC		 _IOW('D', 0x04, struct daadio_dac) /* set dac val */

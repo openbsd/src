@@ -1,4 +1,4 @@
-/*	$OpenBSD: daadio.c,v 1.3 2002/07/09 15:27:59 jason Exp $	*/
+/*	$OpenBSD: daadio.c,v 1.4 2002/07/12 19:50:17 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -50,6 +50,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
+#include <sys/proc.h>
 
 #include <machine/autoconf.h>
 #include <sparc/cpu.h>
@@ -70,6 +71,12 @@ struct daadio_softc {
 	struct		device sc_dv;		/* base device */
 	struct		daadioregs *sc_regs;	/* registers */
 	struct		intrhand sc_ih;		/* interrupt vectoring */
+	struct		daadio_adc *sc_adc_p;
+	int		sc_adc_done;
+	int		sc_flags;		/* flags */
+#define	DAF_LOCKED	0x1
+#define	DAF_WANTED	0x2
+	u_int16_t	sc_adc_val;
 	u_int8_t	sc_ier;			/* software copy of ier */
 };
 
@@ -83,6 +90,7 @@ struct cfdriver daadio_cd = {
 
 void	daadio_ier_setbit(struct daadio_softc *, u_int8_t);
 void	daadio_ier_clearbit(struct daadio_softc *, u_int8_t);
+int	daadio_adc(struct daadio_softc *, struct daadio_adc *);
 
 int	daadioopen(dev_t, int, int, struct proc *);
 int	daadioclose(dev_t, int, int, struct proc *);
@@ -134,6 +142,7 @@ daadioattach(parent, self, aux)
 	fvmeintrestablish(parent, ca->ca_ra.ra_intr[0].int_vec,
 	    ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih);
 	daadio_ier_setbit(sc, IER_PIOEVENT);
+	daadio_ier_setbit(sc, IER_CONVERSION);
 
 	printf(": level %d vec 0x%x\n",
 	    ca->ca_ra.ra_intr[0].int_pri, ca->ca_ra.ra_intr[0].int_vec);
@@ -145,22 +154,24 @@ daadiointr(vsc)
 {
 	struct daadio_softc *sc = vsc;
 	struct daadioregs *regs = sc->sc_regs;
-	u_int8_t val;
+	u_int8_t val, isr;
 	int r = 0;
 
-	if (regs->isr & ISR_PIOEVENT) {
+	isr = regs->isr;
+
+	if (isr & ISR_PIOEVENT) {
 		val = regs->pio_porta;
 		printf("pio value: %x\n", val);
 		r = 1;
 		regs->pio_pattern = val;
 	}
 
-	if (regs->isr & ISR_PIPELINE) {
+	if (isr & ISR_CONVERSION) {
 		r = 1;
-	}
-
-	if (regs->isr & ISR_CONVERSION) {
-		r = 1;
+		sc->sc_adc_val = sc->sc_regs->adc12bit[0];
+		sc->sc_adc_done = 1;
+		if (sc->sc_adc_p != NULL)
+			wakeup(sc->sc_adc_p);
 	}
 
 	return (r);
@@ -229,22 +240,7 @@ daadioioctl(dev, cmd, data, flags, p)
 
 	switch (cmd) {
 	case DIOGADC:
-		if (adc->dad_reg >= 32) {
-			error = EINVAL;
-			break;
-		}
-		adc->dad_val = sc->sc_regs->adc12bit[adc->dad_reg];
-		break;
-	case DIOSADC:
-		if ((flags & FWRITE) == 0) {
-			error = EPERM;
-			break;
-		}
-		if (adc->dad_reg >= 32) {
-			error = EINVAL;
-			break;
-		}
-		sc->sc_regs->adc12bit[adc->dad_reg] = adc->dad_val;
+		error = daadio_adc(sc, adc);
 		break;
 	case DIOGPIO:
 		switch (pio->dap_reg) {
@@ -350,4 +346,48 @@ daadioioctl(dev, cmd, data, flags, p)
 	}
 
 	return (error);
+}
+
+int
+daadio_adc(sc, adc)
+	struct daadio_softc *sc;
+	struct daadio_adc *adc;
+{
+	int s, err = 0;
+
+	if (adc->dad_reg >= 32)
+		return (EINVAL);
+
+	s = splhigh();
+
+	/* Lock device. */
+	while ((sc->sc_flags & DAF_LOCKED) != 0) {
+		sc->sc_flags |= DAF_WANTED;
+		if ((err = tsleep(sc, PWAIT, "daadio", 0)) != 0)
+			goto out;
+	}
+	sc->sc_flags |= DAF_LOCKED;
+
+	/* Start conversion. */
+	sc->sc_adc_done = 0;
+	sc->sc_adc_p = adc;
+	sc->sc_regs->adc12bit[adc->dad_reg] = 0;
+
+	/* Wait for conversion. */
+	while (sc->sc_adc_done == 0)
+		if ((err = tsleep(sc->sc_adc_p, PWAIT, "daadio", 0)) != 0)
+			goto out;
+	sc->sc_adc_p = NULL;
+	adc->dad_val = sc->sc_adc_val;
+
+	/* Unlock device. */
+	sc->sc_flags &= ~DAF_LOCKED;
+	if (sc->sc_flags & DAF_WANTED) {
+		sc->sc_flags &= ~DAF_WANTED;
+		wakeup(sc);
+	}
+
+out:
+	splx(s);
+	return (err);
 }
