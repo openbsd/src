@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.16 1998/08/24 05:32:39 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.17 1998/10/28 19:47:00 marc Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.16 1998/08/24 05:32:39 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.17 1998/10/28 19:47:00 marc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -480,7 +480,7 @@ off_t	dump_off;
 	if ((CORE_GETMAGIC(cpu_hdr) != KCORE_MAGIC)
 		|| (CORE_GETMID(cpu_hdr) != MID_MACHINE)) {
 		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
-		return (-1);
+		return (0);
 	}
 	hdr_size = ALIGN(sizeof(cpu_hdr));
 
