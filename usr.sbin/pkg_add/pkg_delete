@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.46 2004/09/21 09:44:09 espie Exp $
+# $OpenBSD: pkg_delete,v 1.47 2004/09/24 08:49:27 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -41,11 +41,11 @@ sub ensure_ldconfig
 
 sub record_all_shared_items
 {
-	my $db = {};
+	my $db = {dirs=>{}, users=>{}, groups=>{}};
 	my @list = installed_packages();
 	for my $e (@list) {
 		my $plist = OpenBSD::PackingList->fromfile(installed_info($e).CONTENTS, \&OpenBSD::PackingList::DirrmOnly) or next;
-		for my $item (@{$plist->{items}}) {
+		for my $item (@{$plist->{users}}, @{$plist->{groups}}, @{$plist->{items}}) {
 			$item->record_shared_item($e, $db);
 		}
 	}
@@ -57,23 +57,38 @@ sub cleanup_shared_items
 	my $state = shift;
 
 	my $h = $state->{dirs_to_rm};
-	return unless defined $h;
-
+	my $u = $state->{users_to_rm};
+	my $g = $state->{groups_to_rm};
+	return unless defined $h or defined $u or defined $g;
 	my $remaining = record_all_shared_items();
 
-	for my $d (sort {$b cmp $a} keys %$h) {
-		my $realname = $state->{destdir}.$d;
-		if ($remaining->{$realname}) {
-			for my $i (@{$h->{$d}}) {
-				$i->reload($state);
+	if (defined $h) {
+		for my $d (sort {$b cmp $a} keys %$h) {
+			my $realname = $state->{destdir}.$d;
+			if ($remaining->{dirs}->{$realname}) {
+				for my $i (@{$h->{$d}}) {
+					$i->reload($state);
+				}
+			} else {
+				for my $i (@{$h->{$d}}) {
+					$i->cleanup($state);
+				}
+				if (!rmdir $realname) {
+					print "Error deleting directory $realname: $!\n";
+				}
 			}
-		} else {
-			for my $i (@{$h->{$d}}) {
-				$i->cleanup($state);
-			}
-			if (!rmdir $realname) {
-				    print "Error deleting directory $realname: $!\n";
-			}
+		}
+	}
+	if (defined $u) {
+		for my $user (keys %$u) {
+			next if $remaining->{users}->{$user};
+			System("/usr/sbin/userdel", $user);
+		}
+	}
+	if (defined $g) {
+		for my $group (keys %$g) {
+			next if $remaining->{groups}->{$group};
+			System("/usr/sbin/groupdel", $group);
 		}
 	}
 }
@@ -106,13 +121,60 @@ sub log_pkgname
 	}
 }
 
+package OpenBSD::PackingElement::NewUser;
+sub record_shared_item
+{
+	my ($self, $pkgname, $db) = @_;
+	my $k = $self->{name};
+	$db->{users}->{$k} = 1;
+}
+
+sub delete
+{
+	my ($self, $state) = @_;
+
+	my $name = $self->{name};
+
+	if ($state->{verbose} or $state->{not}) {
+		print "rmuser: $name\n";
+	}
+
+	$state->{users_to_rm} = {} unless defined $state->{users_to_rm};
+
+	my $h = $state->{users_to_rm};
+	$h->{$name} = 1;
+}
+
+package OpenBSD::PackingElement::NewGroup;
+sub record_shared_item
+{
+	my ($self, $pkgname, $db) = @_;
+	my $k = $self->{name};
+	$db->{groups}->{$k} = 1;
+}
+
+sub delete
+{
+	my ($self, $state) = @_;
+
+	my $name = $self->{name};
+
+	if ($state->{verbose} or $state->{not}) {
+		print "rmgroup: $name\n";
+	}
+
+	$state->{groups_to_rm} = {} unless defined $state->{groups_to_rm};
+
+	my $h = $state->{groups_to_rm};
+	$h->{$name} = 1;
+}
 
 package OpenBSD::PackingElement::DirBase;
 sub record_shared_item
 {
 	my ($self, $pkgname, $db) = @_;
 	my $k = $self->fullname();
-	$db->{$k} = 1;
+	$db->{dirs}->{$k} = 1;
 }
 
 sub delete
@@ -488,7 +550,7 @@ sub delete_package
 		$plist->get(DEINSTALL)->delete($state);
 	} 
 	manpages_unindex($plist, $state->{destdir});
-	for my $item (@{$plist->{items}}) {
+	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		$item->delete($state);
 	}
 	# guard against duplicate pkgdep
@@ -649,7 +711,7 @@ eval {
 my $dielater = $@;
 
 ensure_ldconfig($opt_v) unless $opt_n;
-# delayed directory removal
+# delayed directory/user/group removal
 cleanup_shared_items($state);
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 
