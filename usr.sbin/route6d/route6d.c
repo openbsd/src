@@ -1,5 +1,5 @@
-/*	$OpenBSD: route6d.c,v 1.8 2000/07/15 04:59:29 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.32 2000/07/15 04:50:43 itojun Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.9 2000/08/13 00:48:39 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.35 2000/08/13 00:39:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.8 2000/07/15 04:59:29 itojun Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.9 2000/08/13 00:48:39 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -2251,7 +2251,7 @@ rt_entry(rtm, again)
 	if ((rtm->rtm_addrs & RTA_DST) == 0)
 		return;		/* ignore routes without destination address */
 	sin6_dst = (struct sockaddr_in6 *)rtmp;
-	rtmp += sin6_dst->sin6_len;
+	rtmp += ROUNDUP(sin6_dst->sin6_len);
 	if (rtm->rtm_addrs & RTA_GATEWAY) {
 		sin6_gw = (struct sockaddr_in6 *)rtmp;
 		rtmp += ROUNDUP(sin6_gw->sin6_len);
@@ -2724,7 +2724,9 @@ filterconfig()
 	struct	iff ftmp, *iff_obj;
 	struct	ifc *ifcp;
 	struct	riprt *rrt;
+#if 0
 	struct	in6_addr gw;
+#endif
 
 	for (i = 0; i < nfilter; i++) {
 		ap = filter[i];
@@ -2783,6 +2785,7 @@ ifonly:
 		rrt->rrt_rflags = RRTF_AGGREGATE;
 		rrt->rrt_t = 0;
 		rrt->rrt_index = loopifindex;
+#if 0
 		if (getroute(&rrt->rrt_info, &gw)) {
 #if 0
 			/*
@@ -2799,6 +2802,7 @@ ifonly:
 			    rrt->rrt_info.rip6_plen);
 #endif
 		}
+#endif
 		/* Put the route to the list */
 		rrt->rrt_next = riprt;
 		riprt = rrt;
