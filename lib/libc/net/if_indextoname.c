@@ -45,28 +45,47 @@ static char __name[IFNAMSIZ];
 char *
 if_indextoname(unsigned int index, char *name)
 {
-	int     i, fd, len;
+	int     i, fd = -1, extra, len = 0;
 	struct ifconf ifconf;
-	char    lastname[IFNAMSIZ], iname[IFNAMSIZ], *retname = NULL;
+	char    lastname[IFNAMSIZ], iname[IFNAMSIZ], *retname = NULL, *inbuf;
 	struct sockaddr *sa;
 	void	*p;
 
-	if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
-		return 0;
+	ifconf.ifc_buf = 0;
 
 	if (!name)
 		name = __name;
 
-	ifconf.ifc_len = 0;
-	ifconf.ifc_buf = 0;
-	if (ioctl(fd, SIOCGIFCONF, (void *) &ifconf))
+	if ((fd = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
 		goto ret;
-	if (ifconf.ifc_len < IFNAMSIZ)
-		goto ret;
-	if (!(ifconf.ifc_buf = malloc(ifconf.ifc_len)))
-		goto ret;
-	if (ioctl(fd, SIOCGIFCONF, (void *) &ifconf))
-		goto ret;
+
+	/*
+	 * Try ifc_len == 0 hack first, to get the actual length.
+	 * If that fails, revert to a loop which grows the ifc_buf
+	 * until it is sufficiently large.
+	 */
+	extra = sizeof(struct ifreq);
+	while (1) {
+		ifconf.ifc_len = len;
+		if (ioctl(fd, SIOCGIFCONF, (void *) &ifconf) == -1 &&
+		    ifconf.ifc_buf)
+			goto ret;
+		if (ifconf.ifc_buf &&
+		    ifconf.ifc_len + extra < len)
+			break;
+		if (ifconf.ifc_buf) {
+			if (len == 0)
+				len = 4096;
+			ifconf.ifc_len = len *= 2;
+		} else {
+			len = ifconf.ifc_len;
+			extra = 0;
+		}
+		inbuf = realloc(ifconf.ifc_buf, ifconf.ifc_len);
+		if (inbuf == NULL)
+			goto ret;
+		ifconf.ifc_buf = inbuf;
+	}
 
 	i = 0;
 	p = ifconf.ifc_buf;
@@ -112,7 +131,8 @@ if_indextoname(unsigned int index, char *name)
 		retname = name;
 	}
 ret:
-	close(fd);
+	if (fd != -1)
+		close(fd);
 	if (ifconf.ifc_buf)
 		free(ifconf.ifc_buf);
 	return (retname);
