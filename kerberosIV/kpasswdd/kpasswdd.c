@@ -1,4 +1,4 @@
-/*	$Id: kpasswdd.c,v 1.1.1.1 1995/12/14 06:52:53 tholo Exp $	*/
+/*	$Id: kpasswdd.c,v 1.2 1996/04/17 07:22:51 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -184,7 +184,7 @@ main()
 	kdb_encrypt_key(&key, &key, &master_key, master_key_schedule,
 		DECRYPT);
 	key_sched(&key, key_schedule);
-	des_set_key(&key, key_schedule);
+	desrw_set_key(&key, key_schedule);
 
 
 	/* get random key and send it over {random} Kperson */
@@ -203,7 +203,7 @@ main()
 	/* now read update info: { info }Krandom */
 
 	key_sched(&kpwd_data.random_key, random_sched);
-	des_set_key(&kpwd_data.random_key, random_sched);
+	desrw_set_key(&kpwd_data.random_key, random_sched);
 	if (des_read(0, &ud_data, sizeof(ud_data)) != sizeof(ud_data)) {
 		syslog(LOG_NOTICE, "update aborted");
 		cleanup();
@@ -213,8 +213,9 @@ main()
 	/* validate info string by looking at the embedded string */
 
 	if (strcmp(ud_data.secure_msg, SECURE_STRING) != 0) {
-		syslog(LOG_NOTICE, "invalid update from %s",
-			inet_ntoa(foreign.sin_addr));
+		syslog(LOG_NOTICE, "invalid update from %s (%s)",
+			inet_ntoa(foreign.sin_addr),
+			ud_data.secure_msg);
 		cleanup();
 		exit(1);
 	}
