@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.12 2001/02/26 06:19:33 tholo Exp $	*/
+/*	$OpenBSD: an.c,v 1.13 2001/02/27 06:48:28 tholo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -591,13 +591,15 @@ an_read_record(sc, ltv)
 
 	/* Tell the NIC to enter record read mode. */
 	if (an_cmd(sc, AN_CMD_ACCESS|AN_ACCESS_READ, ltv->an_type)) {
-		printf("%s: RID access failed\n", sc->sc_dev.dv_xname);
+		printf("%s: RID 0x%04x access failed\n",
+		    sc->sc_dev.dv_xname, ltv->an_type);
 		return(EIO);
 	}
 
 	/* Seek to the record. */
 	if (an_seek(sc, ltv->an_type, 0, AN_BAP1)) {
-		printf("%s: seek to record failed\n", sc->sc_dev.dv_xname);
+		printf("%s: RID 0x%04x seek to record failed\n",
+		    sc->sc_dev.dv_xname, ltv->an_type);
 		return(EIO);
 	}
 
@@ -608,8 +610,9 @@ an_read_record(sc, ltv)
 	 */
 	len = CSR_READ_2(sc, AN_DATA1);
 	if (len > ltv->an_len) {
-		printf("%s: record length mismatch -- expected %d, got %d\n",
-		    sc->sc_dev.dv_xname, ltv->an_len, len);
+		printf("%s: RID 0x%04x record length mismatch -- expected %d, "
+		    "got %d\n", sc->sc_dev.dv_xname, ltv->an_type,
+		    ltv->an_len, len);
 		return(ENOSPC);
 	}
 
@@ -953,9 +956,7 @@ an_ioctl(ifp, command, data)
 			    sc->an_if_flags & IFF_PROMISC) {
 				an_promisc(sc, 0);
 			}
-			else {
-				an_init(sc);
-			}
+			an_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				an_stop(sc);
@@ -1054,17 +1055,16 @@ an_init(sc)
 	if (ifp->if_flags & IFF_RUNNING)
 		an_stop(sc);
 
+	an_reset(sc);
+
 	sc->an_associated = 0;
 
 	/* Allocate the TX buffers */
 	if (an_init_tx_ring(sc)) {
-		an_reset(sc);
-		if (an_init_tx_ring(sc)) {
-			printf("%s: tx buffer allocation failed\n",
-			    sc->sc_dev.dv_xname);
-			splx(s);
-			return;
-		}
+		printf("%s: tx buffer allocation failed\n",
+		    sc->sc_dev.dv_xname);
+		splx(s);
+		return;
 	}
 
 	/* Set our MAC address. */
