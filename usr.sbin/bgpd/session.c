@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.62 2004/01/04 20:07:30 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.63 2004/01/04 20:21:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1042,7 +1042,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 					break;
 				case KEEPALIVE:
 					bgp_fsm(peer, EVNT_RCVD_KEEPALIVE);
-					peer->stats.msg_rcvd_update++;
+					peer->stats.msg_rcvd_keepalive++;
 					break;
 				default:	/* cannot happen */
 					session_notification(peer, ERR_HEADER,
