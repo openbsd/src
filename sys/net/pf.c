@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.315 2003/02/01 15:20:16 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.316 2003/02/05 13:07:20 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1456,15 +1456,14 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr)
 {
 	unsigned char		 hash[16];
-	struct pf_pooladdr	*cur = rpool->cur;
 	struct pf_addr		*raddr = &rpool->cur->addr.addr.v.a.addr;
 	struct pf_addr		*rmask = &rpool->cur->addr.addr.v.a.mask;
 
-	if (cur->addr.addr.type == PF_ADDR_NOROUTE ||
-	    cur->addr.addr.type == PF_ADDR_TABLE)
+	if (rpool->cur->addr.addr.type == PF_ADDR_NOROUTE ||
+	    rpool->cur->addr.addr.type == PF_ADDR_TABLE)
 		return (1);
-	if (cur->addr.addr.type == PF_ADDR_DYNIFTL &&
-	    cur->addr.addr.p.dyn->undefined)
+	if (rpool->cur->addr.addr.type == PF_ADDR_DYNIFTL &&
+	    rpool->cur->addr.addr.p.dyn->undefined)
 		return (1);
 
 	switch (rpool->opts & PF_POOL_TYPEMASK) {
@@ -1514,16 +1513,17 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 		PF_POOLMASK(naddr, raddr, rmask, (struct pf_addr *)&hash, af);
 		break;
 	case PF_POOL_ROUNDROBIN:
-		if (pf_match_addr(0, &cur->addr.addr.v.a.addr,
-		    &cur->addr.addr.v.a.mask, &rpool->counter, af)) {
+		if (pf_match_addr(0, &rpool->cur->addr.addr.v.a.addr,
+		    &rpool->cur->addr.addr.v.a.mask, &rpool->counter, af)) {
 			PF_ACPY(naddr, &rpool->counter, af);
 			PF_AINC(&rpool->counter, af);
 		} else {
 			if ((rpool->cur =
 			    TAILQ_NEXT(rpool->cur, entries)) == NULL)
 				rpool->cur = TAILQ_FIRST(&rpool->list);
-			PF_ACPY(naddr, &cur->addr.addr.v.a.addr, af);
-			PF_ACPY(&rpool->counter, &cur->addr.addr.v.a.addr, af);
+			PF_ACPY(naddr, &rpool->cur->addr.addr.v.a.addr, af);
+			PF_ACPY(&rpool->counter,
+			    &rpool->cur->addr.addr.v.a.addr, af);
 			PF_AINC(&rpool->counter, af);
 		}
 		break;
