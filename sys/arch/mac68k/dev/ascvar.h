@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascvar.h,v 1.2 1997/03/08 16:16:49 briggs Exp $	*/
+/*	$OpenBSD: ascvar.h,v 1.3 2001/08/23 08:17:40 miod Exp $	*/
 /*	$NetBSD: ascvar.h,v 1.3 1997/02/24 05:47:34 scottr Exp $	*/
 
 /*
@@ -39,6 +39,7 @@ struct asc_softc {
 	bus_space_handle_t	sc_handle;
 	int			sc_open;
 	int			sc_ringing;
+	struct timeout		sc_bell_tmo;
 };
 
 int	ascopen __P((dev_t dev, int flag, int mode, struct proc *p));
