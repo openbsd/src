@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: termout.c,v 1.2 1995/11/13 04:59:23 deraadt Exp $";
+static char rcsid[] = "$Id: termout.c,v 1.3 1995/12/14 13:57:47 deraadt Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -41,6 +41,7 @@ static char rcsid[] = "$Id: termout.c,v 1.2 1995/11/13 04:59:23 deraadt Exp $";
 #include <termios.h>
 #endif
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <curses.h>
 #if	defined(ultrix)
@@ -642,7 +643,6 @@ InitTerminal()
 #if	defined(unix)
 	char KSEbuffer[2050];
 	char *lotsofspace = KSEbuffer;
-	extern void abort();
 	extern char *tgetstr();
 #endif	/* defined(unix) */
 
@@ -655,7 +655,7 @@ InitTerminal()
 	ClearArray(Terminal);
 	terminalCursorAddress = SetBufferAddress(0,0);
 #if defined(unix)
-	signal(SIGHUP, abort);
+	signal(SIGHUP, (void (*))abort);
 #endif
 
 	TryToSend = FastScreen;
