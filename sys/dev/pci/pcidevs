@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.276 2000/07/06 17:58:52 aaron Exp $
+	$OpenBSD: pcidevs,v 1.277 2000/07/06 18:40:20 aaron Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1148,7 +1148,7 @@ product MUTECH MV1000		0x0001	MV1000
 
 /* National Semiconductor products */
 product NS DP83810		0x0001	DP83810 10/100
-product NS_DP83815		0x0020	DP83815 10/100
+product NS DP83815		0x0020	DP83815 10/100
 product NS NS87410		0xd001	NS87410
 
 /* NEC */
