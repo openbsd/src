@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_aout.h,v 1.4 1996/05/22 12:07:34 deraadt Exp $	*/
+/*	$OpenBSD: exec_aout.h,v 1.5 1996/06/25 20:48:58 deraadt Exp $	*/
 /*	$NetBSD: exec_aout.h,v 1.15 1996/05/18 17:20:54 christos Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct exec {
 #define	MID_HP200	200	/* hp200 (68010) BSD binary */
 #define	MID_I386	134	/* i386 BSD binary */
 #define	MID_M68K	135	/* m68k BSD binary with 8K page sizes */
-#define	MID_M68K4K	136	/* m68k BSD binary with 4K page sizes */
+#define	MID_M68K4K	136	/* DO NOT USE: m68k BSD binary with 4K page sizes */
 #define	MID_NS32532	137	/* ns32532 */
 #define	MID_SPARC	138	/* sparc */
 #define	MID_PMAX	139	/* pmax */
