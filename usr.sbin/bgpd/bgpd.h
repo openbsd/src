@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.149 2004/11/18 17:17:56 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.150 2004/11/19 14:43:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -454,7 +454,7 @@ enum as_spec {
 	AS_EMPTY
 };
 
-struct as_filter {
+struct filter_as {
 	u_int16_t	as;
 	enum as_spec	type;
 };
@@ -536,7 +536,7 @@ struct filter_community {
 struct filter_match {
 	struct filter_prefix	prefix;
 	struct filter_prefixlen	prefixlen;
-	struct as_filter	as;
+	struct filter_as	as;
 	struct filter_community	community;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.151 2004/11/11 16:59:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.152 2004/11/19 14:43:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,7 +63,7 @@ int		 rde_reflector(struct rde_peer *, struct rde_aspath *);
 void		 rde_dump_rib_as(struct prefix *, pid_t);
 void		 rde_dump_rib_prefix(struct prefix *, pid_t);
 void		 rde_dump_upcall(struct pt_entry *, void *);
-void		 rde_dump_as(struct as_filter *, pid_t);
+void		 rde_dump_as(struct filter_as *, pid_t);
 void		 rde_dump_prefix_upcall(struct pt_entry *, void *);
 void		 rde_dump_prefix(struct ctl_show_rib_prefix *, pid_t);
 void		 rde_update_queue_runner(void);
@@ -355,7 +355,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			break;
 		case IMSG_CTL_SHOW_RIB_AS:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(struct as_filter)) {
+			    sizeof(struct filter_as)) {
 				log_warnx("rde_dispatch: wrong imsg len");
 				break;
 			}
@@ -1494,7 +1494,7 @@ rde_dump_upcall(struct pt_entry *pt, void *ptr)
 }
 
 void
-rde_dump_as(struct as_filter *a, pid_t pid)
+rde_dump_as(struct filter_as *a, pid_t pid)
 {
 	extern struct path_table	 pathtable;
 	struct rde_aspath		*asp;
