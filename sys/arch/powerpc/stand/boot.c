@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 2000/01/22 03:27:52 rahnds Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 2000/01/24 03:07:54 rahnds Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -104,9 +104,19 @@ parseargs(str, howtop)
 	if (str[0] == '\0') {
 		return;
 	}
-	for (cp = &str[1]; *cp; cp++) {
-		if (cp[-1] == ' ' && *cp == '-') {
+	cp = str;
+	while (*cp != 0) {
+		/* check for - */
+		if (*cp == '-') {
+			/* start of options found */
 			break;
+		}
+		while (*cp != 0 && *cp != ' ') {
+			/* character in the middle of the name, skip */
+			cp++;
+		}
+		while (*cp == ' ') {
+			*cp++ = 0;
 		}
 	}
 	if (!*cp)
