@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.6 1996/08/10 12:09:23 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.7 1997/04/14 11:16:23 graichen Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -1162,4 +1162,21 @@ linux_sys___sysctl(p, v, retval)
 	SCARG(&bsa, newlen) = ls.newlen;
 
 	return sys___sysctl(p, &bsa, retval);
+}
+
+int
+linux_sys_nice(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_nice_args /* {
+		syscallarg(int) incr;
+	} */ *uap = v;
+	struct sys_setpriority_args bsa;
+
+	SCARG(&bsa, which) = PRIO_PROCESS;
+	SCARG(&bsa, who) = 0;
+	SCARG(&bsa, prio) = SCARG(uap, incr);
+	return sys_setpriority(p, &bsa, retval);
 }

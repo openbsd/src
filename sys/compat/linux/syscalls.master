@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.7 1996/05/22 12:01:51 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.8 1997/04/14 11:16:31 graichen Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -83,7 +83,7 @@
 31	UNIMPL		stty
 32	UNIMPL		gtty
 33	STD		{ int linux_sys_access(char *path, int flags); }
-34	UNIMPL		nice
+34	STD		{ int linux_sys_nice(int incr); }
 35	UNIMPL		ftime
 36	NOARGS		{ int sys_sync(void); }
 37	STD		{ int linux_sys_kill(int pid, int signum); }
