@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_spec.c,v 1.4 1999/01/06 05:29:29 d Exp $
+ * $OpenBSD: uthread_spec.c,v 1.5 1999/05/14 22:29:52 alex Exp $
  */
 #include <signal.h>
 #include <stdlib.h>
@@ -125,8 +125,8 @@ _thread_cleanupspecific(void)
 			}
 		}
 	}
-	_thread_run->specific_data = NULL;
 	free(_thread_run->specific_data);
+	_thread_run->specific_data = NULL;
 }
 
 static inline const void **
