@@ -1,4 +1,4 @@
-/*	$OpenBSD: rshd.c,v 1.35 2001/01/28 19:34:32 niklas Exp $	*/
+/*	$OpenBSD: rshd.c,v 1.36 2001/02/04 17:51:30 millert Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$OpenBSD: rshd.c,v 1.35 2001/01/28 19:34:32 niklas Exp $";
+static char *rcsid = "$OpenBSD: rshd.c,v 1.36 2001/02/04 17:51:30 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -217,7 +217,7 @@ doit(fromp)
 	int one = 1;
 	char *hostname, *errorstr, *errorhost = (char *) NULL;
 	char *cp, sig, buf[BUFSIZ];
-	char cmdbuf[NCARGS+1], locuser[16], remuser[16];
+	char cmdbuf[NCARGS+1], locuser[_PW_NAME_LEN+1], remuser[_PW_NAME_LEN+1];
 	char remotehost[2 * MAXHOSTNAMELEN + 1];
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
 	char naddr[NI_MAXHOST];
