@@ -1,5 +1,6 @@
-#	$Id: kadm_err.et,v 1.1.1.1 1995/12/14 06:52:45 tholo Exp $
-
+#	$OpenBSD: kadm_err.et,v 1.2 1997/12/01 04:46:58 art Exp $
+#	$KTH: kadm_err.et,v 1.4 1996/06/12 08:01:34 bg Exp $
+#
 # Copyright 1988 by the Massachusetts Institute of Technology.
 #
 # For copying and distribution information, please see the file
@@ -11,7 +12,7 @@
 
 # KADM_SUCCESS, as all success codes should be, is zero
 
-ec KADM_RCSID,		"$Header: /home/cvs/src/kerberosIV/kadm/Attic/kadm_err.et,v 1.1.1.1 1995/12/14 06:52:45 tholo Exp $"
+ec KADM_RCSID,		"$Header: /home/cvs/src/kerberosIV/kadm/Attic/kadm_err.et,v 1.2 1997/12/01 04:46:58 art Exp $"
 # /* Building and unbuilding the packet errors */
 ec KADM_NO_REALM,	"Cannot fetch local realm"
 ec KADM_NO_CRED,	"Unable to fetch credentials"
@@ -49,4 +50,10 @@ ec KADM_LENGTH_ERROR,	"Length mismatch problem"
 ec KADM_ILL_WILDCARD,	"Illegal use of wildcard"
 
 ec KADM_DB_INUSE,	"Database is locked or in use--try again later"
+
+ec KADM_INSECURE_PW,    "Insecure password rejected"
+ec KADM_PW_MISMATCH,    "Cleartext password and DES key did not match"
+
+ec KADM_NOT_SERV_PRINC, "Invalid principal for change srvtab request"
+ec KADM_IMMUTABLE,	"Attempt do delete immutable principal"
 end

@@ -1,23 +1,11 @@
-/*	$Id: kadm.h,v 1.1.1.1 1995/12/14 06:52:34 tholo Exp $	*/
-
-/*-
- * Copyright 1987, 1988 by the Student Information Processing Board
- *	of the Massachusetts Institute of Technology
- *
- * Permission to use, copy, modify, and distribute this software
- * and its documentation for any purpose and without fee is
- * hereby granted, provided that the above copyright notice
- * appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation,
- * and that the names of M.I.T. and the M.I.T. S.I.P.B. not be
- * used in advertising or publicity pertaining to distribution
- * of the software without specific, written prior permission.
- * M.I.T. and the M.I.T. S.I.P.B. make no representations about
- * the suitability of this software for any purpose.  It is
- * provided "as is" without express or implied warranty.
- */
-
 /*
+ * $KTH: kadm.h,v 1.13 1997/08/17 07:30:24 assar Exp $
+ *
+ * Copyright 1988 by the Massachusetts Institute of Technology.
+ *
+ * For copying and distribution information, please see the file
+ * <mit-copyright.h>.
+ *
  * Definitions for Kerberos administration server & client
  */
 
@@ -29,6 +17,8 @@
  * Header file for the fourth attempt at an admin server
  * Doug Church, December 28, 1989, MIT Project Athena
  */
+
+#include <kerberosIV/krb_db.h>
 
 /* The global structures for the client and server */
 typedef struct {
@@ -48,6 +38,8 @@ typedef struct {		/* status of the server, i.e the parameters */
 
 /* Largest password length to be supported */
 #define MAX_KPW_LEN	128
+/* Minimum allowed password length */
+#define MIN_KPW_LEN	6
 
 /* Largest packet the admin server will ever allow itself to return */
 #define KADM_RET_MAX 2048
@@ -61,6 +53,7 @@ typedef struct {		/* status of the server, i.e the parameters */
 /* the lookups for the server instances */
 #define PWSERV_NAME  "changepw"
 #define KADM_SNAME   "kerberos_master"
+#define KADM_PORT    751
 #define KADM_SINST   "kerberos"
 
 /* Attributes fields constants and macros */
@@ -112,7 +105,9 @@ typedef struct {
 enum acl_types {
 ADDACL,
 GETACL,
-MODACL
+MODACL,
+STABACL, /* not used */
+DELACL
 };
 
 /* Various opcodes for the admin server's functions */
@@ -120,19 +115,30 @@ MODACL
 #define ADD_ENT      3
 #define MOD_ENT      4
 #define GET_ENT      5
+#define CHECK_PW     6 /* not used */
+#define CHG_STAB     7 /* not used */
+#define DEL_ENT	     8
 
 void prin_vals __P((Kadm_vals *));
 int stv_long __P((u_char *, u_int32_t *, int, int));
+int vts_long __P((u_int32_t, u_char **, int));
+int vts_string __P((char *, u_char **, int));
+int stv_string __P((u_char *, char *, int, int, int));
 
 int stream_to_vals __P((u_char *, Kadm_vals *, int));
 int vals_to_stream __P((Kadm_vals *, u_char **));
 
 int kadm_init_link __P((char *, char *, char *));
 int kadm_change_pw __P((unsigned char *));
+int kadm_change_pw_plain __P((unsigned char *, char *, char**));
+int kadm_change_pw2 __P((unsigned char *, char *, char**));
 int kadm_mod __P((Kadm_vals *, Kadm_vals *));
 int kadm_get __P((Kadm_vals *, u_char *));
 int kadm_add __P((Kadm_vals *));
+int kadm_del __P((Kadm_vals *));
 void kadm_vals_to_prin __P((u_char *, Principal *, Kadm_vals *));
 void kadm_prin_to_vals __P((u_char *, Kadm_vals *, Principal *));
+
+
 
 #endif /* KADM_DEFS */

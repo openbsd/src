@@ -1,24 +1,25 @@
-/*	$Id: kadm_stream.c,v 1.1.1.1 1995/12/14 06:52:45 tholo Exp $	*/
+/* $KTH: kadm_stream.c,v 1.11 1997/05/02 10:28:05 joda Exp $ */
 
-/*-
- * Copyright (C) 1989 by the Massachusetts Institute of Technology
- *
- * Export of this software from the United States of America is assumed
- * to require a specific license from the United States Government.
- * It is the responsibility of any person or organization contemplating
- * export to obtain such a license before exporting.
- *
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
- */
+/* 
+  Copyright (C) 1989 by the Massachusetts Institute of Technology
+
+   Export of this software from the United States of America is assumed
+   to require a specific license from the United States Government.
+   It is the responsibility of any person or organization contemplating
+   export to obtain such a license before exporting.
+
+WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of M.I.T. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+
+  */
 
 /*
  * Stream conversion functions for Kerberos administration server
@@ -36,96 +37,107 @@
     fatal: prints out a kadm fatal error message, exits
 */
 
-#include "kadm_local.h"
-
-#define min(a,b) (((a) < (b)) ? (a) : (b))
+#include "kadm_locl.h"
 
 static int
-build_field_header(cont, st)
-	u_char *cont;		/* container for fields data */
-	u_char **st;		/* stream */
+build_field_header(u_char *cont, u_char **st)
+             			/* container for fields data */
+            			/* stream */
 {
   *st = (u_char *) malloc (4);
-  bcopy((char *) cont, (char *) *st, 4);
+  memcpy(*st, cont, 4);
   return 4;			/* return pointer to current stream location */
 }
 
 static int
-check_field_header(st, cont, maxlen)
-	u_char *st;		/* stream */
-	u_char *cont;		/* container for fields data */
-	int maxlen;
+check_field_header(u_char *st, u_char *cont, int maxlen)
+           			/* stream */
+             			/* container for fields data */
+           
 {
   if (4 > maxlen)
       return(-1);
-  bcopy((char *) st, (char *) cont, 4);
+  memcpy(cont, st, 4);
   return 4;			/* return pointer to current stream location */
 }
 
-static int
-vts_string(dat, st, loc)
-	char *dat;		/* a string to put on the stream */
-	u_char **st;		/* base pointer to the stream */
-	int loc;		/* offset into the stream for current data */
+int
+vts_string(char *dat, u_char **st, int loc)
+          			/* a string to put on the stream */
+            			/* base pointer to the stream */
+        			/* offset into the stream for current data */
 {
-  *st = (u_char *) realloc ((char *)*st, (unsigned) (loc + strlen(dat) + 1));
-  bcopy(dat, (char *)(*st + loc), strlen(dat)+1);
+  *st = (u_char *) realloc (*st, (unsigned) (loc + strlen(dat) + 1));
+  memcpy(*st + loc, dat, strlen(dat)+1);
   return strlen(dat)+1;
 }
 
 
 static int
-vts_short(dat, st, loc)
-	u_int16_t dat;		/* the attributes field */
-	u_char **st;		/* a base pointer to the stream */
-	int loc;		/* offset into the stream for current data */
+vts_short(u_int16_t dat, u_char **st, int loc)
+            			/* the attributes field */
+            			/* a base pointer to the stream */
+        			/* offset into the stream for current data */
 {
-  u_int16_t temp;			/* to hold the net order short */
-
-  temp = htons(dat);		/* convert to network order */
-  *st = (u_char *) realloc ((char *)*st, (unsigned)(loc + sizeof(u_int16_t)));
-  bcopy((char *) &temp, (char *)(*st + loc), sizeof(u_int16_t));
-  return sizeof(u_int16_t);
+    unsigned char *p;
+    p = realloc(*st, loc + 2);
+    if(p == NULL){
+	abort();
+    }
+    p[loc] = (dat >> 8) & 0xff;
+    p[loc+1] = dat & 0xff;
+    *st = p;
+    return 2;
 }
 
 static int
-vts_char(dat, st, loc)
-	u_char dat;		/* the attributes field */
-	u_char **st;		/* a base pointer to the stream */
-	int loc;		/* offset into the stream for current data */
+vts_char(u_char dat, u_char **st, int loc)
+           			/* the attributes field */
+            			/* a base pointer to the stream */
+        			/* offset into the stream for current data */
 {
-  *st = (u_char *) realloc ((char *)*st, (unsigned)(loc + sizeof(u_char)));
-  (*st)[loc] = (u_char) dat;
-  return 1;
+    unsigned char *p = realloc(*st, loc + 1);
+    if(p == NULL){
+	abort();
+    }
+    p[loc] = dat;
+    *st = p;
+    return 1;
 }
 
 int
-vts_long(dat, st, loc)
-	u_int32_t dat;		/* the attributes field */
-	u_char **st;		/* a base pointer to the stream */
-	int loc;		/* offset into the stream for current data */
+vts_long(u_int32_t dat, u_char **st, int loc)
+           			/* the attributes field */
+            			/* a base pointer to the stream */
+        			/* offset into the stream for current data */
 {
-  u_int32_t temp;			/* to hold the net order short */
-
-  temp = htonl(dat);		/* convert to network order */
-  *st = (u_char *) realloc ((char *)*st, (unsigned)(loc + sizeof(u_int32_t)));
-  bcopy((char *) &temp, (char *)(*st + loc), sizeof(u_int32_t));
-  return sizeof(u_int32_t);
+    unsigned char *p = realloc(*st, loc + 4);
+    if(p == NULL){
+	abort();
+    }
+    p[loc] = (dat >> 24) & 0xff;
+    p[loc+1] = (dat >> 16) & 0xff;
+    p[loc+2] = (dat >> 8) & 0xff;
+    p[loc+3] = dat & 0xff;
+    *st = p;
+    return 4;
 }
     
-static int
-stv_string(st, dat, loc, stlen, maxlen)
-	register u_char *st;	/* base pointer to the stream */
-	char *dat;		/* a string to read from the stream */
-	register int loc;	/* offset into the stream for current data */
-	int stlen;		/* max length of string to copy in */
-	int maxlen;		/* max length of input stream */
+int
+stv_string(u_char *st,		/* base pointer to the stream */
+	   char *dat,		/* a string to read from the stream */
+	   int loc,		/* offset into the stream for current data */
+	   int stlen,		/* max length of string to copy in */
+	   int maxlen)		/* max length of input stream */
 {
   int maxcount;				/* max count of chars to copy */
 
   maxcount = min(maxlen - loc, stlen);
 
-  (void) strncpy(dat, (char *)st + loc, maxcount);
+  if(maxcount <= 0)
+      return -1;
+
+  strncpy(dat, (char *)st + loc, maxcount);
 
   if (dat[maxcount-1]) /* not null-term --> not enuf room */
       return(-1);
@@ -133,49 +145,44 @@ stv_string(st, dat, loc, stlen, maxlen)
 }
 
 static int
-stv_short(st, dat, loc, maxlen)
-	u_char *st;		/* a base pointer to the stream */
-        u_int16_t *dat;		/* the attributes field */
-	int loc;		/* offset into the stream for current data */
-	int maxlen;
+stv_short(u_char *st, u_int16_t *dat, int loc, int maxlen)
+           			/* a base pointer to the stream */
+             			/* the attributes field */
+        			/* offset into the stream for current data */
+           
 {
-  u_int16_t temp;			/* to hold the net order short */
-
-  if (loc + sizeof(temp) > maxlen)
-      return(-1);
-  /*bcopy((char *)((u_long)st+(u_long)loc), (char *) &temp, sizeof(u_short));*/
-  bcopy(st + loc, (char *) &temp, sizeof(temp));
-  *dat = ntohs(temp);		/* convert to network order */
-  return sizeof(temp);
+  if (maxlen - loc < 2)
+      return -1;
+  
+  *dat = (st[loc] << 8) | st[loc + 1];
+  return 2;
 }
 
 int
-stv_long(st, dat, loc, maxlen)
-	u_char *st;		/* a base pointer to the stream */
-	u_int32_t *dat;		/* the attributes field */
-	int loc;		/* offset into the stream for current data */
-	int maxlen;		/* maximum length of st */
+stv_long(u_char *st, u_int32_t *dat, int loc, int maxlen)
+           			/* a base pointer to the stream */
+            			/* the attributes field */
+        			/* offset into the stream for current data */
+           			/* maximum length of st */
 {
-  u_int32_t temp;			/* to hold the net order short */
-
-  if (loc + sizeof(temp) > maxlen)
-      return(-1);
-  /*bcopy((char *)((u_long)st+(u_long)loc), (char *) &temp, sizeof(u_long));*/
-  bcopy(st + loc, (char *) &temp, sizeof(temp));
-  *dat = ntohl(temp);		/* convert to network order */
-  return sizeof(temp);
+  if (maxlen - loc < 4)
+      return -1;
+  
+  *dat = (st[loc] << 24) | (st[loc+1] << 16) | (st[loc+2] << 8) | st[loc+3];
+  return 4;
 }
     
 static int
-stv_char(st, dat, loc, maxlen)
-	u_char *st;		/* a base pointer to the stream */
-	u_char *dat;		/* the attributes field */
-	int loc;		/* offset into the stream for current data */
-	int maxlen;
+stv_char(u_char *st, u_char *dat, int loc, int maxlen)
+           			/* a base pointer to the stream */
+            			/* the attributes field */
+        			/* offset into the stream for current data */
+           
 {
-  if (loc + 1 > maxlen)
-      return(-1);
-  *dat = *(st + loc);
+  if (maxlen - loc < 1)
+      return -1;
+  
+  *dat = st[loc];
   return 1;
 }
 
@@ -187,9 +194,7 @@ vals_to_stream
 this function creates a byte-stream representation of the kadm_vals structure
 */
 int
-vals_to_stream(dt_in, dt_out)
-	Kadm_vals *dt_in;
-	u_char **dt_out;
+vals_to_stream(Kadm_vals *dt_in, u_char **dt_out)
 {
   int vsloop, stsize;		/* loop counter, stream size */
 
@@ -231,15 +236,15 @@ stream_to_vals
 this decodes a byte stream represntation of a vals struct into kadm_vals
 */
 int
-stream_to_vals(dt_in, dt_out, maxlen)
-	u_char *dt_in;
-	Kadm_vals *dt_out;
-	int maxlen;		/* max length to use */
+stream_to_vals(u_char *dt_in, Kadm_vals *dt_out, int maxlen)
+              
+                  
+           				/* max length to use */
 {
-  register int vsloop, stsize;		/* loop counter, stream size */
-  register int status;
+  int vsloop, stsize;		/* loop counter, stream size */
+  int status;
 
-  bzero((char *) dt_out, sizeof(*dt_out));
+  memset(dt_out, 0, sizeof(*dt_out));
 
   stsize = check_field_header(dt_in, dt_out->fields, maxlen);
   if (stsize < 0)
