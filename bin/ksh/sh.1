@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.43 2004/01/15 22:08:45 jmc Exp $
+.\"	$OpenBSD: sh.1,v 1.44 2004/01/23 23:08:45 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -540,7 +540,7 @@ if no
 .Ar list
 is executed, the exit status is zero.
 .It Xo Ic for Ar name No [
-.Ic in Ar word Ar ... term Ns No ]
+.Ic in Ar word Ar ... term Ns ]
 .Ic do Ar list Ic done
 .Xc
 For each
@@ -931,7 +931,7 @@ Lastly, parameters can be assigned values using assignment operators
 inside arithmetic expressions (see
 .Sx Arithmetic expressions
 below) or using the
-.Xo Ic ${ Ns Ar name Ns No =
+.Xo Ic ${ Ns Ar name Ns =
 .Ns Ar value Ns Ic \&}
 .Xc
 form of the parameter substitution (see below).
@@ -944,7 +944,7 @@ commands, or by parameter assignments followed by simple commands) are put in
 the environment (see
 .Xr environ 7 )
 of commands run by the shell as
-.Ar name Ns No = Ns Ar value
+.Ar name Ns = Ns Ar value
 pairs.
 The order in which parameters appear in the environment of a command is
 unspecified.
@@ -997,7 +997,7 @@ is set and not
 it is substituted; otherwise,
 .Ar word
 is printed on standard error (preceded by
-.Ar name Ns No \&: )
+.Ar name Ns \&: )
 and an error occurs (normally causing termination of a shell script, function
 or .-script).
 If word is omitted the string
@@ -1352,7 +1352,7 @@ The pattern elements have the following meaning:
 Matches any single character.
 .It Ic \&*
 Matches any sequence of characters.
-.It Ic \&[ Ns No .. Ns Ic \&]
+.It Ic \&[ Ns .. Ns Ic \&]
 Matches any of the characters inside the brackets.
 Ranges of characters can be
 specified by separating two characters by a
@@ -1373,9 +1373,9 @@ Also, a
 .Ql \&!
 appearing at the start of the list has special meaning (see below), so to
 represent itself it must be quoted or appear later in the list.
-.It Ic \&[\&! Ns No .. Ns Ic \&]
+.It Ic \&[\&! Ns .. Ns Ic \&]
 Like
-.Ic \&[ Ns No .. Ns Ic \&] ,
+.Ic \&[ Ns .. Ns Ic \&] ,
 except it matches any character not inside the brackets.
 .Sm on
 Matches any string of characters that matches zero or more occurrences of the
@@ -1466,7 +1466,7 @@ Note that none of the above pattern elements match either a period
 at the start of a file name or a slash
 .Pq Sq / ,
 even if they are explicitly used in a
-.Ic \&[ Ns No .. Ns Ic \&]
+.Ic \&[ Ns .. Ns Ic \&]
 sequence; also, the names
 .Dq \&.
 and
@@ -1485,7 +1485,7 @@ The
 character classes (i.e.,
 .Ic \&[\&: Ns Ar class-name Ns Ic \&:\&]
 inside a
-.Ic \&[ Ns No .. Ns Ic \&]
+.Ic \&[ Ns .. Ns Ic \&]
 expression) are not yet implemented.
 .Ss Input/output redirection
 When a command is executed, its standard input, standard output, and standard
@@ -1616,7 +1616,7 @@ will print an error with a line number prepended to it.
 Integer arithmetic expressions can be used with the
 .Ic let
 command, inside
-.Ic $(( Ns No .. Ns Ic ))
+.Ic $(( Ns .. Ns Ic ))
 expressions, inside array references (e.g.,
 .Sm off
 .Ar name Ic \&[ Ar expr Ic \&] ) ,
@@ -2217,7 +2217,7 @@ above).
 .Pp
 When listing aliases, one of two formats is used.
 Normally, aliases are listed as
-.Ar name Ns No = Ns Ar value ,
+.Ar name Ns = Ns Ar value ,
 where
 .Ar value
 is quoted.
@@ -2416,7 +2416,7 @@ If no command is given except for I/O redirection, the I/O redirection is
 permanent and the shell is
 not replaced.
 Any file descriptors which are opened or
-.Xr dup 2 Ns No 'd
+.Xr dup 2 Ns 'd
 in this way are made available to other executed commands (note that the Korn
 shell differs here: it does not pass on file descriptors greater than 2).
 .It Ic exit Op Ar status
@@ -2444,7 +2444,7 @@ A command that exits with a non-zero status.
 .It Xo Ic fc
 .Oo Fl e No \&- \&| Fl s Oc
 .Op Fl g
-.Op Ar old Ns No = Ns Ar new
+.Op Ar old Ns = Ns Ar new
 .Op Ar prefix
 .Xc
 Re-execute the selected command (the previous command by default) after

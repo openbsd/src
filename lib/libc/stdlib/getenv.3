@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.8 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: getenv.3,v 1.9 2004/01/23 23:08:46 jmc Exp $
 .\"
 .Dd December 11, 1993
 .Dt GETENV 3
@@ -87,7 +87,7 @@ is zero, the variable is not reset, otherwise it is reset to the given
 The
 .Fn putenv
 function takes an argument of the form
-.Ar name Ns No = Ns Ar value
+.Ar name Ns = Ns Ar value
 and is equivalent to:
 .Bd -literal -offset indent
 setenv(name, value, 1);

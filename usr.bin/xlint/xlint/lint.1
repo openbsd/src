@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lint.1,v 1.16 2003/09/22 05:04:53 jmc Exp $
+.\"	$OpenBSD: lint.1,v 1.17 2004/01/23 23:08:47 jmc Exp $
 .\"	$NetBSD: lint.1,v 1.3 1995/10/23 13:45:31 jpo Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -409,10 +409,10 @@ like
 makes
 .Nm
 check the first
-.Pq Ar n Ns No -1
+.Pq Ar n Ns -1
 arguments as usual.
 The
-.Ar n Ns No -th
+.Ar n Ns -th
 argument is interpreted as a
 .Sy printf
 format string that is used to check the remaining arguments.
@@ -433,10 +433,10 @@ is zero, function prototypes will be treated normally.
 makes
 .Nm
 check the first
-.Pq Ar n Ns No -1
+.Pq Ar n Ns -1
 arguments as usual.
 The
-.Ar n Ns No -th
+.Ar n Ns -th
 argument is interpreted as a
 .Sy scanf
 format string that is used to check the remaining arguments.
@@ -486,7 +486,7 @@ to be used to
 .Nm
 only the source files that have been modified since the last
 time the set of source files were
-.Nm lint Ns No ed .
+.Nm lint Ns ed .
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev LIBDIR

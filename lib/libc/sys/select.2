@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.24 2003/07/30 13:03:07 henning Exp $
+.\"	$OpenBSD: select.2,v 1.25 2004/01/23 23:08:46 jmc Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -61,7 +61,7 @@ The first
 .Fa nfds
 descriptors are checked in each set;
 i.e., the descriptors from 0 through
-.Fa nfds Ns No -1
+.Fa nfds Ns -1
 in the descriptor sets are examined.
 On return,
 .Fn select

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cy.4,v 1.10 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: cy.4,v 1.11 2004/01/23 23:08:46 jmc Exp $
 .\"
 .\" Copyright (c) 1993 Andrew Herbert.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ The device minor numbers for this driver are encoded as follows:
 .It "cy%d: tty input queue overflow"
 Incoming characters have been discarded due to a buffer overflow.
 This is caused by the process in control of the device not
-.Xr read 2 Ns No 'ing
+.Xr read 2 Ns 'ing
 characters fast enough.
 .It "cy%d: receive fifo overrun"
 Incoming characters have been discarded due to a CD1400 channel overrun.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.19 2004/01/02 09:50:28 jmc Exp $
+.\"	$OpenBSD: sed.1,v 1.20 2004/01/23 23:08:47 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -257,7 +257,7 @@ Execute
 .Em function-list
 only when the pattern space is selected.
 .sp
-.It [1addr] Ns Em a Ns No \e
+.It [1addr] Ns Em a Ns \e
 .It Em text
 .br
 Write
@@ -267,13 +267,13 @@ whether by executing the
 .Sq N
 function or by beginning a new cycle.
 .sp
-.It [2addr] Ns Em b Ns No [label]
+.It [2addr] Ns Em b Ns [label]
 Branch to the
 .Sq \&:
 function with the specified label.
 If the label is not specified, branch to the end of the script.
 .sp
-.It [2addr] Ns Em c Ns No \e
+.It [2addr] Ns Em c Ns \e
 .It Em text
 .br
 Delete the pattern space.
@@ -304,7 +304,7 @@ pattern space.
 Append a newline character followed by the contents of the pattern space
 to the hold space.
 .sp
-.It [1addr] Ns Em i Ns No \e
+.It [1addr] Ns Em i Ns \e
 .It Em text
 .br
 Write
@@ -373,7 +373,7 @@ If
 cannot be read for any reason, it is silently ignored and no error
 condition is set.
 .sp
-.It [2addr] Ns Em s Ns No /re/replacement/flags
+.It [2addr] Ns Em s Ns /re/replacement/flags
 Substitute the replacement string for the first instance of the regular
 expression in the pattern space.
 Any character other than backslash or newline can be used instead of
@@ -421,7 +421,7 @@ If the replacement string is identical to that which it replaces, it
 is still considered to have been a replacement.
 .El
 .sp
-.It [2addr] Ns Em t Ns No [label]
+.It [2addr] Ns Em t Ns [label]
 Branch to the
 .Ql \&:
 function bearing the label if any substitutions have been made since the
@@ -437,7 +437,7 @@ Append the pattern space to the
 .It [2addr] Ns Em x
 Swap the contents of the pattern and hold spaces.
 .sp
-.It [2addr] Ns Em y Ns No /string1/string2/
+.It [2addr] Ns Em y Ns /string1/string2/
 Replace all occurrences of characters in
 .Em string1
 in the pattern space with the corresponding characters from
@@ -462,7 +462,7 @@ Apply the function or function-list only to the lines that are
 .Em not
 selected by the address(es).
 .sp
-.It [0addr] Ns Em : Ns No label
+.It [0addr] Ns Em : Ns label
 This function does nothing; it bears a label to which the
 .Sq b
 and

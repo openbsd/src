@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.58 2003/11/22 11:52:49 espie Exp $
+.\"	$OpenBSD: make.1,v 1.59 2004/01/23 23:08:47 jmc Exp $
 .\"	$OpenPackages$
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
@@ -47,7 +47,7 @@
 .Op Fl j Ar max_jobs
 .Op Fl m Ar directory
 .Op Fl V Ar variable
-.Op Ar variable Ns No = Ns Ar value
+.Op Ar variable Ns = Ns Ar value
 .Bk -words
 .Op Ar target ...
 .Ek
@@ -121,7 +121,7 @@ before each command line in the makefile.
 .It Fl t
 Rather than re-building a target as specified in the makefile, create it
 or update its modification time to make it appear up-to-date.
-.It Ar variable Ns No = Ns Ar value
+.It Ar variable Ns = Ns Ar value
 Set the value of the variable
 .Ar variable
 to
@@ -776,7 +776,7 @@ potentially affected, the latter whether multiple substitutions can
 potentially occur within each affected word.
 .It Cm :T
 Replaces each word in the variable with its last component.
-.It Ar :old_string Ns No = Ns Ar new_string
+.It Ar :old_string Ns = Ns Ar new_string
 This is the
 .At V
 style variable substitution.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.59 2004/01/16 10:51:57 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.60 2004/01/23 23:08:46 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -114,12 +114,12 @@ The
 .Fl d
 option is used to make the daemon run in the foreground, logging to stderr.
 .It Xo Fl D
-.Ar class Ns No = Ns Ar level
+.Ar class Ns = Ns Ar level
 .Xc
 Debugging class.
 It's possible to specify this argument many times.
 It takes a parameter of the form
-.Ar class Ns No = Ns Ar level ,
+.Ar class Ns = Ns Ar level ,
 where both
 .Ar class
 and

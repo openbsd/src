@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.15 2001/06/23 07:03:53 pjanzen Exp $
+.\"	$OpenBSD: ccd.4,v 1.16 2004/01/23 23:08:46 jmc Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -74,10 +74,10 @@ pseudo-device	ccd	4	# concatenated disk devices
 .Ed
 .Pp
 The count argument is how many
-.Nm ccd Ns No 's
+.Nm ccd Ns 's
 memory is allocated for at boot time.
 In this example, no more than 4
-.Nm ccd Ns No 's
+.Nm ccd Ns 's
 may be configured.
 .Pp
 A
@@ -120,7 +120,7 @@ geometry and size.
 Optimum striping cannot occur with different disk types.
 .Pp
 There is a run-time utility that is used for configuring
-.Nm ccd Ns No 's .
+.Nm ccd Ns 's .
 See
 .Xr ccdconfig 8
 for more information.

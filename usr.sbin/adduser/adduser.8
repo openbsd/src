@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.34 2003/09/02 18:56:35 jmc Exp $
+.\"	$OpenBSD: adduser.8,v 1.35 2004/01/23 23:08:47 jmc Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ their owner.
 .\" don't allow group or world to write files and allow only owner
 .\" to read/execute/write .rhost, .Xauthority, .kermrc, .netrc, Mail,
 .\" prv, iscreen, term.
-.It Fl encryption Ns No , Fl e Ar method
+.It Fl encryption , e Ar method
 Encrypt local passwords using
 .Ar method
 of encryption as described in
@@ -145,8 +145,8 @@ Do not read the default configuration file.
 .It Fl shell Ar shell
 Specify the default shell for new users.
 .It Xo
-.Fl silent Ns No , Fl s Ns No ,
-.Fl quiet Ns No , Fl q
+.Fl silent , s ,
+.Fl quiet , q
 .Xc
 Causes the program to print fewer warnings, questions, and bug reports.
 .It Fl uid_start Ar uid
@@ -163,7 +163,7 @@ unencrypted.
 The password will be encrypted before it's added to the password file.
 Use of this option will leave username and cleartext password displayable
 for any user.
-.It Fl verbose Ns No , Fl v
+.It Fl verbose , v
 Causes the program to print many warnings and questions.
 This option is recommended for novice users.
 .El
@@ -210,7 +210,7 @@ Removes the user from the password database and all groups in the group
 database.
 If a group becomes empty and its name is the same as the username,
 the group is removed (this complements
-.Nm adduser Ns No 's
+.Nm adduser Ns 's
 unique per-user groups).
 .It
 Recursively deletes all files in the user's home directory and removes the

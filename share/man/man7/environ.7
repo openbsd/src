@@ -1,4 +1,4 @@
-.\"	$OpenBSD: environ.7,v 1.12 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: environ.7,v 1.13 2004/01/23 23:08:46 jmc Exp $
 .\"	$NetBSD: environ.7,v 1.4 1995/07/03 19:45:07 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -45,7 +45,7 @@ is made available by
 .Xr execve 2
 when a process begins.
 By convention these strings have the form
-.Ar name Ns No = Ns Ar value .
+.Ar name Ns = Ns Ar value .
 The following variables are recognized by various commands:
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
@@ -173,7 +173,7 @@ Deprecated synonym of
 Further names may be placed in the environment by the
 .Ic export
 command and
-.Ar name Ns No = Ns Ar value
+.Ar name Ns = Ns Ar value
 arguments in
 .Xr sh 1 ,
 or by the

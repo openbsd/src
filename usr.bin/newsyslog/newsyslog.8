@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.36 2003/06/10 09:12:11 jmc Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.37 2004/01/23 23:08:47 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -225,11 +225,11 @@ Otherwise, the
 .Ar when
 field consists of an optional interval in hours, possibly followed
 by an
-.So Li \&@ Sc Ns No -sign
+.So Li \&@ Sc Ns -sign
 and a time in a restricted
 .Tn ISO 8601
 format or by a
-.So Li \&$ Sc Ns No -sign
+.So Li \&$ Sc Ns -sign
 and a time specification for logfile rotation at a fixed time once
 per day, per week or per month.
 .Pp
@@ -249,7 +249,7 @@ component in the current implementation, since the only comparison is
 The lead-in character for a restricted
 .Tn ISO 8601
 time is an
-.So Li \&@ Sc Ns No -sign .
+.So Li \&@ Sc Ns -sign .
 The particular format of the time in restricted
 .Tn ISO 8601
 is:
@@ -294,7 +294,7 @@ are all equivalent:
 .El
 .Ss Day, week and month time format
 The lead-in character for day, week and month specification is a
-.So Li \&$ Sc Ns No -sign .
+.So Li \&$ Sc Ns -sign .
 The particular format of day, week and month specification is:
 .Op Va D\&hh ,
 .Op Va W\&w Ns Op Va D\&hh
