@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.195 2003/03/04 15:54:54 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.196 2003/03/04 16:05:42 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1152,17 +1152,17 @@ The rule number.
 For example:
 .Pp
 .Bd -literal -offset indent
-.Ic ips = "{ 1.2.3.4, 1.2.3.5 }"
+.Ic ips = \&"{ 1.2.3.4, 1.2.3.5 }\&"
 .Ic pass in proto tcp from any to $ips \e
-.Ic \  \  port >1023 label "$dstaddr:$dstport"
+.Ic \  \  port >1023 label \&"$dstaddr:$dstport\&"
 .Ed
 .Pp
 expands to
 .Bd -literal -offset indent
 .Ic pass in proto tcp from any to 1.2.3.4 \e
-.Ic \  \  port >1023 label "1.2.3.4:>1023"
+.Ic \  \  port >1023 label \&"1.2.3.4:>1023\&"
 .Ic pass in proto tcp from any to 1.2.3.5 \e
-.Ic \  \  port >1023 label "1.2.3.5:>1023"
+.Ic \  \  port >1023 label \&"1.2.3.5:>1023\&"
 .Ed
 .Pp
 The macro expansion for the
