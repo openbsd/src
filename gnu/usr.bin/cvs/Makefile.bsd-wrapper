@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.42 2003/02/16 18:28:41 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.43 2003/05/12 16:40:07 mho Exp $
 
 .include <bsd.own.mk>
 
@@ -12,11 +12,7 @@ CLEANFILES=	src/version.c lib/getdate.c lib/getdate.h macintosh/Makefile \
 		doc/cvs.info-8 doc/cvs.info-9 doc/cvsclient.info \
 		doc/cvsclient.info-1 doc/cvsclient.info-2 doc/cvsclient.info-3
 
-.if (${KERBEROS:L} == "yes")
-KRB=--with-krb4=/usr --enable-encryption
-.else
 KRB=--without-krb4
-.endif
 
 .if (${KERBEROS5:L} == "yes")
 KRB5=--with-gssapi=/usr --enable-encryption
