@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.691 2003/11/26 22:00:23 grange Exp $
+	$OpenBSD: pcidevs,v 1.692 2003/11/27 23:31:51 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1875,6 +1875,7 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 product REALTEK RT8029		0x8029	8029
 product REALTEK RT8129		0x8129	8129
 product REALTEK RT8139		0x8139	8139
+product REALTEK RT8169		0x8169	8169
 
 /* RICOH products */
 product RICOH RF5C465		0x0465	5C465 PCI-CardBus
