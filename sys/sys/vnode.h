@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.22 1999/12/05 07:19:28 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.23 2000/04/19 08:34:51 csapuntz Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -477,9 +477,6 @@ int	vop_generic_bwrite __P((void *ap));
 void	vn_update __P((void));
 int 	vn_close __P((struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p));
-int 	vn_closefile __P((struct file *fp, struct proc *p));
-int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
-	    struct proc *p));
 int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));
 int	vrecycle __P((struct vnode *vp, struct simplelock *inter_lkp,
 	    struct proc *p));
@@ -494,10 +491,7 @@ int	vop_generic_lock __P((void *));
 int	vop_generic_unlock __P((void *));
 int	vop_generic_revoke __P((void *));
 
-int	vn_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
-int	vn_select __P((struct file *fp, int which, struct proc *p));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
-int	vn_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
 int	vn_writechk __P((struct vnode *vp));
 void	vn_syncer_add_to_worklist __P((struct vnode *vp, int delay));
 void    sched_sync __P((struct proc *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.22 1999/11/29 22:02:14 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.23 2000/04/19 08:34:54 csapuntz Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ sys_read(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_read)(fp, &fp->f_offset, &auio, fp->f_cred);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -199,7 +199,7 @@ sys_readv(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_read)(fp, &fp->f_offset, &auio, fp->f_cred);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -266,7 +266,7 @@ sys_write(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio, fp->f_cred);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -354,7 +354,7 @@ sys_writev(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio, fp->f_cred);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_pos_io.c,v 1.4 1999/09/17 17:52:13 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_pos_io.c,v 1.5 2000/04/19 08:34:57 csapuntz Exp $	*/
 
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
@@ -60,16 +60,15 @@
 #include <compat/netbsd/netbsd_signal.h>
 #include <compat/netbsd/netbsd_syscallargs.h>
 
-static int netbsd_set_pos __P((struct proc *, int, off_t, off_t *));
+static int netbsd_check_set_pos __P((struct proc *, int, off_t));
 /*
  * sys_lseek trimmed down
  */
 static int
-netbsd_set_pos(p, fd, offset, ooffset)
+netbsd_check_set_pos(p, fd)
 	struct proc *p;
 	int fd;
 	off_t offset;
-	off_t *ooffset;
 {
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
@@ -90,8 +89,6 @@ netbsd_set_pos(p, fd, offset, ooffset)
 		special = 0;
 	if (!special && offset < 0)
 		return (EINVAL);
-	*ooffset = fp->f_offset;
-	fp->f_offset = offset;
 	return (0);
 }
 
@@ -116,7 +113,7 @@ netbsd_sys_pread(p, v, retval)
 	struct uio auio;
 	struct iovec aiov;
 	long cnt, error = 0;
-	off_t save_offset;
+	off_t offset;
 #ifdef KTRACE
 	struct iovec ktriov;
 #endif
@@ -124,8 +121,10 @@ netbsd_sys_pread(p, v, retval)
 	/* Don't allow nbyte to be larger than max return val */
 	if (SCARG(uap, nbyte) > SSIZE_MAX)
 		return(EINVAL);
-	if ((error = netbsd_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
-		&save_offset)))
+
+	offset = SCARG(uap, offset);
+
+	if ((error = netbsd_check_set_pos(p, SCARG(uap, fd), offset) != 0)
 		return (error);
 	fp = fdp->fd_ofiles[SCARG(uap, fd)];
 	aiov.iov_base = (caddr_t)SCARG(uap, buf);
@@ -144,7 +143,7 @@ netbsd_sys_pread(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_read)(fp, &offset, &auio, fp->f_cred);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -155,7 +154,6 @@ netbsd_sys_pread(p, v, retval)
 		ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_READ, &ktriov,
 		    cnt, error);
 #endif
-	fp->f_offset = save_offset;
 	*retval = cnt;
 	return (error);
 }
@@ -184,22 +182,23 @@ netbsd_sys_preadv(p, v, retval)
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
 	u_int iovlen;
-	off_t save_offset;
+	off_t offset;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
 
 	if (SCARG(uap, iovcnt) <= 0)
 		return (EINVAL);
-	if ((error = netbsd_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
-		&save_offset)))
+
+	offset = SCARG(uap, offset);
+
+	if ((error = netbsd_check_set_pos(p, SCARG(uap, fd), offset) != 0)
 		return (error);
 	fp = fdp->fd_ofiles[SCARG(uap, fd)];
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = SCARG(uap, iovcnt) * sizeof (struct iovec);
 	if (SCARG(uap, iovcnt) > UIO_SMALLIOV) {
 		if (SCARG(uap, iovcnt) > IOV_MAX) {
-			fp->f_offset = save_offset;
 			return (EINVAL);
 		}
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
@@ -235,7 +234,7 @@ netbsd_sys_preadv(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_read)(fp, &offset, &auio, fp->f_cred);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -253,7 +252,6 @@ netbsd_sys_preadv(p, v, retval)
 done:
 	if (needfree)
 		FREE(needfree, M_IOV);
-	fp->f_offset = save_offset;
 	return (error);
 }
 
@@ -278,7 +276,7 @@ netbsd_sys_pwrite(p, v, retval)
 	struct uio auio;
 	struct iovec aiov;
 	long cnt, error = 0;
-	off_t save_offset;
+	off_t offset;
 #ifdef KTRACE
 	struct iovec ktriov;
 #endif
@@ -286,14 +284,15 @@ netbsd_sys_pwrite(p, v, retval)
 	/* Don't allow nbyte to be larger than max return val */
 	if (SCARG(uap, nbyte) > SSIZE_MAX)
 		return(EINVAL);
-	if ((error = netbsd_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
-		&save_offset)))
+
+	offset = SCARG(uap, offset);
+
+	if ((error = netbsd_check_set_pos(p, SCARG(uap, fd), offset) != 0)
 		return (error);
 	fp = fdp->fd_ofiles[SCARG(uap, fd)];
-	if ((fp->f_flag & FWRITE) == 0) {
-		fp->f_offset = save_offset;
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
-	}
+
 	aiov.iov_base = (caddr_t)SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, nbyte);
 	auio.uio_iov = &aiov;
@@ -310,7 +309,7 @@ netbsd_sys_pwrite(p, v, retval)
 		ktriov = aiov;
 #endif
 	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_write)(fp, &offset, &auio, fp->f_cred);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -325,7 +324,6 @@ netbsd_sys_pwrite(p, v, retval)
 		    &ktriov, cnt, error);
 #endif
 	*retval = cnt;
-	fp->f_offset = save_offset;
 	return (error);
 }
 
@@ -353,15 +351,17 @@ netbsd_sys_pwritev(p, v, retval)
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
 	u_int iovlen;
-	off_t save_offset;
+	off_t offset;
 #ifdef KTRACE
 	struct iovec *ktriov = NULL;
 #endif
 
 	if (SCARG(uap, iovcnt) <= 0)
 		return (EINVAL);
-	if ((error = netbsd_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
-		&save_offset)))
+
+	offset = SCARG(uap, offset);
+
+	if ((error = netbsd_check_set_pos(p, SCARG(uap, fd), offset) != 0)
 		return (error);
 	fp = fdp->fd_ofiles[SCARG(uap, fd)];
 	if ((fp->f_flag & FWRITE) == 0) {
@@ -408,7 +408,7 @@ netbsd_sys_pwritev(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_write)(fp, &offset, &auio, fp->f_cred);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -427,7 +427,6 @@ netbsd_sys_pwritev(p, v, retval)
 #endif
 	*retval = cnt;
 done:
-	fp->f_offset = save_offset;
 	if (needfree)
 		FREE(needfree, M_IOV);
 	return (error);

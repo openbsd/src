@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.17 1999/12/08 06:50:24 itojun Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.18 2000/04/19 08:34:51 csapuntz Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -217,8 +217,10 @@ struct stat;
 /*
  * File operations on sockets.
  */
-int	soo_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
-int	soo_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
+int	soo_read __P((struct file *fp, off_t *, struct uio *uio, 
+            struct ucred *cred));
+int	soo_write __P((struct file *fp, off_t *, struct uio *uio,
+            struct ucred *cred));
 int	soo_ioctl __P((struct file *fp, u_long cmd, caddr_t data,
 	    struct proc *p));
 int	soo_select __P((struct file *fp, int which, struct proc *p));

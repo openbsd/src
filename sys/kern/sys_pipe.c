@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.23 2000/01/27 18:56:13 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.24 2000/04/19 08:34:54 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -62,8 +62,8 @@
 /*
  * interfaces to the outside world
  */
-int	pipe_read __P((struct file *, struct uio *, struct ucred *));
-int	pipe_write __P((struct file *, struct uio *, struct ucred *));
+int	pipe_read __P((struct file *, off_t *, struct uio *, struct ucred *));
+int	pipe_write __P((struct file *, off_t *, struct uio *, struct ucred *));
 int	pipe_close __P((struct file *, struct proc *));
 int	pipe_select __P((struct file *, int which, struct proc *));
 int	pipe_ioctl __P((struct file *, u_long, caddr_t, struct proc *));
@@ -264,8 +264,9 @@ pipeselwakeup(cpipe)
 
 /* ARGSUSED */
 int
-pipe_read(fp, uio, cred)
+pipe_read(fp, poff, uio, cred)
 	struct file *fp;
+	off_t *poff;
 	struct uio *uio;
 	struct ucred *cred;
 {
@@ -390,8 +391,9 @@ pipe_read(fp, uio, cred)
 }
 
 int
-pipe_write(fp, uio, cred)
+pipe_write(fp, poff, uio, cred)
 	struct file *fp;
+	off_t *poff;
 	struct uio *uio;
 	struct ucred *cred;
 {

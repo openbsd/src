@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.11 2000/04/04 05:31:50 jasoni Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.12 2000/04/19 08:34:56 csapuntz Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static void bsd_to_linux_flock __P((struct flock *, struct linux_flock *));
 static void linux_to_bsd_flock __P((struct linux_flock *, struct flock *));
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat *));
 static int linux_stat1 __P((struct proc *, void *, register_t *, int));
-static int linux_set_pos __P((struct proc *, int, off_t, off_t *));
+static int linux_set_pos __P((struct proc *, int, off_t));
 
 
 /*
@@ -858,11 +858,10 @@ linux_sys_fdatasync(p, v, retval)
  * sys_lseek trimmed down
  */
 static int
-linux_set_pos(p, fd, offset, ooffset)
+linux_set_pos(p, fd, offset)
 	struct proc *p;
 	int fd;
 	off_t offset;
-	off_t *ooffset;
 {
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
@@ -883,8 +882,6 @@ linux_set_pos(p, fd, offset, ooffset)
 		special = 0;
 	if (!special && offset < 0)
 		return (EINVAL);
-	*ooffset = fp->f_offset;
-	fp->f_offset = offset;
 	return (0);
 }
 
@@ -908,14 +905,17 @@ linux_sys_pread(p, v, retval)
 	struct uio auio;
 	struct iovec aiov;
 	long cnt, error = 0;
-	off_t save_offset;
+	off_t offset;
 
 	/* Don't allow nbyte to be larger than max return val */
 	if (SCARG(uap, nbyte) > SSIZE_MAX)
 		return(EINVAL);
-	if ((error = linux_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
-		&save_offset)))
+
+	offset = SCARG(uap, offset);
+
+	if ((error = linux_set_pos(p, SCARG(uap, fd), offset)) != 0)
 		return (error);
+
 	fp = fdp->fd_ofiles[SCARG(uap, fd)];
 	aiov.iov_base = (caddr_t)SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, nbyte);
@@ -926,13 +926,12 @@ linux_sys_pread(p, v, retval)
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
 	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_read)(fp, &offset, &auio, fp->f_cred);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
-	fp->f_offset = save_offset;
 	*retval = cnt;
 	return (error);
 }
@@ -957,19 +956,20 @@ linux_sys_pwrite(p, v, retval)
 	struct uio auio;
 	struct iovec aiov;
 	long cnt, error = 0;
-	off_t save_offset;
+	off_t offset;
 
 	/* Don't allow nbyte to be larger than max return val */
 	if (SCARG(uap, nbyte) > SSIZE_MAX)
 		return(EINVAL);
-	if ((error = linux_set_pos(p, SCARG(uap, fd), SCARG(uap, offset),
-		&save_offset)))
+
+	offset = SCARG(uap, offset);
+
+	if ((error = linux_set_pos(p, SCARG(uap, fd), offset)) != 0)
 		return (error);
 	fp = fdp->fd_ofiles[SCARG(uap, fd)];
-	if ((fp->f_flag & FWRITE) == 0) {
-		fp->f_offset = save_offset;
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
-	}
+	
 	aiov.iov_base = (caddr_t)SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, nbyte);
 	auio.uio_iov = &aiov;
@@ -979,7 +979,7 @@ linux_sys_pwrite(p, v, retval)
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
 	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_write)(fp, &offset, &auio, fp->f_cred);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -989,6 +989,5 @@ linux_sys_pwrite(p, v, retval)
 	}
 	cnt -= auio.uio_resid;
 	*retval = cnt;
-	fp->f_offset = save_offset;
 	return (error);
 }

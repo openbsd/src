@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.23 1999/11/13 03:48:09 angelos Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.24 2000/04/19 08:34:53 csapuntz Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -60,6 +60,15 @@
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
 #endif
+
+int	vn_read __P((struct file *fp, off_t *off, struct uio *uio, 
+	    struct ucred *cred));
+int	vn_write __P((struct file *fp, off_t *off, struct uio *uio, 
+            struct ucred *cred));
+int	vn_select __P((struct file *fp, int which, struct proc *p));
+int 	vn_closefile __P((struct file *fp, struct proc *p));
+int	vn_ioctl __P((struct file *fp, u_long com, caddr_t data,
+	    struct proc *p));
 
 struct 	fileops vnops =
 	{ vn_read, vn_write, vn_ioctl, vn_select, vn_closefile };
@@ -275,8 +284,9 @@ vn_rdwr(rw, vp, base, len, offset, segflg, ioflg, cred, aresid, p)
  * File table vnode read routine.
  */
 int
-vn_read(fp, uio, cred)
+vn_read(fp, poff, uio, cred)
 	struct file *fp;
+	off_t *poff;
 	struct uio *uio;
 	struct ucred *cred;
 {
@@ -287,12 +297,12 @@ vn_read(fp, uio, cred)
 
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	uio->uio_offset = fp->f_offset;
+	uio->uio_offset = *poff;
 	count = uio->uio_resid;
 	if (vp->v_type != VDIR)
 		error = VOP_READ(vp, uio,
 		    (fp->f_flag & FNONBLOCK) ? IO_NDELAY : 0, cred);
-	fp->f_offset += count - uio->uio_resid;
+	*poff += count - uio->uio_resid;
 	VOP_UNLOCK(vp, 0, p);
 	return (error);
 }
@@ -301,8 +311,9 @@ vn_read(fp, uio, cred)
  * File table vnode write routine.
  */
 int
-vn_write(fp, uio, cred)
+vn_write(fp, poff, uio, cred)
 	struct file *fp;
+	off_t *poff;
 	struct uio *uio;
 	struct ucred *cred;
 {
@@ -320,13 +331,13 @@ vn_write(fp, uio, cred)
 		ioflag |= IO_SYNC;
 	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-	uio->uio_offset = fp->f_offset;
+	uio->uio_offset = *poff;
 	count = uio->uio_resid;
 	error = VOP_WRITE(vp, uio, ioflag, cred);
 	if (ioflag & IO_APPEND)
-		fp->f_offset = uio->uio_offset;
+		*poff = uio->uio_offset;
 	else
-		fp->f_offset += count - uio->uio_resid;
+		*poff += count - uio->uio_resid;
 	VOP_UNLOCK(vp, 0, p);
 	return (error);
 }
@@ -422,13 +433,13 @@ vn_ioctl(fp, com, data, p)
 		if (com == FIBMAP)
 			return VOP_IOCTL(vp, com, data, fp->f_flag,
 					 p->p_ucred, p);
-		if (com == FIONBIO || com == FIOASYNC)	/* XXX */
-			return (0);			/* XXX */
-		/* fall into ... */
+		if (com == FIONBIO || com == FIOASYNC)  /* XXX */
+			return (0);                     /* XXX */
+		/* fall into... */
 
 	default:
 		return (ENOTTY);
-
+		
 	case VFIFO:
 	case VCHR:
 	case VBLK:
