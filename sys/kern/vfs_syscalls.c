@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.37 1998/01/09 16:21:55 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.38 1998/02/16 21:56:29 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1486,7 +1486,7 @@ sys_chflags(p, v, retval)
 {
 	register struct sys_chflags_args /* {
 		syscallarg(char *) path;
-		syscallarg(int) flags;
+		syscallarg(unsigned int) flags;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
@@ -1524,7 +1524,7 @@ sys_fchflags(p, v, retval)
 {
 	register struct sys_fchflags_args /* {
 		syscallarg(int) fd;
-		syscallarg(int) flags;
+		syscallarg(unsigned int) flags;
 	} */ *uap = v;
 	struct vattr vattr;
 	struct vnode *vp;
