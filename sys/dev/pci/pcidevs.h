@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.506 2002/05/02 16:09:44 jason Exp 
+ *		OpenBSD: pcidevs,v 1.507 2002/05/10 21:40:03 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -560,6 +560,7 @@
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
+#define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
@@ -1596,6 +1597,9 @@
 #define	PCI_PRODUCT_CMI_CMI8738	0x0111		/* CMI8738/C3DX Audio */
 #define	PCI_PRODUCT_CMI_CMI8738B	0x0112		/* CMI8738B Audio */
 #define	PCI_PRODUCT_CMI_HSP56	0x0211		/* HSP56 AMR */
+
+/* Netoctave */
+#define	PCI_PRODUCT_NETOCTAVE_NSP2K	0x0100		/* NSP2K */
 
 /* NetVin */
 #define	PCI_PRODUCT_NETVIN_NV5000	0x5000		/* NetVin 5000 */

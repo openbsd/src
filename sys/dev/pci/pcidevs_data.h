@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.506 2002/05/02 16:09:44 jason Exp 
+ *		OpenBSD: pcidevs,v 1.507 2002/05/10 21:40:03 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3137,6 +3137,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_HSP56,
 	    "HSP56 AMR",
+	},
+	{
+	    PCI_VENDOR_NETOCTAVE, PCI_PRODUCT_NETOCTAVE_NSP2K,
+	    "NSP2K",
 	},
 	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000,
@@ -7289,6 +7293,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_USR2,
 	    "US Robotics",
+	},
+	{
+	    PCI_VENDOR_NETOCTAVE,
+	    "Netoctave",
 	},
 	{
 	    PCI_VENDOR_ALTIMA,
