@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.18 2000/03/18 21:36:02 ian Exp $
+	$OpenBSD: syscalls.master,v 1.19 2000/03/27 22:38:12 jasoni Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -268,8 +268,6 @@
 168	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 169	UNIMPL		nfsservctl
-;170	UNIMPL		setresgid
-;171	UNIMPL		getresgid
 170	STD		{ int linux_sys_setresgid(gid_t rgid, gid_t egid, \
 			    gid_t sgid); }
 171	STD		{ int linux_sys_getresgid(gid_t *rgid, gid_t *egid, \
@@ -292,7 +290,7 @@
 180	UNIMPL		pread
 181	UNIMPL		pwrite
 182	STD		{ int linux_sys_chown(char *path, int uid, int gid); }
-183	UNIMPL		getcwd
+183	STD		{ int linux_sys_getcwd(char *bufp, size_t length); }
 184	UNIMPL		capget
 185	UNIMPL		capset
 186	UNIMPL		sigaltstack
