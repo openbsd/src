@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.5 1996/07/04 05:46:54 tholo Exp $ */
+/*	$OpenBSD: lpd.c,v 1.6 1996/08/07 00:20:49 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -505,7 +505,8 @@ chkhost(f)
 	extern char *inet_ntoa();
 
 	f->sin_port = ntohs(f->sin_port);
-	if (f->sin_family != AF_INET || f->sin_port >= IPPORT_RESERVED)
+	if (f->sin_family != AF_INET || f->sin_port >= IPPORT_RESERVED ||
+	    f->sin_port == 20)
 		fatal("Malformed from address");
 
 	/* Need real hostname for temporary filenames */
