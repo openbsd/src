@@ -18,9 +18,8 @@ save_private_key(const char *filename, const char *passphrase,
  * comment of the key is returned in comment_return if it is non-NULL; the
  * caller must free the value with xfree.
  */
-int
-load_public_key(const char *filename, Key * pub,
-    char **comment_return);
+int load_public_key(const char *filename, Key * pub, char **comment_return);
+int try_load_public_key(const char *filename, Key * pub, char **comment_return);
 
 /*
  * Loads the private key from the file.  Returns 0 if an error is encountered
