@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.7 1997/03/01 23:40:09 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.8 1997/03/02 19:59:15 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.7 1997/03/01 23:40:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.8 1997/03/02 19:59:15 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -139,7 +139,6 @@ cwdname()
 	return (getcwd(path, sizeof(path)));
 }
 
-/* XXX - this code sucks! */
 static int
 nextjob()
 {
@@ -232,8 +231,8 @@ writefile(runtimer, queue)
 	if ((jobno = nextjob()) == EOF)
 	    perr("Cannot generate job number");
 
-	/* XXX - use snprintf */
-	(void)sprintf(ppos, "%c%5x%8x", queue, jobno, (unsigned) (runtimer/60));
+	(void)snprintf(ppos, sizeof(atfile) - (ppos - atfile),
+	    "%c%5x%8x", queue, jobno, (unsigned) (runtimer/60));
 
 	for (ap = ppos; *ap != '\0'; ap++)
 		if (*ap == ' ')
@@ -250,8 +249,7 @@ writefile(runtimer, queue)
 	 * their r bit.  Yes, this is a kluge.
 	 */
 	cmask = umask(S_IRUSR | S_IWUSR | S_IXUSR);
-	/* XXX - use open(2) not creat() */
-	if ((fdes = creat(atfile, O_WRONLY)) == -1)
+	if ((fdes = open(atfile, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR)) == -1)
 		perr("Cannot create atjob file");
 
 	if ((fd2 = dup(fdes)) < 0)
