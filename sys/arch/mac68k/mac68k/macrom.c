@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.4 1996/08/10 21:37:47 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.5 1996/10/28 14:55:32 briggs Exp $	*/
 /*	$NetBSD: macrom.c,v 1.26 1996/08/05 23:20:46 briggs Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include "macrom.h"
 #include <sys/malloc.h>
 #include <machine/cpu.h>
+#include <machine/macinfo.h>
 
 #include <machine/frame.h>
 

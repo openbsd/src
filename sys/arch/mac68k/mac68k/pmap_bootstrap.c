@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.5 1996/06/08 16:02:23 briggs Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.6 1996/10/28 14:55:34 briggs Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.26 1996/05/18 18:54:52 briggs Exp $	*/
 
 /* 
@@ -51,6 +51,7 @@
 #include <mac68k/mac68k/clockreg.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <machine/macinfo.h>
 #include <machine/pmap.h>
 #include <machine/autoconf.h>
 

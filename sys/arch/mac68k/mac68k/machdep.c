@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 1996/10/28 03:48:53 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 1996/10/28 14:55:31 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.122 1996/10/15 06:40:39 scottr Exp $	*/
 
 /*
@@ -114,6 +114,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/macinfo.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
