@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.104 1998/10/11 02:50:47 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.105 1998/10/18 20:31:46 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -820,6 +820,10 @@ glob_selection() {
 	local _matched
 	local _tfile
 	local _f
+
+	if [ "X${_selection}" = X"" ]; then
+		return
+	fi
 
 	# Change +/- into add/remove
 	_action=add
