@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.12 2002/05/02 22:56:06 miod Exp $	*/
+/*	$OpenBSD: tc.c,v 1.13 2002/05/03 20:27:44 miod Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -308,20 +308,18 @@ tc_devinfo(id, cp)
 	const char *id;
 	char *cp;
 {
-	const char *driver, *description;
+	const char *driver;
 #ifdef TCVERBOSE
 	struct tc_knowndev *tdp;
 	int match;
-	const char *unmatched = "unknown ";
-#else
-	const char *unmatched = "";
+	const char *description;
 #endif
 
 	driver = NULL;
-	description = id;
 
 #ifdef TCVERBOSE
 	/* find the device in the table, if possible. */
+	description = NULL;
 	tdp = tc_knowndevs;
 	while (tdp->id != NULL) {
 		/* check this entry for a match */
@@ -333,10 +331,9 @@ tc_devinfo(id, cp)
 		}
 		tdp++;
 	}
-#endif
-
-	if (driver == NULL)
-		cp += sprintf(cp, "%sdevice %s", unmatched, id);
-	else
+	if (driver != NULL)
 		cp += sprintf(cp, "%s (%s)", driver, description);
+	else
+#endif
+		cp += sprintf(cp, "%s", id);
 }

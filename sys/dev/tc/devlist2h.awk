@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.4 2002/05/02 22:56:06 miod Exp $
+#	$OpenBSD: devlist2h.awk,v 1.5 2002/05/03 20:27:44 miod Exp $
 #	$NetBSD: devlist2h.awk,v 1.3 1996/06/05 18:32:19 cgd Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -66,11 +66,14 @@ $1 == "device" {
 	devices[ndevices, 1] = $2;		# C identifier for device
 	gsub("-", "_", devices[ndevices, 1]);
 
-	devices[ndevices, 2] = $3;		# driver name
-
 	printf("\n") > hfile
-	printf("#define\tTC_DEVICE_%s\t\"%s\"\n", devices[ndevices, 1],
-	    devices[ndevices, 2]) > hfile
+	if ($3 == "???") { # driver name
+		printf("#define\tTC_DEVICE_%s\tNULL\n",
+		    devices[ndevices, 1]) > hfile
+	} else {
+		printf("#define\tTC_DEVICE_%s\t\"%s\"\n",
+		    devices[ndevices, 1], $3) > hfile
+	}
 
 	printf("#define\tTC_DESCRIPTION_%s\t\"", devices[ndevices, 1]) > hfile
 
