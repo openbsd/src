@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2003/06/10 02:42:58 brad Exp $
+#	$OpenBSD: Makefile,v 1.8 2004/10/18 20:46:48 miod Exp $
 #	$NetBSD: Makefile,v 1.2 2001/03/04 14:50:05 mrg Exp $
 
 CURDIR=	${.CURDIR}
@@ -58,7 +58,7 @@ vers.c: version
 	sh ${S}/conf/newvers.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -N -p -Ttext ${RELOC} -e ${ENTRY} >lderr -o ${PROG} \
+	${LD} -N -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} -L${LIBSADIR} ${LIBSA} -L${LIBKERNDIR} ${LIBKERN} \
 	    -L${LIBZDIR} ${LIBZ}
 
