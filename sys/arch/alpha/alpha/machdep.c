@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.71 2002/04/28 20:55:14 pvalchev Exp $ */
+/* $OpenBSD: machdep.c,v 1.72 2002/05/03 00:06:16 millert Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -128,8 +128,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
-
-#include "le_ioasic.h"			/* for le_iomem creation */
 
 int	cpu_dump(void);
 int	cpu_dumpsize(void);
