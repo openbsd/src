@@ -1,4 +1,5 @@
 ./dev/mouse
+./dev/scan0
 ./sbin/binpatch
 ./sbin/ldconfig
 ./usr/bin/ldd

@@ -1,3 +1,4 @@
+./dev/scan0
 ./sbin/bim
 ./usr/bin/ldd
 ./usr/include/ns32k

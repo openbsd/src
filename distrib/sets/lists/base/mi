@@ -42,7 +42,6 @@
 ./dev
 ./dev/MAKEDEV
 ./dev/fd
-./dev/scan0
 ./etc
 ./etc/disklabels
 ./etc/kerberosIV

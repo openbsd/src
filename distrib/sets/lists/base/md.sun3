@@ -1,3 +1,4 @@
+./dev/scan0
 ./sbin/edlabel
 ./sbin/ldconfig
 ./usr/bin/ldd

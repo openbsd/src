@@ -1,3 +1,4 @@
+./dev/scan0
 ./sbin/fdisk
 ./sbin/ldconfig
 ./usr/bin/ldd
