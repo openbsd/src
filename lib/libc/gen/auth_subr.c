@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.2 2000/11/21 04:17:44 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.3 2000/11/21 19:43:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -749,7 +749,6 @@ auth_call(auth_session_t *as, char *path, ...)
 	char *argv[64];		/* 64 args should more than enough */
 #define	Nargc	(sizeof(argv)/sizeof(argv[0]))
 
-	memset(&(as->ap0), 0, sizeof(as->ap0));
 	va_start(as->ap0, path);
 
 	argc = 0;
