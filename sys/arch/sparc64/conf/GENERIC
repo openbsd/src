@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.60 2002/05/13 15:13:13 jason Exp $
+#	$OpenBSD: GENERIC,v 1.61 2002/05/17 01:37:15 mjacob Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -36,6 +36,7 @@ dc*	at pci? dev ? function ?
 
 # PCI SCSI
 siop*	at pci? dev ? function ?
+isp*	at pci? dev ? function ?
 scsibus* at siop?
 
 # PCI Display
