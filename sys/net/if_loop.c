@@ -122,7 +122,12 @@ looutput(ifp, m, dst, rt)
 		panic("looutput: no header mbuf");
 	ifp->if_lastchange = time;
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
+	/*
+	 * only send packets to bpf if they are real loopback packets;
+	 * looutput() is also called for SIMPLEX interfaces to duplicate
+	 * packets for local use. But don't dup them to bpf.
+	 */
+	if (ifp->if_bpf && (ifp->if_flags&IFF_LOOPBACK)) {
 		/*
 		 * We need to prepend the address family as
 		 * a four byte field.  Cons up a dummy header
