@@ -1,4 +1,4 @@
-/* $OpenBSD: trace.c,v 1.4 2002/02/16 21:27:48 millert Exp $ */
+/* $OpenBSD: trace.c,v 1.5 2002/04/26 13:12:33 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -99,10 +99,10 @@ mark_traced(name, on)
 	} else {
 	    n = find_trace_entry(name);
 	    if (n == NULL) {
-	n = xalloc(sizeof(struct t));
-	n->name = xstrdup(name);
-	n->next = l;
-	l = n;
+		    n = xalloc(sizeof(struct t));
+		    n->name = xstrdup(name);
+		    n->next = l;
+		    l = n;
 	    }
 	    n->on = on;
 	}
