@@ -5,7 +5,7 @@
  * Created from the file:
  *	OpenBSD: vnode_if.src,v 1.19 2002/02/22 20:37:45 drahn Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
+ *	OpenBSD: vnode_if.sh,v 1.10 2002/03/14 23:47:05 millert Exp 
  */
 
 /*
@@ -121,8 +121,7 @@ struct vop_getattr_args {
 	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_getattr_desc;
-int VOP_GETATTR(struct vnode *, struct vattr *, struct ucred *, 
-    struct proc *);
+int VOP_GETATTR(struct vnode *, struct vattr *, struct ucred *, struct proc *);
 
 struct vop_setattr_args {
 	struct vnodeop_desc *a_desc;
@@ -132,8 +131,7 @@ struct vop_setattr_args {
 	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_setattr_desc;
-int VOP_SETATTR(struct vnode *, struct vattr *, struct ucred *, 
-    struct proc *);
+int VOP_SETATTR(struct vnode *, struct vattr *, struct ucred *, struct proc *);
 
 struct vop_read_args {
 	struct vnodeop_desc *a_desc;
@@ -275,8 +273,8 @@ struct vop_symlink_args {
 	char *a_target;
 };
 extern struct vnodeop_desc vop_symlink_desc;
-int VOP_SYMLINK(struct vnode *, struct vnode **, 
-    struct componentname *, struct vattr *, char *);
+int VOP_SYMLINK(struct vnode *, struct vnode **, struct componentname *, 
+    struct vattr *, char *);
 
 struct vop_readdir_args {
 	struct vnodeop_desc *a_desc;
@@ -288,8 +286,8 @@ struct vop_readdir_args {
 	u_long **a_cookies;
 };
 extern struct vnodeop_desc vop_readdir_desc;
-int VOP_READDIR(struct vnode *, struct uio *, struct ucred *, int *, 
-    int *, u_long **);
+int VOP_READDIR(struct vnode *, struct uio *, struct ucred *, int *, int *, 
+    u_long **);
 
 struct vop_readlink_args {
 	struct vnodeop_desc *a_desc;
