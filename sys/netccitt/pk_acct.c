@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_acct.c,v 1.3 1997/11/08 19:56:26 millert Exp $	*/
+/*	$OpenBSD: pk_acct.c,v 1.4 1998/07/28 23:57:26 millert Exp $	*/
 /*	$NetBSD: pk_acct.c,v 1.9 1996/02/13 22:05:11 christos Exp $	*/
 
 /*
@@ -144,6 +144,5 @@ pk_acct (lcp)
 
 	(void) vn_rdwr(UIO_WRITE, vp, (caddr_t)&acbuf, sizeof (acbuf),
 		(off_t)0, UIO_SYSSPACE, IO_UNIT|IO_APPEND,
-		curproc -> p_ucred, (int *)0,
-		(struct proc *)0);
+		curproc -> p_ucred, NULL, NULL);
 }
