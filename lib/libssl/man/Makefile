@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2002/09/03 18:59:56 markus Exp $
+# $OpenBSD: Makefile,v 1.2 2002/09/26 11:41:22 deraadt Exp $
 
 .include <bsd.own.mk>		# for NOMAN
 
@@ -59,7 +59,6 @@ MANALL=	\
 	EVP_VerifyInit.cat3 \
 	HMAC.cat3 \
 	MD5.cat3 \
-	MDC2.cat3 \
 	OPENSSL_VERSION_NUMBER.cat3 \
 	OpenSSL_add_all_algorithms.cat3 \
 	RAND_add.cat3 \
@@ -274,18 +273,6 @@ MD5.ps3: md5.pod
 	( cp ${.ALLSRC} MD5.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  MD5.pm ) | nroff -Tps -man > ${.TARGET}
-.endif
-
-# mdc2.pod -> MDC2.pod
-MDC2.cat3: mdc2.pod
-	( cp ${.ALLSRC} MDC2.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  MDC2.pm ) | nroff -Tascii -man > ${.TARGET}
-.if MANPS
-MDC2.ps3: mdc2.pod
-	( cp ${.ALLSRC} MDC2.pm && pod2man --section=3 --official \
-	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
-	  MDC2.pm ) | nroff -Tps -man > ${.TARGET}
 .endif
 
 # hmac.pod -> HMAC.pod
@@ -529,9 +516,6 @@ MLINKS+=\
 	MD5.3 MD5_Final.3 \
 	MD5.3 MD5_Init.3 \
 	MD5.3 MD5_Update.3 \
-	MDC2.3 MDC2_Final.3 \
-	MDC2.3 MDC2_Init.3 \
-	MDC2.3 MDC2_Update.3 \
 	OPENSSL_VERSION_NUMBER.3 SSLeay.3 \
 	OPENSSL_VERSION_NUMBER.3 SSLeay_version.3 \
 	OpenSSL_add_all_algorithms.3 EVP_cleanup.3 \
@@ -887,7 +871,6 @@ CLEANFILES+=\
 	BUF_MEM_new.pm \
 	CRYPTO_set_locking_callback.pm \
 	HMAC.pm \
-	MDC2.pm \
 	RC4.pm \
 	RIPEMD160.pm \
 	SHA1.pm \
