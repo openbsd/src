@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_hppa.c,v 1.4 1998/09/29 07:21:58 mickey Exp $	*/
+/*	$OpenBSD: exec_hppa.c,v 1.5 1999/02/13 04:35:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -45,7 +45,7 @@
 #include <machine/pdc.h>
 #include "dev_hppa.h"
 
-typedef void (*startfuncp) __P((int, int, int, int, int, caddr_t))
+typedef void (*startfuncp) __P((int, int, int, int, int, int, caddr_t))
     __attribute__ ((noreturn));
 
 void
@@ -84,7 +84,7 @@ machdep_exec(xp, howto, loadaddr)
 	__asm("mtctl %r0, %cr17");
 	__asm("mtctl %r0, %cr17");
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)(xp->xp_entry)) ((int)pdc, howto, bootdev,
+	(*(startfuncp)(xp->xp_entry)) ((int)pdc, howto, bootdev, xp->xp_end,
 				       BOOTARG_APIVER, ac, av);
 	/* not reached */
 }
