@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.6 1999/07/17 21:54:38 niklas Exp $
-#	$EOM: Makefile,v 1.4 1999/07/17 20:44:13 niklas Exp $
+#	$OpenBSD: Makefile,v 1.7 1999/08/05 22:40:37 niklas Exp $
+#	$EOM: Makefile,v 1.5 1999/08/05 15:00:05 niklas Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -37,7 +37,7 @@
 # RSA Key Generation
 
 PROG=		rsakeygen
-SRCS=		log.c rsakeygen.c sysdep.c
+SRCS=		log.c rsakeygen.c sysdep.c util.c
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile

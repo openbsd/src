@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysdep.c,v 1.5 1999/05/01 20:43:40 niklas Exp $	*/
-/*	$EOM: sysdep.c,v 1.7 1999/05/01 20:21:23 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.6 1999/08/05 22:40:37 niklas Exp $	*/
+/*	$EOM: sysdep.c,v 1.8 1999/08/05 15:00:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -43,6 +43,8 @@
 
 #include "sysdep.h"
 
+#include "util.h"
+
 #ifdef NEED_SYSDEP_APP
 #include "app.h"
 #include "conf.h"
@@ -61,12 +63,6 @@
 #include "log.h"
 
 extern char *__progname;
-
-/*
- * This is set to true in case of regression-test mode, when it will
- * cause predictable random numbers be generated.
- */
-int regrand = 0;
 
 /*
  * An as strong as possible random number generator, reverting to a

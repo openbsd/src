@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.c,v 1.5 1999/04/19 19:54:54 niklas Exp $	*/
-/*	$EOM: util.c,v 1.14 1999/04/02 00:58:15 niklas Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1999/08/05 22:40:37 niklas Exp $	*/
+/*	$EOM: util.c,v 1.15 1999/08/05 15:00:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -44,6 +44,12 @@
 #include "sysdep.h"
 #include "transport.h"
 #include "util.h"
+
+/*
+ * This is set to true in case of regression-test mode, when it will
+ * cause predictable random numbers be generated.
+ */
+int regrand = 0;
 
 /*
  * XXX These might be turned into inlines or macros, maybe even

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cookie.c,v 1.5 1999/04/19 20:00:24 niklas Exp $	*/
-/*	$EOM: cookie.c,v 1.20 1999/04/17 23:20:20 niklas Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.6 1999/08/05 22:40:37 niklas Exp $	*/
+/*	$EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -125,6 +125,9 @@ cookie_reset_event (void *arg)
 void
 cookie_init (void)
 {
-  /* Start responder cookie resets.  */
-  cookie_reset_event (0);
+  if (regrand)
+    cookie_secret_reset ();
+  else
+    /* Start responder cookie resets.  */
+    cookie_reset_event (0);
 }
