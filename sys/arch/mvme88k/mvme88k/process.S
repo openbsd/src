@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.19 2003/08/11 20:45:17 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.20 2003/08/12 18:06:48 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -42,6 +42,11 @@ ASLOCAL(swchanpanic)
 	align	4
 ASLOCAL(swsrunpanic)
 	string	"switch SRUN %x\0"
+#ifdef DEBUG
+	align	4
+ASLOCAL(boguspsr)
+	string	"Invalid PSR in idle loop 0x%x\n\0"
+#endif
 
 	text
 	align	8
@@ -143,9 +148,22 @@ ASLOCAL(Lidleloop)
 	bcnd	ne0, r7, _ASM_LABEL(Ldoneloop)
 
 ASLOCAL(Lloopchk)			/* if whichqs is zero, keep checking */
-	bsr.n	_C_LABEL(setipl)	/* enable all ints */
+	bsr.n	_C_LABEL(setipl)	/* unmask all ints... */
 	 or	r2, r0, 0
 
+	ldcr	r2, PSR
+	bb0	PSR_INTERRUPT_DISABLE_BIT, r2, 1f
+#ifdef DEBUG
+	or	r3, r2, r0
+	or.u	r2, r0, hi16(_ASM_LABEL(boguspsr))
+	bsr.n	_C_LABEL(printf)
+	 or	r2, r2, lo16(_ASM_LABEL(boguspsr))
+	ldcr	r2, PSR
+#endif
+	clr	r2, r2, 1<PSR_INTERRUPT_DISABLE_BIT>	/* ...and enable them */
+	FLUSH_PIPELINE
+	stcr	r2, PSR
+1:
 	br	_ASM_LABEL(Lidleloop)
 
 ASLOCAL(Ldoneloop)
