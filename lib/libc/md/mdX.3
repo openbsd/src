@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.7 1997/07/03 23:30:22 provos Exp $
+.\" 	$OpenBSD: mdX.3,v 1.8 1997/07/15 01:54:22 millert Exp $
 .\"
 .Dd October 9, 1996
 .Dt MDX 3
@@ -24,7 +24,7 @@
 .Ft void
 .Fn MDXInit "MDX_CTX *context"
 .Ft void
-.Fn MDXUpdate "MDX_CTX *context" "unsigned char *data" "unsigned int len"
+.Fn MDXUpdate "MDX_CTX *context" "const unsigned char *data" "unsigned int len"
 .Ft void
 .Fn MDXFinal "unsigned char digest[16]" "MDX_CTX *context"
 .Ft "char *"
