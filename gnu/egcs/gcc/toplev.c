@@ -3659,7 +3659,7 @@ rest_of_compilation (decl)
 
       insns = get_insns ();
 
-      if (flag_propolice_protection) prepare_stack_protection ();
+      if (flag_propolice_protection) prepare_stack_protection (inlinable);
   
       /* Dump the rtl code if we are dumping rtl.  */
 
