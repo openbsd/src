@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.15 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.16 2002/09/06 21:09:53 deraadt Exp $	*/
 /*	$NetBSD: dumpfs.c,v 1.12 1997/04/26 05:41:33 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.2 (Berkeley) 2/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.15 2002/06/09 08:13:05 todd Exp $";
+static char rcsid[] = "$OpenBSD: dumpfs.c,v 1.16 2002/09/06 21:09:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -259,7 +259,7 @@ err:	if (fd != -1)
 		(void)close(fd);
 	warn("%s", name);
 	return (1);
-};
+}
 
 int
 dumpcg(name, fd, c)
@@ -326,7 +326,7 @@ dumpcg(name, fd, c)
 		printf("\n");
 	}
 	return (0);
-};
+}
 
 void
 pbits(vp, max)
