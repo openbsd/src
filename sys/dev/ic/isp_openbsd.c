@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.23 2002/05/17 01:32:35 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.24 2002/08/17 17:43:47 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -779,7 +779,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		const char *fmt = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
 		const static char *roles[4] = {
-		    "None", "Target", "Initiator", "Target/Initiator"
+		    "No", "Target", "Initiator", "Target/Initiator"
 		};
 		fcparam *fcp = isp->isp_param;
 		int tgt = *((int *) arg);
@@ -913,6 +913,28 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 		lp->port_wwn = clp->port_wwn;
 		lp->portid = clp->portid;
 		lp->fabric_dev = 1;
+		break;
+	}
+	case ISPASYNC_FW_CRASH:
+	{
+		u_int16_t mbox1, mbox6;
+		mbox1 = ISP_READ(isp, OUTMAILBOX1);
+		if (IS_DUALBUS(isp)) { 
+			mbox6 = ISP_READ(isp, OUTMAILBOX6);
+		} else {
+			mbox6 = 0;
+		}
+                isp_prt(isp, ISP_LOGERR,
+                    "Internal Firmware Error on bus %d @ RISC Address 0x%x",
+                    mbox6, mbox1);
+#ifdef	ISP_FW_CRASH_DUMP
+		if (IS_FC(isp)) {
+			isp->isp_osinfo.blocked |= 1;
+			isp_fw_dump(isp);
+		}
+		isp_reinit(isp);
+		isp_async(isp, ISPASYNC_FW_RESTART, NULL);
+#endif
 		break;
 	}
 	default:
