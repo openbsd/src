@@ -1,4 +1,4 @@
-/*	$OpenBSD: skey.c,v 1.18 2002/05/06 23:34:33 millert Exp $	*/
+/*	$OpenBSD: skey.c,v 1.19 2003/06/10 18:24:40 deraadt Exp $	*/
 /*
  * OpenBSD S/Key (skey.c)
  *
@@ -32,9 +32,7 @@
 void    usage(char *);
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int     n, i, cnt = 1, pass = 0, hexmode = 0;
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
@@ -118,7 +116,8 @@ main(argc, argv)
 
 	/* Get user's secret password */
 	if (!pass) {
-		(void)fputs("Reminder - Do not use this program while logged in via telnet.\n", stderr);
+		fputs("Reminder - Do not use this program while"
+		    " logged in via telnet.\n", stderr);
 		(void)fputs("Enter secret password: ", stderr);
 		readpass(passwd, sizeof(passwd));
 		if (passwd[0] == '\0') 
@@ -148,9 +147,10 @@ main(argc, argv)
 }
 
 void
-usage(s)
-	char *s;
+usage(char *s)
 {
-	(void)fprintf(stderr, "Usage: %s [-x] [-md4|-md5|-sha1|-rmd160] [-n count] [-p password] <sequence#>[/] key\n", s);
+	fprintf(stderr,
+	    "Usage: %s [-x] [-md4|-md5|-sha1|-rmd160] [-n count] "
+	    "[-p password] <sequence#>[/] key\n", s);
 	exit(1);
 }
