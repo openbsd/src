@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.45 2004/10/04 20:03:04 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.46 2004/10/14 16:02:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -348,6 +348,9 @@ const struct ac97_codecid {
 }, ac97_cm[] = {
 	{ 0x41,	0xff, 0, 0,	"CMI9738" },
 	{ 0x61,	0xff, 0, 0,	"CMI9739" },
+	{ 0x78,	0xff, 0, 0,	"CMI9761A" },
+	{ 0x82,	0xff, 0, 0,	"CMI9761B" },
+	{ 0x83,	0xff, 0, 0,	"CMI9761A+" },
 }, ac97_cr[] = {
 	{ 0x84,	0xff, 0, 0,	"EV1938" },
 }, ac97_cs[] = {
