@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.54 2001/06/29 19:59:51 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.55 2001/07/01 06:03:34 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -969,8 +969,6 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
     {
       /*
        * Find out our inbound phase 1 mode.
-       * XXX Assumes IPv4.  It might make sense to search through several
-       * policies too.
        */
       t->vtbl->get_dst (t, &dst);
       if (sockaddr2text(dst, &str, 0) == -1)
