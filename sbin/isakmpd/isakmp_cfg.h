@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.h,v 1.1 2001/07/01 20:43:39 niklas Exp $	*/
+/*	$OpenBSD: isakmp_cfg.h,v 1.2 2002/06/09 00:45:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -42,8 +42,9 @@
 struct isakmp_cfg_attr {
   LIST_ENTRY (isakmp_cfg_attr) link;
   u_int16_t type;
-  /* 16 bits just to be well-aligned.  */
-  u_int16_t ignore;
+  u_int8_t attr_used;
+  /* 8 bits just to be well-aligned.  */
+  u_int8_t ignore;
   size_t length;
   void *value;
 };
