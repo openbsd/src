@@ -34,15 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fabs.s	5.2 (Berkeley) 12/17/90
- *	$Id: fabs.S,v 1.1.1.1 1995/10/18 08:41:23 deraadt Exp $
+ *	$Id: fabs.S,v 1.2 1995/12/30 08:15:41 deraadt Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fabs.S,v 1.1.1.1 1995/10/18 08:41:23 deraadt Exp $"
+	.asciz "$Id: fabs.S,v 1.2 1995/12/30 08:15:41 deraadt Exp $"
 #endif
-
-#include "DEFS.h"
 
 ENTRY(fabs)
 	fldl	4(%esp)
