@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.12 1999/06/29 14:09:51 aaron Exp $
+.\"	$OpenBSD: chflags.2,v 1.13 1999/07/31 03:55:28 deraadt Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -140,6 +140,8 @@ The descriptor is not valid.
 .It Bq Er EINVAL
 .Fa fd
 refers to a socket, not to a file.
+.It Bq Er EINVAL
+Only the super-user can change flags on block and character devices.
 .It Bq Er EINVAL
 The flags value is invalid.
 .It Bq Er EPERM

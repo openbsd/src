@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.5 1999/07/04 11:53:51 aaron Exp $
+.\"	$OpenBSD: chflags.1,v 1.6 1999/07/31 03:55:28 deraadt Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -116,6 +116,9 @@ options are ignored unless the
 option is specified.
 In addition, these options override each other and the
 command's actions are determined by the last one specified.
+.Pp
+Only the super-user can change the user flags on block and
+character devices.
 .Pp
 You can use "ls -lo" to see the flags of existing files.
 .Pp
