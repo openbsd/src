@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.5 2000/09/29 05:28:29 aaron Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.6 2000/10/13 14:55:23 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,6 +87,7 @@
 #define XL_USEIOSPACE
 
 #define XL_PCI_FUNCMEM		0x0018
+#define XL_PCI_INTR		0x0004
 #define XL_PCI_INTRACK		0x8000
 
 #include <dev/ic/xlreg.h>
@@ -166,11 +167,13 @@ xl_pci_attach(parent, self, aux)
 	case TC_DEVICEID_HURRICANE_556:
 		sc->xl_flags |= XL_FLAG_FUNCREG | XL_FLAG_PHYOK |
 		    XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_WEIRDRESET;
+		sc->xl_flags |= XL_FLAG_INVERT_LED_PWR|XL_FLAG_INVERT_MII_PWR;
 		sc->xl_flags |= XL_FLAG_8BITROM;
 		break;
 	case TC_DEVICEID_HURRICANE_556B:
 		sc->xl_flags |= XL_FLAG_FUNCREG | XL_FLAG_PHYOK |
 		    XL_FLAG_EEPROM_OFFSET_30 | XL_FLAG_WEIRDRESET;
+		sc->xl_flags |= XL_FLAG_INVERT_LED_PWR|XL_FLAG_INVERT_MII_PWR;
 		break;
 	default:
 		break;
@@ -300,8 +303,8 @@ xl_pci_intr_ack(sc)
 {
 	struct xl_pci_softc *psc = (struct xl_pci_softc *)sc;
 
-	pci_conf_write(psc->sc_chiptag, psc->sc_pcitag, XL_PCI_FUNCMEM + 4,
-	    XL_PCI_INTRACK);
+	pci_conf_write(psc->sc_chiptag, psc->sc_pcitag,
+	    XL_PCI_FUNCMEM + XL_PCI_INTR, XL_PCI_INTRACK);
 }
 
 struct cfattach xl_pci_ca = {
