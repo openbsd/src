@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.33 2000/08/04 10:07:59 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.34 2000/09/07 22:16:07 espie Exp $
 
 SUBDIRS=	opcodes bfd
 MAN=
@@ -17,7 +17,7 @@ MAN+=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/ranlib.1 \
 		binutils/size.1 binutils/strings.1 binutils/strip.1 \
 		gas/doc/as.1 gprof/gprof.1 ld/ld.1
-MANSUBDIR=/alpha /pmax /powerpc /hppa
+
 .endif
 MAN+= binutils/objdump.1
 
