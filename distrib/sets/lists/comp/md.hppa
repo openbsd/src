@@ -36,6 +36,7 @@
 ./usr/include/hppa/nvm.h
 ./usr/include/hppa/param.h
 ./usr/include/hppa/pcb.h
+./usr/include/hppa/pci_machdep.h
 ./usr/include/hppa/pdc.h
 ./usr/include/hppa/pmap.h
 ./usr/include/hppa/proc.h

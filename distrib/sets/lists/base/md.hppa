@@ -1352,6 +1352,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/nvm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/param.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/pcb.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/pci_machdep.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/pdc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/pmap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/proc.ph
