@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 1999/01/08 03:16:15 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.38 1999/01/08 03:18:40 niklas Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -88,7 +88,7 @@ tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
 inphy*	at mii? phy ?				# Intel 82555 PHYs
 #icsphy*	at mii? phy ?				# ICS 1890 PHYs
 #lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
-#nsphy*	at mii? phy ?				# NS and compatible PHYs
+nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 #mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
