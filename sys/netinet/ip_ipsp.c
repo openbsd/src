@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.50 1999/07/15 14:46:05 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.51 1999/07/17 00:41:52 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -426,30 +426,35 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 INLINE int
 tdb_hash(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 {
-    static u_int32_t seed1 = 0, seed2 = 0;
+    static u_int32_t mult1 = 0, mult2 = 0;
     u_int8_t *ptr = (u_int8_t *) dst;
-    int i;
-    u_int32_t hash, val32 = 0;
+    int i, shift;
+    u_int64_t hash;
+    int val32 = 0;
 
-    if (!seed1) {
-	seed1 = arc4random ();
-	seed2 = arc4random ();
-    }
+    while (mult1 == 0)
+	mult1 = arc4random();
+    while (mult2 == 0)
+	mult2 = arc4random();
 
-    hash = spi ^ proto;
+    hash = (spi ^ proto) * mult1;
     for (i = 0; i < SA_LEN(&dst->sa); i++)
     {
 	val32 = (val32 << 8) | ptr[i];
 	if (i % 4 == 3)
 	{
-	    hash ^= val32;
+	    hash ^= val32 * mult2;
 	    val32 = 0;
 	}
     }
     if (i % 4 != 0)
-	hash ^= val32;
+	hash ^= val32 * mult2;
 
-    return (((hash >> 16) ^ seed1) * (hash ^ seed2)) & tdb_hashmask;
+    shift = ffs(tdb_hashmask + 1);
+    while ((hash & ~tdb_hashmask) != 0)
+      hash = (hash >> shift) ^ (hash & tdb_hashmask);
+
+    return hash;
 }
 
 /*
@@ -508,7 +513,7 @@ tdb_hashstats()
     db_printf("tdb cnt\t\tbucket cnt\n");
     for (i = 0; i < 16; i++)
       if (buckets[i] > 0)
-	db_printf("%d%c\tne\t\%d\n", i, i == 15 ? "+" : "", buckets[i]);
+	db_printf("%d%c\t\t%d\n", i, i == 15 ? "+" : "", buckets[i]);
 }
 #endif	/* DDB */
 
