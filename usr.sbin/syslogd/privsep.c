@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.1 2003/07/31 18:20:07 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.2 2003/07/31 18:25:58 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -237,7 +237,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 				result = 0;
 				must_write(socks[0], &result, sizeof(int));
 			}
-			break;    
+			break;
 
 		case PRIV_DONE_CONFIG_PARSE:
 			dprintf("[priv]: msg PRIV_DONE_CONFIG_PARSE received\n");
@@ -371,9 +371,9 @@ static void
 increase_state(int state)
 {
 	if (state <= cur_state)
-		errx (1, "attempt to decrease or match current state");
+		errx(1, "attempt to decrease or match current state");
 	if (state < STATE_INIT || state > STATE_RESTART)
-		errx (1, "attempt to switch to invalid state");
+		errx(1, "attempt to switch to invalid state");
 	cur_state = state;
 }
 
@@ -437,7 +437,7 @@ priv_open_utmp(void)
 	fp = fdopen(fd, "r");
 	if (!fp) {
 		warn("priv_open_utmp: fdopen() failed");
-		close (fd);
+		close(fd);
 		return NULL;
 	}
 
@@ -464,7 +464,7 @@ priv_open_config(void)
 	fp = fdopen(fd, "r");
 	if (!fp) {
 		warn("priv_open_config: fdopen() failed");
-		close (fd);
+		close(fd);
 		return NULL;
 	}
 
