@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.31 2004/05/07 19:19:49 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.32 2004/05/09 22:14:15 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -28,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-const char      copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
+const char	copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -55,34 +55,34 @@ const char      copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre
 #define BUFFERSIZE	2048
 
 /* The buffer that stdio will use */
-char            stdoutbuf[BUFFERSIZE];
+char		stdoutbuf[BUFFERSIZE];
 
-extern int      overstrike;
+extern int	overstrike;
 
 /* signal handling routines */
-static void     leave(int);
-static void     onalrm(int);
-static void     tstop(int);
-static void     winch(int);
+static void	leave(int);
+static void	onalrm(int);
+static void	tstop(int);
+static void	winch(int);
 
 volatile sig_atomic_t leaveflag, tstopflag, winchflag;
 
-static void     reset_display(void);
+static void	reset_display(void);
 int		rundisplay(void);
 
-static int      max_topn;	/* maximum displayable processes */
+static int	max_topn;	/* maximum displayable processes */
 
-extern int      (*proc_compares[])(const void *, const void *);
+extern int	(*proc_compares[])(const void *, const void *);
 int order_index;
 
 /* pointers to display routines */
-void            (*d_loadave) (int, double *) = i_loadave;
-void            (*d_procstates) (int, int *) = i_procstates;
-void            (*d_cpustates) (int *) = i_cpustates;
-void            (*d_memory) (int *) = i_memory;
-void            (*d_message) (void) = i_message;
-void            (*d_header) (char *) = i_header;
-void            (*d_process) (int, char *) = i_process;
+void		(*d_loadave)(int, double *) = i_loadave;
+void		(*d_procstates)(int, int *) = i_procstates;
+void		(*d_cpustates)(int *) = i_cpustates;
+void		(*d_memory)(int *) = i_memory;
+void		(*d_message)(void) = i_message;
+void		(*d_header)(char *) = i_header;
+void		(*d_process)(int, char *) = i_process;
 
 int displays = 0;	/* indicates unspecified */
 char do_unames = Yes;
@@ -116,11 +116,11 @@ char topn_specified = No;
 #define CMD_displays	9
 #define CMD_kill	10
 #define CMD_renice	11
-#define CMD_idletog     12
-#define CMD_idletog2    13
+#define CMD_idletog	12
+#define CMD_idletog2	13
 #define CMD_user	14
 #define CMD_system	15
-#define CMD_order       16
+#define CMD_order	16
 
 static void
 usage(void)
@@ -172,7 +172,7 @@ parseargs(int ac, char **av)
 			if ((i = atoiwi(optarg)) != Invalid && i != 0) {
 				displays = i;
 				break;
-			}				
+			}
 			warnx("warning: display count should be positive "
 			    "-- option ignored");
 			warnings++;
@@ -370,7 +370,7 @@ main(int argc, char *argv[])
 	if (warnings) {
 		fputs("....", stderr);
 		fflush(stderr);	/* why must I do this? */
-		sleep((unsigned) (3 * warnings));
+		sleep((unsigned)(3 * warnings));
 		fputc('\n', stderr);
 	}
 restart:
@@ -400,7 +400,7 @@ restart:
 
 		/* display the cpu state percentage breakdown */
 		if (dostates) {	/* but not the first time */
-			(*d_cpustates) (system_info.cpustates);
+			(*d_cpustates)(system_info.cpustates);
 		} else {
 			/* we'll do it next time */
 			if (smart_terminal)
@@ -413,13 +413,13 @@ restart:
 		}
 
 		/* display memory stats */
-		(*d_memory) (system_info.memory);
+		(*d_memory)(system_info.memory);
 
 		/* handle message area */
-		(*d_message) ();
+		(*d_message)();
 
 		/* update the header area */
-		(*d_header) (header_text);
+		(*d_header)(header_text);
 
 		if (topn > 0) {
 			/* determine number of processes to actually display */

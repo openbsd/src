@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.37 2004/01/08 18:15:06 millert Exp $	 */
+/* $OpenBSD: machine.c,v 1.38 2004/05/09 22:14:15 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -59,13 +59,13 @@
 #include "utils.h"
 #include "loadavg.h"
 
-static int      swapmode(int *, int *);
+static int	swapmode(int *, int *);
 
 /* get_process_info passes back a handle.  This is what it looks like: */
 
 struct handle {
 	struct kinfo_proc2 **next_proc;	/* points to next valid proc pointer */
-	int             remaining;	/* number of pointers remaining */
+	int		remaining;	/* number of pointers remaining */
 };
 
 /* what we consider to be process size: */
@@ -74,7 +74,7 @@ struct handle {
 /*
  *  These definitions control the format of the per-process area
  */
-static char     header[] =
+static char header[] =
 	"  PID X        PRI NICE  SIZE   RES STATE WAIT     TIME    CPU COMMAND";
 
 /* 0123456   -- field to fill in starts at header+6 */

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.13 2003/06/16 17:24:44 millert Exp $	 */
+/* $OpenBSD: screen.c,v 1.14 2004/05/09 22:14:15 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -30,9 +30,9 @@
 
 /*
  * This file contains the routines that interface to termcap and stty/gtty.
- * 
+ *
  * Paul Vixie, February 1987: converted to use ioctl() instead of stty/gtty.
- * 
+ *
  * I put in code to turn on the TOSTOP bit while top was running, but I didn't
  * really like the results.  If you desire it, turn on the preprocessor
  * variable "TOStop".   --wnl
@@ -251,8 +251,8 @@ standout(char *msg)
 	}
 }
 
-void 
-clear()
+void
+clear(void)
 {
 	if (smart_terminal)
 		putcap(clear_scr);
