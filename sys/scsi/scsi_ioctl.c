@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.5 1996/08/11 23:26:03 deraadt Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.6 1996/08/13 00:06:24 niklas Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.20 1996/02/14 21:47:22 christos Exp $	*/
 
 /*
@@ -382,8 +382,6 @@ scsi_do_safeioctl(sc_link, dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int error;
-
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
 
 	switch(cmd) {
