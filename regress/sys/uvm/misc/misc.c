@@ -179,7 +179,7 @@ main(argc, argv)
 	printf(">>> MAPPING ANOTHER %d PAGE ANONYMOUS REGION <<<\n", npgs);
 
 	addr2 = mmap(NULL, npgs * pgsize, PROT_READ, MAP_ANON, -1, (off_t) 0);
-	if (addr == MAP_FAILED)
+	if (addr2 == MAP_FAILED)
 		err(1, "mmap anon #2");
 
 	printf("    CHECKING RESIDENCY\n");
