@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2002/01/31 11:51:00 hugh Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2002/04/05 03:09:34 deraadt Exp $
 
 machine 	vax			# machine type
 
@@ -6,14 +6,14 @@ machine 	vax			# machine type
 makeoptions	COPTS="-O2"
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=4352	# LESS THAN RELOC
+option		MINIROOTSIZE=3072
 
 # Here are all different supported CPU types listed.
 # One of these is required.
-#option 		VAX8600
-#option 		VAX8200
-#option 		VAX780		# 11/780
-#option 		VAX750		# 11/750
+#option		VAX8600
+#option		VAX8200
+#option		VAX780		# 11/780
+#option		VAX750		# 11/750
 option 		VAX630		# MV II
 option 		VAX650		# MV III, 3300, 3600, 3800, 3900
 option		VAX660		# VAX 4000 200
@@ -35,7 +35,7 @@ option		FFS		# UFS
 option		NFSCLIENT	# Network File System client
 option		CD9660		# ISO 9660 + Rock Ridge file system
 #option		MSDOSFS		# MS-DOS file system
-option		FIFO		# FIFOs; RECOMMENDED
+#option		FIFO		# FIFOs; RECOMMENDED
 
 option		INET		# IP + ICMP + TCP + UDP
 
@@ -44,8 +44,7 @@ option		BOOT_CONFIG	# boot-time kernel config
 config		bsd	root on rd0a swap on rd0b	# and sd0b
 
 # WS console uses VT100 terminal emulation
-option		WSEMUL_VT100
-option		WSDISPLAY_DEFAULTSCREENS=8
+#option		WSEMUL_VT100
 
 # Old compat stuff; needed to run 4.3BSD Reno programs.
 # Note that if COMPAT_ULTRIX is set, you lose compatibility with
@@ -78,7 +77,7 @@ ncr0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 ncr1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 4000/10X MV3100/9X SCSI
-smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
+#smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
 #hd*		at hdc0 drive?		# RD5x disks
@@ -145,22 +144,20 @@ scsibus*	at ncr?
 sd*		at scsibus? target? lun?
 st*		at scsibus? target? lun?
 cd*		at scsibus? target? lun?
-ch*		at scsibus? target? lun?
-ss*		at scsibus? target? lun?
-uk*		at scsibus? target? lun?
+#ch*		at scsibus? target? lun?
+#ss*		at scsibus? target? lun?
+#uk*		at scsibus? target? lun?
 
 # Workstation console
-wsdisplay0	at smg?
-
-
+#wsdisplay0	at smg?
 #wsdisplay0	at clr0
 #wsdisplay0	at qd0
 #wsdisplay0	at qv0
 
-lkkbd0		at dz0 line 0
-wskbd*		at lkkbd? console ?
-lkms0		at dz0 line 1
-wsmouse*	at lkms?
+#lkkbd0		at dz0 line 0
+#wskbd*		at lkkbd? console ?
+#lkms0		at dz0 line 1
+#wsmouse*	at lkms?
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	1	# packet filter
