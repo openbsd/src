@@ -132,7 +132,7 @@ numlabels(row)
 	int i, col, regions, ndrives;
 
 #define COLWIDTH	14
-#define DRIVESPERLINE	((wnd->maxx - INSET) / COLWIDTH)
+#define DRIVESPERLINE	((wnd->_maxx - INSET) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
 			ndrives++;
@@ -140,7 +140,7 @@ numlabels(row)
 	/*
 	 * Deduct -regions for blank line after each scrolling region.
 	 */
-	linesperregion = (wnd->maxy - row - regions) / regions;
+	linesperregion = (wnd->_maxy - row - regions) / regions;
 	/*
 	 * Minimum region contains space for two
 	 * label lines and one line of statistics.
@@ -150,9 +150,9 @@ numlabels(row)
 	col = 0;
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= wnd->maxx - INSET) {
+			if (col + COLWIDTH >= wnd->_maxx - INSET) {
 				col = 0, row += linesperregion + 1;
-				if (row > wnd->maxy - (linesperregion + 1))
+				if (row > wnd->_maxy - (linesperregion + 1))
 					break;
 			}
 			mvwaddstr(wnd, row, col + 4, cur.dk_name[i]);
@@ -175,7 +175,7 @@ barlabels(row)
 	linesperregion = 2 + secs;
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (row > wnd->maxy - linesperregion)
+			if (row > wnd->_maxy - linesperregion)
 				break;
 			mvwprintw(wnd, row++, 0, "%3.3s   Kps|", cur.dk_name[i]);
 			mvwaddstr(wnd, row++, 0, "      tps|");
@@ -214,7 +214,7 @@ showiostat()
 		row += 2;
 		for (i = 0; i < dk_ndrive; i++)
 			if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-				if (row > wnd->maxy - linesperregion)
+				if (row > wnd->_maxy - linesperregion)
 					break;
 				row = stats(row, INSET, i);
 			}
@@ -227,9 +227,9 @@ showiostat()
 	winsertln(wnd);
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= wnd->maxx) {
+			if (col + COLWIDTH >= wnd->_maxx) {
 				col = 0, row += linesperregion + 1;
-				if (row > wnd->maxy - (linesperregion + 1))
+				if (row > wnd->_maxy - (linesperregion + 1))
 					break;
 				wmove(wnd, row + linesperregion, 0);
 				wdeleteln(wnd);
