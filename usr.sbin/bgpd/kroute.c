@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.41 2003/12/27 18:41:40 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.42 2003/12/27 18:43:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -40,7 +40,6 @@ struct {
 	int			fib_sync;
 	int			fd;
 } kr_state;
-	
 
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.10 2003/12/27 14:58:22 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.11 2003/12/27 18:43:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -77,7 +77,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 		else
 			kroute_fib_decouple();
 	}
-	
+
 	xconf->flags = conf->flags;
 	xconf->log = conf->log;
 
