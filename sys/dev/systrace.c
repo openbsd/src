@@ -135,13 +135,13 @@ int	systrace_msg_emul(struct fsystrace *, struct str_process *);
 int	systrace_make_msg(struct str_process *, int);
 
 static struct fileops systracefops = {
-    systracef_read,
-    systracef_write,
-    systracef_ioctl,
-    systracef_select,
-    systracef_kqfilter,
-    systracef_stat,
-    systracef_close
+	systracef_read,
+	systracef_write,
+	systracef_ioctl,
+	systracef_select,
+	systracef_kqfilter,
+	systracef_stat,
+	systracef_close
 };
 
 struct pool systr_proc_pl;
