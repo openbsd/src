@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.20 2003/07/04 17:37:07 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.21 2003/07/04 17:50:24 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -58,7 +58,6 @@ int	bflag;			/* ignore blanks in comparisons */
 int	wflag;			/* totally ignore blanks in comparisons */
 int	iflag;			/* ignore case in comparisons */
 /* Options on hierarchical diffs. */
-int	lflag;			/* long output format with header */
 int	rflag;			/* recursively trace directories */
 int	sflag;			/* announce files which are same */
 char	*start;			/* do file only if name >= this */
@@ -91,7 +90,7 @@ main(int argc, char **argv)
 	status = 2;
 	diffargv = argv;
 
-	while ((ch = getopt(argc, argv, "abC:cD:efilnrS:stU:uw")) != -1) {
+	while ((ch = getopt(argc, argv, "abC:cD:efinrS:stU:uw")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag++;
@@ -121,9 +120,6 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			iflag++;
-			break;
-		case 'l':
-			lflag++;
 			break;
 		case 'n':
 			opt = D_NREVERSE;
@@ -260,12 +256,12 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: diff [-bitw] [-c | -e | -f | -h | -n | -u ] file1 file2\n"
+	    "usage: diff [-bitw] [-c | -e | -f | -n | -u ] file1 file2\n"
 	    "       diff [-bitw] -C number file1 file2\n"
 	    "       diff [-bitw] -D string file1 file2\n"
 	    "       diff [-bitw] -U number file1 file2\n"
-	    "       diff [-biwt] [-c | -e | -f | -h | -n | -u ] "
-	    "[-l] [-r] [-s] [-S name]\n            dir1 dir2\n");
+	    "       diff [-biwt] [-c | -e | -f | -n | -u ] "
+	    "[-r] [-s] [-S name]\n            dir1 dir2\n");
 
 	exit(2);
 }

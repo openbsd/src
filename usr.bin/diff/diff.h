@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.h,v 1.13 2003/07/04 17:37:07 millert Exp $	*/
+/*	$OpenBSD: diff.h,v 1.14 2003/07/04 17:50:24 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -60,7 +60,7 @@
 #define	D_NREVERSE	5	/* Reverse ed script with numbered
 				   lines and no trailing . */
 
-extern int	aflag, bflag, iflag, lflag, rflag, sflag, tflag, wflag;
+extern int	aflag, bflag, iflag, rflag, sflag, tflag, wflag;
 extern char	*start, *ifdefname;
 extern int	opt, wantelses, context, status, anychange;
 extern char	*tempfiles[], **diffargv;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.16 2003/07/04 02:54:36 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.17 2003/07/04 17:50:24 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -57,10 +57,7 @@ static const char sccsid[] = "@(#)diffdir.c	4.12 (Berkeley) 4/30/89";
  */
 #define	d_flags	d_ino
 
-#define	ONLY	1		/* Only in this directory */
-#define	SAME	2		/* Both places and same */
-#define	DIFFER	4		/* Both places and different */
-#define	DIRECT	8		/* Directory */
+#define	DIRECT	1		/* Directory */
 
 struct dir {
 	u_long d_ino;
@@ -69,22 +66,17 @@ struct dir {
 	char *d_entry;
 };
 
-int header;
 static int dirstatus;		/* exit status from diffdir */
-extern int status;
-char title[2 * BUFSIZ];
-char *etitle;
-char *prargs[] = {"pr", "-h", 0, "-f", 0, 0};
+static char title[2 * BUFSIZ];
 
 
 static struct dir *setupdir(char *);
 static int ascii(int);
 static void compare(struct dir *);
-static void calldiff(char *);
+static void calldiff(void);
 static void setfile(char **fpp, char **epp, char *file);
 static int useless(char *);
 static void only(struct dir *dp, int which);
-static void scanpr(struct dir *, int, char *, char *, char *, char *, char *);
 static int entcmp(const void *, const void *);
 
 void
@@ -96,8 +88,8 @@ diffdir(char **argv)
 
 	if (opt == D_IFDEF)
 		warnx("can't specify -I with directories");
-	if (opt == D_EDIT && (sflag || lflag))
-		warnx("warning: shouldn't give -s or -l with -e");
+	if (opt == D_EDIT && sflag)
+		warnx("warning: shouldn't give -s with -e");
 	strlcpy(title, "diff ", sizeof title);
 	for (i = 1; diffargv[i + 2]; i++) {
 		if (!strcmp(diffargv[i], "-"))
@@ -105,8 +97,6 @@ diffdir(char **argv)
 		strlcat(title, diffargv[i], sizeof title);
 		strlcat(title, " ", sizeof title);
 	}
-	for (etitle = title; *etitle; etitle++)
-		;
 	setfile(&file1, &efile1, file1);
 	setfile(&file2, &efile2, file2);
 	argv[0] = file1;
@@ -131,9 +121,7 @@ diffdir(char **argv)
 		else
 			cmp = strcmp(d1->d_entry, d2->d_entry);
 		if (cmp < 0) {
-			if (lflag)
-				d1->d_flags |= ONLY;
-			else if (opt == 0 || opt == 2)
+			if (opt == 0 || opt == 2)
 				only(d1, 1);
 			d1++;
 			dirstatus |= 1;
@@ -142,27 +130,13 @@ diffdir(char **argv)
 			d1++;
 			d2++;
 		} else {
-			if (lflag)
-				d2->d_flags |= ONLY;
-			else if (opt == 0 || opt == 2)
+			if (opt == 0 || opt == 2)
 				only(d2, 2);
 			d2++;
 			dirstatus |= 1;
 		}
 	}
-	if (lflag) {
-		scanpr(dir1, ONLY, "Only in %.*s", file1, efile1, 0, 0);
-		scanpr(dir2, ONLY, "Only in %.*s", file2, efile2, 0, 0);
-		scanpr(dir1, SAME, "Common identical files in %.*s and %.*s",
-		    file1, efile1, file2, efile2);
-		scanpr(dir1, DIFFER, "Binary files which differ in %.*s and %.*s",
-		    file1, efile1, file2, efile2);
-		scanpr(dir1, DIRECT, "Common subdirectories of %.*s and %.*s",
-		    file1, efile1, file2, efile2);
-	}
 	if (rflag) {
-		if (header && lflag)
-			printf("\f");
 		for (d1 = dir1; d1->d_entry; d1++) {
 			if ((d1->d_flags & DIRECT) == 0)
 				continue;
@@ -170,7 +144,7 @@ diffdir(char **argv)
 			    file1 + MAXPATHLEN - efile1);
 			strlcpy(efile2, d1->d_entry,
 			    file2 + MAXPATHLEN - efile2);
-			calldiff(0);
+			calldiff();
 		}
 	}
 	status = dirstatus;
@@ -196,30 +170,6 @@ setfile(char **fpp, char **epp, char *file)
 		*++cp = '\0';
 	}
 	*epp = cp;
-}
-
-static void
-scanpr(struct dir *dp, int test, char *title, char *file1, char *efile1,
-    char *file2, char *efile2)
-{
-	int titled = 0;
-
-	for (; dp->d_entry; dp++) {
-		if ((dp->d_flags & test) == 0)
-			continue;
-		if (titled == 0) {
-			if (header == 0)
-				header = 1;
-			else
-				printf("\n");
-			printf(title,
-			    efile1 - file1 - 1, file1,
-			    efile2 - file2 - 1, file2);
-			printf(":\n");
-			titled = 1;
-		}
-		printf("\t%s\n", dp->d_entry);
-	}
 }
 
 void
@@ -302,7 +252,7 @@ compare(struct dir *dp)
 				goto same;
 			if (fmt1 == S_IFDIR) {
 				dp->d_flags = DIRECT;
-				if (lflag || opt == D_EDIT)
+				if (opt == D_EDIT)
 					goto closem;
 				printf("Common subdirectories: %s and %s\n",
 				    file1, file2);
@@ -325,19 +275,13 @@ compare(struct dir *dp)
 				goto notsame;
 	}
 same:
-	if (sflag == 0)
-		goto closem;
-	if (lflag)
-		dp->d_flags = SAME;
-	else
+	if (sflag != 0)
 		printf("Files %s and %s are identical\n", file1, file2);
 	goto closem;
 notsame:
 	dirstatus |= 1;
 	if (!ascii(f1) || !ascii(f2)) {
-		if (lflag)
-			dp->d_flags |= DIFFER;
-		else if (opt == D_NORMAL || opt == D_CONTEXT || opt == D_UNIFIED)
+		if (opt == D_NORMAL || opt == D_CONTEXT || opt == D_UNIFIED)
 			printf("Binary files %s and %s differ\n",
 			    file1, file2);
 		goto closem;
@@ -345,19 +289,15 @@ notsame:
 	close(f1);
 	close(f2);
 	anychange = 1;
-	if (lflag)
-		calldiff(title);
-	else {
-		if (opt == D_EDIT) {
-			printf("ed - %s << '-*-END-*-'\n", dp->d_entry);
-			calldiff(0);
-		} else {
-			printf("%s%s %s\n", title, file1, file2);
-			calldiff(0);
-		}
-		if (opt == D_EDIT)
-			printf("w\nq\n-*-END-*-\n");
+	if (opt == D_EDIT) {
+		printf("ed - %s << '-*-END-*-'\n", dp->d_entry);
+		calldiff();
+	} else {
+		printf("%s%s %s\n", title, file1, file2);
+		calldiff();
 	}
+	if (opt == D_EDIT)
+		printf("w\nq\n-*-END-*-\n");
 	return;
 closem:
 	close(f1);
@@ -365,49 +305,20 @@ closem:
 }
 
 static void
-calldiff(char *wantpr)
+calldiff(void)
 {
-	int lstatus, lstatus2, pv[2];
+	int lstatus;
 	pid_t pid;
 
-	prargs[2] = wantpr;
 	fflush(stdout);
-	if (wantpr) {
-		snprintf(etitle, title + sizeof title - etitle,
-		    "%s %s", file1, file2);
-		pipe(pv);
-		pid = fork();
-		if (pid == -1)
-			errorx("No more processes");
-		if (pid == 0) {
-			close(0);
-			dup(pv[0]);
-			close(pv[0]);
-			close(pv[1]);
-			execv(_PATH_PR, prargs);
-			errorx("%s", _PATH_PR);
-		}
-	}
 	pid = fork();
 	if (pid == -1)
 		errorx("No more processes");
 	if (pid == 0) {
-		if (wantpr) {
-			close(1);
-			dup(pv[1]);
-			close(pv[0]);
-			close(pv[1]);
-		}
 		execv(_PATH_DIFF, diffargv);
 		error("%s", _PATH_DIFF);
 	}
-	if (wantpr) {
-		close(pv[0]);
-		close(pv[1]);
-	}
 	while (wait(&lstatus) != pid)
-		continue;
-	while (wait(&lstatus2) != -1)
 		continue;
 	/*
 		if ((lstatus >> 8) >= 2)
