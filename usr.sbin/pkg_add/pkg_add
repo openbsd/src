@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.115 2004/11/13 13:06:11 espie Exp $
+# $OpenBSD: pkg_add,v 1.116 2004/11/13 13:34:02 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -554,9 +554,9 @@ sub install_package
 	return ();
 }
 
-our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r);
+our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c);
 $opt_v = 0;
-getopts('avnrxIL:f:B:A:P:Q:',
+getopts('aqcvnrxIL:f:B:A:P:Q:',
 	{'v' => sub {++$opt_v;} });
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
@@ -607,6 +607,8 @@ if (defined $state->{destdir}) {
 
 $state->{conflict_list} = {};
 $state->{not} = $opt_n;
+$state->{quick} = $opt_q;
+$state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
 $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
