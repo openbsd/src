@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.3 1999/04/20 19:46:22 mickey Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.4 1999/06/22 18:01:12 mickey Exp $	*/
 
 #ifndef _MACHINE_PCB_H_
 #define _MACHINE_PCB_H_
@@ -7,7 +7,7 @@
 
 struct pcb {
 	struct trapframe pcb_tf;
-	/* would be nice to align to cache line size here XXX */
+	u_int64_t pcb_fpregs[HPPA_NFPREGS];	/* not included above */
 	int (*pcb_onfault) __P((void));	/* SW copy fault handler */
 	pa_space_t pcb_space;		/* copy pmap_space, for asm's sake */
 };
