@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.6 $"
+#ident "$Revision: 1.7 $"
 #endif
 
 #include "timedc.h"
@@ -46,6 +46,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 
+#include <poll.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -87,16 +88,13 @@ daydiff(char *hostname)
 {
 	int i;
 	int trials;
-	struct timeval tout, now;
-	fd_set ready;
+	struct timeval now;
+	struct pollfd pfd;
 	struct sockaddr_in from;
 	int fromlen;
 	unsigned long sec;
 
 
-	/* wait 2 seconds between 10 tries */
-	tout.tv_sec = 2;
-	tout.tv_usec = 0;
 	for (trials = 0; trials < 10; trials++) {
 		/* ask for the time */
 		sec = 0;
@@ -107,14 +105,13 @@ daydiff(char *hostname)
 		}
 
 		for (;;) {
-			FD_ZERO(&ready);
-			FD_SET(sock, &ready);
-			i = select(sock+1, &ready, (fd_set *)0,
-				   (fd_set *)0, &tout);
+			pfd.fd = sock;
+			pfd.events = POLLIN;
+			i = poll(&pfd, 1, 2 * 1000);
 			if (i < 0) {
 				if (errno == EINTR)
 					continue;
-				perror("select(date read)");
+				perror("poll(date read)");
 				return 0;
 			}
 			if (0 == i)
@@ -272,11 +269,10 @@ void
 msite(int argc, char *argv[])
 {
 	int cc;
-	fd_set ready;
 	struct sockaddr_in dest;
 	int i, length;
 	struct sockaddr_in from;
-	struct timeval tout;
+	struct pollfd pfd;
 	struct tsp msg;
 	struct servent *srvp;
 	char *tgtname;
@@ -317,12 +313,9 @@ msite(int argc, char *argv[])
 			continue;
 		}
 
-		tout.tv_sec = 15;
-		tout.tv_usec = 0;
-		FD_ZERO(&ready);
-		FD_SET(sock, &ready);
-		if (select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0,
-			   &tout)) {
+		pfd.fd = sock;
+		pfd.events = POLLIN;
+		if (poll(&pfd, 1, 15 * 1000)) {
 			length = sizeof(from);
 			cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 			      (struct sockaddr *)&from, &length);
@@ -421,10 +414,9 @@ tracing(int argc, char *argv[])
 	int onflag;
 	int length;
 	int cc;
-	fd_set ready;
+	struct pollfd pfd;
 	struct sockaddr_in dest;
 	struct sockaddr_in from;
-	struct timeval tout;
 	struct tsp msg;
 	struct servent *srvp;
 
@@ -462,11 +454,9 @@ tracing(int argc, char *argv[])
 		return;
 	}
 
-	tout.tv_sec = 5;
-	tout.tv_usec = 0;
-	FD_ZERO(&ready);
-	FD_SET(sock, &ready);
-	if (select(FD_SETSIZE, &ready, (fd_set *)0, (fd_set *)0, &tout)) {
+	pfd.fd = sock;
+	pfd.events = POLLIN;
+	if (poll(&pfd, 1, 5 * 1000)) {
 		length = sizeof(from);
 		cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 		    (struct sockaddr *)&from, &length);
