@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.h,v 1.1 1999/10/04 20:00:52 deraadt Exp $ */
+/*	$OpenBSD: ukc.h,v 1.2 2000/01/08 23:23:37 d Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -46,7 +46,8 @@
 #define I_UEXTRALOC	11
 #define	I_HISTLEN	12
 #define	CA_HISTORY	13
-#define NLENTRIES	14
+#define TZ_TZ		14
+#define NLENTRIES	15
 
 #ifdef UKC_MAIN
 struct nlist nl[] = {
@@ -64,6 +65,7 @@ struct nlist nl[] = {
 	{ "_uextraloc" },
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
+	{ "_tz" },
 };
 struct nlist knl[] = {
 	{ "_locnames" },
@@ -80,6 +82,7 @@ struct nlist knl[] = {
 	{ "_uextraloc" },
 	{ "_userconf_histlen" },
 	{ "_userconf_history" },
+	{ "_tz" },
 };
 int	maxdev = 0;
 int	totdev = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.1 1999/10/04 20:00:50 deraadt Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.2 2000/01/08 23:23:37 d Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -71,6 +71,7 @@ int Xlist __P((cmd_t *));
 int Xshow __P((cmd_t *));
 int Xexit __P((cmd_t *));
 int Xquit __P((cmd_t *));
+int Xtimezone __P((cmd_t *));
 
 #endif _CMD_H
 

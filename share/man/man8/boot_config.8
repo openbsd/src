@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_config.8,v 1.9 1999/07/09 13:35:36 aaron Exp $
+.\"	$OpenBSD: boot_config.8,v 1.10 2000/01/08 23:23:37 d Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson
 .\" All rights reserved.
@@ -56,6 +56,9 @@ using 430 buffers containing 1761280 bytes of memory
 User Kernel Config
 UKC>
 .Ed
+.Pp
+Changes made can be saved for the next reboot, by using
+.Xr config 8 .
 .Sh COMMANDS
 .Bl -tag -width "disable devno | dev" indent
 .It Ic add Ar dev
@@ -86,6 +89,11 @@ Show all devices for which attribute
 .Ar attr
 has the value
 .Ar val .
+.It Ic timezone Op Ar minuteswest Op Ar dst
+Change the
+.Va tz
+timezone structure.
+Without arguments, displays its current value.
 .It Ic verbose
 Toggle the autoconfig verbose variable.
 .El
@@ -201,10 +209,7 @@ commands.
 Continuing...
 mainbus0 (root)
 .Ed
-.Pp
 .Sh BUGS
 The add command is rather restricted, and might be expanded in the future.
-.Pp
-There is no way to save the configuration for next boot.
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>

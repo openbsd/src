@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.18 1999/10/04 20:04:31 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.19 2000/01/08 23:23:37 d Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/time.h>
 
 #include <dev/cons.h>
 
@@ -45,6 +46,7 @@ extern short cfroots[];
 extern int cfroots_size;
 extern int pv_size;
 extern short pv[];
+extern struct timezone tz;
 
 int userconf_base = 16;				/* Base for "large" numbers */
 int userconf_maxdev = -1;			/* # of used device slots   */
@@ -106,6 +108,7 @@ char *userconf_cmds[] = {
 	"lines",	"L",
 	"quit",		"q",
 	"show",		"s",
+	"timezone",	"t",
 	"verbose",	"v",
 	"?",		"h",
 	"",		 "",
@@ -643,6 +646,9 @@ userconf_help()
 		case 's':
 			printf("[attr [val]]        %s",
 			   "show attributes (or devices with an attribute)");
+			break;
+		case 't':
+			printf("[mins [dst]]        set timezone/dst");
 			break;
 		case 'v':
 			printf("                    toggle verbose booting");
@@ -1183,6 +1189,28 @@ userconf_parse(cmd)
 				userconf_show();
 			else
 				userconf_show_attr(c);
+			break;
+		case 't':
+			if (*c == '\0' || userconf_number(c, &a) == 0) {
+				if (*c != '\0') {
+				        tz.tz_minuteswest = a;
+					while (*c != '\n' && *c != '\t' && 
+					    *c != ' ' && *c != '\0')
+						c++;
+					while (*c == '\t' || *c == ' ')
+						c++;
+					if (*c != '\0' && 
+					    userconf_number(c, &a) == 0)
+						tz.tz_dsttime = a;
+					userconf_hist_cmd('t');
+					userconf_hist_int(tz.tz_minuteswest);
+					userconf_hist_int(tz.tz_dsttime);
+					userconf_hist_eoc();
+				}
+				printf("timezone = %d, dst = %d\n",
+				    tz.tz_minuteswest, tz.tz_dsttime);
+			} else 
+				printf("Unknown argument\n");
 			break;
 		case 'v':
 			autoconf_verbose = !autoconf_verbose;
