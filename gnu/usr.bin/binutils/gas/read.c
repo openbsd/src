@@ -4635,7 +4635,7 @@ next_char_of_string ()
 	    int i;
 
 	    for (i = 0, number = 0;
-		 isdigit (c) && i < 3;
+		 i < 3 && isdigit (c);
 		 c = *input_line_pointer++, i++)
 	      {
 		number = number * 8 + c - '0';
