@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.41 1997/07/23 20:36:24 kstailey Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.42 1997/07/25 19:41:16 mickey Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include "pathnames.h"
 #include "extern.h"
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -1536,7 +1536,7 @@ fatal(s)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 reply(int n, const char *fmt, ...)
 #else
 reply(n, fmt, va_alist)
@@ -1546,7 +1546,7 @@ reply(n, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -1562,7 +1562,7 @@ reply(n, fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 lreply(int n, const char *fmt, ...)
 #else
 lreply(n, fmt, va_alist)
@@ -1572,7 +1572,7 @@ lreply(n, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: fingerd.c,v 1.7 1997/07/23 20:36:22 kstailey Exp $";
+static char rcsid[] = "$Id: fingerd.c,v 1.8 1997/07/25 19:41:14 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,14 +193,14 @@ main(argc, argv)
 	exit(0);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 err(const char *fmt, ...)
 #else
 err(fmt, va_alist)
@@ -209,7 +209,7 @@ err(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.19 1997/07/23 20:36:34 kstailey Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.20 1997/07/25 19:41:20 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -699,14 +699,14 @@ fail:
  * connected to client, or older clients will hang waiting for that
  * connection first.
  */
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 error(const char *fmt, ...)
 #else
 error(fmt, va_alist)
@@ -717,7 +717,7 @@ error(fmt, va_alist)
 	va_list ap;
 	int len;
 	char *bp, buf[BUFSIZ];
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

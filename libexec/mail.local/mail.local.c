@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.15 1997/04/04 18:41:27 deraadt Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.16 1997/07/25 19:41:18 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -495,14 +495,14 @@ usage()
 	err(FATAL, "usage: mail.local [-lLH] [-f from] user ...");
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 err(int isfatal, const char *fmt, ...)
 #else
 err(isfatal, fmt)
@@ -512,7 +512,7 @@ err(isfatal, fmt)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
