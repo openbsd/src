@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.7 1996/07/18 15:37:10 shawn Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.8 1996/11/07 11:19:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2794,12 +2794,14 @@ usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 		/* grant the process IO access; only allowed if euid == 0 */
 	{
 
+#if (PCVT_NETBSD <= 100) || defined(COMPAT_10) || defined(COMPAT_11)
 #if PCVT_NETBSD > 9 || PCVT_FREEBSD >= 200
 		struct trapframe *fp = (struct trapframe *)p->p_md.md_regs;
 #elif PCVT_NETBSD || (PCVT_FREEBSD && PCVT_FREEBSD > 102)
 		struct trapframe *fp = (struct trapframe *)p->p_regs;
 #else
 		struct syscframe *fp = (struct syscframe *)p->p_regs;
+#endif
 #endif
 
 		if(suser(p->p_ucred, &p->p_acflag) != 0)
