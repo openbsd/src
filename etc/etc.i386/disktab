@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.16 2004/04/09 21:50:08 jmc Exp $
+#	$OpenBSD: disktab,v 1.17 2004/11/25 22:02:08 deraadt Exp $
 
 # Disk geometry and partition layout tables.
 # Key:
@@ -127,6 +127,6 @@ fuji513|Fujitsu M22XXXX: \
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=ramdisk:se#512:nt#2:ns#128:nc#16:\
-	:pa#3510:oa#0:ta=4.2BSD:ba#4096:fa#512:\
+	:pa#3800:oa#0:ta=4.2BSD:ba#4096:fa#512:\
 	:pb#0:ob#0:tb=swap:\
-	:pc#3510:oc#0:
+	:pc#3800:oc#0:
