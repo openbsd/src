@@ -854,6 +854,7 @@
 ./usr/include/kerberosV/hdb_asn1.h
 ./usr/include/kerberosV/hdb_err.h
 ./usr/include/kerberosV/heim_err.h
+./usr/include/kerberosV/k524_err.h
 ./usr/include/kerberosV/kadm5
 ./usr/include/kerberosV/kadm5/admin.h
 ./usr/include/kerberosV/kadm5/kadm5_err.h

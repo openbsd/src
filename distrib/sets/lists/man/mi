@@ -1897,6 +1897,8 @@
 ./usr/share/man/cat8/sparc64/eeprom.0
 ./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/sparc64/makedev.0
+./usr/share/man/cat8/sparc64/wsconscfg.0
+./usr/share/man/cat8/sparc64/wsconsctl.0
 ./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0

@@ -793,6 +793,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/hdb_asn1.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/hdb_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/heim_err.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/k524_err.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/admin.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/kerberosV/kadm5/kadm5_err.ph
