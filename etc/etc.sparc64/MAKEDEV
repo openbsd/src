@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.4 2002/01/04 16:59:18 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.15 2002/01/08 05:10:38 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.5 2002/01/12 21:08:59 jason Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.16 2002/01/08 06:00:15 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.37 2002/01/08 05:29:13 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.38 2002/01/12 21:09:14 jason Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -229,6 +229,26 @@ mouse*)name=${i##mouse-}
 	fi
 	RMlist="$RMlist mouse"
 	MKlist="$MKlist;ln -s $name mouse";;
+
+magma*)
+	case $U in
+	0)	offset=0  nam=m;;
+	1)	offset=16 nam=n;;
+	2)	offset=32 nam=o;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=$(($U*64))
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c 71 $(($offset+$n))
+		n=$(($n+1))
+	done
+	M bpp${nam}0 c 72 $(($offset+0))
+	M bpp${nam}1 c 72 $(($offset+1))
+	;;
+
 
 crypto)
 	M crypto c 75 0
