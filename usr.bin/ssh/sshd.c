@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.92 2000/03/16 20:56:15 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.93 2000/03/22 09:55:10 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -511,9 +511,6 @@ main(int ac, char **av)
 	/* Chdir to the root directory so that the current disk can be
 	   unmounted if desired. */
 	chdir("/");
-
-	/* Close connection cleanly after attack. */
-	cipher_attack_detected = packet_disconnect;
 
 	/* Start listening for a socket, unless started from inetd. */
 	if (inetd_flag) {

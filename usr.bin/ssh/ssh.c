@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.41 2000/02/28 19:51:58 markus Exp $");
+RCSID("$Id: ssh.c,v 1.42 2000/03/22 09:55:10 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -609,9 +609,6 @@ main(int ac, char **av)
 	/* We no longer need the host private key.  Clear it now. */
 	if (host_private_key_loaded)
 		RSA_free(host_private_key);	/* Destroys contents safely */
-
-	/* Close connection cleanly after attack. */
-	cipher_attack_detected = packet_disconnect;
 
 	/* Enable compression if requested. */
 	if (options.compression) {
