@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2004/10/22 10:15:42 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.19 2004/12/02 19:37:25 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -113,12 +113,16 @@ int allowaperture = 0;
 #ifndef	NBUF
 #define NBUF 0			/* Can be changed in config */
 #endif
+#ifndef	BUFCACHEPERCENT
+#define	BUFCACHEPERCENT	5	/* Can be changed in config */
+#endif
 #ifndef	BUFPAGES
 #define BUFPAGES 0		/* Can be changed in config */
 #endif
 
 int	nbuf = NBUF;
 int	bufpages = BUFPAGES;
+int	bufcachepercent = BUFCACHEPERCENT;
 
 vm_map_t exec_map;
 vm_map_t phys_map;
@@ -554,30 +558,25 @@ allocsys(caddr_t v)
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 
-#ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
-#endif
-
 	/*
 	 * Determine how many buffers to allocate.
 	 */
-	if (bufpages == 0) {
-		bufpages = (physmem / (100/BUFCACHEPERCENT));
-	}
+	if (bufpages == 0)
+		bufpages = physmem * bufcachepercent / 100;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
 	/* Restrict to at most 70% filled kvm */
-	if (nbuf > (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 7 / 10) {
-		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 7 / 10;
-	}
+	if (nbuf * MAXBSIZE >
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+		    MAXBSIZE * 7 / 10;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
-	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE) {
+	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
 		bufpages = nbuf * MAXBSIZE / PAGE_SIZE;
-	}
 
 	valloc(buf, struct buf, nbuf);
 
