@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 1997/07/08 21:55:39 niklas Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 1997/07/09 02:57:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -108,6 +108,8 @@ static struct opcode {
 	{ OPC_BR, "bgt", 1 },		/* 3F */
 };
 
+char *jsr_names[] = { "jmp", "jsr", "ret", "jsr_coroutine" };
+
 vm_offset_t 
 db_disasm(loc, flag)
 	vm_offset_t loc;
@@ -175,24 +177,8 @@ db_disasm(loc, flag)
 			}
 			break;
 		case 0x1a:
-			switch (disp >> 14) {
-			case 0:
-				db_printf("jmp\t$%d,($%d),0x%x", ra, rb,
-				    disp & 0x3fff);
-				break;
-			case 1:
-				db_printf("jsr\t$%d,($%d),0x%x", ra, rb,
-				    disp & 0x3fff);
-				break;
-			case 2:
-				db_printf("ret\t$%d,($%d),0x%x", ra, rb,
-				    disp & 0x3fff);
-				break;
-			case 3:
-				db_printf("jsr_coroutine\t$%d,($%d),0x%x", ra,
-				    rb, disp & 0x3fff);
-				break;
-			}
+			db_printf("%s\t$%d,($%d),0x%x", jsr_names[disp >> 14],
+			    ra, rb, disp & 0x3fff);
 			break;
 		default:
 			db_printf("\t$%d,0x%x($%d)", ra, disp, rb);
