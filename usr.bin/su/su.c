@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.52 2003/06/03 02:56:17 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.53 2003/06/20 18:15:35 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.52 2003/06/03 02:56:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.53 2003/06/20 18:15:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static const char rcsid[] = "$OpenBSD: su.c,v 1.52 2003/06/03 02:56:17 millert E
 
 char   *getloginname(void);
 char   *ontty(void);
-int	chshell(char *);
+int	chshell(const char *);
 int	verify_user(char *, struct passwd *, char *, login_cap_t *,
 	    auth_session_t *);
 void	usage(void);
@@ -364,14 +364,20 @@ verify_user(char *from, struct passwd *pwd, char *style,
 }
 
 int
-chshell(char *sh)
+chshell(const char *sh)
 {
 	char *cp;
+	int found = 0;
 
-	while ((cp = getusershell()) != NULL)
-		if (strcmp(cp, sh) == 0)
-			return (1);
-	return (0);
+	setusershell();
+	while ((cp = getusershell()) != NULL) {
+		if (strcmp(cp, sh) == 0) {
+			found = 1;
+			break;
+		}
+	}
+	endusershell();
+	return (found);
 }
 
 char *
