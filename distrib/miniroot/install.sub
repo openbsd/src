@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.225 2002/05/22 01:48:38 krw Exp $
+#	$OpenBSD: install.sub,v 1.226 2002/06/08 21:52:02 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1198,7 +1198,7 @@ __EOT
 	if [ "$_url_type" = "ftp" ]; then
 		# Need default values even if we proxy ftp...
 		[ "$_ftp_server_login" ] || _ftp_server_login=anonymous
-		[ "$_ftp_server_password" ] || _ftp_server_password=root@`hostname`.${FQDN}
+		[ "$_ftp_server_password" ] || _ftp_server_password=root@`hostname`.$FQDN
 
 		# Get login name, setting IFS to nothing so trailing or
 		# embedded blanks are preserved!
@@ -1219,7 +1219,7 @@ __EOT
 			done
 		else
 			# only used by ftp_list_files()
-			_ftp_server_password=root@`hostname`.${FQDN}
+			_ftp_server_password=root@`hostname`.$FQDN
 		fi
 		IFS=$_oifs
 	fi
@@ -2040,6 +2040,12 @@ __EOT
 	# user confirmation. This means DHCP supplied information will
 	# override a user supplied (or previous DHCP supplied) FQDN.
 	get_fqdn /tmp/resolv.conf /tmp/hosts
+
+	# Also add FQDN to myname
+	if [ "$FQDN" ]; then
+		sed "s/\\(.*\\)\$/\\1.${FQDN}/" /tmp/myname > /tmp/myname.new
+		mv /tmp/myname.new /tmp/myname
+	fi
 
 	resp=`route -n show | sed -ne '/^default */{
 		s///
