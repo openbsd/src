@@ -1,5 +1,4 @@
-#       $OpenBSD: list_floppy,v 1.1 1997/04/14 10:57:14 deraadt Exp $
+#       $OpenBSD: list_floppy,v 1.2 1997/04/16 21:37:43 deraadt Exp $
 
 COPY	${DESTDIR}/usr/mdec/boot	boot
-COPY	${OBJDIR}/bsd.gz		bsd.gz
-
+COPY	${OBJDIR}/bsd.gz		bsd
