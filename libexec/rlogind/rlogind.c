@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogind.c,v 1.31 2002/01/07 03:44:30 millert Exp $	*/
+/*	$OpenBSD: rlogind.c,v 1.32 2002/02/15 19:16:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: rlogind.c,v 1.31 2002/01/07 03:44:30 millert Exp $";
+static char *rcsid = "$OpenBSD: rlogind.c,v 1.32 2002/02/15 19:16:36 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -604,10 +604,12 @@ fatal(f, msg, syserr)
 	if (!confirmed)
 		*bp++ = '\01';		/* error indicator */
 	if (syserr)
-		len = sprintf(bp, "rlogind: %s: %s.\r\n",
+		len = snprintf(bp, buf + sizeof buf - bp,
+		    "rlogind: %s: %s.\r\n",
 		    msg, strerror(errno));
 	else
-		len = sprintf(bp, "rlogind: %s.\r\n", msg);
+		len = snprintf(bp, buf + sizeof buf - bp,
+		    "rlogind: %s.\r\n", msg);
 	(void) write(f, buf, bp + len - buf);
 	exit(1);
 }
