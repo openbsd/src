@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.67 1999/02/21 00:50:28 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.68 1999/02/24 12:34:46 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.67 1999/02/21 00:50:28 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.68 1999/02/24 12:34:46 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -2169,3 +2169,19 @@ depend:
 tags:
 .endif
 
+.PHONY: \
+   addsum all build build-depends checkpatch \
+   checksum clean clean-depends configure deinstall \
+   delete-package delete-package-links depend depends depends-list \
+   describe distclean do-build do-configure do-extract \
+   do-fetch do-install do-package do-patch extract \
+   fake-pkg fetch fetch-depends fetch-list fetch-list-one-pkg \
+   fetch-list-recursive install lib-depends makesum mirror-distfiles \
+   misc-depends package package-depends package-links package-name \
+   package-noinstall package-path patch plist post-build \
+   post-configure post-extract post-fetch post-install post-package \
+   post-patch pre-build pre-clean pre-configure pre-distclean \
+   pre-extract pre-fetch pre-install pre-package pre-patch \
+   pre-repackage print-depends-list print-package-depends readme \
+   readmes real-extract real-fetch real-install reinstall \
+   repackage run-depends tags uninstall
