@@ -177,6 +177,7 @@ clean:
 
 realclean:	clean
 	rm -f $(CONVERTERS)
+	rm -f *.cat1
 
 distclean:	realclean
 
