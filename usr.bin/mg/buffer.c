@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.27 2002/03/16 04:17:36 vincent Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.28 2002/03/16 19:30:29 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -264,6 +264,7 @@ makelist(void)
 	if (bclear(blp) != TRUE)
 		return NULL;
 	blp->b_flag &= ~BFCHG;		/* Blow away old.	 */
+	blp->b_flag |= BFREADONLY;
 
 	listbuf_ncol = ncol;		/* cache ncol for listbuf_goto_buffer */
 
