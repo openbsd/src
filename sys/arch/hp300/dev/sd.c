@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.17 1998/05/02 05:04:44 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.18 1998/05/02 05:36:58 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -442,8 +442,18 @@ sdgetinfo(dev)
 			lp->d_ncylinders = sc->sc_cyls;
 			lp->d_nsectors = lp->d_secperunit /
 			    (lp->d_ntracks * lp->d_ncylinders);
-			if (lp->d_nsectors < 1)
-				lp->d_nsectors = 1;	/* must be >= 1 */
+			/*
+			 * We must make sure d_nsectors is a sane value.
+			 * Adjust d_ncylinders to be reasonable if we 
+			 * monkey with d_nsectors.
+			 */
+			if (lp->d_nsectors < 1) {
+				lp->d_nsectors = 32;
+				lp->d_ncylinders = lp->d_secperunit /
+				    ( lp->d_ntracks * lp->d_nsectors);
+				if (lp->d_ncylinders == 0)
+					lp->d_ncylinders = sc->sc_cyls;
+			}
 		} else {
 			lp->d_ntracks = 20;
 			lp->d_ncylinders = 1;
