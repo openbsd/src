@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.16 2001/06/24 20:27:02 fgsch Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.17 2001/06/24 22:38:47 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1348,7 +1348,7 @@ vr_init(xsc)
 	struct vr_softc		*sc = xsc;
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct mii_data		*mii = &sc->sc_mii;
-	int			s;
+	int			s, i;
 
 	s = splimp();
 
@@ -1357,6 +1357,12 @@ vr_init(xsc)
 	 */
 	vr_stop(sc);
 	vr_reset(sc);
+
+	/*
+	 * Set our station address.
+	 */
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		CSR_WRITE_1(sc, VR_PAR0 + i, sc->arpcom.ac_enaddr[i]);
 
 	VR_CLRBIT(sc, VR_RXCFG, VR_RXCFG_RX_THRESH);
 	VR_SETBIT(sc, VR_RXCFG, VR_RXTHRESH_STORENFWD);
