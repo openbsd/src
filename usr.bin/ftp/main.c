@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 1997/01/25 21:42:33 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 1997/01/29 22:21:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 1997/01/25 21:42:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 1997/01/29 22:21:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -213,6 +213,8 @@ main(argc, argv)
 			if (!connected) {
 				printf("failed to connect to %s\n", host);
 				ret = 1;
+				argc--;
+				argv++;
 				goto bail;
 			}
 			*argv = p + 1;
