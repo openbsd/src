@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2001/09/11 20:10:00 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2001/09/12 00:23:33 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -578,7 +578,7 @@ cpu_startup()
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 	ppc_malloc_ok = 1;
 
-	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	printf("avail mem = %d\n", ptoa(uvmexp.free));
