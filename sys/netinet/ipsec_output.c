@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.7 2001/05/11 17:20:11 aaron Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.8 2001/05/20 08:34:27 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -291,6 +291,9 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
     struct ip6_hdr *ip6;
 #endif /* INET6 */
 
+    struct tdb_ident *tdbi;
+    struct m_tag *mtag;
+
     switch (tdb->tdb_dst.sa.sa_family)
     {
 #ifdef INET
@@ -332,6 +335,22 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
 	    return ENXIO;
     }
 
+    /* Add a record of what we've done to the packet */
+    mtag = m_tag_get(PACKET_TAG_IPSEC_DONE, sizeof(struct tdb_ident),
+		     M_NOWAIT);
+    if (mtag == NULL)
+    {
+	m_freem(m);
+	DPRINTF(("ipsp_process_done(): could not allocate packet tag\n"));
+	return ENOMEM;
+    }
+    tdbi = (struct tdb_ident *)(mtag + 1);
+    bcopy(&tdb->tdb_dst, &tdbi->dst, sizeof(union sockaddr_union));
+    tdbi->proto = tdb->tdb_sproto;
+    tdbi->spi = tdb->tdb_spi;
+
+    m_tag_prepend(m, mtag);
+
     /* If there's another (bundled) TDB to apply, do so */
     if (tdb->tdb_onext)
       return ipsp_process_packet(m, tdb->tdb_onext, tdb->tdb_dst.sa.sa_family,
@@ -353,8 +372,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
 	    NTOHS(ip->ip_len);
 	    NTOHS(ip->ip_off);
 
-	    return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
-			     NULL, NULL);
+	    return ip_output(m, NULL, NULL, IP_RAWOUTPUT, NULL, NULL);
 #endif /* INET */
 
 #ifdef INET6

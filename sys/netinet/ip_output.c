@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.90 2001/05/16 12:53:36 ho Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.91 2001/05/20 08:34:29 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -126,6 +126,8 @@ ip_output(m0, va_alist)
 #ifdef IPSEC
 	union sockaddr_union sdst;
 	u_int32_t sspi;
+	struct m_tag *mtag;
+	struct tdb_ident *tdbi;
 
 	struct inpcb *inp;
 	struct tdb *tdb;
@@ -280,11 +282,11 @@ ip_output(m0, va_alist)
 	if (inp && inp->inp_tdb_out &&
 	    inp->inp_tdb_out->tdb_dst.sa.sa_family == AF_INET &&
 	    !bcmp(&inp->inp_tdb_out->tdb_dst.sin.sin_addr,
-		  &ip->ip_dst, sizeof(ip->ip_dst)))
+	        &ip->ip_dst, sizeof(ip->ip_dst)))
 	        tdb = inp->inp_tdb_out;
 	else
 	        tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
-				      IPSP_DIRECTION_OUT, NULL, inp);
+		    IPSP_DIRECTION_OUT, NULL, inp);
 
 	if (tdb == NULL) {
 	        splx(s);
@@ -325,6 +327,21 @@ ip_output(m0, va_alist)
 			splx(s);
 			sproto = 0; /* mark as no-IPsec-needed */
 			goto done_spd;
+		}
+
+		/* Loop detection */
+		for (mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL); mtag;
+		     mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, mtag)) {
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			if (tdbi->spi == tdb->tdb_spi &&
+			    tdbi->proto == tdb->tdb_sproto &&
+			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
+			        sizeof(union sockaddr_union))) {
+				splx(s);
+				sproto = 0; /* mark as no-IPsec-needed */
+				DPRINTF(("ip_output: IPsec loop detected, skipping further IPsec processing.\n"));
+				goto done_spd;
+			}
 		}
 
 	        /* We need to do IPsec */
