@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcons_font.h,v 1.4 1997/08/08 08:25:25 downsj Exp $	*/
+/*	$OpenBSD: rcons_font.h,v 1.5 1998/03/20 05:18:30 todd Exp $	*/
 /* $NetBSD: rcons_font.h,v 1.3 1995/11/29 22:03:53 pk Exp $ */
 
 /*
@@ -6,8 +6,6 @@
  * which is either a small one (`fixed'), or a PROM compatible
  * largr one (`gallant19').
  */
-
-#ifdef RASTERCONS_SMALLFONT
 
 static u_int32_t font_fixed_0_pixels[] = {
 	0,0xf0000000,0xf0000000,0xf0000000,0xf0000000,0xf0000000,0xf0000000,0xf0000000,0xf0000000,0xf0000000,0,0,0
@@ -1138,7 +1136,7 @@ static struct raster font_fixed_255 = { 6, 13, 1, 1, font_fixed_255_pixels, 0 };
 #define null64 null32, null32
 #define null128 null64, null64
 
-struct raster_font console_font = {
+struct raster_font console_font_fixed = {
     6, 13, 10, RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,
     {
 	{ &font_fixed_0, 0, -10, 6, 0 },
@@ -1381,10 +1379,8 @@ struct raster_font console_font = {
 #undef null64
 #undef null128
 
-#else /* RASTERCONS_SMALLFONT */
-
 /*
- * PROM compatible fount
+ * PROM compatible font
  */
 static u_int32_t gallant19_0_pixels[] = { 0, 0, 0x7fe00000, 0x7fe00000,
 0x7fe00000, 0x7fe00000, 0x7fe00000, 0x7fe00000, 0x7fe00000, 0x7fe00000,
@@ -2791,4 +2787,3 @@ struct raster_font console_font = {
 #endif /*COLORFONT_CACHE*/
 };
 
-#endif /* RASTERCONS_SMALLFONT */
