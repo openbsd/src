@@ -3189,7 +3189,54 @@ API_EXPORT(void) ap_send_error_response(request_rec *r, int recursive_error)
  */
 static AP_SHA1_CTX baseCtx;
 
+int ap_create_etag_state(pool *pconf)
+{
+    u_int32_t rnd;
+    unsigned int u;
+    int fd;
+    const char* filename;
+
+    filename = ap_server_root_relative(pconf, "logs/etag-state");
+    ap_server_strip_chroot(filename, 0);
+
+    if ((fd = open(filename, O_CREAT|O_RDWR|O_NOFOLLOW, 0640)) == -1) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+          "could not create %s", filename);
+        exit(-1);
+    }
+
+    if (fchown(fd, -1, ap_group_id) == -1) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+          "could not chown %s", filename);
+        exit(-1);
+    }
+
+    /* generate random bytes and write them */
+    for (u = 0; u < 4; u++) {
+        rnd = arc4random();
+        if (write(fd, &rnd, sizeof(rnd)) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+              "could not write to %s", filename);
+            exit(-1);
+        }
+    }
+
+    close (fd);
+}
+
 API_EXPORT(void) ap_init_etag(pool *pconf)
+{
+    if (ap_read_etag_state(pconf) == -1) {
+        ap_create_etag_state(pconf);
+        if (ap_read_etag_state(pconf) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+              "could not initialize etag state");
+            exit(-1);
+        }
+    }			
+}
+
+int ap_read_etag_state(pool *pconf)
 {
     struct stat st;
     u_int32_t rnd;
@@ -3203,11 +3250,10 @@ API_EXPORT(void) ap_init_etag(pool *pconf)
     ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, NULL,
       "Initializing etag from %s", filename);
 
-    if ((fd = open(filename, O_CREAT|O_RDWR|O_NOFOLLOW, 0600)) == -1) {
-        ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
-          "could not open %s", filename);
-        exit(-1);
-    }
+    ap_server_strip_chroot(filename, 0);
+
+    if ((fd = open(filename, O_RDONLY|O_NOFOLLOW, 0640)) == -1)
+	return (-1);
 
     if (fstat(fd, &st) == -1) {
         ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
@@ -3216,42 +3262,13 @@ API_EXPORT(void) ap_init_etag(pool *pconf)
     }
 
     if (st.st_size != sizeof(rnd)*4) {
-        if (st.st_size > 0) {
-            ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, NULL,
-              "truncating %s from %qd bytes to 0", filename, st.st_size);
-        }
-
-        if (ftruncate(fd, 0) == -1) {
-            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
-              "could not truncate %s", filename);
-            exit(-1);
-        }
-
-        /* generate random bytes and write them */
-        for (u = 0; u < 4; u++) {
-            rnd = arc4random();
-            if (write(fd, &rnd, sizeof(rnd)) == -1) {
-                ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
-                  "could not write to %s", filename);
-                exit(-1);
-            }
-        }
-
-        /* rewind */
-        if (lseek(fd, 0, SEEK_SET) == -1) {
-            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
-              "could not seek on %s", filename);
-            exit(-1);
-        }
+	return (-1);
     }
 
     /* read 4 random 32-bit uints from file and update the hash context */
     for (u = 0; u < 4; u++) {
-        if (read(fd, &rnd, sizeof(rnd)) < sizeof(rnd)) {
-            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
-              "could not read from %s", filename);
-            exit(-1);
-        }
+        if (read(fd, &rnd, sizeof(rnd)) < sizeof(rnd))
+            return (-1);
 
         ap_SHA1Update_binary(&baseCtx, (const unsigned char *)&rnd,
           sizeof(rnd));
