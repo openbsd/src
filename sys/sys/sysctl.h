@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.52 2002/06/08 23:32:14 angelos Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.53 2002/06/09 04:26:40 angelos Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -172,7 +172,8 @@ struct ctlname {
 #define	KERN_NFILES		56	/* int: number of open files */
 #define	KERN_TTYCOUNT		57	/* int: number of tty devices */
 #define KERN_NUMVNODES		58	/* int: number of vnodes in use */
-#define	KERN_MAXID		59	/* number of valid kern ids */
+#define	KERN_MBSTAT		59	/* struct: mbuf statistics */
+#define	KERN_MAXID		60	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -234,6 +235,7 @@ struct ctlname {
 	{ "nfiles", CTLTYPE_INT }, \
 	{ "ttycount", CTLTYPE_INT }, \
 	{ "numvnodes", CTLTYPE_INT }, \
+	{ "mbstat", CTLTYPE_STRUCT }, \
 }
 
 /*
