@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.13 2000/04/10 18:40:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.14 2000/04/11 13:49:34 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -80,10 +80,13 @@ typedef struct hifn_desc {
 /*
  * Masks for the "length" field of struct hifn_desc.
  */
-#define HIFN_D_MASKDONEIRQ	(0x1 << 25)
-#define HIFN_D_LAST		(0x1 << 29)
-#define HIFN_D_JUMP		(0x1 << 30)
-#define HIFN_D_VALID		(0x1 << 31)
+#define HIFN_D_LENGTH		0x0000ffff	/* length bit mask */
+#define	HIFN_D_MASKDONEIRQ	0x02000000	/* mask the done interrupt */
+#define	HIFN_D_DESTOVER		0x04000000	/* destination overflow */
+#define	HIFN_D_OVER		0x08000000	/* overflow */
+#define	HIFN_D_LAST		0x20000000	/* last descriptor in chain */
+#define	HIFN_D_JUMP		0x40000000	/* jump descriptor */
+#define	HIFN_D_VALID		0x80000000	/* valid bit */
 
 /*
  * hifn_callback_t 
