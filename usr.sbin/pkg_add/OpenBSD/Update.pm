@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.26 2004/11/11 22:40:38 espie Exp $
+# $OpenBSD: Update.pm,v 1.27 2004/11/12 21:52:01 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -74,11 +74,18 @@ sub extract
 		return;
 	}
 	
+	my $d = dirname($file->{destdir}.$file->{name});
+	while (!-d $d && -e _) {
+		$d = dirname($d);
+	}
+	if (!-e _) {
+		File::Path::mkpath($d);
+	}
 	if ($state->{not}) {
-		print "extracting tempfile under ", dirname($file->{destdir}.$file->{name}), "\n";
+		print "extracting tempfile under $d\n";
 	} else {
 		my ($fh, $tempname) = tempfile('pkg.XXXXXXXXXX', 
-		    DIR => dirname($file->{destdir}.$file->{name}));
+		    DIR => $d);
 
 		print "extracting $tempname\n" if $state->{very_verbose};
 		$file->{name} = $tempname;
@@ -94,6 +101,7 @@ sub extract
 	my $fullname = $self->fullname();
 	my $destdir = $state->{destdir};
 
+	return if -e $destdir.$fullname;
 	print "new directory ", $destdir, $fullname, "\n" if $state->{very_verbose};
 	return if $state->{not};
 	File::Path::mkpath($destdir.$fullname);
