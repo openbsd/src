@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.281 2001/10/24 13:57:46 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.282 2001/11/26 16:38:37 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -378,10 +378,11 @@ sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 neo*	at pci? dev ? function ?		# NeoMagic 256AV/ZX
 cmpci*	at pci? dev ? function ?		# C-Media CMI8338/8738
 auich*	at pci? dev ? function ?		# i82801 ICH AC'97 audio
+autri*	at pci? dev ? function ?		# Trident 4D WAVE
+auvia*	at pci? dev ? function ?		# VIA VT82C686A
 clcs*	at pci? dev ? function ?		# CS4280 CrystalClear audio
 clct*	at pci? dev ? function ?		# CS4281 CrystalClear audio
 fms*	at pci? dev ? function ?		# Forte Media FM801
-auvia*	at pci? dev ? function ?		# VIA VT82C686A
 maestro* at pci? dev ? function ?		# ESS Maestro PCI
 yds*	at pci? dev ? function ?		# Yamaha YMF Audio
 emu*	at pci? dev ? function ?		# SB Live!
@@ -409,6 +410,7 @@ midi*	at sb?			# SB MPU401 port
 midi*	at opl?			# OPL FM synth
 midi*	at ym?
 midi*	at mpu?
+midi*	at autri?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -429,8 +431,9 @@ audio*	at cmpci?
 audio*	at clcs?
 audio*	at clct?
 audio*	at auich?
-audio*	at fms?
+audio*	at autri?
 audio*	at auvia?
+audio*	at fms?
 audio*	at uaudio?
 audio*	at maestro?
 audio*	at yds?

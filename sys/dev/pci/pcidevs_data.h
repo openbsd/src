@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.468 2001/11/23 04:17:58 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.469 2001/11/26 16:37:32 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3817,6 +3817,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
 	    "7016 10/100BaseTX",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
+	    "Trident 4D WAVE",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,

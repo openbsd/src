@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.118 2001/10/27 05:02:30 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.119 2001/11/26 16:38:37 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -96,6 +96,11 @@ file	dev/pci/auich.c			auich
 device	emu: audio, auconv, mulaw, ac97
 attach	emu at pci
 file	dev/pci/emuxki.c		emu
+
+# Trident 4DWAVE based PCI audio (including SiS 7018, ALi M5451)
+device	autri: audio, auconv, mulaw, ac97, midibus
+attach	autri at pci
+file	dev/pci/autri.c			autri
 
 # CS4280 CrystalClear Audio
 device	clcs: audio, auconv, mulaw, ac97
