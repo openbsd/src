@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.14 2000/04/05 04:29:59 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.15 2000/04/06 18:21:42 aaron Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ void *match, *aux;
 		case PCI_PRODUCT_ADP_398XU:
 		case PCI_PRODUCT_ADP_2944U:
 		case PCI_PRODUCT_ADP_2940UWPro:
-		case PCI_PRODUCT_ADP_AIC6915:
 		case PCI_PRODUCT_ADP_7895:
 			return (1);
 		}
