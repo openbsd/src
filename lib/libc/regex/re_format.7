@@ -1,4 +1,4 @@
-.\"	$OpenBSD: re_format.7,v 1.3 1997/04/28 20:44:58 millert Exp $
+.\"	$OpenBSD: re_format.7,v 1.4 1997/07/17 05:20:53 mickey Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -84,8 +84,8 @@ An atom followed by a bound
 containing two integers \fIi\fR and \fIj\fR matches
 a sequence of \fIi\fR through \fIj\fR (inclusive) matches of the atom.
 .PP
-An atom is a regular expression enclosed in `()' (matching a match for the
-regular expression),
+An \fIatom\fR is a regular expression enclosed in `()'
+(matching a match for the regular expression),
 an empty set of `()' (matching the null string)\(dg,
 a \fIbracket expression\fR (see below), `.'
 (matching any single character), `^' (matching the null string at the
