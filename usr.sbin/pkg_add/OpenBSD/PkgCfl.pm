@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.10 2004/12/28 13:54:13 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.11 2005/03/14 08:46:24 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -33,11 +33,15 @@ sub glob2re
 	return "^$_\$";
 }
 
-sub make_conflict_list($)
+sub make_conflict_list
 {
-	my ($class, $plist) = @_;
+	my ($class, $plist, $pkg) = @_;
 	my $l = [];
 	my $pkgname = $plist->pkgname();
+	if (!defined $pkgname) {
+		print STDERR "No pkgname in packing-list for $pkg\n";
+		return;
+	}
 	my $stem = OpenBSD::PackageName::splitstem($pkgname);
 
 	unless (defined $plist->{'no-default-conflict'}) {
@@ -92,7 +96,7 @@ sub fill_conflict_lists($)
 		my $plist = OpenBSD::PackingList->from_installation($pkg, 
 		    \&OpenBSD::PackingList::ConflictOnly);
 		next unless defined $plist;
-		$plist->{conflicts} = OpenBSD::PkgCfl->make_conflict_list($plist);
+		$plist->{conflicts} = OpenBSD::PkgCfl->make_conflict_list($plist, $pkg);
 		register($plist, $state);
 	}
 }
