@@ -1,4 +1,4 @@
-/*	$OpenBSD: twevar.h,v 1.4 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: twevar.h,v 1.5 2002/09/17 13:45:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -40,7 +40,8 @@ struct twe_ccb {
 	paddr_t			ccb_cmdpa;
 	TAILQ_ENTRY(twe_ccb)	ccb_link;
 	enum {
-		TWE_CCB_FREE, TWE_CCB_READY, TWE_CCB_QUEUED, TWE_CCB_PREQUEUED
+		TWE_CCB_FREE, TWE_CCB_READY, TWE_CCB_QUEUED, TWE_CCB_PREQUEUED,
+		TWE_CCB_DONE
 	} ccb_state;
 	int			ccb_length;
 	void			*ccb_data;
@@ -56,6 +57,9 @@ struct twe_softc {
 	struct device	sc_dev;
 	void		*sc_ih;
 	struct scsi_link sc_link;
+	struct lock	sc_lock;
+	struct proc	*sc_thread;
+	int		sc_thread_on;
 
 	bus_space_tag_t	iot;
 	bus_space_handle_t ioh;
@@ -68,6 +72,7 @@ struct twe_softc {
 	twe_queue_head	sc_free_ccb;
 	twe_queue_head	sc_ccbq;
 	twe_queue_head	sc_ccb2q;
+	twe_queue_head	sc_done_ccb;
 
 	struct timeout	sc_enqueue_tmo;
 
@@ -82,8 +87,8 @@ struct twe_softc {
 };
 
 /* XXX These have to become spinlocks in case of SMP */
-#define TWE_LOCK_TWE(sc) splbio()
-#define TWE_UNLOCK_TWE(sc, lock) splx(lock)
+#define TWE_LOCK(sc) splbio()
+#define TWE_UNLOCK(sc, lock) splx(lock)
 typedef int twe_lock_t;
 
 void	tweminphys(struct buf *bp);

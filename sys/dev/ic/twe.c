@@ -1,7 +1,7 @@
-/*	$OpenBSD: twe.c,v 1.17 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: twe.c,v 1.18 2002/09/17 13:45:38 mickey Exp $	*/
 
 /*
- * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
+ * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
  *
  * The SCSI emulation layer is derived from gdt(4) driver,
  * Copyright (c) 1999, 2000 Niklas Hallqvist. All rights reserved.
@@ -41,6 +41,8 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/kthread.h>
 
 #include <machine/bus.h>
 
@@ -83,8 +85,10 @@ void twe_dispose(struct twe_softc *sc);
 int  twe_cmd(struct twe_ccb *ccb, int flags, int wait);
 int  twe_start(struct twe_ccb *ccb, int wait);
 int  twe_complete(struct twe_ccb *ccb);
-int  twe_done(struct twe_softc *sc, int idx);
+int  twe_done(struct twe_softc *sc, struct twe_ccb *ccb);
 void twe_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
+void twe_thread_create(void *v);
+void twe_thread(void *v);
 
 
 static __inline struct twe_ccb *
@@ -179,6 +183,9 @@ twe_attach(sc)
 	TAILQ_INIT(&sc->sc_ccb2q);
 	TAILQ_INIT(&sc->sc_ccbq);
 	TAILQ_INIT(&sc->sc_free_ccb);
+	TAILQ_INIT(&sc->sc_done_ccb);
+
+	lockinit(&sc->sc_lock, PWAIT, "twelk", 0, 0);
 
 	pa = sc->sc_cmdmap->dm_segs[0].ds_addr +
 	    sizeof(struct twe_cmd) * (TWE_MAXCMDS - 1);;
@@ -357,14 +364,14 @@ twe_attach(sc)
 		cap->table_id = TWE_PARAM_UI + i;
 		cap->param_id = 4;
 		cap->param_size = 4;	/* 4 bytes */
-		lock = TWE_LOCK_TWE(sc);
+		lock = TWE_LOCK(sc);
 		if (twe_cmd(ccb, BUS_DMA_NOWAIT, 1)) {
-			TWE_UNLOCK_TWE(sc, lock);
+			TWE_UNLOCK(sc, lock);
 			printf("%s: error fetching capacity for unit %d\n",
 			    sc->sc_dev.dv_xname, i);
 			continue;
 		}
-		TWE_UNLOCK_TWE(sc, lock);
+		TWE_UNLOCK(sc, lock);
 
 		nunits++;
 		sc->sc_hdr[i].hd_present = 1;
@@ -397,6 +404,23 @@ twe_attach(sc)
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
+	kthread_create_deferred(twe_thread_create, sc);
+
+	return (0);
+}
+
+void
+twe_thread_create(void *v)
+{
+	struct twe_softc *sc = v;
+
+	if (kthread_create(twe_thread, sc, &sc->sc_thread,
+	    "%s", sc->sc_dev.dv_xname)) {
+		/* TODO disable twe */
+		printf("%s: failed to create kernel thread, disabled",
+		    sc->sc_dev.dv_xname);
+	}
+
 	TWE_DPRINTF(TWE_D_CMD, ("stat=%b ",
 	    bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS), TWE_STAT_BITS));
 	/*
@@ -412,8 +436,57 @@ twe_attach(sc)
 	bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
 	    TWE_CTRL_EINT | TWE_CTRL_ERDYI |
 	    /*TWE_CTRL_HOSTI |*/ TWE_CTRL_MCMDI);
+}
 
-	return 0;
+void
+twe_thread(v)
+	void *v;
+{
+	struct twe_softc *sc = v;
+	struct twe_ccb *ccb;
+	twe_lock_t lock;
+	u_int32_t status;
+	int err;
+
+	splbio();
+	for (;;) {
+		lock = TWE_LOCK(sc);
+
+		while (!TAILQ_EMPTY(&sc->sc_done_ccb)) {
+			ccb = TAILQ_FIRST(&sc->sc_done_ccb);
+			TAILQ_REMOVE(&sc->sc_done_ccb, ccb, ccb_link);
+			if ((err = twe_done(sc, ccb)))
+				printf("%s: done failed (%d)\n",
+				    sc->sc_dev.dv_xname, err);
+		}
+
+		status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
+		TWE_DPRINTF(TWE_D_INTR, ("twe_thread stat=%b ",
+		    status & TWE_STAT_FLAGS, TWE_STAT_BITS));
+		while (!(status & TWE_STAT_CQF) &&
+		    !TAILQ_EMPTY(&sc->sc_ccb2q)) {
+
+			ccb = TAILQ_LAST(&sc->sc_ccb2q, twe_queue_head);
+			TAILQ_REMOVE(&sc->sc_ccb2q, ccb, ccb_link);
+
+			ccb->ccb_state = TWE_CCB_QUEUED;
+			TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
+			bus_space_write_4(sc->iot, sc->ioh, TWE_COMMANDQUEUE,
+			    ccb->ccb_cmdpa);
+
+			status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
+			TWE_DPRINTF(TWE_D_INTR, ("twe_thread stat=%b ",
+			    status & TWE_STAT_FLAGS, TWE_STAT_BITS));
+		}
+
+		if (!TAILQ_EMPTY(&sc->sc_ccb2q))
+			bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
+			    TWE_CTRL_ECMDI);
+
+		TWE_UNLOCK(sc, lock);
+		sc->sc_thread_on = 1;
+		tsleep(sc, PWAIT, "twespank", 0);
+	}
 }
 
 int
@@ -546,8 +619,7 @@ twe_start(ccb, wait)
 		TWE_DPRINTF(TWE_D_CMD, ("prequeue(%d) ", cmd->cmd_index));
 		ccb->ccb_state = TWE_CCB_PREQUEUED;
 		TAILQ_INSERT_TAIL(&sc->sc_ccb2q, ccb, ccb_link);
-		bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
-		    TWE_CTRL_ECMDI);
+		wakeup(sc);
 		return 0;
 	}
 
@@ -584,15 +656,16 @@ twe_complete(ccb)
 {
 	struct twe_softc *sc = ccb->ccb_sc;
 	struct scsi_xfer *xs = ccb->ccb_xs;
-	u_int32_t	status;
 	int i;
 
 	for (i = 100 * (xs? xs->timeout : 35000); i--; DELAY(10)) {
-		status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
+		u_int32_t status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
+
 		/* TWE_DPRINTF(TWE_D_CMD,  ("twe_intr stat=%b ",
 		    status & TWE_STAT_FLAGS, TWE_STAT_BITS)); */
 
 		while (!(status & TWE_STAT_RQE)) {
+			struct twe_ccb *ccb1;
 			u_int32_t ready;
 
 			ready = bus_space_read_4(sc->iot, sc->ioh,
@@ -600,8 +673,10 @@ twe_complete(ccb)
 
 			TWE_DPRINTF(TWE_D_CMD, ("ready=%x ", ready));
 
-			if (!twe_done(sc, TWE_READYID(ready)) &&
-			    ccb->ccb_state == TWE_CCB_FREE) {
+			ccb1 = &sc->sc_ccbs[TWE_READYID(ready)];
+			TAILQ_REMOVE(&sc->sc_ccbq, ccb1, ccb_link);
+			ccb1->ccb_state = TWE_CCB_DONE;
+			if (!twe_done(sc, ccb1) && ccb1 == ccb) {
 				TWE_DPRINTF(TWE_D_CMD, ("complete\n"));
 				return 0;
 			}
@@ -616,21 +691,20 @@ twe_complete(ccb)
 }
 
 int
-twe_done(sc, idx)
+twe_done(sc, ccb)
 	struct twe_softc *sc;
-	int	idx;
+	struct twe_ccb *ccb;
 {
-	struct twe_ccb *ccb = &sc->sc_ccbs[idx];
 	struct twe_cmd *cmd = ccb->ccb_cmd;
 	struct scsi_xfer *xs = ccb->ccb_xs;
 	bus_dmamap_t	dmap;
 	twe_lock_t	lock;
 
-	TWE_DPRINTF(TWE_D_CMD, ("done(%d) ", idx));
+	TWE_DPRINTF(TWE_D_CMD, ("done(%d) ", cmd->cmd_index));
 
-	if (ccb->ccb_state != TWE_CCB_QUEUED) {
-		printf("%s: unqueued ccb %d ready\n",
-		    sc->sc_dev.dv_xname, idx);
+	if (ccb->ccb_state != TWE_CCB_DONE) {
+		printf("%s: undone ccb %d ready\n",
+		     sc->sc_dev.dv_xname, cmd->cmd_index);
 		return 1;
 	}
 
@@ -669,8 +743,7 @@ twe_done(sc, idx)
 		bus_dmamem_free(sc->dmat, ccb->ccb_2bseg, ccb->ccb_2nseg);
 	}
 
-	lock = TWE_LOCK_TWE(sc);
-	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
+	lock = TWE_LOCK(sc);
 	twe_put_ccb(ccb);
 
 	if (xs) {
@@ -678,10 +751,11 @@ twe_done(sc, idx)
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
-	TWE_UNLOCK_TWE(sc, lock);
+	TWE_UNLOCK(sc, lock);
 
 	return 0;
 }
+
 void
 tweminphys(bp)
 	struct buf *bp;
@@ -729,7 +803,7 @@ twe_scsi_cmd(xs)
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
-	int error, op, flags;
+	int error, op, flags, wait;
 	twe_lock_t lock;
 
 
@@ -834,7 +908,7 @@ twe_scsi_cmd(xs)
 	case WRITE_COMMAND:
 	case WRITE_BIG:
 	case SYNCHRONIZE_CACHE:
-		lock = TWE_LOCK_TWE(sc);
+		lock = TWE_LOCK(sc);
 
 		flags = 0;
 		if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
@@ -860,7 +934,7 @@ twe_scsi_cmd(xs)
 				    sc->sc_hdr[target].hd_size);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsi_done(xs);
-				TWE_UNLOCK_TWE(sc, lock);
+				TWE_UNLOCK(sc, lock);
 				return (COMPLETE);
 			}
 		}
@@ -876,7 +950,7 @@ twe_scsi_cmd(xs)
 		if ((ccb = twe_get_ccb(sc)) == NULL) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
-			TWE_UNLOCK_TWE(sc, lock);
+			TWE_UNLOCK(sc, lock);
 			return (COMPLETE);
 		}
 
@@ -890,11 +964,14 @@ twe_scsi_cmd(xs)
 		cmd->cmd_flags = flags;
 		cmd->cmd_io.count = htole16(blockcnt);
 		cmd->cmd_io.lba = htole32(blockno);
+		wait = xs->flags & SCSI_POLL;
+		if (!sc->sc_thread_on)
+			wait |= SCSI_POLL;
 
 		if ((error = twe_cmd(ccb, ((xs->flags & SCSI_NOSLEEP)?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), xs->flags & SCSI_POLL))) {
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK), wait))) {
 
-			TWE_UNLOCK_TWE(sc, lock);
+			TWE_UNLOCK(sc, lock);
 			TWE_DPRINTF(TWE_D_CMD, ("failed %p ", xs));
 			if (xs->flags & SCSI_POLL) {
 				xs->error = XS_TIMEOUT;
@@ -906,9 +983,9 @@ twe_scsi_cmd(xs)
 			}
 		}
 
-		TWE_UNLOCK_TWE(sc, lock);
+		TWE_UNLOCK(sc, lock);
 
-		if (xs->flags & SCSI_POLL)
+		if (wait & SCSI_POLL)
 			return (COMPLETE);
 		else
 			return (SUCCESSFULLY_QUEUED);
@@ -943,34 +1020,6 @@ twe_intr(v)
 	}
 #endif
 
-	if (status & TWE_STAT_CMDI) {
-
-		lock = TWE_LOCK_TWE(sc);
-		while (!(status & TWE_STAT_CQF) &&
-		    !TAILQ_EMPTY(&sc->sc_ccb2q)) {
-
-			ccb = TAILQ_LAST(&sc->sc_ccb2q, twe_queue_head);
-			TAILQ_REMOVE(&sc->sc_ccb2q, ccb, ccb_link);
-
-			ccb->ccb_state = TWE_CCB_QUEUED;
-			TAILQ_INSERT_TAIL(&sc->sc_ccbq, ccb, ccb_link);
-			bus_space_write_4(sc->iot, sc->ioh, TWE_COMMANDQUEUE,
-			    ccb->ccb_cmdpa);
-
-			rv++;
-
-			status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
-			TWE_DPRINTF(TWE_D_INTR, ("twe_intr stat=%b ",
-			    status & TWE_STAT_FLAGS, TWE_STAT_BITS));
-		}
-
-		if (TAILQ_EMPTY(&sc->sc_ccb2q))
-			bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
-			    TWE_CTRL_MCMDI);
-
-		TWE_UNLOCK_TWE(sc, lock);
-	}
-
 	if (status & TWE_STAT_RDYI) {
 
 		while (!(status & TWE_STAT_RQE)) {
@@ -986,14 +1035,26 @@ twe_intr(v)
 			ready = bus_space_read_4(sc->iot, sc->ioh,
 			    TWE_READYQUEUE);
 
-			if (!twe_done(sc, TWE_READYID(ready)))
-				rv++;
+			ccb = &sc->sc_ccbs[TWE_READYID(ready)];
+			TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
+			ccb->ccb_state = TWE_CCB_DONE;
+			TAILQ_INSERT_TAIL(&sc->sc_done_ccb, ccb, ccb_link);
+			rv++;
 
 			status = bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS);
 			TWE_DPRINTF(TWE_D_INTR, ("twe_intr stat=%b ",
 			    status & TWE_STAT_FLAGS, TWE_STAT_BITS));
 		}
 	}
+
+	if (status & TWE_STAT_CMDI) {
+		rv++;
+		bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
+		    TWE_CTRL_MCMDI);
+	}
+
+	if (rv)
+		wakeup(sc);
 
 	if (status & TWE_STAT_ATTNI) {
 		u_int16_t aen;
@@ -1007,7 +1068,7 @@ twe_intr(v)
 		bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
 		    TWE_CTRL_CATTNI);
 
-		lock = TWE_LOCK_TWE(sc);
+		lock = TWE_LOCK(sc);
 		for (aen = -1; aen != TWE_AEN_QEMPTY; ) {
 			u_int8_t param_buf[2 * TWE_SECTOR_SIZE + TWE_ALIGN - 1];
 			struct twe_param *pb = (void *) (((u_long)param_buf +
@@ -1036,7 +1097,7 @@ twe_intr(v)
 			aen = *(u_int16_t *)pb->data;
 			TWE_DPRINTF(TWE_D_AEN, ("aen=%x ", aen));
 		}
-		TWE_UNLOCK_TWE(sc, lock);
+		TWE_UNLOCK(sc, lock);
 	}
 
 	return rv;
