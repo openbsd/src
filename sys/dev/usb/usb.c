@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.19 2002/05/07 18:29:18 nate Exp $	*/
+/*	$OpenBSD: usb.c,v 1.20 2002/07/09 17:41:02 nate Exp $	*/
 /*	$NetBSD: usb.c,v 1.53 2001/01/23 17:04:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -448,7 +448,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		err = usbd_do_request_flags(sc->sc_bus->devices[addr],
 			  &ur->ucr_request, ptr, ur->ucr_flags,
-			  &ur->ucr_actlen);
+			  &ur->ucr_actlen, USBD_DEFAULT_TIMEOUT);
 		if (err) {
 			error = EIO;
 			goto ret;

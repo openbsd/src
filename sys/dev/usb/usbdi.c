@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.18 2002/05/07 18:29:19 nate Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.19 2002/07/09 17:41:02 nate Exp $ */
 /*	$NetBSD: usbdi.c,v 1.81 2001/04/17 00:05:33 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -861,20 +861,22 @@ usbd_start_next(usbd_pipe_handle pipe)
 usbd_status
 usbd_do_request(usbd_device_handle dev, usb_device_request_t *req, void *data)
 {
-	return (usbd_do_request_flags(dev, req, data, 0, 0));
+	return (usbd_do_request_flags(dev, req, data, 0, 0,
+				      USBD_DEFAULT_TIMEOUT));
 }
 
 usbd_status
 usbd_do_request_flags(usbd_device_handle dev, usb_device_request_t *req,
-		      void *data, u_int16_t flags, int *actlen)
+		      void *data, u_int16_t flags, int *actlen, u_int32_t timo)
 {
 	return (usbd_do_request_flags_pipe(dev, dev->default_pipe, req, 
-					   data, flags, actlen));
+					   data, flags, actlen, timo));
 }
 
 usbd_status
 usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
-	usb_device_request_t *req, void *data, u_int16_t flags, int *actlen)
+	usb_device_request_t *req, void *data, u_int16_t flags, int *actlen,
+	u_int32_t timeout)
 {
 	usbd_xfer_handle xfer;
 	usbd_status err;
@@ -893,7 +895,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	xfer = usbd_alloc_xfer(dev);
 	if (xfer == NULL)
 		return (USBD_NOMEM);
-	usbd_setup_default_xfer(xfer, dev, 0, USBD_DEFAULT_TIMEOUT, req,
+	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
 				data, UGETW(req->wLength), flags, 0);
 	xfer->pipe = pipe;
 	err = usbd_sync_transfer(xfer);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.20 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: ugen.c,v 1.21 2002/07/09 17:41:02 nate Exp $ */
 /*	$NetBSD: ugen.c,v 1.49 2001/10/24 22:31:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1220,7 +1220,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			}
 		}
 		err = usbd_do_request_flags(sc->sc_udev, &ur->ucr_request, 
-			  ptr, ur->ucr_flags, &ur->ucr_actlen);
+			  ptr, ur->ucr_flags, &ur->ucr_actlen,
+			  USBD_DEFAULT_TIMEOUT);
 		if (err) {
 			error = EIO;
 			goto ret;
