@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.29 2003/11/26 00:33:58 espie Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.30 2004/04/20 23:21:23 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.29 2003/11/26 00:33:58 espie Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.30 2004/04/20 23:21:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct passwd *pw = NULL, lpw;
+	struct passwd *pw = NULL, *opw, lpw;
 	int i, ch, pfd, tfd, dfd;
 	char *arg = NULL;
 	sigset_t fullset;
@@ -170,12 +170,16 @@ main(int argc, char *argv[])
 		if (!pw_scan(arg, pw, NULL))
 			exit(1);
 	}
+	if ((opw = pw_dup(pw)) == NULL)
+		err(1, NULL);
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
 		char tempname[] = _PATH_VARTMP "pw.XXXXXXXXXX";
 		int edit_status;
 
+		if ((pw = pw_dup(pw)) == NULL)
+			pw_error(NULL, 1, 1);
 		dfd = mkstemp(tempname);
 		if (dfd == -1 || fcntl(dfd, F_SETFD, 1) == -1)
 			pw_error(tempname, 1, 1);
@@ -233,10 +237,13 @@ main(int argc, char *argv[])
 #endif	/* YP */
 	{
 		/* Copy the passwd file to the lock file, updating pw. */
-		pw_copy(pfd, tfd, pw);
+		pw_copy(pfd, tfd, pw, opw);
+
+		/* If username changed we need to rebuild the entire db. */
+		arg = !strcmp(opw->pw_name, pw->pw_name) ? pw->pw_name : NULL;
 
 		/* Now finish the passwd file update. */
-		if (pw_mkdb(pw->pw_name, 0) == -1)
+		if (pw_mkdb(arg, 0) == -1)
 			pw_error(NULL, 0, 1);
 	}
 

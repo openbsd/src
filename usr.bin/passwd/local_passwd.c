@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.31 2004/03/10 21:23:17 millert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.32 2004/04/20 23:21:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.31 2004/03/10 21:23:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.32 2004/04/20 23:21:23 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ void kbintr(int);
 int
 local_passwd(char *uname, int authenticated)
 {
-	struct passwd *pw;
+	struct passwd *pw, *opw;
 	login_cap_t *lc;
 	sigset_t fullset;
 	time_t period;
@@ -76,6 +76,10 @@ local_passwd(char *uname, int authenticated)
 		if (!use_yp)
 #endif
 		warnx("unknown user %s.", uname);
+		return(1);
+	}
+	if ((opw = pw_dup(pw)) == NULL) {
+		warn(NULL);
 		return(1);
 	}
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
@@ -133,7 +137,8 @@ local_passwd(char *uname, int authenticated)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/* Update master.passwd file and rebuild spwd.db. */
-	pw_copy(pfd, tfd, pw);
+	pw_copy(pfd, tfd, pw, opw);
+	free(opw);
 	if (pw_mkdb(uname, pwflags) < 0)
 		pw_error(NULL, 0, 1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_expire.c,v 1.7 2003/09/02 16:55:32 markus Exp $	*/
+/*	$OpenBSD: check_expire.c,v 1.8 2004/04/20 23:21:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -51,14 +51,10 @@
 
 #include "util.h"
 
-static char *pwd_update(struct passwd *);
+static char *pwd_update(const struct passwd *, const struct passwd *);
 
 int
-login_check_expire(back, pwd, class, lastchance)
-	FILE *back;
-	struct passwd *pwd;
-	char *class;
-	int lastchance;
+login_check_expire(FILE *back, struct passwd *pwd, char *class, int lastchance)
 {
 	auth_session_t *as;
 	login_cap_t *lc;
@@ -132,7 +128,7 @@ login_check_expire(back, pwd, class, lastchance)
 				 */
 				npwd = pw_dup(pwd);
 				npwd->pw_change = 1;
-				p = pwd_update(npwd);
+				p = pwd_update(npwd, pwd);
 				memset(npwd->pw_passwd, 0,
 				    strlen(npwd->pw_passwd));
 				free(npwd);
@@ -164,8 +160,7 @@ login_check_expire(back, pwd, class, lastchance)
 }
 
 static char *
-pwd_update(pwd)
-	struct passwd *pwd;
+pwd_update(const struct passwd *pwd, const struct passwd *opwd)
 {
 	int tfd, pfd;
 
@@ -184,7 +179,7 @@ pwd_update(pwd)
 		return(strerror(errno));
 	}
 
-	pw_copy(pfd, tfd, pwd);
+	pw_copy(pfd, tfd, pwd, opwd);
 	if (pw_mkdb(pwd->pw_name, 0) < 0) {
 		pw_abort();
 		return("unable to update password database");
