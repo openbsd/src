@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2000/10/27 00:16:17 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.51 2001/01/18 23:00:42 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -198,7 +198,22 @@ where = 3;
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
 
-#if 1
+	/* map all of possible physical memory, ick */
+	battable[0x1].batl = BATL(0x10000000, BAT_M);
+	battable[0x1].batu = BATU(0x10000000);
+	battable[0x2].batl = BATL(0x20000000, BAT_M);
+	battable[0x2].batu = BATU(0x20000000);
+	battable[0x3].batl = BATL(0x30000000, BAT_M);
+	battable[0x3].batu = BATU(0x30000000);
+	battable[0x4].batl = BATL(0x40000000, BAT_M);
+	battable[0x4].batu = BATU(0x40000000);
+	battable[0x5].batl = BATL(0x50000000, BAT_M);
+	battable[0x5].batu = BATU(0x50000000);
+	battable[0x6].batl = BATL(0x60000000, BAT_M);
+	battable[0x6].batu = BATU(0x60000000);
+	battable[0x7].batl = BATL(0x70000000, BAT_M);
+	battable[0x7].batu = BATU(0x70000000);
+
 	battable[0x8].batl = BATL(0x80000000, BAT_I);
 	battable[0x8].batu = BATU(0x80000000);
 	battable[0x9].batl = BATL(0x90000000, BAT_I);
@@ -206,15 +221,6 @@ where = 3;
 	battable[0xa].batl = BATL(0xa0000000, BAT_I);
 	battable[0xa].batu = BATU(0xa0000000);
 	segment8_a_mapped = 1;
-#if 0
-	if(system_type == POWER4e) {
-		/* Map ISA I/O */
-		addbatmap(MPC106_V_ISA_IO_SPACE, MPC106_P_ISA_IO_SPACE, BAT_I);
-		battable[1].batl = BATL(0xbfffe000, BAT_I);
-		battable[1].batu = BATU(0xbfffe000);
-	}
-#endif
-#endif
 
 	/*
 	 * Now setup fixed bat registers
