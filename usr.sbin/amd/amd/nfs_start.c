@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.13 2003/06/02 23:36:51 millert Exp $
+ *	$Id: nfs_start.c,v 1.14 2004/10/04 15:19:04 millert Exp $
  */
 
 #include "am.h"
@@ -41,8 +41,8 @@
 #include <unistd.h>
 #include <setjmp.h>
 
-extern jmp_buf select_intr;
-extern int select_intr_valid;
+extern jmp_buf poll_intr;
+extern int poll_intr_valid;
 
 #ifdef HAS_TFS
 /*
@@ -61,7 +61,6 @@ SVCXPRT *nfsxprt, *lnfsxprt;
 SVCXPRT *amqp, *lamqp;
 
 extern int fwd_sock;
-int max_fds = -1;
 
 #ifdef DEBUG
 /*
@@ -99,14 +98,14 @@ checkup(void)
 #endif /* DEBUG */
 
 static int
-do_select(sigset_t *mask, sigset_t *omask, int fds, fd_set *fdp,
-    struct timeval *tvp)
+do_poll(sigset_t *mask, sigset_t *omask, struct pollfd *pfd, int nfds,
+    int timeout)
 {
 	int sig;
-	int nsel;
+	int nready;
 
-	if ((sig = setjmp(select_intr))) {
-		select_intr_valid = 0;
+	if ((sig = setjmp(poll_intr))) {
+		poll_intr_valid = 0;
 		/* Got a signal */
 		switch (sig) {
 		case SIGINT:
@@ -115,10 +114,10 @@ do_select(sigset_t *mask, sigset_t *omask, int fds, fd_set *fdp,
 			reschedule_timeout_mp();
 			break;
 		}
-		nsel = -1;
+		nready = -1;
 		errno = EINTR;
 	} else {
-		select_intr_valid = 1;
+		poll_intr_valid = 1;
 		/*
 		 * Invalidate the current clock value
 		 */
@@ -132,9 +131,7 @@ do_select(sigset_t *mask, sigset_t *omask, int fds, fd_set *fdp,
 		/*
 		 * Wait for input
 		 */
-		nsel = select(fds, fdp, NULL, NULL,
-		    tvp->tv_sec ? tvp : (struct timeval *) 0);
-
+		nready = poll(pfd, nfds, timeout ? timeout * 1000 : INFTIM);
 	}
 
 	sigprocmask(SIG_BLOCK, mask, NULL);
@@ -146,7 +143,7 @@ do_select(sigset_t *mask, sigset_t *omask, int fds, fd_set *fdp,
 		mapc_reload();
 		do_mapc_reload = clocktime() + ONE_HOUR;
 	}
-	return nsel;
+	return nready;
 }
 
 /*
@@ -156,29 +153,12 @@ do_select(sigset_t *mask, sigset_t *omask, int fds, fd_set *fdp,
 static int
 rpc_pending_now()
 {
-	struct timeval tvv;
-	int nsel;
-	fd_set *fdsp;
-	int fdsn;
+	struct pollfd pfd[1];
 
-	fdsn = howmany(max_fds+1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
-		return(0);
-	memset(fdsp, 0, fdsn);
-	FD_SET(fwd_sock, fdsp);
+	pfd[0].fd = fwd_sock;
+	pfd[0].events = POLLIN;
 
-	tvv.tv_sec = tvv.tv_usec = 0;
-	nsel = select(max_fds+1, fdsp, NULL, NULL, &tvv);
-	if (nsel < 1) {
-		free(fdsp);
-		return(0);
-	}
-	if (FD_ISSET(fwd_sock, fdsp)) {
-		free(fdsp);
-		return(1);
-	}
-	free(fdsp);
-	return(0);
+	return (poll(pfd, 1, 0) == 1);
 }
 
 static serv_state
@@ -203,39 +183,14 @@ run_rpc(void)
 	 * been unmounted.
 	 */
 	while ((int)amd_state <= (int)Finishing) {
-		struct timeval tvv;
-		int nsel;
+		struct pollfd *pfd;
+		int nready, timeout;
 		time_t now;
-#ifdef RPC_4
-#ifdef __OpenBSD__
-		extern int __svc_fdsetsize;
-		extern fd_set *__svc_fdset;
-		fd_set *fdsp;
-		int fdsn = __svc_fdsetsize;
-		int bytes;
 
-		if (fwd_sock > fdsn)
-			fdsn = fwd_sock;
-		bytes = howmany(fdsn, NFDBITS) * sizeof(fd_mask);
-
-		fdsp = malloc(bytes);
-		memset(fdsp, 0, bytes);
-		memcpy(fdsp, __svc_fdset, bytes);
-		FD_SET(fwd_sock, fdsp);
-#else
-		fd_set *fdsp;
-		int fdsn = FDSETSIZE;
-		bytes = howmany(fdsn, NFDBITS) * sizeof(fd_mask);
-		fdsp = malloc(bytes);
-		memcpy(fdsp, &svc_fdset, bytes);
-		FD_SET(fwd_sock, fdsp);
-#endif
-#else
-		fd_set readfds;
-		FD_ZERO(&readfds);
-		readfds.fds_bits[0] = svc_fds;
-		FD_SET(fwd_sock, &readfds);
-#endif /* RPC_4 */
+		pfd = xmalloc(sizeof(*pfd) * (svc_max_pollfd + 1));
+		memcpy(&pfd[1], svc_pollfd, sizeof(*pfd) * svc_max_pollfd);
+		pfd[0].fd = fwd_sock;
+		pfd[0].events = POLLIN;
 
 #ifdef DEBUG
 		checkup();
@@ -250,11 +205,10 @@ run_rpc(void)
 		if (next_softclock <= now) {
 			if (amd_state == Finishing)
 				umount_exported();
-			tvv.tv_sec = softclock();
+			timeout = softclock();
 		} else {
-			tvv.tv_sec = next_softclock - now;
+			timeout = next_softclock - now;
 		}
-		tvv.tv_usec = 0;
 
 		if (amd_state == Finishing && last_used_map < 0) {
 			flush_mntfs();
@@ -263,29 +217,28 @@ run_rpc(void)
 		}
 
 #ifdef DEBUG
-		if (tvv.tv_sec)
-			dlog("Select waits for %ds", tvv.tv_sec);
+		if (timeout)
+			dlog("Poll waits for %ds", timeout);
 		else
-			dlog("Select waits for Godot");
+			dlog("Poll waits for Godot");
 #endif /* DEBUG */
 
-		nsel = do_select(&mask, &omask, fdsn + 1, fdsp, &tvv);
+		nready = do_poll(&mask, &omask, pfd, svc_max_pollfd + 1, timeout);
 
-
-		switch (nsel) {
+		switch (nready) {
 		case -1:
 			if (errno == EINTR) {
 #ifdef DEBUG
-				dlog("select interrupted");
+				dlog("poll interrupted");
 #endif /* DEBUG */
 				continue;
 			}
-			perror("select");
+			perror("poll");
 			break;
 
 		case 0:
 #ifdef DEBUG
-			/*dlog("select returned 0");*/
+			/*dlog("poll returned 0");*/
 #endif /* DEBUG */
 			break;
 
@@ -293,32 +246,25 @@ run_rpc(void)
 			/* Read all pending NFS responses at once to avoid
 			   having responses queue up as a consequence of
 			   retransmissions. */
-			if (FD_ISSET(fwd_sock, fdsp)) {
-				FD_CLR(fwd_sock, fdsp);
-				--nsel;
+			if (pfd[0].revents & (POLLIN|POLLHUP)) {
+				pfd[0].fd = -1;
+				pfd[0].events = pfd[0].revents = 0;
+				--nready;
 				do {
 					fwd_reply();
 				} while (rpc_pending_now() > 0);
 			}
 
-			if (nsel) {
+			if (nready) {
 				/*
 				 * Anything left must be a normal
 				 * RPC request.
 				 */
-#ifdef RPC_4
-#ifdef __OpenBSD__
-				svc_getreqset2(fdsp, fdsn);
-#else
-				svc_getreqset(fdsp);
-#endif
-#else
-				svc_getreq(readfds.fds_bits[0]);
-#endif /* RPC_4 */
+				svc_getreq_poll(pfd + 1, nready);
 			}
 			break;
 		}
-		free(fdsp);
+		free(pfd);
 	}
 
 	sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -405,18 +351,6 @@ mount_automounter(pid_t ppid)
 	 */
 	if (fwd_init() != 0)
 		return 3;
-
-	/*
-	 * One or other of so, fwd_sock
-	 * must be the highest fd on
-	 * which to select.
-	 */
-	if (so > max_fds)
-		max_fds = so;
-	if (so2 > max_fds)
-		max_fds = so2;
-	if (fwd_sock > max_fds)
-		max_fds = fwd_sock;
 
 	/*
 	 * Construct the root automount node

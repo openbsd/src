@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amd.c	8.1 (Berkeley) 6/6/93
- *	$Id: amd.c,v 1.12 2003/06/02 23:36:51 millert Exp $
+ *	$Id: amd.c,v 1.13 2004/10/04 15:19:04 millert Exp $
  */
 
 #ifndef lint
@@ -78,8 +78,8 @@ struct in_addr myipaddr;		/* (An) IP address of this host */
 serv_state amd_state;
 struct amd_stats amd_stats;		/* Server statistics */
 time_t do_mapc_reload = 0;		/* mapc_reload() call required? */
-jmp_buf select_intr;
-int select_intr_valid;
+jmp_buf poll_intr;
+int poll_intr_valid;
 int orig_umask;
 
 /*
@@ -107,8 +107,8 @@ sigterm(int sig)
 		plog(XLOG_WARNING, "WARNING: automounter going down on signal %d", sig);
 		break;
 	}
-	if (select_intr_valid)
-		longjmp(select_intr, sig);
+	if (poll_intr_valid)
+		longjmp(poll_intr, sig);
 }
 
 /*
