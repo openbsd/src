@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.13 2001/07/15 13:10:49 assar Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.14 2001/08/26 14:31:36 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -40,8 +40,8 @@ MVME88K=	$S/arch/mvme88k
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmvme88k -Dm88k
-CWARNFLAGS=	-Wall -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main # -Wstrict-prototypes
+CWARNFLAGS=	-Wall -Werror -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main -Wstrict-prototypes
 CMACHFLAGS=
 COPTS?=		-O
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS}
