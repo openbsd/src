@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.62 2002/01/23 17:12:36 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.63 2002/01/27 01:56:31 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -888,7 +888,8 @@ ipsec_validate_transform_id (u_int8_t proto, u_int8_t transform_id)
 	transform_id < IPSEC_AH_MD5 || transform_id > IPSEC_AH_DES ? -1 : 0;
     case IPSEC_PROTO_IPSEC_ESP:
       return transform_id < IPSEC_ESP_DES_IV64
-	|| transform_id > IPSEC_ESP_AES ? -1 : 0;
+	|| (transform_id > IPSEC_ESP_AES && transform_id < IPSEC_ESP_AES_MARS)
+	|| transform_id > IPSEC_ESP_AES_TWOFISH ? -1 : 0;
     case IPSEC_PROTO_IPCOMP:
       return transform_id < IPSEC_IPCOMP_OUI
 	|| transform_id > IPSEC_IPCOMP_V42BIS ? -1 : 0;

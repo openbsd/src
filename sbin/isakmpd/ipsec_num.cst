@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.7 2000/10/16 23:27:55 niklas Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.8 2002/01/27 01:56:31 ho Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -216,6 +216,11 @@ IPSEC_ESP
   RC4					10
   NULL					11
   AES                                   12
+  AES_MARS				249
+  AES_RC6				250
+  AES_RIJNDAEL				251
+  AES_SERPENT				252
+  AES_TWOFISH				253
 .
 
 # IPSEC IPCOMP transform IDs
