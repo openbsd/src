@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.4 2001/06/12 15:40:31 niklas Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.5 2001/06/23 01:54:48 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -95,6 +95,8 @@
 #include <netinet/if_ether.h>
 #endif
 
+#include <net/if_ieee80211.h>
+
 #include <machine/bus.h>
 
 #include <dev/pci/pcireg.h>
@@ -182,6 +184,10 @@ wi_pci_attach(parent, self, aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
+	/* Make sure interrupts are disabled. */
+	CSR_WRITE_2(sc, WI_INT_EN, 0);
+	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
+
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
@@ -199,10 +205,6 @@ wi_pci_attach(parent, self, aux)
 		return;
 	}
 	printf(": %s", intrstr);
-
-	/* Make sure interrupts are disabled. */
-	CSR_WRITE_2(sc, WI_INT_EN, 0);
-	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
 
 	/*
 	 * Setup the PLX chip for level interrupts and config index 1
