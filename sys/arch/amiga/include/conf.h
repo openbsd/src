@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 1996/05/04 09:28:38 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 1996/05/07 10:12:22 niklas Exp $	*/
 /*	$NetBSD: conf.h,v 1.1 1996/04/21 21:13:16 veego Exp $	*/
 
 /*
@@ -86,13 +86,6 @@ cdev_decl(view);
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
-
-/* open, close, read, ioctl */
-#define	cdev_ss_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
 #define	cdev_view_init(c,n) { \
