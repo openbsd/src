@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.23 2001/07/03 21:28:03 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.24 2001/07/19 16:46:27 millert Exp $	*/
 
 /*
  * execute command tree
@@ -78,7 +78,6 @@ execute(t, flags)
 {
 	int i;
 	volatile int rv = 0;
-	volatile int rv_prop = 0; /* rv being propogated or newly generated? */
 	int pv[2];
 	char ** volatile ap;
 	char *s, *cp;
@@ -160,7 +159,6 @@ execute(t, flags)
 
 	  case TPAREN:
 		rv = execute(t->left, flags|XFORK);
-		rv_prop = 1;
 		break;
 
 	  case TPIPE:
@@ -279,7 +277,6 @@ execute(t, flags)
 			rv = execute(t->right, flags & XERROK);
 		else
 			flags |= XERROK;
-		rv_prop = 1;
 		break;
 
 	  case TBANG:
@@ -328,7 +325,6 @@ execute(t, flags)
 			}
 		}
 		rv = 0; /* in case of a continue */
-		rv_prop = 1;
 		if (t->type == TFOR) {
 			while (*ap != NULL) {
 				setstr(global(t->str), *ap++, KSH_UNWIND_ERROR);
@@ -340,7 +336,6 @@ execute(t, flags)
 			for (;;) {
 				if (!(cp = do_selectargs(ap, is_first))) {
 					rv = 1;
-					rv_prop = 0;
 					break;
 				}
 				is_first = FALSE;
@@ -372,7 +367,6 @@ execute(t, flags)
 		rv = 0; /* in case of a continue */
 		while ((execute(t->left, XERROK) == 0) == (t->type == TWHILE))
 			rv = execute(t->right, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TIF:
@@ -382,7 +376,6 @@ execute(t, flags)
 		rv = execute(t->left, XERROK) == 0 ?
 			execute(t->right->left, flags & XERROK) :
 			execute(t->right->right, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TCASE:
@@ -395,12 +388,10 @@ execute(t, flags)
 		break;
 	  Found:
 		rv = execute(t->left, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TBRACE:
 		rv = execute(t->left, flags & XERROK);
-		rv_prop = 1;
 		break;
 
 	  case TFUNCT:
@@ -412,7 +403,6 @@ execute(t, flags)
 		 * (allows "ls -l | time grep foo").
 		 */
 		rv = timex(t, flags & ~XEXEC);
-		rv_prop = 1;
 		break;
 
 	  case TEXEC:		/* an eval'd TCOM */
@@ -440,7 +430,7 @@ execute(t, flags)
 	quitenv();		/* restores IO */
 	if ((flags&XEXEC))
 		unwind(LEXIT);	/* exit child */
-	if (rv != 0 && !rv_prop && !(flags & XERROK)) {
+	if (rv != 0 && !(flags & XERROK)) {
 		if (Flag(FERREXIT))
 			unwind(LERROR);
 		trapsig(SIGERR_);
