@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.6 1998/12/22 05:33:52 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.7 1998/12/31 02:40:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_tl.c,v 1.23 1998/12/14 06:32:56 dillon Exp $
+ *	$FreeBSD: if_tl.c,v 1.24 1998/12/29 15:39:35 wpaul Exp $
  */
 
 /*
@@ -248,7 +248,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$FreeBSD: if_tl.c,v 1.23 1998/12/14 06:32:56 dillon Exp $";
+	"$FreeBSD: if_tl.c,v 1.24 1998/12/29 15:39:35 wpaul Exp $";
 #endif
 
 #ifdef TL_DEBUG
@@ -2586,7 +2586,7 @@ static void tl_start(ifp)
 		evset(sc, EV_START_Q);
 #endif
 		sc->tl_cdata.tl_tx_tail->tl_next = start_tx;
-		sc->tl_cdata.tl_tx_tail = start_tx;
+		sc->tl_cdata.tl_tx_tail = cur_tx;
 	}
 
 	/*
