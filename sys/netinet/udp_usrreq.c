@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.5 1996/05/02 23:34:11 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.6 1996/05/15 09:03:12 mickey Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -158,8 +158,10 @@ udp_input(m, va_alist)
 
 	/*
 	 * Checksum extended UDP header and data.
+	 * from W.R.Stevens: check incoming udp cksums even if
+	 *	udpcksum is not set.
 	 */
-	if (udpcksum && uh->uh_sum) {
+	if (uh->uh_sum) {
 		bzero(((struct ipovly *)ip)->ih_x1,
 		    sizeof ((struct ipovly *)ip)->ih_x1);
 		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
