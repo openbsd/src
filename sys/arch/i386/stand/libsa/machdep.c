@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 1997/07/31 20:16:45 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 1997/08/05 12:58:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,13 +47,22 @@ machdep()
 	*(u_int16_t*)0xb8148 = 0x4730;
 #endif
 	gateA20(1);
+#ifdef DEBUG
+	*(u_int16_t*)0xb8148 = 0x4731;
+#endif
 	debug_init();
+#ifdef DEBUG
+	*(u_int16_t*)0xb8148 = 0x4732;
+#endif
 	cons_probe();	/* call console init before any io */
+#ifdef DEBUG
+	*(u_int16_t*)0xb8148 = 0x4733;
+#endif
 #ifndef _TEST
 	memprobe();
 #endif
 #ifdef DEBUG
-	*(u_int16_t*)0xb8148 = 0x4f31;
+	*(u_int16_t*)0xb8148 = 0x4f34;
 #endif
 #ifdef BOOT_APM
 	printf("apm_init: ");
