@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.2 2004/04/12 20:29:16 henning Exp $
+# $OpenBSD: dhclient-script,v 1.3 2004/04/12 20:39:21 deraadt Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -159,7 +159,7 @@ PREINIT)
 
 ARPCHECK|ARPSEND)
 	;;
-  
+
 BOUND|RENEW|REBIND|REBOOT)
 	if [ -n "$old_ip_address" ]; then
 		if [ "$old_ip_address" != "$alias_ip_address" ]; then
