@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.36 1995/10/07 09:19:13 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.37 1995/11/25 01:24:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,7 @@
 
 #include <dev/isa/if_levar.h>
 #include <dev/ic/am7990reg.h>
+#define LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
 char *card_type[] = {"unknown", "BICC Isolan", "NE2100", "DEPCA", "PCnet-ISA", "PCnet-PCI"};
@@ -440,50 +441,5 @@ leintredge(arg)
 			return (1);
 }
 #endif
-
-/*
- * Routines for accessing the transmit and receive buffers.
- */
-
-void
-copytobuf_contig(sc, from, boff, len)
-	struct le_softc *sc;
-	caddr_t from;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(from, buf + boff, len);
-}
-
-void
-copyfrombuf_contig(sc, to, boff, len)
-	struct le_softc *sc;
-	caddr_t to;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(buf + boff, to, len);
-}
-
-void
-zerobuf_contig(sc, boff, len)
-	struct le_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bzero() to do the work.
-	 */
-	bzero(buf + boff, len);
-}
 
 #include <dev/ic/am7990.c>
