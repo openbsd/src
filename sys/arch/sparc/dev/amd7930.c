@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.6 1996/08/12 02:10:35 downsj Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.7 1997/06/20 10:33:37 grr Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.10 1996/03/31 22:38:29 pk Exp $	*/
 
 /*
@@ -916,7 +916,7 @@ amd7930hwintr(au0)
 		}
 	}
 
-	*(au->au_intrcnt)++;
+	(*au->au_intrcnt)++;
 	return (1);
 }
 #endif /* AUDIO_C_HANDLER */
