@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.11 1997/07/08 04:26:00 downsj Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.12 1997/07/10 17:37:10 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.11 1997/07/08 04:26:00 downsj Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.12 1997/07/10 17:37:10 kstailey Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -226,7 +226,7 @@ void PRS(argc, argv)
         char    line[BUFSIZ];
 	char	*p;
 
-        timenow = time((time_t *) 0);
+        timenow = time(NULL);
         daytime = ctime(&timenow) + 4;
         daytime[15] = '\0';
 
@@ -399,7 +399,7 @@ struct conf_entry *parse_file()
                 free(errline);
         }
         if (working)
-                working->next = (struct conf_entry *) NULL;
+                working->next = NULL;
         (void) fclose(f);
         return(first);
 }
