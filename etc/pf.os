@@ -1,4 +1,4 @@
-# $OpenBSD: pf.os,v 1.3 2003/08/27 13:55:40 avsm Exp $
+# $OpenBSD: pf.os,v 1.4 2003/08/27 17:52:29 frantzen Exp $
 # passive OS fingerprinting
 # -------------------------
 #
@@ -186,59 +186,84 @@
 # Standard OS signatures #
 ##########################
 
+# ----------------- AIX ---------------------
+
+# AIX is first because its signatures are close to NetBSD, MacOS X and
+# Linux 2.0, but it uses a fairly rare MSSes, at least sometimes...
+# This is a shoddy hack, though.
+
+16384:64:0:44:M512:		AIX:4.3:2-3:AIX 4.3.2 and earlier
+
+16384:64:0:60:M512,N,W%2,N,N,T:	AIX:4.3:3:AIX 4.3.3-5.2
+16384:64:0:60:M512,N,W%2,N,N,T:	AIX:5.1-2::AIX 4.3.3-5.2
+32768:64:0:60:M512,N,W%2,N,N,T:	AIX:4.3:3:AIX 4.3.3-5.2
+32768:64:0:60:M512,N,W%2,N,N,T:	AIX:5.1-2::AIX 4.3.3-5.2
+65535:64:0:60:M512,N,W%2,N,N,T:	AIX:4.3:3:AIX 4.3.3-5.2
+65535:64:0:60:M512,N,W%2,N,N,T:	AIX:5.1-2::AIX 4.3.3-5.2
+
 # ----------------- Linux -------------------
 
 512:64:0:44:M*:			Linux:2.0:3x:Linux 2.0.3x
 16384:64:0:44:M*:		Linux:2.0:3x:Linux 2.0.3x
 
-5440:64:1:60:M1360,S,T,N,W0:	Linux:google::Linux (Google crawlbot)
+S4:64:1:60:M1360,S,T,N,W0:	Linux:google::Linux (Google crawlbot)
 
 S3:64:1:60:M*,S,T,N,W0:		Linux:2.4:18-21:Linux 2.4.18 and newer
 S4:64:1:60:M*,S,T,N,W0:		Linux:2.4::Linux 2.4
-S3:64:1:60:M*,S,T,N,W1:		Linux:2.5::Linux 2.5 (newer)
+S3:64:1:60:M*,S,T,N,W1:		Linux:2.5::Linux 2.5
 S4:64:1:60:M*,S,T,N,W1:		Linux:2.5::Linux 2.5
-
-# That's quite stupid, but happens. The WSS is a multiplier of
-# MSS, but not that MSS - the default ethernet MSS instead ;-)
-5840:64:1:60:M*,S,T,N,W0:	Linux:2.4::Linux 2.4 (NAT or snafu)
 
 S20:64:1:60:M*,S,T,N,W0:	Linux:2.2:20-25:Linux 2.2.20 and newer
 S22:64:1:60:M*,S,T,N,W0:	Linux:2.2::Linux 2.2
+S11:64:1:60:M*,S,T,N,W0:	Linux:2.2::Linux 2.2
 
-# This happens only over loopback:
-# 32767:64:1:60:M*,S,T,N,W0:Linux:2.4 (local)
-# S8:64:1:60:M*,S,T,N,W0:Linux:2.2 (local)
+# Popular cluster config scripts disable timestamps and
+# selective ACK:
+S4:64:1:48:M1460,N,W0:		Linux:2.4:cluster:Linux 2.4 in cluster
+
+# This needs to be investigated. On some systems, WSS
+# is selected as a multiple of MTU instead of MSS. I got
+# many submissions for this for many late versions of 2.4:
+T4:64:1:60:M1412,S,T,N,W0:	Linux:2.4::Linux 2.4 (late, uncommon)
+
+# This happens only over loopback, but let's make folks happy:
+32767:64:1:60:M16396,S,T,N,W0:	Linux:2.4:lo0:Linux 2.4 (local)
+S8:64:1:60:M3884,S,T,N,W0:	Linux:2.2:lo0:Linux 2.2 (local)
+
+# Opera visitors:
+16384:64:1:60:M*,S,T,N,W0:	Linux:2.2:Opera:Linux 2.2 (Opera?)
+32767:64:1:60:M*,S,T,N,W0:	Linux:2.4:Opera:Linux 2.4 (Opera?)
+
 # Some fairly common mods:
-# S4:64:1:52:M*,N,N,S,N,W0:	Linux:2.4:ts:Linux 2.4 w/o timestamps
+#   S4:64:1:52:M*,N,N,S,N,W0:	Linux:2.4:noTS:Linux 2.4 w/o timestamps
 
 # ----------------- FreeBSD -----------------
-# 4.6 - 5.0 is a bit of a guesswork at the moment.
-# Need more data before the final release.
 
 16384:64:1:44:M*:		FreeBSD:2.0-2.2::FreeBSD 2.0-4.1
 16384:64:1:44:M*:		FreeBSD:3.0-3.5::FreeBSD 2.0-4.1
 16384:64:1:44:M*:		FreeBSD:4.0-4.1::FreeBSD 2.0-4.1
-
-1024:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.4::FreeBSD 4.4
 16384:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.4::FreeBSD 4.4
-
-S:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.6::FreeBSD 4.6
+1024:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.4::FreeBSD 4.4
 
 57344:64:1:44:M*:		FreeBSD:4.6-4.8:noRFC1323:FreeBSD 4.6-4.8 (no RFC1323)
 57344:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.6-4.8::FreeBSD 4.6-4.8
 
-65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.8-4.9::FreeBSD 4.8-5.0
-65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:5.0::FreeBSD 4.8-5.0
+65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.8-4.9::FreeBSD 4.8-5.0 (or MacOS X)
+65535:64:1:60:M*,N,W0,N,N,T:	FreeBSD:5.0::FreeBSD 4.8-5.0 (or MacOS X)
 32768:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.8-4.9::FreeBSD 4.8-5.0 (or MacOS X)
 32768:64:1:60:M*,N,W0,N,N,T:	FreeBSD:5.0::FreeBSD 4.8-5.0 (or MacOS X)
 
-65535:48:1:60:M*,N,W1,N,N,T:	FreeBSD:5.1::FreeBSD 5.1
+65535:48:1:60:M*,N,W1,N,N,T:	FreeBSD:5.0-5.1::FreeBSD 5.0-5.1
+
+# 16384:64:1:60:M*,N,N,N,N,N,N,T:FreeBSD:4.4:noTS:FreeBSD 4.4 (w/o timestamps)
 
 # ----------------- NetBSD ------------------
 
+65535:64:0:60:M*,N,W0,N,N,T0:	NetBSD:1.6:opera:NetBSD 1.6 (Opera)
 16384:64:0:60:M*,N,W0,N,N,T0:	NetBSD:1.6::NetBSD 1.6
 16384:64:1:60:M*,N,W0,N,N,T0:	NetBSD:1.6:df:NetBSD 1.6 (DF)
-16384:64:0:60:M*,N,W0,N,N,T:	NetBSD:1.3::NetBSD 1.3 (or OpenBSD 2.6)
+16384:64:0:60:M*,N,W0,N,N,T:	NetBSD:1.3::NetBSD 1.3
+65535:64:1:60:M*,N,W1,N,N,T0:	NetBSD:1.6::NetBSD 1.6W-current (DF)
 
 # ----------------- OpenBSD -----------------
 
@@ -248,85 +273,97 @@ S:64:1:60:M*,N,W0,N,N,T:	FreeBSD:4.6::FreeBSD 4.6
 57344:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.3-3.4::OpenBSD 3.3-3.4
 57344:64:0:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.3-3.4:no-df:OpenBSD 3.3-3.4 (scrub no-df)
 
+65535:64:1:64:M*,N,N,S,N,W0,N,N,T:	OpenBSD:3.0-3.4:opera:OpenBSD 3.0-3.4 (Opera)
+
 # ----------------- Solaris -----------------
-# Splitting 8/9 into two cases, we'll see if there
-# are any complaints...
 
 S17:64:1:64:N,W3,N,N,T0,N,N,S,M*:	Solaris:8:RFC1323:Solaris 8 RFC1323
 S17:64:1:48:N,N,S,M*:			Solaris:8::Solaris 8
 S34:64:1:48:M1460,N,N,S:		Solaris:9::Solaris 9
 
 S17:255:1:44:M*:			Solaris:2.5-2.7::Solaris 2.5 to 7
-S6:255:1:44:M*:				Solaris:2.6::Solaris 2.6
+S6:255:1:44:M*:				Solaris:2.6-2.7::Solaris 2.6 to 7
 
 # ----------------- IRIX --------------------
 
+49152:64:0:44:M*:			IRIX:6.4::IRIX 6.4
 61440:64:0:44:M*:			IRIX:6.2-6.5::IRIX 6.2-6.5
 49152:64:0:52:M*,N,W2,N,N,S:		IRIX:6.5:RFC1323:IRIX 6.5 (RFC1323)
-61440:64:0:48:M*,N,N,S:			IRIX:6.5:14m:IRIX 6.5.14m
-49152:64:0:48:M*,N,N,S:			IRIX:6.5:19:IRIX 6.5.19
+49152:64:0:52:M*,N,W3,N,N,S:		IRIX:6.5:RFC1323:IRIX 6.5 (RFC1323)
+
+61440:64:0:48:M*,N,N,S:			IRIX:6.5:12:IRIX 6.5.12
+49152:64:0:48:M*,N,N,S:			IRIX:6.5:15-21:IRIX 6.5.15 - 6.5.21
 
 # ----------------- Tru64 -------------------
 
 32768:64:1:48:M*,N,W0:			Tru64:4.0f::Tru64 4.0f
-61440:64:0:48:M*,N,W0:			Tru64:5.1a:JP4:Tru64 v5.1a JP4
+32768:64:0:48:M*,N,W0:			Tru64:5.0::Tru64 5.0
+# This looks awfully Linuxish :/
+# S22:64:0:60:M*,S,T,N,W0:		Tru64:5.0:a:Tru64 5.0a
+61440:64:0:48:M*,N,W0:			Tru64:5.1a:JP4:Tru64 v5.1a JP4 (or OpenVMS 7.2 on Compaq 5.1 stack)
+
 
 # ----------------- OpenVMS -----------------
 
 6144:64:1:60:M*,N,W0,N,N,T:		OpenVMS:7.2::OpenVMS 7.2 (Multinet 4.4 stack)
 
-# ----------------- AIX ---------------------
-
-32768:64:0:60:M*,N,W0,N,N,T:		AIX:4.3:3:AIX 4.3.3
-
 # ----------------- MacOS -------------------
 
+16616:255:1:48:M*,W0:			MacOS:7.3-7.6:OTTCP:MacOS 7.3-8.6 (OTTCP)
+16616:255:1:48:M*,W0:			MacOS:8.0-8.6:OTTCP:MacOS 7.3-8.6 (OTTCP)
 32768:255:1:48:M*,W0,N:			MacOS:9.1-9.2::MacOS 9.1/9.2
+32768:64:0:60:M*,N,W0,N,N,T:		MacOS:X:10.2:MacOS X 10.2
 
 # ----------------- Windows -----------------
 
+# Windows 98 had a plenty of signatures depending on
+# release, but I don't have all the data.
+
 S44:64:1:48:N,N,S,M*:			Windows:98:SE:Windows 98SE
+S6:128:1:48:M*:				Windows:98:noSACK:Windows 98 (no sack)
 8192:128:1:48:M*,N,N,S:			Windows:98::Windows 98
-8192:128:1:44:M*:			Windows:NT::Windows old NT (?)
+37300:64:1:48:M*,N,N,S:			Windows:98::Windows 98
+8192:128:1:44:M*:			Windows:NT:4.0:Windows NT 4.0
+
 
 %8192:128:1:48:M*,N,N,S:		Windows:XP::Windows XP/2000
 %8192:128:1:48:M*,N,N,S:		Windows:2000P::Windows XP/2000
 65535:128:1:48:M*,N,N,S:		Windows:2000:SP4:Windows 2000 SP4
-S44:128:1:48:M*,N,N,S:			Windows:XP::Windows XP or 2000 SP3
-S44:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows XP or 2000 SP3
+S44:128:1:48:M*,N,N,S:			Windows:XP::Windows XP or 2000 SP3+
+S44:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows XP or 2000 SP3+
 S6:128:1:48:M*,N,N,S:			Windows:XP::Windows XP or 2000 SP3
 S6:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows XP or 2000 SP3
 
+# This block yet to be verified
 S45:128:1:48:M*,N,N,S:			@Windows:XP::Windows XP
 S46:128:1:48:M*,N,N,S:			@Windows:XP::Windows XP
 
-# The same stuff w/o DF - happens quite often:
-%8192:128:0:48:M*,N,N,S:		Windows:XP::Windows XP/2000
-%8192:128:0:48:M*,N,N,S:		Windows:2000P::Windows XP/2000
-65535:128:0:48:M*,N,N,S:		Windows:2000:SP4:Windows 2000 SP4
-S44:128:0:48:M*,N,N,S:			Windows:XP::Windows XP or 2000 SP3
-S44:128:0:48:M*,N,N,S:			Windows:2000:SP3:Windows XP or 2000 SP3
-S6:128:0:48:M*,N,N,S:			Windows:XP::Windows XP or 2000 SP3
-S6:128:0:48:M*,N,N,S:			Windows:2000:SP3:Windows XP or 2000 SP3
+32767:128:1:52:M*,N,W0,N,N,S:		Windows:NT4::Windows NT4
+6144:128:1:52:M*,N,W0,N,N,S:		Windows:NT4::Windows NT4
+S45:128:1:52:M*,N,W0,N,N,S:		Windows:2000:SP3:Windows 2000 SP3
 
-S45:128:0:48:M*,N,N,S:			@Windows:XP:firewalled:Windows XP (firewalled)
-S46:128:0:48:M*,N,N,S:			@Windows:XP:firewalled:Windows XP (firewalled)
+64512:128:1:48:M*,N,N,S:		Windows:XP::Windows XP/2000
+64512:128:1:48:M*,N,N,S:		Windows:2000::Windows XP/2000
+S52:128:1:48:M1260,N,N,S:		Windows:XP:Cisco VPN:Windows XP/2000 via Cisco VPN Adapter
+S52:128:1:48:M1260,N,N,S:		Windows:2000:Cisco VPN:Windows XP/2000 via Cisco VPN Adapter
 
-# I'm not sure what this is, but one report suggests NT. 'll see...
-32767:128:1:52:M*,N,W0,N,N,S:		Windows:NT:4:Windows NT4
-6144:128:1:52:M*,N,W0,N,N,S:		Windows:NT:4:Windows NT4
-S45:128:1:52:M*,N,W0,N,N,S:		Windows:NT:4:Windows NT4
-
-*:128:1:64:M*,N,W2,N,N,T0,N,N,S:	Windows:2000:SP4:Windows 2000 SP4 (RFC1323) or PalmPC
-
-# Odds and ends...
-58944:64:1:52:M*,N,W2,N,N,S:		Windows:XP:SP2:Windows XP SP2 IPv6 System Mechanic tuned
+# Odds, ends, mods. Advanced Networking Pack turns out to be
+# responsible for enabling RFC1323, System Mechanic also messes
+# with TTLs and timestamps:
+ 
+*:128:1:64:M*,N,W2,N,N,T0,N,N,S:	Windows:2000:SP4:Windows 2000 SP4 (AdvNetPack) or PalmPC
+S4:128:1:48:M*,N,N,S:			Windows:2000:SP3:Windows 2000 SP3 (NetTweak)
+S44:128:1:64:M*,N,W0,N,N,T0,N,N,S:	Windows:XP:AdvNetPack:Windows XP (AdvNetPack)
+58944:64:1:52:M*,N,W2,N,N,S:		Windows:XP:system mechanic:Windows XP (System Mechanic tuned)
 
 # ----------------- HP/UX -------------------
 
-32768:64:1:44:M1460:			HP-UX:B.10.20::HP/UX B.10.20
-32768:64:0:48:M1448,W0,N:		HP-UX:11.0::HP/UX 11.0
-0:64:0:48:M1460,W0,N:			HP-UX:B.11.00::HP/UX B.11.0 A (RFC1323)
+32768:64:1:44:M*:			HP-UX:B.10.20::HP-UX B.10.20
+32768:64:0:48:M*,W0,N:			HP-UX:11.0::HP-UX 11.0
+32768:64:1:48:M*,W0,N:			HP-UX:11.10-11.11::HP-UX 11.0 or 11.11
+
+# Whoa. Hardcore WSS.
+0:64:0:48:M*,W0,N:			HP-UX:B.11.00:A:HP-UX B.11.00 A (RFC1323)
 
 
 # ----------------- SCO ------------------
@@ -340,37 +377,65 @@ S17:64:1:44:M1460:			SCO:OpenServer:5.0:SCO Unixware 7.0.0 or OpenServer 5.0.4-5
 
 # ----------------- BSD/OS ------------------
 
+# Once again, power of two WSS is also shared by MacOS X with DF set
 8192:64:1:60:M1460,N,W0,N,N,T:		BSD/OS:3.1::BSD/OS 3.1-4.3
 8192:64:1:60:M1460,N,W0,N,N,T:		BSD/OS:4.0-4.3::BSD/OS 3.1-4.3
 
 
-################################
-# Appliance / other signatures #
-################################
+# ---------------- NewtonOS -----------------
+ 
+4096:64:0:44:M1420:		NewtonOS:2.1::NewtonOS 2.1
+
+# ---------------- NeXTSTEP -----------------
+
+S8:64:0:44:M512:		NeXTSTEP:3.3::NeXTSTEP 3.3
+
+# ------------------ BeOS -------------------
+
+1024:255:0:48:M*,N,W0:		BeOS:5.0-5.1::BeOS 5.0-5.1
+12288:255:0:44:M1402:		BeOS:5.0:3:BeOS 5.0.3
+
+# ------------------ OS/400 -----------------
+
+8192:64:1:60:M1440,N,W0,N,N,T:	OS/400:V4R4M000:L00:OS/400 V4R4M000 L00
+
+# ------------------ ULTRIX -----------------
+
+16384:64:0:40:.:		ULTRIX:4.5::ULTRIX 4.5
+
+# ------------------- DOS -------------------
+
+2048:255:0:44:M536:		DOS:WATTCP:1.05:DOS Arachne via WATTCP/1.05
+
+###########################################
+# Appliance / embedded / other signatures #
+###########################################
 
 # ---------- Firewalls / routers ------------
 
 S12:64:1:44:M1460:			@Checkpoint:::Checkpoint (rnknown 1)
 S12:64:1:48:N,N,S,M1460:		@Checkpoint:::Checkpoint (unknown 2)
+4096:32:0:44:M1460:			ExtremeWare:4.x::ExtremeWare 4.x
+60352:64:0:52:M1460,N,W2,N,N,S:		Clavister:7.03.01::Clavister firewall 7.03.01
 
 # ------- Switches and other stuff ----------
 
 4128:255:0:44:M*:			Cisco:::Cisco Catalyst 3500, 7500 etc
+60352:128:1:64:M1460,N,W2,N,N,T,N,N,S:	Alteon:ACEswitch::Alteon ACEswitch
 
 # ---------- Caches and whatnots ------------
 
-5840:64:1:52:M1460,N,N,S,N,W0:		AOL:web cache::AOL web cache
+S4:64:1:52:M1460,N,N,S,N,W0:		AOL:web cache::AOL web cache
 
 32850:64:1:64:N,W1,N,N,T,N,N,S,M*:	NetApp:5.x::NetApp Data OnTap 5.x
-16384:64:1:64:M1460,N,N,S,N,W0,N:	NetApp:5.3:1:NetApp NetCache 5.3.1
+16384:64:1:64:M1460,N,N,S,N,W0,N:	NetApp:5.3:1:NetApp 5.3.1
+65535:64:0:64:M1460,N,N,S,N,W3,N,N,T:	NetApp:5.3:1:NetApp 5.3.1
 65535:64:0:60:M1460,N,W0,N,N,T:		NetApp:CacheFlow::NetApp CacheFlow
 8192:64:1:64:M1460,N,N,S,N,W0,N,N,T:	NetApp:5.2:1:NetApp NetCache 5.2.1
 
-5840:64:0:48:M1460,N,N,S:		Cisco:Content Engine::Cisco Content Engine
+S4:64:0:48:M1460,N,N,S:			Cisco:Content Engine::Cisco Content Engine
 
 27085:128:0:40:.:			Dell:PowerApp cache::Dell PowerApp (Linux-based)
-
-60352:128:1:64:M1460,N,W2,N,N,T,N,N,S:	Alteon:ACEswitch::Alteon ACEswitch
 
 65535:255:1:48:N,W1,M1460:		Inktomi:crawler::Inktomi crawler
 
@@ -378,8 +443,21 @@ S12:64:1:48:N,N,S,M1460:		@Checkpoint:::Checkpoint (unknown 2)
 
 # ----------- Embedded systems --------------
 
-S9:255:0:44:M536:			PalmOS:Tungsten:C:PalmOS Tungsten C(Win95 based)
-S5:255:0:44:M536:			PalmOS:3::PalmOS 3 (Win95 based)
+S9:255:0:44:M536:			PalmOS:Tungsten:C:PalmOS Tungsten C
+S5:255:0:44:M536:			PalmOS:3::PalmOS 3/4
+S5:255:0:44:M536:			PalmOS:4::PalmOS 3/4
+S4:255:0:44:M536:			PalmOS:3:5:PalmOS 3.5
+
+S23:64:1:64:N,W1,N,N,T,N,N,S,M1460:	SymbianOS:7::SymbianOS 7
+8192:255:0:44:M1460:			SymbianOS:6048::SymbianOS 6048 (on Nokia 7650?)
+
+# Perhaps S4?
+5840:64:1:60:M1452,S,T,N,W1:		Zaurus:3.10::Zaurus 3.10
+
+32768:128:1:64:M1460,N,W0,N,N,T0,N,N,S:	PocketPC:2002::PocketPC 2002
+
+S1:255:0:44:M346:			Contiki:1.1:rc0:Contiki 1.1-rc0
+
 
 
 ####################
