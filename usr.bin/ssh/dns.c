@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.3 2003/05/14 22:56:51 jakob Exp $	*/
+/*	$OpenBSD: dns.c,v 1.4 2003/05/14 23:29:22 jakob Exp $	*/
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -44,7 +44,7 @@
 #include "uuencode.h"
 
 extern char *__progname;
-RCSID("$OpenBSD: dns.c,v 1.3 2003/05/14 22:56:51 jakob Exp $");
+RCSID("$OpenBSD: dns.c,v 1.4 2003/05/14 23:29:22 jakob Exp $");
 
 #ifndef LWRES
 static const char *errset_text[] = {
@@ -154,7 +154,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 {
 	int counter;
 	int result;
-	struct rrsetinfo *keys = NULL;
+	struct rrsetinfo *fingerprints = NULL;
 	int failures = 0;
 
 	u_int8_t hostkey_algorithm;
@@ -173,7 +173,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		fatal("No key to look up!");
 
 	result = getrrsetbyname(hostname, DNS_RDATACLASS_IN,
-	    DNS_RDATATYPE_SSHFP, 0, &keys);
+	    DNS_RDATATYPE_SSHFP, 0, &fingerprints);
 	if (result) {
 		verbose("DNS lookup error: %s", dns_result_totext(result));
 		return DNS_VERIFY_ERROR;
@@ -181,13 +181,13 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 
 #ifdef DNSSEC
 	/* Only accept validated answers */
-	if (!keys->rri_flags & RRSET_VALIDATED) {
+	if (!fingerprints->rri_flags & RRSET_VALIDATED) {
 		error("Ignored unvalidated fingerprint from DNS.");
 		return DNS_VERIFY_ERROR;
 	}
 #endif
 
-	debug("found %d fingerprints in DNS", keys->rri_nrdatas);
+	debug("found %d fingerprints in DNS", fingerprints->rri_nrdatas);
 
 	/* Initialize host key parameters */
 	if (!dns_read_key(&hostkey_algorithm, &hostkey_digest_type,
@@ -196,15 +196,15 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		return DNS_VERIFY_ERROR;
 	}
 
-	for (counter = 0 ; counter < keys->rri_nrdatas ; counter++)  {
+	for (counter = 0 ; counter < fingerprints->rri_nrdatas ; counter++)  {
 		/*
 		 * Extract the key from the answer. Ignore any badly
-		 * formatted keys.
+		 * formatted fingerprints.
 		 */
 		if (!dns_read_rdata(&dnskey_algorithm, &dnskey_digest_type,
 		    &dnskey_digest, &dnskey_digest_len,
-		    keys->rri_rdatas[counter].rdi_data,
-		    keys->rri_rdatas[counter].rdi_length)) {
+		    fingerprints->rri_rdatas[counter].rdi_data,
+		    fingerprints->rri_rdatas[counter].rdi_length)) {
 			verbose("Error parsing fingerprint from DNS.");
 			continue;
 		}
@@ -218,7 +218,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 			    hostkey_digest_len) == 0) {
 
 				/* Matching algoritm and digest. */
-				freerrset(keys);
+				freerrset(fingerprints);
 #ifdef DNSSEC
 				debug("matching host key fingerprint found in DNS");
 				return DNS_VERIFY_OK;
@@ -234,7 +234,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		}
 	}
 
-	freerrset(keys);
+	freerrset(fingerprints);
 
 	if (failures) {
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
