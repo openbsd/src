@@ -1,7 +1,7 @@
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 1.2
-REV=		12
+REV=		20
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
@@ -14,7 +14,9 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0a
 VND_DEV=	/dev/${VND}
 VND_RDEV=	/dev/r${VND}
-IMAGE?=		miniroot-${REV}.fs
+PID!=		echo $$$$
+REALIMAGE!=	echo /tmp/image.${PID}
+IMAGE?=		miniroot${REV}.fs
 IMAGESIZE?=	10240 # 5Mb in 512 byte blocks
 NEWFSOPTS?=
 
@@ -28,9 +30,15 @@ all:
 	@false
 .else
 
-all: ${CBIN}
-	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig -v -c ${VND_DEV} ${IMAGE}
+bsd:
+	cd ${.CURDIR}/../../../../sys/arch/${MACHINE}/conf && config GENERIC
+	cd ${.CURDIR}/../../../../sys/arch/${MACHINE}/compile/GENERIC &&
+	    make clean && make depend && make &&
+	cp ${.CURDIR}/../../../../sys/arch/${MACHINE}/compile/GENERIC/bsd bsd
+
+all: ${CBIN} bsd
+	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
+	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
 	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} miniroot
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
@@ -42,6 +50,7 @@ all: ${CBIN}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
 	cat /*bin/* > /dev/null
+	cp ${REALIMAGE} ${IMAGE}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
