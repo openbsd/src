@@ -102,8 +102,8 @@ void	packet_set_kex(Kex *k);
 int	dh_pub_is_valid(DH *dh, BIGNUM *dh_pub);
 DH	*dh_new_group_asc(const char *, const char *);
 DH	*dh_new_group(BIGNUM *, BIGNUM *);
-void	dh_gen_key();
-DH	*dh_new_group1();
+void	dh_gen_key(DH *);
+DH	*dh_new_group1(void);
 
 u_char *
 kex_hash(

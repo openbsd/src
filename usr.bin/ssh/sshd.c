@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.141 2000/12/20 19:32:08 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.142 2000/12/20 19:37:22 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -163,8 +163,8 @@ int session_id2_len = 0;
 u_int utmp_len = MAXHOSTNAMELEN;
 
 /* Prototypes for various functions defined later in this file. */
-void do_ssh1_kex();
-void do_ssh2_kex();
+void do_ssh1_kex(void);
+void do_ssh2_kex(void);
 
 void ssh_dh1_server(Kex *, Buffer *_kexinit, Buffer *);
 void ssh_dhgex_server(Kex *, Buffer *_kexinit, Buffer *);
@@ -1150,7 +1150,7 @@ main(int ac, char **av)
  * SSH1 key exchange
  */
 void
-do_ssh1_kex()
+do_ssh1_kex(void)
 {
 	int i, len;
 	int plen, slen;
@@ -1341,7 +1341,7 @@ do_ssh1_kex()
  * SSH2 key exchange: diffie-hellman-group1-sha1
  */
 void
-do_ssh2_kex()
+do_ssh2_kex(void)
 {
 	Buffer *server_kexinit;
 	Buffer *client_kexinit;

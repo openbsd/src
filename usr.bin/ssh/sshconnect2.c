@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.32 2000/12/19 23:17:58 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.33 2000/12/20 19:37:22 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -475,7 +475,7 @@ int	userauth_pubkey(Authctxt *authctxt);
 int	userauth_passwd(Authctxt *authctxt);
 int	userauth_kbdint(Authctxt *authctxt);
 
-void	authmethod_clear();
+void	authmethod_clear(void);
 Authmethod *authmethod_get(char *authlist);
 Authmethod *authmethod_lookup(const char *name);
 
@@ -933,7 +933,7 @@ static char *authlist_state = NULL;	 /* state variable for strtok_r() */
  * finished processing server list to free resources.
  */
 void
-authmethod_clear()
+authmethod_clear(void)
 {
 	if (authlist_current != NULL) {
 		xfree(authlist_current);

@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.31 2000/12/19 23:17:55 markus Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.32 2000/12/20 19:37:21 markus Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -62,7 +62,7 @@ int	decode_reply(int type);
 /* Returns the number of the authentication fd, or -1 if there is none. */
 
 int
-ssh_get_authentication_socket()
+ssh_get_authentication_socket(void)
 {
 	const char *authsocket;
 	int sock, len;
@@ -167,7 +167,7 @@ ssh_close_authentication_socket(int sock)
  */
 
 AuthenticationConnection *
-ssh_get_authentication_connection()
+ssh_get_authentication_connection(void)
 {
 	AuthenticationConnection *auth;
 	int sock;

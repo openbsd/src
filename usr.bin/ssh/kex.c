@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kex.c,v 1.15 2000/12/19 23:17:56 markus Exp $");
+RCSID("$OpenBSD: kex.c,v 1.16 2000/12/20 19:37:22 markus Exp $");
 
 #include "ssh.h"
 #include "ssh2.h"
@@ -190,7 +190,7 @@ dh_new_group(BIGNUM *gen, BIGNUM *modulus)
 }
 
 DH *
-dh_new_group1()
+dh_new_group1(void)
 {
 	static char *gen = "2", *group1 =
 	    "FFFFFFFF" "FFFFFFFF" "C90FDAA2" "2168C234" "C4C6628B" "80DC1CD1"

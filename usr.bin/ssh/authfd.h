@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: authfd.h,v 1.15 2000/12/19 23:17:55 markus Exp $"); */
+/* RCSID("$OpenBSD: authfd.h,v 1.16 2000/12/20 19:37:21 markus Exp $"); */
 
 #ifndef AUTHFD_H
 #define AUTHFD_H
@@ -51,7 +51,7 @@ typedef struct {
 }       AuthenticationConnection;
 
 /* Returns the number of the authentication fd, or -1 if there is none. */
-int     ssh_get_authentication_socket();
+int     ssh_get_authentication_socket(void);
 
 /*
  * This should be called for any descriptor returned by
@@ -66,7 +66,7 @@ void    ssh_close_authentication_socket(int authfd);
  * connection could not be opened.  The connection should be closed by the
  * caller by calling ssh_close_authentication_connection().
  */
-AuthenticationConnection *ssh_get_authentication_connection();
+AuthenticationConnection *ssh_get_authentication_connection(void);
 
 /*
  * Closes the connection to the authentication agent and frees any associated
