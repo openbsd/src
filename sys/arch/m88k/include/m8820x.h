@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.2 2004/08/04 09:08:19 miod Exp $ */
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -155,7 +155,12 @@
 /* SSR values */
 #define	CMMU_SSR_CE		0x00008000	/* copyback error */
 #define	CMMU_SSR_BE		0x00004000	/* bus error */
+#define	CMMU_SSR_SO		0x00000100
+#define	CMMU_SSR_M		0x00000010
+#define	CMMU_SSR_U		0x00000008
+#define	CMMU_SSR_PROT		0x00000004
 #define	CMMU_SSR_BH		0x00000002	/* probe BATC hit */
+#define	CMMU_SSR_V		0x00000001
 
 /*
  * Cache line information
