@@ -13,7 +13,7 @@ sysname.c: gensysname
 	./gensysname -c > sysname.c
 
 gensysname: gensysname.o agetarg.o
-	${CC} ${CFLAGS} -o gensysname gensysname.o agetarg.o ${LIBROKEN}
+	${HOSTCC} ${CFLAGS} -o gensysname gensysname.o agetarg.o ${LIBROKEN}
 
 CLEANFILES+=	gensysname.o agetarg.o
 
