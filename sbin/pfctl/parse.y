@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.283 2003/01/09 10:40:44 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.284 2003/01/09 17:59:23 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1157,7 +1157,7 @@ pfrule		: action dir logquick interface route af proto fromto
 			decide_address_family($8.dst.host, &r.af);
 
 			if ($5.rt) {
-				if(!r.direction) {
+				if (!r.direction) {
 					yyerror("direction must be explicit "
 					    "with rules that specify routing");
 					YYERROR;
@@ -3074,7 +3074,7 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	FREE_LIST(struct node_if, interfaces);
 	FREE_LIST(struct node_queue, nqueues);
 
-	return(errs);
+	return (errs);
 }
 
 int
@@ -3138,7 +3138,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 
 			if (!eval_pfqueue(pf, a, bwspec.bw_absolute,
 			    bwspec.bw_percent))
-				if(!pfctl_add_altq(pf, a))
+				if (!pfctl_add_altq(pf, a))
 					added++;
 
 			if ((pf->opts & PF_OPT_VERBOSE) && found == 1) {
