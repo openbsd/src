@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.33 2003/12/10 07:22:43 itojun Exp $	*/
+/*	$OpenBSD: in.c,v 1.34 2004/03/28 17:39:12 deraadt Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -417,7 +417,9 @@ in_control(so, cmd, data, ifp)
 		splx(s);
 		return (error);
 
-	case SIOCDIFADDR:
+	case SIOCDIFADDR: {
+		struct in_multi *inm;
+
 		/*
 		 * Even if the individual steps were safe, shouldn't
 		 * these kinds of changes happen atomically?  What 
@@ -428,10 +430,13 @@ in_control(so, cmd, data, ifp)
 		in_ifscrub(ifp, ia);
 		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
 		TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
+		while ((inm = LIST_FIRST(&ia->ia_multiaddrs)) != NULL)
+			in_delmulti(inm);
 		IFAFREE((&ia->ia_ifa));
 		dohooks(ifp->if_addrhooks, 0);
 		splx(s);
 		break;
+		}
 
 #ifdef MROUTING
 	case SIOCGETVIFCNT:
