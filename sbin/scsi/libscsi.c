@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.1 2003/07/23 23:10:23 deraadt Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.2 2003/07/24 00:20:52 deraadt Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -42,7 +42,7 @@
 #include <stdarg.h>
 #include <fcntl.h>
 
-#include "scsi.h"
+#include "libscsi.h"
 
 static struct
 {
