@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wx.c,v 1.4 2000/07/06 06:19:08 mjacob Exp $	*/
+/*	$OpenBSD: if_wx.c,v 1.5 2000/07/06 23:32:12 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1999, Traakan Software
@@ -1992,7 +1992,7 @@ wx_ioctl(ifp, command, data)
 		error = ether_ioctl(ifp, command, data);
 		break;
 
-#ifdef	SIOCGIFMTU
+#ifdef	SIOCSIFMTU
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > WX_MAXMTU || ifr->ifr_mtu < ETHERMIN) {
 			error = EINVAL;
