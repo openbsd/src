@@ -174,7 +174,7 @@ quaff()
 			}
 			break;
 		case SEE_INVISIBLE:
-			sprintf(buf, "hmm, this potion tastes like %sjuice", fruit);
+			sprintf(buf, "hmm, this potion tastes like %s juice", fruit);
 			message(buf, 0);
 			if (blind) {
 				unblind();
