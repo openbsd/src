@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.5 1998/04/30 01:43:46 jason Exp $	*/
-/*	$NetBSD: ncr53c9x.c,v 1.23 1998/01/31 23:37:51 pk Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.6 1998/05/28 22:07:52 jason Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.26 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -78,6 +78,7 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
@@ -148,9 +149,25 @@ ncr53c9x_attach(sc, adapter, dev)
 {
 
 	/*
+	 * Allocate SCSI message buffers.
+	 * Front-ends can override allocation to avoid alignment
+	 * handling in the DMA engines. Note that that ncr53c9x_msgout()
+	 * can request a 1 byte DMA transfer.
+	 */
+	if (sc->sc_omess == NULL)
+		sc->sc_omess = malloc(NCR_MAX_MSG_LEN, M_DEVBUF, M_NOWAIT);
+
+	if (sc->sc_imess == NULL)
+		sc->sc_imess = malloc(NCR_MAX_MSG_LEN+1, M_DEVBUF, M_NOWAIT);
+
+	if (sc->sc_omess == NULL || sc->sc_imess == NULL) {
+		printf("out of memory\n");
+		return;
+	}
+
+	/*
 	 * Note, the front-end has set us up to print the chip variation.
 	 */
-
 	if (sc->sc_rev >= NCR_VARIANT_MAX) {
 		printf("\n%s: unknown variant %d, devices not attached\n",
 		    sc->sc_dev.dv_xname, sc->sc_rev);
@@ -211,6 +228,7 @@ ncr53c9x_attach(sc, adapter, dev)
 		    NCR_READ_REG(sc, NCR_CFG5));
 		NCR_SCSIREGS(sc);
 	}
+
 }
 
 /*
@@ -243,6 +261,7 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_NCR53C94:
 	case NCR_VARIANT_NCR53C96:
 	case NCR_VARIANT_ESP200:
+		sc->sc_features |= NCR_F_HASCFG3;
 		NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
 	case NCR_VARIANT_ESP100A:
 		NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
@@ -351,7 +370,7 @@ ncr53c9x_init(sc, doreset)
  * only make sense when he DMA CSR has an interrupt showing. Call only
  * if an interrupt is pending.
  */
-void
+__inline__ void
 ncr53c9x_readregs(sc)
 	struct ncr53c9x_softc *sc;
 {
@@ -390,7 +409,7 @@ ncr53c9x_stp2cpb(sc, period)
 	if (ncr53c9x_cpb2stp(sc, v) < period)
 		/* Correct round-down error */
 		v++;
-	return v;
+	return (v);
 }
 
 static inline void
@@ -398,15 +417,29 @@ ncr53c9x_setsync(sc, ti)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_tinfo *ti;
 {
+	u_char syncoff, synctp, cfg3 = sc->sc_cfg3;
 
 	if (ti->flags & T_SYNCMODE) {
-		NCR_WRITE_REG(sc, NCR_SYNCOFF, ti->offset);
-		NCR_WRITE_REG(sc, NCR_SYNCTP,
-		    ncr53c9x_stp2cpb(sc, ti->period));
+		syncoff = ti->offset;
+		synctp = ncr53c9x_stp2cpb(sc, ti->period);
+		if (sc->sc_features & NCR_F_FASTSCSI) {
+			/*
+			 * If the period is 200ns or less (ti->period <= 50),
+			 * put the chip in Fast SCSI mode.
+			 */
+			if (ti->period <= 50)
+				cfg3 |= NCRCFG3_FSCSI;
+		}
 	} else {
-		NCR_WRITE_REG(sc, NCR_SYNCOFF, 0);
-		NCR_WRITE_REG(sc, NCR_SYNCTP, 0);
+		syncoff = 0;
+		synctp = 0;
 	}
+
+	if (sc->sc_features & NCR_F_HASCFG3)
+		NCR_WRITE_REG(sc, NCR_CFG3, cfg3);
+
+	NCR_WRITE_REG(sc, NCR_SYNCOFF, syncoff);
+	NCR_WRITE_REG(sc, NCR_SYNCTP, synctp);
 }
 
 int ncr53c9x_dmaselect = 0;
@@ -544,7 +577,7 @@ ncr53c9x_get_ecb(sc, flags)
 	}
 
 	splx(s);
-	return ecb;
+	return (ecb);
 }
 
 /*
@@ -571,7 +604,7 @@ ncr53c9x_scsi_cmd(xs)
 
 	flags = xs->flags;
 	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL)
-		return TRY_AGAIN_LATER;
+		return (TRY_AGAIN_LATER);
 
 	/* Initialize ecb */
 	ecb->xs = xs;
@@ -598,7 +631,7 @@ ncr53c9x_scsi_cmd(xs)
 	splx(s);
 
 	if ((flags & SCSI_POLL) == 0)
-		return SUCCESSFULLY_QUEUED;
+		return (SUCCESSFULLY_QUEUED);
 
 	/* Not allowed to use interrupts, use polling instead */
 	if (ncr53c9x_poll(sc, xs, ecb->timeout)) {
@@ -606,7 +639,7 @@ ncr53c9x_scsi_cmd(xs)
 		if (ncr53c9x_poll(sc, xs, ecb->timeout))
 			ncr53c9x_timeout(ecb);
 	}
-	return COMPLETE;
+	return (COMPLETE);
 }
 
 /*
@@ -629,7 +662,7 @@ ncr53c9x_poll(sc, xs, count)
 			ncr53c9x_intr(sc);
 #endif
 		if ((xs->flags & ITSDONE) != 0)
-			return 0;
+			return (0);
 		if (sc->sc_state == NCR_IDLE) {
 			NCR_TRACE(("[ncr53c9x_poll: rescheduling] "));
 			ncr53c9x_sched(sc);
@@ -637,7 +670,7 @@ ncr53c9x_poll(sc, xs, count)
 		DELAY(1000);
 		count--;
 	}
-	return 1;
+	return (1);
 }
 
 
@@ -1308,6 +1341,7 @@ ncr53c9x_msgout(sc)
  *
  * Most of this needs verifying.
  */
+int sdebug = 0;
 int
 ncr53c9x_intr(sc)
 	register struct ncr53c9x_softc *sc;
@@ -1315,729 +1349,688 @@ ncr53c9x_intr(sc)
 	register struct ncr53c9x_ecb *ecb;
 	register struct scsi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
-	int loop;
 	size_t size;
 	int nfifo;
 
 	NCR_TRACE(("[ncr53c9x_intr] "));
 
+	if (!NCRDMA_ISINTR(sc))
+		return (0);
+
+again:
+	/* and what do the registers day... */
+	ncr53c9x_readregs(sc);
+
+	sc->sc_intrcnt.ev_count++;
+
 	/*
-	 * I have made some (maybe seriously flawed) assumptions here,
-	 * but basic testing (uncomment the printf() below), show that
-	 * certainly something happens when this loop is here.
-	 *
-	 * The idea is that many of the SCSI operations take very little
-	 * time, and going away and getting interrupted is too high an
-	 * overhead to pay. For example, selecting, sending a message
-	 * and command and then doing some work can be done in one "pass".
-	 *
-	 * The DELAY is not variable because I do not understand that the
-	 * DELAY loop should be fixed-time regardless of CPU speed, but
-	 * I am *assuming* that the faster SCSI processors get things done
-	 * quicker (sending a command byte etc), and so there is no
-	 * need to be too slow.
-	 *
-	 * This is a heuristic. It is 2 when at 20Mhz, 2 at 25Mhz and 1
-	 * at 40Mhz. This needs testing.
+	 * Command are classed as errors. A disconnect is a
+	 * valid condition, and we let the code check is the
+	 * "NCR_BUSFREE_OK" flag was set before declaring it
+	 * and error.
+	 * 
+	 * Also, the status register tells us about "Gross
+	 * Errors" and "Parity errors". Only the Gross Error
+	 * is really bad, and the parity errors are dealt   
+	 * with later
+	 * 
+	 * TODO
+	 *      If there are too many parity error, go to slow
+	 *      cable mode ?
 	 */
-	for (loop = 0; 1;loop++, DELAY(50/sc->sc_freq)) {
-		/* a feeling of deja-vu */
-		if (!NCRDMA_ISINTR(sc))
-			return (loop != 0);
-#if 0
-		if (loop)
-			printf("*");
-#endif
 
-		/* and what do the registers say... */
-		ncr53c9x_readregs(sc);
-
-		sc->sc_intrcnt.ev_count++;
-
-		/*
-		 * At the moment, only a SCSI Bus Reset or Illegal
-		 * Command are classed as errors. A disconnect is a
-		 * valid condition, and we let the code check is the
-		 * "NCR_BUSFREE_OK" flag was set before declaring it
-		 * and error.
-		 *
-		 * Also, the status register tells us about "Gross
-		 * Errors" and "Parity errors". Only the Gross Error
-		 * is really bad, and the parity errors are dealt
-		 * with later
-		 *
-		 * TODO
-		 *	If there are too many parity error, go to slow
-		 *	cable mode ?
-		 */
-
-		/* SCSI Reset */
-		if (sc->sc_espintr & NCRINTR_SBR) {
-			if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
-				NCRCMD(sc, NCRCMD_FLUSH);
-				DELAY(1);
-			}
-			if (sc->sc_state != NCR_SBR) {
-				printf("%s: SCSI bus reset\n",
-					sc->sc_dev.dv_xname);
-				ncr53c9x_init(sc, 0); /* Restart everything */
-				return 1;
-			}
-#if 0
-	/*XXX*/		printf("<expected bus reset: "
-				"[intr %x, stat %x, step %d]>\n",
-				sc->sc_espintr, sc->sc_espstat,
-				sc->sc_espstep);
-#endif
-			if (sc->sc_nexus)
-				panic("%s: nexus in reset state",
-				      sc->sc_dev.dv_xname);
-			goto sched;
+	/* SCSI Reset */
+	if (sc->sc_espintr & NCRINTR_SBR) {
+		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
+			NCRCMD(sc, NCRCMD_FLUSH);
+			DELAY(1);
 		}
+		if (sc->sc_state != NCR_SBR) {
+			printf("%s: SCSI bus reset\n",
+				sc->sc_dev.dv_xname);
+			ncr53c9x_init(sc, 0); /* Restart everything */
+			return (1);
+		}
+#if 0
+/*XXX*/		printf("<expected bus reset: "
+			"[intr %x, stat %x, step %d]>\n",
+			sc->sc_espintr, sc->sc_espstat,
+			sc->sc_espstep);
+#endif
+		if (sc->sc_nexus)
+			panic("%s: nexus in reset state",
+		      sc->sc_dev.dv_xname);
+		goto sched;
+	}
 
-		ecb = sc->sc_nexus;
+	ecb = sc->sc_nexus;
 
 #define NCRINTR_ERR (NCRINTR_SBR|NCRINTR_ILL)
-		if (sc->sc_espintr & NCRINTR_ERR ||
-		    sc->sc_espstat & NCRSTAT_GE) {
+	if (sc->sc_espintr & NCRINTR_ERR ||
+	    sc->sc_espstat & NCRSTAT_GE) {
 
-			if (sc->sc_espstat & NCRSTAT_GE) {
-				/* no target ? */
-				if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
-					NCRCMD(sc, NCRCMD_FLUSH);
-					DELAY(1);
-				}
-				if (sc->sc_state == NCR_CONNECTED ||
-				    sc->sc_state == NCR_SELECTING) {
-					ecb->xs->error = XS_TIMEOUT;
-					ncr53c9x_done(sc, ecb);
-				}
-				return 1;
-			}
-
-			if (sc->sc_espintr & NCRINTR_ILL) {
-				if (sc->sc_flags & NCR_EXPECT_ILLCMD) {
-					/*
-					 * Eat away "Illegal command" interrupt
-					 * on a ESP100 caused by a re-selection
-					 * while we were trying to select
-					 * another target.
-					 */
-#ifdef DEBUG
-					printf("%s: ESP100 work-around activated\n",
-						sc->sc_dev.dv_xname);
-#endif
-					sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
-					continue;
-				}
-				/* illegal command, out of sync ? */
-				printf("%s: illegal command: 0x%x "
-				    "(state %d, phase %x, prevphase %x)\n",
-					sc->sc_dev.dv_xname, sc->sc_lastcmd,
-					sc->sc_state, sc->sc_phase,
-					sc->sc_prevphase);
-				if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
-					NCRCMD(sc, NCRCMD_FLUSH);
-					DELAY(1);
-				}
-				ncr53c9x_init(sc, 1); /* Restart everything */
-				return 1;
-			}
-		}
-		sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
-
-		/*
-		 * Call if DMA is active.
-		 *
-		 * If DMA_INTR returns true, then maybe go 'round the loop
-		 * again in case there is no more DMA queued, but a phase
-		 * change is expected.
-		 */
-		if (NCRDMA_ISACTIVE(sc)) {
-			int r = NCRDMA_INTR(sc);
-			if (r == -1) {
-				printf("%s: DMA error; resetting\n",
-					sc->sc_dev.dv_xname);
-				ncr53c9x_init(sc, 1);
-			}
-			/* If DMA active here, then go back to work... */
-			if (NCRDMA_ISACTIVE(sc))
-				return 1;
-
-			if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
-				/*
-				 * DMA not completed.  If we can not find a
-				 * acceptable explanation, print a diagnostic.
-				 */
-				if (sc->sc_state == NCR_SELECTING)
-					/*
-					 * This can happen if we are reselected
-					 * while using DMA to select a target.
-					 */
-					/*void*/;
-				else if (sc->sc_prevphase == MESSAGE_OUT_PHASE){
-					/*
-					 * Our (multi-byte) message (eg SDTR)
-					 * was interrupted by the target to
-					 * send a MSG REJECT.
-					 * Print diagnostic if current phase
-					 * is not MESSAGE IN.
-					 */
-					if (sc->sc_phase != MESSAGE_IN_PHASE)
-					    printf("%s: !TC on MSG OUT"
-					       " [intr %x, stat %x, step %d]"
-					       " prevphase %x, resid %x\n",
-						sc->sc_dev.dv_xname,
-						sc->sc_espintr,
-						sc->sc_espstat,
-						sc->sc_espstep,
-						sc->sc_prevphase,
-						sc->sc_omlen);
-				} else if (sc->sc_dleft == 0) {
-					/*
-					 * The DMA operation was started for
-					 * a DATA transfer. Print a diagnostic
-					 * if the DMA counter and TC bit
-					 * appear to be out of sync.
-					 */
-					printf("%s: !TC on DATA XFER"
-					       " [intr %x, stat %x, step %d]"
-					       " prevphase %x, resid %x\n",
-						sc->sc_dev.dv_xname,
-						sc->sc_espintr,
-						sc->sc_espstat,
-						sc->sc_espstep,
-						sc->sc_prevphase,
-						ecb?ecb->dleft:-1);
-				}
-			}
-		}
-
-#if 0	/* Unreliable on some NCR revisions? */
-		if ((sc->sc_espstat & NCRSTAT_INT) == 0) {
-			printf("%s: spurious interrupt\n",
-			    sc->sc_dev.dv_xname);
-			return 1;
-		}
-#endif
-
-		/*
-		 * check for less serious errors
-		 */
-		if (sc->sc_espstat & NCRSTAT_PE) {
-			printf("%s: SCSI bus parity error\n",
-				sc->sc_dev.dv_xname);
-			if (sc->sc_prevphase == MESSAGE_IN_PHASE)
-				ncr53c9x_sched_msgout(SEND_PARITY_ERROR);
-			else
-				ncr53c9x_sched_msgout(SEND_INIT_DET_ERR);
-		}
-
-		if (sc->sc_espintr & NCRINTR_DIS) {
-			NCR_MISC(("<DISC [intr %x, stat %x, step %d]>",
-				sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
+		if (sc->sc_espstat & NCRSTAT_GE) {
+			/* Gross Error; no target ? */
 			if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 				NCRCMD(sc, NCRCMD_FLUSH);
 				DELAY(1);
 			}
-			/*
-			 * This command must (apparently) be issued within
-			 * 250mS of a disconnect. So here you are...
-			 */
-			NCRCMD(sc, NCRCMD_ENSEL);
-
-			switch (sc->sc_state) {
-			case NCR_RESELECTED:
-				goto sched;
-
-			case NCR_SELECTING:
-				ecb->xs->error = XS_SELTIMEOUT;
-				goto finish;
-
-			case NCR_CONNECTED:
-				if ((sc->sc_flags & NCR_SYNCHNEGO)) {
-#ifdef NCR53C9X_DEBUG
-					if (ecb)
-						sc_print_addr(ecb->xs->sc_link);
-					printf("sync nego not completed!\n");
-#endif
-					ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
-					sc->sc_flags &= ~NCR_SYNCHNEGO;
-					ti->flags &=
-					    ~(T_NEGOTIATE | T_SYNCMODE);
-				}
-
-				/* it may be OK to disconnect */
-				if ((sc->sc_flags & NCR_ABORTING) == 0) {
-					/*  
-					 * Section 5.1.1 of the SCSI 2 spec
-					 * suggests issuing a REQUEST SENSE
-					 * following an unexpected disconnect.
-					 * Some devices go into a contingent
-					 * allegiance condition when
-					 * disconnecting, and this is necessary
-					 * to clean up their state.
-					 */     
-					printf("%s: unexpected disconnect; ",
-					    sc->sc_dev.dv_xname);
-					if (ecb->flags & ECB_SENSE) {
-						printf("resetting\n");
-						goto reset;
-					}
-					printf("sending REQUEST SENSE\n");
-					untimeout(ncr53c9x_timeout, ecb);
-					ncr53c9x_sense(sc, ecb);
-					goto out;
-				}
-
+			if (sc->sc_state == NCR_CONNECTED ||
+			    sc->sc_state == NCR_SELECTING) {
 				ecb->xs->error = XS_TIMEOUT;
-				goto finish;
-
-			case NCR_DISCONNECT:
-				TAILQ_INSERT_HEAD(&sc->nexus_list, ecb, chain);
-				sc->sc_nexus = NULL;
-				goto sched;
-
-			case NCR_CMDCOMPLETE:
-				goto finish;
+				ncr53c9x_done(sc, ecb);
 			}
+				return (1);
 		}
 
-		switch (sc->sc_state) {
+		if (sc->sc_espintr & NCRINTR_ILL) {
+			if (sc->sc_flags & NCR_EXPECT_ILLCMD) {
+				/*
+				 * Eat away "Illegal command" interrupt
+				 * on a ESP100 caused by a re-selection
+				 * while we were trying to select
+				 * another target.
+				 */
+#ifdef DEBUG
+				printf("%s: ESP100 work-around activated\n",
+					sc->sc_dev.dv_xname);
+#endif
+				sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
+				return (1);
+			}
+			/* illegal command, out of sync ? */
+			printf("%s: illegal command: 0x%x "
+			    "(state %d, phase %x, prevphase %x)\n",
+				sc->sc_dev.dv_xname, sc->sc_lastcmd,
+				sc->sc_state, sc->sc_phase,
+				sc->sc_prevphase);
+			if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
+				NCRCMD(sc, NCRCMD_FLUSH);
+				DELAY(1);
+			}
+			ncr53c9x_init(sc, 1); /* Restart everything */
+			return (1);
+		}
+	}
+	sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
 
-		case NCR_SBR:
-			printf("%s: waiting for SCSI Bus Reset to happen\n",
+	/*
+	 * Call if DMA is active.
+	 *
+	 * If DMA_INTR returns true, then maybe go 'round the loop
+	 * again in case there is no more DMA queued, but a phase
+	 * change is expected.
+	 */
+	if (NCRDMA_ISACTIVE(sc)) {
+		int r = NCRDMA_INTR(sc);
+		if (r == -1) {
+			printf("%s: DMA error; resetting\n",
 				sc->sc_dev.dv_xname);
-			return 1;
+			ncr53c9x_init(sc, 1);
+		}
+		/* If DMA active here, then go back to work... */
+		if (NCRDMA_ISACTIVE(sc))
+			return (1);
 
-		case NCR_RESELECTED:
+		if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
 			/*
-			 * we must be continuing a message ?
+			 * DMA not completed.  If we can not find a
+			 * acceptable explanation, print a diagnostic.
 			 */
+			if (sc->sc_state == NCR_SELECTING)
+				/*
+				 * This can happen if we are reselected
+				 * while using DMA to select a target.
+				 */
+				/*void*/;
+			else if (sc->sc_prevphase == MESSAGE_OUT_PHASE){
+				/*
+				 * Our (multi-byte) message (eg SDTR)
+				 * was interrupted by the target to
+				 * send a MSG REJECT.
+				 * Print diagnostic if current phase
+				 * is not MESSAGE IN.
+				 */
+				if (sc->sc_phase != MESSAGE_IN_PHASE)
+				    printf("%s: !TC on MSG OUT"
+				       " [intr %x, stat %x, step %d]"
+				       " prevphase %x, resid %x\n",
+					sc->sc_dev.dv_xname,
+					sc->sc_espintr,
+					sc->sc_espstat,
+					sc->sc_espstep,
+					sc->sc_prevphase,
+					sc->sc_omlen);
+			} else if (sc->sc_dleft == 0) {
+				/*
+				 * The DMA operation was started for
+				 * a DATA transfer. Print a diagnostic
+				 * if the DMA counter and TC bit
+				 * appear to be out of sync.
+				 */
+				printf("%s: !TC on DATA XFER"
+				       " [intr %x, stat %x, step %d]"
+				       " prevphase %x, resid %x\n",
+					sc->sc_dev.dv_xname,
+					sc->sc_espintr,
+					sc->sc_espstat,
+					sc->sc_espstep,
+					sc->sc_prevphase,
+					ecb?ecb->dleft:-1);
+			}
+		}
+	}
+
+	/*
+	 * check for less serious errors
+	 */
+	if (sc->sc_espstat & NCRSTAT_PE) {
+		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
+		if (sc->sc_prevphase == MESSAGE_IN_PHASE)
+			ncr53c9x_sched_msgout(SEND_PARITY_ERROR);
+		else
+			ncr53c9x_sched_msgout(SEND_INIT_DET_ERR);
+	}
+
+	if (sc->sc_espintr & NCRINTR_DIS) {
+		NCR_MISC(("<DISC [intr %x, stat %x, step %d]>",
+			sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
+		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
+			NCRCMD(sc, NCRCMD_FLUSH);
+			DELAY(1);
+		}
+		/*
+		 * This command must (apparently) be issued within
+		 * 250mS of a disconnect. So here you are...
+		 */
+		NCRCMD(sc, NCRCMD_ENSEL);
+
+		switch (sc->sc_state) {
+		case NCR_RESELECTED:
+			goto sched;
+
+		case NCR_SELECTING:
+			ecb->xs->error = XS_SELTIMEOUT;
+			goto finish;
+
+		case NCR_CONNECTED:
+			if ((sc->sc_flags & NCR_SYNCHNEGO)) {
+#ifdef NCR53C9X_DEBUG
+				if (ecb)
+					sc_print_addr(ecb->xs->sc_link);
+				printf("sync nego not completed!\n");
+#endif
+				ti = &sc->sc_tinfo[ecb->xs->sc_link->target];
+				sc->sc_flags &= ~NCR_SYNCHNEGO;
+				ti->flags &= ~(T_NEGOTIATE | T_SYNCMODE);
+			}
+
+			/* it may be OK to disconnect */
+			if ((sc->sc_flags & NCR_ABORTING) == 0) {
+				/*  
+				 * Section 5.1.1 of the SCSI 2 spec
+				 * suggests issuing a REQUEST SENSE
+				 * following an unexpected disconnect.
+				 * Some devices go into a contingent
+				 * allegiance condition when
+				 * disconnecting, and this is necessary
+				 * to clean up their state.
+				 */     
+				printf("%s: unexpected disconnect; ",
+				    sc->sc_dev.dv_xname);
+				if (ecb->flags & ECB_SENSE) {
+					printf("resetting\n");
+					goto reset;
+				}
+				printf("sending REQUEST SENSE\n");
+				untimeout(ncr53c9x_timeout, ecb);
+				ncr53c9x_sense(sc, ecb);
+				goto out;
+			}
+
+			ecb->xs->error = XS_TIMEOUT;
+			goto finish;
+
+		case NCR_DISCONNECT:
+			TAILQ_INSERT_HEAD(&sc->nexus_list, ecb, chain);
+			sc->sc_nexus = NULL;
+			goto sched;
+
+		case NCR_CMDCOMPLETE:
+			goto finish;
+		}
+	}
+
+	switch (sc->sc_state) {
+
+	case NCR_SBR:
+		printf("%s: waiting for SCSI Bus Reset to happen\n",
+			sc->sc_dev.dv_xname);
+			return (1);
+
+	case NCR_RESELECTED:
+		/*
+		 * we must be continuing a message ?
+		 */
+		if (sc->sc_phase != MESSAGE_IN_PHASE) {
+			printf("%s: target didn't identify\n",
+				sc->sc_dev.dv_xname);
+			ncr53c9x_init(sc, 1);
+			return (1);
+		}
+printf("<<RESELECT CONT'd>>");
+#if XXXX
+		ncr53c9x_msgin(sc);
+		if (sc->sc_state != NCR_CONNECTED) {
+			/* IDENTIFY fail?! */
+			printf("%s: identify failed\n",
+				sc->sc_dev.dv_xname);
+			ncr53c9x_init(sc, 1);
+			return (1);
+		}
+#endif
+		break;
+
+	case NCR_IDLE:
+	case NCR_SELECTING:
+		sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
+		sc->sc_flags = 0;
+		ecb = sc->sc_nexus;
+		if (ecb != NULL && (ecb->flags & ECB_NEXUS)) {
+			sc_print_addr(ecb->xs->sc_link);
+			printf("ECB_NEXUS while in state %x\n", sc->sc_state);
+		}
+
+		if (sc->sc_espintr & NCRINTR_RESEL) {
+			/*
+			 * If we're trying to select a
+			 * target ourselves, push our command
+			 * back into the ready list.
+			 */
+			if (sc->sc_state == NCR_SELECTING) {
+				NCR_MISC(("backoff selector "));
+				untimeout(ncr53c9x_timeout, ecb);
+				sc_link = ecb->xs->sc_link;
+				ti = &sc->sc_tinfo[sc_link->target];
+				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
+				ecb = sc->sc_nexus = NULL;
+			}
+			sc->sc_state = NCR_RESELECTED;
 			if (sc->sc_phase != MESSAGE_IN_PHASE) {
+				/*
+				 * Things are seriously fucked up.
+				 * Pull the brakes, i.e. reset
+				 */
 				printf("%s: target didn't identify\n",
 					sc->sc_dev.dv_xname);
 				ncr53c9x_init(sc, 1);
-				return 1;
+				return (1);
 			}
-printf("<<RESELECT CONT'd>>");
-#if XXXX
+			/*
+			 * The C90 only inhibits FIFO writes until
+			 * reselection is complete, instead of
+			 * waiting until the interrupt status register
+			 * has been read. So, if the reselect happens
+			 * while we were entering a command bytes (for
+			 * another target) some of those bytes can
+			 * appear in the FIFO here, after the
+			 * interrupt is taken.
+			 */
+			nfifo = NCR_READ_REG(sc,NCR_FFLAG) & NCRFIFO_FF;
+			if (nfifo < 2 ||
+			    (nfifo > 2 &&
+			     sc->sc_rev != NCR_VARIANT_ESP100)) {
+				printf("%s: RESELECT: "
+				    "%d bytes in FIFO! "
+				    "[intr %x, stat %x, step %d, prevphase %x]\n",
+					sc->sc_dev.dv_xname,
+					nfifo,
+					sc->sc_espintr,
+					sc->sc_espstat,
+					sc->sc_espstep,
+					sc->sc_prevphase);
+					ncr53c9x_init(sc, 1);
+				return (1);
+			}
+			sc->sc_selid = NCR_READ_REG(sc, NCR_FIFO);
+			NCR_MISC(("selid=0x%2x ", sc->sc_selid));
+
+			/* Handle identify message */
 			ncr53c9x_msgin(sc);
+			if (nfifo != 2) {
+				/*
+				 * Note: this should not happen
+				 * with `dmaselect' on.
+				 */
+				sc->sc_flags |= NCR_EXPECT_ILLCMD;
+				NCRCMD(sc, NCRCMD_FLUSH);
+			} else if (ncr53c9x_dmaselect &&
+				   sc->sc_rev == NCR_VARIANT_ESP100) {
+				sc->sc_flags |= NCR_EXPECT_ILLCMD;
+			}
+
 			if (sc->sc_state != NCR_CONNECTED) {
 				/* IDENTIFY fail?! */
 				printf("%s: identify failed\n",
 					sc->sc_dev.dv_xname);
 				ncr53c9x_init(sc, 1);
-				return 1;
+				return (1);
 			}
-#endif
-			break;
-
-		case NCR_IDLE:
-		case NCR_SELECTING:
-			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
-			sc->sc_flags = 0;
-			ecb = sc->sc_nexus;
-			if (ecb != NULL && (ecb->flags & ECB_NEXUS)) {
-				sc_print_addr(ecb->xs->sc_link);
-				printf("ECB_NEXUS while in state %x\n",
-					sc->sc_state);
-			}
-
-			if (sc->sc_espintr & NCRINTR_RESEL) {
-				/*
-				 * If we're trying to select a
-				 * target ourselves, push our command
-				 * back into the ready list.
-				 */
-				if (sc->sc_state == NCR_SELECTING) {
-					NCR_MISC(("backoff selector "));
-					untimeout(ncr53c9x_timeout, ecb);
-					sc_link = ecb->xs->sc_link;
-					ti = &sc->sc_tinfo[sc_link->target];
-					TAILQ_INSERT_HEAD(&sc->ready_list,
-					    ecb, chain);
-					ecb = sc->sc_nexus = NULL;
-				}
-				sc->sc_state = NCR_RESELECTED;
-				if (sc->sc_phase != MESSAGE_IN_PHASE) {
-					/*
-					 * Things are seriously fucked up.
-					 * Pull the brakes, i.e. reset
-					 */
-					printf("%s: target didn't identify\n",
-						sc->sc_dev.dv_xname);
-					ncr53c9x_init(sc, 1);
-					return 1;
-				}
-				/*
-				 * The C90 only inhibits FIFO writes until
-				 * reselection is complete, instead of
-				 * waiting until the interrupt status register
-				 * has been read. So, if the reselect happens
-				 * while we were entering a command bytes (for
-				 * another target) some of those bytes can
-				 * appear in the FIFO here, after the
-				 * interrupt is taken.
-				 */
-				nfifo = NCR_READ_REG(sc,NCR_FFLAG) & NCRFIFO_FF;
-				if (nfifo < 2 ||
-				    (nfifo > 2 &&
-				     sc->sc_rev != NCR_VARIANT_ESP100)) {
-					printf("%s: RESELECT: "
-					    "%d bytes in FIFO! "
-					    "[intr %x, stat %x, step %d, prevphase %x]\n",
-						sc->sc_dev.dv_xname,
-						nfifo,
-						sc->sc_espintr,
-						sc->sc_espstat,
-						sc->sc_espstep,
-						sc->sc_prevphase);
-					ncr53c9x_init(sc, 1);
-					return 1;
-				}
-				sc->sc_selid = NCR_READ_REG(sc, NCR_FIFO);
-				NCR_MISC(("selid=0x%2x ", sc->sc_selid));
-
-				/* Handle identify message */
-				ncr53c9x_msgin(sc);
-				if (nfifo != 2) {
-					/*
-					 * Note: this should not happen
-					 * with `dmaselect' on.
-					 */
-					sc->sc_flags |= NCR_EXPECT_ILLCMD;
-					NCRCMD(sc, NCRCMD_FLUSH);
-				} else if (ncr53c9x_dmaselect &&
-					   sc->sc_rev == NCR_VARIANT_ESP100) {
-					sc->sc_flags |= NCR_EXPECT_ILLCMD;
-				}
-
-				if (sc->sc_state != NCR_CONNECTED) {
-					/* IDENTIFY fail?! */
-					printf("%s: identify failed\n",
-						sc->sc_dev.dv_xname);
-					ncr53c9x_init(sc, 1);
-					return 1;
-				}
-				continue; /* ie. next phase expected soon */
-			}
+			goto shortcut; /* ie. next phase expected soon */
+		}
 
 #define	NCRINTR_DONE	(NCRINTR_FC|NCRINTR_BS)
-			if ((sc->sc_espintr & NCRINTR_DONE) == NCRINTR_DONE) {
-				ecb = sc->sc_nexus;
-				if (!ecb)
-					panic("esp: not nexus at sc->sc_nexus");
+		if ((sc->sc_espintr & NCRINTR_DONE) == NCRINTR_DONE) {
+			/*
+			 * Arbitration won; examine the `step' register
+			 * to determine how far the selection could progress.
+			 */
+			ecb = sc->sc_nexus;
+			if (!ecb)
+				panic("esp: no nexus");
 
-				sc_link = ecb->xs->sc_link;
-				ti = &sc->sc_tinfo[sc_link->target];
+			sc_link = ecb->xs->sc_link;
+			ti = &sc->sc_tinfo[sc_link->target];
 
-				switch (sc->sc_espstep) {
-				case 0:
-					/*
-					 * The target did not respond with a
-					 * message out phase - probably an old
-					 * device that doesn't recognize ATN.
-					 * Clear ATN and just continue, the
-					 * target should be in the command
-					 * phase.
-					 * XXXX check for command phase?
-					 */
-					NCRCMD(sc, NCRCMD_RSTATN);
-					break;
-				case 1:
-					if ((ti->flags & T_NEGOTIATE) == 0) {
-						printf("%s: step 1 & !NEG\n",
-							sc->sc_dev.dv_xname);
-						goto reset;
-					}
-					if (sc->sc_phase != MESSAGE_OUT_PHASE) {
-						printf("%s: !MSGOUT\n",
-							sc->sc_dev.dv_xname);
-						goto reset;
-					}
-					/* Start negotiating */
-					ti->period = sc->sc_minsync;
-					ti->offset = 15;
-					sc->sc_flags |= NCR_SYNCHNEGO;
-					ncr53c9x_sched_msgout(SEND_SDTR);
-					break;
-				case 3:
-					/*
-					 * Grr, this is supposed to mean
-					 * "target left command phase
-					 *  prematurely". It seems to happen
-					 * regularly when sync mode is on.
-					 * Look at FIFO to see if command
-					 * went out.
-					 * (Timing problems?)
-					 */
-					if (ncr53c9x_dmaselect) {
-					    if (sc->sc_cmdlen == 0)
+			switch (sc->sc_espstep) {
+			case 0:
+				/*
+				 * The target did not respond with a
+				 * message out phase - probably an old
+				 * device that doesn't recognize ATN.
+				 * Clear ATN and just continue, the
+				 * target should be in the command
+				 * phase.
+				 * XXXX check for command phase?
+				 */
+				NCRCMD(sc, NCRCMD_RSTATN);
+				break;
+			case 1:
+				if ((ti->flags & T_NEGOTIATE) == 0) {
+					printf("%s: step 1 & !NEG\n",
+						sc->sc_dev.dv_xname);
+					goto reset;
+				}
+				if (sc->sc_phase != MESSAGE_OUT_PHASE) {
+					printf("%s: !MSGOUT\n",
+						sc->sc_dev.dv_xname);
+					goto reset;
+				}
+				/* Start negotiating */
+				ti->period = sc->sc_minsync;
+				ti->offset = 15;
+				sc->sc_flags |= NCR_SYNCHNEGO;
+				ncr53c9x_sched_msgout(SEND_SDTR);
+				break;
+			case 3:
+				/*
+				 * Grr, this is supposed to mean
+				 * "target left command phase  prematurely".
+				 * It seems to happen regularly when
+				 * sync mode is on.
+				 * Look at FIFO to see if command went out.
+				 * (Timing problems?)
+				 */
+				if (ncr53c9x_dmaselect) {
+					if (sc->sc_cmdlen == 0)
 						/* Hope for the best.. */
 						break;
-					} else if ((NCR_READ_REG(sc, NCR_FFLAG)
+				} else if ((NCR_READ_REG(sc, NCR_FFLAG)
 					    & NCRFIFO_FF) == 0) {
 						/* Hope for the best.. */
 						break;
-					}
-					printf("(%s:%d:%d): selection failed;"
-						" %d left in FIFO "
-						"[intr %x, stat %x, step %d]\n",
+				}
+				printf("(%s:%d:%d): selection failed;"
+					" %d left in FIFO "
+					"[intr %x, stat %x, step %d]\n",
+					sc->sc_dev.dv_xname,
+					sc_link->target,
+					sc_link->lun,
+					NCR_READ_REG(sc, NCR_FFLAG)
+					 & NCRFIFO_FF,
+					sc->sc_espintr, sc->sc_espstat,
+					sc->sc_espstep);
+				NCRCMD(sc, NCRCMD_FLUSH);
+				ncr53c9x_sched_msgout(SEND_ABORT);
+				return (1);
+			case 2:
+				/* Select stuck at Command Phase */
+				NCRCMD(sc, NCRCMD_FLUSH);
+			case 4:
+				if (ncr53c9x_dmaselect &&
+				    sc->sc_cmdlen != 0)
+					printf("(%s:%d:%d): select; "
+					       "%d left in DMA buffer "
+					"[intr %x, stat %x, step %d]\n",
 						sc->sc_dev.dv_xname,
 						sc_link->target,
 						sc_link->lun,
-						NCR_READ_REG(sc, NCR_FFLAG)
-						 & NCRFIFO_FF,
-						sc->sc_espintr, sc->sc_espstat,
+						sc->sc_cmdlen,
+						sc->sc_espintr,
+						sc->sc_espstat,
 						sc->sc_espstep);
-					NCRCMD(sc, NCRCMD_FLUSH);
-					ncr53c9x_sched_msgout(SEND_ABORT);
-					return 1;
-				case 2:
-					/* Select stuck at Command Phase */
-					NCRCMD(sc, NCRCMD_FLUSH);
-				case 4:
-					if (ncr53c9x_dmaselect &&
-					    sc->sc_cmdlen != 0)
-						printf("(%s:%d:%d): select; "
-						       "%d left in DMA buffer "
-						"[intr %x, stat %x, step %d]\n",
-							sc->sc_dev.dv_xname,
-							sc_link->target,
-							sc_link->lun,
-							sc->sc_cmdlen,
-							sc->sc_espintr,
-							sc->sc_espstat,
-							sc->sc_espstep);
-					/* So far, everything went fine */
-					break;
-				}
-#if 0
-				if (ecb->xs->flags & SCSI_RESET)
-					ncr53c9x_sched_msgout(SEND_DEV_RESET);
-				else if (ti->flags & T_NEGOTIATE)
-					ncr53c9x_sched_msgout(
-					    SEND_IDENTIFY | SEND_SDTR);
-				else
-					ncr53c9x_sched_msgout(SEND_IDENTIFY);
-#endif
-
-				ecb->flags |= ECB_NEXUS;
-				ti->lubusy |= (1 << sc_link->lun);
-
-				sc->sc_prevphase = INVALID_PHASE; /* ?? */
-				/* Do an implicit RESTORE POINTERS. */
-				sc->sc_dp = ecb->daddr;
-				sc->sc_dleft = ecb->dleft;
-				sc->sc_state = NCR_CONNECTED;
+				/* So far, everything went fine */
 				break;
-			} else {
-				printf("%s: unexpected status after select"
-					": [intr %x, stat %x, step %x]\n",
-					sc->sc_dev.dv_xname,
-					sc->sc_espintr, sc->sc_espstat,
-					sc->sc_espstep);
-				NCRCMD(sc, NCRCMD_FLUSH);
-				DELAY(1);
-				goto reset;
 			}
-			if (sc->sc_state == NCR_IDLE) {
-				printf("%s: stray interrupt\n",
-				    sc->sc_dev.dv_xname);
-					return 0;
-			}
+
+			ecb->flags |= ECB_NEXUS;
+			ti->lubusy |= (1 << sc_link->lun);
+
+			sc->sc_prevphase = INVALID_PHASE; /* ?? */
+			/* Do an implicit RESTORE POINTERS. */
+			sc->sc_dp = ecb->daddr;
+			sc->sc_dleft = ecb->dleft;
+			sc->sc_state = NCR_CONNECTED;
 			break;
 
-		case NCR_CONNECTED:
-			if (sc->sc_flags & NCR_ICCS) {
-				u_char msg;
+		} else {
 
-				sc->sc_flags &= ~NCR_ICCS;
-
-				if (!(sc->sc_espintr & NCRINTR_DONE)) {
-					printf("%s: ICCS: "
-					      ": [intr %x, stat %x, step %x]\n",
-						sc->sc_dev.dv_xname,
-						sc->sc_espintr, sc->sc_espstat,
-						sc->sc_espstep);
-				}
-				if ((NCR_READ_REG(sc, NCR_FFLAG)
-				    & NCRFIFO_FF) != 2) {
-					int i = (NCR_READ_REG(sc, NCR_FFLAG)
-					    & NCRFIFO_FF) - 2;
-					while (i--)
-						(void) NCR_READ_REG(sc,
-								    NCR_FIFO);
-				}
-				ecb->stat = NCR_READ_REG(sc, NCR_FIFO);
-				msg = NCR_READ_REG(sc, NCR_FIFO);
-				NCR_PHASE(("<stat:(%x,%x)>", ecb->stat, msg));
-				if (msg == MSG_CMDCOMPLETE) {
-					ecb->dleft =
-					  (ecb->flags & ECB_TENTATIVE_DONE)
-						? 0
-						: sc->sc_dleft;
-					if ((ecb->flags & ECB_SENSE) == 0)
-						ecb->xs->resid = ecb->dleft;
-					sc->sc_state = NCR_CMDCOMPLETE;
-				} else
-					printf("%s: STATUS_PHASE: msg %d\n",
-						sc->sc_dev.dv_xname, msg);
-				NCRCMD(sc, NCRCMD_MSGOK);
-				continue; /* ie. wait for disconnect */
-			}
-			break;
-		default:
-			panic("%s: invalid state: %d",
-			      sc->sc_dev.dv_xname,
-			      sc->sc_state);
-		}
-
-		/*
-		 * Driver is now in state NCR_CONNECTED, i.e. we
-		 * have a current command working the SCSI bus.
-		 */
-		if (sc->sc_state != NCR_CONNECTED || ecb == NULL) {
-			panic("esp no nexus");
-		}
-
-		switch (sc->sc_phase) {
-		case MESSAGE_OUT_PHASE:
-			NCR_PHASE(("MESSAGE_OUT_PHASE "));
-			ncr53c9x_msgout(sc);
-			sc->sc_prevphase = MESSAGE_OUT_PHASE;
-			break;
-		case MESSAGE_IN_PHASE:
-			NCR_PHASE(("MESSAGE_IN_PHASE "));
-			if (sc->sc_espintr & NCRINTR_BS) {
-				NCRCMD(sc, NCRCMD_FLUSH);
-				sc->sc_flags |= NCR_WAITI;
-				NCRCMD(sc, NCRCMD_TRANS);
-			} else if (sc->sc_espintr & NCRINTR_FC) {
-				if ((sc->sc_flags & NCR_WAITI) == 0) {
-					printf("%s: MSGIN: unexpected FC bit: "
-						"[intr %x, stat %x, step %x]\n",
-					sc->sc_dev.dv_xname,
-					sc->sc_espintr, sc->sc_espstat,
-					sc->sc_espstep);
-				}
-				sc->sc_flags &= ~NCR_WAITI;
-				ncr53c9x_msgin(sc);
-			} else {
-				printf("%s: MSGIN: weird bits: "
-					"[intr %x, stat %x, step %x]\n",
-					sc->sc_dev.dv_xname,
-					sc->sc_espintr, sc->sc_espstat,
-					sc->sc_espstep);
-			}
-			sc->sc_prevphase = MESSAGE_IN_PHASE;
-			break;
-		case COMMAND_PHASE:
-			/*
-			 * Send the command block. Normally we don't see this
-			 * phase because the SEL_ATN command takes care of
-			 * all this. However, we end up here if either the
-			 * target or we wanted to exchange some more messages
-			 * first (e.g. to start negotiations).
-			 */
-
-			NCR_PHASE(("COMMAND_PHASE 0x%02x (%d) ",
-				ecb->cmd.cmd.opcode, ecb->clen));
-			if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
-				NCRCMD(sc, NCRCMD_FLUSH);
-				DELAY(1);
-			}
-			if (ncr53c9x_dmaselect) {
-				size_t size;
-				/* setup DMA transfer for command */
-				size = ecb->clen;
-				sc->sc_cmdlen = size;
-				sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
-				NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen,
-					     0, &size);
-				/* Program the SCSI counter */
-				NCR_WRITE_REG(sc, NCR_TCL, size);
-				NCR_WRITE_REG(sc, NCR_TCM, size >> 8);
-				if (sc->sc_cfg2 & NCRCFG2_FE) {
-					NCR_WRITE_REG(sc, NCR_TCH, size >> 16);
-				}
-
-				/* load the count in */
-				NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
-
-				/* start the command transfer */
-				NCRCMD(sc, NCRCMD_TRANS | NCRCMD_DMA);
-				NCRDMA_GO(sc);
-			} else {
-				u_char *cmd = (u_char *)&ecb->cmd.cmd;
-				int i;
-				/* Now the command into the FIFO */
-				for (i = 0; i < ecb->clen; i++)
-					NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
-				NCRCMD(sc, NCRCMD_TRANS);
-			}
-			sc->sc_prevphase = COMMAND_PHASE;
-			break;
-		case DATA_OUT_PHASE:
-			NCR_PHASE(("DATA_OUT_PHASE [%ld] ",(long)sc->sc_dleft));
+			printf("%s: unexpected status after select"
+				": [intr %x, stat %x, step %x]\n",
+				sc->sc_dev.dv_xname,
+				sc->sc_espintr, sc->sc_espstat,
+				sc->sc_espstep);
 			NCRCMD(sc, NCRCMD_FLUSH);
-			size = min(sc->sc_dleft, sc->sc_maxxfer);
-			NCRDMA_SETUP(sc, &sc->sc_dp, &sc->sc_dleft,
-				  0, &size);
-			sc->sc_prevphase = DATA_OUT_PHASE;
-			goto setup_xfer;
-		case DATA_IN_PHASE:
-			NCR_PHASE(("DATA_IN_PHASE "));
-			if (sc->sc_rev == NCR_VARIANT_ESP100)
-				NCRCMD(sc, NCRCMD_FLUSH);
-			size = min(sc->sc_dleft, sc->sc_maxxfer);
-			NCRDMA_SETUP(sc, &sc->sc_dp, &sc->sc_dleft,
-				  1, &size);
-			sc->sc_prevphase = DATA_IN_PHASE;
-		setup_xfer:
-			/* Target returned to data phase: wipe "done" memory */
-			ecb->flags &= ~ECB_TENTATIVE_DONE;
+			DELAY(1);
+			goto reset;
+		}
+		if (sc->sc_state == NCR_IDLE) {
+			printf("%s: stray interrupt\n",
+			    sc->sc_dev.dv_xname);
+				return (0);
+		}
+		break;
 
+	case NCR_CONNECTED:
+		if (sc->sc_flags & NCR_ICCS) {
+			/* "Initiate Command Complete Steps" in progress */
+			u_char msg;
+
+			sc->sc_flags &= ~NCR_ICCS;
+
+			if (!(sc->sc_espintr & NCRINTR_DONE)) {
+				printf("%s: ICCS: "
+				      ": [intr %x, stat %x, step %x]\n",
+					sc->sc_dev.dv_xname,
+					sc->sc_espintr, sc->sc_espstat,
+					sc->sc_espstep);
+			}
+			if ((NCR_READ_REG(sc, NCR_FFLAG)
+			    & NCRFIFO_FF) != 2) {
+				int i = (NCR_READ_REG(sc, NCR_FFLAG)
+					    & NCRFIFO_FF) - 2;
+				while (i--)
+					(void) NCR_READ_REG(sc, NCR_FIFO);
+			}
+			ecb->stat = NCR_READ_REG(sc, NCR_FIFO);
+			msg = NCR_READ_REG(sc, NCR_FIFO);
+			NCR_PHASE(("<stat:(%x,%x)>", ecb->stat, msg));
+			if (msg == MSG_CMDCOMPLETE) {
+				ecb->dleft = (ecb->flags & ECB_TENTATIVE_DONE)
+					? 0
+					: sc->sc_dleft;
+				if ((ecb->flags & ECB_SENSE) == 0)
+					ecb->xs->resid = ecb->dleft;
+				sc->sc_state = NCR_CMDCOMPLETE;
+			} else
+				printf("%s: STATUS_PHASE: msg %d\n",
+					sc->sc_dev.dv_xname, msg);
+			NCRCMD(sc, NCRCMD_MSGOK);
+			goto shortcut; /* ie. wait for disconnect */
+		}
+		break;
+	default:
+		panic("%s: invalid state: %d",
+		      sc->sc_dev.dv_xname,
+		      sc->sc_state);
+	}
+
+	/*
+	 * Driver is now in state NCR_CONNECTED, i.e. we
+	 * have a current command working the SCSI bus.
+	 */
+	if (sc->sc_state != NCR_CONNECTED || ecb == NULL) {
+		panic("esp no nexus");
+	}
+
+	switch (sc->sc_phase) {
+	case MESSAGE_OUT_PHASE:
+		NCR_PHASE(("MESSAGE_OUT_PHASE "));
+		ncr53c9x_msgout(sc);
+		sc->sc_prevphase = MESSAGE_OUT_PHASE;
+		break;
+	case MESSAGE_IN_PHASE:
+		NCR_PHASE(("MESSAGE_IN_PHASE "));
+		sc->sc_prevphase = MESSAGE_IN_PHASE;
+		if (sc->sc_espintr & NCRINTR_BS) {
+			NCRCMD(sc, NCRCMD_FLUSH);
+			sc->sc_flags |= NCR_WAITI;
+			NCRCMD(sc, NCRCMD_TRANS);
+		} else if (sc->sc_espintr & NCRINTR_FC) {
+			if ((sc->sc_flags & NCR_WAITI) == 0) {
+				printf("%s: MSGIN: unexpected FC bit: "
+					"[intr %x, stat %x, step %x]\n",
+				sc->sc_dev.dv_xname,
+				sc->sc_espintr, sc->sc_espstat,
+				sc->sc_espstep);
+			}
+			sc->sc_flags &= ~NCR_WAITI;
+			ncr53c9x_msgin(sc);
+		} else {
+			printf("%s: MSGIN: weird bits: "
+				"[intr %x, stat %x, step %x]\n",
+				sc->sc_dev.dv_xname,
+				sc->sc_espintr, sc->sc_espstat,
+				sc->sc_espstep);
+		}
+		goto shortcut;	/* i.e. expect data to be ready */
+		break;
+	case COMMAND_PHASE:
+		/*
+		 * Send the command block. Normally we don't see this
+		 * phase because the SEL_ATN command takes care of
+		 * all this. However, we end up here if either the
+		 * target or we wanted to exchange some more messages
+		 * first (e.g. to start negotiations).
+		 */
+
+		NCR_PHASE(("COMMAND_PHASE 0x%02x (%d) ",
+			ecb->cmd.cmd.opcode, ecb->clen));
+		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
+			NCRCMD(sc, NCRCMD_FLUSH);
+			DELAY(1);
+		}
+		if (ncr53c9x_dmaselect) {
+			size_t size;
+			/* setup DMA transfer for command */
+			size = ecb->clen;
+			sc->sc_cmdlen = size;
+			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen,
+				     0, &size);
 			/* Program the SCSI counter */
 			NCR_WRITE_REG(sc, NCR_TCL, size);
 			NCR_WRITE_REG(sc, NCR_TCM, size >> 8);
 			if (sc->sc_cfg2 & NCRCFG2_FE) {
 				NCR_WRITE_REG(sc, NCR_TCH, size >> 16);
 			}
+
 			/* load the count in */
 			NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
 
-			/*
-			 * Note that if `size' is 0, we've already transceived
-			 * all the bytes we want but we're still in DATA PHASE.
-			 * Apparently, the device needs padding. Also, a
-			 * transfer size of 0 means "maximum" to the chip
-			 * DMA logic.
-			 */
-			NCRCMD(sc,
-			       (size==0?NCRCMD_TRPAD:NCRCMD_TRANS)|NCRCMD_DMA);
+			/* start the command transfer */
+			NCRCMD(sc, NCRCMD_TRANS | NCRCMD_DMA);
 			NCRDMA_GO(sc);
-			return 1;
-		case STATUS_PHASE:
-			NCR_PHASE(("STATUS_PHASE "));
-			sc->sc_flags |= NCR_ICCS;
-			NCRCMD(sc, NCRCMD_ICCS);
-			sc->sc_prevphase = STATUS_PHASE;
-			break;
-		case INVALID_PHASE:
-			break;
-		default:
-			printf("%s: unexpected bus phase; resetting\n",
-			    sc->sc_dev.dv_xname);
-			goto reset;
+		} else {
+			u_char *cmd = (u_char *)&ecb->cmd.cmd;
+			int i;
+			/* Now the command into the FIFO */
+			for (i = 0; i < ecb->clen; i++)
+				NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+			NCRCMD(sc, NCRCMD_TRANS);
 		}
+		sc->sc_prevphase = COMMAND_PHASE;
+		break;
+	case DATA_OUT_PHASE:
+		NCR_PHASE(("DATA_OUT_PHASE [%ld] ",(long)sc->sc_dleft));
+		NCRCMD(sc, NCRCMD_FLUSH);
+		size = min(sc->sc_dleft, sc->sc_maxxfer);
+		NCRDMA_SETUP(sc, &sc->sc_dp, &sc->sc_dleft,
+			  0, &size);
+		sc->sc_prevphase = DATA_OUT_PHASE;
+		goto setup_xfer;
+	case DATA_IN_PHASE:
+		NCR_PHASE(("DATA_IN_PHASE "));
+		if (sc->sc_rev == NCR_VARIANT_ESP100)
+			NCRCMD(sc, NCRCMD_FLUSH);
+		size = min(sc->sc_dleft, sc->sc_maxxfer);
+		NCRDMA_SETUP(sc, &sc->sc_dp, &sc->sc_dleft,
+			  1, &size);
+		sc->sc_prevphase = DATA_IN_PHASE;
+	setup_xfer:
+		/* Target returned to data phase: wipe "done" memory */
+		ecb->flags &= ~ECB_TENTATIVE_DONE;
+
+		/* Program the SCSI counter */
+		NCR_WRITE_REG(sc, NCR_TCL, size);
+		NCR_WRITE_REG(sc, NCR_TCM, size >> 8);
+		if (sc->sc_cfg2 & NCRCFG2_FE) {
+			NCR_WRITE_REG(sc, NCR_TCH, size >> 16);
+		}
+		/* load the count in */
+		NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
+
+		/*
+		 * Note that if `size' is 0, we've already transceived
+		 * all the bytes we want but we're still in DATA PHASE.
+		 * Apparently, the device needs padding. Also, a
+		 * transfer size of 0 means "maximum" to the chip
+		 * DMA logic.
+		 */
+		NCRCMD(sc,
+		       (size==0?NCRCMD_TRPAD:NCRCMD_TRANS)|NCRCMD_DMA);
+		NCRDMA_GO(sc);
+		return (1);
+	case STATUS_PHASE:
+		NCR_PHASE(("STATUS_PHASE "));
+		sc->sc_flags |= NCR_ICCS;
+		NCRCMD(sc, NCRCMD_ICCS);
+		sc->sc_prevphase = STATUS_PHASE;
+		break;
+	case INVALID_PHASE:
+		break;
+	default:
+		printf("%s: unexpected bus phase; resetting\n",
+		    sc->sc_dev.dv_xname);
+		goto reset;
 	}
-	panic("esp: should not get here..");
+
+out:
+	return (1);
 
 reset:
 	ncr53c9x_init(sc, 1);
-	return 1;
+	goto out;
 
 finish:
 	ncr53c9x_done(sc, ecb);
@@ -2048,8 +2041,20 @@ sched:
 	ncr53c9x_sched(sc);
 	goto out;
 
-out:
-	return 1;
+shortcut:
+	/*
+	 * The idea is that many of the SCSI operations take very little
+	 * time, and going away and getting interrupted is too high an
+	 * overhead to pay. For example, selecting, sending a message
+	 * and command and then doing some work can be done in one "pass".
+	 *
+	 * The delay is a heuristic. It is 2 when at 20Mhz, 2 at 25Mhz and 1
+	 * at 40Mhz. This needs testing.
+	 */
+	DELAY(50/sc->sc_freq);
+	if (NCRDMA_ISINTR(sc))
+		goto again;
+	goto out;
 }
 
 void

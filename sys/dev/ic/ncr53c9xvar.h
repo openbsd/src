@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.3 1998/02/03 22:02:48 jason Exp $	*/
-/*	$NetBSD: ncr53c9xvar.h,v 1.11 1997/10/05 18:35:09 thorpej Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.4 1998/05/28 22:07:54 jason Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -276,11 +276,11 @@ struct ncr53c9x_softc {
 	u_char	sc_msgpriq;	/* One or more messages to send (encoded) */
 	u_char	sc_msgout;	/* What message is on its way out? */
 	u_char	sc_msgoutq;	/* What messages have been sent so far? */
-	u_char	sc_omess[NCR_MAX_MSG_LEN];
-	caddr_t	sc_omp;	/* Message pointer (for multibyte messages) */
+	u_char	*sc_omess;	/* MSGOUT buffer */
+	caddr_t	sc_omp;		/* Message pointer (for multibyte messages) */
 	size_t	sc_omlen;
-	u_char	sc_imess[NCR_MAX_MSG_LEN + 1];
-	caddr_t	sc_imp;	/* Message pointer (for multibyte messages) */
+	u_char	*sc_imess;	/* MSGIN buffer */
+	caddr_t	sc_imp;		/* Message pointer (for multibyte messages) */
 	size_t	sc_imlen;
 
 	caddr_t	sc_cmdp;	/* Command pointer (for DMAed commands) */
@@ -290,6 +290,7 @@ struct ncr53c9x_softc {
 	int sc_freq;				/* Freq in HZ */
 	int sc_id;				/* our scsi id */
 	int sc_rev;				/* esp revision */
+	int sc_features;			/* chip features */
 	int sc_minsync;				/* minimum sync period / 4 */
 	int sc_maxxfer;				/* maximum transfer size */
 };
@@ -313,6 +314,10 @@ struct ncr53c9x_softc {
 #define NCR_WAITI	0x20	/* Waiting for non-DMA data to arrive */
 #define	NCR_ATN		0x40	/* ATN asserted */
 #define	NCR_EXPECT_ILLCMD	0x80	/* Expect Illegal Command Interrupt */
+
+/* values for sc_features */
+#define	NCR_F_HASCFG3	0x01	/* chip has CFG3 register */
+#define	NCR_F_FASTSCSI	0x02	/* chip supports Fast mode */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x01
