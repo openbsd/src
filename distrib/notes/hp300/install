@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.24 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: install,v 1.25 2003/03/25 19:57:18 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
@@ -110,7 +110,7 @@ OpenBSDBootMsgs
 	or vt100 compatible terminal; nothing else is supported.  (If
 	your terminal type is xterm, just use vt100).
 	
-OpenBDSInstallPart3({:- or "hd0" for HPIB/CS80 drives-:})
+OpenBSDInstallPart3({:- or "hd0" for HPIB/CS80 drives-:})
 
 OpenBSDInstallPart4
 
@@ -121,7 +121,7 @@ OpenBSDInstallPart4
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-OpenBSDDInstallPart5(sd0)
+OpenBSDInstallPart5(sd0)
 
 OpenBSDInstallNet({:-CD-ROM, NFS, -:})
 

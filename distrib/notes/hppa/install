@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.3 2003/02/15 01:23:26 miod Exp $
+dnl	$OpenBSD: install,v 1.4 2003/03/25 19:57:20 miod Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -101,7 +101,7 @@ OpenBSDBootMsgs
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).
 	
-OpenBDSInstallPart3
+OpenBSDInstallPart3
 
 OpenBSDInstallPart4
 
@@ -112,7 +112,7 @@ OpenBSDInstallPart4
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-OpenBSDDInstallPart5(sd0)
+OpenBSDInstallPart5(sd0)
 
 OpenBSDInstallNet({:-CD-ROM, -:},nofloppy)
 
