@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermgmt.conf.5,v 1.3 2004/06/04 18:04:21 otto Exp $
+.\" $OpenBSD: usermgmt.conf.5,v 1.4 2004/06/06 21:16:48 jmc Exp $
 .\" $NetBSD: usermgmt.conf.5,v 1.3 2002/10/02 13:49:11 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@ or using the
 .Fl D
 option to
 .Xr useradd 8 .
-.Pp
 .Bl -tag -width preserveX
 .It Ic base_dir
 sets the base directory name, in which new users' home directories
@@ -86,8 +85,7 @@ and the same, and a line added to
 .Pa /etc/group
 to describe the new group.
 It has the format:
-.Pp
-.Bd -ragged -offset indent -compact
+.Bd -ragged -offset indent
 .Ic group
 .Ar gid | name | Li =uid
 .Ed
