@@ -6,6 +6,8 @@ kerberosV stuff.
 
 To build this stuff, do the following:
 
+# cd /usr/src/kerberosIV/lib/sl
+# make
 # cd /usr/src/kerberosV
 # make build
 
@@ -25,12 +27,27 @@ Things todo, in no particular order:
 
  - Make sure to not try krb5 auth when no ticket exists. (same goes for krb4)
  - kadmind
- - Other servers
+ - hprop, iprop
+ - kf, kfd
+ - kpasswdd and hack krb5 support in our passwd
+ - krb5-config script
+ - kx, kxd
+ - krb5 support in login, xdm, xlock, su and sudo
+ - rxtelnet, rxterm
+ - string2key
+ - verify_krb5_conf
+ - pop-server and push
+ - rsh, rshd
  - ssh and sshd
  - Test what happens for a user not using kerberos
  - Test all combinations of compat stuff between client, kdc and server
  - Slave propagation k5->k5 and k4->k5
- - Test how to upgrade a realm from k4 to k5
+ - Test and document how to upgrade a realm from k4 to k5
  - Test compatibility with other k5 implementations, for example MIT and
-   Windows 2000
+   Windows 2000, and document any caveats or tricks
  - Logging
+ - Manpages are missing for many library functions, as well as a few
+   programs. So we should document them and give back to the Heimdal project.
+ - Build and install heimdal.info
+ - Fix /etc/rc and companions
+ - Example configuration installed when system is installed
