@@ -784,6 +784,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/eapreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/emuxkireg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/emuxkivar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esareg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esavar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esoreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esovar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/fmsvar.ph
