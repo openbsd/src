@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.88 2001/07/21 03:08:57 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.89 2001/08/08 03:11:46 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1014,10 +1014,29 @@ hifn_write_command(cmd, buf)
 	}
 
 	if (using_crypt && cry_cmd->masks & HIFN_CRYPT_CMD_NEW_KEY) {
-		len = (cry_cmd->masks & HIFN_CRYPT_CMD_ALG_3DES) ?
-		    HIFN_3DES_KEY_LENGTH : HIFN_DES_KEY_LENGTH;
-		bcopy(cmd->ck, buf_pos, len);
-		buf_pos += len;
+		switch (cry_cmd->masks & HIFN_CRYPT_CMD_ALG_MASK) {
+		case HIFN_CRYPT_CMD_ALG_3DES:
+			bcopy(cmd->ck, buf_pos, HIFN_3DES_KEY_LENGTH);
+			buf_pos += HIFN_3DES_KEY_LENGTH;
+			break;
+		case HIFN_CRYPT_CMD_ALG_DES:
+			bcopy(cmd->ck, buf_pos, HIFN_DES_KEY_LENGTH);
+			buf_pos += cmd->cklen;
+			break;
+		case HIFN_CRYPT_CMD_ALG_RC4:
+			len = 256;
+			do {
+				int clen;
+
+				clen = MIN(cmd->cklen, len);
+				bcopy(cmd->ck, buf_pos, clen);
+				len -= clen;
+				buf_pos += clen;
+			} while (len > 0);
+			bzero(buf_pos, 4);
+			buf_pos += 4;
+			break;
+		}
 	}
 
 	if (using_crypt && cry_cmd->masks & HIFN_CRYPT_CMD_NEW_IV) {
@@ -1461,26 +1480,32 @@ hifn_newsession(sidp, cri)
 		return (ENOMEM);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
-		if (c->cri_alg == CRYPTO_MD5_HMAC ||
-		    c->cri_alg == CRYPTO_SHA1_HMAC) {
+		switch (c->cri_alg) {
+		case CRYPTO_MD5_HMAC:
+		case CRYPTO_SHA1_HMAC:
 			if (mac)
 				return (EINVAL);
 			mac = 1;
-		} else if (c->cri_alg == CRYPTO_DES_CBC ||
-		    c->cri_alg == CRYPTO_3DES_CBC) {
+			break;
+		case CRYPTO_DES_CBC:
+		case CRYPTO_3DES_CBC:
+			get_random_bytes(sc->sc_sessions[i].hs_iv,
+			    HIFN_IV_LENGTH);
+			/*FALLTHROUGH*/
+		case CRYPTO_ARC4:
 			if (cry)
 				return (EINVAL);
 			cry = 1;
-		} else
+			break;
+		default:
 			return (EINVAL);
-
+		}
 	}
 	if (mac == 0 && cry == 0)
 		return (EINVAL);
 
 	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
 	sc->sc_sessions[i].hs_flags = 1;
-	get_random_bytes(sc->sc_sessions[i].hs_iv, HIFN_IV_LENGTH);
 
 	return (0);
 }
@@ -1570,7 +1595,8 @@ hifn_process(crp)
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
-			 crd1->crd_alg == CRYPTO_3DES_CBC) {
+		    crd1->crd_alg == CRYPTO_3DES_CBC ||
+		    crd1->crd_alg == CRYPTO_ARC4) {
 			if ((crd1->crd_flags & CRD_F_ENCRYPT) == 0)
 				cmd->base_masks |= HIFN_BASE_CMD_DECODE;
 			maccrd = NULL;
@@ -1581,17 +1607,19 @@ hifn_process(crp)
 		}
 	} else {
 		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
+		     crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
-			crd2->crd_alg == CRYPTO_3DES_CBC) &&
+		     crd2->crd_alg == CRYPTO_3DES_CBC ||
+		     crd2->crd_alg == CRYPTO_ARC4) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
 			cmd->base_masks = HIFN_BASE_CMD_DECODE;
 			maccrd = crd1;
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
+		    crd1->crd_alg == CRYPTO_ARC4 ||
 		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
 		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
-			crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
+		     crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -1607,8 +1635,24 @@ hifn_process(crp)
 	if (enccrd) {
 		cmd->enccrd = enccrd;
 		cmd->base_masks |= HIFN_BASE_CMD_CRYPT;
-		cmd->cry_masks |= HIFN_CRYPT_CMD_MODE_CBC |
-		    HIFN_CRYPT_CMD_NEW_IV;
+		switch (enccrd->crd_alg) {
+		case CRYPTO_ARC4:
+			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_RC4;
+			break;
+		case CRYPTO_DES_CBC:
+			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES |
+			    HIFN_CRYPT_CMD_MODE_CBC |
+			    HIFN_CRYPT_CMD_NEW_IV;
+			break;
+		case CRYPTO_3DES_CBC:
+			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_3DES |
+			    HIFN_CRYPT_CMD_MODE_CBC |
+			    HIFN_CRYPT_CMD_NEW_IV;
+			break;
+		default:
+			err = EINVAL;
+			goto errout;
+		}
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
 				bcopy(enccrd->crd_iv, cmd->iv, HIFN_IV_LENGTH);
@@ -1637,12 +1681,8 @@ hifn_process(crp)
 				    HIFN_IV_LENGTH, cmd->iv);
 		}
 
-		if (enccrd->crd_alg == CRYPTO_DES_CBC)
-			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES;
-		else
-			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_3DES;
-
 		cmd->ck = enccrd->crd_key;
+		cmd->cklen = enccrd->crd_klen >> 3;
 
 		if (sc->sc_sessions[session].hs_flags == 1)
 			cmd->cry_masks |= HIFN_CRYPT_CMD_NEW_KEY;
