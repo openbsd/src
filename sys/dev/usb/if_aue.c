@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_aue.c,v 1.26 2002/07/25 04:07:32 nate Exp $ */
-/*	$NetBSD: if_aue.c,v 1.79 2002/07/11 21:14:25 augustss Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.27 2002/07/29 03:33:02 nate Exp $ */
+/*	$NetBSD: if_aue.c,v 1.80 2002/07/25 06:45:38 matt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -185,6 +185,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_SS1001},	  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS},	  PNA },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII},	  PII },
+ {{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_USB2LAN},	  PII },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100},	  0 },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBLP100}, PNA },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBEL100}, 0 },
