@@ -1,4 +1,4 @@
-/* $OpenBSD */
+/*	$OpenBSD: esa.c,v 1.2 2002/04/08 06:06:10 deraadt Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: if_sfreg.h,v 1.5 2002/04/08 06:06:10 deraadt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
