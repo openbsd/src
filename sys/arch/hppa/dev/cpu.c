@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.14 2002/03/19 01:30:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -37,6 +37,7 @@
 
 #include <machine/cpufunc.h>
 #include <machine/pdc.h>
+#include <machine/reg.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 
