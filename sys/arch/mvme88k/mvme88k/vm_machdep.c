@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.54 2003/10/05 20:27:47 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.55 2003/10/24 20:40:07 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -70,9 +70,6 @@ vaddr_t iomap_mapin(paddr_t, psize_t, boolean_t);
 void iomap_mapout(vaddr_t, vsize_t);
 void *mapiodev(void *, int);
 void unmapiodev(void *, int);
-vaddr_t mapiospace(caddr_t, int);
-void unmapiospace(vaddr_t);
-int badpaddr(caddr_t, int);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -367,7 +364,7 @@ iomap_mapin(paddr_t pa, psize_t len, boolean_t canwait)
 
 	while (len>0) {
 		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
-			   VM_PROT_WRITE | VM_PROT_READ |(CACHE_INH << 16),
+			   VM_PROT_WRITE | VM_PROT_READ,
 			   VM_PROT_WRITE | VM_PROT_READ | PMAP_WIRED);
 		len -= PAGE_SIZE;
 		tva += PAGE_SIZE;
@@ -430,44 +427,11 @@ unmapiodev(kva, size)
 	iomap_mapout(va, size);
 }
 
-/*
- * Map the given physical IO address into the kernel temporarily.
- * Maps one page.
- * Should have some sort of lockig for the use of phys_map_vaddr. XXX nivas
- */
-
-vaddr_t
-mapiospace(caddr_t pa, int len)
-{
-	int off = (u_long)pa & PGOFSET;
-	extern vaddr_t phys_map_vaddr1;
-
-	pa = (caddr_t)trunc_page((paddr_t)pa);
-
-	pmap_kenter_pa(phys_map_vaddr1, (paddr_t)pa,
-	    VM_PROT_READ|VM_PROT_WRITE);
-	pmap_update(pmap_kernel());
-
-	return (phys_map_vaddr1 + off);
-}
-
-/*
- * Unmap the address from above.
- */
-
-void
-unmapiospace(vaddr_t va)
-{
-	va = trunc_page(va);
-
-	pmap_kremove(va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-}
-
 int
 badvaddr(vaddr_t va, int size)
 {
-	register int 	x;
+	volatile int x;
+
 	if (badaddr(va, size)) {
 		return -1;
 	}
@@ -485,26 +449,7 @@ badvaddr(vaddr_t va, int size)
 	default:
                 return -1;
 	}
-	return(0);
-}
-
-int
-badpaddr(caddr_t pa, int size)
-{
-	vaddr_t va;
-	int val;
-
-	/*
-	 * Do not allow crossing a page boundary.
-	 */
-	if (((int)pa & PGOFSET) + size > NBPG) {
-		return -1;
-	}
-
-	va = mapiospace(pa, NBPG);
-	val = badvaddr(va, size);
-	unmapiospace(va);
-	return (val);
+	return (0);
 }
 
 /*
@@ -546,5 +491,6 @@ kvtop(va)
 	paddr_t pa;
 
 	pmap_extract(pmap_kernel(), va, &pa);
+	/* XXX check for failure */
 	return ((u_int)pa);
 }
