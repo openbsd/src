@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.6 1998/03/01 00:38:01 niklas Exp $	*/
+/*	$OpenBSD: vm.h,v 1.7 1998/09/11 21:17:52 mickey Exp $	*/
 /*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
 
 /*
@@ -76,10 +76,10 @@ typedef struct lock		*lock_t;
 #include <vm/vm_param.h>
 #include <sys/lock.h>
 #include <vm/vm_prot.h>
+#include <vm/pmap.h>
 #include <vm/vm_inherit.h>
 #include <vm/vm_map.h>
 #include <vm/vm_object.h>
-#include <vm/pmap.h>
 #include <vm/vm_extern.h>
 
 /*
