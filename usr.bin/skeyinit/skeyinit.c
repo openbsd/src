@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.19 1997/07/25 00:27:30 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.20 1997/07/27 21:36:05 millert Exp $	*/
 /*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
@@ -9,14 +9,19 @@
  *          John S. Walden <jsw@thumper.bellcore.com>
  *          Scott Chasin <chasin@crimelab.com>
  *
+ * Modifications:
+ *          Todd C. Miller <Todd.Miller@courtesan.com>
+ *
  * S/KEY initialization and seed update
  */
 
 #include <sys/param.h>
+#include <sys/file.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
 #include <err.h>
+#include <errno.h>
 #include <ctype.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -138,8 +143,6 @@ main(argc, argv)
 				errx(1, "Password incorrect.");
 		}
 	}
-
-	(void)setpriority(PRIO_PROCESS, 0, -4);
 
 	rval = skeylookup(&skey, pp->pw_name);
 	switch (rval) {
@@ -311,6 +314,21 @@ main(argc, argv)
 
 	btoa8(skey.val, key);
 
+	/*
+	 * Obtain an exclusive lock on the key file so we don't
+	 * clobber someone authenticating themselves at the same time.
+	 */
+	for (i = 0; i < 300; i++) {
+		if ((rval = flock(fileno(skey.keyfile), LOCK_EX|LOCK_NB)) == 0
+		    || errno != EWOULDBLOCK)
+			break;
+		usleep(100000);			/* Sleep for 0.1 seconds */
+	}
+	if (rval == -1)	{			/* Can't get exclusive lock */
+		errno = EAGAIN;
+		err(1, "cannot open database");
+	}
+
 	/* Don't save algorithm type for md4 (keep record length same) */
 	if (strcmp(skey_get_algorithm(), "md4") == 0)
 		(void)fprintf(skey.keyfile, "%s %04d %-16s %s %-21s\n",
@@ -318,9 +336,9 @@ main(argc, argv)
 	else
 		(void)fprintf(skey.keyfile, "%s %s %04d %-16s %s %-21s\n",
 		    pp->pw_name, skey_get_algorithm(), n, seed, skey.val, tbuf);
-	(void)fclose(skey.keyfile);
 
-	(void)setpriority(PRIO_PROCESS, 0, 0);
+	(void)flock(fileno(skey.keyfile), LOCK_UN);
+	(void)fclose(skey.keyfile);
 
 	(void)printf("\nID %s skey is otp-%s %d %s\n", pp->pw_name,
 		     skey_get_algorithm(), n, seed);
