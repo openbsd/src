@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.39 2005/01/14 14:51:27 mcbride Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.40 2005/01/14 15:09:42 mcbride Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -978,8 +978,7 @@ reset_vif(struct vif *vifp)
 		}
 	} else if (vifp->v_flags & VIFF_REGISTER) {
 #ifdef PIM
-		if (vifp->v_flags & VIFF_REGISTER)
-			reg_vif_num = VIFI_INVALID;
+		reg_vif_num = VIFI_INVALID;
 #endif
 	} else {
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
