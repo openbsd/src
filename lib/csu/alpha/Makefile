@@ -1,14 +1,14 @@
-#	$OpenBSD: Makefile,v 1.9 2001/02/03 03:21:35 art Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/02/03 22:48:36 art Exp $
 #	$NetBSD: Makefile,v 1.6 1996/10/18 05:27:38 thorpej Exp $
 
-.include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
-
 CFLAGS+=	-DLIBC_SCCS -DPIC -DELFSIZE=64
-CFLAGS+=	-I${.CURDIR}/../
 
 OBJS=		crt0.o gcrt0.o crtbegin.o crtend.o crtbeginS.o crtendS.o
 
 CLEANFILES+=	core a.out
+
+.PATH:		${.CURDIR}/../common_elf
+CFLAGS+=	-I${.CURDIR}/../common_elf
 
 PICFLAG?=-fpic
 
