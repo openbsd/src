@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.2 1996/03/03 22:30:31 niklas Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.3 1996/03/14 07:58:29 tholo Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ in_pcballoc(so, v)
 	register struct inpcb *inp;
 	int s;
 
-	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_WAITOK);
+	MALLOC(inp, struct inpcb *, sizeof(*inp), M_PCB, M_NOWAIT);
 	if (inp == NULL)
 		return (ENOBUFS);
 	bzero((caddr_t)inp, sizeof(*inp));
