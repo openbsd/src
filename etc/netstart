@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.67 2000/03/18 19:45:45 deraadt Exp $
+#	$OpenBSD: netstart,v 1.68 2000/04/04 13:44:51 millert Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -30,7 +30,7 @@ fi
 # Configure the IP filter before configuring network interfaces
 if [ X"${ipfilter}" = X"YES" -a -f "${ipfilter_rules}" ]; then
 	echo 'configuring IP filter'
-	ipf -Fa -f ${ipfilter_rules} -E
+	ipf -Fa -f ${ipfilter_rules}
 else
 	ipfilter=NO
 fi
