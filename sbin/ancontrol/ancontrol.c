@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.13 2001/04/16 05:10:07 ericj Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.14 2001/04/16 07:51:01 ericj Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -75,11 +75,11 @@ void an_dumpap		__P((void));
 void an_setconfig	__P((int, void *));
 void an_setssid		__P((int, void *));
 void an_setap		__P((int, void *));
-void an_setspeed	__P((int, void *));
-void an_readkeyinfo	__P(());
+void an_setspeed	__P((void *));
+void an_readkeyinfo	__P((void));
 #ifdef ANCACHE
-void an_zerocache	__P(());
-void an_readcache	__P(());
+void an_zerocache	__P((void));
+void an_readcache	__P((void));
 #endif
 void getsock		__P((void));
 static void usage	__P((void));
@@ -127,9 +127,9 @@ int main		__P((int, char **));
 #define ACT_ENABLE_TX_KEY 36
 
 #ifdef ANCACHE
-#define OPTIONS "a:b:c:d:e:f:i:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NQST:W:Z"
+#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NQST:W:Z"
 #else
-#define OPTIONS "a:b:c:d:e:f:i:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NST:W:"
+#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NST:W:"
 #endif /* ANCACHE */
 
 int s;			/* Global socket for ioctl's */
@@ -940,8 +940,7 @@ an_setconfig(act, arg)
 }
 
 void
-an_setspeed(act, arg)
-	int			act;
+an_setspeed(arg)
 	void			*arg;
 {
 	struct an_req		areq;
@@ -1290,19 +1289,27 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	int act = 0, ifspecified = 0;
 	int modifier = 0;
 	int print_stat = 0;
-	void *arg = NULL;
 
 	/* Grab device name, if one is given. Default to "an0" */
-	if (argc > 1 && argv[1][0] != '-') {
-		strlcpy(ifr.ifr_name, argv[1], sizeof(ifr.ifr_name));
-		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
-		argc--;
-		ifspecified = 1;
-	} else
-		strlcpy(ifr.ifr_name, "an0", sizeof(ifr.ifr_name));
+	opterr = 0;
+	ch = getopt(argc, argv, "i:");
+	if (ch == 'i') {
+		strlcpy(ifr.ifr_name, optarg, sizeof(ifr.ifr_name));
+	} else {
+		if (argc > 1 && argv[1][0] != '-') {
+			strlcpy(ifr.ifr_name, argv[1], sizeof(ifr.ifr_name));
+			optind = 2;
+		} else {
+			strlcpy(ifr.ifr_name, "an0", sizeof(ifr.ifr_name));
+			optind = 1;
+		}
+	}
+	opterr = optreset =1;
+
+	/* Grab a socket to do our ioctl's */
+	getsock();
 
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 		switch(ch) {
@@ -1316,8 +1323,7 @@ main(argc, argv)
 			print_stat |= STAT_DUMPCAPS;
 			break;
 		case 'K':
-			act = ACT_SET_KEY_TYPE;
-			arg = optarg;
+			an_setconfig(ACT_SET_KEY_TYPE, optarg);
 			break;
 		case 'N':
 			print_stat |= STAT_DUMPSSID;
@@ -1329,144 +1335,116 @@ main(argc, argv)
 			print_stat |= STAT_DUMPSTATS;
 			break;
 		case 'W':
-			act = ACT_ENABLE_WEP;
-			arg = optarg;
+			an_setconfig(ACT_ENABLE_WEP, optarg);
 			break;
 #ifdef ANCACHE
 		case 'Q':
-			act = ACT_DUMPCACHE;
+			an_readcache();
 			break;
 		case 'Z':
-			act = ACT_ZEROCACHE;
+			an_zerocache();
 			break;
 #endif /* ANCACHE */
 		case 'a':
 			switch (modifier) {
 			case 0:
 			case 1:
-				act = ACT_SET_AP1;
+				an_setap(ACT_SET_AP1, optarg);
 				break;
 			case 2:
-				act = ACT_SET_AP2;
+				an_setap(ACT_SET_AP2, optarg);
 				break;
 			case 3:
-				act = ACT_SET_AP3;
+				an_setap(ACT_SET_AP3, optarg);
 				break;
 			case 4:
-				act = ACT_SET_AP4;
+				an_setap(ACT_SET_AP4, optarg);
 				break;
 			default:
 				errx(1, "bad modifier %d", modifier);
 			}
-			arg = optarg;
 			break;
 		case 'b':
-			act = ACT_SET_BEACON_PERIOD;
-			arg = optarg;
+			an_setconfig(ACT_SET_BEACON_PERIOD, optarg);
 			break;
 		case 'c':
-			act = ACT_SET_FREQ;
-			arg = optarg;
+			an_setconfig(ACT_SET_FREQ, optarg);
 			break;
 		case 'd':
 			switch (modifier) {
 			case 0:
-				act = ACT_SET_DIVERSITY_RX;
+				an_setconfig(ACT_SET_DIVERSITY_RX, optarg);
 				break;
 			case 1:
-				act = ACT_SET_DIVERSITY_TX;
+				an_setconfig(ACT_SET_DIVERSITY_RX, optarg);
 				break;
 			default:
 				errx(1, "must specify RX or TX diversity");
 			}
-			arg = optarg;
 			break;
 		case 'e':
-			act = ACT_SET_KEYS;
-			arg = optarg;
+			an_enable_tx_key(optarg);
 			break;
 		case 'f':
-			act = ACT_SET_FRAG_THRESH;
-			arg = optarg;
-			break;
-		case 'i':
-			if (!ifspecified)
-				strlcpy(ifr.ifr_name, optarg, sizeof(ifr.ifr_name));
+			an_setconfig(ACT_SET_FRAG_THRESH, optarg);
 			break;
 		case 'j':
-			act = ACT_SET_NETJOIN;
-			arg = optarg;
+			an_setconfig(ACT_SET_NETJOIN, optarg);
 			break;
 		case 'k':
-			act = ACT_SET_KEYS;
-			arg = optarg;
+			an_setkeys(optarg, modifier);
 			break;
 		case 'l':
-			act = ACT_SET_MYNAME;
-			arg = optarg;
+			an_setconfig(ACT_SET_MYNAME, optarg);
 			break;
 		case 'm':
-			act = ACT_SET_MAC;
-			arg = optarg;
+			an_setconfig(ACT_SET_MAC, optarg);
 			break;
 		case 'n':
 			switch (modifier) {
 			case 0:
 			case 1:
-				act = ACT_SET_SSID1;
+				an_setssid(ACT_SET_SSID1, optarg);
 				break;
 			case 2:
-				act = ACT_SET_SSID2;
-				break;	
+				an_setssid(ACT_SET_SSID2, optarg);
+				break;
 			case 3:
-				act = ACT_SET_SSID3;	
+				an_setssid(ACT_SET_SSID3, optarg);
 				break;
 			default:
 				errx(1, "bad modifier %d", modifier);
 			}
-			arg = optarg;
 			break;
 		case 'o':
-			act = ACT_SET_OPMODE;
-			arg = optarg;
+			an_setconfig(ACT_SET_OPMODE, optarg);
 			break;
 		case 'p':
-			act = ACT_SET_TXPWR;
-			arg = optarg;
+			an_setconfig(ACT_SET_TXPWR, optarg);
 			break;
 		case 'q':
-			act = ACT_SET_RTS_RETRYLIM;
-			arg = optarg;
+			an_setconfig(ACT_SET_RTS_RETRYLIM, optarg);
 			break;
 		case 'r':
-			act = ACT_SET_RTS_THRESH;
-			arg = optarg;
+			an_setconfig(ACT_SET_RTS_THRESH, optarg);
 			break;
 		case 's':
-			act = ACT_SET_PWRSAVE;
-			arg = optarg;
+			an_setconfig(ACT_SET_PWRSAVE, optarg);
 			break;
 		case 't':
-			act = ACT_SET_TXRATE;
-			arg = optarg;
+			an_setspeed(optarg);
 			break;
 		case 'v':
 			modifier = atoi(optarg);
 			break;
 		case 'w':
-			act = ACT_SET_WAKE_DURATION;
-			arg = optarg;
+			an_setconfig(ACT_SET_WAKE_DURATION, optarg);
 			break;
 		default:
 			usage();
 		}
 	}
 
-	if (!print_stat && !act)
-		usage();
-
-	/* Grab a socket to do our ioctl's */
-	getsock();
 
 	/*
 	 * Show configuration status first. Do not allow
@@ -1488,40 +1466,6 @@ main(argc, argv)
 			an_dumpstats();
 
 		exit(0);
-	}
-
-	switch(act) {
-	case ACT_SET_SSID1:
-	case ACT_SET_SSID2:
-	case ACT_SET_SSID3:
-		an_setssid(act, arg);
-		break;
-	case ACT_SET_AP1:
-	case ACT_SET_AP2:
-	case ACT_SET_AP3:
-	case ACT_SET_AP4:
-		an_setap(act, arg);
-		break;
-	case ACT_SET_TXRATE:
-		an_setspeed(act, arg);
-		break;
-#ifdef ANCACHE
-	case ACT_ZEROCACHE:
-		an_zerocache();
-		break;
-	case ACT_DUMPCACHE:
-		an_readcache();
-		break;
-#endif
-	case ACT_SET_KEYS:
-		an_setkeys(arg, modifier);
-		break;
-	case ACT_ENABLE_TX_KEY:
-		an_enable_tx_key(arg);
-		break;
-	default:
-		an_setconfig(act, arg);
-		break;
 	}
 
 	/* Close our socket */
