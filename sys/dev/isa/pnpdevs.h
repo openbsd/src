@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.74 1999/06/22 16:20:04 niklas Exp 
+ *	#	OpenBSD: pnpdevs,v 1.75 1999/07/04 18:37:36 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -68,6 +68,8 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "MOT15F0", "pccom" },
 	{ "NECE761", "com" },
 	{ "NECE761", "pccom" },
+	{ "SUP1310", "com" },
+	{ "SUP1310", "pccom" },
 	{ "SUP1380", "com" },
 	{ "SUP1380", "pccom" },
 	{ "SUP1381", "com" },
