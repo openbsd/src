@@ -29,12 +29,12 @@
  */
 /*
  * handle_value_request:
- * receive a VALUE_REQUEST packet; return -1 on failure, 0 on success
+ * receive a VALUE_REQUEST packet; return (-1) on failure, 0 on success
  *
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.5 2000/12/15 02:50:38 provos Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.6 2000/12/15 07:29:44 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -84,11 +84,11 @@ handle_value_request(u_char *packet, int size,
 	u_int8_t rcookie[COOKIE_SIZE];
 
 	if (size < VALUE_REQUEST_MIN)
-	     return -1;	/* packet too small  */
+	     return (-1);	/* packet too small  */
 
 	if (packet_check(packet, size, &vr_msg) == -1) {
 	     log_print("bad packet structure in handle_value_request()");
-	     return -1;
+	     return (-1);
 	}
 
 	header = (struct value_request *) packet;
@@ -112,7 +112,7 @@ handle_value_request(u_char *packet, int size,
 					 header->icookie, header->rcookie,
 					 header->counter, BAD_COOKIE);
 		  send_packet();
-		  return 0;
+		  return (0);
 	     }
 
 	     /* Check exchange value - XXX doesn't check long form */
@@ -153,7 +153,7 @@ handle_value_request(u_char *packet, int size,
 		  sstart += scheme_get_len(schemes+sstart);
 	     }
 	     if (sstart >= ssize)
-		  return -1;   /* Did not find a scheme - XXX log */
+		  return (-1);   /* Did not find a scheme - XXX log */
 
 	     /* now check the exchange value */
 	     test = BN_new();
@@ -182,7 +182,7 @@ handle_value_request(u_char *packet, int size,
 	     BN_free(mod);
 
 	     if ((st = state_new()) == NULL)
-		  return -1;
+		     goto resourcefail;
 
 	     /* Default options */
 	     st->flags = IPSEC_OPT_ENC|IPSEC_OPT_AUTH;
@@ -191,7 +191,7 @@ handle_value_request(u_char *packet, int size,
 	     st->uSPIoattrib = calloc(parts[1].size, sizeof(u_int8_t));
              if (st->uSPIoattrib == NULL) {
                   state_value_reset(st);
-		  return -1;
+		  goto resourcefail;
 	     }
              bcopy(parts[1].where, st->uSPIoattrib, parts[1].size);  
              st->uSPIoattribsize = parts[1].size;  
@@ -206,7 +206,7 @@ handle_value_request(u_char *packet, int size,
 	     st->scheme = calloc(vsize, sizeof(u_int8_t));
 	     if (st->scheme == NULL) {
                   state_value_reset(st); 
-                  return -1; 
+                  goto resourcefail; 
              } 
              bcopy(header->scheme, st->scheme, 2);
 	     if (genp != NULL) {
@@ -232,7 +232,8 @@ handle_value_request(u_char *packet, int size,
 	     st->texchange = calloc(st->texchangesize, sizeof(u_int8_t));
 	     if (st->texchange == NULL) {
 		  log_error("calloc() in handle_value_request()");
-		  return -1;
+		  state_value_reset(st);
+		  goto resourcefail;
 	     }
 	     bcopy(parts[0].where, st->texchange, st->texchangesize);
 
@@ -246,8 +247,9 @@ handle_value_request(u_char *packet, int size,
 	     bcopy(&header->counter, st->uSPITBV, 3);
 
 	     if ((st->roschemes = calloc(ssize, sizeof(u_int8_t))) == NULL) {
+		  log_error("calloc() in handle_value_request()");
 		  state_value_reset(st);
-		  return -1;
+		  goto resourcefail;
 	     }
 	     bcopy(schemes, st->roschemes, ssize);
 	     st->roschemesize = ssize;
@@ -255,18 +257,23 @@ handle_value_request(u_char *packet, int size,
 	     if (pick_attrib(st, &(st->oSPIoattrib), 
 			     &(st->oSPIoattribsize)) == -1) {
 		  state_value_reset(st);
-		  return -1;
+		  goto resourcefail;
 	     }
 
 	     st->lifetime = exchange_timeout + time(NULL);
 
 	     /* Now put the filled state object in the chain */
 	     state_insert(st);
+	} else if (st->phase != VALUE_RESPONSE) {
+		LOG_DBG((LOG_PROTOCOL, 55, __FUNCTION__
+			 ": value request from %s, but we are in state %d",
+			 st->address, st->phase));
+		return (-1);
 	}
 	     
 	packet_size = PACKET_BUFFER_SIZE;
 	if (photuris_value_response(st, packet_buffer, &packet_size) == -1)
-	     return -1;
+	     return (-1);
 
 	send_packet();
 
@@ -288,5 +295,13 @@ handle_value_request(u_char *packet, int size,
 
 	st->retries = 0;
 	st->phase = VALUE_RESPONSE;
-	return 0;
+	return (0);
+
+ resourcefail:
+	packet_size = PACKET_BUFFER_SIZE;
+	photuris_error_message(st, packet_buffer, &packet_size,
+			       header->icookie, header->rcookie,
+			       header->counter, RESOURCE_LIMIT);
+	send_packet();
+	return (0);
 }

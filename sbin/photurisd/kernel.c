@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.18 2000/12/15 02:42:08 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.19 2000/12/15 07:29:44 provos Exp $";
 #endif
 
 #include <time.h>
@@ -64,6 +64,7 @@ static char rcsid[] = "$Id: kernel.c,v 1.18 2000/12/15 02:42:08 provos Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <poll.h>
 
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
@@ -83,6 +84,8 @@ static char rcsid[] = "$Id: kernel.c,v 1.18 2000/12/15 02:42:08 provos Exp $";
 #ifdef DEBUG
 #include "config.h"
 #endif
+
+#define POLL_TIMEOUT	500
 
 #define SPITOINT(x) (((x)[0]<<24) + ((x)[1]<<16) + ((x)[2]<<8) + (x)[3])
 #define KERNEL_XF_SET(x) kernel_xf_set(sd, buffer, BUFFER_SIZE, iov, cnt, x)
@@ -329,56 +332,74 @@ kernel_queue_msg(struct sadb_msg *smsg)
 int
 kernel_xf_read(int sd, char *buffer, int blen, int seq)
 {
-     struct sadb_msg *sres = (struct sadb_msg *)buffer;
-     int len, forus;
+	struct sadb_msg *sres = (struct sadb_msg *)buffer;
+	int len, forus;
 
-     /*
-      * Read in response from the kernel. If seq number and/or PID are
-      * given, we need to check PID and sequence number to see if it
-      * really is a message for us.
-      */
-     do {
-	  if (recv(sd, sres, sizeof(*sres), MSG_PEEK) != sizeof(*sres)) {
-	       log_error(__FUNCTION__": read()");
-	       return (0);
-	  }
-	  len = sres->sadb_msg_len * 8;
-	  if (len >= BUFFER_SIZE) {
-	       log_print(__FUNCTION__": PFKEYV2 message len %d too big", len);
-	       return (0);
-	  }
-	  if (read(sd, sres, len) != len) {
-	       log_error(__FUNCTION__": read()");
-	       return (0);
-	  }
+	/*
+	 * Read in response from the kernel. If seq number and/or PID are
+	 * given, we need to check PID and sequence number to see if it
+	 * really is a message for us.
+	 */
+	do {
+		struct pollfd pfd;
+
+		pfd.fd = sd;
+		pfd.events = POLLIN;
+		pfd.revents = 0;
+
+		if (poll(&pfd, 1, POLL_TIMEOUT) == -1) {
+			log_error(__FUNCTION__": poll");
+			return (0);
+		}
+
+		if (!(pfd.revents & POLLIN)) {
+			log_print(__FUNCTION__": no reply from pfkey");
+			return (0);
+		}
+
+		if (recv(sd, sres, sizeof(*sres), MSG_PEEK) != sizeof(*sres)) {
+			log_error(__FUNCTION__": read()");
+			return (0);
+		}
+		len = sres->sadb_msg_len * 8;
+		if (len >= BUFFER_SIZE) {
+			log_print(__FUNCTION__
+				  ": PFKEYV2 message len %d too big", len);
+			return (0);
+		}
+		if (read(sd, sres, len) != len) {
+			log_error(__FUNCTION__": read()");
+			return (0);
+		}
 	  
-	  forus = !(sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid) &&
-		  !(seq && sres->sadb_msg_seq != seq);
+		forus = !(sres->sadb_msg_pid && 
+			  sres->sadb_msg_pid != pfkey_pid) &&
+			!(seq && sres->sadb_msg_seq != seq);
 
-	  if (!forus) {
-		  switch (sres->sadb_msg_type) {
-		  case SADB_ACQUIRE:
-		  case SADB_EXPIRE:
-			  kernel_queue_msg(sres);
-			  break;
-		  default:
-			  LOG_DBG((LOG_KERNEL, 50, __FUNCTION__
-				   ": skipping message type %d",
-				    sres->sadb_msg_type));
-			  break;
-		  }
-	  }
+		if (!forus) {
+			switch (sres->sadb_msg_type) {
+			case SADB_ACQUIRE:
+			case SADB_EXPIRE:
+				kernel_queue_msg(sres);
+				break;
+			default:
+				LOG_DBG((LOG_KERNEL, 50, __FUNCTION__
+					 ": skipping message type %d",
+					 sres->sadb_msg_type));
+				break;
+			}
+		}
 	     
-     } while (!forus);
+	} while (!forus);
  
-     if (sres->sadb_msg_errno) {
-	  LOG_DBG((LOG_KERNEL, 40, __FUNCTION__": PFKEYV2 result: %s",
-		    strerror(sres->sadb_msg_errno)));
-	  errno = sres->sadb_msg_errno;
-	  return (0);
-     }
+	if (sres->sadb_msg_errno) {
+		LOG_DBG((LOG_KERNEL, 40, __FUNCTION__": PFKEYV2 result: %s",
+			 strerror(sres->sadb_msg_errno)));
+		errno = sres->sadb_msg_errno;
+		return (0);
+	}
 
-     return (1);
+	return (1);
 }
 
 int
@@ -1090,12 +1111,12 @@ kernel_unlink_spi(struct spiob *ospi)
      
      if (esp != NULL) {
 	  if (kernel_delete_spi(p, SPITOINT(ospi->SPI), IPPROTO_ESP) == -1)
-	       log_print(__FUNCTION__": kernel_delete_spi()");
+	       log_print(__FUNCTION__": kernel_delete_spi() failed");
      }
 	  
      if (ah != NULL) {
 	  if (kernel_delete_spi(p, SPITOINT(ospi->SPI), IPPROTO_AH) == -1)
-	       log_print(__FUNCTION__": kernel_delete_spi()");
+	       log_print(__FUNCTION__": kernel_delete_spi() failed");
      }
 
      return (1);
