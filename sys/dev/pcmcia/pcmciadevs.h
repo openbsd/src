@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.46 2000/08/30 20:53:50 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.47 2000/09/04 03:51:04 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.41 2000/08/30 20:53:19 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.42 2000/09/04 03:46:51 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -261,6 +261,8 @@
 #define	PCMCIA_PRODUCT_NEWMEDIA_MULTIMEDIA	0x100b
 #define	PCMCIA_CIS_NEWMEDIA_BUSTOASTER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER	0xc102
+#define	PCMCIA_CIS_NEWMEDIA_WAVJAMMER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_WAVJAMMER	0xe005
 #define	PCMCIA_CIS_NEWMEDIA2_BUSTOASTER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NEWMEDIA2_BUSTOASTER	0x0001
 
