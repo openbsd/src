@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.15 1996/05/15 08:56:15 mickey Exp $
-#	$NetBSD: GENERIC,v 1.45 1996/05/07 00:59:53 thorpej Exp $
+#	$OpenBSD: GENERIC,v 1.16 1996/05/27 01:14:06 deraadt Exp $
+#	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -131,21 +131,20 @@ mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 mms1	at isa? port 0x238 irq 5
 #pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
+bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+bt2	at isa? port ? irq ?
+scsibus* at bt?
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+ahc*	at eisa? slot ?
 scsibus* at ahc?
-ahe0	at eisa? slot ?			# Adaptec 284x SCSI controllers
-scsibus* at ahe?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
-bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-bt2	at isa? port ? irq ?
-scsibus* at bt?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 sea0	at isa? iomem 0xc8000 irq 5
@@ -186,9 +185,12 @@ ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet cards
+fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
+ep0	at pci? dev ? function ?		# 3C590 ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
 ed*     at pcmcia? port 0x300 size 0x20 irq 10 slot ? # PCMCIA based ed cards
 ep*     at pcmcia? port 0x300 size 0x10 irq 10 slot ? # PCMCIA based ep cards
