@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.2 1999/02/25 23:15:31 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.3 1999/04/20 20:28:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -111,7 +111,16 @@ lasiattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	register struct lasi_softc *sc = (struct lasi_softc *)self;
 	struct gsc_attach_args ga;
+	bus_space_handle_t ioh;
 	int s, in;
+
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
+			  IOMOD_HPASIZE, 0, &ioh)) {
+#ifdef DEBUG
+		printf("lasiattach: can't map IO space\n");
+#endif
+		return;
+	}
 
 	sc->sc_trs = (struct lasi_trs *)ca->ca_hpa;
 	sc->sc_hw = (struct lasi_hwr *)(ca->ca_hpa + 0xc000);
