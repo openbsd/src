@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2002/04/27 23:21:06 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.44 2002/04/28 14:47:54 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -189,7 +189,7 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	int fromtrap;
 {
 	int sig;
-#if defined(M68040) || defined(M68060)
+#if defined(M68040)
 	int beenhere = 0;
 
 again:

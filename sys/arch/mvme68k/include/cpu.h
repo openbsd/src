@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: cpu.h,v 1.13 2002/04/28 14:47:53 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -224,7 +224,7 @@ void	TBIA(void);
 void	TBIS(vaddr_t);
 void	TBIAS(void);
 void	TBIAU(void);
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 void	DCFA(void);
 void	DCFP(paddr_t);
 void	DCFL(paddr_t);

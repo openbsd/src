@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2002/04/27 23:21:06 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.71 2002/04/28 14:47:53 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -510,7 +510,9 @@ identifycpu()
 	char mc;
 	char speed[6];
 	char suffix[30];
+#ifdef FPSP
 	extern u_long fpvect_tab, fpvect_end, fpsp_tab;
+#endif
 	int len;
 
 	bzero(suffix, sizeof suffix);
@@ -947,12 +949,10 @@ initvectors()
 	typedef void trapfun(void);
 
 	/* XXX should init '40 vecs here, too */
-#if defined(M68060) || defined(M68040)
+#if defined(M68060)
 	extern trapfun *vectab[256];
 	extern trapfun addrerr4060;
-#endif
 
-#ifdef M68060
 	extern trapfun buserr60;
 #if defined(M060SP)
 	/*extern u_int8_t I_CALL_TOP[];*/
@@ -962,14 +962,6 @@ initvectors()
 	extern trapfun illinst;
 #endif
 	extern trapfun fpfault;
-#endif
-
-#ifdef M68040
-	extern trapfun buserr40;
-#endif
-
-#ifdef FPU_EMULATE
-	extern trapfun fpemuli;
 #endif
 
 #ifdef M68060

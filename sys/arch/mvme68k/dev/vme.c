@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.13 2002/04/27 23:21:05 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.14 2002/04/28 14:47:50 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -89,9 +89,9 @@ vmematch(parent, cf, args)
 	void *cf;
 	void *args;
 {
+#if NMC > 0
 	struct confargs *ca = args;
 
-#if NMC > 0
 	if (ca->ca_bustype == BUS_MC) {
 		struct mcreg *mc = (struct mcreg *)ca->ca_master;
 
@@ -344,8 +344,12 @@ vmeattach(parent, self, args)
 {
 	struct vmesoftc *sc = (struct vmesoftc *)self;
 	struct confargs *ca = args;
+#if NPCC > 0
 	struct vme1reg *vme1;
+#endif
+#if NMC > 0 || NPCCTWO > 0
 	struct vme2reg *vme2;
+#endif
 	int scon;
 
 	sc->sc_vaddr = ca->ca_vaddr;

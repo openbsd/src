@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.34 2002/04/27 23:21:06 miod Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.35 2002/04/28 14:47:54 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -247,14 +247,13 @@ vmapbuf(bp, siz)
 {
 	register int npf;
 	register caddr_t addr;
-	register long flags = bp->b_flags;
 	struct proc *p;
 	int off;
 	vm_offset_t kva;
 	vm_offset_t pa;
 
 #ifdef DIAGNOSTIC
-	if ((flags & B_PHYS) == 0)
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 #endif
 
