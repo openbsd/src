@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.42 2000/07/13 22:53:21 provos Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.43 2000/07/14 22:59:46 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -242,7 +242,7 @@ process_config_line(Options *options, const char *host,
 	keyword = strdelim(&s);
 	/* Ignore leading whitespace. */
 	if (*keyword == '\0')
-		keyword = s;
+		keyword = strdelim(&s);
 	if (!*keyword || *keyword == '\n' || *keyword == '#')
 		return 0;
 
