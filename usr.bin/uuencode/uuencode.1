@@ -1,5 +1,5 @@
-.\"	$OpenBSD: uuencode.1,v 1.13 2003/06/03 02:56:21 millert Exp $
-.\"	$NetBSD: uuencode.1,v 1.4 1994/11/17 07:39:42 jtc Exp $
+.\"	$OpenBSD: uuencode.1,v 1.14 2004/04/09 22:54:02 millert Exp $
+.\"	$FreeBSD: uuencode.1,v 1.26 2003/03/18 14:24:47 fanf Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,35 +29,67 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)uuencode.1	8.1 (Berkeley) 6/6/93
+.\" $FreeBSD$
 .\"
-.Dd June 6, 1993
+.Dd January 27, 2002
 .Dt UUENCODE 1
 .Os
 .Sh NAME
 .Nm uuencode ,
-.Nm uudecode
+.Nm uudecode ,
+.Nm b64encode ,
+.Nm b64decode
 .Nd encode/decode a binary file
 .Sh SYNOPSIS
 .Nm uuencode
+.Op Fl m
+.Op Fl o Ar output_file
 .Op Ar file
 .Ar name
 .Nm uudecode
-.Op Fl p
-.Op Ar file ...
+.Op Fl cimprs
+.Op Ar
+.Nm uudecode
+.Op Fl i
+.Fl o Ar output_file
+.Nm b64encode
+.Op Fl o Ar output_file
+.Op Ar file
+.Ar name
+.Nm b64decode
+.Op Fl ciprs
+.Op Ar
+.Nm b64decode
+.Op Fl i
+.Fl o Ar output_file
+.Op Ar file
 .Sh DESCRIPTION
+The
 .Nm uuencode
 and
 .Nm uudecode
-are used to transmit binary files over transmission mediums
+utilities are used to transmit binary files over transmission mediums
 that do not support formats other than printable
 .Tn ASCII
 data.
+.Nm b64encode
+and
+.Nm b64decode
+are equivalent to running
+.Nm uuencode
+and
+.Nm uudecode
+respectively with the
+.Fl m
+flag specified.
 .Pp
 .Nm uuencode
 reads
 .Ar file
 (or by default, the standard input) and writes an encoded version
-to the standard output.
+to the standard output, or to
+.Ar output_file
+if it has been specified.
 The encoding uses only printing
 .Tn ASCII
 characters and includes the
@@ -70,15 +102,74 @@ for use by
 transforms
 .Dq uuencoded
 files (or by default, the standard input) into the original form.
-The resulting file is named
+The resulting file is named either
 .Ar name
+or (depending on options passed to
+.Nm uudecode )
+.Ar output_file
 and will have the mode of the original file except that set-user-ID
 and execute bits are not retained.
-If the
-.Fl p
-option is specified, the output will instead be written to stdout.
 .Nm uudecode
 ignores any leading and trailing lines.
+.Pp
+The options for
+.Nm uuencode
+are as follows:
+.Bl -tag -width ident
+.It Fl m
+Use the Base64 method of encoding, rather than the traditional
+.Nm
+algorithm.
+.It Fl o Ar output_file
+Output to
+.Ar output_file
+instead of standard output.
+.El
+.Pp
+The options for
+.Nm uudecode
+are as follows:
+.Bl -tag -width ident
+.It Fl c
+Decode more than one uuencoded file from
+.Ar file
+if possible.
+.It Fl i
+Do not overwrite files.
+.It Fl m
+When used with the
+.Fl r
+flag, decode Base64 input instead of traditional
+.Nm
+input.
+Without
+.Fl r
+it has no effect.
+.It Fl o Ar output_file
+Output to
+.Ar output_file
+instead of any pathname contained in the input data.
+.It Fl p
+Decode
+.Ar file
+and write output to standard output.
+.It Fl r
+Decode raw (or broken) input which is missing the initial and
+possibly the final framing lines.
+The input is assumed to be in the traditional
+.Nm
+encoding, but if the
+.Fl m
+flag is used, or if the utility is invoked as
+.Nm b64decode ,
+then the input is assumed to be in Base64 format.
+.It Fl s
+Do not strip output pathname to base filename.
+By default
+.Nm uudecode
+deletes any prefix ending with the last slash '/' for security
+reasons.
+.El
 .Sh EXAMPLES
 The following example packages up a source tree, compresses it,
 uuencodes it and mails it to a user on another system.
@@ -88,16 +179,27 @@ is run on the target system, the file
 .Pa src_tree.tar.Z
 will be created which may then be uncompressed and extracted
 into the original tree.
-.Pp
-.Bd -literal -offset indent -compact
-$ tar cf \- src_tree \&| compress \&| \\
-uuencode src_tree.tar.Z \&| mail user@example.com
+.Bd -literal -offset indent
+$ tar cf - src_tree | compress | \e
+uuencode src_tree.tar.Z | mail user@example.com
 .Ed
 .Pp
-Both utilities exit 0 on success or >0 if an error occurred.
+The following example unpacks all uuencoded
+files from your mailbox into your current working directory.
+.Bd -literal -offset indent
+$ uudecode -c \*(Lt $MAIL
+.Ed
+.Pp
+The following example extracts a compressed tar
+archive from your mailbox
+.Bd -literal -offset indent
+$ uudecode -o /dev/stdout \*(Gt $MAIL | zcat | tar xfv -
+.Ed
 .Sh SEE ALSO
+.Xr basename 1 ,
 .Xr compress 1 ,
 .Xr mail 1 ,
+.Xr uucp 1 ,
 .Xr uuencode 5
 .Sh STANDARDS
 The
@@ -110,9 +212,9 @@ utilities conform to
 The
 .Nm uudecode
 and
-.Nm uuencode
+.Nm
 utilities appeared in
 .Bx 4.0 .
 .Sh BUGS
-The encoded form of the file is expanded by 35% (3 bytes become 4 plus
-control information).
+Files encoded using the traditional algorithm are expanded by 35%
+(3 bytes become 4 plus control information).
