@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.84 2002/07/20 19:24:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.85 2002/08/12 16:35:40 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -138,7 +138,6 @@ int	physmem;
 
 /* sysctl settable */
 int	sparc_led_blink = 0;
-int	sparc_vsyncblank = 0;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -470,10 +469,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (ENOTDIR);	/* overloaded */
 
 	switch (name[0]) {
-	case CPU_VSYNCBLANK:
-		ret = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &sparc_vsyncblank);
-		return (ret);
 	case CPU_LED_BLINK:
 #if (NLED > 0) || (NAUXREG > 0) || (NSCF > 0)
 		oldval = sparc_led_blink;
