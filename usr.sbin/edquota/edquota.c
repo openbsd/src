@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.37 2003/04/02 20:30:09 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.38 2003/04/25 18:55:39 avsm Exp $";
 #endif /* not lint */
 
 /*
@@ -631,7 +631,7 @@ readtimes(quplist, infd)
 			return(0);
 		}
 		cnt = sscanf(cp,
-		    " block grace period: %d %s file grace period: %d %s",
+		    " block grace period: %d %9s file grace period: %d %9s",
 		    (int *)&btime, bunits, (int *)&itime, iunits);
 		if (cnt != 4) {
 			warnx("%s:%s: bad format", fsp, cp);
