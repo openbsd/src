@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot_43.c,v 1.2 1996/08/02 20:34:42 niklas Exp $	*/
+/*	$OpenBSD: kern_prot_43.c,v 1.3 2002/10/30 20:07:41 millert Exp $	*/
 /*	$NetBSD: kern_prot_43.c,v 1.3 1995/10/07 06:26:27 mycroft Exp $	*/
 
 /*
@@ -61,27 +61,32 @@ compat_43_sys_setregid(p, v, retval)
 	register_t *retval;
 {
 	struct compat_43_sys_setregid_args /* {
-		syscallarg(int) rgid;
-		syscallarg(int) egid;
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
 	} */ *uap = v;
-	struct sys_setegid_args segidargs;
-	struct sys_setgid_args sgidargs;
+	struct pcred *pc = p->p_cred;
+	struct sys_setresgid_args sresgidargs;
+	gid_t rgid, egid, sgid;
 
+	rgid = SCARG(uap, rgid);
+	egid = SCARG(uap, egid);
 	/*
-	 * There are five cases, described above in osetreuid()
+         * The saved gid presents a bit of a dilemma, as it did not
+         * appear in 4.3BSD.  We only set the saved gid when the real
+         * gid is specified and either its value would change, or,
+         * where the saved and effective gids are different.
 	 */
-	if (SCARG(uap, rgid) == (gid_t)-1) {
-		if (SCARG(uap, egid) == (gid_t)-1)
-			return (0);				/* -1, -1 */
-		SCARG(&segidargs, egid) = SCARG(uap, egid);	/* -1,  N */
-		return (sys_setegid(p, &segidargs, retval));
-	}
-	if (SCARG(uap, egid) == (gid_t)-1) {
-		SCARG(&segidargs, egid) = SCARG(uap, rgid);	/* N, -1 */
-		return (sys_setegid(p, &segidargs, retval));
-	}
-	SCARG(&sgidargs, gid) = SCARG(uap, rgid);	/* N, N and N, M */
-	return (sys_setgid(p, &sgidargs, retval));
+	if (rgid != (gid_t)-1 && (rgid != pc->p_rgid ||
+	    pc->p_svgid != (egid != (gid_t)-1 ? egid : pc->pc_ucred->cr_gid)))
+		sgid = rgid;
+	else
+		sgid = (gid_t)-1;
+
+	SCARG(&sresgidargs, rgid) = rgid;
+	SCARG(&sresgidargs, egid) = egid;
+	SCARG(&sresgidargs, egid) = sgid;
+
+	return (sys_setresgid(p, &sresgidargs, retval));
 }
 
 /* ARGSUSED */
@@ -92,35 +97,30 @@ compat_43_sys_setreuid(p, v, retval)
 	register_t *retval;
 {
 	struct compat_43_sys_setreuid_args /* {
-		syscallarg(int) ruid;
-		syscallarg(int) euid;
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
 	} */ *uap = v;
-	struct sys_seteuid_args seuidargs;
-	struct sys_setuid_args suidargs;
+	struct pcred *pc = p->p_cred;
+	struct sys_setresuid_args sresuidargs;
+	uid_t ruid, euid, suid;
 
+	ruid = SCARG(uap, ruid);
+	euid = SCARG(uap, euid);
 	/*
-	 * There are five cases, and we attempt to emulate them in
-	 * the following fashion:
-	 * -1, -1: return 0. This is correct emulation.
-	 * -1,  N: call seteuid(N). This is correct emulation.
-	 *  N, -1: if we called setuid(N), our euid would be changed
-	 *         to N as well. the theory is that we don't want to
-	 * 	   revoke root access yet, so we call seteuid(N)
-	 * 	   instead. This is incorrect emulation, but often
-	 *	   suffices enough for binary compatibility.
-	 *  N,  N: call setuid(N). This is correct emulation.
-	 *  N,  M: call setuid(N). This is close to correct emulation.
+         * The saved uid presents a bit of a dilemma, as it did not
+         * appear in 4.3BSD.  We only set the saved uid when the real
+         * uid is specified and either its value would change, or,
+         * where the saved and effective uids are different.
 	 */
-	if (SCARG(uap, ruid) == (uid_t)-1) {
-		if (SCARG(uap, euid) == (uid_t)-1)
-			return (0);				/* -1, -1 */
-		SCARG(&seuidargs, euid) = SCARG(uap, euid);	/* -1,  N */
-		return (sys_seteuid(p, &seuidargs, retval));
-	}
-	if (SCARG(uap, euid) == (uid_t)-1) {
-		SCARG(&seuidargs, euid) = SCARG(uap, ruid);	/* N, -1 */
-		return (sys_seteuid(p, &seuidargs, retval));
-	}
-	SCARG(&suidargs, uid) = SCARG(uap, ruid);	/* N, N and N, M */
-	return (sys_setuid(p, &suidargs, retval));
+	if (ruid != (uid_t)-1 && (ruid != pc->p_ruid ||
+	    pc->p_svuid != (euid != (uid_t)-1 ? euid : pc->pc_ucred->cr_uid)))
+		suid = ruid;
+	else
+		suid = (uid_t)-1;
+
+	SCARG(&sresuidargs, ruid) = ruid;
+	SCARG(&sresuidargs, euid) = euid;
+	SCARG(&sresuidargs, euid) = suid;
+
+	return (sys_setresuid(p, &sresuidargs, retval));
 }
