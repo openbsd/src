@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.14 2002/03/23 23:58:50 miod Exp $
+dnl	$OpenBSD: xfer,v 1.15 2002/04/04 21:13:32 jason Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -53,9 +53,9 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
  				- or -
  		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 	and under Solaris:
-		dd if=floppy{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
+		dd if=floppy{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=36b
  				- or -
- 		dd if=miniroot{:--:}OSrev.fs of=/dev/c0t0d0s1 bs=36b
+ 		dd if=miniroot{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=36b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
