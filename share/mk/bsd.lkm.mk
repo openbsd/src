@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lkm.mk,v 1.7 1996/06/03 04:01:15 mickey Exp $
+#	$OpenBSD: bsd.lkm.mk,v 1.8 1996/08/01 10:17:53 niklas Exp $
 #	from @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -9,7 +9,11 @@
 
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
+.if defined(BSDSRCDIR)
+CFLAGS+=	${COPTS} -D_KERNEL -I${BSDSRCDIR}/sys -I${BSDSRCDIR}/sys/arch
+.else
 CFLAGS+=	${COPTS} -D_KERNEL -I/sys -I/sys/arch
+.endif
 
 LDFLAGS+= -r
 .if defined(LKM)
