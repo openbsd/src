@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.1 2004/06/22 22:53:51 millert Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.2 2004/10/20 22:21:13 fgsch Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -299,6 +299,9 @@ typedef uint8_t *ieee80211_mgt_beacon_t;
 /* bit 12 is reserved */
 #define	IEEE80211_CAPINFO_DSSSOFDM		0x2000
 /* bits 14-15 are reserved */
+#define IEEE80211_CAPINFO_BITS                  "\20\01ESS\02IBSS\03POLLABLE\04POLLREQ\05PRIVACY\06SHORT_PREAMBLE\07PBCC\10CHNL_AGILITY\13SHORT_SLOTTIME\14RSN\16DSSSOFDM"
+
+
 
 /*
  * 802.11i/WPA information element (maximally sized).
