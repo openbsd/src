@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.281 2000/07/13 01:10:44 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.282 2000/07/13 22:22:48 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -924,8 +924,7 @@ product DELTA RHINEII		0x1320	RhineII
 
 /* Diamond products */
 product DIAMOND VIPER		0x9001	Viper/PCI
-product DIAMOND MONSTER		0x0001	Monster
-
+product DIAMOND2 MONSTER	0x0001	Monster
 product DIAMOND2 MX300		0x0002	Monster Sound MX300
 
 /* Distributed Processing Technology products */
