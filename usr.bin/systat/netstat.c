@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.7 1997/06/23 22:21:48 millert Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.8 1997/12/19 09:03:33 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.7 1997/06/23 22:21:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.8 1997/12/19 09:03:33 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -388,14 +388,16 @@ inetprint(in, port, proto)
 	struct servent *sp = 0;
 	char line[80], *cp;
 
-	sprintf(line, "%.*s.", 16, inetname(*in));
+	snprintf(line, sizeof line, "%.*s.", 16, inetname(*in));
 	cp = strchr(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport(port, proto);
 	if (sp || port == 0)
-		sprintf(cp, "%.8s", sp ? sp->s_name : "*");
+		snprintf(cp, sizeof line - strlen(cp), "%.8s",
+		    sp ? sp->s_name : "*");
 	else
-		sprintf(cp, "%d", ntohs((u_short)port));
+		snprintf(cp, sizeof line - strlen(cp), "%d",
+		    ntohs((u_short)port));
 	/* pad to full column to clear any garbage */
 	cp = strchr(line, '\0');
 	while (cp - line < 22)
@@ -440,7 +442,7 @@ inetname(in)
 	else {
 		in.s_addr = ntohl(in.s_addr);
 #define C(x)	((x) & 0xff)
-		sprintf(line, "%u.%u.%u.%u", C(in.s_addr >> 24),
+		snprintf(line, sizeof line, "%u.%u.%u.%u", C(in.s_addr >> 24),
 			C(in.s_addr >> 16), C(in.s_addr >> 8), C(in.s_addr));
 	}
 	return (line);

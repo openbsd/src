@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.11 1997/11/24 16:19:42 kstailey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.12 1997/12/19 09:03:34 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.11 1997/11/24 16:19:42 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.12 1997/12/19 09:03:34 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -604,7 +604,7 @@ putint(n, l, c, w)
 			addch(' ');
 		return;
 	}
-	sprintf(b, "%*d", w, n);
+	snprintf(b, sizeof b, "%*d", w, n);
 	if (strlen(b) > w) {
 		while (w-- > 0)
 			addch('*');
@@ -626,7 +626,7 @@ putfloat(f, l, c, w, d, nz)
 			addch(' ');
 		return;
 	}
-	sprintf(b, "%*.*f", w, d, f);
+	snprintf(b, sizeof b, "%*.*f", w, d, f);
 	if (strlen(b) > w) {
 		while (--w >= 0)
 			addch('*');

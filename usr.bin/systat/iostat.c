@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.9 1997/07/15 14:41:06 kstailey Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.10 1997/12/19 09:03:32 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.9 1997/07/15 14:41:06 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.10 1997/12/19 09:03:32 deraadt Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -305,7 +305,7 @@ histogram(val, colwidth, scale)
 
 	k = MIN(v, colwidth);
 	if (v > colwidth) {
-		sprintf(buf, "%4.1f", val);
+		snprintf(buf, sizeof buf, "%4.1f", val);
 		k -= strlen(buf);
 		while (k--)
 			waddch(wnd, 'X');
