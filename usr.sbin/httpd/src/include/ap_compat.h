@@ -19,7 +19,6 @@ extern "C" {
 
 #define MD5Final                       ap_MD5Final
 #define MD5Init                        ap_MD5Init
-#define MD5Update                      ap_MD5Update
 #define acquire_mutex                  ap_acquire_mutex
 #define add_cgi_vars                   ap_add_cgi_vars
 #define add_common_vars                ap_add_common_vars
