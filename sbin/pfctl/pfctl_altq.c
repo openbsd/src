@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.50 2003/04/05 21:44:46 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.51 2003/04/11 15:13:34 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -152,19 +152,6 @@ qname_to_qid(const char *qname)
 			return (altq->qid);
 	}
 	return (0);
-}
-
-char *
-qid_to_qname(u_int32_t qid, const char *ifname)
-{
-	struct pf_altq	*altq;
-
-	TAILQ_FOREACH(altq, &altqs, entries) {
-		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
-		    altq->qid == qid)
-			return (altq->qname);
-	}
-	return (NULL);
 }
 
 void
