@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.6 1996/05/02 06:43:18 niklas Exp $	*/
-/*	$NetBSD: locore.s,v 1.50 1996/04/21 21:07:04 veego Exp $	*/
+/*	$OpenBSD: locore.s,v 1.7 1996/05/04 13:29:04 niklas Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 1996/05/02 02:08:33 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -841,9 +841,9 @@ Lcacheon:
  * Create a fake exception frame that returns to user mode,
  * make space for the rest of a fake saved register set, and
  * pass the first available RAM and a pointer to the register
- * set to "main()".  "main()" will do an "execve()" using that
+ * set to "mi_main()".  "mi_main()" will do an "execve()" using that
  * stack frame.
- * When "main()" returns, we're running in process 1 and have
+ * When "mi_main()" returns, we're running in process 1 and have
  * successfully executed the "execve()".  We load up the registers from
  * that set; the "rte" loads the PC and PSR, which jumps to "init".
  */
@@ -858,7 +858,7 @@ Lcacheon:
 	movl	usp,a1
 	movl	a1,sp@(FR_SP)		| save user stack pointer in frame
 	pea	sp@			| addr of space for D0 
-	jbsr	_main			| main(firstaddr, r0)
+	jbsr	_mi_main		| mi_main(firstaddr, r0)
 	addql	#4,sp			| pop args
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lnoflush		| no, skip
@@ -1842,6 +1842,14 @@ Ldoreset:
  */
 	.globl	_kernel_reload
 _kernel_reload:
+	lea	Lreload_copy,a0		| cursory validity check of new kernel
+	movl	a0@,d0			|  to see if the kernel reload code
+	addl	sp@(4),a0		|  in new image matches running kernel
+	cmpl	a0@,d0
+	jeq	Lreload_ok
+	rts				| It doesn't match - can't reload
+Lreload_ok:
+	jsr	_bootsync
 	CUSTOMADDR(a5)
 
 	movew	#(1<<9),a5@(0x096)	| disable DMA (before clobbering chipmem)
