@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_getprocs.3,v 1.6 1999/07/09 13:35:25 aaron Exp $
+.\"	$OpenBSD: kvm_getprocs.3,v 1.7 2000/03/04 15:29:56 aaron Exp $
 .\"	$NetBSD: kvm_getprocs.3,v 1.3 1996/05/20 16:58:03 mrg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -49,8 +49,6 @@
 .Sh SYNOPSIS
 .Fd #include <kvm.h>
 .Fd #include <sys/sysctl.h>
-.\" .Fa kvm_t *kd
-.br
 .Ft struct kinfo_proc *
 .Fn kvm_getprocs "kvm_t *kd" "int op" "int arg" "int *cnt"
 .Ft char **
@@ -66,36 +64,39 @@ The
 and
 .Fa arg
 arguments constitute a predicate which limits the set of processes
-returned.  The value of
+returned.
+The value of
 .Fa op
 describes the filtering predicate as follows:
 .Pp
 .Bl -tag -width 20n -offset indent -compact
-.It Sy KERN_PROC_ALL
+.It Dv KERN_PROC_ALL
 all processes
-.It Sy KERN_PROC_PID
+.It Dv KERN_PROC_PID
 processes with process ID
 .Fa arg
-.It Sy KERN_PROC_PGRP
+.It Dv KERN_PROC_PGRP
 processes with process group
 .Fa arg
-.It Sy KERN_PROC_SESSION
+.It Dv KERN_PROC_SESSION
 processes with session
 .Fa arg
-.It Sy KERN_PROC_TTY
+.It Dv KERN_PROC_TTY
 processes with tty
 .Fa arg
-.It Sy KERN_PROC_UID
+.It Dv KERN_PROC_UID
 processes with effective user ID
 .Fa arg
-.It Sy KERN_PROC_RUID
+.It Dv KERN_PROC_RUID
 processes with real user ID
 .Fa arg
 .El
 .Pp
 The number of processes found is returned in the reference parameter
 .Fa cnt .
-The processes are returned as a contiguous array of kinfo_proc structures.
+The processes are returned as a contiguous array of
+.Li kinfo_proc
+structures.
 This memory is locally allocated, and subsequent calls to
 .Fn kvm_getprocs
 and
@@ -108,7 +109,8 @@ command line arguments passed to process indicated by
 .Fa p .
 Most likely, these arguments correspond to the values passed to
 .Xr exec 3
-on process creation.  This information is, however,
+on process creation.
+This information is, however,
 deliberately under control of the process itself.
 Note that the original command name can be found, unaltered,
 in the
@@ -119,7 +121,8 @@ field of the process structure returned by
 The
 .Fa nchr
 argument indicates the maximum number of characters, including null bytes,
-to use in building the strings.  If this amount is exceeded, the string
+to use in building the strings.
+If this amount is exceeded, the string
 causing the overflow is truncated and the partial result is returned.
 This is handy for programs like
 .Xr ps 1
@@ -133,7 +136,8 @@ is zero, no limit is imposed and all argument strings are returned in
 their entirety.
 .Pp
 The memory allocated to the argv pointers and string storage
-is owned by the kvm library.  Subsequent
+is owned by the kvm library.
+Subsequent
 .Fn kvm_getprocs
 and
 .Xr kvm_close 3
@@ -143,8 +147,8 @@ The
 .Fn kvm_getenvv
 function is similar to
 .Fn kvm_getargv
-but returns the vector of environment strings.  This data is
-also alterable by the process.
+but returns the vector of environment strings.
+This data is also alterable by the process.
 .Sh RETURN VALUES
 .Fn kvm_getprocs ,
 .Fn kvm_getargv ,

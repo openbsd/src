@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm_read.3,v 1.4 1999/07/09 13:35:26 aaron Exp $
+.\"	$OpenBSD: kvm_read.3,v 1.5 2000/03/04 15:29:57 aaron Exp $
 .\"	$NetBSD: kvm_read.3,v 1.2 1996/03/18 22:34:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -57,7 +57,8 @@ The
 and
 .Fn kvm_write
 functions are used to read and write kernel virtual memory (or a crash
-dump file). See
+dump file).
+See
 .Fn kvm_open 3
 or
 .Fn kvm_openfiles 3
@@ -81,7 +82,8 @@ to
 Unlike their SunOS counterparts, these functions cannot be used to
 read or write process address spaces.
 .Sh RETURN VALUES
-Upon success, the number of bytes actually transferred is returned.
+Upon successful completion, the number of bytes actually transferred is
+returned.
 Otherwise, \-1 is returned.
 .Sh SEE ALSO
 .Xr kvm 3 ,
