@@ -1,4 +1,4 @@
-/*	$OpenBSD: wax.c,v 1.3 2003/04/03 21:45:14 mickey Exp $	*/
+/*	$OpenBSD: wax.c,v 1.4 2003/04/07 16:49:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,2003 Michael Shalayeff
@@ -99,6 +99,7 @@ waxattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct gsc_attach_args ga;
 	bus_space_handle_t ioh;
+	int s, in;
 
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
 			  IOMOD_HPASIZE, 0, &ioh)) {
@@ -112,7 +113,6 @@ waxattach(parent, self, aux)
 
 	printf("\n");
 
-#if 0
 	/* interrupts guts */
 	s = splhigh();
 	sc->sc_regs->wax_iar = cpu_gethpa(0) | (31 - ca->ca_irq);
@@ -121,7 +121,6 @@ waxattach(parent, self, aux)
 	in = sc->sc_regs->wax_irr;
 	sc->sc_regs->wax_imr = 0;
 	splx(s);
-#endif
 
 	sc->sc_ic.gsc_type = gsc_wax;
 	sc->sc_ic.gsc_dv = sc;
