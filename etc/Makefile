@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.112 2000/06/19 17:38:44 todd Exp $
+#	$OpenBSD: Makefile,v 1.113 2000/06/25 16:04:03 naddy Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -205,7 +205,9 @@ distribution-etc-root-var: distrib-dirs
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g wheel -m 444 \
 	    ld.so.conf ${DESTDIR}/etc)
 .endif
+.ifndef NOMAKEDEV
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
+.endif
 .if ${MACHINE} == "vax"
 	(cd etc.vax; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
 	    ${DESTDIR}/)
@@ -220,7 +222,8 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g ${BINGRP} -m 644 aliases \
 	    ${DESTDIR}/etc/mail/aliases
 	/usr/libexec/sendmail/sendmail -C${DESTDIR}/etc/mail/sendmail.cf \
-	    -bi -O AliasFile=${DESTDIR}/etc/mail/aliases
+	    -bi -O AliasFile=${DESTDIR}/etc/mail/aliases \
+	    -O DontBlameSendmail=mapinunsafedirpath
 	${INSTALL} -c -o root -g wheel -m 600 root/root.mail \
 		${DESTDIR}/var/mail/root
 
