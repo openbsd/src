@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.6 2004/08/30 11:50:56 deraadt Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.7 2004/09/24 14:51:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,8 +93,9 @@ int
 ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
     int auth)
 {
-	char	 buf[NTP_MSGSIZE];
-	char	*p;
+	char		 buf[NTP_MSGSIZE];
+	char		*p;
+	u_int8_t	sa_len;
 
 	p = buf;
 	memcpy(p, &msg->status, sizeof(msg->status));
@@ -136,7 +137,12 @@ ntp_sendmsg(int fd, struct sockaddr *sa, struct ntp_msg *msg, ssize_t len,
 		/* XXX */
 	}
 
-	if (sendto(fd, &buf, len, 0, sa, SA_LEN(sa)) != len) {
+	if (sa != NULL)
+		sa_len = SA_LEN(sa);
+	else
+		sa_len = 0;
+
+	if (sendto(fd, &buf, len, 0, sa, sa_len) != len) {
 		if (errno == ENOBUFS || errno == EHOSTUNREACH ||
 		    errno == ENETDOWN || errno == EHOSTDOWN) {
 			/* logging is futile */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.34 2004/09/18 20:01:38 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.35 2004/09/24 14:51:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -83,9 +83,14 @@ client_addr_init(struct ntp_peer *p)
 		}
 	}
 
-	if (p->addr != NULL &&
-	    (p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
-		fatal("client_query socket");
+	if (p->addr != NULL) {
+		if ((p->query->fd = socket(p->addr->ss.ss_family,
+		    SOCK_DGRAM, 0)) == -1)
+			fatal("client_query socket");
+		if (connect(p->query->fd, (struct sockaddr *)&p->addr->ss,
+		    p->addr->ss.ss_len) == -1)
+			fatal("client_query connect");
+	}
 
 	set_next(p, 0);
 
@@ -108,6 +113,9 @@ client_nextaddr(struct ntp_peer *p)
 
 	if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM, 0)) == -1)
 		fatal("client_query socket");
+	if (connect(p->query->fd, (struct sockaddr *)&p->addr->ss,
+	    p->addr->ss.ss_len) == -1)
+		fatal("client_query connect");
 
 	p->shift = 0;
 	p->trustlevel = TRUSTLEVEL_PATHETIC;
@@ -141,8 +149,8 @@ client_query(struct ntp_peer *p)
 	p->query->msg.xmttime.fraction = arc4random();
 	p->query->xmttime = gettime();
 
-	if (ntp_sendmsg(p->query->fd, (struct sockaddr *)&p->addr->ss,
-	    &p->query->msg, NTP_MSGSIZE_NOAUTH, 0) == -1) {
+	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg,
+	    NTP_MSGSIZE_NOAUTH, 0) == -1) {
 		set_next(p, INTERVAL_QUERY_PATHETIC);
 		return (-1);
 	}
@@ -156,8 +164,6 @@ client_query(struct ntp_peer *p)
 int
 client_dispatch(struct ntp_peer *p, u_int8_t settime)
 {
-	struct sockaddr_storage	 fsa;
-	socklen_t		 fsa_len;
 	char			 buf[NTP_MSGSIZE];
 	ssize_t			 size;
 	struct ntp_msg		 msg;
@@ -165,13 +171,12 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 	double			 abs_offset;
 	time_t			 interval;
 
-	fsa_len = sizeof(fsa);
 	if ((size = recvfrom(p->query->fd, &buf, sizeof(buf), 0,
-	    (struct sockaddr *)&fsa, &fsa_len)) == -1) {
+	    NULL, NULL)) == -1) {
 		if (errno == EHOSTUNREACH || errno == EHOSTDOWN ||
 		    errno == ENETDOWN) {
 			log_warn("recvfrom %s",
-			    log_sockaddr((struct sockaddr *)&fsa));
+			    log_sockaddr((struct sockaddr *)&p->addr->ss));
 			return (0);
 		} else
 			fatal("recvfrom");
@@ -246,7 +251,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		if (p->trustlevel < TRUSTLEVEL_BADPEER &&
 		    p->trustlevel + 1 >= TRUSTLEVEL_BADPEER)
 			log_info("peer %s now valid",
-			    log_sockaddr((struct sockaddr *)&fsa));
+			    log_sockaddr((struct sockaddr *)&p->addr->ss));
 		p->trustlevel++;
 	}
 
@@ -255,7 +260,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 		ntp_settime(p->reply[p->shift].offset);
 
 	log_debug("reply from %s: offset %f delay %f, "
-	    "next query %ds", log_sockaddr((struct sockaddr *)&fsa),
+	    "next query %ds", log_sockaddr((struct sockaddr *)&p->addr->ss),
 	    p->reply[p->shift].offset, p->reply[p->shift].delay, interval);
 
 	if (++p->shift >= OFFSET_ARRAY_SIZE)
