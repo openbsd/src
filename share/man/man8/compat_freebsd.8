@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_freebsd.8,v 1.10 2003/02/19 09:10:36 jmc Exp $
+.\"	$OpenBSD: compat_freebsd.8,v 1.11 2003/03/18 13:01:36 david Exp $
 .\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -107,8 +107,8 @@ binaries without any extra work.
 How to get to know which shared libraries
 .Fx
 binaries need, and where to get them?
-Basically, there are 3 possibilities. (When following these instructions,
-root privileges are required on the
+Basically, there are 3 possibilities.
+(When following these instructions, root privileges are required on the
 .Ox
 system to perform the necessary installation steps).
 .Pp
@@ -262,7 +262,8 @@ ldconfig program with directory arguments in which the
 .Fx
 runtime linker should look for shared libs. 
 .Pa /usr/lib
-is standard. For example:
+is standard.
+For example:
 .Pp
 .Bl -tag -width 123 -compact -offset indent
 .It me@openbsd% mkdir -p /emul/freebsd/var/run
