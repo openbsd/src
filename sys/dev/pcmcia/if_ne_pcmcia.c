@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.40 2001/03/31 15:01:34 aaron Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.41 2001/04/18 14:59:31 aaron Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -316,6 +316,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TX,
       PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
       0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FAST_ETHER_PCC_TXF,
+      PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TXF,
+      0, -1, { 0x00, 0x90, 0x99 } },
 
     { PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
