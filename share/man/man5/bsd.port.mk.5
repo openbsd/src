@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.87 2003/03/22 08:02:03 david Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.88 2003/04/03 07:56:28 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -420,7 +420,7 @@ Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed
 (default: ${PORTSDIR}/cdrom-packages/${ARCH})
 .It Ev CDROM_SITE
-Path to a local database that holds distribution files (usually a CD-Rom
+Path to a local database that holds distribution files (usually a CD-ROM
 or other similar media), used to retrieve distribution files before going
 to the network.
 Defaults to
@@ -1199,7 +1199,7 @@ Set to bison if needed.
 .It Pa ../Makefile.inc
 Common Makefile fragment for a set of ports, included automatically.
 .It Pa /cdrom/distfiles
-Default path to a CD-Rom (or other media) full of distribution files.
+Default path to a CD-ROM (or other media) full of distribution files.
 .It Pa Makefile.${ARCH}
 Arch-dependent Makefile fragment, included automatically.
 .It Pa ${DISTDIR}
