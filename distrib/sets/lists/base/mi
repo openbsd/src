@@ -1820,7 +1820,6 @@
 ./usr/share/sendmail/cf/chez.cs.mc
 ./usr/share/sendmail/cf/clientproto.mc
 ./usr/share/sendmail/cf/corpse.mc
-./usr/share/sendmail/cf/courtesan-lists.mc
 ./usr/share/sendmail/cf/courtesan-nonet.mc
 ./usr/share/sendmail/cf/courtesan.mc
 ./usr/share/sendmail/cf/cs-hpux10.mc
@@ -1848,6 +1847,7 @@
 ./usr/share/sendmail/cf/mail.cs.mc
 ./usr/share/sendmail/cf/mail.eecs.mc
 ./usr/share/sendmail/cf/mailspool.cs.mc
+./usr/share/sendmail/cf/openbsd-bulk.mc
 ./usr/share/sendmail/cf/openbsd-lists.mc
 ./usr/share/sendmail/cf/openbsd-localhost.mc
 ./usr/share/sendmail/cf/openbsd-proto.mc
