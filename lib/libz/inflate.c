@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.4 2003/12/16 22:33:02 henning Exp $	*/
+/*	$OpenBSD: inflate.c,v 1.5 2003/12/17 00:24:47 henning Exp $	*/
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2003 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -885,12 +885,14 @@ int flush;
             Tracev((stderr, "inflate:       codes ok\n"));
             state->mode = LEN;
         case LEN:
+#ifndef SLOW
             if (have >= 6 && left >= 258) {
                 RESTORE();
                 inflate_fast(strm, out);
                 LOAD();
                 break;
             }
+#endif
             for (;;) {
                 this = state->lencode[BITS(state->lenbits)];
                 if ((unsigned)(this.bits) <= bits) break;
