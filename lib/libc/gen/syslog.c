@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.26 2004/05/18 02:05:52 jfb Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.27 2005/03/08 15:41:03 moritz Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -204,6 +204,8 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 				prlen = snprintf(t, fmt_left, "Error %d",
 				    saved_errno); 
 			}
+			if (prlen < 0)
+				prlen = 0;
 			if (prlen >= fmt_left)
 				prlen = fmt_left - 1;
 			t += prlen;
