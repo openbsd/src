@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.13 1996/09/24 02:38:30 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.14 1996/09/24 02:40:12 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -841,6 +841,8 @@ sys_mknod(p, v, retval)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
+	if (p->p_fd->fd_rdir)
+		return (EINVAL);
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
