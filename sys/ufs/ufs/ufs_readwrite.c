@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.5 1996/07/01 06:52:24 downsj Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.6 1996/07/13 21:49:19 downsj Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #define	WRITE			lfs_write
 #define	WRITE_S			"lfs_write"
 #define	fs_bsize		lfs_bsize
-#define	fs_maxfilesize		lfs_maxfilesize
+#define MAXFILESIZE		fs->lfs_maxfilesize
 #else
 #ifdef EXT2_READWRITE
 #define BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -70,6 +70,7 @@
 #define	READ_S			"ffs_read"
 #define	WRITE			ffs_write
 #define	WRITE_S			"ffs_write"
+#define MAXFILESIZE		fs->fs_maxfilesize
 #endif
 #endif
 
@@ -116,11 +117,7 @@ READ(v)
 		panic("%s: type %d", READ_S, vp->v_type);
 #endif
 	fs = ip->I_FS;
-#ifdef EXT2_READWRITE
 	if ((u_int64_t)uio->uio_offset > MAXFILESIZE)
-#else
-	if ((u_int64_t)uio->uio_offset > fs->fs_maxfilesize)
-#endif
 		return (EFBIG);
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
@@ -238,11 +235,7 @@ WRITE(v)
 
 	fs = ip->I_FS;
 	if (uio->uio_offset < 0 ||
-#ifdef EXT2_READWRITE
 	    (u_int64_t)uio->uio_offset + uio->uio_resid > MAXFILESIZE)
-#else
-	    (u_int64_t)uio->uio_offset + uio->uio_resid > fs->fs_maxfilesize)
-#endif
 		return (EFBIG);
 	/*
 	 * Maybe this should be above the vnode op call, but so long as
