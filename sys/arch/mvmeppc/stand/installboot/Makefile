@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.1 2001/06/26 21:58:03 smurph Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/03/09 22:23:41 miod Exp $
 
 .if ${MACHINE} == "mvmeppc"
 PROG=	installboot
 MAN=	installboot.8
-MANSUBDIR=/mvme88k
+MANSUBDIR=/mvmeppc
 
 BINDIR=/usr/mdec
 DPADD=${LIBUTIL}
