@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.66 1999/10/14 17:29:04 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.67 1999/10/15 15:16:01 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -557,7 +557,7 @@ if [ X"$ssl" != X1 ]; then
 		echo "      licences work.  (This is how the USA crypto export policy feels to the"
 		echo "      rest of the world.)"
 		echo ""
-		echo "If you do not install the ssl package now, it is easily installed at
+		echo "If you do not install the ssl package now, it is easily installed at"
 		echo "a later time (see the afterboot(8) and ssl(8) manual pages)."
 
 		echo -n "Install SSL+RSA libraries now via (f)tp, (h)ttp, or (n)ot? [$resp] "
