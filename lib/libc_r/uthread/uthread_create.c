@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_create.c,v 1.8 1999/03/10 10:06:22 d Exp $
+ * $OpenBSD: uthread_create.c,v 1.9 1999/05/12 06:00:00 d Exp $
  */
 #include <errno.h>
 #include <stdlib.h>
@@ -174,7 +174,8 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 			_unlock_thread_list();
 
 			/* Return a pointer to the thread structure: */
-			(*thread) = new_thread;
+			if (thread != NULL)
+				(*thread) = new_thread;
 
 			/* Schedule the new user thread: */
 			_thread_kern_sched(NULL);
