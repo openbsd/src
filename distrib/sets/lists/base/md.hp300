@@ -1,4 +1,3 @@
-./etc/wsconsctl.conf
 ./sbin/ldconfig
 ./sbin/wsconsctl
 ./usr/bin/ldd
