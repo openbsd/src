@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.29 2003/01/03 14:39:36 miod Exp $
+#  $OpenBSD: Makefile,v 1.30 2003/02/27 00:30:43 jason Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -147,7 +147,7 @@ SRCS=	${COMMON_SRCS}
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
-	ieee_test.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
+	logb.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3
 MAN+=	infnan.3
 
@@ -156,9 +156,8 @@ MLINKS+=exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
 MLINKS+=hypot.3 cabs.3
 MLINKS+=ieee.3 copysign.3 ieee.3 finite.3 ieee.3 ilogb.3 \
 	ieee.3 nextafter.3 ieee.3 remainder.3 ieee.3 scalbn.3
-MLINKS+=ieee_test.3 logb.3
-MLINKS+=ieee_test.3 scalb.3
-MLINKS+=ieee_test.3 significand.3
+MLINKS+=logb.3 scalb.3
+MLINKS+=logb.3 significand.3
 MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
 MLINKS+=lgamma.3 gamma.3
 MLINKS+=sqrt.3 cbrt.3
@@ -194,10 +193,9 @@ MLINKS+=ieee.3 ilogbf.3
 MLINKS+=ieee.3 nextafterf.3
 MLINKS+=ieee.3 remainderf.3
 MLINKS+=ieee.3 scalbnf.3
-MLINKS+=ieee_test.3 ieee_testf.3
-MLINKS+=ieee_test.3 logbf.3
-MLINKS+=ieee_test.3 scalbf.3
-MLINKS+=ieee_test.3 significandf.3
+MLINKS+=logb.3 logbf.3
+MLINKS+=logb.3 scalbf.3
+MLINKS+=logb.3 significandf.3
 MLINKS+=j0.3 j0f.3
 MLINKS+=j0.3 j1f.3
 MLINKS+=j0.3 jnf.3
