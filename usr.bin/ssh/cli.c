@@ -1,4 +1,4 @@
-/*	$OpenBSD: cli.c,v 1.11 2001/03/06 00:33:04 deraadt Exp $	*/
+/*	$OpenBSD: cli.c,v 1.12 2001/05/06 17:52:07 mouring Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cli.c,v 1.11 2001/03/06 00:33:04 deraadt Exp $");
+RCSID("$OpenBSD: cli.c,v 1.12 2001/05/06 17:52:07 mouring Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -162,7 +162,7 @@ cli_read(char* buf, int size, int echo)
 }
 
 static int
-cli_write(char* buf, int size)
+cli_write(const char* buf, int size)
 {
 	int i, len, pos, ret = 0;
 	char *output, *p;
@@ -194,7 +194,7 @@ cli_write(char* buf, int size)
  * buffer is storing the response.
  */
 char*
-cli_read_passphrase(char* prompt, int from_stdin, int echo_enable)
+cli_read_passphrase(const char* prompt, int from_stdin, int echo_enable)
 {
 	char	buf[BUFSIZ];
 	char*	p;
