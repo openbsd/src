@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.3 2005/02/02 19:15:07 henning Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.4 2005/02/09 15:41:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -86,7 +86,7 @@ lsa_flood(struct iface *iface, struct nbr *originator, struct lsa_hdr *lsa_hdr,
 	if (!queued)
 		return (0);
 
-	if (iface == originator->iface) {
+	if (iface == originator->iface && iface->self != originator) {
 		if (iface->dr == originator || iface->bdr == originator)
 			return (0);
 		if (iface->state & IF_STA_BACKUP)
