@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.157 2004/12/20 21:31:22 espie Exp $
+# $OpenBSD: pkg_add,v 1.158 2004/12/20 22:19:24 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -164,6 +164,7 @@ sub pre_add($$)
 	if (can_install($plist, $state, $handle)) {
 		return $handle;
 	} else {
+		$handle->close();
 		if ($state->{forced}->{kitchensink}) {
 			$errors = 0;
 		}
@@ -617,6 +618,7 @@ sub install_package
 			$handle->{solved_dependencies}, 0)) {
 			    Warn "Can't install $pkg: lib not found $spec\n";
 			    clue($handle->{solved_dependencies});
+			    $handle->close();
 			    return () unless $forced{libdepends};
 		    }
 		}
@@ -627,6 +629,7 @@ sub install_package
 		    $handle->{solved_dependencies}, 1, $extra)) {
 		    	Warn "Can't install $pkg: lib not found ", $lib->{name}, "\n";
 			clue($extra);
+			$handle->close();
 			return () unless $forced{libdepends};
 		}
 	}
