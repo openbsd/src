@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.23 2002/01/12 16:23:36 millert Exp $
+.\"	$OpenBSD: style.9,v 1.24 2002/02/17 19:58:32 millert Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -122,15 +122,13 @@ Functions that are used locally in more than one module go into a
 separate header file, e.g.,
 .Pa extern.h .
 .Pp
-Only use the
-.Li __P
-macro from the include file
-.Pa Aq sys/cdefs.h
-if the source file in general is (to be) compilable with a K&R compiler.
 Use of the
 .Li __P
-macro in new code is discouraged, although modifications to existing
-files should be consistent with that file's conventions.
+macro has been deprecated.
+It is allowed in code imported from other sources but should not be
+used in native
+.Ox
+code.
 Prototypes should not have variable names associated with the types; i.e.:
 .Bd -literal -compact -offset 0i
 void	function(int);
