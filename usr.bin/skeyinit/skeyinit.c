@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.40 2002/06/23 03:07:22 deraadt Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.41 2002/11/16 23:05:36 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -93,7 +93,8 @@ main(int argc, char **argv)
 			case 'a':
 				if (argv[++i] == NULL || argv[i][0] == '\0')
 					usage();
-				auth_type = argv[i];
+				if (auth_type == NULL)
+					auth_type = argv[i];
 				break;
 			case 's':
 				defaultsetup = 0;
@@ -167,6 +168,31 @@ main(int argc, char **argv)
 		}
 	}
 
+	switch (skey_haskey(pp->pw_name)) {
+	case -1:
+		if (errno == ENOENT || errno == EPERM)
+			errx(1, "S/Key disabled");
+		else
+			err(1, "cannot open database");
+		break;
+	case 0:
+		/* existing user */
+		break;
+	case 1:
+		if (!defaultsetup) {
+			fprintf(stderr,
+"You must authenticate yourself before using S/Key for the first time.  In
+secure mode this is normally done via an existing S/Key key.  However, since
+you do not have an entry in the S/Key database you will have to specify an
+alternate authentication type via the `-a' flag, e.g.
+    \"skeyinit -s -a krb5\" or \"skeyinit -s -a passwd\"\n
+Note that entering a plaintext password over a non-secure link defeats the
+purpose of using S/Key in the fist place.\n");
+			exit(1);
+		}
+		break;
+	}
+
 	if (defaultsetup)
 		fputs("Reminder - Only use this method if you are directly "
 		    "connected\n           or have an encrypted channel.  If "
@@ -188,10 +214,7 @@ main(int argc, char **argv)
 	rval = skeylookup(&skey, pp->pw_name);
 	switch (rval) {
 		case -1:
-			if (errno == ENOENT)
-				errx(1, "S/Key disabled");
-			else
-				err(1, "cannot open database");
+			err(1, "cannot open database");
 			break;
 		case 0:
 			/* remove user if asked to do so */

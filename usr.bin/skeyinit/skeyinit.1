@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.23 2002/05/17 15:54:12 millert Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.24 2002/11/16 23:05:36 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -99,13 +99,28 @@ count and seed.
 You can then "cut-and-paste" or type the words into the
 .Nm
 window.
+When the
+.Fl s
+option is specified,
+.Nm
+will try to authenticate the user via S/Key, instead of the default listed in
+.Pa /etc/login.conf .
+If a user has no entry in the S/Key database, an alternate authentication
+type must be specified via the
+.Fl a
+option.
+Please note that entering a password or passphrase in plain text
+defeats the purpose of using
+.Dq secure
+mode.
 .It Fl x
 Displays pass phrase in hexadecimal instead of ASCII.
 .It Fl a Ar auth-type
 Specify an authentication type such as
-.Dq krb4
+.Dq krb4 ,
+.Dq krb5
 or
-.Dq krb5 .
+.Dq passwd .
 .It Fl n Ar count
 Start the
 .Nm skey
@@ -136,7 +151,9 @@ via the
 flag.
 .El
 .Sh FILES
-.Bl -tag -width /etc/skey
+.Bl -tag -width /etc/login.conf -compact
+.It Pa /etc/login.conf
+file containing authentication types
 .It Pa /etc/skey
 directory containing user entries for S/Key
 .El
