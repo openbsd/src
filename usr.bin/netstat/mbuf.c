@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.15 2002/06/24 17:51:05 angelos Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.16 2002/06/30 20:27:16 angelos Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.15 2002/06/24 17:51:05 angelos Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.16 2002/06/30 20:27:16 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,16 @@ mbpr(mbaddr, mbpooladdr, mclpooladdr)
 		if (kread(mclpooladdr, (char *)&mclpool, sizeof (mclpool)))
 			return;
 	} else {
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MBSTAT;
+		size = sizeof(mbstat);
+
+		if (sysctl(mib, 2, &mbstat, &size, NULL, 0) < 0) {
+			printf("Can't retrieve mbuf statistics from the kernel: %s\n",
+			    strerror(errno));
+			return;
+		}
+
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_POOL;
 		mib[2] = KERN_POOL_NPOOLS;
