@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.75 2002/07/16 13:46:43 fgsch Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.76 2002/08/08 18:53:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.75 2002/07/16 13:46:43 fgsch Exp $";
+	"$OpenBSD: if_wi.c,v 1.76 2002/08/08 18:53:10 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1466,20 +1466,18 @@ wi_ioctl(ifp, command, data)
 
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			if (sc->wi_ptype == WI_PORTTYPE_AP) {
-				WI_SETVAL(WI_RID_PROMISC, 0);
-			} else {
-				if (ifp->if_flags & IFF_RUNNING &&
-				    ifp->if_flags & IFF_PROMISC &&
-				    !(sc->wi_if_flags & IFF_PROMISC)) {
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->wi_if_flags & IFF_PROMISC)) {
+				if (sc->wi_ptype != WI_PORTTYPE_AP)
 					WI_SETVAL(WI_RID_PROMISC, 1);
-				} else if (ifp->if_flags & IFF_RUNNING &&
-				    !(ifp->if_flags & IFF_PROMISC) &&
-				    sc->wi_if_flags & IFF_PROMISC) {
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->wi_if_flags & IFF_PROMISC) {
+				if (sc->wi_ptype != WI_PORTTYPE_AP)
 					WI_SETVAL(WI_RID_PROMISC, 0);
-				}
-			}
-			wi_init(sc);
+			} else
+				wi_init(sc);
 		} else if (ifp->if_flags & IFF_RUNNING)
 			wi_stop(sc);
 		sc->wi_if_flags = ifp->if_flags;
