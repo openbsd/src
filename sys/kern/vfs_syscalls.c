@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.64 2000/04/15 19:52:48 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.65 2000/04/20 06:32:00 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2797,3 +2797,213 @@ sys_ogetfsstat(p, v, retval)
 		*retval = count;
 	return (0);
 }
+
+
+/*
+ * Positional read system call.
+ */
+int
+sys_pread(p, v, retval)
+        struct proc *p;
+        void *v;
+        register_t *retval;
+{
+        struct sys_pread_args /* {
+                syscallarg(int) fd;
+                syscallarg(void *) buf;
+                syscallarg(size_t) nbyte;
+                syscallarg(off_t) offset;
+        } */ *uap = v;
+        struct filedesc *fdp = p->p_fd;
+        struct file *fp;
+        struct vnode *vp;
+        off_t offset;
+        int error, fd = SCARG(uap, fd);
+
+        if ((u_int)fd >= fdp->fd_nfiles ||
+            (fp = fdp->fd_ofiles[fd]) == NULL ||
+#if notyet
+            (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
+#endif
+            (fp->f_flag & FREAD) == 0)
+                return (EBADF);
+
+#if notyet
+        FILE_USE(fp);
+#endif
+
+        vp = (struct vnode *)fp->f_data;
+        if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+                error = ESPIPE;
+                goto out;
+        }
+
+        offset = SCARG(uap, offset);
+
+        /* dofileread() will unuse the descriptor for us */
+        return (dofileread(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+            &offset, retval));
+
+ out:
+#if notyet
+        FILE_UNUSE(fp, p);
+#endif
+        return (error);
+}
+
+/*
+ * Positional scatter read system call.
+ */
+int
+sys_preadv(p, v, retval)
+        struct proc *p;
+        void *v;
+        register_t *retval;
+{
+        struct sys_preadv_args /* {
+                syscallarg(int) fd;
+                syscallarg(const struct iovec *) iovp;
+                syscallarg(int) iovcnt;
+                syscallarg(off_t) offset;
+        } */ *uap = v;
+        struct filedesc *fdp = p->p_fd;
+        struct file *fp;
+        struct vnode *vp;
+        off_t offset;
+        int error, fd = SCARG(uap, fd);
+
+        if ((u_int)fd >= fdp->fd_nfiles ||
+            (fp = fdp->fd_ofiles[fd]) == NULL ||
+#if notyet
+            (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
+#endif
+            (fp->f_flag & FREAD) == 0)
+                return (EBADF);
+
+#if notyet
+        FILE_USE(fp);
+#endif
+
+        vp = (struct vnode *)fp->f_data;
+        if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+                error = ESPIPE;
+                goto out;
+        }
+
+        offset = SCARG(uap, offset);
+
+        /* dofilereadv() will unuse the descriptor for us */
+        return (dofilereadv(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+            &offset, retval));
+
+ out:
+#if notyet
+        FILE_UNUSE(fp, p);
+#endif
+        return (error);
+}
+
+/*
+ * Positional write system call.
+ */
+int
+sys_pwrite(p, v, retval)
+        struct proc *p;
+        void *v;
+        register_t *retval;
+{
+        struct sys_pwrite_args /* {
+                syscallarg(int) fd;
+                syscallarg(const void *) buf;
+                syscallarg(size_t) nbyte;
+                syscallarg(off_t) offset;
+        } */ *uap = v;
+        struct filedesc *fdp = p->p_fd;
+        struct file *fp;
+        struct vnode *vp;
+        off_t offset;
+        int error, fd = SCARG(uap, fd);
+
+        if ((u_int)fd >= fdp->fd_nfiles ||
+            (fp = fdp->fd_ofiles[fd]) == NULL ||
+#if notyet
+            (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
+#endif
+            (fp->f_flag & FWRITE) == 0)
+                return (EBADF);
+
+#if notyet
+        FILE_USE(fp);
+#endif
+
+        vp = (struct vnode *)fp->f_data;
+        if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+                error = ESPIPE;
+                goto out;
+        }
+
+        offset = SCARG(uap, offset);
+
+        /* dofilewrite() will unuse the descriptor for us */
+        return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
+            &offset, retval));
+
+ out:
+#if notyet
+        FILE_UNUSE(fp, p);
+#endif
+        return (error);
+}
+
+
+/*
+ * Positional gather write system call.
+ */
+int
+sys_pwritev(p, v, retval)
+        struct proc *p;
+        void *v;
+        register_t *retval;
+{
+        struct sys_pwritev_args /* {
+                syscallarg(int) fd;
+                syscallarg(const struct iovec *) iovp;
+                syscallarg(int) iovcnt;
+                syscallarg(off_t) offset;
+        } */ *uap = v;
+        struct filedesc *fdp = p->p_fd;
+        struct file *fp;
+        struct vnode *vp;
+        off_t offset;
+        int error, fd = SCARG(uap, fd);
+
+        if ((u_int)fd >= fdp->fd_nfiles ||
+            (fp = fdp->fd_ofiles[fd]) == NULL ||
+#if notyet
+            (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
+#endif
+            (fp->f_flag & FWRITE) == 0)
+                return (EBADF);
+
+#if notyet
+        FILE_USE(fp);
+#endif
+        vp = (struct vnode *)fp->f_data;
+        if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+                error = ESPIPE;
+                goto out;
+        }
+
+        offset = SCARG(uap, offset);
+
+        /* dofilewritev() will unuse the descriptor for us */
+        return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
+            &offset, retval));
+
+ out:
+#if notyet
+        FILE_UNUSE(fp, p);
+#endif
+        return (error);
+}
+
