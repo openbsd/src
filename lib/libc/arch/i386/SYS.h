@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.6 2000/01/06 08:50:35 d Exp $
+ *	$OpenBSD: SYS.h,v 1.7 2000/01/06 09:05:58 d Exp $
  */
 
 #include <machine/asm.h>
@@ -78,9 +78,15 @@
 #endif /* ! __STDC__ */
 #endif /* WEAK_ALIASES */
 
+#ifdef __STDC__
 #define	__DO_SYSCALL(x)					\
-			movl $(__CONCAT(SYS_,x)),%eax;	\
+			movl $(SYS_ ## x),%eax;		\
 			int $0x80
+#else /* ! __STDC__ */
+#define	__DO_SYSCALL(x)					\
+			movl $(SYS_/**/x),%eax;		\
+			int $0x80
+#endif /* ! __STDC__ */
 
 /* perform a syscall, set errno */
 #define	SYSCALL(x)					\
