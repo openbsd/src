@@ -1,4 +1,4 @@
-/* * $OpenBSD: lib.c,v 1.10 2002/09/07 01:25:34 marc Exp $	- library routines*/
+/* * $OpenBSD: lib.c,v 1.11 2002/11/27 00:37:53 espie Exp $	- library routines*/
 /*
  */
 
@@ -289,7 +289,7 @@ symdef_library(int fd, struct file_entry *entry, int member_length)
 
 			read_entry_symbols(fd, subentry);
 			subentry->strings = (char *)
-				alloca(subentry->string_size);
+				xmalloc(subentry->string_size);
 			read_entry_strings(fd, subentry);
 
 			/*
@@ -299,8 +299,8 @@ symdef_library(int fd, struct file_entry *entry, int member_length)
 
 			if (!(link_mode & FORCEARCHIVE) &&
 					!subfile_wanted_p(subentry)) {
-				if (subentry->symbols)
-					free(subentry->symbols);
+				free(subentry->symbols);
+				free(subentry->strings);
 				free(subentry);
 			} else {
 				/*
@@ -336,6 +336,7 @@ symdef_library(int fd, struct file_entry *entry, int member_length)
 				 * We'll read the strings again
 				 * if we need them.
 				 */
+				free(subentry->strings);
 				subentry->strings = 0;
 			}
 		}
@@ -368,13 +369,13 @@ linear_library(int fd, struct file_entry *entry)
 			return;
 
 		read_entry_symbols(fd, subentry);
-		subentry->strings = (char *)alloca(subentry->string_size);
+		subentry->strings = (char *)xmalloc(subentry->string_size);
 		read_entry_strings(fd, subentry);
 
 		if (!(link_mode & FORCEARCHIVE) &&
 					!subfile_wanted_p(subentry)) {
-			if (subentry->symbols)
-				free(subentry->symbols);
+			free(subentry->symbols);
+			free(subentry->strings);
 			free(subentry);
 		} else {
 			read_entry_relocation(fd, subentry);
@@ -385,8 +386,8 @@ linear_library(int fd, struct file_entry *entry)
 			else
 				entry->subfiles = subentry;
 			prev = subentry;
-			subentry->strings = 0;	/* Since space will dissapear
-						 * on return */
+			free(subentry->strings);
+			subentry->strings = 0;	
 		}
 
 		this_subfile_offset += member_length + sizeof(struct ar_hdr);
