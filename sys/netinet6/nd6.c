@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.9 2000/04/13 14:34:10 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.10 2000/04/13 16:27:26 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
 
 /*
@@ -1859,6 +1859,7 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 	}
 	sdl = SDL(rt->rt_gateway);
 	if (sdl->sdl_alen == 0) {
+		/* this should be impossible, but we bark here for debugging */
 		printf("nd6_storelladdr: sdl_alen == 0\n");
 		return(0);
 	}
