@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.5,v 1.29 2004/10/05 14:18:22 millert Exp $
+.\"	$OpenBSD: passwd.5,v 1.30 2005/02/09 16:28:30 jmc Exp $
 .\"	$NetBSD: passwd.5,v 1.4 1995/07/28 06:46:05 phil Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -82,6 +82,10 @@ file by
 and has the class, change, and expire fields removed.
 Also, the encrypted password field is replaced by an asterisk
 .Pq Ql \&* .
+.Pp
+The password files should never be edited by hand;
+.Xr vipw 8
+should be used instead.
 .Pp
 The
 .Ar name
