@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: server.c,v 1.1.1.1 1995/10/18 08:45:59 deraadt Exp $";
+static char *rcsid = "$Id: server.c,v 1.2 1995/12/15 08:58:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -704,6 +704,7 @@ recvf(cmd, type)
 
 	cp = cmd;
 	opts = 0;
+	f = 0;		/*  Initialize, so for links it remains 0.  */
 	while (*cp >= '0' && *cp <= '7')
 		opts = (opts << 3) | (*cp++ - '0');
 	if (*cp++ != ' ') {
@@ -917,7 +918,9 @@ differ:			buf[0] = '\0';
 		note("%s: utimes failed %s: %s\n", host, new, strerror(errno));
 
 	if (fchog(f, new, owner, group, mode) < 0) {
-badnew2:	(void) close(f);
+badnew2:	
+		if (f)		/*  Don't close if f hasn't been opened.  */
+			(void) close(f);
 		(void) unlink(new);
 		return;
 	}
