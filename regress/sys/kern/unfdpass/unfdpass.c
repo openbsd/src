@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.3 2001/11/11 23:26:35 deraadt Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.4 2002/02/09 13:56:29 art Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -118,8 +118,10 @@ main(argc, argv)
 	sun.sun_len = SUN_LEN(&sun);
 
 	i = 1;
+#if 0
 	if (setsockopt(listensock, 0, LOCAL_CREDS, &i, sizeof(i)) == -1)
 		err(1, "setsockopt");
+#endif
 
 	if (bind(listensock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
 		err(1, "bind");
@@ -183,7 +185,8 @@ main(argc, argv)
 		switch (cmp->cmsg_type) {
 		case SCM_RIGHTS:
 			if (cmp->cmsg_len != sizeof(message.fdcm))
-				errx(1, "bad fd control message length");
+				errx(1, "bad fd control message length %d",
+				    cmp->cmsg_len);
 
 			files = (int *)CMSG_DATA(cmp);
 			break;
@@ -210,7 +213,7 @@ main(argc, argv)
 		for (i = 0; i < 2; i++) {
 			(void) memset(buf, 0, sizeof(buf));
 			if (read(files[i], buf, sizeof(buf)) <= 0)
-				err(1, "read file %d", i + 1);
+				err(1, "read file %d (%d)", i + 1, files[i]);
 			printf("%s", buf);
 		}
 	}
