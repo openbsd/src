@@ -32,12 +32,6 @@
 #include "pathname.h"
 #include "file_media.h"
 
-#ifndef __linux__
-#include "SCSI_media.h"
-#include "ATA_media.h"
-#endif
-
-
 /*
  * Defines
  */
