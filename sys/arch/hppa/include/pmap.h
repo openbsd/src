@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.23 2002/09/12 12:50:47 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.24 2002/10/17 02:21:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -59,14 +59,6 @@ typedef struct pmap *pmap_t;
 #define KERNEL_ACCESS_ID 1
 #define KERNEL_TEXT_PROT (TLB_AR_KRX | (KERNEL_ACCESS_ID << 1))
 #define KERNEL_DATA_PROT (TLB_AR_KRW | (KERNEL_ACCESS_ID << 1))
-
-struct pv_entry;
-
-struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
-	pt_entry_t	pvh_attrs;	/* to preserve ref/mod */
-};
 
 struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pv_entry	*pv_next;
