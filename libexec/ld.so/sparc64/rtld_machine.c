@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.6 2001/09/26 10:45:02 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.7 2001/09/26 14:57:56 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -223,7 +223,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	long	i;
 	long	numrela;
 	long	fails = 0;
-	Elf_Addr loff, mask;
+	Elf_Addr loff;
 	Elf_RelA *relas;
 	load_list_t *llist;
 
@@ -248,26 +248,25 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	}
 
 	for (i = 0; i < numrela; i++, relas++) {
-		Elf_Addr *where, value, ooff;
-		long type;
+		Elf_Addr *where, value, ooff, mask;
+		Elf_Word type;
 		const Elf_Sym *sym, *this;
 		const char *symn;
 
-		where = (Elf64_Addr *)(relas->r_offset + loff);
-
 		type = ELF_R_TYPE(relas->r_info);
-		value = relas->r_addend;
 
 		if (type == R_TYPE(NONE))
 			continue;
 
-		if (type == R_TYPE(RELATIVE)) {
-			*where = (Elf_Addr)(loff + value);
-			continue;
-		}
-
 		if (type == R_TYPE(JMP_SLOT) && rel != DT_JMPREL)
 			continue;
+
+		where = (Elf_Addr *)(relas->r_offset + loff);
+
+		if (RELOC_USE_ADDEND(type))
+			value = relas->r_addend;
+		else
+			value = 0;
 
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 			sym = object->dyn.symtab;
@@ -288,8 +287,6 @@ resolve_failed:
 		}
 
 		if (type == R_TYPE(JMP_SLOT)) {
-			if (relas->r_addend)
-				value -= relas->r_addend;
 			_dl_reloc_plt((Elf_Word *)where, value, relas);
 			continue;
 		}
@@ -319,6 +316,10 @@ resolve_failed:
 		if (RELOC_BASE_RELATIVE(type)) {
 			value += loff;
 		}
+
+		mask = RELOC_VALUE_BITMASK(type);
+		value >>= RELOC_VALUE_RIGHTSHIFT(type);
+		value &= mask;
 
 		if (RELOC_UNALIGNED(type)) {
 			/* Handle unaligned relocations. */
