@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.27 2004/10/31 08:29:53 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.28 2004/10/31 09:16:22 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1453,13 +1453,24 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 void
 ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 {
-	/* Halt while we are messing. */
-	sqh->qh.qh_qtd.qtd_status |= htole32(EHCI_QTD_HALTED);
+	int i;
+	u_int32_t status;
+
+	/* Save toggle bit and ping status. */
+	status = sqh->qh.qh_qtd.qtd_status &
+	    htole32(EHCI_QTD_TOGGLE_MASK |
+		EHCI_QTD_SET_STATUS(EHCI_QTD_PINGSTATE));
+	/* Set HALTED to make gw leave it alone */
+	sqh->qh.qh_qtd.qtd_status =
+	    htole32(EHCI_QTD_SET_STATUS(EHCI_QTD_HALTED));
 	sqh->qh.qh_curqtd = 0;
 	sqh->qh.qh_qtd.qtd_next = htole32(sqtd->physaddr);
+	sqh->qh.qh_qtd.qtd_altnext = 0;
+	for (i = 0; i < EHCI_QTD_NBUFFERS; i++ )
+		sqh->qh.qh_qtd.qtd_buffer[i] = 0;
 	sqh->sqtd = sqtd;
-	/* Clear halt */
-	sqh->qh.qh_qtd.qtd_status &= htole32(~EHCI_QTD_HALTED);
+	/* Set !HALTED && !ACTIVE to start execution, preserve some fields */
+	sqh->qh.qh_qtd.qtd_status = status;
 }
 
 /*
