@@ -2108,6 +2108,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/zlib.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/sha2.ph
 ./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/i386-openbsd
 ./usr/mdec/biosboot

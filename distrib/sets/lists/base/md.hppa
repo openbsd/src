@@ -545,6 +545,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/crypto/rmd160.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/crypto/sha1.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/crypto/sha2.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/crypto/sk.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/crypto/skipjack.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/crypto/spr.ph
