@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.3 2001/01/30 19:51:43 aaron Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.4 2001/02/18 15:18:49 aaron Exp $ */
 /* $NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $ */
 
 /*
@@ -326,6 +326,7 @@ wsmouse_input(wsmousedev, btns, x, y, z, flags)
 	 * of changes or out of room.  As events get delivered,
 	 * mark them `unchanged'.
 	 */
+	ub = sc->sc_ub;
 	any = 0;
 	get = evar->get;
 	put = evar->put;
@@ -413,7 +414,6 @@ wsmouse_input(wsmousedev, btns, x, y, z, flags)
 	}
 
 	mb = sc->sc_mb;
-	ub = sc->sc_ub;
 	while ((d = mb ^ ub) != 0) {
 		/*
 		 * Mouse button change.  Find the first change and drop
