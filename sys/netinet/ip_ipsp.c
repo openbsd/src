@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.61 1999/12/25 07:09:42 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.62 1999/12/27 03:05:52 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1334,6 +1334,10 @@ ipsp_kern(int off, char **bufp, int len)
 	      if (tdb->tdb_authalgxform)
 		l += sprintf(buffer + l, "\t\tAuthentication = <%s>\n",
 			     tdb->tdb_authalgxform->name);
+
+	      if (tdb->tdb_interface)
+		l += sprintf(buffer + l, "\tAssociated interface = <%s>\n",
+			     ((struct ifnet *) tdb->tdb_interface)->if_xname);
 
 	      if (tdb->tdb_bind_out)
 		l += sprintf(buffer + l,
