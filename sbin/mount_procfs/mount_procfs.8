@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_procfs.8,v 1.21 2003/06/03 13:16:08 jmc Exp $
+.\"	$OpenBSD: mount_procfs.8,v 1.22 2003/12/08 11:30:28 jmc Exp $
 .\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -82,6 +82,8 @@ references the current process.
 .Pp
 Each directory contains several files.
 .Bl -tag -width status
+.It Pa cmdline
+Process command line parameters, separated by NULs.
 .It Pa ctl
 A write-only file which supports a variety
 of control operations.
@@ -122,13 +124,19 @@ in which case that signal is delivered to the process
 A reference to the vnode from which the process text was read.
 This can be used to gain access to the process's symbol table,
 or to start another copy of the process.
+.It Pa fpregs
+The floating point registers as defined by
+.Dv "struct fpregs"
+in
+.Aq Pa machine/reg.h .
+.Pa fpregs
+is only implemented on machines which have distinct general
+purpose and floating point register sets.
 .It Pa mem
 The complete virtual memory image of the process.
 Only those address which exist in the process can be accessed.
 Reads and writes to this file modify the process.
 Writes to the text segment remain private to the process.
-.It Pa cmdline
-Process command line parameters, separated by NULs.
 .It Pa note
 Not implemented.
 .It Pa notepg
@@ -141,14 +149,6 @@ defined in
 .Aq Pa machine/reg.h .
 .Pa regs
 can only be written when the process is stopped.
-.It Pa fpregs
-The floating point registers as defined by
-.Dv "struct fpregs"
-in
-.Aq Pa machine/reg.h .
-.Pa fpregs
-is only implemented on machines which have distinct general
-purpose and floating point register sets.
 .It Pa status
 The process status.
 This file is read-only and returns a single line containing
@@ -227,13 +227,14 @@ The block size of the filesystem is the system page size.
 .Bl -tag -width /proc/curproc -compact
 .It Pa /proc/#
 .It Pa /proc/curproc
+.It Pa /proc/curproc/cmdline
 .It Pa /proc/curproc/ctl
 .It Pa /proc/curproc/file
+.It Pa /proc/curproc/fpregs
 .It Pa /proc/curproc/mem
 .It Pa /proc/curproc/note
 .It Pa /proc/curproc/notepg
 .It Pa /proc/curproc/regs
-.It Pa /proc/curproc/fpregs
 .It Pa /proc/curproc/status
 .El
 .Sh SEE ALSO
