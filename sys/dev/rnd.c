@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.24 1997/06/17 19:42:01 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.25 1997/06/18 05:09:09 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -296,9 +296,10 @@ struct timer_rand_state {
 };
 
 struct arc4_stream {
-	u_char	i;
-	u_char	j;
-	u_char	s[256];
+	u_int8_t i;
+	u_int8_t j;
+	u_int8_t s[256];
+	int	cnt;
 };
 
 struct rand_event {
@@ -317,7 +318,7 @@ struct rand_event {
 struct rndstats rndstats;
 static struct random_bucket random_state;
 static int arc4random_uninitialized = 2;
-static struct arc4_stream arc4random_state;
+static struct arc4_stream arc4_state;
 static struct timer_rand_state mouse_timer_state;
 static struct timer_rand_state extract_timer_state;
 static struct timer_rand_state disk_timer_state;
@@ -337,10 +338,10 @@ static struct rand_event *event_free;
 static __inline void add_entropy_word __P((const u_int32_t));
 static void enqueue_randomness __P((register struct timer_rand_state*, u_int));
 void dequeue_randomness __P((void *));
-static __inline int extract_entropy __P((register char *, int));
-void	arc4_init __P((struct arc4_stream *, u_char *, int));
+static __inline int extract_entropy __P((register u_int8_t *, int));
+void	arc4_init __P((u_int8_t *, int));
 static __inline void arc4_stir __P((void));
-static __inline u_char arc4_getbyte __P((register struct arc4_stream *));
+static __inline u_int8_t arc4_getbyte __P((void));
 
 /* Arcfour random stream generator.  This code is derived from section
  * 17.1 of Applied Cryptography, second edition, which describes a
@@ -361,34 +362,35 @@ static __inline u_char arc4_getbyte __P((register struct arc4_stream *));
  */
 
 void
-arc4_init (struct arc4_stream *as, u_char *data, int len)
+arc4_init (register u_int8_t *data, int len)
 {
-	int n;
-	u_char si;
+	register u_int8_t si;
+	register int n;
 
-	as->i--;
+	arc4_state.i--;
 	for (n = 0; n < 256; n++) {
-		as->i = (as->i + 1) & 0xff;
-		si = as->s[as->i];
-		as->j = (as->j + si + data[n % len]) & 0xff;
-		as->s[as->i] = as->s[as->j];
-		as->s[as->j] = si;
+		arc4_state.i = (arc4_state.i + 1) & 0xff;
+		si = arc4_state.s[arc4_state.i];
+		arc4_state.j = (arc4_state.j + si + data[n % len]) & 0xff;
+		arc4_state.s[arc4_state.i] = arc4_state.s[arc4_state.j];
+		arc4_state.s[arc4_state.j] = si;
 	}
+	arc4_state.cnt = 0;
 }
 
-static __inline u_char
-arc4_getbyte (register struct arc4_stream *as)
+static __inline u_int8_t
+arc4_getbyte (void)
 {
-	register u_char si, sj;
+	register u_int8_t si, sj;
 
 	rndstats.arc4_reads++;
-	as->i = (as->i + 1) & 0xff;
-	si = as->s[as->i];
-	as->j = (as->j + si) & 0xff;
-	sj = as->s[as->j];
-	as->s[as->i] = sj;
-	as->s[as->j] = si;
-	return (as->s[(si + sj) & 0xff]);
+	arc4_state.i = (arc4_state.i + 1) & 0xff;
+	si = arc4_state.s[arc4_state.i];
+	arc4_state.j = (arc4_state.j + si) & 0xff;
+	sj = arc4_state.s[arc4_state.j];
+	arc4_state.s[arc4_state.i] = sj;
+	arc4_state.s[arc4_state.j] = si;
+	return (arc4_state.s[(si + sj) & 0xff]);
 }
 
 static __inline void
@@ -407,10 +409,19 @@ u_int32_t
 arc4random (void)
 {
 	arc4maybeinit ();
-	return ((arc4_getbyte (&arc4random_state) << 24)
-		| (arc4_getbyte (&arc4random_state) << 16)
-		| (arc4_getbyte (&arc4random_state) << 8)
-		| arc4_getbyte (&arc4random_state));
+	return ((arc4_getbyte () << 24) | (arc4_getbyte () << 16)
+		| (arc4_getbyte () << 8) | arc4_getbyte ());
+}
+
+static __inline void
+arc4_stir (void)
+{
+	u_int8_t buf[256];
+
+	microtime ((struct timeval *) buf);
+	get_random_bytes (buf + sizeof (struct timeval),
+			  sizeof (buf) - sizeof (struct timeval));
+	arc4_init (buf, sizeof (buf));
 }
 
 void
@@ -438,9 +449,9 @@ randomattach(void)
 	for (rep = event_space; rep < &event_space[QEVLEN]; rep++)
 		rep->re_next = rep + 1;
 	for (i = 0; i < 256; i++)
-		arc4random_state.s[i] = i;
+		arc4_state.s[i] = i;
 	microtime (&tv);
-	arc4_init (&arc4random_state, (u_char *) &tv, sizeof (tv));
+	arc4_init ((u_int8_t *) &tv, sizeof (tv));
 	rnd_attached = 1;
 }
 
@@ -615,7 +626,8 @@ dequeue_randomness(v)
 		rnd_enqueued--;
 
 		/* Prevent overflow */
-		if ((random_state.entropy_count + nbits) > POOLBITS)
+		if ((random_state.entropy_count + nbits) > POOLBITS &&
+		    arc4_state.cnt > 256)
 			arc4_stir();
 
 		add_entropy_word(val);
@@ -707,7 +719,7 @@ add_tty_randomness(c)
  */
 static __inline int
 extract_entropy(buf, nbytes)
-	register char	*buf;
+	register u_int8_t *buf;
 	int	nbytes;
 {
 	int	ret, i;
@@ -778,7 +790,7 @@ get_random_bytes(buf, nbytes)
 	void	*buf;
 	size_t	nbytes;
 {
-	extract_entropy((char *) buf, nbytes);
+	extract_entropy((u_int8_t *) buf, nbytes);
 	rndstats.rnd_used += nbytes * 8;
 }
 
@@ -845,11 +857,11 @@ randomread(dev, uio, ioflag)
 			break;
 		case RND_ARND:
 		    {
-			u_char *cp = (u_char *) buf;
-			u_char *end = cp + n;
+			u_int8_t *cp = (u_int8_t *) buf;
+			u_int8_t *end = cp + n;
 			arc4maybeinit ();
 			while (cp < end)
-				*cp++ = arc4_getbyte (&arc4random_state);
+				*cp++ = arc4_getbyte ();
 			break;
 		    }
 		}
@@ -875,17 +887,6 @@ randomselect(dev, rw, p)
 	return 0;
 }
 
-static __inline void
-arc4_stir (void)
-{
-	u_char buf[256];
-
-	microtime ((struct timeval *) buf);
-	get_random_bytes (buf + sizeof (struct timeval),
-			  sizeof (buf) - sizeof (struct timeval));
-	arc4_init (&arc4random_state, buf, sizeof (buf));
-}
-
 int
 randomwrite(dev, uio, flags)
 	dev_t	dev;
@@ -908,7 +909,7 @@ randomwrite(dev, uio, flags)
 		if (!ret) {
 			int	i;
 			while (n % sizeof(u_int32_t))
-				((u_char *) buf)[n++] = 0;
+				((u_int8_t *) buf)[n++] = 0;
 			n >>= 2;
 			for (i = 0; i < n; i++)
 				add_entropy_word(buf[i]);
