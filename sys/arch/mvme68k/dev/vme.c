@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.18 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.19 2004/01/14 20:52:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -307,11 +307,6 @@ vmescan(parent, child, args, bustype)
 	struct cfdata *cf = child;
 	struct vmesoftc *sc = (struct vmesoftc *)parent;
 	struct confargs oca;
-
-	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-		printf(" indirect devices not supported\n");
-		return 0;
-	}
 
 	bzero(&oca, sizeof oca);
 	oca.ca_bustype = bustype;

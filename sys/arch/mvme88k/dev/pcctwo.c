@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcctwo.c,v 1.20 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.21 2004/01/14 20:52:52 miod Exp $ */
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.
@@ -130,11 +130,6 @@ pcctwo_scan(parent, child, args)
 	struct cfdata *cf = child;
 	struct pcctwosoftc *sc = (struct pcctwosoftc *)parent;
 	struct confargs oca;
-
-	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-                printf(" indirect devices not supported\n");
-                return 0;
-        }
 
 	bzero(&oca, sizeof oca);
 	oca.ca_offset = cf->cf_loc[0];

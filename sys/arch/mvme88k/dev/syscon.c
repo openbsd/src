@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.14 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.15 2004/01/14 20:52:52 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -148,11 +148,6 @@ syscon_scan(parent, child, args)
 	struct cfdata *cf = child;
 	struct sysconsoftc *sc = (struct sysconsoftc *)parent;
 	struct confargs oca;
-
-	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-		printf(" indirect devices not supported\n");
-		return 0;
-	}
 
 	bzero(&oca, sizeof oca);
 	oca.ca_offset = cf->cf_loc[0];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.13 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: mc.c,v 1.14 2004/01/14 20:52:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -106,11 +106,6 @@ mc_scan(parent, child, args)
 	struct cfdata *cf = child;
 	struct mcsoftc *sc = (struct mcsoftc *)parent;
 	struct confargs oca;
-
-	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-                printf(" indirect devices not supported\n");
-                return 0;
-        }
 
 	bzero(&oca, sizeof oca);
 	oca.ca_offset = cf->cf_loc[0];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.12 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: ipic.c,v 1.13 2004/01/14 20:52:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -100,14 +100,6 @@ ipicscan(parent, child, args)
 	int slot, n = 0;
 	caddr_t ipv, ipp;
 	struct ipid *ipid;
-
-#if 0
-/* XXX all these are indirect!! how to fix? */
-	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-		printf(" indirect devices not supported\n");
-		return 0;
-	}
-#endif
 
 	/* XXX can we determine IPIC_IPSPACE automatically? */
 	for (slot = 0; slot < sc->sc_nip; slot++) {

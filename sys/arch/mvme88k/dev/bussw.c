@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.10 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.11 2004/01/14 20:52:52 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -133,11 +133,6 @@ bussw_scan(parent, child, args)
 	struct cfdata *cf = child;
 	struct bussw_softc *sc = (struct bussw_softc *)parent;
 	struct confargs oca;
-
-	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-		printf(" indirect devices not supported\n");
-		return 0;
-	}
 
 	bzero(&oca, sizeof oca);
 	oca.ca_offset = cf->cf_loc[0];
