@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.22 1997/04/19 18:40:02 pefo Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.23 1997/06/05 10:15:24 deraadt Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -407,6 +407,7 @@ main(framep)
 	microtime(&rtv);
 	srandom((u_long)(rtv.tv_sec ^ rtv.tv_usec));
 
+	randompid = 1;
 	/* The scheduler is an infinite loop. */
 	scheduler();
 	/* NOTREACHED */

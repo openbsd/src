@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.7 1997/02/18 00:11:47 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.8 1997/06/05 10:15:26 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -54,12 +54,14 @@
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/ktrace.h>
+#include <dev/rndvar.h>
 
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
 
 int	nprocs = 1;		/* process 0 */
+int	randompid;		/* when set to 1, pid's go random */
 pid_t	lastpid;
 
 #define	ISFORK	0
@@ -155,11 +157,9 @@ fork1(p1, forktype, rforkflags, retval)
 	/* Allocate new proc. */
 	MALLOC(newproc, struct proc *, sizeof(struct proc), M_PROC, M_WAITOK);
 
-	/*
-	 * Find an unused process ID.  We remember a range of unused IDs
-	 * ready to use (from lastpid+1 through pidchecked-1).
-	 */
 	lastpid++;
+	if (randompid)
+		lastpid = PID_MAX;
 retry:
 	/*
 	 * If the process ID prototype has wrapped around,
@@ -167,7 +167,7 @@ retry:
 	 * tend to include daemons that don't exit.
 	 */
 	if (lastpid >= PID_MAX) {
-		lastpid = 100;
+		lastpid = arc4random() % PID_MAX;
 		pidchecked = 0;
 	}
 	if (lastpid >= pidchecked) {
