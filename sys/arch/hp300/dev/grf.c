@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.16 1995/11/28 08:14:30 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.17 1996/02/24 00:55:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,11 +59,12 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
+
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfreg.h>
-
-#include <machine/cpu.h>
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>
@@ -78,12 +79,20 @@ extern struct emul emul_hpux;
 #include <miscfs/specfs/specdev.h>
 
 #include "ite.h"
-#if NITE == 0
+#if NITE > 0
+#include <hp300/dev/itevar.h>
+#else
 #define	iteon(u,f)
 #define	iteoff(u,f)
-#endif
+#endif /* NITE > 0 */
 
 struct	grf_softc grf_softc[NGRF];
+
+/*
+ * Frambuffer state information, statically allocated for benefit
+ * of the console.
+ */
+struct	grf_data grf_cn;
 
 #ifdef DEBUG
 int grfdebug = 0;
@@ -94,23 +103,32 @@ int grfdebug = 0;
 #endif
 
 /*ARGSUSED*/
-grfopen(dev, flags)
+grfopen(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
 	int unit = GRFUNIT(dev);
-	register struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *sc;
+	struct grf_data *gp;
 	int error = 0;
 
-	if (unit >= NGRF || (gp->g_flags & GF_ALIVE) == 0)
+	if (unit >= NGRF)
 		return(ENXIO);
+
+	sc = &grf_softc[unit];
+	gp = sc->sc_data;
+
+	if ((gp->g_flags & GF_ALIVE) == 0)
+		return (ENXIO);
+
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
 #ifdef COMPAT_HPUX
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
-	if (curproc->p_emul == &emul_hpux)
+	if (p->p_emul == &emul_hpux)
 		if (gp->g_flags & GF_BSDOPEN)
 			return(EBUSY);
 		else
@@ -134,11 +152,23 @@ grfopen(dev, flags)
 }
 
 /*ARGSUSED*/
-grfclose(dev, flags)
+grfclose(dev, flags, mode, p)
 	dev_t dev;
-	int flags;
+	int flags, mode;
+	struct proc *p;
 {
-	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	int unit = GRFUNIT(dev);
+	struct grf_softc *sc;
+	struct grf_data *gp;
+
+	if (unit >= NGRF)
+		return(ENXIO);
+
+	sc = &grf_softc[unit];
+	gp = sc->sc_data;
+
+	if ((gp->g_flags & GF_ALIVE) == 0)
+		return (ENXIO);
 
 	(void) grfoff(dev);
 #ifdef COMPAT_HPUX
@@ -155,8 +185,18 @@ grfioctl(dev, cmd, data, flag, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
-	int error;
+	struct grf_softc *sc;
+	struct grf_data *gp;
+	int error, unit = GRFUNIT(dev);
+
+	if (unit >= NGRF)
+		return(ENXIO);
+
+	sc = &grf_softc[unit];
+	gp = sc->sc_data;
+
+	if ((gp->g_flags & GF_ALIVE) == 0)
+		return (ENXIO);
 
 #ifdef COMPAT_HPUX
 	if (p->p_emul == &emul_hpux)
@@ -211,44 +251,56 @@ grfmmap(dev, off, prot)
 	return(grfaddr(&grf_softc[GRFUNIT(dev)], off));
 }
 
+int
 grfon(dev)
-	dev_t dev;
+	dev_t dev;	/* XXX */
 {
 	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *sc;
+	struct grf_data *gp;
+
+	sc = &grf_softc[unit];
+	gp = sc->sc_data;
 
 	/*
 	 * XXX: iteoff call relies on devices being in same order
 	 * as ITEs and the fact that iteoff only uses the minor part
 	 * of the dev arg.
 	 */
-	iteoff(unit, 3);
+	iteoff(sc->sc_ite->sc_data, 3);
 	return((*gp->g_sw->gd_mode)(gp,
 				    (dev&GRFOVDEV) ? GM_GRFOVON : GM_GRFON,
 				    (caddr_t)0));
 }
 
+int
 grfoff(dev)
-	dev_t dev;
+	dev_t dev;	/* XXX */
 {
 	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *sc;
+	struct grf_data *gp;
 	int error;
+
+	sc = &grf_softc[unit];
+	gp = sc->sc_data;
 
 	(void) grfunmap(dev, (caddr_t)0, curproc);
 	error = (*gp->g_sw->gd_mode)(gp,
 				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
 				     (caddr_t)0);
 	/* XXX: see comment for iteoff above */
-	iteon(unit, 2);
+	(void) iteon(sc->sc_ite->sc_data, 2);
 	return(error);
 }
 
-grfaddr(gp, off)
-	struct grf_softc *gp;
+int
+grfaddr(sc, off)
+	struct grf_softc *sc;
 	register int off;
 {
-	register struct grfinfo *gi = &gp->g_display;
+	struct grf_data *gp= sc->sc_data;
+	struct grfinfo *gi = &gp->g_display;
 
 	/* control registers */
 	if (off >= 0 && off < gi->gd_regsize)
@@ -275,7 +327,8 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 	caddr_t data;
 	struct proc *p;
 {
-	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
+	struct grf_data *gp = sc->sc_data;
 	int error;
 
 	error = 0;
@@ -372,8 +425,9 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 	return(error);
 }
 
+int
 grflock(gp, block)
-	register struct grf_softc *gp;
+	struct grf_data *gp;
 	int block;
 {
 	struct proc *p = curproc;		/* XXX */
@@ -382,8 +436,8 @@ grflock(gp, block)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grflock(%d): dev %x flags %x lockpid %x\n",
-		       p->p_pid, gp-grf_softc, gp->g_flags,
+		printf("grflock(%d): flags %x lockpid %x\n",
+		       p->p_pid, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_pid) {
@@ -426,12 +480,12 @@ grflock(gp, block)
 }
 
 grfunlock(gp)
-	register struct grf_softc *gp;
+	struct grf_data *gp;
 {
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
-		       curproc->p_pid, gp-grf_softc, gp->g_flags,
+		printf("grfunlock(%d): flags %x lockpid %d\n",
+		       curproc->p_pid, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_lockp != curproc)
@@ -465,7 +519,8 @@ grfdevno(dev)
 	dev_t dev;
 {
 	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *sc = &grf_softc[unit];
+	struct grf_data *gp = sc->sc_data;
 	int newdev;
 
 	if (unit >= NGRF || (gp->g_flags&GF_ALIVE) == 0)
@@ -495,7 +550,8 @@ grfmap(dev, addrp, p)
 	caddr_t *addrp;
 	struct proc *p;
 {
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
+	struct grf_data *gp = sc->sc_data;
 	int len, error;
 	struct vnode vn;
 	struct specinfo si;
@@ -527,7 +583,8 @@ grfunmap(dev, addr, p)
 	caddr_t addr;
 	struct proc *p;
 {
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	struct grf_softc *sc = &grf_softc[GRFUNIT(dev)];
+	struct grf_data *gp = sc->sc_data;
 	vm_size_t size;
 	int rv;
 
@@ -578,7 +635,7 @@ iounmmap(dev, addr)
  * slot is available. 
  */
 grffindpid(gp)
-	struct grf_softc *gp;
+	struct grf_data *gp;
 {
 	register short pid, *sp;
 	register int i, limit;
@@ -616,7 +673,7 @@ done:
 }
 
 grfrmpid(gp)
-	struct grf_softc *gp;
+	struct grf_data *gp;
 {
 	register short pid, *sp;
 	register int limit, i;

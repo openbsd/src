@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.2 1995/12/02 18:22:04 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.3 1996/02/14 02:44:40 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, The University of Utah and
@@ -144,6 +144,7 @@ mtattach(hd)
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;
 	sc->sc_flags = MTF_EXISTS;
+	sc->sc_dq.dq_softc = sc;
 	sc->sc_dq.dq_ctlr = hpibno;
 	sc->sc_dq.dq_unit = unit;
 	sc->sc_dq.dq_slave = slave;
@@ -453,13 +454,14 @@ mtustart(unit)
         { hpib_softc[unit].sc_flags &= ~HPIBF_PPOLL; }
 
 void
-spl_mtintr(unit)
-	int unit;
+spl_mtintr(arg)
+	void *arg;
 {
+	struct mt_softc *sc = arg;
 	int s = splbio();
 
-	hpibppclear(mt_softc[unit].sc_hpibno);
-	mtintr(unit);
+	hpibppclear(sc->sc_hpibno);
+	mtintr(sc);
 	(void) splx(s);
 }
 
@@ -608,7 +610,7 @@ mtstart(unit)
 				log(LOG_ERR, "mt%d can't reset\n", unit);
 				goto fatalerror;
 			}
-			timeout(spl_mtintr, (void *)unit, 4 * hz);
+			timeout(spl_mtintr, (void *)sc, 4 * hz);
 			hpibawait(sc->sc_hpibno, sc->sc_slave);
 			return;
 
@@ -695,12 +697,14 @@ mtgo(unit)
 	       bp->b_un.b_addr, bp->b_bcount, rw, rw != 0);
 }
 
-mtintr(unit)
-	register int unit;
+int
+mtintr(arg)
+	void *arg;
 {
-	register struct mt_softc *sc = &mt_softc[unit];
+	register struct mt_softc *sc = arg;
 	register struct buf *bp, *dp;
 	register int i;
+	int unit = sc->sc_hd->hp_unit;
 	u_char	cmdbuf[4];
 
 	bp = mttab[unit].b_actf;
@@ -744,7 +748,7 @@ mtintr(unit)
 		 * to the request for DSJ.  It's probably just "busy" figuring
 		 * it out and will know in a little bit...
 		 */
-		timeout(spl_mtintr, (void *)unit, hz >> 5);
+		timeout(spl_mtintr, (void *)sc, hz >> 5);
 		return;
 
 	    default:
@@ -761,7 +765,7 @@ mtintr(unit)
 			sc->sc_stat3, sc->sc_stat5);
 
 		if ((bp->b_flags & B_CMD) && bp->b_cmd == MTRESET)
-			untimeout(spl_mtintr, (void *)unit);
+			untimeout(spl_mtintr, (void *)sc);
 		if (sc->sc_stat3 & SR3_POWERUP)
 			sc->sc_flags &= MTF_OPEN | MTF_EXISTS;
 		goto error;
@@ -813,7 +817,7 @@ mtintr(unit)
 				sc->sc_flags |= MTF_HITBOF;
 		}
 		if (bp->b_cmd == MTRESET) {
-			untimeout(spl_mtintr, (void *)unit);
+			untimeout(spl_mtintr, (void *)sc);
 			sc->sc_flags |= MTF_ALIVE;
 		}
 	} else {

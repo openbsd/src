@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.3 1995/12/02 18:21:49 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.4 1996/02/14 02:43:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -118,6 +118,7 @@ acattach(hd)
 
 	(void)acident(sc, hd, 1);	/* XXX Ick. */
 
+	sc->sc_dq.dq_softc = sc;
 	sc->sc_dq.dq_unit = unit;
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_slave = hd->hp_slave;
@@ -422,13 +423,15 @@ acgo(unit)
 	}
 }
 
-acintr(unit, stat)
-	int unit, stat;
+acintr(arg, stat)
+	void *arg;
+	int stat;
 {
-	register struct ac_softc *sc = &ac_softc[unit];
+	register struct ac_softc *sc = arg;
 	register struct buf *bp = sc->sc_bp;
 	u_char sensebuf[78];
 	struct scsi_xsense *sp;
+	int unit = sc->sc_hd->hp_unit;
 
 #ifdef DEBUG
 	if (ac_debug & ACD_FOLLOW)

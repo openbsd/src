@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.13 1995/12/02 18:22:18 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.14 1996/02/14 02:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -250,6 +250,7 @@ stattach(hd)
 
 	(void)stident(sc, hd, 1);	/* XXX Ick. */
 
+	sc->sc_dq.dq_softc = sc;
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_unit = hd->hp_unit;
 	sc->sc_dq.dq_slave = hd->hp_slave;
@@ -988,10 +989,12 @@ stioctl(dev, cmd, data, flag, p)
 	return(0);
 }
 
-stintr(unit, stat)
-	int unit, stat;
+stintr(arg, stat)
+	void *arg;
+	int stat;
 {
-	register struct st_softc *sc = &st_softc[unit];
+	register struct st_softc *sc = arg;
+	int unit = sc->sc_hd->hp_unit;
 	register struct st_xsense *xp = &st_xsense[unit];
 	register struct buf *bp = sttab[unit].b_actf;
 	struct hp_device *hp = sc->sc_hd;

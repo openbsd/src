@@ -1,6 +1,7 @@
-/*	$NetBSD: autoconf.c,v 1.14 1995/12/30 18:25:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1996/04/07 18:21:08 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -59,10 +60,15 @@
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 
+#include <dev/cons.h>
+
+#include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
+
 #include <hp300/hp300/isr.h>
+
 #include <hp300/dev/device.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/hilreg.h>
@@ -74,7 +80,6 @@
  */
 int	cold;		    /* if 1, still working on cold-start */
 int	cpuspeed = 0;	    /* relative cpu speed -- can be patched */	
-struct	isr isrqueue[NISR];
 struct	hp_hw sc_table[MAXCTLRS];
 
 /* XXX must be allocated statically because of early console init */
@@ -94,6 +99,12 @@ configure()
 {
 	register struct hp_hw *hw;
 	int found;
+
+	/*
+	 * Find out what hardware is attached to the machine.
+	 * XXX goes away with new config.
+	 */
+	find_devs();
 
 	/*
 	 * XXX: these should be consolidated into some kind of table
@@ -647,6 +658,107 @@ same_hw_device(hw, hd)
 char notmappedmsg[] = "WARNING: no space to map IO card, ignored\n";
 
 /*
+ * Scan all select codes, passing the corresponding VA to (*func)().
+ * (*func)() is a driver-specific routine that looks for the console
+ * hardware.
+ */
+void
+console_scan(func, arg)
+	int (*func) __P((int, caddr_t, void *));
+	void *arg;
+{
+	int size, scode, sctop;
+	caddr_t pa, va;
+
+	/*
+	 * Scan all select codes.  Check each location for some
+	 * hardware.  If there's something there, call (*func)().
+	 */
+	sctop = (machineid == HP_320) ? 32 : 256;
+	for (scode = 0; scode < sctop; ++scode) {
+		/*
+		 * Abort mission if console has been forced.
+		 */
+		if (conforced)
+			return;
+
+		/*
+		 * Skip over the select code hole and
+		 * the internal HP-IB controller.
+		 */
+		if (((scode >= 32) && (scode < 132)) ||
+		    ((scode == 7) && internalhpib))
+			continue;
+
+		/* Map current PA. */
+		pa = sctopa(scode);
+		va = iomap(pa, NBPG);
+		if (va == 0)
+			continue;
+
+		/* Check to see if hardware exists. */
+		if (badaddr(va)) {
+			iounmap(va, NBPG);
+			continue;
+		}
+
+		/*
+		 * Hardware present, call callback.  Driver returns
+		 * size of region to map if console probe successful
+		 * and worthwhile.
+		 */
+		size = (*func)(scode, va, arg);
+		iounmap(va, NBPG);
+		if (size) {
+			/* Free last mapping. */
+			if (convasize)
+				iounmap(conaddr, convasize);
+			convasize = 0;
+
+			/* Remap to correct size. */
+			va = iomap(pa, size);
+			if (va == 0)
+				continue;
+
+			/* Save this state for next time. */
+			conscode = scode;
+			conaddr = va;
+			convasize = size;
+		}
+	}
+}
+
+/*
+ * Special version of cninit().  Actually, crippled somewhat.
+ * This version lets the drivers assign cn_tab.
+ */
+void
+hp300_cninit()
+{
+	struct consdev *cp;
+	extern struct consdev constab[];
+
+	cn_tab = NULL;
+
+	/*
+	 * Call all of the console probe functions.
+	 */
+	for (cp = constab; cp->cn_probe; cp++)
+		(*cp->cn_probe)(cp);
+
+	/*
+	 * No console, we can handle it.
+	 */
+	if (cn_tab == NULL)
+		return;
+
+	/*
+	 * Turn on the console.
+	 */
+	(*cn_tab->cn_init)(cn_tab);
+}
+
+/*
  * Scan the IO space looking for devices.
  */
 find_devs()
@@ -654,14 +766,9 @@ find_devs()
 	short sc;
 	u_char *id_reg;
 	register caddr_t addr;
-	register struct hp_hw *hw;
+	register struct hp_hw *hw = sc_table;
 	int didmap, sctop;
 
-	/*
-	 * Initialize IO resource map for iomap().
-	 */
-	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
-	hw = sc_table;
 	/*
 	 * Probe all select codes + internal display addr
 	 */
@@ -680,6 +787,14 @@ find_devs()
 		} else if (sc == 7 && internalhpib) {
 			hw->hw_pa = (caddr_t) 0x478000;
 			addr = internalhpib = (caddr_t) IIOV(hw->hw_pa);
+			didmap = 0;
+		} else if (sc == conscode) {
+			/*
+			 * If this is the console, it's already been
+			 * mapped, and the address is known.
+			 */
+			hw->hw_pa = sctopa(sc);
+			addr = conaddr;
 			didmap = 0;
 		} else {
 			hw->hw_pa = sctopa(sc);
@@ -920,6 +1035,7 @@ iomap(pa, size)
 	return(kva);
 }
 
+void
 iounmap(kva, size)
 	caddr_t kva;
 	int size;
@@ -935,27 +1051,6 @@ iounmap(kva, size)
 	physunaccess(kva, size);
 	ix = btoc(kva - extiobase) + 1;
 	rmfree(extiomap, btoc(size), ix);
-}
-
-isrinit()
-{
-	register int i;
-
-	for (i = 0; i < NISR; i++)
-		isrqueue[i].isr_forw = isrqueue[i].isr_back = &isrqueue[i];
-}
-
-void
-isrlink(isr)
-	register struct isr *isr;
-{
-	int i = ISRIPL(isr->isr_ipl);
-
-	if (i < 0 || i >= NISR) {
-		printf("bad IPL %d\n", i);
-		panic("configure");
-	}
-	insque(isr, isrqueue[i].isr_back);
 }
 
 /*
@@ -1095,3 +1190,11 @@ setroot()
 		dumpdev = swdevt[0].sw_dev;
 #endif
 }
+
+#ifndef NEWCONFIG	/* XXX */
+void
+config_init()
+{
+	/* Stub, so kernel will link. */
+}
+#endif

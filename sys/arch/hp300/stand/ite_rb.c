@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rb.c,v 1.7 1994/10/26 07:27:37 cgd Exp $	*/
+/*	$NetBSD: ite_rb.c,v 1.8 1996/03/03 04:23:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 #ifdef ITECONSOLE
 
 #include <sys/param.h>
-#include <hp300/dev/itevar.h>
+#include <hp300/stand/itevar.h>
 #include <hp300/dev/itereg.h>
 
 #include <hp300/dev/grf_rbreg.h>
@@ -55,8 +55,12 @@
 #define REGBASE		((struct rboxfb *)(ip->regbase))
 #define WINDOWMOVER	rbox_windowmove
 
+void	rbox_windowmove __P((struct ite_data *, int, int, int, int,
+	    int, int, int));
+
+void
 rbox_init(ip)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 {
 	int i;
 	
@@ -125,8 +129,9 @@ rbox_init(ip)
 			    ip->ftwidth, RR_COPYINVERTED);
 }
 
+void
 rbox_putc(ip, c, dy, dx, mode)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
         register int dy, dx;
 	int c, mode;
 {
@@ -135,8 +140,9 @@ rbox_putc(ip, c, dy, dx, mode)
 			ip->ftheight, ip->ftwidth, RR_COPY);
 }
 
+void
 rbox_cursor(ip, flag)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
         register int flag;
 {
 	if (flag == DRAW_CURSOR)
@@ -149,8 +155,9 @@ rbox_cursor(ip, flag)
 		erase_cursor(ip)
 }
 
+void
 rbox_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 	register int sy, sx, h, w;
 {
 	rbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
@@ -159,8 +166,9 @@ rbox_clear(ip, sy, sx, h, w)
 			RR_CLEAR);
 }
 
+void
 rbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
+        register struct ite_data *ip;
         register int sy, count;
         int dir, sx;
 {
@@ -175,8 +183,9 @@ rbox_scroll(ip, sy, sx, count, dir)
 			ip->cols * ip->ftwidth, RR_COPY);
 }
 
+void
 rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
 	register struct rboxfb *rp = REGBASE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.6 1995/12/02 02:46:45 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.7 1996/02/14 02:44:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -101,7 +101,7 @@ struct	dma_softc {
 #define DMAF_NOINTR	0x04
 
 struct	devqueue dmachan[NDMACHAN + 1];
-int	dmaintr();
+int	dmaintr __P((void *));
 
 #ifdef DEBUG
 int	dmadebug = 0;
@@ -180,6 +180,9 @@ dmainit()
 
 	printf("%s: 98620%c, 2 channels, %d bit\n", sc->sc_xname,
 	       rev, (rev == 'B') ? 16 : 32);
+
+	/* Establish the interrupt handler */
+	isrlink(dmaintr, sc, DMAINTLVL, ISRPRI_BIO);
 }
 
 int
@@ -442,9 +445,10 @@ dmastop(unit)
 }
 
 int
-dmaintr()
+dmaintr(arg)
+	void *arg;
 {
-	struct dma_softc *sc = &Dma_softc;
+	struct dma_softc *sc = arg;
 	register struct dma_channel *dc;
 	register int i, stat;
 	int found = 0;

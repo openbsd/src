@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.1 1996/01/06 12:44:06 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.2 1996/02/14 02:56:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.

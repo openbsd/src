@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.8 1995/10/04 06:54:44 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.9 1996/02/26 21:51:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,13 +56,15 @@
 
 struct dcadevice *dcacnaddr = 0;
 
+#define DCACONSCODE	9	/* XXX */
+
 void
 dcaprobe(cp)
 	struct consdev *cp;
 {
 	register struct dcadevice *dca;
 
-	dcacnaddr = (struct dcadevice *) sctoaddr(CONSCODE);
+	dcacnaddr = (struct dcadevice *) sctoaddr(DCACONSCODE);
 	if (badaddr((char *)dcacnaddr)) {
 		cp->cn_pri = CN_DEAD;
 		return;
@@ -86,7 +88,7 @@ dcaprobe(cp)
 	}
 
 #endif
-	curcons_scode = CONSCODE;
+	curcons_scode = DCACONSCODE;
 }
 
 void

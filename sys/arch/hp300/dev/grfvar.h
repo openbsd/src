@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.6 1995/03/28 18:16:06 jtc Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.7 1996/02/24 00:55:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,19 +49,8 @@ struct	grf_lockpage {
 };
 #define gl_lockslot gl_locks[0]
 
-/*
- * Static configuration info for display types
- */
-struct	grfsw {
-	int	gd_hwid;	/* id returned by hardware */
-	int	gd_swid;	/* id to be returned by software */
-	char	*gd_desc;	/* description printed at config time */
-	int	(*gd_init)();	/* boot time init routine */
-	int	(*gd_mode)();	/* misc function routine */
-};
-
 /* per display info */
-struct	grf_softc {
+struct	grf_data {
 	int	g_flags;		/* software flags */
 	struct  grfsw *g_sw;		/* static configuration info */
 	caddr_t	g_regkva;		/* KVA of registers */
@@ -72,6 +61,24 @@ struct	grf_softc {
 	short	*g_pid;			/* array of pids with device open */
 	int	g_lockpslot;		/* g_pid entry of g_lockp */
 	caddr_t	g_data;			/* device dependent data */
+};
+
+/*
+ * Static configuration info for display types
+ */
+struct	grfsw {
+	int	gd_hwid;	/* id returned by hardware */
+	int	gd_swid;	/* id to be returned by software */
+	char	*gd_desc;	/* description printed at config time */
+				/* boot time init routine */
+	int	(*gd_init) __P((struct grf_data *, int, caddr_t));
+				/* misc function routine */
+	int	(*gd_mode) __P((struct grf_data *, int, caddr_t));
+};
+
+struct	grf_softc {
+	struct	grf_data *sc_data;	/* display state information */
+	struct	ite_softc *sc_ite;	/* pointer to ite; may be NULL */
 };
 
 /* flags */
@@ -97,7 +104,8 @@ struct	grf_softc {
 #define GRFUNIT(d)	((d) & 0x7)
 
 #ifdef _KERNEL
+extern	struct grf_data grf_cn;		/* grf_data for console device */
 extern	struct grf_softc grf_softc[];
-extern	struct grfsw grfsw[];
+extern	struct grfsw *grfsw[];
 extern	int ngrfsw;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.14 1996/01/23 00:28:09 scottr Exp $	*/
+/*	$NetBSD: ct.c,v 1.15 1996/02/14 02:44:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -161,6 +161,7 @@ ctattach(hd)
 	(void)ctident(sc, hd, 1);	/* XXX Ick. */
 
 	ctreset(sc, hd);
+	sc->sc_dq.dq_softc = sc;
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_unit = hd->hp_unit;
 	sc->sc_dq.dq_slave = hd->hp_slave;
@@ -635,12 +636,14 @@ cteof(sc, bp)
 #endif
 }
 
-ctintr(unit)
-	register int unit;
+int
+ctintr(arg)
+	void *arg;
 {
-	register struct ct_softc *sc = &ct_softc[unit];
+	register struct ct_softc *sc = arg;
 	register struct buf *bp, *dp;
 	u_char stat;
+	int unit = sc->sc_hd->hp_unit;
 
 	bp = cttab[unit].b_actf;
 	if (bp == NULL) {

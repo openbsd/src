@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.8 1995/12/02 18:21:56 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.9 1996/02/14 02:44:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -86,7 +86,7 @@ int	fhpibppoll __P((int));
 void	fhpibppwatch __P((void *));
 void	fhpibgo __P((int, int, int, void *, int, int, int));
 void	fhpibdone __P((int));
-int	fhpibintr __P((int));
+int	fhpibintr __P((void *));
 
 /*
  * Our controller ops structure.
@@ -422,7 +422,7 @@ fhpibdmadone(arg)
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(&hs->sc_dq);
 		dq = hs->sc_sq.dq_forw;
-		(dq->dq_driver->d_intr)(dq->dq_unit);
+		(dq->dq_driver->d_intr)(dq->dq_softc);
 	}
 	(void) splx(s);
 }
@@ -471,13 +471,13 @@ fhpibdone(unit)
 }
 
 int
-fhpibintr(unit)
-	register int unit;
+fhpibintr(arg)
+	void *arg;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
+	register struct hpib_softc *hs = arg;
 	register struct fhpibdevice *hd;
 	register struct devqueue *dq;
-	register int stat0;
+	register int stat0, unit = hs->sc_hc->hp_unit;
 
 	hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;
 	stat0 = hd->hpib_ids;
@@ -513,7 +513,7 @@ fhpibintr(unit)
 		hd->hpib_imask = 0;
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(&hs->sc_dq);
-		(dq->dq_driver->d_intr)(dq->dq_unit);
+		(dq->dq_driver->d_intr)(dq->dq_softc);
 	} else if (hs->sc_flags & HPIBF_PPOLL) {
 		stat0 = hd->hpib_intr;
 #ifdef DEBUG
@@ -542,7 +542,7 @@ fhpibintr(unit)
 		}
 #endif
 		hs->sc_flags &= ~HPIBF_PPOLL;
-		(dq->dq_driver->d_intr)(dq->dq_unit);
+		(dq->dq_driver->d_intr)(dq->dq_softc);
 	}
 	return(1);
 }

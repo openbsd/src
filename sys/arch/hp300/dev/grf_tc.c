@@ -1,6 +1,7 @@
-/*	$NetBSD: grf_tc.c,v 1.4 1994/10/26 07:24:04 cgd Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.7 1996/03/03 16:49:04 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,22 +50,77 @@
  * Graphics routines for TOPCAT and CATSEYE frame buffers
  */
 #include <sys/param.h>
+#include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/systm.h>
+ 
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
+  
+#include <dev/cons.h>
 
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/dev/grf_tcreg.h>
 
-#include <machine/cpu.h>
+#include <hp300/dev/itevar.h>
+#include <hp300/dev/itereg.h>
+
+#include "ite.h"
+
+int	tc_init __P((struct grf_data *, int, caddr_t));
+int	tc_mode __P((struct grf_data *, int, caddr_t));
+
+/* Topcat (bobcat) grf switch */
+struct grfsw topcat_grfsw = {
+	GID_TOPCAT, GRFBOBCAT, "topcat", tc_init, tc_mode
+};
+
+/* Lo-res catseye grf switch */
+struct grfsw lrcatseye_grfsw = {
+	GID_LRCATSEYE, GRFCATSEYE, "lo-res catseye", tc_init, tc_mode
+};
+
+/* Hi-res catseye grf switch */
+struct grfsw hrcatseye_grfsw = {
+	GID_HRCCATSEYE, GRFCATSEYE, "hi-res catseye", tc_init, tc_mode
+};
+
+/* Hi-res monochrome catseye grf switch */
+struct grfsw hrmcatseye_grfsw = {
+	GID_HRMCATSEYE, GRFCATSEYE, "hi-res catseye", tc_init, tc_mode
+};
+
+#if NITE > 0
+void	topcat_init __P((struct ite_data *));
+void	topcat_deinit __P((struct ite_data *));
+void	topcat_putc __P((struct ite_data *, int, int, int, int));
+void	topcat_cursor __P((struct ite_data *, int));
+void	topcat_clear __P((struct ite_data *, int, int, int, int));
+void	topcat_scroll __P((struct ite_data *, int, int, int, int));
+void	topcat_windowmove __P((struct ite_data *, int, int, int, int,
+		int, int, int));
+
+/* Topcat/catseye ite switch */
+struct itesw topcat_itesw = {
+	topcat_init, topcat_deinit, topcat_clear, topcat_putc,
+	topcat_cursor, topcat_scroll, ite_readbyte, ite_writeglyph
+};
+#endif /* NITE > 0 */
 
 /*
  * Initialize hardware.
  * Must fill in the grfinfo structure in g_softc.
  * Returns 0 if hardware not present, non-zero ow.
  */
-tc_init(gp, addr)
-	struct grf_softc *gp;
+int
+tc_init(gp, scode, addr)
+	struct grf_data *gp;
+	int scode;
 	caddr_t addr;
 {
 	register struct tcboxfb *tp = (struct tcboxfb *) addr;
@@ -72,48 +128,56 @@ tc_init(gp, addr)
 	volatile u_char *fbp;
 	u_char save;
 	int fboff;
-	extern caddr_t sctopa(), iomap();
+	extern caddr_t sctopa();
 
-	if (ISIIOVA(addr))
-		gi->gd_regaddr = (caddr_t) IIOP(addr);
-	else
-		gi->gd_regaddr = sctopa(vatosc(addr));
-	gi->gd_regsize = 0x10000;
-	gi->gd_fbwidth = (tp->fbwmsb << 8) | tp->fbwlsb;
-	gi->gd_fbheight = (tp->fbhmsb << 8) | tp->fbhlsb;
-	gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
-	fboff = (tp->fbomsb << 8) | tp->fbolsb;
-	gi->gd_fbaddr = (caddr_t) (*((u_char *)addr + fboff) << 16);
-	if (gi->gd_regaddr >= (caddr_t)DIOIIBASE) {
-		/*
-		 * For DIO II space the fbaddr just computed is the offset
-		 * from the select code base (regaddr) of the framebuffer.
-		 * Hence it is also implicitly the size of the register set.
-		 */
-		gi->gd_regsize = (int) gi->gd_fbaddr;
-		gi->gd_fbaddr += (int) gi->gd_regaddr;
-		gp->g_regkva = addr;
-		gp->g_fbkva = addr + gi->gd_regsize;
-	} else {
-		/*
-		 * For DIO space we need to map the seperate framebuffer.
-		 */
-		gp->g_regkva = addr;
-		gp->g_fbkva = iomap(gi->gd_fbaddr, gi->gd_fbsize);
-	}
-	gi->gd_dwidth = (tp->dwmsb << 8) | tp->dwlsb;
-	gi->gd_dheight = (tp->dhmsb << 8) | tp->dhlsb;
-	gi->gd_planes = tp->num_planes;
-	gi->gd_colors = 1 << gi->gd_planes;
-	if (gi->gd_colors == 1) {
-		fbp = (u_char *) gp->g_fbkva;
-		tp->wen = ~0;
-		tp->prr = 0x3;
-		tp->fben = ~0;
-		save = *fbp;
-		*fbp = 0xFF;
-		gi->gd_colors = *fbp + 1;
-		*fbp = save;
+	/*
+	 * If the console has been initialized, and it was us, there's
+	 * no need to repeat this.
+	 */
+	if (consinit_active || (scode != conscode)) {
+		if (ISIIOVA(addr))
+			gi->gd_regaddr = (caddr_t) IIOP(addr);
+		else
+			gi->gd_regaddr = sctopa(scode);
+		gi->gd_regsize = 0x10000;
+		gi->gd_fbwidth = (tp->fbwmsb << 8) | tp->fbwlsb;
+		gi->gd_fbheight = (tp->fbhmsb << 8) | tp->fbhlsb;
+		gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
+		fboff = (tp->fbomsb << 8) | tp->fbolsb;
+		gi->gd_fbaddr = (caddr_t) (*((u_char *)addr + fboff) << 16);
+		if (gi->gd_regaddr >= (caddr_t)DIOIIBASE) {
+			/*
+			 * For DIO II space the fbaddr just computed is the
+			 * offset from the select code base (regaddr) of the
+			 * framebuffer.  Hence it is also implicitly the
+			 * size of the register set.
+			 */
+			gi->gd_regsize = (int) gi->gd_fbaddr;
+			gi->gd_fbaddr += (int) gi->gd_regaddr;
+			gp->g_regkva = addr;
+			gp->g_fbkva = addr + gi->gd_regsize;
+		} else {
+			/*
+			 * For DIO space we need to map the seperate
+			 * framebuffer.
+			 */
+			gp->g_regkva = addr;
+			gp->g_fbkva = iomap(gi->gd_fbaddr, gi->gd_fbsize);
+		}
+		gi->gd_dwidth = (tp->dwmsb << 8) | tp->dwlsb;
+		gi->gd_dheight = (tp->dhmsb << 8) | tp->dhlsb;
+		gi->gd_planes = tp->num_planes;
+		gi->gd_colors = 1 << gi->gd_planes;
+		if (gi->gd_colors == 1) {
+			fbp = (u_char *) gp->g_fbkva;
+			tp->wen = ~0;
+			tp->prr = 0x3;
+			tp->fben = ~0;
+			save = *fbp;
+			*fbp = 0xFF;
+			gi->gd_colors = *fbp + 1;
+			*fbp = save;
+		}
 	}
 	return(1);
 }
@@ -125,8 +189,9 @@ tc_init(gp, addr)
  * Function may not be needed anymore.
  */
 /*ARGSUSED*/
+int
 tc_mode(gp, cmd, data)
-	struct grf_softc *gp;
+	struct grf_data *gp;
 	int cmd;
 	caddr_t data;
 {
@@ -216,4 +281,398 @@ tc_mode(gp, cmd, data)
 	}
 	return(error);
 }
+
+#if NITE > 0
+
+/*
+ * Topcat/catseye ite routines
+ */
+
+#define REGBASE	    	((struct tcboxfb *)(ip->regbase))
+#define WINDOWMOVER 	topcat_windowmove
+
+void
+topcat_init(ip)
+	struct ite_data *ip;
+{
+	/* XXX */
+	if (ip->regbase == NULL) {
+		struct grf_data *gp = ip->grf;
+
+		ip->regbase = gp->g_regkva;
+		ip->fbbase = gp->g_fbkva;
+		ip->fbwidth = gp->g_display.gd_fbwidth;
+		ip->fbheight = gp->g_display.gd_fbheight;
+		ip->dwidth = gp->g_display.gd_dwidth;
+		ip->dheight = gp->g_display.gd_dheight;
+	}
+
+	/*
+	 * Catseye looks a lot like a topcat, but not completely.
+	 * So, we set some bits to make it work.
+	 */
+	if (REGBASE->fbid != GID_TOPCAT) {
+		while ((REGBASE->catseye_status & 1))
+			;
+		REGBASE->catseye_status = 0x0;
+		REGBASE->vb_select      = 0x0;
+		REGBASE->tcntrl         = 0x0;
+		REGBASE->acntrl         = 0x0;
+		REGBASE->pncntrl        = 0x0;
+		REGBASE->rug_cmdstat    = 0x90;
+	}
+
+	/*
+	 * Determine the number of planes by writing to the first frame
+	 * buffer display location, then reading it back. 
+	 */
+	REGBASE->wen = ~0;
+	REGBASE->fben = ~0;
+	REGBASE->prr = RR_COPY;
+	*FBBASE = 0xFF;
+	ip->planemask = *FBBASE;
+
+	/*
+	 * Enable reading/writing of all the planes.
+	 */
+	REGBASE->fben = ip->planemask;
+	REGBASE->wen  = ip->planemask;
+	REGBASE->ren  = ip->planemask;
+	REGBASE->prr  = RR_COPY;
+
+	ite_fontinfo(ip);
+
+	/*
+	 * Clear the framebuffer on all planes.
+	 */
+	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
+	tc_waitbusy(ip->regbase, ip->planemask);
+
+	ite_fontinit(ip);
+
+	/*
+	 * Initialize color map for color displays
+	 */
+	if (ip->planemask != 1) {
+	  	tc_waitbusy(ip->regbase, ip->planemask);
+		REGBASE->nblank = 0x01;
+
+		tccm_waitbusy(ip->regbase);
+		REGBASE->rdata  = 0x0;
+		REGBASE->gdata  = 0x0;
+		REGBASE->bdata  = 0x0;
+		REGBASE->cindex = 0xFF;
+		REGBASE->strobe = 0xFF;
+
+		DELAY(100);
+		tccm_waitbusy(ip->regbase);
+		REGBASE->rdata  = 0x0;
+		REGBASE->gdata  = 0x0;
+		REGBASE->bdata  = 0x0;
+		REGBASE->cindex = 0x0;
+
+		DELAY(100);
+		tccm_waitbusy(ip->regbase);
+		REGBASE->rdata  = 0xFF;
+		REGBASE->gdata  = 0xFF;
+		REGBASE->bdata  = 0xFF;
+		REGBASE->cindex = 0xFE;
+		REGBASE->strobe = 0xFF;
+
+		DELAY(100);
+		tccm_waitbusy(ip->regbase);
+		REGBASE->rdata  = 0x0;
+		REGBASE->gdata  = 0x0;
+		REGBASE->bdata  = 0x0;
+		REGBASE->cindex = 0x0;
+	}
+
+	/*
+	 * Stash the inverted cursor.
+	 */
+	topcat_windowmove(ip, charY(ip, ' '), charX(ip, ' '),
+			  ip->cblanky, ip->cblankx, ip->ftheight,
+			  ip->ftwidth, RR_COPYINVERTED);
+}
+
+void
+topcat_deinit(ip)
+	struct ite_data *ip;
+{
+	topcat_windowmove(ip, 0, 0, 0, 0, ip->fbheight, ip->fbwidth, RR_CLEAR);
+	tc_waitbusy(ip->regbase, ip->planemask);
+
+	REGBASE->nblank = ~0;
+   	ip->flags &= ~ITE_INITED;
+}
+
+void
+topcat_putc(ip, c, dy, dx, mode)
+	struct ite_data *ip;
+	int c, dy, dx, mode;
+{
+        int wmrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+	
+	topcat_windowmove(ip, charY(ip, c), charX(ip, c),
+			  dy * ip->ftheight, dx * ip->ftwidth,
+			  ip->ftheight, ip->ftwidth, wmrr);
+}
+
+void
+topcat_cursor(ip, flag)
+	struct ite_data *ip;
+	int flag;
+{
+	if (flag == DRAW_CURSOR)
+		draw_cursor(ip)
+	else if (flag == MOVE_CURSOR) {
+		erase_cursor(ip)
+		draw_cursor(ip)
+	}
+	else
+		erase_cursor(ip)
+}
+
+void
+topcat_clear(ip, sy, sx, h, w)
+	struct ite_data *ip;
+	int sy, sx, h, w;
+{
+	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
+			  sy * ip->ftheight, sx * ip->ftwidth, 
+			  h  * ip->ftheight, w  * ip->ftwidth,
+			  RR_CLEAR);
+}
+
+void
+topcat_scroll(ip, sy, sx, count, dir)
+        struct ite_data *ip;
+        int sy, count, dir, sx;
+{
+	register int dy;
+	register int dx = sx;
+	register int height = 1;
+	register int width = ip->cols;
+
+	if (dir == SCROLL_UP) {
+		dy = sy - count;
+		height = ip->rows - sy;
+	}
+	else if (dir == SCROLL_DOWN) {
+		dy = sy + count;
+		height = ip->rows - dy - 1;
+	}
+	else if (dir == SCROLL_RIGHT) {
+		dy = sy;
+		dx = sx + count;
+		width = ip->cols - dx;
+	}
+	else {
+		dy = sy;
+		dx = sx - count;
+		width = ip->cols - sx;
+	}		
+
+	topcat_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
+			  dy * ip->ftheight, dx * ip->ftwidth,
+			  height * ip->ftheight,
+			  width  * ip->ftwidth, RR_COPY);
+}
+
+void
+topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
+	struct ite_data *ip;
+	int sy, sx, dy, dx, h, w, func;
+{
+  	register struct tcboxfb *rp = REGBASE;
+	
+	if (h == 0 || w == 0)
+		return;
+	tc_waitbusy(ip->regbase, ip->planemask);
+	rp->wmrr     = func;
+	rp->source_y = sy;
+	rp->source_x = sx;
+	rp->dest_y   = dy;
+	rp->dest_x   = dx;
+	rp->wheight  = h;
+	rp->wwidth   = w;
+	rp->wmove    = ip->planemask;
+}
+
+/*
+ * Topcat/catseye console support
+ */
+
+int
+topcat_console_scan(scode, va, arg)
+	int scode;
+	caddr_t va;
+	void *arg;
+{
+	struct grfreg *grf = (struct grfreg *)va;
+	struct consdev *cp = arg;
+	u_char *dioiidev; 
+	int force = 0, pri; 
+
+	if (grf->gr_id != GRFHWID)
+		return (0);
+
+	switch (grf->gr_id2) {
+	case GID_TOPCAT:
+	case GID_LRCATSEYE:
+	case GID_HRCCATSEYE:
+	case GID_HRMCATSEYE:
+		break;
+
+	default:
+		return (0);
+	}
+
+	pri = CN_NORMAL;
+
+#ifdef CONSCODE
+	/*
+	 * Raise our priority, if appropriate.
+	 */
+	if (scode == CONSCODE) {
+		pri = CN_REMOTE;
+		force = conforced = 1;
+	}
 #endif
+
+	/* Only raise priority. */
+	if (pri > cp->cn_pri)
+		cp->cn_pri = pri;
+
+	/*
+	 * If our priority is higher than the currently-remembered
+	 * console, stash our priority.
+	 */
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+		cn_tab = cp;
+		if (scode >= 132) {
+			dioiidev = (u_char *)va;
+			return ((dioiidev[0x101] + 1) * 0x100000);
+		}
+		return (DIOCSIZE);
+	}
+	return (0);
+}
+
+void
+topcatcnprobe(cp)
+	struct consdev *cp;
+{
+	int maj;
+	caddr_t va;
+	struct grfreg *grf;
+	int force = 0;
+
+	maj = ite_major();
+
+	/* initialize required fields */
+	cp->cn_dev = makedev(maj, 0);		/* XXX */
+	cp->cn_pri = CN_DEAD;
+
+	/* Abort early if the console is already forced. */
+	if (conforced)
+		return;
+
+	/* Look for "internal" framebuffer. */
+	va = (caddr_t)IIOV(GRFIADDR);
+	grf = (struct grfreg *)va;
+	if (!badaddr(va) && (grf->gr_id == GRFHWID)) {
+		switch (grf->gr_id2) {
+		case GID_TOPCAT:
+		case GID_LRCATSEYE:
+		case GID_HRCCATSEYE:
+		case GID_HRMCATSEYE:
+			cp->cn_pri = CN_INTERNAL;
+
+#ifdef CONSCODE
+			/*
+			 * Raise our priority and save some work,
+			 * if appropriate.
+			 */
+			if (CONSCODE == -1) {
+				cp->cn_pri = CN_REMOTE;
+				force = conforced = 1;
+			}
+#endif
+
+			/*
+			 * If our priority is higher than the currently
+			 * remembered console, stash our priority, and unmap
+			 * whichever device might be currently mapped.
+			 * Since we're internal, we set the saved size to 0
+			 * so they don't attempt to unmap our fixed VA later.
+			 */
+			if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
+			    || force) {
+				cn_tab = cp;
+				if (convasize)
+					iounmap(conaddr, convasize);
+				conscode = -1;
+				conaddr = va;
+				convasize = 0;
+			}
+		}
+	}
+
+	console_scan(topcat_console_scan, cp);
+}
+
+void
+topcatcninit(cp)
+	struct consdev *cp;
+{
+	struct ite_data *ip = &ite_cn;
+	struct grf_data *gp = &grf_cn;
+	struct grfreg *grf = (struct grfreg *)conaddr;
+
+	/*
+	 * Initialize the framebuffer hardware.
+	 */
+	(void)tc_init(gp, conscode, conaddr);
+
+	/*
+	 * Set up required grf data.
+	 */
+	switch (grf->gr_id2) {
+	case GID_TOPCAT:
+		gp->g_sw = &topcat_grfsw;
+		break;
+
+	case GID_LRCATSEYE:
+		gp->g_sw = &lrcatseye_grfsw;
+		break;
+
+	case GID_HRCCATSEYE:
+		gp->g_sw = &hrcatseye_grfsw;
+		break;
+
+	case GID_HRMCATSEYE:
+		gp->g_sw = &hrmcatseye_grfsw;
+		break;
+
+	default:
+		/* THIS SHOULD NEVER HAPPEN! */
+		panic("topcat console: impossible!");	/* XXX won't see it */
+	}
+	gp->g_display.gd_id = gp->g_sw->gd_swid;
+	gp->g_flags = GF_ALIVE;
+
+	/*
+	 * Set up required ite data and initialize ite.
+	 */
+	ip->isw = &topcat_itesw;
+	ip->grf = gp;
+	ip->flags = ITE_ALIVE|ITE_CONSOLE|ITE_ACTIVE|ITE_ISCONS;
+	ip->attrbuf = console_attributes;
+	iteinit(ip);
+
+	kbd_ite = ip;		/* XXX */
+}
+
+#endif /* NITE > 0 */
+#endif /* NGRF > 0 */

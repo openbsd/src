@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.8 1995/12/29 17:12:48 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.9 1996/02/24 00:54:53 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -55,6 +55,7 @@ options		FPSP		# floating point interface for 68040
 options		USELEDS		# make the lights twinkle
 options		COMPAT_NOLABEL	# defaults for unlabeled disks
 #options	PANICBUTTON	# two fast <reset>s on HIL dump kernel
+#options	CONSCODE="9"	# force console at this select code
 
 #
 # HP-UX binary compatibility.

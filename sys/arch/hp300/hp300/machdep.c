@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1996/01/16 22:24:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1996/03/13 23:42:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,16 +75,17 @@
 #include <sys/shm.h>
 #endif
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+
 #include <dev/cons.h>
-#include <hp300/hp300/isr.h>
-#include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
+#include <vm/vm_param.h>
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "hp300";		/* cpu "architecture" */
@@ -123,15 +124,34 @@ extern struct emul emul_hpux;
 #endif
 
 /*
+ * Select code of console.  Set to -1 if console is on
+ * "internal" framebuffer.
+ */
+int	conscode;
+int	consinit_active;	/* flag for driver init routines */
+caddr_t	conaddr;		/* for drivers in cn_init() */
+int	convasize;		/* size of mapped console device */
+int	conforced;		/* console has been forced */
+
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
 consinit()
 {
+	extern struct map extiomap[];
 
 	/*
-	 * Set cpuspeed immediately since cninit() called routines
+	 * Initialize some variables for sanity.
+	 */
+	consinit_active = 1;
+	convasize = 0;
+	conforced = 0;
+	conscode = 1024;		/* invalid */
+
+	/*
+	 * Set cpuspeed immediately since hp300_cninit() called routines
 	 * might use delay.  Note that we only set it if a custom value
 	 * has not already been specified.
 	 */
@@ -161,15 +181,18 @@ consinit()
 		if (mmutype == MMU_68040)
 			cpuspeed *= 2;	/* XXX */
 	}
+
 	/*
-         * Find what hardware is attached to this machine.
-         */
-	find_devs();
+	 * Initialize the DIO resource map.
+	 */
+	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
 
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-	cninit();
+	hp300_cninit();
+
+	consinit_active = 0;
 
 #ifdef DDB
 	ddb_init();
@@ -1138,9 +1161,9 @@ boot(howto)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-#ifdef PANICWAIT
-	if ((howto & RB_HALT) == 0) {
-		printf("hit any hey to reboot...\n");
+#if defined(PANICWAIT) && !defined(DDB)
+	if ((howto & RB_HALT) == 0 && panicstr) {
+		printf("hit any key to reboot...\n");
 		(void)cngetc();
 		printf("\n");
 	}
@@ -1322,89 +1345,6 @@ badbaddr(addr)
 	i = *(volatile char *)addr;
 	nofault = (int *) 0;
 	return(0);
-}
-
-netintr()
-{
-#ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
-}
-
-intrhand(sr)
-	int sr;
-{
-	register struct isr *isr;
-	register int found = 0;
-	register int ipl;
-	extern struct isr isrqueue[];
-	static int straycount;
-
-	ipl = (sr >> 8) & 7;
-	switch (ipl) {
-
-	case 3:
-	case 4:
-	case 5:
-		ipl = ISRIPL(ipl);
-		isr = isrqueue[ipl].isr_forw;
-		for (; isr != &isrqueue[ipl]; isr = isr->isr_forw) {
-			if ((isr->isr_intr)(isr->isr_arg)) {
-				found++;
-				break;
-			}
-		}
-		if (found)
-			straycount = 0;
-		else if (++straycount > 50)
-			panic("intrhand: stray interrupt");
-		else
-			printf("stray interrupt, sr 0x%x\n", sr);
-		break;
-
-	case 0:
-	case 1:
-	case 2:
-	case 6:
-	case 7:
-		if (++straycount > 50)
-			panic("intrhand: unexpected sr");
-		else
-			printf("intrhand: unexpected sr 0x%x\n", sr);
-		break;
-	}
 }
 
 #if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.7 1995/12/02 18:22:01 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.8 1996/02/14 02:44:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -57,7 +57,7 @@ void	hpibattach __P((struct hp_ctlr *));
 void	hpibstart __P((int));
 void	hpibgo __P((int, int, int, void *, int, int, int));
 void	hpibdone __P((int));
-int	hpibintr __P((int));
+int	hpibintr __P((void *));
 
 struct	driver hpibdriver = {
 	hpibmatch,
@@ -70,7 +70,6 @@ struct	driver hpibdriver = {
 };
 
 struct	hpib_softc hpib_softc[NHPIB];
-struct	isr hpib_isr[NHPIB];
 
 extern	int nhpibtype __P((struct hp_ctlr *));	/* XXX */
 extern	int fhpibtype __P((struct hp_ctlr *));	/* XXX */
@@ -112,6 +111,8 @@ hpibattach(hc)
 	/*
 	 * Call the appropriate "attach" routine for this controller.
 	 * The type is set in the "type" routine.
+	 *
+	 * XXX This is, by the way, exactly backwards.
 	 */
 	switch (hs->sc_type) {
 	case HPIBA:
@@ -134,10 +135,7 @@ hpibattach(hc)
 	hs->sc_sq.dq_forw = hs->sc_sq.dq_back = &hs->sc_sq;
 
 	/* Establish the interrupt handler. */
-	hpib_isr[hc->hp_unit].isr_intr = hpibintr;
-	hpib_isr[hc->hp_unit].isr_ipl = hc->hp_ipl;
-	hpib_isr[hc->hp_unit].isr_arg = hc->hp_unit;
-	isrlink(&hpib_isr[hc->hp_unit]);
+	isrlink(hpibintr, hs, hc->hp_ipl, ISRPRI_BIO);
 
 	/* Reset the controller, display what we've seen, and we're done. */
 	hpibreset(hc->hp_unit);
@@ -305,10 +303,11 @@ hpibdone(unit)
 }
 
 int
-hpibintr(unit)
-	register int unit;
+hpibintr(arg)
+	void *arg;
 {
+	struct hpib_softc *hs = arg;
 
-	return ((hpib_softc[unit].sc_controller->hpib_intr)(unit));
+	return ((hs->sc_controller->hpib_intr)(arg));
 }
 #endif /* NHPIB > 0 */

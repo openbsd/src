@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_gb.c,v 1.7 1994/10/26 07:27:33 cgd Exp $	*/
+/*	$NetBSD: ite_gb.c,v 1.8 1996/03/03 04:23:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,15 +48,19 @@
 
 #include <sys/param.h>
 
-#include <hp300/dev/itevar.h>
+#include <hp300/stand/itevar.h>
 #include <hp300/dev/itereg.h>
 #include <hp300/dev/grf_gbreg.h>
 
 #define REGBASE     	((struct gboxfb *)(ip->regbase))
 #define WINDOWMOVER 	gbox_windowmove
 
+void	gbox_windowmove __P((struct ite_data *, int, int, int, int,
+	    int, int, int));
+
+void
 gbox_init(ip)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
 {
 	REGBASE->write_protect = 0x0;
 	REGBASE->interrupt = 0x4;
@@ -109,8 +113,9 @@ gbox_init(ip)
 			ip->ftwidth, RR_COPYINVERTED);
 }
 
+void
 gbox_putc(ip, c, dy, dx, mode)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
         register int dy, dx;
 	int c, mode;
 {
@@ -119,8 +124,9 @@ gbox_putc(ip, c, dy, dx, mode)
 			ip->ftheight, ip->ftwidth, RR_COPY);
 }
 
+void
 gbox_cursor(ip, flag)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
         register int flag;
 {
 	if (flag == DRAW_CURSOR)
@@ -133,8 +139,9 @@ gbox_cursor(ip, flag)
 		erase_cursor(ip)
 }
 
+void
 gbox_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 	register int sy, sx, h, w;
 {
 	gbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
@@ -153,8 +160,9 @@ gbox_clear(ip, sy, sx, h, w)
 			(w)  * ip->ftwidth, \
 			RR_COPY)
 
+void
 gbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
+        register struct ite_data *ip;
         register int sy;
         int dir, sx, count;
 {
@@ -171,8 +179,9 @@ gbox_scroll(ip, sy, sx, count, dir)
 		gbox_blockmove(ip, sy + i, sx, dy + i, 0, 1, ip->cols);
 }
 
+void
 gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
-     register struct ite_softc *ip;
+     register struct ite_data *ip;
      int sy, sx, dy, dx, mask;
      register int h, w;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.18 1996/01/10 20:54:29 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.20 1996/02/14 02:44:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -253,8 +253,6 @@ rdmatch(hd)
 	rs->sc_dkdev.dk_name = rs->sc_xname;
 	disk_attach(&rs->sc_dkdev);
 
-		return (0);
-
 	return (1);
 }
 
@@ -266,6 +264,7 @@ rdattach(hd)
 
 	(void)rdident(rs, hd, 1);	/* XXX Ick. */
 
+	rs->sc_dq.dq_softc = rs;
 	rs->sc_dq.dq_ctlr = hd->hp_ctlr;
 	rs->sc_dq.dq_unit = hd->hp_unit;
 	rs->sc_dq.dq_slave = hd->hp_slave;
@@ -788,10 +787,11 @@ rdgo(unit)
 	       rs->sc_addr, rs->sc_resid, rw, rw != 0);
 }
 
-rdintr(unit)
-	register int unit;
+rdintr(arg)
+	void *arg;
 {
-	register struct rd_softc *rs = &rd_softc[unit];
+	register struct rd_softc *rs = arg;
+	int unit = rs->sc_hd->hp_unit;
 	register struct buf *bp = rdtab[unit].b_actf;
 	register struct hp_device *hp = rs->sc_hd;
 	u_char stat = 13;	/* in case hpibrecv fails */

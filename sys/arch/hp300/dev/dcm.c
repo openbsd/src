@@ -1,7 +1,7 @@
-/*	$NetBSD: dcm.c,v 1.22 1995/12/31 00:27:21 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.26 1996/03/03 16:48:54 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -66,6 +66,7 @@
 #include <sys/syslog.h>
 #include <sys/time.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
@@ -78,7 +79,7 @@
 #define DEFAULT_BAUD_RATE 9600
 #endif
 
-int	dcmmatch(), dcmintr(), dcmparam();
+int	dcmmatch(), dcmparam();
 void	dcmattach(), dcmstart();
 struct	driver dcmdriver = {
 	dcmmatch, dcmattach, "dcm",
@@ -130,11 +131,6 @@ struct	dcmischeme {
 static	struct dcmdevice *dcm_cn = NULL;	/* pointer to hardware */
 static	int dcm_lastcnpri = CN_DEAD;		/* XXX last priority */
 static	int dcmconsinit;			/* has been initialized */
-#ifdef DCMCONSOLE
-static	int dcmconsole = DCMCONSOLE;
-#else
-static	int dcmconsole = -1;
-#endif
 
 int	dcmdefaultrate = DEFAULT_BAUD_RATE;
 int	dcmconbrdbusy = 0;
@@ -232,7 +228,6 @@ struct	dcm_softc {
 	struct	tty *sc_tty[NDCMPORT];	/* our tty instances */
 	struct	modemreg *sc_modem[NDCMPORT]; /* modem control */
 	char	sc_mcndlast[NDCMPORT];	/* XXX last modem status for port */
-	struct	isr sc_isr;		/* interrupt handler */
 	short	sc_softCAR;		/* mask of ports with soft-carrier */
 	struct	dcmischeme sc_scheme;	/* interrupt scheme for board */
 
@@ -247,6 +242,7 @@ struct	dcm_softc {
 	 * Bits for sc_flags
 	 */
 #define	DCM_ACTIVE	0x00000001	/* indicates board is alive */
+#define	DCM_ISCONSOLE	0x00000002	/* indicates board is console */
 #define	DCM_STDDCE	0x00000010	/* re-map DCE to standard */
 #define	DCM_FLAGMASK	(DCM_STDDCE)	/* mask of valid bits in config flags */
 
@@ -256,6 +252,7 @@ struct	dcm_softc {
 } dcm_softc[NDCM];
 
 void	dcminit __P((struct dcmdevice *, int, int));
+int	dcmintr __P((void *));
 
 int
 dcmmatch(hd)
@@ -264,23 +261,13 @@ dcmmatch(hd)
 	struct dcm_softc *sc = &dcm_softc[hd->hp_unit];
 	struct dcmdevice *dcm;
 	int i, timo = 0;
-	int s, brd, isconsole, mbits;
+	int s, brd, mbits;
 
 	dcm = (struct dcmdevice *)hd->hp_addr;
 	if ((dcm->dcm_rsid & 0x1f) != DCMID)
 		return (0);
 
 	brd = hd->hp_unit;
-	isconsole = (brd == DCMBOARD(dcmconsole));
-
-	/*
-	 * XXX selected console device (CONSUNIT) as determined by
-	 * dcmcnprobe does not agree with logical numbering imposed
-	 * by the config file (i.e. lowest address DCM is not unit
-	 * CONSUNIT).  Don't recognize this card.
-	 */
-	if (isconsole && (dcm != sc->sc_dcm))
-		return (0);
 
 	sc->sc_hd = hd;
 	hd->hp_ipl = DCMIPL(dcm->dcm_ic);
@@ -303,7 +290,7 @@ dcmmatch(hd)
 			return (0);
 	DELAY(50000)	/* XXX why is this needed ???? */
 	if (dcm->dcm_stcon != ST_OK) {
-		if (!isconsole)
+		if (hd->hp_args->hw_sc != conscode)
 			printf("dcm%d: self test failed: %x\n",
 			       brd, dcm->dcm_stcon);
 		return (0);
@@ -321,12 +308,21 @@ dcmattach(hd)
 	struct dcm_softc *sc = &dcm_softc[hd->hp_unit];
 	struct dcmdevice *dcm;
 	int i, timo = 0;
-	int s, brd, isconsole, mbits;
+	int s, brd, mbits;
 
 	dcm = sc->sc_dcm = (struct dcmdevice *)hd->hp_addr;
 
 	brd = hd->hp_unit;
-	isconsole = (brd == DCMBOARD(dcmconsole));
+	if (hd->hp_args->hw_sc == conscode) {
+		sc->sc_flags |= DCM_ISCONSOLE;
+
+		/*
+		 * We didn't know which unit this would be during
+		 * the console probe, so we have to fixup cn_dev here.
+		 * Note that we always assume port 1 on the board.
+		 */
+		cn_tab->cn_dev = makedev(dcmmajor, (brd << 2) | DCMCONSPORT);
+	}
 
 	/* Extract configuration info from flags. */
 	sc->sc_softCAR = (hd->hp_flags & DCM_SOFTCAR);
@@ -336,10 +332,7 @@ dcmattach(hd)
 	sc->sc_flags |= DCM_ACTIVE;
 
 	/* Establish the interrupt handler. */
-	sc->sc_isr.isr_ipl = hd->hp_ipl;
-	sc->sc_isr.isr_arg = brd;
-	sc->sc_isr.isr_intr = dcmintr;
-	isrlink(&sc->sc_isr);
+	isrlink(dcmintr, sc, hd->hp_ipl, ISRPRI_TTY);
 
 	if (dcmistype == DIS_TIMER)
 		dcmsetischeme(brd, DIS_RESET|DIS_TIMER);
@@ -364,20 +357,20 @@ dcmattach(hd)
 	dcm->dcm_ic = IC_IE;		/* turn all interrupts on */
 
 	/*
-	 * Need to reset baud rate, etc. of next print so reset dcmconsole.
+	 * Need to reset baud rate, etc. of next print so reset dcmconsinit.
 	 * Also make sure console is always "hardwired"
 	 */
-	if (isconsole) {
+	if (sc->sc_flags & DCM_ISCONSOLE) {
 		dcmconsinit = 0;
-		sc->sc_softCAR |= (1 << DCMPORT(dcmconsole));
-		printf(": console on port %d\n", DCMPORT(dcmconsole));
+		sc->sc_softCAR |= (1 << DCMCONSPORT);
+		printf(": console on port %d\n", DCMCONSPORT);
 	} else
 		printf("\n");
 
 #ifdef KGDB
 	if (major(kgdb_dev) == dcmmajor &&
 	    DCMBOARD(DCMUNIT(kgdb_dev)) == brd) {
-		if (dcmconsole == DCMUNIT(kgdb_dev))
+		if (dcmconsole == DCMUNIT(kgdb_dev))	/* XXX fixme */
 			kgdb_dev = NODEV; /* can't debug over console port */
 #ifndef KGDB_CHEAT
 		/*
@@ -600,12 +593,13 @@ dcmtty(dev)
 }
  
 int
-dcmintr(brd)
-	register int brd;
+dcmintr(arg)
+	void *arg;
 {
-	struct dcm_softc *sc = &dcm_softc[brd];
+	struct dcm_softc *sc = arg;
 	struct dcmdevice *dcm = sc->sc_dcm;
 	struct dcmischeme *dis = &sc->sc_scheme;
+	int brd = sc->sc_hd->hp_unit;
 	int code, i;
 	int pcnd[4], mcode, mcnd[4];
 
@@ -971,8 +965,8 @@ dcmioctl(dev, cmd, data, flag, p)
 		userbits = *(int *)data;
 
 		if ((userbits & TIOCFLAG_SOFTCAR) ||
-		    ((board == DCMBOARD(dcmconsole)) &&
-		    (port == DCMPORT(dcmconsole))))
+		    ((sc->sc_flags & DCM_ISCONSOLE) &&
+		    (port == DCMCONSPORT)))
 			sc->sc_softCAR |= (1 << port);
 
 		if (userbits & TIOCFLAG_CLOCAL)
@@ -1376,70 +1370,81 @@ dcminit(dcm, port, rate)
  * Following are all routines needed for DCM to act as console
  */
 
+int
+dcm_console_scan(scode, va, arg)
+	int scode;
+	caddr_t va;
+	void *arg;
+{
+	struct dcmdevice *dcm = (struct dcmdevice *)va;
+	struct consdev *cp = arg;
+	u_char *dioiidev;
+	int force = 0, pri;
+
+	switch (dcm->dcm_rsid) {
+	case DCMID:
+		pri = CN_NORMAL;
+		break;
+
+	case DCMID|DCMCON:
+		pri = CN_REMOTE;
+		break;
+
+	default:
+		return (0);
+	}
+
+#ifdef CONSCODE
+	/*
+	 * Raise our priority, if appropriate.
+	 */
+	if (scode == CONSCODE) {
+		pri = CN_REMOTE;
+		force = conforced = 1;
+	}
+#endif
+
+	/* Only raise priority. */
+	if (pri > cp->cn_pri)
+		cp->cn_pri = pri;
+
+	/*
+	 * If our priority is higher than the currently-remembered
+	 * console, stash our priority, for the benefit of dcmcninit().
+	 */
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+		cn_tab = cp;
+		if (scode >= 132) {
+			dioiidev = (u_char *)va;
+			return ((dioiidev[0x101] + 1) * 0x100000);
+		}
+		return (DIOCSIZE);
+	}
+	return (0);
+}
+
 void
 dcmcnprobe(cp)
 	struct consdev *cp;
 {
-	struct dcm_softc *sc;	/* XXX thorpej */
-	struct dcmdevice *dcm;
-	struct hp_hw *hw;
-	int unit;
 
 	/* locate the major number */
 	for (dcmmajor = 0; dcmmajor < nchrdev; dcmmajor++)
 		if (cdevsw[dcmmajor].d_open == dcmopen)
 			break;
 
-	/*
-	 * XXX FIX ME!
-	 * Implicitly assigns the lowest select code DCM card found to be
-	 * logical unit 0 (actually CONUNIT).  If your config file does
-	 * anything different, you're screwed.
-	 */
-	for (hw = sc_table; hw->hw_type; hw++)
-		if (HW_ISDEV(hw, D_COMMDCM) && !badaddr((short *)hw->hw_kva))
-			break;
-	if (!HW_ISDEV(hw, D_COMMDCM)) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-
-	unit = CONUNIT;
-	dcm = (struct dcmdevice *)hw->hw_kva;
-
 	/* initialize required fields */
-	cp->cn_dev = makedev(dcmmajor, unit);
-	switch (dcm->dcm_rsid) {
-	case DCMID:
-		cp->cn_pri = CN_NORMAL;
-		break;
+	cp->cn_dev = makedev(dcmmajor, 0);	/* XXX */
+	cp->cn_pri = CN_DEAD;
 
-	case DCMID|DCMCON:
-		cp->cn_pri = CN_REMOTE;
-		break;
-
-	default:
-		cp->cn_pri = CN_DEAD;
+	/* Abort early if console already forced. */
+	if (conforced)
 		return;
-	}
 
-	/*
-	 * If dcmconsole is initialized, raise our priority.
-	 */
-	if (dcmconsole == unit)
-		cp->cn_pri = CN_REMOTE;
-
-	/*
-	 * If our priority is higher than the currently-remembered
-	 * DCM, stash our priority and address, for the benefit of
-	 * dcmcninit().
-	 */
-	if (cp->cn_pri > dcm_lastcnpri) {
-		dcm_lastcnpri = cp->cn_pri;
-		dcm_cn = dcm;
-	}
+	console_scan(dcm_console_scan, cp);
 
 #ifdef KGDB_CHEAT
+	/* XXX this needs to be fixed. */
 	/*
 	 * This doesn't currently work, at least not with ite consoles;
 	 * the console hasn't been initialized yet.
@@ -1461,18 +1466,18 @@ dcmcnprobe(cp)
 #endif
 }
 
+/* ARGSUSED */
 void
 dcmcninit(cp)
 	struct consdev *cp;
 {
-	int unit = DCMUNIT(cp->cn_dev);
-	int port = DCMPORT(unit);
 
-	dcminit(dcm_cn, port, dcmdefaultrate);
+	dcm_cn = (struct dcmdevice *)conaddr;
+	dcminit(dcm_cn, DCMCONSPORT, dcmdefaultrate);
 	dcmconsinit = 1;
-	dcmconsole = DCMUNIT(cp->cn_dev);
 }
 
+/* ARGSUSED */
 int
 dcmcngetc(dev)
 	dev_t dev;
@@ -1480,22 +1485,13 @@ dcmcngetc(dev)
 	struct dcmrfifo *fifo;
 	struct dcmpreg *pp;
 	u_int head;
-	int s, c, stat, unit, port;
+	int s, c, stat;
 
-	unit = DCMUNIT(dev);
-	port = DCMPORT(unit);
-
-	/*
-	 * NOTE: This assumes that unit == dcmconsole.  If it doesn't,
-	 * well, you lose.  (It's also extremely unlikely that will ever
-	 * not be the case.)
-	 */
-
-	pp = dcm_preg(dcm_cn, port);
+	pp = dcm_preg(dcm_cn, DCMCONSPORT);
 
 	s = splhigh();
 	head = pp->r_head & RX_MASK;
-	fifo = &dcm_cn->dcm_rfifos[3-port][head>>1];
+	fifo = &dcm_cn->dcm_rfifos[3-DCMCONSPORT][head>>1];
 	while (head == (pp->r_tail & RX_MASK))
 		;
 	/*
@@ -1517,6 +1513,7 @@ dcmcngetc(dev)
 /*
  * Console kernel output character routine.
  */
+/* ARGSUSED */
 void
 dcmcnputc(dev, c)
 	dev_t dev;
@@ -1524,35 +1521,26 @@ dcmcnputc(dev, c)
 {
 	struct dcmpreg *pp;
 	unsigned tail;
-	int s, unit, port, stat;
+	int s, unit, stat;
 
-	unit = DCMUNIT(dev);
-	port = DCMPORT(unit);
-
-	/*
-	 * NOTE: This assumes that unit == dcmconsole.  If it doesn't,
-	 * well, you lose.  (It's also extremely unlikely that will ever
-	 * not be the case.)
-	 */
-
-	pp = dcm_preg(dcm_cn, port);
+	pp = dcm_preg(dcm_cn, DCMCONSPORT);
 
 	s = splhigh();
 #ifdef KGDB
 	if (dev != kgdb_dev)
 #endif
 	if (dcmconsinit == 0) {
-		dcminit(dcm_cn, port, dcmdefaultrate);
+		dcminit(dcm_cn, DCMCONSPORT, dcmdefaultrate);
 		dcmconsinit = 1;
 	}
 	tail = pp->t_tail & TX_MASK;
 	while (tail != (pp->t_head & TX_MASK))
 		;
-	dcm_cn->dcm_tfifos[3-port][tail].data_char = c;
+	dcm_cn->dcm_tfifos[3-DCMCONSPORT][tail].data_char = c;
 	pp->t_tail = tail = (tail + 1) & TX_MASK;
 	SEM_LOCK(dcm_cn);
-	dcm_cn->dcm_cmdtab[port].dcm_data |= CT_TX;
-	dcm_cn->dcm_cr |= (1 << port);
+	dcm_cn->dcm_cmdtab[DCMCONSPORT].dcm_data |= CT_TX;
+	dcm_cn->dcm_cr |= (1 << DCMCONSPORT);
 	SEM_UNLOCK(dcm_cn);
 	while (tail != (pp->t_head & TX_MASK))
 		;

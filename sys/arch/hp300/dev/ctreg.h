@@ -1,4 +1,4 @@
-/*	$NetBSD: ctreg.h,v 1.5 1995/12/31 04:11:42 thorpej Exp $	*/
+/*	$NetBSD: ctreg.h,v 1.6 1996/02/09 18:00:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -165,14 +165,7 @@ struct ct_describe {
 #define	C_SSM		0x3e
 #define	C_WFM		0x49
 #define	C_UNLOAD	0x4a
-/*
- * XXX XXX XXX THIS IS SUPPOSED TO FIT IN A 1-BYTE SPACE?!
- */
-#if 0
-#define	C_REL		0x140
-#else
-#define C_REL		0x40	/* what ended up happening */
-#endif
+#define C_REL		0xc0
 
 #define	C_CMD		0x05
 #define	C_EXEC		0x0e

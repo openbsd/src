@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.22 1996/01/08 03:27:36 thorpej Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.25 1996/02/24 00:54:55 thorpej Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -7,6 +7,7 @@ arch/hp300/hp300/dkbad.c		standard
 arch/hp300/hp300/kgdb_glue.c		optional kgdb compile-with "${NORMAL_C} -fno-defer-pop"
 arch/hp300/hp300/kgdb_stub.c		optional kgdb
 arch/hp300/hp300/machdep.c		standard config-dependent
+arch/hp300/hp300/isr.c			standard
 arch/hp300/hp300/mem.c			standard
 arch/hp300/hp300/pmap.c			standard
 arch/hp300/hp300/pmap_bootstrap.c	standard
@@ -21,11 +22,6 @@ arch/hp300/dev/grf_hy.c			optional grf needs-count # XXX? d-d?
 arch/hp300/dev/grf_machdep.c		optional grf
 arch/hp300/dev/grf_rb.c			optional grf needs-count # XXX? d-d?
 arch/hp300/dev/grf_tc.c			optional grf needs-count # XXX? d-d?
-arch/hp300/dev/ite_dv.c			optional ite needs-count # XXX? d-d?
-arch/hp300/dev/ite_gb.c			optional ite needs-count # XXX? d-d?
-arch/hp300/dev/ite_hy.c			optional ite needs-count # XXX? d-d?
-arch/hp300/dev/ite_rb.c			optional ite needs-count # XXX? d-d?
-arch/hp300/dev/ite_tc.c			optional ite needs-count # XXX? d-d?
 arch/hp300/dev/dcm.c			optional dcm device-driver
 arch/hp300/dev/if_le.c			optional le device-driver
 arch/hp300/dev/dma.c			standard
@@ -49,6 +45,7 @@ arch/hp300/dev/hil_keymaps.c		standard
 arch/hp300/dev/ite.c			optional ite needs-count # XXX? d-d?
 arch/hp300/dev/ite_subr.c		optional ite needs-count # XXX? d-d?
 arch/m68k/m68k/copy.s			standard
+arch/m68k/m68k/db_memrw.c		optional ddb
 dev/cons.c				standard
 dev/cninit.c				standard
 thisisfor_in_proto.c			optional hy

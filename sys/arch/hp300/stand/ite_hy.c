@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_hy.c,v 1.2 1994/10/26 07:27:34 cgd Exp $	*/
+/*	$NetBSD: ite_hy.c,v 1.3 1996/03/03 04:23:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,7 @@
 #ifdef ITECONSOLE
 #include <sys/param.h>
 
-#include <hp300/dev/itevar.h>
+#include <hp300/stand/itevar.h>
 #include <hp300/dev/itereg.h>
 #include <hp300/dev/grf_hyreg.h>
 
@@ -59,8 +59,13 @@
 #define	charX(ip,c)	\
 	(((c) % (ip)->cpl) * ((((ip)->ftwidth + 7) / 8) * 8) + (ip)->fontx)
 
+void	hyper_ite_fontinit __P((struct ite_data *));
+void	hyper_windowmove __P((struct ite_data *, int, int, int, int,
+	    int, int, int));
+
+void
 hyper_init(ip)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
 {
 	int width;
 
@@ -86,8 +91,9 @@ hyper_init(ip)
 			 ip->ftwidth, RR_COPYINVERTED);
 }
 
+void
 hyper_ite_fontinit(ip)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
 {
 	register u_char *fbmem, *dp;
 	int c, l, b;
@@ -114,8 +120,9 @@ hyper_ite_fontinit(ip)
 	}
 }
 
+void
 hyper_putc(ip, c, dy, dx, mode)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
         register int dy, dx;
 	int c, mode;
 {
@@ -124,8 +131,9 @@ hyper_putc(ip, c, dy, dx, mode)
 			 ip->ftheight, ip->ftwidth, RR_COPY);
 }
 
+void
 hyper_cursor(ip, flag)
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
         int flag;
 {
 	switch (flag) {
@@ -141,8 +149,9 @@ hyper_cursor(ip, flag)
 	}
 }
 
+void
 hyper_clear(ip, sy, sx, h, w)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 	register int sy, sx, h, w;
 {
 	hyper_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
@@ -151,8 +160,9 @@ hyper_clear(ip, sy, sx, h, w)
 			 RR_CLEAR);
 }
 
+void
 hyper_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
+        register struct ite_data *ip;
         register int sy, count;
         int dir, sx;
 {
@@ -247,8 +257,9 @@ int endtab[32] =
 	0xFFFFFFFE
     };
 
+void
 hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
 	unsigned int *psrcBase, *pdstBase;

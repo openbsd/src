@@ -1,4 +1,4 @@
-/*	$NetBSD: dcareg.h,v 1.5 1995/12/31 00:27:19 thorpej Exp $	*/
+/*	$NetBSD: dcareg.h,v 1.6 1996/02/24 00:55:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -173,7 +173,3 @@ struct dcadevice {
 #define	MSR_TERI	0x04
 #define	MSR_DDSR	0x02
 #define	MSR_DCTS	0x01
-
-/* WARNING: Serial console is assumed to be at SC9 */
-#define CONSCODE	(9)
-#define CONUNIT		(0)

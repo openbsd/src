@@ -1,4 +1,4 @@
-/*	$NetBSD: dcmreg.h,v 1.4 1994/10/26 07:23:37 cgd Exp $	*/
+/*	$NetBSD: dcmreg.h,v 1.5 1996/02/24 00:55:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -250,8 +250,7 @@ struct	dcmpreg {
 #define RX_MASK		0xff
 
 /*
- * WARNING: Serial console is assumed to be the lowest select-code card
- * and that card must be logical unit 0 in the kernel.  Also, CONUNIT must
- * be 1, the port affected by the REMOTE/LOCAL switch.
+ * DCM console caveat: only port 1 is affected by the remote switch, and
+ * thus the only supported console port on a given DCM card.
  */
-#define CONUNIT	(1)
+#define DCMCONSPORT	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 1996/01/16 22:24:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 1996/02/14 02:56:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -515,80 +515,42 @@ Lsigr1:
 
 /*
  * Interrupt handlers.
- * All DIO device interrupts are auto-vectored.  Most can be configured
- * to interrupt in the range IPL3 to IPL5.  Here are our assignments:
- *
- *	Level 0:	Spurious: ignored.
- *	Level 1:	HIL
- *	Level 2:
- *	Level 3:	Internal HP-IB, DCM
- *	Level 4:	"Fast" HP-IBs, SCSI
- *	Level 5:	DMA, Ethernet, Built-in RS232 (DCA)
- *	Level 6:	Clock
- *	Level 7:	Non-maskable: parity errors, RESET key
+ * All device interrupts are auto-vectored.  The CPU provides
+ * the vector 0x18+level.  Note we count spurious interrupts, but
+ * we don't do anything else with them.
  */
-	.globl	_hilint, _intrhand, _hardclock, _nmihand, _dmaintr
-	.globl	_dcafastservice
 
-_spurintr:
+#define INTERRUPT_SAVEREG	moveml	#0xC0C0,sp@-
+#define INTERRUPT_RESTOREREG	moveml	sp@+,#0x0303
+
+	/* Externs. */
+	.globl	_hilint, _isrdispatch, _nmihand
+	.globl	_hardclock, _statintr
+
+_spurintr:	/* Level 0 */
 	addql	#1,_intrcnt+0
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-_lev1intr:
-	moveml	#0xC0C0,sp@-
+_lev1intr:	/* Level 1: HIL XXX this needs to go away */
+	INTERRUPT_SAVEREG
 	jbsr	_hilint
-	moveml	sp@+,#0x0303
+	INTERRUPT_RESTOREREG
 	addql	#1,_intrcnt+4
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-/*
- * Check for unbuffered serial port (DCA) interrupts first in an attempt
- * to minimize received character lossage.  Then we check for DMA activity
- * to reduce overhead there.
- */
-_lev5intr:
-	moveml	#0xC0C0,sp@-
-	tstl	_dcafastservice		| unbuffered port active?
-	jeq	Ltrydma			| no, check DMA
-	clrl	sp@-			| yes, check DCA port 0
-	jbsr	_dcaintr		|    first to avoid overflow
+_intrhand:	/* Levels 2 through 5 */
+	INTERRUPT_SAVEREG
+	movw	sp@(22),sp@-		| push exception vector info
+	clrw	sp@-
+	jbsr	_isrdispatch		| call dispatch routine
 	addql	#4,sp
-	tstl	d0			| did it belong to DCA?
-	jeq	Ltrydma			| no, go try DMA
-	moveml	sp@+,#0x0303
-	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
-	jra	rei
-Ltrydma:
-	jbsr	_dmaintr		| check DMA channels
-	tstl	d0 			| was it ours?
-	jeq	Lnotdma			| no, go poll other devices
-	moveml	sp@+,#0x0303
-	addql	#1,_intrcnt+24
-	addql	#1,_cnt+V_INTR
-	jra	rei
+	INTERRUPT_RESTOREREG
+	jra	rei			| all done
 
-_lev2intr:
-_lev3intr:
-_lev4intr:
-	moveml	#0xC0C0,sp@-
-Lnotdma:
-	lea	_intrcnt,a0
-	movw	sp@(22),d0		| use vector offset
-	andw	#0xfff,d0		|   sans frame type
-	addql	#1,a0@(-0x60,d0:w)	|     to increment apropos counter
-	movw	sr,sp@-			| push current SR value
-	clrw	sp@-			|    padded to longword
-	jbsr	_intrhand		| handle interrupt
-	addql	#4,sp			| pop SR
-	moveml	sp@+,#0x0303
-	addql	#1,_cnt+V_INTR
-	jra	rei
-
-_lev6intr:
-	moveml	#0xC0C0,sp@-		| save scratch registers
+_lev6intr:	/* Level 6: clock */
+	INTERRUPT_SAVEREG
 	CLKADDR(a0)
 	movb	a0@(CLKSR),d0		| read clock status
 Lclkagain:
@@ -599,7 +561,7 @@ Lnotim1:
 	btst	#2,d0			| timer3 interrupt?
 	jeq	Lnotim3			| no, skip statclock
 	movpw	a0@(CLKMSB3),d1		| clear timer3 interrupt
-	addql	#1,_intrcnt+32		| count clock interrupts
+	addql	#1,_intrcnt+28		| count clock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	d0,sp@-			| save status
 	movl	a1,sp@-
@@ -610,7 +572,7 @@ Lnotim1:
 Lnotim3:
 	btst	#0,d0			| timer1 interrupt?
 	jeq	Lrecheck		| no, skip hardclock
-	addql	#1,_intrcnt+28		| count hardclock interrupts
+	addql	#1,_intrcnt+24		| count hardclock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 #ifdef USELEDS
@@ -653,11 +615,11 @@ Lrecheck:
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
 	movb	a0@(CLKSR),d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
-	moveml	sp@+,#0x0303		| restore scratch registers
+	INTERRUPT_RESTOREREG
 	jra	rei			| all done
 
-_lev7intr:
-	addql	#1,_intrcnt+36
+_lev7intr:	/* Level 7: Parity errors, reset key */
+	addql	#1,_intrcnt+32
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
@@ -2036,12 +1998,11 @@ _intrnames:
 	.asciz	"lev3"
 	.asciz	"lev4"
 	.asciz	"lev5"
-	.asciz	"dma"
 	.asciz	"clock"
 	.asciz  "statclock"
 	.asciz	"nmi"
 _eintrnames:
 	.even
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0
 _eintrcnt:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.10 1995/10/04 06:54:47 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.11 1996/03/03 04:23:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,57 +51,51 @@
 #include <sys/param.h>
 #include <dev/cons.h>
 #include <hp300/dev/device.h>
-#include <hp300/dev/itevar.h>
+#include <hp300/stand/itevar.h>
 #include <hp300/dev/grfreg.h>
 #include <hp300/stand/consdefs.h>
 #include <hp300/stand/samachdep.h>
 
-extern int nodev();
-extern u_char ite_readbyte();
-extern int ite_writeglyph();
-
-extern int topcat_init(), topcat_putc();
-extern int topcat_clear(), topcat_cursor(), topcat_scroll();
-extern int gbox_init(), gbox_clear();
-extern int gbox_putc(), gbox_cursor(), gbox_scroll();
-extern int rbox_init(), rbox_clear();
-extern int rbox_putc(), rbox_cursor(), rbox_scroll();
-extern int dvbox_init(), dvbox_clear();
-extern int dvbox_putc(), dvbox_cursor(), dvbox_scroll();
-extern int hyper_init(), hyper_clear();
-extern int hyper_putc(), hyper_cursor(), hyper_scroll();
+void	ite_deinit_noop __P((struct ite_data *));
 
 struct itesw itesw[] = {
-	GID_TOPCAT,
-	topcat_init,	nodev,		topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_GATORBOX,
-	gbox_init,	nodev,		gbox_clear,	gbox_putc,
-	gbox_cursor,	gbox_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_RENAISSANCE,
-	rbox_init,	nodev,		rbox_clear,	rbox_putc,
-	rbox_cursor,	rbox_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_LRCATSEYE,
-	topcat_init,	nodev,		topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_HRCCATSEYE,
-	topcat_init,	nodev,		topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_HRMCATSEYE,
-	topcat_init,	nodev,		topcat_clear,	topcat_putc,
-	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_DAVINCI,
-      	dvbox_init,	nodev,		dvbox_clear,	dvbox_putc,
-	dvbox_cursor,	dvbox_scroll,	ite_readbyte,	ite_writeglyph,
-	GID_HYPERION,
-	hyper_init,	nodev,		hyper_clear,	hyper_putc,
-	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph,
+	{ GID_TOPCAT,
+	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_GATORBOX,
+	gbox_init,	ite_deinit_noop, gbox_clear,	gbox_putc,
+	gbox_cursor,	gbox_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_RENAISSANCE,
+	rbox_init,	ite_deinit_noop, rbox_clear,	rbox_putc,
+	rbox_cursor,	rbox_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_LRCATSEYE,
+	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_HRCCATSEYE,
+	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_HRMCATSEYE,
+	topcat_init,	ite_deinit_noop, topcat_clear,	topcat_putc,
+	topcat_cursor,	topcat_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_DAVINCI,
+      	dvbox_init,	ite_deinit_noop, dvbox_clear,	dvbox_putc,
+	dvbox_cursor,	dvbox_scroll,	ite_readbyte,	ite_writeglyph },
+
+	{ GID_HYPERION,
+	hyper_init,	ite_deinit_noop, hyper_clear,	hyper_putc,
+	hyper_cursor,	hyper_scroll,	ite_readbyte,	ite_writeglyph },
 };
 int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
-struct  ite_softc ite_softc[NITE] = { 0 };
+struct  ite_data ite_data[NITE] = { 0 };
 int	ite_scode[NITE] = { 0 };
 
 /*
@@ -113,7 +107,7 @@ iteconfig()
 	int dtype, fboff, i;
 	struct hp_hw *hw;
 	struct grfreg *gr;
-	struct ite_softc *ip;
+	struct ite_data *ip;
 
 	i = 0;
 	for (hw = sc_table; hw < &sc_table[MAXCTLRS]; hw++) {
@@ -131,7 +125,7 @@ iteconfig()
 		if (i >= NITE)
 			break;
 		ite_scode[i] = hw->hw_sc;
-		ip = &ite_softc[i];
+		ip = &ite_data[i];
 		ip->isw = &itesw[dtype];
 		ip->regbase = (caddr_t) gr;
 		fboff = (gr->gr_fbomsb << 8) | gr->gr_fbolsb;
@@ -172,7 +166,7 @@ iteprobe(cp)
 	struct consdev *cp;
 {
 	register int ite;
-	register struct ite_softc *ip;
+	register struct ite_data *ip;
 	int unit, pri;
 
 #ifdef CONSDEBUG
@@ -190,7 +184,7 @@ iteprobe(cp)
 		if (ite < whichconsole)
 			continue;
 #endif
-		ip = &ite_softc[ite];
+		ip = &ite_data[ite];
 		if ((ip->flags & (ITE_ALIVE|ITE_CONSOLE))
 		    != (ITE_ALIVE|ITE_CONSOLE))
 			continue;
@@ -212,12 +206,12 @@ iteinit(cp)
 	struct consdev *cp;
 {
 	int ite = cp->cn_dev;
-	struct ite_softc *ip;
+	struct ite_data *ip;
 
 	if (itecons != -1)
 		return;
 
-	ip = &ite_softc[ite];
+	ip = &ite_data[ite];
 
 	ip->curx = 0;
 	ip->cury = 0;
@@ -237,7 +231,7 @@ iteputchar(dev, c)
 	dev_t dev;
 	register int c;
 {
-	register struct ite_softc *ip = &ite_softc[itecons];
+	register struct ite_data *ip = &ite_data[itecons];
 	register struct itesw *sp = ip->isw;
 
 	c &= 0x7F;
@@ -276,7 +270,7 @@ iteputchar(dev, c)
 }
 
 itecheckwrap(ip, sp)
-     register struct ite_softc *ip;
+     register struct ite_data *ip;
      register struct itesw *sp;
 {
 	if (++ip->curx == ip->cols) {
@@ -292,7 +286,7 @@ itecheckwrap(ip, sp)
 }
 
 ite_clrtoeol(ip, sp, y, x)
-     register struct ite_softc *ip;
+     register struct ite_data *ip;
      register struct itesw *sp;
      register int y, x;
 {
@@ -312,3 +306,10 @@ itegetchar(dev)
 #endif
 }
 #endif
+
+/* ARGSUSED */
+void
+ite_deinit_noop(ip)
+	struct ite_data *ip;
+{
+}

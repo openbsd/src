@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.21 1996/01/10 20:31:12 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.22 1996/02/14 02:44:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -164,6 +164,7 @@ hilopen(dev, flags, mode, p)
   	register struct hil_softc *hilp = &hil_softc[HILLOOP(dev)];
 	register struct hilloopdev *dptr;
 	u_char device = HILUNIT(dev);
+	int s;
 
 #ifdef DEBUG
 	if (hildebug & HDB_FOLLOW)
@@ -219,7 +220,7 @@ hilopen(dev, flags, mode, p)
 	/*
 	 * Opened the keyboard, put in raw mode.
 	 */
-	(void) splhil();
+	s = splhil();
 	if (device == hilp->hl_kbddev) {
 		u_char mask = 0;
 		send_hil_cmd(hilp->hl_addr, HIL_WRITEKBDSADR, &mask, 1, NULL);
@@ -229,7 +230,7 @@ hilopen(dev, flags, mode, p)
 			printf("hilopen: keyboard %d raw\n", hilp->hl_kbddev);
 #endif
 	}
-	(void) spl0();
+	splx(s);
 	return (0);
 }
 
@@ -244,6 +245,7 @@ hilclose(dev, flags, mode, p)
 	register int i;
 	u_char device = HILUNIT(dev);
 	char mask, lpctrl;
+	int s;
 	extern struct emul emul_netbsd;
 
 #ifdef DEBUG
@@ -266,13 +268,13 @@ hilclose(dev, flags, mode, p)
 					(void) hilqfree(hilp, i, p);
 		} else {
 			mask = ~hildevmask(device);
-			(void) splhil();
+			s = splhil();
 			for (i = 0; i < NHILQ; i++)
 				if (hilp->hl_queue[i].hq_procp == p) {
 					dptr->hd_qmask &= ~hilqmask(i);
 					hilp->hl_queue[i].hq_devmask &= mask;
 				}
-			(void) spl0();
+			splx(s);
 		}
 	}
 	/*
@@ -283,7 +285,7 @@ hilclose(dev, flags, mode, p)
 	/*
 	 * Set keyboard back to cooked mode when closed.
 	 */
-	(void) splhil();
+	s = splhil();
 	if (device && device == hilp->hl_kbddev) {
 		mask = 1 << (hilp->hl_kbddev - 1);
 		send_hil_cmd(hilp->hl_addr, HIL_WRITEKBDSADR, &mask, 1, NULL);
@@ -309,7 +311,7 @@ hilclose(dev, flags, mode, p)
 #endif
 		kbdenable(HILLOOP(dev));
 	}
-	(void) spl0();
+	splx(s);
 	return (0);
 }
 
@@ -325,7 +327,7 @@ hilread(dev, uio)
 	register int cc;
 	u_char device = HILUNIT(dev);
 	u_char buf[HILBUFSIZE];
-	int error;
+	int error, s;
 
 #if 0
 	/*
@@ -342,7 +344,7 @@ hilread(dev, uio)
 	if ((dptr->hd_flags & HIL_READIN) == 0)
 		return(ENODEV);
 
-	(void) splhil();
+	s = splhil();
 	while (dptr->hd_queue.c_cc == 0) {
 		if (dptr->hd_flags & HIL_NOBLOCK) {
 			spl0();
@@ -354,7 +356,7 @@ hilread(dev, uio)
 			return (error);
 		}
 	}
-	(void) spl0();
+	splx(s);
 
 	error = 0;
 	while (uio->uio_resid > 0 && error == 0) {

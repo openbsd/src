@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.7 1995/12/02 18:22:12 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.8 1996/02/14 02:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -72,15 +72,15 @@ extern void isrlink();
 extern void _insque();
 extern void _remque();
 
-int	scsimatch(), scsigo(), scsiintr(), scsixfer();
+int	scsimatch(), scsigo(), scsixfer();
 void	scsiattach(), scsistart(), scsidone(), scsifree(), scsireset();
+int	scsiintr __P((void *));
 struct	driver scsidriver = {
 	scsimatch, scsiattach, "scsi", (int (*)())scsistart, scsigo, scsiintr,
 	(int (*)())scsidone,
 };
 
 struct	scsi_softc scsi_softc[NSCSI];
-struct	isr scsi_isr[NSCSI];
 
 int scsi_cmd_wait = SCSI_CMD_WAIT;
 int scsi_data_wait = SCSI_DATA_WAIT;
@@ -257,10 +257,11 @@ scsiattach(hc)
 	hs->sc_dq.dq_unit = hc->hp_unit;
 	hs->sc_dq.dq_driver = &scsidriver;
 	hs->sc_sq.dq_forw = hs->sc_sq.dq_back = &hs->sc_sq;
-	scsi_isr[hc->hp_unit].isr_intr = scsiintr;
-	scsi_isr[hc->hp_unit].isr_ipl = hc->hp_ipl;
-	scsi_isr[hc->hp_unit].isr_arg = hc->hp_unit;
-	isrlink(&scsi_isr[hc->hp_unit]);
+
+	/* Establish the interrupt handler. */
+	isrlink(scsiintr, hs, hc->hp_ipl, ISRPRI_BIO);
+
+	/* Reset the controller. */
 	scsireset(hc->hp_unit);
 
 	/*
@@ -1156,14 +1157,15 @@ scsidone(unit)
 }
 
 int
-scsiintr(unit)
-	register int unit;
+scsiintr(arg)
+	void *arg;
 {
-	register struct scsi_softc *hs = &scsi_softc[unit];
+	register struct scsi_softc *hs = arg;
 	volatile register struct scsidevice *hd =
 				(struct scsidevice *)hs->sc_hc->hp_addr;
 	register u_char ints;
 	register struct devqueue *dq;
+	int unit = hs->sc_hc->hp_unit;
 
 	if ((hd->scsi_csr & (CSR_IE|CSR_IR)) != (CSR_IE|CSR_IR))
 		return (0);
@@ -1186,7 +1188,7 @@ scsiintr(unit)
 		finishxfer(hs, hd, dq->dq_slave);
 		hs->sc_flags &=~ (SCSI_IO|SCSI_HAVEDMA);
 		dmafree(&hs->sc_dq);
-		(dq->dq_driver->d_intr)(dq->dq_unit, hs->sc_stat[0]);
+		(dq->dq_driver->d_intr)(dq->dq_softc, hs->sc_stat[0]);
 	} else {
 		/* Something unexpected happened -- deal with it. */
 		hd->scsi_ints = ints;
@@ -1197,7 +1199,7 @@ scsiintr(unit)
 			hs->sc_flags &=~ (SCSI_IO|SCSI_HAVEDMA);
 			dmafree(&hs->sc_dq);
 			dq = hs->sc_sq.dq_forw;
-			(dq->dq_driver->d_intr)(dq->dq_unit, -1);
+			(dq->dq_driver->d_intr)(dq->dq_softc, -1);
 		}
 	}
 	return(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.8 1995/12/02 18:22:06 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.9 1996/02/14 02:44:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@ int	nhpibppoll __P((int));
 void	nhpibppwatch __P((void *));
 void	nhpibgo __P((int, int, int, void *, int, int, int));
 void	nhpibdone __P((int));
-int	nhpibintr __P((int));
+int	nhpibintr __P((void *));
 
 /*
  * Our controller ops structure.
@@ -362,7 +362,7 @@ nhpibreadtimo(arg)
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(&hs->sc_dq);
 		dq = hs->sc_sq.dq_forw;
-		(dq->dq_driver->d_intr)(dq->dq_unit);
+		(dq->dq_driver->d_intr)(dq->dq_softc);
 	}
 	(void) splx(s);
 }
@@ -400,14 +400,14 @@ nhpibdone(unit)
 }
 
 int
-nhpibintr(unit)
-	register int unit;
+nhpibintr(arg)
+	void *arg;
 {
-	register struct hpib_softc *hs = &hpib_softc[unit];
+	register struct hpib_softc *hs = arg;
 	register struct nhpibdevice *hd;
 	register struct devqueue *dq;
 	register int stat0;
-	int stat1;
+	int stat1, unit = hs->sc_hc->hp_unit;
 
 #ifdef lint
 	if (stat1 = unit) return(1);
@@ -428,13 +428,13 @@ nhpibintr(unit)
 		hd->hpib_acr = AUX_TCA;
 		hs->sc_flags &= ~(HPIBF_DONE|HPIBF_IO|HPIBF_READ|HPIBF_TIMO);
 		dmafree(&hs->sc_dq);
-		(dq->dq_driver->d_intr)(dq->dq_unit);
+		(dq->dq_driver->d_intr)(dq->dq_softc);
 	} else if (hs->sc_flags & HPIBF_PPOLL) {
 		hd->hpib_mim = 0;
 		stat0 = nhpibppoll(unit);
 		if (stat0 & (0x80 >> dq->dq_slave)) {
 			hs->sc_flags &= ~HPIBF_PPOLL;
-			(dq->dq_driver->d_intr)(dq->dq_unit);
+			(dq->dq_driver->d_intr)(dq->dq_softc);
 		}
 #ifdef DEBUG
 		else

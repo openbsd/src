@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.7 1995/12/02 18:22:08 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.8 1996/02/14 02:44:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -114,6 +114,7 @@ ppiattach(hd)
 	printf("\n");
 
 	sc->sc_flags = PPIF_ALIVE;
+	sc->sc_dq.dq_softc = sc;
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_unit = hd->hp_unit;
 	sc->sc_dq.dq_slave = hd->hp_slave;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.21 1996/01/07 22:02:18 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.22 1996/02/14 02:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -358,6 +358,7 @@ sdattach(hd)
 
 	(void)sdident(sc, hd, 1);	/* XXX Ick. */
 
+	sc->sc_dq.dq_softc = sc;
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_unit = hd->hp_unit;
 	sc->sc_dq.dq_slave = hd->hp_slave;
@@ -1025,11 +1026,12 @@ sdgo(unit)
 }
 
 void
-sdintr(unit, stat)
-	register int unit;
+sdintr(arg, stat)
+	void *arg;
 	int stat;
 {
-	register struct sd_softc *sc = &sd_softc[unit];
+	register struct sd_softc *sc = arg;
+	int unit = sc->sc_hd->hp_unit;
 	register struct buf *bp = sdtab[unit].b_actf;
 	register struct hp_device *hp = sc->sc_hd;
 	int cond;

@@ -1,7 +1,7 @@
-/*	$NetBSD: dca.c,v 1.19 1995/12/31 00:27:16 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.23 1996/03/03 16:48:52 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -62,6 +62,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
@@ -80,7 +81,6 @@ struct	dca_softc {
 	struct hp_device	*sc_hd;		/* device info */
 	struct dcadevice	*sc_dca;	/* pointer to hardware */
 	struct tty		*sc_tty;	/* our tty instance */
-	struct isr		sc_isr;		/* interrupt handler */
 	int			sc_oflows;	/* overflow counter */
 	short			sc_flags;	/* state flags */
 
@@ -90,28 +90,22 @@ struct	dca_softc {
 #define	DCA_ACTIVE	0x0001	/* indicates live unit */
 #define	DCA_SOFTCAR	0x0002	/* indicates soft-carrier */
 #define	DCA_HASFIFO	0x0004	/* indicates unit has FIFO */
+#define DCA_ISCONSOLE	0x0008	/* indicates unit is console */
 
 } dca_softc[NDCA];
 
 void	dcastart();
-int	dcaparam(), dcaintr();
+int	dcaparam();
+int	dcaintr __P((void *));
 int	ndca = NDCA;
 int	dcadefaultrate = TTYDEF_SPEED;
 int	dcamajor;
-int	dcafastservice;
 
 /*
- * Stuff for DCA console support.  This could probably be done a little
- * better.
+ * Stuff for DCA console support.
  */
 static	struct dcadevice *dca_cn = NULL;	/* pointer to hardware */
-static	int dca_lastcnpri = CN_DEAD;		/* XXX last priority */
 static	int dcaconsinit;			/* has been initialized */
-#ifdef DCACONSOLE
-static	int dcaconsole = DCACONSOLE;
-#else
-static	int dcaconsole = -1;
-#endif
 
 struct speedtab dcaspeedtab[] = {
 	0,	0,
@@ -179,8 +173,16 @@ dcaattach(hd)
 	struct dcadevice *dca = (struct dcadevice *)hd->hp_addr;
 	struct dca_softc *sc = &dca_softc[unit];
 
-	if (unit == dcaconsole)
+	if (hd->hp_args->hw_sc == conscode) {
+		sc->sc_flags |= DCA_ISCONSOLE;
 		DELAY(100000);
+
+		/*
+		 * We didn't know which unit this would be during
+		 * the console probe, so we have to fixup cn_dev here.
+		 */
+		cn_tab->cn_dev = makedev(dcamajor, unit);
+	}
 
 	dca->dca_reset = 0xFF;
 	DELAY(100);
@@ -194,10 +196,8 @@ dcaattach(hd)
 	sc->sc_dca = dca;
 
 	/* Establish interrupt handler. */
-	sc->sc_isr.isr_ipl = hd->hp_ipl;
-	sc->sc_isr.isr_arg = unit;
-	sc->sc_isr.isr_intr = dcaintr;
-	isrlink(&sc->sc_isr);
+	isrlink(dcaintr, sc, hd->hp_ipl,
+	    (sc->sc_flags & DCA_HASFIFO) ? ISRPRI_TTY : ISRPRI_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;
 	if (hd->hp_flags)
@@ -210,7 +210,7 @@ dcaattach(hd)
 	 * Need to reset baud rate, etc. of next print so reset dcaconsinit.
 	 * Also make sure console is always "hardwired."
 	 */
-	if (unit == dcaconsole) {
+	if (sc->sc_flags & DCA_ISCONSOLE) {
 		dcaconsinit = 0;
 		sc->sc_flags |= DCA_SOFTCAR;
 		printf(": console, ");
@@ -224,7 +224,7 @@ dcaattach(hd)
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(dcamajor, unit)) {
-		if (dcaconsole == unit)
+		if (sc->sc_flags & DCA_ISCONSOLE)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
 			dcainit(dca, kgdb_rate);
@@ -335,13 +335,6 @@ dcaopen(dev, flag, mode, p)
 
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
-	/*
-	 * XXX hack to speed up unbuffered builtin port.
-	 * If dca_fastservice is set, a level 5 interrupt
-	 * will be directed to dcaintr first.
-	 */
-	if (error == 0 && unit == 0 && (sc->sc_flags & DCA_HASFIFO) == 0)
-		dcafastservice = 1;
 
 	return (error);
 }
@@ -360,9 +353,6 @@ dcaclose(dev, flag, mode, p)
 	int s;
  
 	unit = DCAUNIT(dev);
-
-	if (unit == 0)
-		dcafastservice = 0;
 
 	sc = &dca_softc[unit];
 	dca = sc->sc_dca;
@@ -433,10 +423,11 @@ dcatty(dev)
 }
  
 int
-dcaintr(unit)
-	register int unit;
+dcaintr(arg)
+	void *arg;
 {
-	struct dca_softc *sc = &dca_softc[unit];
+	struct dca_softc *sc = arg;
+	int unit = sc->sc_hd->hp_unit;
 	register struct dcadevice *dca = sc->sc_dca;
 	register struct tty *tp = sc->sc_tty;
 	register u_char code;
@@ -665,7 +656,8 @@ dcaioctl(dev, cmd, data, flag, p)
 
 		userbits = *(int *)data;
 
-		if ((userbits & TIOCFLAG_SOFTCAR) || (unit == dcaconsole))
+		if ((userbits & TIOCFLAG_SOFTCAR) ||
+		    (sc->sc_flags & DCA_ISCONSOLE))
 			sc->sc_flags |= DCA_SOFTCAR;
 
 		if (userbits & TIOCFLAG_CLOCAL)
@@ -888,76 +880,96 @@ dcainit(dca, rate)
  * Following are all routines needed for DCA to act as console
  */
 
+int
+dca_console_scan(scode, va, arg)
+	int scode;
+	caddr_t va;
+	void *arg;
+{
+	struct dcadevice *dca = (struct dcadevice *)va;
+	struct consdev *cp = arg;
+	u_char *dioiidev;
+	int force = 0, pri;
+
+	switch (dca->dca_id) {
+	case DCAID0:
+	case DCAID1:
+		pri = CN_NORMAL;
+		break;
+
+	case DCAREMID0:
+	case DCAREMID1:
+		pri = CN_REMOTE;
+		break;
+
+	default:
+		return (0);
+	}
+
+#ifdef CONSCODE
+	/*
+	 * Raise our priority, if appropriate.
+	 */
+	if (scode == CONSCODE) {
+		pri = CN_REMOTE;
+		force = conforced = 1;
+	}
+#endif
+
+	/* Only raise priority. */
+	if (pri > cp->cn_pri)
+		cp->cn_pri = pri;
+
+	/*
+	 * If our priority is higher than the currently-remembered
+	 * console, stash our priority, for the benefit of dcacninit().
+	 */
+	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
+		cn_tab = cp;
+		if (scode >= 132) {
+			dioiidev = (u_char *)va;
+			return ((dioiidev[0x101] + 1) * 0x100000);
+		}
+		return (DIOCSIZE);
+	}
+	return (0);
+}
+
 void
 dcacnprobe(cp)
 	struct consdev *cp;
 {
-	struct dcadevice *dca;
-	int unit;
 
 	/* locate the major number */
 	for (dcamajor = 0; dcamajor < nchrdev; dcamajor++)
 		if (cdevsw[dcamajor].d_open == dcaopen)
 			break;
 
-	/* XXX: ick */
-	unit = CONUNIT;
-
-	dca = (struct dcadevice *)sctova(CONSCODE);
-
-	/* make sure hardware exists */
-	if (badaddr((short *)dca)) {
-		cp->cn_pri = CN_DEAD;
-		return;
-	}
-
 	/* initialize required fields */
-	cp->cn_dev = makedev(dcamajor, unit);
+	cp->cn_dev = makedev(dcamajor, 0);	/* XXX */
+	cp->cn_pri = CN_DEAD;
 
-	switch (dca->dca_id) {
-	case DCAID0:
-	case DCAID1:
-		cp->cn_pri = CN_NORMAL;
-		break;
-	case DCAREMID0:
-	case DCAREMID1:
-		cp->cn_pri = CN_REMOTE;
-		break;
-	default:
-		cp->cn_pri = CN_DEAD;
-		break;
-	}
+	/* Abort early if console is already forced. */
+	if (conforced)
+		return;
 
-	/*
-	 * If dcaconsole is initialized, raise our priority.
-	 */
-	if (dcaconsole == unit)
-		cp->cn_pri = CN_REMOTE;
-
-	/*
-	 * If our priority is higher than the currently-remembered
-	 * DCA, stash our priority and address, for the benefit of
-	 * dcacninit().
-	 */
-	if (cp->cn_pri > dca_lastcnpri) {
-		dca_lastcnpri = cp->cn_pri;
-		dca_cn = dca;
-	}
+	console_scan(dca_console_scan, cp);
 
 #ifdef KGDB
+	/* XXX this needs to be fixed. */
 	if (major(kgdb_dev) == 1)			/* XXX */
 		kgdb_dev = makedev(dcamajor, minor(kgdb_dev));
 #endif
 }
 
+/* ARGSUSED */
 void
 dcacninit(cp)
 	struct consdev *cp;
 {
-	int unit = DCAUNIT(cp->cn_dev);
 
+	dca_cn = (struct dcadevice *)conaddr;
 	dcainit(dca_cn, dcadefaultrate);
-	dcaconsole = unit;
 	dcaconsinit = 1;
 }
 
@@ -972,12 +984,6 @@ dcacngetc(dev)
 #ifdef lint
 	stat = dev; if (stat) return (0);
 #endif
-
-	/*
-	 * NOTE: This assumes that DCAUNIT(dev) == dcaconsole.  If
-	 * it doesn't, well, you lose.  (It's also extremely unlikely
-	 * that will ever not be the case.)
-	 */
 
 	s = splhigh();
 	while (((stat = dca_cn->dca_lsr) & LSR_RXRDY) == 0)
@@ -1004,12 +1010,6 @@ dcacnputc(dev, c)
 #ifdef lint
 	stat = dev; if (stat) return;
 #endif
-
-	/*
-	 * NOTE: This assumes that DCAUNIT(dev) == dcaconsole.  If
-	 * it doesn't, well, you lose.  (It's also extremely unlikely
-	 * that will ever not be the case.)
-	 */
 
 	if (dcaconsinit == 0) {
 		dcainit(dca_cn, dcadefaultrate);

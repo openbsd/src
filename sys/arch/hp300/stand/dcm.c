@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.8 1995/10/04 06:54:45 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.9 1996/02/27 22:11:44 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,8 @@
 
 struct dcmdevice *dcmcnaddr = NULL;
 
+#define	DCMCONUNIT	0	/* XXX */
+
 void
 dcmprobe(cp)
 	struct consdev *cp;
@@ -89,7 +91,7 @@ dcminit(cp)
 	struct consdev *cp;
 {
 	register struct dcmdevice *dcm = dcmcnaddr;
-	register int port = CONUNIT;
+	register int port = DCMCONUNIT;
 
 	dcm->dcm_ic = IC_ID;
 	while (dcm->dcm_thead[port].ptr != dcm->dcm_ttail[port].ptr)
@@ -115,7 +117,7 @@ dcmgetchar(dev)
 	register unsigned head;
 	int c, stat, port;
 
-	port = CONUNIT;
+	port = DCMCONUNIT;
 	pp = dcm_preg(dcm, port);
 	head = pp->r_head & RX_MASK;
 	if (head == (pp->r_tail & RX_MASK))
@@ -150,7 +152,7 @@ dcmputchar(dev, c)
 	unsigned tail;
 	int port, stat;
 
-	port = CONUNIT;
+	port = DCMCONUNIT;
 	pp = dcm_preg(dcm, port);
 	tail = pp->t_tail & TX_MASK;
 	timo = 50000;

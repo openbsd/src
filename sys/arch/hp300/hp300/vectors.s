@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.6 1994/10/26 07:26:03 cgd Exp $
+|	$NetBSD: vectors.s,v 1.7 1996/02/14 02:57:07 thorpej Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -39,8 +39,8 @@
 	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
-	.globl	_spurintr,_lev1intr,_lev2intr,_lev3intr
-	.globl	_lev4intr,_lev5intr,_lev6intr,_lev7intr
+	.globl	_spurintr,_lev1intr,_lev6intr,_lev7intr
+	.globl	_intrhand
 	.globl	_trap0,_trap1,_trap2,_trap15
 	.globl	_fpfline, _fpunsupp
 	.globl	_trap12
@@ -72,10 +72,10 @@ Lvectab:
 	.long	_badtrap	/* 23: unassigned, reserved */
 	.long	_spurintr	/* 24: spurious interrupt */
 	.long	_lev1intr	/* 25: level 1 interrupt autovector */
-	.long	_lev2intr	/* 26: level 2 interrupt autovector */
-	.long	_lev3intr	/* 27: level 3 interrupt autovector */
-	.long	_lev4intr	/* 28: level 4 interrupt autovector */
-	.long	_lev5intr	/* 29: level 5 interrupt autovector */
+	.long	_intrhand	/* 26: level 2 interrupt autovector */
+	.long	_intrhand	/* 27: level 3 interrupt autovector */
+	.long	_intrhand	/* 28: level 4 interrupt autovector */
+	.long	_intrhand	/* 29: level 5 interrupt autovector */
 	.long	_lev6intr	/* 30: level 6 interrupt autovector */
 	.long	_lev7intr	/* 31: level 7 interrupt autovector */
 	.long	_trap0		/* 32: syscalls */

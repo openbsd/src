@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.16 1995/12/11 17:09:09 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.18 1996/02/02 23:53:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -39,8 +39,6 @@
 #define _VA_LIST_ _BSD_VA_LIST_
 #define _PTRDIFF_T_ _BSD_PTRDIFF_T_
 
-#define _KERNEL
-
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/map.h>
@@ -50,6 +48,8 @@
 #include <sys/syscall.h>
 #include <sys/user.h>
 
+#include <vm/vm.h>
+
 #include <machine/cpu.h>
 #include <machine/trap.h>
 #include <machine/psl.h>
@@ -57,7 +57,6 @@
 #include <machine/pte.h>
 
 #include <hp300/hp300/clockreg.h>
-#include <vm/vm.h>
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
 #endif
@@ -66,7 +65,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-#include <unistd.h>
 
 extern int errno;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 1995/08/13 00:22:40 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.25 1996/03/04 05:04:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,9 @@
 /*
  * Machine dependent constants for HP9000 series 300.
  */
+#define	_MACHINE	hp300
 #define	MACHINE		"hp300"
+#define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K4K
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_subr.c,v 1.5 1994/10/26 07:24:35 cgd Exp $	*/
+/*	$NetBSD: ite_subr.c,v 1.6 1996/02/24 00:55:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,8 +57,9 @@
 
 #include <machine/cpu.h>
 
+void
 ite_fontinfo(ip)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 {
 	u_long fontaddr = getword(ip, getword(ip, FONTROM) + FONTADDR);
 
@@ -89,8 +90,9 @@ ite_fontinfo(ip)
 	}
 }
 
+void
 ite_fontinit(ip)
-	register struct ite_softc *ip;
+	struct ite_data *ip;
 {
 	int bytewidth = (((ip->ftwidth - 1) / 8) + 1);
 	int glyphsize = bytewidth * ip->ftheight;
@@ -118,15 +120,16 @@ ite_fontinit(ip)
  */
 u_char
 ite_readbyte(ip, disp)
-	struct ite_softc *ip;
+	struct ite_data *ip;
 	int disp;
 {
 	return((u_char) *(((u_char *)ip->regbase) + disp));
 }
 
+void
 ite_writeglyph(ip, fbmem, glyphp)
-	register struct ite_softc *ip;
-	register u_char *fbmem, *glyphp;
+	struct ite_data *ip;
+	u_char *fbmem, *glyphp;
 {
 	register int bn;
 	int l, b;

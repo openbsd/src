@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.6 1995/12/02 18:21:54 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.7 1996/02/14 02:44:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,12 +81,14 @@ struct hp_device {
 	char		hp_xname[8];
 };
 
+/* XXX This needs to die. */
 struct	devqueue {
 	struct	devqueue *dq_forw;
 	struct	devqueue *dq_back;
 	int	dq_ctlr;
 	int	dq_unit;
 	int	dq_slave;
+	void	*dq_softc;
 	struct	driver *dq_driver;
 };
 

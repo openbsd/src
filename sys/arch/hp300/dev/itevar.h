@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.8 1995/11/19 23:14:25 thorpej Exp $	*/
+/*	$NetBSD: itevar.h,v 1.9 1996/02/24 00:55:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,18 +44,6 @@
 
 #define ITEUNIT(dev)       minor(dev)
 
-struct itesw {
-	int	ite_hwid;		/* Hardware id */
-	int	(*ite_init)();
-	int	(*ite_deinit)();
-	int	(*ite_clear)();
-	int	(*ite_putc)();
-	int	(*ite_cursor)();
-	int	(*ite_scroll)();
-	u_char	(*ite_readbyte)();
-	int	(*ite_writeglyph)();
-};
-
 #define getbyte(ip, offset) \
 	((*(ip)->isw->ite_readbyte)(ip, offset))
 
@@ -65,10 +53,11 @@ struct itesw {
 #define writeglyph(ip, offset, fontbuf) \
 	((*(ip)->isw->ite_writeglyph)((ip), (offset), (fontbuf)))
 
-struct ite_softc {
+struct ite_data {
 	int	flags;
+	struct	tty *tty;
 	struct  itesw *isw;
-	struct  grf_softc *grf;
+	struct  grf_data *grf;
 	caddr_t regbase, fbbase;
 	short	curx, cury;
 	short   cursorx, cursory;
@@ -85,6 +74,22 @@ struct ite_softc {
 	short	pos;
 	char	imode, escape, fpd, hold;
 	caddr_t	devdata;			/* display dependent data */
+};
+
+struct itesw {
+	void	(*ite_init) __P((struct ite_data *));
+	void	(*ite_deinit) __P((struct ite_data *));
+	void	(*ite_clear) __P((struct ite_data *, int, int, int, int));
+	void	(*ite_putc) __P((struct ite_data *, int, int, int, int));
+	void	(*ite_cursor) __P((struct ite_data *, int));
+	void	(*ite_scroll) __P((struct ite_data *, int, int, int, int));
+	u_char	(*ite_readbyte) __P((struct ite_data *, int));
+	void	(*ite_writeglyph) __P((struct ite_data *, u_char *, u_char *));
+};
+
+struct ite_softc {
+	struct	ite_data *sc_data;	/* terminal state info */
+	struct	grf_softc *sc_grf;	/* pointer to framebuffer */
 };
 
 /* Flags */
@@ -180,10 +185,26 @@ struct ite_softc {
 #define KBD_EXT_RIGHT_UP      0x93
 
 #define	TABSIZE		8
-#define	TABEND(u)	(ite_tty[u]->t_winsize.ws_col - TABSIZE)
+#define	TABEND(ip)	((ip)->tty->t_winsize.ws_col - TABSIZE)
 
 #ifdef _KERNEL
+extern	struct ite_data ite_cn;		/* ite_data for console device */
+extern	struct ite_data *kbd_ite;	/* XXX */
 extern	struct ite_softc ite_softc[];
 extern	struct itesw itesw[];
+extern	u_char console_attributes[];
 extern	int nitesw;
+
+/* ite.c prototypes */
+void	ite_attach_grf __P((int, int));
+int	iteon __P((struct ite_data *, int));
+void	iteoff __P((struct ite_data *, int));
+void	itefilter __P((char, char));
+int	ite_major __P((void));
+
+/* ite_subr.c prototypes */
+void	ite_fontinfo __P((struct ite_data *));
+void	ite_fontinit __P((struct ite_data *));
+u_char	ite_readbyte __P((struct ite_data *, int));
+void	ite_writeglyph __P((struct ite_data *, u_char *, u_char *));
 #endif

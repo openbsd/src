@@ -1,6 +1,7 @@
-/*	$NetBSD: grf_machdep.c,v 1.3 1995/12/02 18:21:58 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.4 1996/02/24 00:55:13 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,83 +52,78 @@
 #if NGRF > 0
 
 #include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
+
+#include <machine/autoconf.h>
 
 #include <hp300/dev/device.h>
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfreg.h>
 
+#include <hp300/dev/itevar.h>
+
+#include "ite.h"
+
 int grfmatch();
 void grfattach();
+
+int	grfinit __P((struct hp_device *, struct grf_data *, int));
+
 struct	driver grfdriver = { grfmatch, grfattach, "grf" };
 
-/*
- * XXX called from ite console init routine.
- * Does just what configure will do later but without printing anything.
- */
-grfconfig()
-{
-	register caddr_t addr;
-	register struct hp_hw *hw;
-	register struct hp_device *hd, *nhd;
-
-	for (hw = sc_table; hw->hw_type; hw++) {
-	        if (!HW_ISDEV(hw, D_BITMAP))
-			continue;
-		/*
-		 * Found one, now match up with a logical unit number
-		 */
-		nhd = NULL;		
-		addr = hw->hw_kva;
-		for (hd = hp_dinit; hd->hp_driver; hd++) {
-			if (hd->hp_driver != &grfdriver || hd->hp_alive)
-				continue;
-			/*
-			 * Wildcarded.  If first, remember as possible match.
-			 */
-			if (hd->hp_addr == NULL) {
-				if (nhd == NULL)
-					nhd = hd;
-				continue;
-			}
-			/*
-			 * Not wildcarded.
-			 * If exact match done searching, else keep looking.
-			 */
-			if (sctova(hd->hp_addr) == addr) {
-				nhd = hd;
-				break;
-			}
-		}
-		/*
-		 * Found a match, initialize
-		 */
-		if (nhd && grfinit(addr, nhd->hp_unit))
-			nhd->hp_addr = addr;
-	}
-}
-
-/*
- * Normal init routine called by configure() code
- */
 int
 grfmatch(hd)
 	struct hp_device *hd;
 {
-	struct grf_softc *gp = &grf_softc[hd->hp_unit];
+	struct grf_softc *sc = &grf_softc[hd->hp_unit];
+	int scode;
 
-	if ((gp->g_flags & GF_ALIVE) == 0 &&
-	    !grfinit(hd->hp_addr, hd->hp_unit))
+	if (hd->hp_args->hw_pa == (caddr_t)GRFIADDR) /* XXX */
+		scode = -1;
+	else
+		scode = hd->hp_args->hw_sc;
+
+	if (scode == conscode) {
+		/*
+		 * We've already been initialized.
+		 */
+		sc->sc_data = &grf_cn;
+		return (1);
+	}
+
+	/*
+	 * Allocate storage space for the grf_data.
+	 */
+	sc->sc_data = (struct grf_data *)malloc(sizeof(struct grf_data),
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->sc_data == NULL) {
+		printf("grfmatch: malloc for grf_data failed\n");
 		return (0);
+	}
+	bzero(sc->sc_data, sizeof(struct grf_data));
 
-	return(1);
+	return (grfinit(hd, sc->sc_data, scode));
 }
 
 void
 grfattach(hd)
 	struct hp_device *hd;
 {
-	struct grf_softc *gp = &grf_softc[hd->hp_unit];
+	struct grf_softc *sc = &grf_softc[hd->hp_unit];
+	struct grf_data *gp = sc->sc_data;
+	int scode, isconsole;
+
+	if (hd->hp_args->hw_pa == (caddr_t)GRFIADDR) /* XXX */
+		scode = -1;
+	else
+		scode = hd->hp_args->hw_sc;
+
+	if (scode == conscode)
+		isconsole = 1;
+	else
+		isconsole = 0;
 
 	printf(": %d x %d ", gp->g_display.gd_dwidth,
 	    gp->g_display.gd_dheight);
@@ -135,24 +131,37 @@ grfattach(hd)
 		printf("monochrome");
 	else
 		printf("%d color", gp->g_display.gd_colors);
-	printf(" %s display\n", gp->g_sw->gd_desc);
+	printf(" %s display", gp->g_sw->gd_desc);
+	if (isconsole)
+		printf(" (console)");
+	printf("\n");
+
+#if NITE > 0
+	/* XXX hack */
+	ite_attach_grf(hd->hp_unit, isconsole);
+#endif /* NITE > 0 */
 }
 
-grfinit(addr, unit)
-	caddr_t addr;
-	int unit;
+int
+grfinit(hd, gp, scode)
+	struct hp_device *hd;
+	struct grf_data *gp;
+	int scode;
 {
-	struct grf_softc *gp = &grf_softc[unit];
 	register struct grfsw *gsw;
 	struct grfreg *gr;
+	caddr_t addr = hd->hp_addr;
+	int i;
 
 	gr = (struct grfreg *) addr;
 	if (gr->gr_id != GRFHWID)
 		return(0);
-	for (gsw = grfsw; gsw < &grfsw[ngrfsw]; gsw++)
+	for (i = 0; i < ngrfsw; ++i) {
+		gsw = grfsw[i];
 		if (gsw->gd_hwid == gr->gr_id2)
 			break;
-	if (gsw < &grfsw[ngrfsw] && (*gsw->gd_init)(gp, addr)) {
+	}
+	if ((i < ngrfsw) && (*gsw->gd_init)(gp, scode, addr)) {
 		gp->g_sw = gsw;
 		gp->g_display.gd_id = gsw->gd_swid;
 		gp->g_flags = GF_ALIVE;
@@ -160,4 +169,4 @@ grfinit(addr, unit)
 	}
 	return(0);
 }
-#endif
+#endif /* NGRF > 0 */
