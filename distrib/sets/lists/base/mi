@@ -1361,6 +1361,7 @@
 ./usr/share/man/COPYRIGHT
 ./usr/share/man/cat1
 ./usr/share/man/cat2
+./usr/share/man/cat2/i386
 ./usr/share/man/cat3
 ./usr/share/man/cat3p
 ./usr/share/man/cat4

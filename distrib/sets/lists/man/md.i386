@@ -19,13 +19,12 @@
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/apm.0
 ./usr/share/man/cat8/apmd.0
-./usr/share/man/cat8/biosboot.0
-./usr/share/man/cat8/boot.0
-./usr/share/man/cat8/boot.conf.0
+./usr/share/man/cat8/i386/biosboot.0
+./usr/share/man/cat8/i386/boot.0
+./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/fdisk.0
 ./usr/share/man/cat8/i386/bad144.0
 ./usr/share/man/cat8/installboot.0
 ./usr/share/man/cat8/ispcvt.0
 ./usr/share/man/cat8/ldconfig.0
-./usr/share/man/cat8/mbr.0
 ./usr/share/man/cat8/zzz.0
