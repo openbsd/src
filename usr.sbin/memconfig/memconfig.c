@@ -1,4 +1,4 @@
-/* $OpenBSD: memconfig.c,v 1.8 2003/06/26 19:47:09 deraadt Exp $ */
+/* $OpenBSD: memconfig.c,v 1.9 2003/09/26 16:09:27 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
@@ -168,7 +168,8 @@ listfunc(memfd, argc, argv)
 			showall = 1;
 			break;
 		case 'o':
-			owner = strdup(optarg);
+			if (!(owner = strdup(optarg)))
+				errx(1, "out of memory");
 			break;
 		case '?':
 		default:
@@ -290,7 +291,8 @@ clearfunc(memfd, argc, argv)
 		case 'o':
 			if ((*optarg == 0) || (strlen(optarg) > 7))
 				help("clear");
-			owner = strdup(optarg);
+			if (!(owner = strdup(optarg)))
+				errx(1, "out of memory");
 			break;
 
 		case '?':

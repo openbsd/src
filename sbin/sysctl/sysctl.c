@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.98 2003/09/09 11:55:05 jmc Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.99 2003/09/26 16:09:27 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.98 2003/09/09 11:55:05 jmc Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.99 2003/09/26 16:09:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1970,7 +1970,7 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 
 char	**emul_names;
 int	emul_num, nemuls;
-void	emul_init(void);
+int	emul_init(void);
 
 int
 sysctl_emul(char *string, char *newval, int flags)
@@ -1979,7 +1979,10 @@ sysctl_emul(char *string, char *newval, int flags)
 	char *head, *target;
 	size_t len;
 
-	emul_init();
+	if (emul_init() == -1) {
+		warnx("emul_init: out of memory");
+		return (1);
+	}
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_EMUL;
@@ -2072,7 +2075,7 @@ sysctl_emul(char *string, char *newval, int flags)
 
 }
 
-void
+int
 emul_init(void)
 {
 	static int done;
@@ -2089,13 +2092,11 @@ emul_init(void)
 	mib[2] = KERN_EMUL_NUM;
 	len = sizeof(int);
 	if (sysctl(mib, 3, &emul_num, &len, NULL, 0) == -1)
-		return;
+		return (-1);
 
 	emul_names = calloc(emul_num, sizeof(char *));
-	if (emul_names == NULL) {
-		warn("emul_init");
-		return;
-	}
+	if (emul_names == NULL)
+		return (-1);
 
 	nemuls = emul_num;
 	for (i = 0; i < emul_num; i++) {
@@ -2110,7 +2111,12 @@ emul_init(void)
 			continue;
 		}
 		emul_names[i] = strdup(string);
+		if (emul_names[i] == NULL) {
+			free(emul_names);
+			return (-1);
+		}
 	}
+	return (0);
 }
 
 /*

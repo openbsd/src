@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.14 2003/04/13 11:20:47 jmc Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.15 2003/09/26 16:09:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -521,7 +521,8 @@ main(int argc, char **argv)
 			identify = TRUE;
 			break;
 		case 'p':
-			mouse.portname = strdup(optarg);
+			if ((mouse.portname = strdup(optarg)) == NULL)
+				logerr(1, "out of memory");
 			break;
 		case 't':
 			if (strcmp(optarg, "auto") == 0) {
