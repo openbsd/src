@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.14 1997/06/23 01:42:04 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.15 1997/06/29 18:14:35 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -913,10 +913,12 @@ sosetopt(so, level, optname, m0)
 				break;
 
 			case SO_SNDLOWAT:
-				so->so_snd.sb_lowat = (long)cnt;
+				so->so_snd.sb_lowat = (cnt > so->so_snd.sb_hiwat) ?
+				    so->so_snd.sb_hiwat : cnt;
 				break;
 			case SO_RCVLOWAT:
-				so->so_rcv.sb_lowat = (long)cnt;
+				so->so_rcv.sb_lowat = (cnt > so->so_rcv.sb_hiwat) ?
+				    so->so_rcv.sb_hiwat : cnt;
 				break;
 			}
 			break;
