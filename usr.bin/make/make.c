@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.31 2001/11/22 21:18:10 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.32 2001/11/23 23:42:45 deraadt Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -512,8 +512,7 @@ Make_Update(cgn)
     for (ln = Lst_First(&cgn->iParents); ln != NULL; ln = Lst_Adv(ln)) {
 	pgn = (GNode *)Lst_Datum(ln);
 	if (pgn->make) {
-	    if (pgn->type & OP_IS_SUFFIX)
-		Varq_Set(IMPSRC_INDEX, cname, pgn);
+	    Varq_Set(IMPSRC_INDEX, cname, pgn);
 	    Varq_Set(PREFIX_INDEX, cpref, pgn);
 	}
     }

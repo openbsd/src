@@ -1,7 +1,7 @@
 #ifndef GNODE_H
 #define GNODE_H
 /*	$OpenPackages$ */
-/*	$OpenBSD: gnode.h,v 1.3 2001/11/22 21:18:10 espie Exp $ */
+/*	$OpenBSD: gnode.h,v 1.4 2001/11/23 23:42:45 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -176,7 +176,6 @@ struct GNode_ {
 				     * commands for a target */
 #define OP_SAVE_CMDS	0x04000000  /* Saving commands on .END (Compat) */
 #define OP_DEPS_FOUND	0x02000000  /* Already processed by Suff_FindDeps */
-#define OP_IS_SUFFIX	0x01000000  /* Cmds filled by suffix rule */
 
 /*
  * OP_NOP will return true if the node with the given type was not the

@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.47 2001/11/22 21:18:10 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.48 2001/11/23 23:42:45 deraadt Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1431,8 +1431,6 @@ SuffApplyTransform(tGn, sGn, t, s)
     /* Record last child for expansion purposes.  */
     ln = Lst_Last(&tGn->children);
 
-    if (Lst_IsEmpty(&tGn->commands))
-	tGn->type |= OP_IS_SUFFIX;
     /* Pass the buck to Make_HandleUse to apply the rule.  */
     Make_HandleUse(gn, tGn);
 
