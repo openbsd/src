@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.7 2000/02/07 06:09:09 itojun Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.8 2000/04/14 04:41:39 itojun Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -107,8 +107,8 @@ tcp_trace(act, ostate, tp, headers, req, len)
 #endif
 	struct tcp_debug *td = &tcp_debug[tcp_debx++];
 	struct tcpiphdr *ti = (struct tcpiphdr *)headers;
-#ifdef INET6
 	struct tcphdr *th;
+#ifdef INET6
 	struct tcpipv6hdr *ti6 = (struct tcpipv6hdr *)ti;
 #endif
 
@@ -130,7 +130,9 @@ tcp_trace(act, ostate, tp, headers, req, len)
 		} else {
 			bzero(&td->td_ti6, sizeof(struct tcpipv6hdr));
 		}
-	} else {
+	} else
+#endif /* INET6 */
+	{
 		if (ti) {
 			th = &ti->ti_t;
 			td->td_ti = *ti;
@@ -138,12 +140,6 @@ tcp_trace(act, ostate, tp, headers, req, len)
 			bzero(&td->td_ti, sizeof(struct tcpiphdr));
 		}
 	}
-#else /* INET6 */
-	if (ti)
-		td->td_ti = *ti;
-	else
-		bzero((caddr_t)&td->td_ti, sizeof (*ti));
-#endif /* INET6 */
 
 	td->td_req = req;
 #ifdef TCPDEBUG
@@ -176,7 +172,7 @@ tcp_trace(act, ostate, tp, headers, req, len)
 		if (flags) {
 #ifndef lint
 			char *cp = "<";
-#define pf(f) { if (th->th_flags&TH_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (th->th_flags&TH_##f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SYN); pf(ACK); pf(FIN); pf(RST); pf(PUSH); pf(URG);
 #endif
 			printf(">");
