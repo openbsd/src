@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.10 2002/02/07 04:44:52 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.11 2002/02/07 16:39:48 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -123,9 +123,9 @@ union bt_cmap {
 /* cursor x/y position for 'off' */
 #define	THC_CURSOFF		((65536-32) | ((65536-32) << 16))
 
-#define	THC_MISC_REV_M		0x000f0000
+#define	THC_MISC_REV_M		0x000f0000	/* chip revision */
 #define	THC_MISC_REV_S		16
-#define	THC_MISC_RESET		0x00001000	/* ??? */
+#define	THC_MISC_RESET		0x00001000	/* reset */
 #define	THC_MISC_VIDEN		0x00000400	/* video enable */
 #define	THC_MISC_SYNC		0x00000200	/* not sure what ... */
 #define	THC_MISC_VSYNC		0x00000100	/* ... these really are */
@@ -133,6 +133,7 @@ union bt_cmap {
 #define	THC_MISC_CURSRES	0x00000040	/* cursor resolution */
 #define	THC_MISC_INTEN		0x00000020	/* v.retrace intr enable */
 #define	THC_MISC_INTR		0x00000010	/* intr pending/ack */
+#define	THC_MISC_CYCLS		0x0000000f	/* cycles before transfer */
 
 struct cgsix_softc {
 	struct device sc_dev;
@@ -179,13 +180,9 @@ struct cgsix_softc {
     bus_space_write_4((sc)->sc_bustag, (sc)->sc_bt_regs, (reg), (val))
 #define	BT_READ(sc, reg) \
     bus_space_read_4((sc)->sc_bustag, (sc)->sc_bt_regs, (reg))
-
-#define	BT_INIT(sc) do {					\
-	BT_WRITE((sc), BT_ADDR, 0x06);	/* command reg */	\
-	BT_WRITE((sc), BT_CTRL, 0x73);	/* overlay plane */	\
-	BT_WRITE((sc), BT_ADDR, 0x04);  /* read mask */		\
-	BT_WRITE((sc), BT_CTRL, 0xff);	/* color planes */	\
-} while (0)
+#define	BT_BARRIER(sc,reg,flags) \
+    bus_space_barrier((sc)->sc_bustag, (sc)->sc_bt_regs, (reg), \
+	sizeof(u_int32_t), (flags))
 
 struct mmo {
 	u_long	mo_uaddr;		/* user (virtual address */
@@ -235,6 +232,7 @@ void cgsix_loadcmap __P((struct cgsix_softc *, u_int, u_int));
 void cgsix_setcolor __P((struct cgsix_softc *, u_int,
     u_int8_t, u_int8_t, u_int8_t));
 void cgsix_reset __P((struct cgsix_softc *));
+void cgsix_hardreset __P((struct cgsix_softc *));
 void cgsix_blank __P((struct cgsix_softc *, int));
 
 static int a2int __P((char *, int));
@@ -327,7 +325,13 @@ cgsixattach(parent, self, aux)
 		goto fail_tec;
 	}
 
+	/* if prom didn't initialize us, do it the hard way */
+	if (OF_getproplen(sa->sa_node, "width") != sizeof(u_int32_t))
+		cgsix_hardreset(sc);
+
 	console = cgsix_is_console(sa->sa_node);
+
+	cgsix_reset(sc);
 
 	/* grab the current palette */
 	BT_WRITE(sc, BT_ADDR, 0);
@@ -337,24 +341,12 @@ cgsixattach(parent, self, aux)
 		sc->sc_cmap.cm_map[i][2] = BT_READ(sc, BT_CMAP) >> 24;
 	}
 
-	cgsix_reset(sc);
 	cgsix_blank(sc, 0);
 
-	sc->sc_depth = getpropint(sa->sa_node, "depth", -1);
-	if (sc->sc_depth == -1)
-		sc->sc_depth = 8;
-
-	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", -1);
-	if (sc->sc_linebytes == -1)
-		sc->sc_linebytes = 1152;
-
-	sc->sc_height = getpropint(sa->sa_node, "height", -1);
-	if (sc->sc_height == -1)
-		sc->sc_height = 900;
-
-	sc->sc_width = getpropint(sa->sa_node, "width", -1);
-	if (sc->sc_width == -1)
-		sc->sc_width = 1152;
+	sc->sc_depth = getpropint(sa->sa_node, "depth", 8);
+	sc->sc_linebytes = getpropint(sa->sa_node, "linebytes", 1152);
+	sc->sc_height = getpropint(sa->sa_node, "height", 900);
+	sc->sc_width = getpropint(sa->sa_node, "width", 1152);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
@@ -679,6 +671,62 @@ cgsix_reset(sc)
 	/* enable cursor in brooktree DAC */
 	BT_WRITE(sc, BT_ADDR, 0x6 << 24);
 	BT_WRITE(sc, BT_CTRL, BT_READ(sc, BT_CTRL) | (0x3 << 24));
+}
+
+void
+cgsix_hardreset(sc)
+	struct cgsix_softc *sc;
+{
+	u_int32_t fhc, rev;
+
+	/* setup brooktree */
+	BT_WRITE(sc, BT_ADDR, 0x04 << 24);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0xff << 24);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+
+	BT_WRITE(sc, BT_ADDR, 0x05 << 24);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0x00 << 24);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+
+	BT_WRITE(sc, BT_ADDR, 0x06 << 24);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0x70 << 24);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+
+	BT_WRITE(sc, BT_ADDR, 0x07 << 24);
+	BT_BARRIER(sc, BT_ADDR, BUS_SPACE_BARRIER_WRITE);
+	BT_WRITE(sc, BT_CTRL, 0x00 << 24);
+	BT_BARRIER(sc, BT_CTRL, BUS_SPACE_BARRIER_WRITE);
+
+
+	/* configure thc */
+	THC_WRITE(sc, CG6_THC_MISC, THC_MISC_RESET | THC_MISC_INTR |
+	    THC_MISC_CYCLS);
+	THC_WRITE(sc, CG6_THC_MISC, THC_MISC_INTR | THC_MISC_CYCLS);
+
+	THC_WRITE(sc, CG6_THC_HSYNC1, 0x10009);
+	THC_WRITE(sc, CG6_THC_HSYNC2, 0x570000);
+	THC_WRITE(sc, CG6_THC_HSYNC3, 0x15005d);
+	THC_WRITE(sc, CG6_THC_VSYNC1, 0x10005);
+	THC_WRITE(sc, CG6_THC_VSYNC2, 0x2403a8);
+	THC_WRITE(sc, CG6_THC_REFRESH, 0x16b);
+
+	THC_WRITE(sc, CG6_THC_MISC, THC_MISC_RESET | THC_MISC_INTR |
+	    THC_MISC_CYCLS);
+	THC_WRITE(sc, CG6_THC_MISC, THC_MISC_INTR | THC_MISC_CYCLS);
+
+	/* configure fhc (1152x900) */
+	fhc = FHC_READ(sc);
+	rev = (fhc & FHC_REV_MASK) >> FHC_REV_SHIFT;
+
+	fhc = FHC_RES_1152 | FHC_CPU_68020 | FHC_TEST;
+	if (rev < 1)
+		fhc |= FHC_FROP_DISABLE;
+	if (rev < 2)
+		fhc |= FHC_DST_DISABLE;
+	FHC_WRITE(sc, fhc);
 }
 
 void
