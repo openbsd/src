@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.26 1999/12/21 17:49:28 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.27 2000/06/18 04:42:43 beck Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -300,13 +300,13 @@ struct	tcpstat {
 	{ "baddynamic", CTLTYPE_STRUCT }, \
 	{ "recvspace",	CTLTYPE_INT }, \
 	{ "sendspace",	CTLTYPE_INT }, \
-	{ "ident", CTLTYPE_STRUCT }, \
+	{ "ident", 	CTLTYPE_STRUCT }, \
 	{ "sack",	CTLTYPE_INT }, \
 	{ "mssdflt",	CTLTYPE_INT }, \
 }
 
 struct tcp_ident_mapping {
-	struct sockaddr faddr, laddr;
+	struct sockaddr_storage faddr, laddr;
 	int euid, ruid;
 };
 

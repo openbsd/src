@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.41 2000/06/18 02:02:01 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.42 2000/06/18 04:42:43 beck Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -809,9 +809,14 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 	size_t newlen;
 {
 	int error = 0, s;
+	int is_ipv6 = 0;
 	struct tcp_ident_mapping tir;
 	struct inpcb *inp;
 	struct sockaddr_in *fin, *lin;
+#ifdef INET6
+	struct sockaddr_in6 *fin6, *lin6;
+	struct in6_addr f6, l6;
+#endif
 
 	if (oldp == NULL || newp != NULL || newlen != 0)
 		return (EINVAL);
@@ -819,20 +824,58 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 		return (ENOMEM);
 	if ((error = copyin(oldp, &tir, sizeof (tir))) != 0 )
 		return (error);
-	if (tir.faddr.sa_len != sizeof (struct sockaddr) ||
-	    tir.faddr.sa_family != AF_INET)
-		return (EINVAL);
-	fin = (struct sockaddr_in *)&tir.faddr;
-	lin = (struct sockaddr_in *)&tir.laddr;
+	switch (tir.faddr.ss_family) {
+#ifdef INET6
+	case AF_INET6:
+		is_ipv6 = 1;
+		fin6 = (struct sockaddr_in6 *)&tir.faddr;
+		error = in6_embedscope(&f6, fin6, NULL, NULL);
+		if (error)
+			return EINVAL;	/*?*/
+		lin6 = (struct sockaddr_in6 *)&tir.laddr;
+		error = in6_embedscope(&l6, lin6, NULL, NULL);
+		if (error)
+			return EINVAL;	/*?*/
+		break;
+#endif
+	case AF_INET:
+	  	fin = (struct sockaddr_in *)&tir.faddr;
+		lin = (struct sockaddr_in *)&tir.laddr;
+		break;
+	default:
+		return(EINVAL);
+	}
 
 	s = splsoftnet();
-	inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr, fin->sin_port,
-	    lin->sin_addr, lin->sin_port);
+	if (is_ipv6) {
+#ifdef INET6
+		inp = in6_pcbhashlookup(&tcbtable, &f6,
+		    fin6->sin6_port, &l6, lin6->sin6_port);
+#else
+		panic("tcp_ident: cannot happen");
+#endif
+	}
+	else 
+		inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr, 
+		    fin->sin_port, lin->sin_addr, lin->sin_port);
+
 	if (inp == NULL) {
 		++tcpstat.tcps_pcbhashmiss;
-		inp = in_pcblookup(&tcbtable, &fin->sin_addr, fin->sin_port,
-		    &lin->sin_addr, lin->sin_port, 0);
-	}
+		if (is_ipv6) {
+#ifdef INET6
+			inp = in_pcblookup(&tcbtable, &f6,
+			    fin6->sin6_port, &l6, lin6->sin6_port,
+			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
+#else
+			panic("tcp_ident: cannot happen");
+#endif
+		}
+		else
+			inp = in_pcblookup(&tcbtable, &fin->sin_addr,
+			    fin->sin_port, &lin->sin_addr, lin->sin_port, 
+			    INPLOOKUP_WILDCARD);
+	}	
+
 	if (inp != NULL && (inp->inp_socket->so_state & SS_CONNECTOUT)) {
 		tir.ruid = inp->inp_socket->so_ruid;
 		tir.euid = inp->inp_socket->so_euid;
