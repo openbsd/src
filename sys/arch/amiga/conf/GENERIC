@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2000/01/09 22:00:17 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.29 2000/02/29 19:09:44 niklas Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -152,6 +152,7 @@ audio*		at aucc?
 
 # Ethernet cards
 le*		at zbus0		# Lance ethernet.
+ne*		at zbus0		# AriadneII
 ed0		at zbus0		# dp8390 ethernet
 es0		at zbus0		# SMC 91C90 ethernet
 qn0		at zbus0		# quicknet ethernet
@@ -251,9 +252,18 @@ aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 aic*	at pcmcia? function ?		# PCMCIA based aic SCSI controllers
 scsibus* at aic?
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wdc1	at isa? port 0x170 irq ?
-wd*	at wdc? drive ?
+# IDE controllers
+wdc0    at isa? port 0x1f0 irq 14 flags 0x00
+wdc1    at isa? port 0x170 irq 15 flags 0x00
+wdc*    at pcmcia? function ?
+#wdc*    at isapnp?
+
+# IDE hard drives
+wd*     at wdc? channel ? drive ? flags 0x0000
+
+# ATAPI<->SCSI
+atapiscsi* at wdc? channel ?
+scsibus* at atapiscsi?
 
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
 we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
