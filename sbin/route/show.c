@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.12 2000/01/09 23:00:13 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.13 2000/01/10 00:54:35 angelos Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.12 2000/01/09 23:00:13 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.13 2000/01/10 00:54:35 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -392,16 +392,17 @@ encap_print(rtm)
         register struct rt_msghdr *rtm;
 {
         struct sockaddr_encap *sen1 = (struct sockaddr_encap *)(rtm + 1);
-        struct sockaddr_encap *sen3 = (struct sockaddr_encap *)
-				      ((u_char *)sen1 + sizeof(*sen1));
-#if 0
-	struct sockaddr_encap *sen2 = (struct sockaddr_encap *)
-				      ((u_char *)sen3 + sizeof(*sen3));
-#endif /* 0 */
+        struct sockaddr_encap *sen3;
+	struct sockaddr_encap *sen2;
 
         u_char buffer[40];
 
         bzero(buffer, sizeof(buffer));
+
+	sen3 = (struct sockaddr_encap *) (ROUNDUP(sen1->sen_len) +
+					  (char *)sen1);
+	sen2 = (struct sockaddr_encap *) (ROUNDUP(sen3->sen_len) +
+					  (char *)sen3);
 
 	if (sen1->sen_type == SENT_IP4) {
 		inet_ntop(AF_INET, &sen1->sen_ip_src, buffer, sizeof(buffer));
