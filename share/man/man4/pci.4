@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.47 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: pci.4,v 1.48 2001/10/08 22:18:19 deraadt Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -149,6 +149,8 @@ controllers.
 .Bl -tag -width 10n -offset ind
 .It Xr an 4
 Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
+.It Xr bge 4
+Broadcom BCM570x PCI gigabit ethernet.
 .It Xr dc 4
 Various Tulip-like Ethernet
 interfaces such as the DEC/Intel 21143;
@@ -221,6 +223,8 @@ SMC 9432 10/100 Mbps Ethernet interfaces.
 VIA Technologies VT3043 and VT86C100A Ethernet interfaces.
 .It Xr wb 4
 Winbond W89C840F Ethernet interfaces.
+.It Xr wi 4
+WaveLAN/IEEE and PRISM-II 802.11DS wireless network interfaces.
 .It Xr wx 4
 Intel Gigabit Ethernet interfaces.
 .It Xr xl 4
@@ -240,6 +244,8 @@ Pijnenburg PCC-ISES hardware crypto accelerator.
 .Bl -tag -width 10n -offset ind
 .It Xr cy 4
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications devices.
+.It Xr cz 4
+Cyclades-Z series multi-port serial adapter device driver.
 .El
 .Ss Display adapters
 .Bl -tag -width 10n -offset ind
