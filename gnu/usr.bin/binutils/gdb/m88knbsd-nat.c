@@ -278,19 +278,19 @@ m88k_register_u_addr (blockend, regnum)
     case 29:
     case 30:
     case 31:
-      return (ustart + ((int) &u.u_pcb.user_state.r[0] - (int) &u) + 
+      return (ustart + ((int) &u.u_pcb.user_state.tf_r[0] - (int) &u) + 
         REGISTER_SIZE * regnum);
-    case PSR_REGNUM:  return (ustart + ((int) &u.u_pcb.user_state.epsr - (int) &u));
-    case FPSR_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.fpsr - (int) &u));
-    case FPCR_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.fpcr - (int) &u));
-    case SXIP_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.sxip - (int) &u)); 
-    case SNIP_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.snip - (int) &u)); 
-    case SFIP_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.sfip - (int) &u)); 
+    case PSR_REGNUM:  return (ustart + ((int) &u.u_pcb.user_state.tf_epsr - (int) &u));
+    case FPSR_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.tf_fpsr - (int) &u));
+    case FPCR_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.tf_fpcr - (int) &u));
+    case SXIP_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.tf_sxip - (int) &u)); 
+    case SNIP_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.tf_snip - (int) &u)); 
+    case SFIP_REGNUM: return (ustart + ((int) &u.u_pcb.user_state.tf_sfip - (int) &u)); 
     default: 
 	if (regnum < NUM_REGS)
 	    /* The register is one of those which is not defined...
 	       give it zero */
-	    return (ustart + ((int) &u.u_pcb.user_state.r[0] - (int) &u));
+	    return (ustart + ((int) &u.u_pcb.user_state.tf_r[0] - (int) &u));
 	else
 	    return (blockend + REGISTER_SIZE * regnum);
     }
@@ -366,16 +366,16 @@ fetch_kcore_registers (pcb)
 
   PRT ("fetch_kcore_registers");
   /* r0-r31 */
-  ip = &pcb->user_state.r[0];
+  ip = &pcb->user_state.tf_r[0];
   for (i = 0; i < 32; i++, ip++)
     supply_register(i, (char *)ip);
 
   /* PSR (sr) */
-  tmp = pcb->user_state.epsr & 0xFFFF;
+  tmp = pcb->user_state.tf_epsr & 0xFFFF;
   supply_register(PSR_REGNUM, (char *)&tmp);
 
   /* PC (use return address) */
-  tmp = pcb->user_state.sxip;
+  tmp = pcb->user_state.tf_sxip;
   if (target_read_memory(tmp, (char *)&tmp, sizeof(tmp)))
     tmp = 0;
   supply_register(PC_REGNUM, (char *)&tmp);
