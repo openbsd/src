@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.24 2003/06/28 18:12:31 jason Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.25 2003/06/28 18:22:14 jason Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -395,12 +395,20 @@ amd7930_set_params(addr, setmode, usemode, p, r)
 	case AUDIO_ENCODING_ULAW:
 		break;
 	case AUDIO_ENCODING_SLINEAR:
+	case AUDIO_ENCODING_SLINEAR_BE:
+	case AUDIO_ENCODING_SLINEAR_LE:
 		p->sw_code = slinear8_to_mulaw;
 		r->sw_code = mulaw_to_slinear8;
 		break;
 	case AUDIO_ENCODING_ULINEAR:
+	case AUDIO_ENCODING_ULINEAR_BE:
+	case AUDIO_ENCODING_ULINEAR_LE:
 		p->sw_code = ulinear8_to_mulaw;
 		r->sw_code = mulaw_to_ulinear8;
+		break;
+	case AUDIO_ENCODING_ALAW:
+		p->sw_code = alaw_to_mulaw;
+		r->sw_code = mulaw_to_alaw;
 		break;
 	default:
 		return (EINVAL);
@@ -431,6 +439,12 @@ amd7930_query_encoding(addr, fp)
 	case 2:
 		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 3:
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
+		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
