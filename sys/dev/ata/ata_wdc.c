@@ -281,7 +281,6 @@ again:
 			ata_bio->nbytes = xfer->c_bcount;
 			cmd = (ata_bio->flags & ATA_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
-			nblks = ata_bio->nblks;
 	    		/* Init the DMA channel. */
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
@@ -514,7 +513,6 @@ end:
 	return 1;
 }
 
-
 void
 wdc_ata_bio_kill_xfer(chp, xfer)
 	struct channel_softc *chp;
@@ -541,8 +539,6 @@ wdc_ata_bio_done(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct ata_bio *ata_bio = xfer->cmd;
-	int drive = xfer->drive;
-	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, 
@@ -550,11 +546,6 @@ wdc_ata_bio_done(chp, xfer)
 	    DEBUG_XFERS);
 
 	timeout_del(&chp->ch_timo);
-	if (ata_bio->error == NOERROR)
-		drvp->n_dmaerrs = 0;
-	else if (drvp->n_dmaerrs >= NERRS_MAX) {
-		wdc_downgrade_mode(drvp);
-	}
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;
@@ -599,6 +590,8 @@ again:
 		errstring = "recal";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 	/* fall through */
