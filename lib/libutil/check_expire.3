@@ -1,4 +1,4 @@
-.\"	$OpenBSD: check_expire.3,v 1.1 2000/11/27 05:55:47 millert Exp $
+.\"	$OpenBSD: check_expire.3,v 1.2 2001/07/13 22:14:07 millert Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -29,6 +29,7 @@
 .Nm check_expire
 .Nd check for password expiration
 .Sh SYNOPSIS
+.Fd #include <stdio.h>
 .Fd #include <util.h>
 .Ft int
 .Fn login_check_expire "FILE *back" "struct passwd *pwd" "char *class" "int lastchance"
