@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.8 2000/06/06 18:29:46 millert Exp $	*/
+/*	$OpenBSD: quot.c,v 1.9 2000/06/07 03:55:03 millert Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.8 2000/06/06 18:29:46 millert Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.9 2000/06/07 03:55:03 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -538,17 +538,16 @@ quot(name, mp)
 	 * XXX this is completely broken.  Of course you can't read a
 	 * directory, well, not anymore.  How to fix this, though...
 	 */
-	if ((fd = open(name, 0)) < 0
-	    || lseek(fd, SBOFF, 0) != SBOFF
-	    || read(fd, superblock, SBSIZE) != SBSIZE) {
+	if ((fd = open(name, 0)) < 0) {
 		warn("%s", name);
-		close(fd);
 		return;
 	}
-	if (((struct fs *)superblock)->fs_magic != FS_MAGIC
+	if (lseek(fd, SBOFF, 0) != SBOFF
+	    || read(fd, superblock, SBSIZE) != SBSIZE
+	    || ((struct fs *)superblock)->fs_magic != FS_MAGIC
 	    || ((struct fs *)superblock)->fs_bsize > MAXBSIZE
 	    || ((struct fs *)superblock)->fs_bsize < sizeof(struct fs)) {
-		fprintf(stderr, "%s: not a BSD filesystem\n", name);
+		warnx("%s: not a BSD filesystem", name);
 		close(fd);
 		return;
 	}
@@ -567,7 +566,7 @@ main(argc, argv)
 	char **argv;
 {
 	int cnt, all, i;
-	char dev[MNAMELEN], *nm, *mountpoint;
+	char dev[MNAMELEN], *nm, *mountpoint, *cp;
 	struct statfs *mp;
 	
 	all = 0;
@@ -623,17 +622,28 @@ main(argc, argv)
 		}
 	}
 	for (; --argc >= 0; argv++) {
-		nm = *argv;
 		mountpoint = NULL;
+		nm = *argv;
+
+		/* Remove trailing slashes from name. */
+		cp = nm + strlen(nm);
+		while (*(--cp) == '/' && cp != nm)
+			*cp = '\0';
 
 		/* Look up the name in the mount table. */
 		for (i = 0; i < cnt; i++) {
+			/* Remove trailing slashes from name. */
+			cp = mp[i].f_mntonname + strlen(mp[i].f_mntonname);
+			while (*(--cp) == '/' && cp != mp[i].f_mntonname)
+				*cp = '\0';
+
 			if ((!strcmp(mp->f_fstypename, MOUNT_FFS) ||
 			     !strcmp(mp->f_fstypename, MOUNT_MFS) ||
 			     !strcmp(mp->f_fstypename, "ufs")) &&
-			    strcmp(*argv, mp[i].f_mntonname) == 0) {
+			    strcmp(nm, mp[i].f_mntonname) == 0) {
 				nm = mp[i].f_mntfromname;
 				mountpoint = mp[i].f_mntonname;
+				break;
 			}
 		}
 
