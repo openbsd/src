@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.222 2001/01/23 04:37:44 krw Exp $
+#	$OpenBSD: GENERIC,v 1.223 2001/01/24 10:25:42 hugh Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -20,6 +20,9 @@ option		UVM		# use the UVM virtual memory system
 #option		USER_LDT	# user-settable LDT; used by WINE
 option		XSERVER		# diddle with console driver
 option		APERTURE	# in-kernel aperture driver for XFree86
+
+#option		KGDB		# Remote debugger support; exclusive of DDB
+#option		"KGDB_DEVNAME=\"pccom\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
 #option		DUMMY_NOPS	# speed hack; recommended
 
