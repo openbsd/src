@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 1996/07/06 23:59:36 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 1996/07/15 07:35:13 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -51,6 +51,8 @@ bdev_decl(sd);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
+#include "uk.h"
+cdev_decl(uk);
 #include "acd.h"
 bdev_decl(acd);
 #include "mcd.h"
@@ -217,7 +219,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_disk_init(NCCD,ccd),	/* 18: concatenated disk driver */
 	cdev_ss_init(NSS,ss),           /* 19: SCSI scanner */
-	cdev_notdef(),			/* 20 */
+	cdev_uk_init(NUK,uk),		/* 20: unknown SCSI */
 	cdev_ocis_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
