@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.21 2003/12/25 23:15:58 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.22 2003/12/25 23:21:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -70,9 +70,9 @@ u_int32_t		rtseq = 1;
 pid_t			pid;
 
 #define	F_BGPD_INSERTED		0x0001
-#define F_KERNEL		0x0002
+#define	F_KERNEL		0x0002
 #define	F_CONNECTED		0x0004
-#define F_NEXTHOP		0x0008
+#define	F_NEXTHOP		0x0008
 
 int
 kroute_init(void)
@@ -89,7 +89,6 @@ kroute_init(void)
 	pid = getpid();
 
 	RB_INIT(&krt);
-
 	kroute_fetchtable();
 
 	return (s);
@@ -136,8 +135,6 @@ retry:
 			} else			/* nexthop invalid */
 				return (-1);
 			break;
-		case EEXIST:	/* connected route */
-			return (-2);
 		default:
 			logit(LOG_INFO, "kroute_msg: %s", strerror(errno));
 			return (-1);
