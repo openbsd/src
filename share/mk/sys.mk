@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.30 2002/09/10 21:36:57 deraadt Exp $
+#	$OpenBSD: sys.mk,v 1.31 2003/01/14 22:41:38 mickey Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -34,6 +34,8 @@ CC?=		cc
 
 .if (${MACHINE_ARCH} == "m88k")
 CFLAGS?=	-O0 ${PIPE} ${DEBUG}
+.elif (${MACHINE_ARCH} == "hppa")
+CFLAGS?=	-O2 -fno-stack-protector ${PIPE} ${DEBUG}
 .else
 CFLAGS?=	-O2 ${PIPE} ${DEBUG}
 .endif
