@@ -1,5 +1,22 @@
-.\"
-.\" $Id: groff_mm.man,v 1.1.1.3 1996/09/15 01:56:33 etheisen Exp $
+.ig \"-*- nroff -*-
+Copyright (C) 1991-1995 Free Software Foundation, Inc.
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+Permission is granted to copy and distribute modified versions of this
+manual under the conditions for verbatim copying, provided that the
+entire resulting derived work is distributed under the terms of a
+permission notice identical to this one.
+
+Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that this permission notice may be included in
+translations approved by the Free Software Foundation instead of in
+the original English.
+..
+.\" $Id: groff_mm.man,v 1.2 1997/04/22 14:07:31 kstailey Exp $
 .\"
 .de T2
 .ne 2v
@@ -18,7 +35,7 @@
 groff_mm \- groff mm macros
 .SH SYNOPSIS
 .B groff
-.B \-m@TMAC_M@
+.B \-m@TMAC_M_PREFIX@m
 [
 .IR options .\|.\|.
 ]
@@ -38,9 +55,16 @@ the macros OK and PM is not implemented.
 .B \(bu
 groff mm does not support cut marks
 .LP
-\fBm@TMAC_M@\fP is intended to be international. Therefore it is 
+\fBm@TMAC_M_PREFIX@m\fP is intended to be international. Therefore it is 
 possible to write short national macrofiles which change all
-english text to the preferred language. Use \fBm@TMAC_M@se\fP as an example.
+english text to the preferred language. Use \fBm@TMAC_M_PREFIX@mse\fP as an example.
+.LP
+New macros: \fBAPP\fP, \fBAPPSK\fP, \fBB1\fP, \fBB2\fP, \fBBVL\fP,
+\fBCOVER\fP, \fBCOVEND\fP, \fBGETHN\fP, \fBGETPN\fP, \fBGETR\fP,
+\fBGETST\fP, \fBINITR\fP, \fBMC\fP, \fBMOVE\fP, \fBMULB\fP,
+\fBMULN\fP, \fBMULE\fP, \fBPGFORM\fP, \fBPGNH\fP, \fBSETR\fP,
+\fBTAB\fP, \fBVERBON\fP, \fBVERBOFF\fP.
+.LP
 .\"########################################################################
 .LP
 A file called \fBlocale\fP or \fIlang\fP\fB_locale\fP is read
@@ -187,9 +211,6 @@ room number or name and up to three extra arguments.
 Approval signature, generates an approval line with place for
 signature and date. The string \fBAPPROVED:\fP can be changed
 with variable \fBLetapp\fP, and the string \fBDate\fP in \fBLetdate\fP.
-.TP
-.B "AVL [name]"
-Letter signature, generates a line with place for signature. 
 .TP
 .B "B [bold-text [prev-font-tex [bold...]]]"
 Begin boldface
@@ -388,19 +409,12 @@ change the numbering.
 It is possible to use \fB.af\fP to change the format of the number.
 If number register \fBOf\fP is 1, then the format of title
 will use a dash instead of a dot after the number.
-.br
 The string \fBLe\fP controls the title of the
 List of Equations, default is \fILIST OF EQUATIONS\fP.
-The List of Equations will only be printed if number register \fBLe\fP
-is 1, default 0.
 The string \fBLiec\fP contains the word \fIEquation\fP, wich
 is printed before the number.
-If \fIrefname\fP is used, then the equation number is saved with
+If \fIrefname\fP is used, then the equationnumber is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
-.br
-Special handling of the title will occur if
-\fBEC\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
-affected by the format of \fBDS\fP.
 .TP
 .B "EF [arg]"
 Even-page footer, printed just above the normal page footer
@@ -439,20 +453,14 @@ number register \fBEq\fP is 1. Then the label will appear at the
 left margin.
 .TP
 .B "EX [title [override [flag [refname]]]]"
-Exhibit title, arguments are the same as for \fBEC\fP.
+Exhibit title, arguments are the same as for \fBEC\fP
 \fBEX\fP uses the number register \fBEx\fP as counter.
 The string \fBLx\fP controls the title of the
 List of Exhibits, default is \fILIST OF EXHIBITS\fP.
-The List of Exhibits will only be printed if number register \fBLx\fP
-is 1, default 1.
 The string \fBLiex\fP contains the word \fIExhibit\fP, wich
 is printed before the number.
-If \fIrefname\fP is used, then the exhibit number is saved with
+If \fIrefname\fP is used, then the exhibitnumber is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
-.br
-Special handling of the title will occur if
-\fBEX\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
-affected by the format of \fBDS\fP.
 .TP
 .B "FC [closing]"
 Prints \fIYours\ very\ truly,\fP as a formal closing of a letter or
@@ -485,26 +493,15 @@ justification (ljust).
 .fi
 .DT
 Argument greater than or equal to 11 is considered as arg 0.
-Default for m@TMAC_M@m is 10.
+Default for m@TMAC_M_PREFIX@mm is 10.
 .TP
 .B FE
 Footnote end.
 .TP
 .B "FG [title [override [flag [refname]]]]"
-Figure title, arguments are the same as for \fBEC\fP.
-\fBFG\fP uses the number register \fBFg\fP as counter.
-The string \fBLf\fP controls the title of the
-List of Figures, default is \fILIST OF FIGURES\fP.
-The List of Figures will only be printed if number register \fBLf\fP
-is 1, default 1.
-The string \fBLifg\fP contains the word \fIFigure\fP, wich
-is printed before the number.
-If \fIrefname\fP is used, then the figure number is saved with
+Figure title.
+If \fIrefname\fP is used, then the figurenumber is saved with
 \&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
-.br
-Special handling of the title will occur if
-\fBFG\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
-affected by the format of \fBDS\fP.
 .TP
 .B "FS [label]"
 Footnote start.
@@ -755,52 +752,6 @@ See \fBI\fP.
 .B IE
 Ends the address-specification after \fPIA\fP.
 .TP
-.B "INITI filename [type]"
-Initialize the new index system, sets the filename to collect
-index lines in with \fBIND\fP. Argument \fItype\fP selects
-teh type of index, page number, header marks or both.
-The default is \fIN\fP.
-.sp
-\fBtype\fP
-.in +.5i
-.T2 N
-Page numbers
-.T2 H
-Header marks
-.T2 B
-Both page numbers and header marks, tab separated
-.in
-.TP
-.B "IND arg1 [arg2 [...]]"
-\fBIND\fP writes a line in the index file selected by \fBINITI\fP
-with all arguments and the page number or header mark separated by tabs.
-.in +.5i
-\fBExamples\fP
-.br
-arg1\etpage number
-.br
-arg1\etarg2\etpage number
-.br
-arg1\etheader mark
-.br
-arg1\etpage number\etheader mark
-.in
-.TP
-.B "INDP"
-\fBINDP\fP prints the index by running the command specified
-by string variable \fBIndcmd\fP, normally \fIsort\ -t\et\fP.
-\fBINDP\fP reads the output from the command to form
-the index, normally in two columns (can be changed by defining \fBTYIND\fP).
-The index is printed with string variable \fBIndex\fP as header,
-default is \fBINDEX\fP. One-column processing is
-returned after the list. \fBINDP\fP will call the
-user-defined macros \fBTXIND\fP, \fBTYIND\fP and \fBTZIND\fP if defined.
-\fBTXIND\fP is called before printing \fBINDEX\fP, \fBTYIND\fP
-is called instead of printing \fBINDEX\fP. \fBTZIND\fP is called
-after the printing and should take care of restoring to normal
-operation again.
-
-.TP
 .B "INITR filename"
 Initialize the refencemacros. References will be written to
 \fIfilename.tmp\fP and \fIfilename.qrf\fP. Requires two passes with groff.
@@ -877,12 +828,7 @@ List item precedes every item in a list. Without argument \fBLS\fP
 will print the mark determined by the current list type. By giving
 \fBLI\fP one argument, it will use that as the mark instead.
 Two arguments to \fBLI\fP will make \fImark\fP a prefix to
-the current mark.
-There will be no separating space between the prefix
-and the mark if the second argument is \fB2\fP instead of \fB1\fP.
-This behaviour can also be achieved by setting number register
-\fBLimsp\fP to zero.
-A zero length \fImark\fP will make a hanging
+the current mark. A zero length \fImark\fP will make a hanging
 indent instead.
 .sp
 A blank line is normally printed before the list item. This behaviour
@@ -1123,7 +1069,7 @@ on the first page.
 .TP
 .B PE
 Picture end.
-Ends a picture for \fB@TMAC_M@pic\fP, see the manual for \fB@TMAC_M@pic\fP.
+Ends a picture for \fB@g@pic\fP, see the manual for \fB@g@pic\fP.
 .TP
 .B "PF [arg]"
 Page footer.
@@ -1270,18 +1216,9 @@ to avoid this.
 reset tabs to every 5n. Normally used to reset any previous tabpositions.
 .TP
 .B "TB [title [override [flag [refname]]]]"
-Table title, arguments are the same as for \fBEC\fP.
-\fBTB\fP uses the number register \fBTb\fP as counter.
-The string \fBLt\fP controls the title of the
-List of Tables, default is \fILIST OF TABLES\fP.
-The List of Tables will only be printed if number register \fBLt\fP
-is 1, default 1.
-The string \fBLitb\fP contains the word \fITABLE\fP, wich
-is printed before the number.
-.br
-Special handling of the title will occur if
-\fBTB\fP is used inside \fBDS\fP/\fBDE\fP, it will not be
-affected by the format of \fBDS\fP.
+Table title.
+If \fIrefname\fP is used, then the tablenumber is saved with
+\&\fB.SETR\fP, and can be retrieved with \fB.GETST\fP \fIrefname\fP.
 .TP
 .B "TC [slevel [spacing [tlevel [tab [h1 [h2 [h3 [h4 [h5]]]]]]]]]"
 Table of contents.
@@ -1304,10 +1241,6 @@ table of contents.
 The user-defined macros \fBTX\fP and \fBTY\fP are used if \fBTC\fP is called
 with at most four arguments. \fBRX\fP is called before the printing
 of \fICONTENTS\fP, and \fBTY\fP is called instead of printing \fICONTENTS\fP.
-.sp
-Equivalent macros can be defined for list of figures, tables, equations
-and excibits by defining \fBTXxx\fP or \fBTYxx\fP, where \fBxx\fP
-is \fBFg\fP, \fBTB\fP, \fBEC\fP or \fBEX\fP.
 .sp
 String \fBCi\fP can be set to control the indentations for each heading-level.
 It must be scaled, like \fB.ds\ Ci\ .25i\ .5i\ .75i\ 1i\ 1i\fP.
@@ -1439,7 +1372,7 @@ Floating displays does not generate line break.
 .LP
 .\"########################################################################
 .LP
-.B "Strings used in m@TMAC_M@:"
+.B "Strings used in m@TMAC_M_PREFIX@m:"
 .TP
 .B App
 A string containing the word "APPENDIX".
@@ -1455,12 +1388,6 @@ Nonnumeric fontnames may also be used.
 Pointsize list for headings. Normally "0 0 0 0 0 0 0" which is the same as
 "10 10 10 10 10 10 10".
 .TP
-.B Index
-.TP
-Contains \fIINDEX\fP.
-.B Indcmd
-.TP
-Contains the index command, \fIsort\ -t\et\fP.
 .B Lifg
 String containing \fIFigure\fP.
 .TP
@@ -1560,7 +1487,7 @@ Contains \e(tm, trade mark.
 Argument to \fB.nm\fP in \fB.VERBON\fP, default: \fB1\fP.
 .\"-----------------------------------
 .LP
-.B "Number variables used in m@TMAC_M@:"
+.B "Number variables used in m@TMAC_M_PREFIX@m:"
 .TP
 .B Aph
 Print an appendix-page for every new appendix 
@@ -1658,13 +1585,6 @@ Default: Lf=1, Lt=1, Lx=1, Le=0.
 .TP
 .B Li
 List indent, used by .AL, default 6.
-.TP
-.B Limsp
-Flag for space between prefix and mark in automatic lists (.AL).
-.br
-0\ ==\ no space
-.br
-1\ ==\ space
 .TP
 .B Ls
 List space, if current listlevel > Ls then no spacing will occur around lists.
@@ -1794,7 +1714,7 @@ variable \fBlet*lo-\fP\fItype\fP.
 Jörgen Hägg, Lund, Sweden <jh@axis.se>.
 .SH FILES
 .TP
-.B @MACRODIR@/tmac.@TMAC_M@
+.B @MACRODIR@/tmac.@TMAC_M_PREFIX@m
 .TP
 .B @TMAC_MDIR@/*.cov
 .TP
@@ -1809,4 +1729,4 @@ Jörgen Hägg, Lund, Sweden <jh@axis.se>.
 .BR @g@eqn (@MAN1EXT@)
 .br
 .BR mm (@MAN7EXT@)
-.BR m@TMAC_M@se (@MAN7EXT@)
+.BR m@TMAC_M_PREFIX@mse (@MAN7EXT@)

@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 // A front end for groff.
 
@@ -50,11 +50,6 @@ extern "C" {
 }
 #endif /* not STDLIB_H_DECLARES_PUTENV */
 
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-/* defined in <string.h> in NetBSD */
-const char *strsignal(int);
-#endif
-
 const int SOELIM_INDEX = 0;
 const int REFER_INDEX = SOELIM_INDEX + 1;
 const int PIC_INDEX = REFER_INDEX + 1;
@@ -79,6 +74,7 @@ public:
   void set_name(const char *, const char *);
   const char *get_name();
   void append_arg(const char *, const char * = 0);
+  void insert_arg(const char *);
   void clear_args();
   char **get_argv();
   void print(int is_last, FILE *fp);
@@ -95,7 +91,7 @@ void print_commands();
 void append_arg_to_string(const char *arg, string &str);
 void handle_unknown_desc_command(const char *command, const char *arg,
 				 const char *filename, int lineno);
-const char *basename(const char *);
+const char *xbasename(const char *);
 
 void usage();
 void help();
@@ -117,7 +113,7 @@ int main(int argc, char **argv)
     command_prefix = PROG_PREFIX;
   commands[TROFF_INDEX].set_name(command_prefix, "troff");
   while ((opt = getopt(argc, argv,
-		       "itpeRszavVhblCENXZF:m:T:f:w:W:M:d:r:n:o:P:L:"))
+		       "itpeRsSzavVhblCENXZF:m:T:f:w:W:M:d:r:n:o:P:L:"))
 	 != EOF) {
     char buf[3];
     buf[0] = '-';
@@ -172,6 +168,10 @@ int main(int argc, char **argv)
     case 'E':
     case 'b':
       commands[TROFF_INDEX].append_arg(buf);
+      break;
+    case 'S':
+      commands[PIC_INDEX].append_arg(buf);
+      commands[TROFF_INDEX].insert_arg("-msafer");
       break;
     case 'T':
       if (strcmp(optarg, "Xps") == 0) {
@@ -236,7 +236,7 @@ int main(int argc, char **argv)
   }
   if (driver)
     commands[POST_INDEX].set_name(driver);
-  int gxditview_flag = driver && strcmp(basename(driver), GXDITVIEW) == 0;
+  int gxditview_flag = driver && strcmp(xbasename(driver), GXDITVIEW) == 0;
   if (gxditview_flag && argc - optind == 1) {
     commands[POST_INDEX].append_arg("-title");
     commands[POST_INDEX].append_arg(argv[optind]);
@@ -284,7 +284,8 @@ int main(int argc, char **argv)
   commands[TROFF_INDEX].append_arg("-T", device);
   commands[EQN_INDEX].append_arg("-T", device);
 
-  for (int first_index = 0; first_index < TROFF_INDEX; first_index++)
+  int first_index;
+  for (first_index = 0; first_index < TROFF_INDEX; first_index++)
     if (commands[first_index].get_name() != 0)
       break;
   if (optind < argc) {
@@ -312,10 +313,10 @@ int main(int argc, char **argv)
     print_commands();
     exit(0);
   }
-  exit(run_commands());
+  return run_commands();
 }
 
-const char *basename(const char *s)
+const char *xbasename(const char *s)
 {
   if (!s)
     return 0;
@@ -352,7 +353,8 @@ void handle_unknown_desc_command(const char *command, const char *arg,
 
 void print_commands()
 {
-  for (int last = SPOOL_INDEX; last >= 0; last--)
+  int last;
+  for (last = SPOOL_INDEX; last >= 0; last--)
     if (commands[last].get_name() != 0)
       break;
   for (int i = 0; i <= last; i++)
@@ -415,6 +417,14 @@ void possible_command::append_arg(const char *s, const char *t)
   args += '\0';
 }
 
+void possible_command::insert_arg(const char *s)
+{
+  string str(s);
+  str += '\0';
+  str += args;
+  args = str;
+}
+
 void possible_command::build_argv()
 {
   if (argv)
@@ -466,7 +476,8 @@ void append_arg_to_string(const char *arg, string &str)
   str += ' ';
   int needs_quoting = 0;
   int contains_single_quote = 0;
-  for (const char *p = arg; *p != '\0'; p++)
+  const char*p;
+  for (p = arg; *p != '\0'; p++)
     switch (*p) {
     case ';':
     case '&':
@@ -523,7 +534,7 @@ char **possible_command::get_argv()
 void synopsis()
 {
   fprintf(stderr,
-"usage: %s [-abehilpstvzCENRVXZ] [-Fdir] [-mname] [-Tdev] [-ffam] [-wname]\n"
+"usage: %s [-abehilpstvzCENRSVXZ] [-Fdir] [-mname] [-Tdev] [-ffam] [-wname]\n"
 "       [-Wname] [ -Mdir] [-dcs] [-rcn] [-nnum] [-olist] [-Parg] [-Larg]\n"
 "       [files...]\n",
 	  program_name);
@@ -564,6 +575,7 @@ void help()
 "-Parg\tpass arg to the postprocessor\n"
 "-Larg\tpass arg to the spooler\n"
 "-N\tdon't allow newlines within eqn delimiters\n"
+"-S\tenable safer mode\n"
 "\n",
 	stderr);
   exit(0);

@@ -5,6 +5,7 @@ NORMALFILES=$(TMAC_ANDOC) tmac.pic tmac.ps tmac.psnew tmac.psold tmac.pspic \
       tmac.lj4 eqnrc troffrc tmac.safer
 SPECIALFILES=$(TMAC_AN) tmac.s
 STRIPFILES=tmac.e tmac.doc tmac.doc.old
+# MDOCFILES=doc-common doc-ditroff doc-nroff doc-syms
 mdocdir=$(tmacdir)/mdoc
 CLEANADD=stamp-strip stamp-wrap tmac.e-s tmac.doc-s tmac.doc.old-s \
  doc-common-s doc-ditroff-s doc-nroff-s doc-syms-s *-wrap

@@ -1,5 +1,5 @@
-GROFF_LIBDIR = /usr/share
-GROFF_FONTDIR = $(GROFF_LIBDIR)/groff_font
+GROFF_LIBDIR = /usr/local/lib/groff
+GROFF_FONTDIR = $(GROFF_LIBDIR)/font
 GROFF_FONTPATH = .:$(GROFF_FONTDIR):/usr/local/lib/font:/usr/lib/font
 DPIS = 75 100
 

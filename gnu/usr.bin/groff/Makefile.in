@@ -64,7 +64,7 @@ DVIPRINT=@DVIPRINT@
 g=@g@
 
 # Common prefix for installation directories.
-# Used in definitions of exec_prefix, datasubdir, fontpath, manroot.
+# Used in definitions of exec_prefix, datasubdir, fontpath, mandir.
 # This must already exist when you do make install.
 prefix=@prefix@
 
@@ -130,20 +130,20 @@ indexname=Ind
 # otherwise the supplied eign file will be used.
 common_words_file=$(datasubdir)/eign
 
-# manroot is the root of the man page directory tree.
-manroot=$(prefix)/man
+# mandir is the root of the man page directory tree.
+mandir=@mandir@
 
 # man1ext is the man section for user commands.
 man1ext=1
-man1dir=$(manroot)/man$(man1ext)
+man1dir=$(mandir)/man$(man1ext)
 
 # man5ext is the man section for file formats.
 man5ext=5
-man5dir=$(manroot)/man$(man5ext)
+man5dir=$(mandir)/man$(man5ext)
 
 # man7ext is the man section for macros.
 man7ext=7
-man7dir=$(manroot)/man$(man7ext)
+man7dir=$(mandir)/man$(man7ext)
 
 # DEFINES should include the following:
 # -DHAVE_MMAP			if you have mmap() and <sys/mman.h>
@@ -235,7 +235,7 @@ MDEFINES="MAKEOVERRIDES=$(MAKEOVERRIDES)" \
   "tmacdir=$(tmacdir)" "tmacpath=$(tmacpath)" \
   "indexext=$(indexext)" "indexdir=$(indexdir)" \
   "indexname=$(indexname)" "common_words_file=$(common_words_file)" \
-  "manroot=$(manroot)" "man1ext=$(man1ext)" "man1dir=$(man1dir)" \
+  "mandir=$(mandir)" "man1ext=$(man1ext)" "man1dir=$(man1dir)" \
   "man5ext=$(man5ext)" "man5dir=$(man5dir)" \
   "man7ext=$(man7ext)" "man7dir=$(man7dir)" \
   "tmac_wrap=$(tmac_wrap)" "sys_tmac_prefix=$(sys_tmac_prefix)" \
@@ -395,7 +395,7 @@ uninstall: uninstall_sub uninstall_dirs
 .PHONY: uninstall_dirs
 uninstall_dirs:
 # Use rmdir here so that the directories are only removed if they're empty
-	-rmdir $(man1dir) $(man5dir) $(man7dir) $(manroot) \
+	-rmdir $(man1dir) $(man5dir) $(man7dir) $(mandir) \
 	  $(tmacdir) $(fontdir) $(bindir) $(datasubdir) $(datadir)
 
 

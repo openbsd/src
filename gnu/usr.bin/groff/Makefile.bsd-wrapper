@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1997/04/21 17:42:33 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1997/04/22 14:07:25 kstailey Exp $
 
 #
 # groff config
@@ -15,32 +15,32 @@ GNUCXXFLAGS=	CCFLAGS="${CXXFLAGS}"
 CLEANFILES=	config.cache config.log pic/pic.cc eqn/eqn.cc \
 		refer/label.cc pic/pic.tab.h eqn/eqn.tab.h ${MANALL}
 
-# All of groff's man pages have a .man extension.  Sigh.
+# All of groff's man pages have a .n extension.  Sigh.
 MANLOCALBUILD=	yes
 
-MAN_SRC1=	addftinfo/addftinfo.man groff/groff.man troff/troff.man \
-	tbl/tbl.man pic/pic.man eqn/eqn.man grops/grops.man grotty/grotty.man \
-	grodvi/grodvi.man tfmtodit/tfmtodit.man grolj4/grolj4.man \
-	hpftodit/hpftodit.man refer/refer.man lookbib/lookbib.man \
-	indxbib/indxbib.man lkbib/lkbib.man soelim/soelim.man \
-	pfbtops/pfbtops.man psbb/psbb.man \
-	afmtodit/afmtodit.man grog/grog.man nroff/nroff.man
-MAN_SRC5=	man/groff_font.man man/groff_out.man
-MAN_SRC7=	man/groff_char.man tmac/groff_ms.man tmac/me.man \
-	tmac/msafer.man mm/groff_mm.man mm/groff_mmse.man
+MAN_SRC1=	addftinfo/addftinfo.n groff/groff.n troff/troff.n \
+	tbl/tbl.n pic/pic.n eqn/eqn.n grops/grops.n grotty/grotty.n \
+	grodvi/grodvi.n tfmtodit/tfmtodit.n grolj4/grolj4.n \
+	hpftodit/hpftodit.n refer/refer.n lookbib/lookbib.n \
+	indxbib/indxbib.n lkbib/lkbib.n soelim/soelim.n \
+	pfbtops/pfbtops.n psbb/psbb.n \
+	afmtodit/afmtodit.n grog/grog.n nroff/nroff.n
+MAN_SRC5=	man/groff_font.n man/groff_out.n
+MAN_SRC7=	man/groff_char.n tmac/groff_ms.n tmac/me.n \
+	tmac/msafer.n mm/groff_mm.n mm/groff_mmse.n
 
-MAN_BUILD1=	${MAN_SRC1:S/.man$/.cat1/g}
-MAN_BUILD5=	${MAN_SRC5:S/.man$/.cat5/g}
-MAN_BUILD7=	${MAN_SRC7:S/.man$/.cat7/g}
+MAN_BUILD1=	${MAN_SRC1:S/.n$/.cat1/g}
+MAN_BUILD5=	${MAN_SRC5:S/.n$/.cat5/g}
+MAN_BUILD7=	${MAN_SRC7:S/.n$/.cat7/g}
 
 # Only use for cleaning!
 MANALL=		${MAN_BUILD1} ${MAN_BUILD5} ${MAN_BUILD7}
 
 MLINKS=	groff_ms.7 ms.7 groff_mm.7 mm.7
 
-.SUFFIXES: .man .cat1 .cat5 .cat7
+.SUFFIXES: .n .cat1 .cat5 .cat7
 
-.man.cat1 .man.cat5 .man.cat7:
+.n.cat1 .n.cat5 .n.cat7:
 	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
 	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
 
@@ -50,10 +50,12 @@ all: config.status gnu_build
 
 config: .FORCE
 	-rm -f config.cache
-	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
+	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
+		--mandir=${DATASUBDIR}/man
 
 config.status:
-	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX}
+	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
+		--mandir=${DATASUBDIR}/man
 
 gnu_build:
 	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS="-s ${LDSTATIC}" \
