@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.22 2002/10/15 20:48:30 markus Exp $
+ * $OpenBSD: calendar.birthday,v 1.23 2002/10/16 17:31:48 markus Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -44,6 +44,7 @@
 01/30	Franklin Delano Roosevelt born in Hyde Park, New York, 1882
 01/31	Jackie Robinson born, 1919
 02/03	Gertrude Stein born, 1874
+02/03	Paul Auster born in Newark, N.J., 1947
 02/05	Alex Harvey (SAHB) is born in Glasgow, Scotland, 1935
 02/06	King George VI of UK dies;  his daughter becomes Elizabeth II, 1952
 02/07	Sinclair Lewis born, 1885
