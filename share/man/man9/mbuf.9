@@ -1,0 +1,607 @@
+.\"     $OpenBSD: mbuf.9,v 1.3 2001/12/06 10:08:47 jjbg Exp $
+.\"
+.\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 4, 2001
+.Dt MBUF 9
+.Os
+.Sh NAME
+.Nm mbuf
+.Nd Kernel memory management for networking protocols
+.Sh SYNOPSIS
+.Fd #include <sys/mbuf.h>
+.Ft struct mbuf *
+.Fn m_copym2 "struct mbuf *m" "int off0" "int len" "int wait"
+.Ft struct mbuf *
+.Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+.Ft struct mbuf *
+.Fn m_free "struct mbuf *m"
+.Fn MFREE "struct mbuf *m" "struct mbuf *n"
+.Ft struct mbuf *
+.Fn m_get "int nowait" "int type"
+.Fn MGET "struct mbuf *m" "int how" "int type"
+.Ft struct mbuf *
+.Fn m_getclr "int nowait" "int type"
+.Ft struct mbuf *
+.Fn m_gethdr "int nowait" "int type"
+.Fn MGETHDR "struct mbuf *m" "int how" "int type"
+.Ft struct mbuf *
+.Fn m_prepend "struct mbuf *m" "int len" "int how"
+.Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
+.Ft struct mbuf *
+.Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
+.Ft struct mbuf *
+.Fn m_pullup "struct mbuf *n" "int len"
+.Ft struct mbuf *
+.Fn m_pullup2 "struct mbuf *n" "int len"
+.Ft struct mbuf *
+.Fn m_retry "int i" "int t"
+.Ft struct mbuf *
+.Fn m_retryhdr "int i" "int t"
+.Ft struct mbuf *
+.Fn m_split "struct mbuf *m0" "int len0" "int wait"
+.Ft struct mbuf *
+.Fn m_inject "struct mbuf *m0" "int len0" "int siz" "int wait"
+.Ft struct mbuf *
+.Fn m_getptr "struct mbuf *m" "int loc" "int *off"
+.Ft void
+.Fn m_adj "struct mbuf *mp" "int req_len"
+.Ft void
+.Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
+.Ft void
+.Fn m_freem "struct mbuf *m"
+.Ft void 
+.Fn m_reclaim "void"
+.Ft void
+.Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
+.Ft void
+.Fn m_cat "struct mbuf *m" "struct mbuf *n"
+.Ft struct mbuf *
+.Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" \
+"void (*func)(const void *, void *, size_t)"
+.Ft void
+.Fn m_zero "struct mbuf *m"
+.Ft int
+.Fn m_apply "struct mbuf *m" "int off" "int len" \
+"int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
+.Fn MEXTALLOC "struct mbuf *m" "int size" "int how"
+.Fn MCLGET "struct mbuf *m" "int how"
+.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" \
+"void (*free)(caddr_t, u_int, void *)" "void *arg"
+.Fn M_ALIGN "struct mbuf *m" "int len"
+.Fn MH_ALIGN "struct mbuf *m" "int len"
+.Fn M_READONLY "struct mbuf *m"
+.Fn M_LEADINGSPACE "struct mbuf *m"
+.Fn M_TRAILINGSPACE "struct mbuf *m"
+.Fn MCHTYPE "struct mbuf *m" "int type"
+.Pp
+.Bd -literal
+#define MLEN            (MSIZE - sizeof(struct m_hdr))
+#define MHLEN           (MLEN - sizeof(struct pkthdr))
+
+#define MINCLSIZE       (MHLEN + 1)
+#define M_MAXCOMPRESS   (MHLEN / 2)
+
+#define mtod(m,t)       ((t)((m)->m_data))
+
+struct m_hdr {
+        struct  mbuf *mh_next;
+        struct  mbuf *mh_nextpkt;
+        caddr_t mh_data;
+        u_int   mh_len;
+        short   mh_type;
+        short   mh_flags;
+};
+
+struct  pkthdr {
+        struct  ifnet *rcvif;
+        int     len;
+        void    *tdbi;
+
+};
+
+struct m_ext {
+        caddr_t ext_buf;
+        void    (*ext_free)
+                    __P((struct mbuf *));
+        u_int   ext_size;
+        void    (*ext_ref)
+                    __P((struct mbuf *));
+        void    *ext_handle;
+};
+
+struct mbuf {
+        struct  m_hdr m_hdr;
+        union {
+                struct {
+                        struct  pkthdr MH_pkthdr;
+                        union {
+                                struct  m_ext MH_ext;
+                                char    MH_databuf[MHLEN];
+                        } MH_dat;
+                } MH;
+                char    M_databuf[MLEN];
+        } M_dat;
+};
+
+union mcluster {
+        union   mcluster *mcl_next;
+        char    mcl_buf[MCLBYTES];
+};
+
+#define m_next          m_hdr.mh_next
+#define m_len           m_hdr.mh_len
+#define m_data          m_hdr.mh_data
+#define m_type          m_hdr.mh_type
+#define m_flags         m_hdr.mh_flags
+#define m_nextpkt       m_hdr.mh_nextpkt
+#define m_act           m_nextpkt
+#define m_pkthdr        M_dat.MH.MH_pkthdr
+#define m_ext           M_dat.MH.MH_dat.MH_ext
+#define m_pktdat        M_dat.MH.MH_dat.MH_databuf
+#define m_dat           M_dat.M_databuf
+.Ed
+.Sh DESCRIPTION
+The
+.Nm
+functions provide a way to manage the memory buffers used by the
+Several functions and macros are used to allocate and deallocate mbufs,
+but also to get, inject, remove, copy, modify, prepend or append data
+inside these mbufs.
+The size of an
+.Nm
+is MSIZE
+.Pq defined in Aq Pa machine/param.h .
+.Pp
+An
+.Nm
+structure is defined as an
+.Fa m_hdr
+structure followed by a
+union.
+The header contains the following elements:
+.Bl -tag -width foobarmoocow
+.It Fa mh_next
+A pointer to the next mbuf in the mbuf chain.
+.It Fa mh_nextpkt
+A pointer to the next mbuf chain (i.e., packet) in the queue.
+.It Fa mh_data
+Indicates the address of the beginning of data in the mbuf.
+.It Fa mh_type
+Indicates the type of data contained in the mbuf (see below).
+.It Fa mh_flags
+Flags (see below).
+.El
+.Pp
+The
+.Fa mh_type
+variable can take the following values:
+.Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
+.It Dv MT_FREE
+the mbuf should be on the free list.
+.It Dv MT_DATA
+the data in the mbuf was dynamically allocated.
+.It Dv MT_HEADER
+the data contains a packet header.
+.It Dv MT_SONAME
+the data is a socket name.
+.It Dv MT_SOOPTS
+the data are socket options.
+.It Dv MT_FTABLE
+the data is a fragment reassembly header.
+.It Dv MT_CONTROL
+the mbuf contains extra-data protocol message.
+.It Dv MT_OOBDATA
+the data consists of out-of-banddata.
+.El
+.Pp
+The
+.Fa mh_flags
+variable can take the following values:
+.Bl -tag -compact -offset indent -width XXXXXXXXXXXXXXXXXX
+.It Dv M_EXT
+mbuf has associated external storage.
+.It Dv M_PKTHDR
+the mbuf is the first that forms a packet.
+.It Dv M_EOR
+end of record.
+.It Dv M_CLUSTER
+the external storage is a cluster.
+.It Dv M_PROTO1
+protocol-specific.
+.It Dv M_BCAST
+packet send/received as link-level broadcast.
+.It Dv M_MCAST
+packet send/received as link-level multicast.
+.It Dv M_CONF
+packet was encrypted (ESP-transport).
+.It Dv M_AUTH
+packet was authenticated (AH).
+.It Dv M_COMP
+packet was compressed (IPCOMP).
+.It Dv M_IPV4_CSUM_OUT
+IPv4 checksum needed.
+.It Dv M_TCPV4_CSUM_OUT
+TCP checksum needed.
+.It Dv M_UDPV4_CSUM_OUT
+UDP checksum needed.
+.It Dv M_IPV4_CSUM_IN_OK
+IPv4 checksum verified.
+.It Dv M_IPV4_CSUM_IN_BAD
+IPv4 checksum bad.
+.It Dv M_TCP_CSUM_IN_OK
+TCP/IPv4 checksum verified.
+.It Dv M_TCP_CSUM_IN_BAD
+TCP/IPv4 checksum bad.
+.It Dv M_UDP_CSUM_IN_OK
+UDP/IPv4 checksum verified.
+.It Dv M_UDP_CSUM_IN_BAD
+UDP/IPv4 checksum bad.
+.It Dv M_ANYCAST6
+received as IPv6 anycast.
+.It Dv M_LOOP
+for mbuf statistics.
+.El
+.Pp
+An external cluster is used when the data to hold in the mbuf is
+large.
+The size of an external cluster is MCLBYTES
+.Pq also defined in Aq Pa machine/param.h .
+A cluster should be used when the size of the data reach MINCLSIZE
+(the minimum size to be held by an external cluster).
+.Pp
+The combination of the M_EXT and M_PKTHDR flags give four types of
+mbuf.
+When none of these constants are in use, the mbuf is a "normal"
+one, where the data part of the mbuf has the following elements:
+.Bl -tag -width foobarmoocow
+.It Fa m_dat
+buffer holding the data (size MLEN).
+.El
+.Pp
+When the M_PKTHDR is set, it means that the data contained in the mbuf
+is a packet header.
+The data itself is contained in the mbuf (just like the previous case)
+but 8 bytes are taken from the data portion to store a packet
+header.
+The data part has then the following elements:
+.Bl -tag -width foobarmoocow
+.It Fa m_pkthdr
+packet header, containing the length of the data, a pointer to the
+interface onwhich the data was received and a generic pointer to a
+structure containing information for IPsec processing. 
+.It Fa m_pktdat
+buffer holding the data (size MHLEN).
+.El
+.Pp
+When the M_EXT flag is set, it means that an external storage buffer
+is used to hold the data, which is no more stored in the mbuf.
+The data part of the mbuf has now the following elements:
+.Bl -tag -width foobarmoocow
+.It Fa m_pkthdr
+a packet header, just like the previous case, but it is empty.
+No information is stored here
+.It Fa m_ext
+a structure containing information about the external storage
+buffer.
+The information consists of the address of the external buffer,
+a pointer to the function used to free the buffer, a pointer to the
+arguments of the function, the size of the buffer, the type of the
+buffer, and pointers to the previous and next mbufs using this
+cluster.
+.El
+.Pp
+When both the M_EXT and M_PKTHDR flags are set, it means that an
+external storage buffer is used to store the data and this data
+contains a packet header.
+The structure used is the same than the previous one except that the
+.Fa m_pkthdr
+element is not empty, it contains the same information than when
+M_PKTHDR is used alone.
+.Pp
+.Bl -tag -width compact
+.It Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
+Make a copy of an mbuf chain starting at
+.Fa off0
+bytes from the beginning
+and continuing for
+.Fa len
+bytes.
+The
+.Fa wait
+parameter can be M_WAIT or
+M_DONTWAIT.
+It does not copy clusters, it just increases their reference count.
+.It Fn m_copym2 "struct mbuf *m" "int off0" "int len" "int wait"
+The same as
+.Fn m_copym
+except that it copies cluster mbufs, where
+.Fn m_copym
+just increase the reference count of the clusters.
+.It Fn m_free "struct mbuf *m"
+Free the mbuf pointed to by
+.Fa m .
+A pointer to the successor of the mbuf,
+if it exists, is returned by the function.
+.It Fn MFREE "m" "n"
+Free the mbuf pointed to by
+.Fa m
+and use
+.Fa n
+to point to the next mbuf in
+the chain if it exists.
+See
+.Fn m_free .
+.It Fn m_get "int nowait" "int type"
+Return a pointer to an mbuf of the type specified.
+.It Fn MGET "m" "how" "type"
+Return a pointer to an mbuf in
+.Fa m
+of the type specified.
+See
+.Fn m_get .
+.It Fn m_getclr "int nowait" "int type"
+Return a pointer to an mbuf of the type specified, and clear the data
+area of the mbuf.
+.It Fn m_gethdr "int nowait" "int type"
+Return a pointer to an mbuf after initializing it to contain a packet
+header.
+The type is specified.
+.It Fn MGETHDR "m" "int how" "int type"
+Return a pointer to an mbuf in m after initializing it to contain a
+packet header.
+See
+.Fn m_gethdr .
+.It Fn m_prepend "struct mbuf *m" "int len" "int how"
+Allocates a new mbuf and prepend it to the mbuf chain pointed to by
+.Fa m .
+If
+.Fa m
+points to an mbuf with a packet header, it is moved to the new
+mbuf that has been prepended.
+The return value is a pointer on the new mbuf chain.
+.It Fn M_PREPEND "m" "plen" "how"
+Prepend space of size
+.Fa plen
+to the mbuf pointed to by
+.Fa m .
+If a new mbuf must be allocated,
+.Fa how
+specifies whether to wait or not.
+.It Fn m_pulldown "struct mbuf *m" "int off" "int len" "int *offp"
+Ensure that the data in the mbuf chain starting at
+.Fa off
+and ending at
+.Fa off+len
+will be put in a continuous memory region.
+.Fa len
+must be smaller or equal than MCLBYTES.
+The pointer returned points to an mbuf in the chain and the new offset
+for data in this mbuf is
+.Fa *offp .
+.It Fn m_pullup "struct mbuf *n" "int len"
+Ensure that the data in the mbuf chain starting at the beginning of
+the chain and ending at
+.Fa len
+will be put in continuous memory region.
+The
+.Fa len
+argument must be smaller or equal than MHLEN.
+.It Fn m_pullup2 "struct mbuf *n" "int len"
+Just like
+.Fn m_pullup ,
+ensure that the data starting at the beginning of the mbuf chain and
+ending at
+.Fa len
+will be put in continuous memory region.
+The
+.Fa len
+argument can be up to MCLBYTES.
+.Fn m_pullup2
+will simply call
+.Fn m_pullup
+if
+.Fa len
+is smaller or equal to MHLEN.
+.It Fn m_retry "int i" "int t"
+Used when
+.Fn MGET
+fails.
+.Fn m_retry
+asks protocols to free memory space and re-attempts to allocate an mbuf.
+.It Fn m_retryhdr "int i" "int t"
+Same as
+.Fn m_retry
+except it retries a failed
+.Fn MRETRYHDR .
+.It Fn m_split "struct mbuf *m0" "int len0" "int wait"
+Attempts to split an mbuf chain in 2 pieces, returning a pointer on
+the tail (which is made of the previous mbuf chain but the first
+.Fa len0
+bytes).
+.It Fn m_inject "struct mbuf *m0" "int len0" "int siz" "int wait"
+Injects a new mbuf chain of length
+.Fa siz
+in the mbuf chain pointed to by
+.Fa m0
+at position
+.Fa len0 .
+If there is enough space for an object of size
+.Fa siz
+in the appropriate location, no memory will be allocated.
+On failure, the function returns NULL (the mbuf is left untouched) and
+on success, a pointer to the first injected mbuf is returned.
+.It Fn m_getptr "struct mbuf *m" "int loc" "int *off"
+Returns a pointer to the mbuf containing the data located at
+.Fa loc
+bytes of the beginning.
+The offset in the new mbuf is pointed to by
+.Fa off .
+.It Fn m_adj "struct mbuf *mp" "int req_len"
+Trims
+.Fa req_len
+bytes of data from the mbuf chain pointed to by
+.Fa mp .
+If
+.Fa req_len
+is positive, the data will be trimmed from the head of the mbuf chain
+and if it is negative, it will be trimmed from the tail of the mbuf
+chain.
+.It Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
+Copy data from a buffer back into the mbuf chain pointed to by
+.Fa m0
+starting at
+.Fa off
+bytes from the beginning and extending the mbuf chain if
+necessary.
+The mbufs need to be initialized properly, including the setting of
+.Fa m_len .
+.It Fn m_freem "struct mbuf *m"
+Free the mbuf chain pointed to by
+.Fa m .
+.It Fn m_reclaim "void"
+Ask protocols to free unused memory space.
+.It Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
+Copy data from the mbuf chain pointed to by
+.Fa m
+starting at
+.Fa off
+bytes from the beginning and continuing for
+.Fa len
+bytes into the buffer pointed to by
+.Fa cp .
+.It Fn m_cat "struct mbuf *m" "struct mbuf *n"
+Concatenate the mbuf chain pointed to by
+.Fa n
+to the mbuf chain pointed to by
+.Fa m .
+The mbuf chains must be of the same type.
+.It Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" \
+"void (*func)(const void *, void *, size_t)"
+Copy
+.Fa totlen
+bytes of data from device local memory pointed to by
+.Fa buf
+using the function
+.Fa func .
+The data is copied into an mbuf chain and a pointer to the head of it
+is returned.
+If
+.Fa off0
+is non-zero, it means the packet is trailer-encapsulated and
+.Fa off0
+bytes plus the type and length fields will be skipped before doing the
+copy.
+.It Fn m_zero "struct mbuf *m"
+Zeroize the data part of the mbufs in the mbuf chain pointed to by
+.Fa m
+.It Fn m_apply "struct mbuf *m" "int off" "int len" \
+"int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
+Apply the function
+.Fa func
+to the data in the mbuf chain pointed to by
+.Fa m
+starting at
+.Fa off
+bytes from the beginning and continuing for
+.Fa len
+bytes.
+.It Fn mtod "struct mbuf *m" "datatype"
+Return a pointer to the data contained in the specified mbuf
+.Fa m
+casted to
+.Fa datatype .
+.It Fn MCLGET "struct mbuf *m" "int how"
+Allocate and add an mbuf cluster to the mbuf pointed to by
+.Fa m .
+On success, the flag M_EXT is set in the mbuf.
+.It Fn MEXTALLOC "struct mbuf *m" "int size" "int how"
+Allocate external storage of size
+.Fa size
+and add it to the mbuf pointed to by
+.Fa m .
+On success, the flag M_EXT is set in the mbuf.
+.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" \
+"void (*free)(caddr_t, u_int, void *)" "void *arg"
+Add pre-allocated storage to the mbuf pointed to by
+.Fa m .
+On success, the flag M_EXT is set in the mbuf.
+.It Fn M_ALIGN "m" "len"
+Set the
+.Fa m_data
+pointer of the newly allocated mbuf with
+.Fn m_get
+or
+.Fn MGET
+pointed to by
+.Fa m
+to an object of the specified size
+.Fa len
+at the end of the mbuf, longword aligned.
+.It Fn MH_ALIGN "m" "len"
+Same as
+.Fn M_ALIGN
+except it is for an mbuf allocated with
+.Fn m_gethdr
+or
+.Fn MGETHDR .
+.It Fn M_READONLY "m"
+Check if the data of the mbuf pointed to by
+.Fa m
+is read-only.
+This is true for non-cluster external storage and for clusters that
+are being referenced by more than one mbuf.
+.It Fn M_LEADINGSPACE "m"
+Compute the amount of space available before the current start of data
+in the mbuf pointed to by
+.Fa m .
+.It Fn M_TRAILINGSPACE "m"
+Compute the amount of space available after the end of data in the
+mbuf pointed to by
+.Fa m .
+.It Fn MCHTYPE "m" "type"
+Change the type of the mbuf pointed to by
+.Fa m
+to
+.Fa type .
+.El
+.Sh SEE ALSO
+.Xr netstat 1 ,
+.Xr mbuf_tags 9 ,
+.Pa /usr/share/doc/smm/18.net.
+.Rs
+.%A Jun-Ichiro Hagino
+.%T "Mbuf issues in 4.4BSD IPv6/IPsec support (experiences from KAME IPv6/IPsec implementation)"
+.%B "Proceedings of the freenix track: 2000 USENIX annual technical conference"
+.%D June 2000
+.Re
+.Sh CODE REFERENCES
+The mbuf management functions are implemented in the files
+.Pa sys/kern/uipc_mbuf.c
+and
+.Pa sys/kern/uipc_mbuf2.c .
+The function prototypes and the macros are located in
+.Pa sys/sys/mbuf.h .
