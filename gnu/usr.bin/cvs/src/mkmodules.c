@@ -66,6 +66,7 @@ static const char *const loginfo_contents[] = {
     "# characters are:\n",
     "#\n",
     "#   s = file name\n",
+    "#   t = tag name\n",
     "#   V = old version number (pre-checkin)\n",
     "#   v = new version number (post-checkin)\n",
     "#\n",
