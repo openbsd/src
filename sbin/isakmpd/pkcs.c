@@ -1,8 +1,8 @@
-/*	$OpenBSD: pkcs.c,v 1.8 1999/03/24 16:37:17 niklas Exp $	*/
-/*	$EOM: pkcs.c,v 1.12 1999/02/25 11:39:18 niklas Exp $	*/
+/*	$Id: pkcs.c,v 1.9 1999/07/07 22:10:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,22 +48,22 @@
 #include "pkcs.h"
 
 struct norm_type RSAPublicKey[] = {
-  { TAG_INTEGER, UNIVERSAL, "modulus", 0, NULL},	/* modulus */
-  { TAG_INTEGER, UNIVERSAL, "publicExponent", 0, NULL},	/* public exponent */
-  { TAG_STOP, 0, NULL, 0, NULL}
+  { TAG_INTEGER, UNIVERSAL, "modulus", 0, 0 },		/* modulus */
+  { TAG_INTEGER, UNIVERSAL, "publicExponent", 0, 0 },	/* public exponent */
+  { TAG_STOP, 0, 0, 0, 0 }
 };
 
 struct norm_type RSAPrivateKey[] = {
-  { TAG_INTEGER, UNIVERSAL, "version", 1, "\0"},	/* version */
-  { TAG_INTEGER, UNIVERSAL, "modulus", 0, NULL},	/* modulus */
-  { TAG_INTEGER, UNIVERSAL, "publicExponent", 0, NULL},	/* public exponent */
-  { TAG_INTEGER, UNIVERSAL, "privateExponent", 0, NULL},/* private exponent */
-  { TAG_INTEGER, UNIVERSAL, "prime1", 0, NULL},		/* p */
-  { TAG_INTEGER, UNIVERSAL, "prime2", 0, NULL},		/* q */
-  { TAG_INTEGER, UNIVERSAL, "exponent1", 0, NULL},	/* d mod (p-1) */
-  { TAG_INTEGER, UNIVERSAL, "exponent2", 0, NULL},	/* d mod (q-1) */
-  { TAG_INTEGER, UNIVERSAL, "coefficient", 0, NULL},	/* inv. of q mod p */
-  { TAG_STOP, 0, NULL, 0, NULL}
+  { TAG_INTEGER, UNIVERSAL, "version", 1, "" },		/* version */
+  { TAG_INTEGER, UNIVERSAL, "modulus", 0, 0 },		/* modulus */
+  { TAG_INTEGER, UNIVERSAL, "publicExponent", 0, 0 },	/* public exponent */
+  { TAG_INTEGER, UNIVERSAL, "privateExponent", 0, 0 },	/* private exponent */
+  { TAG_INTEGER, UNIVERSAL, "prime1", 0, 0 },		/* p */
+  { TAG_INTEGER, UNIVERSAL, "prime2", 0, 0 },		/* q */
+  { TAG_INTEGER, UNIVERSAL, "exponent1", 0, 0 },	/* d mod (p-1) */
+  { TAG_INTEGER, UNIVERSAL, "exponent2", 0, 0 },	/* d mod (q-1) */
+  { TAG_INTEGER, UNIVERSAL, "coefficient", 0, 0 },	/* inv. of q mod p */
+  { TAG_STOP, 0, 0, 0, 0 }
 };
 
 /*
@@ -73,11 +73,19 @@ struct norm_type RSAPrivateKey[] = {
 int
 pkcs_mpz_to_norm_type (struct norm_type *obj, mpz_ptr n)
 {
-  obj->len = sizeof (mpz_ptr);
-  if ((obj->data = malloc (obj->len)) == NULL)
-    return 0;
+  mpz_ptr p;
 
-  mpz_init_set ((mpz_ptr) obj->data, n);
+  p = malloc (sizeof *p);
+  if (!p)
+    {
+      log_error ("pkcs_mpz_to_norm_type: malloc (%d) failed", sizeof *p);
+      return 0;
+    }
+
+  mpz_init_set (p, n);
+
+  obj->len = sizeof *p;
+  obj->data = p;
 
   return 1;
 }
@@ -90,28 +98,28 @@ u_int8_t *
 pkcs_public_key_to_asn (struct rsa_public_key *pub)
 {
   u_int8_t *erg;
-  struct norm_type *key, seq = {TAG_SEQUENCE, UNIVERSAL, NULL, 0, NULL};
+  struct norm_type *key, seq = {TAG_SEQUENCE, UNIVERSAL, 0, 0, 0 };
 
   seq.data = &RSAPublicKey;
   asn_template_clone (&seq, 1);
   key = seq.data;
-  if (key == NULL)
-    return NULL;
+  if (!key)
+    return 0;
 
   if (!pkcs_mpz_to_norm_type (&key[0], pub->n))
     {
       free (key);
-      return NULL;
+      return 0;
     }
 
   if (!pkcs_mpz_to_norm_type (&key[1], pub->e))
     {
       free (key[0].data); 
       free (key);
-      return NULL;
+      return 0;
     }
 
-  erg = asn_encode_sequence (&seq, NULL);
+  erg = asn_encode_sequence (&seq, 0);
 
   asn_free (&seq);
 
@@ -126,7 +134,7 @@ int
 pkcs_public_key_from_asn (struct rsa_public_key *pub, u_int8_t *asn,
 			  u_int32_t len)
 {
-  struct norm_type *key, seq = {TAG_SEQUENCE, UNIVERSAL, NULL, 0, NULL};
+  struct norm_type *key, seq = {TAG_SEQUENCE, UNIVERSAL, 0, 0, 0 };
 
   mpz_init (pub->n);
   mpz_init (pub->e);
@@ -134,18 +142,18 @@ pkcs_public_key_from_asn (struct rsa_public_key *pub, u_int8_t *asn,
   seq.data = RSAPublicKey;
   asn_template_clone (&seq, 1);
 
-  if (seq.data == NULL)
+  if (!seq.data)
     return 0;
 
-  if (asn_decode_sequence (asn, len, &seq) == NULL)
+  if (!asn_decode_sequence (asn, len, &seq))
     {
       asn_free (&seq);
       return 0;
     }
 
   key = seq.data;
-  mpz_set (pub->n, (mpz_ptr) key[0].data);
-  mpz_set (pub->e, (mpz_ptr) key[1].data);
+  mpz_set (pub->n, (mpz_ptr)key[0].data);
+  mpz_set (pub->e, (mpz_ptr)key[1].data);
 
   asn_free (&seq);
       
@@ -161,31 +169,21 @@ pkcs_free_public_key (struct rsa_public_key *pub)
 
 /*
  * Get ASN.1 representation of PrivateKey.
- * XXX - not sure if we need this.
+ * XXX I am not sure if we need this.
  */
 u_int8_t *
 pkcs_private_key_to_asn (struct rsa_private_key *priv)
 {
-  mpz_t d1, d2, qinv;
-  struct norm_type *key, seq = {TAG_SEQUENCE, UNIVERSAL, NULL, 0, NULL};
-  u_int8_t *erg = NULL;
+  struct norm_type *key, seq = { TAG_SEQUENCE, UNIVERSAL, 0, 0, 0 };
+  u_int8_t *erg = 0;
+
+  mpz_t tmp;
 
   seq.data = RSAPrivateKey;
   asn_template_clone (&seq, 1);
   key = seq.data;
-  if (key == NULL)
-    return NULL;
-
-  mpz_init (d1);
-  mpz_sub_ui (d1, priv->p, 1);
-  mpz_mod (d1, priv->d, d1);
-
-  mpz_init (d2);
-  mpz_sub_ui (d2, priv->q, 1);
-  mpz_mod (d2, priv->d, d2);
-
-  mpz_init (qinv);
-  mpz_invert (qinv, priv->q, priv->p);
+  if (!key)
+    return 0;
 
   if (!pkcs_mpz_to_norm_type (&key[1], priv->n))
     goto done;
@@ -202,28 +200,27 @@ pkcs_private_key_to_asn (struct rsa_private_key *priv)
   if (!pkcs_mpz_to_norm_type (&key[5], priv->q))
     goto done;
 
-  if (!pkcs_mpz_to_norm_type (&key[6], d1))
+  if (!pkcs_mpz_to_norm_type (&key[6], priv->d1))
     goto done;
 
-  if (!pkcs_mpz_to_norm_type (&key[7], d2))
+  if (!pkcs_mpz_to_norm_type (&key[7], priv->d2))
     goto done;
 
-  if (!pkcs_mpz_to_norm_type (&key[8], qinv))
+  if (!pkcs_mpz_to_norm_type (&key[8], priv->qinv))
     goto done;
 
-  mpz_set_ui (d1, 0);
+  mpz_init (tmp);
+  mpz_set_ui (tmp, 0);
 
-  if (!pkcs_mpz_to_norm_type (&key[0], d1))
+  if (!pkcs_mpz_to_norm_type (&key[0], tmp))
     goto done;
 
-  erg = asn_encode_sequence (&seq, NULL);
+  erg = asn_encode_sequence (&seq, 0);
 
  done:
+  mpz_clear (tmp);
   asn_free (&seq);
 
-  mpz_clear (d1);
-  mpz_clear (d2);
-  mpz_clear (qinv);
 
   return erg;
 }
@@ -236,7 +233,7 @@ int
 pkcs_private_key_from_asn (struct rsa_private_key *priv, u_int8_t *asn,
 			   u_int32_t len)
 {
-  struct norm_type *key, seq = {TAG_SEQUENCE, UNIVERSAL, NULL, 0, NULL};
+  struct norm_type *key, seq = { TAG_SEQUENCE, UNIVERSAL, 0, 0, 0 };
   u_int8_t *erg;
 
   mpz_init (priv->n);
@@ -244,17 +241,20 @@ pkcs_private_key_from_asn (struct rsa_private_key *priv, u_int8_t *asn,
   mpz_init (priv->q);
   mpz_init (priv->e);
   mpz_init (priv->d);
+  mpz_init (priv->d1);
+  mpz_init (priv->d2);
+  mpz_init (priv->qinv);
 
   seq.data = RSAPrivateKey;
   asn_template_clone (&seq, 1);
-  if (seq.data == NULL)
+  if (!seq.data)
     return 0;
 
   if (!(erg = asn_decode_sequence (asn, len, &seq)))
     goto done;
 
   key = seq.data;
-  if (mpz_cmp_ui ((mpz_ptr) key[0].data, 0))
+  if (mpz_cmp_ui ((mpz_ptr)key[0].data, 0))
     {
       log_print ("pkcs_set_private_key: version too high");
       erg = 0;
@@ -266,11 +266,18 @@ pkcs_private_key_from_asn (struct rsa_private_key *priv, u_int8_t *asn,
   mpz_set (priv->d, key[3].data);
   mpz_set (priv->p, key[4].data);
   mpz_set (priv->q, key[5].data);
+  mpz_set (priv->d1, key[6].data);
+  mpz_set (priv->d2, key[7].data);
+  mpz_set (priv->qinv, key[8].data);
+
+  mpz_init (priv->qinv_mul_q);
+
+  mpz_mul (priv->qinv_mul_q, priv->qinv, priv->q);
 
  done:
   asn_free (&seq);
 
-  return erg == NULL ? 0 : 1;
+  return erg ? 1 : 0;
 }
 
 void
@@ -281,12 +288,18 @@ pkcs_free_private_key (struct rsa_private_key *priv)
   mpz_clear (priv->d);
   mpz_clear (priv->p);
   mpz_clear (priv->q);
+  mpz_clear (priv->d1);
+  mpz_clear (priv->d2);
+  mpz_clear (priv->qinv);
+  mpz_clear (priv->qinv_mul_q);
 }
 
 /*
  * Creates a PKCS#1 block with data and then uses the private
  * exponent to do RSA encryption, returned is an allocated buffer
  * with the encryption result.
+ *
+ * Either pub_key or priv_key must be specified
  *
  * XXX CRIPPLED in the OpenBSD version as RSA is patented in the US.
  */
@@ -301,6 +314,7 @@ pkcs_rsa_encrypt (int art, struct rsa_public_key *pub_key,
 
 /*
  * Private Key Decryption, the 'in'-buffer is being destroyed 
+ * Either pub_key or priv_key must be specified
  *
  * XXX CRIPPLED in the OpenBSD version as RSA is patented in the US.
  */
@@ -328,8 +342,8 @@ int
 pkcs_generate_rsa_keypair (struct rsa_public_key *pubk, 
 			   struct rsa_private_key *seck, u_int32_t bits)
 {
-  /* XXX Always fail until we interface legal (in the US) RSA code.  */
-  return 0;
+-  /* XXX Always fail until we interface legal (in the US) RSA code.  */
+-  return 0;
 }
 
 /* Generate a random prime with at most bits significant bits */
