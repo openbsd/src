@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.4 1996/04/17 07:20:01 tholo Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.5 1996/07/22 01:59:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -426,6 +426,9 @@ doit(fromp)
 			errorstr = "Login incorrect.\n";
 		goto fail;
 	}
+
+	setegid(pwd->pw_gid);
+	seteuid(pwd->pw_uid);
 	if (chdir(pwd->pw_dir) < 0) {
 		(void) chdir("/");
 #ifdef notdef
@@ -436,6 +439,8 @@ doit(fromp)
 		exit(1);
 #endif
 	}
+	seteuid(0);
+	setegid(0);	/* XXX use a saved gid instead? */
 
 #ifdef	KERBEROS
 	if (use_kerberos) {

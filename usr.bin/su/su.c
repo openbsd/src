@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.4 1996/06/26 05:39:34 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.5 1996/07/22 01:58:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.4 1996/06/26 05:39:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.5 1996/07/22 01:58:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -242,10 +242,15 @@ badlogin:
 			environ = cleanenv;
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
 			(void)setenv("TERM", p, 1);
+
+			seteuid(pwd->pw_uid);
+			setegid(pwd->pw_gid);
 			if (chdir(pwd->pw_dir) < 0) {
 				fprintf(stderr, "su: no directory\n");
 				exit(1);
 			}
+			seteuid(0);
+			setegid(0);	/* XXX use a saved gid instead? */
 		}
 		if (asthem || pwd->pw_uid)
 			(void)setenv("USER", pwd->pw_name, 1);

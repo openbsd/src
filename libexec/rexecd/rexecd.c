@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.2 1996/05/26 08:34:56 deraadt Exp $";
+static char rcsid[] = "$Id: rexecd.c,v 1.3 1996/07/22 01:59:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -161,10 +161,15 @@ doit(f, fromp)
 			exit(1);
 		}
 	}
+	setegid(pwd->pw_gid);
+	seteuid(pwd->pw_uid);
 	if (chdir(pwd->pw_dir) < 0) {
 		error("No remote directory.\n");
 		exit(1);
 	}
+	seteuid(0);
+	setegid(0);	/* XXX use a saved gid instead? */
+
 	(void) write(2, "\0", 1);
 	if (port) {
 		(void) pipe(pv);
