@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.149 2004/07/31 21:27:31 brad Exp $
+.\"	$OpenBSD: options.4,v 1.150 2004/09/01 20:54:47 tom Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -1067,19 +1067,31 @@ and/or
 .Xr apmd 8 .
 .It Cd option \&"TIMEZONE=value\&"
 .Ar value
-indicates the timezone offset of hardware realtime clock device, in minutes,
+indicates the timezone offset of the hardware realtime clock device,
+in minutes,
 from UTC.
-It is useful when hardware realtime clock device is configured with local time,
+It is useful when the hardware realtime clock device is configured
+with local time,
 when dual-booting
 .Ox
 with other operating systems on a single machine.
-For instance, if hardware realtime clock is set to Tokyo time,
+For instance, if the hardware realtime clock is set to Tokyo time,
 .Ar value
 should be
 .Li \&-540
 as Tokyo local time is 9 hours ahead of UTC.
 Double quotes are needed when specifying a negative
 .Ar value .
+.It Cd option DST=value
+If
+.Ar value
+is non-zero, indicates that the hardware realtime clock device
+is one hour ahead of the offset given in
+.Sq TIMEZONE ,
+due to Daylight Saving Time (DST).
+If
+.Ar value
+is zero, the hardware realtime clock device is not in Daylight Saving Time.
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
