@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.21 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.22 1999/12/21 14:09:48 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ int    tcp_do_rfc1323 = TCP_DO_RFC1323;
 
 #ifndef TCP_DO_SACK
 #ifdef TCP_SACK
-#define TCP_DO_SACK	0	/* XXX - make this 1 when SACK is fixed */
+#define TCP_DO_SACK	1
 #else
 #define TCP_DO_SACK	0
 #endif
