@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.373 2003/07/04 08:24:52 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.374 2003/07/04 10:39:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2102,6 +2102,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	int			 tag = -1;
 	u_int16_t		 mss = tcp_mssdflt;
 
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
+
 	if (direction == PF_OUT) {
 		bport = nport = th->th_sport;
 		/* check outgoing packet for BINAT/NAT */
@@ -2112,6 +2114,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
 			    &th->th_sum, &naddr, nport, 0, af);
 			rewrite++;
+			if (nat->natpass)
+				r = NULL;
 		}
 	} else {
 		bport = nport = th->th_dport;
@@ -2123,10 +2127,11 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
 			    &th->th_sum, &naddr, nport, 0, af);
 			rewrite++;
+			if (rdr->natpass)
+				r = NULL;
 		}
 	}
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
@@ -2416,6 +2421,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
+
 	if (direction == PF_OUT) {
 		bport = nport = uh->uh_sport;
 		/* check outgoing packet for BINAT/NAT */
@@ -2426,6 +2433,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
 			    &uh->uh_sum, &naddr, nport, 1, af);
 			rewrite++;
+			if (nat->natpass)
+				r = NULL;
 		}
 	} else {
 		bport = nport = uh->uh_dport;
@@ -2437,10 +2446,11 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_change_ap(daddr, &uh->uh_dport, pd->ip_sum,
 			    &uh->uh_sum, &naddr, nport, 1, af);
 			rewrite++;
+			if (rdr->natpass)
+				r = NULL;
 		}
 	}
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
@@ -2680,6 +2690,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 #endif /* INET6 */
 	}
 
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
+
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(PF_OUT, ifp, pd->proto,
@@ -2700,6 +2712,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 				break;
 #endif /* INET6 */
 			}
+			if (nat->natpass)
+				r = NULL;
 		}
 	} else {
 		/* check incoming packet for BINAT/RDR */
@@ -2721,10 +2735,11 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 				break;
 #endif /* INET6 */
 			}
+			if (rdr->natpass)
+				r = NULL;
 		}
 	}
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
@@ -2896,6 +2911,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
+
 	if (direction == PF_OUT) {
 		/* check outgoing packet for BINAT/NAT */
 		if ((nat = pf_get_translation(PF_OUT, ifp, pd->proto,
@@ -2914,6 +2931,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 				break;
 #endif /* INET6 */
 			}
+			if (nat->natpass)
+				r = NULL;
 		}
 	} else {
 		/* check incoming packet for BINAT/RDR */
@@ -2933,10 +2952,11 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 				break;
 #endif /* INET6 */
 			}
+			if (rdr->natpass)
+				r = NULL;
 		}
 	}
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
 		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
