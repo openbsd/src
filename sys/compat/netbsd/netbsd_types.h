@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_types.h,v 1.2 1999/09/17 12:13:47 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_types.h,v 1.3 1999/09/17 15:03:18 kstailey Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -43,3 +43,4 @@
 typedef	int64_t		netbsd_blkcnt_t;	/* fs block count */
 typedef	u_int32_t	netbsd_blksize_t;	/* fs optimal block size */
 typedef	u_int32_t	netbsd_nlink_t;		/* link count */
+typedef	u_int32_t	netbsd_mode_t;		/* permissions */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_misc.c,v 1.4 1999/09/17 13:41:29 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_misc.c,v 1.5 1999/09/17 15:03:18 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -44,7 +44,9 @@
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/stat.h>
 #include <sys/vnode.h>
 
 #include <compat/netbsd/netbsd_types.h>
@@ -87,4 +89,92 @@ netbsd_sys_fdatasync(p, v, retval)
 
 	VOP_UNLOCK(vp, 0, p);
 	return (error);
+}
+
+/*ARGSUSED*/
+int
+netbsd_sys_lchmod(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct netbsd_sys_lchmod_args /* {
+		syscallarg(char *) path;
+		syscallarg(netbsd_mode_t) mode;
+	} */ *uap = v;
+	register struct vnode *vp;
+	struct vattr vattr;
+	int error;
+	struct nameidata nd;
+
+	if (SCARG(uap, mode) & ~(S_IFMT | ALLPERMS))
+		return (EINVAL);
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	vp = nd.ni_vp;
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		error = EROFS;
+	else {
+		VATTR_NULL(&vattr);
+		vattr.va_mode = SCARG(uap, mode) & ALLPERMS;
+		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	}
+	vput(vp);
+	return (error);
+}
+
+/*ARGSUSED*/
+int
+netbsd_sys_lutimes(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+        register struct netbsd_sys_lutimes_args /* {
+                syscallarg(const char *) path;
+                syscallarg(const struct timeval *) tptr;
+        } */ *uap = v;
+        register struct vnode *vp;
+        struct timeval tv[2];
+        struct vattr vattr;
+        int error;
+        struct nameidata nd;
+
+        VATTR_NULL(&vattr);
+        if (SCARG(uap, tptr) == NULL) {
+                microtime(&tv[0]);
+                tv[1] = tv[0];
+                vattr.va_vaflags |= VA_UTIMES_NULL;
+        } else {
+                error = copyin((caddr_t)SCARG(uap, tptr), (caddr_t)tv,
+                               sizeof (tv));
+                if (error)
+                        return (error);
+		/* XXX workaround timeval matching the VFS constant VNOVAL */
+		if (tv[0].tv_sec == VNOVAL)
+			tv[0].tv_sec = VNOVAL - 1;
+		if (tv[1].tv_sec == VNOVAL)
+			tv[1].tv_sec = VNOVAL - 1;
+        }
+        NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+        if ((error = namei(&nd)) != 0)
+                return (error);
+        vp = nd.ni_vp;
+        VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+        if (vp->v_mount->mnt_flag & MNT_RDONLY)
+                error = EROFS;
+        else {
+                vattr.va_atime.tv_sec = tv[0].tv_sec;
+                vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
+                vattr.va_mtime.tv_sec = tv[1].tv_sec;
+                vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
+                error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+        }
+	vput(vp);
+        return (error);
 }
