@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.1 1997/09/21 04:27:53 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.2 1997/09/21 05:18:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -140,7 +140,7 @@ biosprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct bios_attach_args *bia = aux;
-	extern int bootapiver; /* locore.s */
+	extern u_int bootapiver; /* locore.s */
 
 	if (bootapiver == 0)
 		return 0;
@@ -190,9 +190,8 @@ biosattach(parent, self, aux)
 		case 0xf9: p = "PC Convertible";break;
 		case 0xf8: p = "PS/2 386+";	break;
 	}
-	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c; entry %x:%x\n",
-	       p, va[15], va[5], va[6], va[8], va[9], va[11], va[12],
-	       bios_kentry.cs, bios_kentry.ip);
+	printf(": %s(%02x) BIOS, date %u%c%c/%c%c/%c%c\n",
+	       p, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
 #ifdef DEBUG
 	printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
 		BIOS_vars.apm_detail, BIOS_vars.apm_code32_base,
@@ -316,12 +315,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern u_int cnvmem, extmem;
+	extern u_int cnvmem, extmem, bootapiver; /* locore.s */
 	dev_t consdev;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
+
+	if (bootapiver == 0 && name[0] != CPU_CONSDEV)
+		return EOPNOTSUPP;
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
