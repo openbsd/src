@@ -63,6 +63,10 @@ struct sunos_sys_lstat_args {
 	syscallarg(struct ostat *) ub;
 };
 
+struct sunos_sys_otimes_args {
+	syscallarg(struct tms *) tp;
+};
+
 struct sunos_sys_mctl_args {
 	syscallarg(caddr_t) addr;
 	syscallarg(int) len;
@@ -237,6 +241,7 @@ int	sunos_sys_stat	__P((struct proc *, void *, register_t *));
 int	sunos_sys_lstat	__P((struct proc *, void *, register_t *));
 int	sys_dup	__P((struct proc *, void *, register_t *));
 int	sys_pipe	__P((struct proc *, void *, register_t *));
+int	sunos_sys_otimes	__P((struct proc *, void *, register_t *));
 int	sys_profil	__P((struct proc *, void *, register_t *));
 int	sys_setgid	__P((struct proc *, void *, register_t *));
 int	sys_getgid	__P((struct proc *, void *, register_t *));

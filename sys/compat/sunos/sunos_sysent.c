@@ -121,8 +121,8 @@ struct sysent sunos_sysent[] = {
 	    sys_dup },				/* 41 = dup */
 	{ 0, 0,
 	    sys_pipe },				/* 42 = pipe */
-	{ 0, 0,
-	    sys_nosys },			/* 43 = unimplemented sunos_times */
+	{ 1, s(struct sunos_sys_otimes_args),
+	    sunos_sys_otimes },			/* 43 = otimes */
 	{ 4, s(struct sys_profil_args),
 	    sys_profil },			/* 44 = profil */
 	{ 0, 0,

@@ -38,6 +38,7 @@
 #define	SUNOS_SYS_lstat	40
 #define	SUNOS_SYS_dup	41
 #define	SUNOS_SYS_pipe	42
+#define	SUNOS_SYS_otimes	43
 #define	SUNOS_SYS_profil	44
 #define	SUNOS_SYS_setgid	46
 #define	SUNOS_SYS_getgid	47

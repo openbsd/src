@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.8 1997/11/13 18:35:29 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.9 1998/03/23 06:54:17 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -87,7 +87,7 @@
 40	STD		{ int sunos_sys_lstat(char *path, struct ostat *ub); }
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
-43	UNIMPL		sunos_times
+43	STD		{ int sunos_sys_otimes(struct tms *tp); }
 44	NOARGS		{ int sys_profil(caddr_t samples, u_int size, \
 			    u_int offset, u_int scale); }
 45	UNIMPL		

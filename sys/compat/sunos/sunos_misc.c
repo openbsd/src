@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.18 1997/11/30 21:40:30 deraadt Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.19 1998/03/23 06:54:10 millert Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 #include <sys/socketvar.h>
+#include <sys/times.h>
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
@@ -1219,4 +1220,37 @@ sunos_sys_stime(p, v, retval)
 	*retval = 0;
 	microtime(&tv);
 	return copyout(&tv.tv_sec, SCARG(uap, tp), sizeof(*(SCARG(uap, tp))));
+}
+
+/*
+ * This code is partly stolen from src/lib/libc/gen/times.c
+ * XXX - CLK_TCK isn't declared in /sys, just in <time.h>, done here
+ */
+
+#define	CLK_TCK	100
+#define	CONVTCK(r)	(r.tv_sec * CLK_TCK + r.tv_usec / (1000000 / CLK_TCK))
+
+int
+sunos_sys_otimes(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_otimes_args /* {
+		syscallarg(struct tms *) tp;
+	} */ *uap = v;
+	struct tms tms;
+	struct rusage ru, *rup;
+
+	/* RUSAGE_SELF */
+	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL);
+	tms.tms_utime = CONVTCK(ru.ru_utime);
+	tms.tms_stime = CONVTCK(ru.ru_stime);
+
+	/* RUSAGE_CHILDREN */
+	rup = &p->p_stats->p_cru;
+	tms.tms_cutime = CONVTCK(rup->ru_utime);
+	tms.tms_cstime = CONVTCK(rup->ru_stime);
+
+	return copyout(&tms, SCARG(uap, tp), sizeof(*(SCARG(uap, tp))));
 }
