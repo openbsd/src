@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_stack.c,v 1.1 1999/11/25 07:01:46 d Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.2 1999/11/25 19:00:19 deraadt Exp $	*/
 
 /*
  * Thread stack allocation.
@@ -25,6 +25,7 @@ _thread_stack_alloc(base, size)
 	size_t size;
 {
 	struct stack *stack;
+	int nbpg = getpagesize();
 
 	/* Maintain a queue of default-sized stacks that we can re-use. */
 	if (size == PTHREAD_STACK_DEFAULT) {
@@ -56,20 +57,20 @@ _thread_stack_alloc(base, size)
 	}
 
 	/* Allocate some storage for the stack, with some overhead: */
-	stack->storage = malloc(size + NBPG * 2);
+	stack->storage = malloc(size + nbpg * 2);
 	if (stack->storage == NULL) {
 		free(stack);
 		return NULL;
 	}
 
 	/* The red zone is the first physical page of the storage: */
-	stack->redzone = (void*)(((int)stack->storage + NBPG - 1) & 
-	    ~(NBPG - 1));
-	if (mprotect(stack->redzone, NBPG, 0) == -1)
+	stack->redzone = (void*)(((int)stack->storage + nbpg - 1) & 
+	    ~(nbpg - 1));
+	if (mprotect(stack->redzone, nbpg, 0) == -1)
 		PANIC("Cannot protect stack red zone");
 
 	/* Find the useful range of the stack. */
-	stack->base = stack->redzone + NBPG;
+	stack->base = stack->redzone + nbpg;
 	stack->size = size;
 
 	return stack;
@@ -79,13 +80,16 @@ void
 _thread_stack_free(stack)
 	struct stack *stack;
 {
+	int nbpg = getpagesize();
+
 	/* Cache allocated stacks of default size. */
 	if (stack->storage != NULL && stack->size == PTHREAD_STACK_DEFAULT)
 		SLIST_INSERT_HEAD(&_stackq, stack, qe);
 	else {
 		/* Restore storage protection to what malloc expects: */
 		if (stack->redzone)
-			mprotect(stack->redzone, NBPG, PROT_READ|PROT_WRITE);
+			mprotect(stack->redzone, nbpg,
+			    PROT_READ|PROT_WRITE);
 
 		/* Free storage */
 		if (stack->storage)
