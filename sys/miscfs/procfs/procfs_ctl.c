@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.3 1996/09/26 18:06:34 bitblt Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.4 1996/09/27 01:52:01 bitblt Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -123,20 +123,6 @@ procfs_control(curp, p, op)
 		if (p->p_pid == curp->p_pid)
 			return (EINVAL);
 
-		/*
-		 * it's not owned by you, or the last exec gave us
-		 * setuid/setgid privs (unless you're root),
-		 */
-		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
-			ISSET(t->p_flag, P_SUGID)) &&
-		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
-			return (error);
-
-		/*
-		 * ...it's init, which controls the security level
-		 */
-		if (t->p_pid == 1 && securelevel > 0)
-			return (EPERM);
 
 		/*
 		 * Go ahead and set the trace flag.
