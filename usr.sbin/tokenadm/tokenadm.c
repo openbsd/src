@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenadm.c,v 1.7 2004/04/07 14:09:35 aaron Exp $	*/
+/*	$OpenBSD: tokenadm.c,v 1.8 2004/06/21 15:27:19 avsm Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -153,11 +153,11 @@ main(int argc, char **argv)
 			if (what == REMOVE || how)
 				goto usage;
 			if (*optarg == '-') {
-				if ((c = token_mode(optarg+1)) == NULL)
+				if ((c = token_mode(optarg+1)) == 0)
 					errx(1, "%s: unknown mode", optarg+1);
 				dmode |= c;
 			} else {
-				if ((c = token_mode(optarg)) == NULL)
+				if ((c = token_mode(optarg)) == 0)
 					errx(1, "%s: unknown mode", optarg);
 				emode |= c;
 			}

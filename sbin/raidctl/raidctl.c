@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.21 2003/07/06 22:55:32 avsm Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.22 2004/06/21 15:27:18 avsm Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -250,7 +250,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((num_options > 1) || (argc == NULL))
+	if ((num_options > 1) || (argc == 0))
 		usage();
 
 	if (strlcpy(name, argv[0], sizeof name) >= sizeof(name))

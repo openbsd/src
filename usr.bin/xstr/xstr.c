@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.11 2003/06/03 02:56:24 millert Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.12 2004/06/21 15:27:19 avsm Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: xstr.c,v 1.11 2003/06/03 02:56:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: xstr.c,v 1.12 2004/06/21 15:27:19 avsm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -308,7 +308,7 @@ inithash(void)
 		return;
 	for (;;) {
 		mesgpt = tellpt;
-		if (fgetNUL(buf, sizeof buf, mesgread) == NULL)
+		if (fgetNUL(buf, sizeof buf, mesgread) == 0)
 			break;
 		hashit(buf, 0);
 	}
