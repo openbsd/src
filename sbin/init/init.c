@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.29 2002/10/10 23:27:54 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.30 2002/12/11 21:58:37 millert Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.29 2002/10/10 23:27:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.30 2002/12/11 21:58:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -263,9 +263,9 @@ main(int argc, char *argv[])
 	/*
 	 * Paranoia.
 	 */
-	close(0);
-	close(1);
-	close(2);
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
+	close(STDERR_FILENO);
 
 	/*
 	 * Start the state machine.
@@ -275,7 +275,7 @@ main(int argc, char *argv[])
 	/*
 	 * Should never reach here.
 	 */
-	return (1);
+	exit(1);
 }
 
 /*
@@ -1096,10 +1096,10 @@ collect_child(pid_t pid)
 {
 	session_t *sp, *sprev, *snext;
 
-	if (! sessions)
+	if (sessions == NULL)
 		return;
 
-	if (! (sp = find_session(pid)))
+	if ((sp = find_session(pid)) == NULL)
 		return;
 
 	clear_session_logs(sp);
