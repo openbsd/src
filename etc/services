@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.43 2002/06/27 02:25:27 brad Exp $
+#	$OpenBSD: services,v 1.44 2002/08/11 16:33:15 millert Exp $
 #
 # Network services, Internet style
 #
@@ -187,6 +187,8 @@ ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp		# Prospero non-privileged
 prospero-np	1525/udp
+pptp		1723/tcp		# Point-to-Point Tunneling Protocol
+pptp		1723/udp		# Point-to-Point Tunneling Protocol
 nfsd		2049/udp	nfs	# NFS server
 nfsd		2049/tcp	nfs	# NFS server
 eklogin		2105/tcp		# Kerberos encrypted rlogin
