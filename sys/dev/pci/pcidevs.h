@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.84 1998/09/07 23:31:23 jason Exp 
+ *	OpenBSD: pcidevs,v 1.85 1998/09/20 04:16:40 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -249,7 +249,7 @@
 #define	PCI_VENDOR_ADVSYSPROD	0x10cd		/* Advanced System Products */
 #define	PCI_VENDOR_RADIUS	0x10ce		/* Radius */
 #define	PCI_VENDOR_CITICORP	0x10cf		/* Citicorp TTI */
-#define	PCI_VENDOR_FUJITSU2	0x10d0		/* Fujitsu Limited (2nd ID) */
+#define	PCI_VENDOR_FUJITSU2	0x10d0		/* Fujitsu (2nd ID) */
 #define	PCI_VENDOR_FUTUREPLUS	0x10d1		/* Future+ Systems */
 #define	PCI_VENDOR_MOLEX	0x10d2		/* Molex */
 #define	PCI_VENDOR_JABIL	0x10d3		/* Jabil Circuit */
@@ -440,7 +440,7 @@
 #define	PCI_VENDOR_OMEGA	0x119b		/* Omega Micro */
 #define	PCI_VENDOR_ITI	0x119c		/* Information Technology Institute */
 #define	PCI_VENDOR_BUG	0x119d		/* Bug Sapporo */
-#define	PCI_VENDOR_FUJITSU3	0x119e		/* Fujitsu (3th PCI Vendor ID) */
+#define	PCI_VENDOR_FUJITSU3	0x119e		/* Fujitsu (3th ID) */
 #define	PCI_VENDOR_BULL	0x119f		/* Bull Hn Information Systems */
 #define	PCI_VENDOR_CONVEX	0x11a0		/* Convex Computer */
 #define	PCI_VENDOR_HAMAMATSU	0x11a1		/* Hamamatsu Photonics */
@@ -471,6 +471,7 @@
 #define	PCI_VENDOR_NETPERIPH	0x11bc		/* Network Peripherals */
 #define	PCI_VENDOR_PINNACLE	0x11bd		/* Pinnacle Systems */
 #define	PCI_VENDOR_IMI	0x11be		/* International Microcircuts */
+#define	PCI_VENDOR_FUJITSU4	0x11c1		/* Fujitsu (4th ID) */
 #define	PCI_VENDOR_NEC2	0x11c3		/* NEC (2nd ID) */
 #define	PCI_VENDOR_DOCTECH	0x11c4		/* Document Technologies */
 #define	PCI_VENDOR_SHIVA	0x11c5		/* Shiva */
@@ -494,6 +495,7 @@
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
 #define	PCI_VENDOR_AURORA	0x125c		/* Aurora Technologies */
+#define	PCI_VENDOR_ESSTECH	0x125d		/* ESS Technology Inc */
 #define	PCI_VENDOR_ENSONIQ	0x1274		/* Ensoniq */
 #define	PCI_VENDOR_NETAPP	0x1275		/* Network Appliance */
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
@@ -517,6 +519,7 @@
 #define	PCI_VENDOR_COMPUTONE	0x8e0e		/* Computone Corperation */
 #define	PCI_VENDOR_KTI	0x8e2e		/* KTI */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
+#define	PCI_VENDOR_ADP2	0x9005		/* Adaptec (2nd ID) */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
@@ -596,6 +599,11 @@
 #define	PCI_PRODUCT_ADP_398XU	0x8378		/* AHA-398X Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
 
+#define	PCI_PRODUCT_ADP2_2940U2	0x0010		/* AHA-2940 Ultra2 */
+#define	PCI_PRODUCT_ADP2_7890	0x001f		/* AIC-7890/1 */
+#define	PCI_PRODUCT_ADP2_3940U2	0x0050		/* AHA-3940 Ultra2 */
+#define	PCI_PRODUCT_ADP2_7896	0x005f		/* AIC-7896/7 */
+
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
 
@@ -640,6 +648,7 @@
 
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME Interface Mod. 617 */
+#define	PCI_PRODUCT_BIT3_PCIVME2706	0x0300		/* PCI-VME Interface Mod. 2706 */
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* BT848 */
@@ -765,6 +774,9 @@
 /* Ensoniq products */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
 
+/* ESS Technology Inc products */
+#define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* SOLO-1 AudioDrive */
+
 /* Essential Communications products */
 #define	PCI_PRODUCT_ESSENTIAL_RR_HIPPI	0x0001		/* RoadRunner HIPPI Interface */
 #define	PCI_PRODUCT_ESSENTIAL_RR_GIGE	0x0005		/* RoadRunner Gig-E Interface */
@@ -775,6 +787,9 @@
 /* FORE products */
 #define	PCI_PRODUCT_FORE_PCA200	0x0210		/* ATM PCA-200 */
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
+
+/* Fujtsu products */
+#define	PCI_PRODUCT_FUJITSU4_LTMODEM	0x0440		/* K56flex DSVD LTMODEM */
 
 /* Future Domain products */
 #define	PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30	0x0000		/* TMC-18C30 (36C70) */
@@ -890,6 +905,9 @@
 
 /* NetVin */
 #define	PCI_PRODUCT_NETVIN_NV5000	0x5000		/* NetVin 5000 */
+
+/* Newbridge / Tundra products */
+#define	PCI_PRODUCT_NEWBRIDGE_CA91CX42	0x0000		/* Universe VME bridge */
 
 /* NCR/Symbios Logic products */
 #define	PCI_PRODUCT_SYMBIOS_810	0x0001		/* 53c810 */
@@ -1043,6 +1061,7 @@
 #define	PCI_PRODUCT_TRIDENT_TGUI_9320	0x9320		/* TGUI 9320 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9350	0x9350		/* TGUI 9350 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9360	0x9360		/* TGUI 9360 */
+#define	PCI_PRODUCT_TRIDENT_CYBER_9397	0x9397		/* CYBER 9397 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9420	0x9420		/* TGUI 9420 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9440	0x9440		/* TGUI 9440 */
 #define	PCI_PRODUCT_TRIDENT_TGUI_9660	0x9660		/* TGUI 9660 */

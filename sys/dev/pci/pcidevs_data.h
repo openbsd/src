@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.84 1998/09/07 23:31:23 jason Exp 
+ *	OpenBSD: pcidevs,v 1.85 1998/09/20 04:16:40 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -339,6 +339,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AHA-2944 Ultra",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2,
+	    0,
+	    "Adaptec (2nd ID)",
+	    "AHA-2940 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7890,
+	    0,
+	    "Adaptec (2nd ID)",
+	    "AIC-7890/1",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3940U2,
+	    0,
+	    "Adaptec (2nd ID)",
+	    "AHA-3940 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7896,
+	    0,
+	    "Adaptec (2nd ID)",
+	    "AIC-7896/7",
+	},
+	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
 	    0,
 	    "Alliance Semiconductor",
@@ -487,6 +511,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bit3 Computer Corp.",
 	    "PCI-VME Interface Mod. 617",
+	},
+	{
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME2706,
+	    0,
+	    "Bit3 Computer Corp.",
+	    "PCI-VME Interface Mod. 2706",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -981,6 +1011,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AudioPCI",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
+	    0,
+	    "ESS Technology Inc",
+	    "SOLO-1 AudioDrive",
+	},
+	{
 	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
 	    0,
 	    "Essential Communications",
@@ -1009,6 +1045,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FORE Systems",
 	    "ATM PCA-200e",
+	},
+	{
+	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_LTMODEM,
+	    0,
+	    "Fujitsu (4th ID)",
+	    "K56flex DSVD LTMODEM",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -1459,6 +1501,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NetVin",
 	    "NetVin 5000",
+	},
+	{
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91CX42,
+	    0,
+	    "Newbridge Microsystems",
+	    "Universe VME bridge",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
@@ -2077,6 +2125,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9360",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397,
+	    0,
+	    "Trident Microsystems",
+	    "CYBER 9397",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9420,
@@ -3755,7 +3809,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_FUJITSU2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Fujitsu Limited (2nd ID)",
+	    "Fujitsu (2nd ID)",
 	    NULL,
 	},
 	{
@@ -4901,7 +4955,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_FUJITSU3, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Fujitsu (3th PCI Vendor ID)",
+	    "Fujitsu (3th ID)",
 	    NULL,
 	},
 	{
@@ -5085,6 +5139,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_FUJITSU4, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Fujitsu (4th ID)",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_NEC2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NEC (2nd ID)",
@@ -5223,6 +5283,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ESSTECH, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ESS Technology Inc",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_ENSONIQ, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Ensoniq",
@@ -5358,6 +5424,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADP, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Adaptec",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ADP2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Adaptec (2nd ID)",
 	    NULL,
 	},
 	{
