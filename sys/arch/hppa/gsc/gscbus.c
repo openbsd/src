@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.8 1999/08/16 04:05:38 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.9 2000/02/09 05:04:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -81,6 +81,7 @@
 
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+#include <machine/cpufunc.h>
 
 #include <hppa/gsc/gscbusvar.h>
 
@@ -139,6 +140,9 @@ gscattach(parent, self, aux)
 	sc->sc_ic = ga->ga_ic;
 	sc->sc_intrmask = 0;
 	bzero(sc->sc_intrvs, sizeof(sc->sc_intrvs));
+
+	if (machine_ledaddr)
+		printf(": %sleds", machine_ledword? "word" : "");
 
 	printf ("\n");
 

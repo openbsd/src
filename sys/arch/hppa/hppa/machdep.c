@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.20 2000/01/25 22:11:39 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.21 2000/02/09 05:04:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -127,6 +127,12 @@ int dcache_stride;
 int dcache_line_mask;
 
 /*
+ * things to not kill
+ */
+volatile u_int8_t *machine_ledaddr;
+int machine_ledword, machine_leds;
+
+/*
  * CPU params (should be the same for all cpus in the system)
  */
 struct pdc_cache pdc_cache PDC_ALIGNMENT;
@@ -169,7 +175,7 @@ struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 
 #ifdef DEBUG
 int sigdebug = 0xff;
-pid_t sigpid;
+pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #endif
 
@@ -452,7 +458,8 @@ cpu_startup()
 			UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_NONE,
 			    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL,
 			    UVM_FLAG_FIXED)) != KERN_SUCCESS)
-			panic("cpu_startup: cannot allocate VM for graphics");
+			printf("WARNING: don't have space for stinger @0x%x\n",
+			    addr);
 	}
 #endif
 
@@ -853,10 +860,10 @@ dumpsys()
 		maddr = NULL;
 		blkno = dumplo + cpu_dumpsize();
 		dump = bdevsw[major(dumpdev)].d_dump;
-		/* TODO block map the whole memory */
+		/* TODO block map the whole physical memory */
 		for (i = 0; i < bytes; i += n) {
 		
-			/* Print out how many MBs we to go. */
+			/* Print out how many MBs we are to go. */
 			n = bytes - i;
 			if (n && (n % (1024*1024)) == 0)
 				printf("%d ", n / (1024 * 1024));

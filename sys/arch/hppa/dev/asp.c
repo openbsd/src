@@ -1,4 +1,4 @@
-/*	$OpenBSD: asp.c,v 1.4 1999/11/26 17:59:55 mickey Exp $	*/
+/*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -46,6 +46,7 @@
 #include <machine/bus.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+#include <machine/cpufunc.h>
 
 #include <hppa/dev/cpudevs.h>
 #include <hppa/dev/viper.h>
@@ -70,9 +71,6 @@ struct asp_trs {
 	u_int32_t asp_iar;
 	u_int32_t asp_resv[3];
 	u_int8_t  asp_cled;
-#define	ASP_LEDDATA	1
-#define	ASP_LEDSTROBE	2
-#define	ASP_LEDPULSE	8
 	u_int8_t  asp_resv1[3];
 	struct {
 		u_int		:20,
@@ -103,18 +101,26 @@ struct asp_trs {
 #define	asp_scsi	_asp_ios.asp_scsi
 };
 
-static const char asp_spus[][12] = {
-	"Cobra", "Coral", "Bushmaster", "Hardball", "Scorpio", "Coral II",
-	"#6", "#7"
+const struct asp_spus_tag {
+	char	name[12];
+	int	ledword;
+} asp_spus[] = {
+	{ "Cobra", 0 },
+	{ "Coral", 0 },
+	{ "Bushmaster", 0 },
+	{ "Hardball", 1 },
+	{ "Scorpio", 0 },
+	{ "Coral II", 1 },
+	{ "#6", 0 },
+	{ "#7", 0 }
 };
 
 struct asp_softc {
 	struct  device sc_dev;
 	struct gscbus_ic sc_ic;
 
-	struct asp_hwr volatile *sc_hw;
-	struct asp_trs volatile *sc_trs;
-	u_int8_t sc_leds;
+	volatile struct asp_hwr *sc_hw;
+	volatile struct asp_trs *sc_trs;
 };
 
 /* ASP "Primary Controller" HPA */
@@ -175,7 +181,8 @@ aspattach(parent, self, aux)
 	sc->sc_trs = (struct asp_trs *)ASP_CHPA;
 	sc->sc_hw = (struct asp_hwr *)ca->ca_hpa;
 
-	sc->sc_leds = 0;
+	machine_ledaddr = &sc->sc_trs->asp_cled;
+	machine_ledword = asp_spus[sc->sc_trs->asp_spu].ledword;
 
 	/* reset ASP */
 	/* sc->sc_hw->asp_reset = 1; */
@@ -189,8 +196,9 @@ aspattach(parent, self, aux)
 	sc->sc_trs->asp_imr = 0;
 	splx(s);
 
-	printf (": %s rev %d, lan %d scsi %d\n", asp_spus[sc->sc_trs->asp_spu],
-	    sc->sc_hw->asp_version, sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
+	printf (": %s rev %d, lan %d scsi %d\n",
+	    asp_spus[sc->sc_trs->asp_spu].name, sc->sc_hw->asp_version,
+	    sc->sc_trs->asp_lan, sc->sc_trs->asp_scsi);
 
 	sc->sc_ic.gsc_type = gsc_asp;
 	sc->sc_ic.gsc_dv = sc;
@@ -204,23 +212,6 @@ aspattach(parent, self, aux)
 	ga.ga_ic = &sc->sc_ic;
 	config_found(self, &ga, gscprint);
 }
-
-#ifdef USELEDS
-void
-heartbeat(int on)
-{
-	register struct asp_softc *sc;
-
-	sc = asp_cd.cd_devs[0];
-	if (asp_cd.cd_ndevs && sc) {
-		register u_int8_t r = sc->sc_leds ^= ASP_LEDPULSE, b;
-		for (b = 0x80; b; b >>= 1) {
-			sc->sc_trs->asp_cled = (r & b)? 1 : 0;
-			sc->sc_trs->asp_cled = ASP_LEDSTROBE | (r & b)? 1 : 0;
-		}
-	}
-}
-#endif
 
 void
 asp_intr_establish(v, mask)

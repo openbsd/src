@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.12 1999/12/18 08:52:05 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.13 2000/02/09 05:04:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -209,6 +209,49 @@ pdtlbe(pa_space_t sp, vaddr_t va)
 	mtsp(sp, 1);
 	__asm volatile("pdtlbe %%r0(%%sr1, %0)":: "r" (va));
 }
+
+#ifdef USELEDS
+#define	PALED_NETOUT	0x01
+#define	PALED_NETIN	0x02
+#define	PALED_DISK	0x04
+#define	PALED_HEARTBEAT	0x08
+#define	PALED_LOADMASK	0xf0
+
+#define	PALED_DATA	0x01
+#define	PALED_STROBE	0x02
+
+extern volatile u_int8_t *machine_ledaddr;
+extern int machine_ledword, machine_leds;
+
+static __inline void
+ledctl(int on, int off, int toggle)
+{
+	if (machine_ledaddr) {
+		int r;
+
+		if (on)
+			machine_leds |= on;
+		if (off)
+			machine_leds &= ~off;
+		if (toggle)
+			machine_leds ^= toggle;
+			
+		r = ~machine_leds;	/* it seems they should be reversed */
+
+		if (machine_ledword)
+			*machine_ledaddr = r;
+		else {
+			register int b;
+			for (b = 0x80; b; b >>= 1) {
+				*machine_ledaddr = (r & b)? PALED_DATA : 0;
+				DELAY(1);
+				*machine_ledaddr = ((r & b)? PALED_DATA : 0) |
+				    PALED_STROBE;
+			}
+		}
+	}
+}
+#endif
 
 #ifdef _KERNEL
 void fcacheall __P((void));
