@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.125 2002/11/26 20:19:56 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.126 2002/11/26 22:46:27 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -328,7 +328,8 @@ For example,
 .Ed
 .Pp
 .Sh QUEUEING
-Filtering rules can also assign packets to a queue,
+Filtering rules can also assign packets to a queue for the purpose of bandwidth
+control.
 At least two rules are required to configure queues, and later
 any packet filtering or rule can reference the defined
 queues by name.
@@ -448,49 +449,51 @@ to keep track of the original address for traffic associated with that state
 and correctly direct return traffic on that connection.
 .Pp
 A variety of translation types rules are available with pf:
-.Pp
 .Bl -tag -width xxxx
-.It Pa nat
-These rules operate on outgoing connections, translating the source address.
-.It Pa rdr
-These rules operate on incoming connections, translating the destination address.
-.It Pa binat
-These rules (Bidirection NAT) behave somewhat like a combination of both
-.Ba nat
+.It Em nat
+rules operate on outgoing connections, translating the source address.
+.It Em rdr
+rules operate on incoming connections, translating the destination address.
+.It binat
+rules (Bidirection NAT) behave somewhat like a combination of both
+.Pa nat
 and
 .Pa rdr
 and create a one-to-one mapping between two netblocks of equal size.
 .El
 .Pp
-In addition to modifying the address, some translation rules may also modify
-source or destination ports for TCP or UDP connections.
-In the case of
+In addition to modifying the address, some translation rules may modify
+source or destination ports for
+.Xr tcp
+or
+.Xr udp
+connections; implicitly in the case of
 .Pa nat
-rules this is possible,
-while it is explicit in the case of
+rules and explicitly in the case of
 .Pa rdr
 rules.
 Port numbers are never translated with a
 .Pa binat
 rule.
 .Pp
+For each packet processed by the translator, the translation rules are
+evaluated in sequential order, from first to last.
+Each rule either matches the packet or doesn't.
+The first matching rule decides what action is taken.
+.Pp
 The
 .Pa no
 option prefixed to a translation rule causes packets to remain untranslated,
 much in the same way as
 .Pa drop <direction> quick
-works when doing regular filtering.
-.Pp
-For each packet processed by the translator, the translation rules are
-evaluated in sequential order, from first to last.
-The first matching rule decides what action is taken.
+works in the packet filter.
 .Pp
 If no rule matches the packet, the default action is to pass the packet
-on to the filter rules unmodified.
+up to the filter unmodified.
 It should be noted that all translations of packets occur before
 the filters are applied.
-Hence, filtering rules for redirected packets must match based on
-the address and port after translation.
+Hence, rules for redirected packets should specify the address and port
+after translation.
 Note that all translation rules apply only to packets that pass through
 the specified interface.
 For instance, redirecting port 80 on an external interface to an internal
@@ -508,9 +511,18 @@ has the ability to
 .Pa block
 and
 .Pa pass
-packets based on a variety of attributes of their layer 2 (IP) and layer 3
-(Transport) headers. In addition, packets which are passed or blocked can be
-assigned to queues for the purpose of traffic shaping.
+packets based on a variety of attributes of their layer 2 (see
+.Xr ip 4
+and
+.Xr ip6 4
+) and layer 3 (see
+.Xr tcp 4 ,
+.Xr udp 4 ,
+.Xr icmp 4 ,
+and
+.Xr icmp6 4
+) headers. In addition, packets which are passed or blocked can be
+assigned to queues for the purpose of bandwidth control.
 .Pp
 For each packet processed by the packet filter, the filter rules are
 evaluated in sequential order, from first to last.
@@ -528,6 +540,7 @@ that match explicit rules, one uses
 .Ed
 .Pp
 as the first two rules.
+.Pp
 .Sh ACTIONS
 .Bl -tag -width Fl
 .It Em block
@@ -1511,7 +1524,13 @@ Example rulesets
 .Xr services 5 ,
 .Xr ftp-proxy 8 ,
 .Xr pfctl 8 ,
-.Xr pflogd 8
+.Xr pflogd 8 ,
+.Xr ip 4 ,
+.Xr ip6 4 ,
+.Xr tcp 4 ,
+.Xr udp 4 ,
+.Xr icmp 4
+.Xr icmp6 4
 .Sh HISTORY
 The
 .Nm
