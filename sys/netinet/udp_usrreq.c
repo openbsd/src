@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.65 2001/06/23 03:42:10 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.66 2001/06/23 05:36:08 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -856,6 +856,8 @@ udp_output(m, va_alist)
 	register int len = m->m_pkthdr.len;
 	struct in_addr laddr;
 	int s = 0, error = 0;
+	struct route *ro;
+	struct ifnet *ifp;
 	va_list ap;
 	int pcbflags = 0;
 
@@ -936,9 +938,20 @@ udp_output(m, va_alist)
 
 	ui->ui_sum = 0;
 	if (udpcksum) {
+		ro = &inp->inp_route;
+		if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP)) {
+			ifp = ro->ro_rt->rt_ifp;
+			if (ifp->if_capabilities & IFCAP_CSUM_UDPv4) {
+				m->m_pkthdr.csum |= M_UDPV4_CSUM_OUT;
+				ui->ui_sum = in_cksum(m,
+				    sizeof(struct udpiphdr));
+				goto skipudpcsum;
+			}
+		}
 		if ((ui->ui_sum = in_cksum(m, sizeof (struct udpiphdr) +
 		    len)) == 0)
 			ui->ui_sum = 0xffff;
+ skipudpcsum:
 	}
 	((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	

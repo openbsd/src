@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.38 2001/06/23 03:10:21 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.39 2001/06/23 05:36:08 angelos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <sys/socketvar.h>
 
 #include <net/route.h>
+#include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -225,6 +226,8 @@ tcp_output(tp)
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned int optlen, hdrlen;
 	int idle, sendalot = 0;
+	struct route *ro;
+	struct ifnet *ifp;
 #ifdef TCP_SACK
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
@@ -948,6 +951,20 @@ send:
 	case 0:	/*default to PF_INET*/
 #ifdef INET
 	case AF_INET:
+		/*
+		 * If we know our route, and the interface supports TCPv4
+		 * checksumming, only compute the pseudoheader.
+		 */
+		ro = &tp->t_inpcb->inp_route;
+		if (ro->ro_rt && (ro->ro_rt->rt_flags & RTF_UP)) {
+			ifp = ro->ro_rt->rt_ifp;
+			if (ifp->if_capabilities & IFCAP_CSUM_TCPv4) {
+				m->m_pkthdr.csum |= M_TCPV4_CSUM_OUT;
+				th->th_sum = in_cksum(m, (int)hdrlen);
+				break;
+			}
+		}
+
 		th->th_sum = in_cksum(m, (int)(hdrlen + len));
 		break;
 #endif /* INET */
