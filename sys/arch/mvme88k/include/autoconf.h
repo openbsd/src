@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.8 2001/09/28 20:49:13 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.9 2001/11/09 00:12:19 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -67,7 +67,7 @@ int always_match __P((struct device *, struct cfdata *, void *));
 extern void	*bootaddr;	/* PA of boot device */
 extern int	bootpart;	/* boot partition (disk) */
 
-struct	device *bootdv; /* boot device */
+extern	struct device *bootdv; /* boot device */
 
 void	*mapiodev __P((void *pa, int size));
 void	unmapiodev __P((void *kva, int size));
