@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.20 2000/07/27 17:44:33 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.21 2001/07/18 16:18:17 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.20 2000/07/27 17:44:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.21 2001/07/18 16:18:17 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,7 +243,9 @@ void
 onintr(signo)
 	int signo;
 {
-	errx(1, "interrupted.");
+#define intrmessage	"m4: interrupted.\n"
+	write(STDERR_FILENO, intrmessage, sizeof(intrmessage));
+	_exit(1);
 }
 
 /*
