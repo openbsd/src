@@ -1,4 +1,4 @@
-/*	$OpenBSD: utsname.h,v 1.2 1996/03/03 12:12:43 niklas Exp $	*/
+/*	$OpenBSD: utsname.h,v 1.3 2000/04/01 10:13:26 jakob Exp $	*/
 /*	$NetBSD: utsname.h,v 1.6 1994/06/29 06:46:11 cgd Exp $	*/
 
 /*-
@@ -42,12 +42,14 @@
 #ifndef	_SYS_UTSNAME_H
 #define	_SYS_UTSNAME_H
 
+#define SYS_NMLN	256
+
 struct utsname {
-	char	sysname[256];	/* Name of this OS. */
-	char	nodename[256];	/* Name of this network node. */
-	char	release[256];	/* Release level. */
-	char	version[256];	/* Version level. */
-	char	machine[256];	/* Hardware type. */
+	char	sysname[SYS_NMLN];	/* Name of this OS. */
+	char	nodename[SYS_NMLN];	/* Name of this network node. */
+	char	release[SYS_NMLN];	/* Release level. */
+	char	version[SYS_NMLN];	/* Version level. */
+	char	machine[SYS_NMLN];	/* Hardware type. */
 };
 
 #include <sys/cdefs.h>
