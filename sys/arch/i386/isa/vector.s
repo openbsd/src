@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.9 1999/01/13 07:26:01 niklas Exp $	*/
+/*	$OpenBSD: vector.s,v 1.10 1999/02/26 04:22:03 art Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -34,6 +34,12 @@
 #include <dev/isa/isareg.h>
 
 #define ICU_HARDWARE_MASK
+
+#if defined(UVM)
+#define MY_COUNT _C_LABEL(uvmexp)
+#else
+#define MY_COUNT _cnt
+#endif
 
 /*
  * These macros are fairly self explanatory.  If ICU_SPECIAL_MASK_MODE is
@@ -161,7 +167,7 @@ IDTVEC(fast/**/irq_num)							;\
 	call	IH_FUN(%eax)						;\
 	ack(irq_num)							;\
 	addl	$4,%esp							;\
-	incl	_cnt+V_INTR		/* statistical info */		;\
+	incl	MY_COUNT+V_INTR		/* statistical info */		;\
 	popl	%es							;\
 	popl	%ds							;\
 	popl	%edx							;\
@@ -215,7 +221,7 @@ _Xintr/**/irq_num/**/:							;\
 	MAKE_FRAME							;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
 	ack(irq_num)			/* and allow other intrs */	;\
-	incl	_cnt+V_INTR		/* statistical info */		;\
+	incl	MY_COUNT+V_INTR		/* statistical info */		;\
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
 	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
 _Xresume/**/irq_num/**/:						;\
