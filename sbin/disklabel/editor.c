@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.38 1998/07/23 05:21:23 csapuntz Exp $	*/
+/*	$OpenBSD: editor.c,v 1.39 1998/07/26 17:01:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.38 1998/07/23 05:21:23 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.39 1998/07/26 17:01:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -363,10 +363,10 @@ editor_add(lp, freep, p)
 	/* XXX - make more like other editor_* */
 	if (p != NULL) {
 		partno = p[0] - 'a';
-		if (partno < 0 || partno >= MAXPARTITIONS) {
+		if (partno < 0 || partno == 2 || partno >= MAXPARTITIONS) {
 			fprintf(stderr,
-			    "Partition must be between 'a' and '%c'.\n",
-			    'a' + MAXPARTITIONS - 1);
+			    "Partition must be between 'a' and '%c' "
+			    "(excluding 'c').\n", 'a' + MAXPARTITIONS - 1);
 			return;
 		} else if (lp->d_partitions[partno].p_fstype != FS_UNUSED &&
 		    lp->d_partitions[partno].p_size != 0) {
