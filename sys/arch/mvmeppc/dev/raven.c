@@ -1,4 +1,4 @@
-/*	$OpenBSD: raven.c,v 1.5 2004/01/29 10:58:06 miod Exp $ */
+/*	$OpenBSD: raven.c,v 1.6 2004/05/14 20:38:32 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -63,8 +63,12 @@ struct cfdriver raven_cd = {
 int
 raven_match(struct device *parent, void *match, void *aux)
 {
+	struct confargs *ca = aux;
 	void *va;
 	u_int32_t probe;
+
+	if (strcmp(ca->ca_name, raven_cd.cd_name) != 0)
+		return 0;
 
 	if ((va = mapiodev((paddr_t)RAVEN_BASE, RAVEN_SIZE)) == NULL)
 		return 0;

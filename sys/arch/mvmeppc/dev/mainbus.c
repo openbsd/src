@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.8 2004/01/29 21:33:10 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.9 2004/05/14 20:38:32 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -109,10 +109,17 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &nca, mbprint);
 
 	/*
+	 * Attach the BUG terminal services if necessary.
+	 */
+	nca.ca_name = "bugtty";
+	nca.ca_bus = &sc->sc_bus;
+	config_found(self, &nca, mbprint);
+
+	/*
 	 * Find and attach the PCI Northbridge. It will find and attach
 	 * everything.
 	 */
-	nca.ca_name = "mpcpcibr";
+	nca.ca_name = "raven";
 	nca.ca_bus = &sc->sc_bus;
 	config_found(self, &nca, mbprint);
 }

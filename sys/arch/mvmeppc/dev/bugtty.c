@@ -1,9 +1,9 @@
-/*	$OpenBSD: bugtty.c,v 1.9 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.10 2004/05/14 20:38:32 miod Exp $ */
 
-/* Copyright (c) 1998 Steve Murphree, Jr. 
+/* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,7 +25,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */  
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,12 +33,12 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
 
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <dev/cons.h>
@@ -50,7 +50,7 @@ void bugttyattach(struct device *parent, struct device *self, void *aux);
 
 struct cfattach bugtty_ca = {
         sizeof(struct device), bugttymatch, bugttyattach
-};      
+};
 
 struct cfdriver bugtty_cd = {
         NULL, "bugtty", DV_TTY
@@ -62,6 +62,7 @@ cdev_decl(bugtty);
 
 int bugttymctl(dev_t dev, int bits, int how);
 int bugttyparam(struct tty *tp, struct termios *tm);
+void bugtty_chkinput(void);
 
 #define DIALOUT(x) ((x) & 0x80)
 #define SWFLAGS(dev) (bugttyswflags | (DIALOUT(dev) ? TIOCFLAG_SOFTCAR : 0))
@@ -71,19 +72,8 @@ char bugtty_ibuffer[BUGBUF+1];
 volatile char *pinchar = bugtty_ibuffer;
 char bug_obuffer[BUGBUF+1];
 
-struct tty *bugtty_tty[NBUGTTY];
-
-/*
-	int	ca_bustype;
-	void	*ca_vaddr;
-	void	*ca_paddr;
-	int	ca_offset;
-	int	ca_len;
-	int	ca_ipl;
-	int	ca_vec;
-	char	*ca_name;
-	void	*ca_master;	 points to bus-dependent data 
-*/
+#define	BUGTTYS	4
+struct tty *bugtty_tty[BUGTTYS];
 
 int
 bugttymatch(parent, self, aux)
@@ -91,6 +81,11 @@ bugttymatch(parent, self, aux)
 	void *self;
 	void *aux;
 {
+	struct confargs *ca = aux;
+
+	if (strcmp(ca->ca_name, bugtty_cd.cd_name) != 0)
+		return (0);
+
 	return (1);
 }
 
@@ -100,7 +95,7 @@ bugttyattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(": bugtty\n");
+	printf(": fallback console\n");
 }
 
 #define BUGTTYUNIT(x) ((x) & (0x7f))
@@ -109,13 +104,13 @@ void bugttyoutput(struct tty *tp);
 int bugttydefaultrate = TTYDEF_SPEED;
 int bugttyswflags;
 
-struct tty * 
+struct tty *
 bugttytty(dev)
 	dev_t dev;
 {
 	int unit;
 	unit = BUGTTYUNIT(dev);
-	if (unit >= 4) {
+	if (unit >= BUGTTYS) {
 		return (NULL);
 	}
 	return bugtty_tty[unit];
@@ -246,7 +241,7 @@ void
 bugttyoutput(tp)
 	struct tty *tp;
 {
-	int cc, s, cnt ;
+	int cc, s, cnt;
 
 	/* only supports one unit */
 
@@ -291,8 +286,24 @@ bugttyread(dev, uio, flag)
 	struct tty *tp;
 
 	if ((tp = bugtty_tty[BUGTTYUNIT(dev)]) == NULL)
-		return (ENXIO); 
+		return (ENXIO);
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+}
+
+/* only to be called at splclk() */
+void
+bugtty_chkinput()
+{
+	struct tty *tp;
+
+	tp = bugtty_tty[0]; /* assumes console on the first port... */
+	if (tp == NULL)
+		return;
+
+	while (mvmeprom_instat() != 0) {
+		u_char c = mvmeprom_getchar() & 0xff;
+		(*linesw[tp->t_line].l_rint)(c, tp);
+	}
 }
 
 int
@@ -340,7 +351,7 @@ bugttyioctl(dev, cmd, data, flag, p)
 		return (ENXIO);
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0) 
+	if (error >= 0)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -383,9 +394,9 @@ bugttyioctl(dev, cmd, data, flag, p)
 		*(int *)data = SWFLAGS(dev);
 		break;
 	case TIOCSFLAGS:
-		error = suser(p, 0); 
+		error = suser(p, 0);
 		if (error != 0)
-			return (EPERM); 
+			return (EPERM);
 
 		bugttyswflags = *(int *)data;
 		bugttyswflags &= /* only allow valid flags */
@@ -422,7 +433,7 @@ bugttycnprobe(cp)
 	struct consdev *cp;
 {
 	int maj;
-	
+
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == bugttyopen)

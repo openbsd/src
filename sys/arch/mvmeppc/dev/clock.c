@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2004/01/28 23:50:16 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2004/05/14 20:38:32 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -39,6 +39,8 @@
 #include <machine/pio.h>
 #include <machine/intr.h>
 #include <machine/powerpc.h>
+
+#include "bugtty.h"
 
 void resettodr(void);
 void decr_intr(struct clockframe *);
@@ -345,6 +347,12 @@ decr_intr(struct clockframe *frame)
 			lasttb += ticks_per_intr;
 			intrcnt[PPC_CLK_IRQ]++;
 			hardclock(frame);
+#if NBUGTTY > 0
+			{
+				extern void bugtty_chkinput(void);
+				bugtty_chkinput();
+			}
+#endif
 		}
 
 		while (nstats-- > 0)
