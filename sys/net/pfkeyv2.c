@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.90 2003/12/02 23:16:29 markus Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.91 2004/06/21 23:10:31 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -904,9 +904,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = EINVAL;
 			goto ret;
 		}
-		/* UDP encapsulation is only supported for ESP */
-		if (smsg->sadb_msg_satype != SADB_SATYPE_ESP &&
-		    headers[SADB_X_EXT_UDPENCAP]) {
+		/* UDP encap has to be enabled and is only supported for ESP */
+		if (headers[SADB_X_EXT_UDPENCAP] &&
+		    (!udpencap_enable ||
+		    smsg->sadb_msg_satype != SADB_SATYPE_ESP)) {
 			rval = EINVAL;
 			goto ret;
 		}
@@ -1054,9 +1055,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			rval = EINVAL;
 			goto ret;
 		}
-		/* UDP encapsulation is only supported for ESP */
-		if (smsg->sadb_msg_satype != SADB_SATYPE_ESP &&
-		    headers[SADB_X_EXT_UDPENCAP]) {
+		/* UDP encap has to be enabled and is only supported for ESP */
+		if (headers[SADB_X_EXT_UDPENCAP] &&
+		    (!udpencap_enable ||
+		    smsg->sadb_msg_satype != SADB_SATYPE_ESP)) {
 			rval = EINVAL;
 			goto ret;
 		}
