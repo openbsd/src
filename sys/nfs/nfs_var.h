@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.12 2000/06/30 01:06:02 art Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.13 2001/06/25 02:15:47 csapuntz Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -116,8 +116,8 @@ int nfs_symlink __P((void *));
 int nfs_mkdir __P((void *));
 int nfs_rmdir __P((void *));
 int nfs_readdir __P((void *));
-int nfs_readdirrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_readdirplusrpc __P((struct vnode *, struct uio *, struct ucred *));
+int nfs_readdirrpc(struct vnode *, struct uio *, struct ucred *, int *);
+int nfs_readdirplusrpc(struct vnode *, struct uio *, struct ucred *, int *);
 int nfs_sillyrename __P((struct vnode *, struct vnode *,
 			 struct componentname *));
 int nfs_lookitup __P((struct vnode *, char *, int, struct ucred *,
@@ -289,8 +289,6 @@ void nfsm_srvfattr __P((struct nfsrv_descript *, struct vattr *,
 int nfsrv_fhtovp __P((fhandle_t *, int, struct vnode **, struct ucred *,
 		      struct nfssvc_sock *, struct mbuf *, int *, int));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
-nfsuint64 *nfs_getcookie __P((struct nfsnode *, off_t off, int));
-void nfs_invaldir __P((struct vnode *));
 void nfs_clearcommit __P((struct mount *));
 int nfsrv_errmap __P((struct nfsrv_descript *, int));
 void nfsrvw_sort __P((gid_t *, int));

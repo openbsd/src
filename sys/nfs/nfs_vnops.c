@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.31 2001/06/23 02:14:26 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.32 2001/06/25 02:15:48 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -234,7 +234,6 @@ extern struct nfsstats nfsstats;
 extern nfstype nfsv3_type[9];
 struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
-#define	DIRHDSIZ	(sizeof (struct dirent) - (MAXNAMLEN + 1))
 
 /*
  * nfs null call from vfs.
@@ -1833,6 +1832,27 @@ nfs_rmdir(v)
 	return (error);
 }
 
+
+/*
+ * The readdir logic below has a big design bug. It stores the NFS cookie in 
+ * the returned uio->uio_offset but does not store the verifier (it cannot).
+ * Instead, the code stores the verifier in the nfsnode and applies that
+ * verifies to all cookies, no matter what verifier was originally with
+ * the cookie.
+ *
+ * From a practical standpoint, this is not a problem since almost all
+ * NFS servers do not change the validity of cookies across deletes
+ * and inserts.
+ */
+
+struct nfs_dirent {
+	u_int32_t cookie[2];
+	struct dirent dirent;
+};
+
+#define	NFS_DIRHDSIZ    (sizeof (struct nfs_dirent) - (MAXNAMLEN + 1))
+#define NFS_DIRENT_OVERHEAD  offsetof(struct nfs_dirent, dirent)
+
 /*
  * nfs readdir call
  */
@@ -1845,23 +1865,32 @@ nfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
-		int a_ncookies;
+		u_long **a_cookies;
+		int *a_ncookies;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct nfsnode *np = VTONFS(vp);
-	register struct uio *uio = ap->a_uio;
-	char *base = uio->uio_iov->iov_base;
-	off_t off = uio->uio_offset;
+	struct vnode *vp = ap->a_vp;
+	struct nfsnode *np = VTONFS(vp);
+	struct uio *uio = ap->a_uio;
 	int tresid, error;
 	struct vattr vattr;
+	u_long *cookies = NULL;
+	int ncookies = 0, cnt;
+	u_int64_t  newoff = uio->uio_offset;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	struct uio readdir_uio;
+	struct iovec readdir_iovec;
+	struct proc * p = uio->uio_procp;
+	int done = 0, eof = 0;
+	struct ucred *cred = ap->a_cred;
+	void *data;
 
 	if (vp->v_type != VDIR)
 		return (EPERM);
 	/*
 	 * First, check for hit on the EOF offset cache
 	 */
-	if (np->n_direofoffset > 0 && uio->uio_offset >= np->n_direofoffset &&
+	if (np->n_direofoffset != 0 && 
+	    uio->uio_offset == np->n_direofoffset &&
 	    (np->n_flag & NMODIFIED) == 0) {
 		if (VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS) {
 			if (NQNFS_CKCACHABLE(vp, ND_READ)) {
@@ -1869,7 +1898,8 @@ nfs_readdir(v)
 				*ap->a_eofflag = 1;
 				return (0);
 			}
-		} else if (VOP_GETATTR(vp, &vattr, ap->a_cred, uio->uio_procp) == 0 &&
+		} else if (
+			VOP_GETATTR(vp, &vattr, ap->a_cred, uio->uio_procp) == 0 &&
 			np->n_mtime == vattr.va_mtime.tv_sec) {
 			nfsstats.direofcache_hits++;
 			*ap->a_eofflag = 1;
@@ -1877,71 +1907,130 @@ nfs_readdir(v)
 		}
 	}
 
-	/*
-	 * Call nfs_bioread() to do the real work.
-	 */
+	if (uio->uio_resid < NFS_FABLKSIZE)
+		return (EINVAL);
+
 	tresid = uio->uio_resid;
-	error = nfs_bioread(vp, uio, 0, ap->a_cred);
 
-	if (!error && uio->uio_resid == tresid) {
-		nfsstats.direofcache_misses++;
-		*ap->a_eofflag = 1;
-		return (0);
-	}
+	if (uio->uio_rw != UIO_READ)
+		return (EINVAL);
 
-	if (!error && ap->a_cookies) {
-		struct dirent *dp;
-		u_long *cookies;
-		/* XXX - over-estimate - see UFS code for how to do it
-		   right */
-		int ncookies = ((caddr_t)uio->uio_iov->iov_base - base) / 12;
+	if (ap->a_cookies) {
+		ncookies = uio->uio_resid / 20;
 
 		MALLOC(cookies, u_long *, sizeof(*cookies) * ncookies,
 		       M_TEMP, M_WAITOK);
-                *ap->a_ncookies = ncookies;
-                *ap->a_cookies = cookies;
+		*ap->a_ncookies = ncookies;
+		*ap->a_cookies = cookies;
+	}
 
-		/* Only the NFS server and emulations use cookies, and they
-		 * load the directory block into system space, so we can
-		 * just look at it directly.
-		 */
-		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
-			panic("nfs_readdir: lost in space");
-		while (ncookies-- && base < (caddr_t)uio->uio_iov->iov_base) {
-			dp = (struct dirent *) base;
-			if (dp->d_reclen == 0)
-				break;
-			off += dp->d_reclen;
-			*(cookies++) = off;
-			base += dp->d_reclen;
+	if ((nmp->nm_flag & (NFSMNT_NFSV3 | NFSMNT_GOTFSINFO)) == NFSMNT_NFSV3)
+		(void)nfs_fsinfo(nmp, vp, cred, p);
+
+	cnt = 5;
+
+	MALLOC(data, void *, NFS_DIRBLKSIZ, M_TEMP, 
+	    M_WAITOK);
+
+	do {
+		struct nfs_dirent *ndp = data;
+
+		readdir_iovec.iov_len = NFS_DIRBLKSIZ;
+		readdir_iovec.iov_base = data;
+		readdir_uio.uio_offset = newoff;
+		readdir_uio.uio_iov = &readdir_iovec;
+		readdir_uio.uio_iovcnt = 1;
+		readdir_uio.uio_segflg = UIO_SYSSPACE;
+		readdir_uio.uio_rw = UIO_READ;
+		readdir_uio.uio_resid = NFS_DIRBLKSIZ;
+
+		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
+			error = nfs_readdirplusrpc(vp, &readdir_uio, cred, 
+			    &eof);
+			if (error == NFSERR_NOTSUPP)
+				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
+		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
+			error = nfs_readdirrpc(vp, &readdir_uio, cred, &eof);
 
-		*ap->a_ncookies -= ncookies;
-		uio->uio_resid += ((caddr_t)uio->uio_iov->iov_base - base);
-		uio->uio_iov->iov_len += ((caddr_t)uio->uio_iov->iov_base - base);
-		uio->uio_iov->iov_base = base;
+		if (error == NFSERR_BAD_COOKIE)
+			error = EINVAL;
+
+		while (error == 0 && 
+		    (ap->a_cookies == NULL || ncookies != 0) &&
+		    ndp < (struct nfs_dirent *)readdir_iovec.iov_base) {
+			struct dirent *dp = &ndp->dirent;
+			int reclen = dp->d_reclen;
+
+			dp->d_reclen -= NFS_DIRENT_OVERHEAD;
+
+			if (uio->uio_resid < dp->d_reclen) {
+				done = 1;
+				break;
+			}
+
+			error = uiomove((caddr_t)dp, dp->d_reclen, uio);
+			if (error) 
+				break;
+			
+			newoff = fxdr_hyper(&ndp->cookie[0]);
+			
+			if (ap->a_cookies != NULL) {
+				*cookies = newoff;
+				cookies++;
+				ncookies--;
+			}
+
+			ndp = (struct nfs_dirent *)((u_int8_t *)ndp + reclen);
+		}
+	} while (!error && !done && !eof && cnt--);
+	
+	FREE(data, M_TEMP);
+	data = NULL;
+	
+	if (ap->a_cookies) {
+		if (error) {
+			FREE(*ap->a_cookies, M_TEMP); 
+			*ap->a_cookies = NULL;
+			*ap->a_ncookies = 0;
+		} else {
+			*ap->a_ncookies -= ncookies;
+		}
+	}
+	
+	if (!error) 
+		uio->uio_offset = newoff;
+
+	if (!error && (eof || uio->uio_resid == tresid)) {
+		nfsstats.direofcache_misses++;
+		*ap->a_eofflag = 1;
+		return (0);
 	}
 
 	*ap->a_eofflag = 0;
 	return (error);
 }
 
+
+/*
+ * The function below stuff the cookies in after the name
+ */
+
 /*
  * Readdir rpc call.
- * Called from below the buffer cache by nfs_doio().
  */
 int
-nfs_readdirrpc(vp, uiop, cred)
-	struct vnode *vp;
-	register struct uio *uiop;
-	struct ucred *cred;
+nfs_readdirrpc(struct vnode *vp, 
+    struct uio *uiop, 
+    struct ucred *cred,
+    int *end_of_directory)
 {
 	register int len, left;
+	struct nfs_dirent *ndp = NULL;
 	register struct dirent *dp = NULL;
 	register u_int32_t *tl;
 	register caddr_t cp;
 	register int32_t t1, t2;
-	register nfsuint64 *cookiep;
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	nfsuint64 cookie;
@@ -1953,19 +2042,13 @@ nfs_readdirrpc(vp, uiop, cred)
 	int v3 = NFS_ISV3(vp);
 
 #ifndef DIAGNOSTIC
-	if (uiop->uio_iovcnt != 1 || (uiop->uio_offset & (NFS_DIRBLKSIZ - 1)) ||
+	if (uiop->uio_iovcnt != 1 || 
 		(uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
 		panic("nfs readdirrpc bad uio");
 #endif
 
-	/*
-	 * If there is no cookie, assume end of directory.
-	 */
-	cookiep = nfs_getcookie(dnp, uiop->uio_offset, 0);
-	if (cookiep)
-		cookie = *cookiep;
-	else
-		return (0);
+	txdr_hyper(uiop->uio_offset, &cookie.nfsuquad[0]);
+
 	/*
 	 * Loop around doing readdir rpc's of size nm_readdirsize
 	 * truncated to a multiple of NFS_READDIRBLKSIZ.
@@ -1980,11 +2063,17 @@ nfs_readdirrpc(vp, uiop, cred)
 			nfsm_build(tl, u_int32_t *, 5 * NFSX_UNSIGNED);
 			*tl++ = cookie.nfsuquad[0];
 			*tl++ = cookie.nfsuquad[1];
-			*tl++ = dnp->n_cookieverf.nfsuquad[0];
-			*tl++ = dnp->n_cookieverf.nfsuquad[1];
+			if (cookie.nfsuquad[0] == 0 &&
+			    cookie.nfsuquad[1] == 0) {
+				*tl++ = 0;
+				*tl++ = 0;
+			} else {
+				*tl++ = dnp->n_cookieverf.nfsuquad[0];
+				*tl++ = dnp->n_cookieverf.nfsuquad[1];
+			}
 		} else {
 			nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
-			*tl++ = cookie.nfsuquad[0];
+			*tl++ = cookie.nfsuquad[1];
 		}
 		*tl = txdr_unsigned(nmp->nm_readdirsize);
 		nfsm_request(vp, NFSPROC_READDIR, uiop->uio_procp, cred);
@@ -2021,40 +2110,37 @@ nfs_readdirrpc(vp, uiop, cred)
 				m_freem(mrep);
 				goto nfsmout;
 			}
-			tlen = nfsm_rndup(len);
-			if (tlen == len)
-				tlen += 4;	/* To ensure null termination */
+			tlen = nfsm_rndup(len + 1);
 			left = NFS_READDIRBLKSIZ - blksiz;
-			if ((tlen + DIRHDSIZ) > left) {
+			if ((tlen + NFS_DIRHDSIZ) > left) {
 				dp->d_reclen += left;
 				(caddr_t)uiop->uio_iov->iov_base += left;
 				uiop->uio_iov->iov_len -= left;
-				uiop->uio_offset += left;
 				uiop->uio_resid -= left;
 				blksiz = 0;
 			}
-			if ((tlen + DIRHDSIZ) > uiop->uio_resid)
+			if ((tlen + NFS_DIRHDSIZ) > uiop->uio_resid)
 				bigenough = 0;
 			if (bigenough) {
-				dp = (struct dirent *)uiop->uio_iov->iov_base;
+				ndp = (struct nfs_dirent *)
+				    uiop->uio_iov->iov_base;
+				dp = &ndp->dirent;
 				dp->d_fileno = (int)fileno;
 				dp->d_namlen = len;
-				dp->d_reclen = tlen + DIRHDSIZ;
+				dp->d_reclen = tlen + NFS_DIRHDSIZ;
 				dp->d_type = DT_UNKNOWN;
 				blksiz += dp->d_reclen;
 				if (blksiz == NFS_READDIRBLKSIZ)
 					blksiz = 0;
-				uiop->uio_offset += DIRHDSIZ;
-				uiop->uio_resid -= DIRHDSIZ;
-				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
-				uiop->uio_iov->iov_len -= DIRHDSIZ;
+				uiop->uio_resid -= NFS_DIRHDSIZ;
+				uiop->uio_iov->iov_base += NFS_DIRHDSIZ;
+				uiop->uio_iov->iov_len -= NFS_DIRHDSIZ;
 				nfsm_mtouio(uiop, len);
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';	/* null terminate */
 				(caddr_t)uiop->uio_iov->iov_base += tlen;
 				uiop->uio_iov->iov_len -= tlen;
-				uiop->uio_offset += tlen;
 				uiop->uio_resid -= tlen;
 			} else
 				nfsm_adv(nfsm_rndup(len));
@@ -2066,9 +2152,13 @@ nfs_readdirrpc(vp, uiop, cred)
 				    2 * NFSX_UNSIGNED);
 			}
 			if (bigenough) {
-				cookie.nfsuquad[0] = *tl++;
-				if (v3)
-					cookie.nfsuquad[1] = *tl++;
+				if (v3) {
+					ndp->cookie[0] = cookie.nfsuquad[0] =
+					    *tl++;
+				} else
+					ndp->cookie[0] = 0;
+
+				ndp->cookie[1] = cookie.nfsuquad[1] = *tl++;
 			} else if (v3)
 				tl += 2;
 			else
@@ -2093,7 +2183,6 @@ nfs_readdirrpc(vp, uiop, cred)
 		dp->d_reclen += left;
 		uiop->uio_iov->iov_base += left;
 		uiop->uio_iov->iov_len -= left;
-		uiop->uio_offset += left;
 		uiop->uio_resid -= left;
 	}
 
@@ -2101,14 +2190,14 @@ nfs_readdirrpc(vp, uiop, cred)
 	 * We are now either at the end of the directory or have filled the
 	 * block.
 	 */
-	if (bigenough)
-		dnp->n_direofoffset = uiop->uio_offset;
-	else {
+	if (bigenough) {
+		dnp->n_direofoffset = fxdr_hyper(&cookie.nfsuquad[0]);
+		if (end_of_directory) *end_of_directory = 1;
+	} else {
 		if (uiop->uio_resid > 0)
 			printf("EEK! readdirrpc resid > 0\n");
-		cookiep = nfs_getcookie(dnp, uiop->uio_offset, 1);
-		*cookiep = cookie;
 	}
+
 nfsmout:
 	return (error);
 }
@@ -2117,18 +2206,16 @@ nfsmout:
  * NFS V3 readdir plus RPC. Used in place of nfs_readdirrpc().
  */
 int
-nfs_readdirplusrpc(vp, uiop, cred)
-	struct vnode *vp;
-	register struct uio *uiop;
-	struct ucred *cred;
+nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, struct ucred *cred, 
+    int *end_of_directory)
 {
 	register int len, left;
+	struct nfs_dirent *ndirp = NULL;
 	register struct dirent *dp = NULL;
 	register u_int32_t *tl;
 	register caddr_t cp;
 	register int32_t t1, t2;
 	register struct vnode *newvp;
-	register nfsuint64 *cookiep;
 	caddr_t bpos, dpos, cp2, dpossav1, dpossav2;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2, *mdsav1, *mdsav2;
 	struct nameidata nami, *ndp = &nami;
@@ -2142,22 +2229,16 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	int attrflag, fhsize;
 
 #ifndef DIAGNOSTIC
-	if (uiop->uio_iovcnt != 1 || (uiop->uio_offset & (NFS_DIRBLKSIZ - 1)) ||
+	if (uiop->uio_iovcnt != 1 || 
 		(uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
 		panic("nfs readdirplusrpc bad uio");
 #endif
 	ndp->ni_dvp = vp;
 	newvp = NULLVP;
 
-	/*
-	 * If there is no cookie, assume end of directory.
-	 */
-	cookiep = nfs_getcookie(dnp, uiop->uio_offset, 0);
-	if (cookiep)
-		cookie = *cookiep;
-	else
-		return (0);
-	/*
+	txdr_hyper(uiop->uio_offset, &cookie.nfsuquad[0]);
+	
+        /*
 	 * Loop around doing readdir rpc's of size nm_readdirsize
 	 * truncated to a multiple of NFS_READDIRBLKSIZ.
 	 * The stopping criteria is EOF or buffer full.
@@ -2170,8 +2251,14 @@ nfs_readdirplusrpc(vp, uiop, cred)
  		nfsm_build(tl, u_int32_t *, 6 * NFSX_UNSIGNED);
 		*tl++ = cookie.nfsuquad[0];
 		*tl++ = cookie.nfsuquad[1];
-		*tl++ = dnp->n_cookieverf.nfsuquad[0];
-		*tl++ = dnp->n_cookieverf.nfsuquad[1];
+		if (cookie.nfsuquad[0] == 0 &&
+		    cookie.nfsuquad[1] == 0) {
+			*tl++ = 0;
+			*tl++ = 0;
+		} else {
+			*tl++ = dnp->n_cookieverf.nfsuquad[0];
+			*tl++ = dnp->n_cookieverf.nfsuquad[1];
+		}
 		*tl++ = txdr_unsigned(nmp->nm_readdirsize);
 		*tl = txdr_unsigned(nmp->nm_rsize);
 		nfsm_request(vp, NFSPROC_READDIRPLUS, uiop->uio_procp, cred);
@@ -2195,33 +2282,31 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				m_freem(mrep);
 				goto nfsmout;
 			}
-			tlen = nfsm_rndup(len);
-			if (tlen == len)
-				tlen += 4;	/* To ensure null termination*/
+			tlen = nfsm_rndup(len + 1);
 			left = NFS_READDIRBLKSIZ - blksiz;
-			if ((tlen + DIRHDSIZ) > left) {
+			if ((tlen + NFS_DIRHDSIZ) > left) {
 				dp->d_reclen += left;
 				uiop->uio_iov->iov_base += left;
 				uiop->uio_iov->iov_len -= left;
-				uiop->uio_offset += left;
 				uiop->uio_resid -= left;
 				blksiz = 0;
 			}
-			if ((tlen + DIRHDSIZ) > uiop->uio_resid)
+			if ((tlen + NFS_DIRHDSIZ) > uiop->uio_resid)
 				bigenough = 0;
 			if (bigenough) {
-				dp = (struct dirent *)uiop->uio_iov->iov_base;
+				ndirp = (struct nfs_dirent *)
+				    uiop->uio_iov->iov_base;
+				dp = &ndirp->dirent;
 				dp->d_fileno = (int)fileno;
 				dp->d_namlen = len;
-				dp->d_reclen = tlen + DIRHDSIZ;
+				dp->d_reclen = tlen + NFS_DIRHDSIZ;
 				dp->d_type = DT_UNKNOWN;
 				blksiz += dp->d_reclen;
 				if (blksiz == NFS_READDIRBLKSIZ)
 					blksiz = 0;
-				uiop->uio_offset += DIRHDSIZ;
-				uiop->uio_resid -= DIRHDSIZ;
-				uiop->uio_iov->iov_base += DIRHDSIZ;
-				uiop->uio_iov->iov_len -= DIRHDSIZ;
+				uiop->uio_resid -= NFS_DIRHDSIZ;
+				uiop->uio_iov->iov_base += NFS_DIRHDSIZ;
+				uiop->uio_iov->iov_len -= NFS_DIRHDSIZ;
 				cnp->cn_nameptr = uiop->uio_iov->iov_base;
 				cnp->cn_namelen = len;
 				nfsm_mtouio(uiop, len);
@@ -2230,14 +2315,13 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				*cp = '\0';
 				uiop->uio_iov->iov_base += tlen;
 				uiop->uio_iov->iov_len -= tlen;
-				uiop->uio_offset += tlen;
 				uiop->uio_resid -= tlen;
 			} else
 				nfsm_adv(nfsm_rndup(len));
 			nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 			if (bigenough) {
-				cookie.nfsuquad[0] = *tl++;
-				cookie.nfsuquad[1] = *tl++;
+				ndirp->cookie[0] = cookie.nfsuquad[0] = *tl++;
+				ndirp->cookie[1] = cookie.nfsuquad[1] = *tl++;
 			} else
 				tl += 2;
 
@@ -2317,7 +2401,6 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		dp->d_reclen += left;
 		uiop->uio_iov->iov_base += left;
 		uiop->uio_iov->iov_len -= left;
-		uiop->uio_offset += left;
 		uiop->uio_resid -= left;
 	}
 
@@ -2325,14 +2408,14 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	 * We are now either at the end of the directory or have filled the
 	 * block.
 	 */
-	if (bigenough)
-		dnp->n_direofoffset = uiop->uio_offset;
-	else {
+	if (bigenough) {
+		dnp->n_direofoffset = fxdr_hyper(&cookie.nfsuquad[0]);
+		if (end_of_directory) *end_of_directory = 1;
+	} else {
 		if (uiop->uio_resid > 0)
 			printf("EEK! readdirplusrpc resid > 0\n");
-		cookiep = nfs_getcookie(dnp, uiop->uio_offset, 1);
-		*cookiep = cookie;
 	}
+
 nfsmout:
 	if (newvp != NULLVP)
 		vrele(newvp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.8 2001/06/23 02:14:27 csapuntz Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.9 2001/06/25 02:15:48 csapuntz Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -206,8 +206,6 @@ int	nfs_removeit __P((struct sillyrename *));
 int	nfs_nget __P((struct mount *,nfsfh_t *,int,struct nfsnode **));
 int	nfs_lookitup __P((struct vnode *,char *,int,struct ucred *,struct proc *,struct nfsnode **));
 int	nfs_sillyrename __P((struct vnode *,struct vnode *,struct componentname *));
-nfsuint64 *nfs_getcookie __P((struct nfsnode *, off_t, int));
-void nfs_invaldir __P((struct vnode *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));
 

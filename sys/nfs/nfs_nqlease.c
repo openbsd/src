@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.15 2001/02/24 19:07:11 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.16 2001/06/25 02:15:46 csapuntz Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -1046,8 +1046,9 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 				np->n_timer.cqe_next = 0;
 				if (np->n_flag & (NMODIFIED | NQNFSEVICTED)) {
 					if (np->n_flag & NQNFSEVICTED) {
-						if (vp->v_type == VDIR)
-							nfs_invaldir(vp);
+						if (vp->v_type == VDIR) {
+							np->n_direofoffset = 0;
+						}
 						cache_purge(vp);
 						(void) nfs_vinvalbuf(vp,
 						       V_SAVE, cred, p, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.29 2000/06/26 22:48:15 art Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.30 2001/06/25 02:15:47 csapuntz Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1805,88 +1805,6 @@ netaddr_match(family, haddr, nam)
 		break;
 	};
 	return (0);
-}
-
-static nfsuint64 nfs_nullcookie = {{ 0, 0 }};
-/*
- * This function finds the directory cookie that corresponds to the
- * logical byte offset given.
- */
-nfsuint64 *
-nfs_getcookie(np, off, add)
-	register struct nfsnode *np;
-	off_t off;
-	int add;
-{
-	register struct nfsdmap *dp, *dp2;
-	register int pos;
-
-	pos = off / NFS_DIRBLKSIZ;
-	if (pos == 0) {
-#ifdef DIAGNOSTIC
-		if (add)
-			panic("nfs getcookie add at 0");
-#endif
-		return (&nfs_nullcookie);
-	}
-	pos--;
-	dp = np->n_cookies.lh_first;
-	if (!dp) {
-		if (add) {
-			MALLOC(dp, struct nfsdmap *, sizeof (struct nfsdmap),
-				M_NFSDIROFF, M_WAITOK);
-			dp->ndm_eocookie = 0;
-			LIST_INSERT_HEAD(&np->n_cookies, dp, ndm_list);
-		} else
-			return ((nfsuint64 *)0);
-	}
-	while (pos >= NFSNUMCOOKIES) {
-		pos -= NFSNUMCOOKIES;
-		if (dp->ndm_list.le_next) {
-			if (!add && dp->ndm_eocookie < NFSNUMCOOKIES &&
-				pos >= dp->ndm_eocookie)
-				return ((nfsuint64 *)0);
-			dp = dp->ndm_list.le_next;
-		} else if (add) {
-			MALLOC(dp2, struct nfsdmap *, sizeof (struct nfsdmap),
-				M_NFSDIROFF, M_WAITOK);
-			dp2->ndm_eocookie = 0;
-			LIST_INSERT_AFTER(dp, dp2, ndm_list);
-			dp = dp2;
-		} else
-			return ((nfsuint64 *)0);
-	}
-	if (pos >= dp->ndm_eocookie) {
-		if (add)
-			dp->ndm_eocookie = pos + 1;
-		else
-			return ((nfsuint64 *)0);
-	}
-	return (&dp->ndm_cookies[pos]);
-}
-
-/*
- * Invalidate cached directory information, except for the actual directory
- * blocks (which are invalidated separately).
- * Done mainly to avoid the use of stale offset cookies.
- */
-void
-nfs_invaldir(vp)
-	register struct vnode *vp;
-{
-#ifdef notdef /* XXX */
-	register struct nfsnode *np = VTONFS(vp);
-
-#ifdef DIAGNOSTIC
-	if (vp->v_type != VDIR)
-		panic("nfs: invaldir not dir");
-#endif
-	np->n_direofoffset = 0;
-	np->n_cookieverf.nfsuquad[0] = 0;
-	np->n_cookieverf.nfsuquad[1] = 0;
-	if (np->n_cookies.lh_first)
-		np->n_cookies.lh_first->ndm_eocookie = 0;
-#endif
 }
 
 /*

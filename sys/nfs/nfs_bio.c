@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.18 2001/02/23 14:52:50 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.19 2001/06/25 02:15:46 csapuntz Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 	struct ucred *cred;
 {
 	register struct nfsnode *np = VTONFS(vp);
-	register int biosize, diff, i;
+	register int biosize, diff;
 	struct buf *bp = NULL, *rabp;
 	struct vattr vattr;
 	struct proc *p;
@@ -117,14 +117,6 @@ nfs_bioread(vp, uio, ioflag, cred)
 	 */
 	if ((nmp->nm_flag & NFSMNT_NQNFS) == 0 && vp->v_type != VLNK) {
 		if (np->n_flag & NMODIFIED) {
-			if (vp->v_type != VREG) {
-				if (vp->v_type != VDIR)
-					panic("nfs: bioread, not dir");
-				nfs_invaldir(vp);
-				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-				if (error)
-					return (error);
-			}
 			np->n_attrstamp = 0;
 			error = VOP_GETATTR(vp, &vattr, cred, p);
 			if (error)
@@ -135,8 +127,6 @@ nfs_bioread(vp, uio, ioflag, cred)
 			if (error)
 				return (error);
 			if (np->n_mtime != vattr.va_mtime.tv_sec) {
-				if (vp->v_type == VDIR)
-					nfs_invaldir(vp);
 				error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 				if (error)
 					return (error);
@@ -157,20 +147,12 @@ nfs_bioread(vp, uio, ioflag, cred)
 		    if (error)
 			return (error);
 		    if (np->n_lrev != np->n_brev ||
-			(np->n_flag & NQNFSNONCACHE) ||
-			((np->n_flag & NMODIFIED) && vp->v_type == VDIR)) {
-			if (vp->v_type == VDIR)
-			    nfs_invaldir(vp);
+			(np->n_flag & NQNFSNONCACHE)) {
 			error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 			    return (error);
 			np->n_brev = np->n_lrev;
 		    }
-		} else if (vp->v_type == VDIR && (np->n_flag & NMODIFIED)) {
-		    nfs_invaldir(vp);
-		    error = nfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
-		    if (error)
-			return (error);
 		}
 	    }
 	    /*
@@ -183,8 +165,6 @@ nfs_bioread(vp, uio, ioflag, cred)
 			return (nfs_readrpc(vp, uio, cred));
 		case VLNK:
 			return (nfs_readlinkrpc(vp, uio, cred));
-		case VDIR:
-			break;
 		default:
 			printf(" NQNFSNONCACHE: type %x unexpected\n",	
 				vp->v_type);
@@ -292,71 +272,6 @@ again:
 		got_buf = 1;
 		on = 0;
 		break;
-	    case VDIR:
-		if (uio->uio_resid < NFS_READDIRBLKSIZ)
-			return (0);
-		nfsstats.biocache_readdirs++;
-		lbn = uio->uio_offset / NFS_DIRBLKSIZ;
-		on = uio->uio_offset & (NFS_DIRBLKSIZ - 1);
-		bp = nfs_getcacheblk(vp, lbn, NFS_DIRBLKSIZ, p);
-		if (!bp)
-		    return (EINTR);
-		if ((bp->b_flags & B_DONE) == 0) {
-		    bp->b_flags |= B_READ;
-		    error = nfs_doio(bp, cred, p);
-		    if (error) {
-			brelse(bp);
-			while (error == NFSERR_BAD_COOKIE) {
-			    nfs_invaldir(vp);
-			    error = nfs_vinvalbuf(vp, 0, cred, p, 1);
-			    /*
-			     * Yuck! The directory has been modified on the
-			     * server. The only way to get the block is by
-			     * reading from the beginning to get all the
-			     * offset cookies.
-			     */
-			    for (i = 0; i <= lbn && !error; i++) {
-				bp = nfs_getcacheblk(vp, i, NFS_DIRBLKSIZ, p);
-				if (!bp)
-				    return (EINTR);
-				if ((bp->b_flags & B_DONE) == 0) {
-				    bp->b_flags |= B_READ;
-				    error = nfs_doio(bp, cred, p);
-				    if (error)
-					brelse(bp);
-				}
-			    }
-			}
-			if (error)
-			    return (error);
-		    }
-		}
-
-		/*
-		 * If not eof and read aheads are enabled, start one.
-		 * (You need the current block first, so that you have the
-		 *  directory offset cookie of the next block.)
-		 */
-		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
-		    (np->n_direofoffset == 0 ||
-		    (lbn + 1) * NFS_DIRBLKSIZ < np->n_direofoffset) &&
-		    !(np->n_flag & NQNFSNONCACHE) &&
-		    !incore(vp, lbn + 1)) {
-			rabp = nfs_getcacheblk(vp, lbn + 1, NFS_DIRBLKSIZ, p);
-			if (rabp) {
-			    if ((rabp->b_flags & (B_DONE | B_DELWRI)) == 0) {
-				rabp->b_flags |= (B_READ | B_ASYNC);
-				if (nfs_asyncio(rabp, cred)) {
-				    rabp->b_flags |= B_INVAL;
-				    brelse(rabp);
-				}
-			    } else
-				brelse(rabp);
-			}
-		}
-		n = min(uio->uio_resid, NFS_DIRBLKSIZ - bp->b_resid - on);
-		got_buf = 1;
-		break;
 	    default:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 		break;
@@ -372,10 +287,6 @@ again:
 		break;
 	    case VLNK:
 		n = 0;
-		break;
-	    case VDIR:
-		if (np->n_flag & NQNFSNONCACHE)
-			bp->b_flags |= B_INVAL;
 		break;
 	    default:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
@@ -850,17 +761,6 @@ nfs_doio(bp, cr, p)
 		uiop->uio_offset = (off_t)0;
 		nfsstats.readlink_bios++;
 		error = nfs_readlinkrpc(vp, uiop, cr);
-		break;
-	    case VDIR:
-		nfsstats.readdir_bios++;
-		uiop->uio_offset = ((u_quad_t)bp->b_lblkno) * NFS_DIRBLKSIZ;
-		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
-			error = nfs_readdirplusrpc(vp, uiop, cr);
-			if (error == NFSERR_NOTSUPP)
-				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
-		}
-		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
-			error = nfs_readdirrpc(vp, uiop, cr);
 		break;
 	    default:
 		printf("nfs_doio:  type %x unexpected\n",vp->v_type);
