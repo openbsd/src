@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.19 2002/05/09 14:12:17 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.20 2002/05/26 01:21:12 deraadt Exp $	*/
 /*	$KAME: faithd.c,v 1.50 2002/05/09 14:06:52 itojun Exp $	*/
 
 /*
@@ -765,7 +765,7 @@ sig_child(int sig)
 	while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) > 0) {
 		if (pid && WEXITSTATUS(status))
 			syslog_r(LOG_WARNING, &sdata,
-			    "child %d exit status 0x%x", pid, status);
+			    "child %ld exit status 0x%x", (long)pid, status);
 	}
 
 	errno = save_errno;
