@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.48 2001/06/25 01:59:29 angelos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.49 2001/06/26 06:56:41 aaron Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -369,13 +369,13 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			xchg(((struct ip6_hdr *)ti)->ip6_dst,\
 			    ((struct ip6_hdr *)ti)->ip6_src,\
 			    struct in6_addr);
-			th = (void *)ti + sizeof(struct ip6_hdr);
+			th = (void *)(ti + sizeof(struct ip6_hdr));
 		} else
 #endif /* INET6 */
 		{
 			m->m_len = sizeof (struct tcpiphdr);
 			xchg(ti->ti_dst.s_addr, ti->ti_src.s_addr, u_int32_t);
-			th = (void *)ti + sizeof(struct ip);
+			th = (void *)(ti + sizeof(struct ip));
 		}
 		xchg(th->th_dport, th->th_sport, u_int16_t);
 #undef xchg
