@@ -1,1 +1,2 @@
-/* rubbish */
+#include <SYS.h>
+RSYSCALL(sigreturn)

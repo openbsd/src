@@ -1,4 +1,3 @@
-/* rubbish */
 #include "SYS.h"
 	.extern __logname_valid
 RSYSCALL(setlogin)
