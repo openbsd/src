@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.69 2001/09/29 02:41:31 jason Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.70 2001/09/29 03:28:11 jason Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3014,7 +3014,7 @@ natsemi_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	pcireg_t interface;
+	pcireg_t interface, ctl;
 	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -3031,8 +3031,6 @@ natsemi_chip_map(sc, pa)
 	}
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, NATSEMI_CCBT, 0xb7);
-	pciide_pci_write(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL1,
-	    NATSEMI_CTRL1_CH1INTMAP | NATSEMI_CTRL1_CH2INTMAP);
 
 	/*
 	 * Mask off interrupts from both channels, appropriate channel(s)
@@ -3052,6 +3050,14 @@ natsemi_chip_map(sc, pa)
 	    PCI_CLASS_REG));
 	interface &= ~PCIIDE_CHANSTATUS_EN;	/* Reserved on PC87415 */
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	/* If we're in PCIIDE mode, unmask INTA, otherwise mask it. */
+	ctl = pciide_pci_read(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL1);
+	if (interface & (PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1)))
+		ctl &= ~NATSEMI_CTRL1_INTAMASK;
+	else
+		ctl |= NATSEMI_CTRL1_INTAMASK;
+	pciide_pci_write(sc->sc_pc, sc->sc_tag, NATSEMI_CTRL1, ctl);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
