@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.41 1997/10/28 10:19:12 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.42 1997/11/23 05:17:58 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -166,7 +166,6 @@ cdev_decl(svr4_net);
 #include "pctr.h"
 #include "bios.h"
 
-cdev_decl(ipl);
 #ifdef IPFILTER
 #define NIPF 1
 #else
