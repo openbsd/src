@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2000/01/12 16:37:48 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 2000/02/17 18:54:15 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 # master: http://www.tuxedo.org/~esr/terminfo/termtypes.master.gz
@@ -6,19 +6,26 @@
 MAN=	termcap.5
 CLEANFILES+= terminfo.src termcap.src terminfo.db termcap.db
 
+# Use the tic we just built if possible
+.if exists(../../usr.bin/tic/tic)
+TIC=	../../usr.bin/tic/tic
+.else
+TIC=	/usr/bin/tic
+.endif
+
 all: terminfo.db termcap.db
 
 terminfo.src: termtypes.master
-	tic -I -x ${.ALLSRC} | sed \
+	${TIC} -I -x ${.ALLSRC} | sed \
 	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
 	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
 	    > ${.TARGET}
 	@if [ ! -s ${.TARGET} ]; then \
-	    echo ${.TARGET} is zero length!  You need to update /usr/bin/tic ;\
+	    echo ${.TARGET} is zero length!  You need to update ${TIC} ;\
 	    rm -f ${.TARGET} ;\
 	    exit 1 ;\
 	else case `sed 1q ${.TARGET}` in \
-	    Usage*) echo ${.TARGET} is corrupt!  You need to update /usr/bin/tic ;\
+	    Usage*) echo ${.TARGET} is corrupt!  You need to update ${TIC} ;\
 		    rm -f ${.TARGET} ;\
 		    exit 1 ;;\
 	    esac ;\
@@ -28,16 +35,16 @@ terminfo.db: terminfo.src
 	cap_mkdb -i -f terminfo terminfo.src
 
 termcap.src: termtypes.master
-	tic -C -x ${.ALLSRC} | sed \
+	${TIC} -C -x ${.ALLSRC} | sed \
 	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
 	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
 	    > ${.TARGET}
 	@if [ ! -s ${.TARGET} ]; then \
-	    echo ${.TARGET} is zero length!  You need to update /usr/bin/tic ;\
+	    echo ${.TARGET} is zero length!  You need to update ${TIC} ;\
 	    rm -f ${.TARGET} ;\
 	    exit 1 ;\
 	else case `sed 1q ${.TARGET}` in \
-	    Usage*) echo ${.TARGET} is corrupt!  You need to update /usr/bin/tic ;\
+	    Usage*) echo ${.TARGET} is corrupt!  You need to update ${TIC} ;\
 		    rm -f ${.TARGET} ;\
 		    exit 1 ;;\
 	    esac ;\
