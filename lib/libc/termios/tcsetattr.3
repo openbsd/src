@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcsetattr.3,v 1.6 1999/05/27 16:21:00 aaron Exp $
+.\"	$OpenBSD: tcsetattr.3,v 1.7 1999/06/05 04:47:42 aaron Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -167,9 +167,15 @@ terminal interface.
 Unless otherwise noted for a specific command, these functions are restricted
 from use by background processes.
 Attempts to perform these operations shall cause the process group to be sent
-a SIGTTOU signal.
-If the calling process is blocking or ignoring SIGTTOU signals, the process
-is allowed to perform the operation and the SIGTTOU signal is not sent.
+a
+.Dv SIGTTOU
+signal.
+If the calling process is blocking or ignoring
+.Dv SIGTTOU
+signals, the process
+is allowed to perform the operation and the
+.Dv SIGTTOU
+signal is not sent.
 .Pp
 In all the functions, although
 .Fa fd
@@ -213,27 +219,27 @@ termios structure referenced by
 The
 .Fa action
 field is created by
-.Em OR Ns 'ing
+.Tn OR Ns 'ing
 the following values, as specified in the include file
 .Aq Pa termios.h .
 .Bl -tag -width "TCSADRAIN"
-.It Fa TCSANOW
+.It Dv TCSANOW
 The change occurs immediately.
-.It Fa TCSADRAIN
+.It Dv TCSADRAIN
 The change occurs after all output written to
 .Fa fd
 has been transmitted to the terminal.
 This value of
 .Fa action
 should be used when changing parameters that affect output.
-.It Fa TCSAFLUSH
+.It Dv TCSAFLUSH
 The change occurs after all output written to
 .Fa fd
 has been transmitted to the terminal
 Additionally, any input that has been received but not read is discarded.
-.It Fa TCSASOFT
+.It Dv TCSASOFT
 If this value is
-.Em OR Ns 'ed
+.Tn OR Ns 'ed
 into the
 .Fa action
 value, the values of the
@@ -323,7 +329,7 @@ and
 .Nm cfsetspeed
 functions,
 as well as the
-.Li TCSASOFT
+.Dv TCSASOFT
 option to the
 .Nm tcsetattr
 function are extensions to the
