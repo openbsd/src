@@ -1,4 +1,5 @@
 #!/bin/sh
+#	$OpenBSD: install.sub,v 1.2 1997/02/17 17:00:05 rahnds Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +37,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-#	NetBSD installation/upgrade script - common subroutines.
+#	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
 VERSION=				# filled in automatically (see list)
@@ -611,7 +612,7 @@ install_from_mounted_fs() {
 			fi
 		done
 	else
-		echo "There are no NetBSD install sets available in \"$1\""
+		echo "There are no OpenBSD install sets available in \"$1\""
 		return
 	fi
 
