@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.21 2003/07/22 17:18:49 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.22 2003/07/22 17:20:53 millert Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.21 2003/07/22 17:18:49 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.22 2003/07/22 17:20:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1312,7 +1312,6 @@ do_ed_script(void)
 {
 	char	*t;
 	long	beginning_of_this_line;
-	bool	this_line_is_command = FALSE;
 	FILE	*pipefp;
 
 	if (!skip_rest_of_patch) {
@@ -1333,9 +1332,9 @@ do_ed_script(void)
 		p_input_line++;
 		for (t = buf; isdigit(*t) || *t == ','; t++)
 			;
-		this_line_is_command = (isdigit(*buf) &&
-		    (*t == 'd' || *t == 'c' || *t == 'a'));
-		if (this_line_is_command) {
+		/* POSIX defines allowed commands as {a,c,d,i,s} */
+		if (isdigit(*buf) && (*t == 'a' || *t == 'c' || *t == 'd' ||
+		    *t == 'i' || *t == 's')) {
 			if (!skip_rest_of_patch)
 				fputs(buf, pipefp);
 			if (*t != 'd') {
