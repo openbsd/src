@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_machdep.h,v 1.4 1997/08/07 09:10:43 niklas Exp $	 */
+/*	$OpenBSD: svr4_machdep.h,v 1.5 1997/08/27 20:17:42 mickey Exp $	 */
 /*	$NetBSD: svr4_machdep.h,v 1.5 1995/03/31 02:51:37 christos Exp $	 */
 
 /*
@@ -91,6 +91,8 @@ struct svr4_ssd {
 	unsigned int access1;
 	unsigned int access2;
 };
+
+#define SVR4_SYSARCH_GOSF	114	/* get OS features vector */
 
 /*
  * Processor traps
