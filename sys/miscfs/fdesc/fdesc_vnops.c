@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.28 2002/02/02 16:05:58 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.29 2002/02/12 18:41:21 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -568,17 +568,24 @@ fdesc_setattr(v)
 		}
 		return (error);
 	}
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		return (EROFS);
+	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
+		error = EROFS;
+		goto out;
+	}
 	/*
 	 * Directories can cause deadlocks.
 	 */
-	if (vp->v_type == VDIR)
-		return (EOPNOTSUPP);
+	if (vp->v_type == VDIR) {
+		error = EOPNOTSUPP;
+		goto out;
+	}
 	vn_lock(vp, LK_EXCLUSIVE|LK_RETRY, p);
 	error = VOP_SETATTR(vp, vap, ap->a_cred, p);
 	VOP_UNLOCK(vp, 0, p);
+out:
+	FRELE(fp);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_file.c,v 1.11 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: freebsd_file.c,v 1.12 2002/02/12 18:41:20 art Exp $	*/
 /*	$NetBSD: freebsd_file.c,v 1.3 1996/05/03 17:03:09 christos Exp $	*/
 
 /*
@@ -623,7 +623,10 @@ freebsd_sys_fstatfs(p, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	FREF(fp);
+	error = VFS_STATFS(mp, sp, p);
+	FRELE(fp);
+	if (error)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 

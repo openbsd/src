@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_25.c,v 1.1 2001/05/16 17:14:38 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_25.c,v 1.2 2002/02/12 18:41:20 art Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,21 +135,24 @@ compat_25_sys_fstatfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_25_sys_fstatfs_args /* {
+	struct compat_25_sys_fstatfs_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct ostatfs *) buf;
 	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	struct ostatfs osb;
 	int error;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	FREF(fp);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	error = VFS_STATFS(mp, sp, p);
+	FRELE(fp);
+	if (error)
 		return (error);
 
 	statfs_to_ostatfs(p, mp, sp, &osb);

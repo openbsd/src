@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_getdents.c,v 1.4 2001/09/05 23:38:28 art Exp $	*/
+/*	$OpenBSD: netbsd_getdents.c,v 1.5 2002/02/12 18:41:20 art Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -167,9 +167,11 @@ netbsd_sys_getdents(p, v, retval)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
+	FREF(fp);
 	error = netbsd_vn_readdir(fp, SCARG(uap, buf), UIO_USERSPACE,
 			SCARG(uap, count), &done, p, 0, 0);
 	*retval = done;
+	FRELE(fp);
 	return (error);
 }
 

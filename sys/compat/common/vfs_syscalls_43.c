@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.16 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.17 2002/02/12 18:41:20 art Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -355,10 +355,13 @@ compat_43_sys_getdirentries(p, v, retval)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 unionread:
-	if (vp->v_type != VDIR)
-		return (EINVAL);
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto bad;
+	}
 	aiov.iov_base = SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, count);
 	auio.uio_iov = &aiov;
@@ -428,13 +431,13 @@ unionread:
 	}
 	VOP_UNLOCK(vp, 0, p);
 	if (error)
-		return (error);
+		goto bad;
 	if ((SCARG(uap, count) == auio.uio_resid) &&
 	    union_check_p &&
 	    (union_check_p(p, &vp, fp, auio, &error) != 0))
 		goto unionread;
 	if (error)
-		return (error);
+		goto bad;
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&
 	    (vp->v_flag & VROOT) &&
@@ -450,5 +453,7 @@ unionread:
 	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
 	    sizeof(long));
 	*retval = SCARG(uap, count) - auio.uio_resid;
+bad:
+	FRELE(fp);
 	return (error);
 }

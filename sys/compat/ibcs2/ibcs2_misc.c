@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.19 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.20 2002/02/12 18:41:20 art Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -434,15 +434,16 @@ ibcs2_sys_getdents(p, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
+	FREF(fp);
 	args.resid = SCARG(uap, nbytes);
 	args.outp = (caddr_t)SCARG(uap, buf);
-	
-	if ((error = readdir_with_callback(fp, &fp->f_offset, args.resid,
-	    ibcs2_readdir_callback, &args)) != 0)
+	error = readdir_with_callback(fp, &fp->f_offset, args.resid,
+	    ibcs2_readdir_callback, &args)
+	FRELE(fp);
+	if (error)
 		return (error);
 
 	*retval = SCARG(uap, nbytes) - args.resid;
-
 	return (0);
 }
 
@@ -474,15 +475,17 @@ ibcs2_sys_read(p, v, retval)
 	if (vp->v_type != VDIR)
 		return sys_read(p, uap, retval);
 
+	FREF(fp);
 	args.resid = SCARG(uap, nbytes);
 	args.outp = (caddr_t)SCARG(uap, buf);
-	
-	if ((error = readdir_with_callback(fp, &fp->f_offset, args.resid,
-	    ibcs2_classicread_callback, &args)) != 0)
+
+	error = readdir_with_callback(fp, &fp->f_offset, args.resid,
+	    ibcs2_classicread_callback, &args);
+	FRELE(fp);
+	if (error)
 		return (error);
-	
-	*retval = SCARG(uap, nbytes) - args.resid;
-	
+
+	*retval = SCARG(uap, nbytes) - args.resid;	
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: osf1_mount.c,v 1.5 2000/08/04 15:47:55 ericj Exp $ */
+/* 	$OpenBSD: osf1_mount.c,v 1.6 2002/02/12 18:41:20 art Exp $ */
 /*	$NetBSD: osf1_mount.c,v 1.14 1999/05/05 01:51:34 cgd Exp $	*/
 
 /*
@@ -117,12 +117,14 @@ osf1_sys_fstatfs(p, v, retval)
 	struct osf1_statfs osfs;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)))
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)))
+	FREF(fp);
+	error = VFS_STATFS(mp, sp, p);
+	FRELE(fp);
+	if (error)
 		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	osf1_cvt_statfs_from_native(sp, &osfs);

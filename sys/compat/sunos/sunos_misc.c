@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.32 2002/02/12 13:05:31 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.33 2002/02/12 18:41:21 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -441,9 +441,12 @@ sunos_sys_getdents(p, v, retval)
 
 	args.resid = SCARG(uap, nbytes);
 	args.outp = (caddr_t)SCARG(uap, buf);
-	
-	if ((error = readdir_with_callback(fp, &fp->f_offset, args.resid,
-	    sunos_readdir_callback, &args)) != 0)
+
+	FREF(fp);
+	error = readdir_with_callback(fp, &fp->f_offset, args.resid,
+	    sunos_readdir_callback, &args);
+	FRELE(fp);
+	if (error)
 		return (error);
 
 	*retval = SCARG(uap, nbytes) - args.resid;
@@ -594,18 +597,22 @@ sunos_sys_fchroot(p, v, retval)
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
+	FREF(fp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 	VOP_UNLOCK(vp, 0, p);
-	if (error)
+	if (error) {
+		FRELE(fp);
 		return (error);
+	}
 	VREF(vp);
 	if (fdp->fd_rdir != NULL)
 		vrele(fdp->fd_rdir);
 	fdp->fd_rdir = vp;
+	FRELE(fp);
 	return (0);
 }
 
@@ -849,14 +856,17 @@ sunos_sys_fstatfs(p, v, retval)
 	struct sunos_sys_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	FREF(fp);
+	error = VFS_STATFS(mp, sp, p);
+	FRELE(fp);
+	if (error)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return sunstatfs(sp, (caddr_t)SCARG(uap, buf));

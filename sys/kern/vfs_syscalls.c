@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.92 2002/02/08 19:58:03 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.93 2002/02/12 18:41:21 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -604,13 +604,13 @@ sys_fstatfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fstatfs_args /* {
+	struct sys_fstatfs_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	register struct statfs *sp;
+	struct statfs *sp;
 	int error;
 	struct statfs sb;
 
@@ -618,7 +618,10 @@ sys_fstatfs(p, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	FREF(fp);
+	error = VFS_STATFS(mp, sp, p);
+	FRELE(fp);
+	if (error)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 #if notyet
@@ -723,7 +726,7 @@ sys_fchdir(p, v, retval)
 	struct sys_fchdir_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 	struct vnode *vp, *tdp;
 	struct mount *mp;
 	struct file *fp;
@@ -731,6 +734,7 @@ sys_fchdir(p, v, retval)
 
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	/* No need to FREF/FRELE since we VREF the vnode here. */
 	vp = (struct vnode *)fp->f_data;
 	VREF(vp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -1800,7 +1804,7 @@ sys_fchflags(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fchflags_args /* {
+	struct sys_fchflags_args /* {
 		syscallarg(int) fd;
 		syscallarg(unsigned int) flags;
 	} */ *uap = v;
@@ -1811,6 +1815,7 @@ sys_fchflags(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -1834,6 +1839,7 @@ sys_fchflags(p, v, retval)
 	}
 out:
 	VOP_UNLOCK(vp, 0, p);
+	FRELE(fp);
 	return (error);
 }
 
@@ -1886,7 +1892,7 @@ sys_fchmod(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fchmod_args /* {
+	struct sys_fchmod_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) mode;
 	} */ *uap = v;
@@ -1900,6 +1906,7 @@ sys_fchmod(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -1911,6 +1918,7 @@ sys_fchmod(p, v, retval)
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 	VOP_UNLOCK(vp, 0, p);
+	FRELE(fp);
 	return (error);
 }
 
@@ -2028,12 +2036,12 @@ sys_fchown(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fchown_args /* {
+	struct sys_fchown_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vattr vattr;
 	int error;
 	struct file *fp;
@@ -2041,6 +2049,7 @@ sys_fchown(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2065,6 +2074,7 @@ sys_fchown(p, v, retval)
 	}
 out:
 	VOP_UNLOCK(vp, 0, p);
+	FRELE(fp);
 	return (error);
 }
 
@@ -2138,7 +2148,7 @@ sys_futimes(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct timeval *) tptr;
 	} */ *uap = v;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct timeval tv[2];
 	struct vattr vattr;
 	int error;
@@ -2162,6 +2172,7 @@ sys_futimes(p, v, retval)
 	}
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2175,6 +2186,7 @@ sys_futimes(p, v, retval)
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 	VOP_UNLOCK(vp, 0, p);
+	FRELE(fp);
 	return (error);
 }
 
@@ -2226,7 +2238,7 @@ sys_ftruncate(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_ftruncate_args /* {
+	struct sys_ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
@@ -2240,6 +2252,7 @@ sys_ftruncate(p, v, retval)
 		return (error);
 	if ((fp->f_flag & FWRITE) == 0)
 		return (EINVAL);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2251,6 +2264,7 @@ sys_ftruncate(p, v, retval)
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 	}
 	VOP_UNLOCK(vp, 0, p);
+	FRELE(fp);
 	return (error);
 }
 
@@ -2267,12 +2281,13 @@ sys_fsync(p, v, retval)
 	struct sys_fsync_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct file *fp;
 	int error;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
@@ -2282,6 +2297,7 @@ sys_fsync(p, v, retval)
 #endif
 
 	VOP_UNLOCK(vp, 0, p);
+	FRELE(fp);
 	return (error);
 }
 
@@ -2485,7 +2501,7 @@ sys_getdirentries(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getdirentries_args /* {
+	struct sys_getdirentries_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(u_int) count;
@@ -2502,10 +2518,13 @@ sys_getdirentries(p, v, retval)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
+	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 unionread:
-	if (vp->v_type != VDIR)
-		return (EINVAL);
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto bad;
+	}
 	aiov.iov_base = SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, count);
 	auio.uio_iov = &aiov;
@@ -2520,13 +2539,13 @@ unionread:
 	fp->f_offset = auio.uio_offset;
 	VOP_UNLOCK(vp, 0, p);
 	if (error)
-		return (error);
+		goto bad;
 	if ((SCARG(uap, count) == auio.uio_resid) &&
 	    union_check_p &&
 	    (union_check_p(p, &vp, fp, auio, &error) != 0))
 		goto unionread;
 	if (error)
-		return (error);
+		goto bad;
 
 	if ((SCARG(uap, count) == auio.uio_resid) &&
 	    (vp->v_flag & VROOT) &&
@@ -2542,6 +2561,8 @@ unionread:
 	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
 	    sizeof(long));
 	*retval = SCARG(uap, count) - auio.uio_resid;
+bad:
+	FRELE(fp);
 	return (error);
 }
 
