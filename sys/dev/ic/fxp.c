@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.54 2004/06/27 02:38:37 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.55 2004/07/12 20:57:32 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -446,30 +446,6 @@ fxp_attach_common(sc, intrstr)
 	ifp->if_watchdog = fxp_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	
-	if (sc->sc_flags & FXPF_DISABLE_STANDBY) {
-		fxp_read_eeprom(sc, &data, 10, 1);
-		if (data & 0x02) {			/* STB enable */
-			u_int16_t cksum;
-			int i;
-			printf("Disabling dynamic standby mode in EEPROM\n");
-			data &= ~0x02;
-			fxp_write_eeprom(sc, &data, 10, 1);
-			printf("New EEPROM ID: 0x%x\n", data);
-			cksum = 0;
-			for (i = 0; i < (1 << sc->eeprom_size) - 1; i++) {
-				fxp_read_eeprom(sc, &data, i, 1);
-				cksum += data;
-			}
-			i = (1 << sc->eeprom_size) - 1;
-			cksum = 0xBABA - cksum;
-			fxp_read_eeprom(sc, &data, i, 1);
-			fxp_write_eeprom(sc, &cksum, i, 1);
-			printf("EEPROM checksum @ 0x%x: 0x%x -> 0x%x\n",
-			    i, data, cksum);
-		}
-	}
-
 #if NVLAN > 0
 	/*
 	 * Only 82558 and newer cards have a bit to ignore oversized frames.
@@ -480,6 +456,31 @@ fxp_attach_common(sc, intrstr)
 
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+	if (sc->sc_flags & FXPF_DISABLE_STANDBY) {
+		fxp_read_eeprom(sc, &data, 10, 1);
+		if (data & 0x02) {			/* STB enable */
+			u_int16_t cksum;
+			int i;
+
+			printf("%s: Disabling dynamic standby mode in EEPROM",
+			    sc->sc_dev.dv_xname);
+			data &= ~0x02;
+			fxp_write_eeprom(sc, &data, 10, 1);
+			printf(", New ID 0x%x", data);
+			cksum = 0;
+			for (i = 0; i < (1 << sc->eeprom_size) - 1; i++) {
+				fxp_read_eeprom(sc, &data, i, 1);
+				cksum += data;
+			}
+			i = (1 << sc->eeprom_size) - 1;
+			cksum = 0xBABA - cksum;
+			fxp_read_eeprom(sc, &data, i, 1);
+			fxp_write_eeprom(sc, &cksum, i, 1);
+			printf(", cksum @ 0x%x: 0x%x -> 0x%x\n",
+			    i, data, cksum);
+		}
+	}
 
 	/*
 	 * Initialize our media structures and probe the MII.
