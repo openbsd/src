@@ -34,7 +34,7 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`$Id: trinity.mc,v 1.1.1.1 1995/10/18 08:48:10 deraadt Exp $')
+VERSIONID(`$Id: trinity.mc,v 1.2 1996/01/29 01:41:06 dm Exp $')
 OSTYPE(bsd4.4)dnl
 define(`UUCP_RELAY', life.ai.mit.edu)dnl
 define(`BITNET_RELAY', mitvma.mit.edu)dnl

@@ -32,13 +32,14 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
-include(`../m4/cf.m4')
-VERSIONID(`@(#)vangogh.mc	8.2 (Berkeley) 1/26/94')
-DOMAIN(cs.exposed)dnl
-OSTYPE(bsd4.4)dnl
-MAILER(local)dnl
-MAILER(smtp)dnl
-define(`MCI_CACHE_SIZE', 5)
-Cw okeeffe.CS.Berkeley.EDU
-Cw python.CS.Berkeley.EDU
+divert(0)
+VERSIONID(`@(#)Berkeley.EDU.m4	8.9 (Berkeley) 10/5/95')
+DOMAIN(berkeley-only)dnl
+define(`BITNET_RELAY', `bitnet-relay.Berkeley.EDU')dnl
+define(`UUCP_RELAY', `uucp-relay.Berkeley.EDU')dnl
+define(`confFORWARD_PATH', `$z/.forward.$w:$z/.forward')dnl
+define(`confCW_FILE', `-o /etc/sendmail.cw')dnl
+define(`confDONT_INIT_GROUPS', True)dnl
+FEATURE(redirect)dnl
+FEATURE(use_cw_file)dnl
+FEATURE(stickyhost)dnl

@@ -32,21 +32,7 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
-include(`../m4/cf.m4')
-VERSIONID(`@(#)python.mc	8.1 (Berkeley) 6/7/93')
-OSTYPE(bsd4.4)dnl
-DOMAIN(cs.exposed)dnl
-define(`LOCAL_RELAY', vangogh.CS.Berkeley.EDU)dnl
-define(`MASQUERADE_NAME', vangogh.CS.Berkeley.EDU)dnl
-MAILER(local)dnl
-MAILER(smtp)dnl
-
-# accept mail sent to the domain head
-DDBostic.COM
-
-LOCAL_RULE_0
-# accept mail sent to the domain head
-R< @ $D . > : $*		$@ $>7 $1		@here:... -> ...
-R$* $=O $* < @ $D . >		$@ $>7 $1 $2 $3		...@here -> ...
-R$* < @ $D . >			$#local $: $1		user@here -> user
+divert(0)
+VERSIONID(`@(#)S2K.Berkeley.EDU.m4	8.2 (Berkeley) 4/21/95')
+DOMAIN(CS.Berkeley.EDU)dnl
+MASQUERADE_AS(postgres.Berkeley.EDU)dnl

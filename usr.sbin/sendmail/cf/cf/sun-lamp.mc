@@ -35,7 +35,7 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)sun-lamp.mc	$Revision: 1.1.1.1 $')
+VERSIONID(`@(#)sun-lamp.mc	$Revision: 1.2 $')
 OSTYPE(bsd4.4)dnl
 MASQUERADE_AS(NetBSD.ORG)dnl
 MAILER(local)dnl

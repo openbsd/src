@@ -33,12 +33,8 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-include(`../m4/cf.m4')
-VERSIONID(`@(#)chez.mc	8.1 (Berkeley) 6/7/93')
-OSTYPE(bsd4.4)dnl
-DOMAIN(cs.exposed)dnl
-define(`LOCAL_RELAY', vangogh.CS.Berkeley.EDU)dnl
-define(`MASQUERADE_NAME', vangogh.CS.Berkeley.EDU)dnl
-MAILER(local)dnl
-MAILER(smtp)dnl
-Fw/etc/sendmail.cw
+divert(0)
+VERSIONID(`@(#)masquerade_envelope.m4	8.1 (Berkeley) 7/9/95')
+divert(-1)
+
+define(`_MASQUERADE_ENVELOPE_', 1)
