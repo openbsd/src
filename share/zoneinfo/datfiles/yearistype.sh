@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 : '@(#)yearistype.sh	7.4'
 
