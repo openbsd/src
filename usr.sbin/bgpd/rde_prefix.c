@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.2 2003/12/19 19:24:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -188,7 +188,8 @@ pt_lookup(struct in_addr prefix)
 	PT_STAT(pt_lookup);
 	for (i = MAX_PREFIX; i >= MIN_PREFIX; i--) {
 		p = pt_get(prefix, i);
-		if (p != NULL) return p;
+		if (p != NULL)
+			return p;
 	}
 	return NULL;
 }
