@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile_et.c,v 1.9 2000/12/24 11:53:11 aaron Exp $	*/
+/*	$OpenBSD: compile_et.c,v 1.10 2003/06/25 21:19:34 deraadt Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -180,7 +180,7 @@ generate(void)
 }
 
 static void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
