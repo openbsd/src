@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.7 1998/02/14 08:52:06 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.8 1999/10/26 22:53:52 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.7 1998/02/14 08:52:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.8 1999/10/26 22:53:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ print(tp, wp, ldisc, fmt)
 	put("-pendin", PENDIN, 0);
 	put("-nokerninfo", NOKERNINFO, 0);
 	put("-extproc", EXTPROC, 0);
+	put("-xcase", XCASE, 0);
 
 	/* input flags */
 	tmp = tp->c_iflag;
@@ -137,6 +138,7 @@ print(tp, wp, ldisc, fmt)
 	put("-icrnl", ICRNL, 1);
 	put("-inlcr", INLCR, 0);
 	put("-igncr", IGNCR, 0);
+	put("-iuclc", IUCLC, 0);
 	put("-ixon", IXON, 1);
 	put("-ixoff", IXOFF, 0);
 	put("-ixany", IXANY, 1);
@@ -152,7 +154,12 @@ print(tp, wp, ldisc, fmt)
 	binit("oflags");
 	put("-opost", OPOST, 1);
 	put("-onlcr", ONLCR, 1);
+	put("-ocrnl", OCRNL, 0);
+	put("-onocr", ONOCR, 0);
+	put("-onlret", ONLRET, 0);
+	put("-olcuc", OLCUC, 0);
 	put("-oxtabs", OXTABS, 1);
+	put("-onoeot", ONOEOT, 0);
 
 	/* control flags (hardware state) */
 	tmp = tp->c_cflag;

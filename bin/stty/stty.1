@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stty.1,v 1.17 1999/08/17 14:04:01 aaron Exp $
+.\"	$OpenBSD: stty.1,v 1.18 1999/10/26 22:53:53 deraadt Exp $
 .\"	$NetBSD: stty.1,v 1.10 1995/09/07 06:57:14 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -261,6 +261,8 @@ Newline performs (does not perform) carriage return on output.
 Translate (do not translate) lower case to upper case on output.
 .It Cm oxtabs Pq Fl oxtabs
 Expand (do not expand) tabs to spaces on output.
+.It Cm onoeot Pq Fl onoeot
+Discard (do not discard) EOFs on output.
 .El
 .Ss Local modes
 Local mode flags (lflags) affect various and sundry characteristics of terminal
