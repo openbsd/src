@@ -2865,3 +2865,5 @@
 ./usr/include/dev/pci/if_axreg.h
 ./usr/include/dev/pcmcia/if_cnwreg.h
 ./usr/include/sys/sched.h
+./usr/include/dev/ic/i82596reg.h
+./usr/include/dev/ic/i82596var.h
