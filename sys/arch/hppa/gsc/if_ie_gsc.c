@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.11 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.12 2002/03/18 19:13:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -328,7 +328,6 @@ ie_gsc_attach(parent, self, aux)
 	sc->sc_maddr = kvtop((caddr_t)sc->bh);
 
 #else
-	printf("%x ", ie_mem);
 	sc->bh = (u_int)ie_mem;
 	sc->sc_maddr = sc->bh;
 #endif
