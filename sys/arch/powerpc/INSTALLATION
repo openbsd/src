@@ -51,6 +51,11 @@ MBR Partition 0: sysid 6=0x06 (Primary 'big' DOS (> 32MB))
     end: cylinder    0, head   0, sector  0
 --
 
+
+sample disklabel output
+--
+--
+
 Make certain to leave that unmodified and as the active partition.
 That parition is currently used to hold the boot loader.
 
@@ -67,6 +72,28 @@ when the label is written back out to the disk these messages are normal:
 --
 fdisk: DIOCWLABEL: Inappropriate ioctl for device
 fdisk: DIOCWLABEL: Inappropriate ioctl for device
+--
+example fdisk output
+--
+Using device /dev/rsd1c:
+Parameters extracted from in-core disklabel are:
+    cylinders=8004 heads=8 sectors/track=16
+    sectors/cylinder=128 total=1024512
+Figures below won't work with BIOS for partitions not in cylinder 1
+Parameters to be used for BIOS calculations are:
+    cylinders=8004 heads=8 sectors/track=16
+    sectors/cylinder=128
+WARNING: BIOS sector numbers start at 1 (not 0)
+MBR Partition 0: sysid 6=0x06 (Primary 'big' DOS (> 32MB))
+    start 1, size 2048 (1 MB), flag 0x80
+    beg: cylinder    0, head   0, sector  0
+    end: cylinder    0, head   0, sector  0
+MBR Partition 1: <UNUSED>
+MBR Partition 2: <UNUSED>
+MBR Partition 3: sysid 166=0xa6 (OpenBSD or BSD Big Endian)
+    start 2176, size 1022336 (499 MB), flag 0x00
+    beg: cylinder   17, head   0, sector  1
+    end: cylinder  836, head   7, sector 16
 --
 
 Now it is necessary to create a UNIX disklabel for the drive
@@ -89,6 +116,36 @@ at a time, Otherwise the input buffer can overflow and lose characters.
 
 Make certain to keep the partition 'd' around. The only
 change to possibly make to it would be make it's type MSDOS?
+
+example disklabel output
+---
+type: unknown
+disk: 
+label: 
+flags:
+bytes/sector: 512
+sectors/track: 16
+tracks/cylinder: 8
+sectors/cylinder: 128
+cylinders: 8004
+total sectors: 1024512
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # milliseconds
+track-to-track seek: 0  # milliseconds
+drivedata: 0 
+
+8 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:    56704     2176    4.2BSD      512  4096    64   # (Cyl.   17 - 459)
+  b:   102400    58880      swap                        # (Cyl.  460 - 1259)
+  c:  1024512        0    unused        0     0         # (Cyl.    0 - 8003)
+  d:     2048        1    unused        0     0         # (Cyl.    0*- 16)
+  g:   460800   161280    4.2BSD      512  4096    64   # (Cyl. 1260 - 4859)
+  h:   402432   622080    4.2BSD      512  4096    64   # (Cyl. 4860 - 8003)
+---
 
 It probably would be nice to eventually make the install kernel
 have option MFS or the rd device, so that "disklabel -e" could be used.
