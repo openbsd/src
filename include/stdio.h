@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.16 1995/03/25 02:51:02 jtc Exp $	*/
+/*	$NetBSD: stdio.h,v 1.17 1996/01/20 01:36:30 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -232,10 +232,6 @@ size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));
 char	*gets __P((char *));
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-extern int sys_nerr;			/* perror(3) external variables */
-extern const char *const sys_errlist[];
-#endif
 void	 perror __P((const char *));
 int	 printf __P((const char *, ...));
 int	 putc __P((int, FILE *));
