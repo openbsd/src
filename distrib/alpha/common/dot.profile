@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.6 2002/04/09 20:04:09 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.7 2002/04/13 03:10:48 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -40,7 +40,13 @@ TERMS=`grep '^[A-z]' /usr/share/misc/termcap | sed -e 's/|[^|]*$//' -e 's/|/ /g'
 TERM=vt220
 PAGER=more
 
-rootdisk=`dmesg|grep "^root on"|{ o=;while read x y z t;do o=/dev/$z;done;echo $o;}`
+rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
+	g
+	p
+}'|sed -n -e '/^root on \([0-9a-z]*\)/{
+	s//\/dev\/\1/
+	p
+}'`
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
