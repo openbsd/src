@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.11 2005/01/03 21:08:12 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.12 2005/02/26 21:51:33 david Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -158,7 +158,7 @@ cvs_logmsg_open(const char *path)
  *
  * Get a log message by forking and executing the user's editor.  The <dir>
  * argument is a relative path to the directory for which the log message
- * applies, and the 3 tail queue arguemnts contains all the files for which the
+ * applies, and the 3 tail queue arguments contains all the files for which the
  * log message will apply.  Any of these arguments can be set to NULL in the
  * case where there is no information to display.
  * Returns the message in a dynamically allocated string on success, NULL on
