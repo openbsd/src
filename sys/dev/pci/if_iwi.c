@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.15 2004/12/04 19:01:46 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.16 2004/12/04 19:19:24 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -229,7 +229,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	ic->ic_phytype = IEEE80211_T_DS;
+	ic->ic_phytype = IEEE80211_T_OFDM;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
 
@@ -280,7 +280,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
-	/* Default to authmode OPEN */
+	/* default to authmode OPEN */
 	sc->authmode = IEEE80211_AUTH_OPEN;
 
 	/* IBSS channel undefined for now */
@@ -1321,12 +1321,12 @@ iwi_stop_master(struct iwi_softc *sc)
 	CSR_WRITE_4(sc, IWI_CSR_INTR_MASK, 0);
 
 	CSR_WRITE_4(sc, IWI_CSR_RST, IWI_RST_STOP_MASTER);
-	for (ntries = 0; ntries < 50; ntries++) {
+	for (ntries = 0; ntries < 5; ntries++) {
 		if (CSR_READ_4(sc, IWI_CSR_RST) & IWI_RST_MASTER_DISABLED)
 			break;
 		DELAY(10);
 	}
-	if (ntries == 50)
+	if (ntries == 5)
 		printf("%s: timeout waiting for master\n", sc->sc_dev.dv_xname);
 
 	CSR_WRITE_4(sc, IWI_CSR_RST, CSR_READ_4(sc, IWI_CSR_RST) |
@@ -1589,7 +1589,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 	CSR_WRITE_4(sc, IWI_CSR_CTL, CSR_READ_4(sc, IWI_CSR_CTL) |
 	    IWI_CTL_ALLOW_STANDBY);
 
-	/* Wait at most 1 s for firmware initialization to complete */
+	/* Wait at most one second for firmware initialization to complete */
 	if ((error = tsleep(sc, 0, "iwiinit", hz)) != 0) {
 		printf("%s: timeout waiting for firmware initialization to "
 		    "complete\n", sc->sc_dev.dv_xname);
@@ -1618,7 +1618,7 @@ iwi_config(struct iwi_softc *sc)
 	u_int32_t data;
 	int error, i;
 
-	DPRINTF(("Setting adapter MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
+	DPRINTF(("Setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
 	IEEE80211_ADDR_COPY(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
 	error = iwi_cmd(sc, IWI_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
@@ -1637,13 +1637,13 @@ iwi_config(struct iwi_softc *sc)
 		return error;
 
 	data = htole32(IWI_POWER_MODE_CAM);
-	DPRINTF(("Setting adapter power mode to %u\n", data));
+	DPRINTF(("Setting power mode to %u\n", letoh32(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_POWER_MODE, &data, sizeof data, 0);
 	if (error != 0)
 		return error;
 
 	data = htole32(ic->ic_rtsthreshold);
-	DPRINTF(("Setting adapter RTS threshold to %u\n", letoh32(data)));
+	DPRINTF(("Setting RTS threshold to %u\n", letoh32(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_RTS_THRESHOLD, &data, sizeof data, 0);
 	if (error != 0)
 		return error;
@@ -1690,7 +1690,7 @@ iwi_config(struct iwi_softc *sc)
 		return error;
 
 	data = htole32(arc4random());
-	DPRINTF(("Setting initialization vector to %u\n", data));
+	DPRINTF(("Setting initialization vector to %u\n", letoh32(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_IV, &data, sizeof data, 0);
 	if (error != 0)
 		return error;
@@ -1703,7 +1703,7 @@ iwi_config(struct iwi_softc *sc)
 			wepkey.len = k->wk_len;
 			bzero(wepkey.key, sizeof wepkey.key);
 			bcopy(k->wk_key, wepkey.key, k->wk_len);
-			DPRINTF(("Setting wep key index %d len %d\n",
+			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = iwi_cmd(sc, IWI_CMD_SET_WEP_KEY, &wepkey,
 			    sizeof wepkey, 0);

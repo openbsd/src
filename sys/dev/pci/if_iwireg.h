@@ -1,4 +1,4 @@
-/*	$Id: if_iwireg.h,v 1.7 2004/12/04 19:01:47 damien Exp $ */
+/*	$Id: if_iwireg.h,v 1.8 2004/12/04 19:19:24 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -425,4 +425,4 @@ struct iwi_wep_key {
 #define IWI_EEPROM_CTL(sc, val) do {					\
 	MEM_WRITE_4((sc), IWI_MEM_EEPROM_CTL, (val));			\
 	DELAY(IWI_EEPROM_DELAY);					\
-} while (0)
+} while (/* CONSTCOND */0)
