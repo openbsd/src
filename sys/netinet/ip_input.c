@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.108 2003/01/07 09:00:34 kjc Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.109 2003/02/11 21:08:04 cedric Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -298,6 +298,7 @@ ipv4_input(m)
 	struct in_ifaddr *ia;
 	struct ipqent *ipqe;
 	int hlen, mff;
+	in_addr_t pfrdr = 0;
 #ifdef IPSEC
 	int error, s;
 	struct tdb *tdb;
@@ -392,6 +393,7 @@ ipv4_input(m)
 	/*
 	 * Packet filter
 	 */
+	pfrdr = ip->ip_dst.s_addr;
 	if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m) != PF_PASS)
 		goto bad;
 	if (m == NULL)
@@ -399,6 +401,7 @@ ipv4_input(m)
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
+	pfrdr = (pfrdr != ip->ip_dst.s_addr);
 #endif
 
 	/*
@@ -513,7 +516,7 @@ ipv4_input(m)
 		 */
 #endif /* IPSEC */
 
-		ip_forward(m, 0);
+		ip_forward(m, pfrdr);
 	}
 	return;
 
