@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.5 2002/09/06 18:45:06 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.6 2003/03/17 02:20:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -70,12 +70,12 @@ main(int argc, char **argv)
 				syslog(LOG_ERR, "%s: invalid service", optarg);
 				exit(1);
 			}
-                        break;
+			break;
 		case 'v':
-                        if (strncmp(optarg, "wheel=", 6) == 0)
-                                wheel = optarg + 6;
-                        else if (strncmp(optarg, "lastchance=", 10) == 0)
-				lastchance = (strcmp(optarg + 10, "yes") == 0);
+			if (strncmp(optarg, "wheel=", 6) == 0)
+				wheel = optarg + 6;
+			else if (strncmp(optarg, "lastchance=", 11) == 0)
+				lastchance = (strcmp(optarg + 11, "yes") == 0);
 			else if (strcmp(optarg, "login=yes") == 0)
 				arg_login = 1;
 			else if (strcmp(optarg, "notickets=yes") == 0)
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 		mode = 0;
 		count = -1;
 		while (++count < sizeof(response) &&
-		      read(3, &response[count], 1) == 1) {
+		    read(3, &response[count], 1) == 1) {
 			if (response[count] == '\0' && ++mode == 2)
 				break;
 			if (response[count] == '\0' && mode == 1) {
