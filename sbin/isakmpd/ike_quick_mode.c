@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.87 2004/09/17 13:53:08 ho Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.88 2005/02/10 13:01:01 ho Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1740,7 +1740,7 @@ next_sa:
 			goto cleanup;
 		}
 	} else if (
-#ifdef USE_X509
+#if defined (USE_X509) && defined (USE_POLICY)
 	    ignore_policy ||
 #endif
 	    strncmp("yes", conf_get_str("General", "Use-Keynote"), 3)) {
