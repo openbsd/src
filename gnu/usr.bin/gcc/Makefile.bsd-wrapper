@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.42 2004/01/15 17:48:03 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.43 2004/01/28 23:40:36 espie Exp $
 
 #MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
-MAN=		gcc.1 cpp.1 gcov.1
+MAN=		gcc.1 cpp.1 gcov.1 gcc-local.1
 #MLINKS+=	cccp.1 cpp.1
 #MLINKS+=	protoize.1 unprotoize.1
+MLINKS+=	gcc.1 cc.1 cpp.1 ccpp.1
 
 BINDIR=/usr/bin
 .if defined(BOOTSTRAP)
@@ -15,6 +16,14 @@ MLINKS+=	gcc.1 g++.1 gcc.1 c++.1
 MLINKS+=	g77.1 f77.1
 .endif
 V=3.3.2
+
+FAKE_FILES=/usr/share/info/g77.info-21 \
+	/usr/share/info/gcc-info-25 \
+	/usr/share/info/gcc-info-26 \
+	/usr/share/info/gcc-info-27 \
+	/usr/share/info/gcc-info-28 \
+	/usr/share/info/gcc-info-29 \
+	/usr/share/info/gcc-info-30
 
 .SUFFIXES:	.1
 .PATH.1:	${.CURDIR}/gcc ${.CURDIR}/gcc/doc
@@ -137,6 +146,9 @@ install:	maninstall target_path
 		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77
 #	ln -fs `cat target-path`/cpp \
 #		${DESTDIR}/usr/libexec
+	for i in ${FAKE_FILES}; do \
+	    touch ${DESTDIR}$$i; \
+	done
 
 clean cleandir: 
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
