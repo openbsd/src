@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.12 2001/08/26 02:37:00 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.13 2001/08/31 01:06:26 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -424,14 +424,6 @@ kdbprinttrap(type, code)
 
 void
 Debugger()
-{
-	asm (ENTRY_ASM); /* entry trap */
-	/* ends up at ddb_entry_trap below */
-}
-
-/* gimmeabreak - drop execute the ENTRY trap */
-void
-gimmeabreak()
 {
 	asm (ENTRY_ASM); /* entry trap */
 	/* ends up at ddb_entry_trap below */

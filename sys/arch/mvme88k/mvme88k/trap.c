@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2001/08/26 14:31:12 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2001/08/31 01:06:29 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1214,9 +1214,9 @@ error_fault(struct m88100_saved_state *frame)
 	DEBUG_MSG("last exception vector = %d\n", last_vector);
 #endif 
 #if DDB 
-	gimmeabreak();
+	Debugger();
 	DEBUG_MSG("You really can't restart after an error exception!\n");
-	gimmeabreak();
+	Debugger();
 #endif /* DDB */
 	bugreturn();  /* This gets us to Bug instead of a loop forever */
 }
@@ -1228,9 +1228,9 @@ error_reset(struct m88100_saved_state *frame)
 	DEBUG_MSG("This is usually caused by a branch to a NULL function pointer.\n");
 	DEBUG_MSG("e.g. jump to address 0.  Use the debugger trace command to track it down.\n");
 #if DDB 
-	gimmeabreak();
+	Debugger();
 	DEBUG_MSG("It's useless to restart after a reset exception! You might as well reboot.\n");
-	gimmeabreak();
+	Debugger();
 #endif /* DDB */
 	bugreturn();  /* This gets us to Bug instead of a loop forever */
 }

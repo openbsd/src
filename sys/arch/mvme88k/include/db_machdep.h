@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.12 2001/08/26 14:31:07 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.13 2001/08/31 01:06:29 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -49,8 +49,6 @@
 /* Entry trap for the debugger - used for inline assembly breaks*/
 #define ENTRY_ASM       	"tb0 0, r0, 132"
 #define DDB_ENTRY_TRAP_NO	132
-
-void gimmeabreak __P((void));
 
 typedef vm_offset_t   db_addr_t;
 typedef int           db_expr_t;
