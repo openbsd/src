@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.16 1999/09/14 21:03:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.17 1999/09/15 08:57:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -524,17 +524,27 @@ __has_ypmaster()
 	int keylen, resultlen;
 	char *key, *result;
 	static int checked = -1;
+	static uid_t saved_uid, saved_euid;
+	uid_t uid = getuid(), euid = geteuid();
 
-	if (checked != -1)
+	/*
+	 * Do not recheck IFF the saved UID and the saved
+	 * EUID are the same. In all other cases, recheck.
+	 */
+	if (checked != -1 && saved_uid == uid && saved_euid == euid)
 		return (checked);
 
-	if (geteuid() != 0) {
+	if (euid != 0) {
+		saved_uid = uid;
+		saved_euid = euid;
 		checked = 0;
 		return (checked);
 	}
 
 	if (!__ypdomain) {
 		if (_yp_check(&__ypdomain) == 0) {
+			saved_uid = uid;
+			saved_euid = euid;
 			checked = 0;
 			return (checked);	/* No domain. */
 		}
@@ -542,11 +552,15 @@ __has_ypmaster()
 
 	if (yp_first(__ypdomain, "master.passwd.byname",
 	    &key, &keylen, &result, &resultlen)) {
+		saved_uid = uid;
+		saved_euid = euid;
 	    	checked = 0;
 		return (checked);
 	}
-	free(result);
+	free (result);
 
+	saved_uid = uid;
+	saved_euid = euid;
 	checked = 1;
 	return (checked);
 }
