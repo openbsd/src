@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.13 2002/03/26 19:12:56 niklas Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.14 2002/08/08 13:51:25 aaron Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ update_window:
 			} /* else queue this packet; */
 		} else {
 			/*register struct socket *so = cb->s_nspcb->nsp_socket;
-			if (so->so_state && SS_NOFDREF) {
+			if (so->so_state & SS_NOFDREF) {
 				ns_error(dtom(si), NS_ERR_NOSOCK, 0);
 				(void)spp_close(cb);
 			} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_pcb.c,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: iso_pcb.c,v 1.5 2002/08/08 13:51:25 aaron Exp $	*/
 /*	$NetBSD: iso_pcb.c,v 1.10 1996/04/13 01:34:56 cgd Exp $	*/
 
 /*-
@@ -232,7 +232,7 @@ iso_pcbbind(v, nam)
 		bcopy(TSEL(siso), suf.data, sizeof(suf.data));
 		suf.s = ntohs(suf.s);
 		if ((suf.s < ISO_PORT_RESERVED) &&
-		    (isop->isop_socket->so_state && SS_PRIV) == 0)
+		    (isop->isop_socket->so_state & SS_PRIV) == 0)
 			return EACCES;
 	} else {
 		register char  *cp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.2 2002/04/08 06:06:10 deraadt Exp $	*/
+/*	$OpenBSD: esa.c,v 1.3 2002/08/08 13:51:25 aaron Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -1610,7 +1610,7 @@ esa_power(struct esa_softc *sc, int state)
 
 	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &pmcapreg, 0)) {
 		data = pci_conf_read(pc, tag, pmcapreg + 4);
-		if ((data && PCI_PMCSR_STATE_MASK) != state)
+		if ((data & PCI_PMCSR_STATE_MASK) != state)
 			pci_conf_write(pc, tag, pmcapreg + 4, state);
 	}
 		
