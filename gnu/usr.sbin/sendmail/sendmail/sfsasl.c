@@ -9,7 +9,7 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: sfsasl.c,v 8.98 2004/03/03 19:20:31 ca Exp $")
+SM_RCSID("@(#)$Sendmail: sfsasl.c,v 8.100 2004/11/23 18:32:32 ca Exp $")
 #include <stdlib.h>
 #include <sendmail.h>
 #include <errno.h>
@@ -279,9 +279,28 @@ sasl_write(fp, buf, size)
 # else /* SASL >= 20000 */
 	char *outbuf;
 # endif /* SASL >= 20000 */
-	unsigned int outlen;
+	unsigned int outlen, *maxencode;
 	size_t ret = 0, total = 0;
 	struct sasl_obj *so = (struct sasl_obj *) fp->f_cookie;
+
+	/*
+	**  Fetch the maximum input buffer size for sasl_encode().
+	**  This can be less than the size set in attemptauth()
+	**  due to a negotation with the other side, e.g.,
+	**  Cyrus IMAP lmtp program sets maxbuf=4096,
+	**  digestmd5 substracts 25 and hence we'll get 4071
+	**  instead of 8192 (MAXOUTLEN).
+	**  Hack (for now): simply reduce the size, callers are (must be)
+	**  able to deal with that and invoke sasl_write() again with
+	**  the rest of the data.
+	**  Note: it would be better to store this value in the context
+	**  after the negotiation.
+	*/
+
+	result = sasl_getprop(so->conn, SASL_MAXOUTBUF,
+                             (const void **) &maxencode);
+	if (result == SASL_OK && size > *maxencode && *maxencode > 0)
+		size = *maxencode;
 
 	result = sasl_encode(so->conn, buf,
 			     (unsigned int) size, &outbuf, &outlen);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,13 +13,12 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.451 2004/03/01 21:50:36 ca Exp $")
+SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.455 2004/08/12 23:23:19 gshapiro Exp $")
 
 #include <sysexits.h>
 
 
-extern void	markfailure __P((ENVELOPE *, ADDRESS *, MCI *, int, bool));
-static void	datatimeout __P((void));
+static void	datatimeout __P((int));
 static void	esmtp_check __P((char *, bool, MAILER *, MCI *, ENVELOPE *));
 static void	helo_options __P((char *, bool, MAILER *, MCI *, ENVELOPE *));
 static int	smtprcptstat __P((ADDRESS *, MAILER *, MCI *, ENVELOPE *));
@@ -2761,7 +2760,8 @@ smtpdata(m, mci, e, ctladdr, xstart)
 }
 
 static void
-datatimeout()
+datatimeout(ignore)
+	int ignore;
 {
 	int save_errno = errno;
 
@@ -2997,10 +2997,12 @@ smtprset(m, mci, e)
 	**  to take when a value other than 250 is received.
 	**
 	**  However, if 421 is returned for the RSET, leave
-	**  mci_state as MCIS_SSD (set in reply()).
+	**  mci_state alone (MCIS_SSD can be set in reply()
+	**  and MCIS_CLOSED can be set in smtpquit() if
+	**  reply() gets a 421 and calls smtpquit()).
 	*/
 
-	if (mci->mci_state != MCIS_SSD)
+	if (mci->mci_state != MCIS_SSD && mci->mci_state != MCIS_CLOSED)
 		mci->mci_state = MCIS_OPEN;
 }
 /*
@@ -3063,7 +3065,7 @@ reply(m, mci, e, timeout, pfunc, enhstat, rtype)
 	MCI *mci;
 	ENVELOPE *e;
 	time_t timeout;
-	void (*pfunc)();
+	void (*pfunc) __P((char *, bool, MAILER *, MCI *, ENVELOPE *));
 	char **enhstat;
 	int rtype;
 {

@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sys/time.h>
 
-SM_RCSID("@(#)$Sendmail: deliver.c,v 8.976 2004/07/23 20:45:01 gshapiro Exp $")
+SM_RCSID("@(#)$Sendmail: deliver.c,v 8.981 2004/09/30 18:28:32 ca Exp $")
 
 #if HASSETUSERCONTEXT
 # include <login_cap.h>
@@ -28,10 +28,10 @@ SM_RCSID("@(#)$Sendmail: deliver.c,v 8.976 2004/07/23 20:45:01 gshapiro Exp $")
 # include "sfsasl.h"
 #endif /* STARTTLS || SASL */
 
-void		markfailure __P((ENVELOPE *, ADDRESS *, MCI *, int, bool));
 static int	deliver __P((ENVELOPE *, ADDRESS *));
 static void	dup_queue_file __P((ENVELOPE *, ENVELOPE *, int));
-static void	mailfiletimeout __P((void));
+static void	mailfiletimeout __P((int));
+static void	endwaittimeout __P((int));
 static int	parse_hostsignature __P((char *, char **, MAILER *));
 static void	sendenvelope __P((ENVELOPE *, int));
 extern MCI	*mci_new __P((SM_RPOOL_T *));
@@ -1659,7 +1659,7 @@ deliver(e, firstto)
 		}
 
 		/*
-		**  Strip one leading backslash if requested and the
+		**  Strip all leading backslashes if requested and the
 		**  next character is alphanumerical (the latter can
 		**  probably relaxed a bit, see RFC2821).
 		*/
@@ -2900,6 +2900,17 @@ reconnect:	/* after switching to an encrypted connection */
 		smtpinit(m, mci, e, ONLY_HELO(mci->mci_flags));
 		CLR_HELO(mci->mci_flags);
 
+		/*
+		**  If a cached connection gave a 421 reply to the
+		**  RSET, the connection will be closed by now.
+		*/
+
+		if (mci->mci_state == MCIS_CLOSED)
+		{
+			rcode = EX_TEMPFAIL;
+			goto give_up;
+		}
+
 		if (IS_DLVR_RETURN(e))
 		{
 			/*
@@ -3769,7 +3780,8 @@ markfailure(e, q, mci, rcode, ovr)
 static jmp_buf	EndWaitTimeout;
 
 static void
-endwaittimeout()
+endwaittimeout(ignore)
+	int ignore;
 {
 	/*
 	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
@@ -4001,7 +4013,7 @@ giveresponse(status, dsn, m, mci, ctladdr, xstart, e, to)
 #ifdef EHOSTUNREACH
 			  case EHOSTUNREACH:	/* No route to host */
 #endif /* EHOSTUNREACH */
-				if (mci->mci_host != NULL)
+				if (mci != NULL && mci->mci_host != NULL)
 				{
 					(void) sm_strlcpyn(bp,
 							   SPACELEFT(buf, bp),
@@ -5601,7 +5613,8 @@ mailfile(filename, mailer, ctladdr, sfflags, e)
 }
 
 static void
-mailfiletimeout()
+mailfiletimeout(ignore)
+	int ignore;
 {
 	/*
 	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2004/06/24 03:59:26 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 2004/12/16 00:21:30 millert Exp $
 
 LIB=	sm
 SRCS=	assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c \
@@ -7,7 +7,7 @@ SRCS=	assert.c debug.c errstring.c exc.c heap.c match.c rpool.c strdup.c \
 	fscanf.c fseek.c fvwrite.c fwalk.c fwrite.c get.c makebuf.c put.c \
 	refill.c rewind.c setvbuf.c smstdio.c snprintf.c sscanf.c stdio.c \
 	strio.c ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c \
-	vsnprintf.c vsscanf.c wbuf.c wsetup.c string.c stringf.c \
+	vsnprintf.c wbuf.c wsetup.c string.c stringf.c \
 	xtrap.c strto.c test.c path.c strcasecmp.c strrevcmp.c signal.c \
 	clock.c config.c shm.c mbdb.c strexit.c cf.c ldap.c niprop.c
 ENVDEF=	-DNOT_SENDMAIL

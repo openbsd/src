@@ -1,10 +1,61 @@
 			SENDMAIL RELEASE NOTES
-      $Sendmail: RELEASE_NOTES,v 8.1679 2004/07/30 18:03:07 ca Exp $
+      $Sendmail: RELEASE_NOTES,v 8.1702 2004/12/14 17:36:31 ca Exp $
 
 
 This listing shows the version of the sendmail binary, the version
 of the sendmail configuration files, the date of release, and a
 summary of the changes in that release.
+
+8.13.2/8.13.2	2004/12/15
+	Do not split the first header even if it exceeds the internal
+		buffer size.  Previously a part of such a header would
+		end up in the body of the message.  Problem noted by
+		Simple Nomad of BindView.
+	Do not complain about "cataddr: string too long" when checking
+		headers that do not contain RFC 2822 addresses.
+		Problem noted by Rich Graves of Brandeis University.
+	If a server returns a 421 reply to the RSET command between
+		message deliveries, do not attempt to deliver any more
+		messages on that connection.  This prevents bogus "Bad
+		file number" recipient status.  Problem noted by
+		Allan E Johannesen of Worcester Polytechnic Institute.
+	Allow trailing white space in EHLO command as recommended by RFC
+		2821.  Problem noted by Ralph Santagato of SBC Services.
+	Deal with clients which use AUTH but negotiate a smaller buffer size
+		for data exchanges than the value used by sendmail, e.g.,
+		Cyrus IMAP lmtp server.  Based on patch by Jamie Clark.
+	When passing ESMTP arguments for RCPT to a milter, do not cut
+		them off at a comma.  Problem noted by Krzysztof Oledzki.
+	Add more logging to milter change header functions to
+		complement existing logging.  Based on patch from
+		Gurusamy Sarathy of Active State.
+	Include <lber.h> in include/sm/config.h when LDAPMAP is defined.
+		Patch from Edgar Hoch of the University of Stuttgart.
+	Fix DNS lookup if IPv6 is enabled when converting an IP address
+		to a hostname for use with SASL.  Problem noted by Ken Jones;
+		patch from Hajimu UMEMOTO.
+	CONFIG: For consistency enable MODIFY_MAILER_FLAGS for the prog
+		mailer.  Patch from John Beck of Sun Microsystems.
+	LIBMILTER: It was possible that xxfi_abort() was called after
+		xxfi_eom() for a message if some timeouts were triggered.
+		Patch from Alexey Kravchuk.
+	LIBMILTER: Slightly rearrange mutex use in listener.c to allow
+		different threads to call smfi_opensocket() and smfi_main().
+		Patch from Jordan Ritter of Cloudmark.
+	MAIL.LOCAL: Properly terminate MBDB before exiting.  Problem
+		noted by Nelson Fung.
+	MAIL.LOCAL: make strip-mail.local used a wrong path to access
+		mail.local.  Problem noted by William Park.
+	VACATION: Properly terminate MBDB before exiting.  Problem noted
+		by Nelson Fung.
+	Portability:
+		Add support for DragonFly BSD.
+	New Files:
+		cf/ostype/dragonfly.m4
+		devtools/OS/DragonFly
+		include/sm/os/sm_os_dragonfly.h
+	Deleted Files:
+		libsm/vsscanf.c
 
 8.13.1/8.13.1	2004/07/30
 	Using the default AliasFile ldap: specification would cause the

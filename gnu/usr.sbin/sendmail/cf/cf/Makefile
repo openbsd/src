@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.20 2004/06/24 03:59:24 millert Exp $
+#	$OpenBSD: Makefile,v 1.21 2004/12/16 00:21:29 millert Exp $
 #
 #  Makefile for configuration files.
 #
-#	$Sendmail: Makefile,v 8.58 2003/10/20 22:01:00 ca Exp $
+#	$Sendmail: Makefile,v 8.59 2004/08/06 03:54:05 gshapiro Exp $
 #
 
 #
@@ -152,6 +152,7 @@ M4FILES=\
 	${CFDIR}/ostype/darwin.m4 \
 	${CFDIR}/ostype/dgux.m4 \
 	${CFDIR}/ostype/domainos.m4 \
+	${CFDIR}/ostype/dragonfly.m4 \
 	${CFDIR}/ostype/dynix3.2.m4 \
 	${CFDIR}/ostype/freebsd4.m4 \
 	${CFDIR}/ostype/freebsd5.m4 \
