@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.23 2003/03/10 15:37:29 jmc Exp $
+.\" $OpenBSD: authpf.8,v 1.24 2003/03/11 09:24:57 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -93,10 +93,10 @@ in order to cause evaluation of any
 .Nm
 rules:
 .Bd -literal
-.Ic nat-anchor authpf
-.Ic rdr-anchor authpf
-.Ic binat-anchor authpf
-.Ic anchor authpf
+nat-anchor authpf
+rdr-anchor authpf
+binat-anchor authpf
+anchor authpf
 .Ed
 .Pp
 .Sh FILTER AND TRANSLATION RULES
@@ -311,21 +311,21 @@ To make that happen,
 .Xr login.conf 5
 should have entries that look something like this:
 .Bd -literal
-.Ic shell-default:shell=/bin/csh
+shell-default:shell=/bin/csh
 .Pp
-.Ic default:\e
-.Ic \  \  \  \  ...
-.Ic \  \  \  \  :shell=/usr/sbin/authpf
+default:\e
+            ...
+	    :shell=/usr/sbin/authpf
 .Pp
-.Ic daemon:\e
-.Ic \  \  \  \  ...
-.Ic \  \  \  \  :shell=/bin/csh:\e
-.Ic \  \  \  \  :tc=default:
+daemon:\e
+	    ...
+	    :shell=/bin/csh:\e
+	    :tc=default:
 .Pp
-.Ic staff:\e
-.Ic \  \  \  \  ...
-.Ic \  \  \  \  :shell=/bin/csh:\e
-.Ic \  \  \  \  :tc=default:
+staff:\e
+	    ...
+	    :shell=/bin/csh:\e
+	    :tc=default:
 .Ed
 .Pp
 Using a default password file, all users will get
@@ -339,8 +339,8 @@ must be properly configured to detect and defeat network attacks.
 To that end, the following options should be added to
 .Xr sshd_config 5 :
 .Bd -literal
-.Ic ClientAliveInterval 15
-.Ic ClientAliveCountMax 3
+ClientAliveInterval 15
+ClientAliveCountMax 3
 .Ed
 .Pp
 This ensures that unresponsive or spoofed sessions are terminated within a
@@ -354,25 +354,17 @@ of
 .Pa /etc/motd
 or something as simple as the following:
 .Bd -literal -offset indent
-.Xo Ic This means you will be held accountable\ 
-.Ic by the powers that be
-.Xc
-.Xo Ic for traffic originating from your machine,\ 
-.Ic so please play nice.
-.Xc
+This means you will be held accountable by the powers that be
+for traffic originating from your machine, so please play nice.
 .Ed
 .Pp
 To tell the user where to go when the system is broken,
 .Pa /etc/authpf/authpf.problem
 could contain something like this:
 .Bd -literal -offset indent
-.Xo Ic Sorry, there appears to be some system\ 
-.Ic problem. To report this
-.Xc
-.Xo Ic problem so we can fix it, please\ 
-.Ic phone 1-900-314-1597 or send
-.Xc
-.Ic an email to remove@bulkmailerz.net.
+Sorry, there appears to be some system problem. To report this
+problem so we can fix it, please phone 1-900-314-1597 or send
+an email to remove@bulkmailerz.net.
 .Ed
 .Pp
 \fBPacket Filter Rules\fP - In areas where this gateway is used to protect a
@@ -394,21 +386,17 @@ Example
 .Bd -literal
 # by default we allow internal clients to talk to us using
 # ssh and use us as a dns server.
-.Ic internal_if=\&"fxp1\&"
-.Ic gateway_addr=\&"10.0.1.1\&"
-.Ic nat-anchor authpf
-.Ic rdr-anchor authpf
-.Ic binat-anchor authpf
-.Ic block in on $internal_if from any to any
-.Xo Ic pass in quick on $internal_if proto tcp\ 
-.Ic from any to $gateway_addr \e
-.Xc
-.Ic \  \  port = ssh
-.Xo Ic pass in quick on $internal_if proto udp\ 
-.Ic from any to $gateway_addr \e
-.Xc
-.Ic \  \  port = domain
-.Ic anchor authpf
+internal_if=\&"fxp1\&"
+gateway_addr=\&"10.0.1.1\&"
+nat-anchor authpf
+rdr-anchor authpf
+binat-anchor authpf
+block in on $internal_if from any to any
+pass in quick on $internal_if proto tcp from any to $gateway_addr \e
+      port = ssh
+pass in quick on $internal_if proto udp from any to $gateway_addr \e
+      port = domain
+anchor authpf
 .Ed
 .Pp
 Example
@@ -416,14 +404,12 @@ Example
 .Bd -literal
 # no real restrictions here, basically turn the network jack off or on.
 .Pp
-.Ic external_if = \&"xl0\&"
-.Ic internal_if = \&"fxp0\&"
+external_if = \&"xl0\&"
+internal_if = \&"fxp0\&"
 .Pp
-.Xo Ic pass in log quick on $internal_if proto\ 
-.Ic tcp from $user_ip to any \e
-.Xc
-.Ic \  \  keep state
-.Ic pass in quick on $internal_if from $user_ip to any
+pass in log quick on $internal_if proto tcp from $user_ip to any \e
+      keep state
+pass in quick on $internal_if from $user_ip to any
 .Ed
 .Pp
 Another example
@@ -431,30 +417,22 @@ Another example
 for an insecure network (such as a public wireless network) where
 we might need to be a bit more restrictive.
 .Bd -literal
-.Ic internal_if=\&"fxp1\&"
-.Ic ipsec_gw=\&"10.2.3.4\&"
+internal_if=\&"fxp1\&"
+ipsec_gw=\&"10.2.3.4\&"
 .Pp
 # rdr ftp for proxying by ftp-proxy(8)
-.Xo Ic rdr on $internal_if proto tcp from\ 
-.Ic $user_ip to any port 21 \e
-.Xc
-.Ic \  \  -> 127.0.0.1 port 8081
+rdr on $internal_if proto tcp from $user_ip to any port 21 \e
+      -> 127.0.0.1 port 8081
 .Pp
 # allow out ftp, ssh, www and https only, and allow user to negotiate
 # ipsec with the ipsec server.
-.Xo Ic pass in log quick on $internal_if\ 
-.Ic proto tcp from $user_ip to any \e
-.Xc
-.Ic \  \  port { 21, 22, 80, 443 } flags S/SA
-.Xo Ic pass in quick on $internal_if proto\ 
-.Ic tcp from $user_ip to any \e
-.Xc
-.Ic \  \  port { 21, 22, 80, 443 }
-.Xo Ic pass in quick proto udp from $user_ip\ 
-.Ic to $ipsec_gw port = isakmp \e
-.Xc
-.Ic \  \  keep state
-.Ic pass in quick proto esp from $user_ip to $ipsec_gw
+pass in log quick on $internal_if proto tcp from $user_ip to any \e
+      port { 21, 22, 80, 443 } flags S/SA
+pass in quick on $internal_if proto tcp from $user_ip to any \e
+      port { 21, 22, 80, 443 }
+pass in quick proto udp from $user_ip to $ipsec_gw port = isakmp \e
+      keep state
+pass in quick proto esp from $user_ip to $ipsec_gw
 .Ed
 .Sh FILES
 .Bl -tag -width "/etc/authpf/authpf.conf" -compact

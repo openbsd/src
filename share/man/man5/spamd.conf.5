@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.conf.5,v 1.6 2003/03/09 02:37:58 deraadt Exp $
+.\"	$OpenBSD: spamd.conf.5,v 1.7 2003/03/11 09:24:58 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" Copyright (c) 2003 Bob Beck
@@ -54,26 +54,26 @@ follows the syntax of configuration databases as documented in
 .Xr getcap 3 . 
 Example:
 .Bd -literal -offset indent
-.Ic all:\e
-.Ic 	:spews1:white:myblack:\e
-.Ic 	
-.Ic spews1:\e
-.Ic 	:black\e
-.Ic 	:msg="SPAM. Your address \&%A is in the spews\e
-.Ic 	level 1 database\ensee http://www.spews.org/ask.cgi?x=\&%A\en":\e
-.Ic 	:method=http:\e	
-.Ic 	:file=www.spews.org/spews_list_level1.txt:
-.Ic \ \	
-.Ic white:\e
-.Ic 	:white:\e
-.Ic 	:method=file:\e
-.Ic 	:file=/var/mail/mywhite.txt:\e
-.Ic \ \ 
-.Ic myblack:\e
-.Ic 	:black:\e
-.Ic 	:msg=/var/mail/myblackmsg.txt:\e
-.Ic 	:method=file:\e
-.Ic 	:file=/var/mail/myblack.txt
+all:\e
+	:spews1:white:myblack:\e
+.Pp
+spews1:\e
+	:black\e
+	:msg="SPAM. Your address \&%A is in the spews\e
+	level 1 database\ensee http://www.spews.org/ask.cgi?x=\&%A\en":\e
+	:method=http:\e	
+	:file=www.spews.org/spews_list_level1.txt:
+.Pp
+white:\e
+	:white:\e
+	:method=file:\e
+	:file=/var/mail/mywhite.txt:\e
+.Pp
+myblack:\e
+	:black:\e
+	:msg=/var/mail/myblackmsg.txt:\e
+	:method=file:\e
+	:file=/var/mail/myblack.txt
 .Ed
 .Pp
 The default configuration file must include the entry
@@ -101,9 +101,8 @@ from
 .Ar myblack ,
 the configuration
 .Bd -literal -offset indent
-.Ic all:\e
-.Ic 	:spews1:white:myblack:white:\e
-.Ic 	
+all:\e
+	:spews1:white:myblack:white:\e
 .Ed
 would be used instead.
 .Pp
@@ -156,12 +155,12 @@ are ignored.
 Network blocks may be specified in any of the formats as in
 the following example:
 .Bd -literal -offset indent
-.Ic # CIDR format
-.Ic 192.168.20.0/24
-.Ic # A start - end range
-.Ic 192.168.21.0 - 192.168.21.255
-.Ic # As a single IP address
-.Ic 192.168.23.1
+# CIDR format
+192.168.20.0/24
+# A start - end range
+192.168.21.0 - 192.168.21.255
+# As a single IP address
+192.168.23.1
 .Ed
 .Pp
 Each blacklist must include a message, specified in the
