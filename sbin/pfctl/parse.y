@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.203 2002/11/23 15:59:57 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.204 2002/11/23 16:41:43 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -197,7 +197,7 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
 	    struct node_proto *, struct node_host *, struct node_port *,
 	    struct node_host *, struct node_port *, struct node_uid *,
 	    struct node_gid *, struct node_icmp *);
-void	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *);
+int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *);
 int	expand_queue(struct pf_altq *, struct node_queue *,
 	    struct node_queue_bw);
 int	check_rulestate(int);
@@ -538,7 +538,8 @@ altqif		: ALTQ interface SCHEDULER schedtype bandwidth tbrsize
 				yyerror("no child queues?");
 				YYERROR;
 			}
-			expand_altq(&a,	$2, $8);
+			if (expand_altq(&a, $2, $8))
+				YYERROR;
 		}
 		;
 
@@ -2491,30 +2492,37 @@ expand_label(char *label, const char *ifname, sa_family_t af,
 	expand_label_nr("$nr", label);
 }
 
-void
+int
 expand_altq(struct pf_altq *a, struct node_if *interfaces,
     struct node_queue *nqueues)
 {
 	struct	pf_altq pa, pb;
 	char	qname[PF_QNAME_SIZE];
 	struct	node_queue *n;
+	int	errors = 0;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 		memcpy(&pa, a, sizeof(struct pf_altq));
 		strlcpy(pa.ifname, interface->ifname, IFNAMSIZ);
 
-		if (interface->not)
+		if (interface->not) {
 			yyerror("altq on ! <interface> is not supported");
-		else {
-			eval_pfaltq(pf, &pa);
-			pfctl_add_altq(pf, &pa);
+			errors++;
+		} else {
+			if (eval_pfaltq(pf, &pa))
+				errors++;
+			else
+				if (pfctl_add_altq(pf, &pa))
+					errors++;
+
 			if (pf->opts & PF_OPT_VERBOSE) {
 				print_altq(&pf->paltq->altq, 0);
 				if (nqueues && nqueues->tail) {
 					printf(" queue { ");
 					LOOP_THROUGH(struct node_queue, queue,
 					    nqueues,
-						printf("%s ", queue->queue);
+						printf("%s ",
+						    queue->queue);
 					);
 					printf("}");
 				}
@@ -2530,8 +2538,11 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 			pb.qlimit = pa.qlimit;
 			pb.scheduler = pa.scheduler;
 			pb.pq_u.cbq_opts.flags = pa.pq_u.cbq_opts.flags;
-			eval_pfqueue(pf, &pb, pa.ifbandwidth, 0);
-			pfctl_add_altq(pf, &pb);
+			if (eval_pfqueue(pf, &pb, pa.ifbandwidth, 0))
+				errors++;
+			else
+				if (pfctl_add_altq(pf, &pb))
+					errors++;
 
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
 				n = calloc(1, sizeof(struct node_queue));
@@ -2553,6 +2564,8 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 	);
 	FREE_LIST(struct node_if, interfaces);
 	FREE_LIST(struct node_queue, nqueues);
+
+	return(errors);
 }
 
 int
