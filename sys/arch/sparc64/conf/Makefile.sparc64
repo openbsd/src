@@ -18,7 +18,7 @@ SPARC64=	$S/arch/sparc64
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 # XXX - remove the __OpenBSD__ later!
-CPPFLAGS=	-D__OpenBSD__ ${INCLUDES} ${IDENT} -D_KERNEL -Dsparc64
+CPPFLAGS=	-U__NetBSD__ -D__OpenBSD__ ${INCLUDES} ${IDENT} -D_KERNEL -Dsparc64
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
@@ -140,7 +140,7 @@ links:
 
 SRCS=	${SPARC64}/sparc64/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC64}/sparc64/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
