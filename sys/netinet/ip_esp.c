@@ -1,8 +1,8 @@
-/*	$OpenBSD: ip_esp.c,v 1.51 2000/11/17 04:15:42 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.52 2001/03/15 06:30:59 mickey Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
- * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and
  * Niels Provos (provos@physnet.uni-hamburg.de).
  *
  * The original version of this code was written by John Ioannidis
@@ -18,11 +18,11 @@
  *
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
- *	
+ *
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
@@ -148,7 +148,7 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	    DPRINTF(("esp_init(): keylength %d too small (min length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->minkey, txform->name));
 	    return EINVAL;
 	}
-    
+
 	if (ii->ii_enckeylen > txform->maxkey)
 	{
 	    DPRINTF(("esp_init(): keylength %d too large (max length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->maxkey, txform->name));
@@ -191,13 +191,13 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	    DPRINTF(("esp_init(): keylength %d doesn't match algorithm %s keysize (%d)\n", ii->ii_authkeylen, thash->name, thash->keysize));
 	    return EINVAL;
 	}
-    
+
     	tdbp->tdb_authalgxform = thash;
 
 	DPRINTF(("esp_init(): initialized TDB with hash algorithm %s\n",
 		 thash->name));
     }
-    
+
     tdbp->tdb_xform = xsp;
     tdbp->tdb_bitmap = 0;
     tdbp->tdb_rpl = AH_HMAC_INITIAL_RPL;
@@ -359,7 +359,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
     {
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	tdb_delete(tdb, TDBEXP_TIMEOUT);
+	tdb_delete(tdb);
 	m_freem(m);
 	return ENXIO;
     }
@@ -585,7 +585,7 @@ esp_input_cb(void *op)
     }
 
     /* Remove the ESP header and IV from the mbuf. */
-    if (roff == 0) 
+    if (roff == 0)
     {
 	/* The ESP header was conveniently at the beginning of the mbuf */
 	m_adj(m1, hlen);
@@ -623,7 +623,7 @@ esp_input_cb(void *op)
       }
       else
       {
-	  /* 
+	  /*
 	   * The ESP header lies in the "middle" of the mbuf...do an
 	   * overlapping copy of the remainder of the mbuf over the ESP
 	   * header.
@@ -811,7 +811,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
     {
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	tdb_delete(tdb, TDBEXP_TIMEOUT);
+	tdb_delete(tdb);
 	m_freem(m);
 	return EINVAL;
     }
@@ -825,24 +825,24 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     }
 
     /*
-     * Loop through mbuf chain; if we find an M_EXT mbuf with 
+     * Loop through mbuf chain; if we find an M_EXT mbuf with
      * more than one reference, replace the rest of the chain.
      */
     mi = m;
-    while (mi != NULL && 
-	   (!(mi->m_flags & M_EXT) || 
+    while (mi != NULL &&
+	   (!(mi->m_flags & M_EXT) ||
 	    (mi->m_ext.ext_ref == NULL &&
 	     mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1)))
     {
         mo = mi;
         mi = mi->m_next;
     }
-     
+
     if (mi != NULL)
     {
         /* Replace the rest of the mbuf chain. */
         struct mbuf *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
-      
+
         if (n == NULL)
         {
 	    espstat.esps_hdrops++;
@@ -1132,7 +1132,7 @@ m_pad(struct mbuf *m, int n)
     register struct mbuf *m0, *m1;
     register int len, pad;
     caddr_t retval;
-	
+
     if (n <= 0)			/* no stupid arguments */
     {
 	DPRINTF(("m_pad(): pad length invalid (%d)\n", n));

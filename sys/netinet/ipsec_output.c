@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.2 2000/09/19 08:38:59 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.3 2001/03/15 06:31:00 mickey Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -8,7 +8,7 @@
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
@@ -127,7 +127,10 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
     if (tdb->tdb_first_use == 0)
     {
 	tdb->tdb_first_use = time.tv_sec;
-	tdb_expiration(tdb, TDBEXP_TIMEOUT);
+	if (tdb->tdb_flags & TDBF_FIRSTUSE)
+	    timeout_add(&tdb->tdb_first_tmo, hz * tdb->tdb_exp_first_use);
+	if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
+	    timeout_add(&tdb->tdb_sfirst_tmo, hz * tdb->tdb_soft_first_use);
     }
 
     /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.55 2001/03/04 20:50:40 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.56 2001/03/15 06:30:57 mickey Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -212,7 +212,7 @@ export_sa(void **p, struct tdb *tdb)
 
     sadb_sa->sadb_sa_spi = tdb->tdb_spi;
     sadb_sa->sadb_sa_replay = tdb->tdb_wnd;
-  
+
     if (tdb->tdb_flags & TDBF_INVALID)
       sadb_sa->sadb_sa_state = SADB_SASTATE_LARVAL;
 
@@ -308,57 +308,62 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 	      tdb->tdb_flags |= TDBF_ALLOCATIONS;
 	    else
 	      tdb->tdb_flags &= ~TDBF_ALLOCATIONS;
-      
+
 	    if ((tdb->tdb_exp_bytes = sadb_lifetime->sadb_lifetime_bytes) != 0)
 	      tdb->tdb_flags |= TDBF_BYTES;
 	    else
 	      tdb->tdb_flags &= ~TDBF_BYTES;
-      
+
 	    if ((tdb->tdb_exp_timeout =
 		 sadb_lifetime->sadb_lifetime_addtime) != 0)
 	    {
 		tdb->tdb_flags |= TDBF_TIMER;
-		tdb->tdb_exp_timeout += time.tv_sec;
-	    }
-	    else
-	      tdb->tdb_flags &= ~TDBF_TIMER;
-      
+		timeout_add(&tdb->tdb_timer_tmo, hz * tdb->tdb_exp_timeout);
+	    } else
+	        tdb->tdb_flags &= ~TDBF_TIMER;
+
 	    if ((tdb->tdb_exp_first_use =
 		 sadb_lifetime->sadb_lifetime_usetime) != 0)
-	      tdb->tdb_flags |= TDBF_FIRSTUSE;
+	    {
+	        tdb->tdb_flags |= TDBF_FIRSTUSE;
+	        timeout_add(&tdb->tdb_first_tmo, hz * tdb->tdb_exp_first_use);
+	    }
 	    else
-	      tdb->tdb_flags &= ~TDBF_FIRSTUSE;
+	        tdb->tdb_flags &= ~TDBF_FIRSTUSE;
 	    break;
-      
+
 	case PFKEYV2_LIFETIME_SOFT:
 	    if ((tdb->tdb_soft_allocations =
 		 sadb_lifetime->sadb_lifetime_allocations) != 0)
 	      tdb->tdb_flags |= TDBF_SOFT_ALLOCATIONS;
 	    else
 	      tdb->tdb_flags &= ~TDBF_SOFT_ALLOCATIONS;
-      
+
 	    if ((tdb->tdb_soft_bytes =
 		 sadb_lifetime->sadb_lifetime_bytes) != 0)
 	      tdb->tdb_flags |= TDBF_SOFT_BYTES;
 	    else
 	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
-      
+
 	    if ((tdb->tdb_soft_timeout =
 		 sadb_lifetime->sadb_lifetime_addtime) != 0)
 	    {
 		tdb->tdb_flags |= TDBF_SOFT_TIMER;
-		tdb->tdb_soft_timeout += time.tv_sec;
+		timeout_add(&tdb->tdb_stimer_tmo, hz * tdb->tdb_soft_timeout);
 	    }
 	    else
 	      tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
-      
+
 	    if ((tdb->tdb_soft_first_use =
 		 sadb_lifetime->sadb_lifetime_usetime) != 0)
-	      tdb->tdb_flags |= TDBF_SOFT_FIRSTUSE;
+	    {
+	        tdb->tdb_flags |= TDBF_SOFT_FIRSTUSE;
+	        timeout_add(&tdb->tdb_sfirst_tmo, hz * tdb->tdb_soft_first_use);
+	    }
 	    else
-	      tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+	        tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
 	    break;
-      
+
 	case PFKEYV2_LIFETIME_CURRENT:  /* Nothing fancy here */
 	    tdb->tdb_cur_allocations =
 				      sadb_lifetime->sadb_lifetime_allocations;
@@ -366,9 +371,6 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 	    tdb->tdb_established = sadb_lifetime->sadb_lifetime_addtime;
 	    tdb->tdb_first_use = sadb_lifetime->sadb_lifetime_usetime;
     }
-
-    /* Setup/update our position in the expiration queue.  */
-    tdb_expiration(tdb, TDBEXP_TIMEOUT);
 }
 
 /*
@@ -393,12 +395,10 @@ export_lifetime(void **p, struct tdb *tdb, int type)
 	      sadb_lifetime->sadb_lifetime_bytes = tdb->tdb_exp_bytes;
 
 	    if (tdb->tdb_flags & TDBF_TIMER)
-	      sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_exp_timeout -
-						     tdb->tdb_established;
+	      sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_exp_timeout;
 
 	    if (tdb->tdb_flags & TDBF_FIRSTUSE)
-	      sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_exp_first_use -
-						     tdb->tdb_first_use;
+	      sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_exp_first_use;
 	    break;
 
 	case PFKEYV2_LIFETIME_SOFT:
@@ -410,14 +410,12 @@ export_lifetime(void **p, struct tdb *tdb, int type)
 	      sadb_lifetime->sadb_lifetime_bytes = tdb->tdb_soft_bytes;
 
 	    if (tdb->tdb_flags & TDBF_SOFT_TIMER)
-	      sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_soft_timeout -
-						     tdb->tdb_established;
+	      sadb_lifetime->sadb_lifetime_addtime = tdb->tdb_soft_timeout;
 
 	    if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
-	      sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_soft_first_use -
-						     tdb->tdb_first_use;
+	      sadb_lifetime->sadb_lifetime_usetime = tdb->tdb_soft_first_use;
 	    break;
-      
+
 	case PFKEYV2_LIFETIME_CURRENT:
 	    sadb_lifetime->sadb_lifetime_allocations =
 						      tdb->tdb_cur_allocations;
@@ -580,7 +578,7 @@ import_key(struct ipsecinit *ii, struct sadb_key *sadb_key, int type)
 {
     if (!sadb_key)
       return;
-        
+
     if (type == PFKEYV2_ENCRYPTION_KEY)
     { /* Encryption key */
 	ii->ii_enckeylen = sadb_key->sadb_key_bits / 8;
@@ -693,7 +691,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 				       &packet)) != 0)
 	      goto ret;
 
-	    /* 
+	    /*
 	     * Search for promiscuous listeners, skipping the
 	     * original destination.
 	     */
@@ -1101,12 +1099,12 @@ pfkeyv2_dump_walker(struct tdb *sa, void *state, int last)
 /*
  * Delete an SA.
  */
-int 
+int
 pfkeyv2_flush_walker(struct tdb *sa, void *satype_vp, int last)
 {
     if (!(*((u_int8_t *) satype_vp)) ||
 	sa->tdb_satype == *((u_int8_t *) satype_vp))
-      tdb_delete(sa, 0);
+      tdb_delete(sa);
 
     return 0;
 }
@@ -1138,7 +1136,7 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 
 	    *sproto = IPPROTO_ESP;
 
-	    if(alg != NULL) 
+	    if(alg != NULL)
 	      *alg = satype = XF_ESP;
 
 	    break;
@@ -1255,7 +1253,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
     /* Validate message format */
     if ((rval = pfkeyv2_parsemessage(message, len, headers)) != 0)
       goto ret;
- 
+
     smsg = (struct sadb_msg *) headers[0];
     switch(smsg->sadb_msg_type)
     {
@@ -1331,7 +1329,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		newsa = (struct tdb *) freeme;
 		newsa->tdb_satype = smsg->sadb_msg_satype;
 
-		if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype, 
+		if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype,
 						  &newsa->tdb_sproto, &alg)))
 		  goto splxret;
 
@@ -1366,7 +1364,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		if (rval)
 		{
 		    rval = EINVAL;
-		    tdb_delete(freeme, TDBEXP_TIMEOUT);
+		    tdb_delete(freeme);
 		    freeme = NULL;
 		    goto splxret;
 		}
@@ -1374,7 +1372,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		newsa->tdb_cur_allocations = sa2->tdb_cur_allocations;
 
 		/* Delete old version of the SA, insert new one */
-		tdb_delete(sa2, TDBEXP_TIMEOUT);
+		tdb_delete(sa2);
 		puttdb((struct tdb *) freeme);
 		sa2 = freeme = NULL;
 	    }
@@ -1444,7 +1442,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		bzero(&ii, sizeof(struct ipsecinit));
 
 		newsa->tdb_satype = smsg->sadb_msg_satype;
-		if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype, 
+		if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype,
 						  &newsa->tdb_sproto, &alg)))
 		  goto splxret;
 
@@ -1482,7 +1480,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		if (rval)
 		{
 		    rval = EINVAL;
-		    tdb_delete(freeme, TDBEXP_TIMEOUT);
+		    tdb_delete(freeme);
 		    freeme = NULL;
 		    goto splxret;
 		}
@@ -1509,8 +1507,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		rval = ESRCH;
 		goto splxret;
 	    }
-      
-	    tdb_delete(sa2, TDBEXP_TIMEOUT);
+
+	    tdb_delete(sa2);
 
 	    splx(s);
 
@@ -1545,7 +1543,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		rval = ESRCH;
 		goto splxret;
 	    }
-      
+
 	    rval = pfkeyv2_get(sa2, headers, &freeme);
 	    if (rval)
 	      mode = PFKEYV2_SENDMESSAGE_UNICAST;
@@ -1565,7 +1563,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		rval = ENOMEM;
 		goto ret;
 	    }
-      
+
 	    bzero(freeme, i);
 
 	    ssup = (struct sadb_supported *) freeme;
@@ -1589,7 +1587,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    /* Keep track what this socket has registered for */
 	    pfkeyv2_socket->registration |= (1 << ((struct sadb_msg *)message)->sadb_msg_satype);
-      
+
 	    bzero(freeme, i);
 
 	    ssup = (struct sadb_supported *) freeme;
@@ -1621,7 +1619,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    switch(smsg->sadb_msg_satype)
 	    {
-		case SADB_SATYPE_UNSPEC:  
+		case SADB_SATYPE_UNSPEC:
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
 		case SADB_X_SATYPE_IPIP:
@@ -1630,7 +1628,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 #endif /* TCP_SIGNATURE */
 		    s = spltdb();
 
-		    tdb_walk(pfkeyv2_flush_walker, 
+		    tdb_walk(pfkeyv2_flush_walker,
 			     (u_int8_t *) &(smsg->sadb_msg_satype));
 
 		    splx(s);
@@ -1713,10 +1711,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    splx(s);
 	}
 	 break;
-	 
+
 	case SADB_X_DELFLOW:
 	    delflag = 1;   /* fall through */
-	
+
 	case SADB_X_ADDFLOW:
 	{
 	    union sockaddr_union *src, *dst, *srcmask, *dstmask, *ssrc;
@@ -2061,7 +2059,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    }
          }
 	 break;
-	
+
 	case SADB_X_PROMISC:
 	    if (len >= 2 * sizeof(struct sadb_msg))
 	    {
@@ -2355,7 +2353,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		sadb_comb->sadb_comb_auth_minbits = 128;
 		sadb_comb->sadb_comb_auth_maxbits = 128;
 	    }
-	
+
 	sadb_comb->sadb_comb_soft_allocations = ipsec_soft_allocations;
 	sadb_comb->sadb_comb_hard_allocations = ipsec_exp_allocations;
 

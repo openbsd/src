@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.79 2001/03/04 20:34:00 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.80 2001/03/15 06:31:00 mickey Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -24,7 +24,7 @@
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
@@ -46,6 +46,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 #include <netinet/in.h>
 
 union sockaddr_union
@@ -144,7 +145,7 @@ struct sockaddr_encap
  * system is concerned. By using only one bit in the type field
  * for each type, we sort-of make sure that different types of
  * encapsulation addresses won't be matched against the wrong type.
- * 
+ *
  */
 
 #define SENT_IP4	0x0001		/* data is two struct in_addr */
@@ -212,7 +213,7 @@ struct ipsec_policy
 #define NOTIFY_SOFT_EXPIRE      0       /* Soft expiration of SA */
 #define NOTIFY_HARD_EXPIRE      1       /* Hard expiration of SA */
 #define NOTIFY_REQUEST_SA       2       /* Establish an SA */
-  
+
 #define NOTIFY_SATYPE_CONF      1       /* SA should do encryption */
 #define NOTIFY_SATYPE_AUTH      2       /* SA should do authentication */
 #define NOTIFY_SATYPE_TUNNEL    4       /* SA should use tunneling */
@@ -266,11 +267,13 @@ struct tdb				/* tunnel descriptor block */
 
     u_int32_t	      tdb_flags;  	/* Flags related to this TDB */
 
-    TAILQ_ENTRY(tdb)  tdb_expnext;	/* Expiration cluster list link */
-    TAILQ_ENTRY(tdb)  tdb_explink;	/* Expiration ordered list link */
+    struct timeout    tdb_timer_tmo;
+    struct timeout    tdb_first_tmo;
+    struct timeout    tdb_stimer_tmo;
+    struct timeout    tdb_sfirst_tmo;
 
     u_int32_t         tdb_exp_allocations;  /* Expire after so many flows */
-    u_int32_t         tdb_soft_allocations; /* Expiration warning */ 
+    u_int32_t         tdb_soft_allocations; /* Expiration warning */
     u_int32_t         tdb_cur_allocations;  /* Total number of allocations */
 
     u_int64_t         tdb_exp_bytes;    /* Expire after so many bytes passed */
@@ -280,7 +283,6 @@ struct tdb				/* tunnel descriptor block */
     u_int64_t         tdb_exp_timeout;	/* When does the SPI expire */
     u_int64_t         tdb_soft_timeout;	/* Send a soft-expire warning */
     u_int64_t         tdb_established;	/* When was the SPI established */
-    u_int64_t	      tdb_timeout;	/* Next absolute expiration time.  */
 
     u_int64_t	      tdb_first_use;	  /* When was it first used */
     u_int64_t         tdb_soft_first_use; /* Soft warning */
@@ -350,7 +352,7 @@ struct ipsecinit
     u_int8_t        ii_encalg;
     u_int8_t        ii_authalg;
 };
-	  
+
 struct xformsw
 {
     u_short		xf_type;	/* Unique ID of xform */
@@ -383,7 +385,7 @@ htonq(u_int64_t q)
     register u_int32_t u, l;
     u = q >> 32;
     l = (u_int32_t) q;
-        
+
     return htonl(u) | ((u_int64_t)htonl(l) << 32);
 }
 
@@ -396,7 +398,7 @@ htonq(u_int64_t q)
 
 #else
 #error  "Please fix <machine/endian.h>"
-#endif                                          
+#endif
 
 #ifdef _KERNEL
 
@@ -437,8 +439,6 @@ extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
-extern TAILQ_HEAD(expclusterlist_head, tdb) expclusterlist;
-extern TAILQ_HEAD(explist_head, tdb) explist;
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 extern TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head;
 
@@ -478,14 +478,9 @@ extern struct tdb *gettdbbyaddr(union sockaddr_union *, u_int8_t,
 extern struct tdb *gettdbbysrc(union sockaddr_union *, u_int8_t,
 			       struct mbuf *, int);
 extern void puttdb(struct tdb *);
-extern void tdb_delete(struct tdb *, int);
+extern void tdb_delete(struct tdb *);
 extern int tdb_init(struct tdb *, u_int16_t, struct ipsecinit *);
-extern void tdb_expiration(struct tdb *, int);
-/* Flag values for the last argument of tdb_expiration().  */
-#define TDBEXP_EARLY	1	/* The tdb is likely to end up early.  */
-#define TDBEXP_TIMEOUT	2	/* Maintain expiration timeout.  */
 extern int tdb_walk(int (*)(struct tdb *, void *, int), void *);
-extern void handle_expirations(void *);
 
 /* XF_IP4 */
 extern int ipe4_attach(void);

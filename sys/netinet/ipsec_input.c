@@ -1,11 +1,11 @@
-/*	$OpenBSD: ipsec_input.c,v 1.32 2000/09/19 03:20:59 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.33 2001/03/15 06:31:00 mickey Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
- * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and
  * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
+ * This code was written by John Ioannidis for BSD/OS in Athens, Greece,
  * in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
@@ -18,11 +18,11 @@
  *
  * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
- *	
+ *
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
@@ -193,7 +193,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	IPSEC_ISTAT(espstat.esps_notdb, ahstat.ahs_notdb);
 	return ENOENT;
     }
-	
+
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
 	splx(s);
@@ -228,7 +228,10 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
     if (tdbp->tdb_first_use == 0)
     {
 	tdbp->tdb_first_use = time.tv_sec;
-	tdb_expiration(tdbp, TDBEXP_TIMEOUT);
+	if (tdbp->tdb_flags & TDBF_FIRSTUSE)
+	    timeout_add(&tdbp->tdb_first_tmo, hz * tdbp->tdb_exp_first_use);
+	if (tdbp->tdb_flags & TDBF_SOFT_FIRSTUSE)
+	    timeout_add(&tdbp->tdb_sfirst_tmo, hz * tdbp->tdb_soft_first_use);
     }
 
     /*
@@ -348,7 +351,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	}
 #endif /* INET6 */
 
-	/* 
+	/*
 	 * Check that the source address is an expected one, if we know what
 	 * it's supposed to be. This avoids source address spoofing.
 	 */
@@ -432,7 +435,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	    }
 	}
 
-	/* 
+	/*
 	 * Check that the source address is an expected one, if we know what
 	 * it's supposed to be. This avoids source address spoofing.
 	 */
@@ -490,7 +493,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	bpfif = (struct ifnet *) tdbp->tdb_interface;
     else
 	bpfif = &encif[0].sc_if;
-    if (bpfif->if_bpf) 
+    if (bpfif->if_bpf)
     {
         /*
          * We need to prepend the address family as
@@ -509,7 +512,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
         m1.m_next = m;
         m1.m_len = ENC_HDRLEN;
         m1.m_data = (char *) &hdr;
-        
+
         bpf_mtap(bpfif->if_bpf, &m1);
     }
 #endif
@@ -621,7 +624,7 @@ ah4_input_cb(struct mbuf *m, ...)
     struct ifqueue *ifq = &ipintrq;
 
     /*
-     * Interface pointer is already in first mbuf; chop off the 
+     * Interface pointer is already in first mbuf; chop off the
      * `outer' header and reschedule.
      */
 
@@ -664,7 +667,7 @@ esp4_input_cb(struct mbuf *m, ...)
     struct ifqueue *ifq = &ipintrq;
 
     /*
-     * Interface pointer is already in first mbuf; chop off the 
+     * Interface pointer is already in first mbuf; chop off the
      * `outer' header and reschedule.
      */
     if (IF_QFULL(ifq))

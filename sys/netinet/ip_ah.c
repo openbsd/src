@@ -1,8 +1,8 @@
-/*	$OpenBSD: ip_ah.c,v 1.46 2001/02/20 06:48:06 itojun Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.47 2001/03/15 06:30:58 mickey Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
- * Angelos D. Keromytis (kermit@csd.uch.gr) and 
+ * Angelos D. Keromytis (kermit@csd.uch.gr) and
  * Niels Provos (provos@physnet.uni-hamburg.de).
  *
  * The original version of this code was written by John Ioannidis
@@ -23,7 +23,7 @@
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
- * modification of this software. 
+ * modification of this software.
  * You may use this code under the GNU public license if you so wish. Please
  * contribute changes back to the authors under this freer than GPL license
  * so that we may further the use of strong encryption without limitations to
@@ -263,7 +263,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		    m_freem(m);
 		    return EINVAL;
 		}
-			   
+
 		switch (ptr[off])
 		{
 		    case IPOPT_EOL:
@@ -372,7 +372,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 
 	    /* Done with IPv6 header */
 	    m_copyback(m, 0, sizeof(struct ip6_hdr), (caddr_t) &ip6);
-	    
+
 	    /* Let's deal with the remaining headers (if any) */
 	    if (skip - sizeof(struct ip6_hdr) > 0)
 	    {
@@ -574,7 +574,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
 	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	  tdb_delete(tdb, TDBEXP_TIMEOUT);
+	  tdb_delete(tdb);
 	  m_freem(m);
 	  return ENXIO;
       }
@@ -676,7 +676,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
  */
 int
 ah_input_cb(void *op)
-{ 
+{
     int roff, rplen, error, skip, protoff;
     unsigned char calc[AH_ALEN_MAX];
     struct mbuf *m1, *m0, *m;
@@ -778,7 +778,7 @@ ah_input_cb(void *op)
     }
 
     /* Remove the AH header from the mbuf */
-    if (roff == 0) 
+    if (roff == 0)
     {
 	/* The AH header was conveniently at the beginning of the mbuf */
 	m_adj(m1, rplen + ahx->authsize);
@@ -816,7 +816,7 @@ ah_input_cb(void *op)
       }
       else
       {
-	  /* 
+	  /*
 	   * The AH header lies in the "middle" of the mbuf...do an
 	   * overlapping copy of the remainder of the mbuf over the ESP
 	   * header.
@@ -954,7 +954,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
 	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	  tdb_delete(tdb, TDBEXP_TIMEOUT);
+	  tdb_delete(tdb);
 	  m_freem(m);
 	  return EINVAL;
       }
@@ -968,24 +968,24 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     }
 
     /*
-     * Loop through mbuf chain; if we find an M_EXT mbuf with 
+     * Loop through mbuf chain; if we find an M_EXT mbuf with
      * more than one reference, replace the rest of the chain.
      */
     mi = m;
-    while (mi != NULL && 
-	   (!(mi->m_flags & M_EXT) || 
+    while (mi != NULL &&
+	   (!(mi->m_flags & M_EXT) ||
 	    (mi->m_ext.ext_ref == NULL &&
 	     mclrefcnt[mtocl(mi->m_ext.ext_buf)] <= 1)))
     {
         mo = mi;
         mi = mi->m_next;
     }
-     
+
     if (mi != NULL)
     {
         /* Replace the rest of the mbuf chain. */
         struct mbuf *n = m_copym2(mi, 0, M_COPYALL, M_DONTWAIT);
-      
+
         if (n == NULL)
         {
 	    ahstat.ahs_hdrops++;
@@ -1017,7 +1017,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
      * at the beginning of the returned mbuf.
      */
     ah = mtod(mi, struct ah *);
-    
+
     /* Initialize the AH header */
     m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &ah->ah_nh);
     ah->ah_hl = (rplen + ahx->authsize - AH_FLENGTH) / sizeof(u_int32_t);
