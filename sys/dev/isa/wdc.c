@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.5 1996/08/17 06:24:54 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.6 1996/09/04 00:51:15 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -228,6 +228,21 @@ wdcattach(parent, self, aux)
 #endif
 
 	/*
+	 * Attach an ATAPI bus, if configured.
+	 */
+	wdc->ab_link = malloc(sizeof(struct bus_link), M_DEVBUF, M_NOWAIT);
+	if (wdc->ab_link == NULL) {
+		printf("%s: can't allocate ATAPI link\n", self->dv_xname);
+		return;
+	}
+	bzero(wdc->ab_link,sizeof(struct bus_link));
+	wdc->ab_link->type = BUS;
+	wdc->ab_link->wdc_softc = (caddr_t)wdc;
+	wdc->ab_link->ctlr_link = &(wdc->ctlr_link);
+	wdc->ab_link->ctrl = self->dv_unit;
+	(void)config_found(self, (void *)wdc->ab_link, NULL);
+
+	/*
 	 * Attach standard IDE/ESDI/etc. disks to the controller.
 	 */
 	for (drive = 0; drive < 2; drive++) {
@@ -263,21 +278,6 @@ wdcattach(parent, self, aux)
 			    wdcprint);
 		}
 	}
-
-	/*
-	 * Attach an ATAPI bus, if configured.
-	 */
-	wdc->ab_link = malloc(sizeof(struct bus_link), M_DEVBUF, M_NOWAIT);
-	if (wdc->ab_link == NULL) {
-		printf("%s: can't allocate ATAPI link\n", self->dv_xname);
-		return;
-	}
-	bzero(wdc->ab_link,sizeof(struct bus_link));
-	wdc->ab_link->type = BUS;
-	wdc->ab_link->wdc_softc = (caddr_t)wdc;
-	wdc->ab_link->ctlr_link = &(wdc->ctlr_link);
-	wdc->ab_link->ctrl = self->dv_unit;
-	(void)config_found(self, (void *)wdc->ab_link, NULL);
 }
 
 /*
@@ -1602,7 +1602,7 @@ wdc_atapi_intr(wdc, xfer)
 	bus_chipset_tag_t bc = wdc->sc_bc;
 	bus_io_handle_t ioh = wdc->sc_ioh;
 	struct atapi_command_packet *acp = xfer->atapi_cmd;
-	int len, phase, i;
+	int len, phase, i, retries = 0;
 	int err, st, ire;
 
 	if (wait_for_unbusy(wdc) < 0) {
@@ -1616,6 +1616,7 @@ wdc_atapi_intr(wdc, xfer)
 	printf("wdc_atapi_intr: %s\n", wdc->sc_dev.dv_xname);
 #endif
 
+again:
 	len = bus_io_read_1(bc, ioh, wd_cyl_lo) +
 	    256 * bus_io_read_1(bc, ioh, wd_cyl_hi);
 
@@ -1725,6 +1726,10 @@ wdc_atapi_intr(wdc, xfer)
 		break;
 
 	default: 
+		if (++retries < 500) {
+			DELAY(100);
+			goto again;
+		}
 		printf("wdc_atapi_intr: unknown phase %d\n", phase);
 		acp->status = ERROR;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.7 1996/08/09 01:33:57 niklas Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.8 1996/09/04 00:51:13 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -61,9 +61,6 @@ struct atapibus_softc {
 
 LIST_HEAD(pkt_free_list, atapi_command_packet) pkt_free_list;
 
-static __inline void bswap __P((char *, int));
-static __inline void btrim __P((char *, int));
-
 int atapi_error __P((struct atapi_command_packet *));
 void atapi_sense __P((struct atapi_command_packet *, u_int8_t, u_int8_t));
 void at_print_addr __P((struct at_dev_link *, u_int8_t));
@@ -97,10 +94,10 @@ struct atapi_quirk_inquiry_pattern {
 
 struct atapi_quirk_inquiry_pattern atapi_quirk_inquiry_patterns[] = {
 	{ATAPI_DEVICE_TYPE_CD, ATAPI_REMOVABLE,
-	 "GCD-R580B", "1.00", ADEV_LITTLETOC},	/* GoldStar 8X */
+	 "GCD-R580B", "1.00", AQUIRK_LITTLETOC},/* GoldStar 8X */
 
 	{ATAPI_DEVICE_TYPE_DAD, ATAPI_REMOVABLE,
-	 "NEC                 CD-ROM DRIVE:260", "3.04", ADEV_CDROM},
+	 "NEC                 CD-ROM DRIVE:260", "3.04", AQUIRK_CDROM},
 						/* NEC Multispin 2Vi */
 
 	{0, 0, NULL, NULL, 0}			/* The End */
@@ -277,33 +274,6 @@ atapibusattach(parent, self, aux)
 				free(ad_link, M_DEVBUF);
 		}
 	}
-}
-
-static __inline void
-bswap (buf, len)
-	char *buf;
-	int len;
-{       
-	u_int16_t *p = (u_int16_t *)(buf + len);
-
-	while (--p >= (u_int16_t *)buf)
-		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
-}
-
-static __inline void
-btrim (buf, len)
-	char *buf;
-	int len;
-{
-	char *p; 
-
-	/* Remove the trailing spaces. */
-	for (p = buf; p < buf + len; ++p)
-		if (*p == '\0')
-			*p = ' ';
-
-	for (p = buf + len - 1; p >= buf && *p == ' '; --p)
-		*p = '\0';
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapilink.h,v 1.5 1996/08/07 01:56:29 downsj Exp $	*/
+/*	$OpenBSD: atapilink.h,v 1.6 1996/09/04 00:51:14 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -150,8 +150,9 @@ struct at_dev_link {
 #define ACAP_DRQ_ACCEL		0x0200	/* accelerated DRQ */
 #define ACAP_LEN 		0x0400	/* 16 bit commands */
 	u_int8_t quirks;		/* per-device oddities */
-#define ADEV_CDROM		0x01	/* device is a CD-ROM */
-#define ADEV_LITTLETOC		0x02	/* Audio TOC uses wrong byte order */
+#define AQUIRK_CDROM		0x01	/* device is a CD-ROM */
+#define AQUIRK_LITTLETOC	0x02	/* Audio TOC uses wrong byte order */
+#define AQUIRK_NOCAPACITY	0x04	/* no READ_CD_CAPACITY command */
 	void	(*start) __P((void *));	/* device start routine */
 	int	(*done) __P((void *));	/* device done routine */
 };
@@ -217,6 +218,9 @@ static __inline void _lto4l __P((u_int32_t val, u_int8_t *bytes));
 static __inline u_int32_t _2ltol __P((u_int8_t *bytes));
 static __inline u_int32_t _3ltol __P((u_int8_t *bytes));
 static __inline u_int32_t _4ltol __P((u_int8_t *bytes));
+
+static __inline void bswap __P((char *, int));
+static __inline void btrim __P((char *, int));
 
 static __inline void
 _lto2b(val, bytes)
@@ -365,4 +369,31 @@ _4ltol(bytes)
 	     (bytes[2] << 16) |
 	     (bytes[3] << 24);
 	return (rv);
+}
+
+static __inline void
+bswap (buf, len)
+	char *buf;
+	int len;
+{
+	u_int16_t *p = (u_int16_t *)(buf + len);
+
+	while (--p >= (u_int16_t *)buf)
+		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
+}
+
+static __inline void
+btrim (buf, len)
+	char *buf;
+	int len;
+{
+	char *p;
+
+	/* Remove the trailing spaces. */
+	for (p = buf; p < buf + len; ++p)
+		if (*p == '\0')
+			*p = ' ';
+
+	for (p = buf + len - 1; p >= buf && *p == ' '; --p)
+		*p = '\0';
 }

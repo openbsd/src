@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.10 1996/08/09 06:57:58 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.11 1996/09/04 00:51:13 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -144,7 +144,6 @@ int	acd_read_toc __P((struct acd_softc *, int, int, void *, int));
 static void lba2msf __P((u_int32_t, u_int8_t *, u_int8_t *, u_int8_t *));
 #endif
 static __inline u_int32_t msf2lba __P((u_int8_t, u_int8_t, u_int8_t));
-static __inline void bswap __P((u_int8_t *, int));
 
 struct dkdriver acddkdriver = { acdstrategy };
 
@@ -165,7 +164,7 @@ acdmatch(parent, match, aux)
 #endif
 
 	if (((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
-	    ATAPI_DEVICE_TYPE_CD) || (sa->quirks & ADEV_CDROM))
+	    ATAPI_DEVICE_TYPE_CD) || (sa->quirks & AQUIRK_CDROM))
 		return 1;
 	return 0;
 }
@@ -677,17 +676,6 @@ msf2lba (m, s, f)
 	return (((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET;
 }
 
-static __inline void
-bswap (buf, len)
-	u_int8_t *buf;
-	int len;
-{       
-	u_int16_t *p = (u_int16_t *)(buf + len);
-
-	while (--p >= (u_int16_t *)buf)
-		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
-}
-
 /*
  * Perform special action on behalf of the user.
  * Knows about the internals of this device
@@ -789,7 +777,7 @@ acdioctl(dev, cmd, addr, flag, p)
 		error = acd_read_toc(acd, 0, 0, &hdr, sizeof(hdr));
 		if (error)
 			return error;
-		if (acd->ad_link->quirks & ADEV_LITTLETOC) {
+		if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
 			bswap((u_int8_t *)&hdr.len, sizeof(hdr.len));
 #endif
@@ -822,7 +810,7 @@ acdioctl(dev, cmd, addr, flag, p)
 		    for (ntracks = th->ending_track - th->starting_track + 1;
 		         ntracks >= 0; ntracks--) {
 			toc.tab[ntracks].addr_type = CD_LBA_FORMAT;
-			if (acd->ad_link->quirks & ADEV_LITTLETOC) {
+			if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
 				bswap((u_int8_t*)&toc.tab[ntracks].addr.addr, sizeof(toc.tab[ntracks].addr.addr));
 #endif
@@ -830,7 +818,7 @@ acdioctl(dev, cmd, addr, flag, p)
 				(u_int32_t)(*toc.tab[ntracks].addr.addr) = ntohl((u_int32_t)(*toc.tab[ntracks].addr.addr));
 		    }
 		}
-		if (acd->ad_link->quirks & ADEV_LITTLETOC) {
+		if (acd->ad_link->quirks & AQUIRK_LITTLETOC) {
 #if BYTE_ORDER == BIG_ENDIAN
 				bswap((u_int8_t*)&th->len, sizeof(th->len));
 #endif
@@ -1007,14 +995,25 @@ acdgetdisklabel(acd)
  * Find out from the device what it's capacity is
  */
 u_long
-acd_size(cd, flags)
-	struct acd_softc *cd;
+acd_size(acd, flags)
+	struct acd_softc *acd;
 	int flags;
 {
 	struct atapi_read_cd_capacity_data rdcap;
 	struct atapi_read_cd_capacity cmd;
 	u_long blksize;
 	u_long size;
+
+	if (acd->ad_link->quirks & AQUIRK_NOCAPACITY) {
+		/*
+		 * the drive doesn't support the READ_CD_CAPACITY command
+		 * use a fake size
+		 */
+		acd->params.blksize = 2048;
+		acd->params.disksize = 400000;
+
+		return 400000;
+	}
 
 	/*
 	 * make up a atapi command and ask the atapi driver to do
@@ -1028,21 +1027,14 @@ acd_size(cd, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	if (atapi_exec_cmd(cd->ad_link, &cmd , sizeof(cmd),
+	if (atapi_exec_cmd(acd->ad_link, &cmd, sizeof(cmd),
 	    &rdcap, sizeof(rdcap), B_READ, 0) != 0) {
 		ATAPI_DEBUG_PRINT(("ATAPI_READ_CD_CAPACITY failed\n"));
 		return 0;
 	}
 
-	blksize = _4btol((u_int8_t*)&rdcap.blksize);
-	if (blksize < 512)
-		blksize = 2048;	/* some drives lie ! */
-	cd->params.blksize = blksize;
-
-	size = _4btol((u_int8_t*)&rdcap.size);
-	if (size < 100)
-		size = 400000;	/* ditto */
-	cd->params.disksize = size;
+	acd->params.blksize = _4btol((u_int8_t*)&rdcap.blksize);
+	acd->params.disksize = _4btol((u_int8_t*)&rdcap.size);
 
 	ATAPI_DEBUG_PRINT(("acd_size: %ld %ld\n",blksize,size));
 	return size;
