@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.9 2002/12/02 15:05:23 mickey Exp $
+.\"	$OpenBSD: altq.9,v 1.10 2003/04/14 18:11:32 tedu Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -36,7 +36,7 @@
 .Fd #include <sys/socket.h>
 .Fd #include <net/if.h>
 .Ft void \"macro
-.Fn IFQ_ENQUEUE "struct ifaltq *ifq" "struct mbuf *m" "int error"
+.Fn IFQ_ENQUEUE "struct ifaltq *ifq" "struct mbuf *m" "struct altq_pktattr *pa" "int err"
 .Ft void \"macro
 .Fn IFQ_DEQUEUE "struct ifaltq *ifq" "struct mbuf *m"
 .Ft void \"macro
@@ -205,28 +205,33 @@ macros looks like:
 	#endif
 .Ed
 .Ss Enqueue operation
-The semantics of the enqueue operation is changed.
+The semantics of the enqueue operation are changed.
 In the new style,
 enqueue and packet drop are combined since they cannot be easily
 separated in many queuing disciplines.
 The new enqueue operation corresponds to the following macro that is
 written with the old macros.
 .Bd -literal
-#define	IFQ_ENQUEUE(ifq, m, error)                      \e
-do {                                                    \e
-        if (IF_QFULL((ifq))) {                          \e
-                m_freem((m));                           \e
-                (error) = ENOBUFS;                      \e
-                IF_DROP(ifq);                           \e
-         } else {                                       \e
-                IF_ENQUEUE((ifq), (m));                 \e
-                (error) = 0;                            \e
-         }                                              \e
+#define	IFQ_ENQUEUE(ifq, m, pattr, err)                   \e
+do {                                                      \e
+        if (ALTQ_IS_ENABLED((ifq)))                       \e
+                ALTQ_ENQUEUE((ifq), (m), (pattr), (err)); \e
+        else {                                            \e
+                if (IF_QFULL((ifq))) {                    \e
+                        m_freem((m));                     \e
+                        (err) = ENOBUFS;                  \e
+                 } else {                                 \e
+                        IF_ENQUEUE((ifq), (m));           \e
+                        (err) = 0;                        \e
+                 }                                        \e
+         }                                                \e
+	 if ((err))                                       \e
+	        (ifq)->ifq_drops++;                       \e
 } while (0)
 .Ed
 .Pp
 .Fn IFQ_ENQUEUE
-does the followings:
+does the following:
 .Bl -hyphen -compact
 .It
 queue a packet
@@ -234,7 +239,7 @@ queue a packet
 drop (and free) a packet if the enqueue operation fails
 .El
 If the enqueue operation fails,
-.Fa error
+.Fa err
 is set to
 .Dv ENOBUFS .
 .Fa mbuf
@@ -265,7 +270,7 @@ looks as follows:
                                        |     len = m->m_pkthdr.len;
      s = splimp();                     |     s = splimp();
      if (IF_QFULL(&ifp->if_snd)) {     |     IFQ_ENQUEUE(&ifp->if_snd, m,
-                                       |                 error);
+                                       |         NULL, error);
          IF_DROP(&ifp->if_snd);        |     if (error != 0) {
          splx(s);                      |         splx(s);
          senderr(ENOBUFS);             |         return (error);
@@ -545,7 +550,7 @@ The enqueue operation looks like:
  IF_ENQUEUE(ifq, m);                   |     }
                                        | } else
                                        |     IFQ_ENQUEUE(&sc->sc_if.if_snd,
-                                       |                 m, error);
+                                       |         NULL, m, error);
                                        |
                                        | if (error) {
                                        |     splx(s);
@@ -581,8 +586,8 @@ Queuing disciplines also need to guarantee the same mbuf is returned if
 is called immediately after
 .Fn IFQ_POLL .
 .Sh SEE ALSO
-.Xr pfctl 8 ,
-.Xr pf.conf 5
+.Xr pf.conf 5 ,
+.Xr pfctl 8
 .Sh HISTORY
 The
 .Nm
