@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.4 1999/11/09 04:13:54 rahnds Exp $ */
+/*	$OpenBSD: pio.h,v 1.5 2001/06/24 04:45:45 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -40,36 +40,28 @@
 void *mapiodev(paddr_t pa, psize_t len);
 
 static __inline void
-__outb(a,v)
-	volatile u_int8_t *a;
-	int v;
+__outb(volatile u_int8_t *a, int v)
 {
 	*a = v;
 	__asm__ volatile("eieio");
 }
 
 static __inline void
-__outw(a,v)
-	volatile u_int16_t *a;
-	u_int16_t v;
+__outw(volatile u_int16_t *a, u_int16_t v)
 {
 	*a = v;
 	__asm__ volatile("eieio");
 }
 
 static __inline void
-__outl(a,v)
-	volatile u_int32_t *a;
-	int v;
+__outl(volatile u_int32_t *a, int v)
 {
 	*a = v;
 	__asm__ volatile("eieio");
 }
 
 static __inline void
-__outwrb(a,v)
-	volatile u_int16_t *a;
-	u_int16_t v;
+__outwrb(volatile u_int16_t *a, u_int16_t v)
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
@@ -78,9 +70,7 @@ __outwrb(a,v)
 }
 
 static __inline void
-__outlrb(a,v)
-	volatile u_int32_t *a;
-	u_int32_t v;
+__outlrb(volatile u_int32_t *a, u_int32_t v)
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
@@ -89,8 +79,7 @@ __outlrb(a,v)
 }
 
 static __inline u_int8_t
-__inb(a)
-	volatile u_int8_t *a;
+__inb(volatile u_int8_t *a)
 {
 	u_int8_t _v_;
 
@@ -100,8 +89,7 @@ __inb(a)
 }
 
 static __inline u_int16_t
-__inw(a)
-	volatile u_int16_t *a;
+__inw(volatile u_int16_t *a)
 {
 	u_int16_t _v_;
 
@@ -111,8 +99,7 @@ __inw(a)
 }
 
 static __inline u_int32_t
-__inl(a)
-	volatile u_int32_t *a;
+__inl(volatile u_int32_t *a)
 {
 	u_int32_t _v_;
 
@@ -122,8 +109,7 @@ __inl(a)
 }
 
 static __inline u_int16_t
-__inwrb(a)
-	volatile u_int16_t *a;
+__inwrb(volatile u_int16_t *a)
 {
 	u_int16_t _v_;
 	u_int32_t _p_ = (u_int32_t)a;
@@ -134,8 +120,7 @@ __inwrb(a)
 }
 
 static __inline u_int32_t
-__inlrb(a)
-	volatile u_int32_t *a;
+__inlrb(volatile u_int32_t *a)
 {
 	u_int32_t _v_;
 	u_int32_t _p_ = (u_int32_t)a;
