@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.60 2003/07/28 19:59:18 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.61 2003/07/29 18:24:36 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -590,6 +590,9 @@ syscall(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
+#ifdef DIAGNOSTIC
+	int ocpl = cpl;
+#endif
 
 	uvmexp.syscalls++;
 #ifdef DIAGNOSTIC
@@ -757,6 +760,14 @@ syscall(frame)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, orig_error, rval[0]);
+#endif
+#ifdef DIAGNOSTIC
+	if (cpl != ocpl) {
+		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
+		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
+		    cpl, code, args[0], args[1], args[2], p->p_pid);
+		cpl = ocpl;
+	}
 #endif
 }
 

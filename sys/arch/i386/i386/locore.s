@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.72 2003/07/11 20:45:18 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.73 2003/07/29 18:24:36 mickey Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1227,36 +1227,6 @@ ENTRY(copystr)
 	popl	%esi
 	ret
 
-/*
- * fuword(caddr_t uaddr);
- * Fetch an int from the user's address space.
- * Not used outside locore anymore.
- */
-ASENTRY(fuword)
-	movl	4(%esp),%edx
-	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
-	ja	_ASM_LABEL(fusuaddrfault)
-	movl	_C_LABEL(curpcb),%ecx
-	movl	$_ASM_LABEL(fusufault),PCB_ONFAULT(%ecx)
-	movl	(%edx),%eax
-	movl	$0,PCB_ONFAULT(%ecx)
-	ret
-
-/*
- * Handle faults from fuword.  Clean up and return -1.
- */
-ASENTRY(fusufault)
-	movl	$0,PCB_ONFAULT(%ecx)
-	movl	$-1,%eax
-	ret
-
-/*
- * Handle earlier faults from fuword, due to our of range addresses.
- */
-ASENTRY(fusuaddrfault)
-	movl	$-1,%eax
-	ret
-
 /*****************************************************************************/
 
 /*
@@ -1887,10 +1857,6 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-#ifdef DIAGNOSTIC
-	movl	_C_LABEL(cpl),%ebx
-	movl	TF_EAX(%esp),%esi	# syscall no
-#endif /* DIAGNOSTIC */
 	call	_C_LABEL(syscall)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
@@ -1902,53 +1868,7 @@ syscall1:
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
 	jmp	2b
-#ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
-#else /* DIAGNOSTIC */
-1:	cmpl	_C_LABEL(cpl),%ebx
-	jne	3f
-	INTRFASTEXIT
-3:	sti
-	movl	TF_ESP(%esp),%edi	# user stack pointer
-	leal	4(%edi),%edi		# parameters (in userspace)
-	cmpl	$SYS_syscall,%esi
-	jne	5f
-	pushl	%edi
-	CALL	_ASM_LABEL(fuword)
-	movl	%eax,%esi		# indirect syscall no for SYS_syscall
-	leal	4(%edi),%edi		# shift parameters
-	jmp	6f
-5:	
-	cmpl	$SYS___syscall,%esi
-	jne	6f
-	pushl	%edi
-	CALL	_ASM_LABEL(fuword)
-	movl	%eax,%esi		# indirect syscall no for SYS___syscall
-	leal	8(%edi),%edi		# shift parameters (quad alignment)
-6:
-	leal	8(%edi),%ecx
-	pushl	%ecx
-	call	_ASM_LABEL(fuword)
-	movl	%eax,(%esp)		# 3rd syscall arg
-	leal	4(%edi),%ecx
-	pushl	%ecx
-	call	_ASM_LABEL(fuword)
-	movl	%eax,(%esp)		# 2nd syscall arg
-	pushl	%edi
-	call	_ASM_LABEL(fuword)
-	movl	%eax,(%esp)		# 1st syscall arg
-	pushl	%esi			# syscall no
-	pushl	_C_LABEL(cpl)		# current spl
-	pushl	$4f			# format string
-	call	_C_LABEL(printf)
-	addl	$24,%esp
-#if defined(DDB) && 0
-	int	$3
-#endif /* DDB */
-	movl	%ebx,_C_LABEL(cpl)
-	jmp	2b
-4:	.asciz	"WARNING: SPL (0x%x) NOT LOWERED ON syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT\n"
-#endif /* DIAGNOSTIC */
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
