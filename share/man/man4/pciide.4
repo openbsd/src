@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.34 2003/06/06 11:30:06 grange Exp $
+.\"	$OpenBSD: pciide.4,v 1.35 2003/06/06 11:36:02 grange Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -90,6 +90,13 @@ Silicon Integrated System 5513 (5597/5598)
 .It
 VIA Technologies VT82C586/A/B, VT82C596A/B, VT82C686A/B, VT8231, VT8366,
 VT8233, VT8235
+.El
+.Pp
+It also supports the following Serial ATA controllers:
+.Pp
+.Bl -bullet -compact -offset indent
+.It
+Silicon Image SiI3112
 .El
 .Pp
 Some of these controllers are only available in multifunction PCI chips.
