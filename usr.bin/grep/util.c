@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2003/06/22 22:38:50 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2003/06/23 00:55:09 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -47,7 +47,7 @@
  */
 
 static int	linesqueued;
-static int	procline(str_t *l);
+static int	procline(str_t *l, int);
 
 int
 grep_tree(char **argv)
@@ -92,7 +92,7 @@ procfile(char *fn)
 {
 	str_t ln;
 	file_t *f;
-	int c, t, z;
+	int c, t, z, nottext;
 
 	if (fn == NULL) {
 		fn = "(standard input)";
@@ -105,7 +105,9 @@ procfile(char *fn)
 			warn("%s", fn);
 		return 0;
 	}
-	if (aflag && grep_bin_file(f)) {
+
+	nottext = grep_bin_file(f);
+	if (nottext && binbehave == BIN_FILE_SKIP) {
 		grep_close(f);
 		return 0;
 	}
@@ -127,7 +129,7 @@ procfile(char *fn)
 
 		z = tail;
 
-		if ((t = procline(&ln)) == 0 && Bflag > 0 && z == 0) {
+		if ((t = procline(&ln, nottext)) == 0 && Bflag > 0 && z == 0) {
 			enqueue(&ln);
 			linesqueued++;
 		}
@@ -146,6 +148,10 @@ procfile(char *fn)
 		printf("%s\n", fn);
 	if (Lflag && c == 0)
 		printf("%s\n", fn);
+	if (c && !cflag && !lflag && !Lflag &&
+	    binbehave == BIN_FILE_BIN && nottext)
+		printf("Binary file %s matches\n", fn);
+
 	return c;
 }
 
@@ -157,7 +163,7 @@ procfile(char *fn)
 #define isword(x) (isalnum(x) || (x) == '_')
 
 static int
-procline(str_t *l)
+procline(str_t *l, int nottext)
 {
 	regmatch_t	pmatch;
 	int		c, i, r, t;
@@ -192,6 +198,9 @@ procline(str_t *l)
 	}
 
 print:
+	if (c && binbehave == BIN_FILE_BIN && nottext)
+		return c; /* Binary file */
+
 	if ((tail > 0 || c) && !cflag && !qflag) {
 		if (c) {
 			if (first > 0 && tail == 0 && (Bflag < linesqueued) && (Aflag || Bflag))

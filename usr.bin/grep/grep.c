@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.8 2003/06/22 23:51:22 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.9 2003/06/23 00:55:09 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -27,6 +27,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/limits.h>
 #include <sys/stat.h>
 
 #include <err.h>
@@ -67,7 +68,6 @@ int	 Vflag;		/* -V: display version information */
 #ifndef NOZ
 int	 Zflag;		/* -Z: decompress input before processing */
 #endif
-int	 aflag;		/* -a: only search ascii files */
 int	 bflag;		/* -b: show block numbers for each match */
 int	 cflag;		/* -c: only show a count of matching lines */
 int	 hflag;		/* -h: don't print filename headers */
@@ -81,6 +81,14 @@ int	 vflag;		/* -v: only show non-matching lines */
 int	 wflag;		/* -w: pattern must start and end on word boundaries */
 int	 xflag;		/* -x: pattern must match entire line */
 
+int binbehave = BIN_FILE_BIN;
+
+enum {
+	BIN_OPT = CHAR_MAX + 1,
+	HELP_OPT,
+	MMAP_OPT
+};
+
 /* Housekeeping */
 int	 first;		/* flag whether or not this is our fist match */
 int	 tail;		/* lines left to print */
@@ -93,29 +101,35 @@ usage(void)
 {
 	fprintf(stderr,
 #ifdef NOZ
-	    "usage: %s [-[AB] num] [-CEFGHLPRSVabchilnoqsvwx]"
+	    "usage: %s [-[AB] num] [-CEFGHILPRSUVabchilnoqsvwx]"
 #else
-	    "usage: %s [-[AB] num] [-CEFGHLPRSVZabchilnoqsvwx]"
+	    "usage: %s [-[AB] num] [-CEFGHILPRSUVZabchilnoqsvwx]"
 #endif
 	    " [-e pattern] [-f file] [file ...]\n", __progname);
 	exit(2);
 }
 
 #ifdef NOZ
-static char *optstr = "0123456789A:B:CEFGHLPSRUVabce:f:hilnoqrsuvwxy";
+static char *optstr = "0123456789A:B:CEFGHILPSRUVabce:f:hilnoqrsuvwxy";
 #else
-static char *optstr = "0123456789A:B:CEFGHLPSRUVZabce:f:hilnoqrsuvwxy";
+static char *optstr = "0123456789A:B:CEFGHILPSRUVZabce:f:hilnoqrsuvwxy";
 #endif
 
 struct option long_options[] =
 {
-	{"basic-regexp",        no_argument,       NULL, 'G'},
-	{"extended-regexp",     no_argument,       NULL, 'E'},
-	{"fixed-strings",       no_argument,       NULL, 'F'},
+	{"binary-files",        required_argument, NULL, BIN_OPT},
+	{"help",                no_argument,       NULL, HELP_OPT},
+	{"mmap",                no_argument,       NULL, MMAP_OPT},
 	{"after-context",       required_argument, NULL, 'A'},
 	{"before-context",      required_argument, NULL, 'B'},
 	{"context",             optional_argument, NULL, 'C'},
+	{"devices",             required_argument, NULL, 'D'},
+	{"extended-regexp",     no_argument,       NULL, 'E'},
+	{"fixed-strings",       no_argument,       NULL, 'F'},
+	{"basic-regexp",        no_argument,       NULL, 'G'},
+	{"binary",              no_argument,       NULL, 'U'},
 	{"version",             no_argument,       NULL, 'V'},
+	{"text",                no_argument,       NULL, 'a'},
 	{"byte-offset",         no_argument,       NULL, 'b'},
 	{"count",               no_argument,       NULL, 'c'},
 	{"regexp",              required_argument, NULL, 'e'},
@@ -129,11 +143,9 @@ struct option long_options[] =
 	{"silent",              no_argument,       NULL, 'q'},
 	{"recursive",           no_argument,       NULL, 'r'},
 	{"no-messages",         no_argument,       NULL, 's'},
-	{"text",                no_argument,       NULL, 'a'},
 	{"revert-match",        no_argument,       NULL, 'v'},
 	{"word-regexp",         no_argument,       NULL, 'w'},
 	{"line-regexp",         no_argument,       NULL, 'x'},
-	{"binary",              no_argument,       NULL, 'U'},
 	{"unix-byte-offsets",   no_argument,       NULL, 'u'},
 #ifndef NOZ
 	{"decompress",          no_argument,       NULL, 'Z'},
@@ -230,6 +242,9 @@ main(int argc, char *argv[])
 		case 'H':
 			Hflag++;
 			break;
+		case 'I':
+			binbehave = BIN_FILE_SKIP;
+			break;
 		case 'L':
 			lflag = 0;
 			Lflag = qflag = 1;
@@ -246,13 +261,11 @@ main(int argc, char *argv[])
 			oflag++;
 			break;
 		case 'U':
-		case 'u':
-			/* these are here for compatability */
+			binbehave = BIN_FILE_BIN;
 			break;
 		case 'V':
 			fprintf(stderr, "grep version %u.%u\n", VER_MAJ, VER_MIN);
-			fprintf(stderr, argv[0]);
-			usage();
+			exit(0);
 			break;
 #ifndef NOZ
 		case 'Z':
@@ -260,7 +273,7 @@ main(int argc, char *argv[])
 			break;
 #endif
 		case 'a':
-			aflag = 1;
+			binbehave = BIN_FILE_TEXT;
 			break;
 		case 'b':
 			bflag = 1;
@@ -308,6 +321,21 @@ main(int argc, char *argv[])
 		case 'x':
 			xflag = 1;
 			break;
+		case BIN_OPT:
+			if (strcmp("binary", optarg) == 0)
+				binbehave = BIN_FILE_BIN;
+			else if (strcmp("without-match", optarg) == 0)
+				binbehave = BIN_FILE_SKIP;
+			else if (strcmp("text", optarg) == 0)
+				binbehave = BIN_FILE_TEXT;
+			else
+				errx(2, "Unknown binary-files option");
+			break;
+		case 'u':
+		case MMAP_OPT:
+			/* default, compatibility */
+			break;
+		case HELP_OPT:
 		default:
 			usage();
 		}

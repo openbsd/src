@@ -1,4 +1,4 @@
-/*	$OpenBSD: binary.c,v 1.4 2003/06/22 22:38:50 deraadt Exp $	*/
+/*	$OpenBSD: binary.c,v 1.5 2003/06/23 00:55:09 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -83,7 +83,7 @@ mmbin_file(mmf_t *f)
 
 	/* XXX knows too much about mmf internals */
 	for (i = 0; i < BUFFER_SIZE && i < f->len; i++)
-		if (!isprint(f->base[i]))
+		if (!isprint(f->base[i]) && !isspace(f->base[i]))
 			return 1;
 	mmrewind(f);
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.2 2003/06/22 22:38:50 deraadt Exp $	*/
+/*	$OpenBSD: grep.h,v 1.3 2003/06/23 00:55:09 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -35,6 +35,10 @@
 #define VER_MAJ 0
 #define VER_MIN 9
 
+#define BIN_FILE_BIN	0
+#define BIN_FILE_SKIP	1
+#define BIN_FILE_TEXT	2
+
 typedef struct {
 	size_t		 len;
 	int		 line_no;
@@ -48,8 +52,9 @@ extern int	 cflags, eflags;
 
 /* Command line flags */
 extern int	 Aflag, Bflag, Hflag, Lflag, Pflag, Sflag, Rflag, Zflag,
-		 aflag, bflag, cflag, hflag, lflag, nflag, qflag, sflag,
+		 bflag, cflag, hflag, lflag, nflag, qflag, sflag,
 		 vflag, wflag, xflag;
+extern int	 binbehave;
 
 extern int	 first, lead, matchall, patterns, tail;
 extern char    **pattern;
