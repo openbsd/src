@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.26 2001/10/14 18:27:57 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.27 2001/10/14 20:59:33 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -614,8 +614,9 @@ define({:-OpenBSDXferFloppyFromUNIX-:},
 		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
 	and, under Solaris:
 		dd if=floppy{:--:}OSrev.fs of=/dev/rdiskette0 bs=36b
-	but you may need to turn off the volume management daemon, vold(1M),
-	before attempting the copy.
+	unless the volume management daemon, vold(1M), is running, in
+	which case the following command is preferable:
+		dd if=floppy{:--:}OSrev.fs of=/vol/dev/rdiskette0 bs=36b
 
 	If you are using another operating system, you may have to adapt
 	this to conform to local naming conventions for the floppy and
