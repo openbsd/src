@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.37 1997/02/01 00:31:49 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.38 1997/02/01 00:58:25 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -405,7 +405,7 @@ allocsys(v)
 		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
 		    MAXBSIZE * 7 / 10;
 
-	/* More buffer pages that fits into the buffers is senseless.  */
+	/* More buffer pages than fits into the buffers is senseless.  */
 	if (bufpages > nbuf * MAXBSIZE / CLBYTES)
 		bufpages = nbuf * MAXBSIZE / CLBYTES;
 
