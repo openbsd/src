@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.27 2001/08/28 12:17:04 markus Exp $	*/
+/*	$OpenBSD: parse.y,v 1.28 2001/09/04 13:47:51 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -53,6 +53,12 @@ static int lineno = 1;
 static int errors = 0;
 static int natmode = 0;
 
+struct node_if {
+	char			 ifname[IFNAMSIZ];
+	u_int8_t		 not;
+	struct node_if		*next;
+};
+
 struct node_proto {
 	u_int8_t		 proto;
 	struct node_proto	*next;
@@ -80,7 +86,16 @@ int			 rule_consistent(struct pf_rule *);
 int			 yyparse(void);
 struct pf_rule_addr	*new_addr(void);
 u_int32_t		 ipmask(u_int8_t);
-void			 expand_rule(struct pf_rule *, struct node_proto *,
+void			 expand_rule_hosts(struct pf_rule *,
+			    struct node_if *, struct node_proto *,
+			    struct node_host *, struct node_port *,
+			    struct node_host *, struct node_port *);
+void			 expand_rule_protos(struct pf_rule *,
+			    struct node_if *, struct node_proto *,
+			    struct node_host *, struct node_port *,
+			    struct node_host *, struct node_port *);
+void			 expand_rule(struct pf_rule *,
+			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
 			    struct node_host *, struct node_port *);
 
@@ -100,10 +115,6 @@ typedef struct {
 		int			i;
 		char			*string;
 		struct {
-			char		*string;
-			int		not;
-		}			iface;
-		struct {
 			u_int8_t	b1;
 			u_int8_t	b2;
 			u_int16_t	w;
@@ -113,6 +124,7 @@ typedef struct {
 			int		b;
 			int		t;
 		}			range;
+		struct node_if		*interface;
 		struct node_proto	*proto;
 		struct node_host	*host;
 		struct node_port	*port;
@@ -129,11 +141,11 @@ typedef struct {
 %token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP PROTO ALL ANY ICMPTYPE CODE KEEP MODULATE STATE
 %token	PORT RDR NAT ARROW NODF MINTTL ERROR
-%token	<v.string> STRING
-%token	<v.number> NUMBER
+%token	<v.string>	STRING
+%token	<v.number>	NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
-%type	<v.iface> iface natiface
-%type	<v.number> port icmptype minttl
+%type	<v.interface>	interface if_list if_item_not if_item
+%type	<v.number>	port icmptype minttl
 %type	<v.i>	dir log quick keep nodf
 %type	<v.b>	action icmpspec flag flags blockspec
 %type	<v.range>	dport rport
@@ -163,7 +175,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick iface proto fromto flags icmpspec keep nodf minttl
+pfrule		: action dir log quick interface proto fromto flags icmpspec keep nodf minttl
 		{
 			struct pf_rule r;
 
@@ -181,8 +193,6 @@ pfrule		: action dir log quick iface proto fromto flags icmpspec keep nodf mintt
 			r.direction = $2;
 			r.log = $3;
 			r.quick = $4;
-			if ($5.string)
-				memcpy(r.ifname, $5.string, sizeof(r.ifname));
 
 			r.flags = $8.b1;
 			r.flagset = $8.b2;
@@ -195,7 +205,7 @@ pfrule		: action dir log quick iface proto fromto flags icmpspec keep nodf mintt
 			if ($12)
 				r.min_ttl = $12;
 
-			expand_rule(&r, $6, $7.src.host, $7.src.port,
+			expand_rule(&r, $5, $6, $7.src.host, $7.src.port,
 			    $7.dst.host, $7.dst.port);
 		}
 		;
@@ -236,19 +246,25 @@ quick		: /* empty */			{ $$ = 0; }
 		| QUICK				{ $$ = 1; }
 		;
 
-natiface	: iface
-		| ON '!' STRING			{
-			$$.string = strdup($3);
-			if ($$.string == NULL)
-				err(1, "natiface: strdup");
-			$$.not = 1;
-		}
+interface	: /* empty */			{ $$ = NULL; }
+		| ON if_item_not		{ $$ = $2; }
+		| ON '{' if_list '}'		{ $$ = $3; }
 		;
-iface		: /* empty */			{ $$.string = NULL; }
-		| ON STRING			{
-			$$.string = strdup($2);
-			if ($$.string == NULL)
-				err(1, "iface: strdup");
+
+if_list		: if_item_not			{ $$ = $1; }
+		| if_list ',' if_item_not	{ $3->next = $1; $$ = $3; }
+		;
+
+if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
+		| if_item			{ $$ = $1; }
+
+if_item		: STRING			{
+			$$ = malloc(sizeof(struct node_if));
+			if ($$ == NULL)
+				err(1, "if_item: malloc");
+			strlcpy($$->ifname, $1, IFNAMSIZ);
+			$$->not = 0;
+			$$->next = NULL;
 		}
 		;
 
@@ -492,7 +508,7 @@ nodf		: /* empty */			{ $$ = 0; }
 		| NODF				{ $$ = 1; }
 		;
 
-natrule		: NAT natiface proto FROM ipspec TO ipspec ARROW address
+natrule		: NAT interface proto FROM ipspec TO ipspec ARROW address
 		{
 			struct pf_nat nat;
 
@@ -502,10 +518,10 @@ natrule		: NAT natiface proto FROM ipspec TO ipspec ARROW address
 			}
 			memset(&nat, 0, sizeof(nat));
 
-			if ($2.string) {
-				memcpy(nat.ifname, $2.string,
+			if ($2 != NULL) {
+				memcpy(nat.ifname, $2->ifname,
 				    sizeof(nat.ifname));
-				nat.ifnot = $2.not;
+				nat.ifnot = $2->not;
 			}
 			if ($3 != NULL) {
 				nat.proto = $3->proto;
@@ -534,7 +550,7 @@ natrule		: NAT natiface proto FROM ipspec TO ipspec ARROW address
 		}
 		;
 
-rdrrule		: RDR natiface proto FROM ipspec TO ipspec dport ARROW address rport
+rdrrule		: RDR interface proto FROM ipspec TO ipspec dport ARROW address rport
 		{
 			struct pf_rdr rdr;
 
@@ -544,10 +560,10 @@ rdrrule		: RDR natiface proto FROM ipspec TO ipspec dport ARROW address rport
 			}
 			memset(&rdr, 0, sizeof(rdr));
 
-			if ($2.string) {
-				memcpy(rdr.ifname, $2.string,
+			if ($2 != NULL) {
+				memcpy(rdr.ifname, $2->ifname,
 				    sizeof(rdr.ifname));
-				rdr.ifnot = $2.not;
+				rdr.ifnot = $2->not;
 			}
 			if ($3 != NULL) {
 				rdr.proto = $3->proto;
@@ -699,60 +715,90 @@ rule_consistent(struct pf_rule *r)
 		} \
 	} while (0)
 
-void
-expand_rule(struct pf_rule *r, struct node_proto *protos,
+void expand_rule_hosts(struct pf_rule *r,
+    struct node_if *interface, struct node_proto *proto,
+    struct node_host *src_hosts, struct node_port *src_ports,
+    struct node_host *dst_hosts, struct node_port *dst_ports)
+{
+	struct node_host *src_host, *dst_host;
+	struct node_port *src_port, *dst_port;
+
+	src_host = src_hosts;
+	while (src_host != NULL) {
+		src_port = src_ports;
+		while (src_port != NULL) {
+			dst_host = dst_hosts;
+			while (dst_host != NULL) {
+				dst_port = dst_ports;
+				while (dst_port != NULL) {
+					memcpy(r->ifname, interface->ifname,
+					  sizeof(r->ifname));
+					r->proto = proto->proto;
+					r->src.addr = src_host->addr;
+					r->src.mask = src_host->mask;
+					r->src.not = src_host->not;
+					r->src.port[0] = src_port->port[0];
+					r->src.port[1] = src_port->port[1];
+					r->src.port_op = src_port->op;
+					r->dst.addr = dst_host->addr;
+					r->dst.mask = dst_host->mask;
+					r->dst.not = dst_host->not;
+					r->dst.port[0] = dst_port->port[0];
+					r->dst.port[1] = dst_port->port[1];
+					r->dst.port_op = dst_port->op;
+					if (rule_consistent(r) < 0)
+						yyerror("skipping rule "
+						    "due to errors");
+					else
+						pfctl_add_rule(pf, r);
+					dst_port = dst_port->next;
+				}
+				dst_host = dst_host->next;
+			}
+			src_port = src_port->next;
+		}
+		src_host = src_host->next;
+	}
+}
+
+void expand_rule_protos(struct pf_rule *r,
+    struct node_if *interface, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports)
 {
 	struct node_proto *proto;
-	struct node_host *src_host, *dst_host;
-	struct node_port *src_port, *dst_port;
 
+	proto = protos;
+	while (proto != NULL) {
+		expand_rule_hosts(r, interface, proto, src_hosts,
+		    src_ports, dst_hosts, dst_ports);
+		proto = proto->next;
+	}
+}
+
+void
+expand_rule(struct pf_rule *r,
+    struct node_if *interfaces, struct node_proto *protos,
+    struct node_host *src_hosts, struct node_port *src_ports,
+    struct node_host *dst_hosts, struct node_port *dst_ports)
+{
+	struct node_if *interface;
+
+	CHECK_ROOT(struct node_if, interfaces);
 	CHECK_ROOT(struct node_proto, protos);
 	CHECK_ROOT(struct node_host, src_hosts);
 	CHECK_ROOT(struct node_port, src_ports);
 	CHECK_ROOT(struct node_host, dst_hosts);
 	CHECK_ROOT(struct node_port, dst_ports);
 
-	proto = protos;
-	while (proto != NULL) {
-		src_host = src_hosts;
-		while (src_host != NULL) {
-			src_port = src_ports;
-			while (src_port != NULL) {
-				dst_host = dst_hosts;
-				while (dst_host != NULL) {
-					dst_port = dst_ports;
-					while (dst_port != NULL) {
-						r->proto = proto->proto;
-						r->src.addr = src_host->addr;
-						r->src.mask = src_host->mask;
-						r->src.not = src_host->not;
-						r->src.port[0] = src_port->port[0];
-						r->src.port[1] = src_port->port[1];
-						r->src.port_op = src_port->op;
-						r->dst.addr = dst_host->addr;
-						r->dst.mask = dst_host->mask;
-						r->dst.not = dst_host->not;
-						r->dst.port[0] = dst_port->port[0];
-						r->dst.port[1] = dst_port->port[1];
-						r->dst.port_op = dst_port->op;
-						if (rule_consistent(r) < 0)
-							yyerror("skipping rule "
-							    "due to errors");
-						else
-							pfctl_add_rule(pf, r);
-						dst_port = dst_port->next;
-					}
-					dst_host = dst_host->next;
-				}
-				src_port = src_port->next;
-			}
-			src_host = src_host->next;
-		}
-		proto = proto->next;
+	interface = interfaces;
+	while (interface != NULL) {
+		expand_rule_protos(r, interface, protos, src_hosts,
+		    src_ports, dst_hosts, dst_ports);
+		interface = interface->next;
 	}
 
+	FREE_LIST(struct node_if, interfaces);
 	FREE_LIST(struct node_proto, protos);
 	FREE_LIST(struct node_host, src_hosts);
 	FREE_LIST(struct node_port, src_ports);
