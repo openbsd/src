@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2000/01/06 03:21:43 smurph Exp $ */
+/*	$OpenBSD: pmap.c,v 1.15 2000/07/06 12:56:18 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -843,7 +843,6 @@ pmap_pinit(pmap)
 	if (mmutype <= MMU_68040)
 		pmap->pm_stfree = protostfree;
 #endif
-	pmap->pm_stchanged = TRUE;
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
 }
@@ -927,27 +926,26 @@ pmap_reference(pmap)
 	simple_unlock(&pmap->pm_lock);
 }
 
+/*
+ *	Mark that a processor is about to be used by a given pmap.
+ */
 void
-pmap_activate(pmap, pcb)
-	register pmap_t pmap;
-	struct pcb *pcb;
+pmap_activate(p)
+	struct proc *p;
 {
-
-	if (pmap == NULL)
-		return;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%x, %x)\n", pmap, pcb);
+		printf("pmap_activate(%p)\n", p);
 #endif
 
-	PMAP_ACTIVATE(pmap, pcb, pmap == curproc->p_vmspace->vm_map.pmap);
+	PMAP_ACTIVATE(pmap, p == curproc);
 }
 
 void
-pmap_deactivate(pmap, pcb)
-	register pmap_t pmap;
-	struct pcb *pcb;
+pmap_deactivate(p)
+	struct proc *p;
 {
 }
 
@@ -2137,16 +2135,13 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				if (mmutype <= MMU_68040)
 					ptpmap->pm_stfree = protostfree;
 #endif
-				ptpmap->pm_stchanged = TRUE;
 				/*
 				 * XXX may have changed segment table
 				 * pointer for current process so
 				 * update now to reload hardware.
 				 */
-				if (curproc != NULL &&
-				    ptpmap == curproc->p_vmspace->vm_map.pmap)
-					PMAP_ACTIVATE(ptpmap,
-					    &curproc->p_addr->u_pcb, 1);
+				if (active_user_pmap(ptpmap))
+					PMAP_ACTIVATE(ptpmap, 1);
 			}
 #ifdef DEBUG
 			else if (ptpmap->pm_sref < 0)
@@ -2373,13 +2368,12 @@ pmap_enter_ptpage(pmap, va)
 			pmap->pm_stfree = protostfree;
 		}
 #endif
-		pmap->pm_stchanged = TRUE;
 		/*
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
-			PMAP_ACTIVATE(pmap, &curproc->p_addr->u_pcb, 1);
+		if (active_user_pmap(pmap))
+			PMAP_ACTIVATE(pmap, 1);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: pmap %x stab %x(%x)\n",

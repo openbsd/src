@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.3 2000/01/06 03:21:43 smurph Exp $
+#	$OpenBSD: genassym.cf,v 1.4 2000/07/06 12:56:18 art Exp $
 
 #
 # Copyright (c) 1995 Theo de Raadt
@@ -126,10 +126,6 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 
-# VM structure fields
-define	VM_PMAP			offsetof(struct vmspace, vm_pmap)
-define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
-
 # interrupt/fault metering
 define	V_SWTCH			offsetof(struct vmmeter, v_swtch)
 define	V_INTR			offsetof(struct vmmeter, v_intr)
@@ -195,7 +191,6 @@ define	SG_ISHIFT		SG_ISHIFT
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
-define	PCB_USTP		offsetof(struct pcb, pcb_ustp)
 define	PCB_USP			offsetof(struct pcb, pcb_usp)
 define	PCB_REGS		offsetof(struct pcb, pcb_regs)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
