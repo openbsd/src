@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.5 2003/07/02 21:44:57 deraadt Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.6 2003/07/24 08:03:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -146,9 +146,9 @@ struct idname auth_types[] = {
 	{ SADB_AALG_MD5HMAC,		"hmac-md5",		NULL },
 	{ SADB_AALG_RIPEMD160HMAC,	"hmac-ripemd160",	NULL },
 	{ SADB_AALG_SHA1HMAC,		"hmac-sha1",		NULL },
-	{ SADB_AALG_SHA2_256,		"sha2-256",		NULL },
-	{ SADB_AALG_SHA2_384,		"sha2-384",		NULL },
-	{ SADB_AALG_SHA2_512,		"sha2-512",		NULL },
+	{ SADB_AALG_SHA2_256,		"hmac-sha2-256",	NULL },
+	{ SADB_AALG_SHA2_384,		"hmac-sha2-384",	NULL },
+	{ SADB_AALG_SHA2_512,		"hmac-sha2-512",	NULL },
 	{ SADB_X_AALG_MD5,		"md5",			NULL },
 	{ SADB_X_AALG_SHA1,		"sha1",			NULL },
 	{ 0,				NULL,			NULL }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.12 2003/02/15 22:57:58 jason Exp $	*/
+/*	$OpenBSD: xform.h,v 1.13 2003/07/24 08:03:19 itojun Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -27,6 +27,7 @@
 #include <sys/md5k.h>
 #include <crypto/sha1.h>
 #include <crypto/rmd160.h>
+#include <crypto/sha2.h>
 
 /* Declarations */
 struct auth_hash {
@@ -64,6 +65,9 @@ union authctx {
 	MD5_CTX md5ctx;
 	SHA1_CTX sha1ctx;
 	RMD160_CTX rmd160ctx;
+	SHA256_CTX sha2_256ctx;
+	SHA384_CTX sha2_384ctx;
+	SHA512_CTX sha2_512ctx;
 };
 
 extern struct enc_xform enc_xform_des;
@@ -82,6 +86,9 @@ extern struct auth_hash auth_hash_key_sha1;
 extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;
+extern struct auth_hash auth_hash_hmac_sha2_256_96;
+extern struct auth_hash auth_hash_hmac_sha2_384_96;
+extern struct auth_hash auth_hash_hmac_sha2_512_96;
 
 extern struct comp_algo comp_algo_deflate;
 extern struct comp_algo comp_algo_lzs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.15 2003/02/23 18:45:32 markus Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.16 2003/07/24 08:03:19 itojun Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -181,6 +181,18 @@ export_sa(void **p, struct tdb *tdb)
 
 		case CRYPTO_RIPEMD160_HMAC:
 			sadb_sa->sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
+			break;
+
+		case CRYPTO_SHA2_256_HMAC:
+			sadb_sa->sadb_sa_auth = SADB_AALG_SHA2_256;
+			break;
+
+		case CRYPTO_SHA2_384_HMAC:
+			sadb_sa->sadb_sa_auth = SADB_AALG_SHA2_384;
+			break;
+
+		case CRYPTO_SHA2_512_HMAC:
+			sadb_sa->sadb_sa_auth = SADB_AALG_SHA2_512;
 			break;
 
 		case CRYPTO_MD5_KPDK:

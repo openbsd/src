@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.122 2003/05/06 07:28:39 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.123 2003/07/24 08:03:20 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -57,6 +57,9 @@ union sockaddr_union {
 #define	MD5HMAC96_KEYSIZE	16
 #define	SHA1HMAC96_KEYSIZE	20
 #define	RIPEMD160HMAC96_KEYSIZE	20
+#define	SHA2_256HMAC96_KEYSIZE	32
+#define	SHA2_384HMAC96_KEYSIZE	48
+#define	SHA2_512HMAC96_KEYSIZE	64
 
 #define	AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
 #define	AH_HMAC_RPLENGTH	4	/* 32 bits of replay counter */
@@ -66,7 +69,10 @@ union sockaddr_union {
 #define	AH_MD5_ALEN		16
 #define	AH_SHA1_ALEN		20
 #define	AH_RMD160_ALEN		20
-#define	AH_ALEN_MAX		20 	/* Keep updated */
+#define	AH_SHA2_256_ALEN	32
+#define	AH_SHA2_384_ALEN	48
+#define	AH_SHA2_512_ALEN	64
+#define	AH_ALEN_MAX		64 	/* Keep updated */
 
 /* Reserved SPI numbers */
 #define	SPI_LOCAL_USE		0

@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.87 2003/02/16 21:30:13 deraadt Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.88 2003/07/24 08:03:19 itojun Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -99,18 +99,21 @@ static const struct sadb_alg ealgs[] = {
 	{ SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},
 	{ SADB_X_EALG_CAST, 64, 40, 128},
 	{ SADB_X_EALG_SKIPJACK, 64, 80, 80},
-	{ SADB_X_EALG_AES, 128, 64, 256},
+	{ SADB_X_EALG_AES, 128, 64, 256}
 };
 
 static const struct sadb_alg aalgs[] = {
 	{ SADB_AALG_SHA1HMAC, 0, 160, 160 },
 	{ SADB_AALG_MD5HMAC, 0, 128, 128 },
-	{ SADB_AALG_RIPEMD160HMAC, 0, 160, 160 }
+	{ SADB_AALG_RIPEMD160HMAC, 0, 160, 160 },
+	{ SADB_AALG_SHA2_256, 0, 256, 256 },
+	{ SADB_AALG_SHA2_384, 0, 384, 384 },
+	{ SADB_AALG_SHA2_512, 0, 512, 512 }
 };
 
 static const struct sadb_alg calgs[] = {
 	{ SADB_X_CALG_DEFLATE, 0, 0, 0},
-	{ SADB_X_CALG_LZS, 0, 0, 0},
+	{ SADB_X_CALG_LZS, 0, 0, 0}
 };
 
 extern uint32_t sadb_exts_allowed_out[SADB_MAX+1];
@@ -1950,6 +1953,21 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 			sadb_comb->sadb_comb_auth = SADB_AALG_MD5HMAC;
 			sadb_comb->sadb_comb_auth_minbits = 128;
 			sadb_comb->sadb_comb_auth_maxbits = 128;
+		} else if (!strncasecmp(ipsec_def_auth, "hmac-sha2-256",
+		    sizeof("hmac-sha2-256"))) {
+			sadb_comb->sadb_comb_auth = SADB_AALG_SHA2_256;
+			sadb_comb->sadb_comb_auth_minbits = 256;
+			sadb_comb->sadb_comb_auth_maxbits = 256;
+		} else if (!strncasecmp(ipsec_def_auth, "hmac-sha2-384",
+		    sizeof("hmac-sha2-384"))) {
+			sadb_comb->sadb_comb_auth = SADB_AALG_SHA2_384;
+			sadb_comb->sadb_comb_auth_minbits = 384;
+			sadb_comb->sadb_comb_auth_maxbits = 384;
+		} else if (!strncasecmp(ipsec_def_auth, "hmac-sha2-512",
+		    sizeof("hmac-sha2-512"))) {
+			sadb_comb->sadb_comb_auth = SADB_AALG_SHA2_512;
+			sadb_comb->sadb_comb_auth_minbits = 512;
+			sadb_comb->sadb_comb_auth_maxbits = 512;
 		}
 
 		sadb_comb->sadb_comb_soft_allocations = ipsec_soft_allocations;

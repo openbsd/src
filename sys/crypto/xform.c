@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.22 2003/02/19 02:38:42 jason Exp $	*/
+/*	$OpenBSD: xform.c,v 1.23 2003/07/24 08:03:19 itojun Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -47,6 +47,7 @@
 
 #include <sys/md5k.h>
 #include <crypto/sha1.h>
+#include <crypto/sha2.h>
 #include <crypto/rmd160.h>
 #include <crypto/blf.h>
 #include <crypto/cast.h>
@@ -92,6 +93,9 @@ void null_decrypt(caddr_t, u_int8_t *);
 int MD5Update_int(void *, u_int8_t *, u_int16_t);
 int SHA1Update_int(void *, u_int8_t *, u_int16_t);
 int RMD160Update_int(void *, u_int8_t *, u_int16_t);
+int SHA256_Update_int(void *, u_int8_t *, u_int16_t);
+int SHA384_Update_int(void *, u_int8_t *, u_int16_t);
+int SHA512_Update_int(void *, u_int8_t *, u_int16_t);
 
 u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
 u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **);
@@ -190,6 +194,27 @@ struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 	20, 20, 12, sizeof(RMD160_CTX),
 	(void (*)(void *)) RMD160Init, RMD160Update_int,
 	(void (*)(u_int8_t *, void *)) RMD160Final
+};
+
+struct auth_hash auth_hash_hmac_sha2_256_96 = {
+	CRYPTO_SHA2_256_HMAC, "HMAC-SHA2-256",
+	32, 32, 12, sizeof(SHA256_CTX),
+	(void (*)(void *)) SHA256_Init, SHA256_Update_int,
+	(void (*)(u_int8_t *, void *)) SHA256_Final
+};
+
+struct auth_hash auth_hash_hmac_sha2_384_96 = {
+	CRYPTO_SHA2_384_HMAC, "HMAC-SHA2-384",
+	48, 48, 12, sizeof(SHA384_CTX),
+	(void (*)(void *)) SHA384_Init, SHA384_Update_int,
+	(void (*)(u_int8_t *, void *)) SHA384_Final
+};
+
+struct auth_hash auth_hash_hmac_sha2_512_96 = {
+	CRYPTO_SHA2_512_HMAC, "HMAC-SHA2-512",
+	64, 64, 12, sizeof(SHA512_CTX),
+	(void (*)(void *)) SHA512_Init, SHA512_Update_int,
+	(void (*)(u_int8_t *, void *)) SHA512_Final
 };
 
 struct auth_hash auth_hash_key_md5 = {
@@ -461,6 +486,27 @@ int
 SHA1Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
 {
 	SHA1Update(ctx, buf, len);
+	return 0;
+}
+
+int
+SHA256_Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+{
+	SHA256_Update(ctx, buf, len);
+	return 0;
+}
+
+int
+SHA384_Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+{
+	SHA384_Update(ctx, buf, len);
+	return 0;
+}
+
+int
+SHA512_Update_int(void *ctx, u_int8_t *buf, u_int16_t len)
+{
+	SHA512_Update(ctx, buf, len);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.61 2003/06/10 16:41:28 deraadt Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.62 2003/07/24 08:03:19 itojun Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -423,7 +423,10 @@ and
 .Nm sha1
 for both old and new ah and also new esp.
 Also
-.Nm rmd160
+.Nm rmd160 ,
+.Nm sha2-256 ,
+.Nm sha2-384 ,
+.Nm sha2-512
 for both new ah and esp.
 .It Fl comp
 The compression algorithm to be used with the IPCA.

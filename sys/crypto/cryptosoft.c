@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.38 2003/02/21 20:33:35 jason Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.39 2003/07/24 08:03:19 itojun Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -420,6 +420,9 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_MD5_HMAC:
 	case CRYPTO_SHA1_HMAC:
 	case CRYPTO_RIPEMD160_HMAC:
+	case CRYPTO_SHA2_256_HMAC:
+	case CRYPTO_SHA2_384_HMAC:
+	case CRYPTO_SHA2_512_HMAC:
 		if (sw->sw_octx == NULL)
 			return EINVAL;
 
@@ -629,6 +632,15 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			goto authcommon;
 		case CRYPTO_RIPEMD160_HMAC:
 			axf = &auth_hash_hmac_ripemd_160_96;
+			goto authcommon;
+		case CRYPTO_SHA2_256_HMAC:
+			axf = &auth_hash_hmac_sha2_256_96;
+			goto authcommon;
+		case CRYPTO_SHA2_384_HMAC:
+			axf = &auth_hash_hmac_sha2_384_96;
+			goto authcommon;
+		case CRYPTO_SHA2_512_HMAC:
+			axf = &auth_hash_hmac_sha2_512_96;
 		authcommon:
 			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
 			    M_NOWAIT);
@@ -880,6 +892,9 @@ swcr_process(struct cryptop *crp)
 		case CRYPTO_MD5_HMAC:
 		case CRYPTO_SHA1_HMAC:
 		case CRYPTO_RIPEMD160_HMAC:
+		case CRYPTO_SHA2_256_HMAC:
+		case CRYPTO_SHA2_384_HMAC:
+		case CRYPTO_SHA2_512_HMAC:
 		case CRYPTO_MD5_KPDK:
 		case CRYPTO_SHA1_KPDK:
 		case CRYPTO_MD5:
@@ -942,6 +957,9 @@ swcr_init(void)
 	algs[CRYPTO_RIJNDAEL128_CBC] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_DEFLATE_COMP] = CRYPTO_ALG_FLAG_SUPPORTED;
 	algs[CRYPTO_NULL] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA2_256_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA2_384_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
+	algs[CRYPTO_SHA2_512_HMAC] = CRYPTO_ALG_FLAG_SUPPORTED;
 
 	crypto_register(swcr_id, algs, swcr_newsession,
 	    swcr_freesession, swcr_process);

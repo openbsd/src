@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.76 2003/07/09 22:03:16 itojun Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.77 2003/07/24 08:03:19 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -105,6 +105,18 @@ ah_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
 	case SADB_AALG_RIPEMD160HMAC:
 		thash = &auth_hash_hmac_ripemd_160_96;
+		break;
+
+	case SADB_AALG_SHA2_256:
+		thash = &auth_hash_hmac_sha2_256_96;
+		break;
+
+	case SADB_AALG_SHA2_384:
+		thash = &auth_hash_hmac_sha2_384_96;
+		break;
+
+	case SADB_AALG_SHA2_512:
+		thash = &auth_hash_hmac_sha2_512_96;
 		break;
 
 	case SADB_X_AALG_MD5:
