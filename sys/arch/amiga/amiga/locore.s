@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.8 1996/05/04 13:34:27 niklas Exp $	*/
-/*	$NetBSD: locore.s,v 1.51 1996/05/02 02:08:33 mhitch Exp $	*/
+/*	$OpenBSD: locore.s,v 1.9 1996/05/07 09:58:36 niklas Exp $	*/
+/*	$NetBSD: locore.s,v 1.52 1996/05/04 04:43:23 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,12 +50,14 @@
 
 #include "assym.h"
 
+L_base:
 	.long	0x4ef80400+NBPG	/* jmp jmp0.w */
 	.fill	NBPG/4-1,4,0/*xdeadbeef*/
 
 #include <amiga/amiga/vectors.s>
 #include <amiga/amiga/custom.h>
 #include "ser.h"
+#include "fd.h"
 	
 #define CIAAADDR(ar)	movl	_CIAAbase,ar
 #define CIABADDR(ar)	movl	_CIABbase,ar
@@ -451,7 +453,7 @@ _trace:
  *	Level 3:	VBL
  *	Level 4:	audio (and deferred IPL 6 when LEV6_DEFER)
  *	Level 5:	builtin-RS232 RBF
- *	Level 6:	Clock (CIA-B-Timers) + External devices
+ *	Level 6:	Clock (CIA-B-Timers), Floppy index pulse & Ext. devices
  *	Level 7:	Non-maskable: shouldn't be possible. ignore.
  */
 
@@ -564,15 +566,22 @@ _fake_lev6intr:
 	movew	#INTF_SETCLR+INTF_EXTER,a0@ | reenable EXTER interrupts
 #endif
 	btst	#0,d0			| timerA interrupt?
-	jeq     Lskipciab		| no
-| save d0 if we want to check other CIAB interrupts?
-	lea	sp@(16),a1		| get pointer to PS
+	jeq     Ltstciab4		| no
+	movl	d0,sp@-			| push CIAB interrupt flags
+	lea	sp@(20),a1		| get pointer to PS
 	movl	a1,sp@-			| push pointer to PS, PC
 	jbsr	_hardclock		| call generic clock int routine
 	addql	#4,sp			| pop params
 	addql	#1,_intrcnt+32		| add another system clock interrupt
+	movl	sp@+,d0			| pop interrupt flags
+Ltstciab4:
+#if NFD > 0
+	btst	#4,d0			| FLG (dskindex) interrupt?
+	jeq	Lskipciab		| no
+	jbsr	_fdidxintr		| tell floppy driver we got it
 Lskipciab:
-| process any other CIAB interrupts?
+#endif
+| other ciab interrupts?
 Llev6done:
 	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
@@ -734,18 +743,29 @@ _esym:	.long	0
  */
 	.comm	_lowram,4
 
+#define	RELOC(var, ar)	\
+	lea	var,ar;	\
+	addl	a5,ar
+
 	.text
 	.globl	_eclockfreq
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
+
+	| XXX should be a symbol?
+	| 2: needs a4 = esym
+	| 3: no chipmem requirement
+	|    bootinfo data structure
+
 	.word	0
-	.word	0x0002			| loadbsd version required
-					| 2: needs a4 = esym
-					| XXX should be a symbol?
+	.word	0x0003			| loadbsd version required
 start:
+	lea	pc@(L_base),a5		| initialize relocation register
+
 	movw	#PSL_HIGHIPL,sr		| no interrupts
-	lea	tmpstk,sp		| give ourselves a temporary stack
+	RELOC(tmpstk,a6)
+	movl	a6,sp			| give ourselves a temporary stack
 
 	| save the passed parameters. `prepass' them on the stack for
 	| later catch by _start_c
@@ -761,37 +781,43 @@ start:
 	 * initialize some hw addresses to their physical address 
 	 * for early running
 	 */
-	movl	#0x400,_chipmem_start
-	movl	#0xbfe001,_CIAAbase
-	movl	#0xbfd000,_CIABbase
-	movl	#0xdff000,_CUSTOMbase
+	RELOC(_chipmem_start, a0)
+	movl	#0x400,a0@
+	RELOC(_CIAAbase, a0)
+	movl	#0xbfe001,a0@
+	RELOC(_CIABbase, a0)
+	movl	#0xbfd000,a0@
+	RELOC(_CUSTOMbase, a0)
+	movl	#0xdff000,a0@
 
 	/*
 	 * initialize the timer frequency
 	 */
-	movl	d4,_eclockfreq
+	RELOC(_eclockfreq, a0)
+	movl	d4,a0@
 
+	RELOC(_mmutype, a0)
 	movl	#AMIGA_68030,d1		| 68030 Attn flag from exec
 	andl	d5,d1
 	jeq	Ltestfor020
-	movl	#-1,_mmutype		| assume 020 means 851
+	movl	#-1,a0@			| assume 020 means 851
 	jra	Lsetcpu040		| skip to init.
 Ltestfor020:
 	movl	#AMIGA_68020,d1		| 68020 Attn flag from exec
 	andl	d5,d1
 	jeq	Lsetcpu040
-	movl	#1,_mmutype
+	movl	#1,a0@
 Lsetcpu040:
 	movl	#CACHE_OFF,d0		| 68020/030 cache
 	movl	#AMIGA_68040,d1
 	andl	d1,d5
 	jeq	Lstartnot040		| it's not 68040
-	movl	#MMU_68040,_mmutype	| same as hp300 for compat
+	movl	#MMU_68040,a0@		| same as hp300 for compat
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 Lstartnot040:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
-	movl	#Lvectab,a0
+	movl	#_vectab,a0
 	movc	a0,vbr
 
 /* initialize source/destination control registers for movs */
@@ -800,9 +826,14 @@ Lstartnot040:
 	movc	d0,dfc			|   and destination of transfers
 
 /* let the C function initialize everything and enable the MMU */
-	jsr	_start_c
+	RELOC(_start_c, a0)
+	jbsr	a0@
 	addl	#28,sp
+	jmp	Lunshadow
 
+Lunshadow:
+|	lea	tmpstk,sp		| give ourselves a temporary stack
+	jbsr	_start_c_cleanup
 /* set kernel stack, user SP, and initial pcb */
 	movl	_proc0paddr,a1		| proc0 kernel stack
 	lea	a1@(USPACE),sp	| set kernel stack to end of area
