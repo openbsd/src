@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.4 2001/04/08 19:16:50 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.5 2001/04/08 19:25:29 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -363,6 +363,23 @@ struct txp_boot_record {
 	volatile u_int32_t	br_rxhipri_lo;		/* rx high pri ring */
 	volatile u_int32_t	br_rxhipri_hi;
 	volatile u_int32_t	br_rxhipri_siz;
+};
+
+/*
+ * host ring structure (shared with typhoon)
+ */
+struct txp_hostring {
+	volatile u_int32_t	hr_rx_hi_read_idx;	/* host->arm */
+	volatile u_int32_t	hr_rx_lo_read_idx;	/* host->arm */
+	volatile u_int32_t	hr_rx_buf_write_idx;	/* host->arm */
+	volatile u_int32_t	hr_resp_read_idx;	/* host->arm */
+	volatile u_int32_t	hr_tx_lo_desc_read_idx;	/* arm->host */
+	volatile u_int32_t	hr_tx_hi_desc_read_idx;	/* arm->host */
+	volatile u_int32_t	hr_rx_lo_write_idx;	/* arm->host */
+	volatile u_int32_t	hr_rx_buf_read_idx;	/* arm->host */
+	volatile u_int32_t	hr_cmd_read_idx;	/* arm->host */
+	volatile u_int32_t	hr_resp_write_idx;	/* arm->host */
+	volatile u_int32_t	hr_rx_hi_write_idx;	/* arm->host */
 };
 
 /*
