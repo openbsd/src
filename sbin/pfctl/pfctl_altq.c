@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.4 2002/11/18 23:20:43 deraadt Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.5 2002/11/19 17:37:39 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -531,10 +531,7 @@ pfctl_print_altq_node(const struct pf_altq_node *node, unsigned level)
 	if (node == NULL)
 		return;
 
-	if (node->altq.qname[0])
-		print_altq(&node->altq, level);
-	else
-		print_queue(&node->altq, level);
+	print_altq(&node->altq, level);
 
 	if (node->children != NULL) {
 		printf(" {");
