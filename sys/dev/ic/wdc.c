@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.4 1999/07/22 04:36:33 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.5 1999/07/22 22:42:47 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -812,6 +812,7 @@ wdc_probe_caps(drvp)
 		/* IDENTIFY failed. Can't tell more about the device */
 		return;
 	}
+	printf("%s: ", drv_dev->dv_xname);
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
 		/*
@@ -825,7 +826,8 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: 32-bit data port", drv_dev->dv_xname);
+			printf("32-bit", drv_dev->dv_xname);
+			sep = ", ";
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
@@ -833,20 +835,13 @@ wdc_probe_caps(drvp)
 	    params.atap_ata_major != 0xffff) {
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
-				if ((drvp->drive_flags & DRIVE_CAP32) == 0)
-					printf("%s: ", drv_dev->dv_xname);
-				else
-					printf(", ");
-				printf("ATA version %d\n", i);
+				printf("%sATA version %d\n", sep, i);
 				drvp->ata_vers = i;
 				break;
 			}
 		}
 	} else 
 #endif
-	if (drvp->drive_flags & DRIVE_CAP32)
-		printf("\n");
-
 	/* An ATAPI device is at last PIO mode 3 */
 	if (drvp->drive_flags & DRIVE_ATAPI)
 		drvp->PIO_mode = 3;
@@ -880,9 +875,8 @@ wdc_probe_caps(drvp)
 				   AT_POLL) != CMD_OK)
 					continue;
 			if (!printed) { 
-				printf("%s: supports PIO mode %d",
-				    drv_dev->dv_xname, i + 3);
-				sep = ",";
+				printf("%ssupports PIO mode %d", sep, i + 3);
+				sep = ", ";
 				printed = 1;
 			}
 			/*
@@ -914,8 +908,8 @@ wdc_probe_caps(drvp)
 				    != CMD_OK)
 					continue;
 			if (!printed) {
-				printf("%s DMA mode %d", sep, i);
-				sep = ",";
+				printf("%sDMA mode %d", sep, i);
+				sep = ", ";
 				printed = 1;
 			}
 			if (wdc->cap & WDC_CAPABILITY_DMA) {
@@ -938,8 +932,8 @@ wdc_probe_caps(drvp)
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_POLL) != CMD_OK)
 						continue;
-				printf("%s Ultra-DMA mode %d", sep, i);
-				sep = ",";
+				printf("%sUltra-DMA mode %d", sep, i);
+				sep = ", ";
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
 					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
 					    wdc->UDMA_cap < i)
@@ -951,8 +945,8 @@ wdc_probe_caps(drvp)
 				break;
 			}
 		}
-		printf("\n");
 	}
+	printf("\n");
 
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
