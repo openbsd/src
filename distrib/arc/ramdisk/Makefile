@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.2 1997/05/14 21:25:14 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/05/18 13:40:50 pefo Exp $
 
 # NOTE! We don't do crunched yet!
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
+BSD_RD=		bsd.rd
 IMAGE=		mr.fs
 CBIN?=		instbin
 CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
@@ -13,14 +14,12 @@ LISTS=		${.CURDIR}/list
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/mtree.conf
 
-VND?=		svnd0
+VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /tmp/image.${PID}
-
-all:	bsd.rd
 
 
 DISKTYPE=       rdroot
@@ -28,17 +27,29 @@ NBLKS=          20000
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -c 16 -i 4096
 
-bsd.rd:	${IMAGE} bsd rdsetroot
-	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
+.ifndef DESTDIR
+all ${IMAGE}:
+	@echo setenv DESTDIR before makeing a ramdisk!
+	@false
+.else
 
-bsd:
-	cd ${.CURDIR}/../../../../sys/arch/arc/conf && config RAMDISK
-	cd ${.CURDIR}/../../../../sys/arch/arc/compile/RAMDISK && \
-	    make clean && make depend && make
-	cp ${.CURDIR}/../../../../sys/arch/arc/compile/RAMDISK/bsd bsd
+all:	${BSD_RD}
+
+${BSD_RD}: ${IMAGE} bsd rdsetroot
+	cp bsd ${BSD_RD}.elf
+	${.OBJDIR}/rdsetroot ${BSD_RD}.elf < ${IMAGE}
+	elf2ecoff ${BSD_RD}.elf ${BSD_RD}
+	rm ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
+
+.endif
+
+bsd:
+	cd ${.TOP}/../../sys/arch/arc/conf && config RAMDISK
+	cd ${.TOP}/../../sys/arch/arc/compile/RAMDISK && \
+	    make clean && make depend && make
+	cp ${.TOP}/../../sys/arch/arc/compile/RAMDISK/bsd bsd
 
 rd_setup: 
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
@@ -49,6 +60,9 @@ rd_setup:
 	mount ${VND_DEV} ${MOUNT_POINT}
 
 rd_teardown:
+	sync
+	cat /*bin/* > /dev/null
+	sync
 	@df -i ${MOUNT_POINT}
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
@@ -66,7 +80,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp ${FS} ${DESTDIR}/snapshot/${FS}
+	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
@@ -81,6 +95,9 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c \
-	    bsd bsd.rd bsd.gz floppy*.fs rdsetroot
+	    bsd ${BSD_RD} ${BSD_RD}.elf rdsetroot
+
+beforeinstall:
+	cp ${BSD.RD} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>

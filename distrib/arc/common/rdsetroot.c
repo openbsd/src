@@ -1,11 +1,11 @@
-/*	$OpenBSD: rdsetroot.c,v 1.1 1997/05/14 21:13:32 pefo Exp $	*/
+/*	$OpenBSD: rdsetroot.c,v 1.2 1997/05/18 13:40:47 pefo Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
  * All rights reserved.
  *
- * ELF modifications Copyright (c) Per Fogelstrom.
+ * ELF modifications Copyright (c) 1997 Per Fogelstrom.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

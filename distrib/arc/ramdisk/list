@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 1997/05/14 20:52:45 pefo Exp $
+#	$OpenBSD: list,v 1.2 1997/05/18 13:40:54 pefo Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/bin/cat		bin/cat
@@ -45,13 +45,14 @@ COPY	${OBJDIR}/sbin/mount_kernfs	sbin/mount_kernfs
 COPY	${OBJDIR}/sbin/newfs		sbin/newfs
 LINK	sbin/newfs			sbin/mount_mfs
 COPY	${OBJDIR}/sbin/ping		sbin/ping
-COPY	${OBJDIR}/sbin/restore		sbin/restore
+#COPY	${OBJDIR}/sbin/restore		sbin/restore
 COPY	${OBJDIR}/sbin/route		sbin/route
 #COPY	${OBJDIR}/sbin/slattach		sbin/slattach
 #COPY	${OBJDIR}/sbin/scsi		sbin/scsi
 COPY	${OBJDIR}/sbin/umount		sbin/umount
 COPY	${OBJDIR}/usr/bin/cut		usr/bin/cut
 COPY	${OBJDIR}/usr/bin/egrep		usr/bin/egrep
+COPY	${OBJDIR}/usr/bin/elf2ecoff	usr/bin/elf2ecoff
 LINK	usr/bin/egrep			usr/bin/fgrep
 LINK	usr/bin/egrep			usr/bin/grep
 COPY	${OBJDIR}/usr/bin/ftp		usr/bin/ftp
@@ -64,14 +65,16 @@ COPY	${OBJDIR}/usr/bin/rsh		usr/bin/rsh
 COPY	${OBJDIR}/usr/bin/sed		usr/bin/sed
 COPY	${OBJDIR}/usr/bin/sort		usr/bin/sort
 #COPY	${OBJDIR}/usr/bin/tip		usr/bin/tip
-#COPY	${OBJDIR}/usr/bin/vi		usr/bin/vi
+COPY	${OBJDIR}/usr/bin/vi		usr/bin/vi
 #COPY	${OBJDIR}/usr/sbin/bad144	usr/sbin/bad144
 #COPY	${OBJDIR}/usr/sbin/chat		usr/sbin/chat
 COPY	${OBJDIR}/usr/sbin/chown	usr/sbin/chown usr/sbin/chgrp
 LINK	usr/sbin/chown			usr/sbin/chgrp
 #COPY	${OBJDIR}/usr/sbin/pppd		usr/sbin/pppd
 COPY	${OBJDIR}/usr/lib/libc.so.16.1	usr/lib/libc.so.16.1
+COPY	${OBJDIR}/usr/lib/libedit.so.0.0	usr/lib/libedit.so.0.0
 COPY	${OBJDIR}/usr/lib/libtermcap.so.0.0	usr/lib/libtermcap.so.0.0
+COPY	${OBJDIR}/usr/lib/libtermlib.so.2.0	usr/lib/libtermlib.so.2.0
 COPY	${OBJDIR}/usr/libexec/ld.so	usr/libexec/ld.so
 
 # `internal' crunchgen links
@@ -83,10 +86,8 @@ SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL	/bin/rm dev/MAKEDEV
 
 # we need the contents of /usr/mdec
-#COPY	${DESTDIR}/usr/mdec/bootsd	usr/mdec/bootsd
-#COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
-#LINK	usr/mdec/bootsd			usr/mdec/bootwd
-#LINK	usr/mdec/sdboot			usr/mdec/wdboot
+COPY	${DESTDIR}/usr/mdec/mbr		usr/mdec/mbr
+COPY	${DESTDIR}/usr/mdec/msdos5mb.gz	usr/mdec/msdos5mb.gz
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
@@ -104,7 +105,7 @@ COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
 COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
 COPY	install.md			install.md
-COPY	${CURDIR}/../../../miniroot/install.sh		install
-COPY	${CURDIR}/../../../miniroot/upgrade.sh		upgrade
-SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../../miniroot/install.sub > install.sub
+COPY	${TOPDIR}/../miniroot/install.sh		install
+COPY	${TOPDIR}/../miniroot/upgrade.sh		upgrade
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${TOPDIR}/../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install
