@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.4 2001/06/27 03:31:40 angelos Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.5 2001/06/29 03:39:04 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -46,6 +46,7 @@
 #include "log.h"
 #include "message.h"
 #include "transport.h"
+#include "util.h"
 
 /* adapted from <dns/rdatastruct.h> / RFC 2535  */
 struct dns_rdata_key {
@@ -62,7 +63,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 {
   struct rrsetinfo *rr;
   struct hostent *hostent;
-  struct sockaddr_in *dst;
+  struct sockaddr *dst;
   int ret, i;
   struct dns_rdata_key key_rr;
   u_int8_t algorithm;
@@ -90,17 +91,41 @@ dns_get_key (int type, struct message *msg, int *keylen)
     }
 
   /* Get peer IP address */
-  msg->transport->vtbl->get_dst (msg->transport, (struct sockaddr **)&dst, &i);
+  msg->transport->vtbl->get_dst (msg->transport, &dst, &i);
   /* Get peer name and aliases */
-  hostent = lwres_gethostbyaddr ((char *)&dst->sin_addr, 
-				 sizeof (struct in_addr), PF_INET);
+  switch (dst->sa_family)
+    {
+    case AF_INET:
+      hostent =
+	lwres_gethostbyaddr ((char *)&((struct sockaddr_in *)dst)->sin_addr,
+			     sizeof (struct in_addr), PF_INET);
+      break;
+    case AF_INET6:
+      hostent =
+	lwres_gethostbyaddr ((char *)&((struct sockaddr_in6 *)dst)->sin6_addr,
+			     sizeof (struct in6_addr), PF_INET6);
+      break;
+    default:
+      log_print ("dns_get_key: unsupported protocol family %d",
+		 dst->sa_family);
+      return 0;
+    }
 
   if (!hostent)
     {
+#ifdef USE_DEBUG
+      char *dst_str;
+
+      if (sockaddr2text (dst, &dst_str, 0))
+	dst_str = 0;
+
       LOG_DBG ((LOG_MISC, 30, 
 		"dns_get_key: lwres_gethostbyaddr (%s) failed: %s", 
-		inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
-		lwres_hstrerror (lwres_h_errno)));
+		dst_str ? dst_str : "<???>", lwres_hstrerror (lwres_h_errno)));
+
+      if (dst_str)
+	free (dst_str);
+#endif
       return 0;
     }
 
