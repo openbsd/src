@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.71 2001/09/03 05:34:43 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.72 2001/09/10 22:41:55 art Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,8 @@ SUBDIR+=ypcat ypmatch ypwhich
 .endif
 
 # Don't use the standard tool chain on the alpha, powerpc, and hppa.
-.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "powerpc" && ${MACHINE_ARCH} != "hppa")
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "powerpc" && \
+    ${MACHINE_ARCH} != "hppa" && ${MACHINE_ARCH} != "sparc64")
 SUBDIR+= ar nm ranlib size strip strings
 .endif
 
