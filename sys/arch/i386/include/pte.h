@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.6 2002/07/31 02:30:29 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.7 2004/02/06 00:23:21 deraadt Exp $	*/
 /*	$NetBSD: pte.h,v 1.11 1998/02/06 21:58:05 thorpej Exp $	*/
 
 /*
@@ -190,5 +190,6 @@ typedef u_int32_t pt_entry_t;		/* PTE */
 #define PGEX_P		0x01	/* protection violation (vs. no mapping) */
 #define PGEX_W		0x02	/* exception during a write cycle */
 #define PGEX_U		0x04	/* exception while in user mode (upl) */
+#define PGEX_I		0x10	/* instruction fetch blocked by NX */
 
 #endif /* _I386_PTE_H_ */
