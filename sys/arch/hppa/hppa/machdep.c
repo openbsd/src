@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2000/03/23 20:25:41 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 2000/07/02 03:59:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -533,25 +533,6 @@ cpu_startup()
 
 	printf("real mem = %d (%d reserved for PROM, %d used by OpenBSD)\n",
 	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
-
-	/*
-	 * Kludge for STI graphics, which may have rom outside the IO space
-	 */
-#include "sti.h"
-#if NSTI > 0
-	{
-		vaddr_t addr = PAGE0->pd_resv2[1];
-
-		/* reserve virtual address space for the sti rom */
-		if (addr && addr < 0xf0000000 &&
-		    uvm_map(kernel_map, &addr, 0x1000000, NULL,
-			UVM_UNKNOWN_OFFSET, UVM_MAPFLAG(UVM_PROT_NONE,
-			    UVM_PROT_NONE, UVM_INH_NONE, UVM_ADV_NORMAL,
-			    UVM_FLAG_FIXED)) != KERN_SUCCESS)
-			printf("WARNING: don't have space for stinger @0x%x\n",
-			    addr);
-	}
-#endif
 
 	/*
 	 * Now allocate buffers proper.  They are different than the above
