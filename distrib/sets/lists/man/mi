@@ -660,6 +660,7 @@
 ./usr/share/man/cat1/ypmatch.0
 ./usr/share/man/cat1/ypwhich.0
 ./usr/share/man/cat1/yyfix.0
+./usr/share/man/cat1/zaurus
 ./usr/share/man/cat1/zcat.0
 ./usr/share/man/cat1/zcmp.0
 ./usr/share/man/cat1/zdiff.0
@@ -690,6 +691,7 @@
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sparc64
 ./usr/share/man/cat3/vax
+./usr/share/man/cat3/zaurus
 ./usr/share/man/cat3p
 ./usr/share/man/cat3p/AnyDBM_File.0
 ./usr/share/man/cat3p/Attribute::Handlers.0
@@ -1300,6 +1302,7 @@
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
 ./usr/share/man/cat4/mac68k/autoconf.0
+./usr/share/man/cat4/mac68k/esp.0
 ./usr/share/man/cat4/mac68k/intro.0
 ./usr/share/man/cat4/mac68k/kmem.0
 ./usr/share/man/cat4/mac68k/mainbus.0
@@ -1667,6 +1670,7 @@
 ./usr/share/man/cat4/xmphy.0
 ./usr/share/man/cat4/yds.0
 ./usr/share/man/cat4/ym.0
+./usr/share/man/cat4/zaurus
 ./usr/share/man/cat4/zero.0
 ./usr/share/man/cat5
 ./usr/share/man/cat5/.rhosts.0
@@ -1804,6 +1808,7 @@
 ./usr/share/man/cat5/wsconsctl.conf.0
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat5/ypserv.acl.0
+./usr/share/man/cat5/zaurus
 ./usr/share/man/cat6
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/des_modes.0
@@ -2306,6 +2311,8 @@
 ./usr/share/man/cat8/ypxfr_1perday.0
 ./usr/share/man/cat8/ypxfr_1perhour.0
 ./usr/share/man/cat8/ypxfr_2perday.0
+./usr/share/man/cat8/zaurus
+./usr/share/man/cat8/zaurus/MAKEDEV.0
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
 ./usr/share/man/cat9
@@ -2325,6 +2332,7 @@
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sparc64
 ./usr/share/man/cat9/vax
+./usr/share/man/cat9/zaurus
 ./usr/share/man/man1
 ./usr/share/man/man1/alpha
 ./usr/share/man/man1/amd64
@@ -2342,6 +2350,7 @@
 ./usr/share/man/man1/sparc
 ./usr/share/man/man1/sparc64
 ./usr/share/man/man1/vax
+./usr/share/man/man1/zaurus
 ./usr/share/man/man2
 ./usr/share/man/man3
 ./usr/share/man/man3p
@@ -2362,6 +2371,7 @@
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sparc64
 ./usr/share/man/man4/vax
+./usr/share/man/man4/zaurus
 ./usr/share/man/man5
 ./usr/share/man/man6
 ./usr/share/man/man7
@@ -2382,6 +2392,7 @@
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sparc64
 ./usr/share/man/man8/vax
+./usr/share/man/man8/zaurus
 ./usr/share/man/man9
 ./usr/share/man/ps1
 ./usr/share/man/ps1/alpha
@@ -2400,6 +2411,7 @@
 ./usr/share/man/ps1/sparc
 ./usr/share/man/ps1/sparc64
 ./usr/share/man/ps1/vax
+./usr/share/man/ps1/zaurus
 ./usr/share/man/ps2
 ./usr/share/man/ps2/alpha
 ./usr/share/man/ps2/amd64
@@ -2421,6 +2433,7 @@
 ./usr/share/man/ps3/sparc
 ./usr/share/man/ps3/sparc64
 ./usr/share/man/ps3/vax
+./usr/share/man/ps3/zaurus
 ./usr/share/man/ps3p
 ./usr/share/man/ps4
 ./usr/share/man/ps4/alpha
@@ -2439,6 +2452,7 @@
 ./usr/share/man/ps4/sparc
 ./usr/share/man/ps4/sparc64
 ./usr/share/man/ps4/vax
+./usr/share/man/ps4/zaurus
 ./usr/share/man/ps5
 ./usr/share/man/ps5/alpha
 ./usr/share/man/ps5/amd64
@@ -2456,6 +2470,7 @@
 ./usr/share/man/ps5/sparc
 ./usr/share/man/ps5/sparc64
 ./usr/share/man/ps5/vax
+./usr/share/man/ps5/zaurus
 ./usr/share/man/ps6
 ./usr/share/man/ps7
 ./usr/share/man/ps8
@@ -2475,6 +2490,7 @@
 ./usr/share/man/ps8/sparc
 ./usr/share/man/ps8/sparc64
 ./usr/share/man/ps8/vax
+./usr/share/man/ps8/zaurus
 ./usr/share/man/ps9
 ./usr/share/man/ps9/alpha
 ./usr/share/man/ps9/amd64
@@ -2492,6 +2508,7 @@
 ./usr/share/man/ps9/sparc
 ./usr/share/man/ps9/sparc64
 ./usr/share/man/ps9/vax
+./usr/share/man/ps9/zaurus
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
