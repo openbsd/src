@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.7 1996/07/29 00:03:19 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.8 1996/07/29 03:06:35 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -61,6 +61,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#include <netinet/tcp.h>
 
 #define	FTP_NAMES
 #include <arpa/ftp.h>
@@ -116,6 +117,7 @@ int	debug = 0;
 int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
+int	high_data_ports = 0;
 int	guest;
 #ifdef STATS
 int	stats;
@@ -232,9 +234,9 @@ main(argc, argv, envp)
 	char *cp, line[LINE_MAX];
 	FILE *fd;
 #ifdef STATS
-	char *argstr = "dDlSt:T:u:Uv";
+	char *argstr = "dDhlSt:T:u:Uv";
 #else
-	char *argstr = "dDlt:T:u:Uv";
+	char *argstr = "dDhlt:T:u:Uv";
 #endif
 
 	tzset();	/* in case no timezone database in ~ftp */
@@ -250,6 +252,10 @@ main(argc, argv, envp)
 
 		case 'D':
 			daemon_mode = 1;
+			break;
+
+		case 'h':
+			high_data_ports = 1;
 			break;
 
 		case 'l':
@@ -299,6 +305,8 @@ main(argc, argv, envp)
 			break;
 		}
 	}
+
+	(void) freopen(_PATH_DEVNULL, "w", stderr);
 
 	/*
 	 * LOG_NDELAY sets up the logging connection immediately,
@@ -376,7 +384,6 @@ main(argc, argv, envp)
 		}
 	}
 
-	(void) freopen(_PATH_DEVNULL, "w", stderr);
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
 	if ((long)signal(SIGURG, myoob) < 0)
@@ -998,6 +1005,23 @@ getdatasock(mode)
 	if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&on, sizeof(int)) < 0)
 		syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
 #endif
+#ifdef TCP_NOPUSH
+	/*
+	 * Turn off push flag to keep sender TCP from sending short packets
+	 * at the boundaries of each write().  Should probably do a SO_SNDBUF
+	 * to set the send buffer size as well, but that may not be desirable
+	 * in heavy-load situations.
+	 */
+	on = 1;
+	if (setsockopt(s, IPPROTO_TCP, TCP_NOPUSH, (char *)&on, sizeof on) < 0)
+		syslog(LOG_WARNING, "setsockopt (TCP_NOPUSH): %m");
+#endif
+#ifdef SO_SNDBUF
+	on = 65536;
+	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&on, sizeof on) < 0)
+		syslog(LOG_WARNING, "setsockopt (SO_SNDBUF): %m");
+#endif
+
 	return (fdopen(s, mode));
 bad:
 	/* Return the real value of errno (close may change it) */
@@ -1665,22 +1689,38 @@ myoob(signo)
 void
 passive()
 {
-	int len;
+	int len, on;
+	u_short port;
 	char *p, *a;
 
+	if (pw == NULL) {
+		reply(530, "Please login with USER and PASS");
+		return;
+	}
 	pdata = socket(AF_INET, SOCK_STREAM, 0);
 	if (pdata < 0) {
 		perror_reply(425, "Can't open passive connection");
 		return;
 	}
+
+	on = high_data_ports ? IP_PORTRANGE_HIGH : IP_PORTRANGE_DEFAULT;
+	(void) seteuid((uid_t)0);
+	if (setsockopt(pdata, IPPROTO_IP, IP_PORTRANGE,
+		       (char *)&on, sizeof(on)) < 0) {
+		(void) seteuid((uid_t)pw->pw_uid);
+		goto pasv_error;
+	}
+
 	pasv_addr = ctrl_addr;
 	pasv_addr.sin_port = 0;
 	(void) seteuid((uid_t)0);
-	if (bind(pdata, (struct sockaddr *)&pasv_addr, sizeof(pasv_addr)) < 0) {
+	if (bind(pdata, (struct sockaddr *)&pasv_addr,
+		 sizeof(pasv_addr)) < 0) {
 		(void) seteuid((uid_t)pw->pw_uid);
 		goto pasv_error;
 	}
 	(void) seteuid((uid_t)pw->pw_uid);
+
 	len = sizeof(pasv_addr);
 	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
 		goto pasv_error;

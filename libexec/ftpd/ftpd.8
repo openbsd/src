@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.5 1996/07/28 23:32:15 downsj Exp $
+.\"	$OpenBSD: ftpd.8,v 1.6 1996/07/29 03:06:33 downsj Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -43,7 +43,7 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm ftpd
-.Op Fl dDlSU
+.Op Fl dDhlSU
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
 .Op Fl u Ar mask
@@ -73,6 +73,9 @@ starting
 from
 .Xr inetd 8
 and is thus useful on busy servers to reduce load.
+.It Fl h
+The server will use data ports in the high port range (normally 40000..44999)
+for passive connections.
 .It Fl l
 Each successful and failed 
 .Xr ftp 1
