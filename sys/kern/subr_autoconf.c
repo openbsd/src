@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.24 1999/08/05 17:41:44 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.25 1999/08/08 00:37:09 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -456,6 +456,7 @@ config_make_softc(parent, cf)
 	bzero(dev, ca->ca_devsize);
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
+	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
 
 	/* If this is a STAR device, search for a free unit number */
 	if (cf->cf_fstate == FSTATE_STAR) {
@@ -508,6 +509,167 @@ config_make_softc(parent, cf)
 		panic("config_make_softc: duplicate %s", dev->dv_xname);
 
 	return (dev);
+}
+
+/*
+ * Detach a device.  Optionally forced (e.g. because of hardware
+ * removal) and quiet.  Returns zero if successful, non-zero
+ * (an error code) otherwise.
+ *
+ * Note that this code wants to be run from a process context, so
+ * that the detach can sleep to allow processes which have a device
+ * open to run and unwind their stacks.
+ */
+int
+config_detach(dev, flags)
+	struct device *dev;
+	int flags;
+{
+	struct cfdata *cf;
+	struct cfattach *ca;
+	struct cfdriver *cd;
+#ifdef DIAGNOSTIC
+	struct device *d;
+#endif
+	int rv = 0, i;
+
+	cf = dev->dv_cfdata;
+#ifdef DIAGNOSTIC
+	if (cf->cf_fstate != FSTATE_FOUND && cf->cf_fstate != FSTATE_STAR)
+		panic("config_detach: bad device fstate");
+#endif
+	ca = cf->cf_attach;
+	cd = cf->cf_driver;
+
+	/*
+	 * Ensure the device is deactivated.  If the device doesn't
+	 * have an activation entry point, we allow DVF_ACTIVE to
+	 * remain set.  Otherwise, if DVF_ACTIVE is still set, the
+	 * device is busy, and the detach fails.
+	 */
+	if (ca->ca_activate != NULL)
+		rv = config_deactivate(dev);
+
+	/*
+	 * Try to detach the device.  If that's not possible, then
+	 * we either panic() (for the forced but failed case), or
+	 * return an error.
+	 */
+	if (rv == 0) {
+		if (ca->ca_detach != NULL)
+			rv = (*ca->ca_detach)(dev, flags);
+		else
+			rv = EOPNOTSUPP;
+	}
+	if (rv != 0) {
+		if ((flags & DETACH_FORCE) == 0)
+			return (rv);
+		else
+			panic("config_detach: forced detach of %s failed (%d)",
+			    dev->dv_xname, rv);
+	}
+
+	/*
+	 * The device has now been successfully detached.
+	 */
+
+#ifdef DIAGNOSTIC
+	/*
+	 * Sanity: If you're successfully detached, you should have no
+	 * children.  (Note that because children must be attached
+	 * after parents, we only need to search the latter part of
+	 * the list.)
+	 */
+	for (d = TAILQ_NEXT(dev, dv_list); d != NULL;
+	     d = TAILQ_NEXT(d, dv_list)) {
+		if (d->dv_parent == dev)
+			panic("config_detach: detached device has children");
+	}
+#endif
+
+	/*
+	 * Mark cfdata to show that the unit can be reused, if possible.
+	 * Note that we can only re-use a starred unit number if the unit
+	 * being detached had the last assigned unit number.
+	 */
+	for (cf = cfdata; cf->cf_driver; cf++) {
+		if (cf->cf_driver == cd) {
+			if (cf->cf_fstate == FSTATE_FOUND &&
+			    cf->cf_unit == dev->dv_unit)
+				cf->cf_fstate = FSTATE_NOTFOUND;
+			if (cf->cf_fstate == FSTATE_STAR &&
+			    cf->cf_unit == dev->dv_unit + 1)
+				cf->cf_unit--;
+		}
+	}
+
+	/*
+	 * Unlink from device list.
+	 */
+	TAILQ_REMOVE(&alldevs, dev, dv_list);
+
+	/*
+	 * Remove from cfdriver's array, tell the world, and free softc.
+	 */
+	cd->cd_devs[dev->dv_unit] = NULL;
+	if ((flags & DETACH_QUIET) == 0)
+		printf("%s detached\n", dev->dv_xname);
+	free(dev, M_DEVBUF);
+
+	/*
+	 * If the device now has no units in use, deallocate its softc array.
+	 */
+	for (i = 0; i < cd->cd_ndevs; i++)
+		if (cd->cd_devs[i] != NULL)
+			break;
+	if (i == cd->cd_ndevs) {		/* nothing found; deallocate */
+		free(cd->cd_devs, M_DEVBUF);
+		cd->cd_devs = NULL;
+		cd->cd_ndevs = 0;
+	}
+
+	/*
+	 * Return success.
+	 */
+	return (0);
+}
+
+int
+config_activate(dev)
+	struct device *dev;
+{
+	struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	int rv = 0, oflags = dev->dv_flags;
+
+	if (ca->ca_activate == NULL)
+		return (EOPNOTSUPP);
+
+	if ((dev->dv_flags & DVF_ACTIVE) == 0) {
+		dev->dv_flags |= DVF_ACTIVE;
+		rv = (*ca->ca_activate)(dev, DVACT_ACTIVATE);
+		if (rv)
+			dev->dv_flags = oflags;
+	}
+	return (rv);
+}
+
+int
+config_deactivate(dev)
+	struct device *dev;
+{
+	struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	int rv = 0, oflags = dev->dv_flags;
+
+	if (ca->ca_activate == NULL)
+		return (EOPNOTSUPP);
+
+	if (dev->dv_flags & DVF_ACTIVE) {
+		dev->dv_flags &= ~DVF_ACTIVE;
+		rv = (*ca->ca_activate)(dev, DVACT_DEACTIVATE);
+		if (rv)
+			dev->dv_flags = oflags;
+	}
+	return (rv);
 }
 
 /*
