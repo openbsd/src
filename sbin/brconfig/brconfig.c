@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.21 2002/12/09 12:34:08 markus Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.22 2002/12/09 23:57:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -51,7 +51,6 @@
 #include <limits.h>
 
 void usage(void);
-int main(int, char **);
 int bridge_setflag(int, char *, short);
 int bridge_clrflag(int, char *, short);
 int bridge_ifsetflag(int, char *, char *, u_int32_t);
@@ -670,7 +669,7 @@ bridge_list(int s, char *brdg, char *delim)
 		bridge_rules(s, brdg, buf, delim);
 	}
 	free(bifc.ifbic_buf);
-	return (0);             /* NOTREACHED */
+	return (0);		/* NOTREACHED */
 }
 
 int
@@ -783,7 +782,6 @@ bridge_maxage(int s, char *brdg, char *arg)
 		return (EX_IOERR);
 	}
 	return (0);
-	
 }
 
 int
@@ -832,7 +830,6 @@ bridge_fwddelay(int s, char *brdg, char *arg)
 		return (EX_IOERR);
 	}
 	return (0);
-	
 }
 
 int
@@ -857,7 +854,6 @@ bridge_hellotime(int s, char *brdg, char *arg)
 		return (EX_IOERR);
 	}
 	return (0);
-	
 }
 
 int
