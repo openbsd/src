@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.13 1996/09/11 07:22:03 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.14 1996/10/05 07:17:00 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -753,7 +753,7 @@ acdioctl(dev, cmd, addr, flag, p)
 	case CDIOCPLAYBLOCKS: {
 		struct ioc_play_blocks *args = (struct ioc_play_blocks *)addr;
 
-		return acd_play(acd, args->blk, args->len);
+		return acd_play_big(acd, args->blk, args->len);
 	}
 
 	case CDIOCREADSUBCHANNEL: {

@@ -790,7 +790,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		data.page.audio.flags |= CD_PA_IMMED;
 		if ((error = cd_set_mode(cd, &data)) != 0)
 			return error;
-		return cd_play(cd, args->blk, args->len);
+		return cd_play_big(cd, args->blk, args->len);
 	}
 	case CDIOCREADSUBCHANNEL: {
 		struct ioc_read_subchannel *args
