@@ -1,4 +1,4 @@
-/* $OpenBSD: test_signal.c,v 1.1 2000/01/04 00:17:46 d Exp $ */
+/* $OpenBSD: test_signal.c,v 1.2 2000/08/07 02:00:04 brad Exp $ */
 
 /*
  * This program tests signal handler re-entrancy.
@@ -37,7 +37,7 @@ handler(sig)
 int
 main()
 {
-	pthread_t slpr;
+	/* pthread_t slpr; */
 
 	ASSERT(signal(SIGALRM, handler) != SIG_ERR);
 	CHECKe(alarm(1));
