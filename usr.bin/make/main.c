@@ -316,9 +316,12 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 	 * on the end of the "create" list.
 	 */
 	for (argv += optind, argc -= optind; *argv; ++argv, --argc)
-		if (Parse_IsVar(*argv))
-			Parse_DoVar(*argv, VAR_CMD);
-		else {
+		if (Parse_IsVar(*argv)) {
+			char *var = strdup(*argv);
+
+			Parse_DoVar(var, VAR_CMD);
+			free(var);
+		} else {
 			if (!**argv)
 				Punt("illegal (null) argument.");
 			if (**argv == '-') {
