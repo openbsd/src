@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.6 2001/04/07 14:17:38 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.7 2001/04/18 17:57:28 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -96,6 +96,8 @@ struct link {
 	struct node *node;
 };
 
+#define NO_ORDER	UINT_MAX
+
 struct node {
 	unsigned int refs;	/* Number of arcs left, coming into this node . 
 				 * Note that nodes with a null count can't 
@@ -124,7 +126,8 @@ static struct node *node_lookup __P((struct ohash *, const char *, const char *)
 static void usage __P((void));
 static struct node *new_node __P((const char *, const char *));
 
-static void read_pairs __P((FILE *, struct ohash *, int, const char *));
+static unsigned int read_pairs __P((FILE *, struct ohash *, int, 
+    const char *, unsigned int));
 static void split_nodes __P((struct ohash *, struct array *, struct array *));
 static void insert_arc __P((struct node *, struct node *));
 
@@ -133,7 +136,8 @@ static void dump_node __P((struct node *));
 static void dump_array __P((struct array *));
 static void dump_hash __P((struct ohash *));
 #endif
-static void read_hints __P((FILE *, struct ohash *, int, const char *));
+static unsigned int read_hints __P((FILE *, struct ohash *, int, 
+    const char *, unsigned int));
 static struct node *find_smallest_node __P((struct array *));
 static struct node *find_good_cycle_break __P((struct array *));
 static void print_cycle __P((struct array *));
@@ -228,7 +232,7 @@ new_node(start, end)
 	n->arcs = NULL;
 	n->refs = 0;
 	n->mark = 0;
-	n->order = 0;
+	n->order = NO_ORDER;
 	n->traverse = NULL;
 	return n;
 }
@@ -319,20 +323,19 @@ insert_arc(a, b)
 	a->arcs = l;
 }
 
-static void
-read_pairs(f, h, reverse, name)
+static unsigned int
+read_pairs(f, h, reverse, name, order)
 	FILE 		*f;
 	struct ohash 	*h;
 	int 		reverse;
 	const char 	*name;
+	unsigned int	order;
 {
 	int 		toggle;
 	struct node 	*a;
 	size_t 		size;
 	char 		*str;
-	unsigned int	o;
 
-	o = 1;
 	toggle = 1;
 	a = NULL;
 	
@@ -351,8 +354,8 @@ read_pairs(f, h, reverse, name)
 				continue;
 			if (toggle) {
 				a = node_lookup(h, str, e);
-				if (a->order == 0)
-					a->order = o++;
+				if (a->order == NO_ORDER)
+					a->order = order++;
 			} else {
 				struct node *b;
 
@@ -373,20 +376,19 @@ read_pairs(f, h, reverse, name)
 		errx(EX_DATAERR, "odd number of pairs in %s", name);
     	if (!feof(f))
 		err(EX_IOERR, "error reading %s", name);
+	return order;
 }
 
-static void
-read_hints(f, h, quiet, name)
+static unsigned int
+read_hints(f, h, quiet, name, order)
 	FILE 		*f;
 	struct ohash 	*h;
 	int 		quiet;
 	const char 	*name;
+	unsigned int	order;
 {
 	char 		*str;
 	size_t 		size;
-	unsigned int 	i;
-
-	i = 1;
 
 	while ((str = fgetln(f, &size)) != NULL) {
 		char *sentinel;
@@ -403,16 +405,17 @@ read_hints(f, h, quiet, name)
 			for (e = str; !isspace(*e) && e < sentinel; e++)
 				continue;
 			a = node_lookup(h, str, e);
-			if (a->order != 0)
+			if (a->order != NO_ORDER) {
 				if (!quiet)
 				    warnx(
 					"duplicate node %s in hints file %s",
 					a->k, name);
-			else
-				a->order = i++;
+			} else
+				a->order = order++;
 			str = e;
 		}
 	}
+	return order;
 }
 
 
@@ -802,6 +805,9 @@ main(argc, argv)
 	struct ohash 	pairs;
 	int 		reverse_flag, quiet_flag, long_flag, 
 			    warn_flag, hints_flag, verbose_flag;
+	unsigned int	order;
+
+	order = 1;
 
 	reverse_flag = quiet_flag = long_flag = 
 		warn_flag = hints_flag = verbose_flag = 0;
@@ -819,7 +825,8 @@ main(argc, argv)
 			    if (f == NULL)
 				    err(EX_NOINPUT, "Can't open hint file %s",
 					optarg);
-			    read_hints(f, &pairs, quiet_flag, optarg);
+			    order = read_hints(f, &pairs, quiet_flag,
+				optarg, order);
 			    fclose(f);
 		    }
 			    /*FALLTHRU*/
@@ -859,12 +866,12 @@ main(argc, argv)
 		f = fopen(argv[0], "r");
 		if (f == NULL)
 			err(EX_NOINPUT, "Can't open file %s", argv[1]);
-		read_pairs(f, &pairs, reverse_flag, argv[1]);
+		order = read_pairs(f, &pairs, reverse_flag, argv[1], order);
 		fclose(f);
 		break;
 	}
 	case 0:
-		read_pairs(stdin, &pairs, reverse_flag, "stdin");
+		order = read_pairs(stdin, &pairs, reverse_flag, "stdin", order);
 		break;
 	default:
 		usage();
