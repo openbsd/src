@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.8 1996/07/23 23:54:17 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.9 1996/08/15 13:49:48 niklas Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -228,3 +228,8 @@ void	kmstartup __P((void));
 void	Debugger __P((void));	/* in DDB only */
 int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
 #endif
+
+#ifdef BOOT_CONFIG
+void	user_config __P((void));
+#endif
+

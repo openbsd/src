@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.5 1996/07/27 11:27:43 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.6 1996/08/15 13:49:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -37,6 +37,8 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <dev/cons.h>
+
 extern char *locnames[];
 extern short locnamp[];
 extern struct cfdata cfdata[];
@@ -49,6 +51,26 @@ int userconf_cnt = -1;
 int userconf_lines = 12;
 char userconf_argbuf[40];
 char userconf_cmdbuf[40];
+
+void userconf_init __P((void));
+int userconf_more __P((void));
+void userconf_modify __P((char *, int*));
+void userconf_pnum __P((int));
+void userconf_pdevnam __P((short));
+void userconf_pdev __P((short));
+int userconf_number __P((char *, int *));
+int userconf_device __P((char *, int *, short *, short *));
+void userconf_modify __P((char *, int *));
+void userconf_change __P((int));
+void userconf_disable __P((int));
+void userconf_enable __P((int));
+void userconf_help __P((void));
+void userconf_list __P((void));
+void userconf_show __P((void));
+void userconf_show_attr_val __P((short, int *));
+void userconf_show_attr __P((char *));
+void userconf_common_dev __P((char *, int, short, short, char));
+int userconf_parse __P((char *));
 
 #define UC_CHANGE 'c'
 #define UC_DISABLE 'd'
@@ -72,12 +94,11 @@ char *userconf_cmds[] = {
 	"",		 "",
 };
 
+void
 userconf_init()
 {
 	int i = 0;
 	struct cfdata *cd;
-	short *p;
-	int   *l;
 	int   ln;		
 
 	while(cfdata[i].cf_attach != 0) {
@@ -115,10 +136,11 @@ userconf_more()
 	return(quit);
 }
 
+void
 userconf_pnum(val)
-int val;
+	int val;
 {
-	if (val > -2 & val < 16) {
+	if (val > -2 && val < 16) {
 		printf("%d",val);
 	} else {
 		switch(userconf_base) {
@@ -136,8 +158,9 @@ int val;
 	}
 }
 
+void
 userconf_pdevnam(dev)
-short dev;
+	short dev;
 {
 	struct cfdata *cd;
 
@@ -161,8 +184,9 @@ short dev;
 	}
 }
 
+void
 userconf_pdev(devno)
-short devno;
+	short devno;
 {
 	struct cfdata *cd;
 	short *p;
@@ -215,9 +239,9 @@ short devno;
 }
 
 int
-userconf_number(c,val)
-char *c;
-int *val;
+userconf_number(c, val)
+	char *c;
+	int *val;
 {
 	u_int num = 0;
 	int neg = 0;
@@ -235,7 +259,7 @@ int *val;
 			c++;
 		}
 	}
-	while (*c != '\n' & *c != '\t' & *c != ' ' & *c != '\000') {
+	while (*c != '\n' && *c != '\t' && *c != ' ' && *c != '\000') {
 		u_char cc = *c;
 
 		if (cc >= '0' && cc <= '9')
@@ -262,22 +286,22 @@ int *val;
 }
 
 int
-userconf_device(cmd,len,unit,state)
-char *cmd;
-int *len;
-short *unit, *state;
+userconf_device(cmd, len, unit, state)
+	char *cmd;
+	int *len;
+	short *unit, *state;
 {
 	short u = 0, s = FSTATE_FOUND;
 	int l = 0;
 	char *c;
 
 	c = cmd;
-	while(*c >= 'a' & *c <= 'z') { l++; c++; };
+	while(*c >= 'a' && *c <= 'z') { l++; c++; };
 	if (*c == '*') {
 		s = FSTATE_STAR;
 		c++;
 	} else {
-		while(*c >= '0' & *c <= '9') {
+		while(*c >= '0' && *c <= '9') {
 			s = FSTATE_NOTFOUND;
 			u=u*10 + *c - '0';
 			c++;
@@ -295,9 +319,10 @@ short *unit, *state;
 	return(-1);
 }
 
+void
 userconf_modify(item, val)
-char *item;
-int  *val;
+	char *item;
+	int  *val;
 {
 	int ok = 0;
 	int a;
@@ -327,8 +352,9 @@ int  *val;
 	}
 }
 
+void
 userconf_change(devno)
-int devno;
+	int devno;
 {
 	struct cfdata *cd;
 	char c = '\000';
@@ -395,8 +421,9 @@ int devno;
 
 }
 
+void
 userconf_disable(devno)
-int devno;
+	int devno;
 {
 	int done = 0;
 	
@@ -429,8 +456,9 @@ int devno;
 
 }
 
+void
 userconf_enable(devno)
-int devno;
+	int devno;
 {
 	int done = 0;
 	
@@ -463,6 +491,7 @@ int devno;
 
 }
 
+void
 userconf_help()
 {
 	int j = 0,k;
@@ -514,8 +543,8 @@ userconf_help()
 	
 }
 
-userconf_list(count)
-int count;
+void
+userconf_list()
 {
 	int i = 0;
 
@@ -529,6 +558,7 @@ int count;
 	userconf_cnt = -1;
 }
 
+void
 userconf_show()
 {
 	int i = 0;
@@ -543,9 +573,10 @@ userconf_show()
 	userconf_cnt = -1;
 }
 
+void
 userconf_show_attr_val(attr, val)
-short attr;
-int   *val;
+	short attr;
+	int   *val;
 {
 	struct cfdata *cd;
 	int   *l;
@@ -581,15 +612,16 @@ int   *val;
 	userconf_cnt = -1;
 }
 
+void
 userconf_show_attr(cmd)
-char *cmd;
+	char *cmd;
 {
 	char *c;
 	short attr = -1, i = 0, l = 0;
 	int a;
 	
 	c = cmd;
-	while (*c != ' ' & *c != '\t' & *c != '\n' & *c != '\000') {
+	while (*c != ' ' && *c != '\t' && *c != '\n' && *c != '\000') {
 		c++; l++;
 	}
 	while (*c == ' ' || *c == '\t' || *c == '\n') {
@@ -621,11 +653,12 @@ char *cmd;
 	}
 }
 
-userconf_common_dev(dev,len,unit,state,routine)
-char *dev;
-int len;
-short unit, state;
-char routine;
+void
+userconf_common_dev(dev, len, unit, state, routine)
+	char *dev;
+	int len;
+	short unit, state;
+	char routine;
 {
 	int i = 0;
 
@@ -694,9 +727,9 @@ char routine;
 
 int
 userconf_parse(cmd)
-char *cmd;
+	char *cmd;
 {
-	char *c,*v;
+	char *c, *v;
 	int i = 0, j = 0, k, a;
 	short unit, state;
 
@@ -825,14 +858,13 @@ void
 user_config()
 {
 	char prompt[] = "UKC> ";
-	int  i;
 	
 	userconf_init();
 	printf("User Kernel Config\n");
 	
 	printf(prompt);
-	while (i = getsn(userconf_cmdbuf,sizeof(userconf_cmdbuf)) != 0) {
-		if (userconf_parse(&userconf_cmdbuf)) break;
+	while (getsn(userconf_cmdbuf, sizeof(userconf_cmdbuf)) != 0) {
+		if (userconf_parse(userconf_cmdbuf)) break;
 		printf(prompt);
 	}
 	printf("Continuing...\n");
