@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.1 2001/10/05 18:57:28 nate Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.2 2001/10/09 21:16:20 nate Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2062,6 +2062,23 @@ struct bge_ring_data {
 	struct bge_gib		bge_info;
 };
 
+#define BGE_RING_DMA_ADDR(sc, offset) \
+	((sc)->bge_ring_map->dm_segs[0].ds_addr + \
+	offsetof(struct bge_ring_data, offset))
+
+/*
+ * Number of DMA segments in a TxCB. Note that this is carefully
+ * chosen to make the total struct size an even power of two. It's
+ * critical that no TxCB be split across a page boundry since
+ * no attempt is made to allocate physically contiguous memory.
+ * 
+ */
+#ifdef __alpha__ /* XXX - should be conditional on pointer size */
+#define BGE_NTXSEG      30
+#else
+#define BGE_NTXSEG      31
+#endif
+
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses
  * of our mbuf chains since we can only convert from physical to virtual,
@@ -2072,10 +2089,17 @@ struct bge_chain_data {
 	struct mbuf		*bge_rx_std_chain[BGE_STD_RX_RING_CNT];
 	struct mbuf		*bge_rx_jumbo_chain[BGE_JUMBO_RX_RING_CNT];
 	struct mbuf		*bge_rx_mini_chain[BGE_MINI_RX_RING_CNT];
+	bus_dmamap_t		bge_tx_map[BGE_TX_RING_CNT];
+	bus_dmamap_t		bge_rx_std_map[BGE_STD_RX_RING_CNT];
+	bus_dmamap_t		bge_rx_jumbo_map;
 	/* Stick the jumbo mem management stuff here too. */
 	caddr_t			bge_jslots[BGE_JSLOTS];
 	void			*bge_jumbo_buf;
 };
+
+#define BGE_JUMBO_DMA_ADDR(sc, m) \
+	((sc)->bge_cdata.bge_rx_jumbo_map->dm_segs[0].ds_addr + \
+	 (mtod((m), char *) - (char *)(sc)->bge_cdata.bge_jumbo_buf))
 
 struct bge_type {
 	u_int16_t		bge_vid;
@@ -2112,6 +2136,7 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
+	bus_dmamap_t		bge_ring_map;
 	u_int16_t		bge_tx_saved_considx;
 	u_int16_t		bge_rx_saved_considx;
 	u_int16_t		bge_ev_saved_considx;
