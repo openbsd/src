@@ -1,6 +1,6 @@
-.\"	$OpenBSD: mktemp.1,v 1.18 2000/11/09 17:52:25 aaron Exp $
+.\"	$OpenBSD: mktemp.1,v 1.19 2001/10/01 17:08:30 millert Exp $
 .\"
-.\" Copyright (c) 1996, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" Copyright (c) 1996, 2000, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 20, 1996
+.Dd September 30, 2001
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -33,9 +33,8 @@
 .Nd make temporary file name (unique)
 .Sh SYNOPSIS
 .Nm mktemp
-.Op Fl d
-.Op Fl q
-.Op Fl u
+.Op Fl dqtu
+.Op Fl p Ar directory
 .Ar template
 .Sh DESCRIPTION
 The
@@ -92,10 +91,44 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Make a directory instead of a file.
+.It Fl p Ar directory
+Use the specified
+.Ar directory
+as a prefix when generating the temporary file name.
+The
+.Ar directory
+will be overridden by the user's
+.Ev TMPDIR
+environment variable if it is set.
+This option implies the
+.Fl t
+flag (see below).
 .It Fl q
 Fail silently if an error occurs.
 This is useful if
 a script does not want error output to go to standard error.
+.It Fl t
+Generate a temporary file rooted in a temporary directory.
+The temporary directory is chosen as follows:
+.Bl -bullet
+.It
+If the user's
+.Ev TMPDIR
+environment variable is set, the directory contained therein is used.
+.It
+Otherwise, if the
+.Fl p
+flag was given the specified directory is used.
+.It
+If none of the above apply,
+.Pa /tmp
+is used.
+.El
+.Pp
+In this mode, the
+.Ar template
+should be a directory component (as opposed to a full path) and thus
+should not contain any forward slashes.
 .It Fl u
 Operate in
 .Dq unsafe
@@ -126,12 +159,38 @@ TMPFILE=`mktemp /tmp/$CMD.XXXXXXXXXX` || exit 1
 echo "program output" >> $TMPFILE
 .Ed
 .Pp
-In this case, we want the script to catch the error ourselves.
+The same fragment with support for a user's
+.Ev TMPDIR
+environment variable can be written as follows.
 .Bd -literal -offset indent
 CMD=`basename $0`
-TMPFILE=`mktemp -q /tmp/$CMD.XXXXXXXXXX`
+TMPFILE=`mktemp -t $CMD.XXXXXXXXXX` || exit 1
+echo "program output" >> $TMPFILE
+.Ed
+.Pp
+In some cases, it may be desirable to use a default temporary directory
+other than
+.Pa /tmp .
+In this example the temporary file will be created in
+.Pa /extra/tmp
+unless the user's
+.Ev TMPDIR
+environment variable specifies otherwise.
+.Bd -literal -offset indent
+CMD=`basename $0`
+TMPFILE=`mktemp -t -p /extra/tmp $CMD.XXXXXXXXXX` || exit 1
+echo "program output" >> $TMPFILE
+.Ed
+.Pp
+In some cases, we want the script to catch the error.
+For instance, if we attempt to create two temporary files and
+the second one fails we need to remove the first before exiting.
+.Bd -literal -offset indent
+CMD=`basename $0`
+TMP1=`mktemp -t $CMD.1.XXXXXXXXXX` || exit 1
+TMP2=`mktemp -t $CMD.2.XXXXXXXXXX`
 if [ $? -ne 0 ]; then
-	echo "$CMD: Can't create temp file, exiting..."
+	rm -f $TMP1
 	exit 1
 fi
 .Ed
@@ -139,16 +198,23 @@ fi
 Or perhaps you don't want to exit if
 .Nm
 is unable to create the file.
-In this case you can protect the part of the script thusly.
+In this case you can protect that part of the script thusly.
 .Bd -literal -offset indent
 CMD=`basename $0`
-TMPFILE=`mktemp /tmp/$CMD.XXXXXXXXXX` && {
+TMPFILE=`mktemp -q -t $CMD.XXXXXXXXXX` && {
 	# Safe to use $TMPFILE in this block
 	echo data > $TMPFILE
 	...
 	rm -f $TMPFILE
 }
 .Ed
+.Sh ENVIRONMENT
+.Bl -tag -width TMPDIR
+.It Ev TMPDIR
+directory in which to place the temporary file when in
+.Fl t
+mode
+.El
 .Sh SEE ALSO
 .Xr mkdtemp 3 ,
 .Xr mkstemp 3 ,

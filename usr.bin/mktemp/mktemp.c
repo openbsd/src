@@ -1,7 +1,7 @@
-/*	$OpenBSD: mktemp.c,v 1.5 1998/06/21 22:14:00 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.6 2001/10/01 17:08:30 millert Exp $	*/
 
 /*
- * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,22 +28,23 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.5 1998/06/21 22:14:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.6 2001/10/01 17:08:30 millert Exp $";
 #endif /* not lint */                                                        
 
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
 
-extern char *__progname;
-
 void
 usage()
 {
-	(void) fprintf(stderr, "Usage: %s [-d] [-q] [-u] template\n",
-	    __progname);
+	extern char *__progname;
+
+	(void) fprintf(stderr,
+	    "Usage: %s [-dqtu] [-p prefix] template\n", __progname);
 	exit(1);
 }
 
@@ -52,21 +53,28 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *template;
-	int c, uflag = 0, qflag = 0, makedir = 0;
+	int ch, uflag = 0, qflag = 0, tflag = 0, makedir = 0;
+	char *cp, *template, *prefix = _PATH_TMP;
+	size_t plen;
 
-	while ((c = getopt(argc, argv, "dqu")) != -1)
-		switch(c) {
+	while ((ch = getopt(argc, argv, "dp:qtu")) != -1)
+		switch(ch) {
 		case 'd':
 			makedir = 1;
+			break;
+		case 'p':
+			prefix = optarg;
+			tflag = 1;
 			break;
 		case 'q':
 			qflag = 1;
 			break;
+		case 't':
+			tflag = 1;
+			break;
 		case 'u':
 			uflag = 1;
 			break;
-		case '?':
 		default:
 			usage();
 	}
@@ -74,11 +82,38 @@ main(argc, argv)
 	if (argc - optind != 1)
 		usage();
 
-	if ((template = strdup(argv[optind])) == NULL) {
-		if (qflag)
-			exit(1);
-		else
-			errx(1, "Cannot allocate memory");
+	if (tflag) {
+		if (strchr(argv[optind], '/')) {
+			if (qflag)
+				exit(1);
+			else
+				errx(1, "template must not contain directory separators in -t mode");
+		}
+
+		cp = getenv("TMPDIR");
+		if (cp != NULL && *cp != '\0')
+			prefix = cp;
+		plen = strlen(prefix);
+		while (plen != 0 && prefix[plen - 1] == '/')
+			plen--;
+
+		template = (char *)malloc(plen + 1 + strlen(argv[optind]) + 1);
+		if (template == NULL) {
+			if (qflag)
+				exit(1);
+			else
+				errx(1, "Cannot allocate memory");
+		}
+		memcpy(template, prefix, plen);
+		template[plen] = '/';
+		strcpy(template + plen + 1, argv[optind]);	/* SAFE */
+	} else {
+		if ((template = strdup(argv[optind])) == NULL) {
+			if (qflag)
+				exit(1);
+			else
+				errx(1, "Cannot allocate memory");
+		}
 	}
 
 	if (makedir) {
