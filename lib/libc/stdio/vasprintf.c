@@ -1,4 +1,4 @@
-/*	$OpenBSD: vasprintf.c,v 1.5 1998/08/14 21:39:41 deraadt Exp $	*/
+/*	$OpenBSD: vasprintf.c,v 1.6 1998/10/16 16:11:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vasprintf.c,v 1.5 1998/08/14 21:39:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vasprintf.c,v 1.6 1998/10/16 16:11:56 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -48,23 +48,25 @@ vasprintf(str, fmt, ap)
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
 	f._bf._base = f._p = (unsigned char *)malloc(128);
-	if (f._bf._base == NULL) {
-		*str = NULL;
-		errno = ENOMEM;
-		return (-1);
-	}
-	f._bf._size = f._w = 127;		/* Leave room for the NULL */
+	if (f._bf._base == NULL)
+		goto err;
+	f._bf._size = f._w = 127;		/* Leave room for the NUL */
 	ret = vfprintf(&f, fmt, ap);
+	if (ret == -1)
+		goto err;
 	*f._p = '\0';
-	_base = realloc(f._bf._base, f._bf._size + 1);
-	if (_base == NULL) {
-		if (f._bf._base)
-			free(f._bf._base);
-		f._bf._base = NULL;
-		errno = ENOMEM;
-		ret = -1;
-	}
-	f._bf._base = _base;
-	*str = (char *)f._bf._base;
+	_base = realloc(f._bf._base, ret + 1);
+	if (_base == NULL)
+		goto err;
+	*str = (char *)_base;
 	return (ret);
+
+err:
+	if (f._bf._base) {
+		free(f._bf._base);
+		f._bf._base = NULL;
+	}
+	*str = NULL;
+	errno = ENOMEM;
+	return (-1);
 }
