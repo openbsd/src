@@ -36,4 +36,8 @@
 #define	__warn_references(sym,msg)	/* nothing */
 #endif
 
+#define __weak_alias(alias,sym)				\
+	__asm__(".weak " _C_LABEL(alias) ";"		\
+	_C_LABEL(alias) "=" _C_LABEL(sym))
+
 #endif /* !_MACHINE_CDEFS_H_ */
