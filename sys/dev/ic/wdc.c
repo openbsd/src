@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.54 2002/10/16 21:43:39 art Exp $     */
+/*      $OpenBSD: wdc.c,v 1.55 2002/12/12 10:26:26 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -898,7 +898,7 @@ wdcstart(chp)
 	splassert(IPL_BIO);
 
 	/* is there a xfer ? */
-	if ((xfer = chp->ch_queue->sc_xfer.tqh_first) == NULL) {
+	if ((xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer)) == NULL) {
 		return;
 	}
 
@@ -984,7 +984,7 @@ wdcintr(arg)
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	xfer = chp->ch_queue->sc_xfer.tqh_first;
+	xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer);
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
         ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0)	/* irq was not for us, still waiting for irq */
@@ -1139,7 +1139,7 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 #ifdef WDCNDELAY_DEBUG
 	/* After autoconfig, there should be no long delays. */
 	if (!cold && time > WDCNDELAY_DEBUG) {
-		struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+		struct wdc_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer);
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
@@ -1885,7 +1885,7 @@ wdc_exec_xfer(chp, xfer)
 	 * to complete, we're going to reboot soon anyway.
 	 */
 	if ((xfer->c_flags & C_POLL) != 0 &&
-	    chp->ch_queue->sc_xfer.tqh_first != NULL) {
+	    !TAILQ_EMPTY(&chp->ch_queue->sc_xfer)) {
 		TAILQ_INIT(&chp->ch_queue->sc_xfer);
 	}
 	/* insert at the end of command list */
@@ -1951,7 +1951,7 @@ __wdcerror(chp, msg)
 	struct channel_softc *chp;
 	char *msg;
 {
-	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+	struct wdc_xfer *xfer = TAILQ_FIRST(&chp->ch_queue->sc_xfer);
 	if (xfer == NULL)
 		printf("%s:%d: %s\n", chp->wdc->sc_dev.dv_xname, chp->channel,
 		    msg);
@@ -2044,7 +2044,7 @@ wdc_ioctl_find(bp)
 	int s;
 
 	s = splbio();
-	for (wi = wi_head.lh_first; wi != 0; wi = wi->wi_list.le_next)
+	LIST_FOREACH(wi, &wi_head, wi_list)
 		if (bp == &wi->wi_bp)
 			break;
 	splx(s);
