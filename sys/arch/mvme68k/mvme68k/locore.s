@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.39 2004/03/09 00:08:13 xsa Exp $ */
+/*	$OpenBSD: locore.s,v 1.40 2004/04/24 21:09:37 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -428,7 +428,7 @@ Lstart2:
 	addl	a5,a4			| convert to PA
 #if 0
 	| XXX clear from end-of-kernel to 1M, as a workaround for an
-	| inane pmap_bootstrap bug I cannot find (68040-specific)
+	| insane pmap_bootstrap bug I cannot find (68040-specific)
 	movl	a4,a0
 	movl	#1024*1024,d0
 	cmpl	a0,d0			| end of kernel is beyond 1M?
