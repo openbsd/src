@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.12 2005/03/19 09:49:39 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.13 2005/03/19 09:52:54 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1190,6 +1190,7 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_rateset *rs;
 	struct ural_tx_desc *desc;
 	struct ural_tx_data *data;
 	struct ieee80211_frame *wh;
@@ -1198,9 +1199,14 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	usbd_status error;
 	int xferlen, rate;
 
-	/* XXX should do automatic rate adaptation */
-	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
-	rate = MAX(rate, ieee80211_get_rate(ic));
+	if (ic->ic_fixed_rate != -1) {
+		rs = &ic->ic_sup_rates[ic->ic_curmode];
+		rate = rs->rs_rates[ic->ic_fixed_rate];
+	} else {
+		rs = &ni->ni_rates;
+		rate = rs->rs_rates[ni->ni_txrate];
+	}
+	rate &= IEEE80211_RATE_VAL;
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
