@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.4 2004/07/25 03:18:52 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.5 2004/07/26 15:58:01 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -189,14 +189,14 @@ cvs_file_ignore(const char *pat)
 
 
 /*
- * cvs_file_isignored()
+ * cvs_file_chkign()
  *
  * Returns 1 if the filename <file> is matched by one of the ignore
  * patterns, or 0 otherwise.
  */
 
 int
-cvs_file_isignored(const char *file)
+cvs_file_chkign(const char *file)
 {
 	struct cvs_ignpat *ip;
 
@@ -254,7 +254,7 @@ cvs_file_getv(const char *dir, int *nfiles, int recurse)
 		ent = (struct dirent *)dp;
 		dp += ent->d_reclen;
 
-		if (cvs_file_isignored(ent->d_name))
+		if (cvs_file_chkign(ent->d_name))
 			continue;
 
 		tmp = realloc(fvec, (*nfiles + 1) * sizeof(char *));
@@ -298,7 +298,9 @@ cvs_file_get(const char *path, int flags)
 {
 	int cwd;
 	size_t dlen;
+	char buf[32];
 	struct stat st;
+	struct tm lmtm;
 	struct cvs_file *cfp;
 	struct cvs_ent *ent;
 
@@ -328,8 +330,20 @@ cvs_file_get(const char *path, int flags)
 	else {
 		if (rcsnum_cmp(ent->ce_rev, cvs_addedrev, 2) == 0)
 			cfp->cf_cvstat = CVS_FST_ADDED;
-		else
-			cfp->cf_cvstat = CVS_FST_UPTODATE;
+		else {
+			/* check last modified time */
+			if ((gmtime_r((time_t *)&(st.st_atime), &lmtm) == NULL) ||
+			    (asctime_r(&lmtm, buf) == NULL)) {
+				cvs_log(LP_ERR,
+				    "failed to generate file timestamp");
+				/* fake an up to date file */
+				strlcpy(buf, ent->ce_timestamp, sizeof(buf));
+			}
+			if (strcmp(buf, ent->ce_timestamp) == 0)
+				cfp->cf_cvstat = CVS_FST_UPTODATE;
+			else
+				cfp->cf_cvstat = CVS_FST_MODIFIED;
+		}
 
 		cvs_ent_free(ent);
 	}
@@ -435,7 +449,7 @@ cvs_file_getdir(struct cvs_file *cf, int flags)
 		ent = (struct dirent *)dp;
 		dp += ent->d_reclen;
 
-		if ((flags & CF_IGNORE) && cvs_file_isignored(ent->d_name))
+		if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
 			continue;
 
 		snprintf(pbuf, sizeof(pbuf), "%s/%s", cf->cf_path, ent->d_name);
@@ -474,6 +488,33 @@ cvs_file_free(struct cvs_file *cf)
 	if (cf->cf_ddat != NULL)
 		cvs_file_freedir(cf->cf_ddat);
 	free(cf);
+}
+
+
+/*
+ * cvs_file_examine()
+ *
+ * Examine the contents of the CVS file structure <cf> with the function
+ * <exam>.  The function is called for all subdirectories and files of the
+ * root file.
+ */
+
+int
+cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
+{
+	int ret;
+	struct cvs_file *fp;
+
+	if (cf->cf_type == DT_DIR) {
+		ret = (*exam)(cf, arg);
+		LIST_FOREACH(fp, &(cf->cf_ddat->cd_files), cf_list) {
+			ret = cvs_file_examine(fp, exam, arg);
+			if (ret == -1)
+				return (-1);
+		}
+	}
+	else
+		return (*exam)(cf, arg);
 }
 
 
