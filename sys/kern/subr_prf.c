@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_prf.c,v 1.16 1997/10/01 02:22:59 angelos Exp $	*/
-/*	$NetBSD: subr_prf.c,v 1.25 1996/04/22 01:38:46 christos Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.17 1997/11/04 20:43:26 chuck Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -59,43 +59,103 @@
 #include <dev/cons.h>
 
 /*
- * Note that stdarg.h and the ANSI style va_start macro is used for both
- * ANSI and traditional C compilers.
+ * note that stdarg.h and the ansi style va_start macro is used for both
+ * ansi and traditional c complers.
+ * XXX: this requires that stdarg.h define: va_alist and va_dcl
  */
 #include <machine/stdarg.h>
 
-#ifdef KADB
-#include <machine/kdbparam.h>
-#endif
 #ifdef KGDB
+#include <sys/kgdb.h>
 #include <machine/cpu.h>
 #endif
+#ifdef DDB
+#include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
+extern	int db_radix;		/* XXX: for non-standard '%r' format */
+#endif
 
-#define TOCONS	0x01
-#define TOTTY	0x02
-#define TOLOG	0x04
-
-struct	tty *constty;			/* pointer to console "window" tty */
-
-void	(*v_putc) __P((int)) = cnputc;	/* routine to putc on virtual console */
-
-static void putchar __P((int, int, struct tty *));
-static char *ksprintn __P((u_long, int, int *));
-void kprintf __P((const char *, int, struct tty *, va_list));
-
-int consintr = 1;			/* Ok to handle console interrupts? */
 
 /*
- * Variable panicstr contains argument to first call to panic; used as flag
- * to indicate that the kernel has already called panic.
+ * defines
  */
-const char *panicstr;
+
+/* flags for kprintf */
+#define TOCONS		0x01	/* to the console */
+#define TOTTY		0x02	/* to the process' tty */
+#define TOLOG		0x04	/* to the kernel message buffer */
+#define TOBUFONLY	0x08	/* to the buffer (only) [for sprintf] */
+#define TODDB		0x10	/* to ddb console */
+
+/* max size buffer kprintf needs to print quad_t [size in base 8 + \0] */
+#define KPRINTF_BUFSIZE		(sizeof(quad_t) * NBBY / 3 + 2)
+
 
 /*
- * Panic is called on unresolvable fatal errors.  It prints "panic: mesg",
- * and then reboots.  If we are called twice, then we avoid trying to sync
- * the disks as this often leads to recursive panics.
+ * local prototypes
  */
+
+static int	 kprintf __P((const char *, int, struct tty *, 
+				char *, va_list));
+static void	 putchar __P((int, int, struct tty *));
+
+
+/*
+ * globals
+ */
+
+struct	tty *constty;	/* pointer to console "window" tty */
+int	consintr = 1;	/* ok to handle console interrupts? */
+extern	int log_open;	/* subr_log: is /dev/klog open? */
+const	char *panicstr; /* arg to first call to panic (used as a flag
+			   to indicate that panic has already been called). */
+
+/*
+ * v_putc: routine to putc on virtual console
+ *
+ * the v_putc pointer can be used to redirect the console cnputc elsewhere
+ * [e.g. to a "virtual console"].
+ */
+
+void (*v_putc) __P((int)) = cnputc;	/* start with cnputc (normal cons) */
+
+
+/*
+ * functions
+ */
+
+/*
+ *      Partial support (the failure case) of the assertion facility
+ *      commonly found in userland.
+ */
+void
+__assert(t, f, l, e)
+	const char *t, *f, *e;
+	int l;
+{
+
+	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d\n",
+		t, e, f, l);
+}
+
+/*
+ * tablefull: warn that a system table is full
+ */
+
+void
+tablefull(tab)
+	const char *tab;
+{
+	log(LOG_ERR, "%s: table is full\n", tab);
+}
+
+/*
+ * panic: handle an unresolvable fatal error
+ *
+ * prints "panic: <message>" and reboots.   if called twice (i.e. recursive
+ * call) we avoid trying to sync the disk and just reboot (to avoid 
+ * recursive panics).
+ */
+
 void
 #ifdef __STDC__
 panic(const char *fmt, ...)
@@ -105,20 +165,19 @@ panic(fmt, va_alist)
 	va_dcl
 #endif
 {
-	static char panicbuf[1024];
 	int bootopt;
 	va_list ap;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
-	va_start(ap, fmt);
 	if (panicstr)
 		bootopt |= RB_NOSYNC;
-	else {
-		vsprintf(panicbuf, fmt, ap);
-		panicstr = panicbuf;
-	}
+	else
+		panicstr = fmt;
 
-	printf("panic: %:\n", fmt, ap);
+	va_start(ap, fmt);
+	printf("panic: ");
+	vprintf(fmt, ap);
+	printf("\n");
 	va_end(ap);
 
 #ifdef KGDB
@@ -135,35 +194,145 @@ panic(fmt, va_alist)
 }
 
 /*
- *	Partial support (the failure case) of the assertion facility
- *	commonly found in userland.
+ * kernel logging functions: log, logpri, addlog
  */
-void
-__assert(t, f, l, e)
-	const char *t, *f, *e;
-	int l;
-{
 
-	panic("kernel %sassertion \"%s\" failed: file \"%s\", line %d\n",
-	    t, e, f, l);
+/*
+ * log: write to the log buffer
+ *
+ * => will not sleep [so safe to call from interrupt]
+ * => will log to console if /dev/klog isn't open
+ */
+
+void
+#ifdef __STDC__
+log(int level, const char *fmt, ...)
+#else
+log(level, fmt, va_alist)
+	int level;
+	char *fmt;
+	va_dcl
+#endif
+{
+	register int s;
+	va_list ap;
+
+	s = splhigh();
+	logpri(level);		/* log the level first */
+	va_start(ap, fmt);
+	kprintf(fmt, TOLOG, NULL, NULL, ap);
+	splx(s);
+	va_end(ap);
+	if (!log_open) {
+		va_start(ap, fmt);
+		kprintf(fmt, TOCONS, NULL, NULL, ap);
+		va_end(ap);
+	}
+	logwakeup();		/* wake up anyone waiting for log msgs */
 }
 
 /*
- * Warn that a system table is full.
+ * logpri: log the priority level to the klog
  */
-void
-tablefull(tab)
-	const char *tab;
-{
 
-	log(LOG_ERR, "%s: table is full\n", tab);
+void			/* XXXCDC: should be static? */
+logpri(level)
+	int level;
+{
+	char *p;
+	char snbuf[KPRINTF_BUFSIZE];
+
+	putchar('<', TOLOG, NULL);
+	sprintf(snbuf, "%d", level);
+	for (p = snbuf ; *p ; p++)
+		putchar(*p, TOLOG, NULL);
+	putchar('>', TOLOG, NULL);
 }
 
 /*
- * Uprintf prints to the controlling terminal for the current process.
- * It may block if the tty queue is overfull.  No message is printed if
- * the queue does not clear in a reasonable time.
+ * addlog: add info to previous log message
  */
+
+int
+#ifdef __STDC__
+addlog(const char *fmt, ...)
+#else
+addlog(fmt, va_alist)
+	char *fmt;
+	va_dcl
+#endif
+{
+	register int s;
+	va_list ap;
+
+	s = splhigh();
+	va_start(ap, fmt);
+	kprintf(fmt, TOLOG, NULL, NULL, ap);
+	splx(s);
+	va_end(ap);
+	if (!log_open) {
+		va_start(ap, fmt);
+		kprintf(fmt, TOCONS, NULL, NULL, ap);
+		va_end(ap);
+	}
+	logwakeup();
+	return(0);
+}
+
+
+/*
+ * putchar: print a single character on console or user terminal.
+ *
+ * => if console, then the last MSGBUFS chars are saved in msgbuf
+ *	for inspection later (e.g. dmesg/syslog)
+ */
+static void
+putchar(c, flags, tp)
+	register int c;
+	int flags;
+	struct tty *tp;
+{
+	extern int msgbufmapped;
+	struct msgbuf *mbp;
+
+	if (panicstr)
+		constty = NULL;
+	if ((flags & TOCONS) && tp == NULL && constty) {
+		tp = constty;
+		flags |= TOTTY;
+	}
+	if ((flags & TOTTY) && tp && tputchar(c, tp) < 0 &&
+	    (flags & TOCONS) && tp == constty)
+		constty = NULL;
+	if ((flags & TOLOG) &&
+	    c != '\0' && c != '\r' && c != 0177 && msgbufmapped) {
+		mbp = msgbufp;
+		if (mbp->msg_magic != MSG_MAGIC) {
+			bzero((caddr_t) mbp, sizeof(*mbp));
+			mbp->msg_magic = MSG_MAGIC;
+		} else {
+			mbp->msg_bufc[mbp->msg_bufx++] = c;
+			if (mbp->msg_bufx < 0 || mbp->msg_bufx >= MSG_BSIZE)
+				mbp->msg_bufx = 0;
+		}
+	}
+	if ((flags & TOCONS) && constty == NULL && c != '\0')
+		(*v_putc)(c);
+#ifdef DDB
+	if (flags & TODDB)
+		db_putchar(c);
+#endif
+}
+
+
+/*
+ * uprintf: print to the controlling tty of the current process
+ *
+ * => we may block if the tty queue is full
+ * => no message is printed if the queue doesn't clear in a reasonable
+ *	time
+ */
+
 void
 #ifdef __STDC__
 uprintf(const char *fmt, ...)
@@ -178,10 +347,25 @@ uprintf(fmt, va_alist)
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
 		va_start(ap, fmt);
-		kprintf(fmt, TOTTY, p->p_session->s_ttyp, ap);
+		kprintf(fmt, TOTTY, p->p_session->s_ttyp, NULL, ap);
 		va_end(ap);
 	}
 }
+
+/*
+ * tprintf functions: used to send messages to a specific process
+ *
+ * usage:
+ *   get a tpr_t handle on a process "p" by using "tprintf_open(p)"
+ *   use the handle when calling "tprintf"
+ *   when done, do a "tprintf_close" to drop the handle
+ */
+
+/*
+ * tprintf_open: get a tprintf handle on a process "p"
+ *
+ * => returns NULL if process can't be printed to
+ */
 
 tpr_t
 tprintf_open(p)
@@ -195,6 +379,10 @@ tprintf_open(p)
 	return ((tpr_t) NULL);
 }
 
+/*
+ * tprintf_close: dispose of a tprintf handle obtained with tprintf_open
+ */
+
 void
 tprintf_close(sess)
 	tpr_t sess;
@@ -205,8 +393,10 @@ tprintf_close(sess)
 }
 
 /*
- * tprintf prints on the controlling terminal associated
- * with the given session.
+ * tprintf: given tprintf handle to a process [obtained with tprintf_open], 
+ * send a message to the controlling tty for that process.
+ *
+ * => also sends message to /dev/klog
  */
 void
 #ifdef __STDC__
@@ -229,15 +419,18 @@ tprintf(tpr, fmt, va_alist)
 		tp = sess->s_ttyp;
 	}
 	va_start(ap, fmt);
-	kprintf(fmt, flags, tp, ap);
+	kprintf(fmt, flags, tp, NULL, ap);
 	va_end(ap);
 	logwakeup();
 }
 
+
 /*
- * Ttyprintf displays a message on a tty; it should be used only by
- * the tty driver, or anything that knows the underlying tty will not
- * be revoke(2)'d away.  Other callers should use tprintf.
+ * ttyprintf: send a message to a specific tty
+ *
+ * => should be used only by tty driver or anything that knows the
+ *	underlying tty will not be revoked(2)'d away.  [otherwise,
+ *	use tprintf]
  */
 void
 #ifdef __STDC__
@@ -252,83 +445,44 @@ ttyprintf(tp, fmt, va_alist)
 	va_list ap;
 
 	va_start(ap, fmt);
-	kprintf(fmt, TOTTY, tp, ap);
+	kprintf(fmt, TOTTY, tp, NULL, ap);
 	va_end(ap);
 }
 
-extern	int log_open;
+#ifdef DDB
 
 /*
- * Log writes to the log buffer, and guarantees not to sleep (so can be
- * called by interrupt routines).  If there is no process reading the
- * log yet, it writes to the console also.
+ * db_printf: printf for DDB (via db_putchar)
  */
-void
-#ifdef __STDC__
-log(int level, const char *fmt, ...)
-#else
-log(level, fmt, va_alist)
-	int level;
-	char *fmt;
-	va_dcl
-#endif
-{
-	register int s;
-	va_list ap;
-
-	s = splhigh();
-	logpri(level);
-	va_start(ap, fmt);
-	kprintf(fmt, TOLOG, NULL, ap);
-	splx(s);
-	va_end(ap);
-	if (!log_open) {
-		va_start(ap, fmt);
-		kprintf(fmt, TOCONS, NULL, ap);
-		va_end(ap);
-	}
-	logwakeup();
-}
-
-void
-logpri(level)
-	int level;
-{
-	register int ch;
-	register char *p;
-
-	putchar('<', TOLOG, NULL);
-	for (p = ksprintn((u_long)level, 10, NULL); (ch = *p--) != 0;)
-		putchar(ch, TOLOG, NULL);
-	putchar('>', TOLOG, NULL);
-}
 
 int
 #ifdef __STDC__
-addlog(const char *fmt, ...)
+db_printf(const char *fmt, ...)
 #else
-addlog(fmt, va_alist)
+db_printf(fmt, va_alist)
 	char *fmt;
 	va_dcl
 #endif
 {
-	register int s;
 	va_list ap;
+	int retval;
 
-	s = splhigh();
 	va_start(ap, fmt);
-	kprintf(fmt, TOLOG, NULL, ap);
-	splx(s);
+	retval = kprintf(fmt, TODDB, NULL, NULL, ap);
 	va_end(ap);
-	if (!log_open) {
-		va_start(ap, fmt);
-		kprintf(fmt, TOCONS, NULL, ap);
-		va_end(ap);
-	}
-	logwakeup();
-	return (0);
+	return(retval);
 }
 
+#endif /* DDB */
+
+
+/*
+ * normal kernel printf functions: printf, vprintf, sprintf
+ */
+
+/*
+ * printf: print a message to the console and the log
+ */
 int
 #ifdef __STDC__
 printf(const char *fmt, ...)
@@ -339,24 +493,67 @@ printf(fmt, va_alist)
 #endif
 {
 	va_list ap;
-	register int savintr;
+	int savintr, retval;
 
 	savintr = consintr;		/* disable interrupts */
 	consintr = 0;
 	va_start(ap, fmt);
-	kprintf(fmt, TOCONS | TOLOG, NULL, ap);
+	retval = kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
 	va_end(ap);
 	if (!panicstr)
 		logwakeup();
 	consintr = savintr;		/* reenable interrupts */
-	return (0);
+	return(retval);
 }
 
-#define FLAG_LONG 	0x1
-#define FLAG_QUAD	0x2
+/*
+ * vprintf: print a message to the console and the log [already have
+ *	va_alist]
+ */
+
+void
+vprintf(fmt, ap)
+	const char *fmt;
+	va_list ap;
+{
+	int savintr;
+
+	savintr = consintr;		/* disable interrupts */
+	consintr = 0;
+	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+	if (!panicstr)
+		logwakeup();
+	consintr = savintr;		/* reenable interrupts */
+}
 
 /*
- * Scaled down version of printf(3).
+ * sprintf: print a message to a buffer
+ */
+int
+#ifdef __STDC__
+sprintf(char *buf, const char *fmt, ...)
+#else
+sprintf(buf, fmt, va_alist)
+        char *buf;
+        const char *cfmt;
+        va_dcl
+#endif
+{
+	int retval;
+	va_list ap;
+
+	va_start(ap, fmt);
+	retval = kprintf(fmt, TOBUFONLY, NULL, buf, ap);
+	va_end(ap);
+	*(buf + retval) = 0;	/* null terminate */
+	return(retval);
+}
+
+/*
+ * kprintf: scaled down version of printf(3).
+ *
+ * this version based on vfprintf() from libc which was derived from 
+ * software contributed to Berkeley by Chris Torek.
  *
  * Two additional formats:
  *
@@ -388,353 +585,515 @@ printf(fmt, va_alist)
  *	va_end(ap);
  * }
  *
- * Space or zero padding and a field width are supported for the numeric
- * formats only.
+ * this is the actual printf innards
+ *
+ * This code is large and complicated...
  */
-void
-kprintf(fmt, flags, tp, ap)
-	register const char *fmt;
-	int flags;
+
+/*
+ * macros for converting digits to letters and vice versa
+ */
+#define	to_digit(c)	((c) - '0')
+#define is_digit(c)	((unsigned)to_digit(c) <= 9)
+#define	to_char(n)	((n) + '0')
+
+/*
+ * flags used during conversion.
+ */
+#define	ALT		0x001		/* alternate form */
+#define	HEXPREFIX	0x002		/* add 0x or 0X prefix */
+#define	LADJUST		0x004		/* left adjustment */
+#define	LONGDBL		0x008		/* long double; unimplemented */
+#define	LONGINT		0x010		/* long integer */
+#define	QUADINT		0x020		/* quad integer */
+#define	SHORTINT	0x040		/* short integer */
+#define	ZEROPAD		0x080		/* zero (as opposed to blank) pad */
+#define FPT		0x100		/* Floating point number */
+
+	/*
+	 * To extend shorts properly, we need both signed and unsigned
+	 * argument extraction methods.
+	 */
+#define	SARG() \
+	(flags&QUADINT ? va_arg(ap, quad_t) : \
+	    flags&LONGINT ? va_arg(ap, long) : \
+	    flags&SHORTINT ? (long)(short)va_arg(ap, int) : \
+	    (long)va_arg(ap, int))
+#define	UARG() \
+	(flags&QUADINT ? va_arg(ap, u_quad_t) : \
+	    flags&LONGINT ? va_arg(ap, u_long) : \
+	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
+	    (u_long)va_arg(ap, u_int))
+
+#define KPRINTF_PUTCHAR(C) \
+	(oflags == TOBUFONLY) ? *sbuf++ = (C) : putchar((C), oflags, tp);
+
+int
+kprintf(fmt0, oflags, tp, sbuf, ap)
+	const char *fmt0;
+	int oflags;
 	struct tty *tp;
+	char *sbuf;
 	va_list ap;
 {
-	register char *p, *q;
-	register int ch, n;
-	u_int64_t ul;
-	int base, lflag, tmp, width;
-	char padc;
+	char *fmt;		/* format string */
+	int ch;			/* character from fmt */
+	int n;			/* handy integer (short term usage) */
+	char *cp;		/* handy char pointer (short term usage) */
+	int flags;		/* flags as above */
+	int ret;		/* return value accumulator */
+	int width;		/* width from format (%8d), or 0 */
+	int prec;		/* precision from format (%.3d), or -1 */
+	char sign;		/* sign prefix (' ', '+', '-', or \0) */
 
+	u_quad_t _uquad;	/* integer arguments %[diouxX] */
+	enum { OCT, DEC, HEX } base;/* base for [diouxX] conversion */
+	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
+	int realsz;		/* field size expanded by dprec */
+	int size;		/* size of converted field or string */
+	char *xdigs;		/* digits for [xX] conversion */
+	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
+
+	cp = NULL;	/* XXX: shutup gcc */
+	size = 0;	/* XXX: shutup gcc */
+
+	fmt = (char *)fmt0;
+	ret = 0;
+
+	xdigs = NULL;		/* XXX: shut up gcc warning */
+
+	/*
+	 * Scan the format for conversions (`%' character).
+	 */
 	for (;;) {
-		padc = ' ';
-		width = 0;
-		while ((ch = *(const u_char *)fmt++) != '%') {
-			if (ch == '\0')
-				return;
-			putchar(ch, flags, tp);
+		while (*fmt != '%' && *fmt) {
+			KPRINTF_PUTCHAR(*fmt++);
+			ret++;
 		}
-		lflag = 0;
-reswitch:	switch (ch = *(const u_char *)fmt++) {
-		case '\0':
-			while(*--fmt != '%')
-				;
-			fmt++;
-			putchar('%', flags, tp);
-			continue;
-		case '0':
-			padc = '0';
-			goto reswitch;
-		case '1': case '2': case '3': case '4':
-		case '5': case '6': case '7': case '8': case '9':
-			for (width = 0;; ++fmt) {
-				width = width * 10 + ch - '0';
-				ch = *fmt;
-				if (ch < '0' || ch > '9')
-					break;
-			}
-			goto reswitch;
-		case 'l':
-			lflag |= FLAG_LONG;
-			goto reswitch;
-		case 'q':
-			lflag |= FLAG_QUAD;
-			goto reswitch;
-		case 'b':
-			ul = va_arg(ap, int);
-			p = va_arg(ap, char *);
-			for (q = ksprintn(ul, *p++, NULL); (ch = *q--) != 0;)
-				putchar(ch, flags, tp);
+		if (*fmt == 0)
+			goto done;
 
-			if (!ul)
+		fmt++;		/* skip over '%' */
+
+		flags = 0;
+		dprec = 0;
+		width = 0;
+		prec = -1;
+		sign = '\0';
+
+rflag:		ch = *fmt++;
+reswitch:	switch (ch) {
+		/* XXX: non-standard '%:' format */
+#ifndef __powerpc__
+		case ':': 
+			if (oflags != TOBUFONLY) {
+				cp = va_arg(ap, char *);
+				kprintf(cp, oflags, tp, 
+					NULL, va_arg(ap, va_list));
+			}
+			continue;	/* no output */
+#endif
+		/* XXX: non-standard '%b' format */
+		case 'b': {
+			char *b, *z;
+			int tmp;
+			_uquad = va_arg(ap, int);
+			b = va_arg(ap, char *);
+			if (*b == 8)
+				sprintf(buf, "%qo", _uquad);
+			else if (*b == 10)
+				sprintf(buf, "%qd", _uquad);
+			else if (*b == 16)
+				sprintf(buf, "%qx", _uquad);
+			else
 				break;
+			b++;
 
-			for (tmp = 0; (n = *p++) != 0;) {
-				if (ul & (1 << (n - 1))) {
-					putchar(tmp ? ',' : '<', flags, tp);
-					for (; (n = *p) > ' '; ++p)
-						putchar(n, flags, tp);
-					tmp = 1;
-				} else
-					for (; *p > ' '; ++p)
-						continue;
+			z = buf;
+			while (*z) {
+				KPRINTF_PUTCHAR(*z++);
+				ret++;
 			}
-			if (tmp)
-				putchar('>', flags, tp);
-			break;
-		case 'c':
-			putchar(va_arg(ap, int), flags, tp);
-			break;
-		case ':':
-			p = va_arg(ap, char *);
-			kprintf(p, flags, tp, va_arg(ap, va_list));
-			break;
-		case 's':
-			if ((p = va_arg(ap, char *)) == NULL)
-				p = "(null)";
-			while ((ch = *p++) != 0)
-				putchar(ch, flags, tp);
-			break;
-		case 'd':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, int64_t);
-			else
-			  ul = lflag & FLAG_LONG ? 
-			       va_arg(ap, long) : va_arg(ap, int);
-			if ((int64_t)ul < 0) {
-				putchar('-', flags, tp);
-				ul = -(int64_t)ul;
+
+			if (_uquad) {
+				tmp = 0;
+				while ((n = *b++) != 0) {
+					if (_uquad & (1 << (n - 1))) {
+						KPRINTF_PUTCHAR(tmp ? ',':'<');
+						ret++;
+						while ((n = *b) > ' ') {
+							KPRINTF_PUTCHAR(n);
+							ret++;
+							b++;
+						}
+						tmp = 1;
+					} else {
+						while(*b > ' ')
+							b++;
+					}
+				}
+				if (tmp) {
+					KPRINTF_PUTCHAR('>');
+					ret++;
+				}
 			}
-			base = 10;
-			goto number;
-		case 'o':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, u_int64_t);
-			else
-			  ul = lflag & FLAG_LONG ?
-			       va_arg(ap, u_long) : va_arg(ap, u_int);
-			base = 8;
-			goto number;
-		case 'u':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, u_int64_t);
-			else
-			  ul = lflag & FLAG_LONG ?
-			       va_arg(ap, u_long) : va_arg(ap, u_int);
-			base = 10;
-			goto number;
-		case 'p':
-			putchar('0', flags, tp);
-			putchar('x', flags, tp);
-			ul = (u_long)va_arg(ap, void *);
-			base = 16;
-			goto number;
-		case 'x':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, u_int64_t);
-			else
-			  ul = lflag & FLAG_LONG ?
-			       va_arg(ap, u_long) : va_arg(ap, u_int);
-			base = 16;
-number:			p = ksprintn(ul, base, &tmp);
-			if (width && (width -= tmp) > 0)
-				while (width--)
-					putchar(padc, flags, tp);
-			while ((ch = *p--) != 0)
-				putchar(ch, flags, tp);
-			break;
-		default:
-			putchar('%', flags, tp);
-			if (lflag & FLAG_QUAD)
-				putchar('q', flags, tp);
-			if (lflag & FLAG_LONG)
-				putchar('l', flags, tp);
-			/* FALLTHROUGH */
-		case '%':
-			putchar(ch, flags, tp);
+			continue;	/* no output */
 		}
-	}
-}
 
-/*
- * Print a character on console or users terminal.  If destination is
- * the console then the last MSGBUFS characters are saved in msgbuf for
- * inspection later.
- */
-static void
-putchar(c, flags, tp)
-	register int c;
-	int flags;
-	struct tty *tp;
-{
-	extern int msgbufmapped;
-	register struct msgbuf *mbp;
+#ifdef DDB
+		/* XXX: non-standard '%r' format (print int in db_radix) */
+		case 'r':
+			if ((oflags & TODDB) == 0) 
+				goto default_case;
+			
+			if (db_radix == 16)
+				goto case_z;	/* signed hex */
+			_uquad = SARG();
+			if ((quad_t)_uquad < 0) {
+				_uquad = -_uquad;
+				sign = '-';
+			}
+			base = (db_radix == 8) ? OCT : DEC;
+			goto number;
 
-	if (panicstr)
-		constty = NULL;
-	if ((flags & TOCONS) && tp == NULL && constty) {
-		tp = constty;
-		flags |= TOTTY;
-	}
-	if ((flags & TOTTY) && tp && tputchar(c, tp) < 0 &&
-	    (flags & TOCONS) && tp == constty)
-		constty = NULL;
-	if ((flags & TOLOG) &&
-	    c != '\0' && c != '\r' && c != 0177 && msgbufmapped) {
-		mbp = msgbufp;
-		if (mbp->msg_magic != MSG_MAGIC) {
-			bzero((caddr_t)mbp, sizeof(*mbp));
-			mbp->msg_magic = MSG_MAGIC;
-		}
-		mbp->msg_bufc[mbp->msg_bufx++] = c;
-		if (mbp->msg_bufx < 0 || mbp->msg_bufx >= MSG_BSIZE)
-			mbp->msg_bufx = 0;
-	}
-	if ((flags & TOCONS) && constty == NULL && c != '\0')
-		(*v_putc)(c);
-}
 
-/*
- * Scaled down version of sprintf(3).
- */
-int
-#ifdef __STDC__
-vsprintf(char *buf, const char *cfmt, va_list ap)
-#else
-vsprintf(buf, cfmt, ap)
-	char *buf, *cfmt;
-	va_list ap;
+		/* XXX: non-standard '%z' format ("signed hex", a "hex %i")*/
+		case 'z':
+		case_z:
+			if ((oflags & TODDB) == 0) 
+				goto default_case;
+
+			xdigs = "0123456789abcdef";
+			ch = 'x';	/* the 'x' in '0x' (below) */
+			_uquad = SARG();
+			base = HEX;
+			/* leading 0x/X only if non-zero */
+			if (flags & ALT && _uquad != 0)
+				flags |= HEXPREFIX;
+			if ((quad_t)_uquad < 0) {
+				_uquad = -_uquad;
+				sign = '-';
+			}
+			goto number;
 #endif
-{
-	register const char *fmt = cfmt;
-	register char *p, *bp;
-	register int ch, base;
-	u_int64_t ul;
-	int lflag, tmp, width;
-	char padc;
 
-	for (bp = buf; ; ) {
-		padc = ' ';
-		width = 0;
-		while ((ch = *(const u_char *)fmt++) != '%')
-			if ((*bp++ = ch) == '\0')
-				return ((bp - buf) - 1);
-
-		lflag = 0;
-reswitch:	switch (ch = *(const u_char *)fmt++) {
-		case '\0':
-			while(*--fmt != '%')
-				;
-			while((*bp++ = *fmt++))
-				;
-			return ((bp - buf) - 1);
-		case '0':
-			padc = '0';
+		case ' ':
+			/*
+			 * ``If the space and + flags both appear, the space
+			 * flag will be ignored.''
+			 *	-- ANSI X3J11
+			 */
+			if (!sign)
+				sign = ' ';
+			goto rflag;
+		case '#':
+			flags |= ALT;
+			goto rflag;
+		case '*':
+			/*
+			 * ``A negative field width argument is taken as a
+			 * - flag followed by a positive field width.''
+			 *	-- ANSI X3J11
+			 * They don't exclude field widths read from args.
+			 */
+			if ((width = va_arg(ap, int)) >= 0)
+				goto rflag;
+			width = -width;
+			/* FALLTHROUGH */
+		case '-':
+			flags |= LADJUST;
+			goto rflag;
+		case '+':
+			sign = '+';
+			goto rflag;
+		case '.':
+			if ((ch = *fmt++) == '*') {
+				n = va_arg(ap, int);
+				prec = n < 0 ? -1 : n;
+				goto rflag;
+			}
+			n = 0;
+			while (is_digit(ch)) {
+				n = 10 * n + to_digit(ch);
+				ch = *fmt++;
+			}
+			prec = n < 0 ? -1 : n;
 			goto reswitch;
+		case '0':
+			/*
+			 * ``Note that 0 is taken as a flag, not as the
+			 * beginning of a field width.''
+			 *	-- ANSI X3J11
+			 */
+			flags |= ZEROPAD;
+			goto rflag;
 		case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			for (width = 0;; ++fmt) {
-				width = width * 10 + ch - '0';
-				ch = *fmt;
-				if (ch < '0' || ch > '9')
-					break;
-			}
+			n = 0;
+			do {
+				n = 10 * n + to_digit(ch);
+				ch = *fmt++;
+			} while (is_digit(ch));
+			width = n;
 			goto reswitch;
-		case 'q':
-			lflag |= FLAG_QUAD;
-			goto reswitch;
+		case 'h':
+			flags |= SHORTINT;
+			goto rflag;
 		case 'l':
-			lflag |= FLAG_LONG;
-			goto reswitch;
-		/* case 'b': ... break; XXX */
-		case 'c':
-			*bp++ = va_arg(ap, int);
-			break;
-		/* case 'r': ... break; XXX */
-		case 's':
-			p = va_arg(ap, char *);
-			while ((*bp++ = *p++) != 0)
-				continue;
-			--bp;
-			break;
-		case 'd':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, int64_t);
-			else
-			  ul = lflag & FLAG_LONG ?
-			       va_arg(ap, long) : va_arg(ap, int);
-			if ((int64_t)ul < 0) {
-				*bp++ = '-';
-				ul = -(int64_t)ul;
+			if (*fmt == 'l') {
+				fmt++;
+				flags |= QUADINT;
+			} else {
+				flags |= LONGINT;
 			}
-			base = 10;
-			goto number;
+			goto rflag;
+		case 'q':
+			flags |= QUADINT;
+			goto rflag;
+		case 'c':
+			*(cp = buf) = va_arg(ap, int);
+			size = 1;
+			sign = '\0';
 			break;
-		case 'o':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, u_int64_t);
-			else
-			  ul = lflag & FLAG_LONG ?
-			       va_arg(ap, u_long) : va_arg(ap, u_int);
-			base = 8;
+		case 'D':
+			flags |= LONGINT;
+			/*FALLTHROUGH*/
+		case 'd':
+		case 'i':
+			_uquad = SARG();
+			if ((quad_t)_uquad < 0) {
+				_uquad = -_uquad;
+				sign = '-';
+			}
+			base = DEC;
 			goto number;
-			break;
-		case 'u':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, u_int64_t);
-			else
-			  ul = lflag & FLAG_LONG ?
-			       va_arg(ap, u_long) : va_arg(ap, u_int);
-			base = 10;
-			goto number;
-			break;
-		case 'p':
-			*bp++ = '0';
-			*bp++ = 'x';
-			ul = (u_long)va_arg(ap, void *);
-			base = 16;
-			goto number;
-		case 'x':
-			if (lflag & FLAG_QUAD)
-			  ul = va_arg(ap, u_int64_t);
-			else
-			  ul = lflag & FLAG_LONG ?
-			       va_arg(ap, u_long) : va_arg(ap, u_int);
-			base = 16;
-number:			p = ksprintn(ul, base, &tmp);
-			if (width && (width -= tmp) > 0)
-				while (width--)
-					*bp++ = padc;
-			while ((ch = *p--) != 0)
-				*bp++ = ch;
-			break;
-		default:
-			*bp++ = '%';
-			if (lflag & FLAG_QUAD)
-				*bp++ = 'q';
-			if (lflag & FLAG_LONG)
-				*bp++ = 'l';
-			/* FALLTHROUGH */
-		case '%':
-			*bp++ = ch;
-		}
-	}
-}
+		case 'n':
+#ifdef DDB
+		/* XXX: non-standard '%n' format */
+		/*
+		 * XXX: HACK!   DDB wants '%n' to be a '%u' printed
+		 * in db_radix format.   this should die since '%n'
+		 * is already defined in standard printf to write
+		 * the number of chars printed so far to the arg (which
+		 * should be a pointer.
+		 */
+			if (oflags & TODDB) {
+				if (db_radix == 16)
+					ch = 'x';	/* convert to %x */
+				else if (db_radix == 8)
+					ch = 'o';	/* convert to %o */
+				else
+					ch = 'u';	/* convert to %u */
 
-int
-#ifdef __STDC__
-sprintf(char *buf, const char *cfmt, ...)
-#else
-sprintf(buf, cfmt, va_alist)
-	char *buf, *cfmt;
-	va_dcl
+				/* ... and start again */
+				goto reswitch;
+			}
+
 #endif
-{
-	va_list ap;
-	int ret;
+			if (flags & QUADINT)
+				*va_arg(ap, quad_t *) = ret;
+			else if (flags & LONGINT)
+				*va_arg(ap, long *) = ret;
+			else if (flags & SHORTINT)
+				*va_arg(ap, short *) = ret;
+			else
+				*va_arg(ap, int *) = ret;
+			continue;	/* no output */
+		case 'O':
+			flags |= LONGINT;
+			/*FALLTHROUGH*/
+		case 'o':
+			_uquad = UARG();
+			base = OCT;
+			goto nosign;
+		case 'p':
+			/*
+			 * ``The argument shall be a pointer to void.  The
+			 * value of the pointer is converted to a sequence
+			 * of printable characters, in an implementation-
+			 * defined manner.''
+			 *	-- ANSI X3J11
+			 */
+			/* NOSTRICT */
+			_uquad = (u_long)va_arg(ap, void *);
+			base = HEX;
+			xdigs = "0123456789abcdef";
+			flags |= HEXPREFIX;
+			ch = 'x';
+			goto nosign;
+		case 's':
+			if ((cp = va_arg(ap, char *)) == NULL)
+				cp = "(null)";
+			if (prec >= 0) {
+				/*
+				 * can't use strlen; can only look for the
+				 * NUL in the first `prec' characters, and
+				 * strlen() will go further.
+				 */
+				char *p = memchr(cp, 0, prec);
 
-	va_start(ap, cfmt);
-	ret = vsprintf(buf, cfmt, ap);
-	va_end(ap);
-	return(ret);
-}
+				if (p != NULL) {
+					size = p - cp;
+					if (size > prec)
+						size = prec;
+				} else
+					size = prec;
+			} else
+				size = strlen(cp);
+			sign = '\0';
+			break;
+		case 'U':
+			flags |= LONGINT;
+			/*FALLTHROUGH*/
+		case 'u':
+			_uquad = UARG();
+			base = DEC;
+			goto nosign;
+		case 'X':
+			xdigs = "0123456789ABCDEF";
+			goto hex;
+		case 'x':
+			xdigs = "0123456789abcdef";
+hex:			_uquad = UARG();
+			base = HEX;
+			/* leading 0x/X only if non-zero */
+			if (flags & ALT && _uquad != 0)
+				flags |= HEXPREFIX;
 
-/*
- * Put a number (base <= 16) in a buffer in reverse order; return an
- * optional length and a pointer to the NULL terminated (preceded?)
- * buffer.
- */
-static char *
-ksprintn(ul, base, lenp)
-	register u_long ul;
-	register int base, *lenp;
-{					/* A long in base 8, plus NULL. */
-	static char buf[sizeof(long) * NBBY / 3 + 2];
-	register char *p;
+			/* unsigned conversions */
+nosign:			sign = '\0';
+			/*
+			 * ``... diouXx conversions ... if a precision is
+			 * specified, the 0 flag will be ignored.''
+			 *	-- ANSI X3J11
+			 */
+number:			if ((dprec = prec) >= 0)
+				flags &= ~ZEROPAD;
 
-	p = buf;
-	do {
-		*++p = "0123456789abcdef"[ul % base];
-	} while (ul /= base);
-	if (lenp)
-		*lenp = p - buf;
-	return (p);
+			/*
+			 * ``The result of converting a zero value with an
+			 * explicit precision of zero is no characters.''
+			 *	-- ANSI X3J11
+			 */
+			cp = buf + KPRINTF_BUFSIZE;
+			if (_uquad != 0 || prec != 0) {
+				/*
+				 * Unsigned mod is hard, and unsigned mod
+				 * by a constant is easier than that by
+				 * a variable; hence this switch.
+				 */
+				switch (base) {
+				case OCT:
+					do {
+						*--cp = to_char(_uquad & 7);
+						_uquad >>= 3;
+					} while (_uquad);
+					/* handle octal leading 0 */
+					if (flags & ALT && *cp != '0')
+						*--cp = '0';
+					break;
+
+				case DEC:
+					/* many numbers are 1 digit */
+					while (_uquad >= 10) {
+						*--cp = to_char(_uquad % 10);
+						_uquad /= 10;
+					}
+					*--cp = to_char(_uquad);
+					break;
+
+				case HEX:
+					do {
+						*--cp = xdigs[_uquad & 15];
+						_uquad >>= 4;
+					} while (_uquad);
+					break;
+
+				default:
+					cp = "bug in kprintf: bad base";
+					size = strlen(cp);
+					goto skipsize;
+				}
+			}
+			size = buf + KPRINTF_BUFSIZE - cp;
+		skipsize:
+			break;
+		default:	/* "%?" prints ?, unless ? is NUL */
+#ifdef DDB
+		default_case:	/* DDB */
+#endif
+			if (ch == '\0')
+				goto done;
+			/* pretend it was %c with argument ch */
+			cp = buf;
+			*cp = ch;
+			size = 1;
+			sign = '\0';
+			break;
+		}
+
+		/*
+		 * All reasonable formats wind up here.  At this point, `cp'
+		 * points to a string which (if not flags&LADJUST) should be
+		 * padded out to `width' places.  If flags&ZEROPAD, it should
+		 * first be prefixed by any sign or other prefix; otherwise,
+		 * it should be blank padded before the prefix is emitted.
+		 * After any left-hand padding and prefixing, emit zeroes
+		 * required by a decimal [diouxX] precision, then print the
+		 * string proper, then emit zeroes required by any leftover
+		 * floating precision; finally, if LADJUST, pad with blanks.
+		 *
+		 * Compute actual size, so we know how much to pad.
+		 * size excludes decimal prec; realsz includes it.
+		 */
+		realsz = dprec > size ? dprec : size;
+		if (sign)
+			realsz++;
+		else if (flags & HEXPREFIX)
+			realsz+= 2;
+
+		/* right-adjusting blank padding */
+		if ((flags & (LADJUST|ZEROPAD)) == 0) {
+			n = width - realsz;
+			while (n-- > 0)
+				KPRINTF_PUTCHAR(' ');
+		}
+
+		/* prefix */
+		if (sign) {
+			KPRINTF_PUTCHAR(sign);
+		} else if (flags & HEXPREFIX) {
+			KPRINTF_PUTCHAR('0');
+			KPRINTF_PUTCHAR(ch);
+		}
+
+		/* right-adjusting zero padding */
+		if ((flags & (LADJUST|ZEROPAD)) == ZEROPAD) {
+			n = width - realsz;
+			while (n-- > 0)
+				KPRINTF_PUTCHAR('0');
+		}
+
+		/* leading zeroes from decimal precision */
+		n = dprec - size;
+		while (n-- > 0)
+			KPRINTF_PUTCHAR('0');
+
+		/* the string or number proper */
+		while (size--)
+			KPRINTF_PUTCHAR(*cp++);
+		/* left-adjusting padding (always blank) */
+		if (flags & LADJUST) {
+			n = width - realsz;
+			while (n-- > 0)
+				KPRINTF_PUTCHAR(' ');
+		}
+
+		/* finally, adjust ret */
+		ret += width > realsz ? width : realsz;
+
+	}
+done:
+	return (ret);
+	/* NOTREACHED */
 }
