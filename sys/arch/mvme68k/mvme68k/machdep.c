@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.73 2003/01/04 17:21:31 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.74 2003/01/04 17:41:17 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1191,52 +1191,6 @@ memsize162()
 	}
 }
 #endif
-
-int
-memsize()
-{
-	volatile unsigned int *look;
-	unsigned int *max;
-	extern char *end;
-#define MAXPHYSMEM (unsigned long)0x10000000 	/* max physical memory */
-#define PATTERN   0x5a5a5a5a
-#define STRIDE    (4*1024) 	/* 4k at a time */
-#define Roundup(value, stride) (((unsigned)(value) + (stride) - 1) & ~((stride)-1))
-	/* 
-	 * Put machine specific exception vectors in place.
-	 */
-	initvectors();
-	/*
-	 * count it up.
-	 */
-	max = (void *)MAXPHYSMEM;
-	for (look = (void *)Roundup(end, STRIDE); look < max;
-		 look = (int *)((unsigned)look + STRIDE)) {
-		unsigned save;
-
-		if (badvaddr((vaddr_t)look, 2)) {
-#if defined(DEBUG)
-			printf("%x\n", look);
-#endif
-			look = (int *)((int)look - STRIDE);
-			break;
-		}
-
-		/*
-		 * If we write a value, we expect to read the same value back.
-		 * We'll do this twice, the 2nd time with the opposite bit
-		 * pattern from the first, to make sure we check all bits.
-		 */
-		save = *look;
-		if (*look = PATTERN, *look != PATTERN)
-			break;
-		if (*look = ~PATTERN, *look != ~PATTERN)
-			break;
-		*look = save;
-	}
-	physmem = btoc(trunc_page((unsigned)look)); /* in pages */
-	return (trunc_page((unsigned)look));
-}
 
 /*
  * Boot console routines: 
