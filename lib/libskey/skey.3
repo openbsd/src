@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.3,v 1.5 2002/05/17 15:51:06 millert Exp $
+.\" $OpenBSD: skey.3,v 1.6 2002/05/24 21:32:40 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -306,7 +306,8 @@ The
 function stores the (potentially fake) S/Key challenge for
 .Fa user
 in
-.Fa buf .
+.Fa buf ,
+which is at least SKEY_MAX_CHALLENGE bytes long.
 It also fills in the skey struct
 .Fa rec
 and locks the user's record in the S/Key database.
