@@ -1,4 +1,4 @@
-.\" $OpenBSD: inb.2,v 1.4 2003/05/30 10:21:31 jmc Exp $
+.\" $OpenBSD: inb.2,v 1.5 2003/08/08 07:50:09 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Matthieu Herrb
 .\" All rights reserved.
@@ -121,6 +121,10 @@ The
 .Fn write*
 functions write data to the device memory previously mapped by
 .Fn map_memory .
+.Pp
+.Sy Note :
+Code using these functions must be compiled using
+.Fl lalpha .
 .\" .Sh EXAMPLES
 .\" TBW
 .Sh HISTORY
