@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1996/08/10 04:18:48 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1996/08/21 03:12:17 downsj Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
@@ -37,7 +37,7 @@ MAN+=	abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 bsearch.3 \
 	random.3 realpath.3 strtod.3 strtol.3 strtoul.3 system.3
 
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
-MLINKS+=malloc.3 free.3 malloc.3 realloc.3
+MLINKS+=malloc.3 free.3 malloc.3 realloc.3 cfree.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=rand.3 srand.3
 MLINKS+=random.3 initstate.3 random.3 setstate.3 random.3 srandom.3
