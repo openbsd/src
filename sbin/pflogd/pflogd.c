@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.10 2002/01/21 07:46:09 dhartmei Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.11 2002/05/08 17:28:34 jasoni Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -154,9 +154,9 @@ init_pcap(void)
 
 	if (filter) {
 		if (pcap_compile(hpcap, &bprog, filter, PCAP_OPT_FIL, 0) < 0)
-			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
+			logmsg(LOG_WARNING, "%s\n", pcap_geterr(hpcap));
 		else if (pcap_setfilter(hpcap, &bprog) < 0)
-			logmsg(LOG_WARNING, "%s", pcap_geterr(hpcap));
+			logmsg(LOG_WARNING, "%s\n", pcap_geterr(hpcap));
 	}
 
 	if (pcap_datalink(hpcap) != DLT_PFLOG) {
