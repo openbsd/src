@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.113 2000/06/25 16:04:03 naddy Exp $
+#	$OpenBSD: Makefile,v 1.114 2000/07/18 18:46:05 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -59,7 +59,7 @@ distribution-etc-root-var: distrib-dirs
 	cat sysctl.conf etc.${MACHINE}/sysctl.conf > ${DESTDIR}/etc/sysctl.conf && \
 	    chown ${BINOWN} ${DESTDIR}/etc/sysctl.conf && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/sysctl.conf && \
-	    chmod 644 ${DESTDIR}/etc/ttys
+	    chmod 644 ${DESTDIR}/etc/sysctl.conf
 	cat fbtab.head etc.${MACHINE}/fbtab fbtab.tail > ${DESTDIR}/etc/fbtab && \
 	    chown ${BINOWN} ${DESTDIR}/etc/fbtab && \
 	    chgrp ${BINGRP} ${DESTDIR}/etc/fbtab && \
