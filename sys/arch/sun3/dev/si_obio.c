@@ -1,4 +1,4 @@
-/*	$OpenBSD: si_obio.c,v 1.8 1997/09/11 16:09:59 kstailey Exp $	*/
+/*	$OpenBSD: si_obio.c,v 1.9 2000/06/06 20:51:41 miod Exp $	*/
 /*	$NetBSD: si_obio.c,v 1.7 1996/11/20 18:57:00 gwr Exp $	*/
 
 /*-
@@ -98,6 +98,10 @@
 #include <machine/autoconf.h>
 #include <machine/obio.h>
 #include <machine/dvma.h>
+
+#ifndef DDB
+#define Debugger()
+#endif
 
 #define DEBUG XXX
 
