@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.35 1997/09/24 22:42:59 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.36 1997/10/07 08:56:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -229,13 +229,13 @@ biosopen(struct open_file *f, ...)
 		return ENXIO;
 	}
 
-	BIOS_vars.bios_dev = bd->biosdev;
 	bd->dinfo = biosdinfo(bd->biosdev);
 	if (!bd->dinfo)
 		bd->dinfo = 0x01014f12; /* fake geometry */
 	/* pass c: geometry for floppy */
 	BIOS_vars.bios_geometry = (bd->biosdev & 0x80)? bd->dinfo
 		: biosdinfo(0x80);
+	BIOS_vars.bios_dev = (bd->biosdev & 0x80)? bd->biosdev : 0x80;
 		
 	/* maj is fixed later w/ disklabel read */
 	bootdev = bd->bsddev = MAKEBOOTDEV(maj, 0, 0, unit, part);

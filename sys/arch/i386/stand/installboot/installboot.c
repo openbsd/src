@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.17 1997/10/03 21:36:07 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.18 1997/10/07 08:56:18 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -144,7 +144,7 @@ main(argc, argv)
 	if ((nheads == -1 || nsectors == -1) &&
 	    sysctl(mib, 3, &biosdev, &size, NULL, 0) != -1) {
 
-		if (biosdev == 0 || (biosdev & 0x80)) {
+		if (biosdev & 0x80) {
 			u_int geo;
 
 			mib[2] = BIOS_GEOMETRY;
@@ -431,7 +431,8 @@ loadblocknums(boot, devfd, dl)
 		fprintf(stderr, "Will load %d blocks of size %d each.\n",
 			ndb, fs->fs_bsize);
 
-	if (dl->d_type != 0 && dl->d_type < DTYPE_FLOPPY) {
+	if (dl->d_type != 0 && dl->d_type != DTYPE_FLOPPY &&
+	    dl->d_type != DTYPE_VND ) {
 		/* adjust disklabel w/ synthetic geometry */
 		dl->d_nsectors = nsectors;
 		dl->d_secpercyl = dl->d_nsectors * nheads;
