@@ -1,4 +1,4 @@
-.\" $OpenBSD: authpf.8,v 1.18 2002/10/25 18:34:53 camield Exp $
+.\" $OpenBSD: authpf.8,v 1.19 2002/12/22 14:19:30 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -73,11 +73,32 @@ environment variable and, after performing additional access checks,
 reads a template file to determine what filter and translation (if
 any) rules to add.
 On session exit the same rules that were added at startup are removed.
-By default, filter rules are added at the end of the active
+.Pp
+Each
+.Nm
+process stores its rules in a separate ruleset inside a
 .Xr pf 4
-filter list, and translation rules are added at the start of the active
-.Xr pf 4
-nat and rdr lists.
+.Pa anchor
+shared by all
+.Nm
+processes.
+By default, the
+.Pa anchor
+name "authpf" is used, and the ruleset names equal the PIDs of the
+.Nm
+processes.
+The following rules need to be added to the main ruleset
+.Pa /etc/pf.conf
+in order to cause evaluation of any
+.Nm
+rules:
+.Bd -literal
+nat-anchor authpf
+rdr-anchor authpf
+binat-anchor authpf
+anchor authpf
+.Ed
+.Pp
 .Sh FILTER AND TRANSLATION RULES
 Filter and translation rules for
 .Nm
@@ -120,24 +141,17 @@ file is optional.
 Options are controlled by the
 .Pa /etc/authpf/authpf.conf
 file.
-This file is required to be present and readable for
-.Nm
-to run.
-It may be empty if the default behavior does not need to be changed.
+If the file is empty or does not exist, defaults are used for all
+configuration options.
 The file consists of pairs of the form
 .Li name=value
 one per line.
 Currently, the allowed values are as follows:
 .Bl -tag -width Ds
-.It rule_action=[head|tail]
-controls where filter rules are added, the default behavior is "tail"
-meaning filter rules are added to the end of the active filter list.
-.It Dv nat_action=[head|tail]
-controls where nat rules are added, the default behavior is "head"
-meaning filter rules are added to the start of the active nat list.
-.It Dv rdr_action=[head|tail]
-controls where rdr rules are added, the default behavior is "head"
-meaning filter rules are added to the start of the active rdr list.
+.It anchor=name
+Use the specified
+.Pa anchor
+name instead of "authpf".
 .El
 .Sh USER MESSAGES
 On successful invocation,
@@ -371,11 +385,15 @@ Example
 # ssh and use us as a dns server.
 internal_if="fxp1"
 gateway_addr="10.0.1.1"
+nat-anchor authpf
+rdr-anchor authpf
+binat-anchor authpf
 block in on $internal_if from any to any
 pass in quick on $internal_if proto tcp from any to $gateway_addr \\
  port = ssh
 pass in quick on $internal_if proto udp from any to $gateway_addr \\
  port = domain
+anchor authpf
 .Ed
 .Pp
 Example
