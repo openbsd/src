@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2002/03/19 23:08:55 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.66 2002/03/19 23:16:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1159,6 +1159,8 @@ pmap_kenter_pa(va, pa, prot)
 	DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_kenter_pa(%x, %x, %x)\n", va, pa, prot));
 
+	simple_lock(&pmap->pm_obj.vmobjlock);
+
 	if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va)) &&
 	    !(pde = pmap_pde_alloc(pmap_kernel(), va, NULL)))
 		panic("pmap_kenter_pa: cannot allocate pde");
@@ -1168,8 +1170,12 @@ pmap_kenter_pa(va, pa, prot)
 		    va, pde, pte);
 #endif
 
-	pte = pa | PTE_PROT(TLB_UNCACHABLE|TLB_WIRED|TLB_DIRTY|pmap_prot(pmap_kernel(), prot));
+	pte = pa | PTE_PROT(TLB_WIRED|TLB_DIRTY|pmap_prot(pmap_kernel(), prot));
+	/* if (pa >= HPPA_IOSPACE) */
+		pte |= TLB_UNCACHABLE;
 	pmap_pte_set(pde, va, pte);
+
+	simple_unlock(&pmap->pm_obj.vmobjlock);
 
 	DPRINTF(PDB_FOLLOW|PDB_ENTER, ("pmap_kenter_pa: leaving\n"));
 }
@@ -1184,6 +1190,8 @@ pmap_kremove(va, size)
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 	    ("pmap_kremove(%x, %x)\n", va, size));
+
+	simple_lock(&pmap->pm_obj.vmobjlock);
 
 	for (pdemask = va + 1; va < eva; va += PAGE_SIZE) {
 		if (pdemask != (va & PDE_MASK)) {
@@ -1208,6 +1216,8 @@ pmap_kremove(va, size)
 
 		pmap_pte_set(pde, va, 0);
 	}
+
+	simple_unlock(&pmap->pm_obj.vmobjlock);
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE, ("pmap_kremove: leaving\n"));
 }
