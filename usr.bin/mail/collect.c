@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.26 2003/10/24 20:32:06 avsm Exp $	*/
+/*	$OpenBSD: collect.c,v 1.27 2004/01/03 20:06:59 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: collect.c,v 1.26 2003/10/24 20:32:06 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: collect.c,v 1.27 2004/01/03 20:06:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -428,7 +428,7 @@ exwrite(char *name, FILE *fp, int f)
 		}
 	}
 	(void)Fclose(of);
-	printf("%d/%d\n", lc, cc);
+	printf("%lld/%lld\n", (long long)lc, (long long)cc);
 	fflush(stdout);
 	return(0);
 }
