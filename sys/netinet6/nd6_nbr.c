@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.7 2000/01/08 05:28:08 deraadt Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.8 2000/02/07 06:04:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -50,10 +50,10 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #include <net/net_osdep.h>
 
@@ -313,13 +313,33 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	struct in6_ifaddr *ia = NULL;
 	struct ip6_moptions im6o;
 	int icmp6len;
+	int maxlen;
 	caddr_t mac;
 	struct ifnet *outif = NULL;
 	
 	if (IN6_IS_ADDR_MULTICAST(taddr6))
 		return;
 
-	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
+	/* estimate the size of message */
+	maxlen = sizeof(*ip6) + sizeof(*nd_ns);
+	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
+	if (max_linkhdr + maxlen >= MCLBYTES) {
+#ifdef DIAGNOSTIC
+		printf("nd6_ns_output: max_linkhdr + maxlen >= MCLBYTES "
+		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
+#endif
+		return;
+	}
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m && max_linkhdr + maxlen >= MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			m = NULL;
+		}
+	}
+	if (m == NULL)
 		return;
 
 	if (daddr6 == NULL || IN6_IS_ADDR_MULTICAST(daddr6)) {
@@ -331,7 +351,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 
 	icmp6len = sizeof(*nd_ns);
 	m->m_pkthdr.len = m->m_len = sizeof(*ip6) + icmp6len;
-	MH_ALIGN(m, m->m_len + 16); /* 1+1+6 is enought. but just in case */
+	m->m_data += max_linkhdr;	/*or MH_ALIGN() equivalent?*/
 
 	/* fill neighbor solicitation packet */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -727,10 +747,30 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr)
 	struct in6_ifaddr *ia = NULL;
 	struct ip6_moptions im6o;
 	int icmp6len;
+	int maxlen;
 	caddr_t mac;
 	struct ifnet *outif = NULL;
-	
-	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
+
+	/* estimate the size of message */
+	maxlen = sizeof(*ip6) + sizeof(*nd_na);
+	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
+	if (max_linkhdr + maxlen >= MCLBYTES) {
+#ifdef DIAGNOSTIC
+		printf("nd6_na_output: max_linkhdr + maxlen >= MCLBYTES "
+		    "(%d + %d > %d)\n", max_linkhdr, maxlen, MCLBYTES);
+#endif
+		return;
+	}
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m && max_linkhdr + maxlen >= MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			m = NULL;
+		}
+	}
+	if (m == NULL)
 		return;
 
 	if (IN6_IS_ADDR_MULTICAST(daddr6)) {
@@ -742,7 +782,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr)
 
 	icmp6len = sizeof(*nd_na);
 	m->m_pkthdr.len = m->m_len = sizeof(struct ip6_hdr) + icmp6len;
-	MH_ALIGN(m, m->m_len + 16); /* 1+1+6 is enough. but just in case */
+	m->m_data += max_linkhdr;	/*or MH_ALIGN() equivalent?*/
 
 	/* fill neighbor advertisement packet */
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -880,7 +920,8 @@ nd6_dad_start(ifa, tick)
 	 * - the interface address is anycast
 	 */
 	if (!(ia->ia6_flags & IN6_IFF_TENTATIVE)) {
-		printf("nd6_dad_start: called with non-tentative address "
+		log(LOG_DEBUG,
+			"nd6_dad_start: called with non-tentative address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
@@ -905,7 +946,7 @@ nd6_dad_start(ifa, tick)
 
 	dp = malloc(sizeof(*dp), M_IP6NDP, M_NOWAIT);
 	if (dp == NULL) {
-		printf("nd6_dad_start: memory allocation failed for "
+		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
@@ -915,8 +956,7 @@ nd6_dad_start(ifa, tick)
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 #ifdef DEBUG
-	/* XXXJRT This is probably a purely debugging message. */
-	printf("%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
+	log(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
 	    ip6_sprintf(&ia->ia_addr.sin6_addr));
 #endif
 
@@ -960,23 +1000,23 @@ nd6_dad_timer(ifa)
 
 	/* Sanity check */
 	if (ia == NULL) {
-		printf("nd6_dad_timer: called with null parameter\n");
+		log(LOG_ERR, "nd6_dad_timer: called with null parameter\n");
 		goto done;
 	}
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
-		printf("nd6_dad_timer: DAD structure not found\n");
+		log(LOG_ERR, "nd6_dad_timer: DAD structure not found\n");
 		goto done;
 	}
 	if (ia->ia6_flags & IN6_IFF_DUPLICATED) {
-		printf("nd6_dad_timer: called with duplicated address "
+		log(LOG_ERR, "nd6_dad_timer: called with duplicated address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
 		goto done;
 	}
 	if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0) {
-		printf("nd6_dad_timer: called with non-tentative address "
+		log(LOG_ERR, "nd6_dad_timer: called with non-tentative address "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
 			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
@@ -985,13 +1025,13 @@ nd6_dad_timer(ifa)
 
 	/* timeouted with IFF_{RUNNING,UP} check */
 	if (dp->dad_ns_tcount > dad_maxtry) {
-		printf("%s: could not run DAD, driver problem?\n",
+		log(LOG_ERR, "%s: could not run DAD, driver problem?\n",
 		    if_name(ifa->ifa_ifp));
 
 		TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 		free(dp, M_IP6NDP);
 		dp = NULL;
-		ifa->ifa_refcnt--;
+		IFAFREE(ifa);
 		goto done;
 	}
 
@@ -1062,8 +1102,7 @@ nd6_dad_timer(ifa)
 			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
 #ifdef DEBUG
-			/* XXXJRT This is probably a purely debugging message */
-			printf("%s: DAD complete for %s - no duplicates "
+			log(LOG_INFO, "%s: DAD complete for %s - no duplicates "
 			    "found\n", if_name(ifa->ifa_ifp),
 			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 #endif
@@ -1071,7 +1110,7 @@ nd6_dad_timer(ifa)
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 			free(dp, M_IP6NDP);
 			dp = NULL;
-			ifa->ifa_refcnt--;
+			IFAFREE(ifa);
 		}
 	}
 
@@ -1088,7 +1127,7 @@ nd6_dad_duplicated(ifa)
 
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
-		printf("nd6_dad_duplicated: DAD structure not found\n");
+		log(LOG_ERR, "nd6_dad_duplicated: DAD structure not found\n");
 		return;
 	}
 
@@ -1103,14 +1142,15 @@ nd6_dad_duplicated(ifa)
 	/* We are done with DAD, with duplicated address found. (failure) */
 	untimeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa);
 
-	printf("%s: DAD complete for %s - duplicate found\n",
+	log(LOG_ERR, "%s: DAD complete for %s - duplicate found\n",
 	    if_name(ifa->ifa_ifp), ip6_sprintf(&ia->ia_addr.sin6_addr));
-	printf("%s: manual intervention required\n", if_name(ifa->ifa_ifp));
+	log(LOG_ERR, "%s: manual intervention required\n",
+	    if_name(ifa->ifa_ifp));
 
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
-	ifa->ifa_refcnt--;
+	IFAFREE(ifa);
 }
 
 static void
