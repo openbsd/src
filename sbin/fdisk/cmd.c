@@ -1,5 +1,4 @@
-
-/* $OpenBSD: cmd.c,v 1.1 1997/09/29 22:58:14 weingart Exp $ */
+/*	$OpenBSD: cmd.c,v 1.2 1997/09/29 23:33:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner

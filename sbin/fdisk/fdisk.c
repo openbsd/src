@@ -1,5 +1,4 @@
-
-/* $OpenBSD: fdisk.c,v 1.22 1997/09/29 23:16:59 mickey Exp $ */
+/*	$OpenBSD: fdisk.c,v 1.23 1997/09/29 23:33:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
