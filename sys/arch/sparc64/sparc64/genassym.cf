@@ -77,7 +77,6 @@
 include <sys/param.h>
 include <sys/buf.h>
 include <sys/proc.h>
-include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>
 include <sys/syscall.h>
