@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.5 2002/02/14 04:58:36 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.6 2002/05/21 01:41:56 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -28,7 +28,6 @@
 #		Tries to make the ``standard'' number of each type.
 #	std	standard devices
 #	fd	makes fd/* for the fdescfs.
-#	local	configuration specific devices
 #	ramdisk	makes all devices for a ramdisk kernel
 #
 # Tapes:
@@ -165,7 +164,6 @@ all)
 	sh $this pci
 	sh $this lkm xfs0 altq
 	sh $this usbs
-	sh $this local
 	;;
 
 ramdisk)
@@ -646,11 +644,6 @@ altq)
 		chmod 644 altq/$dev
 		unit=$(($unit + 1))
 	done
-	;;
-
-local)
-	umask 0
-	test -s MAKEDEV.local && sh $this.local
 	;;
 
 *)
