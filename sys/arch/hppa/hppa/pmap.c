@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.7 1998/12/08 19:49:38 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.8 1998/12/30 02:11:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -178,10 +178,12 @@ struct {
 #define	PDB_PARANOIA	0x00002000
 #define	PDB_WIRING	0x00004000
 #define	PDB_PVDUMP	0x00008000
+#define	PDB_STEAL	0x00010000
 int pmapdebug =
 	  PDB_FOLLOW
 	| PDB_INIT
 /*	| PDB_ENTER */
+	| PDB_STEAL
 	;
 #endif
 
@@ -776,8 +778,9 @@ pmap_bootstrap(vstart, vend)
 			panic("pmap_bootstrap: cannot block map I/O space");
 	}
 
-	vm_page_physload(atop(virtual_avail), totalphysmem,
-			 atop(virtual_avail), totalphysmem);
+	i = atop(virtual_avail - virtual_steal);
+	vm_page_physload(atop(virtual_avail), totalphysmem + i,
+			 atop(virtual_avail), totalphysmem + i);
 	/* we have only one initial phys memory segment */
 	vm_physmem[0].pmseg.pvent = (struct pv_entry *)addr;
 	virtual_steal = addr += size;
@@ -805,11 +808,16 @@ pmap_steal_memory(size, startp, endp)
 	size = hppa_round_page(size);
 	if (size <= virtual_avail - virtual_steal) {
 #ifdef PMAPDEBUG
-		printf("pmap_steal_memory: steal %d bytes (%x+%x,%x)\n",
-		       size, virtual_steal, size, virtual_avail);
+		if (pmapdebug & PDB_STEAL)
+			printf("pmap_steal_memory: steal %d bytes (%x+%x,%x)\n",
+			       size, virtual_steal, size, virtual_avail);
 #endif
 		va = virtual_steal;
 		virtual_steal += size;
+
+		/* make seg0 smaller (reduce fake top border) */
+		vm_physmem[0].end -= atop(size);
+		vm_physmem[0].avail_end -= atop(size);
 	} else
 		va = NULL;
 
@@ -832,21 +840,25 @@ pmap_init(void)
 	register struct pv_page *pvp;
 
 #ifdef PMAPDEBUG
+	int opmapdebug = pmapdebug;
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_init()\n");
-/*	pmapdebug |= PDB_VA | PDB_PV; */
+	pmapdebug = 0;
 #endif
 
-	/* alloc the rest of steal area for pv_pages */
-	for (pvp = (struct pv_page *)virtual_steal;
-	     pvp + 1 <= (struct pv_page *)virtual_avail; pvp++)
-		pmap_insert_pvp(pvp, 1);
+	/* allocate the rest of the steal area for pv_pages */
 #ifdef PMAPDEBUG
-	printf("pmap_init: allocate %d pv_pages @ %x\n",
+	printf("pmap_init: %d pv_pages @ %x allocated\n",
 	       (virtual_avail - virtual_steal) / sizeof(struct pv_page),
 	       virtual_steal);
 #endif
-	virtual_steal = virtual_avail;
+	while ((pvp = (struct pv_page *)pmap_steal_memory(
+			sizeof(*pvp), NULL, NULL)))
+		pmap_insert_pvp(pvp, 1);
+
+#ifdef PMAPDEBUG
+	pmapdebug = opmapdebug /* | PDB_VA | PDB_PV */;
+#endif
 
 #if FORCE_MAP_KERNEL
 	end_text = round_page((vm_offset_t)&etext);
