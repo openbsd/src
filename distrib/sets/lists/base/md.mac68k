@@ -8,7 +8,7 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.4/2.8.1/include
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.4/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.20.2
+./usr/lib/libc.so.20.3
 ./usr/lib/libcurses.so.5.0
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
