@@ -1,4 +1,4 @@
-/*	$OpenBSD: kerberos.c,v 1.12 1998/02/25 15:50:57 art Exp $	*/
+/*	$OpenBSD: kerberos.c,v 1.13 1998/07/13 19:57:19 art Exp $	*/
 /* $KTH: kerberos.c,v 1.70 1997/09/26 18:06:38 joda Exp $ */
 
 /*
@@ -777,10 +777,15 @@ main(int argc, char **argv)
     printf("\tLog file is %s\n", log_file);
 
     kset_logfile(log_file);
-    
-    /* find our hostname, and use it as the instance */
-    if (gethostname(k_instance, INST_SZ))
-	err (1, "gethostname");
+
+    {
+        char hostname[MAXHOSTNAMELEN];
+        /* find our hostname, and use it as the instance */
+        if (gethostname(hostname, sizeof(hostname)))
+	    err (1, "gethostname");
+	strncpy(k_instance, hostname, sizeof(k_instance) - 1);
+	k_instance[sizeof(k_instance) - 1] = '\0';
+    }
 
     make_sockets(port_spec, i_flag ? &i_addr : NULL, &fds, &nfds);
 
