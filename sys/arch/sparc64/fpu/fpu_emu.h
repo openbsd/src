@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emu.h,v 1.1 2001/09/08 22:33:51 jason Exp $	*/
+/*	$OpenBSD: fpu_emu.h,v 1.2 2001/09/10 16:00:30 jason Exp $	*/
 /*	$NetBSD: fpu_emu.h,v 1.4 2000/08/03 18:32:07 eeh Exp $ */
 
 /*
@@ -188,9 +188,12 @@ void	fpu_implode(struct fpemu *, struct fpn *, int, u_int *);
 #define	FPE_REG		0x2
 extern int fpe_debug;
 void	fpu_dumpfpn(struct fpn *);
+void	fpu_dumpstate(struct fpstate64 *);
 #define	DPRINTF(x, y)	if (fpe_debug & (x)) printf y
 #define DUMPFPN(x, f)	if (fpe_debug & (x)) fpu_dumpfpn((f))
+#define	DUMPSTATE(x, s)	if (fpe_debug & (x)) fpu_dumpstate((s))
 #else
 #define	DPRINTF(x, y)
 #define DUMPFPN(x, f)
+#define	DUMPSTATE(x, s)
 #endif
