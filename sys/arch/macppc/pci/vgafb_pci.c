@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.4 2002/03/26 16:51:43 drahn Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.5 2002/03/27 15:26:11 jason Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -104,13 +104,14 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 	*iosize   = 0x0;
 	*memsize  = 0x0;
 	*mmiosize = 0x0;
-	for (i = 0x10; i <= 0x18; i += 4) {
+	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
 #ifdef DEBUG_VGAFB
 		printf("vgafb confread %x %x\n",
 			i, pci_conf_read(pc, pa->pa_tag, i));
 #endif
 		/* need to check more than just two base addresses? */
-		if (0x1 & pci_conf_read(pc, pa->pa_tag, i) ) {
+		if (PCI_MAPREG_TYPE(pci_conf_read(pc, pa->pa_tag, i)) ==
+		    PCI_MAPREG_TYPE_IO)
 			retval = pci_io_find(pc, pa->pa_tag, i,
 				&addr, &size);
 			if (retval) {
