@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.12 2000/12/31 18:18:56 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.13 2001/01/09 03:09:10 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -121,10 +121,11 @@ va_dcl
     }
 
     /*
-     * Remove the outer IP header, make sure there's at least an
-     * ethernet header's worth of data in there. 
+     * Make sure there's at least an ethernet header's plus one byte
+     * (EtherIP header) worth of data after the outer IP header.
      */
-    if (m->m_pkthdr.len < iphlen + sizeof(struct ether_header))
+    if (m->m_pkthdr.len < iphlen + sizeof(struct ether_header) +
+	sizeof(u_int8_t))
     {
 	DPRINTF(("etherip_input(): encapsulated packet too short\n"));
 	etheripstat.etherip_hdrops++;
@@ -132,10 +133,33 @@ va_dcl
 	return;
     }
 
-    /* Make sure the ethernet header at least is in the first mbuf. */
-    if (m->m_len < iphlen + sizeof(struct ether_header))
+    /* Verify EtherIP version number */
+    m_copydata(m, iphlen, sizeof(u_int8_t), &v);
+    if (v != (ETHERIP_VERSION << 4))
     {
-	if ((m = m_pullup(m, iphlen + sizeof(struct ether_header))) == 0)
+	/*
+	 * Note that the other potential failure of the above check is that the
+	 * second nibble of the EtherIP header (the reserved part) is not
+	 * zero; this is also invalid protocol behaviour.
+	 */
+	if (v & 0xffff)
+	{
+	    DPRINTF(("etherip_input(): received invalid EtherIP header (reserved field non-zero\n"));
+	}
+	else
+	{
+	    DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xffff));
+	}
+	etheripstat.etherip_adrops++;
+	m_freem(m);
+	return;
+    }
+
+    /* Make sure the ethernet header at least is in the first mbuf. */
+    if (m->m_len < iphlen + sizeof(struct ether_header) + sizeof(u_int8_t))
+    {
+	if ((m = m_pullup(m, iphlen + sizeof(struct ether_header) +
+			  sizeof(u_int8_t))) == 0)
 	{
 	    DPRINTF(("etherip_input(): m_pullup() failed\n"));
 	    etheripstat.etherip_adrops++;
@@ -148,7 +172,7 @@ va_dcl
     bzero(&ssrc, sizeof(ssrc));
     bzero(&sdst, sizeof(sdst));
 
-    m_copydata(m, 0, 1, &v);
+    m_copydata(m, 0, sizeof(u_int8_t), &v);
     switch (v >> 4)
     {
 #ifdef INET
@@ -179,10 +203,10 @@ va_dcl
 	    return /* EAFNOSUPPORT */;
     }
 
-    /* Chop off the `outer' header and reschedule. */
-    m->m_len -= iphlen;
-    m->m_pkthdr.len -= iphlen;
-    m->m_data += iphlen;
+    /* Chop off the `outer' IP and EtherIP headers and reschedule. */
+    m->m_len -= (iphlen + sizeof(u_int8_t));
+    m->m_pkthdr.len -= (iphlen + sizeof(u_int8_t));
+    m->m_data += (iphlen + sizeof(u_int8_t));
 
     /* Statistics */
     etheripstat.etherip_ibytes += m->m_pkthdr.len;
@@ -261,6 +285,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #endif /* INET6 */
 
     ushort hlen;
+    u_int8_t v;
 
     /* Some address family sanity checks */
     if ((tdb->tdb_src.sa.sa_family != 0) &&
@@ -308,6 +333,9 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    m_freem(m);
 	    return EINVAL;
     }
+
+    /* Don't forget the EtherIP header */
+    hlen += sizeof(u_int8_t);
 
     /* Get enough space for a header */
     M_PREPEND(m, hlen, M_DONTWAIT);
@@ -362,6 +390,10 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    break;
 #endif /* INET6 */
     }
+
+    /* Set the version number */
+    v = (ETHERIP_VERSION << 4) & 0xffff0000;
+    m_copyback(m, hlen - sizeof(u_int8_t), sizeof(u_int8_t), &v);
 
     *mp = m;
 
