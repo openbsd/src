@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.16 2003/06/26 07:27:29 deraadt Exp $	*/
+/*	$OpenBSD: option.c,v 1.17 2003/07/02 21:04:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)option.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: option.c,v 1.16 2003/06/26 07:27:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: option.c,v 1.17 2003/07/02 21:04:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,8 @@ static char rcsid[] = "$OpenBSD: option.c,v 1.16 2003/06/26 07:27:29 deraadt Exp
 
 #include "find.h"
 #include "extern.h"
+
+int typecompare(const void *, const void *);
 
 /* NB: the following table must be sorted lexically. */
 static OPTION options[] = {
@@ -144,7 +146,6 @@ OPTION *
 option(char *name)
 {
 	OPTION tmp;
-	int typecompare(const void *, const void *);
 
 	tmp.name = name;
 	return ((OPTION *)bsearch(&tmp, options,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: colcrt.c,v 1.7 2003/06/28 15:36:35 mickey Exp $	*/
+/*	$OpenBSD: colcrt.c,v 1.8 2003/07/02 21:04:09 deraadt Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: colcrt.c,v 1.7 2003/06/28 15:36:35 mickey Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.8 2003/07/02 21:04:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: colcrt.c,v 1.7 2003/06/28 15:36:35 mickey Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <err.h>
 
 /*
  * colcrt - replaces col for crts with new nroff esp. when using tbl.
@@ -86,7 +87,7 @@ main(int argc, char *argv[])
 	int c;
 
 	argc--;
-	*argv++;
+	argv++;
 	while (argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
 			case 0:

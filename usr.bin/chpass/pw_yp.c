@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.18 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.19 2003/07/02 21:04:09 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.18 2003/06/03 02:56:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.19 2003/07/02 21:04:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.18 2003/06/03 02:56:06 millert Exp 
 #define passwd yp_passwd_rec
 #include <rpcsvc/yppasswd.h>
 #undef passwd
+#include "chpass.h"
 
 extern char *__progname;
 

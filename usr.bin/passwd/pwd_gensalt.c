@@ -1,4 +1,5 @@
-/* $OpenBSD: pwd_gensalt.c,v 1.16 2003/04/05 15:56:27 deraadt Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.17 2003/07/02 21:04:10 deraadt Exp $ */
+
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -43,6 +44,7 @@
 
 void	to64(char *, int32_t, int n);
 char	*bcrypt_gensalt(u_int8_t);
+int	pwd_gensalt(char *, int, struct passwd *, login_cap_t *, char);
 
 int
 pwd_gensalt(char *salt, int saltlen, struct passwd *pwd, login_cap_t *lc, char type)

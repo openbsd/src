@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.h,v 1.7 2003/06/25 17:28:00 millert Exp $	*/
+/*	$OpenBSD: grep.h,v 1.8 2003/07/02 21:04:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -92,6 +92,7 @@ void		 initqueue(void);
 void		 enqueue(str_t *x);
 void		 printqueue(void);
 void		 clearqueue(void);
+int		 countqueue(void);
 
 /* mmfile.c */
 typedef struct mmfile {

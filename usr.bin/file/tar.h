@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.h,v 1.3 1997/02/09 23:58:37 millert Exp $	*/
+/*	$OpenBSD: tar.h,v 1.4 2003/07/02 21:04:10 deraadt Exp $	*/
 
 /*
  * Header file for public domain tar (tape archive) program.
@@ -166,15 +166,3 @@ TAR_EXTERN struct link	*linklist;	/* Points to first link in list */
  * Error recovery stuff
  */
 TAR_EXTERN char		read_error_flag;
-
-
-/*
- * Declarations of functions available to the world.
- */
-/*LINTLIBRARY*/
-union record *findrec();
-void userec();
-union record *endofrecs();
-void anno();
-#define	 annorec(stream, msg)	anno(stream, msg, 0)	/* Cur rec */
-#define	annofile(stream, msg)	anno(stream, msg, 1)	/* Saved rec */

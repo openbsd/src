@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.21 2003/04/28 03:07:40 tedu Exp $	*/
+/*	$OpenBSD: run.c,v 1.22 2003/07/02 21:04:09 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -88,6 +88,10 @@ Cell	*jret	= &retcell;
 static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE };
 
 Node	*curnode = NULL;	/* the node being executed, for debugging */
+
+void	stdinit(void);
+void	flush_all(void);
+
 
 /* buffer memory management */
 int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,

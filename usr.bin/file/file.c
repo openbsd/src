@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2003/06/13 18:31:14 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2003/07/02 21:04:09 deraadt Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -31,7 +31,7 @@
  */
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: file.c,v 1.12 2003/06/13 18:31:14 deraadt Exp $";
+static char *moduleid = "$OpenBSD: file.c,v 1.13 2003/07/02 21:04:09 deraadt Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -94,9 +94,7 @@ static short	byteconv2(int, int, int);
  * main - parse arguments and handle options
  */
 int
-main(argc, argv)
-int argc;
-char *argv[];
+main(int argc, char *argv[])
 {
 	int c;
 	int check = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.46 2003/06/28 16:49:44 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.47 2003/07/02 21:04:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.46 2003/06/28 16:49:44 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.47 2003/07/02 21:04:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -160,8 +160,10 @@ void vtrans(struct vnode *, int, int, off_t);
 int getfname(char *);
 void pipetrans(struct pipe *, int);
 void kqueuetrans(struct kqueue *, int);
-void cryptotrans(void *, int i);
-void systracetrans(struct fsystrace *, int i);
+void cryptotrans(void *, int);
+void systracetrans(struct fsystrace *, int);
+char *getmnton(struct mount *);
+const char *inet6_addrstr(struct in6_addr *);
 
 int
 main(int argc, char *argv[])
@@ -398,7 +400,7 @@ vtrans(struct vnode *vp, int i, int flag, off_t offset)
 	struct vnode vn;
 	struct filestat fst;
 	char rw[3], mode[17];
-	char *badtype = NULL, *filename, *getmnton(struct mount *);
+	char *badtype = NULL, *filename;
 
 	filename = badtype = NULL;
 	if (!KVM_READ(vp, &vn, sizeof (struct vnode))) {

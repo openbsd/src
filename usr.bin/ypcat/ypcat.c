@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypcat.c,v 1.9 2003/06/02 04:00:16 deraadt Exp $ */
+/*	$OpenBSD: ypcat.c,v 1.10 2003/07/02 21:04:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypcat.c,v 1.9 2003/06/02 04:00:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypcat.c,v 1.10 2003/07/02 21:04:10 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -42,6 +42,9 @@ static char rcsid[] = "$OpenBSD: ypcat.c,v 1.9 2003/06/02 04:00:16 deraadt Exp $
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+
+void	usage(void);
+int	printit(u_long, char *, int, char *, int, void *);
 
 struct ypalias {
 	char *alias, *name;

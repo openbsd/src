@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.9 2003/06/02 04:00:17 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.10 2003/07/02 21:04:10 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.9 2003/06/02 04:00:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.10 2003/07/02 21:04:10 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -43,6 +43,8 @@ static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.9 2003/06/02 04:00:17 deraadt Exp
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+
+void	usage(void);
 
 struct ypalias {
 	char *alias, *name;

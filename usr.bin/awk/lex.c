@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.6 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.7 2003/07/02 21:04:09 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -96,6 +96,10 @@ Keyword keywords[] ={	/* keep sorted: binary searched */
 #else
 #define	RET(x)	return(x)
 #endif
+
+int peek(void);
+int gettok(char **, int *);
+int binsearch(char *, Keyword *, int);
 
 int peek(void)
 {

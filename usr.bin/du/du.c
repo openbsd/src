@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.14 2003/07/02 21:04:09 deraadt Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.14 2003/07/02 21:04:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,12 @@ static char rcsid[] = "$OpenBSD: du.c,v 1.13 2003/06/10 22:20:46 deraadt Exp $";
 #include <string.h>
 #include <unistd.h>
 
+typedef enum { NONE = 0, KILO, MEGA, GIGA, TERA, PETA /* , EXA */ } unit_t;
+
 int	 linkchk(FTSENT *);
 void	 prtout(quad_t, char *, int);
 void	 usage(void);
+unit_t	 unit_adjust(double *);
 
 int
 main(int argc, char *argv[])
@@ -250,8 +253,6 @@ linkchk(FTSENT *p)
  * "human-readable" output: use 3 digits max.--put unit suffixes at
  * the end.  Makes output compact and easy-to-read. 
  */
-
-typedef enum { NONE = 0, KILO, MEGA, GIGA, TERA, PETA /* , EXA */ } unit_t;
 
 unit_t
 unit_adjust(double *val)

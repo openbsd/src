@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.11 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.12 2003/07/02 21:04:09 deraadt Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.11 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.12 2003/07/02 21:04:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ static char rcsid[] = "$OpenBSD: bdes.c,v 1.11 2003/06/10 22:20:45 deraadt Exp $
 #include <string.h>
 
 typedef char Desbuf[8];
-int 	tobinhexi(char, int);
+int 	tobinhex(char, int);
 void 	cvtkey(char *, char *);
 int 	setbits(char *, int);
 void 	makekey(Desbuf);
@@ -213,7 +213,7 @@ main(int ac, char *av[])
 	/* process the argument list */
 	kflag = 0;
 	while ((i = getopt(argc, argv, "abdF:f:k:m:o:pv:")) != -1)
-		switch(i) {
+		switch (i) {
 		case 'a':		/* key is ASCII */
 			keybase = KEY_ASCII;
 			break;
@@ -281,9 +281,9 @@ main(int ac, char *av[])
 	makekey(msgbuf);
 	inverse = (alg == ALG_CBC || alg == ALG_ECB) && mode == MODE_DECRYPT;
 
-	switch(alg) {
+	switch (alg) {
 	case ALG_CBC:
-		switch(mode) {
+		switch (mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using CBC mode */
 			cbcauth();
 			break;
@@ -296,7 +296,7 @@ main(int ac, char *av[])
 		}
 		break;
 	case ALG_CFB:
-		switch(mode) {
+		switch (mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using CFB mode */
 			cfbauth();
 			break;
@@ -309,7 +309,7 @@ main(int ac, char *av[])
 		}
 		break;
 	case ALG_CFBA:
-		switch(mode) {
+		switch (mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using CFBA mode */
 			err(1, "can't authenticate with CFBA mode");
 			break;
@@ -322,7 +322,7 @@ main(int ac, char *av[])
 		}
 		break;
 	case ALG_ECB:
-		switch(mode) {
+		switch (mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using ECB mode */
 			err(1, "can't authenticate with ECB mode");
 			break;
@@ -335,7 +335,7 @@ main(int ac, char *av[])
 		}
 		break;
 	case ALG_OFB:
-		switch(mode) {
+		switch (mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using OFB mode */
 			err(1, "can't authenticate with OFB mode");
 			break;
@@ -357,7 +357,7 @@ main(int ac, char *av[])
 int
 tobinhex(char c, int radix)
 {
-	switch(c) {
+	switch (c) {
 	case '0':		return(0x0);
 	case '1':		return(0x1);
 	case '2':		return(radix > 2 ? 0x2 : -1);
@@ -393,7 +393,7 @@ cvtkey(char *obuf, char *ibuf)
 	/*
 	 * just switch on the key base
 	 */
-	switch(keybase) {
+	switch (keybase) {
 	case KEY_ASCII:			/* ASCII to integer */
 		(void)strncpy(obuf, ibuf, 8);
 		return;
