@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rresvport.c,v 1.1 1999/12/16 21:30:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rresvport.c,v 1.2 1999/12/17 19:08:52 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -82,9 +82,11 @@ rresvport_af(alport, af)
 	case AF_INET:
 		sa->sa_len = sizeof(struct sockaddr_in);
 		portp = &((struct sockaddr_in *)&sa)->sin_port;
+		break;
 	case AF_INET6:
 		sa->sa_len = sizeof(struct sockaddr_in6);
 		portp = &((struct sockaddr_in6 *)&sa)->sin6_port;
+		break;
 	default:
 		return (-1);
 	}
