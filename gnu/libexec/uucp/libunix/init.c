@@ -272,7 +272,7 @@ usysdep_initialize (puuconf,iflags)
       && geteuid () == 0)
     {
       q = getpwnam (OWNER);
-      if (q != NULL) P
+      if (q != NULL) {
 	seteuid (q->pw_uid);
 	setuid (q->pw_uid);
       }
