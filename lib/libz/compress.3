@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zlib.3,v 1.1 2003/09/25 09:12:09 jmc Exp $
+.\"	$OpenBSD: compress.3,v 1.1 2003/10/01 08:40:20 jmc Exp $
 .\"
 .\"  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
 .\"
@@ -22,11 +22,11 @@
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
 .Dd September 17, 2003
-.Dt ZLIB 3
+.Dt COMPRESS 3
 .Os
 .Sh NAME
-.Nm zlib
-.Nd general purpose compression library
+.Nm compress
+.Nd zlib general purpose compression library
 .Sh SYNOPSIS
 .Fd "#include <zlib.h>"
 .Pp
@@ -121,11 +121,11 @@ Checksum functions
 .Fn crc32 "uLong crc" "const Bytef *buf" "uInt len"
 .Sh DESCRIPTION
 This manual page describes the
-.Nm
+.Nm zlib
 general purpose compression library, version 1.1.4.
 .Pp
 The
-.Nm
+.Nm zlib
 compression library provides in-memory compression and decompression functions,
 including integrity checks of the uncompressed data.
 This version of the library supports only one compression method
@@ -226,7 +226,7 @@ if there was not enough memory,
 if level is not a valid compression level,
 .Dv Z_VERSION_ERROR
 if the
-.Nm
+.Nm zlib
 library version
 .Pq zlib_version
 is incompatible with the version assumed by the caller
@@ -481,7 +481,7 @@ is large enough
 .Pq the exact value depends on the compression method ,
 .Fn inflateInit
 determines the compression method from the
-.Nm
+.Nm zlib
 header and allocates all data structures accordingly;
 otherwise the allocation will be deferred to the first call to
 .Fn inflate .
@@ -502,13 +502,13 @@ if successful,
 if there was not enough memory,
 .Dv Z_VERSION_ERROR
 if the
-.Nm
+.Nm zlib
 library version is incompatible with the version assumed by the caller.
 .Fa msg
 is set to null if there is no error message.
 .Fn inflateInit
 does not perform any decompression apart from reading the
-.Nm
+.Nm zlib
 header if present: this will be done by
 .Fn inflate .
 (So
@@ -655,7 +655,7 @@ has been produced,
 if a preset dictionary is needed at this point,
 .Dv Z_DATA_ERROR
 if the input data was corrupted (input stream not conforming to the
-.Nm
+.Nm zlib
 format or incorrect adler32 checksum),
 .Dv Z_STREAM_ERROR
 if the stream structure was inconsistent
@@ -985,7 +985,7 @@ if a parameter is invalid
 is set to null if there is no error message.
 .Fn inflateInit2
 does not perform any decompression apart from reading the
-.Nm
+.Nm zlib
 header if present: this will be done by
 .Fn inflate .
 (So
@@ -1227,7 +1227,7 @@ returns
 if the file could not be opened or if there was
 insufficient memory to allocate the (de)compression state;
 errno can be checked to distinguish the two cases (if errno is zero, the
-.Nm
+.Nm zlib
 error is
 .Dv Z_MEM_ERROR ) .
 .It Xo
@@ -1387,7 +1387,7 @@ is as in the
 .Fn deflate
 function.
 The return value is the
-.Nm
+.Nm zlib
 error number (see function
 .Fn gzerror
 below).
@@ -1476,7 +1476,7 @@ The
 function flushes all pending output if necessary, closes the compressed file
 and deallocates all the (de)compression state.
 The return value is the
-.Nm
+.Nm zlib
 error number (see function
 .Fn gzerror
 below).
@@ -1492,7 +1492,7 @@ given compressed
 .Fa file .
 .Fa errnum
 is set to the
-.Nm
+.Nm zlib
 error number.
 If an error occurred in the file system and not in the compression library,
 .Fa errnum
@@ -1624,7 +1624,7 @@ must return
 .Dv Z_NULL
 if there is not enough memory for the object.
 If
-.Nm
+.Nm zlib
 is used in a multi-threaded application,
 .Fa zalloc
 and
@@ -1712,7 +1712,7 @@ in a single step).
 .Ed
 .Sh VARIOUS HACKS
 deflateInit and inflateInit are macros to allow checking the
-.Nm
+.Nm zlib
 version and the compiler's view of
 .Fa z_stream .
 .Bl -tag -width Ds
@@ -1755,6 +1755,8 @@ version and the compiler's view of
 .Xc
 .El
 .Sh SEE ALSO
+.Xr compress 1
+.Pp
 .Bl -tag -width 12n -compact
 .It RFC 1950
 ZLIB Compressed Data Format Specification.
