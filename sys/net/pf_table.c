@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.51 2004/04/28 03:31:33 pb Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.52 2004/04/28 15:12:20 pb Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1942,6 +1942,7 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 		break;
 #endif /* INET6 */
 	default:
+		;
 	}
 	if ((ke == NULL || ke->pfrke_not) != notrule) {
 		if (op_pass != PFR_OP_PASS)
