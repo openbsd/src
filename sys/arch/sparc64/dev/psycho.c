@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.30 2003/03/25 22:10:19 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.31 2003/05/16 06:59:12 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/reboot.h>
+
+#include <uvm/uvm_extern.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -119,6 +121,9 @@ int psycho_dmamem_map(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *, int, si
 void psycho_dmamem_unmap(bus_dma_tag_t, bus_dma_tag_t, caddr_t, size_t);
 void psycho_map_psycho(struct psycho_softc *, int, bus_addr_t, bus_size_t,
     bus_addr_t, bus_size_t);
+int psycho_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+void psycho_identify_pbm(struct psycho_softc *sc, struct psycho_pbm *pp,
+    struct pcibus_attach_args *pa);
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
@@ -306,7 +311,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	csr = psycho_psychoreg_read(sc, psy_csr);
-	sc->sc_ign = 0x7c0; /* APB IGN is always 0x7c */
+	sc->sc_ign = INTMAP_IGN; /* APB IGN is always 0x1f << 6 = 0x7c */
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
 		sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
 
@@ -534,8 +539,36 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
 	pba.pba_pc->bustag = sc->sc_configtag;
 	pba.pba_pc->bushandle = sc->sc_configaddr;
+	pba.pba_pc->intr_map = psycho_intr_map;
+
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
+		psycho_identify_pbm(sc, pp, &pba);
+	else
+		pp->pp_id = PSYCHO_PBM_UNKNOWN;
 
 	config_found(self, &pba, psycho_print);
+}
+
+void
+psycho_identify_pbm(struct psycho_softc *sc, struct psycho_pbm *pp,
+    struct pcibus_attach_args *pa)
+{
+	vaddr_t pci_va = (vaddr_t)bus_space_vaddr(sc->sc_bustag, sc->sc_pcictl);
+	paddr_t pci_pa;
+
+	if (pmap_extract(pmap_kernel(), pci_va, &pci_pa) == 0)
+	    pp->pp_id = PSYCHO_PBM_UNKNOWN;
+	else switch(pci_pa & 0xffff) {
+		case 0x2000:
+			pp->pp_id = PSYCHO_PBM_A;
+			break;
+		case 0x4000:
+			pp->pp_id = PSYCHO_PBM_B;
+			break;
+		default:
+			pp->pp_id = PSYCHO_PBM_UNKNOWN;
+			break;
+	}
 }
 
 void
@@ -983,6 +1016,41 @@ psycho_bus_mmap(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t paddr,
 	}
 
 	return (-1);
+}
+
+/*
+ * Bus-specific interrupt mapping
+ */ 
+int
+psycho_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	struct psycho_pbm *pp = pa->pa_pc->cookie;
+	struct psycho_softc *sc = pp->pp_sc;
+	u_int ino;
+
+	ino = *ihp;
+
+	if ((ino & ~INTMAP_PCIINT) == 0) {
+		if (ino == 0 || ino > 4) {
+			u_int32_t intreg;
+
+			intreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			     PCI_INTERRUPT_REG);
+			
+			ino = PCI_INTERRUPT_PIN(intreg) - 1;
+		} else
+			ino -= 1;
+
+		ino &= INTMAP_PCIINT;
+				
+		ino |= sc->sc_ign;
+		ino |= ((pp->pp_id == PSYCHO_PBM_B) ? INTMAP_PCIBUS : 0);
+		ino |= ((pa->pa_device - 1) << 2) & INTMAP_PCISLOT;
+			
+		*ihp = ino;
+	}
+  
+	return (0);
 }
 
 /*
