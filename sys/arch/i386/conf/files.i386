@@ -1,11 +1,11 @@
-#	$OpenBSD: files.i386,v 1.25 1996/09/01 20:56:31 downsj Exp $
+#	$OpenBSD: files.i386,v 1.26 1996/09/12 07:48:44 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
 
 # maxpartitions must be first item in files.${ARCH}
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 16 64
 
