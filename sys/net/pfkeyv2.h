@@ -203,7 +203,8 @@ struct sadb_cred {
 #define SADB_X_EXT_LOCAL_CREDENTIALS  26
 #define SADB_X_EXT_REMOTE_CREDENTIALS 27
 #define SADB_X_EXT_LOCAL_AUTH         28
-#define SADB_EXT_MAX                  28
+#define SADB_X_EXT_REMOTE_AUTH        29
+#define SADB_EXT_MAX                  29
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -288,6 +289,12 @@ struct sadb_cred {
 #define SADB_CREDTYPE_X509           1
 #define SADB_CREDTYPE_KEYNOTE        2
 #define SADB_CREDTYPE_MAX            3
+
+#define PFKEYV2_AUTH_LOCAL           0
+#define PFKEYV2_AUTH_REMOTE          1
+
+#define PFKEYV2_CRED_LOCAL           0
+#define PFKEYV2_CRED_REMOTE          1
 
 #define SADB_AUTHTYPE_NONE           0
 #define SADB_AUTHTYPE_PASSPHRASE     1

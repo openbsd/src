@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.60 2001/05/21 03:02:17 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.61 2001/05/30 11:27:33 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -69,7 +69,9 @@ void export_lifetime(void **, struct tdb *, int);
 void export_credentials(void **, struct tdb *, int);
 void export_sa(void **, struct tdb *);
 void export_key(void **, struct tdb *, int);
+void export_auth(void **, struct tdb *, int);
 
+void import_auth(struct tdb *, struct sadb_cred *, int);
 void import_address(struct sockaddr *, struct sadb_address *);
 void import_identity(struct tdb *, struct sadb_ident *, int);
 void import_key(struct ipsecinit *, struct sadb_key *, int);
@@ -484,6 +486,45 @@ export_address(void **p, struct sockaddr *sa)
 }
 
 /*
+ * Import authentication information into the TDB.
+ */
+void
+import_auth(struct tdb *tdb, struct sadb_cred *sadb_auth, int dstauth)
+{
+    struct ipsec_ref **ipr;
+
+    if (!sadb_auth)
+      return;
+
+    if (dstauth == PFKEYV2_AUTH_REMOTE)
+      ipr = &tdb->tdb_remote_auth;
+    else
+      ipr = &tdb->tdb_local_auth;
+
+    MALLOC(*ipr, struct ipsec_ref *, EXTLEN(sadb_auth) -
+	   sizeof(struct sadb_cred) + sizeof(struct ipsec_ref),
+	   M_CREDENTIALS, M_WAITOK);
+    (*ipr)->ref_len = EXTLEN(sadb_auth) - sizeof(struct sadb_cred);
+    switch (sadb_auth->sadb_cred_type)
+    {
+	case SADB_AUTHTYPE_PASSPHRASE:
+	    (*ipr)->ref_type = IPSP_AUTH_PASSPHRASE;
+	    break;
+	case SADB_AUTHTYPE_RSA:
+	    (*ipr)->ref_type = IPSP_AUTH_RSA;
+	    break;
+	default:
+	    FREE(*ipr, M_CREDENTIALS);
+	    *ipr = NULL;
+	    return;
+    }
+    (*ipr)->ref_count = 1;
+    (*ipr)->ref_malloctype = M_CREDENTIALS;
+    bcopy((void *) sadb_auth + sizeof(struct sadb_cred),
+	  (*ipr) + 1, (*ipr)->ref_len);
+}
+
+/*
  * Import a set of credentials into the TDB.
  */
 void
@@ -494,7 +535,7 @@ import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
     if (!sadb_cred)
       return;
 
-    if (dstcred)
+    if (dstcred == PFKEYV2_CRED_REMOTE)
       ipr = &tdb->tdb_remote_cred;
     else
       ipr = &tdb->tdb_local_cred;
@@ -503,7 +544,19 @@ import_credentials(struct tdb *tdb, struct sadb_cred *sadb_cred, int dstcred)
 	   sizeof(struct sadb_cred) + sizeof(struct ipsec_ref),
 	   M_CREDENTIALS, M_WAITOK);
     (*ipr)->ref_len = EXTLEN(sadb_cred) - sizeof(struct sadb_cred);
-    (*ipr)->ref_type = sadb_cred->sadb_cred_type;
+    switch (sadb_cred->sadb_cred_type)
+    {
+	case SADB_CREDTYPE_X509:
+	    (*ipr)->ref_type = IPSP_CRED_X509;
+	    break;
+	case SADB_CREDTYPE_KEYNOTE:
+	    (*ipr)->ref_type = IPSP_CRED_KEYNOTE;
+	    break;
+	default:
+	    FREE(*ipr, M_CREDENTIALS);
+	    *ipr = NULL;
+	    return;
+    }
     (*ipr)->ref_count = 1;
     (*ipr)->ref_malloctype = M_CREDENTIALS;
     bcopy((void *) sadb_cred + sizeof(struct sadb_cred),
@@ -530,7 +583,25 @@ import_identity(struct tdb *tdb, struct sadb_ident *sadb_ident, int type)
 	   sizeof(struct sadb_ident) + sizeof(struct ipsec_ref), M_CREDENTIALS,
 	   M_WAITOK);
     (*ipr)->ref_len = EXTLEN(sadb_ident) - sizeof(struct sadb_ident);
-    (*ipr)->ref_type = sadb_ident->sadb_ident_type;
+    switch (sadb_ident->sadb_ident_type)
+    {
+	case SADB_IDENTTYPE_PREFIX:
+	    (*ipr)->ref_type = IPSP_IDENTITY_PREFIX;
+	    break;
+	case SADB_IDENTTYPE_FQDN:
+	    (*ipr)->ref_type = IPSP_IDENTITY_FQDN;
+	    break;
+	case SADB_IDENTTYPE_MBOX:
+	    (*ipr)->ref_type = IPSP_IDENTITY_MBOX;
+	    break;
+	case SADB_IDENTTYPE_CONNECTION:
+	    (*ipr)->ref_type = IPSP_IDENTITY_CONNECTION;
+	    break;
+	default:
+	    FREE(*ipr, M_CREDENTIALS);
+	    *ipr = NULL;
+	    return;
+    }
     (*ipr)->ref_count = 1;
     (*ipr)->ref_malloctype = M_CREDENTIALS;
     bcopy((void *) sadb_ident + sizeof(struct sadb_ident), (*ipr) + 1,
@@ -543,14 +614,51 @@ export_credentials(void **p, struct tdb *tdb, int dstcred)
     struct ipsec_ref **ipr;
     struct sadb_cred *sadb_cred = (struct sadb_cred *) *p;
 
-    if (dstcred)
+    if (dstcred == PFKEYV2_CRED_REMOTE)
       ipr = &tdb->tdb_remote_cred;
     else
       ipr = &tdb->tdb_local_cred;
 
     sadb_cred->sadb_cred_len = (sizeof(struct sadb_cred) +
 				PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
-    sadb_cred->sadb_cred_type = (*ipr)->ref_type;
+
+    switch ((*ipr)->ref_type)
+    {
+	case IPSP_CRED_KEYNOTE:
+	    sadb_cred->sadb_cred_type = SADB_CREDTYPE_KEYNOTE;
+	    break;
+	case IPSP_CRED_X509:
+	    sadb_cred->sadb_cred_type = SADB_CREDTYPE_X509;
+	    break;
+    }
+    *p += sizeof(struct sadb_cred);
+    bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
+    *p += PADUP((*ipr)->ref_len);
+}
+
+void
+export_auth(void **p, struct tdb *tdb, int dstauth)
+{
+    struct ipsec_ref **ipr;
+    struct sadb_cred *sadb_auth = (struct sadb_cred *) *p;
+
+    if (dstauth == PFKEYV2_AUTH_REMOTE)
+      ipr = &tdb->tdb_remote_auth;
+    else
+      ipr = &tdb->tdb_local_auth;
+
+    sadb_auth->sadb_cred_len = (sizeof(struct sadb_cred) +
+				PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
+
+    switch ((*ipr)->ref_type)
+    {
+	case IPSP_CRED_KEYNOTE:
+	    sadb_auth->sadb_cred_type = SADB_CREDTYPE_KEYNOTE;
+	    break;
+	case IPSP_CRED_X509:
+	    sadb_auth->sadb_cred_type = SADB_CREDTYPE_X509;
+	    break;
+    }
     *p += sizeof(struct sadb_cred);
     bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
     *p += PADUP((*ipr)->ref_len);
@@ -569,7 +677,21 @@ export_identity(void **p, struct tdb *tdb, int type)
 
     sadb_ident->sadb_ident_len = (sizeof(struct sadb_ident) +
 				  PADUP((*ipr)->ref_len)) / sizeof(uint64_t);
-    sadb_ident->sadb_ident_type = (*ipr)->ref_type;
+    switch ((*ipr)->ref_type)
+    {
+	case IPSP_IDENTITY_PREFIX:
+	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_PREFIX;
+	    break;
+	case IPSP_IDENTITY_FQDN:
+	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_FQDN;
+	    break;
+	case IPSP_IDENTITY_MBOX:
+	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_MBOX;
+	    break;
+	case IPSP_IDENTITY_CONNECTION:
+	    sadb_ident->sadb_ident_type = SADB_IDENTTYPE_CONNECTION;
+	    break;
+    }
     *p += sizeof(struct sadb_ident);
     bcopy((*ipr) + 1, *p, (*ipr)->ref_len);
     *p += PADUP((*ipr)->ref_len);
@@ -1040,13 +1162,26 @@ pfkeyv2_get(struct tdb *sa, void **headers, void **buffer)
     if (sa->tdb_local_cred)
     {
 	headers[SADB_X_EXT_LOCAL_CREDENTIALS] = p;
-	export_credentials(&p, sa, 0);
+	export_credentials(&p, sa, PFKEYV2_CRED_LOCAL);
     }
 
     if (sa->tdb_remote_cred)
     {
 	headers[SADB_X_EXT_REMOTE_CREDENTIALS] = p;
-	export_credentials(&p, sa, 1);
+	export_credentials(&p, sa, PFKEYV2_CRED_REMOTE);
+    }
+
+    /* Export authentication information, if present */
+    if (sa->tdb_local_auth)
+    {
+	headers[SADB_X_EXT_LOCAL_AUTH] = p;
+	export_auth(&p, sa, PFKEYV2_AUTH_LOCAL);
+    }
+
+    if (sa->tdb_remote_auth)
+    {
+	headers[SADB_X_EXT_REMOTE_AUTH] = p;
+	export_auth(&p, sa, PFKEYV2_AUTH_REMOTE);
     }
 
     /* Export authentication key, if present */
@@ -1363,12 +1498,18 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		import_identity(newsa, headers[SADB_EXT_IDENTITY_DST],
 				PFKEYV2_IDENTITY_DST);
 		import_credentials(newsa,
-				   headers[SADB_X_EXT_LOCAL_CREDENTIALS], 0);
+				   headers[SADB_X_EXT_LOCAL_CREDENTIALS],
+				   PFKEYV2_CRED_LOCAL);
 		import_credentials(newsa,
-				   headers[SADB_X_EXT_REMOTE_CREDENTIALS], 1);
-
+				   headers[SADB_X_EXT_REMOTE_CREDENTIALS],
+				   PFKEYV2_CRED_REMOTE);
+		import_auth(newsa, headers[SADB_X_EXT_LOCAL_AUTH],
+			    PFKEYV2_AUTH_LOCAL);
+		import_auth(newsa, headers[SADB_X_EXT_REMOTE_AUTH],
+			    PFKEYV2_AUTH_REMOTE);
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;
+		headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
 
 		rval = tdb_init(newsa, alg, &ii);
 		if (rval)
@@ -1481,12 +1622,18 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				PFKEYV2_IDENTITY_DST);
 
 		import_credentials(newsa,
-				   headers[SADB_X_EXT_LOCAL_CREDENTIALS], 0);
+				   headers[SADB_X_EXT_LOCAL_CREDENTIALS],
+				   PFKEYV2_CRED_LOCAL);
 		import_credentials(newsa,
-				   headers[SADB_X_EXT_REMOTE_CREDENTIALS], 1);
-
+				   headers[SADB_X_EXT_REMOTE_CREDENTIALS],
+				   PFKEYV2_CRED_REMOTE);
+		import_auth(newsa, headers[SADB_X_EXT_LOCAL_AUTH],
+			    PFKEYV2_AUTH_LOCAL);
+		import_auth(newsa, headers[SADB_X_EXT_REMOTE_AUTH],
+			    PFKEYV2_AUTH_REMOTE);
 		headers[SADB_EXT_KEY_AUTH] = NULL;
 		headers[SADB_EXT_KEY_ENCRYPT] = NULL;
+		headers[SADB_X_EXT_LOCAL_AUTH] = NULL;
 
 		rval = tdb_init(newsa, alg, &ii);
 		if (rval)
