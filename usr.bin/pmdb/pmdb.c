@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.5 2002/03/19 23:10:57 drahn Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.6 2002/03/19 23:17:58 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -74,12 +74,14 @@ struct clit cmds[] = {
 	{ "exit", "quit", 0, 0, cmd_quit, (void *)-1 },
 };
 
+#define NCMDS	sizeof(cmds)/sizeof(cmds[0])
+
 int
 main(int argc, char **argv)
 {
 	extern const char *__progname;
 	struct pstate ps;
-	int i, ncmds;
+	int i;
 	int status;
 	void *cm;
 	char *pmenv;
@@ -113,9 +115,7 @@ main(int argc, char **argv)
 
 	signal(SIGINT, SIG_IGN);
 
-	ncmds = sizeof(cmds)/sizeof(cmds[0]);
-
-	for (i = 0; i < ncmds; i++)
+	for (i = 0; i < NCMDS; i++)
 		if (cmds[i].arg == (void *)-1)
 			cmds[i].arg = &ps;
 
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 
 	process_load(&ps);
 
-	cm = cmdinit(cmds, ncmds);
+	cm = cmdinit(cmds, NCMDS);
 	while (ps.ps_state != TERMINATED) {
 		int signum;
 		int stopped;
@@ -263,7 +263,7 @@ cmd_show_backtrace(int argc, char **argv, void *arg)
 				printf(", ");
 		}
 		if (offs == 0) {
-			printf(")\n", offs);
+			printf(")\n");
 		} else {
 			printf(")+0x%lx\n", offs);
 		}
