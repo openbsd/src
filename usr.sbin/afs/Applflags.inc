@@ -1,4 +1,4 @@
-LDADD	+= -lkrb -ldes ../libarla/libarla.a -ltermcap ../libroken/libroken.a -lreadline -lcurses -lkafs
+LDADD	+= -lkrb -lkrb5 -lcrypto ../libarla/libarla.a -ltermcap ../libroken/libroken.a -lreadline -lcurses -lkafs -lasn1 -lcom_err
 DPADD	+= ../libroken/libroken.a ../libarla/libarla.a ${LIBKRB} ${LIBDES} ${LIBREADLINE} ${LIBTERMCAP} ${LIBCURSES} ${LIBKAFS}
 CFLAGS	+= -I${.CURDIR}/../src/util -I${.CURDIR}/../src/lib/roken \
 	   -I${.CURDIR}/../src/include -I${.CURDIR}/../libroken \
