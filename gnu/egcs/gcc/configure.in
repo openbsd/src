@@ -527,11 +527,10 @@ changequote([,])dnl
 	*-*-openbsd*)
 		tm_file=${cpu_type}/openbsd.h
 		tmake_file="t-libc-ok t-openbsd"
-		xmake_file=x-openbsd
 		# avoid surprises, always provide an xm-openbsd file 
 		xm_file=${cpu_type}/xm-openbsd.h
-		# don't depend on processor x-fragments as well
-		xmake_file=none
+		# for egcs in tree, we use our own fragment
+		xmake_file=x-openbsd
  		if test x$enable_threads = xyes; then
  			thread_file='posix'
 			tmake_file="${tmake_file} t-openbsd-thread"
