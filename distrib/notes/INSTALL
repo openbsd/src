@@ -27,7 +27,9 @@ aimed at making the emulation as accurate as possible.
 Cryptography components are part of OpenBSD. OpenBSD is from Canada,
 and export of these pieces (such as kerberosIV) to the world is not
 restricted. Note that it can not be re-exported from the US once it
-has entered US.
+has entered US.  Because of this, take care NOT to get the distrib-
+ution from an FTP server in the US if you are outside of Canada and
+the US.
 
 Many new user programs have been added in OpenBSD 2.1, as well,
 bringing it closer to our goal of supplying a complete UN*X-like
