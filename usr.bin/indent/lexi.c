@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.3 1997/07/25 22:00:46 mickey Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.4 1997/09/10 07:01:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lexi.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: lexi.c,v 1.3 1997/07/25 22:00:46 mickey Exp $";
+static char rcsid[] = "$OpenBSD: lexi.c,v 1.4 1997/09/10 07:01:10 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -61,8 +61,7 @@ struct templ {
     int         rwcode;
 };
 
-struct templ specials[100] =
-{
+struct templ specialsinit[] = {
 	{ "switch", 1 },
 	{ "case", 2 },
 	{ "break", 0 },
@@ -91,8 +90,11 @@ struct templ specials[100] =
 	{ "else", 6 },
 	{ "do", 6 },
 	{ "sizeof", 7 },
-	{ 0, 0 }
 };
+
+struct templ *specials = specialsinit;
+int	nspecials = sizeof(specialsinit) / sizeof(specialsinit[0]);
+int	maxspecials;
 
 char        chartype[128] =
 {				/* this is used to facilitate the decision of
@@ -129,6 +131,7 @@ lexi()
     static int  l_struct;	/* set to 1 if the last token was 'struct' */
     int         code;		/* internal code to be returned */
     char        qchar;		/* the delimiter character for a string */
+    int		i;
 
     e_token = s_token;		/* point to start of place to save token */
     unary_delim = false;
@@ -152,8 +155,6 @@ lexi()
 	register char *j;	/* used for searching thru list of
 				 * 
 				 * reserved words */
-	register struct templ *p;
-
 	if (isdigit(*buf_ptr) || (buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
 	    int         seendot = 0,
 	                seenexp = 0;
@@ -218,8 +219,9 @@ lexi()
 	/*
 	 * This loop will check if the token is a keyword.
 	 */
-	for (p = specials; (j = p->rwd) != 0; p++) {
+	for (i = 0; i < nspecials; i++) {
 	    register char *p = s_token;	/* point at scanned token */
+	    j = specials[i].rwd;
 	    if (*j++ != *p++ || *j++ != *p++)
 		continue;	/* This test depends on the fact that
 				 * identifiers are always at least 1 character
@@ -232,11 +234,11 @@ lexi()
 		    goto found_keyword;	/* I wish that C had a multi-level
 					 * break... */
 	}
-	if (p->rwd) {		/* we have a keyword */
+	if (i < nspecials) {		/* we have a keyword */
     found_keyword:
 	    ps.its_a_keyword = true;
 	    ps.last_u_d = true;
-	    switch (p->rwcode) {
+	    switch (specials[i].rwcode) {
 	    case 1:		/* it is a switch */
 		return (swstmt);
 	    case 2:		/* a case or default */
@@ -546,19 +548,42 @@ stop_lit:
 void
 addkey(key, val)
     char       *key;
+    int		val;
 {
-    register struct templ *p = specials;
-    while (p->rwd)
+    register struct templ *p;
+    int i = 0;
+
+    while (i < nspecials) {
+	p = &specials[i];
 	if (p->rwd[0] == key[0] && strcmp(p->rwd, key) == 0)
 	    return;
 	else
-	    p++;
-    if (p >= specials + sizeof specials / sizeof specials[0])
-	return;			/* For now, table overflows are silently
-				 * ignored */
+	    i++;
+    }
+
+    if (specials == specialsinit) {
+	/*
+	 * Whoa. Must reallocate special table.
+	 */
+	printf("alloc\n");
+	nspecials = sizeof (specialsinit) / sizeof (specialsinit[0]);
+	maxspecials = nspecials;
+	maxspecials += maxspecials >> 2;
+	specials = (struct templ *)malloc(maxspecials * sizeof specials[0]);
+	if (specials == NULL)
+	    errx(1, "indent: out of memory");
+	memmove(specials, specialsinit, sizeof specialsinit);
+    } else if (nspecials >= maxspecials) {
+	printf("realloc\n");
+	maxspecials += maxspecials >> 2;
+	specials = realloc(specials, maxspecials * sizeof specials[0]);
+	if (specials == NULL)
+	    errx(1, "indent: out of memory");
+    }
+    
+    p = &specials[i];
     p->rwd = key;
     p->rwcode = val;
-    p[1].rwd = 0;
-    p[1].rwcode = 0;
+    nspecials++;
     return;
 }
