@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.116 2005/02/15 19:44:15 reyk Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.117 2005/04/03 08:07:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.116 2005/02/15 19:44:15 reyk Exp $";
+	"$OpenBSD: if_wi.c,v 1.117 2005/04/03 08:07:00 uwe Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1592,22 +1592,6 @@ wi_ioctl(ifp, command, data)
 	}
 
 	switch(command) {
-	case SIOCSWAVELAN:
-	case SIOCSPRISM2DEBUG:
-	case SIOCS80211NWID:
-	case SIOCS80211NWKEY:
-	case SIOCS80211POWER:
-	case SIOCS80211TXPOWER:
-		error = suser(p, 0);
-		if (error) {
-			splx(s);
-			return (error);
-		}
-	default:
-		break;
-	}
-
-	switch(command) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -1727,6 +1711,8 @@ wi_ioctl(ifp, command, data)
 		error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 		break;
 	case SIOCSWAVELAN:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
@@ -1806,6 +1792,8 @@ wi_ioctl(ifp, command, data)
 			error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 		break;
 	case SIOCSPRISM2DEBUG:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
@@ -1831,6 +1819,8 @@ wi_ioctl(ifp, command, data)
 		}
 		break;
 	case SIOCS80211NWID:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
 		if (error)
 			break;
@@ -1848,18 +1838,24 @@ wi_ioctl(ifp, command, data)
 			wi_init(sc);
 		break;
 	case SIOCS80211NWKEY:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = wi_set_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
 	case SIOCG80211NWKEY:
 		error = wi_get_nwkey(sc, (struct ieee80211_nwkey *)data);
 		break;
 	case SIOCS80211POWER:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = wi_set_pm(sc, (struct ieee80211_power *)data);
 		break;
 	case SIOCG80211POWER:
 		error = wi_get_pm(sc, (struct ieee80211_power *)data);
 		break;
 	case SIOCS80211TXPOWER:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		error = wi_set_txpower(sc, (struct ieee80211_txpower *)data);
 		break;
 	case SIOCG80211TXPOWER:
