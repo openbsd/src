@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.6 2003/06/25 03:32:11 deraadt Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.7 2003/06/25 03:37:32 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -92,7 +92,7 @@ diffdir(char **argv)
 
 	if (opt == D_IFDEF) {
 		fprintf(stderr, "diff: can't specify -I with directories\n");
-		done();
+		done(0);
 	}
 	if (opt == D_EDIT && (sflag || lflag))
 		fprintf(stderr,
@@ -232,7 +232,7 @@ setupdir(char *cp)
 	if (dirp == NULL) {
 		fprintf(stderr, "diff: ");
 		perror(cp);
-		done();
+		done(0);
 	}
 	nitems = 0;
 	dp = talloc(sizeof(struct dir));
@@ -367,7 +367,7 @@ calldiff(char *wantpr)
 		pid = fork();
 		if (pid == -1) {
 			fprintf(stderr, "No more processes");
-			done();
+			done(0);
 		}
 		if (pid == 0) {
 			close(0);
@@ -377,13 +377,13 @@ calldiff(char *wantpr)
 			execv(pr + 4, prargs);
 			execv(pr, prargs);
 			perror(pr);
-			done();
+			done(0);
 		}
 	}
 	pid = fork();
 	if (pid == -1) {
 		fprintf(stderr, "diff: No more processes\n");
-		done();
+		done(0);
 	}
 	if (pid == 0) {
 		if (wantpr) {
@@ -395,7 +395,7 @@ calldiff(char *wantpr)
 		execv(diff + 4, diffargv);
 		execv(diff, diffargv);
 		perror(diff);
-		done();
+		done(0);
 	}
 	if (wantpr) {
 		close(pv[0]);
@@ -407,7 +407,7 @@ calldiff(char *wantpr)
 		continue;
 	/*
 		if ((lstatus >> 8) >= 2)
-			done();
+			done(0);
 	*/
 	dirstatus |= lstatus >> 8;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.4 2003/06/25 03:25:29 tedu Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.5 2003/06/25 03:37:32 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -234,7 +234,7 @@ diffreg(void)
 		execv(diffh, diffargv);
 		fprintf(stderr, "diff: ");
 		perror(diffh);
-		done();
+		done(0);
 	}
 	chrtran = (iflag ? cup2low : clow2low);
 	if ((stb1.st_mode & S_IFMT) == S_IFDIR) {
@@ -242,44 +242,44 @@ diffreg(void)
 		if (stat(file1, &stb1) < 0) {
 			fprintf(stderr, "diff: ");
 			perror(file1);
-			done();
+			done(0);
 		}
 	} else if ((stb2.st_mode & S_IFMT) == S_IFDIR) {
 		file2 = splice(file2, file1);
 		if (stat(file2, &stb2) < 0) {
 			fprintf(stderr, "diff: ");
 			perror(file2);
-			done();
+			done(0);
 		}
 	} else if ((stb1.st_mode & S_IFMT) != S_IFREG || !strcmp(file1, "-")) {
 		if (!strcmp(file2, "-")) {
 			fprintf(stderr, "diff: can't specify - -\n");
-			done();
+			done(0);
 		}
 		file1 = copytemp();
 		if (stat(file1, &stb1) < 0) {
 			fprintf(stderr, "diff: ");
 			perror(file1);
-			done();
+			done(0);
 		}
 	} else if ((stb2.st_mode & S_IFMT) != S_IFREG || !strcmp(file2, "-")) {
 		file2 = copytemp();
 		if (stat(file2, &stb2) < 0) {
 			fprintf(stderr, "diff: ");
 			perror(file2);
-			done();
+			done(0);
 		}
 	}
 	if ((f1 = fopen(file1, "r")) == NULL) {
 		fprintf(stderr, "diff: ");
 		perror(file1);
-		done();
+		done(0);
 	}
 	if ((f2 = fopen(file2, "r")) == NULL) {
 		fprintf(stderr, "diff: ");
 		perror(file2);
 		fclose(f1);
-		done();
+		done(0);
 	}
 	if (stb1.st_size != stb2.st_size)
 		goto notsame;
@@ -307,7 +307,7 @@ notsame:
 		printf("Binary files %s and %s differ\n", file1, file2);
 		fclose(f1);
 		fclose(f2);
-		done();
+		done(0);
 	}
 	prepare(0, f1);
 	prepare(1, f2);
@@ -344,7 +344,7 @@ notsame:
 same:
 	if (opt == D_CONTEXT && anychange == 0)
 		printf("No differences encountered\n");
-	done();
+	done(0);
 }
 
 char *tempfile = _PATH_TMP;
@@ -363,13 +363,13 @@ copytemp(void)
 	if (f < 0) {
 		fprintf(stderr, "diff: ");
 		perror(tempfile);
-		done();
+		done(0);
 	}
 	while ((i = read(0, buf, BUFSIZ)) > 0)
 		if (write(f, buf, i) != i) {
 			fprintf(stderr, "diff: ");
 			perror(tempfile);
-			done();
+			done(0);
 		}
 	close(f);
 	return (tempfile);
@@ -383,7 +383,7 @@ splice(char *dir, char *file)
 
 	if (!strcmp(file, "-")) {
 		fprintf(stderr, "diff: can't specify - with other arg directory\n");
-		done();
+		done(0);
 	}
 	tail = rindex(file, '/');
 	if (tail == 0)
@@ -560,11 +560,11 @@ check(void)
 
 	if ((input[0] = fopen(file1, "r")) == NULL) {
 		perror(file1);
-		done();
+		done(0);
 	}
 	if ((input[1] = fopen(file2, "r")) == NULL) {
 		perror(file2);
-		done();
+		done(0);
 	}
 	j = 1;
 	ixold[0] = ixnew[0] = 0;

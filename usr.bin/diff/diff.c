@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.3 2003/06/25 03:02:33 tedu Exp $	*/
+/*	$OpenBSD: diff.c,v 1.4 2003/06/25 03:37:32 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -126,7 +126,7 @@ main(int argc, char **argv)
 					if (*argp) {
 						fprintf(stderr,
 						    "diff: -c: bad count\n");
-						done();
+						done(0);
 					}
 					argp = "";
 				} else
@@ -138,7 +138,7 @@ main(int argc, char **argv)
 			case 'S':
 				if (*argp == 0) {
 					fprintf(stderr, "diff: use -Sstart\n");
-					done();
+					done(0);
 				}
 				start = argp;
 				*--argp = 0;	/* don't pass it on */
@@ -155,40 +155,40 @@ main(int argc, char **argv)
 			default:
 				fprintf(stderr, "diff: -%s: unknown option\n",
 				    --argp);
-				done();
+				done(0);
 			}
 	}
 	if (argc != 2) {
 		fprintf(stderr, "diff: two filename arguments required\n");
-		done();
+		done(0);
 	}
 	file1 = argv[0];
 	file2 = argv[1];
 	if (hflag && opt) {
 		fprintf(stderr,
 		    "diff: -h doesn't support -e, -f, -n, -c, or -I\n");
-		done();
+		done(0);
 	}
 	if (!strcmp(file1, "-"))
 		stb1.st_mode = S_IFREG;
 	else if (stat(file1, &stb1) < 0) {
 		fprintf(stderr, "diff: ");
 		perror(file1);
-		done();
+		done(0);
 	}
 	if (!strcmp(file2, "-"))
 		stb2.st_mode = S_IFREG;
 	else if (stat(file2, &stb2) < 0) {
 		fprintf(stderr, "diff: ");
 		perror(file2);
-		done();
+		done(0);
 	}
 	if ((stb1.st_mode & S_IFMT) == S_IFDIR &&
 	    (stb2.st_mode & S_IFMT) == S_IFDIR) {
 		diffdir(argv);
 	} else
 		diffreg();
-	done();
+	done(0);
 	/* notreached */
 	return (0);
 }
@@ -208,10 +208,12 @@ max(int a, int b)
 }
 
 void
-done(void)
+done(int sig)
 {
 	if (tempfile)
 		unlink(tempfile);
+	if (sig)
+		_exit(status);
 	exit(status);
 }
 
@@ -219,7 +221,7 @@ void
 catchsig(int sigraised)
 {
 	/* print something? */
-	done();
+	done(0);
 }
 
 void *
@@ -246,5 +248,5 @@ static void
 noroom(void)
 {
 	fprintf(stderr, "diff: files too big, try -h\n");
-	done();
+	done(0);
 }
