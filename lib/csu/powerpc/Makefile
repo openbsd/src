@@ -48,7 +48,7 @@ crtendS.o: crtendS.c
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-install:
+realinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 		${DESTDIR}/usr/lib
 

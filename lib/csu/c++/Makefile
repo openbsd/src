@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 1998/09/15 11:01:51 pefo Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/03/24 18:40:20 tholo Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ c++rt0.o: c++rt0.c
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-install:
+realinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
