@@ -1,4 +1,4 @@
-# $OpenBSD: Ustar.pm,v 1.6 2004/01/29 13:06:39 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.7 2004/02/15 15:33:59 espie Exp $
 #
 # Copyright (c) 2002 Marc Espie.
 # 
@@ -218,7 +218,7 @@ sub create
 		$linkname=$self->{cwd}.'/'.$linkname;
 	}
 	link $self->{destdir}.$linkname, $self->{destdir}.$self->{name} or
-	    die "Can't link $self->{destdir}.$linkname to $self->{destdir}.$self->{name}: $!";
+	    die "Can't link $self->{destdir}$linkname to $self->{destdir}$self->{name}: $!";
 }
 
 sub isLink() { 1 }
@@ -232,7 +232,7 @@ sub create
 	my $self = shift;
 	$self->make_basedir($self->{name});
 	symlink $self->{linkname}, $self->{destdir}.$self->{name} or 
-	    die "Can't symlink $self->{linkname} to $self->{destdir}.$self->{name}: $!";
+	    die "Can't symlink $self->{linkname} to $self->{destdir}$self->{name}: $!";
 }
 
 sub isLink() { 1 }
@@ -247,7 +247,7 @@ sub create
 	$self->make_basedir($self->{name});
 	open (my $out, '>', $self->{destdir}.$self->{name});
 	if (!defined $out) {
-		die "Can't write to $self->{destdir}.$self->{name}: $!";
+		die "Can't write to $self->{destdir}$self->{name}: $!";
 	}
 	my $buffer;
 	my $toread = $self->{size};
@@ -259,12 +259,12 @@ sub create
 		}
 		$self->{archive}->{swallow} -= $maxread;
 		unless (print $out $buffer) {
-			die "Error writing to $self->{destdir}.$self->{name}: $!";
+			die "Error writing to $self->{destdir}$self->{name}: $!";
 		}
 			
 		$toread -= $maxread;
 	}
-	$out->close() or die "Error closing $self->{destdir}.$self->{name}: $!";
+	$out->close() or die "Error closing $self->{destdir}$self->{name}: $!";
 	$self->SUPER::set_modes();
 }
 
