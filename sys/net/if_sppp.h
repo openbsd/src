@@ -26,6 +26,10 @@
 #ifndef _NET_IF_HDLC_H_
 #define _NET_IF_HDLC_H_ 1
 
+#ifdef __OpenBSD__
+#include <sys/timeout.h>
+#endif
+
 #define IDX_LCP 0		/* idx into state table */
 
 struct slcp {
@@ -100,6 +104,9 @@ struct sppp {
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	struct callout_handle ch[IDX_COUNT]; /* per-proto and if callouts */
 	struct callout_handle pap_my_to_ch; /* PAP needs one more... */
+#elif defined(__OpenBSD__)
+	struct timeout ch[IDX_COUNT];
+	struct timeout pap_my_to_ch;
 #endif
 	struct slcp lcp;		/* LCP params */
 	struct sipcp ipcp;		/* IPCP params */
