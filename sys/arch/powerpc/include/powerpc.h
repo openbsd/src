@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.3 1997/10/13 10:53:48 pefo Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.4 1999/07/05 21:01:19 rahnds Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -46,7 +46,35 @@ void mem_regions __P((struct mem_region **, struct mem_region **));
  *
  * Not sure whether boot itself should be implementation dependent instead.	XXX
  */
-void ppc_exit __P((void)) __attribute__((__noreturn__));
-void ppc_boot __P((char *bootspec)) __attribute__((__noreturn__));
+typedef void (exit_f) __P((void)) /*__attribute__((__noreturn__))*/ ;
+typedef void (boot_f) __P((char *bootspec)) /* __attribute__((__noreturn__))*/ ;
+typedef void (vmon_f) __P((void));
+
+/* firmware interface.
+ * regardless of type of firmware used several items
+ * are need from firmware to boot up.
+ * these include:
+ *	memory information
+ *	vmsetup for firmware calls.
+ *	default character print mechanism ???
+ *	firmware exit (return)
+ *	firmware boot (reset)
+ *	vmon - tell firmware the bsd vm is active.
+ */
+
+typedef void (mem_regions_f)__P((struct mem_region **memp,
+	struct mem_region **availp));
+
+struct firmware {
+	mem_regions_f	*mem_regions;
+	exit_f		*exit;
+	boot_f		*boot;
+	vmon_f		*vmon;
+	
+#ifdef FW_HAS_PUTC
+	boot_f		*putc;
+#endif
+};
+extern  struct firmware *fw;
 
 #endif	/* _MACHINE_POWERPC_H_ */

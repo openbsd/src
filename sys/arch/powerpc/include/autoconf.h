@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.4 1998/08/25 07:42:29 pefo Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.5 1999/07/05 21:01:19 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -44,6 +44,7 @@
 #define OFWMACH         0       /* Openfirmware drivers */
 #define	POWER4e		1	/* V.I Power.4e board */
 #define	PWRSTK		2	/* Motorola Powerstack series */
+#define	APPL		3	/* Apple PowerMac machines (OFW?) */
 
 extern int system_type;
 
