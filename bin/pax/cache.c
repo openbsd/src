@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.12 2002/10/16 19:20:02 millert Exp $	*/
+/*	$OpenBSD: cache.c,v 1.13 2003/03/10 03:50:13 david Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: cache.c,v 1.12 2002/10/16 19:20:02 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cache.c,v 1.13 2003/03/10 03:50:13 david Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ static GIDC **grptb = NULL;	/* group name to gid cache */
 
 /*
  * uidtb_start
- *	creates an an empty uidtb
+ *	creates an empty uidtb
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -100,7 +100,7 @@ uidtb_start(void)
 
 /*
  * gidtb_start
- *	creates an an empty gidtb
+ *	creates an empty gidtb
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -124,7 +124,7 @@ gidtb_start(void)
 
 /*
  * usrtb_start
- *	creates an an empty usrtb
+ *	creates an empty usrtb
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -148,7 +148,7 @@ usrtb_start(void)
 
 /*
  * grptb_start
- *	creates an an empty grptb
+ *	creates an empty grptb
  * Return:
  *	0 if ok, -1 otherwise
  */
