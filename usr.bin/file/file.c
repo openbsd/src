@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.8 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.9 2002/11/29 00:27:03 millert Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -27,7 +27,7 @@
  * 4. This notice may not be removed or altered.
  */
 #ifndef	lint
-static char *moduleid = "$OpenBSD: file.c,v 1.8 2002/02/16 21:27:46 millert Exp $";
+static char *moduleid = "$OpenBSD: file.c,v 1.9 2002/11/29 00:27:03 millert Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -55,9 +55,9 @@ static char *moduleid = "$OpenBSD: file.c,v 1.8 2002/02/16 21:27:46 millert Exp 
 #include "file.h"
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-vczL] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-vbczL] [-f namefile] [-m magicfiles] file...\n"
 #else
-# define USAGE  "Usage: %s [-vcz] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-vbcz] [-f namefile] [-m magicfiles] file...\n"
 #endif
 
 #ifndef MAGIC
@@ -66,6 +66,7 @@ static char *moduleid = "$OpenBSD: file.c,v 1.8 2002/02/16 21:27:46 millert Exp 
 
 int 			/* Global command-line options 		*/
 	debug = 0, 	/* debugging 				*/
+	bflag = 0,	/* Don't print filename			*/
 	lflag = 0,	/* follow Symlinks (BSD only) 		*/
 	zflag = 0;	/* follow (uncompress) compressed files */
 
@@ -100,12 +101,15 @@ char *argv[];
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = MAGIC;
 
-	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != -1)
+	while ((c = getopt(argc, argv, "bvcdf:Lm:z")) != -1)
 		switch (c) {
 		case 'v':
 			(void) printf("%s-%d.%d\n", __progname,
 				       FILE_VERSION_MAJOR, patchlevel);
 			return 1;
+		case 'b':
+			++bflag;
+			break;
 		case 'c':
 			++check;
 			break;
@@ -297,7 +301,7 @@ int wid;
 		inname = stdname;
 	}
 
-	if (wid > 0)
+	if (wid > 0 && !bflag)
 	     (void) printf("%s:%*s ", inname, 
 			   (int) (wid - strlen(inname)), "");
 

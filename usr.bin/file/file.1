@@ -1,4 +1,4 @@
-.\" $OpenBSD: file.1,v 1.16 2002/01/24 19:34:48 mickey Exp $
+.\" $OpenBSD: file.1,v 1.17 2002/11/29 00:27:03 millert Exp $
 .\" $FreeBSD: src/usr.bin/file/file.1,v 1.16 2000/03/01 12:19:39 sheldonh Exp $
 .Dd July 30, 1997
 .Dt FILE 1
@@ -8,7 +8,7 @@
 .Nd determine file type
 .Sh SYNOPSIS
 .Nm file
-.Op Fl vczL
+.Op Fl vbczL
 .Op Fl f Ar namefile
 .Op Fl m Ar magicfiles
 .Ar file Op Ar ...
@@ -126,6 +126,8 @@ of files containing magic numbers.
 This can be a single file, or a colon-separated list of files.
 .It Fl z
 Try to look inside compressed files.
+.It Fl b
+Do not prepend filenames to output lines (brief mode).
 .It Fl c
 Cause a checking printout of the parsed form of the magic file.
 This is usually used in conjunction with
