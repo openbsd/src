@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.18 2003/12/19 00:29:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.19 2003/12/21 18:41:23 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -34,6 +34,7 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
+use OpenBSD::Vstat;
 use Getopt::Std;
 use File::Copy;
 
@@ -284,15 +285,10 @@ sub check_lib_specs
 		}
 		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
 			my ($libname, $major, $minor) = ($1, $2, $3);
-			unless (opendir(DIRECTORY, $dir)) {
-				print "base directory not found\n" if $opt_v;
-				return undef;
-			}
 			my @candidates = 
 			    grep { /^lib\Q$libname\E\.so\.$major\.(\d+)$/ 
 			    	&& $1 >= $minor } 
-			    readdir(DIRECTORY);
-			close(DIRECTORY);
+			    OpenBSD::Vstat::vreaddir($dir);
 			if (@candidates == 0) {
 				print "not found\n" if $opt_v;
 				return undef;
@@ -315,15 +311,26 @@ sub really_add($)
 	my $pkgname = $plist->pkgname();
 	$ENV{'PKG_PREFIX'} = '/usr/local';
 	# check for collisions with existing stuff
-	my $collisions = 0;
+	my $problems = 0;
 	for my $item (@{$plist->{items}}) {
 		next unless $item->IsFile();
-		if (-e $item->fullname()) {
-			print "Collision: ",$item->fullname()," already exists\n";
-			$collisions++;
+		my $fname = $item->fullname();
+		if (OpenBSD::Vstat::vexists($fname)) {
+			print "Collision: $fname already exists\n";
+			$problems++;
+		}
+		my $s = OpenBSD::Vstat::add($fname, $item->{size});
+		next unless defined $s;
+		if ($s->{ro}) {
+			print "Error: ", $s->{mnt}, " is read-only ($fname)\n";
+			$problems++;
+		}
+		if ($s->{avail} < 0) {
+			print "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
+			$problems++;
 		}
 	}
-	die if $collisions;
+	die if $problems;
 
 	my $interrupted;
 	local $SIG{'INT'} = sub {
@@ -420,7 +427,6 @@ while (my $pkg = shift @todo) {
 	}
 	for my $dep (@{$plist->{libdepend}}) {
 		# can't check libspecs yet
-		next if $opt_n;
 		next if $dep->{name} ne $plist->pkgname();
 		if (!check_lib_specs('/usr/local', $dep->{libspec})) {
 			print "Can't install $pkg: incorrect libspec: ",
