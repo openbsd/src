@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.53 1998/11/25 04:58:55 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.54 1998/12/29 07:59:25 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -81,6 +81,7 @@
 #	tun*	network tunnel driver
 #	*random	inkernal random data source
 #	magma*	magma card (makes 16 tty and 2 bpp)
+#	bpp*	bpp
 #	xfs*	XFS filesystem devices
 #	ipl	IP filter log
 
@@ -621,6 +622,11 @@ magma*)
 	done
 	mknod bppm${unit}0 c 101 `add $offset 0`
 	mknod bppm${unit}1 c 101 `add $offset 1`
+	;;
+
+bpp*)
+	unit=`expr $i : 'bpp\(.*\)'`
+	mknod bpp${unit} c 104 `add $unit 0`
 	;;
 
 random|srandom|urandom|prandom|arandom)
