@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.71 2000/10/27 07:32:17 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.72 2000/10/27 07:48:22 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -1989,6 +1989,28 @@ x11_input_open(int type, int plen, void *ctxt)
 		packet_put_int(newch);
 		packet_send();
 	}
+}
+
+/* dummy protocol handler that denies SSH-1 requests (agent/x11) */
+void
+deny_input_open(int type, int plen, void *ctxt)
+{
+	int rchan = packet_get_int();
+	switch(type){
+	case SSH_SMSG_AGENT_OPEN:
+		error("Warning: ssh server tried agent forwarding.");
+		break;
+	case SSH_SMSG_X11_OPEN:
+		error("Warning: ssh server tried X11 forwarding.");
+		break;
+	default:
+		error("deny_input_open: type %d plen %d", type, plen);
+		break;
+	}
+	error("Warning: this is probably a break in attempt by a malicious server.");
+	packet_start(SSH_MSG_CHANNEL_OPEN_FAILURE);
+	packet_put_int(rchan);
+	packet_send();
 }
 
 /*
