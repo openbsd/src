@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mac68k,v 1.17 1998/03/04 22:26:45 ryker Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.18 1998/03/06 10:42:15 gene Exp $
 #	$NetBSD: Makefile.mac68k,v 1.53 1997/04/15 06:11:38 scottr Exp $
 
 # Makefile for OpenBSD
@@ -35,8 +35,7 @@ MAC68K=	$S/arch/mac68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dmac68k
-CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-uninitialized -Wno-format -Wno-main
+CWARNFLAGS=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
