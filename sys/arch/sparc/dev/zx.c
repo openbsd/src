@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.12 2005/03/23 17:16:34 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.13 2005/03/23 17:18:46 miod Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -94,6 +94,8 @@
 #include <dev/sbus/zxreg.h>
 #include <sparc/dev/sbusvar.h>
 
+#include <dev/cons.h>	/* for prom console hook */
+
 #define	ZX_WID_SHARED_8		0
 #define	ZX_WID_SHARED_24	1
 #define	ZX_WID_DBL_8		2
@@ -122,11 +124,13 @@ struct zx_softc {
 	volatile struct zx_draw_ss1 *sc_zd_ss1;
 	volatile struct zx_cursor *sc_zcu;
 
+	int	sc_mode;
 };
 
 void	zx_burner(void *, u_int, u_int);
 int	zx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	zx_mmap(void *v, off_t offset, int prot);
+void	zx_prom(void *);
 void	zx_reset(struct zx_softc *, u_int);
 void	zx_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
@@ -273,6 +277,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 	if (isconsole) {
 		/* zx_reset() below will clear screen, so restart at 1st row */
 		fbwscons_console_init(&sc->sc_sunfb, 0);
+		shutdownhook_establish(zx_prom, sc);
 	}
 
 	/* reset cursor & frame buffer controls */
@@ -731,5 +736,25 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (ul) {
 		dp -= 2 << ZX_WWIDTH;
 		*dp = 0xffffffff;
+	}
+}
+
+void
+zx_prom(void *v)
+{
+	struct zx_softc *sc = v;
+	extern struct consdev consdev_prom;
+
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) {
+		/*
+	 	 * Select 8-bit mode.
+	 	 */
+		zx_reset(sc, WSDISPLAYIO_MODE_EMUL);
+
+		/*
+	 	 * Go back to prom output for the last few messages, so they
+	 	 * will be displayed correctly.
+	 	 */
+		cn_tab = &consdev_prom;
 	}
 }
