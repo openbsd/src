@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.9 1998/06/14 18:57:09 matthieu Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.10 1999/02/07 22:09:07 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.37 1996/03/16 23:17:13 christos Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_map.h>
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 
