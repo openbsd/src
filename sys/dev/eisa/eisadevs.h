@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.9 1998/07/04 09:03:48 deraadt Exp 
+ *	OpenBSD: eisadevs,v 1.10 1998/11/22 16:23:16 mickey Exp 
  */
 
 /*
@@ -80,6 +80,15 @@
 
 /* ETI products */
 #define	EISA_PRODUCT_ETI1001	"Microdyne NE3300 Ethernet Rev. C & D"
+
+/* HP products */
+#define	EISA_PRODUCT_HWP0C70	"Hewlett-Packard HP-IB Host Adapter"
+#define	EISA_PRODUCT_HWP0C80	"Hewlett-Packard SCSI Host Adapter (Cirrus-II) -- 25525A"
+#define	EISA_PRODUCT_HWP1850	"Hewlett-Packard LAN AdapterCard -- 25567A"
+#define	EISA_PRODUCT_HWP2051	"Hewlett-Packard EISA Test Adapter Card"
+#define	EISA_PRODUCT_HWPC000	"Hewlett-Packard Series 700 EISA System Board"
+#define	EISA_PRODUCT_HWPC010	"Hewlett-Packard Series 700 EISA System Board"
+#define	EISA_PRODUCT_HWPC051	"Hewlett-Packard Series 700 EISA System Board"
 
 /* 3Com products */
 #define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"

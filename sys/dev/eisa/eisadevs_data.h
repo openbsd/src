@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.9 1998/07/04 09:03:48 deraadt Exp 
+ *	OpenBSD: eisadevs,v 1.10 1998/11/22 16:23:16 mickey Exp 
  */
 
 /*
@@ -151,6 +151,41 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "ETI1001",
 	    EISA_PRODUCT_ETI1001,
+	},
+	{
+	    0,
+	    "HWP0C70",
+	    EISA_PRODUCT_HWP0C70,
+	},
+	{
+	    0,
+	    "HWP0C80",
+	    EISA_PRODUCT_HWP0C80,
+	},
+	{
+	    0,
+	    "HWP1850",
+	    EISA_PRODUCT_HWP1850,
+	},
+	{
+	    0,
+	    "HWP2051",
+	    EISA_PRODUCT_HWP2051,
+	},
+	{
+	    0,
+	    "HWPC000",
+	    EISA_PRODUCT_HWPC000,
+	},
+	{
+	    0,
+	    "HWPC010",
+	    EISA_PRODUCT_HWPC010,
+	},
+	{
+	    0,
+	    "HWPC051",
+	    EISA_PRODUCT_HWPC051,
 	},
 	{
 	    0,
