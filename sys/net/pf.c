@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.341 2003/05/10 22:33:33 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.342 2003/05/10 23:04:31 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2699,6 +2699,38 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	REASON_SET(&reason, PFRES_MATCH);
 	if (r->log)
 		PFLOG_PACKET(ifp, h, m, af, direction, reason, a ? a : r);
+
+	if ((r->action == PF_DROP) &&
+	    ((r->rule_flag & PFRULE_RETURNICMP) ||
+	    (r->rule_flag & PFRULE_RETURN))) {
+		struct pf_addr *a = NULL;
+
+		if (nat != NULL)
+			a = saddr;
+		else if (rdr != NULL)
+			a = daddr;
+		if (a != NULL) {
+			switch (af) {
+#ifdef INET
+			case AF_INET:
+				pf_change_a(&a->v4.s_addr, pd->ip_sum,
+				    baddr.v4.s_addr, 0);
+				break;
+#endif /* INET */
+#ifdef INET6
+			case AF_INET6:
+				PF_ACPY(a, &baddr, af);
+				break;
+#endif /* INET6 */
+			}
+		}
+		if ((af == AF_INET) && r->return_icmp)
+			pf_send_icmp(m, r->return_icmp >> 8,
+			    r->return_icmp & 255, af, r);
+		else if ((af == AF_INET6) && r->return_icmp6)
+			pf_send_icmp(m, r->return_icmp6 >> 8,
+			    r->return_icmp6 & 255, af, r);
+	}
 
 	if (r->action != PF_PASS)
 		return (PF_DROP);
