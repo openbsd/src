@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_output.c,v 1.17 2000/10/11 09:14:15 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.122 2000/08/19 02:12:02 jinmei Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.18 2001/02/02 15:55:18 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -846,11 +846,24 @@ skip_ipsec2:;
 		 * Larger scopes than link will be supported in the near
 		 * future.
 		 */
+		origifp = NULL;
 		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 			origifp = ifindex2ifnet[ntohs(ip6->ip6_src.s6_addr16[1])];
 		else if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
 			origifp = ifindex2ifnet[ntohs(ip6->ip6_dst.s6_addr16[1])];
-		else
+		/*
+		 * XXX: origifp can be NULL even in those two cases above.
+		 * For example, if we remove the (only) link-local address
+		 * from the loopback interface, and try to send a link-local
+		 * address without link-id information.  Then the source
+		 * address is ::1, and the destination address is the
+		 * link-local address with its s6_addr16[1] being zero.
+		 * What is worse, if the packet goes to the loopback interface
+		 * by a default rejected route, the null pointer would be
+		 * passed to looutput, and the kernel would hang.
+		 * The following last resort would prevent such disaster.
+		 */
+		if (origifp == NULL);
 			origifp = ifp;
 	}
 	else
