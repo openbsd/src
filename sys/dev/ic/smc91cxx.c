@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.14 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.15 2002/03/22 00:04:29 vincent Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -132,7 +132,6 @@
 /* XXX Hardware padding doesn't work yet(?) */
 #define	SMC91CXX_SW_PAD
 
-#ifdef SMC_DEBUG
 const char *smc91cxx_idstrs[] = {
 	NULL,				/* 0 */
 	NULL,				/* 1 */
@@ -151,7 +150,6 @@ const char *smc91cxx_idstrs[] = {
 	NULL,				/* 14 */
 	NULL,				/* 15 */
 };
-#endif
 
 /* Supported media types. */
 const int smc91cxx_media[] = {
