@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.20 2004/04/28 15:18:57 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.21 2004/11/04 20:09:18 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.20 2004/04/28 15:18:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.21 2004/11/04 20:09:18 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,17 +74,17 @@ extern int from_inetd;
 
 FILE *ufp;
 
-static u_int
+static long
 getidle(char *tty)
 {
 	char devname[PATH_MAX];
 	struct stat st;
-	u_long idle;
+	long idle;
 	time_t now;
 
 	idle = 0;
 	if (*tty == 'X') {
-		u_long kbd_idle, mouse_idle;
+		long kbd_idle, mouse_idle;
 #if !defined(__i386__)
 		kbd_idle = getidle("kbd");
 #else
@@ -97,7 +97,7 @@ getidle(char *tty)
 		idle = (kbd_idle < mouse_idle) ? kbd_idle : mouse_idle;
 	} else {
 		snprintf(devname, sizeof devname, "%s/%.*s", _PATH_DEV,
-			sizeof(tty), tty);
+		    sizeof(tty), tty);
 		if (stat(devname, &st) < 0) {
 #ifdef DEBUG
 			printf("%s: %m\n", devname);
@@ -129,7 +129,7 @@ rusers_num_svc(void *arg, struct svc_req *rqstp)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, 0, SEEK_SET);
+	lseek(fd, (off_t)0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
@@ -151,8 +151,7 @@ do_names_3(int all)
 {
 	static utmp_array ut;
 	struct utmp usr;
-	int nusers = 0;
-	int fd;
+	int fd, nusers = 0;
 
 	bzero((char *)&ut, sizeof(ut));
 	ut.utmp_array_val = &utmps[0];
@@ -162,7 +161,7 @@ do_names_3(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, 0, SEEK_SET);
+	lseek(fd, (off_t)0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
@@ -214,8 +213,7 @@ do_names_2(int all)
 {
 	static struct utmpidlearr ut;
 	struct utmp usr;
-	int nusers = 0;
-	int fd;
+	int fd, nusers = 0;
 
 	bzero((char *)&ut, sizeof(ut));
 	ut.uia_arr = utmp_idlep;
@@ -226,7 +224,7 @@ do_names_2(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, 0, SEEK_SET);
+	lseek(fd, (off_t)0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
@@ -278,8 +276,7 @@ do_names_1(int all)
 {
 	static struct utmparr ut;
 	struct utmp usr;
-	int nusers = 0;
-	int fd;
+	int fd, nusers = 0;
 
 	bzero((char *)&ut, sizeof(ut));
 	ut.uta_arr = ru_utmpp;
@@ -290,7 +287,7 @@ do_names_1(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, 0, SEEK_SET);
+	lseek(fd, (off_t)0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		close(fd);
