@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.36 2002/10/30 19:11:56 marc Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.37 2002/10/30 20:05:11 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -487,11 +487,8 @@ enum pthread_state {
 
 
 /*
- * File descriptor locking definitions.
+ * File descriptor locking definitions are defined in "thread_private.h"
  */
-#define FD_READ             0x1
-#define FD_WRITE            0x2
-#define FD_RDWR             (FD_READ | FD_WRITE)
 
 /*
  * File descriptor table structure.
@@ -928,13 +925,6 @@ SCLASS struct pthread_cond_attr pthread_condattr_default
 #else
 ;
 #endif
-
-/*
- * Standard I/O file descriptors need special flag treatment since
- * setting one to non-blocking does all on *BSD. Sigh. This array
- * is used to store the initial flag settings.
- */
-SCLASS int	_pthread_stdio_flags[3];
 
 /* File table information: */
 SCLASS struct fd_table_entry **_thread_fd_table
