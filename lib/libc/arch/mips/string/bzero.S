@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: bzero.S,v 1.4 1996/08/19 08:16:13 tholo Exp $"
+	.asciz "$OpenBSD: bzero.S,v 1.5 2001/01/04 21:45:30 todd Exp $"
 #endif /* LIBC_SCCS */
 
 /* bzero(s1, n) */
@@ -59,7 +59,7 @@ LEAF(bzero)
 	addu	a3, a3, a0		# compute ending address
 2:
 	addu	a0, a0, 4		# clear words
-	bne	a0, a3, 2b		#   unrolling loop doesnt help
+	bne	a0, a3, 2b		#   unrolling loop doesn't help
 	sw	zero, -4(a0)		#   since we are limited by memory speed
 smallclr:
 	ble	a1, zero, 2f

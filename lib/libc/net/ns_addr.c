@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ns_addr.c,v 1.4 1997/07/21 20:31:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ns_addr.c,v 1.5 2001/01/04 21:45:31 todd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ ns_addr(name)
 	 * First, figure out what he intends as a field separtor.
 	 * Despite the way this routine is written, the prefered
 	 * form  2-272.AA001234H.01777, i.e. XDE standard.
-	 * Great efforts are made to insure backward compatability.
+	 * Great efforts are made to insure backward compatibility.
 	 */
 	if ((hostname = strchr(buf, '#')))
 		separator = '#';

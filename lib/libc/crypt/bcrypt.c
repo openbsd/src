@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.13 2000/08/02 15:09:41 provos Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.14 2001/01/04 21:45:30 todd Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -237,7 +237,7 @@ bcrypt(key, salt)
 		/* Out of sync with passwd entry */
 		return error;
 
-	/* Computer power doesnt increase linear, 2^x should be fine */
+	/* Computer power doesn't increase linear, 2^x should be fine */
 	if ((rounds = (u_int32_t) 1 << (logr = atoi(salt))) < BCRYPT_MINROUNDS)
 		return error;
 
