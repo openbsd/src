@@ -1,4 +1,4 @@
-/*	$OpenBSD: api.c,v 1.9 2001/01/29 01:58:28 niklas Exp $	*/
+/*	$OpenBSD: api.c,v 1.10 2001/08/18 20:34:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -502,8 +502,8 @@ api_opts_set(sp, name, str_value, num_value, bool_value)
 	case OPT_STR:
 		GET_SPACE_RET(sp, bp, blen, 1024);
 		a.len = snprintf(bp, 1024, "%s=%s", name, str_value);
-		if (a.len > 63)
-			a.len = 63;
+		if (a.len > 1023)
+			a.len = 1023;
 		break;
 	}
 	a.bp = bp;
