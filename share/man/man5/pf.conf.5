@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.243 2003/05/17 06:14:58 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.244 2003/05/17 06:44:27 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1363,7 +1363,7 @@ A tag will be assigned to packets matching this rule.
 This tag can be later used to filter packets with that tag,
 even on another interface.
 The tag is set on every matching rule, not just the last one.
-There is one tag per packet, susequent matches replace it.
+There is one tag per packet, subsequent matches replace it.
 .It Ar tagged <string>
 This rule applies only to packets that have been tagged with the given
 tag.
