@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2001/07/18 10:47:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.36 2001/07/22 19:58:17 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -3317,7 +3317,7 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
  * entry inspected - and turned off if  necessary. If any of the
  * inspected bits were found on, an TLB flush will be performed.
  */
-void
+boolean_t
 pmap_clear_modify(struct vm_page *pg)
 {
 	pv_entry_t    pvl;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2001/07/18 10:47:04 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.26 2001/07/22 19:58:14 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -1570,7 +1570,7 @@ pmap_copy_page(src, dst)
  *	Clear the modify bits on the specified physical page.
  */
 
-void
+boolean_t
 pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
