@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.9 1997/09/02 19:13:18 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.10 1997/09/04 22:36:23 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -180,6 +180,10 @@ main(argc, argv)
 	/* check disklabel */
 	if (dl.d_magic != DISKMAGIC)
 		err(1, "bad disklabel magic=%0x8x", dl.d_magic);
+
+	/* warn on unknown disklabel types */
+	if (dl.d_type == 0)
+		warnx("disklabel type unknown");
 
 	/* Load proto blocks into core */
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)

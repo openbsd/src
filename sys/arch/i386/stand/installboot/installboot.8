@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.3 1997/08/29 22:13:54 mickey Exp $
+.\"	$OpenBSD: installboot.8,v 1.4 1997/09/04 22:36:23 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -88,6 +88,8 @@ of the block device on which the file system containing
 is mounted.
 .El
 .Sh BUGS
+You have disklabel type to be set to some value different from 'unknown'.
+.Pp
 You cannot run
 .Nm installboot
 for drives/partitions others then the one you have loaded /bsd from.
