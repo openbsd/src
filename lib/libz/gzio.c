@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzio.c,v 1.7 2002/03/12 00:25:57 millert Exp $	*/
+/*	$OpenBSD: gzio.c,v 1.8 2002/07/06 00:11:40 millert Exp $	*/
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -681,6 +681,7 @@ z_off_t ZEXPORT gzseek (file, offset, whence)
 	/* At this point, offset is the number of zero bytes to write. */
 	if (s->inbuf == Z_NULL) {
 	    s->inbuf = (Byte*)ALLOC(Z_BUFSIZE); /* for seeking */
+	    if (s->inbuf == Z_NULL) return -1L;
 	    zmemzero(s->inbuf, Z_BUFSIZE);
 	}
 	while (offset > 0)  {
@@ -723,6 +724,7 @@ z_off_t ZEXPORT gzseek (file, offset, whence)
 
     if (offset != 0 && s->outbuf == Z_NULL) {
 	s->outbuf = (Byte*)ALLOC(Z_BUFSIZE);
+	if (s->outbuf == Z_NULL) return -1L;
     }
     while (offset > 0)  {
 	int size = Z_BUFSIZE;
@@ -862,12 +864,13 @@ const char*  ZEXPORT gzerror (file, errnum)
     *errnum = s->z_err;
     if (*errnum == Z_OK) return (const char*)"";
 
-    m =  (char*)(*errnum == Z_ERRNO ? zstrerror(errno) : s->stream.msg);
+    m = (char*)(*errnum == Z_ERRNO ? zstrerror(errno) : s->stream.msg);
 
     if (m == NULL || *m == '\0') m = (char*)ERR_MSG(s->z_err);
 
     TRYFREE(s->msg);
     s->msg = (char*)ALLOC(strlen(s->path) + strlen(m) + 3);
+    if (s->msg == Z_NULL) return (const char*)ERR_MSG(Z_MEM_ERROR);
     strcpy(s->msg, s->path);
     strcat(s->msg, ": ");
     strcat(s->msg, m);
