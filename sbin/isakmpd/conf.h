@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.19 2002/11/15 14:58:38 ho Exp $	*/
+/*	$OpenBSD: conf.h,v 1.20 2003/01/09 13:11:17 ho Exp $	*/
 /*	$EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 
 #define CONF_DFLT_KEYNOTE_CRED_DIR     "/etc/isakmpd/keynote/"
 
-#define CONF_DFLT_TAG_PHASE1_CONFIG    "Default-Phase-1-Configuration"
+#define CONF_DFLT_TAG_PHASE1_CONFIG    "Default-phase-1-configuration"
 #define CONF_DFLT_PHASE1_EXCH_TYPE     "ID_PROT"
 #define CONF_DFLT_PHASE1_TRANSFORMS    "3DES-SHA"
 
