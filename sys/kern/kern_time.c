@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.7 1997/04/23 09:52:03 tholo Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.8 1997/04/26 10:38:30 tholo Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ sys_nanosleep(p, v, retval)
 {
 	static int nanowait;
 	register struct sys_nanosleep_args/* {
-		syscallarg(struct timespec *) rqtp;
+		syscallarg(const struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
 	struct timespec rqt;
@@ -191,7 +191,7 @@ sys_nanosleep(p, v, retval)
 	struct timeval atv, utv;
 	int error, s, timo;
 
-	error = copyin((caddr_t)SCARG(uap, rqtp), (caddr_t)&rqt,
+	error = copyin((const caddr_t)SCARG(uap, rqtp), (caddr_t)&rqt,
 		       sizeof(struct timespec));
 	if (error)
 		return (error);
