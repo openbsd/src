@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.9 2003/05/14 08:42:00 canacar Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.10 2003/10/01 21:21:35 canacar Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -184,6 +184,7 @@ pflog_packet(struct ifnet *ifp, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	if (ifp == NULL || m == NULL || rm == NULL)
 		return (-1);
 
+	bzero(&hdr, sizeof(hdr));
 	hdr.length = PFLOG_REAL_HDRLEN;
 	hdr.af = af;
 	hdr.action = rm->action;
@@ -193,13 +194,10 @@ pflog_packet(struct ifnet *ifp, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	if (am == NULL) {
 		hdr.rulenr = htonl(rm->nr);
 		hdr.subrulenr = -1;
-		bzero(hdr.ruleset, sizeof(hdr.ruleset));
 	} else {
 		hdr.rulenr = htonl(am->nr);
 		hdr.subrulenr = htonl(rm->nr);
-		if (ruleset == NULL)
-			bzero(hdr.ruleset, sizeof(hdr.ruleset));
-		else
+		if (ruleset != NULL)
 			memcpy(hdr.ruleset, ruleset->name,
 			    sizeof(hdr.ruleset));
 
