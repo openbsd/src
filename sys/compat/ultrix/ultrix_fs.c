@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.3 1996/04/21 22:18:45 deraadt Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.4 1997/04/12 21:21:29 graichen Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ ultrix_sys_mount(p, v, retval)
 		na.proto = IPPROTO_UDP;
 		na.fh = una.fh;
 		na.fhsize = NFSX_V2FH;
-		na.flags = /*una.flags;*/ NFSMNT_NOCONN | NFSMNT_RESVPORT;
+		na.flags = /*una.flags;*/ NFSMNT_NOCONN;
 		na.wsize = una.wsize;
 		na.rsize = una.rsize;
 		na.timeo = una.timeo;
