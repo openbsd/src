@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.6 1996/04/21 22:16:14 deraadt Exp $
+#	$OpenBSD: TDR,v 1.7 1996/05/04 09:20:35 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -58,7 +58,7 @@ options		NFSCLIENT	# Network File System client
 options		NFSSERVER	# Network File System server
 
 options		CD9660		# ISO 9660 + Rock Ridge file system
-#options	MSDOSFS		# MS-DOS file system
+options		MSDOSFS		# MS-DOS file system
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
@@ -66,7 +66,7 @@ options		KERNFS		# /kern
 #options	PORTAL		# ?
 #options	PROCFS		# /proc
 #options	UMAPFS		# NULLFS + uid and gid remapping
-options	UNION		# union file system
+options		UNION		# union file system
 
 options		GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
@@ -89,12 +89,12 @@ isa0	at mainbus0
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 
-#pc0	at isa? port 0x60 irq 1		# generic PC console device
-vt0	at isa? port 0x60 irq 1
-options	PCVT_NOFASTSCROLL
+pc0	at isa? port 0x60 irq 1		# generic PC console device
+#vt0	at isa? port 0x60 irq 1
+#options PCVT_NOFASTSCROLL
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-#com1	at isa? port 0x2f8 irq 3
+com1	at isa? port 0x2f8 irq 3
 #com2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
@@ -163,6 +163,35 @@ ep2	at isa? port ? irq ?
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 #spkr0	at pckbd? port 0x61
+
+#options	APM_NOIDLE
+#options	PCIVERBOSE
+#options	PCMCIA_DEBUG
+#options	PCMCIA_ISA_DEBUG
+
+#apm0	at mainbus?
+#pcmcia* at pcic?
+
+# Multiple controllers need some testing.  Some laptops have multiple PCIC
+# controllers instead of two-slot controllers.
+# The i82365 (pcic) controller uses the same ports for the first two
+# controllers and for the second two controllers.
+
+# IRQ 2/9 doesn't seem to work for status change interrupts, so use one
+# of the higher ones.
+#pcicmaster0	at isa? port 0x3E0 size 2
+#pcic0	at pcicmaster0 irq 11 iomem 0xd4000 iosiz 4096
+#pcic1	at pcicmaster0 irq 12 iomem 0xd5000 iosiz 4096
+#pcicmaster1 at isa? port 0x3E2 size 2
+#pcic2	at pcicmaster1 irq 11 iomem 0xd6000 iosiz 4096
+#pcic3	at pcicmaster1 irq 12 iomem 0xd7000 iosiz 4096
+
+#ed0	at pcmcia? port 0x300 iomem 0xd8000 iosiz 8192 	irq 10
+#ed0	at pcmcia? port 0x300 size 0x20 irq 10 slot ?
+#ep0	at pcmcia? port 0x300 size 0x10 irq 10 slot ?
+#com1	at pcmcia? port 0x2f8 size 8 irq 5 slot ?
+#com2	at pcmcia? port 0x3e8 size 8 irq 5 slot ?
+#com3	at pcmcia? port 0x2e8 size 8 irq 3 slot ?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 16		# packet filter
