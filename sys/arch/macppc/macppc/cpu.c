@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2002/03/21 17:37:11 drahn Exp $ */
+/*	$OpenBSD: cpu.c,v 1.4 2002/03/21 17:37:57 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -140,6 +140,7 @@ cpuattach(parent, dev, aux)
 		} else {
 			sprintf(cpu_model, "7451");
 		}
+		break;
 	case MPC7455:
 		sprintf(cpu_model, "7455");
 		break;
