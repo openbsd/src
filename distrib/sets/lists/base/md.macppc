@@ -1485,7 +1485,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/bat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/cdefs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/cpu.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/dlfcn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/elf_abi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/exec.ph
