@@ -440,3 +440,5 @@
 ./usr/lib/apache/modules/mod_unique_id.so
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
+./usr/libdata/perl5/site_perl/mips-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/memrange.ph

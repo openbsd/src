@@ -413,3 +413,5 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/memrange.ph

@@ -18,7 +18,7 @@
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
 ./usr/lib/libg2c.so.5.24
-./usr/lib/libiberty.so.2.0
+./usr/lib/libiberty.so.3.0
 ./usr/lib/libkadm.so.5.0
 ./usr/lib/libkafs.so.5.1
 ./usr/lib/libkdb.so.5.0
@@ -730,3 +730,5 @@
 ./usr/lib/apache/modules/mod_unique_id.so
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
+./usr/libdata/perl5/site_perl/i386-openbsd/g2c.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/memrange.ph
