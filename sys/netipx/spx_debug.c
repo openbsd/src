@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_debug.c,v 1.2 1996/10/26 09:34:56 mickey Exp $	*/
+/*	$OpenBSD: spx_debug.c,v 1.3 2000/01/11 01:26:21 fgsch Exp $	*/
 
 /*-
  *
@@ -57,7 +57,6 @@
 #include <netinet/tcp_fsm.h>
 
 #include <netipx/ipx.h>
-#include <netipx/ipx_error.h>
 #include <netipx/ipx_pcb.h>
 #include <netipx/ipx.h>
 #include <netipx/ipx_var.h>

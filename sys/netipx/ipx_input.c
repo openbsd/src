@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.4 1996/12/23 08:47:04 mickey Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.5 2000/01/11 01:26:21 fgsch Exp $	*/
 
 /*-
  *
@@ -65,7 +65,6 @@
 #include <netipx/ipx_if.h>
 #include <netipx/ipx_pcb.h>
 #include <netipx/ipx_var.h>
-#include <netipx/ipx_error.h>
 
 #ifndef IPXPRINTFS
 #define IPXPRINTFS	1	/* printing forwarding information */
@@ -138,8 +137,7 @@ ipxintr()
 	register struct mbuf *m;
 	register struct ipxpcb *ipxp;
 	register int i;
-	int len, s, error;
-	char oddpacketp;
+	int len, s;
 
 next:
 	/*
@@ -188,12 +186,6 @@ next:
 	}
 
 	ipx = mtod(m, struct ipx *);
-	len = ntohs(ipx->ipx_len);
-	if (oddpacketp == (len & 1)) {
-		len++;		/* If this packet is of odd length,
-				   preserve garbage byte for checksum */
-	}
-
 	/*
 	 * Check that the amount of data in the buffers
 	 * is as at least much as the IPX header would have us expect.
@@ -221,13 +213,7 @@ next:
 #ifdef	IPXDEBUG
 			printf("ipxintr: bad sum [%u]\n", i);
 #endif
-			ipx->ipx_sum = i;
-			if (ipx_hosteqnh(ipx_thishost, ipx->ipx_dna.ipx_host))
-				error = IPX_ERR_BADSUM;
-			else
-				error = IPX_ERR_BADSUM_T;
-			ipx_error(m, error, 0);
-			goto next;
+			goto bad;
 		}
 	}
 	/*
@@ -275,9 +261,6 @@ next:
 	 */
 	ipxintr_swtch++;
 	if (ipxp) {
-		if (oddpacketp) {
-			m_adj(m, -1);
-		}
 		if ((ipxp->ipxp_flags & IPXP_ALL_PACKETS)==0)
 			switch (ipx->ipx_pt) {
 
@@ -288,19 +271,13 @@ next:
 				    spx_input(m, ipxp);
 				    goto next;
 
-			    case IPXPROTO_ERROR:
-#ifdef	IPXDEBUG
-				    printf("ipxintr: error packet\n");
-#endif
-				    ipx_err_input(m);
-				    goto next;
 			}
 #ifdef	IPXDEBUG
 		printf("ipxintr: ipx packet\n");
 #endif
 		ipx_input(m, ipxp);
 	} else
-		ipx_error(m, IPX_ERR_NOSOCK, 0);
+		goto bad;
 
 	goto next;
 
@@ -308,14 +285,6 @@ bad:
 	m_freem(m);
 	goto next;
 }
-
-u_char ipxctlerrmap[PRC_NCMDS] = {
-	ECONNABORTED,	ECONNABORTED,	0,		0,
-	0,		0,		EHOSTDOWN,	EHOSTUNREACH,
-	ENETUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
-	EMSGSIZE,	0,		0,		0,
-	0,		0,		0,		0
-};
 
 void *
 ipx_ctlinput(cmd, arg_as_sa, dummy)
@@ -325,16 +294,9 @@ ipx_ctlinput(cmd, arg_as_sa, dummy)
 {
 	caddr_t arg = (/* XXX */ caddr_t)arg_as_sa;
 	struct ipx_addr *ipx;
-	struct ipxpcb *ipxp;
-	struct ipx_errp *errp;
-	int type;
 
 	if (cmd < 0 || cmd > PRC_NCMDS)
 		return NULL;
-	if (ipxctlerrmap[cmd] == 0)
-		return NULL;		/* XXX */
-	type = IPX_ERR_UNREACH_HOST;
-	errp = (struct ipx_errp *)arg;
 	switch (cmd) {
 		struct sockaddr_ipx *sipx;
 
@@ -348,22 +310,7 @@ ipx_ctlinput(cmd, arg_as_sa, dummy)
 		break;
 
 	default:
-		ipx = &errp->ipx_err_ipx.ipx_dna;
-		type = errp->ipx_err_num;
-		type = ntohs((u_short)type);
 		break;
-	}
-	switch (type) {
-
-	case IPX_ERR_UNREACH_HOST:
-		ipx_pcbnotify(ipx, (int)ipxctlerrmap[cmd], ipx_abort, (long)0);
-		break;
-
-	case IPX_ERR_NOSOCK:
-		ipxp = ipx_pcblookup(ipx, errp->ipx_err_ipx.ipx_sna.ipx_port,
-			IPX_WILDCARD);
-		if(ipxp && ipxdonosocks && ! ipx_nullhost(ipxp->ipxp_faddr))
-			(void) ipx_drop(ipxp, (int)ipxctlerrmap[cmd]);
 	}
 	return NULL;
 }
@@ -382,7 +329,7 @@ ipx_forward(m)
 struct mbuf *m;
 {
 	register struct ipx *ipx = mtod(m, struct ipx *);
-	register int error, type, code;
+	register int error;
 	struct mbuf *mcopy = NULL;
 	int agedelta = 1;
 	int flags = IPX_FORWARDING;
@@ -390,24 +337,18 @@ struct mbuf *m;
 	int ok_back = 0;
 
 	if (ipxforwarding == 0) {
-		/* can't tell difference between net and host */
-		type = IPX_ERR_UNREACH_HOST, code = 0;
-		goto senderror;
+		m_freem(m);
+		goto cleanup;
 	}
 	ipx->ipx_tc++;
 	if (ipx->ipx_tc > IPX_MAXHOPS) {
-		type = IPX_ERR_TOO_OLD, code = 0;
-		goto senderror;
+		m_freem(m);
+		goto cleanup;
 	}
-	/*
-	 * Save at most 42 bytes of the packet in case
-	 * we need to generate an IPX error message to the src.
-	 */
-	mcopy = m_copy(m, 0, imin((int)ntohs(ipx->ipx_len), 42));
 
 	if ((ok_there = ipx_do_route(&ipx->ipx_dna,&ipx_droute))==0) {
-		type = IPX_ERR_UNREACH_HOST, code = 0;
-		goto senderror;
+		m_freem(m);
+		goto cleanup;
 	}
 	/*
 	 * Here we think about  forwarding  broadcast packets,
@@ -435,8 +376,8 @@ struct mbuf *m;
 		    (ifp!=ipx_sroute.ro_rt->rt_ifp)) {
 			flags |= IPX_ALLOWBROADCAST;
 		} else {
-			type = IPX_ERR_UNREACH_HOST, code = 0;
-			goto senderror;
+			m_freem(m);
+			goto cleanup;
 		}
 	}
 	/* need to adjust checksum */
@@ -457,18 +398,16 @@ struct mbuf *m;
 		ipx->ipx_sum = 0xffff;
 
 	error = ipx_outputfl(m, &ipx_droute, flags);
-
-	if (ipxprintfs && !error) {
-		printf("forward: ");
-		ipx_printhost(&ipx->ipx_sna);
-		printf(" to ");
-		ipx_printhost(&ipx->ipx_dna);
-		printf(" hops %d\n", ipx->ipx_tc);
-	}
-
-	if (error && mcopy != NULL) {
+	if (error == 0) {
+		if (ipxprintfs) {
+			printf("forward: ");
+			ipx_printhost(&ipx->ipx_sna);
+			printf(" to ");
+			ipx_printhost(&ipx->ipx_dna);
+			printf(" hops %d\n", ipx->ipx_tc);
+		}
+	} else if (mcopy != NULL) {
 		ipx = mtod(mcopy, struct ipx *);
-		type = IPX_ERR_UNSPEC_T, code = 0;
 		switch (error) {
 
 		case ENETUNREACH:
@@ -476,21 +415,16 @@ struct mbuf *m;
 		case EHOSTUNREACH:
 		case ENETDOWN:
 		case EPERM:
-			type = IPX_ERR_UNREACH_HOST;
 			break;
 
 		case EMSGSIZE:
-			type = IPX_ERR_TOO_BIG;
-			code = 576; /* too hard to figure out mtu here */
 			break;
 
 		case ENOBUFS:
-			type = IPX_ERR_UNSPEC_T;
 			break;
 		}
 		mcopy = NULL;
-	senderror:
-		ipx_error(m, type, code);
+		m_freem(m);
 	}
 cleanup:
 	if (ok_there)

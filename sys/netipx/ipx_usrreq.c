@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.5 1997/01/18 17:53:54 mickey Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.6 2000/01/11 01:26:21 fgsch Exp $	*/
 
 /*-
  *
@@ -64,7 +64,6 @@
 #include <netipx/ipx_pcb.h>
 #include <netipx/ipx_if.h>
 #include <netipx/ipx_var.h>
-#include <netipx/ipx_error.h>
 #include <netipx/ipx_ip.h>
 
 #include <machine/stdarg.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spx_usrreq.c,v 1.6 1998/03/18 21:30:06 mickey Exp $	*/
+/*	$OpenBSD: spx_usrreq.c,v 1.7 2000/01/11 01:26:22 fgsch Exp $	*/
 
 /*-
  *
@@ -57,7 +57,6 @@
 #include <netipx/ipx.h>
 #include <netipx/ipx_pcb.h>
 #include <netipx/ipx_var.h>
-#include <netipx/ipx_error.h>
 #include <netipx/spx.h>
 #include <netipx/spx_timer.h>
 #include <netipx/spx_var.h>
@@ -289,7 +288,7 @@ dropwithreset:
 	si->si_seq = ntohs(si->si_seq);
 	si->si_ack = ntohs(si->si_ack);
 	si->si_alo = ntohs(si->si_alo);
-	ipx_error(dtom(si), IPX_ERR_NOSOCK, 0);
+	m_freem(dtom(si));
 	if (cb->s_ipxpcb->ipxp_socket->so_options & SO_DEBUG || traceallspxs)
 		spx_trace(SA_DROP, (u_char)ostate, cb, &spx_savesi, 0);
 	return;
@@ -467,18 +466,18 @@ update_window:
 			spxstat.spxs_rcvpackafterwin++;
 		if (si->si_cc & SPX_OB) {
 			if (SSEQ_GT(si->si_seq, cb->s_alo + 60)) {
-				ipx_error(dtom(si), IPX_ERR_FULLUP, 0);
+				m_freem(dtom(si));
 				return (0);
 			} /* else queue this packet; */
 		} else {
 			/*register struct socket *so = cb->s_ipxpcb->ipxp_socket;
 			if (so->so_state && SS_NOFDREF) {
-				ipx_error(dtom(si), IPX_ERR_NOSOCK, 0);
+				m_freem(dtom(si));
 				(void)spx_close(cb);
 			} else
 				       would crash system*/
 			spx_istat.notyet++;
-			ipx_error(dtom(si), IPX_ERR_FULLUP, 0);
+			m_freem(dtom(si));
 			return (0);
 		}
 	}
@@ -615,14 +614,10 @@ spx_ctlinput(cmd, arg_as_sa, dummy)
 {
 	caddr_t arg = (/* XXX */ caddr_t)arg_as_sa;
 	struct ipx_addr *na;
-	struct ipx_errp *errp = (struct ipx_errp *)arg;
-	struct ipxpcb *ipxp;
 	struct sockaddr_ipx *sipx;
-	int type;
 
 	if (cmd < 0 || cmd > PRC_NCMDS)
 		return NULL;
-	type = IPX_ERR_UNREACH_HOST;
 
 	switch (cmd) {
 
@@ -639,38 +634,11 @@ spx_ctlinput(cmd, arg_as_sa, dummy)
 		break;
 
 	default:
-		errp = (struct ipx_errp *)arg;
-		na = &errp->ipx_err_ipx.ipx_dna;
-		type = errp->ipx_err_num;
-		type = ntohs((u_short)type);
 		break;
 	}
-	switch (type) {
-
-	case IPX_ERR_UNREACH_HOST:
-		ipx_pcbnotify(na, (int)ipxctlerrmap[cmd], spx_abort, (long)0);
-		break;
-
-	case IPX_ERR_TOO_BIG:
-	case IPX_ERR_NOSOCK:
-		ipxp = ipx_pcblookup(na, errp->ipx_err_ipx.ipx_sna.ipx_port,
-			IPX_WILDCARD);
-		if (ipxp) {
-			if(ipxp->ipxp_ppcb)
-				(void)spx_drop((struct spxpcb *)ipxp->ipxp_ppcb,
-						(int)ipxctlerrmap[cmd]);
-			else
-				(void)ipx_drop(ipxp, (int)ipxctlerrmap[cmd]);
-		}
-		break;
-
-	case IPX_ERR_FULLUP:
-		ipx_pcbnotify(na, 0, spx_quench, (long)0);
-		break;
-	}
-
 	return NULL;
 }
+
 /*
  * When a source quench is received, close congestion window
  * to one packet.  We will gradually open it again as we proceed.
