@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.47 2003/03/06 21:56:48 miod Exp $
+dnl	$OpenBSD: hardware,v 1.48 2003/03/09 02:41:19 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -116,6 +116,8 @@ Supported devices {:-include-:}:
 	  + TCX - 8/24-bit color
 	  + Vigra VS10 and VS12 framebuffers (8 bit color, selectable
 	    VGA-compatible modes and connector)
+	  + ZX (aka Leo) - 8/24-bit color, overlay planes, double-buffered,
+	    3-D acceleration
 	- 4/200 on-board bwtwo
 	- P4 video (4/100 and 4/300):
 	  + bwtwo - black and white
@@ -191,8 +193,6 @@ Hardware the we do NOT currently support, but get many questions about:
         - SBus cgeight, 24-bit color, unaccelerated
         - SBus GT, 24-bit color, 8-bit color, overlay planes,
 	  double-buffered, 3-D acceleration (aka "Graphics Tower")
-        - SBus ZX, 24-bit color, 8-bit color, overlay planes,
-	  double-buffered, 3-D acceleration (aka Leo)
     * On-board Audio and ISDN
 	This is present on some sun4m systems (LX, LC, SPARCstation 10/20)
     * Multiple Processors/Modules in sun4m systems
