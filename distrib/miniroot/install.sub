@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.230 2002/06/10 22:38:12 krw Exp $
+#	$OpenBSD: install.sub,v 1.231 2002/06/10 23:03:32 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1848,7 +1848,8 @@ munge_fstab() {
 		esac
 
 		# Don't use soft updates
-		_opt="$(echo ${_opt} | sed 's/,softdep,/,/; s/,softdep//; s/softdep,//')"
+		_opt="$(echo ${_opt} | \
+			sed -e 's/^softdep$//; s/^softdep,//; s/,softdep,/,/; s/,softdep$//;')"
 
 		if [ "$_mp" = "/" ]; then
 			_mp=
