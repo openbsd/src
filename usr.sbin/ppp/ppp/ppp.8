@@ -1,4 +1,4 @@
-.\" $Id: ppp.8,v 1.52 1999/06/14 10:14:19 brian Exp $
+.\" $Id: ppp.8,v 1.53 1999/06/23 16:49:04 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Os
@@ -1465,6 +1465,7 @@ command below.
 .Ar Proto
 must be one of
 .Sq icmp ,
+.Sq igmp ,
 .Sq udp
 or
 .Sq tcp .
@@ -3830,7 +3831,7 @@ as they travel across the link.
 .No permit|deny
 .Oo Ar src_addr Ns Op / Ns Ar width
 .Op Ar dst_addr Ns Op / Ns Ar width
-.Oc Oo tcp|udp|icmp Op src lt|eq|gt Ar port
+.Oc Oo tcp|udp|igmp|icmp Op src lt|eq|gt Ar port
 .Op dst lt|eq|gt Ar port
 .Op estab
 .Op syn
