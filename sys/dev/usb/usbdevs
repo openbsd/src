@@ -1,4 +1,4 @@
-	$OpenBSD: usbdevs,v 1.10 1999/11/07 21:38:25 fgsch Exp $
+	$OpenBSD: usbdevs,v 1.11 1999/12/26 14:57:06 fgsch Exp $
 /*	$NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 vendor HP		0x03f0	Hewlett Packard
 vendor NEC		0x0409	NEC
 vendor KODAK		0x040a	Eastman Kodak Corp.
+vendor MELCO		0x0411	Melco Inc.
 vendor CATC		0x0423	Computer Access Technology Corp.
 vendor GRAVIS		0x0428	Advanced Gravis Computer Tech. Ltd.
 vendor LEXMARK		0x043d	Lexmark International Inc.
@@ -62,6 +63,7 @@ vendor CONNECTIX	0x0478	Connectix Corp.
 vendor LUCENT		0x047e	Lucent
 vendor STMICRO		0x0483	STMicroelectronics
 vendor ACER		0x04a5	Acer Peripheral Inc.
+vendor CANON		0x04a9	Canon Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
@@ -75,6 +77,7 @@ vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor, Inc.
 vendor APC		0x051d	American Power Conversion
 vendor AKS		0x0529	Fast Security AG
+vendor UNIACCESS	0x0540	Universal Access
 vendor ANCHOR		0x0547	Anchor Chips Inc.
 vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ATEN		0x0557	ATEN International Corp. Ltd.
@@ -91,6 +94,7 @@ vendor OMNIVISION	0x05a9	OmniVision
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor QTRONIX		0x05c7	Qtronix Corp
+vendor ELSA		0x05cc	ELSA Gmbh
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor PIENGINEERING	0x05f3  P.I. Engineering
 vendor CHIC		0x05fe	Chic Technology
@@ -99,9 +103,11 @@ vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
 vendor MIDIMAN		0x0763	Midiman
 vendor SANDISK		0x0781	SanDisk Corp
+vendor COREGA		0x07aa	Corega
 vendor SIIG		0x07cc	SIIG
 vendor HANDSPRING	0x082d	Handspring Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
+vendor BILLIONTON	0x08dd	Billionton Systems Inc.
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
@@ -123,8 +129,13 @@ product NEC HUB_B		0x55ab	hub
 /* Kodak products */
 product KODAK DC260		0x0110	Digital Science DC260
 product KODAK DC240		0x0120	Digital Science DC240
+product KODAK DC280		0x0130	Digital Science DC280
+
+/* Melco Inc products */
+product MELCO LUATX		0x0001	LUA-TX Ethernet
 
 /* CATC products */
+product CATC CHIEF		0x000d	USB Chief Bus & Protocol Analyzer
 product CATC ANDROMEDA		0x1237	Andromeda hub
 
 /* Gravis products */
@@ -177,6 +188,9 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 /* Acer products */
 product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
+/* Canon Inc. products */
+product CANON S10		0x3041	PowerShot S10
+
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
@@ -185,6 +199,7 @@ product CYPRESS THERMO		0x0002	thermometer
 product EPSON PRINTER3		0x0003	ISD USB Smart Cable
 
 /* 3Com products */
+product 3COM HOMECONN		0x009d	HomeConnect USB Camera
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Konica Corp. Products */
@@ -213,6 +228,9 @@ product APC UPSPRO500		0x0002	Back-UPS Pro 500
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Universal Access products */
+product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
 /* Anchor products */
 product ANCHOR EZUSB		0x2131	EZUSB
@@ -262,10 +280,14 @@ product INSYSTEM ISD110		0x0200  IDE adapter
 /* Qtronix products */
 product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
+/* Elsa products */
+product ELSA MODEM1		0x2265	ELSA Modem Board
+
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
 product LOGITECH QUICKCAM	0x0801	QuickCam
+product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 
@@ -292,13 +314,17 @@ product ENTREGA 4S		0x0004	4S serial connector
 product ENTREGA CENTRONICS	0x0006	Centronics connector
 product ENTREGA 1S9		0x0093	1S9 serial connector
 product ENTREGA EZUSB		0x8000	EZ-USB
-product ENTREGA SERIAL		0x8001	DB25 Serial connector
+/*product ENTREGA SERIAL	0x8001	DB25 Serial connector*/
+/*product ENTREGA SERIAL_DB9	0x8093	DB9 Serial connector*/
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
 
 /* SanDisk products */
 product	SANDISK IMAGEMATE	0x0001	USB ImageMate
+
+/* Corega products */
+product COREGA ETHER_USB_T	0x0001	Ether USB-T
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
@@ -309,6 +335,9 @@ product	HANDSPRING VISOR	0x0100	Handspring Visor
 /* ActiveWire Inc. products */
 product ACTIVEWIRE IOBOARD	0x0100	I/O Board
 product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1 firmware
+
+/* Billionton products */
+product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
 
 /* Motorola products */
 product	MOTOROLA MC141555	0x1555	MC141555 hub controller
