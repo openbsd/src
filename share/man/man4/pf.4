@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.13 2001/12/16 23:42:16 deraadt Exp $
+.\"	$OpenBSD: pf.4,v 1.14 2002/02/14 23:03:19 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -89,8 +89,7 @@ is ignored.
 .It Dv DIOCCOMMITRULES Fa "u_int32_t"
 Switch inactive to active filter rule set.
 Requires
-.Va ticket
-.
+.Va ticket .
 .It Dv DIOCGETRULES    Fa "struct pfioc_rule"
 Returns
 .Va ticket
@@ -117,6 +116,18 @@ struct pfioc_nat {
 .It Dv DIOCCOMMITNATS  Fa "u_int32_t"
 .It Dv DIOCGETNATS     Fa "struct pfioc_nat"
 .It Dv DIOCGETNAT      Fa "struct pfioc_nat"
+.It Dv DIOCBEGINBINATS Fa "u_int32_t"
+.It Dv DIOCADDBINAT    Fa "struct pfioc_binat"
+.Bd -literal
+struct pfioc_binat {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_binat	 binat;
+};
+.Ed
+.It Dv DIOCCOMMITBINATS Fa "u_int32_t"
+.It Dv DIOCGETBINATS   Fa "struct pfioc_binat"
+.It Dv DIOCGETBINAT    Fa "struct pfioc_changebinat"
 .It Dv DIOCBEGINRDRS   Fa "u_int32_t"
 .It Dv DIOCADDRDR      Fa "struct pfioc_rdr"
 .Bd -literal
@@ -155,8 +166,8 @@ Specifies the interface for which statistics are accumulated.
 struct pf_status {
 	u_int64_t	 counters[PFRES_MAX];
 	u_int64_t	 fcounters[FCNT_MAX];
-	u_int64_t	 pcounters[2][3];
-	u_int64_t	 bcounters[2];
+	u_int64_t	 pcounters[2][2][3];
+	u_int64_t	 bcounters[2][2];
 	u_int32_t	 running;
 	u_int32_t	 states;
 	u_int32_t	 since;
@@ -166,6 +177,7 @@ struct pf_status {
 .Pp
 Gets the internal packet filter statistics.
 .It Dv DIOCCLRSTATUS
+Clears the internal packet filter statistics.
 .It Dv DIOCNATLOOK     Fa "struct pfioc_natlook"
 Looks up a state table entry by source and destination addresses and ports.
 .Bd -literal
@@ -178,15 +190,16 @@ struct pfioc_natlook {
 	u_int16_t	 dport;
 	u_int16_t	 rsport;
 	u_int16_t	 rdport;
+	u_int8_t	 af;
 	u_int8_t	 proto;
 	u_int8_t	 direction;
 };
 .Ed
 .It Dv DIOCSETDEBUG    Fa "u_int32_t"
+Sets the debug level.
 .Bd -literal
 enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
 .Ed
-Sets the debug level.
 .It Dv DIOCGETSTATES   Fa "struct pfioc_states"
 .Bd -literal
 struct pfioc_states {
@@ -207,6 +220,7 @@ struct pfioc_changerule {
 	struct pf_rule	 oldrule;
 	struct pf_rule	 newrule;
 };
+
 enum	{ PF_CHANGE_ADD_HEAD=1, PF_CHANGE_ADD_TAIL=2,
 	  PF_CHANGE_ADD_BEFORE=3, PF_CHANGE_ADD_AFTER=4,
 	  PF_CHANGE_REMOVE=5 };
@@ -218,6 +232,15 @@ struct pfioc_changenat {
 	u_int32_t	 action;
 	struct pf_nat	 oldnat;
 	struct pf_nat	 newnat;
+};
+.Ed
+.It Dv DIOCCHANGEBINAT   Fa "struct pfioc_changebinat"
+Adds or removes a binat rule in the active binat rule set.
+.Bd -literal
+struct pfioc_changebinat {
+	u_int32_t	action;
+	struct pf_binat	oldbinat;
+	struct pf_binat	newbinat;
 };
 .Ed
 .It Dv DIOCCHANGERDR   Fa "struct pfioc_changerdr"
@@ -237,6 +260,8 @@ struct pfioc_tm {
 };
 .Ed
 .It Dv DIOCGETTIMEOUT  Fa "struct pfioc_tm"
+.It Dv DIOCCLRRULECTRS
+Clear per-rule statistics.
 .El
 .Sh EXAMPLES
 The following example demonstrates how to use the DIOCNATLOOK command
