@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.9 1997/02/28 02:22:31 angelos Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.10 1997/02/28 04:04:13 angelos Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -98,10 +98,6 @@ struct socket {
 	void	(*so_upcall) __P((struct socket *so, caddr_t arg, int waitf));
 	caddr_t	so_upcallarg;		/* Arg for above */
 	uid_t	so_uid;			/* who opened the socket */
-        u_char  so_seclevel[4];         /* security levels XXX unused byte 3 */
-#define SL_AUTH           0             /* Authentication level */
-#define SL_ESP_TRANS      1             /* ESP transport level */
-#define SL_ESP_NETWORK    2             /* ESP network (encapsulation) level */
 };
 
 /*
