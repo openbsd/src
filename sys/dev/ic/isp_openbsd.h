@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.17 2001/11/06 19:53:18 miod Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.18 2001/12/14 00:20:55 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -41,6 +41,10 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 
+#if	!(defined(__sparc__) && !defined(__sparcv9__))
+#include <machine/bus.h>
+#endif
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -50,9 +54,17 @@
 
 #include <uvm/uvm_extern.h>
 
+/*
+ * Efficiency- get rid of SBus code && tests unless we need them.
+ */
+#if	defined(__sparcv9__ ) || defined(__sparc__)
+#define	ISP_SBUS_SUPPORTED	1
+#else
+#define	ISP_SBUS_SUPPORTED	0
+#endif
 
 #define	ISP_PLATFORM_VERSION_MAJOR	2
-#define	ISP_PLATFORM_VERSION_MINOR	0
+#define	ISP_PLATFORM_VERSION_MINOR	1
 
 struct isposinfo {
 	struct device		_dev;
@@ -63,6 +75,16 @@ struct isposinfo {
 	int			mboxwaiting;
 	u_int32_t		islocked;
 	u_int32_t		onintstack;
+#if	!(defined(__sparc__) && !defined(__sparcv9__))
+	bus_dma_tag_t		dmatag;
+	bus_dmamap_t		rqdmap;
+	bus_dmamap_t		rsdmap;
+	bus_dmamap_t		scdmap;	/* FC only */
+#define	isp_dmatag		isp_osinfo.dmatag
+#define	isp_rqdmap		isp_osinfo.rqdmap
+#define	isp_rsdmap		isp_osinfo.rsdmap
+#define	isp_scdmap		isp_osinfo.scdmap
+#endif
 	unsigned int		: 28,
 		
 		rtpend		: 1,
@@ -112,14 +134,52 @@ struct isposinfo {
 
 #define	MAXISPREQUEST(isp)	256
 
-#ifdef	__alpha__
-#define	MEMORYBARRIER(isp, type, offset, size)	alpha_mb()
+#if	!(defined(__sparc__) && !defined(__sparcv9__))
+#define	MEMORYBARRIER(isp, type, offset, size)			\
+switch (type) {							\
+case SYNC_REQUEST:						\
+{								\
+	off_t off = (off_t) offset * QENTRY_LEN;		\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_rqdmap,	\
+	    off, size, BUS_DMASYNC_PREWRITE);			\
+	break;							\
+}								\
+case SYNC_RESULT:						\
+{								\
+	off_t off = (off_t) offset * QENTRY_LEN;		\
+	off += ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));		\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_rsdmap,	\
+	    off, size, BUS_DMASYNC_POSTREAD);			\
+	break;							\
+}								\
+case SYNC_SFORDEV:						\
+{								\
+	off_t off =						\
+	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
+	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
+	    off, size, BUS_DMASYNC_PREWRITE);			\
+	break;							\
+}								\
+case SYNC_SFORCPU:						\
+{								\
+	off_t off =						\
+	    ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp)) +		\
+	    ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp)) + offset;	\
+	bus_dmamap_sync(isp->isp_dmatag, isp->isp_scdmap,	\
+	    off, size, BUS_DMASYNC_POSTREAD);			\
+	break;							\
+}								\
+case SYNC_REG:							\
+default:							\
+	break;							\
+}
 #else
 #define	MEMORYBARRIER(isp, type, offset, size)
 #endif
 
 #define	MBOX_ACQUIRE(isp)
-#define	MBOX_WAIT_COMPLETE	isp_wait_complete
+#define	MBOX_WAIT_COMPLETE		isp_wait_complete
 
 #define	MBOX_NOTIFY_COMPLETE(isp)					\
 	if (isp->isp_osinfo.mboxwaiting) {				\
@@ -194,29 +254,37 @@ struct isposinfo {
 #define	ISP_NODEWWN(isp)	FCPARAM(isp)->isp_nodewwn
 #define	ISP_PORTWWN(isp)	FCPARAM(isp)->isp_portwwn
 
-#define	ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
-	if((void *)src != (void *)dest) bcopy(src, dest, sizeof (isp_pdb_t))
-#define	ISP_SWIZZLE_ICB(a, b)
-#ifdef	__sparc__
-#define ISP_SWIZZLE_REQUEST(a, b)			\
-	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);	\
-        ISP_SBUSIFY_ISPREQ(a, b)
-#define ISP_UNSWIZZLE_RESPONSE(a, b, c)			\
-	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
+#if	BYTE_ORDER == BIG_ENDIAN
+#ifdef	ISP_SBUS_SUPPORTED
+#define	ISP_IOXPUT_8(isp, s, d)		*(d) = s
+#define	ISP_IOXPUT_16(isp, s, d)				\
+	*(d) = (isp->isp_bustype == ISP_BT_SBUS)? s : swap16(s)
+#define	ISP_IOXPUT_32(isp, s, d)				\
+	*(d) = (isp->isp_bustype == ISP_BT_SBUS)? s : swap32(s)
+
+#define	ISP_IOXGET_8(isp, s, d)		d = (*((u_int8_t *)s))
+#define	ISP_IOXGET_16(isp, s, d)				\
+	d = (isp->isp_bustype == ISP_BT_SBUS)?			\
+	*((u_int16_t *)s) : swap16(*((u_int16_t *)s))
+#define	ISP_IOXGET_32(isp, s, d)				\
+	d = (isp->isp_bustype == ISP_BT_SBUS)?			\
+	*((u_int32_t *)s) : swap32(*((u_int32_t *)s))
 #else
-#define	ISP_SWIZZLE_REQUEST(a, b)
-#define	ISP_UNSWIZZLE_RESPONSE(a, b, c)
+#define	ISP_IOXPUT_8(isp, s, d)		*(d) = s
+#define	ISP_IOXPUT_16(isp, s, d)	*(d) = swap16(s)
+#define	ISP_IOXPUT_32(isp, s, d)	*(d) = swap32(s)
+#define	ISP_IOXGET_8(isp, s, d)		d = (*((u_int8_t *)s))
+#define	ISP_IOXGET_16(isp, s, d)	d = swap16(*((u_int16_t *)s))
+#define	ISP_IOXGET_32(isp, s, d)	d = swap32(*((u_int32_t *)s))
 #endif
-#define	ISP_SWIZZLE_SNS_REQ(a, b)
-#define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
-#ifdef	__sparc__
-#define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)	\
-	{								\
-		u_int16_t tmp = *rp >> 8;				\
-		tmp |= ((*rp & 0xff) << 8);				\
-		*rp = tmp;						\
-	}
+#define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)	*rp = swap16(*rp)
 #else
+#define	ISP_IOXPUT_8(isp, s, d)		*(d) = s
+#define	ISP_IOXPUT_16(isp, s, d)	*(d) = s
+#define	ISP_IOXPUT_32(isp, s, d)	*(d) = s
+#define	ISP_IOXGET_8(isp, s, d)		d = *(s)
+#define	ISP_IOXGET_16(isp, s, d)	d = *(s)
+#define	ISP_IOXGET_32(isp, s, d)	d = *(s)
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)
 #endif
 
@@ -336,7 +404,7 @@ isp_wait_complete(struct ispsoftc *isp)
 {
 	if (MUST_POLL(isp)) {
 		int usecs = 0;
-		while (usecs < 2 * 1000000) {
+		while (usecs < 5 * 1000000) {
 			u_int16_t isr, sema, mbox;
 			if (isp->isp_mboxbsy == 0) {
 				break;

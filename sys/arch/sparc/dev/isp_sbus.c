@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.18 2001/09/01 07:16:39 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.19 2001/12/14 00:20:54 mjacob Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -47,6 +47,15 @@
 #include <dev/microcode/isp/asm_sbus.h>
 #endif
 
+#define ISP_SBUSIFY_ISPHDR(isp, hdrp)					\
+	ISP_SWAP8((hdrp)->rqs_entry_count, (hdrp)->rqs_entry_type);	\
+	ISP_SWAP8((hdrp)->rqs_flags, (hdrp)->rqs_seqno);
+
+#define	ISP_SWIZZLE_REQUEST(a, b)				\
+	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);		\
+        ISP_SWAP8((b)->req_target, (b)->req_lun_trn)
+
+
 static int
 isp_sbus_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
 static u_int16_t isp_sbus_rd_reg(struct ispsoftc *, int);
@@ -80,7 +89,7 @@ struct isp_sbussoftc {
 	struct ispsoftc	sbus_isp;
 	sdparam		sbus_dev;
 	struct intrhand sbus_ih;
-	volatile u_char *sbus_reg;
+	volatile u_int16_t *sbus_reg;
 	int		sbus_node;
 	int		sbus_pri;
 	struct ispmdvec	sbus_mdvec;
@@ -148,9 +157,9 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	sbc->sbus_mdvec = mdvec;
 
 	if (ca->ca_ra.ra_vaddr) {
-		sbc->sbus_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
+		sbc->sbus_reg = (volatile u_int16_t *) ca->ca_ra.ra_vaddr;
 	} else {
-		sbc->sbus_reg = (volatile u_char *)
+		sbc->sbus_reg = (volatile u_int16_t *)
 			mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
 	}
 	sbc->sbus_node = ca->ca_ra.ra_node;
@@ -273,15 +282,14 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	(((struct isp_sbussoftc *)a)->sbus_poff[((x) & _BLK_REG_MASK) >> \
 	_BLK_REG_SHFT] + ((x) & 0xff))
 
-#define	BXR2(pcs, off)		\
-	(*((u_int16_t *) &sbc->sbus_reg[off]))
+#define	BXR2(pcs, off)		(sbc->sbus_reg[off >> 1])
 
 static int
 isp_sbus_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,
     u_int16_t *semap, u_int16_t *mbp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
-	u_int16_t isr, sema;
+	volatile u_int16_t isr, sema;
 
 	isr = BXR2(pcs, IspVirt2Off(isp, BIU_ISR));
 	sema = BXR2(pcs, IspVirt2Off(isp, BIU_SEMA));
@@ -304,7 +312,7 @@ isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
 	offset += (regoff & 0xff);
-	return (*((u_int16_t *) &sbc->sbus_reg[offset]));
+	return ((u_int16_t) sbc->sbus_reg[offset >> 1]);
 }
 
 static void
@@ -313,7 +321,7 @@ isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, u_int16_t val)
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
 	offset += (regoff & 0xff);
-	*((u_int16_t *) &sbc->sbus_reg[offset]) = val;
+	sbc->sbus_reg[offset >> 1] = val;
 }
 
 
@@ -382,10 +390,12 @@ isp_sbus_dmasetup(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *rq,
     u_int16_t *iptrp, u_int16_t optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
+	ispreq_t *qe;
 	ispcontreq_t *crq;
 	vaddr_t kdvma;
 	int dosleep = (xs->flags & SCSI_NOSLEEP) != 0;
 
+	qe = (ispreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, isp->isp_reqidx);
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
 		goto mbxsync;
@@ -444,6 +454,7 @@ isp_sbus_dmasetup(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *rq,
 
 mbxsync:
 	ISP_SWIZZLE_REQUEST(isp, rq);
+	bcopy(rq, qe, sizeof (ispreq_t));
 	return (CMD_QUEUED);
 }
 
@@ -478,11 +489,6 @@ isp_sbus_intr(void *arg)
 		isp->isp_intbogus++;
 		return (0);
 	} else {
-#if	0
-		struct iss_sbussoftc *s = (struct isp_sbussoftc *)isp;
-		bus_dmamap_sync(s->pci_dmat, s->pci_result_dmap,
-		    BUS_DMASYNC_POSTREAD);
-#endif
 		isp->isp_osinfo.onintstack = 1;
 		isp_intr(isp, isr, sema, mbox);
 		isp->isp_osinfo.onintstack = 0;
