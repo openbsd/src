@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.5 2001/04/02 23:11:20 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.6 2001/05/11 16:19:37 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -257,7 +257,7 @@ _dl_tryload_shlib(const char *libname, int type)
 	 *  space required. Map it unaccessible to start with.
 	 */
 	libaddr = (Elf_Addr)_dl_mmap(0, maxva - minva, PROT_NONE,
-					MAP_COPY|MAP_ANON, -1, 0);
+					MAP_PRIVATE|MAP_ANON, -1, 0);
 	if(_dl_check_error(libaddr)) {
 		_dl_printf("%s: rtld mmap failed mapping %s.\n",
 				_dl_progname, libname);
@@ -275,7 +275,7 @@ _dl_tryload_shlib(const char *libname, int type)
 			char *start = (char *)(phdp->p_vaddr & ~align) + loff;
 			int size  = (phdp->p_vaddr & align) + phdp->p_filesz;
 			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
-					MAP_FIXED|MAP_COPY, libfile,
+					MAP_FIXED|MAP_PRIVATE, libfile,
 					phdp->p_offset & ~align);
 			next_load = (load_list_t *)_dl_malloc(
 					sizeof(load_list_t));
@@ -303,7 +303,7 @@ _dl_tryload_shlib(const char *libname, int type)
 				size  = phdp->p_memsz - size;
 				res = _dl_mmap(start, size,
 					       PFLAGS(phdp->p_flags),
-					       MAP_FIXED|MAP_COPY|MAP_ANON,
+					       MAP_FIXED|MAP_PRIVATE|MAP_ANON,
 						-1, 0);
 				if(_dl_check_error(res)) {
 					_dl_printf("%s: rtld mmap failed mapping %s.\n",
