@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_single.h,v 1.1 1997/01/13 11:51:09 niklas Exp $	*/
+/*	$OpenBSD: asm_single.h,v 1.2 1998/04/25 07:09:06 d Exp $	*/
 /*	$NetBSD: asm_single.h,v 1.1 1996/09/16 06:03:58 leo Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  * Provide bit manipulation macro's that resolve to a single instruction.
  * These can be considered atomic on single processor architectures when
  * no page faults can occur when acessing <var>.
- * There primary use is to avoid race conditions when manipulating device
+ * Their primary use is to avoid race conditions when manipulating device
  * registers.
  */
 
