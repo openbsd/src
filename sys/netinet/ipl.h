@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipl.h,v 1.7 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ipl.h,v 1.8 2000/04/12 21:46:42 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1999 by Darren Reed.
@@ -13,6 +13,6 @@
 #ifndef	__IPL_H__
 #define	__IPL_H__
 
-#define	IPL_VERSION	"IP Filter: v3.3.12"
+#define	IPL_VERSION	"IP Filter: v3.3.12a"
 
 #endif
