@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_getch.c,v 1.4 2000/03/10 01:35:02 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.5 2000/06/19 03:53:41 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_getch.c,v 1.46 2000/02/20 01:21:33 tom Exp $")
+MODULE_ID("$From: lib_getch.c,v 1.47 2000/05/28 01:12:51 tom Exp $")
 
 #include <fifo_defs.h>
 
@@ -310,6 +310,30 @@ wgetch(WINDOW *win)
     }
 
     /*
+     * If echo() is in effect, display the printable version of the
+     * key on the screen.  Carriage return and backspace are treated
+     * specially by Solaris curses:
+     *
+     * If carriage return is defined as a function key in the
+     * terminfo, e.g., kent, then Solaris may return either ^J (or ^M
+     * if nonl() is set) or KEY_ENTER depending on the echo() mode. 
+     * We echo before translating carriage return based on nonl(),
+     * since the visual result simply moves the cursor to column 0.
+     *
+     * Backspace is a different matter.  Solaris curses does not
+     * translate it to KEY_BACKSPACE if kbs=^H.  This does not depend
+     * on the stty modes, but appears to be a hardcoded special case.
+     * This is a difference from ncurses, which uses the terminfo entry.
+     * However, we provide the same visual result as Solaris, moving the
+     * cursor to the left.
+     */
+    if (SP->_echo && !(win->_flags & _ISPAD)) {
+	chtype backup = (ch == KEY_BACKSPACE) ? '\b' : ch;
+	if (backup < KEY_MIN)
+	    wechochar(win, backup);
+    }
+
+    /*
      * Simulate ICRNL mode
      */
     if ((ch == '\r') && SP->_nl)
@@ -323,9 +347,6 @@ wgetch(WINDOW *win)
     if ((ch < KEY_MIN) && (ch & 0x80))
 	if (!SP->_use_meta)
 	    ch &= 0x7f;
-
-    if (SP->_echo && ch < KEY_MIN && !(win->_flags & _ISPAD))
-	wechochar(win, (chtype) ch);
 
     T(("wgetch returning : %#x = %s", ch, _trace_key(ch)));
 

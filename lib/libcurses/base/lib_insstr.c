@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_insstr.c,v 1.2 1999/03/14 03:10:32 millert Exp $	*/
+/*	$OpenBSD: lib_insstr.c,v 1.3 2000/06/19 03:53:42 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,8 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
-
 /*
 **	lib_insstr.c
 **
@@ -45,39 +43,41 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_insstr.c,v 1.13 1999/03/14 00:27:21 tom Exp $")
+MODULE_ID("$From: lib_insstr.c,v 1.14 2000/04/29 21:16:41 tom Exp $")
 
-int winsnstr(WINDOW *win, const char *s, int n)
+int
+winsnstr(WINDOW *win, const char *s, int n)
 {
-int     code = ERR;
-short	oy;
-short	ox ;
-const unsigned char *str = (const unsigned char *)s;
-const unsigned char *cp;
+    int code = ERR;
+    NCURSES_SIZE_T oy;
+    NCURSES_SIZE_T ox;
+    const unsigned char *str = (const unsigned char *) s;
+    const unsigned char *cp;
 
-        T((T_CALLED("winsnstr(%p,%s,%d)"), win, _nc_visbuf(s), n));
+    T((T_CALLED("winsnstr(%p,%s,%d)"), win, _nc_visbuf(s), n));
 
-	if (win && str) {
-	  oy = win->_cury; ox = win->_curx;
-	  for (cp = str; *cp && (n <= 0 || (cp - str) < n); cp++) {
+    if (win && str) {
+	oy = win->_cury;
+	ox = win->_curx;
+	for (cp = str; *cp && (n <= 0 || (cp - str) < n); cp++) {
 	    if (*cp == '\n' || *cp == '\r' || *cp == '\t' || *cp == '\b')
-	      _nc_waddch_nosync(win, (chtype)(*cp));
+		_nc_waddch_nosync(win, (chtype) (*cp));
 	    else if (is7bits(*cp) && iscntrl(*cp)) {
-	      winsch(win, ' ' + (chtype)(*cp));
-	      winsch(win, '^');
-	      win->_curx += 2;
+		winsch(win, ' ' + (chtype) (*cp));
+		winsch(win, '^');
+		win->_curx += 2;
 	    } else {
-	      winsch(win, (chtype)(*cp));
-	      win->_curx++;
+		winsch(win, (chtype) (*cp));
+		win->_curx++;
 	    }
 	    if (win->_curx > win->_maxx)
-	      win->_curx = win->_maxx;
-	  }
-	  
-	  win->_curx = ox;
-	  win->_cury = oy;
-	  _nc_synchook(win);
-	  code = OK;
+		win->_curx = win->_maxx;
 	}
-	returnCode(code);
+
+	win->_curx = ox;
+	win->_cury = oy;
+	_nc_synchook(win);
+	code = OK;
+    }
+    returnCode(code);
 }

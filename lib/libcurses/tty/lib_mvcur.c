@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.6 2000/03/10 01:35:05 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.7 2000/06/19 03:53:53 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -154,7 +154,7 @@
 #include <term.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_mvcur.c,v 1.63 2000/02/13 01:02:34 tom Exp $")
+MODULE_ID("$From: lib_mvcur.c,v 1.64 2000/05/14 01:25:28 tom Exp $")
 
 #define STRLEN(s)       (s != 0) ? strlen(s) : 0
 
@@ -774,7 +774,7 @@ onscreen_mvcur(int yold, int xold, int ynew, int xnew, bool ovw)
     /* tactic #4: use home-down + local movement */
     if (cursor_to_ll
 	&& ((newcost = relative_move(NULL, screen_lines - 1, 0, ynew, xnew,
-	    ovw)) != INFINITY)
+		    ovw)) != INFINITY)
 	&& SP->_ll_cost + newcost < usecost) {
 	tactic = 4;
 	usecost = SP->_ll_cost + newcost;
@@ -797,29 +797,33 @@ onscreen_mvcur(int yold, int xold, int ynew, int xnew, bool ovw)
     /*
      * These cases are ordered by estimated relative frequency.
      */
-    if (tactic) {
-	if (tactic == 1)
-	    (void) relative_move(use, yold, xold, ynew, xnew, ovw);
-	else if (tactic == 2) {
-	    (void) strcpy(use, carriage_return);
-	    (void) relative_move(use + SP->_carriage_return_length,
-		yold, 0, ynew, xnew, ovw);
-	} else if (tactic == 3) {
-	    (void) strcpy(use, cursor_home);
-	    (void) relative_move(use + SP->_cursor_home_length,
-		0, 0, ynew, xnew, ovw);
-	} else if (tactic == 4) {
-	    (void) strcpy(use, cursor_to_ll);
-	    (void) relative_move(use + SP->_cursor_to_ll_length,
-		screen_lines - 1, 0, ynew, xnew, ovw);
-	} else {		/* if (tactic == 5) */
-	    use[0] = '\0';
-	    if (xold > 0)
-		(void) strcat(use, carriage_return);
-	    (void) strcat(use, cursor_left);
-	    (void) relative_move(use + strlen(use),
-		yold - 1, screen_columns - 1, ynew, xnew, ovw);
-	}
+    switch (tactic) {
+    case 1:
+	(void) relative_move(use, yold, xold, ynew, xnew, ovw);
+	break;
+    case 2:
+	(void) strcpy(use, carriage_return);
+	(void) relative_move(use + SP->_carriage_return_length,
+	    yold, 0, ynew, xnew, ovw);
+	break;
+    case 3:
+	(void) strcpy(use, cursor_home);
+	(void) relative_move(use + SP->_cursor_home_length,
+	    0, 0, ynew, xnew, ovw);
+	break;
+    case 4:
+	(void) strcpy(use, cursor_to_ll);
+	(void) relative_move(use + SP->_cursor_to_ll_length,
+	    screen_lines - 1, 0, ynew, xnew, ovw);
+	break;
+    case 5:
+	use[0] = '\0';
+	if (xold > 0)
+	    (void) strcat(use, carriage_return);
+	(void) strcat(use, cursor_left);
+	(void) relative_move(use + strlen(use),
+	    yold - 1, screen_columns - 1, ynew, xnew, ovw);
+	break;
     }
 #endif /* !NO_OPTIMIZE */
 
@@ -1020,7 +1024,7 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 
 	    printf("\" (%ld msec)\n",
 		(long) (after.tv_usec - before.tv_usec + (after.tv_sec -
-		    before.tv_sec) * 1000000));
+			before.tv_sec) * 1000000));
 	} else if (sscanf(buf, "s %d %d %d %d", &fy, &fx, &ty, &tx) == 4) {
 	    struct timeval before, after;
 
@@ -1032,7 +1036,7 @@ main(int argc GCC_UNUSED, char *argv[]GCC_UNUSED)
 
 	    printf("\" (%ld msec)\n",
 		(long) (after.tv_usec - before.tv_usec + (after.tv_sec -
-		    before.tv_sec) * 1000000));
+			before.tv_sec) * 1000000));
 	} else if (buf[0] == 'r') {
 	    (void) strcpy(tname, termname());
 	    load_term();

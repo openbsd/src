@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.26 2000/03/26 16:45:03 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.27 2000/06/19 03:53:35 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.157 2000/03/26 01:01:14 tom Exp $
+ * $From: curses.priv.h,v 1.161 2000/05/27 23:10:03 tom Exp $
  *
  *	curses.priv.h
  *
@@ -402,6 +402,7 @@ struct screen {
 	unsigned long	*oldhash, *newhash;
 
 	bool            _cleanup;	/* cleanup after int/quit signal */
+	int             (*_outch)(int);	/* output handler if not putc */
 };
 
 extern SCREEN *_nc_screen_chain;
@@ -504,10 +505,6 @@ typedef	struct {
 	line->lastchar = end
 
 #define SIZEOF(v) (sizeof(v)/sizeof(v[0]))
-
-#define typeMalloc(type,elts) (type *)malloc((elts)*sizeof(type))
-#define typeCalloc(type,elts) (type *)calloc((elts),sizeof(type))
-#define typeRealloc(type,elts,ptr) (type *)_nc_doalloc(ptr, (elts)*sizeof(type))
 
 #define FreeIfNeeded(p)  if ((p) != 0) free(p)
 
@@ -654,13 +651,6 @@ extern void _nc_expanded(void);
 #define getcwd(buf,len) getwd(buf)
 #endif
 
-/* doalloc.c */
-extern void *_nc_doalloc(void *, size_t);
-#if !HAVE_STRDUP
-#define strdup _nc_strdup
-extern char *_nc_strdup(const char *);
-#endif
-
 /* doupdate.c */
 #if USE_XMC_SUPPORT
 extern void _nc_do_xmc_glitch(attr_t);
@@ -727,17 +717,22 @@ extern void _nc_hash_map(void);
 extern void _nc_init_keytry(void);
 extern void _nc_keep_tic_dir(const char *);
 extern void _nc_make_oldhash(int i);
+extern void _nc_flush(void);
 extern void _nc_outstr(const char *str);
 extern void _nc_scroll_oldhash(int n, int top, int bot);
 extern void _nc_scroll_optimize(void);
 extern void _nc_scroll_window(WINDOW *, int const, short const, short const, chtype);
-extern void _nc_set_buffer(FILE *ofp, bool buffered);
+extern void _nc_set_buffer(FILE *, bool);
 extern void _nc_signal_handler(bool);
 extern void _nc_synchook(WINDOW *win);
 extern void _nc_trace_tries(struct tries *tree);
 
 #if USE_SIZECHANGE
 extern void _nc_update_screensize(void);
+#endif
+
+#ifdef USE_WIDEC_SUPPORT
+extern int _nc_utf8_outch(int);
 #endif
 
 /* scroll indices */
@@ -750,7 +745,6 @@ extern int *_nc_oldnums;
 		_nc_set_buffer(SP->_ofp, flag)
 
 #define NC_OUTPUT ((SP != 0) ? SP->_ofp : stdout)
-#define _nc_flush() (void)fflush(NC_OUTPUT)
 
 /*
  * On systems with a broken linker, define 'SP' as a function to force the

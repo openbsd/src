@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_parse.c,v 1.6 2000/03/26 16:45:03 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.7 2000/06/19 03:53:48 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -54,7 +54,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: comp_parse.c,v 1.39 2000/03/25 17:07:30 tom Exp $")
+MODULE_ID("$From: comp_parse.c,v 1.40 2000/04/15 16:57:08 tom Exp $")
 
 static void sanity_check(TERMTYPE *);
 void (*_nc_check_termtype) (TERMTYPE *) = sanity_check;
@@ -461,26 +461,26 @@ sanity_check(TERMTYPE * tp)
     }
 
     /* listed in structure-member order of first argument */
-    PAIRED(enter_alt_charset_mode, exit_alt_charset_mode)
-	ANDMISSING(enter_alt_charset_mode, acs_chars)
-	ANDMISSING(exit_alt_charset_mode, acs_chars)
-	ANDMISSING(enter_blink_mode, exit_attribute_mode)
-	ANDMISSING(enter_bold_mode, exit_attribute_mode)
-	PAIRED(exit_ca_mode, enter_ca_mode)
-	PAIRED(enter_delete_mode, exit_delete_mode)
-	ANDMISSING(enter_dim_mode, exit_attribute_mode)
-	PAIRED(enter_insert_mode, exit_insert_mode)
-	ANDMISSING(enter_secure_mode, exit_attribute_mode)
-	ANDMISSING(enter_protected_mode, exit_attribute_mode)
-	ANDMISSING(enter_reverse_mode, exit_attribute_mode)
-	PAIRED(from_status_line, to_status_line)
-	PAIRED(meta_off, meta_on)
+    PAIRED(enter_alt_charset_mode, exit_alt_charset_mode);
+    ANDMISSING(enter_alt_charset_mode, acs_chars);
+    ANDMISSING(exit_alt_charset_mode, acs_chars);
+    ANDMISSING(enter_blink_mode, exit_attribute_mode);
+    ANDMISSING(enter_bold_mode, exit_attribute_mode);
+    PAIRED(exit_ca_mode, enter_ca_mode);
+    PAIRED(enter_delete_mode, exit_delete_mode);
+    ANDMISSING(enter_dim_mode, exit_attribute_mode);
+    PAIRED(enter_insert_mode, exit_insert_mode);
+    ANDMISSING(enter_secure_mode, exit_attribute_mode);
+    ANDMISSING(enter_protected_mode, exit_attribute_mode);
+    ANDMISSING(enter_reverse_mode, exit_attribute_mode);
+    PAIRED(from_status_line, to_status_line);
+    PAIRED(meta_off, meta_on);
 
-	PAIRED(prtr_on, prtr_off)
-	PAIRED(save_cursor, restore_cursor)
-	PAIRED(enter_xon_mode, exit_xon_mode)
-	PAIRED(enter_am_mode, exit_am_mode)
-	ANDMISSING(label_off, label_on)
-	PAIRED(display_clock, remove_clock)
-	ANDMISSING(set_color_pair, initialize_pair)
+    PAIRED(prtr_on, prtr_off);
+    PAIRED(save_cursor, restore_cursor);
+    PAIRED(enter_xon_mode, exit_xon_mode);
+    PAIRED(enter_am_mode, exit_am_mode);
+    ANDMISSING(label_off, label_on);
+    PAIRED(display_clock, remove_clock);
+    ANDMISSING(set_color_pair, initialize_pair);
 }

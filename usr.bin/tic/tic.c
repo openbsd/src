@@ -42,7 +42,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.67 2000/03/19 02:08:10 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.69 2000/04/08 23:53:49 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -236,8 +236,8 @@ put_translate(int c)
     if (in_name) {
 	if (used + 1 >= have) {
 	    have += 132;
-	    namebuf = (namebuf != 0) ? realloc(namebuf, have) : malloc(have);
-	    suffix = (suffix != 0) ? realloc(suffix, have) : malloc(have);
+	    namebuf = typeRealloc(char, have, namebuf);
+	    suffix = typeRealloc(char, have, suffix);
 	}
 	if (c == '\n' || c == '@') {
 	    namebuf[used++] = '\0';
@@ -328,7 +328,7 @@ make_namelist(char *src)
 		}
 	    }
 	    if (pass == 1) {
-		dst = (const char **) calloc(nn + 1, sizeof(*dst));
+		dst = typeCalloc(const char *, nn + 1);
 		rewind(fp);
 	    }
 	}
@@ -351,7 +351,7 @@ make_namelist(char *src)
 		    break;
 	    }
 	    if (pass == 1)
-		dst = (const char **) calloc(nn + 1, sizeof(*dst));
+		dst = typeCalloc(const char *, nn + 1);
 	}
     }
     if (showsummary) {

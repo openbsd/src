@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.8 2000/04/14 19:14:02 millert Exp $	 */
+/*	$OpenBSD: read_termcap.c,v 1.9 2000/06/19 03:53:52 millert Exp $	 */
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -57,7 +57,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_termcap.c,v 1.46 2000/03/18 21:53:26 tom Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.47 2000/04/15 16:53:19 Todd.C.Miller Exp $")
 
 #ifndef PURE_TERMINFO
 
@@ -925,9 +925,9 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
     static char *source;
     static int lineno;
 
-    if (!issetugid() && (p = getenv("TERMCAP")) != 0 && !is_pathname(p) &&
-	_nc_name_match(p, tn, "|:")) {
-
+    if (!issetugid() && (p = getenv("TERMCAP")) != 0
+	&& !is_pathname(p) && _nc_name_match(p, tn, "|:")) {
+	/* TERMCAP holds a termcap entry */
 	strlcpy(tc, p, sizeof(tc));
 	_nc_set_source("TERMCAP");
     } else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.8 2000/03/26 16:45:04 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.9 2000/06/19 03:53:55 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -72,7 +72,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.134 2000/03/26 02:17:10 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.136 2000/05/20 23:28:00 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -183,6 +183,8 @@ GoTo(int const row, int const col)
 static inline void
 PutAttrChar(chtype ch)
 {
+    int data;
+
     if (tilde_glitch && (TextOf(ch) == '~'))
 	ch = ('`' | AttrOf(ch));
 
@@ -190,10 +192,11 @@ PutAttrChar(chtype ch)
 	    _tracechtype(ch),
 	    SP->_cursrow, SP->_curscol));
     UpdateAttrs(ch);
-    if (SP->_cleanup) {
-	_nc_outch((int) TextOf(ch));
+    data = TextOf(ch);
+    if (SP->_outch != 0) {
+	SP->_outch(data);
     } else {
-	putc((int) TextOf(ch), SP->_ofp);	/* macro's fastest... */
+	putc(data, SP->_ofp);	/* macro's fastest... */
 #ifdef TRACE
 	_nc_outchars++;
 #endif /* TRACE */
@@ -851,18 +854,23 @@ ClrUpdate(void)
 */
 
 static void
-ClrToEOL(chtype blank)
+ClrToEOL(chtype blank, bool needclear)
 {
     int j;
-    bool needclear = FALSE;
 
-    for (j = SP->_curscol; j < screen_columns; j++) {
-	chtype *cp = &(curscr->_line[SP->_cursrow].text[j]);
+    if (curscr != 0
+	&& SP->_cursrow >= 0
+	&& SP->_curscol >= 0) {
+	for (j = SP->_curscol; j < screen_columns; j++) {
+	    chtype *cp = &(curscr->_line[SP->_cursrow].text[j]);
 
-	if (*cp != blank) {
-	    *cp = blank;
-	    needclear = TRUE;
+	    if (*cp != blank) {
+		*cp = blank;
+		needclear = TRUE;
+	    }
 	}
+    } else {
+	needclear = TRUE;
     }
 
     if (needclear) {
@@ -872,8 +880,9 @@ ClrToEOL(chtype blank)
 	    int count = (screen_columns - SP->_curscol);
 	    while (count-- > 0)
 		PutChar(blank);
-	} else
+	} else {
 	    putp(clr_eol);
+	}
     }
 }
 
@@ -1012,7 +1021,7 @@ TransformLine(int const lineno)
 
     if (attrchanged) {		/* we may have to disregard the whole line */
 	GoTo(lineno, firstChar);
-	ClrToEOL(ClrBlank(curscr));
+	ClrToEOL(ClrBlank(curscr), FALSE);
 	PutRange(oldLine, newLine, lineno, 0, (screen_columns - 1));
 #if USE_XMC_SUPPORT
 
@@ -1147,7 +1156,7 @@ TransformLine(int const lineno)
 	    GoTo(lineno, firstChar);
 	    if (newLine[firstChar] != blank)
 		PutChar(newLine[firstChar]);
-	    ClrToEOL(blank);
+	    ClrToEOL(blank, FALSE);
 	} else if ((nLastChar != oLastChar)
 		&& (newLine[nLastChar] != oldLine[oLastChar]
 		|| !(_nc_idcok && has_ic()))) {
@@ -1155,7 +1164,7 @@ TransformLine(int const lineno)
 	    if ((oLastChar - nLastChar) > SP->_el_cost) {
 		if (PutRange(oldLine, newLine, lineno, firstChar, nLastChar))
 		    GoTo(lineno, nLastChar + 1);
-		ClrToEOL(blank);
+		ClrToEOL(blank, FALSE);
 	    } else {
 		n = max(nLastChar, oLastChar);
 		PutRange(oldLine, newLine, lineno, firstChar, n);
@@ -1197,7 +1206,7 @@ TransformLine(int const lineno)
 		    if (PutRange(oldLine, newLine, lineno,
 			    n + 1, nLastNonblank))
 			GoTo(lineno, nLastNonblank + 1);
-		    ClrToEOL(blank);
+		    ClrToEOL(blank, FALSE);
 		} else {
 		    /*
 		     * The delete-char sequence will
@@ -1458,7 +1467,7 @@ scroll_csr_forward(int n, int top, int bot, int miny, int maxy, chtype blank)
 #ifdef NCURSES_EXT_FUNCS
     if (FILL_BCE()) {
 	for (i = 0; i < n; i++) {
-	    GoTo(bot-i, 0);
+	    GoTo(bot - i, 0);
 	    for (j = 0; j < screen_columns; j++)
 		PutChar(blank);
 	}
@@ -1514,7 +1523,7 @@ scroll_csr_backward(int n, int top, int bot, int miny, int maxy, chtype blank)
 #ifdef NCURSES_EXT_FUNCS
     if (FILL_BCE()) {
 	for (i = 0; i < n; i++) {
-	    GoTo(top+i, 0);
+	    GoTo(top + i, 0);
 	    for (j = 0; j < screen_columns; j++)
 		PutChar(blank);
 	}
@@ -1594,7 +1603,7 @@ _nc_scrolln(int n, int top, int bot, int maxy)
 	if (non_dest_scroll_region || (memory_above && top == 0)) {
 	    for (i = 0; i < n; i++) {
 		GoTo(i, 0);
-		ClrToEOL(BLANK);
+		ClrToEOL(BLANK, FALSE);
 	    }
 	}
 
@@ -1638,7 +1647,7 @@ _nc_scrolln(int n, int top, int bot, int maxy)
 	    } else if (clr_eol) {
 		for (i = 0; i < -n; i++) {
 		    GoTo(maxy + n + i, 0);
-		    ClrToEOL(BLANK);
+		    ClrToEOL(BLANK, FALSE);
 		}
 	    }
 	}
@@ -1726,6 +1735,12 @@ _nc_screen_wrap(void)
 	SP->_default_color = TRUE;
 	_nc_do_color(-1, 0, FALSE, _nc_outch);
 	SP->_default_color = FALSE;
+
+	mvcur(SP->_cursrow, SP->_curscol, screen_lines - 1, 0);
+	SP->_cursrow = screen_lines - 1;
+	SP->_curscol = 0;
+
+	ClrToEOL(BLANK, TRUE);
     }
 #endif
 }

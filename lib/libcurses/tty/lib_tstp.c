@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tstp.c,v 1.5 1999/11/28 17:49:54 millert Exp $	*/
+/*	$OpenBSD: lib_tstp.c,v 1.6 2000/06/19 03:53:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -50,7 +50,7 @@
 #define _POSIX_SOURCE
 #endif
 
-MODULE_ID("$From: lib_tstp.c,v 1.20 1999/10/22 23:11:09 tom Exp $")
+MODULE_ID("$From: lib_tstp.c,v 1.21 2000/05/20 23:28:56 tom Exp $")
 
 #if defined(SIGTSTP) && (HAVE_SIGACTION || HAVE_SIGVEC)
 #define USE_SIGTSTP 1
@@ -228,6 +228,7 @@ static void cleanup(int sig)
 			&& SP->_ofp != 0
 			&& isatty(fileno(SP->_ofp))) {
 			    SP->_cleanup = TRUE;
+			    SP->_outch = _nc_outch;
 			}
 			set_term(scan);
 			endwin();

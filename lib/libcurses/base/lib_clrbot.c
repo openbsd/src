@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_clrbot.c,v 1.1 1999/01/18 19:09:38 millert Exp $	*/
+/*	$OpenBSD: lib_clrbot.c,v 1.2 2000/06/19 03:53:39 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,36 +42,37 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_clrbot.c,v 1.14 1998/06/28 00:36:26 tom Exp $")
+MODULE_ID("$From: lib_clrbot.c,v 1.15 2000/04/29 21:15:26 tom Exp $")
 
-int wclrtobot(WINDOW *win)
+int
+wclrtobot(WINDOW *win)
 {
-int     code = ERR;
+    int code = ERR;
 
-	T((T_CALLED("wclrtobot(%p)"), win));
+    T((T_CALLED("wclrtobot(%p)"), win));
 
-	if (win) {
-		short y;
-		short startx = win->_curx;
-		chtype blank = _nc_background(win);
+    if (win) {
+	NCURSES_SIZE_T y;
+	NCURSES_SIZE_T startx = win->_curx;
+	chtype blank = _nc_background(win);
 
-		T(("clearing from y = %d to y = %d with maxx =  %d", win->_cury, win->_maxy, win->_maxx));
+	T(("clearing from y = %d to y = %d with maxx =  %d",
+		win->_cury, win->_maxy, win->_maxx));
 
-		for (y = win->_cury; y <= win->_maxy; y++) {
-			struct ldat *line = &(win->_line[y]);
-			chtype *ptr = &(line->text[startx]);
-			chtype *end = &(line->text[win->_maxx]);
+	for (y = win->_cury; y <= win->_maxy; y++) {
+	    struct ldat *line = &(win->_line[y]);
+	    chtype *ptr = &(line->text[startx]);
+	    chtype *end = &(line->text[win->_maxx]);
 
-			CHANGED_TO_EOL(line, startx, win->_maxx);
+	    CHANGED_TO_EOL(line, startx, win->_maxx);
 
-			while (ptr <= end)
-				*ptr++ = blank;
+	    while (ptr <= end)
+		*ptr++ = blank;
 
-			startx = 0;
-		}
-		_nc_synchook(win);
-		code = OK;
+	    startx = 0;
 	}
-	returnCode(code);
+	_nc_synchook(win);
+	code = OK;
+    }
+    returnCode(code);
 }
-

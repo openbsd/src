@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: infocmp.1tbl,v 1.8 2000/03/26 16:45:04 millert Exp $
+.\" $OpenBSD: infocmp.1tbl,v 1.9 2000/06/19 03:53:57 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: infocmp.1m,v 1.24 2000/03/19 03:03:31 tom Exp $
+.\" $From: infocmp.1m,v 1.25 2000/06/11 02:08:16 tom Exp $
 .TH infocmp 1 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -367,7 +367,7 @@ Actual BSD curses versions will have a more restricted set.  To see only the
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com>
 and
-Thomas E. Dickey <dickey@clark.net>
+Thomas E. Dickey <dickey@herndon4.his.com>
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

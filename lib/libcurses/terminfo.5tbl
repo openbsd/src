@@ -33,7 +33,7 @@
 .\"***************************************************************************
 .\"
 .\" $From: terminfo.head,v 1.8 1998/03/11 21:12:53 juergen Exp $
-.\" $OpenBSD: terminfo.5tbl,v 1.7 2000/03/13 23:53:39 millert Exp $
+.\" $OpenBSD: terminfo.5tbl,v 1.8 2000/06/19 03:53:36 millert Exp $
 .TH TERMINFO 5 "" "" "File Formats"
 .ds n 5
 .ds d /usr/share/terminfo
@@ -1623,7 +1623,7 @@ YI Set page length to #1 hundredth of an inch
 T}
 .TE
 .ad
-.\" $From: terminfo.tail,v 1.31 2000/03/12 00:36:41 tom Exp $
+.\" $From: terminfo.tail,v 1.32 2000/04/15 20:04:58 tom Exp $
 .\" Beginning of terminfo.tail file
 .ps +1
 .PP
@@ -1935,7 +1935,8 @@ The \fB%\fR encodings have the following meanings:
 	\s-1%%	outputs `%'
 	%\fI[[\fP:\fI]flags][width[.precision]][\fPdoxXs\fI]\fP
 		as in \fBprintf\fP, flags are [-+#] and space
-	%c	print pop() gives %c
+	%c	print pop() like %c in printf()
+	%s	print pop() like %s in printf()
 
 	%p[1-9]	push \fIi\fP'th parm
 	%P[a-z]	set dynamic variable [a-z] to pop()
@@ -1952,7 +1953,7 @@ The \fB%\fR encodings have the following meanings:
 	%= %> %<	logical operations: push(pop() op pop())
 	%A, %O	logical and & or operations (for conditionals)
 	%! %~	unary operations push(op pop())
-	%i	add 1 to first two parms (for ANSI terminals)
+	%i	add 1 to first two parameters (for ANSI terminals)
 
 	%? expr %t thenpart %e elsepart %;
 		if-then-else, %e elsepart is optional.

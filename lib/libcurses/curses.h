@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.50 2000/04/04 16:49:58 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.51 2000/06/19 03:53:35 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.90 2000/02/19 22:15:43 tom Exp $ */
+/* $From: curses.h.in,v 1.92 2000/04/29 18:52:53 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 5
 #define NCURSES_VERSION_MINOR 0
-#define NCURSES_VERSION_PATCH 20000401
+#define NCURSES_VERSION_PATCH 20000617
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -66,6 +66,12 @@
 
 #undef  NCURSES_CONST
 #define NCURSES_CONST 
+
+#undef	NCURSES_COLOR_T
+#define	NCURSES_COLOR_T short
+
+#undef	NCURSES_SIZE_T
+#define	NCURSES_SIZE_T short
 
 typedef unsigned long chtype;
 
@@ -247,18 +253,18 @@ cchar_t;
 struct ldat
 {
 	chtype  *text;		/* text of the line */
-	short   firstchar;	/* first changed character in the line */
-	short   lastchar;	/* last changed character in the line */
-	short   oldindex;	/* index of the line at last update */
+	NCURSES_SIZE_T firstchar; /* first changed character in the line */
+	NCURSES_SIZE_T lastchar; /* last changed character in the line */
+	NCURSES_SIZE_T oldindex; /* index of the line at last update */
 };
 
 struct _win_st
 {
-	short   _cury, _curx;	/* current cursor position */
+	NCURSES_SIZE_T _cury, _curx; /* current cursor position */
 
 	/* window location and size */
-	short   _maxy, _maxx;	/* maximums of x and y, NOT window size */
-	short   _begy, _begx;	/* screen coords of upper-left-hand corner */
+	NCURSES_SIZE_T _maxy, _maxx; /* maximums of x and y, NOT window size */
+	NCURSES_SIZE_T _begy, _begx; /* screen coords of upper-left-hand corner */
 
 	short   _flags;		/* window state flags */
 
@@ -281,8 +287,8 @@ struct _win_st
 	struct ldat *_line;	/* the actual line data */
 
 	/* global screen state */
-	short	_regtop;	/* top line of scrolling region */
-	short	_regbottom;	/* bottom line of scrolling region */
+	NCURSES_SIZE_T _regtop;	/* top line of scrolling region */
+	NCURSES_SIZE_T _regbottom; /* bottom line of scrolling region */
 
 	/* these are used only if this is a sub-window */
 	int	_parx;		/* x coordinate of this window in parent */
@@ -292,12 +298,12 @@ struct _win_st
 	/* these are used only if this is a pad */
 	struct pdat
 	{
-	    short _pad_y,      _pad_x;
-	    short _pad_top,    _pad_left;
-	    short _pad_bottom, _pad_right;
+	    NCURSES_SIZE_T _pad_y,      _pad_x;
+	    NCURSES_SIZE_T _pad_top,    _pad_left;
+	    NCURSES_SIZE_T _pad_bottom, _pad_right;
 	} _pad;
 
-	short   _yoffset;	/* real begy is _begy + _yoffset */
+	NCURSES_SIZE_T _yoffset; /* real begy is _begy + _yoffset */
 };
 
 extern WINDOW   *stdscr;
@@ -952,7 +958,7 @@ extern bool mouse_trafo(int*, int*, bool);              /* generated */
 #define winchstr(w, s)		winchnstr(w, s, -1)
 #define winsstr(w, s)		winsnstr(w, s, -1)
 
-#define redrawwin(w)		wredrawln(w, 0, w->_maxy+1)
+#define redrawwin(win)		wredrawln(win, 0, (win)->_maxy+1)
 #define waddstr(win,str)	waddnstr(win,str,-1)
 #define waddchstr(win,str)	waddchnstr(win,str,-1)
 

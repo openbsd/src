@@ -1,4 +1,4 @@
-/*	$OpenBSD: progs.priv.h,v 1.5 2000/03/10 01:35:06 millert Exp $	*/
+/*	$OpenBSD: progs.priv.h,v 1.6 2000/06/19 03:53:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998-2000 Free Software Foundation, Inc.                   *
@@ -32,7 +32,7 @@
  *  Author: Thomas E. Dickey <dickey@clark.net> 1997,1998                   *
  ****************************************************************************/
 /*
- * $From: progs.priv.h,v 1.21 2000/03/05 04:32:47 tom Exp $
+ * $From: progs.priv.h,v 1.22 2000/04/08 23:47:39 tom Exp $
  *
  *	progs.priv.h
  *
@@ -172,8 +172,3 @@ extern int optind;
 #  define isascii(c) 1	/* not really ascii anyway */
 # endif
 #endif
-
-#if !HAVE_STRDUP
-#define strdup _nc_strdup
-extern char *_nc_strdup(const char *);
-#endif /* not HAVE_STRDUP */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_color.c,v 1.7 2000/03/26 16:45:03 millert Exp $	*/
+/*	$OpenBSD: lib_color.c,v 1.8 2000/06/19 03:53:40 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -43,7 +43,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_color.c,v 1.49 2000/03/26 03:12:12 tom Exp $")
+MODULE_ID("$From: lib_color.c,v 1.51 2000/05/20 20:09:22 tom Exp $")
 
 /*
  * These should be screen structure members.  They need to be globals for
@@ -314,7 +314,7 @@ init_pair(short pair, short f, short b)
 	}
     }
     SP->_color_pairs[pair] = result;
-    if ((int)(SP->_current_attr & A_COLOR) == COLOR_PAIR(pair))
+    if ((int) (SP->_current_attr & A_COLOR) == COLOR_PAIR(pair))
 	SP->_current_attr |= A_COLOR;	/* force attribute update */
 
     if (initialize_pair) {
@@ -421,10 +421,12 @@ pair_content(short pair, short *f, short *b)
 void
 _nc_do_color(int old_pair, int pair, bool reverse, int (*outc) (int))
 {
-    short fg = C_MASK, bg = C_MASK;
-    short old_fg, old_bg;
+    NCURSES_COLOR_T fg = C_MASK, bg = C_MASK;
+    NCURSES_COLOR_T old_fg, old_bg;
 
-    if (pair != 0) {
+    if (pair < 0 || pair >= COLOR_PAIRS) {
+	return;
+    } else if (pair != 0) {
 	if (set_color_pair) {
 	    TPUTS_TRACE("set_color_pair");
 	    tputs(tparm(set_color_pair, pair), 1, outc);
@@ -466,7 +468,7 @@ _nc_do_color(int old_pair, int pair, bool reverse, int (*outc) (int))
 #endif
 
     if (reverse) {
-	short xx = fg;
+	NCURSES_COLOR_T xx = fg;
 	fg = bg;
 	bg = xx;
     }

@@ -50,7 +50,7 @@
 #include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.42 2000/04/01 19:08:36 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.44 2000/06/10 21:59:21 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -65,6 +65,9 @@ long _nc_curr_file_pos = 0;	/* file offset of current line */
 long _nc_comment_start = 0;	/* start of comment range before name */
 long _nc_comment_end = 0;	/* end of comment range before name */
 long _nc_start_line = 0;	/* start line of current entry */
+
+struct token _nc_curr_token =
+{0, 0, 0};
 
 /*****************************************************************************
  *
@@ -472,6 +475,8 @@ _nc_trans_string(char *ptr, char *last)
 	    }
 	    if (ch == '?') {
 		*(ptr++) = '\177';
+		if (_nc_tracing)
+		    _nc_warning("Allow ^? as synonym for \\177");
 	    } else {
 		if ((ch &= 037) == 0)
 		    ch = 128;

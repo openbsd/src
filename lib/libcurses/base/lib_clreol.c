@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_clreol.c,v 1.1 1999/01/18 19:09:39 millert Exp $	*/
+/*	$OpenBSD: lib_clreol.c,v 1.2 2000/06/19 03:53:40 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
 /*
 **	lib_clreol.c
 **
@@ -43,51 +42,52 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_clreol.c,v 1.15 1998/06/28 00:32:20 tom Exp $")
+MODULE_ID("$From: lib_clreol.c,v 1.16 2000/04/29 21:14:54 tom Exp $")
 
-int  wclrtoeol(WINDOW *win)
+int
+wclrtoeol(WINDOW *win)
 {
-int     code = ERR;
+    int code = ERR;
 
-	T((T_CALLED("wclrtoeol(%p)"), win));
+    T((T_CALLED("wclrtoeol(%p)"), win));
 
-	if (win) {
-		chtype	blank;
-		chtype	*ptr, *end;
-		struct ldat *line;
-		short y = win->_cury;
-		short x = win->_curx;
+    if (win) {
+	chtype blank;
+	chtype *ptr, *end;
+	struct ldat *line;
+	NCURSES_SIZE_T y = win->_cury;
+	NCURSES_SIZE_T x = win->_curx;
 
-		/*
-		 * If we have just wrapped the cursor, the clear applies to the
-		 * new line, unless we are at the lower right corner.
-		 */
-		if (win->_flags & _WRAPPED
-		 && y < win->_maxy) {
-			win->_flags &= ~_WRAPPED;
-		}
-
-		/*
-		 * There's no point in clearing if we're not on a legal
-		 * position, either.
-		 */
-		if (win->_flags & _WRAPPED
-		 || y > win->_maxy
-		 || x > win->_maxx)
-			returnCode(ERR);
-
-		blank = _nc_background(win);
-		line = &win->_line[y];
-		CHANGED_TO_EOL(line, x, win->_maxx);
-
-		ptr = &(line->text[x]);
-		end = &(line->text[win->_maxx]);
-
-		while (ptr <= end)
-			*ptr++ = blank;
-
-		_nc_synchook(win);
-		code = OK;
+	/*
+	 * If we have just wrapped the cursor, the clear applies to the
+	 * new line, unless we are at the lower right corner.
+	 */
+	if (win->_flags & _WRAPPED
+	    && y < win->_maxy) {
+	    win->_flags &= ~_WRAPPED;
 	}
-	returnCode(code);
+
+	/*
+	 * There's no point in clearing if we're not on a legal
+	 * position, either.
+	 */
+	if (win->_flags & _WRAPPED
+	    || y > win->_maxy
+	    || x > win->_maxx)
+	    returnCode(ERR);
+
+	blank = _nc_background(win);
+	line = &win->_line[y];
+	CHANGED_TO_EOL(line, x, win->_maxx);
+
+	ptr = &(line->text[x]);
+	end = &(line->text[win->_maxx]);
+
+	while (ptr <= end)
+	    *ptr++ = blank;
+
+	_nc_synchook(win);
+	code = OK;
+    }
+    returnCode(code);
 }

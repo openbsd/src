@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_vidattr.c,v 1.4 2000/03/26 16:45:04 millert Exp $	*/
+/*	$OpenBSD: lib_vidattr.c,v 1.5 2000/06/19 03:53:54 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -66,7 +66,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_vidattr.c,v 1.26 2000/03/26 02:56:20 tom Exp $");
+MODULE_ID("$From: lib_vidattr.c,v 1.27 2000/04/29 23:25:27 tom Exp $")
 
 #define doPut(mode) TPUTS_TRACE(#mode); tputs(mode, 1, outc)
 
@@ -121,7 +121,8 @@ vidputs(attr_t newmode, int (*outc) (int))
      * If we have a terminal that cannot combine color with video
      * attributes, use the colors in preference.
      */
-    if ((newmode & A_COLOR)
+    if (((newmode & A_COLOR) != 0
+	    || fix_pair0)
 	&& (no_color_video > 0)) {
 	/* *INDENT-OFF* */
 	static const struct {

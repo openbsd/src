@@ -1,7 +1,7 @@
-/*	$OpenBSD: lib_scrreg.c,v 1.1 1999/01/18 19:09:58 millert Exp $	*/
+/*	$OpenBSD: lib_scrreg.c,v 1.2 2000/06/19 03:53:45 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,8 +33,6 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-
-
 /*
 **	lib_scrreg.c
 **
@@ -44,21 +42,21 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_scrreg.c,v 1.7 1998/02/11 12:13:53 tom Exp $")
+MODULE_ID("$From: lib_scrreg.c,v 1.8 2000/04/29 21:13:04 tom Exp $")
 
-int wsetscrreg(WINDOW *win, int top, int bottom)
+int
+wsetscrreg(WINDOW *win, int top, int bottom)
 {
-	T((T_CALLED("wsetscrreg(%p,%d,%d)"), win, top, bottom));
+    T((T_CALLED("wsetscrreg(%p,%d,%d)"), win, top, bottom));
 
-	if (win &&
-	    top >= 0  && top <= win->_maxy &&
-	    bottom >= 0  &&  bottom <= win->_maxy &&
-	    bottom > top)
-	  {
-	    win->_regtop	= (short)top;
-	    win->_regbottom = (short)bottom;
-	    
-	    returnCode(OK);
-	  } else
-	    returnCode(ERR);
+    if (win &&
+	top >= 0 && top <= win->_maxy &&
+	bottom >= 0 && bottom <= win->_maxy &&
+	bottom > top) {
+	win->_regtop = (NCURSES_SIZE_T) top;
+	win->_regbottom = (NCURSES_SIZE_T) bottom;
+
+	returnCode(OK);
+    } else
+	returnCode(ERR);
 }

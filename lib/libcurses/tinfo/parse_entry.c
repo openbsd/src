@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_entry.c,v 1.6 2000/03/13 23:53:40 millert Exp $	*/
+/*	$OpenBSD: parse_entry.c,v 1.7 2000/06/19 03:53:51 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -49,7 +49,7 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term_entry.h>
 
-MODULE_ID("$From: parse_entry.c,v 1.43 2000/03/12 00:09:06 tom Exp $")
+MODULE_ID("$From: parse_entry.c,v 1.44 2000/04/30 00:17:42 tom Exp $")
 
 #ifdef LINT
 static short const parametrized[] =
@@ -57,9 +57,6 @@ static short const parametrized[] =
 #else
 #include <parametrized.h>
 #endif
-
-struct token _nc_curr_token =
-{0, 0, 0};
 
 static void postprocess_termcap(TERMTYPE *, bool);
 static void postprocess_terminfo(TERMTYPE *);

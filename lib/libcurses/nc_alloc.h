@@ -1,4 +1,4 @@
-/*	$OpenBSD: nc_alloc.h,v 1.5 1999/05/08 20:28:58 millert Exp $	*/
+/*	$OpenBSD: nc_alloc.h,v 1.6 2000/06/19 03:53:36 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -31,7 +31,7 @@
 /****************************************************************************
  *  Author: Thomas E. Dickey <dickey@clark.net> 1996,1997                   *
  ****************************************************************************/
-/* $From: nc_alloc.h,v 1.7 1999/04/03 23:15:13 tom Exp $ */
+/* $From: nc_alloc.h,v 1.8 2000/04/08 23:42:57 tom Exp $ */
 
 #ifndef NC_ALLOC_included
 #define NC_ALLOC_included 1
@@ -70,5 +70,16 @@ extern void _nc_leaks_dump_entry(void);
 #ifndef ExitProgram
 #define ExitProgram(code) return code
 #endif
+
+/* doalloc.c */
+extern void *_nc_doalloc(void *, size_t);
+#if !HAVE_STRDUP
+#define strdup _nc_strdup
+extern char *_nc_strdup(const char *);
+#endif
+
+#define typeMalloc(type,elts) (type *)malloc((elts)*sizeof(type))
+#define typeCalloc(type,elts) (type *)calloc((elts),sizeof(type))
+#define typeRealloc(type,elts,ptr) (type *)_nc_doalloc(ptr, (elts)*sizeof(type))
 
 #endif /* NC_ALLOC_included */

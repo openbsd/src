@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curs_getch.3tbl,v 1.7 1999/01/18 19:07:12 millert Exp $
+.\" $OpenBSD: curs_getch.3tbl,v 1.8 2000/06/19 03:53:34 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_getch.3x,v 1.15 1998/11/29 01:04:26 Rick.Ohnemus Exp $
+.\" $From: curs_getch.3x,v 1.16 2000/05/27 22:48:05 tom Exp $
 .TH curs_getch 3 ""
 .SH NAME
 \fBgetch\fR, \fBwgetch\fR, \fBmvgetch\fR,
@@ -59,7 +59,7 @@ this is after one character (cbreak mode), or after the first newline (nocbreak
 mode).  In half-delay mode, the program waits until a character is typed or the
 specified timeout has been reached.
 
-If \fBnoecho\fR has been set, then the character will also be echoed into the
+Unless \fBnoecho\fR has been set, then the character will also be echoed into the
 designated window according to the following rules:
 If the character is the current erase character, left arrow, or backspace,
 the cursor is moved one space to the left and that screen position is erased
