@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.1 2004/10/18 12:03:19 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.2 2004/10/18 13:29:14 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -26,8 +26,37 @@ my $isatty;
 my $enabled = 0;
 
 # unless we know better
-my $width = 80;
+my $width;
 my $playfield;
+
+my $wsz_format = 'SSSS';
+our %sizeof;
+
+sub find_window_size
+{
+	return if defined $width;
+	# try to get exact window width
+	my $r;
+	$r = pack($wsz_format, 0, 0, 0, 0);
+	$sizeof{'struct winsize'} = 8;
+	require 'sys/ttycom.ph';
+	$width = 80;
+	if (ioctl(STDERR, &TIOCGWINSZ, $r) == 0) {
+		my ($rows, $cols, $xpix, $ypix) = 
+		    unpack($wsz_format, $r);
+		$width = $cols;
+	}
+}
+
+sub compute_playfield
+{
+	return unless $isatty;
+	# compute playfield
+	$playfield = $width - length($header) - 10;
+	if ($playfield < 5) {
+		$playfield = 0;
+	}
+}
 
 sub enable
 {
@@ -43,13 +72,16 @@ sub set_header
 		if (!defined $isatty) {
 			$isatty = -t STDERR;
 		}
+		find_window_size();
 	}
 	if ($isatty) {
-		# compute playfield
-		$playfield = $width - length($header) - 10;
-		if ($playfield > 40) {
-			$playfield = 40;
-		}
+		find_window_size();
+		compute_playfield();
+		$SIG{'WINCH'} = sub {
+			$width = undef;
+			find_window_size();
+			compute_playfield();
+		};
 	}
 	return $isatty;
 }
@@ -58,10 +90,15 @@ sub show
 {
 	my ($current, $total) = @_;
 	return unless $isatty;
+	my $d;
 
-        my $stars = ($current * $playfield) / $total;
-	my $percent = int (($current * 100)/$total + 0.5);
-        my $d = "$header|".'*'x$stars.' 'x($playfield-$stars)."| ".$percent."\%";
+	if ($playfield) {
+	    my $stars = ($current * $playfield) / $total;
+	    my $percent = int (($current * 100)/$total + 0.5);
+	    $d = "$header|".'*'x$stars.' 'x($playfield-$stars)."| ".$percent."\%";
+	} else {
+	    $d = $header;
+	}
 	return if $d eq $lastdisplay;
         $lastdisplay=$d;
         print STDERR $d, "\r";
