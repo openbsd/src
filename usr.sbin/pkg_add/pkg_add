@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.124 2004/11/20 23:38:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.125 2004/11/21 13:24:41 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -178,7 +178,7 @@ sub solve_dependencies
 {
 	my ($verbose, $handle, @extra) = @_;
 	my $plist = $handle->{plist};
-	my $to_register = $handle->{solved_dependencies} = [];
+	my $to_register = $handle->{solved_dependencies} = {};
 	my $to_install;
 
 	# do simple old style pkgdep first
@@ -187,13 +187,13 @@ sub solve_dependencies
 		if (!is_installed($dep->{name})) {
 			push(@deps, $dep->{name});
 		}
-		push(@$to_register, $dep->{name});
+		$to_register->{$dep->{name}} = 1;
 	}
 	for my $dep (@{$plist->{depend}}, @{$plist->{newdepend}}, @{$plist->{libdepend}}) {
 	    next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, installed_packages());
 	    if (@candidates >= 1) {
-		    push(@$to_register, $candidates[0]);
+		    $to_register->{$candidates[0]} = 1;
 	    } else {
 	    	if (!defined $to_install) {
 			$to_install = {};
@@ -205,37 +205,37 @@ sub solve_dependencies
 	    	my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, keys %{$to_install});
 		if (@candidates >= 1) {
 		    push(@deps, $to_install->{$candidates[0]});
-		    push(@$to_register, $candidates[0]);
+		    $to_register->{$candidates[0]} = 1;
 		} else {
 		    # try with list of packages
 		    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, OpenBSD::PackageLocator::available());
 		    # one single choice
 		    if (@candidates == 1) {
 			push(@deps, $candidates[0]);
-			push(@$to_register, $candidates[0]);
+			$to_register->{$candidates[0]} = 1;
 		    } elsif (@candidates > 1) {
 			# grab default if available
 		    	if (grep {$_ eq $dep->{def}} @candidates) {
 			    push(@deps, $dep->{def});
-			    push(@$to_register, $dep->{def});
+			    $to_register->{$dep->{def}} = 1;
 			# grab first one otherwise
 			} else {
 			    push(@deps, $candidates[0]);
-			    push(@$to_register, $candidates[0]);
+			    $to_register->{$candidates[0]} = 1;
 			}
 		    } else {
 			# can't get a list of packages, assume default
 			# will be there.
 			push(@deps, $dep->{def});
-			push(@$to_register, $dep->{def});
+			$to_register->{$dep->{def}} = 1;
 		    }
 		}
 	    }
 	}
 
-	if ($verbose && @{$to_register} > 0) {
+	if ($verbose && %$to_register) {
 	    print "Dependencies for ", $plist->pkgname(), " resolve to: ", 
-	    	join(',', @$to_register);
+	    	join(', ', keys %$to_register);
 	    print " (todo: ", join(',', @deps), ")" if @deps > 0;
 	    print "\n";
 	}
@@ -426,7 +426,7 @@ sub really_add($$)
 
 			my $r = OpenBSD::Requiring->new($pkgname);
 
-			for my $dep (@{$handle->{solved_dependencies}}) {
+			for my $dep (keys %{$handle->{solved_dependencies}}) {
 				OpenBSD::RequiredBy->new($dep)->add($pkgname);
 				$r->add($dep);
 			}
@@ -482,7 +482,7 @@ sub find_old_lib
 		    $state->{destdir}.$plist->pkgbase(), $lib, $available)) {
 			Warn "Found library ", $lib, " in old package $try\n";
 			$plist->visit('available_lib', $global_avail, $try);
-			push(@$dependencies, $try);
+			$dependencies->{$try} = 1;
 			return 1;
 		}
 	}
@@ -539,8 +539,7 @@ sub lookup_library
 	return 0 unless $harder;
 	# lookup through the full tree...
 	my $done = {};
-	my %base_dependencies = map {($_, 1)} @$dependencies;
-	my @todo = @$dependencies;
+	my @todo = keys %$dependencies;
 	while (my $dep = pop @todo) {
 		require OpenBSD::RequiredBy;
 
@@ -549,7 +548,7 @@ sub lookup_library
 		for my $dep2 (OpenBSD::Requiring->new($dep)->list()) {
 			push(@todo, $dep2) unless $done->{$dep2};
 		}
-		next if $base_dependencies{$dep};
+		next if $dependencies->{$dep};
 		my $plist = OpenBSD::PackingList->from_installation($dep,
 			\&OpenBSD::PackingList::LibraryOnly);
 		my $avail2 = {};
@@ -558,7 +557,7 @@ sub lookup_library
 		    $state->{destdir}.$plist->pkgbase(), $lib, $avail2)) {
 			Warn "Found library ", $lib, " in dependent package $dep\n";
 			$plist->visit('available_lib', $available, $dep);
-			push(@$dependencies, $dep);
+			$dependencies->{$dep} = 1;
 			return 1;
 		}
 	}
@@ -603,7 +602,7 @@ sub install_package
 
 	# verify dependencies and register them
 
-	for my $dep (@{$handle->{solved_dependencies}}) {
+	for my $dep (keys %{$handle->{solved_dependencies}}) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
 		return ();
@@ -611,7 +610,7 @@ sub install_package
 
 	# grab libraries
 	my $available = {};
-	for my $dep (@{$handle->{solved_dependencies}}) {
+	for my $dep (keys %{$handle->{solved_dependencies}}) {
 		my $plist = OpenBSD::PackingList->from_installation($dep, 
 			\&OpenBSD::PackingList::LibraryOnly);
 		$plist->visit('available_lib', $available, $dep);
