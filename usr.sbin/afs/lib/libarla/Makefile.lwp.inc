@@ -4,6 +4,7 @@ OBJS		+= process.o
 CLEANFILES	+= process.S process.o lwp.c lwp.h
 .PATH:	${AFSSRC}/lwp
 CFLAGS	+= -DAFS_BSD_ENV -DFD_SPEED_HACK -I${AFSSRC}/lwp
+AINC	+= -DUSING_ASM -DHAVE_PIC
 
 # We use the handcoded assembler stuff for context switching, not
 # pthreads (because pthreads do not work for now).
@@ -31,8 +32,5 @@ process.S:
 		*)  echo "Unknown host_cpu, good luck" ;; \
 	esac; \
 	ln -s ${AFSSRC}/lwp/$$PROCESS_S process.S
-
-process.o: process.S
-	${CC} ${CFLAGS} -DUSING_ASM -DHAVE_PIC -c process.S
 
 all:	lwp.h
