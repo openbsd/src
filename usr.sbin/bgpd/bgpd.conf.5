@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.28 2004/05/24 08:45:04 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.29 2004/07/05 17:04:44 henning Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -646,7 +646,12 @@ AS path attribute.
 Set the
 .Em NEXTHOP
 AS path attribute
-to a different nexthop address.
+to a different nexthop address, or use blackhole or reject routes.
+.Bd -literal -offset indent
+set nexthop 192.168.0.1
+set nexthop blackhole
+set nexthop reject
+.Ed
 .It Ar pftable
 Adds the prefix in the update to the specified
 .Xr pf 4
