@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.20 1999/09/25 14:44:00 espie Exp $
+.\"	$OpenBSD: make.1,v 1.21 1999/11/06 14:43:57 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -1196,7 +1196,25 @@ For loops are expanded before tests, so a fragment such as:
 \&.fi
 .Ed
 won't work, and should be rewritten the other way around.
-
+.Pp
+Syntax errors in for loops yield erroneous line numbers.
+.Pp
+End of file handling is not consistent. Some missing newlines are reported
+as weird errors, others are ignored silently.
+.Pp
+Command-line expansion as in
+.Bd -literal
+VAR != cat /dev/null
+.Ed
+does not distinguish between problems in the command and empty command
+result.
+.Pp
+When handling pre-BSD 4.4 archives, 
+.Nm
+may erroneously mark archive members as out of date if the archive name
+was truncated.
+.Pp
+Variable handling and for loop expansion are incredibly inefficient.
 .Sh SEE ALSO
 .Xr mkdep 1
 .Sh HISTORY
