@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.23 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.24 2003/08/30 21:54:06 miod Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -765,8 +765,6 @@ function swaps in the named process.
 .Fn uvm_chgkprot "caddr_t addr" "size_t len" "int rw"
 .Ft void
 .Fn uvm_kernacc "caddr_t addr" "size_t len" "int rw"
-.Ft boolean_t
-.Fn uvm_useracc "caddr_t addr" "size_t len" "int rw"
 .Ft void
 .Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len" \
                "vm_prot_t access_type"
@@ -823,16 +821,13 @@ This function is only available with options
 .Pp
 The
 .Fn uvm_kernacc
-and
-.Fn uvm_useracc
-functions check the access at address
+function checks the access at address
 .Fa addr
 to
 .Fa addr + len
 for
 .Fa rw
-access, in the kernel address space, and the current process'
-address space respectively.
+access, in the kernel address space.
 .Pp
 The
 .Fn uvm_vslock
