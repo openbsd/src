@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.4 2002/05/11 14:46:41 millert Exp $ */
+/* $OpenBSD: limits.h,v 1.5 2004/09/16 13:10:57 miod Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -34,7 +34,6 @@
  * user-visible (only typedefs and #define names that stays in the __xxx
  * namespace).
  *
- *   __machine_arch_is_64_bits		(default is 32 bits arches)
  *   __machine_has_unsigned_chars	(default is signed chars)
  *   __FLT_xxx/__DBL_xxx		non standard values for floating
  *   					points limits.
@@ -66,7 +65,7 @@
 #define	INT_MAX		0x7fffffff	/* max value for an int */
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
-#ifdef __machine_is_64_bits
+#ifdef __LP64__
 # define ULONG_MAX	0xffffffffffffffffUL
 					/* max value for unsigned long */
 # define LONG_MAX	0x7fffffffffffffffL	
@@ -96,7 +95,7 @@
 
 
 #if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
-# ifdef __machine_is_64_bits
+# ifdef __LP64__
 #  define LONG_BIT	64
 # else
 #  define LONG_BIT	32
