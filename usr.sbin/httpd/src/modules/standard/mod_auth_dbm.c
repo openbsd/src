@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_auth_dbm.c,v 1.11 2003/08/21 13:11:36 henning Exp $ */
+/*	$OpenBSD: mod_auth_dbm.c,v 1.12 2004/12/02 19:42:47 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -78,14 +78,7 @@
 #include "http_log.h"
 #include "http_main.h"
 #include "http_protocol.h"
-#if (defined(WIN32) || defined(NETWARE))
-#include <sdbm.h>
-#define dbm_open sdbm_open
-#define dbm_fetch sdbm_fetch
-#define dbm_close sdbm_close
-#else
 #include <ndbm.h>
-#endif
 
 /*
  * Module definition information - the part between the -START and -END

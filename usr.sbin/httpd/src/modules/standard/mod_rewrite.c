@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.22 2004/09/08 16:12:30 henning Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.23 2004/12/02 19:42:48 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -97,16 +97,10 @@
 #include "fdcache.h"
 
 #ifndef NO_WRITEV
-#ifndef NETWARE
 #include <sys/types.h>
-#endif
 #include <sys/uio.h>
 #endif
 
-#ifdef NETWARE
-#include <nwsemaph.h>
-static LONG locking_sem = 0;
-#endif
 
 /*
 ** +-------------------------------------------------------+
@@ -1232,9 +1226,7 @@ static int hook_uri2file(request_rec *r)
             /* it was finally rewritten to a local path */
 
             /* expand "/~user" prefix */
-#if !defined(WIN32) && !defined(NETWARE)
             r->filename = expand_tildepaths(r, r->filename);
-#endif
             rewritelog(r, 2, "local path result: %s", r->filename);
 
             /* the filename must be either an absolute local path or an
@@ -2219,13 +2211,11 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
         }
     }
     else if (strcmp(p->pattern, "-l") == 0) {
-#if !defined(OS2) && !defined(WIN32)  && !defined(NETWARE)
         if (lstat(input, &sb) == 0) {
             if (S_ISLNK(sb.st_mode)) {
                 rc = 1;
             }
         }
-#endif
     }
     else if (strcmp(p->pattern, "-d") == 0) {
         if (stat(input, &sb) == 0) {
@@ -2812,7 +2802,6 @@ static char *escape_absolute_uri(ap_pool *p, char *uri, unsigned scheme)
 **  Unix /etc/passwd database information
 **
 */
-#if !defined(WIN32) && !defined(NETWARE)
 static char *expand_tildepaths(request_rec *r, char *uri)
 {
     char user[LONG_STRING_LEN];
@@ -2848,7 +2837,6 @@ static char *expand_tildepaths(request_rec *r, char *uri)
     }
     return newuri;
 }
-#endif
 
 
 
@@ -3264,13 +3252,7 @@ static void open_rewritelog(server_rec *s, pool *p)
     char *fname;
     piped_log *pl;
     int    rewritelog_flags = ( O_WRONLY|O_APPEND|O_CREAT );
-#if defined(NETWARE)
-    mode_t rewritelog_mode  = ( S_IREAD|S_IWRITE );
-#elif defined(WIN32)
-    mode_t rewritelog_mode  = ( _S_IREAD|_S_IWRITE );
-#else
     mode_t rewritelog_mode  = ( S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH );
-#endif
 
     conf = ap_get_module_config(s->module_config, &rewrite_module);
 
@@ -3430,13 +3412,7 @@ static char *current_logtime(request_rec *r)
 ** +-------------------------------------------------------+
 */
 
-#if defined(NETWARE)
-#define REWRITELOCK_MODE ( S_IREAD|S_IWRITE )
-#elif defined(WIN32)
-#define REWRITELOCK_MODE ( _S_IREAD|_S_IWRITE )
-#else
 #define REWRITELOCK_MODE ( S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH )
-#endif
 
 static void rewritelock_create(server_rec *s, pool *p)
 {
@@ -3457,15 +3433,10 @@ static void rewritelock_create(server_rec *s, pool *p)
                      "file %s", lockname);
         exit(1);
     }
-#if !defined(OS2) && !defined(WIN32) && !defined(NETWARE)
     /* make sure the childs have access to this file */
     if (geteuid() == 0 /* is superuser */)
         chown(lockname, ap_user_id, -1 /* no gid change */);
-#endif
 
-#ifdef NETWARE
-	locking_sem = OpenLocalSemaphore (1);
-#endif
 
     return;
 }
@@ -3499,9 +3470,6 @@ static void rewritelock_remove(void *data)
     unlink(lockname);
     lockname = NULL;
     lockfd = -1;
-#ifdef NETWARE
-	CloseLocalSemaphore (locking_sem);
-#endif
 
 }
 
@@ -3598,41 +3566,8 @@ static int rewritemap_program_child(void *cmd, child_info *pinfo)
     /*
      * Exec() the child program
      */
-#if defined(WIN32)
-    /* MS Windows */
-    {
-        char pCommand[MAX_STRING_LEN];
-        STARTUPINFO si;
-        PROCESS_INFORMATION pi;
-
-        ap_snprintf(pCommand, sizeof(pCommand), "%s /C %s", SHELL_PATH, cmd);
-
-        memset(&si, 0, sizeof(si));
-        memset(&pi, 0, sizeof(pi));
-
-        si.cb          = sizeof(si);
-        si.dwFlags     = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-        si.wShowWindow = SW_HIDE;
-        si.hStdInput   = pinfo->hPipeInputRead;
-        si.hStdOutput  = pinfo->hPipeOutputWrite;
-        si.hStdError   = pinfo->hPipeErrorWrite;
-
-        if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, 0,
-                          environ, NULL, &si, &pi)) {
-            CloseHandle(pi.hProcess);
-            CloseHandle(pi.hThread);
-            child_pid = pi.dwProcessId;
-        }
-    }
-#elif defined(NETWARE)
-   /* Need something here!!! Spawn???? */
-#elif defined(OS2)
-    /* IBM OS/2 */
-    execl(SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, (char *)NULL);
-#else
     /* Standard Unix */
     execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, (char *)NULL);
-#endif
     return(child_pid);
 }
 
@@ -3655,11 +3590,9 @@ static char *lookup_variable(request_rec *r, char *var)
     time_t tc;
     struct tm *tm;
     request_rec *rsub;
-#ifndef WIN32
     struct passwd *pw;
     struct group *gr;
     struct stat finfo;
-#endif
 
     result = NULL;
 
@@ -3851,9 +3784,6 @@ static char *lookup_variable(request_rec *r, char *var)
         LOOKAHEAD(ap_sub_req_lookup_file)
     }
 
-#if !defined(WIN32) && !defined(NETWARE)
-    /* Win32 has a rather different view of file ownerships.
-       For now, just forget it */
 
     /* file stuff */
     else if (strcasecmp(var, "SCRIPT_USER") == 0) {
@@ -3886,7 +3816,6 @@ static char *lookup_variable(request_rec *r, char *var)
             }
         }
     }
-#endif /* ndef WIN32 && NETWARE*/
 
 #ifdef EAPI
     else {
@@ -4403,12 +4332,6 @@ static void fd_lock(request_rec *r, int fd)
     rc = _locking(fd, _LK_LOCK, 1);
     lseek(fd, 0, SEEK_END);
 #endif
-#ifdef NETWARE
-	if ((locking_sem != 0) && (TimedWaitOnLocalSemaphore (locking_sem, 10000) != 0))
-		rc = -1;
-	else
-		rc = 1;
-#endif
 
     if (rc < 0) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
@@ -4438,11 +4361,6 @@ static void fd_unlock(request_rec *r, int fd)
     lseek(fd, 0, SEEK_SET);
     rc = _locking(fd, _LK_UNLCK, 1);
     lseek(fd, 0, SEEK_END);
-#endif
-#ifdef NETWARE
-	if (locking_sem)
-		SignalLocalSemaphore (locking_sem);
-	rc = 1;
 #endif
 
     if (rc < 0) {

@@ -101,11 +101,7 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                 /*
                  * seed in contents of an external file
                  */
-#ifdef WIN32
-                if ((fp = ap_pfopen(p, pRandSeed->cpPath, "rb")) == NULL)
-#else
                 if ((fp = ap_pfopen(p, pRandSeed->cpPath, "r")) == NULL)
-#endif
                     continue;
                 nDone += ssl_rand_feedfp(p, fp, pRandSeed->nBytes);
                 ap_pfclose(p, fp);

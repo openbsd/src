@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_userdir.c,v 1.11 2003/08/21 13:11:37 henning Exp $ */
+/*	$OpenBSD: mod_userdir.c,v 1.12 2004/12/02 19:42:48 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -173,29 +173,14 @@ static const char *set_user_dir(cmd_parms *cmd, void *dummy, char *arg)
         while (*userdirs) {
             char *thisdir = ap_getword_conf(cmd->pool, &userdirs);
             if (!ap_os_is_path_absolute(thisdir) && !strchr(thisdir, ':')) {
-#if defined(WIN32) || defined(NETWARE)
-                return "UserDir must specify an absolute redirect "
-                       "or absolute file path";
-#else
                 if (strchr(thisdir, '*')) {
                      return "UserDir cannot specify '*' substitution within "
                             "a relative path";
                 }
-#endif
             }
         }
         s_cfg->userdir = ap_pstrdup(cmd->pool, arg);
         ap_server_strip_chroot(s_cfg->userdir, 1);
-#if defined(WIN32) || defined(OS2) || defined(NETWARE)
-        /* These are incomplete paths, so we cannot canonicalize them yet.
-         * but any backslashes will confuse the parser, later, so simply
-         * change them to slash form.
-         */
-        arg = s_cfg->userdir;
-        while (arg = strchr(arg, '\\')) {
-            *(arg++) = '/';
-        }
-#endif
         return NULL;
     }
     /*
@@ -345,24 +330,11 @@ static int translate_userdir(request_rec *r)
              * serves [homedir]/[UserDir arg]
              * e.g. /~smith -> /home/smith/public_html
              */
-#if defined(WIN32) || defined(NETWARE)
-            /* Need to figure out home dirs on NT and NetWare 
-             * Shouldn't happen here, though, we trap for this in set_user_dir
-             */
-            return DECLINED;
-#else                           /* WIN32 & NetWare */
             struct passwd *pw;
             if ((pw = getpwnam(w))) {
-#ifdef OS2
-                /* Need to manually add user name for OS/2 */
-                filename = ap_pstrcat(r->pool, pw->pw_dir, w, "/",
-                                      userdir, NULL);
-#else
                 filename = ap_pstrcat(r->pool, pw->pw_dir, "/",
                                       userdir, NULL);
-#endif
             }
-#endif                          /* WIN32 & NetWare */
         }
 
         /*

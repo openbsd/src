@@ -92,31 +92,14 @@ extern "C" {
  * file with a relative pathname will have this added.
  */
 #ifndef HTTPD_ROOT
-#ifdef OS2
-/* Set default for OS/2 file system */
-#define HTTPD_ROOT "/os2httpd"
-#elif defined(WIN32)
-/* Set default for Windows file system */
-#define HTTPD_ROOT "/apache"
-#elif defined(BEOS) || defined(BONE)
-#define HTTPD_ROOT "/boot/home/apache"
-#elif defined(NETWARE)
-#define HTTPD_ROOT "sys:/apache"
-#else
 #define HTTPD_ROOT "/usr/local/apache"
-#endif
 #endif /* HTTPD_ROOT */
 
 /* Default location of documents.  Can be overridden by the DocumentRoot
  * directive.
  */
 #ifndef DOCUMENT_LOCATION
-#ifdef OS2
-/* Set default for OS/2 file system */
-#define DOCUMENT_LOCATION  HTTPD_ROOT "/docs"
-#else
 #define DOCUMENT_LOCATION  HTTPD_ROOT "/htdocs"
-#endif
 #endif /* DOCUMENT_LOCATION */
 
 /* Max. number of dynamically loaded modules */
@@ -153,10 +136,6 @@ extern "C" {
 #define DEFAULT_HTTP_PORT	80
 #define DEFAULT_HTTPS_PORT	443
 #define ap_is_default_port(port,r)	((port) == ap_default_port(r))
-#ifdef NETWARE
-#define ap_http_method(r) ap_os_http_method((void*)r)
-#define ap_default_port(r) ap_os_default_port((void*)r)
-#else
 #ifdef EAPI
 #define ap_http_method(r)   (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::http::method") != NULL) ? ((char *)ap_ctx_get((r)->ctx, "ap::http::method")) : "http")
 #define ap_default_port(r)  (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::default::port") != NULL) ? atoi((char *)ap_ctx_get((r)->ctx, "ap::default::port")) : DEFAULT_HTTP_PORT)
@@ -164,7 +143,6 @@ extern "C" {
 #define ap_http_method(r)	"http"
 #define ap_default_port(r)	DEFAULT_HTTP_PORT
 #endif /* EAPI */
-#endif
 
 /* --------- Default user name and group name running standalone ---------- */
 /* --- These may be specified as numbers by placing a # before a number --- */
@@ -177,11 +155,7 @@ extern "C" {
 #endif
 
 #ifndef DEFAULT_ERRORLOG
-#if defined(OS2) || defined(WIN32)
-#define DEFAULT_ERRORLOG "logs/error.log"
-#else
 #define DEFAULT_ERRORLOG "logs/error_log"
-#endif
 #endif /* DEFAULT_ERRORLOG */
 
 #ifndef DEFAULT_PIDLOG
@@ -212,12 +186,7 @@ extern "C" {
 
 /* Define this to be what your per-directory security files are called */
 #ifndef DEFAULT_ACCESS_FNAME
-#ifdef OS2
-/* Set default for OS/2 file system */
-#define DEFAULT_ACCESS_FNAME "htaccess"
-#else
 #define DEFAULT_ACCESS_FNAME ".htaccess"
-#endif
 #endif /* DEFAULT_ACCESS_FNAME */
 
 /* The name of the server config file */
@@ -256,12 +225,7 @@ extern "C" {
 
 /* The path to the shell interpreter, for parsed docs */
 #ifndef SHELL_PATH
-#if defined(OS2) || defined(WIN32)
-/* Set default for OS/2 and Windows file system */
-#define SHELL_PATH "CMD.EXE"
-#else
 #define SHELL_PATH "/bin/sh"
-#endif
 #endif /* SHELL_PATH */
 
 /* The path to the suExec wrapper, can be overridden in Configuration */
@@ -327,13 +291,7 @@ extern "C" {
  * the overhead.
  */
 #ifndef HARD_SERVER_LIMIT
-#ifdef WIN32
-#define HARD_SERVER_LIMIT 1024
-#elif defined(NETWARE)
-#define HARD_SERVER_LIMIT 2048
-#else
 #define HARD_SERVER_LIMIT 256
-#endif
 #endif
 
 /*
@@ -618,9 +576,6 @@ API_EXPORT(void) ap_add_config_define(const char *define);
 #define CGI_MAGIC_TYPE "application/x-httpd-cgi"
 #define INCLUDES_MAGIC_TYPE "text/x-server-parsed-html"
 #define INCLUDES_MAGIC_TYPE3 "text/x-server-parsed-html3"
-#ifdef CHARSET_EBCDIC
-#define ASCIITEXT_MAGIC_TYPE_PREFIX "text/x-ascii-" /* Text files whose content-type starts with this are passed thru unconverted */
-#endif /*CHARSET_EBCDIC*/
 #define MAP_FILE_MAGIC_TYPE "application/x-type-map"
 #define ASIS_MAGIC_TYPE "httpd/send-as-is"
 #define DIR_MAGIC_TYPE "httpd/unix-directory"
@@ -644,25 +599,10 @@ API_EXPORT(void) ap_add_config_define(const char *define);
                           "\"http://www.w3.org/TR/REC-html40/frameset.dtd\">\n"
 
 /* Just in case your linefeed isn't the one the other end is expecting. */
-#ifndef CHARSET_EBCDIC
 #define LF 10
 #define CR 13
 #define CRLF "\015\012"
 #define OS_ASC(c) (c)
-#else /* CHARSET_EBCDIC */
-#include "ap_ebcdic.h"
-/* OSD_POSIX uses the EBCDIC charset. The transition ASCII->EBCDIC is done in
- * the buff package (bread/bputs/bwrite), so everywhere else, we use
- * "native EBCDIC" CR and NL characters. These are therefore defined as
- * '\r' and '\n'.
- * NB: this is not the whole truth - sometimes \015 and \012 are contained
- * in literal (EBCDIC!) strings, so these are not converted but passed.
- */
-#define CR '\r'
-#define LF '\n'
-#define CRLF "\r\n"
-#define OS_ASC(c) (os_toascii[c])
-#endif /* CHARSET_EBCDIC */
 
 /* Possible values for request_rec.read_body (set by handling module):
  *    REQUEST_NO_BODY          Send 413 error if message has any body
@@ -866,17 +806,6 @@ struct request_rec {
      * happy.
      */
     char *case_preserved_filename;
-
-#ifdef CHARSET_EBCDIC
-    /* We don't want subrequests to modify our current conversion flags.
-     * These flags save the state of the conversion flags when subrequests
-     * are run.
-     */
-    struct {
-        unsigned conv_in:1;    /* convert ASCII->EBCDIC when read()ing? */
-        unsigned conv_out:1;   /* convert EBCDIC->ASCII when write()ing? */
-    } ebcdic;
-#endif
 
 /* Things placed at the end of the record to avoid breaking binary
  * compatibility.  It would be nice to remember to reorder the entire
@@ -1093,15 +1022,6 @@ API_EXPORT(char *) ap_pbase64encode(pool *p, char *string);
 API_EXPORT(char *) ap_uudecode(pool *p, const char *bufcoded);
 API_EXPORT(char *) ap_uuencode(pool *p, char *string); 
 
-#if defined(OS2) || defined(WIN32)
-API_EXPORT(char *) ap_double_quotes(pool *p, const char *str);
-API_EXPORT(char *) ap_caret_escape_args(pool *p, const char *str);
-#endif
-
-#ifdef OS2
-void os2pathname(char *path);
-#endif
-
 API_EXPORT(int)    ap_regexec(const regex_t *preg, const char *string,
                               size_t nmatch, regmatch_t pmatch[], int eflags);
 API_EXPORT(size_t) ap_regerror(int errcode, const regex_t *preg, 
@@ -1168,25 +1088,10 @@ API_EXPORT(void) ap_chdir_file(const char *file);
 #define ap_os_systemcase_filename(p,f)  (f)
 #else
 API_EXPORT(char *) ap_os_canonical_filename(pool *p, const char *file);
-#ifdef WIN32
-API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool, const char *szFile);
-API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, const char *szFile);
-#elif defined(OS2)
-API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool, const char *szFile);
-API_EXPORT(char *) ap_os_systemcase_filename(pool *pPool, const char *szFile);
-#elif defined(NETWARE)
-API_EXPORT(char *) ap_os_case_canonical_filename(pool *pPool, const char *szFile);
-#define ap_os_systemcase_filename(p,f) ap_os_case_canonical_filename(p,f)
-#else
 #define ap_os_case_canonical_filename(p,f) ap_os_canonical_filename(p,f)
 #define ap_os_systemcase_filename(p,f) ap_os_canonical_filename(p,f)
 #endif
-#endif
 
-#ifdef CHARSET_EBCDIC
-API_EXPORT(int)    ap_checkconv(struct request_rec *r);    /* for downloads */
-API_EXPORT(int)    ap_checkconv_in(struct request_rec *r); /* for uploads */
-#endif /*#ifdef CHARSET_EBCDIC*/
 
 API_EXPORT(char *) ap_get_local_host(pool *);
 API_EXPORT(unsigned long) ap_get_virthost_addr(char *hostname, unsigned short *port);

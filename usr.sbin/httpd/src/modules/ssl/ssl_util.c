@@ -183,39 +183,8 @@ int ssl_util_ppopen_child(void *cmd, child_info *pinfo)
     /*
      * Exec() the child program
      */
-#if defined(WIN32)
-    /* MS Windows */
-    {
-        char pCommand[MAX_STRING_LEN];
-        STARTUPINFO si;
-        PROCESS_INFORMATION pi;
-
-        ap_snprintf(pCommand, sizeof(pCommand), "%s /C %s", SHELL_PATH, cmd);
-
-        memset(&si, 0, sizeof(si));
-        memset(&pi, 0, sizeof(pi));
-
-        si.cb          = sizeof(si);
-        si.dwFlags     = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-        si.wShowWindow = SW_HIDE;
-        si.hStdInput   = pinfo->hPipeInputRead;
-        si.hStdOutput  = pinfo->hPipeOutputWrite;
-        si.hStdError   = pinfo->hPipeErrorWrite;
-
-        if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, 0,
-                          environ, NULL, &si, &pi)) {
-            CloseHandle(pi.hProcess);
-            CloseHandle(pi.hThread);
-            child_pid = pi.dwProcessId;
-        }
-    }
-#elif defined(OS2)
-    /* IBM OS/2 */
-    spawnl(P_NOWAIT, SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
-#else
     /* Standard Unix */
     execl(SHELL_PATH, SHELL_PATH, "-c", (char *)cmd, (char *)NULL);
-#endif
     return (child_pid);
 }
 
@@ -365,41 +334,13 @@ char *ssl_util_ptxtsub(
 **  _________________________________________________________________
 */
 
-#ifdef WIN32
-static HANDLE lock_cs[CRYPTO_NUM_LOCKS];
-
-static void win32_locking_callback(int mode, int type, char* file, int line)
-{
-    if (mode & CRYPTO_LOCK)
-        WaitForSingleObject(lock_cs[type], INFINITE);
-    else
-        ReleaseMutex(lock_cs[type]);
-    return;
-}
-#endif /* WIN32 */
-
 void ssl_util_thread_setup(void)
 {
-#ifdef WIN32
-    int i;
-
-    for (i = 0; i < CRYPTO_NUM_LOCKS; i++)
-        lock_cs[i] = CreateMutex(NULL, FALSE, NULL);
-    CRYPTO_set_locking_callback((void(*)(int, int, const char *, int))
-                                win32_locking_callback);
-#endif /* WIN32 */
     return;
 }
 
 void ssl_util_thread_cleanup(void)
 {
-#ifdef WIN32
-    int i;
-
-    CRYPTO_set_locking_callback(NULL);
-    for (i = 0; i < CRYPTO_NUM_LOCKS; i++)
-        CloseHandle(lock_cs[i]);
-#endif /* WIN32 */
     return;
 }
 

@@ -63,111 +63,16 @@
  */
 
 #include "ap_config.h"
-#ifndef NETWARE
 #include <sys/types.h>
-#endif
 #include <errno.h>
 #include "ap.h"
 
-#ifdef WIN32
-#include <conio.h>
-#endif
-
-#ifndef CHARSET_EBCDIC
 #define LF 10
 #define CR 13
-#else /* CHARSET_EBCDIC */
-#define LF '\n'
-#define CR '\r'
-#endif /* CHARSET_EBCDIC */
 
 #define MAX_STRING_LEN 256
 
 #define ERR_OVERFLOW 5
-
-#if defined(MPE) || defined(BEOS) || defined(BONE)
-#include <termios.h>
-
-char *
-getpass(const char *prompt)
-{
-	static char		buf[MAX_STRING_LEN+1];	/* null byte at end */
-	char			*ptr;
-	sigset_t		sig, sigsave;
-	struct termios	term, termsave;
-	FILE			*fp,*outfp;
-	int				c;
-
-        if ((outfp = fp = fopen("/dev/tty", "w+")) == NULL) {
-                outfp = stderr;
-                fp = stdin;
-        }
-
-	sigemptyset(&sig);	/* block SIGINT & SIGTSTP, save signal mask */
-	sigaddset(&sig, SIGINT);
-	sigaddset(&sig, SIGTSTP);
-	sigprocmask(SIG_BLOCK, &sig, &sigsave);
-
-	tcgetattr(fileno(fp), &termsave);	/* save tty state */
-	term = termsave;			/* structure copy */
-	term.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
-	tcsetattr(fileno(fp), TCSAFLUSH, &term);
-
-	fputs(prompt, outfp);
-
-	ptr = buf;
-	while ( (c = getc(fp)) != EOF && c != '\n') {
-		if (ptr < &buf[MAX_STRING_LEN])
-			*ptr++ = c;
-	}
-	*ptr = 0;			/* null terminate */
-	putc('\n', outfp);		/* we echo a newline */
-
-						/* restore tty state */
-	tcsetattr(fileno(fp), TCSAFLUSH, &termsave);
-
-						/* restore signal mask */
-	sigprocmask(SIG_SETMASK, &sigsave, NULL);
-	if (fp != stdin) fclose(fp);
-
-	return(buf);
-}
-#endif /* MPE */
-
-#if defined(WIN32) || defined(NETWARE)
-/*
- * Windows lacks getpass().  So we'll re-implement it here.
- */
-
-static char *getpass(const char *prompt)
-{
-    static char password[MAX_STRING_LEN];
-    int n = 0;
-
-    fputs(prompt, stderr);
-    
-    while ((password[n] = _getch()) != '\r') {
-        if (password[n] >= ' ' && password[n] <= '~') {
-            n++;
-            printf("*");
-        }
-	else {
-            printf("\n");
-            fputs(prompt, stderr);
-            n = 0;
-        }
-    }
- 
-    password[n] = '\0';
-    printf("\n");
-
-    if (n > (MAX_STRING_LEN - 1)) {
-        password[MAX_STRING_LEN - 1] = '\0';
-    }
-
-    return (char *) &password;
-}
-#endif
 
 /*
  * Use the OS getpass() routine (or our own) to obtain a password from

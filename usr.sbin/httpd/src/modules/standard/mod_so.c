@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_so.c,v 1.12 2003/08/21 13:11:37 henning Exp $ */
+/*	$OpenBSD: mod_so.c,v 1.13 2004/12/02 19:42:48 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -182,9 +182,6 @@ static void unload_module(moduleinfo *modi)
     ap_remove_loaded_module(modi->modp);
 
     /* unload the module space itself */
-#ifdef NETWARE
-    ap_os_dso_unsym((ap_os_dso_handle_t)modi->modp->dynamic_load_handle, modi->name);
-#endif
     ap_os_dso_unload((ap_os_dso_handle_t)modi->modp->dynamic_load_handle);
 
     /* destroy the module information */

@@ -211,19 +211,8 @@ static int log_script(request_rec *r, cgi_server_conf * conf, int ret,
 	/* Soak up script output */
 	while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_in) > 0)
 	    continue;
-#if defined(WIN32) || defined(NETWARE)
-        /* Soak up stderr and redirect it to the error log.
-         * Script output to stderr is already directed to the error log
-         * on Unix, thanks to the magic of fork().
-         */
-        while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_err) > 0) {
-            ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, r, 
-                          "%s", argsbuffer);            
-        }
-#else
 	while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_err) > 0)
 	    continue;
-#endif
 	return ret;
     }
 
@@ -287,9 +276,6 @@ static int log_script(request_rec *r, cgi_server_conf * conf, int ret,
 
 
 struct cgi_child_stuff {
-#ifdef TPF
-    TPF_FORK_CHILD t;
-#endif
     request_rec *r;
     int nph;
     int debug;
@@ -304,12 +290,7 @@ static int cgi_child(void *child_stuff, child_info *pinfo)
     int child_pid;
 
 #ifdef DEBUG_CGI
-#ifdef OS2
-    /* Under OS/2 need to use device con. */
-    FILE *dbg = fopen("con", "w");
-#else
     FILE *dbg = fopen("/dev/tty", "w");
-#endif
     int i;
 #endif
 
@@ -330,9 +311,7 @@ static int cgi_child(void *child_stuff, child_info *pinfo)
 	fprintf(dbg, "'%s'\n", env[i]);
 #endif
 
-#ifndef WIN32
     ap_chdir_file(r->filename);
-#endif
     if (!cld->debug)
 	ap_error_log2stderr(r->server);
 
@@ -340,15 +319,9 @@ static int cgi_child(void *child_stuff, child_info *pinfo)
      * NB only ISINDEX scripts get decoded arguments.
      */
 
-#ifdef TPF
-    return (0);
-#else
     ap_cleanup_for_exec();
 
     child_pid = ap_call_exec(r, pinfo, argv0, env, 0);
-#if defined(WIN32) || defined(OS2)
-    return (child_pid);
-#else
 
     /* Uh oh.  Still here.  Where's the kaboom?  There was supposed to be an
      * EARTH-shattering kaboom!
@@ -363,8 +336,6 @@ static int cgi_child(void *child_stuff, child_info *pinfo)
     exit(0);
     /* NOT REACHED */
     return (0);
-#endif
-#endif  /* TPF */
 }
 
 static int cgi_handler(request_rec *r)
@@ -401,26 +372,9 @@ static int cgi_handler(request_rec *r)
 	return log_scripterror(r, conf, FORBIDDEN, APLOG_NOERRNO,
 			       "attempt to include NPH CGI script");
 
-#if defined(OS2) || defined(WIN32)
-    /* Allow for cgi files without the .EXE extension on them under OS/2 */
-    if (r->finfo.st_mode == 0) {
-	struct stat statbuf;
-	char *newfile;
-
-	newfile = ap_pstrcat(r->pool, r->filename, ".EXE", NULL);
-
-	if ((stat(newfile, &statbuf) != 0) || (!S_ISREG(statbuf.st_mode))) {
-	    return log_scripterror(r, conf, NOT_FOUND, 0,
-				   "script not found or unable to stat");
-	} else {
-	    r->filename = newfile;
-	}
-    }
-#else
     if (r->finfo.st_mode == 0)
 	return log_scripterror(r, conf, NOT_FOUND, APLOG_NOERRNO,
 			       "script not found or unable to stat");
-#endif
     if (S_ISDIR(r->finfo.st_mode))
 	return log_scripterror(r, conf, FORBIDDEN, APLOG_NOERRNO,
 			       "attempt to invoke directory as script");
@@ -438,21 +392,6 @@ static int cgi_handler(request_rec *r)
     cld.r = r;
     cld.nph = nph;
     cld.debug = conf->logname ? 1 : 0;
-#ifdef TPF
-    cld.t.filename = r->filename;
-    cld.t.subprocess_env = r->subprocess_env;
-    cld.t.prog_type = FORK_FILE;
-#endif   /* TPF */
-
-#ifdef CHARSET_EBCDIC
-    /* The included MIME headers must ALWAYS be in text/ebcdic format.
-     * Only after reading the MIME headers, we check the Content-Type
-     * and switch to the necessary conversion mode.
-     * Until then (and in case an nph- script was called), use the
-     * configured default conversion:
-     */
-    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out);
-#endif /*CHARSET_EBCDIC*/
 
     /*
      * we spawn out of r->main if it's there so that we can avoid
@@ -529,20 +468,9 @@ static int cgi_handler(request_rec *r)
 	    while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_in) > 0) {
 		continue;
 	    }
-#if defined(WIN32) || defined(NETWARE)
-            /* Soak up stderr and redirect it to the error log.
-             * Script output to stderr is already directed to the error log
-             * on Unix, thanks to the magic of fork().
-             */
-            while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_err) > 0) {
-                ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, r, 
-                              "%s", argsbuffer);            
-            }
-#else
 	    while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_err) > 0) {
 	        continue;
 	    }
-#endif
 	    ap_kill_timeout(r);
 
 
@@ -575,19 +503,9 @@ static int cgi_handler(request_rec *r)
 	ap_bclose(script_in);
 
 	ap_soft_timeout("soaking script stderr", r);
-#if defined(WIN32) || defined(NETWARE)
-        /* Script output to stderr is already directed to the error log
-         * on Unix, thanks to the magic of fork().
-         */
-        while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_err) > 0) {
-            ap_log_rerror(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, r, 
-                          "%s", argsbuffer);            
-        }
-#else
 	while (ap_bgets(argsbuffer, HUGE_STRING_LEN, script_err) > 0) {
 	    continue;
 	}
-#endif
 	ap_kill_timeout(r);
 	ap_bclose(script_err);
     }

@@ -84,7 +84,6 @@ void ssl_scache_dbm_init(server_rec *s, pool *p)
     }
     ssl_dbm_close(dbm);
 
-#if !defined(OS2) && !defined(WIN32)
     /*
      * We have to make sure the Apache child processes have access to
      * the DBM file. But because there are brain-dead platforms where we
@@ -107,7 +106,6 @@ void ssl_scache_dbm_init(server_rec *s, pool *p)
                       ap_user_id, -1);
         }
     }
-#endif
     ssl_mutex_off(s);
     ssl_scache_dbm_expire(s);
     return;

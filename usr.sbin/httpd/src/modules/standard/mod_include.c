@@ -101,11 +101,7 @@
 #define DEFAULT_TIME_FORMAT "%A, %d-%b-%Y %H:%M:%S %Z"
 #define SIZEFMT_BYTES 0
 #define SIZEFMT_KMG 1
-#ifdef CHARSET_EBCDIC
-#define RAW_ASCII_CHAR(ch)  os_toebcdic[(unsigned char)ch]
-#else /*CHARSET_EBCDIC*/
 #define RAW_ASCII_CHAR(ch)  (ch)
-#endif /*CHARSET_EBCDIC*/
 
 module MODULE_VAR_EXPORT includes_module;
 
@@ -114,9 +110,7 @@ module MODULE_VAR_EXPORT includes_module;
 /* XXX: could use ap_table_overlap here */
 static void add_include_vars(request_rec *r, char *timefmt)
 {
-#if !defined(WIN32) && !defined(NETWARE)
     struct passwd *pw;
-#endif /* ndef WIN32 */
     table *e = r->subprocess_env;
     char *t;
     time_t date = r->request_time;
@@ -127,7 +121,6 @@ static void add_include_vars(request_rec *r, char *timefmt)
               ap_ht_time(r->pool, r->finfo.st_mtime, timefmt, 0));
     ap_table_setn(e, "DOCUMENT_URI", r->uri);
     ap_table_setn(e, "DOCUMENT_PATH_INFO", r->path_info);
-#if !defined(WIN32) && !defined(NETWARE)
     pw = getpwuid(r->finfo.st_uid);
     if (pw) {
         ap_table_setn(e, "USER_NAME", ap_pstrdup(r->pool, pw->pw_name));
@@ -136,7 +129,6 @@ static void add_include_vars(request_rec *r, char *timefmt)
         ap_table_setn(e, "USER_NAME", ap_psprintf(r->pool, "user#%lu",
                     (unsigned long) r->finfo.st_uid));
     }
-#endif /* ndef WIN32 */
 
     if ((t = strrchr(r->filename, '/'))) {
         ap_table_setn(e, "DOCUMENT_NAME", ++t);
@@ -612,9 +604,7 @@ static int include_cgi(char *s, request_rec *r)
     }
 
     ap_destroy_sub_req(rr);
-#if !defined(WIN32) && !defined(NETWARE)
     ap_chdir_file(r->filename);
-#endif
 
     return 0;
 }
@@ -629,10 +619,6 @@ static int is_only_below(const char *path)
 {
 #ifdef HAVE_DRIVE_LETTERS
     if (path[1] == ':')
-	return 0;
-#endif
-#ifdef NETWARE
-    if (strchr(path, ':'))
 	return 0;
 #endif
     if (path[0] == '/') {
@@ -739,9 +725,7 @@ static int handle_include(FILE *in, request_rec *r, const char *error, int noexe
             if (!error_fmt && ap_run_sub_req(rr)) {
                 error_fmt = "unable to include \"%s\" in parsed file %s";
             }
-#if !defined(WIN32) && !defined(NETWARE)
             ap_chdir_file(r->filename);
-#endif
             if (error_fmt) {
                 ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR,
 			    r, error_fmt, tag_val, r->filename);
@@ -765,9 +749,6 @@ static int handle_include(FILE *in, request_rec *r, const char *error, int noexe
 }
 
 typedef struct {
-#ifdef TPF
-    TPF_FORK_CHILD t;
-#endif
     request_rec *r;
     char *s;
 } include_cmd_arg;
@@ -779,16 +760,9 @@ static int include_cmd_child(void *arg, child_info *pinfo)
     table *env = r->subprocess_env;
     int child_pid = 0;
 #ifdef DEBUG_INCLUDE_CMD
-#ifdef OS2
-    /* under OS/2 /dev/tty is referenced as con */
-    FILE *dbg = fopen("con", "w");
-#else
     FILE *dbg = fopen("/dev/tty", "w");
 #endif
-#endif
-#if !defined(WIN32) && !defined(OS2)
     char err_string[MAX_STRING_LEN];
-#endif
 
 #ifdef DEBUG_INCLUDE_CMD
     fprintf(dbg, "Attempting to include command '%s'\n", s);
@@ -821,16 +795,10 @@ static int include_cmd_child(void *arg, child_info *pinfo)
 #ifdef DEBUG_INCLUDE_CMD
     fprintf(dbg, "Attempting to exec '%s'\n", s);
 #endif
-#ifdef TPF
-    return (0);
-#else
     ap_cleanup_for_exec();
     /* set shellcmd flag to pass arg to SHELL_PATH */
     child_pid = ap_call_exec(r, pinfo, s, ap_create_environment(r->pool, env),
 			     1);
-#if defined(WIN32) || defined(OS2)
-    return (child_pid);
-#else
     /* Oh, drat.  We're still here.  The log file descriptors are closed,
      * so we have to whimper a complaint onto stderr...
      */
@@ -845,8 +813,6 @@ static int include_cmd_child(void *arg, child_info *pinfo)
     exit(0);
     /* NOT REACHED */
     return (child_pid);
-#endif /* WIN32 */
-#endif /* TPF */
 }
 
 static int include_cmd(char *s, request_rec *r)
@@ -856,11 +822,6 @@ static int include_cmd(char *s, request_rec *r)
 
     arg.r = r;
     arg.s = s;
-#ifdef TPF
-    arg.t.filename = r->filename;
-    arg.t.subprocess_env = r->subprocess_env;
-    arg.t.prog_type = FORK_FILE;
-#endif
 
     if (!ap_bspawn_child(r->pool, include_cmd_child, &arg,
 			 kill_after_timeout, NULL, &script_in, NULL)) {
@@ -895,9 +856,7 @@ static int handle_exec(FILE *in, request_rec *r, const char *error)
                 ap_rputs(error, r);
             }
             /* just in case some stooge changed directories */
-#if !defined(WIN32) && !defined(NETWARE)
             ap_chdir_file(r->filename);
-#endif
         }
         else if (!strcmp(tag, "cgi")) {
             parse_string(r, tag_val, parsed_string, sizeof(parsed_string), 0);
@@ -907,9 +866,7 @@ static int handle_exec(FILE *in, request_rec *r, const char *error)
                 ap_rputs(error, r);
             }
             /* grumble groan */
-#if !defined(WIN32) && !defined(NETWARE)
             ap_chdir_file(r->filename);
-#endif
         }
         else if (!strcmp(tag, "done")) {
             return 0;
@@ -2172,22 +2129,8 @@ static int handle_printenv(FILE *in, request_rec *r, const char *error)
 
 static void send_parsed_content(FILE *f, request_rec *r)
 {
-#ifdef NETWARE
-    /* NetWare has a fixed lengh stack.  Since MAX_STRING_LEN is set
-       to 8k, one call to this function allocates 24k of stack space.
-       During a server-side include evaluation this function is
-       called recusively, allocating 24k each time.  Obviously it 
-       doesn't take long to blow a 64k stack which is the default
-       for Apache for NetWare.  Since MAX_STRING_LEN is used all
-       throughout the Apache code, we should rethink using a default
-       of 8k especially in recursive functions.
-    */
-    char directive[512], error[512];
-    char timefmt[512];
-#else
     char directive[MAX_STRING_LEN], error[MAX_STRING_LEN];
     char timefmt[MAX_STRING_LEN];
-#endif
     int noexec = ap_allow_options(r) & OPT_INCNOEXEC;
     int ret, sizefmt;
     int if_nesting;
@@ -2202,9 +2145,7 @@ static void send_parsed_content(FILE *f, request_rec *r)
     printing = conditional_status = 1;
     if_nesting = 0;
 
-#if !defined(WIN32) && !defined(NETWARE)
     ap_chdir_file(r->filename);
-#endif
     if (r->args) {              /* add QUERY stuff to env cause it ain't yet */
         char *arg_copy = ap_pstrdup(r->pool, r->args);
 
@@ -2399,10 +2340,7 @@ static int send_parsed_file(request_rec *r)
     }
 
     if ((*state == xbithack_full)
-#if !defined(OS2) && !defined(WIN32) && !defined(NETWARE)
-    /*  OS/2 dosen't support Groups. */
         && (r->finfo.st_mode & S_IXGRP)
-#endif
         ) {
         ap_update_mtime(r, r->finfo.st_mtime);
         ap_set_last_modified(r);
@@ -2492,10 +2430,6 @@ static int send_parsed_file(request_rec *r)
      */
     ap_hard_timeout("send SSI", r);
 
-#ifdef CHARSET_EBCDIC
-    /* XXX:@@@ Is the generated/included output ALWAYS in text/ebcdic format? */
-    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, 1);
-#endif
 
     send_parsed_content(f, r);
 
@@ -2524,10 +2458,6 @@ static int send_shtml_file(request_rec *r)
 
 static int xbithack_handler(request_rec *r)
 {
-#if defined(OS2) || defined(WIN32) || defined(NETWARE)
-    /* OS/2 dosen't currently support the xbithack. This is being worked on. */
-    return DECLINED;
-#else
     enum xbithack *state;
 
     if (!(r->finfo.st_mode & S_IXUSR)) {
@@ -2541,7 +2471,6 @@ static int xbithack_handler(request_rec *r)
         return DECLINED;
     }
     return send_parsed_file(r);
-#endif
 }
 
 static const command_rec includes_cmds[] =

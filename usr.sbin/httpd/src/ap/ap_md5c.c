@@ -105,9 +105,6 @@
 #include "ap_config.h"
 #include "ap_md5.h"
 #include "ap.h"
-#ifdef CHARSET_EBCDIC
-#include "ap_ebcdic.h"
-#endif /*CHARSET_EBCDIC*/
 #if HAVE_CRYPT_H
 #include <crypt.h>
 #endif
@@ -214,7 +211,6 @@ API_EXPORT(void) ap_MD5Update(AP_MD5_CTX *context, const unsigned char *input,
     partLen = 64 - idx;
 
     /* Transform as many times as possible. */
-#ifndef CHARSET_EBCDIC
     if (inputLen >= partLen) {
 	memcpy(&context->buffer[idx], input, partLen);
 	MD5Transform(context->state, context->buffer);
@@ -231,26 +227,6 @@ API_EXPORT(void) ap_MD5Update(AP_MD5_CTX *context, const unsigned char *input,
 
     /* Buffer remaining input */
     memcpy(&context->buffer[idx], &input[i], inputLen - i);
-#else /*CHARSET_EBCDIC*/
-    if (inputLen >= partLen) {
-	ebcdic2ascii(&context->buffer[idx], input, partLen);
-	MD5Transform(context->state, context->buffer);
-
-	for (i = partLen; i + 63 < inputLen; i += 64) {
-	    unsigned char inp_tmp[64];
-	    ebcdic2ascii(inp_tmp, &input[i], 64);
-	    MD5Transform(context->state, inp_tmp);
-	}
-
-	idx = 0;
-    }
-    else {
-	i = 0;
-    }
-
-    /* Buffer remaining input */
-    ebcdic2ascii(&context->buffer[idx], &input[i], inputLen - i);
-#endif /*CHARSET_EBCDIC*/
 }
 
 /* MD5 finalization. Ends an MD5 message-digest operation, writing the
@@ -264,21 +240,6 @@ API_EXPORT(void) ap_MD5Final(unsigned char digest[16], AP_MD5_CTX *context)
 
     /* Save number of bits */
     Encode(bits, context->count, 8);
-
-#ifdef CHARSET_EBCDIC
-    /* XXX: @@@: In order to make this no more complex than necessary,
-     * this kludge converts the bits[] array using the ascii-to-ebcdic
-     * table, because the following ap_MD5Update() re-translates
-     * its input (ebcdic-to-ascii).
-     * Otherwise, we would have to pass a "conversion" flag to ap_MD5Update()
-     */
-    ascii2ebcdic(bits,bits,8);
-
-    /* Since everything is converted to ascii within ap_MD5Update(), 
-     * the initial 0x80 (PADDING[0]) must be stored as 0x20 
-     */
-    PADDING[0] = os_toebcdic[0x80];
-#endif /*CHARSET_EBCDIC*/
 
     /* Pad out to 56 mod 64. */
     idx = (unsigned int) ((context->count[0] >> 3) & 0x3f);

@@ -145,11 +145,6 @@
 #include "util_md5.h"
 #include "ap_sha1.h"
 
-#ifdef WIN32
-/* Crypt APIs are available on Win95 with OSR 2 */
-#include <wincrypt.h>
-#endif
-
 #ifdef HAVE_SHMEM_MM
 #include "mm.h"
 #endif	/* HAVE_SHMEM_MM */
@@ -387,11 +382,7 @@ static void initialize_tables(server_rec *s)
     client_mm = mm_create(SHMEM_SIZE, tmpnam(NULL));
     if (client_mm == NULL)
 	goto failed;
-#ifdef MPE
-    if (geteuid() == 1) {
-#else
     if (geteuid() == 0) {
-#endif
 	if (mm_permission(client_mm, 0600, ap_user_id, ap_group_id))
 	    goto failed;
     }
@@ -410,11 +401,7 @@ static void initialize_tables(server_rec *s)
     opaque_mm = mm_create(sizeof(*opaque_cntr), tmpnam(NULL));
     if (opaque_mm == NULL)
 	goto failed;
-#ifdef MPE
-    if (geteuid() == 1) {
-#else
     if (geteuid() == 0) {
-#endif
 	if (mm_permission(opaque_mm, 0600, ap_user_id, ap_group_id))
 	    goto failed;
     }
@@ -429,11 +416,7 @@ static void initialize_tables(server_rec *s)
     otn_count_mm = mm_create(sizeof(*otn_counter), tmpnam(NULL));
     if (otn_count_mm == NULL)
 	goto failed;
-#ifdef MPE
-    if (geteuid() == 1) {
-#else
     if (geteuid() == 0) {
-#endif
 	if (mm_permission(otn_count_mm, 0600, ap_user_id, ap_group_id))
 	    goto failed;
     }

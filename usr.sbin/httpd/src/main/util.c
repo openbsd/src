@@ -72,12 +72,6 @@
 #include "httpd.h"
 #include "http_conf_globals.h"	/* for user_id & group_id */
 #include "http_log.h"
-#if defined(SUNOS4)
-/* stdio.h has been read in ap_config.h already. Add missing prototypes here: */
-extern int fgetc(FILE *);
-extern char *fgets(char *s, int, FILE*);
-extern int fclose(FILE *);
-#endif
 
 /* A bunch of functions in util.c scan strings looking for certain characters.
  * To make that more efficient we encode a lookup table.  The test_char_table
@@ -900,13 +894,7 @@ API_EXPORT(configfile_t *) ap_pcfg_openfile(pool *p, const char *name)
 
     if (fstat(fileno(file), &stbuf) == 0 &&
         !S_ISREG(stbuf.st_mode) &&
-#if defined(WIN32) || defined(OS2)
-        !(strcasecmp(name, "nul") == 0 ||
-          (strlen(name) >= 4 &&
-           strcasecmp(name + strlen(name) - 4, "/nul") == 0))) {
-#else
         strcmp(name, "/dev/null") != 0) {
-#endif /* WIN32 || OS2 */
 	saved_errno = errno;
         ap_log_error(APLOG_MARK, APLOG_ERR | APLOG_NOERRNO, NULL,
                     "Access to file %s denied by server: not a regular file",
@@ -1460,9 +1448,6 @@ static const char c2x_table[] = "0123456789abcdef";
 
 static ap_inline unsigned char *c2x(unsigned what, unsigned char *where)
 {
-#ifdef CHARSET_EBCDIC
-    what = os_toascii[what];
-#endif /*CHARSET_EBCDIC*/
     *where++ = '%';
     *where++ = c2x_table[what >> 4];
     *where++ = c2x_table[what & 0xf];
@@ -1595,17 +1580,6 @@ API_EXPORT(char *) ap_escape_shell_cmd(pool *p, const char *str)
     s = (const unsigned char *)str;
     for (; *s; ++s) {
 
-#if defined(WIN32) || defined(OS2)
-        /* 
-         * Newlines to Win32/OS2 CreateProcess() are ill advised.
-         * Convert them to spaces since they are effectively white
-         * space to most applications
-         */
-	if (*s == '\r' || *s == '\n') {
-	    *d++ = ' ';
-	    continue;
-	}
-#endif
 
 	if (TEST_CHAR(*s, T_ESCAPE_SHELL_CMD)) {
 	    *d++ = '\\';
@@ -1621,19 +1595,9 @@ static char x2c(const char *what)
 {
     register char digit;
 
-#ifndef CHARSET_EBCDIC
     digit = ((what[0] >= 'A') ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
     digit *= 16;
     digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
-#else /*CHARSET_EBCDIC*/
-    char xstr[5];
-    xstr[0]='0';
-    xstr[1]='x';
-    xstr[2]=what[0];
-    xstr[3]=what[1];
-    xstr[4]='\0';
-    digit = os_toebcdic[0xFF & ap_strtol(xstr, NULL, 16)];
-#endif /*CHARSET_EBCDIC*/
     return (digit);
 }
 
@@ -1852,10 +1816,6 @@ API_EXPORT(int) ap_can_exec(const struct stat *finfo)
 #ifdef MULTIPLE_GROUPS
     int cnt;
 #endif
-#if defined(OS2) || defined(WIN32) || defined(NETWARE)
-    /* OS/2 dosen't have Users and Groups */
-    return 1;
-#else
     if (ap_user_id == finfo->st_uid)
 	if (finfo->st_mode & S_IXUSR)
 	    return 1;
@@ -1870,7 +1830,6 @@ API_EXPORT(int) ap_can_exec(const struct stat *finfo)
     }
 #endif
     return ((finfo->st_mode & S_IXOTH) != 0);
-#endif
 }
 
 #ifdef NEED_STRDUP
@@ -1961,10 +1920,6 @@ char *strstr(char *s1, char *s2)
 #ifdef NEED_INITGROUPS
 int initgroups(const char *name, gid_t basegid)
 {
-#if defined(QNX) || defined(MPE) || defined(BEOS) || defined(TPF) || defined(__TANDEM) || defined(NETWARE) || defined(BONE)
-/* QNX, MPE and BeOS do not appear to support supplementary groups. */
-    return 0;
-#else /* ndef QNX */
     gid_t groups[NGROUPS_MAX];
     struct group *g;
     int index = 0;
@@ -1985,7 +1940,6 @@ int initgroups(const char *name, gid_t basegid)
     endgrent();
 
     return setgroups(index, groups);
-#endif /* def QNX */
 }
 #endif /* def NEED_INITGROUPS */
 
@@ -2041,9 +1995,6 @@ API_EXPORT(void) ap_str_tolower(char *str)
 
 API_EXPORT(uid_t) ap_uname2id(const char *name)
 {
-#if defined(WIN32) || defined(NETWARE)
-    return (1);
-#else
     struct passwd *ent;
 
     if (name[0] == '#')
@@ -2054,14 +2005,10 @@ API_EXPORT(uid_t) ap_uname2id(const char *name)
 	exit(1);
     }
     return (ent->pw_uid);
-#endif
 }
 
 API_EXPORT(gid_t) ap_gname2id(const char *name)
 {
-#if defined(WIN32) || defined(NETWARE)
-    return (1);
-#else
     struct group *ent;
 
     if (name[0] == '#')
@@ -2072,7 +2019,6 @@ API_EXPORT(gid_t) ap_gname2id(const char *name)
 	exit(1);
     }
     return (ent->gr_gid);
-#endif
 }
 
 
@@ -2155,11 +2101,7 @@ API_EXPORT(char *) ap_get_local_host(pool *a)
     char *server_hostname = NULL;
     struct hostent *p;
 
-#ifdef BEOS /* BeOS returns zero as an error for gethostname */
-    if (gethostname(str, sizeof(str) - 1) == 0) {
-#else    
     if (gethostname(str, sizeof(str) - 1) != 0) {
-#endif /* BeOS */
 	ap_log_error(APLOG_MARK, APLOG_WARNING, NULL,
 	             "%s: gethostname() failed to determine ServerName\n",
                      ap_server_argv0);
@@ -2235,71 +2177,6 @@ API_EXPORT(char *) ap_uuencode(pool *p, char *string)
     return ap_pbase64encode(p, string);
 }
 
-#if defined(OS2) || defined(WIN32)
-/* quotes in the string are doubled up.
- * Used to escape quotes in args passed to OS/2's cmd.exe
- * and Win32's command.com
- */
-API_EXPORT(char *) ap_double_quotes(pool *p, const char *str)
-{
-    int num_quotes = 0;
-    int len = 0;
-    char *quote_doubled_str, *dest;
-    
-    while (str[len]) {
-        if (str[len++] == '\"') {
-            num_quotes++;
-        }
-    }
-    
-    quote_doubled_str = ap_palloc(p, len + num_quotes + 1);
-    dest = quote_doubled_str;
-    
-    while (*str) {
-        if (*str == '\"')
-            *(dest++) = '\"';
-        *(dest++) = *(str++);
-    }
-    
-    *dest = 0;
-    return quote_doubled_str;
-}
-
-/*
- * If ap_caret_escape_args resembles ap_escape_shell_cmd, it aught to.
- * Taken verbatim so we can trust the integrety of this function.
- */
-API_EXPORT(char *) ap_caret_escape_args(pool *p, const char *str)
-{
-    char *cmd;
-    unsigned char *d;
-    const unsigned char *s;
-
-    cmd = ap_palloc(p, 2 * strlen(str) + 1);	/* Be safe */
-    d = (unsigned char *)cmd;
-    s = (const unsigned char *)str;
-    for (; *s; ++s) {
-
-        /* 
-         * Newlines to Win32/OS2 CreateProcess() are ill advised.
-         * Convert them to spaces since they are effectively white
-         * space to most applications
-         */
-	if (*s == '\r' || *s == '\n') {
-	    *d++ = ' ';
-            continue;
-	}
-
-	if (TEST_CHAR(*s, T_ESCAPE_SHELL_CMD)) {
-	    *d++ = '^';
-	}
-	*d++ = *s;
-    }
-    *d = '\0';
-
-    return cmd;
-}
-#endif
 
 #ifdef NEED_STRERROR
 char *

@@ -3,9 +3,6 @@
 #include <sys/types.h>
 #include <assert.h>
 #include <stdlib.h>
-#ifdef TPF
-#include <sysapi.h> /* for tmslc() */
-#endif /* TPF */
 
 #include "hsregex.h"
 #include "main.ih"
@@ -142,9 +139,6 @@ FILE *in;
 	char *bpname = "REG_BADPAT";
 	regex_t re;
 
-#ifdef TPF
-        tmslc(TMSLC_ENABLE, "IBMHIPRI"); /* extend our process' life */
-#endif /* TPF */
 	while (fgets(inbuf, sizeof(inbuf), in) != NULL) {
 		line++;
 		if (inbuf[0] == '#' || inbuf[0] == '\n')

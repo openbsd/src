@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_log_agent.c,v 1.7 2003/08/21 13:11:36 henning Exp $ */
+/*	$OpenBSD: mod_log_agent.c,v 1.8 2004/12/02 19:42:48 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -68,12 +68,7 @@
 module agent_log_module;
 
 static int xfer_flags = (O_WRONLY | O_APPEND | O_CREAT);
-#ifdef OS2
-/* OS/2 dosen't support users and groups */
-static mode_t xfer_mode = (S_IREAD | S_IWRITE);
-#else
 static mode_t xfer_mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-#endif
 
 typedef struct {
     char *fname;

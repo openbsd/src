@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_log_config.c,v 1.15 2004/01/15 12:17:18 otto Exp $ */
+/*	$OpenBSD: mod_log_config.c,v 1.16 2004/12/02 19:42:48 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -192,12 +192,7 @@
 module MODULE_VAR_EXPORT config_log_module;
 
 static int xfer_flags = (O_WRONLY | O_APPEND | O_CREAT);
-#if defined(OS2) || defined(WIN32) || defined(NETWARE)
-/* OS/2 dosen't support users and groups */
-static mode_t xfer_mode = (S_IREAD | S_IWRITE);
-#else
 static mode_t xfer_mode = (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-#endif
 
 /* POSIX.1 defines PIPE_BUF as the maximum number of bytes that is
  * guaranteed to be atomic when writing a pipe.  And PIPE_BUF >= 512

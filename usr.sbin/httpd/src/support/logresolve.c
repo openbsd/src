@@ -44,15 +44,7 @@
 
 #include <ctype.h>
 
-#if !defined(MPE) && !defined(WIN32)
-#ifndef BEOS
 #include <arpa/inet.h>
-#else
-/* BeOS lacks the necessary files until we get the new networking */
-#include <netinet/in.h>
-#define NO_ADDRESS 4
-#endif /* BEOS */
-#endif /* !MPE && !WIN32*/
 
 static void cgethost(struct in_addr ipnum, char *string, int check);
 static int getline(char *s, int n);
@@ -280,11 +272,6 @@ int main (int argc, char *argv[])
     char *bar, hoststring[MAXDNAME + 1], line[MAXLINE], *statfile;
     int i, check;
 
-#ifdef WIN32
-    WSADATA wsaData;
-    WSAStartup(0x101, &wsaData);
-#endif
-
     check = 0;
     statfile = NULL;
     for (i = 1; i < argc; i++) {
@@ -339,10 +326,6 @@ int main (int argc, char *argv[])
 	else
 	    puts(hoststring);
     }
-
-#ifdef WIN32
-     WSACleanup();
-#endif
 
     if (statfile != NULL) {
 	FILE *fp;

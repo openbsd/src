@@ -73,9 +73,6 @@ extern int ap_docrootcheck;
 extern API_VAR_EXPORT uid_t ap_user_id;
 extern API_VAR_EXPORT char *ap_user_name;
 extern API_VAR_EXPORT gid_t ap_group_id;
-#ifdef NETWARE
-extern unsigned int ap_thread_stack_size;
-#endif
 #ifdef MULTIPLE_GROUPS
 extern gid_t group_id_list[NGROUPS_MAX];
 #endif

@@ -141,7 +141,6 @@ void ssl_mutex_kill(server_rec *s)
 
 void ssl_mutex_file_create(server_rec *s, pool *p)
 {
-#ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
     char mutexfile[MAXPATHLEN];
 
@@ -159,10 +158,8 @@ void ssl_mutex_file_create(server_rec *s, pool *p)
     ap_pclosef(p, mc->nMutexFD);
 
     /* make sure the childs have access to this file */
-#ifndef OS2
     if (geteuid() == 0 /* is superuser */)
         chown(mutexfile, ap_user_id, -1 /* no gid change */);
-#endif
 
     /* open the lockfile for real */
     if ((mc->nMutexFD = ap_popenf(p, mutexfile,
@@ -172,13 +169,11 @@ void ssl_mutex_file_create(server_rec *s, pool *p)
                 mutexfile);
         ssl_die();
     }
-#endif
     return;
 }
 
 void ssl_mutex_file_open(server_rec *s, pool *p)
 {
-#ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
     char mutexfile[MAXPATHLEN];
 
@@ -193,13 +188,11 @@ void ssl_mutex_file_open(server_rec *s, pool *p)
                 mutexfile);
         ssl_die();
     }
-#endif
     return;
 }
 
 void ssl_mutex_file_remove(void *data)
 {
-#ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
     char mutexfile[MAXPATHLEN];
     strlcpy(mutexfile, mc->szMutexFile, sizeof(mutexfile));
@@ -207,21 +200,17 @@ void ssl_mutex_file_remove(void *data)
 
     /* remove the mutex lockfile */
     unlink(mutexfile);
-#endif
     return;
 }
 
-#ifndef WIN32
 #ifdef SSL_USE_FCNTL
 static struct flock   lock_it;
 static struct flock unlock_it;
-#endif
 #endif
 
 BOOL ssl_mutex_file_acquire(void)
 {
     int rc = -1;
-#ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
 
 #ifdef SSL_USE_FCNTL
@@ -240,7 +229,6 @@ BOOL ssl_mutex_file_acquire(void)
            && (errno == EINTR)                         )
         ;
 #endif
-#endif
 
     if (rc < 0)
         return FALSE;
@@ -251,7 +239,6 @@ BOOL ssl_mutex_file_acquire(void)
 BOOL ssl_mutex_file_release(void)
 {
     int rc = -1;
-#ifndef WIN32
     SSLModConfigRec *mc = myModConfig();
 
 #ifdef SSL_USE_FCNTL
@@ -269,7 +256,6 @@ BOOL ssl_mutex_file_release(void)
     while (   (rc = flock(mc->nMutexFD, LOCK_UN)) < 0
            && (errno == EINTR)                       ) 
         ;
-#endif
 #endif
 
     if (rc < 0)

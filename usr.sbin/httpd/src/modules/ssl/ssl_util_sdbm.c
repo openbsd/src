@@ -74,12 +74,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef WIN32
-#include <io.h>
-#include <errno.h>
-#else
 #include <unistd.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -91,13 +86,6 @@
 
 #ifndef NULL
 #define NULL (void *)0
-#endif
-
-/*
- * externals
- */
-#ifdef sun
-extern int errno;
 #endif
 
 /*
@@ -190,9 +178,6 @@ int mode;
                 flags = (flags & ~O_WRONLY) | O_RDWR;
         else if ((flags & 03) == O_RDONLY)
                 db->flags = DBM_RDONLY;
-#if defined(OS2) || defined(MSDOS) || defined(WIN32)
-        flags |= O_BINARY;
-#endif
 
 /*
  * open the files in sequence, and stat the dirfile.

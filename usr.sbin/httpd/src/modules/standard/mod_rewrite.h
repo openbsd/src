@@ -102,9 +102,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <ctype.h>
-#ifndef NETWARE
 #include <sys/types.h>
-#endif
 #include <sys/stat.h>
 
     /* Include from the Apache server ... */
@@ -156,24 +154,12 @@
 #endif
 #if !defined(USE_FCNTL) && !defined(USE_FLOCK)
 #define USE_FLOCK 1
-#if !defined(MPE) && !defined(WIN32) && !defined(__TANDEM) && !defined(NETWARE)
 #include <sys/file.h>
-#endif
 #ifndef LOCK_UN
 #undef USE_FLOCK
 #define USE_FCNTL 1
 #include <fcntl.h>
 #endif
-#endif
-#if defined(AIX) || defined(AIXIA64)
-#undef USE_FLOCK
-#define USE_FCNTL 1
-#include <fcntl.h>
-#endif
-#ifdef WIN32
-#undef USE_FCNTL
-#define USE_LOCKING
-#include <sys/locking.h>
 #endif
 
 

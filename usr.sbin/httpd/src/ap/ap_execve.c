@@ -263,10 +263,6 @@ static const char **hashbang(const char *filename, char * const *argv)
     int fd;
     int sargc = 0;
     int i, j;
-#ifdef WIN32
-    int fw = 0;			/* found at least one word */
-    int first_word = 0;
-#endif /* WIN32 */
 
     if ((fd = open(filename, O_RDONLY)) == -1) {
 	return NULL;
@@ -292,23 +288,10 @@ static const char **hashbang(const char *filename, char * const *argv)
 #endif /*NEW_CRLF */
 	    if (ws) {		/* a blank after a word.. save it */
 		*p = '\0';
-#ifndef WIN32
 		if (sargc < HACKVECSZ - 1) {
 		    sargv[sargc++] = ws;
 		}
 		ws = NULL;
-#else /* WIN32 */
-		if (sargc < HACKVECSZ - 1) {
-		    sargv[sargc] = first_word ? NULL : hb_subst(ws);
-		    if (sargv[sargc] == NULL) {
-			sargv[sargc] = ws;
-		    }
-		    sargc++;
-		}
-		ws = NULL;
-		fw = 1;
-		first_word = 1;
-#endif /* WIN32 */
 	    }
 	    p++;
 	    continue;
@@ -318,24 +301,11 @@ static const char **hashbang(const char *filename, char * const *argv)
 
 	case '\n':		/* The end of the line. */
 	    if (
-#ifdef WIN32
-		   fw ||
-#endif /* WIN32 */
 		   ws) {	/* terminate the last word */
 		*p = '\0';
-#ifndef WIN32
 		if (sargc < HACKVECSZ - 1) {
 		    sargv[sargc++] = ws;
 		}
-#else /* WIN32 */
-		if (sargc < HACKVECSZ - 1) {	/* deal with the 1-word case */
-		    sargv[sargc] = first_word ? NULL : hb_subst(ws);
-		    if (sargv[sargc] == NULL) {
-			sargv[sargc] = ws;
-		    }
-		    sargc++;
-		}
-#endif /* !WIN32 */
 		sargv[sargc] = NULL;
 	    }
 	    /* Count number of entries in the old argv vector */

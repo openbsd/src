@@ -692,7 +692,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
         return HTTP_INTERNAL_SERVER_ERROR;
     }
 
-#if !defined(TPF) && !defined(BEOS)
     if (conf->recv_buffer_size > 0
         && setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
                       (const char *)&conf->recv_buffer_size, sizeof(int))
@@ -700,16 +699,13 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
         ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
                       "setsockopt(SO_RCVBUF): Failed to set ProxyReceiveBufferSize, using default");
     }
-#endif
 
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&one,
                    sizeof(one)) == -1) {
-#ifndef _OSD_POSIX              /* BS2000 has this option "always on" */
         ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
          "proxy: error setting reuseaddr option: setsockopt(SO_REUSEADDR)");
         ap_pclosesocket(p, sock);
         return HTTP_INTERNAL_SERVER_ERROR;
-#endif                          /* _OSD_POSIX */
     }
 
 #ifdef SINIX_D_RESOLVER_BUG
@@ -748,9 +744,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
     ap_bpushfd(ctrl, sock, sock);
 /* shouldn't we implement telnet control options here? */
 
-#ifdef CHARSET_EBCDIC
-    ap_bsetflag(ctrl, B_ASCII2EBCDIC | B_EBCDIC2ASCII, 1);
-#endif                          /* CHARSET_EBCDIC */
 
     /* possible results: */
     /* 120 Service ready in nnn minutes. */
@@ -971,7 +964,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
                                       "proxy: error creating PASV socket"));
     }
 
-#if !defined (TPF) && !defined(BEOS)
     if (conf->recv_buffer_size) {
         if (setsockopt(dsock, SOL_SOCKET, SO_RCVBUF,
                 (const char *)&conf->recv_buffer_size, sizeof(int)) == -1) {
@@ -979,7 +971,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
                           "setsockopt(SO_RCVBUF): Failed to set ProxyReceiveBufferSize, using default");
         }
     }
-#endif
 
     ap_bputs("PASV" CRLF, ctrl);
     ap_bflush(ctrl);
@@ -1061,11 +1052,9 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
 
         if (setsockopt(dsock, SOL_SOCKET, SO_REUSEADDR, (void *)&one,
                        sizeof(one)) == -1) {
-#ifndef _OSD_POSIX              /* BS2000 has this option "always on" */
             return ftp_cleanup_and_return(r, ctrl, data, sock, dsock,
                                 ap_proxyerror(r, HTTP_INTERNAL_SERVER_ERROR,
                                   "proxy: error setting reuseaddr option"));
-#endif                          /* _OSD_POSIX */
         }
 
         if (bind(dsock, (struct sockaddr *)&server,
@@ -1280,15 +1269,8 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
 
     if (get_dirlisting) {
         ap_table_setn(resp_hdrs, "Content-Type", "text/html");
-#ifdef CHARSET_EBCDIC
-        r->ebcdic.conv_out = 1; /* server-generated */
-#endif
     }
     else {
-#ifdef CHARSET_EBCDIC
-        r->ebcdic.conv_out = 0; /* do not convert what we read from the ftp
-                                 * server */
-#endif
         if (r->content_type != NULL) {
             ap_table_setn(resp_hdrs, "Content-Type", r->content_type);
             ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, r->server, "FTP: Content-Type set to %s", r->content_type);
@@ -1366,9 +1348,6 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
     /* finally output the headers to the client */
     ap_send_http_header(r);
 
-#ifdef CHARSET_EBCDIC
-    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out);
-#endif
 /* send body */
     if (!r->header_only) {
         if (!get_dirlisting) {

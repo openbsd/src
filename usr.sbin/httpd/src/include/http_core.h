@@ -166,17 +166,6 @@ API_EXPORT(const char *) ap_auth_nonce (request_rec *);
 API_EXPORT(int) ap_satisfies (request_rec *r);
 API_EXPORT(const array_header *) ap_requires (request_rec *);    
 
-#ifdef WIN32
-/* 
- * CGI Script stuff for Win32...
- */
-typedef enum { eFileTypeUNKNOWN, eFileTypeBIN, eFileTypeEXE16, eFileTypeEXE32, 
-               eFileTypeSCRIPT, eCommandShell16, eCommandShell32 } file_type_e;
-typedef enum { INTERPRETER_SOURCE_UNSET, INTERPRETER_SOURCE_REGISTRY, 
-               INTERPRETER_SOURCE_SHEBANG } interpreter_source_e;
-API_EXPORT(file_type_e) ap_get_win32_interpreter(const request_rec *, char **);
-#endif
-
 #ifdef CORE_PRIVATE
 
 /*
@@ -308,40 +297,7 @@ typedef struct {
     array_header *sec;
     regex_t *r;
 
-#ifdef WIN32
-    /* Where to find interpreter to run scripts */
-    interpreter_source_e script_interpreter_source;
-#endif    
     
-#ifdef CHARSET_EBCDIC
-    /* Configurable EBCDIC Conversion stuff */
-    /* Direction specific conversion: */
-#define dir_Out 0               /* 0utput (returned contents in a GET or POST) */
-#define dir_In  1               /* 1nput  (uploaded contents in a PUT / POST) */
-
-    /* Conversion Enabled/Disabled: */
-#define conv_Unset '?'          /* Conversion unconfigured */
-#define conv_Off   '0'          /* BINARY or ASCII file (no conversion) */
-#define conv_On    '1'          /* TEXT file (EBCDIC->ASCII for dir_Out; ASCII->EBCDIC for dir_In) */
-
-    /* The configuration args {On|Off}[={In|Out|InOut}] are currently stored
-     * as character strings ("0" = conv_Off, "1" = conv_On)
-     */
-    table *ebcdicconversion_by_ext_in;
-    table *ebcdicconversion_by_ext_out;
-    table *ebcdicconversion_by_type_in;
-    table *ebcdicconversion_by_type_out;
-
-#define LEGACY_KLUDGE 1 /* After a couple of versions this legacy kludge should be set to 0 */
-#ifndef ASCIITEXT_MAGIC_TYPE_PREFIX
-#define ASCIITEXT_MAGIC_TYPE_PREFIX "text/x-ascii-"     /* Text files whose content-type starts with this are passed thru unconverted */
-#endif
-    int x_ascii_magic_kludge;   /* whether to handle the text/x-ascii- kludge */
-
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-    int ebcdicconversion_debug_header; /* whether to add an X-EBCDIC-Debug-{In,Out} header to the response */
-#endif
-#endif /* CHARSET_EBCDIC */
 
     /*
      * What attributes/data should be included in ETag generation?

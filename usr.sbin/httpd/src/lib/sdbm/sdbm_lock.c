@@ -22,32 +22,13 @@
 #endif
 #if !defined(USE_FCNTL) && !defined(USE_FLOCK)
 #define USE_FLOCK 1
-#if !defined(MPE) && !defined(WIN32) && !defined(NETWARE)
 #include <sys/file.h>
-#endif
 #ifndef LOCK_UN
 #undef USE_FLOCK
 #define USE_FCNTL 1
 #include <fcntl.h>
 #endif
 #endif
-#ifdef AIX
-#undef USE_FLOCK
-#define USE_FCNTL 1
-#include <fcntl.h>
-#endif
-#ifdef WIN32
-#undef USE_FCNTL
-#define USE_LOCKING
-#include <sys/locking.h>
-#endif
-#ifdef NETWARE
-#undef USE_FCNTL
-#define USE_SEM_LOCKING
-#include <nwsemaph.h>
-LONG locking_sem = 0;
-#endif
-
 
 #ifdef USE_FCNTL
 /* ugly interface requires this structure to be "live" for a while */

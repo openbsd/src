@@ -93,12 +93,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN32
-#include <io.h>
-#include <errno.h>
-#else
 #include <unistd.h>
-#endif
 
 /* forward definitions for table.h */
 typedef struct table_st table_t;

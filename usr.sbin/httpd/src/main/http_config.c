@@ -1,4 +1,4 @@
-/* $OpenBSD: http_config.c,v 1.14 2003/08/21 13:11:35 henning Exp $ */
+/* $OpenBSD: http_config.c,v 1.15 2004/12/02 19:42:47 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -557,11 +557,7 @@ API_EXPORT(void) ap_add_module(module *m)
 	fprintf(stderr, "%s: module \"%s\" is not compatible with this "
 		"version of Apache.\n", ap_server_argv0, m->name);
 	fprintf(stderr, "Please contact the vendor for the correct version.\n");
-#ifdef NETWARE
-        clean_parent_exit(1);
-#else    
 	exit(1);
-#endif
     }
 
     if (m->next == NULL) {
@@ -577,11 +573,7 @@ API_EXPORT(void) ap_add_module(module *m)
 		    " the dynamic\n", ap_server_argv0, m->name);
 	    fprintf(stderr, "module limit was reached. Please increase "
 		    "DYNAMIC_MODULE_LIMIT and recompile.\n");
-#ifdef NETWARE
-            clean_parent_exit(1);
-#else
 	    exit(1);
-#endif
 	}
     }
 
@@ -594,15 +586,6 @@ API_EXPORT(void) ap_add_module(module *m)
 	m->name = 1 + strrchr(m->name, '/');
     if (strrchr(m->name, '\\'))
 	m->name = 1 + strrchr(m->name, '\\');
-
-#ifdef _OSD_POSIX /* __FILE__="*POSIX(/home/martin/apache/src/modules/standard/mod_info.c)" */
-    /* We cannot fix the string in-place, because it's const */
-    if (m->name[strlen(m->name)-1]==')') {
-	char *tmp = strdup(m->name);	/* FIXME:memory leak, albeit a small one */
-	tmp[strlen(tmp)-1] = '\0';
-	m->name = tmp;
-    }
-#endif /*_OSD_POSIX*/
 
 #ifdef EAPI
     /*
@@ -748,11 +731,7 @@ API_EXPORT(void) ap_setup_prelinked_modules(void)
         sizeof(module *)*(total_modules+DYNAMIC_MODULE_LIMIT+1));
     if (ap_loaded_modules == NULL) {
 	fprintf(stderr, "Ouch!  Out of memory in ap_setup_prelinked_modules()!\n");
-#ifdef NETWARE
-        clean_parent_exit(1);
-#else
 	exit(1);
-#endif
     }
     for (m = ap_preloaded_modules, m2 = ap_loaded_modules; *m != NULL; )
         *m2++ = *m++;
@@ -1145,9 +1124,7 @@ API_EXPORT_NONSTD(const char *) ap_set_file_slot(cmd_parms *cmd, char *struct_pt
        so the server can be moved or mirrored with less pain.  */
     char *p;
     int offset = (int) (long) cmd->info;
-#ifndef OS2
     arg = ap_os_canonical_filename(cmd->pool, arg);
-#endif
     if (ap_os_is_path_absolute(arg))
 	p = arg;
     else
@@ -1166,9 +1143,7 @@ static cmd_parms default_parms =
 
 API_EXPORT(char *) ap_server_root_relative(pool *p, char *file)
 {
-#ifndef OS2
     file = ap_os_canonical_filename(p, file);
-#endif
     if(ap_os_is_path_absolute(file))
 	return file;
     return ap_make_full_path(p, ap_server_root, file);
@@ -1238,11 +1213,7 @@ static void process_command_config(server_rec *s, array_header *arr, pool *p,
 
     if (errmsg) {
         fprintf(stderr, "Syntax error in -C/-c directive:\n%s\n", errmsg);
-#ifdef NETWARE
-        clean_parent_exit(1);
-#else
         exit(1);
-#endif
     }
 
     ap_cfg_closefile(parms.config_file);
@@ -1332,11 +1303,7 @@ CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p
 	    perror("fopen");
 	    fprintf(stderr, "%s: could not open config directory %s\n",
 		ap_server_argv0, path);
-#ifdef NETWARE
-	    clean_parent_exit(1);
-#else
 	    exit(1);
-#endif
 	}
 	candidates = ap_make_array(p, 1, sizeof(fnames));
 	while ((dir_entry = readdir(dirp)) != NULL) {
@@ -1378,11 +1345,7 @@ CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p
 	perror("fopen");
 	fprintf(stderr, "%s: could not open document config file %s\n",
 		ap_server_argv0, fname);
-#ifdef NETWARE
-        clean_parent_exit(1);
-#else
 	exit(1);
-#endif
     }
 
     errmsg = ap_srm_command_loop(&parms, s->lookup_defaults);
@@ -1391,11 +1354,7 @@ CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p
 	fprintf(stderr, "Syntax error on line %d of %s:\n",
 		parms.config_file->line_number, parms.config_file->name);
 	fprintf(stderr, "%s\n", errmsg);
-#ifdef NETWARE
-        clean_parent_exit(1);
-#else
 	exit(1);
-#endif
     }
 
     ap_cfg_closefile(parms.config_file);
@@ -1841,10 +1800,8 @@ API_EXPORT(void) ap_show_modules(void)
     for (n = 0; ap_loaded_modules[n]; ++n) {
 	printf("  %s\n", ap_loaded_modules[n]->name);
     }
-#if !defined(WIN32) && !defined(NETWARE) && !defined(TPF)
     printf("suexec: %s\n",
 	   ap_suexec_enabled
 	       ? "enabled; valid wrapper " SUEXEC_BIN
 	       : "disabled; invalid wrapper " SUEXEC_BIN);
-#endif
 }

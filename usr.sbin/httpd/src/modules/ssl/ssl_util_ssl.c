@@ -384,9 +384,6 @@ BOOL SSL_X509_getCN(pool *p, X509 *xs, char **cppCN)
             *cppCN = ap_palloc(p, xsne->value->length+1);
             ap_cpystrn(*cppCN, (char *)xsne->value->data, xsne->value->length+1);
             (*cppCN)[xsne->value->length] = NUL;
-#ifdef CHARSET_EBCDIC
-            ascii2ebcdic(*cppCN, *cppCN, strlen(*cppCN));
-#endif
             return TRUE;
         }
     }

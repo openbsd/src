@@ -64,20 +64,9 @@
 #include "http_main.h"
 #include "http_core.h"
 #include "util_date.h"
-#ifdef WIN32
-#include <sys/utime.h>
-#else
 #include <utime.h>
-#endif                          /* WIN32 */
 #include "multithread.h"
 #include "ap_md5.h"
-#ifdef __TANDEM
-#include <sys/types.h>
-#include <sys/stat.h>
-#endif
-#ifdef TPF
-#include "os.h"
-#endif
 
 struct gc_ent {
     unsigned long int len;
@@ -126,9 +115,7 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
                              const char *cachedir, const char *cachesubdir);
 static void help_proxy_garbage_coll(request_rec *r);
 static int should_proxy_garbage_coll(request_rec *r);
-#if !defined(WIN32) && !defined(MPE) && !defined(OS2) && !defined(NETWARE) && !defined(TPF)
 static void detached_proxy_garbage_coll(request_rec *r);
-#endif
 
 
 void ap_proxy_garbage_coll(request_rec *r)
@@ -146,11 +133,7 @@ void ap_proxy_garbage_coll(request_rec *r)
 
     ap_block_alarms();          /* avoid SIGALRM on big cache cleanup */
     if (should_proxy_garbage_coll(r))
-#if !defined(WIN32) && !defined(MPE) && !defined(OS2) && !defined(NETWARE) && !defined(TPF)
         detached_proxy_garbage_coll(r);
-#else
-        help_proxy_garbage_coll(r);
-#endif
     ap_unblock_alarms();
 
     (void)ap_acquire_mutex(garbage_mutex);
@@ -203,7 +186,6 @@ static int gcdiff(const void *ap, const void *bp)
         return 0;
 }
 
-#if !defined(WIN32) && !defined(MPE) && !defined(OS2) && !defined(NETWARE) && !defined(TPF)
 static void detached_proxy_garbage_coll(request_rec *r)
 {
     pid_t pid;
@@ -241,21 +223,6 @@ static void detached_proxy_garbage_coll(request_rec *r)
                         ap_server_argv0);
                 exit(1);
             }
-#elif defined(NEXT) || defined(NEWSOS)
-            if (setpgrp(0, getpid()) == -1 || (pgrp = getpgrp(0)) == -1) {
-                perror("setpgrp");
-                fprintf(stderr, "%S: setpgrp or getpgrp failed\n",
-                        ap_server_argv0);
-                exit(1);
-            }
-#elif defined(CYGWIN)
-            /* Cygwin does not take any argument for setpgrp() */
-            if ((pgrp = setpgrp()) == -1) {
-                perror("setpgrp");
-                fprintf(stderr, "%S: setpgrp failed\n",
-                        ap_server_argv0);
-                exit(1);
-            }
 #else
             if ((pgrp = setpgrp(getpid(), 0)) == -1) {
                 perror("setpgrp");
@@ -279,7 +246,6 @@ static void detached_proxy_garbage_coll(request_rec *r)
         return;
     }
 }
-#endif                          /* ndef WIN32 */
 
 #define DOT_TIME "/.time"       /* marker */
 
@@ -426,11 +392,7 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
     struct stat buf;
     int fd, i;
     DIR *dir;
-#if defined(NEXT) || defined(WIN32)
-    struct DIR_TYPE *ent;
-#else
     struct dirent *ent;
-#endif
     struct gc_ent *fent;
     int nfiles = 0;
     char *filename;
@@ -480,49 +442,8 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
 
 /* under OS/2 use dirent's d_attr to identify a diretory */
 /* under TPF use stat to identify a directory */
-#if defined(OS2) || defined(TPF)
-/* is it a directory? */
-#ifdef OS2
-        if (ent->d_attr & A_DIR)
-#elif defined(TPF)
-            if (stat(filename, &buf) == -1) {
-                if (errno != ENOENT)
-                    ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-                                 "proxy gc: stat(%s)", filename);
-            }
-        if (S_ISDIR(buf.st_mode))
-#endif
-        {
-            char newcachedir[HUGE_STRING_LEN];
-            ap_snprintf(newcachedir, sizeof(newcachedir),
-                        "%s%s/", cachesubdir, ent->d_name);
-            if (!sub_garbage_coll(r, files, cachebasedir, newcachedir)) {
-                ap_snprintf(newcachedir, sizeof(newcachedir),
-                            "%s%s", cachedir, ent->d_name);
-#if TESTING
-                fprintf(stderr, "Would remove directory %s\n", newcachedir);
-#else
-                rmdir(newcachedir);
-#endif
-                --nfiles;
-            }
-            continue;
-        }
-#endif
 
 /* read the file */
-#if defined(WIN32)
-        /*
-         * On WIN32 open does not work for directories, so we us stat instead
-         * of fstat to determine if the file is a directory
-         */
-        if (stat(filename, &buf) == -1) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-                         "proxy gc: stat(%s)", filename);
-            continue;
-        }
-        fd = -1;
-#else
         fd = open(filename, O_RDONLY | O_BINARY);
         if (fd == -1) {
             if (errno != ENOENT)
@@ -536,16 +457,10 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
             close(fd);
             continue;
         }
-#endif
 
-/* In OS/2 and TPF this has already been done above */
-#if !defined(OS2) && !defined(TPF)
         if (S_ISDIR(buf.st_mode)) {
             char newcachedir[HUGE_STRING_LEN];
-#if !defined(WIN32)
-            /* Win32 used stat, no file to close */
             close(fd);
-#endif
             ap_snprintf(newcachedir, sizeof(newcachedir),
                         "%s%s/", cachesubdir, ent->d_name);
             if (!sub_garbage_coll(r, files, cachebasedir, newcachedir)) {
@@ -564,21 +479,7 @@ static int sub_garbage_coll(request_rec *r, array_header *files,
             }
             continue;
         }
-#endif
 
-#if defined(WIN32)
-        /*
-         * Since we have determined above that the file is not a directory,
-         * it should be safe to open it now
-         */
-        fd = open(filename, O_RDONLY | O_BINARY);
-        if (fd == -1) {
-            if (errno != ENOENT)
-                ap_log_error(APLOG_MARK, APLOG_ERR, r->server,
-                             "proxy gc: open(%s) = %d", filename, errno);
-            continue;
-        }
-#endif
 
         i = read(fd, line, 17 * (3) - 1);
         close(fd);
@@ -1617,7 +1518,6 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
 
     while (1) {
 /* create temporary filename */
-#ifndef TPF
 #define TMPFILESTR    "/tmpXXXXXXXXXX"
         if (conf->cache.root == NULL) {
             c = ap_proxy_cache_error(c);
@@ -1629,18 +1529,6 @@ int ap_proxy_cache_update(cache_req *c, table *resp_hdrs,
         strlcat(c->tempfile, TMPFILESTR, tflen);
 #undef TMPFILESTR
         p = mktemp(c->tempfile);
-#else
-        if (conf->cache.root == NULL) {
-            c = ap_proxy_cache_error(c);
-            break;
-        }
-        tflen = strlen(conf->cache.root) + 1 + L_tmpnam;
-        c->tempfile = ap_palloc(r->pool, tflen);
-        strlcpy(c->tempfile, conf->cache.root, tflen);
-        strlcat(c->tempfile, "/", tflen);
-        p = tmpnam(NULL);
-        strlcat(c->tempfile, p, tflen);
-#endif
         if (p == NULL) {
             c = ap_proxy_cache_error(c);
             break;
@@ -1783,29 +1671,13 @@ void ap_proxy_cache_tidy(cache_req *c)
             if (!p)
                 break;
             *p = '\0';
-#if defined(WIN32) || defined(NETWARE)
-            if (mkdir(c->filename) < 0 && errno != EEXIST)
-#elif defined(__TANDEM)
-                if (mkdir(c->filename, S_IRWXU | S_IRWXG | S_IRWXO) < 0 && errno != EEXIST)
-#else
             if (mkdir(c->filename, S_IREAD | S_IWRITE | S_IEXEC) < 0 && errno != EEXIST)
-#endif                          /* WIN32 */
                 ap_log_error(APLOG_MARK, APLOG_ERR, s,
                              "proxy: error creating cache directory %s",
                              c->filename);
             *p = '/';
             ++p;
         }
-#if defined(OS2) || defined(WIN32) || defined(NETWARE) || defined(MPE)
-        /* Under OS/2 use rename. */
-        if (rename(c->tempfile, c->filename) == -1) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, s,
-                         "proxy: error renaming cache file %s to %s",
-                         c->tempfile, c->filename);
-            (void)unlink(c->tempfile);
-        }
-#else
-
         if (link(c->tempfile, c->filename) == -1)
             ap_log_error(APLOG_MARK, APLOG_INFO, s,
                          "proxy: error linking cache file %s to %s",
@@ -1813,6 +1685,5 @@ void ap_proxy_cache_tidy(cache_req *c)
         if (unlink(c->tempfile) == -1)
             ap_log_error(APLOG_MARK, APLOG_ERR, s,
                          "proxy: error deleting temp file %s", c->tempfile);
-#endif
     }
 }

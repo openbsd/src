@@ -67,14 +67,10 @@
 #include "ap_config.h"
 #include "ap.h"
 
-#ifdef CHARSET_EBCDIC
-#include "ap_ebcdic.h"
-#endif				/* CHARSET_EBCDIC */
 
 /* aaaack but it's fast and const should make it shared text page. */
 static const unsigned char pr2six[256] =
 {
-#ifndef CHARSET_EBCDIC
     /* ASCII table */
     64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
     64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
@@ -92,25 +88,6 @@ static const unsigned char pr2six[256] =
     64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
     64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
     64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64
-#else /*CHARSET_EBCDIC*/
-    /* EBCDIC table */
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 62, 64,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64, 63, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64, 26, 27, 28, 29, 30, 31, 32, 33, 34, 64, 64, 64, 64, 64, 64,
-    64, 35, 36, 37, 38, 39, 40, 41, 42, 43, 64, 64, 64, 64, 64, 64,
-    64, 64, 44, 45, 46, 47, 48, 49, 50, 51, 64, 64, 64, 64, 64, 64,
-    64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-    64,  0,  1,  2,  3,  4,  5,  6,  7,  8, 64, 64, 64, 64, 64, 64,
-    64,  9, 10, 11, 12, 13, 14, 15, 16, 17, 64, 64, 64, 64, 64, 64,
-    64, 64, 18, 19, 20, 21, 22, 23, 24, 25, 64, 64, 64, 64, 64, 64,
-    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 64, 64, 64, 64, 64, 64
-#endif /*CHARSET_EBCDIC*/
 };
 
 API_EXPORT(int) ap_base64decode_len(const char *bufcoded)
@@ -130,16 +107,9 @@ API_EXPORT(int) ap_base64decode_len(const char *bufcoded)
 
 API_EXPORT(int) ap_base64decode(char *bufplain, const char *bufcoded)
 {
-#ifdef CHARSET_EBCDIC
-    int i;
-#endif				/* CHARSET_EBCDIC */
     int len;
     
     len = ap_base64decode_binary((unsigned char *) bufplain, bufcoded);
-#ifdef CHARSET_EBCDIC
-    for (i = 0; i < len; i++)
-	bufplain[i] = os_toebcdic[bufplain[i]];
-#endif				/* CHARSET_EBCDIC */
     bufplain[len] = '\0';
     return len;
 }
@@ -202,38 +172,7 @@ API_EXPORT(int) ap_base64encode_len(int len)
 
 API_EXPORT(int) ap_base64encode(char *encoded, const char *string, int len)
 {
-#ifndef CHARSET_EBCDIC
     return ap_base64encode_binary(encoded, (const unsigned char *) string, len);
-#else				/* CHARSET_EBCDIC */
-    int i;
-    char *p;
-
-    p = encoded;
-    for (i = 0; i < len - 2; i += 3) {
-	*p++ = basis_64[(os_toascii[string[i]] >> 2) & 0x3F];
-	*p++ = basis_64[((os_toascii[string[i]] & 0x3) << 4) |
-	                ((int) (os_toascii[string[i + 1]] & 0xF0) >> 4)];
-	*p++ = basis_64[((os_toascii[string[i + 1]] & 0xF) << 2) |
-	                ((int) (os_toascii[string[i + 2]] & 0xC0) >> 6)];
-	*p++ = basis_64[os_toascii[string[i + 2]] & 0x3F];
-    }
-    if (i < len) {
-	*p++ = basis_64[(os_toascii[string[i]] >> 2) & 0x3F];
-	if (i == (len - 1)) {
-	    *p++ = basis_64[((os_toascii[string[i]] & 0x3) << 4)];
-	    *p++ = '=';
-	}
-	else {
-	    *p++ = basis_64[((os_toascii[string[i]] & 0x3) << 4) |
-	                    ((int) (os_toascii[string[i + 1]] & 0xF0) >> 4)];
-	    *p++ = basis_64[((os_toascii[string[i + 1]] & 0xF) << 2)];
-	}
-	*p++ = '=';
-    }
-
-    *p++ = '\0';
-    return p - encoded;
-#endif				/* CHARSET_EBCDIC */
 }
 
 /* This is the same as ap_base64encode() except on EBCDIC machines, where

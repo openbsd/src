@@ -450,9 +450,6 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int verify)
     if (sc->nPassPhraseDialogType == SSL_PPTYPE_BUILTIN) {
         char *prompt;
         int i;
-#ifdef WIN32
-        FILE *con;
-#endif
 
         ssl_log(s, SSL_LOG_INFO,
                 "Init: Requesting pass phrase via builtin terminal dialog");
@@ -462,21 +459,10 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int verify)
          * at our init stage Apache already connected STDERR
          * to the general error logfile.
          */
-#ifdef WIN32
-        stderr_store = STDERR_FILENO_STORE;
-#else
         if ((stderr_store = open("/dev/null", O_WRONLY)) == -1)
             stderr_store = STDERR_FILENO_STORE;
-#endif
         dup2(STDERR_FILENO, stderr_store);
-#ifdef WIN32
-        if ((con = fopen("con", "w")) != NULL)
-            dup2(fileno(con), STDERR_FILENO);
-        else
-            dup2(STDOUT_FILENO, STDERR_FILENO);
-#else
         dup2(STDOUT_FILENO, STDERR_FILENO);
-#endif
 
         /*
          * The first time display a header to inform the user about what
@@ -519,10 +505,6 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int verify)
          */
         dup2(stderr_store, STDERR_FILENO);
         close(stderr_store);
-#ifdef WIN32
-        if (con != NULL)
-            fclose(con);
-#endif
     }
 
     /*

@@ -398,14 +398,10 @@ const char *ssl_cmd_SSLMutex(
         mc->nMutexMode  = SSL_MUTEXMODE_NONE;
     }
     else if (strlen(arg) > 5 && strcEQn(arg, "file:", 5)) {
-#ifndef WIN32
         mc->nMutexMode  = SSL_MUTEXMODE_FILE;
         mc->szMutexFile = ap_psprintf(mc->pPool, "%s.%lu",
                                       ssl_util_server_root_relative(cmd->pool, "mutex", arg+5),
                                       (unsigned long)getpid());
-#else
-        return "SSLMutex: Lockfiles not available on this platform";
-#endif
     }
     else if (strcEQ(arg, "sem")) {
 #ifdef SSL_CAN_USE_SEM

@@ -1,4 +1,4 @@
-/* $OpenBSD: http_core.c,v 1.18 2004/07/31 20:01:55 brad Exp $ */
+/* $OpenBSD: http_core.c,v 1.19 2004/12/02 19:42:47 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -87,11 +87,7 @@
  * the benefit for small files.  It shouldn't be set lower than 1.
  */
 #ifndef MMAP_THRESHOLD
-#ifdef SUNOS4
-#define MMAP_THRESHOLD		(8*1024)
-#else
 #define MMAP_THRESHOLD		1
-#endif
 #endif
 #endif
 #ifndef MMAP_LIMIT
@@ -152,25 +148,11 @@ static void *create_core_dir_config(pool *a, char *dir)
 
     conf->limit_req_body = 0;
     conf->sec = ap_make_array(a, 2, sizeof(void *));
-#ifdef WIN32
-    conf->script_interpreter_source = INTERPRETER_SOURCE_UNSET;
-#endif
 
     conf->server_signature = srv_sig_unset;
 
     conf->add_default_charset = ADD_DEFAULT_CHARSET_UNSET;
     conf->add_default_charset_name = DEFAULT_ADD_DEFAULT_CHARSET_NAME;
-
-#ifdef CHARSET_EBCDIC
-    conf->ebcdicconversion_by_ext_in = ap_make_table(a, 4);
-    conf->ebcdicconversion_by_ext_out = ap_make_table(a, 4);
-    conf->ebcdicconversion_by_type_in = ap_make_table(a, 4);
-    conf->ebcdicconversion_by_type_out = ap_make_table(a, 4);
-    conf->x_ascii_magic_kludge = 0;
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-    conf->ebcdicconversion_debug_header = 0;
-#endif
-#endif /* CHARSET_EBCDIC */
 
     /*
      * Flag for use of inodes in ETags.
@@ -299,11 +281,6 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
         conf->satisfy = new->satisfy;
     }
 
-#ifdef WIN32
-    if (new->script_interpreter_source != INTERPRETER_SOURCE_UNSET) {
-        conf->script_interpreter_source = new->script_interpreter_source;
-    }
-#endif
 
     if (new->server_signature != srv_sig_unset) {
 	conf->server_signature = new->server_signature;
@@ -315,21 +292,6 @@ static void *merge_core_dir_configs(pool *a, void *basev, void *newv)
 	    conf->add_default_charset_name = new->add_default_charset_name;
 	}
     }
-
-#ifdef CHARSET_EBCDIC
-    conf->ebcdicconversion_by_ext_in = ap_overlay_tables(a, new->ebcdicconversion_by_ext_in,
-                                               base->ebcdicconversion_by_ext_in);
-    conf->ebcdicconversion_by_ext_out = ap_overlay_tables(a, new->ebcdicconversion_by_ext_out,
-                                               base->ebcdicconversion_by_ext_out);
-    conf->ebcdicconversion_by_type_in = ap_overlay_tables(a, new->ebcdicconversion_by_type_in,
-                                                base->ebcdicconversion_by_type_in);
-    conf->ebcdicconversion_by_type_out = ap_overlay_tables(a, new->ebcdicconversion_by_type_out,
-                                                base->ebcdicconversion_by_type_out);
-    conf->x_ascii_magic_kludge = new->x_ascii_magic_kludge ? new->x_ascii_magic_kludge : base->x_ascii_magic_kludge;
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-    conf->ebcdicconversion_debug_header = new->ebcdicconversion_debug_header ? new->ebcdicconversion_debug_header : base->ebcdicconversion_debug_header;
-#endif
-#endif /* CHARSET_EBCDIC */
 
     /*
      * Now merge the setting of the FileETag directive.
@@ -902,227 +864,6 @@ API_EXPORT(unsigned long) ap_get_limit_req_body(const request_rec *r)
     return d->limit_req_body;
 }
 
-#ifdef WIN32
-static char* get_interpreter_from_win32_registry(pool *p, const char* ext) 
-{
-    char extension_path[] = "SOFTWARE\\Classes\\";
-    char executable_path[] = "\\SHELL\\OPEN\\COMMAND";
-
-    HKEY hkeyOpen;
-    DWORD type;
-    int size;
-    int result;
-    char *keyName;
-    char *buffer;
-    char *s;
-
-    if (!ext)
-        return NULL;
-    /* 
-     * Future optimization:
-     * When the registry is successfully searched, store the interpreter
-     * string in a table to make subsequent look-ups faster
-     */
-
-    /* Open the key associated with the script extension */
-    keyName = ap_pstrcat(p, extension_path, ext, NULL);
-
-    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE, 
-                          &hkeyOpen);
-
-    if (result != ERROR_SUCCESS) 
-        return NULL;
-
-    /* Read to NULL buffer to find value size */
-    size = 0;
-    result = RegQueryValueEx(hkeyOpen, "", NULL, &type, NULL, &size);
-
-    if (result == ERROR_SUCCESS) {
-        buffer = ap_palloc(p, size);
-        result = RegQueryValueEx(hkeyOpen, "", NULL, &type, buffer, &size);
-    }
-
-    RegCloseKey(hkeyOpen);
-
-    if (result != ERROR_SUCCESS)
-        return NULL;
-
-    /* Open the key associated with the interpreter path */
-    keyName = ap_pstrcat(p, extension_path, buffer, executable_path, NULL);
-
-    result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, keyName, 0, KEY_QUERY_VALUE, 
-                          &hkeyOpen);
-
-    if (result != ERROR_SUCCESS)
-        return NULL;
-
-    /* Read to NULL buffer to find value size */
-    size = 0;
-    result = RegQueryValueEx(hkeyOpen, "", 0, &type, NULL, &size);
-
-    if (result == ERROR_SUCCESS) {
-        buffer = ap_palloc(p, size);
-        result = RegQueryValueEx(hkeyOpen, "", 0, &type, buffer, &size);
-    }
-
-    RegCloseKey(hkeyOpen);
-
-    if (result != ERROR_SUCCESS)
-        return NULL;
-
-    /*
-     * The command entry may contain embedded %envvar% entries,
-     * e.g. %winsysdir%\somecommand.exe %1
-     *
-     * Resolve them here
-     */
-    size = ExpandEnvironmentStrings(buffer, NULL, 0);
-    if (size) {
-        s = ap_palloc(p, size);
-        if (ExpandEnvironmentStrings(buffer, s, size))
-            buffer = s;
-    }
-
-    /*
-     * The canonical way shell command entries are entered in the Win32 
-     * registry is as follows:
-     *   shell [options] "%1" [options] [%*]
-     * where
-     *   shell - full path name to interpreter or shell to run.
-     *           E.g., c:\usr\local\ntreskit\perl\bin\perl.exe
-     *   options - optional switches
-     *              E.g., /C or -w
-     *   "%1" - Place holder for file to run the shell against. 
-     *          Quoted for if long path names are accepted.
-     *          Not quoted if only short paths are acceptd
-     *
-     *   %* - additional arguments
-     *
-     * Effective in v. 1.3.15, the responsibility is the consumer's
-     * to make these substitutions.
-     */
-
-    return buffer;
-}
-
-API_EXPORT (file_type_e) ap_get_win32_interpreter(const  request_rec *r, 
-                                                  char** interpreter )
-{
-    HANDLE hFile;
-    DWORD nBytesRead;
-    BOOLEAN bResult;
-    char buffer[1024];
-    core_dir_config *d;
-    int i;
-    file_type_e fileType = eFileTypeUNKNOWN;
-    char *ext = NULL;
-    char *exename = NULL;
-
-    d = (core_dir_config *)ap_get_module_config(r->per_dir_config, 
-                                                &core_module);
-
-    /* Find the file extension */
-    exename = strrchr(r->filename, '/');
-    if (!exename) {
-        exename = strrchr(r->filename, '\\');
-    }
-    if (!exename) {
-        exename = r->filename;
-    }
-    else {
-        exename++;
-    }
-    ext = strrchr(exename, '.');
-
-    if (ext && (!strcasecmp(ext,".bat") || !strcasecmp(ext,".cmd"))) 
-    {
-        char *p, *shellcmd = getenv("COMSPEC");
-        if (!shellcmd)
-            return eFileTypeUNKNOWN;
-        p = strchr(shellcmd, '\0');
-        if ((p - shellcmd >= 11) && !strcasecmp(p - 11, "command.com")) 
-        {
-            /* Command.com doesn't like long paths, doesn't do .cmd
-             */
-            if (!strcasecmp(ext,".cmd"))
-                return eFileTypeUNKNOWN;
-            *interpreter = ap_pstrcat(r->pool, "\"", shellcmd, "\" /C %1", NULL);
-            return eCommandShell16;
-        }
-        else {
-            /* Assume any other likes long paths, and knows .cmd,
-             * but the entire /c arg should be double quoted, e.g.
-             * "c:\path\cmd.exe" /c ""prog" "arg" "arg""
-             */
-            *interpreter = ap_pstrcat(r->pool, "\"", shellcmd, "\" /C \"\"%1\" %*\"", NULL);
-            return eCommandShell32;
-        }
-    }
-
-    /* If the file has an extension and it is not .com and not .exe and
-     * we've been instructed to search the registry, then do it!
-     */
-    if (ext && strcasecmp(ext,".exe") && strcasecmp(ext,".com") &&
-        d->script_interpreter_source == INTERPRETER_SOURCE_REGISTRY) {
-         /* Check the registry */
-        *interpreter = get_interpreter_from_win32_registry(r->pool, ext);
-        if (*interpreter)
-            return eFileTypeSCRIPT;
-        else {
-            ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, r->server,
-             "ScriptInterpreterSource config directive set to \"registry\".\n\t"
-             "Registry was searched but interpreter not found. Trying the shebang line.");
-        }
-    }        
-
-    /* Need to peek into the file figure out what it really is... */
-    hFile = CreateFile(r->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hFile == INVALID_HANDLE_VALUE) {
-        return eFileTypeUNKNOWN;
-    }
-    bResult = ReadFile(hFile, (void*) &buffer, sizeof(buffer) - 1, 
-                       &nBytesRead, NULL);
-    if (!bResult || (nBytesRead == 0)) {
-        ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
-                      "ReadFile(%s) failed", r->filename);
-        CloseHandle(hFile);
-        return eFileTypeUNKNOWN;
-    }
-    CloseHandle(hFile);
-    buffer[nBytesRead] = '\0';
-
-    /* Script or executable, that is the question... */
-    if ((buffer[0] == '#') && (buffer[1] == '!')) {
-        /* Assuming file is a script since it starts with a shebang */
-        fileType = eFileTypeSCRIPT;
-        for (i = 2; i < (sizeof(buffer) - 1); i++) {
-            if ((buffer[i] == '\r')
-                || (buffer[i] == '\n')) {
-                break;
-            }
-        }
-        buffer[i] = '\0';
-        for (i = 2; buffer[i] == ' ' ; ++i)
-            ;
-        *interpreter = ap_pstrdup(r->pool, buffer + i ); 
-    }
-    else {
-        /* Not a script, is it an executable? */
-        IMAGE_DOS_HEADER *hdr = (IMAGE_DOS_HEADER*)buffer;    
-        if ((nBytesRead >= sizeof(IMAGE_DOS_HEADER)) && (hdr->e_magic == IMAGE_DOS_SIGNATURE)) {
-            if (hdr->e_lfarlc < 0x40)
-                fileType = eFileTypeEXE16;
-            else
-                fileType = eFileTypeEXE32;
-        }
-        else
-            fileType = eFileTypeUNKNOWN;
-    }
-
-    return fileType;
-}
-#endif
 
 /*****************************************************************
  *
@@ -1555,11 +1296,7 @@ static const char *missing_endsection(cmd_parms *cmd, int nest)
  * people don't get bitten by wrong-cased regex matches
  */
 
-#ifdef WIN32
-#define USE_ICASE REG_ICASE
-#else
 #define USE_ICASE 0
-#endif
 
 static const char *end_nested_section(cmd_parms *cmd, void *dummy)
 {
@@ -2142,11 +1879,6 @@ static const char *set_send_buffer_size(cmd_parms *cmd, void *dummy, char *arg)
 
 static const char *set_user(cmd_parms *cmd, void *dummy, char *arg)
 {
-#ifdef WIN32
-    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, cmd->server,
-		 "User directive has no affect on Win32");
-    cmd->server->server_uid = ap_user_id = 1;
-#else
     const char *err = ap_check_cmd_context(cmd, NOT_IN_DIR_LOC_FILE|NOT_IN_LIMIT);
     if (err != NULL) {
         return err;
@@ -2198,7 +1930,6 @@ static const char *set_user(cmd_parms *cmd, void *dummy, char *arg)
 	exit (1);
     }
 #endif
-#endif /* WIN32 */
 
     return NULL;
 }
@@ -2442,18 +2173,12 @@ static const char *set_use_canonical_name(cmd_parms *cmd, core_dir_config *d,
 
 static const char *set_daemons_to_start(cmd_parms *cmd, void *dummy, char *arg) 
 {
-#ifdef WIN32
-    fprintf(stderr, "WARNING: StartServers has no effect on Win32\n");
-#elif defined(NETWARE)
-    fprintf(stderr, "WARNING: StartServers has no effect on NetWare\n");
-#else
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
         return err;
     }
 
     ap_daemons_to_start = atoi(arg);
-#endif
     return NULL;
 }
 
@@ -2665,18 +2390,6 @@ static const char *set_bind_address(cmd_parms *cmd, void *dummy, char *arg)
     return NULL;
 }
 
-#ifdef NETWARE
-static const char *set_threadstacksize(cmd_parms *cmd, void *dummy, char *stacksize)
-{
-    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
-    if (err != NULL) {
-        return err;
-    }
-    
-    ap_thread_stack_size = atoi(stacksize);    
-    return NULL;
-}
-#endif
 
 /* Though the AcceptFilter functionality is not available across
  * all platforms - we still allow the config directive to appear
@@ -2895,18 +2608,6 @@ static const char *set_authnonce (cmd_parms *cmd, void *mconfig, char *word1)
 }
 
 
-#ifdef _OSD_POSIX /* BS2000 Logon Passwd file */
-static const char *set_bs2000_account(cmd_parms *cmd, void *dummy, char *name)
-{
-    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
-    if (err != NULL) {
-        return err;
-    }
-
-    return os_set_account(cmd->pool, name);
-}
-#endif /*_OSD_POSIX*/
-
 static const char *set_protocol_req_check(cmd_parms *cmd,
                                               core_dir_config *d, int arg) 
 {
@@ -3047,22 +2748,6 @@ static const char *set_limit_req_body(cmd_parms *cmd, core_dir_config *conf,
     return NULL;
 }
 
-#ifdef WIN32
-static const char *set_interpreter_source(cmd_parms *cmd, core_dir_config *d,
-                                                char *arg)
-{
-    if (!strcasecmp(arg, "registry")) {
-        d->script_interpreter_source = INTERPRETER_SOURCE_REGISTRY;
-    } else if (!strcasecmp(arg, "script")) {
-        d->script_interpreter_source = INTERPRETER_SOURCE_SHEBANG;
-    } else {
-        return ap_pstrcat(cmd->temp_pool, "ScriptInterpreterSource \"", arg, 
-                          "\" must be \"registry\" or \"script\"",
-                          NULL);
-    }
-    return NULL;
-}
-#endif
 
 static const char *set_cgi_command_args(cmd_parms *cmd,
                                               void *mconfig,
@@ -3072,122 +2757,6 @@ static const char *set_cgi_command_args(cmd_parms *cmd,
     cfg->cgi_command_args = arg ? AP_FLAG_ON : AP_FLAG_OFF;
     return NULL;
 }
-
-#ifdef CHARSET_EBCDIC
-
-typedef struct {
-  char conv_out[2];
-  char conv_in[2];
-} parsed_conf_t;
-
-/* Check for conversion syntax:  { On | Off } [ = { In | Out | InOut } ] */
-static parsed_conf_t *
-parse_on_off_in_out(pool *p, char *arg)
-{
-    static parsed_conf_t ret = { { conv_Unset, '\0' }, { conv_Unset, '\0' } };
-    char *onoff = ap_getword_nc(p, &arg, '=');
-    int in = 0, out = 0, inout = 0;
-    char conv_val;
-
-    /* Check for valid syntax:  { On | Off } [ = { In | Out | InOut } ] */
-    if (strcasecmp(onoff, "On") == 0)
-        conv_val = conv_On;
-    else if (strcasecmp(onoff, "Off") == 0)
-        conv_val = conv_Off;
-    else
-        return NULL;
-
-    /* Check the syntax, and at the same time assign the test results */
-    if (!(inout = (*arg == '\0')) &&
-        !(in = (strcasecmp(arg, "In") == 0)) &&
-        !(out = (strcasecmp(arg, "Out") == 0)) &&
-        !(inout = (strcasecmp(arg, "InOut") == 0))) {
-        /* Invalid string, not conforming to syntax! */
-        return NULL;
-    }
-
-    ret.conv_in[0]  = (in || inout)  ? conv_val : conv_Unset;
-    ret.conv_out[0] = (out || inout) ? conv_val : conv_Unset;
-
-    return &ret;
-}
-
-
-/* Handle the EBCDICConvert directive:
- *   EBCDICConvert {On|Off}[={In|Out|InOut}] ext ...
- */
-static const char *
-add_conversion_by_ext(cmd_parms *cmd, core_dir_config *m,
-		      char *onoff, char *ext)
-{
-    parsed_conf_t *onoff_code = parse_on_off_in_out(cmd->pool, onoff);
-
-    if (onoff_code == NULL)
-        return "Invalid syntax: use EBCDICConvert {On|Off}[={In|Out|InOut}] ext [...]";
-
-    if (*ext == '.')
-        ++ext;
-
-    if (*onoff_code->conv_in != conv_Unset)
-	ap_table_addn(m->ebcdicconversion_by_ext_in, ext,
-		      ap_pstrndup(cmd->pool, onoff_code->conv_in, 1));
-    if (*onoff_code->conv_out != conv_Unset)
-	ap_table_addn(m->ebcdicconversion_by_ext_out, ext,
-		      ap_pstrndup(cmd->pool, onoff_code->conv_out, 1));
-
-    return NULL;
-}
-
-
-/* Handle the EBCDICConvertByType directive:
- *   EBCDICConvertByType {On|Off}[={In|Out|InOut}] mimetype ...
- */
-static const char *
-add_conversion_by_type(cmd_parms *cmd, core_dir_config *m,
-		       char *onoff, char *type)
-{
-    parsed_conf_t *onoff_code = parse_on_off_in_out(cmd->pool, onoff);
-
-    if (onoff_code == NULL)
-        return "Invalid syntax: use EBCDICConvertByType {On|Off}[={In|Out|InOut}] mimetype [...]";
-
-    if (*onoff_code->conv_in != conv_Unset)
-	ap_table_addn(m->ebcdicconversion_by_type_in, type,
-		      ap_pstrndup(cmd->pool, onoff_code->conv_in, 1));
-    if (*onoff_code->conv_out != conv_Unset)
-	ap_table_addn(m->ebcdicconversion_by_type_out, type,
-		      ap_pstrndup(cmd->pool, onoff_code->conv_out, 1));
-
-    return NULL;
-}
-
-
-/* Handle the EBCDICKludge directive:
- *   EBCDICKludge {On|Off}
- */
-#ifdef LEGACY_KLUDGE
-static const char *
-set_x_ascii_kludge(cmd_parms *cmd, core_dir_config *m, int arg)
-{
-    m->x_ascii_magic_kludge = arg;
-
-    return NULL;
-}
-#endif
-
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-/* Handle the EBCDICDebugHeader directive:
- *   EBCDICDebugHeader {On|Off}
- */
-static const char *
-set_debug_header(cmd_parms *cmd, core_dir_config *m, int arg)
-{
-    m->ebcdicconversion_debug_header = arg;
-
-    return NULL;
-}
-#endif
-#endif /* CHARSET_EBCDIC */
 
 /*
  * Note what data should be used when forming file ETag values.
@@ -3632,10 +3201,6 @@ static const command_rec core_cmds[] = {
    OR_ALL, TAKE12, "soft/hard limits for max number of processes per uid" },
 { "BindAddress", set_bind_address, NULL, RSRC_CONF, TAKE1,
   "'*', a numeric IP address, or the name of a host with a unique IP address"},
-#ifdef NETWARE
-{ "ThreadStackSize", set_threadstacksize, NULL, RSRC_CONF, TAKE1,
-  "Stack size each created thread will use."},
-#endif
 { "Listen", set_listener, NULL, RSRC_CONF, TAKE1,
   "A port number or a numeric IP address and a port number"},
 { "SendBufferSize", set_send_buffer_size, NULL, RSRC_CONF, TAKE1,
@@ -3672,14 +3237,6 @@ static const command_rec core_cmds[] = {
   "Level of verbosity in error logging" },
 { "NameVirtualHost", ap_set_name_virtual_host, NULL, RSRC_CONF, TAKE1,
   "A numeric IP address:port, or the name of a host" },
-#ifdef _OSD_POSIX
-{ "BS2000Account", set_bs2000_account, NULL, RSRC_CONF, TAKE1,
-  "Name of server User's bs2000 logon account name" },
-#endif
-#ifdef WIN32
-{ "ScriptInterpreterSource", set_interpreter_source, NULL, OR_FILEINFO, TAKE1,
-  "Where to find interpreter to run Win32 scripts - Registry or Script (shebang line)" },
-#endif
 { "CGICommandArgs", set_cgi_command_args, NULL, OR_OPTIONS, FLAG,
   "Allow or Disallow CGI requests to pass args on the command line" },
 { "ServerTokens", set_serv_tokens, NULL, RSRC_CONF, TAKE1,
@@ -3715,36 +3272,11 @@ static const command_rec core_cmds[] = {
 #ifdef HAVE_FLOCK_SERIALIZED_ACCEPT
     "'flock' "
 #endif
-#ifdef HAVE_OS2SEM_SERIALIZED_ACCEPT
-    "'os2sem' "
-#endif
-#ifdef HAVE_TPF_CORE_SERIALIZED_ACCEPT
-    "'tpfcore' "
-#endif
-#ifdef HAVE_BEOS_SERIALIZED_ACCEPT
-    "'beos_sem' "
-#endif
 #ifdef HAVE_NONE_SERIALIZED_ACCEPT
     "'none' "
 #endif
     "are compiled in"
 },
-
-/* EBCDIC Conversion directives: */
-#ifdef CHARSET_EBCDIC
-{ "EBCDICConvert", add_conversion_by_ext, NULL, OR_FILEINFO, ITERATE2,
-    "{On|Off}[={In|Out|InOut}] followed by one or more file extensions" },
-{ "EBCDICConvertByType", add_conversion_by_type, NULL, OR_FILEINFO, ITERATE2,
-    "{On|Off}[={In|Out|InOut}] followed by one or more MIME types" },
-#ifdef LEGACY_KLUDGE
-{ "EBCDICKludge", set_x_ascii_kludge, NULL, OR_FILEINFO, FLAG,
-    "'On': enable or default='Off': disable the old text/x-ascii-mimetype kludge" },
-#endif
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-{ "EBCDICDebugHeader", set_debug_header, NULL, OR_FILEINFO, FLAG,
-    "'On': enable or default='Off': disable the EBCDIC Debugging MIME Header" },
-#endif
-#endif /* CHARSET_EBCDIC */
 
 { "FileETag", set_etag_bits, NULL, OR_FILEINFO, RAW_ARGS,
   "Specify components used to construct a file's ETag"},
@@ -3803,259 +3335,6 @@ static int core_translate(request_rec *r)
 }
 
 static int do_nothing(request_rec *r) { return OK; }
-
-#ifdef CHARSET_EBCDIC
-struct do_mime_match_parms {
-    request_rec *request;     /* [In] current request_rec */
-    int direction;            /* [In] determine conversion for: dir_In|dir_Out */
-    const char *content_type; /* [In] Content-Type (dir_In: from MIME Header, else r->content_type) */
-    int match_found;          /* [Out] nonzero if a match was found */
-    int conv;                 /* [Out] conversion setting if match was found */
-};
-
-
-/* This routine is called for each mime type configured by the
- * EBCDICConvertByType directive.
- */
-static int
-do_mime_match(void *rec, const char *key, const char *val)
-{
-    int conv = (val[0] == conv_On);
-    const char *content_type;
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-    request_rec *r = ((struct do_mime_match_parms *) rec)->request;
-#endif
-
-    ((struct do_mime_match_parms *) rec)->match_found = 0;
-    ((struct do_mime_match_parms *) rec)->conv = conv_Unset;
-
-    content_type = ((struct do_mime_match_parms *) rec)->content_type;
-
-    /* If no type set: no need to continue */
-    if (content_type == NULL)
-        return 0;
-
-    /* If the MIME type matches, set the conversion flag appropriately */
-    if ((ap_is_matchexp(key) && ap_strcasecmp_match(content_type, key) == 0)
-        || (strcasecmp(key, content_type) == 0)) {
-
-        ((struct do_mime_match_parms *) rec)->match_found = 1;
-        ((struct do_mime_match_parms *) rec)->conv = conv;
-
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-	ap_table_setn(r->headers_out,
-               ((((struct do_mime_match_parms *) rec)->direction) == dir_In)
-		      ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
-                       ap_psprintf(r->pool, "EBCDICConversionByType %s %s",
-                                   conv ? "On" : "Off",
-                                   key));
-#endif
-
-        /* the mime type scan stops at the first  match. */
-        return 0;
-    }
-
-    return 1;
-}
-
-static void
-ap_checkconv_dir(request_rec *r, const char **pType, int dir)
-{
-    core_dir_config *conf =
-    (core_dir_config *) ap_get_module_config(r->per_dir_config, &core_module);
-    table *conv_by_ext, *conv_by_type;
-    const char *type, *conversion;
-    char *ext;
-    int conv_valid = 0, conv;
-
-    conv_by_ext  = (dir == dir_In) ? conf->ebcdicconversion_by_ext_in  : conf->ebcdicconversion_by_ext_out;
-    conv_by_type = (dir == dir_In) ? conf->ebcdicconversion_by_type_in : conf->ebcdicconversion_by_type_out;
-
-    type = (*pType == NULL) ? ap_default_type(r) : *pType;
-
-    /* Pseudo "loop" which is executed once only, with break's at individual steps */
-    do {
-        /* Step 0: directories result in redirections or in directory listings.
-	 * Both are EBCDIC text documents.
-	 * @@@ Should we check for the handler instead?
-	 */
-        if (S_ISDIR(r->finfo.st_mode) && dir == dir_Out) {
-            conv = conv_valid = 1;
-            break;
-        }
-
-        /* 1st step: check the binding on file extension. This allows us to
-         * override the conversion default based on a specific name.
-         * For instance, the following would allow some HTML files
-         * to be converted (.html) and others passed unconverted (.ahtml):
-         *     AddType text/html .html .ahtml
-         *     EBCDICConvert Off .ahtml
-         * For uploads, this assumes that the destination file name
-	 * has the correct extension. That may not be true for, e.g.,
-	 * Netscape Communicator roaming profile uploads!
-         */
-        if (r->filename && !ap_is_empty_table(conv_by_ext)) {
-            const char *fn = strrchr(r->filename, '/');
-
-            if (fn == NULL)
-                fn = r->filename;
-
-            /* Parse filename extension */
-            if ((ext = strrchr(fn, '.')) != NULL) {
-                ++ext;
-
-                /* Check for Content-Type */
-                if ((conversion = ap_table_get(conv_by_ext, ext)) != NULL) {
-
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-		    if (conf->ebcdicconversion_debug_header)
-		        ap_table_setn(r->headers_out,
-				      (dir == dir_In) ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
-				      ap_psprintf(r->pool, "EBCDICConversion %s .%s",
-						  (conversion[0] == conv_On) ? "On" : "Off",
-						  ext));
-#endif
-
-                    conv = (conversion[0] == conv_On);
-                    conv_valid = 1;
-                    break;
-                }
-            }
-        }
-
-
-        /* 2nd step: test for the old "legacy kludge", that is, a default
-         * conversion=on for text/?* message/?* multipart/?* and the possibility
-         * to override the text/?* conversion with a definition like
-         *    AddType text/x-ascii-plain .atxt
-         *    AddType text/x-ascii-html  .ahtml
-         * where the "x-ascii-" would be removed and the conversion switched
-         * off.
-         * This step must be performed prior to testing wildcard MIME types
-         * like text/?* by the EBCDICConvertByType directive.
-         */
-#ifdef LEGACY_KLUDGE
-        /* This fallback is only used when enabled (default=off) */
-        if (conf->x_ascii_magic_kludge) {
-            char *magic;
-
-            /* If the mime type of a document is set to
-             * "text/x-ascii-anything", it gets changed to
-             * "text/anything" here and the conversion is forced to off
-             * ("binary" or ASCII documents).
-             */
-            if (*pType != NULL
-                && (magic = strstr(*pType, "/x-ascii-")) != NULL) {
-
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-		if (conf->ebcdicconversion_debug_header)
-		    ap_table_setn(r->headers_out,
-				  (dir == dir_In) ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
-				  ap_psprintf(r->pool, "EBCDICKludge On (and type is: %s, thus no conversion)",
-					      *pType));
-#endif
-
-                /* the mime type scan stops at the first  match. */
-                magic[1] = '\0';        /* overwrite 'x' */
-
-                /* Fix MIME type: strip out the magic "x-ascii-" substring */
-                *pType = ap_pstrcat(r->pool, *pType, &magic[9], NULL);
-
-                magic[1] = 'x'; /* restore 'x' in old string (just in case) */
-
-                /* Switch conversion to BINARY */
-                conv = 0;       /* do NOT convert this document */
-                conv_valid = 1;
-                break;
-            }
-        }
-#endif /*LEGACY_KLUDGE */
-
-
-        /* 3rd step: check whether a generic conversion was defined for a MIME type,
-         * like in
-         *    EBCDICConvertByType  On  model/vrml application/postscript text/?*
-         */
-        if (!ap_is_empty_table(conv_by_type)) {
-            struct do_mime_match_parms do_par;
-
-            do_par.request = r;
-            do_par.direction = dir;
-	    do_par.content_type = type;
-
-            ap_table_do(do_mime_match, (void *) &do_par, conv_by_type, NULL);
-
-            if ((conv_valid = do_par.match_found) != 0) {
-                conv = do_par.conv;
-                break;
-            }
-        }
-        else /* If no conversion by type was configured, use the default: */
-        {
-            /*
-             * As a final step, mime types starting with "text/", "message/" or
-             * "multipart/" imply a conversion, while all the rest is
-             * delivered unconverted (i.e., binary, e.g. application/octet-stream).
-             */
-
-            /* If no content type is set then treat it as text (conversion=on) */
-            conv =
-                (type == NULL) ||
-                (strncasecmp(type, "text/", 5) == 0) ||
-                (strncasecmp(type, "message/", 8) == 0) ||
-                (strncasecmp(type, "multipart/", 10) == 0) ||
-                (strcasecmp(type, "application/x-www-form-urlencoded") == 0);
-
-#if ADD_EBCDICCONVERT_DEBUG_HEADER
-		if (conf->ebcdicconversion_debug_header)
-		    ap_table_setn(r->headers_out,
-				  (dir == dir_In) ? "X-EBCDIC-Debug-In" : "X-EBCDIC-Debug-Out",
-				  ap_psprintf(r->pool,
-					      "No EBCDICConversion configured (and type is: %s, "
-					      "=> guessed conversion = %s)",
-					      type, conv ? "On" : "Off"));
-#endif
-            conv_valid = 1;
-            break;
-        }
-    } while (0);
-
-    if (conv_valid) {
-        if (dir == dir_In)
-            r->ebcdic.conv_in = conv;
-        else
-            r->ebcdic.conv_out = conv;
-    }
-}
-
-/* This function determines the conversion for uploads (PUT/POST): */
-API_EXPORT(int)
-ap_checkconv_in(request_rec *r)
-{
-    const char *typep;
-
-    /* If nothing is being sent as input anyway, we don't bother about conversion */
-    /* (see ap_should_client_block())*/
-    if (r->read_length || (!r->read_chunked && (r->remaining <= 0)))
-        return r->ebcdic.conv_in;
-
-    typep = ap_table_get(r->headers_in, "Content-Type");
-    ap_checkconv_dir(r, &typep, dir_In);
-
-    return r->ebcdic.conv_in;
-}
-
-
-/* Backward compatibility function */
-API_EXPORT(int)
-ap_checkconv(request_rec *r)
-{
-    ap_checkconv_dir(r, &r->content_type, dir_Out);
-    return r->ebcdic.conv_out;
-}
-
-#endif /* CHARSET_EBCDIC */
-
 
 #ifdef USE_MMAP_FILES
 struct mmap_rec {
@@ -4126,12 +3405,7 @@ static int default_handler(request_rec *r)
         return METHOD_NOT_ALLOWED;
     }
 	
-#if defined(OS2) || defined(WIN32) || defined(NETWARE) || defined(CYGWIN)
-    /* Need binary mode for OS/2 */
-    f = ap_pfopen(r->pool, r->filename, "rb");
-#else
     f = ap_pfopen(r->pool, r->filename, "r");
-#endif
 
     if (f == NULL) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
@@ -4170,17 +3444,10 @@ static int default_handler(request_rec *r)
 	ap_unblock_alarms();
 #endif
 
-#ifdef CHARSET_EBCDIC
-	if (d->content_md5 & 1) {
-	    ap_table_setn(r->headers_out, "Content-MD5",
-			  ap_md5digest(r->pool, f, r->ebcdic.conv_out));
-	}
-#else
 	if (d->content_md5 & 1) {
 	    ap_table_setn(r->headers_out, "Content-MD5",
 			  ap_md5digest(r->pool, f));
 	}
-#endif /* CHARSET_EBCDIC */
 
 	rangestatus = ap_set_byterange(r);
 

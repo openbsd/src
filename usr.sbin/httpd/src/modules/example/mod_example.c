@@ -516,10 +516,6 @@ static int example_handler(request_rec *r)
 
     ap_soft_timeout("send example call trace", r);
     ap_send_http_header(r);
-#ifdef CHARSET_EBCDIC
-    /* Server-generated response, converted */
-    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->ebcdic.conv_out = 1);
-#endif
 
     /*
      * If we're only supposed to send header information (HEAD request), we're

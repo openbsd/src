@@ -74,7 +74,6 @@ static struct per_thread_data *get_per_thread_data(void);
 int ap_proxy_hex2c(const char *x)
 {
     int i;
-#ifndef CHARSET_EBCDIC
     int ch;
 
     ch = x[0];
@@ -94,14 +93,10 @@ int ap_proxy_hex2c(const char *x)
     else
         i += ch - ('a' - 10);
     return i;
-#else                           /* CHARSET_EBCDIC */
-    return (1 == sscanf(x, "%2x", &i)) ? os_toebcdic[i & 0xFF] : 0;
-#endif                          /* CHARSET_EBCDIC */
 }
 
 void ap_proxy_c2hex(int ch, char *x)
 {
-#ifndef CHARSET_EBCDIC
     int i;
 
     x[0] = '%';
@@ -116,14 +111,6 @@ void ap_proxy_c2hex(int ch, char *x)
         x[2] = ('A' - 10) + i;
     else
         x[2] = '0' + i;
-#else                           /* CHARSET_EBCDIC */
-    static const char ntoa[] = {"0123456789ABCDEF"};
-    ch = os_toascii[ch & 0xFF];
-    x[0] = '%';
-    x[1] = ntoa[(ch >> 4) & 0x0F];
-    x[2] = ntoa[ch & 0x0F];
-    x[3] = '\0';
-#endif                          /* CHARSET_EBCDIC */
 }
 
 /*
@@ -283,11 +270,7 @@ char *
         if (!ap_isdigit(host[i]) && host[i] != '.')
             break;
     /* must be an IP address */
-#if defined(WIN32) || defined(NETWARE) || defined(TPF) || defined(BEOS)
-    if (host[i] == '\0' && (inet_addr(host) == -1))
-#else
     if (host[i] == '\0' && (ap_inet_addr(host) == -1 || inet_network(host) == -1))
-#endif
     {
         return "Bad IP address in URL";
     }
@@ -471,12 +454,6 @@ long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c, off_t len, int 
     if (c != NULL)
         c->written = 0;
 
-#ifdef CHARSET_EBCDIC
-    /* The cache copy is ASCII, not EBCDIC, even for text/html) */
-    ap_bsetflag(f, B_ASCII2EBCDIC | B_EBCDIC2ASCII, 0);
-    ap_bsetflag(con->client, B_ASCII2EBCDIC | B_EBCDIC2ASCII, 0);
-#endif
-
     /*
      * Since we are reading from one buffer and writing to another, it is
      * unsafe to do a soft_timeout here, at least until the proxy has its own
@@ -485,11 +462,6 @@ long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c, off_t len, int 
 
     ap_kill_timeout(r);
 
-#if defined(WIN32) || defined(TPF) || defined(NETWARE)
-    /* works fine under win32, so leave it */
-    ap_hard_timeout("proxy send body", r);
-    alternate_timeouts = 0;
-#else
     /*
      * CHECKME! Since hard_timeout won't work in unix on sends with partial
      * cache completion, we have to alternate between hard_timeout for reads,
@@ -503,7 +475,6 @@ long int ap_proxy_send_fb(BUFF *f, request_rec *r, cache_req *c, off_t len, int 
         ap_hard_timeout("proxy send body", r);
         alternate_timeouts = 0;
     }
-#endif
 
     /*
      * Loop and ap_bread() while we can successfully read and write, or
@@ -842,17 +813,8 @@ void ap_proxy_hash(const char *it, char *val, int ndepth, int nlength)
     char tmp[22];
     int i, k, d;
     unsigned int x;
-#if defined(MPE) || (defined(AIX) && defined(__ps2__))
-    /*
-     * Believe it or not, AIX 1.x does not allow you to name a file '@', so
-     * hack around it in the encoding.
-     */
-    static const char enc_table[64] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_%";
-#else
     static const char enc_table[64] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_@";
-#endif
 
     ap_MD5Init(&context);
     ap_MD5Update(&context, (const unsigned char *)it, strlen(it));
@@ -1371,10 +1333,6 @@ int ap_proxy_doconnect(int sock, struct sockaddr_in *addr, request_rec *r)
     ap_hard_timeout("proxy connect", r);
     do {
         i = connect(sock, (struct sockaddr *)addr, sizeof(struct sockaddr_in));
-#if defined(WIN32) || defined(NETWARE)
-        if (i == SOCKET_ERROR)
-            errno = WSAGetLastError();
-#endif                          /* WIN32 */
     } while (i == -1 && errno == EINTR);
     if (i == -1) {
         ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
@@ -1644,45 +1602,8 @@ int ap_proxy_read_response_line(BUFF *f, request_rec *r, char *buffer, int size,
 
 }
 
-
-#if defined WIN32
-
-static DWORD tls_index;
-
-BOOL WINAPI DllMain(HINSTANCE dllhandle, DWORD reason, LPVOID reserved)
-{
-    LPVOID memptr;
-
-    switch (reason) {
-    case DLL_PROCESS_ATTACH:
-        tls_index = TlsAlloc();
-    case DLL_THREAD_ATTACH:     /* intentional no break */
-        TlsSetValue(tls_index, malloc(sizeof(struct per_thread_data)));
-        break;
-    case DLL_THREAD_DETACH:
-        memptr = TlsGetValue(tls_index);
-        if (memptr) {
-            free(memptr);
-            TlsSetValue(tls_index, 0);
-        }
-        break;
-    }
-
-    return TRUE;
-}
-
-#endif
-
 static struct per_thread_data *get_per_thread_data(void)
 {
-#if defined(WIN32)
-
-    return (struct per_thread_data *)TlsGetValue(tls_index);
-
-#else
-
     static APACHE_TLS struct per_thread_data sptd;
     return &sptd;
-
-#endif
 }

@@ -151,9 +151,7 @@
 
 #include "httpd.h"
 #include "http_config.h"
-#ifndef NETWARE
 #include <sys/types.h>
-#endif
 #include <sys/stat.h>
 #include "util_script.h"
 #include "http_log.h"

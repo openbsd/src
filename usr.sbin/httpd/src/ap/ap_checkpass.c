@@ -101,15 +101,7 @@ API_EXPORT(char *) ap_validate_password(const char *passwd, const char *hash)
 	/*
 	 * It's not our algorithm, so feed it to crypt() if possible.
 	 */
-#if defined(WIN32) || defined(NETWARE)
-	/*
-	 * On Windows, the only alternative to our MD5 algorithm is plain
-	 * text.
-	 */
-	ap_cpystrn(sample, passwd, sizeof(sample) - 1);
-#else
 	ap_cpystrn(sample, (char *)crypt(passwd, hash), sizeof(sample) - 1);
-#endif
     }
     return (strcmp(sample, hash) == 0) ? NULL : "password mismatch";
 }

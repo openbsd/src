@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_alias.c,v 1.11 2003/10/29 10:11:00 henning Exp $ */
+/*	$OpenBSD: mod_alias.c,v 1.12 2004/12/02 19:42:47 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -147,12 +147,8 @@ static const char *add_alias_internal(cmd_parms *cmd, void *dummy, char *f, char
 	    return "Regular expression could not be compiled.";
         new->real = r;
     }
-#ifndef OS2
     else
         new->real = ap_os_canonical_filename(cmd->pool, r);
-#else
-    new->real = r;
-#endif
     new->fake = f;
     new->handler = cmd->info;
 

@@ -312,12 +312,7 @@ int main(int argc, char *argv[])
     if ((argc > 1)
         && (! strcmp(argv[1], "-V"))
         && ((uid == 0)
-#ifdef _OSD_POSIX
-        /* User name comparisons are case insensitive on BS2000/OSD */
-            || (! strcasecmp(HTTPD_USER, pw->pw_name)))
-#else  /* _OSD_POSIX */
             || (! strcmp(HTTPD_USER, pw->pw_name)))
-#endif /* _OSD_POSIX */
         ) {
 #ifdef DOC_ROOT
         fprintf(stderr, " -D DOC_ROOT=\"%s\"\n", DOC_ROOT);
@@ -362,20 +357,11 @@ int main(int argc, char *argv[])
      * is the user allowed to do so as defined in
      * suexec.h.  If not the allowed user, error out.
      */
-#ifdef _OSD_POSIX
-    /* User name comparisons are case insensitive on BS2000/OSD */
-    if (strcasecmp(HTTPD_USER, pw->pw_name)) {
-        log_err("crit: calling user mismatch (%s instead of %s)\n",
-		pw->pw_name, HTTPD_USER);
-	exit(103);
-    }
-#else  /* _OSD_POSIX */
     if (strcmp(HTTPD_USER, pw->pw_name)) {
         log_err("crit: calling user mismatch (%s instead of %s)\n",
 		pw->pw_name, HTTPD_USER);
 	exit(103);
     }
-#endif /* _OSD_POSIX */
 
     /*
      * Check for a leading '/' (absolute path) in the command to be executed,
@@ -423,35 +409,6 @@ int main(int argc, char *argv[])
 	actual_gname = strdup(target_gname);
     }
 
-#ifdef _OSD_POSIX
-    /*
-     * Initialize BS2000 user environment
-     */
-    {
-	pid_t pid, reaped;
-	int status;
-
-	switch (pid = ufork(target_uname))
-	{
-	case -1:	/* Error */
-	    log_err("emerg: failed to setup bs2000 environment for user "
-		    "%s: %s\n",
-		    target_uname, strerror(errno));
-	    exit(150);
-	case 0:	/* Child */
-	    break;
-	default:	/* Father */
-	    while (pid != (reaped = waitpid(pid, &status, 0))
-		   && (reaped != -1 || errno != ECHILD))
-		;
-	    /* @@@ FIXME: should we deal with STOP signals as well? */
-	    if (WIFSIGNALED(status)) {
-		kill (getpid(), WTERMSIG(status));
-	    }
-	    exit(WEXITSTATUS(status));
-	}
-    }
-#endif /* _OSD_POSIX */
 
     /*
      * Save these for later since initgroups will hose the struct

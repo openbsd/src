@@ -66,16 +66,11 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#ifndef NETWARE
 #include <sys/types.h>
-#endif
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef WIN32
-#include <float.h>
-#endif
 
 typedef enum {
     NO = 0, YES = 1
@@ -97,12 +92,7 @@ typedef enum {
 typedef WIDE_INT wide_int;
 typedef unsigned WIDE_INT u_wide_int;
 typedef WIDEST_INT widest_int;
-#ifdef __TANDEM
-/* Although Tandem supports "long long" there is no unsigned variant. */
-typedef unsigned long       u_widest_int;
-#else
 typedef unsigned WIDEST_INT u_widest_int;
-#endif
 typedef int bool_int;
 
 #define S_NULL			"(null)"

@@ -114,10 +114,6 @@ static int check_safe_file(request_rec *r)
 
 static int check_symlinks(char *d, int opts)
 {
-#if defined(OS2) || defined(WIN32) || defined(NETWARE)
-    /* OS/2 doesn't have symlinks */
-    return OK;
-#else
     struct stat lfi, fi;
     char *lastp;
     int res;
@@ -167,7 +163,6 @@ static int check_symlinks(char *d, int opts)
 
     return (fi.st_uid == lfi.st_uid) ? OK : HTTP_FORBIDDEN;
 
-#endif
 }
 
 /* Dealing with the file system to get PATH_INFO
@@ -247,9 +242,6 @@ static int get_path_info(request_rec *r)
         else {
             errno = 0;
             rv = stat(path, &r->finfo);
-#ifdef OS2
-            r->finfo.st_ino = 0;
-#endif
         }
 
         if (cp != end)
@@ -458,15 +450,6 @@ static int directory_walk(request_rec *r)
         iStart = 4;
 #endif
 
-#if defined(NETWARE)
-    /* If the name is a fully qualified volume name, then do not perform any
-     * true file test on the machine name (start at machine/share:/)
-     * XXX: The implementation eludes me at this moment... 
-     *      Does this make sense?  Please test!
-     */
-    if (num_dirs > 1 && strchr(test_filename, '/') < strchr(test_filename, ':'))
-        iStart = 2;
-#endif
 
 #if defined(HAVE_DRIVE_LETTERS) || defined(NETWARE)
     /* Should match <Directory> sections starting from '/', not 'e:/' 
@@ -788,11 +771,6 @@ static request_rec *make_sub_request(const request_rec *r)
     request_rec *rr = ap_pcalloc(rrp, sizeof(request_rec));
 
     rr->pool = rrp;
-#ifdef CHARSET_EBCDIC
-    /* Assume virgin state (like after reading the request_line): */
-    ap_bsetflag(r->connection->client, B_ASCII2EBCDIC, rr->ebcdic.conv_in  = 1);
-    ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, rr->ebcdic.conv_out = 1);
-#endif   
     return rr;
 }
 
@@ -1039,12 +1017,6 @@ API_EXPORT(int) ap_run_sub_req(request_rec *r)
 
 API_EXPORT(void) ap_destroy_sub_req(request_rec *r)
 {
-#ifdef CHARSET_EBCDIC
-    if (r->main) {
-        ap_bsetflag(r->connection->client, B_ASCII2EBCDIC, r->main->ebcdic.conv_in);
-        ap_bsetflag(r->connection->client, B_EBCDIC2ASCII, r->main->ebcdic.conv_out);
-    }
-#endif   
     /* Reclaim the space */
     ap_destroy_pool(r->pool);
 }
@@ -1444,10 +1416,6 @@ static request_rec *internal_internal_redirect(const char *new_uri, request_rec 
     new->no_local_copy   = r->no_local_copy;
     new->read_length     = r->read_length;     /* We can only read it once */
     new->vlist_validator = r->vlist_validator;
-#ifdef CHARSET_EBCDIC /* @@@ Is this correct? When is it used? */
-    new->ebcdic.conv_out= r->ebcdic.conv_out;
-    new->ebcdic.conv_in = r->ebcdic.conv_in;
-#endif
 
     ap_table_setn(new->subprocess_env, "REDIRECT_STATUS",
 	ap_psprintf(r->pool, "%d", r->status));

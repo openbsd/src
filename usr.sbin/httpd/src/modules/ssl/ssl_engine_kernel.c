@@ -429,9 +429,7 @@ void ssl_hook_NewConnection(conn_rec *conn)
      * (don't used under Win32, because
      * there we use select())
      */
-#ifndef WIN32
     SSL_set_read_ahead(ssl, TRUE);
-#endif
 
 #ifdef SSL_VENDOR
     /* Allow vendors to do more things on connection time... */

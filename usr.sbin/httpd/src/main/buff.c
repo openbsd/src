@@ -122,177 +122,12 @@
  * futher I/O will be done
  */
 
-#if defined(WIN32) || defined(NETWARE) || defined(CYGWIN_WINSOCK) 
-
-/*
-  select() sometimes returns 1 even though the write will block. We must work around this.
-*/
-
-API_EXPORT(int) ap_sendwithtimeout(int sock, const char *buf, int len, int flags)
-{
-    int iostate = 1;
-    fd_set fdset;
-    struct timeval tv;
-    int err = WSAEWOULDBLOCK;
-    int rv;
-    int retry;
-
-    tv.tv_sec = ap_check_alarm();
-
-    /* If ap_sendwithtimeout is called with an invalid timeout
-     * set a default timeout of 300 seconds. This hack is needed
-     * to emulate the non-blocking send() that was removed in 
-     * the previous patch to this function. Network servers
-     * should never make network i/o calls w/o setting a timeout.
-     * (doing otherwise opens a DoS attack exposure)
-     */
-    if (tv.tv_sec <= 0) {
-        tv.tv_sec = 300;
-    }
-
-    rv = ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
-    iostate = 0;
-    if (rv) {
-	err = WSAGetLastError();
-	ap_assert(0);
-    }
-
-    rv = send(sock, buf, len, flags);
-    if (rv == SOCKET_ERROR) {
-	err = WSAGetLastError();
-	if (err == WSAEWOULDBLOCK)
-	    do {
-		retry=0;
-
-		FD_ZERO(&fdset);
-		FD_SET(sock, &fdset);
-		tv.tv_usec = 0;
-		rv = select(sock + 1, NULL, &fdset, NULL, &tv);
-		if (rv == SOCKET_ERROR)
-		    err = WSAGetLastError();
-		else if (rv == 0) {
- 		    ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
-		    if(ap_check_alarm() < 0) {
-			WSASetLastError(EINTR);	/* Simulate an alarm() */
-			return (SOCKET_ERROR);
-		    }
- 		}
-		else {
-		    rv = send(sock, buf, len, flags);
-		    if (rv == SOCKET_ERROR) {
-		        err = WSAGetLastError();
-			if(err == WSAEWOULDBLOCK) {
-			    
-			    retry=1;
-                            ap_log_error(APLOG_MARK,APLOG_DEBUG,NULL,
-                                         "select claimed we could write, but in fact we couldn't.");
-#ifdef NETWARE
-                            ThreadSwitchWithDelay();
-#else
-			    Sleep(100);
-#endif
-			}
-		    }
-		}
-	    } while(retry);
-    }
-
-    ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
-
-    if (rv == SOCKET_ERROR)
-	WSASetLastError(err);
-    return (rv);
-}
-
-
-API_EXPORT(int) ap_recvwithtimeout(int sock, char *buf, int len, int flags)
-{
-    int iostate = 1;
-    fd_set fdset;
-    struct timeval tv;
-    int err = WSAEWOULDBLOCK;
-    int rv;
-    int retry;
-
-    tv.tv_sec = ap_check_alarm();
-
-    /* If ap_recvwithtimeout is called with an invalid timeout
-     * set a default timeout of 300 seconds. This hack is needed
-     * to emulate the non-blocking recv() that was removed in 
-     * the previous patch to this function. Network servers
-     * should never make network i/o calls w/o setting a timeout.
-     * (doing otherwise opens a DoS attack exposure)
-     */
-    if (tv.tv_sec <= 0) {
-        tv.tv_sec = 300;
-    }
-
-    rv = ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
-    iostate = 0;
-    ap_assert(!rv);
-
-    rv = recv(sock, buf, len, flags);
-    if (rv == SOCKET_ERROR) {
-	err = WSAGetLastError();
-	if (err == WSAEWOULDBLOCK) {
-            do {
-                retry = 0;
-                FD_ZERO(&fdset);
-                FD_SET(sock, &fdset);
-                tv.tv_usec = 0;
-                rv = select(sock + 1, &fdset, NULL, NULL, &tv);
-                if (rv == SOCKET_ERROR)
-                    err = WSAGetLastError();
-                else if (rv == 0) {
-                    ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
-                    ap_check_alarm();
-                    WSASetLastError(WSAEWOULDBLOCK);
-                    return (SOCKET_ERROR);
-                }
-                else {
-                    rv = recv(sock, buf, len, flags);
-                    if (rv == SOCKET_ERROR) {
-                        err = WSAGetLastError();
-                        if (err == WSAEWOULDBLOCK) {
-                            ap_log_error(APLOG_MARK, APLOG_DEBUG, NULL,
-                                         "select claimed we could read, but in fact we couldn't.");
-                            retry = 1;
-#ifdef NETWARE
-                            ThreadSwitchWithDelay();
-#else
-                            Sleep(100);
-#endif
-                        }
-                    }
-                }
-            } while (retry);
-        }
-    }
-
-    ioctlsocket(sock, FIONBIO, (u_long*)&iostate);
-
-    if (rv == SOCKET_ERROR)
-	WSASetLastError(err);
-    return (rv);
-}
-
-#endif /* WIN32 */
-
 
 /* the lowest level reading primitive */
 static int ap_read(BUFF *fb, void *buf, int nbyte)
 {
     int rv;
     
-#ifdef WIN32
-    if (fb->hFH != INVALID_HANDLE_VALUE) {
-        if (!ReadFile(fb->hFH,buf,nbyte,&rv,NULL)) {
-            errno = GetLastError();
-            rv = -1;
-        }
-    }
-    else
-#endif
 #ifdef EAPI
 	if (!ap_hook_call("ap::buff::read", &rv, fb, buf, nbyte))
 #endif /* EAPI */
@@ -305,41 +140,7 @@ static ap_inline int buff_read(BUFF *fb, void *buf, int nbyte)
 {
     int rv;
 
-#if defined (WIN32) || defined(NETWARE) || defined(CYGWIN_WINSOCK) 
-    if (fb->flags & B_SOCKET) {
-#ifdef EAPI
-	if (!ap_hook_call("ap::buff::recvwithtimeout", &rv, fb, buf, nbyte))
-#endif /* EAPI */
-	rv = ap_recvwithtimeout(fb->fd_in, buf, nbyte, 0);
-	if (rv == SOCKET_ERROR)
-	    errno = WSAGetLastError();
-    }
-    else
-	rv = ap_read(fb, buf, nbyte);
-#elif defined (BEOS)
-    if (fb->flags & B_SOCKET) {
-        rv = recv(fb->fd_in, buf, nbyte, 0);
-    } else
-        rv = ap_read(fb,buf,nbyte);
-#elif defined(TPF)
-    fd_set fds;
-    struct timeval tv;
-
-    ap_check_signals();
-    if (fb->flags & B_SOCKET) {
-        FD_ZERO(&fds);
-        FD_SET(fb->fd_in, &fds);
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
-        rv = ap_select(fb->fd_in + 1, &fds, NULL, NULL, &tv);
-        if (rv > 0)
-            rv = ap_read(fb, buf, nbyte);
-    }
-    else
-        rv = ap_read(fb, buf, nbyte);
-#else
     rv = ap_read(fb, buf, nbyte);
-#endif /* WIN32 */
     return rv;
 }
 
@@ -348,32 +149,12 @@ static int ap_write(BUFF *fb, const void *buf, int nbyte)
 {
     int rv;
     
-#ifdef WIN32
-    if (fb->hFH != INVALID_HANDLE_VALUE) {
-        if (!WriteFile(fb->hFH,buf,nbyte,&rv,NULL)) {
-            errno = GetLastError();
-            rv = -1;
-        }
-    }
-    else
-#endif
 #ifdef EAPI
 	if (!ap_hook_call("ap::buff::write", &rv, fb, buf, nbyte))
 #endif /* EAPI */
 #if defined (B_SFIO)
 	rv = sfwrite(fb->sf_out, buf, nbyte);
 #else
-#ifdef _OSD_POSIX
-        /* Sorry, but this is a hack: On BS2000, currently the send() call
-         * has slightly better performance, and it doesn't have a maximum
-	 * transfer size of 16kB per write. Both write() and writev()
-	 * currently have such a limit and therefore don't work
-	 * too well with MMAP files.
-	 */
-	if (fb->flags & B_SOCKET)
-	    rv = send(fb->fd, buf, nbyte, 0);
-	else
-#endif
 	rv = write(fb->fd, buf, nbyte);
 #endif
     
@@ -388,25 +169,7 @@ static ap_inline int buff_write(BUFF *fb, const void *buf, int nbyte)
         fb->filter_callback(fb, buf, nbyte);
     }
    
-#if defined(WIN32) || defined(NETWARE)
-    if (fb->flags & B_SOCKET) {
-#ifdef EAPI
-	if (!ap_hook_call("ap::buff::sendwithtimeout", &rv, fb, buf, nbyte))
-#endif /* EAPI */
-	rv = ap_sendwithtimeout(fb->fd, buf, nbyte, 0);
-	if (rv == SOCKET_ERROR)
-	    errno = WSAGetLastError();
-    }
-    else
-	rv = ap_write(fb, buf, nbyte);
-#elif defined(BEOS)
-    if(fb->flags & B_SOCKET) {
-        rv = send(fb->fd, buf, nbyte, 0);
-    } else 
-        rv = ap_write(fb, buf,nbyte);
-#else
     rv = ap_write(fb, buf, nbyte);
-#endif /* WIN32 */
     return rv;
 }
 
@@ -446,10 +209,6 @@ API_EXPORT(BUFF *) ap_bcreate(pool *p, int flags)
     else
 	fb->outbase = NULL;
 
-#ifdef CHARSET_EBCDIC
-    fb->flags |= (flags & B_SOCKET) ? (B_EBCDIC2ASCII | B_ASCII2EBCDIC) : 0;
-#endif /*CHARSET_EBCDIC*/
-
     fb->inptr = fb->inbase;
 
     fb->incnt = 0;
@@ -460,9 +219,6 @@ API_EXPORT(BUFF *) ap_bcreate(pool *p, int flags)
 
     fb->fd = -1;
     fb->fd_in = -1;
-#ifdef WIN32
-    fb->hFH = INVALID_HANDLE_VALUE;
-#endif
 
 #ifdef B_SFIO
     fb->sf_in = NULL;
@@ -491,16 +247,6 @@ API_EXPORT(void) ap_bpushfd(BUFF *fb, int fd_in, int fd_out)
     fb->fd = fd_out;
     fb->fd_in = fd_in;
 }
-
-#ifdef WIN32
-/*
- * Push some Win32 handles onto the stream.
- */
-API_EXPORT(void) ap_bpushh(BUFF *fb, HANDLE hFH)
-{
-    fb->hFH = hFH;
-}
-#endif
 
 API_EXPORT(int) ap_bsetopt(BUFF *fb, int optname, const void *optval)
 {
@@ -605,12 +351,6 @@ static void end_chunk(BUFF *fb)
     /* tack on the trailing CRLF, we've reserved room for this */
     fb->outbase[fb->outcnt++] = CR;
     fb->outbase[fb->outcnt++] = LF;
-
-#ifdef CHARSET_EBCDIC
-    /* Chunks are an HTTP/1.1 Protocol feature. They must ALWAYS be in ASCII */
-    ebcdic2ascii(&fb->outbase[fb->outchunk], &fb->outbase[fb->outchunk], CHUNK_HEADER_SIZE);
-    ebcdic2ascii(&fb->outbase[fb->outcnt-2], &fb->outbase[fb->outcnt-2], 2);
-#endif /*CHARSET_EBCDIC*/
 
     fb->outchunk = -1;
 }
@@ -802,32 +542,18 @@ API_EXPORT(int) ap_bread(BUFF *fb, void *buf, int nbyte)
 	 * buffer from before we went unbuffered. */
 	if (fb->incnt) {
 	    i = (fb->incnt > nbyte) ? nbyte : fb->incnt;
-#ifdef CHARSET_EBCDIC
-	    if (fb->flags & B_ASCII2EBCDIC)
-		ascii2ebcdic(buf, fb->inptr, i);
-	    else
-#endif /*CHARSET_EBCDIC*/
 	    memcpy(buf, fb->inptr, i);
 	    fb->incnt -= i;
 	    fb->inptr += i;
 	    return i;
 	}
 	i = read_with_errors(fb, buf, nbyte);
-#ifdef CHARSET_EBCDIC
-	if (i > 0 && ap_bgetflag(fb, B_ASCII2EBCDIC))
-	    ascii2ebcdic(buf, buf, i);
-#endif /*CHARSET_EBCDIC*/
 	return i;
     }
 
     nrd = fb->incnt;
 /* can we fill the buffer */
     if (nrd >= nbyte) {
-#ifdef CHARSET_EBCDIC
-	if (fb->flags & B_ASCII2EBCDIC)
-	    ascii2ebcdic(buf, fb->inptr, nbyte);
-	else
-#endif /*CHARSET_EBCDIC*/
 	memcpy(buf, fb->inptr, nbyte);
 	fb->incnt = nrd - nbyte;
 	fb->inptr += nbyte;
@@ -835,11 +561,6 @@ API_EXPORT(int) ap_bread(BUFF *fb, void *buf, int nbyte)
     }
 
     if (nrd > 0) {
-#ifdef CHARSET_EBCDIC
-	if (fb->flags & B_ASCII2EBCDIC)
-	    ascii2ebcdic(buf, fb->inptr, nrd);
-	else
-#endif /*CHARSET_EBCDIC*/
 	memcpy(buf, fb->inptr, nrd);
 	nbyte -= nrd;
 	buf = nrd + (char *) buf;
@@ -852,10 +573,6 @@ API_EXPORT(int) ap_bread(BUFF *fb, void *buf, int nbyte)
     if (nbyte >= fb->bufsiz) {
 /* read directly into caller's buffer */
 	i = read_with_errors(fb, buf, nbyte);
-#ifdef CHARSET_EBCDIC
-	if (i > 0 && ap_bgetflag(fb, B_ASCII2EBCDIC))
-	    ascii2ebcdic(buf, buf, i);
-#endif /*CHARSET_EBCDIC*/
 	if (i == -1) {
 	    return nrd ? nrd : -1;
 	}
@@ -870,11 +587,6 @@ API_EXPORT(int) ap_bread(BUFF *fb, void *buf, int nbyte)
 	fb->incnt = i;
 	if (i > nbyte)
 	    i = nbyte;
-#ifdef CHARSET_EBCDIC
-	if (fb->flags & B_ASCII2EBCDIC)
-	    ascii2ebcdic(buf, fb->inptr, i);
-	else
-#endif /*CHARSET_EBCDIC*/
 	memcpy(buf, fb->inptr, i);
 	fb->incnt -= i;
 	fb->inptr += i;
@@ -935,10 +647,6 @@ API_EXPORT(int) ap_bgets(char *buff, int n, BUFF *fb)
 	}
 
 	ch = fb->inptr[i++];
-#ifdef CHARSET_EBCDIC
-	if (fb->flags & B_ASCII2EBCDIC)
-	    ch = os_toebcdic[(unsigned char)ch];
-#endif
 	if (ch == LF) {  /* got LF */
 	    if (ct == 0)
 		buff[ct++] = '\n';
@@ -997,13 +705,7 @@ API_EXPORT(int) ap_blookc(char *buff, BUFF *fb)
 	fb->incnt = i;
     }
 
-#ifndef CHARSET_EBCDIC
     *buff = fb->inptr[0];
-#else /*CHARSET_EBCDIC*/
-    *buff = (fb->flags & B_ASCII2EBCDIC)
-	     ? os_toebcdic[(unsigned char)fb->inptr[0]]
-	     : fb->inptr[0];
-#endif /*CHARSET_EBCDIC*/
     return 1;
 }
 
@@ -1217,10 +919,6 @@ static int bcwrite(BUFF *fb, const void *buf, int nbyte)
     /* without writev() this has poor performance, too bad */
 
     ap_snprintf(chunksize, sizeof(chunksize), "%x" CRLF, nbyte);
-#ifdef CHARSET_EBCDIC
-    /* Chunks are an HTTP/1.1 Protocol feature. They must ALWAYS be in ASCII */
-    ebcdic2ascii(chunksize, chunksize, strlen(chunksize));
-#endif /*CHARSET_EBCDIC*/
     if (write_it_all(fb, chunksize, strlen(chunksize)) == -1)
 	return -1;
     if (write_it_all(fb, buf, nbyte) == -1)
@@ -1232,10 +930,6 @@ static int bcwrite(BUFF *fb, const void *buf, int nbyte)
     vec[0].iov_base = chunksize;
     vec[0].iov_len = ap_snprintf(chunksize, sizeof(chunksize), "%x" CRLF,
 				 nbyte);
-#ifdef CHARSET_EBCDIC
-    /* Chunks are an HTTP/1.1 Protocol feature. They must ALWAYS be in ASCII */
-    ebcdic2ascii(chunksize, chunksize, strlen(chunksize));
-#endif /*CHARSET_EBCDIC*/
     vec[1].iov_base = (void *) buf;	/* cast is to avoid const warning */
     vec[1].iov_len = nbyte;
     vec[2].iov_base = ascii_CRLF;
@@ -1271,10 +965,6 @@ static int large_write(BUFF *fb, const void *buf, int nbyte)
 	vec[nvec].iov_base = chunksize;
 	vec[nvec].iov_len = ap_snprintf(chunksize, sizeof(chunksize),
 					"%x" CRLF, nbyte);
-#ifdef CHARSET_EBCDIC
-    /* Chunks are an HTTP/1.1 Protocol feature. They must ALWAYS be in ASCII */
-	ebcdic2ascii(chunksize, chunksize, strlen(chunksize));
-#endif /*CHARSET_EBCDIC*/
 	++nvec;
 	vec[nvec].iov_base = (void *) buf;
 	vec[nvec].iov_len = nbyte;
@@ -1311,31 +1001,11 @@ static int large_write(BUFF *fb, const void *buf, int nbyte)
 API_EXPORT(int) ap_bwrite(BUFF *fb, const void *buf, int nbyte)
 {
     int i, nwr, useable_bufsiz;
-#ifdef CHARSET_EBCDIC
-    static char *cbuf = NULL;
-    static int csize = 0;
-#endif /*CHARSET_EBCDIC*/
 
     if (fb->flags & (B_WRERR | B_EOUT))
 	return -1;
     if (nbyte == 0)
 	return 0;
-
-#ifdef CHARSET_EBCDIC
-    if (ap_bgetflag(fb, B_EBCDIC2ASCII)) {
-        if (nbyte > csize) {
-            if (cbuf != NULL)
-                free(cbuf);
-            cbuf = malloc(csize = nbyte+HUGE_STRING_LEN);
-            if (cbuf == NULL) {
-                fprintf(stderr, "Ouch!  Out of memory in ap_bwrite()!\n");
-                csize = 0;
-            }
-        }
-        ebcdic2ascii((cbuf) ? cbuf : (void*)buf, buf, nbyte);
-        buf = (cbuf) ? cbuf : buf;
-    }
-#endif /*CHARSET_EBCDIC*/
 
     if (!(fb->flags & B_WR)) {
 /* unbuffered write -- have to use bcwrite since we aren't taking care
@@ -1525,13 +1195,6 @@ API_EXPORT(int) ap_bclose(BUFF *fb)
 	    rc3 = 0;
 	}
     } else {
-#if defined(WIN32)
-    if (fb->hFH != INVALID_HANDLE_VALUE) {
-        rc2 = ap_pcloseh(fb->pool, fb->hFH);
-        rc3 = 0;
-    }
-    else {
-#endif
 	rc2 = ap_pclosef(fb->pool, fb->fd);
 	if (fb->fd_in != fb->fd) {
 	    rc3 = ap_pclosef(fb->pool, fb->fd_in);
@@ -1540,9 +1203,6 @@ API_EXPORT(int) ap_bclose(BUFF *fb)
 	    rc3 = 0;
 	}
     }
-#if defined(WIN32)
-    }
-#endif
 
     fb->inptr = fb->inbase;
     fb->incnt = 0;
@@ -1623,13 +1283,6 @@ static int bprintf_flush(ap_vformatter_buff *vbuff)
     struct bprintf_data *b = (struct bprintf_data *)vbuff;
     BUFF *fb = b->fb;
 
-#ifdef CHARSET_EBCDIC
-    /* Characters were pushed into the buffer without conversion. Do it now */
-    if (fb->flags & B_EBCDIC2ASCII)
-        ebcdic2ascii(&fb->outbase[fb->outcnt],
-		     &fb->outbase[fb->outcnt],
-		     b->vbuff.curpos - (char *)&fb->outbase[fb->outcnt]);
-#endif /*CHARSET_EBCDIC*/
     fb->outcnt += b->vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
     if (fb->outcnt == fb->bufsiz) {
 	if (ap_bflush(fb)) {
@@ -1657,13 +1310,6 @@ API_EXPORT_NONSTD(int) ap_bprintf(BUFF *fb, const char *fmt, ...)
     res = ap_vformatter(bprintf_flush, &b.vbuff, fmt, ap);
     va_end(ap);
     if (res != -1) {
-#ifdef CHARSET_EBCDIC
-	/* Characters were pushed into the buffer without conversion. Do it now */
-	if (fb->flags & B_EBCDIC2ASCII)
-	    ebcdic2ascii(&fb->outbase[fb->outcnt],
-			 &fb->outbase[fb->outcnt],
-			 b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt]);
-#endif /*CHARSET_EBCDIC*/
 	fb->outcnt += b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
     }
     return res;
@@ -1682,13 +1328,6 @@ API_EXPORT(int) ap_vbprintf(BUFF *fb, const char *fmt, va_list ap)
     b.fb = fb;
     res = ap_vformatter(bprintf_flush, &b.vbuff, fmt, ap);
     if (res != -1) {
-#ifdef CHARSET_EBCDIC
-	/* Characters were pushed into the buffer without conversion. Do it now */
-	if (fb->flags & B_EBCDIC2ASCII)
-	    ebcdic2ascii(&fb->outbase[fb->outcnt],
-			 &fb->outbase[fb->outcnt],
-			 b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt]);
-#endif /*CHARSET_EBCDIC*/
 	fb->outcnt += b.vbuff.curpos - (char *)&fb->outbase[fb->outcnt];
     }
     return res;

@@ -92,9 +92,6 @@
 #include "ap_config.h"
 #include "ap_sha1.h"
 #include "ap.h"
-#ifdef CHARSET_EBCDIC
-#include "ap_ebcdic.h"
-#endif /*CHARSET_EBCDIC*/
 
 /* a bit faster & bigger, if defined */
 #define UNROLL_LOOPS
@@ -282,46 +279,7 @@ API_EXPORT(void) ap_SHA1Update_binary(AP_SHA1_CTX *sha_info,
 API_EXPORT(void) ap_SHA1Update(AP_SHA1_CTX *sha_info, const char *buf,
 			       unsigned int count)
 {
-#ifdef CHARSET_EBCDIC
-    int i;
-    const AP_BYTE *buffer = (const AP_BYTE *) buf;
-
-    if ((sha_info->count_lo + ((AP_LONG) count << 3)) < sha_info->count_lo) {
-	++sha_info->count_hi;
-    }
-    sha_info->count_lo += (AP_LONG) count << 3;
-    sha_info->count_hi += (AP_LONG) count >> 29;
-    /* Is there a remainder of the previous Update operation? */
-    if (sha_info->local) {
-	i = SHA_BLOCKSIZE - sha_info->local;
-	if (i > count) {
-	    i = count;
-	}
-	ebcdic2ascii(((AP_BYTE *) sha_info->data) + sha_info->local,
-			      buffer, i);
-	count -= i;
-	buffer += i;
-	sha_info->local += i;
-	if (sha_info->local == SHA_BLOCKSIZE) {
-	    maybe_byte_reverse(sha_info->data, SHA_BLOCKSIZE);
-	    sha_transform(sha_info);
-	}
-	else {
-	    return;
-	}
-    }
-    while (count >= SHA_BLOCKSIZE) {
-	ebcdic2ascii((AP_BYTE *)sha_info->data, buffer, SHA_BLOCKSIZE);
-	buffer += SHA_BLOCKSIZE;
-	count -= SHA_BLOCKSIZE;
-	maybe_byte_reverse(sha_info->data, SHA_BLOCKSIZE);
-	sha_transform(sha_info);
-    }
-    ebcdic2ascii((AP_BYTE *)sha_info->data, buffer, count);
-    sha_info->local = count;
-#else
     ap_SHA1Update_binary(sha_info, (const unsigned char *) buf, count);
-#endif
 }
 
 /* finish computing the SHA digest */

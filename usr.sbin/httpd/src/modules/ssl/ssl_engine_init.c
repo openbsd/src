@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_engine_init.c,v 1.24 2004/10/20 14:02:40 henning Exp $ */
+/* $OpenBSD: ssl_engine_init.c,v 1.25 2004/12/02 19:42:47 henning Exp $ */
 
 /*                      _             _
 **  _ __ ___   ___   __| |    ___ ___| |  mod_ssl
@@ -178,11 +178,6 @@ void ssl_init_Module(server_rec *s, pool *p)
                 SERVER_BASEVERSION,
                 ssl_var_lookup(p, NULL, NULL, NULL, "SSL_VERSION_INTERFACE"),
                 ssl_var_lookup(p, NULL, NULL, NULL, "SSL_VERSION_LIBRARY"));
-#ifdef WIN32
-        ssl_log(s, SSL_LOG_WARN, "You are using mod_ssl under Win32. " 
-                "This combination is *NOT* officially supported. "
-                "Use it at your own risk!");
-#endif
     }
 
     /*
@@ -258,9 +253,7 @@ void ssl_init_Module(server_rec *s, pool *p)
 #ifndef __OpenBSD__
         ssl_init_TmpKeysHandle(SSL_TKP_GEN, s, p);
 #endif
-#ifndef WIN32
         return;
-#endif
     }
 
 #ifdef __OpenBSD__
@@ -355,9 +348,6 @@ void ssl_init_Module(server_rec *s, pool *p)
  */
 void ssl_init_SSLLibrary(void)
 {
-#ifdef WIN32
-    CRYPTO_malloc_init();
-#endif
     SSL_load_error_strings();
     SSL_library_init();
     ssl_util_thread_setup();

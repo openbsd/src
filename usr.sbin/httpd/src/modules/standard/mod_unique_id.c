@@ -144,50 +144,6 @@ typedef struct {
 
 static unsigned global_in_addr;
 
-#ifdef WIN32
-
-static DWORD tls_index;
-
-BOOL WINAPI DllMain (HINSTANCE dllhandle, DWORD reason, LPVOID reserved)
-{
-    LPVOID memptr;
-
-    switch (reason) {
-    case DLL_PROCESS_ATTACH:
-	tls_index = TlsAlloc();
-    case DLL_THREAD_ATTACH: /* intentional no break */
-	TlsSetValue(tls_index, calloc(sizeof(unique_id_rec), 1));
-	break;
-    case DLL_THREAD_DETACH:
-	memptr = TlsGetValue(tls_index);
-	if (memptr) {
-	    free (memptr);
-	    TlsSetValue (tls_index, 0);
-	}
-	break;
-    }
-
-    return TRUE;
-}
-
-static unique_id_rec* get_cur_unique_id(int parent)
-{
-    /* Apache initializes the child process, not the individual child threads.
-     * Copy the original parent record if this->pid is not yet initialized.
-     */
-    static unique_id_rec *parent_id;
-    unique_id_rec *cur_unique_id = (unique_id_rec *) TlsGetValue(tls_index);
-
-    if (parent) {
-        parent_id = cur_unique_id;
-    }
-    else if (!cur_unique_id->pid) {
-        memcpy(cur_unique_id, parent_id, sizeof(*parent_id));
-    }
-    return cur_unique_id;
-}
-
-#else /* !WIN32 */
 
 /* Even when not MULTITHREAD, this will return a single structure, since
  * APACHE_TLS should be defined as empty on single-threaded platforms.
@@ -197,8 +153,6 @@ static unique_id_rec* get_cur_unique_id(int parent)
     static APACHE_TLS unique_id_rec spcid;
     return &spcid;
 }
-
-#endif /* !WIN32 */
 
 
 /*

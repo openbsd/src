@@ -96,9 +96,7 @@
 #include "httpd.h"
 #include "http_config.h"
 #include "http_core.h"
-#if !defined(WIN32) && !defined(MPE) && !defined(TPF)
 #include <sys/time.h>
-#endif
 
 module MODULE_VAR_EXPORT usertrack_module;
 
@@ -152,11 +150,7 @@ static char * make_cookie_id(char * buffer, int bufsize, request_rec *r,
     struct tms mpe_tms;
 #elif !defined(WIN32)
     struct timeval tv;
-#ifdef NETWARE
-    time_t tz = 0;
-#else
     struct timezone tz = {0, 0};
-#endif /* defined(NETWARE) */
 #endif
 
     cookie_dir_rec *dcfg;

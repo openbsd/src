@@ -215,19 +215,11 @@ typedef struct module_struct {
      * Modules should not rely on the order in which create_server_config
      * and create_dir_config are called.
      */
-#ifdef ULTRIX_BRAIN_DEATH
-    void (*init) ();
-    void *(*create_dir_config) ();
-    void *(*merge_dir_config) ();
-    void *(*create_server_config) ();
-    void *(*merge_server_config) ();
-#else
     void (*init) (server_rec *, pool *);
     void *(*create_dir_config) (pool *p, char *dir);
     void *(*merge_dir_config) (pool *p, void *base_conf, void *new_conf);
     void *(*create_server_config) (pool *p, server_rec *s);
     void *(*merge_server_config) (pool *p, void *base_conf, void *new_conf);
-#endif
 
     const command_rec *cmds;
     const handler_rec *handlers;
@@ -268,13 +260,8 @@ typedef struct module_struct {
      * parameters passed here are the same as those passed to the global
      * init method above.
      */
-#ifdef ULTRIX_BRAIN_DEATH
-    void (*child_init) ();
-    void (*child_exit) ();
-#else
     void (*child_init) (server_rec *, pool *);
     void (*child_exit) (server_rec *, pool *);
-#endif
     int (*post_read_request) (request_rec *);
 
 #ifdef EAPI
@@ -321,19 +308,11 @@ typedef struct module_struct {
      *     to close/finalize connection dependent things like sending end
      *     headers for on-the-fly compression, etc.
      */
-#ifdef ULTRIX_BRAIN_DEATH
-    void  (*add_module) ();
-    void  (*remove_module) ();
-    char *(*rewrite_command) ();
-    void  (*new_connection) ();
-    void  (*close_connection) ();
-#else
     void  (*add_module) (struct module_struct *);
     void  (*remove_module) (struct module_struct *);
     char *(*rewrite_command) (cmd_parms *, void *config, const char *);
     void  (*new_connection) (conn_rec *);
     void  (*close_connection) (conn_rec *);
-#endif
 #endif /* EAPI */
 } module;
 

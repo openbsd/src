@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_auth.c,v 1.11 2003/08/21 13:11:36 henning Exp $ */
+/*	$OpenBSD: mod_auth.c,v 1.12 2004/12/02 19:42:47 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -285,12 +285,6 @@ static int check_user_access(request_rec *r)
          * owner of the document.
          */
 	if (strcmp(w, "file-owner") == 0) {
-#if defined(WIN32) || defined(NETWARE) || defined(OS2)
-            ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, r,
-                          "'Require file-owner' not supported "
-                          "on this platform, ignored");
-            continue;
-#else
             struct passwd *pwent;
             ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, r,
                           "checking for 'owner' access for file '%s'",
@@ -318,15 +312,8 @@ static int check_user_access(request_rec *r)
                     continue;
                 }
             }
-#endif
         }
 	if (strcmp(w, "file-group") == 0) {
-#if defined(WIN32) || defined(NETWARE) || defined(OS2)
-            ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, r,
-                          "'Require file-group' not supported "
-                          "on this platform, ignored");
-            continue;
-#else
             struct group *grent;
             if (sec->auth_grpfile == NULL) {
                 ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO, r,
@@ -369,7 +356,6 @@ static int check_user_access(request_rec *r)
                     continue;
                 }
             }
-#endif
         }
 	if (strcmp(w, "user") == 0) {
 	    while (t[0] != '\0') {
