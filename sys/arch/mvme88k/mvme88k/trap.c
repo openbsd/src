@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2003/09/02 20:57:21 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2003/09/03 01:15:56 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -451,32 +451,16 @@ user_fault:
 
 		va = trunc_page((vm_offset_t)fault_addr);
 
-		/*
-		 * XXX
-		 * Page faults for addresses in page zero _SEEM TO BE_ special.
-		 * For some reason, we will keep faulting with the same
-		 * cause when the interrupts get enabled, later in the
-		 * exception process, and eventually eat all the interrupt
-		 * stack in a recursive DAE.
-		 * Since accesses to this page will always result in a
-		 * SIGSEGV, we can safely clear the DAE condition here.
-		 *
-		 * (behaviour experienced on MVME187C)
-		 */
-		if (va == 0) {
-			frame->dpfsr = 0;
-			frame->dmt0 = 0;
-			result = EFAULT;
-		}
-
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 
 		/* Call uvm_fault() to resolve non-bus error faults */
 		switch (pbus_type) {
+#if 0
 		case 0:
 			result = 0;
 			break;
+#endif
 		case 3:
 			result = EACCES;
 			break;
@@ -515,7 +499,26 @@ user_fault:
 				frame->snip = frame->sxip & ~NIP_E;
 			}
 		} else {
-			sig = result == EACCES ?  SIGBUS : SIGSEGV;
+			/*
+			 * XXX
+			 * Page faults for addresses in page zero _SEEM TO BE_
+			 * special.
+			 * For some reason, we will keep faulting with the same
+			 * cause when the interrupts get enabled, later in the
+			 * exception process, and eventually eat all the
+			 * interrupt stack in a recursive DAE.
+			 * Since accesses to this page will always result in a
+			 * SIGSEGV, we can safely clear the DAE condition here.
+			 *
+			 * (behaviour experienced on MVME187C)
+			 */
+			if (va == 0 && type == (T_DATAFLT + T_USER) &&
+			    pbus_type == 5 && SYSTEMMODE(frame->epsr)) {
+				frame->dpfsr = 0;
+				frame->dmt0 = 0;
+			}
+
+			sig = result == EACCES ? SIGBUS : SIGSEGV;
 			fault_type = result == EACCES ?
 				BUS_ADRERR : SEGV_MAPERR;
 		}
