@@ -1,4 +1,4 @@
-/* *	$OpenBSD: find.h,v 1.5 1996/09/01 04:56:26 tholo Exp $*/
+/* *	$OpenBSD: find.h,v 1.6 1996/12/23 04:58:09 millert Exp $*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,8 +40,8 @@
 /* node type */
 enum ntype {
 	N_AND = 1, 				/* must start > 0 */
-	N_ATIME, N_CLOSEPAREN, N_CTIME, N_DEPTH, N_EMPTY, N_EXEC, N_EXPR,
-	N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MAXDEPTH,
+	N_ATIME, N_CLOSEPAREN, N_CTIME, N_DEPTH, N_EMPTY, N_EXEC, N_EXECDIR,
+	N_EXPR, N_FOLLOW, N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MAXDEPTH,
 	N_MINDEPTH, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER,
 	N_OK, N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRUNE,
 	N_SIZE, N_TYPE, N_USER, N_XDEV,
@@ -106,7 +106,7 @@ typedef struct _option {
 #define	O_NONE		0x01		/* no call required */
 #define	O_ZERO		0x02		/* pass: nothing */
 #define	O_ARGV		0x04		/* pass: argv, increment argv */
-#define	O_ARGVP		0x08		/* pass: *argv, N_OK || N_EXEC */
+#define	O_ARGVP		0x08		/* pass: *argv, N_OK || N_EXEC || N_EXECDIR */
 	int flags;
 } OPTION;
 

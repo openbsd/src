@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.9 1996/09/01 07:26:45 tholo Exp $
+.\"	$OpenBSD: find.1,v 1.10 1996/12/23 04:58:09 millert Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -156,6 +156,16 @@ arguments it is replaced by the pathname of the current file.
 will be executed from the directory from which
 .Nm find
 was executed.
+.It Ic -execdir Ar utility Op argument ... ; 
+The
+.Ic \&-execdir
+primary is identical to the
+.Ic -exec
+primary with the exception that
+.Ar Utility
+will be executed from the directory that holds
+the current file.  The filename substituted for
+the string ``{}'' is not qualified.
 .It Ic -follow
 Follow symbolic links.
 .It Ic -fstype Ar type 
