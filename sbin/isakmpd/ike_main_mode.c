@@ -1,8 +1,8 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.7 1999/03/31 23:46:52 niklas Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.71 1999/03/31 23:33:02 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.8 1999/04/02 01:09:39 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.74 1999/04/02 00:57:44 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1051,8 +1051,11 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	    {
 	      str = conf_get_str (life->field, "LIFE_TYPE");
 	      if (!str)
-		/* XXX Log this?  */
-		continue;
+		{
+		  log_print ("attribute_unacceptable: "
+			     "section [%s] has no LIFE_TYPE", life->field);
+		  continue;
+		}
 
 	      /*
 	       * If this is the type we are looking at, save a pointer
@@ -1062,11 +1065,12 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 		{
 		  vs->life = life->field;
 		  rv = 0;
+		  goto bail_out;
 		}
-	      else
-		vs->life = 0;
 	    }
-	  /* XXX Log?  */
+	  log_print ("attribute_unacceptable: unrecognized LIFE_TYPE %d",
+		     decode_16 (value));
+	  vs->life = 0;
 	  break;
 
 	case IKE_ATTR_LIFE_DURATION:
