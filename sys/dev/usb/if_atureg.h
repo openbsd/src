@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.5 2004/11/16 08:57:29 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.6 2004/11/17 14:00:10 deraadt Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.5 2004/11/16 08:57:29 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.6 2004/11/17 14:00:10 deraadt Exp $ */
 
 /************ 		driver options 		************/
 
@@ -275,7 +275,7 @@ enum atu_mgmt_state {
 u_int8_t	*atu_mgmt_statename[] = {"NONE", "LISTENING", "JOINING",
     "AUTHENTICATING", "ASSOCIATING", "CREATING IBSS", "HAPPY NETWORKING :)",
     "GIVEN UP"};
-#endif ATU_DEBUG
+#endif /* ATU_DEBUG */
 
 struct atu_mgmt {
 	enum atu_mgmt_state	state;
