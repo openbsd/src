@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.148 2003/09/18 07:52:54 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.149 2003/10/14 19:42:10 jakob Exp $");
 
 #include <openssl/bn.h>
 
@@ -33,16 +33,12 @@ RCSID("$OpenBSD: sshconnect.c,v 1.148 2003/09/18 07:52:54 markus Exp $");
 #include "misc.h"
 #include "readpass.h"
 
-#ifdef DNS
 #include "dns.h"
-#endif
 
 char *client_version_string = NULL;
 char *server_version_string = NULL;
 
-#ifdef DNS
 int verified_host_key_dns = 0;
-#endif
 
 /* import */
 extern Options options;
@@ -722,7 +718,6 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			/* The default */
 			fp = key_fingerprint(host_key, SSH_FP_MD5, SSH_FP_HEX);
 			msg2[0] = '\0';
-#ifdef DNS
 			if (options.verify_host_key_dns) {
 				if (verified_host_key_dns)
 					snprintf(msg2, sizeof(msg2),
@@ -733,7 +728,6 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 					    "No matching host key fingerprint"
 					    " found in DNS.\n");
 			}
-#endif
 			snprintf(msg, sizeof(msg),
 			    "The authenticity of host '%.200s (%s)' can't be "
 			    "established%s\n"
@@ -900,7 +894,6 @@ verify_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 {
 	struct stat st;
 
-#ifdef DNS
 	if (options.verify_host_key_dns) {
 		switch(verify_host_key_dns(host, hostaddr, host_key)) {
 		case DNS_VERIFY_OK:
@@ -919,7 +912,6 @@ verify_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
 			break;
 		}
 	}
-#endif /* DNS */
 
 	/* return ok if the key can be found in an old keyfile */
 	if (stat(options.system_hostfile2, &st) == 0 ||
