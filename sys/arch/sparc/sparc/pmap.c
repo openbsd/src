@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 1999/09/06 07:13:39 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.37 1999/11/05 16:22:08 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3706,12 +3706,6 @@ pmap_pinit(pm)
 		 * rg_seg_ptps pointer indicates invalid for the 4m)
 		 */
 		urp = malloc(SRMMU_L1SIZE * sizeof(int), M_VMPMAP, M_WAITOK);
-#if 0
-		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-			kvm_uncache(urp,
-				    ((SRMMU_L1SIZE*sizeof(int))+NBPG-1)/NBPG);
-#endif
-
 #ifdef DEBUG
 		if ((u_int) urp % (SRMMU_L1SIZE * sizeof(int)))
 			panic("pmap_pinit: malloc() not giving aligned memory");
@@ -5689,10 +5683,6 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 			free(ptd, M_VMPMAP);
 			goto rgretry;
 		}
-#if 0
-		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-			kvm_uncache((char *)ptd, (size+NBPG-1)/NBPG);
-#endif
 
 		rp->rg_seg_ptps = ptd;
 		for (i = 0; i < SRMMU_L2SIZE; i++)
@@ -5714,10 +5704,6 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			free(pte, M_VMPMAP);
 			goto sretry;
 		}
-#if 0
-		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-			kvm_uncache((caddr_t)pte, (size+NBPG-1)/NBPG);
-#endif
 
 		sp->sg_pte = pte;
 		sp->sg_npte = 1;
