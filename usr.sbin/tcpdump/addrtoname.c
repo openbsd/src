@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.22 2004/02/02 09:43:27 otto Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.23 2004/02/04 08:35:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.22 2004/02/02 09:43:27 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.23 2004/02/04 08:35:12 otto Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -46,6 +46,7 @@ struct rtentry;
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <inttypes.h>
 #include <netdb.h>
 #include <pcap.h>
 #include <pcap-namedb.h>
@@ -169,7 +170,7 @@ getname(const u_char *ap)
 	/*
 	 * Extract 32 bits in network order, dealing with alignment.
 	 */
-	switch ((long)ap & 3) {
+	switch ((intptr_t)ap & (sizeof(u_int32_t)-1)) {
 
 	case 0:
 		addr = *(u_int32_t *)ap;

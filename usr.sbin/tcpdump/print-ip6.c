@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6.c,v 1.4 2003/01/27 10:00:40 henning Exp $	*/
+/*	$OpenBSD: print-ip6.c,v 1.5 2004/02/04 08:35:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -41,8 +41,10 @@ static const char rcsid[] =
 #include <netinet/udp_var.h>
 #include <netinet/tcp.h>
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "interface.h"
@@ -65,23 +67,31 @@ ip6_print(register const u_char *bp, register int length)
 	
 	ip6 = (const struct ip6_hdr *)bp;
 
-#ifdef TCPDUMP_ALIGN
 	/*
 	 * The IP header is not word aligned, so copy into abuf.
 	 * This will never happen with BPF.  It does happen with
 	 * raw packet dumps from -r.
 	 */
-	if ((int)ip & (sizeof(long)-1)) {
-		static u_char *abuf;
+	if ((intptr_t)ip6 & (sizeof(long)-1)) {
+		static u_char *abuf = NULL;
+		static int didwarn = 0;
 
-		if (abuf == NULL)
+		if (abuf == NULL) {
 			abuf = (u_char *)malloc(snaplen);
-		bcopy((char *)ip, (char *)abuf, min(length, snaplen));
-		snapend += abuf - (u_char *)ip;
+			if (abuf == NULL)
+				error("ip6_print: malloc");
+		}
+		memcpy((char *)abuf, (char *)ip6, min(length, snaplen));
+		snapend += abuf - (u_char *)ip6;
 		packetp = abuf;
-		ip = (struct ip6_hdr *)abuf;
+		ip6 = (struct ip6_hdr *)abuf;
+		/* We really want libpcap to give us aligned packets */
+		if (!didwarn) {
+			warning("compensating for unaligned libpcap packets");
+			++didwarn;
+		}
 	}
-#endif
+
 	if ((u_char *)(ip6 + 1) > snapend) {
 		printf("[|ip6]");
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.23 2004/02/02 09:43:27 otto Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.24 2004/02/04 08:35:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.23 2004/02/02 09:43:27 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.24 2004/02/04 08:35:12 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -39,6 +39,7 @@ static const char rcsid[] =
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -364,7 +365,7 @@ ip_print(register const u_char *bp, register u_int length)
 	 * This will never happen with BPF.  It does happen with raw packet
 	 * dumps from -r.
 	 */
-	if ((long)ip & 3) {
+	if ((intptr_t)ip & (sizeof(long)-1)) {
 		static u_char *abuf = NULL;
 		static int didwarn = 0;
 

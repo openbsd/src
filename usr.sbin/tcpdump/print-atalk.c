@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.22 2004/02/02 09:43:27 otto Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.23 2004/02/04 08:35:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.22 2004/02/02 09:43:27 otto Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.23 2004/02/04 08:35:12 otto Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ struct rtentry;
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -223,7 +224,7 @@ ddp_print(register const u_char *bp, register u_int length, register int t,
 	  register u_short snet, register u_char snode, u_char skt)
 {
 
-	if ((long)bp & 3) {
+	if ((intptr_t)bp & (sizeof(long)-1)) {
 		static u_char *abuf = NULL;
 
 		if (abuf == NULL) {
