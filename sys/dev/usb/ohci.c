@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.28 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: ohci.c,v 1.29 2002/06/07 22:26:34 miod Exp $ */
 /*	$NetBSD: ohci.c,v 1.104 2001/09/28 23:57:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -871,9 +871,7 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
-#if defined(__OpenBSD__)
-	timeout_set(&sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
-#endif
+	usb_callout_init(sc->sc_tmo_rhsc);
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -1150,10 +1148,8 @@ ohci_intr1(ohci_softc_t *sc)
 		 * on until the port has been reset.
 		 */
 		ohci_rhsc_able(sc, 0);
-#if defined (__OpenBSD__)
 		/* Do not allow RHSC interrupts > 1 per second */
-		timeout_add(&sc->sc_tmo_rhsc, hz);
-#endif
+		usb_callout(sc->sc_tmo_rhsc, hz, ohci_rhsc_enable, sc);
 	}
 
 	sc->sc_bus.intr_context--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.15 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.16 2002/06/07 22:26:33 miod Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -137,10 +137,6 @@ ohci_pci_attach(parent, self, aux)
 		printf(": couldn't map interrupt\n");
 		return;
 	}
-
-#if defined(__OpenBSD__)
-	timeout_set(&sc->sc.sc_tmo_rhsc, ohci_rhsc_enable, sc);
-#endif
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ohci_intr, sc,
