@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.7 1999/04/18 17:06:29 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.8 1999/04/20 17:31:25 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,33 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Apr 16, 1999:
+	with code kindly provided by Bruce Lilly, awk now parses 
+	/=/ and similar constructs more sensibly in more places.
+
+Apr 5, 1999:
+	changed true/false to True/False in run.c to make it
+	easier to compile with C++.  Added some casts on malloc
+	and realloc to be honest about casts; ditto.  changed
+	ltype int to long in struct rrow to reduce some 64-bit
+	complaints; other changes scattered throughout for the
+	same purpose.  thanks to Nelson Beebe for these portability
+	improvements.
+
+	removed some horrible pointer-int casting in b.c and elsewhere
+	by adding ptoi and itonp to localize the casts, which are
+	all benign.  fixed one incipient bug that showed up on sgi
+	in 64-bit mode.
+
+	reset lineno for new source file; include filename in error
+	message.  also fixed line number error in continuation lines.
+	(thanks to Nelson Beebe for both of these.)
+
+Mar 24, 1999:
+	Nelson Beebe notes that irix 5.3 yacc dies with a bogus
+	error; use a newer version or switch to bison, since sgi
+	is unlikely to fix it.
 
 Mar 5, 1999:
 	after hearing from yet another innocent victim, changed 

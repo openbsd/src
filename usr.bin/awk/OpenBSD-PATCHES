@@ -1,6 +1,6 @@
-/*	$OpenBSD: OpenBSD-PATCHES,v 1.3 1999/04/18 17:06:29 millert Exp $	*/
+/*	$OpenBSD: OpenBSD-PATCHES,v 1.4 1999/04/20 17:31:28 millert Exp $	*/
 
-I merged the March 5, 1999 version of the "one true awk" from Brian Kernighan's
+I merged the April 16, 1999 version of the "one true awk" from Brian Kernighan's
 web page http://cm.bell-labs.com/who/bwk/
 
 Mods to the distribution sources:
@@ -38,7 +38,7 @@ Let me know if you find more problems.
 --- /home/millert/tmp/awk/awk.1	Sun Jan 19 18:06:25 1997
 +++ awk.1	Sun Jan 19 17:51:39 1997
 @@ -1,3 +1,4 @@
-+.\"	$OpenBSD: OpenBSD-PATCHES,v 1.3 1999/04/18 17:06:29 millert Exp $
++.\"	$OpenBSD: OpenBSD-PATCHES,v 1.4 1999/04/20 17:31:28 millert Exp $
  .de EX
  .nf
  .ft CW

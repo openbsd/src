@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.4 1999/04/18 17:06:30 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.5 1999/04/20 17:31:30 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -66,6 +66,7 @@ extern	int	cgoto(fa *, int, int);
 extern	void	freefa(fa *);
 
 extern	int	pgetc(void);
+extern	char	*cursource(void);
 
 extern	Node	*nodealloc(int);
 extern	Node	*exptostat(Node *);
@@ -89,7 +90,9 @@ extern	Node	*linkum(Node *, Node *);
 extern	void	defn(Cell *, Node *, Node *);
 extern	int	isarg(char *);
 extern	char	*tokname(int);
-extern	Cell *(*proctab[])(Node **, int);
+extern	Cell	*(*proctab[])(Node **, int);
+extern	int	ptoi(void *);
+extern	Node	*itonp(int);
 
 extern	void	syminit(void);
 extern	void	arginit(int, char **);

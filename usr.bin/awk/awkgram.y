@@ -1,4 +1,4 @@
-/*	$OpenBSD: awkgram.y,v 1.4 1997/08/25 16:17:09 kstailey Exp $	*/
+/*	$OpenBSD: awkgram.y,v 1.5 1999/04/20 17:31:29 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -241,10 +241,10 @@ pattern:
 	| '(' plist ')' IN varname	{ $$ = op2(INTEST, $2, makearr($5)); }
 	| pattern '|' GETLINE var	{ 
 			if (safe) ERROR "cmd | getline is unsafe" SYNTAX;
-			else $$ = op3(GETLINE, $4, (Node*)$2, $1); }
+			else $$ = op3(GETLINE, $4, itonp($2), $1); }
 	| pattern '|' GETLINE		{ 
 			if (safe) ERROR "cmd | getline is unsafe" SYNTAX;
-			else $$ = op3(GETLINE, (Node*)0, (Node*)$2, $1); }
+			else $$ = op3(GETLINE, (Node*)0, itonp($2), $1); }
 	| pattern term %prec CAT	{ $$ = op2(CAT, $1, $2); }
 	| re
 	| term
@@ -295,13 +295,13 @@ rparen:
 simple_stmt:
 	  print prarg '|' term		{ 
 			if (safe) ERROR "print | is unsafe" SYNTAX;
-			else $$ = stat3($1, $2, (Node *) $3, $4); }
+			else $$ = stat3($1, $2, itonp($3), $4); }
 	| print prarg APPEND term	{
 			if (safe) ERROR "print >> is unsafe" SYNTAX;
-			else $$ = stat3($1, $2, (Node *) $3, $4); }
+			else $$ = stat3($1, $2, itonp($3), $4); }
 	| print prarg GT term		{
 			if (safe) ERROR "print > is unsafe" SYNTAX;
-			else $$ = stat3($1, $2, (Node *) $3, $4); }
+			else $$ = stat3($1, $2, itonp($3), $4); }
 	| print prarg			{ $$ = stat3($1, $2, NIL, NIL); }
 	| DELETE varname '[' patlist ']' { $$ = stat2(DELETE, makearr($2), $4); }
 	| DELETE varname		 { $$ = stat2(DELETE, makearr($2), 0); }
@@ -351,7 +351,8 @@ subop:
 	;
 
 term:
-	  term '+' term			{ $$ = op2(ADD, $1, $3); }
+ 	  term '/' ASGNOP term		{ $$ = op2(DIVEQ, $1, $4); }
+ 	| term '+' term			{ $$ = op2(ADD, $1, $3); }
 	| term '-' term			{ $$ = op2(MINUS, $1, $3); }
 	| term '*' term			{ $$ = op2(MULT, $1, $3); }
 	| term '/' term			{ $$ = op2(DIVIDE, $1, $3); }
@@ -360,17 +361,17 @@ term:
 	| '-' term %prec UMINUS		{ $$ = op1(UMINUS, $2); }
 	| '+' term %prec UMINUS		{ $$ = $2; }
 	| NOT term %prec UMINUS		{ $$ = op1(NOT, notnull($2)); }
-	| BLTIN '(' ')'			{ $$ = op2(BLTIN, (Node *) $1, rectonode()); }
-	| BLTIN '(' patlist ')'		{ $$ = op2(BLTIN, (Node *) $1, $3); }
-	| BLTIN				{ $$ = op2(BLTIN, (Node *) $1, rectonode()); }
+	| BLTIN '(' ')'			{ $$ = op2(BLTIN, itonp($1), rectonode()); }
+	| BLTIN '(' patlist ')'		{ $$ = op2(BLTIN, itonp($1), $3); }
+	| BLTIN				{ $$ = op2(BLTIN, itonp($1), rectonode()); }
 	| CALL '(' ')'			{ $$ = op2(CALL, celltonode($1,CVAR), NIL); }
 	| CALL '(' patlist ')'		{ $$ = op2(CALL, celltonode($1,CVAR), $3); }
 	| DECR var			{ $$ = op1(PREDECR, $2); }
 	| INCR var			{ $$ = op1(PREINCR, $2); }
 	| var DECR			{ $$ = op1(POSTDECR, $1); }
 	| var INCR			{ $$ = op1(POSTINCR, $1); }
-	| GETLINE var LT term		{ $$ = op3(GETLINE, $2, (Node *)$3, $4); }
-	| GETLINE LT term		{ $$ = op3(GETLINE, NIL, (Node *)$2, $3); }
+	| GETLINE var LT term		{ $$ = op3(GETLINE, $2, itonp($3), $4); }
+	| GETLINE LT term		{ $$ = op3(GETLINE, NIL, itonp($2), $3); }
 	| GETLINE var			{ $$ = op3(GETLINE, $2, NIL, NIL); }
 	| GETLINE			{ $$ = op3(GETLINE, NIL, NIL, NIL); }
 	| INDEX '(' pattern comma pattern ')'
@@ -433,7 +434,7 @@ varlist:
 
 varname:
 	  VAR			{ $$ = celltonode($1, CVAR); }
-	| ARG 			{ $$ = op1(ARG, (Node *) $1); }
+	| ARG 			{ $$ = op1(ARG, itonp($1)); }
 	| VARNF			{ $$ = op1(VARNF, (Node *) $1); }
 	;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.2 1997/08/25 16:17:13 kstailey Exp $	*/
+/*	$OpenBSD: parse.c,v 1.3 1999/04/20 17:31:30 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -208,7 +208,7 @@ Node *pa2stat(Node *a, Node *b, Node *c)	/* pat, pat {...} */
 {
 	Node *x;
 
-	x = node4(PASTAT2, a, b, c, (Node *) paircnt);
+	x = node4(PASTAT2, a, b, c, itonp(paircnt));
 	if (paircnt++ >= PA2NUM)
 		ERROR "limited to %d pat,pat statements", PA2NUM SYNTAX;
 	x->ntype = NSTAT;
@@ -259,4 +259,14 @@ int isarg(char *s)		/* is s in argument list for current function? */
 		if (strcmp(((Cell *)(p->narg[0]))->nval, s) == 0)
 			return n;
 	return -1;
+}
+
+int ptoi(void *p)	/* convert pointer to integer */
+{
+	return (int) (long) p;	/* swearing that p fits, of course */
+}
+
+Node *itonp(int i)	/* and vice versa */
+{
+	return (Node *) (long) i;
 }
