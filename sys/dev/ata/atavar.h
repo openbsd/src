@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.3 1999/09/05 21:45:22 niklas Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.4 1999/10/09 03:42:03 csapuntz Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
  */
 
 /* Hight-level functions and structures used by both ATA and ATAPI devices */
+
+struct ataparams;
 
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
@@ -81,7 +83,7 @@ struct ata_drive_datas {
     /* downgrade mode after this many successive errors */
 #define NERRS_MAX 2
 
-    struct device *drv_softc; /* ATA drives softc, if any */
+    struct device *drv_softc; /* ATA/PI drive's softc, can be NULL */
     void *chnl_softc; /* channel softc */
 };
 
@@ -154,7 +156,8 @@ int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
 #define WDC_QUEUED   0x02
 #define WDC_TRY_AGAIN 0x03
 
-void wdc_probe_caps __P((struct ata_drive_datas*));
+void wdc_probe_caps __P((struct ata_drive_datas*, struct ataparams *));
+void wdc_print_caps __P((struct ata_drive_datas*));
 int  wdc_downgrade_mode __P((struct ata_drive_datas*));
 
 void wdc_reset_channel __P((struct ata_drive_datas *));

@@ -150,7 +150,6 @@ wdc_isapnp_attach(parent, self, aux)
 
 	printf("\n");
 	wdcattach(&sc->wdc_channel);
-	wdc_final_attach(&sc->wdc_channel);
 }
 
 #ifdef notyet

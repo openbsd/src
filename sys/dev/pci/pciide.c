@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.10 1999/10/04 22:54:18 deraadt Exp $     */
+/*      $OpenBSD: pciide.c,v 1.11 1999/10/09 03:42:04 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -436,10 +436,8 @@ pciide_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	struct pciide_softc *sc = (struct pciide_softc *)self;
-	struct pciide_channel *cp;
 	pcireg_t csr;
 	char devinfo[256];
-	int i;
 
 	sc->sc_pp = pciide_lookup_product(pa->pa_id);
 	if (sc->sc_pp == NULL) {
@@ -462,14 +460,6 @@ pciide_attach(parent, self, aux)
 		csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 		csr |= PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
-	}
-
-	/* This is a hook so that the ATAPI-SCSI stuff can
-	   attach the SCSI BUS now and do the probes */
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
-		cp = &sc->pciide_channels[i];
-
-		wdc_final_attach(&cp->wdc_channel);
 	}
 
 	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",

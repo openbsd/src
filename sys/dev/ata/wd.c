@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.7 1999/08/15 09:47:18 millert Exp $ */
+/*	$OpenBSD: wd.c,v 1.8 1999/10/09 03:42:03 csapuntz Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -296,6 +296,9 @@ wdattach(parent, self, aux)
 		printf("%s: IDENTIFY failed\n", wd->sc_dev.dv_xname);
 		return;
 	}
+
+	wdc_probe_caps(wd->drvp, &wd->sc_params);
+	wdc_print_caps(wd->drvp);
 
 	for (blank = 0, p = wd->sc_params.atap_model, q = buf, i = 0;
 	    i < sizeof(wd->sc_params.atap_model); i++) {

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.13 1999/10/06 04:57:32 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.14 1999/10/09 03:42:03 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -117,7 +117,7 @@ struct atapiscsi_xfer;
 int	atapiscsi_match __P((struct device *, void *, void *));
 void	atapiscsi_attach __P((struct device *, struct device *, void *));
 
-int	wdc_atapi_get_params __P((struct atapiscsi_softc *, u_int8_t, int,
+int	wdc_atapi_get_params __P((struct channel_softc *, u_int8_t, int,
 	    struct ataparams *)); 
 
 int	atapi_dsc_wait __P((struct ata_drive_datas *, int));
@@ -129,10 +129,7 @@ void    atapi_to_scsi_sense __P((struct scsi_xfer *, u_int8_t));
 struct atapiscsi_softc {
 	struct device  sc_dev;
 	struct  scsi_link  sc_adapterlink;
-	struct  wdc_softc  *sc_wdc;
-	u_int8_t sc_channel;  
-	int  valid[2];
-	struct ata_drive_datas *sc_drvs;
+	struct channel_softc *chp;
 };
 
 static struct scsi_adapter atapiscsi_switch = 
@@ -173,6 +170,7 @@ int atapiscsi_match(parent, match, aux)
 
 	if (aa_link == NULL)
 		return (0);
+
 	if (aa_link->aa_type != T_ATAPI)
 		return (0);
 
@@ -191,18 +189,14 @@ atapiscsi_attach(parent, self, aux)
 {
 	struct atapiscsi_softc *as = (struct atapiscsi_softc *)self;
 	struct ata_atapi_attach *aa_link = aux;
+	struct channel_softc *chp = aa_link->aa_bus_private;
 	struct ataparams ids;
 	struct ataparams *id = &ids;
 	int drive;
 
 	printf("\n");
 
-	/* Ouch */
-	as->valid[0] = as->valid[1] = 0;
-
-	as->sc_wdc = (struct wdc_softc *)parent;
-	as->sc_drvs = aa_link->aa_drv_data;
-	as->sc_channel = aa_link->aa_channel;
+	as->chp = chp;
 	as->sc_adapterlink.adapter_softc = as;
 	as->sc_adapterlink.adapter_target = 7;
 	as->sc_adapterlink.adapter_buswidth = 2;
@@ -211,22 +205,17 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_adapterlink.openings = 1;
 	as->sc_adapterlink.flags = SDEV_ATAPI;
 	as->sc_adapterlink.quirks = SDEV_NOLUNS;
-	as->sc_wdc->channels[as->sc_channel]->ch_as = as;
 
 	for (drive = 0; drive < 2 ; drive++ ) {
-		struct ata_drive_datas *drvp = &as->sc_drvs[drive];
+		struct ata_drive_datas *drvp = &chp->ch_drive[drive];
 			
 		if ((drvp->drive_flags & DRIVE_ATAPI) &&
-		    (wdc_atapi_get_params(as, drive,
+		    (wdc_atapi_get_params(chp, drive,
 		    SCSI_POLL|SCSI_NOSLEEP, id) == COMPLETE)) {
-
-			as->valid[drive] = 1;
-
-			/* This is wrong. All the devices on the ATAPI bus
-			   will be called atapibus by the IDE side of the
-			   driver. */
-			drvp->drv_softc = (struct device *)as;
-			wdc_probe_caps(drvp);
+			/* Temporarily, the device will be called
+			   atapiscsi. */
+			drvp->drv_softc = (struct device*)as;
+			wdc_probe_caps(drvp, id);
 
 			WDCDEBUG_PRINT(
 			    ("general config %04x capabilities %04x ",
@@ -247,20 +236,31 @@ atapiscsi_attach(parent, self, aux)
 
 			WDCDEBUG_PRINT(("driver caps %04x\n", drvp->atapi_cap),
 			    DEBUG_PROBE);
-		}
+		} else
+			drvp->drive_flags &= ~DRIVE_ATAPI;
 	}
+
+	as->sc_adapterlink.scsibus = (u_int8_t)-1;
 
 	config_found((struct device *)as, 
 		     &as->sc_adapterlink, scsiprint);
 
-}
+	if (as->sc_adapterlink.scsibus != (u_int8_t)-1) {
+		int bus = as->sc_adapterlink.scsibus;
 
+		for (drive = 0; drive < 2; drive++) {
+			extern struct cfdriver scsibus_cd;
 
-void
-wdc_atapibus_final_attach(chp)
-	struct channel_softc *chp;
-{
-	/* Get rid of this eventually */
+			struct scsibus_softc *scsi = scsibus_cd.cd_devs[bus];
+			struct scsi_link *link = scsi->sc_link[drive][0];
+			struct ata_drive_datas *drvp = &chp->ch_drive[drive];
+
+			if (drvp->drv_softc == (struct device *)as && link) {
+				drvp->drv_softc = link->device_softc;
+				wdc_print_caps(drvp);
+			}
+		}
+	}
 }
 
 void
@@ -278,10 +278,9 @@ wdc_atapibus_attach(chp)
 	aa_link.aa_type = T_ATAPI;
 	aa_link.aa_channel = channel;
 	aa_link.aa_openings = 1;
-	aa_link.aa_drv_data = chp->ch_drive; /* pass the whole array */
-#if 0
-	aa_link.aa_bus_private = &wdc->sc_atapi_adapter;
-#endif
+	aa_link.aa_drv_data = NULL; 
+	aa_link.aa_bus_private = chp;
+
 	(void)config_found(&wdc->sc_dev, (void *)&aa_link, atapi_print);
 }
 
@@ -300,15 +299,12 @@ wdc_atapi_minphys (struct buf *bp)
  */
 
 int
-wdc_atapi_get_params(as, drive, flags, id)
-	struct atapiscsi_softc *as;
+wdc_atapi_get_params(chp, drive, flags, id)
+	struct channel_softc *chp;
 	u_int8_t drive;
 	int flags;
 	struct ataparams *id;
 {
-	struct wdc_softc *wdc = as->sc_wdc;
-	struct channel_softc *chp =
-	    wdc->channels[as->sc_channel];
 	struct wdc_command wdc_c;
 
 	/* if no ATAPI device detected at wdc attach time, skip */
@@ -361,12 +357,12 @@ wdc_atapi_send_cmd(sc_xfer)
 	struct scsi_xfer *sc_xfer;
 {
 	struct atapiscsi_softc *as = sc_xfer->sc_link->adapter_softc;
-	struct wdc_softc *wdc = as->sc_wdc;
+	int drive = sc_xfer->sc_link->target;
+	struct channel_softc *chp = as->chp;
+	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
+	struct wdc_softc *wdc = chp->wdc;
 	struct wdc_xfer *xfer;
 	int flags = sc_xfer->flags;
-	int channel = as->sc_channel;
-	int drive = sc_xfer->sc_link->target;
-	struct ata_drive_datas *drvp = &as->sc_drvs[drive];
 	int s, ret, saved_datalen;
 	char saved_len_bytes[3];
 
@@ -374,9 +370,9 @@ restart:
 	saved_datalen = 0;
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d\n",
-	    wdc->sc_dev.dv_xname, channel, drive), DEBUG_XFERS);
+	    wdc->sc_dev.dv_xname, chp->channel, drive), DEBUG_XFERS);
 
-	if (drive > 1 || !as->valid[drive]) {
+	if (drive > 1 || !(drvp->drive_flags & DRIVE_ATAPI)) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
 		return (COMPLETE);
 	}
@@ -451,7 +447,7 @@ restart:
 		}
 	}
 
-	wdc_exec_xfer(wdc->channels[channel], xfer);
+	wdc_exec_xfer(chp, xfer);
 #ifdef DIAGNOSTIC
 	if (((sc_xfer->flags & SCSI_POLL) != 0 ||
 	     (drvp->atapi_cap & ACAP_DSC) != 0) &&
@@ -1099,21 +1095,17 @@ again:
 		if (wdcwait(chp, 0, 0, (irq == 0) ? 10000 : 0)) 
 			goto timeout;
 
-		if (!(chp->ch_status & WDCS_DRQ) &&
-		    chp->ch_status & WDCS_ERR) {
-			chp->ch_error = bus_space_read_1(chp->cmd_iot,
-							 chp->cmd_ioh, 
-							 wd_error);
-			goto error;
+		/* We don't really care if this operation failed.
+		   It's just there to wake the drive from its stupor. */
+		if (!(chp->ch_status & WDCS_ERR)) {
+			wdcbit_bucket(chp, 512);
+	
+			errstring = "Post IDENTIFY";
+			/* Wait for the drive to become unbusy before shoving
+			   the PIOMODE command down its throat */
+			if (wdcwait(chp, 0, 0, 10000))
+				goto timeout;
 		}
-
-		wdcbit_bucket(chp, 512);
-		
-		errstring = "Post IDENTIFY";
-		/* Wait for the drive to become unbusy before shoving
-		   the PIOMODE command down its throat */
-		if (wdcwait(chp, 0, 0, 10000))
-			goto timeout;
 
 		drvp->state = PIOMODE;
 		goto again;

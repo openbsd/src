@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.2 1999/07/22 02:54:06 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.3 1999/10/09 03:42:04 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -37,8 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct atapiscsi_softc;
-
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
 	/* this is a lot for hard drives, but not for cdroms */
 
@@ -63,13 +61,12 @@ struct channel_softc { /* Per channel data */
 	int ch_flags;
 #define WDCF_ACTIVE   0x01	/* channel is active */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
+#define WDCF_ONESLAVE 0x20      /* slave-only channel */
 	u_int8_t ch_status;         /* copy of status register */
 	u_int8_t ch_error;          /* copy of error register */
 	/* per-drive infos */
 	struct ata_drive_datas ch_drive[2];
 	
-	struct atapiscsi_softc *ch_as;
-
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
 	 * are not independants
@@ -159,7 +156,6 @@ struct wdc_xfer {
 
 int   wdcprobe __P((struct channel_softc *));
 void  wdcattach __P((struct channel_softc *));
-void  wdc_final_attach __P((struct channel_softc *));
 int   wdcintr __P((void *));
 void  wdc_exec_xfer __P((struct channel_softc *, struct wdc_xfer *));
 struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
@@ -193,8 +189,6 @@ void	wdc_delref __P((struct channel_softc *));
 #define WDC_RESET_WAIT 31000
 
 void wdc_atapibus_attach __P((struct channel_softc *));
-void wdc_atapibus_final_attach __P((struct channel_softc *));
-
 int   atapi_print       __P((void *, const char *));
 
 void wdc_disable_intr __P((struct channel_softc *));

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.9 1999/09/05 21:43:30 niklas Exp $     */
+/*      $OpenBSD: wdc.c,v 1.10 1999/10/09 03:42:04 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -127,6 +127,8 @@ int   wdprint __P((void *, const char *));
 #define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
+#define DEBUG_STATUSX 0x20
+
 #ifdef WDCDEBUG
 int wdcdebug_mask = 0;
 int wdc_nxfer = 0;
@@ -290,11 +292,11 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
-		 * sc is supposted to be 0x1 for ATAPI but at last one drive
-		 * set it to 0x0 - or maybe it's the controller.
+		 * This is a simplification of the test in the ATAPI
+		 * spec since not all drives seem to set the other regs
+		 * correctly.
 		 */
-		if ((sc == 0x00 || sc == 0x01) && sn == 0x01 &&
-		    cl == 0x14 && ch == 0xeb) {
+		if (cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 		} else {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
@@ -351,6 +353,9 @@ wdcattach(chp)
 			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
 		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
 			continue;
+
+		if (i == 1 && ((chp->ch_drive[0].drive_flags & DRIVE) == 0))
+			chp->ch_flags |= WDCF_ONESLAVE;
 
 		/* Issue a IDENTIFY command, to try to detect slave ghost */
 		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) ==
@@ -454,8 +459,7 @@ wdcattach(chp)
 		aa_link.aa_channel = chp->channel;
 		aa_link.aa_openings = 1;
 		aa_link.aa_drv_data = &chp->ch_drive[i];
-		if (config_found(&chp->wdc->sc_dev, (void *)&aa_link, wdprint))
-			wdc_probe_caps(&chp->ch_drive[i]);
+		config_found(&chp->wdc->sc_dev, (void *)&aa_link, wdprint);
 	}
 
 	/*
@@ -492,15 +496,6 @@ wdcattach(chp)
 	}
 #ifndef __OpenBSD__
 	wdc_delref(chp);
-#endif
-}
-
-void
-wdc_final_attach(chp)
-	struct channel_softc *chp;
-{
-#if NATAPISCSI > 0
-	wdc_atapibus_final_attach(chp);
 #endif
 }
 
@@ -723,8 +718,28 @@ wdcwait(chp, mask, bits, timeout)
 	timeout = timeout * 1000 / WDCDELAY; /* delay uses microseconds */
 
 	for (;;) {
+#ifdef TEST_ALTSTS
 		chp->ch_status = status =
-		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+		    bus_space_read_1(chp->ctl_iot, chp->ctl_ioh, 
+				     wd_aux_altsts);
+#else
+		chp->ch_status = status =
+		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, 
+				     wd_status);
+#endif
+		if (status == 0xff && (chp->ch_flags & WDCF_ONESLAVE)) {
+			bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+			    WDSD_IBM | 0x10);
+#ifdef TEST_ALTSTS
+			chp->ch_status = status = 
+			    bus_space_read_1(chp->ctl_iot, chp->ctl_ioh,
+				wd_aux_altsts);
+#else
+			chp->ch_status = status = 
+			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+				wd_status);
+#endif
+		}
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits) 
 			break;
 		if (++time > timeout) {
@@ -732,14 +747,22 @@ wdcwait(chp, mask, bits, timeout)
 			    "error %x\n", status,
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 				wd_error)),
-			    DEBUG_STATUS);
+			    DEBUG_STATUSX | DEBUG_STATUS); 
 			return -1;
 		}
 		delay(WDCDELAY);
 	}
-	if (status & WDCS_ERR)
+#ifdef TEST_ALTSTS
+	/* Acknowledge any pending interrupts */
+	bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+#endif
+	if (status & WDCS_ERR) {
 		chp->ch_error = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 		    wd_error);
+		WDCDEBUG_PRINT(("wdcwait: error %x\n", chp->ch_error),
+			       DEBUG_STATUSX | DEBUG_STATUS);
+	}
+
 #ifdef WDCNDELAY_DEBUG
 	/* After autoconfig, there should be no long delays. */
 	if (!cold && time > WDCNDELAY_DEBUG) {
@@ -794,24 +817,20 @@ wdctimeout(arg)
  * XXX this should be a controller-indep function
  */
 void
-wdc_probe_caps(drvp)
+wdc_probe_caps(drvp, params)
 	struct ata_drive_datas *drvp;
+	struct ataparams *params;
 {
-	struct ataparams params, params2;
 	struct channel_softc *chp = drvp->chnl_softc;
 	struct device *drv_dev = drvp->drv_softc;
 	struct wdc_softc *wdc = chp->wdc;
 	int i, printed;
-	char *sep = "";
 	int cf_flags;
 
-	if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK) {
-		/* IDENTIFY failed. Can't tell more about the device */
-		return;
-	}
-	printf("%s: ", drv_dev->dv_xname);
 	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
+		struct ataparams params2;
+
 		/*
 		 * Controller claims 16 and 32 bit transfers.
 		 * Re-do an IDENTIFY with 32-bit transfers,
@@ -819,19 +838,16 @@ wdc_probe_caps(drvp)
 		 */
 		drvp->drive_flags |= DRIVE_CAP32;
 		ata_get_params(drvp, AT_POLL, &params2);
-		if (bcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
+		if (bcmp(params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
-			printf("16-bit");
-		} else
-			printf("32-bit");
-		sep = ", ";
+		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
-	if (params.atap_ata_major > 0x01 && 
-	    params.atap_ata_major != 0xffff) {
+	if (params->atap_ata_major > 0x01 && 
+	    params->atap_ata_major != 0xffff) {
 		for (i = 14; i > 0; i--) {
-			if (params.atap_ata_major & (1 << i)) {
+			if (params->atap_ata_major & (1 << i)) {
 				printf("%sATA version %d\n", sep, i);
 				drvp->ata_vers = i;
 				break;
@@ -847,8 +863,8 @@ wdc_probe_caps(drvp)
 	 * It's not in the specs, but it seems that some drive 
 	 * returns 0xffff in atap_extensions when this field is invalid
 	 */
-	if (params.atap_extensions != 0xffff &&
-	    (params.atap_extensions & WDC_EXT_MODES)) {
+	if (params->atap_extensions != 0xffff &&
+	    (params->atap_extensions & WDC_EXT_MODES)) {
 		printed = 0;
 		/*
 		 * XXX some drives report something wrong here (they claim to
@@ -857,10 +873,9 @@ wdc_probe_caps(drvp)
 		 * If higther mode than 7 is found, abort.
 		 */
 		for (i = 7; i >= 0; i--) {
-			if ((params.atap_piomode_supp & (1 << i)) == 0)
+			if ((params->atap_piomode_supp & (1 << i)) == 0)
 				continue;
 			if (i > 4) {
-				printf("\n");
 				return;
 			}
 
@@ -875,8 +890,6 @@ wdc_probe_caps(drvp)
 				   AT_POLL) != CMD_OK)
 					continue;
 			if (!printed) { 
-				printf("%ssupports PIO mode %d", sep, i + 3);
-				sep = ", ";
 				printed = 1;
 			}
 			/*
@@ -895,13 +908,12 @@ wdc_probe_caps(drvp)
 			 * We didn't find a valid PIO mode.
 			 * Assume the values returned for DMA are buggy too
 			 */
-			printf("\n");
 			return;
 		}
 		drvp->drive_flags |= DRIVE_MODE;
 		printed = 0;
 		for (i = 7; i >= 0; i--) {
-			if ((params.atap_dmamode_supp & (1 << i)) == 0)
+			if ((params->atap_dmamode_supp & (1 << i)) == 0)
 				continue;
 			if ((wdc->cap & WDC_CAPABILITY_DMA) &&
 			    (wdc->cap & WDC_CAPABILITY_MODE))
@@ -909,8 +921,6 @@ wdc_probe_caps(drvp)
 				    != CMD_OK)
 					continue;
 			if (!printed) {
-				printf("%sDMA mode %d", sep, i);
-				sep = ", ";
 				printed = 1;
 			}
 			if (wdc->cap & WDC_CAPABILITY_DMA) {
@@ -923,9 +933,9 @@ wdc_probe_caps(drvp)
 			}
 			break;
 		}
-		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
+		if (params->atap_extensions & WDC_EXT_UDMA_MODES) {
 			for (i = 7; i >= 0; i--) {
-				if ((params.atap_udmamode_supp & (1 << i))
+				if ((params->atap_udmamode_supp & (1 << i))
 				    == 0)
 					continue;
 				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
@@ -933,8 +943,6 @@ wdc_probe_caps(drvp)
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_POLL) != CMD_OK)
 						continue;
-				printf("%sUltra-DMA mode %d", sep, i);
-				sep = ", ";
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
 					if ((wdc->cap & WDC_CAPABILITY_MODE) &&
 					    wdc->UDMA_cap < i)
@@ -947,7 +955,6 @@ wdc_probe_caps(drvp)
 			}
 		}
 	}
-	printf("\n");
 
 	/* Try to guess ATA version here, if it didn't get reported */
 	if (drvp->ata_vers == 0) {
@@ -986,6 +993,32 @@ wdc_probe_caps(drvp)
 			drvp->drive_flags |= DRIVE_UDMA | DRIVE_MODE;
 		}
 	}
+}
+
+void
+wdc_print_caps(drvp)
+	struct ata_drive_datas *drvp;
+{
+	struct device *drv_dev = drvp->drv_softc;
+
+ 	printf("%s: can use ", drv_dev->dv_xname);
+
+	if (drvp->drive_flags & DRIVE_CAP32) {
+		printf("32-bit");
+	} else 
+		printf("16-bit");
+
+	printf(", PIO mode %d", drvp->PIO_cap);
+
+	if (drvp->drive_flags & DRIVE_DMA) {
+		printf(", DMA mode %d", drvp->DMA_cap);
+	}
+
+	if (drvp->drive_flags & DRIVE_UDMA) {
+		printf(", Ultra-DMA mode %d", drvp->UDMA_cap);
+	}
+			
+	printf("\n");
 }
 
 /*
@@ -1395,9 +1428,18 @@ __wdcerror(chp, msg)
 	if (xfer == NULL)
 		printf("%s:%d: %s\n", chp->wdc->sc_dev.dv_xname, chp->channel,
 		    msg);
-	else
-		printf("%s:%d:%d: %s\n", chp->wdc->sc_dev.dv_xname,
-		    chp->channel, xfer->drive, msg);
+	else {
+		struct device *drv_dev = chp->ch_drive[xfer->drive].drv_softc;
+
+		if (drv_dev) {
+			printf("%s(%s:%d:%d): %s\n", drv_dev->dv_xname,
+			       chp->wdc->sc_dev.dv_xname,
+			       chp->channel, xfer->drive, msg);
+		} else {
+			printf("%s:%d:%d: %s\n", chp->wdc->sc_dev.dv_xname,
+			       chp->channel, xfer->drive, msg);
+		}
+	}
 }
 
 /* 
