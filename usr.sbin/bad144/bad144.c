@@ -1,4 +1,4 @@
-/*	$OpenBSD: bad144.c,v 1.14 2002/06/10 00:40:53 miod Exp $	*/
+/*	$OpenBSD: bad144.c,v 1.15 2003/03/14 14:53:45 jmc Exp $	*/
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.14 2002/06/10 00:40:53 miod Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.15 2003/03/14 14:53:45 jmc Exp $";
 #endif /* not lint */
 
 /*
@@ -654,13 +654,15 @@ void
 usage()
 {
 	fprintf(stderr,
-		  "usage: bad144 disk [ snum [ bn ... ] ]\n");
+		  "usage: bad144 [-c] [-n] [-v] disk [snum [bn ...]]\n");
 	fprintf(stderr,
 	      "to read or overwrite bad-sector table, e.g.: bad144 hp0\n");
 	fprintf(stderr,
-		  "or bad144 -a [ -c ] disk  bn ...\n");
+		  "or bad144 -a [-c] [-n] [-v] disk [bn ...]\n");
 	fprintf(stderr, "where options are:\n");
 	fprintf(stderr, "\t-a  add new bad sectors to the table\n");
 	fprintf(stderr, "\t-c  copy original sector to replacement\n");
+	fprintf(stderr, "\t-n  make no permanent changes\n");
+	fprintf(stderr, "\t-v  be verbose\n");
 	exit(1);
 }
