@@ -14,7 +14,7 @@ Functions for reading passphrases and passwords.
 */
 
 #include "includes.h"
-RCSID("$Id: readpass.c,v 1.3 1999/09/30 08:34:25 deraadt Exp $");
+RCSID("$Id: readpass.c,v 1.4 1999/10/11 20:24:54 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -57,27 +57,6 @@ char *read_passphrase(const char *prompt, int from_stdin)
       f = fopen("/dev/tty", "r");
       if (!f)
 	{
-	  if (getenv("DISPLAY"))
-	    {
-	      char command[512];
-	      fprintf(stderr,
-		      "Executing ssh-askpass to query the password...\n");
-	      fflush(stdout);
-	      fflush(stderr);
-	      sprintf(command, "ssh-askpass '%.400s'", prompt);
-	      f = popen(command, "r");
-	      if (!fgets(buf, sizeof(buf), f))
-		{
-		  pclose(f);
-		  fprintf(stderr, "No passphrase supplied.  Exiting.\n");
-		  exit(1);
-		}
-	      pclose(f);
-	      if (strchr(buf, '\n'))
-		*strchr(buf, '\n') = 0;
-	      return xstrdup(buf);
-	    }
-
 	  /* No controlling terminal and no DISPLAY.  Nowhere to read. */
 	  fprintf(stderr, "You have no controlling tty and no DISPLAY.  Cannot read passphrase.\n");
 	  exit(1);
