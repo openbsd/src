@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.21 2003/06/21 00:42:58 tedu Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.22 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ struct emul emul_linux_aout = {
 	NULL,
 	linux_sigcode,
 	linux_esigcode,
+	0,
 	NULL,
 	linux_e_proc_exec,
 	linux_e_proc_fork,
@@ -134,6 +135,7 @@ struct emul emul_linux_elf = {
 	exec_elf32_fixup,
 	linux_sigcode,
 	linux_esigcode,
+	0,
 	NULL,
 	linux_e_proc_exec,
 	linux_e_proc_fork,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.85 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.86 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -92,6 +92,7 @@ int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
 int sysctl_intrcnt(int *, u_int, void *, size_t *);
 int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
+int sysctl_emul(int *, u_int, void *, size_t *, void *, size_t);
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -268,6 +269,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		case KERN_SHMINFO:
 		case KERN_INTRCNT:
 		case KERN_WATCHDOG:
+		case KERN_EMUL:
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -481,6 +483,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_intrcnt(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_WATCHDOG:
 		return (sysctl_wdog(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+	case KERN_EMUL:
+		return (sysctl_emul(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 	default:
 		return (EOPNOTSUPP);
@@ -1515,4 +1520,41 @@ sysctl_sensors(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			break;
 
 	return (sysctl_rdstruct(oldp, oldlenp, newp, s, sizeof(struct sensor)));
+}
+
+int
+sysctl_emul(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	int enabled, error;
+	struct emul *e;
+
+	if (name[0] == KERN_EMUL_NUM) {
+		if (namelen != 1)
+			return (ENOTDIR);
+		return (sysctl_rdint(oldp, oldlenp, newp, nemuls));
+	}
+
+	if (namelen != 2)
+		return (ENOTDIR);
+	if (name[0] > nemuls || name[0] < 0)
+		return (EINVAL);
+	e = emulsw[name[0] - 1];
+
+	switch (name[1]) {
+	case KERN_EMUL_NAME:
+		return (sysctl_rdstring(oldp, oldlenp, newp, e->e_name));
+	case KERN_EMUL_ENABLED:
+		if (e->e_flags & EMUL_NATIVE)
+			return (sysctl_rdint(oldp, oldlenp, newp, 1));
+		else {
+			enabled = (e->e_flags & EMUL_ENABLED);
+			error = sysctl_int(oldp, oldlenp, newp, newlen,
+			    &enabled);
+			e->e_flags |= (enabled & EMUL_ENABLED);
+			return (error);
+		}
+	default:
+		return (EINVAL);
+	}
 }

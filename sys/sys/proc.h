@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.66 2003/08/03 19:25:49 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.67 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -95,12 +95,19 @@ struct	emul {
 	int	(*e_fixup)(struct proc *, struct exec_package *);
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
+	int	e_flags;		/* Flags, see below */
 	struct uvm_object *e_sigobject;	/* shared sigcode object */
 					/* Per-process hooks */
 	void	(*e_proc_exec)(struct proc *, struct exec_package *);
 	void	(*e_proc_fork)(struct proc *p, struct proc *parent);
 	void	(*e_proc_exit)(struct proc *);
 };
+/* Flags for e_flags */
+#define	EMUL_ENABLED	0x0001		/* Allow exec to continue */
+#define	EMUL_NATIVE	0x0002		/* Always enabled */
+
+extern struct emul *emulsw[];		/* All emuls in system */
+extern int nemuls;			/* Number of emuls */
 
 /*
  * Description of a process.

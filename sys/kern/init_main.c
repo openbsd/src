@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.105 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.106 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -135,6 +135,7 @@ void	start_cleaner(void *);
 void	start_update(void *);
 void	start_reaper(void *);
 void    start_crypto(void *);
+void	init_exec(void);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -159,7 +160,9 @@ struct emul emul_native = {
 	NULL,
 	sigcode,
 	esigcode,
+	EMUL_ENABLED | EMUL_NATIVE,
 };
+
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -372,6 +375,9 @@ main(framep)
 	for (i = 0; i < sizeof(__guard) / 4; i++)
 		guard[i] = arc4random();
 #endif
+
+	/* init exec and emul */
+	init_exec();
 
 	/* Start the scheduler */
 	scheduler_start();

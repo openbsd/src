@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.95 2003/06/11 06:22:15 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.96 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.95 2003/06/11 06:22:15 deraadt Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.96 2003/08/21 18:56:07 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,6 +206,7 @@ int sysctl_seminfo(char *, char **, int *, int, int *);
 int sysctl_shminfo(char *, char **, int *, int, int *);
 int sysctl_watchdog(char *, char **, int *, int, int *);
 int sysctl_sensors(char *, char **, int *, int, int *);
+int sysctl_emul(char *, char *, int);
 #ifdef CPU_CHIPSET
 int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
@@ -430,6 +431,9 @@ parse(char *string, int flags)
 			if (len < 0)
 				return;
 			break;
+		case KERN_EMUL:
+			sysctl_emul(string, newval, flags);
+			return;
 		}
 		break;
 
@@ -1962,6 +1966,133 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[2] = atoi(name);
 	*typep = CTLTYPE_STRUCT;
 	return (3);
+}
+
+char	**emul_names;
+int	emul_num;
+void	emul_init(void);
+
+int
+sysctl_emul(char *string, char *newval, int flags)
+{
+	int mib[4], enabled, i, old, found = 0;
+	char *head, *target;
+	size_t len;
+
+	emul_init();
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_EMUL;
+	mib[3] = KERN_EMUL_ENABLED;
+	head = "kern.emul.";
+
+	if (aflag || strcmp(string, "kern.emul") == 0) {
+		if (strcmp(string, "kern.emul") == 0 && wflag) {
+			warnx("%s: specification is incomplete", string);
+			return (1);
+		}
+		if (nflag)
+			printf("%d\n", emul_num);
+		else
+			printf("%snemuls = %d\n", head, emul_num);
+		for (i = 0; i < emul_num; i++) {
+			mib[2] = i + 1;
+			len = sizeof(int);
+			if (sysctl(mib, 4, &enabled, &len, NULL, 0) == -1) {
+				warn("%s", string);
+				continue;
+			}
+			if (nflag)
+				printf("%d\n", enabled);
+			else
+				printf("%s%s = %d\n", head, emul_names[i],
+				    enabled);
+		}
+		return (0);
+	}
+	/* User specified a third level name */
+	target = strrchr(string, '.');
+	target++;
+	if (strcmp(string, "nemuls") == 0) {
+		if (newval) {
+			warnx("Operation not permitted");
+			return (1);
+		}
+		if (nflag)
+			printf("%d\n", emul_num);
+		else
+			printf("%snemuls = %d\n", head, emul_num);
+		return (0);
+	}
+	for (i = 0; i < emul_num; i++) {
+		if (strcmp(target, emul_names[i]))
+			continue;
+		found = 1;
+		mib[2] = i + 1;
+		len = sizeof(int);
+		if (newval) {
+			enabled = atoi(newval);
+			if (sysctl(mib, 4, &old, &len, &enabled, len) == -1) {
+				warn("%s", string);
+				continue;
+			}
+			if (nflag)
+				printf("%d\n", enabled);
+			else
+				printf("%s%s: %d -> %d\n", head, target, old,
+				    enabled);
+		} else {
+			if (sysctl(mib, 4, &enabled, &len, NULL, 0) == -1) {
+				warn("%s", string);
+				continue;
+			}
+			if (nflag)
+				printf("%d\n", enabled);
+			else
+				printf("%s%s = %d\n", head, target, enabled);
+		}
+	}
+	if (!found)
+		warnx("third level name %s in kern.emul is invalid",
+		    string);
+	return (0);
+
+
+}
+
+void
+emul_init(void)
+{
+	static int done;
+	char string[16];
+	int mib[4], i;
+	size_t len;
+
+	if (done)
+		return;
+	done = 1;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_EMUL;
+	mib[2] = KERN_EMUL_NUM;
+	len = sizeof(int);
+	if (sysctl(mib, 3, &emul_num, &len, NULL, 0) == -1)
+		return;
+
+	emul_names = malloc(emul_num * sizeof(char *));
+	if (emul_names == NULL) {
+		warn("emul_init");
+		return;
+	}
+
+	for (i = 0; i < emul_num; i++) {
+		mib[2] = i + 1;
+		mib[3] = 0;
+		len = sizeof(string);
+		if (sysctl(mib, 4, string, &len, NULL, 0) == -1)
+			break;
+		emul_names[i] = strdup(string);
+	}
 }
 
 /*

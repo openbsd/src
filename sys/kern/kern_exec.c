@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.80 2003/06/21 00:42:58 tedu Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.81 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -175,6 +175,8 @@ check_exec(p, epp)
 		if (execsw[i].es_check == NULL)
 			continue;
 		newerror = (*execsw[i].es_check)(p, epp);
+		if (!newerror && !(epp->ep_emul->e_flags & EMUL_ENABLED))
+			newerror = ENOEXEC;
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
 			error = newerror;
@@ -235,7 +237,7 @@ sys_execve(p, v, retval)
 		syscallarg(char * *) argp;
 		syscallarg(char * *) envp;
 	} */ *uap = v;
-	int error, i;
+	int error;
 	struct exec_package pack;
 	struct nameidata nid;
 	struct vattr attr;
@@ -258,18 +260,6 @@ sys_execve(p, v, retval)
 	 * Mark this process as "leave me alone, I'm execing".
 	 */
 	p->p_flag |= P_INEXEC;
-
-	/*
-	 * figure out the maximum size of an exec header, if necessary.
-	 * XXX should be able to keep LKM code from modifying exec switch
-	 * when we're still using it, but...
-	 */
-	if (exec_maxhdrsz == 0) {
-		for (i = 0; i < nexecs; i++)
-			if (execsw[i].es_check != NULL
-			    && execsw[i].es_hdrsz > exec_maxhdrsz)
-				exec_maxhdrsz = execsw[i].es_hdrsz;
-	}
 
 	/* init the namei data to point the file user's program name */
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);

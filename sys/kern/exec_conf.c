@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_conf.c,v 1.12 2001/11/14 14:37:22 hugh Exp $	*/
+/*	$OpenBSD: exec_conf.c,v 1.13 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: exec_conf.c,v 1.16 1995/12/09 05:34:47 cgd Exp $	*/
 
 /*
@@ -121,3 +121,73 @@ struct execsw execsw[] = {
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
 int exec_maxhdrsz;
+
+extern struct emul emul_native, emul_elf32, emul_elf64, emul_aout,
+	emul_bsdos, emul_aout_freebsd, emul_elf_freebsd, emul_hpux,
+	emul_ibcs2, emul_linux_elf, emul_linux_aout, emul_elf64_netbsd,
+	emul_osf1, emul_sunos, emul_svr4, emul_ultrix;
+struct emul *emulsw[] = {
+	&emul_native,
+#ifdef _KERN_DO_ELF
+	&emul_elf32,
+#endif
+#ifdef _KERN_DO_ELF64
+	&emul_elf64,
+#endif
+#if defined (_KERN_DO_AOUT) && defined (COMPAT_AOUT)
+	&emul_aout,
+#endif
+#ifdef COMPAT_BSDOS
+	&emul_bsdos,
+#endif
+#ifdef COMPAT_FREEBSD
+	&emul_aout_freebsd,
+	&emul_elf_freebsd,
+#endif
+#ifdef COMPAT_HPUX
+	&emul_hpux,
+#endif
+#ifdef COMPAT_IBCS2
+	&emul_ibcs2,
+#endif
+#ifdef COMPAT_LINUX
+	&emul_linux_elf,
+	&emul_linux_aout,
+#endif
+#if defined (COMPAT_NETBSD) && defined (_KERN_DO_ELF64)
+	&emul_elf64_netbsd,
+#endif
+#ifdef COMPAT_OSF1
+	&emul_osf1,
+#endif
+#ifdef COMPAT_SUNOS
+	&emul_sunos,
+#endif
+#ifdef COMPAT_SVR4
+	&emul_svr4,
+#endif
+#ifdef COMPAT_ULTRIX
+	&emul_ultrix,
+#endif
+};
+int	nemuls = sizeof(emulsw) / sizeof(*emulsw);
+
+void	init_exec(void);
+
+void
+init_exec(void)
+{
+	int i;
+
+	/*
+	 * figure out the maximum size of an exec header.
+	 * XXX should be able to keep LKM code from modifying exec switch
+	 * when we're still using it, but...
+	 */
+	if (exec_maxhdrsz == 0) {
+		for (i = 0; i < nexecs; i++)
+			if (execsw[i].es_check != NULL
+			    && execsw[i].es_hdrsz > exec_maxhdrsz)
+				exec_maxhdrsz = execsw[i].es_hdrsz;
+	}
+}

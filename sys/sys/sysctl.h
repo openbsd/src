@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.64 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.65 2003/08/21 18:56:07 tedu Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -177,7 +177,8 @@ struct ctlname {
 #define	KERN_SHMINFO		62	/* struct: SysV struct shminfo */
 #define KERN_INTRCNT		63	/* node: interrupt counters */
 #define	KERN_WATCHDOG		64	/* node: watchdog */
-#define	KERN_MAXID		65	/* number of valid kern ids */
+#define	KERN_EMUL		65	/* node: emuls */
+#define	KERN_MAXID		66	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -245,7 +246,17 @@ struct ctlname {
 	{ "shminfo", CTLTYPE_STRUCT }, \
 	{ "intrcnt", CTLTYPE_NODE }, \
  	{ "watchdog", CTLTYPE_NODE }, \
+ 	{ "emul", CTLTYPE_NODE }, \
 }
+
+/*
+ * KERN_EMUL subtypes.
+ */
+#define	KERN_EMUL_NUM		0
+/* Fourth level sysctl names */
+#define KERN_EMUL_NAME		0
+#define KERN_EMUL_ENABLED	1
+
 
 /*
  * KERN_PROC subtypes
