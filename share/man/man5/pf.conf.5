@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.325 2005/02/27 15:08:39 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.326 2005/03/01 18:10:44 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -632,7 +632,7 @@ to modulate the TCP timestamps with a random number.
 There is a problem with TCP on long fat pipes, in that a packet might get
 delayed for longer than it takes the connection to wrap its 32-bit sequence
 space.
-In such an occurance, the old packet would be indistinguishable from a
+In such an occurrence, the old packet would be indistinguishable from a
 new packet and would be accepted as such.
 The solution to this is called PAWS: Protection Against Wrapped Sequence
 numbers.
