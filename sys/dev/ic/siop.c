@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.1 2001/02/15 04:07:58 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.2 2001/02/20 00:32:28 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ int	siop_morecbd __P((struct siop_softc *));
 struct siop_lunsw *siop_get_lunsw __P((struct siop_softc *));
 void	siop_add_reselsw __P((struct siop_softc *, int));
 void	siop_update_scntl3 __P((struct siop_softc *, struct siop_target *));
+void	siop_print_info __P((struct siop_softc *, int));
 
 struct cfdriver siop_cd = {
 	NULL, "siop", DV_DULL
@@ -732,10 +733,6 @@ scintr:
 				}
 				if (msg == MSG_EXTENDED &&
 				    extmsg == MSG_EXT_WDTR) {
-					/* WDTR rejected, initiate sync */
-					printf("%s: target %d using 8bit "
-					    "transfers\n", sc->sc_dev.dv_xname,
-					    target);
 					if ((siop_target->flags & TARF_SYNC)
 					    == 0) {
 						siop_target->status = TARST_OK;
@@ -753,10 +750,6 @@ scintr:
 					return 1;
 				} else if (msg == MSG_EXTENDED &&
 				    extmsg == MSG_EXT_SDTR) {
-					/* sync rejected */
-					printf("%s: target %d asynchronous\n",
-					    sc->sc_dev.dv_xname,
-					    target);
 					siop_target->status = TARST_OK;
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_msgin_ack);
@@ -1088,8 +1081,7 @@ out:
 	siop_cmd->status = CMDST_FREE;
 	xs->flags |= ITSDONE;
 	xs->resid = 0;
-	if ((xs->flags & SCSI_POLL) == 0)
-		scsi_done (xs);
+	scsi_done(xs);
 }
 
 /*
@@ -1226,6 +1218,37 @@ siop_handle_reset(sc)
 	}
 }
 
+void
+siop_print_info(sc, target)
+	struct siop_softc *sc;
+	int target;
+{
+	const u_int32_t id = sc->targets[target]->id;
+	const u_int8_t scf = ((id >> 24) & SCNTL3_SCF_MASK) >> SCNTL3_SCF_SHIFT;
+	const u_int8_t offset = ((id >> 8) & SXFER_MO_MASK) >> SXFER_MO_SHIFT;
+	const int clock = sc->clock_period;
+	int i;
+
+	printf("%s: target %d using %d bit ", sc->sc_dev.dv_xname, target,
+	    (sc->targets[target]->flags & TARF_ISWIDE) ? 16 : 8);
+
+	if (offset == 0)
+		printf("async ");
+	else {
+		for (i = 0; i < sizeof(scf_period) / sizeof(scf_period[0]); i++)
+			if ((scf_period[i].clock == clock) 
+			    && (scf_period[i].scf == scf)) {
+				printf("%s ", scf_period[i].rate);
+				break;
+			}
+		if (i == sizeof(scf_period) / sizeof(scf_period[0]))
+			printf("? ");
+		printf("MHz %d REQ/ACK offset ", offset);
+	}
+	
+	printf("xfers\n");
+}
+
 int
 siop_scsicmd(xs)
 	struct scsi_xfer *xs;
@@ -1281,7 +1304,7 @@ siop_scsicmd(xs)
 			return(TRY_AGAIN_LATER);
 		}
 		sc->targets[target]->status = TARST_PROBING;
-		sc->targets[target]->flags = 0;
+		sc->targets[target]->flags = TARF_WIDE | TARF_SYNC;
 		sc->targets[target]->id = sc->clock_div << 24; /* scntl3 */
 		sc->targets[target]->id |=  target << 16; /* id */
 		/* sc->targets[target]->id |= 0x0 << 8; scxfer is 0 */
@@ -1298,7 +1321,9 @@ siop_scsicmd(xs)
 		for (i=0; i < 8; i++)
 			sc->targets[target]->siop_lun[i] = NULL;
 		siop_add_reselsw(sc, target);
-	}
+	} else if (sc->targets[target]->status == TARST_PROBING)
+		sc->targets[target]->status = TARST_ASYNC;
+
 	if (sc->targets[target]->siop_lun[lun] == NULL) {
 		sc->targets[target]->siop_lun[lun] =
 		    malloc(sizeof(struct siop_lun), M_DEVBUF, M_NOWAIT);
@@ -1352,11 +1377,23 @@ siop_scsicmd(xs)
 	siop_start(sc);
 	if (xs->flags & SCSI_POLL) {
 		/* poll for command completion */
-		while ((xs->flags & ITSDONE) == 0) {
-			delay(1000);
+		for(i = xs->timeout; i > 0; i--) {
 			siop_intr(sc);
+			if (xs->flags & ITSDONE) {
+				if ((xs->cmd->opcode == INQUIRY)
+				    && (xs->sc_link->lun == 0)
+				    && (xs->error == XS_NOERROR))
+					siop_print_info(sc, target);
+				break;
+			}
+			delay(1000);
 		}
 		splx(s);
+		if (i == 0) {
+			siop_timeout(siop_cmd);
+			while ((xs->flags & ITSDONE) == 0)
+				siop_intr(sc);
+		}
 		return (COMPLETE);
 	}
 	splx(s);

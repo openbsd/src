@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.h,v 1.1 2001/02/15 04:07:58 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.h,v 1.2 2001/02/20 00:32:30 krw Exp $ */
 /*	$NetBSD: siop_pci_common.h,v 1.2 2000/10/23 14:57:23 bouyer Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
 struct siop_product_desc {
 	u_int32_t product;
 	int	revision;
-	const char *name;
 	int	features; /* features are defined in siopvar.h */
 	u_int8_t maxburst;
 	u_int8_t maxoff;  /* maximum supported offset */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.1 2001/02/15 04:07:58 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.2 2001/02/20 00:32:29 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -184,15 +184,11 @@ siop_wdtr_neg(siop_cmd)
 		/* we initiated wide negotiation */
 		switch (tables->msg_in[3]) {
 		case MSG_EXT_WDTR_BUS_8_BIT:
-			printf("%s: target %d using 8bit transfers\n",
-			    sc->sc_dev.dv_xname, target);
 			siop_target->flags &= ~TARF_ISWIDE;
 			sc->targets[target]->id &= ~(SCNTL3_EWS << 24);
 			break;
 		case MSG_EXT_WDTR_BUS_16_BIT:
 			if (siop_target->flags & TARF_WIDE) {
-				printf("%s: target %d using 16bit transfers\n",
-				    sc->sc_dev.dv_xname, target);
 				siop_target->flags |= TARF_ISWIDE;
 				sc->targets[target]->id |= (SCNTL3_EWS << 24);
 				break;
@@ -229,13 +225,9 @@ siop_wdtr_neg(siop_cmd)
 		/* target initiated wide negotiation */
 		if (tables->msg_in[3] >= MSG_EXT_WDTR_BUS_16_BIT
 		    && (siop_target->flags & TARF_WIDE)) {
-			printf("%s: target %d using 16bit transfers\n",
-			    sc->sc_dev.dv_xname, target);
 			siop_target->flags |= TARF_ISWIDE;
 			sc->targets[target]->id |= SCNTL3_EWS << 24;
 		} else {
-			printf("%s: target %d using 8bit transfers\n",
-			    sc->sc_dev.dv_xname, target);
 			siop_target->flags &= ~TARF_ISWIDE;
 			sc->targets[target]->id &= ~(SCNTL3_EWS << 24);
 		}
@@ -282,9 +274,6 @@ siop_sdtr_neg(siop_cmd)
 				continue;
 			if (scf_period[i].period == sync) {
 				/* ok, found it. we now are sync. */
-				printf("%s: target %d now synchronous at "
-				    "%sMhz, offset %d\n", sc->sc_dev.dv_xname,
-				    target, scf_period[i].rate, offset);
 				sc->targets[target]->id &=
 				    ~(SCNTL3_SCF_MASK << 24);
 				sc->targets[target]->id |= scf_period[i].scf
@@ -310,8 +299,6 @@ reject:
 		send_msgout = 1;
 		tables->t_msgout.count= htole32(1);
 		tables->msg_out[0] = MSG_MESSAGE_REJECT;
-		printf("%s: target %d asynchronous\n", sc->sc_dev.dv_xname,
-		    target);
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
 		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
 		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
@@ -333,9 +320,6 @@ reject:
 				continue;
 			if (scf_period[i].period == sync) {
 				/* ok, found it. we now are sync. */
-				printf("%s: target %d now synchronous at "
-				    "%sMhz, offset %d\n", sc->sc_dev.dv_xname,
-				    target, scf_period[i].rate, offset);
 				sc->targets[target]->id &=
 				    ~(SCNTL3_SCF_MASK << 24);
 				sc->targets[target]->id |= scf_period[i].scf

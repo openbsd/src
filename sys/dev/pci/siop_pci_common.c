@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.1 2001/02/15 04:07:58 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.2 2001/02/20 00:32:30 krw Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.6 2001/01/10 15:50:20 thorpej Exp $	*/
 
 /*
@@ -56,37 +56,31 @@
 const struct siop_product_desc siop_products[] = {
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x00,
-	"Symbios Logic 53c810 (fast scsi)",
 	SF_PCI_RL | SF_CHIP_LS,
 	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_810,
 	0x10,
-	"Symbios Logic 53c810a (fast scsi)",
 	SF_PCI_RL | SF_PCI_BOF | SF_CHIP_PF | SF_CHIP_LS,
 	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_815,
 	0x00,
-	"Symbios Logic 53c815 (fast scsi)",
 	SF_PCI_RL | SF_PCI_BOF,
 	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_820,
 	0x00,
-	"Symbios Logic 53c820 (fast wide scsi)",
 	SF_PCI_RL | SF_CHIP_LS | SF_BUS_WIDE,
 	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x00,
-	"Symbios Logic 53c825 (fast wide scsi)",
 	SF_PCI_RL | SF_PCI_BOF | SF_BUS_WIDE,
 	4, 8, 3, 250, 0
 	},
 	{ PCI_PRODUCT_SYMBIOS_825,
 	0x10,
-	"Symbios Logic 53c825a (fast wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_WIDE,
@@ -94,7 +88,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_860,
 	0x00,
-	"Symbios Logic 53c860 (ultra scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_PF | SF_CHIP_LS |
 	SF_BUS_ULTRA,
@@ -102,7 +95,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x00,
-	"Symbios Logic 53c875 (ultra-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA | SF_BUS_WIDE,
@@ -110,7 +102,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_875,
 	0x02,
-	"Symbios Logic 53c875 (ultra-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
@@ -119,7 +110,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_875J,
 	0x00,
-	"Symbios Logic 53c875j (ultra-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
@@ -128,7 +118,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_885,
 	0x00,
-	"Symbios Logic 53c885 (ultra-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_DBLR |
 	SF_CHIP_LS | SF_CHIP_10REGS |
@@ -137,7 +126,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_895,
 	0x00,
-	"Symbios Logic 53c895 (ultra2-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
@@ -146,7 +134,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_896,
 	0x00,
-	"Symbios Logic 53c896 (ultra2-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
@@ -155,7 +142,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_895A,
 	0x00,
-	"Symbios Logic 53c895a (ultra2-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
@@ -164,7 +150,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ PCI_PRODUCT_SYMBIOS_1510D,
 	0x00,
-	"Symbios Logic 53c1510d (ultra2-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
 	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
@@ -173,7 +158,6 @@ const struct siop_product_desc siop_products[] = {
 	},
 	{ 0,
 	0x00,
-	NULL,
 	0x00,
 	0, 0, 0, 0, 0
 	},
@@ -190,7 +174,7 @@ siop_lookup_product(id, rev)
 	if (PCI_VENDOR(id) != PCI_VENDOR_SYMBIOS)
 		return NULL;
 
-	for (pp = siop_products; pp->name != NULL; pp++) {
+	for (pp = siop_products; pp->product != 0; pp++) {
 		if (PCI_PRODUCT(id) == pp->product && pp->revision <= rev)
 			if (rp == NULL || pp->revision > rp->revision)
 				rp = pp;
@@ -227,7 +211,6 @@ siop_pci_attach_common(sc, pa)
 	sc->siop.ram_size = sc->sc_pp->ram_size;
 
 	sc->siop.sc_reset = siop_pci_reset;
-	printf(": %s\n", sc->sc_pp->name);
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
 	sc->siop.sc_dmat = pa->pa_dmat;
@@ -255,7 +238,7 @@ siop_pci_attach_common(sc, pa)
 		sc->siop.sc_rh = ioh;
 		sc->siop.sc_raddr = ioaddr;
 	} else {
-		printf("%s: unable to map device registers\n",
+		printf("\n%s: unable to map device registers\n",
 		    sc->siop.sc_dev.dv_xname);
 		return 0;
 	}
@@ -272,37 +255,33 @@ siop_pci_attach_common(sc, pa)
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &sc->siop.sc_ramt, &sc->siop.sc_ramh,
-		    &sc->siop.sc_scriptaddr, NULL) == 0) {
-			printf("%s: using on-board RAM\n",
-			    sc->siop.sc_dev.dv_xname);
-		} else {
-			printf("%s: can't map on-board RAM\n",
-			    sc->siop.sc_dev.dv_xname);
+		    &sc->siop.sc_scriptaddr, NULL) != 0)
 			sc->siop.features &= ~SF_CHIP_RAM;
-		}
 	}
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &intrhandle)) {
-		printf("%s: couldn't map interrupt\n",
+		printf("\n%s: couldn't map interrupt\n",
 		    sc->siop.sc_dev.dv_xname);
 		return 0;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
 	    siop_intr, &sc->siop, sc->siop.sc_dev.dv_xname);
-	if (sc->sc_ih != NULL) {
-		printf("%s: interrupting at %s\n",
-		    sc->siop.sc_dev.dv_xname,
-		    intrstr ? intrstr : "unknown interrupt");
-	} else {
-		printf("%s: couldn't establish interrupt",
+	if (sc->sc_ih != NULL)
+		printf(": %s, ", (intrstr != NULL) ? intrstr : "irq ?");
+	else {
+		printf("\n%s: couldn't establish interrupt",
 		    sc->siop.sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return 0;
 	}
+
+	if (sc->siop.features & SF_CHIP_RAM)
+		printf("has RAM\n");
+
 	return 1;
 }
 
