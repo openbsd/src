@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.h,v 1.2 2004/03/17 00:47:06 krw Exp $	*/
+/*	$OpenBSD: mpt.h,v 1.3 2004/03/20 03:54:16 krw Exp $	*/
 /*	$NetBSD: mpt.h,v 1.2 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 #define MPT_OFFSET_SEQUENCE     0x04
 #define MPT_OFFSET_DIAGNOSTIC   0x08
 #define MPT_OFFSET_TEST         0x0C
+#define MPT_OFFSET_RWDATA       0x10
+#define MPT_OFFSET_RWADDR       0x14
 #define MPT_OFFSET_INTR_STATUS  0x30
 #define MPT_OFFSET_INTR_MASK    0x34
 #define MPT_OFFSET_REQUEST_Q    0x40
@@ -178,6 +180,7 @@ int mpt_read_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
 int mpt_write_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
 
 /* FW Download Boot */
+int mpt_downloadboot(mpt_softc_t *);
 int mpt_do_upload(mpt_softc_t *);
 int mpt_alloc_fw_mem(mpt_softc_t *, uint32_t , int);
 void mpt_free_fw_mem(mpt_softc_t *);

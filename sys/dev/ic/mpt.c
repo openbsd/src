@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.3 2004/03/19 02:47:36 krw Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.4 2004/03/20 03:54:16 krw Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -181,6 +181,9 @@ mpt_soft_reset(mpt_softc_t *mpt)
 void
 mpt_hard_reset(mpt_softc_t *mpt)
 {
+	u_int32_t	diag0;
+	int		count;
+
 	/* This extra read comes for the Linux source
 	 * released by LSI. It's function is undocumented!
 	 */
@@ -214,9 +217,25 @@ mpt_hard_reset(mpt_softc_t *mpt)
 
 	/* Note that if there is no valid firmware to run, the doorbell will
 	   remain in the reset state (0x00000000) */
-	if (mpt->download_fw) {
-		/* FIXME do download boot we panic for now */
-		panic("FWDownloadBoot not implemented yet.");
+
+	/* try to download firmware, if available */
+	if (mpt->fw) {
+		/* wait for the adapter to finish the reset */
+		for (count = 0; count < 30; count++) {
+			diag0 = mpt_read(mpt, MPI_DIAGNOSTIC_OFFSET);
+			mpt_prt(mpt, "diag0=%08x\n", diag0);
+			if (!(diag0 & MPI_DIAG_RESET_ADAPTER)) {
+				break;
+			}
+
+			/* wait 1 second */
+			DELAY(1000);
+		}
+		count = mpt_downloadboot(mpt);
+		if (count < 0) {
+			panic("firmware downloadboot failure (%d)!\n",
+			    count);
+		}
 	}
 }
 
@@ -1149,14 +1168,6 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		mpt->fw_download_boot = facts.Flags
 			& MPI_IOCFACTS_FLAGS_FW_DOWNLOAD_BOOT;
 
-		/* if download boot set download flag */
-		if (mpt->fw_download_boot) {
-			mpt->download_fw = 1;
-		}
-		else {
-			mpt->download_fw = 0;
-		}
-
 		mpt->fw_image_size = facts.FWImageSize;
 
 		if (mpt_get_portfacts(mpt, &pfp) != MPT_OK) {
@@ -1327,7 +1338,7 @@ mpt_do_upload(mpt_softc_t *mpt)
 
 	prequest->ImageType = MPI_FW_UPLOAD_ITYPE_FW_IOC_MEM;
 	prequest->Function = MPI_FUNCTION_FW_UPLOAD;
-	prequest->MsgContext = 0; /* XXX MU ok? */
+	prequest->MsgContext = 0;
 
 	ptcsge = (FWUploadTCSGE_t *) &prequest->SGL;
 	ptcsge->Reserved = 0;
@@ -1407,3 +1418,151 @@ mpt_do_upload(mpt_softc_t *mpt)
 	return error;
 }
 
+/*
+ * mpt_downloadboot - DownloadBoot code
+ * Returns 0 for success, <0 for failure
+ */
+int
+mpt_downloadboot(mpt_softc_t *mpt)
+{
+	MpiFwHeader_t		*fwhdr = NULL;
+	MpiExtImageHeader_t	*exthdr = NULL;
+	int			fw_size;
+	u_int32_t		diag0;
+#if MPT_DEBUG
+	u_int32_t		diag1;	
+#endif
+	int			count = 0;
+	u_int32_t		*ptr = NULL;
+	u_int32_t		nextimg;
+	u_int32_t		load_addr;
+	u_int32_t		diagrw_data;
+
+#ifdef MPT_DEBUG
+	diag0 = mpt_read(mpt, MPT_OFFSET_DIAGNOSTIC);
+	if (mpt->mpt2)
+		diag1 = mpt_read(mpt->mpt2, MPT_OFFSET_DIAGNOSTIC);
+	mpt_prt(mpt, "diag0=%08x, diag1=%08x\n", diag0, diag1);
+#endif
+	mpt_prt(mpt, "fw size 0x%x, ioc FW ptr %p\n",
+			mpt->fw_image_size, mpt->fw);
+	if (mpt->mpt2)
+		mpt_prt(mpt->mpt2, "ioc FW ptr %p\n", mpt->mpt2->fw);
+
+	fw_size = mpt->fw_image_size;
+
+	if (fw_size == 0)
+		return -1;
+
+	mpt_prt(mpt, "FW Image @ %p\n", mpt->fw);
+
+	if (!mpt->fw)
+		return -2;
+
+	/* 
+	 * Write magic sequence to WriteSequence register
+	 * until enter diagnostic mode
+	 */
+	diag0 = mpt_read(mpt, MPT_OFFSET_DIAGNOSTIC);
+	while ((diag0 & MPI_DIAG_DRWE) == 0) {
+		mpt_write(mpt, MPT_OFFSET_SEQUENCE, 0xFF);
+		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_1);
+		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_2);
+		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_3);
+		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_4);
+		mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_5);
+		
+		/* wait 100msec */
+		DELAY(100);
+
+		count++;
+		if (count > 20) {
+			mpt_prt(mpt, "enable diagnostic mode FAILED! (%02xh)\n",
+			    diag0);
+			return -EFAULT;
+		}
+
+		diag0 = mpt_read(mpt, MPT_OFFSET_DIAGNOSTIC);
+#ifdef MPT_DEBUG
+		if (mpt->mpt2)
+			diag1 = mpt_read(mpt->mpt2, MPT_OFFSET_DIAGNOSTIC);
+		mpt_prt(mpt, "diag0=%08x, diag1=%08x\n", diag0, diag1);
+#endif
+		mpt_prt(mpt, "wrote magic DiagWriteEn sequence (%x)\n", diag0);
+	}
+
+	/* Set the DiagRwEn and Disable ARM bits */
+	diag0 |= (MPI_DIAG_RW_ENABLE | MPI_DIAG_DISABLE_ARM);
+	mpt_write(mpt, MPT_OFFSET_DIAGNOSTIC, diag0);
+
+#ifdef MPT_DEBUG
+	if (mpt->mpt2)
+		diag1 = mpt_read(mpt->mpt2, MPT_OFFSET_DIAGNOSTIC);
+	mpt_prt(mpt, "diag0=%08x, diag1=%08x\n", diag0, diag1);
+#endif
+
+	fwhdr = (MpiFwHeader_t *) mpt->fw;
+	ptr = (u_int32_t *) fwhdr;
+	count = (fwhdr->ImageSize + 3)/4;
+	nextimg = fwhdr->NextImageHeaderOffset;
+
+	/* 
+	 * write the LoadStartAddress to the DiagRw Address Register
+	 * XXX linux is using programmed IO for the RWADDR and RWDATA
+	 */
+	mpt_write(mpt, MPT_OFFSET_RWADDR, fwhdr->LoadStartAddress);
+
+	mpt_prt(mpt, "LoadStart addr written 0x%x \n", fwhdr->LoadStartAddress);
+	mpt_prt(mpt, "writing file image: 0x%x u32's @ %p\n", count, ptr);
+
+	while (count--) {
+		mpt_write(mpt, MPT_OFFSET_RWDATA, *ptr);
+		ptr++;
+	}
+
+	while (nextimg) {
+		ptr = (u_int32_t *) (mpt->fw + nextimg);
+		exthdr = (MpiExtImageHeader_t *) ptr;
+		count = (exthdr->ImageSize +3)/4;
+		nextimg = exthdr->NextImageHeaderOffset;
+		load_addr = exthdr->LoadStartAddress;
+
+		mpt_prt(mpt, "write ext image: 0x%x u32's @ %p\n", count, ptr);
+
+		mpt_write(mpt, MPT_OFFSET_RWADDR, load_addr);
+
+		while (count--) {
+			mpt_write(mpt, MPT_OFFSET_RWDATA, *ptr);
+			ptr++;
+		}
+	}
+
+	/* write the IopResetVectorRegAddr */
+	mpt_prt(mpt, "write IopResetVector addr!\n");
+	mpt_write(mpt, MPT_OFFSET_RWADDR, fwhdr->IopResetRegAddr);
+
+	/* write the IopResetVectorValue */
+	mpt_prt(mpt, "write IopResetVector value!\n");
+	mpt_write(mpt, MPT_OFFSET_RWDATA, fwhdr->IopResetVectorValue);
+
+	/*
+	 * clear the internal flash bad bit - autoincrementing register,
+	 * so must do two writes.
+	 */
+	mpt_write(mpt, MPT_OFFSET_RWADDR, 0x3F000000);
+	diagrw_data = mpt_read(mpt, MPT_OFFSET_RWDATA);
+	diagrw_data |= 0x4000000;
+	mpt_write(mpt, MPT_OFFSET_RWADDR, 0x3F000000);
+	mpt_write(mpt, MPT_OFFSET_RWDATA, diagrw_data);
+
+	/* clear the RW enable and DISARM bits */
+	diag0 = mpt_read(mpt, MPT_OFFSET_DIAGNOSTIC);
+	diag0 &= ~(MPI_DIAG_DISABLE_ARM | MPI_DIAG_RW_ENABLE
+	       	| MPI_DIAG_FLASH_BAD_SIG);
+	mpt_write(mpt, MPT_OFFSET_DIAGNOSTIC, diag0);
+
+	/* write 0xFF to reset the sequencer */
+	mpt_write(mpt, MPT_OFFSET_SEQUENCE, 0xFF);
+
+	return 0;
+}
