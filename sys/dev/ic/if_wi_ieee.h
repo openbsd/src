@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.1 2001/05/15 02:40:36 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.2 2001/06/07 04:58:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -171,38 +171,43 @@ struct wi_counters {
 /*
  * Network parameters, static configuration entities.
  */
-#define WI_RID_PORTTYPE		0xFC00 /* Connection control characteristics */
-#define WI_RID_MAC_NODE		0xFC01 /* MAC address of this station */
-#define WI_RID_DESIRED_SSID	0xFC02 /* Service Set ID for connection */
-#define WI_RID_OWN_CHNL		0xFC03 /* Comm channel for BSS creation */
-#define WI_RID_OWN_SSID		0xFC04 /* IBSS creation ID */
-#define WI_RID_OWN_ATIM_WIN	0xFC05 /* ATIM window time for IBSS creation */
-#define WI_RID_SYSTEM_SCALE	0xFC06 /* scale that specifies AP density */
-#define WI_RID_MAX_DATALEN	0xFC07 /* Max len of MAC frame body data */
-#define WI_RID_MAC_WDS		0xFC08 /* MAC addr of corresponding WDS node */
-#define WI_RID_PM_ENABLED	0xFC09 /* ESS power management enable */
-#define WI_RID_PM_EPS		0xFC0A /* PM EPS/PS mode */
-#define WI_RID_MCAST_RX		0xFC0B /* ESS PM mcast reception */
-#define WI_RID_MAX_SLEEP	0xFC0C /* max sleep time for ESS PM */
-#define WI_RID_HOLDOVER		0xFC0D /* holdover time for ESS PM */
-#define WI_RID_NODENAME		0xFC0E /* ID name of this node for diag */
-#define WI_RID_DTIM_PERIOD	0xFC10 /* beacon interval between DTIMs */
-#define WI_RID_WDS_ADDR1	0xFC11 /* port 1 MAC of WDS link node */
-#define WI_RID_WDS_ADDR2	0xFC12 /* port 1 MAC of WDS link node */
-#define WI_RID_WDS_ADDR3	0xFC13 /* port 1 MAC of WDS link node */
-#define WI_RID_WDS_ADDR4	0xFC14 /* port 1 MAC of WDS link node */
-#define WI_RID_WDS_ADDR5	0xFC15 /* port 1 MAC of WDS link node */
-#define WI_RID_WDS_ADDR6	0xFC16 /* port 1 MAC of WDS link node */
-#define WI_RID_MCAST_PM_BUF	0xFC17 /* PM buffering of mcast */
-#define WI_RID_ENCRYPTION	0xFC20 /* enable/disable WEP */
-#define WI_RID_AUTHTYPE		0xFC21 /* specify authentication type */
-#define WI_RID_P2_TX_CRYPT_KEY	0xFC23
-#define WI_RID_P2_CRYPT_KEY0	0xFC24
-#define WI_RID_P2_CRYPT_KEY1	0xFC25
-#define WI_RID_MICROWAVE_OVEN	0xFC25
-#define WI_RID_P2_CRYPT_KEY2	0xFC26
-#define WI_RID_P2_CRYPT_KEY3	0xFC27
-#define WI_RID_P2_ENCRYPTION	0xFC28
+#define	WI_RID_PORTTYPE		0xFC00 /* Connection control characteristics */
+#define	WI_RID_MAC_NODE		0xFC01 /* MAC address of this station */
+#define	WI_RID_DESIRED_SSID	0xFC02 /* Service Set ID for connection */
+#define	WI_RID_OWN_CHNL		0xFC03 /* Comm channel for BSS creation */
+#define	WI_RID_OWN_SSID		0xFC04 /* IBSS creation ID */
+#define	WI_RID_OWN_ATIM_WIN	0xFC05 /* ATIM window time for IBSS creation */
+#define	WI_RID_SYSTEM_SCALE	0xFC06 /* scale that specifies AP density */
+#define	WI_RID_MAX_DATALEN	0xFC07 /* Max len of MAC frame body data */
+#define	WI_RID_MAC_WDS		0xFC08 /* MAC addr of corresponding WDS node */
+#define	WI_RID_PM_ENABLED	0xFC09 /* ESS power management enable */
+#define	WI_RID_PM_EPS		0xFC0A /* PM EPS/PS mode */
+#define	WI_RID_MCAST_RX		0xFC0B /* ESS PM mcast reception */
+#define	WI_RID_MAX_SLEEP	0xFC0C /* max sleep time for ESS PM */
+#define	WI_RID_HOLDOVER		0xFC0D /* holdover time for ESS PM */
+#define	WI_RID_NODENAME		0xFC0E /* ID name of this node for diag */
+#define	WI_RID_DTIM_PERIOD	0xFC10 /* beacon interval between DTIMs */
+#define	WI_RID_WDS_ADDR1	0xFC11 /* port 1 MAC of WDS link node */
+#define	WI_RID_WDS_ADDR2	0xFC12 /* port 1 MAC of WDS link node */
+#define	WI_RID_WDS_ADDR3	0xFC13 /* port 1 MAC of WDS link node */
+#define	WI_RID_WDS_ADDR4	0xFC14 /* port 1 MAC of WDS link node */
+#define	WI_RID_WDS_ADDR5	0xFC15 /* port 1 MAC of WDS link node */
+#define	WI_RID_WDS_ADDR6	0xFC16 /* port 1 MAC of WDS link node */
+#define	WI_RID_MCAST_PM_BUF	0xFC17 /* PM buffering of mcast */
+#define	WI_RID_ENCRYPTION	0xFC20 /* enable/disable WEP */
+#define	WI_RID_AUTHTYPE		0xFC21 /* specify authentication type */
+#define	WI_RID_P2_TX_CRYPT_KEY	0xFC23
+#define	WI_RID_P2_CRYPT_KEY0	0xFC24
+#define	WI_RID_P2_CRYPT_KEY1	0xFC25
+#define	WI_RID_MICROWAVE_OVEN	0xFC25
+#define	WI_RID_P2_CRYPT_KEY2	0xFC26
+#define	WI_RID_P2_CRYPT_KEY3	0xFC27
+#define	WI_RID_P2_ENCRYPTION	0xFC28
+#define	WI_RID_WEP_MAPTABLE	0xFC29
+#define	WI_RID_AUTH_CNTL	0xFC2A
+#define	WI_RID_ROAMING_MODE	0xFC2D
+#define	WI_RID_BASIC_RATE	0xFCB3
+#define	WI_RID_SUPPORT_RATE	0xFCB4
 
 /*
  * Network parameters, dynamic configuration entities
@@ -237,6 +242,8 @@ struct wi_counters {
 #define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
 #define WI_RID_TX_CRYPT_KEY	0xFCB1
 #define WI_RID_TICK_TIME	0xFCE0
+#define WI_RID_SCAN_REQ		0xFCE1
+#define WI_RID_JOIN_REQ		0xFCE2
 
 struct wi_key {
 	u_int16_t		wi_keylen;
