@@ -1,4 +1,4 @@
-#	$OpenBSD: TDR,v 1.17 1996/09/20 06:45:10 deraadt Exp $
+#	$OpenBSD: TDR,v 1.18 1996/09/26 09:56:29 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -145,7 +145,7 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
-mcd0	at isa? port 0x300 irq 7	# Mitsumi CD-ROM drives
+#mcd0	at isa? port 0x300 irq 7	# Mitsumi CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
