@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.5 2004/12/10 19:19:11 jfb Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.6 2005/01/03 22:10:12 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -179,39 +179,50 @@ rcsnum_cmp(const RCSNUM *n1, const RCSNUM *n2, u_int depth)
 int
 rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 {
+	u_int32_t val;
 	const char *sp;
 	void *tmp;
 
 	if (nump->rn_id == NULL) {
 		nump->rn_id = (u_int16_t *)malloc(sizeof(u_int16_t));
-		if (nump->rn_id == NULL)
+		if (nump->rn_id == NULL) {
+			cvs_log(LP_ERRNO, "failed to allocate RCSNUM");
 			return (-1);
+		}
 	}
 
 	nump->rn_len = 0;
-	nump->rn_id[nump->rn_len] = 0;
+	nump->rn_id[0] = 0;
 
 	for (sp = str;; sp++) {
 		if (!isdigit(*sp) && (*sp != '.'))
 			break;
 
 		if (*sp == '.') {
+			if (nump->rn_len >= RCSNUM_MAXLEN - 1) {
+				cvs_log(LP_ERR,
+				    "RCSNUM exceeds maximum length");
+				goto rcsnum_aton_failed;
+			}
+
 			nump->rn_len++;
 			tmp = realloc(nump->rn_id,
 			    (nump->rn_len + 1) * sizeof(u_int16_t));
 			if (tmp == NULL) {
-				free(nump->rn_id);
-				nump->rn_len = 0;
-				nump->rn_id = NULL;
-				return (-1);
+				goto rcsnum_aton_failed;
 			}
 			nump->rn_id = (u_int16_t *)tmp;
 			nump->rn_id[nump->rn_len] = 0;
 			continue;
 		}
 
-		nump->rn_id[nump->rn_len] *= 10;
-		nump->rn_id[nump->rn_len] += *sp - 0x30;
+		val = (nump->rn_id[nump->rn_len] * 10) + (*sp - 0x30);
+		if (val > RCSNUM_MAXNUM) {
+			cvs_log(LP_ERR, "RCSNUM overflow");
+			goto rcsnum_aton_failed;
+		}
+
+		nump->rn_id[nump->rn_len] = val;
 	}
 
 	if (ep != NULL)
@@ -219,4 +230,10 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 
 	nump->rn_len++;
 	return (nump->rn_len);
+
+rcsnum_aton_failed:
+	nump->rn_len = 0;
+	free(nump->rn_id);
+	nump->rn_id = NULL;
+	return (-1);
 }
