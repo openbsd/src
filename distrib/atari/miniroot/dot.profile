@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.5 2000/03/01 22:10:02 todd Exp $
+#	$OpenBSD: dot.profile,v 1.6 2000/10/25 16:38:12 millert Exp $
 #	$NetBSD: dot.profile,v 1.1.1.1.4.2 1996/07/15 06:33:30 leo Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -44,8 +44,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
+	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 9600
 
 	# run update, so that installed software is written as it goes.
 	update

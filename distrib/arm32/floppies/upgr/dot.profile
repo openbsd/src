@@ -42,8 +42,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
+	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 9600
 	echo ''
 
 	# run update, so that installed software is written as it goes.

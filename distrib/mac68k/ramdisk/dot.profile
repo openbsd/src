@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.2 2000/01/30 01:21:20 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.3 2000/10/25 16:38:13 millert Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -48,8 +48,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	export DONEPROFILE
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
+	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 9600
 	echo ''
 
 	echo 'Remounting /dev/rd0a as root...'

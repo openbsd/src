@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.4 2000/08/08 01:08:07 deraadt Exp $
+#       $OpenBSD: dot.profile,v 1.5 2000/10/25 16:38:16 millert Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -46,8 +46,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount_ffs -o update /dev/rd0a /
 
 	# set up some sane defaults
-	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
 
 
 	# Installing or upgrading?
