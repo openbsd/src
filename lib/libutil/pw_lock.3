@@ -60,8 +60,10 @@ functions allow a program to update the system passwd database.
 The
 .Fn pw_lock
 function attempts to lock the passwd database by creating the file
-.Pa /etc/ptmp ,
-and returns the file descriptor of that file.  If
+.Pa /etc/ptmp
+with an exclusive lock (using
+.Xr flock 2
+semantics) and returns the file descriptor of that file.  If
 .Fa retries
 is greater than zero,
 .Fn pw_lock
@@ -102,4 +104,5 @@ functions return -1 if they are unable to complete properly.
 .It Pa /etc/ptmp
 .El
 .Sh SEE ALSO
+.Xr flock 2 ,
 .Xr pw_init 3
