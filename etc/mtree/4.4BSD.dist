@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.77 1999/07/18 09:39:51 niklas Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.78 1999/08/02 19:50:09 jakob Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -247,6 +247,11 @@ libexec
 # ./usr/libexec/lpr
 lpr
 # ./usr/libexec/lpr
+..
+
+# ./libexec/sendmail
+sendmail	type=dir uname=root gname=wheel mode=0755
+# ./libexec/sendmail
 ..
 
 # ./usr/libexec/uucp
