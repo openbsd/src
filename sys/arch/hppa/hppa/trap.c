@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2002/02/02 03:07:46 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2002/02/05 04:26:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -173,7 +173,7 @@ trap(type, frame)
 		tts = trap_type[trapnum];
 
 	if (trapnum != T_INTERRUPT && trapnum != T_IBREAK)
-		db_printf("trap: %d, %s for %x:%x at %x:%x, fl=%x, fp=%p\n",
+		db_printf("trap: %x, %s for %x:%x at %x:%x, fl=%x, fp=%p\n",
 		    type, tts, space, va, frame->tf_iisq_head,
 		    frame->tf_iioq_head, frame->tf_flags, frame);
 	else if (trapnum  == T_IBREAK)
@@ -586,7 +586,7 @@ cpu_intr(frame)
 				register int s, r;
 
 				iv->evcnt.ev_count++;
-				s = splx(iv->pri);
+				s = splraise(iv->pri);
 				/* no arg means pass the frame */
 				r = (iv->handler)(iv->arg? iv->arg:frame);
 				splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.7 2000/08/15 19:42:56 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.8 2002/02/05 04:26:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -335,7 +335,7 @@ mg_intr(void *v)
 	int s, irq = 0;
 
 	iv = &sc->sc_iv[irq];
-	s = splx(iv->iv_pri);
+	s = splraise(iv->iv_pri);
 	(iv->iv_handler)(iv->iv_arg);
 	splx(s);
 
