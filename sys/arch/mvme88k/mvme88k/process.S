@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.15 2001/12/22 09:49:39 smurph Exp $	*/
+/*	$OpenBSD: process.S,v 1.16 2003/08/03 23:34:09 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -36,26 +36,26 @@
 #include <machine/intr.h>
 
 	data
-	align 4
+	align	4
 swchanpanic:
-	string  "switch wchan %x"
-	align 4
+	string	"switch wchan %x"
+	align	4
 swsrunpanic:
 	string	"switch SRUN %x"
 
 	text
-	align 8
+	align	8
 Lswchanpanic:
-	or.u r2, r0, hi16(swchanpanic)
-	or   r2, r2, lo16(swchanpanic)
-	or   r3, r0, r9
-	bsr  _panic
+	or.u	r2, r0, hi16(swchanpanic)
+	or	r2, r2, lo16(swchanpanic)
+	or	r3, r0, r9
+	bsr	_panic
 
 Lswsrunpanic:
-	or.u r2, r0, hi16(swsrunpanic)
-	or   r2, r2, lo16(swsrunpanic)
-	or   r3, r0, r9
-	bsr  _panic
+	or.u	r2, r0, hi16(swsrunpanic)
+	or	r2, r2, lo16(swsrunpanic)
+	or	r3, r0, r9
+	bsr	_panic
 /*
  * At exit of a process, do a cpu_switch for the last time.
  * The mapping of the pcb at p->p_addr has already been deleted,
@@ -76,7 +76,7 @@ ENTRY(switch_exit)
 	st	r30, r10,lo16(_curpcb)	/* curpcb = &idle_u */
 	or.u	r10, r0, hi16(_curproc)
 	st	r0, r10, lo16(_curproc)	/* curproc = NULL */
-        
+
 	/* Schedule the vmspace and stack to be freed. */
 	bsr.n	_exit2			/* call exit2(p); */
 	subu	r31, r31, 48		/* allocate stack  */
@@ -98,7 +98,7 @@ ASGLOBAL(idle)
 					/* spin reading whichqs until != 0 */
 1:
 	or.u	r10, r0, hi16(_whichqs)
-	ld	r11, r10,lo16(_whichqs) 
+	ld	r11, r10,lo16(_whichqs)
 	bcnd	eq0, r11, 1b
 	bsr.n	_setipl
 	or	r2, r0, IPL_HIGH	/* block all ints */
@@ -154,7 +154,7 @@ Lidleloop:
 	bcnd	ne0, r7, Ldoneloop
 
 Lloopchk:				/* if whichqs is zero, keep checking */
-	bsr.n	_setipl			/* enable all ints */	
+	bsr.n	_setipl			/* enable all ints */
 	or	r2, r0, 0
 
 	br	Lidleloop
@@ -170,14 +170,14 @@ Ldoneloop:
 	bcnd	eq0, r7, Lloopchk	/* keep spinning for whichqs to be !=0*/
 
 	xor	r6, r6, r6		/* set r6 to 0 */
-     1:	bb1	0,  r7, 2f		/* if rightmost bit set, done */
+1:	bb1	0,  r7, 2f		/* if rightmost bit set, done */
 	extu	r7, r7, 0<1>		/* else, right shift whichqs, */
 	br.n	1b			/* increment r6, and repeat */
 	addu	r6, r6, 1
-     2:
+2:
 	or.u	r7, r0, hi16(_qs)
 	or	r7, r7, lo16(_qs)
-	
+
 	/*
 	 * Need to make
 	 *	p->p_forw->p_back = p->p_back and
@@ -190,21 +190,21 @@ Ldoneloop:
 	ld	r9,  r8, P_FORW	/* r8 is q, r9 is p */
 
 	ld	r12, r9, P_FORW	/* r12 = p->p_forw */
-	st	r8, r12, P_BACK /* p->p_forw->p_back = q (p->p_back) */
-	st	r12, r8, P_FORW /* q->p_forw = p->p_forw */
+	st	r8, r12, P_BACK	/* p->p_forw->p_back = q (p->p_back) */
+	st	r12, r8, P_FORW	/* q->p_forw = p->p_forw */
 	lda.d	r8,  r7[r6]	/* reload r8 with qs[ff1(whichqs)] */
-	ld	r12, r8, P_FORW /* q->p_forw */
+	ld	r12, r8, P_FORW	/* q->p_forw */
 	cmp	r12, r12, r8	/* q == q->p_forw; anyone left on queue? */
 	bb1	ne,  r12, Lsw2	/* yes, skip clearing bit in whichqs  */
 
 	or	r12, r0, 1	/* r12 is 1 now */
-      1:bcnd	eq0, r6, 2f
+1:	bcnd	eq0, r6, 2f
 	mak	r12, r12, 0<1>	/* shift left by 1 */
 	br.n	1b
 	subu	r6,  r6, 1	/* keep doing this while r6 != 0 */
-      2:
+2:
 	/*
-	 * NOTE: we could have just used "mak	r12, r12, r6" instead of the
+	 * NOTE: we could have just used "mak r12, r12, r6" instead of the
 	 * loop above. But that will break if NQS is made > 32. I can use
 	 * preprocessor to do the right thing, but that means I have to
 	 * include sys/proc.h in this file. XXX nivas
@@ -221,11 +221,11 @@ Lsw2:
 	bb1	ne, r2, Lswsrunpanic
 
 	or.u	r11, r0, hi16(_want_resched)
-	st	r0, r11, lo16(_want_resched) 	/* clear want_resched */
+	st	r0, r11, lo16(_want_resched)	/* clear want_resched */
 
 	or.u	r11, r0, hi16(_curproc)
 	st	r9,  r11,lo16(_curproc)		/* curproc = p */
-	
+
 	/* huh??? */
 	or.u	r10, r0, hi16(_curpcb)
 	ld	r10,r10, lo16(_curpcb)
@@ -240,7 +240,7 @@ Lsw2:
 	ld	r3, r9, P_ADDR
 	or.u	r10, r0, hi16(_curpcb)
 	st	r3, r10, lo16(_curpcb)		/* curpcb = p->p_addr */
-	
+
 	/* see if pmap_activate needs to be called */
 	/* _pmap_activate() now has proc * as parameter 01-11-2000 smurph */
 	/* No more VM_PMAP to contend with!!!  */
@@ -248,7 +248,7 @@ Lsw2:
 	or	r14, r0, r9		/* save p in r14 */
 	subu	r31, r31,48
 	/* r2 = pmap, r3 = pcb, r4 = cpu number */
-	bsr	_pmap_activate		/* _pmap_activate(proc *p)*/ 
+	bsr	_pmap_activate		/* _pmap_activate(proc *p)*/
 	addu    r31, r31,48
 	or	r9, r0, r14		/* restore p saved in r14 */
 
@@ -256,11 +256,11 @@ Lswnochg:
 	or.u	r31, r0, hi16(_intstack_end)
 	or	r31,r31, lo16(_intstack_end)/* now goto a tmp stack for NMI */
 	subu	r31, r31,48
-	bsr.n    _load_u_area		    /* load_u_area(p) */
+	bsr.n    _load_u_area
 	or	r2, r0, r9
 	addu	r31, r31,48
-					/* flush tlb of any user addresses */
-        or	r2, r0, 0	/* 0 = user space */
+				/* flush tlb of any user addresses */
+	or	r2, r0, 0	/* 0 = user space */
 	or	r3, r0, 0	/* start at addr 0 */
 	subu	r31, r31,48
 	/* r2 = 1 : kernel ? user, r3 = address, r4 = size */
@@ -275,7 +275,7 @@ Lswnochg:
 	st	r10, r14, P_ADDR	/* p->p_addr = curpcb; restore p_addr */
 
 	/* restore from the current context */
-	ld	r1,r10,  PCB_PC	
+	ld	r1,r10,  PCB_PC
 	ld.d	r14,r10, PCB_R14
 	ld.d	r16,r10, PCB_R16
 	ld.d	r18,r10, PCB_R18
