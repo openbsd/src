@@ -72,6 +72,8 @@ Supported devices {:-include-:}:
 			Cogent EM100
 			Digital DE450
 			Digital DE500
+			Netgear FA310TX rev D1
+			Lite-On PNIC
 		BICC Isolan [* and not recently tested]
 		Intel EtherExpress 16
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
