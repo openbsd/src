@@ -40,6 +40,9 @@ Supported hardware:
 			    and associated disks.
 				[Note: With single ATAPI device IDE busses, the
 				ATAPI device should be set to SLAVE.]
+			3COM 3c9xx (3c900, 3c905b, 3c905c) ethernet boards.
+			RealTek 8129/8139 based ethernet boards.
+			Lite-On PNIC (82c168,82c169) based ethernet boards.
 			Keyboard.
 			PS/2-style mice.
 
