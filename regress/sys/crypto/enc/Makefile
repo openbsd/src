@@ -1,6 +1,6 @@
-#       $OpenBSD: Makefile,v 1.1 2002/03/25 14:06:17 markus Exp $
+#       $OpenBSD: Makefile,v 1.2 2002/10/21 20:46:50 mickey Exp $
 
 PROG=   des3
-LDFLAGS=-ldes
+LDADD=-ldes
 
 .include <bsd.regress.mk>
