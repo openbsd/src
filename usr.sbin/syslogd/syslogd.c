@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.73 2004/01/13 04:08:27 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.74 2004/01/19 16:06:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.73 2004/01/13 04:08:27 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.74 2004/01/19 16:06:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,10 @@ main(int argc, char *argv[])
 	if (linesize < MAXLINE)
 		linesize = MAXLINE;
 	linesize++;
-	line = malloc(linesize);
+	if ((line = malloc(linesize)) == NULL) {
+		logerror("Couldn't allocate line buffer");
+		die(0);
+	}
 
 	/* Clear poll array, set all fds to ignore */
 	for (i = 0; i < N_PFD; i++) {
