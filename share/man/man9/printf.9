@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.9,v 1.9 2003/06/11 18:07:23 tedu Exp $
+.\"	$OpenBSD: printf.9,v 1.10 2003/06/13 01:14:54 tedu Exp $
 .\"     $NetBSD: kprintf.9,v 1.6 1999/03/16 00:40:47 garbled Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/systm.h>
-.Ft void
+.Ft int
 .Fo "printf"
 .Fa "const char *format"
 .Fa "..."
@@ -62,7 +62,7 @@
 .Fa "const char *format"
 .Fa "..."
 .Fc
-.Ft void
+.Ft int
 .Fo "vprintf"
 .Fa "const char *format"
 .Fa "va_list ap"
@@ -195,7 +195,9 @@ This format specifier is only available to
 .El
 .Sh RETURN VALUES
 The
-.Fn snprintf
+.Fn printf ,
+.Fn snprintf ,
+.Fn vprintf ,
 and
 .Fn vsnprintf
 functions return the number of characters they placed in the buffer
@@ -232,8 +234,6 @@ bail("descriptor %d is invalid.", 5)
 \(rA "bailing out: descriptor 5 is invalid"
 .Ed
 .Sh SEE ALSO
-.\" The following page has not been written, but I am including a cross-
-.\" reference to it in the hopes that it will inspire someone to write it.
 .Xr revoke 2 ,
 .Xr printf 3 ,
 .Xr ddb 4 ,
