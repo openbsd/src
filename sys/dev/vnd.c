@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.12 1997/05/17 20:09:46 millert Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.13 1997/05/18 13:00:12 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -422,14 +422,7 @@ vndstrategy(bp)
 			auio.uio_iovcnt = 1;
 			auio.uio_offset = dbtob(bp->b_blkno);
 			auio.uio_segflg = UIO_SYSSPACE;
-
-			/*
-			 * It seems we can get NULL proc pointers in bp->b_proc
-			 * that causes a quota check in VOP_WRITE to fault.
-			 * In that case chalk it up on curproc instead, for
-			 * safety.
-			 */
-			auio.uio_procp = (bp->b_proc ? bp->b_proc : curproc);
+			auio.uio_procp = NULL;
 
 			VOP_LOCK(vnd->sc_vp);
 			vnd->sc_flags |= VNF_BUSY;
