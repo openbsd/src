@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nc.1,v 1.8 2000/07/06 04:06:55 aaron Exp $
+.\"	$OpenBSD: nc.1,v 1.9 2000/07/08 15:42:04 aaron Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -33,11 +33,11 @@
 .Nd "arbitrary TCP and UDP connections and listens"
 .Sh SYNOPSIS
 .Nm nc
+.Op Fl lnrtuvz
 .Op Fl e Ar command
 .Op Fl g Ar intermediates
 .Op Fl G Ar hopcount
 .Op Fl i Ar interval
-.Op Fl lnrtuvz
 .Op Fl o Ar filename
 .Op Fl p Ar source port
 .Op Fl s Ar ip address
