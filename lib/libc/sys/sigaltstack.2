@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.5 1998/07/06 18:28:35 deraadt Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.6 1998/12/05 17:55:52 espie Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -141,7 +141,7 @@ Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Sigstack
+.Fn Sigaltstack
 will fail and the signal stack context will remain unchanged
 if one of the following occurs.
 .Bl -tag -width [ENOMEM]
