@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.13 1999/01/19 10:04:54 niklas Exp $	*/
+/*	$OpenBSD: cross.c,v 1.14 2000/05/28 03:28:42 art Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -53,6 +53,44 @@
 #include <amiga/isa/isa_machdep.h>
 #include <amiga/isa/crossreg.h>
 #include <amiga/isa/crossvar.h>
+
+#if defined(UVM)
+void	crossattach __P((struct device *, struct device *, void *));
+int	crossmatch __P((struct device *, void *, void *));
+
+struct cfattach cross_ca = {
+	sizeof(struct cross_softc), crossmatch, crossattach
+};
+
+struct cfdriver cross_cd = {
+	NULL, "cross", DV_DULL, 0
+};
+
+void
+crossattach(a, b, c)
+	struct device *a;
+	struct device *b;
+	void *c;
+{
+	panic("crossattach && UVM");
+}
+
+int
+crossmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct zbus_args *zap = aux;
+
+	/*
+	 * Check manufacturer and product id.
+	 */
+	if (zap->manid == 2011 && zap->prodid == 3)
+		printf("cross not supported with uvm yet.");
+	return(0);
+}
+
+#else
 
 extern int cold;
 
@@ -469,3 +507,4 @@ cross_intr_check(ic, irq, type)
 
 	return (__isa_intr_check(irq, type, sc->sc_intrsharetype));
 }
+#endif /* UVM */
