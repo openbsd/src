@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.72 1998/07/21 20:48:24 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.73 1998/07/21 21:56:17 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1741,6 +1741,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "ViRGE DX/GX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_GX2,
+	    0,
+	    "S3",
+	    "ViRGE GX2",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX,
+	    0,
+	    "S3",
+	    "ViRGE MX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MXP,
+	    0,
+	    "S3",
+	    "ViRGE MXP",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,

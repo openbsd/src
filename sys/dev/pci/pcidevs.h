@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.72 1998/07/21 20:48:24 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.73 1998/07/21 21:56:17 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1269,6 +1269,9 @@
 #define	PCI_PRODUCT_S3_TRIO64V2_DX	0x8901		/* Trio64V2/DX */
 #define	PCI_PRODUCT_S3_PLATO	0x8902		/* Plato */
 #define	PCI_PRODUCT_S3_VIRGE_DX_GX	0x8a01		/* ViRGE DX/GX */
+#define	PCI_PRODUCT_S3_VIRGE_GX2	0x8a10		/* ViRGE GX2 */
+#define	PCI_PRODUCT_S3_VIRGE_MX	0x8c01		/* ViRGE MX */
+#define	PCI_PRODUCT_S3_VIRGE_MXP	0x8c03		/* ViRGE MXP */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
 /* SGS Thomson products */
