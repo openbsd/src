@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.76 2000/06/09 17:10:58 chris Exp $
+#	$OpenBSD: files.pci,v 1.77 2000/06/30 03:28:07 art Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -77,6 +77,11 @@ file	dev/pci/opl_eso.c		opl_eso
 device	ich: audio, auconv, mulaw, ac97
 attach	ich at pci
 file	dev/pci/ich.c			ich
+
+# CS4280 CrystalClear Audio
+device	clcs: audio, auconv, mulaw, ac97
+attach	clcs at pci
+file	dev/pci/cs4280.c		clcs
 
 # ICP Vortex GDT PCI RAID controllers
 # device declaration in sys/conf/files
