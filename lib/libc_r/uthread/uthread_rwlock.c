@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_rwlock.c,v 1.3 1999/11/25 07:01:42 d Exp $	*/
+/*	$OpenBSD: uthread_rwlock.c,v 1.4 2002/05/07 05:17:15 pvalchev Exp $	*/
 /*-
  * Copyright (c) 1998 Alex Nash
  * All rights reserved.
@@ -203,7 +203,7 @@ pthread_rwlock_tryrdlock (pthread_rwlock_t *rwlock)
 
 	/* give writers priority over readers */
 	if (prwlock->blocked_writers || prwlock->state < 0)
-		ret = EWOULDBLOCK;
+		ret = EBUSY;
 	else if (prwlock->state == MAX_READ_LOCKS)
 		ret = EAGAIN; /* too many read locks acquired */
 	else
@@ -239,7 +239,7 @@ pthread_rwlock_trywrlock (pthread_rwlock_t *rwlock)
 		return(ret);
 
 	if (prwlock->state != 0)
-		ret = EWOULDBLOCK;
+		ret = EBUSY;
 	else
 		/* indicate we are locked for writing */
 		prwlock->state = -1;
