@@ -1,4 +1,4 @@
-/*	$OpenBSD: el.c,v 1.6 1997/06/29 23:40:48 millert Exp $	*/
+/*	$OpenBSD: el.c,v 1.7 2000/06/28 17:45:25 dugsong Exp $	*/
 /*	$NetBSD: el.c,v 1.6 1997/04/24 18:54:16 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-static char rcsid[] = "$OpenBSD: el.c,v 1.6 1997/06/29 23:40:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: el.c,v 1.7 2000/06/28 17:45:25 dugsong Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -296,14 +296,11 @@ el_source(el, fname)
     char *ptr, path[MAXPATHLEN];
 
     if (fname == NULL) {
-	fname = &elpath[1];
-	if ((fp = fopen(fname, "r")) == NULL) {
-	    if (issetugid() != 0 || (ptr = getenv("HOME")) == NULL) 
-		return -1;
-	    fname = strncpy(path, ptr, sizeof(path) - 1);
-	    path[sizeof(path) - 1] = '\0';
-	    (void)strncat(path, elpath, sizeof(path) - strlen(path));
-	}
+        ptr = getenv("HOME");
+        if (issetugid() != 0 || ptr == NULL || *ptr == '\0')
+	        return -1;
+        (void) snprintf(path, sizeof(path), "%s%s", ptr, elpath);
+        fname = path;
     }
 
     if ((fp = fopen(fname, "r")) == NULL) 
