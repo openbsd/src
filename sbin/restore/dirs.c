@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.8 1996/09/16 16:35:09 millert Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.9 1996/12/04 01:41:53 deraadt Exp $	*/
 /*	$NetBSD: dirs.c,v 1.16 1995/06/19 00:20:11 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.8 1996/09/16 16:35:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.9 1996/12/04 01:41:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,8 +77,8 @@ static char rcsid[] = "$OpenBSD: dirs.c,v 1.8 1996/09/16 16:35:09 millert Exp $"
 struct inotab {
 	struct	inotab *t_next;
 	ino_t	t_ino;
-	long	t_seekpt;
-	long	t_size;
+	int32_t	t_seekpt;
+	int32_t	t_size;
 };
 static struct inotab *inotab[HASHSIZE];
 
@@ -101,8 +101,8 @@ struct modeinfo {
 #define DIRBLKSIZ 1024
 struct rstdirdesc {
 	int	dd_fd;
-	long	dd_loc;
-	long	dd_size;
+	int32_t	dd_loc;
+	int32_t	dd_size;
 	char	dd_buf[DIRBLKSIZ];
 };
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: symtab.c,v 1.2 1996/06/23 14:32:19 deraadt Exp $	*/
-/*	$NetBSD: symtab.c,v 1.8 1995/03/18 14:59:54 cgd Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.3 1996/12/04 01:41:53 deraadt Exp $	*/
+/*	$NetBSD: symtab.c,v 1.9 1996/11/30 18:04:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.2 1996/06/23 14:32:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.3 1996/12/04 01:41:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -440,13 +440,13 @@ freename(name)
  * Useful quantities placed at the end of a dumped symbol table.
  */
 struct symtableheader {
-	long	volno;
-	long	stringsize;
-	long	entrytblsize;
+	int32_t	volno;
+	int32_t	stringsize;
+	int32_t	entrytblsize;
 	time_t	dumptime;
 	time_t	dumpdate;
 	ino_t	maxino;
-	long	ntrec;
+	int32_t	ntrec;
 };
 
 /*
