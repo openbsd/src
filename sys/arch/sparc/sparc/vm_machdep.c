@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2001/12/09 01:45:32 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -125,7 +125,7 @@ dvma_malloc_space(size_t len, void *kaddr, int flags, int space)
 
 	len = round_page(len);
 	/* XXX - verify if maybe uvm_km_valloc from kernel_map would be ok. */
-	s = splbio();
+	s = splvm();
 	kva = uvm_km_valloc(kmem_map, len);
 	splx(s);
 	if (kva == 0)
@@ -265,6 +265,7 @@ dvma_mapin_space(map, va, len, canwait, space)
 				pa |= PG_IOC;
 #endif
 #endif
+			/* XXX - this should probably be pmap_kenter */
 			pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
 				   VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		}
