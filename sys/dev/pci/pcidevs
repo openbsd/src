@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.474 2001/12/11 22:39:17 todd Exp $
+	$OpenBSD: pcidevs,v 1.475 2001/12/18 17:31:14 drahn Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -809,10 +809,10 @@ product APPLE GC		0x0002	GC
 product APPLE OHARE		0x0007	OHare
 product APPLE HEATHROW		0x0010	Heathrow
 product APPLE PADDINGTON	0x0017	Paddington
-product APPLE UNINORTHETH	0x001e	Uni-North Eth
-product APPLE UNINORTH		0x001f	Uni-North
+product APPLE UNINORTHETH	0x001e	Uni-N Eth
+product APPLE UNINORTH		0x001f	Uni-N
 product APPLE USB		0x0019	USB
-product APPLE UNINORTHAGP	0x0020	Uni-North AGP
+product APPLE UNINORTHAGP	0x0020	Uni-N AGP
 product APPLE GMAC		0x0021	GMAC
 product APPLE KEYLARGO		0x0022	Keylargo
 product APPLE GMAC2		0x0024	GMAC
@@ -821,6 +821,9 @@ product APPLE PANGEA_OHCI	0x0026	Pangea USB
 product APPLE PANGEA_AGP	0x0027	Pangea AGP
 product APPLE PANGEA_PCI1	0x0028	Pangea Host-PCI
 product APPLE PANGEA_PCI2	0x0029	Pangea Host-PCI
+product APPLE UNINORTH2AGP	0x002d  Uni-N2 AGP
+product APPLE UNINORTH2		0x002e  Uni-N2 Host
+product APPLE UNINORTH2ETH	0x002f  Uni-N2 Host
 product APPLE PANGEA_FW		0x0030	Pangea FireWire
 
 /* ARC Logic products */
@@ -1438,6 +1441,7 @@ product LUCENT LTMODEM_045C	0x045c	LTMODEM
 product LUCENT VENUSMODEM	0x0480	Venus Modem
 product LUCENT USBHC		0x5801	USB
 product LUCENT USBQBUS		0x5803  USB QuadraBus
+product LUCENT FW322		0x5811  FW322 1394
 
 /* LuxSonor */
 product LUXSONOR LS242		0x0020	LS242 DVD Decoder
