@@ -1,4 +1,4 @@
-/* RCSID("$Id: channels.h,v 1.11 2000/05/02 12:44:38 markus Exp $"); */
+/* RCSID("$Id: channels.h,v 1.12 2000/05/03 18:03:06 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -175,7 +175,7 @@ void    channel_permit_all_opens(void);
  * listening for the port, and sends back a success reply (or disconnect
  * message if there was an error).  This never returns if there was an error.
  */
-void    channel_input_port_forward_request(int is_root);
+void    channel_input_port_forward_request(int is_root, int gateway_ports);
 
 /*
  * Creates a port for X11 connections, and starts listening for it. Returns

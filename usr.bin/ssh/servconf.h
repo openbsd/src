@@ -13,7 +13,7 @@
  *
  */
 
-/* RCSID("$Id: servconf.h,v 1.20 2000/05/03 10:21:48 markus Exp $"); */
+/* RCSID("$Id: servconf.h,v 1.21 2000/05/03 18:03:07 markus Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -51,6 +51,7 @@ typedef struct {
 	int     keepalives;	/* If true, set SO_KEEPALIVE. */
 	char   *ciphers;	/* Ciphers in order of preference. */
 	int	protocol;	/* Protocol in order of preference. */
+	int     gateway_ports;	/* If true, allow remote connects to forwarded ports. */
 	SyslogFacility log_facility;	/* Facility for system logging. */
 	LogLevel log_level;	/* Level for system logging. */
 	int     rhosts_authentication;	/* If true, permit rhosts

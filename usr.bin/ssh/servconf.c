@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.37 2000/05/03 10:21:47 markus Exp $");
+RCSID("$Id: servconf.c,v 1.38 2000/05/03 18:03:06 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -72,6 +72,7 @@ initialize_server_options(ServerOptions *options)
 	options->num_deny_groups = 0;
 	options->ciphers = NULL;
 	options->protocol = SSH_PROTO_UNKNOWN;
+	options->gateway_ports = -1;
 }
 
 void
@@ -147,6 +148,8 @@ fill_default_server_options(ServerOptions *options)
 		options->use_login = 0;
 	if (options->protocol == SSH_PROTO_UNKNOWN)
 		options->protocol = SSH_PROTO_1|SSH_PROTO_2;
+	if (options->gateway_ports == -1)
+		options->gateway_ports = 0;
 }
 
 #define WHITESPACE " \t\r\n"
@@ -170,7 +173,8 @@ typedef enum {
 	sPrintMotd, sIgnoreRhosts, sX11Forwarding, sX11DisplayOffset,
 	sStrictModes, sEmptyPasswd, sRandomSeedFile, sKeepAlives, sCheckMail,
 	sUseLogin, sAllowUsers, sDenyUsers, sAllowGroups, sDenyGroups,
-	sIgnoreUserKnownHosts, sHostDSAKeyFile, sCiphers, sProtocol, sPidFile
+	sIgnoreUserKnownHosts, sHostDSAKeyFile, sCiphers, sProtocol, sPidFile,
+	sGatewayPorts
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -222,6 +226,7 @@ static struct {
 	{ "denygroups", sDenyGroups },
 	{ "ciphers", sCiphers },
 	{ "protocol", sProtocol },
+	{ "gatewayports", sGatewayPorts },
 	{ NULL, 0 }
 };
 
@@ -509,6 +514,10 @@ parse_flag:
 
 		case sUseLogin:
 			intptr = &options->use_login;
+			goto parse_flag;
+
+		case sGatewayPorts:
+			intptr = &options->gateway_ports;
 			goto parse_flag;
 
 		case sLogFacility:

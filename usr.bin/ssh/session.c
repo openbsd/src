@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.11 2000/05/02 12:44:38 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.12 2000/05/03 18:03:07 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -310,7 +310,7 @@ do_authenticated(struct passwd * pw)
 				break;
 			}
 			debug("Received TCP/IP port forwarding request.");
-			channel_input_port_forward_request(pw->pw_uid == 0);
+			channel_input_port_forward_request(pw->pw_uid == 0, options.gateway_ports);
 			success = 1;
 			break;
 

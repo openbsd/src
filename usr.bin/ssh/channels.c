@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.55 2000/05/02 19:33:12 markus Exp $");
+RCSID("$Id: channels.c,v 1.56 2000/05/03 18:03:06 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -1552,7 +1552,7 @@ channel_request_remote_forwarding(u_short listen_port, const char *host_to_conne
  */
 
 void
-channel_input_port_forward_request(int is_root)
+channel_input_port_forward_request(int is_root, int gateway_ports)
 {
 	u_short port, host_port;
 	char *hostname;
@@ -1571,9 +1571,8 @@ channel_input_port_forward_request(int is_root)
 				  port);
 	/*
 	 * Initiate forwarding,
-	 * bind port to localhost only (gateway ports == 0).
 	 */
-	channel_request_local_forwarding(port, hostname, host_port, 0);
+	channel_request_local_forwarding(port, hostname, host_port, gateway_ports);
 
 	/* Free the argument string. */
 	xfree(hostname);
