@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cypher.c,v 1.9 2000/07/24 01:02:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cypher.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,12 @@ cypher()
 	char   *filename, *rfilename;
 	size_t  filename_len;
 
-	while (wordtype[wordnumber] == ADJS)
-		wordnumber++;
 	while (wordnumber <= wordcount) {
+		if (wordtype[wordnumber] != VERB) {
+			printf("%s: How's that?\n", words[wordnumber]);
+			return (-1);
+		}
+
 		switch (wordvalue[wordnumber]) {
 
 		case UP:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.13 2000/09/21 00:23:43 pjanzen Exp $	*/
+/*	$OpenBSD: com6.c,v 1.14 2000/09/23 03:02:36 pjanzen Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com6.c,v 1.13 2000/09/21 00:23:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com6.c,v 1.14 2000/09/23 03:02:36 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,8 +234,7 @@ light()
 void
 dooropen()
 {				/* synonyms = {open, unlock} */
-	while(wordtype[++wordnumber] == ADJS)
-		;
+	wordnumber++;
 	if (wordnumber <= wordcount && wordtype[wordnumber] == NOUNS
 	    && wordvalue[wordnumber] == DOOR) {
 		switch(position) {

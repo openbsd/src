@@ -1,4 +1,4 @@
-/*	$OpenBSD: com3.c,v 1.7 2000/07/03 05:23:44 pjanzen Exp $	*/
+/*	$OpenBSD: com3.c,v 1.8 2000/09/23 03:02:35 pjanzen Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com3.c,v 1.7 2000/07/03 05:23:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com3.c,v 1.8 2000/09/23 03:02:35 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ jump()
 		position = 145;
 		break;
 	case 232:
-		position = 275;
+		position = FINAL;
 		break;
 	case 3:
 		position = 1;
@@ -114,7 +114,7 @@ bury()
 	int     value;
 
 	if (TestBit(inven, SHOVEL)) {
-		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber < wordcount);
+		while (wordtype[++wordnumber] != OBJECT && wordtype[wordnumber] != NOUNS && wordnumber <= wordcount);
 		value = wordvalue[wordnumber];
 		if (wordtype[wordnumber] == NOUNS && (TestBit(location[position].objects, value) || value == BODY))
 			switch (value) {
@@ -194,26 +194,24 @@ int
 shoot()
 {
 	int     firstnumber, value;
-	int     n;
 
 	firstnumber = wordnumber;
 	if (!TestBit(inven, LASER))
 		puts("You aren't holding a blaster.");
 	else {
-		while(wordtype[++wordnumber] == ADJS)
-			;
+		wordnumber++;
 		while(wordnumber <= wordcount && wordtype[wordnumber] == OBJECT) {
 			value = wordvalue[wordnumber];
 			printf("%s:\n", objsht[value]);
-			for (n=0; objsht[value][n]; n++);
 			if (TestBit(location[position].objects, value)) {
 				ClearBit(location[position].objects, value);
 				ourtime++;
-				printf("The %s explode%s\n", objsht[value], (objsht[value][n-1]=='s' ? (objsht[value][n-2]=='s' ? "s." : ".") : "s."));
+				printf("The %s explode%s\n", objsht[value],
+				    (IsPluralObject(value) ? "." : "s."));
 				if (value == BOMB)
 					die(0);
 			} else
-				printf("I dont see any %s around here.\n", objsht[value]);
+				printf("I don't see any %s around here.\n", objsht[value]);
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.7 2000/09/17 21:28:33 pjanzen Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 2000/09/23 03:02:38 pjanzen Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.7 2000/09/17 21:28:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.8 2000/09/23 03:02:38 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,13 +110,33 @@ parse()
 			wordtype[n] = wp->article;
 		}
 	}
+	/* Don't let a comma mean AND if followed by a verb. */
+	for (n = 0; n < wordcount; n++)
+		if (wordvalue[n] == AND && words[n][0] == ','
+		    && wordtype[n + 1] == VERB) {
+			wordvalue[n] = -1;
+			wordtype[n] = -1;
+		}
+	/* We never use adjectives, so yank them all; disambiguation
+	 * code would need to go before this.
+	 */
+	for (n = 1; n < wordcount; n++)
+		if (wordtype[n] == ADJS) {
+			int i;
+			for (i = n + 1; i < wordcount; i++) {
+				wordtype[i - 1] = wordtype[i];
+				wordvalue[i - 1] = wordvalue[i];
+				strlcpy(words[i - 1], words[i], WORDLEN);
+			}
+			wordcount--;
+		}
 	/* Trim "AND AND" which can happen naturally at the end of a
-	 * comma-delimited list
+	 * comma-delimited list.
 	 */
 	for (n = 1; n < wordcount; n++)
 		if (wordvalue[n - 1] == AND && wordvalue[n] == AND) {
 			int i;
-			for (i = n + 1; i < wordcount; i++) {
+			for (i = n + 1; i <= wordcount; i++) {
 				wordtype[i - 1] = wordtype[i];
 				wordvalue[i - 1] = wordvalue[i];
 				strlcpy(words[i - 1], words[i], WORDLEN);

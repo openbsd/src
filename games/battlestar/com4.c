@@ -1,4 +1,4 @@
-/*	$OpenBSD: com4.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $	*/
+/*	$OpenBSD: com4.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $	*/
 /*	$NetBSD: com4.c,v 1.3 1995/03/21 15:07:04 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com4.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com4.c,v 1.10 2000/09/23 03:02:36 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,6 @@ take(from)
 	unsigned int from[];
 {
 	int     firstnumber, heavy, bulky, value;
-	int     n;
 
 	firstnumber = wordnumber;
 	if (wordnumber < wordcount && wordvalue[wordnumber + 1] == OFF) {
@@ -57,11 +56,10 @@ take(from)
 		wordvalue[wordnumber] = TAKEOFF;
 		return (cypher());
 	} else {
-		while (wordtype[++wordnumber] == ADJS);
+		wordnumber++;
 		while (wordnumber <= wordcount && wordtype[wordnumber] == OBJECT) {
 			value = wordvalue[wordnumber];
 			printf("%s:\n", objsht[value]);
-			for (n = 0; objsht[value][n]; n++);
 			heavy = (carrying + objwt[value]) <= WEIGHT;
 			bulky = (encumber + objcumber[value]) <= CUMBER;
 			if ((TestBit(from, value) || wiz || tempwiz) && heavy && bulky && !TestBit(inven, value)) {
@@ -76,17 +74,18 @@ take(from)
 				ClearBit(from, value);
 				if (value == MEDALION)
 					win--;
-			} else
-				if (TestBit(inven, value))
-					printf("You're already holding %s%s.\n",
-					    (objsht[value][n-1] == 's' ? "" :
-					    (AorAn(value))), objsht[value]);
-				else if (!heavy)
-					printf("The %s %s too heavy.\n", objsht[value],(objsht[value][n-1] == 's' ? "are" : "is"));
-				else if (!bulky)
-					printf("The %s %s too cumbersome to hold.\n", objsht[value],(objsht[value][n-1] == 's' ? "are" : "is"));
-				else
-					printf("I dont see any %s around here.\n", objsht[value]);
+			} else if (TestBit(inven, value))
+				printf("You're already holding %s%s.\n",
+				    (IsPluralObject(value) ? "" :
+				    (AorAn(value))), objsht[value]);
+			else if (!TestBit(from, value))
+				printf("I don't see any %s around here.\n", objsht[value]);
+			else if (!heavy)
+				printf("The %s %s too heavy.\n", objsht[value],
+				    (IsPluralObject(value) ? "are" : "is"));
+			else
+				printf("The %s %s too cumbersome to hold.\n", objsht[value],
+				    (IsPluralObject(value) ? "are" : "is"));
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else
@@ -226,8 +225,7 @@ throw(name)
 			deposit = location[position].down;
 			break;
 		}
-		wordnumber = first;
-		while (wordtype[++wordnumber] == ADJS);
+		wordnumber++;
 		while (wordnumber <= wordcount) {
 			value = wordvalue[wordnumber];
 			if (deposit && TestBit(location[position].objects, value)) {
@@ -279,8 +277,7 @@ drop(name)
 	int     firstnumber, value;
 
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] == ADJS)
-		;
+	wordnumber++;
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT || wordtype[wordnumber] == NOUNS)) {
 		value = wordvalue[wordnumber];
 		if (value == BODY) {	/* special case */
@@ -296,11 +293,16 @@ drop(name)
 			if (TestBit(inven, DEADNATIVE) || TestBit(location[position].objects, DEADNATIVE))
 				value = DEADNATIVE;
 		}
-		if (wordtype[wordnumber] == NOUNS) {
-			if (value == DOOR)
+		if (wordtype[wordnumber] == NOUNS && value == DOOR) {
+			if (*name == 'K')
 				puts("You hurt your foot.");
 			else
+				puts("You're not holding a door.");
+		} else if (objsht[value] == NULL) {
+			if (*name == 'K')
 				puts("That's not for kicking!");
+			else
+				puts("You don't have that.");
 		} else {
 			printf("%s:\n", objsht[value]);
 			if (TestBit(inven, value)) {
@@ -366,10 +368,16 @@ eat()
 	int     firstnumber, value;
 
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] == ADJS);
+	wordnumber++;
 	while (wordnumber <= wordcount) {
 		value = wordvalue[wordnumber];
+		if (wordtype[wordnumber] != OBJECT || objsht[value] == NULL)
+			value = -2;
 		switch (value) {
+
+		case -2:
+			puts("You can't eat that!");
+			return (firstnumber);
 
 		case -1:
 			puts("Eat what?");
@@ -378,7 +386,7 @@ eat()
 		default:
 			printf("You can't eat %s%s!\n",
 			    wordtype[wordnumber] == OBJECT &&
-			    objsht[value][strlen(objsht[value]) - 1] == 's' ? "" :
+			    IsPluralObject(value) ? "" :
 			    (AorAn(value)), objsht[value]);
 			return (firstnumber);
 
@@ -398,13 +406,12 @@ eat()
 				snooze += CYCLE / 10;
 				ourtime++;
 				puts("Eaten.  You can explore a little longer now.");
-			}
-			else if (ourtime < ate - CYCLE)
-				puts("You're stuffed.");
+			} else if (!TestBit(inven, value))
+				printf("You aren't holding the %s.\n", objsht[value]);
 			else if (!TestBit(inven, KNIFE))
 				puts("You need a knife.");
 			else
-				printf("You aren't holding the %s.\n", objsht[value]);
+				puts("You're stuffed.");
 			if (wordnumber < wordcount - 1 && wordvalue[++wordnumber] == AND)
 				wordnumber++;
 			else

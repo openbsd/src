@@ -1,4 +1,4 @@
-/*	$OpenBSD: com5.c,v 1.6 2000/07/03 05:23:44 pjanzen Exp $	*/
+/*	$OpenBSD: com5.c,v 1.7 2000/09/23 03:02:36 pjanzen Exp $	*/
 /*	$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com5.c,v 1.6 2000/07/03 05:23:44 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com5.c,v 1.7 2000/09/23 03:02:36 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,7 +105,11 @@ love()
 	if (wordtype[wordnumber] == NOUNS) {
 	    if ((TestBit(location[position].objects, BATHGOD) ||
 	        TestBit(location[position].objects, NORMGOD)) &&
-		wordvalue[wordnumber] == NORMGOD && !loved) {
+		   wordvalue[wordnumber] == NORMGOD) {
+			if (loved) {
+				printf("Loved.\n");
+				return;
+			}
 			if (godready >= 2) {
 				puts("She cuddles up to you, and her mouth starts to work:\n'That was my sister's amulet.  The lovely goddess, Purl, was she.  The Empire\ncaptured her just after the Darkness came.  My other sister, Vert, was killed\nby the Dark Lord himself.  He took her amulet and warped its power.\nYour quest was foretold by my father before he died, but to get the Dark Lord's\namulet you must use cunning and skill.  I will leave you my amulet,");
 				puts("which you may use as you wish.  As for me, I am the last goddess of the\nwaters.  My father was the Island King, and the rule is rightfully mine.'\n\nShe pulls the throne out into a large bed.");
@@ -126,6 +130,7 @@ love()
 				ourtime += 10;
 				printf("Loved.\n");
 				zzz();
+				return;
 			} else {
 				puts("You wish!");
 				return;
@@ -146,6 +151,8 @@ love()
 		    wordvalue[wordnumber] == ELF ||
 		    wordvalue[wordnumber] == TIMER)
 			puts("Kinky!");
+		else
+			puts("It doesn't seem to work.");
 	    } else
 		puts("Where's your lover?");
 	} else

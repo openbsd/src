@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.8 2000/09/17 21:28:32 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.9 2000/09/23 03:02:36 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -60,7 +60,8 @@
 #define SetBit(array, index)	(array[index/BITS] |= (1 << (index % BITS)))
 #define ClearBit(array, index)	(array[index/BITS] &= ~(1 << (index % BITS)))
  /* "a " vs "an " before an object */
-#define AorAn(value)	(strchr("aeiou", objsht[value][0]) ? "an " : "a ")
+#define AorAn(value)	(objflags[(value)] & OBJ_AN ? "an " : "a ")
+#define IsPluralObject(value) (objflags[(value)] & OBJ_PLURAL)
 
  /* well known rooms */
 #define FINAL	275
@@ -110,8 +111,8 @@
 #define MACE		29
 #define SHOVEL		30
 #define HALBERD		31
-#define	COMPASS		32
-#define	CRASH		33
+#define COMPASS		32
+#define CRASH		33
 #define ELF		34
 #define FOOT		35
 #define COINS		36
@@ -209,7 +210,7 @@
 #define NUMOFINJURIES 13
 
  /* notes */
-#define	CANTLAUNCH	0
+#define CANTLAUNCH	0
 #define LAUNCHED	1
 #define CANTSEE		2
 #define CANTMOVE	3
@@ -235,6 +236,10 @@
 #define MAXWEIGHT	60
 #define MAXCUMBER	10
 
+/* Flags for objects */
+#define OBJ_PLURAL	1
+#define OBJ_AN		2
+
 struct room {
 	const char   *name;
 	int     link[8];
@@ -259,6 +264,7 @@ extern const char   *const objsht[NUMOFOBJECTS];
 extern const char   *const ouch[NUMOFINJURIES];
 extern const int     objwt[NUMOFOBJECTS];
 extern const int     objcumber[NUMOFOBJECTS];
+extern const int     objflags[NUMOFOBJECTS];
 
  /* current input line */
 #define WORDLEN 15

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $	*/
+/*	$OpenBSD: com2.c,v 1.10 2000/09/23 03:02:35 pjanzen Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com2.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: com2.c,v 1.10 2000/09/23 03:02:35 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,15 +47,15 @@ static char rcsid[] = "$OpenBSD: com2.c,v 1.9 2000/09/17 21:28:32 pjanzen Exp $"
 int
 wearit()
 {				/* synonyms = {sheathe, sheath} */
-	int     n;
 	int     firstnumber, value;
 
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] == ADJS);
+	wordnumber++;
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT ||
-	    wordtype[wordnumber] == NOUNS)) {
+	    (wordtype[wordnumber] == NOUNS && wordvalue[wordnumber] != DOOR))) {
 		value = wordvalue[wordnumber];
-		for (n = 0; objsht[value][n]; n++);
+		if (objsht[value] == NULL)
+			break;
 		switch (value) {
 
 		case -1:
@@ -63,7 +63,9 @@ wearit()
 			return (firstnumber);
 
 		default:
-			printf("You can't wear%s%s!\n", (objsht[value][n - 1] == 's' ? " " : " a "), objsht[value]);
+			printf("You can't wear %s%s!\n",
+			    (IsPluralObject(value) ? "" : AorAn(value)),
+			    objsht[value]);
 			return (firstnumber);
 
 		case KNIFE:
@@ -92,7 +94,7 @@ wearit()
 				encumber -= objcumber[value];
 				ourtime++;
 				printf("You are now wearing %s%s.\n",
-				    (objsht[value][n - 1] == 's' ? "the " : 
+				    (IsPluralObject(value) ? "the " : 
 				    (AorAn(value))), objsht[value]);
 			} else
 				if (TestBit(wear, value))
@@ -137,7 +139,7 @@ draw()
 int
 use()
 {
-	while (wordtype[++wordnumber] == ADJS && wordnumber < wordcount);
+	wordnumber++;
 	if (wordvalue[wordnumber] == AMULET && TestBit(inven, AMULET) &&
 	    position != FINAL) {
 		puts("The amulet begins to glow.");
@@ -184,35 +186,34 @@ murder()
 	if (n == NUMOFOBJECTS) {
 		if (TestBit(inven, LASER)) {
 			printf("Your laser should do the trick.\n");
-			n = wordnumber;
-			while (wordtype[++n] == ADJS)
-				;
-			switch(wordvalue[n]) {
+			wordnumber++;
+			switch(wordvalue[wordnumber]) {
 			case NORMGOD:
 			case TIMER:
 			case NATIVE:
 			case MAN:
-				wordvalue[wordnumber] = SHOOT;
+				wordvalue[--wordnumber] = SHOOT;
 				cypher();
 				break;
 			case -1:
 				puts("Kill what?");
 				break;
 			default:
-				if (wordtype[n] != OBJECT ||
+				if (wordtype[wordnumber] != OBJECT ||
 				    wordvalue[wordnumber] == EVERYTHING)
 					puts("You can't kill that!");
 				else
-					printf("You can't kill the %s!\n",
-					    objsht[wordvalue[n]]);
+					printf("You can't kill %s%s!\n",
+					    (IsPluralObject(wordvalue[wordnumber]) ? "" :
+					    AorAn(wordvalue[wordnumber])),
+					    objsht[wordvalue[wordnumber]]);
 				break;
 			}
 		} else
 			puts("You don't have suitable weapons to kill.");
 	} else {
 		printf("Your %s should do the trick.\n", objsht[n]);
-		while (wordtype[++wordnumber] == ADJS)
-			;
+		wordnumber++;
 		switch (wordvalue[wordnumber]) {
 
 		case NORMGOD:
@@ -232,7 +233,7 @@ murder()
 					if (wintime)
 						live();
 				} else
-					puts("I dont see her anywhere.");
+					puts("I don't see her anywhere.");
 			break;
 		case TIMER:
 			if (TestBit(location[position].objects, TIMER)) {
