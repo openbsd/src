@@ -87,6 +87,7 @@ xprt_register(xprt)
 	if (xports == NULL) {
 		xports = (SVCXPRT **)
 			mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
+		memset(xports, 0, FD_SETSIZE * sizeof(SVCXPRT *));
 	}
 	if (sock < FD_SETSIZE) {
 		xports[sock] = xprt;
