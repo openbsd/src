@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.39 2001/01/10 18:16:26 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.40 2001/01/14 23:09:11 angelos Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.135 2000/10/16 18:16:59 provos Exp $	*/
 
 /*
@@ -992,6 +992,40 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   struct sockaddr *src, *dst;
   socklen_t srclen, dstlen;
 
+  /* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
+  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: SKEYID_a",
+		isa->skeyid_a, isa->skeyid_len));
+  prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
+  if (!prf)
+    return -1;
+
+  prf->Init (prf->prfctx);
+  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: message_id",
+		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
+  prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
+  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: NONCE_I_b",
+		exchange->nonce_i, exchange->nonce_i_len));
+  prf->Update (prf->prfctx, exchange->nonce_i, exchange->nonce_i_len);
+  rest = hashp->p + GET_ISAKMP_GEN_LENGTH (hashp->p);
+  rest_len = (GET_ISAKMP_HDR_LENGTH (msg->iov[0].iov_base)
+	      - (rest - (u_int8_t*)msg->iov[0].iov_base));
+  LOG_DBG_BUF ((LOG_MISC, 90,
+		"initiator_recv_HASH_SA_NONCE: payloads after HASH(2)", rest,
+		rest_len));
+  prf->Update (prf->prfctx, rest, rest_len);
+  prf->Final (hash->digest, prf->prfctx);
+  prf_free (prf);
+  LOG_DBG_BUF ((LOG_MISC, 80,
+		"initiator_recv_HASH_SA_NONCE: computed HASH(2)",
+		hash->digest, hashsize));
+  if (memcmp (hashp->p + ISAKMP_HASH_DATA_OFF, hash->digest, hashsize) != 0)
+    {
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 0);
+      return -1;
+    }
+  /* Mark the HASH as handled.  */
+  hashp->flags |= PL_MARK;
+
   /*
    * As we are getting an answer on our transform offer, only one transform
    * should be given.
@@ -1141,40 +1175,6 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 
   /* Mark the SA as handled.  */
   sa_p->flags |= PL_MARK;
-
-  /* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: SKEYID_a",
-		isa->skeyid_a, isa->skeyid_len));
-  prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
-  if (!prf)
-    return -1;
-
-  prf->Init (prf->prfctx);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: message_id",
-		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
-  prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
-  LOG_DBG_BUF ((LOG_MISC, 90, "initiator_recv_HASH_SA_NONCE: NONCE_I_b",
-		exchange->nonce_i, exchange->nonce_i_len));
-  prf->Update (prf->prfctx, exchange->nonce_i, exchange->nonce_i_len);
-  rest = hashp->p + GET_ISAKMP_GEN_LENGTH (hashp->p);
-  rest_len = (GET_ISAKMP_HDR_LENGTH (msg->iov[0].iov_base)
-	      - (rest - (u_int8_t*)msg->iov[0].iov_base));
-  LOG_DBG_BUF ((LOG_MISC, 90,
-		"initiator_recv_HASH_SA_NONCE: payloads after HASH(2)", rest,
-		rest_len));
-  prf->Update (prf->prfctx, rest, rest_len);
-  prf->Final (hash->digest, prf->prfctx);
-  prf_free (prf);
-  LOG_DBG_BUF ((LOG_MISC, 80,
-		"initiator_recv_HASH_SA_NONCE: computed HASH(2)",
-		hash->digest, hashsize));
-  if (memcmp (hashp->p + ISAKMP_HASH_DATA_OFF, hash->digest, hashsize) != 0)
-    {
-      message_drop (msg, ISAKMP_NOTIFY_INVALID_HASH_INFORMATION, 0, 1, 0);
-      return -1;
-    }
-  /* Mark the HASH as handled.  */
-  hashp->flags |= PL_MARK;
 
   isa = sa->data;
   if ((isa->group_desc && (!ie->group || ie->group->id != isa->group_desc))
