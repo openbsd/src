@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.37 2001/06/25 00:43:12 mickey Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.38 2001/07/30 14:15:59 art Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -178,8 +178,8 @@ void	_isa_bus_dmamem_free __P((bus_dma_tag_t,
 int	_isa_bus_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *,
 	    int, size_t, caddr_t *, int));
 void	_isa_bus_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
-int	_isa_bus_dmamem_mmap __P((bus_dma_tag_t, bus_dma_segment_t *,
-	    int, int, int, int));
+paddr_t	_isa_bus_dmamem_mmap __P((bus_dma_tag_t, bus_dma_segment_t *,
+	    int, off_t, int, int));
 
 int	_isa_dma_check_buffer __P((void *, bus_size_t, int, bus_size_t,
 	    struct proc *));
@@ -1000,11 +1000,13 @@ _isa_bus_dmamem_unmap(t, kva, size)
 /*
  * mmap(2) ISA DMA-safe memory.
  */
-int
+paddr_t
 _isa_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 
 	return (_bus_dmamem_mmap(t, segs, nsegs, off, prot, flags));

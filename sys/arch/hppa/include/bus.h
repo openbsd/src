@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.12 2000/06/15 19:05:09 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -356,8 +356,8 @@ struct hppa_bus_dma_tag {
 	int	(*_dmamem_map) __P((void *, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
 	void	(*_dmamem_unmap) __P((void *, caddr_t, size_t));
-	int	(*_dmamem_mmap) __P((void *, bus_dma_segment_t *,
-		    int, int, int, int));
+	paddr_t	(*_dmamem_mmap) __P((void *, bus_dma_segment_t *,
+		    int, off_t, int, int));
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
