@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.1.1.1 1995/10/18 08:47:18 deraadt Exp $
+@c	$Id: amdref.texinfo,v 1.2 1996/02/17 02:55:36 dm Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -1389,8 +1389,14 @@ Don't make a connection on datagram transports.
 No close-to-open consistency.
 @item nodevs
 Don't allow local special devices on this filesystem.
+@item nolooklease
+When nqnfs is selected, disable the automatic acquiring of leases on
+lookups.
 @item nosuid
 Don't allow set-uid or set-gid executables on this filesystem.
+@item nqnfs
+Enable leasing extensions to the NFS protocol know as Not Quite NFS.
+Only supported by the 4.4BSD NFS implementation.
 @item quota
 Enable quota checking on this mount.
 @item resvport

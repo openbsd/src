@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nfs_ops.c,v 1.1.1.1 1995/10/18 08:47:11 deraadt Exp $";
+static char *rcsid = "$Id: nfs_ops.c,v 1.2 1996/02/17 02:55:19 dm Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -614,6 +614,13 @@ mntfs *mf;
 	if (hasmntopt(&mnt, MNTOPT_RESVPORT) != NULL)
 		nfs_args.flags |= NFSMNT_RESVPORT;
 #endif /* MNTOPT_RESVPORT */
+
+#ifdef MNTOPT_NQNFS
+	if (hasmntopt(&mnt, MNTOPT_NQNFS) != NULL)
+		nfs_args.flags |= NFSMNT_NQNFS;
+	if (hasmntopt(&mnt, "nolooklease") == NULL)
+		nfs_args.flags |= NFSMNT_NQLOOKLEASE;
+#endif /* MNTOPT_NQNFS */
 
 #ifdef NFSMNT_PGTHRESH
 	if (nfs_args.pg_thresh = hasmntval(&mnt, "pgthresh"))
