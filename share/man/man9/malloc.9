@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.8 1999/10/05 20:53:11 aaron Exp $
+.\"	$OpenBSD: malloc.9,v 1.9 2000/06/06 20:18:54 art Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -386,3 +386,41 @@ panic:
 .It
 .Dq Data modified on freelist: Aq data object description
 .El
+.Sh DEBUGGING
+A kernel compiled with the
+.Dv MALLOC_DEBUG
+option allows for more extensive
+debugging of memory allocations. You can choose which allocation to debug
+with the
+.Va malloc_deb_type
+and
+.Va malloc_deb_size
+variables.
+.Va malloc_deb_type
+should be set to the memory type and
+.Va malloc_deb_size
+should be set to the memory size you want to debug. 0 can be used as a
+wildcard.
+.Pp
+Every call to
+.Fn malloc
+with a memory type and size that matches the debugged type and size will
+allocate two virtual pages. The pointer returned will be aligned so that
+the requested area will end at the page boundary and the second virtual page
+will be left unmapped. This way we can catch reads and writes outside the
+allocated area.
+.Pp
+Every call to
+.Fn free
+with memory that was returned by the debugging malloc will cause the memory
+area to become unmapped so that we can catch dangling reads and writes to
+freed memory.
+.Pp
+There are no special diagnotics if any errors are caught by the debugging
+malloc. The errors will look like normal access to unmapped memory.
+.Pp
+You have to be very careful when using the
+.Dv MALLOC_DEBUG
+option, the memory consumption can run away pretty quickly and there is
+a severe performance degradation when allocating and freeing debugged memory
+types.
