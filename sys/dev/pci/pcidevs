@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.33 1998/03/10 08:43:50 deraadt Exp $
+$OpenBSD: pcidevs,v 1.34 1998/03/11 08:20:31 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -595,6 +595,9 @@ product AVANCE AVG2302	0x2302	AVG2302
 product AVANCE2 ALG2301	0x2301	ALG2301
 product AVANCE2 ALG2302	0x2302	ALG2302
 
+/* Bit3 products */
+product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+
 /* BusLogic products */
 product BUSLOGIC MULTIMASTER_NC	0x0140	MultiMaster NC
 product BUSLOGIC MULTIMASTER	0x1040	MultiMaster
@@ -617,14 +620,14 @@ product CIRRUS CL_GD5434_4	0x00a4	CL-GD5434-4
 product CIRRUS CL_GD5434_8	0x00a8	CL-GD5434-8
 product CIRRUS CL_GD5436	0x00ac	CL-GD5436
 product CIRRUS CL_GD5446	0x00b8	CL-GD5446
-product	CIRRUS CL_GD5480	0x00bc	CL-GD5480
+product CIRRUS CL_GD5480	0x00bc	CL-GD5480
 product CIRRUS CL_GD6729	0x1100	CL-GD6729
 product CIRRUS CL_GD7542	0x1200	CL-GD7542
 product CIRRUS CL_GD7543	0x1202	CL-GD7543
 product CIRRUS CL_GD7541	0x1204	CL-GD7541
 
-/* CMD Technology products */
-product CMDTECH 640A		0x0640	PCI640A
+/* CMD Technology products -- info gleaned from their web site */
+product CMDTECH 640		0x0640	PCI640
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
 product	CMDTECH 642		0x0642	PCI0642
 product	CMDTECH 643		0x0643	PCI0643
