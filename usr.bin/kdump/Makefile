@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2004/11/24 18:11:15 fgsch Exp $
+#	$OpenBSD: Makefile,v 1.12 2004/12/12 17:06:51 naddy Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -20,10 +20,13 @@ ioctl.c: ${.CURDIR}/mkioctls
 	    ${DESTDIR}/usr/include/dev/vndioctl.h \
 	    ${DESTDIR}/usr/include/scsi/ses.h \
 	    ${DESTDIR}/usr/include/net/bpf.h \
-	    ${DESTDIR}/usr/include/net80211/ieee80211.h \
+	    ${DESTDIR}/usr/include/net/if_pfsync.h \
 	    ${DESTDIR}/usr/include/net/if_ppp.h \
+	    ${DESTDIR}/usr/include/net/if_pppoe.h \
 	    ${DESTDIR}/usr/include/net/if_tun.h \
 	    ${DESTDIR}/usr/include/net/pfvar.h \
+	    ${DESTDIR}/usr/include/net80211/ieee80211_ioctl.h \
+	    ${DESTDIR}/usr/include/netinet/ip_carp.h \
 	    ${DESTDIR}/usr/include/netinet6/in6_var.h \
 	    ${DESTDIR}/usr/include/sys/agpio.h \
 	    ${DESTDIR}/usr/include/sys/ataio.h \

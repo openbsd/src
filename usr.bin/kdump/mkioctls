@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.17 2004/11/24 18:11:15 fgsch Exp $
+#	$OpenBSD: mkioctls,v 1.18 2004/12/12 17:06:51 naddy Exp $
 
 #
 # Copyright (c) 1994
@@ -46,13 +46,16 @@ BEGIN {
 	print "#include <netinet6/nd6.h>"
 	print "#include <netinet6/ip6_mroute.h>"
 	print "#include <net/if_bridge.h>"
+	print "#include <net/if_pfsync.h>"
 	print "#include <sys/termios.h>"
+	print "#include <netinet/ip_carp.h>"
 	print "#include <netinet/ip_ipsp.h>"
 	print "#include <net/if_enc.h>"
 	print "#include <net80211/ieee80211.h>"
+	print "#include <net80211/ieee80211_ioctl.h>"
 	print "#include <net/ppp_defs.h>"
 	print "#include <net/if_ppp.h>"
-	print "#include <net/if_pppvar.h>"
+	print "#include <net/if_pppoe.h>"
 	print "#include <net/if_tun.h>"
 	print "#include <net/pfvar.h>"
 	print "#include <sys/disklabel.h>"
@@ -92,7 +95,7 @@ BEGIN {
 	print ""
 }
 
-/^#[ 	]*define[ 	]*(AGPIOC_|ATAIO|AUDIO_|BIOC|CCDIOC|CDIO|CIOC|CHIO|DIOC|MIDI_|GPIO|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|RD_|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z_0-9]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*(AGPIOC_|ATAIO|AUDIO_|BIOC|CCDIOC|CDIO|CIOC|CHIO|DIOC|MIDI_|GPIO|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|SESIOC_|SIOC|PCIOC|PPPIOC|PPPOE|RD_|RIOC|RND|STRIOC|SCIOC|OSCIOC|TUN|VNDIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z_0-9]*[ 	]*_IO/ {
 
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
