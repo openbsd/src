@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.48 1999/12/16 05:17:36 mjacob Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.49 1999/12/31 20:24:05 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -337,6 +337,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "NEC     ", "CD-ROM DRIVE:84 ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:210", "1.0"},  SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "NEC     ", "CD-ROM DRIVE:501", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:841", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
