@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.92 2001/05/27 00:39:26 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.93 2001/05/27 05:27:49 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ ip_output(m0, va_alist)
 			if (tdbi->spi == tdb->tdb_spi &&
 			    tdbi->proto == tdb->tdb_sproto &&
 			    !bcmp(&tdbi->dst, &tdb->tdb_dst,
-			        sizeof(union sockaddr_union))) {
+			    sizeof(union sockaddr_union))) {
 				splx(s);
 				sproto = 0; /* mark as no-IPsec-needed */
 				DPRINTF(("ip_output: IPsec loop detected, skipping further IPsec processing for this packet.\n"));
@@ -859,7 +859,6 @@ ip_ctloutput(op, so, level, optname, mp)
 		if (op == PRCO_SETOPT && *mp)
 			(void) m_free(*mp);
 	} else switch (op) {
-
 	case PRCO_SETOPT:
 		switch (optname) {
 		case IP_OPTIONS:
@@ -952,7 +951,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_ESP_TRANS_LEVEL:
 		case IP_ESP_NETWORK_LEVEL:
 #ifndef IPSEC
-			error = EINVAL;
+			error = EOPNOTSUPP;
 #else
 			if (m == 0 || m->m_len != sizeof(int)) {
 				error = EINVAL;
@@ -999,6 +998,33 @@ ip_ctloutput(op, so, level, optname, mp)
 #endif
 			break;
 
+		case IP_IPSEC_LOCAL_ID:
+		case IP_IPSEC_REMOTE_ID:
+		case IP_IPSEC_LOCAL_CRED:
+		case IP_IPSEC_REMOTE_CRED:
+		case IP_IPSEC_AUTH:
+#ifndef IPSEC
+			error = EOPNOTSUPP;
+#else
+			switch (optname) {
+			case IP_IPSEC_LOCAL_ID:
+				/* XXX */
+				break;
+			case IP_IPSEC_REMOTE_ID:
+				/* XXX */
+				break;
+			case IP_IPSEC_LOCAL_CRED:
+				/* XXX */
+				break;
+			case IP_IPSEC_REMOTE_CRED:
+				/* XXX */
+				break;
+			case IP_IPSEC_AUTH:
+				/* XXX */
+				break;
+			}
+#endif
+			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1098,6 +1124,33 @@ ip_ctloutput(op, so, level, optname, mp)
 				break;
 			}
 			*mtod(m, int *) = optval;
+#endif
+			break;
+		case IP_IPSEC_LOCAL_ID:
+		case IP_IPSEC_REMOTE_ID:
+		case IP_IPSEC_LOCAL_CRED:
+		case IP_IPSEC_REMOTE_CRED:
+		case IP_IPSEC_AUTH:
+#ifndef IPSEC
+			error = EOPNOTSUPP;
+#else
+			switch (optname) {
+			case IP_IPSEC_LOCAL_ID:
+				/* XXX */
+				break;
+			case IP_IPSEC_REMOTE_ID:
+				/* XXX */
+				break;
+			case IP_IPSEC_LOCAL_CRED:
+				/* XXX */
+				break;
+			case IP_IPSEC_REMOTE_CRED:
+				/* XXX */
+				break;
+			case IP_IPSEC_AUTH:
+				/* XXX */
+				break;
+			}
 #endif
 			break;
 		default:
