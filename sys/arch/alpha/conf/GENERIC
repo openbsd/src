@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.87 2001/09/28 07:18:30 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.88 2001/09/28 22:58:56 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -15,7 +15,7 @@ option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 option		DEC_550		# Miata:	Digital Personal Workstation
-option		DEC_6600	# EV6:		264DP OEM Board
+option		DEC_6600	# EV6:		XP1000, 264DP OEM Board
 option		API_UP1000	# EV6:		Alpha Processor UP1000
 
 option		COMPAT_OSF1	# OSF/1 binary compatibility

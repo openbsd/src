@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.11 2001/07/19 14:34:28 art Exp $
+#	$OpenBSD: RAMDISKB,v 1.12 2001/09/28 22:58:56 deraadt Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 
 machine	alpha			# architecture, used by config; REQUIRED
@@ -14,7 +14,7 @@ option		SMALL_KERNEL
 #option		DEC_EB164	# EB164:	AlphaPC 164
 #option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 #option		DEC_550		# Miata:	Digital Personal Workstation
-option		DEC_6600	# EV6:		264DP OEM Board
+option		DEC_6600	# EV6:		XP1000, 264DP OEM Board
 option		API_UP1000	# EV6:		Alpha Processor UP1000
 
 # Enable the hooks used for initializing the ram-disk.
