@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.35 2004/05/31 10:48:48 mpf Exp $	*/
+/*	$OpenBSD: in.c,v 1.36 2004/06/21 23:48:09 mcbride Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -274,6 +274,7 @@ in_control(so, cmd, data, ifp)
 			TAILQ_INSERT_TAIL(&in_ifaddr, ia, ia_list);
 			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
 			    ifa_list);
+			ia->ia_addr.sin_family = AF_INET;
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
@@ -372,6 +373,10 @@ in_control(so, cmd, data, ifp)
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
+		else if (newifaddr) {
+			splx(s);
+			goto cleanup;
+		}
 		splx(s);
 		return error;
 
@@ -414,12 +419,18 @@ in_control(so, cmd, data, ifp)
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
 		if (!error)
 			dohooks(ifp->if_addrhooks, 0);
+		else if (newifaddr) {
+			splx(s);
+			goto cleanup;
+		}
 		splx(s);
 		return (error);
 
 	case SIOCDIFADDR: {
 		struct in_multi *inm;
 
+		error = 0;
+cleanup:
 		/*
 		 * Even if the individual steps were safe, shouldn't
 		 * these kinds of changes happen atomically?  What 
@@ -435,7 +446,7 @@ in_control(so, cmd, data, ifp)
 		IFAFREE((&ia->ia_ifa));
 		dohooks(ifp->if_addrhooks, 0);
 		splx(s);
-		break;
+		return (error);
 		}
 
 #ifdef MROUTING
