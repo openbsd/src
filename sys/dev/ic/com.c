@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.74 2001/09/30 15:20:59 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.75 2001/10/02 23:39:27 art Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1316,7 +1316,7 @@ comintr(arg)
 		if (ISSET(lsr, LSR_RXRDY)) {
 			register u_char *p = sc->sc_ibufp;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERUPTS
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			softintr_schedule(sc->sc_si);
 #endif
 			do {
