@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.6 1999/08/19 06:38:24 d Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.7 1999/08/23 23:24:47 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -234,6 +234,7 @@ rln_pcmcia_attach(parent, self, aux)
 		printf(" manf %04x prod %04x", pa->manufacturer, pa->product);
 #endif
 
+	rln_reset(sc);
 	rlnconfig(sc);
 	printf("\n");
 }
