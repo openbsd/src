@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.7 2001/06/27 00:58:56 lebel Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.8 2001/12/08 20:37:32 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -50,7 +50,8 @@ static char *rcsid = "$OpenBSD: __strerror.c,v 1.7 2001/06/27 00:58:56 lebel Exp
 #include <stdio.h>
 #include <string.h>
 
-static char *itoa(num)
+static char *
+itoa(num)
 	int num;
 {
 	static char buffer[11];
@@ -78,9 +79,10 @@ __strerror(num, buf)
 {
 #define	UPREFIX	"Unknown error: "
 	register unsigned int errnum;
-
 #ifdef NLS
+	int save_errno;
 	nl_catd catd;
+
 	catd = catopen("libc", 0);
 #endif
 
@@ -99,10 +101,13 @@ __strerror(num, buf)
 		strcpy(buf, UPREFIX);
 #endif
 		strncat(buf, itoa(errnum), NL_TEXTMAX-strlen(buf)-1);
+		errno = EINVAL;
 	}
 
 #ifdef NLS
+	save_errno = errno;
 	catclose(catd);
+	errno = save_errno;
 #endif
 
 	return buf;
