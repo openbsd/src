@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.34 2004/11/04 15:03:53 mickey Exp $ */
+/* $OpenBSD: vga.c,v 1.35 2004/12/25 23:58:14 miod Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -868,9 +868,10 @@ vga_load_font(v, cookie, data)
 	if (slot >= 8)
 		return (ENOSPC);
 
-	if (!vc->vc_fonts[slot])
-		f = malloc(sizeof(struct vgafont), M_DEVBUF, M_WAITOK);
-	if (!f)
+	if (vc->vc_fonts[slot] != NULL)
+		return (EEXIST);
+	f = malloc(sizeof(struct vgafont), M_DEVBUF, M_WAITOK);
+	if (f == NULL)
 		return (ENOMEM);
 	strlcpy(f->name, data->name, sizeof(f->name));
 	f->height = data->fontheight;
