@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.37 1999/07/25 11:12:32 deraadt Exp $	*/
+/*	$OpenBSD: sd.c,v 1.38 1999/07/25 11:13:08 deraadt Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -225,10 +225,9 @@ sdattach(parent, self, aux)
 
 	switch (result) {
 	case SDGP_RESULT_OK:
-                printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total\n",
+                printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total",
                     dp->disksize / (1048576 / dp->blksize), dp->cyls,
                     dp->heads, dp->sectors, dp->blksize, dp->disksize);
-
 		break;
 
 	case SDGP_RESULT_OFFLINE:
