@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.8 2002/04/08 17:49:41 jason Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.9 2002/07/18 02:14:26 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -217,7 +217,10 @@ ce4231_match(parent, vcf, aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	return (strcmp("SUNW,CS4231", ea->ea_name) == 0);
+	if (!strcmp("SUNW,CS4231", ea->ea_name) ||
+	    !strcmp("audio", ea->ea_name))
+		return (1);
+	return (0);
 }
 
 void    
