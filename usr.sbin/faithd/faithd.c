@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.2 1999/12/20 16:32:53 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.3 1999/12/30 16:31:01 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -463,7 +463,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	if (error == -1)
 		exit_error("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
 
-	error = connect(s_dst, sa4, sa4->sa_family);
+	error = connect(s_dst, sa4, sa4->sa_len);
 	if (error == -1)
 		exit_failure("connect: %s", ERRSTR);
 
