@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1998/10/18 20:02:28 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1999/02/03 23:31:15 millert Exp $
 
 SUBDIR=bcwrap
 
 MAN=	doc/bc.1 doc/dc.1
 LDFLAGS+=	-s ${LDSTATIC}
-GNUCFLAGS=	CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
+GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS}
@@ -26,13 +26,13 @@ config: .FORCE
 .endif
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	CFLAGS="${CFLAGS}" \
+	${GNUCFLAGS} \
 	sh ${.CURDIR}/configure --prefix=${PREFIX}/usr --infodir=${PREFIX}/usr/share/info ${CF}
 
 config.status:
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-	CFLAGS="${CFLAGS}" \
+	${GNUCFLAGS} \
 	sh ${.CURDIR}/configure --prefix=${PREFIX}/usr --infodir=${PREFIX}/usr/share/info ${CF}
 
 .ifdef NOMAN
