@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.134 1999/10/26 13:12:49 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.135 1999/10/28 21:53:55 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -237,6 +237,7 @@ pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 ax*	at pci? dev ? function ?		# ASIX AX88140A ethernet
+al*	at pci?	dev ? function ?		# ADMtek AL981/AN985 ethernet
 skc*	at pci? dev ? function ?		# SysKonnect GEnesis 984x
 sk*	at skc?					#  each port of above
 
