@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.6 2001/01/02 23:51:52 smurph Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/07/18 13:28:47 espie Exp $
 
 # -DEXTENDED 
 # 	if you want the paste & spaste macros.
 
 PROG=	m4
-CFLAGS+=-DEXTENDED 
-CFLAGS+=-W -Wall -Wstrict-prototypes \
+CFLAGS+=-DEXTENDED
+CDIAGFLAGS=-W -Wall -Wstrict-prototypes \
 	-Wno-unused -Wno-char-subscripts -Wno-sign-compare
 # No optimization for m88k
 .if (${MACHINE_ARCH} == "m88k")

@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.28 2001/06/05 11:59:09 espie Exp $
+#	$OpenBSD: Makefile,v 1.29 2001/07/18 13:29:49 espie Exp $
 
 PROG=	make
-CFLAGS+= -I${.OBJDIR} -I${.CURDIR} ${WARNINGS}
-WARNINGS=-Wall -W -Wno-char-subscripts -Wstrict-prototypes -pedantic -Wmissing-prototypes
+CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
+CDIAGFLAGS=-Wall -W -Wno-char-subscripts -Wstrict-prototypes -pedantic \
+	-Wmissing-prototypes
 
 CFLAGS+=-DUSE_TIMESPEC
 CFLAGS+=-DHAS_BOOL_H
