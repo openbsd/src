@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.40 2004/01/26 14:42:47 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.41 2004/01/26 21:08:18 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,7 +92,7 @@ typedef struct {
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	DUMP MSG IN TABLE
 %token	LOG UPDATES
-%token	TCP SIGNATURE KEY
+%token	TCP MD5SIG KEY
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.number>	number optnumber yesno
@@ -348,7 +348,7 @@ peeropts	: REMOTEAS number	{
 		| MAXPREFIX number {
 			curpeer->conf.max_prefix = $2;
 		}
-		| TCP SIGNATURE KEY string {
+		| TCP MD5SIG KEY string {
 			unsigned i;
 
 			for (i = 0; i < strlen($4); i++)
@@ -408,6 +408,7 @@ lookup(char *s)
 		{ "local-address",	LOCALADDR},
 		{ "log",		LOG},
 		{ "max-prefix",		MAXPREFIX},
+		{ "md5sig",		MD5SIG},
 		{ "min",		YMIN},
 		{ "msg",		MSG},
 		{ "multihop",		MULTIHOP},
@@ -417,7 +418,6 @@ lookup(char *s)
 		{ "passive",		PASSIVE},
 		{ "remote-as",		REMOTEAS},
 		{ "router-id",		ROUTERID},
-		{ "signature",		SIGNATURE},
 		{ "table",		TABLE},
 		{ "tcp",		TCP},
 		{ "updates",		UPDATES},
