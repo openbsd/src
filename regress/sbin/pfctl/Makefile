@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.168 2003/12/16 05:02:46 mcbride Exp $
+# $OpenBSD: Makefile,v 1.169 2003/12/30 16:48:47 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -37,9 +37,8 @@ PFOPT=1 2 3 4 5
 
 .END:
 	${SUDO} ifconfig lo1000000 destroy
-# destroy on tun does not work yet
-#	${SUDO} ifconfig tun1000000 destroy
-#	${SUDO} ifconfig tun1000001 destroy
+	${SUDO} ifconfig tun1000000 destroy
+	${SUDO} ifconfig tun1000001 destroy
 .endif
 
 .for n in ${PFFAIL}
