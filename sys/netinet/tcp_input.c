@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.40 1999/07/06 20:17:52 cmetz Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.41 1999/07/13 21:57:42 deraadt Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -313,6 +313,7 @@ tcp_input(struct mbuf *m, ...)
 #else
 tcp_input(m, va_alist)
 	register struct mbuf *m;
+	va_dcl
 #endif
 {
 	register struct inpcb *inp;
