@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.54 2005/02/26 21:51:33 david Exp $
+.\"	$OpenBSD: cvs.1,v 1.55 2005/03/01 09:33:47 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -1014,10 +1014,82 @@ Prompt for a password for an authenticating server.
 Remove an entry in
 .Pa .cvspass
 for a remote repository.
-.It Ic rdiff
-Create
+.It Xo Ic rdiff
+.Op Fl flR
+.Oo Fl c \*(Ba
+.Fl u Oc
+.Oo Fl s \*(Ba
+.Fl t Oc
+.Op Fl V Ar ver
+.Fl D Ar date \*(Ba
+.Fl r Ar rev
+.Oo Fl D Ar date2 \*(Ba
+.Fl r Ar rev2 Oc
+.Ar module ...
+.Xc
+.Pp
+The
+.Ic rdiff
+command lists differences between two revisions in a
 .Xr patch 1
-format diffs between releases.
+compatible format.
+This command does not need a local checkout of the repository
+to work.
+.Pp
+The
+.Ic rdiff
+command takes the following options:
+.Bl -tag -width Ds -offset 3n
+.It Fl c
+Produces a diff with three lines of context.
+See
+.Xr diff 1
+for more information.
+This is the default.
+.It Xo Fl D Ar date
+.Op Fl D Ar date2
+.Xc
+Differences between the revision at
+.Ar date
+and the working copy or
+.Ar date
+and
+.Ar date2
+(if specified).
+.It Fl f
+Force the use of the head revision if the specified
+date or revision is not found.
+.It Fl l
+Limit the scope of the search to the local directory
+only and disable recursive behaviour.
+.It Fl R
+Enable recursive behaviour.
+This is the default.
+.It Xo Fl r Ar rev
+.Op Fl r Ar rev2
+.Xc
+Differences between revision
+.Ar rev
+and the working copy or
+.Ar rev
+and
+.Ar rev2
+(if specified).
+.It Fl s
+Create a summary change instead of a whole patch.
+.It Fl t
+Lists differences between the last two revisions of each file.
+.It Fl u
+Produces a diff in unidiff format.
+.It Fl V Ar ver
+Use the RCS version
+.Ar ver
+for keyword substitution.
+.El
+.Pp
+Aliases:
+.Ic pa ,
+.Ic patch .
 .It Xo Ic release
 .Op Fl d
 .Ar dir ...
