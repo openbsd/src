@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.17 2001/03/22 16:30:13 niklas Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.18 2001/03/28 04:11:34 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1594,7 +1594,7 @@ ti_attach(parent, self, aux)
 	 * Get station address from the EEPROM. Note: the manual states
 	 * that the MAC address is at offset 0x8c, however the data is
 	 * stored as two longwords (since that's how it's loaded into
-	 * the NIC). This means the MAC address is actually preceeded
+	 * the NIC). This means the MAC address is actually preceded
 	 * by two zero bytes. We need to skip over those.
 	 */
 	if (ti_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
@@ -1921,24 +1921,19 @@ int ti_intr(xsc)
 {
 	struct ti_softc		*sc;
 	struct ifnet		*ifp;
-	int			claimed = 0;
 
 	sc = xsc;
 	ifp = &sc->arpcom.ac_if;
 
-#ifdef notdef
-	/* Avoid this for now -- checking this register is expensive. */
+	/* XXX checking this register is expensive. */
 	/* Make sure this is really our interrupt. */
 	if (!(CSR_READ_4(sc, TI_MISC_HOST_CTL) & TI_MHC_INTSTATE))
-		return;
-#endif
+		return (0);
 
 	/* Ack interrupt and stop others from occuring. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 1);
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		claimed = 1;
-
 		/* Check RX return ring producer/consumer */
 		ti_rxeof(sc);
 
@@ -1954,7 +1949,7 @@ int ti_intr(xsc)
 	if (ifp->if_flags & IFF_RUNNING && ifp->if_snd.ifq_head != NULL)
 		ti_start(ifp);
 
-	return (claimed);
+	return (1);
 }
 
 void ti_stats_update(sc)
