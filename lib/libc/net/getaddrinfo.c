@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.37 2002/07/01 07:43:48 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.38 2002/07/01 21:08:13 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ static const struct afd *find_afd(int);
 static int addrconfig(const struct addrinfo *);
 #endif
 #ifdef INET6
-static u_int32_t ip6_str2scopeid(char *, struct sockaddr_in6 *);
+static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
 
 static void _sethtent(void);
@@ -784,7 +784,7 @@ explore_numeric_scope(pai, hostname, servname, res)
 			if (cur->ai_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
-			if ((scopeid = ip6_str2scopeid(scope, sin6)) == -1) {
+			if (ip6_str2scopeid(scope, sin6, &scopeid) == -1) {
 				free(hostname2);
 				return(EAI_NODATA); /* XXX: is return OK? */
 			}
@@ -968,12 +968,12 @@ addrconfig(pai)
 
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
-static u_int32_t
-ip6_str2scopeid(scope, sin6)
+static int
+ip6_str2scopeid(scope, sin6, scopeid)
 	char *scope;
 	struct sockaddr_in6 *sin6;
+	u_int32_t *scopeid;
 {
-	u_int32_t scopeid;
 	u_long lscopeid;
 	struct in6_addr *a6 = &sin6->sin6_addr;
 	char *ep;
@@ -988,10 +988,10 @@ ip6_str2scopeid(scope, sin6)
 		 * and interfaces, so we simply use interface indices for
 		 * like-local scopes.
 		 */
-		scopeid = if_nametoindex(scope);
-		if (scopeid == 0)
+		*scopeid = if_nametoindex(scope);
+		if (*scopeid == 0)
 			goto trynumeric;
-		return(scopeid);
+		return 0;
 	}
 
 	/* still unclear about literal, allow numeric only - placeholder */
@@ -1006,9 +1006,9 @@ ip6_str2scopeid(scope, sin6)
   trynumeric:
 	errno = 0;
 	lscopeid = strtoul(scope, &ep, 10);
-	scopeid = lscopeid & 0xffffffff;
-	if (errno == 0 && ep && *ep == '\0' && scopeid == lscopeid)
-		return scopeid;
+	*scopeid = (u_int32_t)(lscopeid & 0xffffffff);
+	if (errno == 0 && ep && *ep == '\0' && *scopeid == lscopeid)
+		return 0;
 	else
 		return -1;
 }
