@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.12 2001/12/22 16:41:51 nordin Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.13 2002/02/15 18:10:15 nordin Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -156,6 +156,7 @@ void
 timeout_add(struct timeout *new, int to_ticks)
 {
 	int s;
+	int old_time;
 
 	timeout_wheel_lock(&s);
 #ifdef DIAGNOSTIC
@@ -164,17 +165,26 @@ timeout_add(struct timeout *new, int to_ticks)
 	if (to_ticks < 0)
 		panic("timeout_add: to_ticks < 0");
 #endif
-	/* If this timeout was already on a queue we remove it. */
-	if (new->to_flags & TIMEOUT_ONQUEUE)
-		CIRCQ_REMOVE(&new->to_list);
-	else
-		new->to_flags |= TIMEOUT_ONQUEUE;
-
 	/* Initialize the time here, it won't change. */
+	old_time = new->to_time;
 	new->to_time = to_ticks + ticks;
 	new->to_flags &= ~TIMEOUT_TRIGGERED;
 
-	CIRCQ_INSERT(&new->to_list, &timeout_todo);
+	/*
+	 * If this timeout already is scheduled and now is moved
+	 * earlier, reschedule it now. Otherwise leave it in place
+	 * and let it be rescheduled later.
+	 */
+	if (new->to_flags & TIMEOUT_ONQUEUE) {
+		if (new->to_time < old_time) {
+			CIRCQ_REMOVE(&new->to_list);
+			CIRCQ_INSERT(&new->to_list, &timeout_todo);
+		}
+	} else {
+		new->to_flags |= TIMEOUT_ONQUEUE;
+		CIRCQ_INSERT(&new->to_list, &timeout_todo);
+	}
+
 	timeout_wheel_unlock(s);
 }
 
