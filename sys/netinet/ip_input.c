@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.24 1997/02/22 13:25:28 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.25 1997/02/28 03:44:53 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -94,6 +94,10 @@ int	ip_directedbcast = IPDIRECTEDBCAST;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
+
+u_char  ipsec_auth_default_level = IPSEC_AUTH_LEVEL_DEFAULT;
+u_char  ipsec_esp_trans_default_level = IPSEC_ESP_TRANS_LEVEL_DEFAULT;
+u_char  ipsec_esp_network_default_level = IPSEC_ESP_NETWORK_LEVEL_DEFAULT;
 
 /* from in_pcb.c */
 extern int ipport_firstauto;

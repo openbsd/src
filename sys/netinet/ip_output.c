@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.7 1997/02/20 01:08:06 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.8 1997/02/28 03:44:54 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -794,6 +794,35 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			break;
 
+		case IP_AUTH_LEVEL:
+		case IP_ESP_TRANS_LEVEL:
+		case IP_ESP_NETWORK_LEVEL:
+#ifndef IPSEC
+		    error = EINVAL;
+#else
+		    if (m == 0 || m->m_len != sizeof(u_char))
+		      error = EINVAL;
+		    else {
+			optval = *mtod(m, u_char *);
+			
+			switch (optname) {
+			    case IP_AUTH_LEVEL:
+				so->so_seclevel[SL_AUTH] = optval;
+				break;
+
+			    case IP_ESP_TRANS_LEVEL:
+				so->so_seclevel[SL_ESP_TRANS] = optval;
+				break;
+				
+			    case IP_ESP_NETWORK_LEVEL:
+				so->so_seclevel[SL_ESP_NETWORK] = optval;
+				break;
+			}
+			
+		    }
+#endif
+		    break;
+		    
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -871,6 +900,30 @@ ip_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = optval;
 			break;
 
+		case IP_AUTH_LEVEL:
+		case IP_ESP_TRANS_LEVEL:
+		case IP_ESP_NETWORK_LEVEL:
+#ifndef IPSEC
+		    *mtod(m, int *) = IPSEC_LEVEL_NONE;
+#else
+		    switch (optname) {
+			    case IP_AUTH_LEVEL:
+				    optval = so->so_seclevel[SL_AUTH];
+				    break;
+				
+			    case IP_ESP_TRANS_LEVEL:
+				    optval = so->so_seclevel[SL_ESP_TRANS];
+				    break;
+				
+			    case IP_ESP_NETWORK_LEVEL:
+				    optval = so->so_seclevel[SL_ESP_NETWORK];
+				    break;
+		    }
+		    
+		    *mtod(m, int *) = optval;
+#endif
+		    break;
+				
 		default:
 			error = ENOPROTOOPT;
 			break;
