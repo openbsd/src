@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.18 1995/12/26 04:23:14 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.19 1996/01/03 21:07:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,8 @@ extern struct sysent ultrix_sysent[];
 extern char *ultrix_syscallnames[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long, register_t *));
+extern char sigcode[], esigcode[];
+
 struct emul emul_ultrix = {
 	"ultrix",
 	NULL,
@@ -109,8 +111,9 @@ struct emul emul_ultrix = {
 	0,
 	copyargs,
 	cpu_exec_ecoff_setregs,
-	0,
-	0,
+	/* 0, 0, */
+	sigcode,
+	esigcode,
 };
 
 #define GSI_PROG_ENV 1
@@ -244,17 +247,6 @@ async_daemon(p, v, retval)
 	return (sys_nfssvc(p, &ouap, retval));
 }
 #endif /* NFSCLIENT */
-
-ultrix_sys_sigpending(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct ultrix_sys_sigpending_args *uap = v;
-	int mask = p->p_siglist & p->p_sigmask;
-
-	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
-}
 
 #if 0
 /* XXX: Temporary until sys/dir.h, include/dirent.h and sys/dirent.h are fixed */
@@ -610,6 +602,7 @@ ultrix_sys_exportfs(p, v, retval)
 	return 0;
 }
 
+int
 ultrix_sys_mknod(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -624,6 +617,18 @@ ultrix_sys_mknod(p, v, retval)
 }
 
 int
+ultrix_sys_sigpending(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_sigpending_args *uap = v;
+	int mask = p->p_siglist & p->p_sigmask;
+
+	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
+}
+
+int
 ultrix_sys_sigcleanup(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -632,4 +637,18 @@ ultrix_sys_sigcleanup(p, v, retval)
 	struct ultrix_sys_sigcleanup_args *uap = v;
 
 	return sys_sigreturn(p, (struct sys_sigreturn_args *)uap, retval);
+}
+
+int
+ultrix_sys_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ultrix_sys_sigcleanup_args *uap = v;
+
+#ifdef DEBUG
+	printf("ultrix sigreturn\n");
+#endif
+	return sys_sigreturn(p, (struct sys_sigreturn_args  *)uap, retval);
 }
