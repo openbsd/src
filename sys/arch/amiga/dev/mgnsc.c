@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgnsc.c,v 1.7 1996/05/06 09:35:05 niklas Exp $	*/
+/*	$OpenBSD: mgnsc.c,v 1.8 1996/10/04 15:10:40 niklas Exp $	*/
 /*	$NetBSD: mgnsc.c,v 1.18 1996/04/21 21:12:11 veego Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <machine/intr.h>
 #include <machine/psl.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

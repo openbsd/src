@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfc.c,v 1.7 1996/08/23 18:53:12 niklas Exp $ */
+/*	$OpenBSD: mfc.c,v 1.8 1996/10/04 15:10:39 niklas Exp $ */
 /*	$NetBSD: mfc.c,v 1.12.4.1 1996/06/06 04:53:16 mhitch Exp $ */
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
