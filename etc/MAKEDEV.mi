@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.9 2002/01/07 21:58:54 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.10 2002/01/08 00:52:06 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -117,8 +117,8 @@ _dl({-std-},{-std-},
 {-wd-},{-wd0 wd1 wd2 wd3-},
 {-raid-},{-raid0 raid1 raid2 raid3-},
 {-ofdisk-},{-ofdisk0 ofdisk1 ofdisk2 ofdisk3 ofdisk4-},
-{-xy-},{-xy0 xy1 xy2 xy3 xy4-},
-{-xd-},{-xd0 xd1 xd2 xd3 xd4-},
+{-xy-},{-xy0 xy1 xy2 xy3-},
+{-xd-},{-xd0 xd1 xd2 xd3-},
 {-hd-},{-hd0 hd1 hd2 hd3 hd4-},
 {-rz-},{-rz0 rz1 rz2 rz3 rz4-},
 {-rd-},{-rd0-},
@@ -162,6 +162,9 @@ _dl({-std-},{-std-},
 {-usbs-},{-usbs-},
 {-pci-},{-pci-},
 {-wsmouse-},{-wscons-},
+{-btw-},{-bwtwo0-},
+{-cgt-},{-cgtwo0-},
+{-cfr-},{-cgfour0-},
 {-grf-},{-grf0 grf1 grf2 grf3 grf4 grf5 grf6-},
 {-par-},{-par0-},
 {-amouse-},{-mouse0 mouse1-},
