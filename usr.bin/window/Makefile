@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 1995/09/28 10:33:55 tls Exp $
+#	$NetBSD: Makefile,v 1.6 1995/12/21 05:24:49 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	window
-CFLAGS+= -DVMIN_BUG
 SRCS=	char.c cmd.c cmd1.c cmd2.c cmd3.c cmd4.c cmd5.c cmd6.c cmd7.c \
 	context.c error.c lcmd.c lcmd1.c lcmd2.c main.c mloop.c parser1.c \
 	parser2.c parser3.c parser4.c parser5.c scanner.c startup.c string.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwtty.c,v 1.3 1995/09/28 10:35:58 tls Exp $	*/
+/*	$NetBSD: wwtty.c,v 1.4 1995/12/21 11:06:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwtty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwtty.c,v 1.3 1995/09/28 10:35:58 tls Exp $";
+static char rcsid[] = "$NetBSD: wwtty.c,v 1.4 1995/12/21 11:06:50 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,6 @@ register struct ww_tty *t;
 	if (tcgetattr(d, &t->ww_termios) < 0)
 		goto bad;
 #endif
-	if ((t->ww_fflags = fcntl(d, F_GETFL, 0)) < 0)
-		goto bad;
 	return 0;
 bad:
 	wwerrno = WWE_SYS;
@@ -112,8 +110,6 @@ register struct ww_tty *t;
 	if (tcsetattr(d, TCSADRAIN, &t->ww_termios) < 0)
 		goto bad;
 #endif
-	if (fcntl(d, F_SETFL, t->ww_fflags) < 0)
-		goto bad;
 	return 0;
 bad:
 	wwerrno = WWE_SYS;

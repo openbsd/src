@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1995/09/28 10:34:27 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1995/12/21 10:45:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.4 1995/09/28 10:34:27 tls Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.5 1995/12/21 10:45:28 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,8 @@ char **argv;
 	if (debug || xflag)
 		(void) wwsettty(0, &wwnewtty);
 
-	if ((cmdwin = wwopen(wwbaud > 2400 ? WWO_REVERSE : 0, 1, wwncol,
-			     0, 0, 0)) == 0) {
+	if ((cmdwin = wwopen(WWT_INTERNAL, wwbaud > 2400 ? WWO_REVERSE : 0, 1,
+			     wwncol, 0, 0, 0)) == 0) {
 		wwflush();
 		(void) fprintf(stderr, "%s.\r\n", wwerror());
 		goto bad;
@@ -165,14 +165,15 @@ char **argv;
 	cmdwin->ww_nointr = 1;
 	cmdwin->ww_noupdate = 1;
 	cmdwin->ww_unctrl = 1;
-	if ((framewin = wwopen(WWO_GLASS|WWO_FRAME, wwnrow, wwncol, 0, 0, 0))
-	    == 0) {
+	if ((framewin = wwopen(WWT_INTERNAL, WWO_GLASS|WWO_FRAME, wwnrow,
+			       wwncol, 0, 0, 0)) == 0) {
 		wwflush();
 		(void) fprintf(stderr, "%s.\r\n", wwerror());
 		goto bad;
 	}
 	wwadd(framewin, &wwhead);
-	if ((boxwin = wwopen(WWO_GLASS, wwnrow, wwncol, 0, 0, 0)) == 0) {
+	if ((boxwin = wwopen(WWT_INTERNAL, WWO_GLASS, wwnrow, wwncol, 0, 0, 0))
+	    == 0) {
 		wwflush();
 		(void) fprintf(stderr, "%s.\r\n", wwerror());
 		goto bad;

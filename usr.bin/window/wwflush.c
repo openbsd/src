@@ -1,4 +1,4 @@
-/*	$NetBSD: wwflush.c,v 1.3 1995/09/28 10:35:30 tls Exp $	*/
+/*	$NetBSD: wwflush.c,v 1.5 1995/12/21 10:46:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwflush.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwflush.c,v 1.3 1995/09/28 10:35:30 tls Exp $";
+static char rcsid[] = "$NetBSD: wwflush.c,v 1.5 1995/12/21 10:46:08 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,11 @@ wwflush()
 
 wwcheckpoint()
 {
-	int s = sigblock(sigmask(SIGALRM) | sigmask(SIGIO));
+	sigset_t sigset, osigset;
+
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGALRM);
+	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 
 	tt.tt_ack = 0;
 	do {
@@ -80,7 +84,7 @@ wwcheckpoint()
 #endif
 		(void) alarm(3);
 		for (wwdocheckpoint = 0; !wwdocheckpoint && tt.tt_ack == 0;)
-			(void) sigpause(s);
+			sigsuspend(&osigset);
 	} while (tt.tt_ack == 0);
 	(void) alarm(0);
 	wwdocheckpoint = 0;
@@ -94,7 +98,8 @@ wwcheckpoint()
 		wwcopyscreen(wwos, wwcs);
 		(void) alarm(3);
 	}
-	(void) sigsetmask(s);
+
+	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 }
 
 wwcopyscreen(s1, s2)

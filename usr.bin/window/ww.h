@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.3 1995/09/28 10:35:07 tls Exp $	*/
+/*	$NetBSD: ww.h,v 1.5 1995/12/21 11:05:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -97,7 +97,7 @@ struct ww {
 	char ww_hascursor;	/* has fake cursor */
 
 		/* things for the window process and io */
-	char ww_ispty;		/* ww_pty is really a pty, not socket pair */
+	char ww_type;		/* ww_pty is really a pty, not socket pair */
 	char ww_stopped;	/* output stopped */
 	int ww_pty;		/* file descriptor of pty or socket pair */
 	int ww_socket;		/* other end of socket pair */
@@ -128,7 +128,6 @@ struct ww_tty {
 #else
 	struct termios ww_termios;
 #endif
-	int ww_fflags;
 };
 
 union ww_char {
@@ -181,6 +180,11 @@ struct ww_update {
 #define WWF_MASK	(WWF_U|WWF_R|WWF_D|WWF_L)
 #define WWF_LABEL	0x40
 #define WWF_TOP		0x80
+
+	/* ww_type values */
+#define	WWT_PTY		0	/* pty */
+#define	WWT_SOCKET	1	/* socket pair */
+#define	WWT_INTERNAL	2
 
 	/* flags to wwopen() */
 #define WWO_PTY		0x01		/* want pty */

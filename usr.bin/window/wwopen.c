@@ -1,4 +1,4 @@
-/*	$NetBSD: wwopen.c,v 1.4 1995/09/28 10:35:42 tls Exp $	*/
+/*	$NetBSD: wwopen.c,v 1.5 1995/12/21 10:46:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: wwopen.c,v 1.4 1995/09/28 10:35:42 tls Exp $";
+static char rcsid[] = "$NetBSD: wwopen.c,v 1.5 1995/12/21 10:46:19 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static char rcsid[] = "$NetBSD: wwopen.c,v 1.4 1995/09/28 10:35:42 tls Exp $";
 #include <fcntl.h>
 
 struct ww *
-wwopen(flags, nrow, ncol, row, col, nline)
+wwopen(type, flags, nrow, ncol, row, col, nline)
 {
 	register struct ww *w;
 	register i, j;
@@ -100,11 +100,14 @@ wwopen(flags, nrow, ncol, row, col, nline)
 	w->ww_cur.r = w->ww_w.t;
 	w->ww_cur.c = w->ww_w.l;
 
-	if (flags & WWO_PTY) {
+	w->ww_type = type;
+	switch (type) {
+	case WWT_PTY:
 		if (wwgetpty(w) < 0)
 			goto bad;
-		w->ww_ispty = 1;
-	} else if (flags & WWO_SOCKET) {
+		break;
+	case WWT_SOCKET:
+	    {
 		int d[2];
 		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, d) < 0) {
 			wwerrno = WWE_SYS;
@@ -114,8 +117,10 @@ wwopen(flags, nrow, ncol, row, col, nline)
 		(void) fcntl(d[1], F_SETFD, 1);
 		w->ww_pty = d[0];
 		w->ww_socket = d[1];
+		break;
+	    }
 	}
-	if (flags & (WWO_PTY|WWO_SOCKET)) {
+	if (type != WWT_INTERNAL) {
 		if ((w->ww_ob = malloc(512)) == 0) {
 			wwerrno = WWE_NOMEM;
 			goto bad;

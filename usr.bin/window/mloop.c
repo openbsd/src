@@ -1,4 +1,4 @@
-/*	$NetBSD: mloop.c,v 1.3 1995/09/28 10:34:28 tls Exp $	*/
+/*	$NetBSD: mloop.c,v 1.4 1995/12/21 10:45:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mloop.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mloop.c,v 1.3 1995/09/28 10:34:28 tls Exp $";
+static char rcsid[] = "$NetBSD: mloop.c,v 1.4 1995/12/21 10:45:53 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,13 +64,15 @@ mloop()
 			register char *p;
 			register n;
 
-			if (wwibp >= wwibq)
+			if (wwibp >= wwibq) {
+				wwibp = wwibq = wwib;
 				wwiomux();
+			}
 			for (p = wwibp; p < wwibq && wwmaskc(*p) != escapec;
 			     p++)
 				;
 			if ((n = p - wwibp) > 0) {
-				if (!w->ww_ispty && w->ww_stopped)
+				if (w->ww_type != WWT_PTY && w->ww_stopped)
 					startwin(w);
 #if defined(sun) && !defined(BSD)
 				/* workaround for SunOS pty bug */

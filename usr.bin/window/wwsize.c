@@ -1,4 +1,4 @@
-/*	$NetBSD: wwsize.c,v 1.3 1995/09/28 10:35:54 tls Exp $	*/
+/*	$NetBSD: wwsize.c,v 1.4 1995/12/21 10:46:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwsize.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwsize.c,v 1.3 1995/09/28 10:35:54 tls Exp $";
+static char rcsid[] = "$NetBSD: wwsize.c,v 1.4 1995/12/21 10:46:28 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ register struct ww *w;
 	/*
 	 * Fool with pty.
 	 */
-	if (w->ww_ispty && w->ww_pty >= 0)
+	if (w->ww_type == WWT_PTY && w->ww_pty >= 0)
 		(void) wwsetttysize(w->ww_pty, nrow, ncol);
 	return 0;
 bad:

@@ -1,4 +1,4 @@
-/*	$NetBSD: win.c,v 1.5 1995/09/29 00:44:08 cgd Exp $	*/
+/*	$NetBSD: win.c,v 1.6 1995/12/21 10:46:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)win.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: win.c,v 1.5 1995/09/29 00:44:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: win.c,v 1.6 1995/12/21 10:46:01 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ char *shf, **sh;
 		error("Illegal window position.");
 		return 0;
 	}
-	w = wwopen(haspty ? WWO_PTY : WWO_SOCKET, nrow, ncol, row, col, nline);
+	w = wwopen(haspty ? WWT_PTY : WWT_SOCKET, 0, nrow, ncol, row, col, nline);
 	if (w == 0) {
 		error("Can't open window: %s.", wwerror());
 		return 0;
@@ -179,7 +179,7 @@ char *label;
 {
 	register struct ww *w;
 
-	if ((w = wwopen(0, nrow, wwncol, 2, 0, 0)) == 0)
+	if ((w = wwopen(WWT_INTERNAL, 0, nrow, wwncol, 2, 0, 0)) == 0)
 		return 0;
 	w->ww_mapnl = 1;
 	w->ww_hasframe = 1;
@@ -308,7 +308,7 @@ register struct ww *w;
 stopwin(w)
 	register struct ww *w;
 {
-	if (w->ww_pty >= 0 && w->ww_ispty && wwstoptty(w->ww_pty) < 0)
+	if (w->ww_pty >= 0 && w->ww_type == WWT_PTY && wwstoptty(w->ww_pty) < 0)
 		error("Can't stop output: %s.", wwerror());
 	else
 		w->ww_stopped = 1;
@@ -317,7 +317,7 @@ stopwin(w)
 startwin(w)
 	register struct ww *w;
 {
-	if (w->ww_pty >= 0 && w->ww_ispty && wwstarttty(w->ww_pty) < 0)
+	if (w->ww_pty >= 0 && w->ww_type == WWT_PTY && wwstarttty(w->ww_pty) < 0)
 		error("Can't start output: %s.", wwerror());
 	else
 		w->ww_stopped = 0;
