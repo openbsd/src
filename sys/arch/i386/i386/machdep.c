@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 1998/05/22 05:49:07 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.88 1998/05/25 06:54:48 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -683,8 +683,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{ {
 			CPUCLASS_486,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"486"		/* Default */
+				0, 0, 0, "MediaGX", 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0,
+				"486 class"	/* Default */
 			},
 			NULL
 		},
@@ -692,9 +693,9 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, 0, "6x86", 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0,
-				"6x86"		/* Default */
+				0, 0, "6x86 (M1)", 0, "GXm", 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0,
+				"M1 class"	/* Default */
 			},
 			cyrix6x86_cpu_setup
 		},
@@ -702,12 +703,35 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				"M2", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"M2"		/* Default */
+				"6x86MX (M2)", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0,
+				"M2 class"	/* Default */
 			},
 			NULL
 		} }
 	}
+};
+
+struct cpu_cpuid_feature i386_cpuid_features[] = {
+	{ CPUID_FPU,	"FPU" },
+	{ CPUID_VME,	"V86" },
+	{ CPUID_DE,	"DE" },
+	{ CPUID_PSE,	"PSE" },
+	{ CPUID_TSC,	"TSC" },
+	{ CPUID_MSR,	"MSR" },
+	{ CPUID_PAE,	"PAE" },
+	{ CPUID_MCE,	"MCE" },
+	{ CPUID_CX8,	"CX8" },
+	{ CPUID_APIC,	"APIC" },
+	{ CPUID_SYS1,	"SYS" },
+	{ CPUID_SYS2,	"SYS" },
+	{ CPUID_MTRR,	"MTRR" },
+	{ CPUID_PGE,	"PGE" },
+	{ CPUID_MCA,	"MCA" },
+	{ CPUID_CMOV,	"CMOV" },
+	{ CPUID_MMX,	"MMX" },
+	{ CPUID_EMMX,	"EMMX" },
+	{ CPUID_3D,	"AMD3D" }
 };
 
 void
@@ -747,9 +771,7 @@ identifycpu()
 {
 	extern char cpu_vendor[];
 	extern int cpu_id;
-#if defined(I586_CPU) || defined(I686_CPU)
 	extern int cpu_feature;
-#endif
 	const char *name, *modifier, *vendorname, *token;
 	const char *cpu_device = "cpu0";
 	int class = CPUCLASS_386, vendor, i, max;
@@ -832,12 +854,28 @@ identifycpu()
 	printf("%s: %s", cpu_device, cpu_model);
 
 #if defined(I586_CPU) || defined(I686_CPU)
-	if (cpu_feature && (cpu_feature & 0x10) >> 4) {	/* Has TSC */
+	if (cpu_feature && (cpu_feature & CPUID_TSC)) {	/* Has TSC */
 		calibrate_cyclecounter();
 		printf(" %d MHz", pentium_mhz);
 	}
 #endif
 	printf("\n");
+
+	if (cpu_feature) {
+		int numbits = 0;
+
+		printf("%s: ", cpu_device);
+		max = sizeof(i386_cpuid_features)
+			/ sizeof(i386_cpuid_features[0]);
+		for (i = 0; i < max; i++) {
+			if (cpu_feature & i386_cpuid_features[i].feature_bit) {
+				printf("%s%s", (numbits == 0 ? "" : ","),
+				       i386_cpuid_features[i].feature_name);
+				numbits++;
+			}
+		}
+		printf("\n");
+	}
 
 	cpu_class = class;
 
