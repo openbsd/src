@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.16 2001/06/06 12:31:52 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.17 2001/06/13 08:40:39 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -494,14 +494,10 @@ _dl_rtld(elf_object_t *object)
 	 */
 	_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	_dl_md_reloc(object, DT_RELA, DT_RELASZ);
-#if defined(__alpha__)
-	/* We assume that DT_PTREL is DT_RELA */
-	_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-#endif
-	if (_dl_bindnow) {	/* XXX Perhaps more checking ? */
-		_dl_md_reloc_got(object, 1);
-	} else {
+	if (_dl_bindnow || object->dyn.bind_now) {	/* XXX Perhaps more checking ? */
 		_dl_md_reloc_got(object, 0);
+	} else {
+		_dl_md_reloc_got(object, 1);
 	}
 	object->status |= STAT_RELOC_DONE;
 }
