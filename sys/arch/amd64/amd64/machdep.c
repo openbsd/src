@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2004/02/27 21:55:25 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.15 2004/02/27 21:55:49 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -182,7 +182,7 @@ int	nbuf = 0;
 #endif
 
 #ifndef BUFCACHEPERCENT
-#define BUFCACHEPERCENT 5
+#define BUFCACHEPERCENT 10
 #endif
 
 #ifdef BUFPAGES
