@@ -1,4 +1,4 @@
-/*	$OpenBSD: urlphy.c,v 1.1 2002/05/07 19:31:16 nate Exp $ */
+/*	$OpenBSD: urlphy.c,v 1.2 2002/05/07 19:50:01 nate Exp $ */
 /*	$NetBSD: urlphy.c,v 1.1 2002/03/28 21:07:53 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -105,8 +105,6 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": Realtek RTL8150L internal media interface\n");
-
 	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
 
 	sc->mii_inst = mii->mii_instance;
@@ -130,12 +128,8 @@ urlphy_attach(struct device *parent, struct device *self, void *aux)
 	mii_phy_reset(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
-	else
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_phy_add_media(sc);
-	printf("\n");
 }
 
 int
