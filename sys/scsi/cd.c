@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.69 2003/05/16 19:54:05 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.70 2003/05/17 16:55:45 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1339,7 +1339,7 @@ cd_size(cd, flags)
 	u_long size;
 	
 	/* Reasonable defaults for drives that don't support
-	   READ_CD_CAPCITY */
+	   READ_CD_CAPACITY */
 	cd->params.blksize = 2048;
 	cd->params.disksize = 400000;
 
