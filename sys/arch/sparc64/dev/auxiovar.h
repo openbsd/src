@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxiovar.h,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: auxiovar.h,v 1.5 2003/02/10 10:02:59 jason Exp $	*/
 /*	$NetBSD: auxiovar.h,v 1.4 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -58,11 +58,5 @@ struct auxio_softc {
  * XXX: old interfaces.  we set auxio_reg the first auxio we attach.
  */
 #ifndef _LOCORE
-/*
- * Copy of AUXIO_REG for the benefit of assembler modules (eg. trap handlers)
- * as AUXREG_VA depends on NBPG which is not a constant.
- */
-volatile u_char *auxio_reg;
-unsigned int auxregbisc(int, int);
 void auxio_led_blink(void *);
 #endif
