@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpvar.h,v 1.1 1996/08/14 14:36:16 shawn Exp $	*/
+/*	$OpenBSD: isapnpvar.h,v 1.2 1997/07/12 23:22:02 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -35,25 +35,25 @@ struct irq_format {
 };
 
 struct dma_format {
-	int channel;		/* DMA channel */
+	int channel;	/* DMA channel */
 	int info;		/* DMA type */
 };
 
 struct io_descriptor {
 	int type;		/* normal or fixed I/O descriptor */
 	int info;		/* decoding information */
-	int min_base;		/* minimum base I/O address */	
-	int max_base;		/* maximum base I/O address */
-	int alignment;		/* alignment for base address */
+	int min_base;	/* minimum base I/O address */	
+	int max_base;	/* maximum base I/O address */
+	int alignment;	/* alignment for base address */
 	int size;		/* number of contiguous ports */
 };
 
 struct mem_descriptor {
 	int type;		/* 24 or 32bit memory descriptor */
 	int info;		/* misc. memory information */
-	int min_base;		/* minimum base mem address */
-	int max_base;		/* maximum base mem address */
-	int alignment;		/* aligment for base address */
+	int min_base;	/* minimum base mem address */
+	int max_base;	/* maximum base mem address */
+	int alignment;	/* aligment for base address */
 	int size;		/* number of memory range length */
 };
 
@@ -93,6 +93,11 @@ struct cardinfo {
 	TAILQ_HEAD(, devinfo) q_dev;
 	struct devinfo *dev;
 	TAILQ_ENTRY(cardinfo) card_link;
+};
+
+struct pnp_knowndev {
+	char *pnpid;
+	char *driver;
 };
 
 #endif /* !_DEV_ISA_ISAPNPVAR_H_ */

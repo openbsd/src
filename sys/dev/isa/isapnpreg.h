@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpreg.h,v 1.1 1996/08/14 14:36:16 shawn Exp $	*/
+/*	$OpenBSD: isapnpreg.h,v 1.2 1997/07/12 23:22:01 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996, Sujal M. Patel
@@ -41,53 +41,60 @@
 
 /* Static ports */
 #define ADDRESS			0x279
+#if 0
 #define WRITE_DATA		0xa79
+#else
+#define WRITE_DATA		(ADDRESS+0x0800)
+#endif
 
 
 /* PnP Registers.  Write to ADDRESS and then use WRITE/READ_DATA */
-#define SET_RD_DATA		0x00
+#define SET_RD_DATA			0x00
 #define SERIAL_ISOLATION	0x01
-#define CONFIG_CONTROL          0x02
-#define WAKE			0x03
+#define CONFIG_CONTROL		0x02
+#define WAKE				0x03
 #define	RESOURCE_DATA		0x04
-#define STATUS			0x05
-#define SET_CSN			0x06
-#define SET_LDN			0x07
-#define ACTIVATE		0x30
+#define STATUS				0x05
+#define SET_CSN				0x06
+#define SET_LDN				0x07
+#define ACTIVATE			0x30
 #define IO_RANGE_CHECK		0x31
-#define MEM_CONFIG		0x40
+#define MEM_CONFIG			0x40
 #define IO_CONFIG_BASE		0x60
-#define IRQ_CONFIG		0x70
-#define DRQ_CONFIG		0x74
+#define IRQ_CONFIG			0x70
+#define DRQ_CONFIG			0x74
 
 /* Small Resource Item names */
-#define PNP_VERSION		0x1
+#define PNP_VERSION			0x1
 #define LOG_DEVICE_ID		0x2
 #define COMP_DEVICE_ID		0x3
-#define IRQ_FORMAT		0x4
-#define DMA_FORMAT		0x5
+#define IRQ_FORMAT			0x4
+#define DMA_FORMAT			0x5
 #define START_DEPEND_FUNC	0x6
 #define END_DEPEND_FUNC		0x7
 #define IO_PORT_DESC		0x8
 #define FIXED_IO_PORT_DESC	0x9
-#define SM_RES_RESERVED		0xa-0xd
+#define SM_RES_RESERVED1	0xa
+#define SM_RES_RESERVED2	0xb
+#define SM_RES_RESERVED3	0xc
+#define SM_RES_RESERVED4	0xd
 #define SM_VENDOR_DEFINED	0xe
-#define END_TAG			0xf
+#define END_TAG				0xf
 
 /* Large Resource Item names */
-#define MEMORY_RANGE_DESC	0x1
-#define ID_STRING_ANSI		0x2
-#define ID_STRING_UNICODE	0x3
-#define LG_VENDOR_DEFINED	0x4
+#define MEMORY_RANGE_DESC		0x1
+#define ID_STRING_ANSI			0x2
+#define ID_STRING_UNICODE		0x3
+#define LG_VENDOR_DEFINED		0x4
 #define _32BIT_MEM_RANGE_DESC	0x5
 #define _32BIT_FIXED_LOC_DESC	0x6
-#define LG_RES_RESERVED		0x7-0x7f
+#define LG_RES_RESERVED			0x7-0x7f
 
 /* Priority for Resource Group */
-#define BASIC_CONFIGURATION     -1
-#define GOOD_CONFIGURATION      0x0
-#define ACCEPTABLE_CONFIGURATION 0x1
-#define SUBOPTIMAL_CONFIGURATION 0x2
-#define RESERVED_CONFIGURATION  0x3
+#define BASIC_CONFIGURATION			-1
+#define GOOD_CONFIGURATION			0x0
+#define ACCEPTABLE_CONFIGURATION	0x1
+#define SUBOPTIMAL_CONFIGURATION	0x2
+#define RESERVED_CONFIGURATION		0x3
 
 #endif /* !_DEV_ISA_ISAPNPREG_H_ */
