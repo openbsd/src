@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.36 2001/05/29 21:40:36 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.37 2001/05/31 17:34:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.36 2001/05/29 21:40:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.37 2001/05/31 17:34:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,8 +65,6 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.36 2001/05/29 21:40:36 millert Exp $";
 #include <varargs.h>
 #endif
 #include <bsd_auth.h>
-
-#define	ARGSTR	"-a:c:fKlm"
 
 char   *ontty __P((void));
 int	chshell __P((char *));
@@ -94,7 +92,7 @@ main(argc, argv)
 	iscsh = UNSET;
 	class = shell = style = NULL;
 	asme = asthem = fastlogin = 0;
-	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
+	while ((ch = getopt(argc, argv, "-a:c:fKlm")) != -1)
 		switch(ch) {
 		case 'a':
 			if (style)
@@ -343,8 +341,8 @@ usage()
 {
 	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: %s [%s] [-a auth-type] %s ",
-	    "[-c login-class] [login [argument ...]]\n", __progname, ARGSTR);
+	fprintf(stderr, "usage: %s [-fKlm] [-a auth-type] %s ", __progname,
+	    ARGSTR, "[-c login-class] [login [shell arguments]]\n");
 	exit(1);
 }
 
