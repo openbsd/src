@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.55 2002/10/29 18:30:21 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.56 2002/12/09 02:35:21 art Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -421,8 +421,10 @@ uvm_mapent_free(me)
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
 	} else if (me->flags & UVM_MAP_KMEM) {
+		splassert(IPL_NONE);
 		pool_put(&uvm_map_entry_kmem_pool, me);
 	} else {
+		splassert(IPL_NONE);
 		pool_put(&uvm_map_entry_pool, me);
 	}
 }
