@@ -1,5 +1,5 @@
 %{
-/*      $OpenBSD: scan.l,v 1.8 2003/10/18 19:57:10 otto Exp $	*/
+/*      $OpenBSD: scan.l,v 1.9 2003/10/18 20:35:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: scan.l,v 1.8 2003/10/18 19:57:10 otto Exp $";
+static const char rcsid[] = "$OpenBSD: scan.l,v 1.9 2003/10/18 20:35:36 otto Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -172,7 +172,7 @@ init_strbuf(void)
 	if (strbuf == NULL) {
 		strbuf = malloc(strbuf_sz);
 		if (strbuf == NULL)
-			err(1, "cannot allocate string buffer");
+			err(1, NULL);
 	}
 	strbuf[0] = '\0';
 }
@@ -192,7 +192,7 @@ add_str(const char *str)
 		p = realloc(strbuf, newsize);
 		if (p == NULL) {
 			free(strbuf);
-			err(1, "cannot realloc string buffer");
+			err(1, NULL);
 		}
 		strbuf_sz = newsize;
 		strbuf = p;

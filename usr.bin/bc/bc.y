@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.11 2003/10/18 19:57:10 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.12 2003/10/18 20:35:36 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.11 2003/10/18 19:57:10 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.12 2003/10/18 20:35:36 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -628,7 +628,7 @@ grow(void)
 		p = realloc(instructions, newsize * sizeof(*p));
 		if (p == NULL) {
 			free(instructions);
-			err(1, "cannot realloc instruction buffer");
+			err(1, NULL);
 		}
 		instructions = p;
 		instr_sz = newsize;
@@ -651,7 +651,7 @@ as(const char *str)
 	instructions[current].index = ALLOC_STRING;
 	instructions[current].u.astr = strdup(str);
 	if (instructions[current].u.astr == NULL)
-		err(1, "cannot allocate string");
+		err(1, NULL);
 	return current++;
 }
 
@@ -767,7 +767,7 @@ yyerror(char *s)
 		asprintf(&str, "%s: %s:%d: %s: %s unexpected",
 		    __progname, filename, lineno, s, yytext);
 	if (str == NULL)
-		err(1, "cannot allocate string");
+		err(1, NULL);
 
 	fputs("c[", stdout);
 	for (p = str; *p != '\0'; p++) {
