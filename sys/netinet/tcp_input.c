@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.185 2005/03/12 08:07:09 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.186 2005/04/05 20:27:35 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1629,7 +1629,7 @@ trimthenstep6:
 #if 1 /* TCP_ECN */
 						tcpstat.tcps_cwr_frecovery++;
 #endif
-						tcpstat.tcps_sndrexmitfast++;
+						tcpstat.tcps_sack_recovery_episode++;
 #if defined(TCP_SACK) && defined(TCP_FACK)
 						tp->t_dupacks = tcprexmtthresh;
 						(void) tcp_output(tp);
@@ -2486,6 +2486,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	/* Note: TCPOLEN_SACK must be 2*sizeof(tcp_seq) */
 	tmp_cp = cp + 2;
 	tmp_olen = optlen - 2;
+	tcpstat.tcps_sack_rcv_opts++;
 	if (tp->snd_numholes < 0)
 		tp->snd_numholes = 0;
 	if (tp->t_maxseg == 0)

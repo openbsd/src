@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.94 2005/03/30 17:45:36 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.95 2005/04/05 20:27:35 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.94 2005/03/30 17:45:36 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.95 2005/04/05 20:27:35 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -346,6 +346,15 @@ tcp_stats(u_long off, char *name)
 	p(tcps_sc_dupesyn, "\t%qd duplicate SYN%s received for entries "
 		"already in the cache\n");
 	p(tcps_sc_dropped, "\t%qd SYN%s dropped (no route or no space)\n");
+
+	p(tcps_sack_recovery_episode, "\t%qd SACK recovery episode%s\n");
+	p(tcps_sack_rexmits,
+		"\t\t%qd segment rexmit%s in SACK recovery episodes\n");
+	p(tcps_sack_rexmit_bytes,
+		"\t\t%qd byte rexmit%s in SACK recovery episodes\n");
+	p(tcps_sack_rcv_opts,
+		"\t%qd SACK option%s received\n");
+	p(tcps_sack_snd_opts, "\t%qd SACK option%s sent\n");
 
 #undef p
 #undef p1

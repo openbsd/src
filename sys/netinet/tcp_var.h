@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.72 2005/03/09 11:14:38 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.73 2005/04/05 20:27:35 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -445,6 +445,12 @@ struct	tcpstat {
 	u_int64_t tcps_sc_retransmitted;/* # of retransmissions */
 
 	u_int64_t tcps_conndrained;	/* # of connections drained */
+
+	u_int64_t tcps_sack_recovery_episode;	/* SACK recovery episodes */
+	u_int64_t tcps_sack_rexmits;		/* SACK rexmit segments */
+	u_int64_t tcps_sack_rexmit_bytes;	/* SACK rexmit bytes */
+	u_int64_t tcps_sack_rcv_opts;		/* SACK options received */
+	u_int64_t tcps_sack_snd_opts;		/* SACK options sent */
 };
 
 /*

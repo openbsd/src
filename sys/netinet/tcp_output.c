@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.75 2005/02/27 13:22:56 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.76 2005/04/05 20:27:35 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -640,6 +640,7 @@ send:
 		int count = 0;  /* actual number of SACKs inserted */
 		int maxsack = (MAX_TCPOPTLEN - (optlen + 4))/TCPOLEN_SACK;
 
+		tcpstat.tcps_sack_snd_opts++;
 		maxsack = min(maxsack, TCP_MAX_SACK);
 		for (i = 0; (i < tp->rcv_numsacks && count < maxsack); i++) {
 			struct sackblk sack = tp->sackblks[i];
@@ -817,6 +818,8 @@ send:
 #if defined(TCP_SACK) && defined(TCP_FACK)
 		tp->retran_data += len;
 #endif /* TCP_FACK */
+		tcpstat.tcps_sack_rexmits++;
+		tcpstat.tcps_sack_rexmit_bytes += len;
 	}
 #endif /* TCP_SACK */
 
