@@ -1,4 +1,4 @@
-/* $OpenBSD: sio.c,v 1.1.1.1 2004/04/21 15:23:55 aoyama Exp $ */
+/* $OpenBSD: sio.c,v 1.2 2004/07/27 12:36:32 miod Exp $ */
 /* $NetBSD: sio.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
 
 /*-
@@ -100,7 +100,8 @@ sio_attach(parent, self, aux)
 		config_found(self, (void *)&sio_args, sio_print);
 	}
 
-	isrlink_autovec(xsiointr, sc, ma->ma_ilvl, ISRPRI_TTYNOBUF);
+	isrlink_autovec(xsiointr, sc, ma->ma_ilvl, ISRPRI_TTYNOBUF,
+	    self->dv_xname);
 }
 
 int

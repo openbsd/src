@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.1.1.1 2004/04/21 15:23:55 aoyama Exp $ */
+/* $OpenBSD: spc.c,v 1.2 2004/07/27 12:36:32 miod Exp $ */
 /* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
 
 /*-
@@ -105,7 +105,8 @@ spc_mainbus_attach(parent, self, aux)
 	sc->sc_dma_start = NULL;
 	sc->sc_dma_done = NULL;
 
-	isrlink_autovec(spc_intr, (void *)sc, ma->ma_ilvl, ISRPRI_BIO);
+	isrlink_autovec(spc_intr, (void *)sc, ma->ma_ilvl, ISRPRI_BIO,
+	    self->dv_xname);
 
 	spc_attach(sc, &spc_switch);
 }

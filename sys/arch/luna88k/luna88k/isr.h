@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.h,v 1.1.1.1 2004/04/21 15:24:00 aoyama Exp $	*/
+/*	$OpenBSD: isr.h,v 1.2 2004/07/27 12:36:34 miod Exp $	*/
 /*	$NetBSD: isr.h,v 1.1 2000/01/05 08:49:04 nisimura Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/evcount.h>
 #include <sys/queue.h>
 
 /*
@@ -53,6 +54,7 @@ struct isr_autovec {
 	void		*isr_arg;
 	int		isr_ipl;
 	int		isr_priority;
+	struct evcount	isr_count;
 };
 
 typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
@@ -66,5 +68,5 @@ typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
 #define ISRPRI_TTYNOBUF		3
 
 void	isrinit(void);
-void	isrlink_autovec(int (*)(void *), void *, int, int);
+void	isrlink_autovec(int (*)(void *), void *, int, int, const char *);
 void	isrdispatch_autovec(int);
