@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 1997/09/28 16:49:41 flipk Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 1997/10/02 14:27:48 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -796,14 +796,18 @@ haltsys:
 
 	if (howto & RB_HALT) {
 #if NAPM > 0 && !defined(APM_NO_POWEROFF)
-		/* turn off, if we can.  But try to turn disk off and
-		 * wait a bit first--some disk drives are slow to clean up
-		 * and users have reported disk corruption.
-		 */
-		delay(500000);
-		apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
-		delay(500000);
-		apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+		if (howto & RB_POWERDOWN) {
+			printf("\nAttempting to power down...\n");
+			/*
+			 * Turn off, if we can.  But try to turn disk off and
+		 	 * wait a bit first--some disk drives are slow to
+			 * clean up and users have reported disk corruption.
+		 	 */
+			delay(500000);
+			apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+			delay(500000);
+			apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_OFF);
+		}
 #endif
 		printf("\n");
 		printf("The operating system has halted.\n");
