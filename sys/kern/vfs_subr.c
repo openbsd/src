@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.57 2001/03/21 17:05:29 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.58 2001/03/22 00:31:56 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/syscallargs.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -120,6 +121,8 @@ static __inline__ void vputonfreelist __P((struct vnode *));
 void printlockedvnodes __P((void));
 #endif
 
+struct pool vnode_pool;
+
 /*
  * Initialize the vnode management data structures.
  */
@@ -127,6 +130,8 @@ void
 vntblinit()
 {
 
+	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodes",
+		0, pool_page_alloc_nointr, pool_page_free_nointr, M_VNODE);
 	simple_lock_init(&mntvnode_slock);
 	simple_lock_init(&mntid_slock);
 	simple_lock_init(&spechash_slock);
@@ -399,8 +404,7 @@ getnewvnode(tag, mp, vops, vpp)
 	     ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
 		splx(s);
 		simple_unlock(&vnode_free_list_slock);
-		vp = (struct vnode *)malloc((u_long)sizeof *vp,
-		    M_VNODE, M_WAITOK);
+		vp = pool_get(&vnode_pool, PR_WAITOK);
 		bzero((char *)vp, sizeof *vp);
 		numvnodes++;
 	} else {
