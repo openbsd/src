@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.88 2002/09/15 09:37:18 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.89 2002/09/15 09:39:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -800,6 +800,8 @@ $syscall_return
 	mtctl	t1, pidr3
 	mtctl	t2, pidr4
 #endif
+	ldw	TF_CR0(sr3, t3), t1
+	mtctl	t1, rctr
 	ldw	TF_CR30(sr3, t3), t1
 	mtctl	t1, cr30
 
@@ -1892,8 +1894,23 @@ LEAF_ENTRY(fpu_save)
 	fstds,ma %fr29, 8(arg0)
 	fstds,ma %fr30, 8(arg0)
 	fstds    %fr31, 0(arg0)
+	fdc	r0(arg0)
+	ldo	-60(arg0), arg0
+	fdc	r0(arg0)
+	ldo	-32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	-32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	-32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	-32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	-32(arg0), arg0
+	fdc	r0(arg0)
+	ldo	-32(arg0), arg0
+	fdc	r0(arg0)
 	bv	r0(rp)
-	nop
+	sync
 EXIT(fpu_save)
 
 #ifdef FPEMUL
@@ -1910,8 +1927,8 @@ ENTRY($fpu_emulate,0)
 	ldw	R%fpemu_stack(r31), r31
 	ldo	R%TRAPFRAME_SIZEOF+HPPA_FRAME_SIZE(r31), sp
 
-	stw	r1 , TF_R1 (r31)
 	stw	r2 , TF_R2 (r31)
+	stw	r3 , TF_R2 (r31)
 	stw	r19, TF_R19(r31)
 	stw	r20, TF_R20(r31)
 	stw	r21, TF_R21(r31)
@@ -1926,6 +1943,7 @@ ENTRY($fpu_emulate,0)
 	mfctl	sar, r1
 	mfctl	iir, arg0
 	stw	r1, TF_CR11(r31)
+	stw	arg0, TF_CR19(r31)
 
 	extru,<> arg0, 10, 1, r0
 	extru,= arg0, 11, 1, r0
@@ -1960,6 +1978,7 @@ ENTRY($fpu_emulate,0)
 	ldw	TF_R21(r31), r21
 	ldw	TF_R20(r31), r20
 	ldw	TF_R19(r31), r19
+	ldw	TF_R3 (r31), r3
 	ldw	TF_R2 (r31), r2
 	mfctl	tr3, sp
 	mfctl	tr2, r31
