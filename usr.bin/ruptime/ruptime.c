@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.11 2003/06/25 21:18:47 deraadt Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.12 2003/08/04 17:06:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.11 2003/06/25 21:18:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ruptime.c,v 1.12 2003/08/04 17:06:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ int	hscmp(const void *, const void *);
 int	ucmp(const void *, const void *);
 int	lcmp(const void *, const void *);
 int	tcmp(const void *, const void *);
+char	*interval(time_t, char *);
 
 void morehosts(void);
 
@@ -82,7 +83,6 @@ main(int argc, char *argv[])
 	int aflg, cc, ch, f, i, maxloadav;
 	char buf[sizeof(struct whod)];
 	int (*cmp)(const void *, const void *) = hscmp;
-	char *interval(time_t, char *);
 
 	aflg = 0;
 	while ((ch = getopt(argc, argv, "alrut")) != -1)

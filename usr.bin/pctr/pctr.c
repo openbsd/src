@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.10 2003/06/10 22:20:49 deraadt Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.11 2003/08/04 17:06:44 deraadt Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -297,7 +297,7 @@ list(int fam)
 	}
 }
 
-struct ctrfn *
+static struct ctrfn *
 fn2cfnp(u_int family, u_int sel)
 {
 	struct ctrfn *cfnp;

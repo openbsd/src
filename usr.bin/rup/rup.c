@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.17 2003/06/10 22:20:50 deraadt Exp $	*/
+/*	$OpenBSD: rup.c,v 1.18 2003/08/04 17:06:45 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.17 2003/06/10 22:20:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.18 2003/08/04 17:06:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,7 +65,7 @@ struct host_list {
 void usage(void);
 int print_rup_data(char *, statstime *host_stat);
 
-int
+static int
 search_host(struct in_addr addr)
 {
 	struct host_list *hp;
@@ -80,7 +80,7 @@ search_host(struct in_addr addr)
 	return(0);
 }
 
-void
+static void
 remember_host(struct in_addr addr)
 {
 	struct host_list *hp;
@@ -111,7 +111,7 @@ enum sort_type {
 };
 enum sort_type sort_type;
 
-int
+static int
 compare(const void *v1, const void *v2)
 {
 	const struct rup_data *d1 = v1;
@@ -132,7 +132,7 @@ compare(const void *v1, const void *v2)
 	}
 }
 
-void
+static void
 remember_rup_data(char *host, struct statstime *st)
 {
 	if (rup_data_idx >= rup_data_max) {
@@ -151,7 +151,7 @@ remember_rup_data(char *host, struct statstime *st)
 }
 
 
-int
+static int
 rstat_reply(char *replyp, struct sockaddr_in *raddrp)
 {
 	struct hostent *hp;
@@ -235,7 +235,7 @@ print_rup_data(char *host, statstime *host_stat)
 }
 
 
-void
+static void
 onehost(char *host)
 {
 	CLIENT *rstat_clnt;
@@ -263,7 +263,7 @@ onehost(char *host)
 	clnt_destroy(rstat_clnt);
 }
 
-void
+static void
 allhosts(void)
 {
 	statstime host_stat;

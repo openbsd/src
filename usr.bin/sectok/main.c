@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 2002/06/17 07:10:52 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.9 2003/08/04 17:06:46 deraadt Exp $ */
 
 /*
  * Smartcard commander.
@@ -55,7 +55,7 @@ int     port, fd = -1, cla, sleepytime;
 volatile sig_atomic_t interrupted;
 FILE   *cmdf;
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,
@@ -64,9 +64,7 @@ usage(void)
 }
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	char    buf[_POSIX2_LINE_MAX], *scriptfile = NULL, *tp, *tv[MAXTOKENS];
 	int     i, tc;

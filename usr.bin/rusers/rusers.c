@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.25 2003/06/17 21:56:25 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.26 2003/08/04 17:06:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -47,7 +47,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: rusers.c,v 1.25 2003/06/17 21:56:25 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rusers.c,v 1.26 2003/08/04 17:06:46 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -99,7 +99,9 @@ int ucompare(const void *, const void *);
 bool_t rusers_reply(char *, struct sockaddr_in *);
 bool_t rusers_reply_3(char *, struct sockaddr_in *);
 enum clnt_stat get_reply(int, in_port_t, u_long, struct rpc_msg *,
-    struct rmtcallres *, bool_t (*)());
+    struct rmtcallres *, bool_t (*)(char *, struct sockaddr_in *));
+enum clnt_stat rpc_setup(int *, XDR *, struct rpc_msg *,
+    struct rmtcallargs *, AUTH *, char *);
 __dead void usage(void);
 
 int aflag, hflag, iflag, lflag, uflag;
@@ -408,7 +410,7 @@ onehost(char *host)
 
 enum clnt_stat
 get_reply(int sock, in_port_t port, u_long xid, struct rpc_msg *msgp,
-	  struct rmtcallres *resp, bool_t (*callback)())
+    struct rmtcallres *resp, bool_t (*callback)(char *, struct sockaddr_in *))
 {
 	ssize_t inlen;
 	socklen_t fromlen;
@@ -456,7 +458,7 @@ retry:
 
 enum clnt_stat
 rpc_setup(int *fdp, XDR *xdr, struct rpc_msg *msg, struct rmtcallargs *args,
-	  AUTH *unix_auth, char *buf)
+    AUTH *unix_auth, char *buf)
 {
 	int on = 1;
 
