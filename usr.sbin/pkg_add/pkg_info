@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.20 2004/11/15 12:22:59 espie Exp $
+# $OpenBSD: pkg_info,v 1.21 2004/11/15 12:58:48 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -26,6 +26,32 @@ use OpenBSD::Error;
 my $total_size = 0;
 my $pkgs = 0;
 
+
+sub find_pkg
+{
+	my ($pkg, $code) = @_;
+	if (is_installed($pkg)) {
+		&$code($pkg, installed_info($pkg));
+		return;
+	}
+	if (OpenBSD::PackageName::is_stem($pkg)) {
+		my @l = sort (OpenBSD::PackageName::findstem($pkg, installed_packages()));
+		if (@l != 0) {
+			for my $p (@l) {
+				&$code($p, installed_info($p));
+			}
+			return;
+		}
+	}
+				
+	require OpenBSD::PackageLocator;
+
+	my $true_package = OpenBSD::PackageLocator->find($pkg);
+	return unless $true_package;
+	my $dir = $true_package->info();
+	&$code($pkg, $dir);
+	$true_package->close();
+}
 sub printfile
 {
 	my $filename = shift;
@@ -54,6 +80,34 @@ sub find_by_spec
 	require OpenBSD::PkgSpec;
 
 	return sort(OpenBSD::PkgSpec::match($pat, installed_packages()));
+}
+
+sub filter_files
+{
+	require OpenBSD::PackingOld;
+	require OpenBSD::PackingList;
+
+	my $search = shift;
+	my @result = ();
+	for my $arg (@_) {
+		find_pkg($arg,
+		    sub {
+		    	my ($pkg, $dir) = @_;
+				
+			my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS,
+			    \&OpenBSD::PackingList::FilesOnly);
+			for my $item (@{$plist->{items}}) {
+				next unless $item->IsFile();
+				my $fname = $item->fullname();
+				if (defined $search->{"$fname"}) {
+					push(@{$search->{$fname}}, $pkg);
+					push(@result, $pkg);
+				}
+			}
+			$plist->forget();
+		    });
+	}
+	return @result;
 }
 
 my $all_plists;
@@ -87,6 +141,7 @@ our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_K, $opt_L,
     $opt_a, $opt_M, $opt_U, $opt_A);
 my $terse = 0;
 my $exit_code = 0;
+my @sought_files;
 
 sub print_info
 {
@@ -189,7 +244,7 @@ sub print_info
 	}
 }
 
-getopts('cDdfIikKLmpqRrsvhe:MU:l:aA',
+getopts('cDdfIikKLmpqRrsvhe:E:MU:l:aA',
 	{'e' =>
 		sub {
 			my $pat = shift;
@@ -204,6 +259,13 @@ getopts('cDdfIikKLmpqRrsvhe:MU:l:aA',
 			}
 			push(@ARGV, @list);
 			$terse = 1;
+		},
+	 'E' =>
+	 	sub {
+			require File::Spec;
+
+			push(@sought_files, File::Spec->rel2abs(shift));
+
 		}
 	});
 
@@ -245,29 +307,21 @@ if (@ARGV == 0) {
 	@ARGV = sort(installed_packages(defined $opt_A ? 0 : 1));
 }
 
-for my $pkg (@ARGV) {
-	if (is_installed($pkg)) {
-		print_info($pkg, installed_info($pkg));
-		next;
-	}
-	if (OpenBSD::PackageName::is_stem($pkg)) {
-		my @l = sort (OpenBSD::PackageName::findstem($pkg, installed_packages()));
-		if (@l != 0) {
-			for my $p (@l) {
-				print_info($p, installed_info($p));
-			}
-			next;
+if (@sought_files) {
+	my %hash = map { ($_, []) }  @sought_files;
+	@ARGV = filter_files(\%hash, @ARGV);
+	for my $f (@sought_files) {
+		my $l = $hash{$f};
+		if (@$l) {
+			print "$f: ", join(',', @$l), "\n" unless $opt_q;
+		} else {
+			$exit_code = 1;
 		}
 	}
-				
-	require OpenBSD::PackageLocator;
+}
 
-	my $true_package = OpenBSD::PackageLocator->find($pkg);
-	next unless $true_package;
-	my $dir = $true_package->info();
-	$true_package->close();
-
-	print_info($pkg, $dir);
+for my $pkg (@ARGV) {
+	find_pkg($pkg, \&print_info);
 }
 if ($pkgs > 1) {
 	print "Total size: $total_size\n";
