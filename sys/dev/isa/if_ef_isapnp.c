@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.1 1999/08/04 03:29:27 jason Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.2 1999/08/04 23:14:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -79,28 +79,8 @@ struct ef_softc {
 	void *			sc_ih;
 	int			sc_tx_start_thresh;
 	int			sc_tx_succ_ok;
-	int			sc_tx_busmaster;
-	int			sc_rx_busmaster;
 	int			sc_busmaster;
 	int			sc_full_duplex;
-};
-
-struct ef_media_types {
-	char		*efm_name;
-	u_int16_t	efm_media_bits;	/* bits to set in Wn4_Media reg */
-	u_int8_t	efm_mask;	/* xcvr present bit in W3 config */
-	u_int8_t	efm_next;	/* next media type */
-	int		efm_media;
-} ef_media_types[] = {
-	{ "10BaseT",	0x00c0,	0x08,	3,	IFM_ETHER|IFM_10_T	},
-	{ "10Base5",	0x0008,	0x20,	8,	IFM_ETHER|IFM_10_5	},
-	{ "undefined",	0x0000,	0x80,	0,	IFM_ETHER|IFM_NONE	},
-	{ "10Base2",	0x0000,	0x10,	1,	IFM_ETHER|IFM_10_2	},
-	{ "100BaseTX",	0x0080,	0x02,	5,	IFM_ETHER|IFM_100_TX	},
-	{ "100BaseFX",	0x0080,	0x04,	6,	IFM_ETHER|IFM_100_FX	},
-	{ "MII",	0x0000,	0x40,	0,	IFM_ETHER|IFM_AUTO	},
-	{ "100BaseT4",	0x0000,	0x01,	0,	IFM_ETHER|IFM_100_T4	},
-	{ "Default",	0x0000,	0xff,	0,	IFM_ETHER|IFM_AUTO	},
 };
 
 #define	ETHER_MIN_LEN		64
@@ -137,7 +117,6 @@ void efstart __P((struct ifnet *));
 int efioctl __P((struct ifnet *, u_long, caddr_t));
 void efwatchdog __P((struct ifnet *));
 void efreset __P((struct ef_softc *));
-void efshutdown __P((void *));
 void efstop __P((struct ef_softc *));
 void efsetmulti __P((struct ef_softc *));
 int efbusyeeprom __P((struct ef_softc *));
@@ -178,7 +157,7 @@ ef_isapnp_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int i, prt;
+	int i;
 	u_int16_t x;
 	u_int32_t cfg;
 
@@ -187,8 +166,6 @@ ef_isapnp_attach(parent, self, aux)
 
 	efcompletecmd(sc, EP_COMMAND, GLOBAL_RESET);
 	DELAY(1500);
-
-	printf(":");
 
 	for (i = 0; i < 3; i++) {
 		if (efbusyeeprom(sc))
@@ -212,33 +189,14 @@ ef_isapnp_attach(parent, self, aux)
 	if (efbusyeeprom(sc))
 		return;
 	x = bus_space_read_2(iot, ioh, EF_W0_EEPROM_DATA);
-	sc->sc_tx_busmaster = (x & 0x20) ? 1 : 0;
-	sc->sc_rx_busmaster = (x & 0x20) ? 1 : 0;
 
-	printf(" address %s", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-
-	GO_WINDOW(3);
-	cfg = bus_space_read_4(iot, ioh, EP_W3_INTERNAL_CONFIG);
-	x = bus_space_read_2(iot, ioh, EP_W3_RESET_OPTIONS);
-	printf(" media ");
-	prt = 0;
-	if (cfg & 0x01000000) {
-		printf("autoselect");
-		prt = 1;
-	}
-
-	for (i = 0; i < 8; i++) {
-		if (x & ef_media_types[i].efm_mask) {
-			printf("%s%s", prt ? "/" : "",
-			    ef_media_types[i].efm_name);
-			prt = 1;
-		}
-	}
-	printf("\n");
+	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * XXX this assumes there is an MII transceiver
 	 */
+	GO_WINDOW(3);
+	cfg = bus_space_read_4(iot, ioh, EP_W3_INTERNAL_CONFIG);
 	cfg &= ~(0x00f00000);
 	cfg |= (0x06 << 20);
 	bus_space_write_4(iot, ioh, EP_W3_INTERNAL_CONFIG, cfg);
@@ -266,8 +224,6 @@ ef_isapnp_attach(parent, self, aux)
 #endif
 
 	sc->sc_tx_start_thresh = 20;
-
-	shutdownhook_establish(efshutdown, sc);
 
 	efcompletecmd(sc, EP_COMMAND, RX_RESET);
 	efcompletecmd(sc, EP_COMMAND, TX_RESET);
@@ -361,18 +317,8 @@ startagain:
 	}
 
 	if (fillcnt) {
-		if (fillcnt == 1)
-			bus_space_write_4(iot, ioh,
-			    EF_W1_TX_PIO_WR_1, filler >> 24);
-		else if (fillcnt == 2)
-			bus_space_write_4(iot, ioh,
-			    EF_W1_TX_PIO_WR_1, filler >> 16);
-		else if (fillcnt == 3)
-			bus_space_write_4(iot, ioh,
-			    EF_W1_TX_PIO_WR_1, filler >> 8);
-		else
-			bus_space_write_4(iot, ioh,
-			    EF_W1_TX_PIO_WR_1, filler);
+		bus_space_write_4(iot, ioh, EF_W1_TX_PIO_WR_1,
+		    filler >> (32 - (8 * fillcnt)));
 		fillcnt = 0;
 		filler = 0;
 	}
@@ -503,8 +449,7 @@ efinit(sc)
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, STATUS_ENABLE |
 	    S_CARD_FAILURE | S_INT_RQD | S_UPD_STATS | S_TX_COMPLETE |
-	    (sc->sc_tx_busmaster ? S_DOWN_COMPLETE : S_TX_AVAIL) |
-	    (sc->sc_rx_busmaster ? S_UP_COMPLETE : S_RX_COMPLETE) |
+	    S_TX_AVAIL | S_RX_COMPLETE |
 	    (sc->sc_busmaster ? S_DMA_DONE : 0));
 	bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR |
 	    S_INTR_LATCH | S_TX_AVAIL | S_RX_EARLY | S_INT_RQD);
@@ -553,16 +498,6 @@ efstop(sc)
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_INTR_MASK);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RX_FILTER);
-}
-
-void
-efshutdown(vsc)
-	void *vsc;
-{
-	struct ef_softc *sc = vsc;
-
-	efstop(sc);
-	efcompletecmd(sc, EP_COMMAND, GLOBAL_RESET);
 }
 
 void
