@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.4 1998/12/21 01:02:27 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.26 1998/12/19 09:18:17 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.5 1999/02/26 03:52:22 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.27 1999/02/25 11:39:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -40,6 +40,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "sysdep.h"
+
 #include "conf.h"
 #include "doi.h"
 #include "exchange.h"
