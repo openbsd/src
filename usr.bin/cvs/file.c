@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.22 2004/08/06 14:12:56 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.23 2004/08/06 14:55:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -99,6 +99,7 @@ static int        cvs_file_getdir  (CVSFILE *, int);
 static void       cvs_file_freedir (struct cvs_dir *);
 static int        cvs_file_sort    (struct cvs_flist *, u_int);
 static int        cvs_file_cmp     (const void *, const void *);
+static int        cvs_file_cmpname (const char *, const char *);
 static CVSFILE*   cvs_file_alloc   (const char *, u_int);
 static CVSFILE*   cvs_file_lget    (const char *, int, CVSFILE *);
 
@@ -202,14 +203,19 @@ cvs_file_ignore(const char *pat)
 int
 cvs_file_chkign(const char *file)
 {
+	int flags;
 	struct cvs_ignpat *ip;
+
+	flags = FNM_PERIOD;
+	if (cvs_nocase)
+		flags |= FNM_CASEFOLD;
 
 	TAILQ_FOREACH(ip, &cvs_ign_pats, ip_list) {
 		if (ip->ip_flags & CVS_IGN_STATIC) {
-			if (strcmp(file, ip->ip_pat) == 0)
+			if (cvs_file_cmpname(file, ip->ip_pat) == 0)
 				return (1);
 		}
-		else if (fnmatch(ip->ip_pat, file, FNM_PERIOD) == 0)
+		else if (fnmatch(ip->ip_pat, file, flags) == 0)
 			return (1);
 	}
 
@@ -334,7 +340,7 @@ cvs_file_find(CVSFILE *hier, const char *path)
 		}
 
 		TAILQ_FOREACH(sf, &(cf->cf_ddat->cd_files), cf_list)
-			if (strcmp(pp, sf->cf_name) == 0)
+			if (cvs_file_cmpname(pp, sf->cf_name) == 0)
 				break;
 		if (sf == NULL)
 			return (NULL);
@@ -358,12 +364,21 @@ cvs_file_find(CVSFILE *hier, const char *path)
 int
 cvs_file_attach(CVSFILE *parent, CVSFILE *file)
 {
+	struct cvs_dir *dp;
+	struct cvs_ent *ent;
 
 	if (parent->cf_type != DT_DIR)
 		return (-1);
 
-	TAILQ_INSERT_HEAD(&(parent->cf_ddat->cd_files), file, cf_list);
-	parent->cf_ddat->cd_nfiles++;
+	dp = parent->cf_ddat;
+
+	/* if the parent doesn't have an entry for that file, create it */
+	if ((dp->cd_ent != NULL) &&
+	    ((ent = cvs_ent_get(dp->cd_ent, file->cf_name)) == NULL)) {
+	}
+
+	TAILQ_INSERT_TAIL(&(dp->cd_files), file, cf_list);
+	dp->cd_nfiles++;
 	file->cf_parent = parent;
 
 	return (0);
@@ -614,7 +629,7 @@ cvs_file_cmp(const void *f1, const void *f2)
 	CVSFILE *cf1, *cf2;
 	cf1 = *(CVSFILE **)f1;
 	cf2 = *(CVSFILE **)f2;
-	return strcmp(cf1->cf_name, cf2->cf_name);
+	return cvs_file_cmpname(cf1->cf_name, cf2->cf_name);
 }
 
 
@@ -752,4 +767,12 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 	}
 
 	return (cfp);
+}
+
+
+static int
+cvs_file_cmpname(const char *name1, const char *name2)
+{
+	return (cvs_nocase == 0) ? (strcmp(name1, name2)) :
+	    (strcasecmp(name1, name2));
 }
