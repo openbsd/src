@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.8 2000/10/16 17:08:08 aaron Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.9 2001/02/03 05:56:14 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -44,6 +44,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -590,7 +591,7 @@ int ste_intr(xsc)
 			ste_txeoc(sc);
 
 		if (status & STE_ISR_STATS_OFLOW) {
-			untimeout(ste_stats_update, sc);
+			timeout_del(&sc->sc_stats_tmo);
 			ste_stats_update(sc);
 		}
 
@@ -824,7 +825,7 @@ void ste_stats_update(xsc)
 			ste_start(ifp);
 	}
 
-	timeout(ste_stats_update, sc, hz);
+	timeout_add(&sc->sc_stats_tmo, hz);
 	splx(s);
 
 	return;
@@ -1226,7 +1227,8 @@ void ste_init(xsc)
 
 	splx(s);
 
-	timeout(ste_stats_update, sc, hz);
+	timeout_set(&sc->sc_stats_tmo, ste_stats_update, sc);
+	timeout_add(&sc->sc_stats_tmo, hz);
 
 	return;
 }
@@ -1239,7 +1241,7 @@ void ste_stop(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	untimeout(ste_stats_update, sc);
+	timeout_del(&sc->sc_stats_tmo);
 
 	CSR_WRITE_2(sc, STE_IMR, 0);
 	STE_SETBIT2(sc, STE_MACCTL1, STE_MACCTL1_TX_DISABLE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.8 2000/10/16 17:08:08 aaron Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.9 2001/02/03 05:59:17 mickey Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,6 +91,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1026,7 +1027,7 @@ int sf_intr(arg)
 
 		if (status & SF_ISR_ABNORMALINTR) {
 			if (status & SF_ISR_STATSOFLOW) {
-				untimeout(sf_stats_update, sc);
+				timeout_del(&sc->sc_stats_tmo);
 				sf_stats_update(sc);
 			} else
 				sf_init(sc);
@@ -1147,9 +1148,10 @@ void sf_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	timeout(sf_stats_update, sc, hz);
-
 	splx(s);
+
+	timeout_set(&sc->sc_stats_tmo, sf_stats_update, sc);
+	timeout_add(&sc->sc_stats_tmo, hz);
 
 	return;
 }
@@ -1283,7 +1285,7 @@ void sf_stop(sc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	untimeout(sf_stats_update, sc);
+	timeout_del(&sc->sc_stats_tmo);
 
 	csr_write_4(sc, SF_GEN_ETH_CTL, 0);
 	csr_write_4(sc, SF_CQ_CONSIDX, 0);
@@ -1362,9 +1364,9 @@ void sf_stats_update(xsc)
 			sf_start(ifp);
 	}
 
-	timeout(sf_stats_update, sc, hz);
-
 	splx(s);
+
+	timeout_add(&sc->sc_stats_tmo, hz);
 
 	return;
 }

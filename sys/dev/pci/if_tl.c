@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.15 2001/01/25 03:50:51 todd Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.16 2001/02/03 05:52:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -190,6 +190,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 
@@ -1849,7 +1850,7 @@ void tl_stats_update(xsc)
 			    tl_rx_overrun(tl_stats);
 	ifp->if_oerrors += tl_tx_underrun(tl_stats);
 
-	timeout(tl_stats_update, sc, hz);
+	timeout_add(&sc->tl_stats_tmo, hz);
 
 	return;
 }
@@ -2144,8 +2145,10 @@ void tl_init(xsc)
 	(void)splx(s);
 
 	/* Start the stats update counter */
-	timeout(tl_stats_update, sc, hz);
-	timeout(tl_wait_up, sc, 2 * hz);
+	timeout_set(&sc->tl_stats_tmo, tl_stats_update, sc);
+	timeout_add(&sc->tl_stats_tmo, hz);
+	timeout_set(&sc->tl_wait_tmo, tl_wait_up, sc);
+	timeout_add(&sc->tl_wait_tmo, 2 * hz);
 
 	return;
 }
@@ -2336,8 +2339,8 @@ void tl_stop(sc)
 	ifp = &sc->arpcom.ac_if;
 
 	/* Stop the stats updater. */
-	untimeout(tl_stats_update, sc);
-	untimeout(tl_wait_up, sc);
+	timeout_del(&sc->tl_stats_tmo);
+	timeout_del(&sc->tl_wait_tmo);
 
 	/* Stop the transmitter */
 	CMD_CLR(sc, TL_CMD_RT);

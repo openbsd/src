@@ -1031,6 +1031,7 @@ struct sf_softc {
 	void			*sc_ih;		/* interrupt handler cookie */
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
+	struct timeout		sc_stats_tmo;
 	mii_data_t		sc_mii;		/* mii bus */
 	bus_space_handle_t	sf_bhandle;	/* bus space handle */
 	bus_space_tag_t		sf_btag;	/* bus space tag */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tlreg.h,v 1.5 2000/11/14 03:56:32 jason Exp $	*/
+/*	$OpenBSD: if_tlreg.h,v 1.6 2001/02/03 05:52:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -115,6 +115,7 @@ struct tl_softc {
 	void *			sc_ih;		/* interrupt handler cookie */
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
+	struct timeout		tl_stats_tmo, tl_wait_tmo;
 	bus_space_handle_t	tl_bhandle;
 	bus_space_tag_t		tl_btag;
 	struct tl_type		*tl_dinfo;	/* ThunderLAN adapter info */
