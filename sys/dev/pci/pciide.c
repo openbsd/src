@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.134 2003/07/23 22:07:15 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.135 2003/07/23 22:10:36 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4591,7 +4591,10 @@ pdc202xx_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_NO_ATAPI_DMA;
+	    WDC_CAPABILITY_MODE;
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_PDC20246 ||
+	    PDC_IS_262(sc))
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_ATAPI_DMA;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
