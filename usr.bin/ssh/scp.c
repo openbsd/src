@@ -11,6 +11,8 @@
 */
 
 /*
+ * Parts from:
+ *
  * Copyright (c) 1983, 1990, 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -45,7 +47,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.34 2000/08/19 02:26:08 deraadt Exp $");
+RCSID("$OpenBSD: scp.c,v 1.35 2000/08/19 02:50:07 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -61,6 +63,7 @@ void progressmeter(int);
 
 /* Returns width of the terminal (for progress meter calculations). */
 int getttywidth(void);
+int do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout, int argc);
 
 /* Time a transfer started. */
 static struct timeval start;
@@ -113,13 +116,13 @@ char *ssh_program = SSH_PROGRAM;
  */
 
 int
-do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
+do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout, int argc)
 {
 	int pin[2], pout[2], reserved[2];
 
 	if (verbose_mode)
 		fprintf(stderr, "Executing: host %s, user %s, command %s\n",
-			host, remuser ? remuser : "(unspecified)", cmd);
+		    host, remuser ? remuser : "(unspecified)", cmd);
 
 	/*
 	 * Reserve two descriptors so that the real pipes won't get
@@ -139,7 +142,7 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 
 	/* For a child to execute the command on the remote host using ssh. */
 	if (fork() == 0) {
-		char *args[100];
+		char *args[100];	/* XXX careful */
 		unsigned int i;
 
 		/* Child. */
@@ -209,8 +212,6 @@ fatal(const char *fmt,...)
 	exit(255);
 }
 
-/* This stuff used to be in BSD rcp extern.h. */
-
 typedef struct {
 	int cnt;
 	char *buf;
@@ -225,8 +226,6 @@ void nospace(void);
 int okname(char *);
 void run_err(const char *,...);
 void verifydir(char *);
-
-/* Stuff from BSD rcp.c continues. */
 
 struct passwd *pwd;
 uid_t userid;
@@ -342,8 +341,8 @@ main(argc, argv)
 	remin = remout = -1;
 	/* Command to be executed on remote system using "ssh". */
 	(void) sprintf(cmd, "scp%s%s%s%s", verbose_mode ? " -v" : "",
-		       iamrecursive ? " -r" : "", pflag ? " -p" : "",
-		       targetshouldbedirectory ? " -d" : "");
+	    iamrecursive ? " -r" : "", pflag ? " -p" : "",
+	    targetshouldbedirectory ? " -d" : "");
 
 	(void) signal(SIGPIPE, lostconn);
 
@@ -401,8 +400,8 @@ toremote(targ, argc, argv)
 				src = ".";
 			host = strchr(argv[i], '@');
 			len = strlen(ssh_program) + strlen(argv[i]) +
-				strlen(src) + (tuser ? strlen(tuser) : 0) +
-				strlen(thost) + strlen(targ) + CMDNEEDS + 32;
+			    strlen(src) + (tuser ? strlen(tuser) : 0) +
+			    strlen(thost) + strlen(targ) + CMDNEEDS + 32;
 			bp = xmalloc(len);
 			if (host) {
 				*host++ = 0;
@@ -437,8 +436,8 @@ toremote(targ, argc, argv)
 				bp = xmalloc(len);
 				(void) sprintf(bp, "%s -t %s", cmd, targ);
 				host = cleanhostname(thost);
-				if (do_cmd(host, tuser,
-					   bp, &remin, &remout) < 0)
+				if (do_cmd(host, tuser, bp, &remin,
+				    &remout, argc) < 0)
 					exit(1);
 				if (response() < 0)
 					exit(1);
@@ -460,11 +459,11 @@ tolocal(argc, argv)
 	for (i = 0; i < argc - 1; i++) {
 		if (!(src = colon(argv[i]))) {	/* Local to local. */
 			len = strlen(_PATH_CP) + strlen(argv[i]) +
-				     strlen(argv[argc - 1]) + 20;
+			    strlen(argv[argc - 1]) + 20;
 			bp = xmalloc(len);
 			(void) sprintf(bp, "exec %s%s%s %s %s", _PATH_CP,
-				       iamrecursive ? " -r" : "", pflag ? " -p" : "",
-				       argv[i], argv[argc - 1]);
+			    iamrecursive ? " -r" : "", pflag ? " -p" : "",
+			    argv[i], argv[argc - 1]);
 			if (verbose_mode)
 				fprintf(stderr, "Executing: %s\n", bp);
 			if (system(bp))
@@ -490,7 +489,7 @@ tolocal(argc, argv)
 		len = strlen(src) + CMDNEEDS + 20;
 		bp = xmalloc(len);
 		(void) sprintf(bp, "%s -f %s", cmd, src);
-		if (do_cmd(host, suser, bp, &remin, &remout) < 0) {
+		if (do_cmd(host, suser, bp, &remin, &remout, argc) < 0) {
 			(void) xfree(bp);
 			++errs;
 			continue;
@@ -547,8 +546,8 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			 * versions expecting microseconds.
 			 */
 			(void) sprintf(buf, "T%lu 0 %lu 0\n",
-				       (unsigned long) stb.st_mtime,
-				       (unsigned long) stb.st_atime);
+			    (unsigned long) stb.st_mtime,
+			    (unsigned long) stb.st_atime);
 			(void) atomicio(write, remout, buf, strlen(buf));
 			if (response() < 0)
 				goto next;
@@ -625,8 +624,8 @@ rsource(name, statp)
 		last++;
 	if (pflag) {
 		(void) sprintf(path, "T%lu 0 %lu 0\n",
-			       (unsigned long) statp->st_mtime,
-			       (unsigned long) statp->st_atime);
+		    (unsigned long) statp->st_mtime,
+		    (unsigned long) statp->st_atime);
 		(void) atomicio(write, remout, path, strlen(path));
 		if (response() < 0) {
 			closedir(dirp);
@@ -634,8 +633,7 @@ rsource(name, statp)
 		}
 	}
 	(void) sprintf(path, "D%04o %d %.1024s\n",
-		       (unsigned int) (statp->st_mode & FILEMODEMASK),
-		       0, last);
+	    (unsigned int) (statp->st_mode & FILEMODEMASK), 0, last);
 	if (verbose_mode)
 		fprintf(stderr, "Entering directory: %s", path);
 	(void) atomicio(write, remout, path, strlen(path));
@@ -782,7 +780,7 @@ sink(argc, argv)
 			if (need > cursize)
 				namebuf = xmalloc(need);
 			(void) sprintf(namebuf, "%s%s%s", targ,
-				       *targ ? "/" : "", cp);
+			    *targ ? "/" : "", cp);
 			np = namebuf;
 		} else
 			np = targ;
@@ -982,43 +980,6 @@ run_err(const char *fmt,...)
 	va_end(ap);
 }
 
-/* Stuff below is from BSD rcp util.c. */
-
-/*-
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	$OpenBSD: scp.c,v 1.34 2000/08/19 02:26:08 deraadt Exp $
- */
-
 char *
 colon(cp)
 	char *cp;
@@ -1095,7 +1056,7 @@ allocbuf(bp, fd, blksize)
 		size = blksize;
 	else
 		size = blksize + (stb.st_blksize - blksize % stb.st_blksize) %
-			stb.st_blksize;
+		    stb.st_blksize;
 	if (bp->cnt >= size)
 		return (bp);
 	if (bp->buf == NULL)
@@ -1184,10 +1145,10 @@ progressmeter(int flag)
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			 "|%.*s%*s|", i,
-			 "*****************************************************************************"
-			 "*****************************************************************************",
-			 barlength - i, "");
+		    "|%.*s%*s|", i,
+		    "*****************************************************************************"
+		    "*****************************************************************************",
+		    barlength - i, "");
 	}
 	i = 0;
 	abbrevsize = cursize;
@@ -1228,14 +1189,14 @@ progressmeter(int flag)
 		i = remaining / 3600;
 		if (i)
 			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-				 "%2d:", i);
+			    "%2d:", i);
 		else
 			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-				 "   ");
+			    "   ");
 		i = remaining % 3600;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			 "%02d:%02d%s", i / 60, i % 60,
-			 (flag != 1) ? " ETA" : "    ");
+		    "%02d:%02d%s", i / 60, i % 60,
+		    (flag != 1) ? " ETA" : "    ");
 	}
 	atomicio(write, fileno(stdout), buf, strlen(buf));
 
