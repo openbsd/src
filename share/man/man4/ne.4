@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ne.4,v 1.15 2003/06/24 23:08:30 miod Exp $
+.\"	$OpenBSD: ne.4,v 1.16 2003/06/29 16:38:28 miod Exp $
 .\"	$NetBSD: ne.4,v 1.4 1998/02/22 05:21:20 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -49,6 +49,11 @@
 .Cd "ne* at isapnp?"
 .Cd "ne* at pci? dev ? function ?"
 .Cd "ne* at pcmcia? function ?"
+.Pp
+.Cd "bmtphy* at mii? phy ?"
+.Cd "lxtphy* at mii? phy ?"
+.Cd "nsphyter* at mii? phy ?"
+.Cd "ukphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -130,12 +135,16 @@ The driver found the card, but was unable to make the card respond
 to complete the configuration sequence.
 .El
 .Sh SEE ALSO
+.Xr bmtphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
+.Xr lxtphy 4 ,
 .Xr netintro 4 ,
+.Xr nsphyter 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
+.Xr ukphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
