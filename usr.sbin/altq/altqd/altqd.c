@@ -1,4 +1,4 @@
-/*	$OpenBSD: altqd.c,v 1.4 2001/08/20 08:36:27 kjc Exp $	*/
+/*	$OpenBSD: altqd.c,v 1.5 2001/11/19 04:20:42 deraadt Exp $	*/
 /*	$KAME: altqd.c,v 1.5 2001/08/16 10:39:16 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -108,7 +108,7 @@ sig_pipe(int sig)
 	 */
 }
 
-int gotsig_hup, gotsig_int, gotsig_term;
+volatile sig_atomic_t gotsig_hup, gotsig_int, gotsig_term;
 
 void
 sig_hup(int sig)
