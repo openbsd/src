@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbd.c,v 1.5 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: gsckbd.c,v 1.6 2005/02/22 16:58:12 mickey Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -278,6 +278,7 @@ gsckbdattach(parent, self, aux)
 	struct pckbc_attach_args *pa = aux;
 	int isconsole;
 	struct wskbddev_attach_args a;
+	u_char cmd[1];
 
 	printf("\n");
 
@@ -285,10 +286,15 @@ gsckbdattach(parent, self, aux)
 
 	if (isconsole) {
 		sc->id = &gsckbd_consdata;
+		/*
+		 * Some keyboards are not enabled after a reset,
+		 * so make sure it is enabled now.
+		 */
+		cmd[0] = KBC_ENABLE;
+		(void) pckbc_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		    cmd, 1, 0, 0, 0);
 		sc->sc_enabled = 1;
 	} else {
-		u_char cmd[1];
-
 		sc->id = malloc(sizeof(struct gsckbd_internal),
 				M_DEVBUF, M_WAITOK);
 		(void) gsckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
