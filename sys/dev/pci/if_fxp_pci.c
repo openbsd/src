@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.6 2001/06/13 23:19:16 jason Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.7 2001/08/03 23:28:49 chris Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -161,9 +161,12 @@ fxp_pci_attach(parent, self, aux)
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_82562:
 		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+		/* FALLTHROUGH */
+	case PCI_PRODUCT_INTEL_82559:
+	case PCI_PRODUCT_INTEL_82559ER:
 		sc->not_82557 = 1;
 		break;
-	default:
+	case PCI_PRODUCT_INTEL_82557:
 		/*
 		 * revisions
 		 * 2 = 82557
@@ -171,6 +174,9 @@ fxp_pci_attach(parent, self, aux)
 		 * 8 = 82559
 		 */
 		sc->not_82557 = (rev >= 4) ? 1 : 0;
+		break;
+	default:
+		sc->not_82557 = 0;
 		break;
 	}
 
