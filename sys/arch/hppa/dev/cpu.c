@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.17 2002/05/08 03:16:08 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 2002/05/23 16:03:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -139,21 +139,18 @@ cpuattach(parent, self, aux)
 	printf("MHz, ");
 
 	if (fpu_enable) {
-		const char *name;
-		u_int ver;
+		u_int32_t ver[2];
 
 		mtctl(fpu_enable, CR_CCR);
 		__asm volatile(
+		    "fstds   %%fr0,0(%0)\n\t"
 		    "copr,0,0\n\t"
-		    "fstws   %%fr0,0(%0)"
+		    "fstds   %%fr0,0(%0)"
 		    :: "r" (&ver) : "memory");
 		mtctl(0, CR_CCR);
-		ver = HPPA_FPUVER(ver);
-		name = hppa_mod_info(HPPA_TYPE_FPU, ver >> 5);
-		if (name)
-			printf("FPU %s rev %d", name, ver & 0x1f);
-		else
-			printf("FPU v%d.%02d", ver >> 5, ver & 0x1f);
+		ver[0] = HPPA_FPUVER(ver[0]);
+		printf("FPU %s rev %d",
+		    hppa_mod_info(HPPA_TYPE_FPU, ver[0] >> 5), ver[0] & 0x1f);
 	}
 
 	/* if (pdc_model.sh)
