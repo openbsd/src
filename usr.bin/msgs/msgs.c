@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.4 1996/09/16 02:26:12 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.5 1996/10/28 00:45:58 millert Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.4 1996/09/16 02:26:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.5 1996/10/28 00:45:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ int argc; char *argv[];
 	/*
 	 * determine current message bounds
 	 */
-	sprintf(fname, "%s/%s", _PATH_MSGS, BOUNDS);
+	snprintf(fname, sizeof(fname), "%s/%s", _PATH_MSGS, BOUNDS);
 	bounds = fopen(fname, "r");
 
 	if (bounds != NULL) {
@@ -282,7 +282,8 @@ int argc; char *argv[];
 				continue;
 
 			if (clean)
-				sprintf(inbuf, "%s/%s", _PATH_MSGS, cp);
+				snprintf(inbuf, sizeof(inbuf), "%s/%s",
+					 _PATH_MSGS, cp);
 
 			while (isdigit(*cp))
 				i = i * 10 + *cp++ - '0';
@@ -338,7 +339,7 @@ int argc; char *argv[];
 		}
 
 		nextmsg = lastmsg + 1;
-		sprintf(fname, "%s/%d", _PATH_MSGS, nextmsg);
+		snprintf(fname, sizeof(fname), "%s/%d", _PATH_MSGS, nextmsg);
 		newmsg = fopen(fname, "w");
 		if (newmsg == NULL) {
 			perror(fname);
@@ -395,7 +396,7 @@ int argc; char *argv[];
 	totty = (isatty(fileno(stdout)) != 0);
 	use_pager = use_pager && totty;
 
-	sprintf(fname, "%s/%s", getenv("HOME"), MSGSRC);
+	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), MSGSRC);
 	msgsrc = fopen(fname, "r");
 	if (msgsrc) {
 		newrc = NO;
@@ -461,7 +462,7 @@ int argc; char *argv[];
 	 */
 	for (msg = firstmsg; msg <= lastmsg; msg++) {
 
-		sprintf(fname, "%s/%d", _PATH_MSGS, msg);
+		snprintf(fname, sizeof(fname), "%s/%d", _PATH_MSGS, msg);
 		newmsg = fopen(fname, "r");
 		if (newmsg == NULL)
 			continue;
@@ -617,7 +618,7 @@ int length;
 		signal(SIGPIPE, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
                 if ((env_pager = getenv("PAGER")) == NULL) {
-                        sprintf(cmdbuf, _PATH_PAGER, Lpp);
+                        snprintf(cmdbuf, sizeof(cmdbuf), _PATH_PAGER, Lpp);
                 } else {
                         strcpy(cmdbuf, env_pager);
                 }
@@ -741,7 +742,7 @@ char *prompt;
 			cmsg = atoi(&inbuf[1]);
 		else
 			cmsg = msg;
-		sprintf(fname, "%s/%d", _PATH_MSGS, cmsg);
+		snprintf(fname, sizeof(fname), "%s/%d", _PATH_MSGS, cmsg);
 
 		oldpos = ftell(newmsg);
 
@@ -766,7 +767,7 @@ char *prompt;
 		else {
 			strcpy(fname, _PATH_TMPFILE);
 			mktemp(fname);
-			sprintf(cmdbuf, _PATH_MAIL, fname);
+			snprintf(cmdbuf, sizeof(cmdbuf), _PATH_MAIL, fname);
 			mailing = YES;
 		}
 		if ((fd = open(fname, O_RDWR|O_EXCL|O_CREAT|O_APPEND)) == -1 ||
