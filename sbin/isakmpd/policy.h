@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.h,v 1.3 2000/02/20 16:30:20 niklas Exp $	*/
-/*	$EOM: policy.h,v 1.5 2000/02/19 07:46:33 niklas Exp $ */
+/*	$OpenBSD: policy.h,v 1.4 2000/04/07 22:03:35 niklas Exp $	*/
+/*	$EOM: policy.h,v 1.6 2000/04/06 19:50:35 niklas Exp $ */
 
 /*
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
@@ -40,7 +40,7 @@
 #if defined (USE_KEYNOTE)
 #define LK(sym, args) sym args
 #define LKV(sym) sym
-#elif defined (HAVE_DLOPEN)
+#elif defined (HAVE_DLOPEN) && 0
 #define LK(sym, args) lk_ ## sym args
 #define LKV(sym) *lk_ ## sym
 #else
@@ -48,7 +48,7 @@
 #define LKV(sym) !!libkeynote called but no USE_KEYNOTE nor HAVE_DLOPEN!!
 #endif
 
-#if defined(HAVE_DLOPEN) && !defined(USE_KEYNOTE)
+#if defined(HAVE_DLOPEN) && !defined(USE_KEYNOTE) && 0
 struct keynote_deckey;
 
 extern void *libkeynote;
