@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.778 2004/10/10 05:04:29 brad Exp 
+ *	OpenBSD: pcidevs,v 1.779 2004/10/15 08:43:28 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4061,6 +4061,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
 	    "AEON",
+	},
+	{
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_GV_BCTV3,
+	    "GV-BCTV3",
 	},
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
@@ -8277,6 +8281,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NKK,
 	    "NKK",
+	},
+	{
+	    PCI_VENDOR_IODATA,
+	    "IO Data Device Inc",
 	},
 	{
 	    PCI_VENDOR_INITIO,

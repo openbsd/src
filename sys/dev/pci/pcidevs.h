@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.778 2004/10/10 05:04:29 brad Exp 
+ *	OpenBSD: pcidevs,v 1.779 2004/10/15 08:43:28 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -139,6 +139,7 @@
 #define	PCI_VENDOR_AMCIRCUITS	0x10e8		/* Applied Micro Circuits */
 #define	PCI_VENDOR_REALTEK	0x10ec		/* Realtek */
 #define	PCI_VENDOR_NKK	0x10f5		/* NKK */
+#define	PCI_VENDOR_IODATA	0x10fc		/* IO Data Device Inc */
 #define	PCI_VENDOR_INITIO	0x1101		/* Initio */
 #define	PCI_VENDOR_CREATIVELABS	0x1102		/* Creative Labs */
 #define	PCI_VENDOR_TRIONES	0x1103		/* HighPoint */
@@ -1490,6 +1491,9 @@
 
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
+
+/* IO Data Device Inc products */
+#define	PCI_PRODUCT_IODATA_GV_BCTV3	0x4020		/* GV-BCTV3 */
 
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
