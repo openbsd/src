@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.121 2003/12/20 16:13:53 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.122 2003/12/23 23:47:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -275,6 +275,14 @@ const struct hppa_cpu_typed {
 	{ "", 0 }
 };
 
+int
+hppa_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	int mhz = PAGE0->mem_10msec / 10000;
+
+	return sysctl_rdint(oldp, oldlenp, newp, mhz);
+}
+
 void
 hppa_init(start)
 	paddr_t start;
@@ -420,6 +428,7 @@ hppa_init(start)
 	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
 	    PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
 
+	cpu_cpuspeed = &hppa_cpuspeed;
 #ifdef DDB
 	ddb_init();
 #endif
