@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: main.c,v 1.11 1999/04/26 08:55:01 brian Exp $
+ * $Id: main.c,v 1.12 1999/05/08 11:06:37 brian Exp $
  *
  *	TODO:
  */
@@ -45,6 +45,7 @@
 #include "alias.h"
 #endif
 #endif
+#include "layer.h"
 #include "probe.h"
 #include "mbuf.h"
 #include "log.h"
@@ -571,7 +572,6 @@ DoLoop(struct bundle *bundle)
         t.tv_usec = 100000;
         select(0, NULL, NULL, NULL, &t);
       }
-
   } while (bundle_CleanDatalinks(bundle), !bundle_IsDead(bundle));
 
   log_Printf(LogDEBUG, "DoLoop done.\n");

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: prompt.c,v 1.3 1999/04/19 16:59:42 brian Exp $
+ *	$Id: prompt.c,v 1.4 1999/05/08 11:06:39 brian Exp $
  */
 
 #include <sys/param.h>
@@ -41,6 +41,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "layer.h"
 #include "defs.h"
 #include "timer.h"
 #include "command.h"

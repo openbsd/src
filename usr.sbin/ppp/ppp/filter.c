@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: filter.c,v 1.3 1999/02/06 03:22:36 brian Exp $
+ * $Id: filter.c,v 1.4 1999/05/08 11:06:35 brian Exp $
  *
  *	TODO: Shoud send ICMP error message when we discard packets.
  */
@@ -35,6 +35,7 @@
 #include <strings.h>
 #include <termios.h>
 
+#include "layer.h"
 #include "defs.h"
 #include "command.h"
 #include "mbuf.h"

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1997 Brian Somers <brian@Awfulhak.org>
+ * Copyright (c) 1999 Brian Somers <brian@Awfulhak.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,35 +23,46 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: throughput.h,v 1.3 1999/05/08 11:06:40 brian Exp $
+ *	$Id: sync.c,v 1.1 1999/05/08 11:06:39 brian Exp $
  */
 
-#define SAMPLE_PERIOD 5
+#include <sys/types.h>
 
-#define THROUGHPUT_OVERALL 0x0001
-#define THROUGHPUT_CURRENT 0x0002
-#define THROUGHPUT_PEAK    0x0004
-#define THROUGHPUT_ALL     THROUGHPUT_OVERALL | THROUGHPUT_CURRENT \
-                           | THROUGHPUT_PEAK	
+#include <stdio.h>
+#include <termios.h>
 
-struct pppThroughput {
-  time_t uptime;
-  unsigned long long OctetsIn;
-  unsigned long long OctetsOut;
-  unsigned long long SampleOctets[SAMPLE_PERIOD];
-  unsigned long long OctetsPerSecond;
-  unsigned long long BestOctetsPerSecond;
-  time_t BestOctetsPerSecondTime;
-  int nSample;
-  unsigned rolling : 1;
-  struct pppTimer Timer;
-};
+#include "layer.h"
+#include "defs.h"
+#include "mbuf.h"
+#include "log.h"
+#include "sync.h"
+#include "timer.h"
+#include "lqr.h"
+#include "hdlc.h"
+#include "throughput.h"
+#include "fsm.h"
+#include "lcp.h"
+#include "ccp.h"
+#include "link.h"
+#include "async.h"
+#include "descriptor.h"
+#include "physical.h"
 
-extern void throughput_init(struct pppThroughput *);
-extern void throughput_disp(struct pppThroughput *, struct prompt *);
-extern void throughput_log(struct pppThroughput *, int, const char *);
-extern void throughput_start(struct pppThroughput *, const char *, int);
-extern void throughput_stop(struct pppThroughput *);
-extern void throughput_addin(struct pppThroughput *, long long);
-extern void throughput_addout(struct pppThroughput *, long long);
-extern void throughput_clear(struct pppThroughput *, int, struct prompt *);
+static struct mbuf *
+sync_LayerPull(struct bundle *b, struct link *l, struct mbuf *bp,
+               u_short *proto)
+{
+  struct physical *p = link2physical(l);
+
+  if (!p)
+    log_Printf(LogERROR, "Can't Pull a sync packet from a logical link\n");
+  else {
+    /* Normally done by the HDLC layer */
+    p->hdlc.lqm.SaveInOctets += mbuf_Length(bp) + 1;
+    p->hdlc.lqm.SaveInPackets++;
+  }
+
+  return bp;
+}
+
+struct layer synclayer = { LAYER_SYNC, "sync", NULL, sync_LayerPull };

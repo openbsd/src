@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: cbcp.h,v 1.2 1999/02/06 03:22:32 brian Exp $
+ *	$Id: cbcp.h,v 1.3 1999/05/08 11:06:33 brian Exp $
  */
 
 struct mbuf;
@@ -60,6 +60,6 @@ struct cbcp {
 
 extern void cbcp_Init(struct cbcp *, struct physical *);
 extern void cbcp_Up(struct cbcp *);
-extern void cbcp_Input(struct physical *, struct mbuf *);
+extern struct mbuf *cbcp_Input(struct bundle *, struct link *, struct mbuf *);
 extern void cbcp_Down(struct cbcp *);
 extern void cbcp_ReceiveTerminateReq(struct physical *);

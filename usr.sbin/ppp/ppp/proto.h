@@ -15,9 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcpproto.h,v 1.2 1999/02/06 03:22:41 brian Exp $
- *
- *	TODO:
+ *	$Id: proto.h,v 1.1 1999/05/08 11:06:39 brian Exp $
  */
 
 /*
@@ -41,3 +39,10 @@
 #define	PROTO_CBCP	0xc029
 #define	PROTO_LQR	0xc025
 #define	PROTO_CHAP	0xc223
+
+struct lcp;
+
+extern int proto_WrapperOctets(struct lcp *, u_short);
+struct mbuf *proto_Prepend(struct mbuf *, u_short, unsigned, int);
+
+extern struct layer protolayer;
