@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.11 1999/04/22 20:02:43 art Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.12 2000/06/26 22:51:01 art Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -201,6 +201,7 @@ typedef char ttychar_t;
 #define STRIP_MTU_ONWIRE (SLMTU + 20 + STRIP_HDRLEN) /* (2*SLMTU+2 in sl.c */
 
 
+
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
 
 /* This is a NetBSD-1.0 or later kernel. */
@@ -274,7 +275,7 @@ void	strip_sendbody __P((struct st_softc *sc, struct mbuf *m));
 int	strip_newpacket __P((struct st_softc *sc, u_char *ptr, u_char *end));
 struct mbuf * strip_send __P((struct st_softc *sc, struct mbuf *m0));
 
-static void strip_timeout __P((void *x));
+void strip_timeout __P((void *x));
 
 
 
@@ -348,6 +349,7 @@ stripattach(n)
 	register int i = 0;
 
 	for (sc = st_softc; i < NSTRIP; sc++) {
+		timeout_set(&sc->sc_timo, strip_timeout, sc);
 		sc->sc_unit = i;		/* XXX */
 		sprintf(sc->sc_if.if_xname, "strip%d", i++);
 		sc->sc_if.if_softc = sc;
@@ -523,7 +525,7 @@ stripclose(tp)
 		sc->sc_txbuf = 0;
 
 		if (sc->sc_flags & SC_TIMEOUT) {
-			untimeout(strip_timeout, (void *) sc);
+			timeout_del(&sc->sc_timo);
 			sc->sc_flags &= ~SC_TIMEOUT;
 		}
 	}
@@ -1015,7 +1017,7 @@ stripstart(tp)
 #if 0
 	/* schedule timeout to start output */
 	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
-		timeout(strip_timeout, (void *) sc, HZ);
+		timeout_add(&sc->sc_timo, hz);
 		sc->sc_flags |= SC_TIMEOUT;
 	}
 #endif
@@ -1027,7 +1029,7 @@ stripstart(tp)
 	 * after it has drained the t_outq.
 	 */
 	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
-		timeout(strip_timeout, (void *) sc, HZ);
+		timeout_add(&sc->sc_timo, hz);
 		sc->sc_flags |= SC_TIMEOUT;
 	}
 #endif
