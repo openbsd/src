@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_main.c	10.32 (Berkeley) 7/1/96";
+static const char sccsid[] = "@(#)cl_main.c	10.33 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -37,6 +37,7 @@ static const char sccsid[] = "@(#)cl_main.c	10.32 (Berkeley) 7/1/96";
 GS *__global_list;				/* GLOBAL: List of screens. */
 sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
+static void	   cl_func_std __P((GS *));
 static CL_PRIVATE *cl_init __P((GS *));
 static GS	  *gs_init __P((char *));
 static void	   nomem __P((char *));
@@ -227,29 +228,6 @@ cl_init(gp)
 		nomem(gp->progname);
 	gp->cl_private = clp;
 
-	/* Initialize the list of curses functions. */
-	gp->scr_addstr = cl_addstr;
-	gp->scr_attr = cl_attr;
-	gp->scr_baud = cl_baud;
-	gp->scr_bell = cl_bell;
-	gp->scr_busy = NULL;
-	gp->scr_clrtoeol = cl_clrtoeol;
-	gp->scr_cursor = cl_cursor;
-	gp->scr_deleteln = cl_deleteln;
-	gp->scr_event = cl_event;
-	gp->scr_ex_adjust = cl_ex_adjust;
-	gp->scr_fmap = cl_fmap;
-	gp->scr_insertln = cl_insertln;
-	gp->scr_keyval = cl_keyval;
-	gp->scr_move = cl_move;
-	gp->scr_msg = NULL;
-	gp->scr_optchange = cl_optchange;
-	gp->scr_refresh = cl_refresh;
-	gp->scr_rename = cl_rename;
-	gp->scr_screen = cl_screen;
-	gp->scr_suspend = cl_suspend;
-	gp->scr_usage = cl_usage;
-
 	/*
 	 * Set the G_STDIN_TTY flag.  It's purpose is to avoid setting and
 	 * resetting the tty if the input isn't from there.
@@ -272,6 +250,10 @@ tcfail:			(void)fprintf(stderr, "%s: tcgetattr: %s\n",
 		}
 		(void)close(fd);
 	}
+
+	/* Initialize the list of curses functions. */
+	cl_func_std(gp);
+
 	return (clp);
 }
 
@@ -438,6 +420,37 @@ sig_end(gp)
 #ifdef SIGWINCH
 	(void)sigaction(SIGWINCH, NULL, &clp->oact[INDX_WINCH]);
 #endif
+}
+
+/*
+ * cl_func_std --
+ *	Initialize the standard curses functions.
+ */
+static void
+cl_func_std(gp)
+	GS *gp;
+{
+	gp->scr_addstr = cl_addstr;
+	gp->scr_attr = cl_attr;
+	gp->scr_baud = cl_baud;
+	gp->scr_bell = cl_bell;
+	gp->scr_busy = NULL;
+	gp->scr_clrtoeol = cl_clrtoeol;
+	gp->scr_cursor = cl_cursor;
+	gp->scr_deleteln = cl_deleteln;
+	gp->scr_event = cl_event;
+	gp->scr_ex_adjust = cl_ex_adjust;
+	gp->scr_fmap = cl_fmap;
+	gp->scr_insertln = cl_insertln;
+	gp->scr_keyval = cl_keyval;
+	gp->scr_move = cl_move;
+	gp->scr_msg = NULL;
+	gp->scr_optchange = cl_optchange;
+	gp->scr_refresh = cl_refresh;
+	gp->scr_rename = cl_rename;
+	gp->scr_screen = cl_screen;
+	gp->scr_suspend = cl_suspend;
+	gp->scr_usage = cl_usage;
 }
 
 /*

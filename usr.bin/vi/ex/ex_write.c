@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_write.c	10.28 (Berkeley) 6/28/96";
+static const char sccsid[] = "@(#)ex_write.c	10.30 (Berkeley) 7/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -193,7 +193,7 @@ exwr(sp, cmdp, cmd)
 	}
 
 	/* Set the FS_ALL flag if we're writing the entire file. */
-	if (cmdp->addr1.lno == 1 && !db_exist(sp, cmdp->addr2.lno + 1))
+	if (cmdp->addr1.lno <= 1 && !db_exist(sp, cmdp->addr2.lno + 1))
 		LF_SET(FS_ALL);
 
 	/* If "write >>" it's an append to a file. */
@@ -256,7 +256,7 @@ exwr(sp, cmdp, cmd)
 			F_SET(sp->frp, FR_NAMECHANGE | FR_EXNAMED);
 
 			/* Notify the screen. */
-			(void)sp->gp->scr_rename(sp);
+			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 		} else
 			set_alt_name(sp, name);
 		break;

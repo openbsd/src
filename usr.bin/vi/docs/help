@@ -204,3 +204,26 @@ unabbreviate: delete an abbreviation
 	yank: copy lines to a cut buffer
 	   z: display different screens of the file
 	   ~: replace previous RE with previous replacement string,
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+Edit options:
+noaltwerase     filec=""        nomodeline      scroll=17       notildeop
+autoindent      flash           msgcat="./"     nosearchincr    timeout  
+autoprint       hardtabs=0      noprint=""      nosecure        nottywerase
+noautowrite     noiclower       nonumber        shiftwidth=8    noverbose  
+backup=""       noignorecase    nooctal         noshowmatch     warn
+nobeautify      keytime=6       open            noshowmode      window=35
+cedit=""        noleftright     optimize        sidescroll=16   nowindowname
+columns=80      lines=36        print=""        noslowopen      wraplen=0
+comment         nolisp          prompt          nosourceany     wrapmargin=0
+noedcompatible  nolist          readonly        tabstop=8       wrapscan
+escapetime=1    lock            noredraw        taglength=0     nowriteany
+noerrorbells    magic           remap           tags="tags"
+exrc            matchtime=7     report=5        term="xterm"
+noextended      mesg            ruler           noterse
+cdpath="/usr/src/local/nvi:/tmp"
+directory="/tmp"
+paragraphs="IPLPPPQPP LIpplpipbp"
+recdir="/var/tmp/vi.recover"
+sections="NHSHH HUnhsh"
+shell="/bin/csh"
+shellmeta="~{[*?$`'"\"

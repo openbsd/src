@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_term.c	10.20 (Berkeley) 5/3/96";
+static const char sccsid[] = "@(#)cl_term.c	10.21 (Berkeley) 7/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -231,6 +231,10 @@ cl_optchange(sp, opt, str, valp)
 	char *str;
 	u_long *valp;
 {
+	CL_PRIVATE *clp;
+
+	clp = CLP(sp);
+
 	switch (opt) {
 	case O_COLUMNS:
 	case O_LINES:
@@ -243,7 +247,23 @@ cl_optchange(sp, opt, str, valp)
 		F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
 		break;
 	case O_MESG:
-		cl_omesg(sp, CLP(sp), !*valp);
+		(void)cl_omesg(sp, clp, !*valp);
+		break;
+	case O_WINDOWNAME:
+		if (*valp) {
+			F_CLR(clp, CL_RENAME_OK);
+
+			(void)cl_rename(sp, NULL, 0);
+		} else {
+			F_SET(clp, CL_RENAME_OK);
+
+			/*
+			 * If the screen is live, i.e. we're not reading the
+			 * .exrc file, update the window.
+			 */
+			if (sp->frp != NULL && sp->frp->name != NULL)
+				(void)cl_rename(sp, sp->frp->name, 1);
+		}
 		break;
 	}
 	return (0);

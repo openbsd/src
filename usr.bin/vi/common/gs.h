@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)gs.h	10.32 (Berkeley) 6/18/96
+ *	@(#)gs.h	10.33 (Berkeley) 7/12/96
  */
 
 #define	TEMPORARY_FILE_STRING	"/tmp"	/* Default temporary file name. */
@@ -182,7 +182,7 @@ struct _gs {
 					/* Refresh the screen. */
 	int	(*scr_refresh) __P((SCR *, int));
 					/* Rename the file. */
-	int	(*scr_rename) __P((SCR *));
+	int	(*scr_rename) __P((SCR *, char *, int));
 					/* Set the screen type. */
 	int	(*scr_screen) __P((SCR *, u_int32_t));
 					/* Suspend the editor. */

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1996/07/24 16:15:02 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/08/16 17:58:13 michaels Exp $
 #
 # From	@(#)Makefile.in	8.63 (Berkeley) 6/19/96
 
@@ -29,12 +29,14 @@ SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 LINKS=  ${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
 MLINKS= vi.1 ex.1 vi.1 view.1
 
-.PATH: ${.CURDIR}/../vi ${.CURDIR}/../svi ${.CURDIR}/../ex ${.CURDIR}/../sex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
+.PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man \
+#${.CURDIR}/../svi ${.CURDIR}/../sex 
+
 .include <bsd.prog.mk>
 .include "../../Makefile.inc"
 
-cat=	dutch english german ru_SU.KOI8-R swedish
-datadir=	${DESTDIR}/usr/share
-afterinstall:
-	install -d ${datadir}/vi/catalog
-	(cd ${.CURDIR}/../catalog && install -m $(NONBINMODE) -c $(cat) $(datadir)/vi/catalog )
+#cat=	dutch english german ru_SU.KOI8-R swedish
+#datadir=	${DESTDIR}/usr/share
+#afterinstall:
+#	install -d ${datadir}/vi/catalog
+#	(cd ${.CURDIR}/../catalog && install -m $(NONBINMODE) -c $(cat) $(datadir)/vi/catalog )

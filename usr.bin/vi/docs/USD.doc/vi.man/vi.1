@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)vi.1	8.44 (Berkeley) 6/28/96
+.\"     @(#)vi.1	8.45 (Berkeley) 8/10/96
 .\"
-.TH VI 1 "June 28, 1996"
+.TH VI 1 "August 10, 1996"
 .UC
 .SH NAME
 ex, vi, view \- text editors
@@ -1220,6 +1220,9 @@ Define additional paragraph boundaries for the
 and
 .B \&}
 commands.
+.TP
+.B "path []"
+Define additional directories to search for files being edited.
 .\" I cannot get a double quote to print between the square brackets
 .\" to save my life.  The ONLY way I've been able to get this to work
 .\" is with the .tr command.

@@ -32,11 +32,11 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Define vfork as fork if vfork does not work.  */
-/* #undef vfork */
+/*#define vfork fork */
 
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
-/* #undef WORDS_BIGENDIAN */
+/*#define WORDS_BIGENDIAN 1 */
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef ssize_t */
@@ -92,8 +92,8 @@
 /* Define if you want to compile in the Perl interpreter. */
 /* #undef HAVE_PERL_INTERP */
 
-/* Define if your Perl is at least 5.002_01. */
-/* #undef HAVE_PERL_5_002_01 */
+/* Define if your Perl is at least 5.003_01. */
+/* #undef HAVE_PERL_5_003_01 */
 
 /* Define if you have the Berkeley style revoke(2) system call. */
 #define HAVE_REVOKE 1
@@ -111,7 +111,7 @@
 /* #undef HAVE_TCL_INTERP */
 
 /* Define if your sprintf returns a pointer, not a length. */
-/* #undef SPRINTF_RET_CHARPNT */
+/*#define SPRINTF_RET_CHARPNT 1 */
 
 /* Define if you have the bsearch function.  */
 #define HAVE_BSEARCH 1

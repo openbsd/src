@@ -1,3 +1,35 @@
+1.72 -> 1.73 (08/12/96)
+	+ Fix CSCOPE_DIRS environmental variable support.
+	+ Ex parser fix for global commands in script files.
+	+ Add the O_PATH option, so you can specify a directory search path
+	  for files.
+	+ Make it possible to specify the database file to cscope, allowing
+	  multiple databases in a single directory.
+	+ Fix incremental search to overwrite erased characters so the user
+	  can tell where they are on the colon-command line.
+	+ Fix incremental search to restart the search if the user enters an
+	  unescaped shell meta character.
+1.71 -> 1.72 (07/12/96)
+	+ Cscope fix: test for files newer than the database was reversed.
+	+ Display "files to edit" message for rewind, next and initial screen.
+	+ Fix a bug in the R command where it could fail if the user extended
+	  the file.
+	+ Fix a bug where text abbreviations could corrupt the line.
+	+ Fix a bug where the windowname edit option couldn't be set before a
+	  file was loaded into the edit buffer.
+	+ Fix a bug where the system .exrc values weren't being overridden by
+	  the user's $HOME .exrc values.
+	+ Fix a bug in the filename completion code, where garbage characters
+	  could be added to the colon command line.
+	+ Fix bug where multiple edit sessions on a non-existent file could
+	  all write the file without warning.
+	+ Fix bug where screen update was incorrect if a character triggered
+	  both a wrapmargin and showmatch condition.
+	+ Fix bug in leftright scrolling where <CR> during text input didn't
+	  return the cursor to the left margin.
+	+ Rev the Perl interpreter code, new version from Sven Verdoolaege,
+	  based on Perl 5.003.01.
+	+ Fix bug in tags file pattern search introduced in 1.71.
 1.70 -> 1.71 (07/01/96)
 	+ Don't include <term.h> -- neither HPUX or Solaris can cope with it.
 	+ Fix bug where ^M's in the original pattern were converted into new
@@ -84,7 +116,7 @@
 	+ Fix R command -- it used a DB pinned page after discarding it.
 	+ Minor fixes in multiple edit buffer message handling code.
 	+ Fix yk command moving to shorter line core dump.
-	+ Rework message handing to try and gang more messages onto a single
+	+ Rework message handling to try and gang more messages onto a single
 	  line.
 1.65 -> 1.66 (05/18/96)
 	+ Convert vi man page to historic -man macro package, and install it.

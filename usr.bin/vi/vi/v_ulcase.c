@@ -116,7 +116,7 @@ v_mulcase(sp, vp)
 	recno_t lno;
 
 	for (lno = vp->m_start.lno;;) {
-		if (db_get(sp, lno, DBG_FATAL, (char **)&p, &len))
+		if (db_get(sp, lno, DBG_FATAL, &p, &len))
 			return (1);
 		if (len != 0 && ulcase(sp, lno, p, len,
 		    lno == vp->m_start.lno ? vp->m_start.cno : 0,

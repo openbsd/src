@@ -53,7 +53,6 @@ int ex_copy __P((SCR *, EXCMD *));
 int ex_move __P((SCR *, EXCMD *));
 int ex_open __P((SCR *, EXCMD *));
 int ex_perl __P((SCR*, EXCMD *));
-int ex_perldo __P((SCR*, EXCMD *));
 int ex_preserve __P((SCR *, EXCMD *));
 int ex_recover __P((SCR *, EXCMD *));
 int ex_list __P((SCR *, EXCMD *));

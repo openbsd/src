@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)msg.c	10.39 (Berkeley) 6/20/96";
+static const char sccsid[] = "@(#)msg.c	10.42 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -517,20 +517,34 @@ msgq_status(sp, lno, flags)
 	u_int flags;
 {
 	recno_t last;
-	const char *t;
-	char *bp, *np, *p, *s;
-	int needsep;
 	size_t blen, len;
+	int cnt, needsep;
+	const char *t;
+	char **ap, *bp, *np, *p, *s;
 
+	/* Get sufficient memory. */
 	len = strlen(sp->frp->name);
 	GET_SPACE_GOTO(sp, bp, blen, len + 128);
 	p = bp;
 
+	/* Copy in the filename. */
 	memmove(p, sp->frp->name, len);
 	p += len;
 	np = p;
 	*p++ = ':';
 	*p++ = ' ';
+
+	/* Copy in the argument count. */
+	if (F_ISSET(sp, SC_STATUS_CNT) && sp->argv != NULL) {
+		for (cnt = 0, ap = sp->argv; *ap != NULL; ++ap, ++cnt);
+		(void)sprintf(p,
+		    msg_cat(sp, "317|%d files to edit", NULL), cnt);
+		p += strlen(p);
+		*p++ = ':';
+		*p++ = ' ';
+
+		F_CLR(sp, SC_STATUS_CNT);
+	}
 
 	/*
 	 * See nvi/exf.c:file_init() for a description of how and when the

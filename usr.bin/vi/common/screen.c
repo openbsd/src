@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)screen.c	10.13 (Berkeley) 5/10/96";
+static const char sccsid[] = "@(#)screen.c	10.14 (Berkeley) 7/19/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,6 +151,10 @@ screen_end(sp)
 	F_CLR(sp, SC_SCR_EX | SC_SCR_VI);
 
 	rval = 0;
+#ifdef HAVE_PERL_INTERP
+	if (perl_screen_end(sp))		/* End perl. */
+		rval = 1;
+#endif
 	if (v_screen_end(sp))			/* End vi. */
 		rval = 1;
 	if (ex_screen_end(sp))			/* End ex. */

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_read.c	10.36 (Berkeley) 6/28/96";
+static const char sccsid[] = "@(#)ex_read.c	10.37 (Berkeley) 7/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ ex_read(sp, cmdp)
 				F_SET(sp->frp, FR_NAMECHANGE | FR_EXNAMED);
 
 				/* Notify the screen. */
-				(void)gp->scr_rename(sp);
+				(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 			} else
 				set_alt_name(sp, name);
 			break;

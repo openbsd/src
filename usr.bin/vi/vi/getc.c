@@ -49,7 +49,7 @@ cs_init(sp, csp)
 {
 	int isempty;
 
-	if (db_eget(sp, csp->cs_lno, (char **)&csp->cs_bp, &csp->cs_len, &isempty)) {
+	if (db_eget(sp, csp->cs_lno, &csp->cs_bp, &csp->cs_len, &isempty)) {
 		if (isempty)
 			msgq(sp, M_BERR, "177|Empty file");
 		return (1);
@@ -179,7 +179,7 @@ cs_prev(sp, csp)
 			break;
 		}
 		if (db_get(sp,			/* The line should exist. */
-		    --csp->cs_lno, DBG_FATAL, (char **)&csp->cs_bp, &csp->cs_len)) {
+		    --csp->cs_lno, DBG_FATAL, &csp->cs_bp, &csp->cs_len)) {
 			++csp->cs_lno;
 			return (1);
 		}

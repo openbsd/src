@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vi.c	10.52 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)vi.c	10.53 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,6 +87,9 @@ vi(spp)
 	/* Initialize the vi screen. */
 	if (v_init(sp))
 		return (1);
+
+	/* Set the focus. */
+	(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 
 	for (vip = VIP(sp), rval = 0;;) {
 		/* Resolve messages. */
@@ -260,10 +263,14 @@ gc_event:
 			if (next == NULL)
 				break;
 
-			/* Switch, and display a status line. */
+			/* Switch screens, change focus. */
 			sp = next;
 			vip = VIP(sp);
+			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
+
+			/* Don't trust the cursor. */
 			F_SET(vip, VIP_CUR_INVALID);
+
 			continue;
 		}
 
@@ -377,9 +384,10 @@ intr:			CLR_INTERRUPT(sp);
 			if (F_ISSET(sp, SC_STATUS) && vs_resolve(sp, 0))
 				goto ret;
 
-			/* Switch screens. */
+			/* Switch screens, change focus. */
 			sp = sp->nextdisp;
 			vip = VIP(sp);
+			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 
 			/* Don't trust the cursor. */
 			F_SET(vip, VIP_CUR_INVALID);
@@ -389,8 +397,11 @@ intr:			CLR_INTERRUPT(sp);
 				return (1);
 		}
 
-		/* If the last command switched files, we don't care. */
-		F_CLR(sp, SC_FSWITCH);
+		/* If the last command switched files, change focus. */
+		if (F_ISSET(sp, SC_FSWITCH)) {
+			F_CLR(sp, SC_FSWITCH);
+			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
+		}
 
 		/* If leaving vi, return to the main editor loop. */
 		if (F_ISSET(gp, G_SRESTART) || F_ISSET(sp, SC_EX)) {

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_init.c	10.24 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)ex_init.c	10.25 (Berkeley) 7/10/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -186,6 +186,12 @@ ex_exrc(sp)
 		break;
 	}
 
+	/* Run the commands. */
+	if (EXCMD_RUNNING(sp->gp))
+		(void)ex_cmd(sp);
+	if (F_ISSET(sp, SC_EXIT | SC_EXIT_FORCE))
+		return (0);
+
 	if ((p = getenv("NEXINIT")) != NULL) {
 		if (ex_run_str(sp, "NEXINIT", p, strlen(p), 1, 0))
 			return (1);
@@ -211,12 +217,13 @@ ex_exrc(sp)
 		}
 	}
 
-	/* Run the commands, they may set the exrc edit option. */
+	/* Run the commands. */
 	if (EXCMD_RUNNING(sp->gp))
 		(void)ex_cmd(sp);
 	if (F_ISSET(sp, SC_EXIT | SC_EXIT_FORCE))
 		return (0);
 
+	/* Previous commands may have set the exrc option. */
 	if (O_ISSET(sp, O_EXRC)) {
 		switch (exrc_isok(sp, &lsb, _PATH_NEXRC, 0, 0)) {
 		case NOEXIST:

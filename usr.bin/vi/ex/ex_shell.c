@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_shell.c	10.35 (Berkeley) 6/28/96";
+static const char sccsid[] = "@(#)ex_shell.c	10.37 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,8 +55,14 @@ ex_shell(sp, cmdp)
 	 */
 	(void)snprintf(buf, sizeof(buf), "%s -i", O_STR(sp, O_SHELL));
 
-	/* If we're stil in a vi screen, move out explicitly. */
+	/* Restore the window name. */
+	(void)cl_rename(sp, NULL, 0);
+
+	/* If we're still in a vi screen, move out explicitly. */
 	rval = ex_exec_proc(sp, cmdp, buf, NULL, !F_ISSET(sp, SC_SCR_EXWROTE));
+
+	/* Set the window name. */
+	(void)cl_rename(sp, sp->frp->name, 1);
 
 	/*
 	 * !!!

@@ -1,4 +1,4 @@
-#	@(#)README	8.142 (Berkeley) 6/30/96
+#	@(#)README	8.143 (Berkeley) 7/9/96
 
 This is the README for nex/nvi, a freely redistributable replacement for
 the ex/vi text editors originally distributed as part of the Fourth
@@ -7,7 +7,7 @@ Berkeley.
 
 The source code for nex/nvi can be retrieved by using anonymous ftp to
 ftp.cs.berkeley.edu.  The files ucb/4bsd/nvi.tar.Z and ucb/4bsd/nvi.tar.gz
-are the compressed and gzip'd archives, respectively, of version 1.34 of
+are the compressed and gzip'd archives, respectively, of version 1.71 of
 nex/nvi.  This version is believed to be stable and reasonably problem
 free.  The file ucb/4bsd/nvi.ALPHA.###.tar.gz is a gzip'd archive of the
 current alpha-test release of nex/nvi.  This version reflects the current

@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)set.opt.roff	8.63 (Berkeley) 6/26/96
+.\"     @(#)set.opt.roff	8.64 (Berkeley) 8/10/96
 .\"
 .SH 1 "Set Options"
 .pp
@@ -757,6 +757,23 @@ recognized:
 <newline>.A<space>
 <newline>.##
 .)l
+.KY path
+.IP "path []"
+The path option can be used to specify a <colon>-separated list of
+paths, similar to the
+.LI PATH
+environment variable in the shells.
+If this option is set,
+the name of the file to be edited is not an absolute pathname,
+the first component of the filename is not
+.QT \&.
+or
+.QT \&.. ,
+and the file to be edited doesn't exist in the current directory,
+the elements of the
+.OP path
+option are sequentially searched for a file of the specified name.
+If such a file is found, it is edited.
 .\" I cannot get a double quote to print between the square brackets
 .\" to save my life.  The ONLY way I've been able to get this to work
 .\" is with the .tr command.
@@ -943,7 +960,7 @@ In the text to be edited, the character string
 .LI <char-pair>
 is one of the character pairs in the option's value),
 defines a section boundary in the same manner that
-.OP paragraph
+.OP paragraphs
 option boundaries are defined.
 .KY secure
 .IP "secure [off]"

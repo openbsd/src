@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_txt.c	10.73 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)v_txt.c	10.79 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ static int	 txt_map_end __P((SCR *));
 static int	 txt_map_init __P((SCR *));
 static int	 txt_margin __P((SCR *, TEXT *, TEXT *, int *, u_int32_t));
 static void	 txt_nomorech __P((SCR *));
-static void	 txt_Rcleanup __P((SCR *, TEXTH *, TEXT *, const size_t));
+static void	 txt_Rresolve __P((SCR *, TEXTH *, TEXT *, const size_t));
 static int	 txt_resolve __P((SCR *, TEXTH *, u_int32_t));
 static int	 txt_showmatch __P((SCR *, TEXT *));
 static void	 txt_unmap __P((SCR *, TEXT *, u_int32_t *));
@@ -879,7 +879,7 @@ k_escape:	LINE_RESOLVE;
 		 * characters, and making them into insert characters.
 		 */
 		if (LF_ISSET(TXT_REPLACE))
-			txt_Rcleanup(sp, &sp->tiq, tp, len);
+			txt_Rresolve(sp, &sp->tiq, tp, len);
 
 		/*
 		 * If there are any overwrite characters, copy down
@@ -1005,6 +1005,19 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 		--tp->cno;
 
 		/*
+		 * Historically, vi didn't replace the erased characters with
+		 * <blank>s, presumably because it's easier to fix a minor
+		 * typing mistake and continue on if the previous letters are
+		 * already there.  This is a problem for incremental searching,
+		 * because the user can no longer tell where they are in the
+		 * colon command line because the cursor is at the last search
+		 * point in the screen.  So, if incrementally searching, erase
+		 * the erased characters from the screen.
+		 */
+		if (FL_ISSET(is_flags, IS_RUNNING))
+			tp->lb[tp->cno] = ' ';
+
+		/*
 		 * Increment overwrite, decrement ai if deleted.
 		 *
 		 * !!!
@@ -1080,11 +1093,16 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 		 * interface and the historic tty driver behavior,
 		 * respectively, and the default is the same as the historic
 		 * vi behavior.
+		 *
+		 * Overwrite erased characters if doing incremental search;
+		 * see comment above.
 		 */
 		if (LF_ISSET(TXT_TTYWERASE))
 			while (tp->cno > max) {
 				--tp->cno;
 				++tp->owrite;
+				if (FL_ISSET(is_flags, IS_RUNNING))
+					tp->lb[tp->cno] = ' ';
 				if (isblank(tp->lb[tp->cno - 1]))
 					break;
 			}
@@ -1092,6 +1110,8 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 			if (LF_ISSET(TXT_ALTWERASE)) {
 				--tp->cno;
 				++tp->owrite;
+				if (FL_ISSET(is_flags, IS_RUNNING))
+					tp->lb[tp->cno] = ' ';
 				if (isblank(tp->lb[tp->cno - 1]))
 					break;
 			}
@@ -1100,6 +1120,8 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 			while (tp->cno > max) {
 				--tp->cno;
 				++tp->owrite;
+				if (FL_ISSET(is_flags, IS_RUNNING))
+					tp->lb[tp->cno] = ' ';
 				if (tmp != inword(tp->lb[tp->cno - 1])
 				    || isblank(tp->lb[tp->cno - 1]))
 					break;
@@ -1146,7 +1168,17 @@ leftmargin:		tp->lb[tp->cno - 1] = ' ';
 			max = tp->offset;
 		}
 		tp->owrite += tp->cno - max;
-		tp->cno = max;
+
+		/*
+		 * Overwrite erased characters if doing incremental search;
+		 * see comment above.
+		 */
+		if (FL_ISSET(is_flags, IS_RUNNING))
+			do {
+				tp->lb[--tp->cno] = ' ';
+			} while (tp->cno > max);
+		else
+			tp->cno = max;
 
 		/* Reset if we deleted an incremental search character. */
 		if (FL_ISSET(is_flags, IS_RUNNING))
@@ -1326,7 +1358,7 @@ ebuf_chk:	if (tp->cno >= tp->len) {
 		break;
 	}
 
-#if defined(DEBUG) && 1
+#ifdef DEBUG
 	if (tp->cno + tp->insert + tp->owrite != tp->len) {
 		msgq(sp, M_ERR,
 		    "len %u != cno: %u ai: %u insert %u overwrite %u",
@@ -1554,14 +1586,25 @@ search:	if (isinfoline)
 	if (v_event_push(sp, NULL, qp->output, qp->olen, CH_ABBREVIATED))
 		return (1);
 
-	/* Move to the start of the abbreviation, adjust the length. */
+	/*
+	 * If the size of the abbreviation is larger than or equal to the size
+	 * of the original text, move to the start of the replaced characters,
+	 * and add their length to the overwrite count.
+	 *
+	 * If the abbreviation is smaller than the original text, we have to
+	 * delete the additional overwrite characters and copy down any insert
+	 * characters.
+	 */
 	tp->cno -= len;
-	tp->len -= len;
-
-	/* Copy any insert characters back. */
-	if (tp->insert)
-		memmove(tp->lb + tp->cno + tp->owrite,
-		    tp->lb + tp->cno + tp->owrite + len, tp->insert);
+	if (qp->olen >= len)
+		tp->owrite += len;
+	else {
+		if (tp->insert)
+			memmove(tp->lb + tp->cno + qp->olen,
+			    tp->lb + tp->cno + tp->owrite + len, tp->insert);
+		tp->owrite += qp->olen;
+		tp->len -= len - qp->olen;
+	}
 
 	/*
 	 * We return the length of the abbreviated characters.  This is so
@@ -2053,7 +2096,7 @@ retry:		for (len = 0,
 	}
 
 	/* Overwrite the expanded text first. */
-	for (t = cmd.argv[0]->bp; len &&  nlen; --len, --nlen)
+	for (t = cmd.argv[0]->bp; len > 0 && nlen > 0; --len, --nlen)
 		*p++ = *t++;
 
 	/* If lost text, make the remaining old text overwrite characters. */
@@ -2063,20 +2106,19 @@ retry:		for (len = 0,
 	}
 
 	/* Overwrite any overwrite characters next. */
-	for (; nlen && tp->owrite; --nlen, --tp->owrite, ++tp->cno)
+	for (; nlen > 0 && tp->owrite > 0; --nlen, --tp->owrite, ++tp->cno)
 		*p++ = *t++;
 
 	/* Shift remaining text up, and move the cursor to the end. */
 	if (nlen) {
-		/* Make sure the buffer's big enough. */
-		off = p - tp->lb;
 		BINC_RET(sp, tp->lb, tp->lb_len, tp->len + nlen);
+		off = p - tp->lb;
 		p = tp->lb + off;
 
 		tp->cno += nlen;
 		tp->len += nlen;
 
-		if (tp->insert)
+		if (tp->insert != 0)
 			(void)memmove(p + nlen, p, tp->insert);
 		while (nlen--)
 			*p++ = *t++;
@@ -2085,14 +2127,17 @@ retry:		for (len = 0,
 	/* If a single match and it's a directory, retry it. */
 	if (argc == 1 && !stat(cmd.argv[0]->bp, &sb) && S_ISDIR(sb.st_mode)) {
 isdir:		off = p - tp->lb;
-		BINC_RET(sp, tp->lb, tp->lb_len, tp->len + 1);
 		p = tp->lb + off;
 
-		if (!tp->owrite && tp->insert)
-			(void)memmove(p + 1, p, tp->insert);
+		if (tp->owrite == 0) {
+			BINC_RET(sp, tp->lb, tp->lb_len, tp->len + 1);
+			if (tp->insert != 0)
+				(void)memmove(p + 1, p, tp->insert);
+			++tp->len;
+		} else
+			--tp->owrite;
 
 		++tp->cno;
-		++tp->len;
 		*p++ = '/';
 
 		trydir = 1;
@@ -2170,7 +2215,7 @@ txt_fc_col(sp, argc, argv)
 				break;
 		}
 		if (nf)
-			FREE_SPACE(sp, (u_char **)p, 0);
+			FREE_SPACE(sp, p, 0);
 		CHK_INTR;
 	} else {
 		/* Figure out the number of columns. */
@@ -2188,7 +2233,7 @@ txt_fc_col(sp, argc, argv)
 				p = msg_print(sp, argv[base]->bp + prefix, &nf);
 				cnt = ex_printf(sp, "%s", p);
 				if (nf)
-					FREE_SPACE(sp, (u_char **)p, 0);
+					FREE_SPACE(sp, p, 0);
 				CHK_INTR;
 				if ((base += numrows) >= argc)
 					break;
@@ -2528,12 +2573,20 @@ txt_isrch(sp, vp, tp, is_flagsp)
 	}
 
 	/*
-	 * If it's an RE quote character, and not a quoted RE quote character,
-	 * ignore it for now.
+	 * If it's an RE quote character, and not quoted, ignore it until
+	 * we get another character.
 	 */
 	if (tp->lb[tp->cno - 1] == '\\' &&
 	    (tp->cno == 2 || tp->lb[tp->cno - 2] != '\\'))
 		return (0);
+
+	/*
+	 * If it's a magic shell character, and not quoted, reset the cursor
+	 * to the starting point.
+	 */
+	if (strchr(O_STR(sp, O_SHELLMETA), tp->lb[tp->cno - 1]) != NULL &&
+	    (tp->cno == 2 || tp->lb[tp->cno - 2] != '\\'))
+		vp->m_final = vp->m_start;
 
 	/*
 	 * If we see the search pattern termination character, then quit doing
@@ -2690,8 +2743,10 @@ txt_showmatch(sp, tp)
 	 * Do a refresh first, in case we haven't done one in awhile,
 	 * so the user can see what we're complaining about.
 	 */
+	UPDATE_POSITION(sp, tp);
 	if (vs_refresh(sp, 1))
 		return (1);
+
 	/*
 	 * We don't display the match if it's not on the screen.  Find
 	 * out what the first character on the screen is.
@@ -2818,18 +2873,18 @@ txt_margin(sp, tp, wmtp, didbreak, flags)
 }
 
 /*
- * txt_Rcleanup --
+ * txt_Rresolve --
  *	Resolve the input line for the 'R' command.
  */
 static void
-txt_Rcleanup(sp, tiqh, tp, olen)
+txt_Rresolve(sp, tiqh, tp, orig_len)
 	SCR *sp;
 	TEXTH *tiqh;
 	TEXT *tp;
-	const size_t olen;
+	const size_t orig_len;
 {
 	TEXT *ttp;
-	size_t ilen, tmp;
+	size_t input_len, retain;
 	char *p;
 
 	/*
@@ -2843,8 +2898,8 @@ txt_Rcleanup(sp, tiqh, tp, olen)
 	 * Calculate how many characters the user has entered,
 	 * plus the blanks erased by <carriage-return>/<newline>s.
 	 */
-	for (ttp = tiqh->cqh_first, ilen = 0;;) {
-		ilen += ttp == tp ? tp->cno : ttp->len + ttp->R_erase;
+	for (ttp = tiqh->cqh_first, input_len = 0;;) {
+		input_len += ttp == tp ? tp->cno : ttp->len + ttp->R_erase;
 		if ((ttp = ttp->q.cqe_next) == (void *)&sp->tiq)
 			break;
 	}
@@ -2856,17 +2911,22 @@ txt_Rcleanup(sp, tiqh, tp, olen)
 	 * because they're after the cursor and we don't want to lose them.
 	 * (This is okay because the R command has no insert characters.)
 	 * We set owrite to 0 so that the insert characters don't get copied
-	 * to somewhere else, which means that the length has to be adjusted
-	 * here as well.
+	 * to somewhere else, which means that the line and the length have
+	 * to be adjusted here as well.
+	 *
+	 * We have to retrieve the original line because the original pinned
+	 * page has long since been discarded.  If it doesn't exist, that's
+	 * okay, the user just extended the file.
 	 */
-	if (ilen < olen) {
-		tmp = MIN(tp->owrite, olen - ilen);
-		if (db_get(sp, tp->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
+	if (input_len < orig_len) {
+		retain = MIN(tp->owrite, orig_len - input_len);
+		if (db_get(sp,
+		    tiqh->cqh_first->lno, DBG_FATAL | DBG_NOCACHE, &p, NULL))
 			return;
-		memmove(tp->lb + tp->cno, p + ilen, tmp);
-		tp->len -= tp->owrite - tmp;
+		memcpy(tp->lb + tp->cno, p + input_len, retain);
+		tp->len -= tp->owrite - retain;
 		tp->owrite = 0;
-		tp->insert += tmp;
+		tp->insert += retain;
 	}
 }
 

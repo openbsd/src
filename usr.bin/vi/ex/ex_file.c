@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_file.c	10.11 (Berkeley) 5/2/96";
+static const char sccsid[] = "@(#)ex_file.c	10.12 (Berkeley) 7/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,7 +70,7 @@ ex_file(sp, cmdp)
 		F_SET(frp, FR_NAMECHANGE);
 
 		/* Notify the screen. */
-		(void)sp->gp->scr_rename(sp);
+		(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 		break;
 	default:
 		abort();

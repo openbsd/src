@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_argv.c	10.19 (Berkeley) 3/30/96";
+static const char sccsid[] = "@(#)ex_argv.c	10.23 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -18,6 +18,7 @@ static const char sccsid[] = "@(#)ex_argv.c	10.19 (Berkeley) 3/30/96";
 
 #include <bitstring.h>
 #include <ctype.h>
+#include <dirent.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -29,7 +30,9 @@ static const char sccsid[] = "@(#)ex_argv.c	10.19 (Berkeley) 3/30/96";
 
 static int argv_alloc __P((SCR *, size_t));
 static int argv_fexp __P((SCR *, EXCMD *,
-	       char *, size_t, char *, size_t *, char **, size_t *, int));
+	char *, size_t, char *, size_t *, char **, size_t *, int));
+static int argv_prefix __P((SCR *,
+	char *, char *, char **, size_t *, size_t *));
 static int argv_sexp __P((SCR *, char **, size_t *, size_t *));
 
 /*
@@ -183,25 +186,58 @@ argv_exp2(sp, excp, cmd, cmdlen)
 		for (p = mp = O_STR(sp, O_SHELLMETA); *p != '\0'; ++p)
 			if (isblank(*p) || isalnum(*p))
 				break;
+		p = bp + SHELLOFFSET;
+		n = len - SHELLOFFSET;
 		if (*p != '\0') {
-			for (p = bp, n = len; n > 0; --n, ++p)
+			for (; n > 0; --n, ++p)
 				if (strchr(mp, *p) != NULL)
 					break;
 		} else
-			for (p = bp, n = len; n > 0; --n, ++p)
+			for (; n > 0; --n, ++p)
 				if (!isblank(*p) &&
 				    !isalnum(*p) && strchr(mp, *p) != NULL)
 					break;
 	}
-	if (n > 0) {
+
+	/*
+	 * If we found a meta character in the string, fork a shell to expand
+	 * it.  Unfortunately, this is comparatively slow.  Historically, it
+	 * didn't matter much, since users don't enter meta characters as part
+	 * of pathnames that frequently.  The addition of filename completion
+	 * broke that assumption because it's easy to use.  As a result, lots
+	 * folks have complained that the expansion code is too slow.  So, we
+	 * detect filename completion as a special case, and do it internally.
+	 * Note that this code assumes that the <asterisk> character is the
+	 * match-anything meta character.  That feels safe -- if anyone writes
+	 * a shell that doesn't follow that convention, I'd suggest giving them
+	 * a festive hot-lead enema.
+	 */
+	switch (n) {
+	case 0:
+		p = bp + SHELLOFFSET;
+		len -= SHELLOFFSET;
+		break;
+	case 1:
+		if (*p == '*') {
+			*p++ = '\0';
+			n = p - bp;
+			if (argv_prefix(sp,
+			    bp + SHELLOFFSET, p, &bp, &blen, &len)) {
+				rval = 1;
+				goto err;
+			}
+			p = bp + n;
+			len -= n;
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
 		if (argv_sexp(sp, &bp, &blen, &len)) {
 			rval = 1;
 			goto err;
 		}
 		p = bp;
-	} else {
-		p = bp + SHELLOFFSET;
-		len -= SHELLOFFSET;
+		break;
 	}
 
 #if defined(DEBUG) && 0
@@ -472,6 +508,116 @@ argv_free(sp)
 }
 
 /*
+ * argv_prefix --
+ *	Find all file names matching the prefix and append them to the
+ *	buffer.
+ */
+static int
+argv_prefix(sp, path, wp, bpp, blenp, lenp)
+	SCR *sp;
+	char *path, *wp, **bpp;
+	size_t *blenp, *lenp;
+{
+	DIR *dirp;
+	struct dirent *dp;
+	size_t blen, clen, dlen, doffset, len, nlen;
+	char *bp, *dname, *name, *p;
+
+	/*
+	 * Open the directory, set up the name and length for comparison,
+	 * the prepended directory and length.
+	 */
+	if ((p = strrchr(path, '/')) == NULL) {
+		dlen = 0;
+		dname = ".";
+		name = path;
+	} else { 
+		if (p == path) {
+			dname = "/";
+			dlen = 0;
+		} else {
+			*p = '\0';
+			dname = path;
+			dlen = strlen(path);
+		}
+		name = p + 1;
+	}
+	nlen = strlen(name);
+
+	if ((dirp = opendir(dname)) == NULL) {
+		msgq_str(sp, M_SYSERR, dname, "%s");
+		return (1);
+	}
+
+	/* Local copies of the buffer variables. */
+	bp = *bpp;
+	blen = *blenp;
+
+	/*
+	 * We're passed a pointer to the name (after the echo command at
+	 * the start of the buffer) and a pointer to the place to start
+	 * writing.  Set a pointer to the start of the write area, and a
+	 * value for the amount of space we have to write.
+	 */
+	p = wp;
+	len = wp - bp;
+	blen -= len;
+
+	/*
+	 * Read the directory, checking for files with a matching prefix.
+	 *
+	 * XXX
+	 * We don't use the d_namlen field, it's not portable enough; we
+	 * assume that d_name is nul terminated, instead.
+	 */
+	while ((dp = readdir(dirp)) != NULL) {
+		clen = strlen(dp->d_name);
+		if (nlen == 0 ||
+		    (clen >= nlen && !memcmp(dp->d_name, name, nlen))) {
+			if (blen < clen + dlen + 5) {
+				doffset = dname - bp;
+				ADD_SPACE_GOTO(sp, bp, *blenp,
+				    *blenp * 2 + clen + dlen + 5);
+				p = bp + len;
+				blen = *blenp - len;
+				if (dname == path)
+					dname = bp + doffset;
+			}
+			if (dlen != 0) {
+				memcpy(p, dname, dlen);
+				p += dlen;
+				*p++ = '/';
+				len += dlen + 1;
+				blen -= dlen + 1;
+			}
+			memcpy(p, dp->d_name, clen);
+			p += clen;
+			*p++ = ' ';
+			len += clen + 1;
+			blen -= clen + 1;
+		}
+	}
+	(void)closedir(dirp);
+
+	/*
+	 * If we didn't find a match, complain that the expansion failed.  We
+	 * can't know for certain that's the error, but it's a good guess, and
+	 * it matches historic practice. 
+	 */
+	if (p == wp) {
+		msgq(sp, M_ERR, "304|Shell expansion failed");
+alloc_err:	return (1);
+	}
+
+	/* Delete the final <space>, nul terminate the string. */
+	*--p = '\0';
+	*lenp = len - 1;
+	*bpp = bp;		/* *blenp is already updated. */
+
+	return (0);
+}
+
+/*
  * argv_sexp --
  *	Fork a shell, pipe a command through it, and read the output into
  *	a buffer.
@@ -502,6 +648,7 @@ argv_sexp(sp, bpp, blenp, lenp)
 	else
 		++sh;
 
+	/* Local copies of the buffer variables. */
 	bp = *bpp;
 	blen = *blenp;
 
@@ -581,10 +728,10 @@ err:		if (ifp != NULL)
 
 	/* Delete the final newline, nul terminate the string. */
 	if (p > bp && (p[-1] == '\n' || p[-1] == '\r')) {
+		--p;
 		--len;
-		*--p = '\0';
-	} else
-		*p = '\0';
+	}
+	*p = '\0';
 	*lenp = len;
 	*bpp = bp;		/* *blenp is already updated. */
 

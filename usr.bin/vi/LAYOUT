@@ -1,4 +1,4 @@
-#	@(#)LAYOUT	8.10 (Berkeley) 5/13/96
+#	@(#)LAYOUT	8.11 (Berkeley) 8/11/96
 
 LAYOUT
 	This file: the layout of the nvi sources.
@@ -8,9 +8,6 @@ LICENSE
 
 README
 	Welcome message and basic information.
-
-VERSION
-	The version information of nvi.
 
 build/
 	The build/configuration directory for nvi.  See build/README for
@@ -98,6 +95,8 @@ ex/
 	it's in the vi directory.  Files are generally named by the
 	command(s) they support, but occasionally with a name that
 	describes their functionality.
+
+	version.h	-- Version information.
 
 include/
 	Replacement include files:

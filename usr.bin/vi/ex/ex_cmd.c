@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_cmd.c	10.18 (Berkeley) 6/29/96";
+static const char sccsid[] = "@(#)ex_cmd.c	10.19 (Berkeley) 7/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -256,7 +256,7 @@ EXCMDLIST const cmds[] = {
 	    "pe[rl] cmd",
 	    "run the perl interpreter with the command"},
 /* C_PERLDOCMD */
-	{"perldo",	ex_perldo,	E_ADDR2_ALL|E_ADDR_ZERO|
+	{"perldo",	ex_perl,	E_ADDR2_ALL|E_ADDR_ZERO|
 					    E_ADDR_ZERODEF|E_SECURE,
 	    "s",
 	    "perld[o] cmd",

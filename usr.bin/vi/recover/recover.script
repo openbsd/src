@@ -3,7 +3,7 @@
 # Script to recover nvi edit sessions.
 #
 RECDIR=/var/tmp/vi.recover
-SENDMAIL=/usr/lib/sendmail
+SENDMAIL=/usr/sbin/sendmail
 echo 'Recovering nvi editor sessions.'
 
 # Check editor backup files.

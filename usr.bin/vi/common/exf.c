@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)exf.c	10.42 (Berkeley) 6/19/96";
+static const char sccsid[] = "@(#)exf.c	10.46 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -41,6 +41,7 @@ static const char sccsid[] = "@(#)exf.c	10.42 (Berkeley) 6/19/96";
 static int	file_backup __P((SCR *, char *, char *));
 static void	file_cinit __P((SCR *));
 static void	file_comment __P((SCR *));
+static int	file_spath __P((SCR *, FREF *, struct stat *, int *));
 
 /*
  * file_add --
@@ -133,7 +134,7 @@ file_init(sp, frp, rcv_name, flags)
 	RECNOINFO oinfo;
 	struct stat sb;
 	size_t psize;
-	int fd, open_err, readonly;
+	int fd, exists, open_err, readonly;
 	char *oname, tname[MAXPATHLEN];
 
 	open_err = readonly = 0;
@@ -168,13 +169,20 @@ file_init(sp, frp, rcv_name, flags)
 	F_SET(ep, F_FIRSTMODIFY);
 
 	/*
+	 * Scan the user's path to find the file that we're going to
+	 * try and open.
+	 */
+	if (file_spath(sp, frp, &sb, &exists))
+		return (1);
+
+	/*
 	 * If no name or backing file, for whatever reason, create a backing
 	 * temporary file, saving the temp file name so we can later unlink
 	 * it.  If the user never named this file, copy the temporary file name
 	 * to the real name (we display that until the user renames it).
 	 */
 	oname = frp->name;
-	if (LF_ISSET(FS_OPENERR) || oname == NULL || stat(oname, &sb)) {
+	if (LF_ISSET(FS_OPENERR) || oname == NULL || !exists) {
 		if (opts_empty(sp, O_DIRECTORY, 0))
 			goto err;
 		(void)snprintf(tname, sizeof(tname),
@@ -200,6 +208,8 @@ file_init(sp, frp, rcv_name, flags)
 		psize = 1024;
 		if (!LF_ISSET(FS_OPENERR))
 			F_SET(frp, FR_NEWFILE);
+
+		time(&ep->mtime);
 	} else {
 		/*
 		 * XXX
@@ -214,8 +224,10 @@ file_init(sp, frp, rcv_name, flags)
 			psize = 1;
 		psize *= 1024;
 
+		F_SET(ep, F_DEVSET);
 		ep->mdev = sb.st_dev;
 		ep->minode = sb.st_ino;
+
 		ep->mtime = sb.st_mtime;
 
 		if (!S_ISREG(sb.st_mode))
@@ -395,9 +407,6 @@ file_init(sp, frp, rcv_name, flags)
 	/* Set the initial cursor position, queue initial command. */
 	file_cinit(sp);
 
-	/* Change the name of the icon/window. */
-	(void)sp->gp->scr_rename(sp);
-
 	/* Redraw the screen from scratch, schedule a welcome message. */
 	F_SET(sp, SC_SCR_REFORMAT | SC_STATUS);
 
@@ -425,6 +434,73 @@ oerr:	if (F_ISSET(ep, F_RCV_ON))
 
 	return (open_err ?
 	    file_init(sp, frp, rcv_name, flags | FS_OPENERR) : 1);
+}
+
+/*
+ * file_spath --
+ *	Scan the user's path to find the file that we're going to
+ *	try and open.
+ */
+static int
+file_spath(sp, frp, sbp, existsp)
+	SCR *sp;
+	FREF *frp;
+	struct stat *sbp;
+	int *existsp;
+{
+	CHAR_T savech;
+	size_t len;
+	int found;
+	char *name, *p, *t, path[MAXPATHLEN];
+
+	/*
+	 * If the name is NULL or an explicit reference (i.e., the first
+	 * component is . or ..) ignore the O_PATH option.
+	 */
+	name = frp->name;
+	if (name == NULL) {
+		*existsp = 0;
+		return (0);
+	}
+	if (name[0] == '/' || name[0] == '.' &&
+	    (name[1] == '/' || name[1] == '.' && name[2] == '/')) {
+		*existsp = !stat(name, sbp);
+		return (0);
+	}
+
+	/* Try . */
+	if (!stat(name, sbp)) {
+		*existsp = 1;
+		return (0);
+	}
+
+	/* Try the O_PATH option values. */
+	for (found = 0, p = t = O_STR(sp, O_PATH);; ++p) {
+		if (*p == ':' || *p == '\0') {
+			if (t < p - 1) {
+				savech = *p;
+				*p = '\0';
+				len = snprintf(path,
+				    sizeof(path), "%s/%s", t, name);
+				if (!stat(path, sbp))
+					found = 1;
+				*p = savech;
+			}
+			t = p + 1;
+		}
+		if (*p == '\0' || found)
+			break;
+	}
+
+	/* If we found it, build a new pathname and discard the old one. */
+	if (found) {
+		MALLOC_RET(sp, p, char *, len + 1);
+		memcpy(p, path, len + 1);
+		free(frp->name);
+		frp->name = p;
+	}
+	*existsp = found;
+	return (0);
 }
 
 /*
@@ -671,11 +747,13 @@ file_write(sp, fm, tm, name, flags)
 	char *p, *s, *t, buf[MAXPATHLEN + 64];
 	const char *msgstr;
 
+	ep = sp->ep;
+	frp = sp->frp;
+
 	/*
 	 * Writing '%', or naming the current file explicitly, has the
 	 * same semantics as writing without a name.
 	 */
-	frp = sp->frp;
 	if (name == NULL || !strcmp(name, frp->name)) {
 		noname = 1;
 		name = frp->name;
@@ -728,20 +806,17 @@ file_write(sp, fm, tm, name, flags)
 	if (stat(name, &sb))
 		mtype = NEWFILE;
 	else {
-		mtype = OLDFILE;
-		if (!LF_ISSET(FS_FORCE | FS_APPEND)) {
-			ep = sp->ep;
-			if (noname && ep->mtime != 0 &&
-			    (sb.st_dev != sp->ep->mdev ||
-			    sb.st_ino != ep->minode ||
-			    sb.st_mtime != ep->mtime)) {
-				msgq_str(sp, M_ERR, name,
-				    LF_ISSET(FS_POSSIBLE) ?
+		if (noname && !LF_ISSET(FS_FORCE | FS_APPEND) &&
+		    (F_ISSET(ep, F_DEVSET) &&
+		    (sb.st_dev != ep->mdev || sb.st_ino != ep->minode) ||
+		    sb.st_mtime != ep->mtime)) {
+			msgq_str(sp, M_ERR, name, LF_ISSET(FS_POSSIBLE) ?
 "250|%s: file modified more recently than this copy; use ! to override" :
 "251|%s: file modified more recently than this copy");
-				return (1);
-			}
+			return (1);
 		}
+
+		mtype = OLDFILE;
 	}
 
 	/* Set flags to create, write, and either append or truncate. */
@@ -814,16 +889,16 @@ file_write(sp, fm, tm, name, flags)
 	 * we re-init the time.  That way the user can clean up the disk
 	 * and rewrite without having to force it.
 	 */
-	if (noname) {
-		ep = sp->ep;
+	if (noname)
 		if (stat(name, &sb))
-			ep->mtime = 0;
+			time(&ep->mtime);
 		else {
+			F_SET(ep, F_DEVSET);
 			ep->mdev = sb.st_dev;
 			ep->minode = sb.st_ino;
+
 			ep->mtime = sb.st_mtime;
 		}
-	}
 
 	/*
 	 * If the write failed, complain loudly.  ex_writefp() has already
@@ -851,7 +926,7 @@ file_write(sp, fm, tm, name, flags)
 	 * exiting.
 	 */
 	if (LF_ISSET(FS_ALL) && !LF_ISSET(FS_APPEND)) {
-		F_CLR(sp->ep, F_MODIFIED);
+		F_CLR(ep, F_MODIFIED);
 		if (F_ISSET(frp, FR_TMPFILE))
 			if (noname)
 				F_SET(frp, FR_TMPEXIT);
@@ -1134,8 +1209,12 @@ file_m1(sp, force, flags)
 	SCR *sp;
 	int force, flags;
 {
+	EXF *ep;
+
+	ep = sp->ep;
+
 	/* If no file loaded, return no modifications. */
-	if (sp->ep == NULL)
+	if (ep == NULL)
 		return (0);
 
 	/*
@@ -1144,11 +1223,11 @@ file_m1(sp, force, flags)
 	 * unless force is also set.  Otherwise, we fail unless forced or
 	 * there's another open screen on this file.
 	 */
-	if (F_ISSET(sp->ep, F_MODIFIED))
+	if (F_ISSET(ep, F_MODIFIED))
 		if (O_ISSET(sp, O_AUTOWRITE)) {
 			if (!force && file_aw(sp, flags))
 				return (1);
-		} else if (sp->ep->refcnt <= 1 && !force) {
+		} else if (ep->refcnt <= 1 && !force) {
 			msgq(sp, M_ERR, LF_ISSET(FS_POSSIBLE) ?
 "262|File modified since last complete write; write or use ! to override" :
 "263|File modified since last complete write; write or use :edit! to override");
@@ -1170,15 +1249,19 @@ file_m2(sp, force)
 	SCR *sp;
 	int force;
 {
+	EXF *ep;
+
+	ep = sp->ep;
+
 	/* If no file loaded, return no modifications. */
-	if (sp->ep == NULL)
+	if (ep == NULL)
 		return (0);
 
 	/*
 	 * If the file has been modified, we'll want to fail, unless forced
 	 * or there's another open screen on this file.
 	 */
-	if (F_ISSET(sp->ep, F_MODIFIED) && sp->ep->refcnt <= 1 && !force) {
+	if (F_ISSET(ep, F_MODIFIED) && ep->refcnt <= 1 && !force) {
 		msgq(sp, M_ERR,
 "264|File modified since last complete write; write or use ! to override");
 		return (1);
@@ -1198,8 +1281,12 @@ file_m3(sp, force)
 	SCR *sp;
 	int force;
 {
+	EXF *ep;
+
+	ep = sp->ep;
+
 	/* If no file loaded, return no modifications. */
-	if (sp->ep == NULL)
+	if (ep == NULL)
 		return (0);
 
 	/*
@@ -1209,7 +1296,7 @@ file_m3(sp, force)
 	 * We permit writing to temporary files, so that user maps using file
 	 * system names work with temporary files.
 	 */
-	if (F_ISSET(sp->frp, FR_TMPEXIT) && sp->ep->refcnt <= 1 && !force) {
+	if (F_ISSET(sp->frp, FR_TMPEXIT) && ep->refcnt <= 1 && !force) {
 		msgq(sp, M_ERR,
 		    "265|File is a temporary; exit will discard modifications");
 		return (1);

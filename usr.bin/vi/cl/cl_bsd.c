@@ -176,13 +176,16 @@ setupterm(ttype, fno, errp)
 	if ((*errp = tgetent(buf, ttype)) > 0) {
 		if (ke != NULL)
 			free(ke);
-		ke = ((p = tigetstr("rmkx")) == (char *)-1) ? NULL : strdup(p);
+		ke = ((p = tigetstr("rmkx")) == (char *)-1) ?
+		    NULL : strdup(p);
 		if (ks != NULL)
 			free(ks);
-		ks = ((p = tigetstr("smkx")) == (char *)-1) ? NULL : strdup(p);
+		ks = ((p = tigetstr("smkx")) == (char *)-1) ?
+		    NULL : strdup(p);
 		if (vb != NULL)
 			free(vb);
-		vb = ((p = tigetstr("flash")) == (char *)-1) ? NULL : strdup(p);
+		vb = ((p = tigetstr("flash")) == (char *)-1) ?
+		    NULL : strdup(p);
 	}
 }
 #endif /* !HAVE_CURSES_SETUPTERM */

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_subst.c	10.32 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)ex_subst.c	10.35 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,7 +91,7 @@ subagain:	return (ex_subagain(sp, cmdp));
 	sp->c_suffix = sp->g_suffix = 0;
 
 	/*
-	 * Get the pattern string, toss escaped characters.
+	 * Get the pattern string, toss escaping characters.
 	 *
 	 * !!!
 	 * Historic vi accepted any of the following forms:
@@ -103,10 +103,10 @@ subagain:	return (ex_subagain(sp, cmdp));
 	 *
 	 * QUOTING NOTE:
 	 *
-	 * Only toss an escape character if it escapes a delimiter.
+	 * Only toss an escaping character if it escapes a delimiter.
 	 * This means that "s/A/\\\\f" replaces "A" with "\\f".  It
 	 * would be nice to be more regular, i.e. for each layer of
-	 * escaping a single escape character is removed, but that's
+	 * escaping a single escaping character is removed, but that's
 	 * not how the historic vi worked.
 	 */
 	for (ptrn = t = p;;) {
@@ -179,7 +179,7 @@ subagain:	return (ex_subagain(sp, cmdp));
 	 *
 	 * QUOTING NOTE:
 	 *
-	 * Only toss an escape character if it escapes a delimiter or
+	 * Only toss an escaping character if it escapes a delimiter or
 	 * if O_MAGIC is set and it escapes a tilde.
 	 *
 	 * !!!
@@ -1208,8 +1208,10 @@ re_tag_conv(sp, ptrnp, plenp, replacedp)
 	}
 
 	/* If the first or second character is a '^', it's magic. */
-	if (p[0] == '^')
+	if (p[0] == '^') {
 		*t++ = *p++;
+		--len;
+	}
 
 	/*
 	 * Escape every other magic character we can find, meanwhile stripping
@@ -1278,7 +1280,7 @@ re_cscope_conv(sp, ptrnp, plenp, replacedp)
 			memcpy(t, CSCOPE_RE_SPACE, sizeof(CSCOPE_RE_SPACE) - 1);
 			t += sizeof(CSCOPE_RE_SPACE) - 1;
 		} else {
-			if (strchr("\\^.[]$*", *p))
+			if (strchr("\\^.[]$*+?()|{}", *p))
 				*t++ = '\\';
 			*t++ = *p;
 		}
@@ -1358,7 +1360,7 @@ re_sub(sp, ip, lbp, lbclenp, lblenp, match)
 	 *	\U convert to upper-case, until \E, \e, or end of replacement
 	 *
 	 * Otherwise, since this is the lowest level of replacement, discard
-	 * all escape characters.  This (hopefully) follows historic practice.
+	 * all escaping characters.  This (hopefully) matches historic practice.
 	 */
 #define	OUTCH(ch, nltrans) {						\
 	CHAR_T __ch = (ch);						\

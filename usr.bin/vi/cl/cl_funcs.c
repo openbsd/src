@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_funcs.c	10.45 (Berkeley) 6/26/96";
+static const char sccsid[] = "@(#)cl_funcs.c	10.48 (Berkeley) 8/11/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -473,6 +473,17 @@ cl_refresh(sp, repaint)
 	SCR *sp;
 	int repaint;
 {
+	CL_PRIVATE *clp;
+
+	clp = CLP(sp);
+
+	/*
+	 * If we received a killer signal, we're done, there's no point
+	 * in refreshing the screen.
+	 */
+	if (clp->killersig)
+		return (0);
+
 	/*
 	 * If repaint is set, the editor is telling us that we don't know
 	 * what's on the screen, so we have to repaint from scratch.
@@ -490,11 +501,13 @@ cl_refresh(sp, repaint)
  * cl_rename --
  *	Rename the file.
  *
- * PUBLIC: int cl_rename __P((SCR *));
+ * PUBLIC: int cl_rename __P((SCR *, char *, int));
  */
 int
-cl_rename(sp)
+cl_rename(sp, name, on)
 	SCR *sp;
+	char *name;
+	int on;
 {
 	GS *gp;
 	CL_PRIVATE *clp;
@@ -507,14 +520,13 @@ cl_rename(sp)
 
 	/*
 	 * XXX
-	 * We can only rename windows for xterm.  Since it's destructive (we
-	 * can't restore it to its original value on exit) we have to get the
-	 * user's permission.
+	 * We can only rename windows for xterm.
 	 */
-	if (O_ISSET(sp, O_WINDOWNAME)) {
-		if (!strncmp(ttype, "xterm", sizeof("xterm") - 1)) {
+	if (on) {
+		if (F_ISSET(clp, CL_RENAME_OK) &&
+		    !strncmp(ttype, "xterm", sizeof("xterm") - 1)) {
 			F_SET(clp, CL_RENAME);
-			(void)printf(XTERM_RENAME, sp->frp->name);
+			(void)printf(XTERM_RENAME, name);
 			(void)fflush(stdout);
 		}
 	} else
@@ -603,6 +615,9 @@ cl_suspend(sp, allowedp)
 	/* Restore the cursor keys to normal mode. */
 	(void)keypad(stdscr, FALSE);
 
+	/* Restore the window name. */
+	(void)cl_rename(sp, NULL, 0);
+
 #ifdef HAVE_BSD_CURSES
 	(void)cl_attr(sp, SA_ALTERNATE, 0);
 #else
@@ -622,6 +637,16 @@ cl_suspend(sp, allowedp)
 
 	/* Time passes ... */
 
+	/*
+	 * If we received a killer signal, we're done.  Leave everything
+	 * unchanged.  In addition, the terminal has already been reset
+	 * correctly, so leave it alone.
+	 */
+	if (clp->killersig) {
+		F_CLR(clp, CL_SCR_EX_INIT | CL_SCR_VI_INIT);
+		return (0);
+	}
+
 #ifdef HAVE_BSD_CURSES
 	/* Restore terminal settings. */
 	if (F_ISSET(gp, G_STDIN_TTY))
@@ -629,6 +654,10 @@ cl_suspend(sp, allowedp)
 
 	(void)cl_attr(sp, SA_ALTERNATE, 1);
 #endif
+
+	/* Set the window name. */
+	(void)cl_rename(sp, sp->frp->name, 1);
+
 	/* Put the cursor keys into application mode. */
 	(void)keypad(stdscr, TRUE);
 

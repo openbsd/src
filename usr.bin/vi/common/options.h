@@ -6,7 +6,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)options.h	10.16 (Berkeley) 5/16/96
+ *	@(#)options.h	10.17 (Berkeley) 7/2/96
  */
 
 /*
@@ -83,7 +83,7 @@ struct _optlist {
 #define	OPT_ALWAYS	0x002		/* Always call the support function. */
 #define	OPT_NDISP	0x004		/* Never display the option. */
 #define	OPT_NOSAVE	0x008		/* Mkexrc command doesn't save. */
-#define	OPT_NOSET	0x010		/* Option may not be unset. */
+#define	OPT_NOSET	0x010		/* Option may not be set. */
 #define	OPT_NOUNSET	0x020		/* Option may not be unset. */
 #define	OPT_NOZERO	0x040		/* Option may not be set to 0. */
 	u_int8_t flags;
