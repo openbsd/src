@@ -1,6 +1,6 @@
-/*	$OpenBSD: pmap.c,v 1.117 2004/06/24 19:59:14 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.1 2004/07/25 11:06:42 miod Exp $	*/
 /*
- * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
+ * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -45,7 +45,6 @@
  *
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
@@ -177,10 +176,6 @@ pg_to_pvh(struct vm_page *pg)
 		simple_unlock(&(pmap)->pm_lock); \
 		SPLX(spl); \
 	} while (0)
-
-#define ETHERPAGES 16
-void *etherbuf = NULL;
-int etherlen;
 
 #ifdef	PMAP_USE_BATC
 
@@ -610,7 +605,6 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  * Extern/Global:
  *
  *	PAGE_SIZE	VM (software) page size
- *	kernelstart	start symbol of kernel text
  *	etext		end of kernel text
  *	phys_map_vaddr	VA of page mapped arbitrarily for debug/IO
  *
@@ -629,10 +623,9 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  * IO purposes. They are arbitrarily mapped when needed. They are used,
  * for example, by pmap_copy_page and pmap_zero_page.
  *
- * For m88k, we have to map BUG memory also. This is a read only
- * mapping for 0x10000 bytes. We will end up having load_start as
- * 0 and VM_MIN_KERNEL_ADDRESS as 0 - yes sir, we have one-to-one
- * mapping!!!
+ *    This implementation also assumes that the space below the kernel
+ * is reserved (typically from PROM purposes). We should ideally map it
+ * read only except when invoking its services...
  */
 
 void
@@ -646,7 +639,7 @@ pmap_bootstrap(vaddr_t load_start)
 	unsigned int kernel_pmap_size, pdt_size;
 	int i;
 	pmap_table_t ptable;
-	extern void *kernelstart, *etext;
+	extern void *etext;
 
 	simple_lock_init(&kernel_pmap->pm_lock);
 
@@ -659,15 +652,10 @@ pmap_bootstrap(vaddr_t load_start)
 	 *    ...
 	 *  pmap_bootstrap(&kernelstart, ...);
 	 * kernelstart being the first symbol in the load image.
-	 * The kernel is linked such that &kernelstart == 0x10000 (size of
-	 * BUG reserved memory area).
-	 * The expression (&kernelstart - load_start) will end up as
-	 *	0, making virtual_avail == avail_start, giving a 1-to-1 map)
 	 */
 
 	avail_start = round_page(avail_start);
-	virtual_avail = avail_start +
-	    (trunc_page((vaddr_t)&kernelstart) - load_start);
+	virtual_avail = avail_start;
 
 	/*
 	 * Initialize kernel_pmap structure
@@ -745,20 +733,16 @@ pmap_bootstrap(vaddr_t load_start)
 	 * Map the kernel image into virtual space
 	 */
 
-	s_text = load_start;	/* paddr of text */
-	e_text = load_start +
-	    ((vaddr_t)&etext - trunc_page((vaddr_t)&kernelstart));
-	/* paddr of end of text section*/
-	e_text = round_page(e_text);
+	s_text = trunc_page(load_start);	/* paddr of text */
+	e_text = round_page((vaddr_t)&etext);	/* paddr of end of text */
 
-	/* map the first 64k (BUG ROM) read only, cache inhibited (? XXX) */
-	vaddr = pmap_map(0, 0, 0x10000, VM_PROT_WRITE | VM_PROT_READ,
-	    CACHE_INH);
+	/* map the PROM area */
+	vaddr = pmap_map(0, 0, s_text, VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 	/* map the kernel text read only */
-	vaddr = pmap_map(trunc_page((vaddr_t)&kernelstart),
-	    s_text, e_text, VM_PROT_WRITE | VM_PROT_READ,
-	    CACHE_GLOBAL);	/* shouldn't it be RO? XXX*/
+	vaddr = pmap_map(s_text, s_text, e_text,
+	    VM_PROT_WRITE | VM_PROT_READ,	/* shouldn't it be RO? XXX*/
+	    CACHE_GLOBAL);
 
 	vaddr = pmap_map(vaddr, e_text, (paddr_t)kmap,
 	    VM_PROT_WRITE | VM_PROT_READ, CACHE_GLOBAL);
@@ -776,31 +760,7 @@ pmap_bootstrap(vaddr_t load_start)
 	vaddr = pmap_map(vaddr, (paddr_t)kmap, avail_start,
 	    VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
-#if defined (MVME187) || defined (MVME197)
-	/*
-	 * Get ethernet buffer - need etherlen bytes physically contiguous.
-	 * 1 to 1 mapped as well???. There is actually a bug in the macros
-	 * used by the 1x7 ethernet driver. Remove this when that is fixed.
-	 * XXX -nivas
-	 */
-	if (brdtyp == BRD_187 || brdtyp == BRD_8120 || brdtyp == BRD_197) {
-		avail_start = vaddr;
-		etherlen = ETHERPAGES * PAGE_SIZE;
-		etherbuf = (void *)vaddr;
-
-		vaddr = pmap_map(vaddr, avail_start, avail_start + etherlen,
-		    VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
-
-		virtual_avail += etherlen;
-		avail_start += etherlen;
-
-		if (vaddr != virtual_avail) {
-			virtual_avail = vaddr;
-			avail_start = round_page(avail_start);
-		}
-	}
-
-#endif /* defined (MVME187) || defined (MVME197) */
+	vaddr = pmap_bootstrap_md(vaddr);
 
 	virtual_avail = round_page(virtual_avail);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -815,13 +775,7 @@ pmap_bootstrap(vaddr_t load_start)
 	virtual_avail += 2 * (max_cpus << PAGE_SHIFT);
 
 	/*
-	 * Map all IO space 1-to-1. Ideally, I would like to not do this
-	 * but have va for the given IO address dynamically allocated. But
-	 * on the 88200, 2 of the BATCs are hardwired to map the IO space
-	 * 1-to-1; I decided to map the rest of the IO space 1-to-1.
-	 * And bug ROM & the SRAM need to be mapped 1-to-1 if we ever want to
-	 * execute bug system calls after the MMU has been turned on.
-	 * OBIO should be mapped cache inhibited.
+	 * Create all the machine-specific mappings.
 	 */
 
 	for (ptable = pmap_table_build(); ptable->size != (vsize_t)-1; ptable++)

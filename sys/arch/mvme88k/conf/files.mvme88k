@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme88k,v 1.31 2004/07/23 15:34:03 miod Exp $
+#	$OpenBSD: files.mvme88k,v 1.32 2004/07/25 11:06:42 miod Exp $
 #
 maxpartitions 16
 
@@ -85,7 +85,7 @@ file	arch/mvme88k/mvme88k/eh.S
 file	arch/mvme88k/mvme88k/locore_c_routines.c
 file	arch/mvme88k/mvme88k/machdep.c
 file	arch/mvme88k/mvme88k/mem.c
-file	arch/mvme88k/mvme88k/pmap.c
+file	arch/mvme88k/mvme88k/pmap_bootstrap.c
 file	arch/mvme88k/mvme88k/pmap_table.c
 file	arch/mvme88k/ddb/db_interface.c			ddb
 file	arch/mvme88k/dev/bugio.c
