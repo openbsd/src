@@ -256,12 +256,13 @@ file.
 .It Fl Q
 Do not print an error message if RSA support is missing.
 .It Fl V Ar client_protocol_id
-SSH2 compatibility mode.
+SSH-2 compatibility mode.
 When this option is specified
 .Nm
 assumes the client has sent the supplied version string
 and skips the
 Protocol Version Identification Exchange.
+This option is not intended to be called directly.
 .It Fl 4
 Forces
 .Nm
