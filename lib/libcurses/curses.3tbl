@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curses.3tbl,v 1.9 1999/01/18 19:07:17 millert Exp $
+.\" $OpenBSD: curses.3tbl,v 1.10 1999/01/21 01:19:56 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -694,8 +694,14 @@ directory containing initialization files for the terminal capability database
 /usr/share/terminfo
 terminal capability database
 .SH SEE ALSO
-\fBterminfo\fR(\*n) and 3 pages whose names begin "curs_" for detailed routine
-descriptions.
+\fBterminfo\fR(\*n), \fBterminfo\fR(3), and 3 pages whose names begin with
+"curs_" for detailed routine descriptions.
+.TP
+/usr/share/doc/html/curses/ncurses-intro.html
+intro to ncurses.
+.TP
+/usr/share/doc/html/curses/hackguide.html
+ncurses hacker's guide.
 .SH EXTENSIONS
 The \fBcurses\fR library can be compiled with an option (\fB-DUSE_GETCAP\fR)
 that falls back to the old-style /etc/termcap file if the terminal setup code
