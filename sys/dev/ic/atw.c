@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.8 2004/07/15 12:08:14 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.9 2004/07/15 12:15:09 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.43 2004/07/15 06:30:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.47 2004/07/15 06:34:24 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -2342,6 +2342,7 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
 	struct atw_softc *sc = ifp->if_softc;
+	enum ieee80211_state ostate = ic->ic_state;
 	int error;
 
 	if (nstate == IEEE80211_S_INIT) {
@@ -2625,9 +2626,6 @@ atw_intr(void *arg)
 		if (status)
 			ATW_WRITE(sc, ATW_STSR, status);
 
-		if (sc->sc_intr_ack != NULL)
-			(*sc->sc_intr_ack)(sc);
-
 #ifdef ATW_DEBUG
 #define PRINTINTR(flag) do { \
 	if ((status & flag) != 0) { \
@@ -2785,7 +2783,6 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 	u_int32_t ackmask = 0, opmode, stsr, test0;
 	int i, s;
 
-	/* without this, somehow we run concurrently w/ interrupt handler */
 	s = splnet(); 
 
 	opmode = sc->sc_opmode & ~bits;
@@ -2898,10 +2895,10 @@ atw_rxintr(struct atw_softc *sc)
 		DPRINTF3(sc,
 		    ("%s: rx stat %08x rssi %08x buf1 %08x buf2 %08x\n",
 		    sc->sc_dev.dv_xname,
-		    sc->sc_rxdescs[i].ar_stat,
-		    sc->sc_rxdescs[i].ar_rssi,
-		    sc->sc_rxdescs[i].ar_buf1,
-		    sc->sc_rxdescs[i].ar_buf2));
+		    letoh32(sc->sc_rxdescs[i].ar_stat),
+		    letoh32(sc->sc_rxdescs[i].ar_rssi),
+		    letoh32(sc->sc_rxdescs[i].ar_buf1),
+		    letoh32(sc->sc_rxdescs[i].ar_buf2)));
 
 		/*
 		 * Make sure the packet fits in one buffer.  This should
@@ -2977,7 +2974,7 @@ atw_rxintr(struct atw_softc *sc)
 		if (sc->sc_opmode & ATW_NAR_PR)
 			m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = len;
+		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
 		if (rate0 >= sizeof(rate_tbl) / sizeof(rate_tbl[0]))
 			rate = 0;
@@ -3310,11 +3307,6 @@ atw_start(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-
-#if 0 /* TBD ??? */
-	if ((sc->sc_flags & ATWF_LINK_UP) == 0 && ifp->if_snd.ifq_len < 10)
-		return;
-#endif
 
 	/*
 	 * Remember the previous number of free descriptors and
