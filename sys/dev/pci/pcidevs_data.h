@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.219 2000/02/18 11:16:43 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.220 2000/02/22 18:50:38 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3601,6 +3601,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident",
 	    "TGUI 9440",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9525,
+	    0,
+	    "Trident",
+	    "CYBER 9525",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9660,
