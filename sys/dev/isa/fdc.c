@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.12 1999/01/07 06:14:48 niklas Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.13 2000/07/18 01:28:12 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -241,7 +241,6 @@ fdcresult(fdc)
 		}
 		delay(10);
 	}
-	log(LOG_ERR, "fdcresult: timeout\n");
 	return -1;
 }
 
