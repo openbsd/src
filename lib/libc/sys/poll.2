@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.16 2003/09/08 18:29:15 millert Exp $
+.\"	$OpenBSD: poll.2,v 1.17 2003/09/23 16:53:34 millert Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -40,8 +40,19 @@
 .Fn poll "struct pollfd *fds" "int nfds" "int timeout"
 .Sh DESCRIPTION
 .Fn poll
-provides a mechanism for reporting I/O conditions across a set of file
+provides a mechanism for multiplexing I/O across a set of file
 descriptors.
+It is similar in function to
+.Xr select 2 .
+Unlike
+.Xr select 2 ,
+however, it is possible to only pass in data corresponding to the
+file descriptors for which events are wanted.
+This makes
+.Fn poll
+more efficient than
+.Xr select 2
+in most cases.
 .Pp
 The arguments are as follows:
 .Bl -tag -width timeout
@@ -81,7 +92,7 @@ The number of
 structures in the array.
 .It Fa timeout
 Maximum interval to wait for the poll to complete, in milliseconds.
-If this value is 0, then
+If this value is 0,
 .Fn poll
 will return immediately.
 If this value is INFTIM (-1),
@@ -157,6 +168,9 @@ bitmask; it is ignored in the
 member.
 .El
 .Pp
+The significance and semantics of normal, priority, and high-priority
+data are device-specific.
+.Pp
 In addition to I/O multiplexing,
 .Fn poll
 can be used to generate simple timeouts.
@@ -165,20 +179,49 @@ This functionality may be achieved by passing a null pointer for
 .Sh RETURN VALUES
 Upon error,
 .Fn poll
-returns a \-1 and sets the global variable
+returns \-1 and sets the global variable
 .Va errno
 to indicate the error.
 If the timeout interval was reached before any events occurred,
-a 0 is returned.
+.Fn poll
+returns 0.
 Otherwise,
 .Fn poll
 returns the number of file descriptors for which
 .Fa revents
 is non-zero.
+.Sh EXAMPLES
+The following example implements a read from the standard input that times
+out after 60 seconds:
+.Bd -literal -offset indent
+#include <err.h>
+#include <stdio.h>
+#include <unistd.h>
+
+struct pollfd pfd[1];
+char buf[BUFSIZ];
+int nfds;
+
+pfd[0].fd = STDIN_FILENO;
+pfd[0].events = POLLIN;
+nfds = poll(pfd, 1, 60 * 1000);
+if (nfds == -1 || (pfd[0].revents & (POLLERR|POLLHUP|POLLNVAL)))
+	errx(1, "poll error");
+if (nfds == 0)
+	errx(1, "time out");
+if (read(STDIN_FILENO, buf, sizeof(buf)) == -1)
+	errx(1, "read");
+.Ed
 .Sh ERRORS
 .Fn poll
 will fail if:
 .Bl -tag -width "EINVAL   "
+.It Bq Er EFAULT
+.Fa fds
+points outside the process's allocated address space.
+.It Bq Er EINTR
+.Fn poll
+caught a signal during the polling process.
 .It Bq Er EINVAL
 .Fa nfds
 was either a negative number or greater than the number of available
@@ -187,15 +230,6 @@ file descriptors.
 The timeout passed to
 .Fn poll
 was too large.
-.It Bq Er EAGAIN
-Resource allocation failed inside of
-.Fn poll .
-Subsequent calls to
-.Fn poll
-may succeed.
-.It Bq Er EINTR
-.Fn poll
-caught a signal during the polling process.
 .El
 .Sh SEE ALSO
 .Xr getrlimit 2 ,
@@ -209,11 +243,10 @@ system call appeared in
 .At V.3 .
 .Sh BUGS
 The
-.Dv POLLHUP
-and
 .Dv POLLERR
-flags are currently unimplemented in
-.Ox .
+and
+.Dv POLLWRBAND
+flags are accepted but ignored by the kernel.
 .Pp
 Because
 .Ox
@@ -227,12 +260,10 @@ bitmasks.
 As a result, the
 .Dv POLLIN ,
 .Dv POLLNORM ,
-.Dv POLLPRI ,
-.Dv POLLRDNORM
 and
-.Dv POLLRDBAND
-flags are all equivalent.
-Also, the
-.Dv POLLWRBAND
-flag is equivalent to
-.Dv POLLWRNORM .
+.Dv POLLRDNORM
+flags are equivalent.
+.Pp
+Internally to the kernel,
+.Fn poll
+works poorly if multiple processes wait on the same file descriptor.
