@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.64 2001/02/28 01:24:09 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.65 2001/03/20 19:20:36 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -997,6 +997,20 @@ local traffic.
 .It Li icmp6.nodeinfo
 The variable enables, or disables, kernel support for
 ICMPv6 node information query/reply.
+If you set the variable to 0, the kernel will respond to no ICMPv6 node
+information queries.
+If non-zero, the kernel is permitted to respond to ICMPv6 node information
+queries.
+For security-sensitive query types, you can control the kernel behavior
+by setting certain bits in the variable.
+Turning the 2^0 bit
+.Pq least significant bit, equals to 1
+will make the kernel respond to ICMPv6 FQDN queries
+.Pq Li ping6 -w .
+Turning the 2^1 bit
+.Pq equals to 2
+will make the kernel respond to ICMPv6 node addresses queries
+.Pq Li ping6 -a .
 .It Li icmp6.errppslimit
 The variable specifies the maximum number of outgoing ICMPv6 error messages,
 per second.
