@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.30 2002/11/24 02:00:36 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.31 2002/11/24 15:05:03 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -1035,7 +1035,7 @@ fdcstatus(dv, n, s)
 		printf("\n");
 		break;
 	case 2:
-		printf(" (st0 %s cyl %d)\n",
+		printf(" (st0 %b cyl %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
@@ -1150,7 +1150,7 @@ fdchwintr(fdc)
 		}
 	}
 done:
-	sc->sc_intrcnt.ev_count++;
+	fdc->sc_intrcnt.ev_count++;
 	return (1);
 }
 #endif
