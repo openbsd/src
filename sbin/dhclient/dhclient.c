@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.36 2004/04/13 18:04:09 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.37 2004/04/14 20:14:49 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -104,6 +104,8 @@ int		routefd;
 
 struct interface_info	*ifi;
 
+int	 findproto(char *, int);
+void	 routehandler(struct protocol *);
 void	 usage(void);
 int	 check_option(struct client_lease *l, int option);
 int	 ipv4addrs(char * buf);
