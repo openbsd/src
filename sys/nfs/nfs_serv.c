@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.31 2002/04/29 07:36:32 deraadt Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.32 2002/05/10 22:07:08 csapuntz Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2777,6 +2777,18 @@ again:
 		goto again;
 	}
 
+	/*
+	 * struct READDIRPLUS3resok {
+	 *     postop_attr dir_attributes;
+	 *     cookieverf3 cookieverf;
+	 *     dirlistplus3 reply;
+	 * }
+	 *
+	 * struct dirlistplus3 {
+	 *     entryplus3  *entries;
+	 *     bool eof;
+	 *  }
+	 */	
 	dirlen = len = NFSX_V3POSTOPATTR + NFSX_V3COOKIEVERF + 2 * NFSX_UNSIGNED;
 	nfsm_reply(cnt);
 	nfsm_srvpostop_attr(getret, &at);
@@ -2816,8 +2828,19 @@ again:
 			 * exceeded, get out now. Both of these lengths
 			 * are calculated conservatively, including all
 			 * XDR overheads.
+			 *
+			 * Each entry:
+			 * 2 * NFSX_UNSIGNED for fileid3
+			 * 1 * NFSX_UNSIGNED for length of name
+			 * nlen + rem == space the name takes up
+			 * 2 * NFSX_UNSIGNED for the cookie
+			 * 1 * NFSX_UNSIGNED to indicate if file handle present
+			 * 1 * NFSX_UNSIGNED for the file handle length
+			 * NFSX_V3FH == space our file handle takes up
+			 * NFSX_V3POSTOPATTR == space the attributes take up
+			 * 1 * NFSX_UNSIGNED for next pointer
 			 */
-			len += (7 * NFSX_UNSIGNED + nlen + rem + NFSX_V3FH +
+			len += (8 * NFSX_UNSIGNED + nlen + rem + NFSX_V3FH +
 				NFSX_V3POSTOPATTR);
 			dirlen += (6 * NFSX_UNSIGNED + nlen + rem);
 			if (len > cnt || dirlen > fullsiz) {
