@@ -985,8 +985,10 @@ again:
 		/* flush any data in the FIFO */
 		if (fifo) {
 			if (state->flags & DMA_OUT) {
+#ifdef DIAGNOSTIC /* XXX - don't exacly know it this should be ifdefed */
 	printf("asc: DMA_OUT, fifo resid %d, len %d, flags 0x%x\n",
 					fifo, len, state->flags);
+#endif
 				len += fifo;
 			} else if (state->flags & DMA_IN) {
 				printf("asc_intr: IN: dmalen %d len %d fifo %d\n",
