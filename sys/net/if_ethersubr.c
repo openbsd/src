@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.54 2001/07/30 21:48:58 jason Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.55 2001/08/19 15:28:24 jason Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1103,7 +1103,9 @@ ether_addmulti(ifr, ac)
 	register struct arpcom *ac;
 {
 	register struct ether_multi *enm;
+#ifdef INET
 	struct sockaddr_in *sin;
+#endif
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif /* INET6 */
@@ -1211,7 +1213,9 @@ ether_delmulti(ifr, ac)
 	register struct arpcom *ac;
 {
 	register struct ether_multi *enm;
+#ifdef INET
 	struct sockaddr_in *sin;
+#endif
 #ifdef INET6
 	struct sockaddr_in6 *sin6;
 #endif /* INET6 */
