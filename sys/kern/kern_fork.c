@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.32 2000/06/18 17:59:55 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.33 2000/07/07 15:57:02 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ sys_rfork(p, v, retval)
 		flags |= FORK_NOZOMBIE;
 
 	if (rforkflags & RFMEM)
-		flags |= FORK_SHAREVM;
+		flags |= FORK_VMNOSTACK;
 
 	return (fork1(p, flags, NULL, 0, retval));
 }
@@ -162,6 +162,11 @@ fork1(p1, flags, stack, stacksize, retval)
 		tablefull("proc");
 		return (EAGAIN);
 	}
+
+#if !defined(UVM)
+	if (flag & FORK_SHAREVM)
+		return (EINVAL);
+#endif
 
 	/*
 	 * Increment the count of procs running with this uid. Don't allow
@@ -336,8 +341,15 @@ again:
 	 */
 	p1->p_holdcnt++;
 
-#if !defined(UVM) /* We do this later for UVM */
-	if (flags & FORK_SHAREVM) {
+#if defined(UVM)
+	if (flags & FORK_VMNOSTACK) {
+		/* share as much address space as possible */
+		(void) uvm_map_inherit(&p1->p_vmspace->vm_map,
+		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
+		    VM_INHERIT_SHARE);
+	}
+#else
+	if (flags & FORK_VMNOSTACK) {
 		/* share as much address space as possible */
 		(void) vm_map_inherit(&p1->p_vmspace->vm_map,
 		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
