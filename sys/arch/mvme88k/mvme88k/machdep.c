@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.81 2001/12/22 17:57:11 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.82 2001/12/24 04:12:40 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -408,19 +408,19 @@ save_u_area(struct proc *p, vm_offset_t va)
 {
 	int i; 
 	for (i=0; i<UPAGES; i++) {
-		p->p_md.md_upte[i] = kvtopte((va + (i * NBPG)))->bits;
+		p->p_md.md_upte[i] = *((pt_entry_t *)kvtopte((va + (i * NBPG))));
 	}
 }
 
 void
 load_u_area(struct proc *p)
 {
-	pte_template_t *t;
+	pt_entry_t *t;
 
 	int i; 
 	for (i=0; i<UPAGES; i++) {
 		t = kvtopte((UADDR + (i * NBPG)));
-		t->bits = p->p_md.md_upte[i];
+		*t = p->p_md.md_upte[i];
 	}
 	for (i=0; i<UPAGES; i++) {
 		cmmu_flush_tlb(1, (UADDR + (i * NBPG)), NBPG);

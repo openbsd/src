@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2001/12/22 17:57:11 smurph Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2001/12/24 04:12:40 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -913,9 +913,9 @@ m88110_trap(unsigned type, struct m88100_saved_state *frame)
 				pte = pmap_pte(map->pmap, va);
 				if (pte == PT_ENTRY_NULL)
 					panic("NULL pte on write fault??");
-				if (!pte->modified && !pte->prot) {
+				if (!(*pte & PG_M) && !(*pte & PG_RO)) {
 					/* Set modified bit and try the write again. */
-					pte->modified = 1; 
+					*pte |= PG_M;
 					return;
 				}
 			}
@@ -990,15 +990,15 @@ m88110_user_fault:
 				pte = pmap_pte(vm_map_pmap(map), va);
 				if (pte == PT_ENTRY_NULL)
 					panic("NULL pte on write fault??");
-				if (!pte->modified && !pte->prot) {
+				if (!(*pte & PG_M) && !(*pte & PG_PROT)) {
 					/* Set modified bit and try the write again. */
-					pte->modified = 1;
+					*pte |= PG_M;
 					/* invalidate ATCs to force table search */
 					set_dcmd(CMMU_DCMD_INV_UATC);
 					return;
 				} else {
 					/* This must be a real write protection fault */
-					printf("Write protect???? mod = %d, wp = %d\n", pte->modified, pte->prot);
+					printf("Write protect???? mod = %d, wp = %d\n", !!(*pte & PG_M), !!(*pte & PG_PROT));
 					result = uvm_fault(map, va, 0, ftype);
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.4 2001/12/22 09:49:39 smurph Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.5 2001/12/24 04:12:40 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -786,9 +786,9 @@ m88110_cmmu_show_translation(unsigned address,
 	union {
 		unsigned bits;
 		struct {
-			unsigned segment_table_index:10,
-			page_table_index:10,
-			page_offset:12;
+			unsigned segment_table_index:SDT_BITS,
+			page_table_index:PDT_BITS,
+			page_offset:PG_BITS;
 		} field;
 	} virtual_address;
 	unsigned value;
@@ -856,7 +856,7 @@ m88110_cmmu_show_translation(unsigned address,
 			DEBUG_MSG("<would report an error, valid bit not set>\n");
 			return;
 		}
-		value = apr_template.field.st_base << 12; /* now point to seg page */
+		value = apr_template.field.st_base << PG_BITS; /* now point to seg page */
 	}
 
 	/* translate value from physical to virtual */
@@ -868,43 +868,43 @@ m88110_cmmu_show_translation(unsigned address,
 
 	/****** ACCESS SEGMENT TABLE AND INTERPRET SEGMENT DESCRIPTOR  *******/
 	{
-		union sdt_entry_template std_template;
+		sdt_entry_t sdt;
 		if (verbose_flag)
 			DEBUG_MSG("will follow to entry %d of page at 0x%x...\n",
 				  virtual_address.field.segment_table_index, value);
 		value |= virtual_address.field.segment_table_index *
-			 sizeof(struct sdt_entry);
+			 sizeof(sdt_entry_t);
 
 		if (badwordaddr((vm_offset_t)value)) {
 			DEBUG_MSG("ERROR: unable to access page at 0x%08x.\n", value);
 			return;
 		}
 
-		std_template.bits = *(unsigned *)value;
+		sdt = *(sdt_entry_t *)value;
 		if (verbose_flag > 1)
-			DEBUG_MSG("SEG DESC @0x%x is 0x%08x\n", value, std_template.bits);
+			DEBUG_MSG("SEG DESC @0x%x is 0x%08x\n", value, sdt);
 		DEBUG_MSG("SEG DESC @0x%x: PgTbl: 0x%x000",
-			  value, std_template.sdt_desc.table_addr);
-		if (std_template.sdt_desc.wt)	    DEBUG_MSG(", WTHRU");
+			  value, PG_PFNUM(sdt));
+		if (sdt & CACHE_WT)		    DEBUG_MSG(", WTHRU");
 		else				    DEBUG_MSG(", !wthru");
-		if (std_template.sdt_desc.sup)	    DEBUG_MSG(", S-PROT");
+		if (sdt & SG_SO)		    DEBUG_MSG(", S-PROT");
 		else				    DEBUG_MSG(", UserOk");
-		if (std_template.sdt_desc.g)	    DEBUG_MSG(", GLOBAL");
+		if (sdt & CACHE_GLOBAL)		    DEBUG_MSG(", GLOBAL");
 		else				    DEBUG_MSG(", !global");
-		if (std_template.sdt_desc.no_cache) DEBUG_MSG(", $INHIBIT");
+		if (sdt & CACHE_INH)		    DEBUG_MSG(", $INHIBIT");
 		else				    DEBUG_MSG(", $ok");
-		if (std_template.sdt_desc.prot)	    DEBUG_MSG(", W-PROT");
+		if (sdt & SG_PROT)		    DEBUG_MSG(", W-PROT");
 		else				    DEBUG_MSG(", WriteOk");
-		if (std_template.sdt_desc.dtype)    DEBUG_MSG(", VALID");
+		if (sdt & SG_V)			    DEBUG_MSG(", VALID");
 		else				    DEBUG_MSG(", !valid");
 		DEBUG_MSG(".\n");
 
 		/* if not valid, done now */
-		if (std_template.sdt_desc.dtype == 0) {
+		if (!(sdt & SG_V)) {
 			DEBUG_MSG("<would report an error, STD entry not valid>\n");
 			return;
 		}
-		value = std_template.sdt_desc.table_addr << 12;
+		value = ptoa(PG_PFNUM(sdt));
 	}
 
 	/* translate value from physical to virtual */
@@ -914,51 +914,50 @@ m88110_cmmu_show_translation(unsigned address,
 
 	/******* PAGE TABLE *********/
 	{
-		union pte_template pte_template;
+		pt_entry_t pte;
 		if (verbose_flag)
 			DEBUG_MSG("will follow to entry %d of page at 0x%x...\n",
 				  virtual_address.field.page_table_index, value);
 		value |= virtual_address.field.page_table_index *
-			 sizeof(struct pt_entry);
+			 sizeof(pt_entry_t);
 
 		if (badwordaddr((vm_offset_t)value)) {
 			DEBUG_MSG("error: unable to access page at 0x%08x.\n", value);
-
 			return;
 		}
 
-		pte_template.bits = *(unsigned *)value;
+		pte = *(pt_entry_t *)value;
 		if (verbose_flag > 1)
-			DEBUG_MSG("PAGE DESC @0x%x is 0x%08x.\n", value, pte_template.bits);
+			DEBUG_MSG("PAGE DESC @0x%x is 0x%08x.\n", value, pte);
 		DEBUG_MSG("PAGE DESC @0x%x: page @%x000",
-			  value, pte_template.pte.pfn);
-		if (pte_template.pte.wired)    DEBUG_MSG(", WIRE");
-		else			       DEBUG_MSG(", !wire");
-		if (pte_template.pte.wt)       DEBUG_MSG(", WTHRU");
-		else			       DEBUG_MSG(", !wthru");
-		if (pte_template.pte.sup)      DEBUG_MSG(", S-PROT");
-		else			       DEBUG_MSG(", UserOk");
-		if (pte_template.pte.g)	       DEBUG_MSG(", GLOBAL");
-		else			       DEBUG_MSG(", !global");
-		if (pte_template.pte.ci)       DEBUG_MSG(", $INHIBIT");
-		else			       DEBUG_MSG(", $ok");
-		if (pte_template.pte.modified) DEBUG_MSG(", MOD");
-		else			       DEBUG_MSG(", !mod");
-		if (pte_template.pte.pg_used)  DEBUG_MSG(", USED");
-		else			       DEBUG_MSG(", !used");
-		if (pte_template.pte.prot)     DEBUG_MSG(", W-PROT");
-		else			       DEBUG_MSG(", WriteOk");
-		if (pte_template.pte.dtype)    DEBUG_MSG(", VALID");
-		else			       DEBUG_MSG(", !valid");
+			  value, PG_PFNUM(pte));
+		if (pte & PG_W)			DEBUG_MSG(", WIRE");
+		else				DEBUG_MSG(", !wire");
+		if (pte & CACHE_WT)		DEBUG_MSG(", WTHRU");
+		else				DEBUG_MSG(", !wthru");
+		if (pte & PG_SO)		DEBUG_MSG(", S-PROT");
+		else				DEBUG_MSG(", UserOk");
+		if (pte & CACHE_GLOBAL)		DEBUG_MSG(", GLOBAL");
+		else				DEBUG_MSG(", !global");
+		if (pte & CACHE_INH)		DEBUG_MSG(", $INHIBIT");
+		else				DEBUG_MSG(", $ok");
+		if (pte & PG_M)			DEBUG_MSG(", MOD");
+		else				DEBUG_MSG(", !mod");
+		if (pte & PG_U)			DEBUG_MSG(", USED");
+		else				DEBUG_MSG(", !used");
+		if (pte & PG_PROT)		DEBUG_MSG(", W-PROT");
+		else				DEBUG_MSG(", WriteOk");
+		if (pte & PG_V)			DEBUG_MSG(", VALID");
+		else				DEBUG_MSG(", !valid");
 		DEBUG_MSG(".\n");
 
 		/* if not valid, done now */
-		if (pte_template.pte.dtype == 0) {
+		if (!(pte & PG_V)) {
 			DEBUG_MSG("<would report an error, PTE entry not valid>\n");
 			return;
 		}
 
-		value = pte_template.pte.pfn << 12;
+		value = ptoa(PG_PFNUM(pte));
 		if (verbose_flag)
 			DEBUG_MSG("will follow to byte %d of page at 0x%x...\n",
 				  virtual_address.field.page_offset, value);
@@ -1018,11 +1017,6 @@ m88110_load_patc(int entry, vm_offset_t vaddr, vm_offset_t paddr, int kernel)
 	set_dppl(lpa);
 }
 
-#define SDT_WP(sd_ptr)  ((sd_ptr)->prot != 0)
-#define SDT_SUP(sd_ptr)  ((sd_ptr)->sup != 0)
-#define PDT_WP(pte_ptr)  ((pte_ptr)->prot != 0)
-#define PDT_SUP(pte_ptr)  ((pte_ptr)->sup != 0)
-
 int 
 m88110_table_search(pmap_t map, vm_offset_t virt, int write, int kernel, int data)
 {
@@ -1048,7 +1042,7 @@ m88110_table_search(pmap_t map, vm_offset_t virt, int write, int kernel, int dat
 	if (write && SDT_WP(sdt))
 			return (7); /* Write Violation */
 
-	pte = (pt_entry_t *)(((sdt + SDT_ENTRIES)->table_addr)<<PDT_SHIFT) + PDTIDX(virt);
+	pte = (pt_entry_t *)(PG_PFNUM(*(sdt_entry_t *)(sdt + SDT_ENTRIES))<<PDT_SHIFT) + PDTIDX(virt);
 	/*
 	 * Check whether page frame exist or not.
 	 */
