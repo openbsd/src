@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.5 2004/11/28 15:12:17 pat Exp $	*/
+/*	$OpenBSD: conf.y,v 1.6 2004/12/30 20:55:02 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -465,6 +465,10 @@ lex_start:
 		}
 
 		conf_pbuf = strdup(mval);
+		if (conf_pbuf == NULL) {
+			cvs_log(LP_ERRNO, "failed to copy macro");
+			return (-1);
+		}
 		conf_pbind = 0;
 		goto lex_start;
 	}
