@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.8 1999/03/11 01:35:03 pjanzen Exp $
-.\" $EOM: isakmpd.conf.5,v 1.11 1999/02/25 11:09:39 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.9 1999/03/24 14:43:53 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.12 1999/03/24 11:01:56 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -89,6 +89,13 @@ a filter for the set of addresses the interfaces configured
 provides.  This means that we won't see if an address given
 here does not exist on this host, and thus no error is given for
 that case.
+.It Em Shared-SADB
+If this tag is defined, whatever the value is, some semantics of
+.Nm
+are changed so that multiple instances can run on top of one SADB
+and setup SAs with eachother.  Specifically this means replay
+protection will not be asked for, and errors that can occur when
+updating an SA with its parameters a 2nd time will be ignored.
 .El
 .It Em Phase 1
 ISAKMP SA negotiation parameter root
@@ -235,10 +242,8 @@ A list of transforms useable for implementing the protocol.
 Each of the list elements is a name of an <IPSec-transform>
 section.  See below.
 .It Em ReplayWindow
-The size of the window used for replay protection.  Normally this is should
-not be touched, unless you do local IPSec setups, i.e. both the sender and
-receiver are on the same box.  Then replay protection has to be turned off
-which is done by setting this parameter to -1.  Look at the
+The size of the window used for replay protection.  This is normally
+left alone.  Look at the
 .Nm ESP
 and
 .Nm AH
