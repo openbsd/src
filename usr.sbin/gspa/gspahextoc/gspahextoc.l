@@ -113,6 +113,7 @@ main(argc, argv)
 
 	printf(" * Do not edit manually..\n");
 	printf(" */\n");
+	printf("#include <sys/types.h>\n");
 	printf("u_int16_t tmscode[] = {\n\t");
 	yylex();
 	if (bufptr>0)
