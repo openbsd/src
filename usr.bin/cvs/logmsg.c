@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.2 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.3 2004/12/02 17:45:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -39,10 +39,9 @@
 #include "proto.h"
 
 
-#define CVS_LOGMSG_TERMWIDTH  80
 #define CVS_LOGMSG_BIGMSG     32000
 #define CVS_LOGMSG_FTMPL      "/tmp/cvsXXXXXXXXXX"
-#define CVS_LOGMSG_LOGPREFIX  "CVS:"
+#define CVS_LOGMSG_PREFIX     "CVS:"
 #define CVS_LOGMSG_LOGLINE \
 "----------------------------------------------------------------------"
 
@@ -124,8 +123,8 @@ cvs_logmsg_open(const char *path)
 		len = strlen(lbuf);
 		if (len == 0)
 			continue;
-		else if ((lcont == 0) && (strncmp(lbuf, CVS_LOGMSG_LOGPREFIX,
-		    strlen(CVS_LOGMSG_LOGPREFIX)) == 0))
+		else if ((lcont == 0) && (strncmp(lbuf, CVS_LOGMSG_PREFIX,
+		    strlen(CVS_LOGMSG_PREFIX)) == 0))
 			/* skip lines starting with the prefix */
 			continue;
 
@@ -150,12 +149,13 @@ cvs_logmsg_open(const char *path)
  */
 
 char*
-cvs_logmsg_get(const char *dir)
+cvs_logmsg_get(const char *dir, struct cvs_flist *files)
 {
-	int ret, fd, argc, fds[3];
-	size_t len;
-	char *argv[4], buf[16], path[MAXPATHLEN], *msg;
+	int ret, fd, argc, fds[3], nl;
+	size_t len, tlen;
+	char *argv[4], buf[16], path[MAXPATHLEN], fpath[MAXPATHLEN], *msg;
 	FILE *fp;
+	CVSFILE *cvsfp;
 	struct stat st1, st2;
 
 	msg = NULL;
@@ -176,19 +176,41 @@ cvs_logmsg_get(const char *dir)
 	fp = fdopen(fd, "w");
 	if (fp == NULL) {
 		cvs_log(LP_ERRNO, "failed to fdopen");
+		(void)close(fd);
+		if (unlink(path) == -1)
+			cvs_log(LP_ERRNO, "failed to unlink temporary file");
+		return (NULL);
 	} else {
 		fprintf(fp,
 		    "\n%s %s\n%s Enter Log.  Lines beginning with `%s' are "
 		    "removed automatically\n%s\n%s Commiting in %s\n"
-		    "%s\n%s Modified Files:\n",
-		    CVS_LOGMSG_LOGPREFIX, CVS_LOGMSG_LOGLINE,
-		    CVS_LOGMSG_LOGPREFIX, CVS_LOGMSG_LOGPREFIX,
-		    CVS_LOGMSG_LOGPREFIX, CVS_LOGMSG_LOGPREFIX,
-		    dir, CVS_LOGMSG_LOGPREFIX, CVS_LOGMSG_LOGPREFIX);
+		    "%s\n",
+		    CVS_LOGMSG_PREFIX, CVS_LOGMSG_LOGLINE,
+		    CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX,
+		    CVS_LOGMSG_PREFIX, CVS_LOGMSG_PREFIX,
+		    dir, CVS_LOGMSG_PREFIX);
 
 		/* XXX list files here */
+		fprintf(fp, "%s Modified Files:", CVS_LOGMSG_PREFIX);
+		nl = 1;
+		TAILQ_FOREACH(cvsfp, files, cf_list) {
+			/* take the space into account */
+			cvs_file_getpath(cvsfp, fpath, sizeof(fpath));
+			len = strlen(fpath) + 1;
+			if (tlen + len >= 72)
+				nl = 1;
 
-		fprintf(fp, "%s %s\n", CVS_LOGMSG_LOGPREFIX,
+			if (nl) {
+				fprintf(fp, "\n%s\t", CVS_LOGMSG_PREFIX);
+				tlen = 8;
+				nl = 0;
+			}
+
+			fprintf(fp, " %s", fpath);
+			tlen += len;
+		}
+
+		fprintf(fp, "\n%s %s\n", CVS_LOGMSG_PREFIX,
 		    CVS_LOGMSG_LOGLINE);
 	}
 	(void)fflush(fp);
