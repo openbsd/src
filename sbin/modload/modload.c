@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.22 2001/03/15 03:07:52 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.23 2001/03/15 18:00:37 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ linkcmd(kernel, entry, outfile, address, object)
 	if ((pid = fork()) < 0)
 		err(18, "fork");
 
-	if(pid == 0) {
+	if (pid == 0) {
 		execl(_PATH_LD, "ld", LDSYMTABLE, kernel, "-e", entrybuf, "-o",
 		    outfile, LDTEXTSTART, addrbuf, object, NULL);
 		exit(128 + errno);
@@ -109,17 +109,17 @@ linkcmd(kernel, entry, outfile, address, object)
 
 	waitpid(pid, &status, 0);
 
-	if(WIFSIGNALED(status)) {
+	if (WIFSIGNALED(status)) {
 		errx(1, "%s got signal: %s", _PATH_LD,
 		sys_siglist[WTERMSIG(status)]);
 	}
 
-	if(WEXITSTATUS(status) > 128) {
+	if (WEXITSTATUS(status) > 128) {
 		errno = WEXITSTATUS(status) - 128;
 		err(1, "exec(%s)", _PATH_LD);
 	}
 
-	if(WEXITSTATUS(status) != 0)
+	if (WEXITSTATUS(status) != 0)
 		errx(1, "%s: return code %d", _PATH_LD, WEXITSTATUS(status));
 }
 
@@ -167,7 +167,7 @@ cleanup()
 		fileopen &= ~MOD_OPEN;
 	}
 
-	if(dounlink && unlink(modout) != 0) {
+	if (dounlink && unlink(modout) != 0) {
 		err(17, "unlink(%s)", modout);
 		dounlink = 0;
 	}
@@ -178,20 +178,13 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int c;
 	char *kname = _PATH_UNIX;
-	char *entry = NULL;
-	char *post = NULL;
-	char *out = NULL;
-	char *modobj;
-	char *p;
+	char *entry = NULL, *post = NULL, *out = NULL, *modobj, *p;
 	struct exec info_buf;
 	struct stat stb;
 	u_int modsize;	/* XXX */
 	u_int modentry;	/* XXX */
-	struct nlist *nlp;
-	int strtablen, numsyms;
-
+	int strtablen, c;
 	struct lmc_loadbuf ldbuf;
 	int sz, bytesleft, old = 0;
 	char buf[MODIOBUF];
@@ -257,7 +250,7 @@ main(argc, argv)
 	if (out == NULL) {
 		p = strrchr(modobj, '/');
 		if (p)
-			p++;                    /* skip over '/' */
+			p++;			/* skip over '/' */
 		else
 			p = modobj;
 		snprintf(modout, sizeof modout, "%s%sut", _PATH_TMP, p);
@@ -272,16 +265,16 @@ main(argc, argv)
 	if (!entry) {   /* calculate default entry point */
 		entry = strrchr(modobj, '/');
 		if (entry)
-			entry++;                /* skip over '/' */
+			entry++;		/* skip over '/' */
 		else
 			entry = modobj;
-		entry = strdup(entry);          /* so we can modify it */
+		entry = strdup(entry);		/* so we can modify it */
 		if (!entry)
 			errx(1, "Could not allocate memory");
 		entry[strlen(entry) - 2] = '\0'; /* chop off .o */
 	}
 
-	if((modfd = open(out, O_RDWR | O_EXCL | O_CREAT, 0600)) < 0)
+	if ((modfd = open(out, O_RDWR | O_EXCL | O_CREAT, 0600)) < 0)
 		err(1, "creating %s", out);
 	close(modfd);
 
@@ -308,7 +301,7 @@ main(argc, argv)
 	 * stat for filesize to figure out string table size
 	 */
 	if (fstat(modfd, &stb) == -1)
-	    err(3, "fstat `%s'", out);
+		err(3, "fstat `%s'", out);
 
 	/*
 	 * Close the dummy module -- we have our sizing information.
@@ -339,22 +332,25 @@ main(argc, argv)
 	resrv.addr = 0;		/* returned */
 	strtablen = stb.st_size - N_STROFF(info_buf);
 	if (symtab) {
-	    /* XXX TODO:  grovel through symbol table looking
-	       for just the symbol table stuff from the new module,
-	       and skip the stuff from the kernel. */
-	    resrv.sym_size = info_buf.a_syms + strtablen;
-	    resrv.sym_symsize = info_buf.a_syms;
+		/*
+		 * XXX TODO:  grovel through symbol table looking
+		 * for just the symbol table stuff from the new module,
+		 * and skip the stuff from the kernel.
+		*/
+		resrv.sym_size = info_buf.a_syms + strtablen;
+		resrv.sym_symsize = info_buf.a_syms;
 	} else
-	    resrv.sym_size = resrv.sym_symsize = 0;
+		resrv.sym_size = resrv.sym_symsize = 0;
 
 	if (ioctl(devfd, LMRESERV, &resrv) == -1) {
-	    if (symtab)
-		warn("not loading symbols: kernel does not support symbol table loading");
+		if (symtab)
+			warn("not loading symbols: "
+			    "kernel does not support symbol table loading");
 	doold:
-	    symtab = 0;
-	    if (ioctl(devfd, LMRESERV_O, &resrv) == -1)
-		err(9, "can't reserve memory");
-	    old = 1;
+		symtab = 0;
+		if (ioctl(devfd, LMRESERV_O, &resrv) == -1)
+			err(9, "can't reserve memory");
+		old = 1;
 	}
 	fileopen |= PART_RESRV;
 
@@ -392,8 +388,7 @@ main(argc, argv)
 	 * Transfer the relinked module to kernel memory in chunks of
 	 * MODIOBUF size at a time.
 	 */
-	for (bytesleft = info_buf.a_text + info_buf.a_data;
-	    bytesleft > 0;
+	for (bytesleft = info_buf.a_text + info_buf.a_data; bytesleft > 0;
 	    bytesleft -= sz) {
 		sz = min(bytesleft, MODIOBUF);
 		if (read(modfd, buf, sz) != sz)
@@ -405,41 +400,39 @@ main(argc, argv)
 	}
 
 	if (symtab) {
-	    /*
-	     * Seek to the symbol table to start loading it...
-	     */
-	    if (lseek(modfd, N_SYMOFF(info_buf), SEEK_SET) == -1)
-		err(12, "lseek");
+		/*
+		 * Seek to the symbol table to start loading it...
+		 */
+		if (lseek(modfd, N_SYMOFF(info_buf), SEEK_SET) == -1)
+			err(12, "lseek");
 
-	    /*
-	     * Read and load the symbol table entries.
-	     */
-	    for (bytesleft = info_buf.a_syms;
-		 bytesleft > 0;
-		 bytesleft -= sz) {
-		sz = min(bytesleft, MODIOBUF);
-		if (read(modfd, buf, sz) != sz)
-			err(14, "read");
-		ldbuf.cnt = sz;
-		ldbuf.data = buf;
-		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
-		    err(11, "error transferring sym buffer");
-	    }
+		/*
+		 * Read and load the symbol table entries.
+		 */
+		for (bytesleft = info_buf.a_syms; bytesleft > 0;
+		    bytesleft -= sz) {
+			sz = min(bytesleft, MODIOBUF);
+			if (read(modfd, buf, sz) != sz)
+				err(14, "read");
+			ldbuf.cnt = sz;
+			ldbuf.data = buf;
+			if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
+				err(11, "error transferring sym buffer");
+		    }
 
-	    /*
-	     * Read the string table and load it.
-	     */
-	    for (bytesleft = strtablen;
-		 bytesleft > 0;
-		 bytesleft -= sz) {
-		sz = min(bytesleft, MODIOBUF);
-		if (read(modfd, buf, sz) != sz)
-			err(14, "read");
-		ldbuf.cnt = sz;
-		ldbuf.data = buf;
-		if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
-		    err(11, "error transferring stringtable buffer");
-	    }
+		/*
+		 * Read the string table and load it.
+		 */
+		for (bytesleft = strtablen; bytesleft > 0;
+		    bytesleft -= sz) {
+			sz = min(bytesleft, MODIOBUF);
+			if (read(modfd, buf, sz) != sz)
+				err(14, "read");
+			ldbuf.cnt = sz;
+			ldbuf.data = buf;
+			if (ioctl(devfd, LMLOADSYMS, &ldbuf) == -1)
+				err(11, "error transferring stringtable buffer");
+		}
 	}
 
 	/*
@@ -454,17 +447,20 @@ main(argc, argv)
 	 * zero on failure.
 	 */
 	if (ioctl(devfd, LMREADY, &modentry) == -1) {
-	    if (errno == EINVAL && !old) {
-		if (fileopen & MOD_OPEN)
-		    close(modfd);
-		/* PART_RESRV is not true since the kernel cleans up
-		   after a failed LMREADY */
-		fileopen &= ~(MOD_OPEN|PART_RESRV);
-		/* try using oldstyle */
-		warn("module failed to load using new version; trying old version");
-		goto doold;
-	    } else
-		err(14, "error initializing module");
+		if (errno == EINVAL && !old) {
+			if (fileopen & MOD_OPEN)
+				close(modfd);
+			/*
+			 * PART_RESRV is not true since the kernel cleans
+			 * up after a failed LMREADY
+			*/
+			fileopen &= ~(MOD_OPEN|PART_RESRV);
+			/* try using oldstyle */
+			warn("module failed to load using new version; "
+			    "trying old version");
+			goto doold;
+		} else
+			err(14, "error initializing module");
 	}
 
 	/*
