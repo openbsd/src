@@ -1,4 +1,5 @@
-/*	$OpenBSD: pwd_check.c,v 1.8 2004/07/13 21:09:48 millert Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.9 2004/07/13 21:29:12 millert Exp $	*/
+
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -83,17 +84,17 @@ pwd_check(login_cap_t *lc, char *password)
 {
 	regex_t rgx;
 	int i, res, min_len;
-	char *option;
+	char *checker;
 	int pipefds[2];
 	pid_t child;
 
-	min_len = (int) login_getcapnum(lc, "minpasswordlen", 6, 6);
+	min_len = (int)login_getcapnum(lc, "minpasswordlen", 6, 6);
 	if (min_len > 0 && strlen(password) < min_len) {
 		printf("Please enter a longer password.\n");
 		return (0);
 	}
 
-	for (i = 0; i < sizeof(patterns)/sizeof(struct pattern); i++) {
+	for (i = 0; i < sizeof(patterns) / sizeof(struct pattern); i++) {
 		if (regcomp(&rgx, patterns[i].match, patterns[i].flags) != 0)
 			continue;
 		res = regexec(&rgx, password, 0, NULL, 0);
@@ -104,8 +105,9 @@ pwd_check(login_cap_t *lc, char *password)
 		}
 	}
 
-	/* If no checker is specified in login.conf we accept the password */
-	if ((option = login_getcapstr(lc, "passwordcheck", NULL, NULL)) == NULL)
+	/* If no external checker is specified, just accept the password */
+	checker = login_getcapstr(lc, "passwordcheck", NULL, NULL);
+	if (checker == NULL)
 		return (1);
 
 	/* Okay, now pass control to an external program */
@@ -128,7 +130,7 @@ pwd_check(login_cap_t *lc, char *password)
 		close(pipefds[0]);
 		close(pipefds[1]);
 
-		argp[2] = option;
+		argp[2] = checker;
 		if (execv(_PATH_BSHELL, argp) == -1)
 			exit(1);
 		/* NOT REACHED */
@@ -137,7 +139,6 @@ pwd_check(login_cap_t *lc, char *password)
 		goto out;
 	}
 	close(pipefds[0]);
-	free(option);
 
 	/* Send the password to STDIN of child */
 	write(pipefds[1], password, strlen(password) + 1);
@@ -145,11 +146,13 @@ pwd_check(login_cap_t *lc, char *password)
 
 	/* get the return value from the child */
 	wait(&child);
-	if (WIFEXITED(child) && WEXITSTATUS(child) == 0)
+	if (WIFEXITED(child) && WEXITSTATUS(child) == 0) {
+		free(checker);
 		return (1);
+	}
 
  out:
-	free(option);
+	free(checker);
 	printf("Please use a different password. Unusual capitalization,\n");
 	printf("control characters, or digits are suggested.\n");
 	return (0);
@@ -160,24 +163,18 @@ pwd_gettries(login_cap_t *lc)
 {
 	quad_t ntries;
 
-	/*
-	 * Check login.conf
-	 */
 	if ((ntries = login_getcapnum(lc, "passwordtries", -1, -1)) != -1) {
-		if (ntries > INT_MAX || ntries < 0) {
-			fprintf(stderr,
-			    "Warning: pwdtries out of range in /etc/login.conf");
-			goto out;
-		}
-		return((int)ntries);
+		if (ntries > 0 && ntries <= INT_MAX)
+			return((int)ntries);
+		fprintf(stderr,
+		    "Warning: pwdtries out of range in /etc/login.conf");
 	}
 
 	/*
-	 * If no amount of tries is specified, return a default of
-	 * 3, meaning that after 3 attempts where the user is foiled
-	 * by the password checks, it will no longer be checked and
-	 * they can set it to whatever they like.
+	 * If no amount of tries is specified, return a default of 3,
+	 * meaning that after 3 attempts where the user is foiled by the
+	 * password checks, it will no longer be checked and they can set
+	 * it to whatever they like.  This is the historic BSD behavior.
 	 */
-	out:
-		return (3);
+	return (3);
 }

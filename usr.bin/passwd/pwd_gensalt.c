@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_gensalt.c,v 1.18 2004/07/13 21:09:48 millert Exp $ */
+/*	$OpenBSD: pwd_gensalt.c,v 1.19 2004/07/13 21:29:12 millert Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -48,9 +48,8 @@ int	pwd_gensalt(char *, int, login_cap_t *, char);
 int
 pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 {
-	char	option[LINE_MAX], *next, *now, *cipher;
+	char *next, *now, *cipher;
 
-	option[0] = '\0';
 	*salt = '\0';
 
 	switch (type) {
@@ -63,22 +62,13 @@ pwd_gensalt(char *salt, int saltlen, login_cap_t *lc, char type)
 		break;
 	}
 
-	/*
-	 * Check login.conf
-	 */
-	if ((next = login_getcapstr(lc, cipher, NULL, NULL)) != NULL) {
-		strlcpy(option, next, sizeof(option));
-		free(next);
-	} 
-
-	if (*option == 0) {
-		if (type == 'l')
-			strlcpy(option, "old", sizeof(option));
+	if ((next = login_getcapstr(lc, cipher, NULL, NULL)) == NULL) {
+		if (type == 'y')
+			next = "old";
 		else		
-			strlcpy(option, "blowfish,6", sizeof(option));
+			next = "blowfish,6";
 	}
 
-	next = option;
 	now = strsep(&next, ",");
 	if (!strcmp(now, "old")) {
 		if (saltlen < 3)
