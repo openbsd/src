@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.5 2002/02/25 01:14:31 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.42 2002/03/31 21:49:12 fgsch Exp 
+#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.6 2002/04/14 23:26:46 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.43 2002/04/11 20:28:49 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.58 2002/03/31 21:51:38 fgsch Exp $
+#	$OpenBSD: MAKEDEV,v 1.59 2002/04/14 23:27:01 deraadt Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -185,8 +185,9 @@ U=`unt $i`
 
 case $i in
 ramdisk)
-	R std random bpf0 sd0 sd1 rd0
+	R std random bpf0 sd0 sd1 rd0 cd0
 	;;
+
 std)
 	M console	c 0 0 600
 	M tty		c 2 0
