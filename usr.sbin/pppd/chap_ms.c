@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.8 2003/06/11 23:33:29 deraadt Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.9 2004/06/29 22:04:44 millert Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -45,7 +45,7 @@
 #if 0
 static char rcsid[] = "Id: chap_ms.c,v 1.8 1998/04/01 00:15:43 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap_ms.c,v 1.8 2003/06/11 23:33:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chap_ms.c,v 1.9 2004/06/29 22:04:44 millert Exp $";
 #endif
 #endif
 
@@ -280,8 +280,11 @@ ChapMS_NT(rchallenge, rchallenge_len, secret, secret_len, response)
 	unicodePassword[i * 2] = (u_char)secret[i];
 
     MD4Init(&md4Context);
+#ifdef __OpenBSD__
+    MD4Update(&md4Context, unicodePassword, secret_len * 2);	/* Unicode is 2 bytes/char */
+#else
     MD4Update(&md4Context, unicodePassword, secret_len * 2 * 8);	/* Unicode is 2 bytes/char, *8 for bit count */
-
+#endif
     MD4Final(hash, &md4Context);	/* Tell MD4 we're done */
 
     ChallengeResponse(rchallenge, hash, response->NTResp);
