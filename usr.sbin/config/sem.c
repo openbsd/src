@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.16 2000/01/03 19:27:23 angelos Exp $	*/
+/*	$OpenBSD: sem.c,v 1.17 2000/10/28 21:51:38 angelos Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -893,8 +893,9 @@ addpseudo(name, number)
 		return;
 	}
 	if (ht_lookup(devitab, name) != NULL) {
-		error("`%s' already defined", name);
-		return;
+		warnx("warning: duplicate definition of `%s', will use latest definition", name);
+		ht_remove(devitab, name);
+		d->d_umax = 0;
 	}
 	i = newdevi(name, number - 1, d);	/* foo 16 => "foo0..foo15" */
 	if (ht_insert(devitab, name, i))
