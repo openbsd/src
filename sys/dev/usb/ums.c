@@ -1,4 +1,5 @@
 /*	$NetBSD: ums.c,v 1.44 2000/06/01 14:29:01 augustss Exp $	*/
+/*	$OpenBSD: ums.c,v 1.2 2000/09/07 22:17:48 matthieu Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -267,8 +268,9 @@ USB_ATTACH(ums)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	printf("%s: %d buttons%s\n", USBDEVNAME(sc->sc_dev),
-	       sc->nbuttons, sc->flags & UMS_Z ? " and Z dir." : "");
+	printf("%s: %d button%s%s\n", USBDEVNAME(sc->sc_dev),
+	       sc->nbuttons, sc->nbuttons == 1 ? "" : "s", 
+	       sc->flags & UMS_Z ? " and Z dir." : "");
 
 	for (i = 1; i <= sc->nbuttons; i++)
 		hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, i),
