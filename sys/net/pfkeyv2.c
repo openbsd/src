@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.50 2000/11/17 04:08:44 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.51 2000/11/17 05:08:14 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -60,7 +60,7 @@ static struct sadb_alg aalgs[] =
 {
     { SADB_AALG_SHA1HMAC, 0, 160, 160 },
     { SADB_AALG_MD5HMAC, 0, 128, 128 },
-    { SADB_X_AALG_RIPEMD160HMAC, 0, 160, 160 }
+    { SADB_AALG_RIPEMD160HMAC, 0, 160, 160 }
 };
 
 void export_address(void **, struct sockaddr *);
@@ -227,7 +227,7 @@ export_sa(void **p, struct tdb *tdb)
 		break;
 
 	    case CRYPTO_RIPEMD160_HMAC:
-		sadb_sa->sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+		sadb_sa->sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
 		break;
 
 	    case CRYPTO_MD5_KPDK:
@@ -2285,7 +2285,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	  if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
 			   sizeof("hmac_ripemd160")))
 	  {
-	      sadb_comb->sadb_comb_auth = SADB_X_AALG_RIPEMD160HMAC;
+	      sadb_comb->sadb_comb_auth = SADB_AALG_RIPEMD160HMAC;
 	      sadb_comb->sadb_comb_auth_minbits = 160;
 	      sadb_comb->sadb_comb_auth_maxbits = 160;
 	  }
