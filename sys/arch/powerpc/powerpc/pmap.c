@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.23 2001/02/20 04:29:08 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.24 2001/02/22 03:26:24 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -94,6 +94,152 @@ dump_avail()
 	}
 }
 #endif
+
+
+/* virtual to physical map */
+static inline int
+VP_SR(va)
+	paddr_t va;
+{
+	return (va >> VP_SR_POS) & VP_SR_MASK;
+}
+static inline int
+VP_IDX1(va)
+	paddr_t va;
+{
+	return (va >> VP_IDX1_POS) & VP_IDX1_MASK;
+}
+
+static inline int
+VP_IDX2(va)
+	paddr_t va;
+{
+	return (va >> VP_IDX2_POS) & VP_SR_MASK;
+}
+
+int
+pmap_vp_valid(pm, va)
+	pmap_t pm;
+	vaddr_t va;
+{
+	pmapv_t *vp1;
+	vp1 = pm->vps[VP_SR(va)];
+	if (vp1 != NULL) {
+		return (vp1[VP_IDX1(va)] & (1 << VP_IDX2(va)));
+	}
+	return 0;
+}
+int
+pmap_vp_remove(pm, va)
+	pmap_t pm;
+	vaddr_t va;
+{
+	pmapv_t *vp1;
+	int s;
+	int retcode;
+	retcode = 0;
+	vp1 = pm->vps[VP_SR(va)];
+#ifdef DEBUG
+	printf("pmap_vp_remove: removing va %x pm %x", va, pm);
+#endif
+	if (vp1 != NULL) {
+		s = splhigh();
+		retcode = vp1[VP_IDX1(va)] & (1 << VP_IDX2(va));
+		vp1[VP_IDX1(va)] &= ~(1 << VP_IDX2(va));
+		splx(s);
+	}
+#ifdef DEBUG
+	printf(" ret %x\n", retcode);
+#endif
+	return retcode;
+}
+void
+pmap_vp_enter(pm, va, pa)
+	pmap_t pm;
+	vaddr_t va;
+	paddr_t pa;
+{
+	pmapv_t *vp1;
+	pmapv_t *mem1;
+	int s;
+	int idx;
+	idx = VP_SR(va);
+	vp1 = pm->vps[idx];
+#ifdef DEBUG
+	printf("pmap_vp_enter: pm %x va %x vp1 %x idx %x ", pm, va, vp1, idx);
+#endif
+	if (vp1 == NULL) {
+#ifdef DEBUG
+		printf("l1 entry idx %x ", idx);
+#endif
+		if (pm == pmap_kernel()) {
+			printf(" irk kernel allocating map?");
+		} else {
+#ifdef UVM
+			if (!(mem1 = (pmapv_t *)uvm_km_zalloc(kernel_map, NBPG)))
+				panic("pmap_vp_enter: uvm_km_zalloc() failed");
+#else
+			if (!(mem1 = (pmapv_t *)kmem_alloc(kernel_map, NBPG)))
+				panic("pmap_vp_enter: kmem_alloc() failed");
+#endif
+		}
+		pm->vps[idx] = mem1;
+#ifdef DEBUG
+		printf("got %x ", mem1);
+#endif
+		vp1 = mem1;
+	}
+#ifdef DEBUG
+	printf("l2 idx %x\n", VP_IDX2(va));
+#endif
+
+	s = splhigh();
+	vp1[VP_IDX1(va)] |= (1 << VP_IDX2(va));
+	splx(s);
+	return;
+}
+
+void
+pmap_vp_destroy(pm)
+	pmap_t pm;
+{
+	pmapv_t *vp1;
+	int sr, idx1;
+
+	for (sr = 0; sr < 32; sr++) {
+		vp1 = pm->vps[sr];
+		if (vp1 == NULL) {
+			continue;
+		}
+#ifdef SANITY
+		for(idx1 = 0; idx1 < 1024; idx1++) {
+			if (vp1[idx1] != 0) {
+				printf("mapped page at %x \n"
+					0); /* XXX what page was this... */
+				vp1[idx2] = 0;
+
+			}
+		}
+#endif
+#ifdef UVM
+		uvm_km_free(kernel_map, (vaddr_t)vp1, NBPG);
+#else
+		kmem_free(kernel_map, (vm_offset_t)vp1, NBPG);
+#endif
+		pm->vps[sr] = 0;
+	}
+}
+static int vp_page0[1024];
+static int vp_page1[1024];
+void
+pmap_vp_preinit()
+{
+	pmap_t pm = pmap_kernel();
+	/* magic addresses are 0xe0000000, 0xe8000000 */
+	pm->vps[VP_SR(0xe0000000)] = vp_page0;
+	pm->vps[VP_SR(0xe8000000)] = vp_page1;
+}
+
 
 /*
  * This is a cache of referenced/modified bits.
@@ -541,6 +687,7 @@ dump_avail();
 	asm volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((u_int)ptable | (ptab_mask >> 10)));
 	tlbia();
+	pmap_vp_preinit();
 	nextavail = avail->start;
 }
 
@@ -793,6 +940,7 @@ pmap_release(pm)
 	int i, j;
 	int s;
 
+	pmap_vp_destroy(pm);
 	if (!pm->pm_sr[0])
 		panic("pmap_release");
 	i = pm->pm_sr[0] / 16;
@@ -1157,6 +1305,8 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 	pmap_remove(pm, va, va + NBPG-1);
 
 	pm->pm_stats.resident_count++;
+
+	pmap_vp_enter(pm, va, pa);
 	
 	/*
 	 * Compute the HTAB index.
@@ -1255,13 +1405,19 @@ pmap_remove(pm, va, endva)
 	vm_offset_t va, endva;
 {
 	int idx, i, s;
+	int found; /* if found, we are done, only one mapping per va */
 	sr_t sr;
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;
 	struct pv_entry *pv;
 	
 	s = splimp();
-	while (va < endva) {
+	for (; va < endva; va += NBPG) {
+		if (0 == pmap_vp_remove(pm, va)) {
+			/* no mapping */
+			continue;
+		}
+		found = 0;
 		sr = ptesr(pm->pm_sr, va);
 		idx = pteidx(sr, va);
 		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++)
@@ -1272,7 +1428,12 @@ pmap_remove(pm, va, endva)
 				tlbsync();
 				pmap_remove_pv(pm, idx, va, ptp->pte_lo);
 				pm->pm_stats.resident_count--;
+				found = 1;
+				break;
 			}
+		if (found) {
+			continue;
+		}
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
 				ptp->pte_hi &= ~PTE_VALID;
@@ -1281,7 +1442,12 @@ pmap_remove(pm, va, endva)
 				tlbsync();
 				pmap_remove_pv(pm, idx, va, ptp->pte_lo);
 				pm->pm_stats.resident_count--;
+				found = 1;
+				break;
 			}
+		if (found) {
+			continue;
+		}
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
 			if (ptematch(&po->po_pte, sr, va, 0)) {
@@ -1289,9 +1455,9 @@ pmap_remove(pm, va, endva)
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
 				pm->pm_stats.resident_count--;
+				break;
 			}
 		}
-		va += NBPG;
 	}
 	splx(s);
 }
@@ -1530,7 +1696,6 @@ pmap_page_protect(pa, prot)
 	pte_t *ptp;
 	struct pte_ovfl *po, *npo;
 	int i, s, pind, idx;
-	int found;
 	struct pmap *pm;
 	struct pv_entry *pv;
 	

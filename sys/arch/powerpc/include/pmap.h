@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.3 1997/01/09 03:03:46 rahnds Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.4 2001/02/22 03:26:23 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -49,12 +49,25 @@ typedef u_int sr_t;
 #define	SR_VSID		0x00ffffff
 
 #ifndef _LOCORE
+/* V->P mapping data */
+typedef int pmapv_t;
+#define VP_SR_SIZE	32
+#define VP_SR_MASK	VP_SR_SIZE-1
+#define VP_SR_POS 	27
+#define VP_IDX1_SIZE	1024
+#define VP_IDX1_MASK	VP_IDX1_SIZE-1
+#define VP_IDX1_POS 	17
+#define VP_IDX2_SIZE	32
+#define VP_IDX2_MASK	VP_IDX2_SIZE-1
+#define VP_IDX2_POS 	12
+
 /*
  * Pmap stuff
  */
 struct pmap {
 	sr_t pm_sr[16];		/* segments used in this pmap */
 	int pm_refs;		/* ref count */
+	pmapv_t *vps[VP_SR_SIZE];	/* virtual to physical table */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 
