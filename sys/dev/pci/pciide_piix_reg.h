@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.7 2003/10/16 21:35:16 grange Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.8 2003/11/07 21:34:56 grange Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.5 2001/01/05 15:29:40 bouyer Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  * "82371FB (PIIX) and 82371SB (PIIX3) PCI ISA IDE XCELERATOR"
  * "82371AB PCI-TO-ISA / IDE XCELERATOR (PIIX4)" and
  * "Intel 82801AA (ICH) and Intel 82801AB (ICH0) I/O Controller Hub"
- * available from http://developers.intel.com/
+ * available from http://developer.intel.com/
  */
 
 /*
