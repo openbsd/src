@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gsc.4,v 1.16 2003/06/06 10:29:42 jmc Exp $
+.\"	$OpenBSD: gsc.4,v 1.17 2003/06/19 20:27:19 deraadt Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -64,7 +64,8 @@ the performance of the whole I/O-subsystem.
 The system includes machine-dependent
 .Tn GSC
 drivers, sorted by driver name:
-.Bl -tag -width pcdisplay -offset indent
+.Pp
+.Bl -tag -width 12n -offset indent -compact
 .It Xr com 4
 RS-232 ports.
 .It Xr gsckbc 4
@@ -84,9 +85,8 @@ SCSI I/O processor.
 Some of these
 .Tn GSC
 devices also have
-.Tn PCI
-,
-.Tn EISA
+.Tn PCI ,
+.Tn EISA ,
 or
 .Tn ISA
 equivalents.
@@ -106,4 +106,4 @@ The
 .Nm
 driver
 appeared in
-.Ox 2.4 .
+.Ox 2.6 .
