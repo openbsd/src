@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.29 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: conf.h,v 1.30 2004/06/25 20:25:34 hshoexer Exp $	 */
 /* $EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	 */
 
 /*
@@ -57,6 +57,7 @@
 #define CONF_DFLT_RETRANSMITS          "3"
 #define CONF_DFLT_EXCH_MAX_TIME        "120"
 
+#define CONF_DFLT_USE_KEYNOTE          "yes"
 #define CONF_DFLT_POLICY_FILE          ISAKMPD_ROOT "isakmpd.policy"
 
 #define CONF_DFLT_X509_CA_DIR          ISAKMPD_ROOT "ca/"

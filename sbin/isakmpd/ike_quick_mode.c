@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.83 2004/06/20 17:17:35 ho Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.84 2004/06/25 20:25:34 hshoexer Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -111,6 +111,11 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	struct keynote_deckey dc;
 	X509_NAME      *subject;
 #endif
+
+	/* Do we want to use keynote policies? */
+	if (ignore_policy ||
+	    strncmp("yes", conf_get_str("General", "Use-Keynote"), 3))
+		return 1;
 
 	/* Initialize if necessary -- e.g., if pre-shared key auth was used */
 	if (isakmp_sa->policy_id < 0) {

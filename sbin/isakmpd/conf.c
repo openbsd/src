@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.70 2004/06/14 13:53:31 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.71 2004/06/25 20:25:34 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -471,6 +471,7 @@ conf_load_defaults(int tr)
 	conf_set(tr, "General", "Retransmits", CONF_DFLT_RETRANSMITS, 0, 1);
 	conf_set(tr, "General", "Exchange-max-time", CONF_DFLT_EXCH_MAX_TIME,
 	    0, 1);
+	conf_set(tr, "General", "Use-Keynote", CONF_DFLT_USE_KEYNOTE, 0, 1);
 	conf_set(tr, "General", "Policy-file", CONF_DFLT_POLICY_FILE, 0, 1);
 	conf_set(tr, "General", "Pubkey-directory", CONF_DFLT_PUBKEY_DIR, 0,
 	    1);

@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.h,v 1.14 2004/04/28 20:20:32 hshoexer Exp $	 */
+/* $OpenBSD: policy.h,v 1.15 2004/06/25 20:25:34 hshoexer Exp $	 */
 /* $EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
@@ -38,6 +38,7 @@
 #define PRIVATE_KEY_FILE	"private_key"
 #endif
 
+extern int	ignore_policy;
 extern int      policy_asserts_num;
 extern int      x509_policy_asserts_num;
 extern int      x509_policy_asserts_num_alloc;

@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.76 2004/06/24 15:58:58 hshoexer Exp $	 */
+/* $OpenBSD: policy.c,v 1.77 2004/06/25 20:25:34 hshoexer Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -67,6 +67,7 @@
 #include "x509.h"
 
 char          **policy_asserts = NULL;
+int		ignore_policy = 0;
 int             policy_asserts_num = 0;
 struct exchange *policy_exchange = 0;
 struct sa      *policy_sa = 0;
@@ -1937,6 +1938,11 @@ policy_init(void)
 	int             fd, i;
 
 	LOG_DBG((LOG_POLICY, 30, "policy_init: initializing"));
+
+	/* Do we want to use the policy modules?  */
+	if (ignore_policy ||
+	    strncmp("yes", conf_get_str("General", "Use-Keynote"), 3))
+		return;
 
 	/* Get policy file from configuration.  */
 	policy_file = conf_get_str("General", "Policy-file");
