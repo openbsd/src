@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hp.4,v 1.9 2002/10/01 21:05:31 miod Exp $
+.\"	$OpenBSD: hp.4,v 1.10 2003/03/12 07:36:44 jmc Exp $
 .\"	$NetBSD: hp.4,v 1.4 1996/03/05 15:28:50 ragge Exp $
 .\"
 .\" Copyright (c) 1980,1988, 1991 Regents of the University of California.
@@ -60,14 +60,14 @@ described in
 The script
 .Xr MAKEDEV 8
 should be used to create the special files; if a special file
-needs to be created by hand consult
+needs to be created by hand, consult
 .Xr mknod 8 .
 It is recommended as a security precaution to not create special files
 for devices which may never be installed.
 .Pp
 The first sector of each disk contains both a first-stage bootstrap program
 and a disk label containing geometry information and partition layouts (see
-.Xr disklabel 5 .
+.Xr disklabel 5 ) .
 This sector is normally write-protected, and disk-to-disk copies should
 avoid copying this sector.
 The label may be updated with
