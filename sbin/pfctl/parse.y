@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.117 2002/07/13 18:36:02 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.118 2002/07/15 13:36:02 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1618,6 +1618,14 @@ rule_consistent(struct pf_rule *r)
 	if (r->rule_flag & PFRULE_FRAGMENT && (r->src.port_op ||
 	    r->dst.port_op || r->flagset || r->type || r->code)) {
 		yyerror("fragments can be filtered only on IP header fields");
+		problems++;
+	}
+	if (r->rule_flag & PFRULE_RETURNRST && r->proto != IPPROTO_TCP) {
+		yyerror("return-rst can only be applied to TCP rules");
+		problems++;
+	}
+	if (r->action == PF_DROP && r->keep_state) {
+		yyerror("keep state on block rules doesn't make sense");
 		problems++;
 	}
 	return (-problems);
