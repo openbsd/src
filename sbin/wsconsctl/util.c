@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2001/06/30 02:12:57 mickey Exp $ */
+/*	$OpenBSD: util.c,v 1.6 2001/07/06 21:52:34 mickey Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -56,7 +56,7 @@ struct nameint {
 	char *name;
 };
 
-static struct nameint kbtype_tab[] = {
+static const struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_LK201,	"lk201" },
 	{ WSKBD_TYPE_LK401,	"lk401" },
 	{ WSKBD_TYPE_PC_XT,	"pc-xt" },
@@ -67,14 +67,18 @@ static struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_ADB,	"adb" },
 };
 
-static struct nameint mstype_tab[] = {
+static const struct nameint mstype_tab[] = {
 	{ WSMOUSE_TYPE_VSXXX,	"dec-tc" },
 	{ WSMOUSE_TYPE_PS2,	"ps2" },
 	{ WSMOUSE_TYPE_USB,	"usb" },
+	{ WSMOUSE_TYPE_LMS,	"lms" },
+	{ WSMOUSE_TYPE_MMS,	"mms" },
 	{ WSMOUSE_TYPE_TPANEL,	"touch-pannel" },
+	{ WSMOUSE_TYPE_NEXT,	"NeXT" },
+	{ WSMOUSE_TYPE_ARCHIMEDES, "archimedes" }
 };
 
-static struct nameint dpytype_tab[] = {
+static const struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_UNKNOWN,	"unknown" },
 	{ WSDISPLAY_TYPE_PM_MONO,	"dec-pm-mono" },
 	{ WSDISPLAY_TYPE_PM_COLOR,	"dec-pm-color" },
@@ -92,19 +96,27 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_PXG,		"dex-pxg" },
 	{ WSDISPLAY_TYPE_TX,		"dex-tx" },
 	{ WSDISPLAY_TYPE_HPCFB,		"generic-hpc" },
+	{ WSDISPLAY_TYPE_VIDC,		"arm-vidc" },
+	{ WSDISPLAY_TYPE_SPX,		"dec-spx" },
+	{ WSDISPLAY_TYPE_GPX,		"dec-gpx" },
+	{ WSDISPLAY_TYPE_LCG,		"dec-lcg" },
+	{ WSDISPLAY_TYPE_VAX_MONO,	"dec-mono" },
+	{ WSDISPLAY_TYPE_SB_P9100,	"p9100" },
+	{ WSDISPLAY_TYPE_EGA,		"ega" },
+	{ WSDISPLAY_TYPE_DCPVR,		"powervr" }
 };
 
-static struct nameint kbdenc_tab[] = {
+static const struct nameint kbdenc_tab[] = {
 	KB_ENCTAB
 };
 
-static struct nameint kbdvar_tab[] = {
+static const struct nameint kbdvar_tab[] = {
 	KB_VARTAB
 };
 
-static char *int2name __P((int, int, struct nameint *, int));
-static int name2int __P((char *, struct nameint *, int));
-static void print_kmap __P((struct wskbd_map_data *));
+char *int2name __P((int, int, const struct nameint *, int));
+int name2int __P((char *, const struct nameint *, int));
+void print_kmap __P((struct wskbd_map_data *));
 
 struct field *
 field_by_name(field_tab, name)
@@ -135,12 +147,10 @@ field_by_value(field_tab, addr)
 	errx(1, "internal error: field_by_value: not found");
 }
 
-static char *
+char *
 int2name(val, uflag, tab, len)
-	int val;
-	int uflag;
-	struct nameint *tab;
-	int len;
+	int val, uflag, len;
+	const struct nameint *tab;
 {
 	static char tmp[20];
 	int i;
@@ -156,10 +166,10 @@ int2name(val, uflag, tab, len)
 		return(NULL);
 }
 
-static int
+int
 name2int(val, tab, len)
 	char *val;
-	struct nameint *tab;
+	const struct nameint *tab;
 	int len;
 {
 	int i;
@@ -305,7 +315,7 @@ rd_field(f, val, merge)
 	}
 }
 
-static void
+void
 print_kmap(map)
 	struct wskbd_map_data *map;
 {
