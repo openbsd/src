@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.8 1999/11/20 17:49:00 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.9 1999/12/21 22:30:48 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -73,7 +73,9 @@
 #define EXITTYPE        32
 #define DEFNTYPE        33
  
-#define STATIC          128
+#define TYPEMASK	63	/* Keep bits really corresponding to a type. */
+#define STATIC          128	/* Name is statically allocated, don't free. */
+#define RECDEF		256	/* Pure recursive def, don't expand it */
 
 /*
  * m4 special characters
@@ -120,12 +122,12 @@
  
 typedef struct ndblock *ndptr;
  
-struct ndblock {                /* hastable structure         */
-        char    *name;          /* entry name..               */
-        char    *defn;          /* definition..               */
-        int     type;           /* type of the entry..        */
-	unsigned hv;
-        ndptr   nxtptr;         /* link to next entry..       */
+struct ndblock {		/* hastable structure         */
+	char		*name;	/* entry name..               */
+	char		*defn;	/* definition..               */
+	unsigned int	type;	/* type of the entry..        */
+	unsigned int 	hv;	/* hash function value..      */
+	ndptr		nxtptr;	/* link to next entry..       */
 };
  
 #define nil     ((ndptr) 0)

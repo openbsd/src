@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.21 1999/11/30 22:19:50 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.22 1999/12/21 22:30:47 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.21 1999/11/30 22:19:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.22 1999/12/21 22:30:47 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,6 +110,9 @@ eval(argv, argc, td)
 	for (n = 0; n < argc; n++)
 		printf("argv[%d] = %s\n", n, argv[n]);
 #endif
+
+	if (td & RECDEF) 
+		errx(1, "expanding recursive definition for %s", argv[1]);
  /*
   * if argc == 3 and argv[2] is null, then we
   * have macro-or-builtin() type call. We adjust
@@ -118,7 +121,7 @@ eval(argv, argc, td)
 	if (argc == 3 && !*(argv[2]))
 		argc--;
 
-	switch (td & ~STATIC) {
+	switch (td & TYPEMASK) {
 
 	case DEFITYPE:
 		if (argc > 2)
@@ -485,8 +488,6 @@ dodefine(name, defn)
 
 	if (!*name)
 		errx(1, "null definition.");
-	if (STREQ(name, defn))
-		errx(1, "%s: recursive definition.", name);
 	if ((p = lookup(name)) == nil)
 		p = addent(name);
 	else if (p->defn != null)
@@ -496,6 +497,8 @@ dodefine(name, defn)
 	else
 		p->defn = xstrdup(defn);
 	p->type = MACRTYPE;
+	if (STREQ(name, defn))
+		p->type |= RECDEF;
 }
 
 /*
@@ -531,14 +534,14 @@ dopushdef(name, defn)
 
 	if (!*name)
 		errx(1, "null definition");
-	if (STREQ(name, defn))
-		errx(1, "%s: recursive definition.", name);
 	p = addent(name);
 	if (!*defn)
 		p->defn = null;
 	else
 		p->defn = xstrdup(defn);
 	p->type = MACRTYPE;
+	if (STREQ(name, defn))
+		p->type |= RECDEF;
 }
 
 /*
