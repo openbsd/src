@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.32 2004/11/28 02:14:55 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.33 2004/12/12 06:21:35 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -204,7 +204,7 @@ Static usbd_status kue_ctl(struct kue_softc *, int, u_int8_t,
 			   u_int16_t, void *, u_int32_t);
 Static usbd_status kue_setword(struct kue_softc *, u_int8_t, u_int16_t);
 Static int kue_load_fw(struct kue_softc *);
-void kue_attachhook(void *xsc);
+void kue_attachhook(void *);
 
 Static usbd_status
 kue_setword(struct kue_softc *sc, u_int8_t breq, u_int16_t word)
