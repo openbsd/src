@@ -1,4 +1,4 @@
-# $OpenBSD: disktab,v 1.17 2001/05/30 00:17:46 deraadt Exp $
+# $OpenBSD: disktab,v 1.18 2001/09/04 22:24:41 deraadt Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
 #
@@ -18,11 +18,11 @@
 #
 
 miniroot:\
-	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#80:\
+	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#96:\
 	:ts=3500:\
-	:pa#10240:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+	:pa#12288:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
 	:pb#0:ob#0:\
-	:pc#10240:oc#0:
+	:pc#12288:oc#0:
 
 rdroot:\
 	:ty=ramdisk:se#512:nt#2:rm#300:ns#8:nc#1024:\
