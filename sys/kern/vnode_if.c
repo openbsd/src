@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.8 1998/08/08 03:53:30 csapuntz Exp 
+ *	OpenBSD: vnode_if.src,v 1.9 1998/12/05 16:54:02 csapuntz Exp 
  * by the script:
- *	OpenBSD: vnode_if.sh,v 1.3 1996/04/19 16:09:13 niklas Exp 
+ *	OpenBSD: vnode_if.sh,v 1.5 1999/03/03 14:23:19 deraadt Exp 
  */
 
 /*
@@ -41,6 +41,7 @@
  * SUCH DAMAGE.
  */
 
+#define INTERNAL_VOP_NOT_INLINE
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
