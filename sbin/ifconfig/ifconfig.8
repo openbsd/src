@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.45 2000/06/18 18:06:47 niklas Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.46 2000/06/18 19:16:47 provos Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -214,7 +214,7 @@ When an interface is marked
 the system will not attempt to
 transmit messages through that interface.
 If possible, the interface will be reset to disable reception as well.
-This action does not automatically disable routes using the interface.
+This action automatically disables routes using the interface.
 .It Cm dstsa
 Bind an
 .Xr ipsec 4
