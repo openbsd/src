@@ -1,4 +1,4 @@
-/*	$OpenBSD: fancy.c,v 1.5 1998/08/19 05:55:03 pjanzen Exp $	*/
+/*	$OpenBSD: fancy.c,v 1.6 1998/09/02 06:46:51 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fancy.c,v 1.5 1998/08/19 05:55:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fancy.c,v 1.6 1998/09/02 06:46:51 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -564,12 +564,6 @@ clear()
 		linect[i] = -1;
 	buffnum = -1;		/* ignore leftover buffer contents */
 	tputs(CL, LI, addbuf);	/* put CL in buffer */
-}
-
-void
-tos()
-{				/* home cursor */
-	curmove(0, 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.2 1998/03/19 11:13:14 pjanzen Exp $	*/
+/*	$OpenBSD: back.h,v 1.3 1998/09/02 06:46:51 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -179,9 +179,7 @@ void	refresh __P((void));
 void	roll __P((void));
 int	rsetbrd __P((void));
 void	save __P((int));
-void	strset __P((char *, char *));
 int	text __P((char **));
-void	tos __P((void));
 void	wrboard __P((void));
 void	wrbsub __P((void));
 void	wrhit __P((int));
