@@ -1,7 +1,7 @@
-/*	$OpenBSD: vm_machdep.c,v 1.30 2001/12/08 02:24:06 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.31 2002/02/01 21:03:20 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999-2000 Michael Shalayeff
+ * Copyright (c) 1999-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -106,11 +106,9 @@ pagemove(from, to, size)
 
 	while (size > 0) {
 		pmap_extract(pmap_kernel(), (vaddr_t)from, &pa);
-		pmap_remove(pmap_kernel(),
-			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
-		pmap_enter(pmap_kernel(), (vaddr_t)to, pa,
-			   VM_PROT_READ|VM_PROT_WRITE,
-			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kremove((vaddr_t)from, PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t)to, pa,
+		    VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
