@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.8 2003/09/26 06:58:04 miod Exp 
+#	OpenBSD: etc.mvme88k/MAKEDEV.md,v 1.9 2003/12/30 10:33:24 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.63 2003/10/15 02:01:04 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
 #
@@ -37,7 +37,7 @@
 #	vnd*	"file" pseudo-disks
 #	rd*	"rd" pseudo-disks
 # Terminal ports:
-#	ttya-d	MVME188 standard serial ports
+#	ttya-b	MVME188 standard serial ports
 #	tty0*	MVME1x7 CL-CD2400 serial ports
 #	ttyv*	MVME332XT serial ports
 # Pseudo terminals:
@@ -314,8 +314,6 @@ tty[a-z])
 	case $u in
 	a) n=0 ;;
 	b) n=1 ;;
-	c) n=2 ;;
-	d) n=3 ;;
 	*) echo unknown tty device $i ;;
 	esac
 	case $u in
@@ -360,11 +358,11 @@ ramdisk)
 
 all)
 	R ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 tty00 tty01
-	R tty02 tty03 ttya ttyb ttyc ttyd ccd0 ccd1 ccd2 ccd3 vnd0
-	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1
-	R tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	R pty0 pty1 pty2 xfs0 ss0 ch0 vmel0 vmes0 nvram0 sram0 uk0
-	R random lkm pf systrace std st0 st1 fd
+	R tty02 tty03 ttya ttyb ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2
+	R vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3
+	R bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1
+	R pty2 xfs0 ss0 ch0 vmel0 vmes0 nvram0 sram0 uk0 random lkm pf
+	R systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)
