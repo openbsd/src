@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.8 1997/12/02 02:29:48 deraadt Exp $
+#	$OpenBSD: list,v 1.9 1998/03/28 23:40:52 millert Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
@@ -86,8 +86,8 @@ COPY	${TOPDIR}/common/termcap.hp-vt	usr/share/misc/termcap
 # and the installation tools
 COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
-COPY	install.sh			install
 COPY	install.md			install.md
-COPY	install.sub			install.sub
+COPY	${CURDIR}/../../miniroot/install.sh	install
+SPECIAL	sed -e "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
 
 SPECIAL	chmod 755 install

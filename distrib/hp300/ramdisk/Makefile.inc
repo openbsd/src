@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.1 1997/02/16 18:20:01 downsj Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1998/03/28 23:40:48 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -23,7 +23,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
+	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c

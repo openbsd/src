@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1998/02/13 10:23:34 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 1998/03/28 23:40:47 millert Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -6,7 +6,7 @@ TOP=		${.CURDIR}/..
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk-${REV}.fs
 CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
-BASE=miniroot
+BASE=		ramdisk
 
 MOUNT_POINT=	/mnt
 
@@ -16,6 +16,9 @@ VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
+
+GZIP?=		gzip
+GZIPFLAGS?=	-9f
 
 all: ${CBIN} ${IMAGE} bsd.rd
 	@echo "all done"
@@ -32,7 +35,7 @@ NEWFSARGS= -m 0 -o space -c 16 -i 3072
 
 bsd.rd: ${IMAGE} bsd rdsetroot
 	${.OBJDIR}/rdsetroot bsd < ${IMAGE}
-	gzip -c9 bsd > bsd.rd
+	${GZIP} -c ${GZIPFLAGS} bsd > bsd.rd
 	rm bsd
 
 bsd:
@@ -67,5 +70,3 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 .PRECIOUS:	${IMAGE}
-
-
