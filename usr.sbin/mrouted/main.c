@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char rcsid[] =
-	"@(#) $Id: main.c,v 1.2 1995/12/14 01:45:26 deraadt Exp $";
+	"@(#) $Id: main.c,v 1.3 1995/12/19 17:48:04 deraadt Exp $";
 #endif
 
 extern char *configfilename;
@@ -675,6 +675,7 @@ log(int severity, int syserr, char *format, ...)
     char tbuf[20];
     struct timeval now;
     struct tm *thyme;
+    time_t t;
 
     va_start(ap, format);
 #else
@@ -691,6 +692,7 @@ log(severity, syserr, format, va_alist)
     char tbuf[20];
     struct timeval now;
     struct tm *thyme;
+    time_t t;
 
     va_start(ap);
 #endif
@@ -704,7 +706,8 @@ log(severity, syserr, format, va_alist)
 	case 2: if (severity > LOG_INFO  ) break;
 	default:
 	    gettimeofday(&now,NULL);
-	    thyme = localtime(&now.tv_sec);
+	    t = now.tv_sec;
+	    thyme = localtime(&t);
 	    strftime(tbuf, sizeof(tbuf), "%X.%%03d ", thyme);
 	    fprintf(stderr, tbuf, now.tv_usec / 1000);
 	    fprintf(stderr, "%s", msg);
