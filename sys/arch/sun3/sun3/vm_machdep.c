@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2001/06/08 08:09:30 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2001/06/27 04:44:04 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
 
 /*
@@ -60,9 +60,7 @@
 #include <vm/vm_kern.h>
 /* #include <vm/vm_map.h> */
 
-#ifdef UVM
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/machdep.h>
@@ -204,11 +202,7 @@ cpu_exit(p)
 {
 
 	(void) splimp();
-#ifdef UVM
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -366,11 +360,7 @@ vmapbuf(bp, sz)
 	off = addr & PGOFSET;
 	addr = trunc_page(addr);
 	size = round_page(bp->b_bcount + off);
-#ifdef UVM
 	kva = uvm_km_valloc_wait(kernel_map, size);
-#else
-	kva = kmem_alloc_wait(kernel_map, size);
-#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	npf = btoc(size);
@@ -425,11 +415,7 @@ vunmapbuf(bp, sz)
 	 * pmap_remove but that will do nothing since we
 	 * already removed the actual mappings.
 	 */
-#ifdef UVM
 	uvm_km_free_wakeup(kernel_map, pgva, size);
-#else
-	kmem_free_wakeup(kernel_map, pgva, size);
-#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

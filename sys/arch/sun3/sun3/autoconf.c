@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2001/06/11 01:30:13 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2001/06/27 04:44:02 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
@@ -63,9 +63,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-#ifdef UVM
 #include <uvm/uvm_extern.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/control.h>
@@ -281,11 +279,7 @@ bus_mapin(bustype, paddr, sz)
 	pmt |= PMAP_NC;	/* non-cached */
 
 	/* Get some kernel virtual address space. */
-#ifdef UVM
 	va = uvm_km_valloc_wait(kernel_map, sz);
-#else
-	va = kmem_alloc_wait(kernel_map, sz);
-#endif
 	if (va == 0)
 		panic("bus_mapin");
 	retval = va + off;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2001/06/11 01:30:13 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2001/06/27 04:44:03 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -82,9 +82,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#ifdef UVM
 #include <uvm/uvm.h>
-#endif
 
 #include <machine/pte.h>
 #include <machine/control.h>
@@ -1475,13 +1473,8 @@ pmap_bootstrap()
 	/* Initialization for pmap_next_page() */
 	avail_next = avail_start;
 
-#ifdef UVM
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_setpagesize();
-#else
-	cnt.v_page_size = PAGE_SIZE;
-	vm_set_page_size();
-#endif
 
 	sun3_protection_init();
 
@@ -1608,11 +1601,7 @@ pmap_init()
 	sz = PA_PGNUM(avail_end);
 	sz *= sizeof(struct pv_entry);
 
-#ifdef UVM
 	pv_head_table = (pv_entry_t) uvm_km_zalloc(kernel_map, sz);
-#else
-	pv_head_table = (pv_entry_t) kmem_alloc(kernel_map, sz);
-#endif
 	if (!pv_head_table)
 		mon_panic("pmap: kmem_alloc() of pv table failed");
 	bzero((caddr_t) pv_head_table, sz);
@@ -1666,26 +1655,14 @@ pmap_page_upload()
 		 */
 		a = atop(avail_start);
 		b = atop(hole_start);
-#ifdef UVM
 		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(a, b, a, b);
-#endif
 		c = atop(hole_start + hole_size);
 		d = atop(avail_end);
-#ifdef UVM
 		uvm_page_physload(b, d, c, d, VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(b, d, c, d);
-#endif
 	} else {
 		a = atop(avail_start);
 		d = atop(avail_end);
-#ifdef UVM
 		uvm_page_physload(a, d, a, d, VM_FREELIST_DEFAULT);
-#else
-		vm_page_physload(a, d, a, d);
-#endif
 	}
 }
 
