@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.91 2003/05/14 08:01:02 mho Exp $
+#	$OpenBSD: Makefile,v 1.92 2003/05/17 20:58:52 millert Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -80,10 +80,6 @@ build:
 	cd ${.CURDIR}/kerberosV/lib && ${MAKE} depend && ${MAKE} && \
 	    NOMAN=1 exec ${SUDO} ${MAKE} install
 .endif
-	cd ${.CURDIR}/gnu/usr.bin/perl && \
-	    ${MAKE} -f Makefile.bsd-wrapper depend && \
-	    ${MAKE} -f Makefile.bsd-wrapper perl.lib && \
-	    exec ${SUDO} ${MAKE} -f Makefile.bsd-wrapper install.lib
 	${MAKE} depend && ${MAKE} && exec ${SUDO} ${MAKE} install
 
 .if !defined(TARGET)
