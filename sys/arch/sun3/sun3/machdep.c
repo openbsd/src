@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 1997/02/06 20:00:43 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1997/04/05 20:32:49 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ extern short exframesize[];
 extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
 
 int physmem;
-int fpu_type;
+int fputype;
 int msgbufmapped;
 label_t *nofault;
 vm_offset_t vmmap;
@@ -414,7 +414,7 @@ setregs(p, pack, stack, retval)
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fpu_type) {
+	if (fputype) {
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 	}
 	/* XXX - HPUX sigcode hack would go here... */
@@ -618,7 +618,7 @@ sendsig(catcher, sig, mask, code, type, val)
 #endif
 	}
 
-	if (fpu_type) {
+	if (fputype) {
 		kfp->sf_state.ss_flags |= SS_FPSTATE;
 		m68881_save(&kfp->sf_state.ss_fpstate);
 	}
