@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.27 2001/11/28 19:28:15 art Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.28 2001/12/02 23:37:52 art Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.50 2001/05/26 21:27:21 chs Exp $	*/
 
 /*
@@ -79,10 +79,10 @@ static int		uvn_findpage __P((struct uvm_object *, voff_t,
 					  struct vm_page **, int));
 boolean_t		uvn_flush __P((struct uvm_object *, voff_t, voff_t,
 				       int));
-static int		uvn_get __P((struct uvm_object *, voff_t,
+int			uvn_get __P((struct uvm_object *, voff_t,
 				     struct vm_page **, int *, int, vm_prot_t,
 				     int, int));
-static int		uvn_put __P((struct uvm_object *, struct vm_page **,
+int			uvn_put __P((struct uvm_object *, struct vm_page **,
 				     int, boolean_t));
 static void		uvn_reference __P((struct uvm_object *));
 static boolean_t	uvn_releasepg __P((struct vm_page *,
@@ -817,7 +817,7 @@ uvn_cluster(uobj, offset, loffset, hoffset)
  * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
  */
 
-static int
+int
 uvn_put(uobj, pps, npages, flags)
 	struct uvm_object *uobj;
 	struct vm_page **pps;
@@ -842,7 +842,7 @@ uvn_put(uobj, pps, npages, flags)
  * => NOTE: caller must check for released pages!!
  */
 
-static int
+int
 uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	struct uvm_object *uobj;
 	voff_t offset;
@@ -853,12 +853,20 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	int advice, flags;
 {
 	struct vnode *vp = (struct vnode *)uobj;
+	struct proc *p = curproc;
 	int error;
 	UVMHIST_FUNC("uvn_get"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
+	error = vn_lock(vp, LK_EXCLUSIVE|LK_RECURSEFAIL|LK_NOWAIT, p);
+	if (error) {
+		if (error == EBUSY)
+			return EAGAIN;
+		return error;
+	}
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
-			     access_type, advice, flags);
+		     access_type, advice, flags);
+	VOP_UNLOCK(vp, LK_RELEASE, p);
 	return error;
 }
 
