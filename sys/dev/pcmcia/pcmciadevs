@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.55 2001/03/31 14:27:09 aaron Exp $
+	$OpenBSD: pcmciadevs,v 1.56 2001/04/06 18:01:56 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -107,6 +107,7 @@ product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B
 /* Aironet */
 product AIRONET PC4500		0x0005 Aironet PC4500
 product AIRONET PC4800		0x0007 Aironet PC4800
+product AIRONET 350		0x000a Aironet 350
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
