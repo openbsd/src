@@ -1,4 +1,4 @@
-/*	$OpenBSD: dump.c,v 1.2 1999/12/09 15:10:49 itojun Exp $	*/
+/*	$OpenBSD: dump.c,v 1.3 2000/02/25 10:32:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -31,7 +31,9 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
 

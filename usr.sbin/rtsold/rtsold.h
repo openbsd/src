@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.h,v 1.2 1999/12/09 15:10:49 itojun Exp $	*/
+/*	$OpenBSD: rtsold.h,v 1.3 2000/02/25 10:32:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,7 +33,7 @@ struct ifinfo {
 	struct ifinfo *next;	/* pointer to the next interface */
 
 	struct sockaddr_dl *sdl; /* link-layer address */
-	char ifname[16];	/* interface name */
+	char ifname[IF_NAMESIZE]; /* interface name */
 	int active;		/* interface status */
 	int probeinterval;	/* interval of probe timer(if necessary) */
 	int probetimer;		/* rest of probe timer */
@@ -43,6 +43,7 @@ struct ifinfo {
 	int dadcount;
 	struct timeval timer;
 	struct timeval expire;
+	int errors;		/* # of errors we've got - detect wedge */
 
 	int racnt;		/* total # of valid RAs it have got */
 

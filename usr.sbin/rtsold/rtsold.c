@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.6 2000/02/01 03:24:11 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.7 2000/02/25 10:32:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,9 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
 #include <net/if_dl.h>
 
 #include <netinet/in.h>
@@ -85,6 +87,9 @@ static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurab
 static char *pidfilename = "/var/run/rtsold.pid"; /* should be configurable */
 
 static int ifconfig __P((char *ifname));
+#if 0
+static int ifreconfig __P((char *ifname));
+#endif
 static int make_packet __P((struct ifinfo *ifinfo));
 static struct timeval *rtsol_check_timer __P((void));
 static void TIMEVAL_ADD __P((struct timeval *a, struct timeval *b,
@@ -160,6 +165,11 @@ main(argc, argv)
 		if (log_upto >= 0)
 			setlogmask(LOG_UPTO(log_upto));
 	}
+
+#ifndef HAVE_ARC4RANDOM
+	/* random value initilization */
+	srandom((u_long)time(NULL));
+#endif
 
 	/* warn if accept_rtadv is down */
 	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
@@ -269,11 +279,13 @@ ifconfig(char *ifname)
 	if (find_ifinfo(sdl->sdl_index)) {
 		warnmsg(LOG_ERR, __FUNCTION__,
 			"interface %s was already cofigured", ifname);
+		free(sdl);
 		return(-1);
 	}
 
 	if ((ifinfo = malloc(sizeof(*ifinfo))) == NULL) {
 		warnmsg(LOG_ERR, __FUNCTION__, "memory allocation failed");
+		free(sdl);
 		return(-1);
 	}
 	memset(ifinfo, 0, sizeof(*ifinfo));
@@ -318,10 +330,37 @@ ifconfig(char *ifname)
 	return(0);
 
   bad:
-	free(ifinfo);
 	free(ifinfo->sdl);
+	free(ifinfo);
 	return(-1);
 }
+
+#if 0
+static int
+ifreconfig(char *ifname)
+{
+	struct ifinfo *ifi, *prev;
+	int rv;
+
+	prev = NULL;
+	for (ifi = iflist; ifi; ifi = ifi->next) {
+		if (strncmp(ifi->ifname, ifname, sizeof(ifi->ifname)) == 0)
+			break;
+		prev = ifi;
+	}
+	prev->next = ifi->next;
+
+	rv = ifconfig(ifname);
+
+	/* reclaim it after ifconfig() in case ifname is pointer inside ifi */
+	if (ifi->rs_data)
+		free(ifi->rs_data);
+	free(ifi->sdl);
+	free(ifi);
+
+	return rv;
+}
+#endif
 
 struct ifinfo *
 find_ifinfo(int ifindex)
@@ -506,7 +545,11 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
+#ifndef HAVE_ARC4RANDOM
+		interval = random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
+#else
 		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
+#endif
 		ifinfo->timer.tv_sec = interval / MILLION;
 		ifinfo->timer.tv_usec = interval % MILLION;
 		break;
