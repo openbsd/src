@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.590 2003/01/26 20:00:12 mickey Exp $
+	$OpenBSD: pcidevs,v 1.591 2003/02/03 08:22:57 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -567,6 +567,7 @@ vendor USR2		0x16ec	US Robotics
 vendor NETOCTAVE	0x170b	Netoctave
 vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
+vendor LANERGY		0x1812	Lanergy
 vendor SYMPHONY2	0x1c1c	Symphony Labs
 vendor TEKRAM2		0x1de1	Tekram Technology
 vendor HINT		0x3388	Hint
@@ -1567,6 +1568,9 @@ product LMC HSSI		0x0003	HSSI
 product LMC DS3			0x0004	DS3
 product LMC SSI			0x0005	SSI
 product LMC DS1			0x0006	DS1
+
+/* Lanergy */
+product LANERGY APPIAN_PCI_LITE	0x0001	Appian Lite
 
 /* Lava */
 product LAVA TWOSP_2S		0x0100	Dual Serial
