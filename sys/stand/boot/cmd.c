@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.33 1997/09/20 22:40:37 flipk Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.34 1997/10/07 07:59:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,7 +34,6 @@
 
 #include <sys/param.h>
 #include <libsa.h>
-#include <biosdev.h>
 #include <sys/reboot.h>
 #include "cmd.h"
 
@@ -372,15 +371,27 @@ Xset()
 static int
 Xstty()
 {
-	int sp;
-	char *cp;
+	register int sp;
+	register char *cp;
+	dev_t dev;
+
 	if (cmd.argc == 1)
-		printf("com speed is %d\n", com_setsp(0));
+		printf("%s speed is %d\n", ttyname(0), cnspeed(0, -1));
 	else {
-		sp = 0;
-		for (cp = cmd.argv[1]; *cp && isdigit(*cp); cp++)
-			sp = sp*10 + (*cp - '0');
-		com_setsp(sp);
+		dev = ttydev(cmd.argv[1]);
+		if (dev == NODEV)
+			printf("%s not a console device\n", cmd.argv[1]);
+		else {
+			if (cmd.argc == 2)
+				printf("%s speed is %d\n", cmd.argv[1],
+				       cnspeed(dev, -1));
+			else {
+				sp = 0;
+				for (cp = cmd.argv[2]; *cp && isdigit(*cp); cp++)
+					sp = sp * 10 + (*cp - '0');
+				cnspeed(dev, sp);
+			}
+		}
 	}
 
 	return 0;
