@@ -49,6 +49,7 @@ osr="1.2"
 
 echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
+echo "char osversion[] = \"${id}#${v}\";" >> vers.c
 echo "char sccs[8] = { ' ', ' ', ' ', ' ', '@', '(', '#', ')' };" >> vers.c
 echo \
   "char version[] = \
