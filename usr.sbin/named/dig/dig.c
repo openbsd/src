@@ -1,10 +1,10 @@
-/*	$OpenBSD: dig.c,v 1.6 2002/04/29 06:26:50 pvalchev Exp $	*/
+/*	$OpenBSD: dig.c,v 1.7 2002/07/12 21:11:10 deraadt Exp $	*/
 
 #ifndef lint
 #if 0
 static char rcsid[] = "$From: dig.c,v 8.8 1996/05/21 07:32:40 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: dig.c,v 1.6 2002/04/29 06:26:50 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: dig.c,v 1.7 2002/07/12 21:11:10 deraadt Exp $";
 #endif
 #endif
 
@@ -392,7 +392,12 @@ main(argc, argv)
  * More cmd-line options than anyone should ever have to
  * deal with ....
  */
-		while (*(++argv) != NULL && **argv != '\0') { 
+		while (*(++argv) != NULL && **argv != '\0') {
+			if ((strlen(*argv) + 2) >
+			    (sizeof(cmd)/sizeof(char) - strlen(cmd))) {
+				fprintf(stderr, "Command line too long.\n");
+				exit(1);
+			}
 			strcat(cmd,*argv); strcat(cmd," ");
 			if (**argv == '@') {
 				srv = (*argv+1);
