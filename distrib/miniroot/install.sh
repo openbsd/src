@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.42 1998/10/28 17:51:14 millert Exp $
+#	$OpenBSD: install.sh,v 1.43 1998/11/09 03:54:52 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -84,7 +84,6 @@ MODE="install"
 #	md_get_cddevs()		- return available CD-ROM devices
 #	md_get_partition_range() - return range of valid partition letters
 #	md_installboot()	- install boot-blocks on disk
-#	md_labeldisk()		- put label on a disk
 #	md_prep_disklabel()	- label the root disk
 #	md_welcome_banner()	- display friendly message
 #	md_not_going_to_install() - display friendly message

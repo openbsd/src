@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.111 1998/11/03 04:35:16 aaron Exp $
+#	$OpenBSD: install.sub,v 1.112 1998/11/09 03:54:52 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -421,31 +421,6 @@ __getrootdisk_1
 		echo "The disk $resp does not exist."
 		ROOTDISK=""
 	fi
-}
-
-labelmoredisks() {
-	cat << \__labelmoredisks_1
-
-You may label the following disks:
-
-__labelmoredisks_1
-	echo "$_DKDEVS"
-	echo	""
-	echo -n	"Label which disk? [done] "
-	getresp "done"
-	case "$resp" in
-		done)
-			;;
-
-		*)
-			if isin $resp $_DKDEVS ; then
-				md_labeldisk $resp
-			else
-				echo ""
-				echo "The disk $resp does not exist."
-			fi
-			;;
-	esac
 }
 
 addhostent() {
