@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.56 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.57 2003/07/25 08:31:16 markus Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -327,7 +327,7 @@ conf_parse (int trans, char *buf, size_t sz)
  *     where
  *       {proto}  = ESP, AH
  *       {cipher} = DES, 3DES, CAST, BLF, AES
- *       {hash}   = MD5, SHA, RIPEMD
+ *       {hash}   = MD5, SHA, RIPEMD, SHA2-{-256,384,512}
  *       {group}  = GRP1, GRP2, GRP5
  *
  * DH group defaults to MODP_1024.
@@ -393,14 +393,18 @@ conf_load_defaults (int tr)
 			"CAST_CBC", 0 };
   char *dh_group[]  = { "MODP_768", "MODP_1024", "MODP_1536", 0 };
   char *qm_enc[]    = { "DES", "3DES", "CAST", "BLOWFISH", "AES", 0 };
-  char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD", "NONE", 0 };
+  char *qm_hash[]   = { "HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
+			"HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512",
+			"NONE", 0 };
 
   /* Abbreviations to make section names a bit shorter.  */
   char *mm_auth_p[] = { "", "-DSS", "-RSA_SIG", 0 };
   char *mm_enc_p[]  = { "DES", "BLF", "3DES", "CAST", 0 };
   char *dh_group_p[]= { "-GRP1", "-GRP2", "-GRP5", "", 0 };
   char *qm_enc_p[]  = { "-DES", "-3DES", "-CAST", "-BLF", "-AES", 0 };
-  char *qm_hash_p[] = { "-MD5", "-SHA", "-RIPEMD", "", 0 };
+  char *qm_hash_p[] = { "-MD5", "-SHA", "-RIPEMD",
+                        "-SHA2-256", "-SHA2-384", "-SHA2-512",
+                        "", 0 };
 
   /* Helper #defines, incl abbreviations.  */
 #define PROTO(x)  ((x) ? "AH" : "ESP")

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.77 2003/06/10 12:21:29 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.78 2003/07/25 08:31:16 markus Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1226,7 +1226,7 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	    || decode_16 (value) > IPSEC_ENCAP_TRANSPORT;
 	case IPSEC_ATTR_AUTHENTICATION_ALGORITHM:
 	  return decode_16 (value) < IPSEC_AUTH_HMAC_MD5
-	    || decode_16 (value) > IPSEC_AUTH_KPDK;
+	    || decode_16 (value) > IPSEC_AUTH_HMAC_RIPEMD;
 	case IPSEC_ATTR_KEY_LENGTH:
 	  /* XXX Blowfish needs '0'. Others appear to disregard this attr?  */
 	  return 0;
@@ -1737,6 +1737,12 @@ ipsec_esp_authkeylength (struct proto *proto)
     case IPSEC_AUTH_HMAC_SHA:
     case IPSEC_AUTH_HMAC_RIPEMD:
       return 20;
+    case IPSEC_AUTH_HMAC_SHA2_256:
+      return 32;
+    case IPSEC_AUTH_HMAC_SHA2_384:
+      return 48;
+    case IPSEC_AUTH_HMAC_SHA2_512:
+      return 64;
     default:
       return 0;
     }
@@ -1753,6 +1759,12 @@ ipsec_ah_keylength (struct proto *proto)
     case IPSEC_AH_SHA:
     case IPSEC_AH_RIPEMD:
       return 20;
+    case IPSEC_AH_SHA2_256:
+      return 32;
+    case IPSEC_AH_SHA2_384:
+      return 48;
+    case IPSEC_AH_SHA2_512:
+      return 64;
     default:
       return -1;
     }

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.134 2003/07/24 09:59:03 itojun Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.135 2003/07/25 08:31:16 markus Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -971,6 +971,24 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  break;
 #endif
 
+#ifdef SADB_X_AALG_SHA2_256
+	case IPSEC_AUTH_HMAC_SHA2_256:
+	  ssa.sadb_sa_auth = SADB_X_AALG_SHA2_256;
+	  break;
+#endif
+
+#ifdef SADB_X_AALG_SHA2_384
+	case IPSEC_AUTH_HMAC_SHA2_384:
+	  ssa.sadb_sa_auth = SADB_X_AALG_SHA2_384;
+	  break;
+#endif
+
+#ifdef SADB_X_AALG_SHA2_512
+	case IPSEC_AUTH_HMAC_SHA2_512:
+	  ssa.sadb_sa_auth = SADB_X_AALG_SHA2_512;
+	  break;
+#endif
+
 	case IPSEC_AUTH_DES_MAC:
 	case IPSEC_AUTH_KPDK:
 	  /* XXX We should be supporting KPDK */
@@ -1019,6 +1037,24 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
 #endif
+	  break;
+#endif
+
+#ifdef SADB_X_AALG_SHA2_256
+	case IPSEC_AH_SHA2_256:
+	  ssa.sadb_sa_auth = SADB_X_AALG_SHA2_256;
+	  break;
+#endif
+
+#ifdef SADB_X_AALG_SHA2_384
+	case IPSEC_AH_SHA2_384:
+	  ssa.sadb_sa_auth = SADB_X_AALG_SHA2_384;
+	  break;
+#endif
+
+#ifdef SADB_X_AALG_SHA2_512
+	case IPSEC_AH_SHA2_512:
+	  ssa.sadb_sa_auth = SADB_X_AALG_SHA2_512;
 	  break;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.72 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.73 2003/07/25 08:31:16 markus Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -566,6 +566,18 @@ report_proto (FILE *fd, struct proto *proto)
 	  fprintf (fd, "HMAC-RIPEMD-160\n");
 	  break;
 
+	case IPSEC_AUTH_HMAC_SHA2_256:
+	  fprintf (fd, "HMAC-SHA2-256\n");
+	  break;
+
+	case IPSEC_AUTH_HMAC_SHA2_384:
+	  fprintf (fd, "HMAC-SHA2-384\n");
+	  break;
+
+	case IPSEC_AUTH_HMAC_SHA2_512:
+	  fprintf (fd, "HMAC-SHA2-512\n");
+	  break;
+
 	case IPSEC_AUTH_DES_MAC:
 	case IPSEC_AUTH_KPDK:
 	  /* XXX We should be supporting KPDK */
@@ -596,6 +608,18 @@ report_proto (FILE *fd, struct proto *proto)
 
 	case IPSEC_AH_RIPEMD:
 	  fprintf (fd, "HMAC-RIPEMD-160\n");
+	  break;
+
+	case IPSEC_AH_SHA2_256:
+	  fprintf (fd, "HMAC-SHA2-256\n");
+	  break;
+
+	case IPSEC_AH_SHA2_384:
+	  fprintf (fd, "HMAC-SHA2-384\n");
+	  break;
+
+	case IPSEC_AH_SHA2_512:
+	  fprintf (fd, "HMAC-SHA2-512\n");
 	  break;
 
 	default:

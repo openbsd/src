@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.65 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: policy.c,v 1.66 2003/07/25 08:31:16 markus Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -264,6 +264,18 @@ policy_callback (char *name)
 
 		case IPSEC_AH_RIPEMD:
 		  ah_hash_alg = "ripemd";
+		  break;
+
+		case IPSEC_AH_SHA2_256:
+		  ah_auth_alg = "sha2-256";
+		  break;
+
+		case IPSEC_AH_SHA2_384:
+		  ah_auth_alg = "sha2-384";
+		  break;
+
+		case IPSEC_AH_SHA2_512:
+		  ah_auth_alg = "sha2-512";
 		  break;
 
 		case IPSEC_AH_DES:
@@ -548,6 +560,18 @@ policy_callback (char *name)
 			  ah_auth_alg = "hmac-ripemd";
 			  break;
 
+			case IPSEC_AUTH_HMAC_SHA2_256:
+			  ah_auth_alg = "hmac-sha2-256";
+			  break;
+
+			case IPSEC_AUTH_HMAC_SHA2_384:
+			  ah_auth_alg = "hmac-sha2-384";
+			  break;
+
+			case IPSEC_AUTH_HMAC_SHA2_512:
+			  ah_auth_alg = "hmac-sha2-512";
+			  break;
+
 			case IPSEC_AUTH_DES_MAC:
 			  ah_auth_alg = "des-mac";
 			  break;
@@ -571,6 +595,18 @@ policy_callback (char *name)
 
 			case IPSEC_AUTH_HMAC_RIPEMD:
 			  esp_auth_alg = "hmac-ripemd";
+			  break;
+
+			case IPSEC_AUTH_HMAC_SHA2_256:
+			  esp_auth_alg = "hmac-sha2-256";
+			  break;
+
+			case IPSEC_AUTH_HMAC_SHA2_384:
+			  esp_auth_alg = "hmac-sha2-384";
+			  break;
+
+			case IPSEC_AUTH_HMAC_SHA2_512:
+			  esp_auth_alg = "hmac-sha2-512";
 			  break;
 
 			case IPSEC_AUTH_DES_MAC:
