@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.7 1996/04/24 06:26:47 mickey Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.8 1996/04/24 06:43:51 mickey Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.22 1996/02/13 22:00:26 christos Exp $	*/
 
 /*
@@ -545,7 +545,6 @@ tunwrite(dev, uio, ioflag)
 		isr = NETISR_NS;
 		break;
 #endif
-#ifdef ISO
 #ifdef IPX
 	case AF_IPX:
 		ifq = &ipxintrq;
