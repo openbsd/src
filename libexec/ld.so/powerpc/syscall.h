@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.17 2003/07/06 20:04:00 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.18 2003/12/03 17:00:15 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -142,16 +142,6 @@ _dl_read(int fd, const char* buf, size_t len)
 #define STRINGIFY(x)  #x
 #define XSTRINGIFY(x) STRINGIFY(x)
 long _dl__syscall(quad_t val, ...);
-__asm__(".align 2\n\t"
-	".type _dl__syscall,@function\n"
-	"_dl__syscall:\n\t"
-	"li 0, " XSTRINGIFY(SYS___syscall) "\n\t"
-	"sc\n\t"
-	"cmpwi	0, 0\n\t"
-	"beq	1f\n\t"
-	"li	3, -1\n\t"
-	"1:\n\t"
-	"blr");
 
 static inline void *
 _dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
