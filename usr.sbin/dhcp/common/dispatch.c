@@ -449,10 +449,13 @@ void got_one (l)
 		if ((! interface_status(ip)) 
 		    || (ip->noifmedia && ip->errors > 20)) {
 			/* our interface has gone away. */
-			warn("Interface %s appears to no longer be valid",
+			warn("Interface %s no longer appears valid.",
 			     ip->name); 
 			ip->dead = 1;
 			interfaces_invalidated = 1;
+			close(l->fd);
+			remove_protocol(l);
+			free(ip);
 		}
 		return;
 	}
