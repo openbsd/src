@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hp300.8,v 1.2 1996/06/23 14:32:06 deraadt Exp $
+.\"	$OpenBSD: boot_hp300.8,v 1.3 1996/06/29 18:24:15 mickey Exp $
 .\"	$NetBSD: boot_hp300.8,v 1.3 1995/04/23 10:33:34 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -67,7 +67,7 @@ This
 .Em boot
 program
 finds the corresponding file on the given device 
-.Pf ( Ar netbsd
+.Pf ( Ar bsd
 by default),
 loads that file into memory,
 and starts the program at the entry address specified in the program header.
@@ -97,7 +97,7 @@ specifiers.
 For example,
 to boot from the `a' file system of unit 0 on HP-IB 2,
 type
-.Ql rd(16, 0)netbsd
+.Ql rd(16, 0)bsd
 to the boot prompt.
 For tapes, the minor device number gives a file offset.
 .Pp
@@ -106,7 +106,7 @@ In an emergency, the bootstrap methods described in the paper
 can be used to boot from a distribution tape.
 .Sh FILES
 .Bl -tag -width /usr/mdec/installboot -compact
-.It Pa /netbsd
+.It Pa /bsd
 system code
 .It Pa /usr/mdec/bootrd
 .Tn LIF

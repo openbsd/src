@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.2 1996/06/23 14:32:07 deraadt Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.3 1996/06/29 18:24:17 mickey Exp $
 .\"	$NetBSD: boot_i386.8,v 1.3 1995/04/23 10:33:35 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -57,7 +57,7 @@ clones attempt to boot the floppy disk drive A (otherwise known as drive
 0) first, and failing that, attempt to boot the hard disk C (otherwise
 known as hard disk controller 1, drive 0).
 The automatic boot will attempt to load
-.Pa netbsd
+.Pa bsd
 from partition A of either the floppy or the hard disk.
 This boot may be aborted by typing any character on the keyboard repeatedly
 (four or five times at least) during the operating system load phase, after
@@ -102,9 +102,9 @@ fd	5 1/4" or 3 1/2" High density floppies
 For example,
 to boot from a file system which starts at cylinder 0
 of unit 0 of an IDE disk, type
-.Dq Li wd0a:netbsd
+.Dq Li wd0a:bsd
 to the boot prompt;
-.Dq Li fd0a:netbsd
+.Dq Li fd0a:bsd
 would specify a 3 1/2" floppy drive 0 .
 .Pp
 In an emergency, the bootstrap methods described in the paper
@@ -112,8 +112,8 @@ In an emergency, the bootstrap methods described in the paper
 can be used
 to boot from a distribution tape.
 .Sh FILES
-.Bl -tag -width /netbsdxx -compact
-.It Pa /netbsd
+.Bl -tag -width /bsdxx -compact
+.It Pa /bsd
 system code
 .It Pa /boot
 system bootstrap

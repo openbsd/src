@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_mac68k.8,v 1.2 1996/06/23 14:32:07 deraadt Exp $
+.\"	$OpenBSD: boot_mac68k.8,v 1.3 1996/06/29 18:24:17 mickey Exp $
 .\"	$NetBSD: boot_mac68k.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -85,7 +85,7 @@ dialog where booting preferences may be changed and an option whereby
 these options may be saved.  The preferences are stored in the program
 itself, not in a preferences folder--thus allowing two separate copies
 of the program to be configured differently (e.g. to boot different
-netbsd or netbsd.test, or to boot from two different drives).
+bsd or bsd.test, or to boot from two different drives).
 .Pp
 One option that may be specified is a boot to single-user mode.  This
 stops the boot process very early on and allows system maintenence.
@@ -108,13 +108,13 @@ in native OS rather than from the usual location in the
 .Tn NetBSD
 file system.  A radio button is supplied for this purpose.  Note that
 some programs will not run properly if the kernel is not found as
-.Ar /netbsd
+.Ar /bsd
 within the 
 .Tn NetBSD
 file system.
 .Sh FILES
-.Bl -tag -width /netbsd -compact
-.It Pa /netbsd
+.Bl -tag -width /bsd -compact
+.It Pa /bsd
 system kernel
 .El
 .Sh SEE ALSO

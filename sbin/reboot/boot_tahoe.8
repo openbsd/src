@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_tahoe.8,v 1.2 1996/06/23 14:32:10 deraadt Exp $
+.\"	$OpenBSD: boot_tahoe.8,v 1.3 1996/06/29 18:24:20 mickey Exp $
 .\"	$NetBSD: boot_tahoe.8,v 1.3 1995/04/23 10:33:38 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -125,9 +125,9 @@ to boot from a file system which starts at cylinder 0
 of unit 0 of an
 .Tn SMD-E
 disk, type
-.Ql dk(0,0)netbsd
+.Ql dk(0,0)bsd
 to the boot prompt;
-.Ql dk(2,1,0)netbsd
+.Ql dk(2,1,0)bsd
 would specify drive 1 on
 .Tn SMD-E
 controller 2.
@@ -137,8 +137,8 @@ In an emergency, the bootstrap methods described in the paper
 can be used
 to boot from a distribution tape.
 .Sh FILES
-.Bl -tag -width /netbsd -compact
-.It Pa /netbsd
+.Bl -tag -width /bsd -compact
+.It Pa /bsd
 system code
 .It Pa /boot
 system bootstrap
