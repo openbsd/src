@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.33 2004/04/17 17:52:03 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.34 2004/04/17 17:53:46 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -753,7 +753,7 @@ const struct puc_device_description puc_devices[] = {
 	 * Exsys EX-41098
 	 */
 	{   /* "Exsys EX-41098", */
-	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD_EXSYS_EX41098,	0, 0 },
+	    {	PCI_VENDOR_OXFORD2, PCI_PRODUCT_OXFORD2_EXSYS_EX41098,	0, 0 },
 	    {	0xffff, 0xffff,						0, 0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
