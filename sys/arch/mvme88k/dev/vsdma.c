@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.9 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.10 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -81,11 +81,11 @@ struct scsi_device vs_scsidev = {
 
 struct cfattach vs_ca = {
 	sizeof(struct vs_softc), vsmatch, vsattach,
-};    
+};
 
 struct cfdriver vs_cd = {
-	NULL, "vs", DV_DULL, 0 
-}; 
+	NULL, "vs", DV_DULL, 0
+};
 
 int
 vsmatch(pdp, vcf, args)
@@ -97,7 +97,7 @@ vsmatch(pdp, vcf, args)
 		return (1);
 	} else {
 		return (0);
-	}           
+	}
 }
 
 void

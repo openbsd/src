@@ -1,9 +1,9 @@
-/*	$OpenBSD: vxreg.h,v 1.2 2001/01/14 20:25:23 smurph Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.3 2003/10/11 22:08:57 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
  *
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -28,7 +28,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */  
+ */
 
 /* IPC - Intelligent Peripheral Controller */
 
@@ -36,13 +36,13 @@ struct vxreg {
 /*0x0*/volatile u_short ipc_addrh;	 /* IPC addr reg, most significant */
 /*0x2*/volatile u_short ipc_addrl;	 /* IPC addr reg, least significant */
 /*0x4*/volatile u_char  ipc_amr;	  /* IPC address modifier reg */
-/*0x5*/volatile u_char  unused1;   
+/*0x5*/volatile u_char  unused1;
 /*0x6*/volatile u_short ipc_cr;	 /* IPC control ceg */
 /*0x8*/volatile u_short ipc_sr;	 /* IPC status reg */
 /*0xA*/volatile u_char  ipc_mdbp;	/* IPC model data byte pointer */
-/*0xB*/volatile u_char  reserved3;   
+/*0xB*/volatile u_char  reserved3;
 /*0xC*/volatile u_char  ipc_avrp;	/* IPC abort vector reg pointer */
-/*0xD*/volatile u_char  unused2;   
+/*0xD*/volatile u_char  unused2;
 /*0xE*/volatile u_short ipc_tas;		 /* IPC test and set reg */
 };
 
@@ -269,8 +269,8 @@ struct packet {      /* 68 bytes */
 	volatile short   ioctl_mode_h;
 	volatile short   ioctl_mode_l;
 	volatile char    filler4[6];
-	volatile short   error_h;   
-	volatile short   error_l;   
+	volatile short   error_h;
+	volatile short   error_l;
 	volatile short   event_code;
 	volatile char    filler5[6];
 	union {
@@ -301,8 +301,8 @@ struct ioctl_a_packet {      /* 68 bytes */
 	volatile short   ioctl_mode_h;
 	volatile short   ioctl_mode_l;
 	volatile char    filler4[6];
-	volatile short   error_h;   
-	volatile short   error_l;   
+	volatile short   error_h;
+	volatile short   error_l;
 	volatile short   event_code;
 	volatile char    filler5[6];
 	volatile unsigned short c_iflag;
@@ -393,8 +393,8 @@ struct init_packet {
 	volatile char              filler_3[7];
 	volatile char              interrupt_vec;
 	volatile char              filler_4[6];
-	volatile short             error_h;   
-	volatile short             error_l;   
+	volatile short             error_h;
+	volatile short             error_l;
 };
 
 struct event_packet {
@@ -406,8 +406,8 @@ struct event_packet {
 	volatile char              filler_1[4];
 	volatile char              device_number;
 	volatile char              filler_2[19];
-	volatile short             error_h;   
-	volatile short             error_l;   
+	volatile short             error_h;
+	volatile short             error_l;
 #define  E_INTR      0x0001
 #define  E_QUIT      0x0002
 #define  E_HUP       0x0004
@@ -434,8 +434,8 @@ struct open_packet {
 	volatile char              filler_1[4];
 	volatile char              device_number;
    volatile char              filler_2[19];
-	volatile short             error_h;   
-	volatile short             error_l;   
+	volatile short             error_h;
+	volatile short             error_l;
 	volatile unsigned short    event_code;		/* returned from IPC */
 };
 
@@ -448,8 +448,8 @@ struct close_packet {
 	volatile char              filler_1[4];
 	volatile char              device_number;
    volatile char              filler_2[19];
-	volatile short             error_h;   
-	volatile short             error_l;   
+	volatile short             error_h;
+	volatile short             error_l;
 	volatile unsigned short    event_code;		/* returned from IPC */
 };
 
@@ -462,8 +462,8 @@ struct read_wakeup_packet {
 	volatile char              filler_1[4];
 	volatile char              device_number;
    volatile char              filler_2[19];
-	volatile short             error_h;   
-	volatile short             error_l;   
+	volatile short             error_h;
+	volatile short             error_l;
 };
 
 struct write_wakeup_packet {
@@ -475,12 +475,12 @@ struct write_wakeup_packet {
 	volatile char              filler_1[4];
 	volatile char              device_number;
    volatile char              filler_2[19];
-	volatile short             error_h;   
-	volatile short             error_l;   
+	volatile short             error_h;
+	volatile short             error_l;
 };
 
 /*
- * All structures must reside in dual port user memory. 
+ * All structures must reside in dual port user memory.
  * ($FFxx0100 to $FFxxFFF0)
  * All structures must be word aligned (see byte counts above)
  *

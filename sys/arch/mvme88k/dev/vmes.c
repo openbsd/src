@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.11 2003/06/04 04:11:37 deraadt Exp $ */
+/*	$OpenBSD: vmes.c,v 1.12 2003/10/11 22:08:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -49,8 +49,8 @@ int  vmesmatch(struct device *, void *, void *);
 
 struct cfattach vmes_ca = {
         sizeof(struct vmessoftc), vmesmatch, vmesattach
-}; 
- 
+};
+
 struct cfdriver vmes_cd = {
         NULL, "vmes", DV_DULL, 0
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.9 2001/09/28 20:46:39 miod Exp $ */
+/*	$OpenBSD: pcb.h,v 1.10 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Mach Operating System
@@ -25,8 +25,8 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
-/* 
- * Motorola 88100 pcb definitions 
+/*
+ * Motorola 88100 pcb definitions
  *
  */
 /*
@@ -36,7 +36,7 @@
 
 #include <machine/reg.h>
 
-/* 
+/*
  * Our PCB is the regular PCB+Save area for kernel frame.
  * Upon entering kernel mode from user land, save the user context
  * in the saved_state area - this is passed as the exception frame.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vevar.h,v 1.3 2002/03/14 01:26:39 millert Exp $	*/
+/*	$OpenBSD: if_vevar.h,v 1.4 2003/10/11 22:08:57 miod Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -35,7 +35,7 @@
  * Ethernet software status per device.
  *
  * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface. 
+ * arpcom.ac_if, which the routing code uses to locate the interface.
  * This structure contains the output queue for the interface, its address, ...
  *
  * NOTE: this structure MUST be the first element in machine-dependent

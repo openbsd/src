@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieeefp.h,v 1.3 2003/09/26 21:43:30 miod Exp $ */
+/*	$OpenBSD: ieeefp.h,v 1.4 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -33,7 +33,7 @@
  * Values for fp_except are selected to match the bits in FPSR (see
  * m88100 user's manual page 6-33). This file is derived from the
  * definitions in the ABI/88k manual and sparc port.
- * 			       -- Nivas		
+ * 			       -- Nivas
  */
 
 #ifndef _M88K_IEEEFP_H_

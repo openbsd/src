@@ -1,9 +1,9 @@
-/*	$OpenBSD: clreg.h,v 1.3 2003/06/04 16:36:15 deraadt Exp $ */
+/*	$OpenBSD: clreg.h,v 1.4 2003/10/11 22:08:57 miod Exp $ */
 
-/* Copyright (c) 1998 Steve Murphree, Jr. 
+/* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
  *
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,7 +25,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */  
+ */
 
 struct clreg {
 	volatile u_char anon1[0x7];

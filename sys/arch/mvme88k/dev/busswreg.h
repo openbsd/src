@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.3 2001/12/19 04:02:25 smurph Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.4 2003/10/11 22:08:57 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -126,11 +126,11 @@ struct bussw_reg {
 #define BS_XCC_FBSY	0x00000004
 #define BS_XCC_DIAG	0x00000008
 
-/* 
- * INTR1 - Abort Control Register 
- * Cross Processor Interrupt Register 
- * Timer Interrupt 1 Register 
- * Timer Interrupt 2 Register 
+/*
+ * INTR1 - Abort Control Register
+ * Cross Processor Interrupt Register
+ * Timer Interrupt 1 Register
+ * Timer Interrupt 2 Register
  */
 #define BS_INTR1_ABORT_ICLR	0x08000000	/* abort interrupt clear */
 #define BS_INTR1_ABORT_IEN	0x10000000	/* abort interrupt enable */
@@ -163,11 +163,11 @@ struct bussw_reg {
 #define BS_VBASE_SRC_EXT	0x4	/* external interrupt */
 #define BS_VBASE_SRC_SPUR	0x7	/* spurious interrupt */
 
-/* 
- * INTR2 - Write Post Control Register 
- * Processor Address Log Interrupt Register 
- * External Interrupt Register 
- * Vector Base 
+/*
+ * INTR2 - Write Post Control Register
+ * Processor Address Log Interrupt Register
+ * External Interrupt Register
+ * Vector Base
  */
 #define BS_INTR2_WPINT_ICLR	0x08000000	/* WPINT interrupt clear */
 #define BS_INTR2_WPINT_IEN	0x10000000	/* WPINT interrupt enable */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: prom.h,v 1.11 2003/09/01 19:14:04 miod Exp $ */
+/*	$OpenBSD: prom.h,v 1.12 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -109,7 +109,7 @@ struct mvmeprom_brdid {
 	u_char	pwa[16];		/* printed wiring assembly number */
 	u_char	speed[4];		/* cpu speed */
 	u_char	etheraddr[6];		/* mac address, all zero if no ether */
-	u_char	fill[2];		
+	u_char	fill[2];
 	u_char	scsiid[2];		/* local SCSI id */
 	u_char	sysid[8];		/* system id - nothing on mvme187 */
 	u_char	brd1_pwb[8];		/* memory board 1 pwb */

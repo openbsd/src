@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.11 2002/03/14 01:26:38 millert Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.12 2003/10/11 22:08:57 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -44,7 +44,7 @@ boolean_t inst_delayed(unsigned int ins);
 #ifdef INTERNAL_SSTEP
 db_breakpoint_t db_not_taken_bkpt = 0;
 db_breakpoint_t db_taken_bkpt = 0;
-#endif 
+#endif
 
 /*
  * Returns TRUE is the instruction a branch or jump instruction
@@ -70,7 +70,7 @@ inst_branch(ins)
 	return FALSE;
 }
 
-/* 
+/*
  * inst_load(ins)
  * Returns the number of words the instruction loads. byte,
  * half and word count as 1; double word as 2
@@ -286,7 +286,7 @@ getreg_val(frame, regno)
 #ifdef INTERNAL_SSTEP
 void
 db_set_single_step(regs)
-	register db_regs_t *regs;
+	db_regs_t *regs;
 {
 	if (cputyp == CPU_88110) {
 		((regs)->epsr |= (PSR_TRACE | PSR_SER));
@@ -334,4 +334,4 @@ db_clear_single_step(regs)
 		}
 	}
 }
-#endif 
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.h,v 1.9 2003/06/04 04:11:37 deraadt Exp $ */
+/*	$OpenBSD: vme.h,v 1.10 2003/10/11 22:08:57 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -347,10 +347,10 @@ struct vme2reg {
 #define VME2_GET_VBR1(x)	((((x)->vme2_vbr >> 24) & 0xf) << 4)
 #define VME2_VBR_GPOXXXX	0x00ffffff
 /*8c*/	volatile u_long		vme2_misc;
-#define VME2_MISC_MPIRQEN	0x00000080	/* do not set */	
+#define VME2_MISC_MPIRQEN	0x00000080	/* do not set */
 #define VME2_MISC_REVEROM	0x00000040	/* 167: dis eprom. 166: en flash */
 #define VME2_MISC_DISSRAM	0x00000020	/* do not set */
-#define VME2_MISC_DISMST	0x00000010	
+#define VME2_MISC_DISMST	0x00000010
 #define VME2_MISC_NOELBBSY	0x00000008	/* do not set */
 #define VME2_MISC_DISBSYT	0x00000004	/* do not set */
 #define VME2_MISC_ENINT		0x00000002	/* do not set */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.12 2003/09/28 22:14:33 miod Exp $ */
+/*	$OpenBSD: syscon.c,v 1.13 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -67,9 +67,9 @@ struct sysconreg syscon_reg = {
    (unsigned int *volatile)RMAD_REG,	(unsigned int *volatile)WVAD_REG,
    (unsigned int *volatile)RVAD_REG,	(unsigned int *volatile)CIO_PORTC,
    (unsigned int *volatile)CIO_PORTB,	(unsigned int *volatile)CIO_PORTA,
-   (unsigned int *volatile)CIO_CTRL 
+   (unsigned int *volatile)CIO_CTRL
    };
-  
+
 struct sysconsoftc {
 	struct device	sc_dev;
 	void		*sc_vaddr;	/* Utility I/O space */
@@ -119,7 +119,7 @@ sysconmatch(parent, vcf, args)
 		return (0);
 
 	/*
-	 * Uh, MVME188 better have on of these, so always match if it 
+	 * Uh, MVME188 better have on of these, so always match if it
 	 * is a MVME188...
 	 */
 	syscon = (struct sysconreg *)(IIOV(ca->ca_paddr));
@@ -193,7 +193,7 @@ sysconattach(parent, self, args)
 
 	printf(": rev %d\n", 1);
 
-	/* 
+	/*
 	 * pseudo driver, abort interrupt handler
 	 */
 	sc->sc_abih.ih_fn = sysconabort;

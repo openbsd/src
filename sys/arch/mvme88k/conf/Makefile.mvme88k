@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme88k,v 1.29 2003/10/01 20:39:38 miod Exp $
+#	$OpenBSD: Makefile.mvme88k,v 1.30 2003/10/11 22:08:55 miod Exp $
 #
 # Makefile for OpenBSD
 #
@@ -171,7 +171,7 @@ links:
 SRCS=	param.c ioconf.c ${CFILES} ${SFILES}
 
 depend:: .depend
-.depend: ${SRCS} assym.h param.c 
+.depend: ${SRCS} assym.h param.c
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if !empty(SFILES)
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -183,16 +183,16 @@ depend:: .depend
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
 if_tun.o if_loop.o if_ethersubr.o: Makefile
 in_proto.o: Makefile
 
 # depend on maxusers
 assym.h machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 locore.o machdep.o: Makefile
 process.o locore_asm_routines.o eh.o: assym.h
 m88110_mmu.o m88110_fp.o  m88100_fp.o : assym.h

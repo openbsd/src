@@ -1,9 +1,9 @@
-/*	$OpenBSD: disklabel.h,v 1.10 2003/06/03 21:09:01 deraadt Exp $ */
+/*	$OpenBSD: disklabel.h,v 1.11 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,7 +25,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */  
+ */
 
 #ifndef __MACHINE_DISKLABEL_H__
 #define __MACHINE_DISKLABEL_H__

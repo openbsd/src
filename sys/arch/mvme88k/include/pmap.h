@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.30 2003/09/26 22:27:25 miod Exp $ */
+/*	$OpenBSD: pmap.h,v 1.31 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -37,7 +37,7 @@ struct pmap {
 	u_int32_t		pm_ibatc[BATC_MAX];	/* instruction BATCs */
 	u_int32_t		pm_dbatc[BATC_MAX];	/* data BATCs */
 #endif
-}; 
+};
 
 #define PMAP_NULL ((pmap_t) 0)
 

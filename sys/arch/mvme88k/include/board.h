@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.17 2003/09/28 16:01:11 miod Exp $ */
+/*	$OpenBSD: board.h,v 1.18 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -62,7 +62,7 @@
 #define VMEA32D16_SIZE	0x007FFFFF	/* VMEbus A32/D16 size */
 
 
-/* These need to be here because of the way m18x_cmmu.c 
+/* These need to be here because of the way m18x_cmmu.c
    handles the CMMU's. */
 #define CMMU_SIZE	0x1000
 
@@ -99,7 +99,7 @@
 #endif
 #ifdef MVME187
 #include <machine/mvme187.h>
-#endif 
+#endif
 #ifdef MVME188
 #include <machine/mvme188.h>
 #endif

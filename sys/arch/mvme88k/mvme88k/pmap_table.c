@@ -1,28 +1,28 @@
-/*	$OpenBSD: pmap_table.c,v 1.15 2003/09/16 20:52:22 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.16 2003/10/11 22:08:57 miod Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 
@@ -49,7 +49,7 @@ m187_board_table[] = {
 	{ OBIO_START  , OBIO_START  , round_page(OBIO_SIZE)  , RW, CI },
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
-#endif 
+#endif
 
 #ifdef MVME188
 const pmap_table_entry
@@ -58,7 +58,7 @@ m188_board_table[] = {
 	    round_page(MVME188_UTILITY_SIZE), RW, CI },
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
-#endif 
+#endif
 
 #ifdef MVME197
 const pmap_table_entry
@@ -68,24 +68,24 @@ m197_board_table[] = {
 	/* No need to mention BUG here - it is contained inside OBIO */
 	{ 0, 0, 0xffffffff, 0, 0 },
 };
-#endif 
+#endif
 
-pmap_table_t 
+pmap_table_t
 pmap_table_build(void)
 {
 	switch (brdtyp) {
 #ifdef MVME187
 	case BRD_187:
 		return m187_board_table;
-#endif 
+#endif
 #ifdef MVME188
 	case BRD_188:
 		return m188_board_table;
-#endif 
+#endif
 #ifdef MVME197
 	case BRD_197:
 		return m197_board_table;
-#endif 
+#endif
 	default:
 		return NULL;	/* silence warning */
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2003/01/13 20:12:16 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2003/10/11 22:08:57 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -46,8 +46,8 @@
 #define M88K_LEVEL5_IRQ	5
 #define M88K_LEVEL6_IRQ	6
 #define M88K_LEVEL7_IRQ	7
-/* 
- * We keep track of these separately, but   
+/*
+ * We keep track of these separately, but
  * they will be reflected with the above also.
  */
 #define M88K_CLK_IRQ	8
@@ -57,7 +57,7 @@
 
 extern int intrcnt[M88K_NIRQ];
 
-#endif 
+#endif
 
 /*
  * IPL levels.

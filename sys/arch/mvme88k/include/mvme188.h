@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.14 2003/09/28 16:01:12 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.15 2003/10/11 22:08:57 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -253,10 +253,10 @@
 #define SLAVE_MASK (LVL6 | LVL1)
 
 #define MASK_LVL_0 (LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2 | LVL1)
-#define MASK_LVL_1 (LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2) 
-#define MASK_LVL_2 (LVL7 | LVL6 | LVL5 | LVL4 | LVL3)  
-#define MASK_LVL_3 (LVL7 | LVL6 | LVL5 | LVL4)    
-#define MASK_LVL_4 (LVL7 | LVL6 | LVL5)    
+#define MASK_LVL_1 (LVL7 | LVL6 | LVL5 | LVL4 | LVL3 | LVL2)
+#define MASK_LVL_2 (LVL7 | LVL6 | LVL5 | LVL4 | LVL3)
+#define MASK_LVL_3 (LVL7 | LVL6 | LVL5 | LVL4)
+#define MASK_LVL_4 (LVL7 | LVL6 | LVL5)
 #define MASK_LVL_5 (LVL7 | LVL6)
 #define MASK_LVL_6 (LVL7)
 #define MASK_LVL_7 0x00000000 /* all ints disabled */
@@ -364,7 +364,7 @@ extern unsigned int int_mask_val[INT_LEVEL];
 extern unsigned int int_mask_shadow[MAX_CPUS];
 extern unsigned int *volatile int_mask_reg[MAX_CPUS];
 
-#endif 
+#endif
 
 #define M188_IACK		0xFFF85000
 #define M188_IVEC		0x40	/* vector returned upon MVME188 int */

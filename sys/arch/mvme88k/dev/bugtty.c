@@ -1,9 +1,9 @@
-/*	$OpenBSD: bugtty.c,v 1.16 2003/09/01 19:14:01 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.17 2003/10/11 22:08:57 miod Exp $ */
 
-/* Copyright (c) 1998 Steve Murphree, Jr. 
+/* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -25,7 +25,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */  
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ void bugttyattach(struct device *parent, struct device *self, void *aux);
 
 struct cfattach bugtty_ca = {
         sizeof(struct device), bugttymatch, bugttyattach
-};      
+};
 
 struct cfdriver bugtty_cd = {
         NULL, "bugtty", DV_TTY, 0
@@ -86,7 +86,7 @@ int needprom = 1;
 	int	ca_ipl;
 	int	ca_vec;
 	char	*ca_name;
-	void	*ca_master;	 points to bus-dependent data 
+	void	*ca_master;	 points to bus-dependent data
 */
 
 int
@@ -96,7 +96,7 @@ bugttymatch(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	
+
 	if (needprom == 0)
 		return (0);
 	ca->ca_paddr = (void *)0xfff45000;
@@ -122,7 +122,7 @@ void bugttyoutput(struct tty *tp);
 int bugttydefaultrate = TTYDEF_SPEED;
 int bugttyswflags;
 
-struct tty * 
+struct tty *
 bugttytty(dev)
 	dev_t dev;
 {
@@ -308,7 +308,7 @@ bugttyread(dev, uio, flag)
 	struct tty *tp;
 
 	if ((tp = bugtty_tty[BUGTTYUNIT(dev)]) == NULL)
-		return (ENXIO); 
+		return (ENXIO);
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
@@ -378,7 +378,7 @@ bugttyioctl(dev, cmd, data, flag, p)
 		return (ENXIO);
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0) 
+	if (error >= 0)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
@@ -421,9 +421,9 @@ bugttyioctl(dev, cmd, data, flag, p)
 		*(int *)data = SWFLAGS(dev);
 		break;
 	case TIOCSFLAGS:
-		error = suser(p, 0); 
+		error = suser(p, 0);
 		if (error != 0)
-			return (EPERM); 
+			return (EPERM);
 
 		bugttyswflags = *(int *)data;
 		bugttyswflags &= /* only allow valid flags */
@@ -461,12 +461,12 @@ bugttycnprobe(cp)
 {
 	int maj;
 	int needprom = 1;
-	
+
 	if (needprom == 0) {
 		cp->cn_pri = CN_DEAD;
 		return (0);
 	}
-		
+
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == bugttyopen)
