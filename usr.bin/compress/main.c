@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2003/07/08 00:30:12 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2003/07/11 02:31:18 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.32 2003/07/08 00:30:12 mickey Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.33 2003/07/11 02:31:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,23 +65,23 @@ extern char *__progname;
 const struct compressor {
 	char *name;
 	char *suffix;
-	int (*check_header)(int, struct stat *, const char *);
-	void *(*open)(int, const char *, int);
+	u_char *magic;
+	void *(*open)(int, const char *, int, int);
 	int (*read)(void *, char *, int);
 	int (*write)(void *, const char *, int);
 	int (*close)(void *);
 } c_table[] = {
 #define M_COMPRESS (&c_table[0])
-  { "compress", ".Z", z_check_header,  z_open,  zread,   zwrite,   zclose },
+  { "compress", ".Z", "\037\235", z_open,  zread,   zwrite,   zclose },
 #define M_DEFLATE (&c_table[1])
-  { "deflate", ".gz", gz_check_header, gz_open, gz_read, gz_write, gz_close },
+  { "deflate", ".gz", "\037\213", gz_open, gz_read, gz_write, gz_close },
 #if 0
 #define M_LZH (&c_table[2])
-  { "lzh", ".lzh", lzh_check_header, lzh_open, lzh_read, lzh_write, lzh_close },
+  { "lzh", ".lzh", "\037\240", lzh_open, lzh_read, lzh_write, lzh_close },
 #define M_ZIP (&c_table[3])
-  { "zip", ".zip", zip_check_header, zip_open, zip_read, zip_write, zip_close },
+  { "zip", ".zip", "PK", zip_open, zip_read, zip_write, zip_close },
 #define M_PACK (&c_table[4])
-  { "pack", ".pak",pak_check_header, pak_open, pak_read, pak_write, pak_close },
+  { "pack", ".pak", "\037\036", pak_open, pak_read, pak_write, pak_close },
 #endif
   { NULL }
 };
@@ -464,7 +464,7 @@ compress(const char *in, const char *out, const struct compressor *method,
 		return (-1);
 	}
 
-	if ((cookie = (*method->open)(ofd, "w", bits)) == NULL) {
+	if ((cookie = (*method->open)(ofd, "w", bits, 0)) == NULL) {
 		if (verbose >= 0)
 			warn("%s", in);
 		(void) close(ofd);
@@ -505,16 +505,16 @@ const struct compressor *
 check_method(int fd, struct stat *sb, const char *out)
 {
 	const struct compressor *method;
+	u_char magic[2];
 
-	for (method = &c_table[0];
-	    method->name != NULL && !(*method->check_header)(fd, sb, out);
-	    method++)
-		;
-
-	if (method->name == NULL)
-		method = NULL;
-
-	return (method);
+	if (read(fd, magic, sizeof(magic)) != 2)
+		return (NULL);
+	for (method = &c_table[0]; method->name != NULL; method++) {
+		if (magic[0] == method->magic[0] &&
+		    magic[1] == method->magic[1])
+			return (method);
+	}
+	return (NULL);
 }
 
 int
@@ -543,14 +543,14 @@ decompress(const char *in, const char *out, const struct compressor *method,
 		return -1;
 	}
 
-	if (!pipin && (method = check_method(ifd, sb, out)) == NULL) {
+	if ((method = check_method(ifd, sb, out)) == NULL) {
 		if (verbose >= 0)
 			warnx("%s: unrecognized file format", in);
 		close (ifd);
 		return -1;
 	}
 
-	if ((cookie = (*method->open)(ifd, "r", bits)) == NULL) {
+	if ((cookie = (*method->open)(ifd, "r", bits, 1)) == NULL) {
 		if (verbose >= 0)
 			warn("%s", in);
 		error++;

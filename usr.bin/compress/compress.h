@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.4 2003/06/03 21:08:36 mickey Exp $	*/
+/*	$OpenBSD: compress.h,v 1.5 2003/07/11 02:31:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -37,21 +37,21 @@ extern const char main_rcsid[], z_rcsid[], gz_rcsid[], pkzip_rcsid[],
     pack_rcsid[], lzh_rcsid[];
 
 extern int z_check_header(int, struct stat *, const char *);
-extern void *z_open(int, const char *, int);
+extern void *z_open(int, const char *, int, int);
 extern FILE *zopen(const char *, const char *,int);
 extern int zread(void *, char *, int);
 extern int zwrite(void *, const char *, int);
 extern int zclose(void *);
 
 extern int gz_check_header(int, struct stat *, const char *);
-extern void *gz_open(int, const char *, int);
+extern void *gz_open(int, const char *, int, int);
 extern int gz_read(void *, char *, int);
 extern int gz_write(void *, const char *, int);
 extern int gz_close(void *);
 extern int gz_flush(void *, int);
 
 extern int lzh_check_header(int, struct stat *, const char *);
-extern void *lzh_open(int, const char *, int);
+extern void *lzh_open(int, const char *, int, int);
 extern int lzh_read(void *, char *, int);
 extern int lzh_write(void *, const char *, int);
 extern int lzh_close(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.11 2003/07/10 00:06:50 david Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.12 2003/07/11 02:31:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.11 2003/07/10 00:06:50 david Exp $";
+    "$OpenBSD: gzopen.c,v 1.12 2003/07/11 02:31:18 millert Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -97,26 +97,11 @@ static const u_char gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
 static int put_int32(gz_stream *, u_int32_t);
 static u_int32_t get_int32(gz_stream *);
-static int get_header(gz_stream *);
+static int get_header(gz_stream *, int);
 static int get_byte(gz_stream *);
 
-int
-gz_check_header(int fd, struct stat *sb, const char *ofn)
-{
-	int f;
-	u_char buf[sizeof(gz_magic)];
-	off_t off = lseek(fd, 0, SEEK_CUR);
-
-	f = (read(fd, buf, sizeof(buf)) == sizeof(buf) &&
-	    !memcmp(buf, gz_magic, sizeof(buf)));
-
-	lseek (fd, off, SEEK_SET);
-
-	return f;
-}
-
 void *
-gz_open(int fd, const char *mode, int bits)
+gz_open(int fd, const char *mode, int bits, int gotmagic)
 {
 	gz_stream *s;
 
@@ -177,7 +162,7 @@ gz_open(int fd, const char *mode, int bits)
 			s = NULL;
 		}
 	} else {
-		if (get_header(s) != 0) { /* skip the .gz header */
+		if (get_header(s, gotmagic) != 0) { /* skip the .gz header */
 			gz_close (s);
 			s = NULL;
 		}
@@ -297,7 +282,7 @@ get_int32(gz_stream *s)
 }
 
 static int
-get_header(gz_stream *s)
+get_header(gz_stream *s, int gotmagic)
 {
 	int method; /* method byte */
 	int flags;  /* flags byte */
@@ -305,11 +290,13 @@ get_header(gz_stream *s)
 	int c;
 
 	/* Check the gzip magic header */
-	for (len = 0; len < 2; len++) {
-		c = get_byte(s);
-		if (c != gz_magic[len]) {
-			errno = EFTYPE;
-			return -1;
+	if (!gotmagic) {
+		for (len = 0; len < 2; len++) {
+			c = get_byte(s);
+			if (c != gz_magic[len]) {
+				errno = EFTYPE;
+				return -1;
+			}
 		}
 	}
 

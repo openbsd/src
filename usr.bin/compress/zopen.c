@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.11 2003/06/22 15:22:43 deraadt Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.12 2003/07/11 02:31:18 millert Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
 const char z_rcsid[] =
-	"$OpenBSD: zopen.c,v 1.11 2003/06/22 15:22:43 deraadt Exp $";
+	"$OpenBSD: zopen.c,v 1.12 2003/07/11 02:31:18 millert Exp $";
 #endif
 
 /*-
@@ -104,7 +104,7 @@ struct s_zstate {
 	int zs_fd;			/* File stream for I/O */
 	char zs_mode;			/* r or w */
 	enum {
-		S_START, S_MIDDLE, S_EOF
+		S_START, S_MAGIC, S_MIDDLE, S_EOF
 	} zs_state;			/* State of computation */
 	int zs_n_bits;			/* Number of bits/code. */
 	int zs_maxbits;			/* User settable max # bits/code. */
@@ -227,6 +227,8 @@ zwrite(void *cookie, const char *wbp, int num)
 	count = num;
 	bp = (u_char *)wbp;
 	switch (zs->zs_state) {
+	case S_MAGIC:
+		return -1;
 	case S_EOF:
 		return 0;
 	case S_START:
@@ -468,6 +470,16 @@ zread(void *cookie, char *rbp, int num)
 	case S_START:
 		zs->zs_state = S_MIDDLE;
 		zs->zs_bp = zs->zs_buf;
+		header[0] = header[1] = header[2] = '\0';
+		read(zs->zs_fd, header, sizeof(header));
+		break;
+	case S_MAGIC:
+		zs->zs_state = S_MIDDLE;
+		zs->zs_bp = zs->zs_buf;
+		header[0] = z_magic[0];
+		header[1] = z_magic[1];
+		header[2] = '\0';
+		read(zs->zs_fd, &header[2], 1);
 		break;
 	case S_MIDDLE:
 		goto middle;
@@ -476,8 +488,7 @@ zread(void *cookie, char *rbp, int num)
 	}
 
 	/* Check the magic number */
-	if (read(zs->zs_fd, header, sizeof(header)) != sizeof(header) ||
-	    memcmp(header, z_magic, sizeof(z_magic)) != 0) {
+	if (header[0] != z_magic[0] || header[1] != z_magic[1]) {
 		errno = EFTYPE;
 		return (-1);
 	}
@@ -706,7 +717,7 @@ zopen(const char *name, const char *mode, int bits)
 	if ((fd = open(name, (*mode=='r'? O_RDONLY:O_WRONLY|O_CREAT),
 	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
 		return NULL;
-	if ((cookie = z_open(fd, mode, bits)) == NULL) {
+	if ((cookie = z_open(fd, mode, bits, 0)) == NULL) {
 		close(fd);
 		return NULL;
 	}
@@ -715,7 +726,7 @@ zopen(const char *name, const char *mode, int bits)
 }
 
 void *
-z_open(int fd, const char *mode, int bits)
+z_open(int fd, const char *mode, int bits, int gotmagic)
 {
 	struct s_zstate *zs;
 
@@ -740,7 +751,7 @@ z_open(int fd, const char *mode, int bits)
 	zs->zs_checkpoint = CHECK_GAP;
 	zs->zs_in_count = 1;		/* Length of input. */
 	zs->zs_out_count = 0;		/* # of codes output (for debugging).*/
-	zs->zs_state = S_START;
+	zs->zs_state = gotmagic ? S_MAGIC : S_START;
 	zs->zs_offset = 0;
 	zs->zs_size = 0;
 	zs->zs_mode = mode[0];
@@ -748,19 +759,4 @@ z_open(int fd, const char *mode, int bits)
 
 	zs->zs_fd = fd;
 	return zs;
-}
-
-int
-z_check_header(int fd, struct stat *sb, const char *ofn)
-{
-	int f;
-	u_char buf[sizeof(z_magic)];
-	off_t off = lseek(fd, 0, SEEK_CUR);
-
-	f = (read(fd, buf, sizeof(buf)) == sizeof(buf) &&
-	    !memcmp(buf, z_magic, sizeof(buf)));
-
-	lseek (fd, off, SEEK_SET);
-
-	return f;
 }
