@@ -76,7 +76,7 @@ is a cancellation point and is cancelled, the effect on
 was never called.
 .Pp
 The constant
-.Fa PTHREAD_ONCE_INIT
+.Dv PTHREAD_ONCE_INIT
 is defined by header
 .Aq Pa pthread.h .
 .Pp
@@ -85,8 +85,7 @@ The behavior of
 is undefined if
 .Fa once_control
 has automatic storage duration or is not initialized by
-.Fa PTHREAD_ONCE_INIT .
-.Pp
+.Dv PTHREAD_ONCE_INIT .
 .Sh RETURN VALUES
 If successful,  the
 .Fn pthread_once
@@ -94,7 +93,6 @@ function will return zero. Otherwise an error number will be returned to
 indicate the error.
 .Sh ERRORS
 None.
-.Pp
 .Sh STANDARDS
 .Fn pthread_once
 conforms to ISO/IEC 9945-1 ANSI/IEEE

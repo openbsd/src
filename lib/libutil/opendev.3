@@ -1,4 +1,4 @@
-.\"	$OpenBSD: opendev.3,v 1.6 1999/05/27 16:21:00 aaron Exp $
+.\"	$OpenBSD: opendev.3,v 1.7 1999/07/02 21:13:07 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -36,22 +36,27 @@
 .Sh DESCRIPTION
 The
 .Fn opendev
-function opens a device using the "short form" name.  This is typically
-"sd0" or "sd0c", for instance, which will be expanded to
+function opens a device using the
+.Dq short form
+name.  This is typically
+.Dq sd0
+or
+.Dq sd0c ,
+for instance, which will be expanded to
 .Pa /dev/rsd0c
 on most architectures.
 .Pp
 The
-.Ar oflags
+.Fa oflags
 are the same as the
-.Ar flags
+.Fa flags
 passed to
 .Xr open 2 .
 .Pp
 The
-.Ar dflags
+.Fa dflags
 are specified by
-.Em OR Ns 'ing
+.Tn OR Ns 'ing
 the following values:
 .Pp
 .Bd -literal -offset indent -compact
@@ -60,17 +65,19 @@ OPENDEV_DRCT	attempt to open the device itself during expansion
 .Ed
 .Pp
 If
-.Ar realpath
-is not NULL, it is modified to point at the fully expanded device name.
-.Pp
+.Fa realpath
+is not
+.Dv NULL ,
+it is modified to point at the fully expanded device name.
 .Sh RETURN VALUES
 The
 .Fn opendev
 return value and errors are the same as the return value and errors of
 .Xr open 2 .
-.Sh HISTORY
-.Fn opendev
-first appeared in
-.Ox 1.2 .
 .Sh SEE ALSO
 .Xr open 2
+.Sh HISTORY
+The
+.Fn opendev
+function first appeared in
+.Ox 1.2 .

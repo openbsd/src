@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$Id: lgamma.3,v 1.6 1999/07/01 00:06:40 deraadt Exp $
+.\"	$Id: lgamma.3,v 1.7 1999/07/02 21:13:06 aaron Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
-.Os BSD 4.3
+.Os
 .Sh NAME
 .Nm lgamma ,
 .Nm lgammaf
@@ -64,7 +64,6 @@ returns ln\||\(*G(x)|.
 The external integer
 .Fa signgam
 returns the sign of \(*G(x).
-.Pp
 .Sh IDIOSYNCRASIES
 Do not use the expression
 .Dq Li signgam\(**exp(lgamma(x))
@@ -77,7 +76,6 @@ lg = lgamma(x); g = signgam\(**exp(lg);
 Only after
 .Fn lgamma
 has returned can signgam be correct.
-.Pp
 .Sh RETURN VALUES
 .Fn lgamma
 returns appropriate values unless an argument is out of range.
@@ -95,6 +93,6 @@ is set to
 .Xr math 3
 .Sh HISTORY
 The
-.Nm lgamma
+.Fn lgamma
 function appeared in 
 .Bx 4.3 .
