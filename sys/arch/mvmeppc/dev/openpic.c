@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.11 2004/01/29 10:58:06 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.12 2004/01/30 22:24:27 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -36,32 +36,32 @@
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
 
-#if 0
-#define OP_DEBUG
-#endif 
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <ddb/db_var.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
+
 #include <mvmeppc/dev/openpicreg.h>
 #include <mvmeppc/dev/ravenvar.h>
 #include <mvmeppc/dev/ravenreg.h>
 
-#define ICU_LEN 32
-#define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
-#define IO_ICU1	(isaspace_va + 0x20)
-#define IO_ICU2	(isaspace_va + 0xA0)
-#define IO_ELCR1	(isaspace_va + 0x4D0)
-#define IO_ELCR2	(isaspace_va + 0x4D1)
+#define ICU_LEN		32
+#define LEGAL_IRQ(x)	((x >= 0) && (x < ICU_LEN))
+#define IO_ICU1		(isaspace_va + 0x20)
+#define IO_ICU2		(isaspace_va + 0xa0)
+#define IO_ELCR1	(isaspace_va + 0x4d0)
+#define IO_ELCR2	(isaspace_va + 0x4d1)
 #define IRQ_SLAVE	2
 #define ICU_OFFSET	0
 #define PIC_OFFSET	16
@@ -71,12 +71,10 @@ unsigned char icu2_val = 0xff;
 unsigned char elcr1_val = 0x00;
 unsigned char elcr2_val = 0x00;
 
-#define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IO_ICU2 + 1, imen >> 8))
-
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 int hwirq[ICU_LEN], virq[ICU_LEN];
-unsigned int imen	/* = 0xffffffff */; /* XXX */
+unsigned int imen = 0xffffffff;
 int virq_max;
 
 struct evcnt evirq[ICU_LEN];
@@ -91,35 +89,34 @@ void openpic_enable_irq_mask(int irq_mask);
 #define HWIRQ_MAX 27
 #define HWIRQ_MASK 0x0fffffff
 
-static   __inline u_int openpic_read(int);
-static   __inline void openpic_write(int, u_int);
-void  openpic_enable_irq(int, int);
-void  openpic_disable_irq(int);
-void  openpic_init(void);
-void  openpic_set_priority(int, int);
-void  openpic_set_vec_pri(int, int);
-static   __inline int openpic_read_irq(int);
-static   __inline void openpic_eoi(int);
-void openpic_initirq(int, int, int, int, int);
+static __inline u_int openpic_read(int);
+static __inline void openpic_write(int, u_int);
+void openpic_enable_irq(int, int);
+void openpic_disable_irq(int);
+void openpic_init(void);
+void openpic_set_priority(int, int);
+static __inline int openpic_read_irq(int);
+static __inline void openpic_eoi(int);
+void openpic_initirq(int, int, int);
 
-void  i8259_init(void);
-int   i8259_intr(void);
-void  i8259_enable_irq(int, int);
-void  i8259_disable_irq(int);
-void  *i8259_intr_establish(void *, int, int, int, int (*)(void *), void *,
+void i8259_init(void);
+int i8259_intr(void);
+void i8259_enable_irq(int, int);
+void i8259_disable_irq(int);
+void *i8259_intr_establish(void *, int, int, int, int (*)(void *), void *,
     char *);
-void  i8259_set_irq_mask(void);
+void i8259_set_irq_mask(void);
 
 struct openpic_softc {
 	struct device sc_dev;
 };
 
-int   openpic_match(struct device *parent, void *cf, void *aux);
-void  openpic_attach(struct device *, struct device *, void *);
-void  openpic_do_pending_int(void);
-void  ext_intr_openpic(void);
+int openpic_match(struct device *parent, void *cf, void *aux);
+void openpic_attach(struct device *, struct device *, void *);
+void openpic_do_pending_int(void);
+void ext_intr_openpic(void);
 
-struct cfattach openpic_ca = { 
+struct cfattach openpic_ca = {
 	sizeof(struct openpic_softc), openpic_match, openpic_attach
 };
 
@@ -141,7 +138,7 @@ const struct pci_route {
 int isaintrs;
 
 int
-openpic_match(parent, cf, aux) 
+openpic_match(parent, cf, aux)
 	struct device *parent;
 	void *cf;
 	void *aux;
@@ -154,14 +151,14 @@ openpic_match(parent, cf, aux)
 }
 
 u_int8_t *interrupt_reg;
-typedef void  (void_f) (void);
+typedef void (void_f) (void);
 extern void_f *pending_int_f;
 int abort_switch (void *arg);
 int i8259_dummy (void *arg);
 
 typedef int mac_intr_handle_t;
 
-typedef void  *(intr_establish_t)(void *, mac_intr_handle_t,
+typedef void *(intr_establish_t)(void *, mac_intr_handle_t,
     int, int, int (*)(void *), void *, char *);
 typedef void (intr_disestablish_t)(void *, void *);
 
@@ -194,9 +191,8 @@ openpic_attach(parent, self, aux)
 	openpic_init();
 
 	pending_int_f = openpic_do_pending_int;
-	intr_establish_func  = i8259_intr_establish;
-	intr_disestablish_func  = openpic_intr_disestablish;
-	install_extint(ext_intr_openpic);
+	intr_establish_func = i8259_intr_establish;
+	intr_disestablish_func = openpic_intr_disestablish;
 
 #if 1
 	openpic_collect_preconf_intr();
@@ -205,11 +201,11 @@ openpic_attach(parent, self, aux)
 
 #if 1
 	openpic_intr_establish(parent, 0x00, IST_LEVEL, IPL_HIGH,
-							  i8259_dummy, (void *)0x00, "8259 Interrupt");
+	    i8259_dummy, (void *)0x00, "8259 Interrupt");
 	i8259_intr_establish(parent, 0x08, IST_EDGE, IPL_HIGH,
-								abort_switch, (void *)0x08, "abort button");
+	    abort_switch, (void *)0x08, "abort button");
 #endif
-	
+
 	printf("\n");
 }
 
@@ -220,14 +216,14 @@ openpic_collect_preconf_intr()
 	for (i = 0; i < ppc_configed_intr_cnt; i++) {
 #ifdef DEBUG
 		printf("\n\t%s irq %d level %d fun %x arg %x",
-				 ppc_configed_intr[i].ih_what, ppc_configed_intr[i].ih_irq,
-				 ppc_configed_intr[i].ih_level, ppc_configed_intr[i].ih_fun,
-				 ppc_configed_intr[i].ih_arg);
+		    ppc_configed_intr[i].ih_what, ppc_configed_intr[i].ih_irq,
+		    ppc_configed_intr[i].ih_level, ppc_configed_intr[i].ih_fun,
+		    ppc_configed_intr[i].ih_arg);
 #endif
 		openpic_intr_establish(NULL, ppc_configed_intr[i].ih_irq,
-									  IST_LEVEL, ppc_configed_intr[i].ih_level,
-									  ppc_configed_intr[i].ih_fun, ppc_configed_intr[i].ih_arg,
-									  ppc_configed_intr[i].ih_what);
+		    IST_LEVEL, ppc_configed_intr[i].ih_level,
+		    ppc_configed_intr[i].ih_fun, ppc_configed_intr[i].ih_arg,
+		    ppc_configed_intr[i].ih_what);
 	}
 }
 
@@ -235,8 +231,8 @@ int
 abort_switch(void *arg)
 {
 #ifdef DDB
-	printf("Abort button pressed, entering debugger.\n");
-	Debugger();
+	if (db_console)
+		Debugger();
 #else
 	printf("Abort button pressed, debugger not available.\n");
 #endif
@@ -253,7 +249,6 @@ int
 fakeintr(arg)
 	void *arg;
 {
-
 	return 0;
 }
 
@@ -275,7 +270,7 @@ i8259_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	extern int cold;
 
 	fakehand.ih_next = NULL;
-	fakehand.ih_fun  = fakeintr;
+	fakehand.ih_fun = fakeintr;
 
 #if 0
 	printf("i8259_intr_establish, %d, %s", irq, (type == IST_EDGE) ? "EDGE":"LEVEL"));
@@ -359,7 +354,7 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	extern int cold;
 
 	fakehand.ih_next = NULL;
-	fakehand.ih_fun  = fakeintr;
+	fakehand.ih_fun = fakeintr;
 
 	pr = pci_routes;
 	while (pr->pci !=0) {
@@ -388,8 +383,8 @@ openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	case IST_PULSE:
 		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-			   intr_typename(intrtype[irq]),
-			   intr_typename(type));
+			    intr_typename(intrtype[irq]),
+			    intr_typename(type));
 		break;
 	}
 
@@ -490,20 +485,18 @@ intr_calculatemasks()
 {
 	int irq, level;
 	struct intrhand *q;
-#ifdef OP_DEBUG
-	printf("intr_calculatemasks() ");
-#endif 
+
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int levels = 0;
+		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			levels |= 1 << q->ih_level;
 		intrlevel[irq] = levels;
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 5; level++) {
-		register int irqs = 0;
+	for (level = IPL_NONE; level < IPL_NUM; level++) {
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
@@ -513,15 +506,14 @@ intr_calculatemasks()
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
-	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
-
-	/*
+	 *
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
 	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_TTY] |= imask[IPL_NET];
+	imask[IPL_IMP] |= imask[IPL_TTY];
+	imask[IPL_CLOCK] |= imask[IPL_IMP] | SPL_CLOCK;
 
 	/*
 	 * These are pseudo-levels.
@@ -531,7 +523,7 @@ intr_calculatemasks()
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		register int irqs = 1 << irq;
+		int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
 		intrmask[irq] = irqs | SINT_MASK;
@@ -539,14 +531,14 @@ intr_calculatemasks()
 
 	/* Lastly, determine which IRQs are actually in use. */
 	{
-		register int irqs = 0;
+		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++) {
 			if (intrhand[irq]) {
 				irqs |= 1 << irq;
-				if (hwirq[irq] < PIC_OFFSET)
-					i8259_enable_irq(hwirq[irq], intrtype[irq]);
-				else
+				if (hwirq[irq] >= PIC_OFFSET)
 					openpic_enable_irq(hwirq[irq], intrtype[irq]);
+				else
+					i8259_enable_irq(hwirq[irq], intrtype[irq]);
 			} else {
 				if (hwirq[irq] >= PIC_OFFSET)
 					openpic_disable_irq(hwirq[irq]);
@@ -554,10 +546,11 @@ intr_calculatemasks()
 					i8259_disable_irq(hwirq[irq]);
 			}
 		}
+		imen = ~irqs;
 	}
 #if 0
 	i8259_enable_irq(2, IST_EDGE);
-#endif 
+#endif
 }
 
 /*
@@ -569,8 +562,11 @@ mapirq(irq)
 {
 	int v;
 
+#ifdef DIAGNOSTIC
 	if (irq < 0 || irq >= ICU_LEN)
 		panic("invalid irq");
+#endif
+
 	virq_max++;
 	v = virq_max;
 	if (v > HWIRQ_MAX)
@@ -607,25 +603,20 @@ openpic_do_pending_int()
 	int irq;
 	int pcpl;
 	int hwpend;
-	int emsr, dmsr;
+	int s;
 	static int processing;
 
 	if (processing)
 		return;
 
-#ifdef OP_DEBUG
-	printf("openpic_do_pending_int()\n");
-#endif 
 	processing = 1;
+
 	pcpl = splhigh();		/* Turn off all */
-	asm volatile("mfmsr %0" : "=r"(emsr));
-	dmsr = emsr & ~PSL_EE;
-	asm volatile("mtmsr %0" :: "r"(dmsr));
+	s = ppc_intr_disable();
 
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
 	openpic_enable_irq_mask(~imen);
-
 	hwpend &= HWIRQ_MASK;
 	while (hwpend) {
 		irq = 31 - cntlzw(hwpend);
@@ -653,10 +644,16 @@ openpic_do_pending_int()
 			ipending &= ~SINT_NET;
 			softnet(pisr);
 		}
-	} while (ipending & (SINT_NET|SINT_CLOCK) & ~cpl);
+#if 0
+		if ((ipending & SINT_TTY) & ~pcpl) {
+			ipending &= ~SINT_TTY;
+			softtty();
+		}
+#endif
+	} while (ipending & (SINT_NET|SINT_CLOCK|SINT_TTY) & ~cpl);
 	ipending &= pcpl;
 	cpl = pcpl;	/* Don't use splx... we are here already! */
-	asm volatile("mtmsr %0" :: "r"(emsr));
+	ppc_intr_enable(s);
 	processing = 0;
 }
 
@@ -665,7 +662,7 @@ openpic_read(reg)
 	int reg;
 {
 	char *addr = (void *)(openpic_base + reg);
-	
+
 	return in32rb(addr);
 }
 
@@ -684,9 +681,7 @@ openpic_enable_irq_mask(irq_mask)
 	int irq_mask;
 {
 	int irq;
-#ifdef OP_DEBUG
-	printf("openpic_enable_irq_mask()\n");
-#endif 
+
 	for ( irq = 0; irq <= virq_max; irq++) {
 		if (irq_mask & (1 << irq)) {
 			if (hwirq[irq] >= PIC_OFFSET)
@@ -708,39 +703,29 @@ openpic_enable_irq(irq, type)
 	int type;
 {
 	u_int x;
+
 	/* skip invalid irqs */
-	if (irq == -1)
+	if (irq < 0)
 		return;
 	if (irq >= PIC_OFFSET)
 		irq -= PIC_OFFSET;
-#ifdef OP_DEBUG
-	printf("enabeling irq %d, %s, val = 0x%x\n", irq, (type == IST_EDGE) ? "EDGE":"LEVEL", openpic_read(OPENPIC_SRC_VECTOR(irq)));
-#endif 
 
-	while((x = openpic_read(OPENPIC_SRC_VECTOR(irq))) & OPENPIC_ACTIVITY){
+	while ((x = openpic_read(OPENPIC_SRC_VECTOR(irq))) & OPENPIC_ACTIVITY) {
 		x = openpic_read_irq(0);
 		openpic_eoi(0);
-#ifdef OP_DEBUG
-		printf("x=0x%x\n", x);
-#endif 
 	}
-	
+
 	x &= ~(OPENPIC_IMASK|OPENPIC_SENSE_LEVEL|OPENPIC_SENSE_EDGE|
 			 OPENPIC_POLARITY_POSITIVE);
 #if 1
 	if (irq == 0) {
 		x |= OPENPIC_POLARITY_POSITIVE;
 	}
-#endif 
-	if (type == IST_LEVEL) {
+#endif
+	if (type == IST_LEVEL)
 		x |= OPENPIC_SENSE_LEVEL;
-	} else {
+	else
 		x |= OPENPIC_SENSE_EDGE;
-	}
-#ifdef OP_DEBUG
-	printf("enabeling irq %d, %s, %s, val 0x%08x\n", irq, (type == IST_EDGE) ? "EDGE":"LEVEL", (x & OPENPIC_POLARITY_POSITIVE) ? "H":"L", x);
-#endif 
-
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
@@ -749,85 +734,67 @@ openpic_disable_irq(irq)
 	int irq;
 {
 	u_int x;
+
 	/* skip invalid irqs */
 	if (irq >= PIC_OFFSET)
 		irq -= PIC_OFFSET;
 
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
 	x |= OPENPIC_IMASK;
-#ifdef OP_DEBUG
-	printf("disabeling irq %d, val 0x%08x\n", irq, x);
-#endif 
-
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
-void 
+void
 i8259_set_irq_mask(void)
 {
-	if (icu2_val != 0xFF) {
+	if (icu2_val != 0xff) {
 		/* Turn on the second IC */
-#ifdef OP_DEBUG
-		printf("turning on ICU2\n");
-#endif 
-		icu1_val &= ~(1 << 2);
+		icu1_val &= ~(1 << IRQ_SLAVE);
 	} else {
-		icu1_val |= (1 << 2);
+		icu1_val |= (1 << IRQ_SLAVE);
 	}
 
 	outb(IO_ICU1 + 1, icu1_val);
 	outb(IO_ICU2 + 1, icu2_val);
 	outb(IO_ELCR1, elcr1_val);
 	outb(IO_ELCR2, elcr2_val);
-#ifdef OP_DEBUG
-	printf("ICU  %x-%x\n", icu2_val, icu1_val);
-	printf("ELCR %x-%x\n", elcr2_val, elcr1_val);
-#endif 
 }
 
 void
 i8259_disable_irq(irq)
 	int irq;
 {
-	if (irq == -1)
+	if (irq < 0)
 		return;
 	if (irq < 8)
 		icu1_val |= 1 << irq;
 	else
-		icu2_val	|= 1 << (irq - 8);
+		icu2_val |= 1 << (irq - 8);
 	i8259_set_irq_mask();
-#ifdef OP_DEBUG
-	printf("disabeling isa irq %d\n", irq);
-#endif 
 }
 
-void 
+void
 i8259_enable_irq(irq, type)
-	int irq, type; 
+	int irq, type;
 {
 	/* skip invalid irqs */
-	if (irq == -1)
+	if (irq < 0)
 		return;
-	if ( irq < 8 ){
+	if (irq < 8) {
 		icu1_val &= ~(1 << irq);
-		if (type == IST_LEVEL) {
+		if (type == IST_LEVEL)
 			elcr1_val |= (1 << irq);
-		} else {
+		else
 			elcr1_val &= ~(1 << irq);
-		}
 	} else {
-		icu2_val	&= ~(1 << (irq - 8));
-		if (type == IST_LEVEL) {
-			elcr2_val |= (1 << (irq - 8));
-		} else {
-			elcr2_val &= ~(1 << (irq - 8));
-		}
+		irq -= 8;
+		icu2_val &= ~(1 << irq);
+		if (type == IST_LEVEL)
+			elcr2_val |= (1 << irq);
+		else
+			elcr2_val &= ~(1 << irq);
 	}
 	i8259_set_irq_mask();
-#ifdef OP_DEBUG
-	printf("enabeling isa irq %d, %s\n", irq, (type == IST_EDGE) ? "EDGE":"LEVEL");
-#endif 
-
 }
 
 void
@@ -873,7 +840,7 @@ i8259_init(void)
 	outb(IO_ICU2+1, IRQ_SLAVE);
 	outb(IO_ICU2+1, 1);		/* 8086 mode */
 	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-#endif 
+#endif
 }
 
 int
@@ -886,27 +853,25 @@ i8259_intr(void)
 	 */
 	outb(IO_ICU1, 0x0C);
 	irq = inb(IO_ICU1) & 7;
-#ifdef OP_DEBUG
-	printf("isa intr = %d\n", irq);
-#endif 
-	if (irq == 2) {
+
+	if (irq == IRQ_SLAVE) {
 		/*
 		 * Interrupt is cascaded so perform interrupt
 		 * acknowledge on controller 2
 		 */
 		outb(IO_ICU2, 0x0C);
 		irq = (inb(IO_ICU2) & 7) + 8;
-	} else if (irq==7) {
+	} else if (irq == 7) {
 		/*
 		 * This may be a spurious interrupt
 		 *
 		 * Read the interrupt status register. If the most
 		 * significant bit is not set then there is no valid
-* interrupt
-*/
+		 * interrupt
+		 */
 		outb(IO_ICU1, 0x0B);
-		if (~inb(IO_ICU1)&0x80)
-			return 0xFF;
+		if (~inb(IO_ICU1) & 0x80)
+			return 0xff;
 	}
 	return (ICU_OFFSET + irq);
 }
@@ -916,27 +881,18 @@ ext_intr_openpic()
 {
 	int irq, realirq;
 	int r_imen;
-	int pcpl;
+	int pcpl, ocpl;
 	struct intrhand *ih;
 
-#ifdef OP_DEBUG
-	printf("Interrupt!\n");
-#endif 
-	pcpl = splhigh();			/* Turn off all */
+	pcpl = cpl;
 
 	realirq = openpic_read_irq(0);
-#ifdef OP_DEBUG
-	printf("irq %d\n", realirq);
-#endif 
 
-	while (realirq != 0xFF) {
+	while (realirq != 0xff) {
 		if (realirq == 0x00) {
 			realirq = i8259_intr();
-#ifdef OP_DEBUG
-			printf("irq2 %d\n", realirq);
-#endif 
 			openpic_eoi(0);
-			if (realirq == 0xFF)
+			if (realirq == 0xff)
 				continue;
 		}
 
@@ -951,45 +907,60 @@ ext_intr_openpic()
 			ipending |= r_imen;		/* Masked! Mark this as pending */
 			if (realirq >= ICU_OFFSET)
 				i8259_disable_irq(realirq);
-			else
+			else {
 				openpic_disable_irq(realirq);
+				openpic_eoi(0);
+			}
 		} else {
+			if (realirq >= ICU_OFFSET)
+				i8259_disable_irq(realirq);
+			else {
+				openpic_disable_irq(realirq);
+				openpic_eoi(0);
+			}
+			ocpl = splraise(intrmask[irq]);
+
 			ih = intrhand[irq];
 			while (ih) {
+				ppc_intr_enable(1);
+
 				(*ih->ih_fun)(ih->ih_arg);
+
+				ppc_intr_disable();
 				ih = ih->ih_next;
 			}
-			uvmexp.intrs++;
-			evirq[realirq].ev_count++;
-		}
 
-		openpic_eoi(0);
+			uvmexp.intrs++;
+			__asm__ volatile("":::"memory");
+			cpl = ocpl;
+			__asm__ volatile("":::"memory");
+#if 0
+			evirq[realirq].ev_count++;
+#endif
+			if (realirq >= ICU_OFFSET)
+				i8259_enable_irq(realirq, intrtype[irq]);
+			else
+				openpic_enable_irq(realirq, intrtype[irq]);
+		}
 
 		realirq = openpic_read_irq(0);
 	}
 
-	splx(pcpl);		 /* Process pendings. */
+	ppc_intr_enable(1);
+
+	splx(pcpl);	 /* Process pendings. */
 }
 
 void
-openpic_set_vec_pri(int irq, int pri)
+openpic_initirq(int irq, int pol, int sense)
 {
 	u_int x;
-	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
-	x &= ~OPENPIC_PRIORITY_MASK;
-	x |= pri << OPENPIC_PRIORITY_SHIFT;
-	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
-}
 
-void
-openpic_initirq(int irq, int pri, int vec, int pol, int sense)
-{
-	u_int x;
-	x = (vec & OPENPIC_VECTOR_MASK);
+	x = (irq & OPENPIC_VECTOR_MASK);
 	x |= OPENPIC_IMASK;
 	x |= (pol ? OPENPIC_POLARITY_POSITIVE : OPENPIC_POLARITY_NEGATIVE);
 	x |= (sense ? OPENPIC_SENSE_LEVEL : OPENPIC_SENSE_EDGE);
-	x |= pri << OPENPIC_PRIORITY_SHIFT;
+	x |= 8 << OPENPIC_PRIORITY_SHIFT;
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
@@ -1002,13 +973,12 @@ openpic_init()
 	/* disable all interrupts and init hwirq[] */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		hwirq[irq] = -1;
-      intrtype[irq] = IST_NONE;
-      intrmask[irq] = 0;
-      intrlevel[irq] = 0;
-      intrhand[irq] = NULL;
+		intrtype[irq] = IST_NONE;
+		intrmask[irq] = 0;
+		intrlevel[irq] = 0;
+		intrhand[irq] = NULL;
 		openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
 	}
-	
 	openpic_set_priority(0, 15);
 
 	/* we don't need 8259 pass through mode */
@@ -1021,25 +991,26 @@ openpic_init()
 		openpic_write(OPENPIC_SRC_DEST(irq), CPU(0));
 
 	/* special case for intr src 0 */
-	openpic_initirq(0, 8, 0, 1, 0);
-
+	openpic_initirq(0, 1, 0);
 	for (irq = 1; irq < ICU_LEN; irq++) {
-		openpic_initirq(irq, 8, irq, 0, 1);
+		openpic_initirq(irq, 0, 1);
 	}
 
 	/* XXX set spurious intr vector */
-	openpic_write(OPENPIC_SPURIOUS_VECTOR, 0xFF);   
+#if 0
+	openpic_write(OPENPIC_SPURIOUS_VECTOR, 0xFF);
+#endif
 
 	/* unmask interrupts for cpu 0 */
 	openpic_set_priority(0, 0);
 
-	/* clear all pending interrunts */
+	/* clear all pending interrunts */	/* < ICU_LEN ? */
 	for (irq = 0; irq < PIC_OFFSET; irq++) {
 		openpic_read_irq(0);
 		openpic_eoi(0);
 	}
 
-	for (irq = 0; irq < PIC_OFFSET; irq++) {
+	for (irq = 0; irq < PIC_OFFSET; irq++) {	/* < ICU_LEN ? */
 		i8259_disable_irq(irq);
 		openpic_disable_irq(irq);
 	}
