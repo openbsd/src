@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_encap.h,v 1.3 1998/11/17 11:10:18 niklas Exp $	*/
-/*	$EOM: pf_encap.h,v 1.8 1998/10/12 22:15:13 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.h,v 1.4 1999/02/26 03:48:48 niklas Exp $	*/
+/*	$EOM: pf_encap.h,v 1.9 1999/01/31 01:20:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,7 @@
 #ifndef _PF_ENCAP_H_
 #define _PF_ENCAP_H_
 
+#include <sys/types.h>
 #include <sys/queue.h>
 
 struct proto;
@@ -55,12 +56,16 @@ struct pf_encap_node {
 };
 
 extern int pf_encap_delete_spi (struct sa *, struct proto *, int);
-extern int pf_encap_enable_spi (struct sa *, int);
+extern int pf_encap_enable_sa (struct sa *, int);
+extern int pf_encap_enable_spi (in_addr_t, in_addr_t, in_addr_t, in_addr_t,
+				u_int8_t *, u_int8_t, in_addr_t);
 extern u_int8_t *pf_encap_get_spi (size_t *, u_int8_t, void *, size_t);
 extern int pf_encap_group_spis (struct sa *, struct proto *, struct proto *,
 				int);
 extern void pf_encap_handler (int);
 extern int pf_encap_open (void);
+extern int pf_encap_route (in_addr_t, in_addr_t, in_addr_t, in_addr_t,
+			   u_int8_t, in_addr_t, char *);
 extern int pf_encap_set_spi (struct sa *, struct proto *, int, int);
 
 #endif /* _PF_ENCAP_H_ */
