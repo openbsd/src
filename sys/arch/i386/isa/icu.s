@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.14 2001/09/21 20:54:32 mickey Exp $	*/
+/*	$OpenBSD: icu.s,v 1.15 2001/11/08 20:01:52 mickey Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@ _C_LABEL(splx):
 	movl	4(%esp),%eax
 	movl	%eax,_C_LABEL(cpl)
 	testl	%eax,%eax
-	jnz	_C_LBALE(Xspllower)
+	jnz	_C_LABEL(Xspllower)
 	ret
 #endif /* PROF || GPROF */
 	
