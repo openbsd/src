@@ -465,7 +465,11 @@ HOST_PREFIX=
 # out of the way of the other rules for compiling the same source files.
 HOST_PREFIX_1=loser-
 HOST_CC=$(CC)
+.if ${MACHINE_ARCH} == "vax"
+HOST_CFLAGS=$(ALL_CFLAGS) -O0
+.else
 HOST_CFLAGS=$(ALL_CFLAGS)
+.endif
 HOST_CLIB=$(CLIB)
 HOST_INTLLIBS=$(INTLLIBS)
 HOST_LDFLAGS=$(LDFLAGS)
