@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.23 2001/06/28 20:30:53 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.24 2001/06/29 21:11:24 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -88,8 +88,14 @@ usage()
 char *
 load_file(char *name, size_t *len)
 {
-	FILE *file = fopen(name, "r");
-	char *buf = 0;
+	FILE *file;
+	char *buf = 0, *buf2 = 0;
+	u_int32_t i;
+
+	if (!strcmp(name, "-"))
+		file = stdin;
+	else  
+		file = fopen(name, "r");
 
 	*len = 0;
 	if (file == NULL) {
@@ -97,22 +103,52 @@ load_file(char *name, size_t *len)
 		    name, strerror(errno));
 		return (0);
 	}
-	fseek(file, 0, SEEK_END);
-	*len = ftell(file);
-	fseek(file, 0, SEEK_SET);
-	buf = malloc(*len);
-    	if (buf == NULL) {
-		fclose(file);
-		fprintf(stderr, "ERROR: malloc() failed\n");
+
+	i = 512;	/* Start with this. Grow it as req'd */
+	*len = 0;
+	if ((buf = malloc(i)) == NULL) {
+		fprintf(stderr, "ERROR: could not allocate space "
+			"for rules file\n");
 		return (0);
 	}
-	if (fread(buf, 1, *len, file) != *len) {
-		free(buf);
-		fclose(file);
-		fprintf(stderr, "ERROR: fread() failed\n");
-		return (0);
+	while (!feof(file)) {
+		*len += fread((buf + *len), 1, (i - *len), file);
+		if (*len == i) {
+			/* Out of space - realloc time */
+			i *= 2;
+			if ((buf2 = realloc(buf, i)) == NULL) {
+				if (buf)
+					free(buf);
+				buf = NULL;
+				fprintf(stderr, "ERROR: realloc of "
+					"stdin buffer failed\n");
+				return (0);
+			}
+			buf = buf2;
+		}
 	}
-	fclose(file);
+	if (*len == i) {
+		/* 
+		 * file is exactly the size of our buffer.
+		 * grow ours one so we can null terminate it
+		 */
+		if ((buf2 = realloc(buf, i+1)) == NULL) {
+			if (buf)
+				free(buf);
+			buf = NULL;
+			fprintf(stderr, "ERROR: realloc of "
+				"stdin buffer failed\n");
+			return (0);
+		}
+		buf = buf2;
+	}
+	if (file != stdin)
+		fclose(file);
+	buf[*len]='\0';
+	if (strlen(buf) != *len) {
+		fprintf(stderr, "WARNING: nulls embedded in rules file\n");
+		*len = strlen(buf);
+	}
 	return (buf);
 }
 
@@ -310,16 +346,21 @@ pfctl_nat(int dev, char *filename, int opts)
 	struct pfioc_rdr pr;
 	char *buf, *s;
 	size_t len;
-	unsigned n, nr;
+	unsigned n, r, nr;
 
-	if ((opts & PF_OPT_NOACTION) == 0) 
+	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
 			err(1, "DIOCBEGINNATS");
+		
+		if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
+			err(1, "DIOCBEGINRDRS");
+	}
 
 	buf = load_file(filename, &len);
 	if (buf == NULL)
 		return (1);
 	n = 0;
+	r = 0;
 	nr = 0;
 	s = buf;
 	do {
@@ -334,25 +375,6 @@ pfctl_nat(int dev, char *filename, int opts)
 					print_nat(&pn.nat);
 				n++;
 			}
-	} while (s < (buf + len));
-	free(buf);
-	if ((opts & PF_OPT_NOACTION) == 0) {
-		if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
-			err(1, "DIOCCOMMITNATS");
-		printf("%u nat entries loaded\n", n);
-
-		if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket))
-			err(1, "DIOCBEGINRDRS");
-	}
-	buf = load_file(filename, &len);
-	if (buf == NULL)
-		return (1);
-	n = 0;
-	nr = 0;
-	s = buf;
-	do {
-		char *line = next_line(&s);
-		nr++;
 		if (*line && (*line == 'r'))
 			if (parse_rdr(nr, line, &pr.rdr)) {
 				if ((opts & PF_OPT_NOACTION) == 0)
@@ -360,15 +382,19 @@ pfctl_nat(int dev, char *filename, int opts)
 						err(1, "DIOCADDRDR");
 				if (opts & PF_OPT_VERBOSE)
 					print_rdr(&pr.rdr);
-				n++;
+				r++;
 			}
 	} while (s < (buf + len));
-	free(buf);
+
 	if ((opts & PF_OPT_NOACTION) == 0) {
+		if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
+			err(1, "DIOCCOMMITNATS");
 		if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket))
 			err(1, "DIOCCOMMITRDRS");
-		printf("%u rdr entries loaded\n", n);
+		printf("%u nat entries loaded\n", n);
+		printf("%u rdr entries loaded\n", r);
 	}
+	free(buf);
 	return (0);
 }
 
