@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.15 1997/11/30 18:59:19 rees Exp $	*/
+/*	$OpenBSD: apm.c,v 1.16 1997/12/03 00:19:32 rees Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -219,22 +219,22 @@ apm_power_print (sc, regs)
 	if (apm_minver == 0)
 		switch (BATT_STATE(regs)) {
 		case APM_BATT_HIGH:
-			printf("high\n");
+			printf("high");
 			break;
 		case APM_BATT_LOW:
-			printf("low\n");
+			printf("low");
 			break;
 		case APM_BATT_CRITICAL:
-			printf("critical\n");
+			printf("critical");
 			break;
 		case APM_BATT_CHARGING:
-			printf("charging\n");
+			printf("charging");
 			break;
 		case APM_BATT_UNKNOWN:
-			printf("unknown\n");
+			printf("unknown");
 			break;
 		default:
-			printf("undecoded (%x)\n", BATT_STATE(regs));
+			printf("undecoded (%x)", BATT_STATE(regs));
 			break;
 		}
 	else if (apm_minver >= 1) {
@@ -243,16 +243,18 @@ apm_power_print (sc, regs)
 		else {
 			if (BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
 				printf("high");
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_LOW)
+			else if (BATT_FLAGS(regs) & APM_BATT_FLAG_LOW)
 				printf("low");
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_CRITICAL)
+			else if (BATT_FLAGS(regs) & APM_BATT_FLAG_CRITICAL)
 				printf("critical");
+			else
+				printf("unknown");
 			if (BATT_FLAGS(regs) & APM_BATT_FLAG_CHARGING)
-				printf("charging");
+				printf(", charging");
 			if (BATT_REM_VALID(regs))
-				printf(", estimated %d:%02d minutes\n",
+				printf(", estimated %d:%02d minutes",
 				    BATT_REMAINING(regs) / 60,
-				    BATT_REMAINING(regs)%60);
+				    BATT_REMAINING(regs) % 60);
 		}
 	}
 
@@ -512,7 +514,11 @@ apm_set_powstate(dev, state)
 	return 0;
 }
 
+#ifdef HANDBOOK
+int apmidleon = 0;
+#else
 int apmidleon = 1;
+#endif
 
 void
 apm_cpu_busy()
