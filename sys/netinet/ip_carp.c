@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.94 2005/01/18 23:26:52 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.95 2005/01/29 10:06:16 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1504,6 +1504,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs || sc->sc_naddrs6)
 			sc->sc_if.if_flags |= IFF_UP;
 		carp_set_enaddr(sc);
+		carp_carpdev_state(ifp);
 	} else {
 		carpdetach(sc);
 		sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
