@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.41 2001/03/25 06:27:18 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.42 2001/03/29 19:57:35 drahn Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,6 +71,7 @@
 #	utty*	Serial ports
 #
 # Special purpose devices:
+#	audio*  audio
 #	ch*	SCSI media changer
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
@@ -157,6 +158,7 @@ all)
 	sh $this tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
+	sh $this audio0
 	sh $this random uk0 uk1 ss0 ss1
 	sh $this wscons
 	sh $this lkm xfs0
@@ -431,6 +433,22 @@ cd*)
 		;;
 	esac
 	umask 77
+	;;
+
+audio*)
+	[ "$unit" = "0" ] && n= || n=$unit
+	audio=audio$n
+	sound=sound$n
+	mixer=mixer$n
+	audioctl=audioctl$n
+	major=44
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $unit
+	mknod $audio    c $major $(( $unit + 128 ))
+	mknod $mixer    c $major $(( $unit + 16 ))
+	mknod $audioctl c $major $(( $unit + 192 ))
+	chown root.wheel $audio $sound $mixer $audioctl
+	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
 usb*)
