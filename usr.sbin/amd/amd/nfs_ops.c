@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.3 1996/03/25 15:54:48 niklas Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.4 1996/04/03 14:13:06 dm Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.3 1996/03/25 15:54:48 niklas Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.4 1996/04/03 14:13:06 dm Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -635,8 +635,10 @@ mntfs *mf;
 #ifdef MNTOPT_NQNFS
 	if (hasmntopt(&mnt, MNTOPT_NQNFS) != NULL)
 		nfs_args.flags |= NFSMNT_NQNFS;
+#ifdef NFSMNT_NQLOOKLEASE
 	if (hasmntopt(&mnt, "nolooklease") == NULL)
 		nfs_args.flags |= NFSMNT_NQLOOKLEASE;
+#endif /* NFSMNT_NQLOOKLEASE */
 #endif /* MNTOPT_NQNFS */
 
 #ifdef NFSMNT_PGTHRESH
