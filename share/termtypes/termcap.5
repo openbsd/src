@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.15 2004/03/13 23:07:23 jmc Exp $
+.\"	$OpenBSD: termcap.5,v 1.16 2005/03/07 23:01:40 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -814,9 +814,9 @@ Terminals that use
 .Dq \&%.
 need to be able to
 backspace the cursor
-.Po Sy \&le Pc
+.Pq Sy \&le
 and to move the cursor up one line on the screen
-.Po Sy \&up Pc .
+.Pq Sy \&up .
 This is necessary because it is not always safe to transmit
 .Sy \&\en ,
 .Sy \&^D ,

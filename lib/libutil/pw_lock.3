@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_lock.3,v 1.10 2003/06/02 20:18:42 millert Exp $
+.\"	$OpenBSD: pw_lock.3,v 1.11 2005/03/07 23:01:40 jmc Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -91,10 +91,10 @@ the following values:
 .Bl -tag -width _PASSWORD_SECUREONLY -offset "xxxx" -compact
 .It Dv _PASSWORD_SECUREONLY
 only update the secure database file
-.Po Pa /etc/spwd.db Pc .
+.Pq Pa /etc/spwd.db .
 .It Dv _PASSWORD_OMITV7
 do not update the Version 7 format password file
-.Po Pa /etc/passwd Pc .
+.Pq Pa /etc/passwd .
 .El
 .Pp
 By default the secure, insecure and Version 7 format password databases
