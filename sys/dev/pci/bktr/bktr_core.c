@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.1 2001/03/28 03:27:09 fgsch Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.2 2001/09/22 19:44:37 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -199,6 +199,8 @@ typedef unsigned int uintptr_t;
 #else
 #include <vm/vm.h>			/* for vtophys */
 #include <vm/pmap.h>			/* for vtophys */
+
+#include <dev/rndvar.h>
 #endif
 
 #ifdef __OpenBSD__
@@ -761,6 +763,10 @@ common_bktr_intr( void *arg )
 				    BT848_INT_FMTCHG);
 
 		OUTB(bktr, BKTR_CAP_CTL, bktr->bktr_cap_ctl);
+
+#ifdef __OpenBSD__
+		add_video_randomness(tdec_save);
+#endif
 		return 1;
 	}
 
@@ -773,6 +779,9 @@ common_bktr_intr( void *arg )
 		bktr_status, dstatus, INL(bktr, BKTR_RISC_COUNT) );
  */
 
+#ifdef __OpenBSD__
+	add_video_randomness(INL(bktr, BKTR_RISC_COUNT));
+#endif
 
 	/*
 	 * Disable future interrupts if a capture mode is not selected.
