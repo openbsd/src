@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.23 2000/01/05 16:06:14 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.24 2000/01/12 17:49:53 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.23 2000/01/05 16:06:14 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.24 2000/01/12 17:49:53 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,8 @@ eval(argv, argc, td)
 #endif
 
 	if (td & RECDEF) 
-		errx(1, "expanding recursive definition for %s", argv[1]);
+		errx(1, "%s at line %lu: expanding recursive definition for %s",
+			CURRENT_NAME, CURRENT_LINE, argv[1]);
  /*
   * if argc == 3 and argv[2] is null, then we
   * have macro-or-builtin() type call. We adjust
@@ -211,7 +212,8 @@ eval(argv, argc, td)
 	case INCLTYPE:
 		if (argc > 2)
 			if (!doincl(argv[2]))
-				err(1, "%s", argv[2]);
+				err(1, "%s at line %lu: include(%s)",
+				    CURRENT_NAME, CURRENT_LINE, argv[2]);
 		break;
 
 	case SINCTYPE:
@@ -222,7 +224,8 @@ eval(argv, argc, td)
 	case PASTTYPE:
 		if (argc > 2)
 			if (!dopaste(argv[2]))
-				err(1, "%s", argv[2]);
+				err(1, "%s at line %lu: paste(%s)", 
+				    CURRENT_NAME, CURRENT_LINE, argv[2]);
 		break;
 
 	case SPASTYPE:
@@ -320,7 +323,9 @@ eval(argv, argc, td)
 			
 			fd = mkstemp(temp);
 			if (fd == -1)
-				err(1, "couldn't make temp file %s", argv[2]);
+				err(1, 
+	    "%s at line %lu: couldn't make temp file %s", 
+	    CURRENT_NAME, CURRENT_LINE, argv[2]);
 			close(fd);
 			pbstr(temp);
 			free(temp);
@@ -403,7 +408,8 @@ eval(argv, argc, td)
 		pbstr(lquote);
 		break;
 	default:
-		errx(1, "eval: major botch.");
+		errx(1, "%s at line %lu: eval: major botch.",
+			CURRENT_NAME, CURRENT_LINE);
 		break;
 	}
 }
@@ -492,7 +498,8 @@ dodefine(name, defn)
 	ndptr p;
 
 	if (!*name)
-		errx(1, "null definition.");
+		errx(1, "%s at line %lu: null definition.", CURRENT_NAME,
+		    CURRENT_LINE);
 	if ((p = lookup(name)) == nil)
 		p = addent(name);
 	else if (p->defn != null)
@@ -538,7 +545,8 @@ dopushdef(name, defn)
 	ndptr p;
 
 	if (!*name)
-		errx(1, "null definition");
+		errx(1, "%s at line %lu: null definition", CURRENT_NAME,
+		    CURRENT_LINE);
 	p = addent(name);
 	if (!*defn)
 		p->defn = null;
@@ -605,8 +613,9 @@ doincl(ifile)
 	const char *ifile;
 {
 	if (ilevel + 1 == MAXINP)
-		errx(1, "too many include files.");
-	if ((infile[ilevel + 1] = fopen_trypath(ifile)) != NULL) {
+		errx(1, "%s at line %lu: too many include files.",
+		    CURRENT_NAME, CURRENT_LINE);
+	if (fopen_trypath(infile+ilevel+1, ifile) != NULL) {
 		ilevel++;
 		bbase[ilevel] = bufbase = bp;
 		return (1);

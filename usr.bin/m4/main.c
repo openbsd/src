@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.25 2000/01/11 14:10:01 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.26 2000/01/12 17:49:53 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.25 2000/01/11 14:10:01 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.26 2000/01/12 17:49:53 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ ndptr hashtab[HASHSIZE];	/* hash table for macros etc.  */
 stae mstack[STACKMAX+1]; 	/* stack of m4 machine         */
 int sp; 			/* current m4  stack pointer   */
 int fp; 			/* m4 call frame pointer       */
-FILE *infile[MAXINP];		/* input file stack (0=stdin)  */
+struct input_file infile[MAXINP];/* input file stack (0=stdin)  */
 FILE *outfile[MAXOUT];		/* diversion array(0=bitbucket)*/
 FILE *active;			/* active output file pointer  */
 int ilevel = 0; 		/* input file stack pointer    */
@@ -192,21 +192,20 @@ main(argc,argv)
         if (!argc) {
  		sp = -1;		/* stack pointer initialized */
 		fp = 0; 		/* frame pointer initialized */
-		infile[0] = stdin;	/* default input (naturally) */
+		set_input(infile+0, stdin, "stdin");
+					/* default input (naturally) */
 		macro();
 	} else
 		for (; argc--; ++argv) {
 			p = *argv;
 			if (p[0] == '-' && p[1] == EOS)
-				ifp = stdin;
-			else if ((ifp = fopen_trypath(p)) == NULL)
+				set_input(infile, stdin, "stdin");
+			else if (fopen_trypath(infile, p) == NULL)
 				err(1, "%s", p);
 			sp = -1;
 			fp = 0; 
-			infile[0] = ifp;
 			macro();
-			if (ifp != stdin)
-				(void)fclose(ifp);
+		    	release_input(infile);
 		}
 
 	if (*m4wraps) { 		/* anything for rundown ??   */
@@ -309,8 +308,7 @@ macro()
 				errx(1, "unexpected end of input");
 			if (ilevel <= 0)
 				break;			/* all done thanks.. */
-			--ilevel;
-			(void) fclose(infile[ilevel+1]);
+			release_input(infile+ilevel--);
 			bufbase = bbase[ilevel];
 			continue;
 		}

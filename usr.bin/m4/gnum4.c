@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.3 1999/11/17 15:34:13 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.4 2000/01/12 17:49:53 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -54,7 +54,7 @@ struct path_entry {
 
 static struct path_entry *new_path_entry __P((const char *));
 static void ensure_m4path __P((void));
-static FILE *dopath __P((const char *));
+static struct input_file *dopath __P((struct input_file *, const char *));
 
 static struct path_entry *
 new_path_entry(dirname)
@@ -113,38 +113,42 @@ ensure_m4path()
 }
 
 static
-FILE *
-dopath(filename)
+struct input_file *
+dopath(i, filename)
+	struct input_file *i;
 	const char *filename;
 {
 	char path[MAXPATHLEN];
 	struct path_entry *pe;
-	FILE *file;
+	FILE *f;
 
 	for (pe = first; pe; pe = pe->next) {
 		snprintf(path, sizeof(path), "%s/%s", pe->name, filename);
-		if ((file = fopen(path, "r")) != 0)
-			return file;
+		if ((f = fopen(path, "r")) != 0) {
+			set_input(i, f, path);
+			return i;
+		}
 	}
 	return NULL;
 }
 
-FILE *
-fopen_trypath(filename)
+struct input_file *
+fopen_trypath(i, filename)
+	struct input_file *i;
 	const char *filename;
 {
 	FILE *f;
 
 	f = fopen(filename, "r");
-	if (f)
-		return f;
+	if (f != NULL) {
+		set_input(i, f, filename);
+		return i;
+	}
 	if (filename[0] == '/')
 		return NULL;
 
 	ensure_m4path();
 
-	return dopath(filename);
+	return dopath(i, filename);
 }
-
-
 

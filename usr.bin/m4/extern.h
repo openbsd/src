@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.14 2000/01/11 14:06:11 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.15 2000/01/12 17:49:53 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ extern int	expr __P((const char *));
 
 /* gnum4.c */
 extern void 	addtoincludepath __P((const char *dirname));
-extern FILE 	*fopen_trypath __P((const char *filename));
+extern struct input_file *fopen_trypath __P((struct input_file *, const char *filename));
 
 /* look.c */
 extern ndptr	addent __P((const char *));
@@ -75,10 +75,15 @@ extern char	*xalloc __P((size_t));
 extern char	*xstrdup __P((const char *));
 extern void	usage __P((void));
 
+extern int 	obtain_char __P((struct input_file *));
+extern void	set_input __P((struct input_file *, FILE *, const char *));
+extern void	release_input __P((struct input_file *));
+
+
 extern ndptr hashtab[];		/* hash table for macros etc. */
 extern stae mstack[];		/* stack of m4 machine */
 extern FILE *active;		/* active output file pointer */
-extern FILE *infile[];		/* input file stack (0=stdin) */
+extern struct input_file infile[];/* input file stack (0=stdin) */
 extern FILE *outfile[];		/* diversion array(0=bitbucket) */
 extern int fp; 			/* m4 call frame pointer */
 extern int ilevel;		/* input file stack pointer */

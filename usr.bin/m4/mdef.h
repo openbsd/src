@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.11 2000/01/11 14:06:12 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.12 2000/01/12 17:49:53 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -147,6 +147,15 @@ typedef union {			/* stack structure */
 
 typedef short pbent;		/* pushback entry; needs to hold chars + EOF */
 
+struct input_file {
+	FILE 		*file;
+	char 		*name;
+	unsigned long 	lineno;
+	int 		c;
+};
+
+#define CURRENT_NAME	(infile[ilevel].name)
+#define CURRENT_LINE	(infile[ilevel].lineno)
 /*
  * macros for readibility and/or speed
  *
@@ -154,7 +163,7 @@ typedef short pbent;		/* pushback entry; needs to hold chars + EOF */
  *      pushf() - push a call frame entry onto stack
  *      pushs() - push a string pointer onto stack
  */
-#define gpbc() 	 (bp > bufbase) ? *--bp : getc(infile[ilevel])
+#define gpbc() 	 (bp > bufbase) ? *--bp : obtain_char(infile+ilevel)
 #define pushf(x) if (sp < STACKMAX) mstack[++sp].sfra = (x)
 #define pushs(x) if (sp < STACKMAX) mstack[++sp].sstr = (x)
 
