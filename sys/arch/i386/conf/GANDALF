@@ -1,7 +1,7 @@
 #
 #	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.2 1996/06/05 07:13:17 tholo Exp $
+#	$OpenBSD: GANDALF,v 1.3 1996/06/09 19:03:43 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -27,8 +27,8 @@ options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
-options		DDB		# in-kernel debugger
-makeoptions	DEBUG="-g"	# compile full symbol table
+#options	DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
 options		DIAGNOSTIC	# internally consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
@@ -110,14 +110,14 @@ scsibus* at ahb?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15	# ST506, ESDI, and IDE controllers
 wd*	at wdc? drive ?
 
-ep*	at eisa? slot ?			# 3C5[07]9 ethernet card
+ep*	at eisa? slot ?			# 3C579 ethernet card
 
 #sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 spkr0	at pckbd?			# PC speaker
