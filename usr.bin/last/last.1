@@ -1,4 +1,4 @@
-.\"	$OpenBSD: last.1,v 1.18 2000/12/17 21:33:01 millert Exp $
+.\"	$OpenBSD: last.1,v 1.19 2003/04/14 02:04:58 deraadt Exp $
 .\"	$NetBSD: last.1,v 1.3 1994/12/21 22:41:23 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -47,7 +47,7 @@
 .Op Fl f Ar file
 .Op Fl h Ar host
 .Op Fl t Ar tty
-.Op Fl d Ar [[CC]YY][MMDD]hhmm[.SS]
+.Op Fl d Ar [[[CC]YY]MMDD]hhmm[.SS]
 .Op Ar user ...
 .Sh DESCRIPTION
 The
@@ -111,7 +111,7 @@ and
 .Fl n
 are ignored.
 The argument should be in the form
-.Dq [[CC]YY][MMDD]hhmm[.SS]
+.Dq [[[CC]YY]MMDD]hhmm[.SS]
 where each pair of letters represents the following:
 .Pp
 .Bl -tag -width Ds -compact -offset indent

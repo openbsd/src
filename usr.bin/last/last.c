@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.22 2003/04/06 18:40:14 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.23 2003/04/14 02:04:58 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.22 2003/04/06 18:40:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.23 2003/04/14 02:04:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -567,7 +567,7 @@ ttyconv(arg)
 /*
  * dateconv --
  * Convert the snapshot time in command line given in the format
- *	[[CC]YY][MMDD]hhmm[.SS]] to a time_t.
+ *	[[[CC]YY]MMDD]hhmm[.SS]] to a time_t.
  *	Derived from atime_arg1() in usr.bin/touch/touch.c
  */
 time_t
@@ -585,7 +585,7 @@ dateconv(arg)
 	if ((t = localtime(&timet)) == NULL)
 		err(1, "localtime");
 
-	/* [[CC]YY][MMDD]hhmm[.SS] */
+	/* [[[CC]YY]MMDD]hhmm[.SS] */
 	if ((p = strchr(arg, '.')) == NULL)
 		t->tm_sec = 0;		/* Seconds defaults to 0. */
 	else {
@@ -633,7 +633,7 @@ dateconv(arg)
 	timet = mktime(t);
 	if (timet == -1)
 terr:	   errx(1,
-	"out of range or illegal time specification: [[CC]YY][MMDD]hhmm[.SS]");
+	"out of range or illegal time specification: [[[CC]YY[MMDD]hhmm[.SS]");
 	return (timet);
 }
 
@@ -663,6 +663,6 @@ usage(void)
 
 	fprintf(stderr,
 	    "usage: %s [-#] [-csT] [-f file] [-t tty] [-h host]"
-	    " [-d [[CC]YY][MMDD]hhmm[.SS]] [user ...]\n", __progname);
+	    " [-d [[[CC]YY]MMDD]hhmm[.SS]] [user ...]\n", __progname);
 	exit(1);
 }
