@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.270 2000/06/18 15:27:41 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.271 2000/06/18 16:42:48 form Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1252,6 +1252,7 @@ product NVIDIA	NV1		0x0008	NV1
 product NVIDIA	DAC64		0x0009	DAC64
 product NVIDIA	RIVA_TNT	0x0020	Riva TNT
 product NVIDIA	RIVA_TNT2	0x0028	Riva TNT2
+product NVISIA	GEFORCE256	0x0100	GeForce256
 product NVIDIA	GEFORCE256_DDR	0x0101	GeForce256 DDR
 
 /* Oak Technologies products */
