@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.9 1997/05/30 08:35:18 downsj Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.10 1997/07/03 17:49:49 deraadt Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -619,12 +619,8 @@ ufs_remove(v)
 	register struct vnode *dvp = ap->a_dvp;
 	int error;
 
-	if (vp->v_type == VDIR) {
-		error = EISDIR;
-		goto out;
-	}
 	ip = VTOI(vp);
-	if ((ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
+	if (vp->v_type == VDIR || (ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_ffs_flags & APPEND)) {
 		error = EPERM;
 		goto out;
@@ -895,7 +891,9 @@ abortit:
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
-		    dp == ip || (fcnp->cn_flags&ISDOTDOT) ||
+		    dp == ip ||
+		    (fcnp->cn_flags & ISDOTDOT) ||
+		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
 			VOP_UNLOCK(fvp);
 			error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.4 1997/06/12 21:27:47 downsj Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.5 1997/07/03 17:49:45 deraadt Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -448,13 +448,10 @@ ext2fs_remove(v)
 	register struct vnode *dvp = ap->a_dvp;
 	int error;
 
-	if (vp->v_type == VDIR) {
-		error = EISDIR;
-		goto out;
-	}
 	ip = VTOI(vp);
-	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
-		(VTOI(dvp)->i_e2fs_flags & EXT2_APPEND)) {
+	if (vp->v_type == VDIR ||
+	    (ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
+	    (VTOI(dvp)->i_e2fs_flags & EXT2_APPEND)) {
 		error = EPERM;
 		goto out;
 	}
@@ -666,7 +663,9 @@ abortit:
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
-		    dp == ip || (fcnp->cn_flags&ISDOTDOT) ||
+		    dp == ip ||
+			(fcnp->cn_flags&ISDOTDOT) ||
+			(tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
 			VOP_UNLOCK(fvp);
 			error = EINVAL;
