@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.5 2002/05/21 18:49:00 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.6 2002/05/22 01:45:12 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -123,6 +123,7 @@ struct creator_softc {
 	bus_size_t sc_sizes[FFB_NREGS];
 	int sc_height, sc_width, sc_linebytes, sc_depth;
 	int sc_nscreens, sc_nreg;
+	u_int sc_mode;
 	struct rasops_info sc_rasops;
 };
 
@@ -258,6 +259,9 @@ creator_ioctl(v, cmd, data, flags, p)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_UNKNOWN;
 		break;
+	case WSDISPLAYIO_SMODE:
+		sc->sc_mode = *(u_int *)data;
+		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
 		wdf->height = sc->sc_height;
@@ -340,16 +344,28 @@ creator_mmap(vsc, off, prot)
 	struct creator_softc *sc = vsc;
 	int i;
 
-	for (i = 0; i < sc->sc_nreg; i++) {
-		/* Before this set? */
-		if (off < sc->sc_addrs[i])
-			continue;
-		/* After this set? */
-		if (off >= (sc->sc_addrs[i] + sc->sc_sizes[i]))
-			continue;
+	switch (sc->sc_mode) {
+	case WSDISPLAYIO_MODE_MAPPED:
+		for (i = 0; i < sc->sc_nreg; i++) {
+			/* Before this set? */
+			if (off < sc->sc_addrs[i])
+				continue;
+			/* After this set? */
+			if (off >= (sc->sc_addrs[i] + sc->sc_sizes[i]))
+				continue;
 
-		return (bus_space_mmap(sc->sc_bt, sc->sc_addrs[i],
-		    off - sc->sc_addrs[i], prot, BUS_SPACE_MAP_LINEAR));
+			return (bus_space_mmap(sc->sc_bt, sc->sc_addrs[i],
+			    off - sc->sc_addrs[i], prot, BUS_SPACE_MAP_LINEAR));
+		}
+		break;
+	case WSDISPLAYIO_MODE_DUMBFB:
+		if (sc->sc_nreg < FFB_REG_DFB24)
+			break;
+		if (off >= 0 && off < sc->sc_sizes[FFB_REG_DFB24])
+			return (bus_space_mmap(sc->sc_bt,
+			    sc->sc_addrs[FFB_REG_DFB24], off, prot,
+			    BUS_SPACE_MAP_LINEAR));
+		break;
 	}
 
 	return (-1);
