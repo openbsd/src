@@ -132,17 +132,35 @@ privilege can change the value.
 .It kern.no_trunc	integer	no
 .It kern.vdisable	integer	no
 .It kern.boottime	struct	no
-.It kern.somaxconn	int	yes
-.It kern.sominconn	int	yes
-.It kern.usermount	int	yes
+.It kern.somaxconn	integer	yes
+.It kern.sominconn	integer	yes
+.It kern.usermount	integer	yes
 .It vm.loadavg	struct	no
+.It fs.posix.setuid	integer	yes
 .It machdep.console_device	dev_t	no
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
 .It net.inet.ip.ttl	integer	yes
+.It net.inet.ip.sourceroute	integer	yes
+.It net.inet.ip.directed-broadcast	integer	yes
+.It net.inet.ip.portfirst	integer	yes
+.It net.inet.ip.portlast	integer	yes
+.It net.inet.ip.porthifirst	integer	yes
+.It net.inet.ip.porthilast	integer	yes
+.It net.inet.ip.portfirst	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
+.It net.inet.tcp.keepinittime	integer	yes
 .It net.inet.udp.checksum	integer	yes
+.It net.ipx.ipx.recvspace	integer	yes
+.It net.ipx.ipx.sendspace	integer	yes
+.It debug.syncprt	integer	yes
+.It debug.busyprt	integer	yes
+.It debug.doclusterread	integer	yes
+.It debug.doclusterwrite	integer	yes
+.It debug.doreallocblks	integer	yes
+.It debug.doasyncfree	integer	yes
+.It debug.prtrealloc	integer	yes
 .It hw.machine	string	no
 .It hw.model	string	no
 .It hw.ncpu	integer	no
@@ -170,6 +188,10 @@ privilege can change the value.
 .It user.posix2_upe	integer	no
 .It user.stream_max	integer	no
 .It user.tzname_max	integer	no
+.It ddb.radix	integer	yes
+.It ddb.max_width	integer	yes
+.It ddb.max_line	integer	yes
+.It ddb.tab_stop_width	integer	yes
 .El
 .Sh EXAMPLES
 .Pp
@@ -212,6 +234,8 @@ fourth level IP identifiers
 definitions for fourth level ICMP identifiers
 .It Pa <netinet/udp_var.h>
 definitions for fourth level UDP identifiers
+.It Pa <ddb/db_var.h>
+definitions for second level ddb identifiers
 .El
 .Sh SEE ALSO
 .Xr sysctl 3
