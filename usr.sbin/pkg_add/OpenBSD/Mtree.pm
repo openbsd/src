@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Mtree.pm,v 1.1 2004/09/14 22:24:21 espie Exp $
+# $OpenBSD: Mtree.pm,v 1.2 2005/02/26 13:56:28 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -22,26 +22,34 @@ package OpenBSD::Mtree;
 use File::Spec;
 
 # read an mtree file, and produce the corresponding directory hierarchy
-sub parse 
+
+sub parse_fh
 {
-	my ($mtree, $current_dir, $filename) = @_;
-	open my $file, '<', $filename;
-	while(<$file>) {
+	my ($mtree, $basedir, $fh) = @_;
+	local $_;
+	while(<$fh>) {
 		chomp;
 		s/^\s*//;
 		next if /^\#/ || /^\//;
 		s/\s.*$//;
 		next if /^$/;
 		if ($_ eq '..') {
-			$current_dir =~ s|/[^/]*$||;
+			$basedir =~ s|/[^/]*$||;
 			next;
 		} else {
-			$current_dir.="/$_";
+			$basedir.="/$_";
 		}
-		$_ = $current_dir;
+		$_ = $basedir;
 		while (s|/\./|/|)	{}
 		$mtree->{File::Spec->canonpath($_)} = 1;
 	}
+}
+
+sub parse 
+{
+	my ($mtree, $basedir, $filename) = @_;
+	open my $file, '<', $filename or die "can't open $filename: $!";
+	parse_fh($mtree, $basedir, $file);
 	close $file;
 }
 
