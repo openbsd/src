@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.20 2000/03/17 22:05:57 art Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.21 2000/06/20 17:56:10 art Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ int	arpt_down = 20;		/* once declared down, don't send for 20 secs */
 static	void arprequest
 	    __P((struct arpcom *, u_int32_t *, u_int32_t *, u_int8_t *));
 static	void arptfree __P((struct llinfo_arp *));
-static	void arptimer __P((void *));
+void arptimer __P((void *));
 static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
 static	void in_arpinput __P((struct mbuf *));
 
@@ -116,7 +116,7 @@ static int db_show_radix_node __P((struct radix_node *, void *));
  * Timeout routine.  Age arp_tab entries periodically.
  */
 /* ARGSUSED */
-static void
+void
 arptimer(arg)
 	void *arg;
 {
