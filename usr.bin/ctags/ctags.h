@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.h,v 1.3 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: ctags.h,v 1.4 2003/05/12 20:41:39 pjanzen Exp $	*/
 /*	$NetBSD: ctags.h,v 1.3 1995/03/26 20:14:07 glass Exp $	*/
 
 /*
@@ -90,4 +90,4 @@ extern void	l_entries(void);
 extern void	y_entries(void);
 extern int	PF_funcs(void);
 extern void	c_entries(void);
-extern void	skip_comment(void);
+extern void	skip_comment(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: C.c,v 1.7 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: C.c,v 1.8 2003/05/12 20:41:39 pjanzen Exp $	*/
 /*	$NetBSD: C.c,v 1.3 1995/03/26 20:14:02 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: C.c,v 1.7 2002/02/16 21:27:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: C.c,v 1.8 2003/05/12 20:41:39 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,10 @@ endtok:			if (sp > tok) {
 		 */
 		case '/':
 			if (GETC(==, '*')) {
-				skip_comment();
+				skip_comment(c);
+				continue;
+			} else if (c == '/') {
+				skip_comment(c);
 				continue;
 			}
 			(void)ungetc(c, inf);
@@ -146,6 +149,13 @@ endtok:			if (sp > tok) {
 		 * level zero indicates a function.
 		 */
 		case '(':
+			do {
+				c = getc(inf);
+			} while (iswhite(c));
+			if (c == '*')
+				break;
+			else
+				ungetc(c, inf);
 			if (!level && token) {
 				int	curline;
 
@@ -270,6 +280,9 @@ func_entry()
 {
 	int	c;			/* current character */
 	int	level = 0;		/* for matching '()' */
+	static char attribute[] = "__attribute__";
+	char maybe_attribute[sizeof attribute + 1];
+	char *anext;
 
 	/*
 	 * Find the end of the assumed function declaration.
@@ -286,7 +299,9 @@ func_entry()
 		case '/':
 			/* skip comments */
 			if (GETC(==, '*'))
-				skip_comment();
+				skip_comment(c);
+			else if (c == '/')
+				skip_comment(c);
 			break;
 		case '(':
 			level++;
@@ -307,14 +322,43 @@ fnd:
 	 * is a token character if it's a function and a non-token
 	 * character if it's a declaration.  Comments don't count...
 	 */
-	for (;;) {
+	for (anext = maybe_attribute;;) {
 		while (GETC(!=, EOF) && iswhite(c))
 			if (c == '\n')
 				SETLINE;
+		if (c == EOF)
+			return NO;
+		/*
+		 * Recognize the GNU __attribute__ extension, which would
+		 * otherwise make the heuristic test DTWT
+		 */
+		if (anext == maybe_attribute) {
+			if (intoken(c)) {
+				*anext++ = c;
+				continue;
+			}
+		} else {
+			if (intoken(c)) {
+				if (anext - maybe_attribute < (int)(sizeof attribute - 1))
+					*anext++ = c;
+				else
+					break;
+				continue;
+			} else {
+				*anext++ = '\0';
+				if (strcmp(maybe_attribute, attribute) == 0) {
+					(void)ungetc(c, inf);
+					return NO;
+				}
+				break;
+			}
+		}
 		if (intoken(c) || c == '{')
 			break;
 		if (c == '/' && GETC(==, '*'))
-			skip_comment();
+			skip_comment(c);
+		else if (c == '/')
+			skip_comment(c);
 		else {				/* don't ever "read" '/' */
 			(void)ungetc(c, inf);
 			return (NO);
@@ -449,7 +493,7 @@ str_entry(c)
  *	skip over comment
  */
 void
-skip_comment()
+skip_comment(int commenttype)
 {
 	int	c;			/* character read */
 	int	star;			/* '*' flag */
@@ -461,10 +505,17 @@ skip_comment()
 			star = YES;
 			break;
 		case '/':
-			if (star)
+			if (commenttype == '*' && star)
 				return;
 			break;
 		case '\n':
+			if (commenttype == '/') {
+				/* We don't really parse C, so sometimes it
+				 * is necessary to see the newline
+				 */
+				ungetc(c, inf);
+				return;
+			}
 			SETLINE;
 			/*FALLTHROUGH*/
 		default:
@@ -528,7 +579,10 @@ skip_key(key)
 		case '/':
 			/* skip comments */
 			if (GETC(==, '*')) {
-				skip_comment();
+				skip_comment(c);
+				break;
+			} else if (c == '/') {
+				skip_comment(c);
 				break;
 			}
 			(void)ungetc(c, inf);
