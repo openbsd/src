@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc_gsc.c,v 1.2 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: fdc_gsc.c,v 1.3 2003/01/25 07:22:01 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -58,7 +58,7 @@ fdc_gsc_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
 	int rv;
 
@@ -82,7 +82,7 @@ fdc_gsc_attach(parent, self, aux)
 {
 	struct fdc_softc *sc = (void *)self;
 	bus_space_handle_t ioh;
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
 	/* Re-map the I/O space. */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))

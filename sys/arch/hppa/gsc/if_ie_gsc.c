@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.16 2002/12/14 23:00:48 deraadt Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.17 2003/01/25 07:22:01 jason Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -106,8 +106,8 @@ ie_gsc_reset(sc, what)
 	struct ie_softc *sc;
 	int what;
 {
-	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
-	register int i;
+	volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
+	int i;
 
 	r->ie_reset = 0;
 	/*
@@ -150,7 +150,7 @@ void
 ie_gsc_attend(sc)
 	struct ie_softc *sc;
 {
-	register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
+	volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 
 	fdcache(0, (vaddr_t)ie_mem, IE_SIZE);
 	DELAY(1);
@@ -185,13 +185,13 @@ ie_gsc_port(sc, cmd)
 	}
 
 	if (sc->sc_flags & IEGSC_GECKO) {
-		register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
+		volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 		r->ie_port = cmd & 0xffff;
 		DELAY(1000);
 		r->ie_port = cmd >> 16;
 		DELAY(1000);
 	} else {
-		register volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
+		volatile struct ie_gsc_regs *r = (struct ie_gsc_regs *)sc->ioh;
 		r->ie_port = cmd >> 16;
 		DELAY(1000);
 		r->ie_port = cmd & 0xffff;
@@ -278,7 +278,7 @@ ie_gsc_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_attach_args *ga = aux;
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_LAN &&
@@ -294,8 +294,8 @@ ie_gsc_attach(parent, self, aux)
 	void *aux;
 {
 	struct pdc_lan_station_id pdc_mac PDC_ALIGNMENT;
-	register struct ie_softc *sc = (struct ie_softc *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct ie_softc *sc = (struct ie_softc *)self;
+	struct gsc_attach_args *ga = aux;
 	/*bus_dma_segment_t seg;
 	int rseg;*/
 	int rv;

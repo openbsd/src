@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop_gsc.c,v 1.2 2003/01/08 05:20:35 mickey Exp $	*/
+/*	$OpenBSD: osiop_gsc.c,v 1.3 2003/01/25 07:22:01 jason Exp $	*/
 /*	$NetBSD: osiop_gsc.c,v 1.6 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*
@@ -110,8 +110,8 @@ osiop_gsc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct osiop_softc *sc = (void *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct osiop_softc *sc = (void *)self;
+	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 
 	sc->sc_bst = ga->ga_iot;

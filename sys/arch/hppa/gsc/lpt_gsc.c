@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.7 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.8 2003/01/25 07:22:01 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -101,7 +101,7 @@ lpt_gsc_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	u_int8_t mask, data;
@@ -159,8 +159,8 @@ lpt_gsc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct lpt_softc *sc = (void *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct lpt_softc *sc = (void *)self;
+	struct gsc_attach_args *ga = aux;
 
 	/* sc->sc_flags |= LPT_POLLED; */
 
