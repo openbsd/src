@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.28 2001/03/08 13:11:06 jakob Exp $
+#	$OpenBSD: services,v 1.29 2001/03/13 08:29:16 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -167,6 +167,7 @@ remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 #> does register or list uses of these ports as a convienence to the
 #> community.
 #
+socks		1080/tcp		# Socks
 ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp		# Prospero non-privileged
