@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.143 2000/12/27 12:34:50 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.144 2000/12/28 12:03:58 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -640,6 +640,7 @@ main(int ac, char **av)
 			fprintf(stderr, "  -f file    Configuration file (default %s)\n", SERVER_CONFIG_FILE);
 			fprintf(stderr, "  -d         Debugging mode (multiple -d means more debugging)\n");
 			fprintf(stderr, "  -i         Started from inetd\n");
+			fprintf(stderr, "  -D         Do not fork into daemon mode\n");
 			fprintf(stderr, "  -q         Quiet (no logging)\n");
 			fprintf(stderr, "  -p port    Listen on the specified port (default: 22)\n");
 			fprintf(stderr, "  -k seconds Regenerate server key every this many seconds (default: 3600)\n");
