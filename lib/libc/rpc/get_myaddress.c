@@ -54,6 +54,9 @@ static char *rcsid = "$NetBSD: get_myaddress.c,v 1.3 1996/01/04 20:05:04 pk Exp 
 
 /* 
  * don't use gethostbyname, which would invoke yellow pages
+ *
+ * Avoid loopback interfaces.  We return information from a loopback
+ * interface only if there are no other possible interfaces.
  */
 int
 get_myaddress(addr)
@@ -64,6 +67,7 @@ get_myaddress(addr)
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
 	int len, slop;
+	int loopback = 0, gotit = 0;
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		return (-1);
@@ -74,6 +78,7 @@ get_myaddress(addr)
 		(void) close(s);
 		return (-1);
 	}
+again:
 	ifr = ifc.ifc_req;
 	for (len = ifc.ifc_len; len; len -= sizeof ifreq) {
 		ifreq = *ifr;
@@ -82,9 +87,11 @@ get_myaddress(addr)
 			return (-1);
 		}
 		if ((ifreq.ifr_flags & IFF_UP) &&
-		    ifr->ifr_addr.sa_family == AF_INET) {
+		    ifr->ifr_addr.sa_family == AF_INET &&
+		    (loopback == 1 && (ifreq.ifr_flags & IFF_LOOPBACK))) {
 			*addr = *((struct sockaddr_in *)&ifr->ifr_addr);
 			addr->sin_port = htons(PMAPPORT);
+			gotit = 1;
 			break;
 		}
 		/*
@@ -96,6 +103,10 @@ get_myaddress(addr)
 			len -= slop;
 		}
 		ifr++;
+	}
+	if (gotit == 0 && loopback == 0) {
+		loopback = 1;
+		goto again;
 	}
 	(void) close(s);
 	return (0);
