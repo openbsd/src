@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.13 2001/05/24 01:17:51 mickey Exp $	*/
+/*	$OpenBSD: echo.c,v 1.14 2001/05/24 01:55:49 mickey Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -15,17 +15,17 @@
 
 #include <stdarg.h>
 
-static int	veread		__P((const char *, char *buf, int, int, va_list));
-static int      complt		__P((int, int, char *, int));
-static int      complt_list	__P((int, int, char *, int));
-static void     eformat		__P((const char *, va_list));
-static void     eputi		__P((int, int));
-static void     eputl		__P((long, int));
-static void     eputs		__P((char *));
-static void     eputc		__P((char));
-static LIST    *copy_list	__P((LIST *));
+static int	veread		__P((const char *, char *buf, int, int, ...));
+static int	complt		__P((int, int, char *, int));
+static int	complt_list	__P((int, int, char *, int));
+static void	eformat		__P((const char *, ...));
+static void	eputi		__P((int, int));
+static void	eputl		__P((long, int));
+static void	eputs		__P((char *));
+static void	eputc		__P((char));
+static LIST	*copy_list	__P((LIST *));
 
-int             epresf = FALSE;		/* stuff in echo line flag */
+int		epresf = FALSE;		/* stuff in echo line flag */
 
 /*
  * Erase the echo line.
@@ -41,9 +41,9 @@ eerase()
 }
 
 /*
- * Ask a "yes" or "no" question.  Return ABORT if the user answers the 
- * question with the abort ("^G") character.  Return FALSE for "no" and 
- * TRUE for "yes".  No formatting services are available.  No newline 
+ * Ask a "yes" or "no" question.  Return ABORT if the user answers the
+ * question with the abort ("^G") character.  Return FALSE for "no" and
+ * TRUE for "yes".  No formatting services are available.  No newline
  * required.
  */
 int
@@ -116,8 +116,8 @@ eyesno(sp)
 }
 
 /*
- * Write out a prompt and read back a reply.  The prompt is now written 
- * out with full "ewprintf" formatting, although the arguments are in a 
+ * Write out a prompt and read back a reply.  The prompt is now written
+ * out with full "ewprintf" formatting, although the arguments are in a
  * rather strange place.  This is always a new message, there is no auto
  * completion, and the return is echoed as such.
  */
@@ -134,10 +134,10 @@ ereply(const char *fmt, char *buf, int nbuf, ...)
 }
 
 /*
- * This is the general "read input from the echo line" routine.  The basic 
+ * This is the general "read input from the echo line" routine.  The basic
  * idea is that the prompt string "prompt" is written to the echo line, and
- * a one line reply is read back into the supplied "buf" (with maximum 
- * length "len"). The "flag" contains EFNEW (a new prompt), an EFFUNC 
+ * a one line reply is read back into the supplied "buf" (with maximum
+ * length "len"). The "flag" contains EFNEW (a new prompt), an EFFUNC
  * (autocomplete), or EFCR (echo the carriage return as CR).
  */
 /* VARARGS */
@@ -153,15 +153,12 @@ eread(const char *fmt, char *buf, int nbuf, int flag, ...)
 }
 
 static int
-veread(fp, buf, nbuf, flag, ap)
-	const char *fp;
-	char       *buf;
-	int         nbuf, flag;
-	va_list     ap;
+veread(const char *fp, char *buf, int nbuf, int flag, ...)
 {
 	int	 cpos;
 	int	 i;
 	int	 c;
+	va_list		ap;
 
 #ifndef NO_MACRO
 	if (inmacro) {
@@ -178,7 +175,9 @@ veread(fp, buf, nbuf, flag, ap)
 		epresf = TRUE;
 	} else
 		eputc(' ');
+	va_start(ap, flag);
 	eformat(fp, ap);
+	va_end(ap);
 	tteeol();
 	ttflush();
 	for (;;) {
@@ -227,7 +226,7 @@ veread(fp, buf, nbuf, flag, ap)
 			ttflush();
 			return ABORT;
 		case CCHR('H'):			/* rubout, erase */
-		case CCHR('?'):	
+		case CCHR('?'):
 			if (cpos != 0) {
 				ttputc('\b');
 				ttputc(' ');
@@ -549,8 +548,8 @@ complt_list(flags, c, buf, cpos)
 
 /*
  * The "lp1" and "lp2" point to list structures.  The "cpos" is a horizontal
- * position in the name.  Return the longest block of characters that can be 
- * autocompleted at this point.  Sometimes the two symbols are the same, but 
+ * position in the name.  Return the longest block of characters that can be
+ * autocompleted at this point.  Sometimes the two symbols are the same, but
  * this is normal.
  */
 int
@@ -575,9 +574,9 @@ getxtra(lp1, lp2, cpos, wflag)
 }
 
 /*
- * Special "printf" for the echo line.  Each call to "ewprintf" starts a 
- * new line in the echo area, and ends with an erase to end of the echo 
- * line.  The formatting is done by a call to the standard formatting 
+ * Special "printf" for the echo line.  Each call to "ewprintf" starts a
+ * new line in the echo area, and ends with an erase to end of the echo
+ * line.  The formatting is done by a call to the standard formatting
  * routine.
  */
 /* VARARGS */
@@ -601,21 +600,21 @@ ewprintf(const char *fmt, ...)
 }
 
 /*
- * Printf style formatting. This is called by both "ewprintf" and "ereply" 
- * to provide formatting services to their clients.  The move to the start 
- * of the echo line, and the erase to the end of the echo line, is done by 
+ * Printf style formatting. This is called by both "ewprintf" and "ereply"
+ * to provide formatting services to their clients.  The move to the start
+ * of the echo line, and the erase to the end of the echo line, is done by
  * the caller.
  * Note: %c works, and prints the "name" of the character.
  * %k prints the name of a key (and takes no arguments).
  */
 static void
-eformat(fp, ap)
-	const char *fp;
-	va_list ap;
+eformat(const char *fp, ...)
 {
 	char	kname[NKNAME], *cp;
+	va_list ap;
 	int	c;
 
+	va_start(ap, fp);
 	while ((c = *fp++) != '\0') {
 		if (c != '%')
 			eputc(c);
@@ -720,7 +719,7 @@ eputs(s)
 }
 
 /*
- * Put character.  Watch for control characters, and for the line getting 
+ * Put character.  Watch for control characters, and for the line getting
  * too long.
  */
 static void
