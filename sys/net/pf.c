@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.415 2003/12/31 22:14:42 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.416 2004/01/04 12:56:33 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -238,7 +238,7 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] =
 	(s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
-#define LOCKED_IF(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :    \
+#define BOUND_IFACE(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :   \
 	((r)->rule_flag & PFRULE_GRBOUND) ? (k)->pfik_parent :	       \
 	(k)->pfik_parent->pfik_parent)
 
@@ -2741,7 +2741,7 @@ cleanup:
 			pool_put(&pf_state_pl, s);
 			return (PF_DROP);
 		}
-		if (pf_insert_state(LOCKED_IF(r, kif), s)) {
+		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			pf_normalize_tcp_cleanup(s);
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
@@ -3030,7 +3030,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(LOCKED_IF(r, kif), s)) {
+		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
 			pool_put(&pf_state_pl, s);
@@ -3305,7 +3305,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(LOCKED_IF(r, kif), s)) {
+		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			pf_src_tree_remove_state(s);
 			pool_put(&pf_state_pl, s);
@@ -3563,7 +3563,7 @@ cleanup:
 			s->nat_src_node = nsn;
 			s->nat_src_node->states++;
 		}
-		if (pf_insert_state(LOCKED_IF(r, kif), s)) {
+		if (pf_insert_state(BOUND_IFACE(r, kif), s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
 			if (r->log)
 				PFLOG_PACKET(kif, h, m, af, direction, reason,
