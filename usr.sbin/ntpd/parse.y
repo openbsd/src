@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.7 2004/07/07 06:51:16 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.8 2004/07/08 01:22:57 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -170,27 +170,13 @@ conf_main	: LISTEN ON address	{
 		;
 
 address		: STRING		{
-			u_int8_t	 len;
-			struct ntp_addr	*h;
-
-			if (($$ = host($1, &len)) == NULL) {
+			if (($$ = host($1)) == NULL) {
 				yyerror("could not parse address spec \"%s\"",
 				    $1);
 				free($1);
 				YYERROR;
 			}
 			free($1);
-
-			for (h = $$; h != NULL; h = h->next)
-				if ((h->ss.ss_family == AF_INET && len != 32) ||
-				    (h->ss.ss_family == AF_INET6 && len != 128))
-				    {
-					/* unreachable */
-					yyerror("got prefixlen %u, expected %u",
-					    len, h->ss.ss_family ==
-					    AF_INET ? 32 : 128);
-					YYERROR;
-				}
 		}
 		;
 

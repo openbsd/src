@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.17 2004/07/07 07:32:05 alexander Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.18 2004/07/08 01:22:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -184,7 +184,7 @@ int	 cmdline_symset(char *);
 
 /* config.c */
 int		 check_file_secrecy(int, const char *);
-struct ntp_addr	*host(const char *, u_int8_t *);
+struct ntp_addr	*host(const char *);
 
 /* ntp_msg.c */
 int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);

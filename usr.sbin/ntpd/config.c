@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2004/07/07 05:47:57 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.7 2004/07/08 01:22:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,9 +27,9 @@
 
 #include "ntpd.h"
 
-struct ntp_addr	*host_v4(const char *, u_int8_t *);
+struct ntp_addr	*host_v4(const char *);
 struct ntp_addr	*host_v6(const char *);
-struct ntp_addr	*host_dns(const char *, u_int8_t *);
+struct ntp_addr	*host_dns(const char *);
 
 int
 check_file_secrecy(int fd, const char *fname)
@@ -55,27 +55,9 @@ check_file_secrecy(int fd, const char *fname)
 }
 
 struct ntp_addr	*
-host(const char *s, u_int8_t *len)
+host(const char *s)
 {
-	int			 mask;
-	char			*p, *q, *ps;
 	struct ntp_addr		*h = NULL;
-
-	if ((p = strrchr(s, '/')) != NULL) {
-		errno = 0;
-		mask = strtol(p+1, &q, 0);
-		if (errno == ERANGE || !q || *q || mask > 128 || q == (p+1)) {
-			log_warnx("invalid netmask");
-			return (NULL);
-		}
-		if ((ps = malloc(strlen(s) - strlen(p) + 1)) == NULL)
-			fatal("host: malloc");
-		strlcpy(ps, s, strlen(s) - strlen(p) + 1);
-	} else {
-		if ((ps = strdup(s)) == NULL)
-			fatal("host: strdup");
-		mask = 128;
-	}
 
 	if (!strcmp(s, "*"))
 		if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
@@ -83,39 +65,29 @@ host(const char *s, u_int8_t *len)
 
 	/* IPv4 address? */
 	if (h == NULL)
-		h = host_v4(s, len);
+		h = host_v4(s);
 
 	/* IPv6 address? */
-	if (h == NULL) {
-		h = host_v6(ps);
-		*len = mask;
-	}
+	if (h == NULL)
+		h = host_v6(s);
 
 	/* Hostname? */
 	if (h == NULL)
-		h = host_dns(ps, len);
-
-	free(ps);
+		h = host_dns(s);
 
 	return (h);
 }
 
 struct ntp_addr	*
-host_v4(const char *s, u_int8_t *len)
+host_v4(const char *s)
 {
 	struct in_addr		 ina;
 	struct sockaddr_in	*sa_in;
 	struct ntp_addr		*h;
-	int			 bits = 32;
 
 	bzero(&ina, sizeof(struct in_addr));
-	if (strrchr(s, '/') != NULL) {
-		if ((bits = inet_net_pton(AF_INET, s, &ina, sizeof(ina))) == -1)
-			return (NULL);
-	} else {
-		if (inet_pton(AF_INET, s, &ina) != 1)
-			return (NULL);
-	}
+	if (inet_pton(AF_INET, s, &ina) != 1)
+		return (NULL);
 
 	if ((h = calloc(1, sizeof(struct ntp_addr))) == NULL)
 		fatal(NULL);
@@ -123,7 +95,6 @@ host_v4(const char *s, u_int8_t *len)
 	sa_in->sin_len = sizeof(struct sockaddr_in);
 	sa_in->sin_family = AF_INET;
 	sa_in->sin_addr.s_addr = ina.s_addr;
-	*len = bits;
 
 	return (h);
 }
@@ -158,7 +129,7 @@ host_v6(const char *s)
 }
 
 struct ntp_addr	*
-host_dns(const char *s, u_int8_t *len)
+host_dns(const char *s)
 {
 	struct addrinfo		 hints, *res0, *res;
 	int			 error;
@@ -185,13 +156,11 @@ host_dns(const char *s, u_int8_t *len)
 			sa_in->sin_len = sizeof(struct sockaddr_in);
 			sa_in->sin_addr.s_addr = ((struct sockaddr_in *)
 			    res->ai_addr)->sin_addr.s_addr;
-			*len = 32;
 		} else {
 			sa_in6 = (struct sockaddr_in6 *)&h->ss;
 			sa_in6->sin6_len = sizeof(struct sockaddr_in6);
 			memcpy(&sa_in6->sin6_addr, &((struct sockaddr_in6 *)
 			    res->ai_addr)->sin6_addr, sizeof(struct in6_addr));
-			*len = 128;
 		}
 
 		h->next = hh;
