@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.22 2000/07/16 08:27:20 markus Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.23 2000/08/02 06:23:30 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -39,7 +39,7 @@ int
 ssh_get_authentication_socket()
 {
 	const char *authsocket;
-	int sock;
+	int sock, len;
 	struct sockaddr_un sunaddr;
 
 	authsocket = getenv(SSH_AUTHSOCKET_ENV_NAME);
@@ -48,6 +48,7 @@ ssh_get_authentication_socket()
 
 	sunaddr.sun_family = AF_UNIX;
 	strlcpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
+	sunaddr.sun_len = len = SUN_LEN(&sunaddr)+1;
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0)
@@ -58,7 +59,7 @@ ssh_get_authentication_socket()
 		close(sock);
 		return -1;
 	}
-	if (connect(sock, (struct sockaddr *) & sunaddr, sizeof(sunaddr)) < 0) {
+	if (connect(sock, (struct sockaddr *) & sunaddr, len) < 0) {
 		close(sock);
 		return -1;
 	}
