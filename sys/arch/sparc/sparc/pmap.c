@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.133 2003/03/13 22:09:20 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.134 2003/04/06 22:50:37 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -738,7 +738,6 @@ static void sortm(struct memarr *, int);
 void	ctx_alloc(struct pmap *);
 void	ctx_free(struct pmap *);
 void	pg_flushcache(struct vm_page *);
-void	kvm_iocache(caddr_t, int);
 #ifdef DEBUG
 void	pm_check(char *, struct pmap *);
 void	pm_check_k(char *, struct pmap *);
@@ -6123,33 +6122,6 @@ kvm_setcache(va, npages, cached)
 		}
 #endif
 	}
-}
-
-/*
- * Turn on IO cache for a given (va, number of pages).
- *
- * We just assert PG_NC for each PTE; the addresses must reside
- * in locked kernel space.  A cache flush is also done.
- */
-void
-kvm_iocache(va, npages)
-	caddr_t va;
-	int npages;
-{
-
-#ifdef SUN4M
-	if (CPU_ISSUN4M) /* %%%: Implement! */
-		panic("kvm_iocache: 4m iocache not implemented");
-#endif
-#if defined(SUN4) || defined(SUN4C)
-	for (; --npages >= 0; va += NBPG) {
-		int pte = getpte4(va);
-		if ((pte & PG_V) == 0)
-			panic("kvm_iocache !pg_v");
-		pte |= PG_IOC;
-		setpte4(va, pte);
-	}
-#endif
 }
 
 int
