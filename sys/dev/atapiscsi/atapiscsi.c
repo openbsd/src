@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.15 1999/10/29 01:15:16 deraadt Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.16 1999/10/29 17:12:23 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -753,8 +753,11 @@ wdc_atapi_intr_drq(chp, xfer, irq)
 	
 	WDCDEBUG_PRINT(("PHASE_DATA\n"), DEBUG_INTR);
 	
-	if (len == 0) 
+	if (len == 0) {
+		printf("wdc_atapi_intr_drq: length 0 transfer in "
+		    "data phase\n");
 	        goto abort_data;
+	}
 	  
 	if (xfer->c_bcount >= len) {
 		/* Common case */
@@ -808,7 +811,7 @@ wdc_atapi_intr_drq(chp, xfer, irq)
 		drvp->n_dmaerrs++;
 	}
 
-	sc_xfer->error = XS_TIMEOUT;
+	sc_xfer->error = XS_RESET;
 	wdc_atapi_reset(chp, xfer);
 
 	return (1);
@@ -1121,6 +1124,7 @@ wdc_atapi_done(chp, xfer)
 	struct scsi_xfer *sc_xfer = xfer->cmd;
 	int need_done = xfer->c_flags & C_NEEDDONE;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
+	int doing_dma = xfer->c_flags & C_DMA;
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -1131,9 +1135,12 @@ wdc_atapi_done(chp, xfer)
 	if (drvp->n_dmaerrs ||
 	    (sc_xfer->error != XS_NOERROR && sc_xfer->error != XS_SENSE &&
 	    sc_xfer->error != XS_SHORTSENSE)) {
+#if 0
 		printf("wdc_atapi_done: sc_xfer->error %d\n", sc_xfer->error);
+#endif
 		drvp->n_dmaerrs = 0;
-		wdc_downgrade_mode(drvp);
+		if (doing_dma)
+			wdc_downgrade_mode(drvp);
 	}
 	    
 	if (need_done) {
