@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.5 1998/11/17 11:10:22 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.8 1998/08/21 14:33:09 provos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.6 1999/02/26 03:53:16 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.9 1999/02/25 11:39:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -42,6 +42,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "sysdep.h"
 
 #include "conf.h"
 #include "exchange.h"
