@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 1999/06/06 04:48:23 jason Exp $
+#	$OpenBSD: GENERIC,v 1.43 1999/07/23 19:13:07 jason Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -279,6 +279,13 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI devices
 fdc0	at mainbus0				# sun4c controller
 fdc0	at obio0				# sun4m controller
 fd*	at fdc0					# the drive itself
+
+# flash memory, sysconfig regs, and VME for Force boards
+#scf0	at mainbus0				# FORCE CPU-5V sysconfig
+#flash0	at obio0				# FORCE CPU-5V flash-memory
+#fga0	at iommu0				# FORCE CPU-5V VME/SBus bridge
+#fvme*	at fga0					# FORCE CPU-5V
+#daadio*	at fvme? addr 0x0 level 1 vect 0x1f	# Matrix MD-DAADIO board
 
 pseudo-device	kbd		# Sun keyboard
 #pseudo-device	strip	1	# radio clock
