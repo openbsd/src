@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.2 2004/06/25 17:27:01 andreas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.3 2004/07/22 11:15:00 art Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <machine/trap.h>
+#include <sys/mutex.h>
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
@@ -127,7 +128,7 @@ void db_startcpu(int cpu);
 void db_stopcpu(int cpu);
 void x86_ipi_db(struct cpu_info *);
 
-extern struct SIMPLELOCK ddb_mp_slock;
+extern struct mutex ddb_mp_mutex;
 
 #define DDB_STATE_NOT_RUNNING	0
 #define DDB_STATE_RUNNING	1
