@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.19 2004/02/25 14:22:12 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.20 2004/03/02 12:40:31 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -326,7 +326,7 @@ extern int quiet_interface_discovery;
 extern void (*bootp_packet_handler)(struct interface_info *,
     struct dhcp_packet *, int, unsigned int, struct iaddr, struct hardware *);
 extern struct timeout *timeouts;
-void discover_interfaces(void);
+void discover_interfaces(struct interface_info *);
 void reinitialize_interfaces(void);
 void dispatch(void);
 void got_one(struct protocol *);

@@ -1,6 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.16 2004/03/02 12:19:14 henning Exp $	*/
-
-/* Network input dispatcher... */
+/*	$OpenBSD: dispatch.c,v 1.17 2004/03/02 12:40:31 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -49,9 +47,6 @@
 #include <ifaddrs.h>
 #include <poll.h>
 
-/* Most boxes has less than 16 interfaces, so this might be a good guess.  */
-#define INITIAL_IFREQ_COUNT 16
-
 struct interface_info *interfaces, *dummy_interfaces, *fallback_interface;
 struct protocol *protocols;
 struct timeout *timeouts;
@@ -72,10 +67,8 @@ int quiet_interface_discovery;
  * what subnet it's on, and add it to the list of interfaces.
  */
 void
-discover_interfaces(void)
+discover_interfaces(struct interface_info *iface)
 {
-	struct interface_info *tmp;
-	struct interface_info *last, *next;
 	struct sockaddr_in foo;
 	struct ifreq *tif;
 	struct ifaddrs *ifap, *ifa;
@@ -89,11 +82,7 @@ discover_interfaces(void)
 		    (!(ifa->ifa_flags & IFF_UP)))
 			continue;
 
-		for (tmp = interfaces; tmp; tmp = tmp->next)
-			if (!strcmp(tmp->name, ifa->ifa_name))
-				break;
-
-		if (!tmp)
+		if (strcmp(iface->name, ifa->ifa_name))
 			break;
 
 		/*
@@ -103,10 +92,10 @@ discover_interfaces(void)
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			struct sockaddr_dl *foo =
 			    (struct sockaddr_dl *)ifa->ifa_addr;
-			tmp->index = foo->sdl_index;
-			tmp->hw_address.hlen = foo->sdl_alen;
-			tmp->hw_address.htype = HTYPE_ETHER; /* XXX */
-			memcpy(tmp->hw_address.haddr,
+			iface->index = foo->sdl_index;
+			iface->hw_address.hlen = foo->sdl_alen;
+			iface->hw_address.htype = HTYPE_ETHER; /* XXX */
+			memcpy(iface->hw_address.haddr,
 			    LLADDR(foo), foo->sdl_alen);
 		} else if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct iaddr addr;
@@ -114,59 +103,28 @@ discover_interfaces(void)
 			bcopy(ifa->ifa_addr, &foo, sizeof(foo));
 			if (foo.sin_addr.s_addr == htonl(INADDR_LOOPBACK))
 				continue;
-			if (!tmp->ifp) {
+			if (!iface->ifp) {
 				int len = IFNAMSIZ + ifa->ifa_addr->sa_len;
-				tif = malloc(len);
-				if (!tif)
-					error("no space to remember ifp.");
+				if ((tif = malloc(len)) == NULL)
+					error("no space to remember ifp");
 				strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
 				memcpy(&tif->ifr_addr, ifa->ifa_addr,
 				    ifa->ifa_addr->sa_len);
-				tmp->ifp = tif;
-				tmp->primary_address = foo.sin_addr;
+				iface->ifp = tif;
+				iface->primary_address = foo.sin_addr;
 			}
 			addr.len = 4;
 			memcpy(addr.iabuf, &foo.sin_addr.s_addr, addr.len);
 		}
 	}
 
-	/*
-	 * Now cycle through all the interfaces we found, looking for
-	 * hardware addresses.
-	 */
+	if (!iface->ifp)
+		error("%s: not found", iface->name);
 
-	/* Weed out the interfaces that did not have IP addresses. */
-	last = NULL;
-	for (tmp = interfaces; tmp; tmp = next) {
-		next = tmp->next;
-		if (!tmp->ifp || !(tmp->flags & INTERFACE_REQUESTED)) {
-			if ((tmp->flags & INTERFACE_REQUESTED))
-				error("%s: not found", tmp->name);
-			if (!last)
-				interfaces = interfaces->next;
-			else
-				last->next = tmp->next;
-
-			/*
-			 * Remember the interface in case we need to know
-			 * about it later.
-			 */
-			tmp->next = dummy_interfaces;
-			dummy_interfaces = tmp;
-			continue;
-		}
-		last = tmp;
-
-		memcpy(&foo, &tmp->ifp->ifr_addr, sizeof(tmp->ifp->ifr_addr));
-
-		/* Register the interface... */
-		if_register_receive(tmp);
-		if_register_send(tmp);
-	}
-
-	/* Now register all the remaining interfaces as protocols. */
-	for (tmp = interfaces; tmp; tmp = tmp->next)
-		add_protocol(tmp->name, tmp->rfdesc, got_one, tmp);
+	/* Register the interface... */
+	if_register_receive(iface);
+	if_register_send(iface);
+	add_protocol(iface->name, iface->rfdesc, got_one, iface);
 
 	freeifaddrs(ifap);
 }
