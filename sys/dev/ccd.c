@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.27 1998/01/24 21:12:36 niklas Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.28 1998/01/24 21:33:32 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -832,7 +832,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 	struct ccdcinfo *ci, *ci2 = NULL;
 	struct ccdbuf *cbp;
 	daddr_t cbn, cboff, sblk;
-	int ccdisk, off;
+	int ccdisk, off, s;
 	long old_bcount, cnt;
 	struct ccdiinfo *ii;
 	struct buf *nbp;
@@ -927,8 +927,11 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 			nbp->b_data = addr;
 		else {
 			do {
+				s = splbio();
 				nbp->b_data = (caddr_t)kmem_alloc_pageable(
 				    ccdmap, bp->b_bcount);
+				splx(s);
+
 				/*
 				 * XXX Instead of sleeping, we might revert
 				 * XXX to old I/O policy for this buffer set.
