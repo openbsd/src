@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.151 2001/09/15 16:47:07 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.152 2001/09/15 22:25:25 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3884,6 +3884,7 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			/* offset of protocol header that follows h2 */
 			off2 = ipoff2 + (h2.ip_hl << 2);
 
+			pd2.proto = h2.ip_p;
 			pd2.src = (struct pf_addr *)&h2.ip_src;
 			pd2.dst = (struct pf_addr *)&h2.ip_dst;
 			pd2.ip_sum = &h2.ip_sum;
