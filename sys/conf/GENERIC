@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.9 1996/08/29 07:40:24 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.10 1996/08/31 01:58:49 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -27,7 +27,7 @@ option		COMPAT_09	# NetBSD 0.9,
 option		COMPAT_10	# NetBSD 1.0,
 option		COMPAT_11	# NetBSD 1.1,
 option		COMPAT_43	# and 4.3BSD
-option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+#option		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
 option		LKM		# loadable kernel modules
 
