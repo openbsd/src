@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.9 2001/05/22 20:22:22 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.10 2001/05/24 18:47:21 angelos Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -340,7 +340,9 @@ m_tag_delete_chain(m, t)
 	struct m_tag *p;
 
 	/* Be a bit paranoid */
-	if (m->m_pkthdr.tags.tqh_last == NULL) {
+	if (m->m_pkthdr.tags.tqh_last == NULL ||
+	    (m->m_pkthdr.tags.tqh_first == NULL &&
+	    m->m_pkthdr.tags.tqh_last != &m->m_pkthdr.tags.tqh_first)) {
 #ifdef DIAGNOSTIC
 		printf("m_tag_delete_chain: uninitialized tags on mbuf %p\n",
 		       m);
