@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.17 1999/11/25 19:24:38 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.18 1999/11/26 17:04:07 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -97,9 +97,9 @@ device	dino: pcibus
 attach	dino at mainbus
 file	arch/hppa/dev/dino.c		dino
 
-#device	sti: wsemuldisplaydev
-#attach	sti at mainbus
-#file	arch/hppa/dev/sti.c		sti
+device	sti # : wsemuldisplaydev
+attach	sti at mainbus
+file	arch/hppa/dev/sti.c		sti needs-flag
 
 ###
 
