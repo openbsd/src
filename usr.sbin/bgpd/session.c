@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.37 2003/12/24 21:19:48 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.38 2003/12/24 23:14:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -323,8 +323,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			peer->rbuf = calloc(1, sizeof(struct peer_buf_read));
 			if (peer->rbuf == NULL)
 				fatal(NULL, errno);
-			peer->rbuf->wptr = peer->rbuf->buf;
-			peer->rbuf->pkt_len = MSGSIZE_HEADER;
+			peer->rbuf->wpos = 0;
 
 			/* init write buffer */
 			msgbuf_init(&peer->wbuf);
@@ -868,9 +867,11 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 int
 session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 {
-	ssize_t		n, read_total;
+	ssize_t		n, rpos, av, left;
 	socklen_t	len;
 	int		error;
+	u_int16_t	msglen;
+	u_int8_t	msgtype;
 
 	if (peer->state == STATE_CONNECT) {
 		if (pfd->revents & POLLOUT) {
@@ -922,10 +923,8 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 	}
 
 	if (pfd->revents & POLLIN) {
-		read_total = 0;
-		do {
-			if ((n = read(peer->sock, peer->rbuf->wptr,
-			    peer->rbuf->pkt_len - peer->rbuf->read_len)) ==
+		if ((n = read(peer->sock, peer->rbuf->buf + peer->rbuf->wpos,
+			    sizeof(peer->rbuf->buf) - peer->rbuf->wpos)) ==
 			    -1) {
 				if (errno != EINTR) {
 					log_err(peer, "read error");
@@ -933,61 +932,54 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 				}
 				return (1);
 			}
-			read_total += n;
-			peer->rbuf->wptr += n;
-			peer->rbuf->read_len += n;
-			if (peer->rbuf->read_len == peer->rbuf->pkt_len) {
-				if (!peer->rbuf->seen_hdr) {	/* got header */
-					if (parse_header(peer,
-					    peer->rbuf->buf,
-					    &peer->rbuf->pkt_len,
-					    &peer->rbuf->type) == 1) {
-						bgp_fsm(peer, EVNT_CON_FATAL);
-						return (1);
-					}
-					peer->rbuf->seen_hdr = 1;
-				} else {	/* we got the full packet */
-					switch (peer->rbuf->type) {
-					case OPEN:
-						bgp_fsm(peer, EVNT_RCVD_OPEN);
-						break;
-					case UPDATE:
-						bgp_fsm(peer, EVNT_RCVD_UPDATE);
-						break;
-					case NOTIFICATION:
-						bgp_fsm(peer,
-						    EVNT_RCVD_NOTIFICATION);
-						break;
-					case KEEPALIVE:
-						bgp_fsm(peer,
-						    EVNT_RCVD_KEEPALIVE);
-						break;
-					default:	/* cannot happen */
-						session_notification(peer,
-						    ERR_HEADER, ERR_HDR_TYPE,
-						    &peer->rbuf->type, 1);
-						logit(LOG_CRIT,
-						    "received message with "
-						    "unknown type %u",
-						    peer->rbuf->type);
-					}
-					n = 0;	/* give others a chance... */
-					if (peer->rbuf != NULL) {
-						bzero(peer->rbuf, sizeof(struct
-						    peer_buf_read));
-						peer->rbuf->wptr =
-						    peer->rbuf->buf;
-						peer->rbuf->pkt_len =
-						    MSGSIZE_HEADER;
-					}
+			if (n == 0) /* connection closed */
+				bgp_fsm(peer, EVNT_CON_CLOSED);
+
+			rpos = 0;
+			av = peer->rbuf->wpos + n;
+
+			for (;;) {
+				if (rpos + MSGSIZE_HEADER > av)
+					break;
+				if (parse_header(peer, peer->rbuf->buf + rpos,
+				    &msglen, &msgtype) == -1)
+					return (0);
+				if (rpos + msglen > av)
+					break;
+				peer->rbuf->rptr = peer->rbuf->buf + rpos;
+
+				switch (msgtype) {
+				case OPEN:
+					bgp_fsm(peer, EVNT_RCVD_OPEN);
+					break;
+				case UPDATE:
+					bgp_fsm(peer, EVNT_RCVD_UPDATE);
+					break;
+				case NOTIFICATION:
+					bgp_fsm(peer, EVNT_RCVD_NOTIFICATION);
+					break;
+				case KEEPALIVE:
+					bgp_fsm(peer, EVNT_RCVD_KEEPALIVE);
+					break;
+				default:	/* cannot happen */
+					session_notification(peer, ERR_HEADER,
+					    ERR_HDR_TYPE, &msgtype, 1);
+					logit(LOG_CRIT,
+					    "received message with unknown type"
+					    " %u", msgtype);
 				}
+				rpos += msglen;
 			}
-		} while (n > 0);
-		if (read_total == 0) /* connection closed */
-			bgp_fsm(peer, EVNT_CON_CLOSED);
+			if (rpos < av) {
+				left = av - rpos;
+				memcpy(&peer->rbuf->buf, peer->rbuf->buf + rpos,
+				    left);
+				peer->rbuf->wpos = left;
+			} else
+				peer->rbuf->wpos = 0;
+
 		return (1);
 	}
-
 	return (0);
 }
 
@@ -1081,7 +1073,7 @@ parse_open(struct peer *peer)
 	u_int32_t	 bgpid;
 	u_int8_t	 optparamlen;
 
-	p = peer->rbuf->buf;
+	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER;	/* header is already checked */
 
 	memcpy(&version, p, sizeof(version));
@@ -1152,12 +1144,12 @@ parse_update(struct peer *peer)
 	 * in case of errors the whole session is reset with a
 	 * notification anyway, we only need to know the peer
 	 */
-	p = peer->rbuf->buf;
+	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER_MARKER;
 	memcpy(&datalen, p, sizeof(datalen));
 	datalen = ntohs(datalen);
 
-	p = peer->rbuf->buf;
+	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER;	/* header is already checked */
 	datalen -= MSGSIZE_HEADER;
 
@@ -1175,12 +1167,12 @@ parse_notification(struct peer *peer)
 	u_int16_t	 datalen;
 
 	/* just log */
-	p = peer->rbuf->buf;
+	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER_MARKER;
 	memcpy(&datalen, p, sizeof(datalen));
 	datalen = ntohs(datalen);
 
-	p = peer->rbuf->buf;
+	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER;	/* header is already checked */
 	datalen -= MSGSIZE_HEADER;
 

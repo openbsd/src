@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.19 2003/12/24 20:09:57 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.20 2003/12/24 23:14:23 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -34,6 +34,7 @@
 
 #define	MAX_PKTSIZE			4096
 #define	MIN_HOLDTIME			3
+#define	READ_BUF_SIZE			65535
 
 #define BGPD_OPT_VERBOSE		0x0001
 #define BGPD_OPT_VERBOSE2		0x0002
@@ -107,12 +108,9 @@ struct bgpd_config {
 };
 
 struct peer_buf_read {
-	u_char			 buf[MAX_PKTSIZE];
-	ssize_t			 read_len;
-	u_int16_t		 pkt_len;
-	u_int8_t		 type;
-	u_char			*wptr;
-	u_int8_t		 seen_hdr;
+	u_char			 buf[READ_BUF_SIZE];
+	u_char			*rptr;
+	ssize_t			 wpos;
 };
 
 struct peer_config {
