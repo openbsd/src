@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.51 2004/01/15 22:22:11 marc Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.52 2004/02/01 06:22:14 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -764,6 +764,9 @@ struct pthread {
 
 	/* Number of priority ceiling or protection mutexes owned. */
 	int		priority_mutex_count;
+
+	/* Number rwlocks rdlocks held. */
+	int			rdlock_count;
 
 	/*
 	 * Queue of currently owned mutexes.

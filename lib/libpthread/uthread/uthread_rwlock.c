@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_rwlock.c,v 1.4 2002/05/07 05:17:15 pvalchev Exp $	*/
+/*	$OpenBSD: uthread_rwlock.c,v 1.5 2004/02/01 06:22:14 brad Exp $	*/
 /*-
  * Copyright (c) 1998 Alex Nash
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: uthread_rwlock.c,v 1.4 1999/08/28 00:03:45 peter Exp $
+ * $FreeBSD: uthread_rwlock.c,v 1.9 2004/01/08 15:39:12 deischen Exp $
  */
 
 #ifdef _THREAD_SAFE
@@ -56,7 +56,7 @@ init_static (pthread_rwlock_t *rwlock)
 
 	_SPINUNLOCK(&static_init_lock);
 
-	return(ret);
+	return (ret);
 }
 
 int
@@ -80,15 +80,14 @@ pthread_rwlock_destroy (pthread_rwlock_t *rwlock)
 
 		ret = 0;
 	}
-
-	return(ret);
+	return (ret);
 }
 
 int
 pthread_rwlock_init (pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *attr)
 {
-	pthread_rwlock_t	prwlock;
-	int			ret;
+	pthread_rwlock_t prwlock;
+	int ret;
 
 	/* allocate rwlock object */
 	prwlock = (pthread_rwlock_t)malloc(sizeof(struct pthread_rwlock));
@@ -116,7 +115,7 @@ pthread_rwlock_init (pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *attr)
 				free(prwlock);
 			} else {
 				/* success */
-				prwlock->state		 = 0;
+				prwlock->state = 0;
 				prwlock->blocked_writers = 0;
 
 				*rwlock = prwlock;
@@ -124,14 +123,15 @@ pthread_rwlock_init (pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *attr)
 		}
 	}
 
-	return(ret);
+	return (ret);
 }
 
 int
 pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
 {
-	pthread_rwlock_t 	prwlock;
-	int			ret;
+	pthread_rwlock_t prwlock;
+	struct pthread *curthread;
+	int ret;
 
 	if (rwlock == NULL)
 		return(EINVAL);
@@ -150,22 +150,43 @@ pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
 	if ((ret = pthread_mutex_lock(&prwlock->lock)) != 0)
 		return(ret);
 
-	/* give writers priority over readers */
-	while (prwlock->blocked_writers || prwlock->state < 0) {
-		ret = pthread_cond_wait(&prwlock->read_signal, &prwlock->lock);
+	/* check lock count */
+	if (prwlock->state == MAX_READ_LOCKS) {
+		pthread_mutex_unlock(&prwlock->lock);
+		return (EAGAIN);
+	}
 
-		if (ret != 0) {
-			/* can't do a whole lot if this fails */
-			pthread_mutex_unlock(&prwlock->lock);
-			return(ret);
+	curthread = _get_curthread();
+	if ((curthread->rdlock_count > 0) && (prwlock->state > 0)) {
+		/*
+		 * To avoid having to track all the rdlocks held by
+		 * a thread or all of the threads that hold a rdlock,
+		 * we keep a simple count of all the rdlocks held by
+		 * a thread.  If a thread holds any rdlocks it is
+		 * possible that it is attempting to take a recursive
+		 * rdlock.  If there are blocked writers and precedence
+		 * is given to them, then that would result in the thread
+		 * deadlocking.  So allowing a thread to take the rdlock
+		 * when it already has one or more rdlocks avoids the
+		 * deadlock.  I hope the reader can follow that logic ;-)
+		 */
+		;	/* nothing needed */
+	} else {
+		/* give writers priority over readers */
+		while (prwlock->blocked_writers || prwlock->state < 0) {
+			ret = pthread_cond_wait(&prwlock->read_signal,
+			    &prwlock->lock);
+
+			if (ret != 0) {
+				/* can't do a whole lot if this fails */
+				pthread_mutex_unlock(&prwlock->lock);
+				return(ret);
+			}
 		}
 	}
 
-	/* check lock count */
-	if (prwlock->state == MAX_READ_LOCKS)
-		ret = EAGAIN;
-	else
-		++prwlock->state; /* indicate we are locked for reading */
+	curthread->rdlock_count++;
+	prwlock->state++; /* indicate we are locked for reading */
 
 	/*
 	 * Something is really wrong if this call fails.  Returning
@@ -175,14 +196,15 @@ pthread_rwlock_rdlock (pthread_rwlock_t *rwlock)
 	 */
 	pthread_mutex_unlock(&prwlock->lock);
 
-	return(ret);
+	return (ret);
 }
 
 int
 pthread_rwlock_tryrdlock (pthread_rwlock_t *rwlock)
 {
-	pthread_rwlock_t 	prwlock;
-	int			ret;
+	pthread_rwlock_t prwlock;
+	struct pthread *curthread;
+	int ret;
 
 	if (rwlock == NULL)
 		return(EINVAL);
@@ -201,25 +223,33 @@ pthread_rwlock_tryrdlock (pthread_rwlock_t *rwlock)
 	if ((ret = pthread_mutex_lock(&prwlock->lock)) != 0)
 		return(ret);
 
-	/* give writers priority over readers */
-	if (prwlock->blocked_writers || prwlock->state < 0)
-		ret = EBUSY;
-	else if (prwlock->state == MAX_READ_LOCKS)
+	curthread = _get_curthread();
+	if (prwlock->state == MAX_READ_LOCKS)
 		ret = EAGAIN; /* too many read locks acquired */
-	else
-		++prwlock->state; /* indicate we are locked for reading */
+	else if ((curthread->rdlock_count > 0) && (prwlock->state > 0)) {
+		/* see comment for pthread_rwlock_rdlock() */
+		curthread->rdlock_count++;
+		prwlock->state++;
+	}
+	/* give writers priority over readers */
+	else if (prwlock->blocked_writers || prwlock->state < 0)
+		ret = EBUSY;
+	else {
+		prwlock->state++; /* indicate we are locked for reading */
+		curthread->rdlock_count++;
+	}
 
 	/* see the comment on this in pthread_rwlock_rdlock */
 	pthread_mutex_unlock(&prwlock->lock);
 
-	return(ret);
+	return (ret);
 }
 
 int
 pthread_rwlock_trywrlock (pthread_rwlock_t *rwlock)
 {
-	pthread_rwlock_t 	prwlock;
-	int			ret;
+	pthread_rwlock_t prwlock;
+	int ret;
 
 	if (rwlock == NULL)
 		return(EINVAL);
@@ -247,14 +277,15 @@ pthread_rwlock_trywrlock (pthread_rwlock_t *rwlock)
 	/* see the comment on this in pthread_rwlock_rdlock */
 	pthread_mutex_unlock(&prwlock->lock);
 
-	return(ret);
+	return (ret);
 }
 
 int
 pthread_rwlock_unlock (pthread_rwlock_t *rwlock)
 {
-	pthread_rwlock_t 	prwlock;
-	int			ret;
+	pthread_rwlock_t prwlock;
+	struct pthread *curthread;
+	int ret;
 
 	if (rwlock == NULL)
 		return(EINVAL);
@@ -268,8 +299,11 @@ pthread_rwlock_unlock (pthread_rwlock_t *rwlock)
 	if ((ret = pthread_mutex_lock(&prwlock->lock)) != 0)
 		return(ret);
 
+	curthread = _get_curthread();
 	if (prwlock->state > 0) {
-		if (--prwlock->state == 0 && prwlock->blocked_writers)
+		curthread->rdlock_count--;
+		prwlock->state--;
+		if (prwlock->state == 0 && prwlock->blocked_writers)
 			ret = pthread_cond_signal(&prwlock->write_signal);
 	} else if (prwlock->state < 0) {
 		prwlock->state = 0;
@@ -284,14 +318,14 @@ pthread_rwlock_unlock (pthread_rwlock_t *rwlock)
 	/* see the comment on this in pthread_rwlock_rdlock */
 	pthread_mutex_unlock(&prwlock->lock);
 
-	return(ret);
+	return (ret);
 }
 
 int
 pthread_rwlock_wrlock (pthread_rwlock_t *rwlock)
 {
-	pthread_rwlock_t 	prwlock;
-	int			ret;
+	pthread_rwlock_t prwlock;
+	int ret;
 
 	if (rwlock == NULL)
 		return(EINVAL);
@@ -311,17 +345,18 @@ pthread_rwlock_wrlock (pthread_rwlock_t *rwlock)
 		return(ret);
 
 	while (prwlock->state != 0) {
-		++prwlock->blocked_writers;
+		prwlock->blocked_writers++;
 
-		ret = pthread_cond_wait(&prwlock->write_signal, &prwlock->lock);
+		ret = pthread_cond_wait(&prwlock->write_signal,
+		    &prwlock->lock);
 
 		if (ret != 0) {
-			--prwlock->blocked_writers;
+			prwlock->blocked_writers--;
 			pthread_mutex_unlock(&prwlock->lock);
 			return(ret);
 		}
 
-		--prwlock->blocked_writers;
+		prwlock->blocked_writers--;
 	}
 
 	/* indicate we are locked for writing */
@@ -330,7 +365,7 @@ pthread_rwlock_wrlock (pthread_rwlock_t *rwlock)
 	/* see the comment on this in pthread_rwlock_rdlock */
 	pthread_mutex_unlock(&prwlock->lock);
 
-	return(ret);
+	return (ret);
 }
 
 #endif /* _THREAD_SAFE */
