@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.18 2001/03/03 21:23:49 deraadt Exp $
+#	$OpenBSD: install.md,v 1.19 2001/03/24 01:17:50 drahn Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ md_init_mbr() {
 	echo
 	echo "If you choose to manually setup the MSDOS partition, "
 	echo "consult your PowerPC OpenFirmware manual -and- the"
-	echo "PowerPC BSD Installation Guide for doing setup this way."
+	echo "PowerPC OpenBSD Installation Guide for doing setup this way."
 	echo
 	echo -n "Do you want to init the MBR and the MSDOS partition? [y]"
 	getresp "y"
@@ -138,18 +138,56 @@ md_init_mbr() {
 	esac
 }
 
+md_init_hfs() {
+	pdisk /dev/${1}c
+}
 md_checkfordisklabel() {
 	# $1 is the disk to check
 	local rval
 
 	echo
-	echo "Power.4e systems need an MBR and MSDOS partition on the boot disk."
-	echo "This is necessary because the OpenFirmware doesn't know about"
-	echo "OpenBSD, or how to boot the system from a BSD partition."
-	echo
-	echo "Install will put a boot program with the name 'ofwboot' "
-	echo "that you will configure OpenFirmware to use when booting OpenBSD."
-	echo
+	echo "Apple systems have two methods to label/partition a boot disk."
+	echo "Either the disk can be partitioned with apple HFS partition"
+	echo "tools to contain an \"Unused\" partition, or without any any"
+	echo "macos tools, the disk can be labled using an MBR partition table"
+	echo "If the HFS (DPME) partition table is used, after the disk is"
+	echo "partitioned with the apple software, the \"Unused\" section"
+	echo "must be changed to type \"OpenBSD\" name \"OpenBSD\" using the"
+	echo "pdisk tool contained on this ramdisk. The disklabel can"
+	echo "then be edited normally"
+	echo "WARNING: the MBR partitioning code will HAPPILY overwrite/destroy"
+	echo "any HFS partitions on the disk, including the partition table."
+	echo "Choose the MBR option carefully, knowing this fact."
+
+	echo "Do you want to choose (H)FS labeling or (M)BR labeling [H]"
+	getresp "h"
+	case "$resp" in
+	m*|M*)
+		disklabeltype=MBR
+		md_checkforMBRdisklabel $1
+		rval=$?
+		;;
+	*)
+		disklabeltype=HFS
+		md_init_hfs $1;;
+		rval=$?
+		;;
+	esac
+	return $rval
+}
+md_checkforMBRdisklabel() {
+
+	echo "You have chosen to put a MBR disklabel on the disk.
+	echo -n "Is this correct [n]
+	getresp "n"
+	case "$resp" in
+	n*|N*)
+		echo "aborting install"
+		exit 0;;
+	*)
+		;;
+	esac
+
 	echo -n "Have you initialized an MSDOS partition using OpenFirmware? [n]"
 	getresp "n"
 	case "$resp" in
@@ -322,11 +360,19 @@ Do not change any parameters except the partition layout and the label name.
 __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
-	disklabel -W ${_disk}
-	disklabel ${_disk} >/tmp/label.$$
-	disklabel -r -R ${_disk} /tmp/label.$$
-	rm -f /tmp/label.$$
-	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
+	if [[ $disklabeltype = "HFS" ]] 
+	then
+		disklabel -f /tmp/fstab.${_disk} -E ${_disk}
+	elif [[ $disklabeltype = "MBR" ]] 
+	then
+		disklabel -W ${_disk}
+		disklabel ${_disk} >/tmp/label.$$
+		disklabel -r -R ${_disk} /tmp/label.$$
+		rm -f /tmp/label.$$
+		disklabel -f /tmp/fstab.${_disk} -E ${_disk}
+	else
+		echo "unknown disk label type"
+	fi
 }
 
 md_welcome_banner() {
