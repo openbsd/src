@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.37 1998/03/02 05:12:20 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.38 1998/03/02 14:20:32 jason Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,7 +55,8 @@
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
-# Call units:
+# Terminal ports:
+#	tty[a-d]	onboard zs serial ports
 # Special purpose devices:
 #	audio
 #	openprom
@@ -479,7 +480,8 @@ tty[a-z])
 	*) echo unknown tty device $i ;;
 	esac
 	mknod tty$unit c 12 $n
-	chown uucp.wheel tty$unit
+	mknod cua$unit c 12 `add $n 128`
+	chown uucp.wheel tty$unit cua$unit
 	;;
 
 pty*)
