@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.43 2004/04/23 09:31:47 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.44 2004/09/14 22:06:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -362,6 +362,8 @@ const struct ac97_codecid {
 }, ac97_ic[] = {
 	{ 0x01, 0xff, 0, 0,	"ICE1230" },
 	{ 0x11, 0xff, 0, 0,	"ICE1232" },
+	{ 0x51, 0xff, 0, 0,	"VIA VT1616" },
+	{ 0x52, 0xff, 0, 0,	"VIA VT1616i" },
 }, ac97_ns[] = {
 	{ 0x00,	0xff, 0, 0,	"LM454[03568]" },
 	{ 0x31,	0xff, 0, 0,	"LM4549" },
