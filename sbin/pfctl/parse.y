@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.338 2003/03/08 15:17:34 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.339 2003/03/09 18:58:25 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3178,6 +3178,21 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 				break;
 			}
 
+			if (strlcpy(pa.ifname, tqueue->ifname,
+			    sizeof(pa.ifname)) >= sizeof(pa.ifname))
+				errx(1, "expand_queue: strlcpy");
+			if (strlcpy(pa.parent, tqueue->parent,
+			    sizeof(pa.parent)) >= sizeof(pa.parent))
+				errx(1, "expand_queue: strlcpy");
+
+			if (!eval_pfqueue(pf, &pa, bwspec.bw_absolute,
+			    bwspec.bw_percent))
+				if (!pfctl_add_altq(pf, &pa))
+					added++;
+
+			if (nqueues == NULL)
+				continue;
+
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
 				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
@@ -3201,17 +3216,6 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 					queues->tail = n;
 				}
 			);
-			if (strlcpy(pa.ifname, tqueue->ifname,
-			    sizeof(pa.ifname)) >= sizeof(pa.ifname))
-				errx(1, "expand_queue: strlcpy");
-			if (strlcpy(pa.parent, tqueue->parent,
-			    sizeof(pa.parent)) >= sizeof(pa.parent))
-				errx(1, "expand_queue: strlcpy");
-
-			if (!eval_pfqueue(pf, &pa, bwspec.bw_absolute,
-			    bwspec.bw_percent))
-				if (!pfctl_add_altq(pf, &pa))
-					added++;
 		}
 	);
 
