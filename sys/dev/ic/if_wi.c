@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.60 2002/04/30 22:56:33 mickey Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.61 2002/05/31 19:27:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.60 2002/04/30 22:56:33 mickey Exp $";
+	"$OpenBSD: if_wi.c,v 1.61 2002/05/31 19:27:40 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -270,9 +270,10 @@ wi_attach(sc)
 		break;
 	case WI_SYMBOL:
 		sc->wi_flags |= WI_FLAGS_HAS_DIVERSITY;
-		/* XXX - Symbol does not seem to support IBSS creation. */
 		if (sc->sc_sta_firmware_ver >= 20000)
 			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
+		if (sc->sc_sta_firmware_ver >= 25000)
+			sc->wi_flags |= WI_FLAGS_HAS_CREATE_IBSS;
 		sc->wi_ibss_port = htole16(4);
 		break;
 	}
