@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.15 2001/08/02 15:09:35 rees Exp $ */
+/* $Id: sectok.h,v 1.16 2003/04/04 00:50:56 deraadt Exp $ */
 
 /*
 copyright 2001
@@ -80,7 +80,7 @@ int sectok_close(int fd);
 int sectok_selectfile(int fd, int cla, unsigned char *fid, int *swp);
 
 /* Convenience functions */
-void sectok_fmt_fid(char *fname, unsigned char *fid);
+void sectok_fmt_fid(char *fname, size_t fnamelen, unsigned char *fid);
 int sectok_parse_atr(int fd, int flags, unsigned char *atr, int len, struct scparam *param);
 void sectok_parse_fname(char *buf, unsigned char *fid);
 int sectok_parse_input(char *ibuf, unsigned char *obuf, int olen);

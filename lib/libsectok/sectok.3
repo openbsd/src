@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sectok.3,v 1.6 2003/02/18 07:51:08 jmc Exp $
+.\"	$OpenBSD: sectok.3,v 1.7 2003/04/04 00:50:56 deraadt Exp $
 .\"
 .\" Jim Rees <rees@umich.edu>
 .\" CITI Smartcard development <smartcards@umich.edu>
@@ -66,7 +66,7 @@
 .Ft int
 .Fn sectok_selectfile "int fd" "int cla" "unsigned char *fid" "int *swp"
 .Ft void
-.Fn sectok_fmt_fid "char *fname" "unsigned char *fid"
+.Fn sectok_fmt_fid "char *fname" "size_t fnamelen" "unsigned char *fid"
 .Ft int
 .Fn sectok_parse_atr "int fd" "int flags" "unsigned char *atr" "int len" "struct scparam *param"
 .Ft void
