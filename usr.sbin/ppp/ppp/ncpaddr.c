@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ncpaddr.c,v 1.5 2002/05/16 14:46:05 brian Exp $
+ * $OpenBSD: ncpaddr.c,v 1.6 2002/06/15 08:02:01 brian Exp $
  */
 
 #include <sys/types.h>
@@ -405,7 +405,7 @@ ncpaddr_aton(struct ncpaddr *addr, struct ncp *ncp, const char *data)
 
   if (!ncprange_aton(&range, ncp, data))
     return 0;
-  
+
   if (range.ncprange_family == AF_INET && range.ncprange_ip4width != 32) {
     log_Printf(LogWARN, "ncpaddr_aton: %s: Only 32 bits allowed\n", data);
     return 0;

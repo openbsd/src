@@ -25,13 +25,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias.h,v 1.11 2001/11/23 11:17:03 brian Exp $
+ * $OpenBSD: alias.h,v 1.12 2002/06/15 08:01:59 brian Exp $
  */
 
 /*-
  * Alias.h defines the outside world interfaces for the packet aliasing
  * software.
- * 
+ *
  * This software is placed into the public domain with no restrictions on its
  * distribution.
  */

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.36 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: lcp.c,v 1.37 2002/06/15 08:02:00 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1219,7 +1219,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
         break;
       }
       break;
-      
+
     default:
       sz = (sizeof desc - 2) / 2;
       if (sz > opt->hdr.len - 2)

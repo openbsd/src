@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.41 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.42 2002/06/15 08:02:00 brian Exp $
  */
 
 #include <sys/param.h>
@@ -210,14 +210,14 @@ datalink_LoginDone(struct datalink *dl)
 {
   chat_Finish(&dl->chat);
 
-  if (!dl->script.packetmode) { 
+  if (!dl->script.packetmode) {
     dl->dial.tries = -1;
     dl->dial.incs = 0;
     datalink_NewState(dl, DATALINK_READY);
   } else if (!physical_Raw(dl->physical)) {
     dl->dial.tries = 0;
     log_Printf(LogWARN, "datalink_LoginDone: Not connected.\n");
-    if (dl->script.run) { 
+    if (dl->script.run) {
       datalink_NewState(dl, DATALINK_LOGOUT);
       if (!chat_Setup(&dl->chat, dl->cfg.script.logout, NULL))
         log_Printf(LogWARN, "Invalid logout script\n");
@@ -339,7 +339,7 @@ datalink_UpdateSet(struct fdescriptor *d, fd_set *r, fd_set *w, fd_set *e,
 
         case CARRIER_LOST:
           physical_Offline(dl->physical);	/* Is this required ? */
-          if (dl->script.run) { 
+          if (dl->script.run) {
             datalink_NewState(dl, DATALINK_HANGUP);
             if (!chat_Setup(&dl->chat, dl->cfg.script.hangup, NULL))
               log_Printf(LogWARN, "Invalid hangup script\n");

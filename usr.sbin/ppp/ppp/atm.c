@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: atm.c,v 1.8 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: atm.c,v 1.9 2002/06/15 08:02:00 brian Exp $
  */
 
 #include <sys/types.h>
@@ -170,7 +170,7 @@ atm_CreateDevice(struct physical *p, const char *iface, unsigned vpi,
 {
   struct atmdevice *dev;
   struct sockaddr_natm sock;
-  
+
   if ((dev = calloc(1, sizeof *dev)) == NULL) {
     log_Printf(LogWARN, "%s: Cannot allocate an atm device: %s\n",
                p->link.name, strerror(errno));
@@ -214,14 +214,14 @@ atm_Create(struct physical *p)
       && p->name.full[PPPOA_LEN] == ':') {
     char iface[25];
     unsigned vci, vpi;
-    
+
     if (sscanf(p->name.full + PPPOA_LEN + 1, "%25[A-Za-z0-9]:%u.%u", iface,
                &vpi, &vci) != 3) {
       log_Printf(LogWARN, "Malformed ATM device name \'%s\', "
                  "PPPoA:if:vpi.vci expected\n", p->name.full);
       return NULL;
     }
-    
+
     dev = atm_CreateDevice(p, iface, vpi, vci);
   }
 

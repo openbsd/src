@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: slcompress.c,v 1.14 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: slcompress.c,v 1.15 2002/06/15 08:02:01 brian Exp $
  *
  *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
@@ -184,7 +184,7 @@ sl_compress_tcp(struct mbuf * m,
 
     /*
      * Wasn't the first -- search for it.
-     * 
+     *
      * States are kept in a circularly linked list with last_cs pointing to the
      * end of the list.  The list is kept in lru order by moving a state to
      * the head of the list whenever it is referenced.  Since the list is

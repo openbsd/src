@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: id.c,v 1.9 2002/05/27 23:19:38 brian Exp $
+ *	$OpenBSD: id.c,v 1.10 2002/06/15 08:02:00 brian Exp $
  */
 
 #include <sys/param.h>
@@ -228,7 +228,7 @@ ID0logout(const char *device, int nologout)
   ID0set0();
   if (nologout || logout(ut_line)) {
     log_Printf(LogID0, "logout(\"%s\")\n", ut_line);
-    logwtmp(ut_line, "", ""); 
+    logwtmp(ut_line, "", "");
     log_Printf(LogID0, "logwtmp(\"%s\", \"\", \"\")\n", ut_line);
   } else
     log_Printf(LogERROR, "ID0logout: No longer logged in on %s\n", ut_line);

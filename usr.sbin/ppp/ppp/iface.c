@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.24 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: iface.c,v 1.25 2002/06/15 08:02:00 brian Exp $
  */
 
 #include <sys/param.h>
@@ -252,7 +252,7 @@ iface_addr_Zap(const char *name, struct iface_addr *addr, int s)
       memcpy(&ifra6.ifra_dstaddr, &sspeer, sizeof ifra6.ifra_dstaddr);
     ifra6.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
     ifra6.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
-    
+
     res = ID0ioctl(s, SIOCDIFADDR_IN6, &ifra6);
     break;
 #endif
@@ -386,7 +386,7 @@ iface_Clear(struct iface *iface, struct ncp *ncp, int family, int how)
           }
           s = &s4;
           break;
-          
+
 #ifndef NOINET6
         case AF_INET6:
           if (in6skip) {

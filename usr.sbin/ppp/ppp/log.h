@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: log.h,v 1.10 2001/11/23 11:17:03 brian Exp $
+ *	$OpenBSD: log.h,v 1.11 2002/06/15 08:02:00 brian Exp $
  */
 
 #define LogLOG		(0)
@@ -53,7 +53,7 @@
 #define LogERROR	(23)	/* syslog(LOG_ERR, ....), + sent to VarTerm */
 #define LogALERT	(24)	/* syslog(LOG_ALERT, ....)	 */
 
-#define LogMAXCONF	(21)  
+#define LogMAXCONF	(21)
 #define LogMAX		(24)
 
 struct mbuf;

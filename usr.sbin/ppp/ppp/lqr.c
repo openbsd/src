@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lqr.c,v 1.13 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: lqr.c,v 1.14 2002/06/15 08:02:00 brian Exp $
  */
 
 #include <sys/param.h>
@@ -240,7 +240,7 @@ lqr_Input(struct bundle *bundle, struct link *l, struct mbuf *bp)
       if (p->hdlc.lqm.timer.load == 0 ||
           !(p->hdlc.lqm.method & LQM_LQR) ||
           (lastLQR && lastLQR == p->hdlc.lqm.lqr.peer.PeerInLQRs) ||
-          (p->hdlc.lqm.lqr.peer_timeout && 
+          (p->hdlc.lqm.lqr.peer_timeout &&
            p->hdlc.lqm.timer.rest * 100 / SECTICKS >
            p->hdlc.lqm.lqr.peer_timeout))
         SendLqrData(lcp);

@@ -26,13 +26,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap_ms.h,v 1.6 2001/08/10 17:43:40 brian Exp $
+ * $OpenBSD: chap_ms.h,v 1.7 2002/06/15 08:02:00 brian Exp $
  */
 
 /* Max # of (Unicode) chars in an NT password */
 #define MAX_NT_PASSWORD	256
 
-/* Don't rely on sizeof(MS_ChapResponse) in case of struct padding */  
+/* Don't rely on sizeof(MS_ChapResponse) in case of struct padding */
 #define MS_CHAP_RESPONSE_LEN    49
 #define CHAP81_RESPONSE_LEN     49
 #define CHAP81_NTRESPONSE_LEN   24

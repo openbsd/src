@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: throughput.c,v 1.10 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: throughput.c,v 1.11 2002/06/15 08:02:01 brian Exp $
  */
 
 #include <sys/types.h>
@@ -85,8 +85,8 @@ throughput_uptime(struct pppThroughput *t)
   downat = t->downtime ? t->downtime : time(NULL);
   if (t->uptime && downat < t->uptime) {
     /* Euch !  The clock's gone back ! */
-    int i; 
- 
+    int i;
+
     for (i = 0; i < t->SamplePeriod; i++)
       t->in.SampleOctets[i] = t->out.SampleOctets[i] = 0;
     t->nSample = 0;
@@ -270,7 +270,7 @@ throughput_clear(struct pppThroughput *t, int clear_type, struct prompt *prompt)
     t->OctetsIn = t->OctetsOut = 0;
     t->downtime = 0;
     time(&t->uptime);
-  } 
+  }
 
   if (clear_type & THROUGHPUT_CURRENT) {
     prompt_Printf(prompt, "current cleared (was %6qu bytes/sec in,"
@@ -287,7 +287,7 @@ throughput_clear(struct pppThroughput *t, int clear_type, struct prompt *prompt)
     if (last > time_buf && *--last == '\n')
       *last = '\0';
     prompt_Printf(prompt, "peak    cleared (was %6qu bytes/sec on %s)\n",
-                  t->BestOctetsPerSecond, time_buf); 
+                  t->BestOctetsPerSecond, time_buf);
     t->BestOctetsPerSecond = 0;
     time(&t->BestOctetsPerSecondTime);
   }

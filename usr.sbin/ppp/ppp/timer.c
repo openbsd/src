@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: timer.c,v 1.12 2002/06/15 01:33:23 brian Exp $
+ * $OpenBSD: timer.c,v 1.13 2002/06/15 08:02:01 brian Exp $
  */
 
 #include <errno.h>
@@ -211,13 +211,13 @@ TimerService(void)
       exp = tp;
       tp = next;
     } while (tp && tp->rest == 0);
-  
+
     TimerList = tp;
     if (TimerList != NULL)	/* Any timers remaining ? */
       timer_InitService(1);	/* Restart the Timer Service */
     else
       timer_TermService();	/* Stop the Timer Service */
-  
+
     /* Process all expired timers */
     while (exp) {
       ExpiredList = exp->enext;
@@ -262,7 +262,7 @@ timer_Show(int LogLevel, struct prompt *prompt)
     log_Printf(LogLevel, "---- End of Timer Service List ---\n");
 }
 
-void 
+void
 timer_InitService(int restart)
 {
   struct itimerval itimer;
@@ -279,7 +279,7 @@ timer_InitService(int restart)
   }
 }
 
-void 
+void
 timer_TermService(void)
 {
   struct itimerval itimer;

@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.35 2002/05/27 23:19:38 brian Exp $
+ *  $OpenBSD: physical.c,v 1.36 2002/06/15 08:02:01 brian Exp $
  *
  */
 
@@ -479,7 +479,7 @@ physical_ShowStatus(struct cmdargs const *arg)
     prompt_Printf(arg->prompt, "\"%s\"", dev);
     dev += strlen(dev) + 1;
   }
-  
+
   prompt_Printf(arg->prompt, "\n Characteristics: ");
   if (physical_IsSync(arg->cx->physical))
     prompt_Printf(arg->prompt, "sync");

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: log.c,v 1.15 2001/11/23 11:17:03 brian Exp $
+ *	$OpenBSD: log.c,v 1.16 2002/06/15 08:02:00 brian Exp $
  */
 
 #include <sys/types.h>
@@ -323,7 +323,7 @@ log_Printf(int lev, const char *fmt,...)
 	         LogTunno, log_Name(lev), fmt);
       else
         snprintf(nfmt, sizeof nfmt, "%s: %s", log_Name(lev), fmt);
-  
+
       if (log_PromptContext && lev == LogWARN)
         /* Warnings just go to the current prompt */
         prompt_vPrintf(log_PromptContext, nfmt, ap);

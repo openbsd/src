@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_irc.c,v 1.10 2001/11/23 11:17:03 brian Exp $
+ * $OpenBSD: alias_irc.c,v 1.11 2002/06/15 08:01:59 brian Exp $
  */
 
 /* Alias_irc.c intercepts packages contain IRC CTCP commands, and
@@ -48,7 +48,7 @@
 
 /* Includes */
 #include <ctype.h>
-#include <stdio.h> 
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -68,14 +68,14 @@ AliasHandleIrcOut(struct ip *pip, /* IP packet to examine */
 				 struct alias_link *link,		  /* Which link are we on? */
 				 int maxsize		  /* Maximum size of IP packet including headers */
 				 )
-{       
+{
     int hlen, tlen, dlen;
     struct in_addr true_addr;
     u_short true_port;
     char *sptr;
     struct tcphdr *tc;
 	 int i;							  /* Iterator through the source */
-        
+
 /* Calculate data length of TCP packet */
     tc = (struct tcphdr *) ((char *) pip + (pip->ip_hl << 2));
     hlen = (pip->ip_hl + tc->th_off) << 2;
@@ -87,7 +87,7 @@ AliasHandleIrcOut(struct ip *pip, /* IP packet to examine */
         return;
 
 /* Place string pointer at beginning of data */
-    sptr = (char *) pip;  
+    sptr = (char *) pip;
     sptr += hlen;
 	 maxsize -= hlen;				  /* We're interested in maximum size of data, not packet */
 
@@ -230,7 +230,7 @@ lFOUND_CTCP:
 		 {
 			 struct alias_link *dcc_link;
 			 struct in_addr destaddr;
-			 
+
 
 			 true_port = htons(org_port);
 			 true_addr.s_addr = htonl(org_addr);
@@ -261,7 +261,7 @@ lFOUND_CTCP:
 
 				 alias_address = GetAliasAddress(link);
 				 n = snprintf(&newpacket[iCopy],
-										 sizeof(newpacket)-iCopy, 
+										 sizeof(newpacket)-iCopy,
 										 "%lu ", (u_long)htonl(alias_address.s_addr));
 				 if( n < 0 ) {
 					 DBprintf(("DCC packet construct failure.\n"));
@@ -273,7 +273,7 @@ lFOUND_CTCP:
 				 }
 				 alias_port = GetAliasPort(dcc_link);
 				 n = snprintf(&newpacket[iCopy],
-										 sizeof(newpacket)-iCopy, 
+										 sizeof(newpacket)-iCopy,
 										 "%u", htons(alias_port) );
 				 if( n < 0 ) {
 					 DBprintf(("DCC packet construct failure.\n"));
@@ -320,7 +320,7 @@ lFOUND_CTCP:
 		  /* Revise IP header */
         {
 			  u_short new_len;
-			  
+
 			  new_len = htons(hlen + iCopy + copyat);
 			  DifferentialChecksum(&pip->ip_sum,
 										  &new_len,
