@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.40 2003/12/16 20:33:25 markus Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.41 2004/04/25 18:50:01 henning Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -1533,6 +1533,8 @@ ppp_inproc(sc, m)
 	if (sc->sc_flags & SC_DEBUG)
 	    printf("%s: input queue full\n", ifp->if_xname);
 	ifp->if_iqdrops++;
+	if (!inq->ifq_congestion)
+		if_congestion(inq);
 	goto bad;
     }
     IF_ENQUEUE(inq, m);
