@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.3 2001/08/13 20:36:52 camield Exp $ */
+/* $OpenBSD: params.h,v 1.4 2001/08/16 19:54:20 camield Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -10,7 +10,7 @@
 /*
  * Are we going to be a standalone server or start via an inetd clone?
  */
-#define POP_STANDALONE			0
+#define POP_STANDALONE			1
 
 #if POP_STANDALONE
 
