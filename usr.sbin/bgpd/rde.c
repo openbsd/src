@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.44 2004/01/04 17:19:41 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.45 2004/01/04 20:47:34 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -36,7 +36,8 @@
 #define PFD_PIPE_SESSION	1
 
 void		 rde_sighdlr(int);
-void		 rde_dispatch_imsg(struct imsgbuf *, int);
+void		 rde_dispatch_imsg_session(struct imsgbuf *);
+void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 int		 rde_update_dispatch(struct imsg *);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct in_addr *,
 		     u_int8_t *);
@@ -143,24 +144,24 @@ rde_main(struct bgpd_config *config, struct peer *peer_l, int pipe_m2r[2],
 			if (errno != EINTR)
 				fatal("poll error");
 
-		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN)
-			rde_dispatch_imsg(&ibuf_main, PFD_PIPE_MAIN);
-
-		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN)
-			rde_dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION);
-
 		if (nfds > 0 && (pfd[PFD_PIPE_MAIN].revents & POLLOUT) &&
-		    ibuf_main.w.queued) {
-			nfds--;
+		    ibuf_main.w.queued)
 			if ((n = msgbuf_write(&ibuf_main.w)) < 0)
 				fatal("pipe write error");
+
+		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
+			nfds--;
+			rde_dispatch_imsg_parent(&ibuf_main);
 		}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT) &&
-		    ibuf_se.w.queued) {
-			nfds--;
+		    ibuf_se.w.queued)
 			if ((n = msgbuf_write(&ibuf_se.w)) < 0)
 				fatal("pipe write error");
+
+		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
+			nfds--;
+			rde_dispatch_imsg_session(&ibuf_se);
 		}
 	}
 
@@ -169,43 +170,73 @@ rde_main(struct bgpd_config *config, struct peer *peer_l, int pipe_m2r[2],
 }
 
 void
-rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
+rde_dispatch_imsg_session(struct imsgbuf *ibuf)
+{
+	struct imsg		 imsg;
+	u_int32_t		 rid;
+	int			 n;
+
+	if ((n = imsg_read(ibuf)) == -1)
+		fatal("rde_dispatch_imsg_session: imsg_read error");
+	if (n == 0)	/* connection closed */
+		fatal("rde_dispatch_imsg_session: pipe closed");
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg_session: imsg_read error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_UPDATE:
+			rde_update_dispatch(&imsg);
+			break;
+		case IMSG_SESSION_UP:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rid))
+				fatalx("incorrect size of session request");
+			memcpy(&rid, imsg.data, sizeof(rid));
+			peer_up(imsg.hdr.peerid, rid);
+			break;
+		case IMSG_SESSION_DOWN:
+			peer_down(imsg.hdr.peerid);
+			break;
+		default:
+			break;
+		}
+		imsg_free(&imsg);
+	}
+}
+
+void
+rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	struct imsg		 imsg;
 	struct mrt		 mrtdump;
 	struct peer_config	*pconf;
 	struct rde_peer		*p, *np;
-	u_int32_t		 rid;
 	int			 n;
 
 	if ((n = imsg_read(ibuf)) == -1)
-		fatal("rde_dispatch_imsg: imsg_read error");
-
+		fatal("rde_dispatch_imsg_parent: imsg_read error");
 	if (n == 0)	/* connection closed */
-		fatal("rde_dispatch_imsg: pipe closed");
+		fatal("rde_dispatch_imsg_parent: pipe closed");
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
-			fatal("rde_dispatch_imsg: imsg_read error");
-
+			fatal("rde_dispatch_imsg_parent: imsg_read error");
 		if (n == 0)
 			break;
 
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("reconf request not from parent");
 			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
 			    NULL)
 				fatal(NULL);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			break;
 		case IMSG_RECONF_PEER:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("reconf request not from parent");
 			pconf = imsg.data;
-			p = peer_get(pconf->id); /* will always fail atm */
-			if (p == NULL)
+			if ((p = peer_get(pconf->id)) == NULL)
 				p = peer_add(pconf->id, pconf);
 			else
 				memcpy(&p->conf, pconf,
@@ -213,13 +244,10 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			p->conf.reconf_action = RECONF_KEEP;
 			break;
 		case IMSG_RECONF_DONE:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("reconf request not from parent");
 			if (nconf == NULL)
 				fatalx("got IMSG_RECONF_DONE but no config");
 			for (p = LIST_FIRST(&peerlist);
-			    p != LIST_END(&peerlist);
-			    p = np) {
+			    p != LIST_END(&peerlist); p = np) {
 				np = LIST_NEXT(p, peer_l);
 				switch (p->conf.reconf_action) {
 				case RECONF_NONE:
@@ -238,39 +266,15 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			nconf = NULL;
 			logit(LOG_INFO, "RDE reconfigured");
 			break;
-		case IMSG_UPDATE:
-			if (idx != PFD_PIPE_SESSION)
-				fatalx("update msg not from session engine");
-			rde_update_dispatch(&imsg);
-			break;
-		case IMSG_SESSION_UP:
-			if (idx != PFD_PIPE_SESSION)
-				fatalx("session msg not from session engine");
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rid))
-				fatalx("incorrect size of session request");
-			memcpy(&rid, imsg.data, sizeof(rid));
-			peer_up(imsg.hdr.peerid, rid);
-			break;
-		case IMSG_SESSION_DOWN:
-			if (idx != PFD_PIPE_SESSION)
-				fatalx("session msg not from session engine");
-			peer_down(imsg.hdr.peerid);
-			break;
 		case IMSG_NEXTHOP_UPDATE:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("nexthop response not from parent");
 			nexthop_update(imsg.data);
 			break;
 		case IMSG_MRT_REQ:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("mrt request not from parent");
 			mrtdump.id = imsg.hdr.peerid;
 			mrtdump.msgbuf = &ibuf_main.w;
 			pt_dump(mrt_dump_upcall, &mrtdump);
 			/* FALLTHROUGH */
 		case IMSG_MRT_END:
-			if (idx != PFD_PIPE_MAIN)
-				fatalx("mrt request not from parent");
 			/* ignore end message because a dump is atomic */
 			if (imsg_compose(&ibuf_main, IMSG_MRT_END,
 			    imsg.hdr.peerid, NULL, 0) == -1)
@@ -283,11 +287,7 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 	}
 }
 
-/*
- * rde_update_dispatch() -- handle routing updates comming from the session
- * engine.
- */
-
+/* handle routing updates from the session engine. */
 int
 rde_update_dispatch(struct imsg *imsg)
 {
