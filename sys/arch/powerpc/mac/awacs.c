@@ -384,16 +384,18 @@ awacs_intr(v)
 		printf("should change inputs\n");
 	}
 	if (reason & AWACS_CTL_PORTCHG) {
+#ifdef DEBUG
+		printf("status = %x\n", awacs_read_reg(sc, AWACS_CODEC_STATUS));
+#endif
+
 		if (awacs_read_reg(sc, AWACS_CODEC_STATUS) & 0x8) {
 			/* default output to speakers */
-			printf(" headphones");
 			sc->sc_output_mask = 1 << 1;
 			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
 			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
 			awacs_write_codec(sc, sc->sc_codecctl1);
 		} else {
 			/* default output to speakers */
-			printf(" speaker");
 			sc->sc_output_mask = 1 << 0;
 			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
 			sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
