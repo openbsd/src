@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.4 1996/07/01 20:40:07 deraadt Exp $	*/
+/*	$OpenBSD: inp.c,v 1.5 1996/09/24 04:19:26 millert Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: inp.c,v 1.4 1996/07/01 20:40:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inp.c,v 1.5 1996/09/24 04:19:26 millert Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -103,17 +103,17 @@ char *filename;
 	s = lbuf + 20;
 	strncpy(s, filename, pathlen);
 
-#define try(f, a1, a2) (Sprintf(s + pathlen, f, a1, a2), stat(s, &cstat) == 0)
+#define try(f, a1, a2) (Snprintf(s + pathlen, sizeof lbuf - (s + pathlen - lbuf), f, a1, a2), stat(s, &cstat) == 0)
 	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
 	    || try("RCS/%s"  , filebase,         0)
 	    || try(    "%s%s", filebase, RCSSUFFIX)) {
-	    Sprintf(buf, CHECKOUT, filename);
-	    Sprintf(lbuf, RCSDIFF, filename);
+	    Snprintf(buf, sizeof buf, CHECKOUT, filename);
+	    Snprintf(lbuf, sizeof lbuf, RCSDIFF, filename);
 	    cs = "RCS";
 	} else if (   try("SCCS/%s%s", SCCSPREFIX, filebase)
 		   || try(     "%s%s", SCCSPREFIX, filebase)) {
-	    Sprintf(buf, GET, s);
-	    Sprintf(lbuf, SCCSDIFF, s, filename);
+	    Snprintf(buf, sizeof buf, GET, s);
+	    Snprintf(lbuf, sizeof lbuf, SCCSDIFF, s, filename);
 	    cs = "SCCS";
 	} else if (statfailed)
 	    fatal2("can't find %s\n", filename);

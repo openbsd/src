@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.4 1996/09/24 02:58:53 millert Exp $ */
+/*	$OpenBSD: common.h,v 1.5 1996/09/24 04:19:25 millert Exp $ */
 
 #define DEBUGGING
 
@@ -16,7 +16,7 @@
 #define Close (void)close
 #define Fclose (void)fclose
 #define Fflush (void)fflush
-#define Sprintf (void)sprintf
+#define Snprintf (void)snprintf
 #define Strcpy (void)strcpy
 #define Strcat (void)strcat
 
@@ -81,8 +81,6 @@
 #define strEQ(s1,s2) (!strcmp(s1, s2))
 #define strnNE(s1,s2,l) (strncmp(s1, s2, l))
 #define strnEQ(s1,s2,l) (!strncmp(s1, s2, l))
-
-#define Mkstemp mkstemp
 
 /* typedefs */
 
@@ -172,9 +170,9 @@ char *rindex();
 int  mkstemp();
 #if 0				/* This can cause a prototype conflict.  */
 #ifdef CHARSPRINTF
-char *sprintf();
+char *snprintf();
 #else
-int sprintf();
+int snprintf();
 #endif
 #endif
 
