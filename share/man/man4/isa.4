@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.26 2003/11/08 16:55:35 miod Exp $
+.\"	$OpenBSD: isa.4,v 1.27 2004/02/07 20:08:53 miod Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -38,13 +38,16 @@
 .Nm isa
 .Nd introduction to ISA bus support
 .Sh SYNOPSIS
-.Cd "# i386"
+.Cd "# amd64 and i386"
 .Cd "isa0 at mainbus0"
 .Cd "isa0 at pcib?"
 .Pp
 .Cd "# alpha"
 .Cd "isa* at pceb?"
 .Cd "isa* at sio?"
+.Pp
+.Cd "# cats"
+.Cd "isa0 at pcib?"
 .Pp
 .Cd "# pegasos"
 .Cd "isa* at isabr?"

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.31 2003/12/05 19:42:34 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.32 2004/02/07 20:08:53 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -39,13 +39,10 @@
 .Nm wi
 .Nd WaveLAN/IEEE, PRISM 2-3 and Spectrum24 802.11DS wireless network driver
 .Sh SYNOPSIS
-.Cd "# i386/macppc/sparc64"
-.Cd "wi* at pci? dev ? function ?"
-.Pp
-.Cd "# i386/macppc/sparc/sparc64"
+.Cd "# all architectures"
 .Cd "wi* at pcmcia? function ?"
 .Pp
-.Cd "# macppc"
+.Cd "# macppc extra attachment"
 .Cd "wi* at macobio?"
 .Sh DESCRIPTION
 The
