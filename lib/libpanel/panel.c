@@ -1,4 +1,4 @@
-/*	$OpenBSD: panel.c,v 1.5 1998/09/17 04:14:49 millert Exp $	*/
+/*	$OpenBSD: panel.c,v 1.6 1998/11/19 01:14:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -36,7 +36,7 @@
 /* panel.c -- implementation of panels library, some core routines */
 #include "panel.priv.h"
 
-MODULE_ID("$From: panel.c,v 1.15 1998/02/11 12:14:01 tom Exp $")
+MODULE_ID("$From: panel.c,v 1.16 1998/09/19 21:26:31 Todd.Miller Exp $")
 
 #ifdef TRACE
 #ifndef TRACE_TXT
