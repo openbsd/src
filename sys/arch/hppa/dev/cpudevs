@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.11 1999/06/22 23:48:15 mickey Exp $
+$OpenBSD: cpudevs,v 1.12 1999/07/18 18:53:40 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -286,11 +286,11 @@ bus	MERCED	16	Merced
 
 cpu	SOFTEMU	0x01	Software Emulation
 cpu	TORNADO	0x0b	Tornado
-cpu	PCXL	0x0d	PCX-L
-cpu	PCXU	0x0e	PCX-U
-cpu	PCXL2	0x0f	PCX-L2
-cpu	PCXUP	0x10	PCX-U+
-cpu	PCXW	0x11	0cx-W
+cpu	PCXT1	0x0d	PA7100LC
+cpu	PCXUP	0x0e	PA8000
+cpu	PCXL2	0x0f	PA7300LC
+cpu	PCXUP1	0x10	PA8200
+cpu	PCXW	0x11	PA8500
 
 fpu	SOFTEMU	0x01	Software Emulation
 fpu	INDIGO	0x02	Indigo
