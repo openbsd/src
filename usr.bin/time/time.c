@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.7 2001/06/13 13:46:54 art Exp $	*/
+/*	$OpenBSD: time.c,v 1.8 2001/06/13 17:43:38 art Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: time.c,v 1.7 2001/06/13 13:46:54 art Exp $";
+static char rcsid[] = "$OpenBSD: time.c,v 1.8 2001/06/13 17:43:38 art Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -161,9 +161,9 @@ main(argc, argv)
 		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_isrss / ticks : 0,
 			"average unshared stack size");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_minflt, "page reclaims");
+			ru.ru_minflt, "minor page faults");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_majflt, "page faults");
+			ru.ru_majflt, "major page faults");
 		fprintf(stderr, "%10ld  %s\n",
 			ru.ru_nswap, "swaps");
 		fprintf(stderr, "%10ld  %s\n",
