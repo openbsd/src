@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxpvar.h,v 1.3 1998/07/02 21:15:47 downsj Exp $	*/
+/*	$OpenBSD: if_fxpvar.h,v 1.4 1998/08/21 20:29:13 downsj Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -30,14 +30,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      Id: if_fxp.c,v 1.34 1997/04/23 01:44:30 davidg Exp
+ *      Id: if_fxpvar.h,v 1.6 1998/08/02 00:29:15 dg Exp
  */
 
 /*
  * Misc. defintions for the Intel EtherExpress Pro/100B PCI Fast
  * Ethernet driver
  */
-
+/*
+ * NOTE: Elements are ordered for optimal cacheline behavior, and NOT
+ *	 for functional grouping.
+ */
 struct fxp_softc {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct device sc_dev;		/* generic device structures */
@@ -53,18 +56,17 @@ struct fxp_softc {
 #if defined(__NetBSD__)
 	struct ethercom sc_ethercom;	/* ethernet common part */
 #endif
-	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
-	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
-	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
+	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
+	int tx_queued;			/* # of active TxCB's */
+	int need_mcsetup;		/* multicast filter needs programming */
+	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
 	struct fxp_stats *fxp_stats;	/* Pointer to interface stats */
+	int rx_idle_secs;		/* # of seconds RX has been idle */
+	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
 	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */
 	int all_mcasts;			/* receive all multicasts */
-	int need_mcsetup;		/* multicast filter needs programming */
-	int tx_queued;			/* # of active TxCB's */
-	int rx_idle_secs;		/* # of seconds RX has been idle */
-	int promisc_mode;		/* promiscuous mode enabled */
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
