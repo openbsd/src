@@ -42,6 +42,12 @@ driver supports the following Buslogic SCSI adapters:
 .El
 .Pp
 The Buslogic BT-930 is not supported.
+.Pp
+The PCI versions of this card will require the Buslogic BIOS
+"Advanced Options" suboption called "Set ISA Compatible IO Port"
+to be set to the value "Primary" or "Alternate".  Some cards have
+an option called "Set host adapter IO port address as default" instead;
+for those boards you should set the value to "false".
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sd 4 ,
