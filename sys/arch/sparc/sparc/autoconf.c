@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.42 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.43 2001/11/22 09:45:42 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -349,10 +349,9 @@ bootstrap()
 
 	if (CPU_ISSUN4OR4C) {
 		/* Map Interrupt Enable Register */
-		pmap_enter(pmap_kernel(), INTRREG_VA,
+		pmap_kenter_pa(INTRREG_VA,
 			   INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			   VM_PROT_READ | VM_PROT_WRITE);
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
 	}
