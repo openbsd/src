@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.8,v 1.13 1999/07/08 03:19:14 aaron Exp $
+.\"	$OpenBSD: ipf.8,v 1.14 1999/07/08 03:20:45 aaron Exp $
 .Dd July 7, 1999
 .Dt IPF 8
 .Os
@@ -63,8 +63,8 @@ Edit
 .Pa /etc/sysctl.conf
 and set
 .Cm net.inet.ip.forwarding=1
-if this machine is to act as a firewall. This step is not necessary for hosts
-which are only filtering packets for themselves, but won't hurt either way.
+if this machine is to act as a firewall that also routes traffic or does
+Network Address Translation (NAT).
 .El
 .Pp
 Once these steps are complete a rule file may be created. A very
