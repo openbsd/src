@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_order.c,v 1.5 1996/08/19 08:35:11 tholo Exp $";
+static char *rcsid = "$OpenBSD: yp_order.c,v 1.6 2000/03/15 03:56:48 todd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ again:
 	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
 	/*
 	 * XXX
-	 * NIS+ YP emulation package does not impliment YPPROC_ORDER
+	 * NIS+ YP emulation package does not implement YPPROC_ORDER
 	 */
 	if (r == RPC_PROCUNAVAIL) {
 		r = YPERR_YPERR;

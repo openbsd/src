@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 1998/04/27 02:01:48 gene Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 2000/03/15 03:56:49 todd Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -361,7 +361,7 @@ int	mac68k_bus_space_probe __P((bus_space_tag_t t,
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 /*

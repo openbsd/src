@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.18 1999/09/17 09:57:12 espie Exp $	*/
+/*	$OpenBSD: bus.h,v 1.19 2000/03/15 03:56:49 todd Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -405,7 +405,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
-			!!! bus_space_write_multi_8 unimplimented !!!
+			!!! bus_space_write_multi_8 unimplemented !!!
 #endif
 
 /*
