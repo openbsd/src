@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.3 2001/06/12 15:40:29 niklas Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.4 2002/09/08 01:09:07 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -146,7 +146,7 @@ typedef enum {
 	CT_RAID10,                  /* stripe of mirror */
 	CT_RAID00,                  /* stripe of stripe */
 	CT_VOLUME_OF_MIRRORS,       /* volume of mirror */
-	CT_PSEUDO_RAID3,            /* really raid4 */
+	CT_PSEUDO_RAID3	            /* really raid4 */
 } AAC_FSAVolType;
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.5 2002/07/25 04:07:33 nate Exp $ */
+/*	$OpenBSD: umidivar.h,v 1.6 2002/09/08 01:09:07 deraadt Exp $ */
 /*	$NetBSD: umidivar.h,v 1.4 2002/07/11 21:14:32 augustss Exp $ */
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ typedef enum {
 	PS_NORMAL_2OF3=2,
 	PS_NORMAL_1OF2=3,
 	PS_EXCL_1=4,
-	PS_EXCL_2=5,
+	PS_EXCL_2=5
 } packet_state_t;
 
 #define UMIDI_PACKET_SIZE 4
