@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.15 1997/05/02 00:59:51 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.16 1997/05/08 16:36:37 gene Exp $	*/
 /*	$NetBSD: nubus.h,v 1.25 1997/05/02 00:54:28 briggs Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
  * and DrHW     1 (TFB).
  */
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 #define NUBUS_CATEGORY_BOARD	0x0001
