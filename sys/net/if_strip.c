@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.20 2002/06/30 13:04:36 itojun Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.21 2002/07/30 23:30:50 itojun Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -647,7 +647,7 @@ strip_send(sc, m0)
 	/* The header has been enqueued in clear;  undo the M_PREPEND() of the header. */
 	m0->m_data += sizeof(struct st_header);
 	m0->m_len -= sizeof(struct st_header);
-	if (m0 && m0->m_flags & M_PKTHDR) {
+	if (m0->m_flags & M_PKTHDR) {
 		m0->m_pkthdr.len -= sizeof(struct st_header);
 	}
 #ifdef DIAGNOSTIC
