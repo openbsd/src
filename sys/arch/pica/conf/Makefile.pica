@@ -29,6 +29,8 @@ TOUCH=	touch -f -c
 S=	../../../..
 PICA=	../..
 
+LD=ld.kern
+
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpica -D__NetBSD__ ${GP} \
 	-mips2 -mcpu=r4000
@@ -90,9 +92,9 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		else strip=-x; \
 		fi; \
 		echo ${LD} $$strip -N -o $@ -e start -Ttext 80080000 \
-			'$${SYSTEM_OBJ}' vers.o $(LIBKERN); \
+			'$${SYSTEM_OBJ}' vers.o; \
 		${LD} $$strip -N -o $@ -e start -Ttext 80080000 \
-			${SYSTEM_OBJ} vers.o $(LIBKERN)
+			${SYSTEM_OBJ} vers.o
 #SYSTEM_LD_TAIL= @echo rearranging symbols;\
 #		symorder symbols.sort $@;\
 #SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
