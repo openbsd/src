@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.33 1997/05/16 16:36:53 millert Exp $
+#	$OpenBSD: install.sub,v 1.34 1997/05/17 00:06:36 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -608,8 +608,8 @@ install_url() {
 	_url_type=$1; shift
 
 	echo "\nThis is an automated ${_url_type}-based installation process.\n"\
-	     "You will be asked several questions and then the\n"\
-	     "files will be retrieved iteratively via ftp(1).\n"
+"You will be asked several questions and then the\n"\
+"files will be retrieved iteratively via ftp(1).\n"
 	    
 	# Proxy the connections?
 	if [ "X${_proxy_host}" = X"" ]; then
