@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.56 1999/11/16 21:15:19 markus Exp $");
+RCSID("$Id: sshd.c,v 1.57 1999/11/17 09:51:21 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1233,11 +1233,12 @@ do_authloop(struct passwd *pw)
 	n = BN_new();
 	packet_get_bignum(n, &nlen);
 	packet_integrity_check(plen, nlen, type);
+
 	authenticated = auth_rsa(pw, n);
-	BN_clear_free(n);
 	log("RSA authentication %s for %.100s.",
 	    authenticated ? "accepted" : "failed",
 	    pw->pw_name);
+	BN_clear_free(n);
 	break;
   
       case SSH_CMSG_AUTH_PASSWORD:
@@ -1255,6 +1256,9 @@ do_authloop(struct passwd *pw)
   
 	/* Try authentication with the password. */
 	authenticated = auth_password(pw, password);
+	log("Password authentication %s for %.100s.",
+	    authenticated ? "accepted" : "failed",
+	    pw->pw_name);
 
 	memset(password, 0, strlen(password));
 	xfree(password);
