@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.h,v 1.6 2003/07/10 12:01:41 jason Exp $	*/
+/*	$OpenBSD: instr.h,v 1.7 2003/07/13 07:00:48 jason Exp $	*/
 /*	$NetBSD: instr.h,v 1.3 2000/01/10 03:53:20 eeh Exp $ */
 
 /*
@@ -244,6 +244,7 @@ union instr {
 		u_int	:2;		/* 11 only */
 		u_int	i_rd:5;		/* destination register */
 		u_int	i_op3:6;	/* second-level decode (see IOP3_mem) */
+		u_int	i_rs1:5;	/* source register 1 */
 		u_int	i_i:1;		/* immediate vs asi */
 		u_int	i_low13:13;	/* depend on i bit */
 	} i_loadstore;
