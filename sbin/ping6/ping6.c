@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.46 2002/05/30 18:22:13 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.47 2002/05/30 21:32:45 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.155 2002/05/26 13:18:25 itojun Exp $	*/
 
 /*
@@ -621,7 +621,7 @@ main(argc, argv)
 
 		error = getaddrinfo(gateway, NULL, &hints, &gres);
 		if (error) {
-			errx(1, "getaddrinfo for the gateway %s",
+			errx(1, "getaddrinfo for the gateway %s: %s",
 			     gateway, gai_strerror(error));
 		}
 		if (gres->ai_next && (options & F_VERBOSE))
