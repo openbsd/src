@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_bind.c,v 1.2 1999/01/06 05:29:22 d Exp $
+ * $OpenBSD: uthread_bind.c,v 1.3 1999/02/16 16:39:59 deraadt Exp $
  */
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -38,7 +38,7 @@
 #include "pthread_private.h"
 
 int
-bind(int fd, const struct sockaddr * name, int namelen)
+bind(int fd, const struct sockaddr * name, socklen_t namelen)
 {
 	int             ret;
 

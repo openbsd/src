@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_connect.c,v 1.1 1998/08/27 09:00:58 d Exp $
+ * $OpenBSD: uthread_connect.c,v 1.2 1999/02/16 16:40:00 deraadt Exp $
  */
 #include <errno.h>
 #include <sys/types.h>
@@ -40,10 +40,11 @@
 #include "pthread_private.h"
 
 int
-connect(int fd, const struct sockaddr * name, int namelen)
+connect(int fd, const struct sockaddr * name, socklen_t namelen)
 {
 	struct sockaddr tmpname;
-	int             errnolen, ret, tmpnamelen;
+	int             errnolen, ret;
+	socklen_t	tmpnamelen;
 
 	if ((ret = _FD_LOCK(fd, FD_RDWR, NULL)) == 0) {
 		if ((ret = _thread_sys_connect(fd, name, namelen)) < 0) {

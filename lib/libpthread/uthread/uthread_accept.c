@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_accept.c,v 1.2 1999/01/06 05:29:21 d Exp $
+ * $OpenBSD: uthread_accept.c,v 1.3 1999/02/16 16:39:59 deraadt Exp $
  */
 #include <errno.h>
 #include <unistd.h>
@@ -41,7 +41,7 @@
 #include "pthread_private.h"
 
 int
-accept(int fd, struct sockaddr * name, int *namelen)
+accept(int fd, struct sockaddr * name, socklen_t *namelen)
 {
 	int             ret;
 

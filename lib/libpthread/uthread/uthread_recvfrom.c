@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: uthread_recvfrom.c,v 1.2 1999/01/06 05:29:25 d Exp $
+ * $OpenBSD: uthread_recvfrom.c,v 1.3 1999/02/16 16:40:00 deraadt Exp $
  */
 #include <errno.h>
 #include <sys/types.h>
@@ -40,7 +40,8 @@
 #include "pthread_private.h"
 
 ssize_t
-recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr * from, int *from_len)
+recvfrom(int fd, void *buf, size_t len, int flags, struct sockaddr * from,
+    socklen_t *from_len)
 {
 	int             ret;
 
