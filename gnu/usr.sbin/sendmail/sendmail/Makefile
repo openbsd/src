@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2002/06/03 17:25:46 millert Exp $
+#	$OpenBSD: Makefile,v 1.18 2003/02/19 06:18:10 millert Exp $
 
 PROG=	sendmail
 
@@ -15,11 +15,10 @@ DPADD=	${LIBSSL} ${LIBCRYPTO}
 #ENVDEF+= -DSASL
 #LDADD+= -lsasl
 
-# To build with mail filter support (untested)
-#WANT_LIBMILTER=1
-#ENVDEF+= -DMILTER
-#CPPFLAGS+= -pthread
-#LDFLAGS+= -pthread
+# For mail filter support (untested)
+.if defined(WANT_LIBMILTER)
+ENVDEF+= -DMILTER
+.endif
 
 # Since we have random PIDs we need to be careful to avoid filename collisions
 ENVDEF+= -DFAST_PID_RECYCLE
