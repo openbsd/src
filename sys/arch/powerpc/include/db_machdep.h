@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.10 2001/07/09 02:07:05 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.11 2001/08/12 16:09:19 drahn Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
 #ifndef	_PPC_DB_MACHDEP_H_
 #define	_PPC_DB_MACHDEP_H_
 
-#include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 #include <machine/trap.h>
