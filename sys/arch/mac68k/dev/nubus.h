@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.12 1997/04/10 20:34:33 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.13 1997/05/01 03:35:53 briggs Exp $	*/
 /*	$NetBSD: nubus.h,v 1.17 1997/02/24 06:20:07 scottr Exp $	*/
 
 /*
@@ -58,7 +58,10 @@
 #define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146
+#define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
+#define	   NUBUS_DRHW_FIILX	0x0417	/* Futura II LX */
+#define	   NUBUS_DRHW_FIISXDSP	0x042F	/* Futura II SX/DSP */
 
 /* False DrHW values for video cards masquerading as other cards */
 #define    NUBUS_DRHW_SAM768	0x10000	/* Cornerstone/Samsung 768x1006 */
