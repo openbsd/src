@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.18 2003/07/06 21:57:27 deraadt Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.19 2003/08/07 11:12:38 hin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -29,9 +29,6 @@
 #include "common.h"
 
 #include <kerberosV/krb5.h>
-#ifdef KRB524
-#include <kerberosIV/krb.h>
-#endif
 
 krb5_error_code ret;
 krb5_context context;
