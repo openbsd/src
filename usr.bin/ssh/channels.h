@@ -1,4 +1,4 @@
-/* RCSID("$Id: channels.h,v 1.10 2000/04/28 08:10:20 markus Exp $"); */
+/* RCSID("$Id: channels.h,v 1.11 2000/05/02 12:44:38 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -56,7 +56,7 @@ typedef struct Channel {
 
 	char   *ctype;		/* type */
 
-	// callback
+	/* callback */
 	channel_callback_fn	*cb_fn;
 	void	*cb_arg;
 	int	cb_event;

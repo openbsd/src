@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.14 2000/04/14 10:30:32 markus Exp $");
+RCSID("$Id: nchan.c,v 1.15 2000/05/02 12:44:38 markus Exp $");
 
 #include "ssh.h"
 
@@ -314,7 +314,7 @@ chan_write_failed2(Channel *c)
 	switch (c->ostate) {
 	case CHAN_OUTPUT_OPEN:
 		debug("channel %d: output open -> closed", c->self);
-		chan_shutdown_write(c); // ??
+		chan_shutdown_write(c); /* ?? */
 		c->ostate = CHAN_OUTPUT_CLOSED;
 		break;
 	case CHAN_OUTPUT_WAIT_DRAIN:

@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.10 2000/05/02 08:05:32 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.11 2000/05/02 12:44:38 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -551,7 +551,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 		/* Close the extra descriptor for the pseudo tty. */
 		close(ttyfd);
 
-///XXXX ? move to do_child() ??
+/* XXXX ? move to do_child() ??*/
 		/*
 		 * Get IP address of client.  This is needed because we want
 		 * to record where the user logged in from.  If the
