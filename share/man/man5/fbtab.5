@@ -1,0 +1,59 @@
+.\" this is comment
+.Dd August 22, 1994
+.Dt FBTAB 5
+.Os
+.Sh NAME
+.Nm fbtab
+.Nd change device protection upon login
+.Sh DESCRIPTION
+The
+.Nm fbtab
+file contains lines which specify how the permissions and
+ownership of various system files should be changed based on
+the user's login device name.
+.Pp
+Comments start with a # and extend to the end of the line.
+Blank lines or lines with only a comment are ignored.
+.Pp
+All other lines consist of three fields delimited by
+whitespace.
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.It Login Device
+The device you have logged in on, ie. /dev/ttyv0.
+.It File Permission 
+An octal permission number (0600), as used by
+.Xr chmod 2 .
+.It Other devices
+The final field is a ":"-delimited list of devices, ie.
+/dev/console:/dev/fd0a.
+All device names are absolute paths.
+A path that ends in "/*" refers to all
+directory entries except "." and "..".
+.El
+.Pp
+The
+.Nm fbtab
+file is used by
+.Xr login 1
+to
+.Xr chown 2
+the specified files to the user who has performed a login.  As well,
+.Xr chmod 2
+is used to set the devices to the specified permission.
+When a user logs out,
+.Xr init 8
+is responsible for performing the inverse operation, this results in
+the files once again belonging to root.
+.Sh FILES
+.Bl -tag -width /etc/fbtab -compact
+.It Pa /etc/fbtab
+The
+.Nm fbtab
+file resides in
+.Pa /etc .
+.El
+.Sh SEE ALSO
+.Xr login 1 ,
+.Xr init 8
+.Sh AUTHOR
+Guido van Rooij
