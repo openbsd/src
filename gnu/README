@@ -1,0 +1,18 @@
+$OpenBSD: README,v 1.1 2001/08/18 13:12:57 espie Exp $
+
+Some of the software in this subtree follows special rules.
+
+Specifically, the FSF not only wants the GPL licence, but they
+also insist that you assign your copyright to the FSF for anything
+but trivial changes.
+
+So:
+- check the history of external code before importing it.
+- be ready to arrange for copyright papers somewhat in advance if
+you want to work on it (the FSF takes a few months to process these).
+
+Otherwise, changes might not make it to the main distribution, and may
+need some further maintenance over time, or risk getting lost.
+
+Some internal changes are acceptable, but OpenBSD can't afford to maintain
+a complete separate toolchain on its own.
