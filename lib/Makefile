@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.26 1998/07/07 18:50:50 art Exp $
+#	$OpenBSD: Makefile,v 1.27 1998/07/23 21:15:50 millert Exp $
 #	$NetBSD: Makefile,v 1.20.4.1 1996/06/14 17:22:38 cgd Exp $
 
 SUBDIR=	csu libarch libc libcom_err libcompat libcurses libdes libedit \
 	libform libl libm libmenu libocurses libossaudio libpanel libpcap \
-	libresolv librpcsvc libskey libtelnet libterm libtermlib \
-	libutil libwrap liby libz
+	libresolv librpcsvc libskey libtelnet libutil libwrap liby libz
 
 # XXX Temporarely until all ports are able to use libkvm (leo)
 .if	make(obj)
