@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.24 1998/06/11 16:47:17 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.25 1998/06/26 18:07:30 deraadt Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -199,8 +199,7 @@ tcp_usrreq(so, req, m, nam, control)
 		sin = mtod(nam, struct sockaddr_in *);
 
 		/* Trying to connect to some broadcast address */
-		if (in_broadcast(sin->sin_addr, NULL))
-		{
+		if (in_broadcast(sin->sin_addr, NULL)) {
 			error = EINVAL;
 			break;
 		}
