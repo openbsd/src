@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.47 1999/04/07 05:58:04 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.48 1999/04/07 06:09:22 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -306,10 +306,19 @@ else
 	done
 fi
 
-#unfortunately, cannot do this in 2.5
-#if [ -f /sbin/swapon ]; then
-#	swapon /dev/${ROOTDISK}b
-#fi
+if [ -f /sbin/swapon ]; then
+	echo "Do you wish to enable swap for this install (WARNING: Useful for low memory"
+	echo "machines, but only do this if the b partition on the root disk was configured"
+	echo -n "correctly before this kernel boot, or disaster will result)? [n]"
+	getresp "n"
+	case "$resp" in
+		y*|Y*)
+			swapon /dev/${ROOTDISK}b
+			;;
+		*)
+			;;
+	esac
+fi
 
 # Get network configuration information, and store it for placement in the
 # root filesystem later.
