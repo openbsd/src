@@ -1,3 +1,5 @@
+/*	$OpenBSD: pipe.h,v 1.2 1996/09/04 22:38:47 niklas Exp $	*/
+
 /*
  * Copyright (c) 1996 John S. Dyson
  * All rights reserved.
@@ -17,8 +19,6 @@
  *    is allowed if this notation is included.
  * 5. Modifications may be freely made to this file if the above conditions
  *    are met.
- *
- * $Id: pipe.h,v 1.1 1996/08/27 14:47:07 shawn Exp $
  */
 
 #ifndef _SYS_PIPE_H_
@@ -26,12 +26,12 @@
 
 #ifndef OLD_PIPE
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/time.h>			/* for struct timeval */
 #include <sys/select.h>			/* for struct selinfo */
 #include <vm/vm.h>			/* for vm_page_t */
 #include <machine/param.h>		/* for PAGE_SIZE */
-#endif
+#endif /* _KERNEL */
 
 /*
  * Pipe buffer size, keep moderate in value, pipes take kva space.
@@ -114,9 +114,9 @@ struct pipe {
 	int	pipe_busy;		/* busy flag, mostly to handle rundown sanely */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 int	pipe_stat __P((struct pipe *pipe, struct stat *ub));
-#endif
+#endif /* _KERNEL */
 
 #endif /* !OLD_PIPE */
 
