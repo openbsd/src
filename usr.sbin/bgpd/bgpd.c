@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.73 2004/02/03 17:36:30 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.74 2004/02/06 20:18:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ void	usage(void);
 int	main(int, char *[]);
 int	check_child(pid_t, const char *);
 int	reconfigure(char *, struct bgpd_config *, struct mrt_head *,
-	    struct peer **);
+	    struct peer **, struct filter_head *);
 int	dispatch_imsg(struct imsgbuf *, int, struct mrt_head *);
 
 int			rfd = -1;
@@ -96,7 +96,9 @@ main(int argc, char *argv[])
 	struct peer		*peer_l;
 	struct mrt_head		 mrt_l;
 	struct network_head	 net_l;
+	struct filter_head	 rules_l;
 	struct network		*net;
+	struct filter_rule	*r;
 	struct mrt		*(mrt[POLL_MAX]);
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
@@ -115,6 +117,7 @@ main(int argc, char *argv[])
 	bzero(&conf, sizeof(conf));
 	LIST_INIT(&mrt_l);
 	TAILQ_INIT(&net_l);
+	TAILQ_INIT(&rules_l);
 	peer_l = NULL;
 
 	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
@@ -144,7 +147,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l))
+	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l, &rules_l))
 		exit(1);
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
@@ -216,6 +219,11 @@ main(int argc, char *argv[])
 		free(net);
 	}
 
+	for (r = TAILQ_FIRST(&rules_l); r != NULL; r = TAILQ_FIRST(&rules_l)) {
+		TAILQ_REMOVE(&rules_l, r, entries);
+		free(r);
+	}
+
 	while (quit == 0) {
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
 		pfd[PFD_PIPE_SESSION].events = POLLIN;
@@ -278,7 +286,7 @@ main(int argc, char *argv[])
 
 		if (reconfig) {
 			log_info("rereading config");
-			reconfigure(conffile, &conf, &mrt_l, &peer_l);
+			reconfigure(conffile, &conf, &mrt_l, &peer_l, &rules_l);
 			reconfig = 0;
 		}
 
@@ -337,13 +345,14 @@ check_child(pid_t pid, const char *pname)
 
 int
 reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
-    struct peer **peer_l)
+    struct peer **peer_l, struct filter_head *rules_l)
 {
 	struct network_head	 net_l;
 	struct network		*n;
 	struct peer		*p;
+	struct filter_rule	*r;
 
-	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l)) {
+	if (parse_config(conffile, conf, mrt_l, peer_l, &net_l, rules_l)) {
 		log_warnx("config file %s has errors, not reloading",
 		    conffile);
 		return (-1);
@@ -370,6 +379,11 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 			return (-1);
 		TAILQ_REMOVE(&net_l, n, network_l);
 		free(n);
+	}
+	for (r = TAILQ_FIRST(rules_l); r != NULL; r = TAILQ_FIRST(rules_l)) {
+		/* XXX imsg_compose... */
+		TAILQ_REMOVE(rules_l, r, entries);
+		free(r);
 	}
 	if (imsg_compose(&ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0) == -1 ||
 	    imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.90 2004/02/05 14:29:09 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.91 2004/02/06 20:18:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -264,6 +264,91 @@ struct session_up {
 struct ctl_show_nexthop {
 	struct bgpd_addr	addr;
 	u_int8_t		valid;
+};
+
+enum filter_actions {
+	ACTION_NONE,
+	ACTION_ALLOW,
+	ACTION_DENY
+};
+
+enum directions {
+	DIR_IN=1,
+	DIR_OUT
+};
+
+enum from_spec {
+	FROM_ALL,
+	FROM_ADDRESS,
+	FROM_DESCR,
+	FROM_GROUP
+};
+
+enum as_spec {
+	AS_NONE,
+	AS_ALL,
+	AS_SOURCE,
+	AS_TRANSIT
+};
+
+enum comp_ops {
+	OP_NONE,
+	OP_RANGE,
+	OP_EQ,
+	OP_NE,
+	OP_LE,
+	OP_LT,
+	OP_GE,
+	OP_GT
+};
+
+/* set flags */
+#define	SET_LOCALPREF	0x01
+#define	SET_MED		0x02
+#define	SET_NEXTHOP	0x04
+#define	SET_NEXTHOP6	0x08
+#define	SET_PREPEND	0x10
+
+struct filter_peers {
+	u_int32_t	peerid;
+	u_int32_t	groupid;
+};
+
+struct filter_match {
+	struct {
+		struct bgpd_addr	addr;
+		u_int8_t		len;
+	} prefix;
+	struct {
+		enum comp_ops		op;
+		u_int8_t		len_min;
+		u_int8_t		len_max;
+	} prefixlen;
+	struct {
+		u_int16_t		as;
+		enum as_spec		type;
+	} as;
+};
+
+struct filter_set {
+	u_int8_t	flags;
+	u_int32_t	localpref;
+	u_int32_t	med;
+	struct in_addr	nexthop;
+	struct in6_addr	nexthop6;
+	u_int8_t	prepend;
+};
+
+TAILQ_HEAD(filter_head, filter_rule);
+
+struct filter_rule {
+	TAILQ_ENTRY(filter_rule)	entries;
+	enum filter_actions		action;
+	enum directions			dir;
+	u_int8_t			quick;
+	struct filter_peers		peer;
+	struct filter_match		match;
+	struct filter_set		set;
 };
 
 /* prototypes */

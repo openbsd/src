@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.50 2004/02/05 23:50:54 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.51 2004/02/06 20:18:18 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@ static struct network_head	*netconf;
 static struct peer		*peer_l, *peer_l_old;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
+static struct filter_head	*filter_l;
 static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
@@ -64,6 +65,10 @@ struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t);
 int		 get_id(struct peer *);
+int		 expand_rule(struct filter_rule *, struct filter_peers *,
+		    struct filter_match *, struct filter_set *);
+void		 print_op(enum comp_ops);
+void		 print_rule(struct filter_rule *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -80,9 +85,13 @@ int	 atoul(char *, u_long *);
 
 typedef struct {
 	union {
-		u_int32_t	 number;
-		char		*string;
-		struct in_addr	 addr;
+		u_int32_t		 number;
+		char			*string;
+		struct in_addr		 addr;
+		u_int8_t		 u8;
+		struct filter_peers	 filter_peers;
+		struct filter_match	 filter_match;
+		struct filter_set	 filter_set;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -95,11 +104,21 @@ typedef struct {
 %token	DUMP MSG IN TABLE
 %token	LOG UPDATES
 %token	TCP MD5SIG PASSWORD KEY
+%token	ALLOW DENY MATCH
+%token	QUICK
+%token	FROM TO ANY
+%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS
+%token	SET LOCALPREF MED NEXTHOP PREPEND
 %token	ERROR
-%token	<v.string>	STRING
-%type	<v.number>	number optnumber yesno
-%type	<v.string>	string
-%type	<v.addr>	address
+%token	<v.string>		STRING
+%type	<v.number>		number optnumber yesno
+%type	<v.string>		string
+%type	<v.addr>		address
+%type	<v.u8>			action quick direction
+%type	<v.filter_peers>	filter_peer
+%type	<v.filter_match>	filter_match
+%type	<v.filter_set>		filter_set filter_set_l filter_set_opt
+%type	<v.u8>			unaryop filter_as
 %%
 
 grammar		: /* empty */
@@ -108,6 +127,7 @@ grammar		: /* empty */
 		| grammar varset '\n'
 		| grammar neighbor '\n'
 		| grammar group '\n'
+		| grammar filterrule '\n'
 		| grammar error '\n'		{ errors++; }
 		;
 
@@ -392,6 +412,158 @@ peeropts	: REMOTEAS number	{
 		}
 		;
 
+filterrule	: action quick direction filter_peer filter_match filter_set
+		{
+			struct filter_rule	r;
+
+			bzero(&r, sizeof(r));
+			r.action = $1;
+			r.quick = $2;
+			r.dir = $3;
+
+			if (expand_rule(&r, &$4, &$5, &$6) == -1)
+				YYERROR;
+		}
+		;
+
+action		: ALLOW		{ $$ = ACTION_ALLOW; }
+		| DENY		{ $$ = ACTION_DENY; }
+		| MATCH		{ $$ = ACTION_NONE; }
+		;
+
+quick		: /* empty */	{ $$ = 0; }
+		| QUICK		{ $$ = 1; }
+		;
+
+direction	: FROM		{ $$ = DIR_IN; }
+		| TO		{ $$ = DIR_OUT; }
+		;
+
+filter_peer	: ANY		{ $$.peerid = $$.groupid = 0; }
+		| address	{
+			struct peer *p;
+
+			$$.groupid = $$.peerid = 0;
+			for (p = peer_l; p != NULL; p = p->next)
+				if (!memcmp(&p->conf.remote_addr.v4,
+				    &$1, sizeof(p->conf.remote_addr.v4))) {
+					$$.peerid = p->conf.id;
+					break;
+				}
+			if ($$.peerid == 0) {
+				yyerror("no such peer: %s", inet_ntoa($1));
+				YYERROR;
+			}
+		}
+		| GROUP string	{
+			struct peer *p;
+
+			$$.peerid = 0;
+			for (p = peer_l; p != NULL; p = p->next)
+				if (!strcmp(p->conf.group, $2)) {
+					$$.groupid = p->conf.groupid;
+					break;
+				}
+			if ($$.groupid == 0) {
+				yyerror("no such group: \"%s\"", $2);
+				YYERROR;
+			}
+		}
+		;
+
+filter_match	: /* empty */			{ bzero(&$$, sizeof($$)); }
+		| PREFIX address '/' number	{
+			bzero(&$$, sizeof($$));
+			$$.prefix.addr.af = AF_INET;
+			$$.prefix.addr.v4.s_addr = $2.s_addr;
+			if ($4 > 32) {
+				yyerror("prefixlength must be <= 32");
+				YYERROR;
+			}
+			$$.prefix.len = $4;
+		}
+		| PREFIXLEN unaryop number	{
+			bzero(&$$, sizeof($$));
+			if ($3 > 128) {
+				yyerror("prefixlen must be < 128");
+				YYERROR;
+			}
+			$$.prefixlen.op = $2;
+			$$.prefixlen.len_min = $3;
+		}
+		| filter_as number		{
+			bzero(&$$, sizeof($$));
+			if ($2 > 0xffff) {
+				yyerror("AS out of range, max %u", 0xffff);
+				YYERROR;
+			}
+			$$.as.as = $2;
+			$$.as.type = $1;
+		}
+		;
+
+filter_as	: AS		{ $$ = AS_ALL; }
+		| SOURCEAS	{ $$ = AS_SOURCE; }
+		| TRANSITAS	{ $$ = AS_TRANSIT; }
+		;
+
+filter_set	: /* empty */				{
+			bzero(&$$, sizeof($$));
+		}
+		| SET filter_set_opt			{ $$ = $2; }
+		| SET "{" filter_set_l "}"		{ $$ = $3; }
+		;
+
+filter_set_l	: filter_set_l comma filter_set_opt	{
+			$$ = $1;
+			if ($$.flags & $3.flags) {
+				yyerror("redefining set shitz is not fluffy");
+				YYERROR;
+			}
+			$$.flags |= $3.flags;
+			if ($3.flags & SET_LOCALPREF)
+				$$.localpref = $3.localpref;
+			if ($3.flags & SET_MED)
+				$$.med = $3.med;
+			if ($3.flags & SET_NEXTHOP)
+				memcpy(&$$.nexthop, &$3.nexthop,
+				    sizeof($$.nexthop));
+			if ($3.flags & SET_PREPEND)
+				$$.prepend = $3.prepend;
+		}
+		| filter_set_opt
+		;
+
+filter_set_opt	: LOCALPREF number		{
+			$$.flags = SET_LOCALPREF;
+			$$.localpref = $2;
+		}
+		| MED number			{
+			$$.flags = SET_MED;
+			$$.med = $2;
+		}
+		| NEXTHOP address		{
+			$$.flags = SET_NEXTHOP;
+			$$.nexthop.s_addr = $2.s_addr;
+		}
+		| PREPEND number		{
+			$$.flags = SET_PREPEND;
+			$$.prepend = $2;
+		}
+		;
+
+comma		: ","
+		| /* empty */
+		;
+
+unaryop		: '='		{ $$ = OP_EQ; }
+		| '!' '='	{ $$ = OP_NE; }
+		| '<' '='	{ $$ = OP_LE; }
+		| '<'		{ $$ = OP_LT; }
+		| '>' '='	{ $$ = OP_GE; }
+		| '>'		{ $$ = OP_GT; }
+		;
+
 %%
 
 struct keywords {
@@ -427,31 +599,47 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "AS",			AS},
+		{ "allow",		ALLOW},
 		{ "announce",		ANNOUNCE},
+		{ "any",		ANY},
+		{ "deny",		DENY},
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
 		{ "fib-update",		FIBUPDATE},
+		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
 		{ "in",			IN},
 		{ "key",		KEY},
 		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
+		{ "localpref",		LOCALPREF},
 		{ "log",		LOG},
+		{ "match",		MATCH},
 		{ "max-prefix",		MAXPREFIX},
 		{ "md5sig",		MD5SIG},
+		{ "med",		MED},
 		{ "min",		YMIN},
 		{ "msg",		MSG},
 		{ "multihop",		MULTIHOP},
 		{ "neighbor",		NEIGHBOR},
 		{ "network",		NETWORK},
+		{ "nexthop",		NEXTHOP},
 		{ "on",			ON},
 		{ "passive",		PASSIVE},
 		{ "password",		PASSWORD},
+		{ "prefix",		PREFIX},
+		{ "prefixlen",		PREFIXLEN},
+		{ "prepend-self",	PREPEND},
+		{ "quick",		QUICK},
 		{ "remote-as",		REMOTEAS},
 		{ "router-id",		ROUTERID},
+		{ "set",		SET},
+		{ "source-AS",		SOURCEAS},
 		{ "table",		TABLE},
 		{ "tcp",		TCP},
+		{ "to",			TO},
+		{ "transit-AS",		TRANSITAS},
 		{ "updates",		UPDATES},
 	};
 	const struct keywords	*p;
@@ -660,10 +848,12 @@ top:
 
 int
 parse_config(char *filename, struct bgpd_config *xconf,
-    struct mrt_head *xmconf, struct peer **xpeers, struct network_head* nc)
+    struct mrt_head *xmconf, struct peer **xpeers, struct network_head *nc,
+    struct filter_head *xfilter_l)
 {
-	struct sym	*sym, *next;
-	struct peer	*p, *pnext;
+	struct sym		*sym, *next;
+	struct peer		*p, *pnext;
+	struct filter_rule	*r;
 
 	if ((conf = calloc(1, sizeof(struct bgpd_config))) == NULL)
 		fatal(NULL);
@@ -680,6 +870,8 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	lineno = 1;
 	errors = 0;
 	id = 1;
+	filter_l = xfilter_l;
+	TAILQ_INIT(filter_l);
 
 	conf->listen_addr.sin_len = sizeof(conf->listen_addr);
 	conf->listen_addr.sin_family = AF_INET;
@@ -711,6 +903,10 @@ parse_config(char *filename, struct bgpd_config *xconf,
 			free(sym);
 		}
 	}
+
+	if (xconf->opts & BGPD_OPT_VERBOSE)
+		TAILQ_FOREACH(r, filter_l, entries)
+			print_rule(r);
 
 	errors += merge_config(xconf, conf, peer_l);
 	errors += mrt_mergeconfig(xmconf, mrtconf);
@@ -918,4 +1114,138 @@ get_id(struct peer *newpeer)
 	}
 
 	return (-1);
+}
+
+int
+expand_rule(struct filter_rule *rule, struct filter_peers *peer,
+    struct filter_match *match, struct filter_set *set)
+{
+	struct filter_rule	*r;
+
+	if ((r = calloc(1, sizeof(struct filter_rule))) == NULL) {
+		log_warn("expand_rule");
+		return (-1);
+	}
+
+	memcpy(r, rule, sizeof(struct filter_rule));
+	memcpy(&r->peer, peer, sizeof(struct filter_peers));
+	memcpy(&r->match, match, sizeof(struct filter_match));
+	memcpy(&r->set, set, sizeof(struct filter_set));
+
+	TAILQ_INSERT_TAIL(filter_l, r, entries);
+
+	return (0);
+}
+
+void
+print_op(enum comp_ops op)
+{
+	switch (op) {
+	case OP_EQ:
+		printf("=");
+		break;
+	case OP_NE:
+		printf("!=");
+		break;
+	case OP_LE:
+		printf("<=");
+		break;
+	case OP_LT:
+		printf("<");
+		break;
+	case OP_GE:
+		printf(">=");
+		break;
+	case OP_GT:
+		printf(">");
+		break;
+	default:
+		printf("?");
+		break;
+	}
+}
+
+void
+print_rule(struct filter_rule *r)
+{
+	struct peer	*p;
+
+	if (r->action == ACTION_ALLOW)
+		printf("allow ");
+	else if (r->action == ACTION_DENY)
+		printf("deny ");
+	else
+		printf("match ");
+
+	if (r->quick)
+		printf("quick ");
+
+	if (r->dir == DIR_IN)
+		printf("from ");
+	else if (r->dir == DIR_OUT)
+		printf("to ");
+	else
+		printf("eeeeeeeps. ");
+
+	if (r->peer.peerid) {
+		for (p = peer_l; p != NULL && p->conf.id != r->peer.peerid;
+		    p = p->next)
+			;	/* nothing */
+		if (p == NULL)
+			printf("?");
+		else
+			printf("%s ", log_addr(&p->conf.remote_addr));
+	} else if (r->peer.groupid) {
+		for (p = peer_l; p != NULL &&
+		    p->conf.groupid != r->peer.groupid; p = p->next)
+			;	/* nothing */
+		if (p == NULL)
+			printf("group ? ");
+		else
+			printf("group %s ", p->conf.group);
+	} else
+		printf("any ");
+
+	if (r->match.prefix.addr.af)
+		printf("prefix %s/%u ", log_addr(&r->match.prefix.addr),
+		    r->match.prefix.len);
+
+	if (r->match.prefixlen.op) {
+		if (r->match.prefixlen.op == OP_RANGE)
+			printf("prefixlen %u - %u ", r->match.prefixlen.len_min,
+			    r->match.prefixlen.len_max);
+		else {
+			printf("prefixlen ");
+			print_op(r->match.prefixlen.op);
+			printf(" %u ", r->match.prefixlen.len_min);
+		}
+	}
+
+	if (r->match.as.type) {
+		if (r->match.as.type == AS_ALL)
+			printf("AS %u ", r->match.as.as);
+		else if (r->match.as.type == AS_SOURCE)
+			printf("source-AS %u ", r->match.as.as);
+		else if (r->match.as.type == AS_TRANSIT)
+			printf("transit-AS %u ", r->match.as.as);
+		else
+			printf("unfluffy-AS %u ", r->match.as.as);
+	}
+
+	if (r->set.flags) {
+		printf("set { ");
+		if (r->set.flags & SET_LOCALPREF)
+			printf("localpref %u ", r->set.localpref);
+		if (r->set.flags & SET_MED)
+			printf("med %u ", r->set.med);
+		if (r->set.flags & SET_NEXTHOP)
+			printf("nexthop %s ", inet_ntoa(r->set.nexthop));
+		if (r->set.flags & SET_PREPEND)
+			printf("prepend-self %u ", r->set.prepend);
+
+
+		printf("}");
+	}
+
+	printf("\n");
 }
