@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 1997/10/16 06:48:12 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 1998/04/26 22:30:57 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@ dev_decl(filedesc,open);
 #include "com.h"
 #include "lpt.h"
 #include "uk.h"
-#include "new_audio.h"
+#include "audio.h"
 cdev_decl(audio);
 
 struct cdevsw	cdevsw[] =
@@ -145,7 +145,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
 	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */
-	cdev_audio_init(NNEW_AUDIO,audio),	/* 39: cc audio interface */
+	cdev_audio_init(NAUDIO,audio),	/* 39: cc audio interface */
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
 };

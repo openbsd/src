@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 1997/10/07 11:04:52 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.24 1998/04/26 22:30:59 niklas Exp $
 #	$NetBSD: GENERIC,v 1.85 1997/08/27 19:32:49 is Exp $
 
 #
@@ -148,7 +148,7 @@ com*		at drsupio? port ?	# DraCo serial
 a2kbbc0 	at mainbus0		# A2000 battery backed clock
 a34kbbc0	at mainbus0		# A3000/A4000 battery backed clock
 aucc*		at mainbus0		# Amiga CC audio
-new_audio*	at aucc?
+audio*		at aucc?
 
 # Ethernet cards
 le*		at zbus0		# Lance ethernet.
