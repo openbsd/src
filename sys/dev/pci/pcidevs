@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.186 1999/09/30 03:34:39 pjanzen Exp $
+$OpenBSD: pcidevs,v 1.187 1999/10/09 19:41:07 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -942,6 +942,7 @@ product INTEL 82596		0x1226	EE Pro 10 PCI
 product INTEL EEPRO100		0x1227	EE Pro 100
 product INTEL EEPRO100S		0x1228	EE Pro 100 Smart
 product INTEL 82557		0x1229	82557
+product INTEL 82559		0x1030	82559
 product INTEL 82437FX		0x122d	82437FX (Triton) PCI/Cache/DRAM
 product INTEL 82371		0x122e	82371FB (Triton) PCI-ISA
 product INTEL 82371FB_IDE	0x1230	82371FB (Triton) IDE
