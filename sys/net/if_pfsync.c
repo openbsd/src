@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.29 2004/04/25 18:09:30 pb Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.30 2004/04/28 00:20:47 pb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1177,6 +1177,7 @@ pfsync_timeout(void *v)
 	splx(s);
 }
 
+/* This must be called in splnet() */
 void
 pfsync_send_bus(struct pfsync_softc *sc, u_int8_t status)
 {
@@ -1270,6 +1271,7 @@ pfsync_bulkfail(void *v)
 	}
 }
 
+/* This must be called in splnet() */
 int
 pfsync_sendout(sc)
 	struct pfsync_softc *sc;
