@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.13 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.14 2002/07/09 23:33:15 jason Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -370,11 +370,15 @@ cgthree_set_video(sc, enable)
 	struct cgthree_softc *sc;
 	int enable;
 {
+	extern int sparc_vsyncblank;
 
 	if (enable)
-		sc->sc_fbc->fbc_ctrl |= FBC_VENAB;
-	else
+		sc->sc_fbc->fbc_ctrl |= FBC_VENAB | FBC_TIMING;
+	else {
 		sc->sc_fbc->fbc_ctrl &= ~FBC_VENAB;
+		if (sparc_vsyncblank)
+			sc->sc_fbc->fbc_ctrl &= ~FBC_TIMING;
+	}
 }
 
 static int

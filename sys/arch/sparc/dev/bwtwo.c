@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.20 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.21 2002/07/09 23:33:15 jason Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -491,6 +491,7 @@ bwtwo_set_video(sc, enable)
 	struct bwtwo_softc *sc;
 	int enable;
 {
+	extern int sparc_vsyncblank;
 
 #if defined(SUN4)
 	if (CPU_ISSUN4 && (sc->sc_bustype == BUS_OBIO)) {
@@ -514,6 +515,9 @@ bwtwo_set_video(sc, enable)
 
 	if (enable)
 		sc->sc_reg->fbc_ctrl |= FBC_VENAB | FBC_TIMING;
-	else
+	else {
 		sc->sc_reg->fbc_ctrl &= ~FBC_VENAB;
+		if (sparc_vsyncblank)
+			sc->sc_reg->fbc_ctrl &= ~FBC_TIMING;
+	}
 }
