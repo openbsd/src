@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.10 1996/09/04 22:52:04 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.11 1996/09/16 10:16:04 downsj Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
@@ -59,6 +59,7 @@ NLSMODE?=	${NONBINMODE}
 
 COPY?=		-c
 STRIP?=		-s
+STATIC?=	-static
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
