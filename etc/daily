@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.32 2000/05/26 14:51:31 aaron Exp $
+#	$OpenBSD: daily,v 1.33 2000/05/26 17:44:33 marc Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -14,8 +14,9 @@ if [ -f /etc/daily.local ]; then
 fi
 
 TMP=`mktemp /tmp/_daily.XXXXXX` || exit 1
+OUT=`mktemp /tmp/_security.XXXXXX` || exit 1
 
-trap 'rm -f $TMP' 0 1 15
+trap 'rm -f $TMP $OUT' 0 1 15
 
 echo ""
 echo "Removing scratch and junk files:"
@@ -188,4 +189,7 @@ if [ -f /etc/Distfile ]; then
 	fi
 fi
 
-sh /etc/security 2>&1 | mail -s "$host daily insecurity output" root
+sh /etc/security 2>&1 > $OUT
+if [ -s $OUT ]; then
+    mail -s "$host daily insecurity output" root < $OUT
+fi
