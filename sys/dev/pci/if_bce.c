@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.1 2004/02/13 23:24:30 andreas Exp $ */
+/* $OpenBSD: if_bce.c,v 1.2 2004/09/01 21:11:50 millert Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -219,8 +219,9 @@ static int
 bce_lookup(const struct pci_attach_args *pa)
 {
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM4401)
-	    return 1;
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM4401 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM4401B0))
+		return 1;
 
 	return 0;
 }
