@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.9 2000/07/17 07:30:12 art Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.10 2000/07/17 16:25:16 deraadt Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ kthread_create(func, arg, newpp, fmt, va_alist)
 #ifdef UVM
 	error = fork1(&proc0, FORK_SHAREVM|FORK_NOZOMBIE, NULL, 0, rv);
 #else
-	error = fork1(&proc, FORK_VMNOSTACK|FORK_NOZOMBIE, NULL, 0, rv);
+	error = fork1(&proc0, FORK_VMNOSTACK|FORK_NOZOMBIE, NULL, 0, rv);
 #endif
 	if (error)
 		return (error);
