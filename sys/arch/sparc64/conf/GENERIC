@@ -1,0 +1,40 @@
+# 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
+
+machine		sparc64
+
+include "../../../conf/GENERIC"
+
+option		SUN4U
+option		_LP64
+
+option		DDB_SAFE_CONSOLE	# XXX - remove later
+
+maxusers	64
+
+config		bsd	swap generic
+
+# Main bus and CPU .. all systems.
+mainbus0 at root
+cpu0	at mainbus0
+
+# Bus types found on SPARC systems.
+
+sbus0	at mainbus0				# Ultra 1
+
+#### Standard system devices -- all required for a given architecture
+
+## PROM console driver -- if all else fails
+pcons0	at mainbus0				# PROM console
+
+## Mostek clock 
+## The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
+clock*	at sbus? slot ? offset ?
+
+## Timer chip found on (some) sun4u systems.
+timer*	at mainbus0
+
+## Lance Ethernet - AMD7990
+le*		at sbus? slot ? offset ?
+ledma*		at sbus? slot ? offset ?
+le*		at ledma?
+
