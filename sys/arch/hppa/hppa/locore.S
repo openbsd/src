@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.114 2003/09/29 19:23:02 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.115 2003/10/05 14:13:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -143,6 +143,9 @@ eintrnames
 netisr
 	.word	0
 	.align	16
+
+	BSS(cpu_hzticks, 4)	/* itmr ticks in one hz */
+	BSS(cpu_itmr, 4)	/* itmr value at the most recent clk int */
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */
@@ -958,6 +961,9 @@ LDILDO(tlbd_l)
 	depi	0,31,PGSHIFT,r9	/* align offset to page */
 	/* CR28XXX according to a popular belief cr28 should be read here */
 #define	HPMCPRE	nop
+#define	INTRPRE	\
+	mfctl	eirr, r8 ! \
+	mtctl	r8, eirr
 
 	.align NBPG
 	.export $ivaaddr, entry
@@ -968,7 +974,7 @@ hpmc_v
 	CTRAP(hpmc,T_HPMC,HPMCPRE)	/*  1. high priority machine check */
 	ATRAP(power,T_POWERFAIL)	/*  2. power failure */
 	ATRAP(recnt,T_RECOVERY)		/*  3. recovery counter trap */
-	CTRAP(intr,T_INTERRUPT,)	/*  4. external interrupt */
+	CTRAP(intr,T_INTERRUPT,INTRPRE)	/*  4. external interrupt */
 	ATRAP(lpmc,T_LPMC)		/*  5. low-priority machine check */
 	STRAP(itlb,T_ITLBMISS,ITLBPRE)	/*  6. instruction TLB miss fault */
 	ATRAP(iprot,T_IPROT)		/*  7. instruction protection trap */
@@ -1906,10 +1912,21 @@ EXIT(hppa_pfr)
 	.import	imask, data
 	.import	intr_table, data
 ENTRY(TLABEL(intr),0)
+	/* r8 set to eirr in the INTRPRE */
 
-	mfctl	eirr, r8
-	mtctl	r8, eirr	/* ack now */
+	bb,>=,n	r8, 0, $intr_noclock
+	nop
 
+	/* reload the itmr */
+	ldil	L%cpu_hzticks, r25	/* those both are aligned properly */
+	ldw	R%cpu_hzticks(r25), r16
+	ldw	R%cpu_itmr(r25), r9
+	sh1add	r16, r9, r17
+	add	r16, r9, r16
+	mtctl	r17, cr16
+	stw	r16, R%cpu_itmr(r25)
+
+$intr_noclock
 	ldil	L%ipending, r17
 	ldw	R%ipending(r17), r24
 	ldil	L%intr_table, r1

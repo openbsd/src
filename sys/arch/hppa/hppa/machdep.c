@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 2003/09/25 22:20:44 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.115 2003/10/05 14:13:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -134,7 +134,7 @@ struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
 struct pdc_model pdc_model PDC_ALIGNMENT;
 
 	/* w/ a little deviation should be the same for all installed cpus */
-u_int	cpu_itmr, cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
+u_int	cpu_ticksnum, cpu_ticksdenom;
 
 	/* exported info */
 char	machine[] = MACHINE_ARCH;
@@ -279,6 +279,7 @@ void
 hppa_init(start)
 	paddr_t start;
 {
+	extern u_int cpu_hzticks;
 	extern int kernel_text;
 	vaddr_t v, v1;
 	int error;

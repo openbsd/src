@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.37 2003/07/30 21:24:19 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.38 2003/10/05 14:13:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff
@@ -120,14 +120,6 @@ extern int cpu_hvers;
 #define	HPPA_FLEX(a)	(((a) & HPPA_FLEX_MASK) >> 18)
 #define	HPPA_SPA_ENABLE	0x00000020
 #define	HPPA_NMODSPBUS	64
-
-#define	CPU_CLOCKUPDATE() do {					\
-	register_t __itmr;					\
-	__asm __volatile("mfctl	%%cr16, %0" : "=r" (__itmr));	\
-	cpu_itmr = __itmr;					\
-	__itmr += cpu_hzticks;					\
-	__asm __volatile("mtctl	%0, %%cr16" :: "r" (__itmr));	\
-} while (0)
 
 #define	clockframe		trapframe
 #define	CLKF_PC(framep)		((framep)->tf_iioq_head)
