@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.3 1999/10/09 03:42:04 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.4 1999/10/29 01:15:15 deraadt Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -194,3 +194,7 @@ int   atapi_print       __P((void *, const char *));
 void wdc_disable_intr __P((struct channel_softc *));
 void wdc_enable_intr __P((struct channel_softc *));
 int wdc_select_drive __P((struct channel_softc *, int, int));
+
+void wdc_output_bytes __P((struct ata_drive_datas *drvp, void *, unsigned int));
+void wdc_input_bytes __P((struct ata_drive_datas *drvp, void *, unsigned int));
+

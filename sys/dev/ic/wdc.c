@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.11 1999/10/28 19:59:27 fgsch Exp $     */
+/*      $OpenBSD: wdc.c,v 1.12 1999/10/29 01:15:15 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -128,6 +128,7 @@ int   wdprint __P((void *, const char *));
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #define DEBUG_STATUSX 0x20
+#define DEBUG_SDRIVE 0x40
 
 #ifdef WDCDEBUG
 int wdcdebug_mask = 0;
@@ -184,16 +185,21 @@ wdc_select_drive(chp, drive, howlong)
 	int drive;
 	int howlong;
 {
-	if (wait_for_unbusy (chp, howlong))
-		return -1;
-
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4));
 	
 	delay(1);
 
-	if (wdcwait(chp, WDCS_DRQ, 0, howlong))
+	if (wdcwait(chp, WDCS_DRQ, 0, howlong)) {
+		WDCDEBUG_PRINT(("wdc_select_drive %s:%d:%d waiting for %d"
+				"after\n",
+				chp->wdc->sc_dev.dv_xname, chp->channel, drive,
+				howlong),
+			       DEBUG_SDRIVE);
+		
+		
 		return -1;
+	}
 
 	return 0;
 }
@@ -524,8 +530,9 @@ wdcstart(chp)
 #endif /* WDC_DIAGNOSTIC */
 
 	/* is there a xfer ? */
-	if ((xfer = chp->ch_queue->sc_xfer.tqh_first) == NULL)
+	if ((xfer = chp->ch_queue->sc_xfer.tqh_first) == NULL) {
 		return;
+	}
 
 	/* adjust chp, in case we have a shared queue */
 	chp = xfer->chp;
@@ -996,6 +1003,65 @@ wdc_probe_caps(drvp, params)
 }
 
 void
+wdc_output_bytes(drvp, bytes, buflen)
+	struct ata_drive_datas *drvp;
+	void *bytes;
+	unsigned int buflen;
+{
+	struct channel_softc *chp = drvp->chnl_softc;
+	unsigned int off = 0;
+	unsigned int len = buflen;
+
+	if (drvp->drive_flags & DRIVE_CAP32) {
+		bus_space_write_multi_4(chp->data32iot,
+		    chp->data32ioh, wd_data,
+		    (void *)((u_int8_t *)bytes + off), 
+		    len >> 2);
+
+		off += ((len >> 2) << 2);
+		len = len & 0x03;
+	}
+
+	if (len > 0) {
+		bus_space_write_multi_2(chp->cmd_iot,
+		    chp->cmd_ioh, wd_data,
+		    (void *)((u_int8_t *)bytes + off), 
+		    (len + 1) >> 1);
+	}
+
+	return;
+}
+
+void
+wdc_input_bytes(drvp, bytes, buflen)
+	struct ata_drive_datas *drvp;
+	void *bytes;
+	unsigned int buflen;
+{
+	struct channel_softc *chp = drvp->chnl_softc;
+	unsigned int off = 0;
+	unsigned int len = buflen;
+
+	if (drvp->drive_flags & DRIVE_CAP32) {
+		bus_space_read_multi_4(chp->data32iot,
+		    chp->data32ioh, wd_data,
+		    (void *)((u_int8_t *)bytes + off), 
+		    len >> 2);
+		off += ((len >> 2) << 2);
+		len = len & 0x03;
+	}
+
+	if (len > 0) {
+		bus_space_read_multi_2(chp->cmd_iot,
+		    chp->cmd_ioh, wd_data,
+		    (void *)((u_int8_t *)bytes + off), 
+		    (len + 1) >> 1);
+	}
+
+	return;
+}
+
+void
 wdc_print_caps(drvp)
 	struct ata_drive_datas *drvp;
 {
@@ -1167,13 +1233,21 @@ __wdccommand_start(chp, xfer)
 	}
 
 	/*
-	 * Make sure the bus isn't busy
+	 * For resets, we don't really care to make sure that
+	 * the bus is free
 	 */
-	if (wdc_select_drive(chp, drive, wdc_c->timeout) != 0) {
-		wdc_c->flags |= AT_TIMEOU;
-		__wdccommand_done(chp, xfer);
-		return;
-	}
+	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
+	    WDSD_IBM | (drive << 4));
+
+	if (wdc_c->r_command != ATAPI_SOFT_RESET) {
+		if (wdcwait(chp, wdc_c->r_st_bmask, wdc_c->r_st_bmask,
+		    wdc_c->timeout) != 0) {
+			wdc_c->flags |= AT_TIMEOU;
+			__wdccommand_done(chp, xfer);
+			return;
+		}
+	} else
+		DELAY(10);
 
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
@@ -1196,6 +1270,7 @@ __wdccommand_intr(chp, xfer, irq)
 	struct wdc_xfer *xfer;
 	int irq;
 {
+	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	struct wdc_command *wdc_c = xfer->cmd;
 	int bcount = wdc_c->bcount;
 	char *data = wdc_c->data;
@@ -1212,25 +1287,9 @@ __wdccommand_intr(chp, xfer, irq)
 		return 1;
 	}
 	if (wdc_c->flags & AT_READ) {
-		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
-			bus_space_read_multi_4(chp->data32iot, chp->data32ioh,
-			    0, (u_int32_t*)data, bcount >> 2);
-			data += bcount & 0xfffffffc;
-			bcount = bcount & 0x03;
-		}
-		if (bcount > 0)
-			bus_space_read_multi_2(chp->cmd_iot, chp->cmd_ioh,
-			    wd_data, (u_int16_t *)data, bcount >> 1);
+		wdc_input_bytes(drvp, data, bcount);
 	} else if (wdc_c->flags & AT_WRITE) {
-		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
-			bus_space_write_multi_4(chp->data32iot, chp->data32ioh,
-			    0, (u_int32_t*)data, bcount >> 2);
-			data += bcount & 0xfffffffc;
-			bcount = bcount & 0x03;
-		}
-		if (bcount > 0)
-			bus_space_write_multi_2(chp->cmd_iot, chp->cmd_ioh,
-			    wd_data, (u_int16_t *)data, bcount >> 1);
+		wdc_output_bytes(drvp, data, bcount);
 	}
 	__wdccommand_done(chp, xfer);
 	WDCDEBUG_PRINT(("__wdccommand_intr returned\n"), DEBUG_INTR);
