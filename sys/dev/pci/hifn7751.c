@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.78 2001/06/23 23:01:08 angelos Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.79 2001/06/24 16:30:59 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -900,7 +900,7 @@ hifn_write_command(cmd, buf)
 	base_cmd->masks = cmd->base_masks;
 	dlen = cmd->src_map->dm_mapsize;
 	base_cmd->total_source_count = dlen & HIFN_BASE_CMD_LENMASK_LO;
-	base_cmd->total_dest_count = dlen & HIFN_BASE_CMD_LENMASK_HI;
+	base_cmd->total_dest_count = dlen & HIFN_BASE_CMD_LENMASK_LO;
 	dlen >>= 16;
 	base_cmd->session_num = cmd->session_num |
 	    ((dlen << HIFN_BASE_CMD_SRCLEN_S) & HIFN_BASE_CMD_SRCLEN_M) |
@@ -915,6 +915,7 @@ hifn_write_command(cmd, buf)
 		mac_cmd->masks = cmd->mac_masks |
 		    ((dlen << HIFN_MAC_CMD_SRCLEN_S) & HIFN_MAC_CMD_SRCLEN_M);
 		mac_cmd->header_skip = cmd->mac_header_skip;
+		mac_cmd->reserved = 0;
 		buf_pos += sizeof(hifn_mac_command_t);
 	}
 
@@ -926,6 +927,7 @@ hifn_write_command(cmd, buf)
 		cry_cmd->masks = cmd->cry_masks |
 		    ((dlen << HIFN_CRYPT_CMD_SRCLEN_S) & HIFN_CRYPT_CMD_SRCLEN_M);
 		cry_cmd->header_skip = cmd->crypt_header_skip;
+		cry_cmd->reserved = 0;
 		buf_pos += sizeof(hifn_crypt_command_t);
 	}
 
