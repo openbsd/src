@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.37 2004/02/27 14:43:18 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.38 2004/02/27 14:46:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -114,13 +114,12 @@ path_update(struct rde_peer *peer, struct attr_flags *attrs,
 		asp = path_add(peer, attrs);
 		pte = prefix_add(asp, prefix, prefixlen);
 	} else {
-		if (attr_compare(&asp->flags, attrs) == 0)
+		if (attr_compare(&asp->flags, attrs) == 0) {
 			/* path are equal, just add prefix */
 			pte = prefix_add(asp, prefix, prefixlen);
-		else {
+		} else {
 			/* non equal path attributes create new path */
-			if ((p = prefix_get(asp,
-			    prefix, prefixlen)) == NULL) {
+			if ((p = prefix_get(asp, prefix, prefixlen)) == NULL) {
 				asp = path_add(peer, attrs);
 				pte = prefix_add(asp, prefix, prefixlen);
 			} else {
@@ -169,15 +168,13 @@ path_add(struct rde_peer *peer, struct attr_flags *attr)
 void
 path_remove(struct rde_aspath *asp)
 {
-	struct prefix	*p, *np;
+	struct prefix	*p;
 
 	RIB_STAT(path_remove);
 
-	for (p = LIST_FIRST(&asp->prefix_h); p != NULL; p = np) {
-		np = LIST_NEXT(p, path_l);
+	while ((p = LIST_FIRST(&asp->prefix_h)) != NULL) {
 		prefix_destroy(p);
 	}
-	LIST_INIT(&asp->prefix_h);
 	path_destroy(asp);
 }
 
@@ -308,8 +305,7 @@ prefix_get(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 }
 
 /*
- * Adds or updates a prefix. Returns 1 if a new routing decision needs
- * to be done -- which is actually always.
+ * Adds or updates a prefix.
  */
 struct pt_entry *
 prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
@@ -382,7 +378,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	 * is noticed by prefix_evaluate().
 	 */
 	LIST_REMOVE(p, prefix_l);
-	prefix_evaluate(np, p->prefix);
+	prefix_evaluate(np, np->prefix);
 
 	/* remove old prefix node */
 	oasp = p->aspath;
@@ -400,7 +396,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 
 	/* destroy old path if empty */
 	if (path_empty(oasp))
-		path_destroy(oasp); /* XXX probably use path_remove */
+		path_destroy(oasp);
 
 	return np->prefix;
 }
@@ -433,7 +429,7 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 	if (pt_empty(pte))
 		pt_remove(pte);
 	if (path_empty(asp))
-		path_destroy(asp); /* XXX probably use path_remove */
+		path_destroy(asp);
 }
 
 /*
