@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.73 2004/06/14 09:55:42 ho Exp $	 */
+/* $OpenBSD: udp.c,v 1.74 2004/06/17 19:36:36 hshoexer Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -139,8 +139,11 @@ udp_make(struct sockaddr *laddr)
 	if (!t) {
 		log_print("udp_make: malloc (%lu) failed",
 		    (unsigned long)sizeof *t);
+		free(laddr);
 		return 0;
 	}
+	t->src = laddr;
+
 	s = socket(laddr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
 	if (s == -1) {
 		log_error("udp_make: socket (%d, %d, %d)", laddr->sa_family,
@@ -180,7 +183,6 @@ udp_make(struct sockaddr *laddr)
 		goto err;
 	}
 	t->transport.vtbl = &udp_transport_vtbl;
-	t->src = laddr;
 	if (monitor_bind(s, t->src, sysdep_sa_len(t->src))) {
 		char	*tstr;
 
@@ -261,8 +263,9 @@ udp_clone(struct udp_transport *u, struct sockaddr *raddr)
 static struct transport *
 udp_bind(const struct sockaddr *addr)
 {
-	struct sockaddr *src = malloc(sysdep_sa_len((struct sockaddr *)addr));
+	struct sockaddr *src;
 
+	src = malloc(sysdep_sa_len((struct sockaddr *)addr));
 	if (!src)
 		return 0;
 
@@ -529,7 +532,7 @@ void
 udp_report(struct transport *t)
 {
 	struct udp_transport *u = (struct udp_transport *)t;
-	char	*src, *dst;
+	char	*src = NULL, *dst = NULL;
 
 	if (sockaddr2text(u->src, &src, 0))
 		goto ret;
