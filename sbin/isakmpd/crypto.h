@@ -1,5 +1,5 @@
-/*	$OpenBSD: crypto.h,v 1.3 1998/11/17 11:10:09 niklas Exp $	*/
-/*	$EOM: crypto.h,v 1.10 1998/08/05 13:14:03 niklas Exp $	*/
+/*	$OpenBSD: crypto.h,v 1.4 2000/10/16 23:28:04 niklas Exp $	*/
+/*	$EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -38,8 +38,12 @@
 #define _CRYPTO_H_
 
 #include <des.h>
+#ifdef USE_BLOWFISH
 #include <blf.h>
+#endif
+#ifdef USE_CAST
 #include <cast.h>
+#endif
 
 #define USE_32BIT
 #if defined (USE_64BIT)
@@ -89,8 +93,12 @@ struct keystate {
   u_int8_t	*riv, *liv;
   union {
     des_key_schedule desks[3];
+#ifdef USE_BLOWFISH
     blf_ctx blfks;
+#endif
+#ifdef USE_CAST
     cast_key castks;
+#endif
   } keydata;
 };
 
