@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.29 2001/02/05 00:30:45 deraadt Exp $
+.\"	$OpenBSD: ps.1,v 1.30 2001/05/04 17:29:39 millert Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -113,7 +113,7 @@ Extract values associated with the name list from the specified core
 instead of the default
 .Dq Pa /dev/kmem .
 .It Fl m
-Sort by memory usage, instead of by process
+Sort by memory usage, instead of by start time
 .Tn ID .
 .It Fl N Ar system
 Extract the name list from the specified system instead of the default
@@ -141,7 +141,7 @@ the standard header.
 Display information associated with the specified process
 .Tn ID .
 .It Fl r
-Sort by current CPU usage, instead of by process
+Sort by current CPU usage, instead of by start time
 .Tn ID .
 .It Fl S
 Change the way the process time is calculated by summing all exited
