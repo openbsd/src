@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.4 2002/06/14 04:16:23 art Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.5 2002/07/31 01:09:32 jason Exp $	*/
 /*	$NetBSD: openprom.c,v 1.2 2000/11/18 23:45:05 mrg Exp $ */
 
 /*
@@ -99,8 +99,8 @@ openpromcheckid(sid, tid)
 	register struct nodeops *no;
 
 	no = promvec->pv_nodeops;
-	for (; sid != 0; sid = no->no_nextnode(sid))
-		if (sid == tid || openpromcheckid(no->no_child(sid), tid))
+	for (; sid != 0; sid = OF_peer(sid))
+		if (sid == tid || openpromcheckid(OF_child(sid), tid))
 			return (1);
 
 	return (0);
