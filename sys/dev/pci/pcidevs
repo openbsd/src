@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.824 2005/01/23 06:58:48 jsg Exp $
+$OpenBSD: pcidevs,v 1.825 2005/01/23 07:13:12 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -147,6 +147,7 @@ vendor	VORTEX		0x1119	Vortex
 vendor	EFFICIENTNETS	0x111a	Efficent Networks
 vendor	IDT		0x111d	IDT
 vendor	FORE		0x1127	FORE Systems
+vendor	PHILIPS		0x1131	Philips
 vendor	ZIATECH		0x1138	Ziatech
 vendor	CYCLONE		0x113c	Cyclone
 vendor	ALLIANCE	0x1142	Alliance Semiconductor
@@ -653,6 +654,7 @@ product ATI RADEON_9600PRO	0x4150	Radeon 9600 Pro
 product ATI RADEON_9600		0x4151	Radeon 9600
 product ATI RADEON_9600XT	0x4152	Radeon 9600 XT
 product ATI MACH32		0x4158	Mach32
+product ATI RADEON_9600PRO_S	0x4170	Radeon 9600 Pro Sec
 product ATI RADEON_9600XT_2	0x4172	Radeon 9600 XT 2nd
 product ATI R200_BB		0x4242	Radeon 8500 BB
 product ATI RADEON_IGP320M	0x4336	Radeon IGP 320M
@@ -2107,6 +2109,9 @@ product RCC CSB6_USB		0x0221	CSB6 USB
 product RCC CSB5BRIDGE		0x0225	CSB5 PCI
 product RCC CSB6_LPC		0x0227	CSB6 LPC
 product RCC ISA			0x0230	PCI/ISA
+
+/* Philips products */
+product PHILIPS SAA7130		0x7130	SAA7130
 
 /* Picopower */
 product PICOPOWER PT80C826	0x0000	PT80C826
