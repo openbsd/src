@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.262 2000/05/30 16:15:58 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.263 2000/05/31 07:07:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3852,7 +3852,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
 	    0,
 	    "Texas Instruments",
-	    "PCI2030 PCI-CardBus",
+	    "PCI2030 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2031,
+	    0,
+	    "Texas Instruments",
+	    "PCI2031 PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420,
