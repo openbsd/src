@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.20 2001/09/29 21:54:00 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.21 2002/01/02 18:34:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -609,6 +609,7 @@ an_read_record(sc, ltv)
 {
 	u_int16_t	*ptr, len;
 	int		i;
+	u_int16_t	ltv_data_length;
 
 	if (ltv->an_len < 4 || ltv->an_type == 0)
 		return(EINVAL);
@@ -628,23 +629,28 @@ an_read_record(sc, ltv)
 	}
 
 	/*
-	 * Read the length and record type and make sure they
-	 * match what we expect (this verifies that we have enough
+	 * Read the length to make sure it
+	 * matches what we expect (this verifies that we have enough
 	 * room to hold all of the returned data).
 	 */
 	len = CSR_READ_2(sc, AN_DATA1);
-	if (len > ltv->an_len) {
+
+	/*
+	 * Work out record's data length, which is struct length - type word
+	 * as we have just read the length.
+	 */
+	ltv_data_length = ltv->an_len - sizeof(u_int16_t);
+
+	if (len > ltv_data_length) {
 		printf("%s: RID 0x%04x record length mismatch -- expected %d, "
 		    "got %d\n", sc->sc_dev.dv_xname, ltv->an_type,
-		    ltv->an_len, len);
+		    ltv_data_length, len);
 		return(ENOSPC);
 	}
 
-	ltv->an_len = len;
-
 	/* Now read the data. */
 	ptr = ltv->an_val;
-	for (i = 0; i < (ltv->an_len - 1) >> 1; i++)
+	for (i = 0; i < (len - 1) >> 1; i++)
 		ptr[i] = CSR_READ_2(sc, AN_DATA1);
 
 #if BYTE_ORDER == BIG_ENDIAN
