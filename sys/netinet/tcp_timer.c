@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.35 2004/11/25 15:32:08 markus Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.36 2004/12/13 12:01:49 espie Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ tcp_timer_rexmt(void *arg)
 	rto = TCP_REXMTVAL(tp);
 	if (rto < tp->t_rttmin)
 		rto = tp->t_rttmin;
-	TCPT_RANGESET((long) tp->t_rxtcur,
+	TCPT_RANGESET(tp->t_rxtcur,
 	    rto * tcp_backoff[tp->t_rxtshift],
 	    tp->t_rttmin, TCPTV_REXMTMAX);
 	TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
