@@ -1,7 +1,6 @@
-./usr/share/info/cfg-paper.info
-./usr/share/info/configure.info
-./usr/share/info/configure.info-1
-./usr/share/info/configure.info-2
+./usr/share/info/gcc.info-26
+./usr/share/info/gcc.info-27
+./usr/share/info/gcc.info-28
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
 ./usr/share/info/cpp.info-2
@@ -66,8 +65,6 @@
 ./usr/share/info/info-stnd.info
 ./usr/share/info/info.info
 ./usr/share/info/iostream.info
-./usr/share/info/iostream.info-1
-./usr/share/info/iostream.info-2
 ./usr/share/info/kth-krb.info
 ./usr/share/info/libg++.info
 ./usr/share/info/libg++.info-1
@@ -76,8 +73,6 @@
 ./usr/share/info/libg++.info-4
 ./usr/share/info/libg++.info-5
 ./usr/share/info/standards.info
-./usr/share/info/standards.info-1
-./usr/share/info/standards.info-2
 ./usr/share/info/texinfo
 ./usr/share/info/texinfo-1
 ./usr/share/info/texinfo-10
@@ -137,7 +132,6 @@
 ./usr/share/man/cat1/comm.0
 ./usr/share/man/cat1/compile_et.0
 ./usr/share/man/cat1/compress.0
-./usr/share/man/cat1/configure.0
 ./usr/share/man/cat1/cp.0
 ./usr/share/man/cat1/cpio.0
 ./usr/share/man/cat1/cpp.0
