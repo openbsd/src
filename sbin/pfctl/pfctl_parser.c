@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.48 2001/09/15 03:54:40 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.49 2001/09/15 23:13:40 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -155,8 +155,8 @@ struct icmpcodeent icmp_code[] = {
 };
 
 struct icmpcodeent icmp6_code[] = {
-	{ "admin-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE },
-	{ "noroute-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN },
+	{ "admin-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN },
+	{ "noroute-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE },
 	{ "notnbr-unr",	ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOTNEIGHBOR },
 	{ "beyond-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_BEYONDSCOPE },
 	{ "addr-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR },
