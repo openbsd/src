@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.h,v 1.8 2003/06/03 02:56:06 millert Exp $	*/
+/*	$OpenBSD: chpass.h,v 1.9 2003/06/25 22:41:35 deraadt Exp $	*/
 /*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
 
 /*
@@ -36,7 +36,8 @@ struct passwd;
 
 typedef struct _entry {
 	char *prompt;
-	int (*func)(), restricted, len;
+	int (*func)(char *, struct passwd *, struct _entry *);
+	int restricted, len;
 	char *except, *save;
 } ENTRY;
 
