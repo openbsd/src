@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.21 1998/12/19 19:05:02 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.22 1998/12/28 03:50:37 jason Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -130,6 +130,7 @@ inphy*	at mii? phy ?				# Intel 82555 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
+#mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
 #ukphy*	at mii? phy ?				# "unknown" PHYs
 
 # ISA/EISA bus support

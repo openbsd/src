@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 1998/11/11 20:12:52 jason Exp $
+#	$OpenBSD: GENERIC,v 1.36 1998/12/28 03:50:37 jason Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -91,6 +91,7 @@ inphy*	at mii? phy ?				# Intel 82555 PHYs
 #nsphy*	at mii? phy ?				# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
+#mtdphy*	at mii? phy ?				# Myson MTD972 PHYs
 #ukphy*	at mii? phy ?				# "unknown" PHYs
 
 # ISA/EISA bus support
