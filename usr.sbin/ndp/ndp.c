@@ -1,9 +1,10 @@
-/*	$OpenBSD: ndp.c,v 1.5 2000/04/17 04:44:51 itojun Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.6 2000/06/20 21:53:43 itojun Exp $	*/
+/*	$KAME: ndp.c,v 1.40 2000/06/20 21:50:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -154,6 +155,7 @@ void ifinfo __P((int, char **));
 void rtrlist __P((void));
 void plist __P((void));
 void pfx_flush __P((void));
+void rtrlist __P((void));
 void rtr_flush __P((void));
 void harmonize_rtr __P((void));
 #ifdef SIOCSDEFIFACE_IN6	/* XXX: check SIOCGDEFIFACE_IN6 as well? */
@@ -172,8 +174,6 @@ main(argc, argv)
 	int ch;
 	int aflag = 0, cflag = 0, dflag = 0, sflag = 0, Hflag = 0,
 		pflag = 0, rflag = 0, Pflag = 0, Rflag = 0;
-	extern char *optarg;
-	extern int optind;
 
 	pid = getpid();
 	thiszone = gmt2local(0);
@@ -259,6 +259,7 @@ main(argc, argv)
 		if (argc != 1)
 			usage();
 		delete(argv[0]);
+		exit(0);
 	}
 	if (pflag) {
 		plist();
@@ -380,6 +381,12 @@ set(argc, argv)
 		return 1;
 	}
 	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
+#ifdef __KAME__
+	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
+		*(u_int16_t *)&sin->sin6_addr.s6_addr[2] =
+			htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
+	}
+#endif
 	ea = (u_char *)LLADDR(&sdl_m);
 	if (ndp_ether_aton(eaddr, ea) == 0)
 		sdl_m.sdl_alen = 6;
@@ -393,7 +400,6 @@ set(argc, argv)
 			flags |= RTF_ANNOUNCE;
 		argv++;
 	}
-tryagain:
 	if (rtmsg(RTM_GET) < 0) {
 		perror(host);
 		return (1);
@@ -408,8 +414,13 @@ tryagain:
 		case IFT_ISO88024: case IFT_ISO88025:
 			goto overwrite;
 		}
-		goto tryagain;
+		/*
+		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
+		 */
+		fprintf(stderr, "set: cannot configure a new entry\n");
+		return 1;
 	}
+
 overwrite:
 	if (sdl->sdl_family != AF_LINK) {
 		printf("cannot intuit interface index and type for %s\n", host);
@@ -441,6 +452,12 @@ get(host)
 		return;
 	}
 	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
+#ifdef __KAME__
+	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
+		*(u_int16_t *)&sin->sin6_addr.s6_addr[2] =
+			htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
+	}
+#endif
 	dump(&sin->sin6_addr);
 	if (found_entry == 0) {
 		getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
@@ -476,7 +493,12 @@ delete(host)
 		return 1;
 	}
 	sin->sin6_addr = ((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
-/*tryagain:*/
+#ifdef __KAME__
+	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
+		*(u_int16_t *)&sin->sin6_addr.s6_addr[2] =
+			htons(((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id);
+	}
+#endif
 	if (rtmsg(RTM_GET) < 0) {
 		perror(host);
 		return (1);
@@ -493,8 +515,12 @@ delete(host)
 				goto delete;
 			}
 		}
+		/*
+		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
+		 */
+		fprintf(stderr, "delete: cannot delete non-NDP entry\n");
+		return 1;
 	}
-	return 0;
 
 delete:
 	if (sdl->sdl_family != AF_LINK) {
@@ -502,7 +528,7 @@ delete:
 		return (1);
 	}
 	if (rtmsg(RTM_DELETE) == 0) {
-	       getnameinfo((struct sockaddr *)sin, 
+	       getnameinfo((struct sockaddr *)sin,
 			   sin->sin6_len, host_buf,
 			   sizeof(host_buf), NULL, 0,
 			   NI_WITHSCOPEID | (nflag ? NI_NUMERICHOST : 0));
@@ -1043,7 +1069,7 @@ plist()
 						 printf(" (reachable)\n");
 						 break;
 					 default:
-						 printf(" (unreachable)\n"); 
+						 printf(" (unreachable)\n");
 					}
 				}
 				else
@@ -1117,7 +1143,7 @@ setdefif(ifname)
 			err(1, "failed to resolve i/f index for %s", ifname);
 	}
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) 
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
 
 	strcpy(ndifreq.ifname, "lo0"); /* dummy */
@@ -1135,7 +1161,7 @@ getdefif()
 	struct in6_ndifreq ndifreq;
 	char ifname[IFNAMSIZ+8];
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) 
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		err(1, "socket");
 
 	memset(&ndifreq, 0, sizeof(ndifreq));
