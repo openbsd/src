@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.11 2005/03/25 22:18:00 mickey Exp $
+dnl	$OpenBSD: install,v 1.12 2005/03/26 15:56:37 mickey Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -6,9 +6,11 @@ Bootstrapping the installation ramdisk kernel is supported
 from both network and CD-ROM.
 
 
-Booting from CD-ROM installation media:
+Booting from Tape or CD-ROM installation media:
 
-You can burn a bootable CD-ROM and boot from it.
+You can burn a bootable CD-ROM and boot from it or you can prepare an
+installation tape as described in the "Creating an installation tape"
+section earlier.
 To boot from SCSI CD-ROM, simply insert the CD into the drive before power
 up, then during the computer's self-test cycle, press the space bar.
 Subsequently at the PROM prompt issue a command:
@@ -25,10 +27,15 @@ present may find those too.  A sample output might be:
    P1                 LAN.10.0.0.5.3.254       lucifier
    P2                 FWSCSI.5.0               IBM     DDRS-34560WS
    P3                 FWSCSI.0.0               SEAGATE ST318436LW
+   P4                 SESCSI.6.0               HP     HP35480A
 
 To boot from your CD-ROM type:
 
 	BOOT_ADMIN> boot p0
+
+To boot from your tape type:
+
+	BOOT_ADMIN> boot p4
 
 
 Booting from Network:
