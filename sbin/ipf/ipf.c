@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipf.c,v 1.16 1999/02/08 18:29:11 millert Exp $      */
+/*     $OpenBSD: ipf.c,v 1.17 1999/02/08 18:58:59 millert Exp $      */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.16 1999/02/08 18:29:11 millert Exp $";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.17 1999/02/08 18:58:59 millert Exp $";
 #endif
 
 static	void	frsync __P((void));
@@ -57,6 +57,8 @@ extern	char	*index __P((const char *, int));
 #endif
 
 extern	char	*optarg;
+extern	int	optind;
+extern	int	optreset;
 
 void	zerostats __P((void));
 int	main __P((int, char *[]));
@@ -88,6 +90,12 @@ char *argv[];
 {
 	int c;
 
+	while ((c = getopt(argc, argv, OPTS)) != -1)
+		if (c == '?')
+			usage();
+
+	optreset = 1;
+	optind = 1;
 	while ((c = getopt(argc, argv, OPTS)) != -1) {
 		switch (c)
 		{
@@ -146,9 +154,6 @@ char *argv[];
 			break;
 		case 'Z' :
 			zerostats();
-			break;
-		default :
-			usage();
 			break;
 		}
 	}
