@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.18 2004/01/22 20:34:55 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.19 2004/01/24 17:38:30 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -40,45 +40,24 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 {
 	struct peer		*p;
 
-	/* merge conf (new) into xconf (old)  */
 	if (!conf->as) {
 		log_warnx("configuration error: AS not given");
 		return (1);
 	}
-	if (xconf->as != conf->as)
-		xconf->as = conf->as;
 
-	if (conf->bgpid && xconf->bgpid != conf->bgpid)
-		xconf->bgpid = conf->bgpid;
+	if (!conf->min_holdtime)
+		conf->min_holdtime = MIN_HOLDTIME;
 
-	if (!xconf->bgpid)
-		xconf->bgpid = get_bgpid();
-
-	if (conf->holdtime && !xconf->holdtime)
-		xconf->holdtime = conf->holdtime;
-	if (!conf->holdtime && xconf->holdtime)
-		conf->holdtime = xconf->holdtime;
-
-	if (conf->min_holdtime && !xconf->min_holdtime)
-		xconf->min_holdtime = conf->min_holdtime;
-	if (!conf->min_holdtime && xconf->min_holdtime)
-		conf->min_holdtime = xconf->min_holdtime;
-	if (!xconf->min_holdtime)
-		xconf->min_holdtime = conf->min_holdtime = MIN_HOLDTIME;
-
-	memcpy(&xconf->listen_addr, &conf->listen_addr,
-	    sizeof(xconf->listen_addr));
-
-	xconf->flags = conf->flags;
-	xconf->log = conf->log;
-	xconf->holdtime = conf->holdtime;
-	xconf->min_holdtime = conf->min_holdtime;
+	if (!conf->bgpid)
+		conf->bgpid = get_bgpid();
 
 	for (p = peer_l; p != NULL; p = p->next) {
-		p->conf.ebgp = (p->conf.remote_as != xconf->as);
+		p->conf.ebgp = (p->conf.remote_as != conf->as);
 		if (!p->conf.id)
 			p->conf.id = get_id(p);
 	}
+
+	memcpy(xconf, conf, sizeof(struct bgpd_config));
 
 	return (0);
 }
