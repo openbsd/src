@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.17 2000/12/12 03:41:23 jason Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.18 2000/12/31 00:14:59 angelos Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -109,11 +109,6 @@
 #define	SIOCBRDGGTO	_IOWR('i', 70, struct ifbrparam)/* cache timeout */
 #define	SIOCBRDGDADDR	 _IOW('i', 71, struct ifbareq)	/* delete addr */
 #define	SIOCBRDGFLUSH	 _IOW('i', 72, struct ifbreq)	/* flush addr cache */
-
-#define SIOCGENCSA	_IOWR('i', 73, struct ifsa)	/* get enc sa */
-#define SIOCSENCDSTSA	 _IOW('i', 74, struct ifsa)	/* set enc sa */
-#define SIOCSENCSRCSA	 _IOW('i', 75, struct ifsa)	/* set enc sa */
-#define SIOCSENCCLEARSA	 _IOW('i', 76, struct ifsa)	/* set enc sa */
 
 #define SIOCBRDGARL	 _IOW('i', 77, struct ifbrlreq)	/* add bridge rule */
 #define SIOCBRDGFRL	 _IOW('i', 78, struct ifbrlreq)	/* flush brdg rules */
