@@ -1,4 +1,4 @@
-.\"	$OpenBSD: test.1,v 1.16 2003/11/20 11:00:18 jmc Exp $
+.\"	$OpenBSD: test.1,v 1.17 2003/11/21 09:04:51 jmc Exp $
 .\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -98,11 +98,6 @@ is set.
 True if
 .Ar file
 exists and is a symbolic link.
-This operator is for COMPATIBILITY purposes;
-do not rely on its existence.
-Use
-.Fl L
-instead.
 .It Fl k Ar file
 True if
 .Ar file
@@ -162,6 +157,11 @@ is zero.
 True if
 .Ar file
 exists and is a symbolic link.
+This operator is for compatibility purposes.
+Do not rely on its existence;
+use
+.Fl h
+instead.
 .It Fl O Ar file
 True if
 .Ar file
