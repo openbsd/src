@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.32 2000/09/10 16:39:42 rahnds Exp $
+#	$OpenBSD: MAKEDEV,v 1.33 2000/10/03 03:50:34 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -42,6 +42,7 @@
 #	vnd*	"file" pseudo-disks
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	concatenated disk devices
+#	raid*	RAIDframe disk devices
 #
 # Terminal ports:
 #	ttyE*	wscons
@@ -150,6 +151,7 @@ all)
 	sh $this sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
 	sh $this vnd0 vnd1 vnd2 vnd3
 	sh $this ccd0 ccd1 ccd2 ccd3
+	sh $this raid0 raid1 raid2 raid3
 	sh $this rd0 ipl
 	sh $this ttyo0 ttyE0
 	sh $this tty00 tty01 tty02 tty03 pty0
@@ -209,13 +211,14 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|wd*|ccd*|ofdisk*)
+sd*|wd*|ccd*|ofdisk*|raid*)
 	umask 2 ; unit=${i##*[a-z]}
 	case $i in
-	sd*) name=sd; blk=2; chr=8;;
-	wd*) name=wd; blk=0; chr=11;;
-	ofdisk*) name=ofdisk; blk=4; chr=13;;
-	ccd*) name=ccd; blk=16; chr=18;;
+	sd*) name=sd;		blk=2;	chr=8;;
+	wd*) name=wd;		blk=0;	chr=11;;
+	ofdisk*) name=ofdisk;	blk=4;	chr=13;;
+	ccd*) name=ccd; 	blk=16;	chr=18;;
+	raid*) name=raid;	blk=19;	chr=54;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
