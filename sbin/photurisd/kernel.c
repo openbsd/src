@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.3 1999/03/31 20:33:45 niklas Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.4 1999/07/02 23:37:33 deraadt Exp $";
 #endif
 
 #include <time.h>
@@ -534,7 +534,7 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sa.sadb_msg_type = SPI->flags & SPI_OWNER ? 
 	  SADB_UPDATE : SADB_ADD;
      sa.sadb_msg_satype = !hmac ?
-	  SADB_SATYPE_X_AH_OLD : SADB_SATYPE_AH;
+	  SADB_X_SATYPE_AH_OLD : SADB_SATYPE_AH;
      sa.sadb_msg_seq = pfkey_seq++;
      sa.sadb_msg_pid = pfkey_pid;
      iov[cnt].iov_base = &sa;
@@ -576,7 +576,7 @@ kernel_ah(attrib_t *ob, struct spiob *SPI, u_int8_t *secrets, int hmac)
      sr.sadb_sa_auth = xf->kernel_id;
      sr.sadb_sa_encrypt = 0;
      if (SPI->flags & SPI_TUNNEL)
-	  sr.sadb_sa_flags |= SADB_SAFLAGS_X_TUNNEL;
+	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
      sa.sadb_msg_len += sr.sadb_sa_len;
 
      iov[cnt].iov_base = &sr;
@@ -678,7 +678,7 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      sa.sadb_msg_type = SPI->flags & SPI_OWNER ?
 	  SADB_UPDATE : SADB_ADD;
      sa.sadb_msg_satype = xf_enc->flags & ESP_OLD ?
-	  SADB_SATYPE_X_ESP_OLD : SADB_SATYPE_ESP;
+	  SADB_X_SATYPE_ESP_OLD : SADB_SATYPE_ESP;
      sa.sadb_msg_seq = pfkey_seq++;
      sa.sadb_msg_pid = pfkey_pid;
      iov[cnt].iov_base = &sa;
@@ -692,9 +692,9 @@ kernel_esp(attrib_t *ob, attrib_t *ob2, struct spiob *SPI, u_int8_t *secrets)
      sr.sadb_sa_auth = attauth ? xf_auth->kernel_id : 0;
      sr.sadb_sa_encrypt = xf_enc->kernel_id;
      if (xf_enc->flags & ESP_OLD)
-	  sr.sadb_sa_flags |= SADB_SAFLAGS_X_HALFIV;
+	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
      if (SPI->flags & SPI_TUNNEL)
-	  sr.sadb_sa_flags |= SADB_SAFLAGS_X_TUNNEL;
+	  sr.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
      sa.sadb_msg_len += sr.sadb_sa_len;
 
      iov[cnt].iov_base = &sr;
@@ -817,7 +817,7 @@ kernel_group_spi(char *address, u_int8_t *spi)
      iov[cnt++].iov_len = sizeof(sa);
 
      sa2.sadb_sa_len = sizeof(sa2) / 8;
-     sa2.sadb_sa_exttype = SADB_EXT_X_SA2;
+     sa2.sadb_sa_exttype = SADB_X_EXT_SA2;
      sa2.sadb_sa_spi = htonl(SPI);
      sa2.sadb_sa_state = SADB_SASTATE_MATURE;
      smsg.sadb_msg_len += sa2.sadb_sa_len;
@@ -837,7 +837,7 @@ kernel_group_spi(char *address, u_int8_t *spi)
      iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 
      sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
-     sad2.sadb_address_exttype = SADB_EXT_X_DST2;
+     sad2.sadb_address_exttype = SADB_X_EXT_DST2;
      iov[cnt].iov_base = &sad2;
      iov[cnt++].iov_len = sizeof(sad2);
      dst2.sin.sin_family = AF_INET;
@@ -848,7 +848,7 @@ kernel_group_spi(char *address, u_int8_t *spi)
      iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 
      sproto.sadb_protocol_len = sizeof(sproto) / 8;
-     sproto.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
+     sproto.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
      sproto.sadb_protocol_proto = SADB_SATYPE_AH;
      smsg.sadb_msg_len += sproto.sadb_protocol_len;
      iov[cnt].iov_base = &sproto;
@@ -906,7 +906,7 @@ kernel_bind_spis(struct spiob *spi1, struct spiob *spi2)
      iov[cnt++].iov_len = sizeof(sa);
 
      sa2.sadb_sa_len = sizeof(sa2) / 8;
-     sa2.sadb_sa_exttype = SADB_EXT_X_SA2;
+     sa2.sadb_sa_exttype = SADB_X_EXT_SA2;
      sa2.sadb_sa_spi = htonl(outspi);
      sa2.sadb_sa_state = SADB_SASTATE_MATURE;
      smsg.sadb_msg_len += sa2.sadb_sa_len;
@@ -926,7 +926,7 @@ kernel_bind_spis(struct spiob *spi1, struct spiob *spi2)
      iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 
      sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
-     sad2.sadb_address_exttype = SADB_EXT_X_DST2;
+     sad2.sadb_address_exttype = SADB_X_EXT_DST2;
      iov[cnt].iov_base = &sad2;
      iov[cnt++].iov_len = sizeof(sad2);
      dst2.sin.sin_family = AF_INET;
@@ -937,7 +937,7 @@ kernel_bind_spis(struct spiob *spi1, struct spiob *spi2)
      iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 
      sproto.sadb_protocol_len = sizeof(sproto) / 8;
-     sproto.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
+     sproto.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
      sproto.sadb_protocol_proto = spi2->flags & SPI_ESP ?
 	  SADB_SATYPE_ESP : SADB_SATYPE_AH;
      smsg.sadb_msg_len += sproto.sadb_protocol_len;
@@ -1013,10 +1013,10 @@ kernel_enable_spi(in_addr_t isrc, in_addr_t ismask,
      iov[cnt].iov_base = &dst;
      iov[cnt++].iov_len = sizeof(struct sockaddr_in);
 
-     sad1.sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
-     sad2.sadb_address_exttype = SADB_EXT_X_SRC_MASK;
-     sad3.sadb_address_exttype = SADB_EXT_X_DST_FLOW;
-     sad4.sadb_address_exttype = SADB_EXT_X_DST_MASK;
+     sad1.sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
+     sad2.sadb_address_exttype = SADB_X_EXT_SRC_MASK;
+     sad3.sadb_address_exttype = SADB_X_EXT_DST_FLOW;
+     sad4.sadb_address_exttype = SADB_X_EXT_DST_MASK;
      
      sad1.sadb_address_len = (sizeof(sad1) + sizeof(struct sockaddr_in)) / 8;
      sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
@@ -1109,10 +1109,10 @@ kernel_disable_spi(in_addr_t isrc, in_addr_t ismask,
      iov[cnt].iov_base = &sa;
      iov[cnt++].iov_len = sizeof(sa);
 
-     sad1.sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
-     sad2.sadb_address_exttype = SADB_EXT_X_SRC_MASK;
-     sad3.sadb_address_exttype = SADB_EXT_X_DST_FLOW;
-     sad4.sadb_address_exttype = SADB_EXT_X_DST_MASK;
+     sad1.sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
+     sad2.sadb_address_exttype = SADB_X_EXT_SRC_MASK;
+     sad3.sadb_address_exttype = SADB_X_EXT_DST_FLOW;
+     sad4.sadb_address_exttype = SADB_X_EXT_DST_MASK;
      
      sad1.sadb_address_len = (sizeof(sad1) + sizeof(struct sockaddr_in)) / 8;
      sad2.sadb_address_len = (sizeof(sad2) + sizeof(struct sockaddr_in)) / 8;
@@ -1354,7 +1354,7 @@ kernel_insert_spi(struct stateob *st, struct spiob *SPI)
 	       if (kernel_enable_spi(SPI->isrc, SPI->ismask,
 				     SPI->idst, SPI->idmask,
 				     SPI->address, spi, proto, 
-				     SADB_SAFLAGS_X_REPLACEFLOW | SADB_SAFLAGS_X_LOCALFLOW |
+				     SADB_X_SAFLAGS_REPLACEFLOW | SADB_X_SAFLAGS_LOCALFLOW |
 				     (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0)) == -1)
 		    log_error(0, "kernel_enable_spi() in kernel_insert_spi()");
 	  } else {
@@ -1414,7 +1414,7 @@ kernel_unlink_spi(struct spiob *ospi)
 			AT_AH_ATTRIB);
      
      if (esp != NULL) {
-	  int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0) | SADB_SAFLAGS_X_LOCALFLOW;
+	  int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0) | SADB_X_SAFLAGS_LOCALFLOW;
 	  if (!(ospi->flags & SPI_OWNER) && 
 	      kernel_disable_spi(ospi->isrc, ospi->ismask,
 				 ospi->idst, ospi->idmask,
@@ -1429,7 +1429,7 @@ kernel_unlink_spi(struct spiob *ospi)
      if (ah != NULL) {
 	  if (esp == NULL) {
 	       int flag = (vpn_mode ? /*ENABLE_FLAG_MODIFY*/ : 0) | 
-					SADB_SAFLAGS_X_LOCALFLOW;
+					SADB_X_SAFLAGS_LOCALFLOW;
 	       if (!(ospi->flags & SPI_OWNER) &&
 		   kernel_disable_spi(ospi->isrc, ospi->ismask,
 				      ospi->idst, ospi->idmask,

@@ -49,13 +49,13 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #define BITMAP_KEY      (BITMAP_KEY_AUTH | BITMAP_KEY_ENCRYPT)
 #define BITMAP_IDENTITY (BITMAP_IDENTITY_SRC | BITMAP_IDENTITY_DST)
 #define BITMAP_MSG                     1
-#define BITMAP_X_SRC_MASK              (1 << SADB_EXT_X_SRC_MASK)
-#define BITMAP_X_DST_MASK              (1 << SADB_EXT_X_DST_MASK)
-#define BITMAP_X_PROTOCOL              (1 << SADB_EXT_X_PROTOCOL)
-#define BITMAP_X_SA2                   (1 << SADB_EXT_X_SA2)
-#define BITMAP_X_SRC_FLOW              (1 << SADB_EXT_X_SRC_FLOW)
-#define BITMAP_X_DST_FLOW              (1 << SADB_EXT_X_DST_FLOW)
-#define BITMAP_X_DST2                  (1 << SADB_EXT_X_DST2)
+#define BITMAP_X_SRC_MASK              (1 << SADB_X_EXT_SRC_MASK)
+#define BITMAP_X_DST_MASK              (1 << SADB_X_EXT_DST_MASK)
+#define BITMAP_X_PROTOCOL              (1 << SADB_X_EXT_PROTOCOL)
+#define BITMAP_X_SA2                   (1 << SADB_X_EXT_SA2)
+#define BITMAP_X_SRC_FLOW              (1 << SADB_X_EXT_SRC_FLOW)
+#define BITMAP_X_DST_FLOW              (1 << SADB_X_EXT_DST_FLOW)
+#define BITMAP_X_DST2                  (1 << SADB_X_EXT_DST2)
 
 uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -274,7 +274,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
     seen |= (1 << sadb_ext->sadb_ext_type);
 
     switch (sadb_ext->sadb_ext_type) {
-      case SADB_EXT_X_SA2:
+      case SADB_X_EXT_SA2:
       case SADB_EXT_SA:
 	{
 	  struct sadb_sa *sadb_sa = (struct sadb_sa *)p;
@@ -298,7 +298,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	    return EINVAL;
 	}
 	break;
-      case SADB_EXT_X_PROTOCOL:
+      case SADB_X_EXT_PROTOCOL:
 	if (i != sizeof(struct sadb_protocol))
 	    return EINVAL;
 	break;
@@ -312,11 +312,11 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	break;
       case SADB_EXT_ADDRESS_SRC:
       case SADB_EXT_ADDRESS_DST:
-      case SADB_EXT_X_DST2:
-      case SADB_EXT_X_SRC_MASK:
-      case SADB_EXT_X_DST_MASK:
-      case SADB_EXT_X_SRC_FLOW:
-      case SADB_EXT_X_DST_FLOW:
+      case SADB_X_EXT_DST2:
+      case SADB_X_EXT_SRC_MASK:
+      case SADB_X_EXT_DST_MASK:
+      case SADB_X_EXT_SRC_FLOW:
+      case SADB_X_EXT_DST_FLOW:
       case SADB_EXT_ADDRESS_PROXY:
 	{
 	  struct sadb_address *sadb_address = (struct sadb_address *)p;
@@ -346,10 +346,10 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	      /* Only check the right pieces */
 	      switch (sadb_ext->sadb_ext_type)
 	      {
-		  case SADB_EXT_X_SRC_MASK:
-		  case SADB_EXT_X_DST_MASK:
-		  case SADB_EXT_X_SRC_FLOW:
-		  case SADB_EXT_X_DST_FLOW:
+		  case SADB_X_EXT_SRC_MASK:
+		  case SADB_X_EXT_DST_MASK:
+		  case SADB_X_EXT_SRC_FLOW:
+		  case SADB_X_EXT_DST_FLOW:
 		      break;
 		      
 		  default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_xform.c,v 1.2 1999/06/30 17:23:59 deraadt Exp $	*/
+/*	$OpenBSD: ip_xform.c,v 1.3 1999/07/02 23:37:33 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -198,7 +198,7 @@ blf_zerokey(u_int8_t **sched)
 }
 
 struct enc_xform enc_xform_blf = {
-    SADB_EALG_X_BLF, "Blowfish",
+    SADB_X_EALG_BLF, "Blowfish",
     ESP_BLF_BLKS, ESP_BLF_IVS,
     5, BLF_MAXKEYLEN, 8,
     blf_encrypt,
@@ -236,7 +236,7 @@ cast5_zerokey(u_int8_t **sched)
 }
 
 struct enc_xform enc_xform_cast5 = {
-    SADB_EALG_X_CAST, "CAST",
+    SADB_X_EALG_CAST, "CAST",
     ESP_CAST_BLKS, ESP_CAST_IVS,
     5, 16, 8,
     cast5_encrypt,
@@ -282,7 +282,7 @@ skipjack_zerokey(u_int8_t **sched)
 }
 
 struct enc_xform enc_xform_skipjack = {
-    SADB_EALG_X_SKIPJACK, "Skipjack",
+    SADB_X_EALG_SKIPJACK, "Skipjack",
     ESP_SKIPJACK_BLKS, ESP_SKIPJACK_IVS,
     10, 10, 8,
     skipjack_encrypt,
@@ -314,7 +314,7 @@ struct auth_hash auth_hash_hmac_sha1_96 = {
 };
 
 struct auth_hash auth_hash_hmac_ripemd_160_96 = {
-    SADB_AALG_X_RIPEMD160HMAC96, "HMAC-RIPEMD-160-96",
+    SADB_X_AALG_RIPEMD160HMAC96, "HMAC-RIPEMD-160-96",
     RIPEMD160HMAC96_KEYSIZE, AH_RMD160_ALEN,
     sizeof(RMD160_CTX),
     (void (*)(void *)) RMD160Init,
@@ -323,7 +323,7 @@ struct auth_hash auth_hash_hmac_ripemd_160_96 = {
 };
 
 struct auth_hash auth_hash_key_md5 = {
-    SADB_AALG_X_MD5, "Keyed MD5", 
+    SADB_X_AALG_MD5, "Keyed MD5", 
     0, AH_MD5_ALEN,
     sizeof(MD5_CTX),
     (void (*)(void *))MD5Init, 
@@ -332,7 +332,7 @@ struct auth_hash auth_hash_key_md5 = {
 };
 
 struct auth_hash auth_hash_key_sha1 = {
-    SADB_AALG_X_SHA1, "Keyed SHA1",
+    SADB_X_AALG_SHA1, "Keyed SHA1",
     0, AH_SHA1_ALEN,
     sizeof(SHA1_CTX),
     (void (*)(void *))SHA1Init, 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.11 1999/06/02 06:34:53 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.12 1999/07/02 23:37:32 deraadt Exp $	*/
 /*	$EOM: pf_key_v2.c,v 1.16 1999/05/25 08:06:26 niklas Exp $	*/
 
 /*
@@ -655,15 +655,15 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 	  ssa.sadb_sa_encrypt = SADB_EALG_3DESCBC;
 	  break;
 
-#ifdef SADB_EALG_X_CAST
+#ifdef SADB_X_EALG_CAST
 	case IPSEC_ESP_CAST:
-	  ssa.sadb_sa_encrypt = SADB_EALG_X_CAST;
+	  ssa.sadb_sa_encrypt = SADB_X_EALG_CAST;
 	  break;
 #endif
 
-#ifdef SADB_EALG_X_BLF
+#ifdef SADB_X_EALG_BLF
 	case IPSEC_ESP_BLOWFISH:
-	  ssa.sadb_sa_encrypt = SADB_EALG_X_BLF;
+	  ssa.sadb_sa_encrypt = SADB_X_EALG_BLF;
 	  break;
 #endif
 
@@ -730,9 +730,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
   ssa.sadb_sa_replay
     = conf_get_str ("General", "Shared-SADB") ? 0 : iproto->replay_window;
   ssa.sadb_sa_state = SADB_SASTATE_MATURE;
-#ifdef SADB_SAFLAGS_X_TUNNEL
+#ifdef SADB_X_SAFLAGS_TUNNEL
   ssa.sadb_sa_flags
-    = iproto->encap_mode == IPSEC_ENCAP_TUNNEL ? SADB_SAFLAGS_X_TUNNEL : 0;
+    = iproto->encap_mode == IPSEC_ENCAP_TUNNEL ? SADB_X_SAFLAGS_TUNNEL : 0;
 #else
   ssa.sadb_sa_flags = 0;
 #endif
@@ -1007,9 +1007,9 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
    * XXX The LOCALFLOW flag should only be set if this machine is part of the
    * source subnet.
    */
-  ssa.sadb_sa_flags = SADB_SAFLAGS_X_LOCALFLOW;
+  ssa.sadb_sa_flags = SADB_X_SAFLAGS_LOCALFLOW;
   if (!delete)
-    ssa.sadb_sa_flags |= SADB_SAFLAGS_X_REPLACEFLOW;
+    ssa.sadb_sa_flags |= SADB_X_SAFLAGS_REPLACEFLOW;
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa, 0) == -1)
     goto cleanup;
 
@@ -1046,7 +1046,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   addr = malloc (len);
   if (!addr)
     goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
+  addr->sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
 #if 0
   addr->sadb_address_proto = 0;
@@ -1066,7 +1066,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   addr = malloc (len);
   if (!addr)
     goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_SRC_MASK;
+  addr->sadb_address_exttype = SADB_X_EXT_SRC_MASK;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
 #if 0
   addr->sadb_address_proto = 0;
@@ -1086,7 +1086,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   addr = malloc (len);
   if (!addr)
     goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_DST_FLOW;
+  addr->sadb_address_exttype = SADB_X_EXT_DST_FLOW;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
 #if 0
   addr->sadb_address_proto = 0;
@@ -1106,7 +1106,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   addr = malloc (len);
   if (!addr)
     goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_DST_MASK;
+  addr->sadb_address_exttype = SADB_X_EXT_DST_MASK;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
 #if 0
   addr->sadb_address_proto = 0;
@@ -1513,7 +1513,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   if (pf_key_v2_msg_add (grpspis, (struct sadb_ext *)&sa1, 0) == -1)
     goto cleanup;
 
-  sa2.sadb_sa_exttype = SADB_EXT_X_SA2;
+  sa2.sadb_sa_exttype = SADB_X_EXT_SA2;
   sa2.sadb_sa_len = sizeof sa2 / PF_KEY_V2_CHUNK;
   memcpy (&sa2.sadb_sa_spi, proto2->spi[incoming], sizeof sa2.sadb_sa_spi);
   sa2.sadb_sa_replay = 0;
@@ -1554,7 +1554,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   addr = malloc (len);
   if (!addr)
     goto cleanup;
-  addr->sadb_address_exttype = SADB_EXT_X_DST2;
+  addr->sadb_address_exttype = SADB_X_EXT_DST2;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
 #if 0
   addr->sadb_address_proto = 0;
@@ -1569,7 +1569,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   addr = 0;
 
   /* Setup the PROTOCOL extension.  */
-  protocol.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
+  protocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
   protocol.sadb_protocol_len = sizeof protocol / PF_KEY_V2_CHUNK;
   switch (proto2->proto)
     {

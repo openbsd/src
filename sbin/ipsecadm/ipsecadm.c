@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.19 1999/06/05 19:32:57 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.20 1999/07/02 23:37:32 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -88,14 +88,14 @@ typedef struct {
 transform xf[] = {
     {"des", SADB_EALG_DESCBC,   XF_ENC |ESP_OLD|ESP_NEW},
     {"3des", SADB_EALG_3DESCBC, XF_ENC |ESP_OLD|ESP_NEW},
-    {"blf", SADB_EALG_X_BLF,   XF_ENC |        ESP_NEW},
-    {"cast", SADB_EALG_X_CAST, XF_ENC |        ESP_NEW},
-    {"skipjack", SADB_EALG_X_SKIPJACK, XF_ENC |        ESP_NEW},
+    {"blf", SADB_X_EALG_BLF,   XF_ENC |        ESP_NEW},
+    {"cast", SADB_X_EALG_CAST, XF_ENC |        ESP_NEW},
+    {"skipjack", SADB_X_EALG_SKIPJACK, XF_ENC |        ESP_NEW},
     {"md5", SADB_AALG_MD5HMAC96,  XF_AUTH|AH_NEW|ESP_NEW},
     {"sha1", SADB_AALG_SHA1HMAC96,XF_AUTH|AH_NEW|ESP_NEW},
-    {"md5", SADB_AALG_X_MD5,  XF_AUTH|AH_OLD},
-    {"sha1", SADB_AALG_X_SHA1,XF_AUTH|AH_OLD},
-    {"rmd160", SADB_AALG_X_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
+    {"md5", SADB_X_AALG_MD5,  XF_AUTH|AH_OLD},
+    {"sha1", SADB_X_AALG_SHA1,XF_AUTH|AH_OLD},
+    {"rmd160", SADB_X_AALG_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
 };
 
 void
@@ -269,7 +269,7 @@ main(int argc, char **argv)
     sa.sadb_sa_state = SADB_SASTATE_MATURE;
 
     /* Initialize */
-    sa2.sadb_sa_exttype = SADB_EXT_X_SA2;
+    sa2.sadb_sa_exttype = SADB_X_EXT_SA2;
     sa2.sadb_sa_len = sizeof(sa2) / 8;
     sa2.sadb_sa_replay = 0;
     sa2.sadb_sa_state = SADB_SASTATE_MATURE;
@@ -315,14 +315,14 @@ main(int argc, char **argv)
 	  {
 	      mode = ESP_OLD;
 	      smsg.sadb_msg_type = SADB_ADD;
-	      smsg.sadb_msg_satype = SADB_SATYPE_X_ESP_OLD;
+	      smsg.sadb_msg_satype = SADB_X_SATYPE_ESP_OLD;
 	  }
 	  else
 	    if (!strcmp(argv[2], "ah"))
 	    {
 		mode = AH_OLD;
 		smsg.sadb_msg_type = SADB_ADD;
-		smsg.sadb_msg_satype = SADB_SATYPE_X_AH_OLD;
+		smsg.sadb_msg_satype = SADB_X_SATYPE_AH_OLD;
 	    }
 	    else
 	    {
@@ -370,7 +370,7 @@ main(int argc, char **argv)
 		{
 		    mode = ENC_IP;
 		    smsg.sadb_msg_type = SADB_ADD;
-		    smsg.sadb_msg_satype = SADB_SATYPE_X_IPIP;
+		    smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 		    i++;
 		}
 		else
@@ -463,7 +463,7 @@ main(int argc, char **argv)
 
 	    if (mode & ESP_OLD)
 	      if (strlen(argv[i + 2]) == 4)
-		sa.sadb_sa_flags |= SADB_SAFLAGS_X_HALFIV;
+		sa.sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
 
 	    i++;
 	    continue;
@@ -533,7 +533,7 @@ main(int argc, char **argv)
 
 	if (!strcmp(argv[i] + 1, "forcetunnel") && isencauth(mode))
 	{
-	    sa.sadb_sa_flags |= SADB_SAFLAGS_X_TUNNEL;
+	    sa.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
 	    continue;
 	}
 
@@ -547,7 +547,7 @@ main(int argc, char **argv)
 		exit(1);
 	    }
 
-	    sa.sadb_sa_flags |= SADB_SAFLAGS_X_HALFIV;
+	    sa.sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
 	    continue;
 	}
 
@@ -559,7 +559,7 @@ main(int argc, char **argv)
 
 	if (!strcmp(argv[i] + 1, "local") && iscmd(mode, FLOW))
 	{
-	    sa.sadb_sa_flags |= SADB_SAFLAGS_X_LOCALFLOW;
+	    sa.sadb_sa_flags |= SADB_X_SAFLAGS_LOCALFLOW;
 	    continue;
 	}
 
@@ -567,17 +567,17 @@ main(int argc, char **argv)
 	    (isencauth(mode) || mode == ENC_IP) && ( i + 2 < argc))
 	{
 	    i += 2;
-	    sa.sadb_sa_flags |= SADB_SAFLAGS_X_TUNNEL;
+	    sa.sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
 	    continue;
 	}
 
 	if (!strcmp(argv[i] + 1, "addr") && iscmd(mode, FLOW) &&
 	    (i + 4 < argc))
 	{
-	    sad4.sadb_address_exttype = SADB_EXT_X_SRC_FLOW;
-	    sad5.sadb_address_exttype = SADB_EXT_X_DST_FLOW;
-	    sad6.sadb_address_exttype = SADB_EXT_X_SRC_MASK;
-	    sad7.sadb_address_exttype = SADB_EXT_X_DST_MASK;
+	    sad4.sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
+	    sad5.sadb_address_exttype = SADB_X_EXT_DST_FLOW;
+	    sad6.sadb_address_exttype = SADB_X_EXT_SRC_MASK;
+	    sad7.sadb_address_exttype = SADB_X_EXT_DST_MASK;
 
 	    sad4.sadb_address_len = (sizeof(sad4) +
 				     sizeof(struct sockaddr_in)) / 8;
@@ -648,7 +648,7 @@ main(int argc, char **argv)
 	    }
 
 	    sprotocol.sadb_protocol_len = 1;
-	    sprotocol.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
+	    sprotocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
 	    sprotocol.sadb_protocol_proto = tproto;
 	    i++;
 	    continue;
@@ -720,7 +720,7 @@ main(int argc, char **argv)
 	{
 	    sad8.sadb_address_len = (sizeof(sad8) +
 				     sizeof(struct sockaddr_in)) / 8;
-	    sad8.sadb_address_exttype = SADB_EXT_X_DST2;
+	    sad8.sadb_address_exttype = SADB_X_EXT_DST2;
 	    dst2.sin.sin_family = AF_INET;
 	    dst2.sin.sin_len = sizeof(struct sockaddr_in);
 	    dst2set = inet_aton(argv[i + 1], &dst2.sin.sin_addr) != -1 ? 1 : 0;
@@ -748,7 +748,7 @@ main(int argc, char **argv)
 		  else
 		    if (!strcasecmp(argv[i + 1], "ip4"))
 		    {
-			smsg.sadb_msg_satype = SADB_SATYPE_X_IPIP;
+			smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 			proto = IPPROTO_IPIP;
 		    }
 		    else
@@ -778,7 +778,7 @@ main(int argc, char **argv)
 		    smsg.sadb_msg_satype = SADB_SATYPE_AH;
 		  else
 		    if (proto == IPPROTO_IPIP)
-		      smsg.sadb_msg_satype = SADB_SATYPE_X_IPIP;
+		      smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 	    }
 	    
 	    i++;
@@ -804,7 +804,7 @@ main(int argc, char **argv)
 		  else
 		    if (!strcasecmp(argv[i + 1], "ip4"))
 		    {
-			sprotocol.sadb_protocol_proto = SADB_SATYPE_X_IPIP;
+			sprotocol.sadb_protocol_proto = SADB_X_SATYPE_IPIP;
 			proto2 = IPPROTO_IPIP;
 		    }
 		    else
@@ -835,20 +835,20 @@ main(int argc, char **argv)
 		    sprotocol.sadb_protocol_proto = SADB_SATYPE_AH;
 		  else
 		    if (proto2 == IPPROTO_IPIP)
-		      sprotocol.sadb_protocol_proto = SADB_SATYPE_X_IPIP;
+		      sprotocol.sadb_protocol_proto = SADB_X_SATYPE_IPIP;
 	    }
 
-	    sprotocol.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
+	    sprotocol.sadb_protocol_exttype = SADB_X_EXT_PROTOCOL;
 	    sprotocol.sadb_protocol_len = 1;
 	    i++;
 	    continue;
 	}
 
 	if (!strcmp(argv[i] + 1, "chain") &&
-	    !(sa.sadb_sa_flags & SADB_SAFLAGS_X_CHAINDEL) &&
+	    !(sa.sadb_sa_flags & SADB_X_SAFLAGS_CHAINDEL) &&
 	    iscmd(mode, DEL_SPI))
 	{
-	    sa.sadb_sa_flags |= SADB_SAFLAGS_X_CHAINDEL;
+	    sa.sadb_sa_flags |= SADB_X_SAFLAGS_CHAINDEL;
 	    continue;
 	}
 

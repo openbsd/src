@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.3 1999/03/27 21:18:01 provos Exp $ */
+/* $Id: kernel.h,v 1.4 1999/07/02 23:37:33 deraadt Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -62,16 +62,16 @@ typedef struct {
  */
 
 transform xf[] = {
-     {  5, SADB_AALG_X_MD5, XF_AUTH|AH_OLD},
-     {  6, SADB_AALG_X_SHA1, XF_AUTH|AH_OLD},
+     {  5, SADB_X_AALG_MD5, XF_AUTH|AH_OLD},
+     {  6, SADB_X_AALG_SHA1, XF_AUTH|AH_OLD},
      {  5, SADB_AALG_MD5HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
      {  6, SADB_AALG_SHA1HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
-     {  7, SADB_AALG_X_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
+     {  7, SADB_X_AALG_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
      {  8, SADB_EALG_DESCBC, XF_ENC|ESP_OLD},
      { 18, SADB_EALG_3DESCBC, XF_ENC|ESP_NEW},
-     { 16, SADB_EALG_X_BLF, XF_ENC|ESP_NEW},
-     { 17, SADB_EALG_X_CAST, XF_ENC|ESP_NEW},
-     { 19, SADB_EALG_X_SKIPJACK, XF_ENC|ESP_NEW},
+     { 16, SADB_X_EALG_BLF, XF_ENC|ESP_NEW},
+     { 17, SADB_X_EALG_CAST, XF_ENC|ESP_NEW},
+     { 19, SADB_X_EALG_SKIPJACK, XF_ENC|ESP_NEW},
 };
 
 transform *kernel_get_transform(int id);

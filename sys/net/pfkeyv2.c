@@ -69,15 +69,15 @@ static int npromisc = 0;
 static struct sadb_alg ealgs[] = {
     { SADB_EALG_DESCBC, 64, 64, 64 },
     { SADB_EALG_3DESCBC, 64, 192, 192 },
-    { SADB_EALG_X_BLF, 64, 5, BLF_MAXKEYLEN},
-    { SADB_EALG_X_CAST, 64, 5, 16},
-    { SADB_EALG_X_SKIPJACK, 64, 10, 10},
+    { SADB_X_EALG_BLF, 64, 5, BLF_MAXKEYLEN},
+    { SADB_X_EALG_CAST, 64, 5, 16},
+    { SADB_X_EALG_SKIPJACK, 64, 10, 10},
 };
 
 static struct sadb_alg aalgs[] = {
 { SADB_AALG_SHA1HMAC96, 0, 160, 160 },
 { SADB_AALG_MD5HMAC96, 0, 128, 128 },
-{ SADB_AALG_X_RIPEMD160HMAC96, 0, 160, 160 }
+{ SADB_X_AALG_RIPEMD160HMAC96, 0, 160, 160 }
 };
 
 extern int pfkey_register(struct pfkey_version *version);
@@ -177,10 +177,10 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
       if (sadb_sa->sadb_sa_flags & SADB_SAFLAGS_PFS)
 	tdb->tdb_flags |= TDBF_PFS;
 
-      if (sadb_sa->sadb_sa_flags & SADB_SAFLAGS_X_HALFIV)
+      if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_HALFIV)
 	tdb->tdb_flags |= TDBF_HALFIV;
 
-      if (sadb_sa->sadb_sa_flags & SADB_SAFLAGS_X_TUNNEL)
+      if (sadb_sa->sadb_sa_flags & SADB_X_SAFLAGS_TUNNEL)
 	tdb->tdb_flags |= TDBF_TUNNELING;
   }
 
@@ -211,10 +211,10 @@ export_sa(void **p, struct tdb *tdb)
     sadb_sa->sadb_sa_flags |= SADB_SAFLAGS_PFS;
 
   if (tdb->tdb_flags & TDBF_HALFIV)
-    sadb_sa->sadb_sa_flags |= SADB_SAFLAGS_X_HALFIV;
+    sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_HALFIV;
   
   if (tdb->tdb_flags & TDBF_TUNNELING)
-    sadb_sa->sadb_sa_flags |= SADB_SAFLAGS_X_TUNNEL;
+    sadb_sa->sadb_sa_flags |= SADB_X_SAFLAGS_TUNNEL;
 
   *p += sizeof(struct sadb_sa);
 }
@@ -754,7 +754,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  sa.tdb_sproto = IPPROTO_ESP;
 	  break;
 
-	case SADB_SATYPE_X_AH_OLD:
+	case SADB_X_SATYPE_AH_OLD:
 	  if (!ah_enable) {
 	    rval = EOPNOTSUPP;
 	    goto ret;
@@ -762,7 +762,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  sa.tdb_sproto = IPPROTO_AH;
 	  break;
 	    
-	case SADB_SATYPE_X_ESP_OLD:
+	case SADB_X_SATYPE_ESP_OLD:
 	  if (!esp_enable) {
 	    rval = EOPNOTSUPP;
 	    goto ret;
@@ -770,7 +770,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	  sa.tdb_sproto = IPPROTO_ESP;
 	  break;
 
-	case SADB_SATYPE_X_IPIP:
+	case SADB_X_SATYPE_IPIP:
 	  sa.tdb_sproto = IPPROTO_IPIP;
 	  break;
 
@@ -839,7 +839,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    alg = XF_NEW_ESP;
 	    break;
 
-	  case SADB_SATYPE_X_AH_OLD:
+	  case SADB_X_SATYPE_AH_OLD:
 	    if (!ah_enable) {
 	      rval = EOPNOTSUPP;
 	      goto splxret;
@@ -848,7 +848,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    alg = XF_OLD_AH;
 	    break;
 
-	  case SADB_SATYPE_X_ESP_OLD:
+	  case SADB_X_SATYPE_ESP_OLD:
 	    if (!esp_enable) {
 	      rval = EOPNOTSUPP;
 	      goto splxret;
@@ -857,7 +857,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    alg = XF_OLD_ESP;
 	    break;
 
-	  case SADB_SATYPE_X_IPIP:
+	  case SADB_X_SATYPE_IPIP:
 	    newsa->tdb_sproto = IPPROTO_IPIP;
 	    alg = XF_IP4;
 	    break;
@@ -965,7 +965,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    alg = XF_NEW_ESP;
 	    break;
 
-	  case SADB_SATYPE_X_AH_OLD:
+	  case SADB_X_SATYPE_AH_OLD:
 	    if (!ah_enable) {
 	      rval = EOPNOTSUPP;
 	      goto splxret;
@@ -974,7 +974,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    alg = XF_OLD_AH;
 	    break;
   
-	  case SADB_SATYPE_X_ESP_OLD:
+	  case SADB_X_SATYPE_ESP_OLD:
 	    if (!esp_enable) {
 	      rval = EOPNOTSUPP;
 	      goto splxret;
@@ -983,7 +983,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    alg = XF_OLD_ESP;
 	    break;
 
-	  case SADB_SATYPE_X_IPIP:
+	  case SADB_X_SATYPE_IPIP:
 	    newsa->tdb_sproto = IPPROTO_IPIP;
 	    alg = XF_IP4;
 	    break;
@@ -1037,7 +1037,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	goto splxret;
       }
       
-      tdb_delete(sa2, ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & SADB_SAFLAGS_X_CHAINDEL, TDBEXP_TIMEOUT);
+      tdb_delete(sa2, ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & SADB_X_SAFLAGS_CHAINDEL, TDBEXP_TIMEOUT);
       splx(s);
       sa2 = NULL;
       break;
@@ -1135,11 +1135,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	struct rtentry *rt;
 
 	/*
-	 * SADB_SAFLAGS_X_REPLACEFLOW set means we should remove any
+	 * SADB_X_SAFLAGS_REPLACEFLOW set means we should remove any
 	 * potentially conflicting flow while we are adding this new one.
 	 */
 	replace = ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & 
-	          SADB_SAFLAGS_X_REPLACEFLOW;
+	          SADB_X_SAFLAGS_REPLACEFLOW;
 	if (replace && delflag) {
 	    rval = EINVAL;
 	    goto ret;
@@ -1157,20 +1157,20 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	}
 
 	local = ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & 
-		SADB_SAFLAGS_X_LOCALFLOW;
+		SADB_X_SAFLAGS_LOCALFLOW;
 	bzero(&encapdst, sizeof(struct sockaddr_encap));
 	bzero(&encapnetmask, sizeof(struct sockaddr_encap));
 	bzero(&encapgw, sizeof(struct sockaddr_encap));
 	bzero(&alts, sizeof(alts));
 	bzero(&altm, sizeof(altm));
 	
-	src = (union sockaddr_union *) (headers[SADB_EXT_X_SRC_FLOW] + sizeof(struct sadb_address));
-	dst = (union sockaddr_union *) (headers[SADB_EXT_X_DST_FLOW] + sizeof(struct sadb_address));
-	srcmask = (union sockaddr_union *) (headers[SADB_EXT_X_SRC_MASK] + sizeof(struct sadb_address));
-	dstmask = (union sockaddr_union *) (headers[SADB_EXT_X_DST_MASK] + sizeof(struct sadb_address));
+	src = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_FLOW] + sizeof(struct sadb_address));
+	dst = (union sockaddr_union *) (headers[SADB_X_EXT_DST_FLOW] + sizeof(struct sadb_address));
+	srcmask = (union sockaddr_union *) (headers[SADB_X_EXT_SRC_MASK] + sizeof(struct sadb_address));
+	dstmask = (union sockaddr_union *) (headers[SADB_X_EXT_DST_MASK] + sizeof(struct sadb_address));
 
-	if (headers[SADB_EXT_X_PROTOCOL])
-	  sproto = ((struct sadb_protocol *) headers[SADB_EXT_X_PROTOCOL])->sadb_protocol_proto;
+	if (headers[SADB_X_EXT_PROTOCOL])
+	  sproto = ((struct sadb_protocol *) headers[SADB_X_EXT_PROTOCOL])->sadb_protocol_proto;
 	else
 	  sproto = 0;
 	
@@ -1458,10 +1458,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    goto splxret;
 	}
 
-	tdb2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_X_SA2])->sadb_sa_spi,
-		      (union sockaddr_union *)(headers[SADB_EXT_X_DST2] +
+	tdb2 = gettdb(((struct sadb_sa *)headers[SADB_X_EXT_SA2])->sadb_sa_spi,
+		      (union sockaddr_union *)(headers[SADB_X_EXT_DST2] +
 					       sizeof(struct sadb_address)),
-		      SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_EXT_X_PROTOCOL])->sadb_protocol_proto));
+		      SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_X_EXT_PROTOCOL])->sadb_protocol_proto));
 
 	if (tdb2 == NULL) {
 	    rval = ESRCH;
@@ -1512,10 +1512,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    goto splxret;
 	}
 
-	tdb2 = gettdb(((struct sadb_sa *)headers[SADB_EXT_X_SA2])->sadb_sa_spi,
-		     (union sockaddr_union *)(headers[SADB_EXT_X_DST2] +
+	tdb2 = gettdb(((struct sadb_sa *)headers[SADB_X_EXT_SA2])->sadb_sa_spi,
+		     (union sockaddr_union *)(headers[SADB_X_EXT_DST2] +
 					      sizeof(struct sadb_address)),
-		     SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_EXT_X_PROTOCOL])->sadb_protocol_proto));
+		     SADB_GETSPROTO(((struct sadb_protocol *)headers[SADB_X_EXT_PROTOCOL])->sadb_protocol_proto));
 
 	if (tdb2 == NULL) {
 	    rval = ESRCH;
@@ -1749,13 +1749,13 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 
   switch (sa->tdb_sproto) {
     case IPPROTO_AH:
-      satype = sa->tdb_xform->xf_type == XF_OLD_AH ? SADB_SATYPE_X_AH_OLD : SADB_SATYPE_AH;
+      satype = sa->tdb_xform->xf_type == XF_OLD_AH ? SADB_X_SATYPE_AH_OLD : SADB_SATYPE_AH;
       break;
     case IPPROTO_ESP:
-      satype = sa->tdb_xform->xf_type == XF_OLD_ESP ? SADB_SATYPE_X_ESP_OLD : SADB_SATYPE_ESP;
+      satype = sa->tdb_xform->xf_type == XF_OLD_ESP ? SADB_X_SATYPE_ESP_OLD : SADB_SATYPE_ESP;
       break;
     case IPPROTO_IPIP:
-      satype = SADB_SATYPE_X_IPIP;
+      satype = SADB_X_SATYPE_IPIP;
       break;
     default:
       rval = EOPNOTSUPP;

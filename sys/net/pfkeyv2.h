@@ -160,9 +160,9 @@ struct sadb_protocol {
 };
     
 #define SADB_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
-                              (x) == SADB_SATYPE_X_AH_OLD ? IPPROTO_AH :\
+                              (x) == SADB_X_SATYPE_AH_OLD ? IPPROTO_AH :\
                                 (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
-                                  (x) == SADB_SATYPE_X_ESP_OLD ? IPPROTO_ESP :\
+                                  (x) == SADB_X_SATYPE_ESP_OLD ? IPPROTO_ESP :\
                                     IPPROTO_IPIP )
 
 #define SADB_EXT_RESERVED             0
@@ -181,13 +181,13 @@ struct sadb_protocol {
 #define SADB_EXT_PROPOSAL             13
 #define SADB_EXT_SUPPORTED            14
 #define SADB_EXT_SPIRANGE             15
-#define SADB_EXT_X_SRC_MASK           16
-#define SADB_EXT_X_DST_MASK           17
-#define SADB_EXT_X_PROTOCOL           18
-#define SADB_EXT_X_SA2                19
-#define SADB_EXT_X_SRC_FLOW           20
-#define SADB_EXT_X_DST_FLOW           21
-#define SADB_EXT_X_DST2               22
+#define SADB_X_EXT_SRC_MASK           16
+#define SADB_X_EXT_DST_MASK           17
+#define SADB_X_EXT_PROTOCOL           18
+#define SADB_X_EXT_SA2                19
+#define SADB_X_EXT_SRC_FLOW           20
+#define SADB_X_EXT_DST_FLOW           21
+#define SADB_X_EXT_DST2               22
 #define SADB_EXT_MAX                  22
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
@@ -198,9 +198,9 @@ struct sadb_protocol {
 #define SADB_SATYPE_OSPFV2    4
 #define SADB_SATYPE_RIPV2     5
 #define SADB_SATYPE_MIP       6
-#define SADB_SATYPE_X_AH_OLD  7
-#define SADB_SATYPE_X_ESP_OLD 8
-#define SADB_SATYPE_X_IPIP    9
+#define SADB_X_SATYPE_AH_OLD  7
+#define SADB_X_SATYPE_ESP_OLD 8
+#define SADB_X_SATYPE_IPIP    9
 #define SADB_SATYPE_MAX       9
 
 #define SADB_SASTATE_LARVAL   0
@@ -214,25 +214,25 @@ struct sadb_protocol {
 #define SADB_AALG_SHA1HMAC           2
 #define SADB_AALG_MD5HMAC96          3
 #define SADB_AALG_SHA1HMAC96         4
-#define SADB_AALG_X_RIPEMD160HMAC96  5
-#define SADB_AALG_X_MD5              6
-#define SADB_AALG_X_SHA1             7
+#define SADB_X_AALG_RIPEMD160HMAC96  5
+#define SADB_X_AALG_MD5              6
+#define SADB_X_AALG_SHA1             7
 #define SADB_AALG_MAX                7
 
 #define SADB_EALG_NONE        0
 #define SADB_EALG_DESCBC      1
 #define SADB_EALG_3DESCBC     2
-#define SADB_EALG_X_BLF       3
-#define SADB_EALG_X_CAST      4
-#define SADB_EALG_X_SKIPJACK  5
+#define SADB_X_EALG_BLF       3
+#define SADB_X_EALG_CAST      4
+#define SADB_X_EALG_SKIPJACK  5
 #define SADB_EALG_MAX         5
 
 #define SADB_SAFLAGS_PFS         	0x01    /* perfect forward secrecy */
-#define SADB_SAFLAGS_X_HALFIV    	0x02    /* Used for ESP-old */
-#define SADB_SAFLAGS_X_TUNNEL	 	0x04    /* Force tunneling */
-#define SADB_SAFLAGS_X_CHAINDEL  	0x08    /* Delete whole SA chain */
-#define SADB_SAFLAGS_X_LOCALFLOW 	0x10    /* Add flow with src=0.0.0.0 */
-#define SADB_SAFLAGS_X_REPLACEFLOW	0x20    /* Replace existing flow */
+#define SADB_X_SAFLAGS_HALFIV    	0x02    /* Used for ESP-old */
+#define SADB_X_SAFLAGS_TUNNEL	 	0x04    /* Force tunneling */
+#define SADB_X_SAFLAGS_CHAINDEL  	0x08    /* Delete whole SA chain */
+#define SADB_X_SAFLAGS_LOCALFLOW 	0x10    /* Add flow with src=0.0.0.0 */
+#define SADB_X_SAFLAGS_REPLACEFLOW	0x20    /* Replace existing flow */
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1
