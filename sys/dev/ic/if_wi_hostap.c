@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.13 2002/04/15 19:47:33 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.14 2002/04/23 22:25:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -276,6 +276,7 @@ wihap_shutdown(struct wi_softc *sc)
 
 	if (!(whi->apflags & WIHAPFL_ACTIVE))
 		return;
+	whi->apflags = 0;
 
 	/* XXX: I read somewhere you can deauth all the stations with
 	 * a single broadcast.  Maybe try that someday.
@@ -306,8 +307,6 @@ wihap_shutdown(struct wi_softc *sc)
 		sta = next;
 	}
 	splx(s);
-
-	whi->apflags = 0;
 }
 
 /* sta_hash_func()
