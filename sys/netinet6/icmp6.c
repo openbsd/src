@@ -1,5 +1,5 @@
-/*	$OpenBSD: icmp6.c,v 1.43 2001/06/09 06:43:37 angelos Exp $	*/
-/*	$KAME: icmp6.c,v 1.212 2001/06/01 05:35:52 jinmei Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.44 2001/06/22 12:59:08 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -181,10 +181,6 @@ static int icmp6_notify_error __P((struct mbuf *, int, int, int));
 static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
 static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 static void icmp6_redirect_timeout __P((struct rtentry *, struct rttimer *));
-
-#ifdef COMPAT_RFC1885
-static struct route_in6 icmp6_reflect_rt;
-#endif
 
 void
 icmp6_init()
@@ -2014,6 +2010,15 @@ icmp6_rip6_input(mp, off)
 /*
  * Reflect the ip6 packet back to the source.
  * OFF points to the icmp6 header, counted from the top of the mbuf.
+ *
+ * Note: RFC 1885 required that an echo reply should be truncated if it
+ * did not fit in with (return) path MTU, and KAME code supported the
+ * behavior.  However, as a clarification after the RFC, this limitation
+ * was removed in a revised version of the spec, RFC 2463.  We had kept the
+ * old behavior, with a (non-default) ifdef block, while the new version of
+ * the spec was an internet-draft status, and even after the new RFC was
+ * published.  But it would rather make sense to clean the obsoleted part
+ * up, and to make the code simpler at this stage.
  */
 void
 icmp6_reflect(m, off)
@@ -2028,10 +2033,6 @@ icmp6_reflect(m, off)
 	int type, code;
 	struct ifnet *outif = NULL;
 	struct sockaddr_in6 sa6_src, sa6_dst;
-#ifdef COMPAT_RFC1885
-	int mtu = IPV6_MMTU;
-	struct sockaddr_in6 *sin6 = &icmp6_reflect_rt.ro_dst;
-#endif
 
 	/* too short to reflect */
 	if (off < sizeof(struct ip6_hdr)) {
@@ -2104,38 +2105,6 @@ icmp6_reflect(m, off)
 	in6_recoverscope(&sa6_dst, &t, m->m_pkthdr.rcvif);
 	in6_embedscope(&t, &sa6_dst, NULL, NULL);
 
-#ifdef COMPAT_RFC1885
-	/*
-	 * xxx guess MTU
-	 * RFC 1885 requires that echo reply should be truncated if it
-	 * does not fit in with (return) path MTU, but the description was
-	 * removed in the new spec.
-	 */
-	if (icmp6_reflect_rt.ro_rt == 0 ||
-	    ! (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &ip6->ip6_dst))) {
-		if (icmp6_reflect_rt.ro_rt) {
-			icmp6_reflect_rt.ro_rt = 0;
-		}
-		bzero(sin6, sizeof(*sin6));
-		sin6->sin6_family = PF_INET6;
-		sin6->sin6_len = sizeof(struct sockaddr_in6);
-		sin6->sin6_addr = ip6->ip6_dst;
-
-		rtalloc((struct route *)&icmp6_reflect_rt.ro_rt);
-	}
-
-	if (icmp6_reflect_rt.ro_rt == 0)
-		goto bad;
-
-	if ((icmp6_reflect_rt.ro_rt->rt_flags & RTF_HOST)
-	    && mtu < icmp6_reflect_rt.ro_rt->rt_ifp->if_mtu)
-		mtu = icmp6_reflect_rt.ro_rt->rt_rmx.rmx_mtu;
-
-	if (mtu < m->m_pkthdr.len) {
-		plen -= (m->m_pkthdr.len - mtu);
-		m_adj(m, mtu - m->m_pkthdr.len);
-	}
-#endif
 	/*
 	 * If the incoming packet was addressed directly to us(i.e. unicast),
 	 * use dst as the src for the reply.
@@ -2204,11 +2173,8 @@ icmp6_reflect(m, off)
 	m->m_pkthdr.rcvif = NULL;
 #endif /*IPSEC*/
 
-#ifdef COMPAT_RFC1885
-	ip6_output(m, NULL, &icmp6_reflect_rt, 0, NULL, &outif);
-#else
 	ip6_output(m, NULL, NULL, 0, NULL, &outif);
-#endif
+
 	if (outif)
 		icmp6_ifoutstat_inc(outif, type, code);
 
