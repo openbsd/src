@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.124 2003/05/17 18:31:54 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.125 2003/05/17 18:35:04 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -162,6 +162,13 @@ struct pciide_softc {
 	bus_space_tag_t		sc_dma_iot;
 	bus_space_handle_t	sc_dma_ioh;
 	bus_dma_tag_t		sc_dmat;
+
+	/*
+	 * Some controllers might have DMA restrictions other than
+	 * the norm.
+	 */
+	bus_size_t		sc_dma_maxsegsz;
+	bus_size_t		sc_dma_boundary;
 
 	/* For Cypress */
 	const struct cy82c693_handle *sc_cy_handle;
@@ -724,6 +731,10 @@ pciide_attach(parent, self, aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
+	/* Set up DMA defaults; these might be adjusted by chip_map. */
+	sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX;
+	sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_ALIGN;
+
 	WDCDEBUG_PRINT((" sc_pc=%p, sc_tag=%p, pa_class=0x%x\n", sc->sc_pc,
 	    sc->sc_tag, pa->pa_class), DEBUG_PROBE);
 
@@ -1120,7 +1131,7 @@ pciide_dma_table_setup(sc, channel, drive)
 	    dma_maps->dmamap_table->dm_segs[0].ds_addr), DEBUG_PROBE);
 	/* Create a xfer DMA map for this drive */
 	if ((error = bus_dmamap_create(sc->sc_dmat, IDEDMA_BYTE_COUNT_MAX,
-	    NIDEDMA_TABLES, IDEDMA_BYTE_COUNT_MAX, IDEDMA_BYTE_COUNT_ALIGN,
+	    NIDEDMA_TABLES, sc->sc_dma_maxsegsz, sc->sc_dma_boundary,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &dma_maps->dmamap_xfer)) != 0) {
 		printf("%s:%d: unable to create xfer DMA map for "
