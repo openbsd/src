@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.12 1999/01/18 00:03:35 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.13 1999/02/16 16:44:07 millert Exp $
  *
  */
 
@@ -630,23 +630,23 @@ int     _thread_sys_pipe(int *);
 
 /* #include <sys/socket.h> */
 #ifdef  _SYS_SOCKET_H_
-int     _thread_sys_accept(int, struct sockaddr *, int *);
-int     _thread_sys_bind(int, const struct sockaddr *, int);
-int     _thread_sys_connect(int, const struct sockaddr *, int);
-int     _thread_sys_getpeername(int, struct sockaddr *, int *);
-int     _thread_sys_getsockname(int, struct sockaddr *, int *);
-int     _thread_sys_getsockopt(int, int, int, void *, int *);
+int     _thread_sys_accept(int, struct sockaddr *, socklen_t *);
+int     _thread_sys_bind(int, const struct sockaddr *, socklen_t);
+int     _thread_sys_connect(int, const struct sockaddr *, socklen_t);
+int     _thread_sys_getpeername(int, struct sockaddr *, socklen_t *);
+int     _thread_sys_getsockname(int, struct sockaddr *, socklen_t *);
+int     _thread_sys_getsockopt(int, int, int, void *, socklen_t *);
 int     _thread_sys_listen(int, int);
-int     _thread_sys_setsockopt(int, int, int, const void *, int);
+int     _thread_sys_setsockopt(int, int, int, const void *, socklen_t);
 int     _thread_sys_shutdown(int, int);
 int     _thread_sys_socket(int, int, int);
 int     _thread_sys_socketpair(int, int, int, int *);
 ssize_t _thread_sys_recv(int, void *, size_t, int);
-ssize_t _thread_sys_recvfrom(int, void *, size_t, int, struct sockaddr *, int *);
+ssize_t _thread_sys_recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
 ssize_t _thread_sys_recvmsg(int, struct msghdr *, int);
 ssize_t _thread_sys_send(int, const void *, size_t, int);
 ssize_t _thread_sys_sendmsg(int, const struct msghdr *, int);
-ssize_t _thread_sys_sendto(int, const void *,size_t, int, const struct sockaddr *, int);
+ssize_t _thread_sys_sendto(int, const void *,size_t, int, const struct sockaddr *, socklen_t);
 #endif
 
 /* #include <stdio.h> */
