@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.8 1997/09/23 21:40:59 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.9 1997/09/24 18:39:43 angelos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -73,7 +73,7 @@ typedef struct {
 }       transform;
 
 int xf_esp_new __P((struct in_addr, struct in_addr, u_int32_t, int, int, 
-		    u_char *, u_char *, struct in_addr, struct in_addr));
+		    u_char *, u_char *, struct in_addr, struct in_addr, int));
 int xf_esp_old __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
 		    u_char *, struct in_addr, struct in_addr)); 
 int xf_ah_new __P((struct in_addr, struct in_addr, u_int32_t, int, u_char *,
@@ -135,6 +135,7 @@ usage()
 	      "\t\t-iv <val>\t iv to be used\n"
 	      "\t\t-proto <val>\t security protocol\n"
 	      "\t\t-chain\t\t SPI chain delete\n"
+	      "\t\t-oldpadding\told style padding for new ESP\n"
 	      "\talso: dst2, spi2, proto2\n"
 	  );
 }
@@ -145,7 +146,7 @@ main(argc, argv)
 	char  **argv;
 {
 	int i;
-	int mode = ESP_NEW, new = 1, flag = 0;
+	int mode = ESP_NEW, new = 1, flag = 0, oldpadding = 0;
 	int auth = 0, enc = 0, ivlen = 0, klen = 0;
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
 	int chain = 0; 
@@ -235,6 +236,9 @@ main(argc, argv)
 	     } else if (!strcmp(argv[i]+1, "src") && i+1 < argc) {
 		  src.s_addr = inet_addr(argv[i+1]);
 		  i++;
+	     } else if (!strcmp(argv[i]+1, "oldpadding")) {
+		  oldpadding = 1;
+		  i++;
 	     } else if (!strcmp(argv[i]+1, "tunnel") && i+2 < argc) {
 		  osrc.s_addr = inet_addr(argv[i+1]);
 		  i++;
@@ -306,7 +310,8 @@ main(argc, argv)
 	if (isencauth(mode)) {
 	     switch(mode) {
 	     case ESP_NEW:
-		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, osrc, odst);
+		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, osrc, odst,
+			     oldpadding);
 		  break;
 	     case ESP_OLD:
 		  xf_esp_old(src, dst, spi, enc, ivp, keyp, osrc, odst);
