@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trsp.c	6.8 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: trsp.c,v 1.2 1996/05/30 09:10:46 deraadt Exp $";
+static char rcsid[] = "$Id: trsp.c,v 1.3 1996/06/03 18:06:23 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -149,7 +149,7 @@ again:
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (system != _PATH_UNIX || core != _PATH_KMEM)
+	if (!strcmp(system, _PATH_UNIX) || !strcmp(core, _PATH_KMEM))
 		setgid(getgid());
 	(void) nlist(system, nl);
 	if (nl[0].n_value == 0) {
