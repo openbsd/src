@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.11 2000/02/20 21:24:19 mjacob Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.12 2000/07/06 05:25:15 mjacob Exp $	*/
 /* release_03_25_99 */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -230,6 +230,9 @@ isp_sbus_attach(parent, self, aux)
 		ISP_UNLOCK(isp);
 		return;
 	}
+
+	ENABLE_INTS(isp);
+
 	/*
 	 * do generic attach.
 	 */
@@ -366,19 +369,6 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		rq->req_seg_count = 1;
 		goto mbxsync;
 	}
-	if (XS_CDBLEN(xs) > 12) {
-		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
-		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
-		if (*iptrp == optr) {
-			printf("%s: Request Queue Overflow++\n", isp->isp_name);
-			XS_SETERR(xs, HBA_BOTCH);
-			return (CMD_COMPLETE);
-		}
-	} else {
-		crq = NULL;
-	}
-	assert(rq->req_handle != 0 && rq->req_handle <= isp->isp_maxcmds);
-
 	if (CPU_ISSUN4M) {
 		kdvma = (vaddr_t)
 			kdvma_mapin((caddr_t)xs->data, xs->datalen, dosleep);
@@ -390,11 +380,26 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		kdvma = (vaddr_t) xs->data;
 	}
 
-	if (sbc->sbus_kdma_allocs[rq->req_handle - 1] != (vaddr_t) 0) {
+	if (sbc->sbus_kdma_allocs[isp_handle_index(rq->req_handle)] != 0) {
 		panic("%s: kdma handle already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	sbc->sbus_kdma_allocs[rq->req_handle - 1] = kdvma;
+	if (XS_CDBLEN(xs) > 12) {
+		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
+		*iptrp = ISP_NXT_QENTRY(*iptrp, RQUEST_QUEUE_LEN);
+		if (*iptrp == optr) {
+			printf("%s: Request Queue Overflow++\n", isp->isp_name);
+			if (CPU_ISSUN4M) {
+				dvma_mapout(kdvma,
+				    (vaddr_t) xs->data, xs->datalen);
+			}
+			XS_SETERR(xs, HBA_BOTCH);
+			return (CMD_EAGAIN);
+		}
+	} else {
+		crq = NULL;
+	}
+	sbc->sbus_kdma_allocs[isp_handle_index(rq->req_handle)] = kdvma;
 	if (xs->flags & SCSI_DATA_IN) {
 		rq->req_flags |= REQFLAG_DATA_IN;
 	} else {
@@ -402,6 +407,8 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 	if (crq) {
 		rq->req_seg_count = 2;
+		rq->req_dataseg[0].ds_count = 0;
+		rq->req_dataseg[0].ds_base =  0;
 		bzero((void *)crq, sizeof (*crq));
 		crq->req_header.rqs_entry_count = 1;
 		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;  
@@ -431,13 +438,12 @@ isp_sbus_dmateardown(isp, xs, handle)
 	if (xs->flags & SCSI_DATA_IN) {
 		cpuinfo.cache_flush(xs->data, xs->datalen - xs->resid);
 	}
-	assert(handle != 0 && handle <= isp->isp_maxcmds);
-	if (sbc->sbus_kdma_allocs[handle - 1] == (vaddr_t) 0) {
+	if (sbc->sbus_kdma_allocs[isp_handle_index(handle)] == (vaddr_t) 0) {
 		panic("%s: kdma handle not already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	kdvma = sbc->sbus_kdma_allocs[handle - 1];
-	sbc->sbus_kdma_allocs[handle - 1] = (vaddr_t) 0;
+	kdvma = sbc->sbus_kdma_allocs[isp_handle_index(handle)];
+	sbc->sbus_kdma_allocs[isp_handle_index(handle)] = (vaddr_t) 0;
 	if (CPU_ISSUN4M) {
 		dvma_mapout(kdvma, (vaddr_t) xs->data, xs->datalen);
 	}
