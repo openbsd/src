@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.14 2000/04/28 22:13:54 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.15 2000/05/01 19:44:10 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.14 2000/04/28 22:13:54 espie Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.15 2000/05/01 19:44:10 espie Exp $";
 #endif
 
 /*
@@ -83,13 +83,11 @@ pkg_do(char *pkg)
     int code;
     plist_t *p;
     struct stat sb;
-    int inPlace;
 
     code = 0;
     zapLogDir = 0;
     LogDir[0] = '\0';
     strcpy(playpen, FirstPen);
-    inPlace = 0;
     dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
 
     /* Are we coming in for a second pass, everything already extracted? */
@@ -175,7 +173,7 @@ pkg_do(char *pkg)
 	     * extracted the full file, anyway.
 	     */
 
-	    if (!extract && !inPlace && min_free(playpen) < sb.st_size * 4) {
+	    if (!extract && min_free(playpen) < sb.st_size * 4) {
 		warnx("projected size of %ld exceeds available free space\n"
 		       "Please set your PKG_TMPDIR variable to point to a"
 		       "location with more\n"
@@ -184,10 +182,6 @@ pkg_do(char *pkg)
 		       where_to);
 		goto bomb;
 	    }
-
-	    /* If this is a direct extract and we didn't want it, stop now */
-	    if (inPlace && Fake)
-		goto success;
 
 	    /* Finally unpack the whole mess.  If extract is null we already
 	       did so so don't bother doing it again. */
@@ -406,9 +400,7 @@ pkg_do(char *pkg)
 	}
     }
 
-    /* Now finally extract the entire show if we're not going direct */
-    if (!inPlace && !Fake)
-	extract_plist(".", &Plist);
+    extract_plist(".", &Plist);
 
     if (!Fake && fexists(MTREE_FNAME)) {
 	if (Verbose)
