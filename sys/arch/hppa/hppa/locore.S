@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.91 2002/10/07 15:32:37 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.92 2002/10/07 15:40:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -237,7 +237,7 @@ $qisnowon
 	/*
 	 * Cannot change the queues or IPSW with the Q-bit on
 	 */
-	rsm	RESET_PSW, r0
+	rsm	RESET_PSL, r0
 	nop ! nop ! nop ! nop ! nop ! nop ! nop
 
 	/*
@@ -293,7 +293,7 @@ LEAF_ENTRY($kernel_setup)
 	 * disable interrupts and turn off all bits in the psw so that
 	 * we start in a known state.
 	 */
-	rsm	RESET_PSW, r0
+	rsm	RESET_PSL, r0
 	nop ! nop ! nop ! nop ! nop ! nop
 
 	/* get things ready for the kernel to run in virtual mode */
@@ -811,7 +811,7 @@ $syscall_return
 	 * sp will be left in virtual until restored from trapframe,
 	 * since we don't use it anyway.
 	 */
-	rsm	RESET_PSW, r0
+	rsm	RESET_PSL, r0
 	nop ! nop ! nop ! nop ! nop ! nop ! nop
 $syscall_return_phys
 
