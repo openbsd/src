@@ -1,5 +1,4 @@
-/*	$OpenBSD: locate.h,v 1.2 1996/06/26 05:35:53 deraadt Exp $	*/
-/*	$NetBSD: locate.h,v 1.3 1994/12/22 06:17:48 jtc Exp $	*/
+/*        $OpenBSD: locate.h,v 1.3 1996/08/16 22:00:13 michaels Exp $                                                           */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,3 +41,29 @@
 #define	OFFSET		14		/* abs value of max likely diff */
 #define	PARITY		0200		/* parity bit */
 #define	SWITCH		30		/* switch code */
+
+/* 	0-28	likeliest differential counts + offset to make nonnegative */
+#define LDC_MIN         0
+#define LDC_MAX        28
+
+/*	128-255 bigram codes (128 most common, as determined by 'updatedb') */
+#define BIGRAM_MIN    (UCHAR_MAX - CHAR_MAX) 
+#define BIGRAM_MAX    UCHAR_MAX
+
+/*	32-127  single character (printable) ascii residue (ie, literal) */
+#define ASCII_MIN      32
+#define ASCII_MAX     CHAR_MAX
+
+/* #define TO7BIT(x)     (x = ( ((u_char)x) & CHAR_MAX )) */
+#define TO7BIT(x)     (x = x & CHAR_MAX )
+
+
+#if UCHAR_MAX >= 4096
+   define TOLOWER(ch)	  tolower(ch)
+#else
+
+u_char myctype[UCHAR_MAX + 1];
+#define TOLOWER(ch)	(myctype[ch])
+#endif
+
+#define INTSIZE (sizeof(int))

@@ -1,5 +1,4 @@
-/*	$OpenBSD: locate.c,v 1.2 1996/06/26 05:35:52 deraadt Exp $	*/
-/*	$NetBSD: locate.c,v 1.6 1994/12/22 06:17:47 jtc Exp $	*/
+/*        $OpenBSD: locate.c,v 1.3 1996/08/16 22:00:12 michaels Exp $                                                           */
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,8 +45,9 @@ static char copyright[] =
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: locate.c,v 1.3 1996/08/16 22:00:12 michaels Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: locate.c,v 1.2 1996/06/26 05:35:52 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -59,19 +59,19 @@ static char rcsid[] = "$OpenBSD: locate.c,v 1.2 1996/06/26 05:35:52 deraadt Exp 
  * bigram coding by a further 20-25%.
  *
  * The codes are:
- * 
+ *
  * 	0-28	likeliest differential counts + offset to make nonnegative
  *	30	switch code for out-of-range count to follow in next word
  *	128-255 bigram codes (128 most common, as determined by 'updatedb')
  *	32-127  single character (printable) ascii residue (ie, literal)
- * 
+ *
  * A novel two-tiered string search technique is employed:
- * 
+ *
  * First, a metacharacter-free subpattern and partial pathname is matched
  * BACKWARDS to avoid full expansion of the pathname list.  The time savings
  * is 40-50% over forward matching, which cannot efficiently handle
  * overlapped search patterns and compressed path residue.
- * 
+ *
  * Then, the actual shell glob-style regular expression (if in this form) is
  * matched against the candidate pathnames using the slower routines provided
  * in the standard 'find'.
@@ -98,14 +98,15 @@ main(argc, argv)
 		(void)fprintf(stderr, "usage: locate pattern\n");
 		exit(1);
 	}
-	if (!(fp = fopen(_PATH_FCODES, "r"))) {
+	if ((fp = fopen(_PATH_FCODES, "r")) == NULL) {
 		(void)fprintf(stderr, "locate: no database file %s.\n",
 		    _PATH_FCODES);
 		exit(1);
 	}
-	while (*++argv)
+	while (*(++argv) != NULL)
 		fastfind(*argv);
-	exit(0);
+	
+	return 0;
 }
 
 fastfind(pathpart)
@@ -125,7 +126,7 @@ fastfind(pathpart)
 	patend = patprep(p);
 
 	found = 0;
-	for (c = getc(fp), count = 0; c != EOF;) {
+	for (c = getc(fp), count = 0; c != EOF; ) {
 		count += ((c == SWITCH) ? getw(fp) : c) - OFFSET;
 		/* overlay old path */
 		for (p = path + count; (c = getc(fp)) > SWITCH;)
@@ -145,8 +146,7 @@ fastfind(pathpart)
 						break;
 				if (*p == NULL) {	/* fast match success */
 					found = 1;
-					if (!globflag ||
-					    !fnmatch(pathpart, path, 0))
+					if (!globflag || !fnmatch(pathpart, path, 0))
 						(void)printf("%s\n", path);
 					break;
 				}

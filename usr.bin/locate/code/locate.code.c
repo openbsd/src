@@ -1,5 +1,4 @@
-/*	$OpenBSD: locate.code.c,v 1.2 1996/06/26 05:35:50 deraadt Exp $	*/
-/*	$NetBSD: locate.code.c,v 1.5 1995/08/31 22:36:33 jtc Exp $	*/
+/*        $OpenBSD: locate.code.c,v 1.3 1996/08/16 22:00:11 michaels Exp $                                                           */
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,9 +44,10 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)locate.code.c	8.4 (Berkeley) 5/4/95";
+static char sccsid[] = "@(#)locate.code.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$OpenBSD: locate.code.c,v 1.3 1996/08/16 22:00:11 michaels Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: locate.code.c,v 1.2 1996/06/26 05:35:50 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -86,37 +86,47 @@ static char rcsid[] = "$OpenBSD: locate.code.c,v 1.2 1996/06/26 05:35:50 deraadt
  */
 
 #include <sys/param.h>
-
 #include <err.h>
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-
+#include <stdio.h>
 #include "locate.h"
 
 #define	BGBUFSIZE	(NBG * 2)	/* size of bigram buffer */
 
-char buf1[MAXPATHLEN] = " ";	
-char buf2[MAXPATHLEN];
+u_char buf1[MAXPATHLEN] = " ";	
+u_char buf2[MAXPATHLEN];
 char bigrams[BGBUFSIZE + 1] = { 0 };
+
+#define LOOKUP 1
+#ifdef LOOKUP
+#define BGINDEX(x) (big[(u_int)*x][(u_int)*(x+1)])
+typedef u_char bg_t;
+bg_t big[UCHAR_MAX][UCHAR_MAX];
+
+#else
+#define BGINDEX(x) bgindex(x)
+typedef int bg_t;
+#endif
 
 int	bgindex __P((char *));
 void	usage __P((void));
+extern int optind;
+extern int optopt;
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *cp, *oldpath, *path;
+	register u_char *cp, *oldpath, *path;
 	int ch, code, count, diffcount, oldcount;
 	FILE *fp;
+	register int i, j;
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch(ch) {
-		case '?':
 		default:
 			usage();
 		}
@@ -135,26 +145,38 @@ main(argc, argv)
 		err(1, "stdout");
 	(void)fclose(fp);
 
+#ifdef LOOKUP
+	/* init lookup table */
+	for (i = 0; i < UCHAR_MAX; i++)
+	    	for (j = 0; j < UCHAR_MAX; j++) 
+			big[i][j] = (bg_t)-1;
+
+	for (cp = bigrams, i = 0; *cp != NULL; i += 2, cp += 2)
+	        big[(int)*cp][(int)*(cp + 1)] = (bg_t)i;
+#endif
+
 	oldpath = buf1;
 	path = buf2;
 	oldcount = 0;
 	while (fgets(path, sizeof(buf2), stdin) != NULL) {
-		/* Truncate newline. */
-		cp = path + strlen(path) - 1;
-		if (cp > path && *cp == '\n')
-			*cp = '\0';
+
+	    	/* skip empty lines */
+		if (*path == '\n')
+			continue;
 
 		/* Squelch characters that would botch the decoding. */
-		for (cp = path; *cp != '\0'; cp++) {
-			*cp &= PARITY-1;
-			if (*cp <= SWITCH)
+		for (cp = path; *cp != NULL; cp++) {
+			/* chop newline */
+			if (*cp == '\n')
+				*cp = NULL;
+			/* range */
+			else if (*cp < ASCII_MIN || *cp > ASCII_MAX)
 				*cp = '?';
 		}
 
 		/* Skip longest common prefix. */
-		for (cp = path; *cp == *oldpath; cp++, oldpath++)
-			if (*oldpath == '\0')
-				break;
+		for (cp = path; *cp == *oldpath && *cp; cp++, oldpath++);
+
 		count = cp - path;
 		diffcount = count - oldcount + OFFSET;
 		oldcount = count;
@@ -166,13 +188,13 @@ main(argc, argv)
 			if (putchar(diffcount) == EOF)
 				err(1, "stdout");
 
-		while (*cp != '\0') {
-			if (*(cp + 1) == '\0') {
+		while (*cp != NULL) {
+			if (*(cp + 1) == NULL) {
 				if (putchar(*cp) == EOF)
 					err(1, "stdout");
 				break;
 			}
-			if ((code = bgindex(cp)) < 0) {
+			if ((code = BGINDEX(cp)) == (bg_t)-1) {
 				if (putchar(*cp++) == EOF ||
 				    putchar(*cp++) == EOF)
 					err(1, "stdout");
@@ -194,9 +216,11 @@ main(argc, argv)
 	/* Non-zero status if there were errors */
 	if (fflush(stdout) != 0 || ferror(stdout))
 		exit(1);
-	exit(0);
+
+	return 0;
 }
 
+#ifndef LOOKUP
 int
 bgindex(bg)			/* Return location of bg in bigrams or -1. */
 	char *bg;
@@ -205,11 +229,12 @@ bgindex(bg)			/* Return location of bg in bigrams or -1. */
 
 	bg0 = bg[0];
 	bg1 = bg[1];
-	for (p = bigrams; *p != '\0'; p++)
+	for (p = bigrams; *p != NULL; p++)
 		if (*p++ == bg0 && *p == bg1)
 			break;
-	return (*p == '\0' ? -1 : --p - bigrams);
+	return (*p == NULL ? -1 : (--p - bigrams));
 }
+#endif /* !LOOKUP */
 
 void
 usage()

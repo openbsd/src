@@ -1,6 +1,3 @@
-.\"	$OpenBSD: locate.1,v 1.2 1996/06/26 05:35:52 deraadt Exp $
-.\"	$NetBSD: locate.1,v 1.4 1995/07/25 18:20:25 jtc Exp $
-.\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -41,8 +38,8 @@
 .Nm locate
 .Nd find files
 .Sh SYNOPSIS
-.Nm locate
-.Ar pattern
+.Ar locate
+pattern
 .Sh DESCRIPTION
 .Nm Locate
 searches a database for all pathnames which match the specified
@@ -63,12 +60,16 @@ including slashes (``/'').
 As a special case, a pattern containing no globbing characters (``foo'')
 is matched as though it were ``*foo*''.
 .Sh FILES
-.Bl -tag -width /var/db/locate.database -compact
+.Bl -tag -width /usr/libexec/locate.updatedb -compact
 .It Pa /var/db/locate.database
+The actual database
+.It Pa /usr/libexec/locate.updatedb
+Script to update the locate database
 .El
 .Sh SEE ALSO
 .Xr find 1 ,
-.Xr fnmatch 3
+.Xr fnmatch 3 ,
+.Xr locate.updatedb 8
 .Rs
 .%A Woods, James A.
 .%D 1983
@@ -77,6 +78,16 @@ is matched as though it were ``*foo*''.
 .%V 8:1
 .%P pp. 8-10
 .Re
+.Sh BUGS
+.Nm Locate
+may fail to list some files that are present, or may 
+to list files that have been removed from the system.  This is because
+locate only reports files that are present in the database, which is
+typically only regenerated once a week by the 
+.Nm /etc/weekly 
+script.  Use
+.Xr find 1
+to locate files that are of a more transitory nature.
 .Sh HISTORY
 The
 .Nm locate

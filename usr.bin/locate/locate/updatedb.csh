@@ -1,7 +1,6 @@
 #!/bin/csh -f
 #
-#	$OpenBSD: updatedb.csh,v 1.2 1996/06/26 05:35:54 deraadt Exp $
-#	$NetBSD: updatedb.csh,v 1.7 1995/08/31 22:36:35 jtc Exp $
+# $OpenBSD: updatedb.csh,v 1.3 1996/08/16 22:00:13 michaels Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -37,7 +36,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)updatedb.csh	8.4 (Berkeley) 10/27/94
+#	@(#)updatedb.csh	8.3 (Berkeley) 3/19/94
 #
 
 set SRCHPATHS = "/"			# directories to be put in the database
@@ -60,14 +59,13 @@ set errs = $TMPDIR/locate.errs.$$
 
 # search locally or everything
 # find ${SRCHPATHS} -print | \
-find ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a \
-		-prune -o -print | \
+find ${SRCHPATHS} \! -fstype ufs -prune -or -print | \
 	tr '/' '\001' | \
-	(sort -T "$TMPDIR" -f; echo $status > $errs) | tr '\001' '/' > $filelist
+	(sort -T $TMPDIR -f; echo $status > $errs) | tr '\001' '/' > $filelist
 
 $LIBDIR/locate.bigram < $filelist | \
-	(sort -T "$TMPDIR"; echo $status >> $errs) | \
-	uniq -c | sort -T "$TMPDIR" -nr | \
+	(sort -T /$TMPDIR; echo $status >> $errs) | \
+	uniq -c | sort -T /$TMPDIR -nr | \
 	awk '{ if (NR <= 128) print $2 }' | tr -d '\012' > $bigrams
 
 # code the file list
