@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.14 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: twe.c,v 1.15 2001/12/06 09:30:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
@@ -397,9 +397,21 @@ twe_attach(sc)
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
+	TWE_DPRINTF(TWE_D_CMD, ("stat=%b ",
+	    bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS), TWE_STAT_BITS));
+	/*
+	 * ack all before enable, cannot be done in one
+	 * operation as it seems clear is not processed
+	 * if enable is specified.
+	 */
+	bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
+	    TWE_CTRL_CHOSTI | TWE_CTRL_CATTNI | TWE_CTRL_CERR);
+	TWE_DPRINTF(TWE_D_CMD, ("stat=%b ",
+	    bus_space_read_4(sc->iot, sc->ioh, TWE_STATUS), TWE_STAT_BITS));
 	/* enable interrupts */
-	bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL, TWE_CTRL_EINT |
-	    /*TWE_CTRL_HOSTI |*/ TWE_CTRL_CATTNI | TWE_CTRL_ERDYI);
+	bus_space_write_4(sc->iot, sc->ioh, TWE_CONTROL,
+	    TWE_CTRL_EINT | TWE_CTRL_ERDYI |
+	    /*TWE_CTRL_HOSTI |*/ TWE_CTRL_MCMDI);
 
 	return 0;
 }
