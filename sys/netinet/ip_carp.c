@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.16 2003/11/03 05:09:39 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.17 2003/11/04 02:52:40 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -32,7 +32,6 @@
  *	- find a way to schednetisr() packet earlier than through inetsw[];
  *	- track iface ip address changes;
  *	- support for hardware checksum calculations;
- *	- support for inet6;
  *
  */
 
@@ -768,7 +767,6 @@ carp_send_ad(void *v)
 		m->m_data -= sizeof(*ip6);
 
 		sc->sc_ac.ac_if.if_lastchange = time;
-		sc->sc_ac.ac_if.if_lastchange = time;
 		sc->sc_ac.ac_if.if_opackets++;
 		sc->sc_ac.ac_if.if_obytes += len;
 		carpstats.carps_opackets6++;
@@ -1441,7 +1439,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 #ifdef INET6
 		case AF_INET6:
 			sc->if_flags |= IFF_UP;
-			error = carp_set_addr(sc, satosin(&ifra->ifra_addr));
+			error = carp_set_addr6(sc, satosin6(&ifra->ifra_addr));
 			break;
 #endif /* INET6 */
 		default:
@@ -1596,7 +1594,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 	if (mtag == NULL)
 		return (0);
 
-	bcopy( mtag + 1, &sc, sizeof(struct carp_softc *));
+	bcopy(mtag + 1, &sc, sizeof(struct carp_softc *));
 
 	/* Set the source MAC address to Virtual Router MAC Address */
 	switch (ifp->if_type) {
