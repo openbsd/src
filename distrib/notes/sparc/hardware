@@ -1,16 +1,14 @@
-OpenBSD/sparc RELEASE runs on the following classes of machines:
+OpenBSD/sparc 2.0 runs on the following classes of machines:
 	- sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
 	- sun4 (e.g. the 4/100, 4/200, and 4/300.   note that support
 		for the 4/400 processor is incomplete)
+	- sun4m (e.g. sparc classic, 4, 5, 10, and 20)
 
-OpenBSD/sparc RELEASE does *not* run on these machines (yet):
+OpenBSD/sparc 2.0 does *not* run on these machines (yet):
 	- sun-4/400 (lacking support for the I/O cache, and has
 			ethernet problems)
-	- sun4m (e.g. sparc classic, 4, 5, 10, and 20)
 	- sun4d (e.g. sparc center 2000)
-
-Work on porting OpenBSD/sparc to the sun4m platform is currently in 
-progress, but was not ready in time for the 2.0 release.
+	- sun4u (e.g. Ultrasparcs)
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
@@ -47,7 +45,9 @@ Supported devices include:
 
 Hardware the we do NOT currently support, but get many questions
 about:
-	sun4m, including multiprocessor machines
+	multiprocessor machines
+	audio drivers for sun4m machines
+	floppy driver for sun4m machines
 	interrupt driven SCSI driver for sun-4/100's and sun-4/200's
 
 The next release will hopefully run on many more machines.  In

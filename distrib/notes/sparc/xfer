@@ -9,18 +9,6 @@ you choose.  The various methods are explained below.
 
 To prepare for installing via an NFS partition:
 
-	Since the current OpenBSD/sparc installation program uses
-	a diskless setup for your workstation, you will already
-	have to prepare an NFS directory for use as a remote
-	root filesystem (see the section `Installing the OpenBSD System'
-	below for details). The easiest way is to put the OpenBSD filesets
-	in this root filesystem on the server where the install program
-	will find them.
-
-	However, you have the option to put the filesets in
-	another directory or even on another NFS server. To do
-	so, follow these guide lines:
-
 	Place the OpenBSD software you wish to install into
 	a directory on an NFS server, and make that directory
 	mountable by the machine which you will be installing
@@ -31,6 +19,13 @@ To prepare for installing via an NFS partition:
 	the router closest to the the new OpenBSD machine,
 	if the NFS server is not on a network which is
 	directly attached to the OpenBSD machine.
+
+	If you are using a diskless setup to install OpenBSD on
+	your machine, you can take advantage of the fact that
+	the above has already been done on your machine's server.
+	So, you can conveniently put the OpenBSD filesets in your
+	machine's root filesystem on the server where the install
+	program can find them.
 
 	Once you have done this, you can proceed to the next
 	step in the installation process, preparing your
