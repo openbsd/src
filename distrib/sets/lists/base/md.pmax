@@ -1,2 +1,3 @@
+./sbin/ldconfig
 ./usr/mdec/bootrz
 ./usr/mdec/rzboot

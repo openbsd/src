@@ -15,6 +15,7 @@
 ./etc/dm.conf
 ./etc/dumpdates
 ./etc/exports
+./etc/fbtab
 ./etc/ftpchroot
 ./etc/ftpusers
 ./etc/gettytab
@@ -22,12 +23,15 @@
 ./etc/hosts
 ./etc/hosts.equiv
 ./etc/hosts.lpd
+./etc/ifaliases
 ./etc/inetd.conf
 ./etc/ipf.rules
 ./etc/kerberosIV/README
 ./etc/kerberosIV/krb.conf
 ./etc/kerberosIV/krb.realms
+./etc/ksh.kshrc
 ./etc/localtime
+./etc/locate.rc
 ./etc/magic
 ./etc/mail.rc
 ./etc/man.conf
@@ -41,6 +45,7 @@
 ./etc/namedb/localhost.rev
 ./etc/namedb/named.boot
 ./etc/namedb/root.cache
+./etc/nat.rules
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf
@@ -60,6 +65,7 @@
 ./etc/rbootd.conf
 ./etc/rc
 ./etc/rc.local
+./etc/rc.securelevel
 ./etc/remote
 ./etc/rmt
 ./etc/rpc
@@ -80,10 +86,12 @@
 ./etc/uucp/passwd
 ./etc/uucp/port
 ./etc/uucp/sys
+./etc/virc
 ./etc/weekly
 ./root/.cshrc
 ./root/.klogin
 ./root/.login
 ./root/.profile
+./var/at/at.deny
 ./var/cron/tabs/root
 ./var/msgs/bounds

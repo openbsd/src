@@ -111,6 +111,7 @@
 ./usr/include/dev/ic/uhavar.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
+./usr/include/dev/ic/z8536reg.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/ahareg.h
@@ -614,7 +615,6 @@
 ./usr/include/netinet/ip_icmp.h
 ./usr/include/netinet/ip_ip4.h
 ./usr/include/netinet/ip_ipsp.h
-./usr/include/netinet/ip_md5.h
 ./usr/include/netinet/ip_mroute.h
 ./usr/include/netinet/ip_nat.h
 ./usr/include/netinet/ip_sha1.h
@@ -841,6 +841,7 @@
 ./usr/include/sys/malloc.h
 ./usr/include/sys/map.h
 ./usr/include/sys/mbuf.h
+./usr/include/sys/md5k.h
 ./usr/include/sys/mman.h
 ./usr/include/sys/mount.h
 ./usr/include/sys/msg.h
@@ -1103,6 +1104,7 @@
 ./usr/share/man/cat2/fstatfs.0
 ./usr/share/man/cat2/fsync.0
 ./usr/share/man/cat2/ftruncate.0
+./usr/share/man/cat2/futimes.0
 ./usr/share/man/cat2/getdirentries.0
 ./usr/share/man/cat2/getegid.0
 ./usr/share/man/cat2/geteuid.0
@@ -1127,6 +1129,7 @@
 ./usr/share/man/cat2/ioctl.0
 ./usr/share/man/cat2/issetugid.0
 ./usr/share/man/cat2/kill.0
+./usr/share/man/cat2/ktrace.0
 ./usr/share/man/cat2/lchown.0
 ./usr/share/man/cat2/link.0
 ./usr/share/man/cat2/listen.0
@@ -1169,7 +1172,6 @@
 ./usr/share/man/cat2/rfork.0
 ./usr/share/man/cat2/rmdir.0
 ./usr/share/man/cat2/sbrk.0
-./usr/share/man/cat2/seek.0
 ./usr/share/man/cat2/select.0
 ./usr/share/man/cat2/semctl.0
 ./usr/share/man/cat2/semget.0
@@ -1253,6 +1255,9 @@
 ./usr/share/man/cat3/alarm.0
 ./usr/share/man/cat3/alloca.0
 ./usr/share/man/cat3/alphasort.0
+./usr/share/man/cat3/arc4random.0
+./usr/share/man/cat3/arc4random_addrandom.0
+./usr/share/man/cat3/arc4random_stir.0
 ./usr/share/man/cat3/asctime.0
 ./usr/share/man/cat3/asin.0
 ./usr/share/man/cat3/asinh.0
@@ -1558,6 +1563,7 @@
 ./usr/share/man/cat3/getgrouplist.0
 ./usr/share/man/cat3/gethostbyaddr.0
 ./usr/share/man/cat3/gethostbyname.0
+./usr/share/man/cat3/gethostbyname2.0
 ./usr/share/man/cat3/gethostent.0
 ./usr/share/man/cat3/gethostid.0
 ./usr/share/man/cat3/gethostname.0

@@ -1,3 +1,4 @@
+./sbin/ldconfig
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.14.0
 ./usr/lib/libcurses.so.3.1

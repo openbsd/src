@@ -1,6 +1,7 @@
 ./usr/bin/addftinfo
 ./usr/bin/afmtodit
 ./usr/bin/checknr
+./usr/bin/deroff
 ./usr/bin/eqn
 ./usr/bin/grodvi
 ./usr/bin/groff
