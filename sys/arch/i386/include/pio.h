@@ -1,4 +1,4 @@
-/*	$OpenBSD: pio.h,v 1.6 1999/01/31 14:56:01 espie Exp $	*/
+/*	$OpenBSD: pio.h,v 1.7 1999/03/09 15:39:08 mickey Exp $	*/
 /*	$NetBSD: pio.h,v 1.13 1996/03/08 20:15:23 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ insb(int port, void *addr, int cnt)
 	__asm __volatile("cld\n\trepne\n\tinsb"			:
 			 "=D" (addr), "=c" (cnt)		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
-			 "memory");
+			 "memory", "cc");
 }
 
 #define	inw(port) \
@@ -107,7 +107,7 @@ insw(int port, void *addr, int cnt)
 	__asm __volatile("cld\n\trepne\n\tinsw"			:
 			 "=D" (addr), "=c" (cnt)		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
-			 "memory");
+			 "memory", "cc");
 }
 
 #define	inl(port) \
@@ -135,7 +135,7 @@ insl(int port, void *addr, int cnt)
 	__asm __volatile("cld\n\trepne\n\tinsl"			:
 			 "=D" (addr), "=c" (cnt)		:
 			 "d" (port), "0" (addr), "1" (cnt)	:
-			 "memory");
+			 "memory", "cc");
 }
 
 #define	outb(port, data) \
@@ -158,7 +158,8 @@ outsb(int port, const void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsb"		:
 			 "=S" (addr), "=c" (cnt)		:
-			 "d" (port), "0" (addr), "1" (cnt));
+			 "d" (port), "0" (addr), "1" (cnt)	:
+			 "cc");
 }
 
 #define	outw(port, data) \
@@ -181,7 +182,8 @@ outsw(int port, const void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsw"		:
 			 "=S" (addr), "=c" (cnt)		:
-			 "d" (port), "0" (addr), "1" (cnt));
+			 "d" (port), "0" (addr), "1" (cnt)	:
+			 "cc");
 }
 
 #define	outl(port, data) \
@@ -204,7 +206,8 @@ outsl(int port, const void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trepne\n\toutsl"		:
 			 "=S" (addr), "=c" (cnt)		:
-			 "d" (port), "0" (addr), "1" (cnt));
+			 "d" (port), "0" (addr), "1" (cnt)	:
+			 "cc");
 }
 
 #endif /* _I386_PIO_H_ */
