@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2003/09/01 22:51:05 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2003/09/02 10:35:53 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -210,12 +210,12 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 	struct vm_map *map;
 	vm_offset_t va;
 	vm_prot_t ftype;
-	int fault_type;
+	int fault_type, pbus_type;
 	u_long fault_code;
 	unsigned nss, fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
-	int result = 0;  
+	int result;
 	int sig = 0;
 	unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
 
@@ -304,166 +304,140 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 
 	case T_DATAFLT:
 		/* kernel mode data fault */
+
+		/* data fault on the user address? */
+		if ((frame->dmt0 & DMT_DAS) == 0) {
+			type = T_DATAFLT + T_USER;
+			goto user_fault;
+		}
+
 		/*
 		 * If the faulting address is in user space, handle it in
 		 * the context of the user process. Else, use kernel map.
 		 */
 
-		if (type == T_DATAFLT) {
-			fault_addr = frame->dma0;
-			if (frame->dmt0 & (DMT_WRITE|DMT_LOCKBAR)) {
-				ftype = VM_PROT_READ|VM_PROT_WRITE;
-				fault_code = VM_PROT_WRITE;
-			} else {
-				ftype = VM_PROT_READ;
-				fault_code = VM_PROT_READ;
-			}
+		fault_addr = frame->dma0;
+		if (frame->dmt0 & (DMT_WRITE|DMT_LOCKBAR)) {
+			ftype = VM_PROT_READ|VM_PROT_WRITE;
+			fault_code = VM_PROT_WRITE;
 		} else {
-			fault_addr = frame->sxip & XIP_ADDR;
 			ftype = VM_PROT_READ;
 			fault_code = VM_PROT_READ;
 		}
 
 		va = trunc_page((vm_offset_t)fault_addr);
+		if (va == 0) {
+			panic("trap: bad kernel access at %x", fault_addr);
+		}
 
 		vm = p->p_vmspace;
-		map = &vm->vm_map;
+		map = kernel_map;
 
-		/* data fault on a kernel address... */
-		if (frame->dmt0 & DMT_DAS)
-			map = kernel_map;
-
-		/* data fault on the user address */
-		if (type == T_DATAFLT && (frame->dmt0 & DMT_DAS) == 0) {
-			type = T_DATAFLT + T_USER;
-			goto user_fault;
-		}
-#if 0
-		printf("\nKernel Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
-		       ((frame->dpfsr >> 16) & 0x7),
-		       pbus_exception_type[(frame->dpfsr >> 16) & 0x7],
+		pbus_type = (frame->dpfsr >> 16) & 0x07;
+#ifdef DEBUG
+		printf("Kernel Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
+		       pbus_type, pbus_exception_type[pbus_type],
 		       fault_addr, frame, frame->cpu);
 #endif 
-		/*
-		 * If it is a guarded access, bus error is OK.
-		 */
-		if ((frame->dpfsr >> 16 & 0x7) == 0x3 &&     /* bus error */
-		    (frame->sxip & ~3) >= (unsigned)&guarded_access_start &&
-		    (frame->sxip & ~3) <= (unsigned)&guarded_access_end) {
 
-			frame->snip = ((unsigned)&guarded_access_bad    ) | NIP_V;
-			frame->sfip = ((unsigned)&guarded_access_bad + 4) | FIP_V;
-			frame->sxip = 0;
-			/* We sort of resolved the fault ourselves because 
-			 * we know where it came from.  [gaurded_assess()]
-			 * But we must still think about the other possible 
-			 * transactions in dmt1 & dmt2.  Mark dmt0 so that 
-			 * data_access_emulation skips it.  XXX smurph
-			 */
-			frame->dmt0 = DMT_SKIP;
-			frame->dpfsr = 0;
-                        data_access_emulation((unsigned *)frame);
-                        /* so data_access_emulation doesn't get called again. */
-			frame->dmt0 = 0;
-			return;
-		}
-		/*
-		 *	On a no fault, just return.
-		 */
-		if ((frame->dpfsr >> 16 & 0x7) == 0x0) {     /* no fault  */
+		switch (pbus_type) {
+		case 3:	/* bus error */
+			/*
+		 	 * If it is a guarded access, bus error is OK.
+		 	 */
+			if ((frame->sxip & ~3) >=
+			      (unsigned)&guarded_access_start &&
+			    (frame->sxip & ~3) <=
+			      (unsigned)&guarded_access_end) {
+				frame->snip =
+				  ((unsigned)&guarded_access_bad    ) | NIP_V;
+				frame->sfip =
+				  ((unsigned)&guarded_access_bad + 4) | FIP_V;
+				frame->sxip = 0;
+				/* We sort of resolved the fault ourselves
+				 * because we know where it came from
+				 * [guarded_access()]. But we must still think
+				 * about the other possible transactions in
+				 * dmt1 & dmt2.  Mark dmt0 so that
+				 * data_access_emulation skips it.  XXX smurph
+				 */
+				frame->dmt0 = DMT_SKIP;
+				data_access_emulation((unsigned *)frame);
+				frame->dpfsr = 0;
+				frame->dmt0 = 0;
+				return;
+			}
+			break;
+		case 0: /* no fault */
 			/*
 			 * The fault was resolved. Call data_access_emulation 
 			 * to drain the data unit pipe line and reset dmt0 
 			 * so that trap won't get called again. 
 			 * For inst faults, back up the pipe line.
 			 */
-				if (type == T_DATAFLT) {
-					/*
-					printf("calling data_access_emulation()\n");
-					*/
-					data_access_emulation((unsigned *)frame);
-					frame->dmt0 = 0;
-					frame->dpfsr = 0;
-				} else {
-					frame->sfip = frame->snip & ~FIP_E;
-					frame->snip = frame->sxip & ~NIP_E;
-				}
-				return;
-		}
-
-		/*
-		 *	On a segment or a page fault, call vm_fault() to resolve
-		 *	the fault.
-		 */
-		if ((unsigned)map & 3) {
-			printf("map is not word aligned! 0x%x\n", map);
-#ifdef DDB
-			Debugger();
-#endif
-		}
-		if ((frame->dpfsr >> 16 & 0x7) == 0x4	     /* seg fault  */
-		    || (frame->dpfsr >> 16 & 0x7) == 0x5) {  /* page fault */
+			data_access_emulation((unsigned *)frame);
+			frame->dpfsr = 0;
+			frame->dmt0 = 0;
+			return;
+		case 4:	/* seg fault */
+		case 5:	/* page fault */
 			result = uvm_fault(map, va, 0, ftype);
 			if (result == 0) {
-			/*
-			 * We could resolve the fault. Call
-			 * data_access_emulation to drain the data unit pipe
-			 * line and reset dmt0 so that trap won't get called
-			 * again. For inst faults, back up the pipe line.
-			 */
-				if (type == T_DATAFLT) {
-					/*
-					printf("calling data_access_emulation()\n");
-					*/
-					data_access_emulation((unsigned *)frame);
-					frame->dmt0 = 0;
-					frame->dpfsr = 0;
-				} else {
-					frame->sfip = frame->snip & ~FIP_E;
-					frame->snip = frame->sxip & ~NIP_E;
-				}
+				/*
+				 * We could resolve the fault. Call
+				 * data_access_emulation to drain the data
+				 * unit pipe line and reset dmt0 so that trap
+				 * won't get called again. For inst faults,
+				 * back up the pipe line.
+				 */
+				data_access_emulation((unsigned *)frame);
+				frame->dpfsr = 0;
+				frame->dmt0 = 0;
 				return;
 			}
+			break;
 		}
-		/*
-		printf ("PBUS Fault %d (%s) va = 0x%x\n", ((frame->dpfsr >> 16) & 0x7), 
-			pbus_exception_type[(frame->dpfsr >> 16) & 0x7], va);
-		*/
+#ifdef DEBUG
+		printf ("PBUS Fault %d (%s) va = 0x%x\n", pbus_type,
+			pbus_exception_type[pbus_type], va);
+#endif
 		/*
 		 * if still the fault is not resolved ...
 		 */
-		if (!p->p_addr->u_pcb.pcb_onfault)
+		if (p->p_addr->u_pcb.pcb_onfault == 0)
 			panictrap(frame->vector, frame);
 
-		frame->snip = ((unsigned)p->p_addr->u_pcb.pcb_onfault    ) | FIP_V;
-		frame->sfip = ((unsigned)p->p_addr->u_pcb.pcb_onfault + 4) | FIP_V;
+		frame->snip =
+		    ((unsigned)p->p_addr->u_pcb.pcb_onfault    ) | FIP_V;
+		frame->sfip =
+		    ((unsigned)p->p_addr->u_pcb.pcb_onfault + 4) | FIP_V;
 		frame->sxip = 0;
 		/* We sort of resolved the fault ourselves because 
-		 * we know where it came from.  [fuwintr() or suwintr()]
+		 * we know where it came from [copyxxx()]
 		 * But we must still think about the other possible 
 		 * transactions in dmt1 & dmt2.  Mark dmt0 so that 
 		 * data_access_emulation skips it. XXX smurph
 		 */
 		frame->dmt0 = DMT_SKIP;
-		frame->dpfsr = 0;
 		data_access_emulation((unsigned *)frame);
-		/* so data_access_emulation doesn't get called again. */
+		frame->dpfsr = 0;
 		frame->dmt0 = 0;
 		return;
 	case T_INSTFLT+T_USER:
 		/* User mode instruction access fault */
 		/* FALLTHRU */
 	case T_DATAFLT+T_USER:
-		user_fault:
+user_fault:
 		if (type == T_INSTFLT+T_USER) {
 			fault_addr = frame->sxip & XIP_ADDR;
+			pbus_type = (frame->ipfsr >> 16) & 0x07;
 		} else {
 			fault_addr = frame->dma0;
+			pbus_type = (frame->dpfsr >> 16) & 0x07;
 		}
-#if 0
+#ifdef DEBUG
 		printf("User Data access fault #%d (%s) v = 0x%x, frame 0x%x cpu %d\n",
-		       ((frame->dpfsr >> 16) & 0x7),
-		       pbus_exception_type[(frame->dpfsr >> 16) & 0x7],
+		       pbus_type, pbus_exception_type[pbus_type],
 		       fault_addr, frame, frame->cpu);
 #endif 
 
@@ -479,17 +453,19 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
-		if ((unsigned)map & 3) {
-			printf("map is not word aligned! 0x%x\n", map);
-#ifdef DDB
-			Debugger();
-#endif
-		}
-		/* Call vm_fault() to resolve non-bus error faults */
-		if ((frame->ipfsr >> 16 & 0x7) != 0x3 &&
-		    (frame->dpfsr >> 16 & 0x7) != 0x3) {
+
+		/* Call uvm_fault() to resolve non-bus error faults */
+		switch (pbus_type) {
+		case 0:
+			result = 0;
+			break;
+		case 3:
+			result = EACCES;
+			break;
+		default:
 			result = uvm_fault(map, va, 0, ftype);
 			frame->ipfsr = frame->dpfsr = 0;
+			break;
 		}
 
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
@@ -503,23 +479,25 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 
 		if (result == 0) {
 			if (type == T_DATAFLT+T_USER) {
-			/*
-			 * We could resolve the fault. Call
-			 * data_access_emulation to drain the data unit
-			 * pipe line and reset dmt0 so that trap won't
-			 * get called again.
-			 */
+				/*
+			 	 * We could resolve the fault. Call
+			 	 * data_access_emulation to drain the data unit
+			 	 * pipe line and reset dmt0 so that trap won't
+			 	 * get called again.
+			 	 */
 				data_access_emulation((unsigned *)frame);
-				frame->dmt0 = 0;
 				frame->dpfsr = 0;
+				frame->dmt0 = 0;
 			} else {
-			/* back up SXIP, SNIP clearing the the Error bit */
+				/*
+				 * back up SXIP, SNIP,
+				 * clearing the the Error bit
+				 */
 				frame->sfip = frame->snip & ~FIP_E;
 				frame->snip = frame->sxip & ~NIP_E;
 			}
 		} else {
-			sig = result == EACCES ?
-				SIGBUS : SIGSEGV;
+			sig = result == EACCES ?  SIGBUS : SIGSEGV;
 			fault_type = result == EACCES ?
 				BUS_ADRERR : SEGV_MAPERR;
 		}
