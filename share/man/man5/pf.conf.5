@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.321 2004/12/23 20:33:03 jaredy Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.322 2005/01/01 07:57:53 pascoe Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -2458,7 +2458,7 @@ nat on $ext_if inet proto udp from any port = isakmp to any -> ($ext_if) \e
 # Translate outgoing packets' source address (any protocol).
 # Translate incoming packets' destination address to an internal machine
 # (bidirectional).
-binat on $ext_if from 10.1.2.150 to any -> ($ext_if)
+binat on $ext_if from 10.1.2.150 to any -> $ext_if
 
 # RDR
 # Translate incoming packets' destination addresses.
@@ -2572,7 +2572,7 @@ pass in on $wifi_if from any to any keep state
 
 block out on $ext_if from any to any
 pass out quick on $ext_if tagged INTNET keep state
-pass out on $ext_if from any to any port 80 keep state
+pass out on $ext_if proto tcp from any to any port 80 keep state
 
 # tag incoming packets as they are redirected to spamd(8). use the tag
 # to pass those packets through the packet filter.
