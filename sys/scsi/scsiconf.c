@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.40 1998/11/11 00:03:47 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.41 1998/11/28 23:33:30 downsj Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -345,6 +345,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "CD-ROM CDU-541  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-55S  ", ""},     SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "SONY    ", "CD-ROM CDU-561  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8003A", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
