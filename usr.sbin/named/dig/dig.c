@@ -1,10 +1,10 @@
-/*	$OpenBSD: dig.c,v 1.7 2002/07/12 21:11:10 deraadt Exp $	*/
+/*	$OpenBSD: dig.c,v 1.8 2003/01/03 17:59:45 jason Exp $	*/
 
 #ifndef lint
 #if 0
 static char rcsid[] = "$From: dig.c,v 8.8 1996/05/21 07:32:40 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: dig.c,v 1.7 2002/07/12 21:11:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dig.c,v 1.8 2003/01/03 17:59:45 jason Exp $";
 #endif
 #endif
 
@@ -270,6 +270,7 @@ main(argc, argv)
 	char *addrc, *addrend, *addrbegin;
 
 	struct timeval exectime, tv1, tv2, start_time, end_time, query_time;
+	time_t tt;
 
 	char *srv;
 	int anyflag = 0;
@@ -640,8 +641,8 @@ main(argc, argv)
 					       myhostname,
 					       inet_ntoa(_res.nsaddr_list[i]
 							 .sin_addr));
-					printf(";; WHEN: %s",
-					       ctime((time_t *) &(exectime.tv_sec)));
+					tt = (time_t)exectime.tv_sec;
+					printf(";; WHEN: %s", ctime(&tt));
 				}
 				if (!x)
 					break;	/* success */
@@ -695,8 +696,8 @@ main(argc, argv)
 			gettimeofday(&exectime,NULL);
 			printf(";; FROM: %s to SERVER: %s\n",
 			       myhostname, srvmsg);
-			printf(";; WHEN: %s",
-			       ctime((time_t *) &(exectime.tv_sec)));
+			tt = (time_t)exectime.tv_sec;
+			printf(";; WHEN: %s", ctime(&tt));
 			printf(";; MSG SIZE  sent: %d  rcvd: %d\n",
 			       bytes_out, bytes_in);
 		}
