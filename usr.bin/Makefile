@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.78 2002/05/10 00:10:26 nate Exp $
+#	$OpenBSD: Makefile,v 1.79 2002/07/24 01:08:56 art Exp $
 
 .include <bsd.own.mk>
 
@@ -27,9 +27,7 @@ SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes \
 SUBDIR+=ypcat ypmatch ypwhich
 .endif
 
-# Don't use the standard tool chain on the alpha, powerpc, and hppa.
-.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "powerpc" && \
-    ${MACHINE_ARCH} != "hppa" && ${MACHINE_ARCH} != "sparc64")
+.if (${ELF_TOOLCHAIN} != "yes")
 SUBDIR+= ar nm ranlib size strip strings
 .endif
 
