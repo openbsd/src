@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.58 2003/07/19 23:52:27 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.59 2003/08/04 16:51:49 jfb Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -250,8 +250,7 @@ static void *malloc_bytes(size_t size);
 
 #ifdef MALLOC_STATS
 void
-malloc_dump(fd)
-    FILE *fd;
+malloc_dump(FILE *fd)
 {
     struct pginfo **pd;
     struct pgfree *pf;
@@ -310,8 +309,7 @@ malloc_dump(fd)
 extern char *__progname;
 
 static void
-wrterror(p)
-    char *p;
+wrterror(char *p)
 {
     char *q = " error: ";
     struct iovec iov[4];
@@ -335,8 +333,7 @@ wrterror(p)
 }
 
 static void
-wrtwarning(p)
-    char *p;
+wrtwarning(char *p)
 {
     char *q = " warning: ";
     struct iovec iov[4];
@@ -359,7 +356,7 @@ wrtwarning(p)
 
 #ifdef MALLOC_STATS
 static void
-malloc_exit()
+malloc_exit(void)
 {
     FILE *fd = fopen("malloc.out", "a");
     char *q = "malloc() warning: Couldn't dump stats.\n";
@@ -376,8 +373,7 @@ malloc_exit()
  * Allocate a number of pages from the OS
  */
 static void *
-map_pages(pages)
-    size_t pages;
+map_pages(size_t pages)
 {
     caddr_t result, tail;
 
@@ -412,8 +408,7 @@ map_pages(pages)
  * Extend page directory
  */
 static int
-extend_pgdir(index)
-    u_long index;
+extend_pgdir(u_long index)
 {
     struct  pginfo **new, **old;
     size_t i, oldlen;
@@ -466,7 +461,7 @@ extend_pgdir(index)
  * Initialize the world
  */
 static void
-malloc_init ()
+malloc_init(void)
 {
     char *p, b[64];
     int i, j;
@@ -584,8 +579,7 @@ malloc_init ()
  * Allocate a number of complete pages
  */
 static void *
-malloc_pages(size)
-    size_t size;
+malloc_pages(size_t size)
 {
     void *p, *delay_free = NULL;
     int i;
@@ -670,8 +664,7 @@ malloc_pages(size)
  */
 
 static __inline__ int
-malloc_make_chunks(bits)
-    int bits;
+malloc_make_chunks(int bits)
 {
     struct  pginfo *bp;
     void *pp;
@@ -765,8 +758,7 @@ malloc_make_chunks(bits)
  * Allocate a fragment
  */
 static void *
-malloc_bytes(size)
-    size_t size;
+malloc_bytes(size_t size)
 {
     int i,j;
     u_long u;
@@ -828,8 +820,7 @@ malloc_bytes(size)
  * Allocate a piece of memory
  */
 static void *
-imalloc(size)
-    size_t size;
+imalloc(size_t size)
 {
     void *result;
 
@@ -861,9 +852,7 @@ imalloc(size)
  * Change the size of an allocation.
  */
 static void *
-irealloc(ptr, size)
-    void *ptr;
-    size_t size;
+irealloc(void *ptr, size_t size)
 {
     void *p;
     u_long osize, index;
@@ -966,10 +955,7 @@ irealloc(ptr, size)
  */
 
 static __inline__ void
-free_pages(ptr, index, info)
-    void *ptr;
-    int index;
-    struct pginfo *info;
+free_pages(void *ptr, int index, struct pginfo *info)
 {
     int i;
     struct pgfree *pf, *pt=NULL;
@@ -1104,10 +1090,7 @@ free_pages(ptr, index, info)
 
 /* ARGSUSED */
 static __inline__ void
-free_bytes(ptr, index, info)
-    void *ptr;
-    int index;
-    struct pginfo *info;
+free_bytes(void *ptr, int index, struct pginfo *info)
 {
     int i;
     struct pginfo **mp;
@@ -1178,8 +1161,7 @@ free_bytes(ptr, index, info)
 }
 
 static void
-ifree(ptr)
-    void *ptr;
+ifree(void *ptr)
 {
     struct pginfo *info;
     int index;
