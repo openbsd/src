@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.5 1996/07/28 22:42:45 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.6 1996/07/28 23:32:16 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -95,22 +95,24 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 6.00";
+static char version[] = "Version 6.1/OpenBSD";
 
 extern	off_t restart_point;
 extern	char cbuf[];
 
+struct	sockaddr_in server_addr;
 struct	sockaddr_in ctrl_addr;
 struct	sockaddr_in data_source;
 struct	sockaddr_in data_dest;
 struct	sockaddr_in his_addr;
 struct	sockaddr_in pasv_addr;
 
+int	daemon_mode = 0;
 int	data;
 jmp_buf	errcatch, urgcatch;
 int	logged_in;
 struct	passwd *pw;
-int	debug;
+int	debug = 0;
 int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
@@ -149,8 +151,6 @@ char	*krbtkfile_env = NULL;
 
 #ifdef STATS
 char	*ident = NULL;
-
-void	logxfer __P((char *, off_t, time_t));
 #endif
 
 
@@ -203,6 +203,11 @@ static void	 send_data __P((FILE *, FILE *, off_t, off_t, int));
 static struct passwd *
 		 sgetpwnam __P((char *));
 static char	*sgetsave __P((char *));
+static void	 reapchild __P((int));
+
+#ifdef STATS
+void	 logxfer __P((char *, off_t, time_t));
+#endif
 
 static char *
 curdir()
@@ -227,33 +232,12 @@ main(argc, argv, envp)
 	char *cp, line[LINE_MAX];
 	FILE *fd;
 #ifdef STATS
-	char *argstr = "dlSt:T:u:Uv";
+	char *argstr = "dDlSt:T:u:Uv";
 #else
-	char *argstr = "dlt:T:u:Uv";
+	char *argstr = "dDlt:T:u:Uv";
 #endif
 
-	/*
-	 * LOG_NDELAY sets up the logging connection immediately,
-	 * necessary for anonymous ftp's that chroot and can't do it later.
-	 */
-	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
-	addrlen = sizeof(his_addr);
-	if (getpeername(0, (struct sockaddr *)&his_addr, &addrlen) < 0) {
-		syslog(LOG_ERR, "getpeername (%s): %m",argv[0]);
-		exit(1);
-	}
-	addrlen = sizeof(ctrl_addr);
-	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
-		syslog(LOG_ERR, "getsockname (%s): %m",argv[0]);
-		exit(1);
-	}
-#ifdef IP_TOS
-	tos = IPTOS_LOWDELAY;
-	if (setsockopt(0, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(int)) < 0)
-		syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
-#endif
-	data_source.sin_port = htons(ntohs(ctrl_addr.sin_port) - 1);
-	debug = 0;
+	tzset();	/* in case no timezone database in ~ftp */
 
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
@@ -262,6 +246,10 @@ main(argc, argv, envp)
 		switch (ch) {
 		case 'd':
 			debug = 1;
+			break;
+
+		case 'D':
+			daemon_mode = 1;
 			break;
 
 		case 'l':
@@ -311,11 +299,100 @@ main(argc, argv, envp)
 			break;
 		}
 	}
+
+	/*
+	 * LOG_NDELAY sets up the logging connection immediately,
+	 * necessary for anonymous ftp's that chroot and can't do it later.
+	 */
+	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
+
+	if (daemon_mode) {
+		int ctl_sock, fd;
+		struct servent *sv;
+
+		/*
+		 * Detach from parent.
+		 */
+		if (daemon(1, 1) < 0) {
+			syslog(LOG_ERR, "failed to become a daemon");
+			exit(1);
+		}
+		(void) signal(SIGCHLD, reapchild);
+		/*
+		 * Get port number for ftp/tcp.
+		 */
+		sv = getservbyname("ftp", "tcp");
+		if (sv == NULL) {
+			syslog(LOG_ERR, "getservbyname for ftp failed");
+			exit(1);
+		}
+		/*
+		 * Open a socket, bind it to the FTP port, and start
+		 * listening.
+		 */
+		ctl_sock = socket(AF_INET, SOCK_STREAM, 0);
+		if (ctl_sock < 0) {
+			syslog(LOG_ERR, "control socket: %m");
+			exit(1);
+		}
+		if (setsockopt(ctl_sock, SOL_SOCKET, SO_REUSEADDR,
+		    (char *)&on, sizeof(on)) < 0)
+			syslog(LOG_ERR, "control setsockopt: %m");;
+		server_addr.sin_family = AF_INET;
+		server_addr.sin_addr.s_addr = INADDR_ANY;
+		server_addr.sin_port = sv->s_port;
+		if (bind(ctl_sock, (struct sockaddr *)&server_addr,
+			 sizeof(server_addr))) {
+			syslog(LOG_ERR, "control bind: %m");
+			exit(1);
+		}
+		if (listen(ctl_sock, 32) < 0) {
+			syslog(LOG_ERR, "control listen: %m");
+			exit(1);
+		}
+		/*
+		 * Loop forever accepting connection requests and forking off
+		 * children to handle them.
+		 */
+		while (1) {
+			addrlen = sizeof(his_addr);
+			fd = accept(ctl_sock, (struct sockaddr *)&his_addr,
+				    &addrlen);
+			if (fork() == 0) {
+				/* child */
+				(void) dup2(fd, 0);
+				(void) dup2(fd, 1);
+				close(ctl_sock);
+				break;
+			}
+			close(fd);
+		}
+	} else {
+		addrlen = sizeof(his_addr);
+		if (getpeername(0, (struct sockaddr *)&his_addr,
+			        &addrlen) < 0) {
+			syslog(LOG_ERR, "getpeername (%s): %m", argv[0]);
+			exit(1);
+		}
+	}
+
 	(void) freopen(_PATH_DEVNULL, "w", stderr);
 	(void) signal(SIGPIPE, lostconn);
 	(void) signal(SIGCHLD, SIG_IGN);
 	if ((long)signal(SIGURG, myoob) < 0)
 		syslog(LOG_ERR, "signal: %m");
+
+	addrlen = sizeof(ctrl_addr);
+	if (getsockname(0, (struct sockaddr *)&ctrl_addr, &addrlen) < 0) {
+		syslog(LOG_ERR, "getsockname (%s): %m", argv[0]);
+		exit(1);
+	}
+#ifdef IP_TOS
+	tos = IPTOS_LOWDELAY;
+	if (setsockopt(0, IPPROTO_IP, IP_TOS, (char *)&tos, sizeof(int)) < 0)
+		syslog(LOG_WARNING, "setsockopt (IP_TOS): %m");
+#endif
+	data_source.sin_port = htons(ntohs(ctrl_addr.sin_port) - 1);
 
 	/* Try to handle urgent data inline */
 #ifdef SO_OOBINLINE
@@ -1797,6 +1874,13 @@ out:
 		freeglob = 0;
 		globfree(&gl);
 	}
+}
+
+static void
+reapchild(signo)
+	int signo;
+{
+	while (wait3(NULL, WNOHANG, NULL) > 0);
 }
 
 #ifdef STATS

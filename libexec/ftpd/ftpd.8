@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.4 1996/07/28 22:42:45 downsj Exp $
+.\"	$OpenBSD: ftpd.8,v 1.5 1996/07/28 23:32:15 downsj Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -43,7 +43,7 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm ftpd
-.Op Fl dlSU
+.Op Fl dDlSU
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
 .Op Fl u Ar mask
@@ -63,6 +63,16 @@ Available options:
 .Bl -tag -width Ds
 .It Fl d
 Debugging information is written to the syslog using LOG_FTP.
+.It Fl D
+With this option set,
+.Nm ftpd
+will detach and become a daemon, accepting connections on the FTP port and
+forking child processes to handle them. This has lower overhead than
+starting
+.Nm ftpd
+from
+.Xr inetd 8
+and is thus useful on busy servers to reduce load.
 .It Fl l
 Each successful and failed 
 .Xr ftp 1
