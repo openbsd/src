@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2003/07/09 15:52:53 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2003/07/09 23:56:16 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -543,8 +543,27 @@ badtrap:
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
+	{
+		union instr ins;
+
+		if (copyin((caddr_t)pc, &ins, sizeof(ins)) != 0) {
+			/* XXX Can this happen? */
+			trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+			break;
+		}
+		if (ins.i_any.i_op == IOP_mem &&
+		    (ins.i_op3.i_op3 == IOP3_LDQF ||
+		     ins.i_op3.i_op3 == IOP3_STQF ||
+		     ins.i_op3.i_op3 == IOP3_LDQFA ||
+		     ins.i_op3.i_op3 == IOP3_STQFA)) {
+			if (emul_qf(ins.i_int, p, sv))
+				ADVANCE;
+			break;
+		}
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
 		break;
+	}
+
 	case T_INST_EXCEPT:
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);	/* XXX code?? */
 		break;
