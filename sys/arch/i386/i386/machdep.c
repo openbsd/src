@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 1998/01/09 12:14:41 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.72 1998/01/09 12:33:21 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -231,7 +231,7 @@ cpu_startup()
 	msgbufmapped = 1;
 
 	/* Boot arguments are in page 1 */
-	if (bootapiver >= BOOT_APIVER) {
+	if (bootapiver >= 2) {
 		pa = NBPG;
 		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
 			pmap_enter(pmap_kernel(),
@@ -1525,7 +1525,7 @@ init386(first_avail)
 	 * phys 0,  /boot leaves arguments at page 1.
 	 */
 	avail_next = avail_start =
-	    bootapiver >= BOOT_APIVER ? NBPG + i386_round_page(bootargc) : NBPG;
+	    bootapiver >= 2 ? NBPG + i386_round_page(bootargc) : NBPG;
 	avail_end = extmem ? IOM_END + extmem * 1024
 		: cnvmem * 1024;	/* just temporary use */
 
