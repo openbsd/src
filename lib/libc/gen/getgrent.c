@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.13 2000/09/24 14:35:10 d Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.14 2001/09/11 04:52:50 pvalchev Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: getgrent.c,v 1.13 2000/09/24 14:35:10 d Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <grp.h>
+#include <errno.h>
 #ifdef YP
 #include <rpc/rpc.h>
 #include <rpcsvc/yp.h>
@@ -50,15 +51,7 @@ static char rcsid[] = "$OpenBSD: getgrent.c,v 1.13 2000/09/24 14:35:10 d Exp $";
 #endif
 #include "thread_private.h"
 
-_THREAD_PRIVATE_KEY(gr);
-_THREAD_PRIVATE_MUTEX(gr);
-static FILE *_gr_fp;
-static struct group _gr_group;
-static int _gr_stayopen;
-static int grscan __P((int, gid_t, const char *, struct group *));
-static int start_gr __P((void));
-static void endgrent_basic __P((void));
-
+/* This global storage is locked for the non-rentrant functions */
 _THREAD_PRIVATE_KEY(gr_storage);
 static struct group_storage {
 #define	MAXGRP		200
@@ -66,6 +59,22 @@ static struct group_storage {
 #define	MAXLINELENGTH	1024
 	char line[MAXLINELENGTH];
 } gr_storage;
+#define GETGR_R_SIZE_MAX	(1024+200*sizeof(char*))
+
+/* File pointers are locked with the 'gr' mutex */
+_THREAD_PRIVATE_KEY(gr);
+_THREAD_PRIVATE_MUTEX(gr);
+static FILE *_gr_fp;
+static struct group _gr_group;
+static int _gr_stayopen;
+static int grscan __P((int, gid_t, const char *, struct group *, struct group_storage *));
+static int start_gr __P((void));
+static void endgrent_basic __P((void));
+
+static struct group *getgrnam_gs(const char *, struct group *,
+	struct group_storage *);
+static struct group *getgrgid_gs(gid_t, struct group *,
+	struct group_storage *);
 
 #ifdef YP
 enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_NAME };
@@ -75,28 +84,23 @@ static int	__ypcurrentlen;
 #endif
 
 struct group *
-getgrent_r(p_gr)
-struct group *p_gr;
+getgrent()
 {
+	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
+	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
+
 	_THREAD_PRIVATE_MUTEX_LOCK(gr);
-	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL, p_gr))
+	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL, p_gr, gs))
 		p_gr = NULL;
 	_THREAD_PRIVATE_MUTEX_UNLOCK(gr);
 	return (p_gr);
 }
 
-struct group *
-getgrent()
-{
-	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
-
-	return getgrent_r(p_gr);
-}
-
-struct group *
-getgrnam_r(name, p_gr)
+static struct group *
+getgrnam_gs(name, p_gr, gs)
 	const char *name;
 	struct group *p_gr;
+	struct group_storage *gs;
 {
 	int rval;
 
@@ -104,7 +108,7 @@ getgrnam_r(name, p_gr)
 	if (!start_gr())
 		rval = 0;
 	else {
-		rval = grscan(1, 0, name, p_gr);
+		rval = grscan(1, 0, name, p_gr, gs);
 		if (!_gr_stayopen)
 			endgrent_basic();
 	}
@@ -117,14 +121,39 @@ getgrnam(name)
 	const char *name;
 {
 	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
+	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
 
-	return getgrnam_r(name, p_gr);
+	return getgrnam_gs(name, p_gr, gs);
 }
 
-struct group *
-getgrgid_r(gid, p_gr)
+int
+getgrnam_r(name, grp, buffer, bufsize, result)
+	const char *name;
+	struct group *grp;
+	char *buffer;
+	size_t bufsize;
+	struct group **result;
+{
+	int errnosave;
+	int ret;
+
+	if (bufsize < GETGR_R_SIZE_MAX)
+		return ERANGE;
+	errnosave = errno;
+	*result = getgrnam_gs(name, grp, (struct group_storage *)buffer);
+	if (*result == NULL)
+		ret = errno;
+	else
+		ret = 0;
+	errno = errnosave;
+	return ret;
+}
+
+static struct group *
+getgrgid_gs(gid, p_gr, gs)
 	gid_t gid;
 	struct group *p_gr;
+	struct group_storage *gs;
 {
 	int rval;
 
@@ -132,7 +161,7 @@ getgrgid_r(gid, p_gr)
 	if (!start_gr())
 		rval = 0;
 	else {
-		rval = grscan(1, gid, NULL, p_gr);
+		rval = grscan(1, gid, NULL, p_gr, gs);
 		if (!_gr_stayopen)
 			endgrent_basic();
 	}
@@ -145,8 +174,32 @@ getgrgid(gid)
 	gid_t gid;
 {
 	struct group *p_gr = (struct group*)_THREAD_PRIVATE(gr,_gr_group,NULL);
+	struct group_storage *gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
 
-	return getgrgid_r(gid, p_gr);
+	return getgrgid_gs(gid, p_gr, gs);
+}
+
+int
+getgrgid_r(gid, grp, buffer, bufsize, result)
+	gid_t gid;
+	struct group *grp;
+	char *buffer;
+	size_t bufsize;
+	struct group **result;
+{
+	int errnosave;
+	int ret;
+
+	if (bufsize < GETGR_R_SIZE_MAX)
+		return ERANGE;
+	errnosave = errno;
+	*result = getgrgid_gs(gid, grp, (struct group_storage *)buffer);
+	if (*result == NULL)
+		ret = errno;
+	else
+		ret = 0;
+	errno = errnosave;
+	return ret;
 }
 
 static int
@@ -213,11 +266,12 @@ endgrent()
 }
 
 static int
-grscan(search, gid, name, p_gr)
+grscan(search, gid, name, p_gr, gs)
 	register int search;
 	register gid_t gid;
 	register const char *name;
 	struct group *p_gr;
+	struct group_storage *gs;
 {
 	register char *cp, **m;
 	char *bp, *endp;
@@ -230,10 +284,7 @@ grscan(search, gid, name, p_gr)
 #endif
 	char **members;
 	char *line;
-	struct group_storage *gs;
 
-	/* Always use thread-specific storage for member data. */
-	gs = (struct group_storage *)_THREAD_PRIVATE(gr_storage,gr_storage,NULL);
 	if (gs == NULL)
 		return 0;
 	members = gs->members;
