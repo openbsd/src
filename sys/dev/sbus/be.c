@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.6 2001/11/28 16:52:44 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.7 2001/11/28 19:47:54 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -247,33 +247,33 @@ beattach(parent, self, aux)
 
 	if (sa->sa_nreg < 3) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+		    self->dv_xname, sa->sa_nreg);
 		return;
 	}
 
 	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[0].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[0].sbr_offset,
-			  (bus_size_t)sa->sa_reg[0].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cr) != 0) {
+	    (bus_type_t)sa->sa_reg[0].sbr_slot,
+	    (bus_addr_t)sa->sa_reg[0].sbr_offset,
+	    (bus_size_t)sa->sa_reg[0].sbr_size,
+	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_cr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
 
 	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[1].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[1].sbr_offset,
-			  (bus_size_t)sa->sa_reg[1].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_br) != 0) {
+	    (bus_type_t)sa->sa_reg[1].sbr_slot,
+	    (bus_addr_t)sa->sa_reg[1].sbr_offset,
+	    (bus_size_t)sa->sa_reg[1].sbr_size,
+	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_br) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
 
 	if (bus_space_map2(sa->sa_bustag,
-			  (bus_type_t)sa->sa_reg[2].sbr_slot,
-			  (bus_addr_t)sa->sa_reg[2].sbr_offset,
-			  (bus_size_t)sa->sa_reg[2].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, 0, &sc->sc_tr) != 0) {
+	    (bus_type_t)sa->sa_reg[2].sbr_slot,
+	    (bus_addr_t)sa->sa_reg[2].sbr_offset,
+	    (bus_size_t)sa->sa_reg[2].sbr_size,
+	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_tr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
@@ -322,14 +322,14 @@ beattach(parent, self, aux)
 
 	/* Get a DMA handle */
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
-				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n", self->dv_xname, error);
 		return;
 	}
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(sa->sa_dmatag, size, 0, 0,
-				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			self->dv_xname, error);
 		return;
@@ -337,8 +337,7 @@ beattach(parent, self, aux)
 
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
-			            &sc->sc_rb.rb_membase,
-			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    &sc->sc_rb.rb_membase, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			self->dv_xname, error);
 		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
@@ -347,10 +346,9 @@ beattach(parent, self, aux)
 
 	/* Load the buffer */
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
-				     sc->sc_rb.rb_membase, size, NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
+	    sc->sc_rb.rb_membase, size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
-			self->dv_xname, error);
+		    self->dv_xname, error);
 		bus_dmamem_unmap(dmatag, sc->sc_rb.rb_membase, size);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
@@ -386,10 +384,10 @@ beattach(parent, self, aux)
 		if (child == NULL) {
 			/* No PHY attached */
 			ifmedia_add(&sc->sc_media,
-				    IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance),
-				    0, NULL);
+			    IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance),
+			    0, NULL);
 			ifmedia_set(&sc->sc_media,
-				   IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance));
+			    IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance));
 		} else {
 			/*
 			 * Note: we support just one PHY on the external
@@ -398,17 +396,17 @@ beattach(parent, self, aux)
 #ifdef DIAGNOSTIC
 			if (LIST_NEXT(child, mii_list) != NULL) {
 				printf("%s: spurious MII device %s attached\n",
-				       sc->sc_dev.dv_xname,
-				       child->mii_dev.dv_xname);
+				    sc->sc_dev.dv_xname,
+				    child->mii_dev.dv_xname);
 			}
 #endif
 			if (child->mii_phy != BE_PHY_EXTERNAL ||
 			    child->mii_inst > 0) {
 				printf("%s: cannot accomodate MII device %s"
-				       " at phy %d, instance %d\n",
-				       sc->sc_dev.dv_xname,
-				       child->mii_dev.dv_xname,
-				       child->mii_phy, child->mii_inst);
+				    " at phy %d, instance %d\n",
+				    sc->sc_dev.dv_xname,
+				    child->mii_dev.dv_xname,
+				    child->mii_phy, child->mii_inst);
 			} else {
 				sc->sc_phys[instance] = child->mii_phy;
 			}
@@ -418,7 +416,7 @@ beattach(parent, self, aux)
 			 * phy indeed has the auto negotiation capability!!
 			 */
 			ifmedia_set(&sc->sc_media,
-				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
+			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
 
 			/* Mark our current media setting */
 			be_pal_gate(sc, BE_PHY_EXTERNAL);
@@ -440,27 +438,25 @@ beattach(parent, self, aux)
 
 		/* Use `ifm_data' to store BMCR bits */
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,instance),
-			    0, NULL);
+		    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,instance), 0, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,0,instance),
-			    BMCR_S100, NULL);
+		    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,0,instance),
+		    BMCR_S100, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance),
-			    0, NULL);
+		    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance), 0, NULL);
 
 		printf("on-board transceiver at %s: 10baseT, 100baseTX, auto\n",
-			self->dv_xname);
+		    self->dv_xname);
 
 		be_mii_reset(sc, BE_PHY_INTERNAL);
 		/* Only set default medium here if there's no external PHY */
 		if (instance == 0) {
 			be_pal_gate(sc, BE_PHY_INTERNAL);
 			ifmedia_set(&sc->sc_media,
-				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
+			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
 		} else
 			be_mii_writereg((void *)sc,
-				BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
+			    BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
 	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -469,7 +465,7 @@ beattach(parent, self, aux)
 	ifp->if_ioctl = beioctl;
 	ifp->if_watchdog = bewatchdog;
 	ifp->if_flags =
-		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
@@ -579,7 +575,7 @@ be_read(sc, idx, len)
 	    len > ETHERMTU + sizeof(struct ether_header)) {
 
 		printf("%s: invalid packet size %d; dropping\n",
-			ifp->if_xname, len);
+		    ifp->if_xname, len);
 
 		ifp->if_ierrors++;
 		return;
@@ -725,7 +721,6 @@ bewatchdog(ifp)
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
-
 	bereset(sc);
 }
 
@@ -1008,10 +1003,10 @@ beioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-					*(union ns_host *)LLADDR(ifp->if_sadl);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				      sizeof(sc->sc_arpcom.ac_enaddr));
+				    sizeof(sc->sc_arpcom.ac_enaddr));
 			/* Set new address. */
 			beinit(sc);
 			break;
@@ -1275,12 +1270,11 @@ be_mii_sync(sc)
 
 	while (n--) {
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-				  MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO |
-				  MGMT_PAL_OENAB);
+		    MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO | MGMT_PAL_OENAB);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-				  MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO |
-				  MGMT_PAL_OENAB | MGMT_PAL_DCLOCK);
+		    MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO |
+		    MGMT_PAL_OENAB | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 	}
 }
@@ -1317,7 +1311,7 @@ be_tcvr_read_bit(sc, phy)
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, MGMT_PAL_EXT_MDIO);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-				  MGMT_PAL_EXT_MDIO | MGMT_PAL_DCLOCK);
+		    MGMT_PAL_EXT_MDIO | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 		ret = (bus_space_read_4(t, tr, BE_TRI_MGMTPAL) &
 			MGMT_PAL_INT_MDIO) >> MGMT_PAL_INT_MDIO_SHIFT;
@@ -1325,9 +1319,9 @@ be_tcvr_read_bit(sc, phy)
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, MGMT_PAL_INT_MDIO);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 		ret = (bus_space_read_4(t, tr, BE_TRI_MGMTPAL) &
-			MGMT_PAL_EXT_MDIO) >> MGMT_PAL_EXT_MDIO_SHIFT;
+		    MGMT_PAL_EXT_MDIO) >> MGMT_PAL_EXT_MDIO_SHIFT;
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-				  MGMT_PAL_INT_MDIO | MGMT_PAL_DCLOCK);
+		    MGMT_PAL_INT_MDIO | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 	}
 
@@ -1346,10 +1340,10 @@ be_tcvr_write_bit(sc, phy, bit)
 
 	if (phy == BE_PHY_INTERNAL) {
 		v = ((bit & 1) << MGMT_PAL_INT_MDIO_SHIFT) |
-			MGMT_PAL_OENAB | MGMT_PAL_EXT_MDIO;
+		    MGMT_PAL_OENAB | MGMT_PAL_EXT_MDIO;
 	} else {
 		v = ((bit & 1) << MGMT_PAL_EXT_MDIO_SHIFT)
-			| MGMT_PAL_OENAB | MGMT_PAL_INT_MDIO;
+		    | MGMT_PAL_OENAB | MGMT_PAL_INT_MDIO;
 	}
 	bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v);
 	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
@@ -1366,9 +1360,8 @@ be_mii_sendbits(sc, phy, data, nbits)
 {
 	int i;
 
-	for (i = 1 << (nbits - 1); i != 0; i >>= 1) {
+	for (i = 1 << (nbits - 1); i != 0; i >>= 1)
 		be_tcvr_write_bit(sc, phy, (data & i) != 0);
-	}
 }
 
 static int
@@ -1433,7 +1426,7 @@ be_mii_reset(sc, phy)
 	int n;
 
 	be_mii_writereg((struct device *)sc, phy, MII_BMCR,
-			BMCR_LOOP | BMCR_PDOWN | BMCR_ISO);
+	    BMCR_LOOP | BMCR_PDOWN | BMCR_ISO);
 	be_mii_writereg((struct device *)sc, phy, MII_BMCR, BMCR_RESET);
 
 	for (n = 16; n >= 0; n--) {
@@ -1460,8 +1453,8 @@ be_tick(arg)
 	mii_tick(&sc->sc_mii);
 	(void)be_intphy_service(sc, &sc->sc_mii, MII_TICK);
 
-	splx(s);
 	timeout_add(&sc->sc_tick_ch, hz);
+	splx(s);
 }
 
 void
@@ -1557,9 +1550,9 @@ be_intphy_service(sc, mii, cmd)
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst) {
 			bmcr = be_mii_readreg((void *)sc,
-				BE_PHY_INTERNAL, MII_BMCR);
+			    BE_PHY_INTERNAL, MII_BMCR);
 			be_mii_writereg((void *)sc,
-				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
+			    BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 			sc->sc_mii_flags &= ~MIIF_HAVELINK;
 			sc->sc_intphy_curspeed = 0;
 			return (0);
@@ -1620,16 +1613,16 @@ be_intphy_service(sc, mii, cmd)
 
 		/* Read twice in case the register is latched */
 		bmsr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR) |
-		       be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR);
+		    be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR);
 
 		if ((bmsr & BMSR_LINK) != 0) {
 			/* We have a carrier */
 			bmcr = be_mii_readreg((void *)sc,
-					BE_PHY_INTERNAL, MII_BMCR);
+			    BE_PHY_INTERNAL, MII_BMCR);
 
 			if ((sc->sc_mii_flags & MIIF_DOINGAUTO) != 0) {
 				bmcr = be_mii_readreg((void *)sc,
-						BE_PHY_INTERNAL, MII_BMCR);
+				    BE_PHY_INTERNAL, MII_BMCR);
 
 				sc->sc_mii_flags |= MIIF_HAVELINK;
 				sc->sc_intphy_curspeed = (bmcr & BMCR_S100);
@@ -1637,11 +1630,11 @@ be_intphy_service(sc, mii, cmd)
 
 				bmcr &= ~BMCR_ISO;
 				be_mii_writereg((void *)sc,
-					BE_PHY_INTERNAL, MII_BMCR, bmcr);
+				    BE_PHY_INTERNAL, MII_BMCR, bmcr);
 
 				printf("%s: link up at %s Mbps\n",
-					sc->sc_dev.dv_xname,
-					(bmcr & BMCR_S100) ? "100" : "10");
+				    sc->sc_dev.dv_xname,
+				    (bmcr & BMCR_S100) ? "100" : "10");
 			}
 			return (0);
 		}
@@ -1669,7 +1662,7 @@ be_intphy_service(sc, mii, cmd)
 		/* Isolate this phy */
 		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
 		be_mii_writereg((void *)sc,
-				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
+		    BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 		return (0);
 	}
 
