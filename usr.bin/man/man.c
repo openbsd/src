@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.16 2001/01/31 19:26:51 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.17 2001/04/10 02:32:33 millert Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.16 2001/01/31 19:26:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.17 2001/04/10 02:32:33 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,13 +160,14 @@ main(argc, argv)
 	if (!*argv)
 		usage();
 
-	if (!f_cat && !f_how && !f_where)
+	if (!f_cat && !f_how && !f_where) {
 		if (!isatty(1))
 			f_cat = 1;
 		else if ((pager = getenv("PAGER")) != NULL && (*pager != '\0'))
 			pager = check_pager(pager);
 		else
 			pager = _PATH_PAGER;
+	}
 
 	/* Read the configuration file. */
 	config(conffile);
@@ -253,7 +254,7 @@ main(argc, argv)
 	/*
 	 * 3: If the user set the -m option, insert the user's list before
 	 *    whatever list we have, again appending the _subdir list and
-	 *    the machine. 
+	 *    the machine.
 	 */
 	if (p_add != NULL) {
 		e_sectp = NULL;
@@ -269,7 +270,7 @@ main(argc, argv)
 					err(1, NULL);
 				/* puts it at the end, should be at the top, but then the added
 					entries would be in reverse order, fix later when all are added*/
-				TAILQ_INSERT_TAIL(&defp->list, ep, q);  
+				TAILQ_INSERT_TAIL(&defp->list, ep, q);
 				if (e_sectp == NULL) 	/* save first added, to-be the new top */
 					e_sectp = ep;
 			}
@@ -279,7 +280,7 @@ main(argc, argv)
 			defp->list.tqh_first = e_sectp;			/* first added entry, new top */
 			*e_sectp->q.tqe_prev = NULL; 				/* terminate list					*/
 		}
-	}	
+	}
 	/*
 	 * 4: If no -m was specified, and a section was, rewrite the section's
 	 *    paths (if they have a trailing slash) to append the _subdir list
@@ -353,11 +354,11 @@ main(argc, argv)
 		for (ap = pg.gl_pathv; *ap != NULL; ++ap) {
 			if (**ap == '\0')
 				continue;
-			(void)printf("%s\n", *ap);
+			(void)puts(*ap);
 		}
 		exit(cleanup());
 	}
-		
+
 	/*
 	 * 8: We display things in a single command; build a list of things
 	 *    to display.
@@ -374,14 +375,14 @@ main(argc, argv)
 	}
 	p = cmd;
 	len = strlen(pager);
-	memmove(p, pager, len);
+	memcpy(p, pager, len);
 	p += len;
 	*p++ = ' ';
 	for (ap = pg.gl_pathv; *ap != NULL; ++ap) {
 		if (**ap == '\0')
 			continue;
 		len = strlen(*ap);
-		memmove(p, *ap, len);
+		memcpy(p, *ap, len);
 		p += len;
 		*p++ = ' ';
 	}
@@ -512,7 +513,7 @@ next:				anyfound = 1;
 	return (anyfound);
 }
 
-/* 
+/*
  * build_page --
  *	Build a man page for display.
  */
@@ -534,7 +535,7 @@ build_page(fmt, pathp)
 	}
 
        /*
-        * Historically man chdir'd to the root of the man tree. 
+        * Historically man chdir'd to the root of the man tree.
         * This was used in man pages that contained relative ".so"
         * directives (including other man pages for command aliases etc.)
         * It even went one step farther, by examining the first line
@@ -542,11 +543,11 @@ build_page(fmt, pathp)
         * make hard(?) links to the cat'ted man pages for space savings.
         * (We don't do that here, but we could).
         */
- 
+
        /* copy and find the end */
        for (b = buf, p = *pathp; (*b++ = *p++) != '\0';)
                continue;
- 
+
        /* skip the last two path components, page name and man[n] */
        for (--b, n = 2; b != buf; b--)
                if (*b == '/')
@@ -629,9 +630,12 @@ how(fname)
 		if (*buf == '\n')
 			++lcnt;
 		else {
-			for(; lcnt; --lcnt)
+			while (lcnt) {
+				--lcnt;
 				(void)putchar('\n');
-			for (p = buf; isspace(*p); ++p);
+			}
+			for (p = buf; isspace(*p); ++p)
+				;
 			(void)fputs(p, stdout);
 		}
 	}
@@ -680,7 +684,7 @@ check_pager(name)
 
 	/*
 	 * if the user uses "more", we make it "more -s"; watch out for
-	 * PAGER = "mypager /usr/ucb/more"
+	 * PAGER = "mypager /usr/bin/more"
 	 */
 	for (p = name; *p && !isspace(*p); ++p)
 		;
@@ -694,7 +698,7 @@ check_pager(name)
 		save = name;
 		/* allocate space to add the "-s" */
 		if (!(name =
-		    malloc((u_int)(strlen(save) + 1 + sizeof("-s")))))
+		    malloc(strlen(save) + 1 + sizeof("-s"))))
 			err(1, NULL);
 		(void)sprintf(name, "%s %s", save, "-s");
 	}
@@ -722,7 +726,7 @@ jump(argv, flag, name)
 	exit(1);
 }
 
-/* 
+/*
  * onsig --
  *	If signaled, delete the temporary files.
  */
