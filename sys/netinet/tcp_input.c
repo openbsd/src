@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.13 1997/08/09 01:26:00 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.14 1997/08/16 01:34:41 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ tck_delat(int n)
 	if ((n >= tck_nfriends) || (tck_nfriends == 0))
 	  return;
 
-	for (i = n+1; i < tck_nfriends ; i++)
+	for (i = n + 1; i < tck_nfriends ; i++)
 	  tck_friends[i - 1] = tck_friends[i];
 
 	tck_nfriends--;
@@ -182,7 +182,7 @@ static int
 tck_chkcookie(struct tcpiphdr *ti)
 {
 #ifdef DEBUG_TCPCOOKIE
-	printf("tck_chkcookie: src = 0x%08x, cookie = 0x%08x, ack = 0x%08x\n", ntohl(ti->ti_src.s_addr), tck_makecookie(ti->ti_src), ti->ti_ack);
+	printf("tck_chkcookie: src = 0x%08x, cookie = 0x%08x, seq = 0x%08x, ack = 0x%08x\n", ntohl(ti->ti_src.s_addr), tck_makecookie(ti->ti_src), ti->ti_seq, ti->ti_ack);
 #endif /* DEBUG_TCPCOOKIE */
 
 	if (tck_makecookie(ti->ti_src) == ti->ti_seq) /* seq in host order */
