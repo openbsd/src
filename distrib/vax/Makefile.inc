@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/09/21 11:46:09 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2001/02/24 10:55:02 hugh Exp $
 
-# Revision is 1.0
-REV=	10A
+SUBDIR=	../ramdisk
+REV=	28
+
+.include <bsd.subdir.mk>
