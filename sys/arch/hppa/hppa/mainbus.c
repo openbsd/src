@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.28 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.29 2002/03/19 23:04:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -73,113 +73,88 @@ int
 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
     bus_space_handle_t *bshp)
 {
-	extern u_int virtual_avail;
+	static u_int32_t bmm[0x4000/32];
 	register u_int64_t spa, epa;
-	int bank, off;
+	int bank, off, flex = HPPA_FLEX(bpa);
 
 #ifdef BTLBDEBUG
 	printf("bus_mem_add_mapping(%x,%x,%scachable,%p)\n",
-	    bpa, size, cachable?"":"non", bshp);
+	    bpa, size, cachable? "" : "non", bshp);
 #endif
-	if (bpa > 0 && bpa < virtual_avail)
-		*bshp = bpa;
-	else if ((bank = vm_physseg_find(atop(bpa), &off)) < 0) {
-		/*
-		 * determine if we are mapping IO space, or beyond the physmem
-		 * region. use block mapping then
-		 *
-		 * we map the whole bus module (there are 1024 of those max)
-		 * so, check here if it's mapped already, map if needed.
-		 * all mappings are equal mappings.
-		 */
-		static u_int32_t bmm[0x4000/32];
-		int flex = HPPA_FLEX(bpa);
 
+	if ((bank = vm_physseg_find(atop(bpa), &off)) >= 0)
+		panic("mbus_add_mapping: mapping real memory @0x%x", bpa);
+
+	/*
+	 * determine if we are mapping IO space, or beyond the physmem
+	 * region. use block mapping then
+	 *
+	 * we map the whole bus module (there are 1024 of those max)
+	 * so, check here if it's mapped already, map if needed.
+	 * all mappings are equal mappings.
+	 */
 #ifdef DEBUG
-		if (cachable) {
-			printf("WARNING: mapping I/O space cachable\n");
-			cachable = 0;
-		}
+	if (cachable) {
+		printf("WARNING: mapping I/O space cachable\n");
+		cachable = 0;
+	}
 #endif
 
-		/* need a new mapping */
-		if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
-			spa = bpa & HPPA_FLEX_MASK;
-			epa = ((u_long)((u_int64_t)bpa + size +
-				~HPPA_FLEX_MASK - 1) & HPPA_FLEX_MASK) - 1;
+	/* need a new mapping */
+	if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
+		spa = bpa & HPPA_FLEX_MASK;
+		epa = ((u_long)((u_int64_t)bpa + size +
+			~HPPA_FLEX_MASK - 1) & HPPA_FLEX_MASK) - 1;
 #ifdef BTLBDEBUG
-			printf ("bus_mem_add_mapping: adding flex=%x "
-				"%qx-%qx, ", flex, spa, epa);
+		printf("bus_mem_add_mapping: adding flex=%x "
+			"%qx-%qx, ", flex, spa, epa);
 #endif
-			while (spa < epa) {
-				vsize_t len = epa - spa;
-				u_int64_t pa;
-				if (len > pdc_btlb.max_size << PGSHIFT)
-					len = pdc_btlb.max_size << PGSHIFT;
-				if (btlb_insert(HPPA_SID_KERNEL, spa, spa, &len,
-						pmap_sid2pid(HPPA_SID_KERNEL) |
-					    	pmap_prot(pmap_kernel(),
-							  VM_PROT_ALL)) < 0)
-					return -1;
+		while (spa < epa) {
+			vsize_t len = epa - spa;
+			u_int64_t pa;
+			if (len > pdc_btlb.max_size << PGSHIFT)
+				len = pdc_btlb.max_size << PGSHIFT;
+			if (btlb_insert(HPPA_SID_KERNEL, spa, spa, &len,
+			    pmap_sid2pid(HPPA_SID_KERNEL) |
+			    pmap_prot(pmap_kernel(), VM_PROT_ALL)) >= 0) {
 				pa = spa + len - 1;
 #ifdef BTLBDEBUG
-				printf ("--- %x/%x, %qx, %qx-%qx",
-					flex, HPPA_FLEX(pa), pa, spa, epa);
+				printf("--- %x/%x, %qx, %qx-%qx",
+				    flex, HPPA_FLEX(pa), pa, spa, epa);
 #endif
 				/* do the mask */
 				for (; flex <= HPPA_FLEX(pa); flex++) {
 #ifdef BTLBDEBUG
-					printf ("mask %x ", flex);
+					printf("mask %x ", flex);
 #endif
 					bmm[flex / 32] |= (1 << (flex % 32));
 				}
 				spa = pa;
+			} else {
+				spa = max(spa, hppa_trunc_page(bpa));
+				epa = min(epa, hppa_round_page(bpa));
+
+				if (epa - 1 > ~0U)
+					epa = (u_int64_t)~0U + 1;
+
+				for (; spa < epa; spa += PAGE_SIZE)
+					pmap_kenter_pa(spa, spa, VM_PROT_ALL);
+
 			}
 #ifdef BTLBDEBUG
-			printf ("\n");
+			printf("\n");
 #endif
 		}
-#ifdef BTLBDEBUG
-		else {
-			printf("+++ already mapped flex=%x, mask=%x",
-			    flex, bmm[flex / 8]);
-		}
-#endif
-		*bshp = bpa;
-	} else {
-		/* register vaddr_t va; */
-
-#ifdef PMAPDEBUG
-		printf ("%d, %d, %lx\n", bank, off, vm_physmem[0].end);
-#endif
-		spa = hppa_trunc_page(bpa);
-		epa = hppa_round_page(bpa + size);
-
-#ifdef DIAGNOSTIC
-		if (epa <= spa)
-			panic("bus_mem_add_mapping: overflow");
-#endif
-#if 0
-
-		if (!(va = uvm_pagealloc_contig(epa - spa, spa, epa, NBPG)))
-			return (ENOMEM);
-
-		*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
-
-#if notused
-		for (; spa < epa; spa += NBPG, va += NBPG) {
-			if (!cachable)
-				pmap_changebit(va, TLB_UNCACHEABLE, ~0);
-			else
-				pmap_changebit(va, 0, ~TLB_UNCACHEABLE);
-		}
-#endif /* notused */
-#else
-		panic("mbus_add_mapping: not implemented");
-#endif
 	}
+#ifdef BTLBDEBUG
+	else {
+		printf("+++ already b-mapped flex=%x, mask=%x",
+		    flex, bmm[flex / 8]);
+	}
+#endif
 
-	return 0;
+	*bshp = bpa;
+	return (0);
 }
 
 int
@@ -193,9 +168,9 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
 
 	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
 		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
-			printf ("bus_space_map: pa 0x%lx, size 0x%lx\n",
+			printf("bus_space_map: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
-			printf ("bus_space_map: can't free region\n");
+			printf("bus_space_map: can't free region\n");
 		}
 	}
 
@@ -206,7 +181,6 @@ void
 mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 	u_long sva, eva;
-	paddr_t bpa;
 
 	sva = hppa_trunc_page(bsh);
 	eva = hppa_round_page(bsh + size);
@@ -216,14 +190,14 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 		panic("bus_space_unmap: overflow");
 #endif
 
-	if (pmap_extract(pmap_kernel(), bsh, &bpa) && bpa != bsh)
-		uvm_km_free(kernel_map, sva, eva - sva);
+	if (pmap_extract(pmap_kernel(), bsh, NULL))
+		pmap_kremove(sva, eva - sva);
 	else
-		bpa = bsh;	/* XXX assuming equ b-mapping been done */
+		;	/* XXX assuming equ b-mapping been done */
 
-	if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
+	if (extent_free(hppa_ex, bsh, size, EX_NOWAIT)) {
 		printf("bus_space_unmap: ps 0x%lx, size 0x%lx\n",
-		    bpa, size);
+		    bsh, size);
 		printf("bus_space_unmap: can't free region\n");
 	}
 }
@@ -240,7 +214,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 		panic("bus_space_alloc: bad region start/end");
 
 	if ((error = extent_alloc_subregion(hppa_ex, rstart, rend, size,
-					    align, 0, boundary, EX_NOWAIT, &bpa)))
+	    align, 0, boundary, EX_NOWAIT, &bpa)))
 		return (error);
 
 	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
@@ -252,8 +226,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	}
 
 	*addrp = bpa;
-
-	return error;
+	return (error);
 }
 
 void
@@ -860,7 +833,7 @@ mbattach(parent, self, aux)
 		(void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
 	sc->sc_hpa = pdc_hpa.hpa;
-	printf (" [flex %x]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
+	printf(" [flex %x]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
 	bzero (&nca, sizeof(nca));
