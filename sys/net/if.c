@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.100 2004/12/20 07:24:38 pascoe Exp $	*/
+/*	$OpenBSD: if.c,v 1.101 2005/01/14 11:49:01 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1302,12 +1302,6 @@ ifioctl(so, cmd, data, p)
 			(void)memset(ifp->if_description, 0, IFDESCRSIZE);
 			strlcpy(ifp->if_description, ifdescrbuf, IFDESCRSIZE);
 		}
-		break;
-
-	case OSIOCAIFGROUP:
-	case OSIOCGIFGROUP:
-	case OSIOCDIFGROUP:
-		return (EINVAL);
 		break;
 
 	case SIOCAIFGROUP:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.31 2004/12/14 13:41:01 mickey Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.32 2005/01/14 11:49:01 henning Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -142,11 +142,6 @@
 #define	SIOCIFCREATE	 _IOW('i', 122, struct ifreq)	/* create clone if */
 #define	SIOCIFDESTROY	 _IOW('i', 121, struct ifreq)	/* destroy clone if */
 #define	SIOCIFGCLONERS	_IOWR('i', 120, struct if_clonereq) /* get cloners */
-
-/* XXX henning removes this around 20050115 or is a slacker*/
-#define	OSIOCAIFGROUP	_IOW('i', 130, struct oifgroupreq) /* add an ifgroup */
-#define	OSIOCGIFGROUP   _IOWR('i', 131, struct oifgroupreq) /* get ifgroups */
-#define	OSIOCDIFGROUP    _IOW('i', 132, struct oifgroupreq) /* delete ifgroup */
 
 #define	SIOCAIFGROUP	_IOW('i', 135, struct ifgroupreq) /* add an ifgroup */
 #define	SIOCGIFGROUP   _IOWR('i', 136, struct ifgroupreq) /* get ifgroups */

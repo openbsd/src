@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.62 2004/12/07 20:38:46 mcbride Exp $	*/
+/*	$OpenBSD: if.h,v 1.63 2005/01/14 11:49:01 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -432,21 +432,6 @@ struct ifgroupreq {
 	} ifgr_ifgru;
 #define ifgr_group	ifgr_ifgru.ifgru_group
 #define ifgr_groups	ifgr_ifgru.ifgru_groups
-};
-
-/* XXX henning removes this 20050115, compat shitz */
-struct oifgroup {
-	char ifg_group[IFNAMSIZ];
-	TAILQ_ENTRY(oifgroup) ifg_next;
-};
-
-struct oifgroupreq {
-	char	ifgr_name[IFNAMSIZ];
-	u_int	ifgr_len;
-	union {
-		char	ifgru_group[IFNAMSIZ];
-		struct	oifgroup *ifgru_groups;
-	} ifgr_ifgru;
 };
 
 /*
