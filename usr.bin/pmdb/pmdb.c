@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmdb.c,v 1.15 2003/04/05 18:16:21 pvalchev Exp $	*/
+/*	$OpenBSD: pmdb.c,v 1.16 2003/05/15 00:11:03 jfb Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -212,33 +212,6 @@ main(int argc, char **argv)
 	return (0);
 }
 
-/* XXX - move to some other file. */
-int
-read_from_pid(pid_t pid, off_t from, void *to, size_t size)
-{
-	struct ptrace_io_desc piod;
-
-	piod.piod_op = PIOD_READ_D;
-	piod.piod_offs = (void *)(long)from;
-	piod.piod_addr = to;
-	piod.piod_len = size;
-
-	return (ptrace(PT_IO, pid, (caddr_t)&piod, 0));
-}
-
-
-int
-write_to_pid(pid_t pid, off_t to, void *from, size_t size)
-{
-	struct ptrace_io_desc piod;
-
-	piod.piod_op = PIOD_WRITE_D;
-	piod.piod_offs = (void *)(long)to;
-	piod.piod_addr = from;
-	piod.piod_len = size;
-
-	return (ptrace(PT_IO, pid, (caddr_t)&piod, 0));
-}
 
 static int
 cmd_show_registers(int argc, char **argv, void *arg)
