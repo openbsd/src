@@ -1,4 +1,4 @@
-/*	$OpenBSD: libcrypto.h,v 1.11 2001/07/13 14:13:39 ho Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.12 2002/03/05 00:10:26 deraadt Exp $	*/
 /*	$EOM: libcrypto.h,v 1.16 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 /* XXX I want #include <ssl/cryptall.h> but we appear to not install meth.h  */
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
+#include <openssl/md5.h>
 #include <openssl/pem.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509.h>
