@@ -71,6 +71,7 @@ SRCS=	cr_err_reply.c \
           logging.c \
           k_concat.c \
 	  strtok_r.c \
+	  version.c \
 	  base64.c 
 
 # XXX base64.c and strtok_r.c should really be somewhere else. 
