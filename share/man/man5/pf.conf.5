@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.132 2002/12/01 22:21:38 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.133 2002/12/02 22:26:16 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -353,6 +353,10 @@ The
 type is required where currently only CBQ is supported.
 .Pa bandwidth
 is optional and specifies the maximum rate for all queues on this interface.
+If no value is given here, the interface's bandwidth is used.
+The value must not exceed the interface bandwidth and can be specified
+in absolute and percentage values, where the latter ones are relative to the
+interface bandwidth.
 .Pa qlimit
 is optional and specifies the maximum number of packets in this queue.
 .Pa tbrsize
@@ -376,7 +380,8 @@ rule.
 .Pa bandwidth
 sets the maximum bitrate that can be processed by this queue.
 The value must not exceed the value of the parent queue and can be specified
-in absolute and percentage values.
+in absolute and percentage values, the latter ones are relative to the parent
+queue's bandwidth.
 Between queues a
 .Pa priority
 level can be set.
