@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.46 2004/12/08 12:31:55 martin Exp $
+dnl	$OpenBSD: hardware,v 1.47 2005/01/10 19:22:46 martin Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -77,20 +77,19 @@ Supported hardware:
 		Built-in audio.
 		ISA and EISA devices that require DMA operation.
 
-dnl uncomment when support is back on track
-dnl    AlphaStation 500 and 600
-dnl	  Supported devices:
-dnl		Built-in serial and parallel ports.
-dnl		Built-in DEC21040 Ethernet.
-dnl		Built-in ISP SCSI.
-dnl		PCI graphics card (TGA or VGA compatible).
-dnl		Most PCI devices (see below).
-dnl		Some ISA and EISA devices (see below).
-dnl	  Unsupported devices:
-dnl		Floppy drive.
-dnl		Built-in audio.
-dnl		ISA and EISA devices that require DMA operation.
-dnl
+    AlphaStation 500 and 600
+	  Supported devices:
+		Built-in serial and parallel ports.
+		Built-in DEC21040 Ethernet.
+		Built-in ISP SCSI.
+		PCI graphics card (TGA or VGA compatible).
+		Most PCI devices (see below).
+		Some ISA and EISA devices (see below).
+	  Unsupported devices:
+		Floppy drive.
+		Built-in audio.
+		ISA and EISA devices that require DMA operation.
+
     AlphaStation 200, 250, 255 and 400
 	  Supported devices:
 		Built-in serial and parallel ports.
@@ -151,7 +150,6 @@ dnl	AlphaServer systems, other than models 400 and 500, which seem to
 dnl	  be disguised AlphaStation machines
 	AlphaServer systems, other than model 400, which seem to
 	  be disguised AlphaStation machines
-	AlphaStation 500 and 600
 	Alpha XL systems
 	DEC 4000, 7000, and 10000 systems (FutureBus+ and XMIBus based)
 	EB64+ based systems
@@ -298,6 +296,21 @@ A
 		  including: [-]
 			D-Link DGE-550T (10/100/1000baseTX)
 			Antares Microsystems Gigabit Ethernet board
+		SysKonnect and Marvell based adapters (sk), including:
+			SysKonnect SK-9821 (1000baseT)
+			SysKonnect SK-9822 (dual 1000baseT)
+			SysKonnect SK-9841 (1000baseLX)
+			SysKonnect SK-9842 (dual 1000baseLX)
+			SysKonnect SK-9843 (1000baseSX)
+			SysKonnect SK-9844 (dual 1000baseSX)
+			SysKonnect SK-9521 v2.0 (1000baseT 32-bit)
+			SysKonnect SK-9821 v2.0 (1000baseT)
+			SysKonnect SK-9843 v2.0 (1000baseSX)
+			3Com 3c940 (1000baseT)
+			D-Link DGE-530T (1000baseT)
+			Linksys EG1032v2 (1000baseT)
+			Linksys EG1064v2 (1000baseT)
+			SMC 9452TX (1000baseT)
 	FDDI Adapters [*]
 		Digital DEFPA PCI FDDI adapters (fpa)
 	Cryptography Accelerators [*]
