@@ -21,6 +21,7 @@
 ./usr/libdata/perl5/alpha-openbsd/5.6.1/B/Bytecode.pm
 ./usr/libdata/perl5/alpha-openbsd/5.6.1/B/C.pm
 ./usr/libdata/perl5/alpha-openbsd/5.6.1/B/CC.pm
+./usr/libdata/perl5/alpha-openbsd/5.6.1/B/Concise.pm
 ./usr/libdata/perl5/alpha-openbsd/5.6.1/B/Debug.pm
 ./usr/libdata/perl5/alpha-openbsd/5.6.1/B/Deparse.pm
 ./usr/libdata/perl5/alpha-openbsd/5.6.1/B/Disassembler.pm

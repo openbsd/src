@@ -2651,3 +2651,4 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/share/sendmail/ostype/freebsd4.m4
