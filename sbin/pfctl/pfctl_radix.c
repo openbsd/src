@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.10 2003/01/25 23:17:34 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.11 2003/02/03 08:42:15 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -35,7 +35,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <netinet/in.h>
 #include <net/pfvar.h>
 
 #include <errno.h>

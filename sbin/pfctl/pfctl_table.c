@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.29 2003/01/25 23:17:34 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.30 2003/02/03 08:42:15 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -35,7 +35,6 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <netinet/in.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
@@ -392,7 +391,8 @@ load_addr(int argc, char *argv[], char *file, int nonetwork)
 	}
 	while (next_token(buf, fp))
 		append_addr(buf, nonetwork);
-	fclose(fp);
+	if (fp != stdin)
+		fclose(fp);
 }
 
 int
@@ -559,12 +559,10 @@ void
 pfctl_begin_table(void)
 {
 	static int hookreg;
-	int rv;
 
 	if ((loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0)
 		return;
-	rv = pfr_ina_begin(&ticket, NULL, 0);
-	if (rv) {
+	if (pfr_ina_begin(&ticket, NULL, 0) != 0) {
 		radix_perror();
 		exit(1);
 	}
@@ -607,7 +605,6 @@ void
 pfctl_define_table(char *name, int flags, int addrs, int noaction)
 {
 	struct pfr_table tbl;
-	int rv;
 
 	if (noaction || (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0) {
 		size = 0;
@@ -620,9 +617,8 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction)
 	tbl.pfrt_flags = flags;
 
 	inactive = 1;
-	rv = pfr_ina_define(&tbl, buffer.addrs, size, NULL, NULL, ticket,
-	    addrs ? PFR_FLAG_ADDRSTOO : 0);
-	if (rv) {
+	if (pfr_ina_define(&tbl, buffer.addrs, size, NULL, NULL, ticket,
+	    addrs ? PFR_FLAG_ADDRSTOO : 0) != 0) {
 		radix_perror();
 		exit(1);
 	}
@@ -630,14 +626,11 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction)
 }
 
 void
-pfctl_commit_table()
+pfctl_commit_table(void)
 {
-	int rv;
-
 	if ((loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0)
 		return;
-	rv = pfr_ina_commit(ticket, NULL, NULL, 0);
-	if (rv) {
+	if (pfr_ina_commit(ticket, NULL, NULL, 0) != 0) {
 		radix_perror();
 		exit(1);
 	}
@@ -645,7 +638,7 @@ pfctl_commit_table()
 }
 
 void
-inactive_cleanup()
+inactive_cleanup(void)
 {
 	if (inactive)
 		pfr_ina_begin(NULL, NULL, 0);
