@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2003/10/21 20:53:34 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2003/10/24 19:56:44 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -31,9 +31,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*
-#include "machine/ipkdb.h"
-*/
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -183,7 +180,6 @@ static int devio_malloc_safe = 0;
 int segment8_a_mapped = 0;
 
 extern int OF_stdout;
-extern int where;
 
 /* XXX, called from asm */
 void initppc(u_int startkernel, u_int endkernel, char *args);
@@ -204,9 +200,6 @@ initppc(startkernel, endkernel, args)
 #ifdef DDB
 	extern void *ddblow; extern int ddbsize;
 #endif
-#if NIPKDB > 0
-	extern ipkdblow, ipkdbsize;
-#endif
 	extern void consinit(void);
 	extern void callback(void *);
 	extern void *msgbuf_addr;
@@ -215,7 +208,6 @@ initppc(startkernel, endkernel, args)
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
 
-where = 3;
 	curpcb = &proc0paddr->u_pcb;
 
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
@@ -293,10 +285,6 @@ where = 3;
 		case EXC_BPT:
 #if defined(DDB)
 			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
-#else
-#if NIPKDB > 0
-			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
-#endif
 #endif
 			break;
 		}
@@ -468,18 +456,9 @@ where = 3;
 	ofwconprobe();
 	consinit();
 
-#if NIPKDB > 0
-	/*
-	 * Now trap to IPKDB
-	 */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#else
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
-#endif
 #endif
 
 	/*
@@ -1390,10 +1369,7 @@ ppc_close_pci_bridge(int handle)
 
 /* bcopy(), error on fault */
 int
-kcopy(from, to, size)
-	const void *from;
-	void *to;
-	size_t size;
+kcopy(const void *from, void *to, size_t size)
 {
 	faultbuf env;
 	void *oldh = curproc->p_addr->u_pcb.pcb_onfault;
