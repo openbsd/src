@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.32 1998/11/19 10:04:51 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.33 1998/11/21 18:11:21 niklas Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -375,18 +375,19 @@ pccom	GVC5000 #some GVC modem
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
 #ep	TCM5095 #3COM 3c509B		(PNP80F7)
+ne	@@@1980	#OvisLink LE-8019R
+we	SMC8416 #SMC EtherEZ
 
 # Sound:
 #wdc	YMH002F #OPL3-SA3/X Sound Board
 joy	@P@1001	#ALS100+
-joy	CSC0001	#CS4236
+joy	CSC0001	#AW35/Pro gameport
 joy	CTL7002	#Creative SB AWE64 PnP
 joy	ESS0001	#ESS ES1869 Plug and Play AudioD
-ne	@@@1980	#OvisLink LE-8019R
 sb	@X@0001	#CMI8330. Audio Adapter
 sb	ADS7150	#AD1815
 sb	ADS7180	#AD1816
-sb	CSC0000	#CS4236
+sb	CSC0000	#AW35/Pro sound emulation (both SB *and* WSS, somewhat weird)
 sb	CTL0001	#Creative ViBRA16C PnP Audio
 sb	CTL0031	#SB AWE32
 sb	CTL0041	#SB16 PnP (CT4131)
@@ -396,7 +397,8 @@ sb	CTL0044	#SB AWE64 Gold
 sb	CTL0045	#SB AWE64 Value
 sb	ESS1868	#
 sb	ESS1869	#ESS ES1869 Plug and Play AudioD
-we	SMC8416 #SMC EtherEZ
 ym	@@@1001 #ALS100+
 ym	YMH0021	#OPL3-SA2 Sound Board
 ym	YMH0021 #OPL3-SA2 Sound Board
+#	CSC0003 #AW35/pro MPU
+#	CSC0010	#AW35/Pro CTRL
