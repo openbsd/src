@@ -1,4 +1,4 @@
-This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -20,6 +20,78 @@ of a permission notice identical to this one.
 manual into another language, under the above conditions for modified
 versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
+
+
+File: cvs.info,  Node: cvsignore,  Next: checkoutlist,  Prev: rcsinfo,  Up: Administrative files
+
+Ignoring files via cvsignore
+============================
+
+   There are certain file names that frequently occur inside your
+working copy, but that you don't want to put under CVS control.
+Examples are all the object files that you get while you compile your
+sources.  Normally, when you run `cvs update', it prints a line for
+each file it encounters that it doesn't know about (*note update
+output::).
+
+   CVS has a list of files (or sh(1) file name patterns) that it should
+ignore while running `update', `import' and `release'.  This list is
+constructed in the following way.
+
+   * The list is initialized to include certain file name patterns:
+     names associated with CVS administration, or with other common
+     source control systems; common names for patch files, object files,
+     archive files, and editor backup files; and other names that are
+     usually artifacts of assorted utilities.  Currently, the default
+     list of ignored file name patterns is:
+
+              RCS     SCCS    CVS     CVS.adm
+              RCSLOG  cvslog.*
+              tags    TAGS
+              .make.state     .nse_depinfo
+              *~      #*      .#*     ,*      _$*     *$
+              *.old   *.bak   *.BAK   *.orig  *.rej   .del-*
+              *.a     *.olb   *.o     *.obj   *.so    *.exe
+              *.Z     *.elc   *.ln
+              core
+
+   * The per-repository list in `$CVSROOT/CVSROOT/cvsignore' is
+     appended to the list, if that file exists.
+
+   * The per-user list in `.cvsignore' in your home directory is
+     appended to the list, if it exists.
+
+   * Any entries in the environment variable `$CVSIGNORE' is appended
+     to the list.
+
+   * Any `-I' options given to CVS is appended.
+
+   * As CVS traverses through your directories, the contents of any
+     `.cvsignore' will be appended to the list.  The patterns found in
+     `.cvsignore' are only valid for the directory that contains them,
+     not for any sub-directories.
+
+   In any of the 5 places listed above, a single exclamation mark (`!')
+clears the ignore list.  This can be used if you want to store any file
+which normally is ignored by CVS.
+
+   Specifying `-I !' to `cvs import' will import everything, which is
+generally what you want to do if you are importing files from a
+pristine distribution or any other source which is known to not contain
+any extraneous files.  However, looking at the rules above you will see
+there is a fly in the ointment; if the distribution contains any
+`.cvsignore' files, then the patterns from those files will be
+processed even if `-I !' is specified.  The only workaround is to
+remove the `.cvsignore' files in order to do the import.  Because this
+is awkward, in the future `-I !' might be modified to override
+`.cvsignore' files in each directory.
+
+   Note that the syntax of the ignore files consists of a series of
+lines, each of which contains a space separated list of filenames.
+This offers no clean way to specify filenames which contain spaces, but
+you can use a workaround like `foo?bar' to match a file named `foo bar'
+(it also matches `fooxbar' and the like).  Also note that there is
+currently no way to specify comments.
 
 
 File: cvs.info,  Node: checkoutlist,  Next: history file,  Prev: cvsignore,  Up: Administrative files
@@ -52,7 +124,7 @@ such as:
    and the checked out copy in the `CVSROOT' directory should be
 updated.
 
-   Note that listing `passwd' (*note Password authentication server::.)
+   Note that listing `passwd' (*note Password authentication server::)
 in `checkoutlist' is not recommended for security reasons.
 
    For information about keeping a checkout out copy in a more general
@@ -66,9 +138,9 @@ The history file
 ================
 
    The file `$CVSROOT/CVSROOT/history' is used to log information for
-the `history' command (*note history::.).  This file must be created to
+the `history' command (*note history::).  This file must be created to
 turn on logging.  This is done automatically if the `cvs init' command
-is used to set up the repository (*note Creating a repository::.).
+is used to set up the repository (*note Creating a repository::).
 
    The file format of the `history' file is documented only in comments
 in the CVS source code, but generally programs should use the `cvs
@@ -89,7 +161,7 @@ in.  There are several mechanisms to do that.
 environment variable), use `~' followed by `/' or the end of the line.
 Likewise for the home directory of USER, use `~USER'.  These variables
 are expanded on the server machine, and don't get any reasonable
-expansion if pserver (*note Password authenticated::.)  is in use;
+expansion if pserver (*note Password authenticated::) is in use;
 therefore user variables (see below) may be a better choice to
 customize behavior based on the user running CVS.
 
@@ -117,13 +189,16 @@ internal variables are:
 
 `USER'
      Username of the user running CVS (on the CVS server machine).
+     When using pserver, this is the user specified in the repository
+     specification which need not be the same as the username the
+     server is running as (*note Password authentication server::).
 
    If you want to pass a value to the administrative files which the
 user who is running CVS can specify, use a user variable.  To expand a
 user variable, the administrative file contains `${=VARIABLE}'.  To set
 a user variable, specify the global option `-s' to CVS, with argument
 `VARIABLE=VALUE'.  It may be particularly useful to specify this option
-via `.cvsrc' (*note ~/.cvsrc::.).
+via `.cvsrc' (*note ~/.cvsrc::).
 
    For example, if you want the administrative file to refer to a test
 directory you might create a user variable `TESTDIR'.  Then if CVS is
@@ -165,12 +240,6 @@ very strict.  Extraneous spaces or tabs are not permitted.
      default is `yes'.  For more on pserver, see *Note Password
      authenticated::.
 
-`PreservePermissions=VALUE'
-     Enable support for saving special device files, symbolic links,
-     file permissions and ownerships in the repository.  The default
-     value is `no'.  *Note Special Files::, for the full implications
-     of using this keyword.
-
 `TopLevelAdmin=VALUE'
      Modify the `checkout' command to create a `CVS' directory at the
      top level of the new working directory, in addition to `CVS'
@@ -182,7 +251,7 @@ very strict.  Extraneous spaces or tabs are not permitted.
      in one of the checked out subdirectories.  The `CVS' directory
      created there will mean you don't have to specify `CVSROOT' for
      each command.  It also provides a place for the `CVS/Template'
-     file (*note Working directory storage::.).
+     file (*note Working directory storage::).
 
 `LockDir=DIRECTORY'
      Put CVS lock files in DIRECTORY rather than directly in the
@@ -201,6 +270,12 @@ very strict.  Extraneous spaces or tabs are not permitted.
      repository could become corrupted.  CVS 1.10 does not support
      LockDir but it will print a warning if run on a repository with
      LockDir enabled.
+
+`LogHistory=VALUE'
+     Control what is logged to the `CVSROOT/history' file.  Default of
+     `TOFEWGCMAR' (or simply `all') will log all transactions.  Any
+     subset of the default is legal.  (For example, to only log
+     transactions that modify the `*,v' files, use `LogHistory=TMAR'.)
 
 
 File: cvs.info,  Node: Environment variables,  Next: Compatibility,  Prev: Administrative files,  Up: Top
@@ -256,29 +331,29 @@ All environment variables which affect CVS
 
 `$HOMEDRIVE'
      Used to locate the directory where the `.cvsrc' file, and other
-     such files, are searched.  On Unix, CVS just checks for HOME.  On
-     Windows NT, the system will set HOMEDRIVE, for example to `d:' and
-     HOMEPATH, for example to `\joe'.  On Windows 95, you'll probably
-     need to set HOMEDRIVE and HOMEPATH yourself.
+     such files, are searched.  On Unix, CVS just checks for `HOME'.
+     On Windows NT, the system will set `HOMEDRIVE', for example to
+     `d:' and `HOMEPATH', for example to `\joe'.  On Windows 95, you'll
+     probably need to set `HOMEDRIVE' and `HOMEPATH' yourself.
 
 `$CVS_RSH'
      Specifies the external program which CVS connects with, when
-     `:ext:' access method is specified.  *note Connecting via rsh::..
+     `:ext:' access method is specified.  *note Connecting via rsh::.
 
 `$CVS_SERVER'
      Used in client-server mode when accessing a remote repository
      using RSH.  It specifies the name of the program to start on the
      server side when accessing a remote repository using RSH.  The
-     default value is `cvs'.  *note Connecting via rsh::.
+     default value is `cvs'.  *note Connecting via rsh::
 
 `$CVS_PASSFILE'
      Used in client-server mode when accessing the `cvs login server'.
      Default value is `$HOME/.cvspass'.  *note Password authentication
-     client::.
+     client::
 
 `$CVS_CLIENT_PORT'
      Used in client-server mode when accessing the server via Kerberos.
-     *note Kerberos authenticated::.
+     *note Kerberos authenticated::
 
 `$CVS_RCMD_PORT'
      Used in client-server mode.  If set, specifies the port number to
@@ -287,8 +362,8 @@ All environment variables which affect CVS
 
 `$CVS_CLIENT_LOG'
      Used for debugging only in client-server mode.  If set, everything
-     send to the server is logged into ``$CVS_CLIENT_LOG'.in' and
-     everything send from the server is logged into
+     sent to the server is logged into ``$CVS_CLIENT_LOG'.in' and
+     everything sent from the server is logged into
      ``$CVS_CLIENT_LOG'.out'.
 
 `$CVS_SERVER_SLEEP'
@@ -300,7 +375,7 @@ All environment variables which affect CVS
      For CVS 1.10 and older, setting this variable prevents CVS from
      overwriting the `CVS/Root' file when the `-d' global option is
      specified.  Later versions of CVS do not rewrite `CVS/Root', so
-     CVS_IGNORE_REMOTE_ROOT has no effect.
+     `CVS_IGNORE_REMOTE_ROOT' has no effect.
 
 `$COMSPEC'
      Used under OS/2 only.  It specifies the name of the command
@@ -384,8 +459,9 @@ using at any particular moment).
      This is a generic response when trying to connect to a pserver
      server which chooses not to provide a specific reason for denying
      authorization.  Check that the username and password specified are
-     correct and that the CVSROOT specified is allowed by -allow-root
-     in inetd.conf.  See *Note Password authenticated::.
+     correct and that the `CVSROOT' specified is allowed by
+     `--allow-root' in `inetd.conf'.  See *Note Password
+     authenticated::.
 
 `FILE:LINE: Assertion 'TEXT' failed'
      The exact format of this message may vary depending on your
@@ -428,7 +504,7 @@ using at any particular moment).
 
 `cannot open CVS/Entries for reading: No such file or directory'
      This generally indicates a CVS internal error, and can be handled
-     as with other CVS bugs (*note BUGS::.).  Usually there is a
+     as with other CVS bugs (*note BUGS::).  Usually there is a
      workaround--the exact nature of which would depend on the
      situation but which hopefully could be figured out.
 
@@ -466,12 +542,12 @@ using at any particular moment).
      message and the cause is not well-understood.  With the current
      version of CVS, which does not run `co', if this message occurs
      without another error message, it is definitely a CVS bug (*note
-     BUGS::.).
+     BUGS::).
 
 `cvs [login aborted]: could not find out home directory'
      This means that you need to set the environment variables that CVS
-     uses to locate your home directory.  See the discussion of HOME,
-     HOMEDRIVE, and HOMEPATH in *Note Environment variables::.
+     uses to locate your home directory.  See the discussion of `HOME',
+     `HOMEDRIVE', and `HOMEPATH' in *Note Environment variables::.
 
 `cvs update: could not merge revision REV of FILE: No such file or directory'
      CVS 1.9 and older will print this message if there was a problem
@@ -519,7 +595,7 @@ using at any particular moment).
      The likely cause for the original corruption is hardware, the
      operating system, or the like.  Of course, if you find a case in
      which CVS seems to corrupting the file, by all means report it,
-     (*note BUGS::.).  There are quite a few variations of this error
+     (*note BUGS::).  There are quite a few variations of this error
      message, depending on exactly where in the RCS file CVS finds the
      syntax error.
 
@@ -562,13 +638,14 @@ using at any particular moment).
      directory.  If the problem is that you created a CVS directory via
      some mechanism other than CVS, then the answer is simple, use a
      name other than CVS.  If not, it indicates a CVS bug (*note
-     BUGS::.).
+     BUGS::).
 
 `rcs error: Unknown option: -x,v/'
      This message will be followed by a usage message for RCS.  It
      means that you have an old version of RCS (probably supplied with
-     your operating system).  CVS only works with RCS version 5 and
-     later.
+     your operating system), as well as an old version of CVS.  CVS
+     1.9.18 and earlier only work with RCS version 5 and later; current
+     versions of CVS do not run RCS programs.
 
 `cvs [server aborted]: received broken pipe signal'
      This message seems to be caused by a hard-to-track-down bug in CVS
@@ -601,16 +678,20 @@ using at any particular moment).
      system).  For details, see *Note Connection::, and *Note Password
      authentication server::.
 
+`cvs server: cannot open /root/.cvsignore: Permission denied'
+`cvs [server aborted]: can't chdir(/root): Permission denied'
+     See *Note Connection::.
+
 `cvs commit: Up-to-date check failed for `FILE''
      This means that someone else has committed a change to that file
      since the last time that you did a `cvs update'.  So before
      proceeding with your `cvs commit' you need to `cvs update'.  CVS
      will merge the changes that you made and the changes that the
      other person made.  If it does not detect any conflicts it will
-     report `M cacErrCodes.h' and you are ready to `cvs commit'.  If it
-     detects conflicts it will print a message saying so, will report
-     `C cacErrCodes.h', and you need to manually resolve the conflict.
-     For more details on this process see *Note Conflicts example::.
+     report `M FILE' and you are ready to `cvs commit'.  If it detects
+     conflicts it will print a message saying so, will report `C FILE',
+     and you need to manually resolve the conflict.  For more details
+     on this process see *Note Conflicts example::.
 
 `Usage:	diff3 [-exEX3 [-i | -m] [-L label1 -L label3]] file1 file2 file3'
           Only one of [exEX3] allowed
@@ -640,7 +721,7 @@ using at any particular moment).
 `cvs commit: warning: editor session failed'
      This means that the editor which CVS is using exits with a nonzero
      exit status.  Some versions of vi will do this even when there was
-     not a problem editing the file.  If so, point the CVSEDITOR
+     not a problem editing the file.  If so, point the `CVSEDITOR'
      environment variable to a small script such as:
 
           #!/bin/sh
@@ -682,7 +763,7 @@ the next steps depend largely on which access method you are using.
           cvs [pserver aborted]: bad auth protocol start: foo
 
      If this fails to work, then make sure inetd is working right.
-     Change the invocation in inetd.conf to run the echo program
+     Change the invocation in `inetd.conf' to run the echo program
      instead of cvs.  For example:
 
           2401  stream  tcp  nowait  root /bin/echo echo hello
@@ -700,6 +781,26 @@ the next steps depend largely on which access method you are using.
 
      Another good debugging tool is the `-d' (debugging) option to
      inetd.  Consult your system documentation for more information.
+
+     If you seem to be connecting but get errors like:
+
+          cvs server: cannot open /root/.cvsignore: Permission denied
+          cvs [server aborted]: can't chdir(/root): Permission denied
+
+     then either you haven't specified `-f' in `inetd.conf' or your
+     system is setting the `HOME' environment variable for programs
+     being run by inetd.  In the latter case, you can either have inetd
+     run a shell script that unsets `HOME' and then runs CVS, or you
+     can use `env' to run CVS with a pristine environment.
+
+     If you can connect successfully for a while but then can't, you've
+     probably hit inetd's rate limit.  (If inetd receives too many
+     requests for the same service in a short period of time, it
+     assumes that something is wrong and temporarily disables the
+     service.)  Check your inetd documentation to find out how to
+     adjust the rate limit (some versions of inetd have a single rate
+     limit, others allow you to set the limit for each service
+     separately.)
 
 
 File: cvs.info,  Node: Other problems,  Prev: Connection,  Up: Troubleshooting
@@ -785,11 +886,6 @@ problems with CVS itself.
           Phone: +46 (0)13 - 21 46 00
           Fax:   +46 (0)13 - 21 47 00
           http://www.signum.se/
-          
-          Cyclic Software
-          United States of America
-          http://www.cyclic.com/
-          info@cyclic.com
 
    * If you got CVS through a distributor, such as an operating system
      vendor or a vendor of freeware CD-ROMs, you may wish to see
@@ -806,7 +902,7 @@ problems with CVS itself.
    * There may be resources on the net which can help.  Two good places
      to start are:
 
-          http://www.cyclic.com
+          http://www.cvshome.org
           http://www.loria.fr/~molli/cvs-index.html
 
      If you are so inspired, increasing the information available on

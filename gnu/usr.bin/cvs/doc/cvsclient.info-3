@@ -1,5 +1,10 @@
-This is cvsclient.info, produced by Makeinfo version 3.12f from
+This is cvsclient.info, produced by makeinfo version 4.0 from
 ./cvsclient.texi.
+
+INFO-DIR-SECTION Programming
+START-INFO-DIR-ENTRY
+* cvsclient: (cvsclient).      The CVS client/server protocol.
+END-INFO-DIR-ENTRY
 
 
 File: cvsclient.info,  Node: Responses,  Next: Text tags,  Prev: Response pathnames,  Up: Protocol
@@ -536,8 +541,7 @@ Notes on the Protocol
    A number of enhancements are possible.  Also see the file TODO in
 the CVS source distribution, which has further ideas concerning various
 aspects of CVS, some of which impact the protocol.  Similarly, the
-`http://www.cyclic.com' site, in particular the `Development of CVS'
-page.
+`http://www.cvshome.org' site, in particular the `Development' pages.
 
    * The `Modified' request could be speeded up by sending diffs rather
      than entire files.  The client would need some way to keep the

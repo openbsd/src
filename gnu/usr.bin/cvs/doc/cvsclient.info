@@ -1,35 +1,40 @@
-This is cvsclient.info, produced by Makeinfo version 3.12f from
+This is cvsclient.info, produced by makeinfo version 4.0 from
 ./cvsclient.texi.
+
+INFO-DIR-SECTION Programming
+START-INFO-DIR-ENTRY
+* cvsclient: (cvsclient).      The CVS client/server protocol.
+END-INFO-DIR-ENTRY
 
 
 Indirect:
-cvsclient.info-1: 83
-cvsclient.info-2: 24794
-cvsclient.info-3: 61415
+cvsclient.info-1: 214
+cvsclient.info-2: 24926
+cvsclient.info-3: 64193
 
 Tag Table:
 (Indirect)
-Node: Top83
-Node: Introduction904
-Node: Goals3439
-Node: Connection and Authentication6363
-Node: Password scrambling12601
-Node: Protocol14468
-Node: Entries Lines16553
-Node: File Modes17656
-Node: Filenames19194
-Node: File transmissions20501
-Node: Strings22059
-Node: Dates22742
-Node: Request intro23774
-Node: Requests24794
-Node: Response intro58137
-Node: Response pathnames59504
-Node: Responses61415
-Node: Text tags77433
-Node: Example79147
-Node: Requirements82926
-Node: Obsolete83834
-Node: Protocol Notes84572
+Node: Top214
+Node: Introduction1033
+Node: Goals3565
+Node: Connection and Authentication6489
+Node: Password scrambling12727
+Node: Protocol14594
+Node: Entries Lines16679
+Node: File Modes17781
+Node: Filenames19319
+Node: File transmissions20626
+Node: Strings22184
+Node: Dates22867
+Node: Request intro23906
+Node: Requests24926
+Node: Response intro60915
+Node: Response pathnames62282
+Node: Responses64193
+Node: Text tags80211
+Node: Example81925
+Node: Requirements85704
+Node: Obsolete86612
+Node: Protocol Notes87350
 
 End Tag Table

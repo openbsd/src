@@ -1,4 +1,4 @@
-This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -22,188 +22,13 @@ versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
 
 
-File: cvs.info,  Node: checkout options,  Next: checkout examples,  Up: checkout
-
-checkout options
-----------------
-
-   These standard options are supported by `checkout' (*note Common
-options::., for a complete description of them):
-
-`-D DATE'
-     Use the most recent revision no later than DATE.  This option is
-     sticky, and implies `-P'.  See *Note Sticky tags::, for more
-     information on sticky tags/dates.
-
-`-f'
-     Only useful with the `-D DATE' or `-r TAG' flags.  If no matching
-     revision is found, retrieve the most recent revision (instead of
-     ignoring the file).
-
-`-k KFLAG'
-     Process keywords according to KFLAG.  See *Note Keyword
-     substitution::.  This option is sticky; future updates of this
-     file in this working directory will use the same KFLAG.  The
-     `status' command can be viewed to see the sticky options.  See
-     *Note Invoking CVS::, for more information on the `status' command.
-
-`-l'
-     Local; run only in current working directory.
-
-`-n'
-     Do not run any checkout program (as specified with the `-o' option
-     in the modules file; *note modules::.).
-
-`-P'
-     Prune empty directories.  See *Note Moving directories::.
-
-`-p'
-     Pipe files to the standard output.
-
-`-R'
-     Checkout directories recursively.  This option is on by default.
-
-`-r TAG'
-     Use revision TAG.  This option is sticky, and implies `-P'.  See
-     *Note Sticky tags::, for more information on sticky tags/dates.
-
-   In addition to those, you can use these special command options with
-`checkout':
-
-`-A'
-     Reset any sticky tags, dates, or `-k' options.  See *Note Sticky
-     tags::, for more information on sticky tags/dates.
-
-`-c'
-     Copy the module file, sorted, to the standard output, instead of
-     creating or modifying any files or directories in your working
-     directory.
-
-`-d DIR'
-     Create a directory called DIR for the working files, instead of
-     using the module name.  In general, using this flag is equivalent
-     to using `mkdir DIR; cd DIR' followed by the checkout command
-     without the `-d' flag.
-
-     There is an important exception, however.  It is very convenient
-     when checking out a single item to have the output appear in a
-     directory that doesn't contain empty intermediate directories.  In
-     this case _only_, CVS tries to "shorten" pathnames to avoid those
-     empty directories.
-
-     For example, given a module `foo' that contains the file `bar.c',
-     the command `cvs co -d dir foo' will create directory `dir' and
-     place `bar.c' inside.  Similarly, given a module `bar' which has
-     subdirectory `baz' wherein there is a file `quux.c', the command
-     `cvs -d dir co bar/baz' will create directory `dir' and place
-     `quux.c' inside.
-
-     Using the `-N' flag will defeat this behavior.  Given the same
-     module definitions above, `cvs co -N -d dir foo' will create
-     directories `dir/foo' and place `bar.c' inside, while `cvs co -N -d
-     dir bar/baz' will create directories `dir/bar/baz' and place
-     `quux.c' inside.
-
-`-j TAG'
-     With two `-j' options, merge changes from the revision specified
-     with the first `-j' option to the revision specified with the
-     second `j' option, into the working directory.
-
-     With one `-j' option, merge changes from the ancestor revision to
-     the revision specified with the `-j' option, into the working
-     directory.  The ancestor revision is the common ancestor of the
-     revision which the working directory is based on, and the revision
-     specified in the `-j' option.
-
-     In addition, each -j option can contain an optional date
-     specification which, when used with branches, can limit the chosen
-     revision to one within a specific date.  An optional date is
-     specified by adding a colon (:) to the tag:
-     `-jSYMBOLIC_TAG:DATE_SPECIFIER'.
-
-     *Note Branching and merging::.
-
-`-N'
-     Only useful together with `-d DIR'.  With this option, CVS will
-     not "shorten" module paths in your working directory when you
-     check out a single module.  See the `-d' flag for examples and a
-     discussion.
-
-`-s'
-     Like `-c', but include the status of all modules, and sort it by
-     the status string.  *Note modules::, for info about the `-s'
-     option that is used inside the modules file to set the module
-     status.
-
-
-File: cvs.info,  Node: checkout examples,  Prev: checkout options,  Up: checkout
-
-checkout examples
------------------
-
-   Get a copy of the module `tc':
-
-     $ cvs checkout tc
-
-   Get a copy of the module `tc' as it looked one day ago:
-
-     $ cvs checkout -D yesterday tc
-
-
-File: cvs.info,  Node: commit,  Next: diff,  Prev: checkout,  Up: CVS commands
-
-commit--Check files into the repository
-=======================================
-
-   * Synopsis: commit [-lnRf] [-m 'log_message' | -F file] [-r
-     revision] [files...]
-
-   * Requires: working directory, repository.
-
-   * Changes: repository.
-
-   * Synonym: ci
-
-   Use `commit' when you want to incorporate changes from your working
-source files into the source repository.
-
-   If you don't specify particular files to commit, all of the files in
-your working current directory are examined.  `commit' is careful to
-change in the repository only those files that you have really changed.
-By default (or if you explicitly specify the `-R' option), files in
-subdirectories are also examined and committed if they have changed;
-you can use the `-l' option to limit `commit' to the current directory
-only.
-
-   `commit' verifies that the selected files are up to date with the
-current revisions in the source repository; it will notify you, and
-exit without committing, if any of the specified files must be made
-current first with `update' (*note update::.).  `commit' does not call
-the `update' command for you, but rather leaves that for you to do when
-the time is right.
-
-   When all is well, an editor is invoked to allow you to enter a log
-message that will be written to one or more logging programs (*note
-modules::., and *note loginfo::.)  and placed in the RCS file inside the
-repository.  This log message can be retrieved with the `log' command;
-see *Note log::.  You can specify the log message on the command line
-with the `-m MESSAGE' option, and thus avoid the editor invocation, or
-use the `-F FILE' option to specify that the argument file contains the
-log message.
-
-* Menu:
-
-* commit options::              commit options
-* commit examples::             commit examples
-
-
 File: cvs.info,  Node: commit options,  Next: commit examples,  Up: commit
 
 commit options
 --------------
 
    These standard options are supported by `commit' (*note Common
-options::., for a complete description of them):
+options::, for a complete description of them):
 
 `-l'
      Local; run only in current working directory.
@@ -217,7 +42,7 @@ options::., for a complete description of them):
 `-r REVISION'
      Commit to REVISION.  REVISION must be either a branch, or a
      revision on the main trunk that is higher than any existing
-     revision number (*note Assigning revisions::.).  You cannot commit
+     revision number (*note Assigning revisions::).  You cannot commit
      to a specific revision on a branch.
 
    `commit' also supports these options:
@@ -254,14 +79,14 @@ Committing to a branch
 
    You can commit to a branch revision (one that has an even number of
 dots) with the `-r' option.  To create a branch revision, use the `-b'
-option of the `rtag' or `tag' commands (*note Branching and
-merging::.).  Then, either `checkout' or `update' can be used to base
-your sources on the newly created branch.  From that point on, all
-`commit' changes made within these working sources will be
-automatically added to a branch revision, thereby not disturbing
-main-line development in any way.  For example, if you had to create a
-patch to the 1.2 version of the product, even though the 2.0 version is
-already under development, you might do:
+option of the `rtag' or `tag' commands (*note Branching and merging::).
+Then, either `checkout' or `update' can be used to base your sources
+on the newly created branch.  From that point on, all `commit' changes
+made within these working sources will be automatically added to a
+branch revision, thereby not disturbing main-line development in any
+way.  For example, if you had to create a patch to the 1.2 version of
+the product, even though the 2.0 version is already under development,
+you might do:
 
      $ cvs rtag -b -r FCS1_2 FCS1_2_Patch product_module
      $ cvs checkout -r FCS1_2_Patch product_module
@@ -341,7 +166,7 @@ diff options
 ------------
 
    These standard options are supported by `diff' (*note Common
-options::., for a complete description of them):
+options::, for a complete description of them):
 
 `-D DATE'
      Use the most recent revision no later than DATE.  See `-r' for how
@@ -466,7 +291,7 @@ of the source for module without the CVS administrative directories.
 For example, you might use `export' to prepare source for shipment
 off-site.  This command requires that you specify a date or tag (with
 `-D' or `-r'), so that you can count on reproducing the source you ship
-to others.
+to others (and thus it always prunes empty directories).
 
    One often would like to use `-kv' with `cvs export'.  This causes
 any keywords to be expanded such that an import done at some other site
@@ -488,7 +313,7 @@ export options
 --------------
 
    These standard options are supported by `export' (*note Common
-options::., for a complete description of them):
+options::, for a complete description of them):
 
 `-D DATE'
      Use the most recent revision no later than DATE.
@@ -518,7 +343,7 @@ options::., for a complete description of them):
      details on how CVS handles this flag.
 
 `-k SUBST'
-     Set keyword expansion mode (*note Substitution modes::.).
+     Set keyword expansion mode (*note Substitution modes::).
 
 `-N'
      Only useful together with `-d DIR'.  *Note checkout options::, for
@@ -544,7 +369,7 @@ history--Show status of files and users
 `$CVSROOT/CVSROOT/history'.
 
    *Warning:* `history' uses `-f', `-l', `-n', and `-p' in ways that
-conflict with the normal use inside CVS (*note Common options::.).
+conflict with the normal use inside CVS (*note Common options::).
 
 * Menu:
 
@@ -575,7 +400,7 @@ report is generated:
      more than once on the command line.)
 
 `-o'
-     Report on checked-out modules.
+     Report on checked-out modules.  This is the default report type.
 
 `-T'
      Report on all tags.
@@ -652,6 +477,15 @@ an argument:
      use of `-D DATE', which selects the newest revision older than
      DATE.
 
+`-f FILE'
+     Show data for a particular file (you can specify several `-f'
+     options on the same command line).  This is equivalent to
+     specifying the file on the command line.
+
+`-n MODULE'
+     Show data for a particular module (you can specify several `-n'
+     options on the same command line).
+
 `-p REPOSITORY'
      Show data for a particular source repository  (you can specify
      several `-p' options on the same command line).
@@ -668,6 +502,10 @@ an argument:
 
 `-u NAME'
      Show records for user NAME.
+
+`-z TIMEZONE'
+     Show times in the selected records using the specified time zone
+     instead of UTC.
 
 
 File: cvs.info,  Node: import,  Next: log,  Prev: history,  Up: CVS commands
@@ -697,9 +535,9 @@ any files that conflict in the two branches of development; use
 `checkout -j' to reconcile the differences, as import instructs you to
 do.
 
-   If CVS decides a file should be ignored (*note cvsignore::.), it
-does not import it and prints `I ' followed by the filename (*note
-import output::., for a complete description of the output).
+   If CVS decides a file should be ignored (*note cvsignore::), it does
+not import it and prints `I ' followed by the filename (*note import
+output::, for a complete description of the output).
 
    If the file `$CVSROOT/CVSROOT/cvswrappers' exists, any file whose
 names match the specifications in that file will be treated as packages
@@ -722,7 +560,7 @@ execute `import'.
 invoke it.  In particular, it does not set up that directory as a CVS
 working directory; if you want to work with the sources import them
 first and then check them out into a different directory (*note Getting
-the source::.).
+the source::).
 
 * Menu:
 
@@ -737,7 +575,7 @@ import options
 --------------
 
    This standard option is supported by `import' (*note Common
-options::., for a complete description):
+options::, for a complete description):
 
 `-m MESSAGE'
      Use MESSAGE as log information, instead of invoking an editor.
@@ -789,7 +627,7 @@ each file, preceded by one character indicating the status of the file:
      modified; you will have to merge the changes.
 
 `I FILE'
-     The file is being ignored (*note cvsignore::.).
+     The file is being ignored (*note cvsignore::).
 
 `L FILE'
      The file is a symbolic link; `cvs import' ignores symbolic links.
@@ -797,7 +635,7 @@ each file, preceded by one character indicating the status of the file:
      but if there is a consensus on what it should be changed to, it
      doesn't seem to be apparent.  (Various options in the `modules'
      file can be used to recreate symbolic links on checkout, update,
-     etc.; *note modules::..)
+     etc.; *note modules::.)
 
 
 File: cvs.info,  Node: import examples,  Prev: import output,  Up: import
@@ -832,7 +670,7 @@ printed.  All times are displayed in Coordinated Universal Time (UTC).
 (Other parts of CVS print times in the local timezone).
 
    *Warning:* `log' uses `-R' in a way that conflicts with the normal
-use inside CVS (*note Common options::.).
+use inside CVS (*note Common options::).
 
 * Menu:
 
@@ -856,7 +694,7 @@ other options restrict the output.
      Print information about revisions with a checkin date/time in the
      range given by the semicolon-separated list of dates.  The date
      formats accepted are those accepted by the `-D' option to many
-     other CVS commands (*note Common options::.).  Dates can be
+     other CVS commands (*note Common options::).  Dates can be
      combined into ranges as follows:
 
     `D1<D2'
@@ -995,7 +833,7 @@ rdiff options
 -------------
 
    These standard options are supported by `rdiff' (*note Common
-options::., for a complete description of them):
+options::, for a complete description of them):
 
 `-D DATE'
      Use the most recent revision no later than DATE.
@@ -1083,7 +921,7 @@ release--Indicate that a Module is no longer in use
 Since CVS doesn't lock files, it isn't strictly necessary to use this
 command.  You can always simply delete your working directory, if you
 like; but you risk losing changes you may have forgotten, and you leave
-no trace in the CVS history file (*note history file::.) that you've
+no trace in the CVS history file (*note history file::) that you've
 abandoned your checkout.
 
    Use `cvs release' to avoid these problems.  This command checks that
@@ -1119,7 +957,7 @@ release options
      files recursively.  This has the very serious side-effect that any
      directory that you have created inside your checked-out sources,
      and not added to the repository (using the `add' command; *note
-     Adding files::.) will be silently deleted--even if it is non-empty!
+     Adding files::) will be silently deleted--even if it is non-empty!
 
 
 File: cvs.info,  Node: release output,  Next: release examples,  Prev: release options,  Up: release
@@ -1132,7 +970,7 @@ message for any file that is not up-to-date.
 
    *Warning:*  Any new directories that you have created, but not added
 to the CVS directory hierarchy with the `add' command (*note Adding
-files::.) will be silently ignored (and deleted, if `-d' is specified),
+files::) will be silently ignored (and deleted, if `-d' is specified),
 even if they contain files.
 
 `U FILE'
@@ -1159,8 +997,8 @@ even if they contain files.
      FILE is in your working directory, but does not correspond to
      anything in the source repository, and is not in the list of files
      for CVS to ignore (see the description of the `-I' option, and
-     *note cvsignore::.).  If you remove your working sources, this
-     file will be lost.
+     *note cvsignore::).  If you remove your working sources, this file
+     will be lost.
 
 
 File: cvs.info,  Node: release examples,  Prev: release output,  Up: release
@@ -1209,7 +1047,7 @@ update options
 --------------
 
    These standard options are available with `update' (*note Common
-options::., for a complete description of them):
+options::, for a complete description of them):
 
 `-D date'
      Use the most recent revision no later than DATE.  This option is
@@ -1252,6 +1090,11 @@ options::., for a complete description of them):
 `-A'
      Reset any sticky tags, dates, or `-k' options.  See *Note Sticky
      tags::, for more information on sticky tags/dates.
+
+`-C'
+     Overwrite locally modified files with clean copies from the
+     repository (the modified file is saved in `.#FILE.REVISION',
+     however).
 
 `-d'
      Create any directories that exist in the repository if they're
@@ -1365,5 +1208,5 @@ status of the file:
      FILE is in your working directory, but does not correspond to
      anything in the source repository, and is not in the list of files
      for CVS to ignore (see the description of the `-I' option, and
-     *note cvsignore::.).
+     *note cvsignore::).
 

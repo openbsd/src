@@ -1,5 +1,10 @@
-This is cvsclient.info, produced by Makeinfo version 3.12f from
+This is cvsclient.info, produced by makeinfo version 4.0 from
 ./cvsclient.texi.
+
+INFO-DIR-SECTION Programming
+START-INFO-DIR-ENTRY
+* cvsclient: (cvsclient).      The CVS client/server protocol.
+END-INFO-DIR-ENTRY
 
 
 File: cvsclient.info,  Node: Top,  Next: Introduction,  Up: (dir)
@@ -9,7 +14,7 @@ CVS Client/Server
 
    This document describes the client/server protocol used by CVS.  It
 does not describe how to use or administer client/server CVS; see the
-regular CVS manual for that.  This is version 1.10.7 of the protocol
+regular CVS manual for that.  This is version 1.11 of the protocol
 specification--*Note Introduction::, for more on what this version
 number means.
 
@@ -58,7 +63,7 @@ you are reading now) of this document, `cvsclient.texi', can be found
 at the usual GNU FTP sites, with a filename such as
 `cvs-VERSION.tar.gz'.
 
-   This is version 1.10.7 of the protocol specification.  This version
+   This is version 1.11 of the protocol specification.  This version
 number is intended only to aid in distinguishing different versions of
 this specification.  Although the specification is currently maintained
 in conjunction with the CVS implementation, and carries the same
@@ -67,7 +72,7 @@ interoperating with other implementations (such as other versions of
 CVS); see *Note Requirements::.  This version number should not be used
 by clients or servers to determine what variant of the protocol to
 speak; they should instead use the `valid-requests' and
-`Valid-responses' mechanism (*note Protocol::.), which is more flexible.
+`Valid-responses' mechanism (*note Protocol::), which is more flexible.
 
 
 File: cvsclient.info,  Node: Goals,  Next: Connection and Authentication,  Prev: Introduction,  Up: Top
@@ -361,7 +366,7 @@ with a `+', it is silently ignored.
    OPTIONS signifies the keyword expansion options (for example `-ko').
 In an `Entry' request, this indicates the options that were specified
 with the file from the previous file updating response (*note Response
-intro::., for a list of file updating responses); if the client is
+intro::, for a list of file updating responses); if the client is
 specifying the `-k' or `-A' option to `update', then it is the server
 which figures out what overrides what.
 
@@ -492,8 +497,8 @@ command line client (versions 1.5 through at least 1.9).
 
    For the `-d' option to the `log' request, servers should at least
 support RFC 822/1123 format.  Clients are encouraged to use this format
-too (traditionally the command line CVS client has just passed along
-the date format specified by the user, however).
+too (the command line CVS client, version 1.10 and older, just passed
+along the date format specified by the user, however).
 
    The `Mod-time' response and `Checkin-time' request use RFC 822/1123
 format (see the descriptions of that response and request for details).

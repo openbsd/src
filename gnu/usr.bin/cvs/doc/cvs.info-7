@@ -1,4 +1,4 @@
-This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -63,7 +63,8 @@ run the `cvs --help' command, or see *Note Index::.
      Print a help message.  See *Note Global options::.
 
 `-l'
-     Do not log in CVSROOT/history file.  See *Note Global options::.
+     Do not log in `$CVSROOT/CVSROOT/history' file.  See *Note Global
+     options::.
 
 `-n'
      Do not change any files.  See *Note Global options::.
@@ -99,32 +100,33 @@ run the `cvs --help' command, or see *Note Index::.
      options::.
 
 `-z GZIP-LEVEL'
-     Set the compression level (client only).
+     Set the compression level (client only).  See *Note Global
+     options::.
 
-   Keyword expansion modes (*note Substitution modes::.):
+   Keyword expansion modes (*note Substitution modes::):
 
-     -kkv  $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
-     -kkvl $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
-     -kk   $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
+     -kkv  $Id: cvs.info-7,v 1.1.1.12 2001/02/10 19:03:19 tholo Exp $
+     -kkvl $Id: cvs.info-7,v 1.1.1.12 2001/02/10 19:03:19 tholo Exp $
+     -kk   $Id: cvs.info-7,v 1.1.1.12 2001/02/10 19:03:19 tholo Exp $
      -kv   file1,v 1.1 1993/12/09 03:21:13 joe Exp
      -ko   no expansion
      -kb   no expansion, file is binary
 
-   Keywords (*note Keyword list::.):
+   Keywords (*note Keyword list::):
 
      $Author: tholo $
-     $Date: 1999/09/10 05:14:51 $
-     $Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
-     $Id: cvs.info-7,v 1.1.1.11 1999/09/10 05:14:51 tholo Exp $
+     $Date: 2001/02/10 19:03:19 $
+     $Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-7,v 1.1.1.12 2001/02/10 19:03:19 tholo Exp $
+     $Id: cvs.info-7,v 1.1.1.12 2001/02/10 19:03:19 tholo Exp $
      $Locker:  $
      $Name:  $
      $RCSfile: cvs.info-7,v $
-     $Revision: 1.1.1.11 $
+     $Revision: 1.1.1.12 $
      $Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-7,v $
      $State: Exp $
      $Log: cvs.info-7,v $
-     Revision 1.1.1.11  1999/09/10 05:14:51  tholo
-     Latest version from Cyclic; skipped files
+     Revision 1.1.1.12  2001/02/10 19:03:19  tholo
+     Latest from Cyclic Software
 
      Revision 1.1  1993/12/09 03:30:17  joe
      Initial revision
@@ -678,6 +680,11 @@ run the `cvs --help' command, or see *Note Index::.
           Reset any sticky tags/date/options.  See *Note Sticky tags::
           and *Note Keyword substitution::.
 
+    `-C'
+          Overwrite locally modified files with clean copies from the
+          repository (the modified file is saved in `.#FILE.REVISION',
+          however).
+
     `-D DATE'
           Check out revisions as of DATE (is sticky).  See *Note Common
           options::.
@@ -719,6 +726,10 @@ run the `cvs --help' command, or see *Note Index::.
 
     `-W SPEC'
           More wrappers.  See *Note import options::.
+
+`version'
+     Display the version of CVS being used.  If the repository is
+     remote, display both the client and server versions.
 
 `watch [on|off|add|remove] [OPTIONS] [FILES...]'
      on/off: turn on/off read-only checkouts of files.  See *Note
@@ -811,6 +822,8 @@ a file `sfile'.
 * Ampersand modules::
 * Excluding directories::     Excluding directories from a module
 * Module options::            Regular and ampersand modules can take options
+* Module program options::    How the modules ``program options'' programs
+                              are run.
 
 
 File: cvs.info,  Node: Alias modules,  Next: Regular modules,  Up: modules
@@ -950,7 +963,7 @@ directory to be excluded.
 `first-dir' except any files in the subdirectory `first-dir/sdir'.
 
 
-File: cvs.info,  Node: Module options,  Prev: Excluding directories,  Up: modules
+File: cvs.info,  Node: Module options,  Next: Module program options,  Prev: Excluding directories,  Up: modules
 
 Module options
 --------------
@@ -989,13 +1002,48 @@ which supply additional information concerning the module.
      tagged with `rtag'.  PROG runs with two arguments: the module name
      and the symbolic tag specified to `rtag'.  It is not run when
      `tag' is executed.  Generally you will find that taginfo is a
-     better solution (*note user-defined logging::.).
+     better solution (*note user-defined logging::).
 
 `-u PROG'
      Specify a program PROG to run whenever `cvs update' is executed
      from the top-level directory of the checked-out module.  PROG runs
      with a single argument, the full path to the source repository for
      this module.
+
+   You should also see *note Module program options:: about how the
+"program options" programs are run.
+
+
+File: cvs.info,  Node: Module program options,  Prev: Module options,  Up: modules
+
+How the modules file "program options" programs are run
+-------------------------------------------------------
+
+For checkout, rtag, and export, the program is server-based, and as
+such the following applies:-
+
+   If using remote access methods (pserver, ext, etc.), CVS will
+execute this program on the server from a temporary directory. The path
+is searched for this program.
+
+   If using "local access" (on a local or remote NFS filesystem, i.e.
+repository set just to a path), the program will be executed from the
+newly checked-out tree, if found there, or alternatively searched for
+in the path if not.
+
+The commit and update programs are locally-based, and are run as
+follows:-
+
+   The program is always run locally. One must re-checkout the tree one
+is using if these options are updated in the modules administrative
+file. The file CVS/Checkin.prog contains the value of the option `-i'
+set in the modules file, and similarly for the file CVS/Update.prog and
+`-u'. The program is always executed from the top level of the
+checked-out copy on the client. Again, the program is first searched
+for in the checked-out copy and then using the path.
+
+   The programs are all run after the operation has effectively
+completed.
 
 
 File: cvs.info,  Node: Wrappers,  Next: commit files,  Prev: modules,  Up: Administrative files
@@ -1044,7 +1092,7 @@ The commit support files
 ========================
 
    The `-i' flag in the `modules' file can be used to run a certain
-program whenever files are committed (*note modules::.).  The files
+program whenever files are committed (*note modules::).  The files
 described in this section provide other, more flexible, ways to run
 programs whenever something is committed.
 
@@ -1062,13 +1110,13 @@ corresponding programs.
      The specified program is used to evaluate the log message, and
      possibly verify that it contains all required fields.  This is
      most useful in combination with the `rcsinfo' file, which can hold
-     a log message template (*note rcsinfo::.).
+     a log message template (*note rcsinfo::).
 
 `editinfo'
      The specified program is used to edit the log message, and
      possibly verify that it contains all required fields.  This is
      most useful in combination with the `rcsinfo' file, which can hold
-     a log message template (*note rcsinfo::.).  (obsolete)
+     a log message template (*note rcsinfo::).  (obsolete)
 
 `loginfo'
      The specified program is called when the commit is complete.  It
@@ -1140,7 +1188,7 @@ name `DEFAULT'.
 
    Note: when CVS is accessing a remote repository, `commitinfo' will
 be run on the _remote_ (i.e., server) side, not the client side (*note
-Remote repositories::.).
+Remote repositories::).
 
 
 File: cvs.info,  Node: verifymsg,  Next: editinfo,  Prev: commitinfo,  Up: Administrative files
@@ -1218,9 +1266,9 @@ Editinfo
 
    _NOTE:_ The `editinfo' feature has been rendered obsolete.  To set a
 default editor for log messages use the `EDITOR' environment variable
-(*note Environment variables::.) or the `-e' global option (*note
-Global options::.).  See *Note verifymsg::, for information on the use
-of the `verifymsg' feature for evaluating log messages.
+(*note Environment variables::) or the `-e' global option (*note Global
+options::).  See *Note verifymsg::, for information on the use of the
+`verifymsg' feature for evaluating log messages.
 
    If you want to make sure that all log messages look the same way,
 you can use the `editinfo' file to specify a program that is used to
@@ -1353,20 +1401,21 @@ empty field (commas separating fields are still provided).
 `%{sVv}'.
 
    The output will be a string of tokens separated by spaces.  For
-backwards compatibility, the first token will be the repository name.
-The rest of the tokens will be comma-delimited lists of the information
-requested in the format string.  For example, if `/u/src/master' is the
-repository, `%{sVv}' is the format string, and three files (ChangeLog,
-Makefile, foo.c) were modified, the output might be:
+backwards compatibility, the first token will be the repository
+subdirectory.  The rest of the tokens will be comma-delimited lists of
+the information requested in the format string.  For example, if
+`/u/src/master/yoyodyne/tc' is the repository, `%{sVv}' is the format
+string, and three files (ChangeLog, Makefile, foo.c) were modified, the
+output might be:
 
-     /u/src/master ChangeLog,1.1,1.2 Makefile,1.3,1.4 foo.c,1.12,1.13
+     yoyodyne/tc ChangeLog,1.1,1.2 Makefile,1.3,1.4 foo.c,1.12,1.13
 
    As another example, `%{}' means that only the name of the repository
 will be generated.
 
    Note: when CVS is accessing a remote repository, `loginfo' will be
 run on the _remote_ (i.e., server) side, not the client side (*note
-Remote repositories::.).
+Remote repositories::).
 
 * Menu:
 
@@ -1453,76 +1502,4 @@ FILE' that log message will override the template.
 at the time a directory is first checked out will specify a template
 which does not then change.  If you edit `rcsinfo' or its templates,
 you may need to check out a new working directory.
-
-
-File: cvs.info,  Node: cvsignore,  Next: checkoutlist,  Prev: rcsinfo,  Up: Administrative files
-
-Ignoring files via cvsignore
-============================
-
-   There are certain file names that frequently occur inside your
-working copy, but that you don't want to put under CVS control.
-Examples are all the object files that you get while you compile your
-sources.  Normally, when you run `cvs update', it prints a line for
-each file it encounters that it doesn't know about (*note update
-output::.).
-
-   CVS has a list of files (or sh(1) file name patterns) that it should
-ignore while running `update', `import' and `release'.  This list is
-constructed in the following way.
-
-   * The list is initialized to include certain file name patterns:
-     names associated with CVS administration, or with other common
-     source control systems; common names for patch files, object files,
-     archive files, and editor backup files; and other names that are
-     usually artifacts of assorted utilities.  Currently, the default
-     list of ignored file name patterns is:
-
-              RCS     SCCS    CVS     CVS.adm
-              RCSLOG  cvslog.*
-              tags    TAGS
-              .make.state     .nse_depinfo
-              *~      #*      .#*     ,*      _$*     *$
-              *.old   *.bak   *.BAK   *.orig  *.rej   .del-*
-              *.a     *.olb   *.o     *.obj   *.so    *.exe
-              *.Z     *.elc   *.ln
-              core
-
-   * The per-repository list in `$CVSROOT/CVSROOT/cvsignore' is
-     appended to the list, if that file exists.
-
-   * The per-user list in `.cvsignore' in your home directory is
-     appended to the list, if it exists.
-
-   * Any entries in the environment variable `$CVSIGNORE' is appended
-     to the list.
-
-   * Any `-I' options given to CVS is appended.
-
-   * As CVS traverses through your directories, the contents of any
-     `.cvsignore' will be appended to the list.  The patterns found in
-     `.cvsignore' are only valid for the directory that contains them,
-     not for any sub-directories.
-
-   In any of the 5 places listed above, a single exclamation mark (`!')
-clears the ignore list.  This can be used if you want to store any file
-which normally is ignored by CVS.
-
-   Specifying `-I !' to `cvs import' will import everything, which is
-generally what you want to do if you are importing files from a
-pristine distribution or any other source which is known to not contain
-any extraneous files.  However, looking at the rules above you will see
-there is a fly in the ointment; if the distribution contains any
-`.cvsignore' files, then the patterns from those files will be
-processed even if `-I !' is specified.  The only workaround is to
-remove the `.cvsignore' files in order to do the import.  Because this
-is awkward, in the future `-I !' might be modified to override
-`.cvsignore' files in each directory.
-
-   Note that the syntax of the ignore files consists of a series of
-lines, each of which contains a space separated list of filenames.
-This offers no clean way to specify filenames which contain spaces, but
-you can use a workaround like `foo?bar' to match a file named `foo bar'
-(it also matches `fooxbar' and the like).  Also note that there is
-currently no way to specify comments.
 

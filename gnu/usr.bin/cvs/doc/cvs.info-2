@@ -1,4 +1,4 @@
-This is cvs.info, produced by Makeinfo version 3.12f from ./cvs.texinfo.
+This is cvs.info, produced by makeinfo version 4.0 from ./cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -76,7 +76,7 @@ have several repositories is to specify the appropriate repository,
 using the `CVSROOT' environment variable, the `-d' option to CVS, or
 (once you have checked out a working directory) by simply allowing CVS
 to use the repository that was used to check out the working directory
-(*note Specifying a repository::.).
+(*note Specifying a repository::).
 
    The big advantage of having multiple repositories is that they can
 reside on different servers.  With CVS version 1.10, a single command
@@ -122,11 +122,11 @@ file system) from all machines which want to use CVS in server or local
 mode; the client machines need not have any access to it other than via
 the CVS protocol.  It is not possible to use CVS to read from a
 repository which one only has read access to; CVS needs to be able to
-create lock files (*note Concurrency::.).
+create lock files (*note Concurrency::).
 
    To create a repository, run the `cvs init' command.  It will set up
 an empty repository in the CVS root specified in the usual way (*note
-Repository::.).  For example,
+Repository::).  For example,
 
      cvs -d /usr/local/cvsroot init
 
@@ -311,7 +311,7 @@ server you want to use, for example `/usr/local/bin/cvs-1.6'.
 
    There is no need to edit `inetd.conf' or start a CVS server daemon.
 
-   There are two access methods that you use in CVSROOT for rsh.
+   There are two access methods that you use in `CVSROOT' for rsh.
 `:server:' specifies an internal rsh client, which is supported only by
 some CVS ports.  `:ext:' specifies an external rsh program.  By default
 this is `rsh' but you may set the `CVS_RSH' environment variable to
@@ -377,7 +377,7 @@ the following (all on a single line in `inetd.conf') should be
 sufficient:
 
      2401  stream  tcp  nowait  root  /usr/local/bin/cvs
-     cvs --allow-root=/usr/cvsroot pserver
+     cvs -f --allow-root=/usr/cvsroot pserver
 
    You could also use the `-T' option to specify a temporary directory.
 
@@ -404,64 +404,96 @@ whatever is necessary to force it to reread its initialization files.
 
    Because the client stores and transmits passwords in cleartext
 (almost--see *Note Password authentication security::, for details), a
-separate CVS password file may be used, so people don't compromise their
-regular passwords when they access the repository.  This file is
-`$CVSROOT/CVSROOT/passwd' (*note Intro administrative files::.).  Its
-format is similar to `/etc/passwd', except that it only has two or
-three fields, username, password, and optional username for the server
-to use.  For example:
+separate CVS password file is generally used, so people don't compromise
+their regular passwords when they access the repository.  This file is
+`$CVSROOT/CVSROOT/passwd' (*note Intro administrative files::).  It
+uses a colon-separated format, similar to `/etc/passwd' on Unix systems,
+except that it has fewer fields: CVS username, optional password, and
+an optional system username for CVS to run as if authentication
+succeeds.  Here is an example `passwd' file with five entries:
 
+     anonymous:
      bach:ULtgRLXo7NRxs
-     cwang:1sOp854gDF3DY
+     spwang:1sOp854gDF3DY
+     melissa:tGX1fS8sun6rY:pubcvs
+     qproj:XR4EZcEs0szik:pubcvs
 
-   The password is encrypted according to the standard Unix `crypt()'
-function, so it is possible to paste in passwords directly from regular
-Unix `passwd' files.
+   (The passwords are encrypted according to the standard Unix
+`crypt()' function, so it is possible to paste in passwords directly
+from regular Unix `/etc/passwd' files.)
 
-   When authenticating a password, the server first checks for the user
-in the CVS `passwd' file.  If it finds the user, it compares against
-that password.  If it does not find the user, or if the CVS `passwd'
-file does not exist, then the server tries to match the password using
-the system's user-lookup routine (using the system's user-lookup
-routine can be disabled by setting `SystemAuth=no' in the config file,
-*note config::.).  When using the CVS `passwd' file, the server runs as
-the username specified in the third argument in the entry, or as the
-first argument if there is no third argument (in this way CVS allows
-imaginary usernames provided the CVS `passwd' file indicates
-corresponding valid system usernames).  In any case, CVS will have no
-privileges which the (valid) user would not have.
+   The first line in the example will grant access to any CVS client
+attempting to authenticate as user `anonymous', no matter what password
+they use, including an empty password.  (This is typical for sites
+granting anonymous read-only access; for information on how to do the
+"read-only" part, see *Note Read-only access::.)
 
-   It is possible to "map" cvs-specific usernames onto system usernames
-(i.e., onto system login names) in the `$CVSROOT/CVSROOT/passwd' file
-by appending a colon and the system username after the password.  For
-example:
+   The second and third lines will grant access to `bach' and `spwang'
+if they supply their respective plaintext passwords.
 
-     cvs:ULtgRLXo7NRxs:kfogel
-     generic:1sOp854gDF3DY:spwang
-     anyone:1sOp854gDF3DY:spwang
+   The fourth line will grant access to `melissa', if she supplies the
+correct password, but her CVS operations will actually run on the
+server side under the system user `pubcvs'.  Thus, there need not be
+any system user named `melissa', but there _must_ be one named `pubcvs'.
 
-   Thus, someone remotely accessing the repository on
-`faun.example.org' with the following command:
+   The fifth line shows that system user identities can be shared: any
+client who successfully authenticates as `qproj' will actually run as
+`pubcvs', just as `melissa' does.  That way you could create a single,
+shared system user for each project in your repository, and give each
+developer their own line in the `$CVSROOT/CVSROOT/passwd' file.  The CVS
+username on each line would be different, but the system username would
+be the same.  The reason to have different CVS usernames is that CVS
+will log their actions under those names: when `melissa' commits a
+change to a project, the checkin is recorded in the project's history
+under the name `melissa', not `pubcvs'.  And the reason to have them
+share a system username is so that you can arrange permissions in the
+relevant area of the repository such that only that account has
+write-permission there.
 
-     cvs -d :pserver:cvs@faun.example.org:/usr/local/cvsroot checkout foo
+   If the system-user field is present, all password-authenticated CVS
+commands run as that user; if no system user is specified, CVS simply
+takes the CVS username as the system username and runs commands as that
+user.  In either case, if there is no such user on the system, then the
+CVS operation will fail (regardless of whether the client supplied a
+valid password).
 
-   would end up running the server under the system identity kfogel,
-assuming successful authentication.  However, the remote user would not
-necessarily need to know kfogel's system password, as the
-`$CVSROOT/CVSROOT/passwd' file might contain a different password, used
-only for CVS.  And as the example above indicates, it is permissible to
-map multiple cvs usernames onto a single system username.
+   The password and system-user fields can both be omitted (and if the
+system-user field is omitted, then also omit the colon that would have
+separated it from the encrypted password).  For example, this would be a
+valid `$CVSROOT/CVSROOT/passwd' file:
 
-   This feature is designed to allow people repository access without
-full system access (in particular, see *Note Read-only access::);
-however, also see *Note Password authentication security::.  Any sort of
-repository access very likely implies a degree of general system access
-as well.
+     anonymous::pubcvs
+     fish:rKa5jzULzmhOo:kfogel
+     sussman:1sOp854gDF3DY
+
+   When the password field is omitted or empty, then the client's
+authentication attempt will succeed with any password, including the
+empty string.  However, the colon after the CVS username is always
+necessary, even if the password is empty.
+
+   CVS can also fall back to use system authentication.  When
+authenticating a password, the server first checks for the user in the
+`$CVSROOT/CVSROOT/passwd' file.  If it finds the user, it will use that
+entry for authentication as described above.  But if it does not find
+the user, or if the CVS `passwd' file does not exist, then the server
+can try to authenticate the username and password using the operating
+system's user-lookup routines (this "fallback" behavior can be disabled
+by setting `SystemAuth=no' in the CVS `config' file, *note config::).
+Be aware, however, that falling back to system authentication might be
+a security risk: CVS operations would then be authenticated with that
+user's regular login password, and the password flies across the
+network in plaintext.  See *Note Password authentication security:: for
+more on this.
 
    Right now, the only way to put a password in the CVS `passwd' file
 is to paste it there from somewhere else.  Someday, there may be a `cvs
-passwd' command.  Unlike many of the files in `$CVSROOT/CVSROOT', you
-edit the `passwd' file directly, rather than via CVS.
+passwd' command.
+
+   Unlike many of the files in `$CVSROOT/CVSROOT', it is normal to edit
+the `passwd' file in-place, rather than via CVS.  This is because of the
+possible security risks of having the `passwd' file checked out to
+people's working copies.  If you do want to include the `passwd' file
+in checkouts of `$CVSROOT/CVSROOT', see *Note checkoutlist::.
 
 
 File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
@@ -469,49 +501,66 @@ File: cvs.info,  Node: Password authentication client,  Next: Password authentic
 Using the client with password authentication
 .............................................
 
-   Before connecting to the server, the client must "log in" with the
-command `cvs login'.  Logging in verifies a password with the server,
-and also records the password for later transactions with the server.
-The `cvs login' command needs to know the username, server hostname,
-and full repository path, and it gets this information from the
-repository argument or the `CVSROOT' environment variable.
+   To run a CVS command on a remote repository via the
+password-authenticating server, one specifies the `pserver' protocol,
+username, repository host, and path to the repository.  For example:
 
-   `cvs login' is interactive -- it prompts for a password:
+     cvs -d :pserver:bach@faun.example.org:/usr/local/cvsroot checkout someproj
+
+   or
+
+     CVSROOT=:pserver:bach@faun.example.org:/usr/local/cvsroot
+     cvs checkout someproj
+
+   However, unless you're connecting to a public-access repository
+(i.e., one where that username doesn't require a password), you'll need
+to "log in" first.  Logging in verifies your password with the
+repository.  It's done with the `login' command, which will prompt you
+interactively for the password:
 
      cvs -d :pserver:bach@faun.example.org:/usr/local/cvsroot login
      CVS password:
 
-   The password is checked with the server; if it is correct, the
-`login' succeeds, else it fails, complaining that the password was
-incorrect.
+   After you enter the password, CVS verifies it with the server.  If
+the verification succeeds, then that combination of username, host,
+repository, and password is permanently recorded, so future
+transactions with that repository won't require you to run `cvs login'.
+(If verification fails, CVS will exit complaining that the password
+was incorrect, and nothing will be recorded.)
 
-   Once you have logged in, you can force CVS to connect directly to
-the server and authenticate with the stored password:
+   The records are stored, by default, in the file `$HOME/.cvspass'.
+That file's format is human-readable, and to a degree human-editable,
+but note that the passwords are not stored in cleartext--they are
+trivially encoded to protect them from "innocent" compromise (i.e.,
+inadvertent viewing by a system administrator or other non-malicious
+person).
+
+   You can change the default location of this file by setting the
+`CVS_PASSFILE' environment variable.  If you use this variable, make
+sure you set it _before_ `cvs login' is run.  If you were to set it
+after running `cvs login', then later CVS commands would be unable to
+look up the password for transmission to the server.
+
+   Once you have logged in, all CVS commands using that remote
+repository and username will authenticate with the stored password.
+So, for example
 
      cvs -d :pserver:bach@faun.example.org:/usr/local/cvsroot checkout foo
 
-   The `:pserver:' is necessary because without it, CVS will assume it
-should use `rsh' to connect with the server (*note Connecting via
-rsh::.).  (Once you have a working copy checked out and are running CVS
-commands from within it, there is no longer any need to specify the
-repository explicitly, because CVS records it in the working copy's
-`CVS' subdirectory.)
+   should just work (unless the password changes on the server side, in
+which case you'll have to re-run `cvs login').
 
-   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
-format is human-readable, but don't edit it unless you know what you
-are doing.  The passwords are not stored in cleartext, but are
-trivially encoded to protect them from "innocent" compromise (i.e.,
-inadvertently being seen by a system administrator who happens to look
-at that file).
+   Note that if the `:pserver:' were not present in the repository
+specification, CVS would assume it should use `rsh' to connect with the
+server instead (*note Connecting via rsh::).
 
-   The password for the currently chosen remote repository can be
-removed from the CVS_PASSFILE by using the `cvs logout' command.
+   Of course, once you have a working copy checked out and are running
+CVS commands from within it, there is no longer any need to specify the
+repository explicitly, because CVS can deduce the repository from the
+working copy's `CVS' subdirectory.
 
-   The `CVS_PASSFILE' environment variable overrides this default.  If
-you use this variable, make sure you set it _before_ `cvs login' is
-run.  If you were to set it after running `cvs login', then later CVS
-commands would be unable to look up the password for transmission to
-the server.
+   The password for a given remote repository can be removed from the
+`CVS_PASSFILE' by using the `cvs logout' command.
 
 
 File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
@@ -526,7 +575,7 @@ administrator accidentally looking at the file), and will not prevent
 even a naive attacker from gaining the password.
 
    The separate CVS password file (*note Password authentication
-server::.) allows people to use a different password for repository
+server::) allows people to use a different password for repository
 access than for login access.  On the other hand, once a user has
 non-read-only access to the repository, she can execute programs on the
 server system through a variety of means.  Thus, repository access
@@ -578,7 +627,7 @@ authentication server::.  If you are using a GSSAPI mechanism such as
 Kerberos which provides for strong authentication, you will probably
 want to disable the ability to authenticate via cleartext passwords.
 To do so, create an empty `CVSROOT/passwd' password file, and set
-`SystemAuth=no' in the config file (*note config::.).
+`SystemAuth=no' in the config file (*note config::).
 
    The GSSAPI server uses a principal name of cvs/HOSTNAME, where
 HOSTNAME is the canonical name of the server host.  You will have to
@@ -661,7 +710,7 @@ Read-only repository access
 ===========================
 
    It is possible to grant read-only repository access to people using
-the password-authenticated server (*note Password authenticated::.).
+the password-authenticated server (*note Password authenticated::).
 (The other access methods do not have explicit support for read-only
 users because those methods all assume login access to the repository
 machine anyway, and therefore the user can do whatever local file
@@ -671,7 +720,7 @@ permissions allow her to do.)
 which do not modify the repository, except for certain "administrative"
 files (such as lock files and the history file).  It may be desirable
 to use this feature in conjunction with user-aliasing (*note Password
-authentication server::.).
+authentication server::).
 
    Unlike with previous versions of CVS, read-only users should be able
 merely to read the repository, and not to execute programs on the
@@ -705,7 +754,7 @@ still need to be listed in the CVS `passwd' file).  The `writers' file
 has the same format as the `readers' file.
 
    Note: if your CVS `passwd' file maps cvs users onto system users
-(*note Password authentication server::.), make sure you deny or grant
+(*note Password authentication server::), make sure you deny or grant
 read-only access using the _cvs_ usernames, not the system usernames.
 That is, the `readers' and `writers' files contain cvs usernames, which
 may or may not be the same as system usernames.
@@ -737,8 +786,8 @@ are named
 
 where PID is the process identification number of the server.  They are
 located in the directory specified by the `TMPDIR' environment variable
-(*note Environment variables::.), the `-T' global option (*note Global
-options::.), or failing that `/tmp'.
+(*note Environment variables::), the `-T' global option (*note Global
+options::), or failing that `/tmp'.
 
    In most cases the server will remove the temporary directory when it
 is done, whether it finishes normally or abnormally.  However, there
@@ -821,13 +870,12 @@ Tracking sources::, for more information about them.
 directory.
 
      $ cd ..
-     $ mv DIR DIR.orig
-     $ cvs checkout yoyodyne/DIR       # Explanation below
-     $ diff -r DIR.orig yoyodyne/DIR
-     $ rm -r DIR.orig
+     $ cvs checkout yoyodyne/RDIR       # Explanation below
+     $ diff -r WDIR yoyodyne/RDIR
+     $ rm -r WDIR
 
 Erasing the original sources is a good idea, to make sure that you do
-not accidentally edit them in DIR, bypassing CVS.  Of course, it would
+not accidentally edit them in WDIR, bypassing CVS.  Of course, it would
 be wise to make sure that you have a backup of the sources before you
 remove them.
 
@@ -1001,7 +1049,7 @@ revisions, with newer revisions to the right.
 
    It is also possible to end up with numbers containing more than one
 period, for example `1.3.2.2'.  Such revisions represent revisions on
-branches (*note Branching and merging::.); such revision numbers are
+branches (*note Branching and merging::); such revision numbers are
 explained in detail in *Note Branches and revisions::.
 
 
@@ -1037,7 +1085,7 @@ file will be given the numeric revision `4.1'.
    Normally there is no reason to care about the revision numbers--it
 is easier to treat them as internal numbers that CVS maintains, and tags
 provide a better way to distinguish between things like release 1
-versus release 2 of your product (*note Tags::.).  However, if you want
+versus release 2 of your product (*note Tags::).  However, if you want
 to set the numeric revisions, the `-r' option to `cvs commit' can do
 that.  The `-r' option implies the `-f' option, in the sense that it
 causes the files to be committed even if they are not modified.
@@ -1050,5 +1098,5 @@ those that haven't changed), you might invoke:
    Note that the number you specify with `-r' must be larger than any
 existing revision number.  That is, if revision 3.0 exists, you cannot
 `cvs commit -r 1.3'.  If you want to maintain several releases in
-parallel, you need to use a branch (*note Branching and merging::.).
+parallel, you need to use a branch (*note Branching and merging::).
 

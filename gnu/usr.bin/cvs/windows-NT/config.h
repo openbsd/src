@@ -325,3 +325,8 @@ extern char *sock_strerror (int errnum);
    moot since the use of buffer.c ensures that writes will only be as big
    as the buffers).  */
 #define SEND_NEVER_PARTIAL 1
+
+/* Force lib/regex.c to use malloc instead of messing around with alloca
+   and define the old re_comp routines that we use.  */
+#define REGEX_MALLOC 1
+#define _REGEX_RE_COMP 1

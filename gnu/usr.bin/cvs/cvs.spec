@@ -4,7 +4,7 @@ Version: @VERSION@
 Release: 1
 Copyright: GPL
 Group: Development/Version Control
-Source: ftp://download.cyclic.com/pub/cvs-@VERSION@/cvs-@VERSION@.tar.gz
+Source: ftp://ftp.cvshome.org/pub/cvs-@VERSION@/cvs-@VERSION@.tar.gz
 Prefix: /usr
 
 %description
