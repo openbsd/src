@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.13 2004/12/21 18:32:10 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.14 2005/01/13 18:47:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -57,13 +57,12 @@ int
 cvs_commit(int argc, char **argv)
 {
 	int i, ch, flags;
-	char *msg, *mfile;
+	char *mfile;
 	struct cvs_flist cl;
 	struct cvsroot *root;
 
 	flags = CF_RECURSE|CF_IGNORE|CF_SORT;
 	mfile = NULL;
-	msg = NULL;
 	TAILQ_INIT(&cl);
 
 	while ((ch = getopt(argc, argv, "F:flm:Rr:")) != -1) {
@@ -79,7 +78,11 @@ cvs_commit(int argc, char **argv)
 			flags &= ~CF_RECURSE;
 			break;
 		case 'm':
-			msg = optarg;
+			cvs_msg = strdup(optarg);
+			if (cvs_msg == NULL) {
+				cvs_log(LP_ERRNO, "failed to copy message");
+				return (EX_DATAERR);
+			}
 			break;
 		case 'R':
 			flags |= CF_RECURSE;
@@ -89,12 +92,12 @@ cvs_commit(int argc, char **argv)
 		}
 	}
 
-	if ((msg != NULL) && (mfile != NULL)) {
+	if ((cvs_msg != NULL) && (mfile != NULL)) {
 		cvs_log(LP_ERR, "the -F and -m flags are mutually exclusive");
 		return (EX_USAGE);
 	}
 
-	if ((mfile != NULL) && (msg = cvs_logmsg_open(mfile)) == NULL)
+	if ((mfile != NULL) && (cvs_msg = cvs_logmsg_open(mfile)) == NULL)
 		return (EX_DATAERR);
 
 	argc -= optind;
@@ -112,9 +115,10 @@ cvs_commit(int argc, char **argv)
 	if (TAILQ_EMPTY(&cl))
 		return (0);
 
-	if (msg == NULL) {
-		msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files), NULL, &cl, NULL);
-		if (msg == NULL)
+	if (cvs_msg == NULL) {
+		cvs_msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files),
+		    NULL, &cl, NULL);
+		if (cvs_msg == NULL)
 			return (1);
 	}
 
@@ -127,7 +131,7 @@ cvs_commit(int argc, char **argv)
 		return (EX_USAGE);
 	}
 	if ((root->cr_method != CVS_METHOD_LOCAL) &&
-	    ((cvs_connect(root) < 0) || (cvs_logmsg_send(root, msg) < 0)))
+	    ((cvs_connect(root) < 0) || (cvs_logmsg_send(root, cvs_msg) < 0)))
 		return (EX_PROTOCOL);
 
 	cvs_file_examine(cvs_files, cvs_commit_file, &cl);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.3 2005/01/06 19:56:38 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.4 2005/01/13 18:47:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <amni@pandora.be>
  * All rights reserved.
@@ -90,7 +90,11 @@ cvs_import(int argc, char **argv)
 		case 'k':
 			break;
 		case 'm':
-			cvs_msg = optarg;
+			cvs_msg = strdup(optarg);
+			if (cvs_msg == NULL) {
+				cvs_log(LP_ERRNO, "failed to copy message");
+				return (EX_DATAERR);
+			}
 			break;
 		default:
 			return (EX_USAGE);
