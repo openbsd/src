@@ -121,6 +121,7 @@
 ./usr/share/man/cat1/atq.0
 ./usr/share/man/cat1/atrm.0
 ./usr/share/man/cat1/aucat.0
+./usr/share/man/cat1/audioctl.0
 ./usr/share/man/cat1/awk.0
 ./usr/share/man/cat1/banner.0
 ./usr/share/man/cat1/basename.0
@@ -283,6 +284,7 @@
 ./usr/share/man/cat1/md5.0
 ./usr/share/man/cat1/merge.0
 ./usr/share/man/cat1/mesg.0
+./usr/share/man/cat1/mixerctl.0
 ./usr/share/man/cat1/mkdep.0
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
@@ -505,11 +507,18 @@
 ./usr/share/man/cat4/acd.0
 ./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/alpha
+./usr/share/man/cat4/alpha/autoconf.0
 ./usr/share/man/cat4/alpha/com.0
+./usr/share/man/cat4/alpha/cy.0
+./usr/share/man/cat4/alpha/ed.0
+./usr/share/man/cat4/alpha/ep.0
 ./usr/share/man/cat4/alpha/esp.0
 ./usr/share/man/cat4/alpha/intro.0
 ./usr/share/man/cat4/alpha/le.0
+./usr/share/man/cat4/alpha/lpt.0
+./usr/share/man/cat4/alpha/pms.0
 ./usr/share/man/cat4/alpha/scc.0
+./usr/share/man/cat4/alpha/wd.0
 ./usr/share/man/cat4/arandom.0
 ./usr/share/man/cat4/arp.0
 ./usr/share/man/cat4/atalk.0
@@ -549,6 +558,7 @@
 ./usr/share/man/cat4/mac68k/intro.0
 ./usr/share/man/cat4/mac68k/kmem.0
 ./usr/share/man/cat4/mac68k/mainbus.0
+./usr/share/man/cat4/mac68k/mc.0
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
@@ -968,12 +978,3 @@
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
-./usr/share/man/cat1/audioctl.0
-./usr/share/man/cat1/mixerctl.0
-./usr/share/man/cat4/alpha/cy.0
-./usr/share/man/cat4/alpha/ed.0
-./usr/share/man/cat4/alpha/ep.0
-./usr/share/man/cat4/alpha/lpt.0
-./usr/share/man/cat4/alpha/pms.0
-./usr/share/man/cat4/alpha/wd.0
-./usr/share/man/cat4/alpha/autoconf.0

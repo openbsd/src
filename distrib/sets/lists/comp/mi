@@ -113,6 +113,7 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
+./usr/include/dev/ic/opl3sa3.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/smc90cx6reg.h
@@ -162,7 +163,9 @@
 ./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
+./usr/include/dev/isa/wssvar.h
 ./usr/include/dev/isa/wtreg.h
+./usr/include/dev/isa/ymvar.h
 ./usr/include/dev/microcode
 ./usr/include/dev/microcode/aic7xxx
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h
@@ -821,6 +824,7 @@
 ./usr/include/sha1.h
 ./usr/include/signal.h
 ./usr/include/skey.h
+./usr/include/soundcard.h
 ./usr/include/ss
 ./usr/include/ss/ss.h
 ./usr/include/ss/ss_err.h
@@ -1045,6 +1049,9 @@
 ./usr/lib/libmenu_p.a
 ./usr/lib/libocurses.a
 ./usr/lib/libocurses_p.a
+./usr/lib/libossaudio.a
+./usr/lib/libossaudio_p.a
+./usr/lib/libossaudio_pic.a
 ./usr/lib/libpanel.a
 ./usr/lib/libpanel_p.a
 ./usr/lib/libpcap.a
@@ -2003,6 +2010,7 @@
 ./usr/share/man/cat3/opendir.0
 ./usr/share/man/cat3/openlog.0
 ./usr/share/man/cat3/openpty.0
+./usr/share/man/cat3/ossaudio.0
 ./usr/share/man/cat3/overlay.0
 ./usr/share/man/cat3/overwrite.0
 ./usr/share/man/cat3/pair_content.0
@@ -2563,9 +2571,3 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
-./usr/include/dev/isa/wssvar.h
-./usr/include/soundcard.h
-./usr/lib/libossaudio.a
-./usr/lib/libossaudio_p.a
-./usr/lib/libossaudio_pic.a
-./usr/share/man/cat3/ossaudio.0
