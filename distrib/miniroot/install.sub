@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.300 2003/05/11 20:05:56 krw Exp $
+#	$OpenBSD: install.sub,v 1.301 2003/05/11 22:07:42 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -926,7 +926,7 @@ ftp_error () {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	_ftp_server_password, and _ftp_active must be global.
 install_url() {
-	local _file_list _url_type=$1 _url_base _url_login _url_pass _oifs
+	local _file_list _url_type=$1 _url_base _oifs
 
 	donetconfig
 
@@ -935,10 +935,7 @@ install_url() {
 	unset ftp_proxy http_proxy
 	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
 
-	# Provide a list of possible servers
-	: ${_ftp_getlist:=y}
-
-	ask "Do you want to see a list of potential $_url_type servers?" "$_ftp_getlist"
+	ask "Display the list of known $_url_type servers?" "${_ftp_getlist:-y}"
 	case $resp in
 	n*|N*)	_ftp_getlist=n
 		;;
@@ -950,8 +947,6 @@ install_url() {
 		grep "^${_url_type}:" /tmp/ftplist | cat -n | less -XE
 		;;
 	esac
-
-	: ${_ftp_server_dir:=pub/OpenBSD/$SETDIR}
 
 	# Get server IP address or hostname
 	resp=
@@ -1010,7 +1005,8 @@ install_url() {
 	fi
 
 	# Get server directory
-	eval ask_until \"Server directory?\" \"\$_${_url_type}_server_dir\"
+	eval resp=\$_${_url_type}_server_dir
+	ask_until "Server directory?" "${resp:-pub/OpenBSD/$SETDIR}"
 	eval _${_url_type}_server_dir=$resp
 
 	if [[ $_url_type == ftp ]]; then
@@ -1034,23 +1030,21 @@ install_url() {
 	fi
 
 	# Build up the base url since it is so nasty...
+	_url_base=$_url_type://
 	if [[ $_url_type == ftp && $_ftp_server_login != anonymous ]]; then
-		_url_login=`encode_for_url "$_ftp_server_login"`
-		_url_pass=`encode_for_url "$_ftp_server_password"`
-		_url_base=ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}
-	else
-		eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+		_url_base=$_url_base$(encode_for_url "$_ftp_server_login"):$(encode_for_url "$_ftp_server_password")@
 	fi
+	eval _url_base=$_url_base\$_${_url_type}_server_ip/\$_\${_url_type}_server_dir
 
 	# Get list of files from the server.
 	if [[ $_url_type == ftp && -z $ftp_proxy ]] ; then
-		_file_list=`ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir"`
+		_file_list=$(ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir")
 		ftp_error "Login failed." "$_file_list" && return
 		ftp_error "No such file or directory." "$_file_list" && return
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
-		_file_list=`ftp -o - -V "${_url_base}/index.txt" | sed 's///'`
+		_file_list=$(ftp -o - -V "$_url_base/index.txt" | sed 's///')
 	fi
 
 	install_files "$_url_base" "$_file_list"
