@@ -1,9 +1,15 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 1996/05/30 23:10:33 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1996/08/13 02:35:15 deraadt Exp $
+
+.include <bsd.own.mk>
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8
 GNUCFLAGS=	CFLAGS="${CFLAGS} -DSERVER_FLOWCONTROL"
 CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 lib/getdate.c \
 		macintosh/Makefile os2/Makefile
+
+.if defined(KERBEROS)
+KRB=--with-krb4=/usr
+.fi
 
 all:	config.status
 	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
@@ -12,10 +18,10 @@ all:	config.status
 
 config: .FORCE
 	-rm -f config.cache
-	sh ${.CURDIR}/configure --prefix=/usr --with-krb4=/usr
+	sh ${.CURDIR}/configure --prefix=/usr ${KRB}
 
 config.status:
-	sh ${.CURDIR}/configure --prefix=/usr --with-krb4=/usr
+	sh ${.CURDIR}/configure --prefix=/usr ${KRB}
 
 install: maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
