@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.18 2002/07/19 21:31:15 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.19 2002/07/20 10:38:25 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -1417,6 +1417,7 @@ static void usage(char *bin)
     fprintf(stderr, "  -T               : run syntax check for config files (without docroot check)\n");
 #ifndef WIN32
     fprintf(stderr, "  -F               : run main process in foreground, for process supervisors\n");
+    fprintf(stderr, "  -u               : Unsecure mode. Do not chroot into DocumentRoot.\n");
 #endif
 #ifdef WIN32
     fprintf(stderr, "  -n name          : name the Apache service for -k options below;\n");
