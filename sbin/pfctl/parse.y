@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.268 2002/12/21 18:47:33 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.269 2002/12/21 18:53:48 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2076,15 +2076,31 @@ hashkey		: /* empty */
 		}
 		;
 
-pooltype	: /* empty */			{ $$.type = PF_POOL_NONE; }
-		| BITMASK			{ $$.type = PF_POOL_BITMASK; }
-		| RANDOM			{ $$.type = PF_POOL_RANDOM; }
+pooltype	: /* empty */
+		{
+			$$.type = PF_POOL_NONE;
+			$$.key = NULL;
+		}
+		| BITMASK
+		{
+			$$.type = PF_POOL_BITMASK;
+			$$.key = NULL;
+		}
+		| RANDOM
+		{
+			$$.type = PF_POOL_RANDOM;
+			$$.key = NULL;
+		}
 		| SOURCEHASH hashkey
 		{
 			$$.type = PF_POOL_SRCHASH;
 			$$.key = $2;
 		}
-		| ROUNDROBIN			{ $$.type = PF_POOL_ROUNDROBIN; }
+		| ROUNDROBIN
+		{
+			$$.type = PF_POOL_ROUNDROBIN;
+			$$.key = NULL;
+		}
 		;
 
 staticport	: /* empty */			{ $$ = 0; }
