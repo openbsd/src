@@ -1,3 +1,4 @@
+.\"	$OpenBSD: esis.4,v 1.5 2000/04/16 17:44:33 aaron Exp $
 .\"	$NetBSD: esis.4,v 1.3 1994/11/30 16:22:12 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -167,8 +168,7 @@ either by writing a special purpose program, or using the
 .Xr route 8
 command e.g.:
 .Bd -literal
-route add -iface -osi 49.0.4.8.0.2b.b.83.bf \
-	-link qe0:8.0.2b.b.83.bf
+route add -iface -osi 49.0.4.8.0.2b.b.83.bf -link qe0:8.0.2b.b.83.bf
 .Ed
 .Pp
 If the

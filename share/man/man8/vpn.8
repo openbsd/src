@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.29 2000/01/28 06:21:43 deraadt Exp $
+.\" $OpenBSD: vpn.8,v 1.30 2000/04/16 17:44:33 aaron Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -332,7 +332,7 @@ incoming security association):
            10.0.50.0 255.255.255.0 -ingress
 
 # /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
-     -addr 10.0.99.0 255.255.255.0 \e\
+     -addr 10.0.99.0 255.255.255.0 \e\ 
 	   192.168.1.254 255.255.255.255 -ingress
 .Ed
 .It
