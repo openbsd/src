@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.4 1997/07/13 07:21:53 downsj Exp $	*/
+/*	$OpenBSD: srt0.s,v 1.5 1997/07/13 09:43:32 downsj Exp $	*/
 /*	$NetBSD: srt0.s,v 1.2 1997/03/10 08:00:47 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 	.globl	_configure
 	.globl	__rtt
 	.globl	_bootdev,_howto,_lowram,_machineid
-	.globl	_internalhpib
+	.globl	_internalhpib,_mmuid
 
 	STACK =	   0xfffff000	| below the ROM page
 	BOOTTYPE = 0xfffffdc0
@@ -77,6 +77,8 @@ _lowram:
 	.long	0
 _machineid:
 	.long	0
+_mmuid:
+	.long	0
 
 	.text
 begin:
@@ -89,9 +91,11 @@ vecloop:
 	dbf	d0,vecloop	| go til done
 	movl	#NMIRESET,a0	| NMI keyboard reset addr
 	movl	#nmi,a0@	| catch in reset routine
+
 /*
- * Determine our SPU type and look for internal HP-IB
+ * Determine our CPU type and look for internal HP-IB
  */
+
 	lea	_machineid,a0
 	movl	#0x808,d0
 	movc	d0,cacr		| clear and disable on-chip cache(s)
@@ -128,6 +132,7 @@ not370:
 	jeq	ihpibcheck	| no, a 360
 	lsrl	#8,d0		| save MMU ID
 	andl	#0xff,d0
+	movl	d0,_mmuid	| save mmuid
 	cmpb	#1,d0		| are we a 345?
 	jeq	isa345
 	cmpb	#3,d0		| how about a 375?
@@ -167,6 +172,7 @@ not68030:
 	movl	MMUCMD,d0	| get MMU register
 	lsrl	#8,d0
 	andl	#0xff,d0
+	movl	d0,_mmuid	| save mmuid
 	cmpb	#5,d0		| are we a 425t?
 	jeq	isa425
 	cmpb	#7,d0		| how about 425s?
