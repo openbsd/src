@@ -1593,6 +1593,7 @@
 ./usr/share/man/cat2/dup.0
 ./usr/share/man/cat2/dup2.0
 ./usr/share/man/cat2/errno.0
+./usr/share/man/cat2/exect.0
 ./usr/share/man/cat2/execve.0
 ./usr/share/man/cat2/fchdir.0
 ./usr/share/man/cat2/fchflags.0
@@ -2595,7 +2596,6 @@
 ./usr/share/man/cat3/execl.0
 ./usr/share/man/cat3/execle.0
 ./usr/share/man/cat3/execlp.0
-./usr/share/man/cat3/exect.0
 ./usr/share/man/cat3/execv.0
 ./usr/share/man/cat3/execvp.0
 ./usr/share/man/cat3/exit.0
