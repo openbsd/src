@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.87 2004/06/13 19:52:57 mickey Exp $
+$OpenBSD: usbdevs,v 1.88 2004/06/27 19:44:19 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1280,12 +1280,22 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 product RATOC REXUSB60		0xb000	USB serial adapter REX-USB60
 
 /* Roland products */
-product	ROLAND SC8850		0x0003	RolandED SC-8850 MIDI
-product ROLAND UM1		0x0009	UM-1 MIDI I/F
-product ROLAND UA3		0x000f	EDIROL UA-3 USB audio I/F
-product ROLAND UM880N		0x0014	EDIROL UM-880 MIDI I/F (native)
-product ROLAND UM880G		0x0015	EDIROL UM-880 MIDI I/F (generic)
-product	ROLAND SD90		0x0016	EDIROL SD-90 STDIO Canvas MIDI
+product ROLAND UA100            0x0000  UA-100 Audio I/F
+product ROLAND UM4              0x0002  UM-4 MIDI I/F
+product ROLAND SC8850           0x0003  SC-8850 MIDI Synth
+product ROLAND U8               0x0004  U-8 Audio I/F
+product ROLAND UM2              0x0005  UM-2 MIDI I/F
+product ROLAND SC8820           0x0007  SC-8820 MIDI Synth
+product ROLAND PC300            0x0008  PC-300 MIDI Keyboard
+product ROLAND UM1              0x0009  UM-1 MIDI I/F
+product ROLAND SK500            0x000b  SK-500 MIDI Keyboard
+product ROLAND SCD70            0x000c  SC-D70 MIDI Synth
+product ROLAND UM880N           0x0014  UM-880 MIDI I/F 
+product ROLAND SD90             0x0016  SD-90 MIDI Synth
+product ROLAND UM550            0x0023  UM-550 MIDI I/F
+product ROLAND SD20             0x0027  SD-20 MIDI Synth
+product ROLAND SD80             0x0029  SD-80 MIDI Synth
+product ROLAND UA700            0x002b  UA-700 Audio I/F
 
 /* Rockfire products */
 product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
