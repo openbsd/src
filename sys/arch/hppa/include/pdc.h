@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.15 2000/12/06 17:18:57 deraadt Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.16 2002/01/25 21:26:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -518,9 +518,10 @@ struct device_path {
 };
 
 /* dp_flags */
-#define	PF_AUTOBOOT	0x80	/* These two are PDC flags for how to locate */
-#define	PF_AUTOSEARCH	0x40	/*	the "boot device" */
-#define	PF_TIMER	0x0f	/* power of 2 # secs "boot timer" (0 == dflt) */
+#define	PZF_AUTOBOOT	0x80	/* These two are PDC flags for how to locate */
+#define	PZF_AUTOSEARCH	0x40	/*	the "boot device" */
+#define	PZF_TIMER	0x0f	/* power of 2 # secs "boot timer" (0 == dflt) */
+#define	PZF_BITS	"\020\010autoboot\07autosearch"
 
 /*
  * A processors Stable Storage is accessed through the PDC.  There are
