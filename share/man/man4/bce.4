@@ -1,4 +1,4 @@
-.\" $OpenBSD: bce.4,v 1.5 2004/11/22 00:58:39 jmc Exp $
+.\" $OpenBSD: bce.4,v 1.6 2005/01/30 22:29:57 jsg Exp $
 .\" $NetBSD: bce.4,v 1.2 2003/10/05 11:58:36 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 .Nd Broadcom BCM4401 Ethernet device driver
 .Sh SYNOPSIS
 .Cd "bce* at pci?"
+.Cd "bmtphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -133,12 +134,12 @@ An error occurred when writing a PHY register on the MII.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr bge 4 ,
+.Xr bmtphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
-.Xr ukphy 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
