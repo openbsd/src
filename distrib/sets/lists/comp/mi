@@ -250,6 +250,9 @@
 ./usr/include/dev/ic/midwayvar.h
 ./usr/include/dev/ic/mk48txxreg.h
 ./usr/include/dev/ic/monitors.h
+./usr/include/dev/ic/mpt.h
+./usr/include/dev/ic/mpt_mpilib.h
+./usr/include/dev/ic/mpt_openbsd.h
 ./usr/include/dev/ic/mpuvar.h
 ./usr/include/dev/ic/mtd8xxreg.h
 ./usr/include/dev/ic/mtd8xxvar.h
@@ -263,6 +266,8 @@
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
 ./usr/include/dev/ic/nslm7xvar.h
+./usr/include/dev/ic/oosiopreg.h
+./usr/include/dev/ic/oosiopvar.h
 ./usr/include/dev/ic/opl3sa3reg.h
 ./usr/include/dev/ic/oplreg.h
 ./usr/include/dev/ic/oplvar.h
@@ -5119,6 +5124,3 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
-./usr/include/dev/ic/mpt.h
-./usr/include/dev/ic/mpt_mpilib.h
-./usr/include/dev/ic/mpt_openbsd.h

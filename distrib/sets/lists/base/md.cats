@@ -2195,3 +2195,5 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_mpilib.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_openbsd.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oosiopreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oosiopvar.ph

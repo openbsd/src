@@ -2150,3 +2150,5 @@
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/oosiopreg.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/dev/ic/oosiopvar.ph
