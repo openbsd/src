@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.51 2003/10/09 03:47:20 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.52 2004/01/20 21:01:55 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -103,15 +103,9 @@ struct hifn_dma {
 };
 
 struct hifn_session {
-	int hs_state;
-	int hs_prev_op; /* XXX collapse into hs_flags? */
+	int hs_used;
 	u_int8_t hs_iv[HIFN_MAX_IV_LENGTH];
 };
-
-/* We use a state machine on sessions */
-#define	HS_STATE_FREE	0		/* unused session entry */
-#define	HS_STATE_USED	1		/* allocated, but key not on card */
-#define	HS_STATE_KEY	2		/* allocated and key is on card */
 
 #define	HIFN_RING_SYNC(sc, r, i, f)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,		\
@@ -151,6 +145,7 @@ struct hifn_softc {
 	int sc_dmansegs;
 	int32_t sc_cid;
 	int sc_maxses;
+	int sc_nsessions;
 	int sc_ramsize;
 	int sc_flags;
 #define	HIFN_HAS_RNG		0x01	/* includes random number generator */
@@ -164,7 +159,7 @@ struct hifn_softc {
 	int sc_rngfirst;
 	int sc_rnghz;
 	int sc_c_busy, sc_s_busy, sc_d_busy, sc_r_busy, sc_active;
-	struct hifn_session sc_sessions[2048];
+	struct hifn_session *sc_sessions;
 	pci_chipset_tag_t sc_pci_pc;
 	pcitag_t sc_pci_tag;
 	bus_size_t sc_waw_lastreg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.145 2004/01/09 21:32:24 brad Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.146 2004/01/20 21:01:55 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1159,7 +1159,7 @@ hifn_write_command(struct hifn_command *cmd, u_int8_t *buf)
 	base_cmd->total_dest_count = htole16(dlen & HIFN_BASE_CMD_LENMASK_LO);
 	dlen >>= 16;
 	slen >>= 16;
-	base_cmd->session_num = htole16(cmd->session_num |
+	base_cmd->session_num = htole16(
 	    ((slen << HIFN_BASE_CMD_SRCLEN_S) & HIFN_BASE_CMD_SRCLEN_M) |
 	    ((dlen << HIFN_BASE_CMD_DSTLEN_S) & HIFN_BASE_CMD_DSTLEN_M));
 	buf_pos += sizeof(struct hifn_base_command);
@@ -1813,7 +1813,8 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 {
 	struct cryptoini *c;
 	struct hifn_softc *sc = NULL;
-	int i, mac = 0, cry = 0, comp = 0;
+	int i, mac = 0, cry = 0, comp = 0, sesn;
+	struct hifn_session *ses = NULL;
 
 	if (sidp == NULL || cri == NULL)
 		return (EINVAL);
@@ -1828,11 +1829,37 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	if (sc == NULL)
 		return (EINVAL);
 
-	for (i = 0; i < sc->sc_maxses; i++)
-		if (sc->sc_sessions[i].hs_state == HS_STATE_FREE)
-			break;
-	if (i == sc->sc_maxses)
-		return (ENOMEM);
+	if (sc->sc_sessions == NULL) {
+		ses = sc->sc_sessions = (struct hifn_session *)malloc(
+		    sizeof(*ses), M_DEVBUF, M_NOWAIT);
+		if (ses == NULL)
+			return (ENOMEM);
+		sesn = 0;
+		sc->sc_nsessions = 1;
+	} else {
+		for (sesn = 0; sesn < sc->sc_nsessions; sesn++) {
+			if (!sc->sc_sessions[sesn].hs_used) {
+				ses = &sc->sc_sessions[sesn];
+				break;
+			}
+		}
+
+		if (ses == NULL) {
+			sesn = sc->sc_nsessions;
+			ses = (struct hifn_session *)malloc((sesn + 1) *
+			    sizeof(*ses), M_DEVBUF, M_NOWAIT);
+			if (ses == NULL)
+				return (ENOMEM);
+			bcopy(sc->sc_sessions, ses, sesn * sizeof(*ses));
+			bzero(sc->sc_sessions, sesn * sizeof(*ses));
+			free(sc->sc_sessions, M_DEVBUF);
+			sc->sc_sessions = ses;
+			ses = &sc->sc_sessions[sesn];
+			sc->sc_nsessions++;
+		}
+	}
+	bzero(ses, sizeof(*ses));
+	ses->hs_used = 1;
 
 	for (c = cri; c != NULL; c = c->cri_next) {
 		switch (c->cri_alg) {
@@ -1847,7 +1874,7 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		case CRYPTO_DES_CBC:
 		case CRYPTO_3DES_CBC:
 		case CRYPTO_AES_CBC:
-			get_random_bytes(sc->sc_sessions[i].hs_iv,
+			get_random_bytes(ses->hs_iv,
 			    (c->cri_alg == CRYPTO_AES_CBC ?
 			    HIFN_AES_IV_LENGTH : HIFN_IV_LENGTH));
 			/*FALLTHROUGH*/
@@ -1875,8 +1902,7 @@ hifn_newsession(u_int32_t *sidp, struct cryptoini *cri)
 	if ((comp && mac) || (comp && cry))
 		return (EINVAL);
 
-	*sidp = HIFN_SID(sc->sc_dv.dv_unit, i);
-	sc->sc_sessions[i].hs_state = HS_STATE_USED;
+	*sidp = HIFN_SID(sc->sc_dv.dv_unit, sesn);
 
 	return (0);
 }
@@ -1899,7 +1925,7 @@ hifn_freesession(u_int64_t tid)
 
 	sc = hifn_cd.cd_devs[card];
 	session = HIFN_SESSION(sid);
-	if (session >= sc->sc_maxses)
+	if (session >= sc->sc_nsessions)
 		return (EINVAL);
 
 	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
@@ -1927,7 +1953,7 @@ hifn_process(struct cryptop *crp)
 
 	sc = hifn_cd.cd_devs[card];
 	session = HIFN_SESSION(crp->crp_sid);
-	if (session >= sc->sc_maxses) {
+	if (session >= sc->sc_nsessions) {
 		err = EINVAL;
 		goto errout;
 	}
@@ -2018,10 +2044,6 @@ hifn_process(struct cryptop *crp)
 		switch (enccrd->crd_alg) {
 		case CRYPTO_ARC4:
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_RC4;
-			if ((enccrd->crd_flags & CRD_F_ENCRYPT)
-			    != sc->sc_sessions[session].hs_prev_op)
-				sc->sc_sessions[session].hs_state =
-				    HS_STATE_USED;
 			break;
 		case CRYPTO_DES_CBC:
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES |
@@ -2079,6 +2101,7 @@ hifn_process(struct cryptop *crp)
 
 		cmd->ck = enccrd->crd_key;
 		cmd->cklen = enccrd->crd_klen >> 3;
+		cmd->cry_masks |= HIFN_CRYPT_CMD_NEW_KEY;
 
 		/*
 		 * Need to specify the size for the AES key in the masks.
@@ -2100,9 +2123,6 @@ hifn_process(struct cryptop *crp)
 				goto errout;
 			}
 		}
-
-		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
-			cmd->cry_masks |= HIFN_CRYPT_CMD_NEW_KEY;
 	}
 
 	if (maccrd) {
@@ -2132,9 +2152,8 @@ hifn_process(struct cryptop *crp)
 			break;
 		}
 
-		if ((maccrd->crd_alg == CRYPTO_SHA1_HMAC ||
-		     maccrd->crd_alg == CRYPTO_MD5_HMAC) &&
-		    sc->sc_sessions[session].hs_state == HS_STATE_USED) {
+		if (maccrd->crd_alg == CRYPTO_SHA1_HMAC ||
+		     maccrd->crd_alg == CRYPTO_MD5_HMAC) {
 			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
 			bcopy(maccrd->crd_key, cmd->mac, maccrd->crd_klen >> 3);
 			bzero(cmd->mac + (maccrd->crd_klen >> 3),
@@ -2147,14 +2166,8 @@ hifn_process(struct cryptop *crp)
 	cmd->softc = sc;
 
 	err = hifn_crypto(sc, cmd, crp);
-	if (!err) {
-		if(enccrd)
-			sc->sc_sessions[session].hs_prev_op=enccrd->crd_flags
-			    & CRD_F_ENCRYPT;
-		if (sc->sc_sessions[session].hs_state == HS_STATE_USED)
-			sc->sc_sessions[session].hs_state = HS_STATE_KEY;
+	if (!err)
 		return 0;
-	}
 
 errout:
 	if (cmd != NULL)
@@ -2230,11 +2243,6 @@ hifn_abort(struct hifn_softc *sc)
 	}
 	dma->resk = i; dma->resu = u;
 
-	/* Force upload of key next time */
-	for (i = 0; i < sc->sc_maxses; i++)
-		if (sc->sc_sessions[i].hs_state == HS_STATE_KEY)
-			sc->sc_sessions[i].hs_state = HS_STATE_USED;
-	
 	hifn_reset_board(sc, 1);
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
