@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.21 2004/11/03 17:10:03 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.22 2004/11/03 17:11:14 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -376,7 +376,7 @@ ipw_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		break;
 
 	case IEEE80211_M_IBSS:
-		imr->ifm_active |= IFM_IEEE80211_ADHOC;
+		imr->ifm_active |= IFM_IEEE80211_IBSS;
 		break;
 
 	case IEEE80211_M_MONITOR:
