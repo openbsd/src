@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.78 1998/08/13 06:48:38 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.79 1998/08/13 07:46:51 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2301,10 +2301,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C416MV",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C1595,
 	    0,
 	    "VIA Technologies",
-	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
+	    "VT82C1595 (Apollo VP2) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
