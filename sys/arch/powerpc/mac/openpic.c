@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.11 2001/06/25 00:43:15 mickey Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.12 2001/06/25 23:29:56 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -74,7 +74,6 @@ static char *intr_typename(int type);
 static void intr_calculatemasks();
 static __inline int cntlzw(int x);
 static int mapirq(int irq);
-static int read_irq();
 void openpic_enable_irq_mask(int irq_mask);
 
 extern u_int32_t *heathrow_FCR;
@@ -153,7 +152,6 @@ openpic_attach(parent, self, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	struct openpic_softc *sc = (void *)self;
 	extern intr_establish_t *intr_establish_func;
 	extern intr_disestablish_t *intr_disestablish_func;
 	extern intr_establish_t *mac_intr_establish_func;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.3 2001/06/10 15:20:17 drahn Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.4 2001/06/25 23:30:01 drahn Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -337,12 +337,9 @@ vgafb_pci_console(iot, ioaddr, iosize, memt, memaddr, memsize,
 	pci_chipset_tag_t pc;
 	int bus, device, function;
 {
-	extern bus_space_handle_t cons_display_mem_h;
 	struct vgafb_config *vc = &vgafb_pci_console_vc;
 	u_int32_t mmioaddr;
 	u_int32_t mmiosize;
-	int retval;
-	u_int32_t cacheable;
 	static struct pci_attach_args spa;
 	struct pci_attach_args *pa = &spa;
 

@@ -172,7 +172,6 @@ extern struct cfdriver adb_cd;
 int
 gpio_intr(void *arg)
 {
-	struct gpio_softc *sc = arg;
 	int rv = 0;
 
 #if NADB > 0

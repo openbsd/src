@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.11 2001/06/24 23:11:24 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.12 2001/06/25 23:30:00 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -67,10 +67,6 @@ void	vgafb_eraserows __P((void *, int, int));
 void	vgafb_alloc_attr __P((void *c, int fg, int bg, int flags, long *));
 
 void vgafb_setcolor __P((unsigned int index, u_int8_t r, u_int8_t g, u_int8_t b));
-static void drawChar ( struct vgafb_config *vc, char ch, int cx,
-	int cy, char at);
-static void setPixel( struct vgafb_config *vc, int x, int y, int v);
-static void vgafb_invert_char ( struct vgafb_config *vc, int cx, int cy);
 extern const char fontdata_8x16[];
 
 struct vgafb_devconfig {
@@ -143,9 +139,7 @@ vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosi
 	size_t iosize, memsize, mmiosize;
 {
 	bus_space_handle_t ioh_b, ioh_c, ioh_d, memh, mmioh;
-	u_int16_t vgadata;
 	int gotio_b, gotio_c, gotio_d, gotmem, gotmmio, rv;
-	int width;
 
 	gotio_b = gotio_c = gotio_d = gotmem = gotmmio = rv = 0;
 
@@ -222,8 +216,6 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	u_int32_t iobase, membase, mmiobase;
 	size_t iosize, memsize, mmiosize;
 {
-	int cpos;
-	int width, height;
 
         vc->vc_iot = iot;
         vc->vc_memt = memt;
@@ -325,7 +317,6 @@ vgafb_wsdisplay_attach(parent, vc, console)
 	int console;
 {
 	struct wsemuldisplaydev_attach_args aa;
-	struct wscons_odev_spec *wo;
 
         aa.console = console;
 	aa.scrdata = &vgafb_screenlist;
@@ -402,7 +393,6 @@ vgafb_mmap(v, offset, prot)
 {
 	struct vgafb_config *vc = v;
 	bus_space_handle_t h;
-	u_int32_t *port;
 
 	/* memsize... */
 	if (offset >= 0x00000 && offset < 0x800000)	/* 8MB of mem??? */
@@ -454,7 +444,6 @@ void
 vgafb_cnprobe(cp)
 	struct consdev *cp;
 {
-	int i, j;
 	if (cons_displaytype != 1) {
 		cp->cn_pri = CN_DEAD;
 		return;

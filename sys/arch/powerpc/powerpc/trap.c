@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2001/06/10 18:45:02 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2001/06/25 23:30:04 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -373,7 +373,6 @@ mpc_print_pci_stat();
 	{
 		char *errstr[8];
 		int errnum = 0;
-		int i;
 
 		if (frame->srr1 & (1<<(31-11))) { 
 			/* floating point enabled program exception */

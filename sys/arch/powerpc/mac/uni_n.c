@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.3 2001/05/29 01:20:44 drahn Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.4 2001/06/25 23:29:57 drahn Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn. All rights reserved.
@@ -62,10 +62,7 @@ memcmatch(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int node;
 	static int memc_attached = 0;
-	int len;
-	char name[64];
 
 	/* allow only one instance */
 	if (memc_attached == 0) {
@@ -84,8 +81,6 @@ memcattach(parent, self, aux)
 	struct confargs *ca = aux;
 	int len;
 	char name[64];
-	u_int32_t address;
-	u_int32_t *ctladdr;
 	struct memc_softc *sc = (struct memc_softc *)self;
 
 	len = OF_getprop(ca->ca_node, "name", name, sizeof name);

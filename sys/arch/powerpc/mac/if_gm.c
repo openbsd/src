@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.13 2001/06/24 20:26:13 drahn Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.14 2001/06/25 23:29:55 drahn Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -167,11 +167,8 @@ gmac_attach(parent, self, aux)
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	struct ifnet *ifp = &sc->sc_if;
 	struct mii_data *mii = &sc->sc_mii;
-	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	char intrstrbuf[20];
-	bus_addr_t	iobase;
-	bus_size_t	iosize;
 	bus_addr_t	membase;
 	bus_size_t	memsize;
 #ifdef __NetBSD__
@@ -180,7 +177,6 @@ gmac_attach(parent, self, aux)
 	int i;
 	char *p;
 	struct gmac_dma *dp;
-	u_int32_t reg[10];
 	u_char laddr[6];
 
 #ifdef __NetBSD__
@@ -870,7 +866,6 @@ gmac_init(sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	u_int x;
-	int i;
 
 	gmac_stop_txdma(sc);
 	gmac_stop_rxdma(sc);

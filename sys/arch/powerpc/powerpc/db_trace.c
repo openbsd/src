@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.8 2001/06/24 22:00:13 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.9 2001/06/25 23:30:02 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /* 
@@ -97,8 +97,6 @@ db_dumpframe (u_int32_t pframe)
 	u_int32_t nextframe;
 	u_int32_t lr;
 	u_int32_t *access;
-	db_sym_t  sym;
-	int error;
 	char *name;
 	db_expr_t offset;
 
@@ -127,11 +125,6 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char		*modif;
 {
-	int i, val, nargs, spa;
-	db_addr_t	regp;
-	char *		name;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
 
 	if (have_addr == 0){
 		addr = ddb_regs.tf.fixreg[1];

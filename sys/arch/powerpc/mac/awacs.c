@@ -376,7 +376,6 @@ awacs_intr(v)
 {
 	int reason;
 	struct awacs_softc *sc = v;
-	int error;
 	reason = awacs_read_reg(sc, AWACS_SOUND_CTRL);
 
 	if (reason & AWACS_CTL_CNTRLERR) {

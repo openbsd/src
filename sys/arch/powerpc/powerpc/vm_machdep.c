@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.16 2001/06/08 08:09:23 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.17 2001/06/25 23:30:04 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -196,10 +196,8 @@ cpu_coredump(p, vp, cred, chdr)
 {
 	struct coreseg cseg;
 	struct md_coredump md_core;
-	struct trapframe *tf;
 	int error;
 	
-#if 1
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_ZERO, 0);
 	chdr->c_hdrsize = ALIGN(sizeof *chdr);
 	chdr->c_seghdrsize = ALIGN(sizeof cseg);
@@ -221,7 +219,6 @@ cpu_coredump(p, vp, cred, chdr)
 		return error;
 
 	chdr->c_nseg++;
-#endif
 	return 0;
 }
 

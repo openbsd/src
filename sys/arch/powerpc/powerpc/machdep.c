@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.67 2001/06/25 00:43:16 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.68 2001/06/25 23:30:03 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -738,7 +738,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oldonstack;
-	int pa;
 	
 	frame.sf_signum = sig;
 	
@@ -920,7 +919,6 @@ boot(howto)
 {
 	static int syncing;
 	static char str[256];
-	char *ap = str, *ap1 = ap;
 
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
@@ -1186,7 +1184,6 @@ bus_space_unmap(t, bsh, size)
 {
 	bus_addr_t sva;
 	bus_size_t off, len;
-	bus_addr_t bpa;
 
 	/* should this verify that the proper size is freed? */
 	sva = trunc_page(bsh);
@@ -1349,7 +1346,6 @@ __C(bus_space_copy_,BYTES)(v, h1, o1, h2, o2, c)			\
 	bus_space_handle_t h1, h2;					\
 	bus_size_t o1, o2, c;						\
 {									\
-	TYPE val;							\
 	TYPE *src, *dst;						\
 	int i;								\
 									\

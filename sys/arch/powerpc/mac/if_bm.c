@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.6 2001/02/20 19:39:33 mickey Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.7 2001/06/25 23:29:55 drahn Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -104,7 +104,9 @@ static void bmac_reset_chip __P((struct bmac_softc *));
 static void bmac_init __P((struct bmac_softc *));
 static void bmac_init_dma __P((struct bmac_softc *));
 static int bmac_intr __P((void *));
+#ifdef WHY_IS_THIS_XXXX
 static int bmac_tx_intr __P((void *));
+#endif /* WHY_IS_THIS_XXXX */
 static int bmac_rint __P((void *));
 static void bmac_reset __P((struct bmac_softc *));
 static void bmac_stop __P((struct bmac_softc *));
@@ -188,7 +190,6 @@ bmac_attach(parent, self, aux)
 	struct bmac_softc *sc = (void *)self;
 	struct ifnet *ifp = &sc->sc_if;
 	u_char laddr[6];
-	int i;
 
 	sc->sc_flags =0;
 	if (strcmp(ca->ca_name, "ethernet") == 0) {
@@ -227,10 +228,10 @@ bmac_attach(parent, self, aux)
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
 		bmac_intr, sc, "bmac intr");
-	/*
+#ifdef WHY_IS_THIS_XXXX
 	mac_intr_establish(parent, ca->ca_intr[1], IST_LEVEL, IPL_NET,
 		bmac_tx_intr, sc, "bmac_tx");
-	*/
+#endif /* WHY_IS_THIS_XXXX */
 	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_NET,
 		bmac_rint, sc, "bmac rint");
 
@@ -297,7 +298,7 @@ bmac_init(sc)
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
 	caddr_t data;
-	int i, tb;
+	int tb;
 	u_short *p;
 
 	bmac_init_mif(sc);
@@ -413,12 +414,12 @@ bmac_init_dma(sc)
 	dbdma_start(sc->sc_rxdma, sc->sc_rxcmd);
 }
 
+#ifdef WHY_IS_THIS_XXXX
 int
 bmac_tx_intr(v)
 	void *v;
 {
 	struct bmac_softc *sc = v;
-	u_int16_t stat;
 
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	sc->sc_if.if_timer = 0;
@@ -445,6 +446,7 @@ bmac_tx_intr(v)
 	#endif
 	return 1;
 }
+#endif /* WHY_IS_THIS_XXXX */
 int
 bmac_intr(v)
 	void *v;
@@ -751,7 +753,6 @@ bmac_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
-	int temp;
 
 	s = splnet();
 

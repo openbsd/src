@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.1 2001/06/25 18:11:12 drahn Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.2 2001/06/25 23:29:56 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -111,7 +111,6 @@ wi_obio_attach(parent, self, aux)
 	struct wi_obio_softc	*psc = (struct wi_obio_softc *)self;
 	struct wi_softc		*sc = &psc->sc_wi;
 	struct confargs		*ca = aux;
-	int			state = 0;
 
 	printf(" irq %d:", ca->ca_intr[0]);
 

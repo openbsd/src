@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.2 2000/05/02 03:04:27 rahnds Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.3 2001/06/25 23:29:54 drahn Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 
 
-static int	dbdma_alloc_index = 0;
 dbdma_command_t	*dbdma_alloc_commands = NULL;
 
 void

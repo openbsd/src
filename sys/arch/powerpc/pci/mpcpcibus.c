@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.28 2001/06/25 04:52:35 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.29 2001/06/25 23:29:59 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -157,12 +157,7 @@ mpcpcibrmatch(parent, match, aux)
 	void *match, *aux;
 {
 	struct confargs *ca = aux;
-	int handle; 
 	int found = 0;
-	int err;
-	unsigned int val;
-	int qhandle;
-	char type[32];
 
 	if (strcmp(ca->ca_name, mpcpcibr_cd.cd_name) != 0)
 		return (found);
@@ -187,8 +182,6 @@ mpcpcibrattach(parent, self, aux)
 	int map, node;
 	char *bridge;
 	int of_node = 0;
-	u_int32_t base;
-	u_int32_t size;
 
 	switch(system_type) {
 	case POWER4e:
@@ -343,11 +336,13 @@ mpcpcibrattach(parent, self, aux)
 			char compat[32];
 			u_int32_t addr_offset;
 			u_int32_t data_offset;
+#if 0
 			struct pci_reserve_mem null_reserve = {
 				0,
 				0,
 				0
 			};
+#endif
 			int i;
 			int len;
 			int rangelen;
@@ -609,7 +604,6 @@ find_node_intr(node, addr, intr)
 	u_int32_t map[64], *mp;
 	u_int32_t imask[8], maskedaddr[8];
 	u_int32_t icells;
-	char name [32];
 
 	len = OF_getprop(node, "AAPL,interrupts", intr, 4);
 	if (len == 4)
@@ -872,9 +866,7 @@ mpc_conf_read(cpv, tag, offset)
 
 	pcireg_t data;
 	u_int32_t reg;
-	int device;
 	int s;
-	int handle; 
 	int daddr = 0;
 
 	if(offset & 3 || offset < 0 || offset >= 0x100) {
@@ -927,7 +919,6 @@ mpc_conf_write(cpv, tag, offset, data)
 	struct pcibr_config *cp = cpv;
 	u_int32_t reg;
 	int s;
-	int handle; 
 	int daddr = 0;
 
 	reg = mpc_gen_config_reg(cpv, tag, offset);
@@ -962,6 +953,7 @@ mpc_conf_write(cpv, tag, offset, data)
 }
 
 
+/*ARGSUSED*/
 int
 mpc_intr_map(lcv, bustag, buspin, line, ihp)
 	void *lcv;
@@ -969,12 +961,7 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
 	int buspin, line;
 	pci_intr_handle_t *ihp;
 {
-	struct pcibr_config *lcp = lcv;
-	pci_chipset_tag_t pc = &lcp->lc_pc; 
 	int error = 0;
-	int route;
-	int lvl;
-	int device;
 
 	*ihp = -1;
         if (buspin == 0) {

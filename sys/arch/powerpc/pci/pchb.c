@@ -91,13 +91,12 @@ pchbmatch(parent, cf, aux)
 	return (0);
 }
 
+/*ARGSUSED*/
 void
 pchbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
-	char devinfo[256];
 
 	printf("\n");
 
