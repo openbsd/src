@@ -1,4 +1,4 @@
-.\" $OpenBSD: ffs_softupdates.4,v 1.3 2000/02/16 16:53:23 aaron Exp $
+.\" $OpenBSD: ffs_softupdates.4,v 1.4 2000/04/30 18:41:30 millert Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -56,7 +56,17 @@ on, then run
 .Dq reboot -n .
 .Sh CAVEATS
 Soft updates should be considered experimental at this time.
-.br
+.Pp
+CPUs with a small kernel address space, such as the sun4 and
+sun4c, do not have enough kernel memory to support
+.Em Soft Updates .
+Attempts to use
+.Em Soft Updates
+on these CPUs will cause a kernel hang or panic after a short period of
+use as the kernel will quickly run out of memory.  This is not related
+to the amount of physical memory present in the machine--it is a limitation
+of the CPU architecture.
+.Pp
 There should be a
 .Xr mount 2
 option to enable
