@@ -20,7 +20,7 @@ SHELL = /bin/sh
 # try and remove naming ocnflicts and fix Automake to allow particular includes
 # to be attached only to particular object files.  Short term fix is either or.
 ##INCLUDES = -I. -I.. -I$(srcdir) -I$(top_srcdir)/lib
-INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/diff -I$(top_srcdir)/zlib $(includeopt)
+INCLUDES = -I$(top_srcdir)/lib -I$(top_srcdir)/diff $(includeopt)
 
 bin_PROGRAMS = cvs
 bin_SCRIPTS = cvsbug
