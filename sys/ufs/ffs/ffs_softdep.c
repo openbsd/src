@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.26 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.27 2001/11/28 01:18:10 art Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -4347,6 +4347,14 @@ flush_inodedep_deps(fs, ino)
 	int error, waitfor;
 	struct buf *bp;
 	struct vnode *vp;
+	struct uvm_object *uobj;
+
+	vp = softdep_lookupvp(fs, ino);
+#ifdef DIAGNOSTIC
+	if (vp == NULL)
+		panic("flush_inodedep_deps: null vp");
+#endif
+	uobj = &vp->v_uvm.u_obj;
 
 	/*
 	 * This work is done in two passes. The first pass grabs most
@@ -4375,17 +4383,16 @@ flush_inodedep_deps(fs, ino)
 		 * we need something else to trigger those flushes.
 		 * let's just do it here.
 		 */
-
-		vp = softdep_lookupvp(fs, ino);
-		if (vp) {
-			struct uvm_object *uobj = &vp->v_uvm.u_obj;
-
-			simple_lock(&uobj->vmobjlock);
-			(uobj->pgops->pgo_flush)(uobj, 0, 0,
-			    PGO_ALLPAGES|PGO_CLEANIT|
-			    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
-			simple_unlock(&uobj->vmobjlock);
+		FREE_LOCK(&lk);
+		simple_lock(&uobj->vmobjlock);
+		(uobj->pgops->pgo_flush)(uobj, 0, 0,
+		    PGO_ALLPAGES|PGO_CLEANIT|
+		    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
+		simple_unlock(&uobj->vmobjlock);
+		if (waitfor == MNT_WAIT) {
+			drain_output(vp, 0);
 		}
+		ACQUIRE_LOCK(&lk);
 
 		TAILQ_FOREACH(adp, &inodedep->id_inoupdt, ad_next) {
 			if (adp->ad_state & DEPCOMPLETE)
@@ -5015,6 +5022,8 @@ softdep_setup_pagecache(ip, lbn, size)
 
 	/*
 	 * Enter pagecache dependency buf in hash.
+	 * Always reset b_resid to be the full amount of data in the block
+	 * since the caller has the corresponding pages locked and dirty.
 	 */
 
 	bp = softdep_lookup_pcbp(vp, lbn);
@@ -5025,15 +5034,11 @@ softdep_setup_pagecache(ip, lbn, size)
 
 		bp->b_vp = vp;
 		bp->b_lblkno = lbn;
-		bp->b_bcount = bp->b_resid = size;
 		LIST_INIT(&bp->b_dep);
 		LIST_INSERT_HEAD(&pcbphashhead[PCBPHASH(vp, lbn)], bp, b_hash);
 		LIST_INSERT_HEAD(&ip->i_pcbufhd, bp, b_vnbufs);
-	} else {
-		KASSERT(size >= bp->b_bcount);
-		bp->b_resid += size - bp->b_bcount;
-		bp->b_bcount = size;
 	}
+	bp->b_bcount = bp->b_resid = size;
 	return bp;
 }
 
