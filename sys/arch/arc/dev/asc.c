@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.5 1997/04/19 17:19:50 pefo Exp $	*/
+/*	$OpenBSD: asc.c,v 1.6 1997/08/01 23:39:23 deraadt Exp $	*/
 /*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
 
 /*-
@@ -491,7 +491,9 @@ struct scsi_device asc_dev = {
 
 static int asc_intr __P((void *));
 static int asc_poll __P((struct asc_softc *, int));
+#ifdef DEBUG
 static void asc_DumpLog __P((char *));
+#endif
 
 /*
  * Match driver based on name
