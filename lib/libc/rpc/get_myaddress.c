@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: get_myaddress.c,v 1.9 1998/08/14 21:39:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: get_myaddress.c,v 1.10 2000/02/25 05:06:27 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -46,9 +46,8 @@ static char *rcsid = "$OpenBSD: get_myaddress.c,v 1.9 1998/08/14 21:39:36 deraad
 #include <stdlib.h>
 #include <unistd.h>
 #include <net/if.h>
-#include <sys/ioctl.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#include <ifaddrs.h>
 
 /* 
  * don't use gethostbyname, which would invoke yellow pages
@@ -60,67 +59,27 @@ int
 get_myaddress(addr)
 	struct sockaddr_in *addr;
 {
-	int s;
-	char *inbuf = NULL, *ninbuf;
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
-	int len, inbuflen = 8192, slop;
+	struct ifaddrs *ifap, *ifa;
 	int loopback = 0, gotit = 0;
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+	if (getifaddrs(&ifap) != 0)
 		return (-1);
-	}
-	while (1) {
-		ifc.ifc_len = inbuflen;
-		ninbuf = realloc(inbuf, inbuflen);
-		if (ninbuf == NULL) {
-			if (inbuf)
-				free(inbuf);
-			close(s);
-			return (-1);
-		}
-		ifc.ifc_buf = inbuf = ninbuf;
-		if (ioctl(s, SIOCGIFCONF, (char *)&ifc) < 0) {
-			(void) close(s);
-			free(inbuf);
-			return (-1);
-		}
-		if (ifc.ifc_len + sizeof(ifreq) < inbuflen)
-			break;
-		inbuflen *= 2;
-	}
-again:
-	ifr = ifc.ifc_req;
-	for (len = ifc.ifc_len; len; len -= sizeof ifreq) {
-		ifreq = *ifr;
-		if (ioctl(s, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
-			(void) close(s);
-			free(inbuf);
-			return (-1);
-		}
-		if ((ifreq.ifr_flags & IFF_UP) &&
-		    ifr->ifr_addr.sa_family == AF_INET &&
-		    (loopback == 1 && (ifreq.ifr_flags & IFF_LOOPBACK))) {
-			*addr = *((struct sockaddr_in *)&ifr->ifr_addr);
+
+  again:
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if ((ifa->ifa_flags & IFF_UP) &&
+		    ifa->ifa_addr->sa_family == AF_INET &&
+		    (loopback == 1 && (ifa->ifa_flags & IFF_LOOPBACK))) {
+			*addr = *((struct sockaddr_in *)ifa->ifa_addr);
 			addr->sin_port = htons(PMAPPORT);
 			gotit = 1;
 			break;
 		}
-		/*
-		 * Deal with variable length addresses
-		 */
-		slop = ifr->ifr_addr.sa_len - sizeof (struct sockaddr);
-		if (slop > 0) {
-			ifr = (struct ifreq *) ((caddr_t)ifr + slop);
-			len -= slop;
-		}
-		ifr++;
 	}
 	if (gotit == 0 && loopback == 0) {
 		loopback = 1;
 		goto again;
 	}
-	(void) close(s);
-	free (inbuf);
+	freeifaddrs(ifap);
 	return (0);
 }
