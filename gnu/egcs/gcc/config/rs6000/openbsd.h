@@ -30,7 +30,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* Run-time target specifications. */
 #define CPP_PREDEFINES \
- "-D__PPC -D__unix__ -D__OpenBSD__ -D__powerpc -Asystem(unix) -Asystem(OpenBSD) -Acpu(powerpc) -Amachine(powerpc)"
+ "-D__PPC -D__unix__ -D__OpenBSD__ -D__powerpc -D__powerpc__ -Asystem(unix) -Asystem(OpenBSD) -Acpu(powerpc) -Amachine(powerpc)"
 
 #undef LINK_SPEC
 #define LINK_SPEC "-m elf32ppc %{shared:-shared} \
