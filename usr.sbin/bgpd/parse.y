@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.135 2004/08/20 14:56:09 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.136 2004/08/20 15:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,7 +146,7 @@ typedef struct {
 %token	ALLOW DENY MATCH
 %token	QUICK
 %token	FROM TO ANY
-%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
+%token	PREFIX PREFIXLEN SOURCEAS TRANSITAS EMPTYAS COMMUNITY
 %token	SET LOCALPREF MED METRIC NEXTHOP PREPEND PFTABLE REJECT BLACKHOLE
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
@@ -1048,6 +1048,7 @@ prefixlenop	: unaryop number		{
 filter_as_type	: AS		{ $$ = AS_ALL; }
 		| SOURCEAS	{ $$ = AS_SOURCE; }
 		| TRANSITAS	{ $$ = AS_TRANSIT; }
+		| EMPTYAS	{ $$ = AS_EMPTY; }
 		;
 
 filter_set	: /* empty */					{
@@ -1205,6 +1206,7 @@ lookup(char *s)
 		{ "deny",		DENY},
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
+		{ "empty-as",		EMPTYAS},
 		{ "enforce",		ENFORCE},
 		{ "esp",		ESP},
 		{ "fib-update",		FIBUPDATE},

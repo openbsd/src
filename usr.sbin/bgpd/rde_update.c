@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.29 2004/08/13 14:03:20 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.30 2004/08/20 15:31:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -630,7 +630,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	 */
 	if (a->flags & F_ATTR_MED && (peer->conf.ebgp == 0 ||
 	    a->flags & F_ATTR_MED_ANNOUNCE)) {
-		tmp32 = htonl(a->lpref);
+		tmp32 = htonl(a->med);
 		if ((r = attr_write(up_attr_buf + wlen, len, ATTR_OPTIONAL,
 		    ATTR_MED, &tmp32, 4)) == -1)
 			return (-1);
