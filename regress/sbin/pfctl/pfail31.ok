@@ -1,6 +1,6 @@
-stdin:4: unknown interface nothere0
-stdin:5: queue has no parent
-stdin:6: queue has no parent
+stdin:6: unknown interface nothere0
+stdin:7: queue has no parent
+stdin:8: queue has no parent
 pfctl: Syntax error in file: pf rules not loaded
 lan_if = "lo0"
 ext_if = "nothere0"
