@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.113 2002/12/09 11:01:02 henning Exp $
+.\"	$OpenBSD: options.4,v 1.114 2003/01/04 22:11:47 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -164,15 +164,6 @@ applications built for the same architecture.
 This option is available on the alpha architecture.
 See
 .Xr compat_osf1 8 .
-.It Cd option COMPAT_NOMID
-Enables compatibility with a.out executables that lack a machine ID.
-On the i386, this includes
-.Nx
-0.8's ZMAGIC format, 386BSD and BSDI's
-QMAGIC, NMAGIC, and OMAGIC a.out formats.
-On the hp300 and other m68k architectures this permits certain old
-.Bx 4.3
-binaries to work, though its use is discouraged now.
 .It Cd option COMPAT_43
 Use of this option is discouraged.
 It enables compatibility with

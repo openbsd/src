@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.101 2002/12/17 23:11:32 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.102 2003/01/04 22:11:47 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -1103,12 +1103,6 @@ cpu_exec_aout_makecmds(p, epp)
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
-
-#ifdef COMPAT_NOMID
-	/* Check to see if MID == 0. */
-	if (((struct exec *)epp->ep_hdr)->a_midmag == ZMAGIC)
-		return exec_aout_prep_oldzmagic(p, epp);
-#endif
 
 #ifdef COMPAT_SUNOS
 	{
