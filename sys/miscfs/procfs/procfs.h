@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.18 2003/06/02 23:28:10 millert Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.19 2003/08/05 20:47:36 tedu Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -72,15 +72,6 @@ struct pfsnode {
 
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
 #define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
-
-struct procfs_args {
-	int version;
-	int flags;
-};
-
-#define PROCFS_ARGSVERSION	1
-
-#define	PROCFSMNT_LINUXCOMPAT	0x01
 
 /*
  * Kernel stuff follows

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.55 2003/07/18 23:02:58 tedu Exp $	*/
+/*	$OpenBSD: mount.h,v 1.56 2003/08/05 20:47:36 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -252,6 +252,16 @@ struct ntfs_args {
 #define     NTFS_MFLAG_CASEINS      0x00000001
 #define     NTFS_MFLAG_ALLNAMES     0x00000002
 
+struct procfs_args {
+	int version;
+	int flags;
+};
+
+#define PROCFS_ARGSVERSION      1
+
+#define PROCFSMNT_LINUXCOMPAT   0x01
+
+
 /*
  * file system statistics
  */
@@ -265,6 +275,7 @@ union mount_info {
 	struct mfs_args mfs_args;
 	struct nfs_args nfs_args;
 	struct iso_args iso_args;
+	struct procfs_args procfs_args;
 	struct msdosfs_args msdosfs_args;
 	struct adosfs_args adosfs_args;
 	struct ntfs_args ntfs_args;

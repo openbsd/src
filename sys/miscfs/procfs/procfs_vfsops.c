@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.20 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.21 2003/08/05 20:47:36 tedu Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ procfs_mount(mp, path, data, ndp, p)
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("procfs", mp->mnt_stat.f_mntfromname, sizeof("procfs"));
+	bcopy(&args, &mp->mnt_stat.mount_info.procfs_args, sizeof(args));
 
 #ifdef notyet
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
@@ -196,6 +197,8 @@ procfs_statfs(mp, sbp, p)
 		bcopy(&mp->mnt_stat.f_fsid, &sbp->f_fsid, sizeof(sbp->f_fsid));
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		bcopy(&mp->mnt_stat.mount_info.procfs_args,
+		    &sbp->mount_info.procfs_args, sizeof(struct procfs_args));
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
 	return (0);
