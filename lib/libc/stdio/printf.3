@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.20 1999/08/08 14:46:56 deraadt Exp $
+.\"	$OpenBSD: printf.3,v 1.21 1999/09/22 10:05:25 espie Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -634,7 +634,7 @@ and
 .Fn vasprintf
 first appeared in the GNU C library.  This implementation first appeared in
 .Ox 2.3 .
-.Sh BUGS
+.Sh CAVEATS
 The conversion formats
 .Cm \&%D ,
 .Cm \&%O ,
@@ -677,6 +677,14 @@ interface is not available on older
 systems and the
 .Fn asprintf
 interface is not portable.
+.Pp
+Never print a user-supplied string directly as a format without using
+.Cm %s ,
+as an attacker can put format specifiers in that string to mangle
+your stack. Be sure to use the proper secure idiom:
+.Bd -literal -offset indent
+snprintf(buffer, sizeof(buffer), "%s", string)
+.Ed
 .Pp
 There is no way for printf to know the size of each argument passed. If
 you use positional arguments you must ensure that all parameters, up to the
