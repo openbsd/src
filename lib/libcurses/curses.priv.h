@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.16 1999/03/15 19:12:21 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.17 1999/03/16 15:25:08 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.138 1999/03/14 12:25:18 tom Exp $
+ * $From: curses.priv.h,v 1.139 1999/03/16 01:45:35 tom Exp $
  *
  *	curses.priv.h
  *
@@ -627,6 +627,10 @@ extern void _nc_UpdateAttrs(chtype);
 
 extern void _nc_expanded(void);
 
+#endif
+
+#if !HAVE_GETCWD
+#define getcwd(buf,len) getwd(buf)
 #endif
 
 /* doalloc.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tic.c,v 1.8 1999/03/11 21:08:10 millert Exp $	*/
+/*	$OpenBSD: tic.c,v 1.9 1999/03/16 15:25:32 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -44,7 +44,7 @@
 #include <dump_entry.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: tic.c,v 1.49 1999/03/07 01:21:14 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.50 1999/03/16 01:12:04 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -713,6 +713,8 @@ bool	check_only = FALSE;
  * references to locations in the arrays Booleans, Numbers, and Strings ---
  * precisely what's needed (see comp_parse.c).
  */
+
+TERMINAL *cur_term;	/* tweak to avoid linking lib_cur_term.c */
 
 #undef CUR
 #define CUR tp->
