@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.h,v 1.9 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: bugio.h,v 1.10 2001/08/24 22:46:25 miod Exp $ */
 #ifndef __MACHINE_BUGIO_H__
 #define __MACHINE_BUGIO_H__
 #include "sys/cdefs.h"
@@ -84,6 +84,42 @@ struct bugniocall {
 	unsigned long nbytes;
 	unsigned long csword;
 };
+
+typedef struct netcnfgp {
+	unsigned int magic;
+	unsigned int nodemem;
+	unsigned int bfla;
+	unsigned int bfea;
+	unsigned int bfed;
+	unsigned int bfl;
+	unsigned int bfbo;
+	unsigned int tbuffer;
+	unsigned char cipa[4];
+	unsigned char sipa[4];
+	unsigned char netmask[4];
+	unsigned char broadcast[4];
+	unsigned char gipa[4];
+	unsigned char bootp_retry;
+	unsigned char tftp_retry;
+	unsigned char bootp_ctl;
+	unsigned char cnfgp_ctl;
+	unsigned char filename[64];
+	unsigned char argfname[64];
+} NETCNFGP;
+
+struct bugniotcall {
+	unsigned char clun;
+	unsigned char dlun;
+	unsigned char ci;
+	unsigned char cd;
+	NETCNFGP * netcfngp_p;
+	void * unused;
+#define NIOT_READ  (1<<0)
+#define NIOT_WRITE (1<<1)
+#define NIOT_NVRAM (1<<2)    
+	unsigned long cntrlflag;
+};
+
 void buginit	__P((void));
 int buginstat	__P((void));
 char buginchr	__P((void));
@@ -97,5 +133,7 @@ void bugreturn	__P((void));
 int bugfork	__P((int cpu, unsigned address));
 void bugbrdid	__P((struct bugbrdid *));
 void bugnetctrl	__P((struct bugniocall *));
-#endif /* __MACHINE_BUGIO_H__ */
+void bugdelay	__P((int));
+int bugnetcfg	__P((struct bugniotcall *));
 
+#endif /* __MACHINE_BUGIO_H__ */

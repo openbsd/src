@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.7 2001/03/09 05:44:38 smurph Exp $ */
+/*	$OpenBSD: bugio.c,v 1.8 2001/08/24 22:46:23 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,41 +216,6 @@ bugnetctrl(struct bugniocall *niocall)
 	asm("tb0 0,r0,0x1F0");
 /*	OSCTXT();*/
 }
-
-typedef struct netcnfgp {
-	unsigned int magic;
-	unsigned int nodemem;
-	unsigned int bfla;
-	unsigned int bfea;
-	unsigned int bfed;
-	unsigned int bfl;
-	unsigned int bfbo;
-	unsigned int tbuffer;
-	unsigned char cipa[4];
-	unsigned char sipa[4];
-	unsigned char netmask[4];
-	unsigned char broadcast[4];
-	unsigned char gipa[4];
-	unsigned char bootp_retry;
-	unsigned char tftp_retry;
-	unsigned char bootp_ctl;
-	unsigned char cnfgp_ctl;
-	unsigned char filename[64];
-	unsigned char argfname[64];
-} NETCNFGP;
-
-struct bugniotcall {
-	unsigned char clun;
-	unsigned char dlun;
-	unsigned char ci;
-	unsigned char cd;
-	NETCNFGP * netcfngp_p;
-	void * unused;
-#define NIOT_READ  (1<<0)
-#define NIOT_WRITE (1<<1)
-#define NIOT_NVRAM (1<<2)    
-	unsigned long cntrlflag;
-};
 
 int
 bugnetcfg(struct bugniotcall *niotcall)
