@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.16 2000/09/26 17:46:40 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.17 2000/09/26 18:53:13 ericj Exp $ */
 
 /* Netcat 1.10 RELEASE 960320
  *
@@ -28,8 +28,6 @@
  *	backend progs to do various encryption modes??!?!
 */
 
-
-#define HAVE_BIND		/* ASSUMPTION -- seems to work everywhere! */
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -105,9 +103,9 @@ unsigned int o_wait = 0;
 u_short  o_zero = 0;
 
 /* Function Prototype's */
-void	help	__P(());
-void	usage	__P((int));
+void	help __P(());
 void	nlog __P((int, char *, ...));
+void	usage __P((int));
 
 /* 
  * support routines -- the bulk of this thing.  Placed in such an order that
@@ -121,8 +119,7 @@ void	nlog __P((int, char *, ...));
 void 
 catch()
 {
-	errno = 0;
-	if (o_verbose > 1)	/* normally we don't care */
+	if (o_verbose)	/* normally we don't care */
 		nlog(1, "Sent %i Rcvd %i", wrote_net, wrote_out);
 	nlog(1, " punt!");
 }
@@ -199,7 +196,6 @@ comparehosts(hinfo, hp)
 	struct host_info   *hinfo;
 	struct hostent *hp;
 {
-	errno = 0;
 	if (strcasecmp(hinfo->name, hp->h_name) != 0) {
 		nlog(0, "DNS fwd/rev mismatch: %s != %s", hinfo->name, hp->h_name);
 		return (1);
@@ -224,7 +220,6 @@ gethinfo(name, numeric)
 	struct host_info *hinfo = NULL;
 	int x;
 
-	errno = 0;
 	if (name)
 		hinfo = (struct host_info *) calloc(1, sizeof(struct host_info));
 
@@ -325,9 +320,6 @@ getpinfo(pstring, pnum)
 	struct servent *servent;
 	int x;
 	int y;
-	char   *whichp = "tcp";
-	if (o_udpmode)
-		whichp = "udp";
 
 	pinfo->name[0] = '?';/* fast preload */
 	pinfo->name[1] = '\0';
@@ -345,10 +337,10 @@ getpinfo(pstring, pnum)
 		if (o_nflag)	/* go faster, skip getservbyblah */
 			goto gp_finish;
 		y = htons(x);	/* gotta do this -- see Fig.1 below */
-		servent = getservbyport(y, whichp);
+		servent = getservbyport(y, o_udpmode ? "udp" : "tcp");
 		if (servent) {
 			y = ntohs(servent->s_port);
-			if (x != y)	/* "never happen" */
+			if (x != y)
 				nlog(0, "Warning: port-bynum mismatch, %d != %d", x, y);
 			strlcpy(pinfo->name, servent->s_name,
 			    sizeof(pinfo->name));
@@ -371,9 +363,9 @@ getpinfo(pstring, pnum)
 		if (x)
 			return (getpinfo(NULL, x));	/* recurse for
 							 * numeric-string-arg */
-		if (o_nflag)	/* can't use names! */
+		if (o_nflag)
 			return (0);
-		servent = getservbyname(pstring, whichp);
+		servent = getservbyname(pstring, o_udpmode ? "udp" : "tcp");
 		if (servent) {
 			strlcpy(pinfo->name, servent->s_name,
 			    sizeof(pinfo->name));
@@ -481,7 +473,6 @@ doconnect(rad, rp, lad, lp)
 	int nnetfd = 0;
 	int rr;
 	int     x, y;
-	errno = 0;
 
 	/* grab a socket; set opts */
 	while (nnetfd == 0) {
@@ -522,7 +513,6 @@ doconnect(rad, rp, lad, lp)
 			else {
 				nlog(0, "retrying local %s:%d", inet_ntoa(lclend->sin_addr), lp);
 				sleep(2);
-				errno = 0;	/* clear from sleep */
 			}
 		}
 	}
@@ -572,7 +562,6 @@ dolisten(rad, rp, lad, lp)
 	int     x;
 	char   *cp;
 	u_short  z;
-	errno = 0;
 
 	/*
 	 * Pass everything off to doconnect, 
@@ -652,14 +641,13 @@ whoisit:
 	cp = &bigbuf_net[32];
 	x = sizeof(struct sockaddr);
 	rr = getsockname(nnetfd, (struct sockaddr *) lclend, &x);
-	if (rr < 0 && o_verbose)
+	if (rr < 0)
 		nlog(0, "post-rcv getsockname failed");
 	strcpy(cp, inet_ntoa(lclend->sin_addr));
 
 	z = ntohs(remend->sin_port);
 	strcpy(bigbuf_net, inet_ntoa(remend->sin_addr));
 	whozis = gethinfo(bigbuf_net, o_nflag);
-	errno = 0;
 	x = 0;
 	if (rad)		/* xxx: fix to go down the *list* if we have
 				 * one? */
@@ -705,8 +693,8 @@ udptest(fd, where)
 	int rr;
 
 	rr = write(fd, bigbuf_in, 1);
-	if (rr != 1 && o_verbose)
-		nlog(0, "udptest first write failed?! errno %d", errno);
+	if (rr != 1)
+		nlog(0, "udptest first write failed: ");
 	if (o_wait)
 		sleep(o_wait);
 	else {
@@ -718,7 +706,6 @@ udptest(fd, where)
 		o_wait = 0;
 		o_udpmode++;
 	}
-	errno = 0;
 	rr = write(fd, bigbuf_in, 1);
 	if (rr == 1)
 		return (fd);
@@ -727,7 +714,7 @@ udptest(fd, where)
 }
 
 /*
- *  oprint :
+ * oprint :
  * Hexdump bytes shoveled either way to a running logfile, in the format:
  * D offset       -  - - - --- 16 bytes --- - - -  -     # .... ascii .....
  * where "which" sets the direction indicator, D:
@@ -918,7 +905,6 @@ readwrite(fd)
 	}
 	if (o_interval)
 		sleep(o_interval);
-	errno = 0;
 
 	while (FD_ISSET(fd, &fds1)) {	/* i.e. till the *net* closes! */
 		struct timeval *tv;
@@ -1035,7 +1021,6 @@ shovel:
 		}
 		if (o_interval) {
 			sleep(o_interval);
-			errno = 0;
 			continue;
 		}
 		if ((rzleft) || (rnleft)) {	
@@ -1069,16 +1054,14 @@ main(argc, argv)
 	u_short  curport = 0;
 	char   *randports = NULL;
 
-#ifdef HAVE_BIND
 	res_init();
-#endif
+	
 	lclend = (struct sockaddr_in *) calloc(1, sizeof(struct sockaddr));
 	remend = (struct sockaddr_in *) calloc(1, sizeof(struct sockaddr));
 	bigbuf_in = calloc(1, BIGSIZ);
 	bigbuf_net = calloc(1, BIGSIZ);
 	pinfo= (struct port_info *) calloc(1, sizeof(struct port_info));
 
-	errno = 0;
 	gatesptr = 4;
 
 	/*
@@ -1229,14 +1212,14 @@ main(argc, argv)
 	}
 
 	/* other misc initialization */
-	    FD_SET(0, &fds1);	/* stdin *is* initially open */
+	FD_SET(0, &fds1);	/* stdin *is* initially open */
 	if (o_random) {
 		randports = calloc(1, 65536);   /* big flag array for ports */
 	}
 	if (o_wfile) {
 		ofd = open(stage, O_WRONLY | O_CREAT | O_TRUNC, 0664);
 		if (ofd <= 0)	/* must be > extant 0/1/2 */
-			nlog(1, "Can't open %s", stage);
+			nlog(1, "%s: ", stage);
 		stage = (unsigned char *) calloc(1, 100);
 	}
 	/* optind is now index of first non -x arg */
@@ -1246,7 +1229,6 @@ main(argc, argv)
 		themaddr = &whereto->iaddrs[0];
 	if (themaddr)
 		optind++;	/* skip past valid host lookup */
-	errno = 0;
 
 	/*
 	 * Handle listen mode here, and exit afterward.  Only does one connect;
@@ -1281,14 +1263,13 @@ main(argc, argv)
 
 	while (argv[optind]) {
 		hiport = loport = 0;
-		cp = strchr(argv[optind], '-');
-		if (cp) {
+		if (cp = strchr(argv[optind], '-')) {
 			*cp = '\0';
 			cp++;
 			hiport = getpinfo(cp, 0);
 			if (hiport == 0)
 				nlog(1, "invalid port %s", cp);
-		}		/* if found a dash */
+		}
 		loport = getpinfo(argv[optind], 0);
 		if (loport == 0)
 			nlog(1, "invalid port %s", argv[optind]);
@@ -1299,7 +1280,7 @@ main(argc, argv)
 				curport = nextport(randports);
 			} else
 				curport = hiport;
-		} else		/* not a range, including args like "25-25" */
+		} else
 			curport = loport;
 	  	    /*
 		     * Now start connecting to these things.  
@@ -1323,7 +1304,7 @@ main(argc, argv)
 					x = readwrite(netfd);
 			} else {
 				x = 1;
-				if ((Single || (o_verbose > 1)) 
+				if ((Single || (o_verbose)) 
 				   || (errno != ECONNREFUSED)) {
 					nlog(0, "%s [%s] %d (%s)",
 					     whereto->name, whereto->addrs[0], 
@@ -1337,11 +1318,10 @@ main(argc, argv)
 				curport = nextport(randports);
 			else
 				curport--;
-		}
+		    }
 		optind++;
 	}
 
-	errno = 0;
 	nlog(0, "Sent %i Rcvd %i", wrote_net, wrote_out);
 	if (Single)
 		exit(x);
@@ -1364,6 +1344,8 @@ nlog(doexit, fmt)
 		vfprintf(stderr, fmt, args);
 		if (h_errno)
                         herror(NULL);
+		else if (errno)
+			fprintf(stderr, "%s\n", strerror(errno));
 		else
 			putc('\n', stderr);
 		va_end(args);
@@ -1371,6 +1353,8 @@ nlog(doexit, fmt)
  
 	if (doexit)
 		exit(1);
+
+	h_errno = errno = 0;
 }
 
 void
