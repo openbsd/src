@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.264 2002/12/18 10:16:55 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.265 2002/12/18 18:01:41 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -266,16 +266,17 @@ int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw bwspec);
 int	expand_queue(struct pf_altq *, struct node_queue *,
 	    struct node_queue_bw);
-int	check_rulestate(int);
-int	kw_cmp(const void *, const void *);
-int	lookup(char *);
-int	lgetc(FILE *);
-int	lungetc(int);
-int	findeol(void);
-int	yylex(void);
-struct	node_host *host(char *, int);
-int	atoul(char *, u_long *);
-int	getservice(char *);
+
+int			 check_rulestate(int);
+int			 kw_cmp(const void *, const void *);
+int			 lookup(char *);
+int			 lgetc(FILE *);
+int			 lungetc(int);
+int			 findeol(void);
+int			 yylex(void);
+struct node_host	*host(char *, int);
+int			 atoul(char *, u_long *);
+int			 getservice(char *);
 
 struct sym {
 	struct sym *next;
@@ -285,32 +286,34 @@ struct sym {
 };
 struct sym *symhead = NULL;
 
-int	symset(const char *, const char *);
-char *	symget(const char *);
+int			 symset(const char *, const char *);
+char			*symget(const char *);
 
-void	ifa_load(void);
-struct	node_host *ifa_exists(char *);
-struct	node_host *ifa_lookup(char *, enum pfctl_iflookup_mode);
-void	decide_address_family(struct node_host *, sa_family_t *);
-void	remove_invalid_hosts(struct node_host **, sa_family_t *);
-u_int16_t	parseicmpspec(char *, sa_family_t);
+void			 ifa_load(void);
+struct node_host	*ifa_exists(char *);
+struct node_host	*ifa_lookup(char *, enum pfctl_iflookup_mode);
+void			 decide_address_family(struct node_host *,
+			     sa_family_t *);
+void			 remove_invalid_hosts(struct node_host **,
+			     sa_family_t *);
+u_int16_t		 parseicmpspec(char *, sa_family_t);
 
 typedef struct {
 	union {
-		u_int32_t		number;
-		int			i;
+		u_int32_t		 number;
+		int			 i;
 		char			*string;
 		struct {
-			u_int8_t	b1;
-			u_int8_t	b2;
-			u_int16_t	w;
-			u_int16_t	w2;
-		}			b;
+			u_int8_t	 b1;
+			u_int8_t	 b2;
+			u_int16_t	 w;
+			u_int16_t	 w2;
+		}			 b;
 		struct range {
-			int		a;
-			int		b;
-			int		t;
-		}			range;
+			int		 a;
+			int		 b;
+			int		 t;
+		}			 range;
 		struct node_if		*interface;
 		struct node_proto	*proto;
 		struct node_icmp	*icmp;
@@ -319,41 +322,41 @@ typedef struct {
 		struct node_uid		*uid;
 		struct node_gid		*gid;
 		struct node_state_opt	*state_opt;
-		struct peer		peer;
+		struct peer		 peer;
 		struct {
-			struct peer	src, dst;
-		}			fromto;
+			struct peer	 src, dst;
+		}			 fromto;
 		struct pf_poolhashkey	*hashkey;
 		struct {
 			struct node_host	*host;
-			u_int8_t	rt;
-			u_int8_t	pool_opts;
-			sa_family_t	af;
+			u_int8_t		 rt;
+			u_int8_t		 pool_opts;
+			sa_family_t		 af;
 			struct pf_poolhashkey	*key;
-		}			route;
+		}			 route;
 		struct redirection {
 			struct node_host	*host;
 			struct range		 rport;
 		}			*redirection;
 		struct {
-			int		type;
+			int			 type;
 			struct pf_poolhashkey	*key;
-		}			pooltype;
+		}			 pooltype;
 		struct {
 			int			 action;
 			struct node_state_opt	*options;
-		}			keep_state;
+		}			 keep_state;
 		struct {
-			u_int8_t	log;
-			u_int8_t	quick;
-		}			logquick;
+			u_int8_t	 log;
+			u_int8_t	 quick;
+		}			 logquick;
 		struct node_queue	*queue;
-		struct node_queue_opt	queue_options;
-		struct node_queue_bw	queue_bwspec;
-		struct node_qassign	qassign;
-		struct filter_opts	filter_opts;
-		struct queue_opts	queue_opts;
-		struct scrub_opts	scrub_opts;
+		struct node_queue_opt	 queue_options;
+		struct node_queue_bw	 queue_bwspec;
+		struct node_qassign	 qassign;
+		struct filter_opts	 filter_opts;
+		struct queue_opts	 queue_opts;
+		struct scrub_opts	 scrub_opts;
 	} v;
 	int lineno;
 } YYSTYPE;
