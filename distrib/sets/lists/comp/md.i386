@@ -1,6 +1,7 @@
 ./usr/bin/gdb
 ./usr/bin/gprof
-./usr/include/i386
+./usr/include/dlfcn.h
+./usr/include/link.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/apmvar.h
 ./usr/include/machine/asm.h

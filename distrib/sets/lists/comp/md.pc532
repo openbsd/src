@@ -1,4 +1,5 @@
-./usr/include/ns32k
+./usr/include/dlfcn.h
+./usr/include/link.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/cdefs.h
@@ -29,6 +30,7 @@
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
+./usr/include/ns32k
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
@@ -45,3 +47,9 @@
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libutil_pic.a
 ./usr/lib/scrt0.o
+./usr/share/man/cat3/dlclose.0
+./usr/share/man/cat3/dlctl.0
+./usr/share/man/cat3/dlerror.0
+./usr/share/man/cat3/dlfcn.0
+./usr/share/man/cat3/dlopen.0
+./usr/share/man/cat3/dlsym.0

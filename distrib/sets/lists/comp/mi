@@ -190,7 +190,6 @@
 ./usr/include/dev/vndioctl.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
-./usr/include/dlfcn.h
 ./usr/include/elf_abi.h
 ./usr/include/err.h
 ./usr/include/errno.h
@@ -550,7 +549,6 @@
 ./usr/include/kvm.h
 ./usr/include/langinfo.h
 ./usr/include/limits.h
-./usr/include/link.h
 ./usr/include/locale.h
 ./usr/include/malloc.h
 ./usr/include/math.h

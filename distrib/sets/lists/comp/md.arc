@@ -6,6 +6,8 @@
 ./usr/include/ansidecl.h
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
+./usr/include/dlfcn.h
+./usr/include/link.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/autoconf.h
@@ -83,3 +85,9 @@
 ./usr/lib/gcc-lib/mips-arc-openbsd2.0/2.7.2.1/libobjc.a
 ./usr/lib/gcc-lib/mips-arc-openbsd2.0/2.7.2.1/specs
 ./usr/lib/libbfd.a
+./usr/share/man/cat3/dlclose.0
+./usr/share/man/cat3/dlctl.0
+./usr/share/man/cat3/dlerror.0
+./usr/share/man/cat3/dlfcn.0
+./usr/share/man/cat3/dlopen.0
+./usr/share/man/cat3/dlsym.0

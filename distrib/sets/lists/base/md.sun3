@@ -1,5 +1,7 @@
 ./sbin/edlabel
 ./sbin/ldconfig
+./usr/bin/ldd
+./usr/include/m68k
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.16.0
 ./usr/lib/libcurses.so.3.1

@@ -1,5 +1,6 @@
 ./sbin/fdisk
 ./sbin/ldconfig
+./usr/bin/ldd
 ./usr/include/mips
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.16.0
@@ -356,7 +357,6 @@
 ./usr/lib/perl5/site_perl/arc-openbsd
 ./usr/lib/scrt0.o
 ./usr/libexec/ld.so
-./usr/lkm/ipl.o
 ./usr/mips-arc-openbsd2.0
 ./usr/mips-arc-openbsd2.0/bin
 ./usr/mips-arc-openbsd2.0/bin/ar

@@ -4,6 +4,7 @@
 ./usr/share/man/cat1/fontedit.0
 ./usr/share/man/cat1/kcon.0
 ./usr/share/man/cat1/ld.so.0
+./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/loadfont.0
 ./usr/share/man/cat1/mcon.0
 ./usr/share/man/cat1/pcmcia_cntrl.0
@@ -14,7 +15,9 @@
 ./usr/share/man/cat4/ap.0
 ./usr/share/man/cat4/i386/pcvt.0
 ./usr/share/man/cat4/xf86.0
+./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/keycap.0
+./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/apm.0
 ./usr/share/man/cat8/apmd.0
 ./usr/share/man/cat8/biosboot.0
@@ -23,6 +26,7 @@
 ./usr/share/man/cat8/i386/bad144.0
 ./usr/share/man/cat8/installboot.0
 ./usr/share/man/cat8/ispcvt.0
+./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/mbr.0
 ./usr/share/man/cat8/pcmciad.0
 ./usr/share/man/cat8/zzz.0

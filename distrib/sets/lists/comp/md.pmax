@@ -1,7 +1,8 @@
 ./usr/bin/elf2aout
 ./usr/bin/objcopy
 ./usr/bin/objdump
-./usr/include/machine
+./usr/include/dlfcn.h
+./usr/include/link.h
 ./usr/include/machine/ansi.h
 ./usr/include/machine/bsd-aout.h
 ./usr/include/machine/cpu.h

@@ -21,6 +21,7 @@
 ./usr/share/info/dir
 ./usr/share/info/g77.info
 ./usr/share/info/g77.info-1
+./usr/share/info/g77.info-10
 ./usr/share/info/g77.info-2
 ./usr/share/info/g77.info-3
 ./usr/share/info/g77.info-4
@@ -29,7 +30,6 @@
 ./usr/share/info/g77.info-7
 ./usr/share/info/g77.info-8
 ./usr/share/info/g77.info-9
-./usr/share/info/g77.info-10
 ./usr/share/info/gcc.info
 ./usr/share/info/gcc.info-1
 ./usr/share/info/gcc.info-10
@@ -97,8 +97,8 @@
 ./usr/share/man/cat1/at.0
 ./usr/share/man/cat1/atq.0
 ./usr/share/man/cat1/atrm.0
-./usr/share/man/cat1/awk.0
 ./usr/share/man/cat1/aucat.0
+./usr/share/man/cat1/awk.0
 ./usr/share/man/cat1/banner.0
 ./usr/share/man/cat1/basename.0
 ./usr/share/man/cat1/batch.0
@@ -138,11 +138,11 @@
 ./usr/share/man/cat1/crontab.0
 ./usr/share/man/cat1/csh.0
 ./usr/share/man/cat1/ctags.0
-./usr/share/man/cat1/cu.0
-./usr/share/man/cat1/cut.0
 ./usr/share/man/cat1/ctm.0
 ./usr/share/man/cat1/ctm_rmail.0
 ./usr/share/man/cat1/ctm_smail.0
+./usr/share/man/cat1/cu.0
+./usr/share/man/cat1/cut.0
 ./usr/share/man/cat1/cvs.0
 ./usr/share/man/cat1/date.0
 ./usr/share/man/cat1/dc.0
@@ -226,7 +226,6 @@
 ./usr/share/man/cat1/lam.0
 ./usr/share/man/cat1/last.0
 ./usr/share/man/cat1/lastcomm.0
-./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/leave.0
 ./usr/share/man/cat1/less.0
 ./usr/share/man/cat1/lesskey.0
@@ -280,6 +279,9 @@
 ./usr/share/man/cat1/od.0
 ./usr/share/man/cat1/oldrdist.0
 ./usr/share/man/cat1/olf2elf.0
+./usr/share/man/cat1/otp-md4.0
+./usr/share/man/cat1/otp-md5.0
+./usr/share/man/cat1/otp-sha1.0
 ./usr/share/man/cat1/page.0
 ./usr/share/man/cat1/pagesize.0
 ./usr/share/man/cat1/passwd.0
@@ -449,8 +451,8 @@
 ./usr/share/man/cat4/arp.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/bpf.0
-./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/ccd.0
+./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/clnp.0
 ./usr/share/man/cat4/cltp.0
 ./usr/share/man/cat4/cua.0
@@ -505,7 +507,6 @@
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
-./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
 ./usr/share/man/cat5/core.0
@@ -550,7 +551,6 @@
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
-./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
@@ -579,6 +579,8 @@
 ./usr/share/man/cat7/intro.0
 ./usr/share/man/cat7/mailaddr.0
 ./usr/share/man/cat7/mdoc.0
+./usr/share/man/cat7/mm.0
+./usr/share/man/cat7/ms.0
 ./usr/share/man/cat7/msafer.0
 ./usr/share/man/cat7/re_format.0
 ./usr/share/man/cat7/symlink.0
@@ -653,7 +655,6 @@
 ./usr/share/man/cat8/ksrvutil.0
 ./usr/share/man/cat8/kstash.0
 ./usr/share/man/cat8/kvm_mkdb.0
-./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/locate.updatedb.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
@@ -737,8 +738,8 @@
 ./usr/share/man/cat8/rlogind.0
 ./usr/share/man/cat8/rmail.0
 ./usr/share/man/cat8/rmgroup.0
-./usr/share/man/cat8/rmuser.0
 ./usr/share/man/cat8/rmt.0
+./usr/share/man/cat8/rmuser.0
 ./usr/share/man/cat8/route.0
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
@@ -765,6 +766,7 @@
 ./usr/share/man/cat8/sendmail.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/shutdown.0
+./usr/share/man/cat8/skeyprune.0
 ./usr/share/man/cat8/slattach.0
 ./usr/share/man/cat8/slip.0
 ./usr/share/man/cat8/sliplogin.0
@@ -820,9 +822,3 @@
 ./usr/share/man/cat8/ypxfr_2perday.0
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
-./usr/share/man/cat8/skeyprune.0
-./usr/share/man/cat1/otp-md4.0
-./usr/share/man/cat1/otp-md5.0
-./usr/share/man/cat1/otp-sha1.0
-./usr/share/man/cat7/mm.0
-./usr/share/man/cat7/ms.0

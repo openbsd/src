@@ -4,7 +4,9 @@
 ./sbin/fdisk
 ./sbin/ldconfig
 ./sbin/pcmcia_cntrl
+./usr/bin/ldd
 ./usr/bin/pctr
+./usr/include/i386
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.16.1
 ./usr/lib/libcurses.so.3.1
@@ -565,7 +567,6 @@
 ./usr/libexec/ld.so
 ./usr/lkm/ap.o
 ./usr/lkm/apinstall
-./usr/lkm/ipl.o
 ./usr/mdec/biosboot
 ./usr/mdec/boot
 ./usr/mdec/boot.com

@@ -1,6 +1,8 @@
 ./dev/mouse
 ./sbin/binpatch
 ./sbin/ldconfig
+./usr/bin/ldd
+./usr/include/m68k
 ./usr/lib/libacl.so.4.0
 ./usr/lib/libc.so.16.0
 ./usr/lib/libcurses.so.3.1
@@ -29,14 +31,14 @@
 ./usr/lib/libutil.so.4.0
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.2
-./usr/lib/perl5/FileHandle.pm
 ./usr/lib/perl5/DB_File.pm
 ./usr/lib/perl5/Fcntl.pm
+./usr/lib/perl5/FileHandle.pm
+./usr/lib/perl5/POSIX.pm
+./usr/lib/perl5/POSIX.pod
 ./usr/lib/perl5/SDBM_File.pm
 ./usr/lib/perl5/Safe.pm
 ./usr/lib/perl5/Socket.pm
-./usr/lib/perl5/POSIX.pm
-./usr/lib/perl5/POSIX.pod
 ./usr/lib/perl5/auto/DB_File
 ./usr/lib/perl5/auto/DB_File/autosplit.ix
 ./usr/lib/perl5/auto/Fcntl
@@ -539,7 +541,6 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/zlib.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd
 ./usr/libexec/ld.so
-./usr/lkm/ipl.o
 ./usr/sbin/grfconfig
 ./usr/sbin/iteconfig
 ./usr/sbin/loadkmap

@@ -240,7 +240,6 @@
 ./usr/bin/lam
 ./usr/bin/last
 ./usr/bin/lastcomm
-./usr/bin/ldd
 ./usr/bin/leave
 ./usr/bin/less
 ./usr/bin/lesskey
@@ -670,6 +669,7 @@
 ./usr/libexec/uucp/uuxqt
 ./usr/libexec/uucpd
 ./usr/lkm
+./usr/lkm/ipl.o
 ./usr/local
 ./usr/local/bin
 ./usr/local/lib
