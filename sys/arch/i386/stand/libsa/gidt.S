@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.8 1997/07/28 23:03:31 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.9 1997/07/29 16:48:40 flipk Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -39,6 +39,8 @@
 #define _LOCORE
 #include <machine/trap.h>
 #include <machine/biosvar.h>
+#include <machine/specialreg.h>
+#include <machine/segments.h>
 #include <debug_md.h>
 #undef _LOCORE
 #include <assym.h>
@@ -360,7 +362,7 @@ EMUh:
 	prot2real
 
 	addr32
-	movl	_C_LABEL(BIOS_regs)+(biosr_es), %eax
+	movl	_C_LABEL(BIOS_regs)+(BIOSR_ES), %eax
 	movl	%ax, %es
 
 	data32
@@ -375,10 +377,10 @@ intno	= . - 1
 
 	addr32
 	data32
-	movl	%ebx, _C_LABEL(BIOS_regs)+(biosr_bx)
+	movl	%ebx, _C_LABEL(BIOS_regs)+(BIOSR_BX)
 	movl	%es, %bx
 	addr32
-	movl	%bx, _C_LABEL(BIOS_regs)+(biosr_es)
+	movl	%bx, _C_LABEL(BIOS_regs)+(BIOSR_ES)
 	movb	%ah, %bh	/* save flags to return to caller */
 	lahf
 	xchgb	%ah, %bh
@@ -400,12 +402,12 @@ intno	= . - 1
 	movb	%bh , 0xf*4(%esp)
 
 	/* save registers into save area */
-	movl	%eax, _C_LABEL(BIOS_regs)+biosr_ax
-	movl	%ecx, _C_LABEL(BIOS_regs)+biosr_cx
-	movl	%edx, _C_LABEL(BIOS_regs)+biosr_dx
-	movl	%ebp, _C_LABEL(BIOS_regs)+biosr_bp
-	movl	%esi, _C_LABEL(BIOS_regs)+biosr_si
-	movl	%edi, _C_LABEL(BIOS_regs)+biosr_di
+	movl	%eax, _C_LABEL(BIOS_regs)+BIOSR_AX
+	movl	%ecx, _C_LABEL(BIOS_regs)+BIOSR_CX
+	movl	%edx, _C_LABEL(BIOS_regs)+BIOSR_DX
+	movl	%ebp, _C_LABEL(BIOS_regs)+BIOSR_BP
+	movl	%esi, _C_LABEL(BIOS_regs)+BIOSR_SI
+	movl	%edi, _C_LABEL(BIOS_regs)+BIOSR_DI
 
 	popl	%gs
 	popl	%fs

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm_init.S,v 1.2 1997/07/28 23:03:30 mickey Exp $	*/
+/*	$OpenBSD: apm_init.S,v 1.3 1997/07/29 16:48:39 flipk Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -96,7 +96,7 @@ ENTRY(apm_init)
 	shll	$16, %eax
 	orw	%cx, %ax
 	rorl	$16, %eax
-	movl	_C_LABEL(BIOS_regs)+biosr_bx, %ebx
+	movl	_C_LABEL(BIOS_regs)+BIOSR_BX, %ebx
 	cmpb	$'P', %bh
 	jne	1f
 	cmpb	$'M', %bl
