@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.236 2001/01/30 19:54:05 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.237 2001/02/13 14:50:33 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -119,11 +119,6 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 isapnp0	at isa?
 
-option	WSEMUL_VT100			# VT100 / VT220 emulation
-option	WS_KERNEL_FG=WSCOL_WHITE
-option	WS_KERNEL_BG=WSCOL_BLUE
-option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-option	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option	WSDISPLAY_DEFAULTSCREENS=6

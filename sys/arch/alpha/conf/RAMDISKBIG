@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.3 2001/02/09 14:48:54 art Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.4 2001/02/13 14:50:33 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -41,8 +41,6 @@ option		EISAVERBOSE		# recognize "unknown" EISA devices
 option		PCIVERBOSE		# recognize "unknown" PCI devices
 option		TCVERBOSE		# recognize "unknown" TC devices
 #option		USBVERBOSE
-
-option		WSEMUL_VT100		# wscons VT100 emulation
 
 config		bsd	swap generic
 

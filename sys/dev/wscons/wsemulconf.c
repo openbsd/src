@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulconf.c,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
+/* $OpenBSD: wsemulconf.c,v 1.2 2001/02/13 14:50:34 deraadt Exp $ */
 /* $NetBSD: wsemulconf.c,v 1.4 2000/01/05 11:19:37 drochner Exp $ */
 
 /*
@@ -45,7 +45,7 @@ static const struct wsemul_ops *wsemul_conf[] = {
 #ifdef WSEMUL_SUN
 	&wsemul_sun_ops,
 #endif
-#ifdef WSEMUL_VT100
+#ifndef WSEMUL_NO_VT100
 	&wsemul_vt100_ops,
 #endif
 #ifndef WSEMUL_NO_DUMB

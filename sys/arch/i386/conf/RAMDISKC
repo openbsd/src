@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.11 2001/01/30 00:01:22 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.12 2001/02/13 14:50:33 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -86,10 +86,6 @@ cardslot*	at cbb?
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 isapnp0	at isa?
-
-option	WSEMUL_VT100			# VT100 / VT220 emulation
-option	WS_KERNEL_FG=WSCOL_WHITE
-option	WS_KERNEL_BG=WSCOL_BLUE
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
