@@ -222,9 +222,16 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	#! /bin/sh
 	tape=/dev/nrst0
 	mt -f ${tape} rewind
+	if test $# -gt 0
+	then
+		for file in bsd.rd boot
+		do
+			dd if=${file} of=${tape} obs=8k conv=sync
+		done
+	fi
 	for file in base etc comp game man misc xbase xfont xserv xshare
 	do
-		dd if=${file}OSrev.tgz of=${tape}
+		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
 	done
 	tar cf ${tape} bsd
 	mt -f ${tape} offline
@@ -236,7 +243,15 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	cd .../OSREV/sparc
 	sh -x /tmp/maketape
 
+	
+	Note that this script creates a bootable tape. If you only want to
+	fetch the OpenBSD files from tape, but want to boot from another
+	device, you can save time and space creating the tape this way:
 
+	cd .../OSREV/sparc
+	sh -x /tmp/maketape noboot
+
+	
 If you're using a system other than OpenBSD or SunOS, the tape name and
 other requirements may change.
 

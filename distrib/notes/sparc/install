@@ -116,9 +116,10 @@ installation scripts'' below.
 
 Booting From CD-ROM installation media:
 
-	> b sd(,30,0)OSREV/sparc/bsd.rd		# for Sun4 monitors* (not working currently)
+	> b sd(,30,0)OSREV/sparc/bsd.rd		# for Sun4 monitors*
+						# (not working currently)
 	ok boot sd(,6,0)OSREV/sparc/bsd.rd	# for version 1 OpenBOOT ROMs
-	ok boot cdrom OSREV/sparc/bsd.rd		# for version 2 OpenBOOT ROMs
+	ok boot cdrom OSREV/sparc/bsd.rd	# for version 2 OpenBOOT ROMs
 
 If the boot is successful, you will get a loader version message,
 executable sizes and then the Kernel copyright and device probe
@@ -151,7 +152,7 @@ drive 0, modify the boot specifier accordingly, keeping in mind the
 drive vs. scsi-id shuffling and partition a=0, b=1... 
 
         > b sd(0,10,1)bsd       # example - scsi target 2 on sun4 monitors*
-	ok boot sd(0,3,1)bsd	# example - scsi target 0 on V1 OpenBOOT ROM
+	ok boot sd(0,3,1)bsd	# example - scsi target 0 on v1 OpenBOOT ROM
 	ok boot disk3:b bsd     # example - scsi target 0 on v2 OpenBOOT ROM
 	ok boot /sbus/esp/sd@0,0:b bsd  # example - scsi target 0 on v2  
 					# OpenBOOT ROM that won't take 
@@ -160,9 +161,37 @@ drive vs. scsi-id shuffling and partition a=0, b=1...
 (*) for sun4 this is scsi-target*8+scsi-lun (usually 0) expressed in hex...
 
 This will cause the kernel contained in the miniroot to be booted.
-After the initial probe messages you'll asked to start the install
-or upgrade procedure. Proceed to the section ``Running the installation
-scripts'' below.
+After the initial device probe messages you'll asked to start the
+install or upgrade procedure. Proceed to the section ``Running the
+installation scripts'' below.
+
+
+Booting from SCSI tape
+
+Boot the miniroot by typing the appropriate command at the PROM:
+
+	> b st(,,1)			# for sun4 monitors
+					# (not working currently)
+	ok boot st(,,1)			# for version 1 OpenBOOT ROMs
+	ok boot tape:1			# for version 2 OpenBOOT ROMs
+	ok boot /sbus/esp/st@4,0:1	# for version 2 OpenBOOT ROMs
+					# that won't take tape:n syntax.
+	
+The above instructions assume your tape drive is the default tape drive
+using SCSI id 4. If your drive uses id 5, modify the boot command
+accordingly:
+
+	> b st(,28,1)		# example - 2nd tape drive on sun4 monitors
+	ok boot st(,5,1)	# example - 2nd tape drive on v1 OpenBOOT ROM
+	ok boot tape1:1		# example - 2nd tape drive on v2 OpenBOOT ROM
+	ok boot /sbus/esp/st@5,0:1	# example - 2nd tape drive on v2
+					# OpenBOOT ROM that won't take
+					# tape:n syntax
+	
+This will cause the kernel contained in the miniroot to be booted.
+After the initial device probe messages you'll be asked to start the
+install or upgrade procedure. Proceed to the section ``Running the
+installation scripts'' below.
 
 
 Installing using a diskless setup.
@@ -189,8 +218,8 @@ or upgrade procedure. Proceed to the section ``Running the installation
 scripts'' below.
 
 
-Installing using the "new" Single Floppy, CD-ROM, miniroot or netboot
-procedure:
+Installing using the "new" Single Floppy, CD-ROM, tape, miniroot or
+netboot procedure:
 
 The following is a walk-through of the steps you will take while
 getting OpenBSD installed on your hard disk.  If any question has a
