@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.9 2003/12/19 20:20:58 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.10 2003/12/19 20:34:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1218,6 +1218,7 @@ session_dispatch_imsg(int fd, int idx)
 				fatal(NULL, errno);
 			memcpy(nconf, imsg.data, sizeof(struct bgpd_config));
 			nconf->peers = NULL;
+			init_conf(nconf);
 			pending_reconf = 1;
 			break;
 		case IMSG_RECONF_PEER:
@@ -1272,7 +1273,6 @@ session_dispatch_imsg(int fd, int idx)
 			conf->holdtime = nconf->holdtime;
 			conf->bgpid = nconf->bgpid;
 			conf->min_holdtime = nconf->min_holdtime;
-			init_conf(conf);
 			/* add new peers */
 			for (p = nconf->peers; p != NULL; p = next) {
 				next = p->next;
