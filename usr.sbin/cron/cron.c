@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.13 2001/02/21 18:13:31 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.14 2001/07/13 03:28:48 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.13 2001/02/21 18:13:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.14 2001/07/13 03:28:48 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -38,9 +38,9 @@ static	void	usage(void),
 		sigchld_reaper(void),
 		parse_args(int c, char *v[]);
 
-static	int	got_sighup, got_sigchld;
-static	int	timeRunning, virtualTime, clockTime;
-static	long	GMToff;
+static	volatile sig_atomic_t	got_sighup, got_sigchld;
+static	int			timeRunning, virtualTime, clockTime;
+static	long			GMToff;
 
 static void
 usage(void) {
