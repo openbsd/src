@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.4 1996/05/07 07:22:03 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.5 1996/07/31 01:45:53 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.3 1996/05/03 19:22:18 christos Exp $	*/
 
 /*
@@ -114,13 +114,22 @@ void	bus_mem_unmap __P((bus_chipset_tag_t t, bus_mem_handle_t memh,
 #define	bus_mem_write_8(t, h, o, v)					\
     ((void) t, ((void)(*(volatile u_int64_t *)((h) + (o)) = (v))))
 
-/* These are extensions to the general NetBSD bus interface.  */
-#define bus_to_host_2(t, v) (v)
-#define bus_to_host_4(t, v) (v)
-#define bus_to_host_8(t, v) (v)
+#define	bus_io_read_raw_multi_2(t, h, o, a, c)	\
+    ((void) t, insw((h) + (o), (a), (c) >> 1))
+#define	bus_io_read_raw_multi_4(t, h, o, a, c)	\
+    ((void) t, insl((h) + (o), (a), (c) >> 2))
+#if 0 /* Cause a link error for bus_io_read_raw_multi_8 */
+#define	bus_io_read_raw_multi_8(t, h, o, a, c)	\
+				!!! bus_io_read_multi_8 unimplemented !!!
+#endif
 
-#define bus_from_host_2(t, v) (v)
-#define bus_from_host_4(t, v) (v)
-#define bus_from_host_8(t, v) (v)
+#define	bus_io_write_raw_multi_2(t, h, o, a, c)	\
+    ((void) t, outsw((h) + (o), (a), (c) >> 1))
+#define	bus_io_write_raw_multi_4(t, h, o, a, c)	\
+    ((void) t, outsl((h) + (o), (a), (c) >> 2))
+#if 0 /* Cause a link error for bus_io_write_raw_multi_8 */
+#define	bus_io_write_raw_multi_8(t, h, o, a, c)	\
+				!!! bus_io_write_multi_8 unimplimented !!!
+#endif
 
 #endif /* _I386_BUS_H_ */
