@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.23 2001/02/04 21:42:10 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.24 2001/02/05 19:24:07 maja Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -102,6 +102,9 @@ char *userconf_cmds[] = {
 	"add",		"a",
 	"base",		"b",
 	"change",	"c",
+#if defined(DDB)
+	"ddb",		"D",
+#endif
 	"disable",	"d",
 	"enable",	"e",
 	"exit",		"q",
@@ -706,6 +709,11 @@ userconf_help()
 		case 'c':
 			printf("devno|dev           change devices");
 			break;
+#if defined(DDB)
+		case 'D':
+			printf("                    enter ddb");
+			break;
+#endif
 		case 'd':
 			printf("attr val|devno|dev  disable devices");
 			break;
@@ -1239,6 +1247,11 @@ userconf_parse(cmd)
 			else
 				printf("Unknown argument\n");
 			break;
+#if defined(DDB)
+		case 'D':
+			Debugger();
+			break;
+#endif
 		case 'd':
 			if (*c == '\0')
 				printf("Attr, DevNo or Dev expected\n");
