@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.67 2002/04/24 21:38:36 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.68 2002/05/03 15:03:02 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1122,7 +1122,7 @@ Default path to a CD-Rom (or other media) full of distribution files.
 Arch-dependent Makefile fragment, included automatically.
 .It Pa ${DISTDIR}
 cache of all distribution files.
-.It Pa ${FILESDIR}/md5
+.It Pa distinfo
 Checksum file.
 Holds the output of
 .Xr md5 1 ,
@@ -1324,6 +1324,10 @@ instead.
 .El
 .Sh OBSOLETE FILES
 .Bl -tag -width files/md5
+.It Pa ${FILESDIR}/md5
+Renamed to
+.Pa distinfo
+to match other BSD, and save directories.
 .It Pa ${SCRIPTDIR}/{pre,do,post}-*
 Identical functionality can be obtained through a {pre,do,post}-* target,
 invoking the script manually if necessary.
