@@ -1,0 +1,9 @@
+ifconfig lo1 inet 10.163.1.1 netmask 0xffffffff delete mtu 33224
+ARCH=`uname -m`
+if [ $ARCH -eq "alpha" ]; then
+  ifconfig lo1 33192
+fi;
+if [ $ARCH -eq "sparc64" ]; then
+  ifconfig lo1 33192
+fi;
+

@@ -1,0 +1,2 @@
+altq on lo1 cbq bandwidth 10.00Mb tbrsize 32000 queue { openbsd rocks }
+queue openbsd bandwidth 10.00Mb cbq( default ) 
