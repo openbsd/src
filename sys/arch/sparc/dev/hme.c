@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.31 2001/02/20 19:39:34 mickey Exp $	*/
+/*	$OpenBSD: hme.c,v 1.32 2001/06/26 21:58:48 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -828,7 +828,6 @@ hme_read(sc, idx, len)
 	int idx, len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct ether_header *eh;
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
@@ -850,9 +849,6 @@ hme_read(sc, idx, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
@@ -861,9 +857,8 @@ hme_read(sc, idx, len)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
-	/* Pass the packet up, with the ether header sort-of removed. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	/* Pass the packet up. */
+	ether_input_mbuf(ifp, m);
 }
 
 /*
