@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.29 1999/05/31 17:34:52 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.30 1999/06/21 08:27:07 niklas Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ struct statfs {
 	u_int32_t  f_iosize;		/* optimal transfer block size */
 	u_int32_t  f_blocks;		/* total data blocks in file system */
 	u_int32_t  f_bfree;		/* free blocks in fs */
-	u_int32_t  f_bavail;		/* free blocks avail to non-superuser */
+	int32_t    f_bavail;		/* free blocks avail to non-superuser */
 	u_int32_t  f_files;		/* total file nodes in file system */
 	u_int32_t  f_ffree;		/* free file nodes in fs */
 	fsid_t	   f_fsid;		/* file system id */
