@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.59 2002/05/09 15:06:29 nate Exp $
+#	$OpenBSD: GENERIC,v 1.60 2002/05/13 15:13:13 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -121,6 +121,8 @@ timer*	at mainbus0
 le*		at sbus? slot ? offset ?
 ledma*		at sbus? slot ? offset ?
 le*		at ledma?
+lebuffer*	at sbus? slot ? offset ?
+le*		at lebuffer?
 
 # Quad-ethernet glue device, and sub-devices
 qec*		at sbus? slot ? offset ?
