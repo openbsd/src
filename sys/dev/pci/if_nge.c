@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.2 2001/06/24 22:58:01 fgsch Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.3 2001/07/02 05:24:07 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -210,8 +210,6 @@ void nge_delay(sc)
 
 	for (idx = (300 / 33) + 1; idx > 0; idx--)
 		CSR_READ_4(sc, NGE_CSR);
-
-	return;
 }
 
 void nge_eeprom_idle(sc)
@@ -236,8 +234,6 @@ void nge_eeprom_idle(sc)
 	SIO_CLR(NGE_MEAR_EE_CSEL);
 	nge_delay(sc);
 	CSR_WRITE_4(sc, NGE_MEAR, 0x00000000);
-
-	return;
 }
 
 /*
@@ -266,8 +262,6 @@ void nge_eeprom_putbyte(sc, addr)
 		SIO_CLR(NGE_MEAR_EE_CLK);
 		nge_delay(sc);
 	}
-
-	return;
 }
 
 /*
@@ -313,8 +307,6 @@ void nge_eeprom_getword(sc, addr, dest)
 	nge_eeprom_idle(sc);
 
 	*dest = word;
-
-	return;
 }
 
 /*
@@ -338,8 +330,6 @@ void nge_read_eeprom(sc, dest, off, cnt, swap)
 		else
 			*ptr = word;
 	}
-
-	return;
 }
 
 /*
@@ -358,8 +348,6 @@ void nge_mii_sync(sc)
 		SIO_CLR(NGE_MEAR_MII_CLK);
 		DELAY(1);
 	}
-
-	return;
 }
 
 /*
@@ -558,8 +546,6 @@ void nge_miibus_writereg(dev, phy, reg, data)
 	frame.mii_regaddr = reg;
 	frame.mii_data = data;
 	nge_mii_writereg(sc, &frame);
-
-	return;
 }
 
 void nge_miibus_statchg(dev)
@@ -577,8 +563,6 @@ void nge_miibus_statchg(dev)
 		    (NGE_TXCFG_IGN_HBEAT|NGE_TXCFG_IGN_CARR));
 		NGE_CLRBIT(sc, NGE_RX_CFG, NGE_RXCFG_RX_FDX);
 	}
-
-	return;
 }
 
 u_int32_t nge_crc(sc, addr)
@@ -665,8 +649,6 @@ void nge_setmulti(sc)
 	}
 
 	CSR_WRITE_4(sc, NGE_RXFILT_CTL, filtsave);
-
-	return;
 }
 
 void nge_reset(sc)
@@ -693,8 +675,6 @@ void nge_reset(sc)
 	 */
 	CSR_WRITE_4(sc, NGE_CLKRUN, NGE_CLKRUN_PMESTS);
 	CSR_WRITE_4(sc, NGE_CLKRUN, 0);
-
-        return;
 }
 
 /*
@@ -1230,8 +1210,6 @@ void nge_jfree(buf, size, arg)
 					 entry, jpool_entries);
 		}
 	}
-
-	return;
 }
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
@@ -1326,8 +1304,6 @@ void nge_rxeof(sc)
 	}
 
 	sc->nge_cdata.nge_rx_prod = i;
-
-	return;
 }
 
 void nge_rxeoc(sc)
@@ -1339,7 +1315,6 @@ void nge_rxeoc(sc)
 	nge_rxeof(sc);
 	ifp->if_flags &= ~IFF_RUNNING;
 	nge_init(sc);
-	return;
 }
 
 /*
@@ -1402,8 +1377,6 @@ void nge_txeof(sc)
 
 	if (cur_tx != NULL)
 		ifp->if_flags &= ~IFF_OACTIVE;
-
-	return;
 }
 
 void nge_tick(xsc)
@@ -1435,8 +1408,6 @@ void nge_tick(xsc)
 
 
 	splx(s);
-
-	return;
 }
 
 int nge_intr(arg)
@@ -1624,8 +1595,6 @@ void nge_start(ifp)
 	 * Set a timeout in case the chip goes out to lunch.
 	 */
 	ifp->if_timer = 5;
-
-	return;
 }
 
 int nge_loop = 0;
@@ -1789,8 +1758,6 @@ void nge_init(xsc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	(void)splx(s);
-
-	return;
 }
 
 /*
@@ -1827,8 +1794,6 @@ void nge_ifmedia_sts(ifp, ifmr)
 	mii_pollstat(mii);
 	ifmr->ifm_active = mii->mii_media_active;
 	ifmr->ifm_status = mii->mii_media_status;
-
-	return;
 }
 
 int nge_ioctl(ifp, command, data)
@@ -1935,8 +1900,6 @@ void nge_watchdog(ifp)
 
 	if (ifp->if_snd.ifq_head != NULL)
 		nge_start(ifp);
-
-	return;
 }
 
 /*
@@ -2005,8 +1968,6 @@ void nge_stop(sc)
 		sizeof(sc->nge_ldata->nge_tx_list));
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	return;
 }
 
 /*
@@ -2020,8 +1981,6 @@ void nge_shutdown(xsc)
 
 	nge_reset(sc);
 	nge_stop(sc);
-
-	return;
 }
 
 
