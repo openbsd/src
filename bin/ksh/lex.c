@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.21 2004/11/06 20:36:44 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.22 2004/11/10 21:13:54 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -1118,11 +1118,6 @@ set_prompt(to, s)
 	switch (to) {
 	case PS1: /* command */
 #ifdef KSH
-		/* Substitute ! and !! here, before substitutions are done
-		 * so ! in expanded variables are not expanded.
-		 * NOTE: this is not what at&t ksh does (it does it after
-		 * substitutions, POSIX doesn't say which is to be done.
-		 */
 		{
 			struct shf *shf;
 			char * volatile ps1;
@@ -1131,13 +1126,8 @@ set_prompt(to, s)
 			ps1 = str_val(global("PS1"));
 			shf = shf_sopen((char *) 0, strlen(ps1) * 2,
 				SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
-			while (*ps1) {
-				if (*ps1 != '!' || *++ps1 == '!')
-					shf_putchar(*ps1++, shf);
-				else
-					shf_fprintf(shf, "%d",
-						s ? s->line + 1 : 0);
-			}
+			while (*ps1)
+				shf_putchar(*ps1++, shf);
 			ps1 = shf_sclose(shf);
 			saved_atemp = ATEMP;
 			newenv(E_ERRH);
