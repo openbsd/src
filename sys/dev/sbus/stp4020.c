@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.4 2002/06/21 07:55:26 fgsch Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.5 2003/06/23 09:28:00 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -56,10 +56,9 @@
 #include <dev/pcmcia/pcmciachip.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
-#include <dev/sbus/sbusvar.h>
 #include <dev/sbus/stp4020reg.h>
+#include <dev/sbus/stp4020var.h>
 
 /*
  * We use the three available windows per socket in a simple, fixed
@@ -92,55 +91,11 @@ struct stp4020_event {
 #define STP4020_EVENT_INSERTION	0
 #define STP4020_EVENT_REMOVAL	1
 
-/*
- * Per socket data.
- */
-struct stp4020_socket {
-	struct stp4020_softc	*sc;	/* Back link */
-	int		flags;
-#define STP4020_SOCKET_BUSY	0x0001
-#define STP4020_SOCKET_SHUTDOWN	0x0002
-	int		sock;		/* Socket number (0 or 1) */
-	bus_space_tag_t	tag;		/* socket control space */
-	bus_space_handle_t	regs;	/* 			*/
-	struct device	*pcmcia;	/* Associated PCMCIA device */
-	int		(*intrhandler)	/* Card driver interrupt handler */
-			    (void *);
-	void		*intrarg;	/* Card interrupt handler argument */
-	int		ipl;		/* Interrupt level suggested by card */
-	struct {
-		bus_space_handle_t	winaddr;/* this window's address */
-	} windows[STP4020_NWIN];
-
-};
-
-struct stp4020_softc {
-	struct device	sc_dev;		/* Base device */
-	struct sbusdev	sc_sd;		/* SBus device */
-	bus_space_tag_t	sc_bustag;
-	bus_dma_tag_t	sc_dmatag;
-	pcmcia_chipset_tag_t	sc_pct;	/* Chipset methods */
-
-	struct proc	*event_thread;		/* event handling thread */
-	SIMPLEQ_HEAD(, stp4020_event)	events;	/* Pending events for thread */
-
-	struct stp4020_socket sc_socks[STP4020_NSOCK];
-};
-
-
 int	stp4020print(void *, const char *);
-int	stpmatch(struct device *, void *, void *);
-void	stpattach(struct device *, struct device *, void *);
-int	stp4020_iointr(void *);
-int	stp4020_statintr(void *);
 void	stp4020_map_window(struct stp4020_socket *, int, int);
 void	stp4020_calc_speed(int, int, int *, int *);
 
-struct cfattach stp_ca = {
-	sizeof(struct stp4020_softc), stpmatch, stpattach
-};
-
-struct cfdriver stp_cd = {
+struct	cfdriver stp_cd = {
 	NULL, "stp", DV_DULL
 };
 
@@ -256,104 +211,13 @@ stp4020print(aux, busname)
 	return (UNCONF);
 }
 
-int
-stpmatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	struct sbus_attach_args *sa = aux;
-
-	return (strcmp("SUNW,pcmcia", sa->sa_name) == 0);
-}
-
 /*
  * Attach all the sub-devices we can find
  */
 void
-stpattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+stpattach_common(struct stp4020_softc *sc, int clockfreq)
 {
-	struct sbus_attach_args *sa = aux;
-	struct stp4020_softc *sc = (void *)self;
-	int node, rev;
-	int i;
-	bus_space_handle_t bh;
-
-	node = sa->sa_node;
-
-	/* Transfer bus tags */
-	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_dmatag = sa->sa_dmatag;
-
-	/* Set up per-socket static initialization */
-	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
-	sc->sc_socks[0].tag = sc->sc_socks[1].tag = sa->sa_bustag;
-
-	if (sa->sa_nreg < 8) {
-		printf(": only %d register sets\n", sa->sa_nreg);
-		return;
-	}
-
-	if (sa->sa_nintr != 2) {
-		printf(": expect 2 interrupt Sbus levels; got %d\n",
-		    sa->sa_nintr);
-		return;
-	}
-
-#define STP4020_BANK_PROM	0
-#define STP4020_BANK_CTRL	4
-	for (i = 0; i < 8; i++) {
-
-		/*
-		 * STP4020 Register address map:
-		 *	bank  0:   Forth PROM
-		 *	banks 1-3: socket 0, windows 0-2
-		 *	bank  4:   control registers
-		 *	banks 5-7: socket 1, windows 0-2
-		 */
-
-		if (i == STP4020_BANK_PROM)
-			/* Skip the PROM */
-			continue;
-
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[i].sbr_slot,
-		    sa->sa_reg[i].sbr_offset, sa->sa_reg[i].sbr_size,
-		    BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
-			printf(": attach: cannot map registers\n");
-			return;
-		}
-
-		if (i == STP4020_BANK_CTRL) {
-			/*
-			 * Copy tag and handle to both socket structures
-			 * for easy access in control/status IO functions.
-			 */
-			sc->sc_socks[0].regs = sc->sc_socks[1].regs = bh;
-		} else if (i < STP4020_BANK_CTRL) {
-			/* banks 1-3 */
-			sc->sc_socks[0].windows[i-1].winaddr = bh;
-		} else {
-			/* banks 5-7 */
-			sc->sc_socks[1].windows[i-5].winaddr = bh;
-		}
-	}
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
-	/*
-	 * We get to use two SBus interrupt levels.
-	 * The higher level we use for status change interrupts;
-	 * the lower level for PC card I/O.
-	 */
-	if (sa->sa_nintr != 0) {
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
-		    IPL_NONE, 0, stp4020_statintr, sc);
-
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
-		    IPL_NONE, 0, stp4020_iointr, sc);
-	}
+	int i, rev;
 
 	rev = stp4020_rd_sockctl(&sc->sc_socks[0], STP4020_ISR1_IDX) &
 	    STP4020_ISR1_REV_M;
@@ -376,7 +240,7 @@ stpattach(parent, self, aux)
 		if (stp4020_debug)
 			stp4020_dump_regs(h);
 #endif
-		stp4020_attach_socket(h, sa->sa_frequency);
+		stp4020_attach_socket(h, clockfreq);
 	}
 }
 
@@ -650,6 +514,7 @@ stp4020_iointr(arg)
 				(*h->intrhandler)(h->intrarg);
 			}
 		}
+
 	}
 
 	return (r);
