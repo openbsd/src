@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtrr.4,v 1.2 1999/11/24 02:21:34 deraadt Exp $
+.\"	$OpenBSD: mtrr.4,v 1.3 1999/12/23 15:34:35 aaron Exp $
 .\"
 .\" Pentium MTRR  driver for OpenBSD.
 .\" Copyright 1999 Matthieu Herrb <matthieu@openbsd.org>
@@ -13,25 +13,25 @@
 .Os
 .Sh NAME
 .Nm mtrr
-.Nd driver for cpu performance counters
+.Nd driver for CPU memory range attributes
 .Sh SYNOPSIS
 .Cd pseudo-device mtrr
 .Sh DESCRIPTION
 The
 .Nm
 device provides access to the memory range attributes supported by the 
-MTRRs on pentiums. 
+MTRRs on Pentiums. 
 .Pp
 .Ss IOCTL INTERFACE
 Several architectures allow attributes to be associated with ranges of physical
 memory.  These attributes can be manipulated via
 .Fn ioctl
 calls performed on
-.Nm /dev/mem 
+.Pa /dev/mem 
 or 
-.Nm /dev/xf86 .
+.Pa /dev/xf86 .
 Declarations and data types are to be found in
-.Pa <memrange.h>
+.Aq Pa memrange.h
 .Pp
 The specific attributes, and number of programmable ranges may vary between
 architectures.  The full set of supported attributes is:
@@ -133,6 +133,7 @@ enabled.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr mem 4 ,
+.Xr pctr 4 ,
 .Xr xf86 4 ,
 .Xr memconfig 8
 .Sh HISTORY
