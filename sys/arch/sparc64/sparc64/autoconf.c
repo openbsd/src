@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2001/09/19 21:32:20 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2001/09/19 21:44:35 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -789,8 +789,7 @@ findblkmajor(dv)
 	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
-		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)) == 0
-)      
+		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[0].name)) == 0)      
 			return (nam2blk[i].maj);
 	return (-1);
 }
