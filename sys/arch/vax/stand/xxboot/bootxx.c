@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.6 2002/06/11 13:10:03 hugh Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.7 2002/07/31 18:36:12 miod Exp $ */
 /* $NetBSD: bootxx.c,v 1.16 2002/03/29 05:45:08 matt Exp $ */
 
 /*-
@@ -40,7 +40,9 @@
 #include "sys/reboot.h"
 #include "sys/disklabel.h"
 #include "sys/exec.h"
+#ifdef notyet
 #include "sys/exec_elf.h"
+#endif
 
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
@@ -99,7 +101,9 @@ Xmain()
 {
 	union {
 		struct exec aout;
+#ifdef notyet
 		Elf32_Ehdr elf;
+#endif
 	} hdr;
 	int io;
 	u_long entry;
@@ -149,6 +153,7 @@ Xmain()
 		read(io, (void *) entry, hdr.aout.a_text + hdr.aout.a_data);
 		memset((void *) (entry + hdr.aout.a_text + hdr.aout.a_data),
 		       0, hdr.aout.a_bss);
+#ifdef notyet
 	} else if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0) {
 		Elf32_Phdr ph;
 		size_t off = sizeof(hdr.elf);
@@ -176,6 +181,7 @@ Xmain()
 		read(io, (void *) ph.p_paddr, ph.p_filesz);
 		memset((void *) (ph.p_paddr + ph.p_filesz), 0,
 		       ph.p_memsz - ph.p_filesz);
+#endif
 	} else {
 		goto die;
 	}
