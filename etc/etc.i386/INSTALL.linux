@@ -1,4 +1,4 @@
-$OpenBSD: INSTALL.linux,v 1.9 2001/04/17 20:11:20 aaron Exp $
+$OpenBSD: INSTALL.linux,v 1.10 2001/04/18 14:22:20 aaron Exp $
 
    Linux + OpenBSD: it's possible
 
@@ -26,7 +26,7 @@ If you want to grab space from a Windows/DOS partition, use fips.
 Fips20 knows all about FAT32, so windows 95 is no longer a problem.
 
 Other sources of information, especially concerning other BSD systems,
-must be taken with a healthy does of skepticism. OpenBSD definitely
+must be taken with a healthy dose of skepticism. OpenBSD definitely
 differs:
 - disklabels can hold up to 16 partitions,
 - type is A6, not A5,
