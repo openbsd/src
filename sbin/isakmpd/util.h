@@ -1,5 +1,5 @@
-/*	$OpenBSD: util.h,v 1.5 2000/10/13 13:42:50 niklas Exp $	*/
-/*	$EOM: util.h,v 1.8 2000/10/13 13:04:16 ho Exp $	*/
+/*	$OpenBSD: util.h,v 1.6 2000/10/16 23:28:13 niklas Exp $	*/
+/*	$EOM: util.h,v 1.9 2000/10/14 23:40:08 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -47,8 +47,12 @@ struct message;
 
 extern u_int16_t decode_16 (u_int8_t *);
 extern u_int32_t decode_32 (u_int8_t *);
+extern u_int64_t decode_64 (u_int8_t *);
+extern void decode_128 (u_int8_t *, u_int8_t *);
 extern void encode_16 (u_int8_t *, u_int16_t);
 extern void encode_32 (u_int8_t *, u_int32_t);
+extern void encode_64 (u_int8_t *, u_int64_t);
+extern void encode_128 (u_int8_t *, u_int8_t *);
 extern u_int8_t *getrandom (u_int8_t *, size_t);
 extern int hex2raw (char *, u_int8_t *, size_t);
 extern int zero_test (const u_int8_t *, size_t);
