@@ -369,6 +369,7 @@
 ./usr/include/dev/midisynvar.h
 ./usr/include/dev/midivar.h
 ./usr/include/dev/mii
+./usr/include/dev/mii/acphyreg.h
 ./usr/include/dev/mii/amphyreg.h
 ./usr/include/dev/mii/bmtphyreg.h
 ./usr/include/dev/mii/brgphyreg.h
@@ -491,6 +492,8 @@
 ./usr/include/dev/pci/plx9060var.h
 ./usr/include/dev/pci/ppbreg.h
 ./usr/include/dev/pci/pucvar.h
+./usr/include/dev/pci/safereg.h
+./usr/include/dev/pci/safevar.h
 ./usr/include/dev/pci/siop_pci_common.h
 ./usr/include/dev/pci/tgareg.h
 ./usr/include/dev/pci/tgavar.h
@@ -1563,6 +1566,7 @@
 ./usr/include/xfs/xfs_msg_locl.h
 ./usr/include/xfs/xfs_node.h
 ./usr/include/xfs/xfs_pioctl.h
+./usr/include/xfs/xfs_queue.h
 ./usr/include/xfs/xfs_syscalls.h
 ./usr/include/xfs/xfs_vfsops-bsd.h
 ./usr/include/xfs/xfs_vfsops.h

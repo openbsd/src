@@ -958,6 +958,7 @@
 ./usr/share/man/cat4
 ./usr/share/man/cat4/aac.0
 ./usr/share/man/cat4/ac97.0
+./usr/share/man/cat4/acphy.0
 ./usr/share/man/cat4/addcom.0
 ./usr/share/man/cat4/adv.0
 ./usr/share/man/cat4/advansys.0
@@ -1279,6 +1280,7 @@
 ./usr/share/man/cat4/rt.0
 ./usr/share/man/cat4/rtfps.0
 ./usr/share/man/cat4/rtii.0
+./usr/share/man/cat4/safe.0
 ./usr/share/man/cat4/sbus.0
 ./usr/share/man/cat4/scsi.0
 ./usr/share/man/cat4/scsibus.0

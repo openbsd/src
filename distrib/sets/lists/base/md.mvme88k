@@ -87,8 +87,8 @@
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Data/Dumper.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Devel
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Devel/DProf.pm
-./usr/libdata/perl5/m88k-openbsd/5.8.0/Devel/Peek.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Devel/PPPort.pm
+./usr/libdata/perl5/m88k-openbsd/5.8.0/Devel/Peek.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Digest
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Digest/MD5.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/DynaLoader.pm
@@ -138,12 +138,12 @@
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/O.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/ODBM_File.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Opcode.pm
+./usr/libdata/perl5/m88k-openbsd/5.8.0/POSIX.pm
+./usr/libdata/perl5/m88k-openbsd/5.8.0/POSIX.pod
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/PerlIO
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/PerlIO/encoding.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/PerlIO/scalar.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/PerlIO/via.pm
-./usr/libdata/perl5/m88k-openbsd/5.8.0/POSIX.pm
-./usr/libdata/perl5/m88k-openbsd/5.8.0/POSIX.pod
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/SDBM_File.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Safe.pm
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/Socket.pm
@@ -182,12 +182,12 @@
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/DProf
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/DProf/DProf.a
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/DProf/extralibs.ld
-./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/Peek
-./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/Peek/Peek.a
-./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/Peek/extralibs.ld
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/PPPort
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/PPPort/PPPort.a
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/PPPort/extralibs.ld
+./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/Peek
+./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/Peek/Peek.a
+./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Devel/Peek/extralibs.ld
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Digest
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Digest/MD5
 ./usr/libdata/perl5/m88k-openbsd/5.8.0/auto/Digest/MD5/MD5.a
@@ -845,6 +845,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/acphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/amphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/bmtphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/brgphyreg.ph
@@ -967,6 +968,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/safereg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/safevar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/siop_pci_common.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/tgavar.ph
@@ -2026,6 +2029,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_msg_locl.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_node.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_pioctl.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_queue.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_syscalls.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_vfsops-bsd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/xfs_vfsops.ph

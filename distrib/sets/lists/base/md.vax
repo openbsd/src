@@ -354,6 +354,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/acphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/amphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/bmtphyreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/mii/brgphyreg.ph
@@ -476,6 +477,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/plx9060var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/safereg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/safevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/siop_pci_common.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/tgavar.ph
@@ -1533,6 +1536,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_msg_locl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_node.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_pioctl.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_queue.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_syscalls.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_vfsops-bsd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/xfs_vfsops.ph
