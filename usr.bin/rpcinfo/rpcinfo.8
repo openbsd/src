@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpcinfo.8,v 1.6 2000/04/15 11:45:56 aaron Exp $
+.\"	$OpenBSD: rpcinfo.8,v 1.7 2000/07/31 16:55:36 deraadt Exp $
 .\"	from: @(#)rpcinfo.8c	2.2 88/08/03 4.0 RPCSRC; from 1.24 88/02/25 SMI
 .\"
 .Dd December 17, 1987
@@ -27,6 +27,9 @@
 .Nm rpcinfo
 .Fl d
 .Ar program version
+.Nm rpcinfo
+.Fl s
+.Ar program version port
 .Sh DESCRIPTION
 .Nm
 makes an
@@ -92,7 +95,19 @@ service of the specified
 .Ar program
 and
 .Ar version .
-This option can be exercised only by the superuser.
+Registrations which point at ports numbered below 1024 can only be
+deleted by the superuser.
+.It Fl s
+Create a registration for the
+.Tn RPC
+service of the specified
+.Ar program
+and
+.Ar version ,
+located at port
+.Ar port .
+Registrations which point at ports numbered below 1024 can only be
+created (or changed) by the superuser.
 .El
 .Pp
 The
