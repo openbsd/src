@@ -1,4 +1,4 @@
-/*	$OpenBSD: leds.c,v 1.7 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: leds.c,v 1.8 2005/01/08 22:13:24 miod Exp $	*/
 /*	$NetBSD: leds.c,v 1.1 1997/05/05 20:54:35 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <arch/hp300/hp300/leds.h>
+#include <hp300/hp300/leds.h>
 
 extern caddr_t	ledbase;	/* kva of LED page */
 u_int8_t	*ledaddr;	/* actual address of LEDs */
