@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.6 1997/02/16 20:09:00 provos Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.7 1997/02/17 10:34:41 provos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.6 1997/02/16 20:09:00 provos Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.7 1997/02/17 10:34:41 provos Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -165,6 +165,7 @@ yp_passwd(username)
 	if (client==NULL) {
 		fprintf(stderr, "cannot contact yppasswdd on %s: Reason: %s\n",
 		    master, yperr_string(YPERR_YPBIND));
+		free(yppasswd.newpw.pw_passwd);
 		return(YPERR_YPBIND);
 	}
 	client->cl_auth = authunix_create_default();
@@ -176,10 +177,12 @@ yp_passwd(username)
 		fprintf(stderr, "%s: rpc to yppasswdd failed.\n", progname);
 	else if (status) {
 		printf("Couldn't change YP password.\n");
+		free(yppasswd.newpw.pw_passwd);
 		exit(1);
 	}
 	printf("The YP password has been changed on %s, the master YP passwd server.\n",
 	    master);
+	free(yppasswd.newpw.pw_passwd);
 	exit(0);
 }
 
