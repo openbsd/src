@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.19 2000/05/26 11:50:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2000/06/08 00:56:07 mickey Exp $
 
 MAN=	biosboot.8
-MANSUBDIR=/i386
 
 .if ${MACHINE} == "i386"
 PROG=	biosboot

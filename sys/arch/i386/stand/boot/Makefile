@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.27 2000/05/26 11:50:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 2000/06/08 00:56:07 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 MAN=	boot.8
-MANSUBDIR=/i386
 MLINKS=	boot.8 boot.conf.8
 
 .if ${MACHINE} == "i386"
