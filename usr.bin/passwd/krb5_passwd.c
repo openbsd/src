@@ -55,7 +55,7 @@
 /* RCSID("$KTH: kpasswd.c,v 1.23 2000/12/31 07:48:34 assar Exp $"); */
 
 int
-krb5_passwd (int argc, char **argv)
+krb5_passwd(int argc, char **argv)
 {
 	krb5_data result_code_string, result_string;
 	krb5_get_init_creds_opt opt;
