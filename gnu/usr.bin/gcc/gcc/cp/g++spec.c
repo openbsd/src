@@ -289,7 +289,7 @@ lang_specific_driver (in_argc, in_argv, in_added_libraries)
     }
 
   /* Add -lsupc++ for shared. */
-  if (libsupcxx)
+  if (libsupcxx == 1)
     {
       arglist[j++] = saw_profile_flag ? LIBSUPCXX_PROFILE : LIBSUPCXX;
       added_libraries++;
