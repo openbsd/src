@@ -1,5 +1,5 @@
-/*	$OpenBSD: log.c,v 1.7 1999/07/07 22:11:14 niklas Exp $	*/
-/*	$EOM: log.c,v 1.24 1999/06/26 23:26:56 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.8 1999/08/26 22:31:36 niklas Exp $	*/
+/*	$EOM: log.c,v 1.25 1999/08/12 23:08:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -126,8 +126,8 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	   * We may need to explicitly close stdout to do this properly.
 	   * XXX - Figure out how to match two FILE *'s and rewrite.
 	   */  
-	  if (log_output->_file != -1)
-	    if (stdout->_file == log_output->_file)
+	  if (fileno (log_output) != -1)
+	    if (fileno (stdout) == fileno (log_output))
 	      fclose (stdout);
 	  fclose (log_output);
 
