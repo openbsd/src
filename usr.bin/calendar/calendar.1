@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.24 2003/09/09 08:39:53 jmc Exp $
+.\"	$OpenBSD: calendar.1,v 1.25 2004/02/09 20:48:39 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -55,22 +55,22 @@ On Fridays, events on Friday through Monday are displayed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl A Ar num
+Print lines from today and next
+.Ar num
+days (forward, future).
 .It Fl a
 Process the
 .Dq calendar
 files of all users and mail the results
 to them.
 This requires superuser privileges.
-.It Fl A Ar num
-Print lines from today and next
-.Ar num
-days (forward, future).
-.It Fl b
-Enforce special date calculation mode for KOI8 calendars.
 .It Fl B Ar num
 Print lines from today and previous
 .Ar num
 days (backward, past).
+.It Fl b
+Enforce special date calculation mode for KOI8 calendars.
 .It Fl f Pa calendarfile
 Use
 .Pa calendarfile
@@ -169,51 +169,53 @@ Paskha\fB\et\fROrthodox	Easter
 .Sh FILES
 .Bl -tag -width ~/.calendar/calendar -compact
 .It Pa calendar
-file in current directory
+File in current directory.
 .It Pa ~/.calendar
-directory in the user's home directory (which
+Directory in the user's home directory (which
 .Nm
-changes into, if it exists)
+changes into, if it exists).
 .It Pa ~/.calendar/calendar
-file to use if no calendar file exists in the current directory
+File to use if no calendar file exists in the current directory.
 .It Pa ~/.calendar/nomail
 .Nm
-will not send mail if this file exists
+will not send mail if this file exists.
 .It Pa calendar.birthday
-births and deaths of famous (and not-so-famous) people
+Births and deaths of famous (and not-so-famous) people.
 .It Pa calendar.christian
 Christian holidays (should be updated yearly by the local system administrator
-so that roving holidays are set correctly for the current year)
+so that roving holidays are set correctly for the current year).
 .It Pa calendar.computer
-days of special significance to computer people
+Days of special significance to computer people.
+.It Pa calendar.croatian
+Croatian calendar.
 .It Pa calendar.fictional
-Fantasy and Fiction dates (mostly LOTR)
+Fantasy and fiction dates (mostly LOTR).
+.It Pa calendar.french
+French calendar.
+.It Pa calendar.german
+German calendar.
 .It Pa calendar.history
-everything else, mostly U.S. historical events
+Everything else, mostly U.S. historical events.
 .It Pa calendar.holiday
-other holidays (including the not-well-known, obscure, and
+Other holidays (including the not-well-known, obscure, and
 .Em really
-obscure)
+obscure).
 .It Pa calendar.judaic
 Jewish holidays (should be updated yearly by the local system administrator
-so that roving holidays are set correctly for the current year)
+so that roving holidays are set correctly for the current year).
 .It Pa calendar.music
-musical events, births, and deaths (strongly oriented toward rock n' roll)
+Musical events, births, and deaths (strongly oriented toward rock n' roll).
 .It Pa calendar.openbsd
 .Ox
-related events
+related events.
 .It Pa calendar.pagan
-Pagan holidays, celebrations and festivals
-.It Pa calendar.usholiday
-U.S. holidays
-.It Pa calendar.world
-World wide calendar
-.It Pa calendar.croatian
-Croatian calendar
-.It Pa calendar.german
-German calendar
+Pagan holidays, celebrations and festivals.
 .It Pa calendar.russian
-Russian calendar
+Russian calendar.
+.It Pa calendar.usholiday
+U.S. holidays.
+.It Pa calendar.world
+World wide calendar.
 .El
 .Sh SEE ALSO
 .Xr at 1 ,
