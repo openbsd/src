@@ -1,4 +1,4 @@
-#	$OpenBSD: DRACO,v 1.8 1997/01/16 09:23:35 niklas Exp $
+#	$OpenBSD: DRACO,v 1.9 1997/03/25 16:53:58 niklas Exp $
 #	$NetBSD: DRACO,v 1.7 1996/12/20 19:18:16 veego Exp $
 
 #
@@ -109,7 +109,7 @@ option		RETINACONSOLE	# enable code to allow retina to be console
 #option		"KFONT_8X11"	# 8x11 font
 
 # This is how you specify the blitting speed, higher values may speed up blits
-# a littel bit.  If you raise this value too much some trash may appear.
+# a little bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #option		RH_MEMCLK 61000000
 # this option enables the 64 bit sprite which doesn't seems to be work

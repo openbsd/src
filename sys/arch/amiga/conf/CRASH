@@ -1,4 +1,4 @@
-#	$OpenBSD: CRASH,v 1.7 1997/01/16 09:23:34 niklas Exp $
+#	$OpenBSD: CRASH,v 1.8 1997/03/25 16:53:57 niklas Exp $
 
 #
 # The first OpenBSD/Amiga "user" Neil Brewitt's GG2 + NE2000 equipped A3000
@@ -133,7 +133,7 @@ option		IPL_REMAP_1	# Remap level 6 ints version 1
 #option	"ULOWELL_OSC2=66667000"
 
 # This is how you specify the blitting speed, higher values may speed up blits
-# a littel bit.  If you raise this value too much some trash may appear.
+# a little bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #option		RH_MEMCLK 61000000
 # this option enables the 64 bit sprite which doesn't seems to be work

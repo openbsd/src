@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 1997/01/19 13:58:18 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.20 1997/03/25 16:53:56 niklas Exp $
 #	$NetBSD: GENERIC,v 1.69 1997/01/17 14:29:42 is Exp $
 
 #
@@ -89,7 +89,7 @@ option		GRF_AGA		# AGA Chip Set
 #option		"ULOWELL_OSC2=66667000"
 
 # This is how you specify the blitting speed, higher values may speed up blits
-# a littel bit.  If you raise this value too much some trash may appear.
+# a little bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
 #option		RH_MEMCLK 61000000
 # this option enables the 64 bit sprite which doesn't seems to be work
