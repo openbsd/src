@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.134 2002/07/24 23:17:07 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.135 2002/08/20 18:18:55 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.134 2002/07/24 23:17:07 millert Exp $";
+    "$OpenBSD: ftpd.c,v 1.135 2002/08/20 18:18:55 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ int	debug = 0;
 int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
+int	anon_ok = 1;
 int	anon_only = 0;
 int	multihome = 0;
 int	guest;
@@ -269,7 +270,7 @@ curdir()
 	return (guest ? path+1 : path);
 }
 
-char *argstr = "AdDhlMSt:T:u:UvP46";
+char *argstr = "AdDhnlMSt:T:u:UvP46";
 
 static void
 usage()
@@ -325,6 +326,10 @@ main(argc, argv, envp)
 
 		case 'M':
 			multihome = 1;
+			break;
+
+		case 'n':
+			anon_ok = 0;
 			break;
 
 		case 'S':
@@ -716,7 +721,8 @@ user(name)
 
 	guest = 0;
 	host = multihome ? dhostname : hostname;
-	if (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0) {
+	if (anon_ok &&
+	    (strcmp(name, "ftp") == 0 || strcmp(name, "anonymous") == 0)) {
 		if (checkuser(_PATH_FTPUSERS, "ftp") ||
 		    checkuser(_PATH_FTPUSERS, "anonymous"))
 			reply(530, "User %s access denied.", name);

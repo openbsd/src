@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.52 2002/07/28 00:44:47 pvalchev Exp $
+.\"	$OpenBSD: ftpd.8,v 1.53 2002/08/20 18:18:55 deraadt Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -42,7 +42,7 @@
 .Nd Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm ftpd
-.Op Fl AdDlMPSU46
+.Op Fl AdDlMnPSU46
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
 .Op Fl u Ar mask
@@ -93,6 +93,8 @@ for anonymous transfers, a directory matching the fully qualified name of
 the IP number the client connected to, and located inside
 .Pa ~ftp
 is used instead.
+.It Fl n
+Do not permit anonymous ftp logins.  Normally they are permitted.
 .It Fl P
 Permit illegal port numbers or addresses for PORT command initiated connects.
 By default
