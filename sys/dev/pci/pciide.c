@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.18 2000/01/11 01:14:52 chris Exp $     */
+/*      $OpenBSD: pciide.c,v 1.19 2000/01/11 01:16:00 chris Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -2190,8 +2190,6 @@ sis_chip_map(sc, pa)
 	pcireg_t rev = PCI_REVISION(pci_conf_read(sc->sc_pc, sc->sc_tag,
 			    PCI_CLASS_REG));
 	bus_size_t cmdsize, ctlsize;
-
-	printf("\nrevision: i:%i h:%x i:%i h:%x i:%i h:%x\n",rev,rev,interface,interface,interface & PCI_REVISION_MASK, interface & PCI_REVISION_MASK);
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
