@@ -1,0 +1,6 @@
+# $OpenBSD: mk13,v 1.1 2001/07/11 13:12:19 espie Exp $
+# Warning: the next line ends with a space !!!
+A= ends with space 
+
+a:
+	@echo "a$Aa"
