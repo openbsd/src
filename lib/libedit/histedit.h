@@ -168,5 +168,8 @@ __const HistEvent *	history		__P((History *, int, ...));
 #define H_PREV_STR	11	/* , const char*);	*/
 #define H_NEXT_EVENT	12	/* , const int);	*/
 #define H_PREV_EVENT	13	/* , const int);	*/
+#define H_LOAD		14	/* , const char *);	*/
+#define H_SAVE		15	/* , const char *);	*/
+#define H_CLEAR		16	/* , void);		*/
 
 #endif /* _h_editline */
