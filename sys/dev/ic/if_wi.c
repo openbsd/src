@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.57 2002/04/26 19:20:27 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.58 2002/04/26 21:19:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.57 2002/04/26 19:20:27 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.58 2002/04/26 21:19:18 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1580,8 +1580,8 @@ wi_init(sc)
 	WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
 
 	/* Specify the IBSS name */
-	if ((sc->wi_create_ibss && sc->wi_ptype == WI_PORTTYPE_IBSS) ||
-	    sc->wi_ptype == WI_PORTTYPE_AP)
+	if (sc->wi_net_name.i_len != 0 && (sc->wi_ptype == WI_PORTTYPE_AP ||
+	    (sc->wi_create_ibss && sc->wi_ptype == WI_PORTTYPE_IBSS)))
 		WI_SETSTR(WI_RID_OWN_SSID, sc->wi_net_name);
 	else
 		WI_SETSTR(WI_RID_OWN_SSID, sc->wi_ibss_name);
