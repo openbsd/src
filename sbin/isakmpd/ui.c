@@ -1,8 +1,9 @@
-/*	$OpenBSD: ui.c,v 1.16 2000/05/02 14:37:00 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.41 2000/05/01 20:57:33 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.17 2000/10/07 06:57:25 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -83,7 +84,7 @@ ui_init ()
       /* No need to know about errors.  */
       unlink (ui_fifo);
       if (mkfifo (ui_fifo, 0600) == -1)
-	log_fatal ("ui_init: mkfifo (\"%s\", 0600) failed");
+	log_fatal ("ui_init: mkfifo (\"%s\", 0600) failed", ui_fifo);
 
       /* XXX Is O_RDWR needed on some OSes?  Photurisd seems to imply that.  */
       ui_socket = open (ui_fifo, O_RDONLY | O_NONBLOCK, 0);
