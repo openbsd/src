@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.14 2004/12/11 06:27:49 pvalchev Exp $	*/
+/*	$OpenBSD: re.c,v 1.1 2005/01/14 01:08:11 pvalchev Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -169,7 +169,7 @@ const struct pci_matchid re_devices[] = {
 };
 
 int re_probe		(struct device *, void *, void *);
-void re_attach		(struct device *, struct device *, void *);
+void re_attach_common	(struct rl_softc *);
 
 int re_encap		(struct rl_softc *, struct mbuf *, int *);
 
@@ -204,10 +204,6 @@ void re_setmulti	(struct rl_softc *);
 void re_reset		(struct rl_softc *);
 
 int re_diag		(struct rl_softc *);
-
-struct cfattach re_ca = {
-	sizeof(struct re_pci_softc), re_probe, re_attach
-};
 
 struct cfdriver re_cd = {
 	0, "re", DV_IFNET
@@ -757,6 +753,8 @@ re_allocmem(struct rl_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, RL_TX_LIST_SZ, 1,
 	    RL_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
 	    &sc->rl_ldata.rl_tx_list_map);
+        if (error)
+                return (ENOMEM);
         error = bus_dmamem_alloc(sc->sc_dmat, RL_TX_LIST_SZ,
 	    ETHER_ALIGN, 0, 
 	    &sc->rl_ldata.rl_tx_listseg, 1, &rseg, BUS_DMA_NOWAIT);
@@ -767,10 +765,14 @@ re_allocmem(struct rl_softc *sc)
 	error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_tx_listseg,
 	    1, RL_TX_LIST_SZ,
 	    (caddr_t *)&sc->rl_ldata.rl_tx_list, BUS_DMA_NOWAIT);
+        if (error)
+                return (ENOMEM);
 	memset(sc->rl_ldata.rl_tx_list, 0, RL_TX_LIST_SZ);
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->rl_ldata.rl_tx_list_map,
 	    sc->rl_ldata.rl_tx_list, RL_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
+        if (error)
+                return (ENOMEM);
 
 	/* Create DMA maps for TX buffers */
 
@@ -790,6 +792,9 @@ re_allocmem(struct rl_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, RL_RX_LIST_SZ, 1,
 	    RL_RX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
 	    &sc->rl_ldata.rl_rx_list_map);
+        if (error)
+                return (ENOMEM);
+
         error = bus_dmamem_alloc(sc->sc_dmat, RL_RX_LIST_SZ, RL_RING_ALIGN,
 	    0, &sc->rl_ldata.rl_rx_listseg, 1, &rseg, BUS_DMA_NOWAIT);
         if (error)
@@ -799,10 +804,14 @@ re_allocmem(struct rl_softc *sc)
 	error = bus_dmamem_map(sc->sc_dmat, &sc->rl_ldata.rl_rx_listseg,
 	    1, RL_RX_LIST_SZ,
 	    (caddr_t *)&sc->rl_ldata.rl_rx_list, BUS_DMA_NOWAIT);
+        if (error)
+                return (ENOMEM);
 	memset(sc->rl_ldata.rl_rx_list, 0, RL_RX_LIST_SZ);
 
 	error = bus_dmamap_load(sc->sc_dmat, sc->rl_ldata.rl_rx_list_map,
 	     sc->rl_ldata.rl_rx_list, RL_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
+        if (error)
+                return (ENOMEM);
 
 	/* Create DMA maps for RX buffers */
 
@@ -825,108 +834,18 @@ re_allocmem(struct rl_softc *sc)
  * setup and ethernet/BPF attach.
  */
 void
-re_attach(struct device *parent, struct device *self, void *aux)
+re_attach_common(struct rl_softc *sc)
 {
 	u_char			eaddr[ETHER_ADDR_LEN];
 	u_int16_t		as[3];
-	struct re_pci_softc	*psc = (struct re_pci_softc *)self;
-	struct rl_softc		*sc = &psc->sc_rl;
-	struct pci_attach_args	*pa = aux;
-	pci_chipset_tag_t	pc = pa->pa_pc;
-	pci_intr_handle_t	ih;
-	const char		*intrstr = NULL;
 	struct ifnet		*ifp;
 	u_int16_t		re_did = 0;
 	int			error = 0, i;
-	bus_size_t		iosize;
-	pcireg_t		command;
-
-#ifndef BURN_BRIDGES
-	/*
-	 * Handle power management nonsense.
-	 */
-
-	command = pci_conf_read(pc, pa->pa_tag, RL_PCI_CAPID) & 0x000000FF;
-
-	if (command == 0x01) {
-		u_int32_t		iobase, membase, irq;
-
-		/* Save important PCI config data. */
-		iobase = pci_conf_read(pc, pa->pa_tag,  RL_PCI_LOIO);
-		membase = pci_conf_read(pc, pa->pa_tag, RL_PCI_LOMEM);
-		irq = pci_conf_read(pc, pa->pa_tag, RL_PCI_INTLINE);
-
-		/* Reset the power state. */
-		printf("%s: chip is is in D%d power mode "
-		    "-- setting to D0\n", sc->sc_dev.dv_xname,
-		    command & RL_PSTATE_MASK);
-		command &= 0xFFFFFFFC;
-
-		/* Restore PCI config data. */
-		pci_conf_write(pc, pa->pa_tag, RL_PCI_LOIO, iobase);
-		pci_conf_write(pc, pa->pa_tag, RL_PCI_LOMEM, membase);
-		pci_conf_write(pc, pa->pa_tag, RL_PCI_INTLINE, irq);
-	}
-#endif
-
-	/*
-	 * Map control/status registers.
-	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	if ((command & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) == 0) {
-		printf(": neither i/o nor mem enabled\n");
-		return;
-	}
-
-	if (command & PCI_COMMAND_MEM_ENABLE) {
-		if (pci_mapreg_map(pa, RL_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
-			printf(": can't map mem space\n");
-			return;
-		}
-	} else {
-		if (pci_mapreg_map(pa, RL_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->rl_btag, &sc->rl_bhandle, NULL, &iosize, 0)) {
-			printf(": can't map i/o space\n");
-			return;
-		}
-	}
-
-	/* Allocate interrupt */
-	if (pci_intr_map(pa, &ih)) {
-		printf(": couldn't map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc,
-	    sc->sc_dev.dv_xname);
-	if (psc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		return;
-	}
-	printf(": %s", intrstr);
-
-	sc->sc_dmat = pa->pa_dmat;
-	sc->sc_flags |= RL_ENABLED;
 
 	/* Reset the adapter. */
 	re_reset(sc);
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_REALTEK_RT8139:
-		sc->rl_type = RL_8139CPLUS;
-		break;
-	default:
-		sc->rl_type = RL_8169;
-		break;
-	}
+	sc->rl_type = RL_8169;
 
 	if (sc->rl_type == RL_8169) {
 
@@ -1746,10 +1665,10 @@ re_start(ifp)
 int
 re_init(struct ifnet *ifp)
 {
-	struct rl_softc	*sc = ifp->if_softc;
+	struct rl_softc		*sc = ifp->if_softc;
 	u_int32_t		rxcfg = 0;
 	u_int32_t		reg;
-	int s;
+	int			s;
 
 	s = splimp();
 

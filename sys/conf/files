@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.323 2004/12/29 01:02:30 jsg Exp $
+#	$OpenBSD: files,v 1.324 2005/01/14 01:08:11 pvalchev Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -245,6 +245,10 @@ file	dev/ic/mtd8xx.c		mtd
 # RealTek 8129/8139
 device	rl: ether, ifnet, ifmedia, mii
 file	dev/ic/rtl81x9.c	rl
+
+# Realtek 8169
+device	re: ether, ifnet, ifmedia, mii
+file	dev/ic/re.c		re
 
 # Clones of Digital 2104x
 device	dc: ether, ifnet, ifmedia, mii
