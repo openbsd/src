@@ -43,6 +43,11 @@ struct vga_config {
 	char		vc_so;		/* in standout mode? */
 	char		vc_at;		/* normal attributes */
 	char		vc_so_at;	/* standout attributes */
+
+	int	(*vc_ioctl) __P((void *, u_long,
+		    caddr_t, int, struct proc *));
+	int	(*vc_mmap) __P((void *, off_t, int));
+	
 };
 
 int	vga_common_probe __P((bus_space_tag_t, bus_space_tag_t));
@@ -50,3 +55,5 @@ void	vga_common_setup __P((bus_space_tag_t, bus_space_tag_t,
 	    struct vga_config *));
 void	vga_wscons_attach __P((struct device *, struct vga_config *, int));
 void	vga_wscons_console __P((struct vga_config *));
+int	vgaioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	vgammap __P((void *, off_t, int));

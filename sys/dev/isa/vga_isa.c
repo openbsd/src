@@ -54,6 +54,9 @@ int	vga_isa_match __P((struct device *, struct cfdata *, void *));
 #endif
 void	vga_isa_attach __P((struct device *, struct device *, void *));
 
+int	vgaisammap __P((void *, off_t, int));
+int	vgaisaioctl __P((void *, u_long, caddr_t, int, struct proc *));
+
 struct cfattach vga_isa_ca = {
 	sizeof(struct vga_isa_softc), vga_isa_match, vga_isa_attach,
 };
@@ -115,6 +118,8 @@ vga_isa_attach(parent, self, aux)
 		/* set up bus-independent VGA configuration */
 		vga_common_setup(ia->ia_iot, ia->ia_memt, vc);
 	}
+	vc->vc_mmap = vgaisammap;
+	vc->vc_ioctl = vgaisaioctl;
 
 	printf("\n");
 
@@ -142,4 +147,28 @@ vga_isa_console_attach(iot, memt)
 	vga_common_setup(iot, memt, vc);
 
 	vga_wscons_console(vc);
+}
+
+int
+vgaisaioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	struct vga_isa_softc *sc = v;
+
+	return (vgaioctl(sc->sc_vc, cmd, data, flag, p));
+}
+
+int
+vgaisammap(v, offset, prot)
+	void *v;
+	off_t offset;
+	int prot;
+{
+	struct vga_isa_softc *sc = v;
+
+	return (vgammap(sc->sc_vc, offset, prot));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.6 1997/07/31 13:40:01 kstailey Exp $	*/
+/*	$OpenBSD: vga.c,v 1.7 1997/08/22 22:25:59 deraadt Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -63,8 +63,6 @@ struct wscons_emulfuncs vga_emulfuncs = {
 };
 
 int	vgaprint __P((void *, const char *));
-int	vgaioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	vgammap __P((void *, off_t, int));
 
 /*
  * The following functions implement back-end configuration grabbing
@@ -172,8 +170,8 @@ vga_wscons_attach(parent, vc, console)
         wo->wo_emulfuncs = &vga_emulfuncs;
 	wo->wo_emulfuncs_cookie = vc;
 
-        wo->wo_ioctl = vgaioctl;
-        wo->wo_mmap = vgammap;
+        wo->wo_ioctl = vc->vc_ioctl;
+        wo->wo_mmap = vc->vc_mmap;
         wo->wo_miscfuncs_cookie = vc;
 
         wo->wo_nrows = vc->vc_nrow;
@@ -222,6 +220,8 @@ vgaioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	/*struct vga_config *vc = v;*/
+
 	/* XXX */
 	return -1;
 }
@@ -232,7 +232,18 @@ vgammap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-	/* XXX */
+	struct vga_config *vc = v;
+
+	if (offset >= 0xb8000 && offset < 0xc0000) {
+		printf("%p\n", alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_memh) + offset - 0xb8000));
+		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_memh) + offset - 0xb8000);
+	}
+	if (offset >= 0x0000 && offset < 0x2000)
+		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_ioh_b));
+	if (offset >= 0x2000 && offset < 0x4000)
+		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_ioh_c));
+	if (offset >= 0x4000 && offset < 0x6000)
+		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_ioh_d));
 	return -1;
 }
 
