@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.20 2001/02/20 19:39:36 mickey Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.21 2001/03/01 07:37:17 bjc Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -674,9 +674,19 @@ am7990_intr(arg)
 	if ((isr & LE_C0_INTR) == 0)
 		return (0);
 
+#ifdef __vax__
+	/*
+	 * DEC needs this write order to the registers, don't know
+	 * the results on other arch's.  Ragge 991029
+	 */
+	isr &= ~LE_C0_INEA;
+	(*sc->sc_wrcsr)(sc, LE_CSR0, isr);
+	(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_INEA);
+#else
 	(*sc->sc_wrcsr)(sc, LE_CSR0,
 	    isr & (LE_C0_INEA | LE_C0_BABL | LE_C0_CERR | LE_C0_MISS | LE_C0_MERR |
 		   LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
+#endif
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
 #ifdef LEDEBUG
