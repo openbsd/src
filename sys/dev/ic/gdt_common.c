@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.21 2002/06/08 21:26:00 nordin Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.22 2002/06/11 03:34:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -35,11 +35,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <machine/bus.h>
 
@@ -49,14 +50,20 @@
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
+#include <dev/biovar.h>
 #include <dev/ic/gdtreg.h>
 #include <dev/ic/gdtvar.h>
+
+#include "bio.h"
 
 #ifdef GDT_DEBUG
 int gdt_maxcmds = GDT_MAXCMDS;
 #undef GDT_MAXCMDS
 #define GDT_MAXCMDS gdt_maxcmds
 #endif
+
+#define GDT_DRIVER_VERSION 1
+#define GDT_DRIVER_SUBVERSION 1
 
 int	gdt_async_event(struct gdt_softc *, int);
 void	gdt_chain(struct gdt_softc *);
@@ -72,6 +79,9 @@ struct gdt_ccb *gdt_get_ccb(struct gdt_softc *, int);
 int	gdt_internal_cache_cmd(struct scsi_xfer *);
 int	gdt_internal_cmd(struct gdt_softc *, u_int8_t, u_int16_t,
     u_int32_t, u_int32_t, u_int32_t);
+#if NBIO > 0
+int	gdt_ioctl(struct device *, u_long, caddr_t);
+#endif
 int	gdt_raw_scsi_cmd(struct scsi_xfer *);
 int	gdt_scsi_cmd(struct scsi_xfer *);
 void	gdt_start_ccbs(struct gdt_softc *);
@@ -97,6 +107,7 @@ struct scsi_device gdt_dev = {
 	NULL, NULL, NULL, NULL
 };
 
+int gdt_cnt = 0;
 u_int8_t gdt_polling;
 u_int8_t gdt_from_wait;
 struct gdt_softc *gdt_wait_gdt;
@@ -110,14 +121,23 @@ gdt_attach(gdt)
 	struct gdt_softc *gdt;
 {
 	u_int16_t cdev_cnt;
-	int i, id, drv_cyls, drv_hds, drv_secs, error;
+	int i, id, drv_cyls, drv_hds, drv_secs, error, nsegs;
 
 	gdt_polling = 1;
 	gdt_from_wait = 0;
+
+	if (bus_dmamem_alloc(gdt->sc_dmat, GDT_SCRATCH_SZ, PAGE_SIZE, 0,
+	    &gdt->sc_scratch_seg, 1, &nsegs, BUS_DMA_NOWAIT))
+	    panic("%s: bus_dmamem_alloc failed", gdt->sc_dev.dv_xname);
+	if (bus_dmamem_map(gdt->sc_dmat, &gdt->sc_scratch_seg, 1,
+	    GDT_SCRATCH_SZ, &gdt->sc_scratch, BUS_DMA_NOWAIT))
+	    panic("%s: bus_dmamem_map failed", gdt->sc_dev.dv_xname);
+
 	gdt_clear_events(gdt);
 
 	TAILQ_INIT(&gdt->sc_free_ccb);
 	TAILQ_INIT(&gdt->sc_ccbq);
+	TAILQ_INIT(&gdt->sc_ucmdq);
 	LIST_INIT(&gdt->sc_queue);
 
 	/* Initialize the ccbs */
@@ -375,6 +395,12 @@ gdt_attach(gdt)
 	    gdt->sc_raw_feat, gdt->sc_cache_feat);
 #endif
 
+#if NBIO > 0
+	if (bio_register(&gdt->sc_dev, gdt_ioctl) != 0)
+		panic("%s: controller registration failed");
+#endif
+	gdt_cnt++;
+
 	config_found(&gdt->sc_dev, &gdt->sc_link, scsiprint);
 
 	gdt->sc_raw_link = malloc(gdt->sc_bus_cnt * sizeof (struct scsi_link),
@@ -477,6 +503,9 @@ gdt_scsi_cmd(xs)
 	struct gdt_softc *gdt = link->adapter_softc;
 	u_int8_t target = link->target;
 	struct gdt_ccb *ccb;
+#if 0
+	struct gdt_ucmd *ucmd;
+#endif
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
@@ -506,7 +535,7 @@ gdt_scsi_cmd(xs)
 	if (xs != LIST_FIRST(&gdt->sc_queue))
 		gdt_enqueue(gdt, xs, 0);
 
-	while ((xs = gdt_dequeue(gdt))) {
+	while ((xs = gdt_dequeue(gdt)) != NULL) {
 		xs->error = XS_NOERROR;
 		ccb = NULL;
 		link = xs->sc_link;
@@ -864,9 +893,9 @@ gdt_internal_cache_cmd(xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
-		strcpy(inq.vendor, "ICP    ");
+		strcpy(inq.vendor, "ICP	   ");
 		sprintf(inq.product, "Host drive  #%02d", target);
-		strcpy(inq.revision, "   ");
+		strcpy(inq.revision, "	 ");
 		gdt_copy_internal_data(xs, (u_int8_t *)&inq, sizeof inq);
 		break;
 
@@ -1103,26 +1132,13 @@ void
 gdtminphys(bp)
 	struct buf *bp;
 {
-#if 0
-	u_int8_t *buf = bp->b_data;
-	paddr_t pa;
-	long off;
-#endif
-
 	GDT_DPRINTF(GDT_D_MISC, ("gdtminphys(0x%x) ", bp));
 
-#if 1
 	/* As this is way more than MAXPHYS it's really not necessary. */
-	if (bp->b_bcount > ((GDT_MAXOFFSETS - 1) * PAGE_SIZE))
+	if ((GDT_MAXOFFSETS - 1) * PAGE_SIZE < MAXPHYS &&
+	    bp->b_bcount > ((GDT_MAXOFFSETS - 1) * PAGE_SIZE))
 		bp->b_bcount = ((GDT_MAXOFFSETS - 1) * PAGE_SIZE);
-#else
-	for (off = PAGE_SIZE, pa = vtophys(buf); off < bp->b_bcount;
-	    off += PAGE_SIZE)
-		if (pa + off != vtophys(buf + off)) {
-			bp->b_bcount = off;
-			break;
-		}
-#endif
+
 	minphys(bp);
 }
 
@@ -1196,7 +1212,7 @@ gdt_internal_cmd(gdt, service, opcode, arg1, arg2, arg3)
 				    GDT_IOCTL_PARAM_SIZE, (u_int16_t)arg3);
 				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
 				    GDT_IOCTL_P_PARAM,
-				    vtophys(gdt->sc_scratch));
+				    gdt->sc_scratch_seg.ds_addr);
 			} else {
 				gdt_enc16(gdt->sc_cmd + GDT_CMD_UNION +
 				    GDT_CACHE_DEVICENO, (u_int16_t)arg1);
@@ -1367,3 +1383,130 @@ gdt_watchdog(arg)
 	gdt_start_ccbs(gdt);
 	GDT_UNLOCK_GDT(gdt, lock);
 }
+
+#if NBIO > 0
+int
+gdt_ioctl(dev, cmd, addr)
+	struct device *dev;
+	u_long cmd;
+	caddr_t addr;
+{
+	int error = 0;
+	struct gdt_dummy *dummy;
+
+	switch (cmd) {
+	case GDT_IOCTL_DUMMY:
+		dummy = (struct gdt_dummy *)addr;
+		printf("%s: GDT_IOCTL_DUMMY %d\n", dev->dv_xname, dummy->x++);
+		break;
+
+	case GDT_IOCTL_GENERAL: {
+		gdt_ucmd_t *ucmd;
+		struct gdt_softc *gdt = (struct gdt_softc *)dev;
+		gdt_lock_t lock;
+
+		ucmd = (gdt_ucmd_t *)addr;
+		lock = GDT_LOCK_GDT(gdt);
+		TAILQ_INSERT_TAIL(&gdt->sc_ucmdq, ucmd, links);
+		ucmd->complete_flag = FALSE;
+		GDT_UNLOCK_GDT(gdt, lock);
+		gdt_chain(gdt);
+		if (!ucmd->complete_flag)
+			(void)tsleep((void *)ucmd, PCATCH | PRIBIO, "gdtucw",
+			    0);
+		break;
+	}
+
+	case GDT_IOCTL_DRVERS:
+		((gdt_drvers_t *)addr)->vers = 
+		    (GDT_DRIVER_VERSION << 8) | GDT_DRIVER_SUBVERSION;
+		break;
+
+	case GDT_IOCTL_CTRCNT:
+		((gdt_ctrcnt_t *)addr)->cnt = gdt_cnt;
+		break;
+
+#ifdef notyet
+	case GDT_IOCTL_CTRTYPE: {
+		gdt_ctrt_t *p;
+		struct gdt_softc *gdt = (struct gdt_softc *)dev;
+	    
+		p = (gdt_ctrt_t *)addr;
+		p->oem_id = 0x8000;
+		p->type = 0xfd;
+		p->info = (gdt->sc_bus << 8) | (gdt->sc_slot << 3);
+		p->ext_type = 0x6000 | gdt->sc_subdevice;
+		p->device_id = gdt->sc_device;
+		p->sub_device_id = gdt->sc_subdevice;
+		break;
+	}
+#endif
+
+	case GDT_IOCTL_OSVERS: {
+		gdt_osv_t *p;
+
+		p = (gdt_osv_t *)addr;
+		p->oscode = 10;
+		p->version = osrelease[0] - '0';
+		if (osrelease[1] == '.')
+			p->subversion = osrelease[2] - '0';
+		else
+			p->subversion = 0;
+		if (osrelease[3] == '.')
+			p->revision = osrelease[4] - '0';
+		else
+			p->revision = 0;
+		strcpy(p->name, ostype);
+		break;
+	}
+
+#ifdef notyet
+	case GDT_IOCTL_EVENT: {
+		gdt_event_t *p;
+		gdt_lock_t lock;
+
+		p = (gdt_event_t *)addr;
+		if (p->erase == 0xff) {
+			if (p->dvr.event_source == GDT_ES_TEST)
+				p->dvr.event_data.size =
+				    sizeof(p->dvr.event_data.eu.test);
+			else if (p->dvr.event_source == GDT_ES_DRIVER)
+				p->dvr.event_data.size =
+				    sizeof(p->dvr.event_data.eu.driver);
+			else if (p->dvr.event_source == GDT_ES_SYNC)
+				p->dvr.event_data.size =
+				    sizeof(p->dvr.event_data.eu.sync);
+			else
+				p->dvr.event_data.size =
+				    sizeof(p->dvr.event_data.eu.async);
+			lock = GDT_LOCK_GDT(gdt);
+			gdt_store_event(p->dvr.event_source, p->dvr.event_idx,
+			    &p->dvr.event_data);
+			GDT_UNLOCK_GDT(gdt, lock);
+		} else if (p->erase == 0xfe) {
+			lock = GDT_LOCK_GDT(gdt);
+			gdt_clear_events();
+			GDT_UNLOCK_GDT(gdt, lock);
+		} else if (p->erase == 0) {
+			p->handle = gdt_read_event(p->handle, &p->dvr);
+		} else {
+			gdt_readapp_event((u_int8_t)p->erase, &p->dvr);
+		}
+		break;
+	}
+#endif
+
+	case GDT_IOCTL_STATIST:
+#if 0
+		bcopy(&gdt_stat, (gdt_statist_t *)addr, sizeof gdt_stat);
+#else
+		error = EOPNOTSUPP;
+#endif
+		break;
+
+	default:
+		error = EINVAL;
+	}
+	return (error);
+}
+#endif

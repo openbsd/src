@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtreg.h,v 1.1 2000/02/07 00:33:03 niklas Exp $	*/
+/*	$OpenBSD: gdtreg.h,v 1.2 2002/06/11 03:34:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -115,6 +115,7 @@
 #define GDT_IO_CHANNEL		0x20000		/* default IO channel */
 #define GDT_INVALID_CHANNEL	0xffff		/* invalid channel */
 
+/* XXX not belonging here */
 /* IOCTLs */
 #define GDTIOCTL_MASK	    ('J' << 8)
 #define GDTIOCTL_GENERAL    (GDTIOCTL_MASK | 0)	/* general IOCTL */

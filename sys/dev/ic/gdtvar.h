@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.6 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.7 2002/06/11 03:34:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -34,6 +34,176 @@
  * from both ICP-Vortex and Öko.neT.  I want to thank them for their support.
  */
 
+#define GDT_IOCTL_DUMMY _IOWR('B', 32, struct gdt_dummy)
+struct gdt_dummy {
+	void *cookie;
+	int x;
+};
+
+/* XXX Is this pragma necessary?  */
+#pragma pack(1)
+
+#define GDT_SCRATCH_SZ 4096
+
+#define GDT_IOCTL_GENERAL _IOWR('B', 33, gdt_ucmd_t)	/* general IOCTL */
+typedef struct gdt_ucmd {
+	void *cookie;
+	u_int16_t io_node;
+	u_int16_t service;
+	u_int32_t timeout;
+	u_int16_t status;
+	u_int32_t info;
+
+	u_int32_t BoardNode;			/* board node (always 0) */
+	u_int32_t CommandIndex;			/* command number */
+	u_int16_t OpCode;			/* the command (READ,..) */
+	union {
+		struct {
+			u_int16_t DeviceNo;	/* number of cache drive */
+			u_int32_t BlockNo;	/* block number */
+			u_int32_t BlockCnt;	/* block count */
+			void	*DestAddr;	/* data */
+		} cache;			/* cache service cmd. str. */
+		struct {
+			u_int16_t param_size;	/* size of p_param buffer */
+			u_int32_t subfunc;	/* IOCTL function */
+			u_int32_t channel;	/* device */
+			void	*p_param;	/* data */
+		} ioctl;			/* IOCTL command structure */
+		struct {
+			u_int16_t reserved;
+			u_int32_t direction;	/* data direction */
+			u_int32_t mdisc_time;	/* disc. time (0: no timeout)*/
+			u_int32_t mcon_time;	/* connect time(0: no to.) */
+			void	*sdata;		/* dest. addr. (if s/g: -1) */
+			u_int32_t sdlen;	/* data length (bytes) */
+			u_int32_t clen;		/* SCSI cmd. length(6,10,12) */
+			u_int8_t cmd[12];	/* SCSI command */
+			u_int8_t target;	/* target ID */
+			u_int8_t lun;		/* LUN */
+			u_int8_t bus;		/* SCSI bus number */
+			u_int8_t priority;	/* only 0 used */
+			u_int32_t sense_len;	/* sense data length */
+			void	*sense_data;	/* sense data addr. */
+			u_int32_t link_p;	/* linked cmds (not supp.) */
+		} raw;				/* raw service cmd. struct. */
+	} u;
+	u_int8_t data[GDT_SCRATCH_SZ];
+	int	complete_flag;
+	TAILQ_ENTRY(gdt_ucmd) links;
+} gdt_ucmd_t;
+
+#define GDT_IOCTL_DRVERS _IOWR('B', 34, int)	/* get driver version */
+typedef struct gdt_drvers {
+	void *cookie;
+	int vers;
+} gdt_drvers_t;
+
+#define GDT_IOCTL_CTRTYPE _IOR('B', 35, gdt_ctrt_t)	/* get ctr. type */
+typedef struct gdt_ctrt {
+	void *cookie;
+	u_int16_t io_node;
+	u_int16_t oem_id;
+	u_int16_t type;
+	u_int32_t info;
+	u_int8_t access;
+	u_int8_t remote;
+	u_int16_t ext_type;
+	u_int16_t device_id;
+	u_int16_t sub_device_id;
+} gdt_ctrt_t;
+
+#define GDT_IOCTL_OSVERS _IOR('B', 36, gdt_osv_t)	/* get OS version */
+typedef struct gdt_osv {
+	void *cookie;
+	u_int8_t oscode;
+	u_int8_t version;
+	u_int8_t subversion;
+	u_int16_t revision;
+	char	name[64];
+} gdt_osv_t;
+
+#define GDT_IOCTL_CTRCNT _IOR('B', 37, int)	/* get ctr. count */
+typedef struct gdt_ctrcnt {
+	void *cookie;
+	int cnt;
+} gdt_ctrcnt_t;
+
+#define GDT_IOCTL_EVENT _IOWR('B', 38, gdt_event_t)	/* get event */
+
+typedef struct {
+	u_int16_t size;		/* size of structure */
+	union {
+		char	stream[16];
+		struct {
+			u_int16_t ionode;
+			u_int16_t service;
+			u_int32_t index;
+		} driver;
+		struct {
+			u_int16_t ionode;
+			u_int16_t service;
+			u_int16_t status;
+			u_int32_t info;
+			u_int8_t scsi_coord[3];
+		} async;
+		struct {
+			u_int16_t ionode;
+			u_int16_t service;
+			u_int16_t status;
+			u_int32_t info;
+			u_int16_t hostdrive;
+			u_int8_t scsi_coord[3];
+			u_int8_t sense_key;
+		} sync;
+		struct {
+			u_int32_t l1, l2, l3, l4;
+		} test;
+	} eu;
+	u_int32_t severity;
+	u_int8_t event_string[256];          
+} gdt_evt_data;
+#define GDT_ES_ASYNC	1
+#define GDT_ES_DRIVER	2
+#define GDT_ES_TEST	3
+#define GDT_ES_SYNC	4
+
+/* dvrevt structure */
+typedef struct {
+	u_int32_t first_stamp;
+	u_int32_t last_stamp;
+	u_int16_t same_count;
+	u_int16_t event_source;
+	u_int16_t event_idx;
+	u_int8_t application;
+	u_int8_t reserved;
+	gdt_evt_data event_data;
+} gdt_evt_str;
+
+typedef struct gdt_event {
+	void *cookie;
+	int erase;
+	int handle;
+	gdt_evt_str dvr;
+} gdt_event_t;
+
+#define GDT_IOCTL_STATIST _IOR('B', 39, gdt_statist_t) /* get statistics */
+typedef struct gdt_statist {
+	void *cookie;
+	u_int16_t io_count_act;
+	u_int16_t io_count_max;
+	u_int16_t req_queue_act;
+	u_int16_t req_queue_max;
+	u_int16_t cmd_index_act;
+	u_int16_t cmd_index_max;
+	u_int16_t sg_count_act;
+	u_int16_t sg_count_max;
+} gdt_statist_t;
+
+#pragma pack()
+
+#ifdef _KERNEL
+
 /* Debugging */
 #ifdef GDT_DEBUG
 #define GDT_DPRINTF(mask, args) if (gdt_debug & (mask)) printf args
@@ -52,7 +222,6 @@ extern int gdt_debug;
 #define GDT_TIMEOUT		100000000	/* 100000 * 1us = 100s */
 #define GDT_POLL_TIMEOUT	10000000	/* 10000 * 1us = 10s */
 #define GDT_WATCH_TIMEOUT	10000		/* 10000 * 1ms = 10s */
-#define GDT_SCRATCH_SZ		4096		/* 4KB scratch buffer */
 
 /* Context structure for interrupt services */
 struct gdt_intr_ctx {
@@ -68,6 +237,7 @@ struct gdt_intr_ctx {
 struct gdt_ccb {
 	TAILQ_ENTRY(gdt_ccb) gc_chain;
 	struct scsi_xfer *gc_xs;
+	struct gdt_ucmd *gc_ucmd;
 	bus_dmamap_t gc_dmamap_xfer;
 	int gc_timeout;
 	u_int32_t gc_info;
@@ -128,6 +298,7 @@ struct gdt_softc {
 
 	struct gdt_ccb sc_ccbs[GDT_MAXCMDS];
 	TAILQ_HEAD(, gdt_ccb) sc_free_ccb, sc_ccbq;
+	TAILQ_HEAD(, gdt_ucmd) sc_ucmdq;
 	LIST_HEAD(, scsi_xfer) sc_queue;
 	struct scsi_xfer *sc_queuelast;
 
@@ -138,8 +309,9 @@ struct gdt_softc {
 
 	u_int32_t sc_info;
 	u_int32_t sc_info2;
+	bus_dma_segment_t sc_scratch_seg;
+	caddr_t sc_scratch;
 	u_int16_t sc_status;
-	u_int8_t sc_scratch[GDT_SCRATCH_SZ];
 
 	u_int8_t sc_bus_cnt;
 	u_int8_t sc_bus_id[GDT_MAXBUS];
@@ -271,3 +443,5 @@ gdt_dec32(addr)
 #endif
 
 extern u_int8_t gdt_polling;
+
+#endif
