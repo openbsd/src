@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_root.c,v 1.2 2001/08/13 20:19:33 camield Exp $ */
+/* $OpenBSD: pop_root.c,v 1.3 2001/08/16 19:58:16 camield Exp $ */
 
 /*
  * Main daemon code: invokes the actual POP handling routines. Most calls
@@ -9,7 +9,6 @@
  * standalone.c		if not running via an inetd clone (POP_STANDALONE)
  * virtual.c		if supporting virtual domains (POP_VIRTUAL)
  * auth_passwd.c	if using passwd or *BSD (AUTH_PASSWD && !VIRTUAL_ONLY)
- * auth_shadow.c	if using shadow (AUTH_SHADOW && !VIRTUAL_ONLY)
  * auth_pam.c		if using PAM (AUTH_PAM || AUTH_PAM_USERPASS)
  */
 

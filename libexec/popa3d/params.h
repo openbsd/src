@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.4 2001/08/16 19:54:20 camield Exp $ */
+/* $OpenBSD: params.h,v 1.5 2001/08/16 19:58:16 camield Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -103,14 +103,12 @@
  * Choose the password authentication method your system uses:
  *
  * AUTH_PASSWD		Use getpwnam(3) only, for *BSD or readable passwd;
- * AUTH_SHADOW		Use shadow passwords directly (not via PAM);
  * AUTH_PAM		Use PAM in the old-fashioned way;
  * AUTH_PAM_USERPASS	Talk to pam_userpass via Linux-PAM binary prompts.
  *
  * Note that there's no built-in password aging support.
  */
 #define AUTH_PASSWD			1
-#define AUTH_SHADOW			0
 #define AUTH_PAM			0
 #define AUTH_PAM_USERPASS		0
 
@@ -120,7 +118,7 @@
 
 #endif
 
-#if POP_VIRTUAL || AUTH_PASSWD || AUTH_SHADOW
+#if POP_VIRTUAL || AUTH_PASSWD
 
 /*
  * A salt used to waste some CPU time on dummy crypt(3) calls and make
