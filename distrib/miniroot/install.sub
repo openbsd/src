@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.266 2002/10/27 14:05:21 krw Exp $
+#	$OpenBSD: install.sub,v 1.267 2002/10/28 00:36:04 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1520,44 +1520,71 @@ set_timezone() {
 	done
 }
 
+# Remove $1 from $SETSDONE, taking account of the different
+# possible suffixes - none for bsd, .tgz or .tar.gz for the
+# other sets.
+set_not_done () {
+	local _set=$1
+
+	SETSDONE=`rmel $_set $SETSDONE`
+	SETSDONE=`rmel ${_set}.tgz $SETSDONE`
+	SETSDONE=`rmel ${_set}.tar.tgz $SETSDONE`
+}
+
+# Check that required sets were successfully installed by checking
+# for the presence of a 'random' selection of their contents.
+#
+# Required sets are:
+#	1) bsd
+#	2) baseXX
+#	3) etcXX
+#
+# If a 'problem' set is found, remove it from SETSDONE list.
 sane_install() {
-	if [ ! -s /mnt/bsd ]; then
+	local _insane
+
+	# Check if bsd is installed and >0 bytes in size.
+	if [[ ! -s /mnt/bsd ]]; then
+		_insane=y
+		set_not_done bsd
 		cat << __EOT
 
-Warning, no kernel (/mnt/bsd) installed! You did not unpack a file set
-containing a kernel -- this is needed to boot. Please note that the install
-kernel is *not* suitable for general use.
+*** /bsd is not present in the installed system, or is 0 bytes long. OpenBSD
+    cannot boot without a valid kernel! 'bsd' must be (re)installed.
 __EOT
-	elif [ ! -f /mnt/bin/cat ]; then
-		cat << __EOT
-
-You still do not have a /bin/cat in your filesystem (i.e. a sample random file
-which you probably want). This seems to indicate that you are still missing
-important distribution files.
-__EOT
-	elif [ ! -x /mnt/dev/MAKEDEV ]; then
-		cat << __EOT
-
-No /dev/MAKEDEV has been installed yet.
-__EOT
-
-	elif [ ! -d /mnt/etc -o ! -d /mnt/usr/share/zoneinfo -o ! -d /mnt/dev ]; then
-		cat << __EOT
-
-One or more of /etc, /usr/share/zoneinfo or /dev is missing. Did you
-forget to extract a required set?
-__EOT
-	else
-		return 0
 	fi
 
-	cat << __EOT
+	# Check if baseXX is installed.
+	if [[ ! -x /mnt/bin/cat || ! -x /mnt/dev/MAKEDEV ]]; then
+		_insane=y
+		set_not_done base${VERSION}
+		cat << __EOT
 
-You can now try to install the missing set(s), or you can enter '!' at the
-prompt to escape to a shell and fix things by hand.
+*** One or both of the executable files /bin/cat and /dev/MAKEDEV are not
+    present in the installed system. This indicates that executable files
+    OpenBSD requires are missing. 'base${VERSION}' must be (re)installed.
 __EOT
+	fi
 
-	return 1
+	# Check if etcXX is installed.
+	if [[ ! -d /mnt/etc || ! -d /mnt/usr/share/zoneinfo || ! -d /mnt/dev ]]; then
+		_insane=y
+		set_not_done etc${VERSION}
+		cat << __EOT
+
+*** One or more of the directories /etc, /usr/share/zoneinfo and /dev are not
+    present in the installed system. This indicates that directories OpenBSD
+    requires are missing. 'etc${VERSION}' must be (re)installed.
+__EOT
+	fi
+
+	resp=
+	[[ -n $_insane ]] && ask "\nDo you want to (re)install the problem sets?" y
+
+	case $resp in
+	Y*|y*)	return 1 ;;
+	*)	return 0 ;;
+	esac
 }
 
 # Ask the user for locations of sets, and then install whatever sets the
@@ -1578,39 +1605,18 @@ __EOT
 Sets can be located on a (m)ounted filesystem; a (c)drom, (d)isk or (t)ape
 device; or a (f)tp, (n)fs or (h)ttp server.
 __EOT
-		ask "Where are the ${MODE} sets you want to use? (m, c, f, etc.)"
+		ask "Where are the ${MODE} sets? (or 'done')"
 
 		case $resp in
-		c*|C*)	install_cdrom
-			;;
-		d*|D*)	install_disk
-			;;
-		f*|F*)	install_url ftp
-			;;
-		h*|H*)	install_url http
-			;;
-		m*|M*)	install_mounted_fs /mnt
-			;;
-		n*|N*)	install_nfs
-			;;
-		t*|T*)	install_tape
-			;;
-		*)	echo "Invalid response: $resp"
-			;;
-		esac
-
-		# Give the user the opportunity to extract more sets.
-
-		ask "Extract more sets?" n
-		case $resp in
-		n*|N*)	# Perform sanity checks...
-			sane_install && break
-			ask "\nDo you want to extract more sets?" y
-			case $resp in 
-			n*|N*)	break
-				;;
-			esac
-			;;
+		done)	sane_install && return ;;
+		c*|C*)	install_cdrom ;;
+		d*|D*)	install_disk ;;
+		f*|F*)	install_url ftp ;;
+		h*|H*)	install_url http ;;
+		m*|M*)	install_mounted_fs /mnt ;;
+		n*|N*)	install_nfs ;;
+		t*|T*)	install_tape ;;
+		*)	;;
 		esac
 	done
 }
@@ -1990,8 +1996,9 @@ IFDEVS=`get_ifdevs`
 # Devices created with makedev().
 DEVSMADE=
 
+# $MDSETS is the list of kernels for an architecture.
 # extra "site" set can be provided by person doing install or upgrade.
-THESETS="base etc misc comp man game xbase xshare xfont xserv $MDSETS site"
+THESETS="$MDSETS base etc misc comp man game xbase xshare xfont xserv site"
 
 # Global variable using during sets installation
 SETS=
