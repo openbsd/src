@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstForEachFrom.c,v 1.6 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: lstForEachFrom.c,v 1.7 2000/06/10 01:41:07 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.6 2000/06/10 01:32:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.7 2000/06/10 01:41:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ void
 Lst_ForEachFrom(ln, proc, d)
     LstNode    	  	ln;
     ForEachProc		proc;
-    ClientData		d;
+    void		*d;
 {
     ListNode		tln;
 

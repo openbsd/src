@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprite.h,v 1.7 2000/03/26 16:21:33 espie Exp $	*/
+/*	$OpenBSD: sprite.h,v 1.8 2000/06/10 01:41:06 espie Exp $	*/
 /*	$NetBSD: sprite.h,v 1.6 1996/11/06 17:59:22 christos Exp $	*/
 
 /*
@@ -41,12 +41,6 @@
  *	from: @(#)sprite.h	8.1 (Berkeley) 6/6/93
  */
 
-/*
- * sprite.h --
- *
- * Common constants and type declarations for Sprite.
- */
-
 #ifndef _SPRITE
 #define _SPRITE
 
@@ -55,7 +49,6 @@
  * A boolean type is defined as an integer, not an enum. This allows a
  * boolean argument to be an expression that isn't strictly 0 or 1 valued.
  */
-
 typedef int Boolean;
 #ifndef TRUE
 #define TRUE	1
@@ -64,36 +57,8 @@ typedef int Boolean;
 #define FALSE	0
 #endif /* FALSE */
 
-/*
- * Functions that must return a status can return a ReturnStatus to
- * indicate success or type of failure.
- */
-
 typedef int  ReturnStatus;
-
-/*
- * The following statuses overlap with the first 2 generic statuses
- * defined in status.h:
- *
- * SUCCESS			There was no error.
- * FAILURE			There was a general error.
- */
-
-#define	SUCCESS			0x00000000
-#define	FAILURE			0x00000001
-
-
-#ifndef NULL
-#define NULL	 	0
-#endif /* NULL */
-
-/*
- * An address is just a pointer in C.  It is defined as a character pointer
- * so that address arithmetic will work properly, a byte at a time.
- */
-
-typedef char *Address;
-
-typedef void *ClientData;
+#define	SUCCESS			0
+#define	FAILURE			1
 
 #endif /* _SPRITE */

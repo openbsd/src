@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInt.h,v 1.8 1999/12/18 21:53:34 espie Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.9 2000/06/10 01:41:07 espie Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ typedef struct ListNode {
 				     * node may not be deleted until count
 				     * goes to 0 */
  	    	    	flags:8;    /* Node status flags */
-	ClientData	datum;	    /* datum associated with this element */
+	void		*datum;	    /* datum associated with this element */
 } *ListNode;
 /*
  * Flags required for synchronization

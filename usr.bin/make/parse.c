@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.41 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.42 2000/06/10 01:41:06 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.41 2000/06/10 01:32:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.42 2000/06/10 01:41:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,18 +248,18 @@ static struct {
 static void ParseErrorInternal __P((char *, unsigned long, int, char *, ...));
 static void ParseVErrorInternal __P((char *, unsigned long, int, char *, va_list));
 static int ParseFindKeyword __P((char *));
-static void ParseLinkSrc __P((ClientData, ClientData));
-static int ParseDoOp __P((ClientData, ClientData));
-static int ParseAddDep __P((ClientData, ClientData));
+static void ParseLinkSrc __P((void *, void *));
+static int ParseDoOp __P((void *, void *));
+static int ParseAddDep __P((void *, void *));
 static void ParseDoSrc __P((int, char *, Lst));
-static int ParseFindMain __P((ClientData, ClientData));
-static void ParseAddDir __P((ClientData, ClientData));
-static void ParseClearPath __P((ClientData));
+static int ParseFindMain __P((void *, void *));
+static void ParseAddDir __P((void *, void *));
+static void ParseClearPath __P((void *));
 static void ParseDoDependency __P((char *));
-static void ParseAddCmd __P((ClientData, ClientData));
+static void ParseAddCmd __P((void *, void *));
 static int __inline ParseReadc __P((void));
 static void ParseUnreadc __P((int));
-static void ParseHasCommands __P((ClientData));
+static void ParseHasCommands __P((void *));
 static void ParseDoInclude __P((char *));
 #ifdef SYSVINCLUDE
 static void ParseTraditionalInclude __P((char *));
@@ -430,8 +430,8 @@ Parse_Error(va_alist)
  */
 static void
 ParseLinkSrc(pgnp, cgnp)
-    ClientData     pgnp;	/* The parent node */
-    ClientData     cgnp;	/* The child node */
+    void *pgnp;	/* The parent node */
+    void *cgnp;	/* The child node */
 {
     GNode          *pgn = (GNode *)pgnp;
     GNode          *cgn = (GNode *)cgnp;
@@ -461,9 +461,9 @@ ParseLinkSrc(pgnp, cgnp)
  */
 static int
 ParseDoOp (gnp, opp)
-    ClientData     gnp;		/* The node to which the operator is to be
-				 * applied */
-    ClientData     opp;		/* The operator to apply */
+    void *gnp;		/* The node to which the operator is to be
+			 * applied */
+    void *opp;		/* The operator to apply */
 {
     GNode          *gn = (GNode *) gnp;
     int             op = *(int *) opp;
@@ -538,8 +538,8 @@ ParseDoOp (gnp, opp)
  */
 static int
 ParseAddDep(pp, sp)
-    ClientData pp;
-    ClientData sp;
+    void *pp;
+    void *sp;
 {
     GNode *p = (GNode *) pp;
     GNode *s = (GNode *) sp;
@@ -691,8 +691,8 @@ ParseDoSrc (tOp, src, allsrc)
  */
 static int
 ParseFindMain(gnp, dummy)
-    ClientData	  gnp;	    /* Node to examine */
-    ClientData    dummy;
+    void *gnp;	    /* Node to examine */
+    void *dummy;
 {
     GNode   	  *gn = (GNode *) gnp;
     if ((gn->type & OP_NOTARGET) == 0) {
@@ -716,8 +716,8 @@ ParseFindMain(gnp, dummy)
  */
 static void
 ParseAddDir(path, name)
-    ClientData	  path;
-    ClientData    name;
+    void *path;
+    void *name;
 {
     Dir_AddDir((Lst)path, (char *)name);
 }
@@ -734,7 +734,7 @@ ParseAddDir(path, name)
  */
 static void
 ParseClearPath(path)
-    ClientData path;
+    void *path;
 {
     Dir_ClearPath((Lst)path);
 }
@@ -1568,8 +1568,8 @@ Parse_DoVar (line, ctxt)
  */
 static void
 ParseAddCmd(gnp, cmd)
-    ClientData gnp;	/* the node to which the command is to be added */
-    ClientData cmd;	/* the command to add */
+    void *gnp;	/* the node to which the command is to be added */
+    void *cmd;	/* the command to add */
 {
     GNode *gn = (GNode *)gnp;
     /* if target already supplied, ignore commands */
@@ -1600,7 +1600,7 @@ ParseAddCmd(gnp, cmd)
  */
 static void
 ParseHasCommands(gnp)
-    ClientData 	  gnp;	    /* Node to examine */
+    void *gnp;	    /* Node to examine */
 {
     GNode *gn = (GNode *) gnp;
     if (!Lst_IsEmpty(gn->commands)) {
@@ -2027,12 +2027,12 @@ ParseEOF (opened)
     if (opened && curFILE)
 	(void) fclose (curFILE);
     if (curPTR) {
-	free((Address) curPTR->str);
-	free((Address) curPTR);
+	free(curPTR->str);
+	free(curPTR);
     }
     curFILE = ifile->F;
     curPTR = ifile->p;
-    free ((Address)ifile);
+    free(ifile);
     return (CONTINUE);
 }
 
@@ -2359,7 +2359,7 @@ test_char:
 		    break;
 		/*FALLTHRU*/
 	    case COND_PARSE:
-		free ((Address) line);
+		free(line);
 		line = ParseReadLine();
 		break;
 	    case COND_INVALID:

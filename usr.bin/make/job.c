@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.27 2000/06/10 01:32:22 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.28 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.27 2000/06/10 01:32:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.28 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -292,14 +292,14 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 #define W_SETEXITSTATUS(st, val) W_SETMASKED(st, val, WEXITSTATUS)
 
 
-static void JobCondPassSig __P((ClientData, ClientData));
+static void JobCondPassSig __P((void *, void *));
 static void JobPassSig __P((int));
-static int JobCmpPid __P((ClientData, ClientData));
-static int JobPrintCommand __P((ClientData, ClientData));
-static void JobSaveCommand __P((ClientData, ClientData));
+static int JobCmpPid __P((void *, void *));
+static int JobPrintCommand __P((void *, void *));
+static void JobSaveCommand __P((void *, void *));
 static void JobClose __P((Job *));
 #ifdef REMOTE
-static int JobCmpRmtID __P((Job *, ClientData));
+static int JobCmpRmtID __P((Job *, void *));
 # ifdef RMT_WILL_WATCH
 static void JobLocalInput __P((int, Job *));
 # endif
@@ -329,8 +329,8 @@ static void JobRestartJobs __P((void));
  */
 static void
 JobCondPassSig(jobp, signop)
-    ClientData	    	jobp;	    /* Job to biff */
-    ClientData	    	signop;	    /* Signal to send it */
+    void *jobp;	    	/* Job to biff */
+    void *signop;	/* Signal to send it */
 {
     Job	*job = (Job *) jobp;
     int	signo = *(int *) signop;
@@ -450,10 +450,10 @@ JobPassSig(signo)
  */
 static int
 JobCmpPid(job, pid)
-    ClientData        job;	/* job to examine */
-    ClientData        pid;	/* process id desired */
+    void *job;	/* job to examine */
+    void *pid;	/* process id desired */
 {
-    return *(int *) pid - ((Job *) job)->pid;
+    return *(int *)pid - ((Job *)job)->pid;
 }
 
 #ifdef REMOTE
@@ -472,8 +472,8 @@ JobCmpPid(job, pid)
  */
 static int
 JobCmpRmtID(job, rmtID)
-    ClientData      job;	/* job to examine */
-    ClientData      rmtID;	/* remote id desired */
+    void *job;	/* job to examine */
+    void *rmtID;	/* remote id desired */
 {
     return *(int *) rmtID - *(int *) job->rmtID;
 }
@@ -508,8 +508,8 @@ JobCmpRmtID(job, rmtID)
  */
 static int
 JobPrintCommand(cmdp, jobp)
-    ClientData    cmdp;	    	    /* command string to print */
-    ClientData    jobp;	    	    /* job for which to print it */
+    void *cmdp;	    	    /* command string to print */
+    void *jobp;	    	    /* job for which to print it */
 {
     Boolean	  noSpecials;	    /* true if we shouldn't worry about
 				     * inserting special commands into
@@ -666,11 +666,13 @@ JobPrintCommand(cmdp, jobp)
  */
 static void
 JobSaveCommand(cmd, gn)
-    ClientData   cmd;
-    ClientData   gn;
+    void *cmd;
+    void *gn;
 {
-    cmd = (ClientData) Var_Subst((char *) cmd, (GNode *) gn, FALSE);
-    Lst_AtEnd(postCommands->commands, cmd);
+    char *result;
+
+    result = Var_Subst((char *)cmd, (GNode *)gn, FALSE);
+    Lst_AtEnd(postCommands->commands, result);
 }
 
 
@@ -960,10 +962,10 @@ JobFinish(job, status)
 	Lst_ForEachFrom(job->tailCmds, JobSaveCommand, job->node);
 	job->node->made = MADE;
 	Make_Update(job->node);
-	free((Address)job);
+	free(job);
     } else if (*status != 0) {
 	errors += 1;
-	free((Address)job);
+	free(job);
     }
 
     JobRestartJobs();
@@ -1841,11 +1843,11 @@ JobStart(gn, flags, previous)
  		Lst_ForEachFrom(job->tailCmds, JobSaveCommand, job->node);
 		Make_Update(job->node);
 	    }
-	    free((Address)job);
-	    return(JOB_FINISHED);
+	    free(job);
+	    return JOB_FINISHED;
 	} else {
-	    free((Address)job);
-	    return(JOB_ERROR);
+	    free(job);
+	    return JOB_ERROR;
 	}
     } else {
 	(void) fflush(job->cmdFILE);
@@ -2658,7 +2660,7 @@ Job_ParseShell(line)
 	 	  
     words = brk_string(line, &wordCount, TRUE, &shellArgv);
 
-    memset((Address)&newShell, 0, sizeof(newShell));
+    memset(&newShell, 0, sizeof(newShell));
 
     /*
      * Parse the specification by keyword

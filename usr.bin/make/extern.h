@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2000/06/10 01:32:22 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ void Error __P((char *, ...));
 void Fatal __P((char *, ...));
 void Punt __P((char *, ...));
 void DieHorribly __P((void));
-void PrintAddr __P((ClientData));
+void PrintAddr __P((void *));
 void Finish __P((int));
 
 /* make.c */
@@ -114,7 +114,7 @@ char *interval_dup __P((const char *begin, const char *end));
 void Suff_ClearSuffixes __P((void));
 Boolean Suff_IsTransform __P((char *));
 GNode *Suff_AddTransform __P((char *));
-void Suff_EndTransform __P((ClientData));
+void Suff_EndTransform __P((void *));
 void Suff_AddSuffix __P((char *));
 Lst Suff_GetPath __P((char *));
 void Suff_DoPaths __P((void));
@@ -136,7 +136,7 @@ Boolean Targ_Ignore __P((GNode *));
 Boolean Targ_Silent __P((GNode *));
 Boolean Targ_Precious __P((GNode *));
 void Targ_SetMain __P((GNode *));
-void Targ_PrintCmd __P((ClientData));
+void Targ_PrintCmd __P((void *));
 char *Targ_FmtTime __P((time_t));
 void Targ_PrintType __P((int));
 void Targ_PrintGraph __P((int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.h,v 1.5 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: hash.h,v 1.6 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: hash.h,v 1.5 1996/11/06 17:59:07 christos Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ typedef struct Hash_Entry {
     struct Hash_Entry *next;		/* Used to link together all the
     					 * entries associated with the same
 					 * bucket. */
-    ClientData	      clientData;	/* Arbitrary piece of data associated
+    void 	      *clientData;	/* Arbitrary piece of data associated
     					 * with key. */
     unsigned	      namehash;		/* hash value of key */
     char	      name[1];		/* key string */
@@ -88,7 +88,7 @@ typedef struct Hash_Search {
  */
 
 /*
- * ClientData Hash_GetValue(h)
+ * void *Hash_GetValue(h)
  *     Hash_Entry *h;
  */
 

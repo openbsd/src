@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.27 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.28 2000/06/10 01:41:06 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.27 2000/06/10 01:32:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.28 2000/06/10 01:41:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -162,29 +162,29 @@ static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 
 static char *SuffStrIsPrefix __P((char *, char *));
 static char *SuffSuffIsSuffix __P((Suff *, char *));
-static int SuffSuffIsSuffixP __P((ClientData, ClientData));
-static int SuffSuffHasNameP __P((ClientData, ClientData));
-static int SuffSuffIsPrefix __P((ClientData, ClientData));
-static int SuffGNHasNameP __P((ClientData, ClientData));
-static void SuffUnRef __P((ClientData, ClientData));
-static void SuffFree __P((ClientData));
+static int SuffSuffIsSuffixP __P((void *, void *));
+static int SuffSuffHasNameP __P((void *, void *));
+static int SuffSuffIsPrefix __P((void *, void *));
+static int SuffGNHasNameP __P((void *, void *));
+static void SuffUnRef __P((void *, void *));
+static void SuffFree __P((void *));
 static void SuffInsert __P((Lst, Suff *));
 static void SuffRemove __P((Lst, Suff *));
 static Boolean SuffParseTransform __P((char *, Suff **, Suff **));
-static void SuffRebuildGraph __P((ClientData, ClientData));
-static void SuffAddSrc __P((ClientData, ClientData));
+static void SuffRebuildGraph __P((void *, void *));
+static void SuffAddSrc __P((void *, void *));
 static int SuffRemoveSrc __P((Lst));
 static void SuffAddLevel __P((Lst, Src *));
 static Src *SuffFindThem __P((Lst, Lst));
 static Src *SuffFindCmds __P((Src *, Lst));
-static void SuffExpandChildren __P((ClientData, ClientData));
+static void SuffExpandChildren __P((void *, void *));
 static Boolean SuffApplyTransform __P((GNode *, GNode *, Suff *, Suff *));
 static void SuffFindDeps __P((GNode *, Lst));
 static void SuffFindArchiveDeps __P((GNode *, Lst));
 static void SuffFindNormalDeps __P((GNode *, Lst));
-static void SuffPrintName __P((ClientData));
-static void SuffPrintSuff __P((ClientData));
-static void SuffPrintTrans __P((ClientData));
+static void SuffPrintName __P((void *));
+static void SuffPrintSuff __P((void *));
+static void SuffPrintTrans __P((void *));
 
 	/*************** Lst Predicates ****************/
 /*-
@@ -261,10 +261,10 @@ SuffSuffIsSuffix (s, str)
  */
 static int
 SuffSuffIsSuffixP(s, str)
-    ClientData   s;
-    ClientData   str;
+    void *s;
+    void *str;
 {
-    return(!SuffSuffIsSuffix((Suff *) s, (char *) str));
+    return !SuffSuffIsSuffix((Suff *)s, (char *)str);
 }
 
 /*-
@@ -282,8 +282,8 @@ SuffSuffIsSuffixP(s, str)
  */
 static int
 SuffSuffHasNameP (s, sname)
-    ClientData    s;	    	    /* Suffix to check */
-    ClientData    sname; 	    /* Desired name */
+    void *s;	    	    /* Suffix to check */
+    void *sname; 	    /* Desired name */
 {
     return (strcmp ((char *) sname, ((Suff *) s)->name));
 }
@@ -304,11 +304,11 @@ SuffSuffHasNameP (s, sname)
  *-----------------------------------------------------------------------
  */
 static int
-SuffSuffIsPrefix (s, str)
-    ClientData   s;		/* suffix to compare */
-    ClientData   str;	/* string to examine */
+SuffSuffIsPrefix(s, str)
+    void *s;	/* suffix to compare */
+    void *str;	/* string to examine */
 {
-    return (SuffStrIsPrefix (((Suff *) s)->name, (char *) str) == NULL ? 1 : 0);
+    return SuffStrIsPrefix (((Suff *)s)->name, (char *)str) == NULL ? 1 : 0;
 }
 
 /*-
@@ -324,19 +324,19 @@ SuffSuffIsPrefix (s, str)
  *-----------------------------------------------------------------------
  */
 static int
-SuffGNHasNameP (gn, name)
-    ClientData      gn;		/* current node we're looking at */
-    ClientData      name;	/* name we're looking for */
+SuffGNHasNameP(gn, name)
+    void *gn;		/* current node we're looking at */
+    void *name;		/* name we're looking for */
 {
-    return (strcmp ((char *) name, ((GNode *) gn)->name));
+    return strcmp((char *)name, ((GNode *)gn)->name);
 }
 
  	    /*********** Maintenance Functions ************/
 
 static void
 SuffUnRef(lp, sp)
-    ClientData lp;
-    ClientData sp;
+    void *lp;
+    void *sp;
 {
     Lst l = (Lst) lp;
 
@@ -358,8 +358,8 @@ SuffUnRef(lp, sp)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFree (sp)
-    ClientData sp;
+SuffFree(sp)
+    void *sp;
 {
     Suff           *s = (Suff *) sp;
 
@@ -374,8 +374,8 @@ SuffFree (sp)
     Lst_Destroy(s->parents, NOFREE);
     Lst_Destroy(s->searchPath, Dir_Destroy);
 
-    free ((Address)s->name);
-    free ((Address)s);
+    free(s->name);
+    free(s);
 }
 
 /*-
@@ -653,7 +653,7 @@ Suff_AddTransform (line)
  */
 void
 Suff_EndTransform(gnp)
-    ClientData   gnp;    	/* Node for transformation */
+    void *gnp;    	/* Node for transformation */
 {
     GNode *gn = (GNode *)gnp;
 
@@ -704,8 +704,8 @@ Suff_EndTransform(gnp)
  */
 static void
 SuffRebuildGraph(transformp, sp)
-    ClientData  transformp; /* Transformation to test */
-    ClientData  sp;	    /* Suffix to rebuild */
+    void *transformp; 	/* Transformation to test */
+    void *sp;	    	/* Suffix to rebuild */
 {
     GNode   	*transform = (GNode *)transformp;
     Suff    	*s = (Suff *)sp;
@@ -967,8 +967,8 @@ Suff_AddLib (sname)
  */
 static void
 SuffAddSrc(sp, lsp)
-    ClientData	sp;	    /* suffix for which to create a Src structure */
-    ClientData  lsp;	    /* list and parent for the new Src */
+    void *sp;	    /* suffix for which to create a Src structure */
+    void *lsp;	    /* list and parent for the new Src */
 {
     Suff	*s = (Suff *)sp;
     LstSrc      *ls = (LstSrc *)lsp;
@@ -1076,9 +1076,9 @@ SuffRemoveSrc (l)
     while ((ln = Lst_Next (l)) != NULL) {
 	s = (Src *) Lst_Datum (ln);
 	if (s->children == 0) {
-	    free ((Address)s->file);
+	    free(s->file);
 	    if (!s->parent)
-		free((Address)s->pref);
+		free(s->pref);
 	    else {
 #ifdef DEBUG_SRC
 		LstNode ln = Lst_Member(s->parent->cp, s);
@@ -1092,7 +1092,7 @@ SuffRemoveSrc (l)
 	    Lst_Destroy(s->cp, NOFREE);
 #endif
 	    Lst_Remove(l, ln);
-	    free ((Address)s);
+	    free(s);
 	    t |= 1;
 	    Lst_Close(l);
 	    return TRUE;
@@ -1279,8 +1279,8 @@ SuffFindCmds (targ, slst)
  */
 static void
 SuffExpandChildren(cgnp, pgnp)
-    ClientData  cgnp;	    /* Child to examine */
-    ClientData  pgnp;	    /* Parent node being processed */
+    void *cgnp;	    /* Child to examine */
+    void *pgnp;	    /* Parent node being processed */
 {
     GNode   	*cgn = (GNode *)cgnp;
     GNode   	*pgn = (GNode *)pgnp;
@@ -2299,14 +2299,14 @@ Suff_End()
 /********************* DEBUGGING FUNCTIONS **********************/
 
 static void SuffPrintName(s)
-    ClientData s;
+    void *s;
 {
     printf("%s ", ((Suff *)s)->name);
 }
 
 static void
 SuffPrintSuff(sp)
-    ClientData sp;
+    void *sp;
 {
     Suff    *s = (Suff *)sp;
     int	    flags;
@@ -2345,7 +2345,7 @@ SuffPrintSuff(sp)
 
 static void
 SuffPrintTrans(tp)
-    ClientData tp;
+    void *tp;
 {
     GNode   *t = (GNode *)tp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.16 2000/06/10 01:32:22 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.17 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.16 2000/06/10 01:32:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.17 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ struct For_ {
     unsigned long	level;		/* Nesting level		*/
 };
 
-static void ForExec __P((ClientData, ClientData));
+static void ForExec __P((void *, void *));
 static void build_words_list __P((Lst, const char *));
 
 /* Cut a string into words, stuff that into list.  */
@@ -270,8 +270,8 @@ For_Accumulate(arg, line)
  */
 static void
 ForExec(namep, argp)
-    ClientData namep;
-    ClientData argp;
+    void *namep;
+    void *argp;
 {
     char *name = (char *)namep;
     For *arg = (For *)argp;

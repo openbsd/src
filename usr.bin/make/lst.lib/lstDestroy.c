@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDestroy.c,v 1.6 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.7 2000/06/10 01:41:06 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.6 2000/06/10 01:32:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.7 2000/06/10 01:41:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ Lst_Destroy(l, freeProc)
     if (list->lastPtr != NULL)
 	list->lastPtr->nextPtr = NULL;
     else {
-	free ((Address)l);
+	free(l);
 	return;
     }
 
@@ -96,14 +96,14 @@ Lst_Destroy(l, freeProc)
 	for (ln = list->firstPtr; ln != NULL; ln = tln) {
 	     tln = ln->nextPtr;
 	     (*freeProc) (ln->datum);
-	     free ((Address)ln);
+	     free(ln);
 	}
     } else {
 	for (ln = list->firstPtr; ln != NULL; ln = tln) {
 	     tln = ln->nextPtr;
-	     free ((Address)ln);
+	     free(ln);
 	}
     }
 
-    free ((Address)l);
+    free(l);
 }

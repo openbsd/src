@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.26 2000/06/10 01:32:22 espie Exp $	*/
+/*	$OpenBSD: compat.c,v 1.27 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.26 2000/06/10 01:32:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.27 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ static char 	    meta[256];
 static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
 static void CompatInterrupt __P((int));
-static int CompatRunCommand __P((ClientData, ClientData));
-static void CompatMake __P((ClientData, ClientData));
+static int CompatRunCommand __P((void *, void *));
+static void CompatMake __P((void *, void *));
 static int shellneed __P((char **av));
 
 /*-
@@ -200,8 +200,8 @@ shellneed (av)
  */
 static int
 CompatRunCommand (cmdp, gnp)
-    ClientData    cmdp;	    	/* Command to execute */
-    ClientData    gnp;    	/* Node from which the command came */
+    void 	  *cmdp;	/* Command to execute */
+    void 	  *gnp;    	/* Node from which the command came */
 {
     char    	  *cmdStart;	/* Start of expanded command */
     char *cp, *bp = NULL;
@@ -430,8 +430,8 @@ CompatRunCommand (cmdp, gnp)
  */
 static void
 CompatMake(gnp, pgnp)
-    ClientData	gnp;	    /* The node to make */
-    ClientData  pgnp;	    /* Parent to abort if necessary */
+    void *gnp;	    /* The node to make */
+    void *pgnp;	    /* Parent to abort if necessary */
 {
     GNode *gn = (GNode *) gnp;
     GNode *pgn = (GNode *) pgnp;

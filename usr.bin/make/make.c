@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.15 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.16 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.15 2000/06/10 01:32:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.16 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,12 +93,12 @@ static int  	numNodes;   	/* Number of nodes to be processed. If this
 				 * is non-zero when Job_Empty() returns
 				 * TRUE, there's a cycle in the graph */
 
-static void MakeAddChild __P((ClientData, ClientData));
-static void MakeAddAllSrc __P((ClientData, ClientData));
-static void MakeTimeStamp __P((ClientData, ClientData));
-static void MakeHandleUse __P((ClientData, ClientData));
+static void MakeAddChild __P((void *, void *));
+static void MakeAddAllSrc __P((void *, void *));
+static void MakeTimeStamp __P((void *, void *));
+static void MakeHandleUse __P((void *, void *));
 static Boolean MakeStartJobs __P((void));
-static void MakePrintStatus __P((ClientData, ClientData));
+static void MakePrintStatus __P((void *, void *));
 /*-
  *-----------------------------------------------------------------------
  * Make_TimeStamp --
@@ -124,8 +124,8 @@ Make_TimeStamp(pgn, cgn)
 
 static void
 MakeTimeStamp(pgn, cgn)
-    ClientData pgn;	/* the current parent */
-    ClientData cgn;	/* the child we've just examined */
+    void *pgn;	/* the current parent */
+    void *cgn;	/* the child we've just examined */
 {
     Make_TimeStamp((GNode *)pgn, (GNode *)cgn);
 }
@@ -285,8 +285,8 @@ Make_OODate (gn)
  */
 static void
 MakeAddChild(gnp, lp)
-    ClientData     gnp;		/* the node to add */
-    ClientData     lp;		/* the list to which to add it */
+    void *gnp;		/* the node to add */
+    void *lp;		/* the list to which to add it */
 {
     GNode          *gn = (GNode *)gnp;
     Lst            l = (Lst)lp;
@@ -361,8 +361,8 @@ Make_HandleUse(cgn, pgn)
 }
 static void
 MakeHandleUse(pgn, cgn)
-    ClientData pgn;	/* the current parent */
-    ClientData cgn;	/* the child we've just examined */
+    void *pgn;	/* the current parent */
+    void *cgn;	/* the child we've just examined */
 {
     Make_HandleUse((GNode *)pgn, (GNode *)cgn);
 }
@@ -551,8 +551,8 @@ Make_Update (cgn)
  */
 static void
 MakeAddAllSrc(cgnp, pgnp)
-    ClientData	cgnp;	/* The child to add */
-    ClientData	pgnp;	/* The parent to whose ALLSRC variable it should be */
+    void *cgnp;		/* The child to add */
+    void *pgnp;		/* The parent to whose ALLSRC variable it should be */
 			/* added */
 {
     GNode	*cgn = (GNode *) cgnp;
@@ -730,8 +730,8 @@ MakeStartJobs ()
  */
 static void
 MakePrintStatus(gnp, cyclep)
-    ClientData  gnp;	    /* Node to examine */
-    ClientData 	cyclep;	    /* True if gn->unmade being non-zero implies
+    void 	*gnp;	    /* Node to examine */
+    void 	*cyclep;    /* True if gn->unmade being non-zero implies
 			     * a cycle in the graph, not an error in an
 			     * inferior */
 {

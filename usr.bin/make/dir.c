@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.18 2000/06/10 01:32:22 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.19 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.18 2000/06/10 01:32:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.19 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,12 +193,12 @@ static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * should be ok, but... */
 
 
-static int DirFindName __P((ClientData, ClientData));
+static int DirFindName __P((void *, void *));
 static int DirMatchFiles __P((char *, Path *, Lst));
 static void DirExpandCurly __P((char *, char *, Lst, Lst));
 static void DirExpandInt __P((char *, Lst, Lst));
-static void DirPrintWord __P((ClientData));
-static void DirPrintDir __P((ClientData));
+static void DirPrintWord __P((void *));
+static void DirPrintDir __P((void *));
 
 /*-
  *-----------------------------------------------------------------------
@@ -277,10 +277,10 @@ Dir_End()
  */
 static int
 DirFindName (p, dname)
-    ClientData    p;	      /* Current name */
-    ClientData	  dname;      /* Desired name */
+    void *p;	      /* Current name */
+    void *dname;      /* Desired name */
 {
-    return (strcmp (((Path *)p)->name, (char *) dname));
+    return strcmp(((Path *)p)->name, (char *)dname);
 }
 
 /*-
@@ -540,7 +540,7 @@ DirExpandInt(word, path, expansions)
  */
 static void
 DirPrintWord(word)
-    ClientData  word;
+    void *word;
 {
     printf("%s ", (char *)word);
 }
@@ -872,7 +872,7 @@ Dir_FindFile (name, path)
 		entry = Hash_CreateEntry(&mtimes, (char *) file,
 					 (Boolean *)NULL);
 		/* XXX */
-		Hash_SetValue(entry, (ClientData)((long)stb.st_mtime));
+		Hash_SetValue(entry, (void *)((long)stb.st_mtime));
 		nearmisses += 1;
 		return (file);
 	    } else {
@@ -951,7 +951,7 @@ Dir_FindFile (name, path)
 		    name);
 	}
 	/* XXX */
-	Hash_SetValue(entry, (ClientData)(long)stb.st_mtime);
+	Hash_SetValue(entry, (void *)(long)stb.st_mtime);
 	return (estrdup (name));
     } else {
 	if (DEBUG(DIR)) {
@@ -1126,11 +1126,11 @@ Dir_AddDir (path, name)
  *
  *-----------------------------------------------------------------------
  */
-ClientData
+void *
 Dir_CopyDir(p)
-    ClientData p;
+    void *p;
 {
-    ((Path *) p)->refCount += 1;
+    ((Path *)p)->refCount += 1;
 
     return p;
 }
@@ -1193,7 +1193,7 @@ Dir_MakeFlags (flag, path)
  */
 void
 Dir_Destroy (pp)
-    ClientData 	  pp;	    /* The directory descriptor to nuke */
+    void *pp;	    /* The directory descriptor to nuke */
 {
     Path    	  *p = (Path *) pp;
     p->refCount -= 1;
@@ -1205,8 +1205,8 @@ Dir_Destroy (pp)
 	Lst_Remove(openDirectories, ln);
 
 	Hash_DeleteTable (&p->files);
-	free((Address)p->name);
-	free((Address)p);
+	free(p->name);
+	free(p);
     }
 }
 
@@ -1287,8 +1287,9 @@ Dir_PrintDirectories()
     }
 }
 
-static void DirPrintDir(p)
-    ClientData	p;
+static void 
+DirPrintDir(p)
+    void *p;
 {
     printf("%s ", ((Path *)p)->name);
 }

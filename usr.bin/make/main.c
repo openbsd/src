@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.31 2000/06/10 01:32:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.32 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 
 static void		MainParseArgs __P((int, char **));
 char *			chdir_verify_path __P((char *, char *));
-static int		ReadMakefile __P((ClientData, ClientData));
+static int		ReadMakefile __P((void *, void *));
 static void		usage __P((void));
 int 			main __P((int, char **));
 
@@ -189,7 +189,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'V':
 			printVars = TRUE;
-			Lst_AtEnd(variables, (ClientData)optarg);
+			Lst_AtEnd(variables, optarg);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -280,7 +280,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
 			break;
 		case 'f':
-			Lst_AtEnd(makefiles, (ClientData)optarg);
+			Lst_AtEnd(makefiles, optarg);
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
@@ -371,7 +371,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 					optind = 1;     /* - */
 				goto rearg;
 			}
-			Lst_AtEnd(create, (ClientData)estrdup(*argv));
+			Lst_AtEnd(create, estrdup(*argv));
 		}
 }
 
@@ -771,7 +771,7 @@ main(argc, argv)
 			*cp = savec;
 			path = cp + 1;
 		} while (savec == ':');
-		(void)free((Address)vpath);
+		free(vpath);
 	}
 
 	/*
@@ -866,7 +866,8 @@ main(argc, argv)
  */
 static Boolean
 ReadMakefile(p, q)
-	ClientData p, q;
+	void *p; 
+	void *q;
 {
 	char *fname = p;		/* makefile to read */
 	extern Lst parseIncPath;
@@ -1213,7 +1214,7 @@ usage()
 
 void
 PrintAddr(a)
-    ClientData a;
+    void *a;
 {
     printf("%lx ", (unsigned long) a);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.12 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.13 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -60,10 +60,10 @@
 
 typedef	struct	Lst	*Lst;
 typedef	struct	LstNode	*LstNode;
-typedef int (*FindProc) __P((ClientData, ClientData));
-typedef void (*SimpleProc) __P((ClientData));
-typedef void (*ForEachProc) __P((ClientData, ClientData));
-typedef ClientData (*DuplicateProc) __P((ClientData));
+typedef int (*FindProc) __P((void *, void *));
+typedef void (*SimpleProc) __P((void *));
+typedef void (*ForEachProc) __P((void *, void *));
+typedef void * (*DuplicateProc) __P((void *));
 
 /*
  * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
@@ -92,17 +92,17 @@ Boolean		Lst_IsEmpty __P((Lst));
  * Functions to modify a list
  */
 /* Insert an element before another */
-void		Lst_Insert __P((Lst, LstNode, ClientData));
+void		Lst_Insert __P((Lst, LstNode, void *));
 /* Insert an element after another */
-void		Lst_Append __P((Lst, LstNode, ClientData));
+void		Lst_Append __P((Lst, LstNode, void *));
 /* Place an element at the front of a lst. */
-void		Lst_AtFront __P((Lst, ClientData));
+void		Lst_AtFront __P((Lst, void *));
 /* Place an element at the end of a lst. */
-void		Lst_AtEnd __P((Lst, ClientData));
+void		Lst_AtEnd __P((Lst, void *));
 /* Remove an element */
 void		Lst_Remove __P((Lst, LstNode));
 /* Replace a node with a new value */
-void		Lst_Replace __P((LstNode, ClientData));
+void		Lst_Replace __P((LstNode, void *));
 /* Concatenate two lists */
 void		Lst_Concat __P((Lst, Lst, int));
 
@@ -116,7 +116,7 @@ LstNode		Lst_Last __P((Lst));
 /* Return successor to given element */
 LstNode		Lst_Succ __P((LstNode));
 /* Get datum from LstNode */
-ClientData	Lst_Datum __P((LstNode));
+void *	Lst_Datum __P((LstNode));
 
 /*
  * Functions for entire lists
@@ -126,12 +126,12 @@ ClientData	Lst_Datum __P((LstNode));
 #define Lst_Find(l, cProc, d)	Lst_FindFrom(Lst_First(l), cProc, d)
 
 /* Find an element starting from somewhere */
-LstNode		Lst_FindFrom __P((LstNode, FindProc, ClientData));
+LstNode		Lst_FindFrom __P((LstNode, FindProc, void *));
 
 /* Apply a function to all elements of a lst */
 #define Lst_ForEach(l, proc, d)	Lst_ForEachFrom(Lst_First(l), proc, d)
 /* Apply a function to all elements of a lst starting from a certain point.  */
-void		Lst_ForEachFrom __P((LstNode, ForEachProc, ClientData));
+void		Lst_ForEachFrom __P((LstNode, ForEachProc, void *));
 void		Lst_Every __P((Lst, SimpleProc));
 
 
@@ -139,7 +139,7 @@ void		Lst_Every __P((Lst, SimpleProc));
  * See if the given datum is on the list. Returns the LstNode containing
  * the datum
  */
-LstNode		Lst_Member __P((Lst, ClientData));
+LstNode		Lst_Member __P((Lst, void *));
 
 /*
  * these functions are for dealing with a list as a table, of sorts.
@@ -159,8 +159,8 @@ void		Lst_Close __P((Lst));
  * for using the list as a queue
  */
 /* Place an element at tail of queue */
-void		Lst_EnQueue __P((Lst, ClientData));
+void		Lst_EnQueue __P((Lst, void *));
 /* Remove an element from head of queue */
-ClientData	Lst_DeQueue __P((Lst));
+void *	Lst_DeQueue __P((Lst));
 
 #endif /* _LST_H_ */

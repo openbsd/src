@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.17 2000/06/10 01:32:23 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.18 2000/06/10 01:41:06 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.17 2000/06/10 01:32:23 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.18 2000/06/10 01:41:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,11 +102,11 @@ static Hash_Table targets;	/* a hash table of same */
 
 #define HTSIZE	191		/* initial size of hash table */
 
-static void TargPrintOnlySrc __P((ClientData));
-static void TargPrintName __P((ClientData));
-static void TargPrintNode __P((ClientData, ClientData));
+static void TargPrintOnlySrc __P((void *));
+static void TargPrintName __P((void *));
+static void TargPrintNode __P((void *, void *));
 #ifdef CLEANUP
-static void TargFreeGN __P((ClientData));
+static void TargFreeGN __P((void *));
 #endif
 
 /*-
@@ -219,8 +219,8 @@ Targ_NewGN (name)
  *-----------------------------------------------------------------------
  */
 static void
-TargFreeGN (gnp)
-    ClientData gnp;
+TargFreeGN(gnp)
+    void *gnp;
 {
     GNode *gn = (GNode *) gnp;
 
@@ -236,7 +236,7 @@ TargFreeGN (gnp)
     Lst_Destroy(gn->preds, NOFREE);
     Lst_Destroy(gn->context, NOFREE);
     Lst_Destroy(gn->commands, NOFREE);
-    free((Address)gn);
+    free(gn);
 }
 #endif
 
@@ -431,7 +431,7 @@ Targ_SetMain (gn)
 
 static void
 TargPrintName(gnp)
-    ClientData     gnp;
+    void *gnp;
 {
     GNode *gn = (GNode *)gnp;
 
@@ -441,7 +441,7 @@ TargPrintName(gnp)
 
 void
 Targ_PrintCmd(cmd)
-    ClientData cmd;
+    void *cmd;
 {
     printf("\t%s\n", (char *)cmd);
 }
@@ -532,8 +532,8 @@ Targ_PrintType (type)
  */
 static void
 TargPrintNode(gnp, passp)
-    ClientData   gnp;
-    ClientData	 passp;
+    void *gnp;
+    void *passp;
 {
     GNode         *gn = (GNode *)gnp;
     int	    	  pass = *(int *)passp;
@@ -606,7 +606,7 @@ TargPrintNode(gnp, passp)
  */
 static void
 TargPrintOnlySrc(gnp)
-    ClientData 	  gnp;
+    void *gnp;
 {
     GNode   	  *gn = (GNode *)gnp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstEnQueue.c,v 1.5 1999/12/18 21:58:08 espie Exp $	*/
+/*	$OpenBSD: lstEnQueue.c,v 1.6 2000/06/10 01:41:07 espie Exp $	*/
 /*	$NetBSD: lstEnQueue.c,v 1.5 1996/11/06 17:59:38 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstEnQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstEnQueue.c,v 1.5 1999/12/18 21:58:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstEnQueue.c,v 1.6 2000/06/10 01:41:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static char rcsid[] = "$OpenBSD: lstEnQueue.c,v 1.5 1999/12/18 21:58:08 espie Ex
 void
 Lst_EnQueue(l, d)
     Lst	    	  l;
-    ClientData	  d;
+    void	  *d;
 {
     if (LstValid(l) == FALSE) 
 	return;

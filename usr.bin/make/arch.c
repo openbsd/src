@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.26 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.27 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.26 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.27 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,9 +129,9 @@ typedef struct Arch {
     size_t	  fnamesize;  /* Size of the string table */
 } Arch;
 
-static int ArchFindArchive __P((ClientData, ClientData));
+static int ArchFindArchive __P((void *, void *));
 #ifdef CLEANUP
-static void ArchFree __P((ClientData));
+static void ArchFree __P((void *));
 #endif
 static struct ar_hdr *ArchStatMember __P((char *, char *, Boolean));
 static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
@@ -158,7 +158,7 @@ static int ArchSVR4Entry __P((Arch *, char *, size_t, FILE *));
  */
 static void
 ArchFree(ap)
-    ClientData ap;
+    void *ap;
 {
     Arch *a = (Arch *) ap;
     Hash_Search	  search;
@@ -168,12 +168,12 @@ ArchFree(ap)
     for (entry = Hash_EnumFirst(&a->members, &search);
 	 entry != NULL;
 	 entry = Hash_EnumNext(&search))
-	free((Address) Hash_GetValue (entry));
+	free(Hash_GetValue(entry));
 
     free(a->name);
     efree(a->fnametab);
     Hash_DeleteTable(&a->members);
-    free((Address) a);
+    free(a);
 }
 #endif
 
@@ -443,10 +443,10 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
  */
 static int
 ArchFindArchive (ar, archName)
-    ClientData	  ar;	      	  /* Current list element */
-    ClientData	  archName;  	  /* Name we want */
+    void *ar;	      	  /* Current list element */
+    void *archName;  	  /* Name we want */
 {
-    return (strcmp ((char *) archName, ((Arch *) ar)->name));
+    return strcmp ((char *)archName, ((Arch *)ar)->name);
 }
 
 /*-
@@ -634,10 +634,9 @@ ArchStatMember (archive, member, hash)
 	    }
 #endif
 
-	    he = Hash_CreateEntry (&ar->members, memName, NULL);
-	    Hash_SetValue (he, emalloc (sizeof (struct ar_hdr)));
-	    memcpy ((Address)Hash_GetValue (he), (Address)&arh,
-		sizeof (struct ar_hdr));
+	    he = Hash_CreateEntry(&ar->members, memName, NULL);
+	    Hash_SetValue(he, emalloc(sizeof(struct ar_hdr)));
+	    memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
 	}
 	fseek (arch, (size + 1) & ~1, SEEK_CUR);
     }
@@ -659,11 +658,11 @@ ArchStatMember (archive, member, hash)
     }
 
 badarch:
-    fclose (arch);
-    Hash_DeleteTable (&ar->members);
+    fclose(arch);
+    Hash_DeleteTable(&ar->members);
     efree(ar->fnametab);
-    free ((Address)ar);
-    return (NULL);
+    free(ar);
+    return NULL;
 }
 
 #ifdef SVR4ARCHIVES

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.16 2000/04/17 23:50:45 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.17 2000/06/10 01:41:05 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.16 2000/04/17 23:50:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.17 2000/06/10 01:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ typedef enum {
 static void CondPushBack __P((Token));
 static Boolean CondGetArg __P((char **, char **, size_t *, char *, Boolean));
 static Boolean CondDoDefined __P((size_t, char *));
-static int CondStrMatch __P((ClientData, ClientData));
+static int CondStrMatch __P((void *, void *));
 static Boolean CondDoMake __P((size_t, char *));
 static Boolean CondDoExists __P((size_t, char *));
 static Boolean CondDoTarget __P((size_t, char *));
@@ -307,18 +307,14 @@ CondDoDefined(argLen, arg)
  *
  * Results:
  *	0 if string matches pattern
- *
- * Side Effects:
- *	None
- *
  *-----------------------------------------------------------------------
  */
 static int
 CondStrMatch(string, pattern)
-    ClientData    string;
-    ClientData    pattern;
+    void *string;
+    void *pattern;
 {
-    return(!Str_Match((char *) string,(char *) pattern));
+    return !Str_Match((char *)string,(char *)pattern);
 }
 
 /*-

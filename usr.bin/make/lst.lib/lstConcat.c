@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstConcat.c,v 1.7 1999/12/18 21:58:08 espie Exp $	*/
+/*	$OpenBSD: lstConcat.c,v 1.8 2000/06/10 01:41:06 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.7 1999/12/18 21:58:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.8 2000/06/10 01:41:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ Lst_Concat (l1, l2, flags)
 	    }
 	    list1->lastPtr = list2->lastPtr;
 	}
-	free ((Address)l2);
+	free(l2);
     } else if (list2->firstPtr != NULL) {
 	/*
 	 * We set the nextPtr of the last element of list 2 to be NULL to make

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstMember.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
+/*	$OpenBSD: lstMember.c,v 1.6 2000/06/10 01:41:07 espie Exp $	*/
 /*	$NetBSD: lstMember.c,v 1.5 1996/11/06 17:59:48 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstMember.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstMember.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstMember.c,v 1.6 2000/06/10 01:41:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,9 @@ static char rcsid[] = "$OpenBSD: lstMember.c,v 1.5 1999/12/18 21:53:34 espie Exp
 #include    "lstInt.h"
 
 LstNode
-Lst_Member (l, d)
+Lst_Member(l, d)
     Lst	    	  	l;
-    ClientData	  	d;
+    void		*d;
 {
     List    	  	list = (List) l;
     register ListNode	lNode;

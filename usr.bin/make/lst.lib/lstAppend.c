@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAppend.c,v 1.7 1999/12/18 21:58:08 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.8 2000/06/10 01:41:06 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.7 1999/12/18 21:58:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.8 2000/06/10 01:41:06 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ void
 Lst_Append(l, ln, d)
     Lst	  	l;	/* affected list */
     LstNode	ln;	/* node after which to append the datum */
-    ClientData	d;	/* said datum */
+    void 	*d;	/* said datum */
 {
     register List 	list;
     register ListNode	lNode;
