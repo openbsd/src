@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.14 2003/06/09 16:10:03 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.15 2003/06/11 17:47:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -55,7 +55,7 @@ static inline void *
 _dl_memset(void *dst, const int c, size_t n)
 {
 	if (n != 0) {
-		register char *d = dst;
+		char *d = dst;
 
 		do
 			*d++ = c;
