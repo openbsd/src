@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.29 2003/08/26 09:58:43 markus Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.30 2003/11/04 08:54:09 djm Exp $");
 
 #include "packet.h"
 #include "log.h"
@@ -56,9 +56,6 @@ auth_password(Authctxt *authctxt, const char *password)
 	struct passwd * pw = authctxt->pw;
 	int ok = authctxt->valid;
 
-	/* deny if no user. */
-	if (pw == NULL)
-		return 0;
 	if (pw->pw_uid == 0 && options.permit_root_login != PERMIT_YES)
 		ok = 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
