@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.51 2001/07/05 08:47:43 jjbg Exp $	*/
+/*	$OpenBSD: inet.c,v 1.52 2001/07/05 08:54:41 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.51 2001/07/05 08:47:43 jjbg Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.52 2001/07/05 08:54:41 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.51 2001/07/05 08:47:43 jjbg Exp $";
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/ip_ipip.h>
+#include <netinet/ip_ipcomp.h>
 #include <netinet/ip_ether.h>
 
 #include <arpa/inet.h>
@@ -860,13 +861,9 @@ ipcomp_stats(off, name)
 	p(ipcomps_pdrops, "\t%u packet%s dropped due to policy\n");
 	p(ipcomps_notdb, "\t%u packet%s for which no TDB was found\n");
 	p(ipcomps_badkcr, "\t%u input packet%s that failed to be processed\n");
-	p(ipcomps_badenc, "\t%u packet%s with bad compression received\n");
-	p(ipcomps_badauth, "\t%u packet%s that failed verification received\n");
 	p(ipcomps_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");   
 	p(ipcomps_qfull, "\t%u packet%s were dropped due to full output queue\n");
 	p(ipcomps_wrap, "\t%u packet%s where counter wrapping was detected\n");
-	p(ipcomps_replay, "\t%u possibly replayed packet%s received\n"); 
-	p(ipcomps_badilen, "\t%u packet%s with bad payload size or padding received\n");
 	p(ipcomps_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
 	p(ipcomps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ipcomps_crypto, "\t%u packet%s that failed (de)compression processing\n");
