@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.20 2001/06/23 23:01:26 jason Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.21 2001/06/24 22:52:07 jason Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -294,10 +294,11 @@ vlan_start(struct ifnet *ifp)
 }
 
 int
-vlan_input_tag(struct ether_header *eh, struct mbuf *m, u_int16_t t)
+vlan_input_tag(struct mbuf *m, u_int16_t t)
 {
 	int i;
 	struct ifvlan *ifv;
+	struct ether_vlan_header vh;
 
 	for (i = 0; i < NVLAN; i++) {
 		ifv = &ifv_softc[i];
@@ -306,26 +307,17 @@ vlan_input_tag(struct ether_header *eh, struct mbuf *m, u_int16_t t)
 	}
 
 	if (i >= NVLAN) {
-		struct ether_header neh;
-		u_int16_t ntype, *np;
-
-		/*
-		 * Reinsert tag and pass it up to ether_input().
-		 * This allows bridging to continue to work with
-		 * cards that do automatic vlan tagging.  NOTE:
-		 * we're very careful to not disturb possibly
-		 * overlapping memory.
-		 */
-		bcopy(eh, &neh, sizeof(neh));
-		ntype = neh.ether_type;
-		neh.ether_type = htons(ETHERTYPE_8021Q);
+		if (m->m_pkthdr.len < sizeof(struct ether_header))
+			return (-1);
+		m_copydata(m, 0, sizeof(struct ether_header), (caddr_t)&vh);
+		vh.evl_proto = vh.evl_encap_proto;
+		vh.evl_tag = htons(t);
+		vh.evl_encap_proto = htons(ETHERTYPE_8021Q);
 		M_PREPEND(m, EVL_ENCAPLEN, M_DONTWAIT);
 		if (m == NULL)
 			return (-1);
-		np = mtod(m, u_int16_t *);
-		np[0] = htons(t);
-		np[1] = ntype;
-		ether_input(m->m_pkthdr.rcvif, &neh, m);
+		m_copyback(m, 0, sizeof(struct ether_vlan_header), (caddr_t)&vh);
+		ether_input_mbuf(m->m_pkthdr.rcvif, m);
 		return (-1);
 	}
 
@@ -350,15 +342,11 @@ vlan_input_tag(struct ether_header *eh, struct mbuf *m, u_int16_t t)
 		 * drivers to know about VLANs and we're not ready for
 		 * that yet.
 		 */
-		struct mbuf m0;
-		m0.m_next = m;
-		m0.m_len = sizeof(struct ether_header);
-		m0.m_data = (char *)eh;
-		bpf_mtap(ifv->ifv_if.if_bpf, &m0);
+		bpf_mtap(ifv->ifv_if.if_bpf, m);
 	}
 #endif
 	ifv->ifv_if.if_ipackets++;
-	ether_input(&ifv->ifv_if, eh, m);
+	ether_input_mbuf(&ifv->ifv_if, m);
 	return 0;
 }
 
