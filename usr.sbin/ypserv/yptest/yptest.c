@@ -1,4 +1,4 @@
-/*	$OpenBSD: yptest.c,v 1.12 2002/07/19 16:28:48 maja Exp $ */
+/*	$OpenBSD: yptest.c,v 1.13 2003/01/04 14:00:01 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: yptest.c,v 1.12 2002/07/19 16:28:48 maja Exp $";
+static char rcsid[] = "$OpenBSD: yptest.c,v 1.13 2003/01/04 14:00:01 maja Exp $";
 #endif
 
 #include <stdio.h>
@@ -66,9 +66,6 @@ main(int argc, char *argv[])
 	struct ypmaplist *ypml, *y;
 
 	Status = yp_get_default_domain(&Domain);
-	printf("Status %d\n", Status);
-	printf("dom %s\n", Domain);
-	printf("dom %d\n", Domain[0]);
 	if (Status)
 		printf("yp error: %s\n", yperr_string(Status));
 
