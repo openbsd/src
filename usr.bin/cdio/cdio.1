@@ -1,4 +1,4 @@
-.\" $OpenBSD: cdio.1,v 1.1 1996/08/23 23:42:28 downsj Exp $
+.\" $OpenBSD: cdio.1,v 1.2 1996/08/24 08:21:02 deraadt Exp $
 .Dd July 3, 1995
 .Dt CDIO 1
 .Os OpenBSD
@@ -14,9 +14,9 @@
 .Sh DESCRIPTION
 .Nm cdio
 is a program to control audio features of a CD drive. The device is a name such
-as cd0 or mcd0. 
+as cd0, acd0, or mcd0 
 .Pp
-If the device not specified, the environment variable 
+If the device is not specified, the environment variable 
 .Ev DISC
 will be used to find the cd device.
 .Pp
