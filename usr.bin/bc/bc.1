@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.12 2003/11/11 19:49:40 otto Exp $
+.\"	$OpenBSD: bc.1,v 1.13 2003/11/12 19:35:54 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -168,8 +168,7 @@ Any other character following a backslash will be ignored.
 Strings will not be assigned to `last'.
 .Pp
 Function definitions
-.Pp
-.Bd -unfilled -offset indent -compact
+.Bd -unfilled -offset indent
 define L ( L ,..., L ) {
 	auto L, ... , L
 	S; ... S
@@ -180,7 +179,6 @@ define L ( L ,..., L ) {
 As a non-portable extension, the opening brace of the define statement
 may appear on the next line.
 The return statement may also appear in the following forms:
-.Pp
 .Bd -unfilled -offset indent
 return
 return ()
