@@ -50,7 +50,7 @@ theo(int f, int n)
 	return TRUE;
 }
 
-static char *talk[] = {
+static const char *talk[] = {
 	"Write more code.",
 	"Make more commits.",
 	"That's because you have been slacking.",
@@ -63,12 +63,12 @@ static char *talk[] = {
 	"slacker slacker lazy bum bum bum slacker!"
 };
 
-static int ntalk = sizeof(talk)/sizeof(talk[0]);
+static const int ntalk = sizeof(talk)/sizeof(talk[0]);
 
 static int
 theo_analyze(int f, int n)
 {
-	char *str;
+	const char *str;
 	int len;
 
 	str = talk[arc4random() % ntalk];
