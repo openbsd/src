@@ -1,3 +1,4 @@
+#	$OpenBSD: DS3100,v 1.7 1999/10/01 21:59:33 maja Exp $
 #
 # DECstation (3100 or 2100) config file
 #
@@ -17,7 +18,6 @@ maxusers	64
 
 # standard system options
 option		SWAPPAGER		# swap pager (anonymous and swap space)
-option		VNODEPAGER		# vnode pager (mapped files)
 option		DEVPAGER		# device pager (mapped devices)
 # the usual stuff
 option		"COMPAT_43"		# compatibility with 4.3BSD binaries

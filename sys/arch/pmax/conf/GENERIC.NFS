@@ -1,3 +1,4 @@
+#	$OpenBSD: GENERIC.NFS,v 1.5 1999/10/01 21:59:33 maja Exp $
 #
 # GENERIC netboot / nfs root + swap kernel for the distribition simpleroot
 #
@@ -21,7 +22,6 @@ maxusers	64
 
 # standard system options
 option		SWAPPAGER		# swap pager (anonymous and swap space)
-option		VNODEPAGER		# vnode pager (mapped files)
 option		DEVPAGER		# device pager (mapped devices)
 # the usual stuff
 option		"COMPAT_43"		# compatibility with 4.3BSD binaries

@@ -1,3 +1,4 @@
+#	$OpenBSD: PLUTO,v 1.8 1999/10/01 21:59:33 maja Exp $
 #
 #	PLUTO - specific config(8) file for pluto
 #
@@ -13,7 +14,6 @@ option		DST=0
 maxusers	32
 
 option		SWAPPAGER
-option		VNODEPAGER
 option		DEVPAGER
 
 option		COMPAT_43

@@ -1,5 +1,6 @@
+#	$OpenBSD: DS5000_25,v 1.6 1999/10/01 21:59:33 maja Exp $
 #
-# DECstation 5000/20 or 5000/25 kernel config
+# DECstation 5000/20, 5000/25 or 5000/33 kernel config
 #
 
 machine		pmax mips		# machine type and subtype
@@ -17,7 +18,6 @@ maxusers	64
 
 # standard system options
 option		SWAPPAGER		# swap pager (anonymous and swap space)
-option		VNODEPAGER		# vnode pager (mapped files)
 option		DEVPAGER		# device pager (mapped devices)
 # the usual stuff
 option		"COMPAT_43"		# compatibility with 4.3BSD binaries
