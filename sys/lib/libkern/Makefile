@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2002/09/06 22:59:58 art Exp $
+#	$OpenBSD: Makefile,v 1.15 2004/02/03 10:47:19 mickey Exp $
 #	$NetBSD: Makefile,v 1.31 1996/08/10 04:01:31 mycroft Exp $
 
 LIB=	kern
@@ -17,7 +17,7 @@ CPPFLAGS=	-I$M ${KERNCPPFLAGS}
 .endif
 
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE} != "sgi" && \
-    ${MACHINE_ARCH} != "sparc64")
+    ${MACHINE_ARCH} != "sparc64") && ${MACHINE} != "amd64"
 # Quad support
 SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
