@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.64 2003/04/11 00:24:09 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.65 2003/04/11 00:25:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -602,10 +602,10 @@ syscall(struct trapframe *frame)
 	else
 #endif
 		oerror = error = (*callp->sy_call)(p, args, rval);
+	p = curproc;
+	frame = p->p_md.md_regs;
 	switch (error) {
 	case 0:
-		p = curproc;			/* changes on exec() */
-		frame = p->p_md.md_regs;
 		frame->tf_ret0 = rval[0];
 		frame->tf_ret1 = rval[!retq];
 		frame->tf_t1 = 0;
@@ -613,10 +613,7 @@ syscall(struct trapframe *frame)
 	case ERESTART:
 		frame->tf_iioq_head -= 12;
 		frame->tf_iioq_tail -= 12;
-		break;
 	case EJUSTRETURN:
-		p = curproc;
-		frame = p->p_md.md_regs;
 		break;
 	default:
 	bad:
