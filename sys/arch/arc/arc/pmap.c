@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 1998/03/16 09:38:32 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 1998/07/13 05:03:30 imp Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.13 1998/03/16 09:38:32 pefo Exp $
+ *      $Id: pmap.c,v 1.14 1998/07/13 05:03:30 imp Exp $
  */
 
 /*
@@ -170,11 +170,12 @@ struct {
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-extern int kernel_text[];
-extern int _end[];
 int pmapdebug = 0x0;
 
 #endif /* DEBUG */
+
+extern int kernel_text[];
+extern int _end[];
 
 struct pmap	kernel_pmap_store;
 
@@ -1001,7 +1002,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 {
 	register pt_entry_t *pte;
 	register u_int npte;
+#ifdef DIAGNOSTIC
 	register int i;
+#endif
 	vm_page_t mem;
 
 #ifdef DEBUG
