@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.28 2002/01/25 04:50:20 fgsch Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.29 2002/03/10 03:34:35 fgsch Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -123,6 +123,7 @@ cd9660_mountroot()
 	simple_unlock(&mountlist_slock);
         (void)cd9660_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp, p);
+	inittodr(0);
         return (0);
 }
 
