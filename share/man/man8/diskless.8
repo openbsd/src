@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.5 1996/08/31 12:57:36 pefo Exp $
+.\"	$OpenBSD: diskless.8,v 1.6 1996/10/07 20:59:25 deraadt Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -227,6 +227,10 @@ Add myclient to the bootparams database
 myclient  root=server:/export/myclient/root \\
           swap=server:/export/myclient/swap
 .Ed
+Note that some bootparam servers are somewhat sensitive.  Some require
+fully qualified hostnames or partially qualified hostnames (which can
+be solved by having both fully and partially qualified entries). Other
+servers are case sensitive.
 .Pp
 .It 6.
 Build the swap file for myclient:
