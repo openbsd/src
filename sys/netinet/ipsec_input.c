@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.11 2000/01/10 01:23:27 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.12 2000/01/10 02:45:12 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -523,26 +523,26 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 
     if (prot == IPPROTO_TCP || prot == IPPROTO_UDP)
     {
-	struct tdb_ident *tdbi = NULL;
-
 	if (tdbp->tdb_bind_out)
 	{
-	    tdbi = m->m_pkthdr.tdbi;
 	    if (!(m->m_flags & M_PKTHDR))
 	      DPRINTF(("%s: mbuf is not a packet header!\n", IPSEC_NAME));
 
-	    MALLOC(tdbi, struct tdb_ident *, sizeof(struct tdb_ident),
-	           M_TEMP, M_NOWAIT);
+	    MALLOC(m->m_pkthdr.tdbi, struct tdb_ident *,
+		   sizeof(struct tdb_ident), M_TEMP, M_NOWAIT);
 
-	    if (tdbi == NULL)
-	      m->m_pkthdr.tdbi = NULL;
-	    else
+	    if (m->m_pkthdr.tdbi == NULL)
 	    {
-		tdbi->spi = tdbp->tdb_bind_out->tdb_spi;
-		tdbi->dst = tdbp->tdb_bind_out->tdb_dst;
-		tdbi->proto = tdbp->tdb_bind_out->tdb_sproto;
+		((struct tdb_ident *) m->m_pkthdr.tdbi)->spi =
+						tdbp->tdb_bind_out->tdb_spi;
+		((struct tdb_ident *) m->m_pkthdr.tdbi)->dst =
+						tdbp->tdb_bind_out->tdb_dst;
+		((struct tdb_ident *) m->m_pkthdr.tdbi)->proto =
+						tdbp->tdb_bind_out->tdb_sproto;
 	    }
 	}
+	else
+	  m->m_pkthdr.tdbi = NULL;
     }
     else
       m->m_pkthdr.tdbi = NULL;
