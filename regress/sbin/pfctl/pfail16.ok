@@ -1,10 +1,11 @@
 no IP address found for 10.0.0.0.1
+stdin:2: could not parse host specification
 no IP address found for :80
+stdin:3: could not parse host specification
 no IP address found for 2000:0:0:0:0:0:0:0:0:1
+stdin:4: could not parse host specification
 no IP address found for 256.0.0.1
+stdin:5: could not parse host specification
 no IP address found for 10.0.0.0:network
-block drop all 
-block drop all 
-block drop all 
-block drop all 
-block drop all 
+stdin:6: could not parse host specification
+pfctl: Syntax error in config file: pf rules not loaded
