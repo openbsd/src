@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: glob.c,v 1.3 1996/09/11 19:22:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.4 1996/10/27 17:46:40 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -360,6 +360,9 @@ globtilde(pattern, patbuf, pglob)
 				return pattern;
 			else
 				h = pwd->pw_dir;
+		} else {
+			if (strlen(h) >= MAXPATHLEN-1)
+				return pattern;
 		}
 	}
 	else {
