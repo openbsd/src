@@ -1,5 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.25 2000/11/16 15:15:58 millert Exp $	*/
-/*	$NetBSD: skeyinit.c,v 1.6 1995/06/05 19:50:48 pk Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.26 2001/01/26 16:25:34 millert Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -63,8 +62,9 @@ main(argc, argv)
 		err(1, "gethostname");
 	for (i = 0, p = defaultseed; hostname[i] && i < SKEY_NAMELEN; i++) {
 		if (isalpha(hostname[i])) {
-			if (isupper(*p))
-				*p++ = tolower(hostname[i]);
+			if (isupper(hostname[i]))
+				hostname[i] = tolower(hostname[i]);
+			*p++ = hostname[i];
 		} else if (isdigit(hostname[i]))
 			*p++ = hostname[i];
 	}
