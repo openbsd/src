@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.11 2001/05/16 05:07:51 millert Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.12 2001/05/17 00:57:54 pvalchev Exp $
 #
 # Diskless kernel config
 #
@@ -53,7 +53,7 @@ option		BOOT_CONFIG	# add support for boot -c
 maxusers	8
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=0		# daylight saving time used by RTC
 
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
 

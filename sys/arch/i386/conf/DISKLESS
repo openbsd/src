@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.34 2001/05/16 05:07:49 millert Exp $
+#	$OpenBSD: DISKLESS,v 1.35 2001/05/17 00:57:55 pvalchev Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -38,7 +38,7 @@ option		CRYPTO		# Cryptographic framework
 
 maxusers	32		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=0		# daylight saving time used by RTC
 option		NTP		# hooks supporting the Network Time Protocol
 
 option		SWAPPAGER	# paging; REQUIRED

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC.NFS,v 1.8 2001/05/16 05:07:50 millert Exp $
+#	$OpenBSD: GENERIC.NFS,v 1.9 2001/05/17 00:57:57 pvalchev Exp $
 #
 # GENERIC netboot / nfs root + swap kernel for the distribition simpleroot
 #
@@ -16,7 +16,7 @@ option	 	DS5000_200		# 3MAX (kn02)
 option	 	DS5000_240		# 3MAXPLUS (kn03)
 # timezone stuff
 option		TIMEZONE=0
-option		DST=0			# use daylight savings rules
+option		DST=0			# use daylight saving rules
 
 maxusers	64
 

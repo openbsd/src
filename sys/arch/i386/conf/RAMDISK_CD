@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.44 2001/05/05 23:25:32 art Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.45 2001/05/17 00:57:56 pvalchev Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -17,7 +17,7 @@ option		UVM		# use the UVM virtual memory system. REQUIRED
 
 maxusers	4		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=0		# daylight saving time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices

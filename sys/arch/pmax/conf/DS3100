@@ -1,4 +1,4 @@
-#	$OpenBSD: DS3100,v 1.9 2001/05/16 05:07:50 millert Exp $
+#	$OpenBSD: DS3100,v 1.10 2001/05/17 00:57:56 pvalchev Exp $
 #
 # DECstation (3100 or 2100) config file
 #
@@ -12,7 +12,7 @@ option		MIPS1			# R2000/R3000 support
 option	 	DS3100			# PMAX (kn01) decstation 2100, 3100
 # timezone stuff
 option		TIMEZONE=0
-option		DST=0			# use daylight savings rules
+option		DST=0			# use daylight saving rules
 
 maxusers	64
 

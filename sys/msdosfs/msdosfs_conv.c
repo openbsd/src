@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.8 1998/01/11 20:39:06 provos Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.9 2001/05/17 00:58:01 pvalchev Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ unix2dostime(tsp, ddp, dtp, dhp)
 	 * skip the computations and use the saved result.
 	 */
 	t = tsp->tv_sec - (tz.tz_minuteswest * 60)
-	     /* +- daylight savings time correction */ ;
+	     /* +- daylight saving time correction */ ;
 	t &= ~1;
 	if (lasttime != t) {
 		lasttime = t;
@@ -227,7 +227,7 @@ dos2unixtime(dd, dt, dh, tsp)
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
 	tsp->tv_sec = seconds + lastseconds + (tz.tz_minuteswest * 60)
-	     /* -+ daylight savings time correction */ ;
+	     /* -+ daylight saving time correction */ ;
 	tsp->tv_nsec = (dh % 100) * 10000000;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.8 2000/06/30 16:00:11 millert Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.8 2000/06/30 16:00:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $";
 #endif /* not lint */
 #endif
 
@@ -389,7 +389,7 @@ bcddate(file, toc)
 		int tm_year;   /* years since 1900 */
 		int tm_wday;   /* day of the week (0-6) */
 		int tm_yday;   /* day of the year (0-365) */
-		int tm_isdst;  /* non-0 if daylight savings time is in effect */
+		int tm_isdst;  /* non-0 if daylight saving time is in effect */
 	} *tm;
 #else
 	struct tm *tm;

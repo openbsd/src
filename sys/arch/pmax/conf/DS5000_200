@@ -1,4 +1,4 @@
-#	$OpenBSD: DS5000_200,v 1.8 2001/05/16 05:07:50 millert Exp $
+#	$OpenBSD: DS5000_200,v 1.9 2001/05/17 00:57:57 pvalchev Exp $
 #
 # DECstation 5000/200 (KN02 motherboard, codname 3MAX) kernel config
 #
@@ -12,7 +12,7 @@ option		MIPS1			# R2000/R3000 support
 option	 	DS5000_200		# 3MAX (kn02)
 # timezone stuff
 option		TIMEZONE=0
-option		DST=0			# use daylight savings rules
+option		DST=0			# use daylight saving rules
 
 maxusers	64
 

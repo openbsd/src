@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.9 2001/05/04 22:48:58 aaron Exp $
+#	$OpenBSD: RAMDISK,v 1.10 2001/05/17 00:57:53 pvalchev Exp $
 #
 # Ram disk kernel.
 #
@@ -25,7 +25,7 @@ option		UVM		# use the UVM virtual memory system
 maxusers	8
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=0		# daylight saving time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices

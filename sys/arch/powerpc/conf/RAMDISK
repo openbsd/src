@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.19 2001/04/13 03:01:02 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.20 2001/05/17 00:57:58 pvalchev Exp $
 #
 # PPC GENERIC config file
 #
@@ -19,7 +19,7 @@ option		WSEMUL_NO_DUMB
 
 # include "../../../conf/GENERIC"
 option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=0		# daylight saving time used by RTC
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 option		COMPAT_43	# and 4.3BSD
