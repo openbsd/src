@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.7 2003/10/16 03:54:48 deraadt Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.8 2004/01/09 22:57:09 jmc Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -1131,7 +1131,7 @@ printf("intr 0x%02x, except 0x%02x, err 0x%02x\n", intr, exception, error);
 	sc->sc_nextstate = MESH_COMPLETE;
 
 	splx(s);
-	printf("rerturning from mesh_timeout\n");
+	printf("returning from mesh_timeout\n");
 }
 
 void
