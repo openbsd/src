@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.3 1996/06/23 14:20:10 deraadt Exp $	*/
+/*	$OpenBSD: expr.c,v 1.4 1996/09/15 22:27:38 millert Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ to_string(vp)
 	if (tmp == NULL) {
 		err(2, NULL);
 	}
-	sprintf(tmp, "%d", vp->u.i);
+	snprintf(tmp, 25, "%d", vp->u.i);
 	vp->type = string;
 	vp->u.s = tmp;
 }

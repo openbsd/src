@@ -1,4 +1,4 @@
-/*	$OpenBSD: ed.h,v 1.3 1996/08/22 00:35:17 deraadt Exp $	*/
+/*	$OpenBSD: ed.h,v 1.4 1996/09/15 22:25:55 millert Exp $	*/
 /*	$NetBSD: ed.h,v 1.23 1995/03/21 09:04:40 cgd Exp $	*/
 
 /* ed.h: type and constant definitions for the ed editor. */
@@ -116,7 +116,7 @@ if (--mutex == 0) { \
 #define STRTOL(i, p) { \
 	if (((i = strtol(p, &p, 10)) == LONG_MIN || i == LONG_MAX) && \
 	    errno == ERANGE) { \
-		sprintf(errmsg, "number out of range"); \
+		snprintf(errmsg, sizeof(errmsg), "number out of range"); \
 	    	i = 0; \
 		return ERR; \
 	} \
@@ -132,14 +132,14 @@ if ((i) > (n)) { \
 	if ((b) != NULL) { \
 		if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
 			fprintf(stderr, "%s\n", strerror(errno)); \
-			sprintf(errmsg, "out of memory"); \
+			snprintf(errmsg, sizeof(errmsg), "out of memory"); \
 			SPL0(); \
 			return err; \
 		} \
 	} else { \
 		if ((ts = (char *) malloc(ti += max((i), MINBUFSZ))) == NULL) { \
 			fprintf(stderr, "%s\n", strerror(errno)); \
-			sprintf(errmsg, "out of memory"); \
+			snprintf(errmsg, sizeof(errmsg), "out of memory"); \
 			SPL0(); \
 			return err; \
 		} \
@@ -157,7 +157,7 @@ if ((i) > (n)) { \
 	SPL1(); \
 	if ((ts = (char *) realloc((b), ti += max((i), MINBUFSZ))) == NULL) { \
 		fprintf(stderr, "%s\n", strerror(errno)); \
-		sprintf(errmsg, "out of memory"); \
+		snprintf(errmsg, sizeof(errmsg), "out of memory"); \
 		SPL0(); \
 		return err; \
 	} \
@@ -289,7 +289,7 @@ extern int sigflags;
 /* global vars */
 extern long addr_last;
 extern long current_addr;
-extern char errmsg[];
+extern char errmsg[MAXPATHLEN + 40];
 extern long first_addr;
 extern int lineno;
 extern long second_addr;

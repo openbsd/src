@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.2 1996/06/23 14:19:59 deraadt Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.3 1996/09/15 22:25:54 millert Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -44,7 +44,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.2 1996/06/23 14:19:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.3 1996/09/15 22:25:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ void
 des_error(s)
 	char *s;		/* the message */
 {
-	(void)sprintf(errmsg, "%s", s ? s : strerror(errno));
+	(void)snprintf(errmsg, sizeof(errmsg), "%s", s ? s : strerror(errno));
 }
 
 /*
