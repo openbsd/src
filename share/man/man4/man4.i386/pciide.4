@@ -1,5 +1,5 @@
-.\"	$OpenBSD: wdc.4,v 1.8 1999/07/21 23:57:54 aaron Exp $
-.\"	$NetBSD: wdc.4,v 1.4 1999/05/19 14:44:02 bouyer Exp $
+.\"	$OpenBSD: pciide.4,v 1.1 1999/07/21 23:57:55 aaron Exp $
+.\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -33,33 +33,64 @@
 .\"
 
 .Dd October 15, 1998
-.Dt WDC 4
+.Dt pciide 4
 .Os
 .Sh NAME
-.Nm wdc
-.Nd WD100x compatible hard disk controller driver
+.Nm pciide
+.Nd PCI IDE controller driver
 .Sh SYNOPSIS
-.Cd "wdc0 at isa? port 0x1f0 irq 14"
-.Cd "wdc0 at isa? port 0x170 irq 15"
-.Cd "wdc* at isapnp?"
-.Cd "wdc* at pcmcia? function ?"
-.Cd "wd* at wdc? drive ?"
+.Cd "pciide* at pci ? dev ? function ? flags 0x0000"
+.Cd "options PCIIDE_CMD064x_DISABLE"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides the basic functions for the
+driver supports the PCI IDE controllers as specified in the
+"PCI IDE controller specification, revision 1.0" draft, and provides the core
+functions for the
 .Xr wd 4
 and
 .Xr atapi 4
-drivers. It supports IDE and EIDE controllers, as well as MFM, RLL, and ESDI on
-the ISA bus. PCI IDE controllers in legacy mode are also supported, but the
-.Xr pciide 4
-driver may provide more functionalities.
+drivers. This driver includes specific, enhanced support for the CMD Tech
+PCI0640 controller and IDE DMA/UltraDMA support for the following
+controllers:
 .Pp
-For the ISA front-end, the 0x01 flag enables 32-bit I/O negotiation.
-This is known to cause problems with some motherboards.
+.Bl -item -compact -offset indent
+.It
+Acer Labs M5229 IDE controller
+.It
+CMD Tech PCI0643 and PCI0646 IDE controllers
+.It
+Contaq Microsystems/Cypress CY82C693 IDE controller
+.It
+Intel PIIX, PIIX3, and PIIX4 IDE controllers
+.It
+Silicon Integrated System 5597/5598 IDE controller
+.It
+VIA Technologies VT82C586 and VT82C586A IDE controllers
+.El 
+.Pp
+Some of these contollers are only available in multifunction PCI chips.
+.Pp
+The 0x0001 flag forces the
+.Nm 
+driver to use DMA when there is no explicit DMA mode setting support for
+the controller but DMA is present. If the BIOS didn't configure the controller
+properly, this can cause a machine hang.
+
+.Sh BUGS
+There's no way to reliably know if a PCI064x controller is enabled or not.
+If the driver finds a PCI064x, it will assume it is enabled unless
+.Dv PCIIDE_CMD064x_DISABLE
+is specified in the kernel config file.
+This will be a problem only if the controller has been disabled in the BIOS
+and another controller has been installed which uses the ISA legacy I/O ports
+and interrupts.
+.Pp
+The timings used for the PIO and DMA modes for controllers listed above
+are for a PCI bus running at 30 or 33 Mhz. This driver may not
+work properly on overclocked systems.
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr pciide 4 ,
 .Xr scsi 4 ,
-.Xr wd 4
+.Xr wd 4 ,
+.Xr wdc 4
