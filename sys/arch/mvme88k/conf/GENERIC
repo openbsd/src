@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 2003/12/27 23:58:08 miod Exp $
+#	$OpenBSD: GENERIC,v 1.38 2004/01/01 01:51:24 miod Exp $
 
 machine		mvme88k
 
@@ -29,6 +29,7 @@ bugtty0 at mainbus0
 # MVME1x7 devices
 pcctwo0 at mainbus0 addr 0xfff00000		# MVME187
 bussw0  at mainbus0 addr 0xfff00000		# MVME197
+sram0	at mainbus0 addr 0xffe00000		# MVME187
 pcctwo0 at bussw0 offset 0x42000		# MVME197
 clock0	at pcctwo0 ipl 5
 nvram0	at pcctwo0 offset 0xc0000
