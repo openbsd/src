@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.5 2004/07/08 19:53:46 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.6 2004/08/03 10:54:09 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -126,6 +126,7 @@ virtual_init(void)
 			return;
 		LIST_INSERT_HEAD(&virtual_listen_list,
 		    (struct virtual_transport *)default_transport, link);
+		transport_reference(default_transport);
 	}
 
 	if (!bind_family || (bind_family & BIND_FAMILY_INET6)) {
@@ -134,7 +135,10 @@ virtual_init(void)
 			return;
 		LIST_INSERT_HEAD(&virtual_listen_list,
 		    (struct virtual_transport *)default_transport6, link);
+		transport_reference(default_transport6);
 	}
+
+	return;
 }
 
 struct virtual_transport *
@@ -194,11 +198,18 @@ struct virtual_transport *
 virtual_listen_lookup(struct sockaddr *addr)
 {
 	struct virtual_transport *v;
-	struct udp_transport	*u;
+	struct udp_transport	 *u;
 
 	for (v = LIST_FIRST(&virtual_listen_list); v;
 	     v = LIST_NEXT(v, link)) {
-		u = (struct udp_transport *)v->main;
+		if (!(u = (struct udp_transport *)v->main))
+			if (!(u = (struct udp_transport *)v->encap)) {
+				log_print("virtual_listen_lookup: "
+				    "virtual %p has no low-level transports",
+				    v);
+				continue;
+			}
+
 		if (u->src->sa_family == addr->sa_family
 		    && sockaddr_addrlen(u->src) == sockaddr_addrlen(addr)
 		    && memcmp(sockaddr_addrdata (u->src),
@@ -207,6 +218,7 @@ virtual_listen_lookup(struct sockaddr *addr)
 			return v;
 	}
 
+	LOG_DBG((LOG_TRANSPORT, 40, "virtual_listen_lookup: no match"));
 	return 0;
 }
 
@@ -267,7 +279,7 @@ virtual_bind(const struct sockaddr *addr)
 	if (*ep != '\0' || lport < 0 || lport > USHRT_MAX) {
 		log_print("virtual_bind: "
 		    "port string \"%s\" not convertible to in_port_t", port);
-		transport_release(v->main);
+		v->main->vtbl->remove(v->main);
 		free(v);
 		return 0;
 	}
@@ -275,7 +287,7 @@ virtual_bind(const struct sockaddr *addr)
 	sockaddr_set_port((struct sockaddr *)&tmp_sa, (in_port_t)lport);
 	v->encap = udp_encap_bind((struct sockaddr *)&tmp_sa);
 	if (!v->encap) {
-		transport_release(v->main);
+		v->main->vtbl->remove(v->main);
 		free(v);
 		return 0;
 	}
@@ -284,7 +296,6 @@ virtual_bind(const struct sockaddr *addr)
 	v->encap_is_active = 0;
 
 	transport_setup(&v->transport, 1);
-	transport_reference(&v->transport);
 	v->transport.flags |= TRANSPORT_LISTEN;
 
 	return (struct transport *)v;
@@ -484,6 +495,7 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	}
 	LIST_INSERT_HEAD(&virtual_listen_list, (struct virtual_transport *)t,
 	    link);
+	transport_reference(t);
 	return 0;
 }
 
@@ -503,6 +515,9 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 	v2 = (struct virtual_transport *)t;
 
 	memcpy(v2, v, sizeof *v);
+	/* Remove the copy's links into virtual_listen_list.  */
+	v2->link.le_next = 0;
+	v2->link.le_prev = 0;
 
 	if (v->encap_is_active)
 		v2->main = 0; /* No need to clone this.  */
@@ -523,13 +538,6 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 
 	t->flags &= ~TRANSPORT_LISTEN;
 	transport_setup(t, 1);
-
-	transport_reference(t);
-	if (v2->main)
-		transport_reference(v2->main);
-	if (v2->encap)
-		transport_reference(v2->encap);
-
 	return t;
 }
   
@@ -572,8 +580,6 @@ virtual_create(char *name)
 	if (t2)
 		t2->virtual = (struct transport *)v;
 	transport_setup(&v->transport, 1);
-	LIST_INSERT_HEAD(&virtual_listen_list, v, link);
-
 	return (struct transport *)v;
 }
 
@@ -589,6 +595,7 @@ virtual_remove(struct transport *t)
 	if (v->link.le_prev)
 		LIST_REMOVE(v, link);
 
+	LOG_DBG((LOG_TRANSPORT, 90, "virtual_remove: removed %p", v));
 	free(t);
 }
 
@@ -638,7 +645,7 @@ virtual_send_message(struct message *msg, struct transport *t)
 	struct virtual_transport *v =
 	    (struct virtual_transport *)msg->transport;
 #if defined (USE_NAT_TRAVERSAL)
-	struct sockaddr *sa;
+	struct sockaddr *dst;
 	in_port_t port;
 	
 	/*
@@ -657,11 +664,11 @@ virtual_send_message(struct message *msg, struct transport *t)
 		v->encap_is_active++;
 
 		/* Copy destination port if it is translated (NAT).  */
-		v->main->vtbl->get_dst(v->main, &sa);
-		port = ntohs(sockaddr_port(sa));
+		v->main->vtbl->get_dst(v->main, &dst);
+		port = ntohs(sockaddr_port(dst));
 		if (port != UDP_DEFAULT_PORT) {
-			v->main->vtbl->get_dst(v->encap, &sa);
-			sockaddr_set_port(sa, port);
+			v->main->vtbl->get_dst(v->encap, &dst);
+			sockaddr_set_port(dst, port);
 		}
 	}
 #endif /* USE_NAT_TRAVERSAL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.5 2004/07/29 08:54:08 ho Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.6 2004/08/03 10:54:09 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -430,8 +430,12 @@ nat_t_setup_keepalive(struct sa *sa)
 {
 	struct sockaddr *src;
 	struct timeval now;
+	
+	if (sa->initiator)
+		sa->transport->vtbl->get_src(sa->transport, &src);
+	else
+		sa->transport->vtbl->get_dst(sa->transport, &src);
 
-	sa->transport->vtbl->get_src(sa->transport, &src);
 	if (!virtual_listen_lookup(src))
 		return;
 
@@ -443,4 +447,7 @@ nat_t_setup_keepalive(struct sa *sa)
 	if (!sa->nat_t_keepalive)
 		log_print("nat_t_setup_keepalive: "
 		    "timer_add_event() failed, will not send keepalives");
+
+	LOG_DBG((LOG_TRANSPORT, 50, "nat_t_setup_keepalive: "
+	    "added event for phase 1 SA %p", sa));
 }

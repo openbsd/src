@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.77 2004/06/25 19:42:38 mcbride Exp $	 */
+/* $OpenBSD: udp.c,v 1.78 2004/08/03 10:54:09 ho Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -76,9 +76,9 @@ int		  udp_fd_isset(struct transport *, fd_set *);
 void		  udp_get_dst(struct transport *, struct sockaddr **);
 void		  udp_get_src(struct transport *, struct sockaddr **);
 char		 *udp_decode_ids(struct transport *);
+void		  udp_remove(struct transport *);
 
 static struct transport *udp_create(char *);
-static void     udp_remove(struct transport *);
 static void     udp_report(struct transport *);
 static void     udp_handle_message(struct transport *);
 static struct transport *udp_make(struct sockaddr *);
@@ -193,7 +193,6 @@ udp_make(struct sockaddr *laddr)
 		free (tstr);
 	}
 	transport_setup(&t->transport, 0);
-	transport_reference(&t->transport);
 	t->transport.flags |= TRANSPORT_LISTEN;
 	return &t->transport;
 
@@ -355,10 +354,8 @@ udp_create(char *name)
 	}
 	t = (struct transport *)v;
 	rv = udp_clone(v->main, dst);
-	if (rv) {
+	if (rv)
 		rv->vtbl = &udp_transport_vtbl;
-		transport_reference(rv->virtual);
-	}
 
 ret:
 	if (addr_list)
@@ -376,12 +373,12 @@ udp_remove(struct transport *t)
 		free(u->src);
 	if (u->dst)
 		free(u->dst);
-	if (t->flags & TRANSPORT_LISTEN) {
-		if (u->s >= 0)
-			close(u->s);
-		if (u->link.le_prev)
-			LIST_REMOVE(u, link);
-	}
+	if ((t->flags & TRANSPORT_LISTEN) && u->s >= 0)
+		close(u->s);
+	if (t->link.le_prev)
+		LIST_REMOVE(t, link);
+
+	LOG_DBG((LOG_TRANSPORT, 90, "udp_remove: removed transport %p", t));
 	free(t);
 }
 

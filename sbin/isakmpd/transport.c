@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.28 2004/06/21 13:09:00 ho Exp $	 */
+/* $OpenBSD: transport.c,v 1.29 2004/08/03 10:54:09 ho Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -75,17 +75,21 @@ transport_init(void)
 void
 transport_setup(struct transport *t, int toplevel)
 {
-	LOG_DBG((LOG_TRANSPORT, 70, "transport_setup: adding %p%s", t,
-	    toplevel ? " (virtual)" : ""));
-	if (toplevel == 0)
-		LIST_INSERT_HEAD(&transport_list, t, link);
-	else {
-		/* Only the toplevel (virtual) transport has the sendqueues. */
+	if (toplevel) {
+		/* Only the toplevel (virtual) transport has sendqueues.  */
+		LOG_DBG((LOG_TRANSPORT, 70,
+		    "transport_setup: virtual transport %p", t));
 		TAILQ_INIT(&t->sendq);
 		TAILQ_INIT(&t->prio_sendq);
+		t->refcnt = 0;
+	} else {
+		/* udp and udp_encap trp goes into the transport list.  */
+		LOG_DBG((LOG_TRANSPORT, 70,
+		    "transport_setup: added %p to transport list", t));
+		LIST_INSERT_HEAD(&transport_list, t, link);
+		t->refcnt = 1;
 	}
 	t->flags = 0;
-	t->refcnt = 0;
 }
 
 /* Add a referer to transport T.  */
@@ -111,15 +115,6 @@ transport_release(struct transport *t)
 		return;
 
 	LOG_DBG((LOG_TRANSPORT, 70, "transport_release: freeing %p", t));
-	if (t->virtual) {
-		struct virtual_transport *v =
-		    (struct virtual_transport *)t->virtual;
-		if (v->main == t)
-			v->main = 0;
-		else
-			v->encap = 0;
-		LIST_REMOVE(t, link);
-	}
 	t->vtbl->remove(t);
 }
 
@@ -204,7 +199,7 @@ transport_fd_set(fd_set * fds)
 			if (n > max)
 				max = n;
 
-			LOG_DBG((LOG_TRANSPORT,95,"transport_fd_set: "
+			LOG_DBG((LOG_TRANSPORT, 95, "transport_fd_set: "
 			    "transport %p (virtual %p) fd %d", t,
 			    t->virtual, n));
 		}
@@ -228,7 +223,8 @@ transport_pending_wfd_set(fd_set * fds)
 		if (TAILQ_FIRST(&t->virtual->sendq) ||
 		    TAILQ_FIRST(&t->virtual->prio_sendq)) {
 			n = t->vtbl->fd_set(t, fds, 1);
-			LOG_DBG((LOG_TRANSPORT,95,"transport_pending_wfd_set: "
+			LOG_DBG((LOG_TRANSPORT, 95, 
+			    "transport_pending_wfd_set: "
 			    "transport %p (virtual %p) fd %d pending", t,
 			    t->virtual, n));
 			if (n > max)
@@ -278,10 +274,8 @@ transport_send_messages(fd_set * fds)
 	 * Reference all transports first so noone will disappear while in
 	 * use.
 	 */
-	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
+	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
 		transport_reference(t->virtual);
-		transport_reference(t);
-	}
 	
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
 		if ((TAILQ_FIRST(&t->virtual->sendq) ||
@@ -353,6 +347,10 @@ transport_send_messages(fd_set * fds)
 							    "scan");
 					}
 					exchange->last_sent = 0;
+#ifdef notyet
+					exchange_free(exchange);
+					exchange = 0;
+#endif
 				} else {
 					gettimeofday(&expiration, 0);
 
@@ -412,7 +410,6 @@ transport_send_messages(fd_set * fds)
 	for (t = LIST_FIRST(&transport_list); t; t = next) {
 		next = LIST_NEXT(t, link);
 		transport_release(t->virtual);
-		transport_release(t);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.4 2004/07/07 09:13:01 hshoexer Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.5 2004/08/03 10:54:09 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -67,26 +67,26 @@
 #endif
 
 /* Reused, from udp.c */
-struct transport *udp_clone (struct transport *, struct sockaddr *);
+struct transport *udp_clone(struct transport *, struct sockaddr *);
 int		  udp_fd_set(struct transport *, fd_set *, int);
 int		  udp_fd_isset(struct transport *, fd_set *);
-void		  udp_get_dst (struct transport *, struct sockaddr **);
-void		  udp_get_src (struct transport *, struct sockaddr **);
-char		 *udp_decode_ids (struct transport *);
+void		  udp_get_dst(struct transport *, struct sockaddr **);
+void		  udp_get_src(struct transport *, struct sockaddr **);
+char		 *udp_decode_ids(struct transport *);
+void		  udp_remove(struct transport *);
 
-static struct transport *udp_encap_create (char *);
-static void		 udp_encap_remove (struct transport *);
-static void		 udp_encap_report (struct transport *);
-static void		 udp_encap_handle_message (struct transport *);
-static struct transport *udp_encap_make (struct sockaddr *);
-static int		 udp_encap_send_message (struct message *,
+static struct transport *udp_encap_create(char *);
+static void		 udp_encap_report(struct transport *);
+static void		 udp_encap_handle_message(struct transport *);
+static struct transport *udp_encap_make(struct sockaddr *);
+static int		 udp_encap_send_message(struct message *,
     struct transport *);
 
 static struct transport_vtbl udp_encap_transport_vtbl = {
 	{ 0 }, "udp_encap",
 	udp_encap_create,
 	0,
-	udp_encap_remove,
+	udp_remove,
 	udp_encap_report,
 	udp_fd_set,
 	udp_fd_isset,
@@ -191,7 +191,6 @@ udp_encap_make(struct sockaddr *laddr)
 		free(tstr);
 	}
 	transport_setup(&t->transport, 0);
-	transport_reference(&t->transport);
 	t->transport.flags |= TRANSPORT_LISTEN;
 	return &t->transport;
 
@@ -201,7 +200,7 @@ err:
 	if (t) {
 		/* Already closed.  */
 		t->s = -1;
-		udp_encap_remove(&t->transport);
+		udp_remove(&t->transport);
 	}
 	return 0;
 }
@@ -312,34 +311,14 @@ udp_encap_create(char *name)
 	}
 	t = (struct transport *)v;
 	rv = udp_clone(v->encap, dst);
-	if (rv) {
-		rv->vtbl = &udp_encap_transport_vtbl; /* XXX Necessary? */
-		transport_reference(rv->virtual);
-	}
-  
-  ret:
+	if (rv)
+		rv->vtbl = &udp_encap_transport_vtbl;
+
+ret:
 	if (addr_list)
 		conf_free_list(addr_list);
 	free(dst);
 	return rv;
-}
-
-void
-udp_encap_remove(struct transport *t)
-{
-	struct udp_transport *u = (struct udp_transport *)t;
-
-	if (u->src)
-		free (u->src);
-	if (u->dst)
-		free (u->dst);
-	if (t->flags & TRANSPORT_LISTEN) {
-		if (u->s >= 0)
-			close (u->s);
-		if (u->link.le_prev)
-			LIST_REMOVE (u, link);
-	}
-	free (t);
 }
 
 /* Report transport-method specifics of the T transport.  */
