@@ -86,6 +86,7 @@
 ./sbin/fsck_msdos
 ./sbin/fsdb
 ./sbin/fsirand
+./sbin/growfs
 ./sbin/halt
 ./sbin/ifconfig
 ./sbin/init

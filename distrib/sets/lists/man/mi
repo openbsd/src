@@ -1734,6 +1734,7 @@
 ./usr/share/man/cat8/groupdel.0
 ./usr/share/man/cat8/groupinfo.0
 ./usr/share/man/cat8/groupmod.0
+./usr/share/man/cat8/growfs.0
 ./usr/share/man/cat8/halt.0
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp300/MAKEDEV.0
