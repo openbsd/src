@@ -6,7 +6,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=	stand
+SUBDIR=
 
 TPMAX=	../pmax/tags
 SPMAX=	../pmax/pmax/*.[ch] ../pmax/include/*.h \
