@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.9 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: md5.c,v 1.10 2003/11/24 05:22:26 mickey Exp $	*/
 
 /*
  * The rest of the code is derived from MD5C.C by RSADSI. Minor cosmetic
@@ -74,6 +74,7 @@ static void Encode(unsigned char *, UINT4 *, unsigned int);
 static void Decode(UINT4 *, unsigned char *, unsigned int);
 #endif
 
+#define HAVEBCOPY
 #ifdef HAVEMEMCOPY
 #include <memory.h>
 #define MD5_memcpy	memcpy
