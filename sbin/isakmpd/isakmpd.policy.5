@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.21 2001/07/05 07:33:08 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.22 2001/10/04 23:47:21 angelos Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -609,11 +609,7 @@ Signature: "sig-x509-sha1-base64:ql+vrUxv14DcBOQHR2jsbXayq6T\\
 
 .Ed
 .Sh BUGS
-remote_filter, local_filter, and remote_id are only set for IPv4
-addresses (single, range, or subnet), FQDN, and User FQDN.
-
-The \*_addr_upper and \*_addr_lower attributes are not currently set
-for IPv6 addresses (single, range, or subnet).
+A more sane way of expressing IPv6 address ranges is needed.
 .Sh FILES
 .Bl -tag -width /etc/isakmpd/isakmpd.policy
 .It Pa /etc/isakmpd/isakmpd.policy
