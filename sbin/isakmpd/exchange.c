@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.110 2005/03/05 12:25:12 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.111 2005/03/10 17:19:08 cloder Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1799,7 +1799,9 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 				exchange_add_finalization(exchange, finalize,
 				    arg);
 			else {
-				finalize(0, arg, 1);	/* Indicate failure */
+				/* Indicate failure */
+				if (finalize)
+					finalize(0, arg, 1);
 				free(name);
 			}
 			return;
