@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.1 1998/11/14 23:37:25 deraadt Exp $ */
+/* $Id: kernel.h,v 1.2 1999/02/20 21:22:32 deraadt Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -67,6 +67,7 @@ transform xf[] = {
      { 18, ALG_ENC_3DES, XF_ENC|ESP_NEW},
      { 16, ALG_ENC_BLF, XF_ENC|ESP_NEW},
      { 17, ALG_ENC_CAST, XF_ENC|ESP_NEW},
+     { 19, ALG_ENC_SKIPJACK, XF_ENC|ESP_NEW},
 };
 
 transform *kernel_get_transform(int id);
