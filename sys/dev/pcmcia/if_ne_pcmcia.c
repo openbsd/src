@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.7 1999/01/31 11:28:39 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.8 1999/03/26 06:34:28 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -220,6 +220,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
       PCMCIA_CIS_KINGSTON_KNE_PC2,
       0, 0x0180, { 0x00, 0xc0, 0xf0 } },
+
+    { PCMCIA_STR_LINKSYS_FAST_ECARD,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_FAST_ECARD,
+      PCMCIA_CIS_LINKSYS_FAST_ECARD,
+      0, -1, { 0x00, 0x80, 0xc8} },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
@@ -354,7 +359,7 @@ ne_pcmcia_attach(parent, self, aux)
 	struct pcmcia_mem_handle pcmh;
 	bus_addr_t offset;
 	int i, j, mwindow;
-	u_int8_t myea[6], *enaddr = NULL;
+	u_int8_t *enaddr = NULL;
 	void (*npp_init_media) __P((struct dp8390_softc *, int **,
 	    int *, int *));
 	int *media, nmedia, defmedia;
@@ -474,11 +479,12 @@ ne_pcmcia_attach(parent, self, aux)
 					return;
 				}
 				for (j = 0; j < ETHER_ADDR_LEN; j++)
-					myea[j] = bus_space_read_1(pcmh.memt,
+					dsc->sc_arpcom.ac_enaddr[j] =
+					    bus_space_read_1(pcmh.memt,
 					    pcmh.memh, offset + (j * 2));
 				pcmcia_mem_unmap(pa->pf, mwindow);
 				pcmcia_mem_free(pa->pf, &pcmh);
-				enaddr = myea;
+				enaddr = dsc->sc_arpcom.ac_enaddr;
 			}
 			break;
 		}

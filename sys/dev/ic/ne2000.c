@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.6 1998/11/06 06:32:15 fgsch Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.7 1999/03/26 06:34:26 fgsch Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -119,13 +119,13 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	/*
 	 * Detect it again; this gives us the memory size.
 	 */
-	nsc->sc_type = ne2000_detect(nict, nich, asict, asich);
+	nsc->sc_type = ne2000_detect(nsc);
 	if (nsc->sc_type == 0) {
 		printf("%s: where did the card go?\n", dsc->sc_dev.dv_xname);
 		return;
 	}
 
-	useword = (nsc->sc_type == NE2000_TYPE_NE2000);
+	useword = (nsc->sc_type != NE2000_TYPE_NE1000);
 
 	dsc->cr_proto = ED_CR_RD2;
 
@@ -138,7 +138,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	 * NE1000 gets byte-wide DMA, NE2000 gets word-wide DMA.
 	 */
 	dsc->dcr_reg = ED_DCR_FT1 | ED_DCR_LS |
-	    (nsc->sc_type == NE2000_TYPE_NE2000 ? ED_DCR_WTS : 0);
+	    (nsc->sc_type != NE2000_TYPE_NE1000 ? ED_DCR_WTS : 0);
 
 	dsc->test_mem = ne2000_test_mem;
 	dsc->ring_copy = ne2000_ring_copy;
@@ -152,7 +152,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	/*
 	 * 8k of memory plus an additional 8k if an NE2000.
 	 */
-	memsize = 8192 + (nsc->sc_type == NE2000_TYPE_NE2000 ? 8192 : 0);
+	memsize = 8192 + (nsc->sc_type != NE2000_TYPE_NE1000 ? 8192 : 0);
 
 	/*
 	 * NIC memory doens't start at zero on an NE board.
@@ -231,7 +231,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 
 	dsc->mem_size = memsize;
 
-	if (myea == NULL) {
+	if (myea == NULL && nsc->sc_type != NE2000_TYPE_DL10019) {
 		/* Read the station address. */
 		ne2000_readmem(nict, nich, asict, asich, 0, romdata,
 		    sizeof(romdata), useword);
@@ -242,13 +242,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 			dsc->sc_arpcom.ac_enaddr[i] =
 				romdata[i * (useword ? 2 : 1)];
 #endif
-	} else
-#ifdef __NetBSD__
-		bcopy(myea, dsc->sc_enaddr, sizeof(dsc->sc_enaddr));
-#else
-		bcopy(myea, dsc->sc_arpcom.ac_enaddr,
-			sizeof(dsc->sc_arpcom.ac_enaddr));
-#endif
+	}
 
 	/* Clear any pending interrupts that might have occurred above. */
 	bus_space_write_1(nict, nich, ED_P0_ISR, 0xff);
@@ -270,12 +264,14 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
  * Detect an NE-2000 or compatible.  Returns a model code.
  */
 int
-ne2000_detect(nict, nich, asict, asich)
-	bus_space_tag_t nict;
-	bus_space_handle_t nich;
-	bus_space_tag_t asict;
-	bus_space_handle_t asich;
+ne2000_detect(nsc)
+	struct ne2000_softc *nsc;
 {
+	struct dp8390_softc *dsc = &nsc->sc_dp8390;
+	bus_space_tag_t nict = dsc->sc_regt;
+	bus_space_handle_t nich = dsc->sc_regh;
+	bus_space_tag_t asict = nsc->sc_asict;
+	bus_space_handle_t asich = nsc->sc_asich;
 	static u_int8_t test_pattern[32] = "THIS is A memory TEST pattern";
 	u_int8_t test_buffer[32], tmp;
 	int i, rv = 0;
@@ -409,8 +405,20 @@ ne2000_detect(nict, nich, asict, asich)
 
 		rv = NE2000_TYPE_NE2000;
 	} else {
-		/* We're an NE1000. */
-		rv = NE2000_TYPE_NE1000;
+		tmp = 0;
+		for (i = 4; i < 12; i++)
+			tmp += bus_space_read_1(asict, asich, i);
+
+		if (tmp == 0xff) {
+			for (i = 0; i < ETHER_ADDR_LEN; i++)
+				dsc->sc_arpcom.ac_enaddr[i] =
+					bus_space_read_1(asict, asich, i + 4);
+
+			rv = NE2000_TYPE_DL10019;
+		} else {
+			/* We're an NE1000. */
+			rv = NE2000_TYPE_NE1000;
+		}
 	}
 
 	/* Clear any pending interrupts that might have occurred above. */
@@ -607,7 +615,7 @@ ne2000_ring_copy(sc, src, dst, amount)
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
 	u_short tmp_amount;
-	int useword = (nsc->sc_type == NE2000_TYPE_NE2000);
+	int useword = (nsc->sc_type != NE2000_TYPE_NE1000);
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
@@ -638,7 +646,7 @@ ne2000_read_hdr(sc, buf, hdr)
 
 	ne2000_readmem(sc->sc_regt, sc->sc_regh, nsc->sc_asict, nsc->sc_asich,
 	    buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring),
-	    (nsc->sc_type == NE2000_TYPE_NE2000));
+	    (nsc->sc_type != NE2000_TYPE_NE1000));
 #if BYTE_ORDER == BIG_ENDIAN
 	hdr->count = swap16(hdr->count);
 #endif

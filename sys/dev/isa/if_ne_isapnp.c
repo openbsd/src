@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.2 1998/11/06 06:32:15 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.3 1999/03/26 06:34:27 fgsch Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -168,7 +168,7 @@ ne_isapnp_attach(
 	 * Detect it again, so we can print some information about the
 	 * interface.
 	 */
-	netype = ne2000_detect(nict, nich, asict, asich);
+	netype = ne2000_detect(nsc);
 	switch (netype) {
 	case NE2000_TYPE_NE1000:
 		typestr = "NE1000";

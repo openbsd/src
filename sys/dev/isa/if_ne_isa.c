@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isa.c,v 1.2 1998/11/06 06:32:15 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_isa.c,v 1.3 1999/03/26 06:34:27 fgsch Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -112,6 +112,9 @@ ne_isa_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	struct ne_isa_softc *isc = match;
+	struct ne2000_softc *nsc = &isc->sc_ne2000;
+	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t nict = ia->ia_iot;
 	bus_space_handle_t nich;
@@ -138,8 +141,14 @@ ne_isa_match(parent, match, aux)
 	    NE2000_ASIC_NPORTS, &asich))
 		goto out;
 
+	dsc->sc_regt = nict;
+	dsc->sc_regh = nich;
+
+	nsc->sc_asict = asict;
+	nsc->sc_asich = asich;
+
 	/* Look for an NE2000-compatible card. */
-	rv = ne2000_detect(nict, nich, asict, asich);
+	rv = ne2000_detect(nsc);
 
 	if (rv)
 		ia->ia_iosize = NE2000_NPORTS;
@@ -196,7 +205,7 @@ ne_isa_attach(parent, self, aux)
 	 * Detect it again, so we can print some information about the
 	 * interface.
 	 */
-	netype = ne2000_detect(nict, nich, asict, asich);
+	netype = ne2000_detect(nsc);
 	switch (netype) {
 	case NE2000_TYPE_NE1000:
 		typestr = "NE1000";
