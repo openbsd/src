@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.26 2004/03/05 23:57:16 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.27 2004/04/14 20:15:47 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -290,18 +290,12 @@ struct dns_host_entry *enter_dns_host(char *);
 pair cons(caddr_t, pair);
 
 /* alloc.c */
-void *dmalloc(int, char *);
-void dfree(void *, char *);
-struct tree *new_tree(char *);
-struct tree_cache *new_tree_cache(char *);
-struct hash_table *new_hash_table(int, char *);
-struct hash_bucket *new_hash_bucket(char *);
-struct string_list *new_string_list(size_t size, char * name);
-void free_hash_bucket(struct hash_bucket *, char *);
-void free_hash_table(struct hash_table *, char *);
-void free_tree_cache(struct tree_cache *, char *);
-void free_tree(struct tree *, char *);
-void free_string_list(struct string_list *, char *);
+void			*dmalloc(int, char *);
+void			 dfree(void *, char *);
+struct string_list	*new_string_list(size_t size, char * name);
+struct hash_table	*new_hash_table(int, char *);
+struct hash_bucket	*new_hash_bucket(char *);
+void			 free_hash_bucket(struct hash_bucket *, char *);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
