@@ -1,5 +1,5 @@
-/*	$OpenBSD: vfs_bio.c,v 1.4 1996/04/19 16:09:09 niklas Exp $	*/
-/*	$NetBSD: vfs_bio.c,v 1.42 1996/02/18 11:57:08 fvdl Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.5 1996/05/02 13:12:29 deraadt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.43 1996/04/22 01:38:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -59,7 +59,8 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
-#include <sys/cpu.h>
+
+#include <vm/vm.h>
 
 #include "rnd.h"
 #if	NRND > 0

@@ -497,8 +497,8 @@ struct sysent sysent[] = {
 	    sys_munlock },			/* 204 = munlock */
 	{ 1, s(struct sys_undelete_args),
 	    sys_undelete },			/* 205 = undelete */
-	{ 0, 0,
-	    sys_nosys },			/* 206 = unimplemented */
+	{ 2, s(struct sys_futimes_args),
+	    sys_futimes },			/* 206 = futimes */
 	{ 0, 0,
 	    sys_nosys },			/* 207 = unimplemented */
 	{ 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.52 1996/03/16 23:17:20 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,6 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/syscallargs.h>
-#include <sys/cpu.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>

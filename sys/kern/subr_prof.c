@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_prof.c,v 1.5 1996/04/28 00:26:46 tholo Exp $	*/
-/*	$NetBSD: subr_prof.c,v 1.11 1996/03/17 02:44:40 pk Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.6 1996/05/02 13:12:22 deraadt Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -41,7 +41,6 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/cpu.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_sig.c,v 1.3 1996/03/03 17:19:54 niklas Exp $	*/
-/*	$NetBSD: kern_sig.c,v 1.53 1996/02/09 18:59:47 christos Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.4 1996/05/02 13:12:13 deraadt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -61,7 +61,6 @@
 #include <sys/stat.h>
 #include <sys/core.h>
 #include <sys/ptrace.h>
-#include <sys/cpu.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

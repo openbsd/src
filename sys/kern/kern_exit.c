@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_exit.c,v 1.5 1996/03/03 17:19:44 niklas Exp $	*/
-/*	$NetBSD: kern_exit.c,v 1.38 1996/02/09 18:59:29 christos Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.6 1996/05/02 13:12:11 deraadt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -68,7 +68,6 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
-#include <sys/cpu.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
