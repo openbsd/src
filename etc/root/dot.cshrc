@@ -8,11 +8,11 @@ set cdpath=(/sys /sys/arch /usr/src/{bin,sbin,usr.{bin,sbin},pgrm,lib,libexec,sh
 
 setenv BLOCKSIZE 1k
 
-alias	cd	'set old=$cwd; chdir \!*'
+alias	cd	'set old="$cwd"; chdir \!*'
 alias	h	history
 alias	j	jobs -l
 alias	ll	ls -l
-alias	back	'set back=$old; set old=$cwd; cd $back; unset back; dirs'
+alias	back	'set back="$old"; set old="$cwd"; cd "$back"; unset back; dirs'
 
 alias	z	suspend
 alias	x	exit
