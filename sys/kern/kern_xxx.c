@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.3 1996/05/02 13:12:17 deraadt Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.4 1996/08/26 09:16:01 deraadt Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ scdebug_call(p, code, args)
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	     sy->sy_call == nosys))
+	     sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
@@ -123,7 +123,7 @@ scdebug_ret(p, code, error, retval)
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	    sy->sy_call == nosys))
+	    sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
