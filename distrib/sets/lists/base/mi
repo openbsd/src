@@ -496,7 +496,6 @@
 ./usr/bin/zmore
 ./usr/bin/znew
 ./usr/games
-./usr/games/hide
 ./usr/include
 ./usr/lib
 ./usr/lib/apache
