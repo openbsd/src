@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 1999/02/25 17:18:34 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.6 1999/03/04 23:26:14 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -68,7 +68,7 @@ hil*	at gsc? irq 1	# Human Interface Loop, kbd and mouse
 #medusa* at gsc? irq 4	# FDDI
 com0	at gsc? irq 5	# RS/232 serial port
 com1	at gsc? irq 6	# RS/232 serial port
-lpt0	at gsc? irq 7	# LPT centronics iface
+lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
 ie0	at gsc? irq 8	# 82C5[89]6 ether
 siop0	at gsc? irq 9	# NCR 53C7xx
 siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)

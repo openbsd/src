@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.4 1999/02/25 17:18:34 mickey Exp $
+#	$OpenBSD: GECKO,v 1.5 1999/03/04 23:26:13 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -41,7 +41,7 @@ sti0	at mainbus0 		# onboard HCRX-8 graphics
 gsc*	at lasi?
 com0	at gsc? irq 5	# serial ports
 #com1	at gsc?	irq 6?	# serial ports (add-in card)
-lpt*	at gsc?	irq 7	# LPT centronics iface
+lpt*	at gsc?	irq 7	# both com and lpt are on WD16C552
 ie0	at gsc?	irq 8	# 82C596 ether
 #ie1	at gsc?	irq 10?	# 82C596 ether (add-in card)
 siop0	at gsc?	irq 9	# NCR 53C710
