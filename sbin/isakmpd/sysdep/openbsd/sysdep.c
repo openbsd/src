@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.19 2001/08/22 20:59:14 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.20 2001/08/23 19:07:00 niklas Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -140,10 +140,28 @@ sysdep_cleartext (int fd, int af)
     int ipcomp_level;
   } optsw[] =
     { 
-      { IPPROTO_IP, IP_AUTH_LEVEL, IP_ESP_TRANS_LEVEL, IP_ESP_NETWORK_LEVEL,
-	IP_IPCOMP_LEVEL },
-      { IPPROTO_IPV6, IPV6_AUTH_LEVEL, IPV6_ESP_TRANS_LEVEL,
-	IPV6_ESP_NETWORK_LEVEL, IPV6_IPCOMP_LEVEL },
+      {
+	IPPROTO_IP,
+	IP_AUTH_LEVEL,
+	IP_ESP_TRANS_LEVEL,
+	IP_ESP_NETWORK_LEVEL,
+#ifdef IP_IPCOMP_LEVEL
+	IP_IPCOMP_LEVEL
+#else
+	0
+#endif
+      },
+      {
+	IPPROTO_IPV6,
+	IPV6_AUTH_LEVEL,
+	IPV6_ESP_TRANS_LEVEL,
+	IPV6_ESP_NETWORK_LEVEL,
+#ifdef IPV6_IPCOMP_LEVEL
+	IPV6_IPCOMP_LEVEL
+#else
+	0
+#endif
+      },
     };
   
   if (app_none)
@@ -191,8 +209,9 @@ sysdep_cleartext (int fd, int af)
 		optsw[sw].ip_proto);
       return -1;
     }
-  if (setsockopt (fd, optsw[sw].ip_proto, optsw[sw].ipcomp_level,
-		  (char *)&level, sizeof level) == -1
+  if (optsw[sw].ipcomp_level
+      && setsockopt (fd, optsw[sw].ip_proto, optsw[sw].ipcomp_level,
+		     (char *)&level, sizeof level) == -1
       && errno != ENOPROTOOPT)
     {
       log_error("sysdep_cleartext: "
