@@ -1,10 +1,7 @@
-./dev/pcmcia
 ./dev/scan0
 ./dev/scan1
-./sbin/config_slot
 ./sbin/fdisk
 ./sbin/ldconfig
-./sbin/pcmcia_cntrl
 ./usr/bin/ldd
 ./usr/bin/pctr
 ./usr/include/i386
@@ -609,7 +606,6 @@
 ./usr/sbin/loadfont
 ./usr/sbin/mcon
 ./usr/sbin/pccon
-./usr/sbin/pcmciad
 ./usr/sbin/scon
 ./usr/sbin/vt220keys
 ./usr/sbin/vttest
