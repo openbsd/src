@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.22 1997/03/10 02:34:42 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.23 1997/03/10 03:20:30 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
@@ -54,6 +53,8 @@
 
 #define SSMODE(z)	( minor(z)       & 0x03)
 #define SSUNIT(z)	((minor(z) >> 4)       )
+
+#define	MIN(a,b) (((a)<(b))?(a):(b))
 
 /*
  * If the mode is 3 (e.g. minor = 3,7,11,15)
@@ -628,7 +629,7 @@ ssioctl(dev, cmd, addr, flag, p)
 			if (error)
 				return (error);
 		} else {
-			/* add routine to validate paramters */
+			/* XXX add routine to validate paramters */
 			ss_set_window(ss, sio);
 		}
 		break;
@@ -917,5 +918,5 @@ get_buffer_status(ss, bp)
 	    0, 100000, bp, flags | SCSI_NOSLEEP)) {
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
 	}
-	bp->b_bcount = _3btol(buf_sz_retn.tgt_send_buf_len);
+	bp->b_bcount = MIN(_3btol(buf_sz_retn.tgt_send_buf_len), bp->b_bcount);
 }
