@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.550 2002/09/30 18:12:53 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.551 2002/09/30 19:50:32 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -39,7 +39,7 @@
 
 static const struct pci_known_product pci_known_products[] = {
 	{
-	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
 	    "OZ6832 CardBus",
 	},
 	{

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.550 2002/09/30 18:12:53 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.551 2002/09/30 19:50:32 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -598,7 +598,7 @@
  */
 
 /* 2 Micro Inc */
-#define	PCI_PRODUCT_2MICRO_OZ6832	0x6832		/* OZ6832 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 CardBus */
 
 
 /* 3Com Products */
