@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.33 2000/08/04 10:03:16 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.34 2002/06/10 13:54:22 espie Exp $
 
 INFODIR=	infodir=/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -46,7 +46,7 @@ maninstall:
 .endif
 
 install:	maninstall
-	${FSFMAKE} mandir= INSTALL_MAN= install
+	${FSFMAKE} mandir= INSTALL_MAN= DESTDIR=${DESTDIR} install
 	sh ${.CURDIR}/util/gen-dir-node ${DESTDIR}/usr/share/info > \
 	    ${DESTDIR}/usr/share/info/dir
 
