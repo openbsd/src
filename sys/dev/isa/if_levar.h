@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_levar.h,v 1.5 1997/11/07 08:07:01 niklas Exp $	*/
+/*	$OpenBSD: if_levar.h,v 1.6 1997/12/26 08:07:33 deraadt Exp $	*/
 /*	$NetBSD: if_levar.h,v 1.5 1996/05/07 01:50:07 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,13 @@ struct le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
 	void	*sc_ih;
-	bus_space_handle_t sc_ioh;
 	int	sc_card;
 	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 };
+
+hide void le_isa_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_isa_rdcsr __P((struct am7990_softc *, u_int16_t));  
+int le_isa_intredge __P((void *));
