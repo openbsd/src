@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.26 2004/04/28 03:53:35 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.27 2004/04/28 04:59:32 markus Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,8 +52,8 @@ int	pfkey_md5sig_remove(struct peer *);
 int	pfkey_ipsec_establish(struct peer *);
 int	pfkey_ipsec_remove(struct peer *);
 
-#define pfkey_flow(fd, cmd, dir, from, to, sport, dport) \
-	pfkey_send(fd, SADB_SATYPE_ESP, cmd, dir, from, to, \
+#define pfkey_flow(fd, satype, cmd, dir, from, to, sport, dport) \
+	pfkey_send(fd, satype, cmd, dir, from, to, \
 	    0, 0, 0, NULL, 0, 0, NULL, sport, dport)
 
 int
@@ -531,9 +531,20 @@ int
 pfkey_ipsec_establish(struct peer *p)
 {
 	struct peer_auth *auth = &p->conf.auth;
+	uint8_t satype = SADB_SATYPE_ESP;
 
-	if (p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP) {
-		if (pfkey_send(fd, SADB_SATYPE_ESP, SADB_ADD, 0,
+	switch (p->conf.auth.method) {
+	case AUTH_IPSEC_IKE_ESP:
+		satype = SADB_SATYPE_ESP;
+		break;
+	case AUTH_IPSEC_IKE_AH:
+		satype = SADB_SATYPE_AH;
+		break;
+	case AUTH_IPSEC_MANUAL_ESP:
+	case AUTH_IPSEC_MANUAL_AH:
+		satype = p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ?
+		    SADB_SATYPE_ESP : SADB_SATYPE_AH;
+		if (pfkey_send(fd, satype, SADB_ADD, 0,
 		    &p->conf.local_addr, &p->conf.remote_addr,
 		    auth->spi_out,
 		    auth->auth_alg_out, auth->auth_keylen_out,
@@ -544,7 +555,7 @@ pfkey_ipsec_establish(struct peer *p)
 			return (-1);
 		if (pfkey_reply(fd, NULL) < 0)
 			return (-1);
-		if (pfkey_send(fd, SADB_SATYPE_ESP, SADB_ADD, 0,
+		if (pfkey_send(fd, satype, SADB_ADD, 0,
 		    &p->conf.remote_addr, &p->conf.local_addr,
 		    auth->spi_in,
 		    auth->auth_alg_in, auth->auth_keylen_in,
@@ -555,27 +566,31 @@ pfkey_ipsec_establish(struct peer *p)
 			return (-1);
 		if (pfkey_reply(fd, NULL) < 0)
 			return (-1);
+		break;
+	default:
+		return (-1);
+		break;
 	}
 
-	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, 0, BGP_PORT) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, BGP_PORT, 0) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
@@ -588,8 +603,20 @@ pfkey_ipsec_establish(struct peer *p)
 int
 pfkey_ipsec_remove(struct peer *p)
 {
-	if (p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP) {
-		if (pfkey_send(fd, SADB_SATYPE_ESP, SADB_DELETE, 0,
+	uint8_t satype;
+
+	switch (p->conf.auth.method) {
+	case AUTH_IPSEC_IKE_ESP:
+		satype = SADB_SATYPE_ESP;
+		break;
+	case AUTH_IPSEC_IKE_AH:
+		satype = SADB_SATYPE_AH;
+		break;
+	case AUTH_IPSEC_MANUAL_ESP:
+	case AUTH_IPSEC_MANUAL_AH:
+		satype = p->conf.auth.method == AUTH_IPSEC_MANUAL_ESP ?
+		    SADB_SATYPE_ESP : SADB_SATYPE_AH;
+		if (pfkey_send(fd, satype, SADB_DELETE, 0,
 		    &p->conf.local_addr, &p->conf.remote_addr,
 		    p->conf.auth.spi_out, 0, 0, NULL, 0, 0, NULL,
 		    0, 0) < 0)
@@ -597,34 +624,38 @@ pfkey_ipsec_remove(struct peer *p)
 		if (pfkey_reply(fd, NULL) < 0)
 			return (-1);
 
-		if (pfkey_send(fd, SADB_SATYPE_ESP, SADB_DELETE, 0,
+		if (pfkey_send(fd, satype, SADB_DELETE, 0,
 		    &p->conf.remote_addr, &p->conf.local_addr,
 		    p->conf.auth.spi_in, 0, 0, NULL, 0, 0, NULL,
 		    0, 0) < 0)
 			return (-1);
 		if (pfkey_reply(fd, NULL) < 0)
 			return (-1);
+		break;
+	default:
+		return (-1);
+		break;
 	}
 
-	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, 0, BGP_PORT) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
+	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_OUT,
 	    &p->conf.local_addr, &p->conf.remote_addr, BGP_PORT, 0) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, 0, BGP_PORT) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
 		return (-1);
 
-	if (pfkey_flow(fd, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
+	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, IPSP_DIRECTION_IN,
 	    &p->conf.remote_addr, &p->conf.local_addr, BGP_PORT, 0) < 0)
 		return (-1);
 	if (pfkey_reply(fd, NULL) < 0)
