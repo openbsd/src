@@ -3345,3 +3345,4 @@
 ./var/db/libc.tags
 ./usr/include/net/if_ieee80211.h
 ./usr/include/sys/timeout.h
+./usr/include/dev/pci/pciide_amd_reg.h

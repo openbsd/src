@@ -1652,3 +1652,10 @@
 ./usr/share/man/cat9/timeout_del.0
 ./usr/share/man/cat9/timeout_set.0
 ./usr/share/man/cat4/ray.0
+./usr/share/man/cat3/asctime_r.0
+./usr/share/man/cat3/ctime_r.0
+./usr/share/man/cat3/getgrgid_r.0
+./usr/share/man/cat3/getgrnam_r.0
+./usr/share/man/cat3/gmtime_r.0
+./usr/share/man/cat3/localtime_r.0
+./usr/share/man/cat3/readdir_r.0
