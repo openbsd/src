@@ -109,6 +109,12 @@ selection to complete.  If
 is a nil pointer, the select blocks indefinitely.  To effect a poll, the
 .Fa timeout
 argument should be non-nil, pointing to a zero-valued timeval structure.
+.Fa Timeout
+is not changed by
+.Fn select ,
+and may be reused on subsequent calls, however it is good style to re-initialize
+it before each invocation of
+.Fn select .
 .Pp
 Any of
 .Fa readfds ,
@@ -171,13 +177,14 @@ before the inclusion of
 .Aq Pa sys/types.h .
 .Pp
 .Fn Select
-should probably return the time remaining from the original timeout,
-if any, by modifying the time value in place.
-This may be implemented in future versions of the system.
-Thus, it is unwise to assume that the timeout value will be unmodified
-by the
+should probably have been designed to return the time remaining from the
+original timeout, if any, by modifying the time value in place.
+However, it is unlikely this semantic will ever be implemented, as the
+change would cause source code compatibility problems.
+In general it is unwise to assume that the timeout value will be
+unmodified by the
 .Fn select
-call.
+call, and the caller should reinitialize it on each invocation.
 .Sh HISTORY
 The
 .Fn select
