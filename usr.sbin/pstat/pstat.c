@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.47 2004/08/03 04:11:49 mjc Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.48 2004/09/14 22:33:00 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.47 2004/08/03 04:11:49 mjc Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.48 2004/09/14 22:33:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ main(int argc, char *argv[])
 {
 	int fileflag = 0, swapflag = 0, ttyflag = 0, vnodeflag = 0;
 	char buf[_POSIX2_LINE_MAX];
-	int ch, ret;
+	int ch;
 	extern char *optarg;
 	extern int optind;
 
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	(void)setgid(getgid());
 
 	if (vnodeflag)
-		if ((ret = kvm_nlist(kd, nl)) == -1)
+		if (kvm_nlist(kd, nl) == -1)
 			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 
 	if (!(fileflag | vnodeflag | ttyflag | swapflag | totalflag))
@@ -972,7 +972,7 @@ void
 swapmode(void)
 {
 	char *header;
-	int hlen = 10, nswap, rnswap;
+	int hlen = 10, nswap;
 	int div, i, avail, nfree, npfree, used;
 	long blocksize;
 	struct swapent *swdev;
@@ -996,7 +996,8 @@ swapmode(void)
 	}
 	if ((swdev = malloc(nswap * sizeof(*swdev))) == NULL)
 		err(1, "malloc");
-	rnswap = swapctl(SWAP_STATS, swdev, nswap);
+	if (swapctl(SWAP_STATS, swdev, nswap) == -1)
+		err(1, "swapctl");
 
 	if (!totalflag)
 		(void)printf("%-11s %*s %8s %8s %8s  %s\n",

@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.7 2004/07/15 20:46:00 mpf Exp $ */
+/* $OpenBSD: syslogc.c,v 1.8 2004/09/14 22:33:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -75,14 +75,12 @@ main(int argc, char **argv)
 	const char *ctlsock_path;
 	char buf[8192];
 	struct sockaddr_un ctl;
-	socklen_t ctllen;
 	int ctlsock, ch, oflag, rval;
 	FILE *ctlf;
 	extern char *optarg;
 	extern int optind;
 	struct ctl_cmd cc;
 	struct ctl_reply_hdr rr;
-	u_int32_t header[2];
 
 	memset(&cc, '\0', sizeof(cc));
 
