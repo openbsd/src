@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.43 2002/01/23 01:33:07 art Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.44 2002/02/18 04:46:29 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -847,7 +847,7 @@ ipsec_get_acquire(u_int32_t seq)
 {
 	struct ipsec_acquire *ipa;
 
-	TAILQ_FOREACH (ipa, &ipsec_acquire_head, ipa_ipo_next)
+	TAILQ_FOREACH (ipa, &ipsec_acquire_head, ipa_next)
 		if (ipa->ipa_seq == seq)
 			return ipa;
 
