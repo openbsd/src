@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.2 1995/12/27 10:41:48 niklas Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.3 1996/01/01 23:51:28 deraadt Exp $
 
 MAN=	cccp.1 gcc.1 cp/g++.1
 MLINKS=	gcc.1 cc.1
@@ -19,8 +19,8 @@ config.status:
 install:	maninstall
 	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
-		bindir=${DESTDIR}${BINDIR} install
-	ln -f ${DESTDIR}${BINDIR}/gcc ${DESTDIR}${BINDIR}/cc
+		bindir=${DESTDIR}/usr/bin install
+	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
