@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_clntout.c,v 1.5 2001/07/18 22:26:00 deraadt Exp $	*/
+/*	$OpenBSD: rpc_clntout.c,v 1.6 2001/11/24 19:17:47 deraadt Exp $	*/
 /*	$NetBSD: rpc_clntout.c,v 1.4 1995/06/11 21:49:52 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,10 +44,10 @@ static char sccsid[] = "@(#)rpc_clntout.c 1.11 89/02/22 (C) 1987 SMI";
 #include "rpc_parse.h"
 #include "rpc_util.h"
 
-static write_program __P((definition *));
+static void write_program __P((definition *));
 static void printbody __P((proc_list *));
 
-extern pdeclaration();
+extern void pdeclaration();
 
 #define DEFAULT_TIMEOUT 25	/* in seconds */
 static char RESULT[] = "clnt_res";
@@ -59,7 +59,7 @@ write_stubs()
 	list *l;
 	definition *def;
 
-	f_print(fout, 
+	f_print(fout,
 		"\n/* Default timeout can be changed using clnt_control() */\n");
 	f_print(fout, "static struct timeval TIMEOUT = { %d, 0 };\n",
 		DEFAULT_TIMEOUT);
@@ -71,7 +71,7 @@ write_stubs()
 	}
 }
 
-static
+static void
 write_program(def)
 	definition *def;
 {
@@ -117,17 +117,17 @@ void printarglist( proc, addargname, addargtype )
       ptype(proc->args.decls->decl.prefix, proc->args.decls->decl.type, 1);
       f_print(fout, "*argp;\n");
     }
-  } else if (streq( proc->args.decls->decl.type, "void")) { 
+  } else if (streq( proc->args.decls->decl.type, "void")) {
     /* newstyle, 0 argument */
-    if( Cflag ) 
+    if (Cflag)
       f_print(fout, "(%s%s)\n", addargtype, addargname );
     else
       f_print(fout, "(%s)\n", addargname);
   } else {
     /* new style, 1 or multiple arguments */
-    if( !Cflag ) {
+    if (!Cflag) {
       f_print(fout, "(");
-      for (l = proc->args.decls;  l != NULL; l = l->next) 
+      for (l = proc->args.decls;  l != NULL; l = l->next)
 	f_print(fout, "%s, ", l->decl.name);
       f_print(fout, "%s)\n", addargname );
       for (l = proc->args.decls; l != NULL; l = l->next) {
@@ -142,7 +142,7 @@ void printarglist( proc, addargname, addargtype )
     }
   }
 
-  if( !Cflag ) 
+  if (!Cflag)
     f_print(fout, "\t%s%s;\n", addargtype, addargname );
 }
 
@@ -165,13 +165,12 @@ printbody(proc)
 {
   decl_list *l;
   bool_t args2 = (proc->arg_num > 1);
-  int i;
 
   /* For new style with multiple arguments, need a structure in which
      to stuff the arguments. */
 	if ( newstyle && args2) {
 		f_print(fout, "\t%s", proc->args.argname);
-		f_print(fout, " arg;\n");	
+		f_print(fout, " arg;\n");
 	}
 	f_print(fout, "\tstatic ");
 	if (streq(proc->res_type, "void")) {
@@ -187,7 +186,7 @@ printbody(proc)
 	  /* newstyle, 0 arguments */
 	  f_print(fout,
 		    "\tif (clnt_call(clnt, %s, xdr_void", proc->proc_name);
-	  f_print(fout, 
+	  f_print(fout,
  		  ", NULL, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
  		  stringfix(proc->res_type), ampr(proc->res_type), RESULT);
 
@@ -200,15 +199,15 @@ printbody(proc)
 	  f_print(fout,
 		  "\tif (clnt_call(clnt, %s, xdr_%s", proc->proc_name,
 		  proc->args.argname);
-	  f_print(fout, 
+	  f_print(fout,
  		  ", &arg, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
  		  stringfix(proc->res_type),
 		  ampr(proc->res_type), RESULT);
 	} else {  /* single argument, new or old style */
 	      f_print(fout,
  		      "\tif (clnt_call(clnt, %s, xdr_%s, %s%s, xdr_%s, %s%s, TIMEOUT) != RPC_SUCCESS) {\n",
-		      proc->proc_name, 
-		      stringfix(proc->args.decls->decl.type), 
+		      proc->proc_name,
+		      stringfix(proc->args.decls->decl.type),
 		      (newstyle ? "&" : ""),
 		      (newstyle ? proc->args.decls->decl.name : "argp"),
 		      stringfix(proc->res_type),
@@ -217,7 +216,7 @@ printbody(proc)
 	f_print(fout, "\t\treturn (NULL);\n");
 	f_print(fout, "\t}\n");
 	if (streq(proc->res_type, "void")) {
-		f_print(fout, "\treturn ((void *)%s%s);\n", 
+		f_print(fout, "\treturn ((void *)%s%s);\n",
 			ampr(proc->res_type),RESULT);
 	} else {
 		f_print(fout, "\treturn (%s%s);\n", ampr(proc->res_type),RESULT);

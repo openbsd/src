@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.c,v 1.5 2001/11/07 18:44:28 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.c,v 1.6 2001/11/24 19:17:47 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.c,v 1.5 1995/08/29 23:05:55 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -188,7 +188,7 @@ def_program(defp)
 			decls->decl = dec;
 			tailp = &decls->next;
 			/* get args */
-			while(peekscan(TOK_COMMA, &tok)) {
+			while (peekscan(TOK_COMMA, &tok)) {
 			  num_args++;
 			  get_prog_declaration(&dec, DEF_STRUCT, 
 					       num_args);
@@ -326,7 +326,7 @@ def_union(defp)
 	    cases->case_name = tok.str;
 	    scan(TOK_COLON, &tok);
       
-	  }while(peekscan(TOK_CASE,&tok));
+	  } while (peekscan(TOK_CASE,&tok));
       }
     else
       if(flag)
@@ -359,7 +359,7 @@ def_union(defp)
   }
 }
 
-static char* reserved_words[] = {
+static char *reserved_words[] = {
 	"array",
 	"bytes",
 	"destroy",
@@ -375,7 +375,7 @@ static char* reserved_words[] = {
 	NULL
 };
 
-static char* reserved_types[] = {
+static char *reserved_types[] = {
 	"opaque",
 	"string",
 	NULL
@@ -385,7 +385,7 @@ static char* reserved_types[] = {
    xdr routines that would conflict with internal XDR routines. */
 static check_type_name( name, new_type )
 int new_type;
-char* name;
+char *name;
 {
   int i;
   char tmp[100];
@@ -504,7 +504,7 @@ get_prog_declaration(dec, dkind, num)
 		sprintf(name, "%s%d", ARGNAME, num); /* default name of argument */
 
 	dec->name = (char *)strdup(name); 
-	
+
 	if (streq(dec->type, "void")) {
 		return;
 	}

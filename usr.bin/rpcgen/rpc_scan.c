@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.4 2001/07/18 22:26:00 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.5 2001/11/24 19:17:47 deraadt Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,8 +35,8 @@ static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #endif
 
 /*
- * rpc_scan.c, Scanner for the RPC protocol compiler 
- * Copyright (C) 1987, Sun Microsystems, Inc. 
+ * rpc_scan.c, Scanner for the RPC protocol compiler
+ * Copyright (C) 1987, Sun Microsystems, Inc.
  */
 #include <sys/cdefs.h>
 #include <stdlib.h>
@@ -64,7 +64,7 @@ static int pushed = 0;	/* is a token pushed */
 static token lasttok;	/* last token, if pushed */
 
 /*
- * scan expecting 1 given token 
+ * scan expecting 1 given token
  */
 void
 scan(expect, tokp)
@@ -72,13 +72,12 @@ scan(expect, tokp)
 	token *tokp;
 {
 	get_token(tokp);
-	if (tokp->kind != expect) {
+	if (tokp->kind != expect)
 		expected1(expect);
-	}
 }
 
 /*
- * scan expecting any of the 2 given tokens 
+ * scan expecting any of the 2 given tokens
  */
 void
 scan2(expect1, expect2, tokp)
@@ -87,13 +86,12 @@ scan2(expect1, expect2, tokp)
 	token *tokp;
 {
 	get_token(tokp);
-	if (tokp->kind != expect1 && tokp->kind != expect2) {
+	if (tokp->kind != expect1 && tokp->kind != expect2)
 		expected2(expect1, expect2);
-	}
 }
 
 /*
- * scan expecting any of the 3 given token 
+ * scan expecting any of the 3 given token
  */
 void
 scan3(expect1, expect2, expect3, tokp)
@@ -103,14 +101,13 @@ scan3(expect1, expect2, expect3, tokp)
 	token *tokp;
 {
 	get_token(tokp);
-	if (tokp->kind != expect1 && tokp->kind != expect2
-	    && tokp->kind != expect3) {
+	if (tokp->kind != expect1 && tokp->kind != expect2 &&
+	    tokp->kind != expect3)
 		expected3(expect1, expect2, expect3);
-	}
 }
 
 /*
- * scan expecting a constant, possibly symbolic 
+ * scan expecting a constant, possibly symbolic
  */
 void
 scan_num(tokp)
@@ -126,7 +123,7 @@ scan_num(tokp)
 }
 
 /*
- * Peek at the next token 
+ * Peek at the next token
  */
 void
 peek(tokp)
@@ -137,7 +134,7 @@ peek(tokp)
 }
 
 /*
- * Peek at the next token and scan it if it matches what you expect 
+ * Peek at the next token and scan it if it matches what you expect
  */
 int
 peekscan(expect, tokp)
@@ -153,7 +150,7 @@ peekscan(expect, tokp)
 }
 
 /*
- * Get the next token, printing out any directive that are encountered. 
+ * Get the next token, printing out any directive that are encountered.
  */
 void
 get_token(tokp)
@@ -179,8 +176,8 @@ get_token(tokp)
 				if (commenting) {
 					break;
 				} else if (cppline(curline)) {
-					docppline(curline, &linenum, 
-						  &infilename);
+					docppline(curline, &linenum,
+					    &infilename);
 				} else if (directive(curline)) {
 					printdirective(curline);
 				} else {
@@ -209,7 +206,7 @@ get_token(tokp)
 	}
 
 	/*
-	 * 'where' is not whitespace, comment or directive Must be a token! 
+	 * 'where' is not whitespace, comment or directive Must be a token!
 	 */
 	switch (*where) {
 	case ':':
@@ -392,28 +389,28 @@ findconst(str, val)
 }
 
 static token symbols[] = {
-			  {TOK_CONST, "const"},
-			  {TOK_UNION, "union"},
-			  {TOK_SWITCH, "switch"},
-			  {TOK_CASE, "case"},
-			  {TOK_DEFAULT, "default"},
-			  {TOK_STRUCT, "struct"},
-			  {TOK_TYPEDEF, "typedef"},
-			  {TOK_ENUM, "enum"},
-			  {TOK_OPAQUE, "opaque"},
-			  {TOK_BOOL, "bool"},
-			  {TOK_VOID, "void"},
-			  {TOK_CHAR, "char"},
-			  {TOK_INT, "int"},
-			  {TOK_UNSIGNED, "unsigned"},
-			  {TOK_SHORT, "short"},
-			  {TOK_LONG, "long"},
-			  {TOK_FLOAT, "float"},
-			  {TOK_DOUBLE, "double"},
-			  {TOK_STRING, "string"},
-			  {TOK_PROGRAM, "program"},
-			  {TOK_VERSION, "version"},
-			  {TOK_EOF, "??????"},
+	{TOK_CONST, "const"},
+	{TOK_UNION, "union"},
+	{TOK_SWITCH, "switch"},
+	{TOK_CASE, "case"},
+	{TOK_DEFAULT, "default"},
+	{TOK_STRUCT, "struct"},
+	{TOK_TYPEDEF, "typedef"},
+	{TOK_ENUM, "enum"},
+	{TOK_OPAQUE, "opaque"},
+	{TOK_BOOL, "bool"},
+	{TOK_VOID, "void"},
+	{TOK_CHAR, "char"},
+	{TOK_INT, "int"},
+	{TOK_UNSIGNED, "unsigned"},
+	{TOK_SHORT, "short"},
+	{TOK_LONG, "long"},
+	{TOK_FLOAT, "float"},
+	{TOK_DOUBLE, "double"},
+	{TOK_STRING, "string"},
+	{TOK_PROGRAM, "program"},
+	{TOK_VERSION, "version"},
+	{TOK_EOF, "??????"},
 };
 
 static

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_main.c,v 1.8 2001/11/07 18:44:28 deraadt Exp $	*/
+/*	$OpenBSD: rpc_main.c,v 1.9 2001/11/24 19:17:47 deraadt Exp $	*/
 /*	$NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.8 2001/11/07 18:44:28 deraadt Exp $";
+static char cvsid[] = "$OpenBSD: rpc_main.c,v 1.9 2001/11/24 19:17:47 deraadt Exp $";
 #endif
 
 /*
@@ -203,7 +203,7 @@ main(argc, argv)
 		if (allfiles) {
 		  reinitialize();
 		  clnt_output(cmd.infile, "-DRPC_CLIENT", EXTEND, "_client.c");
-		}	
+		}
 	}
 #ifdef __MSDOS__
 	if (dos_cppfile != NULL) {
@@ -297,13 +297,13 @@ static void find_cpp()
 {
   struct stat buf;
 
-  if( stat(CPP, &buf) < 0 )  {	/* SVR4 or explicit cpp does not exist */
+  if (stat(CPP, &buf) < 0 )  {	/* SVR4 or explicit cpp does not exist */
     if (cppDefined) {
       fprintf( stderr, "cannot find C preprocessor: %s \n", CPP );
       crash();
     } else {			/* try the other one */
       CPP = SUNOS_CPP;
-      if( stat( CPP, &buf ) < 0 ) { /* can't find any cpp */
+      if (stat( CPP, &buf ) < 0 ) { /* can't find any cpp */
 	fprintf( stderr, "cannot find any C preprocessor: %s\n", CPP );
 	crash();
       }
@@ -392,7 +392,7 @@ open_input(infile, define)
 }
 
 /* valid tirpc nettypes */
-static char* valid_ti_nettypes[] =
+static char *valid_ti_nettypes[] =
 {
   "netpath",
   "visible",
@@ -407,7 +407,7 @@ static char* valid_ti_nettypes[] =
   };
 
 /* valid inetd nettypes */
-static char* valid_i_nettypes[] =
+static char *valid_i_nettypes[] =
 {
   "udp",
   "tcp",
@@ -415,17 +415,16 @@ static char* valid_i_nettypes[] =
 };
 
 static int check_nettype( name, list_to_check )
-char* name;
-char* list_to_check[];
+char *name;
+char *list_to_check[];
 {
-  int i;
-  for( i = 0; list_to_check[i] != NULL; i++ ) {
-	  if( strcmp( name, list_to_check[i] ) == 0 ) {
-	    return 1;
-	  }
-  }
-  f_print( stderr, "illegal nettype :\'%s\'\n", name );
-  return 0;
+	int i;
+	for( i = 0; list_to_check[i] != NULL; i++ ) {
+		if (strcmp( name, list_to_check[i] ) == 0)
+			return 1;
+	}
+	f_print(stderr, "illegal nettype :\'%s\'\n", name);
+	return 0;
 }
 
 /*
@@ -445,7 +444,7 @@ c_output(infile, define, extend, outfile)
 	long tell;
 
 	c_initialize();
-	open_input(infile, define);	
+	open_input(infile, define);
 	outfilename = extend ? extendfile(infile, outfile) : outfile;
 	open_output(infile, outfilename);
 	add_warning();
@@ -490,10 +489,10 @@ char rpcgen_table_dcl[] = "struct rpcgen_table {\n\
 };\n";
 
 
-char* generate_guard( pathname )
-     char* pathname;
+char *generate_guard( pathname )
+     char *pathname;
 {
-        char* filename, *guard, *tmp;
+        char *filename, *guard, *tmp;
 
 	filename = strrchr(pathname, '/' );  /* find last component */
 	filename = ((filename == 0) ? pathname : filename+1);
@@ -505,7 +504,7 @@ char* generate_guard( pathname )
 			*tmp = toupper(*tmp);
 		tmp++;
 	}
-		
+
 	guard = extendfile(guard, "_H_RPCGEN");
 	return( guard );
 }
@@ -605,17 +604,17 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	  timerflag = 1;
 	}
 
-	if( !tirpcflag && inetdflag )
+	if (!tirpcflag && inetdflag)
 	  f_print(fout, "#include <sys/ttycom.h>/* TIOCNOTTY */\n");
-	if( Cflag && (inetdflag || pmflag ) ) {
+	if (Cflag && (inetdflag || pmflag )) {
 	  f_print(fout, "#ifdef __cplusplus\n");
 	  f_print(fout, "#include <sysent.h> /* getdtablesize, open */\n"); 
 	  f_print(fout, "#endif /* __cplusplus */\n");
 	  
-	  if( tirpcflag )
+	  if (tirpcflag)
 	    f_print(fout, "#include <unistd.h> /* setsid */\n");
 	}
-	if( tirpcflag )
+	if (tirpcflag)
 	  f_print(fout, "#include <sys/types.h>\n");
 
 	f_print(fout, "#include <memory.h>\n");
@@ -654,7 +653,7 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 		f_print(fout, "\nstatic SVCXPRT *caller;\n");	/*EVAS*/
 	write_most(infile, netflag, nomain);
 	if (!nomain) {
-		if( !do_registers(argc, argv) ) {
+		if (!do_registers(argc, argv)) {
 		  if (outfilename)
 		    (void) unlink(outfilename);
 		  usage();
@@ -740,7 +739,7 @@ svc_output(infile, define, extend, outfile)
   char *outfilename;
   long tell;
   
-  open_input(infile, define);	
+  open_input(infile, define);
   outfilename = extend ? extendfile(infile, outfile) : outfile;
   checkfiles(infile,outfilename); /*check if outfile already exists.
 				  if so, print an error message and exit*/
@@ -777,7 +776,7 @@ clnt_output(infile, define, extend, outfile)
   long tell;
   int has_program = 0;
   
-  open_input(infile, define);	
+  open_input(infile, define);
   outfilename = extend ? extendfile(infile, outfile) : outfile;
   checkfiles(infile,outfilename); /*check if outfile already exists.
 				  if so, print an error message and exit*/
@@ -794,7 +793,7 @@ clnt_output(infile, define, extend, outfile)
     has_program += write_sample_clnt(def);
   }
 
-  if( has_program )
+  if (has_program)
     write_sample_clnt_main();
 
   if (extend && tell == ftell(fout)) {
@@ -816,7 +815,7 @@ int do_registers(argc, argv)
 	if ( inetdflag || !tirpcflag) {
 		for (i = 1; i < argc; i++) {
 			if (streq(argv[i], "-s")) {
-			        if(!check_nettype( argv[i + 1], valid_i_nettypes ))
+			        if (!check_nettype( argv[i + 1], valid_i_nettypes ))
 				  return 0;
 				write_inetd_register(argv[i + 1]);
 				i++;
@@ -825,7 +824,7 @@ int do_registers(argc, argv)
 	} else {
 		for (i = 1; i < argc; i++)
 		        if (streq(argv[i], "-s")) {
-			        if(!check_nettype( argv[i + 1], valid_ti_nettypes ))
+			        if (!check_nettype( argv[i + 1], valid_ti_nettypes ))
 				  return 0;
 				write_nettype_register(argv[i + 1]);
 				i++;
@@ -864,7 +863,6 @@ putarg(where, cp)
 		/*NOTREACHED*/
 	}
 	arglist[where] = cp;
-	
 }
 
 /*
@@ -881,8 +879,8 @@ char *outfile;
 
   struct stat buf;
 
-  if(infile)			/* infile ! = NULL */
-    if(stat(infile,&buf) < 0)
+  if (infile)			/* infile ! = NULL */
+    if (stat(infile,&buf) < 0)
       {
 	perror(infile);
 	crash();
@@ -964,9 +962,9 @@ parseargs(argc, argv, cmd)
 					   Ss means set flag['S'];
 					   Sc means set flag['C']; */
 					c = argv[i][++j];  /* get next char */
-					if( c == 's' )
+					if(c == 's')
 					  c = 'S';
-					else if( c == 'c' )
+					else if(c == 'c')
 					  c = 'C';
 					else
 					  return( 0 );
@@ -1071,22 +1069,22 @@ parseargs(argc, argv, cmd)
 	cmd->Ssflag = flag['S'];
 	cmd->Scflag = flag['C'];
 
-	if( tirpcflag ) {
+	if(tirpcflag) {
 	  pmflag = inetdflag ? 0 : 1;	  /* pmflag or inetdflag is always TRUE */
-	  if( (inetdflag && cmd->nflag)) { /* netid not allowed with inetdflag */
+	  if((inetdflag && cmd->nflag)) { /* netid not allowed with inetdflag */
 	    f_print(stderr, "Cannot use netid flag with inetd flag!\n");
 	    return (0);
 	  }
 	} else {  /* 4.1 mode */
 	  pmflag = 0;               /* set pmflag only in tirpcmode */
 	  inetdflag = 1;            /* inetdflag is TRUE by default */
-	  if( cmd->nflag ) {          /* netid needs TIRPC */
+	  if (cmd->nflag) {          /* netid needs TIRPC */
 	    f_print( stderr, "Cannot use netid flag without TIRPC!\n");
 	    return( 0 );
 	  }
 	}
 
-	if( newstyle && ( tblflag || cmd->tflag) ) {
+	if (newstyle && ( tblflag || cmd->tflag)) {
 	  f_print( stderr, "Cannot use table flags with newstyle!\n");
 	  return( 0 );
 	}
