@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.319 2003/08/17 18:51:54 krw Exp $
+#	$OpenBSD: install.sub,v 1.320 2003/08/23 22:22:02 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1591,6 +1591,7 @@ donetconfig() {
 
 	# Get/Confirm the default route.
 	_dr=$(route -n show | sed -ne '/^default */{s///; s/ .*//; p;}')
+	[[ -f /tmp/dhclient.conf ]] && _dr=dhcp
 	while : ; do
 		ask_until "Default route? (IP address, 'dhcp' or 'none')" "$_dr"
 		case $resp in
