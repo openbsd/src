@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.5 1997/02/09 23:58:22 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 1998/07/10 15:05:20 mickey Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -27,7 +27,7 @@
  * 4. This notice may not be removed or altered.
  */
 #ifndef	lint
-static char *moduleid = "$OpenBSD: file.c,v 1.5 1997/02/09 23:58:22 millert Exp $";
+static char *moduleid = "$OpenBSD: file.c,v 1.6 1998/07/10 15:05:20 mickey Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ static char *moduleid = "$OpenBSD: file.c,v 1.5 1997/02/09 23:58:22 millert Exp 
 # endif
 #endif
 #include <unistd.h>	/* for read() */
+#include <err.h>
 
 #include <netinet/in.h>		/* for byte swapping */
 
@@ -75,7 +76,6 @@ struct  magic *magic;	/* array of magic entries		*/
 
 char *magicfile;	/* where magic be found 		*/
 
-char *progname;		/* used throughout 			*/
 int lineno;		/* line number in the magic file	*/
 
 
@@ -95,11 +95,7 @@ char *argv[];
 {
 	int c;
 	int check = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
-
-	if ((progname = strrchr(argv[0], '/')) != NULL)
-		progname++;
-	else
-		progname = argv[0];
+	extern char *__progname;
 
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = MAGIC;
@@ -107,7 +103,7 @@ char *argv[];
 	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != -1)
 		switch (c) {
 		case 'v':
-			(void) fprintf(stdout, "%s-%d.%d\n", progname,
+			(void) printf("%s-%d.%d\n", __progname,
 				       FILE_VERSION_MAJOR, patchlevel);
 			return 1;
 		case 'c':
@@ -144,7 +140,7 @@ char *argv[];
 		}
 
 	if (errflg) {
-		(void) fprintf(stderr, USAGE, progname);
+		(void) fprintf(stderr, USAGE, __progname);
 		exit(2);
 	}
 
@@ -156,12 +152,9 @@ char *argv[];
 	}
 
 	if (optind == argc) {
-		if (!didsomefiles) {
-			(void)fprintf(stderr, USAGE, progname);
-			exit(2);
-		}
-	}
-	else {
+		if (!didsomefiles)
+			err(2, USAGE, __progname);
+	} else {
 		int i, wid, nw;
 		for (wid = 0, i = optind; i < argc; i++) {
 			nw = strlen(argv[i]);
@@ -192,7 +185,7 @@ char *fn;
 		wid = 1;
 	} else {
 		if ((f = fopen(fn, "r")) == NULL) {
-			error("Cannot open `%s' (%s).\n", fn, strerror(errno));
+			err(1, "Cannot open `%s'", fn);
 			/*NOTREACHED*/
 		}
 
@@ -296,8 +289,7 @@ int wid;
 
 	if (strcmp("-", inname) == 0) {
 		if (fstat(0, &sb)<0) {
-			error("cannot fstat `%s' (%s).\n", stdname,
-			      strerror(errno));
+			err(1, "cannot fstat `%s'", stdname);
 			/*NOTREACHED*/
 		}
 		inname = stdname;
@@ -331,7 +323,7 @@ int wid;
 	 * try looking at the first HOWMANY bytes
 	 */
 	if ((nbytes = read(fd, (char *)buf, HOWMANY)) == -1) {
-		error("read failed (%s).\n", strerror(errno));
+		err(1, "read failed");
 		/*NOTREACHED*/
 	}
 

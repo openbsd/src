@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.c,v 1.3 1997/02/09 23:58:19 millert Exp $	*/
+/*	$OpenBSD: compress.c,v 1.4 1998/07/10 15:05:19 mickey Exp $	*/
 
 /*
  * compress routines:
@@ -7,11 +7,12 @@
  *	uncompress(method, old, n, newch) - uncompress old into new, 
  *					    using method, return sizeof new
  */
+#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/wait.h>
+#include <err.h>
 
 #include "file.h"
 
@@ -74,7 +75,7 @@ int n;
 	int fdin[2], fdout[2];
 
 	if (pipe(fdin) == -1 || pipe(fdout) == -1) {
-		error("cannot create pipe (%s).\n", strerror(errno));	
+		err(1, "cannot create pipe");	
 		/*NOTREACHED*/
 	}
 	switch (fork()) {
@@ -92,28 +93,27 @@ int n;
 		    (void) close(2);
 
 		execvp(compr[method].argv[0], compr[method].argv);
-		error("could not execute `%s' (%s).\n", 
-		      compr[method].argv[0], strerror(errno));
+		err(1, "could not execute `%s'", compr[method].argv[0]);
 		/*NOTREACHED*/
 	case -1:
-		error("could not fork (%s).\n", strerror(errno));
+		err(1, "could not fork");
 		/*NOTREACHED*/
 
 	default: /* parent */
 		(void) close(fdin[0]);
 		(void) close(fdout[1]);
 		if (write(fdin[1], old, n) != n) {
-			error("write failed (%s).\n", strerror(errno));
+			err(1, "write failed");
 			/*NOTREACHED*/
 		}
 		(void) close(fdin[1]);
 		if ((*newch = (unsigned char *) malloc(n)) == NULL) {
-			error("out of memory.\n");
+			err(1, "malloc");
 			/*NOTREACHED*/
 		}
 		if ((n = read(fdout[0], *newch, n)) <= 0) {
 			free(*newch);
-			error("read failed (%s).\n", strerror(errno));
+			err(1, "read failed");
 			/*NOTREACHED*/
 		}
 		(void) close(fdout[0]);

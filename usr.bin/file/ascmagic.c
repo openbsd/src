@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascmagic.c,v 1.3 1997/02/09 23:58:18 millert Exp $	*/
+/*	$OpenBSD: ascmagic.c,v 1.4 1998/07/10 15:05:15 mickey Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -33,11 +33,12 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
 #include "file.h"
 #include "names.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: ascmagic.c,v 1.3 1997/02/09 23:58:18 millert Exp $";
+static char *moduleid = "$OpenBSD: ascmagic.c,v 1.4 1998/07/10 15:05:15 mickey Exp $";
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */

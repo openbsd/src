@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.5 1997/08/24 18:33:12 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.6 1998/07/10 15:05:25 mickey Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -38,10 +38,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <err.h>
 #include "file.h"
 
 #ifndef lint
-static char *moduleid = "$OpenBSD: print.c,v 1.5 1997/08/24 18:33:12 millert Exp $";
+static char *moduleid = "$OpenBSD: print.c,v 1.6 1998/07/10 15:05:25 mickey Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -118,7 +119,7 @@ ckfputs(str, fil)
     FILE *fil;
 {
 	if (fputs(str,fil) == EOF)
-		error("write failed.\n");
+		err(1, "write failed");
 }
 
 /*VARARGS*/
@@ -142,64 +143,6 @@ ckfprintf(va_alist)
 #endif
 	(void) vfprintf(f, fmt, va);
 	if (ferror(f))
-		error("write failed.\n");
+		err(1, "write failed");
 	va_end(va);
-}
-
-/*
- * error - print best error message possible and exit
- */
-/*VARARGS*/
-void
-#ifdef __STDC__
-error(const char *f, ...)
-#else
-error(va_alist)
-	va_dcl
-#endif
-{
-	va_list va;
-#ifdef __STDC__
-	va_start(va, f);
-#else
-	const char *f;
-	va_start(va);
-	f = va_arg(va, const char *);
-#endif
-	/* cuz we use stdout for most, stderr here */
-	(void) fflush(stdout); 
-
-	if (progname != NULL) 
-		(void) fprintf(stderr, "%s: ", progname);
-	(void) vfprintf(stderr, f, va);
-	va_end(va);
-	exit(1);
-}
-
-/*VARARGS*/
-void
-#ifdef __STDC__
-magwarn(const char *f, ...)
-#else
-magwarn(va_alist)
-	va_dcl
-#endif
-{
-	va_list va;
-#ifdef __STDC__
-	va_start(va, f);
-#else
-	const char *f;
-	va_start(va);
-	f = va_arg(va, const char *);
-#endif
-	/* cuz we use stdout for most, stderr here */
-	(void) fflush(stdout); 
-
-	if (progname != NULL) 
-		(void) fprintf(stderr, "%s: %s, %d: ", 
-			       progname, magicfile, lineno);
-	(void) vfprintf(stderr, f, va);
-	va_end(va);
-	fputc('\n', stderr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.4 1997/07/25 21:05:26 mickey Exp $	*/
+/*	$OpenBSD: file.h,v 1.5 1998/07/10 15:05:21 mickey Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -91,13 +91,11 @@ struct magic {
 
 extern int   apprentice		__P((char *, int));
 extern int   ascmagic		__P((unsigned char *, int));
-extern void  error		__P((const char *, ...));
 extern void  ckfputs		__P((const char *, FILE *));
 struct stat;
 extern int   fsmagic		__P((const char *, struct stat *));
 extern int   is_compress	__P((const unsigned char *, int *));
 extern int   is_tar		__P((unsigned char *, int));
-extern void  magwarn		__P((const char *, ...));
 extern void  mdump		__P((struct magic *));
 extern void  process		__P((const char *, int));
 extern void  showstr		__P((FILE *, const char *, int));

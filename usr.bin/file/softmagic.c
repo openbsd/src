@@ -1,4 +1,4 @@
-/*	$OpenBSD: softmagic.c,v 1.3 1997/02/09 23:58:36 millert Exp $	*/
+/*	$OpenBSD: softmagic.c,v 1.4 1998/07/10 15:05:27 mickey Exp $	*/
 
 /*
  * softmagic - interpret variable magic from /etc/magic
@@ -27,16 +27,17 @@
  * 4. This notice may not be removed or altered.
  */
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <sys/types.h>
+#include <err.h>
 
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: softmagic.c,v 1.3 1997/02/09 23:58:36 millert Exp $";
+static char *moduleid = "$OpenBSD: softmagic.c,v 1.4 1998/07/10 15:05:27 mickey Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
@@ -106,7 +107,7 @@ int nbytes;
 
 	if (tmpoff == NULL)
 		if ((tmpoff = (int32 *) malloc(tmplen = 20)) == NULL)
-			error("out of memory\n");
+			err(1, "malloc");
 
 	for (magindex = 0; magindex < nmagic; magindex++) {
 		/* if main entry matches, print it... */
@@ -133,7 +134,7 @@ int nbytes;
 		if (++cont_level >= tmplen)
 			if ((tmpoff = (int32 *) realloc(tmpoff,
 						       tmplen += 20)) == NULL)
-				error("out of memory\n");
+				err(1, "malloc");
 		while (magic[magindex+1].cont_level != 0 && 
 		       ++magindex < nmagic) {
 			if (cont_level >= magic[magindex].cont_level) {
@@ -178,7 +179,7 @@ int nbytes;
 						if ((tmpoff = 
 						    (int32 *) realloc(tmpoff,
 						    tmplen += 20)) == NULL)
-							error("out of memory\n");
+							err(1, "malloc");
 				}
 				if (magic[magindex].flag & ADD) {
 					 magic[magindex].offset = oldoff;
@@ -253,7 +254,7 @@ struct magic *m;
 		break;
 
 	default:
-		error("invalid m->type (%d) in mprint().\n", m->type);
+		errx(1, "invalid m->type (%d) in mprint().", m->type);
 		/*NOTREACHED*/
 	}
 	return(t);
@@ -300,7 +301,7 @@ struct magic *m;
 		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
 		return 1;
 	default:
-		error("invalid type %d in mconvert().\n", m->type);
+		errx(1, "invalid type %d in mconvert().", m->type);
 		return 0;
 	}
 }
@@ -433,7 +434,7 @@ struct magic *m;
 		}
 		break;
 	default:
-		error("invalid type %d in mcheck().\n", m->type);
+		errx(1, "invalid type %d in mcheck().", m->type);
 		return 0;/*NOTREACHED*/
 	}
 
@@ -506,7 +507,7 @@ struct magic *m;
 
 	default:
 		matched = 0;
-		error("mcheck: can't happen: invalid relation %d.\n", m->reln);
+		errx(1, "mcheck: can't happen: invalid relation %d.", m->reln);
 		break;/*NOTREACHED*/
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsmagic.c,v 1.3 1997/02/09 23:58:24 millert Exp $	*/
+/*	$OpenBSD: fsmagic.c,v 1.4 1998/07/10 15:05:22 mickey Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <err.h>
 #ifndef major
 # if defined(__SVR4) || defined(_SVR4_SOURCE)
 #  include <sys/mkdev.h>
@@ -52,7 +53,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: fsmagic.c,v 1.3 1997/02/09 23:58:24 millert Exp $";
+static char *moduleid = "$OpenBSD: fsmagic.c,v 1.4 1998/07/10 15:05:22 mickey Exp $";
 #endif	/* lint */
 
 int
@@ -166,7 +167,7 @@ struct stat *sb;
 	case S_IFREG:
 		break;
 	default:
-		error("invalid mode 0%o.\n", sb->st_mode);
+		errx(1, "invalid mode 0%o", sb->st_mode);
 		/*NOTREACHED*/
 	}
 
