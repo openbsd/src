@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.79 2001/08/25 11:37:26 espie Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.80 2001/08/25 15:43:28 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -1139,7 +1139,7 @@ nmihand(frame)
 
 	if (nmihanddeep++)
 		return;
-/*	regdump(&(frame->F_t), 128);
+/*	regdump(&(frame.F_t), 128);
 	dumptrace(); */
 #ifdef DIAGNOSTIC
 	printf("Panic switch: PC is 0x%x.\n", frame.f_pc);

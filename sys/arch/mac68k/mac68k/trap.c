@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2001/08/25 11:37:26 espie Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2001/08/25 15:43:28 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ trap(type, code, v, frame)
 			printf("(press a key)\n"); (void)cngetc();
 #endif
 		}
-		regdump(&(frame->F_t), 128);
+		regdump(&(frame.F_t), 128);
 		type &= ~T_USER;
 		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
