@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.4 2002/04/16 20:53:47 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -84,6 +84,7 @@
  * PMAP_MD_RELOC3()	general purpose kernel virtual addresses relocation
  * PMAP_MD_MAPIOSPACE()	setup machine-specific internal iospace components
  * PMAP_MD_MEMSIZE()	compute avail_end
+ * PMAP_MD_RWZERO	define to NOT make virtual address 0 read only
  */
 
 extern char *etext;
@@ -102,7 +103,6 @@ extern int pmap_aliasmask;
 
 void  pmap_bootstrap(paddr_t, paddr_t);
 
-
 /*
  * Special purpose kernel virtual addresses, used for mapping
  * physical pages for a variety of temporary or permanent purposes:
@@ -115,10 +115,12 @@ caddr_t		CADDR1, CADDR2, vmmap;
 /*
  * Bootstrap the VM system.
  *
- * Called with MMU off so we must relocate all global references by `firstpa'
- * (don't call any functions here!)  `nextpa' is the first available physical
- * memory address.  Returns an updated first PA reflecting the memory we
- * have allocated.  MMU is still off when we return.
+ * Ideally called with MMU off, but not necessarily.  All global references
+ * are relocated by `firstpa' to ensure this works.  Of course, it is not
+ * possible to call any other functions from there.  `nextpa' is the first
+ * available physical memory address.  Returns an updated first PA reflecting
+ * the memory we have allocated.  MMU is still in the same state when we
+ * return.
  *
  * XXX assumes sizeof(u_int) == sizeof(pt_entry_t)
  * XXX a PIC compiler would make this much easier.
@@ -338,6 +340,8 @@ pmap_bootstrap(nextpa, firstpa)
 	 * memory
 	 */
 	*pte = MAXADDR | PG_RW | PG_CI | PG_V | PG_U;
+#else
+	*pte = PG_NV;
 #endif
 	/*
 	 * Initialize kernel page table.
@@ -355,11 +359,19 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = &(PA2VA(kptpa, u_int *))[m68k_btop(KERNBASE)];
 	epte = &pte[m68k_btop(trunc_page((vaddr_t)&etext))];
+#ifndef	PMAP_MD_RWZERO
 	*pte++ = firstpa | PG_NV;	/* make *NULL fail in the kernel */
 #if defined(KGDB) || defined(DDB)
 	protopte = (firstpa + NBPG) | PG_RW | PG_V | PG_U; /* XXX RW for now */
 #else
 	protopte = (firstpa + NBPG) | PG_RO | PG_V | PG_U;
+#endif
+#else
+#if defined(KGDB) || defined(DDB)
+	protopte = firstpa | PG_RW | PG_V | PG_U; /* XXX RW for now */
+#else
+	protopte = firstpa | PG_RO | PG_V | PG_U;
+#endif
 #endif
 	while (pte < epte) {
 		*pte++ = protopte;
