@@ -162,7 +162,7 @@ isa_strayintr(irq)
          */
 	if (intrstray[irq]++ <= 5)
 		log(LOG_ERR, "stray interrupt %d%s\n", irq,
-		    intrstray[irq] >= 5 ? "; stopped logging" : "");
+		    intrstray[irq] > 5 ? "; stopped logging" : "");
 }
 
 int fastvec;
