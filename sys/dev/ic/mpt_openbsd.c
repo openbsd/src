@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.2 2004/03/07 05:08:16 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.3 2004/03/10 01:09:29 deraadt Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -100,8 +100,6 @@
 /* __KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $"); */
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
-
-#include <machine/stdarg.h>		/* for mpt_prt() */
 
 static int	mpt_poll(mpt_softc_t *, struct scsi_xfer *, int);
 static void	mpt_timeout(void *);
