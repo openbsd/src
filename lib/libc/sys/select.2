@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.20 2001/09/04 08:04:08 deraadt Exp $
+.\"	$OpenBSD: select.2,v 1.21 2002/11/19 20:57:13 millert Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -128,7 +128,7 @@ may be given as null pointers if no descriptors are of interest.
 .Sh RETURN VALUES
 .Fn select
 returns the number of ready descriptors that are contained in
-the descriptor sets, or \-1 is an error occurred.
+the descriptor sets, or \-1 if an error occurred.
 If the time limit expires,
 .Fn select
 returns 0.
