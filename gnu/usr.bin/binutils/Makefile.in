@@ -1631,7 +1631,7 @@ configure-target-libiberty: $(ALL_GCC)
 all-target-libiberty: configure-target-libiberty all-gcc all-ld all-target-newlib
 all-target: $(ALL_TARGET_MODULES)
 install-target: $(INSTALL_TARGET_MODULES)
-install-gdb: install-tcl install-tk install-itcl install-tix install-libgui
+#install-gdb: install-tcl install-tk install-itcl install-tix install-libgui
 ### other supporting targets
 
 MAKEDIRS= \
