@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.c,v 1.11 2000/02/25 17:23:41 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.23 2000/02/20 19:58:40 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.12 2000/04/07 22:04:44 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -36,7 +36,6 @@
  */
 
 #include <sys/param.h>
-#include <gmp.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -47,13 +46,14 @@
 #include "math_2n.h"
 #include "math_ec2n.h"
 #include "math_group.h"
+#include "math_mp.h"
 
 /* We do not want to export these definitions.  */
 int modp_getlen (struct group *);
-void modp_getraw (struct group *, mpz_ptr, u_int8_t *);
-int modp_setraw (struct group *, mpz_ptr, u_int8_t *, int);
-int modp_setrandom (struct group *, mpz_ptr);
-int modp_operation (struct group *, mpz_ptr, mpz_ptr, mpz_ptr);
+void modp_getraw (struct group *, math_mp_t, u_int8_t *);
+int modp_setraw (struct group *, math_mp_t, u_int8_t *, int);
+int modp_setrandom (struct group *, math_mp_t);
+int modp_operation (struct group *, math_mp_t, math_mp_t, math_mp_t);
 
 int ec2n_getlen (struct group *);
 void ec2n_getraw (struct group *, ec2np_ptr, u_int8_t *);
@@ -68,9 +68,9 @@ struct ec2n_group {
 };
 
 struct modp_group {
-  mpz_t gen;				/* Generator */
-  mpz_t p;				/* Prime */
-  mpz_t a, b, c, d;
+  math_mp_t gen;			/* Generator */
+  math_mp_t p;				/* Prime */
+  math_mp_t a, b, c, d;
 };
 
 /*
@@ -297,13 +297,21 @@ modp_clone (struct group *new, struct group *clone)
   memcpy (new, clone, sizeof (struct group));
 
   new->group = new_grp;
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
   mpz_init_set (new_grp->p, clone_grp->p);
-
   mpz_init_set (new_grp->gen, clone_grp->gen);
 
   mpz_init (new_grp->a);
   mpz_init (new_grp->b);
   mpz_init (new_grp->c);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  new_grp->p = BN_dup (clone_grp->p);
+  new_grp->gen = BN_dup (clone_grp->gen);
+
+  new_grp->a = BN_new ();
+  new_grp->b = BN_new ();
+  new_grp->c = BN_new ();
+#endif
 
   new->gen = new_grp->gen;
   new->a = new_grp->a;
@@ -318,11 +326,19 @@ modp_free (struct group *old)
 {
   struct modp_group *grp = old->group;
 
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
   mpz_clear (grp->p);
   mpz_clear (grp->gen);
   mpz_clear (grp->a);
   mpz_clear (grp->b);
   mpz_clear (grp->c);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  BN_clear_free (grp->p);
+  BN_clear_free (grp->gen);
+  BN_clear_free (grp->a);
+  BN_clear_free (grp->b);
+  BN_clear_free (grp->c);
+#endif
 
   free (grp);
 }
@@ -339,13 +355,23 @@ modp_init (struct group *group)
 
   group->bits = dscr->bits;
 
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
   mpz_init_set_str (grp->p, dscr->prime, 0);
-
   mpz_init_set_str (grp->gen, dscr->gen, 0);
 
   mpz_init (grp->a);
   mpz_init (grp->b);
   mpz_init (grp->c);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  grp->p = BN_new ();
+  BN_hex2bn (&grp->p, dscr->prime + 2);
+  grp->gen = BN_new ();
+  BN_hex2bn (&grp->gen, dscr->gen + 2);
+
+  grp->a = BN_new ();
+  grp->b = BN_new ();
+  grp->c = BN_new ();
+#endif
 
   group->gen = grp->gen;
   group->a = grp->a;
@@ -474,44 +500,59 @@ modp_getlen (struct group *group)
 }
 
 void
-modp_getraw (struct group *grp, mpz_ptr v, u_int8_t *d)
+modp_getraw (struct group *grp, math_mp_t v, u_int8_t *d)
 {
   mpz_getraw (d, v, grp->getlen (grp));
 }
 
 int
-modp_setraw (struct group *grp, mpz_ptr d, u_int8_t *s, int l)
+modp_setraw (struct group *grp, math_mp_t d, u_int8_t *s, int l)
 {
   mpz_setraw (d, s, l);
   return 0;
 }
 
 int
-modp_setrandom (struct group *grp, mpz_ptr d)
+modp_setrandom (struct group *grp, math_mp_t d)
 {
   int i, l = grp->getlen (grp);
   u_int32_t tmp = 0;
 
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
   mpz_set_ui (d, 0);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  BN_set_word (d, 0);
+#endif
 
   for (i = 0; i < l; i++)
     {
       if (i % 4)
 	tmp = sysdep_random();
 
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
       mpz_mul_2exp (d, d, 8);
       mpz_add_ui (d, d, tmp & 0xFF);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+      BN_lshift (d, d, 8);
+      BN_add_word (d, tmp & 0xFF);
+#endif
       tmp >>= 8;
     }
   return 0;
 }
 
 int
-modp_operation (struct group *group, mpz_ptr d, mpz_ptr a, mpz_ptr e)
+modp_operation (struct group *group, math_mp_t d, math_mp_t a, math_mp_t e)
 {
   struct modp_group *grp = (struct modp_group *)group->group;
 
+#if MP_FLAVOUR == MP_FLAVOUR_GMP
   mpz_powm (d, a, e, grp->p);
+#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
+  BN_CTX *ctx = BN_CTX_new ();
+  BN_mod_exp (d, a, e, grp->p, ctx);
+  BN_CTX_free (ctx);
+#endif
   return 0;
 }
 
