@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.31 2001/06/27 23:51:31 pjanzen Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.32 2001/08/06 10:08:24 mpech Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -162,6 +162,7 @@ outlined as follows:
 .Bl -tag -width flag -compact -offset indent
 .It "AT&T Macro" .
 .It "BSD Macro" .
+.It "BSDI Macro" .
 .It "OpenBSD/FreeBSD/NetBSD Macros" .
 .It "UNIX Macro" .
 .It "Emphasis Macro" .
@@ -578,7 +579,9 @@ or for a locally produced set
 .Pp
 .Dl \&.Os CS Department
 .Pp
-The OpenBSD default,
+The 
+.Ox
+default,
 .Ql \&.Os
 without an argument, has been defined as
 .Ox 2.7
@@ -1481,8 +1484,12 @@ It accepts at most two arguments.
 .Bx 4.3 .
 .El
 .Pp
+The
+.Ql \&.Bx
+macro is parsed and is callable.
+.Ss BSDI Macro
 .Dl Usage: .Bsx [Version/release] ... \*(Pu
-.Bl -tag -width ".Bsx 3.0 ) ," -compact -offset 13n
+.Bl -tag -width ".Bsx 3.0 ) ," -compact -offset 14n
 .It Li ".Bsx"
 .Bsx
 .It Li ".Bsx 3.0 ."
@@ -1490,10 +1497,8 @@ It accepts at most two arguments.
 .El
 .Pp
 The
-.Ql \&.Bx
-and
 .Ql \&.Bsx
-macros is parsed and is callable.
+macro is parsed and is callable.
 .Ss OpenBSD/FreeBSD/NetBSD Macros
 .Dl Usage: .Ox [Version/release] ... \*(Pu
 .Bl -tag -width ".Ox 2.7 ) ," -compact -offset 14n
