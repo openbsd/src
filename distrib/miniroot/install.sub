@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.44 1997/10/17 12:05:57 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.45 1997/10/17 12:20:28 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -799,7 +799,6 @@ install_url() {
 			fi
 			echo $_f
 		done
-		echo ""
 
 		# Get the name of the file.
 		echo -n "File name [$_next]? "
@@ -837,10 +836,9 @@ install_url() {
 		return
 	fi
 
-	echo	""
-	echo	"Fetching files via ${_url_type} may take a long time,"
-	echo	"especially over a slow network connection."
-	echo -n	"Ready to download files? [y] "
+	echo
+	echo "Fetching files via ${_url_type} may take a long time, especially over a slow network"
+	echo -n "connection.  Ready to download files? [y] "
 	getresp "y"
 	case "$resp" in
 		y*|Y*)
