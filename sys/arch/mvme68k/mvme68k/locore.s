@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.29 2001/12/06 21:13:28 millert Exp $ */
+/*	$OpenBSD: locore.s,v 1.30 2002/02/10 23:15:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -807,7 +807,7 @@ Lbe10:
 	btst	#8,d0			| data fault?
 	jne	Lbe10a
 	movql	#1,d0			| user program access FC
-					| (we dont seperate data/program)
+					| (we dont separate data/program)
 	btst	#5,a1@			| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,d0			| else supervisor program access

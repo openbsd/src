@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2001/08/23 14:17:08 aaron Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/02/10 23:15:05 deraadt Exp $
 
 ##########################################################
 ## Compile time options, These set defaults ##############
@@ -88,7 +88,7 @@ STRIP_QUOTES = 0
 # smtpfwdd. 
 # N.B. MAXARGS must be at least 6, or 5 if SENDMAIL_OITRUE (above) is 1.
 # You may wish to change this to be 6 if you want your sendmail to be
-# invoked seperately for each receipient.  
+# invoked separately for each receipient.  
 MAXARGS = 100
 
 # How long (in seconds) should smtpd block on a read() call to a 

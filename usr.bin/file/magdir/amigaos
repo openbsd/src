@@ -1,4 +1,4 @@
-#	$OpenBSD: amigaos,v 1.2 2001/01/29 01:57:57 niklas Exp $
+#	$OpenBSD: amigaos,v 1.3 2002/02/10 23:15:05 deraadt Exp $
 
 #------------------------------------------------------------------------------
 # amigaos:  file(1) magic for AmigaOS binary formats:
@@ -6,7 +6,7 @@
 #
 # From ignatios@cs.uni-bonn.de (Ignatios Souvatzis)
 # Some formats are still missing: AmigaOS special IFF's, e.g.: FORM....CTLG
-# (the others should be seperate, anyway)
+# (the others should be separate, anyway)
 #
 0	belong		0x000003f3	AmigaOS loadseg()ble executable/binary
 0	belong		0x000003e7	AmigaOS object/library data

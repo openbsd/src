@@ -1,4 +1,4 @@
-$OpenBSD: HPMMU.notes,v 1.3 2001/09/20 17:02:29 mpech Exp $
+$OpenBSD: HPMMU.notes,v 1.4 2002/02/10 23:15:05 deraadt Exp $
 $NetBSD: HPMMU.notes,v 1.2 1994/10/26 07:22:51 cgd Exp $
 
 Overview:
@@ -9,7 +9,7 @@ Overview:
 
 	Page and segment table entries mimic the Motorola 68851 PMMU,
 	in an effort at upward compatibility.  The HP MMU uses a two
-	level translation scheme.  There are seperate (but equal!)
+	level translation scheme.  There are separate (but equal!)
 	translation tables for both supervisor and user modes.  At the
 	lowest level are page tables.  Each page table consists of one
 	or more 4k pages of 1024x4 byte page table entries.  Each PTE
@@ -21,14 +21,14 @@ Overview:
 	unused valid bit in page and segment table entries must be
 	zero.
 
-	There are seperate translation lookaside buffers for the user
+	There are separate translation lookaside buffers for the user
 	and supervisor modes, each containing 1024 entries.
 
 	To augment the 68020's instruction cache, the HP CPU has an
 	external cache.  A direct-mapped, virtual cache implementation
 	is used with 16 Kbytes of cache on 320 systems and 32 Kbytes on
 	350 systems.  Each cache entry can contain instructions or data,
-	from either user or supervisor space.  Seperate valid bits are
+	from either user or supervisor space.  Separate valid bits are
 	kept for user and supervisor entries, allowing for descriminatory
 	flushing of the cache.
 

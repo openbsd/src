@@ -1,4 +1,4 @@
-$OpenBSD: Debug.tips,v 1.2 1997/01/12 15:12:08 downsj Exp $
+$OpenBSD: Debug.tips,v 1.3 2002/02/10 23:15:05 deraadt Exp $
 $NetBSD: Debug.tips,v 1.2 1994/10/26 07:22:49 cgd Exp $
 
 NOTE: this description applies to the hp300 system with the old BSD
@@ -94,7 +94,7 @@ The HP maintains the p0br/p0lr and p1br/p1lr PCB fields the same as the
 VAX even though they have no meaning to the hardware.  This also keeps many
 utilities happy.
 
-There is no seperate interrupt stack (right now) on the HPs.  Interrupt
+There is no separate interrupt stack (right now) on the HPs.  Interrupt
 processing is handled on the kernel stack of the "current" process.
 
 Following is a list of things you might want to be able to do with a kernel

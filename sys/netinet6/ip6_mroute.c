@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.17 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.18 2002/02/10 23:15:05 deraadt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -1259,7 +1259,7 @@ ip6_mdq(m, ifp, rt)
 /*
  * Macro to send packet on mif.  Since RSVP packets don't get counted on
  * input, they shouldn't get counted on output, so statistics keeping is
- * seperate.
+ * separate.
  */
 
 #define MC6_SEND(ip6, mifp, m) do {				\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.22 2002/01/02 22:23:25 miod Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.23 2002/02/10 23:15:05 deraadt Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -381,7 +381,7 @@ uvmpd_scan_inactive(pglst)
 	UVMHIST_FUNC("uvmpd_scan_inactive"); UVMHIST_CALLED(pdhist);
 
 	/*
-	 * note: we currently keep swap-backed pages on a seperate inactive
+	 * note: we currently keep swap-backed pages on a separate inactive
 	 * list from object-backed pages.   however, merging the two lists
 	 * back together again hasn't been ruled out.   thus, we keep our
 	 * swap cluster in "swpps" rather than in pps (allows us to mix

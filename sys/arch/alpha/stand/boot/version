@@ -1,4 +1,4 @@
-$OpenBSD: version,v 1.6 1997/05/05 06:01:53 millert Exp $
+$OpenBSD: version,v 1.7 2002/02/10 23:15:05 deraadt Exp $
 $NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 
 1.1:	Initial version
@@ -8,8 +8,8 @@ $NetBSD: version,v 1.9 1997/01/23 23:10:38 cgd Exp $
 1.4-2:	Complete rewrite of boot block code
 1.5:	Update for new ECOFF headers
 1.6:	Don't pass arguments to the kernel, trim unnecessary environment
-	calls, kill 'ask' loop (i.e. if boot fails, halt), seperate
-	ECOFF and a.out support into seperate options.
+	calls, kill 'ask' loop (i.e. if boot fails, halt), separate
+	ECOFF and a.out support into separate options.
 1.7:   Use libsa and libkern rather than building the objects locally.
 1.8:   Search for a kernel, if none specified.
 1.9:   Add support for gzipped kernels.
