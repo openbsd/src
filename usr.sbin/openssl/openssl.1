@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.9 2003/06/12 12:59:51 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.10 2003/07/16 09:05:58 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -459,7 +459,6 @@ This option can be used multiple times to "drill down" into a nested structure.
 .El
 .Sh ASN1PARSE OUTPUT
 The output will typically contain lines like this:
-.Pp
 .Bd -literal
   0:d=0  hl=4 l= 681 cons: SEQUENCE
 
@@ -500,7 +499,6 @@ The contents octets of this will contain the public key information.
 This can be examined using the option
 .Fl strparse Cm 229
 to yield:
-.Pp
 .Bd -literal
 \&    0:d=0  hl=3 l= 137 cons: SEQUENCE
 \&    3:d=1  hl=3 l= 129 prim: INTEGER           :E5D21E1F5C8D208EA7A2166C7FAF9F6BDF2059669C60876DDB70840F1A5AAFA59699FE471F379F1DD6A487E7D5409AB6A88D4A9746E24B91D8CF55DB3521015460C8EDE44EE8A4189F7A7BE77D6CD3A9AF2696F486855CF58BF0EDF2B4068058C7A947F52548DDF7E15E96B385F86422BEA9064A3EE9E1158A56E4A6F47E5897
@@ -816,7 +814,6 @@ Where the option is present in the configuration file and the command line,
 the command line value is used.
 Where an option is described as mandatory, then it must be present in
 the configuration file or the command line equivalent (if any) used.
-.Pp
 .Bl -tag -width "XXXX"
 .It Ar oid_file
 This specifies a file containing additional OBJECT IDENTIFIERS.
@@ -1043,7 +1040,6 @@ Certify a Netscape SPKAC:
 \& $ openssl ca -spkac spkac.txt
 .Pp
 A sample SPKAC file (the SPKAC line has been truncated for clarity):
-.Pp
 .Bd -literal
 \& SPKAC=MIG0MGAwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAn7PDhCeV/xIxUg8V70YRxK2A5
 \& CN=Steve Test
@@ -1054,7 +1050,6 @@ A sample SPKAC file (the SPKAC line has been truncated for clarity):
 .Pp
 A sample configuration file with the relevant sections for
 .Nm ca :
-.Pp
 .Bd -literal
 \& [ ca ]
 \& default_ca      = CA_default            # The default ca section
@@ -1094,7 +1089,6 @@ A sample configuration file with the relevant sections for
 the location of all files can change either by compile time options,
 configuration file entries, environment variables or command line options.
 The values below reflect the default values.
-.Pp
 .Bd -literal
 /usr/local/ssl/lib/openssl.cnf - master configuration file
 \&./demoCA                       - main CA directory
@@ -1307,7 +1301,6 @@ If
 .Cm -
 is used, then the ciphers are deleted from the list, but some or
 all of the ciphers can be added again by later options.
-.br
 .Pp
 If
 .Cm +
@@ -1432,7 +1425,6 @@ authentication used, e.g. DES-CBC3-SHA.
 In these cases, RSA authentication is used.
 .Pp
 .Sy "SSL v3.0 cipher suites"
-.Pp
 .Bd -literal
  SSL_RSA_WITH_NULL_MD5                   NULL-MD5
  SSL_RSA_WITH_NULL_SHA                   NULL-SHA
@@ -1445,7 +1437,6 @@ In these cases, RSA authentication is used.
  SSL_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
  SSL_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 .Ed
-.Pp
 .Bd -literal
  SSL_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
  SSL_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
@@ -1460,7 +1451,6 @@ In these cases, RSA authentication is used.
  SSL_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
  SSL_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
 .Ed
-.Pp
 .Bd -literal
  SSL_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
  SSL_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
@@ -1468,7 +1458,6 @@ In these cases, RSA authentication is used.
  SSL_DH_anon_WITH_DES_CBC_SHA            ADH-DES-CBC-SHA
  SSL_DH_anon_WITH_3DES_EDE_CBC_SHA       ADH-DES-CBC3-SHA
 .Ed
-.Pp
 .Bd -literal
  SSL_FORTEZZA_KEA_WITH_NULL_SHA          Not implemented.
  SSL_FORTEZZA_KEA_WITH_FORTEZZA_CBC_SHA  Not implemented.
@@ -1476,7 +1465,6 @@ In these cases, RSA authentication is used.
 .Ed
 .Pp
 .Sy "TLS v1.0 cipher suites"
-.Pp
 .Bd -literal
  TLS_RSA_WITH_NULL_MD5                   NULL-MD5
  TLS_RSA_WITH_NULL_SHA                   NULL-SHA
@@ -1489,7 +1477,6 @@ In these cases, RSA authentication is used.
  TLS_RSA_WITH_DES_CBC_SHA                DES-CBC-SHA
  TLS_RSA_WITH_3DES_EDE_CBC_SHA           DES-CBC3-SHA
 .Ed
-.Pp
 .Bd -literal
  TLS_DH_DSS_EXPORT_WITH_DES40_CBC_SHA    Not implemented.
  TLS_DH_DSS_WITH_DES_CBC_SHA             Not implemented.
@@ -1504,7 +1491,6 @@ In these cases, RSA authentication is used.
  TLS_DHE_RSA_WITH_DES_CBC_SHA            EDH-RSA-DES-CBC-SHA
  TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA       EDH-RSA-DES-CBC3-SHA
 .Ed
-.Pp
 .Bd -literal
  TLS_DH_anon_EXPORT_WITH_RC4_40_MD5      EXP-ADH-RC4-MD5
  TLS_DH_anon_WITH_RC4_128_MD5            ADH-RC4-MD5
@@ -1536,7 +1522,6 @@ In these cases, RSA authentication is used.
 .Pp
 .Sy Note :
 These ciphers can also be used in SSL v3.
-.Pp
 .Bd -literal
  TLS_RSA_EXPORT1024_WITH_DES_CBC_SHA     EXP1024-DES-CBC-SHA
  TLS_RSA_EXPORT1024_WITH_RC4_56_SHA      EXP1024-RC4-SHA
@@ -1546,7 +1531,6 @@ These ciphers can also be used in SSL v3.
 .Ed
 .Pp
 .Sy "SSL v2.0 cipher suites"
-.Pp
 .Bd -literal
  SSL_CK_RC4_128_WITH_MD5                 RC4-MD5
  SSL_CK_RC4_128_EXPORT40_WITH_MD5        EXP-RC4-MD5
@@ -1670,7 +1654,6 @@ should be linked to each certificate.
 .El
 .Sh CRL NOTES
 The PEM CRL format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN X509 CRL-----
 \& -----END X509 CRL-----
@@ -1756,7 +1739,6 @@ Creates a PKCS#7 structure in
 .Ar DER
 format with no CRL from several
 different certificates:
-.Pp
 .Bd -literal
 \& $ openssl crl2pkcs7 -nocrl -certfile newcert.pem
 \&         -certfile demoCA/cacert.pem -outform DER -out p7.der
@@ -2010,7 +1992,6 @@ versions of
 .Sh DHPARAM NOTES
 .Ar PEM
 format DH parameters use the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN DH PARAMETERS-----
 \& -----END DH PARAMETERS-----
@@ -2162,7 +2143,6 @@ The engine will then be set as the default for all available algorithms.
 The
 .Ar PEM
 private key format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN DSA PRIVATE KEY-----
 \& -----END DSA PRIVATE KEY-----
@@ -2171,7 +2151,6 @@ private key format uses the header and footer lines:
 The
 .Ar PEM
 public key format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN PUBLIC KEY-----
 \& -----END PUBLIC KEY-----
@@ -2296,7 +2275,6 @@ The engine will then be set as the default for all available algorithms.
 .Sh DSAPARAM NOTES
 .Ar PEM
 format DSA parameters use the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN DSA PARAMETERS-----
 \& -----END DSA PARAMETERS-----
@@ -2525,7 +2503,6 @@ Blowfish and RC5 algorithms use a 128 bit key.
 .Bd -literal
 \& base64             Base 64
 .Ed
-.Pp
 .Bd -literal
 \& bf-cbc             Blowfish in CBC mode
 \& bf                 Alias for bf-cbc
@@ -2533,7 +2510,6 @@ Blowfish and RC5 algorithms use a 128 bit key.
 \& bf-ecb             Blowfish in ECB mode
 \& bf-ofb             Blowfish in OFB mode
 .Ed
-.Pp
 .Bd -literal
 \& cast-cbc           CAST in CBC mode
 \& cast               Alias for cast-cbc
@@ -2542,7 +2518,6 @@ Blowfish and RC5 algorithms use a 128 bit key.
 \& cast5-ecb          CAST5 in ECB mode
 \& cast5-ofb          CAST5 in OFB mode
 .Ed
-.Pp
 .Bd -literal
 \& des-cbc            DES in CBC mode
 \& des                Alias for des-cbc
@@ -2550,14 +2525,12 @@ Blowfish and RC5 algorithms use a 128 bit key.
 \& des-ofb            DES in OFB mode
 \& des-ecb            DES in ECB mode
 .Ed
-.Pp
 .Bd -literal
 \& des-ede-cbc        Two key triple DES EDE in CBC mode
 \& des-ede            Alias for des-ede
 \& des-ede-cfb        Two key triple DES EDE in CFB mode
 \& des-ede-ofb        Two key triple DES EDE in OFB mode
 .Ed
-.Pp
 .Bd -literal
 \& des-ede3-cbc       Three key triple DES EDE in CBC mode
 \& des-ede3           Alias for des-ede3-cbc
@@ -2565,11 +2538,9 @@ Blowfish and RC5 algorithms use a 128 bit key.
 \& des-ede3-cfb       Three key triple DES EDE CFB mode
 \& des-ede3-ofb       Three key triple DES EDE in OFB mode
 .Ed
-.Pp
 .Bd -literal
 \& desx               DESX algorithm.
 .Ed
-.Pp
 .Bd -literal
 \& idea-cbc           IDEA algorithm in CBC mode
 \& idea               same as idea-cbc
@@ -2577,7 +2548,6 @@ Blowfish and RC5 algorithms use a 128 bit key.
 \& idea-ecb           IDEA in ECB mode
 \& idea-ofb           IDEA in OFB mode
 .Ed
-.Pp
 .Bd -literal
 \& rc2-cbc            128 bit RC2 in CBC mode
 \& rc2                Alias for rc2-cbc
@@ -2587,13 +2557,11 @@ Blowfish and RC5 algorithms use a 128 bit key.
 \& rc2-64-cbc         64 bit RC2 in CBC mode
 \& rc2-40-cbc         40 bit RC2 in CBC mode
 .Ed
-.Pp
 .Bd -literal
 \& rc4                128 bit RC4
 \& rc4-64             64 bit RC4
 \& rc4-40             40 bit RC4
 .Ed
-.Pp
 .Bd -literal
 \& rc5-cbc            RC5 cipher in CBC mode
 \& rc5                Alias for rc5-cbc
@@ -2854,7 +2822,6 @@ Output the certificates in a Netscape certificate sequence:
 .Ed
 .Pp
 Create a Netscape certificate sequence:
-.Pp
 .Bd -literal
 \& $ openssl nseq -in certs.pem -toseq -out nseq.pem
 .Ed
@@ -2862,7 +2829,6 @@ Create a Netscape certificate sequence:
 The
 .Em PEM
 encoded form uses the same headers and footers as a certificate:
-.Pp
 .Bd -literal
 \& -----BEGIN CERTIFICATE-----
 \& -----END CERTIFICATE-----
@@ -2931,7 +2897,6 @@ input and output files and allowing multiple certificate files to be used.
 .Op Fl resp_key_id
 .Op Fl nrequest Ar n
 .Ek
-.br
 .Pp
 The Online Certificate Status Protocol (OCSP) enables applications to
 determine the (revocation) state of an identified certificate (RFC 2560).
@@ -3242,7 +3207,6 @@ If the OCSP responder is a
 which can give details about multiple CAs and has its own separate
 certificate chain, then its root CA can be trusted for OCSP signing.
 For example:
-.Pp
 .Bd -literal
 \& $ openssl x509 -in ocspCA.pem -addtrust OCSPSigning -out trustedCA.pem
 .Ed
@@ -3279,7 +3243,6 @@ and
 options.
 .Sh OCSP EXAMPLES
 Create an OCSP request and write it to a file:
-.Pp
 .Bd -literal
 \& $ openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem -reqout \e
 	req.der
@@ -3288,14 +3251,12 @@ Create an OCSP request and write it to a file:
 Send a query to an OCSP responder with URL
 .Pa http://ocsp.myhost.com/ ,
 save the response to a file and print it out in text form:
-.Pp
 .Bd -literal
 \& $ openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \e
 \&       -url http://ocsp.myhost.com/ -resp_text -respout resp.der
 .Ed
 .Pp
 Read in an OCSP response and print out text form:
-.Pp
 .Bd -literal
 \& $ openssl ocsp -respin resp.der -text
 .Ed
@@ -3304,21 +3265,18 @@ OCSP server on port 8888 using a standard
 .Nm ca
 configuration, and a separate responder certificate.
 All requests and responses are printed to a file:
-.Pp
 .Bd -literal
 \& $ openssl ocsp -index demoCA/index.txt -port 8888 -rsigner rcert.pem \e
 	-CA demoCA/cacert.pem -text -out log.txt
 .Ed
 .Pp
 As above, but exit after processing one request:
-.Pp
 .Bd -literal
 \& $ openssl ocsp -index demoCA/index.txt -port 8888 -rsigner rcert.pem \e
 	-CA demoCA/cacert.pem -nrequest 1
 .Ed
 .Pp
 Query status information using internally generated request:
-.Pp
 .Bd -literal
 \& $ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
 	demoCA/cacert.pem -issuer demoCA/cacert.pem -serial 1
@@ -3326,7 +3284,6 @@ Query status information using internally generated request:
 .Pp
 Query status information using request read from a file, write response to a
 second file:
-.Pp
 .Bd -literal
 \& $ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
 	demoCA/cacert.pem -reqin req.der -respout resp.der
@@ -3425,7 +3382,6 @@ prints
 .Op Fl noout
 .Op Fl engine Ar id
 .Ek
-.br
 .Pp
 The
 .Nm pkcs7
@@ -3491,14 +3447,12 @@ Output all certificates in a file:
 The
 .Em PEM
 PKCS#7 format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN PKCS7-----
 \& -----END PKCS7-----
 .Ed
 .Pp
 For compatibility with some CAs it will also accept:
-.Pp
 .Bd -literal
 \& -----BEGIN CERTIFICATE-----
 \& -----END CERTIFICATE-----
@@ -3665,14 +3619,12 @@ The encrypted form of a
 .Em PEM
 encoded PKCS#8 file uses the following
 headers and footers:
-.Pp
 .Bd -literal
 \& -----BEGIN ENCRYPTED PRIVATE KEY-----
 \& -----END ENCRYPTED PRIVATE KEY-----
 .Ed
 .Pp
 The unencrypted form uses:
-.Pp
 .Bd -literal
 \& -----BEGIN PRIVATE KEY-----
 \& -----END PRIVATE KEY-----
@@ -3703,7 +3655,6 @@ Various algorithms can be used with the
 .Fl v1
 command line option, including PKCS#5 v1.5 and PKCS#12.
 These are described in more detail below.
-.Pp
 .Bl -tag -width "XXXX"
 .It Ar PBE-MD2-DES PBE-MD5-DES
 These algorithms were included in the original PKCS#5 v1.5 specification.
@@ -4044,21 +3995,18 @@ Output only client certificates to a file:
 Don't encrypt the private key:
 .Pp
 \& $ openssl pkcs12 -in file.p12 -out file.pem -nodes
-.br
 .Pp
 Print some info about a PKCS#12 file:
 .Pp
 \& $ openssl pkcs12 -in file.p12 -info -noout
 .Pp
 Create a PKCS#12 file:
-.Pp
 .Bd -literal
 \& $ openssl pkcs12 -export -in file.pem -out file.p12 \e
 	-name "My Certificate"
 .Ed
 .Pp
 Include some extra certificates:
-.Pp
 .Bd -literal
 \& $ openssl pkcs12 -export -in file.pem -out file.p12 \e
 	-name "My Certificate" -certfile othercerts.pem
@@ -4095,7 +4043,6 @@ and recreating
 the PKCS#12 file from the keys and certificates using a newer version of
 .Nm OpenSSL .
 For example:
-.Pp
 .Bd -literal
 \& $ old-openssl -in bad.p12 -out keycerts.pem
 \& $ openssl -in keycerts.pem -export -name "My PKCS#12 file" -out fixed.p12
@@ -4586,7 +4533,6 @@ If the
 option is set to
 .Em no
 then these sections just consist of field names and values: for example,
-.Pp
 .Bd -literal
 \& CN=My Name
 \& OU=My Organization
@@ -4606,7 +4552,6 @@ option is absent or not set to
 .Em no ,
 then the file contains field prompting information.
 It consists of lines of the form:
-.Pp
 .Bd -literal
 \& fieldName="prompt"
 \& fieldName_default="default field value"
@@ -4673,7 +4618,6 @@ Examine and verify certificate request:
 \& $ openssl req -in req.pem -text -verify -noout
 .Pp
 Create a private key and then generate a certificate request from it:
-.Pp
 .Bd -literal
 \& $ openssl genrsa -out key.pem 1024
 \& $ openssl req -new -key key.pem -out req.pem
@@ -4686,12 +4630,10 @@ The same but just using req:
 Generate a self-signed root certificate:
 .Pp
 \& $ openssl req -x509 -newkey rsa:1024 -keyout key.pem -out req.pem
-.br
 .Pp
 Example of a file pointed to by the
 .Ar oid_file
 option:
-.Pp
 .Bd -literal
 \& 1.2.3.4        shortName       A longer Name
 \& 1.2.3.6        otherName       Other longer Name
@@ -4700,14 +4642,12 @@ option:
 Example of a section pointed to by
 .Ar oid_section
 making use of variable expansion:
-.Pp
 .Bd -literal
 \& testoid1=1.2.3.5
 \& testoid2=${testoid1}.6
 .Ed
 .Pp
 Sample configuration file prompting for field values:
-.Pp
 .Bd -literal
 \& [ req ]
 \& default_bits           = 1024
@@ -4747,7 +4687,6 @@ Sample configuration file prompting for field values:
 .Ed
 .Pp
 Sample configuration containing all field values:
-.Pp
 .Bd -literal
 \& RANDFILE               = $ENV::HOME/.rnd
 .Pp
@@ -4775,14 +4714,12 @@ Sample configuration containing all field values:
 The header and footer lines in the
 .Ar PEM
 format are normally:
-.Pp
 .Bd -literal
 \& -----BEGIN CERTIFICATE REQUEST-----
 \& -----END CERTIFICATE REQUEST-----
 .Ed
 .Pp
 Some software (some versions of Netscape certificate server) instead needs:
-.Pp
 .Bd -literal
 \& -----BEGIN NEW CERTIFICATE REQUEST-----
 \& -----END NEW CERTIFICATE REQUEST-----
@@ -4803,14 +4740,12 @@ by the script in an
 extension.
 .Sh REQ DIAGNOSTICS
 The following messages are frequently asked about:
-.Pp
 .Bd -literal
 \&        Using configuration from /some/path/openssl.cnf
 \&        Unable to load config info
 .Ed
 .Pp
 This is followed some time later by...
-.Pp
 .Bd -literal
 \&        unable to find 'distinguished_name' in config
 \&        problems making Certificate Request
@@ -4824,7 +4759,6 @@ Generation of certificates or requests, however, do need a configuration file.
 This could be regarded as a bug.
 .Pp
 Another puzzling message is this:
-.Pp
 .Bd -literal
 \&        Attributes:
 \&            a0:00
@@ -5012,7 +4946,6 @@ The engine will then be set as the default for all available algorithms.
 The
 .Em PEM
 private key format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN RSA PRIVATE KEY-----
 \& -----END RSA PRIVATE KEY-----
@@ -5021,7 +4954,6 @@ private key format uses the header and footer lines:
 The
 .Em PEM
 public key format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN PUBLIC KEY-----
 \& -----END PUBLIC KEY-----
@@ -5064,7 +4996,6 @@ to
 format:
 .Pp
 \& $ openssl rsa -in key.pem -outform DER -out keyout.der
-.br
 .Pp
 To print out the components of a private key to standard output:
 .Pp
@@ -5164,7 +5095,6 @@ Recover the signed data:
 Examine the raw signed data:
 .Pp
 \& $ openssl rsautl -verify -in file -inkey key.pem -raw -hexdump
-.Pp
 .Bd -literal
 \& 0000 - 00 01 ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
 \& 0010 - ff ff ff ff ff ff ff ff-ff ff ff ff ff ff ff ff   ................
@@ -5190,7 +5120,6 @@ Running
 as follows yields:
 .Pp
 \& $ openssl asn1parse -in pca-cert.pem
-.Pp
 .Bd -literal
 \&    0:d=0  hl=4 l= 742 cons: SEQUENCE
 \&    4:d=1  hl=4 l= 591 cons:  SEQUENCE
@@ -5224,7 +5153,6 @@ The certificate public key can be extracted with:
 The signature can be analysed with:
 .Pp
 \& $ openssl rsautl -in sig -verify -asn1parse -inkey pubkey.pem -pubin
-.Pp
 .Bd -literal
 \&    0:d=0  hl=2 l=  32 cons: SEQUENCE
 \&    2:d=1  hl=2 l=  12 cons:  SEQUENCE
@@ -5243,7 +5171,6 @@ The actual part of the certificate that was signed can be extracted with:
 \& $ openssl asn1parse -in pca-cert.pem -out tbs -noout -strparse 4
 .Pp
 and its digest computed with:
-.Pp
 .Bd -literal
 \& $ openssl md5 -c tbs
 \&   MD5(tbs)= f3:46:9e:aa:1a:4a:73:c9:37:ea:93:00:48:25:08:b5
@@ -5735,7 +5662,6 @@ from the client is displayed and any key presses will be sent to the client.
 .Pp
 Certain single letter commands are also recognized which perform special
 operations: these are listed below.
-.Pp
 .Bl -tag -width "XXXX"
 .It Ar q
 End the current SSL connection, but still accept new connections.
@@ -5867,7 +5793,6 @@ This option won't normally be used.
 .El
 .Sh SESS_ID OUTPUT
 Typical output:
-.Pp
 .Bd -literal
 \& SSL-Session:
 \&     Protocol  : TLSv1
@@ -5908,7 +5833,6 @@ This is the return code when an SSL client certificate is verified.
 The
 .Em PEM
 encoded session format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN SSL SESSION PARAMETERS-----
 \& -----END SSL SESSION PARAMETERS-----
@@ -6247,14 +6171,12 @@ the signers certificates.
 .El
 .Sh SMIME EXAMPLES
 Create a cleartext signed message:
-.Pp
 .Bd -literal
 \& $ openssl smime -sign -in message.txt -text -out mail.msg \e
 \&        -signer mycert.pem
 .Ed
 .Pp
 Create an opaque signed message:
-.Pp
 .Bd -literal
 \& $ openssl smime -sign -in message.txt -text -out mail.msg -nodetach \e
 \&        -signer mycert.pem
@@ -6262,7 +6184,6 @@ Create an opaque signed message:
 .Pp
 Create a signed message, include some additional certificates and
 read the private key from another file:
-.Pp
 .Bd -literal
 \& $ openssl smime -sign -in in.txt -text -out mail.msg \e
 \&        -signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
@@ -6271,7 +6192,6 @@ read the private key from another file:
 Send a signed message under Unix directly to
 .Xr sendmail 8 ,
 including headers:
-.Pp
 .Bd -literal
 \& $ openssl smime -sign -in in.txt -text -signer mycert.pem \e
 \&        -from steve@openssl.org -to someone@somewhere \e
@@ -6279,14 +6199,12 @@ including headers:
 .Ed
 .Pp
 Verify a message and extract the signer's certificate if successful:
-.Pp
 .Bd -literal
 \& $ openssl smime -verify -in mail.msg -signer user.pem \e
 \&	-out signedtext.txt
 .Ed
 .Pp
 Send encrypted mail using triple DES:
-.Pp
 .Bd -literal
 \& $ openssl smime -encrypt -in in.txt -from steve@openssl.org \e
 \&        -to someone@somewhere -subject "Encrypted message" \e
@@ -6294,7 +6212,6 @@ Send encrypted mail using triple DES:
 .Ed
 .Pp
 Sign and encrypt mail:
-.Pp
 .Bd -literal
 \& $ openssl smime -sign -in ml.txt -signer my.pem -text \e
 \&        | openssl smime -encrypt -out mail.msg \e
@@ -6317,22 +6234,18 @@ The output from Netscape form signing is a PKCS#7 structure with the
 detached signature format.
 You can use this program to verify the signature by line wrapping the
 base64 encoded structure and surrounding it with:
-.Pp
 .Bd -literal
 \& -----BEGIN PKCS7-----
 \& -----END PKCS7-----
 .Ed
 .Pp
 and using the command:
-.br
-.Pp
 .Bd -literal
 \& $ openssl smime -verify -inform PEM -in signature.pem
 \& 	-content content.txt
 .Ed
 .Pp
 Alternatively, you can base64 decode the signature and use:
-.Pp
 .Bd -literal
 \& $ openssl smime -verify -inform DER -in signature.der
 \& 	-content content.txt
@@ -6401,7 +6314,6 @@ v3 structures may cause parsing errors.
 The
 .Nm speed
 command is used to test the performance of cryptographic algorithms.
-.Pp
 .Bl -tag -width "XXXX"
 .It Fl engine Ar id
 Specifying an engine (by it's unique
@@ -6511,7 +6423,6 @@ Create an SPKAC using the challenge string "hello":
 \& $ openssl spkac -key key.pem -challenge hello -out spkac.cnf
 .Pp
 Example of an SPKAC, (long lines split up for clarity):
-.Pp
 .Bd -literal
 \& SPKAC=MIG5MGUwXDANBgkqhkiG9w0BAQEFAANLADBIAkEA1cCoq2Wa3Ixs47uI7F\e
 \& PVwHVIPDx5yso105Y6zpozam135a8R0CpoRvkkigIyXfcCjiVi5oWk+6FfPaD03u\e
@@ -6709,7 +6620,6 @@ If any operation fails then the certificate is not valid.
 .Sh VERIFY DIAGNOSTICS
 When a verify operation fails, the output messages can be somewhat cryptic.
 The general form of the error message is:
-.Pp
 .Bd -literal
 \& server.pem: /C=AU/ST=Queensland/O=CryptSoft Pty Ltd/CN=Test CA (1024 bit)
 \& error 24 at 1 depth lookup:invalid CA certificate
@@ -6728,7 +6638,6 @@ includes the name of the error code as defined in the header file
 .Aq Pa x509_vfy.h .
 Some of the error codes are defined but never returned: these are described
 as "unused".
-.Pp
 .Bl -tag -width "XXXX"
 .It Ar "0 X509_V_OK: ok"
 The operation was successful.
@@ -7188,7 +7097,6 @@ The
 .Nm x509
 utility can be used to sign certificates and requests: it
 can thus behave like a "mini CA".
-.Pp
 .Bl -tag -width "XXXX"
 .It Fl signkey Ar filename
 This option causes the input file to be self-signed using the supplied
@@ -7557,7 +7465,6 @@ Convert a certificate to a certificate request:
 .Pp
 Convert a certificate request into a self-signed certificate using
 extensions for a CA:
-.Pp
 .Bd -literal
 \& $ openssl x509 -req -in careq.pem -extfile openssl.cnf -extensions \e
 \&        v3_ca -signkey key.pem -out cacert.pem
@@ -7565,7 +7472,6 @@ extensions for a CA:
 .Pp
 Sign a certificate request using the CA certificate above and add user
 certificate extensions:
-.Pp
 .Bd -literal
 \& $ openssl x509 -req -in req.pem -extfile openssl.cnf -extensions \e
 	v3_usr -CA cacert.pem -CAkey key.pem -CAcreateserial
@@ -7573,7 +7479,6 @@ certificate extensions:
 .Pp
 Set a certificate to be trusted for SSL
 client use and set its alias to "Steve's Class 1 CA":
-.Pp
 .Bd -literal
 \& $ openssl x509 -in cert.pem -addtrust clientAuth \e
 \&        -setalias "Steve's Class 1 CA" -out trust.pem
@@ -7582,21 +7487,18 @@ client use and set its alias to "Steve's Class 1 CA":
 The
 .Em PEM
 format uses the header and footer lines:
-.Pp
 .Bd -literal
 \& -----BEGIN CERTIFICATE-----
 \& -----END CERTIFICATE-----
 .Ed
 .Pp
 It will also handle files containing:
-.Pp
 .Bd -literal
 \& -----BEGIN X509 CERTIFICATE-----
 \& -----END X509 CERTIFICATE-----
 .Ed
 .Pp
 Trusted certificates have the lines:
-.Pp
 .Bd -literal
 \& -----BEGIN TRUSTED CERTIFICATE-----
 \& -----END TRUSTED CERTIFICATE-----
@@ -7684,7 +7586,6 @@ and
 and V1 certificates above apply to
 .Em all
 CA certificates.
-.Pp
 .Bl -tag -width "XXXX"
 .It Ar SSL Client
 The extended key usage extension must be absent or include the
