@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.120 2003/12/18 08:05:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.121 2003/12/20 16:13:53 miod Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -768,7 +768,7 @@ microtime(struct timeval *tv)
 	splx(s);
 
 	tv->tv_usec += itmr * cpu_ticksdenom / cpu_ticksnum;
-	if (tv->tv_usec > 1000000) {
+	if (tv->tv_usec >= 1000000) {
 		tv->tv_usec -= 1000000;
 		tv->tv_sec++;
 	}
