@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.12 1998/08/30 22:19:37 millert Exp $
+.\"	$OpenBSD: printf.3,v 1.13 1998/09/27 20:53:24 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,6 +135,8 @@ will return -1 and set
 to be a NULL pointer.
 .Pp
 If
+.Fn asprintf
+or
 .Fn vasprintf
 are given a
 .Fa size
