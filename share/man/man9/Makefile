@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.55 2002/08/23 15:22:51 art Exp $
+#	$OpenBSD: Makefile,v 1.56 2002/08/24 03:34:20 wcobb Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -9,7 +9,7 @@ MAN=	altq.9 audio.9 boot.9 bus_dma.9 bus_space.9 copy.9 crypto.9 ctxsw.9 \
 	extattr.9 file.9 \
 	fetch.9 fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 \
-	kthread.9 lock.9 malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
+	kern.9 kthread.9 lock.9 malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
 	panic.9 pfind.9 physio.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
@@ -145,5 +145,15 @@ MLINKS+=vm_map_copy.9 vm_copy.9
 MLINKS+=vm_map_inherit.9 vm_inherit.9
 MLINKS+=vm_map_protect.9 vm_protect.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 free.9 malloc.9 FREE.9
+
+MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
+	kern.9 max.9 kern.9 min.9 kern.9 ulmax.9 kern.9 ulmin.9 kern.9 abs.9 \
+	kern.9 assert.9 kern.9 KASSERT.9 kern.9 KDASSERT.9 \
+	kern.9 locc.9 kern.9 skpc.9 kern.9 scanc.9 kern.9 bcmp.9 \
+	kern.9 memchr.9 kern.9 memcmp.9 kern.9 ffs.9 \
+	kern.9 strlen.9 kern.9 strcat.9 kern.9 strcpy.9 \
+	kern.9 strncpy.9 kern.9 strlcpy.9 kern.9 strlcat.9 \
+	kern.9 strcmp.9 kern.9 strncmp.9 kern.9 strncasecmp.9 \
+	kern.9 random.9 kern.9 srandom.9 kern.9 getsn.9
 
 .include <bsd.prog.mk>
