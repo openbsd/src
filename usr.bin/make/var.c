@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.11 1999/09/25 14:44:00 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.12 1999/09/28 21:57:04 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.11 1999/09/25 14:44:00 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.12 1999/09/28 21:57:04 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2136,7 +2136,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    str[*lengthPtr] = '\0';
 	    *freePtr = TRUE;
 	} else {
-	    str = var_Error;
+	    str = err ? var_Error : varNoError;
 	}
     }
     return (str);
