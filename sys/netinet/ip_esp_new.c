@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.7 1997/09/29 22:09:59 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.8 1997/09/30 03:18:04 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -248,8 +248,8 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 		       enc_keylen, (caddr_t) rk);
 
 	    des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
-	    des_set_key((caddr_t) rk + 2, (caddr_t) (xd->edx_eks[1]));
-	    des_set_key((caddr_t) rk + 4, (caddr_t) (xd->edx_eks[2]));
+	    des_set_key((caddr_t) (rk + 2), (caddr_t) (xd->edx_eks[1]));
+	    des_set_key((caddr_t) (rk + 4), (caddr_t) (xd->edx_eks[2]));
 	    break;
     }
 
