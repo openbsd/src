@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.2 1996/06/04 08:43:35 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/12/29 12:18:27 graichen Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: main.c,v 1.2 1996/06/04 08:43:35 niklas Exp $";
+static const char *rcsid = "$OpenBSD: main.c,v 1.3 1996/12/29 12:18:27 graichen Exp $";
 #endif
 
 /*
@@ -94,6 +94,10 @@ main(int argc, char **argv)
 	    break;
 
 	case 'X':
+	  /* XXX this won't work until someone adds the gtar -X option
+	     (--exclude-from-file) to paxtar - so long it is disabled
+	     in perform.c */
+	    printf("WARNING: the -X option is not supported in OpenBSD\n");
 	    ExcludeFrom = optarg;
 	    break;
 

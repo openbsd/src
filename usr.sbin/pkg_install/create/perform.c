@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.2 1996/06/04 08:43:36 niklas Exp $	*/
+/*	$OpenBSD: perform.c,v 1.3 1996/12/29 12:18:28 graichen Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.2 1996/06/04 08:43:36 niklas Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.3 1996/12/29 12:18:28 graichen Exp $";
 #endif
 
 /*
@@ -187,7 +187,9 @@ make_dist(char *home, char *pkg, char *suffix, Package *plist)
     char tball[FILENAME_MAX];
     PackingList p;
     int ret, max, len;
-    char *args[50];	/* Much more than enough. */
+                        /* XXX - The next one should be 
+			   allocated dynamically  */
+    char *args[4096];	/* Much more than enough. */
     int nargs = 0;
     int pipefds[2];
     FILE *totar;
@@ -208,59 +210,47 @@ make_dist(char *home, char *pkg, char *suffix, Package *plist)
     if (Dereference)
 	args[nargs++] = "-h";
     if (ExcludeFrom) {
+      /* XXX this won't work until someone adds the gtar -X option
+	 (--exclude-from-file) to paxtar - so long it is disabled
+	 here and a warning is printed in main.c
 	args[nargs++] = "-X";
 	args[nargs++] = ExcludeFrom;
+	*/
     }
-    args[nargs++] = "-T";	/* Take filenames from file instead of args. */
-    args[nargs++] = "-";	/* Use stdin for the file. */
-    args[nargs] = NULL;
 
     if (Verbose)
-	printf("Creating gzip'd tar ball in '%s'\n", tball);
-
-    /* Set up a pipe for passing the filenames, and fork off a tar process. */
-    if (pipe(pipefds) == -1)
-	barf("Cannot create pipe: %s", strerror(errno));
-    if ((pid = fork()) == -1)
-	barf("Cannot fork process for tar: %s", strerror(errno));
-    if (pid == 0) {	/* The child */
-	dup2(pipefds[0], 0);
-	close(pipefds[0]);
-	close(pipefds[1]);
-	execv("/usr/bin/tar", args);
-	barf("Failed to execute tar command: %s", strerror(errno));
-    }
-
-    /* Meanwhile, back in the parent process ... */
-    close(pipefds[0]);
-    if ((totar = fdopen(pipefds[1], "w")) == NULL)
-	barf("fdopen failed: %s", strerror(errno));
-
-    fprintf(totar, "%s\n", CONTENTS_FNAME);
-    fprintf(totar, "%s\n", COMMENT_FNAME);
-    fprintf(totar, "%s\n", DESC_FNAME);
-
+        if (index(suffix, 'z'))
+	    printf("Creating gzip'd tar ball in '%s'\n", tball);
+        else
+	    printf("Creating tar ball in '%s'\n", tball);
+    args[nargs++] = CONTENTS_FNAME;
+    args[nargs++] = COMMENT_FNAME;
+    args[nargs++] = DESC_FNAME;
     if (Install)
-	fprintf(totar, "%s\n", INSTALL_FNAME);
+        args[nargs++] = INSTALL_FNAME;
     if (DeInstall)
-	fprintf(totar, "%s\n", DEINSTALL_FNAME);
+	args[nargs++] = DEINSTALL_FNAME;
     if (Require)
-	fprintf(totar, "%s\n", REQUIRE_FNAME);
+	args[nargs++] = REQUIRE_FNAME;
     if (Display)
-	fprintf(totar, "%s\n", DISPLAY_FNAME);
+	args[nargs++] = DISPLAY_FNAME;
     if (Mtree)
-	fprintf(totar, "%s\n", MTREE_FNAME);
+	args[nargs++] = MTREE_FNAME;
 
     for (p = plist->head; p; p = p->next) {
 	if (p->type == PLIST_FILE)
-	    fprintf(totar, "%s\n", p->name);
-	else if (p->type == PLIST_CWD || p->type == PLIST_SRC)
-	    fprintf(totar, "-C\n%s\n", p->name);
+	    args[nargs++] = p->name;
+	else if (p->type == PLIST_CWD || p->type == PLIST_SRC) {
+	    args[nargs++] = "-C";
+	    args[nargs++] = p->name;
+	}
 	else if (p->type == PLIST_IGNORE)
 	     p = p->next;
     }
+    args[nargs] = NULL;
+    execv("/bin/tar", args);
+    barf("Failed to execute tar command: %s", strerror(errno));
 
-    fclose(totar);
     wait(&ret);
     /* assume either signal or bad exit is enough for us */
     if (ret)
