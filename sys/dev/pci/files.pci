@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.48 1999/10/01 02:52:23 jason Exp $
+#	$OpenBSD: files.pci,v 1.49 1999/10/01 03:18:53 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -108,7 +108,7 @@ attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
 
 # Lan Media Corporation T1/HSSI/DS3 adapter
-device	lmc: ifnet, sppp
+device	lmc: ifnet, sppp, ifmedia
 attach	lmc at pci
 file	dev/pci/if_lmc.c		lmc
 file	dev/pci/if_lmc_common.c		lmc
@@ -180,12 +180,12 @@ attach	aeon at pci
 file	dev/pci/aeon.c			aeon
 
 # Winbond W89C840F ethernet
-device	wb: ether, ifnet
+device	wb: ether, ifnet, ifmedia
 attach	wb at pci
 file	dev/pci/if_wb.c			wb
 
 # ASIX AX88140A ethernet
-device	ax: ether, ifnet
+device	ax: ether, ifnet, ifmedia
 attach	ax at pci
 file	dev/pci/if_ax.c			ax
 
