@@ -99,7 +99,6 @@ main(int argc, char **argv)
   int i;
   int optind = 0;
 
-  set_progname(argv[0]);
   if(getarg(getargs, num_args, argc, argv, &optind))
       usage(1);
   if(help_flag)
