@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.sysdep,v 1.10 2000/10/16 23:26:44 niklas Exp $
-#	$EOM: Makefile.sysdep,v 1.16 2000/10/15 19:58:40 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.11 2000/12/12 01:45:08 niklas Exp $
+#	$EOM: Makefile.sysdep,v 1.17 2000/12/12 01:18:11 niklas Exp $
 
 #
 # Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -49,7 +49,9 @@ USE_LIBCRYPTO=	defined
 
 .ifdef FEATURES
 .if ${FEATURES:Mpolicy} == "policy"
+.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "mvme88k"
 SRCS+=		keynote_compat.c
+.endif
 USE_KEYNOTE=	defined
 .endif
 .endif
