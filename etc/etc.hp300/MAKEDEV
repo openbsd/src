@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.20 1997/07/07 23:49:58 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.21 1997/07/14 04:27:54 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -70,6 +70,28 @@
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
+
+#
+# Utility functions
+#
+
+hex ()
+{
+	case $1 in
+		[0-9]) echo -n $1 ;;
+		10) echo -n a;;
+		11) echo -n b;;
+		12) echo -n c;;
+		13) echo -n d;;
+		14) echo -n e;;
+		15) echo -n f;;
+	esac
+}
+
+#
+# End of utility functions
+#
+
 for i
 do
 case $i in
@@ -107,9 +129,8 @@ std)
 fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-			printf("mknod %d c 21 %d;", i, i)}'`)
+	n=0
+	(cd fd && while [ $n -lt 64 ]; do mknod $n c 21 $n; n="$(( $n + 1 ))"; done )
 	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
@@ -289,8 +310,9 @@ dca*)
 	unit=`expr $i : 'dca\(.*\)'`
 	case $unit in
 	0|1|2|3)
-		rm -f tty${unit}
+		rm -f tty${unit} cua${unit}
 		mknod tty${unit} c 12 ${unit}
+		mknod cua${unit} c 12 `expr ${unit} + 128`
 		;;
 	*)
 		echo bad unit for dca in: $i
@@ -302,10 +324,20 @@ dcm*)
 	unit=`expr $i : 'dcm\(.*\)'`
 	case $unit in
 	0|1|2|3)
-		eval `echo $unit | awk ' { unit = $1; u = 4 * $1 } END {
-		for (i = 0; i < 4; i++)
-		printf("rm -f tty0%x; mknod tty0%x c 15 %d; ",u+i,u+i,u+i); }'`
-	;;
+		u="$(( $unit * 4 ))"
+		i=0
+		while [ $i -lt 4 ]
+		do
+			n="$(( $u + $i ))"
+			ext=`hex $n`
+
+			rm -f {tty0,cua0}${ext}
+			mknod tty0${ext} c 15 ${n}
+			mknod cua0${ext} c 15 "$(( $n + 128 ))"
+
+			i="$(( $i + 1 ))"
+		done
+		;;
 	*)
 		echo bad unit for dcm in: $i
 		;;
@@ -318,7 +350,9 @@ apci*)
 	case $unit in
 	0)
 		for i in 0 1 2 3; do
-			rm -f ttya${i}; mknod ttya${i} c 35 ${i};
+			rm -f ttya${i} cuaa${i}
+			mknod ttya${i} c 35 ${i}
+			mknod cuaa${i} c 35 `expr ${i} + 128`
 		done
 		;;
 	*)
@@ -421,16 +455,20 @@ pty*)
 	case $class in
 	0|1|2|3|4)
 		umask 0
-		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x pty%s%x;" \
-					"mknod tty%s%x c 4 %d;" \
-					"mknod pty%s%x c 5 %d; ", \
-					n, i, n, i, n, i, b+i, n, i, b+i); }'`
+		n=0
+		while [ $n -lt 16 ]
+		do
+			nam=$name`hex $n`
+			rm -rf {tty,pty}$nam
+			mknod tty$nam c 4 "$(( $offset + $n ))"
+			mknod pty$nam c 5 "$(( $offset + $n ))"
+			n="$(( $n + 1 ))"
+		done
 		umask 77
 		;;
 	esac
 	;;
+
 random|srandom|urandom|prandom|arandom)
         rm -f random urandom srandom prandom arandom
 	mknod  random c 32 0
