@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.323 2003/02/27 12:56:04 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.324 2003/02/27 13:35:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4617,6 +4617,26 @@ done:
 		    r->dst.not);
 
 	/* XXX handle IPv6 options, if not allowed. not implemented. */
+
+#ifdef ALTQ
+	if (action != PF_DROP && r != NULL && r->qid) {
+		struct m_tag	*mtag;
+		struct altq_tag	*atag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			if (pd.tos == IPTOS_LOWDELAY)
+				atag->qid = r->pqid;
+			else
+				atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = AF_INET6;
+			atag->hdr = h;
+			m_tag_prepend(m, mtag);
+		}
+	}
+#endif
 
 	if (log) {
 		if (r == NULL) {
