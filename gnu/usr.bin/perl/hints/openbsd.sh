@@ -71,11 +71,11 @@ case "$openbsd_distribution" in
 	prefix='/usr'
 	prefixexp='/usr'
 	sysman='/usr/share/man/man1'
+	libpth='/usr/lib'
+	glibpth='/usr/lib'
 	# Ports installs non-std libs in /usr/local/lib so look there too
-	glibpth='/usr/lib /usr/local/lib'
-	libpth='/usr/lib /usr/local/lib'
-	locincpth=''
-	loclibpth=''
+	locincpth='/usr/local/include'
+	loclibpth='/usr/local/lib'
 	# Link perl with shared libperl
 	if [ "$usedl" = "$define" -a -r shlib_version ]; then
 		useshrplib=true
