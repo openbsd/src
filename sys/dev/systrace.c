@@ -237,7 +237,7 @@ systracef_ioctl(fp, cmd, data, p)
 			ret = EINVAL;
 		else
 			ret = systrace_attach(fst, pid);
-		DPRINTF(("%s: attach to %d: %d\n", __FUNCTION__, pid, ret));
+		DPRINTF(("%s: attach to %d: %d\n", __func__, pid, ret));
 		goto unlock;
 	case STRIOCDETACH:
 	case STRIOCREPORT:
@@ -741,7 +741,7 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 {
 	int error = 0;
 	
-	DPRINTF(("%s: %d: policy %d\n", __FUNCTION__,
+	DPRINTF(("%s: %d: policy %d\n", __func__,
 		    ans->stra_pid, ans->stra_policy));
 
 	if (!POLICY_VALID(ans->stra_policy)) {
@@ -781,7 +781,7 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 
 	switch(pol->strp_op) {
 	case SYSTR_POLICY_NEW:
-		DPRINTF(("%s: new, ents %d\n", __FUNCTION__,
+		DPRINTF(("%s: new, ents %d\n", __func__,
 			    pol->strp_maxents));
 		if (pol->strp_maxents <= 0 || pol->strp_maxents > 1024)
 			return (EINVAL);
@@ -791,7 +791,7 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 		pol->strp_num = strpol->nr;
 		break;
 	case SYSTR_POLICY_ASSIGN:
-		DPRINTF(("%s: %d -> pid %d\n", __FUNCTION__,
+		DPRINTF(("%s: %d -> pid %d\n", __func__,
 			    pol->strp_num, pol->strp_pid));
 
 		/* Find right policy by number */
@@ -820,7 +820,7 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 
 		break;
 	case SYSTR_POLICY_MODIFY:
-		DPRINTF(("%s: %d: code %d -> policy %d\n", __FUNCTION__,
+		DPRINTF(("%s: %d: code %d -> policy %d\n", __func__,
 			    pol->strp_num, pol->strp_code, pol->strp_policy));
 		if (!POLICY_VALID(pol->strp_policy))
 			return (EINVAL);
@@ -861,7 +861,7 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 	struct filedesc *myfdp, *fdp;
 	int error;
 
-	DPRINTF(("%s: %d\n", __FUNCTION__, strp->pid));
+	DPRINTF(("%s: %d\n", __func__, strp->pid));
 
 	error = systrace_processready(strp);
 	if (error)
@@ -893,7 +893,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	struct iovec iov;
 	int error = 0;
 	
-	DPRINTF(("%s: %d: %p(%d)\n", __FUNCTION__,
+	DPRINTF(("%s: %d: %p(%d)\n", __func__,
 		    io->strio_pid, io->strio_offs, io->strio_len));
 
 	switch (io->strio_op) {
@@ -1026,7 +1026,7 @@ systrace_detach(struct str_process *strp)
 	struct fsystrace *fst = NULL;
 	int error = 0;
 	
-	DPRINTF(("%s: Trying to detach from %d\n", __FUNCTION__, strp->pid));
+	DPRINTF(("%s: Trying to detach from %d\n", __func__, strp->pid));
 
 	if ((proc = systrace_find(strp)) != NULL) {
 		CLR(proc->p_flag, P_SYSTRACE);
@@ -1108,7 +1108,7 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 	if (pol == NULL)
 		return (NULL);
 
-	DPRINTF(("%s: allocating %d -> %d\n", __FUNCTION__,
+	DPRINTF(("%s: allocating %d -> %d\n", __func__,
 		     maxents, maxents * sizeof(int)));
 
 	memset((caddr_t)pol, 0, sizeof(struct str_policy));
@@ -1225,7 +1225,7 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 	nstrp = pool_get(&systr_proc_pl, PR_WAITOK);
 	memset(nstrp, 0, sizeof(struct str_process));
 
-	DPRINTF(("%s: %p: pid %d -> pid %d\n", __FUNCTION__,
+	DPRINTF(("%s: %p: pid %d -> pid %d\n", __func__,
 		    nstrp, strp->pid, npid));
 	
 	msg = &nstrp->msg;
