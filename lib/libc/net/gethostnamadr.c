@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.28 1998/01/11 19:32:10 weingart Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.29 1998/01/20 18:28:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -953,6 +953,8 @@ _yp_gethtbyname(name)
 	static char *__ypcurrent;
 	int __ypcurrentlen, r;
 
+	if (strlen(name) >= MAXHOSTNAMELEN)
+		return (NULL);
 	if (!__ypdomain) {
 		if (_yp_check(&__ypdomain) == 0)
 			return (hp);
