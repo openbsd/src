@@ -419,6 +419,7 @@ safe_location ()
 {
     char current[PATH_MAX];
     char hardpath[PATH_MAX+5];
+    int  hardpathlen;
     int  x;
 
     x = readlink(CVSroot, hardpath, sizeof hardpath - 1);
@@ -431,7 +432,9 @@ safe_location ()
         hardpath[x] = '\0';
     }
     getwd (current);
-    if (strncmp(current, hardpath, strlen(hardpath)) == 0)
+    hardpathlen = strlen (hardpath);
+    if (strncmp(current, hardpath, hardpathlen) == 0
+	&& (current[hardpathlen] == '\0' || current[hardpathlen] == '/'))
     {
         return (0);
     }
