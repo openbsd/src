@@ -1,13 +1,14 @@
-/*	$OpenBSD: rnd.c,v 1.35 2000/04/10 19:44:38 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.36 2000/04/13 13:48:29 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
  *
- * Copyright (c) 1996, 1997 Michael Shalayeff.
+ * Copyright (c) 1996, 1997, 2000 Michael Shalayeff.
  *
- * Version 1.00, last modified 26-May-96
+ * Version 1.89, last modified 19-Sep-99
  *
- * Copyright Theodore Ts'o, 1994, 1995, 1996.  All rights reserved.
+ * Copyright Theodore Ts'o, 1994, 1995, 1996, 1997, 1998, 1999.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -127,13 +128,13 @@
  * The current exported interfaces for gathering environmental noise
  * from the devices are:
  *
- * 	void add_true_randomness(int data);
- * 	void add_timer_randomness(int data);
- * 	void add_mouse_randomness(int mouse_data);
+ *	void add_true_randomness(int data);
+ *	void add_timer_randomness(int data);
+ *	void add_mouse_randomness(int mouse_data);
  *	void add_net_randomness(int isr);
  *	void add_tty_randomness(int c);
- * 	void add_disk_randomness(int n);
- * 	void add_audio_randomness(int n);
+ *	void add_disk_randomness(int n);
+ *	void add_audio_randomness(int n);
  *
  * add_true_randomness() uses true random number generators present
  * on some cryptographic and system chipsets. entropy accounting
@@ -219,21 +220,20 @@
  * =================
  *
  * Ideas for constructing this random number generator were derived
- * from the Pretty Good Privacy's random number generator, and from
- * private discussions with Phil Karn.  Colin Plumb provided a faster
- * random number generator, which speed up the mixing function of the
- * entropy pool, taken from PGP 3.0 (under development).  It has since
- * been modified by myself to provide better mixing in the case where
- * the input values to add_entropy_word() are mostly small numbers.
- * Dale Worley has also contributed many useful ideas and suggestions
- * to improve this driver.
+ * from Pretty Good Privacy's random number generator, and from private
+ * discussions with Phil Karn.  Colin Plumb provided a faster random
+ * number generator, which speed up the mixing function of the entropy
+ * pool, taken from PGPfone.  Dale Worley has also contributed many
+ * useful ideas and suggestions to improve this driver.
  *
  * Any flaws in the design are solely my responsibility, and should
  * not be attributed to the Phil, Colin, or any of authors of PGP.
  *
+ * The code for SHA transform was taken from Peter Gutmann's
+ * implementation, which has been placed in the public domain.
  * The code for MD5 transform was taken from Colin Plumb's
- * implementation, which has been placed in the public domain.  The
- * MD5 cryptographic checksum was devised by Ronald Rivest, and is
+ * implementation, which has been placed in the public domain.
+ * The MD5 cryptographic checksum was devised by Ronald Rivest, and is
  * documented in RFC 1321, "The MD5 Message Digest Algorithm".
  *
  * Further background information on this topic may be obtained from
@@ -271,21 +271,94 @@ int	rnd_debug = 0x0000;
  * For a pool of size 64, try x^64+x^62+x^38+x^10+x^6+x+1.
  */
 #define POOLBITS (POOLWORDS*32)
-#if POOLWORDS == 128
-#define TAP1    99     /* The polynomial taps */
-#define TAP2    59
-#define TAP3    31
-#define TAP4    9
-#define TAP5    7
+#if POOLWORDS == 2048
+#define	TAP1	1638
+#define	TAP2	1231
+#define	TAP3	819
+#define	TAP4	411
+#define	TAP5	1
+#elif POOLWORDS == 1024	/* also (819, 616, 410, 207, 2) */
+#define	TAP1	817
+#define	TAP2	615
+#define	TAP3	412
+#define	TAP4	204
+#define	TAP5	1
+#elif POOLWORDS == 512	/* also (409,307,206,102,2), (409,309,205,103,2) */
+#define	TAP1	411
+#define	TAP2	308
+#define	TAP3	208
+#define	TAP4	104
+#define	TAP5	1
+#elif POOLWORDS == 256
+#define	TAP1	205
+#define	TAP2	155
+#define	TAP3	101
+#define	TAP4	52
+#define	TAP5	1
+#elif POOLWORDS == 128	/* also (103, 78, 51, 27, 2) */
+#define	TAP1	103
+#define	TAP2	76
+#define	TAP3	51
+#define	TAP4	25
+#define	TAP5	1
 #elif POOLWORDS == 64
-#define TAP1    62      /* The polynomial taps */
-#define TAP2    38
-#define TAP3    10
-#define TAP4    6
-#define TAP5    1
+#define	TAP1	52
+#define	TAP2	39
+#define	TAP3	26
+#define	TAP4	14
+#define	TAP5	1
+#elif POOLWORDS == 32
+#define	TAP1	26
+#define	TAP2	20
+#define	TAP3	14
+#define	TAP4	7
+#define	TAP5	1
 #else
 #error No primitive polynomial available for chosen POOLWORDS
 #endif
+
+/*
+ * For the purposes of better mixing, we use the CRC-32 polynomial as
+ * well to make a twisted Generalized Feedback Shift Reigster
+ *
+ * (See M. Matsumoto & Y. Kurita, 1992.  Twisted GFSR generators.  ACM
+ * Transactions on Modeling and Computer Simulation 2(3):179-194.
+ * Also see M. Matsumoto & Y. Kurita, 1994.  Twisted GFSR generators
+ * II.  ACM Transactions on Mdeling and Computer Simulation 4:254-266)
+ *
+ * Thanks to Colin Plumb for suggesting this.
+ *
+ * We have not analyzed the resultant polynomial to prove it primitive;
+ * in fact it almost certainly isn't.  Nonetheless, the irreducible factors
+ * of a random large-degree polynomial over GF(2) are more than large enough
+ * that periodicity is not a concern.
+ *
+ * The input hash is much less sensitive than the output hash.  All
+ * that we want of it is that it be a good non-cryptographic hash;
+ * i.e. it not produce collisions when fed "random" data of the sort
+ * we expect to see.  As long as the pool state differs for different
+ * inputs, we have preserved the input entropy and done a good job.
+ * The fact that an intelligent attacker can construct inputs that
+ * will produce controlled alterations to the pool's state is not
+ * important because we don't consider such inputs to contribute any
+ * randomness.  The only property we need with respect to them is that
+ * the attacker can't increase his/her knowledge of the pool's state.
+ * Since all additions are reversible (knowing the final state and the
+ * input, you can reconstruct the initial state), if an attacker has
+ * any uncertainty about the initial state, he/she can only shuffle
+ * that uncertainty about, but never cause any collisions (which would
+ * decrease the uncertainty).
+ *
+ * The chosen system lets the state of the pool be (essentially) the input
+ * modulo the generator polymnomial.  Now, for random primitive polynomials,
+ * this is a universal class of hash functions, meaning that the chance
+ * of a collision is limited by the attacker's knowledge of the generator
+ * polynomail, so if it is chosen at random, an attacker can never force
+ * a collision.  Here, we use a fixed polynomial, but we *can* assume that
+ * ###--> it is unknown to the processes generating the input entropy. <-###
+ * Because of this important property, this is a good, collision-resistant
+ * hash; hash collisions will occur no more often than chance.
+ */
 
 /* pIII/333 reported to have some drops w/ these numbers */
 #define QEVLEN 96
@@ -307,15 +380,16 @@ struct random_bucket {
 struct timer_rand_state {
 	u_int	last_time;
 	u_int	last_delta;
+	u_int	last_delta2;
 	u_char	dont_count_entropy : 1;
 	u_char	max_entropy : 1;
 };
 
 struct arc4_stream {
-	u_int8_t i;
-	u_int8_t j;
 	u_int8_t s[256];
 	u_int	cnt;
+	u_int8_t i;
+	u_int8_t j;
 };
 
 struct rand_event {
@@ -338,9 +412,19 @@ int rnd_attached;
 int arc4random_initialized;
 struct rndstats rndstats;
 
-void dequeue_randomness __P((void *v));
+static __inline u_int32_t roll(u_int32_t w, int i)
+{
+#ifdef i386
+	__asm ("roll %%cl, %0" : "+r" (w) : "c" (i));
+#else
+	w = (w << i) | (w >> (32 - i));
+#endif
+	return w;
+}
 
-static __inline void add_entropy_words __P((const u_int32_t *, u_int));
+void dequeue_randomness __P((void *));
+
+static __inline void add_entropy_words __P((const u_int32_t *, u_int n));
 static __inline void extract_entropy __P((register u_int8_t *, int));
 
 static __inline u_int8_t arc4_getbyte __P((void));
@@ -520,24 +604,28 @@ add_entropy_words(buf, n)
 	const u_int32_t *buf;
 	u_int n;
 {
-	for (; n--; buf++) {
+	static const u_int32_t twist_table[8] = {
+		0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
+		0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278
+	};
+	u_int i;
+	int new_rotate;
+	u_int32_t w;
 
-		register u_int32_t w = (*buf << random_state.input_rotate) |
-			(*buf >> (32 - random_state.input_rotate));
-		register u_int i = random_state.add_ptr =
-		    (random_state.add_ptr - 1) & (POOLWORDS-1);
-
+	while (n--) {
+		w = roll(*buf, random_state.input_rotate);
+		i = random_state.add_ptr =
+		    (random_state.add_ptr - 1) & (POOLWORDS - 1);
+		/*
+		 * Normally, we add 7 bits of rotation to the pool.
+		 * At the beginning of the pool, add an extra 7 bits
+		 * rotation, so that successive passes spread the
+		 * input bits across the pool evenly.
+		 */
+		new_rotate = random_state.input_rotate + 14;
 		if (i)
-			random_state.input_rotate =
-				(random_state.input_rotate + 7) & 31;
-		else
-			/*
-			 * At the beginning of the pool, add an extra 7 bits
-			 * rotation, so that successive passes spread the
-			 * input bits across the pool evenly.
-			 */
-			random_state.input_rotate =
-				(random_state.input_rotate + 14) & 31;
+			new_rotate = random_state.input_rotate + 7;
+		random_state.input_rotate = new_rotate & 31;
 
 		/* XOR in the various taps */
 		w ^= random_state.pool[(i+TAP1)&(POOLWORDS-1)];
@@ -546,8 +634,7 @@ add_entropy_words(buf, n)
 		w ^= random_state.pool[(i+TAP4)&(POOLWORDS-1)];
 		w ^= random_state.pool[(i+TAP5)&(POOLWORDS-1)];
 		w ^= random_state.pool[i];
-		/* Rotate w left 1 bit (stolen from SHA) and store */
-		random_state.pool[i] = (w << 1) | (w >> 31);
+		random_state.pool[i] = (w >> 3) ^ twist_table[w & 7];
 	}
 }
 
@@ -567,14 +654,14 @@ void
 enqueue_randomness(state, val)
 	int	state, val;
 {
-	register struct timer_rand_state *p;
-	register struct rand_event *rep;
+	struct timer_rand_state *p;
 	struct timeval	tv;
+	register struct rand_event *rep;
 	int s;
 	u_int	time, nbits;
 
 #ifdef DIAGNOSTIC
-	if (state < 0 || RND_SRC_NUM <= state)
+	if (state < 0 || state >= RND_SRC_NUM)
 		return;
 #endif
 
@@ -591,14 +678,21 @@ enqueue_randomness(state, val)
 	 * deltas in order to make our estimate.
 	 */
 	if (!p->dont_count_entropy) {
-		register int	delta, delta2;
-		delta = time - p->last_time;
-		delta2 = delta - p->last_delta;
+		register int	delta, delta2, delta3;
+		delta  = time   - p->last_time;
+		delta2 = delta  - p->last_delta;
+		delta3 = delta2 - p->last_delta2;
 
 		if (delta < 0) delta = -delta;
 		if (delta2 < 0) delta2 = -delta2;
+		if (delta3 < 0) delta3 = -delta3;
 		if (delta > delta2) delta = delta2;
-		delta2 = delta >>= 1;
+		if (delta > delta3) delta = delta3;
+		delta3 = delta >>= 1;
+		/*
+		 * delta &= 0xfff;
+		 * we don't do it since our time sheet is different from linux
+		 */
 
 		if (delta & 0xffff0000) {
 			nbits = 16;
@@ -632,7 +726,8 @@ enqueue_randomness(state, val)
 			return;
 		}
 		p->last_time = time;
-		p->last_delta = delta2;
+		p->last_delta  = delta3;
+		p->last_delta2 = delta2;
 	} else if (p->max_entropy)
 		nbits = 8 * sizeof(val) - 1;
 
@@ -651,6 +746,8 @@ enqueue_randomness(state, val)
 
 	rep->re_next = rnd_event_q;
 	rnd_event_q = rep;
+	rep = rep->re_next;
+	random_state.queued++;
 
 	rndstats.rnd_enqs++;
 	rndstats.rnd_ed[nbits]++;
@@ -658,8 +755,8 @@ enqueue_randomness(state, val)
 	rndstats.rnd_sb[state] += nbits;
 
 	if (++random_state.queued > QEVSLOW/2 && !random_state.tmo) {
-		timeout_add(&rnd_timeout, 1);
 		random_state.tmo++;
+		timeout_add(&rnd_timeout, 1);
 	}
 	splx(s);
 }
@@ -673,7 +770,7 @@ dequeue_randomness(v)
 	u_int nbits;
 	int s;
 
-	timeout_del(&rnd_timeout);	/* XXX just in case */
+	timeout_del(&rnd_timeout);
 	rndstats.rnd_deqs++;
 
 	do {
@@ -740,9 +837,9 @@ extract_entropy(buf, nbytes)
 {
 	MD5_CTX tmp;
 	u_char buffer[16];
-	
+
 	add_timer_randomness(nbytes);
-	
+
 	/* Redundant, but just in case... */
 	if (random_state.entropy_count > POOLBITS)
 		random_state.entropy_count = POOLBITS;
@@ -781,7 +878,7 @@ extract_entropy(buf, nbytes)
 		p[7] ^= p[ 8];
 
 		/* Modify pool so next hash will produce different results */
-		add_entropy_words((u_int32_t *)p, sizeof(buffer)/4);
+		add_entropy_words((u_int32_t*)p, sizeof(buffer)/4);
 
 		/* Copy data to destination buffer */
 		if (i < sizeof(buffer))
@@ -979,7 +1076,7 @@ randomioctl(dev, cmd, data, flag, p)
 		else
 			arc4random_initialized = 0;
 		break;
-	case RNDCLRSTATS:	
+	case RNDCLRSTATS:
 		if (suser(p->p_ucred, &p->p_acflag) != 0)
 			ret = EPERM;
 		else

@@ -1,7 +1,7 @@
-/*	$OpenBSD: rndvar.h,v 1.13 2000/04/10 19:44:39 mickey Exp $	*/
+/*	$OpenBSD: rndvar.h,v 1.14 2000/04/13 13:48:30 mickey Exp $	*/
 
 /*
- * Copyright (c) 1996 Michael Shalayeff.
+ * Copyright (c) 1996,2000 Michael Shalayeff.
  *
  * This software derived from one contributed by Theodore Ts'o.
  *
@@ -37,7 +37,7 @@
 #ifndef __RNDVAR_H__
 #define __RNDVAR_H__
 
-#define POOLWORDS 64	/* Power of 2 - note that this is 32-bit words */
+#define POOLWORDS 1024	/* Power of 2 - note that this is 32-bit words */
 
 #define	RND_RND		0	/* real randomness like nuclear chips */
 #define	RND_SRND	1	/* strong random source */
