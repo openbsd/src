@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.5 2002/05/30 18:25:44 fgsch Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.6 2002/07/25 19:03:25 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -109,6 +109,16 @@ struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 #define	COLS_LEFT		(edp->ncols - edp->ccol - 1)
 #define	ROWS_LEFT		(edp->nrows - edp->crow - 1)
 
+/*
+ * wscons color codes
+ * To compensate for Sun color choices on older framebuffers, these need to
+ * be variables.
+ */
+int	wscol_white = 0;	/* 0 */
+int	wscol_black = 7;	/* 255 */
+int	wskernel_bg = 7;	/* 0 */
+int	wskernel_fg = 0;	/* 255 */
+
 void *
 wsemul_sun_cnattach(type, cookie, ccol, crow, defattr)
 	const struct wsscreen_descr *type;
@@ -131,10 +141,10 @@ wsemul_sun_cnattach(type, cookie, ccol, crow, defattr)
 	edp->curattr = edp->defattr = defattr;
 
 #ifndef WS_KERNEL_FG
-#define WS_KERNEL_FG WSCOL_WHITE
+#define WS_KERNEL_FG wskernel_bg
 #endif
 #ifndef WS_KERNEL_BG
-#define WS_KERNEL_BG WSCOL_BLACK
+#define WS_KERNEL_BG wskernel_fg
 #endif
 #ifndef WS_KERNEL_COLATTR
 #define WS_KERNEL_COLATTR 0
@@ -204,7 +214,7 @@ wsemul_sun_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 	/* XXX This assumes that the default attribute is wob. */
 	if ((!(edp->scrcapabilities & WSSCREEN_WSCOLORS) ||
 		(*edp->emulops->alloc_attr)(edp->emulcookie,
-					    WSCOL_BLACK, WSCOL_WHITE,
+					    WSCOL_WHITE, WSCOL_BLACK,
 					    WSATTR_WSCOLORS,
 					    &edp->bowattr)) &&
 	    (!(edp->scrcapabilities & WSSCREEN_REVERSE) ||
@@ -362,7 +372,7 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->ncols - dst);
 		}
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    src, dst - src, edp->curattr);
+		    src, n, edp->curattr);
 		break;
 
 	case 'A':		/* "Cursor Up (CUU)" */
@@ -434,7 +444,7 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->ncols - src);
 		}
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    dst + edp->ncols - src, src - dst, edp->curattr);
+		    edp->ncols - n, n, edp->curattr);
 		break;
 
 	case 'm':		/* "Select Graphic Rendition (SGR)" */
