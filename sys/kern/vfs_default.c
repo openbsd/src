@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_default.c,v 1.21 2003/07/21 22:44:50 tedu Exp $  */
+/*	$OpenBSD: vfs_default.c,v 1.22 2003/09/01 18:06:03 henning Exp $  */
 
 /*
  *    Portions of this code are:
@@ -62,6 +62,7 @@ vop_generic_revoke(v)
 	void *v;
 {
 	struct vop_revoke_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
@@ -133,6 +134,7 @@ vop_generic_abortop(v)
 	void *v;
 {
 	struct vop_abortop_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
@@ -153,6 +155,7 @@ vop_generic_lock(v)
 	void *v;
 {
 	struct vop_lock_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_flags;
 		struct proc *a_p;
@@ -222,6 +225,7 @@ vop_generic_unlock(v)
 	void *v;
 {
 	struct vop_unlock_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_flags;
 		struct proc *a_p;
@@ -242,6 +246,7 @@ vop_generic_islocked(v)
 	void *v;
 {
 	struct vop_islocked_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 	} */ *ap = v;
 
@@ -260,6 +265,7 @@ vop_generic_kqfilter(v)
 	void *v;
 {
 	struct vop_kqfilter_args /* {
+		struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		struct knote *a_kn;
 	} */ *ap = v;

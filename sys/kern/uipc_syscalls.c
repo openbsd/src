@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.55 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.56 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ sys_bind(p, v, retval)
 {
 	register struct sys_bind_args /* {
 		syscallarg(int) s;
-		syscallarg(struct sockaddr *) name;
+		syscallarg(const struct sockaddr *) name;
 		syscallarg(socklen_t) namelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -263,7 +263,7 @@ sys_connect(p, v, retval)
 {
 	struct sys_connect_args /* {
 		syscallarg(int) s;
-		syscallarg(struct sockaddr *) name;
+		syscallarg(const struct sockaddr *) name;
 		syscallarg(socklen_t) namelen;
 	} */ *uap = v;
 	struct file *fp;
@@ -391,10 +391,10 @@ sys_sendto(p, v, retval)
 {
 	register struct sys_sendto_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(const void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
-		syscallarg(struct sockaddr *) to;
+		syscallarg(const struct sockaddr *) to;
 		syscallarg(socklen_t) tolen;
 	} */ *uap = v;
 	struct msghdr msg;
@@ -421,7 +421,7 @@ sys_sendmsg(p, v, retval)
 {
 	register struct sys_sendmsg_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) msg;
+		syscallarg(const struct msghdr *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct msghdr msg;
@@ -565,7 +565,7 @@ sys_recvfrom(p, v, retval)
 {
 	register struct sys_recvfrom_args /* {
 		syscallarg(int) s;
-		syscallarg(caddr_t) buf;
+		syscallarg(void *) buf;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 		syscallarg(struct sockaddr *) from;
@@ -826,7 +826,7 @@ sys_setsockopt(p, v, retval)
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
-		syscallarg(caddr_t) val;
+		syscallarg(const void *) val;
 		syscallarg(socklen_t) valsize;
 	} */ *uap = v;
 	struct file *fp;
@@ -880,7 +880,7 @@ sys_getsockopt(p, v, retval)
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
-		syscallarg(caddr_t) val;
+		syscallarg(void *) val;
 		syscallarg(socklen_t *) avalsize;
 	} */ *uap = v;
 	struct file *fp;
@@ -949,7 +949,7 @@ sys_getsockname(p, v, retval)
 {
 	struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(struct sockaddr *) asa;
 		syscallarg(socklen_t *) alen;
 	} */ *uap = v;
 	struct file *fp;
@@ -993,7 +993,7 @@ sys_getpeername(p, v, retval)
 {
 	struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
-		syscallarg(caddr_t) asa;
+		syscallarg(struct sockaddr *) asa;
 		syscallarg(socklen_t *) alen;
 	} */ *uap = v;
 	struct file *fp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.106 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.107 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -90,8 +90,8 @@ sys_mount(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_mount_args /* {
-		syscallarg(char *) type;
-		syscallarg(char *) path;
+		syscallarg(const char *) type;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 		syscallarg(void *) data;
 	} */ *uap = v;
@@ -377,7 +377,7 @@ sys_unmount(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_unmount_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	register struct vnode *vp;
@@ -548,10 +548,10 @@ sys_quotactl(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_quotactl_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) cmd;
 		syscallarg(int) uid;
-		syscallarg(caddr_t) arg;
+		syscallarg(char *) arg;
 	} */ *uap = v;
 	register struct mount *mp;
 	int error;
@@ -577,7 +577,7 @@ sys_statfs(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_statfs_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
 	register struct mount *mp;
@@ -791,7 +791,7 @@ sys_chdir(p, v, retval)
 	register_t *retval;
 {
 	struct sys_chdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	int error;
@@ -817,7 +817,7 @@ sys_chroot(p, v, retval)
 	register_t *retval;
 {
 	struct sys_chroot_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	int error;
@@ -879,7 +879,7 @@ sys_open(p, v, retval)
 	register_t *retval;
 {
 	struct sys_open_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
@@ -983,7 +983,7 @@ sys_getfh(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_getfh_args /* {
-		syscallarg(char *) fname;
+		syscallarg(const char *) fname;
 		syscallarg(fhandle_t *) fhp;
 	} */ *uap = v;
 	register struct vnode *vp;
@@ -1229,7 +1229,7 @@ sys_mknod(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_mknod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
@@ -1310,7 +1310,7 @@ sys_mkfifo(p, v, retval)
 	return (EOPNOTSUPP);
 #else
 	register struct sys_mkfifo_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
 	struct vattr vattr;
@@ -1348,8 +1348,8 @@ sys_link(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_link_args /* {
-		syscallarg(char *) path;
-		syscallarg(char *) link;
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct nameidata nd;
@@ -1398,8 +1398,8 @@ sys_symlink(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_symlink_args /* {
-		syscallarg(char *) path;
-		syscallarg(char *) link;
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
 	} */ *uap = v;
 	struct vattr vattr;
 	char *path;
@@ -1443,7 +1443,7 @@ sys_undelete(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_undelete_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	int error;
 	struct nameidata nd;
@@ -1483,7 +1483,7 @@ sys_unlink(p, v, retval)
 	register_t *retval;
 {
 	struct sys_unlink_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	register struct vnode *vp;
 	int error;
@@ -1588,7 +1588,7 @@ sys_access(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_access_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	register struct ucred *cred = p->p_ucred;
@@ -1638,7 +1638,7 @@ sys_stat(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_stat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
 	struct stat sb;
@@ -1671,7 +1671,7 @@ sys_lstat(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_lstat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct stat *) ub;
 	} */ *uap = v;
 	struct stat sb;
@@ -1704,7 +1704,7 @@ sys_pathconf(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_pathconf_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) name;
 	} */ *uap = v;
 	int error;
@@ -1730,7 +1730,7 @@ sys_readlink(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_readlink_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(char *) buf;
 		syscallarg(size_t) count;
 	} */ *uap = v;
@@ -1775,8 +1775,8 @@ sys_chflags(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_chflags_args /* {
-		syscallarg(char *) path;
-		syscallarg(unsigned int) flags;
+		syscallarg(const char *) path;
+		syscallarg(u_int) flags;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
@@ -1823,7 +1823,7 @@ sys_fchflags(p, v, retval)
 {
 	struct sys_fchflags_args /* {
 		syscallarg(int) fd;
-		syscallarg(unsigned int) flags;
+		syscallarg(u_int) flags;
 	} */ *uap = v;
 	struct vattr vattr;
 	struct vnode *vp;
@@ -1870,7 +1870,7 @@ sys_chmod(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_chmod_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
 	register struct vnode *vp;
@@ -1948,9 +1948,9 @@ sys_chown(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_chown_args /* {
-		syscallarg(char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
+		syscallarg(const char *) path;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
@@ -2000,9 +2000,9 @@ sys_lchown(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_lchown_args /* {
-		syscallarg(char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
+		syscallarg(const char *) path;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
@@ -2053,8 +2053,8 @@ sys_fchown(p, v, retval)
 {
 	struct sys_fchown_args /* {
 		syscallarg(int) fd;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
 	} */ *uap = v;
 	struct vnode *vp;
 	struct vattr vattr;
@@ -2103,8 +2103,8 @@ sys_utimes(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_utimes_args /* {
-		syscallarg(char *) path;
-		syscallarg(struct timeval *) tptr;
+		syscallarg(const char *) path;
+		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct timeval tv[2];
@@ -2160,7 +2160,7 @@ sys_futimes(p, v, retval)
 {
 	register struct sys_futimes_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct timeval *) tptr;
+		syscallarg(const struct timeval *) tptr;
 	} */ *uap = v;
 	struct vnode *vp;
 	struct timeval tv[2];
@@ -2214,7 +2214,7 @@ sys_truncate(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_truncate_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
 	} */ *uap = v;
@@ -2327,8 +2327,8 @@ sys_rename(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_rename_args /* {
-		syscallarg(char *) from;
-		syscallarg(char *) to;
+		syscallarg(const char *) from;
+		syscallarg(const char *) to;
 	} */ *uap = v;
 	register struct vnode *tvp, *fvp, *tdvp;
 	struct nameidata fromnd, tond;
@@ -2420,7 +2420,7 @@ sys_mkdir(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_mkdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
 	register struct vnode *vp;
@@ -2463,7 +2463,7 @@ sys_rmdir(p, v, retval)
 	register_t *retval;
 {
 	struct sys_rmdir_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	register struct vnode *vp;
 	int error;
@@ -2615,7 +2615,7 @@ sys_revoke(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_revoke_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
@@ -2995,8 +2995,8 @@ sys_extattr_set_fd(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(int) attrnamespace;
 		syscallarg(const char *) attrname;
-		syscallarg(struct iovec *) iovp;
-		syscallarg(int) iovcnt;
+		syscallarg(void *) data;
+		syscallarg(size_t) nbytes;
 	} */ *uap = v;
 	struct file *fp;
 	char attrname[EXTATTR_MAXNAMELEN];
@@ -3173,7 +3173,7 @@ sys_extattr_delete_file(p, v, retval)
 	register_t *retval;
 {
 	struct sys_extattr_delete_file_args /* {
-		syscallarg(int) fd;
+		syscallarg(const char *) path;
 		syscallarg(int) attrnamespace;
 		syscallarg(const char *) attrname;
 	} */ *uap = v;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.23 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.24 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -210,7 +210,7 @@ sys_setrlimit(p, v, retval)
 {
 	register struct sys_setrlimit_args /* {
 		syscallarg(int) which;
-		syscallarg(struct rlimit *) rlp;
+		syscallarg(const struct rlimit *) rlp;
 	} */ *uap = v;
 	struct rlimit alim;
 	int error;

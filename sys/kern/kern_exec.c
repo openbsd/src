@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.81 2003/08/21 18:56:07 tedu Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.82 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -233,9 +233,9 @@ sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct sys_execve_args /* {
-		syscallarg(char *) path;
-		syscallarg(char * *) argp;
-		syscallarg(char * *) envp;
+		syscallarg(const char *) path;
+		syscallarg(char *const *) argp;
+		syscallarg(char *const *) envp;
 	} */ *uap = v;
 	int error;
 	struct exec_package pack;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.106 2003/08/21 18:56:07 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.107 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -492,9 +492,9 @@ start_init(arg)
 	struct proc *p = arg;
 	vaddr_t addr;
 	struct sys_execve_args /* {
-		syscallarg(char *) path;
-		syscallarg(char **) argp;
-		syscallarg(char **) envp;
+		syscallarg(const char *) path;
+		syscallarg(char *const *) argp;
+		syscallarg(char *const *) envp;
 	} */ args;
 	int options, error;
 	long i;

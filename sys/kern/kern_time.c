@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.37 2003/08/26 02:15:13 tedu Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.38 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -312,8 +312,8 @@ sys_settimeofday(p, v, retval)
 	register_t *retval;
 {
 	struct sys_settimeofday_args /* {
-		syscallarg(struct timeval *) tv;
-		syscallarg(struct timezone *) tzp;
+		syscallarg(const struct timeval *) tv;
+		syscallarg(const struct timezone *) tzp;
 	} */ *uap = v;
 	struct timeval atv;
 	struct timezone atz;
@@ -349,7 +349,7 @@ sys_adjtime(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_adjtime_args /* {
-		syscallarg(struct timeval *) delta;
+		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
 	struct timeval atv;
@@ -469,7 +469,7 @@ sys_setitimer(p, v, retval)
 {
 	register struct sys_setitimer_args /* {
 		syscallarg(int) which;
-		syscallarg(struct itimerval *) itv;
+		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
 	struct itimerval aitv;

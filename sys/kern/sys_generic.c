@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.44 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.45 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -507,7 +507,7 @@ sys_ioctl(p, v, retval)
 	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	struct file *fp;
 	struct filedesc *fdp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.67 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.68 2003/09/01 18:06:03 henning Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -227,7 +227,7 @@ sys_sigaction(p, v, retval)
 {
 	register struct sys_sigaction_args /* {
 		syscallarg(int) signum;
-		syscallarg(struct sigaction *) nsa;
+		syscallarg(const struct sigaction *) nsa;
 		syscallarg(struct sigaction *) osa;
 	} */ *uap = v;
 	struct sigaction vec;
@@ -513,7 +513,7 @@ sys_sigaltstack(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_sigaltstack_args /* {
-		syscallarg(struct sigaltstack *) nss;
+		syscallarg(const struct sigaltstack *) nss;
 		syscallarg(struct sigaltstack *) oss;
 	} */ *uap = v;
 	struct sigacts *psp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.51 2003/08/15 20:32:21 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.52 2003/09/01 18:06:44 henning Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ sys_sbrk(p, v, retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
-		syscallarg(intptr_t) incr;
+		syscallarg(int) incr;
 	} */ *uap = v;
 #endif
 
@@ -134,7 +134,7 @@ sys_mquery(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mquery_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
@@ -367,7 +367,7 @@ sys_mmap(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
@@ -624,7 +624,7 @@ sys_msync(p, v, retval)
 	register_t *retval;
 {
 	struct sys_msync_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -725,7 +725,7 @@ sys_munmap(p, v, retval)
 	register_t *retval;
 {
 	struct sys_munmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	vaddr_t addr;
@@ -804,8 +804,8 @@ sys_mprotect(p, v, retval)
 	register_t *retval;
 {
 	struct sys_mprotect_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
 	vaddr_t addr;
@@ -859,8 +859,8 @@ sys_minherit(p, v, retval)
 	register_t *retval;
 {
 	struct sys_minherit_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(int) len;
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
 		syscallarg(int) inherit;
 	} */ *uap = v;
 	vaddr_t addr;
@@ -904,7 +904,7 @@ sys_madvise(p, v, retval)
 	register_t *retval;
 {
 	struct sys_madvise_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) behav;
 	} */ *uap = v;
