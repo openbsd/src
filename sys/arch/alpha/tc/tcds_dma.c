@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcds_dma.c,v 1.5 1997/01/24 19:58:23 niklas Exp $	*/
+/*	$OpenBSD: tcds_dma.c,v 1.6 2000/07/05 21:50:39 ericj Exp $	*/
 /*	$NetBSD: tcds_dma.c,v 1.15 1996/12/04 22:35:08 mycroft Exp $	*/
 
 /*
@@ -48,8 +48,8 @@
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tcdsreg.h>
 #include <alpha/tc/tcdsvar.h>
-#include <alpha/tc/espreg.h>
-#include <alpha/tc/espvar.h>
+#include <alpha/tc/ascreg.h>
+#include <alpha/tc/ascvar.h>
 
 void
 tcds_dma_reset(sc)

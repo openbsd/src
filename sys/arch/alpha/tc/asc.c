@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.10 2000/02/04 17:30:07 deraadt Exp $	*/
+/*	$OpenBSD: asc.c,v 1.1 2000/07/05 21:50:38 ericj Exp $	*/
 /*	$NetBSD: esp.c,v 1.26 1996/12/05 01:39:40 cgd Exp $	*/
 
 #ifdef __sparc__
@@ -102,8 +102,8 @@
 #include <machine/autoconf.h>	/* badaddr() prototype */
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tcdsvar.h>
-#include <alpha/tc/espreg.h>
-#include <alpha/tc/espvar.h>
+#include <alpha/tc/ascreg.h>
+#include <alpha/tc/ascvar.h>
 #endif
 
 int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
@@ -143,12 +143,12 @@ static inline int esp_cpb2stp __P((struct esp_softc *, int));
 static inline void esp_setsync __P((struct esp_softc *, struct esp_tinfo *));
 
 /* Linkup to the rest of the kernel */
-struct cfattach esp_ca = {
+struct cfattach asc_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
 };
 
-struct cfdriver esp_cd = {
-	NULL, "esp", DV_DULL
+struct cfdriver asc_cd = {
+       NULL, "asc", DV_DULL
 };
 
 struct scsi_adapter esp_switch = {
