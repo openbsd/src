@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.3 1999/08/20 14:11:34 niklas Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.4 2001/01/25 05:37:20 art Exp $	*/
 /*	$NetBSD: crt0.c,v 1.1 1996/09/12 16:59:02 cgd Exp $	*/
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -32,20 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.3 1999/08/20 14:11:34 niklas Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 2001/01/25 05:37:20 art Exp $";
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef ECOFF_COMPAT
-#undef DYNAMIC
-#endif
 
 #include <stdlib.h>
 #include <sys/syscall.h>
-#ifdef DYNAMIC
-#include "rtld.h"
-#else
 typedef void Obj_Entry;
-#endif
 
 /*
  * Lots of the chunks of this file cobbled together from pieces of
@@ -73,20 +65,6 @@ extern void	__init __P((void));
 extern void	__fini __P((void));
 #endif /* ECOFF_COMPAT */
 
-#ifdef DYNAMIC
-void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
-
-const Obj_Entry *mainprog_obj;
-
-/*
- * Arrange for _DYNAMIC to exist weakly at address zero.  That way,
- * if we happen to be compiling without -static but with without any
- * shared libs present, things will still work.
- */
-asm(".weak _DYNAMIC; _DYNAMIC = 0");
-extern int _DYNAMIC;
-#endif /* DYNAMIC */
-
 #ifdef MCRT0
 extern void	monstartup __P((u_long, u_long));
 extern void	_mcleanup __P((void));
@@ -112,11 +90,6 @@ __start(sp, cleanup, obj)
 		else
 			__progname++;
 	}
-
-#ifdef DYNAMIC
-	if (&_DYNAMIC != NULL)
-		rtld_setup(cleanup, obj);
-#endif
 
 #ifdef MCRT0
 	atexit(_mcleanup);
@@ -152,73 +125,3 @@ asm ("  .text");
 asm ("_eprol:");
 #endif
 
-#ifdef DYNAMIC
-void
-rtld_setup(cleanup, obj)
-	void (*cleanup) __P((void));
-	const Obj_Entry *obj;
-{
-
-	if ((obj == NULL) || (obj->magic != RTLD_MAGIC))
-		_FATAL("Corrupt Obj_Entry pointer in GOT");
-	if (obj->version != RTLD_VERSION)
-		_FATAL("Dynamic linker version mismatch");
-
-	mainprog_obj = obj;
-	atexit(cleanup);
-}
-
-void *
-dlopen(name, mode)
-	char	*name;
-	int	mode;
-{
-
-	if (mainprog_obj == NULL)
-		return NULL;
-	return (mainprog_obj->dlopen)(name, mode);
-}
-
-int
-dlclose(fd)
-	void	*fd;
-{
-
-	if (mainprog_obj == NULL)
-		return -1;
-	return (mainprog_obj->dlclose)(fd);
-}
-
-void *
-dlsym(fd, name)
-	void	*fd;
-	char	*name;
-{
-
-	if (mainprog_obj == NULL)
-		return NULL;
-	return (mainprog_obj->dlsym)(fd, name);
-}
-
-#if 0 /* not supported for ELF shlibs, apparently */
-int
-dlctl(fd, cmd, arg)
-	void *fd, *arg;
-	int cmd;
-{
-
-	if (mainprog_obj == NULL)
-		return -1;
-	return (mainprog_obj->dlctl)(fd, cmd, arg);
-}
-#endif
-
-char *
-dlerror()
-{
-
-	if (mainprog_obj == NULL)
-		return NULL;
-	return (mainprog_obj->dlerror)();
-}
-#endif /* DYNAMIC */
