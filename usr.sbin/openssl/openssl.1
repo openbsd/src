@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.39 2004/04/06 13:47:34 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.40 2004/04/08 12:08:27 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -493,7 +493,7 @@ The format of this file is described in the
 section below.
 .It Fl out Ar file
 Output file to place the DER-encoded data into.
-If this option is not present, then no encoded data will be output.
+If this option is not present, no encoded data will be output.
 This is most useful when combined with the
 .Fl strparse
 option.
@@ -614,7 +614,7 @@ The output of some ASN.1 types is not well handled
 .Op Fl extensions Ar section
 .Op Fl extfile Ar section
 .Op Fl in Ar file
-.Op Fl key Ar arg
+.Op Fl key Ar keyfile
 .Op Fl keyfile Ar arg
 .Op Fl keyform Ar PEM | ENGINE
 .Op Fl md Ar arg
@@ -670,7 +670,7 @@ to be added when a certificate is issued (defaults to
 unless the
 .Fl extfile
 option is used).
-If no extension section is present, then a V1 certificate is created.
+If no extension section is present, a V1 certificate is created.
 If the extension section is present
 .Pq even if it is empty ,
 then a V3 certificate is created.
@@ -688,7 +688,7 @@ containing a single certificate request to be signed by the CA.
 .It Fl infiles
 If present, this should be the last option; all subsequent arguments
 are assumed to be the names of files containing certificate requests.
-.It Fl key Ar password
+.It Fl key Ar keyfile
 The password used to encrypt the private key.
 Since on some systems the command line arguments are visible
 (e.g.\&
@@ -1272,7 +1272,7 @@ command on the same database can have unpredictable results.
 The
 .Ar copy_extensions
 option should be used with caution.
-If care is not taken, then it can be a security risk.
+If care is not taken, it can be a security risk.
 For example, if a certificate request contains a
 .Em basicConstraints
 extension with CA:TRUE and the
@@ -1347,7 +1347,7 @@ this is when similar ciphers are available for
 SSL v2 and for SSL v3/TLS v1.
 .It Ar cipherlist
 A cipher list to convert to a cipher preference list.
-If it is not included, then the default cipher list will be used.
+If it is not included, the default cipher list will be used.
 The format is described below.
 .El
 .Sh CIPHERS LIST FORMAT
@@ -1405,7 +1405,7 @@ If
 is used, then the ciphers are moved to the end of the list.
 This option doesn't add any new ciphers, it just moves matching existing ones.
 .Pp
-If none of these characters is present, then the string is just interpreted
+If none of these characters is present, the string is just interpreted
 as a list of ciphers to be appended to the current preference list.
 If the list includes any ciphers already present, they will be ignored;
 that is, they will not be moved to the end of the list.
@@ -1701,7 +1701,7 @@ The options are as follows:
 .It Fl CAfile Ar file
 Verify the signature on a CRL by looking up the issuing certificate in
 .Ar file .
-.It Fl CApath Ar dir
+.It Fl CApath Ar directory
 Verify the signature on a CRL by looking up the issuing certificate in
 .Ar dir .
 This directory must be a standard certificate directory,
@@ -1943,7 +1943,7 @@ If no files are specified then standard input is used.
 The digest of choice for all new applications is SHA1.
 Other digests are, however, still widely used.
 .Pp
-If you wish to sign or verify data using the DSA algorithm, then the dss1
+If you wish to sign or verify data using the DSA algorithm, the dss1
 digest must be used.
 .Pp
 A source of random numbers is required for certain signing algorithms, in
@@ -1993,7 +1993,7 @@ The options are as follows:
 .It Fl 2 , 5
 The generator to use, either 2 or 5.
 2 is the default.
-If present, then the input file is ignored and parameters are generated instead.
+If present, the input file is ignored and parameters are generated instead.
 .It Fl C
 This option converts the parameters into C code.
 The parameters can then be loaded by calling the
@@ -2047,8 +2047,8 @@ This option inhibits the output of the encoded version of the parameters.
 This argument specifies that a parameter set should be generated of size
 .Ar numbits .
 It must be the last option.
-If not present, then a value of 512 is used.
-If this value is present, then the input file is ignored and
+If not present, a value of 512 is used.
+If this value is present, the input file is ignored and
 parameters are generated instead.
 .It Fl out Ar file
 This specifies the output
@@ -2338,7 +2338,7 @@ This option inhibits the output of the encoded version of the parameters.
 .It Ar numbits
 This option specifies that a parameter set should be generated of size
 .Ar numbits .
-If this option is included, then the input file
+If this option is included, the input file
 .Pq if any
 is ignored.
 .It Fl out Ar file
@@ -2411,7 +2411,7 @@ option is set, then base64 process the data on one line.
 Base64 process the data.
 This means that if encryption is taking place, the data is base64-encoded
 after encryption.
-If decryption is set, then the input data is base64 decoded before
+If decryption is set, the input data is base64 decoded before
 being decrypted.
 .It Fl bufsize Ar number
 Set the buffer size for I/O.
@@ -2597,7 +2597,7 @@ this allows a rudimentary integrity or password check to be performed.
 However, since the chance of random data passing the test is
 better than 1 in 256, it isn't a very good test.
 .Pp
-If padding is disabled, then the input data must be a multiple of the cipher
+If padding is disabled, the input data must be a multiple of the cipher
 block length.
 .Pp
 All RC2 ciphers have the same key and effective key length.
@@ -2986,7 +2986,7 @@ and allowing multiple certificate files to be used.
 .Op Fl trust_other
 .Op Fl CA Ar file
 .Op Fl CAfile Ar file
-.Op Fl CApath Ar path
+.Op Fl CApath Ar directory
 .Op Fl cert Ar file
 .Oo
 .Fl host
@@ -3034,7 +3034,7 @@ and behave like a mini OCSP server itself.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl CAfile Ar file , Fl CApath Ar path
+.It Fl CAfile Ar file , Fl CApath Ar directory
 .Ar file
 or
 .Ar path
@@ -3166,7 +3166,7 @@ If the
 .Fl signkey
 option is not present, then the private key is read from the same file
 as the certificate.
-If neither option is specified, then the OCSP request is not signed.
+If neither option is specified, the OCSP request is not signed.
 .It Fl trust_other
 The certificates specified by the
 .Fl verify_certs
@@ -3269,7 +3269,7 @@ or
 when fresh revocation information is available: used in the
 .Ar nextUpdate
 field.
-If neither option is present, then the
+If neither option is present, the
 .Em nextUpdate
 field is omitted, meaning fresh revocation information is immediately available.
 .It Fl nrequest Ar number
@@ -3314,7 +3314,7 @@ options or they will be looked for in the standard
 certificates
 directory.
 .Pp
-If the initial verify fails, then the OCSP verify process halts with an
+If the initial verify fails, the OCSP verify process halts with an
 error.
 .Pp
 Otherwise the issuing CA certificate in the request is compared to the OCSP
@@ -3329,7 +3329,7 @@ Otherwise the root CA of the OCSP responder's CA is checked to see if it
 is trusted for OCSP signing.
 If it is, the OCSP verify succeeds.
 .Pp
-If none of these checks is successful, then the OCSP verify fails.
+If none of these checks is successful, the OCSP verify fails.
 .Pp
 What this effectively means is that if the OCSP responder certificate is
 authorised directly by the CA it is issuing revocation information about
@@ -3695,7 +3695,7 @@ contains a SEQUENCE consisting of the public and private keys, respectively.
 This specifies the output
 .Ar file
 to write a key to, or standard output by default.
-If any encryption options are set, then a pass phrase will be prompted for.
+If any encryption options are set, a pass phrase will be prompted for.
 The output filename should
 .Em not
 be the same as the input filename.
@@ -3998,7 +3998,7 @@ See the list in the
 .Sx PKCS12 NOTES
 section for more information.
 .It Fl chain
-If this option is present, then an attempt is made to include the entire
+If this option is present, an attempt is made to include the entire
 certificate chain of the user certificate.
 The standard CA store is used for this search.
 If the search fails, it is considered a fatal error.
@@ -4031,7 +4031,7 @@ If additional certificates are present, they will also be included
 in the PKCS#12 file.
 .It Fl inkey Ar file
 File to read private key from.
-If not present, then a private key must be present in the input file.
+If not present, a private key must be present in the input file.
 .It Fl keyex | keysig
 Specifies that the private key is to be used for key exchange or just signing.
 This option is only interpreted by MSIE and similar MS software.
@@ -4131,7 +4131,7 @@ Using the
 .Fl clcerts
 option will solve this problem by only outputting the certificate
 corresponding to the private key.
-If the CA certificates are required, then they can be output to a separate
+If the CA certificates are required, they can be output to a separate
 file using the
 .Fl nokeys
 and
@@ -4420,7 +4420,7 @@ is the default.
 This gives the
 .Ar file
 to write the newly created private key to.
-If this option is not specified, then the filename present in the
+If this option is not specified, the filename present in the
 configuration file is used.
 .It Fl md2 | md4 | md5 | sha1
 This specifies the message digest to sign the request with.
@@ -4567,7 +4567,7 @@ They are currently ignored by
 request signing utilities, but some CAs might want them.
 .It Ar default_bits
 This specifies the default key size in bits.
-If not specified, then 512 is used.
+If not specified, 512 is used.
 It is used if the
 .Fl new
 option is used.
@@ -4586,7 +4586,7 @@ Possible values include
 .Ar md5
 and
 .Ar sha1 .
-If not present, then MD5 is used.
+If not present, MD5 is used.
 This option can be overridden on the command line.
 .It Ar distinguished_name
 This specifies the section containing the distinguished name fields to
@@ -4742,8 +4742,8 @@ is the field name being used, for example
 The
 .Qq prompt
 string is used to ask the user to enter the relevant details.
-If the user enters nothing, then the default value is used;
-if no default value is present, then the field is omitted.
+If the user enters nothing, the default value is used;
+if no default value is present, the field is omitted.
 A field can still be omitted if a default value is present,
 if the user just enters the
 .Sq \&.
@@ -5093,7 +5093,7 @@ This option prints out the value of the modulus of the key.
 This specifies the output
 .Ar file
 to write a key to, or standard output if this option is not specified.
-If any encryption options are set, then a pass phrase will be prompted for.
+If any encryption options are set, a pass phrase will be prompted for.
 The output filename should
 .Em not
 be the same as the input filename.
@@ -5347,7 +5347,7 @@ It can be extracted with:
 .Pp
 The certificate public key can be extracted with:
 .Pp
-.Dl $ openssl x509 -in test/testx509.pem -pubkey -noout >pubkey.pem
+.Dl $ openssl x509 -in test/testx509.pem -pubkey -noout \*(Gtpubkey.pem
 .Pp
 The signature can be analysed with:
 .Pp
@@ -5472,7 +5472,7 @@ This specifies the
 and optional
 .Ar port
 to connect to.
-If not specified, then an attempt is made to connect to the local host
+If not specified, an attempt is made to connect to the local host
 on port 4433.
 Alternatively, the host and port pair may be separated using a forward-slash
 character.
@@ -5495,7 +5495,7 @@ Inhibit shutting down the connection when end of file is reached in the
 input.
 .It Fl key Ar keyfile
 The private key to use.
-If not specified, then the certificate file will be used.
+If not specified, the certificate file will be used.
 .It Fl msg
 Show all protocol messages with hex dump.
 .It Fl nbio
@@ -5572,7 +5572,7 @@ As a side effect the connection will never fail due to a server
 certificate verify failure.
 .El
 .Sh S_CLIENT CONNECTED COMMANDS
-If a connection is established with an SSL server, then any data received
+If a connection is established with an SSL server, any data received
 from the server is displayed and any key presses will be sent to the
 server.
 When used interactively (which means neither
@@ -5593,11 +5593,11 @@ To connect to an SSL HTTP server the command:
 .Pp
 would typically be used
 .Pq HTTPS uses port 443 .
-If the connection succeeds, then an HTTP command can be given such as
+If the connection succeeds, an HTTP command can be given such as
 .Qq GET
 to retrieve a web page.
 .Pp
-If the handshake fails, then there are several possible causes; if it is
+If the handshake fails, there are several possible causes; if it is
 nothing obvious like no client certificate, then the
 .Fl bugs , ssl2 , ssl3 , tls1 ,
 .Fl no_ssl2 , no_ssl3 ,
@@ -5633,7 +5633,7 @@ a client certificate.
 Therefore merely including a client certificate
 on the command line is no guarantee that the certificate works.
 .Pp
-If there are problems verifying a server certificate, then the
+If there are problems verifying a server certificate, the
 .Fl showcerts
 option can be used to show the whole chain.
 .Sh S_CLIENT BUGS
@@ -5732,7 +5732,7 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 .Pq DSA
 key.
-If not specified, then the file
+If not specified, the file
 .Pa server.pem
 will be used.
 .It Fl cipher Ar cipherlist
@@ -5773,9 +5773,9 @@ Print extensive debugging information including a hex dump of all traffic.
 The DH parameter file to use.
 The ephemeral DH cipher suites generate keys
 using a set of DH parameters.
-If not specified, then an attempt is made to
+If not specified, an attempt is made to
 load the parameters from the server certificate file.
-If this fails, then a static set of parameters hard coded into the
+If this fails, a static set of parameters hard coded into the
 .Nm s_server
 program will be used.
 .It Fl engine Ar id
@@ -5811,7 +5811,7 @@ generating a unique range of session IDs
 .Pq e.g. with a certain prefix .
 .It Fl key Ar keyfile
 The private key to use.
-If not specified, then the certificate file will be used.
+If not specified, the certificate file will be used.
 .It Fl msg
 Show all protocol messages with hex dump.
 .It Fl nbio
@@ -5819,7 +5819,7 @@ Turns on non-blocking I/O.
 .It Fl nbio_test
 Tests non-blocking I/O.
 .It Fl no_dhe
-If this option is set, then no DH parameters will be loaded, effectively
+If this option is set, no DH parameters will be loaded, effectively
 disabling the ephemeral DH cipher suites.
 .It Xo
 .Fl no_ssl2 | no_ssl3 | no_tls1 |
@@ -5832,7 +5832,7 @@ with all servers and permit them to use SSL v3, SSL v2, or TLS as appropriate.
 Certain export cipher suites sometimes use a temporary RSA key; this option
 disables temporary RSA key generation.
 .It Fl nocert
-If this option is set, then no certificate is used.
+If this option is set, no certificate is used.
 This restricts the cipher suites available to the anonymous ones
 .Pq currently just anonymous DH .
 .It Fl quiet
@@ -5942,9 +5942,197 @@ unknown cipher suites a client says it supports.
 .\" S_TIME
 .\"
 .Sh S_TIME
+.Nm openssl s_time
+.Bk -words
+.Op Fl bugs
+.Op Fl nbio
+.Op Fl new
+.Op Fl reuse
+.Op Fl ssl2
+.Op Fl ssl3
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
+.Op Fl cert Ar file
+.Op Fl cipher Ar cipherlist
+.Op Fl connect Ar host : Ns Ar port
+.Op Fl key Ar keyfile
+.Op Fl time Ar seconds
+.Op Fl verify Ar depth
+.Op Fl www Ar page
+.Ek
+.Pp
 The
+.Nm s_client
+command implements a generic SSL/TLS client which connects to a
+remote host using SSL/TLS.
+It can request a page from the server and includes
+the time to transfer the payload data in its timing measurements.
+It measures the number of connections within a given timeframe,
+the amount of data transferred
+.Pq if any ,
+and calculates the average time spent for one connection.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl bugs
+There are several known bugs in SSL and TLS implementations.
+Adding this option enables various workarounds.
+.It Fl CAfile Ar file
+A file containing trusted certificates to use during server authentication
+and to use when attempting to build the client certificate chain.
+.It Fl CApath Ar directory
+The directory to use for server certificate verification.
+This directory must be in
+.Qq hash format ;
+see
+.Nm verify
+for more information.
+These are also used when building the client certificate chain.
+.It Fl cert Ar file
+The certificate to use, if one is requested by the server.
+The default is not to use a certificate.
+The file is in PEM format.
+.It Fl cipher Ar cipherlist
+This allows the cipher list sent by the client to be modified.
+Although the server determines which cipher suite is used,
+it should take the first supported cipher in the list sent by the client.
+See the
+.Nm ciphers
+command for more information.
+.It Fl connect Ar host : Ns Ar port
+This specifies the host and optional port to connect to.
+.It Fl key Ar keyfile
+The private key to use.
+If not specified, the certificate file will be used.
+The file is in PEM format.
+.It Fl nbio
+Turns on non-blocking I/O.
+.It Fl new
+Performs the timing test using a new session ID for each connection.
+If neither
+.Fl new
+nor
+.Fl reuse
+are specified,
+they are both on by default and executed in sequence.
+.It Fl reuse
+Performs the timing test using the same session ID;
+this can be used as a test that session caching is working.
+If neither
+.Fl new
+nor
+.Fl reuse
+are specified,
+they are both on by default and executed in sequence.
+.It Fl ssl2 | ssl3
+These options disable the use of certain SSL or TLS protocols.
+By default, the initial handshake uses a method
+which should be compatible with all servers and permit them to use
+SSL v3, SSL v2, or TLS as appropriate.
+The timing program is not as rich in options to turn protocols on and off as
+the
+.Nm s_client
+program and may not connect to all servers.
+.Pp
+Unfortunately there are a lot of ancient and broken servers in use which
+cannot handle this technique and will fail to connect.
+Some servers only work if TLS is turned off with the
+.Fl ssl3
+option;
+others will only support SSL v2 and may need the
+.Fl ssl2
+option.
+.It Fl time Ar seconds
+Specifies how long
+.Pq in seconds
 .Nm s_time
-utility is currently undocumented.
+should establish connections and
+optionally transfer payload data from a server.
+The default is 30 seconds.
+Server and client performance and the link speed
+determine how many connections
+.Nm s_time
+can establish.
+.It Fl verify Ar depth
+The verify depth to use.
+This specifies the maximum length of the server certificate chain
+and turns on server certificate verification.
+Currently the verify operation continues after errors, so all the problems
+with a certificate chain can be seen.
+As a side effect,
+the connection will never fail due to a server certificate verify failure.
+.It Fl www Ar page
+This specifies the page to GET from the server.
+A value of
+.Sq /
+gets the index.htm[l] page.
+If this parameter is not specified,
+.Nm s_time
+will only perform the handshake to establish SSL connections
+but not transfer any payload data.
+.El
+.Sh S_TIME NOTES
+.Nm s_client
+can be used to measure the performance of an SSL connection.
+To connect to an SSL HTTP server and get the default page the command
+.Bd -literal -offset indent
+$ openssl s_time -connect servername:443 -www / -CApath yourdir \e
+	-CAfile yourfile.pem -cipher commoncipher [-ssl3]
+.Ed
+.Pp
+would typically be used
+.Pq HTTPS uses port 443 .
+.Dq commoncipher
+is a cipher to which both client and server can agree;
+see the
+.Nm ciphers
+command for details.
+.Pp
+If the handshake fails, there are several possible causes:
+if it is nothing obvious like no client certificate, the
+.Fl bugs , ssl2 ,
+and
+.Fl ssl3
+options can be tried in case it is a buggy server.
+In particular you should play with these options
+.Em before
+submitting a bug report to an OpenSSL mailing list.
+.Pp
+A frequent problem when attempting to get client certificates working
+is that a web client complains it has no certificates or gives an empty
+list to choose from.
+This is normally because the server is not sending
+the clients certificate authority in its
+.Qq acceptable CA list
+when it requests a certificate.
+By using
+.Nm s_client ,
+the CA list can be viewed and checked.
+However some servers only request client authentication
+after a specific URL is requested.
+To obtain the list in this case, it is necessary to use the
+.Fl prexit
+option of
+.Nm s_client
+and send an HTTP request for an appropriate page.
+.Pp
+If a certificate is specified on the command line using the
+.Fl cert
+option,
+it will not be used unless the server specifically requests
+a client certificate.
+Therefore merely including a client certificate
+on the command line is no guarantee that the certificate works.
+.Sh S_TIME BUGS
+Because this program does not have all the options of the
+.Nm s_client
+program to turn protocols on and off,
+you may not be able to measure the performance
+of all protocols with all servers.
+.Pp
+The
+.Fl verify
+option should really exit if the server verification fails.
 .\"
 .\" SESS_ID
 .\"
@@ -6229,7 +6417,7 @@ A
 .Ar file
 containing trusted CA certificates; only used with
 .Fl verify .
-.It Fl CApath Ar dir
+.It Fl CApath Ar directory
 A
 .Ar directory
 containing trusted CA certificates; only used with
@@ -6303,7 +6491,7 @@ When verifying these will be searched for the signers' certificates.
 The certificates should be in PEM format.
 .It Fl signer Ar file
 The signer's certificate when signing a message.
-If a message is being verified, then the signer's certificates will be
+If a message is being verified, the signer's certificates will be
 written to this file if the verification was successful.
 .It Fl recip Ar file
 The recipients certificate when decrypting a message.
@@ -6312,7 +6500,7 @@ must match one of the recipients of the message or an error occurs.
 .It Fl inkey Ar file
 The private key to use when signing or decrypting.
 This must match the corresponding certificate.
-If this option is not specified, then the private key must be included
+If this option is not specified, the private key must be included
 in the certificate file specified with
 the
 .Fl recip
@@ -6355,7 +6543,7 @@ a message.
 The relevant mail headers.
 These are included outside the signed
 portion of a message so they may be included manually.
-If signing, then many
+When signing, many
 .Em S/MIME
 mail clients check the signer's certificate email
 address matches that specified in the From: address.
@@ -6582,7 +6770,7 @@ The
 .Nm speed
 command is used to test the performance of cryptographic algorithms.
 .Bl -tag -width "XXXX"
-.It Cm [zero or more test algorithms]
+.It Bq Cm zero or more test algorithms
 If any options are given,
 .Nm speed
 tests those algorithms, otherwise all of the above are tested.
@@ -6829,7 +7017,7 @@ This is useful if the first certificate filename begins with a
 One or more
 .Ar certificates
 to verify.
-If no certificate files are included, then an attempt is made to read
+If no certificate files are included, an attempt is made to read
 a certificate from standard input.
 They should all be in PEM format.
 .El
@@ -6915,7 +7103,7 @@ and
 dates in the certificate.
 The certificate signatures are also checked at this point.
 .Pp
-If all operations complete successfully, then the certificate is considered
+If all operations complete successfully, the certificate is considered
 valid.
 If any operation fails then the certificate is not valid.
 .Sh VERIFY DIAGNOSTICS
@@ -7072,7 +7260,7 @@ name must either appear in a file (as specified by the
 .Fl CAfile
 option) or a directory (as specified by
 .Fl CApath ) .
-If they occur in both, then only the certificates in the file will
+If they occur in both, only the certificates in the file will
 be recognised.
 .Pp
 Previous versions of
@@ -7232,8 +7420,8 @@ such as the
 and
 .Fl CA
 options.
-If not specified, then MD5 is used.
-If the key being used to sign with is a DSA key, then
+If not specified, MD5 is used.
+If the key being used to sign with is a DSA key,
 this option has no effect: SHA1 is always used with DSA keys.
 .It Fl engine Ar id
 Specifying an engine (by it's unique
@@ -7427,7 +7615,7 @@ Any certificate extensions are retained unless the
 .Fl clrext
 option is supplied.
 .Pp
-If the input is a certificate request, then a self-signed certificate
+If the input is a certificate request, a self-signed certificate
 is created using the supplied private key using the subject name in
 the request.
 .It Fl clrext
@@ -7498,7 +7686,7 @@ Without the
 option, the input is a certificate which must be self-signed.
 .It Fl CAkey Ar file
 Sets the CA private key to sign a certificate with.
-If this option is not specified, then it is assumed that the CA private key
+If this option is not specified, it is assumed that the CA private key
 is present in the CA certificate file.
 .It Fl CAserial Ar file
 Sets the CA serial number file to use.
@@ -7531,10 +7719,10 @@ Normally, if the
 option is specified and the serial number file does not exist, it is an error.
 .It Fl extfile Ar file
 File containing certificate extensions to use.
-If not specified, then no extensions are added to the certificate.
+If not specified, no extensions are added to the certificate.
 .It Fl extensions Ar section
 The section to add certificate extensions from.
-If this option is not specified, then the extensions should either be
+If this option is not specified, the extensions should either be
 contained in the unnamed
 .Pq default
 section or the default section should contain a variable called
@@ -7585,7 +7773,7 @@ and
 Escape the
 .Qq special
 characters required by RFC 2253 in a field that is
-.Dq \& ,+"<>; .
+.Dq \& ,+"\*(Lt\*(Gt; .
 Additionally,
 .Sq #
 is escaped at the beginning of a string
@@ -7612,15 +7800,15 @@ character.
 .It Ar utf8
 Convert all strings to UTF8 format first.
 This is required by RFC 2253.
-If you are lucky enough to have a UTF8 compatible terminal, then the use
-of this option (and
+If you are lucky enough to have a UTF8 compatible terminal,
+the use of this option (and
 .Em not
 setting
 .Ar esc_msb )
 may result in the correct display of multibyte
 .Pq international
 characters.
-If this option is not present, then multibyte characters larger than 0xff
+If this option is not present, multibyte characters larger than 0xff
 will be represented using the format \eUXXXX for 16 bits and \eWXXXXXXXX
 for 32 bits.
 Also, if this option is off, any UTF8Strings will be converted to their
@@ -7645,7 +7833,7 @@ Both options use the RFC 2253 #XXXX... format.
 .It Ar dump_nostr
 Dump non-character string types
 .Pq for example OCTET STRING ;
-if this option is not set, then non-character string types will be displayed
+if this option is not set, non-character string types will be displayed
 as though each content octet represents a single character.
 .It Ar dump_all
 Dump all fields.
@@ -7881,8 +8069,8 @@ The
 .Em basicConstraints
 extension CA flag is used to determine whether the
 certificate can be used as a CA.
-If the CA flag is true, then it is a CA;
-if the CA flag is false, then it is not a CA.
+If the CA flag is true, it is a CA;
+if the CA flag is false, it is not a CA.
 .Em All
 CAs should have the CA flag set to true.
 .Pp
