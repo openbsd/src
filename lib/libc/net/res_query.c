@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.6 1996/08/24 09:32:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.7 1996/08/27 03:32:54 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -379,8 +379,8 @@ __hostalias(name)
 				break;
 			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2)
 				;
-			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			(void)strncpy(abuf, cp1, sizeof(abuf) - 1);
+			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			fclose(fp);
 			return (abuf);
 		}
