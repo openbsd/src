@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.14 2004/02/15 02:45:46 tedu Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.15 2004/09/24 19:29:11 kettenis Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.30 2001/11/13 07:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -607,6 +607,7 @@ rx_putonline(rx)
 	mp->mscp_unit = rx->ra_hwunit;
 	mp->mscp_cmdref = 1;
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
+	DELAY(10000);		/* XXX SIMH needs this. */
 
 	/* Poll away */
 	i = bus_space_read_2(mi->mi_iot, mi->mi_iph, 0);
