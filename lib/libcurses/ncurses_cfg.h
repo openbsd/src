@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncurses_cfg.h,v 1.9 1999/01/31 20:17:07 millert Exp $	*/
+/*	$OpenBSD: ncurses_cfg.h,v 1.10 1999/01/31 20:25:38 millert Exp $	*/
 
 /* include/ncurses_cfg.h.  Generated automatically by configure.  */
 /****************************************************************************
@@ -44,6 +44,7 @@
 #ifndef NC_CONFIG_H
 #define NC_CONFIG_H
 
+#define BSD_TPUTS 1
 #define CC_HAS_INLINE_FUNCS 1
 #define CC_HAS_PROTOS 1
 #define ETIP_NEEDS_ 1
@@ -52,6 +53,7 @@
 #define GCC_SCANF 1
 #define GCC_UNUSED __attribute__((unused))
 #define HAVE_BIG_CORE 1
+#define HAVE_BSD_CGETENT 1
 #define HAVE_BUILTIN_H 1
 #define HAVE_DIRENT_H 1
 #define HAVE_ERRNO 1
@@ -92,6 +94,7 @@
 #define HAVE_SYS_TIME_H 1
 #define HAVE_SYS_TIME_SELECT 1
 #define HAVE_TCGETATTR 1
+#define HAVE_TCGETPGRP 1
 #define HAVE_TERMIOS_H 1
 #define HAVE_TIMES 1
 #define HAVE_TTYENT_H 1
@@ -100,8 +103,6 @@
 #define HAVE_USLEEP 1
 #define HAVE_VSNPRINTF 1
 #define HAVE_VSSCANF 1
-#define HAVE_TCGETPGRP 1
-#define HAVE_BSD_CGETENT 1
 #define NCURSES_EXT_FUNCS 1
 #define NCURSES_NO_PADDING 1
 #define NDEBUG 1
@@ -112,8 +113,8 @@
 #define TERMINFO_DIRS "/usr/share/terminfo"
 #define TYPEOF_CHTYPE long
 #define USE_DATABASE 1
-#define USE_HASHMAP 1
 #define USE_GETCAP 1
+#define USE_HASHMAP 1
 
 	/* The C compiler may not treat these properly but C++ has to */
 #ifdef __cplusplus
