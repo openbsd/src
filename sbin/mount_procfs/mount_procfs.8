@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_procfs.8,v 1.13 2000/04/15 02:15:15 aaron Exp $
+.\"	$OpenBSD: mount_procfs.8,v 1.14 2000/08/13 07:50:52 deraadt Exp $
 .\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -126,6 +126,8 @@ The complete virtual memory image of the process.
 Only those address which exist in the process can be accessed.
 Reads and writes to this file modify the process.
 Writes to the text segment remain private to the process.
+.It Pa cmdline
+Process command line parameters, seperated by NULs.
 .It Pa note
 Not implemented.
 .It Pa notepg
