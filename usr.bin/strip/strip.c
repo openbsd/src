@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.13 2000/10/12 10:15:38 art Exp $	*/
+/*	$OpenBSD: strip.c,v 1.14 2001/07/18 17:17:39 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.13 2000/10/12 10:15:38 art Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.14 2001/07/18 17:17:39 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -149,7 +149,10 @@ s_sym(fn, fd, ep, sp)
 	register EXEC *ep;
 	struct stat *sp;
 {
-	register char *neweof, *mineof;
+	register char *neweof;
+#if	0
+	register char *mineof;
+#endif
 	int zmagic;
 
 	zmagic = ep->a_data &&
@@ -215,7 +218,7 @@ s_stab(fn, fd, ep, sp)
 	EXEC *ep;
 	struct stat *sp;
 {
-	register int cnt, len, nsymcnt;
+	register int cnt, len;
 	register char *nstr, *nstrbase, *p, *strbase;
 	register NLIST *sym, *nsym;
 	u_long allocsize;

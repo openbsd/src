@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.7 2001/07/12 05:17:15 deraadt Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.8 2001/07/18 17:17:39 pvalchev Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.7 2001/07/12 05:17:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.8 2001/07/18 17:17:39 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -144,7 +144,7 @@ main(argc, argv)
 			    UT_LINESIZE, UT_LINESIZE, getdev(ab.ac_tty),
 			    t / (double)AHZ, ctime(&ab.ac_btime));
 			delta = expand(ab.ac_etime) / (double)AHZ;
-			printf(" (%1.0lf:%02.0f:%05.2f)\n",
+			printf(" (%1.0f:%02.0f:%05.2f)\n",
 			    delta / SECSPERHOUR,
 			    fmod(delta, SECSPERHOUR) / SECSPERMIN,
 			    fmod(delta, SECSPERMIN));

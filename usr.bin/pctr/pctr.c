@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.5 2001/06/05 05:05:39 pvalchev Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.6 2001/07/18 17:17:39 pvalchev Exp $	*/
 
 /*
  * Pentium performance counter control program for OpenBSD.
@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -442,7 +443,6 @@ usage (void)
 int
 main (int argc, char **argv)
 {
-  int fd;
   u_int ctr;
   char *cp;
   u_int fn, fl = 0;

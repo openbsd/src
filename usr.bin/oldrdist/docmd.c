@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.12 1999/08/17 09:13:16 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.12 1999/08/17 09:13:16 millert Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -130,7 +130,7 @@ doarrow(filev, files, rhost, cmds)
 	int n, ddir, opts = options;
 
 	if (debug)
-		printf("doarrow(%x, %s, %x)\n", files, rhost, cmds);
+		printf("doarrow(%lx, %s, %lx)\n", (long)files, rhost, (long)cmds);
 
 	if (files == NULL) {
 		error("no files to be updated\n");
@@ -221,7 +221,9 @@ makeconn(rhost)
 	char tuser[20];
 	int n;
 	extern char user[];
+#if	defined(DIRECT_RCMD)
 	extern int userid;
+#endif
 
 	if (debug)
 		printf("makeconn(%s)\n", rhost);
@@ -393,7 +395,7 @@ dodcolon(filev, files, stamp, cmds)
 		return;
 	}
 	if (debug)
-		printf("%s: %ld\n", stamp, stb.st_mtime);
+		printf("%s: %lld\n", stamp, (long long)stb.st_mtime);
 
 	subcmds = cmds;
 	lastmod = stb.st_mtime;
@@ -498,7 +500,7 @@ rcmptime(st)
 	int len;
 
 	if (debug)
-		printf("rcmptime(%x)\n", st);
+		printf("rcmptime(%lx)\n", (long)st);
 
 	if ((d = opendir(target)) == NULL) {
 		error("%s: %s\n", target, strerror(errno));

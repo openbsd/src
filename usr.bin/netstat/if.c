@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.23 2001/02/06 05:24:10 fgsch Exp $	*/
+/*	$OpenBSD: if.c,v 1.24 2001/07/18 17:17:39 pvalchev Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.23 2001/02/06 05:24:10 fgsch Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.24 2001/07/18 17:17:39 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,6 @@ intpr(interval, ifnetaddr)
 	struct sockaddr *sa;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	char name[IFNAMSIZ];
-	int n;
 
 	if (ifnetaddr == 0) {
 		printf("ifnet: symbol not defined\n");
@@ -520,15 +519,15 @@ loop:
 	if (lastif - iftot > 0) {
 		if (bflag)
 			printf("  %10lu %8.8s %10lu %5.5s",
-			    sum->ift_ib -  total->ift_ib, " ",
-			    sum->ift_ob -  total->ift_ob, " ");
+			    (unsigned long)sum->ift_ib -  total->ift_ib, " ",
+			    (unsigned long)sum->ift_ob -  total->ift_ob, " ");
 		else
 			printf("  %8lu %5lu %8lu %5lu %5lu",
-			    sum->ift_ip - total->ift_ip,
-			    sum->ift_ie - total->ift_ie,
-			    sum->ift_op - total->ift_op,
-			    sum->ift_oe - total->ift_oe,
-			    sum->ift_co - total->ift_co);
+			    (unsigned long)sum->ift_ip - total->ift_ip,
+			    (unsigned long)sum->ift_ie - total->ift_ie,
+			    (unsigned long)sum->ift_op - total->ift_op,
+			    (unsigned long)sum->ift_oe - total->ift_oe,
+			    (unsigned long)sum->ift_co - total->ift_co);
 		if (dflag)
 			printf(" %5d", sum->ift_dr - total->ift_dr);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.15 2001/07/12 05:17:13 deraadt Exp $	*/
+/*	$OpenBSD: last.c,v 1.16 2001/07/18 17:17:39 pvalchev Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.15 2001/07/12 05:17:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.16 2001/07/18 17:17:39 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -293,7 +293,7 @@ wtmp()
 						    bp->ut_name, UT_LINESIZE,
 						    UT_LINESIZE, bp->ut_line,
 						    HOST_WIDTH, UT_HOSTSIZE,
-						    bp->ut_host, bp->ut_time);
+						    bp->ut_host, (long)bp->ut_time);
 					} else {
 						ct = ctime(&bp->ut_time);
 						printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
@@ -321,7 +321,7 @@ wtmp()
 					NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
 					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
 					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					bp->ut_time);
+					(long)bp->ut_time);
 				    	} else {
 						ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
@@ -360,7 +360,7 @@ wtmp()
 					NAME_WIDTH, UT_NAMESIZE, bp->ut_name,
 					UT_LINESIZE, UT_LINESIZE, bp->ut_line,
 					HOST_WIDTH, UT_HOSTSIZE, bp->ut_host,
-					bp->ut_time);
+					(long)bp->ut_time);
 				} else {
 					ct = ctime(&bp->ut_time);
 				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s ",
@@ -378,7 +378,7 @@ wtmp()
 					} else {
 						if (seconds) 
 							printf("- %ld",
-							    T->logout);
+							    (long)T->logout);
 						else
 							printf("- %*.*s",
 							    timesize, timesize,
@@ -386,7 +386,7 @@ wtmp()
 					}
 					delta = T->logout - bp->ut_time;
 					if (seconds)
-						printf("  (%ld)\n", delta);
+						printf("  (%ld)\n", (long)delta);
 					else {
 						if (delta < SECSPERDAY)
 							printf("  (%*.*s)\n",

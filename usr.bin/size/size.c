@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.12 2001/05/31 16:26:59 smart Exp $	*/
+/*	$OpenBSD: size.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.12 2001/05/31 16:26:59 smart Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -298,8 +298,8 @@ show_objfile(count, name, fp)
 		(void)printf("text\tdata\tbss\tdec\thex\n");
 	}
 	total = head.a_text + head.a_data + head.a_bss;
-	(void)printf("%lu\t%lu\t%lu\t%lu\t%lx", head.a_text, head.a_data,
-	    head.a_bss, total, total);
+	(void)printf("%lu\t%lu\t%lu\t%lu\t%lx", (unsigned long)head.a_text, 
+	    (unsigned long)head.a_data, (unsigned long)head.a_bss, total, total);
 	if (count > 1)
 		(void)printf("\t%s", name);
 

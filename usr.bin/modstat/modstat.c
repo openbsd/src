@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.12 1999/08/17 09:13:15 millert Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.13 2001/07/18 17:17:39 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -100,14 +100,14 @@ dostat(devfd, modnum, modname)
 	/*
 	 * Decode this stat buffer...
 	 */
-	printf("%-7s %3d %3d %08x %04x %8x %3d %s\n",
+	printf("%-7s %3d %3ld %08lx %04lx %8lx %3ld %s\n",
 	    type_names[sbuf.type],
 	    sbuf.id,		/* module id */
 	    sbuf.offset,	/* offset into modtype struct */
-	    sbuf.area,		/* address module loaded at */
-	    sbuf.size,		/* size in pages(K) */
-	    sbuf.private,	/* kernel address of private area */
-	    sbuf.ver,		/* Version; always 1 for now */
+	    (long)sbuf.area,		/* address module loaded at */
+	    (long)sbuf.size,		/* size in pages(K) */
+	    (long)sbuf.private,	/* kernel address of private area */
+	    (long)sbuf.ver,		/* Version; always 1 for now */
 	    sbuf.name		/* name from private area */
 	);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.11 2000/02/01 03:23:34 deraadt Exp $	*/
+/*	$OpenBSD: more.c,v 1.12 2001/07/18 17:17:39 pvalchev Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -974,7 +974,7 @@ register FILE *f;
     char colonch;
     FILE *helpf;
     int done;
-    char comchar, cmdbuf[80], *p;
+    char comchar, cmdbuf[80];
     char option[8];
     char *EDITOR;
     char *editor;
