@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: random.c,v 1.5 1998/02/06 01:49:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: random.c,v 1.6 1998/02/07 02:16:25 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -250,11 +250,8 @@ initstate(seed, arg_state, n)
 		state[-1] = rand_type;
 	else
 		state[-1] = MAX_TYPES * (rptr - state) + rand_type;
-	if (n < BREAK_0) {
-		(void)fprintf(stderr,
-		    "random: not enough state (%d bytes); ignored.\n", n);
-		return(0);
-	}
+	if (n < BREAK_0)
+		return(NULL);
 	if (n < BREAK_1) {
 		rand_type = TYPE_0;
 		rand_deg = DEG_0;
@@ -303,7 +300,7 @@ initstate(seed, arg_state, n)
  */
 char *
 setstate(arg_state)
-	char *arg_state;
+	const char *arg_state;
 {
 	register long *new_state = (long *)arg_state;
 	register int type = new_state[0] % MAX_TYPES;
@@ -325,8 +322,7 @@ setstate(arg_state)
 		rand_sep = seps[type];
 		break;
 	default:
-		(void)fprintf(stderr,
-		    "random: state info corrupted; not changed.\n");
+		return(NULL);
 	}
 	state = &new_state[1];
 	if (rand_type != TYPE_0) {

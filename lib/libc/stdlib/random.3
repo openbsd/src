@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.4 1998/02/06 01:49:08 deraadt Exp $
+.\"	$OpenBSD: random.3,v 1.5 1998/02/07 02:16:25 millert Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -45,11 +45,11 @@
 .Ft long 
 .Fn random void
 .Ft void
-.Fn srandom "unsigned seed"
+.Fn srandom "unsigned int seed"
 .Ft char *
-.Fn initstate "unsigned seed" "char *state" "size_t n"
+.Fn initstate "unsigned int seed" "char *state" "size_t n"
 .Ft char *
-.Fn setstate "char *state"
+.Fn setstate "const char *state"
 .Sh DESCRIPTION
 The
 .Fn random
@@ -162,7 +162,17 @@ is called with less than 8 bytes of state information, or if
 detects that the state information has been garbled, error
 messages are printed on the standard error output.
 .Sh SEE ALSO
+.Xr drand48 3 ,
 .Xr rand 3
+.Sh STANDARDS
+The
+.Fn random ,                                                           
+.Fn srandom ,                                                           
+.Fn initstate ,                                                           
+and
+.Fn setstate
+functions conform to
+.St -xpg4.2 .
 .Sh HISTORY
 These
 functions appeared in 

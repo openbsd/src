@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.6 1998/02/06 01:49:06 deraadt Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.7 1998/02/07 02:16:26 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -166,11 +166,11 @@ int	 radixsort __P((const unsigned char **, int, const unsigned char *,
 int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
 	    unsigned));
 
-char	*initstate __P((unsigned, char *, size_t));
+char	*initstate __P((unsigned int, char *, size_t));
 long	 random __P((void));
 char	*realpath __P((const char *, char *));
-char	*setstate __P((char *));
-void	 srandom __P((unsigned));
+char	*setstate __P((const char *));
+void	 srandom __P((unsigned int));
 
 int	 putenv __P((const char *));
 int	 setenv __P((const char *, const char *, int));
