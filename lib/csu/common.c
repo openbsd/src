@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.11 2002/07/14 12:37:51 art Exp $	*/
+/*	$OpenBSD: common.c,v 1.12 2002/07/22 19:15:39 art Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -43,9 +43,6 @@ __load_rtld(dp)
 	static struct crt_ldso	crt;
 	struct exec	hdr;
 	rtld_entry_fn	entry;
-#if defined(sun) && defined(DUPZFD)
-	int		dupzfd;
-#endif
 
 #ifdef DEBUG
 	/* Provision for alternate ld.so - security risk! */
@@ -71,23 +68,8 @@ __load_rtld(dp)
 		_FATAL("Bad magic: ld.so\n");
 	}
 
-#ifdef sun
-	/* Get bucket of zeroes */
-	crt.crt_dzfd = open("/dev/zero", 0, 0);
-	if (crt.crt_dzfd == -1) {
-		_FATAL("No /dev/zero\n");
-	}
-#endif
-#ifdef BSD
 	/* We use MAP_ANON */
 	crt.crt_dzfd = -1;
-#endif
-
-#if defined(sun) && defined(DUPZFD)
-	if ((dupzfd = dup(crt.crt_dzfd)) < 0) {
-		_FATAL("Cannot dup /dev/zero\n");
-	}
-#endif
 
 	/* Map in ld.so */
 	crt.crt_ba = mmap(0, hdr.a_text+hdr.a_data+hdr.a_bss,
@@ -98,7 +80,6 @@ __load_rtld(dp)
 		_FATAL("Cannot map ld.so\n");
 	}
 
-#ifdef BSD
 /* !!!
  * This is gross, ld.so is a ZMAGIC a.out, but has `sizeof(hdr)' for
  * an entry point and not at PAGSIZ as the N_*ADDR macros assume.
@@ -107,7 +88,6 @@ __load_rtld(dp)
 #undef N_BSSADDR
 #define N_DATADDR(x)	((x).a_text)
 #define N_BSSADDR(x)	((x).a_text + (x).a_data)
-#endif
 
 	/*
 	 * Map in data segment of ld.so writable
@@ -134,10 +114,6 @@ __load_rtld(dp)
 	crt.crt_bp = (caddr_t)_callmain;
 	crt.crt_prog = __progname;
 
-#ifdef sun
-	/* Call Sun's ld.so entry point: version 1, offset crt */
-	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
-#else
 	ld_entry = &crt.crt_ldentry;
 	entry = (rtld_entry_fn)(crt.crt_ba + sizeof hdr);
 	if ((*entry)(CRT_VERSION_BSD_4, &crt) == -1) {
@@ -152,15 +128,6 @@ __load_rtld(dp)
 		return;
 	}
 	atexit((*ld_entry)->dlexit);
-#endif
-
-#if defined(sun) && defined(DUPZFD)
-	if (dup2(dupzfd, crt.crt_dzfd) < 0) {
-		_FATAL("Cannot dup2 /dev/zero\n");
-	}
-	(void)close(dupzfd);
-#endif
-	return;
 }
 
 /*

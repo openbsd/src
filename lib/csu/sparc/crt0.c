@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2002/02/16 21:27:20 millert Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2002/07/22 19:15:40 art Exp $	*/
 /*	$NetBSD: crt0.c,v 1.15 1995/06/15 21:41:55 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -33,7 +33,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.4 2002/02/16 21:27:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.5 2002/07/22 19:15:40 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -45,17 +45,11 @@ extern	unsigned char	etext;
 extern	unsigned char	eprol asm ("eprol");
 extern void		start(void) asm("start");
 
-#if defined(sun) && defined(sparc)
-static void		__call(void);
-#endif
-
-#ifdef BSD
 #undef mmap
 #define mmap(addr, len, prot, flags, fd, off)	\
     __syscall2((quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
 	(fd), 0, (off_t)(off))
 extern int		__syscall2(quad_t, ...);
-#endif
 
 asm ("	.global start");
 asm ("	.text");
@@ -128,12 +122,6 @@ asm ("	call	_monstartup");
 asm ("	or	%o1, %lo(_etext), %o1");
 #endif
 
-#ifdef sun
-/* SunOS compatibility */
-asm ("	call	start_float");
-asm ("	nop");
-#endif
-
 /* Move `argc', `argv', and `envp' from locals to parameters for `main'.  */
 asm ("	mov	%l0,%o0");
 asm ("	mov	%l1,%o1");
@@ -161,22 +149,6 @@ asm("	ta	%g0");
 asm("	mov	-0x1, %o0");			/* Note: no `errno' */
 asm("	jmp	%o7 + 0x8");
 asm("	mov	-0x1, %o1");
-#endif
-
-#ifdef sun
-static
-__call()
-{
-	/*
-	 * adjust the C generated pointer to the crt struct to the
-	 * likings of ld.so, which is an offset relative to its %fp
-	 */
-	asm("mov	%i0, %o0");
-	asm("mov	%i1, %o1");
-	asm("call	%i2");
-	asm("sub	%o1, %sp, %o1");
-	/*NOTREACHED, control is transferred directly to our caller */
-}
 #endif
 
 #include "common.c"
