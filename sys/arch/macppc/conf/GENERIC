@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.49 2003/10/31 02:32:55 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.50 2004/01/11 16:33:01 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -135,6 +135,8 @@ zstty*		at zsc? channel ?
 #tas*		at i2c?
 
 awacs*		at macobio?			# Apple audio device
+ki2c*		at macobio?			# Keywest I2C
+snapper*	at macobio?			# Snapper audio device
 
 bktr0		at pci? dev ? function ?	# Bt8[47][89] tv/fmradio/video
 radio*		at bktr?
@@ -206,6 +208,7 @@ wskbd*		at ukbd? console ? mux 1
 
 # Audio support
 audio*		at awacs?
+audio*		at snapper?
 audio*		at eap?
 audio*		at uaudio?
 
