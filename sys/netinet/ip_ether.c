@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.1 1999/10/28 03:08:34 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.2 1999/10/29 02:00:23 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -27,6 +27,7 @@
  * Ethernet-inside-IP processing
  */
 
+#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +61,7 @@
 #include <netinet/ip_ether.h>
 #include <netinet/if_ether.h>
 #include <dev/rndvar.h>
+#include <net/if_bridge.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -79,7 +81,7 @@ struct etheripstat etheripstat;
  * etherip_input gets called when we receive an encapsulated packet,
  * either because we got it at a real interface, or because AH or ESP
  * were being used in tunnel mode (in which case the rcvif element will 
- * contain the address of the encapX interface associated with the tunnel.
+ * contain the address of the encX interface associated with the tunnel.
  */
 
 void
@@ -91,8 +93,8 @@ struct mbuf *m;
 va_dcl
 #endif
 {
-    struct ifqueue *ifq = NULL;
-    int iphlen, s;
+    struct ether_header eh;
+    int iphlen;
     va_list ap;
 
     va_start(ap, m);
@@ -110,11 +112,19 @@ va_dcl
 	return;
     }
 
+    /* If there's no interface associated, drop now. */
+    if (m->m_pkthdr.rcvif == 0 || m->m_pkthdr.rcvif->if_bridge == 0)
+    {
+	DPRINTF(("etherip_input(): input interface or bridge unknown\n"));
+	etheripstat.etherip_noifdrops++;
+	m_freem(m);
+	return;
+    }
+    
     /*
      * Remove the outer IP header, make sure there's at least an
      * ethernet header's worth of data in there. 
      */
-
     if (m->m_pkthdr.len < iphlen + sizeof(struct ether_header))
     {
 	DPRINTF(("etherip_input(): encapsulated packet too short\n"));
@@ -147,47 +157,50 @@ va_dcl
     /* Statistics */
     etheripstat.etherip_ibytes += m->m_pkthdr.len;
 
+    /* Copy ethernet header */
+    m_copydata(m, 0, sizeof(eh), (void *) &eh);
 
-    /* tdbi is only set in ESP or ESP, if next protocol is udp or tcp */
+    /* tdbi is only set in ESP or AH, if next protocol is UDP or TCP */
     if (m->m_flags & (M_CONF|M_AUTH))
 	m->m_pkthdr.tdbi = NULL;
 
+#if NBRIDGE > 0
     /*
-     * Interface pointer stays the same; if no IPsec processing has
-     * been done (or will be done), this will point to a normal 
-     * interface. Otherwise, it'll point to an encap interface, which
-     * will allow a packet filter to distinguish between secure and
-     * untrusted packets.
+     * Tap the packet off here for a bridge, if configured and
+     * active for this interface.  bridge_input returns
+     * NULL if it has consumed the packet, otherwise, it
+     * gets processed as normal.
      */
 
-    /* XXX Queue on the right bridge interface. */
-    ifq = &ipintrq;
-
-    s = splimp();			/* isn't it already? */
-    if (IF_QFULL(ifq))
+    if (m->m_pkthdr.rcvif->if_bridge)
     {
-	IF_DROP(ifq);
-	m_freem(m);
-	etheripstat.etherip_qfull++;
-	splx(s);
-
-	DPRINTF(("etherip_input(): packet dropped because of full queue\n"));
-	return;
+	m = bridge_input(m->m_pkthdr.rcvif, &eh, m);
+	if (m == NULL)
+	  return;
     }
+#endif
 
-    IF_ENQUEUE(ifq, m);
-    schednetisr(NETISR_IP);
-    splx(s);
+    m_freem(m);
     return;
 }
 
 #ifdef IPSEC
 int
-etherip_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, 
-	       struct mbuf **mp)
+etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp)
 {
     struct ip *ipo;
     ushort ilen;
+
+    /* Check that the source address, if present, is from AF_INET */
+    if ((tdb->tdb_src.sa.sa_family != 0) &&
+        (tdb->tdb_src.sa.sa_family != AF_INET))
+    {
+        DPRINTF(("etherip_output(): IP in protocol-family <%d> attempted, aborting"
+, tdb->tdb_src.sa.sa_family));
+	etheripstat.etherip_adrops++;
+        m_freem(m);
+        return EINVAL;
+    }
 
     /* Check that the destination address is AF_INET */
     if (tdb->tdb_dst.sa.sa_family != AF_INET)
@@ -222,9 +235,7 @@ etherip_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipo->ip_id = ip_randomid();
     HTONS(ipo->ip_id);
 
-    /*
-     * We should be keeping tunnel soft-state and send back ICMPs if needed.
-     */
+    /* We should be keeping tunnel soft-state and send back ICMPs if needed. */
 
     ipo->ip_src = tdb->tdb_src.sin.sin_addr;
     ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;

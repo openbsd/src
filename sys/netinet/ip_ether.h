@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.h,v 1.1 1999/10/28 03:08:34 angelos Exp $ */
+/*	$OpenBSD: ip_ether.h,v 1.2 1999/10/29 02:00:23 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@adk.gr) 
@@ -29,14 +29,15 @@
 
 struct etheripstat
 {
+    u_int32_t	etherip_hdrops;		/* packet shorter than header shows */
+    u_int32_t	etherip_qfull;		/* bridge queue full, packet dropped */
+    u_int32_t   etherip_noifdrops;	/* no interface/bridge information */
+    u_int32_t	etherip_pdrops;		/* packet dropped due to policy */
+    u_int32_t   etherip_adrops;         /* all other drops */
     u_int32_t	etherip_ipackets;	/* total input packets */
     u_int32_t	etherip_opackets;	/* total output packets */
-    u_int32_t	etherip_hdrops;		/* packet shorter than header shows */
-    u_int32_t   etherip_adrops;         /* all other drops */
-    u_int32_t	etherip_qfull;
-    u_int64_t   etherip_ibytes;
-    u_int64_t   etherip_obytes;
-    u_int32_t	etherip_pdrops;		/* packet dropped due to policy */
+    u_int64_t   etherip_ibytes;		/* input bytes */
+    u_int64_t   etherip_obytes;		/* output bytes */
 };
 
 /*
