@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 1997/10/14 17:11:12 pefo Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 1997/10/18 10:35:04 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ readdisklabel(dev, strat, lp, osdep)
 			bcopy(bp->b_data + DOSPARTOFF, dp, NDOSPART * sizeof(*dp));
 
 			if (ourpart == -1) {
-				/* Search for our DOS partition */
+				/* Search for our MBR partition */
 				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 				    i++, dp2++)
 					if (get_le(&dp2->dp_size) &&
@@ -153,7 +153,7 @@ readdisklabel(dev, strat, lp, osdep)
 				if (ourpart == -1)
 					goto donot;
 				/*
-				 * This is our DOS partition. need sector address
+				 * This is our MBR partition. need sector address
 				 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
 				 */
 				dp2 = &dp[ourpart];
@@ -180,6 +180,10 @@ donot:
 			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
 				struct partition *pp = &lp->d_partitions[8+n];
 
+				if (dp2->dp_typ == DOSPTYP_OPENBSD)
+					continue;
+				if (get_le(&dp2->dp_size) > lp->d_secperunit)
+					continue;
 				if (get_le(&dp2->dp_size))
 					pp->p_size = get_le(&dp2->dp_size);
 				if (get_le(&dp2->dp_start))
@@ -448,7 +452,13 @@ writedisklabel(dev, strat, lp, osdep)
 			goto done;
 		}
 	}
-	error = ESRCH;
+
+	/* Write it in the regular place. */
+	*(struct disklabel *)bp->b_data = *lp;
+	bp->b_flags = B_BUSY | B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+	goto done;
 
 done:
 	bp->b_flags |= B_INVAL;
