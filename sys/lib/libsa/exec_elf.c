@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.2 1998/07/14 14:56:05 mickey Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.3 1998/07/29 00:37:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -48,24 +48,54 @@ elf_load(fd, xp)
 	struct x_param *xp;
 {
 	register Elf32_Ehdr *ehdr = (Elf32_Ehdr *)xp->xp_hdr;
-	register Elf32_Phdr *phdr, *ph;
-	register Elf32_Shdr *shdr, *sh;
+	register Elf32_Phdr *ph;
+	register Elf32_Shdr *sh;
+	Elf32_Phdr phdr[8];	/* XXX hope this is enough */
+	Elf32_Shdr shdr[32];	/* XXX hope this is enough */
 	size_t phsize, shsize;
-	u_int pa;
+	register u_int pa;
+
+#ifdef EXEC_DEBUG
+	if (debug)
+		printf("id=%x.%c%c%c.%x.%x, type=%x, mach=%x, ver=%x, size=%d\n"
+		       "\tep=%x, flgs=%x, ph=%x[%dx%d], sh=%x[%dx%d], str=%x\n",
+		       ehdr->e_ident[0], ehdr->e_ident[1], ehdr->e_ident[2],
+		       ehdr->e_ident[3], ehdr->e_ident[4], ehdr->e_ident[5],
+		       ehdr->e_type, ehdr->e_machine, ehdr->e_version,
+		       ehdr->e_ehsize, ehdr->e_entry, ehdr->e_flags,
+		       ehdr->e_phoff, ehdr->e_phnum, ehdr->e_phentsize,
+		       ehdr->e_shoff, ehdr->e_shnum, ehdr->e_shentsize,
+		       ehdr->e_shstrndx);
+#endif
 
 	xp->xp_entry = ehdr->e_entry;
 
-	if (lseek(fd, ehdr->e_phoff, SEEK_SET) <= 0)
+	if (lseek(fd, ehdr->e_phoff, SEEK_SET) <= 0) {
+#ifdef EXEC_DEBUG
+		if (debug)
+			printf("lseek failed (%d)\n", errno);
+#endif
 		return -1;
+	}
 	
 	phsize = ehdr->e_phnum * ehdr->e_phentsize;
-	phdr = alloca(phsize);
-
-	if (read(fd, phdr, phsize) != phsize)
+	if (phsize > sizeof(phdr) || read(fd, phdr, phsize) != phsize) {
+#ifdef EXEC_DEBUG
+		if (debug)
+			printf("phdr read failed (%d)\n", errno);
+#endif
 		return -1;
+	}
 
 	pa = 0;
 	for (ph = phdr; ph < &phdr[ehdr->e_phnum]; ph++) {
+#ifdef EXEC_DEBUG
+		if (debug)
+			printf("ph%d: type=%x, off==%d, va=%x, fs=%d, ms=%d, "
+			       "flags=%x\n", (ph - phdr), ph->p_type,
+			       ph->p_offset, ph->p_vaddr, ph->p_filesz,
+			       ph->p_memsz, ph->p_flags);
+#endif
 		if (ntohl(ph->p_filesz) && ntohl(ph->p_flags) & PF_X) {
 			pa = ph->p_vaddr;
 			xp->text.addr = 0;
@@ -82,14 +112,25 @@ elf_load(fd, xp)
 		}
 	}
 
-	if (lseek(fd, ehdr->e_shoff, SEEK_SET))
+	if (lseek(fd, ehdr->e_shoff, SEEK_SET) <= 0) {
+#ifdef EXEC_DEBUG
+		if (debug)
+			printf("lseek failed (%d)\n", errno);
+#endif
 		return -1;
+	}
 
+	/* calc symbols location, scanning section headers */
 	shsize = ehdr->e_shnum * ehdr->e_shentsize;
-	shdr = (Elf32_Shdr *) alloca(shsize);
-
-	if (read(fd, shdr, shsize) != shsize)
+	sh = shdr;
+#if notyet
+	if (shsize > sizeof(shdr) || read(fd, shdr, shsize) != shsize) {
+#ifdef EXEC_DEBUG
+		if (debug)
+			printf("shdr read failed (%d)\n", errno);
+#endif
 		return -1;
+	}
 
 	for (sh = shdr; sh < &shdr[ehdr->e_shnum]; sh++) {
 		switch (sh->sh_type) {
@@ -102,7 +143,7 @@ elf_load(fd, xp)
 		}
 		break;
 	}
-
+#endif
 	return 0;
 }
 
