@@ -1,4 +1,4 @@
-/*	$Id: timedc.c,v 1.7 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: timedc.c,v 1.8 2002/05/17 00:21:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -43,10 +43,6 @@ char copyright[] =
 static char sccsid[] = "@(#)timedc.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
-#ifdef sgi
-#ident "$Revision: 1.7 $"
-#endif
-
 #include "timedc.h"
 #include <string.h>
 #include <signal.h>
@@ -55,32 +51,49 @@ static char sccsid[] = "@(#)timedc.c	5.1 (Berkeley) 5/11/93";
 #include <stdlib.h>
 #include <syslog.h>
 
-int trace = 0;
-FILE *fd = 0;
+int	trace = 0;
+FILE	*fd = NULL;
 int	margc;
 int	fromatty;
 char	*margv[20];
 char	cmdline[200];
 
 static struct cmd *getcmd(char *);
-
 volatile sig_atomic_t gotintr;
 
 int
 main(int argc, char *argv[])
 {
+	extern int sock_raw, sock;
+	struct sockaddr_in sin;
 	struct cmd *c;
+
+	sock_raw = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if (sock_raw < 0) {
+		perror("opening raw socket");
+		exit(1);
+	}
+
+	(void) seteuid(getuid());
+	(void) setuid(getuid());
 
 	openlog("timedc", LOG_ODELAY, LOG_AUTH);
 
-	/*
-	 * security dictates!
-	 */
-	if (priv_resources() < 0) {
-		fprintf(stderr, "Could not get privileged resources\n");
+	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock < 0) {
+		perror("opening socket");
+		(void)close(sock_raw);
+		return (-1);
+	}
+
+	memset(&sin, 0, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = INADDR_ANY;
+	if (bind(sock, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		fprintf(stderr, "all reserved ports in use\n");
+		(void)close(sock_raw);
 		exit(1);
 	}
-	/* privs revoked above */
 
 	if (--argc > 0) {
 		c = getcmd(*++argv);
@@ -170,7 +183,7 @@ getcmd(char *name)
 		p = c->c_name;
 		for (q = name; *q == *p++; q++)
 			if (*q == 0)		/* exact match? */
-				return(c);
+				return (c);
 		if (!*q) {			/* the name was a prefix */
 			if (q - name > longest) {
 				longest = q - name;
@@ -181,8 +194,8 @@ getcmd(char *name)
 		}
 	}
 	if (nmatches > 1)
-		return((struct cmd *)-1);
-	return(found);
+		return ((struct cmd *)-1);
+	return (found);
 }
 
 /*
@@ -191,8 +204,8 @@ getcmd(char *name)
 void
 makeargv()
 {
-	char *cp;
 	char **argp = margv;
+	char *cp;
 
 	margc = 0;
 	for (cp = cmdline; *cp;) {
@@ -221,13 +234,13 @@ help(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct cmd *c;
 	extern struct cmd cmdtab[];
+	struct cmd *c;
 
 	if (argc == 1) {
-		int i, j, w;
 		int columns, width = 0, lines;
 		extern int NCMDS;
+		int i, j, w;
 
 		printf("Commands may be abbreviated.  Commands are:\n\n");
 		for (c = cmdtab; c < &cmdtab[NCMDS]; c++) {
@@ -268,6 +281,6 @@ help(argc, argv)
 			printf("?Invalid help command %s\n", arg);
 		else
 			printf("%-*s\t%s\n", (int)HELPINDENT,
-				c->c_name, c->c_help);
+			    c->c_name, c->c_help);
 	}
 }
