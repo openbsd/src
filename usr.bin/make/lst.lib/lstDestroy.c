@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDestroy.c,v 1.8 2000/06/17 14:34:07 espie Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.9 2000/06/17 14:38:21 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.8 2000/06/17 14:34:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.9 2000/06/17 14:38:21 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,15 +52,22 @@ static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.8 2000/06/17 14:34:07 espie Ex
 
 #include	"lstInt.h"
 
+void
+Lst_Delete(l, freeProc)
+    Lst l;
+    SimpleProc freeProc;
+{
+    if (l != NULL)
+	Lst_Destroy(l, freeProc);
+    free(l);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Lst_Destroy --
  *	Destroy a list and free all its resources. If the freeProc is
  *	given, it is called with the datum from each node in turn before
  *	the node is freed.
- *
- * Results:
- *	None.
  *
  * Side Effects:
  *	The given list is freed in its entirety.
@@ -75,9 +82,6 @@ Lst_Destroy(l, freeProc)
     LstNode	ln;
     LstNode	tln;
 
-    if (l == NULL)
-	return;
-
     if (freeProc) {
 	for (ln = l->firstPtr; ln != NULL; ln = tln) {
 	     tln = ln->nextPtr;
@@ -90,6 +94,4 @@ Lst_Destroy(l, freeProc)
 	     free(ln);
 	}
     }
-
-    free(l);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.27 2000/06/10 01:41:05 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.28 2000/06/17 14:38:13 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.27 2000/06/10 01:41:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.28 2000/06/17 14:38:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ static char rcsid[] = "$OpenBSD: arch.c,v 1.27 2000/06/10 01:41:05 espie Exp $";
 #define MACHINE_ARCH TARGET_MACHINE_ARCH
 #endif
 
-static Lst	  archives;   /* Lst of archives we've already examined */
+static LIST	  archives;   /* Lst of archives we've already examined */
 
 typedef struct Arch {
     char	  *name;      /* Name of archive */
@@ -359,18 +359,19 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	     */
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
-	    Lst	  members = Lst_Init();
+	    LIST members;
 	    char  *member;
 
-	    Dir_Expand(memName, dirSearchPath, members);
-	    while ((member = (char *)Lst_DeQueue(members)) != NULL) {
+	    Lst_Init(&members);
+	    Dir_Expand(memName, &dirSearchPath, &members);
+	    while ((member = (char *)Lst_DeQueue(&members)) != NULL) {
 
 		sprintf(nameBuf, "%s(%s)", libName, member);
 		free(member);
-		gn = Targ_FindNode (nameBuf, TARG_CREATE);
-		if (gn == NULL) {
+		gn = Targ_FindNode(nameBuf, TARG_CREATE);
+		if (gn == NULL)
 		    return (FAILURE);
-		} else {
+		else {
 		    /*
 		     * We've found the node, but have to make sure the rest of
 		     * the world knows it's an archive member, without having
@@ -382,7 +383,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 		    Lst_AtEnd(nodeLst, gn);
 		}
 	    }
-	    Lst_Destroy(members, NOFREE);
+	    Lst_Destroy(&members, NOFREE);
 	} else {
 	    sprintf(nameBuf, "%s(%s)", libName, memName);
 	    gn = Targ_FindNode (nameBuf, TARG_CREATE);
@@ -496,7 +497,7 @@ ArchStatMember (archive, member, hash)
     if (cp != NULL)
 	member = cp + 1;
 
-    ln = Lst_Find(archives, ArchFindArchive, archive);
+    ln = Lst_Find(&archives, ArchFindArchive, archive);
     if (ln != NULL) {
 	ar = (Arch *) Lst_Datum (ln);
 
@@ -643,7 +644,7 @@ ArchStatMember (archive, member, hash)
 
     fclose (arch);
 
-    Lst_AtEnd(archives, ar);
+    Lst_AtEnd(&archives, ar);
 
     /*
      * Now that the archive has been read and cached, we can look into
@@ -1044,11 +1045,11 @@ Arch_MemMTime (gn)
     char    	  *nameStart,
 		  *nameEnd;
 
-    if (Lst_Open (gn->parents) != SUCCESS) {
+    if (Lst_Open(&gn->parents) != SUCCESS) {
 	gn->mtime = OUT_OF_DATE;
 	return FALSE;
     }
-    while ((ln = Lst_Next (gn->parents)) != NULL) {
+    while ((ln = Lst_Next(&gn->parents)) != NULL) {
 	pgn = (GNode *) Lst_Datum (ln);
 
 	if (pgn->type & OP_ARCHV) {
@@ -1083,7 +1084,7 @@ Arch_MemMTime (gn)
 	}
     }
 
-    Lst_Close (gn->parents);
+    Lst_Close(&gn->parents);
 
     return gn->mtime == OUT_OF_DATE;
 }
@@ -1171,7 +1172,7 @@ Arch_LibOODate (gn)
 {
     Boolean 	  oodate;
 
-    if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
+    if (OP_NOP(gn->type) && Lst_IsEmpty(&gn->children)) {
 	oodate = FALSE;
     } else if (gn->mtime > now || gn->mtime < gn->cmtime || 
     	gn->mtime == OUT_OF_DATE) {
@@ -1220,9 +1221,9 @@ Arch_LibOODate (gn)
  *-----------------------------------------------------------------------
  */
 void
-Arch_Init ()
+Arch_Init()
 {
-    archives = Lst_Init();
+    Lst_Init(&archives);
 }
 
 
@@ -1244,7 +1245,7 @@ void
 Arch_End ()
 {
 #ifdef CLEANUP
-    Lst_Destroy(archives, ArchFree);
+    Lst_Destroy(&archives, ArchFree);
 #endif
 }
 

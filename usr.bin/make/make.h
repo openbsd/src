@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.18 2000/04/17 23:54:47 espie Exp $	*/
+/*	$OpenBSD: make.h,v 1.19 2000/06/17 14:38:18 espie Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -152,18 +152,18 @@ typedef struct GNode {
     time_t     	    cmtime;    	/* The modification time of its youngest
 				 * child */
 
-    Lst     	    iParents;  	/* Links to parents for which this is an
+    LIST     	    iParents;  	/* Links to parents for which this is an
 				 * implied source, if any */
-    Lst	    	    cohorts;  	/* Other nodes for the :: operator */
-    Lst             parents;   	/* Nodes that depend on this one */
-    Lst             children;  	/* Nodes on which this one depends */
-    Lst	    	    successors;	/* Nodes that must be made after this one */
-    Lst	    	    preds;  	/* Nodes that must be made before this one */
+    LIST    	    cohorts;  	/* Other nodes for the :: operator */
+    LIST            parents;   	/* Nodes that depend on this one */
+    LIST            children;  	/* Nodes on which this one depends */
+    LIST    	    successors;	/* Nodes that must be made after this one */
+    LIST    	    preds;  	/* Nodes that must be made before this one */
 
-    Lst             context;   	/* The local variables */
+    LIST            context;   	/* The local variables */
     unsigned long   lineno;	/* First line number of commands.  */
     const char *    fname;	/* File name of commands.  */
-    Lst             commands;  	/* Creation commands */
+    LIST            commands;  	/* Creation commands */
 
     struct _Suff    *suffix;	/* Suffix for the node (determined by
 				 * Suff_FindDeps and opaque to everyone
@@ -306,10 +306,10 @@ typedef struct GNode {
 /*
  * Global Variables
  */
-extern Lst  	create;	    	/* The list of target names specified on the
+extern LIST  	create;	    	/* The list of target names specified on the
 				 * command line. used to resolve #if
 				 * make(...) statements */
-extern Lst     	dirSearchPath; 	/* The list of directories to search when
+extern LIST    	dirSearchPath; 	/* The list of directories to search when
 				 * looking for targets */
 
 extern Boolean	compatMake;	/* True if we are make compatible */
@@ -348,7 +348,7 @@ extern time_t 	now;	    	/* The time at the start of this whole
 
 extern Boolean	oldVars;    	/* Do old-style variable substitution */
 
-extern Lst	sysIncPath;	/* The system include path. */
+extern LIST	sysIncPath;	/* The system include path. */
 
 /*
  * debug control:

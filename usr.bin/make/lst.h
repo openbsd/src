@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.14 2000/06/17 14:34:04 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.15 2000/06/17 14:38:17 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -109,12 +109,16 @@ typedef void * (*DuplicateProc) __P((void *));
 /*
  * Creation/destruction functions
  */
+/* CTOR/DTOR, ala C++ */
+void		Lst_Init __P((Lst));
+void		Lst_Destroy __P((Lst, SimpleProc));
+
 /* Create a new list */
-Lst		Lst_Init __P((void));
+Lst		Lst_New __P((void));
+/* Destroy an old one */
+void		Lst_Delete __P((Lst, SimpleProc));
 /* Duplicate an existing list */
 Lst		Lst_Duplicate __P((Lst, DuplicateProc));
-/* Destroy an old one */
-void		Lst_Destroy __P((Lst, SimpleProc));
 /* True if list is empty */
 Boolean		Lst_IsEmpty __P((Lst));
 

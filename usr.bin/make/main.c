@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2000/06/10 01:41:05 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2000/06/17 14:38:18 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.32 2000/06/10 01:41:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.33 2000/06/17 14:38:18 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,15 +112,15 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.32 2000/06/10 01:41:05 espie Exp $";
 
 #define	MAKEFLAGS	".MAKEFLAGS"
 
-Lst			create;		/* Targets to be made */
+LIST			create;		/* Targets to be made */
 time_t			now = OUT_OF_DATE;/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
 
 static Boolean		noBuiltins;	/* -r flag */
-static Lst		makefiles;	/* ordered list of makefiles to read */
+static LIST		makefiles;	/* ordered list of makefiles to read */
 static Boolean		printVars;	/* print value of one or more vars */
-static Lst		variables;	/* list of variables to print */
+static LIST		variables;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
 static int		maxLocal;	/* -L argument */
 Boolean			compatMake;	/* -B argument */
@@ -189,7 +189,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		case 'V':
 			printVars = TRUE;
-			Lst_AtEnd(variables, optarg);
+			Lst_AtEnd(&variables, optarg);
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -280,7 +280,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
 			break;
 		case 'f':
-			Lst_AtEnd(makefiles, optarg);
+			Lst_AtEnd(&makefiles, optarg);
 			break;
 		case 'i':
 			ignoreErrors = TRUE;
@@ -310,7 +310,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
 			break;
 		case 'm':
-			Dir_AddDir(sysIncPath, optarg);
+			Dir_AddDir(&sysIncPath, optarg);
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
@@ -371,7 +371,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 					optind = 1;     /* - */
 				goto rearg;
 			}
-			Lst_AtEnd(create, estrdup(*argv));
+			Lst_AtEnd(&create, estrdup(*argv));
 		}
 }
 
@@ -477,7 +477,6 @@ main(argc, argv)
 	char cdpath[MAXPATHLEN + 1];
     	char *machine = getenv("MACHINE");
 	char *machine_arch = getenv("MACHINE_ARCH");
-	Lst sysMkPath;			/* Path of sys.mk */
 	char *cp = NULL, *start;
 					/* avoid faults on read-only strings */
 	static char syspath[] = _PATH_DEFSYSPATH;
@@ -588,10 +587,10 @@ main(argc, argv)
 	setenv("PWD", objdir, 1);
 	unsetenv("CDPATH");
 
-	create = Lst_Init();
-	makefiles = Lst_Init();
+	Lst_Init(&create);
+	Lst_Init(&makefiles);
 	printVars = FALSE;
-	variables = Lst_Init();
+	Lst_Init(&variables);
 	beSilent = FALSE;		/* Print commands as executed */
 	ignoreErrors = FALSE;		/* Pay attention to non-zero returns */
 	noExecute = FALSE;		/* Execute all commands */
@@ -625,7 +624,7 @@ main(argc, argv)
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
 	if (objdir != curdir)
-		Dir_AddDir(dirSearchPath, curdir);
+		Dir_AddDir(&dirSearchPath, curdir);
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 
@@ -672,10 +671,10 @@ main(argc, argv)
 	 * created. If none specified, make the variable empty -- the parser
 	 * will fill the thing in with the default or .MAIN target.
 	 */
-	if (!Lst_IsEmpty(create)) {
+	if (!Lst_IsEmpty(&create)) {
 		LstNode ln;
 
-		for (ln = Lst_First(create); ln != NULL;
+		for (ln = Lst_First(&create); ln != NULL;
 		    ln = Lst_Succ(ln)) {
 			char *name = (char *)Lst_Datum(ln);
 
@@ -690,15 +689,15 @@ main(argc, argv)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	if (Lst_IsEmpty(sysIncPath)) {
+	if (Lst_IsEmpty(&sysIncPath)) {
 		for (start = syspath; *start != '\0'; start = cp) {
 			for (cp = start; *cp != '\0' && *cp != ':'; cp++)
 				continue;
 			if (*cp == '\0') {
-				Dir_AddDir(sysIncPath, start);
+				Dir_AddDir(&sysIncPath, start);
 			} else {
 				*cp++ = '\0';
-				Dir_AddDir(sysIncPath, start);
+				Dir_AddDir(&sysIncPath, start);
 			}
 		}
 	}
@@ -710,20 +709,21 @@ main(argc, argv)
 	 */
 	if (!noBuiltins) {
 		LstNode ln;
+		LIST sysMkPath;		/* Path of sys.mk */
 
-		sysMkPath = Lst_Init();
-		Dir_Expand (_PATH_DEFSYSMK, sysIncPath, sysMkPath);
-		if (Lst_IsEmpty(sysMkPath))
+		Lst_Init(&sysMkPath);
+		Dir_Expand(_PATH_DEFSYSMK, &sysIncPath, &sysMkPath);
+		if (Lst_IsEmpty(&sysMkPath))
 			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);
-		ln = Lst_Find(sysMkPath, ReadMakefile, NULL);
+		ln = Lst_Find(&sysMkPath, ReadMakefile, NULL);
 		if (ln != NULL)
 			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
 	}
 
-	if (!Lst_IsEmpty(makefiles)) {
+	if (!Lst_IsEmpty(&makefiles)) {
 		LstNode ln;
 
-		ln = Lst_Find(makefiles, ReadMakefile, NULL);
+		ln = Lst_Find(&makefiles, ReadMakefile, NULL);
 		if (ln != NULL)
 			Fatal("make: cannot open %s.", (char *)Lst_Datum(ln));
 	} else if (!ReadMakefile("BSDmakefile", NULL))
@@ -767,7 +767,7 @@ main(argc, argv)
 			savec = *cp;
 			*cp = '\0';
 			/* Add directory to search path */
-			Dir_AddDir(dirSearchPath, path);
+			Dir_AddDir(&dirSearchPath, path);
 			*cp = savec;
 			path = cp + 1;
 		} while (savec == ':');
@@ -788,7 +788,7 @@ main(argc, argv)
 	if (printVars) {
 		LstNode ln;
 
-		for (ln = Lst_First(variables); ln != NULL;
+		for (ln = Lst_First(&variables); ln != NULL;
 		    ln = Lst_Succ(ln)) {
 			char *value = Var_Value((char *)Lst_Datum(ln),
 					  VAR_GLOBAL);
@@ -802,10 +802,10 @@ main(argc, argv)
 	 * to create. If none was given on the command line, we consult the
 	 * parsing module to find the main target(s) to create.
 	 */
-	if (Lst_IsEmpty(create))
+	if (Lst_IsEmpty(&create))
 		targs = Parse_MainName();
 	else
-		targs = Targ_FindList(create, TARG_CREATE);
+		targs = Targ_FindList(&create, TARG_CREATE);
 
 	if (!compatMake && !printVars) {
 		/*
@@ -831,10 +831,10 @@ main(argc, argv)
 		Compat_Run(targs);
 	}
 
-	Lst_Destroy(targs, NOFREE);
-	Lst_Destroy(variables, NOFREE);
-	Lst_Destroy(makefiles, NOFREE);
-	Lst_Destroy(create, (SimpleProc)free);
+	Lst_Delete(targs, NOFREE);
+	Lst_Destroy(&variables, NOFREE);
+	Lst_Destroy(&makefiles, NOFREE);
+	Lst_Destroy(&create, (SimpleProc)free);
 
 	/* print the graph now it's been processed if the user requested it */
 	if (DEBUG(GRAPH2))
@@ -870,7 +870,7 @@ ReadMakefile(p, q)
 	void *q;
 {
 	char *fname = p;		/* makefile to read */
-	extern Lst parseIncPath;
+	extern LIST parseIncPath;
 	FILE *stream;
 	char *name, path[MAXPATHLEN + 1];
 
@@ -889,9 +889,9 @@ ReadMakefile(p, q)
 			}
 		}
 		/* look in -I and system include directories. */
-		name = Dir_FindFile(fname, parseIncPath);
+		name = Dir_FindFile(fname, &parseIncPath);
 		if (!name)
-			name = Dir_FindFile(fname, sysIncPath);
+			name = Dir_FindFile(fname, &sysIncPath);
 		if (!name || !(stream = fopen(name, "r")))
 			return(FALSE);
 		fname = name;

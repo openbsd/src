@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.h,v 1.6 1999/12/18 21:53:32 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.7 2000/06/17 14:38:17 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $	*/
 
 /*
@@ -213,8 +213,8 @@ extern GNode	*lastNode;  	/* Last node for which a banner was printed.
 				 * for which the banner was printed */
 extern int  	nJobs;	    	/* Number of jobs running (local and remote) */
 extern int  	nLocal;	    	/* Number of jobs running locally */
-extern Lst  	jobs;	    	/* List of active job descriptors */
-extern Lst  	stoppedJobs;	/* List of jobs that are stopped or didn't
+extern LIST  	jobs;	    	/* List of active job descriptors */
+extern LIST  	stoppedJobs;	/* List of jobs that are stopped or didn't
 				 * quite get started */
 extern Boolean	jobFull;    	/* Non-zero if no more jobs should/will start*/
 

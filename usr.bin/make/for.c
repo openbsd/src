@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.17 2000/06/10 01:41:05 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.18 2000/06/17 14:38:15 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.17 2000/06/10 01:41:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.18 2000/06/17 14:38:15 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ static char rcsid[] = "$OpenBSD: for.c,v 1.17 2000/06/10 01:41:05 espie Exp $";
 struct For_ {
     char		*text;		/* unexpanded text       	*/
     char		*var;		/* Index name		 	*/
-    Lst  		lst;		/* List of items	 	*/
+    LIST  		lst;		/* List of items	 	*/
     size_t		guess;		/* Estimated expansion size	*/
     BUFFER		buf;		/* Accumulating text	 	*/
     unsigned long	lineno;		/* Line number at start of loop */
@@ -202,8 +202,8 @@ For_Eval(line)
     if (DEBUG(FOR))
 	(void)fprintf(stderr, "For: Iterator %s List %s\n", arg->var, sub);
 
-    arg->lst = Lst_Init();
-    build_words_list(arg->lst, sub);
+    Lst_Init(&arg->lst);
+    build_words_list(&arg->lst, sub);
     free(sub);
     arg->lineno = Parse_Getlineno();
     arg->level = 1;
@@ -303,9 +303,9 @@ For_Run(arg)
     arg->text = Buf_Retrieve(&arg->buf);
     arg->guess = Buf_Size(&arg->buf) + GUESS_EXPANSION;
 
-    Lst_ForEach(arg->lst, ForExec, arg);
+    Lst_ForEach(&arg->lst, ForExec, arg);
     free(arg->var);
     free(arg->text);
-    Lst_Destroy(arg->lst, (SimpleProc)free);
+    Lst_Destroy(&arg->lst, (SimpleProc)free);
     free(arg);
 }

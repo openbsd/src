@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.18 2000/06/10 01:41:06 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.19 2000/06/17 14:38:20 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.18 2000/06/10 01:41:06 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.19 2000/06/17 14:38:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -94,9 +94,9 @@ static char *rcsid = "$OpenBSD: targ.c,v 1.18 2000/06/10 01:41:06 espie Exp $";
 #include	  "hash.h"
 #include	  "dir.h"
 
-static Lst        allTargets;	/* the list of all targets found so far */
+static LIST       allTargets;	/* the list of all targets found so far */
 #ifdef CLEANUP
-static Lst	  allGNs;	/* List of all the GNodes */
+static LIST	  allGNs;	/* List of all the GNodes */
 #endif
 static Hash_Table targets;	/* a hash table of same */
 
@@ -122,10 +122,13 @@ static void TargFreeGN __P((void *));
  *-----------------------------------------------------------------------
  */
 void
-Targ_Init ()
+Targ_Init()
 {
-    allTargets = Lst_Init();
-    Hash_InitTable (&targets, HTSIZE);
+#ifdef CLEANUP
+    Lst_Init(&allGNs);
+#endif
+    Lst_Init(&allTargets);
+    Hash_InitTable(&targets, HTSIZE);
 }
 
 /*-
@@ -144,9 +147,8 @@ void
 Targ_End ()
 {
 #ifdef CLEANUP
-    Lst_Destroy(allTargets, NOFREE);
-    if (allGNs)
-	Lst_Destroy(allGNs, TargFreeGN);
+    Lst_Destroy(&allTargets, NOFREE);
+    Lst_Destroy(&allGNs, TargFreeGN);
     Hash_DeleteTable(&targets);
 #endif
 }
@@ -184,22 +186,20 @@ Targ_NewGN (name)
     gn->childMade = 	FALSE;
     gn->order =		0;
     gn->mtime = gn->cmtime = OUT_OF_DATE;
-    gn->iParents =  	Lst_Init();
-    gn->cohorts =   	Lst_Init();
-    gn->parents =   	Lst_Init();
-    gn->children =  	Lst_Init();
-    gn->successors = 	Lst_Init();
-    gn->preds =     	Lst_Init();
-    gn->context =   	Lst_Init();
+    Lst_Init(&gn->iParents);
+    Lst_Init(&gn->cohorts);
+    Lst_Init(&gn->parents);
+    Lst_Init(&gn->children);
+    Lst_Init(&gn->successors);
+    Lst_Init(&gn->preds);
+    Lst_Init(&gn->context);
     gn->lineno = 0;
     gn->fname = NULL;
-    gn->commands =  	Lst_Init();
+    Lst_Init(&gn->commands);
     gn->suffix =	NULL;
 
 #ifdef CLEANUP
-    if (allGNs == NULL)
-	allGNs = Lst_Init();
-    Lst_AtEnd(allGNs, gn);
+    Lst_AtEnd(&allGNs, gn);
 #endif
 
     return (gn);
@@ -227,15 +227,14 @@ TargFreeGN(gnp)
 
     free(gn->name);
     efree(gn->path);
-
-    Lst_Destroy(gn->iParents, NOFREE);
-    Lst_Destroy(gn->cohorts, NOFREE);
-    Lst_Destroy(gn->parents, NOFREE);
-    Lst_Destroy(gn->children, NOFREE);
-    Lst_Destroy(gn->successors, NOFREE);
-    Lst_Destroy(gn->preds, NOFREE);
-    Lst_Destroy(gn->context, NOFREE);
-    Lst_Destroy(gn->commands, NOFREE);
+    Lst_Destroy(&gn->iParents, NOFRE);
+    Lst_Destroy(&gn->cohorts, NOFRE);
+    Lst_Destroy(&gn->parents, NOFRE);
+    Lst_Destroy(&gn->children, NOFRE);
+    Lst_Destroy(&gn->successors, NOFRE);
+    Lst_Destroy(&gn->preds, NOFRE);
+    Lst_Destroy(&gn->context, NOFRE);
+    Lst_Destroy(&gn->commands, NOFRE);
     free(gn);
 }
 #endif
@@ -272,7 +271,7 @@ Targ_FindNode (name, flags)
 	if (isNew) {
 	    gn = Targ_NewGN (name);
 	    Hash_SetValue (he, gn);
-	    Lst_AtEnd(allTargets, gn);
+	    Lst_AtEnd(&allTargets, gn);
 	}
     } else {
 	he = Hash_FindEntry (&targets, name);
@@ -301,7 +300,7 @@ Targ_FindNode (name, flags)
  * -----------------------------------------------------------------------
  */
 Lst
-Targ_FindList (names, flags)
+Targ_FindList(names, flags)
     Lst        	   names;	/* list of names to find */
     int            flags;	/* flags used if no node is found for a given
 				 * name */
@@ -311,7 +310,7 @@ Targ_FindList (names, flags)
     register GNode *gn;		/* node in tLn */
     char    	  *name;
 
-    nodes = Lst_Init();
+    nodes = Lst_New();
 
     if (Lst_Open (names) == FAILURE) {
 	return (nodes);
@@ -327,7 +326,7 @@ Targ_FindList (names, flags)
 	     */
 	    Lst_AtEnd(nodes, gn);
 	    if (gn->type & OP_DOUBLEDEP) {
-		Lst_Concat(nodes, gn->cohorts, LST_CONCNEW);
+		Lst_Concat(nodes, &gn->cohorts, LST_CONCNEW);
 	    }
 	} else if (flags == TARG_NOCREATE) {
 	    Error ("\"%s\" -- target unknown.", name);
@@ -563,15 +562,15 @@ TargPrintNode(gnp, passp)
 		else
 		    printf("# unmade\n");
 	    }
-	    if (!Lst_IsEmpty (gn->iParents)) {
+	    if (!Lst_IsEmpty(&gn->iParents)) {
 		printf("# implicit parents: ");
-		Lst_Every(gn->iParents, TargPrintName);
+		Lst_Every(&gn->iParents, TargPrintName);
 		fputc('\n', stdout);
 	    }
 	}
-	if (!Lst_IsEmpty (gn->parents)) {
+	if (!Lst_IsEmpty(&gn->parents)) {
 	    printf("# parents: ");
-	    Lst_Every(gn->parents, TargPrintName);
+	    Lst_Every(&gn->parents, TargPrintName);
 	    fputc ('\n', stdout);
 	}
 
@@ -585,12 +584,12 @@ TargPrintNode(gnp, passp)
 		printf(":: "); break;
 	}
 	Targ_PrintType(gn->type);
-	Lst_Every(gn->children, TargPrintName);
+	Lst_Every(&gn->children, TargPrintName);
 	fputc('\n', stdout);
-	Lst_Every(gn->commands, Targ_PrintCmd);
+	Lst_Every(&gn->commands, Targ_PrintCmd);
 	printf("\n\n");
 	if (gn->type & OP_DOUBLEDEP)
-	    Lst_ForEach(gn->cohorts, TargPrintNode, &pass);
+	    Lst_ForEach(&gn->cohorts, TargPrintNode, &pass);
     }
 }
 
@@ -632,10 +631,10 @@ Targ_PrintGraph (pass)
 			 * 2 => processing done */
 {
     printf("#*** Input graph:\n");
-    Lst_ForEach(allTargets, TargPrintNode, &pass);
+    Lst_ForEach(&allTargets, TargPrintNode, &pass);
     printf("\n\n");
     printf("#\n#   Files that are only sources:\n");
-    Lst_Every(allTargets, TargPrintOnlySrc);
+    Lst_Every(&allTargets, TargPrintOnlySrc);
     printf("#*** Global Variables:\n");
     Var_Dump (VAR_GLOBAL);
     printf("#*** Command-line Variables:\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.17 2000/06/10 01:41:05 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.18 2000/06/17 14:38:14 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.17 2000/06/10 01:41:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.18 2000/06/17 14:38:14 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -339,7 +339,7 @@ CondDoMake (argLen, arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Lst_Find(create, CondStrMatch, arg) == NULL) {
+    if (Lst_Find(&create, CondStrMatch, arg) == NULL) {
 	result = FALSE;
     } else {
 	result = TRUE;
@@ -371,7 +371,7 @@ CondDoExists (argLen, arg)
     char    *path;
 
     arg[argLen] = '\0';
-    path = Dir_FindFile(arg, dirSearchPath);
+    path = Dir_FindFile(arg, &dirSearchPath);
     if (path != (char *)NULL) {
 	result = TRUE;
 	free(path);

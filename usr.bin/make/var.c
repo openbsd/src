@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.32 2000/06/10 01:41:06 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.33 2000/06/17 14:38:20 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.32 2000/06/10 01:41:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.33 2000/06/17 14:38:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,7 @@ GNode		*VAR_GLOBAL;	/* variables from the makefile */
 GNode		*VAR_CMD;	/* variables defined on the command-line */
 static GNode	*VAR_ENV;	/* variables read from env */
 
-static Lst	allVars;      /* List of all variables */
+static LIST	allVars;      /* List of all variables */
 
 #define FIND_CMD	0x1   /* look in VAR_CMD when searching */
 #define FIND_GLOBAL	0x2   /* look in VAR_GLOBAL as well */
@@ -318,16 +318,16 @@ VarFind (name, ctxt, flags)
      * look for it in VAR_CMD, VAR_GLOBAL and the environment, in that order,
      * depending on the FIND_* flags in 'flags'
      */
-    var = Lst_Find(ctxt->context, VarCmp, name);
+    var = Lst_Find(&ctxt->context, VarCmp, name);
 
     if ((var == NULL) && (flags & FIND_CMD) && (ctxt != VAR_CMD))
-	var = Lst_Find(VAR_CMD->context, VarCmp, name);
+	var = Lst_Find(&VAR_CMD->context, VarCmp, name);
     if (!checkEnvFirst && (var == NULL) && (flags & FIND_GLOBAL) &&
 	(ctxt != VAR_GLOBAL)) {
-	var = Lst_Find(VAR_GLOBAL->context, VarCmp, name);
+	var = Lst_Find(&VAR_GLOBAL->context, VarCmp, name);
     }
     if ((var == NULL) && (flags & FIND_ENV)) {
-    	var = Lst_Find(VAR_ENV->context, VarCmp, name);
+    	var = Lst_Find(&VAR_ENV->context, VarCmp, name);
 	if (var == NULL) {
 	    char *env;
 
@@ -337,7 +337,7 @@ VarFind (name, ctxt, flags)
     }
     if (var == NULL && checkEnvFirst && (flags & FIND_GLOBAL) &&
 		   (ctxt != VAR_GLOBAL)) 
-	    var = Lst_Find(VAR_GLOBAL->context, VarCmp, name);
+	    var = Lst_Find(&VAR_GLOBAL->context, VarCmp, name);
     if (var == NULL)
 	return NULL;
     else 
@@ -377,8 +377,8 @@ VarAdd(name, val, ctxt)
 
     v->flags = 0;
 
-    Lst_AtFront(ctxt->context, v);
-    Lst_AtEnd(allVars, v);
+    Lst_AtFront(&ctxt->context, v);
+    Lst_AtEnd(&allVars, v);
     if (DEBUG(VAR)) {
 	printf("%s:%s = %s\n", ctxt->name, name, val);
     }
@@ -433,14 +433,14 @@ Var_Delete(name, ctxt)
     if (DEBUG(VAR)) {
 	printf("%s:delete %s\n", ctxt->name, name);
     }
-    ln = Lst_Find(ctxt->context, VarCmp, name);
+    ln = Lst_Find(&ctxt->context, VarCmp, name);
     if (ln != NULL) {
 	register Var 	  *v;
 
 	v = (Var *)Lst_Datum(ln);
-	Lst_Remove(ctxt->context, ln);
-	ln = Lst_Member(allVars, v);
-	Lst_Remove(allVars, ln);
+	Lst_Remove(&ctxt->context, ln);
+	ln = Lst_Member(&allVars, v);
+	Lst_Remove(&allVars, ln);
 	VarDelete(v);
     }
 }
@@ -2302,28 +2302,25 @@ Var_GetHead(file)
  * Var_Init --
  *	Initialize the module
  *
- * Results:
- *	None
- *
  * Side Effects:
  *	The VAR_CMD and VAR_GLOBAL contexts are created
  *-----------------------------------------------------------------------
  */
 void
-Var_Init ()
+Var_Init()
 {
     VAR_GLOBAL = Targ_NewGN("Global");
     VAR_CMD = Targ_NewGN("Command");
     VAR_ENV = Targ_NewGN("Environment");
-    allVars = Lst_Init();
+    Lst_Init(&allVars);
 
 }
 
 
 void
-Var_End ()
+Var_End()
 {
-    Lst_Destroy(allVars, VarDelete);
+    Lst_Destroy(&allVars, VarDelete);
 }
 
 
@@ -2347,5 +2344,5 @@ void
 Var_Dump (ctxt)
     GNode          *ctxt;
 {
-    Lst_Every(ctxt->context, VarPrintVar);
+    Lst_Every(&ctxt->context, VarPrintVar);
 }
