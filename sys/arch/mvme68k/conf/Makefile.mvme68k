@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvme68k,v 1.24 2003/11/21 17:53:19 espie Exp $
+#	$OpenBSD: Makefile.mvme68k,v 1.25 2004/10/08 07:11:04 grange Exp $
 
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -167,10 +167,10 @@ SRCS=	${MVME68K}/mvme68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	sh $S/kern/genassym.sh mkdep -f assym.dep ${CFLAGS} \
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${MVME68K}/mvme68k/genassym.cf
 	@sed -e 's/.*\.o:.* /assym.h: /' < assym.dep >> .depend
 	@rm -f assym.dep

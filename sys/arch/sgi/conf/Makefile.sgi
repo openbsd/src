@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.7 2004/09/20 10:43:17 miod Exp $
+#	$OpenBSD: Makefile.sgi,v 1.8 2004/10/08 07:11:04 grange Exp $
 
 # Makefile for OpenBSD
 #
@@ -173,9 +173,9 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${SGI}/sgi/locore.S
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-#	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SGI}/sgi/locore.S
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+#	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
