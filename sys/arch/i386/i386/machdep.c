@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.123 2000/02/03 15:32:23 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.124 2000/02/08 00:14:12 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -169,6 +169,8 @@ extern struct proc *npxproc;
 #endif
 
 #include "bios.h"
+
+#define	MIN(a,b) (((a)<(b))?(a):(b))
 
 /*
  * The following defines are for the code in setup_buffers that tries to
@@ -2039,9 +2041,9 @@ init386(first_avail)
 				printf("\nWARNING: CAN'T ALLOCATE RAM (%x-%x)"
 				       " FROM IOMEM EXTENT MAP!\n", a, e);
 
-			physmem += btoc(e - a);
-			dumpmem[i].start = btoc(a);
-			dumpmem[i].end = btoc(e);
+			physmem += atop(e - a);
+			dumpmem[i].start = atop(a);
+			dumpmem[i].end = atop(e);
 			i++;
 			avail_end = max(avail_end, e);
 		}
@@ -2052,7 +2054,7 @@ init386(first_avail)
 #ifdef DEBUG
 	printf(": %lx\n", avail_end);
 #endif
-	if (physmem < btoc(4 * 1024 * 1024)) {
+	if (physmem < atop(4 * 1024 * 1024)) {
 		printf("\awarning: too little memory available;"
 		       "running in degraded mode\npress a key to confirm\n\n");
 		cngetc();
@@ -2062,23 +2064,38 @@ init386(first_avail)
 	printf("physload: ");
 #endif
 	for (i = 0; i < ndumpmem; i++) {
-		register int32_t a, e;
+		register int32_t a, e, lim;
 
 		a = dumpmem[i].start;
 		e = dumpmem[i].end;
-		if (a < btoc(first_avail) && e > btoc(first_avail))
-			a = btoc(first_avail);
+		if (a < atop(first_avail) && e > atop(first_avail))
+			a = atop(first_avail);
 		if (e > atop(avail_end))
 			e = atop(avail_end);
-#ifdef DEBUG
-		printf (" %x-%x", a, e);
-#endif
+
 		if (a < e) {
 #ifdef UVM
-			if (e <= 16 * 1024 * 1024)
-				uvm_page_physload(a, e, a, e, VM_FREELIST_FIRST16);
-			else
-				uvm_page_physload(a, e, a, e, VM_FREELIST_DEFAULT);
+			if (a < atop(16 * 1024 * 1024)) {
+				lim = MIN(atop(16 * 1024 * 1024), e);
+#ifdef DEBUG
+				printf (" %x-%x (<16M)", a, lim);
+#endif
+				uvm_page_physload(a, lim, a, lim,
+				    VM_FREELIST_FIRST16);
+				if (e > lim) {
+#ifdef DEBUG
+					printf (" %x-%x", lim, e);
+#endif
+					uvm_page_physload(lim, e, lim, e,
+					    VM_FREELIST_DEFAULT);
+				}
+			} else {
+#ifdef DEBUG
+				printf (" %x-%x", a, e);
+#endif
+				uvm_page_physload(a, e, a, e,
+				    VM_FREELIST_DEFAULT);
+			}
 #else
 			vm_page_physload(a, e, a, e);
 #endif
