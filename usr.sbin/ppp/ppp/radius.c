@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radius.c,v 1.15 2002/05/16 14:27:21 brian Exp $
+ *	$OpenBSD: radius.c,v 1.16 2002/05/27 23:22:20 deraadt Exp $
  *
  */
 
@@ -759,8 +759,8 @@ radius_Account(struct radius *r, struct radacct *ac, struct datalink *dl,
     ac->authentic = 2;		/* Assume RADIUS verified auth data */
  
     /* Generate a session ID */
-    snprintf(ac->session_id, sizeof ac->session_id, "%s%d-%s%lu",
-             dl->bundle->cfg.auth.name, (int)getpid(),
+    snprintf(ac->session_id, sizeof ac->session_id, "%s%ld-%s%lu",
+             dl->bundle->cfg.auth.name, (long)getpid(),
              dl->peer.authname, (unsigned long)stats->uptime);
 
     /* And grab our MP socket name */
