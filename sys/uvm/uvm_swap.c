@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.58 2003/12/10 07:34:03 itojun Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.59 2004/09/23 06:31:35 tedu Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -762,7 +762,7 @@ sys_swapctl(p, v, retval)
 	case SWAP_DUMPDEV:
 		if (vp->v_type != VBLK) {
 			error = ENOTBLK;
-			goto out;
+			break;
 		}
 		dumpdev = vp->v_rdev;
 		break;
@@ -867,9 +867,7 @@ sys_swapctl(p, v, retval)
 		/*
 		 * do the real work.
 		 */
-		if ((error = swap_off(p, sdp)) != 0)
-			goto out;
-
+		error = swap_off(p, sdp);
 		break;
 
 	default:
