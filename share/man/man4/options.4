@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.138 2004/03/21 19:50:44 miod Exp $
+.\"	$OpenBSD: options.4,v 1.139 2004/04/20 06:39:04 tedu Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -687,19 +687,6 @@ for details.
 .El
 .Ss Networking Options
 .Bl -ohang
-.It Cd option GATEWAY
-Enables
-.Em IPFORWARDING
-and (on most architectures) increases the size of
-.Em NMBCLUSTERS .
-In general,
-.Em GATEWAY
-is used to indicate that a system should act as a router, and
-.Em IPFORWARDING
-is not invoked directly.
-(Note that
-.Em GATEWAY
-has no impact on protocols other than IP, such as CLNP or XNS.)
 .It Cd option IPFORWARDING
 Enables IP routing behavior.
 With this option enabled, the machine
@@ -707,8 +694,6 @@ will forward IP datagrams between its interfaces that are destined for
 other machines.
 Note that even without this option, the kernel will
 still forward some packets (such as source routed packets) -- removing
-.Em GATEWAY
-and
 .Em IPFORWARDING
 is insufficient to stop all routing through a bastion host on a
 firewall -- source routing is controlled independently.
@@ -1040,21 +1025,6 @@ Default value is 10.
 .El
 .Ss Operation Related Options
 .Bl -ohang
-.It Cd option NMBCLUSTERS=value
-Size of kernel mbuf cluster map,
-.Em mb_map ,
-in MCLBYTES-sized (default: 2048 bytes) logical pages.
-NMBCLUSTERS defaults to 2048 on hppa and i386, to 1024 on powerpc and sparc64,
-to 256 on vax, and to 512 on other architectures.
-If its value is not 2048, it is doubled if
-.Dq option GATEWAY
-is used.
-See
-.Pa /usr/include/machine/param.h
-for exact default information.
-Increase this value if
-.Dq mclpool limit reached
-messages appear.
 .It Cd option NKMEMPAGES=value
 .It Cd option NKMEMPAGES_MIN=value
 .It Cd option NKMEMPAGES_MAX=value

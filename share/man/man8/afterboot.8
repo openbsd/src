@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.88 2003/12/05 23:55:07 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.89 2004/04/20 06:39:04 tedu Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -263,10 +263,7 @@ or
 .Dl net.inet6.ip6.forwarding=1
 .Pp
 to
-.Pa /etc/sysctl.conf ,
-or by compiling a new kernel with the
-.Cm GATEWAY
-option.
+.Pa /etc/sysctl.conf .
 Packets are not forwarded by default, due to RFC requirements.
 .Pp
 You can add new

@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.23 2004/02/07 19:08:44 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.24 2004/04/20 06:39:04 tedu Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -190,8 +190,7 @@ In order for
 to actually mark the interface as up, the keyword ``up'' must be given
 last on its command line.
 .Pp
-The kernel must be set to forward datagrams by including option
-``GATEWAY'' in the kernel config file and issuing the appropriate
+The kernel must be set to forward datagrams by issuing the appropriate
 option to
 .Xr sysctl 8 .
 .Pp
