@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)alloca.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: alloca.3,v 1.1.1.1 1995/10/18 08:42:16 deraadt Exp $
+.\"	$Id: alloca.3,v 1.2 1996/07/12 10:24:57 deraadt Exp $
 .\"
 .Dd May 2, 1991
 .Dt ALLOCA 3
@@ -55,9 +55,6 @@ return.
 The
 .Fn alloca
 function returns a pointer to the beginning of the allocated space.
-If the allocation failed, a
-.Dv NULL
-pointer is returned.
 .Sh SEE ALSO
 .Xr brk 2 ,
 .Xr pagesize 2
