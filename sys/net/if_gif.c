@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.14 2001/02/20 13:50:53 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.15 2001/06/04 23:55:57 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -248,6 +248,7 @@ gif_ioctl(ifp, cmd, data)
 	struct sockaddr *dst, *src;
 	struct sockaddr *sa;
 	int i;
+	int s;
 	struct gif_softc *sc2;
 		
 	switch (cmd) {
@@ -409,8 +410,10 @@ gif_ioctl(ifp, cmd, data)
 		bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
 		sc->gif_pdst = sa;
 
-		ifp->if_flags |= (IFF_UP | IFF_RUNNING);
+		s = splnet();
+		ifp->if_flags |= IFF_RUNNING;
 		if_up(ifp);		/* send up RTM_IFINFO */
+		splx(s);
 
 		error = 0;
 		break;
