@@ -28,7 +28,7 @@ RhostsRSAAuthentication yes
 RSAAuthentication no
 #
 # To enable tunneled clear text passwords, change to yes here!
-PasswordAuthentication no
+PasswordAuthentication yes
 PermitEmptyPasswords no
 #KerberosOrLocalPasswd yes
 
