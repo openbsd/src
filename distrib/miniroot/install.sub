@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.256 2002/09/17 16:15:25 krw Exp $
+#	$OpenBSD: install.sub,v 1.257 2002/09/20 00:15:00 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -171,7 +171,7 @@ get_cddevs() {
 }
 
 get_ifdevs() {
-	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
+	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge|pflog|vlan|gif)[[:digit:]])' | cutword -t: 1
 }
 
 # Ask for a password, saving the input in $resp.
