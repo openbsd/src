@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.6 2004/02/18 03:58:35 deraadt Exp $ */
+/*	$OpenBSD: procmap.c,v 1.7 2004/02/18 04:07:35 deraadt Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -257,6 +257,16 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (kernel != NULL || kmem != NULL) {
+		setegid(getgid());
+		setgid(getgid());
+	}
+
 	argc -= optind;
 	argv += optind;
 
@@ -270,6 +280,10 @@ main(int argc, char *argv[])
 
 	/* start by opening libkvm */
 	kd = kvm_openfiles(kernel, kmem, NULL, O_RDONLY, errbuf);
+
+	setegid(getgid());
+	setgid(getgid());
+
 	errbuf[_POSIX2_LINE_MAX] = '\0';
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
