@@ -32,8 +32,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/arpa/telnet.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/arpa/tftp.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/assert.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/bfd.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/bfdlink.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/bitstring.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/blf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/bm.ph
@@ -723,7 +721,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wsfont/vt220l8x8.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wsfont/wsfont.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dirent.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dis-asm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/disktab.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dlfcn.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/elf_abi.ph

@@ -1,6 +1,3 @@
-./usr/bin/addr2line
-./usr/bin/objcopy
-./usr/bin/readelf
 ./usr/include/g++/PlotFile.h
 ./usr/include/g++/SFile.h
 ./usr/include/g++/_G_config.h

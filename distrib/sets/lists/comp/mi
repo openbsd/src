@@ -51,8 +51,6 @@
 ./usr/include/arpa/telnet.h
 ./usr/include/arpa/tftp.h
 ./usr/include/assert.h
-./usr/include/bfd.h
-./usr/include/bfdlink.h
 ./usr/include/bitstring.h
 ./usr/include/blf.h
 ./usr/include/bm.h
@@ -742,7 +740,6 @@
 ./usr/include/dev/wsfont/vt220l8x8.h
 ./usr/include/dev/wsfont/wsfont.h
 ./usr/include/dirent.h
-./usr/include/dis-asm.h
 ./usr/include/disktab.h
 ./usr/include/dlfcn.h
 ./usr/include/elf_abi.h
@@ -1562,8 +1559,6 @@
 ./usr/lib/gcrt0.o
 ./usr/lib/libasn1.a
 ./usr/lib/libasn1_p.a
-./usr/lib/libbfd.a
-./usr/lib/libbfd.la
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
 ./usr/lib/libcom_err.a
@@ -1620,8 +1615,6 @@
 ./usr/lib/libobjc_p.a
 ./usr/lib/libocurses.a
 ./usr/lib/libocurses_p.a
-./usr/lib/libopcodes.a
-./usr/lib/libopcodes.la
 ./usr/lib/libossaudio.a
 ./usr/lib/libossaudio_p.a
 ./usr/lib/libotermcap.a

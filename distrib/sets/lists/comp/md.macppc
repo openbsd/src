@@ -1,4 +1,8 @@
 ./usr/bin/objcopy
+./usr/bin/readelf
+./usr/include/bfd.h
+./usr/include/bfdlink.h
+./usr/include/dis-asm.h
 ./usr/include/g++/PlotFile.h
 ./usr/include/g++/SFile.h
 ./usr/include/g++/_G_config.h
@@ -223,6 +227,8 @@
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.5/2.95.3/soft-float
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd3.5/2.95.3/soft-float/libgcc.a
 ./usr/lib/libasn1_pic.a
+./usr/lib/libbfd.a
+./usr/lib/libbfd.la
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
@@ -245,6 +251,8 @@
 ./usr/lib/libncurses_pic.a
 ./usr/lib/libobjc_pic.a
 ./usr/lib/libocurses_pic.a
+./usr/lib/libopcodes.a
+./usr/lib/libopcodes.la
 ./usr/lib/libossaudio_pic.a
 ./usr/lib/libotermcap_pic.a
 ./usr/lib/libpanel_pic.a

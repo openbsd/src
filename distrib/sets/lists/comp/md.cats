@@ -54,6 +54,8 @@
 ./usr/include/arm/types.h
 ./usr/include/arm/undefined.h
 ./usr/include/arm/vmparam.h
+./usr/include/bfd.h
+./usr/include/bfdlink.h
 ./usr/include/cats
 ./usr/include/cats/ansi.h
 ./usr/include/cats/asm.h
@@ -100,6 +102,7 @@
 ./usr/include/cats/trap.h
 ./usr/include/cats/types.h
 ./usr/include/cats/vmparam.h
+./usr/include/dis-asm.h
 ./usr/include/g++/backward
 ./usr/include/g++/backward/algo.h
 ./usr/include/g++/backward/algobase.h
@@ -257,6 +260,8 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.5/3.3.2/include/unwind.h
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.5/3.3.2/libgcc.a
 ./usr/lib/libasn1_pic.a
+./usr/lib/libbfd.a
+./usr/lib/libbfd.la
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
@@ -279,6 +284,8 @@
 ./usr/lib/libncurses_pic.a
 ./usr/lib/libobjc_pic.a
 ./usr/lib/libocurses_pic.a
+./usr/lib/libopcodes.a
+./usr/lib/libopcodes.la
 ./usr/lib/libossaudio_pic.a
 ./usr/lib/libotermcap_pic.a
 ./usr/lib/libpanel_pic.a
