@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.14 2000/09/27 00:09:54 angelos Exp $ */
+/* $OpenBSD: environment.c,v 1.15 2000/10/03 01:33:56 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -209,7 +209,8 @@ keynote_free_env(struct environment *en)
  * argument specifies case-insensitivity.
  */
 char *
-keynote_env_lookup(char *name, struct environment **table, u_int hashsize)
+keynote_env_lookup(char *name, struct environment **table,
+                   unsigned int hashsize)
 {
     struct environment *en;
 
@@ -235,10 +236,11 @@ keynote_env_lookup(char *name, struct environment **table, u_int hashsize)
  * successful, and RESULT_FALSE if the variable was not found.
  */
 int
-keynote_env_delete(char *name, struct environment **table, u_int hashsize)
+keynote_env_delete(char *name, struct environment **table,
+                   unsigned int hashsize)
 {
     struct environment *en, *en2;
-    u_int h;
+    unsigned int h;
     
     h = keynote_stringhash(name, hashsize);
     
@@ -274,10 +276,10 @@ keynote_env_delete(char *name, struct environment **table, u_int hashsize)
  */
 int
 keynote_env_add(char *name, char *value, struct environment **table,
-		u_int hashsize, int flags)
+		unsigned int hashsize, int flags)
 {
     struct environment *en;
-    u_int h, i;
+    unsigned int h, i;
     
     en = calloc(1, sizeof(struct environment));
     if (en == (struct environment *) NULL)
@@ -344,7 +346,7 @@ keynote_env_add(char *name, char *value, struct environment **table,
  * Cleanup an environment table.
  */
 void
-keynote_env_cleanup(struct environment **table, u_int hashsize)
+keynote_env_cleanup(struct environment **table, unsigned int hashsize)
 {
     struct environment *en2;
 

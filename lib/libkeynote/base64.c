@@ -1,4 +1,4 @@
-/* $OpenBSD: base64.c,v 1.7 2000/06/13 19:16:15 angelos Exp $ */
+/* $OpenBSD: base64.c,v 1.8 2000/10/03 01:33:55 angelos Exp $ */
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -61,8 +61,8 @@
 #include "keynote.h"
 
 #if defined(HAVE___B64_NTOP)
-int __b64_ntop __P((u_char const *, size_t, char *, size_t));
-int __b64_pton __P((char const *, u_char *, size_t));
+int __b64_ntop __P((unsigned char const *, size_t, char *, size_t));
+int __b64_pton __P((char const *, unsigned char *, size_t));
 
 int
 kn_encode_base64(src, srclength, target, targsize)

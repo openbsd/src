@@ -1,5 +1,4 @@
-/* $OpenBSD: config.hin,v 1.3 2000/09/26 23:28:45 angelos Exp $ */
-
+/* $OpenBSD: config.hin,v 1.4 2000/10/03 01:33:55 angelos Exp $ */
 /* config.hin.  Generated automatically from configure.in by autoheader.  */
 
 /* Define to empty if the keyword does not work.  */
@@ -11,6 +10,9 @@
 /* Define if you can safely include both <sys/time.h> and <time.h>.  */
 #undef TIME_WITH_SYS_TIME
 
+/* Define if you have the __b64_ntop function.  */
+#undef HAVE___B64_NTOP
+
 /* Define if you have the _close function.  */
 #undef HAVE__CLOSE
 
@@ -20,14 +22,8 @@
 /* Define if you have the _read function.  */
 #undef HAVE__READ
 
-/* Define if you have the b64_ntop function.  */
-#undef HAVE___B64_NTOP
-
 /* Define if you have the close function.  */
 #undef HAVE_CLOSE
-
-/* Define if you have the <crypto.h> header file.  */
-#undef HAVE_CRYPTO_H
 
 /* Define if you have the getopt function.  */
 #undef HAVE_GETOPT
@@ -62,6 +58,9 @@
 /* Define if you have the strnicmp function.  */
 #undef HAVE_STRNICMP
 
+/* Define if you have the <crypto.h> header file.  */
+#undef HAVE_CRYPTO_H
+
 /* Define if you have the <fcntl.h> header file.  */
 #undef HAVE_FCNTL_H
 
@@ -77,6 +76,9 @@
 /* Define if you have the <openssl/crypto.h> header file.  */
 #undef HAVE_OPENSSL_CRYPTO_H
 
+/* Define if you have the <pgplib.h> header file.  */
+#undef HAVE_PGPLIB_H
+
 /* Define if you have the <regex.h> header file.  */
 #undef HAVE_REGEX_H
 
@@ -88,6 +90,3 @@
 
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
-
-/* Define if you have the crypto library (-lcrypto).  */
-#undef HAVE_LIBCRYPTO

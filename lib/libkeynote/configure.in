@@ -1,4 +1,4 @@
-dnl $OpenBSD: configure.in,v 1.3 2000/09/26 23:28:45 angelos Exp $
+dnl $OpenBSD: configure.in,v 1.4 2000/10/03 01:33:56 angelos Exp $
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(assertion.h)
 
@@ -30,6 +30,7 @@ AC_CHECK_LIB(m, floor, LIBS="$LIBS -lm")
 AC_CHECK_LIB(rsaref, RSAPrivateDecrypt, LIBS="$LIBS -lrsaref")
 AC_CHECK_LIB(crypto, i2a_ASN1_STRING, LIBS="$LIBS -lcrypto")
 AC_CHECK_LIB(RSAglue, RSA_ref_private_encrypt, LIBS="$LIBS -lRSAglue")
+AC_CHECK_LIB(pgp, pgpCipherByName, LIBS="$LIBS -lpgp")
 
 dnl Checks for header files.
 CPPFLAGS="-I/usr/include -I/usr/local/include -I/usr/ssl/include\
@@ -38,15 +39,22 @@ CPPFLAGS="-I/usr/include -I/usr/local/include -I/usr/ssl/include\
 
 AC_HEADER_STDC
 AC_HEADER_TIME
-AC_CHECK_HEADERS(fcntl.h limits.h unistd.h regex.h sys/time.h io.h)
-AC_CHECK_HEADERS(ssl/crypto.h openssl/crypto.h crypto.h memory.h)
+AC_CHECK_HEADERS(fcntl.h)
+AC_CHECK_HEADERS(limits.h)
+AC_CHECK_HEADERS(unistd.h)
+AC_CHECK_HEADERS(regex.h)
+AC_CHECK_HEADERS(sys/time.h)
+AC_CHECK_HEADERS(io.h)
+AC_CHECK_HEADERS(ssl/crypto.h)
+AC_CHECK_HEADERS(openssl/crypto.h)
+AC_CHECK_HEADERS(crypto.h)
+AC_CHECK_HEADERS(memory.h)
+AC_CHECK_HEADERS(pgplib.h)
 
 dnl Checks for other files
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-AC_CHECK_TYPE(u_int, unsigned int)
-AC_CHECK_TYPE(u_char, unsigned char)
 
 dnl Checks for library functions.
 AC_CHECK_FUNCS(regcomp open close read _open _close _read strchr memcpy)
