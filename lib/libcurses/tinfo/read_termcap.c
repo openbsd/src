@@ -769,7 +769,7 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 
     register char *p;
     register char *cp;
-    char *dummy;
+    char *dummy = NULL;
     char **fname;
     char *home;
     int i;
