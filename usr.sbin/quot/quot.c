@@ -1,4 +1,4 @@
-/*	$OpenBSD: quot.c,v 1.7 1999/09/22 05:04:34 deraadt Exp $	*/
+/*	$OpenBSD: quot.c,v 1.8 2000/06/06 18:29:46 millert Exp $	*/
 /*	$NetBSD: quot.c,v 1.7.4.1 1996/05/31 18:06:36 jtc Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: quot.c,v 1.7 1999/09/22 05:04:34 deraadt Exp $";
+static char rcsid[] = "$Id: quot.c,v 1.8 2000/06/06 18:29:46 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,7 +46,10 @@ static char rcsid[] = "$Id: quot.c,v 1.7 1999/09/22 05:04:34 deraadt Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <paths.h>
 #include <pwd.h>
 #include <unistd.h>
 
@@ -65,12 +68,12 @@ static int headerlen;
  * wrong if the	size is a multiple of the blocksize.
  * The new code always counts the number of DEV_BSIZE byte blocks
  * instead of the number of kilobytes and converts them	to
- * kByte when done (on request).
+ * KByte when done (on request).
  */
 #ifdef	COMPAT
 #define	SIZE(n)	(n)
 #else
-#define	SIZE(n)	howmany(((off_t)(n)) * DEV_BSIZE, blocksize)
+#define	SIZE(n)	(howmany(((off_t)(n)) * DEV_BSIZE, blocksize))
 #endif
 
 #define	INOCNT(fs)	((fs)->fs_ipg)
@@ -94,18 +97,14 @@ get_inode(fd, super, ino)
 	}
 	
 	if (!ip || ino < last || ino >= last + INOCNT(super)) {
-		if (!ip
-		    && !(ip = (struct dinode *)malloc(INOSZ(super)))) {
-			perror("allocate inodes");
-			exit(1);
-		}
+		if (!ip && !(ip = (struct dinode *)malloc(INOSZ(super))))
+			err(1, "allocate inodes");
 		last = (ino / INOCNT(super)) * INOCNT(super);
 		if (lseek(fd,
 			  (off_t)ino_to_fsba(super, last) << super->fs_fshift,
 			  0) < 0
 		    || read(fd, ip, INOSZ(super)) != INOSZ(super)) {
-			perror("read inodes");
-			exit(1);
+			err(1, "read inodes");
 		}
 	}
 	
@@ -123,7 +122,7 @@ virtualblocks(super, ip)
 	struct fs *super;
 	struct dinode *ip;
 {
-	register off_t nblk, sz;
+	off_t nblk, sz;
 	
 	sz = ip->di_size;
 #ifdef	COMPAT
@@ -185,15 +184,14 @@ static int nusers;
 static void
 inituser()
 {
-	register i;
-	register struct user *usr;
+	int i;
+	struct user *usr;
 	
 	if (!nusers) {
 		nusers = 8;
 		if (!(users =
 		    (struct user *)calloc(nusers, sizeof(struct user)))) {
-			perror("allocate users");
-			exit(1);
+			err(1, "allocate users");
 		}
 	} else {
 		for (usr = users, i = nusers; --i >= 0; usr++) {
@@ -206,16 +204,14 @@ inituser()
 static void
 usrrehash()
 {
-	register i;
-	register struct user *usr, *usrn;
+	int i;
+	struct user *usr, *usrn;
 	struct user *svusr;
 	
 	svusr = users;
 	nusers <<= 1;
-	if (!(users = (struct user *)calloc(nusers, sizeof(struct user)))) {
-		perror("allocate users");
-		exit(1);
-	}
+	if (!(users = (struct user *)calloc(nusers, sizeof(struct user))))
+		err(1, "allocate users");
 	for (usr = svusr, i = nusers >> 1; --i >= 0; usr++) {
 		for (usrn = users + (usr->uid&(nusers - 1));
 		     usrn->name;
@@ -231,9 +227,9 @@ static struct user *
 user(uid)
 	uid_t uid;
 {
-	register struct user *usr;
-	register i;
+	int i;
 	struct passwd *pwd;
+	struct user *usr;
 	
 	while (1) {
 		for (usr = users + (uid&(nusers - 1)), i = nusers;
@@ -242,19 +238,12 @@ user(uid)
 			if (!usr->name) {
 				usr->uid = uid;
 				
-				if (!(pwd = getpwuid(uid))) {
-					if (usr->name = (char *)malloc(7))
-						sprintf(usr->name, "#%u",
-						    uid);
-				} else {
-					if (usr->name = (char *)
-					    malloc(strlen(pwd->pw_name) + 1))
-						strcpy(usr->name, pwd->pw_name);
-				}
-				if (!usr->name) {
-					perror("allocate users");
-					exit(1);
-				}
+				if (!(pwd = getpwuid(uid)))
+					asprintf(&usr->name, "#%u", uid);
+				else
+					usr->name = strdup(pwd->pw_name);
+				if (!usr->name)
+					err(1, "allocate users");
 				return usr;
 			} else if (usr->uid == uid)
 				return usr;
@@ -283,7 +272,7 @@ uses(uid, blks, act)
 	time_t act;
 {
 	static time_t today;
-	register struct user *usr;
+	struct user *usr;
 	
 	if (!today)
 		time(&today);
@@ -315,8 +304,8 @@ struct fsizes {
 static void
 initfsizes()
 {
-	register struct fsizes *fp;
-	register i;
+	struct fsizes *fp;
+	int i;
 	
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
 		for (i = FSZCNT; --i >= 0;) {
@@ -336,14 +325,12 @@ dofsizes(fd, super, name)
 	struct dinode *ip;
 	daddr_t sz, ksz;
 	struct fsizes *fp, **fsp;
-	register i;
+	int i;
 	
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 #ifdef	COMPAT
-	if (!(fsizes = (struct fsizes *)malloc(sizeof(struct fsizes)))) {
-		perror("alloc fsize structure");
-		exit(1);
-	}
+	if (!(fsizes = (struct fsizes *)malloc(sizeof(struct fsizes))))
+		err(1, "alloc fsize structure");
 #endif	/* COMPAT */
 	for (inode = 0; inode < maxino; inode++) {
 		errno = 0;
@@ -367,15 +354,14 @@ dofsizes(fd, super, name)
 			}
 #else	/* COMPAT */
 			ksz = SIZE(sz);
-			for (fsp = &fsizes; fp = *fsp; fsp = &fp->fsz_next) {
+			for (fsp = &fsizes; (fp = *fsp); fsp = &fp->fsz_next) {
 				if (ksz < fp->fsz_last)
 					break;
 			}
 			if (!fp || ksz < fp->fsz_first) {
 				if (!(fp = (struct fsizes *)
 				    malloc(sizeof(struct fsizes)))) {
-					perror("alloc fsize structure");
-					exit(1);
+					err(1, "alloc fsize structure");
 				}
 				fp->fsz_next = *fsp;
 				*fsp = fp;
@@ -389,18 +375,16 @@ dofsizes(fd, super, name)
 			fp->fsz_count[ksz % FSZCNT]++;
 			fp->fsz_sz[ksz % FSZCNT] += sz;
 #endif	/* COMPAT */
-		} else if (errno) {
-			perror(name);
-			exit(1);
-		}
+		} else if (errno)
+			err(1, "%s", name);
 	}
 	sz = 0;
 	for (fp = fsizes; fp; fp = fp->fsz_next) {
 		for (i = 0; i < FSZCNT; i++) {
 			if (fp->fsz_count[i])
-				printf("%d\t%d\t%d\n",
+				printf("%d\t%d\t%qd\n",
 				       fp->fsz_first + i, fp->fsz_count[i],
-				    SIZE(sz += fp->fsz_sz[i]));
+				    (quad_t) SIZE(sz += fp->fsz_sz[i]));
 		}
 	}
 }
@@ -414,7 +398,7 @@ douser(fd, super, name)
 	ino_t inode, maxino;
 	struct user *usr, *usrs;
 	struct dinode *ip;
-	register n;
+	int n;
 	
 	maxino = super->fs_ncg * super->fs_ipg - 1;
 	for (inode = 0; inode < maxino; inode++) {
@@ -425,27 +409,23 @@ douser(fd, super, name)
 			     estimate ? virtualblocks(super, ip)
 				: actualblocks(super, ip),
 			    ip->di_atime);
-		else if (errno) {
-			perror(name);
-			exit(1);
-		}
+		else if (errno)
+			err(1, "%s", name);
 	}
-	if (!(usrs = (struct user *)malloc(nusers * sizeof(struct user)))) {
-		perror("allocate users");
-		exit(1);
-	}
-	bcopy(users, usrs, nusers * sizeof(struct user));
+	if (!(usrs = (struct user *)malloc(nusers * sizeof(struct user))))
+		err(1, "allocate users");
+	memcpy(usrs, users, nusers * sizeof(struct user));
 	sortusers(usrs);
 	for (usr = usrs, n = nusers; --n >= 0 && usr->count; usr++) {
-		printf("%5d", SIZE(usr->space));
+		printf("%5qd", (quad_t) SIZE(usr->space));
 		if (count)
-			printf("\t%5d", usr->count);
+			printf("\t%5ld", usr->count);
 		printf("\t%-8s", usr->name);
 		if (unused)
-			printf("\t%5d\t%5d\t%5d",
-			       SIZE(usr->spc30),
-			       SIZE(usr->spc60),
-			       SIZE(usr->spc90));
+			printf("\t%5qd\t%5qd\t%5qd",
+			       (quad_t) SIZE(usr->spc30),
+			       (quad_t) SIZE(usr->spc60),
+			       (quad_t) SIZE(usr->spc90));
 		printf("\n");
 	}
 	free(usrs);
@@ -493,12 +473,11 @@ donames(fd, super, name)
 			putchar('\n');
 			inode1 = inode;
 		} else {
-			if (errno) {
-				perror(name);
-				exit(1);
-			}
+			if (errno)
+				err(1, "%s", name);
 			/* skip this line */
-			while ((c = getchar()) != EOF && c != '\n');
+			while ((c = getchar()) != EOF && c != '\n')
+				;
 		}
 		if (c == EOF)
 			break;
@@ -562,7 +541,7 @@ quot(name, mp)
 	if ((fd = open(name, 0)) < 0
 	    || lseek(fd, SBOFF, 0) != SBOFF
 	    || read(fd, superblock, SBSIZE) != SBSIZE) {
-		perror(name);
+		warn("%s", name);
 		close(fd);
 		return;
 	}
@@ -587,14 +566,11 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int fd;
-	char all = 0;
-	FILE *fp;
+	int cnt, all, i;
+	char dev[MNAMELEN], *nm, *mountpoint;
 	struct statfs *mp;
-	char dev[MNAMELEN + 1];
-	char *nm;
-	int cnt;
 	
+	all = 0;
 	func = douser;
 #ifndef	COMPAT
 	header = getbsize(&headerlen, &blocksize);
@@ -630,14 +606,15 @@ main(argc, argv)
 			}
 		}
 	}
+	cnt = getmntinfo(&mp, MNT_NOWAIT);
 	if (all) {
-		cnt = getmntinfo(&mp, MNT_NOWAIT);
 		for (; --cnt >= 0; mp++) {
-			if (!strncmp(mp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
-			    !strncmp(mp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
-			    !strncmp(mp->f_fstypename, "ufs", MFSNAMELEN)) {
-				if (nm = strrchr(mp->f_mntfromname, '/')) {
-					sprintf(dev, "/dev/r%s", nm + 1);
+			if (!strcmp(mp->f_fstypename, MOUNT_FFS) ||
+			    !strcmp(mp->f_fstypename, MOUNT_MFS) ||
+			    !strcmp(mp->f_fstypename, "ufs")) {
+				if ((nm = strrchr(mp->f_mntfromname, '/'))) {
+					snprintf(dev, sizeof(dev), "%sr%s",
+					    _PATH_DEV, nm + 1);
 					nm = dev;
 				} else
 					nm = mp->f_mntfromname;
@@ -645,7 +622,29 @@ main(argc, argv)
 			}
 		}
 	}
-	while (--argc >= 0)
-		quot(*argv++, 0);
-	return 0;
+	for (; --argc >= 0; argv++) {
+		nm = *argv;
+		mountpoint = NULL;
+
+		/* Look up the name in the mount table. */
+		for (i = 0; i < cnt; i++) {
+			if ((!strcmp(mp->f_fstypename, MOUNT_FFS) ||
+			     !strcmp(mp->f_fstypename, MOUNT_MFS) ||
+			     !strcmp(mp->f_fstypename, "ufs")) &&
+			    strcmp(*argv, mp[i].f_mntonname) == 0) {
+				nm = mp[i].f_mntfromname;
+				mountpoint = mp[i].f_mntonname;
+			}
+		}
+
+		/* Make sure we have the raw device... */
+		if (strncmp(nm, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0 &&
+		    nm[sizeof(_PATH_DEV) - 1] != 'r') {
+			snprintf(dev, sizeof(dev), "%sr%s", _PATH_DEV,
+			    nm + sizeof(_PATH_DEV) - 1);
+			nm = dev;
+		}
+		quot(nm, mountpoint);
+	}
+	exit(0);
 }
