@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.85 2002/06/10 19:31:44 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.86 2002/06/11 01:58:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -537,48 +537,72 @@ char *pf_fcounters[FCNT_MAX+1] = FCNT_NAMES;
 void
 print_status(struct pf_status *s)
 {
-	time_t t = time(NULL);
+	time_t runtime;
 	int i;
+	char statline[80];
 
-	printf("Status: %s  Time: %u  Since: %u  Debug: ",
-	    s->running ? "Enabled" : "Disabled",
-	    t, s->since);
+	runtime = time(NULL) - s->since;
+
+	if ( s->running ) 
+		snprintf(statline, sizeof(statline), 
+		    "Status: Enabled for %us ", runtime);
+	else
+		snprintf(statline, sizeof(statline), "Status: Disabled");
+	printf("%-34s", statline);
 	switch (s->debug) {
 	case 0:
-		printf("None");
+		printf("%25s\n\n", "Debug: None");
 		break;
 	case 1:
-		printf("Urgent");
+		printf("%25s\n\n", "Debug: Urgent");
 		break;
 	case 2:
-		printf("Misc");
+		printf("%25s\n\n", "Debug: Misc");
 		break;
 	}
-	printf("\nBytes In IPv4: %-10llu  Bytes Out: %-10llu\n",
-	    s->bcounters[0][PF_IN], s->bcounters[0][PF_OUT]);
-	printf("         IPv6: %-10llu  Bytes Out: %-10llu\n",
-	    s->bcounters[1][PF_IN], s->bcounters[1][PF_OUT]);
-	printf("Inbound Packets IPv4:  Passed: %-10llu  Dropped: %-10llu\n",
-	    s->pcounters[0][PF_IN][PF_PASS],
-	    s->pcounters[0][PF_IN][PF_DROP]);
-	printf("                IPv6:  Passed: %-10llu  Dropped: %-10llu\n",
-	    s->pcounters[1][PF_IN][PF_PASS],
-	    s->pcounters[1][PF_IN][PF_DROP]);
-	printf("Outbound Packets IPv4: Passed: %-10llu  Dropped: %-10llu\n",
-	    s->pcounters[0][PF_OUT][PF_PASS],
-	    s->pcounters[0][PF_OUT][PF_DROP]);
-	printf("                 IPv6: Passed: %-10llu  Dropped: %-10llu\n",
-	    s->pcounters[1][PF_OUT][PF_PASS],
-	    s->pcounters[1][PF_OUT][PF_DROP]);
-	printf("States: %u\n", s->states);
-	printf("pf Counters\n");
-	for (i = 0; i < FCNT_MAX; i++)
-		printf("%-25s %-8lld\n", pf_fcounters[i],
-		    s->fcounters[i]);
+	if (s->ifname[0] != 0) {
+		printf("Interface Stats for %-16s %5s %16s\n",
+		    s->ifname, "IPv4", "IPv6");
+		printf("  %-25s %14llu %16llu\n", "Bytes In",
+		    s->bcounters[0][PF_IN], s->bcounters[1][PF_IN]);
+		printf("  %-25s %14llu %16llu\n", "Bytes Out",
+		    s->bcounters[0][PF_OUT], s->bcounters[1][PF_OUT]);
+		printf("  Packets In\n"); 
+		printf("    %-23s %14llu %16llu\n", "Passed",
+		    s->pcounters[0][PF_IN][PF_PASS], 
+		    s->pcounters[1][PF_IN][PF_PASS]);
+		printf("    %-23s %14llu %16llu\n", "Blocked",
+		    s->pcounters[0][PF_IN][PF_DROP],
+		    s->pcounters[1][PF_IN][PF_DROP]);
+		printf("  Packets Out\n");
+		printf("    %-23s %14llu %16llu\n", "Passed",
+		    s->pcounters[0][PF_OUT][PF_PASS],
+		    s->pcounters[1][PF_OUT][PF_PASS]);
+		printf("    %-23s %14llu %16llu\n\n", "Blocked",
+		    s->pcounters[0][PF_OUT][PF_DROP],
+		    s->pcounters[1][PF_OUT][PF_DROP]);
+	}
+	printf("%-27s %14s %16s\n", "State Table", "Total", "Rate");
+	printf("  %-25s %14u %14s\n", "current entries", s->states, "");
+	for (i = 0; i < FCNT_MAX; i++) {
+		printf("  %-25s %14lld ", pf_fcounters[i],
+			    s->fcounters[i]);
+		if ( runtime > 0 )
+			printf("%14.1f/s\n",
+			    (double)s->fcounters[i] / (double)runtime);
+		else
+			printf("%14s\n", "");	
+	}
 	printf("Counters\n");
-	for (i = 0; i < PFRES_MAX; i++)
-		printf("%-25s %-8lld\n", pf_reasons[i],
+	for (i = 0; i < PFRES_MAX; i++) {
+		printf("  %-25s %14lld ", pf_reasons[i],
 		    s->counters[i]);
+		if ( runtime > 0 )
+			printf("%14.1f/s\n",
+			    (double)s->counters[i] / (double)runtime);
+		else
+			printf("%14s\n", "");	
+	}
 }
 
 void

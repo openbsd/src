@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.20 2002/06/08 21:09:59 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.21 2002/06/11 01:58:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -42,6 +42,14 @@
 #define PF_OPT_USEDNS		0x0040
 
 #define PF_TH_ALL		0xFF
+
+#define FCNT_NAMES { \
+	"searches", \
+	"inserts", \
+	"removals", \
+	NULL \
+}
+
 
 struct pfctl {
 	int dev;

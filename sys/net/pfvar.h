@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.82 2002/06/09 20:20:58 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.83 2002/06/11 01:58:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -432,12 +432,6 @@ struct pf_pdesc {
 #define FCNT_STATE_REMOVALS	2
 #define FCNT_MAX		3
 
-#define FCNT_NAMES { \
-	"state searches", \
-	"state inserts", \
-	"state removals", \
-	NULL \
-}
 
 #define ACTION_SET(a, x) \
 	do { \
@@ -462,6 +456,7 @@ struct pf_status {
 	u_int32_t	states;
 	u_int32_t	since;
 	u_int32_t	debug;
+	char		ifname[IFNAMSIZ];
 };
 
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
