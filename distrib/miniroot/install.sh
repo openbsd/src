@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.68 1999/10/15 16:55:00 millert Exp $
+#	$OpenBSD: install.sh,v 1.69 1999/10/16 19:01:21 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -310,143 +310,7 @@ echo -n	"Configure the network? [y] "
 getresp "y"
 case "$resp" in
 	y*|Y*)
-		resp=		# force at least one iteration
-		_nam=
-		if [ -f /tmp/myname ]; then
-			_nam=`cat /tmp/myname`
-		fi
-		while [ "X${resp}" = X"" ]; do
-			echo -n "Enter system hostname (short form, ie. \"foo\"): [$_nam] "
-			getresp "$_nam"
-		done
-		hostname $resp
-		echo $resp > /tmp/myname
-
-		resp=		# force at least one iteration
-		if [ -f /tmp/resolv.conf ]; then
-			FQDN=`grep '^domain ' /tmp/resolv.conf | \
-			    sed -e 's/^domain //'`
-		fi
-		while [ "X${resp}" = X"" ]; do
-			echo -n "Enter DNS domain name (ie. \"bar.com\"): [$FQDN] "
-			getresp "$FQDN"
-		done
-		FQDN=$resp
-
-		echo
-		echo "If you have any devices being configured by a DHCP server"
-		echo "it is recommended that you do not enter a default route or"
-		echo "any name servers."
-		echo
-
-		configurenetwork
-
-		resp=`route -n show |
-		    grep '^default' |
-		    sed -e 's/^default          //' -e 's/ .*//'`
-		if [ "X${resp}" = "X" ]; then
-			resp=none
-			if [ -f /tmp/mygate ]; then
-				resp=`cat /etc/mygate`
-				if [ "X${resp}" = "X" ]; then
-					resp="none";
-				fi
-			fi
-		fi
-		echo -n "Enter IP address of default route: [$resp] "
-		getresp "$resp"
-		if [ "X${resp}" != X"none" ]; then
-			route delete default > /dev/null 2>&1
-			if route add default $resp > /dev/null ; then
-				echo $resp > /tmp/mygate
-			fi
-		fi
-
-		resp="none"
-		if [ -f /etc/resolv.conf ]; then
-			resp=
-			for n in `grep '^nameserver ' /etc/resolv.conf | \
-			    sed -e 's/^nameserver //'`; do
-				if [ "X${resp}" = "X" ]; then
-					resp="$n"
-				else
-					resp="$resp $n"
-				fi
-			done
-		elif [ -f /tmp/resolv.conf ]; then
-			resp=
-			for n in `grep '^nameserver ' /tmp/resolv.conf | \
-			    sed -e 's/^nameserver //'`; do
-				if [ "X${resp}" = "X" ]; then
-					resp="$n"
-				else
-					resp="$resp $n"
-				fi
-			done
-		fi
-		echo -n	"Enter IP address of primary nameserver: [$resp] "
-		getresp "$resp"
-		if [ "X${resp}" != X"none" ]; then
-			echo "search $FQDN" > /tmp/resolv.conf
-			for n in `echo ${resp}`; do
-				echo "nameserver $n" >> /tmp/resolv.conf
-			done
-			echo "lookup file bind" >> /tmp/resolv.conf
-
-			echo -n "Would you like to use the nameserver now? [y] "
-			getresp "y"
-			case "$resp" in
-				y*|Y*)
-					cp /tmp/resolv.conf \
-					    /tmp/resolv.conf.shadow
-					;;
-
-				*)
-					;;
-			esac
-		fi
-
-		if [ ! -f /tmp/resolv.conf.shadow ]; then 
-			echo
-			echo "The host table is as follows:"
-			echo
-			cat /tmp/hosts
-		cat << __hosts_table_1
-
-You may want to edit the host table in the event that you are doing an
-NFS installation or an FTP installation without a name server and want
-to refer to the server by name rather than by its numeric ip address.
-__hosts_table_1
-			echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
-			getresp "n"
-			case "$resp" in
-				y*|Y*)
-					${EDITOR} /tmp/hosts
-					;;
-	
-				*)
-					;;
-			esac
-		fi
-
-		cat << \__network_config_2
-
-You will now be given the opportunity to escape to the command shell to do
-any additional network configuration you may need.  This may include adding
-additional routes, if needed.  In addition, you might take this opportunity
-to redo the default route in the event that it failed above.
-__network_config_2
-		echo -n "Escape to shell? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				echo "Type 'exit' to return to install."
-				sh
-				;;
-
-			*)
-				;;
-		esac
+		donetconfig
 		;;
 	*)
 		;;
@@ -587,14 +451,14 @@ if [ X"$ssl" != X1 ]; then
 			case "$resp" in
 			f*|F*)
 				# configure network if necessary
-				test -n "$_ifs" && configurenetwork
+				test -n "$_didnet" || donetconfig
 
 				install_url -ftp -reuse -minpat ${THESETS}'[0-9]*'
 				resp=f
 				;;
 			h*|H*)
 				# configure network if necessary
-				test -n "$_ifs" && configurenetwork
+				test -n "$_didnet" || donetconfig
 
 				install_url -http -reuse -minpat ${THESETS}'[0-9]*'
 				resp=h
