@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.16 2001/03/25 13:11:53 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.17 2001/04/04 07:29:50 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -154,6 +154,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_IRQACK 0x0400    /* callback to ack interrupt */
 #define WDC_CAPABILITY_SINGLE_DRIVE 0x800 /* Don't proble second drive */
+#define WDC_CAPABILITY_NO_ATAPI_DMA 0x1000 /* Don't do DMA with ATAPI */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */

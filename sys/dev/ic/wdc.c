@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.29 2001/04/02 19:01:18 art Exp $     */
+/*      $OpenBSD: wdc.c,v 1.30 2001/04/04 07:29:50 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1228,6 +1228,12 @@ wdc_probe_caps(drvp, params)
 			return;
 		}
 		drvp->drive_flags |= DRIVE_MODE;
+
+		/* Some controllers don't support ATAPI DMA */
+		if ((drvp->drive_flags & DRIVE_ATAPI) &&
+		    (wdc->cap & WDC_CAPABILITY_NO_ATAPI_DMA))
+			return;
+
 		printed = 0;
 		for (i = 7; i >= 0; i--) {
 			if ((params->atap_dmamode_supp & (1 << i)) == 0)
