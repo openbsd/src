@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_isaed.c,v 1.3 1996/04/27 18:39:00 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.4 1996/05/02 06:30:26 niklas Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1896,8 +1896,7 @@ loop:
 		 * mbuf cluster or less; the upper layer protocols can then
 		 * figure out the length from their own length field(s).
 		 */
-		if (len <= (MCLBYTES > ETHER_MAX_LEN ? MCLBYTES :
-		    ETHER_MAX_LEN) &&
+		if (len <= MCLBYTES &&
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
