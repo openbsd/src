@@ -356,7 +356,7 @@ main(argc, argv)
 		}
 
 		/*dprintf("readfds = %#x\n", readfds);*/
-		nfds = select(nfds, &readfds, (fd_set *)NULL,
+		nfds = select(nfds+1, &readfds, (fd_set *)NULL,
 		    (fd_set *)NULL, (struct timeval *)NULL);
 		if (nfds == 0)
 			continue;
