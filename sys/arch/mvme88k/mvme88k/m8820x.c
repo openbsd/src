@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.10 2001/12/24 04:12:40 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.11 2001/12/24 17:18:39 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -378,18 +378,18 @@ m8820x_setup_board_config()
 	cpu_cmmu_ratio = max_cmmus / max_cpus;
 	switch (bd_config[vme188_config].supported) {
 	case 0:
-		printf("MVME%x board configuration #%X: %d CPUs %d CMMUs\n", cputyp, 
+		printf("MVME%x board configuration #%X: %d CPUs %d CMMUs\n", brdtyp, 
 		       vme188_config, max_cpus, max_cmmus);
 		panic("This configuration is not supported - go and get another OS.");
 		/* NOTREACHED */
 		break;
 	case 1:
-		printf("MVME%x board configuration #%X: %d CPUs %d CMMUs\n", cputyp,
+		printf("MVME%x board configuration #%X: %d CPUs %d CMMUs\n", brdtyp,
 		       vme188_config, max_cpus, max_cmmus);
 		m8820x_setup_cmmu_config();
 		break;
 	default:
-		panic("UNKNOWN MVME%x board configuration: WHOAMI = 0x%02x", cputyp, *whoami);
+		panic("UNKNOWN MVME%x board configuration: WHOAMI = 0x%02x", brdtyp, *whoami);
 		/* NOTREACHED */
 		break;
 	}
