@@ -152,6 +152,9 @@ Supported devices {:-include-:}:
 		ProAudio Spectrum [*] [+]
 		ESS PnP audio cards [*] [+]
 		ESS Solo-1 PCI-based audio cards [*] [+]
+	Cryptography Accelerators
+		Hi/Fn 7751 based boards, including:
+			GTGI PowerCrypt Encryption Accelerator
 	Miscellaneous:
 		OPTi(82C929) chipset for multi-interface CD-ROM, and
 			sound ISA cards.
