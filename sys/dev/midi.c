@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.1 1999/01/02 00:02:32 niklas Exp $	*/
+/*	$OpenBSD: midi.c,v 1.2 1999/01/02 00:59:08 niklas Exp $	*/
 /*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
@@ -109,8 +109,6 @@ struct {
 #define MIDI_GETSAVE		_IOWR('m', 100, int)
 
 #endif
-
-extern struct cfdriver midi_cd;
 
 int
 midiprobe(parent, match, aux)
