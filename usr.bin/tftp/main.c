@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2003/06/25 21:09:37 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2003/09/24 20:19:48 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.6 1995/05/21 16:54:10 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: main.c,v 1.16 2003/06/25 21:09:37 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.17 2003/09/24 20:19:48 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -340,6 +340,7 @@ put(int argc, char *argv[])
 		bcopy(hp->h_addr, (caddr_t)&peeraddr.sin_addr, hp->h_length);
 		peeraddr.sin_family = hp->h_addrtype;
 		connected = 1;
+		port = sp->s_port;
 		strlcpy(hostname, hp->h_name, sizeof hostname);
 	}
 	if (!connected) {
