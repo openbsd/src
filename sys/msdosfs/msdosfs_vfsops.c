@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.10 1997/11/06 05:58:57 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.11 1997/11/09 23:15:12 millert Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
 
 /*-
@@ -276,7 +276,10 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
+	VOP_UNLOCK(devvp, 0, p);
+	if (error)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
@@ -638,7 +641,7 @@ msdosfs_sync(mp, waitfor, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
@@ -656,34 +659,54 @@ msdosfs_sync(mp, waitfor, cred, p)
 	/*
 	 * Write back each (modified) denode.
 	 */
+	simple_lock(&mntvnode_slock);
 loop:
 	for (vp = mp->mnt_vnodelist.lh_first;
 	     vp != NULL;
-	     vp = vp->v_mntvnodes.le_next) {
+	     vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * assoicated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp))
-			continue;
+
+		simple_lock(&vp->v_interlock);
+		nvp = vp->v_mntvnodes.le_next;
 		dep = VTODE(vp);
-		if (((dep->de_flag
-		    & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0)
-		    && (vp->v_dirtyblkhd.lh_first == NULL || waitfor == MNT_LAZY))
+		if (vp->v_type == VNON || ((dep->de_flag &
+		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0
+		    && vp->v_dirtyblkhd.lh_first == NULL) ||
+		    waitfor == MNT_LAZY) {
+			simple_unlock(&vp->v_interlock);
 			continue;
-		if (vget(vp, LK_EXCLUSIVE, p))
-			goto loop;
+		}
+		simple_unlock(&mntvnode_slock);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, p);
+		if (error) {
+			simple_lock(&mntvnode_slock);
+			if (error == ENOENT)
+				goto loop;
+			continue;
+		}
 		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
 			allerror = error;
-		vput(vp);
+		VOP_UNLOCK(vp, 0, p);
+		vrele(vp);
+		simple_lock(&mntvnode_slock);
 	}
+	simple_unlock(&mntvnode_slock);
 	/*
 	 * Force stale file system control information to be flushed.
 	 */
-	if ((error = VOP_FSYNC(pmp->pm_devvp, cred, waitfor, p)) != 0)
-		allerror = error;
+	if (waitfor != MNT_LAZY) {
+		if (pmp->pm_mountp->mnt_flag & MNT_SOFTDEP)
+			waitfor = MNT_NOWAIT;
+		vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		if ((error = VOP_FSYNC(pmp->pm_devvp, cred, waitfor, p)) != 0)
+			allerror = error;
+		VOP_UNLOCK(pmp->pm_devvp, 0, p);
+	}
 #ifdef QUOTA
 #endif
 	return (allerror);
