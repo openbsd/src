@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 2000/04/11 02:44:31 pjanzen Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 2001/01/04 22:34:48 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.31 1996/10/30 00:24:42 gwr Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 
 void cpu_initclocks __P((void));
 void clock_intr __P((struct clockframe *));
-
 
 extern volatile u_char *interrupt_reg;
 volatile char *clock_va;
@@ -193,7 +192,8 @@ set_clk_mode(on, off, enable)
 }
 
 /* Called very early by internal_configure. */
-void clock_init()
+void
+clock_init()
 {
 	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
 
@@ -219,7 +219,7 @@ static int clk_intr_ready;
  * Note that clock interrupts MUST STAY DISABLED until here.
  */
 void
-cpu_initclocks(void)
+cpu_initclocks()
 {
 	int s;
 	extern void _isr_clock __P((void));	/* in locore.s */
@@ -329,8 +329,12 @@ microtime(tvp)
 #define SECDAY		86400L
 #define SECYR		(SECDAY * 365)
 
-static long clk_get_secs(void);
-static void clk_set_secs(long);
+static void clk_get_dt __P((struct date_time *));
+static void clk_set_dt __P((struct date_time *));
+void gmt_to_dt __P((long *, struct date_time *));
+void dt_to_gmt __P((struct date_time *, long *));
+static long clk_get_secs __P((void));
+static void clk_set_secs __P((long));
 
 /*
  * Initialize the time of day register, based on the time base
@@ -405,7 +409,8 @@ resettodr()
  * in sequential order (or so it appears). -gwr
  */
 static void
-clk_get_dt(struct date_time *dt)
+clk_get_dt(dt)
+	struct date_time *dt;
 {
 	int s;
 	register volatile char *src, *dst;
@@ -428,7 +433,8 @@ clk_get_dt(struct date_time *dt)
 }
 
 static void
-clk_set_dt(struct date_time *dt)
+clk_set_dt(dt)
+	struct date_time *dt;
 {
 	int s;
 	register volatile char *src, *dst;
@@ -474,7 +480,9 @@ static int month_days[12] = {
 };
 
 void
-gmt_to_dt(long *tp, struct date_time *dt)
+gmt_to_dt(tp, dt)
+	long *tp;
+	struct date_time *dt;
 {
 	register int i;
 	register long days, secs;
@@ -513,7 +521,9 @@ gmt_to_dt(long *tp, struct date_time *dt)
 }
 
 void
-dt_to_gmt(struct date_time *dt, long *tp)
+dt_to_gmt(dt, tp)
+	struct date_time *dt;
+	long *tp;
 {
 	register int i;
 	register long tmp;
@@ -574,7 +584,8 @@ clk_get_secs()
 }
 
 static void
-clk_set_secs(long secs)
+clk_set_secs(secs)
+	long secs;
 {
 	struct date_time dt;
 	long gmt;

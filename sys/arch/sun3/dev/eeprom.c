@@ -1,4 +1,4 @@
-/*	$OpenBSD: eeprom.c,v 1.6 1997/01/16 04:03:44 kstailey Exp $	*/
+/*	$OpenBSD: eeprom.c,v 1.7 2001/01/04 22:34:42 miod Exp $	*/
 /*	$NetBSD: eeprom.c,v 1.8 1996/03/26 15:16:06 gwr Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ static void eeprom_attach __P((struct device *, struct device *, void *));
 static int  ee_update __P((caddr_t, int, int));
 static int  ee_take __P((void));
 static void ee_give __P((void));
+int ee_get_byte __P((int, int));
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
@@ -69,7 +70,8 @@ struct cfdriver eeprom_cd = {
 };
 
 /* Called very early by internal_configure. */
-void eeprom_init()
+void
+eeprom_init()
 {
 	eeprom_va = obio_find_mapping(OBIO_EEPROM, OBIO_EEPROM_SIZE);
 	ee_console = ((struct eeprom *)eeprom_va)->ee_diag.eed_console;
@@ -145,7 +147,8 @@ ee_give()	/* Give the lock. */
 }
 
 int
-eeprom_uio(struct uio *uio)
+eeprom_uio(uio)
+	struct uio *uio;
 {
 	int error;
 	int off;	/* NOT off_t */
@@ -197,7 +200,9 @@ eeprom_uio(struct uio *uio)
  * Update the EEPROM from the passed buf.
  */
 static int
-ee_update(char *buf, int off, int cnt)
+ee_update(buf, off, cnt)
+	caddr_t buf;
+	int off, cnt;
 {
 	volatile char *ep;
 	char *bp;
@@ -240,7 +245,8 @@ ee_update(char *buf, int off, int cnt)
  * which device should be used as the console.
  */
 int
-ee_get_byte(int off, int canwait)
+ee_get_byte(off, canwait)
+	int off, canwait;
 {
 	int c = -1;
 	if ((off < 0) || (off >= OBIO_EEPROM_SIZE))
