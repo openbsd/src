@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.189 2003/04/14 14:17:50 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.190 2003/05/11 20:30:24 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -255,7 +255,7 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 	c->local_consumed = 0;
 	c->local_maxpacket = maxpack;
 	c->remote_id = -1;
-	c->remote_name = remote_name;
+	c->remote_name = xstrdup(remote_name);
 	c->remote_window = 0;
 	c->remote_maxpacket = 0;
 	c->force_drain = 0;
@@ -1012,8 +1012,7 @@ channel_post_x11_listener(Channel *c, fd_set * readset, fd_set * writeset)
 
 		nc = channel_new("accepted x11 socket",
 		    SSH_CHANNEL_OPENING, newsock, newsock, -1,
-		    c->local_window_max, c->local_maxpacket,
-		    0, xstrdup(buf), 1);
+		    c->local_window_max, c->local_maxpacket, 0, buf, 1);
 		if (compat20) {
 			packet_start(SSH2_MSG_CHANNEL_OPEN);
 			packet_put_cstring("x11");
@@ -1128,10 +1127,8 @@ channel_post_port_listener(Channel *c, fd_set * readset, fd_set * writeset)
 			return;
 		}
 		set_nodelay(newsock);
-		nc = channel_new(rtype,
-		    nextstate, newsock, newsock, -1,
-		    c->local_window_max, c->local_maxpacket,
-		    0, xstrdup(rtype), 1);
+		nc = channel_new(rtype, nextstate, newsock, newsock, -1,
+		    c->local_window_max, c->local_maxpacket, 0, rtype, 1);
 		nc->listening_port = c->listening_port;
 		nc->host_port = c->host_port;
 		strlcpy(nc->path, c->path, sizeof(nc->path));
@@ -1157,7 +1154,6 @@ static void
 channel_post_auth_listener(Channel *c, fd_set * readset, fd_set * writeset)
 {
 	Channel *nc;
-	char *name;
 	int newsock;
 	struct sockaddr addr;
 	socklen_t addrlen;
@@ -1169,11 +1165,10 @@ channel_post_auth_listener(Channel *c, fd_set * readset, fd_set * writeset)
 			error("accept from auth socket: %.100s", strerror(errno));
 			return;
 		}
-		name = xstrdup("accepted auth socket");
 		nc = channel_new("accepted auth socket",
 		    SSH_CHANNEL_OPENING, newsock, newsock, -1,
 		    c->local_window_max, c->local_maxpacket,
-		    0, name, 1);
+		    0, "accepted auth socket", 1);
 		if (compat20) {
 			packet_start(SSH2_MSG_CHANNEL_OPEN);
 			packet_put_cstring("auth-agent@openssh.com");
@@ -1990,8 +1985,8 @@ channel_input_port_open(int type, u_int32_t seq, void *ctxt)
 		    originator_string, 1);
 		c->remote_id = remote_id;
 	}
+	xfree(originator_string);
 	if (c == NULL) {
-		xfree(originator_string);
 		packet_start(SSH_MSG_CHANNEL_OPEN_FAILURE);
 		packet_put_int(remote_id);
 		packet_send();
@@ -2084,7 +2079,7 @@ channel_setup_fwd_listener(int type, const char *listen_addr, u_short listen_por
 		/* Allocate a channel number for the socket. */
 		c = channel_new("port listener", type, sock, sock, -1,
 		    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_PACKET_DEFAULT,
-		    0, xstrdup("port listener"), 1);
+		    0, "port listener", 1);
 		strlcpy(c->path, host, sizeof(c->path));
 		c->host_port = port_to_connect;
 		c->listening_port = listen_port;
@@ -2416,7 +2411,7 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 		nc = channel_new("x11 listener",
 		    SSH_CHANNEL_X11_LISTENER, sock, sock, -1,
 		    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
-		    0, xstrdup("X11 inet listener"), 1);
+		    0, "X11 inet listener", 1);
 		nc->single_connection = single_connection;
 	}
 
@@ -2573,11 +2568,11 @@ x11_input_open(int type, u_int32_t seq, void *ctxt)
 		c->remote_id = remote_id;
 		c->force_drain = 1;
 	}
+	xfree(remote_host);
 	if (c == NULL) {
 		/* Send refusal to the remote host. */
 		packet_start(SSH_MSG_CHANNEL_OPEN_FAILURE);
 		packet_put_int(remote_id);
-		xfree(remote_host);
 	} else {
 		/* Send a confirmation to the remote host. */
 		packet_start(SSH_MSG_CHANNEL_OPEN_CONFIRMATION);
@@ -2699,7 +2694,6 @@ auth_input_open_request(int type, u_int32_t seq, void *ctxt)
 {
 	Channel *c = NULL;
 	int remote_id, sock;
-	char *name;
 
 	/* Read the remote channel number from the message. */
 	remote_id = packet_get_int();
@@ -2718,9 +2712,8 @@ auth_input_open_request(int type, u_int32_t seq, void *ctxt)
 	 * agent.
 	 */
 	if (sock >= 0) {
-		name = xstrdup("authentication agent connection");
 		c = channel_new("", SSH_CHANNEL_OPEN, sock, sock,
-		    -1, 0, 0, 0, name, 1);
+		    -1, 0, 0, 0, "authentication agent connection", 1);
 		c->remote_id = remote_id;
 		c->force_drain = 1;
 	}
