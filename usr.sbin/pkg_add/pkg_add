@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.170 2005/03/09 11:22:27 espie Exp $
+# $OpenBSD: pkg_add,v 1.171 2005/03/09 11:30:59 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -501,7 +501,7 @@ sub find_old_lib
 	for my $try (OpenBSD::PkgSpec::match($pattern, installed_packages())) {
 		OpenBSD::SharedLibs::add_package_libs($try);
 		if (check_lib_spec($state->{very_verbose},
-		    $state->{destdir}.$base, $lib, {$try => 1})) {
+		    $base, $lib, {$try => 1})) {
 			Warn "Found library ", $lib, " in old package $try\n"
 			    if $state->{verbose};
 			$dependencies->{$try} = 1;
@@ -517,18 +517,18 @@ sub lookup_library
 
 	print "checking libspec $lib..." if $state->{very_verbose};
 	if (check_lib_spec($state->{very_verbose},
-	    $state->{destdir}.$plist->pkgbase(), $lib, $dependencies)) {
+	    $plist->pkgbase(), $lib, $dependencies)) {
 	    return 1;
 	}
 	if ($harder && $lib !~ m|/|) {
 
 		OpenBSD::SharedLibs::add_system_libs($state->{destdir});
 		if (check_lib_spec($state->{very_verbose},
-		    $state->{destdir}."/usr", $lib, {system => 1})) {
+		    "/usr", $lib, {system => 1})) {
 			return 1;
 		}
 		if (check_lib_spec($state->{very_verbose},
-		    $state->{destdir}."/usr/X11R6", $lib, {system => 1})) {
+		    "/usr/X11R6", $lib, {system => 1})) {
 			return 1;
 		}
 	}
@@ -551,7 +551,7 @@ sub lookup_library
 			next if $dependencies->{$dep};
 			OpenBSD::SharedLibs::add_package_libs($dep);
 			if (check_lib_spec($state->{very_verbose},
-			    $state->{destdir}.$plist->pkgbase(), $lib, {$dep => 1})) {
+			    $plist->pkgbase(), $lib, {$dep => 1})) {
 				Warn "Found library ", $lib, " in dependent package $dep\n" if $state->{verbose};
 				$dependencies->{$dep} = 1;
 				return 1;
@@ -572,7 +572,7 @@ sub lookup_library
 			}
 			OpenBSD::SharedLibs::add_bogus_package_libs($dep);
 			if (check_lib_spec($state->{very_verbose},
-			    $state->{destdir}.$plist->pkgbase(), $lib, {$dep => 1})) {
+			    $plist->pkgbase(), $lib, {$dep => 1})) {
 				Warn "Found unmarked library ", $lib, " in dependent package $dep\n" if $state->{verbose};
 				$dependencies->{$dep} = 1;
 				return 1;
