@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.c,v 1.20 2002/02/26 06:26:38 fgsch Exp $	*/
+/*	$OpenBSD: ld.c,v 1.21 2002/03/31 20:48:16 fgsch Exp $	*/
 /*	$NetBSD: ld.c,v 1.52 1998/02/20 03:12:51 jonathan Exp $	*/
 
 /*-
@@ -1191,7 +1191,7 @@ read_entry_relocation(fd, entry)
 	if (!entry->textrel) {
 
 		reloc = (struct relocation_info *)
-			xmalloc(entry->header.a_trsize);
+			xmalloc(MAX(entry->header.a_trsize, 1));
 
 		pos = text_offset(entry) +
 			entry->header.a_text + entry->header.a_data;
@@ -1214,7 +1214,7 @@ read_entry_relocation(fd, entry)
 	if (!entry->datarel) {
 
 		reloc = (struct relocation_info *)
-			xmalloc(entry->header.a_drsize);
+			xmalloc(MAX(entry->header.a_drsize, 1));
 
 		pos = text_offset(entry) + entry->header.a_text +
 		      entry->header.a_data + entry->header.a_trsize;
