@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.33 2002/03/15 21:49:44 mickey Exp $
+#	$OpenBSD: files.hppa,v 1.34 2002/03/15 22:50:05 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -11,6 +11,7 @@ maxusers 2 8 64
 # "workstation console" routines
 #
 include "dev/wscons/files.wscons"
+file	arch/hppa/hppa/wscons_machdep.c	wsdisplay
 
 #
 # Media Independent Interface (mii)
@@ -33,8 +34,6 @@ include "dev/i2o/files.i2o"
 #
 #include "dev/atapiscsi/files.atapiscsi"
 #include "dev/ata/files.ata"
-
-include "dev/pckbc/files.pckbc"
 
 #
 # ISA Bus support
@@ -182,11 +181,10 @@ file	arch/hppa/gsc/com_harmony.c	com_harmony
 #attach	myri at pci
 #file	dev/pci/myri.c			myri
 
-#
-# PC Keyboard controller (ps2)
-#
-
-#include "dev/pckbc/files.pckbc"
+device	ps2p: wskbddev, wsmousedev
+attach	ps2p at gsc
+file	arch/hppa/gsc/ps2p.c		ps2p needs-flag
+file	arch/hppa/gsc/ps2kbd_map.c	ps2p
 
 #
 # Compatibility
