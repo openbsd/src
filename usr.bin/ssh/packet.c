@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: packet.c,v 1.25 2000/04/03 20:12:55 markus Exp $");
+RCSID("$Id: packet.c,v 1.26 2000/04/04 21:37:27 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -144,8 +144,8 @@ packet_set_connection(int fd_in, int fd_out)
 	connection_in = fd_in;
 	connection_out = fd_out;
 	cipher_type = SSH_CIPHER_NONE;
-	cipher_set_key(&send_context, SSH_CIPHER_NONE, (unsigned char *) "", 0, 1);
-	cipher_set_key(&receive_context, SSH_CIPHER_NONE, (unsigned char *) "", 0, 0);
+	cipher_set_key(&send_context, SSH_CIPHER_NONE, (unsigned char *) "", 0);
+	cipher_set_key(&receive_context, SSH_CIPHER_NONE, (unsigned char *) "", 0);
 	if (!initialized) {
 		initialized = 1;
 		buffer_init(&input);
@@ -344,8 +344,8 @@ packet_set_encryption_key(const unsigned char *key, unsigned int keylen,
 		fatal("keylen too small: %d", keylen);
 
 	/* All other ciphers use the same key in both directions for now. */
-	cipher_set_key(&receive_context, cipher, key, keylen, 0);
-	cipher_set_key(&send_context, cipher, key, keylen, 1);
+	cipher_set_key(&receive_context, cipher, key, keylen);
+	cipher_set_key(&send_context, cipher, key, keylen);
 }
 
 /* Starts constructing a packet to send. */

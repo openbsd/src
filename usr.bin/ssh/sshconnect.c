@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.60 2000/04/04 15:30:51 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.61 2000/04/04 21:37:27 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1728,7 +1728,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	RSA_free(host_key);
 
 	if (options.cipher == SSH_CIPHER_NOT_SET) {
-		if (cipher_mask() & supported_ciphers & (1 << ssh_cipher_default))
+		if (cipher_mask1() & supported_ciphers & (1 << ssh_cipher_default))
 			options.cipher = ssh_cipher_default;
 		else {
 			debug("Cipher %s not supported, using %.100s instead.",
