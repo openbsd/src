@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53cxxx.c,v 1.2 1996/08/31 09:24:07 pefo Exp $	*/
+/*	$OpenBSD: ncr53cxxx.c,v 1.3 1996/08/31 10:49:16 pefo Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -175,7 +175,7 @@ char	*regs720[] = {
 
 int	lineno;
 int	err_listed;
-int	arch = 720;
+int	arch;
 
 char	inbuf[128];
 
@@ -269,6 +269,13 @@ main (int argc, char *argv[])
 		case 'a':
 			if (i + 1 == argc)
 				usage();
+			arch = 0;
+			arch = atoi(argv[i +1]);
+			if(arch != 720 && arch != 710) {
+				fprintf(stderr,"%s: bad arch '%s'\n",
+					argv[0], argv[i +1]);
+				exit(1);
+			}
 			++i;
 			break;
 		default:
@@ -283,6 +290,8 @@ main (int argc, char *argv[])
 		listfp = fopen (listfile, "w");
 	if (errorfile)
 		errfp = fopen (errorfile, "w");
+	else
+		errfp = stderr;
 
 	while (fgets (inbuf, sizeof (inbuf), infp)) {
 		++lineno;
@@ -554,6 +563,9 @@ int	CheckRegister (int t)
 			if (reserved (regs720[i], t))
 				return i;
 	}
+	else {
+		errout("'ARCH' statement missing");
+	}
 	return (-1);
 }
 
@@ -674,7 +686,17 @@ int	lookup (char *name)
 
 void	f_arch (void)
 {
-	/* ?? */
+	int i, archsave;
+
+	i = tokenix;
+
+	archsave = arch;
+	arch = 0;
+	arch = atoi(tokens[i].name);
+	if( arch != 710 && arch != 720) {
+		errout("Unrecognized ARCH");
+		arch = archsave;
+	}
 }
 
 void	f_proc (void)
