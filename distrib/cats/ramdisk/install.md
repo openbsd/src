@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.2 2004/02/02 21:01:19 drahn Exp $
+#	$OpenBSD: install.md,v 1.3 2004/02/06 14:21:12 drahn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,16 +70,116 @@ md_prep_disk() {
 
 	cat << __EOT
 
-$_disk must be partitioned using an MBR partition table.
+$_disk must be partitioned using an BSD or an MBR partition table.
 
-MBR partition tables are created with OpenBSD. MacOS *cannot* be booted from a
-disk partitioned with an MBR partition table.
+BSD partition table or MBR partition tables can be created by openbsd.
+It is more a question of firmware compatiblity disk portability.
+(Once we can figure out what filesystems ABLE can boot)
+__EOT
+
+	while : ; do
+		ask "Use BSD or MBR partition table?" BSD
+		_resp=$resp
+		case $_resp in
+		m|mbr)	export disklabeltype=MBR
+			md_prep_MBR $_disk
+			break
+			;;
+		b|BSD)	export disklabeltype=BSD
+			md_prep_BSD $_disk
+			break
+			;;
+		esac
+	done
+}
+
+md_prep_MBR() {
+	local _disk=$1
+
+	if [[ -n $(disklabel -c $_disk 2>/dev/null | grep ' BSD ') ]]; then
+		cat << __EOT
+
+WARNING: putting an MBR partition table on $_disk will DESTROY the existing BSD
+         partitions and BSD partition table.
+
+__EOT
+		ask_yn "Are you *sure* you want an MBR partition table on $_disk?"
+		[[ $resp == n ]] && exit
+	fi
+
+	ask_yn "Use *all* of $_disk for OpenBSD?"
+	if [[ $resp == y ]]; then
+		echo -n "Creating Master Boot Record (MBR)..."
+		fdisk -e $_disk  >/dev/null 2>&1 << __EOT
+reinit
+update
+write
+quit
+__EOT
+		echo "done."
+
+		echo -n "Formatting 1MB MSDOS boot partition..."
+		gunzip < /usr/mdec/msdos1mb.gz | \
+		    dd of=/dev/r${_disk}c bs=512 seek=1 >/dev/null 2>&1
+		echo "done."
+
+		return
+	fi
+ 
+	# Manual MBR setup. The user is basically on their own. Give a few
+	# hints and let the user rip.
+	cat << __EOT
+
+**** NOTE ****
+
+A valid MBR for an OpenBSD bootable disk must contain at least:
+
+a) One DOS (id '06') partition at least 1MB in size. This is where OpenFirmware
+will look for the 'ofwboot' program used to boot OpenBSD. Consult your PowerPC
+OpenFirmware manual -and- the INSTALL.$ARCH file for directions on setting up
+this partition correctly.
+
+b) One OpenBSD (id 'A6') partition.
+
+**************
+
+Current partition information is:
+
+$(fdisk $_disk)
 
 __EOT
 
-	md_prep_MBR $_disk
+	fdisk -e $_disk
+
+	cat << __EOT
+Here is the MBR configuration you chose:
+
+$(fdisk $_disk)
+
+Please take note of the offsets and sizes of the DOS partition, the OpenBSD
+partition, and any other partitions you want to access from OpenBSD. You will
+need this information to fill in the OpenBSD disklabel.
+
+__EOT
 }
 
+md_prep_BSD() {
+	local _disk=$1
+
+	cat << __EOT
+
+No special setup should be required to label using BSD disklabel.
+however if the disk has previously been partitioned in another
+manner, it may be necessary to wipe existing partition tables
+before proceeding.
+
+dd if=/dev/zero of=/${_disk} bs=512 count=10
+disklabel -c ${_disk}
+
+
+__EOT
+	
+}
 
 md_prep_disklabel() {
 	local _disk=$1 _q
@@ -87,16 +187,17 @@ md_prep_disklabel() {
 	md_prep_disk $_disk
 
 	case $disklabeltype in
+	BSD)	;;
 	MBR)	cat << __EOT
 
 You *MUST* setup the OpenBSD disklabel to include the MSDOS-formatted boot
 partition as the 'i' partition. If the 'i' partition is missing or not the
-MSDOS-formatted boot partition, then the 'ofwboot' file required to boot
+MSDOS-formatted boot partition, then the kernel required to boot
 OpenBSD cannot be installed.
 
 __EOT
 		;;
-	*)	echo "Disk label type ('$disklabeltype') is not 'MBR'."
+	*)	echo "Disk label type ('$disklabeltype') is not 'BSD' or 'MBR'."
 		exit
 		;;
 	esac
