@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.11 2002/01/03 07:14:50 drahn Exp $	*/
+/*	$OpenBSD: dma.c,v 1.12 2002/02/18 14:26:24 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -491,7 +491,7 @@ _dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int curseg;
 
 	size = round_page(size);
-	va = uvm_km_valloc(kmem_map, size);
+	va = uvm_km_valloc(kernel_map, size);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -530,7 +530,7 @@ _dmamem_unmap(t, kva, size)
 #endif
 
 	size = round_page(size);
-	uvm_km_free(kmem_map, (vm_offset_t)kva, size);
+	uvm_km_free(kernel_map, (vm_offset_t)kva, size);
 }
 
 /*
