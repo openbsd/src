@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.6 1997/04/05 21:13:16 millert Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.7 1997/04/30 05:54:43 tholo Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.6 1997/04/05 21:13:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.7 1997/04/30 05:54:43 tholo Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1257,8 +1257,9 @@ loc_aton(ascii, binary)
 	const char *ascii;
 	u_char *binary;
 {
-	const char *cp, *maxcp;
+	const char *maxcp;
 	u_char *bcp;
+	char *cp;
 
 	u_int32_t latit = 0, longit = 0, alt = 0;
 	u_int32_t lltemp1 = 0, lltemp2 = 0;
@@ -1268,7 +1269,7 @@ loc_aton(ascii, binary)
 	u_int8_t siz = 0x12;	/* default = 1e2 cm = 1.00m */
 	int which1 = 0, which2 = 0;
 
-	cp = ascii;
+	cp = (char *)ascii;
 	maxcp = cp + strlen(ascii);
 
 	lltemp1 = latlon2ul(&cp, &which1);
