@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 1999/11/22 05:08:36 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 1999/11/25 17:34:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -423,66 +423,6 @@ pmap_free_pv(struct pv_entry *pv)
 		break;
 	}
 }
-
-#if 0
-/* probably not needed anymore */
-void
-pmap_collect_pv()
-{
-	struct pv_page_list pv_page_collectlist;
-	struct pv_page *pvp, *npvp;
-	struct pv_entry *ph, *ppv, *pv, *npv;
-	int s;
-
-	TAILQ_INIT(&pv_page_collectlist);
-
-	for (pvp = pv_page_freelist.tqh_first; pvp; pvp = npvp) {
-		if (pv_nfree < NPVPPG)
-			break;
-		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
-		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
-			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
-			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
-			pvp->pvp_pgi.pgi_nfree = -1;
-		}
-	}
-
-	if (pv_page_collectlist.tqh_first == 0)
-		return;
-
-	for (ph = &pv_table[npages - 1]; ph >= &pv_table[0]; ph--) {
-		if (ph->pv_pmap == 0)
-			continue;
-		s = splimp();
-		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
-			pvp = (struct pv_page *) trunc_page(pv);
-			if (pvp->pvp_pgi.pgi_nfree == -1) {
-				pvp = pv_page_freelist.tqh_first;
-				if (--pvp->pvp_pgi.pgi_nfree == 0) {
-					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-				}
-				npv = pvp->pvp_pgi.pgi_freelist;
-#ifdef DIAGNOSTIC
-				if (npv == 0)
-					panic("pmap_collect_pv: pgi_nfree inconsistent");
-#endif
-				pvp->pvp_pgi.pgi_freelist = npv->pv_next;
-				*npv = *pv;
-				ppv->pv_next = npv;
-				ppv = npv;
-			} else
-				ppv = pv;
-		}
-		splx(s);
-	}
-
-	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
-		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
-		FREE((vaddr_t) pvp, M_VMPVENT);
-	}
-}
-#endif
 
 /*
  * pmap_enter_pv(pmap, va, tlbprot, tlbpage, pv)
