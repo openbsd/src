@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.commonutils,v 1.3 1996/06/29 05:54:24 tholo Exp $
+#	$OpenBSD: dot.commonutils,v 1.4 1996/10/10 10:10:31 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -40,7 +40,7 @@ fi
 
 # counter for possible shared library confusion
 TAR=/bin/tar
-GUNZIP=/usr/bin/gunzip
+GUNZIP="/usr/bin/gzip -d"
 
 Set_tmp_dir()
 {

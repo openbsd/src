@@ -1,4 +1,4 @@
-#	$Id: list,v 1.5 1996/10/09 02:27:50 deraadt Exp $
+#	$Id: list,v 1.6 1996/10/10 10:10:33 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -44,6 +44,7 @@ SYMLINK	/bin/cat		usr/bin/awk
 SYMLINK	/bin/cat		usr/bin/chgrp
 SYMLINK	/bin/cat		usr/bin/ftp
 SYMLINK	/bin/cat		usr/bin/less
+SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/sed
 SYMLINK	/bin/cat		usr/bin/strings
