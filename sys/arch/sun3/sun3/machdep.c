@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2000/03/23 09:59:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2000/04/29 20:37:31 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ allocsys(v)
 #ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
 #endif
-	valloc(timeouts, struct timeoutout, ntimeout);
+	valloc(timeouts, struct timeout, ntimeout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
