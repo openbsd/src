@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2004/11/12 18:07:42 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.36 2004/11/25 02:28:36 ian Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -181,7 +181,7 @@ com*	at puc?
 #cy*	at pci?				# PCI cyclom serial card
 #cz*	at pci?				# Cyclades-Z multi-port serial boards
 
-#lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #lpt1	at isa? port 0x278
 #lpt2	at isa? port 0x3bc
 #lpt*	at puc?
