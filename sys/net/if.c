@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.17 1998/08/04 20:57:19 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.18 1998/08/05 19:51:06 millert Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -590,8 +590,23 @@ ifconf(cmd, data)
 
 	/* If ifc->ifc_len is 0, fill it in with the needed size and return. */
 	if (space == 0) {
-		for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next)
-			space += sizeof (ifr);
+		for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next) {
+			register struct sockaddr *sa;
+
+			if ((ifa = ifp->if_addrlist.tqh_first) == 0)
+				space += sizeof (ifr);
+			else 
+				for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+					sa = ifa->ifa_addr;
+#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4)
+					if (cmd != OSIOCGIFCONF)
+#endif
+					if (sa->sa_len > sizeof(*sa))
+						space += sa->sa_len -
+						    sizeof (*sa);
+					space += sizeof (ifr);
+				}
+		}
 		ifc->ifc_len = space;
 		return(0);
 	}
