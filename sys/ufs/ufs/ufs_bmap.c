@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.4 1997/05/30 08:35:02 downsj Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.5 1999/04/25 00:36:47 millert Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct vnode *devvp;
-	struct indir a[NIADDR], *xap;
+	struct indir a[NIADDR+1], *xap;
 	daddr_t daddr;
 	long metalbn;
 #ifdef	TRACE
