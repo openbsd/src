@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.15 2001/02/03 05:22:24 mickey Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.16 2001/04/12 07:46:46 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2196,8 +2196,15 @@ sb_malloc(addr, size, pool, flags)
 	int flags;
 {
 	struct sbdsp_softc *sc = addr;
+	int drq;
 
-	return isa_malloc(sc->sc_isa, 4, size, pool, flags);
+	/* 8-bit has more restrictive alignment */
+	if (sc->sc_drq8 != -1)
+		drq = sc->sc_drq8;
+	else
+		drq = sc->sc_drq16;
+
+	return isa_malloc(sc->sc_isa, drq, size, pool, flags);
 }
 
 void
