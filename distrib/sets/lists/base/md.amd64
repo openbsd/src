@@ -2166,6 +2166,7 @@
 ./usr/mdec/boot
 ./usr/mdec/installboot
 ./usr/mdec/mbr
+./usr/mdec/pxeboot
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/wsmoused
