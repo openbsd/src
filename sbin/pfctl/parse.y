@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.281 2003/01/07 04:20:06 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.282 2003/01/08 19:47:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -733,7 +733,12 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af {
 				j = calloc(1, sizeof(struct node_if));
 				if (j == NULL)
 					err(1, "antispoof: calloc");
-				strlcpy(j->ifname, i->ifname, IFNAMSIZ);
+				if (strlcpy(j->ifname, i->ifname, IFNAMSIZ) >=
+				    IFNAMSIZ) {
+					free(j);
+					yyerror("interface name too long");
+					YYERROR;
+				}
 				j->not = 1;
 				h = ifa_lookup(j->ifname, PFCTL_IFLOOKUP_NET);
 
@@ -1014,7 +1019,12 @@ qassign_item	: STRING			{
 			$$ = calloc(1, sizeof(struct node_queue));
 			if ($$ == NULL)
 				err(1, "queue_item: calloc");
-			strlcpy($$->queue, $1, PF_QNAME_SIZE);
+			if (strlcpy($$->queue, $1, PF_QNAME_SIZE) >=
+			    PF_QNAME_SIZE) {
+				free($$);
+				yyerror("queue name too long");
+				YYERROR;
+			}
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -1355,7 +1365,12 @@ if_item		: STRING			{
 			$$ = calloc(1, sizeof(struct node_if));
 			if ($$ == NULL)
 				err(1, "if_item: calloc");
-			strlcpy($$->ifname, $1, IFNAMSIZ);
+			if (strlcpy($$->ifname, $1, IFNAMSIZ) >=
+			    IFNAMSIZ) {
+				free($$);
+				yyerror("interface name too long");
+				YYERROR;
+			}
 			$$->ifa_flags = n->ifa_flags;
 			$$->not = 0;
 			$$->next = NULL;
@@ -1513,8 +1528,13 @@ address		: '(' STRING ')'		{
 			$$->af = 0;
 			set_ipmask($$, 128);
 			$$->addr.type = PF_ADDR_DYNIFTL;
-			strlcpy($$->addr.v.ifname, $2,
-			    sizeof($$->addr.v.ifname));
+			if (strlcpy($$->addr.v.ifname, $2,
+			    sizeof($$->addr.v.ifname)) >=
+			    sizeof($$->addr.v.ifname)) {
+				free($$);
+				yyerror("interface name too long");
+				YYERROR;
+			}
 			$$->next = NULL;
 			$$->tail = $$;
 		}
