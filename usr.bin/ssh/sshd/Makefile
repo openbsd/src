@@ -2,7 +2,6 @@
 
 PROG=	sshd
 BINOWN=	root
-BINGRP=	root
 BINMODE=555
 BINDIR=	/usr/sbin
 LDADD=	-lkrb -lcrypto -ldes -lgmp -lutil -lz

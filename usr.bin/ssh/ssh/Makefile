@@ -2,7 +2,6 @@
 
 PROG=	ssh
 BINOWN=	root
-BINGRP=	root
 BINMODE=4555
 BINDIR=	/usr/bin
 LDADD=	-lkrb -lcrypto -ldes -lgmp -lutil -lz
@@ -42,7 +41,7 @@ generate-host-key:
 # (otherwise it can only log in as the user it runs as, and must be
 # bound to a non-privileged port).  Also, password authentication may
 # not be available if non-root and using shadow passwords.
-install: $(PROGRAMS) make-dirs generate-host-key
+fuck-install: $(PROGRAMS) make-dirs generate-host-key
 	$(INSTALL_PROGRAM) -o root -m 0755 ssh $(install_prefix)$(bindir)/ssh
 	-if test "`echo ssh | sed '$(transform)'`" '!=' ssh; then \
 	  rm -f $(install_prefix)$(bindir)/`echo ssh | sed '$(transform)'`; \

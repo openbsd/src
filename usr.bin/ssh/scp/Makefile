@@ -2,7 +2,6 @@
 
 PROG=	scp
 BINOWN=	root
-BINGRP=	root
 BINMODE=555
 BINDIR=	/usr/bin
 MAN=	scp.1

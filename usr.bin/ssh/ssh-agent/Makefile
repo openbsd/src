@@ -2,7 +2,6 @@
 
 PROG=	ssh-keygen
 BINOWN=	root
-BINGRP=	root
 BINMODE=555
 BINDIR=	/usr/bin
 LDADD=	-lkrb -lcrypto -ldes -lgmp -lutil -lz
