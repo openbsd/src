@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1997/06/30 05:36:15 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 2001/02/04 21:27:00 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -58,12 +58,11 @@ int	 makeline __P((int, union f_handle,
 	    int, RECHEADER *, u_char *, struct field *));
 void	 merge __P((int, int, int (*)(), FILE *, void (*)(), struct field *));
 void	 num_init __P((void));
-void	 onepass __P((u_char **, int, int, int *, u_char *, FILE *));
+void	 onepass __P((u_char **, int, long, long *, u_char *, FILE *));
 int	 optval __P((int, int));
 void	 order __P((union f_handle, int (*)(), struct field *));
 void	 putline __P((RECHEADER *, FILE *));
 void	 putrec __P((RECHEADER *, FILE *));
 void	 rd_append __P((int, union f_handle, int, FILE *, u_char *, u_char *));
-int	 seq __P((FILE *, DBT *, DBT *));
 int	 setfield __P((char *, struct field *, int));
 void	 settables __P((int));

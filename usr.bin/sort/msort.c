@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.8 2000/06/30 16:00:23 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.9 2001/02/04 21:27:01 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.8 2000/06/30 16:00:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.9 2001/02/04 21:27:01 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 	struct tempfile *l_fstack;
 
 	wts = ftbl->weights;
-	if (!UNIQUE && SINGL_FLD && ftbl->flags & F)
+	if (!UNIQUE && SINGL_FLD && (ftbl->flags & F))
 		wts1 = (ftbl->flags & R) ? Rascii : ascii;
 	if (!cfilebuf) {
 		cfilebuf = malloc(MAXLLEN + sizeof(TMFILE));
@@ -207,8 +207,8 @@ insert(flist, rec, ttop, delete)
 	struct mfile **flist, **rec;
 	int delete, ttop;			/* delete = 0 or 1 */
 {
-	register struct mfile *tmprec;
-	register int top, mid, bot = 0, cmpv = 1;
+	struct mfile *tmprec;
+	int top, mid, bot = 0, cmpv = 1;
 	tmprec = *rec;
 	top = ttop;
 	for (mid = top/2; bot +1 != top; mid = (bot+top)/2) {
@@ -263,7 +263,7 @@ order(infile, get, ftbl)
 	int (*get)();
 	struct field *ftbl;
 {
-	u_char *end;
+	u_char *crec_end, *prec_end, *trec_end;
 	int c;
 	RECHEADER *crec, *prec, *trec;
 
@@ -274,16 +274,17 @@ order(infile, get, ftbl)
 	buffer = malloc(2 * (MAXLLEN + sizeof(TRECHEADER)));
 	if (buffer == NULL)
 		errx(2, "cannot allocate memory");
-	end = buffer + 2 * (MAXLLEN + sizeof(TRECHEADER));
 	crec = (RECHEADER *) buffer;
+	crec_end = buffer + MAXLLEN + sizeof(TRECHEADER);
 	prec = (RECHEADER *) (buffer + MAXLLEN + sizeof(TRECHEADER));
+	prec_end = buffer + 2 * (MAXLLEN + sizeof(TRECHEADER));
 	wts = ftbl->weights;
-	if (SINGL_FLD && ftbl->flags & F)
+	if (SINGL_FLD && (ftbl->flags & F))
 		wts1 = ftbl->flags & R ? Rascii : ascii;
 	else
 		wts1 = 0;
-	if (get(-1, infile, 1, prec, end, ftbl) == 0)
-		while (0 == get(-1, infile, 1, crec, end, ftbl)) {
+	if (get(-1, infile, 1, prec, prec_end, ftbl) == 0)
+		while (get(-1, infile, 1, crec, crec_end, ftbl) == 0) {
 			if (0 < (c = cmp(prec, crec))) {
 				crec->data[crec->length-1] = 0;
 				errx(1, "found disorder: %s",
@@ -294,9 +295,16 @@ order(infile, get, ftbl)
 				errx(1, "found non-uniqueness: %s",
 				    crec->data+crec->offset);
 			}
+			/* Swap pointers so that this record is on place
+			 * pointed to by prec and new record is read to place
+			 * pointed to by crec.
+			 */
 			trec = prec;
 			prec = crec;
 			crec = trec;
+			trec_end = prec_end;
+			prec_end = crec_end;
+			crec_end = trec_end;
 		}
 	exit(0);
 }
@@ -305,9 +313,9 @@ static int
 cmp(rec1, rec2)
 	RECHEADER *rec1, *rec2;
 {
-	register int r;
-	register u_char *pos1, *pos2, *end;
-	register u_char *cwts;
+	int r;
+	u_char *pos1, *pos2, *end;
+	u_char *cwts;
 	for (cwts = wts; cwts; cwts = (cwts == wts1 ? 0 : wts1)) {
 		pos1 = rec1->data;
 		pos2 = rec2->data;

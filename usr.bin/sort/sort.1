@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sort.1,v 1.13 2000/11/09 17:52:39 aaron Exp $
+.\"	$OpenBSD: sort.1,v 1.14 2001/02/04 21:27:01 ericj Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -364,6 +364,7 @@ already exists
 .Sh SEE ALSO
 .Xr comm 1 ,
 .Xr join 1 ,
+.Xr radixsort 3 ,
 .Xr uniq 1
 .Sh HISTORY
 A
@@ -371,6 +372,19 @@ A
 command appeared in
 .At v5 .
 .Sh NOTES
+.Nm
+has no limits on input line length (other than imposed by available
+memory) or any restrictions on bytes allowed within lines.
+.Pp
+To protect data
+.Nm
+.Fl o
+calls
+.Xr link 2
+and
+.Xr unlink 2 ,
+and thus fails on protected directories.
+.Pp
 The current sort command uses lexicographic radix sorting, which requires
 that sort keys be kept in memory (as opposed to previous versions which
 used quick and merge sorts and did not).
@@ -389,12 +403,7 @@ is equivalent to
 .Fl f
 and may take twice as long.
 .Sh BUGS
-Lines longer than 65522 characters are discarded and processing continues.
 To sort files larger than 60Mb, use
 .Nm
 .Fl H ;
 files larger than 704Mb must be sorted in smaller pieces, then merged.
-To protect data
-.Nm
-.Fl o
-calls link and unlink, and thus fails in protected directories.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.4 1999/05/24 17:57:17 millert Exp $	*/
+/*	$OpenBSD: fields.c,v 1.5 2001/02/04 21:27:00 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.4 1999/05/24 17:57:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.5 2001/02/04 21:27:00 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,11 +86,11 @@ enterkey(keybuf, line, size, fieldtable)
 	struct field fieldtable[];
 {
 	int i;
-	register u_char *l_d_mask;
-	register u_char *lineend, *pos;
+	u_char *l_d_mask;
+	u_char *lineend, *pos;
 	u_char *endkey, *keypos;
-	register struct coldesc *clpos;
-	register int col = 1;
+	struct coldesc *clpos;
+	int col = 1;
 	struct field *ftpos;
 	l_d_mask = d_mask;
 	pos = (u_char *) line->data - 1;
@@ -100,8 +100,9 @@ enterkey(keybuf, line, size, fieldtable)
 
 	for (i = 0; i < ncols; i++) {
 		clpos = clist + i;
-		for (; (col < clpos->num) && (pos < lineend); col++)
-			{ NEXTCOL(pos); }
+		for (; (col < clpos->num) && (pos < lineend); col++) {
+			NEXTCOL(pos);
+		}
 		if (pos >= lineend)
 			break;
 		clpos->start = SEP_FLAG ? pos + 1 : pos;
@@ -140,12 +141,12 @@ enterkey(keybuf, line, size, fieldtable)
 u_char *
 enterfield(tablepos, endkey, cur_fld, gflags)
 	struct field *cur_fld;
-	register u_char *tablepos, *endkey;
+	u_char *tablepos, *endkey;
 	int gflags;
 {
-	register u_char *start, *end, *lineend, *mask, *lweight;
+	u_char *start, *end, *lineend, *mask, *lweight;
 	struct column icol, tcol;
-	register u_int flags;
+	u_int flags;
 	u_int Rflag;
 
 	icol = cur_fld->icol;
@@ -210,13 +211,13 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 
 u_char *
 number(pos, bufend, line, lineend, Rflag)
-	register u_char *line, *pos, *bufend, *lineend;
+	u_char *line, *pos, *bufend, *lineend;
 	int Rflag;
 {
-	register int or_sign, parity = 0;
-	register int expincr = 1, exponent = -1;
+	int or_sign, parity = 0;
+	int expincr = 1, exponent = -1;
 	int bite, expsign = 1, sign = 1;
-	register u_char lastvalue, *nonzero, *tline, *C_TENS;
+	u_char lastvalue, *nonzero, *tline, *C_TENS;
 	u_char *nweights;
 
 	if (Rflag)

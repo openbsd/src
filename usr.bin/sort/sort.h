@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.h,v 1.4 1999/05/24 17:57:19 millert Exp $	*/
+/*	$OpenBSD: sort.h,v 1.5 2001/02/04 21:27:01 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -79,8 +79,8 @@
 		 err(2, "fwrite");					\
 }
 
-/* length of record is currently limited to 2^16 - 1 */
-typedef u_short length_t;
+/* length of record is currently limited to maximum string length (size_t) */
+typedef size_t length_t;
 
 #define SALIGN(n) ((n+(sizeof(length_t)-1)) & ~(sizeof(length_t)-1))
 

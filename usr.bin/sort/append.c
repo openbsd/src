@@ -1,4 +1,4 @@
-/*	$OpenBSD: append.c,v 1.5 1999/05/24 17:57:17 millert Exp $	*/
+/*	$OpenBSD: append.c,v 1.6 2001/02/04 21:27:00 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)append.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: append.c,v 1.5 1999/05/24 17:57:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: append.c,v 1.6 2001/02/04 21:27:00 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,16 +70,16 @@ void
 append(keylist, nelem, depth, fp, put, ftbl)
 	u_char **keylist;
 	int nelem;
-	register int depth;
+	int depth;
 	FILE *fp;
 	void (*put)(RECHEADER *, FILE *);
 	struct field *ftbl;
 {
-	register u_char *wts, *wts1;
-	register int n, odepth;
-	register u_char **cpos, **ppos, **lastkey;
-	register u_char *cend, *pend, *start;
-	register RECHEADER *crec, *prec;
+	u_char *wts, *wts1;
+	int n, odepth;
+	u_char **cpos, **ppos, **lastkey;
+	u_char *cend, *pend, *start;
+	RECHEADER *crec, *prec;
 
 	if (*keylist == '\0' && UNIQUE)
 		return;
@@ -98,11 +98,15 @@ append(keylist, nelem, depth, fp, put, ftbl)
 		prec = (RECHEADER *) (*ppos - depth);
 		if (UNIQUE)
 			put(prec, fp);
-		for (cpos = keylist+1; cpos < lastkey; cpos++) {
+		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
 			crec = (RECHEADER *) (*cpos - depth);
 			if (crec->length  == prec->length) {
-				pend = (u_char *) &prec->offset + prec->length;
-				cend = (u_char *) &crec->offset + crec->length;
+				/* 
+				 * Set pend and cend so that trailing NUL and
+				 * record separator is ignored.
+				 */
+				pend = (u_char *)&prec->data + prec->length - 2;
+				cend = (u_char *)&crec->data + crec->length - 2;
 				for (start = *cpos; cend >= start; cend--) {
 					if (wts[*cend] != wts[*pend])
 						break;
@@ -131,11 +135,15 @@ append(keylist, nelem, depth, fp, put, ftbl)
 		ppos = keylist;
 		prec = (RECHEADER *) (*ppos - depth);
 		put(prec, fp);
-		for (cpos = keylist+1; cpos < lastkey; cpos++) {
+		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
 			crec = (RECHEADER *) (*cpos - depth);
 			if (crec->offset == prec->offset) {
-				pend = (u_char *) &prec->offset + prec->offset;
-				cend = (u_char *) &crec->offset + crec->offset;
+				/* 
+				 * Set pend and cend so that trailing NUL and
+				 * record separator is ignored.
+				 */
+				pend = (u_char *)&prec->data + prec->offset - 2;
+				cend = (u_char *)&crec->data + crec->offset - 2;
 				for (start = *cpos; cend >= start; cend--) {
 					if (wts[*cend] != wts[*pend])
 						break;

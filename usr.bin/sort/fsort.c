@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.7 1999/05/24 17:57:18 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.8 2001/02/04 21:27:00 ericj Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.7 1999/05/24 17:57:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.8 2001/02/04 21:27:00 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: fsort.c,v 1.7 1999/05/24 17:57:18 millert Exp $
 #include <string.h>
 
 u_char **keylist = 0, *buffer = 0, *linebuf = 0;
+size_t bufsize, linebuf_size;
 struct tempfile fstack[MAXFCT];
 extern char *toutpath;
 #define FSORTMAX 4
@@ -65,21 +66,21 @@ int PANIC = FSORTMAX;
 
 void
 fsort(binno, depth, infiles, nfiles, outfp, ftbl)
-	register int binno, depth;
-	register union f_handle infiles;
-	register int nfiles;
+	int binno, depth;
+	union f_handle infiles;
+	int nfiles;
 	FILE *outfp;
-	register struct field *ftbl;
+	struct field *ftbl;
 {
-	register u_char *bufend, **keypos, *tmpbuf;
+	u_char *bufend, **keypos, *tmpbuf;
 	u_char *weights;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
 	int c, nelem;
-	int sizes [NBINS+1];
+	long sizes[NBINS+1];
 	union f_handle tfiles, mstart = {MAXFCT-16};
-	register int (*get)(int, union f_handle, int, RECHEADER *,
+	int (*get)(int, union f_handle, int, RECHEADER *,
 		u_char *, struct field *);
-	register RECHEADER *crec;
+	RECHEADER *crec;
 	struct field tfield[2];
 	FILE *prevfp, *tailfp[FSORTMAX+1];
 
@@ -93,15 +94,17 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 	tfield[0].icol.num = 1;
 	weights = ftbl[0].weights;
 	if (!buffer) {
-		if ((buffer = malloc(BUFSIZE + 1)) == NULL ||
+		bufsize = BUFSIZE;
+		if ((buffer = malloc(bufsize + 1)) == NULL ||
 		    (keylist = calloc(MAXNUM, sizeof(u_char *))) == NULL)
 			errx(2, "cannot allocate memory");
 		if (!SINGL_FLD) {
-			if ((linebuf = malloc(MAXLLEN)) == NULL)
+			linebuf_size = MAXLLEN;
+			if ((linebuf = malloc(linebuf_size)) == NULL)
 				errx(2, "cannot allocate memory");
 		}
 	}
-	bufend = buffer + BUFSIZE;
+	bufend = buffer + bufsize;
 	if (binno >= 0) {
 		tfiles.top = infiles.top + nfiles;
 		get = getnext;
@@ -138,6 +141,18 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 				}
 				crec =(RECHEADER *)	((char *) crec +
 				SALIGN(crec->length) + sizeof(TRECHEADER));
+			}
+			/*
+			 * buffer was too small for data, allocate
+			 * a bigger buffer.
+			 */
+			if (c == BUFFEND && nelem == 0) {
+				bufsize *= 2;
+				buffer = realloc(buffer, bufsize);
+				if (!buffer)
+					err(2, "failed to realloc buffer");
+				bufend = buffer + bufsize;
+				continue;
 			}
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
 				if (panic >= PANIC) {
@@ -253,22 +268,22 @@ void
 onepass(a, depth, n, sizes, tr, fp)
 	u_char **a;
 	int depth;
-	int n;
-	int sizes[];
+	long n;
+	long sizes[];
 	u_char *tr;
 	FILE *fp;
 {
-	int tsizes[NBINS+1];
+	size_t tsizes[NBINS+1];
 	u_char **bin[257], **top[256], ***bp, ***bpmax, ***tp;
 	static int histo[256];
 	int *hp;
-	register int c;
+	int c;
 	u_char **an, *t, **aj;
-	register u_char **ak, *r;
+	u_char **ak, *r;
 
 	memset(tsizes, 0, sizeof(tsizes));
 	depth += sizeof(TRECHEADER);
-	an = a + n;
+	an = &a[n];
 	for (ak = a; ak < an; ak++) {
 		histo[c = tr[**ak]]++;
 		tsizes[c] += ((RECHEADER *) (*ak -= depth))->length;
@@ -292,7 +307,7 @@ onepass(a, depth, n, sizes, tr, fp)
 		n = an - ak;
 		tsizes[c] += n * sizeof(TRECHEADER);
 		/* tell getnext how many elements in this bin, this segment. */
-		EWRITE(tsizes+c, sizeof(int), 1, fp);
+		EWRITE(&tsizes[c], sizeof(size_t), 1, fp);
 		sizes[c] += tsizes[c];
 		for (; ak < an; ++ak)
 			putrec((RECHEADER *) *ak, fp);
