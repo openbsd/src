@@ -11,7 +11,7 @@ stdin:12: multiple binat ip addresses
 stdin:13: syntax error
 stdin:14: no translation address with matching address family found.
 stdin:15: binat ip versions must match
-stdin:16: no translation address with matching address family found.
-stdin:17: binat ip versions must match
+netmask 128 invalid for IPv4 address
+netmask 128 invalid for IPv4 address
 stdin:18: binat ip versions must match
 pfctl: Syntax error in config file: pf rules not loaded
