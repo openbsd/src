@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.37 2003/09/06 15:07:43 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.38 2003/09/07 01:00:29 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -369,7 +369,7 @@ ASLOCAL(Lbadcpupanic)
 #endif
 
 #ifdef M88110
-#define PREP2(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK) \
+#define PREP2(NAME, NUM, BIT, FLAG_PRECHECK) \
 	SAVE_CTX					; \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
@@ -2133,19 +2133,19 @@ ASLOCAL(no_ast)
 
 /* unknown exception handler */
 GLOBAL(m88110_unknown_handler)
-	PREP2("unknown", 0, DEBUG_UNKNOWN_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("unknown", 0, DEBUG_UNKNOWN_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_UNKNOWN_BIT)
 
 /* interrupt exception handler */
 GLOBAL(m88110_interrupt_handler)
-	PREP2("interrupt", 1, DEBUG_INTERRUPT_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("interrupt", 1, DEBUG_INTERRUPT_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_INT, r30)
 	DONE2(DEBUG_INTERRUPT_BIT)
 
 /* instruction access exception handler */
 GLOBAL(m88110_instruction_access_handler)
-	PREP2("inst", 2, DEBUG_INSTRUCTION_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("inst", 2, DEBUG_INSTRUCTION_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_INSTFLT, r30)
 	DONE2(DEBUG_INSTRUCTION_BIT)
 /*
@@ -2153,25 +2153,25 @@ GLOBAL(m88110_instruction_access_handler)
  *  See badaddr() below for info about Data_Precheck.
  */
 GLOBAL(m88110_data_exception_handler)
-	PREP2("data", 3, DEBUG_DATA_BIT, No_SSBR_Stuff, M88110_Data_Precheck)
+	PREP2("data", 3, DEBUG_DATA_BIT, M88110_Data_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_DATAFLT, r30)
 	DONE2(DEBUG_DATA_BIT)
 
 /* misaligned access exception handler */
 GLOBAL(m88110_misaligned_handler)
-	PREP2("misalign", 4, DEBUG_MISALIGN_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("misalign", 4, DEBUG_MISALIGN_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_MISALGNFLT, r30)
 	DONE2(DEBUG_MISALIGN_BIT)
 
 /* unimplemented opcode exception handler */
 GLOBAL(m88110_unimplemented_handler)
-	PREP2("unimp", 5, DEBUG_UNIMPLEMENTED_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("unimp", 5, DEBUG_UNIMPLEMENTED_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_ILLFLT, r30)
 	DONE2(DEBUG_UNIMPLEMENTED_BIT)
 
 /* privilege exception handler */
 GLOBAL(m88110_privilege_handler)
-	PREP2("privilege", 6, DEBUG_PRIVILEGE_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("privilege", 6, DEBUG_PRIVILEGE_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_PRIVINFLT, r30)
 	DONE2(DEBUG_PRIVILEGE_BIT)
 
@@ -2180,114 +2180,114 @@ GLOBAL(m88110_privilege_handler)
  * a signal to the process...
  */
 GLOBAL(m88110_bounds_handler)
-	PREP2("bounds", 7, DEBUG_BOUNDS_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("bounds", 7, DEBUG_BOUNDS_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_BNDFLT, r30)
 	DONE2(DEBUG_BOUNDS_BIT)
 
 /* integer divide-by-zero exception handler */
 GLOBAL(m88110_divide_handler)
-	PREP2("divide", 8, DEBUG_DIVIDE_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("divide", 8, DEBUG_DIVIDE_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_ZERODIV, r30)
 	DONE2(DEBUG_DIVIDE_BIT)
 
 /* integer overflow exception handler */
 GLOBAL(m88110_overflow_handler)
-	PREP2("overflow", 9, DEBUG_OVERFLOW_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("overflow", 9, DEBUG_OVERFLOW_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_OVFFLT, r30)
 	DONE2(DEBUG_OVERFLOW_BIT)
 
 /* Floating-point precise handler */
 GLOBAL(m88110_fp_precise_handler)
-	PREP2("FPU precise", 114, DEBUG_FPp_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("FPU precise", 114, DEBUG_FPp_BIT, No_Precheck)
 	CALL(_ASM_LABEL(m88110_Xfp_precise), r0, r30)
 	DONE2(DEBUG_FPp_BIT)
 
 /* MVME197 non-maskable interrupt handler (ABORT button) */
 GLOBAL(m88110_nonmaskable)
-	PREP2("MVME197 non-mask", 11, DEBUG_NON_MASK_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("MVME197 non-mask", 11, DEBUG_NON_MASK_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_NON_MASK, r30)
 	DONE2(DEBUG_NON_MASK_BIT)
 
 /* MVME197 data MMU read miss handler */
 GLOBAL(m88110_data_read_miss)
-	PREP2("MVME197 read miss", 12, DEBUG_197_READ_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("MVME197 read miss", 12, DEBUG_197_READ_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_197_READ, r30)
 	DONE2(DEBUG_197_READ_BIT)
 
 /* MVME197 data MMU write miss handler */
 GLOBAL(m88110_data_write_miss)
-	PREP2("MVME197 write miss", 13, DEBUG_197_WRITE_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("MVME197 write miss", 13, DEBUG_197_WRITE_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_197_WRITE, r30)
 	DONE2(DEBUG_197_WRITE_BIT)
 
 /* MVME197 inst MMU ATC miss handler */
 GLOBAL(m88110_inst_atc_miss)
-	PREP2("MVME197 inst miss", 14, DEBUG_197_INST_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("MVME197 inst miss", 14, DEBUG_197_INST_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_197_INST, r30)
 	DONE2(DEBUG_197_INST_BIT)
 
 /* All standard system calls.  */
 GLOBAL(m88110_syscall_handler)
-	PREP2("syscall", 128, DEBUG_SYSCALL_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("syscall", 128, DEBUG_SYSCALL_BIT, No_Precheck)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88110_syscall), r13, r30)
 	DONE2(DEBUG_SYSCALL_BIT)
 
 /* trap 496 comes here */
 GLOBAL(m88110_bugtrap)
-	PREP2("bugsyscall", 496, DEBUG_BUGCALL_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("bugsyscall", 496, DEBUG_BUGCALL_BIT, No_Precheck)
 	ld	r9,  r30, GENREG_OFF(9)
 	CALL(_C_LABEL(bugsyscall), r9, r30)
 	DONE2(DEBUG_BUGCALL_BIT)
 
 GLOBAL(m88110_sigsys)
-	PREP2("sigsys", 501, DEBUG_SIGSYS_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("sigsys", 501, DEBUG_SIGSYS_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_SIGSYS, r30)
 	DONE2(DEBUG_SIGSYS_BIT)
 
 GLOBAL(m88110_sigtrap)
-	PREP2("sigtrap", 510, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("sigtrap", 510, DEBUG_SIGTRAP_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_SIGTRAP, r30)
 	DONE2(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_stepbpt)
-	PREP2("stepbpt", 504, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("stepbpt", 504, DEBUG_SIGTRAP_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_STEPBPT, r30)
 	DONE2(DEBUG_SIGTRAP_BIT)
 
 GLOBAL(m88110_userbpt)
-	PREP2("userbpt", 511, DEBUG_SIGTRAP_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("userbpt", 511, DEBUG_SIGTRAP_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_USERBPT, r30)
 	DONE2(DEBUG_SIGTRAP_BIT)
 
 #ifdef DDB
 GLOBAL(m88110_break)
-	PREP2("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("break", 130, DEBUG_BREAK_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_KDB_BREAK, r30)
 	DONE2(DEBUG_BREAK_BIT)
 
 GLOBAL(m88110_trace)
-	PREP2("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("trace", 131, DEBUG_TRACE_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_KDB_TRACE, r30)
 	DONE2(DEBUG_TRACE_BIT)
 
 GLOBAL(m88110_entry)
-	PREP2("kdb", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("kdb", 132, DEBUG_KDB_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_KDB_ENTRY, r30)
 	DONE2(DEBUG_KDB_BIT)
 #else
 GLOBAL(m88110_break)
-	PREP2("break", 130, DEBUG_BREAK_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("break", 130, DEBUG_BREAK_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_BREAK_BIT)
 
 GLOBAL(m88110_trace)
-	PREP2("trace", 131, DEBUG_TRACE_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("trace", 131, DEBUG_TRACE_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_TRACE_BIT)
 
 GLOBAL(m88110_entry)
-	PREP2("unknown", 132, DEBUG_KDB_BIT, No_SSBR_Stuff, No_Precheck)
+	PREP2("unknown", 132, DEBUG_KDB_BIT, No_Precheck)
 	CALL(_C_LABEL(m88110_trap), T_UNKNOWNFLT, r30)
 	DONE2(DEBUG_KDB_BIT)
 #endif
