@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.76 2004/12/07 19:53:25 henning Exp $	*/
+/*	$OpenBSD: theo.c,v 1.77 2005/01/14 04:03:45 marco Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -163,7 +163,8 @@ static const char *talk[] = {
 	"A burp means less gas later",
 	"optimism in man kind does not belong here",
 	"First user who tries to push this button, he pounds into the ground with a rant of death.",
-	"we did farts.  now we do sperm.  we are cutting edge."
+	"we did farts.  now we do sperm.  we are cutting edge.",
+	"the default configuration is a mixture of piss, puke, shit, and bloody entrails."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
