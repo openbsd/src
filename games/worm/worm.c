@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $	*/
+/*	$OpenBSD: worm.c,v 1.5 1998/03/12 09:09:30 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.5 1998/03/12 09:09:30 pjanzen Exp $";
 #endif
 #endif /* not lint */
 

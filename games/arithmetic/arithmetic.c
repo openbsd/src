@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.6 1996/03/21 18:30:19 jtc Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.6 1998/03/12 09:09:05 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: arithmetic.c,v 1.6 1996/03/21 18:30:19 jtc Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.6 1998/03/12 09:09:05 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
