@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.55 2003/04/30 12:30:27 cedric Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.56 2003/05/10 00:51:53 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -863,4 +863,13 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction,
     const char *anchor, const char *ruleset)
 {
 	fprintf(stderr, "table definitions not yet supported in authpf\n");
+}
+
+int
+pfctl_rules(int dev, char *filename, int opts, char *anchorname,
+    char *rulesetname)
+{
+	/* never called, no anchors inside anchors, but we need the stub */
+	fprintf(stderr, "load anchor not supported from authpf\n");
+	return (1);
 }
