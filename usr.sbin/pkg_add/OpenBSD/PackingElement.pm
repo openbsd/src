@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.28 2004/09/20 10:36:39 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.29 2004/09/21 22:17:49 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -624,6 +624,94 @@ sub stringize($)
 	my $self = $_[0];
 	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
 	    ':'.$self->{pattern}.':'.$self->{def};
+}
+
+package OpenBSD::PackingElement::NewUser;
+our @ISA=qw(OpenBSD::PackingElement);
+__PACKAGE__->setKeyword("newuser");
+
+sub category() { "users" }
+sub keyword() { "newuser" }
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($name, $uid, $group, $loginclass, $comment, $home, $shell) = 
+	    split /\:/, $args;
+	bless { name => $name, uid => $uid, group => $group, 
+	    class => $loginclass, 
+	    comment => $comment, home => $home, shell => $shell }, $class;
+}
+
+sub check
+{
+	my $self = shift;
+	my ($name, $passwd, $uid, $gid, $quota, $class, $gcos, $dir, $shell, 
+	    $expire) = getpwnam($self->{name});
+	return undef unless defined $name;
+	if ($self->{uid} =~ m/^\!/) {
+		return 0 unless $uid == $';
+	}
+	if ($self->{group} =~ m/^\!/) {
+		my $g = $';
+		unless ($g =~ m/^\d+/) {
+			$g = getgrnam($g);
+			return 0 unless defined $g;
+		}
+		return 0 unless $gid eq $g;
+	}
+	if ($self->{class} =~ m/^\!/) {
+		return 0 unless $class eq $';
+	}
+	if ($self->{comment} =~ m/^\!/) {
+		return 0 unless $gcos eq $';
+	}
+	if ($self->{home} =~ m/^\!/) {
+		return 0 unless $dir eq $';
+	}
+	if ($self->{shell} =~ m/^\!/) {
+		return 0 unless $shell eq $';
+	}
+	return 1;
+}
+
+sub stringize($)
+{
+	my $self = $_[0];
+	return $self->{name}.':'.$self->{uid}.':'.$self->{group}.':'.
+	    $self->{class}.':'.$self->{comment}.':'.$self->{home}.':'.
+	    $self->{shell};
+}
+
+package OpenBSD::PackingElement::NewGroup;
+our @ISA=qw(OpenBSD::PackingElement);
+__PACKAGE__->setKeyword("newgroup");
+
+sub category() { "groups" }
+sub keyword() { "newgroup" }
+
+sub new
+{
+	my ($class, $args) = @_;
+	my ($name, $gid) = split /\:/, $args;
+	bless { name => $name, gid => $gid }, $class;
+}
+
+sub check
+{
+	my $self = shift;
+	my ($name, $passwd, $gid, $members) = getgrnam($self->{name});
+	return undef unless defined $name;
+	if ($self->{gid} =~ m/^\!/) {
+		return 0 unless $gid == $';
+	}
+	return 1;
+}
+
+sub stringize($)
+{
+	my $self = $_[0];
+	return $self->{name}.':'.$self->{gid};
 }
 
 package OpenBSD::PackingElement::LibDepend;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.24 2004/09/18 08:14:40 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.25 2004/09/21 22:17:49 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -134,7 +134,7 @@ sub write
 	for my $unique_item (qw(name no-default-conflict manual-installation extrainfo arch)) {
 		$self->{$unique_item}->write($fh) if defined $self->{$unique_item};
 	}
-	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend items)) {
+	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend groups users items)) {
 		if (defined $self->{$listname}) {
 			for my $item (@{$self->{$listname}}) {
 				$item->write($fh);
@@ -163,7 +163,7 @@ sub visit
 	for my $unique_item (qw(name no-default-conflict manual-installation extrainfo arch)) {
 		$self->{$unique_item}->$method(@l) if defined $self->{$unique_item};
 	}
-	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend items)) {
+	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend groups users items)) {
 		if (defined $self->{$listname}) {
 			for my $item (@{$self->{$listname}}) {
 				$item->$method(@l);
