@@ -1,4 +1,5 @@
-/*	$NetBSD: loadbsd.c,v 1.18 1996/01/28 20:01:10 chopps Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.5 1996/05/07 10:14:34 niklas Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.19 1996/05/04 01:23:37 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -76,7 +77,7 @@ void warnx __P((const char *, ...));
 
 /*
  *	Version history:
- *	1.x	Kernel parameter passing version check.
+ *	1.x	Kernel startup interface version check.
  *	2.0	Added symbol table end address and symbol table support.
  *	2.1	03/23/94 - Round up end of fastram segment.
  *		Check fastram segment size for minimum of 2M.
@@ -99,20 +100,27 @@ void warnx __P((const char *, ...));
  *		01/28/95 - Corrected -n on usage & help messages.
  *	2.11	03/12/95 - Check kernel size against chip memory size.
  *	2.12	11/11/95 - Add -I option to inhibit synchronous transfer
- *		11/12/95 - New kernel parameter version - to support passing
- *		a kernel parameter data structure and support moving kernel
- *		image to fastmem rather than chipmem.
+ *		11/12/95 - New kernel startup interface version - to
+ *		support loading kernel image to fastmem rather than chipmem.
+ *	2.13	04/15/96 - Direct load to fastmem.
+ *		Add -Z flag to force chipmem load.
+ *		Moved test mode exit to later - kernel image is created
+ *		and startup interface version checked in test mode.
+ *		Add -s flag for compatibility to bootblock loader.
+ *		05/02/96 - Add a maximum startup interface version level
+ &		to allow future kernel compatibility.
  */
-static const char _version[] = "$VER: LoadBSD 2.12 (12.11.95)";
+static const char _version[] = "$VER: LoadBSD 2.13 (2.5.96)";
 
 /*
- * Kernel parameter passing version
+ * Kernel startup interface version
  *	1:	first version of loadbsd
  *	2:	needs esym location passed in a4
- *	3:	allow kernel image in fastmem rather than chipmem, and
- *		passing kernel parameters in a data structure
+ *	3:	load kernel image into fastmem rather than chipmem
+ *	MAX:	highest version with backward compatibility.
  */
-#define KERNEL_PARAMETER_VERSION	3
+#define KERNEL_STARTUP_VERSION	3
+#define	KERNEL_STARTUP_VERSION_MAX	9
 
 #define MAXMEMSEG	16
 struct boot_memlist {
@@ -135,6 +143,9 @@ void get_AGA __P((void));
 void usage __P((void));
 void verbose_usage __P((void));
 void Version __P((void));
+void startit __P((void *, u_long, u_long, void *, u_long, u_long, int, void *,
+		int, int, u_long, u_long, int));
+void startit_end __P((void));
 
 extern struct ExecBase *SysBase;
 extern char *optarg;
@@ -146,6 +157,7 @@ int t_flag;
 int reqmemsz;
 int S_flag;
 u_long I_flag;
+int Z_flag;
 u_long cpuid;
 long eclock_freq;
 long amiga_flags;
@@ -169,6 +181,8 @@ main(argc, argv)
 	u_char *kp;
 	void *fmem;
 	char *esym;
+	void (*start_it) __P((void *, u_long, u_long, void *, u_long, u_long,
+	     int, void *, int, int, u_long, u_long, int)) = startit;
 
 	program_name = argv[0];
 	boothowto = RB_SINGLE;
@@ -180,7 +194,7 @@ main(argc, argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:ptSV")) != EOF) {
+	while ((ch = getopt(argc, argv, "aAbc:DhI:km:n:ptsSVZ")) != EOF) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -200,6 +214,10 @@ main(argc, argv)
 			break;
 		case 'm':
 			reqmemsz = atoi(optarg) * 1024;
+			break;
+		case 's':
+			boothowto &= ~(RB_AUTOBOOT);
+			boothowto |= RB_SINGLE;
 			break;
 		case 'V':
 			fprintf(stderr,"%s\n",_version + 6);
@@ -225,6 +243,9 @@ main(argc, argv)
 			break;
 		case 'I':
 			I_flag = strtoul(optarg, NULL, 16);
+			break;
+		case 'Z':
+			Z_flag = 1;
 			break;
 		case 'h':
 			verbose_usage();
@@ -267,15 +288,10 @@ main(argc, argv)
 		    || read(fd, &stringsz, 4) != 4
 		    || lseek(fd, sizeof(e), SEEK_SET) < 0)
 			err(20, "lseek for symbols");
-		ksize += e.a_syms + 4 + stringsz;
+		ksize += e.a_syms + 4 + ((stringsz + 3) & ~3);
 	}
 
-	if (ksize >= cmemsz) {
-		printf("Kernel size %d exceeds Chip Memory of %d\n",
-		    ksize, cmemsz);
-		err(20, "Insufficient Chip Memory for kernel");
-	}
-	kp = (u_char *)malloc(ksize);
+	kp = (u_char *)malloc(ksize + ((char *)startit_end - (char *)startit) + 256);
 	if (t_flag) {
 		for (i = 0; i < memlist.m_nseg; ++i) {
 			printf("mem segment %d: start=%08lx size=%08lx"
@@ -310,14 +326,14 @@ main(argc, argv)
 	    (fmemsz & 0xfffff) ? fmemsz >> 10 : fmemsz >> 20,
 	    (fmemsz & 0xfffff) ? 'K' : 'M', fmem, cmemsz >> 20);
 	kvers = (u_short *)(kp + e.a_entry - 2);
-	if (*kvers > KERNEL_PARAMETER_VERSION && *kvers != 0x4e73)
+	if (*kvers > KERNEL_STARTUP_VERSION_MAX && *kvers != 0x4e73)
 		err(20, "newer loadbsd required: %d\n", *kvers);
-	if (*kvers > 2) {
+	if (*kvers > KERNEL_STARTUP_VERSION) {
 		printf("****************************************************\n");
 		printf("*** Notice:  this kernel has features which require\n");
 		printf("*** a newer version of loadbsd.  To allow the use of\n");
 		printf("*** any newer features or capabilities, you should\n");
-		printf("*** update your copy of loadbsd\n");
+		printf("*** update to a newer version of loadbsd\n");
 		printf("****************************************************\n");
 		sleep(3);	/* even more time to see that message */
 	}
@@ -339,9 +355,9 @@ main(argc, argv)
 		read(fd, (char *)nkcd, e.a_syms);
 		nkcd = (int *)((char *)nkcd + e.a_syms);
 		read(fd, (char *)nkcd, stringsz);
-		    nkcd = (int*)((char *)nkcd + stringsz);
+		    nkcd = (int*)((char *)nkcd + ((stringsz + 3) & ~3));
 		    esym = (char *)(textsz + e.a_data + e.a_bss
-		    + e.a_syms + 4 + stringsz);
+		    + e.a_syms + 4 + ((stringsz + 3) & ~3));
 	}
 	*nkcd = ncd;
 
@@ -353,6 +369,35 @@ main(argc, argv)
 	kmemlist->m_nseg = memlist.m_nseg;
 	for (mem_ix = 0; mem_ix < memlist.m_nseg; mem_ix++)
 		kmemlist->m_seg[mem_ix] = memlist.m_seg[mem_ix];
+
+	if (*kvers > 2 && Z_flag == 0) {
+		/*
+		 * Kernel supports direct load to fastmem, and the -Z
+		 * option was not specified.  Copy startup code to end
+		 * of kernel image and set start_it.
+		 */
+		memcpy(kp + ksize + 256, (char *)startit,
+		    (char *)startit_end - (char *)startit);
+		CacheClearU();
+		start_it = (void (*)())kp + ksize + 256;
+		printf("*** Loading from %08lx to Fastmem %08lx ***\n",
+		    kp, fmem);
+		sleep(2);
+	} else {
+		/*
+		 * Either the kernel doesn't suppport loading directly to
+		 * fastmem or the -Z flag was given.  Verify kernel image
+		 * fits into chipmem.
+		 */
+		if (ksize >= cmemsz) {
+			printf("Kernel size %d exceeds Chip Memory of %d\n",
+			    ksize, cmemsz);
+			err(20, "Insufficient Chip Memory for kernel");
+		}
+		Z_flag = 1;
+		printf("*** Loading from %08lx to Chipmem ***\n");
+	}
+
 	/*
 	 * if test option set, done
 	 */
@@ -363,8 +408,8 @@ main(argc, argv)
 	 * XXX AGA startup - may need more
 	 */
 	LoadView(NULL);		/* Don't do this if AGA active? */
-	startit(kp, ksize, e.a_entry, fmem, fmemsz, cmemsz, boothowto, esym,
-	    cpuid, eclock_freq, amiga_flags, I_flag);
+	start_it(kp, ksize, e.a_entry, fmem, fmemsz, cmemsz, boothowto, esym,
+	    cpuid, eclock_freq, amiga_flags, I_flag, Z_flag == 0);
 	/*NOTREACHED*/
 }
 
@@ -561,6 +606,7 @@ start_super:
 	movel	a3@(40),d4		| E clock frequency
 	movel	a3@(44),d3		| Amiga flags
 	movel	a3@(48),a2		| Inhibit sync flags
+	movel	a3@(52),d6		| Load to fastmem flag
 	subl	a5,a5			| target, load to 0
 
 	btst	#3,(ABSEXECBASE)@(0x129) | AFB_68040,SysBase->AttnFlags
@@ -596,11 +642,15 @@ nott:
 
 	movew	#(1<<9),0xdff096	| disable DMA
 
+	tstl	d6			| Can we load to fastmem?
+	beq	L0			| No, leave destination at 0
+	movl	a0,a5			| Move to start of fastmem chunk
+	movl	a0,d6			|   and relocate kernel entry
+	addl	d6,sp@			|   address (on top of stack)
 L0:
-	moveb	a1@+,a5@+
-	subl	#1,d2
+	movl	a1@+,a5@+
+	subl	#4,d2
 	bcc	L0
-
 
 	moveq	#0,d2			| zero out unused registers
 	moveq	#0,d6			| (might make future compatibility
@@ -617,13 +667,14 @@ L0:
 nullrp:	.long	0x7fff0001
 zero:	.long	0
 
+_startit_end:
 
 ");
 
 void
 usage()
 {
-	fprintf(stderr, "usage: %s [-abhkptADSV] [-c machine] [-m mem] [-n mode] [-I sync-inhibit] kernel\n",
+	fprintf(stderr, "usage: %s [-abhkpstADSVZ] [-c machine] [-m mem] [-n mode] [-I sync-inhibit] kernel\n",
 	    program_name);
 	exit(1);
 }
@@ -636,7 +687,7 @@ verbose_usage()
 NAME
 \t%s - loads NetBSD from amiga dos.
 SYNOPSIS
-\t%s [-abhkptDSV] [-c machine] [-m mem] [-n flags] kernel
+\t%s [-abhkpstADSVZ] [-c machine] [-m mem] [-n flags] [-I sync-inhibit] kernel
 OPTIONS
 \t-a  Boot up to multiuser mode.
 \t-A  Use AGA display mode, if available.
@@ -657,11 +708,13 @@ OPTIONS
 \t    segment. The higher priority segment is usually faster
 \t    (i.e. 32 bit memory), but some people have smaller amounts
 \t    of 32 bit memory.
+\t-s  Boot up in singleuser mode (default).
 \t-S  Include kernel symbol table.
 \t-t  This is a *test* option.  It prints out the memory
 \t    list information being passed to the kernel and also
 \t    exits without actually starting NetBSD.
 \t-V  Version of loadbsd program.
+\t-Z  Force kernel load to chipmem.
 HISTORY
 \tThis version supports Kernel version 720 +\n",
       program_name, program_name);
