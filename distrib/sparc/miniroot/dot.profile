@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.5 1997/05/05 13:55:28 grr Exp $
+#	$OpenBSD: dot.profile,v 1.6 1997/05/05 16:31:40 grr Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -78,6 +78,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		echo -n "$TERM can't handle $EDITOR"
 		EDITOR="$DUMB"
 		echo ", using $EDITOR as text editor!"
+	elif [ "X$EDITOR" = "X$EDITORS" ]; then
+		echo "Only one editor available, you get to use $EDITOR!"
 	else
 		_forceloop=""
 		while [ "X$_forceloop" = X"" ]; do
@@ -100,15 +102,13 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 				_forceloop=""
 			fi
 			if [ "X$_forceloop" = "X" ]; then
-				echo "Sorry, we don't do $_choice here."
+				echo "Sorry, $_choice isn't available."
 				_forceloop=""
 			fi
 		done
 		EDITOR="$_choice"
 	fi
 	export EDITOR
-
-printenv
 
 	# Installing or upgrading?
 	_forceloop=""

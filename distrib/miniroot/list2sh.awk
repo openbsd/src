@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.4 1997/05/05 11:56:33 grr Exp $
+#	$OpenBSD: list2sh.awk,v 1.5 1997/05/05 16:31:36 grr Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -56,7 +56,7 @@ $1 == "SPECIAL" {
 	gsub("[\\\\]", "\\\\", work);
 	gsub("[\"]", "\\\"", work);
 	gsub("[$]", "\\$", work);
-	gsub("[`]", "\\&", work);
+	gsub("[`]", "\\`", work);
 	printf("echo \"%s\"\n", work);
 	work=$0;
 	sub("^[ 	]*" $1 "[ 	]*", "", work);
