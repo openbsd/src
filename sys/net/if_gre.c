@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.17 2001/06/27 03:49:53 angelos Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.18 2002/04/03 20:35:58 angelos Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -108,9 +108,14 @@ int ngre = 0;
 /*
  * We can control the acceptance of GRE and MobileIP packets by
  * altering the sysctl net.inet.gre.allow and net.inet.mobileip.allow values
- * respectively. Zero means drop them, all else is acceptance.
+ * respectively. Zero means drop them, all else is acceptance.  We can also
+ * control acceptance of WCCPv1-style GRE packets through the
+ * net.inet.gre.wccp value, but be aware it depends upon normal GRE being
+ * allowed as well.
+ * 
  */
 int gre_allow = 0;
+int gre_wccp = 0;
 int ip_mobile_allow = 0;
 
 static void gre_compute_route(struct gre_softc *sc);
