@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.13 1997/09/24 15:11:07 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.14 1997/12/03 15:53:32 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -16,7 +16,7 @@ option		INTELLIMOUSE	# pms support for MS IntelliMouse
 
 maxusers	16		# estimated number of users
 option		TIMEZONE=300	# time zone to adjust RTC time by
-option		DST=1		# daylight savings time used by RTC
+option		DST=0		# daylight savings time used by RTC
 option		NTP		# High precision timekeeping support 
 
 option		SWAPPAGER	# paging; REQUIRED
