@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.188 2003/02/28 22:43:59 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.189 2003/03/02 12:37:49 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -610,7 +610,8 @@ is specified; when a second one is specified it will instead be used for
 packets which have a
 .Em tos
 of
-.Em lowdelay .
+.Em lowdelay
+and for TCP ACKs with no data payload.
 .Pp
 To continue the previous example, the examples below would specify the
 four referenced
