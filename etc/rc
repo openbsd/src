@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.149 2000/08/05 06:38:55 deraadt Exp $
+#	$OpenBSD: rc,v 1.150 2000/08/25 16:14:12 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -349,7 +349,7 @@ if [ -f /sbin/ldconfig ]; then
 	ldconfig $shlib_dirs
 fi
 
-if [ ! -f /etc/ssh_host_dsa_key -a -x /usr/bin/ssh-keygen ]; then
+if [ ! -f /etc/ssh_host_dsa_key ]; then
 	echo -n "ssh-keygen: generating new DSA host key... "
 	if /usr/bin/ssh-keygen -q -d -f /etc/ssh_host_dsa_key -N ''; then
 		echo done.
@@ -357,8 +357,7 @@ if [ ! -f /etc/ssh_host_dsa_key -a -x /usr/bin/ssh-keygen ]; then
 		echo failed.
 	fi
 fi
-if [ ! -f /etc/ssh_host_key -a -x /usr/bin/ssh-keygen ] && \
-    ssh-keygen -R; then
+if [ ! -f /etc/ssh_host_key ]; then
 	echo -n "ssh-keygen: generating new RSA host key... "
 	if /usr/bin/ssh-keygen -q -f /etc/ssh_host_key -N ''; then
 		echo done.
@@ -492,11 +491,7 @@ if [ "X${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
 fi
 
 if [ X"${sshd}" == X"YES" ]; then
-	if [ -x /usr/sbin/sshd ] && /usr/sbin/sshd -Q ; then
-		echo -n ' sshd'
-	elif [ -x /usr/local/sbin/sshd ] && /usr/local/sbin/sshd ; then
-		echo -n ' sshd'
-	fi
+	/usr/sbin/sshd;			echo -n ' sshd'
 fi
 
 echo '.'
