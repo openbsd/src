@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.22 2003/08/08 09:51:54 jmc Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.23 2004/05/06 16:44:42 deraadt Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -47,6 +47,14 @@ The resolver configuration file contains information that is read
 by the resolver routines the first time they are invoked by a process.
 The file is designed to be human readable and contains a list of
 keywords with values that provide various types of resolver information.
+.Pp
+A hash mark
+.Ql #
+or semicolon
+.Ql \;
+indicates the beginning of a comment;
+subsequent characters up to the end of the line are not interpreted by
+the routines that read the file.
 .Pp
 On a normally configured system this file should not be necessary.
 The only name server to be queried will be on the local machine,
