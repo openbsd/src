@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.31 2001/05/26 04:16:08 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.32 2001/06/05 18:28:18 provos Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -817,19 +817,23 @@ int
 pipe_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *wpipe = rpipe->pipe_peer;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &pipe_rfiltops;
+		SLIST_INSERT_HEAD(&rpipe->pipe_sel.si_note, kn, kn_selnext);
 		break;
 	case EVFILT_WRITE:
+		if (wpipe == NULL)
+			return (1);
 		kn->kn_fop = &pipe_wfiltops;
+		SLIST_INSERT_HEAD(&wpipe->pipe_sel.si_note, kn, kn_selnext);
 		break;
 	default:
 		return (1);
 	}
 	
-	SLIST_INSERT_HEAD(&rpipe->pipe_sel.si_note, kn, kn_selnext);
 	return (0);
 }
 
@@ -837,8 +841,18 @@ void
 filt_pipedetach(struct knote *kn)
 {
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *wpipe = rpipe->pipe_peer;
 
-	SLIST_REMOVE(&rpipe->pipe_sel.si_note, kn, knote, kn_selnext);
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		SLIST_REMOVE(&rpipe->pipe_sel.si_note, kn, knote, kn_selnext);
+		break;
+	case EVFILT_WRITE:
+		if (wpipe == NULL)
+			return;
+		SLIST_REMOVE(&wpipe->pipe_sel.si_note, kn, knote, kn_selnext);
+		break;
+	}
 }
 
 /*ARGSUSED*/
