@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.2 2005/03/24 03:07:04 jfb Exp $	*/
+/*	$OpenBSD: date.y,v 1.3 2005/03/24 15:40:43 jfb Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -26,7 +26,8 @@
 
 #include "log.h"
 
-#define EPOCH		1970
+#define YEAR_EPOCH	1970
+#define YEAR_TMORIGIN	1900
 #define HOUR(x)		((time_t)(x) * 60)
 #define SECSPERDAY	(24L * 60L * 60L)
 
@@ -107,194 +108,191 @@ spec	: /* NULL */
 	;
 
 item	: time {
-			yyHaveTime++;
+		yyHaveTime++;
 	}
 	| zone {
-			yyHaveZone++;
+		yyHaveZone++;
 	}
 	| date {
-			yyHaveDate++;
+		yyHaveDate++;
 	}
 	| day {
-			yyHaveDay++;
+		yyHaveDay++;
 	}
 	| rel {
-			yyHaveRel++;
+		yyHaveRel++;
 	}
 	| number
 	;
 
 time	: tUNUMBER tMERIDIAN {
-			yyHour = $1;
-			yyMinutes = 0;
-			yySeconds = 0;
-			yyMeridian = $2;
+		yyHour = $1;
+		yyMinutes = 0;
+		yySeconds = 0;
+		yyMeridian = $2;
 	}
 	| tUNUMBER ':' tUNUMBER o_merid {
-			yyHour = $1;
-			yyMinutes = $3;
-			yySeconds = 0;
-			yyMeridian = $4;
+		yyHour = $1;
+		yyMinutes = $3;
+		yySeconds = 0;
+		yyMeridian = $4;
 	}
 	| tUNUMBER ':' tUNUMBER tSNUMBER {
-			yyHour = $1;
-			yyMinutes = $3;
-			yyMeridian = MER24;
-			yyDSTmode = DSToff;
-			yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
+		yyHour = $1;
+		yyMinutes = $3;
+		yyMeridian = MER24;
+		yyDSTmode = DSToff;
+		yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
 	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER o_merid {
-			yyHour = $1;
-			yyMinutes = $3;
-			yySeconds = $5;
-			yyMeridian = $6;
+		yyHour = $1;
+		yyMinutes = $3;
+		yySeconds = $5;
+		yyMeridian = $6;
 	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER tSNUMBER {
-			yyHour = $1;
-			yyMinutes = $3;
-			yySeconds = $5;
-			yyMeridian = MER24;
-			yyDSTmode = DSToff;
-			yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
+		yyHour = $1;
+		yyMinutes = $3;
+		yySeconds = $5;
+		yyMeridian = MER24;
+		yyDSTmode = DSToff;
+		yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
 	}
 	;
 
 zone	: tZONE {
-			yyTimezone = $1;
-			yyDSTmode = DSToff;
+		yyTimezone = $1;
+		yyDSTmode = DSToff;
 	}
 	| tDAYZONE {
-			yyTimezone = $1;
-			yyDSTmode = DSTon;
+		yyTimezone = $1;
+		yyDSTmode = DSTon;
 	}
-	|
-	  tZONE tDST {
-			yyTimezone = $1;
-			yyDSTmode = DSTon;
+	| tZONE tDST {
+		yyTimezone = $1;
+		yyDSTmode = DSTon;
 	}
 	;
 
 day	: tDAY {
-			yyDayOrdinal = 1;
-			yyDayNumber = $1;
+		yyDayOrdinal = 1;
+		yyDayNumber = $1;
 	}
 	| tDAY ',' {
-			yyDayOrdinal = 1;
-			yyDayNumber = $1;
+		yyDayOrdinal = 1;
+		yyDayNumber = $1;
 	}
 	| tUNUMBER tDAY {
-			yyDayOrdinal = $1;
-			yyDayNumber = $2;
+		yyDayOrdinal = $1;
+		yyDayNumber = $2;
 	}
 	;
 
 date	: tUNUMBER '/' tUNUMBER {
-			yyMonth = $1;
-			yyDay = $3;
-	}
-	| tUNUMBER '/' tUNUMBER '/' tUNUMBER {
-			if ($1 >= 100) {
-		yyYear = $1;
-		yyMonth = $3;
-		yyDay = $5;
-			} else {
 		yyMonth = $1;
 		yyDay = $3;
-		yyYear = $5;
-			}
+	}
+	| tUNUMBER '/' tUNUMBER '/' tUNUMBER {
+		if ($1 >= 100) {
+			yyYear = $1;
+			yyMonth = $3;
+			yyDay = $5;
+		} else {
+			yyMonth = $1;
+			yyDay = $3;
+			yyYear = $5;
+		}
 	}
 	| tUNUMBER tSNUMBER tSNUMBER {
-			/* ISO 8601 format.  yyyy-mm-dd.  */
-			yyYear = $1;
-			yyMonth = -$2;
-			yyDay = -$3;
+		/* ISO 8601 format.  yyyy-mm-dd.  */
+		yyYear = $1;
+		yyMonth = -$2;
+		yyDay = -$3;
 	}
 	| tUNUMBER tMONTH tSNUMBER {
-			/* e.g. 17-JUN-1992.  */
-			yyDay = $1;
-			yyMonth = $2;
-			yyYear = -$3;
+		/* e.g. 17-JUN-1992.  */
+		yyDay = $1;
+		yyMonth = $2;
+		yyYear = -$3;
 	}
 	| tMONTH tUNUMBER {
-			yyMonth = $1;
-			yyDay = $2;
+		yyMonth = $1;
+		yyDay = $2;
 	}
 	| tMONTH tUNUMBER ',' tUNUMBER {
-			yyMonth = $1;
-			yyDay = $2;
-			yyYear = $4;
+		yyMonth = $1;
+		yyDay = $2;
+		yyYear = $4;
 	}
 	| tUNUMBER tMONTH {
-			yyMonth = $2;
-			yyDay = $1;
+		yyMonth = $2;
+		yyDay = $1;
 	}
 	| tUNUMBER tMONTH tUNUMBER {
-			yyMonth = $2;
-			yyDay = $1;
-			yyYear = $3;
+		yyMonth = $2;
+		yyDay = $1;
+		yyYear = $3;
 	}
 	;
 
 rel	: relunit tAGO {
-			yyRelSeconds = -yyRelSeconds;
-			yyRelMonth = -yyRelMonth;
+		yyRelSeconds = -yyRelSeconds;
+		yyRelMonth = -yyRelMonth;
 	}
 	| relunit
 	;
 
 relunit	: tUNUMBER tMINUTE_UNIT {
-			yyRelSeconds += $1 * $2 * 60L;
+		yyRelSeconds += $1 * $2 * 60L;
 	}
 	| tSNUMBER tMINUTE_UNIT {
-			yyRelSeconds += $1 * $2 * 60L;
+		yyRelSeconds += $1 * $2 * 60L;
 	}
 	| tMINUTE_UNIT {
-			yyRelSeconds += $1 * 60L;
+		yyRelSeconds += $1 * 60L;
 	}
 	| tSNUMBER tSEC_UNIT {
-			yyRelSeconds += $1;
+		yyRelSeconds += $1;
 	}
 	| tUNUMBER tSEC_UNIT {
-			yyRelSeconds += $1;
+		yyRelSeconds += $1;
 	}
 	| tSEC_UNIT {
-			yyRelSeconds++;
+		yyRelSeconds++;
 	}
 	| tSNUMBER tMONTH_UNIT {
-			yyRelMonth += $1 * $2;
+		yyRelMonth += $1 * $2;
 	}
 	| tUNUMBER tMONTH_UNIT {
-			yyRelMonth += $1 * $2;
+		yyRelMonth += $1 * $2;
 	}
 	| tMONTH_UNIT {
-			yyRelMonth += $1;
+		yyRelMonth += $1;
 	}
 	;
 
 number	: tUNUMBER {
-			if (yyHaveTime && yyHaveDate && !yyHaveRel)
-		yyYear = $1;
-			else {
-		if($1>10000) {
+		if (yyHaveTime && yyHaveDate && !yyHaveRel)
+			yyYear = $1;
+		else {
+			if ($1 > 10000) {
 				yyHaveDate++;
 				yyDay= ($1)%100;
 				yyMonth= ($1/100)%100;
 				yyYear = $1/10000;
-		}
-		else {
+			} else {
 				yyHaveTime++;
 				if ($1 < 100) {
-			yyHour = $1;
-			yyMinutes = 0;
-				}
-				else {
+					yyHour = $1;
+					yyMinutes = 0;
+				} else {
 					yyHour = $1 / 100;
 					yyMinutes = $1 % 100;
 				}
 				yySeconds = 0;
 				yyMeridian = MER24;
-			    }
 			}
+		}
 	}
 	;
 
@@ -559,14 +557,14 @@ Convert(time_t Month, time_t Day, time_t Year, time_t Hours, time_t Minutes,
 		Year += 2000;
 	else if (Year < 100) {
 		Year += 1900;
-		if (Year < EPOCH)
+		if (Year < YEAR_EPOCH)
 			Year += 100;
 	}
 	DaysInMonth[1] = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0)
 	    ? 29 : 28;
 	/* Checking for 2038 bogusly assumes that time_t is 32 bits.  But
 	   I'm too lazy to try to check for time_t overflow in another way.  */
-	if (Year < EPOCH || Year > 2038 || Month < 1 || Month > 12 ||
+	if (Year < YEAR_EPOCH || Year > 2038 || Month < 1 || Month > 12 ||
 	    /* Lint fluff:  "conversion from long may lose accuracy" */
 	     Day < 1 || Day > DaysInMonth[(int)--Month])
 		return (-1);
@@ -574,7 +572,7 @@ Convert(time_t Month, time_t Day, time_t Year, time_t Hours, time_t Minutes,
 	for (julian = Day - 1, i = 0; i < Month; i++)
 		julian += DaysInMonth[i];
 
-	for (i = EPOCH; i < Year; i++)
+	for (i = YEAR_EPOCH; i < Year; i++)
 		julian += 365 + (i % 4 == 0);
 	julian *= SECSPERDAY;
 	julian += yyTimezone * 60L;
@@ -789,14 +787,12 @@ yylex(void)
 	}
 }
 
-#define TM_YEAR_ORIGIN 1900
-
 /* Yield A - B, measured in seconds.  */
 static long
-difftm (struct tm *a, struct tm *b)
+difftm(struct tm *a, struct tm *b)
 {
-	int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
-	int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
+	int ay = a->tm_year + (YEAR_TMORIGIN - 1);
+	int by = b->tm_year + (YEAR_TMORIGIN - 1);
 	int days = (
 			  /* difference in day of year */
 			  a->tm_yday - b->tm_yday
