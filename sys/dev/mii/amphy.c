@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.7 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.8 2004/09/27 18:25:47 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -75,9 +75,7 @@ const struct mii_phy_funcs amphy_funcs = {
 };
 
 int
-amphymatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+amphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -98,9 +96,7 @@ amphymatch(parent, match, aux)
 }
 
 void
-amphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+amphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -132,10 +128,7 @@ amphyattach(parent, self, aux)
 }
 
 int
-amphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+amphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -193,8 +186,7 @@ amphy_service(sc, mii, cmd)
 }
 
 void
-amphy_status(sc)
-	struct mii_softc *sc;
+amphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphy.c,v 1.8 2004/09/26 03:38:34 brad Exp $	*/
+/*	$OpenBSD: bmtphy.c,v 1.9 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -68,10 +68,7 @@ const struct mii_phy_funcs bmtphy_funcs = {
 };
 
 int
-bmtphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+bmtphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -86,10 +83,7 @@ bmtphymatch(parent, match, aux)
 }
 
 void
-bmtphyattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+bmtphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -119,10 +113,7 @@ bmtphyattach(parent, self, aux)
 }
 
 int
-bmtphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+bmtphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -184,8 +175,7 @@ bmtphy_service(sc, mii, cmd)
 }
 
 void
-bmtphy_status(sc)
-	struct mii_softc *sc;
+bmtphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -233,8 +223,7 @@ bmtphy_status(sc)
 }
 
 void
-bmtphy_reset(sc)
-	struct mii_softc *sc;
+bmtphy_reset(struct mii_softc *sc)
 {
 	int anar;
 

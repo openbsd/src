@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.11 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.12 2004/09/27 18:25:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -66,10 +66,7 @@ const struct mii_phy_funcs rlphy_funcs = {
 };
 
 int
-rlphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+rlphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -94,9 +91,7 @@ rlphymatch(parent, match, aux)
 }
 
 void
-rlphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rlphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -123,10 +118,7 @@ rlphyattach(parent, self, aux)
 }
 
 int
-rlphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
@@ -172,8 +164,7 @@ rlphy_service(sc, mii, cmd)
 }
 
 void
-rlphy_reset(sc)
-	struct mii_softc *sc;
+rlphy_reset(struct mii_softc *sc)
 {
 	int bmcr;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: txphy.c,v 1.7 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: txphy.c,v 1.8 2004/09/27 18:25:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -63,10 +63,7 @@ const struct mii_phy_funcs txphy_funcs = {
 };
 
 int
-txphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+txphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -77,9 +74,7 @@ txphymatch(parent, match, aux)
 }
 
 void
-txphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+txphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -103,10 +98,7 @@ txphyattach(parent, self, aux)
 }
 
 int
-txphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+txphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 

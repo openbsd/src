@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.14 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.15 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -104,10 +104,7 @@ const struct mii_phy_funcs exphy_funcs = {
 };
 
 int
-exphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+exphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -132,9 +129,7 @@ exphymatch(parent, match, aux)
 }
 
 void
-exphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+exphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -181,10 +176,7 @@ exphyattach(parent, self, aux)
 }
 
 int
-exphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
@@ -237,8 +229,7 @@ exphy_service(sc, mii, cmd)
 }
 
 void
-exphy_reset(sc)
-	struct mii_softc *sc;
+exphy_reset(struct mii_softc *sc)
 {
 
 	mii_phy_reset(sc);

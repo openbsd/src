@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.12 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.13 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -103,10 +103,7 @@ const struct mii_phy_funcs ukphy_funcs = {
 };
 
 int
-ukphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+ukphymatch(struct device *parent, void *match, void *aux)
 {
 
 	/*
@@ -116,9 +113,7 @@ ukphymatch(parent, match, aux)
 }
 
 void
-ukphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ukphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -154,10 +149,7 @@ ukphyattach(parent, self, aux)
 }
 
 int
-ukphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+ukphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;

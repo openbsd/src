@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.15 2004/09/26 03:38:34 brad Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.16 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -109,10 +109,7 @@ const struct mii_phy_funcs nsphy_funcs = {
 };
 
 int
-nsphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+nsphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -124,10 +121,7 @@ nsphymatch(parent, match, aux)
 }
 
 void
-nsphyattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+nsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -152,10 +146,7 @@ nsphyattach(parent, self, aux)
 }
 
 int
-nsphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+nsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -247,8 +238,7 @@ nsphy_service(sc, mii, cmd)
 }
 
 void
-nsphy_status(sc)
-	struct mii_softc *sc;
+nsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -325,8 +315,7 @@ nsphy_status(sc)
 }
 
 void
-nsphy_reset(sc)
-	struct mii_softc *sc;
+nsphy_reset(struct mii_softc *sc)
 {
 	int anar;
 

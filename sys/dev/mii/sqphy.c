@@ -1,4 +1,4 @@
-/*	$OpenBSD: sqphy.c,v 1.10 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: sqphy.c,v 1.11 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: sqphy.c,v 1.17 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -108,10 +108,7 @@ const struct mii_phy_funcs sqphy_funcs = {
 };
 
 int
-sqphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+sqphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -127,9 +124,7 @@ sqphymatch(parent, match, aux)
 }
 
 void
-sqphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sqphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -162,10 +157,7 @@ sqphyattach(parent, self, aux)
 }
 
 int
-sqphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+sqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -227,8 +219,7 @@ sqphy_service(sc, mii, cmd)
 }
 
 void
-sqphy_status(sc)
-	struct mii_softc *sc;
+sqphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

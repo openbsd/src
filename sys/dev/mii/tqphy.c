@@ -1,4 +1,4 @@
-/*	$OpenBSD: tqphy.c,v 1.7 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: tqphy.c,v 1.8 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: tqphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*
@@ -109,10 +109,7 @@ const struct mii_phy_funcs tqphy_funcs = {
 };
 
 int
-tqphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+tqphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -127,9 +124,7 @@ tqphymatch(parent, match, aux)
 }
 
 void
-tqphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tqphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -158,10 +153,7 @@ tqphyattach(parent, self, aux)
 }
 
 int
-tqphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+tqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -223,8 +215,7 @@ tqphy_service(sc, mii, cmd)
 }
 
 void
-tqphy_status(sc)
-	struct mii_softc *sc;
+tqphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

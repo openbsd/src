@@ -1,5 +1,4 @@
-/*	$OpenBSD: mii_bitbang.c,v 1.2 2002/03/14 01:26:57 millert Exp $	*/
-/*	$NetBSD$	*/
+/*	$OpenBSD: mii_bitbang.c,v 1.3 2004/09/27 18:25:48 brad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -72,9 +71,7 @@ do {									\
  *	Synchronize the MII.
  */
 void
-mii_bitbang_sync(sc, ops)
-	struct device *sc;
-	mii_bitbang_ops_t ops;
+mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
 {
 	int i, v;
 
@@ -93,11 +90,8 @@ mii_bitbang_sync(sc, ops)
  *	Send a series of bits to the MII.
  */
 void
-mii_bitbang_sendbits(sc, ops, data, nbits)
-	struct device *sc;
-	mii_bitbang_ops_t ops;
-	u_int32_t data;
-	int nbits;
+mii_bitbang_sendbits(struct device *sc, mii_bitbang_ops_t ops,
+    u_int32_t data, int nbits)
 {
 	int i, v;
 
@@ -121,10 +115,8 @@ mii_bitbang_sendbits(sc, ops, data, nbits)
  *	Read a PHY register by bit-bang'ing the MII.
  */
 int
-mii_bitbang_readreg(sc, ops, phy, reg)
-	struct device *sc;
-	mii_bitbang_ops_t ops;
-	int phy, reg;
+mii_bitbang_readreg(struct device *sc, mii_bitbang_ops_t ops, int phy,
+    int reg)
 {
 	int val = 0, err = 0, i;
 
@@ -171,10 +163,8 @@ mii_bitbang_readreg(sc, ops, phy, reg)
  *	Write a PHY register by bit-bang'ing the MII.
  */
 void
-mii_bitbang_writereg(sc, ops, phy, reg, val)
-	struct device *sc;
-	mii_bitbang_ops_t ops;
-	int phy, reg, val;
+mii_bitbang_writereg(struct device *sc, mii_bitbang_ops_t ops,
+    int phy, int reg, int val)
 {
 
 	mii_bitbang_sync(sc, ops);

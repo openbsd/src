@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.3 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.4 2004/09/27 18:25:48 brad Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -90,10 +90,7 @@ const struct mii_phy_funcs rgephy_funcs = {
 };
 
 int
-rgephymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+rgephymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -106,9 +103,7 @@ rgephymatch(parent, match, aux)
 }
 
 void
-rgephyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rgephyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -139,10 +134,7 @@ rgephyattach(parent, self, aux)
 }
 
 int
-rgephy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg, speed, gig;
@@ -298,8 +290,7 @@ setit:
 }
 
 void
-rgephy_status(sc)
-	struct mii_softc *sc;
+rgephy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	int bmsr, bmcr;
@@ -339,18 +330,17 @@ rgephy_status(sc)
 
 
 int
-rgephy_mii_phy_auto(mii)
-	struct mii_softc *mii;
+rgephy_mii_phy_auto(struct mii_softc *sc)
 {
-	rgephy_loop(mii);
-	PHY_RESET(mii);
+	rgephy_loop(sc);
+	PHY_RESET(sc);
 
-	PHY_WRITE(mii, RGEPHY_MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);
+	PHY_WRITE(sc, RGEPHY_MII_ANAR,
+	    BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA);
 	DELAY(1000);
-	PHY_WRITE(mii, RGEPHY_MII_1000CTL, RGEPHY_1000CTL_AFD);
+	PHY_WRITE(sc, RGEPHY_MII_1000CTL, RGEPHY_1000CTL_AFD);
 	DELAY(1000);
-	PHY_WRITE(mii, RGEPHY_MII_BMCR,
+	PHY_WRITE(sc, RGEPHY_MII_BMCR,
 	    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
 	DELAY(100);
 

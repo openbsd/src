@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.13 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.14 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -109,10 +109,7 @@ const struct mii_phy_funcs icsphy_funcs = {
 };
 
 int
-icsphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+icsphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -132,9 +129,7 @@ icsphymatch(parent, match, aux)
 }
 
 void
-icsphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+icsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;

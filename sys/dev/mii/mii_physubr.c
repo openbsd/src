@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.18 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.19 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -94,8 +94,7 @@ const struct mii_media mii_media_table[] = {
 void	mii_phy_auto_timeout(void *);
 
 void
-mii_phy_setmedia(sc)
-	struct mii_softc *sc;
+mii_phy_setmedia(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -127,9 +126,7 @@ mii_phy_setmedia(sc)
 }
 
 int
-mii_phy_auto(sc, waitfor)
-	struct mii_softc *sc;
-	int waitfor;
+mii_phy_auto(struct mii_softc *sc, int waitfor)
 {
 	int bmsr, i;
 
@@ -173,8 +170,7 @@ mii_phy_auto(sc, waitfor)
 }
 
 void
-mii_phy_auto_timeout(arg)
-	void *arg;
+mii_phy_auto_timeout(void *arg)
 {
 	struct mii_softc *sc = arg;
 	int s, bmsr;
@@ -192,8 +188,7 @@ mii_phy_auto_timeout(arg)
 }
 
 int
-mii_phy_tick(sc)
-	struct mii_softc *sc;
+mii_phy_tick(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -244,8 +239,7 @@ mii_phy_tick(sc)
 }
 
 void
-mii_phy_reset(sc)
-	struct mii_softc *sc;
+mii_phy_reset(struct mii_softc *sc)
 {
 	int reg, i;
 
@@ -268,8 +262,7 @@ mii_phy_reset(sc)
 }
 
 void
-mii_phy_down(sc)
-	struct mii_softc *sc;
+mii_phy_down(struct mii_softc *sc)
 {
 	if (sc->mii_flags & MIIF_DOINGAUTO) {
 		sc->mii_flags &= ~MIIF_DOINGAUTO;
@@ -279,17 +272,13 @@ mii_phy_down(sc)
 
 
 void
-mii_phy_status(sc)
-	struct mii_softc *sc;
+mii_phy_status(struct mii_softc *sc)
 {
-
 	PHY_STATUS(sc);
 }
 
 void
-mii_phy_update(sc, cmd)
-	struct mii_softc *sc;
-	int cmd;
+mii_phy_update(struct mii_softc *sc, int cmd)
 {
 	struct mii_data *mii = sc->mii_pdata;
 
@@ -304,8 +293,7 @@ mii_phy_update(sc, cmd)
 }
 
 void
-mii_phy_statusmsg(sc)
-	struct mii_softc *sc;
+mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
@@ -353,8 +341,7 @@ mii_phy_statusmsg(sc)
  * of media names.  Does not print a newline.
  */
 void
-mii_phy_add_media(sc)
-	struct mii_softc *sc;
+mii_phy_add_media(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 
@@ -419,8 +406,7 @@ mii_phy_add_media(sc)
 }
 
 void
-mii_phy_delete_media(sc)
-	struct mii_softc *sc;
+mii_phy_delete_media(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 
@@ -428,9 +414,7 @@ mii_phy_delete_media(sc)
 }
 
 int
-mii_phy_activate(self, act)
-	struct device *self;
-	enum devact act;
+mii_phy_activate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -448,9 +432,7 @@ mii_phy_activate(self, act)
 }
 
 int
-mii_phy_detach(self, flags)
-	struct device *self;
-	int flags;
+mii_phy_detach(struct device *self, int flags)
 {
 	struct mii_softc *sc = (void *) self;
 
@@ -466,8 +448,7 @@ mii_phy_detach(self, flags)
  * Given an ifmedia word, return the corresponding ANAR value.
  */
 int
-mii_anar(media)
-	int media;
+mii_anar(int media)
 {
 	int rv;
 

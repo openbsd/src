@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.9 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.10 2004/09/27 18:25:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -107,9 +107,7 @@ const struct mii_phy_funcs dcphy_funcs = {
 };
 
 int
-dcphy_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+dcphy_match(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -125,10 +123,7 @@ dcphy_match(parent, match, aux)
 }
 
 void
-dcphy_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+dcphy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -181,10 +176,7 @@ dcphy_attach(parent, self, aux)
 }
 
 int
-dcphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+dcphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct dc_softc *dc_sc;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -320,8 +312,7 @@ dcphy_service(sc, mii, cmd)
 }
 
 void
-dcphy_status(sc)
-	struct mii_softc *sc;
+dcphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	int reg, anlpar, tstat = 0;
@@ -406,9 +397,7 @@ skip:
 }
 
 int
-dcphy_auto(mii, waitfor)
-	struct mii_softc	*mii;
-	int			waitfor;
+dcphy_auto(struct mii_softc *mii, int waitfor)
 {
 	int			i;
 	struct dc_softc		*sc;
@@ -456,8 +445,7 @@ dcphy_auto(mii, waitfor)
 }
 
 void
-dcphy_reset(mii)
-	struct mii_softc	*mii;
+dcphy_reset(struct mii_softc *mii)
 {
 	struct dc_softc		*sc;
 

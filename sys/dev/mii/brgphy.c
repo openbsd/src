@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.16 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.17 2004/09/27 18:25:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -90,9 +90,7 @@ const struct mii_phy_funcs brgphy_funcs = {
 };
 
 int
-brgphy_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+brgphy_probe(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -111,9 +109,7 @@ brgphy_probe(parent, match, aux)
 }
 
 void
-brgphy_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+brgphy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -161,10 +157,7 @@ brgphy_attach(parent, self, aux)
 }
 
 int
-brgphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg, speed, gig;
@@ -331,8 +324,7 @@ setit:
 }
 
 void
-brgphy_status(sc)
-	struct mii_softc *sc;
+brgphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -392,8 +384,7 @@ brgphy_status(sc)
 
 
 int
-brgphy_mii_phy_auto(sc)
-	struct mii_softc *sc;
+brgphy_mii_phy_auto(struct mii_softc *sc)
 {
 	int ktcr = 0;
 
@@ -435,8 +426,7 @@ brgphy_loop(struct mii_softc *sc)
 }
 
 void
-brgphy_reset(sc)
-	struct mii_softc *sc;
+brgphy_reset(struct mii_softc *sc)
 {
 	struct bge_softc *bge_sc;
 	struct ifnet *ifp;
@@ -515,8 +505,7 @@ static const struct bcm_dspcode bcm5704_dspcode[] = {
 };
 
 void
-brgphy_load_dspcode(sc)
-	struct mii_softc *sc;
+brgphy_load_dspcode(struct mii_softc *sc)
 {
 	const struct bcm_dspcode *dsp = NULL;
 	int wait=0, i;

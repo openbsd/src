@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.19 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.20 2004/09/27 18:25:48 brad Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -42,12 +42,7 @@
 #define	_DEV_MII_MIIVAR_H_
 
 #include <sys/queue.h>
-
-#if defined(__NetBSD__)
-#include <sys/callout.h>
-#elif defined(__OpenBSD__)
 #include <sys/timeout.h>
-#endif
 
 /*
  * Media Independent Interface autoconfiguration definitions.
@@ -140,11 +135,7 @@ struct mii_softc {
 	int mii_ticks;			/* MII_TICK counter */
 	int mii_anegticks;		/* ticks before retrying aneg */
 
-#if defined(__NetBSD__)
-	struct callout mii_nway_ch;	/* NWAY callout */
-#elif defined(__OpenBSD__)
 	struct timeout mii_phy_timo;	/* timeout handle */
-#endif
 
 	int mii_media_active;		/* last active media */
 	int mii_media_status;		/* last active status */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xmphy.c,v 1.8 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: xmphy.c,v 1.9 2004/09/27 18:25:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -78,9 +78,7 @@ const struct mii_phy_funcs xmphy_funcs = {
 	xmphy_service, xmphy_status, mii_phy_reset,
 };
 
-int xmphy_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+int xmphy_probe(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -92,9 +90,7 @@ int xmphy_probe(parent, match, aux)
 }
 
 void
-xmphy_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+xmphy_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -125,10 +121,7 @@ xmphy_attach(parent, self, aux)
 }
 
 int
-xmphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+xmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -241,8 +234,7 @@ xmphy_service(sc, mii, cmd)
 }
 
 void
-xmphy_status(sc)
-	struct mii_softc *sc;
+xmphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	int bmsr, bmcr, anlpar;
@@ -296,23 +288,21 @@ xmphy_status(sc)
 
 
 int
-xmphy_mii_phy_auto(mii, waitfor)
-	struct mii_softc *mii;
-	int waitfor;
+xmphy_mii_phy_auto(struct mii_softc *sc, int waitfor)
 {
 	int bmsr, i;
 
-	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
-		PHY_WRITE(mii, XMPHY_MII_ANAR,
+	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
+		PHY_WRITE(sc, XMPHY_MII_ANAR,
 		    XMPHY_ANAR_FDX|XMPHY_ANAR_HDX);
-		PHY_WRITE(mii, XMPHY_MII_BMCR,
+		PHY_WRITE(sc, XMPHY_MII_BMCR,
 		    XMPHY_BMCR_AUTOEN | XMPHY_BMCR_STARTNEG);
 	}
 
 	if (waitfor) {
 		/* Wait 500ms for it to complete. */
 		for (i = 0; i < 500; i++) {
-			if ((bmsr = PHY_READ(mii, XMPHY_MII_BMSR)) &
+			if ((bmsr = PHY_READ(sc, XMPHY_MII_BMSR)) &
 			    XMPHY_BMSR_ACOMP)
 				return (0);
 			DELAY(1000);
@@ -336,10 +326,10 @@ xmphy_mii_phy_auto(mii, waitfor)
 	 * the tick handler driving autonegotiation.  Don't want 500ms
 	 * delays all the time while the system is running!
 	 */
-	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
-		mii->mii_flags |= MIIF_DOINGAUTO;
-		timeout_set(&mii->mii_phy_timo, mii_phy_auto_timeout, mii);
-		timeout_add(&mii->mii_phy_timo, hz >> 1);
+	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
+		sc->mii_flags |= MIIF_DOINGAUTO;
+		timeout_set(&sc->mii_phy_timo, mii_phy_auto_timeout, sc);
+		timeout_add(&sc->mii_phy_timo, hz >> 1);
 	}
 	return (EJUSTRETURN);
 }

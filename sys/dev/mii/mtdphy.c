@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtdphy.c,v 1.9 2004/09/26 00:59:58 brad Exp $	*/
+/*	$OpenBSD: mtdphy.c,v 1.10 2004/09/27 18:25:48 brad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -64,10 +64,7 @@ const struct mii_phy_funcs mtdphy_funcs = {
 };
 
 int
-mtdphymatch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+mtdphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -79,9 +76,7 @@ mtdphymatch(parent, match, aux)
 }
 
 void
-mtdphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mtdphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -104,10 +99,7 @@ mtdphyattach(parent, self, aux)
 }
 
 int
-mtdphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+mtdphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
