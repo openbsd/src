@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.11 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.12 2001/11/22 09:47:37 art Exp $	*/
 /*	$NetBSD: iommu.c,v 1.13 1997/07/29 09:42:04 fair Exp $ */
 
 /*
@@ -130,7 +130,7 @@ iommu_attach(parent, self, aux)
 	register iopte_t *tpte_p;
 	struct pglist mlist;
 	struct vm_page *m;
-	vaddr_t iopte_va;
+	vaddr_t va;
 	paddr_t iopte_pa;
 
 /*XXX-GCC!*/mmupcrsave=0;
@@ -186,20 +186,17 @@ iommu_attach(parent, self, aux)
 #define DVMA_PTESIZE ((0 - DVMA4M_BASE) / 1024)
 	if (uvm_pglistalloc(DVMA_PTESIZE, 0, 0xffffffff, DVMA_PTESIZE,
 			    0, &mlist, 1, 0) ||
-	    (iopte_va = uvm_km_valloc(kernel_map, DVMA_PTESIZE)) == 0)
+	    (va = uvm_km_valloc(kernel_map, DVMA_PTESIZE)) == 0)
 		panic("iommu_attach: can't allocate memory for pagetables");
 #undef DVMA_PTESIZE
 	m = TAILQ_FIRST(&mlist);
 	iopte_pa = VM_PAGE_TO_PHYS(m);
-	sc->sc_ptes = (iopte_t *) iopte_va;
+	sc->sc_ptes = (iopte_t *) va;
 
 	while (m) {
-		/* XXX - art, pagewire breaks the tailq */
-		uvm_pagewire(m);
-		pmap_enter(pmap_kernel(), iopte_va, VM_PAGE_TO_PHYS(m),
-			   VM_PROT_READ|VM_PROT_WRITE,
-			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-		iopte_va += NBPG;
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
+		pmap_kenter_pa(va, pa | PMAP_NC, VM_PROT_READ|VM_PROT_WRITE);
+		va += PAGE_SIZE;
 		m = TAILQ_NEXT(m, pageq);
 	}
 
@@ -211,14 +208,6 @@ iommu_attach(parent, self, aux)
 	 *
 	 * XXX Note that this is rather messy.
 	 */
-
-
-	/*
-	 * Now discache the page tables so that the IOMMU sees our
-	 * changes.
-	 */
-	kvm_uncache((caddr_t)sc->sc_ptes,
-		(((0 - DVMA4M_BASE)/sc->sc_pagesize) * sizeof(iopte_t)) / NBPG);
 
 	/*
 	 * Ok. We've got to read in the original table using MMU bypass,
