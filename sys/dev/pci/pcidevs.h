@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.263 2000/05/31 07:07:43 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.264 2000/05/31 22:12:57 chris Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -636,7 +636,7 @@
 
 /* ADMtek products */
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 */
-#define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* AN985 */
+#define	PCI_PRODUCT_ADMTEK_AN983	0x0985		/* AN983 */
 
 /* Adaptec products */
 #define	PCI_PRODUCT_ADP_AIC7810	0x1078		/* AIC-7810 */
