@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1995, 1996 Theo de Raadt.  All rights reserved.
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -14,6 +15,7 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
+ *	This product includes software developed by Theo de Raadt.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -32,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.14 1996/08/31 17:56:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.15 1996/09/01 18:31:29 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
