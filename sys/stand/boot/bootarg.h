@@ -1,7 +1,7 @@
-/*	$OpenBSD: bootarg.h,v 1.3 1997/10/25 06:58:49 mickey Exp $	*/
+/*	$OpenBSD: bootarg.h,v 1.4 1998/05/18 21:51:45 mickey Exp $	*/
 
 /*
- * Copyright (c) 1996 Michael Shalayeff
+ * Copyright (c) 1996,1997,1998 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,12 @@
  *
  */
 
+#define	BOOTARG_APIVER	(BAPIV_VECTOR)
+#define	BAPIV_ANCIENT	0x00000000	/* MD old i386 bootblocks */
+#define	BAPIV_VARS	0x00000001	/* MD structure w/ add info passed */
+#define	BAPIV_VECTOR	0x00000002	/* MI vector of MD structures passed */
+#define	BAPIV_ENV	0x00000004	/* MI environment vars vector */
+
 typedef struct _boot_args {
 	int ba_type;
 	size_t ba_size;
@@ -39,6 +45,7 @@ typedef struct _boot_args {
 	int ba_arg[1];
 } bootarg_t;
 
+#define	BOOTARG_ENV	0x1000
 #define	BOOTARG_END	-1
 
 #if defined(_KERNEL) || defined(_STANDALONE)
