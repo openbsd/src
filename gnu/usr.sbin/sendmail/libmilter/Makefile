@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2004/06/29 21:53:58 millert Exp $
+#	$OpenBSD: Makefile,v 1.9 2004/12/22 17:01:03 millert Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,8 @@ DOCS=		api.html design.html figure1.jpg figure2.jpg index.html \
 MDOCDIR=	${DESTDIR}${DOCDIR}/html/milter
 SRCS=		main.c engine.c listener.c handler.c comm.c smfi.c signal.c \
 		sm_gethost.c errstring.c strl.c
-CPPFLAGS+=	-D_FFR_MILTER_ROOT_UNSAFE -pthread -Dsm_snprintf=snprintf
+CPPFLAGS+=	-D_FFR_MILTER_ROOT_UNSAFE -ULDAPMAP -pthread \
+		-Dsm_snprintf=snprintf
 .PATH:		${.CURDIR}/../libsm
 
 # Only build the .a version for now.
