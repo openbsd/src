@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.57 2004/01/11 21:56:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.58 2004/01/11 21:57:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -618,7 +618,6 @@ rde_send_nexthop(struct bgpd_addr *next, int valid)
 	else
 		type = IMSG_NEXTHOP_REMOVE;
 
-	/* XXX change to bgpd_addr */
 	if (imsg_compose(&ibuf_main, type, 0, next,
 	    sizeof(struct bgpd_addr)) == -1)
 		fatal("imsg_compose error");
