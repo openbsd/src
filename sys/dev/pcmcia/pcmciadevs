@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.63 2001/05/25 05:05:33 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.64 2001/05/27 19:49:01 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -59,6 +59,7 @@ vendor QUATECH			0x0137	Quatech
 vendor COMPAQ			0x0138	Compaq
 vendor GREYCELL			0x0143	Grey Cell
 vendor LINKSYS			0x0149	Linksys
+vendor NETGEAR			0x0149	Netgear
 vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent
@@ -228,7 +229,10 @@ product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster
 product NEWMEDIA WAVJAMMER	0xe005 NewMedia .WAVjammer
 product NEWMEDIA2 BUSTOASTER	0x0001 NewMedia BusToaster
 
-/* Nokia Products */
+/* Netgear */
+product NETGEAR FA410TXC	0x4530 Netgear FA410TXC
+
+/* Nokia */
 product NOKIA C020_WLAN		0x20c0 Nokia C020
 
 /* Panasonic */
