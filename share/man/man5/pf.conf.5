@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.302 2004/10/18 23:08:08 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.303 2004/10/28 19:29:53 mcbride Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -601,7 +601,7 @@ the firewall state, and expires before reaching the destination host.
 .Ar reassemble tcp
 will raise the TTL of all packets back up to the highest value seen on
 the connection.
-.It timeout modulation
+.It timestamp modulation
 Modern TCP stacks will send a timestamp on every TCP packet and echo
 the other endpoint's timestamp back to them.
 Many operating systems will merely start the timestamp at zero when
