@@ -105,6 +105,7 @@ privilege can change the value.
 .It kern.ostype	string	no
 .It kern.osrelease	string	no
 .It kern.osrevision	integer	no
+.It kern.osversion	string  no
 .It kern.version	string	no
 .It kern.maxvnodes	integer	yes
 .It kern.maxproc	integer	yes
@@ -114,6 +115,7 @@ privilege can change the value.
 .It kern.argmax	integer	no
 .It kern.securelevel	integer	raise only
 .It kern.hostname	string	yes
+.It kern.domainname	string  yes
 .It kern.hostid	integer	yes
 .It kern.clockrate	struct	no
 .It kern.posix1version	integer	no
@@ -130,6 +132,9 @@ privilege can change the value.
 .It kern.no_trunc	integer	no
 .It kern.vdisable	integer	no
 .It kern.boottime	struct	no
+.It kern.somaxconn	int	yes
+.It kern.sominconn	int	yes
+.It kern.usermount	int	yes
 .It vm.loadavg	struct	no
 .It machdep.console_device	dev_t	no
 .It net.inet.ip.forwarding	integer	yes
@@ -163,6 +168,8 @@ privilege can change the value.
 .It user.posix2_localedef	integer	no
 .It user.posix2_sw_dev	integer	no
 .It user.posix2_upe	integer	no
+.It user.stream_max	integer no
+.It user.tzname_max	integer no
 .El
 .Sh EXAMPLES
 .Pp
