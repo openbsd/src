@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.4 1997/11/15 21:51:30 todd Exp $	*/
+/*	$OpenBSD: set.c,v 1.5 2001/12/01 19:10:39 deraadt Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: set.c,v 1.4 1997/11/15 21:51:30 todd Exp $";
+static char rcsid[] = "$OpenBSD: set.c,v 1.5 2001/12/01 19:10:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -458,7 +458,7 @@ adrof1(name, v)
     register Char *name;
     register struct varent *v;
 {
-    register cmp;
+    register int cmp;
 
     v = v->v_left;
     while (v && ((cmp = *name - *v->v_name) ||
@@ -513,7 +513,7 @@ setq(name, vec, p)
     register struct varent *p;
 {
     register struct varent *c;
-    register f;
+    register int f;
 
     f = 0;			/* tree hangs off the header's left link */
     while ((c = p->v_link[f]) != NULL) {
@@ -587,7 +587,7 @@ unsetv1(p)
     register struct varent *p;
 {
     register struct varent *c, *pp;
-    register f;
+    register int f;
 
     /*
      * Free associated memory first to avoid complications.
@@ -727,7 +727,7 @@ balance(p, f, d)
     register struct varent *t;	/* used by the rotate macros */
 
 #endif
-    register ff;
+    register int ff;
 
     /*
      * Ok, from here on, p is the node we're operating on; pp is it's parent; f
@@ -816,7 +816,7 @@ plist(p)
     register struct varent *p;
 {
     register struct varent *c;
-    register len;
+    register int len;
     sigset_t sigset;
 
     if (setintr) {

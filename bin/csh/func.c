@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.11 2001/07/09 07:02:08 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.12 2001/12/01 19:10:39 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.11 2001/07/09 07:02:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.12 2001/12/01 19:10:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ isbfunc(t)
      * one past the end.
      */
     for (bp1 = bfunc, bp2 = bfunc + nbfunc; bp1 < bp2;) {
-	register i;
+	register int i;
 
 	bp = bp1 + ((bp2 - bp1) >> 1);
 	if ((i = *cp - *bp->bname) == 0 &&
@@ -612,7 +612,7 @@ srchx(cp)
     register Char *cp;
 {
     register struct srch *sp, *sp1, *sp2;
-    register i;
+    register int i;
 
     /*
      * Binary search Sp1 is the beginning of the current search range. Sp2 is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.3 1997/07/25 18:58:12 mickey Exp $	*/
+/*	$OpenBSD: lex.c,v 1.4 2001/12/01 19:10:39 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.9 1995/09/27 00:38:46 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.3 1997/07/25 18:58:12 mickey Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.4 2001/12/01 19:10:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1331,7 +1331,7 @@ readc(wanteof)
     bool    wanteof;
 {
     register int c;
-    static  sincereal;
+    static int sincereal;
 
     aret = F_SEEK;
     if ((c = peekread) != '\0') {

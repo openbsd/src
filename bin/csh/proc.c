@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.12 2000/06/28 19:41:10 millert Exp $	*/
+/*	$OpenBSD: proc.c,v 1.13 2001/12/01 19:10:39 deraadt Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: proc.c,v 1.12 2000/06/28 19:41:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: proc.c,v 1.13 2001/12/01 19:10:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -671,7 +671,7 @@ pprint(pp, flag)
     register struct process *pp;
     bool    flag;
 {
-    register status, reason;
+    register int status, reason;
     struct process *tp;
     int     jobflags, pstatus;
     bool hadnl = 1;	/* did we just have a newline */

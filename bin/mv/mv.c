@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.19 2001/09/06 13:29:08 mpech Exp $	*/
+/*	$OpenBSD: mv.c,v 1.20 2001/12/01 19:10:39 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.19 2001/09/06 13:29:08 mpech Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.20 2001/12/01 19:10:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,7 +281,7 @@ fastcopy(from, to, sbp)
 	static u_int blen;
 	static char *bp;
 	register int nread, from_fd, to_fd;
-	int badchown = 0, serrno;
+	int badchown = 0, serrno = 0;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
 		warn("%s", from);
