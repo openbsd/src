@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ipc_10.c,v 1.3 1998/02/10 04:04:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_ipc_10.c,v 1.4 2000/05/01 23:12:28 deraadt Exp $	*/
 /*	$NetBSD: kern_ipc_10.c,v 1.4 1995/10/07 06:26:25 mycroft Exp $	*/
 
 /*
@@ -76,9 +76,6 @@ compat_10_sys_semsys(p, v, retval)
 		syscallarg(struct sembuf *) sops;
 		syscallarg(u_int) nsops;
 	} */ semop_args;
-	struct sys_semconfig_args /* {
-		syscallarg(int) flag;
-	} */ semconfig_args;
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */
@@ -99,10 +96,6 @@ compat_10_sys_semsys(p, v, retval)
 		SCARG(&semop_args, sops) = (struct sembuf *)SCARG(uap, a3);
 		SCARG(&semop_args, nsops) = SCARG(uap, a4);
 		return (sys_semop(p, &semop_args, retval));
-
-	case 3:						/* semconfig() */
-		SCARG(&semconfig_args, flag) = SCARG(uap, a2);
-		return (sys_semconfig(p, &semconfig_args, retval));
 
 	default:
 		return (EINVAL);

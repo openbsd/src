@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.3 1998/06/11 18:32:16 deraadt Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.4 2000/05/01 23:12:30 deraadt Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -20,9 +20,7 @@
 #include <sys/syscallargs.h>
 
 int	semtot = 0;
-struct	proc *semlock_holder = NULL;
 
-void semlock __P((struct proc *));
 struct sem_undo *semu_alloc __P((struct proc *));
 int semundo_adjust __P((struct proc *, struct sem_undo **, int, int, int));
 void semundo_clear __P((int, int));
@@ -46,65 +44,6 @@ seminit()
 		suptr->un_proc = NULL;
 	}
 	semu_list = NULL;
-}
-
-void
-semlock(p)
-	struct proc *p;
-{
-
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
-}
-
-/*
- * Lock or unlock the entire semaphore facility.
- *
- * This will probably eventually evolve into a general purpose semaphore
- * facility status enquiry mechanism (I don't like the "read /dev/kmem"
- * approach currently taken by ipcs and the amount of info that we want
- * to be able to extract for ipcs is probably beyond the capability of
- * the getkerninfo facility.
- *
- * At the time that the current version of semconfig was written, ipcs is
- * the only user of the semconfig facility.  It uses it to ensure that the
- * semaphore facility data structures remain static while it fishes around
- * in /dev/kmem.
- */
-
-int
-sys_semconfig(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_semconfig_args /* {
-		syscallarg(int) flag;
-	} */ *uap = v;
-	int eval = 0;
-
-	semlock(p);
-
-	switch (SCARG(uap, flag)) {
-	case SEM_CONFIG_FREEZE:
-		semlock_holder = p;
-		break;
-
-	case SEM_CONFIG_THAW:
-		semlock_holder = NULL;
-		wakeup((caddr_t)&semlock_holder);
-		break;
-
-	default:
-		printf(
-		    "semconfig: unknown flag parameter value (%d) - ignored\n",
-		    SCARG(uap, flag));
-		eval = EINVAL;
-		break;
-	}
-
-	*retval = 0;
-	return(eval);
 }
 
 /*
@@ -318,8 +257,6 @@ sys___osemctl(p, v, retval)
 	printf("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg);
 #endif
 
-	semlock(p);
-
 	semid = IPCID_TO_IX(semid);
 	if (semid < 0 || semid >= seminfo.semmsl)
 		return(EINVAL);
@@ -483,8 +420,6 @@ sys___semctl(p, v, retval)
 	printf("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg);
 #endif
 
-	semlock(p);
-
 	semid = IPCID_TO_IX(semid);
 	if (semid < 0 || semid >= seminfo.semmsl)
 		return(EINVAL);
@@ -643,8 +578,6 @@ sys_semget(p, v, retval)
 	printf("semget(0x%x, %d, 0%o)\n", key, nsems, semflg);
 #endif
 
-	semlock(p);
-
 	if (key != IPC_PRIVATE) {
 		for (semid = 0; semid < seminfo.semmni; semid++) {
 			if ((sema[semid].sem_perm.mode & SEM_ALLOC) &&
@@ -761,8 +694,6 @@ sys_semop(p, v, retval)
 #ifdef SEM_DEBUG
 	printf("call to semop(%d, %p, %d)\n", semid, sops, nsops);
 #endif
-
-	semlock(p);
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 
@@ -1030,94 +961,13 @@ semexit(p)
 	}
 
 	/*
-	 * There are a few possibilities to consider here ...
+	 * No (i.e. we are in case 1 or 2).
 	 *
-	 * 1) The semaphore facility isn't currently locked.  In this case,
-	 *    this call should proceed normally.
-	 * 2) The semaphore facility is locked by this process (i.e. the one
-	 *    that is exiting).  In this case, this call should proceed as
-	 *    usual and the facility should be unlocked at the end of this
-	 *    routine (since the locker is exiting).
-	 * 3) The semaphore facility is locked by some other process and this
-	 *    process doesn't have an undo structure allocated for it.  In this
-	 *    case, this call should proceed normally (i.e. not accomplish
-	 *    anything and, most importantly, not block since that is
-	 *    unnecessary and could result in a LOT of processes blocking in
-	 *    here if the facility is locked for a long time).
-	 * 4) The semaphore facility is locked by some other process and this
-	 *    process has an undo structure allocated for it.  In this case,
-	 *    this call should block until the facility has been unlocked since
-	 *    the holder of the lock may be examining this process's proc entry
-	 *    (the ipcs utility does this when printing out the information
-	 *    from the allocated sem undo elements).
-	 *
-	 * This leads to the conclusion that we should not block unless we
-	 * discover that the someone else has the semaphore facility locked and
-	 * this process has an undo structure.  Let's do that...
-	 *
-	 * Note that we do this in a separate pass from the one that processes
-	 * any existing undo structure since we don't want to risk blocking at
-	 * that time (it would make the actual unlinking of the element from
-	 * the chain of allocated undo structures rather messy).
+	 * If there is no undo vector, skip to the end and unlock the
+	 * semaphore facility if necessary.
 	 */
-
-	/*
-	 * Does someone else hold the semaphore facility's lock?
-	 */
-
-	if (semlock_holder != NULL && semlock_holder != p) {
-		/*
-		 * Yes (i.e. we are in case 3 or 4).
-		 *
-		 * If we didn't find an undo vector associated with this
-		 * process than we can just return (i.e. we are in case 3).
-		 *
-		 * Note that we know that someone else is holding the lock so
-		 * we don't even have to see if we're holding it...
-		 */
-
-		if (suptr == NULL)
-			return;
-
-		/*
-		 * We are in case 4.
-		 *
-		 * Go to sleep as long as someone else is locking the semaphore
-		 * facility (note that we won't get here if we are holding the
-		 * lock so we don't need to check for that possibility).
-		 */
-
-		while (semlock_holder != NULL)
-			sleep((caddr_t)&semlock_holder, (PZERO - 4));
-
-		/*
-		 * Nobody is holding the facility (i.e. we are now in case 1).
-		 * We can proceed safely according to the argument outlined
-		 * above.
-		 *
-		 * We look up the undo vector again, in case the list changed
-		 * while we were asleep, and the parent is now different.
-		 */
-
-		for (supptr = &semu_list; (suptr = *supptr) != NULL;
-		    supptr = &suptr->un_next) {
-			if (suptr->un_proc == p)
-				break;
-		}
-
-		if (suptr == NULL)
-			panic("semexit: undo vector disappeared");
-	} else {
-		/*
-		 * No (i.e. we are in case 1 or 2).
-		 *
-		 * If there is no undo vector, skip to the end and unlock the
-		 * semaphore facility if necessary.
-		 */
-
-		if (suptr == NULL)
-			goto unlock;
-	}
+	if (suptr == NULL)
+		return;
 
 	/*
 	 * We are now in case 1 or 2, and we have an undo vector for this
@@ -1180,14 +1030,4 @@ semexit(p)
 #endif
 	suptr->un_proc = NULL;
 	*supptr = suptr->un_next;
-
-unlock:
-	/*
-	 * If the exiting process is holding the global semaphore facility
-	 * lock (i.e. we are in case 2) then release it.
-	 */
-	if (semlock_holder == p) {
-		semlock_holder = NULL;
-		wakeup((caddr_t)&semlock_holder);
-	}
 }

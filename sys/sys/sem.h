@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.7 1998/07/20 07:37:22 deraadt Exp $	*/
+/*	$OpenBSD: sem.h,v 1.8 2000/05/01 23:12:30 deraadt Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -173,11 +173,6 @@ int	*semu;			/* undo structure pool */
  */
 #define SEMU(ix)	((struct sem_undo *)(((long)semu)+ix * SEMUSZ))
 
-/*
- * Parameters to the semconfig system call
- */
-#define	SEM_CONFIG_FREEZE	0	/* Freeze the semaphore facility. */
-#define	SEM_CONFIG_THAW		1	/* Thaw the semaphore facility. */
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
