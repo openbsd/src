@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.1 2003/07/01 05:51:31 niklas Exp $
+# $OpenBSD: Makefile,v 1.2 2003/07/01 06:43:03 niklas Exp $
 
-REGRESS_TARGETS=	test-none test-nover test-single test-minor \
-			test-major test-nover-single
+REGRESS_TARGETS=	test-none test-nover test-single test-minor-1 \
+			test-minor-2 test-major-1 test-major-2 \
+			test-nover-single-1 test-nover-single-2
 
 .include <bsd.obj.mk>
 
@@ -64,16 +65,28 @@ test-single:	make-lib clean
 	cp ${OBJDIR_10}/libtest.so.1.0 lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} 1.0
 
-test-minor:	make-lib clean
+test-minor-1:	make-lib clean
 	cp ${OBJDIR_10}/libtest.so.1.0 ${OBJDIR_11}/libtest.so.1.1 lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} 1.1
 
-test-major:	make-lib clean
+test-minor-2:	make-lib clean
+	cp ${OBJDIR_10}/libtest.so.1.0 ${OBJDIR_11}/libtest.so.1.1 lib/
+	sh ${.CURDIR}/test.sh ${PROGPATH} 1.1
+
+test-major-1:	make-lib clean
 	cp ${OBJDIR_11}/libtest.so.1.1 ${OBJDIR_20}/libtest.so.2.0 lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} 2.0
 
-test-nover-single:	make-lib clean
+test-major-2:	make-lib clean
+	cp ${OBJDIR_11}/libtest.so.1.1 ${OBJDIR_20}/libtest.so.2.0 lib/
+	sh ${.CURDIR}/test.sh ${PROGPATH} 2.0
+
+test-nover-single-1:	make-lib clean
 	cp ${OBJDIR_NOVER}/libtest.so ${OBJDIR_10}/libtest.so.1.0 lib/
+	sh ${.CURDIR}/test.sh ${PROGPATH} none
+
+test-nover-single-2:	make-lib clean
+	cp ${OBJDIR_10}/libtest.so.1.0 ${OBJDIR_NOVER}/libtest.so lib/
 	sh ${.CURDIR}/test.sh ${PROGPATH} none
 
 .include <bsd.regress.mk>
