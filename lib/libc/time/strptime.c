@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.2 1998/03/15 06:49:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.3 1998/03/15 23:31:00 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: strptime.c,v 1.2 1998/03/15 06:49:01 millert Ex
 
 
 static	int _conv_num __P((const char **, int *, int, int));
+static	char *_strptime __P((const char *, const char *, struct tm *, int));
 
 
 char *
@@ -65,13 +66,26 @@ strptime(buf, fmt, tm)
 	const char *buf, *fmt;
 	struct tm *tm;
 {
+	return(_strptime(buf, fmt, tm, 1));
+}
+
+static char *
+_strptime(buf, fmt, tm, initialize)
+	const char *buf, *fmt;
+	struct tm *tm;
+	int initialize;
+{
 	char c;
 	const char *bp;
 	int alt_format, i, len;
-	int century = TM_YEAR_BASE;
+	static int century, relyear;
+
+	if (initialize) {
+		century = TM_YEAR_BASE;
+		relyear = -1;
+	}
 
 	bp = buf;
-
 	while ((c = *fmt) != '\0') {
 		/* Clear `alternate' modifier prior to new conversion. */
 		alt_format = 0;
@@ -116,43 +130,43 @@ literal:
 		 */
 		case 'c':	/* Date and time, using the locale's format. */
 			_LEGAL_ALT(_ALT_E);
-			if (!(bp = strptime(bp, _ctloc(d_t_fmt), tm)))
+			if (!(bp = _strptime(bp, _ctloc(d_t_fmt), tm, 0)))
 				return (0);
 			break;
 
 		case 'D':	/* The date as "%m/%d/%y". */
 			_LEGAL_ALT(0);
-			if (!(bp = strptime(bp, "%m/%d/%y", tm)))
+			if (!(bp = _strptime(bp, "%m/%d/%y", tm, 0)))
 				return (0);
 			break;
 	
 		case 'R':	/* The time as "%H:%M". */
 			_LEGAL_ALT(0);
-			if (!(bp = strptime(bp, "%H:%M", tm)))
+			if (!(bp = _strptime(bp, "%H:%M", tm, 0)))
 				return (0);
 			break;
 
 		case 'r':	/* The time as "%I:%M:%S %p". */
 			_LEGAL_ALT(0);
-			if (!(bp = strptime(bp, "%I:%M:%S %p", tm)))
+			if (!(bp = _strptime(bp, "%I:%M:%S %p", tm, 0)))
 				return (0);
 			break;
 
 		case 'T':	/* The time as "%H:%M:%S". */
 			_LEGAL_ALT(0);
-			if (!(bp = strptime(bp, "%H:%M:%S", tm)))
+			if (!(bp = _strptime(bp, "%H:%M:%S", tm, 0)))
 				return (0);
 			break;
 
 		case 'X':	/* The time, using the locale's format. */
 			_LEGAL_ALT(_ALT_E);
-			if (!(bp = strptime(bp, _ctloc(t_fmt), tm)))
+			if (!(bp = _strptime(bp, _ctloc(t_fmt), tm, 0)))
 				return (0);
 			break;
 
 		case 'x':	/* The date, using the locale's format. */
 			_LEGAL_ALT(_ALT_E);
-			if (!(bp = strptime(bp, _ctloc(d_fmt), tm)))
+			if (!(bp = _strptime(bp, _ctloc(d_fmt), tm, 0)))
 				return (0);
 			break;
 
@@ -320,17 +334,8 @@ literal:
 
 		case 'y':	/* The year within the century (2 digits). */
 			_LEGAL_ALT(_ALT_E | _ALT_O);
-			if (!(_conv_num(&bp, &i, 0, 99)))
+			if (!(_conv_num(&bp, &relyear, 0, 99)))
 				return (0);
-
-			if (century == TM_YEAR_BASE) {
-				if (i <= 68)
-					tm->tm_year = i + 2000 - TM_YEAR_BASE;
-				else
-					tm->tm_year = i + 1900 - TM_YEAR_BASE;
-			} else {
-				tm->tm_year = i + century - TM_YEAR_BASE;
-			}
 			break;
 
 		/*
@@ -349,6 +354,21 @@ literal:
 		}
 
 
+	}
+
+	/*
+	 * We need to evaluate the two digit year spec (%y)
+	 * last as we can get a century spec (%C) at any time.
+	 */
+	if (relyear != -1) {
+		if (century == TM_YEAR_BASE) {
+			if (relyear <= 68)
+				tm->tm_year = relyear + 2000 - TM_YEAR_BASE;
+			else
+				tm->tm_year = relyear + 1900 - TM_YEAR_BASE;
+		} else {
+			tm->tm_year = relyear + century - TM_YEAR_BASE;
+		}
 	}
 
 	return ((char *)bp);
