@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.7 1997/07/25 20:12:11 mickey Exp $	*/
+/*	$OpenBSD: common.c,v 1.8 1998/02/15 15:51:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: common.c,v 1.7 1997/07/25 20:12:11 mickey Exp $";
+static char rcsid[] = "$OpenBSD: common.c,v 1.8 1998/02/15 15:51:48 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ getport(rhost, rport)
 	struct hostent *hp;
 	struct servent *sp;
 	struct sockaddr_in sin;
-	int s, timo = 1, lport = IPPORT_RESERVED - 1;
+	int s, timo = 1, on = 1, lport = IPPORT_RESERVED - 1;
 	int err;
 
 	/*
@@ -187,6 +187,9 @@ retry:
 		}
 		return(-1);
 	}
+	
+	/* Don't bother if we get an error here.  */
+	setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof on);
 	return(s);
 }
 
