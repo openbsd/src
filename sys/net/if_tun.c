@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.32 2001/03/05 04:00:36 angelos Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.33 2001/04/23 13:55:27 art Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -455,12 +455,10 @@ tunioctl(dev, cmd, data, flag, p)
 			tp->tun_flags &= ~TUN_ASYNC;
 		break;
 	case FIONREAD:
-		s = splimp();
 		if (tp->tun_if.if_snd.ifq_head)
 			*(int *)data = tp->tun_if.if_snd.ifq_head->m_pkthdr.len;
 		else	
 			*(int *)data = 0;
-		splx(s);
 		break;
 	case TIOCSPGRP:
 		tp->tun_pgid = *(int *)data;
