@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.8 2004/02/12 08:12:58 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.9 2004/02/12 19:22:13 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -667,12 +667,12 @@ logit(int level, const char *fmt, ...)
 	va_start(ap, fmt);
 	if (opt_debug) {
 		/* best effort in out of mem situations */
-		if (asprintf(&nfmt, "ifstated: %s", fmt) == -1) {
-			vfprintf(stderr, fmt, ap);
-			fprintf(stderr, "\n");
-		} else {
+		if (asprintf(&nfmt, "ifstated: %s\n", fmt) != -1) {
 			vfprintf(stderr, nfmt, ap);
 			free(nfmt);
+		} else {
+			vfprintf(stderr, fmt, ap);
+			fprintf(stderr, "\n");
 		}
 	} else
 		vsyslog(LOG_DAEMON, fmt, ap);
