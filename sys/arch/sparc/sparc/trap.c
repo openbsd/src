@@ -367,12 +367,19 @@ badtrap:
 		 * nsaved to -1.  If we decide to deliver a signal on
 		 * our way out, we will clear nsaved.
 		 */
-if (pcb->pcb_uw || pcb->pcb_nsaved) panic("trap T_RWRET 1");
-if (rwindow_debug)
-printf("%s[%d]: rwindow: pcb<-stack: %x\n", p->p_comm, p->p_pid, tf->tf_out[6]);
+#ifdef DIAGNOSTIC
+		if (pcb->pcb_uw || pcb->pcb_nsaved)
+			panic("trap T_RWRET 1");
+		if (rwindow_debug)
+			printf("%s[%d]: rwindow: pcb<-stack: %x\n",
+			    p->p_comm, p->p_pid, tf->tf_out[6]);
+#endif /* DIAGNOSTIC */
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(p, SIGILL);
-if (pcb->pcb_nsaved) panic("trap T_RWRET 2");
+#ifdef DIAGNOSTIC
+		if (pcb->pcb_nsaved)
+			panic("trap T_RWRET 2");
+#endif /* DIAGNOSTIC */
 		pcb->pcb_nsaved = -1;		/* mark success */
 		break;
 
@@ -386,18 +393,25 @@ if (pcb->pcb_nsaved) panic("trap T_RWRET 2");
 		 * in the pcb.  The restore's window may still be in
 		 * the cpu; we need to force it out to the stack.
 		 */
-if (rwindow_debug)
-printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
-p->p_comm, p->p_pid, tf->tf_out[6]);
+#ifdef DIAGNOSTIC
+		if (rwindow_debug)
+			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
+			    p->p_comm, p->p_pid, tf->tf_out[6]);
+#endif /* DIAGNOSTIC */
 		write_user_windows();
 		if (rwindow_save(p) || read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(p, SIGILL);
-if (rwindow_debug)
-printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
-p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
+#ifdef DIAGNOSTIC
+		if (rwindow_debug)
+			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
+			    p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
+#endif /* DIAGNOSTIC */
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
 			sigexit(p, SIGILL);
-if (pcb->pcb_nsaved) panic("trap T_WINUF");
+#ifdef DIAGNOSTIC
+		if (pcb->pcb_nsaved)
+			panic("trap T_WINUF");
+#endif /* DIAGNOSTIC */
 		pcb->pcb_nsaved = -1;		/* mark success */
 		break;
 
@@ -504,18 +518,24 @@ rwindow_save(p)
 	}
 	if (i == 0)
 		return (0);
-if(rwindow_debug)
-printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
+#ifdef DIAGNOSTIC
+	if(rwindow_debug)
+		printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
+#endif /* DIAGNOSTIC */
 	do {
-if(rwindow_debug)
-printf(" %x", rw[1].rw_in[6]);
+#ifdef DIAGNOSTIC
+		if(rwindow_debug)
+			printf(" %x", rw[1].rw_in[6]);
+#endif /* DIAGNOSTIC */
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
 		    sizeof *rw))
 			return (-1);
 		rw++;
 	} while (--i > 0);
-if(rwindow_debug)
-printf("\n");
+#ifdef DIAGNOSTIC
+	if(rwindow_debug)
+		printf("\n");
+#endif /* DIAGNOSTIC */
 	pcb->pcb_nsaved = 0;
 	return (0);
 }
@@ -615,8 +635,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * that got bumped out via LRU replacement.
 	 */
 	vm = p->p_vmspace;
-	rv = mmu_pagein(&vm->vm_pmap, va,
-			ser & SER_WRITE ? VM_PROT_WRITE : VM_PROT_READ);
+	rv = mmu_pagein(&vm->vm_pmap, va, ftype);
 	if (rv < 0)
 		goto fault;
 	if (rv > 0)
