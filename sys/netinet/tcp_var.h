@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.19 1999/03/27 21:04:21 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.20 1999/07/02 21:22:14 cmetz Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -77,8 +77,7 @@ struct tcpcb {
 #define	TF_RCVD_TSTMP	0x0100		/* a timestamp was received in SYN */
 #define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
 
-	struct	tcpiphdr *t_template;	/* skeletal packet for transmit, will
-					 * be either tcpiphdr or tcpipv6hdr */
+	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
 /*
  * The following fields are used as in the protocol specification.
@@ -341,15 +340,15 @@ int	 tcp_output __P((struct tcpcb *));
 void	 tcp_pulloutofband __P((struct socket *, u_int, struct mbuf *));
 void	 tcp_quench __P((struct inpcb *, int));
 int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
-void	 tcp_respond __P((struct tcpcb *,
-	    struct tcpiphdr *, struct mbuf *, tcp_seq, tcp_seq, int));
+void	 tcp_respond __P((struct tcpcb *, caddr_t, struct mbuf *, tcp_seq,
+		tcp_seq, int));
 void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
-struct tcpiphdr *
+struct mbuf *
 	 tcp_template __P((struct tcpcb *));
 struct tcpcb *
 	 tcp_timers __P((struct tcpcb *, int));
-void	 tcp_trace __P((int, int, struct tcpcb *, struct tcpiphdr *, int, int));
+void	 tcp_trace __P((int, int, struct tcpcb *, caddr_t, int, int));
 struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));
 int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));

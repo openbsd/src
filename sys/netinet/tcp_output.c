@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.17 1999/07/02 20:39:08 cmetz Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.18 1999/07/02 21:22:13 cmetz Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -433,7 +433,7 @@ send:
 	 */
 	optlen = 0;
 
-#ifdef defined(INET) && defined(INET6)
+#if defined(INET) && defined(INET6)
 	switch(tp->pf) {
 #else /* defined(INET) && defined(INET6) */
 	switch(0) {
@@ -724,7 +724,7 @@ send:
 		tp->snd_up = tp->snd_una;		/* drag it along */
 
 	/* Put TCP length in pseudo-header */
-#ifdef defined(INET) && defined(INET6)
+#if defined(INET) && defined(INET6)
 	switch(tp->pf) {
 #else /* defined(INET) && defined(INET6) */
 	switch(0) {
@@ -747,7 +747,7 @@ send:
 	 * Put TCP length in extended header, and then
 	 * checksum extended header and data.
 	 */
-#ifdef defined(INET) && defined(INET6)
+#if defined(INET) && defined(INET6)
 	switch (tp->pf) {
 #else /* defined(INET) && defined(INET6) */
 	switch (0) {
@@ -852,7 +852,7 @@ send:
 	 */
 	m->m_pkthdr.len = hdrlen + len;
 
-#ifdef defined(INET) && defined(INET6)
+#if defined(INET) && defined(INET6)
 	switch(tp->pf) {
 #else /* defined(INET) && defined(INET6) */
 	switch(0) {

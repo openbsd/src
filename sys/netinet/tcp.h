@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.6 1999/01/11 02:01:35 deraadt Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.7 1999/07/02 21:22:13 cmetz Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -86,6 +86,8 @@ struct tcphdr {
 #define	   TCPOLEN_TIMESTAMP		10
 #define	   TCPOLEN_TSTAMP_APPA		(TCPOLEN_TIMESTAMP+2) /* appendix A */
 
+#define	MAX_TCPOPTLEN		40	/* Absolute maximum TCP options len */
+
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)
 
@@ -114,8 +116,8 @@ struct tcphdr {
 /*
  * User-settable options (used with setsockopt).
  */
-#define	TCP_NODELAY	0x01	/* don't delay send to coalesce packets */
-#define	TCP_MAXSEG	0x02	/* set maximum segment size */
-#define	TCP_SACK_DISABLE 0x300	/* disable SACKs(if enabled by deflt.)*/
+#define	TCP_NODELAY		0x01   /* don't delay send to coalesce pkts */
+#define	TCP_MAXSEG		0x02   /* set maximum segment size */
+#define	TCP_SACK_DISABLE	0x300  /* disable SACKs (if enabled by def.) */
 
 #endif /* !_NETINET_TCP_H_ */
