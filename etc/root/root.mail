@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Tue Jun  1 04:50:00 MDT 1999
+From deraadt@do-not-reply.openbsd.org Tue Dec  1 04:50:00 MDT 1999
 Return-Path: root
-Date: Tue June  1 04:50:00 MDT 1999
+Date: Tue Dec  1 04:50:00 MDT 1999
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 2.5
+Subject: Welcome to OpenBSD 2.6
 
 This message attempts to describe the most basic first questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
@@ -21,43 +21,46 @@ further information regarding configuration in the file /usr/X11R6/README.
 
 Several popular binary packages (pre-compiled applications) are available
 for most architetures.  If you installed from a CD-ROM the packages
-are on the same CD-ROM you installed from in the directory 2.5/packages.
+are on the same CD-ROM you installed from in the directory 2.6/packages.
 
 CD-ROM Space permitted us to include the following packages for the most common
 architectures:
-        Xaw3d-1.3.tgz		aalib-1.2.tgz		autoconf-2.13.tgz
-	bash-2.03.tgz		bison-1.25.tgz		bzip2-0.9.0c.tgz
-	compface-1.0.tgz	egcs-1.1.2.tgz		emacs-20.3.tgz
-	enscript-1.6.1.tgz	ethereal-0.5.1.tgz	fetchmail-4.7.9.tgz
-	gettext-0.10.35.tgz	ghostscript-5.10.tgz	gimp-1.1.4.tgz
-	glib-1.2.1.tgz		gmake-3.77.tgz		gnuplot-3.7.tgz
-	gtk+-1.2.1.tgz		gv-3.5.8.tgz		id-utils-3.2.tgz
-	iozone-2.01.tgz		mm-2.7.tgz		ircii-2.8.2-epic3.004.tgz
-	jpeg-6b.tgz		m4-1.4.tgz		netpipes-4.1.1-export.tgz
-	mpeg_lib-1.2.1.tgz	nmh-1.0.tgz		pine-4.10.tgz
-	png-1.0.3.tgz		screen-3.7.6.tgz	sharutils-4.2.tgz
-	sniffit-0.3.5.tgz	tar-1.12.tgz		tcl-8.0.5.tgz
-	tcsh-6.08.00.tgz	tiff-3.4.tgz		tk-8.0.5.tgz
-	unzip-5.40.tgz		wget-1.5.3.tgz		xcolors-1.3.tgz
-	xntp3-5.93e-export.tgz
+
+    Xaw3d-1.5.tgz	    aalib-1.2.tgz	autoconf-2.13.tgz
+    bash-2.03.tgz	    bison-1.27.tgz	bzip2-0.9.5d.tgz
+    compface-1.0.tgz	    emacs-20.3.tgz	enscript-1.6.1.tgz
+    ethereal-0.7.4.tgz	    fetchmail-5.1.0.tgz	gettext-0.10.35.tgz
+    ghostscript-5.10.tgz    gimp-1.1.9.tgz	glib-1.2.4.tgz
+    gmake-3.77.tgz	    gnuplot-3.7.tgz	gtk+-1.2.4.tgz
+    gv-3.5.8.tgz	    id-utils-3.2d.tgz	iozone-3.9.tgz
+    jpeg-6b.tgz		    m4-1.4.tgz		ircii-2.8.2-epic3.004.tgz
+    metamail-2.7.tgz	    mm-1.0.11.tgz	mpeg_lib-1.2.1.tgz
+    nmh-1.0.tgz		    pine-4.10.tgz	netpipes-4.1.1-export.tgz
+    png-1.0.3.tgz	    screen-3.7.6.tgz	sharutils-4.2.tgz
+    sniffit-0.3.5.tgz	    tar-1.13.tgz	tcl-8.0.5.tgz
+    tcsh-6.09.00.tgz	    tiff-3.4b37.tgz	tk-8.0.5.tgz
+    unzip-5.40.tgz	    wget-1.5.3.tgz	xcolors-1.3.tgz
+    xntp3-5.93e-export.tgz	
 
 These and many other packages are also available via ftp at
-	ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/
+	ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/
 If you do not find a package you want on the CD, please go look at your
 nearest FTP mirror site.
 
 Select your architecture and download the tarballs of your choice.  For example
 to install the emacs package for i386, execute
-   # mount /dev/cd0a /cdrom; pkg_add /cdrom/2.5/packages/i386/emacs-20.3.tgz
-or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/i386/emacs-20.3.tgz
+   # mount /dev/cd0a /cdrom; pkg_add /cdrom/2.6/packages/i386/emacs-20.3.tgz
+or # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/i386/emacs-20.3.tgz
 
 Other important packages which are not permitted on the CD (due to patents) are
 available on our FTP servers (as described above).  In particular, we provide
-the USA and international versions of both SSH and PGP.  The filenames are:
-	ssh-1.2.26-usa.tgz	ssh-1.2.26-intl.tgz	pgp-2.6.3-usa.tgz
-	pgp-2.6.3-intl.tgz
-You are STRONGLY urged to install one of the above ssh packages and use ssh
-instead of telnet, rlogin, or rsh.
+the USA and international versions of PGP.  The filenames are:
+	pgp-intl-2.6.3-tgz pgp-usa-2.6.3-tgz
+
+You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh! ssh is
+included in OpenBSD, and relies on the libssl26.tar.gz package, which
+contains the patented RSA code.  This package is NOT included on the CD,
+but is available on all our FTP servers.
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
