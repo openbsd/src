@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_trans.h,v 1.2 2001/08/13 20:19:33 camield Exp $ */
+/* $OpenBSD: pop_trans.h,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
 
 /*
  * TRANSACTION state handling.

@@ -1,4 +1,4 @@
-/* $OpenBSD: standalone.c,v 1.2 2001/08/13 20:19:33 camield Exp $ */
+/* $OpenBSD: standalone.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
 
 /*
  * Standalone POP server: accepts connections, checks the anti-flood limits,
