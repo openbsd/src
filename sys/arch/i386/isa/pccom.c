@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.15 1997/12/25 09:19:39 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.16 1997/12/25 14:33:14 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -526,7 +526,7 @@ comprobe(parent, match, aux)
 
 out:
 #if NPCCOM_ISA || NPCCOM_PCMCIA
-	if (rv && IS_ISA(parent)) {
+	if (rv) {
 		struct isa_attach_args *ia = aux;
 
 		ia->ia_iosize = COM_NPORTS;
@@ -575,6 +575,8 @@ comattach(parent, self, aux)
 		if (IS_ISAPNP(parent)) {
 			/* No console support! */
 			ioh = ia->ia_ioh;
+
+			printf(" <%s, %s>", ia->ipa_devident, ia->ipa_devclass);
 		} else {
 	       		if (iobase != comconsaddr) {
 				if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
