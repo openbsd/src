@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.9 2000/01/02 15:48:01 todd Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.10 2000/01/10 02:10:04 todd Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -75,6 +75,9 @@ Regular ipv6 network setup:
 Other network setup:
 .Bd -literal -offset xxxx
 .Va addr_family Va options
+.Va # This is parsed as a comment
+.Va # Below we set the mac address for a wi0 interface
+.Va !wicontrol \e$if -n C0:01:00:00:D4:d3
 .Ed
 .Pp
 For example,
