@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.60 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.61 2005/03/12 18:16:56 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -216,14 +216,32 @@ void sk_dump_bytes(const char *, int);
 
 /* supported device vendors */
 const struct pci_matchid skc_devices[] = {
-	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C940},
-	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE530T},
-	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1032},
-	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1064},
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_SK_V2},
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_SK_V2_BELKIN},
-	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_GE},
-	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2},
+	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3C940 },
+	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_GIG },
+	{ PCI_VENDOR_CNET,		PCI_PRODUCT_CNET_GIGACARD },
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE530T },
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560T },
+	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1032 },
+	{ PCI_VENDOR_LINKSYS,		PCI_PRODUCT_LINKSYS_EG1064 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_SK_V2 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_SK_V2_BELKIN },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_1 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_2 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_3 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_4 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_5 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_6 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_7 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8035 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8050 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8053 },
+	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_GE },
+	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2 },
+	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Sxx },
+	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK9Exx },
 };
 
 static inline u_int32_t
@@ -1561,64 +1579,41 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* determine whether to name it with VPD or just make it up */
 	/* Marvell Yukon VPD's can freqently be bogus */
-	switch (pa->pa_id) {
-	case PCI_ID_CODE(PCI_VENDOR_SCHNEIDERKOCH,
-			 PCI_PRODUCT_SCHNEIDERKOCH_GE):
-	case PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2:
-	case PCI_PRODUCT_3COM_3C940:
-	case PCI_PRODUCT_LINKSYS_EG1032:
-	case PCI_PRODUCT_LINKSYS_EG1064:
-	case PCI_ID_CODE(PCI_VENDOR_SCHNEIDERKOCH,
-			 PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2):
-	case PCI_ID_CODE(PCI_VENDOR_3COM,PCI_PRODUCT_3COM_3C940):
-	case PCI_ID_CODE(PCI_VENDOR_LINKSYS,PCI_PRODUCT_LINKSYS_EG1032):
-	case PCI_ID_CODE(PCI_VENDOR_LINKSYS,PCI_PRODUCT_LINKSYS_EG1064):
- 		sc->sk_name = sc->sk_vpd_prodname;
- 		break;
-	case PCI_ID_CODE(PCI_VENDOR_MARVELL,PCI_PRODUCT_MARVELL_SK_V2):
-	case PCI_ID_CODE(PCI_VENDOR_MARVELL,PCI_PRODUCT_MARVELL_SK_V2_BELKIN):
-	case PCI_PRODUCT_DLINK_DGE530T:
-	case PCI_ID_CODE(PCI_VENDOR_DLINK,PCI_PRODUCT_DLINK_DGE530T):
-	/* whoops Yukon VPD prodname bears no resemblance to reality */
-		switch (sc->sk_type) {
-		case SK_GENESIS:
-			sc->sk_name = sc->sk_vpd_prodname;
-			break;
-		case SK_YUKON:
-			sc->sk_name = "Marvell Yukon Gigabit Ethernet";
-			break;
-		case SK_YUKON_LITE:
-			sc->sk_name = "Marvell Yukon Lite Gigabit Ethernet";
-			break;
-		case SK_YUKON_LP:
-			sc->sk_name = "Marvell Yukon LP Gigabit Ethernet";
-			break;
-		default:
-			sc->sk_name = "Marvell Yukon (Unknown) Gigabit Ethernet";
-		}
-
-	/* Yukon Lite Rev A0 needs special test, from sk98lin driver */
-		if (sc->sk_type == SK_YUKON) {
-			uint32_t flashaddr;
-			uint8_t testbyte;
-			
-			flashaddr = sk_win_read_4(sc, SK_EP_ADDR);
-			
-			/* test Flash-Address Register */
-			sk_win_write_1(sc, SK_EP_ADDR+3, 0xff);
-			testbyte = sk_win_read_1(sc, SK_EP_ADDR+3);
-			
-			if (testbyte != 0) {
-				/* This is a Yukon Lite Rev A0 */
-				sc->sk_type = SK_YUKON_LITE;
-				sc->sk_rev = SK_YUKON_LITE_REV_A0;
-				/* restore Flash-Address Register */
-				sk_win_write_4(sc, SK_EP_ADDR, flashaddr);
-			}
-		}
+	switch (sc->sk_type) {
+	case SK_GENESIS:
+		sc->sk_name = sc->sk_vpd_prodname;
+		break;
+	case SK_YUKON:
+		sc->sk_name = "Marvell Yukon Gigabit Ethernet";
+		break;
+	case SK_YUKON_LITE:
+		sc->sk_name = "Marvell Yukon Lite Gigabit Ethernet";
+		break;
+	case SK_YUKON_LP:
+		sc->sk_name = "Marvell Yukon LP Gigabit Ethernet";
 		break;
 	default:
-		sc->sk_name = "Unkown Marvell";
+		sc->sk_name = "Marvell Yukon (Unknown) Gigabit Ethernet";
+	}
+
+	/* Yukon Lite Rev A0 needs special test, from sk98lin driver */
+	if (sc->sk_type == SK_YUKON) {
+		uint32_t flashaddr;
+		uint8_t testbyte;
+
+		flashaddr = sk_win_read_4(sc, SK_EP_ADDR);
+
+		/* test Flash-Address Register */
+		sk_win_write_1(sc, SK_EP_ADDR+3, 0xff);
+		testbyte = sk_win_read_1(sc, SK_EP_ADDR+3);
+
+		if (testbyte != 0) {
+			/* This is a Yukon Lite Rev A0 */
+			sc->sk_type = SK_YUKON_LITE;
+			sc->sk_rev = SK_YUKON_LITE_REV_A0;
+			/* restore Flash-Address Register */
+			sk_win_write_4(sc, SK_EP_ADDR, flashaddr);
+		}
 	}
 
 	if (sc->sk_type == SK_YUKON_LITE) {
@@ -2092,7 +2087,6 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 	struct mii_data *mii = &sc_if->sk_mii;
 	struct ifnet *ifp = &sc_if->arpcom.ac_if;
 	int status;
-
 
 	DPRINTFN(2, ("sk_intr_bcom\n"));
 
