@@ -17,7 +17,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
 
 # As a special exception to the GNU General Public License, if you
 # distribute this file as part of a program that contains a
@@ -422,7 +423,7 @@ case $basic_machine in
 		# We don't have specific support for the Intel Pentium (p6) followon yet, so just call it a Pentium
 		basic_machine=i586-intel
 		;;
-	pentium-* | p5-* | p6-* | i686-* )
+	pentium-* | p5-* | p6-*)
 		# We don't have specific support for the Intel Pentium (p6) followon yet, so just call it a Pentium
 		basic_machine=i586-`echo $basic_machine | sed 's/^[^-]*-//'`
 		;;
@@ -433,6 +434,9 @@ case $basic_machine in
 	nexen)
 		# We don't have specific support for Nexgen yet, so just call it a Pentium
 		basic_machine=i586-nexgen
+		;;
+	mips-arc-*)
+		basic_machine=mips-r4kle
 		;;
 	pn)
 		basic_machine=pn-gould
@@ -637,7 +641,8 @@ case $os in
 	      | -amigados* | -msdos* | -newsos* | -unicos* | -aos* \
 	      | -nindy* | -vxworks* | -ebmon* | -hms* | -mvs* | -clix* \
 	      | -riscos* | -linux* | -uniplus* | -iris* | -rtu* | -xenix* \
-	      | -hiux* | -386bsd* | -netbsd* | -freebsd* | -riscix* \
+	      | -hiux* | -386bsd* | -netbsd* | -freebsd* | -openbsd* \
+	      |	-riscix* \
 	      | -lynxos* | -bosx* | -nextstep* | -cxux* | -aout* | -elf* \
 	      | -ptx* | -coff* | -ecoff* | -winnt* | -domain* | -vsta* \
 	      | -udi* | -eabi* | -lites* )

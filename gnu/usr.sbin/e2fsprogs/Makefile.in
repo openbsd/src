@@ -8,7 +8,8 @@ INSTALL = @INSTALL@
 @MCONFIG@
 
 LIB_SUBDIRS=lib/et lib/ss lib/ext2fs lib/e2p lib/uuid
-PROG_SUBDIRS=e2fsck debugfs misc tests/progs 
+#PROG_SUBDIRS=e2fsck debugfs misc tests/progs 
+PROG_SUBDIRS=misc 
 SUBDIRS=$(LIB_SUBDIRS) $(PROG_SUBDIRS) tests
 
 SUBS= include/linux/types.h
