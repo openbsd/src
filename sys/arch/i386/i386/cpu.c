@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.2 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.3 2004/06/16 18:23:05 grange Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -422,7 +422,9 @@ cpu_boot_secondary (ci)
 	}
 	if (!(ci->ci_flags & CPUF_RUNNING)) {
 		printf("cpu failed to become ready\n");
+#ifdef DDB
 		Debugger();
+#endif
 	}
 
 	CPU_START_CLEANUP(ci);
