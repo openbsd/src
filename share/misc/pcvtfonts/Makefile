@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2001/03/02 00:59:28 mickey Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/10/05 02:52:33 mickey Exp $
 
 FONTS	= 	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
 		vt220l.816 vt220h.816 vt220l.810 vt220h.810 \
-		koi8-8x8 koi8-8x10 koi8-8x14 koi8-8x16 \
+		koi8-r-8x08 koi8-r-8x10 koi8-r-8x14 koi8-r-8x16 \
+		koi8-u-8x08 koi8-u-8x10 koi8-u-8x14 koi8-u-8x16 \
 		iso8859-1-euro.816
 
 LIBMODE	=	444
@@ -59,16 +60,28 @@ vt220l.810: ${.CURDIR}/vt220l.810.uu
 vt220h.810: ${.CURDIR}/vt220h.810.uu
 	uudecode ${.CURDIR}/$@.uu
 
-koi8-8x8: ${.CURDIR}/koi8-8x8.uu
+koi8-r-8x08: ${.CURDIR}/koi8-r-8x08.uu
 	uudecode ${.CURDIR}/$@.uu
 
-koi8-8x10: ${.CURDIR}/koi8-8x10.uu
+koi8-r-8x10: ${.CURDIR}/koi8-r-8x10.uu
 	uudecode ${.CURDIR}/$@.uu
 
-koi8-8x14: ${.CURDIR}/koi8-8x14.uu
+koi8-r-8x14: ${.CURDIR}/koi8-r-8x14.uu
 	uudecode ${.CURDIR}/$@.uu
 
-koi8-8x16: ${.CURDIR}/koi8-8x16.uu
+koi8-r-8x16: ${.CURDIR}/koi8-r-8x16.uu
+	uudecode ${.CURDIR}/$@.uu
+
+koi8-u-8x08: ${.CURDIR}/koi8-u-8x08.uu
+	uudecode ${.CURDIR}/$@.uu
+
+koi8-u-8x10: ${.CURDIR}/koi8-u-8x10.uu
+	uudecode ${.CURDIR}/$@.uu
+
+koi8-u-8x14: ${.CURDIR}/koi8-u-8x14.uu
+	uudecode ${.CURDIR}/$@.uu
+
+koi8-u-8x16: ${.CURDIR}/koi8-u-8x16.uu
 	uudecode ${.CURDIR}/$@.uu
 
 iso8859-1-euro.816: ${.CURDIR}/iso8859-1-euro.816.uu
