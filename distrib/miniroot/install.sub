@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.117 1999/04/01 21:25:48 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.118 1999/04/02 05:51:16 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -864,7 +864,7 @@ while [ "X${resp}" = X"" ]; do
 	if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
 		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 		resp=""
-	elif [ "X${resp}" != X"" -a `isnumeric $resp` = 1 -a $resp -ge 1 \
+	elif [ "X${resp}" != X"" -a `isnumeric $resp` -eq 1 -a $resp -ge 1 \
 	    -a -f /tmp/ftplist ]; then
 		maxlines=`grep "^${_url_type}:" /tmp/ftplist | cat -n |
 		    sed -n -e '$p' | cutword 1`
