@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.11 1997/11/05 18:22:56 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.12 1997/11/06 15:59:56 kstailey Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.11 1997/11/05 18:22:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.12 1997/11/06 15:59:56 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -180,6 +180,8 @@ logname(k, ve)
 		(void)printf("%-*s", v->width, "-");
 }
 
+#define pgtok(a)	(((a)*getpagesize())/1024)
+
 void
 state(k, ve)
 	KINFO *k;
@@ -237,6 +239,8 @@ state(k, ve)
 		*cp++ = 'V';
 	if ((flag & P_SYSTEM) || p->p_holdcnt)
 		*cp++ = 'L';
+	if (KI_EPROC(k)->e_maxrss / 1024 < pgtok(KI_EPROC(k)->e_vm.vm_rssize))
+		*cp++ = '>';
 	if (KI_EPROC(k)->e_flag & EPROC_SLEADER)
 		*cp++ = 's';
 	if ((flag & P_CONTROLT) && KI_EPROC(k)->e_pgid == KI_EPROC(k)->e_tpgid)
@@ -435,8 +439,6 @@ wchan(k, ve)
 		(void)printf("%-*s", v->width, "-");
 }
 
-#define pgtok(a)	(((a)*getpagesize())/1024)
-
 void
 vsize(k, ve)
 	KINFO *k;
@@ -605,7 +607,7 @@ maxrss(k, ve)
 	VAR *v;
 
 	v = ve->var;
-		(void)printf("%*s", v->width, "-");
+		(void)printf("%*d", v->width, KI_EPROC(k)->e_maxrss / 1024);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.21 1997/11/06 05:59:11 csapuntz Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.22 1997/11/06 15:59:52 kstailey Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ struct kinfo_proc {
 		char	e_login[MAXLOGNAME];	/* setlogin() name */
 #define EMULNAMELEN	7
 		char	e_emul[EMULNAMELEN+1];	/* syscall emulation name */
-		u_int32_t e_spare[2]; /* XXX remove prior to release */
+	        rlim_t	e_maxrss;
 	} kp_eproc;
 };
 

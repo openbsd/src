@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.22 1997/11/06 05:58:19 csapuntz Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.23 1997/11/06 15:59:49 kstailey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/unistd.h>
@@ -754,4 +755,5 @@ fill_eproc(p, ep)
 	ep->e_login[MAXLOGNAME-1] = '\0';
 	strncpy(ep->e_emul, p->p_emul->e_name, EMULNAMELEN);
 	ep->e_emul[EMULNAMELEN] = '\0';
+	ep->e_maxrss = p->p_rlimit[RLIMIT_RSS].rlim_cur;
 }
