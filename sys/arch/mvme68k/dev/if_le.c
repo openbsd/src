@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 1996/05/29 17:54:12 chuck Exp $ */
+/*	$OpenBSD: if_le.c,v 1.9 1996/06/11 10:08:26 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -167,6 +167,8 @@ leattach(parent, self, aux)
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwinit = lehwinit;
+
+	am7990_config(sc);
 
 	((struct pccreg *)ca->ca_master)->pcc_leirq = pri | PCC_IRQ_IEN;
 }
