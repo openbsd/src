@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.247 2000/04/14 09:05:42 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.248 2000/04/15 19:16:08 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1749,6 +1749,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "7751",
 	},
 	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_6500,
+	    0,
+	    "Hi/Fn",
+	    "6500",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0002,
 	    0,
 	    "IBM",
@@ -3003,16 +3009,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RZ1000",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_PCIBRIDGE,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_SOUTH,
 	    0,
 	    "Reliance Computer",
-	    "PCI",
+	    "ROSB-4 SouthBridge",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX5,
 	    0,
 	    "Reliance Computer",
 	    "PCIHB5",
+	},
+	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CIOB20,
+	    0,
+	    "Reliance Computer",
+	    "I/O Bridge",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX7,
