@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.3 2004/11/03 16:40:46 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.4 2004/11/08 16:48:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -559,7 +559,7 @@ struct ath_desc {
 #define	ds_rxstat ds_us.rx
 #define	ds_txstat ds_us.tx
 
-} __attribute__((__packed__));
+} __packed;
 
 #define	HAL_RXDESC_INTREQ	0x0020
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210.c,v 1.4 2004/11/03 16:40:46 reyk Exp $	*/
+/*	$OpenBSD: ar5210.c,v 1.5 2004/11/08 16:48:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -1823,7 +1823,7 @@ ar5k_ar5210_resetKeyCacheEntry(hal, entry)
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5210_KEYTABLE_SIZE);
 
 	for (i = 0; i < AR5K_AR5210_KEYCACHE_SIZE; i++)
-		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i * 4), 0);
+		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i << 2), 0);
 
 	return (AH_FALSE);
 }
@@ -1840,7 +1840,7 @@ ar5k_ar5210_isKeyCacheEntryValid(hal, entry)
 	/*
 	 * Check the validation flag at the end of the entry
 	 */
-	offset = (AR5K_AR5210_KEYCACHE_SIZE - 1) * 4;
+	offset = (AR5K_AR5210_KEYCACHE_SIZE - 1) << 2;
 	if (AR5K_REG_READ(AR5K_AR5210_KEYTABLE(entry) + offset) &
 	    AR5K_AR5210_KEYTABLE_VALID)
 		return AH_TRUE;
@@ -1903,7 +1903,7 @@ ar5k_ar5210_setKeyCacheEntry(hal, entry, keyval, mac, xor_notused)
 		}
 
 		/* Write value */
-		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i * 4), key_v[i]);
+		AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (i << 2), key_v[i]);
 	}
 
 	return (ar5k_ar5210_setKeyCacheEntryMac(hal, entry, mac));
@@ -1924,16 +1924,19 @@ ar5k_ar5210_setKeyCacheEntryMac(hal, entry, mac)
 	AR5K_ASSERT_ENTRY(entry, AR5K_AR5210_KEYTABLE_SIZE);
 
 	offset = AR5K_AR5210_KEYCACHE_SIZE - 2;
+	low_id = high_id = 0;
 
-	/* XXX big endian problems? */
-	bcopy(mac, &low_id, 4);
-	bcopy(mac + 4, &high_id, 2);
+	/* MAC may be NULL if it's a broadcast key */
+	if (mac != NULL) {
+		bcopy(mac, &low_id, 4);
+		bcopy(mac + 4, &high_id, 2);
+	}
 
 	high_id = 0x0000ffff & htole32(high_id);
 
-	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset++ * 4),
+	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset++ << 2),
 	    htole32(low_id));
-	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset * 4), high_id);
+	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset << 2), high_id);
 
 	return (AH_TRUE);
 }

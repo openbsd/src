@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210var.h,v 1.3 2004/11/03 16:40:46 reyk Exp $	*/
+/*	$OpenBSD: ar5210var.h,v 1.4 2004/11/08 16:48:25 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -70,7 +70,7 @@ struct ar5k_ar5210_rx_desc {
 	u_int32_t	r2:1;
 	u_int32_t	inter_req:1;
 	u_int32_t	r3:18;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct ar5k_ar5210_rx_status {
 	/*
@@ -98,7 +98,7 @@ struct ar5k_ar5210_rx_status {
 	u_int32_t	receive_timestamp:13;
 	u_int32_t	key_cache_miss:1;
 	u_int32_t	r3:3;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define AR5K_AR5210_DESC_RX_PHY_ERROR_NONE		0x00
 #define AR5K_AR5210_DESC_RX_PHY_ERROR_TIMING		0x20
@@ -132,7 +132,7 @@ struct ar5k_ar5210_tx_desc {
 	u_int32_t	more:1;
 	u_int32_t	encrypt_key_index:6;
 	u_int32_t	rts_duration:13;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define AR5K_AR5210_DESC_TX_XMIT_RATE_6		0xb
 #define AR5K_AR5210_DESC_TX_XMIT_RATE_9		0xf
@@ -169,7 +169,7 @@ struct ar5k_ar5210_tx_status {
 	u_int32_t	seq_num:12;
 	u_int32_t	ack_sig_strength:8;
 	u_int32_t	r2:11;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Public function prototypes
