@@ -94,7 +94,6 @@ void import_key(struct ipsecinit *, struct sadb_key *, int);
 void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
 int pfdatatopacket(void *, int, struct mbuf **);
-int pfkeyv2_acquire(struct tdb *, int);
 int pfkeyv2_create(struct socket *);
 int pfkeyv2_get(struct tdb *, void **, void **);
 int pfkeyv2_release(struct socket *);
