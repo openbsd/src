@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.9 2001/06/08 08:08:42 art Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.10 2001/06/14 10:41:50 jj Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.16 1997/05/19 10:14:47 veego Exp $	*/
 
 /*
@@ -73,8 +73,9 @@ cachectl(req, addr, len)
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		register int inc = 0;
-		int pa = 0, doall = 0;
+		int doall = 0;
 		caddr_t end = 0;
+		paddr_t pa = 0;
 
 		if (addr == 0 ||
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
