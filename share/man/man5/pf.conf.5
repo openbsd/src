@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.143 2002/12/08 20:41:51 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.144 2002/12/08 20:59:08 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -813,7 +813,6 @@ connections:
 The rule only applies to TCP packets that have the flags <a> set
 out of set <b>.
 Flags not specified in <b> are ignored.
-If <b> is not set, all flags are specified.
 The flags are: (F)IN, (S)YN, (R)ST, (P)USH, (A)CK, (U)RG, (E)CE, and C(W)R.
 .Bl -tag -width Fl
 .It Em flags S/S
@@ -1632,8 +1631,7 @@ unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
 binary-op      = number ( "<>" | "><" ) number
 op-list        = ( unary-op | binary-op ) [ [ "," ] op-list ]
 
-flags          = "flags" ( flag-set | flag-set "/" flag-set |
-                 "/" flag-set )
+flags          = "flags" ( flag-set "/" flag-set | "/" flag-set )
 flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]
                  [ "W" ]
 
