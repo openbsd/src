@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.473 2004/12/11 11:45:44 mpf Exp $ */
+/*	$OpenBSD: pf.c,v 1.474 2004/12/14 03:49:06 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2122,6 +2122,8 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 
 	get_addr:
 		PF_ACPY(naddr, &rpool->counter, af);
+		if (init_addr != NULL && PF_AZERO(init_addr, af))
+			PF_ACPY(init_addr, naddr, af);
 		PF_AINC(&rpool->counter, af);
 		break;
 	}
