@@ -133,6 +133,18 @@ cmsg_len = sizeof(struct in_addr)
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVDSTADDR
 .Ed
+.Pp
+The IP_PORTRANGE
+option causes the default allocation policy for when the kernel is asked
+to choose a free port number.  Three choices are available:
+.Bl -tag -width IP_PORTRANGE_DEFAULT
+.It IP_PORTRANGE_DEFAULT
+The regular range of non-reserved ports.
+.It IP_PORTRANGE_HIGH
+A high range, for fun.
+.It IP_PORTRANGE_LOW
+Reserved ports; between 600 and 1023.
+.El
 .Ss "Multicast Options"
 .Pp
 .Tn IP 
