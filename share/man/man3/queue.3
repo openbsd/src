@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.22 2002/02/24 04:35:32 krw Exp $
+.\"	$OpenBSD: queue.3,v 1.23 2002/04/26 02:24:48 wcobb Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -1019,7 +1019,7 @@ macro refers to a pointer that may have been reallocated already.
 Proper code needs a second variable.
 .Bd -literal -offset indent
 for (var = LIST_FIRST(head); var != LIST_END(head); var = nxt) {
-	nxt = LIST_NEXT(var);
+	nxt = LIST_NEXT(var, entry);
 	free(var);
 }
 LIST_INIT(head);	/* to put the list back in order */
