@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.8 1996/08/07 01:56:27 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.9 1996/08/08 16:52:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -139,7 +139,10 @@ int	acd_play_msf __P((struct acd_softc *, int, int, int, int, int, int));
 int	acd_read_subchannel __P((struct acd_softc *, int, int, int,
 	    struct cd_sub_channel_info *, int));
 int	acd_read_toc __P((struct acd_softc *, int, int, void *, int));
+#if 0
+/* Not used anywhere, left here in case that changes. */
 static void lba2msf __P((u_int32_t, u_int8_t *, u_int8_t *, u_int8_t *));
+#endif
 static __inline u_int32_t msf2lba __P((u_int8_t, u_int8_t, u_int8_t));
 static __inline void bswap __P((u_int8_t *, int));
 
@@ -645,6 +648,9 @@ acdwrite(dev, uio)
 	return (physio(acdstrategy, NULL, dev, B_WRITE, acdminphys, uio));
 }
 
+#if 0
+/* Not used anywhere, left here in case that changes. */
+
 /*
  * conversion between minute-seconde-frame and logical block adress
  * adresses format
@@ -662,6 +668,7 @@ lba2msf (lba, m, s, f)
 	*s = tmp / CD_FRAMES;
 	*f = tmp % CD_FRAMES;
 }
+#endif
 
 static __inline u_int32_t
 msf2lba (m, s, f)
