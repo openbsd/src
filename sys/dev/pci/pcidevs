@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.351 2000/12/06 00:18:06 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.352 2000/12/07 20:48:34 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -610,6 +610,7 @@ product 3DLABS OXYGEN_GVX1	0x000a	Oxygen GVX1
 
 /* 3Ware products */
 product TRIWARE ESCALADE	0x1000	Escalade IDE RAID
+product TRIWARE ESCALADE_ASIC	0x1001	Escalade IDE RAID
 
 /* Aironet Products */
 product AIRONET PC4500		0x4500	PC4500 Wireless
