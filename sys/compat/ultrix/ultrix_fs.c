@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.4 1997/04/12 21:21:29 graichen Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.5 1998/02/13 14:38:24 deraadt Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ ultrix_sys_mount(p, v, retval)
 
 	/* Copy string-ified version of mount type back out to user space */
 	SCARG(&nuap, type) = (char *)usp;
-	if ((error = copyout(fstype, SCARG(&nuap, type),
+	if ((error = copyout(fstype, (void *)SCARG(&nuap, type),
 			    strlen(fstype)+1)) != 0) {
 		return (error);
 	}
