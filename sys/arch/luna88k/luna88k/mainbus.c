@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.1.1.1 2004/04/21 15:24:08 aoyama Exp $ */
+/* $OpenBSD: mainbus.c,v 1.2 2004/08/06 14:22:43 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -41,8 +41,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/cmmu.h>
+#include <machine/cpu.h>
 
 static const struct mainbus_attach_args devs[] = {
 	{ "clock",  0x45000000, -1 },	/* Mostek/Dallas TimeKeeper */
@@ -87,8 +88,15 @@ mainbus_attach(parent, self, args)
 	void *args;
 {
 	int i;
-	
-	printf("\n");
+	extern char cpu_model[];
+
+	printf(": %s\n", cpu_model);
+
+	/*
+	 * Display cpu/mmu details. Only for the master CPU so far.
+	 */
+	cpu_configuration_print(1);
+
 	for (i = 0; i < sizeof(devs)/sizeof(devs[0]); i++)
 		config_found(self, (void *)&devs[i], mainbus_print);
 }
