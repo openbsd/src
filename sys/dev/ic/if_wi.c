@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.20 2002/02/20 20:52:42 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.21 2002/02/20 21:51:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -122,7 +122,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.20 2002/02/20 20:52:42 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.21 2002/02/20 21:51:07 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -768,11 +768,21 @@ wi_write_record(sc, ltv)
 				struct wi_ltv_str ws;
 				struct wi_ltv_keys *wk = (struct wi_ltv_keys *)ltv;
 				for (i = 0; i < 4; i++) {
-					ws.wi_len = 4;
+					bzero(&ws, sizeof(ws));
+					if (wk->wi_keys[i].wi_keylen <= 5) {
+						/* 5 Octet WEP Keys */
+						ws.wi_len = 4;
+						bcopy(&wk->wi_keys[i].wi_keydat,
+						    ws.wi_str, 5);
+						ws.wi_str[5] = '\0';
+					} else {
+						/* 13 Octet WEP Keys */
+						ws.wi_len = 8;
+						bcopy(&wk->wi_keys[i].wi_keydat,
+						    ws.wi_str, 13);
+						ws.wi_str[13] = '\0';
+					}
 					ws.wi_type = WI_RID_P2_CRYPT_KEY0 + i;
-					bcopy(&wk->wi_keys[i].wi_keydat,
-					    ws.wi_str, 5);
-					ws.wi_str[5] = '\0';
 					error = wi_write_record(sc,
 					    (struct wi_ltv_gen *)&ws);
 					if (error)
