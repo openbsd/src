@@ -1,5 +1,5 @@
-/*	$OpenBSD: certpatch.c,v 1.9 2000/10/07 06:58:55 niklas Exp $	*/
-/*	$EOM: certpatch.c,v 1.9 2000/09/28 12:53:37 niklas Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.10 2000/10/26 22:28:07 niklas Exp $	*/
+/*	$EOM: certpatch.c,v 1.10 2000/10/24 13:34:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -98,8 +98,7 @@ main (int argc, char **argv)
   char ipaddr[6], *new_id;
   char *type = IDTYPE_IP, *keyfile = NULL, *id = NULL;
   char *certin, *certout;
-  char ch;
-  int err;
+  int ch, err;
 
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
   unsigned char *p;
