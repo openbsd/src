@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.97 2005/01/05 23:34:37 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.98 2005/02/22 21:44:55 moritz Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -801,8 +801,7 @@ Listen-on=		10.1.0.2
 
 # These connections are walked over after config file parsing and told
 # to the application layer so that it will inform us when traffic wants to
-# pass over them.
-This means we can do on-demand keying.
+# pass over them.  This means we can do on-demand keying.
 [Phase 2]
 Connections=		IPsec-east-west
 
