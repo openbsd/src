@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.19 2000/10/19 03:16:16 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.20 2001/03/02 01:53:30 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -432,9 +432,18 @@ ofwconprobe()
 	printf("\n");
 
 	len = OF_getprop(stdout_node, "assigned-addresses", addr, sizeof(addr));
-	if (len < sizeof(addr[0])) {
-		printf(": no address\n");
-		return;
+	if (len == -1) {
+		int node;
+		node = OF_parent(stdout_node);
+		len = OF_getprop(node, "name", name, 20);
+		name[len] = 0;
+
+		printf("using parent %s:", name);
+		len = OF_getprop(node, "assigned-addresses",
+			addr, sizeof(addr));
+		if (len < sizeof(addr[0])) {
+			panic(": no address\n");
+		}
 	}
 	memtag = ofw_make_tag(NULL, pcibus(addr[0].phys_hi),
 		pcidev(addr[0].phys_hi),
@@ -471,7 +480,6 @@ ofwconprobe()
 			cons_addr, addr[0].size_lo,
 			&pa, pcibus(addr[1].phys_hi), pcidev(addr[1].phys_hi),
 			pcifunc(addr[1].phys_hi));
-
 
 #if 1
 		for (i = 0; i < cons_linebytes * cons_height; i++) {
