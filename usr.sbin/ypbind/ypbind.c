@@ -1,7 +1,8 @@
-/*	$OpenBSD: ypbind.c,v 1.8 1996/06/10 05:48:51 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.9 1996/07/01 00:49:56 deraadt Exp $ */
 
 /*
- * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
+ * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.8 1996/06/10 05:48:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.9 1996/07/01 00:49:56 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -102,6 +103,7 @@ struct rmtcallres rmtcr;
 char rmtcr_outval;
 u_long rmtcr_port;
 SVCXPRT *udptransp, *tcptransp;
+SVCXPRT *ludptransp, *ltcptransp;
 
 struct _dom_binding *xid2ypdb __P((int xid));
 int unique_xid __P((struct _dom_binding *ypdb));
@@ -214,6 +216,10 @@ ypbindproc_setdom_2x(transp, argp, clnt)
 
 	switch (ypsetmode) {
 	case YPSET_LOCAL:
+		if (transp != ludptransp && transp != ltcptransp) {
+			syslog(LOG_WARNING, "attempted spoof of ypsetme");
+			return (bool_t *)NULL;
+		}
 		if (fromsin->sin_addr.s_addr != htonl(INADDR_LOOPBACK))
 			return (bool_t *)NULL;
 		break;
@@ -312,15 +318,17 @@ usage()
 	exit(0);
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	char path[MAXPATHLEN];
+	struct sockaddr_in sin;
 	struct timeval tv;
 	fd_set fdsr;
-	int width, lockfd;
-	int evil = 0, one;
+	int width, lockfd, len, lsock;
+	int evil = 0, one = 1;
 	DIR *dirp;
 	struct dirent *dent;
 
@@ -399,6 +407,54 @@ main(argc, argv)
 		exit(1);
 	}
 
+	if (ypsetmode == YPSET_LOCAL) {
+		/* build UDP local port */
+		if ((lsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
+			syslog(LOG_ERR, "cannot create local udp socket: %m");
+			exit(1);
+		}
+		(void)setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &one,
+		    sizeof one);
+		len = sizeof(sin);
+		if (getsockname(udptransp->xp_sock, (struct sockaddr *)&sin,
+		    &len) == -1) {
+			syslog(LOG_ERR, "cannot getsockname local udp: %m");
+			exit(1);
+		}
+		sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		if (bind(lsock, (struct sockaddr *)&sin, len) != 0) {
+			syslog(LOG_ERR, "cannot bind local udp: %m");
+			exit(1);
+		}
+		if ((ludptransp = svcudp_create(lsock)) == NULL) {
+			fprintf(stderr, "cannot create udp service.");
+			exit(1);
+		}
+
+		/* build TCP local port */
+		if ((lsock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+			syslog(LOG_ERR, "cannot create udp socket: %m");
+			exit(1);
+		}
+		(void)setsockopt(lsock, SOL_SOCKET, SO_REUSEADDR, &one,
+		    sizeof one);
+		len = sizeof(sin);
+		if (getsockname(tcptransp->xp_sock, (struct sockaddr *)&sin,
+		    &len) == -1) {
+			syslog(LOG_ERR, "cannot getsockname udp: %m");
+			exit(1);
+		}
+		sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+		if (bind(lsock, (struct sockaddr *)&sin, len) == -1) {
+			syslog(LOG_ERR, "cannot bind udp: %m");
+			exit(1);
+		}
+		if ((ltcptransp = svctcp_create(lsock, 0, 0)) == NULL) {
+			fprintf(stderr, "cannot create tcp service.");
+			exit(1);
+		}
+	}
+
 	if ((rpcsock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
 		perror("socket");
 		return -1;
@@ -407,10 +463,9 @@ main(argc, argv)
 		perror("socket");
 		return -1;
 	}
-	
+
 	fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
 	fcntl(pingsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
-	one = 1;
 	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
 	rmtca.prog = YPPROG;
 	rmtca.vers = YPVERS;
@@ -799,7 +854,7 @@ try_again:
 }
 
 /*
- * LOOPBACK IS MORE IMPORTANT: PUT IN HACK
+ * We prefer loopback connections.
  */
 rpc_received(dom, raddrp, force)
 char *dom;
