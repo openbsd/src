@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.1 2004/06/19 18:28:37 miod Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.2 2004/06/25 20:18:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -289,7 +289,7 @@ db_set_single_step(regs)
 	db_regs_t *regs;
 {
 	if (cputyp == CPU_88110) {
-		((regs)->epsr |= (PSR_TRACE | PSR_SER));
+		(regs)->epsr |= PSR_TRACE | PSR_SER;
 	} else {
 		db_addr_t pc = PC_REGS(regs);
 #ifndef SOFTWARE_SSTEP_EMUL
@@ -322,7 +322,8 @@ db_clear_single_step(regs)
 	db_regs_t *regs;
 {
 	if (cputyp == CPU_88110) {
-		((regs)->epsr &= ~(PSR_TRACE | PSR_SER));
+		/* do not remove PSR_SER as we don't enable OoO */
+		(regs)->epsr &= ~PSR_TRACE;
 	} else {
 		if (db_taken_bkpt != 0) {
 			db_delete_temp_breakpoint(db_taken_bkpt);
