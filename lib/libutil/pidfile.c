@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.1 2001/09/28 20:16:42 jakob Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.2 2001/12/08 02:25:06 deraadt Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.1 2001/09/28 20:16:42 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.2 2001/12/08 02:25:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,6 +50,7 @@ static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.1 2001/09/28 20:16:42 jakob
 #include <util.h>
 
 static char *pidfile_path;
+static int pidfile_pid;
 
 static void pidfile_cleanup(void);
 
@@ -60,19 +61,20 @@ pidfile(const char *basename)
 {
 	FILE *f;
 	int save_errno;
+	pid_t pid;
 
 	if (basename == NULL)
 		basename = __progname;
 
-	if (pidfile_path != NULL) {                                            
-		free(pidfile_path);                                            
-		pidfile_path = NULL;                                           
-	}                                                                      
+	if (pidfile_path != NULL) {
+		free(pidfile_path);
+		pidfile_path = NULL;
+	}
 
 	/* _PATH_VARRUN includes trailing / */
 	(void) asprintf(&pidfile_path, "%s%s.pid", _PATH_VARRUN, basename);
 	if (pidfile_path == NULL)
-		return (-1); 
+		return (-1);
 
 	if ((f = fopen(pidfile_path, "w")) == NULL) {
 		save_errno = errno;
@@ -82,7 +84,8 @@ pidfile(const char *basename)
 		return (-1);
 	}
 
-	if (fprintf(f, "%d\n", getpid()) <= 0 || fclose(f) != 0) {
+	pid = getpid();
+	if (fprintf(f, "%d\n", pid) <= 0 || fclose(f) != 0) {
 		save_errno = errno;
 		(void) unlink(pidfile_path);
 		free(pidfile_path);
@@ -91,6 +94,7 @@ pidfile(const char *basename)
 		return (-1);
 	}
 
+	pidfile_pid = pid;
 	(void) atexit(pidfile_cleanup);
 
 	return (0);
@@ -100,6 +104,6 @@ static void
 pidfile_cleanup(void)
 {
 
-	if (pidfile_path != NULL)
+	if (pidfile_path != NULL && pidfile_pid == getpid())
 		(void) unlink(pidfile_path);
 }
