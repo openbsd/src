@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.40 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.41 2001/11/05 02:03:58 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ int nfiles;			/* actual number of open files */
 static __inline void fd_used __P((struct filedesc *, int));
 static __inline void fd_unused __P((struct filedesc *, int));
 static __inline int find_next_zero __P((u_int *, int, u_int));
-int finishdup __P((struct filedesc *, int, int, register_t *));
+int finishdup __P((struct proc *, int, int, register_t *));
 int find_last_set __P((struct filedesc *, int));
 
 struct pool file_pool;
@@ -231,7 +231,7 @@ restart:
 		}
 		return (error);
 	}
-	return (finishdup(fdp, old, new, retval));
+	return (finishdup(p, old, new, retval));
 }
 
 /*
@@ -273,7 +273,7 @@ restart:
 		if (new != i)
 			panic("dup2: fdalloc");
 	}
-	return (finishdup(fdp, old, new, retval));
+	return (finishdup(p, old, new, retval));
 }
 
 /*
@@ -316,7 +316,7 @@ restart:
 			}
 			return (error);
 		}
-		return (finishdup(fdp, fd, i, retval));
+		return (finishdup(p, fd, i, retval));
 
 	case F_GETFD:
 		*retval = fdp->fd_ofileflags[fd] & UF_EXCLOSE ? 1 : 0;
@@ -458,16 +458,15 @@ restart:
 
 /*
  * Common code for dup, dup2, and fcntl(F_DUPFD).
- *
- * XXX - should take a proc as an argument.
  */
 int
-finishdup(fdp, old, new, retval)
-	register struct filedesc *fdp;
-	register int old, new;
+finishdup(p, old, new, retval)
+	struct proc *p;
+	int old, new;
 	register_t *retval;
 {
 	struct file *fp, *oldfp;
+	struct filedesc *fdp = p->p_fd;
 
 	oldfp = fdp->fd_ofiles[new];
 
@@ -483,8 +482,8 @@ finishdup(fdp, old, new, retval)
 
 	if (oldfp != NULL) {
 		if (new < fdp->fd_knlistsize)
-			knote_fdclose(curproc, new);
-		closef(oldfp, curproc);
+			knote_fdclose(p, new);
+		closef(oldfp, p);
 	}
 
 	return (0);
