@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.135 2001/08/21 17:25:59 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.136 2001/08/22 00:26:10 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -210,10 +210,14 @@ pf_tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
 	 */
 	if ((diff = a->proto - b->proto) != 0)
 		return (diff);
-	if ((diff = a->addr[0].s_addr - b->addr[0].s_addr) != 0)
-		return (diff);
-	if ((diff = a->addr[1].s_addr - b->addr[1].s_addr) != 0)
-		return (diff);
+	if (a->addr[0].s_addr > b->addr[0].s_addr)
+		return 1;
+	if (a->addr[0].s_addr < b->addr[0].s_addr)
+		return -1;
+	if (a->addr[1].s_addr > b->addr[1].s_addr)
+		return 1;
+	if (a->addr[1].s_addr < b->addr[1].s_addr)
+		return -1;
 	if ((diff = a->port[0] - b->port[0]) != 0)
 		return (diff);
 	if ((diff = a->port[1] - b->port[1]) != 0)
@@ -2605,6 +2609,14 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		 * validate the connection, go through the normal state code
 		 * and keep updating the state TTL.
 		 */
+
+		if (pf_status.debug >= PF_DEBUG_MISC) {
+			printf("pf: loose state match: ");
+			pf_print_state(*state);
+			pf_print_flags(th->th_flags);
+			printf(" seq=%lu ack=%lu len=%u ackskew=%d pkts=%d\n",
+			    seq, ack, len, ackskew, (*state)->packets);
+		}
 
 		(*state)->packets++;
 		(*state)->bytes += h->ip_len;
