@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.15 1998/03/01 18:58:26 niklas Exp $	*/
+/*	$OpenBSD: locore.S,v 1.16 1998/03/16 09:38:28 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.15 1998/03/01 18:58:26 niklas Exp $
+ *	$Id: locore.S,v 1.16 1998/03/16 09:38:28 pefo Exp $
  */
 
 /*
@@ -78,8 +78,8 @@
 #define START_FRAME	((4 * 4) + 4 + 4)
 
 	.globl	start
-	.globl	kernel_start
-kernel_start = start
+	.globl	kernel_text
+kernel_text = start
 start:
 	mtc0	zero, COP_0_STATUS_REG	# Disable interrupts
 	mtc0	zero, COP_0_CAUSE_REG	# Clear soft interrupts
@@ -175,9 +175,11 @@ onfault_table:
 	.word	fswberr
 #define FSWINTRBERR	4
 	.word	fswintrberr
-#ifdef MDB
-#define MDBERR		5
-	.word	mdberr
+#if defined(DDB)
+#define	DDBERR		5
+	.word	ddberr
+#else
+	.word	0
 #endif
 	.text
 
@@ -1041,107 +1043,128 @@ SlowFault:
  *
  *----------------------------------------------------------------------------
  */
+#ifndef MIPS_ISAIII
+#define	STORE	sw	/* 32 bit mode regsave instruction */
+#define	LOAD	lw	/* 32 bit mode regload instruction */
+#define	RSIZE	4	/* 32 bit mode register size */
+#else
+#define	STORE	sd	/* 64 bit mode regsave instruction */
+#define	STORE	ld	/* 64 bit mode regload instruction */
+#define	RSIZE	8	/* 64 bit mode register size */
+#endif
+
+#define	SAVE_REG(reg, offs, base) \
+	STORE	reg, STAND_ARG_SIZE + (RSIZE * offs) (base)
+
+#define	SAVE_CPU \
+	SAVE_REG(AT, AST, sp)		;\
+	SAVE_REG(v0, V0, sp)		;\
+	SAVE_REG(v1, V1, sp)		;\
+	mflo	v0			;\
+	mfhi	v1			;\
+	SAVE_REG(a0, A0, sp)		;\
+	SAVE_REG(a1, A1, sp)		;\
+	SAVE_REG(a2, A2, sp)		;\
+	SAVE_REG(a3, A3, sp)		;\
+	mfc0	a0, COP_0_STATUS_REG	;\
+	mfc0	a1, COP_0_CAUSE_REG	;\
+	mfc0	a2, COP_0_BAD_VADDR	;\
+	mfc0	a3, COP_0_EXC_PC	;\
+	SAVE_REG(t0, T0, sp)		;\
+	SAVE_REG(t1, T1, sp)		;\
+	SAVE_REG(t2, T2, sp)		;\
+	SAVE_REG(t3, T3, sp)		;\
+	SAVE_REG(t4, T4, sp)		;\
+	SAVE_REG(t5, T5, sp)		;\
+	SAVE_REG(t6, T6, sp)		;\
+	SAVE_REG(t7, T7, sp)		;\
+	SAVE_REG(t8, T8, sp)		;\
+	SAVE_REG(t9, T9, sp)		;\
+	SAVE_REG(v0, MULLO, sp)		;\
+	SAVE_REG(v1, MULHI, sp)		;\
+	SAVE_REG(a0, SR, sp)		;\
+	SAVE_REG(a1, CAUSE, sp)		;\
+	SAVE_REG(ra, RA, sp)		;\
+	SAVE_REG(a2, BADVADDR, sp)	;\
+	SAVE_REG(a3, PC, sp)		;\
+	addu	v0, sp, KERN_EXC_FRAME_SIZE ;\
+	SAVE_REG(v0, SP, sp)		;\
+	mtc0	zero,COP_0_STATUS_REG
+
+#ifdef DDB
+#define	SAVE_CPU_DDB \
+	SAVE_REG(s0, S0, sp)		;\
+	SAVE_REG(s1, S1, sp)		;\
+	SAVE_REG(s2, S2, sp)		;\
+	SAVE_REG(s3, S3, sp)		;\
+	SAVE_REG(s4, S4, sp)		;\
+	SAVE_REG(s5, S5, sp)		;\
+	SAVE_REG(s6, S6, sp)		;\
+	SAVE_REG(s7, S7, sp)		;\
+	SAVE_REG(s8, S8, sp)
+#else
+#define	SAVE_CPU_DDB
+#endif
+
+#define	RESTORE_REG(reg, offs, base) \
+	LOAD	reg, STAND_ARG_SIZE + (RSIZE * offs) (base)
+
+#define	RESTORE_CPU \
+	mtc0	zero,COP_0_STATUS_REG	;\
+	RESTORE_REG(a0, SR, sp)		;\
+	RESTORE_REG(t0, MULLO, sp)	;\
+	RESTORE_REG(t1, MULHI, sp)	;\
+	mtc0	a0, COP_0_STATUS_REG	;\
+	mtlo	t0			;\
+	mthi	t1			;\
+	dmtc0	v0, COP_0_EXC_PC	;\
+	RESTORE_REG(AT, AST, sp)		;\
+	RESTORE_REG(v0, V0, sp)		;\
+	RESTORE_REG(v1, V1, sp)		;\
+	RESTORE_REG(a0, A0, sp)		;\
+	RESTORE_REG(a1, A1, sp)		;\
+	RESTORE_REG(a2, A2, sp)		;\
+	RESTORE_REG(a3, A3, sp)		;\
+	RESTORE_REG(t0, T0, sp)		;\
+	RESTORE_REG(t1, T1, sp)		;\
+	RESTORE_REG(t2, T2, sp)		;\
+	RESTORE_REG(t3, T3, sp)		;\
+	RESTORE_REG(t4, T4, sp)		;\
+	RESTORE_REG(t5, T5, sp)		;\
+	RESTORE_REG(t6, T6, sp)		;\
+	RESTORE_REG(t7, T7, sp)		;\
+	RESTORE_REG(t8, T8, sp)		;\
+	RESTORE_REG(t9, T9, sp)		;\
+	RESTORE_REG(ra, RA, sp)		;\
+	addu	sp, sp, KERN_EXC_FRAME_SIZE
 
 /*
  * The kernel exception stack contains 18 saved general registers,
  * the status register and the multiply lo and high registers.
  * In addition, we set this up for linkage conventions.
  */
-#define KERN_REG_SIZE		(18 * 4)
-#define KERN_REG_OFFSET		(STAND_FRAME_SIZE)
-#define KERN_SR_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE)
-#define KERN_MULT_LO_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 4)
-#define KERN_MULT_HI_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 8)
-#define	KERN_EXC_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
+#define KERN_REG_SIZE		(NUMSAVEREGS * RSIZE)
+#define	KERN_EXC_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
 
 NNON_LEAF(MipsKernGenException, KERN_EXC_FRAME_SIZE, ra)
 	.set	noat
-#ifdef MDB
-	la	k0, mdbpcb			# save registers for mdb
-	sw	s0, (S0 * 4)(k0)
-	sw	s1, (S1 * 4)(k0)
-	sw	s2, (S2 * 4)(k0)
-	sw	s3, (S3 * 4)(k0)
-	sw	s4, (S4 * 4)(k0)
-	sw	s5, (S5 * 4)(k0)
-	sw	s6, (S6 * 4)(k0)
-	sw	s7, (S7 * 4)(k0)
-	sw	s8, (S8 * 4)(k0)
-	sw	gp, (GP * 4)(k0)
-	sw	sp, (SP * 4)(k0)
-#endif
 	subu	sp, sp, KERN_EXC_FRAME_SIZE
 	.mask	0x80000000, (STAND_RA_OFFSET - KERN_EXC_FRAME_SIZE)
 /*
- * Save the relevant kernel registers onto the stack.
- * We don't need to save s0 - s8, sp and gp because
- * the compiler does it for us.
+ *  Save CPU state, building 'frame'.
  */
-	sw	AT, KERN_REG_OFFSET + 0(sp)
-	sw	v0, KERN_REG_OFFSET + 4(sp)
-	sw	v1, KERN_REG_OFFSET + 8(sp)
-	sw	a0, KERN_REG_OFFSET + 12(sp)
-	mflo	v0
-	mfhi	v1
-	sw	a1, KERN_REG_OFFSET + 16(sp)
-	sw	a2, KERN_REG_OFFSET + 20(sp)
-	sw	a3, KERN_REG_OFFSET + 24(sp)
-	sw	t0, KERN_REG_OFFSET + 28(sp)
-	mfc0	a0, COP_0_STATUS_REG	# First arg is the status reg.
-	sw	t1, KERN_REG_OFFSET + 32(sp)
-	sw	t2, KERN_REG_OFFSET + 36(sp)
-	sw	t3, KERN_REG_OFFSET + 40(sp)
-	sw	t4, KERN_REG_OFFSET + 44(sp)
-	mfc0	a1, COP_0_CAUSE_REG	# Second arg is the cause reg.
-	sw	t5, KERN_REG_OFFSET + 48(sp)
-	sw	t6, KERN_REG_OFFSET + 52(sp)
-	sw	t7, KERN_REG_OFFSET + 56(sp)
-	sw	t8, KERN_REG_OFFSET + 60(sp)
-	mfc0	a2, COP_0_BAD_VADDR	# Third arg is the fault addr.
-	sw	t9, KERN_REG_OFFSET + 64(sp)
-	sw	ra, KERN_REG_OFFSET + 68(sp)
-	sw	v0, KERN_MULT_LO_OFFSET(sp)
-	sw	v1, KERN_MULT_HI_OFFSET(sp)
-	mfc0	a3, COP_0_EXC_PC		# Fourth arg is the pc.
-	sw	a0, KERN_SR_OFFSET(sp)
-
-	mtc0	zero,COP_0_STATUS_REG	# Set kernel no error level
+	SAVE_CPU
+	SAVE_CPU_DDB
 /*
- * Call the exception handler.
+ *  Call the exception handler.
  */
 	jal	trap
-	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
+	sw	a3, STAND_RA_OFFSET + KERN_REG_SIZE(sp)		# for debugging
 /*
  * Restore registers and return from the exception.
  * v0 contains the return address.
  */
-	mtc0	zero,COP_0_STATUS_REG	# Make shure int disabled
-	lw	a0, KERN_SR_OFFSET(sp)
-	lw	t0, KERN_MULT_LO_OFFSET(sp)
-	lw	t1, KERN_MULT_HI_OFFSET(sp)
-	mtc0	a0, COP_0_STATUS_REG	# Restore the SR, disable intrs
-	mtlo	t0
-	mthi	t1
-	dmtc0	v0, COP_0_EXC_PC		# set return address
-	lw	AT, KERN_REG_OFFSET + 0(sp)
-	lw	v0, KERN_REG_OFFSET + 4(sp)
-	lw	v1, KERN_REG_OFFSET + 8(sp)
-	lw	a0, KERN_REG_OFFSET + 12(sp)
-	lw	a1, KERN_REG_OFFSET + 16(sp)
-	lw	a2, KERN_REG_OFFSET + 20(sp)
-	lw	a3, KERN_REG_OFFSET + 24(sp)
-	lw	t0, KERN_REG_OFFSET + 28(sp)
-	lw	t1, KERN_REG_OFFSET + 32(sp)
-	lw	t2, KERN_REG_OFFSET + 36(sp)
-	lw	t3, KERN_REG_OFFSET + 40(sp)
-	lw	t4, KERN_REG_OFFSET + 44(sp)
-	lw	t5, KERN_REG_OFFSET + 48(sp)
-	lw	t6, KERN_REG_OFFSET + 52(sp)
-	lw	t7, KERN_REG_OFFSET + 56(sp)
-	lw	t8, KERN_REG_OFFSET + 60(sp)
-	lw	t9, KERN_REG_OFFSET + 64(sp)
-	lw	ra, KERN_REG_OFFSET + 68(sp)
-	addu	sp, sp, KERN_EXC_FRAME_SIZE
+	RESTORE_CPU
 	eret					#  exception.
 	.set	at
 END(MipsKernGenException)
@@ -1285,87 +1308,28 @@ END(MipsUserGenException)
  *
  *----------------------------------------------------------------------------
  */
-#define KINTR_REG_OFFSET	(STAND_FRAME_SIZE)
-#define KINTR_SR_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE)
-#define KINTR_MULT_LO_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 4)
-#define KINTR_MULT_HI_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 8)
-#define KINTR_MULT_GP_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
-#define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
 
-NNON_LEAF(MipsKernIntr, KINTR_FRAME_SIZE, ra)
+NNON_LEAF(MipsKernIntr, KERN_EXC_FRAME_SIZE, ra)
 	.set	noat
-	subu	sp, sp, KINTR_FRAME_SIZE	# allocate stack frame
-	.mask	0x80000000, (STAND_RA_OFFSET - KINTR_FRAME_SIZE)
+	subu	sp, sp, KERN_EXC_FRAME_SIZE
+	.mask	0x80000000, (STAND_RA_OFFSET - KERN_EXC_FRAME_SIZE)
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8, sp and gp because
  * the compiler does it for us.
  */
-	sw	AT, KINTR_REG_OFFSET + 0(sp)
-	sw	v0, KINTR_REG_OFFSET + 4(sp)
-	sw	v1, KINTR_REG_OFFSET + 8(sp)
-	sw	a0, KINTR_REG_OFFSET + 12(sp)
-	mflo	v0
-	mfhi	v1
-	sw	a1, KINTR_REG_OFFSET + 16(sp)
-	sw	a2, KINTR_REG_OFFSET + 20(sp)
-	sw	a3, KINTR_REG_OFFSET + 24(sp)
-	sw	t0, KINTR_REG_OFFSET + 28(sp)
-	mfc0	a0, COP_0_STATUS_REG	# First arg is the status reg.
-	sw	t1, KINTR_REG_OFFSET + 32(sp)
-	sw	t2, KINTR_REG_OFFSET + 36(sp)
-	sw	t3, KINTR_REG_OFFSET + 40(sp)
-	sw	t4, KINTR_REG_OFFSET + 44(sp)
-	mfc0	a1, COP_0_CAUSE_REG	# Second arg is the cause reg.
-	sw	t5, KINTR_REG_OFFSET + 48(sp)
-	sw	t6, KINTR_REG_OFFSET + 52(sp)
-	sw	t7, KINTR_REG_OFFSET + 56(sp)
-	sw	t8, KINTR_REG_OFFSET + 60(sp)
-	mfc0	a2, COP_0_EXC_PC		# Third arg is the pc.
-	sw	t9, KINTR_REG_OFFSET + 64(sp)
-	sw	ra, KINTR_REG_OFFSET + 68(sp)
-	sw	v0, KINTR_MULT_LO_OFFSET(sp)
-	sw	v1, KINTR_MULT_HI_OFFSET(sp)
-	sw	a0, KINTR_SR_OFFSET(sp)
-
-	mtc0	zero, COP_0_STATUS_REG	# Reset exl, trap possible.
+	SAVE_CPU
 /*
  * Call the interrupt handler.
  */
 	jal	interrupt
-	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
+	sw	a3, STAND_RA_OFFSET + KERN_REG_SIZE(sp)
 /*
  * Restore registers and return from the interrupt.
  */
-	mtc0	zero, COP_0_STATUS_REG	# Disable interrupt
-	lw	a0, KINTR_SR_OFFSET(sp)
-	lw	t0, KINTR_MULT_LO_OFFSET(sp)
-	lw	t1, KINTR_MULT_HI_OFFSET(sp)
-	mtc0	a0, COP_0_STATUS_REG	# Restore the SR, disable intrs
-	mtlo	t0
-	mthi	t1
-	lw	a0, STAND_RA_OFFSET(sp)
-	lw	AT, KINTR_REG_OFFSET + 0(sp)
-	lw	v0, KINTR_REG_OFFSET + 4(sp)
-	dmtc0	a0, COP_0_EXC_PC		# set return address
-	lw	v1, KINTR_REG_OFFSET + 8(sp)
-	lw	a0, KINTR_REG_OFFSET + 12(sp)
-	lw	a1, KINTR_REG_OFFSET + 16(sp)
-	lw	a2, KINTR_REG_OFFSET + 20(sp)
-	lw	a3, KINTR_REG_OFFSET + 24(sp)
-	lw	t0, KINTR_REG_OFFSET + 28(sp)
-	lw	t1, KINTR_REG_OFFSET + 32(sp)
-	lw	t2, KINTR_REG_OFFSET + 36(sp)
-	lw	t3, KINTR_REG_OFFSET + 40(sp)
-	lw	t4, KINTR_REG_OFFSET + 44(sp)
-	lw	t5, KINTR_REG_OFFSET + 48(sp)
-	lw	t6, KINTR_REG_OFFSET + 52(sp)
-	lw	t7, KINTR_REG_OFFSET + 56(sp)
-	lw	t8, KINTR_REG_OFFSET + 60(sp)
-	lw	t9, KINTR_REG_OFFSET + 64(sp)
-	lw	ra, KINTR_REG_OFFSET + 68(sp)
-	addu	sp, sp, KINTR_FRAME_SIZE
-	eret					#  interrupt.
+	lw	v0, STAND_RA_OFFSET + KERN_REG_SIZE(sp)
+	RESTORE_CPU
+	eret
 	.set	at
 END(MipsKernIntr)
 
@@ -1415,7 +1379,7 @@ NNON_LEAF(MipsUserIntr, STAND_FRAME_SIZE, ra)
 	sw	t6, UADDR+U_PCB_REGS+(T6 * 4)
 	sw	t7, UADDR+U_PCB_REGS+(T7 * 4)
 	sw	t8, UADDR+U_PCB_REGS+(T8 * 4)
-	mfc0	a2, COP_0_EXC_PC		# Third arg is the pc.
+	mfc0	a3, COP_0_EXC_PC		# Fourth arg is the pc.
 	sw	t9, UADDR+U_PCB_REGS+(T9 * 4)
 	sw	gp, UADDR+U_PCB_REGS+(GP * 4)
 	sw	sp, UADDR+U_PCB_REGS+(SP * 4)
@@ -1424,7 +1388,7 @@ NNON_LEAF(MipsUserIntr, STAND_FRAME_SIZE, ra)
 	sw	v0, UADDR+U_PCB_REGS+(MULLO * 4)
 	sw	v1, UADDR+U_PCB_REGS+(MULHI * 4)
 	sw	a0, UADDR+U_PCB_REGS+(SR * 4)
-	sw	a2, UADDR+U_PCB_REGS+(PC * 4)
+	sw	a3, UADDR+U_PCB_REGS+(PC * 4)
 	la	gp, _gp				# switch to kernel GP
 # Turn off fpu and enter kernel mode
 	.set	at
@@ -1435,7 +1399,7 @@ NNON_LEAF(MipsUserIntr, STAND_FRAME_SIZE, ra)
  * Call the interrupt handler.
  */
 	jal	interrupt
-	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
+	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
 /*
  * Restore registers and return from the interrupt.
  */
@@ -2677,7 +2641,7 @@ LEAF(R4K_ConfigCache)
 	beq	v1, t1, 1f
 	li	t1, (MIPS_R5000 << 8)
 	beq	v1, t1, 1f
-	li	t1, (MIPS_RM5230 << 8)
+	li	t1, (MIPS_RM52X0 << 8)
 	beq	v1, t1, 1f
 	li	t2, 1
 
@@ -2974,159 +2938,101 @@ END(R4K_HitFlushDCache)
 LEAF(R4K_InvalidateDCache)
 	addu	a1, a1, a0			# compute ending address
 1:
-	cache	0x11,8194(a0)
+	cache	0x11, 8194(a0)
 	addu	a0, a0, 4
 	bne	a0, a1, 1b
-	cache	0x11,-4(a0)
+	cache	0x11, -4(a0)
 
 	j	ra
 	nop
 END(R4K_InvalidateDCache)
 
-#ifdef MDB
-/*
- * Read a long and return it.
- * Note: addresses can be unaligned!
- *
- * long
-L* mdbpeek(addr)
-L*	caddt_t addr;
-L* {
-L*	return (*(long *)addr);
-L* }
- */
-LEAF(mdbpeek)
-	li	v0, MDBERR
-	sw	v0, UADDR+U_PCB_ONFAULT
-	and	v0, a0, 3		# unaligned address?
+#if defined(DDB)
+LEAF(kdbpeek)
+	li	v0, DDBERR
+	and	v0, a0, 3			# unaligned ?
 	bne	v0, zero, 1f
-	nop
-	b	2f
-	lw	v0, (a0)		# aligned access
+	sw	v0, UADDR+U_PCB_ONFAULT
+
+	lw	v0, (a0)
+	jr	ra
+	sw	zero, UADDR+U_PCB_ONFAULT
+
 1:
-	LWHI	v0, 0(a0)		# get next 4 bytes (unaligned)
+	LWHI	v0, 0(a0)
 	LWLO	v0, 3(a0)
-2:
-	j	ra			# made it w/o errors
+	jr	ra
 	sw	zero, UADDR+U_PCB_ONFAULT
-mdberr:
-	li	v0, 1			# trap sends us here
-	sw	v0, mdbmkfault
-	j	ra
-	nop
-END(mdbpeek)
+END(kdbpeek)
 
-/*
- * Write a long to 'addr'.
- * Note: addresses can be unaligned!
- *
-L* void
-L* mdbpoke(addr, value)
-L*	caddt_t addr;
-L*	long value;
-L* {
-L*	*(long *)addr = value;
-L* }
- */
-LEAF(mdbpoke)
-	li	v0, MDBERR
-	sw	v0, UADDR+U_PCB_ONFAULT
-	and	v0, a0, 3		# unaligned address?
+LEAF(kdbpoke)
+	li	v0, DDBERR
+	and	v0, a0, 3			# unaligned ?
 	bne	v0, zero, 1f
-	nop
-	b	2f
-	sw	a1, (a0)		# aligned access
-1:
-	SWHI	a1, 0(a0)		# store next 4 bytes (unaligned)
-	SWLO	a1, 3(a0)
-	and	a0, a0, ~3		# align address for cache flush
-2:
+	sw	v0, UADDR+U_PCB_ONFAULT
+
+	sw	a1, (a0)
+	jr	ra
 	sw	zero, UADDR+U_PCB_ONFAULT
-	b	R4K_FlushICache		# flush instruction cache
-	li	a1, 8
-END(mdbpoke)
 
-/*
- * Save registers and state so we can do a 'mdbreset' (like longjmp) later.
- * Always returns zero.
- *
-L* int mdb_savearea[11];
-L*
-L* int
-L* mdbsetexit()
-L* {
-L*	mdb_savearea[0] = 0;
-L*	return (0);
-L* }
- */
-	.comm	mdb_savearea, (11 * 4)
+1:
+	SWHI	a1, 0(a0)
+	SWLO	a1, 3(a0)
+	jr	ra
+	sw	zero, UADDR+U_PCB_ONFAULT
+END(kdbpoke)
 
-LEAF(mdbsetexit)
-	la	a0, mdb_savearea
-	sw	s0, 0(a0)
-	sw	s1, 4(a0)
-	sw	s2, 8(a0)
-	sw	s3, 12(a0)
-	sw	s4, 16(a0)
-	sw	s5, 20(a0)
-	sw	s6, 24(a0)
-	sw	s7, 28(a0)
-	sw	sp, 32(a0)
-	sw	s8, 36(a0)
-	sw	ra, 40(a0)
-	j	ra
-	move	v0, zero
-END(mdbsetexit)
-
-/*
- * Restore registers and state (like longjmp) and return x.
- *
-L* int
-L* mdbreset(x)
-L* {
-L*	return (x);
-L* }
- */
-LEAF(mdbreset)
-	la	v0, mdb_savearea
-	lw	ra, 40(v0)
-	lw	s0, 0(v0)
-	lw	s1, 4(v0)
-	lw	s2, 8(v0)
-	lw	s3, 12(v0)
-	lw	s4, 16(v0)
-	lw	s5, 20(v0)
-	lw	s6, 24(v0)
-	lw	s7, 28(v0)
-	lw	sp, 32(v0)
-	lw	s8, 36(v0)
-	j	ra
-	move	v0, a0
-END(mdbreset)
-
-/*
- * Trap into the debugger.
- *
-L* void
-L* mdbpanic()
-L* {
-L* }
- */
-LEAF(mdbpanic)
-	break	BREAK_SOVER_VAL
-	j	ra
+ddberr:
+	jr	ra
 	nop
-END(mdbpanic)
-#endif /* MDB */
 
-#ifdef MDB
-LEAF(cpu_getregs)
-	sw	sp, 0(a0)
-	sw	ra, 4(a0)
-	j	ra
-	sw	s8, 8(a0)
-END(cpu_getregs)
-#endif /* MDB */
+LEAF(Debugger)
+	break   BREAK_SOVER_VAL
+	jr	ra
+	nop
+END(Debugger)
+
+LEAF(setjmp)
+	mfc0	v0, COP_0_STATUS_REG	# Later the "real" spl value!
+	STORE	s0, RSIZE * 0(a0)
+	STORE	s1, RSIZE * 1(a0)
+	STORE	s2, RSIZE * 2(a0)
+	STORE	s3, RSIZE * 3(a0)
+	STORE	s4, RSIZE * 4(a0)
+	STORE	s5, RSIZE * 5(a0)
+	STORE	s6, RSIZE * 6(a0)
+	STORE	s7, RSIZE * 7(a0)
+	STORE	s8, RSIZE * 8(a0)
+	STORE	sp, RSIZE * 9(a0)
+	STORE	ra, RSIZE * 10(a0)
+	STORE	v0, RSIZE * 11(a0)
+	jr	ra
+	li	v0, 0			# setjmp return
+END(setjmp)
+
+LEAF(longjmp)
+	LOAD	v0, RSIZE * 11(a0)
+	LOAD	ra, RSIZE * 10(a0)
+	LOAD	s0, RSIZE * 0(a0)
+	LOAD	s1, RSIZE * 1(a0)
+	LOAD	s2, RSIZE * 2(a0)
+	LOAD	s3, RSIZE * 3(a0)
+	LOAD	s4, RSIZE * 4(a0)
+	LOAD	s5, RSIZE * 5(a0)
+	LOAD	s6, RSIZE * 6(a0)
+	LOAD	s7, RSIZE * 7(a0)
+	LOAD	s8, RSIZE * 8(a0)
+	LOAD	sp, RSIZE * 9(a0)
+	mtc0	v0, COP_0_STATUS_REG	# Later the "real" spl value!
+	jr	ra
+	li	v0, 1			# longjmp return
+END(longjmp)
+
+	.data
+	.globl	esym
+esym:	.word	0
+
+#endif
 
 /*
  * Interrupt counters for vmstat.

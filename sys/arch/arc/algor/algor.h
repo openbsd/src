@@ -1,4 +1,4 @@
-/*	$OpenBSD: algor.h,v 1.3 1997/04/19 17:19:36 pefo Exp $ */
+/*	$OpenBSD: algor.h,v 1.4 1998/03/16 09:38:23 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -36,11 +36,14 @@
 #define	_ALGOR_H_ 1
 
 /*
- * P-4032's Physical address space
+ * Physical address space
  */
 
 #define P4032_PHYS_MIN		0x00000000	/* 256 Meg */
 #define P4032_PHYS_MAX		0x0fffffff
+
+#define P5064_PHYS_MIN		0x00000000	/* 256 Meg */
+#define P5064_PHYS_MAX		0x0fffffff
 
 /*
  * Memory map
@@ -49,8 +52,11 @@
 #define P4032_PHYS_MEMORY_START	0x00000000
 #define P4032_PHYS_MEMORY_END	0x0fffffff	/* 256 Meg in 2 slots */
 
+#define P5064_PHYS_MEMORY_START	0x00000000
+#define P5064_PHYS_MEMORY_END	0x0fffffff	/* 256 Meg in 2 slots */
+
 /*
- * I/O map
+ * I/O map P-4032
  */
 
 #define	P4032_V96x		0xbef00000	/* PCI Bus bridge ctrlregs */
@@ -74,6 +80,36 @@
 #define	P4032_IXR0		0xbff9000c	/* Int crossbar register 0 */
 #define	P4032_IXR1		0xbff90010	/* Int crossbar register 0 */
 #define	P4032_IXR2		0xbff90014	/* Int crossbar register 0 */
+
+/*
+ * I/O map P-5064
+ */
+
+#define	P5064_V96x		P4032_V96x	/* PCI Bus bridge ctrlregs */
+
+#define	P5064_CLOCK		0xbd000070	/* RTC clock ptr reg, data +1 */
+#define	P5064_KEYB		0xbd000064	/* PC Keyboard controller */
+#define	P5064_LED		P4032_LED	/* 4 Char LED display */
+#define	P5064_LCD		P4032_LCD	/* LCD option display */
+#define	P5064_GPIO		P4032_GPIO	/* General purpose I/O */
+#define	P5064_GPIO_IACK		P4032_GPIO_IACK	/* General purpose I/O Iack */
+#define	P5064_FPY		0xbd0003f0	/* Floppy controller */
+#define	P5064_COM1		0xbd0003f8	/* Serial port com1 */
+#define	P5064_COM2		0xbd0002f8	/* Serial port com2 */
+#define	P5064_CENTR		0xbd000378	/* Centronics paralell port */
+#define	P5064_IMR		0xbff90000	/* Int mask reg (wr) */
+#define	P5064_IRR		0xbff90000	/* Int request reg (rd) */
+#define	P5064_EIRR		0xbff90004	/* Error int request reg (rd) */
+#define	P5064_ICR		0xbff90004	/* Int clear register (wr) */
+#define	P5064_PCIIMR		0xbff90008	/* PCI Int mask reg (wr) */
+#define	P5064_PCIIRR		0xbff90008	/* PCI Int req reg (rd) */
+#define	P5064_IDEIMR		0xbff9000c	/* IDE Int req reg (rd) */
+#define	P5064_IDEIRR		0xbff9000c	/* IDE Int req reg (rd) */
+#define	P5064_IXR0		0xbff90010	/* Int crossbar register 0 */
+#define	P5064_IXR1		0xbff90014	/* Int crossbar register 1 */
+#define	P5064_IXR2		0xbff90018	/* Int crossbar register 2 */
+#define	P5064_IXR3		0xbff9001c	/* Int crossbar register 3 */
+#define	P5064_IXR4		0xbff90020	/* Int crossbar register 4 */
 
 /*
  * Interrupt controller interrupt masks

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.8 1998/01/29 14:54:50 pefo Exp $	*/
+/*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	$NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp $	*/
 
 /*-
@@ -535,6 +535,7 @@ ascattach(parent, self, aux)
 	 */
 	switch (system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		bufsiz = 63 * 1024; /*XXX check if code handles 0 as 64k */
 		asc->dma = &asc->__dma;
 		asc_dma_init(asc->dma);
@@ -547,6 +548,7 @@ ascattach(parent, self, aux)
 	 */
 	switch (system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		asc->min_period = ASC_MIN_PERIOD25;
 		asc->max_period = ASC_MAX_PERIOD25;
 		asc->ccf = ASC_CCF(25);

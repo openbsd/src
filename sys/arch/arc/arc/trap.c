@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 1998/03/01 18:58:30 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 1998/03/16 09:38:33 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,6 +69,7 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/mips_opcode.h>
+#include <machine/frame.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -76,6 +77,11 @@
 
 #include <arc/pica/pica.h>
 #include <mips/archtype.h>
+
+#ifdef DDB
+#include <mips/db_machdep.h>
+#include <ddb/db_sym.h>
+#endif
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
@@ -204,7 +210,7 @@ struct {
 
 int cpu_int_mask;	/* External cpu interrupt mask */
 
-#ifdef MDB
+#ifdef DDB
 #define TRAPSIZE	10
 struct trapdebug {		/* trap history buffer for debugging */
 	u_int	status;
@@ -217,18 +223,18 @@ struct trapdebug {		/* trap history buffer for debugging */
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
 void trapDump __P((char *));
-#endif	/* MDB */
+#endif	/* DDB */
 
-#ifdef MDB	/* stack trace code, also useful for DDB one day */
-void stacktrace __P((int, int, int, int));
-void logstacktrace __P((int, int, int, int));
+#ifdef DEBUG	/* stack trace code, also useful for DDB one day */
+void stacktrace __P((int *));
+void logstacktrace __P((int *));
+int  kdbpeek __P((int *));
+int  kdb_trap __P((int, db_regs_t *));
 
 /* extern functions printed by name in stack backtraces */
 extern void idle __P((void));
 extern void MipsTLBMiss __P((void));
-extern u_int mdbpeek __P((int));
-extern int mdb __P((u_int, u_int, struct proc *, int));
-#endif	/* MDB */
+#endif	/* DEBUG */
 
 extern const struct callback *callv;
 extern u_long intrcnt[];
@@ -238,7 +244,7 @@ extern void arpintr __P((void));
 extern void ipintr __P((void));
 extern void pppintr __P((void));
 
-u_int trap __P((u_int, u_int, u_int, u_int, u_int));
+u_int trap __P((u_int, u_int, u_int, u_int, struct trap_frame));
 void interrupt __P((u_int, u_int, u_int, u_int, u_int));
 void softintr __P((u_int, u_int));
 int cpu_singlestep __P((struct proc *));
@@ -252,12 +258,12 @@ u_int MipsEmulateBranch __P((int *, int, int, u_int));
  * ((struct pcb *)UADDR)->pcb_onfault is set, otherwise, return old pc.
  */
 u_int
-trap(statusReg, causeReg, vadr, pc, args)
+trap(statusReg, causeReg, vadr, pc, f)
 	u_int statusReg;	/* status register at time of the exception */
 	u_int causeReg;		/* cause register at time of exception */
 	u_int vadr;		/* address (if any) the fault occured on */
 	u_int pc;		/* program counter where to continue */
-	u_int args;
+	struct trap_frame f;
 {
 	int type, i;
 	unsigned ucode = 0;
@@ -268,14 +274,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 	int typ = 0;
 	union sigval sv;
 
-#ifdef MDB
+#ifdef DDB
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = vadr;
 	trp->pc = pc;
-	trp->ra = !USERMODE(statusReg) ? ((int *)&args)[19] :
+	trp->ra = !USERMODE(statusReg) ? f.reg[PC] :
 		p->p_md.md_regs[RA];
-	trp->sp = (int)&args;
+	trp->sp = (int)&f;
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
@@ -298,9 +304,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_TLB_MOD:
 		/* check for kernel address */
 		if ((int)vadr < 0) {
-			register pt_entry_t *pte;
-			register unsigned entry;
-			register vm_offset_t pa;
+			pt_entry_t *pte;
+			unsigned int entry;
+			vm_offset_t pa;
 
 			pte = kvtopte(vadr);
 			entry = pte->pt_entry;
@@ -331,9 +337,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_TLB_MOD+T_USER:
 	    {
-		register pt_entry_t *pte;
-		register unsigned entry;
-		register vm_offset_t pa;
+		pt_entry_t *pte;
+		unsigned int entry;
+		vm_offset_t pa;
 		pmap_t pmap = &p->p_vmspace->vm_pmap;
 
 		if (!(pte = pmap_segmap(pmap, vadr)))
@@ -373,7 +379,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		ftype = (type == T_TLB_ST_MISS) ? VM_PROT_WRITE : VM_PROT_READ;
 		/* check for kernel address */
 		if ((int)vadr < 0) {
-			register vm_offset_t va;
+			vm_offset_t va;
 			int rv;
 
 		kernel_fault:
@@ -406,9 +412,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 		ftype = VM_PROT_WRITE;
 	dofault:
 	    {
-		register vm_offset_t va;
-		register struct vmspace *vm;
-		register vm_map_t map;
+		vm_offset_t va;
+		struct vmspace *vm;
+		vm_map_t map;
 		int rv;
 
 		vm = p->p_vmspace;
@@ -469,8 +475,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_SYSCALL+T_USER:
 	    {
-		register int *locr0 = p->p_md.md_regs;
-		register struct sysent *callp;
+		int *locr0 = p->p_md.md_regs;
+		struct sysent *callp;
 		unsigned int code;
 		int numsys;
 		struct args {
@@ -480,10 +486,12 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 		cnt.v_syscall++;
 		/* compute next PC after syscall instruction */
-		if ((int)causeReg < 0)
+		if ((int)causeReg < 0) {	/* Check BD bit */
 			locr0[PC] = MipsEmulateBranch(locr0, pc, 0, 0);
-		else
+		}
+		else {
 			locr0[PC] += 4;
+		}
 		callp = p->p_emul->e_sysent;
 		numsys = p->p_emul->e_nsysent;
 		code = locr0[V0];
@@ -598,7 +606,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		rval[0] = 0;
 		rval[1] = locr0[V1];
-#ifdef MDB
+#ifdef DDB
 		if (trp == trapdebug)
 			trapdebug[TRAPSIZE - 1].code = code;
 		else
@@ -611,7 +619,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		 */
 		p = curproc;
 		locr0 = p->p_md.md_regs;
-#ifdef MDB
+#ifdef DDB
 		{ int s;
 		s = splhigh();
 		trp->status = statusReg;
@@ -656,9 +664,15 @@ trap(statusReg, causeReg, vadr, pc, args)
 		goto out;
 	    }
 
+#ifdef DDB
+	case T_BREAK:
+		kdb_trap(type, &f);
+		return(f.reg[PC]);
+#endif
+
 	case T_BREAK+T_USER:
 	    {
-		register unsigned va, instr;
+		unsigned int va, instr;
 		struct uio uio;
 		struct iovec iov;
 
@@ -723,7 +737,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		goto out;
 
 	case T_FPE:
-#ifdef MDB
+#ifdef DDB
 		trapDump("fpintr");
 #else
 		printf("FPU Trap: PC %x CR %x SR %x\n",
@@ -751,46 +765,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	default:
 	err:
-#ifdef MDB
-	    {
-		extern struct pcb mdbpcb;
-
-		if (USERMODE(statusReg))
-			mdbpcb = p->p_addr->u_pcb;
-		else {
-			mdbpcb.pcb_regs[ZERO] = 0;
-			mdbpcb.pcb_regs[AST] = ((int *)&args)[2];
-			mdbpcb.pcb_regs[V0] = ((int *)&args)[3];
-			mdbpcb.pcb_regs[V1] = ((int *)&args)[4];
-			mdbpcb.pcb_regs[A0] = ((int *)&args)[5];
-			mdbpcb.pcb_regs[A1] = ((int *)&args)[6];
-			mdbpcb.pcb_regs[A2] = ((int *)&args)[7];
-			mdbpcb.pcb_regs[A3] = ((int *)&args)[8];
-			mdbpcb.pcb_regs[T0] = ((int *)&args)[9];
-			mdbpcb.pcb_regs[T1] = ((int *)&args)[10];
-			mdbpcb.pcb_regs[T2] = ((int *)&args)[11];
-			mdbpcb.pcb_regs[T3] = ((int *)&args)[12];
-			mdbpcb.pcb_regs[T4] = ((int *)&args)[13];
-			mdbpcb.pcb_regs[T5] = ((int *)&args)[14];
-			mdbpcb.pcb_regs[T6] = ((int *)&args)[15];
-			mdbpcb.pcb_regs[T7] = ((int *)&args)[16];
-			mdbpcb.pcb_regs[T8] = ((int *)&args)[17];
-			mdbpcb.pcb_regs[T9] = ((int *)&args)[18];
-			mdbpcb.pcb_regs[RA] = ((int *)&args)[19];
-			mdbpcb.pcb_regs[MULLO] = ((int *)&args)[21];
-			mdbpcb.pcb_regs[MULHI] = ((int *)&args)[22];
-			mdbpcb.pcb_regs[PC] = pc;
-			mdbpcb.pcb_regs[SR] = statusReg;
-			bzero((caddr_t)&mdbpcb.pcb_regs[F0], 33 * sizeof(int));
-		}
-		if (mdb(causeReg, vadr, p, !USERMODE(statusReg)))
-			return (mdbpcb.pcb_regs[PC]);
-	    }
-#else
-#ifdef MDB
-		stacktrace();
+#ifdef DEBUG
+		stacktrace(!USERMODE(statusReg) ? f.reg : p->p_md.md_regs);
 		trapDump("trap");
-#endif
 #endif
 		panic("trap");
 	}
@@ -847,19 +824,19 @@ out:
  * Note: curproc might be NULL.
  */
 void
-interrupt(statusReg, causeReg, pc, what, args)
+interrupt(statusReg, causeReg, what, pc, args)
 	u_int statusReg;	/* status register at time of the exception */
 	u_int causeReg;		/* cause register at time of exception */
-	u_int pc;		/* program counter where to continue */
 	u_int what;
+	u_int pc;		/* program counter where to continue */
 	u_int args;
 {
-	register unsigned mask;
-	register int i;
+	unsigned mask;
+	int i;
 	struct clockframe cf;
 
 	cnt.v_trap++;
-#ifdef MDB
+#ifdef DDB
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = 0;
@@ -881,7 +858,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 	 *  Check off all enabled interrupts. Called interrupt routine
 	 *  returns mask of interrupts to reenable.
 	 */
-	for(i = 0; i < 5; i++) {
+	for(i = 0; i < 8; i++) {
 		if(cpu_int_tab[i].int_mask & mask) {
 			causeReg &= (*cpu_int_tab[i].int_hand)(mask, &cf);
 		}
@@ -958,13 +935,14 @@ set_intr(mask, int_hand, prio)
 	int	(*int_hand)(u_int, struct clockframe *);
 	int	prio;
 {
-	if(prio > 5)
+	if(prio >= 8)
 		panic("set_intr: to high priority");
 
 	if(cpu_int_tab[prio].int_mask != 0 &&
 	   (cpu_int_tab[prio].int_mask != mask ||
-	    cpu_int_tab[prio].int_hand != int_hand))
-		panic("set_intr: int already set");
+	    cpu_int_tab[prio].int_hand != int_hand)) {
+		panic("set_intr: int already set %x", prio);
+	}
 
 	cpu_int_tab[prio].int_hand = int_hand;
 	cpu_int_tab[prio].int_mask = mask;
@@ -984,6 +962,7 @@ set_intr(mask, int_hand, prio)
 	case DESKSTATION_RPC44:
 		break;
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		break;
 	}
 }
@@ -997,7 +976,7 @@ softintr(statusReg, pc)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned pc;		/* program counter where to continue */
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	int sig;
 
 	cnt.v_soft++;
@@ -1032,12 +1011,12 @@ softintr(statusReg, pc)
 	curpriority = p->p_priority;
 }
 
-#ifdef MDB
+#ifdef DDB
 void
 trapDump(msg)
 	char *msg;
 {
-	register int i;
+	int i;
 	int s;
 
 	s = splhigh();
@@ -1234,10 +1213,10 @@ MipsEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
  */
 int
 cpu_singlestep(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register unsigned va;
-	register int *locr0 = p->p_md.md_regs;
+	unsigned va;
+	int *locr0 = p->p_md.md_regs;
 	int i;
 	int bpinstr = BREAK_SSTEP;
 	int curinstr;
@@ -1310,55 +1289,55 @@ cpu_singlestep(p)
 	return (0);
 }
 
-#ifdef MDB
+#ifdef DDB
 #define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 
 /* forward */
 char *fn_name(unsigned addr);
-void stacktrace_subr __P((int, int, int, int, int (*)(const char*, ...)));
+void stacktrace_subr __P((int *, int (*)(const char*, ...)));
 
 /*
  * Print a stack backtrace.
  */
 void
-stacktrace(a0, a1, a2, a3)
-	int a0, a1, a2, a3;
+stacktrace(regs)
+	int *regs;
 {
-	stacktrace_subr(a0, a1, a2, a3, printf);
+	stacktrace_subr(regs, printf);
 }
 
 void
-logstacktrace(a0, a1, a2, a3)
-	int a0, a1, a2, a3;
+logstacktrace(regs)
+	int *regs;
 {
-	stacktrace_subr(a0, a1, a2, a3, addlog);
+	stacktrace_subr(regs, addlog);
 }
 
 void
-stacktrace_subr(a0, a1, a2, a3, printfn)
-	int a0, a1, a2, a3;
+stacktrace_subr(regs, printfn)
+	int *regs;
 	int (*printfn) __P((const char*, ...));
 {
 	unsigned pc, sp, fp, ra, va, subr;
+	unsigned a0, a1, a2, a3;
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
-	int regs[3];
 	extern char edata[];
-	extern void cpu_getregs __P((int *));
 	unsigned int frames =  0;
 
-	cpu_getregs(regs);
-
 	/* get initial values from the exception frame */
-	sp = regs[0];
-	pc = regs[1];
-	ra = 0;
-	fp = regs[2];
+	sp = regs[SP];
+	pc = regs[PC];
+	fp = regs[S8];
+	ra = regs[RA];		/* May be a 'leaf' function */
+	a0 = regs[A0];
+	a1 = regs[A1];
+	a2 = regs[A2];
+	a3 = regs[A3];
 
 /* Jump here when done with a frame, to start a new one */
 loop:
-	ra = 0;
 
 /* Jump here after a nonstandard (interrupt handler) frame */
 specialframe:
@@ -1380,17 +1359,17 @@ specialframe:
 
 	/* Backtraces should contine through interrupts from kernel mode */
 	if (pc >= (unsigned)MipsKernIntr && pc < (unsigned)MipsUserIntr) {
-		/* NOTE: the offsets depend on the code in locore.s */
 		(*printfn)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)MipsKernIntr, a0, a1, a2);
-		a0 = mdbpeek(sp + 36);
-		a1 = mdbpeek(sp + 40);
-		a2 = mdbpeek(sp + 44);
-		a3 = mdbpeek(sp + 48);
+		regs = (int *)(sp + STAND_ARG_SIZE);
+		a0 = kdbpeek(&regs[A0]);
+		a1 = kdbpeek(&regs[A1]);
+		a2 = kdbpeek(&regs[A2]);
+		a3 = kdbpeek(&regs[A3]);
 
-		pc = mdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
-		ra = mdbpeek(sp + 92);	/* ra at time of exception */
-		sp = sp + 108;
+		pc = kdbpeek(&regs[PC]); /* exc_pc - pc at time of exception */
+		ra = kdbpeek(&regs[RA]); /* ra at time of exception */
+		sp = kdbpeek(&regs[SP]);
 		goto specialframe;
 	}
 
@@ -1440,17 +1419,17 @@ specialframe:
 	 */
 	if (!subr) {
 		va = pc - sizeof(int);
-		while ((instr = mdbpeek(va)) != MIPS_JR_RA)
+		while ((instr = kdbpeek((int *)va)) != MIPS_JR_RA)
 		va -= sizeof(int);
 		va += 2 * sizeof(int);	/* skip back over branch & delay slot */
 		/* skip over nulls which might separate .o files */
-		while ((instr = mdbpeek(va)) == 0)
+		while ((instr = kdbpeek((int *)va)) == 0)
 			va += sizeof(int);
 		subr = va;
 	}
 
 	/*
-	 * Jump here for locore entry pointsn for which the preceding
+	 * Jump here for locore entry points for which the preceding
 	 * function doesn't end in "j ra"
 	 */
 	/* scan forwards to find stack size and any saved registers */
@@ -1462,7 +1441,7 @@ specialframe:
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;
-		instr = mdbpeek(va);
+		instr = kdbpeek((int *)va);
 		i.word = instr;
 		switch (i.JType.op) {
 		case OP_SPECIAL:
@@ -1509,27 +1488,27 @@ specialframe:
 			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
 			case 4: /* a0 */
-				a0 = mdbpeek(sp + (short)i.IType.imm);
+				a0 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 5: /* a1 */
-				a1 = mdbpeek(sp + (short)i.IType.imm);
+				a1 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 6: /* a2 */
-				a2 = mdbpeek(sp + (short)i.IType.imm);
+				a2 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 7: /* a3 */
-				a3 = mdbpeek(sp + (short)i.IType.imm);
+				a3 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 30: /* fp */
-				fp = mdbpeek(sp + (short)i.IType.imm);
+				fp = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 31: /* ra */
-				ra = mdbpeek(sp + (short)i.IType.imm);
+				ra = kdbpeek((int *)(sp + (short)i.IType.imm));
 			}
 			break;
 
@@ -1601,4 +1580,4 @@ fn_name(unsigned addr)
 	return (buf);
 }
 
-#endif /* MDB */
+#endif /* DDB */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.14 1998/03/01 16:50:30 niklas Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -174,6 +174,7 @@ isabrattach(parent, self, aux)
 	/* set up interrupt handlers */
 	switch(system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		set_intr(INT_MASK_2, isabr_iointr, 3);
 		break;
 	case DESKSTATION_TYNE:
@@ -391,6 +392,7 @@ isabr_iointr(mask, cf)
 
 	switch(system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 		break;
 

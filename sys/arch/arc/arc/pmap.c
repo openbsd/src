@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 1998/03/01 00:37:24 niklas Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 1998/03/16 09:38:32 pefo Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.12 1998/03/01 00:37:24 niklas Exp $
+ *      $Id: pmap.c,v 1.13 1998/03/16 09:38:32 pefo Exp $
  */
 
 /*
@@ -170,7 +170,7 @@ struct {
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-extern int kernel_start[];
+extern int kernel_text[];
 extern int _end[];
 int pmapdebug = 0x0;
 
@@ -273,7 +273,7 @@ pmap_bootstrap(firstaddr)
 			mem_layout[i].mem_start = 0x20000;  /* Adjust to be above vec's */
 		}
 		/* Adjust for the kernel expansion area (bufs etc) */
-		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(kernel_start)) && 
+		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(kernel_text)) && 
 		   (mem_layout[i].mem_start < CACHED_TO_PHYS(avail_start))) { 
 			mem_layout[i].mem_size -= CACHED_TO_PHYS(avail_start) - mem_layout[i].mem_start;
 			mem_layout[i].mem_start = CACHED_TO_PHYS(avail_start);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: picabus.c,v 1.9 1998/01/29 14:54:56 pefo Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.10 1998/03/16 09:38:52 pefo Exp $	*/
 /*	$NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp $	*/
 
 /*
@@ -98,7 +98,6 @@ struct pica_dev {
 	intr_handler_t	ps_handler;
 	void 		*ps_base;
 };
-#ifdef ACER_PICA_61
 struct pica_dev acer_pica_61_cpu[] = {
 	{{ "dallas_rtc",0, 0, },
 	   0,			 pica_intrnull, (void *)PICA_SYS_CLOCK, },
@@ -125,15 +124,15 @@ struct pica_dev acer_pica_61_cpu[] = {
 	{{ NULL,       -1, NULL, },
 	   0, NULL, (void *)NULL, },
 };
-#endif
 
 struct pica_dev *pica_cpu_devs[] = {
         NULL,                   /* Unused */
-#ifdef ACER_PICA_61
         acer_pica_61_cpu,       /* Acer PICA */
-#else
+        acer_pica_61_cpu,       /* MAGNUMS same as Acer PICA */
 	NULL,
-#endif
+	NULL,
+	NULL,
+        acer_pica_61_cpu,       /* NEC-R94 same as MAGNUM */
 };
 int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 1997/04/19 17:20:02 pefo Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.3 1998/03/16 09:38:49 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -61,6 +61,7 @@ struct arc_pci_chipset {
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
 	int		(*pc_ether_hw_addr) __P((u_int8_t *));
+	void		(*pc_flush_cache) __P((vm_offset_t, int));
 };
 
 /*
@@ -88,6 +89,10 @@ struct arc_pci_chipset {
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_ether_hw_addr(c, p)						\
     (*(c)->pc_ether_hw_addr)((p))
+#define	pci_flush_cache(p, s)						\
+    (*(c)->pc_flush_cache)((p, s))
 
-vm_offset_t vtophys __P((void *));
+vm_offset_t vtophysaddr __P((struct device *, vm_offset_t));
 
+#define	TULIP_KVATOPHYS(sc, va)	vtophysaddr(&sc->tulip_dev, (vm_offset_t)va)
+#define	NCR_KVATOPHYS(sc, va)	vtophysaddr(&sc->sc_dev, (vm_offset_t)va)

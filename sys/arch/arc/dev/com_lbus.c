@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_lbus.c,v 1.6 1998/03/01 16:19:13 niklas Exp $	*/
+/*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -141,6 +141,7 @@ com_localbus_attach(parent, self, aux)
 
 
 	/* look for a NS 16550AF UART with FIFOs */
+	sc->sc_fifolen = 1;
 	bus_space_write_1(iot, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
 	delay(100);
@@ -150,10 +151,15 @@ com_localbus_attach(parent, self, aux)
 		    FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 			printf(": ns16550a, working fifo\n");
-		} else
+			sc->sc_fifolen = 16;
+		}
+		else {
 			printf(": ns16550, broken fifo\n");
-	} else
+		}
+	}
+	else {
 		printf(": ns8250 or ns16450, no fifo\n");
+	}
 	bus_space_write_1(iot, ioh, com_fifo, 0);
 
 	/* disable interrupts */

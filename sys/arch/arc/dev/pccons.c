@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.18 1998/03/01 16:45:50 niklas Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.19 1998/03/16 09:38:43 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -493,6 +493,9 @@ pcprobe(parent, cfdata, aux)
 			return(0);
 	}
 
+	if(system_type == MAGNUM)
+		return(0);	/* Magnums have different graphics */
+
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
 		printf("pcprobe: command error\n");
@@ -856,7 +859,9 @@ pccnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, 0);
-	if(system_type == ALGOR_P4032) {
+	if(system_type == ALGOR_P4032 ||
+	   system_type == ALGOR_P5064 ||
+	   system_type == MAGNUM) {
 		cp->cn_pri = CN_DEAD;	/* XXX For now... */
 	}
 	else {

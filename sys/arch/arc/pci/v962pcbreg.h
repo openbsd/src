@@ -11,7 +11,7 @@
 /* offsets from base pointer, this construct allows optimisation */
 static char * const _v96xp = (char *)P4032_V96x;
 
-#if #endian(little)
+#if BYTE_ORDER == LITTLE_ENDIAN
 #define V96XW(x)		*(volatile unsigned long *)(_v96xp + (x))
 #define V96XH(x)		*(volatile unsigned short *)(_v96xp + (x))
 #define V96XB(x)		*(volatile unsigned char *)(_v96xp + (x))
@@ -26,10 +26,11 @@ static char * const _v96xp = (char *)P4032_V96x;
 #define V96X_PCI_CMD		V96XH(0x04)
 #define V96X_PCI_STAT		V96XH(0x06)
 #define V96X_PCI_CC_REV		V96XW(0x08)
+#define V96X_PCI_I20_BASE	V96XW(0x10) /* B.2 only */
 #define V96X_PCI_HDR_CFG	V96XW(0x0c)	
 #define V96X_PCI_IO_BASE	V96XW(0x10)
 #define V96X_PCI_BASE0		V96XW(0x14)
-#define V96X_PCI_BASE1		V96XW(0x1c)
+#define V96X_PCI_BASE1		V96XW(0x18)
 #define V96X_PCI_BPARAM		V96XW(0x3c)
 #define V96X_PCI_MAP0		V96XW(0x40)
 #define V96X_PCI_MAP1		V96XW(0x44)
@@ -39,6 +40,9 @@ static char * const _v96xp = (char *)P4032_V96x;
 #define V96X_LB_BASE1		V96XW(0x58)
 #define V96X_LB_MAP0		V96XH(0x5e)
 #define V96X_LB_MAP1		V96XH(0x62)
+#define V96X_LB_BASE2		V96XH(0x64) /* B.2 only */
+#define V96X_LB_MAP2		V96XH(0x66) /* B.2 only */
+#define V96X_LB_SIZE		V96XW(0x68) /* B.2 only */
 #define V96X_LB_IO_BASE		V96XW(0x6c)
 #define V96X_FIFO_CFG		V96XH(0x70)
 #define V96X_FIFO_PRIORITY	V96XH(0x72)
@@ -46,7 +50,9 @@ static char * const _v96xp = (char *)P4032_V96x;
 #define V96X_LB_ISTAT		V96XB(0x76)
 #define V96X_LB_IMASK		V96XB(0x77)
 #define V96X_SYSTEM		V96XH(0x78)
+#define V96X_LB_CFGL		V96XB(0x7a)
 #define V96X_LB_CFG		V96XB(0x7b)
+#define V96X_PCI_CFG		V96XB(0x7c) /* B.2 only */
 #define V96X_DMA_PCI_ADDR0	V96XW(0x80)
 #define V96X_DMA_LOCAL_ADDR0	V96XW(0x84)
 #define V96X_DMA_LENGTH0	V96XW(0x88)
@@ -87,7 +93,8 @@ static char * const _v96xp = (char *)P4032_V96x;
 #define V96X_VREV_A	0x0
 #define V96X_VREV_B0	0x1
 #define V96X_VREV_B1	0x2
-#define V96X_VREV_C0	0x3
+#define V96X_VREV_B2	0x3
+#define V96X_VREV_C0	0x4
 
 #define V96X_PCI_HDR_CFG_LT		0x0000ff00
 #define V96X_PCI_HDR_CFG_LT_SHIFT	8
@@ -143,8 +150,9 @@ static char * const _v96xp = (char *)P4032_V96x;
 #define V96X_SWAP_NONE			(0x0<<8)
 #define V96X_SWAP_16BIT			(0x1<<8)
 #define V96X_SWAP_8BIT			(0x2<<8)
+#define V96X_SWAP_AUTO			(0x3<<8)
 
-/* pci interruprt status register */
+/* pci interrupt status register */
 #define V96X_PCI_INT_STAT_MAILBOX	0x80000000
 #define V96X_PCI_INT_STAT_LOCAL		0x40000000
 #define V96X_PCI_INT_STAT_DMA1		0x02000000
@@ -210,6 +218,7 @@ static char * const _v96xp = (char *)P4032_V96x;
 #define  V96X_LB_TYPE_IO		 (0x1<<1)
 #define  V96X_LB_TYPE_MEM		 (0x3<<1)
 #define  V96X_LB_TYPE_CONF		 (0x5<<1)
+#define V96X_LB_MAPx_AD_LOW_EN		0x0001 /* C.0 only */
 
 /* local bus interrupt control, status and masks */
 #define V96X_LB_INTR_MAILBOX		0x80
@@ -225,6 +234,16 @@ static char * const _v96xp = (char *)P4032_V96x;
 #define V96X_LB_CFG_LB_INT		0x02
 #define V96X_LB_CFG_ERR_EN		0x02
 #define V96X_LB_CFG_RDY_EN		0x01
+
+/* PCI bus configuration */
+#define V96X_PCI_CFG_I2O_EN		0x8000
+#define V96X_PCI_CFG_IO_REG_DIS		0x4000
+#define V96X_PCI_CFG_IO_DIS		0x2000
+#define V96X_PCI_CFG_EN3V		0x1000
+#define V96X_PCI_CFG_AD_LOW		0x0300
+#define V96X_PCI_CFG_AD_LOW_SHIFT	8
+#define V96X_PCI_CFG_DMA_RTYPE		0x00e0
+#define V96X_PCI_CFG_DMA_WTYPE		0x000e    
 
 /* fifo configuration register */ 
 #define V96X_FIFO_CFG_PBRST_MAX		0xc000

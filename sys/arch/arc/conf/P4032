@@ -1,9 +1,9 @@
-#	$OpenBSD: P4032,v 1.4 1997/08/01 11:31:22 deraadt Exp $
+#	$OpenBSD: P4032,v 1.5 1998/03/16 09:38:36 pefo Exp $
 #
 #	Generic configuration file for Algorithmics P4032 board
 #
 
-machine		arc
+machine		arc mips
 
 maxusers	32
 
@@ -20,6 +20,8 @@ option		KTRACE			# system call tracing support
 option		DEBUG			# extra kernel debugging support
 option		COMPAT_43		# compatibility with 4.3BSD binaries
 
+option		DDB
+
 # System V options
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
@@ -33,7 +35,6 @@ option		FDESC		# user file descriptor filesystem (/dev/fd)
 option		FIFO		# POSIX fifo support (in all filesystems)
 option		FFS,QUOTA	# fast filesystem with user and group quotas
 option		KERNFS		# kernel data-structure filesystem
-#option		LFS		# Log-based filesystem (still experimental)
 option		MFS		# memory-based filesystem
 option		MSDOSFS		# Ability to read write MS-Dos filsystem
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)

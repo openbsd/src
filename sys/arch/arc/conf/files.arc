@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.17 1998/01/28 13:46:03 pefo Exp $
+#	$OpenBSD: files.arc,v 1.18 1998/03/16 09:38:38 pefo Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -14,7 +14,6 @@ file	arch/arc/dev/dma.c
 file	arch/arc/arc/machdep.c
 file	arch/arc/arc/pmap.c
 file	arch/arc/arc/trap.c
-file	arch/arc/arc/vm_machdep.c
 
 file	arch/mips/mips/arcbios.c
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 1998/01/28 13:45:55 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 1998/03/16 09:38:30 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.30 1998/01/28 13:45:55 pefo Exp $
+ *      $Id: machdep.c,v 1.31 1998/03/16 09:38:30 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -100,7 +100,7 @@
 #include <arc/algor/algor.h>
 
 extern struct consdev *cn_tab;
-extern char kernel_start[];
+extern char kernel_text[];
 extern void makebootdev __P((char *));
 extern void stacktrace __P((void));
 extern void configure __P((void));
@@ -222,17 +222,6 @@ mips_init(argc, argv, envv)
 		arc_bus_io.bus_base = PICA_V_ISA_IO;
 		arc_bus_mem.bus_base = PICA_V_ISA_MEM;
 		CONADDR = 0;
-
-		/*
-		 * Set up interrupt handling and I/O addresses.
-		 */
-#if 0 /* XXX FIXME */
-		Mips_splnet = Mips_spl1;
-		Mips_splbio = Mips_spl0;
-		Mips_splimp = Mips_spl1;
-		Mips_spltty = Mips_spl2;
-		Mips_splstatclock = Mips_spl3;
-#endif
 		break;
 
 	case DESKSTATION_RPC44:
@@ -263,6 +252,7 @@ mips_init(argc, argv, envv)
 
 			/* Make this more fancy when more comes in here */
 		environment = envv;
+#if 0
 		system_type = ALGOR_P4032;
 		strcpy(cpu_model, "Algorithmics P-4032");
 		arc_bus_io.bus_sparse1 = 2;
@@ -270,9 +260,18 @@ mips_init(argc, argv, envv)
 		arc_bus_io.bus_sparse4 = 0;
 		arc_bus_io.bus_sparse8 = 0;
 		CONADDR = P4032_COM1;
+#else
+		system_type = ALGOR_P5064;
+		strcpy(cpu_model, "Algorithmics P-5064");
+		arc_bus_io.bus_sparse1 = 0;
+		arc_bus_io.bus_sparse2 = 0;
+		arc_bus_io.bus_sparse4 = 0;
+		arc_bus_io.bus_sparse8 = 0;
+		CONADDR = P5064_COM1;
+#endif
 
 		mem_layout[0].mem_start = 0;
-		mem_layout[0].mem_size = mips_trunc_page(CACHED_TO_PHYS(kernel_start));
+		mem_layout[0].mem_size = mips_trunc_page(CACHED_TO_PHYS(kernel_text));
 		mem_layout[1].mem_start = CACHED_TO_PHYS((int)sysend);
 		if(getenv("memsize") != 0) {
 			i = atoi(getenv("memsize"), 10);
@@ -319,9 +318,11 @@ mips_init(argc, argv, envv)
 #else
 	boothowto = RB_SINGLE | RB_ASKNAME;
 #endif /* RAMDISK_HOOKS */
+
 #ifdef KADB
 	boothowto |= RB_KDB;
 #endif
+
 	get_eth_hw_addr(getenv("ethaddr"));
 	cp = getenv("osloadoptions");
 	if(cp) {
@@ -341,6 +342,10 @@ mips_init(argc, argv, envv)
 
 			case 'N': /* don't ask for names */
 				boothowto &= ~RB_ASKNAME;
+				break;
+
+			case 's': /* use serial console */
+				boothowto |= RB_SERCONS;
 				break;
 			}
 
@@ -379,6 +384,7 @@ mips_init(argc, argv, envv)
 		break;
 
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		break;
 
 	case SNI_RM200:
@@ -1280,6 +1286,7 @@ initcpu()
 
 	switch(system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		/*
 		 * Disable all interrupts. New masks will be set up
 		 * during system configuration
