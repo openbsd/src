@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.129 2005/01/15 03:48:17 jsg Exp $
+$OpenBSD: usbdevs,v 1.130 2005/01/23 03:26:34 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -555,6 +555,9 @@ product ASAHIOPTICAL OPTIO230	0x0004	PENTAX Optio230
 
 /* Asante products */
 product ASANTE EA		0x1427	Ethernet
+
+/* Askey Computer products */
+product ASKEY WLL013		0x0321	WLL013
 
 /* ASIX Electronics products */
 product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
