@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.12 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.13 2002/03/15 10:50:59 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.31 2001/05/17 13:45:34 jinmei Exp $	*/
 
 /*
@@ -66,10 +66,59 @@ static void frag6_insque(struct ip6q *, struct ip6q *);
 static void frag6_remque(struct ip6q *);
 static void frag6_freef(struct ip6q *);
 
-/* XXX we eventually need splreass6, or some real semaphore */
-int frag6_doing_reass;
+static int ip6q_locked;
 u_int frag6_nfragpackets;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
+
+static __inline int ip6q_lock_try __P((void));
+static __inline void ip6q_unlock __P((void));
+
+static __inline int
+ip6q_lock_try()
+{
+	int s;
+
+	s = splimp();
+	if (ip6q_locked) {
+		splx(s);
+		return (0);
+	}
+	ip6q_locked = 1;
+	splx(s);
+	return (1);
+}
+
+static __inline void
+ip6q_unlock()
+{
+	int s;
+
+	s = splimp();
+	ip6q_locked = 0;
+	splx(s);
+}
+
+#ifdef DIAGNOSTIC
+#define	IP6Q_LOCK()							\
+do {									\
+	if (ip6q_lock_try() == 0) {					\
+		printf("%s:%d: ip6q already locked\n", __FILE__, __LINE__); \
+		panic("ip6q_lock");					\
+	}								\
+} while (0)
+#define	IP6Q_LOCK_CHECK()						\
+do {									\
+	if (ip6q_locked == 0) {						\
+		printf("%s:%d: ip6q lock not held\n", __FILE__, __LINE__); \
+		panic("ip6q lock check");				\
+	}								\
+} while (0)
+#else
+#define	IP6Q_LOCK()		(void) ip6q_lock_try()
+#define	IP6Q_LOCK_CHECK()	/* nothing */
+#endif
+
+#define	IP6Q_UNLOCK()		ip6q_unlock()
 
 #ifndef offsetof		/* XXX */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
@@ -201,7 +250,7 @@ frag6_input(mp, offp, proto)
 	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
 
-	frag6_doing_reass = 1;
+	IP6Q_LOCK();
 
 	for (q6 = ip6q.ip6q_next; q6 != &ip6q; q6 = q6->ip6q_next)
 		if (ip6f->ip6f_ident == q6->ip6q_ident &&
@@ -270,7 +319,7 @@ frag6_input(mp, offp, proto)
 			icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 				    offset - sizeof(struct ip6_frag) +
 					offsetof(struct ip6_frag, ip6f_offlg));
-			frag6_doing_reass = 0;
+			IP6Q_UNLOCK();
 			return(IPPROTO_DONE);
 		}
 	}
@@ -278,7 +327,7 @@ frag6_input(mp, offp, proto)
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    offset - sizeof(struct ip6_frag) +
 				offsetof(struct ip6_frag, ip6f_offlg));
-		frag6_doing_reass = 0;
+		IP6Q_UNLOCK();
 		return(IPPROTO_DONE);
 	}
 	/*
@@ -433,13 +482,13 @@ insert:
 	for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
 	     af6 = af6->ip6af_down) {
 		if (af6->ip6af_off != next) {
-			frag6_doing_reass = 0;
+			IP6Q_UNLOCK();
 			return IPPROTO_DONE;
 		}
 		next += af6->ip6af_frglen;
 	}
 	if (af6->ip6af_up->ip6af_mff) {
-		frag6_doing_reass = 0;
+		IP6Q_UNLOCK();
 		return IPPROTO_DONE;
 	}
 
@@ -522,14 +571,14 @@ insert:
 	*mp = m;
 	*offp = offset;
 
-	frag6_doing_reass = 0;
+	IP6Q_UNLOCK();
 	return nxt;
 
  dropfrag:
 	in6_ifstat_inc(dstifp, ifs6_reass_fail);
 	ip6stat.ip6s_fragdropped++;
 	m_freem(m);
-	frag6_doing_reass = 0;
+	IP6Q_UNLOCK();
 	return IPPROTO_DONE;
 }
 
@@ -542,6 +591,8 @@ frag6_freef(q6)
 	struct ip6q *q6;
 {
 	struct ip6asfrag *af6, *down6;
+
+	IP6Q_LOCK_CHECK();
 
 	for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
 	     af6 = down6) {
@@ -583,6 +634,9 @@ void
 frag6_enq(af6, up6)
 	struct ip6asfrag *af6, *up6;
 {
+
+	IP6Q_LOCK_CHECK();
+
 	af6->ip6af_up = up6;
 	af6->ip6af_down = up6->ip6af_down;
 	up6->ip6af_down->ip6af_up = af6;
@@ -596,6 +650,9 @@ void
 frag6_deq(af6)
 	struct ip6asfrag *af6;
 {
+
+	IP6Q_LOCK_CHECK();
+
 	af6->ip6af_up->ip6af_down = af6->ip6af_down;
 	af6->ip6af_down->ip6af_up = af6->ip6af_up;
 }
@@ -604,6 +661,9 @@ void
 frag6_insque(new, old)
 	struct ip6q *new, *old;
 {
+
+	IP6Q_LOCK_CHECK();
+
 	new->ip6q_prev = old;
 	new->ip6q_next = old->ip6q_next;
 	old->ip6q_next->ip6q_prev= new;
@@ -614,6 +674,9 @@ void
 frag6_remque(p6)
 	struct ip6q *p6;
 {
+
+	IP6Q_LOCK_CHECK();
+
 	p6->ip6q_prev->ip6q_next = p6->ip6q_next;
 	p6->ip6q_next->ip6q_prev = p6->ip6q_prev;
 }
@@ -629,7 +692,7 @@ frag6_slowtimo()
 	struct ip6q *q6;
 	int s = splnet();
 
-	frag6_doing_reass = 1;
+	IP6Q_LOCK();
 	q6 = ip6q.ip6q_next;
 	if (q6)
 		while (q6 != &ip6q) {
@@ -652,7 +715,7 @@ frag6_slowtimo()
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_prev);
 	}
-	frag6_doing_reass = 0;
+	IP6Q_UNLOCK();
 
 #if 0
 	/*
@@ -679,11 +742,13 @@ frag6_slowtimo()
 void
 frag6_drain()
 {
-	if (frag6_doing_reass)
+
+	if (ip6q_lock_try() == 0)
 		return;
 	while (ip6q.ip6q_next != &ip6q) {
 		ip6stat.ip6s_fragdropped++;
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_next);
 	}
+	IP6Q_UNLOCK();
 }
