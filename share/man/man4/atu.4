@@ -1,7 +1,7 @@
-.\"	$OpenBSD: atu.4,v 1.11 2005/02/12 07:57:18 dlg Exp $
+.\" $OpenBSD: atu.4,v 1.12 2005/02/25 10:41:07 dlg Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
-.\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
+.\" Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by Bill Paul.
+.\" This product includes software developed by Bill Paul.
 .\" 4. Neither the name of the author nor the names of any co-contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"   without specific prior written permission.
@@ -35,7 +35,7 @@
 .Os
 .Sh NAME
 .Nm atu
-.Nd Atmel at76c50x 802.11B wireless network interfaces
+.Nd Atmel AT76C50x 802.11b wireless network interfaces
 .Sh SYNOPSIS
 .Cd "# all architectures"
 .Cd "atu* at uhub? port ?"
@@ -43,31 +43,40 @@
 The
 .Nm
 driver provides support for wireless network adapters based around
-the Atmel at76c503, at76c503a, at76c505, and at76c505a USB chipsets.
+the Atmel AT76C503, AT76C503A, AT76C505, and AT76C505A USB chipsets and four
+companion radio chipsets.
 .Pp
-Supported features include 802.11 and 802.3 frames, power management, BSS,
-IBSS, ad-hoc, and host-based access point mode.
+The hardware supports features including 802.11 and 802.3 frames,
+Wired Equivalent Privacy (WEP), power management,
+selectable transmission rates, and both BSS and IBSS modes of operation.
 .Pp
 The
 .Nm
 driver encapsulates all IP and ARP traffic as 802.11 frames, however
 it can receive either 802.11 or 802.3 frames.
-Transmit speed is selectable between 1Mbps fixed, 2Mbps fixed, 2Mbps
-with auto fallback, 5.5Mbps, 8Mbps, or 11Mbps depending on your hardware.
 .Pp
-Four different radio chipsets are used along with the device, each
-requiring a different firmware.
-.Pp
-By default, the
+The
 .Nm
-driver configures the card for BSS operation (aka infrastructure
-mode).
-This mode requires the use of an access point (base station).
+driver supports Basic Service Set (BSS) operation
+(also known as infrastructure mode).
+This mode requires the use of an access point (also known as a base station)
+to support communication between the adapter and the network.
 .Pp
-For more information on configuring this device, see
-.Xr ifconfig 8 .
+The
+.Nm
+driver also supports Independent Basic Service Set (IBSS)
+operation (also known as ad-hoc or point-to-point mode).
+In IBSS mode stations can communicate amongst themselves without the aid of
+an access point.
+Note there are two different modes described as ad-hoc:
+ad-hoc demo mode, which predates IEEE, is not standardised and does not
+allow interoperability with cards from other vendors; and IBSS,
+which is IEEE standardised and permits interoperability.
+The
+.Nm
+driver supports IEEE standardised IBSS operation.
 .Pp
-The following devices are among those supported by the
+The following devices are known to be supported by the
 .Nm
 driver:
 .Pp
@@ -86,9 +95,111 @@ driver:
 .It Tn SMC 2662W-AR
 .It Tn SMC 2662W-V4
 .El
+.Pp
+The
+.Nm
+driver can be configured at runtime with
+.Xr ifconfig 8
+or on boot with
+.Xr hostname.if 5
+using the following parameters:
+.Bl -tag -width Ds
+.It Cm bssid Ar bssid
+Set the desired BSSID.
+.It Fl bssid
+Unset the desired BSSID.
+The interface will automatically select a BSSID in this mode, which is
+the default.
+.It Cm chan Ar n
+Set the channel (radio frequency) to be used by the adapter based on
+the given channel ID
+.Ar n .
+.It Fl chan
+Unset the desired channel to be used by the adapter.
+The driver will automatically select a channel in this mode, which is
+the default.
+.It Cm media Ar media
+The
+.Nm
+driver supports the following
+.Ar media
+types:
+.Pp
+.Bl -tag -width autoselect -compact
+.It Cm autoselect
+Enable autoselection of the media type and options.
+.It Cm DS1
+Set Direct Spread 1Mbps operation.
+.It Cm DS2
+Set Direct Spread 2Mbps operation.
+.It Cm DS5
+Set Direct Spread 5.5Mbps operation.
+.It Cm DS11
+Set Direct Spread 11Mbps operation.
+.El
+.It Cm mediaopt Ar opts
+The
+.Nm
+driver supports the following media options:
+.Bl -tag -width ibss
+.It Cm ibss
+Select Independant Basic Service Set (IBSS) operation.
+.El
+.It Fl mediaopt Ar opts
+Disable the specified media options on the adapter and returns it to the
+default mode of operation (BSS).
+.It Cm mode Ar mode
+The
+.Nm
+driver supports the following modes:
+.Bl -tag -width 11b
+.It Cm 11b
+Force 802.11b operation.
+.El
+.It Cm nwid Ar id
+Set the network ID.
+The
+.Ar id
+can either be any text string up to 32 characters in length,
+or a series of hexadecimal digits up to 64 digits.
+An empty
+.Ar id
+string allows the interface to connect to any available access points.
+By default the
+.Nm
+driver uses an empty string.
+.It Cm nwkey Ar key
+Enable WEP encryption using the specified
+.Ar key .
+The
+.Ar key
+can either be a string, a series of hexadecimal digits (preceded by
+.So 0x Sc ) ,
+or a set of keys of the form
+.Dq n:k1,k2,k3,k4 ,
+where
+.Sq n
+specifies which of the keys will be used for transmitted packets,
+and the four keys,
+.Dq k1
+through
+.Dq k4 ,
+are configured as WEP keys.
+If a set of keys is specified, a comma
+.Pq Sq \&,
+within the key must be escaped with a backslash.
+Note that if multiple keys are used, their order must be the same within
+the network.
+.Nm
+is capable of using both 40-bit (5 characters or 10 hexadecimal digits)
+or 104-bit (13 characters or 26 hexadecimal digits) keys.
+.It Fl nwkey
+Disable WEP encryption.
+This is the default mode of operation.
+.El
 .Sh FILES
-The driver needs some firmware files,
-which are loaded on demand when the device is attached:
+The adapter needs some firmware files, which are loaded on demand by the
+driver when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/atu-intersil-int
@@ -100,58 +211,6 @@ which are loaded on demand when the device is attached:
 .It Pa /etc/firmware/atu-rfmd2958smc-int
 .It Pa /etc/firmware/atu-rfmd2958smc-ext
 .El
-.Sh EXAMPLES
-Join an existing BSS network (ie: connect to an access point):
-.Dl # ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00
-.Pp
-Join a specific BSS network with network name
-.Dq my_net :
-.Dl # ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net
-.Pp
-Join a specific BSS network with WEP encryption:
-.Bd -literal -compact -offset indent
-# ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	nwkey 0x8736639624
-.Ed
-.Pp
-Join an ad-hoc network with network name
-.Dq my_net :
-.Bd -literal -compact -offset indent
-# ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	mediaopt adhoc
-.Ed
-.Pp
-Create an IBSS network with network name
-.Dq my_net :
-.Bd -literal -compact -offset indent
-# ifconfig atu0 inet 192.168.0.20 netmask 0xffffff00 nwid my_net \e
-	mediaopt ibss-master
-.Ed
-.Pp
-Join an IBSS network with network name
-.Dq my_net :
-.Bd -literal -compact -offset indent
-# ifconfig atu0 inet 192.168.0.22 netmask 0xffffff00 nwid my_net \e
-	mediaopt ibss
-.Ed
-.Pp
-Create a host-based access point:
-.Bd -literal -compact -offset indent
-# ifconfig atu0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
-	mediaopt hostap
-.Ed
-.Pp
-Create a host-based access point with WEP enabled:
-.Bd -literal -compact -offset indent
-# ifconfig atu0 inet 192.168.0.10 netmask 0xffffff00 nwid my_ap \e
-	nwkey 0x1234567890 mediaopt hostap
-.Ed
-.Pp
-Create a host-based wireless bridge to fxp0:
-.Bd -literal -compact -offset indent
-# ifconfig atu0 inet up nwid my_ap mediaopt hostap
-# brconfig bridge0 add fxp0 add atu0 up
-.Ed
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -159,8 +218,7 @@ Create a host-based wireless bridge to fxp0:
 .Xr netintro 4 ,
 .Xr usb 4 ,
 .Xr hostname.if 5 ,
-.Xr ifconfig 8 ,
-.Xr wicontrol 8
+.Xr ifconfig 8
 .Sh AUTHORS
 The
 .Nm
@@ -170,3 +228,9 @@ and ported to
 .Ox
 by
 .An Theo de Raadt and David Gwynne .
+.Sh CAVEATS
+The
+.Nm
+driver does not support a lot of the functionality available in the hardware.
+More work is required to properly support the WEP, IBSS, power management
+and selectable transmission rate features.
