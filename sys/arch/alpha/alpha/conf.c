@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2001/12/11 23:18:59 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.36 2002/01/23 05:06:39 ericj Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -102,6 +102,10 @@ cdev_decl(com);
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
+
+#include "spkr.h"
+cdev_decl(spkr);
+
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(prom);			/* XXX XXX XXX */
@@ -180,7 +184,7 @@ struct cdevsw	cdevsw[] =
         cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */
 	cdev_notdef(),			/* 40 */
-	cdev_notdef(),			/* 41 */
+	cdev_spkr_init(NSPKR,spkr),	/* 41: PC speaker */
 	cdev_notdef(),			/* 42 */
 	cdev_disk_init(NRAID,raid),	/* 43: RAIDframe disk driver */
 	cdev_notdef(),			/* 44 */

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.94 2002/01/23 03:20:41 ericj Exp $
+#	$OpenBSD: GENERIC,v 1.95 2002/01/23 05:06:39 ericj Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -212,8 +212,10 @@ isapnp0	at	isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-#pcppi*	at	isa?				# PC prog. periph. interface
-#spkr0	at	pcppi?
+pcppi*	at	isa?				# PC prog. periph. interface
+spkr0	at	pcppi?				# IBM BASIC emulation
+isabeep0 at	pcppi?				# "keyboard" beep
+midi*	at	pcppi?
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
