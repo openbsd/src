@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpdrop.c,v 1.1 2004/04/26 19:51:20 markus Exp $ */
+/* $OpenBSD: tcpdrop.c,v 1.2 2004/04/27 17:52:21 otto Exp $ */
 
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
@@ -26,10 +26,10 @@
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <netdb.h>
-#include <err.h>
 
 extern char *__progname;
 
@@ -40,10 +40,12 @@ int
 main(int argc, char **argv)
 {
 	struct addrinfo hints, *ail, *aif, *laddr, *faddr;
-	struct tcp_ident_mapping tir, dummy;
+	struct tcp_ident_mapping tir;
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_DROP };
 	int gaierr;
-	size_t i = 1;
+	char fhbuf[NI_MAXHOST], fsbuf[NI_MAXSERV];
+	char lhbuf[NI_MAXHOST], lsbuf[NI_MAXSERV];
+	int rval = 0;
 
 	if (argc != 5) {
 		fprintf(stderr, "usage: %s laddr lport faddr fport\n",
@@ -71,14 +73,30 @@ main(int argc, char **argv)
 				continue;
 			memcpy(&tir.faddr, aif->ai_addr, aif->ai_addrlen);
 			memcpy(&tir.laddr, ail->ai_addr, ail->ai_addrlen);
-			i = sizeof (tir);
-			if (sysctl(mib, sizeof (mib) / sizeof (int), &dummy,
-			    &i, &tir, i) == -1)
-				warn(NULL);
+
+			if (getnameinfo(aif->ai_addr, aif->ai_addrlen,
+			    fhbuf, sizeof(fhbuf),
+			    fsbuf, sizeof(fsbuf),
+			    NI_NUMERICHOST | NI_NUMERICSERV) == -1)
+				err(1, "getnameinfo");
+			if (getnameinfo(ail->ai_addr, ail->ai_addrlen,
+			    lhbuf, sizeof(lhbuf),
+			    lsbuf, sizeof(lsbuf),
+			    NI_NUMERICHOST | NI_NUMERICSERV) == -1)
+				err(1, "getnameinfo");
+
+			if (sysctl(mib, sizeof (mib) / sizeof (int), NULL,
+			    NULL, &tir, sizeof(tir)) == -1) {
+				rval = 1;
+				warn("%s %s %s %s", lhbuf, lsbuf, fhbuf, fsbuf);
+			} else
+				printf("%s %s %s %s: dropped\n",
+				    lhbuf, lsbuf, fhbuf, fsbuf);
+
 		}
 	}
 	freeaddrinfo(laddr);
 	freeaddrinfo(faddr);
 
-	exit(0);
+	exit(rval);
 }
