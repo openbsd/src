@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.21 1997/07/26 12:02:20 maja Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.22 1997/07/30 12:07:02 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.21 1997/07/26 12:02:20 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.22 1997/07/30 12:07:02 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -200,7 +200,7 @@ char *domain;
 char *map;
 char *temp_map;
 {
-	return ypdb_open_suf(temp_map, O_RDWR|O_CREAT|O_EXCL, 0444);
+	return ypdb_open_suf(temp_map, O_RDWR, 0444);
 }
 
 int
