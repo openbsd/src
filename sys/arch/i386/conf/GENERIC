@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.109 1999/05/18 19:47:29 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.110 1999/06/22 14:12:42 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -253,6 +253,9 @@ bktr0   at pci? dev ? function ?
 joy*	at isapnp?
 
 #wdt0	at pci? dev ? function ?	# Ind Computer Source PCI-WDT50x driver
+
+# crypto support
+#aeon*	at pci? dev ? function ?		# Aeon crypto card
 
 pseudo-device	pctr		1
 pseudo-device	sequencer	1
