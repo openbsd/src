@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.48 2004/02/05 14:29:09 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.49 2004/02/05 14:42:45 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -115,7 +115,7 @@ number		: STRING			{
 			u_long	ulval;
 
 			if (atoul($1, &ulval) == -1) {
-				yyerror("%s is not a number", $1);
+				yyerror("\"%s\" is not a number", $1);
 				YYERROR;
 			} else
 				$$ = ulval;
@@ -225,7 +225,8 @@ address		: STRING		{
 				YYERROR;
 			}
 			if (n == 0) {
-				yyerror("could not parse address spec %s", $1);
+				yyerror("could not parse address spec \"%s\"",
+				     $1);
 				YYERROR;
 			}
 		}
@@ -591,7 +592,7 @@ top:
 		}
 		val = symget(buf);
 		if (val == NULL) {
-			yyerror("macro '%s' not defined", buf);
+			yyerror("macro \"%s\" not defined", buf);
 			return (findeol());
 		}
 		parsebuf = val;
@@ -701,7 +702,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
 		next = TAILQ_NEXT(sym, entries);
 		if ((conf->opts & BGPD_OPT_VERBOSE2) && !sym->used)
-			fprintf(stderr, "warning: macro '%s' not "
+			fprintf(stderr, "warning: macro \"%s\" not "
 			    "used\n", sym->nam);
 		if (!sym->persist) {
 			free(sym->nam);
