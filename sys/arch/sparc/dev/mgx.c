@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.2 2003/05/15 04:59:50 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.3 2003/05/18 20:29:16 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -65,17 +65,18 @@
  */
 
 #define	MGX_NREG	9
-#define	MGX_REG_VIDC	4	/* video control and ramdac */
+#define	MGX_REG_CRTC	4	/* video control and ramdac */
 #define	MGX_REG_CTRL	5	/* control engine */
 #define	MGX_REG_VRAM8	8	/* 8-bit memory space */
 
 /*
- * MGX VIDC empirical constants
+ * MGX CRTC empirical constants
  */
-#define	VIDC_DATA	0x03c6
-#define	VIDC_COMMAND	0x03c7
-#define	VIDC_CMAP	0x03ca
-#define	VD_DISABLEVIDEO	0x0020
+#define	ADDRESS_REVERSE(x)	((x) ^ 0x03)
+#define	CRTC_COMMAND	ADDRESS_REVERSE(0x03c4)
+#define	CRTC_DATA	ADDRESS_REVERSE(0x03c5)
+#define	CRTC_CMAP	ADDRESS_REVERSE(0x03c9)
+#define	CD_DISABLEVIDEO	0x0020
 
 /* per-display variables */
 struct mgx_softc {
@@ -84,7 +85,6 @@ struct mgx_softc {
 	struct	rom_reg sc_phys;
 	u_int8_t	sc_cmap[256 * 3];	/* shadow colormap */
 	volatile u_int8_t *sc_vidc;	/* ramdac registers */
-	u_int8_t	sc_vidctrl;	/* VIDC control word */
 
 	int	sc_nscreens;
 };
@@ -183,8 +183,7 @@ mgxattach(struct device *parent, struct device *self, void *args)
 	}
 
 	sc->sc_vidc = (volatile u_int8_t *)mapiodev(
-	    &ca->ca_ra.ra_reg[MGX_REG_VIDC], 0, PAGE_SIZE);
-	sc->sc_vidctrl = sc->sc_vidc[VIDC_DATA];
+	    &ca->ca_ra.ra_reg[MGX_REG_CRTC], 0, PAGE_SIZE);
 
 	/* enable video */
 	mgx_burner(sc, 1, 0);
@@ -335,11 +334,11 @@ mgx_burner(void *v, u_int on, u_int flags)
 {
 	struct mgx_softc *sc = v;
 
-	sc->sc_vidc[VIDC_COMMAND] = 1;	/* trigger? */
+	sc->sc_vidc[CRTC_COMMAND] = 1;	/* trigger? */
 	if (on)
-		sc->sc_vidc[VIDC_DATA] = sc->sc_vidctrl & ~VD_DISABLEVIDEO;
+		sc->sc_vidc[CRTC_DATA] &= ~CD_DISABLEVIDEO;
 	else
-		sc->sc_vidc[VIDC_DATA] = sc->sc_vidctrl | VD_DISABLEVIDEO;
+		sc->sc_vidc[CRTC_DATA] |= CD_DISABLEVIDEO;
 }
 
 /*
@@ -370,7 +369,7 @@ mgx_loadcmap(struct mgx_softc *sc, int start, int ncolors)
 	 * DAC. What a waste.
 	 */
 	for (color = sc->sc_cmap, i = 0; i < 256 * 3; i++)
-		sc->sc_vidc[VIDC_CMAP] = *color++;
+		sc->sc_vidc[CRTC_CMAP] = *color++;
 }
 
 int
