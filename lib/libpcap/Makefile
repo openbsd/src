@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2000/04/26 21:25:52 jakob Exp $
+#	$OpenBSD: Makefile,v 1.14 2001/11/22 12:44:29 espie Exp $
 #	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
 
 LIB=	pcap
@@ -29,11 +29,11 @@ SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
 CLEANFILES+= grammar.c scanner.c grammar.tab.h version.c
 
 grammar.c: grammar.y
-	${YACC.y} -ppcap_yy -b ${.TARGET:R} ${.IMPSRC}
+	${YACC.y} -ppcap_yy -b ${.TARGET:R} ${.ALLSRC}
 	mv ${.TARGET:R}.tab.c ${.TARGET}
 
 scanner.c: scanner.l grammar.c
-	${LEX.l} -Ppcap_yy -o${.TARGET} ${.IMPSRC}
+	${LEX.l} -Ppcap_yy -o${.TARGET} ${.CURDIR}/scanner.l
 
 version.c: ${.CURDIR}/VERSION
 	@rm -f $@
