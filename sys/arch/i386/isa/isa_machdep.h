@@ -97,17 +97,23 @@ struct intrhand {
  * XXX should be made partially machine- and bus-mapping-independent.
  *
  * DMA_BOUNCE is the number of pages of low-addressed physical memory
- * to acquire for ISA bounce buffers.
+ * to acquire for ISA bounce buffers. If physical memory below 16 MB
+ * then DMA_BOUNCE_LOW will be used.
  *
- * isaphysmem is the location of those bounce buffers.  (They are currently
- * assumed to be contiguous.
+ * isaphysmem is the address of this physical contiguous low memory.
+ * isaphysmempgs is the number of pages allocated.
  */
 
 #ifndef DMA_BOUNCE
-#define	DMA_BOUNCE      8		/* one buffer per channel */
+#define	DMA_BOUNCE      48		/* number of pages if memory > 16M */
+#endif
+
+#ifndef DMA_BOUNCE_LOW
+#define	DMA_BOUNCE_LOW  16		/* number of pages if memory <= 16M */
 #endif
 
 extern vm_offset_t isaphysmem;
+extern int isaphysmempgs;
 
 
 /*

@@ -915,8 +915,8 @@ loop:
 		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq);
 #else
-		isa_dmastart(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);
+		isadma_start(bp->b_data + fd->sc_skip, fd->sc_nbytes,
+		    fdc->sc_drq, read ? ISADMA_START_READ : ISADMA_START_WRITE);
 #endif
 		outb(iobase + fdctl, type->rate);
 #ifdef FD_DEBUG
@@ -966,7 +966,7 @@ loop:
 #ifdef NEWCONFIG
 		at_dma_abort(fdc->sc_drq);
 #else
-		isa_dmaabort(fdc->sc_drq);
+		isadma_abort(fdc->sc_drq);
 #endif
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
@@ -980,7 +980,7 @@ loop:
 #ifdef NEWCONFIG
 			at_dma_abort(fdc->sc_drq);
 #else
-			isa_dmaabort(fdc->sc_drq);
+			isadma_abort(fdc->sc_drq);
 #endif
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
@@ -994,9 +994,7 @@ loop:
 #ifdef NEWCONFIG
 		at_dma_terminate(fdc->sc_drq);
 #else
-		read = bp->b_flags & B_READ;
-		isa_dmadone(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);
+		isadma_done(fdc->sc_drq);
 #endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,

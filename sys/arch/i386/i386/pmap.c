@@ -93,6 +93,7 @@
 #include <i386/isa/isa_machdep.h>
 
 #include "isa.h"
+#include "isadma.h"
 
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
@@ -276,8 +277,14 @@ pmap_bootstrap(virtual_start)
 	 * reserve special hunk of memory for use by bus dma as a bounce
 	 * buffer (contiguous virtual *and* physical memory).  XXX
 	 */
-#if NISADMA > 0
-	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
+#if NISA > 0 && NISADMA > 0
+	if (ctob(physmem) >= 0x1000000) {
+		isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
+		isaphysmempgs = DMA_BOUNCE;
+	} else {
+		isaphysmem = pmap_steal_memory(DMA_BOUNCE_LOW * NBPG);
+		isaphysmempgs = DMA_BOUNCE_LOW;
+	}
 #endif
 
 	pmap_update();

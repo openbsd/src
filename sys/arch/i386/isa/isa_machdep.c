@@ -44,11 +44,14 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <vm/vm.h>
+
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/icu.h>
 
@@ -371,4 +374,309 @@ isa_intr_disestablish(arg)
 
 	if (intrhand[irq] == NULL)
 		intrtype[irq] = ISA_IST_NONE;
+}
+
+/*
+ * ISA DMA and bounce buffer management
+ */
+
+#define MAX_CHUNK 256		/* number of low memory segments */
+
+static unsigned long bitmap[MAX_CHUNK / 32 + 1];
+
+#define set(i) (bitmap[(i) >> 5] |= (1 << (i)))
+#define clr(i) (bitmap[(i) >> 5] &= ~(1 << (i)))
+#define bit(i) ((bitmap[(i) >> 5] & (1 << (i))) != 0)
+
+static int bit_ptr = -1;	/* last segment visited */
+static int chunk_size = 0;	/* size (bytes) of one low mem segment */
+static int chunk_num = 0;	/* actual number of low mem segments */
+
+vm_offset_t isaphysmem;		/* base address of low mem arena */
+int isaphysmempgs;		/* number of pages of low mem arena */
+
+/*
+ * check if addr is from our low mem arena
+ */
+
+static int
+bounce_isbounced(addr)
+	vm_offset_t addr;
+{
+	return(addr >= vtophys(isaphysmem) &&
+	       addr < vtophys(isaphysmem)+isaphysmempgs*NBPG);
+}
+
+/*
+ * return the virtual address of addr. addr must be from low mem arena
+ */
+
+static caddr_t
+bounce_to_virt(addr)
+	vm_offset_t addr;
+{
+	return((caddr_t)(isaphysmem+(addr-vtophys(isaphysmem))));
+}
+
+/*
+ * alloc a low mem segment of size nbytes. Alignment constraint is:
+ *   (addr & pmask) == ((addr+size-1) & pmask)
+ * if waitok, call may wait for memory to become available.
+ * returns 0 on failure
+ */
+
+static vm_offset_t
+bounce_alloc(nbytes, pmask, waitok)
+	vm_size_t nbytes;
+	vm_offset_t pmask;
+	int waitok;
+{
+	int i, l;
+	vm_offset_t a, b, c, r;
+	vm_size_t n;
+	int nunits, opri;
+
+	opri = splbio();
+
+	if (bit_ptr < 0) {	/* initialize low mem arena */
+		if ((chunk_size = isaphysmempgs*NBPG/MAX_CHUNK) & 1)
+			chunk_size--;
+		chunk_num =  (isaphysmempgs*NBPG) / chunk_size;
+		for(i = 0; i < chunk_num; i++)
+			set(i);
+		bit_ptr = 0;
+	}
+
+	nunits = (nbytes+chunk_size-1)/chunk_size;
+
+	/*
+	 * set a=start, b=start with address constraints, c=end
+	 * check if this request may ever succeed.
+	 */
+
+	a = isaphysmem;
+	b = (isaphysmem + ~pmask) & pmask;
+	c = isaphysmem + chunk_num*chunk_size;
+	n = nunits*chunk_size;
+	if (a + n >= c || pmask != 0 && a + n >= b && b + n >= c) {
+		splx(opri);
+		return(0);
+	}
+
+	for (;;) {
+		i = bit_ptr;
+		l = -1;
+		do{
+			if (bit(i) && l >= 0 && (i - l + 1) >= nunits){
+				r = vtophys(isaphysmem+(i-nunits+1)*chunk_size);
+				if (((r ^ (r+nbytes-1)) & pmask) == 0) {
+					for (l = i - nunits + 1; l <= i; l++)
+						clr(l);
+					bit_ptr = i;
+					splx(opri);
+					return(r);
+				}
+			} else if (bit(i) && l < 0)
+				l = i;
+			else if (!bit(i))
+				l = -1;
+			if (++i == chunk_num) {
+				i = 0;
+				l = -1;
+			}
+		} while(i != bit_ptr);
+
+		if (waitok)
+			tsleep((caddr_t) &bit_ptr, PRIBIO, "physmem", 0);
+		else {
+			splx(opri);
+			return(0);
+		}
+	}
+}
+
+/* 
+ * return a segent of the low mem arena to the free pool
+ */
+
+static void
+bounce_free(addr, nbytes)
+	vm_offset_t addr;
+	vm_size_t nbytes;
+{
+	int i, j, opri;
+	vm_offset_t vaddr;
+
+	opri = splbio();
+
+	vaddr = (vm_offset_t)bounce_to_virt(addr);
+	if (vaddr < isaphysmem || vaddr >= isaphysmem+chunk_num*chunk_size ||
+	    ((i = (int)(vaddr-isaphysmem)) % chunk_size) != 0)
+		panic("bounce_free: bad address");
+
+	i /= chunk_size;
+	j = i + (nbytes+chunk_size-1)/chunk_size;
+
+	while (i < j) {
+		if (bit(i))
+			panic("bounce_free: already free");
+		set(i);
+		i++;
+	}
+
+	wakeup((caddr_t)&bit_ptr);
+	splx(opri);
+}
+
+/*
+ * setup (addr,nbytes) for an ISA dma transfer.
+ * flags&ISADMA_MAP_WAITOK	may wait
+ * flags&ISADMA_MAP_BOUNCE	may use a bounce buffer if necessary
+ * flags&ISADMA_MAP_CONTIG	result must be physically contiguous
+ * flags&ISADMA_MAP_8BIT	must not cross 64k boundary
+ * flags&ISADMA_MAP_16BIT	must not cross 128k boundary
+ *
+ * returns the number of used phys entries, 0 on failure.
+ * if flags&ISADMA_MAP_CONTIG result is 1 on sucess!
+ */
+
+int
+isadma_map(addr, nbytes, phys, flags)
+	caddr_t addr;
+	vm_size_t nbytes;
+	struct isadma_seg *phys;
+	int flags;
+{
+	vm_offset_t pmask, thiskv, thisphys, nextphys;
+	vm_size_t datalen;
+	int seg, waitok, i;
+
+	if (flags & ISADMA_MAP_8BIT)
+		pmask = ~((64*1024)-1);
+	else if (flags & ISADMA_MAP_16BIT)
+		pmask = ~((128*1024)-1);
+	else
+		pmask = 0;
+
+	waitok = (flags & ISADMA_MAP_WAITOK) != 0;
+
+	thiskv = (vm_offset_t)addr;
+	datalen = nbytes;
+	thisphys = vtophys(thiskv);
+	seg = 0;
+
+	while (datalen > 0 && (seg == 0 || (flags & ISADMA_MAP_CONTIG) == 0)) {
+		if (thisphys == 0)
+			panic("isadma_map: no physical page present");
+
+		phys[seg].length = 0;
+		phys[seg].addr = thisphys;
+
+		nextphys = thisphys;
+		while (datalen > 0 && thisphys == nextphys) {
+			nextphys = trunc_page(thisphys) + NBPG;
+			phys[seg].length += min(nextphys-thisphys, datalen);
+			datalen -= min(nextphys-thisphys, datalen);
+			thiskv = trunc_page(thiskv) + NBPG;
+			if (datalen)
+				thisphys = vtophys(thiskv);
+		}
+
+		if (phys[seg].addr+phys[seg].length > 0xffffff) {
+			if (flags & ISADMA_MAP_CONTIG) {
+				phys[seg].length = nbytes;
+				datalen = 0;
+			}
+			if ((flags & ISADMA_MAP_BOUNCE) == 0)
+				phys[seg].addr = 0;
+			else
+				phys[seg].addr =
+				    bounce_alloc(phys[seg].length, pmask,
+						 waitok);
+			if (phys[seg].addr == 0) {
+				for (i = 0; i < seg; i++)
+					if (bounce_isbounced(phys[i].addr))
+						bounce_free(phys[i].addr,
+							    phys[i].length);
+				return 0;
+			}
+		}
+
+		seg++;
+	}
+
+	/* check all constraints */
+	if (datalen ||
+	    ((phys[0].addr ^ (phys[0].addr+phys[0].length-1)) & pmask) != 0 ||
+	    ((phys[0].addr & 1) && (flags & ISADMA_MAP_16BIT))) {
+		if ((flags & ISADMA_MAP_BOUNCE) == 0)
+			return 0;
+		if ((phys[0].addr = bounce_alloc(nbytes, pmask, waitok)) == 0)
+			return 0;
+		phys[0].length = nbytes;
+	}
+
+	return seg;
+}
+
+/*
+ * undo a ISA dma mapping. Simply return the bounced segments to the pool.
+ */
+
+void
+isadma_unmap(addr, nbytes, nphys, phys)
+	caddr_t addr;
+	vm_size_t nbytes;
+	int nphys;
+	struct isadma_seg *phys;
+{
+	int i;
+
+	for (i = 0; i < nphys; i++)
+		if (bounce_isbounced(phys[i].addr))
+			bounce_free(phys[i].addr, phys[i].length);
+}
+
+/*
+ * copy bounce buffer to buffer where needed
+ */
+
+void
+isadma_copyfrombuf(addr, nbytes, nphys, phys)
+	caddr_t addr;
+	vm_size_t nbytes;
+	int nphys;
+	struct isadma_seg *phys;
+{
+	int i;
+
+	for (i = 0; i < nphys; i++) {
+		if (bounce_isbounced(phys[i].addr)) {
+			bcopy(bounce_to_virt(phys[i].addr), addr,
+			    phys[i].length);
+		}
+		addr += phys[i].length;
+	}
+}
+
+/*
+ * copy buffer to bounce buffer where needed
+ */
+
+void
+isadma_copytobuf(addr, nbytes, nphys, phys)
+	caddr_t addr;
+	vm_size_t nbytes;
+	int nphys;
+	struct isadma_seg *phys;
+{
+	int i;
+
+	for (i = 0; i < nphys; i++) {
+		if (bounce_isbounced(phys[i].addr)) {
+			bcopy(addr, bounce_to_virt(phys[i].addr),
+			    phys[i].length);
+		}
+		addr += phys[i].length;
+	}
 }
