@@ -1,43 +1,86 @@
-.\"	$OpenBSD: bs.6,v 1.1 1996/08/21 08:18:34 downsj Exp $
-.TH BATTLESHIPS 6 "Aug 23, 1989"
-.SH NAME
-bs \- battleships game
-.SH SYNOPSIS
-bs [ -b | -s ] [ -c ]
-.SH DESCRIPTION
+.\"	$OpenBSD: bs.6,v 1.2 1997/08/04 11:28:43 downsj Exp $
+.\"
+.\" Copyright (c) 1997, Jason Downs.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason Downs for the
+.\"      OpenBSD system.
+.\" 4. Neither the name(s) of the author(s) nor the name OpenBSD
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd August 4, 1997
+.Dt BATTLESHIPS 6
+.Sh NAME
+.Nm bs
+.Nd battleships game
+.Sh SYNOPSIS
+.Nm
+.Op Fl b | s
+.Op Fl c
+.Sh DESCRIPTION
 This program allows you to play the familiar Battleships game against the
-computer on a 10x10 board. The interface is visual and largely
+computer on a 10x10 board.  The interface is visual and largely
 self-explanatory; you place your ships and pick your shots by moving the
-cursor around the `sea' with the rogue/hack motion keys hjklyubn.
-.PP
+cursor around the
+.Sq sea
+with the rogue/hack motion keys
+.Em hjklyubn .
+.Pp
 Note that when selecting a ship to place, you must type the capital letter
-(these are, after all, capital ships). During ship placement, the `r' command
-may be used to ignore the current position and randomly place your currently
-selected ship. The `R' command will place all remaining ships randomly. The ^L
+(these are, after all, capital ships).  During ship placement, the
+.Sq r
+command may be used to ignore the current position and randomly place your
+currently selected ship.  The
+.Sq R
+command will place all remaining ships randomly.  The ^L
 command (form feed, ASCII 12) will force a screen redraw).
-.PP
+.Sh OPTIONS
 The command-line arguments control game modes. 
-
-.nf
-	-b selects a `blitz' variant
-	-s selects a `salvo' variant
-	-c permits ships to be placed adjacently
-.fi
-
-The `blitz' variant allows a side to shoot for as long as it continues to
-score hits.
-.PP
-The `salvo' game allows a player one shot per turn for each of his/her ships
-still afloat.  This puts a premium scoring hits early and knocking out some
-ships and also makes much harder the situation where you face a superior force
-with only your PT-boat.
-.PP
-Normally, ships must be separated by at least one square of open water. The
--c option disables this check and allows them to close-pack.
-.PP
+.Bl -tag -width XxXXX
+.It Fl b
+Selects a
+.Sq blitz
+variant.  This allows a side to shoot for as long as it continues to score
+hits.
+.It Fl s
+Selects a
+.Sq salvo
+variant.  This allows a player one shot per turn for each of his/her
+ships still afloat.  This puts a premium on scoring hits early and knocking out
+some ships and also makes it much harder, for example, when you face a superior
+force with only your PT-boat.
+.It Fl c
+Permits ships to be placed adjacently.  Normally, ships must be separated by
+at least one square of open water.  This disables that check and allows them
+to close-pack.
+.El
+.Sh NOTES
 The algorithm the computer uses once it has found a ship to sink is provably
-optimal. The dispersion criterion for the random-fire algorithm may not be.
-.SH AUTHORS
-Originally written by one Bruce Holloway in 1986. Salvo mode added by Chuck A.
-DeGaul (cbosgd!cad). Visual user interface, `closepack' option, code rewrite
+optimal.  The dispersion criterion for the random-fire algorithm may not be.
+.Sh AUTHORS
+Originally written by one Bruce Holloway in 1986.
+Salvo mode added by Chuck A.  DeGaul (cbosgd!cad).
+Visual user interface, `closepack' option, code rewrite
 and manual page by Eric S. Raymond <esr@snark.thyrsus.com> August 1989.
