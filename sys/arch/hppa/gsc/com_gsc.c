@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.2 1998/11/23 03:16:28 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.3 1999/02/25 19:31:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -46,9 +46,13 @@
 #include <hppa/dev/cpudevs.h>
 #include <hppa/gsc/gscbusvar.h>
 
+#define	COMGSC_OFFSET	0x800
+struct com_gsc_regs {
+	u_int8_t reset;
+};
+
 int	com_gsc_probe __P((struct device *, void *, void *));
 void	com_gsc_attach __P((struct device *, struct device *, void *));
-
 
 struct cfattach com_gsc_ca = {
 	sizeof(struct com_softc), com_gsc_probe, com_gsc_attach
@@ -70,8 +74,7 @@ com_gsc_probe(parent, match, aux)
 
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))
 		return 0;
-
-	rv = comprobe1(ca->ca_iot, ioh | IOMOD_DEVOFFSET);
+	rv = comprobe1(ca->ca_iot, ioh + COMGSC_OFFSET);
 	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
 	return rv;
 }
@@ -86,17 +89,24 @@ com_gsc_attach(parent, self, aux)
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_iobase = (bus_addr_t)ga->ga_hpa;
-	sc->sc_iot = HPPA_BUS_TAG_SET_BYTE(ga->ga_iot);
+	sc->sc_iobase = (bus_addr_t)ga->ga_hpa + COMGSC_OFFSET;
+	sc->sc_iot = ga->ga_iot;
 
-	if (bus_space_map(sc->sc_iot, sc->sc_iobase, IOMOD_HPASIZE,
+	if (bus_space_map(sc->sc_iot, ga->ga_hpa, IOMOD_HPASIZE,
 			  0, &sc->sc_ioh))
 		panic ("com_gsc_attach: mapping io space");
+	/* sc->sc_regs = (void *)sc->sc_ioh; */
+	sc->sc_ioh += COMGSC_OFFSET;
 
-	sc->sc_ih = gsc_intr_establish(ga->ga_ic, IPL_TTY, comintr, sc,
-				       sc->sc_dev.dv_xname);
+#if 0
+	r->reset = 0;
+	DELAY(1000);
+#endif
 
-	sc->sc_ioh |= IOMOD_DEVOFFSET;
 	com_attach_subr(sc);
+
+	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
+				       ga->ga_irq, comintr, sc,
+				       sc->sc_dev.dv_xname);
 }
 
