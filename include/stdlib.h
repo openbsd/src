@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.24 1995/03/22 01:08:31 jtc Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@ typedef struct {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void	 abort __P((void));
+__dead void	 abort __P((void));
 int	 abs __P((int));
 int	 atexit __P((void (*)(void)));
 double	 atof __P((const char *));
@@ -95,7 +95,7 @@ void	*bsearch __P((const void *, const void *, size_t,
 	    size_t, int (*)(const void *, const void *)));
 void	*calloc __P((size_t, size_t));
 div_t	 div __P((int, int));
-void	 exit __P((int));
+__dead void	 exit __P((int));
 void	 free __P((void *));
 char	*getenv __P((const char *));
 long	 labs __P((long));
