@@ -1,4 +1,4 @@
-.\"	$OpenBSD: swapctl.8,v 1.20 2003/02/13 08:23:39 jmc Exp $
+.\"	$OpenBSD: swapctl.8,v 1.21 2003/05/10 06:33:39 jmc Exp $
 .\"	$NetBSD: swapctl.8,v 1.14 1998/05/22 18:27:52 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -77,6 +77,20 @@ acts as
 with the
 .Fl A
 option.
+.Pp
+.Sy Note :
+The initial swap device (root disk, partition b) is handled automatically
+by the kernel and does
+.Em not
+need to be added to
+.Pa /etc/fstab
+or added via
+.Nm swapctl .
+It will show up as
+.Qq swap_device
+in the output displayed with the
+.Fl l
+flag.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
