@@ -1,0 +1,99 @@
+.\" $OpenBSD: vlan.4,v 1.1 2000/04/26 19:00:57 chris Exp $
+.\"
+.Dd 09 January 2000
+.Dt VLAN 4
+.Os
+.Sh NAME
+.Nm vlan
+.Nd "IEEE 802.1Q encapsulation/decapsulation pseudo-device"
+.Sh SYNOPSIS
+.Cd pseudo-device vlan Op Ar count
+.Sh DESCRIPTION
+The
+.Nm vlan
+ethernet interface allows construction of virtual LANs when used in
+conjunction with IEEE 802.1Q-compliant ethernet devices.
+.Pp
+This driver currently supports the following modes of operation:
+.Bl -tag -width abc
+.It 802.1Q encapsulation over ethernet (Ethernet protocol 0x8100)
+Frame headers which normally contain the destination host, source host, and
+protocol, are altered with additional information.  After the source host,
+a 32-bit 802.1Q header is included, with 16 bits for the ether type (0x8100), 3 
+bits for the priority field (not used in this implementation), 1 bit for
+the canonical field (always 0), and 12 bits for the vlan identifier.  Following
+the vlan header is the actual ether type for the packet and length information.
+.Pp
+The 802.1Q header specifies the virtual LAN
+and thus allows an ethernet switch or other 802.1Q compliant
+network devices to be aware of which device the packet was intended for.
+This driver allows OpenBSD to group packets logically with separate
+interfaces.
+.El
+.Pp
+The network interfaces are named
+.Sy vlan Ns Ar 0 ,
+.Sy vlan Ns Ar 1 ,
+etc.
+The number of interfaces is given by the corresponding
+.Sy pseudo-device
+line in the system config file.
+.Xr vlan 4
+interfaces support the following unique
+.Xr ioctl 2 Ns s :
+.Bl -tag -width aaa
+.It SIOCSETVLAN: 
+Set the vlan tag and parent for a given vlan interface.
+.It SIOCGETVLAN: 
+Get the vlan tag and parent for a given vlan interface.
+.Pp
+.El
+The operation mode can be given as 
+.Bl -tag -width bbb
+.It link0
+The parent interface supports VLAN tagging/untagging in hardware,
+this requires support from the ethernet driver as well. 
+.El
+.Pp
+to
+.Xr ifconfig 8 .
+.Pp
+.Sh SEE ALSO
+.Xr netintro 4 ,
+.Xr ip 4 ,
+.Xr bridge 4 ,
+.Xr inet 4 ,
+.Xr ifconfig 8
+.Pp
+A draft of IEEE 802.1Q standard can be obtained from
+http://grouper.ieee.org/groups/802/1/pages/802.1Q.html
+or the final version can be purchased from the
+Institute of Electrical and Electronic Engineers, Inc.
+.Sh BUGS
+The 802.1Q specification allows for operation over FDDI and Token Ring
+as well as Ethernet.  
+This driver only supports such operation with ethernet devices.
+.Pp
+Some ethernet chips (notably the Intel 82558/82559) automatically
+discard frames that are larger then 1500 bytes.  All ethernet
+chips sporting this feature should allow for it to be turned off.
+Optimally, upon loading, the chip's OpenBSD driver would do this.
+A temporary kludge is to set the MTU for each machine behind each VLAN to
+1496 or less.  Refer to the hardware manual for your ethernet chip to determine
+if it has this feature, and if so, for information on how to turn it off.
+A symptom of this problem is that small packets (ICMP)
+but packets which are >MTU size are dropped, thus causing
+bulk TCP transfers to hang.
+.Pp
+Some ethernet chips support 802.1Q tagging/untagging in hardware, but
+do not have the appropriate hooks in their driver to pass the packet
+directly to if_vlan.  The PCI device driver if_ti is able to do this,
+use it as a reference.
+.Pp
+This driver could be extended to support the Cisco ISL VLAN protocol,
+detailed at http://www.cisco.com/warp/public/741/4.html.  Unfortunately,
+public reimplementation of this protocol is currently prevented by patent
+(at least in the USA).
+.Pp
+.Sh AUTHOR
+Originally wollman@freebsd.org
