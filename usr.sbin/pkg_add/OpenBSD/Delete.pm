@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.2 2004/10/31 12:40:01 espie Exp $
+# $OpenBSD: Delete.pm,v 1.3 2004/11/01 19:14:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -67,7 +67,7 @@ sub validate_plist($$)
 		}
 	}
 	Fatal "fatal issues" if $problems;
-	return $totsize;
+	$plist->{totsize} = $totsize;
 }
 
 sub remove_packing_info
@@ -83,9 +83,7 @@ sub remove_packing_info
 sub delete_package
 {
 	my ($pkgname, $state) = @_;
-	$state->{pkgname} = $pkgname;
 	my $dir = installed_info($pkgname);
-	$state->{dir} = $dir;
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS) or 
 	    Fatal "Bad package";
 	if (!defined $plist->pkgname()) {
@@ -95,8 +93,20 @@ sub delete_package
 		Fatal "Package $pkgname real name does not match";
 	}
 
-	my $totsize = validate_plist($plist, $state->{destdir});
+	validate_plist($plist, $state->{destdir});
 
+	delete_plist($plist, $state);
+}
+
+sub delete_plist
+{
+	my ($plist, $state) = @_;
+
+	my $totsize = $plist->{totsize};
+	my $pkgname = $plist->pkgname();
+	$state->{pkgname} = $pkgname;
+	my $dir = installed_info($pkgname);
+	$state->{dir} = $dir;
 	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 	if ($plist->has(REQUIRE)) {
 		$plist->get(REQUIRE)->delete($state);

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.89 2004/11/01 14:30:00 espie Exp $
+# $OpenBSD: pkg_add,v 1.90 2004/11/01 19:14:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -85,14 +85,14 @@ sub can_install($$)
 
 	require OpenBSD::Update;
 
-	my $toreplace = $l[0];
-	if (OpenBSD::Update::can_do($toreplace, $pkgname, $state)) {
-		print "Will be able to update $toreplace once we're done\n";
+	my $plist = OpenBSD::Update::can_do($l[0], $pkgname, $state);
+	if ($plist) {
+		return $plist;
 	} else {
-		print "Can't update $toreplace into $pkgname\n";
+		print "Can't update $l[0] into $pkgname\n";
+		$errors++;
+		return undef;
 	}
-	$errors++;
-	return undef;
 }
 
 
@@ -101,9 +101,9 @@ sub pre_add($$)
 {
 	my ($pkg, $state) = @_;
 	my $pkgname1;
+	my $toreplace;
 	
 	if ($pkg ne '-') {
-		my $more = "";
 		if ($state->{verbose}) {
 			if (defined $state->{deptree}->{$pkg}) {
 			    print $state->{deptree}->{$pkg},":";
@@ -111,7 +111,8 @@ sub pre_add($$)
 			print "parsing $pkg\n";
 		}
 		$pkgname1 = OpenBSD::PackageName::url2pkgname($pkg);
-		return undef unless can_install($pkgname1, $state);
+		$toreplace = can_install($pkgname1, $state);
+		return undef unless $toreplace;
 	}
 
 	my $handle = OpenBSD::PackageLocator->find($pkg);
@@ -147,12 +148,18 @@ sub pre_add($$)
 			}
 			print "parsing $pkgname\n";
 		}
-		return undef unless can_install($pkgname, $state);
+		$toreplace = can_install($pkgname, $state);
+		return undef unless $toreplace;
+	}
+	my $avoid = '';
+	if ($toreplace ne '1') {
+		$plist->{replacing} = $toreplace;
+		$avoid = $toreplace->pkgname();
 	}
 	# second handling of conflicts
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
 	$handle->{conflicts} = $l;
-	if ($l->conflicts_with(installed_packages())) {
+	if ($l->conflicts_with(grep {$_ ne $avoid} installed_packages())) {
 		print "package $pkg has conflicts: ", 
 		    join(' ', $l->conflicts_with(installed_packages())), "\n";
 		$errors++;
@@ -420,6 +427,9 @@ sub really_add($$)
 	if (defined $state->{deptree}->{$pkgname}) {
 	    $header = $state->{deptree}->{$pkgname}.":".$header;
 	}
+	if (defined $plist->{replacing}) {
+		$header.="(replacing ". $plist->{replacing}->pkgname(). ")";
+	}
 	if (!OpenBSD::ProgressMeter::set_header($header)) {
 	    print $state->{not} ? "Pretending to add " : "Adding ";
 	    print $header;
@@ -441,10 +451,13 @@ sub really_add($$)
 		$interrupted = 1;
 	};
 
-	if ($state->{replace}) {
+	if (defined $plist->{replacing}) {
 		require OpenBSD::Update;
 
 		$plist->visit('extract', $state);
+		
+		require OpenBSD::Delete;
+		OpenBSD::Delete::delete_plist($plist->{replacing}, $state);
 	}
 
 	do_script($plist, REQUIRE, $state, "INSTALL");

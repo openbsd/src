@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.5 2004/11/01 15:45:02 espie Exp $
+# $OpenBSD: Update.pm,v 1.6 2004/11/01 19:14:26 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -52,7 +52,7 @@ sub extract
 	}
 	my ($fh, $tempname) = tempfile(DIR => dirname($file->{destdir}.$file->{name}));
 
-	print "extracting $tempname\n";
+	print "extracting $tempname\n" if $state->{very_verbose};
 	$file->{name} = $tempname;
 	$file->create();
 	$self->{tempname} = $tempname;
@@ -144,9 +144,9 @@ sub can_do
 		OpenBSD::Delete::validate_plist($plist, $state->{destdir});
 	};
 	if ($@) {
-		$okay = 0;
+		return 0;
 	}
 	
-	return $okay;
+	return $okay ? $plist : $okay;
 }
 1;
