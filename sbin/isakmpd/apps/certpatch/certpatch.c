@@ -1,4 +1,4 @@
-/*	$OpenBSD: certpatch.c,v 1.16 2001/04/09 22:09:53 ho Exp $	*/
+/*	$OpenBSD: certpatch.c,v 1.17 2001/07/11 00:40:29 angelos Exp $	*/
 /*	$EOM: certpatch.c,v 1.11 2000/12/21 14:50:09 ho Exp $	*/
 
 /*
@@ -122,14 +122,14 @@ main (int argc, char **argv)
       break;
     default:
       fprintf (stderr, usage, argv[0]);
-      exit (1);
+      return (1);
     }
 
   argc -= optind;
 
   if (argc != 2) {
     fprintf (stderr, usage, argv[0]);
-    exit (1);
+    return (1);
   }
 
   argv += optind;
@@ -144,7 +144,7 @@ main (int argc, char **argv)
        strcasecmp (IDTYPE_UFQDN, type) != 0) || id == NULL)
     {
       printf ("wrong id type or missing id\n");
-      exit (1);
+      return (1);
     }
 
   /*
@@ -161,7 +161,7 @@ main (int argc, char **argv)
   if (BIO_read_filename (file, certin) == -1) 
     {
       perror ("read");
-      exit (1);
+      return (1);
     }
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
   cert = PEM_read_bio_X509 (file, NULL, NULL, NULL);
@@ -172,7 +172,7 @@ main (int argc, char **argv)
   if (cert == NULL)
     {
       printf ("PEM_read_bio_X509 () failed\n");
-      exit (1);
+      return (1);
     }
 
   /* Get the digest for the actual signing */
@@ -181,7 +181,7 @@ main (int argc, char **argv)
   if (!X509_set_version (cert, 2))
     {
       printf ("X509 failed to set version number\n");
-      exit (1);
+      return (1);
     }
 
   if (!strcasecmp (IDTYPE_IP, type))
@@ -189,7 +189,7 @@ main (int argc, char **argv)
       if (inet_aton (id, &saddr) == -1)
         {
 	  printf ("inet_aton () failed\n");
-	  exit (1);
+	  return (1);
 	}
 
       saddr.s_addr = htonl (saddr.s_addr);
@@ -208,14 +208,14 @@ main (int argc, char **argv)
       if (!data)
 	{
 	  perror ("ASN1_OCTET_STRING_new() failed");
-	  exit (1);
+	  return (1);
 	}
 
       i = i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, NULL);
       if (!ASN1_STRING_set ((ASN1_STRING *)data,NULL,i))
         {
 	  perror ("ASN1_STRING_set() failed");
-	  exit (1);
+	  return (1);
 	}
       p = (unsigned char *)data->data;
       i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, &p);
@@ -230,7 +230,7 @@ main (int argc, char **argv)
       if (new_id == NULL)
         {
           printf ("malloc () failed\n");
-          exit (1);
+          return (1);
         }
 
       if (!strcasecmp (IDTYPE_FQDN, type))
@@ -248,14 +248,14 @@ main (int argc, char **argv)
       if (!data)
         {
           perror ("ASN1_OCTET_STRING_new() failed");
-          exit (1);
+          return (1);
         }
 
       i = i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, NULL);
       if (!ASN1_STRING_set ((ASN1_STRING *)data,NULL,i))
         {
           perror ("ASN1_STRING_set() failed");
-          exit (1);
+          return (1);
         }
       p = (unsigned char *)data->data;
       i2d_ASN1_OCTET_STRING ((ASN1_OCTET_STRING *)&str, &p);
@@ -275,7 +275,7 @@ main (int argc, char **argv)
   if (ex == NULL)
     {
       printf ("X509_EXTENSION_create ()\n");
-      exit (1);
+      return (1);
     }
 
   X509_add_ext (cert, ex, -1);
@@ -284,7 +284,7 @@ main (int argc, char **argv)
   if (BIO_read_filename (file, keyfile) == -1)
     {
       perror ("open");
-      exit (1);
+      return (1);
     }
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L
   if ((pkey_priv = PEM_read_bio_PrivateKey (file, NULL, NULL, NULL)) == NULL)
@@ -293,7 +293,7 @@ main (int argc, char **argv)
 #endif
     {
       printf ("Can not read private key %s\n", keyfile);
-      exit (1);
+      return (1);
     }
   BIO_free (file);
 
@@ -311,12 +311,12 @@ main (int argc, char **argv)
   if (BIO_write_filename (file, certout) == -1)
     {
       perror ("open");
-      exit (1);
+      return (1);
     }
 
   printf ("Writing new certificate to %s\n", certout);
   PEM_write_bio_X509 (file, cert);
   BIO_free (file);
 
-  return 1;
+  return (0);
 }
