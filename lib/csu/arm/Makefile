@@ -9,7 +9,7 @@ ELFDIR=		${.CURDIR}/../common_elf
 .PATH:		${ELFDIR}
 CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
 
-PICFLAG?=-fpic -DPIC
+PICFLAG?=-fpic
 
 all: ${OBJS}
 
@@ -32,8 +32,8 @@ crtbegin.o: crtbegin.c
 	@rm -f ${.TARGET}.o
 
 crtbeginS.o: crtbeginS.c
-	@echo ${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtbeginS.c -o ${.TARGET}
-	@${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtbeginS.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} ${PICFLAG} -DPIC ${ELFDIR}/crtbeginS.c -o ${.TARGET}
+	@${COMPILE.c} ${PICFLAG} -DPIC ${ELFDIR}/crtbeginS.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
@@ -44,8 +44,8 @@ crtend.o: crtend.c
 	@rm -f ${.TARGET}.o
 
 crtendS.o: crtendS.c
-	@echo ${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtendS.c -o ${.TARGET}
-	@${COMPILE.c} ${PICFLAG} ${ELFDIR}/crtendS.c -o ${.TARGET}.o
+	@echo ${COMPILE.c} ${PICFLAG} -DPIC ${ELFDIR}/crtendS.c -o ${.TARGET}
+	@${COMPILE.c} ${PICFLAG} -DPIC ${ELFDIR}/crtendS.c -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
