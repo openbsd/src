@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.15 2001/11/21 04:53:13 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.16 2001/11/21 04:54:51 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
 
 /*
@@ -36,7 +36,6 @@
  * Usage: faithd [<port> <progpath> <arg1(progname)> <arg2> ...]
  *   e.g. faithd telnet /usr/libexec/telnetd telnetd
  */
-#define HAVE_GETIFADDRS
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -72,9 +71,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-#ifdef HAVE_GETIFADDRS
 #include <ifaddrs.h>
-#endif
 
 #ifdef FAITH4
 #include <resolv.h>
@@ -123,9 +120,6 @@ static void sig_terminate __P((int));
 static void start_daemon __P((void));
 static void exit_stderr __P((const char *, ...))
 	__attribute__((__format__(__printf__, 1, 2)));
-#ifndef HAVE_GETIFADDRS
-static unsigned int if_maxindex __P((void));
-#endif
 static void grab_myaddrs __P((void));
 static void free_myaddrs __P((void));
 static void update_myaddrs __P((void));
@@ -871,27 +865,9 @@ exit_success(const char *fmt, ...)
 }
 
 #ifdef USE_ROUTE
-#ifndef HAVE_GETIFADDRS
-static unsigned int
-if_maxindex()
-{
-	struct if_nameindex *p, *p0;
-	unsigned int max = 0;
-
-	p0 = if_nameindex();
-	for (p = p0; p && p->if_index && p->if_name; p++) {
-		if (max < p->if_index)
-			max = p->if_index;
-	}
-	if_freenameindex(p0);
-	return max;
-}
-#endif
-
 static void
 grab_myaddrs()
 {
-#ifdef HAVE_GETIFADDRS
 	struct ifaddrs *ifap, *ifa;
 	struct myaddrs *p;
 	struct sockaddr_in6 *sin6;
@@ -943,94 +919,6 @@ grab_myaddrs()
 	}
 
 	freeifaddrs(ifap);
-#else
-	int s;
-	unsigned int maxif;
-	struct ifreq *iflist;
-	struct ifconf ifconf;
-	struct ifreq *ifr, *ifrp, *ifr_end;
-	struct myaddrs *p;
-	struct sockaddr_in6 *sin6;
-	size_t siz;
-	char ifrbuf[sizeof(struct ifreq) + 1024];
-
-	maxif = if_maxindex() + 1;
-	iflist = (struct ifreq *)malloc(maxif * BUFSIZ);	/* XXX */
-	if (!iflist) {
-		exit_failure("not enough core");
-		/*NOTREACHED*/
-	}
-
-	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
-		exit_failure("socket(SOCK_DGRAM)");
-		/*NOTREACHED*/
-	}
-	memset(&ifconf, 0, sizeof(ifconf));
-	ifconf.ifc_req = iflist;
-	ifconf.ifc_len = maxif * BUFSIZ;	/* XXX */
-	if (ioctl(s, SIOCGIFCONF, &ifconf) < 0) {
-		exit_failure("ioctl(SIOCGIFCONF)");
-		/*NOTREACHED*/
-	}
-	close(s);
-
-	/* Look for this interface in the list */
-	ifr_end = (struct ifreq *) (ifconf.ifc_buf + ifconf.ifc_len);
-	for (ifrp = ifconf.ifc_req;
-	     ifrp < ifr_end;
-	     ifrp = (struct ifreq *)((char *)ifrp + siz)) {
-		memcpy(ifrbuf, ifrp, sizeof(*ifrp));
-		ifr = (struct ifreq *)ifrbuf;
-		siz = ifr->ifr_addr.sa_len;
-		if (siz < sizeof(ifr->ifr_addr))
-			siz = sizeof(ifr->ifr_addr);
-		siz += (sizeof(*ifrp) - sizeof(ifr->ifr_addr));
-		if (siz > sizeof(ifrbuf)) {
-			/* ifr too big */
-			break;
-		}
-		memcpy(ifrbuf, ifrp, siz);
-
-		switch (ifr->ifr_addr.sa_family) {
-		case AF_INET:
-		case AF_INET6:
-			p = (struct myaddrs *)malloc(sizeof(struct myaddrs)
-				+ ifr->ifr_addr.sa_len);
-			if (!p) {
-				exit_failure("not enough core");
-				/*NOTREACHED*/
-			}
-			memcpy(p + 1, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
-			p->next = myaddrs;
-			p->addr = (struct sockaddr *)(p + 1);
-#ifdef __KAME__
-			if (ifr->ifr_addr.sa_family == AF_INET6) {
-				sin6 = (struct sockaddr_in6 *)p->addr;
-				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
-				 || IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
-					sin6->sin6_scope_id =
-						ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
-					sin6->sin6_addr.s6_addr[2] = 0;
-					sin6->sin6_addr.s6_addr[3] = 0;
-				}
-			}
-#endif
-			myaddrs = p;
-			if (dflag) {
-				char hbuf[NI_MAXHOST];
-				getnameinfo(p->addr, p->addr->sa_len,
-					hbuf, sizeof(hbuf), NULL, 0,
-					NI_NUMERICHOST);
-				syslog(LOG_INFO, "my interface: %s %s", hbuf, ifr->ifr_name);
-			}
-			break;
-		default:
-			break;
-		}
-	}
-
-	free(iflist);
-#endif
 }
 
 static void
