@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.57 2000/12/05 10:19:38 angelos Exp $
+.\"	$OpenBSD: options.4,v 1.58 2000/12/14 05:07:53 angelos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -506,6 +506,13 @@ See
 for details.
 .Em Note:
 This option is not yet available on all architectures.
+.It Cd option CRYPTO
+Enables support for the kernel cryptographic framework.
+See
+.Xr crypto 9
+for details.
+While not IP specific, this option is usually used in conjunction with option
+.Em IPSEC .
 .It Cd option INSECURE
 Hardwires the kernel security level at \-1.
 This means that the system always runs in securelevel 0 mode, even when
