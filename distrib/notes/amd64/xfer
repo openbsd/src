@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.4 2004/03/23 10:16:56 tom Exp $
+dnl	$OpenBSD: xfer,v 1.5 2004/03/23 20:33:32 tom Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -19,7 +19,7 @@ OpenBSDXferFloppyFromDOS
 
 OpenBSDXferFloppyFromUNIX
 
-Creating a PXE network bootable setup using SunOS or other Un*x-like system:
+Creating a PXE network bootable setup using OpenBSD or other Un*x-like system:
 
 	In order to start the install via PXE, you will need to set up a
 	DHCP server and a TFTP server.  The details of how to do this
