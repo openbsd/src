@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.28 1999/02/17 00:20:45 millert Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.29 1999/12/18 01:11:06 angelos Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -371,7 +371,7 @@ main(argc, argv)
 				if (pent)
 					proto = pent->p_proto;
 				else
-					errx(1, "proto must be >=0, or a name.");
+					errx(1, "proto must be >=2, or a name.");
 			}
 			break;
 		case 'q':
