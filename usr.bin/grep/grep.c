@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.26 2004/02/04 18:38:52 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.27 2004/04/02 18:39:36 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -82,13 +82,15 @@ int	 sflag;		/* -s: silent mode (ignore errors) */
 int	 vflag;		/* -v: only show non-matching lines */
 int	 wflag;		/* -w: pattern must start and end on word boundaries */
 int	 xflag;		/* -x: pattern must match entire line */
+int	 lbflag;	/* --line-buffered */
 
 int binbehave = BIN_FILE_BIN;
 
 enum {
 	BIN_OPT = CHAR_MAX + 1,
 	HELP_OPT,
-	MMAP_OPT
+	MMAP_OPT,
+	LINEBUF_OPT
 };
 
 /* Housekeeping */
@@ -109,7 +111,7 @@ usage(void)
 #else
 	    "usage: %s [-AB num] [-CEFGHILPRSUVZabchilnoqsvwx]\n"
 #endif
-	    "\t[--context[=num]] [--binary-files=value]\n"
+	    "\t[--context[=num]] [--binary-files=value] [--line-buffered]\n"
 	    "\t[-e pattern] [-f file] [pattern] [file ...]\n", __progname);
 	exit(2);
 }
@@ -125,6 +127,7 @@ struct option long_options[] =
 	{"binary-files",	required_argument,	NULL, BIN_OPT},
 	{"help",		no_argument,		NULL, HELP_OPT},
 	{"mmap",		no_argument,		NULL, MMAP_OPT},
+	{"line-buffered",	no_argument,		NULL, LINEBUF_OPT},
 	{"after-context",	required_argument,	NULL, 'A'},
 	{"before-context",	required_argument,	NULL, 'B'},
 	{"context",		optional_argument,	NULL, 'C'},
@@ -421,6 +424,9 @@ main(int argc, char *argv[])
 		case MMAP_OPT:
 			/* default, compatibility */
 			break;
+		case LINEBUF_OPT:
+			lbflag = 1;
+			break;
 		case HELP_OPT:
 		default:
 			usage();
@@ -458,6 +464,9 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+	
+	if (lbflag)
+		setlinebuf(stdout);
 
 	if ((argc == 0 || argc == 1) && !oflag)
 		hflag = 1;
