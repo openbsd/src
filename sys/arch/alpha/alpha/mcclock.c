@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock.c,v 1.3 1996/10/30 22:38:16 niklas Exp $	*/
+/*	$OpenBSD: mcclock.c,v 1.4 2001/04/14 22:18:03 mjacob Exp $	*/
 /*	$NetBSD: mcclock.c,v 1.4 1996/10/13 02:59:41 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ mcclock_init(dev)
 
 	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
 	mc146818_write(sc, MC_REGB,
-	    MC_REGB_PIE | MC_REGB_BINARY | MC_REGB_24HR);
+	    MC_REGB_PIE | MC_REGB_SQWE | MC_REGB_BINARY | MC_REGB_24HR);
 }
 
 /*
