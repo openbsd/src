@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.4 1996/05/07 02:40:32 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -142,9 +142,9 @@ fddi_output(ifp, m0, dst, rt0)
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
 	ifp->if_lastchange = time;
-	if (rt = rt0) {
+	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
-			if (rt0 = rt = RTALLOC1(dst, 1))
+			if ((rt0 = rt = RTALLOC1(dst, 1)) != NULL)
 				rt->rt_refcnt--;
 			else 
 				senderr(EHOSTUNREACH);
@@ -209,9 +209,9 @@ fddi_output(ifp, m0, dst, rt0)
 		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
 			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
-		} else if (error =
+		} else if ((error =
 			    iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
-					    (char *)edst, &snpalen))
+					    (char *)edst, &snpalen)) != 0)
 			goto bad; /* Not Resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if (*edst & 1)
@@ -249,7 +249,7 @@ fddi_output(ifp, m0, dst, rt0)
 /*	case AF_NSAP: */
 	case AF_CCITT: {
 		register struct sockaddr_dl *sdl = 
-			(struct sockaddr_dl *) rt -> rt_gateway;
+			(struct sockaddr_dl *) rt->rt_gateway;
 
 		if (sdl && sdl->sdl_family == AF_LINK
 		    && sdl->sdl_alen > 0) {

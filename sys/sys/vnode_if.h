@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD
+ *	OpenBSD: vnode_if.src,v 1.4 1996/05/22 11:47:12 deraadt Exp 
  * by the script:
  *	OpenBSD
  */
@@ -935,17 +935,17 @@ static __inline int VOP_TRUNCATE(vp, length, flags, cred, p)
 struct vop_update_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	struct timeval *a_access;
-	struct timeval *a_modify;
+	struct timespec *a_access;
+	struct timespec *a_modify;
 	int a_waitfor;
 };
 extern struct vnodeop_desc vop_update_desc;
-static __inline int VOP_UPDATE __P((struct vnode *, struct timeval *, 
-    struct timeval *, int));
+static __inline int VOP_UPDATE __P((struct vnode *, struct timespec *, 
+    struct timespec *, int));
 static __inline int VOP_UPDATE(vp, access, modify, waitfor)
 	struct vnode *vp;
-	struct timeval *access;
-	struct timeval *modify;
+	struct timespec *access;
+	struct timespec *modify;
 	int waitfor;
 {
 	struct vop_update_args a;
