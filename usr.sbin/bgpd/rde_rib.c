@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.36 2004/02/26 16:16:41 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.37 2004/02/27 14:43:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -333,8 +333,12 @@ prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 
 	if (needlink == 1)
 		prefix_link(p, pte, asp);
-	else
+	else {
+		if (p->aspath != asp)
+			/* prefix belongs to a different aspath so move */
+			return prefix_move(asp, p);
 		p->lastchange = time(NULL);
+	}
 
 	return pte;
 }
