@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.8 2001/09/10 22:40:21 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.9 2001/09/17 04:20:27 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -74,6 +74,7 @@
 #undef	SCHED_DEBUG
 
 #include "assym.h"
+#include "ksyms.h"
 #include <machine/param.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
@@ -5206,7 +5207,7 @@ dostart:
 	wrpr	%g0, 13, %pil
 	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
 	wr	%o0, FPRS_FEF, %fprs		! Turn on FPU
-#ifdef DDB
+#if defined(DDB) || NKSYMS > 0
 	/*
 	 * First, check for DDB arguments.  A pointer to an argument
 	 * is passed in %o1 who's length is passed in %o2.  Our
@@ -12256,7 +12257,7 @@ ENTRY(longjmp)
 
 	.data
 	_ALIGN
-#ifdef DDB
+#if defined(DDB) || NKSYMS > 0
 	.globl	_C_LABEL(esym)
 _C_LABEL(esym):
 	POINTER	0
