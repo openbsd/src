@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.38 1999/02/25 20:14:40 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.39 1999/02/25 20:23:02 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -399,6 +399,9 @@ esp_new_zeroize(struct tdb *tdbp)
 	      case SADB_EALG_X_CAST:
 		  k = sizeof(cast_key);
 		  break;
+
+	      case SADB_EALG_X_SKIPJACK:
+		  /* Not really necessary, we have bzero'ed it */
 
 	      default:
 		  k = 0;
