@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.13 1997/04/18 20:25:54 millert Exp $
+#	$OpenBSD: special,v 1.14 1997/07/26 19:25:28 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -54,7 +54,7 @@ security	type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 sendmail.cf	type=file mode=0644 uname=root gname=wheel optional
 shells		type=file mode=0644 uname=root gname=wheel
-skeykeys	type=file mode=0644 uname=root gname=wheel optional
+skeykeys	type=file mode=0600 uname=root gname=wheel optional
 spwd.db		type=file mode=0600 uname=root gname=wheel
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttys		type=file mode=0644 uname=root gname=wheel
