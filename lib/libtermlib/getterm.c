@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.4 1996/06/21 04:26:11 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.5 1996/06/21 04:34:34 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.4 1996/06/21 04:26:11 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.5 1996/06/21 04:34:34 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -186,6 +186,9 @@ _ti_getterm(name)
 	if (_ti_buf) {
 	    strncpy(_ti_buf, dummy, 1023);
 	    _ti_buf[1023] = '\0';
+	    if ((cp = strrchr(_ti_buf, ':')) != NULL)
+		if (cp[1] != '\0')
+		    cp[1] = '\0';
 	}
 	UP = cursor_up;
 	BC = backspace_if_not_bs;
