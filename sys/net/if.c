@@ -589,14 +589,21 @@ ifconf(cmd, data)
 		strncpy(ifr.ifr_name, ifp->if_name, sizeof(ifr.ifr_name) - 2);
 		for (cp = ifr.ifr_name; cp < ep && *cp; cp++)
 			continue;
-		for (i = ifp->if_unit, ndig = 0; i; i /= 10)
+		i = ifp->if_unit;
+		ndig = 0;
+		do {
 			ndig++;
+			i /= 10;
+		} while (i);
 		cp += ndig;
 		if (cp >= ep)
 			continue;
 		*cp = '\0';
-		for (i = ifp->if_unit; i; i /= 10)
-			*--cp = '0' + (i % 10);
+		i = ifp->if_unit;
+		do {
+			*--cp = '0' + i % 10;
+			i /= 10;
+		} while (i);
 		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
 			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
