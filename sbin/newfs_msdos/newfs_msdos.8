@@ -1,4 +1,4 @@
-.\" $OpenBSD: newfs_msdos.8,v 1.3 1997/01/03 16:45:38 kstailey Exp $
+.\" $OpenBSD: newfs_msdos.8,v 1.4 1997/01/10 19:04:09 kstailey Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Joerg Wunsch
 .\"
@@ -35,7 +35,7 @@
 .Nd create an MS-DOS (FAT) file system
 .Sh SYNOPSIS
 .Nm newfs_msdos
-.Bq Fl f Ar capacity
+.Bq Fl s Ar kilobytes 
 .Bq Fl L Ar vollabel
 .Ar device
 .Sh DESCRIPTION
@@ -55,7 +55,7 @@ won't be truncated.
 .Pp
 The options are as follows:
 .Bl -tag -width 10n -offset indent
-.It Fl f Ar capacity
+.It Fl s Ar kilobytes
 Use defaults for a typical file system with
 .Ar capacity
 kilobytes.  Currently, the values 360, 720, 1200, and 1440 are

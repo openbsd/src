@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs_msdos.c,v 1.2 1996/12/04 08:33:58 deraadt Exp $ */
+/*	$OpenBSD: newfs_msdos.c,v 1.3 1997/01/10 19:04:10 kstailey Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Joerg Wunsch
@@ -44,6 +44,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <util.h>
 
 #include "bootcode.h"
 #include "dosfs.h"
@@ -202,6 +203,7 @@ main(argc, argv)
 	struct tm *tp;
 	time_t  now;
 	int	c, i, fd, format = 0, rootdirsize;
+	char *rdev;
 
 	while ((c = getopt(argc, argv, "s:L:t:")) != EOF)
 		switch (c) {
@@ -223,8 +225,13 @@ main(argc, argv)
 	if (argc != 1)
 		usage();
 
+#if 0
 	if ((fd = open(argv[0], O_RDWR | O_EXCL, 0)) == -1)
 		err(1, "open(%s)", argv[0]);
+#else
+	if ((fd = opendev(argv[0], O_RDWR | O_EXCL, OPENDEV_PART, &rdev)) < 0)
+		err(1, "%s", rdev);
+#endif
 
 	if (format == 0) {
 		/*
