@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.21 2001/06/27 21:27:47 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.22 2001/06/27 21:54:47 kjell Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -51,7 +51,6 @@
 #define PF_OPT_ENABLE		0x0002
 #define PF_OPT_VERBOSE		0x0004
 #define PF_OPT_NOACTION		0x0008
-#define PF_OPT_ZEROSTATS	0x0010
 
 void	 usage(void);
 char	*load_file(char *, size_t *);
@@ -397,27 +396,27 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "c:dehl:Nn:r:s:vz")) != -1) {
+	while ((ch = getopt(argc, argv, "deF:hl:nN:R:s:v")) != -1) {
 		switch (ch) {
-		case 'c':
-			clearopt = optarg;
-			break;
 		case 'd':
 			opts |= PF_OPT_DISABLE;
 			break;
 		case 'e':
 			opts |= PF_OPT_ENABLE;
 			break;
+		case 'F':
+			clearopt = optarg;
+			break;
 		case 'l':
 			logopt = optarg;
 			break;
-		case 'N':
+		case 'n':
 			opts |= PF_OPT_NOACTION;
 			break;
-		case 'n':
+		case 'N':
 			natopt = optarg;
 			break;
-		case 'r':
+		case 'R':
 			rulesopt = optarg;
 			break;
 		case 's':
@@ -425,9 +424,6 @@ main(int argc, char *argv[])
 			break;
 		case 'v':
 			opts |= PF_OPT_VERBOSE;
-			break;
-		case 'z':
-			opts |= PF_OPT_ZEROSTATS;
 			break;
 		case 'h':
 		default:
@@ -444,22 +440,21 @@ main(int argc, char *argv[])
 		if (pfctl_disable(dev))
 			error = 1;
 
-	if (opts & PF_OPT_ZEROSTATS)
-		if (pfctl_clear_stats(dev))
-			error = 1;
-
 	if (clearopt != NULL) {
-		if (!strcmp(clearopt, "rules")) {
+		if (!strcmp(clearopt, "r")) {
 			if (pfctl_clear_rules(dev))
 				error = 1;
-		} else if (!strcmp(clearopt, "nat")) {
+		} else if (!strcmp(clearopt, "n")) {
 			if (pfctl_clear_nat(dev))
 				error = 1;
-		} else if (!strcmp(clearopt, "states")) {
+		} else if (!strcmp(clearopt, "s")) {
 			if (pfctl_clear_states(dev))
 				error = 1;
+		} else if (!strcmp (clearopt, "S")) {
+			if (pfctl_clear_stats(dev))
+				error = 1;
 		} else {
-			warnx("Unknown keyword '%s'", clearopt);
+			warnx("Unknown flush modifier '%s'", clearopt);
 			error = 1;
 		}
 	}
@@ -473,20 +468,20 @@ main(int argc, char *argv[])
 			error = 1;
 
 	if (showopt != NULL) {
-		if (!strcmp(showopt, "rules")) {
+		if (!strcmp(showopt, "r")) {
 			if (pfctl_show_rules(dev))
 				error = 1;
-		} else if (!strcmp(showopt, "nat")) {
+		} else if (!strcmp(showopt, "n")) {
 			if (pfctl_show_nat(dev))
 				error = 1;
-		} else if (!strcmp(showopt, "states")) {
+		} else if (!strcmp(showopt, "s")) {
 			if (pfctl_show_states(dev, 0))
 				error = 1;
-		} else if (!strcmp(showopt, "status")) {
+		} else if (!strcmp(showopt, "S")) {
 			if (pfctl_show_status(dev))
 				error = 1;
 		} else {
-			warnx("Unknown keyword '%s'", showopt);
+			warnx("Unknown show modifier '%s'", showopt);
 			error = 1;
 		}
 	}
