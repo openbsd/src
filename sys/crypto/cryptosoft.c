@@ -569,7 +569,7 @@ swcr_freesession(u_int64_t tid)
     struct swcr_data *swd;
     struct enc_xform *txf;
     struct auth_hash *axf;
-    u_int32_t sid = (tid >> 31) & 0xffff;
+    u_int32_t sid = (tid >> 31) & 0xffffffff;
 
     if ((sid > swcr_sesnum) || (swcr_sessions == NULL) ||
 	(swcr_sessions[sid] == NULL))
