@@ -82,7 +82,8 @@ Installing applications from the ftp.openbsd.org package collection:
 	Note: there are both USA and INTERNATIONAL versions of ssh and
 	pgp on the ftp server.  Be sure to grab the correct version.
 	The USA versions, ssh-usa-1.2.22.tgz and pgp-usa-2.6.3.tgz, use
-	RSAREF, a legal requirement for use within the United States.
+	RSAREF, a legal requirement for use within the United States due
+	to patent issues.
 
 Installing applications from the CD-ROM ports collection:
 
