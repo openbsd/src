@@ -65,3 +65,10 @@ Things todo, in no particular order:
  - Fix /etc/rc and companions
  - Example configuration installed when system is installed
  - GSS-API support in our ftp client and server
+ - Figure out how to deal with kstash
+ - Reduce the number of libraries in kerberosV as well as kerberosIV,
+   kerberosV:
+	libasn1, libkadm5clnt, libkadm5srv, libhdb -> libkrb5
+   kerberosIV:
+	libacl, libkadm, libkdb -> libkrb
+- Unify libroken, and put libsl and libcom_err in libroken
