@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.37 1999/10/17 20:48:07 dugsong Exp $");
+RCSID("$Id: sshd.c,v 1.38 1999/10/17 23:11:24 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1069,7 +1069,7 @@ do_authentication(char *user, int privileged_port)
   /* If the user has no password, accept authentication immediately. */
   if (options.password_authentication &&
 #ifdef KRB4
-      options.kerberos_or_local_passwd &&
+      (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
 #endif /* KRB4 */
       auth_password(pw, ""))
     {
