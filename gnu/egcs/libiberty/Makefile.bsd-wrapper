@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1999/11/20 18:24:18 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1999/12/07 00:42:54 espie Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../include -I$(.OBJDIR)
@@ -13,7 +13,7 @@ PREREQ!=	test ! -f $(.OBJDIR)/needed-list && \
 			(cd $(.CURDIR); \
 			 $(MAKE) -f Makefile.bsd-wrapper1 needed-list); \
 		echo 'Prerequistes made'
-HOST_FILES!=	cat $(.OBJDIR)/needed-list && echo
+HOST_FILES!=	cat $(.OBJDIR)/needed-list
 .endif
 
 SRCS=		argv.c choose-temp.c concat.c cplus-dem.c \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1999/09/30 13:40:35 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1999/12/07 00:42:54 espie Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
@@ -50,7 +50,7 @@ PREREQ!=	test ! -f $(IO_OBJDIR)/iostream.list && \
 IO_OBJS!=	cat $(IO_OBJDIR)/iostream.list
 QIO_OBJS=	$(IO_OBJS:S/^/$(IO_OBJDIR)\//g)
 
-LIBIBERTY_SRCS!=cat $(LIBIBERTY_OBJDIR)/needed-list && echo
+LIBIBERTY_SRCS!=cat $(LIBIBERTY_OBJDIR)/needed-list
 LIBIBERTY_OBJS=$(LIBIBERTY_SRCS:N*.h:S/.c$/.o/g)
 # strerror.o does need to be hardwired, as it holds more functionality
 # than the standard strerror, so HAVE_STRERROR is not enough to disable it
