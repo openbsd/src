@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.4 2001/08/29 05:33:10 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.5 2001/09/20 17:58:33 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #include "bpfilter.h"
 #include "vlan.h"
 
-#define HMEDEBUG
+#undef HMEDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ hme_init(sc)
 	bus_space_write_4(t, mac, HME_MACI_FCCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_EXCNT, 0);
 	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
-	v = ETHERMTU +
+	v = ETHERMTU + sizeof(struct ether_header) +
 #if NVLAN > 0
 	    EVL_ENCAPLEN +
 #endif
@@ -527,7 +527,7 @@ hme_init(sc)
 	bus_space_write_4(t, etx, HME_ETXI_RSIZE, sc->sc_rb.rb_ntbuf);
 
 	bus_space_write_4(t, erx, HME_ERXI_RING, sc->sc_rb.rb_rxddma);
-	v = ETHERMTU +
+	v = ETHERMTU + sizeof(struct ether_header) +
 #if NVLAN > 0
 	    EVL_ENCAPLEN +
 #endif
@@ -737,7 +737,7 @@ hme_read(sc, ix, len)
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
-	    (len > ETHERMTU +
+	    (len > ETHERMTU + sizeof(struct ether_header) +
 #if NVLAN > 1
 		EVL_ENCAPLEN +
 #endif
