@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.42 2004/11/12 17:24:52 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.43 2004/12/13 12:36:02 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -233,21 +233,21 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 				ntp_quit = 1;
 			}
 
-		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & POLLIN) {
+		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & (POLLIN|POLLERR)) {
 			nfds--;
 			if (ntp_dispatch_imsg() == -1)
 				ntp_quit = 1;
 		}
 
 		for (j = 1; nfds > 0 && j < idx_peers; j++)
-			if (pfd[j].revents & POLLIN) {
+			if (pfd[j].revents & (POLLIN|POLLERR)) {
 				nfds--;
 				if (server_dispatch(pfd[j].fd, conf) == -1)
 					ntp_quit = 1;
 			}
 
 		for (; nfds > 0 && j < i; j++)
-			if (pfd[j].revents & POLLIN) {
+			if (pfd[j].revents & (POLLIN|POLLERR)) {
 				nfds--;
 				if (client_dispatch(idx2peer[j - idx_peers],
 				    conf->settime) == -1)
