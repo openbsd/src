@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.30 2003/03/14 12:36:40 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.31 2003/03/21 12:47:36 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -197,7 +197,7 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
 		if (kt->pfrkt_cnt) {
-			printf("pfr_clr_addrs: corruption detected (%d).",
+			printf("pfr_clr_addrs: corruption detected (%d).\n",
 			    kt->pfrkt_cnt);
 			kt->pfrkt_cnt = 0;
 		}
@@ -525,7 +525,7 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 		return (rv);
 
 	if (w.pfrw_free) {
-		printf("pfr_get_addrs: corruption detected (%d).",
+		printf("pfr_get_addrs: corruption detected (%d).\n",
 		    w.pfrw_free);
 		return (ENOTTY);
 	}
@@ -573,7 +573,7 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 		return (rv);
 
 	if (w.pfrw_free) {
-		printf("pfr_get_astats: corruption detected (%d).",
+		printf("pfr_get_astats: corruption detected (%d).\n",
 		    w.pfrw_free);
 		return (ENOTTY);
 	}
@@ -674,10 +674,10 @@ pfr_enqueue_addrs(struct pfr_ktable *kt, struct pfr_kentryworkq *workq,
 	w.pfrw_workq = workq;
 	if (kt->pfrkt_ip4 != NULL)
 		if (rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w))
-			printf("pfr_enqueue_addrs: IPv4 walktree failed.");
+			printf("pfr_enqueue_addrs: IPv4 walktree failed.\n");
 	if (kt->pfrkt_ip6 != NULL)
 		if (rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w))
-			printf("pfr_enqueue_addrs: IPv6 walktree failed.");
+			printf("pfr_enqueue_addrs: IPv6 walktree failed.\n");
 	if (naddr != NULL)
 		*naddr = w.pfrw_cnt;
 }
@@ -690,9 +690,9 @@ pfr_mark_addrs(struct pfr_ktable *kt)
 	bzero(&w, sizeof(w));
 	w.pfrw_op = PFRW_MARK;
 	if (rn_walktree(kt->pfrkt_ip4, pfr_walktree, &w))
-		printf("pfr_mark_addrs: IPv4 walktree failed.");
+		printf("pfr_mark_addrs: IPv4 walktree failed.\n");
 	if (rn_walktree(kt->pfrkt_ip6, pfr_walktree, &w))
-		printf("pfr_mark_addrs: IPv6 walktree failed.");
+		printf("pfr_mark_addrs: IPv6 walktree failed.\n");
 }
 
 
@@ -916,7 +916,7 @@ pfr_unroute_kentry(struct pfr_ktable *kt, struct pfr_kentry *ke)
 	splx(s);
 
 	if (rn == NULL) {
-		printf("pfr_unroute_kentry: delete failed\n");
+		printf("pfr_unroute_kentry: delete failed.\n");
 		return (-1);
 	}
 	return (0);
@@ -1131,7 +1131,7 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 			return (EFAULT);
 	}
 	if (n) {
-		printf("pfr_get_tables: corruption detected (%d).", n);
+		printf("pfr_get_tables: corruption detected (%d).\n", n);
 		return (ENOTTY);
 	}
 	*size = pfr_ktable_cnt;
@@ -1173,7 +1173,7 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 	if (flags & PFR_FLAG_ATOMIC)
 		splx(s);
 	if (n) {
-		printf("pfr_get_tstats: corruption detected (%d).", n);
+		printf("pfr_get_tstats: corruption detected (%d).\n", n);
 		return (ENOTTY);
 	}
 	*size = pfr_ktable_cnt;
@@ -1678,14 +1678,14 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 			ke = NULL;
 		break;
 	}
-	if (ke == NULL || ke->pfrke_not != notrule) {
+	if ((ke == NULL || ke->pfrke_not) != notrule) {
 		if (op_pass != PFR_OP_PASS)
-			printf("pfr_update_stats: assertion failed.");
+			printf("pfr_update_stats: assertion failed.\n");
 		op_pass = PFR_OP_XPASS;
 	}
 	kt->pfrkt_packets[dir_out][op_pass]++;
 	kt->pfrkt_bytes[dir_out][op_pass] += len;
-	if (op_pass != PFR_OP_XPASS) {
+	if (ke != NULL && op_pass != PFR_OP_XPASS) {
 		ke->pfrke_packets[dir_out][op_pass]++;
 		ke->pfrke_bytes[dir_out][op_pass] += len;
 	}
@@ -1715,7 +1715,7 @@ void
 pfr_detach_table(struct pfr_ktable *kt)
 {
 	if (kt->pfrkt_refcnt <= 0)
-		printf("pfr_detach_table: refcount = %d\n",
+		printf("pfr_detach_table: refcount = %d.\n",
 		    kt->pfrkt_refcnt);
 	else if (!--kt->pfrkt_refcnt)
 		pfr_setflags_ktable(kt, kt->pfrkt_flags&~PFR_TFLAG_REFERENCED);
