@@ -1,4 +1,4 @@
-/*	$OpenBSD: vis.c,v 1.8 2003/09/08 00:07:41 millert Exp $	*/
+/*	$OpenBSD: vis.c,v 1.9 2004/09/14 23:01:06 deraadt Exp $	*/
 /*	$NetBSD: vis.c,v 1.4 1994/12/20 16:13:03 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: vis.c,v 1.8 2003/09/08 00:07:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: vis.c,v 1.9 2004/09/14 23:01:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,10 +50,14 @@ static const char rcsid[] = "$OpenBSD: vis.c,v 1.8 2003/09/08 00:07:41 millert E
 #include <err.h>
 #include <vis.h>
 
-int eflags, fold, foldwidth=80, none, markeol, debug;
+int eflags, fold, foldwidth=80, none, markeol;
+
+#ifdef DEBUG
+int debug;
+#endif
 
 int foldit(char *, int, int);
-void process(FILE *, char *);
+void process(FILE *);
 __dead void usage(void);
 
 int
@@ -112,18 +116,18 @@ main(int argc, char *argv[])
 	if (*argv)
 		while (*argv) {
 			if ((fp=fopen(*argv, "r")) != NULL)
-				process(fp, *argv);
+				process(fp);
 			else
 				warn("%s", *argv);
 			argv++;
 		}
 	else
-		process(stdin, "<stdin>");
+		process(stdin);
 	exit(0);
 }
 	
 void
-process(FILE *fp, char *filename)
+process(FILE *fp)
 {
 	static int col = 0;
 	char *cp = "\0"+1;	/* so *(cp-1) starts out != '\n' */
