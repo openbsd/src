@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.482 2002/01/09 19:40:15 mickey Exp $
+	$OpenBSD: pcidevs,v 1.483 2002/01/19 02:32:36 nate Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1244,6 +1244,7 @@ product INTEL 82452		0x1000	PRO 1000
 product INTEL 82452_SC		0x1001	PRO 1000SC
 product INTEL 82453		0x1001	PRO 1000F
 product INTEL 82453_CU		0x1004	PRO 1000T
+product INTEL 82544		0x1008	PRO 1000XT
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE
 product INTEL PRO_100_VE_1	0x1032	PRO/100 VE
 product INTEL PRO_100_VM_0	0x1033	PRO/100 VM
