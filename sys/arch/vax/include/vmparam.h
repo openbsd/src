@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.20 2004/11/28 01:36:39 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.21 2005/03/31 21:30:25 tdeval Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -61,13 +61,13 @@
 #define MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef MAXDSIZ
-#define MAXDSIZ		(24*1024*1024)		/* max data size */
+#define MAXDSIZ		(8*1024*1024)		/* max data size */
 #endif
 #ifndef MAXSSIZ
 #define MAXSSIZ		(8*1024*1024)		/* max stack size */
 #endif
 #ifndef DFLDSIZ
-#define DFLDSIZ		(16*1024*1024)		/* initial data size limit */
+#define DFLDSIZ		(4*1024*1024)		/* initial data size limit */
 #endif
 #ifndef DFLSSIZ
 #define DFLSSIZ		(512*1024)		/* initial stack size limit */
@@ -79,7 +79,7 @@
  * Note: This is just a hint, if we mmap() more than this the page
  * table will be expanded. (at the cost of speed).
  */
-#define MMAPSPACE	(8*1024*1024)
+#define MMAPSPACE	(24*1024*1024)
 
 /* 
  * Size of shared memory map
