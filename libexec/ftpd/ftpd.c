@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.86 2001/01/06 18:24:29 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.87 2001/01/07 07:38:34 angelos Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1369,7 +1369,7 @@ dataconn(name, size, mode)
 			pdata = -1;
 			return (NULL);
 		}
-		if (memcmp(fa, ha, alen) != 0) {
+		if (portcheck && memcmp(fa, ha, alen) != 0) {
 			perror_reply(435, "Can't build data connection"); 
 			(void) close(pdata);
 			(void) close(s);
@@ -1434,7 +1434,7 @@ dataconn(name, size, mode)
 		data = -1;
 		return NULL;
 	}
-	if (memcmp(fa, ha, alen) != 0) {
+	if (portcheck && memcmp(fa, ha, alen) != 0) {
 		perror_reply(435, "Can't build data connection");
 		(void) fclose(file);
 		data = -1;
