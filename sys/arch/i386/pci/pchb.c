@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.31 2002/04/28 20:36:23 nate Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.32 2002/05/06 19:23:47 nate Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -167,6 +167,9 @@ pchbattach(parent, self, aux)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_RCC:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_RCC_CNB20HE:
+			if (PCI_REVISION(pa->pa_id) == 0x23)
+				break;
 		case PCI_PRODUCT_RCC_CIOB20:
 		case PCI_PRODUCT_RCC_CNB20LE:
 		case PCI_PRODUCT_RCC_CMIC_HE:
