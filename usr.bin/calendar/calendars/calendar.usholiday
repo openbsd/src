@@ -1,7 +1,7 @@
 /*
  * USA holiday
  *
- * $OpenBSD: calendar.usholiday,v 1.2 1996/12/05 06:04:51 millert Exp $
+ * $OpenBSD: calendar.usholiday,v 1.3 1998/11/02 21:12:21 pjanzen Exp $
  */
 
 #ifndef _calendar_usholiday_
@@ -17,7 +17,7 @@
 03/20*	Vernal Equinox
 04/01	April Fool's Day
 04/15	Income Tax Day
-04/SunFirst	Daylight Savings Time begins; clocks move forward (1st Sunday of April)
+04/SunFirst	Daylight Saving Time begins; clocks move forward (1st Sunday of April)
 04/28*	Arbor Day (varies from state to state)
 05/SunSecond	Mother's Day (2nd Sunday of May)
 05/SatThird	Armed Forces Day (3rd Saturday of May)
@@ -29,7 +29,7 @@
 09/SunSecond	Grandparent's Day (2nd Sunday of September; varies from state to state)
 09/22*	Autumnal Equinox
 10/MonSecond	Columbus Day (2nd Monday of October)
-10/SunLast	Daylight Savings Time ends; clocks move back (Last Sunday in October)
+10/SunLast	Daylight Saving Time ends; clocks move back (Last Sunday in October)
 10/31	All Hallows Eve  (Halloween)
 11/05*	Election Day (1st Tuesday after 1st Monday for even years)
 11/11	Veterans' Day
