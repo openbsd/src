@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.19 2000/05/01 02:23:19 millert Exp $
+.\"	$OpenBSD: hier.7,v 1.20 2000/05/01 21:02:36 millert Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -102,6 +102,10 @@ configuration files (see
 .Xr pppd
 configuration files (see
 .Xr pppd 8 ) .
+.It Li skel/
+Example
+.Dq \&.
+(dot) files for new accounts.
 .It Li uucp/
 .Xr uucp
 configuration files (see
@@ -251,10 +255,6 @@ Templates for
 .Xr make 1 ) .
 .It Li ms/
 Macros for use with the ms macro package.
-.It Li skel/
-Example
-.Dq \&.
-(dot) files for new accounts.
 .It Li tabset/
 Tab description files for a variety of terminals; used in
 the termcap file (see
