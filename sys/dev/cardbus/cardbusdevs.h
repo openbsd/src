@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs.h,v 1.9 2001/01/27 21:16:10 deraadt Exp $	*/
+/*	$OpenBSD: cardbusdevs.h,v 1.10 2001/07/09 19:42:00 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.8 2001/01/08 21:38:04 mickey Exp 
+ *	OpenBSD: cardbusdevs,v 1.9 2001/07/09 19:41:38 mickey Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -97,3 +97,4 @@
 /* this is the device id `indicating 21143 driver compatibility' */
 #define	CARDBUS_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 (21143) */
 #define	CARDBUS_PRODUCT_XIRCOM_MODEM56	0x0103		/* 56k Modem */
+#define	CARDBUS_PRODUCT_XIRCOM_MODEM56	0x0105		/* CBEM56G Modem */
