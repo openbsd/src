@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.7 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: req.c,v 1.8 2004/12/19 17:32:55 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -62,6 +62,7 @@ static int  cvs_req_directory  (int, char *);
 static int  cvs_req_case       (int, char *);
 static int  cvs_req_argument   (int, char *);
 static int  cvs_req_globalopt  (int, char *);
+static int  cvs_req_gzipstream (int, char *);
 static int  cvs_req_version    (int, char *);
 
 
@@ -91,7 +92,7 @@ struct cvs_reqhdlr {
 	{ cvs_req_argument   },	/* 20 */
 	{ cvs_req_argument   },
 	{ cvs_req_globalopt  },
-	{ NULL               },
+	{ cvs_req_gzipstream },
 	{ NULL               },
 	{ NULL               },
 	{ NULL               },
@@ -315,6 +316,35 @@ cvs_req_globalopt(int reqid, char *line)
 		cvs_log(LP_ERR, "unknown global option `%s'", line);
 		return (-1);
 	}
+
+	return (0);
+}
+
+
+/*
+ * cvs_req_gzipstream()
+ *
+ * Handler for the `Gzip-stream' request, which enables compression at the
+ * level given along with the request.  After this request has been processed,
+ * all further connection data should be compressed.
+ */
+
+static int
+cvs_req_gzipstream(int reqid, char *line)
+{
+	char *ep;
+	long val;
+
+	val = strtol(line, &ep, 10);
+	if ((line[0] == '\0') || (*ep != '\0')) {
+		cvs_log(LP_ERR, "invalid Gzip-stream level `%s'", line);
+		return (-1);
+	} else if ((errno == ERANGE) && ((val < 0) || (val > 9))) {
+		cvs_log(LP_ERR, "Gzip-stream level %ld out of range", val);
+		return (-1);
+	}
+
+	cvs_compress = (int)val;
 
 	return (0);
 }
