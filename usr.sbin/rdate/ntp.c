@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.23 2004/07/14 20:11:16 henning Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.24 2004/09/15 01:05:09 henning Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -67,7 +67,6 @@
 #define NTP_VERSION           4		/* The current version */
 #define NTP_VERSION_MIN       1		/* The minum valid version */
 #define NTP_VERSION_MAX       4		/* The maximum valid version */
-#define NTP_STRATUM_MIN       1		/* The minum valid stratum */
 #define NTP_STRATUM_MAX      14		/* The maximum valid stratum */
 #define NTP_INSANITY     3600.0		/* Errors beyond this are hopeless */
 
@@ -371,8 +370,7 @@ retry:
 		return 1;
 	}
 
-	if (data->stratum < NTP_STRATUM_MIN ||
-	    data->stratum > NTP_STRATUM_MAX) {
+	if (data->stratum > NTP_STRATUM_MAX) {
 		warnx("Invalid stratum received, packet rejected");
 		return 1;
 	}
