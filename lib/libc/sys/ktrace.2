@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.6 1999/05/24 11:57:13 aaron Exp $
+.\"	$OpenBSD: ktrace.2,v 1.7 1999/06/29 14:10:04 aaron Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -54,42 +54,44 @@ function enables or disables tracing of one or more processes.
 Users may only trace their own processes.
 Only the super-user can trace setuid or setgid programs.
 .Pp
-The
-.Ar tracefile
+.Fa tracefile
 gives the pathname of the file to be used for tracing.
 The file must exist and be writable by the calling process.
 All trace records are always appended to the file,
 so the file must be truncated to zero length to discard
 previous trace data.
-If tracing points are being disabled (see KTROP_CLEAR below),
+If tracing points are being disabled (see
+.Dv KTROP_CLEAR
+below),
 .Ar tracefile
-may be NULL.
+may be
+.Dv NULL .
 .Pp
 The
-.Nm ops
+.Fa ops
 parameter specifies the requested ktrace operation.
 The defined operations are:
 .Bl -column KTRFLAG_DESCENDXXX -offset indent
-.It KTROP_SET	Enable trace points specified in Ar trpoints .
-.It KTROP_CLEAR	Disable trace points specified in Ar trpoints .
-.It KTROP_CLEARFILE	Stop all tracing.
-.It KTRFLAG_DESCEND	The tracing change should apply to the
+.It Dv KTROP_SET	Enable trace points specified in Ar trpoints .
+.It Dv KTROP_CLEAR	Disable trace points specified in Ar trpoints .
+.It Dv KTROP_CLEARFILE	Stop all tracing.
+.It Dv KTRFLAG_DESCEND	The tracing change should apply to the
 specified process and all its current children.
 .El
 .Pp
 The
-.Nm trpoints
+.Fa trpoints
 parameter specifies the trace points of interest.
 The defined trace points are:
 .Bl -column KTRFAC_SYSCALLXXX -offset indent
-.It KTRFAC_SYSCALL	Trace system calls.
-.It KTRFAC_SYSRET	Trace return values from system calls.
-.It KTRFAC_NAMEI	Trace name lookup operations.
-.It KTRFAC_GENIO	Trace all I/O (note that this option can
+.It Dv KTRFAC_SYSCALL	Trace system calls.
+.It Dv KTRFAC_SYSRET	Trace return values from system calls.
+.It Dv KTRFAC_NAMEI	Trace name lookup operations.
+.It Dv KTRFAC_GENIO	Trace all I/O (note that this option can
 generate much output).
-.It KTRFAC_PSIG	Trace posted signals.
-.It KTRFAC_CSW	Trace context switch points.
-.It KTRFAC_INHERIT	Inherit tracing to future children.
+.It Dv KTRFAC_PSIG	Trace posted signals.
+.It Dv KTRFAC_CSW	Trace context switch points.
+.It Dv KTRFAC_INHERIT	Inherit tracing to future children.
 .El
 .Pp
 Each tracing event outputs a record composed of a generic header
@@ -107,34 +109,34 @@ struct ktr_header {
 .Ed
 .Pp
 The
-.Nm ktr_len
-field specifies the length of the 
-.Nm ktr_type
+.Fa ktr_len
+field specifies the length of the
+.Fa ktr_type
 data that follows this header.
 The
-.Nm ktr_pid
+.Fa ktr_pid
 and
-.Nm ktr_comm
+.Fa ktr_comm
 fields specify the process and command generating the record.
 The
-.Nm ktr_time
+.Fa ktr_time
 field gives the time (with microsecond resolution)
 that the record was generated.
 The
-.Nm ktr_buf
+.Fa ktr_buf
 is an internal kernel pointer and is not useful.
 .Pp
-The generic header is followed by 
-.Nm ktr_len
+The generic header is followed by
+.Fa ktr_len
 bytes of a
-.Nm ktr_type
+.Fa ktr_type
 record.
 The type specific records are defined in the
 .Pa <sys/ktrace.h>
 include file.
 .Sh RETURN VALUES
 On successful completion a value of 0 is returned.
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to show the error.
 .Sh ERRORS
@@ -162,6 +164,6 @@ An I/O error occurred while reading from or writing to the file system.
 .Xr ktrace 1
 .Sh HISTORY
 A
-.Nm ktrace
+.Fn ktrace
 function call first appeared in
 .Bx 4.4 .

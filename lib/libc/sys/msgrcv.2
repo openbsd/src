@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgrcv.2,v 1.7 1999/05/27 16:54:23 aaron Exp $
+.\"	$OpenBSD: msgrcv.2,v 1.8 1999/06/29 14:10:09 aaron Exp $
 .\"	$NetBSD: msgrcv.2,v 1.2 1997/03/27 08:20:37 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -43,7 +43,7 @@
 .Ft int
 .Fn msgrcv "int msqid" "void *msgp" "size_t msgsz" "long msgtyp" "int msgflg"
 .Sh DESCRIPTION
-The 
+The
 .Fn msgrcv
 function receives a message from the message queue specified in
 .Fa msqid ,
@@ -58,7 +58,8 @@ This structure should consist of the following members:
 .Va mtype
 is an integer greater than 0 that can be used for selecting messages,
 .Va mtext
-is an array of bytes, with a size up to that of the system limit (MSGMAX).
+is an array of bytes, with a size up to that of the system limit
+.Pq Dv MSGMAX .
 .Pp
 The value of
 .Fa msgtyp
@@ -102,7 +103,7 @@ or not. If
 .Dv IPC_NOWAIT
 is set,
 .Fn msgrcv
-will immediately return a value of -1, and set
+will immediately return a value of \-1, and set
 .Va errno
 to
 .Er EAGAIN .
@@ -114,12 +115,12 @@ until:
 .It
 A message of the requested type becomes available on the message queue.
 .It
-The message queue is removed, in which case -1 will be returned, and
+The message queue is removed, in which case \-1 will be returned, and
 .Va errno
 set to
 .Er EINVAL .
 .It
-A signal is received and caught. -1 is returned, and
+A signal is received and caught. \-1 is returned, and
 .Va errno
 set to
 .Er EINTR .
@@ -149,7 +150,7 @@ returns the number of bytes received into the
 .Va mtext
 field of the structure pointed to by
 .Fa msgp .
-Otherwise, -1 is returned, and
+Otherwise, \-1 is returned, and
 .Va errno
 set to indicate the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrlimit.2,v 1.8 1999/05/23 14:10:52 aaron Exp $
+.\"	$OpenBSD: getrlimit.2,v 1.9 1999/06/29 14:10:00 aaron Exp $
 .\"	$NetBSD: getrlimit.2,v 1.8 1995/10/12 15:40:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -55,7 +55,7 @@ and each process it creates may be obtained with the
 .Fn getrlimit
 call, and set with the
 .Fn setrlimit
-call.  
+call.
 .Pp
 The
 .Fa resource
@@ -100,7 +100,7 @@ A resource limit is specified as a soft limit and a hard limit.  When a
 soft limit is exceeded a process may receive a signal (for example, if
 the cpu time or file size is exceeded), but it will be allowed to
 continue execution until it reaches the hard limit (or modifies
-its resource limit).  The 
+its resource limit).  The
 .Em rlimit
 structure is used to specify the hard and soft limits on a resource,
 .Bd -literal -offset indent
@@ -111,9 +111,9 @@ struct rlimit {
 .Ed
 .Pp
 Only the super-user may raise the maximum limits.  Other users
-may only alter 
+may only alter
 .Fa rlim_cur
-within the range from 0 to 
+within the range from 0 to
 .Fa rlim_max
 or (irreversibly) lower
 .Fa rlim_max .
@@ -157,7 +157,7 @@ is sent to the
 offending process.
 .Sh RETURN VALUES
 A 0 return value indicates that the call succeeded, changing
-or returning the resource limit.   A return value of -1 indicates
+or returning the resource limit.   A return value of \-1 indicates
 that an error occurred, and an error code is stored in the global
 location
 .Va errno .

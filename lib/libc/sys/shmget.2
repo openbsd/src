@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmget.2,v 1.6 1999/05/27 14:05:10 aaron Exp $
+.\"	$OpenBSD: shmget.2,v 1.7 1999/06/29 14:10:20 aaron Exp $
 .\"	$NetBSD: shmget.2,v 1.2 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -64,7 +64,7 @@ structure, see
 .Xr shmctl 2 )
 is initialized as follows:
 .Bl -bullet
-.It 
+.It
 .Va shm_perm.cuid
 and
 .Va shm_perm.uid
@@ -82,7 +82,7 @@ is set to the lower 9 bits of
 .Va shm_lpid ,
 .Va shm_nattch ,
 .Va shm_atime ,
-and 
+and
 .Va shm_dtime
 are set to 0
 .It
@@ -95,7 +95,7 @@ is set to the value of
 .El
 .Sh RETURN VALUES
 Upon successful completion a positive shared memory segment identifier is returned.
-Otherwise, -1 is returned and the global variable
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

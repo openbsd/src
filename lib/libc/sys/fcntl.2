@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.13 1999/05/25 22:38:01 aaron Exp $
+.\"	$OpenBSD: fcntl.2,v 1.14 1999/06/29 14:09:54 aaron Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -139,7 +139,7 @@ process groups are specified by supplying
 .Fa arg
 (interpreted as an
 .Fa int )
-as negative, otherwise 
+as negative, otherwise
 .Fa arg
 is taken as a process ID.
 .El
@@ -158,7 +158,7 @@ if no data is available to a
 call, or if a
 .Xr write 2
 operation would block,
-the read or write call returns -1 with the error
+the read or write call returns \-1 with the error
 .Er EAGAIN .
 .It Dv O_APPEND
 Force each write to append at the end of file;
@@ -326,7 +326,7 @@ For example if an application for updating the password file locks the
 password file database while making the update, and then calls
 .Xr getpwname 3
 to retrieve a record,
-the lock will be lost because 
+the lock will be lost because
 .Xr getpwname 3
 opens, reads, and closes the password database.
 The database close will release all locks that the process has
@@ -344,9 +344,9 @@ allows locks to be inherited by child processes.
 is recommended for applications that want to ensure the integrity
 of their locks when using library routines or wish to pass locks
 to their children.
-Note that 
+Note that
 .Xr flock 2
-and 
+and
 .Xr fcntl 2
 locks may be safely used concurrently.
 .Pp
@@ -373,10 +373,10 @@ Value of flags.
 .It Dv F_GETOWN
 Value of file descriptor owner.
 .It other
-Value other than -1.
+Value other than \-1.
 .El
 .Pp
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

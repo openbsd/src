@@ -1,4 +1,4 @@
-.\"	$OpenBSD: semget.2,v 1.9 1999/06/05 04:47:42 aaron Exp $
+.\"	$OpenBSD: semget.2,v 1.10 1999/06/29 14:10:17 aaron Exp $
 .\"	$NetBSD: semget.2,v 1.2 1997/03/27 08:20:41 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -50,7 +50,7 @@ system call returns the semaphore identifier associated with
 .Pp
 A new set containing
 .Fa nsems
-semaphores is created if either 
+semaphores is created if either
 .Fa key
 is equal to
 .Dv IPC_PRIVATE ,
@@ -85,7 +85,7 @@ structure, see
 .Xr semctl 2 )
 is intialized as follows:
 .Bl -bullet
-.It 
+.It
 .Va sem_perm.cuid
 and
 .Va sem_perm.uid
@@ -112,7 +112,7 @@ is set to 0
 .El
 .Sh RETURN VALUES
 .Fn semget
-returns a non-negative semaphore identifier if successful. Otherwise, -1
+returns a non-negative semaphore identifier if successful. Otherwise, \-1
 is returned and
 .Va errno
 is set to reflect the error.

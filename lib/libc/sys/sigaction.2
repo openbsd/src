@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.19 1999/05/10 17:56:29 aaron Exp $
+.\"	$OpenBSD: sigaction.2,v 1.20 1999/06/29 14:10:21 aaron Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -207,7 +207,7 @@ the calling process exit.  If the calling process subsequently issues
 a
 .Xr wait 2
 (or equivalent), it blocks until all of the calling process's child
-processes terminate, and then returns a value of -1 with errno set to
+processes terminate, and then returns a value of \-1 with errno set to
 .Dv ECHILD .
 .It Dv SA_ONSTACK
 If this bit is set, the system will deliver the signal to the process
@@ -348,7 +348,9 @@ handler(sig)
 	int sig;
 .Pp
 .Ed
-If the SA_SIGINFO option is enabled, the canonical way to declare it is:
+If the
+.Dv SA_SIGINFO
+option is enabled, the canonical way to declare it is:
 .Bd -literal -offset indent
 void
 handler(sig, sip, scp)
@@ -371,7 +373,9 @@ as described in
 .Pa <sys/siginfo.h> .
 If
 .Dv SA_SIGINFO
-is not set, this pointer will be NULL instead.
+is not set, this pointer will be
+.Dv NULL
+instead.
 The function specified in
 .Fa sa_sigaction
 will be called instead of the function specified by

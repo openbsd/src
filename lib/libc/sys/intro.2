@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.12 1999/05/27 20:49:35 aaron Exp $
+.\"	$OpenBSD: intro.2,v 1.13 1999/06/29 14:10:03 aaron Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -59,12 +59,12 @@ which is defined as:
 .Pp
 When a system call detects an error,
 it returns an integer value
-indicating failure (usually -1)
+indicating failure (usually \-1)
 and sets the variable
 .Va errno
 accordingly.
 <This allows interpretation of the failure on receiving
-a -1 and to take action accordingly.>
+a \-1 and to take action accordingly.>
 Successful calls never set
 .Va errno ;
 once set, it remains until another error occurs.
@@ -84,7 +84,7 @@ An attempt was made to perform an operation limited to processes
 with appropriate privileges or to the owner of a file or other
 resources.
 .It Er 2 ENOENT Em "No such file or directory" .
-A component of a specified pathname did not exist, or the 
+A component of a specified pathname did not exist, or the
 pathname was an empty string.
 .It Er 3 ESRCH Em "No such process" .
 No process could be found corresponding to that specified by the given
@@ -362,7 +362,7 @@ was supplied to a remove directory or rename call.
 .It Er 68 EUSERS Em "Too many users" .
 The quota system ran out of table entries.
 .It Er 69 EDQUOT Em "Disc quota exceeded" .
-A 
+A
 .Xr write 2
 to an ordinary file, the creation of a
 directory or symbolic link, or the creation of a directory
@@ -374,10 +374,10 @@ was exhausted.
 An attempt was made to access an open file (on an
 .Tn NFS
 filesystem)
-which is now unavailable as referenced by the file descriptor.  
+which is now unavailable as referenced by the file descriptor.
 This may indicate the file was deleted on the
-.Tn NFS 
-server or some 
+.Tn NFS
+server or some
 other catastrophic event occurred.
 .It Er 72 EBADRPC Em "RPC struct is bad" .
 Exchange of
@@ -391,7 +391,7 @@ the local version.
 .It Er 74 EPROGUNAVAIL Em "RPC prog. not avail" .
 The requested program is not registered on the remote host.
 .It Er 75 EPROGMISMATCH Em "Program version wrong" .
-The requested version of the program is not available 
+The requested version of the program is not available
 on the remote host
 .Pq Tn RPC .
 .It Er 76 EPROCUNAVAIL Em "Bad procedure for program" .
@@ -400,10 +400,10 @@ An
 call was attempted for a procedure which doesn't exist
 in the remote program.
 .It Er 77 ENOLCK Em "No locks available" .
-A system-imposed limit on the number of simultaneous file 
+A system-imposed limit on the number of simultaneous file
 locks was reached.
 .It Er 78 ENOSYS Em "Function not implemented" .
-Attempted a system call that is not available on this 
+Attempted a system call that is not available on this
 system.
 .It Er 79 EFTYPE Em "Inappropriate file type or format" .
 The file contains invalid data or set to invalid modes.
@@ -475,10 +475,10 @@ The process group of a session leader is orphaned by definition.
 Each user on the system is identified by a positive integer
 termed the real user ID.
 .Pp
-Each user is also a member of one or more groups. 
+Each user is also a member of one or more groups.
 One of these groups is distinguished from others and
 used in implementing accounting facilities.  The positive
-integer corresponding to this distinguished group is termed 
+integer corresponding to this distinguished group is termed
 the real group ID.
 .Pp
 All processes have a real user ID and real group ID.
@@ -572,7 +572,7 @@ Note also that
 is an upper limit fixed by the kernel, meant to be used for sizing buffers.
 Some filesystems may have additional restrictions.  These can be queried
 using
-.Xr pathconf 2 
+.Xr pathconf 2
 and
 .Xr fpathconf 2 .
 .It Path Name
@@ -585,7 +585,7 @@ followed by zero or more directory names separated
 by slashes, optionally followed by a file name.
 The total length of a path name must be less than 1024
 .Pq Dv MAXPATHLEN
-characters.  
+characters.
 Additional restrictions may apply, depending upon the filesystem, to be
 queried with
 .Xr pathconf 2
@@ -624,13 +624,13 @@ These permissions are used in determining whether a process
 may perform a requested operation on the file (such as opening
 a file for writing).  Access permissions are established at the
 time a file is created.  They may be changed at some later time
-through the 
+through the
 .Xr chmod 2
-call. 
+call.
 .Pp
 File access is broken down according to whether a file may be: read,
 written, or executed.  Directory files use the execute
-permission to control if the directory may be searched. 
+permission to control if the directory may be searched.
 .Pp
 File access permissions are interpreted by the system as
 they apply to three different classes of users: the owner
@@ -686,7 +686,7 @@ chosen from the address family in which the socket was created.
 .El
 .Sh SEE ALSO
 .Xr intro 3 ,
-.Xr perror 3 
+.Xr perror 3
 .Sh HISTORY
 An
 .Nm intro

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: write.2,v 1.11 1999/05/23 14:10:57 aaron Exp $
+.\"	$OpenBSD: write.2,v 1.12 1999/06/29 14:10:32 aaron Exp $
 .\"	$NetBSD: write.2,v 1.6 1995/02/27 12:39:43 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -56,18 +56,18 @@ attempts to write
 of data to the object referenced by the descriptor
 .Fa d
 from the buffer pointed to by
-.Fa buf . 
+.Fa buf .
 .Fn \ Writev
 performs the same action, but gathers the output data
-from the 
+from the
 .Fa iovcnt
 buffers specified by the members of the
 .Fa iov
 array: iov[0], iov[1], ..., iov[iovcnt\|-\|1].
 .Pp
-For 
+For
 .Fn writev ,
-the 
+the
 .Fa iovec
 structure is defined as:
 .Pp
@@ -78,7 +78,7 @@ struct iovec {
 };
 .Ed
 .Pp
-Each 
+Each
 .Fa iovec
 entry specifies the base address and length of an area
 in memory from which data should be written.
@@ -124,16 +124,16 @@ and
 may write fewer bytes than requested;
 the return value must be noted,
 and the remainder of the operation should be retried when possible.
-.Pp                                                                       
-Note that                                                          
-.Fn writev   
-will fail if the value of                                                  
-.Fa iovcnt              
+.Pp
+Note that
+.Fn writev
+will fail if the value of
+.Fa iovcnt
 exceedes the constant
-.Dv IOV_MAX .     
+.Dv IOV_MAX .
 .Sh RETURN VALUES
 Upon successful completion the number of bytes which were written
-is returned.  Otherwise a -1 is returned and the global variable
+is returned.  Otherwise a \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -150,7 +150,7 @@ An attempt is made to write to a pipe that is not open
 for reading by any process.
 .It Bq Er EPIPE
 An attempt is made to write to a socket of type
-.DV SOCK_STREAM
+.Dv SOCK_STREAM
 that is not connected to a peer socket.
 .It Bq Er EFBIG
 An attempt was made to write a file that exceeds the process's

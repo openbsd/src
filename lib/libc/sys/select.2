@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.13 1999/05/23 14:10:55 aaron Exp $
+.\"	$OpenBSD: select.2,v 1.14 1999/06/29 14:10:17 aaron Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -104,12 +104,12 @@ to the maximum number of descriptors supported by the system.
 .Pp
 If
 .Fa timeout
-is a non-nil pointer, it specifies a maximum interval to wait for the
-selection to complete.  If 
+is a non-null pointer, it specifies a maximum interval to wait for the
+selection to complete.  If
 .Fa timeout
-is a nil pointer, the select blocks indefinitely.  To effect a poll, the
+is a null pointer, the select blocks indefinitely.  To effect a poll, the
 .Fa timeout
-argument should be non-nil, pointing to a zero-valued timeval structure.
+argument should be non-null, pointing to a zero-valued timeval structure.
 .Fa timeout
 is not changed by
 .Fn select ,
@@ -122,12 +122,12 @@ Any of
 .Fa writefds ,
 and
 .Fa exceptfds
-may be given as nil pointers if no descriptors are of interest.
+may be given as null pointers if no descriptors are of interest.
 .Sh RETURN VALUES
 .Fn select
 returns the number of ready descriptors that are contained in
 the descriptor sets,
-or -1 if an error occurred.
+or \-1 if an error occurred.
 If the time limit expires,
 .Fn select
 returns 0.

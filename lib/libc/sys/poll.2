@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.6 1999/05/16 19:55:33 alex Exp $
+.\"	$OpenBSD: poll.2,v 1.7 1999/06/29 14:10:14 aaron Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -140,7 +140,7 @@ member will generate an error condition.
 In addition to I/O multiplexing,
 .Fn poll
 can be used to generate simple timeouts.  This functionality may be achieved
-by passing a NULL pointer for
+by passing a null pointer for
 .Pa fds .
 .Sh WARNINGS
 The
@@ -149,7 +149,7 @@ flag is only a close approximation and may not always be accurate.
 .Sh RETURN VALUES
 Upon error,
 .Fn poll
-returns a -1 and sets the global variable
+returns a \-1 and sets the global variable
 .Pa errno
 to indicate the error.  If the timeout interval was reached before any events
 occurred, a 0 is returned.  Otherwise,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgroups.2,v 1.5 1999/05/23 14:10:51 aaron Exp $
+.\"	$OpenBSD: getgroups.2,v 1.6 1999/06/29 14:09:59 aaron Exp $
 .\"	$NetBSD: getgroups.2,v 1.8 1995/02/27 12:32:57 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -48,11 +48,11 @@
 .Sh DESCRIPTION
 .Fn getgroups
 gets the current group access list of the current user process
-and stores it in the array 
+and stores it in the array
 .Fa gidset .
 The parameter
 .Fa gidsetlen
-indicates the number of entries that may be placed in 
+indicates the number of entries that may be placed in
 .Fa gidset .
 .Fn getgroups
 returns the actual number of groups returned in
@@ -63,14 +63,14 @@ will ever
 be returned.
 If
 .Fa gidsetlen
-is 0, 
+is 0,
 .Fn getgroups
 returns the number of groups without modifying the
 .Fa gidset
 array.
 .Sh RETURN VALUES
 A successful call returns the number of groups in the group set.
-A value of -1 indicates that an error occurred, and the error
+A value of \-1 indicates that an error occurred, and the error
 code is stored in the global variable
 .Va errno .
 .Sh ERRORS

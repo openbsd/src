@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.3 1999/05/23 14:10:55 aaron Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.4 1999/06/29 14:10:10 aaron Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -51,34 +51,33 @@ signal will cause it to terminate the sleep early, regardless of the
 .Dv SA_RESTART
 value on the interrupting signal.
 .Sh RETURN VALUE
-If the 
+If the
 .Fn nanosleep
 function returns because the requested time has elapsed, the value
-returned will be zero.  
+returned will be zero.
 .Pp
-If the 
+If the
 .Fn nanosleep
 function returns due to the delivery of a signal, the value returned
-will be the -1, and the global variable
+will be the \-1, and the global variable
 .Va errno
 will be set to indicate the interruption.
-If 
+If
 .Fa rmtp
-is 
-.Pf non- Dv NULL ,
+is non-null,
 the timespec structure it references is updated to contain the
 unslept amount (the request time minus the time actually slept).
 .Sh ERRORS
 If any of the following conditions occur, the
-.Nm 
-function shall return -1 and set
+.Fn nanosleep
+function shall return \-1 and set
 .Va errno
 to the corresponding value.
 .Bl -tag -width Er
 .It Bq Er EFAULT
 Either
 .Fa rqtp
-or 
+or
 .Fa rmtp
 points to memory that is not a valid part of the process
 address space.

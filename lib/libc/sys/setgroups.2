@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setgroups.2,v 1.5 1999/05/23 14:10:56 aaron Exp $
+.\"	$OpenBSD: setgroups.2,v 1.6 1999/06/29 14:10:18 aaron Exp $
 .\"	$NetBSD: setgroups.2,v 1.7 1995/02/27 12:36:49 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993, 1994
@@ -48,7 +48,7 @@
 .Sh DESCRIPTION
 .Fn setgroups
 sets the group access list of the current user process
-according to the array 
+according to the array
 .Fa gidset .
 The parameter
 .Fa ngroups
@@ -58,7 +58,7 @@ more than
 .Pp
 Only the super-user may set new groups.
 .Sh RETURN VALUES
-A 0 value is returned on success, -1 on error, with
+A 0 value is returned on success, \-1 on error, with
 an error code stored in
 .Va errno .
 .Sh ERRORS
@@ -67,7 +67,7 @@ The
 call will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The value of 
+The value of
 .Fa ngroups
 is greater than
 .Dv {NGROUPS_MAX} .

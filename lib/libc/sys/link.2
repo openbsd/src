@@ -1,4 +1,4 @@
-.\"	$OpenBSD: link.2,v 1.9 1999/05/25 13:06:46 aaron Exp $
+.\"	$OpenBSD: link.2,v 1.10 1999/06/29 14:10:04 aaron Exp $
 .\"	$NetBSD: link.2,v 1.7 1995/02/27 12:34:01 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -82,7 +82,7 @@ As mandated by POSIX.1
 may not be a directory.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.  Otherwise,
-a value of -1 is returned and
+a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -92,9 +92,9 @@ will fail and no link will be created if:
 .It Bq Er ENOTDIR
 A component of either path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
@@ -148,7 +148,7 @@ is being placed cannot be extended because the
 user's quota of disk blocks on the file system
 containing the directory has been exhausted.
 .It Bq Er EIO
-An I/O error occurred while reading from or writing to 
+An I/O error occurred while reading from or writing to
 the file system to make the directory entry.
 .It Bq Er EROFS
 The requested link requires writing in a directory on a read-only file
@@ -164,5 +164,5 @@ is outside the process's allocated address space.
 .Sh STANDARDS
 The
 .Fn link
-function is expected to conform to 
+function is expected to conform to
 .St -p1003.1-88 .

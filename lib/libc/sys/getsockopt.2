@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.10 1999/05/23 14:10:54 aaron Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.11 1999/06/29 14:10:02 aaron Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -96,7 +96,8 @@ and modified on return to indicate the actual size of
 the value returned.  If no option value is
 to be supplied or returned,
 .Fa optval
-may be NULL.
+may be
+.Dv NULL .
 .Pp
 .Fa optname
 and any specified options are passed uninterpreted to the appropriate
@@ -186,12 +187,12 @@ of the destination address.
 .Pp
 .Dv SO_LINGER
 controls the action taken when unsent messages
-are queued on socket and a 
+are queued on socket and a
 .Xr close 2
 is performed.
 If the socket promises reliable delivery of data and
 .Dv SO_LINGER is set,
-the system will block the process on the 
+the system will block the process on the
 .Xr close 2
 attempt until it is able to transmit the data or until it decides it
 is unable to deliver the information (a timeout period measured in seconds,
@@ -199,10 +200,10 @@ termed the linger interval, is specified in the
 .Fn setsockopt
 call when
 .Dv SO_LINGER
-is requested). 
+is requested).
 If
 .Dv SO_LINGER
-is disabled and a 
+is disabled and a
 .Xr close 2
 is issued, the system will process the close in a manner that allows
 the process to continue as quickly as possible.
@@ -257,7 +258,7 @@ requested.
 The default value for
 .Dv SO_RCVLOWAT
 is 1.
-If 
+If
 .Dv SO_RCVLOWAT
 is set to a larger value, blocking receive calls normally
 wait until they have received the smaller of the low water mark value
@@ -312,7 +313,7 @@ the error status.
 It may be used to check for asynchronous errors on connected
 datagram sockets or for other asynchronous errors.
 .Sh RETURN VALUES
-A 0 is returned if the call succeeds, -1 if it fails.
+A 0 is returned if the call succeeds, \-1 if it fails.
 .Sh ERRORS
 The call succeeds unless:
 .Bl -tag -width Er
@@ -327,7 +328,7 @@ is a file, not a socket.
 .It Bq Er ENOPROTOOPT
 The option is unknown at the level indicated.
 .It Bq Er EFAULT
-The address pointed to by 
+The address pointed to by
 .Fa optval
 is not in a valid part of the process address space.
 For

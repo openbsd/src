@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.16 1999/06/16 08:45:12 alex Exp $
+.\"	$OpenBSD: mmap.2,v 1.17 1999/06/29 14:10:07 aaron Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -119,7 +119,9 @@ specified.
 If the specified address cannot be used,
 .Nm mmap
 will fail.
-If MAP_FIXED is specified,
+If
+.Dv MAP_FIXED
+is specified,
 .Fa addr
 must be a multiple of the pagesize.
 Use of this option is discouraged.
@@ -140,7 +142,7 @@ Modifications are private and unlike
 you don't see modifications made by others.
 .El
 .Pp
-The 
+The
 .Xr close 2
 function does not unmap pages; see
 .Xr munmap 2

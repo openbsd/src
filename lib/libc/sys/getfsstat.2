@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.9 1999/06/01 15:32:53 millert Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.10 1999/06/29 14:09:58 aaron Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -87,7 +87,8 @@ up to the size specified by
 .Pp
 If
 .Fa buf
-is given as NULL,
+is
+.Dv NULL ,
 .Fn getfsstat
 returns just the number of mounted file systems.
 .Pp
@@ -107,10 +108,10 @@ Thus, some of the information will be out of date, but
 will not block waiting for information from a file system that is
 unable to respond.
 .Sh RETURN VALUES
-Upon successful completion, the number of 
+Upon successful completion, the number of
 .Fa statfs
 structures is returned.
-Otherwise, -1 is returned and the global variable
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgget.2,v 1.6 1999/05/27 14:05:09 aaron Exp $	
+.\"	$OpenBSD: msgget.2,v 1.7 1999/06/29 14:10:09 aaron Exp $	
 .\"	$NetBSD: msgget.2,v 1.1 1995/10/16 23:49:19 jtc Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -65,7 +65,7 @@ structure, see
 .Xr msgctl 2 )
 is initialized as follows:
 .Bl -bullet
-.It 
+.It
 .Va msg_perm.cuid
 and
 .Va msg_perm.uid
@@ -85,20 +85,20 @@ is set to the lower 9 bits of
 .Va msg_lspid ,
 .Va msg_lrpid ,
 .Va msg_rtime ,
-and 
+and
 .Va msg_stime
 are set to 0
 .It
 .Va msg_qbytes
 is set to the system wide maximum value for the number of bytes in a queue
-(MSGMNB).
+.Pq Dv MSGMNB .
 .It
 .Va msg_ctime
 is set to the current time.
 .El
 .Sh RETURN VALUES
 Upon successful completion a positive message queue identifier is returned.
-Otherwise, -1 is returned and the global variable
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

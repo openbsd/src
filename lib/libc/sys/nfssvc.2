@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.7 1999/05/16 19:55:31 alex Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.8 1999/06/29 14:10:11 aaron Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -104,7 +104,10 @@ If the mount point is using Kerberos, then the
 .Xr mount_nfs 8
 daemon will return from
 .Fn nfssvc
-with errno == ENEEDAUTH whenever the client side requires an ``rcmd''
+with errno set to
+.Er ENEEDAUTH
+whenever the client side requires an
+.Dq rcmd
 authentication ticket for the user.
 .Xr mount_nfs 8
 will attempt to get the Kerberos ticket, and if successful will call
@@ -113,7 +116,7 @@ with the flags
 .Dv NFSSVC_MNTD
 and
 .Dv NFSSVC_GOTAUTH
-after filling the ticket into the 
+after filling the ticket into the
 ncd_authstr field
 and
 setting the ncd_authlen and ncd_authtype
@@ -157,11 +160,12 @@ Whenever an
 .Xr nfsd 8
 daemon receives a Kerberos authentication ticket, it will return from
 .Fn nfssvc
-with errno == ENEEDAUTH.
+with errno set to
+.Er ENEEDAUTH .
 The
 .Xr nfsd 8
 will attempt to authenticate the ticket and generate a set of credentials
-on the server for the ``user id'' specified in the field nsd_uid.
+on the server for the user ID specified in the field nsd_uid.
 This is done by first authenticating the Kerberos ticket and then mapping
 the Kerberos principal to a local name and getting a set of credentials for
 that user via.
@@ -213,7 +217,7 @@ Normally
 .Nm nfssvc
 does not return unless the server
 is terminated by a signal when a value of 0 is returned.
-Otherwise, -1 is returned and the global variable
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to specify the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.18 1999/06/05 04:47:42 aaron Exp $
+.\"	$OpenBSD: recv.2,v 1.19 1999/06/29 14:10:16 aaron Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -61,7 +61,7 @@ it is connection-oriented.
 .Pp
 If
 .Fa from
-is non-nil, and the socket is not connection-oriented,
+is non-null and the socket is not connection-oriented,
 the source address of the message is filled in.
 .Fa fromlen
 is a value-result parameter, initialized to the size of
@@ -70,15 +70,15 @@ the buffer associated with
 and modified on return to indicate the actual size of the
 address stored there.
 .Pp
-The 
+The
 .Fn recv
-call is normally used only on a 
+call is normally used only on a
 .Em connected
 socket (see
 .Xr connect 2 )
 and is identical to
 .Fn recvfrom
-with a nil
+with a null
 .Fa from
 parameter.
 As it is redundant, it may not be supported in future releases.
@@ -94,7 +94,7 @@ receive call waits for a message to arrive, unless
 the socket is nonblocking (see
 .Xr fcntl 2 )
 in which case the value
--1 is returned and the external variable
+\-1 is returned and the external variable
 .Va errno
 set to
 .Er EAGAIN .
@@ -114,7 +114,7 @@ call may be used to determine when more data arrive.
 .Pp
 The
 .Fa flags
-argument to a recv call is formed by 
+argument to a recv call is formed by
 .Tn OR Ns ing
 one or more of the values:
 .Bl -column MSG_WAITALL -offset indent
@@ -129,11 +129,15 @@ flag requests receipt of out-of-band data
 that would not be received in the normal data stream.
 Some protocols place expedited data at the head of the normal
 data queue, and thus this flag cannot be used with such protocols.
-The MSG_PEEK flag causes the receive operation to return data
+The
+.Dv MSG_PEEK
+flag causes the receive operation to return data
 from the beginning of the receive queue without removing that
 data from the queue.
 Thus, a subsequent receive call will return the same data.
-The MSG_WAITALL flag requests that the operation block until
+The
+.Dv MSG_WAITALL
+flag requests that the operation block until
 the full request is satisfied.
 However, the call may still return less data than requested
 if a signal is caught, an error or disconnect occurs,
@@ -141,7 +145,7 @@ or the next data to be received is of a different type than that returned.
 .Pp
 The
 .Fn recvmsg
-call uses a 
+call uses a
 .Fa msghdr
 structure to minimize the number of directly supplied parameters.
 This structure has the following form, as defined in
@@ -229,7 +233,7 @@ Indicates that the packet was received as multicast.
 .El
 .Pp
 .Sh RETURN VALUES
-These calls return the number of bytes received, or -1
+These calls return the number of bytes received, or \-1
 if an error occurred.
 .Sh ERRORS
 .Fn recv ,
@@ -272,7 +276,7 @@ and
 may return following error:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-.Fa len   
+.Fa len
 was larger than
 .Dv SSIZE_MAX .
 .El
@@ -291,8 +295,8 @@ array overflowed an
 .It Bq Er EMSGSIZE
 The
 .Fa msg_iovlen
-member of    
-.Fa msg   
+member of
+.Fa msg
 was less than 0 or larger than
 .Dv IOV_MAX .
 .El

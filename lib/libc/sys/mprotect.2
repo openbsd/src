@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.6 1998/07/06 18:28:00 deraadt Exp $
+.\"	$OpenBSD: mprotect.2,v 1.7 1999/06/29 14:10:08 aaron Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -56,12 +56,12 @@ the granularity of protection changes may be as large as an entire region.
 .Sh RETURN VALUES
 Upon successful completion,
 a value of 0 is returned.
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh SEE ALSO
-.Xr madvise 2 , 
-.Xr mincore 2 , 
+.Xr madvise 2 ,
+.Xr mincore 2 ,
 .Xr msync 2 ,
 .Xr munmap 2
 .Sh HISTORY

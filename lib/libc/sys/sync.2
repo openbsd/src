@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sync.2,v 1.4 1999/05/23 14:10:56 aaron Exp $
+.\"	$OpenBSD: sync.2,v 1.5 1999/06/29 14:10:26 aaron Exp $
 .\"	$NetBSD: sync.2,v 1.4 1995/02/27 12:38:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -45,7 +45,7 @@
 .Ft void
 .Fn sync void
 .Sh DESCRIPTION
-The 
+The
 .Fn sync
 function forces a write of dirty (modified) buffers
 in the block buffer cache out
@@ -57,7 +57,7 @@ call is issued
 frequently
 by the user process
 .Xr update 8
-(about every 30 seconds). 
+(about every 30 seconds).
 .Pp
 The function
 .Xr fsync 2
@@ -73,5 +73,5 @@ may return before the buffers are completely flushed.
 .Sh HISTORY
 A
 .Fn sync
-function call appeared in 
+function call appeared in
 .At v6 .

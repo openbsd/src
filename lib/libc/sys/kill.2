@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kill.2,v 1.10 1999/06/06 06:57:53 pjanzen Exp $
+.\"	$OpenBSD: kill.2,v 1.11 1999/06/29 14:10:04 aaron Exp $
 .\"	$NetBSD: kill.2,v 1.7 1995/02/27 12:33:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -58,7 +58,7 @@ may be one of the signals specified in
 .Xr sigaction 2
 or it may be 0, in which case
 error checking is performed but no
-signal is actually sent. 
+signal is actually sent.
 This can be used to check the validity of
 .Fa pid .
 .Pp
@@ -147,5 +147,5 @@ of the group could not be signaled.
 .Sh STANDARDS
 The
 .Fn kill
-function is expected to conform to 
+function is expected to conform to
 .St -p1003.1-88 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flock.2,v 1.10 1999/05/23 14:10:51 aaron Exp $
+.\"	$OpenBSD: flock.2,v 1.11 1999/06/29 14:09:54 aaron Exp $
 .\"	$NetBSD: flock.2,v 1.5 1995/02/27 12:32:32 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -82,7 +82,7 @@ locks and
 locks.
 At any time multiple shared locks may be applied to a file,
 but at no time are multiple exclusive, or both shared and exclusive,
-locks allowed simultaneously on a file.  
+locks allowed simultaneously on a file.
 .Pp
 A shared lock may be
 .Em upgraded
@@ -115,7 +115,7 @@ lose its lock.
 Processes blocked awaiting a lock may be awakened by signals.
 .Sh RETURN VALUES
 Zero is returned if the operation was successful;
-on an error a -1 is returned and an error code is left in
+on an error a \-1 is returned and an error code is left in
 the global location
 .Va errno .
 .Sh ERRORS

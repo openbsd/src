@@ -1,4 +1,4 @@
-.\"	$OpenBSD: access.2,v 1.6 1999/06/05 04:47:41 aaron Exp $
+.\"	$OpenBSD: access.2,v 1.7 1999/06/29 14:09:49 aaron Exp $
 .\"	$NetBSD: access.2,v 1.7 1995/02/27 12:31:44 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -85,7 +85,7 @@ and
 If
 .Fa path
 cannot be found or if any of the desired access modes would
-not be granted, then a -1 value is returned; otherwise
+not be granted, then a \-1 value is returned; otherwise
 a 0 value is returned.
 .Sh ERRORS
 Access to the file is denied if:
@@ -93,9 +93,9 @@ Access to the file is denied if:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
@@ -131,7 +131,7 @@ An invalid value was specified for
 .Sh STANDARDS
 The
 .Fn access
-function conforms to 
+function conforms to
 .St -p1003.1-90 .
 .Sh CAVEAT
 .Fn access

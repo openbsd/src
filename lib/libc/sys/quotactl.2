@@ -1,4 +1,4 @@
-.\"	$OpenBSD: quotactl.2,v 1.4 1999/02/27 21:56:39 deraadt Exp $
+.\"	$OpenBSD: quotactl.2,v 1.5 1999/06/29 14:10:14 aaron Exp $
 .\"	$NetBSD: quotactl.2,v 1.8 1995/02/27 12:35:43 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -81,7 +81,7 @@ The
 .Fa addr
 argument specifies a file from which to take the quotas.
 The quota file must exist;
-it is normally created with the 
+it is normally created with the
 .Xr quotacheck 8
 program.
 The
@@ -139,7 +139,7 @@ parameters are ignored.
 .El
 .Sh RETURN VALUES
 A successful call returns 0,
-otherwise the value -1 is returned and the global variable
+otherwise the value \-1 is returned and the global variable
 .Va errno
 indicates the reason for the failure.
 .Sh ERRORS
@@ -165,9 +165,9 @@ Search permission is denied for a component of a path prefix.
 .It Bq Er ENOTDIR
 A component of a path prefix was not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT

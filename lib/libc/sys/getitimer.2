@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.9 1999/05/23 14:10:51 aaron Exp $
+.\"	$OpenBSD: getitimer.2,v 1.10 1999/06/29 14:09:59 aaron Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -67,9 +67,9 @@ call sets a timer to the specified
 .Fa value
 (returning the previous value of the timer if
 .Fa ovalue
-is non-nil).
+is non-null).
 .Pp
-A timer value is defined by the 
+A timer value is defined by the
 .Fa itimerval
 structure:
 .Bd -literal -offset indent
@@ -81,15 +81,15 @@ struct itimerval {
 .Pp
 If
 .Fa it_value
-is non-zero, it indicates the time to the next timer expiration. 
+is non-zero, it indicates the time to the next timer expiration.
 If
 .Fa it_interval
-is non-zero, it specifies a value to be used in reloading 
+is non-zero, it specifies a value to be used in reloading
 .Fa it_value
 when the timer expires.
-Setting 
+Setting
 .Fa it_value
-to 0 disables a timer.  Setting 
+to 0 disables a timer.  Setting
 .Fa it_interval
 to 0 causes a timer to be disabled after its next expiration (assuming
 .Fa it_value
@@ -158,7 +158,7 @@ Adds two timers and stores the result in
 .Pp
 .Sh RETURN VALUES
 If the calls succeed, a value of 0 is returned.  If an error occurs,
-the value -1 is returned, and a more precise error code is placed
+the value \-1 is returned, and a more precise error code is placed
 in the global variable
 .Va errno .
 .Sh ERRORS

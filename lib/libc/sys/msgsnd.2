@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgsnd.2,v 1.6 1999/05/27 14:05:10 aaron Exp $
+.\"	$OpenBSD: msgsnd.2,v 1.7 1999/06/29 14:10:09 aaron Exp $
 .\"	$NetBSD: msgsnd.2,v 1.2 1997/03/27 08:20:36 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -43,7 +43,7 @@
 .Ft int
 .Fn msgsnd "int msqid" "const void *msgp" "size_t msgsz" "int msgflg"
 .Sh DESCRIPTION
-The 
+The
 .Fn msgsnd
 function sends a message from the message queue specified in
 .Fa msqid .
@@ -58,8 +58,9 @@ consist of the following members:
 .Va mtype
 is an integer greater than 0 that can be used for selecting messages (see
 .Xr msgrcv 2 ) ,
-.Va mtext 
-is an array of bytes, with a size up to that of the system limit (MSGMAX).
+.Va mtext
+is an array of bytes, with a size up to that of the system limit
+.Pq Dv MSGMAX .
 .Pp
 If the number of bytes already on the message queue plus
 .Fa msgsz
@@ -86,7 +87,7 @@ set in it, the call will block until:
 The condition which caused the call to block does no longer exist.
 The message will be sent.
 .It
-The messag queue is removed, in which case -1 will be returned, and
+The messag queue is removed, in which case \-1 will be returned, and
 .Va errno
 is set to
 .Er EINVAL .
@@ -114,7 +115,7 @@ is set to the pid of the calling process.
 is set to the current time.
 .El
 .Sh RETURN VALUES
-Upon successful completion, 0 is returned. Otherwise, -1 is returned and
+Upon successful completion, 0 is returned. Otherwise, \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chdir.2,v 1.4 1999/05/23 14:10:50 aaron Exp $
+.\"	$OpenBSD: chdir.2,v 1.5 1999/06/29 14:09:51 aaron Exp $
 .\"	$NetBSD: chdir.2,v 1.7 1995/02/27 12:32:00 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -74,7 +74,7 @@ In order for a directory to become the current directory,
 a process must have execute (search) access to the directory.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate
 the error.
@@ -86,9 +86,9 @@ one or more of the following are true:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
@@ -122,9 +122,9 @@ is not a valid file descriptor.
 .Sh SEE ALSO
 .Xr chroot 2
 .Sh STANDARDS
-The 
+The
 .Fn chdir
-is expected to conform to 
+is expected to conform to
 .St -p1003.1-88 .
 .Sh HISTORY
 The

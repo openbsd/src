@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.7 1999/06/29 00:36:06 aaron Exp $
+.\"	$OpenBSD: accept.2,v 1.8 1999/06/29 14:09:49 aaron Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -59,7 +59,7 @@ The
 argument
 extracts the first connection request
 on the queue of pending connections, creates
-a new socket with the same properties of 
+a new socket with the same properties of
 .Fa s
 and allocates a new file descriptor
 for the socket.  If no pending connections are
@@ -68,7 +68,7 @@ as non-blocking,
 .Fn accept
 blocks the caller until a connection is present.
 If the socket is marked non-blocking and no pending
-connections are present on the queue, 
+connections are present on the queue,
 .Fn accept
 returns an error as described below.
 The accepted socket
@@ -86,7 +86,7 @@ The exact format of the
 .Fa addr
 parameter is determined by the domain in which the communication
 is occurring.
-The 
+The
 .Fa addrlen
 is a value-result parameter; it should initially contain the
 amount of space pointed to by
@@ -95,7 +95,7 @@ on return it will contain the actual length (in bytes) of the
 address returned.
 This call
 is used with connection-based socket types, currently with
-.Dv SOCK_STREAM . 
+.Dv SOCK_STREAM .
 .Pp
 It is possible to
 .Xr select 2
@@ -117,7 +117,7 @@ file descriptor, and rejection can be implied by closing the
 new socket.
 .Pp
 One can obtain user connection request data without confirming
-the connection by issuing a 
+the connection by issuing a
 .Xr recvmsg 2
 call with an
 .Fa msg_iovlen
@@ -146,7 +146,7 @@ The descriptor is invalid.
 The descriptor references a file, not a socket.
 .It Bq Er EOPNOTSUPP
 The referenced socket is not of type
-.Dv SOCK_STREAM . 
+.Dv SOCK_STREAM .
 .It Bq Er EINVAL
 The referenced socket is not listening for connections (that is,
 .Xr listen 2
@@ -174,5 +174,5 @@ The system file table is full.
 .Sh HISTORY
 The
 .Fn accept
-function appeared in 
+function appeared in
 .Bx 4.2 .

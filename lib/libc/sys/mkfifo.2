@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.2,v 1.3 1999/02/27 21:56:31 deraadt Exp $
+.\"	$OpenBSD: mkfifo.2,v 1.4 1999/06/29 14:10:06 aaron Exp $
 .\"	$NetBSD: mkfifo.2,v 1.8 1995/02/27 12:34:27 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -60,7 +60,7 @@ The fifo's owner ID is set to the process's effective user ID.
 The fifo's group ID is set to that of the parent directory in
 which it is created.
 .Sh RETURN VALUES
-A 0 return value indicates success.  A -1 return value
+A 0 return value indicates success.  A \-1 return value
 indicates an error, and an error code is stored in
 .Va errno .
 .Sh ERRORS
@@ -72,9 +72,9 @@ The kernel has not been configured to support fifo's.
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mincore.2,v 1.7 1998/07/06 18:27:51 deraadt Exp $
+.\"	$OpenBSD: mincore.2,v 1.8 1999/06/29 14:10:05 aaron Exp $
 .\"	$NetBSD: mincore.2,v 1.7 1995/10/12 15:41:05 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -52,13 +52,13 @@ system call
 allows a process to obtain information about whether pages are
 core resident.
 Here the current core residency of the pages is returned
-in the character array 
+in the character array
 .Fa vec ,
 with a value of 1 meaning that the page is in-core.
 .Sh RETURN VALUES
 Upon successful completion,
 a value of 0 is returned.
-Otherwise, a value of -1 is returned and
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.8 1999/05/23 14:10:56 aaron Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.9 1999/06/29 14:10:21 aaron Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -72,7 +72,7 @@ call), the system checks to see
 if the process is currently executing on that stack.
 If the process is not currently executing on the signal stack,
 the system arranges a switch to the signal stack for the
-duration of the signal handler's execution. 
+duration of the signal handler's execution.
 .Pp
 If
 .Dv SS_DISABLE
@@ -84,7 +84,7 @@ and
 are ignored and the signal stack will be disabled.
 Trying to disable an active stack will cause
 .Nm
-to return -1 with
+to return \-1 with
 .Va errno
 set to
 .Dv EINVAL .
@@ -137,7 +137,7 @@ If the stack overflows and this space is not protected
 unpredictable results may occur.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
-Otherwise, a value of -1 is returned and 
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

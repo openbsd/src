@@ -1,4 +1,4 @@
-.\"   $OpenBSD: semop.2,v 1.6 1999/05/27 16:54:23 aaron Exp $
+.\"   $OpenBSD: semop.2,v 1.7 1999/06/29 14:10:18 aaron Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $	
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -48,7 +48,7 @@ provides a number of atomic operations on a set of semaphores. The semaphore
 set is specified by
 .Fa semid .
 .Fa sops
-is an array of semaphore operations, 
+is an array of semaphore operations,
 .Fa nsops
 is the number of operations in this array. The
 .Va sembuf
@@ -99,7 +99,7 @@ In the case where the calling process would normally block, waiting
 for a semaphore to reach a certain value,
 .Dv IPC_NOWAIT
 makes the
-call return immediately, returning a value of -1 and setting
+call return immediately, returning a value of \-1 and setting
 .Va errno
 to
 .Er EAGAIN .
@@ -111,7 +111,7 @@ should the process that has the semaphore locked terminate in a critical
 section.
 .El
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned. Otherwise, -1 is
+Upon successful completion, a value of 0 is returned. Otherwise, \-1 is
 returned and the global variable
 .Va errno
 is set to indicate the error.

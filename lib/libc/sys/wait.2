@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wait.2,v 1.8 1999/06/05 04:47:42 aaron Exp $
+.\"	$OpenBSD: wait.2,v 1.9 1999/06/29 14:10:31 aaron Exp $
 .\"	$NetBSD: wait.2,v 1.6 1995/02/27 12:39:37 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993, 1994
@@ -63,9 +63,9 @@ function suspends execution of its calling process until
 .Fa status
 information is available for a terminated child process,
 or a signal is received.
-On return from a successful 
+On return from a successful
 .Fn wait
-call, 
+call,
 the
 .Fa status
 area contains termination information about the process that exited
@@ -85,18 +85,18 @@ The
 parameter specifies the set of child processes for which to wait.
 If
 .Fa wpid
-is -1, the call waits for any child process.
+is \-1, the call waits for any child process.
 If
 .Fa wpid
 is 0,
 the call waits for any child process in the process group of the caller.
 If
 .Fa wpid
-is greater than zero, the call waits for the process with process id
+is greater than zero, the call waits for the process with process ID
 .Fa wpid .
 If
 .Fa wpid
-is less than -1, the call waits for any process whose process group id
+is less than \-1, the call waits for any process whose process group ID
 equals the absolute value of
 .Fa wpid .
 .Pp
@@ -133,10 +133,10 @@ for stopped processes).
 When the
 .Dv WNOHANG
 option is specified and no processes
-wish to report status, 
+wish to report status,
 .Fn wait4
-returns a 
-process id
+returns a
+process ID
 of 0.
 .Pp
 The
@@ -152,7 +152,7 @@ call is the same as
 .Fn wait4
 with a
 .Fa wpid
-value of -1.
+value of \-1.
 .Pp
 The following macros may be used to test the manner of exit of the process.
 One of the first three macros will evaluate to a non-zero (true) value:
@@ -227,7 +227,7 @@ If
 .Fn wait
 returns due to a stopped
 or terminated child process, the process ID of the child
-is returned to the calling process.  Otherwise, a value of -1
+is returned to the calling process.  Otherwise, a value of \-1
 is returned and
 .Va errno
 is set to indicate the error.
@@ -241,7 +241,7 @@ returns due to a stopped
 or terminated child process, the process ID of the child
 is returned to the calling process.
 If there are no children not previously awaited,
--1 is returned with
+\-1 is returned with
 .Va errno
 set to
 .Bq Er ECHILD .
@@ -251,7 +251,7 @@ is specified and there are
 no stopped or exited children,
 0 is returned.
 If an error is detected or a caught signal aborts the call,
-a value of -1
+a value of \-1
 is returned and
 .Va errno
 is set to indicate the error.
@@ -302,5 +302,5 @@ call are extensions to the POSIX interface.
 .Sh HISTORY
 A
 .Fn wait
-function call appeared in 
+function call appeared in
 .At v6 .

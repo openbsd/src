@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmat.2,v 1.7 1999/05/27 16:54:23 aaron Exp $
+.\"	$OpenBSD: shmat.2,v 1.8 1999/06/29 14:10:19 aaron Exp $
 .\"	$NetBSD: shmat.2,v 1.2 1997/03/27 08:20:38 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -56,15 +56,21 @@ parameter. If it is equal to 0, the system will pick an address itself.
 Otherwise, an attempt is made to map the shared memory segment at the
 address
 .Fa shmaddr
-specifies. If SHM_RND is set in
+specifies. If
+.Dv SHM_RND
+is set in
 .Fa shmflg ,
-the system will round the address down to a multiple of SHMLBA bytes
-(SHMLBA is defined in
+the system will round the address down to a multiple of
+.Dv SHMLBA
+bytes
+.Pf ( Dv SHMLBA
+is defined in
 .Aq Pa sys/shm.h
 ).
 .Pp
 A shared memory segment can be mapped read-only by specifying the
-SHM_RDONLY flag in
+.Dv SHM_RDONLY
+flag in
 .Fa shmflg .
 .Pp
 .Fn shmdt
@@ -83,9 +89,9 @@ command.
 .Sh RETURN VALUES
 .Fn shmat
 returns the address at which the shared memory segment has been mapped into
-the calling process' address space when successful, 
+the calling process' address space when successful,
 .Fn shmdt
-returns 0 on successful completion. Otherwise, a value of -1 is returned,
+returns 0 on successful completion. Otherwise, a value of \-1 is returned,
 and the global variable
 .Va errno
 is set to indicate the error.

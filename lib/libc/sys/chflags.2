@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.11 1999/06/05 04:47:42 aaron Exp $
+.\"	$OpenBSD: chflags.2,v 1.12 1999/06/29 14:09:51 aaron Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -94,7 +94,7 @@ the system is in single-user mode.
 for details.)
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
-Otherwise, -1 is returned and the global variable
+Otherwise, \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -104,9 +104,9 @@ will fail it:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT

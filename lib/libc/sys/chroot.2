@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.7 1999/05/23 14:10:50 aaron Exp $
+.\"	$OpenBSD: chroot.2,v 1.8 1999/06/29 14:09:52 aaron Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -46,7 +46,9 @@
 .Fn chroot "const char *dirname"
 .Sh DESCRIPTION
 .Fa dirname
-is the address of the pathname of a directory, terminated by an ASCII NUL.
+is the address of the pathname of a directory, terminated by an
+.Tn ASCII
+NUL.
 .Fn chroot
 causes
 .Fa dirname
@@ -71,7 +73,7 @@ tree than the altered root directory.
 This call is restricted to the super-user.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.  Otherwise,
-a value of -1 is returned and
+a value of \-1 is returned and
 .Va errno
 is set to indicate an error.
 .Sh ERRORS
@@ -81,9 +83,9 @@ will fail and the root directory will be unchanged if:
 .It Bq Er ENOTDIR
 A component of the path name is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT

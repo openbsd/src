@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socket.2,v 1.10 1999/06/25 04:10:08 aaron Exp $
+.\"	$OpenBSD: socket.2,v 1.11 1999/06/29 14:10:23 aaron Exp $
 .\"	$NetBSD: socket.2,v 1.5 1995/02/27 12:37:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -134,7 +134,7 @@ call.  Once connected, data may be transferred using
 .Xr read 2
 and
 .Xr write 2
-calls or some variant of the 
+calls or some variant of the
 .Xr send 2
 and
 .Xr recv 2
@@ -154,7 +154,7 @@ peer protocol has buffer space cannot be successfully transmitted
 within a reasonable length of time, then
 the connection is considered broken and calls
 will indicate an error with
--1 returns and with
+\-1 returns and with
 .Dv ETIMEDOUT
 as the specific code
 in the global variable
@@ -177,7 +177,7 @@ sockets employ the same system calls
 as
 .Dv SOCK_STREAM
 sockets.  The only difference
-is that 
+is that
 .Xr read 2
 calls will return only the amount of data requested,
 and any remaining in the arriving packet will be discarded.
@@ -192,7 +192,7 @@ calls.  Datagrams are generally received with
 .Xr recvfrom 2 ,
 which returns the next datagram with its return address.
 .Pp
-An 
+An
 .Xr fcntl 2
 call can be used to specify a process group to receive
 a
@@ -212,7 +212,7 @@ and
 .Xr getsockopt 2
 are used to set and get options, respectively.
 .Sh RETURN VALUES
-A -1 is returned if an error occurs, otherwise the return
+A \-1 is returned if an error occurs, otherwise the return
 value is a descriptor referencing the socket.
 .Sh ERRORS
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readlink.2,v 1.8 1999/05/23 14:10:55 aaron Exp $
+.\"	$OpenBSD: readlink.2,v 1.9 1999/06/29 14:10:15 aaron Exp $
 .\"	$NetBSD: readlink.2,v 1.7 1995/02/27 12:35:54 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -59,7 +59,7 @@ character to
 .Fa buf .
 .Sh RETURN VALUES
 The call returns the count of characters placed in the buffer
-if it succeeds, or a -1 if an error occurs, placing the error
+if it succeeds, or a \-1 if an error occurs, placing the error
 code in the global variable
 .Va errno .
 .Sh ERRORS
@@ -69,9 +69,9 @@ will fail if:
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT

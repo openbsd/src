@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.12 1999/06/05 04:47:42 aaron Exp $
+.\"	$OpenBSD: rfork.2,v 1.13 1999/06/29 14:10:16 aaron Exp $
 .\"
 .\" This manual page is taken directly from Plan9, and modified to
 .\" describe the actual OpenBSD implementation.  Permission for
@@ -41,7 +41,7 @@ The current implementation requires this flag to always be set.
 .It Dv RFNOWAIT
 If set, the child process will be dissociated from the parent. Upon
 exit the child will not leave a status for the parent to collect.
-See 
+See
 .Xr wait 2 .
 .It Xo Dv RFNAMEG , Dv RFCNAMEG ,
 .Dv RFENVG , Dv RFCENVG , Dv RFNOTEG

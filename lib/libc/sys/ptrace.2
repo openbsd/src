@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.6 1999/05/27 16:54:23 aaron Exp $
+.\"	$OpenBSD: ptrace.2,v 1.7 1999/06/29 14:10:14 aaron Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -158,7 +158,9 @@ process is running as root, these restrictions do not apply.)  The
 tracing process will see the newly traced process stop and may then
 control it as if it had been traced all along.
 .It Dv PT_DETACH
-This request is like PT_CONTINUE, except that it does not allow
+This request is like
+.Dv PT_CONTINUE ,
+except that it does not allow
 specifying an alternate place to continue execution, and after it
 succeeds, the traced process is no longer traced and continues
 execution normally.
