@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.18 2004/06/28 02:28:42 aaron Exp $ */
+/* $OpenBSD: intr.h,v 1.19 2004/08/16 16:43:52 art Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -118,14 +118,8 @@
 #define	spllowersoftclock()	alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
 
 /* IPL-raising functions/macros */
-static __inline int _splraise(int);
-static __inline int
-_splraise(s)
-	int s;
-{
-	int cur = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
-	return (s > cur ? alpha_pal_swpipl(s) : cur);
-}
+int _splraise(int);
+
 #define splsoft()		_splraise(ALPHA_PSL_IPL_SOFT)
 #define splsoftserial()		splsoft()
 #define splsoftclock()		splsoft()
