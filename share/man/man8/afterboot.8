@@ -43,7 +43,7 @@ name for both the
 .Nm passwd
 and the
 .Nm su
-commands.  This inhibits the possibility files placed in your execution
+commands.  This inhibits the possibility of files placed in your execution
 .Ev PATH
 for most shells.
 \!\"--------------------------------------------------------------------------
@@ -116,15 +116,15 @@ and
 .Nm route add
 if you do not wish to reboot.
 .Pp
-If you wish to route packets between interfaces you do that by doing
+If you wish to route packets between interfaces you do that by putting
 .Bd -literal -offset indent
 # sysctl -w net.inet.ip.forwarding=1
 .Ed
 .Pp
 early on in the boot process (ie. start of
 .Pa /etc/netstart ,
-or by compiling a new kernel with the option GATEWAY.  By default,
-packets are not forwarded due to RFC requirements.
+or by compiling a new kernel with the option GATEWAY.
+Packets are not forwarded by default, due to RFC requirements.
 .Pp
 You can add new "virtual interfaces" by adding the required entries to
 .Pa /etc/ifaliases .
@@ -142,9 +142,14 @@ lookup file bind
 .Ed
 .Pp
 If using a caching name server add the line "nameserver 127.0.0.1" first.
-(Of course, you need to change "named_flags" in /etc/rc.conf and add
-the named.boot file in the appropriate place.  Same holds true if this
-is the name server for you domain.  Also make sure "named" is running.
+(Of course, you need to change "named_flags" in
+.Pa /etc/rc.conf
+and add the
+.Pa named.boot
+file in the appropriate place.  The same holds true if this is the
+name server for your domain.  In addition, make sure that
+.Nm named
+is running.
 [Otherwise there are long waits while timeouts happen.])
 \!\"--------------------------------------------------------------------------
 .Ss YP verification
@@ -155,12 +160,15 @@ command, and edit
 to correct.  You may change the running system with the
 .Nm domainname
 command.
-To start YP client services, simply run ypbind.  The perform the remaining
+To start YP client services, simply run
+.Nm ypbind .
+Then perform the remaining
 YP activation as described in
 .Xr passwd 5 ,
 and
 .Xr group 5 .
-There are many more YP manpages on the system, more information start at
+There are many more YP man pages on the system.  You can find more information
+by starting at
 .Xr yp 8 .
 .Ss Check disks are mounted correctly.
 Check that the disks are mounted correctly by
@@ -252,16 +260,16 @@ To compile a kernel inside a writable source tree, do the following:
 # make
 .Ed
 .Pp
-$ARCH should be the architecture (e.g. i386).  If you like, do a
-"make depend" too so you'll have your dependencies there next time
-you do a compile.
+$ARCH should be the architecture (e.g. i386).  You can do a
+.Nm make depend
+so that you will have dependencies there the next time you do a compile.
 .Pp
 After either of these two steps, you can place the new kernel (called
 .Pa bsd )
 in
 .Pa /
-and the system will boot it next time.  Most people save their backup
-kernels as
+(i.e. /bsd) and the system will boot it next time.
+Most people save their backup kernels as
 .Pa /bsd.1 ,
 .Pa /bsd.2 ...
 \!\"--------------------------------------------------------------------------
@@ -290,12 +298,13 @@ to add users to the
 file
 and edit
 .Pa /etc/group
-by hand if you desire.  As described in
+by hand if you desire.
 .Xr su 8 ,
-make sure to put people in
+tells you to make sure to put people in
 .Pa /etc/group
 under the
-.Pa wheel group if they need root access (non-kerberos).  Something like:
+.Pa wheel
+group if they need root access (non-kerberos).  Something like:
 .Bd -literal -offset indent
 wheel:*:0:root,myself
 .Ed
@@ -327,9 +336,9 @@ fi
 Edit /etc/printcap and /etc/hosts.lpd to get any printers set up.
 \!\"--------------------------------------------------------------------------
 .Ss Tighten up security
-You might wish to tighten up security by editing:
+You might wish to tighten up security more by editing
 .Pa /etc/fbtab
-as for example when installing X.
+as when installing X.
 In
 .Pa /etc/inetd.conf
 turn off extra stuff that you do not need,
@@ -408,8 +417,8 @@ scripts.  Your site specific things should go into
 and
 .Pa /etc/monthly.local.
 .Pp
-These scripts have been limited to keeping the system running without
-filling up disk space from normal running processes and updating databases.
+These scripts have been limited so as to keep the system running without
+filling up disk space from normal running processes and database updates.
 (You probably do not need to understand them.)
 \!\"--------------------------------------------------------------------------
 .Ss Other files in /etc
@@ -445,9 +454,10 @@ on things.  The best bet is to have permissions as in the security list.
 (The first of the two listed permissions, and the first group number of
 the two).
 Use
-.Nm chmod
+.Nm chmod ,
+.Nm chgrp ,
 and
-.Nm chgrp
+.Nm chown
 as needed.
 \!\"--------------------------------------------------------------------------
 .Ss Install packages
@@ -456,9 +466,9 @@ The simple way is to copy source and compile and link/load.
 .Pp
 Copy vendor binaries and install them.  You will need to install any
 shared libraries, etc.
-(hint:
+(Hint:
 .Nm man -k compat
-to find out about compatibily mode.
+to find out how to install and use compatibility mode.)
 .Pp
 Install any of a large group of Third-Party Software that is available
 in source form.  See
@@ -477,18 +487,21 @@ as the routines are present in the normal libraries.
 .Sh SEE ALSO
 .Xr adduser 8 ,
 .Xr aliases 5 ,
+.Xr amd 8 ,
 .Xr bootpd 8 ,
 .Xr bootptab 5 ,
 .Xr ccd 4 ,
 .Xr ccdconfig 8 ,
 .Xr chgrp 1 ,
 .Xr chmod 1 ,
+.Xr chown 8 ,
 .Xr crontab 1 ,
 .Xr crontab 5 ,
 .Xr date 1 ,
 .Xr df 1 ,
 .Xr domainname 8 ,
 .Xr exports 5 ,
+.Xr ext_srvtab 8 ,
 .Xr fbtab 5 ,
 .Xr fstab 5 ,
 .Xr group 5 ,
@@ -502,6 +515,7 @@ as the routines are present in the normal libraries.
 .Xr make 1 ,
 .Xr man 1 ,
 .Xr mount 8 ,
+.Xr named 8 ,
 .Xr netstat 1 ,
 .Xr newaliases 1 ,
 .Xr passwd 1 ,
@@ -513,7 +527,8 @@ as the routines are present in the normal libraries.
 .Xr route 8 ,
 .Xr su 1 ,
 .Xr umount 8 ,
-.Xr vipw 8 .
+.Xr vipw 8 ,
+.Xr ypbind 8 .
 .Sh HISTORY
-This document first appeared 
+This document first appeared
 .Ox 2.2 .
