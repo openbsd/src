@@ -308,7 +308,7 @@ void ssl_mutex_sem_create(server_rec *s, pool *p)
     }
     semctlbuf.sem_perm.uid  = ap_user_id;
     semctlbuf.sem_perm.gid  = ap_group_id;
-    semctlbuf.sem_perm.mode = 0660;
+    semctlbuf.sem_perm.mode = 0600;
     semctlarg.buf = &semctlbuf;
     if (semctl(semid, 0, IPC_SET, semctlarg) < 0) {
         ssl_log(s, SSL_LOG_ERROR|SSL_ADD_ERRNO,
