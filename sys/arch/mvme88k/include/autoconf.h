@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2001/03/16 00:03:52 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.8 2001/09/28 20:49:13 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -64,10 +64,8 @@ int always_match __P((struct device *, struct cfdata *, void *));
 #define CFDATA_LOC(cfdata) (cfdata->cf_loc)
 
 /* the following are from the prom/bootblocks */
-void	*bootaddr;	/* PA of boot device */
-int	bootctrllun;	/* ctrl_lun of boot device */
-int	bootdevlun;	/* dev_lun of boot device */
-int	bootpart;	/* boot partition (disk) */
+extern void	*bootaddr;	/* PA of boot device */
+extern int	bootpart;	/* boot partition (disk) */
 
 struct	device *bootdv; /* boot device */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.13 2001/09/19 21:32:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.14 2001/09/28 20:49:17 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -65,7 +65,10 @@ void	dumpconf __P((void));
 int	findblkmajor __P((struct device *));
 struct device	*getdisk __P((char *, int, int, dev_t *));
 
-int cold;   /* 1 if still booting */
+int cold = 1;   /* 1 if still booting */
+
+void *bootaddr;
+int bootpart;
 
 /*
  * called at boot time, configure all devices on the system.
