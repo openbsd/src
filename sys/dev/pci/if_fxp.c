@@ -359,7 +359,7 @@ fxp_attach(parent, self, aux)
 #ifdef __OpenBSD__
 	    , self->dv_xname
 #endif
-	);
+	    );
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
