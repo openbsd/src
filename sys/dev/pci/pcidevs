@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.84 1998/09/07 23:31:23 jason Exp $
+$OpenBSD: pcidevs,v 1.85 1998/09/20 04:16:40 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -244,7 +244,7 @@ vendor MENTOR		0x10cc	Mentor ARC
 vendor ADVSYSPROD	0x10cd	Advanced System Products
 vendor RADIUS		0x10ce	Radius
 vendor CITICORP		0x10cf	Citicorp TTI
-vendor FUJITSU2		0x10d0	Fujitsu Limited (2nd ID)
+vendor FUJITSU2		0x10d0	Fujitsu (2nd ID)
 vendor FUTUREPLUS	0x10d1	Future+ Systems
 vendor MOLEX		0x10d2	Molex
 vendor JABIL		0x10d3	Jabil Circuit
@@ -435,7 +435,7 @@ vendor MINDSHARE	0x119a	Mind Share
 vendor OMEGA		0x119b	Omega Micro
 vendor ITI		0x119c	Information Technology Institute
 vendor BUG		0x119d	Bug Sapporo
-vendor FUJITSU3		0x119e	Fujitsu (3th PCI Vendor ID)
+vendor FUJITSU3		0x119e	Fujitsu (3th ID)
 vendor BULL		0x119f	Bull Hn Information Systems
 vendor CONVEX		0x11a0	Convex Computer
 vendor HAMAMATSU	0x11a1	Hamamatsu Photonics
@@ -466,6 +466,7 @@ vendor PYRAMID		0x11bb	Pyramid Technologies
 vendor NETPERIPH	0x11bc	Network Peripherals
 vendor PINNACLE		0x11bd	Pinnacle Systems
 vendor IMI		0x11be	International Microcircuts
+vendor FUJITSU4		0x11c1  Fujitsu (4th ID)
 vendor NEC2		0x11c3	NEC (2nd ID)
 vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
@@ -489,6 +490,7 @@ vendor 3DO		0x1239	The 3D0 Company
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor AURORA		0x125c	Aurora Technologies
+vendor ESSTECH		0x125d	ESS Technology Inc
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
@@ -512,6 +514,7 @@ vendor WINBOND2		0x8c4a	Winbond Electronics (2nd ID)
 vendor COMPUTONE	0x8e0e	Computone Corperation
 vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
+vendor ADP2		0x9005	Adaptec (2nd ID)
 vendor ATRONICS		0x907f	Atronics
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
@@ -591,6 +594,11 @@ product ADP 3940U		0x8278	AHA-3940 Ultra
 product ADP 398XU		0x8378	AHA-398X Ultra
 product ADP 2944U		0x8478	AHA-2944 Ultra
 
+product ADP2 2940U2		0x0010	AHA-2940 Ultra2
+product ADP2 7890		0x001f	AIC-7890/1
+product ADP2 3940U2		0x0050	AHA-3940 Ultra2
+product ADP2 7896		0x005f	AIC-7896/7
+
 /* Alliance products */
 product	ALLIANCE AT24		0x6424	AT24
 
@@ -635,6 +643,7 @@ product AVANCE2 ALG2302		0x2302	ALG2302
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 
 /* Brooktree products */
 product BROOKTREE BT848		0x0350	BT848
@@ -760,6 +769,9 @@ product EMULEX LPPFC		0x10df	Light Pulse FibreChannel adapter
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 
+/* ESS Technology Inc products */
+product ESSTECH SOLO1		0x1969	SOLO-1 AudioDrive
+
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
@@ -770,6 +782,9 @@ product ES FREEDOM		0x0001	Freedom PCI-GBus Interface
 /* FORE products */
 product FORE PCA200		0x0210	ATM PCA-200
 product FORE PCA200E		0x0300	ATM PCA-200e
+
+/* Fujtsu products */
+product FUJITSU4 LTMODEM	0x0440	K56flex DSVD LTMODEM
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
@@ -885,6 +900,9 @@ product NEOMAGIC NM3160		0x0004	NM3160
 
 /* NetVin */
 product NETVIN NV5000		0x5000	NetVin 5000
+
+/* Newbridge / Tundra products */
+product NEWBRIDGE CA91CX42	0x0000	Universe VME bridge
 
 /* NCR/Symbios Logic products */
 product SYMBIOS 810		0x0001	53c810
@@ -1038,6 +1056,7 @@ product TOSHIBA	TC35856F	0x0020	TC35856F ATM (Meteor)
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
 product TRIDENT	TGUI_9350	0x9350	TGUI 9350
 product TRIDENT	TGUI_9360	0x9360	TGUI 9360
+product TRIDENT CYBER_9397	0x9397	CYBER 9397
 product TRIDENT	TGUI_9420	0x9420	TGUI 9420
 product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
