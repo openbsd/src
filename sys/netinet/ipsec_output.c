@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.28 2003/12/02 23:16:29 markus Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.29 2004/06/21 23:11:39 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -340,11 +340,14 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
 	tdb->tdb_last_used = time.tv_sec;
 
-	if (udpencap_enable && udpencap_port &&
-	    (tdb->tdb_flags & TDBF_UDPENCAP) != 0) {
+	if ((tdb->tdb_flags & TDBF_UDPENCAP) != 0) {
 		struct mbuf *mi;
 		struct udphdr *uh;
 
+		if (!udpencap_enable || !udpencap_port) {
+			m_freem(m);
+			return ENXIO;
+		}
 		mi = m_inject(m, sizeof(struct ip), sizeof(struct udphdr),
 		    M_DONTWAIT);
 		if (mi == NULL) {
