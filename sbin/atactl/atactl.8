@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.6 2001/04/23 15:30:26 aaron Exp $
+.\"	$OpenBSD: atactl.8,v 1.7 2001/07/20 18:07:11 mpech Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm atactl
 .Nd a program to manipulate ATA (IDE) devices
 .Sh SYNOPSIS
-.Nm
+.Nm atactl
 .Ar device
 .Ar command
 .Oo
@@ -298,7 +298,6 @@ to stderr and
 .Xr cron 8
 will mail it.
 .Sh DIAGNOSTICS
-.Pp
 Not all devices are created equally. Some may not support the feature sets 
 and/or commands needed to perform the requested action, even when the
 .Cm identify

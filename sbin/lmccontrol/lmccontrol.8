@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lmccontrol.8,v 1.5 2000/11/09 17:52:57 aaron Exp $
+.\"	$OpenBSD: lmccontrol.8,v 1.6 2001/07/20 18:07:11 mpech Exp $
 .\"
 .\" Copyright (c) 1997-1999 LAN Media Corporation (LMC)
 .\" All rights reserved.  www.lanmedia.com
@@ -116,14 +116,12 @@ more than 100 feet.
 Program the DS3 card for cable length for over 100 feet in length (higher
 power).
 .El
-.Pp
 .Sh EXAMPLES
 To set a SSI card for a speed of 2048000 bits/sec with HDLC keepalive off,
 one could use:
 .Bd -unfilled -offset indent
 lmccontrol lmc0 -l 2048000 -K
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr lmc 4 ,
 .Xr sppp 4 ,
