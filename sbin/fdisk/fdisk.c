@@ -1,5 +1,5 @@
 
-/* $OpenBSD: fdisk.c,v 1.21 1997/09/29 22:58:16 weingart Exp $ */
+/* $OpenBSD: fdisk.c,v 1.22 1997/09/29 23:16:59 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -48,12 +48,15 @@
 void
 usage()
 {
-	fprintf(stderr, "usage: fdisk [-ie] [-f mbrboot] [-c cyl] [-h head] [-s sect] disk\n");
-	fprintf(stderr, "\t-i: initialize disk with virgin MBR\n");
-	fprintf(stderr, "\t-e: edit MBRs on disk interactively\n");
-	fprintf(stderr, "\t-f: specify non-standard MBR template\n");
-	fprintf(stderr, "\t-chs: specify disk geometry\n");
-	fprintf(stderr, "`disk' may be of the forms: sd0 or /dev/rsd0c.\n");
+	extern char * __progname;
+	fprintf(stderr, "usage: %s "
+		"[-ie] [-f mbrboot] [-c cyl] [-h head] [-s sect] disk\n"
+		"\t-i: initialize disk with virgin MBR\n"
+		"\t-e: edit MBRs on disk interactively\n"
+		"\t-f: specify non-standard MBR template\n"
+		"\t-chs: specify disk geometry\n"
+		"`disk' may be of the forms: sd0 or /dev/rsd0c.\n",
+		__progname);
 	exit(1);
 }
 
