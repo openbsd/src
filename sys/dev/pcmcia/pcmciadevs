@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.105 2003/07/14 22:05:15 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.106 2003/10/28 23:44:02 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -377,6 +377,7 @@ vendor INTERSIL			-1	Intersil
 vendor PLANET			-1	Planet
 vendor PLANEX			-1	Planex
 vendor PREMAX			-1	Premax
+vendor RELIA			-1	Relia Technologies
 vendor RPTI			-1	RPTI
 vendor SARAMNCOM		-1	SaramNcom Co.,Ltd.
 vendor SHUTTLE			-1	Shuttle
@@ -461,3 +462,4 @@ product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P"
 product SIMPLETECH SPECTRUM24_ALT	{ "Symbol&spTechnologies", "LA4111&spSpectrum24&spWireless&spLAN&spPC&spCard", NULL, NULL }
 product AROWANA FE		{ "PCMCIA", "Fast-Ethernet", NULL, NULL }
 product GVC NP0335		{ "ETHER-C16", "ETHER-C16", "Fast&spEthernet", NULL }
+product RELIA RE2408T		{ "PCMCIA&spLAN", "Ethernet", "A", "004743118001" }

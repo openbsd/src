@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.107 2003/07/14 22:06:19 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.108 2003/10/28 23:45:07 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.105 2003/07/14 22:05:15 millert Exp 
+ *		OpenBSD: pcmciadevs,v 1.106 2003/10/28 23:44:02 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -519,6 +519,7 @@
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
 #define	PCMCIA_VENDOR_PLANEX	-1	/* Planex */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
+#define	PCMCIA_VENDOR_RELIA	-1	/* Relia Technologies */
 #define	PCMCIA_VENDOR_RPTI	-1	/* RPTI */
 #define	PCMCIA_VENDOR_SARAMNCOM	-1	/* SaramNcom Co.,Ltd. */
 #define	PCMCIA_VENDOR_SHUTTLE	-1	/* Shuttle */
@@ -669,3 +670,5 @@
 #define	PCMCIA_PRODUCT_AROWANA_FE	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_GVC_NP0335	{ "ETHER-C16", "ETHER-C16", "Fast Ethernet", NULL }
 #define	PCMCIA_PRODUCT_GVC_NP0335	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_RELIA_RE2408T	{ "PCMCIA LAN", "Ethernet", "A", "004743118001" }
+#define	PCMCIA_PRODUCT_RELIA_RE2408T	PCMCIA_PRODUCT_INVALID
