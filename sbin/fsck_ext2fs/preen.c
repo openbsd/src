@@ -1,8 +1,7 @@
-/*	$NetBSD: preen.c,v 1.12 1996/05/11 14:27:50 mycroft Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$NetBSD: preen.c,v 1.1 1997/06/11 11:21:59 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -39,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-static char rcsid[] = "$NetBSD: preen.c,v 1.12 1996/05/11 14:27:50 mycroft Exp $";
+static char rcsid[] = "$NetBSD: preen.c,v 1.1 1997/06/11 11:21:59 bouyer Exp $";
 #endif
 #endif /* not lint */
 

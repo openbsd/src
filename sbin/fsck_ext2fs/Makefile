@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/02/21 07:47:49 mikel Exp $
+#	$NetBSD: Makefile,v 1.1 1997/06/11 11:21:45 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	fsck_ext2fs

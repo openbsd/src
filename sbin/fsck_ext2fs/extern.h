@@ -1,8 +1,7 @@
-/*	$NetBSD: extern.h,v 1.6 1996/09/27 22:45:12 christos Exp $	*/
-
-/* Modified for EXT2FS on NetBSD by Manuel Bouyer, April 1997 */
+/*	$NetBSD: extern.h,v 1.1 1997/06/11 11:21:46 bouyer Exp $	*/
 
 /*
+ * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1994 James A. Jegers
  * All rights reserved.
  *
