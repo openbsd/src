@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.27 2001/09/27 11:40:33 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.28 2001/10/10 18:12:00 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -48,8 +48,8 @@ extern unsigned long expansion_id;
 extern int	expr __P((const char *));
 
 /* gnum4.c */
-extern void 	addtoincludepath __P((const char *dirname));
-extern struct input_file *fopen_trypath __P((struct input_file *, const char *filename));
+extern void 	addtoincludepath __P((const char *));
+extern struct input_file *fopen_trypath __P((struct input_file *, const char *));
 extern void doindir __P((const char *[], int));
 extern void dobuiltin __P((const char *[], int));
 extern void dopatsubst __P((const char *[], int));
@@ -87,7 +87,7 @@ extern void	putback __P((int));
 extern void	*xalloc __P((size_t));
 extern char	*xstrdup __P((const char *));
 extern void	usage __P((void));
-extern void	resizedivs __P((int n));
+extern void	resizedivs __P((int));
 extern size_t	buffer_mark __P((void));
 extern void	dump_buffer __P((FILE *, size_t));
 
