@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpq.c,v 1.14 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.15 2003/09/03 20:23:26 tedu Exp $	*/
 /*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpq.c,v 1.14 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpq.c,v 1.15 2003/09/03 20:23:26 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,10 @@ ckqueue(char *cap)
 
 	if (cgetstr(cap, "sd", &spooldir) == -1)
 		spooldir = _PATH_DEFSPOOL;
-	if ((dirp = opendir(spooldir)) == NULL)
+	dirp = opendir(spooldir);
+	if (spooldir != _PATH_DEFSPOOL)
+		free(spooldir);
+	if (dirp == NULL)
 		return (-1);
 	while ((d = readdir(dirp)) != NULL) {
 		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
