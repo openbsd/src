@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_quirks.c,v 1.1 2000/03/26 22:38:22 mickey Exp $	*/
-/*	$NetBSD$	*/
+/*	$OpenBSD: pci_quirks.c,v 1.2 2000/03/28 03:43:54 mickey Exp $	*/
+/*	$NetBSD: pci_quirks.c,v 1.1 1998/05/31 06:03:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
