@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.114 2002/01/23 16:27:35 mpech Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.115 2002/01/23 16:31:18 mpech Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.114 2002/01/23 16:27:35 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.115 2002/01/23 16:31:18 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -900,10 +900,10 @@ pass(passwd)
 		/* Save anonymous' password. */
 		guestpw = strdup(passwd);
 		if (guestpw == (char *)NULL)
-			fatal("Out of memory");
+			fatal("Out of memory.");
 
 		if ((as = auth_open()) == NULL)
-			fatal("Out of memory");
+			fatal("Out of memory.");
 		auth_setoption(as, "FTPD_HOST",
 		    multihome ? dhostname : hostname);
 		authok = auth_approval(as, lc, pw->pw_name, "ftp");

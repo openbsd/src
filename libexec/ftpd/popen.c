@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.13 2001/03/18 17:20:13 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.14 2002/01/23 16:31:18 mpech Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -112,14 +112,14 @@ ftpd_popen(program, type)
 			if (gargc < MAX_GARGV-1) {
 				gargv[gargc++] = strdup(argv[argc]);
 				if (gargv[gargc -1] == NULL)
-					fatal ("Out of memory");
+					fatal ("Out of memory.");
 			}
 
 		} else
 			for (pop = gl.gl_pathv; *pop && gargc < MAX_GARGV-1; pop++) {
 				gargv[gargc++] = strdup(*pop);
 				if (gargv[gargc - 1] == NULL)
-					fatal ("Out of memory");
+					fatal ("Out of memory.");
 			}
 		globfree(&gl);
 	}
