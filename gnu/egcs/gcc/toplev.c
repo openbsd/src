@@ -3621,6 +3621,10 @@ rest_of_compilation (decl)
   int failure = 0;
   int rebuild_label_notes_after_reload;
 
+  /* When processing delayed functions, init_function_start() won't
+     have been run to re-initialize it.  */
+  cse_not_expected = ! optimize;
+
   /* If we are reconsidering an inline function
      at the end of compilation, skip the stuff for making it inline.  */
 
