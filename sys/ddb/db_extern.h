@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_extern.h,v 1.5 1996/08/04 01:27:45 niklas Exp $	*/
+/*	$OpenBSD: db_extern.h,v 1.6 1996/09/27 14:42:32 briggs Exp $	*/
 /*	$NetBSD: db_extern.h,v 1.1 1996/02/05 01:57:00 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ int db_expression __P((db_expr_t *));
 void db_putstring __P((char *, int));
 void db_putnchars __P((int, int));
 void db_delete __P((int, int));
+void db_delete_line __P((void));
 int db_inputchar __P((int));
 int db_readline __P((char *, int));
 void db_check_interrupt __P((void));
