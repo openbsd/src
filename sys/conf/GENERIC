@@ -1,0 +1,71 @@
+#	$OpenBSD: GENERIC,v 1.1 1996/06/23 12:15:04 deraadt Exp $
+#
+#	Machine-independent options; used by all architectures for their
+#	GENERIC kernel
+
+options		INSECURE	# insecure; allow /dev/mem writing for X
+
+options		TIMEZONE=0	# time zone to adjust RTC time by
+options		DST=0		# daylight savings time used by RTC
+
+options		SWAPPAGER	# paging; REQUIRED
+options		VNODEPAGER	# mmap() of files
+options		DEVPAGER	# mmap() of devices
+
+options		DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options		DIAGNOSTIC	# internal consistency checks
+options		KTRACE		# system call tracing, a la ktrace(1)
+
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+#options	SHMMAXPGS=1024	# 1024 pages is the default
+
+options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options		COMPAT_09	# NetBSD 0.9,
+options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_11	# NetBSD 1.1,
+options		COMPAT_43	# and 4.3BSD
+options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+
+options		LKM		# loadable kernel modules
+
+options		FFS		# UFS
+options		QUOTA		# UFS quotas
+options		LFS		# log-structured file system
+options		MFS		# memory file system
+
+
+options		NFSCLIENT	# Network File System client
+options		NFSSERVER	# Network File System server
+
+options		CD9660		# ISO 9660 + Rock Ridge file system
+options		MSDOSFS		# MS-DOS file system
+options		FDESC		# /dev/fd
+options		FIFO		# FIFOs; RECOMMENDED
+options		KERNFS		# /kern
+options		NULLFS		# loopback file system
+options		PORTAL		# create sockets with open(2)
+options		PROCFS		# /proc
+options		UMAPFS		# NULLFS + uid and gid remapping
+options		UNION		# union file system
+
+#options	GATEWAY		# packet forwarding
+options		INET		# IP + ICMP + TCP + UDP
+options		NS		# XNS
+options		ISO,TPIP	# OSI
+options		EON		# OSI tunneling over IP
+options		CCITT,LLC,HDLC	# X.25
+options		IPFILTER	# IP packet filter for security
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+pseudo-device	sl	2		# CSLIP
+pseudo-device	ppp	2		# PPP
+pseudo-device	tun	2		# network tunneling over tty
+
+pseudo-device	pty	64		# pseudo-terminals
+pseudo-device	tb	1		# tablet line discipline
+pseudo-device	vnd	4		# paging to files
+pseudo-device	ccd	4		# concatenated disk devices
