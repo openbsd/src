@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.27 2004/07/20 18:58:41 espie Exp $
+# $OpenBSD: pkg_delete,v 1.28 2004/08/02 12:12:36 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -277,6 +277,16 @@ sub remove_packing_info
 	rmdir($dir) or die "Can't finish removing directory $dir: $!";
 }
 
+sub manpages_unindex
+{
+	my ($plist, $destdir) = @_;
+	return unless defined $plist->{state}->{mandirs};
+	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
+		system("/usr/libexec/makewhatis", "-u", $destdir.$k,
+		map { $destdir.$_ } @$v);
+	}
+}
+
 sub delete_package
 {
 	my ($pkgname, $state) = @_;
@@ -312,6 +322,7 @@ sub delete_package
 	if ($plist->has(DEINSTALL)) {
 		$plist->get(DEINSTALL)->delete($state);
 	} 
+	manpages_unindex($plist, $state->{destdir});
 	for my $item (@{$plist->{items}}) {
 		$item->delete($state);
 	}

@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.14 2004/08/02 12:08:25 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.15 2004/08/02 12:12:36 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -278,6 +278,26 @@ __PACKAGE__->setKeyword('info');
 sub keyword() { "info" }
 
 sub needs_keyword { 1 }
+
+package OpenBSD::PackingElement::Manpage;
+our @ISA=qw(OpenBSD::PackingElement::File);
+__PACKAGE__->setKeyword('man');
+sub keyword() { "man" }
+sub needs_keyword { 1 }
+
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->SUPER::destate($state);
+	my $fname = $self->fullname();
+	if ($fname =~ m,^(.*/man)/(?:man|cat).*?/,) {
+		my $d = $1;
+		$state->{mandirs} = {} unless defined $state->{mandirs};
+		$state->{mandirs}->{$d} = [] 
+		    unless defined $state->{mandirs}->{$d};
+		push(@{$state->{mandirs}->{$d}}, $fname);
+	}
+}
 
 package OpenBSD::PackingElement::Ignore;
 our @ISA=qw(OpenBSD::PackingElement);

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.36 2004/08/02 12:08:25 espie Exp $
+# $OpenBSD: pkg_add,v 1.37 2004/08/02 12:12:36 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -465,6 +465,17 @@ sub collision_report
 	}
 }
 
+sub manpages_index
+{
+	my ($plist, $destdir) = @_;
+	return unless defined $plist->{state}->{mandirs};
+	while (my ($k, $v) = each %{$plist->{state}->{mandirs}}) {
+		system("/usr/libexec/makewhatis", "-d", $destdir.$k,
+		map { $destdir.$_ } @$v);
+	}
+}
+
+
 sub really_add($$)
 {
 	my ($handle, $destdir) = @_;
@@ -552,6 +563,7 @@ sub really_add($$)
 		last if $interrupted;
 	}
 
+	manpages_index($plist, $destdir);
 	$handle->close();
 
 	unless ($opt_I) {
