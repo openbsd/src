@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.12 1999/08/04 14:38:33 jason Exp $
+.\"	$OpenBSD: intro.4,v 1.13 1999/08/04 17:34:44 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -111,39 +111,38 @@ AdvanSys PCI wide SCSI Host Adapters
 .It aic
 Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
 .It apm
-advanced power management device interface.
+advanced power management.
 .It aria
 Sierra Semiconductor Aria 16 sound cards
 .It ast
 multiplexing serial communications card first made by AST.
 .It bktr
-Brooktree video capture driver
+Brooktree video capture.
 .It boca
 BOCA serial cards.
 .It bt
 Buslogic BT-445, BT-74x, and BT-9xx SCSI boards.
 .It com
 NS8250-, NS16450-, and NS16550-based asynchronous serial
-communications device interface.
+communications.
 .It cy
-Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
-device interface.
+Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications.
 .It de
 DEC tulip-based ethernet cards
 .It ec
-3Com Etherlink II (3c503) Ethernet interface.
+3Com Etherlink II Ethernet (3C503).
 .It ef
-3Com Fast Etherlink ISA (3c515) Ethernet interface.
+3Com Fast Etherlink ISA Ethernet (3C515).
 .It eg
-3Com 3c505 Ethernet board.
+3Com EtherLink Plus Ethernet (3C505).
 .It el
-3Com 3c501 Ethernet board.
+3Com EtherLink Ethernet (3C501).
 .It ep
-3Com Etherlink III (3c5x9) Ethernet interface.
+3Com Etherlink III Ethernet (3C5x9, 3C59x).
 .It ex
 Intel EtherExpress PRO/10 ethernet cards
 .It ie
-Ethernet driver for the AT&T StarLAN 10, EN100, StarLan Fiber, and 3Com 3c507.
+AT&T StarLAN 10, EN100, StarLan Fiber, and 3Com 3c507 Ethernet.
 .It isp
 QLogic PCI SCSI controllers.
 .It iy
@@ -151,17 +150,19 @@ Ether-Express PRO/10
 .It joy
 Joystick
 .It le
-Ethernet driver for BICC Isolan, Novell NE2100, and Digital DEPCA cards.
+BICC Isolan, Novell NE2100, and Digital DEPCA Ethernet.
 .It lms
-Logitech-style bus mouse device interface.
+Logitech-style bus mouse.
 .It lpt
-Parallel port device interface.
+Parallel port.
 .It mcd
 Mitsumi CD-ROM drives.
 .It mem
 Main memory interface.
 .It mms
-Microsoft-style bus mouse device interface.
+Microsoft-style bus mouse.
+.It mx
+Macronix 98713/98715/98725 Ethernet.
 .It ncr
 NCR PCI SCSI adapter boards.
 .It ne
@@ -171,20 +172,22 @@ Numeric Processing Extension coprocessor and emulator.
 .It pctr
 CPU performance counter registers
 .It pms
-PS/2 auxiliary port mouse device interface.
+PS/2 auxiliary port mouse.
+.It pn
+Lite-On 82c168/82c169 PNIC ethernet.
 .It rtfps
 another multiplexing serial communications card.
 .It rl
-RealTek 8129/8139 fast ethernet
+RealTek 8129/8139 Ethernet.
 .It sb
 Sound Blaster card.
 .It sea
 Seagate/Future Domain SCSI cards.  ST01/02, Future Domain TMC-885, and
 Future Domain TMC-950.
 .It speaker
-console speaker device interface.
+console speaker.
 .It ti
-Alteon Tigon I & II Gigabit ethernet
+Alteon Tigon I & II Gigabit ethernet (3COM 3C985, Netgear GA620, etc).
 .It tl
 Texas Instruments ThunderLAN ethernet
 .It tx
@@ -192,6 +195,10 @@ SMC 9432 10/100 Mbps Ethernet cards
 .It uha
 Ultrastor ISA and EISA SCSI adapter cards.  Ultrastore 14f, Ultrastore 34f,
 and Ultrastore 24f.
+.It vr
+VIA Rhine Ethernet.
+.It wb
+Winbond W89C840F fast ethernet.
 .It wdc
 Standard ISA Western Digital type hard drives.  MFM, RLL, ESDI, and IDE.
 .It wds
@@ -203,11 +210,5 @@ Western Digital/SMC WD 80x3, SMC Elite Ultra and SMC EtherEZ Ethernet cards.
 .It wt
 Wangtek and compatible tape drives.  QIC-02 and QIC-36.
 .It xl
-3COM 3c9xx Etherlink XL and Fast Etherlink XL cards
+3COM Etherlink XL and Fast Etherlink XL (3c9xx)
 .El
-.Sh HISTORY
-The
-.Tn i386
-.Nm intro
-appeared in
-.Nx 0.9a .
