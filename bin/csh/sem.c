@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.5 1998/05/18 20:38:21 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.6 1998/08/26 08:00:07 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sem.c,v 1.5 1998/05/18 20:38:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sem.c,v 1.6 1998/08/26 08:00:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,8 @@ execute(t, wanttty, pipein, pipeout)
 		/*
 		 * Continue for builtins that are part of the scripting language
 		 */
-		if (bifunc->bfunct != dobreak   && bifunc->bfunct != docontin &&
+		if (bifunc &&
+		    bifunc->bfunct != dobreak   && bifunc->bfunct != docontin &&
 		    bifunc->bfunct != doelse    && bifunc->bfunct != doend    &&
 		    bifunc->bfunct != doforeach && bifunc->bfunct != dogoto   &&
 		    bifunc->bfunct != doif      && bifunc->bfunct != dorepeat &&
