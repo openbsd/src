@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.48 2002/11/16 22:54:46 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.49 2003/04/03 17:48:50 millert Exp $
  */
 
 #include <sys/param.h>
@@ -47,10 +47,7 @@ static char *tgetline(int, char *, size_t, int);
  * record.
  */
 int
-skeychallenge(mp, name, ss)
-	struct skey *mp;
-	char *name;
-	char *ss;
+skeychallenge(struct skey *mp, char *name, char *ss)
 {
 	int rval;
 
@@ -85,9 +82,7 @@ skeychallenge(mp, name, ss)
  *  1: entry not found
  */
 int
-skeylookup(mp, name)
-	struct skey *mp;
-	char *name;
+skeylookup(struct skey *mp, char *name)
 {
 	struct stat statbuf;
 	size_t nread;
@@ -184,8 +179,7 @@ skeylookup(mp, name)
  *  1: no more entries, keydir is closed.
  */
 int
-skeygetnext(mp)
-	struct skey *mp;
+skeygetnext(struct skey *mp)
 {
 	struct dirent entry, *dp;
 	int rval;
@@ -226,9 +220,7 @@ skeygetnext(mp)
  * The database file is always closed by this call.
  */
 int
-skeyverify(mp, response)
-	struct skey *mp;
-	char *response;
+skeyverify(struct skey *mp, char *response)
 {
 	char key[SKEY_BINKEY_SIZE];
 	char fkey[SKEY_BINKEY_SIZE];
@@ -308,8 +300,7 @@ skeyverify(mp, response)
  *
  */
 int
-skey_haskey(username)
-	char *username;
+skey_haskey(char *username)
 {
 	struct skey skey;
 	int i;
@@ -330,8 +321,7 @@ skey_haskey(username)
  *
  */
 char *
-skey_keyinfo(username)
-	char *username;
+skey_keyinfo(char *username)
 {
 	int i;
 	static char str[SKEY_MAX_CHALLENGE];
@@ -358,9 +348,7 @@ skey_keyinfo(username)
  *
  */
 int
-skey_passcheck(username, passwd)
-	char *username;
-	char *passwd;
+skey_passcheck(char *username, char *passwd)
 {
 	int i;
 	struct skey skey;
@@ -382,8 +370,7 @@ skey_passcheck(username, passwd)
  * hash_collapse()
  */
 static u_int32_t
-hash_collapse(s)
-	u_char *s;
+hash_collapse(u_char *s)
 {
 	int len, target;
 	u_int32_t i;
@@ -406,9 +393,7 @@ hash_collapse(s)
  *
  */
 static void
-skey_fakeprompt(username, skeyprompt)
-	char *username;
-	char *skeyprompt;
+skey_fakeprompt(char *username, char *skeyprompt)
 {
 	int i;
 	u_int ptr;
@@ -530,8 +515,7 @@ skey_fakeprompt(username, skeyprompt)
  *
  */
 int
-skey_authenticate(username)
-	char *username;
+skey_authenticate(char *username)
 {
 	int i;
 	char pbuf[SKEY_MAX_PW_LEN+1], skeyprompt[SKEY_MAX_CHALLENGE+1];
@@ -567,8 +551,7 @@ skey_authenticate(username)
  *  0: record was successfully unlocked
  */
 int
-skey_unlock(mp)
-	struct skey *mp;
+skey_unlock(struct skey *mp)
 {
 	if (mp->logname == NULL || mp->keyfile == NULL)
 		return (-1);
@@ -580,11 +563,7 @@ skey_unlock(mp)
  * Get a line of input (optionally timing out) and place it in buf.
  */
 static char *
-tgetline(fd, buf, bufsiz, timeout)
-	int fd;
-	char *buf;
-	size_t bufsiz;
-	int timeout;
+tgetline(int fd, char *buf, size_t bufsiz, int timeout)
 {
 	size_t left;
 	int n;

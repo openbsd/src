@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $OpenBSD: put.c,v 1.12 2002/06/22 02:13:10 deraadt Exp $
+ * $OpenBSD: put.c,v 1.13 2003/04/03 17:48:50 millert Exp $
  */
 
 #include <stdio.h>
@@ -322,13 +322,11 @@ static const char * const Wp[2048] = {
 };
 
 /*
- * Encode 8 bytes in 'c' as a string of English words.
- * Returns a pointer to a static buffer
+ * Encode 8 bytes in 'c' as a string of 6 four-letter English words separated
+ * by spaces.  The 'out' pointer must have at least 30 bytes for storage.
  */
 char *
-btoe(engout, c)
-	char *engout;
-	char *c;
+btoe(char *engout, char *c)
 {
 	char cp[10];	/* add in room for the parity 2 bits + extract() slop */
 	int p, i, indices[6];
@@ -350,7 +348,7 @@ btoe(engout, c)
 	indices[4] = extract(cp, 44, 11);
 	indices[5] = extract(cp, 55, 11);
 
-	sprintf(engout, "%.4s %.4s %.4s %.4s %.4s %.4s", Wp[indices[0]],
+	snprintf(engout, 30, "%.4s %.4s %.4s %.4s %.4s %.4s", Wp[indices[0]],
 	    Wp[indices[1]], Wp[indices[2]], Wp[indices[3]],
 	    Wp[indices[4]], Wp[indices[5]]);
 
@@ -358,16 +356,15 @@ btoe(engout, c)
 }
 
 /*
- * convert English to binary
+ * Converts the 6 space-separated english words in 'e' to binary form.
+ * The 'out' variable must be at least SKEY_BINKEY_SIZE bytes in size.
  * returns 1 OK - all good words and parity is OK
  *         0 word not in data base
  *        -1 badly formed in put ie > 4 char word
  *        -2 words OK but parity is wrong
  */
 int
-etob(out, e)
-	char *out;
-	char *e;
+etob(char *out, char *e)
 {
 	char *word;
 	int i, p, v, l, low, high;
@@ -378,8 +375,7 @@ etob(out, e)
 	if (e == NULL)
 		return(-1);
 
-	(void)strncpy(input, e, sizeof(input) - 1);
-	input[sizeof(input) - 1] = '\0';
+	(void)strlcpy(input, e, sizeof(input));
 	(void)memset(b, 0, sizeof(b));
 	(void)memset(out, 0, SKEY_BINKEY_SIZE);
 	for (i = 0, p = 0; i < 6; i++, p += 11) {
@@ -416,13 +412,14 @@ etob(out, e)
 	return(1);
 }
 
-/* Display 8 bytes as a series of 16-bit hex digits */
+/*
+ * Format 8 bytes as a series of four 16-bit hex digits.
+ * The 'out' pointer must have at least 20 bytes for storage.
+ */
 char *
-put8(out, s)
-	char *out;
-	char *s;
+put8(char *out, char *s)
 {
-	(void)sprintf(out, "%02X%02X %02X%02X %02X%02X %02X%02X",
+	(void)snprintf(out, 20, "%02X%02X %02X%02X %02X%02X %02X%02X",
 			s[0] & 0xff, s[1] & 0xff, s[2] & 0xff,
 			s[3] & 0xff, s[4] & 0xff, s[5] & 0xff,
 			s[6] & 0xff, s[7] & 0xff);
@@ -433,10 +430,7 @@ put8(out, s)
 
 /* Dictionary binary search */
 static int
-wsrch(w, low, high)
-	char *w;
-	int low;
-	int high;
+wsrch(char *w, int low, int high)
 {
 	int i, j;
 
@@ -464,11 +458,7 @@ wsrch(w, low, high)
 }
 
 static void
-insert(s, x, start, length)
-	char *s;
-	int x;
-	int start;
-	int length;
+insert(char *s, int x, int start, int length)
 {
 	unsigned char cl;
 	unsigned char cc;
@@ -499,10 +489,8 @@ insert(s, x, start, length)
 }
 
 static void
-standard(word)
-	char *word;
+standard(char *word)
 {
-
 	while (*word) {
 		if (!isascii(*word))
 			break;
@@ -520,10 +508,7 @@ standard(word)
 
 /* Extract 'length' bits from the char array 's' starting with bit 'start' */
 static unsigned int
-extract(s, start, length)
-	char *s;
-	int start;
-	int length;
+extract(char *s, int start, int length)
 {
 	unsigned char cl;
 	unsigned char cc;

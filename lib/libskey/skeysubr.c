@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.25 2002/05/29 18:53:15 deraadt Exp $
+ * $OpenBSD: skeysubr.c,v 1.26 2003/04/03 17:48:50 millert Exp $
  */
 
 #include <stdio.h>
@@ -61,23 +61,19 @@ static struct skey_algorithm_table skey_algorithm_table[] = {
 
 /*
  * Crunch a key:
- * concatenate the seed and the password, run through hash function and
- * collapse to 64 bits. This is defined as the user's starting key.
+ *  Concatenate the seed and the password, run through hash function and
+ *  collapse to 64 bits.  This is defined as the user's starting key.
+ *  The result pointer must have at least SKEY_BINKEY_SIZE bytes of storage.
+ *  The seed and password may be of any length.
  */
 int
-keycrunch(result, seed, passwd)
-	char *result;	/* SKEY_BINKEY_SIZE result */
-	char *seed;	/* Seed, any length */
-	char *passwd;	/* Password, any length */
+keycrunch(char *result, char *seed, char *passwd)
 {
 	return(skey_algorithm_table[skey_hash_type].keycrunch(result, seed, passwd));
 }
 
 static int
-keycrunch_md4(result, seed, passwd)
-	char *result;	/* SKEY_BINKEY_SIZE result */
-	char *seed;	/* Seed, any length */
-	char *passwd;	/* Password, any length */
+keycrunch_md4(char *result, char *seed, char *passwd)
 {
 	char *buf = NULL;
 	MD4_CTX md;
@@ -119,10 +115,7 @@ keycrunch_md4(result, seed, passwd)
 }
 
 static int
-keycrunch_md5(result, seed, passwd)
-	char *result;	/* SKEY_BINKEY_SIZE result */
-	char *seed;	/* Seed, any length */
-	char *passwd;	/* Password, any length */
+keycrunch_md5(char *result, char *seed, char *passwd)
 {
 	char *buf;
 	MD5_CTX md;
@@ -164,10 +157,7 @@ keycrunch_md5(result, seed, passwd)
 }
 
 static int
-keycrunch_sha1(result, seed, passwd)
-	char *result;	/* SKEY_BINKEY_SIZE result */
-	char *seed;	/* Seed, any length */
-	char *passwd;	/* Password, any length */
+keycrunch_sha1(char *result, char *seed, char *passwd)
 {
 	char *buf;
 	SHA1_CTX sha;
@@ -220,10 +210,7 @@ keycrunch_sha1(result, seed, passwd)
 }
 
 static int
-keycrunch_rmd160(result, seed, passwd)
-	char *result;	/* SKEY_BINKEY_SIZE result */
-	char *seed;	/* Seed, any length */
-	char *passwd;	/* Password, any length */
+keycrunch_rmd160(char *result, char *seed, char *passwd)
 {
 	char *buf;
 	RMD160_CTX rmd;
@@ -270,16 +257,14 @@ keycrunch_rmd160(result, seed, passwd)
  * Takes SKEY_BINKEY_SIZE bytes and returns SKEY_BINKEY_SIZE bytes in place.
  */
 void
-f(x)
-	char *x;
+f(char *x)
 {
 	(void)skey_algorithm_table[skey_hash_type].keycrunch(x, NULL, NULL);
 }
 
 /* Strip trailing cr/lf from a line of text */
 void
-rip(buf)
-	char *buf;
+rip(char *buf)
 {
 	buf += strcspn(buf, "\r\n");
 
@@ -289,9 +274,7 @@ rip(buf)
 
 /* Read in secret password (turns off echo) */
 char *
-readpass(buf, n)
-	char *buf;
-	int n;
+readpass(char *buf, int n)
 {
 	void (*old_handler)();
 
@@ -319,9 +302,7 @@ readpass(buf, n)
 
 /* Read in an s/key OTP (does not turn off echo) */
 char *
-readskey(buf, n)
-	char *buf;
-	int n;
+readskey(char *buf, int n)
 {
 	(void)fgets(buf, n, stdin);
 	rip(buf);
@@ -333,8 +314,7 @@ readskey(buf, n)
 
 /* Signal handler for trapping ^C */
 static void
-trapped(sig)
-	int sig;
+trapped(int sig)
 {
 	write(STDERR_FILENO, "^C\n", 3);
 
@@ -345,13 +325,11 @@ trapped(sig)
 }
 
 /*
- * Convert 8-byte hex-ascii string to binary array
+ * Convert 16-byte hex-ascii string to 8-byte binary array
  * Returns 0 on success, -1 on error
  */
 int
-atob8(out, in)
-	char *out;
-	char *in;
+atob8(char *out, char *in)
 {
 	int i;
 	int val;
@@ -375,28 +353,23 @@ atob8(out, in)
 	return(0);
 }
 
-/* Convert 8-byte binary array to hex-ascii string */
+/* Convert 8-byte binary array to 16-byte hex-ascii string */
 int
-btoa8(out, in)
-	char *out;
-	char *in;
+btoa8(char *out, char *in)
 {
-	int i;
-
 	if (in == NULL || out == NULL)
 		return(-1);
 
-	for (i=0; i < 8; i++) {
-		(void)sprintf(out, "%02x", *in++ & 0xff);
-		out += 2;
-	}
+	(void)snprintf(out, 17, "%02x%02x%02x%02x%02x%02x%02x%02x",
+	    in[0] & 0xff, in[1] & 0xff, in[2] & 0xff, in[3] & 0xff,
+	    in[4] & 0xff, in[5] & 0xff, in[6] & 0xff, in[7] & 0xff);
+
 	return(0);
 }
 
 /* Convert hex digit to binary integer */
 int
-htoi(c)
-	int c;
+htoi(int c)
 {
 	if ('0' <= c && c <= '9')
 		return(c - '0');
@@ -409,8 +382,7 @@ htoi(c)
 
 /* Skip leading spaces from the string */
 char *
-skipspace(cp)
-	char *cp;
+skipspace(char *cp)
 {
 	while (*cp == ' ' || *cp == '\t')
 		cp++;
@@ -423,8 +395,7 @@ skipspace(cp)
 
 /* Remove backspaced over characters from the string */
 void
-backspace(buf)
-	char *buf;
+backspace(char *buf)
 {
 	char bs = 0x8;
 	char *cp = buf;
@@ -449,8 +420,7 @@ backspace(buf)
 
 /* Make sure line is all seven bits */
 void
-sevenbit(s)
-	char *s;
+sevenbit(char *s)
 {
 	while (*s)
 		*s++ &= 0x7f;
@@ -458,8 +428,7 @@ sevenbit(s)
 
 /* Set hash algorithm type */
 char *
-skey_set_algorithm(new)
-	char *new;
+skey_set_algorithm(char *new)
 {
 	int i;
 
@@ -475,15 +444,14 @@ skey_set_algorithm(new)
 
 /* Get current hash type */
 const char *
-skey_get_algorithm()
+skey_get_algorithm(void)
 {
 	return(skey_algorithm_table[skey_hash_type].name);
 }
 
 /* Turn echo on/off */
 static void
-skey_echo(action)
-	int action;
+skey_echo(int action)
 {
 	static struct termios term;
 	static int echo = 0;
@@ -505,12 +473,12 @@ skey_echo(action)
 
 /* Convert string to lower case */
 static void
-lowcase(s)
-	char *s;
+lowcase(char *s)
 {
 	char *p;
 
-	for (p = s; *p; p++)
+	for (p = s; *p; p++) {
 		if (isupper(*p))
 			*p = tolower(*p);
+	}
 }
