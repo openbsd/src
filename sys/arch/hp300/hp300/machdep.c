@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.95 2005/01/08 22:13:54 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.96 2005/01/10 21:23:52 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -147,9 +147,9 @@ extern struct emul emul_sunos;
  * Some storage space must be allocated statically because of the
  * early console initialization.
  * We know that console initialization will not try to map more than
- * DIO_DEVSIZE bytes. Play safe and allow for twice this size.
+ * DIOII_DEVSIZE bytes. Play safe and allow for twice this size.
  */
-char	extiospace[EXTENT_FIXED_STORAGE_SIZE(2 * DIO_DEVSIZE / PAGE_SIZE)];
+char	extiospace[EXTENT_FIXED_STORAGE_SIZE(2 * DIOII_DEVSIZE / PAGE_SIZE)];
 extern int eiomapsize;
 
 /* prototypes for local functions */
