@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.21 1997/03/25 23:08:57 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.22 1997/03/26 05:23:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.21 1997/03/25 23:08:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.22 1997/03/26 05:23:57 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -503,7 +503,7 @@ main(argc, argv)
 	ypbindlist = (struct _dom_binding *)malloc(sizeof *ypbindlist);
 	memset(ypbindlist, 0, sizeof *ypbindlist);
 	strncpy(ypbindlist->dom_domain, domain, sizeof ypbindlist->dom_domain-1);
-	ypbindlist->dom_domain[sizeof ypbindlist->dom_domain)-1] = '\0';
+	ypbindlist->dom_domain[sizeof (ypbindlist->dom_domain)-1] = '\0';
 	ypbindlist->dom_vers = YPVERS;
 	ypbindlist->dom_alive = 0;
 	ypbindlist->dom_lockfd = -1;
@@ -1007,7 +1007,7 @@ int force;
 		ypdb = (struct _dom_binding *)malloc(sizeof *ypdb);
 		memset(ypdb, 0, sizeof *ypdb);
 		strncpy(ypdb->dom_domain, dom, sizeof ypdb->dom_domain-1);
-		ypdb->dom_domain[sizeof ypdb->dom_domain)-1] = '\0';
+		ypdb->dom_domain[sizeof (ypdb->dom_domain)-1] = '\0';
 		ypdb->dom_lockfd = -1;
 		ypdb->dom_pnext = ypbindlist;
 		ypbindlist = ypdb;
