@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.62 2001/03/06 19:56:50 brad Exp $
+.\"	$OpenBSD: options.4,v 1.63 2001/04/05 04:01:56 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -408,10 +408,9 @@ With soft updates, you gain the performance of asynchronous writes while
 retaining the safety of synchronous metadata updates.
 .Pp
 Soft updates must be enabled on a per-filesystem basis.
-To do this, boot into single user mode and run
-.Ic tunefs -s enable special
-on each character special device you want to enable soft updates on, then run
-.Ic reboot -n .
+See
+.Xr mount 8
+for details.
 .Pp
 Processors with a small kernel address space, such as the sun4 and sun4c, do
 not have enough kernel memory to support soft updates.
