@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.24 2001/09/19 20:50:59 mickey Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.25 2001/11/06 00:24:55 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.43 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
  *
