@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.70 2004/10/06 17:00:03 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.71 2004/10/06 17:02:47 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2418,7 +2418,7 @@ dc_intr(arg)
 	sc = arg;
 	ifp = &sc->sc_arpcom.ac_if;
 
-	/* Supress unwanted interrupts */
+	/* Suppress unwanted interrupts */
 	if (!(ifp->if_flags & IFF_UP)) {
 		if (CSR_READ_4(sc, DC_ISR) & DC_INTRS)
 			dc_stop(sc);
