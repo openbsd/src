@@ -46,6 +46,23 @@ Boston, MA 02111-1307, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
+#undef LINK_SPEC
+#define LINK_SPEC \
+  "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e __start}}}} \
+   %{shared:-shared} %{R*} \
+   %{static:-Bstatic} \
+   %{!static:-Bdynamic} \
+   %{assert*} \
+   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+
+/* As an elf system, we need crtbegin/crtend stuff.  */
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC "\
+        %{!shared: %{pg:gcrt0%O%s} %{!pg:%{p:gcrt0%O%s} %{!p:crt0%O%s}} \
+        crtbegin%O%s} %{shared:crtbeginS%O%s}"
+#undef ENDFILE_SPEC
+#define ENDFILE_SPEC "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+
 /* Specific options for DBX Output.  */
 
 /* This is BSD, so it wants DBX format.  */
