@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.35 2002/09/13 01:31:39 djm Exp $	*/
+/*	$OpenBSD: parse.c,v 1.36 2002/11/25 11:08:18 mpech Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -534,7 +534,7 @@ parse6(int fd, struct sockaddr_in6 *laddr, struct sockaddr_in6 *faddr)
 		if ((n = snprintf(buf, sizeof(buf),
 		    "%d , %d : USERID : %s%s%s :%s\r\n", lport, fport,
 		    opsys_name, charset_sep, charset_name, token))
-		    >= sizeof(buf))
+		    >= sizeof(buf) || n < 0)
 			n = strlen(buf);
 		if (timed_write(fd, buf, n, IO_TIMEOUT) != n && syslog_flag) {
 			syslog(LOG_NOTICE, "write to %s: %m", gethost6(faddr));
