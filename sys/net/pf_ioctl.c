@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.119 2004/05/05 23:16:03 frantzen Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.120 2004/05/18 10:35:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1388,10 +1388,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    ruleset->rules[rs_num].active.ptr, entries)
 			oldrule->nr = nr++;
 
+		ruleset->rules[rs_num].active.ticket++;
+
 		pf_calc_skip_steps(ruleset->rules[rs_num].active.ptr);
 		pf_remove_if_empty_ruleset(ruleset);
 
-		ruleset->rules[rs_num].active.ticket++;
 		splx(s);
 		break;
 	}
