@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.77 2001/06/27 10:31:51 kjell Exp $ */
+/*	$OpenBSD: pf.c,v 1.78 2001/06/27 16:07:16 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1533,7 +1533,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		struct pf_state *s;
 
 		len = h->ip_len - off - 8;
-		id = ih->icmp_hun.ih_idseq.icd_id;
+		id = ih->icmp_id;
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
 			return (PF_DROP);
@@ -1859,9 +1859,9 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 		key.proto   = IPPROTO_ICMP;
 		key.addr[0] = h->ip_src.s_addr;
-		key.port[0] = ih->icmp_hun.ih_idseq.icd_id;
+		key.port[0] = ih->icmp_id;
 		key.addr[1] = h->ip_dst.s_addr;
-		key.port[1] = ih->icmp_hun.ih_idseq.icd_id;
+		key.port[1] = ih->icmp_id;
 
 		s = find_state((direction == PF_IN) ? tree_ext_gwy :
 		    tree_lan_ext, &key);
