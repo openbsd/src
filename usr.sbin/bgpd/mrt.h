@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.5 2003/12/30 13:03:27 henning Exp $ */
+/*	$OpenBSD: mrt.h,v 1.6 2004/01/02 00:13:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -51,7 +51,7 @@ enum MRT_MSG_TYPES {
 	MSG_PROTOCOL_BGP4PLUS1,	/* 10 msg is a BGP4+ (draft 01) packet */
 	MSG_PROTOCOL_OSPF,	/* 11 msg is an OSPF packet */
 	MSG_TABLE_DUMP,		/* 12 routing table dump */
-	MSG_PROTOCOL_BGP4MP=16,	/* 16 zebras own packet format */
+	MSG_PROTOCOL_BGP4MP=16	/* 16 zebras own packet format */
 };
 
 #define MRT_HEADER_SIZE		sizeof(struct mrt_header)
