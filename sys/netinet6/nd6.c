@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.60 2002/10/12 01:09:45 krw Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.61 2003/06/24 07:31:50 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -428,6 +428,7 @@ nd6_timer(ignored_arg)
 			} else {
 				struct mbuf *m = ln->ln_hold;
 				if (m) {
+					ln->ln_hold = NULL;
 					/*
 					 * Fake rcvif to make the ICMP error
 					 * more helpful in diagnosing for the
@@ -439,7 +440,6 @@ nd6_timer(ignored_arg)
 
 					icmp6_error(m, ICMP6_DST_UNREACH,
 						    ICMP6_DST_UNREACH_ADDR, 0);
-					ln->ln_hold = NULL;
 				}
 				next = nd6_free(rt, 0);
 			}
