@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.6 1996/06/29 18:54:11 deraadt Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.7 1997/07/23 03:46:01 denny Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -79,6 +79,12 @@
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
+#endif
+
+#ifdef NETATALK
+#include <netinet/if_ether.h>
+#include <netatalk/at.h>
+#include <netatalk/at_var.h>
 #endif
 
 #if NBPFILTER > 0
@@ -186,6 +192,12 @@ looutput(ifp, m, dst, rt)
 		isr = NETISR_ISO;
 		break;
 #endif
+#ifdef NETATALK
+	case AF_APPLETALK:
+		ifq = &atintrq2;
+		isr = NETISR_ATALK;
+		break;
+#endif NETATALK
 	default:
 		printf("%s: can't handle af%d\n", ifp->if_xname,
 			dst->sa_family);

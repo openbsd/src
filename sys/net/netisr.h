@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.9 1997/02/24 13:34:03 niklas Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.10 1997/07/23 03:46:02 denny Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #define	NETISR_NS	6		/* same as AF_NS */
 #define	NETISR_ISO	7		/* same as AF_ISO */
 #define	NETISR_CCITT	10		/* same as AF_CCITT */
+#define	NETISR_ATALK	16		/* same as AF_APPLETALK */
 #define	NETISR_ARP	18		/* same as AF_LINK */
 #define NETISR_IPX	23		/* same as AF_IPX */
 #define NETISR_ISDN	26		/* same as AF_E164 */
