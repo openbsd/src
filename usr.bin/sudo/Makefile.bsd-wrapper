@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2002/04/26 16:04:24 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2003/03/15 19:26:28 millert Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
 BINOWN=	root
@@ -39,7 +39,7 @@ config: .FORCE
 	CONFIG_FILES="Makefile config.h pathnames.h" \
 	${XCFLAGS} sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
 
-config.status:
+config.status: configure
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	CONFIG_FILES="Makefile config.h pathnames.h" \
 	${XCFLAGS} sh ${.CURDIR}/configure ${CONFIGURE_OPTS} ${CF}
