@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.20 2003/01/13 07:57:47 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.21 2003/01/15 09:42:52 cedric Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -158,9 +158,9 @@ void
 pfr_initialize(void)
 {
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
-	    "pfr_ktable", NULL);
+	    "pfrktable", NULL);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
-	    "pfr_kentry", NULL);
+	    "pfrkentry", NULL);
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
@@ -264,7 +264,8 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		pfr_insert_kentries(kt, &workq, tzero);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
-	}
+	} else
+		pfr_destroy_kentries(&workq);
 	if (nadd != NULL)
 		*nadd = xadd;
 	if (tmpkt != NULL)
@@ -431,7 +432,8 @@ _skip:
 		pfr_clstats_kentries(&changeq, tzero, INVERT_NEG_FLAG);
 		if (flags & PFR_FLAG_ATOMIC)
 			splx(s);
-	}
+	} else
+		pfr_destroy_kentries(&addq);
 	if (nadd != NULL)
 		*nadd = xadd;
 	if (ndel != NULL)
