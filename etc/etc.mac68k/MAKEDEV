@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.11 2003/06/18 18:08:59 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.60 2003/06/18 18:08:59 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.61 2003/10/11 03:32:15 tedu Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
 #
 #
@@ -301,7 +301,7 @@ pty*)
 
 vnd*)
 	dodisk vnd $U 8 19 $U 0
-	dodisk svnd $U 8 19 $U 128
+	dodisk svnd $U 8 19 $U 2048
 	;;
 
 ch*)
