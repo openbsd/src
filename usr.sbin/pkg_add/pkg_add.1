@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.2 2003/10/26 10:33:24 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.3 2003/11/06 18:20:04 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -76,7 +76,11 @@ as a package name causes
 to read from the standard input.
 .Pp
 Alternatively, it is possible to add packages interactively from within
-the ftp client.
+the ftp client,
+in which case setting
+.Ev PKG_PATH
+correctly will be necessary for any dependency to be found out and retrieved
+the same way.
 For example, the following works:
 .Bd -literal
 	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/
