@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.34 2001/06/05 21:18:56 pjanzen Exp $
+.\"	$OpenBSD: printf.3,v 1.35 2001/06/23 15:00:25 provos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -369,8 +369,8 @@ conversion corresponds to a pointer to a
 .Li long int
 argument.
 .It
-The optional character
-.Cm q ,
+The optional character sequence
+.Cm \&ll ,
 specifying that a following
 .Cm d ,
 .Cm i ,
@@ -387,7 +387,9 @@ argument, or that a following
 .Cm n
 conversion corresponds to a pointer to a
 .Li quad int
-argument.
+argument.  The use of
+.Cm q
+has been depreciated as conversion character.
 .It
 The character
 .Cm L
