@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.3 1996/08/21 19:03:29 deraadt Exp $
+.\"	$OpenBSD: mktemp.3,v 1.4 1997/06/20 04:10:18 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,8 @@
 .Fn mktemp "char *template"
 .Ft int
 .Fn mkstemp "char *template"
+.Ft char *
+.Fn mkdtemp "char *template"
 .Sh DESCRIPTION
 The
 .Fn mktemp
@@ -78,11 +80,18 @@ makes the same replacement to the template and creates the template file,
 mode 0600, returning a file descriptor opened for reading and writing.
 This avoids the race between testing for a file's existence and opening it
 for use.
+.Pp
+The
+.Fn mkdtemp
+function makes the same replacement to the template as in
+.Xr mktemp 3
+and creates the template directory, mode 0700.
 .Sh RETURN VALUES
 The
 .Fn mktemp
-function
-returns a pointer to the template on success and
+and
+.Fn mkdtemp
+functions return a pointer to the template on success and
 .Dv NULL
 on failure.
 The
@@ -93,9 +102,10 @@ If either call fails an error code is placed in the global variable
 .Va errno .
 .Sh ERRORS
 The
-.Fn mktemp
-and
+.Fn mktemp ,
 .Fn mkstemp
+and
+.Fn mkdtemp
 functions
 may set
 .Va errno
@@ -106,9 +116,10 @@ The pathname portion of the template is not an existing directory.
 .El
 .Pp
 The
-.Fn mktemp
-and
+.Fn mktemp ,
 .Fn mkstemp
+and
+.Fn mkdtemp
 functions
 may also set
 .Va errno
@@ -124,6 +135,15 @@ may also set
 to any value specified by the
 .Xr open 2
 function.
+.Pp
+The
+.Fn mkdtemp
+function
+may also set
+.Va errno
+to any value specified by the
+.Xr mkdir 2
+function.
 .Sh BUGS
 An attacker can guess the filenames produced by
 .Fn mktemp .
@@ -133,6 +153,7 @@ should be used instead.
 .Sh SEE ALSO
 .Xr chmod 2 ,
 .Xr getpid 2 ,
+.Xr mkdir 2 ,
 .Xr open 2 ,
 .Xr stat 2
 .Sh HISTORY

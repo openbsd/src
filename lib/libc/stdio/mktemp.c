@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.8 1997/04/07 22:48:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.9 1997/06/20 04:10:19 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,7 +44,7 @@ static char rcsid[] = "$OpenBSD: mktemp.c,v 1.8 1997/04/07 22:48:50 millert Exp 
 #include <ctype.h>
 #include <unistd.h>
 
-static int _gettemp();
+static int _gettemp __P((char *, int *, int));
 
 int
 mkstemp(path)
@@ -52,7 +52,14 @@ mkstemp(path)
 {
 	int fd;
 
-	return (_gettemp(path, &fd) ? fd : -1);
+	return (_gettemp(path, &fd, 0) ? fd : -1);
+}
+
+char *
+mkdtemp(path)
+	char *path;
+{
+	return(_gettemp(path, (int *)NULL, 1) ? path : (char *)NULL);
 }
 
 char *_mktemp __P((char *));
@@ -61,7 +68,7 @@ char *
 _mktemp(path)
 	char *path;
 {
-	return(_gettemp(path, (int *)NULL) ? path : (char *)NULL);
+	return(_gettemp(path, (int *)NULL, 0) ? path : (char *)NULL);
 }
 
 __warn_references(mktemp,
@@ -76,14 +83,20 @@ mktemp(path)
 
 
 static int
-_gettemp(path, doopen)
+_gettemp(path, doopen, domkdir)
 	char *path;
 	register int *doopen;
+	int domkdir;
 {
 	extern int errno;
 	register char *start, *trv;
 	struct stat sbuf;
 	int pid;
+
+	if (doopen && domkdir) {
+		errno = EINVAL;
+		return(0);
+	}
 
 	pid = getpid();
 	for (trv = path; *trv; ++trv)
@@ -131,8 +144,12 @@ _gettemp(path, doopen)
 				return(1);
 			if (errno != EEXIST)
 				return(0);
-		}
-		else if (lstat(path, &sbuf))
+		} else if (domkdir) {
+			if (mkdir(path, 0700) == 0)
+				return(1);
+			if (errno != EEXIST)
+				return(0);
+		} else if (lstat(path, &sbuf))
 			return(errno == ENOENT ? 1 : 0);
 
 		/* tricky little algorithm for backward compatibility */
