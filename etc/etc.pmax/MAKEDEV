@@ -29,6 +29,7 @@
 #	cfb*	raw interface to turbochannel PMAG-BA color frame buffer
 #	xcfb*	raw interface to maxine graphics devices
 #	mfb*	raw interface to mono graphics devices
+#	*rnd	random data source
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
@@ -245,6 +246,16 @@ pty*)
 		fi
 		;;
 	esac
+	;;
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 89 0
+	mknod srnd c 89 1
+	mknod urnd c 89 2
+	mknod prnd c 89 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
 	;;
 
 local)

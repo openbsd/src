@@ -39,6 +39,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	*rnd	random data source
 #
 # Platform-specific devices:
 #
@@ -51,7 +52,7 @@ case $i in
 
 all)        
         sh MAKEDEV std fd fd0 sd0 sd1 sd2 st0 cd0 tty0 tty1 pty0 pty1
-        sh MAKEDEV ttyv0 lpt0 pms0 local
+        sh MAKEDEV ttyv0 lpt0 pms0 rnd local
         ;;
 
 std)
@@ -239,6 +240,16 @@ pty*)
 		umask 77
 		;;
 	esac
+	;;
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 32 0
+	mknod srnd c 32 1
+	mknod urnd c 32 2
+	mknod prnd c 32 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
 	;;
 
 local)

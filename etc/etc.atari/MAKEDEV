@@ -79,6 +79,7 @@
 #	lkm	loadable kernel modules interface.
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
+#	*rnd	random data source
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -92,7 +93,7 @@ all)
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 local
+	sh MAKEDEV tun0 tun1 lkm ser02 mdm02 lpt0 rnd local
 	;;
 
 floppy)
@@ -395,6 +396,16 @@ lkm)
         chown root:kmem lkm
         chmod 640 lkm
         ;;
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 30 0
+	mknod srnd c 30 1
+	mknod urnd c 30 2
+	mknod prnd c 30 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
+	;;
 
 local)
 	umask 0

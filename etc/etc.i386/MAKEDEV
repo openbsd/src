@@ -443,8 +443,8 @@ uk*)
 	unit=`expr $i : 'uk\(.*\)'`
 	rm -f uk$unit
 	mknod uk$unit c 20 $unit
-	chown root.wheel uk$unit
-	chmod 600 uk$unit
+	chown root.operator uk$unit
+	chmod 640 uk$unit
 	;;
 	
 local)

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.5 1996/06/23 10:07:24 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.6 1996/07/15 14:59:05 mickey Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -69,6 +69,8 @@
 #	mmclock	memory mapped clock
 #	kbd	keyboard (provides events, for X11)
 #	mouse	mouse (provides events, for X11)
+#	*rnd	inkernel random number generator
+#	uk*	unknown SCSI
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -82,7 +84,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh MAKEDEV mmclock kbd mouse lpa0 lpt0
+	sh MAKEDEV mmclock kbd mouse lpa0 lpt0 rnd
 	sh MAKEDEV local
 	;;
 
@@ -270,6 +272,24 @@ lpt*|lpa*)
 	rm -f $name$unit
 	mknod $name$unit c 31 `expr $unit + $flags`
 	chown root.wheel $name$unit
+	;;
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 33 0
+	mknod srnd c 33 1
+	mknod urnd c 33 2
+	mknod prnd c 33 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
+	;;
+
+uk*)
+	unit=`expr $i : 'uk\(.*\)'`
+	rm -f uk$unit
+	mknod uk$unit c 32 $unit
+	chown root.operator uk$unit
+	chmod 640 uk$unit
 	;;
 
 local)

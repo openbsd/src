@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.6 1996/05/27 22:02:47 chuck Exp $
+#	$Id: MAKEDEV,v 1.7 1996/07/15 14:59:14 mickey Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -89,6 +89,7 @@ all)
 	sh MAKEDEV tun0 tun1 lkm local
 	sh MAKEDEV sram0 nvram0 flash0 vmel0 vmes0
 	#sh MAKEDEV lp0 lptwo0
+	sh MAKEDEV rnd
 	;;
 
 std)

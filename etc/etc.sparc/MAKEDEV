@@ -63,6 +63,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	*rnd	random data source
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
@@ -82,7 +83,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl bwtwo0 cgthree0 cgfour0 cgsix0
 	sh MAKEDEV cgeight0
-	sh MAKEDEV lkm local
+	sh MAKEDEV lkm rnd local
 	;;
 std)
 	mknod console		c 0 0
@@ -270,6 +271,16 @@ pty*)
 		fi
 		;;
 	esac
+	;;
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 119 0
+	mknod srnd c 119 1
+	mknod urnd c 119 2
+	mknod prnd c 119 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
 	;;
 
 local)

@@ -49,6 +49,8 @@
 #	qv*	qvss (microvax) display
 #	ttyv0	qvss (microvax) display reserved pty
 #	lkm	loadable kernel modules
+#	*rnd	random data source
+#
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
 for i
@@ -58,7 +60,7 @@ case $i in
 all)
 	sh MAKEDEV std vnd0 ccd0 pty0 lkm ipl
 	sh MAKEDEV tms0 ts0
-	sh MAKEDEV ra0 ra1 ra2 ra3 ra4 ra5 ra6 ra7 hp0 hp1
+	sh MAKEDEV ra0 ra1 ra2 ra3 ra4 ra5 ra6 ra7 hp0 hp1 rnd
 	;;
 
 std)
@@ -405,6 +407,16 @@ ttyv0)
 	if [ ! -f ttyqe ]; then sh ./MAKEDEV pty1; fi
 	mv ttyqf ttyv0
 	mv ptyqf ptyv0
+	;;
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 58 0
+	mknod srnd c 58 1
+	mknod urnd c 58 2
+	mknod prnd c 58 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
 	;;
 
 local)

@@ -74,7 +74,7 @@ all)
 	sh MAKEDEV std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 rd0 rd1 rd2
 	sh MAKEDEV sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2 tun3 lkm
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2 tun3 lkm rnd
 	sh MAKEDEV local
 	;;
 

@@ -78,6 +78,7 @@
 #	ss*	SCSI scanner device
 #	iic*	IIC bus device
 #	rtc*	RTC device
+#	*rnd	random data source
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -90,7 +91,7 @@ all)
 	sh MAKEDEV std fd fd0 fd1 wd0 wd1 rd0 rd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 ccd0 ccd1 uk0 uk1 ss0
 	sh MAKEDEV ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
-	sh MAKEDEV lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2
+	sh MAKEDEV lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 rnd
 	sh MAKEDEV beep lkm quadmouse local cpu0 cpu1 cpu2 cpu3 cpu4 cpu5
 	;;
 
@@ -344,6 +345,16 @@ cpu*)
 	chown root.wheel cpu$unit
 	;;
 
+
+rnd|srnd|urnd|prnd)
+	rm -f rnd urnd srnd prnd
+	mknod  rnd c 44 0
+	mknod srnd c 44 1
+	mknod urnd c 44 2
+	mknod prnd c 44 3
+	chown root.wheel rnd srnd urnd prnd
+	chmod 644 rnd srnd urnd prnd
+	;;
 
 local)
 	umask 0
