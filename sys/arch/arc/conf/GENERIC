@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 1997/08/01 11:26:58 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.22 1997/08/01 23:53:06 deraadt Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -17,7 +17,7 @@ option		DEVPAGER		# device pager (mapped devices)
 
 option		DIAGNOSTIC		# extra kernel debugging checks
 option		KTRACE			# system call tracing support
-#option		DEBUG			# extra kernel debugging support
+option		DEBUG			# extra kernel debugging support
 option		COMPAT_43		# compatibility with 4.3BSD binaries
 
 # System V options
