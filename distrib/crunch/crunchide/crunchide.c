@@ -214,6 +214,7 @@ void hide_syms(char *filename)
     struct stat infstat;
     struct relocation_info *relp;
     struct nlist *symp;
+    char	buf[4];
 
     /*
      * Open the file and do some error checking.
@@ -235,6 +236,25 @@ void hide_syms(char *filename)
 	close(inf);
 	return;
     }
+
+	if((rc = read(inf, &buf, 4)) < 4) {
+		fprintf(stderr, "%s: read error: %s\n", filename,
+		rc == -1? strerror(errno) : "short read");
+		close(inf);
+		return;
+	}
+
+	if (buf[0] == 0x7f &&
+		(buf[1] == 'E' || buf[1] == 'O') &&
+		buf[2] == 'L' &&
+		buf[3] == 'F')
+	{
+
+		printf("processing elf/olf file\n");
+		elf_hide(inf);
+		return;
+	}
+
 
     /*
      * Read the entire file into memory.  XXX - Really, we only need to
