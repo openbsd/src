@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.69 2005/02/16 22:00:14 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.70 2005/02/24 13:55:51 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -57,6 +57,7 @@
 #include "timer.h"
 #include "transport.h"
 #include "udp.h"
+#include "udp_encap.h"
 #include "ui.h"
 #include "util.h"
 #include "cert.h"
@@ -118,9 +119,9 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-4] [-6] [-a] [-c config-file] [-d] [-D class=level]\n"
-	    "          [-f fifo] [-i pid-file] [-K] [-n] [-p listen-port]\n"
-	    "          [-P local-port] [-L] [-l packetlog-file] [-r seed]\n"
-	    "          [-R report-file] [-v]\n",
+	    "          [-f fifo] [-i pid-file] [-K] [-n] [-N udpencap-port]\n"
+	    "          [-p listen-port] [-P local-port] [-L]\n"
+	    "          [-l packetlog-file] [-r seed] [-R report-file] [-v]\n",
 	    sysdep_progname());
 	exit(1);
 }
@@ -135,7 +136,7 @@ parse_args(int argc, char *argv[])
 	int             do_packetlog = 0;
 #endif
 
-	while ((ch = getopt(argc, argv, "46ac:dD:f:i:Knp:P:Ll:r:R:v")) != -1) {
+	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:P:Ll:r:R:v")) != -1) {
 		switch (ch) {
 		case '4':
 			bind_family |= BIND_FAMILY_INET4;
@@ -188,6 +189,10 @@ parse_args(int argc, char *argv[])
 
 		case 'n':
 			app_none++;
+			break;
+
+		case 'N':
+			udp_encap_default_port = optarg;
 			break;
 
 		case 'p':
