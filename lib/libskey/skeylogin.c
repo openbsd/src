@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.43 2002/05/16 17:09:01 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.44 2002/05/17 15:51:06 millert Exp $
  */
 
 #include <sys/param.h>
@@ -558,33 +558,6 @@ skey_authenticate(username)
 		return (0);
 	}
 	return (-1);
-}
-
-/*
- * Comment out user's entry in the S/Key database
- *
- * Return codes:
- * -1: Write error; database unchanged
- *  0:  Database updated
- *
- * The database file is always closed by this call.
- * XXX - do we still need this function?
- */
-int
-skeyzero(mp)
-	struct skey *mp;
-{
-	int rval;
-
-	/*
-	 * We truncate the file rather than unlinking it since we
-	 * may not have write perms on the directory.
-	 */
-	fflush(mp->keyfile);
-	rval = ftruncate(fileno(mp->keyfile), (off_t)0);
-	(void)fclose(mp->keyfile);
-	mp->keyfile = NULL;
-	return (rval);
 }
 
 /*

@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.3,v 1.4 2002/05/16 03:50:42 millert Exp $
+.\" $OpenBSD: skey.3,v 1.5 2002/05/17 15:51:06 millert Exp $
 .\"
 .\" Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -53,7 +53,6 @@
 .Nm skeygetnext,
 .Nm skeylookup,
 .Nm skeyverify,
-.Nm skeyzero,
 .Nm skipspace
 .Nd S/Key library functions
 .Sh SYNOPSIS
@@ -106,8 +105,6 @@
 .Fn skeylookup "struct skey *rec" "char *user"
 .Ft int
 .Fn skeyverify "struct skey *rec" "char *response"
-.Ft int
-.Fn skeyzero "struct skey *"
 .Ft char *
 .Fn skipspace "char *"
 .Sh DESCRIPTION
@@ -362,17 +359,6 @@ It returns 0 on success (updating the database), 1 on failure, or
 -1 if there was an error accessing the database.
 The database is always closed by a call to
 .Fn skeyverify .
-.Pp
-The
-.Fn skeyzero
-function zeroes out the entry in the S/Key database specified by
-.Fa rec .
-The
-.Fn skeyzero
-function returns 0 on success and -1 if there was an error updating
-the database.
-The S/Key database is always closed by a call to
-.Fn skeyzero .
 .Sh SEE ALSO
 .Xr skey 1 ,
 .Xr skeyinit 1
@@ -389,7 +375,6 @@ the original Bellcore S/Key distribution:
 .Fn skey_keyinfo ,
 .Fn skey_passcheck ,
 .Fn skey_set_algorithm ,
-.Fn skey_unlock ,
-.Fn skeyzero .
+.Fn skey_unlock .
 .Pp
 S/Key is a Trademark of Bellcore.
