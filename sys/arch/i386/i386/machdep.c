@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.144 2001/01/25 04:39:46 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.145 2001/01/25 05:15:24 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1286,7 +1286,17 @@ identifycpu()
 #if defined(I586_CPU) || defined(I686_CPU)
 	if (cpu_feature && (cpu_feature & CPUID_TSC)) {	/* Has TSC */
 		calibrate_cyclecounter();
-		printf(" %d MHz", pentium_mhz);
+		if (pentium_mhz > 994) {
+			int ghz, fr;
+
+			ghz = (pentium_mhz + 9) / 1000;
+			fr = ((pentium_mhz + 9) / 10 ) % 100;
+			if (fr)
+				printf(" %d.%02d GHz", ghz, fr);
+			else
+				printf(" %d GHz", ghz);
+		} else
+			printf(" %d MHz", pentium_mhz);
 	}
 #endif
 	printf("\n");
