@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.7 1996/03/27 19:32:41 niklas Exp $	*/
+/*	$OpenBSD: parse.c,v 1.8 1996/07/23 18:37:12 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.22 1996/03/15 21:52:41 christos Exp $	*/
 
 /*
@@ -2690,7 +2690,7 @@ Parse_MainName()
     main = Lst_Init (FALSE);
 
     if (mainNode == NILGNODE) {
-	Punt ("make: no target to make.\n");
+	Punt ("no target to make.");
     	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {
 	(void) Lst_AtEnd (main, (ClientData)mainNode);
