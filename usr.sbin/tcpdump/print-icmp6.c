@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.3 2002/05/30 18:36:42 deraadt Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.4 2002/11/28 11:05:06 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -449,6 +449,10 @@ icmp6_opt_print(register const u_char *bp, int resid)
 	ECHECK(op->nd_opt_len);
 	if (resid <= 0)
 		return;
+	if (op->nd_opt_len == 0)
+		goto trunc;
+	if (bp + (op->nd_opt_len << 3) > ep)
+		goto trunc;
 	switch (op->nd_opt_type) {
 	case ND_OPT_SOURCE_LINKADDR:
 		opl = (struct nd_opt_hdr *)op;
