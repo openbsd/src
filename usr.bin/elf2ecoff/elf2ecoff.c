@@ -1,4 +1,4 @@
-/* $OpenBSD: elf2ecoff.c,v 1.4 2003/06/10 22:20:46 deraadt Exp $	 */
+/* $OpenBSD: elf2ecoff.c,v 1.5 2003/11/27 10:33:20 henning Exp $	 */
 /* $NetBSD: elf2ecoff.c,v 1.8 1997/07/20 03:50:54 jonathan Exp $	 */
 
 /*
@@ -131,7 +131,8 @@ usage:
 		/* Section types we can't handle... */
 		else if (ph[i].p_type != PT_LOAD) {
 			fprintf(stderr,
-			    "Program header %d type %d can't be converted.\n");
+			    "Program header %d type %d can't be converted.\n",
+			    i, ph[i].p_type);
 			exit(1);
 		}
 		/* Writable (data) segment? */
@@ -334,7 +335,7 @@ copy(int out, int in, off_t offset, off_t size)
 	char	    ibuf[4096];
 	int	    remaining, cur, count;
 
-	/* Go the the start of the ELF symbol table... */
+	/* Go to the start of the ELF symbol table... */
 	if (lseek(in, offset, SEEK_SET) < 0) {
 		perror("copy: lseek");
 		exit(1);
