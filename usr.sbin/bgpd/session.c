@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.124 2004/03/05 13:30:01 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.125 2004/03/05 14:09:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1425,6 +1425,8 @@ parse_open(struct peer *peer)
 	p += sizeof(optparamlen);
 
 	if (optparamlen > msglen - MSGSIZE_OPEN_MIN) {
+			log_peer_warnx(&peer->conf,
+			    "corrupt OPEN message received: length mismatch");
 			session_notification(peer, ERR_OPEN, 0, NULL, 0);
 			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 			return (-1);
@@ -1433,6 +1435,8 @@ parse_open(struct peer *peer)
 	plen = optparamlen;
 	while (plen > 0) {
 		if (plen < 2) {
+			log_peer_warnx(&peer->conf,
+			    "corrupt OPEN message received, len wrong");
 			session_notification(peer, ERR_OPEN, 0, NULL, 0);
 			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 			return (-1);
@@ -1445,6 +1449,8 @@ parse_open(struct peer *peer)
 		plen--;
 		if (op_len > 0) {
 			if (plen < op_len) {
+				log_peer_warnx(&peer->conf,
+				    "corrupt OPEN message received, len wrong");
 				session_notification(peer, ERR_OPEN, 0,
 				    NULL, 0);
 				change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
@@ -1465,6 +1471,9 @@ parse_open(struct peer *peer)
 			 * How the peer should know _which_ optional parameter
 			 * we don't support is beyond me.
 			 */
+			log_peer_warnx(&peer->conf,
+			    "received OPEN message with unsupported optional "
+			    "parameter: type %u", op_type);
 			session_notification(peer, ERR_OPEN, ERR_OPEN_OPT,
 				NULL, 0);
 			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
