@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.9 2004/08/10 16:06:01 otto Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.10 2004/09/16 05:35:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -117,7 +117,7 @@ dbupdate(char *dbname, char *ip)
 	return (-1);
 }
 
-static int
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: %s [-I] [-i interface]\n", __progname);
@@ -136,7 +136,6 @@ main(int argc, char **argv)
 	int ch, p[2];
 	char *buf, *lbuf;
 	size_t len;
-	pid_t pid;
 	FILE *f;
 
 
@@ -162,7 +161,7 @@ main(int argc, char **argv)
 		err(1, "daemon");
 	if (pipe(p) == -1)
 		err(1, "pipe");
-	switch (pid = fork()) {
+	switch (fork()) {
 	case -1:
 		err(1, "fork");
 	case 0:
