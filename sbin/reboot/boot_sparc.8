@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.9 1999/07/03 02:11:07 aaron Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.10 1999/07/08 19:58:30 deraadt Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -38,14 +38,10 @@
 .Dt BOOT_SPARC 8 sparc
 .Os
 .Sh NAME
-.Nm reboot
+.Nm boot
 .Nd
-.Tn UNIX
-bootstrapping procedures
-.Sh SYNOPSIS
-.Nm reboot
-.Op Fl n
-.Op Fl q
+.Tn sparc-specific
+system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
@@ -141,9 +137,8 @@ system bootstrap
 .Xr fsck 8 ,
 .Xr halt 8 ,
 .Xr init 8 ,
+.Xr installboot 8 ,
 .Xr rc 8 ,
 .Xr shutdown 8 ,
 .Xr syslogd 8
-.Sh BUGS
-The use of Sun disk labels, without the ability to write them,
-is problematic.
+

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sun3.8,v 1.7 1999/07/03 02:11:07 aaron Exp $
+.\"	$OpenBSD: boot_sun3.8,v 1.8 1999/07/08 19:58:30 deraadt Exp $
 .\"	$NetBSD: boot_sun3.8,v 1.1 1995/08/08 20:46:20 gwr Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -38,14 +38,10 @@
 .Dt BOOT_SUN3 8 sun3
 .Os
 .Sh NAME
-.Nm reboot
+.Nm boot
 .Nd
-.Tn UNIX
-bootstrapping procedures
-.Sh SYNOPSIS
-.Nm reboot
-.Op Fl n
-.Op Fl q
+.Tn sun3-specific
+system bootstrapping procedures
 .Sh DESCRIPTION
 .Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_pmax.8,v 1.13 1999/07/04 18:59:41 aaron Exp $
+.\"	$OpenBSD: boot_pmax.8,v 1.14 1999/07/08 19:58:30 deraadt Exp $
 .\"	$NetBSD: boot_pmax.8,v 1.1 1995/04/25 23:55:11 mellon Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -37,11 +37,12 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd July 23, 1991
-.Dt BOOT_PMAX 8
+.Dt BOOT_PMAX 8 pmax
 .Os
 .Sh NAME
 .Nm boot
 .Nd
+.Tn sparc-specific
 system bootstrapping procedures
 .Sh DESCRIPTION
 The
@@ -59,7 +60,7 @@ and unless this fails, the system will resume multi-user operations.
 .Pp
 .Ss Cold starts
 At power up, all DECstation ROMs consult the
-.Ev haltaction
+.Nm haltaction
 environment
 variable in EEPROM to determine whether or not to attempt an automatic
 boot.  If this
@@ -198,8 +199,3 @@ described above, and any arguments may be passed similarly.  For example:
 .Xr reboot 8 ,
 .Xr shutdown 8 ,
 .Xr syslogd 8
-.Sh HISTORY
-The
-.Nm
-command is
-.Ud .
