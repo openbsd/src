@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.8 1996/05/02 13:45:45 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.9 1996/05/05 13:39:50 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.18 1996/02/13 22:00:14 christos Exp $	*/
 
 /*
@@ -85,11 +85,72 @@
 #endif
 
 #if defined(LLC) && defined(CCITT)
-extern struct ifqueue pkintrq;
+#include <sys/socketvar.h>
+#include <netccitt/x25.h>
 #endif
 
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
+
+
+int
+ether_ioctl(ifp, arp, cmd, data)
+	register struct ifnet *ifp;
+	struct arpcom *arp;
+	u_long cmd;
+	caddr_t data;
+{
+	struct ifaddr *ifa = (struct ifaddr *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
+
+	switch (cmd) {
+
+#if	defined(CCITT) && defined(LLC)
+	case SIOCSIFCONF_X25:
+		ifp->if_flags |= IFF_UP;
+		ifa->ifa_rtrequest = cons_rtrequest;
+		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
+		break;
+#endif /* CCITT && LLC */
+	case SIOCSIFADDR:
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef IPX
+		case AF_IPX:
+		    {
+			struct ipx_addr *ina = &IA_SIPX(ifa)->sipx_addr;
+
+			if (ipx_nullhost(*ina))
+				ina->ipx_host =
+					*(union ipx_host *)(arp->ac_enaddr);
+			else
+				bcopy (ina->ipx_host.c_host,
+				       arp->ac_enaddr, sizeof(arp->ac_enaddr));
+			break;
+		    }
+#endif /* IPX */
+#ifdef NS
+		/* XXX - This code is probably wrong. */
+		case AF_NS:
+		    {
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host =
+					*(union ns_host *)(arp->ac_enaddr);
+			else
+				bcopy(ina->x_host.c_host,
+				      arp->ac_enaddr, sizeof(arp->ac_enaddr));
+			break;
+		    }
+#endif /* NS */
+		}
+		break;
+
+	default:
+		break;
+	}
+	return 0;
+}
 
 /*
  * Ethernet output routine.
@@ -163,8 +224,8 @@ ether_output(ifp, m0, dst, rt0)
 #endif
 #ifdef IPX
 	case AF_IPX:
-		etype = htons(ETHERTYPE_IPX);
- 		bcopy((caddr_t)&(((struct sockaddr_ipx *)dst)->sipx_addr.ipx_host),
+		etype = htons(satosipx(dst)->sipx_type);
+ 		bcopy((caddr_t)&satosipx(dst)->sipx_addr.ipx_host,
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ipx_thishost, sizeof(edst)))
 			return (looutput(ifp, m, dst, rt));
@@ -367,7 +428,11 @@ ether_input(ifp, eh, m)
 		return;
 #endif
 #ifdef IPX
-	case ETHERTYPE_IPX:
+	case ETHERTYPE_8022:
+	case ETHERTYPE_8022TR:
+	case ETHERTYPE_8023:
+	case ETHERTYPE_SNAP:
+	case ETHERTYPE_II:
 		schednetisr(NETISR_IPX);
 		inq = &ipxintrq;
 		break;

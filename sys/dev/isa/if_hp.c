@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_hp.c,v 1.3 1996/03/08 16:43:03 niklas Exp $       */
+/*    $OpenBSD: if_hp.c,v 1.4 1996/05/05 13:38:41 mickey Exp $       */
 /*    $NetBSD: if_hp.c,v 1.21 1995/12/24 02:31:31 mycroft Exp $       */
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
@@ -76,11 +76,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include "bpfilter.h"
@@ -929,6 +924,10 @@ hpioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s = splnet(), error = 0;
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
 
 	switch (cmd) {
 
@@ -943,27 +942,6 @@ hpioctl(ifp, cmd, data)
 			    IA_SIN(ifa)->sin_addr;
 			arpwhohas((struct arpcom *) ifp, &IA_SIN(ifa)->sin_addr);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-			{
-				register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-				if (ns_nullhost(*ina))
-					ina->x_host = *(union ns_host *) (ns->ns_addrp);
-				else {
-					/*
-							 * The manual says we can't change the address
-							 * while the receiver is armed,
-							 * so reset everything
-							 */
-					ifp->if_flags &= ~IFF_RUNNING;
-					bcopy((caddr_t) ina->x_host.c_host,
-					    (caddr_t) ns->ns_addrp, sizeof(ns->ns_addrp));
-				}
-				hpinit(ifp->if_unit);	/* does hp_setaddr() */
-				break;
-			}
 #endif
 		default:
 			hpinit(ifp->if_unit);

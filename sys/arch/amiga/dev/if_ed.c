@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.4 1996/05/02 06:44:04 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.5 1996/05/05 13:36:29 mickey Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.20 1996/04/21 21:11:44 veego Exp $	*/
 
 /*
@@ -38,11 +38,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -870,6 +865,11 @@ ed_ioctl(ifp, command, data)
 
 	s = splnet();
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (command) {
 
 	case SIOCSIFADDR:
@@ -881,24 +881,6 @@ ed_ioctl(ifp, command, data)
 			ed_init(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			ed_init(sc);
-			break;
-		    }
 #endif
 		default:
 			ed_init(sc);

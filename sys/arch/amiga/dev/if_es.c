@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_es.c,v 1.5 1996/05/04 14:04:04 niklas Exp $	*/
+/*	$OpenBSD: if_es.c,v 1.6 1996/05/05 13:36:33 mickey Exp $	*/
 /*	$NetBSD: if_es.c,v 1.12 1996/05/01 15:55:28 mhitch Exp $	*/
 
 /*
@@ -58,11 +58,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/cpu.h>
@@ -972,6 +967,11 @@ esioctl(ifp, command, data)
 
 	s = splnet();
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		aplx(s);
+		return error;
+	}
+
 	switch (command) {
 
 	case SIOCSIFADDR:
@@ -983,23 +983,6 @@ esioctl(ifp, command, data)
 			esinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			esinit(sc);
-			break;
-		    }
 #endif
 		default:
 			esinit(sc);

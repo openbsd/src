@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_isaed.c,v 1.4 1996/05/02 06:30:26 niklas Exp $	*/
+/*	$OpenBSD: if_isaed.c,v 1.5 1996/05/05 13:36:46 mickey Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -39,11 +39,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0
@@ -2157,6 +2152,11 @@ edioctl(ifp, cmd, data)
 		return ENXIO;		/* may be ignored, oh well. */
 	}
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -2168,24 +2168,6 @@ edioctl(ifp, cmd, data)
 			edinit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			edinit(sc);
-			break;
-		    }
 #endif
 		default:
 			edinit(sc);

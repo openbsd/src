@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.1 1996/05/03 07:58:23 deraadt Exp $       */
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.2 1996/05/05 13:39:22 mickey Exp $       */
 /*	$NetBSD: if_ep.c,v 1.90 1996/04/11 22:29:15 cgd Exp $	*/
 
 /*
@@ -55,11 +55,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #if NBPFILTER > 0

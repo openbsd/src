@@ -54,11 +54,6 @@
 #include <netinet/if_ether.h>   
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif 
-        
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>

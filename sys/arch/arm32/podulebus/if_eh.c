@@ -89,11 +89,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 /****************************************************************************/
 /* Some useful definitions **************************************************/
 /****************************************************************************/
@@ -554,6 +549,11 @@ ehioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splimp ();
 	int error = 0;
+
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
 
 	switch (cmd) {
 	case SIOCSIFADDR:

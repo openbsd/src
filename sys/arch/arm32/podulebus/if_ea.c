@@ -73,11 +73,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 #include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -1445,6 +1440,11 @@ ea_ioctl(ifp, cmd, data)
 
 	s = splimp();
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -1458,25 +1458,6 @@ ea_ioctl(ifp, cmd, data)
 			dprintf(("Interface ea is coming up (AF_INET)\n"));
 			ea_init(sc);
 			break;
-#endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			dprintf(("Interface ea is coming up (AF_NS)\n"));
-			ea_init(sc);
-			break;
-		    }
 #endif
 		default:
 			dprintf(("Interface ea is coming up (default)\n"));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qn.c,v 1.5 1996/05/02 06:44:08 niklas Exp $	*/
+/*	$OpenBSD: if_qn.c,v 1.6 1996/05/05 13:36:38 mickey Exp $	*/
 /*	$NetBSD: if_qn.c,v 1.5 1996/04/21 21:11:50 veego Exp $	*/
 
 /*
@@ -100,11 +100,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <machine/cpu.h>
@@ -877,6 +872,11 @@ qnioctl(ifp, command, data)
 
 	s = splnet();
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (command) {
 
 	case SIOCSIFADDR:
@@ -889,23 +889,6 @@ qnioctl(ifp, command, data)
 			qninit(sc);
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			qnstop(sc);
-			qninit(sc);
-			break;
-		    }
 #endif
 		default:
 			log(LOG_INFO, "qn:sa_family:default (not tested)\n");

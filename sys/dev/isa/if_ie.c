@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_ie.c,v 1.7 1996/04/21 22:24:03 deraadt Exp $       */
+/*    $OpenBSD: if_ie.c,v 1.8 1996/05/05 13:38:46 mickey Exp $       */
 /*	$NetBSD: if_ie.c,v 1.47 1996/04/11 22:29:27 cgd Exp $	*/
 
 /*-
@@ -136,11 +136,6 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <vm/vm.h>
@@ -2122,6 +2117,11 @@ ieioctl(ifp, cmd, data)
 
 	s = splnet();
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -2134,24 +2134,6 @@ ieioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
-#ifdef NS
-		/* XXX - This code is probably wrong. */
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			/* Set new address. */
-			ieinit(sc);
-			break;
-		    }
-#endif /* NS */
 		default:
 			ieinit(sc);
 			break;

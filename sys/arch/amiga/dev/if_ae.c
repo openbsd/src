@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.5 1996/05/02 06:44:02 niklas Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.6 1996/05/05 13:36:23 mickey Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.7 1996/04/21 21:11:40 veego Exp $	*/
 
 /*
@@ -83,23 +83,6 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if defined(CCITT) && defined(LLC)
-#include <sys/socketvar.h>  
-#include <netccitt/x25.h>
-#include <net/if_dl.h>
-#include <net/if_llc.h>
-#include <netccitt/dll.h>
-#include <netccitt/llc_var.h>
-#include <netccitt/pk.h> 
-#include <netccitt/pk_var.h>
-#include <netccitt/pk_extern.h>
-#endif  
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -967,6 +950,11 @@ aeioctl(ifp, cmd, data)
 
 	s = splnet();
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -979,37 +967,11 @@ aeioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else
-				wcopyto(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
-			aeinit(sc); /* does ae_setaddr() */
-			break;
-		    }
-#endif
 		default:
 			aeinit(sc);
 			break;
 		}
 		break;
-
-#if defined(CCITT) && defined(LLC)
-	case SIOCSIFCONF_X25:
-		ifp->if_flags |= IFF_UP;
-		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
-		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
-		if (error == 0)
-			aeinit(sc);
-		break;
-#endif /* CCITT && LLC */
 
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&

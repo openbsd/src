@@ -33,16 +33,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef RMP
-#include <netrmp/rmp.h>
-#include <netrmp/rmp_var.h>
-#endif
-
 #include <vm/vm.h>
 
 #include "bpfilter.h"
@@ -388,6 +378,11 @@ snioctl(ifp, cmd, data)
 	int     s = splnet(), err = 0;
 	int	temp;
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -400,23 +395,6 @@ snioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_ac, ifa);
 			break;
 #endif
-#ifdef NS
-		case AF_NS:
-			{
-				struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-				if (ns_nullhost(*ina)) {
-					ina->x_host = *(union ns_host *)(sc->sc_enaddr);
-				} else {
-					/* XXX
-					 * add an extra i/f address to
-					 * sonic filter
-					 */
-				}
-			}
-			(void)sninit(ifp->if_unit);
-			break;
-#endif	/* NS */
 		default:
 			(void)sninit(ifp->if_unit);
 			break;

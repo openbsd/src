@@ -88,11 +88,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 /* Import our data structres */
 
 #include "if_iereg.h"
@@ -578,6 +573,11 @@ int ieioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
     int error=0;
 
     s=splimp();
+
+    if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+	splx(s);
+	return error;
+    }
 
     switch ( cmd )
     {

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_de.c,v 1.6 1996/04/21 22:25:13 deraadt Exp $       */
+/*    $OpenBSD: if_de.c,v 1.7 1996/05/05 13:38:58 mickey Exp $       */
 /*    $NetBSD: if_de.c,v 1.17 1996/04/01 19:37:54 cgd Exp $       */
 
 /*-
@@ -74,11 +74,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
 #endif
 
 #include <vm/vm.h>
@@ -1942,6 +1937,11 @@ tulip_ioctl(
 
     s = splnet();
 
+    if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+	splx(s);
+	return error;
+    }
+
     switch (cmd) {
 	case SIOCSIFADDR: {
 	    ifp->if_flags |= IFF_UP;
@@ -1954,27 +1954,6 @@ tulip_ioctl(
 		    break;
 		}
 #endif /* INET */
-
-#ifdef NS
-		/*
-		 * This magic copied from if_is.c; I don't use XNS,
-		 * so I have no way of telling if this actually
-		 * works or not.
-		 */
-		case AF_NS: {
-		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)(sc->tulip_ac.ac_enaddr);
-		    } else {
-			ifp->if_flags &= ~IFF_RUNNING;
-			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)sc->tulip_ac.ac_enaddr,
-			      sizeof sc->tulip_ac.ac_enaddr);
-		    }
-		    tulip_init(sc);
-		    break;
-		}
-#endif /* NS */
 
 		default: {
 		    tulip_init(sc);

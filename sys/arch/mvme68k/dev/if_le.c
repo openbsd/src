@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.4 1996/04/28 11:06:05 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.5 1996/05/05 13:37:32 mickey Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -69,15 +69,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#ifdef APPLETALK
-#include <netddp/atalk.h>
 #endif
 
 #include <machine/cpu.h>
@@ -827,6 +818,11 @@ leioctl(ifp, cmd, data)
 	register struct lereg1 *ler1;
 	int s = splnet(), error = 0;
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		retun error;
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -838,27 +834,6 @@ leioctl(ifp, cmd, data)
 			(void)leinit(ifp->if_unit);
 			arp_ifinit(&sc->sc_ac, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(sc->sc_addr);
-			else {
-				/*
-				 * The manual says we can't change the address
-				 * while the receiver is armed,
-				 * so reset everything
-				 */
-				ifp->if_flags &= ~IFF_RUNNING;
-				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)sc->sc_addr, sizeof(sc->sc_addr));
-			}
-			(void)leinit(ifp->if_unit);	/* does le_setaddr() */
-			break;
-		    }
 #endif
 		default:
 			(void)leinit(ifp->if_unit);

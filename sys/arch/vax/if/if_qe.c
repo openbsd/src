@@ -162,11 +162,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
@@ -771,6 +766,11 @@ qeioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splnet(), error = 0;
 
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return error;
+	}
+
 	switch (cmd) {
 
 	case SIOCSIFADDR:
@@ -781,18 +781,6 @@ qeioctl(ifp, cmd, data)
 		case AF_INET:
 			arp_ifinit(&sc->qe_ac, ifa);
 			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
-
-			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(sc->qe_addr);
-			else
-				qe_setaddr(ina->x_host.c_host, ifp->if_unit);
-			break;
-		    }
 #endif
 		}
 		break;
