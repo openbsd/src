@@ -46,6 +46,7 @@ option		UNION		# union file system
 # Networking options
 #option		GATEWAY         # IP packet forwarding
 option		INET            # Internet protocols
+option		IPSEC           # IP Security
 #option		NS              # XNS
 #option		IPX             # IPX+SPX
 #option		ISO,TPIP        # OSI networking

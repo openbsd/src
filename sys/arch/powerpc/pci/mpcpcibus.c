@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.1 1997/10/11 11:29:30 pefo Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.2 1997/10/20 19:52:42 pefo Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -73,7 +73,7 @@ const char *mpc_intr_string __P((void *, pci_intr_handle_t));
 void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
             int, int (*func)(void *), void *, char *));
 void     mpc_intr_disestablish __P((void *, void *));
-int      mpc_ether_hw_addr __P((u_int8_t *));
+void      mpc_ether_hw_addr __P((u_int8_t *));
 
 struct cfattach mpcpcibr_ca = {
         sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
@@ -86,6 +86,24 @@ struct cfdriver mpcpcibr_cd = {
 static int      mpcpcibrprint __P((void *, const char *pnp));
 
 struct pcibr_config mpc_config;
+
+/*
+ * Code from "pci/if_de.c" used to calculate crc32 of ether rom data.
+ */
+#define      TULIP_CRC32_POLY  0xEDB88320UL
+static __inline__ unsigned
+srom_crc32(
+    const unsigned char *databuf,
+    size_t datalen)
+{
+    u_int idx, bit, data, crc = 0xFFFFFFFFUL;
+
+    for (idx = 0; idx < datalen; idx++)
+        for (data = *databuf++, bit = 0; bit < 8; bit++, data >>= 1)
+            crc = (crc >> 1) ^ (((crc ^ data) & 1) ? TULIP_CRC32_POLY : 0);
+    return crc;
+}
+
 
 int
 mpcpcibrmatch(parent, match, aux)
@@ -188,11 +206,50 @@ mpc_attach_hook(parent, self, pba)
 {
 }
 
-int
+void
 mpc_ether_hw_addr(p)
 	u_int8_t *p;
 {
-	return(0);
+	int i;
+
+	for(i = 0; i < 128; i++)
+		p[i] = 0x00;
+	p[18] = 0x03;	/* Srom version. */
+	p[19] = 0x01;	/* One chip. */
+/*XXX*/	p[20] = 0x00;	/* Next six, ethernet address. */
+/*XXX*/	p[21] = 0xa0;	/* XXX Should be read from OFW */
+/*XXX*/	p[22] = 0xf7;
+/*XXX*/	p[23] = 0x04;
+/*XXX*/	p[24] = 0x00;
+/*XXX*/	p[25] = 0x4b;
+	p[26] = 0x00;	/* Chip 0 device number */
+	p[27] = 30;		/* Descriptor offset */
+	p[28] = 00;
+	p[29] = 00;		/* MBZ */
+					/* Descriptor */
+	p[30] = 0x00;	/* Autosense. */
+	p[31] = 0x08;
+	p[32] = 0xff;	/* GP cntrl */
+	p[33] = 0x01;	/* Block cnt */
+#define GPR_LEN 0
+#define	RES_LEN 0
+	p[34] = 0x80 + 12 + GPR_LEN + RES_LEN;
+	p[35] = 0x01;	/* MII PHY type */
+	p[36] = 0x00;	/* PHY number 0 */
+	p[37] = 0x00;	/* GPR Length */
+	p[38] = 0x00;	/* Reset Length */
+	p[39] = 0x00;	/* Media capabilities */
+	p[40] = 0x78;	/* Media capabilities */
+	p[41] = 0x00;	/* Autoneg advertisment */
+	p[42] = 0x78;	/* Autoneg advertisment */
+	p[43] = 0x00;	/* Full duplex map */
+	p[44] = 0x50;	/* Full duplex map */
+	p[45] = 0x00;	/* Treshold map */
+	p[46] = 0x18;	/* Treshold map */
+
+	i = (srom_crc32(p, 126) & 0xFFFF) ^ 0xFFFF;
+	p[126] = i;
+	p[127] = i >> 8;
 }
 
 int
