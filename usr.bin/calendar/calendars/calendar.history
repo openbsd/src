@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.7 1999/06/15 07:03:42 pjanzen Exp $
+ * $OpenBSD: calendar.history,v 1.8 1999/06/15 14:29:46 pjanzen Exp $
  */
 
 #ifndef _calendar_history_
@@ -122,7 +122,6 @@
 04/27	Magellan killed in Philippines, 1521
 04/29	Zipper patented by Gideon Sindback, 1913
 05/01	Beltaine; Feast of the god Bel, sun god
-05/03	Last Star Trek episode first aired ("Turnabout Intruder"), 1969
 05/03	Anti-war protest disrupts business in Washington, 1971
 05/04	Four Kent State students are shot down by the National Guard, 1970
 05/05	John Scopes arrested for teaching evolution, Dayton, TN, 1925
@@ -150,6 +149,7 @@
 05/29	First food stamps issued, 1961
 05/30	US Marines sent to Nicaragua, 1912
 06/02	Native Americans "granted" citizenship, 1924
+06/03	Last Star Trek episode first aired ("Turnabout Intruder"), 1969
 06/05	Robert Kennedy assassinated, 1968
 06/05	US leaves the Gold Standard, 1933
 06/06	First drive-in movie, 1933
