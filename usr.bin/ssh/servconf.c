@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.104 2002/03/19 03:03:43 stevesk Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.105 2002/03/20 19:12:24 stevesk Exp $");
 
 #if defined(KRB4) || defined(KRB5)
 #include <krb.h>
@@ -107,9 +107,6 @@ initialize_server_options(ServerOptions *options)
 	options->client_alive_count_max = -1;
 	options->authorized_keys_file = NULL;
 	options->authorized_keys_file2 = NULL;
-
-	options->unprivileged_user = -1;
-	options->unprivileged_group = -1;
 
 	/* Needs to be accessable in many places */
 	use_privsep = -1;
@@ -237,10 +234,6 @@ fill_default_server_options(ServerOptions *options)
 	/* Turn privilege separation _off_ by default */
 	if (use_privsep == -1)
 		use_privsep = 0;
-	if (options->unprivileged_user == -1)
-		options->unprivileged_user = 32767;
-	if (options->unprivileged_group == -1)
-		options->unprivileged_group = 32767;
 }
 
 /* Keyword tokens. */
@@ -270,7 +263,7 @@ typedef enum {
 	sBanner, sVerifyReverseMapping, sHostbasedAuthentication,
 	sHostbasedUsesNameFromPacketOnly, sClientAliveInterval,
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
-	sUsePrivilegeSeparation, sUnprivUser, sUnprivGroup,
+	sUsePrivilegeSeparation,
 	sDeprecated
 } ServerOpCodes;
 
@@ -344,8 +337,6 @@ static struct {
 	{ "authorizedkeysfile", sAuthorizedKeysFile },
 	{ "authorizedkeysfile2", sAuthorizedKeysFile2 },
 	{ "useprivilegeseparation", sUsePrivilegeSeparation},
-	{ "unprivuser", sUnprivUser},
-	{ "unprivgroup", sUnprivGroup},
 	{ NULL, sBadOption }
 };
 
@@ -719,14 +710,6 @@ parse_flag:
 	case sUsePrivilegeSeparation:
 		intptr = &use_privsep;
 		goto parse_flag;
-
-	case sUnprivUser:
-		intptr = &options->unprivileged_user;
-		goto parse_int;
-
-	case sUnprivGroup:
-		intptr = &options->unprivileged_group;
-		goto parse_int;
 
 	case sAllowUsers:
 		while ((arg = strdelim(&cp)) && *arg != '\0') {
