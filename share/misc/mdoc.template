@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.template,v 1.8 2003/07/16 07:48:19 jmc Exp $
+.\"	$OpenBSD: mdoc.template,v 1.9 2004/07/02 10:36:57 jmc Exp $
 .\"
 .\" The following requests are required for all man pages.
 .Dd Month DD, YYYY
@@ -17,15 +17,15 @@ The
 .Nm
 utility processes files ...
 .\" The following requests should be uncommented and used where appropriate.
-.\" This next request is for sections 2 and 3 function return values only.
+.\" This next request is for sections 2, 3, and 9 function return values only.
 .\" .Sh RETURN VALUES
 .\" This next request is for sections 1, 6, 7 & 8 only.
 .\" .Sh ENVIRONMENT
 .\" .Sh FILES
 .\" .Sh EXAMPLES
-.\" This next request is for section 4 only.
+.\" This next request is for sections 1, 4, 6, and 8 only.
 .\" .Sh DIAGNOSTICS
-.\" The next request is for sections 2 and 3 error and signal handling only.
+.\" The next request is for sections 2, 3, and 9 error and signal handling only.
 .\" .Sh ERRORS
 .\" .Sh SEE ALSO
 .\" .Xr foobar 1

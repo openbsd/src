@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.56 2004/06/30 21:10:08 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.57 2004/07/02 10:36:57 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -514,16 +514,16 @@ The
 utility processes files ...
 \&.\e" The following requests should be uncommented
 \&.\e"  and used where appropriate.
-\&.\e" This next request is for sections 2 and 3
+\&.\e" This next request is for sections 2, 3, and 9
 \&.\e"  function return values only.
 \&.\e" .Sh RETURN VALUES
 \&.\e" This next request is for sections 1, 6, 7 & 8 only.
 \&.\e" .Sh ENVIRONMENT
 \&.\e" .Sh FILES
 \&.\e" .Sh EXAMPLES
-\&.\e" This next request is for section 4 only.
+\&.\e" This next request is for sections 1, 4, 6, and 8 only.
 \&.\e" .Sh DIAGNOSTICS
-\&.\e" The next request is for sections 2 and 3
+\&.\e" The next request is for sections 2, 3, and 9
 \&.\e"  error and signal handling only.
 \&.\e" .Sh ERRORS
 \&.\e" .Sh SEE ALSO
@@ -2420,7 +2420,7 @@ They are listed in the order
 in which they would be used.
 .Bl -tag -width SYNOPSIS
 .It Li \&.Sh RETURN VALUES
-Sections 2 and 3 function return values.
+Sections 2, 3, and 9 function return values.
 .It Li \&.Sh ENVIRONMENT
 The
 .Sx ENVIRONMENT
@@ -2445,7 +2445,7 @@ for details.
 Diagnostics from a command should be placed in this section.
 .It Li \&.Sh ERRORS
 Specific error handling, especially from library functions
-(man page sections 2 and 3) should go here.
+(man page sections 2, 3, and 9) should go here.
 The
 .Ql \&.Er
 macro is used to specify an errno.
