@@ -1,0 +1,13 @@
+Learn was originally written by Mike Lesk with some contributions
+from Brian Kernighan.  The paper in this directory dates from the
+second version of learn, around 1979.
+
+This version of learn has been resurrected from the original V7
+source and edited enough that the source compiles and the
+lessons can be executed.  We have made no attempt to update the
+lessons, nor to fix some of the glaring problems with the code.
+Think of it as a historical document, not a polished system.
+
+cd src
+make
+learn
