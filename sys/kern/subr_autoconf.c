@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.28 2001/08/31 15:12:05 jason Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.29 2001/09/01 05:48:18 jason Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -54,11 +54,6 @@
 #include <machine/limits.h>
 /* Extra stuff from Matthias Drochner <drochner@zelux6.zel.kfa-juelich.de> */
 #include <sys/queue.h>
-
-/* Bleh!  Need device_register proto */
-#if defined(__alpha__) || defined(hp300) || defined(__sparc64__)
-#include <machine/autoconf.h>
-#endif /* __alpha__ || hp300 || __sparc64__ */
 
 /*
  * Autoconfiguration subroutines.
@@ -425,7 +420,7 @@ config_attach(parent, match, aux, print)
 					cf->cf_unit++;
 			}
 	}
-#if defined(__alpha__) || defined(hp300) || defined(__sparc64__)
+#ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);

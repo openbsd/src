@@ -1,4 +1,4 @@
-/* $OpenBSD: autoconf.h,v 1.11 2001/05/05 22:33:26 art Exp $ */
+/* $OpenBSD: autoconf.h,v 1.12 2001/09/01 05:48:18 jason Exp $ */
 /* $NetBSD: autoconf.h,v 1.19 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
@@ -117,6 +117,4 @@ extern struct bootinfo_kernel bootinfo;
 const char *alpha_variation_name(u_int64_t,
     const struct alpha_variation_table *);
 const char *alpha_unknown_sysname(void);
-
-void	device_register __P((struct device *, void *));
 #endif /* _KERNEL */
