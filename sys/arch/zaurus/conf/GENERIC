@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2004/12/31 00:04:35 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.2 2005/01/04 03:47:00 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -74,6 +74,37 @@ pxaip0		at mainbus?
 pxaintc0	at pxaip?	# interrupt controller
 pxagpio0	at pxaip?	# GPIO
 saost0		at pxaip? addr 0x40a00000 size 0x20
+ohci0		at pxaip? addr 0x4c000000 size 0x70 intr 3
+usb*		at ohci?
+
+# USB bus support
+usb*		at ohci?	flags 0x1
+uhub*		at usb?
+uhub*		at uhub?
+
+uhidev*		at uhub?
+uhid*		at uhidev?		# USB Generic HID devices
+ukbd*		at uhidev?		# USB HID Keyboard devices
+wskbd*		at ukbd? mux 1
+#ums*		at uhub?		# USB Mice
+#wsmouse*	at ums? mux 0
+#ulpt*		at uhub?		# USB Printer
+aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+cue*		at uhub?		# CATC USB-EL1201A based Ethernet
+kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+cdce*		at uhub?		# CDC Ethernet
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+udav*		at uhub?		# Davicom DM9601 based Ethernet
+url*		at uhub?		# Realtek RTL8150L based adapters
+wi*		at uhub?		# WaveLAN IEEE 802.11DS
+#uscanner*	at uhub?		# USB Scanner driver
+#usscanner*	at uhub?		# USB SCSI scanners
+#scsibus*	at usscanner?
+#uyap*		at uhub?		# Y@P firmware loader
+#ugen*		at uhub?		# USB Generic driver
+umass*		at uhub?		# USB Mass Storage devices
+scsibus*	at umass?
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
@@ -94,9 +125,12 @@ wi*		at pcmcia?
 wdc*		at pcmcia?
 
 # IDE hard drives
-wd0	at wdc? flags 0x0000
-wd*	at wdc? flags 0x0000
+wd0		at wdc? flags 0x0000
+wd*		at wdc? flags 0x0000
 
+# PHY
+rlphy*		at mii?		# RealTek 8139 internal PHYs
+ukphy*		at mii?		# generic unknown PHYs
 
 # On-board device support
 obio0		at pxaip? intr 8
@@ -109,5 +143,5 @@ wsdisplay*	at lcd? console ?
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
 # Pseudo-Devices
-#pseudo-device	wsmux		2	# mouse & keyboard multiplexor
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 pseudo-device	crypto		1
