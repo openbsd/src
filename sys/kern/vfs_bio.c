@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.31 2001/02/24 19:07:08 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.32 2001/02/27 09:13:51 csapuntz Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -804,7 +804,7 @@ start:
 		 */
 		SET(bp->b_flags, B_AGE);
 		bawrite(bp);
-		goto start;
+		return (0);
 	}
 
 	/* disassociate us from our vnode, if we had one... */
