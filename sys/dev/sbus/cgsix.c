@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.50 2005/03/07 16:44:52 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.51 2005/03/08 21:35:03 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -181,7 +181,7 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 	if ((sc->sc_ih = bus_intr_establish(sa->sa_bustag, sa->sa_pri,
 	    IPL_TTY, 0, cgsix_intr, sc, self->dv_xname)) == NULL) {
 		printf(": couldn't establish interrupt, pri %d\n%s",
-		    sa->sa_pri, self->dv_xname);
+		    INTLEV(sa->sa_pri), self->dv_xname);
 	}
 
 	/* if prom didn't initialize us, do it the hard way */

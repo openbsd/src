@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.23 2004/11/09 14:30:43 miod Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.24 2005/03/08 21:35:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -236,7 +236,8 @@ cs4231_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_AUDIO, 0,
 	    cs4231_intr, sc, self->dv_xname) == NULL) {
-		printf(": couldn't establish interrupt, pri %d\n", sa->sa_pri);
+		printf(": couldn't establish interrupt, pri %d\n",
+		    INTLEV(sa->sa_pri));
 		return;
 	}
 
