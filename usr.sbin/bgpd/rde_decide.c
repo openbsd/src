@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.20 2004/01/13 16:15:37 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.21 2004/01/13 17:11:29 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -564,7 +564,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 				nexthop = peer->local_addr.v4.s_addr;
 		} else
 			nexthop = peer->local_addr.v4.s_addr;
-	} else 
+	} else
 		/* ebgp multihop */
 		/*
 		 * XXX for ebgp multihop nh->connected should always be false
