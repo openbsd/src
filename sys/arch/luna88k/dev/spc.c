@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.3 2004/08/06 18:54:57 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.4 2005/04/04 13:09:51 aoyama Exp $ */
 /* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
 
 /*-
@@ -73,6 +73,14 @@ struct scsi_adapter spc_switch = {
 	NULL,
 };
 
+/* bus space tag for spc */
+struct luna88k_bus_space_tag spc_bst = {
+	4,	/* when reading/writing 1 byte, the stride is 4. */
+	0,	/* not used */
+	0,	/* not used */
+	0,	/* not used */
+};
+
 int
 spc_mainbus_match(parent, cf, aux)
 	struct device *parent;
@@ -100,7 +108,7 @@ spc_mainbus_attach(parent, self, aux)
 
 	printf ("\n");
 
-	sc->sc_iot = LUNA88K_BUS_SPACE_MEM;
+	sc->sc_iot = &spc_bst;
 	sc->sc_ioh = ma->ma_addr;
 	sc->sc_initiator = 7;
 	sc->sc_dma_start = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 2004/08/11 06:09:07 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 2005/04/04 13:09:52 aoyama Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -64,15 +64,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* almost same as OpenBSD/mac68k */
-
 #ifndef _LUNA88K_BUS_H_
 #define _LUNA88K_BUS_H_
-
-/*
- * Value for the luna88k bus space tag, not to be used directly by MI code.
- */
-#define LUNA88K_BUS_SPACE_MEM	0	/* space is mem space */
 
 /*
  * Bus address and size types
@@ -83,8 +76,16 @@ typedef u_long bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef int	bus_space_tag_t;
-typedef u_long	bus_space_handle_t;
+typedef u_long bus_space_handle_t;
+typedef struct luna88k_bus_space_tag *bus_space_tag_t;
+
+struct luna88k_bus_space_tag {
+	/* 'stride' for each bytes reading/writing */
+	uint8_t	bs_stride_1;
+	uint8_t	bs_stride_2;
+	uint8_t bs_stride_4;
+	uint8_t	bs_stride_8;
+};
 
 /*
  *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
@@ -165,13 +166,13 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  */
 
 #define	bus_space_read_1(t, h, o)					\
-    ((void) t, (*(volatile u_int8_t *)((h) + 4 * (o))))
+    (*(volatile u_int8_t *)((h) + (t->bs_stride_1) * (o)))
 
 #define	bus_space_read_2(t, h, o)					\
-    ((void) t, (*(volatile u_int16_t *)((h) + 4 * (o))))
+    (*(volatile u_int16_t *)((h) + (t->bs_stride_2) * (o)))
 
 #define	bus_space_read_4(t, h, o)					\
-    ((void) t, (*(volatile u_int32_t *)((h) + 4 * (o))))
+    (*(volatile u_int32_t *)((h) + (t->bs_stride_4) * (o)))
 
 #if 0	/* Cause a link error for bus_space_read_8 */
 #define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
@@ -186,53 +187,29 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  * described by tag/handle/offset and copy into buffer provided.
  */
 
-#define	bus_space_read_multi_1(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.bu	r13, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		st.b	r13, r11, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 1"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_read_multi_1(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int8_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		*dest++ = bus_space_read_1(tag, handle, offset);
+}
 
-#define	bus_space_read_multi_2(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.hu	r13, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		st.hu	r13, r11, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 2"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_read_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int16_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		*dest++ = bus_space_read_2(tag, handle, offset);
+}
 
-#define	bus_space_read_multi_4(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld	r13, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		st	r13, r11, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 4"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_read_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int32_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		*dest++ = bus_space_read_4(tag, handle, offset);
+}
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
@@ -248,56 +225,33 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  * buffer provided.
  */
 
-#define	bus_space_read_region_1(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.bu	r13, r10, 0				;	\
-		st.b	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		add	r10, r10, 4				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 1"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_read_region_1(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int8_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		*dest++ = bus_space_read_1(tag, handle, offset++);
+}
 
-#define	bus_space_read_region_2(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.hu	r13, r10, 0				;	\
-		st.hu	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		add	r10, r10, 4				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 2"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_read_region_2(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int16_t *dest, size_t count)
+{
+	while ((int)--count >= 0) {
+		*dest++ = bus_space_read_2(tag, handle, offset);
+		offset += 2;
+	}
+}
 
-#define	bus_space_read_region_4(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld	r13, r10, 0				;	\
-		st	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		add	r10, r10, 4				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 4"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int32_t *dest, size_t count)
+{
+	while ((int)--count >= 0) {
+		*dest++ = bus_space_read_4(tag, handle, offset);
+		offset += 4;
+	}
+}
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
@@ -313,13 +267,13 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  */
 
 #define	bus_space_write_1(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int8_t *)((h) + 4 * (o)) = (v))))
+    ((void)(*(volatile u_int8_t *)((h) + (t->bs_stride_1) * (o)) = (v)))
 
 #define	bus_space_write_2(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int16_t *)((h) + 4 * (o)) = (v))))
+    ((void)(*(volatile u_int16_t *)((h) + (t->bs_stride_2) * (o)) = (v)))
 
 #define	bus_space_write_4(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int32_t *)((h) + 4 * (o)) = (v))))
+    ((void)(*(volatile u_int32_t *)((h) + (t->bs_stride_4) * (o)) = (v)))
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
@@ -334,53 +288,29 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  * provided to bus space described by tag/handle/offset.
  */
 
-#define	bus_space_write_multi_1(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.bu	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		st.b	r13, r10, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 1"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_write_multi_1(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int8_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_1(tag, handle, offset, *dest++);
+}
 
-#define	bus_space_write_multi_2(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.hu	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		st.hu	r13, r10, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 2"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_write_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int16_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_2(tag, handle, offset, *dest++);
+}
 
-#define	bus_space_write_multi_4(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		st	r13, r10, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 4"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_write_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int32_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_4(tag, handle, offset, *dest++);
+}
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
@@ -396,56 +326,33 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  * to bus space described by tag/handle starting at `offset'.
  */
 
-#define	bus_space_write_region_1(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.bu	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		st.b	r13, r10, 0				;	\
-		add	r10, r10, 4				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 1"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_write_region_1(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int8_t *dest, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_1(tag, handle, offset++, *dest++);
+}
 
-#define	bus_space_write_region_2(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld.hu	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		st.hu	r13, r10, 0				;	\
-		add	r10, r10, 4				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 2"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_write_region_2(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int16_t *dest, size_t count)
+{
+	while ((int)--count >= 0) {
+		bus_space_write_2(tag, handle, offset, *dest++);
+		offset += 2;
+	}
+}
 
-#define	bus_space_write_region_4(t, h, o, a, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	ld	r13, r11, 0				;	\
-		sub	r12, r12, 1				;	\
-		st	r13, r10, 0				;	\
-		add	r10, r10, 4				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r11, r11, 4"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
-		    "r10", "r11", "r12", "r13");			\
-} while (0);
+static __inline__ void
+bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int32_t *dest, size_t count)
+{
+	while ((int)--count >= 0) {
+		bus_space_write_4(tag, handle, offset, *dest++);
+		offset += 4;
+	}
+}
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
@@ -461,47 +368,29 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  * by tag/handle/offset `count' times.
  */
 
-#define	bus_space_set_multi_1(t, h, o, val, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	st.b	r11, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		bcnd	ne0, r12, 1b"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
-		    "r10", "r11", "r12");				\
-} while (0);
+static __inline__ void
+bus_space_set_multi_1(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int8_t value, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_1(tag, handle, offset, value);
+}
 
-#define	bus_space_set_multi_2(t, h, o, val, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	st.hu	r11, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		bcnd	ne0, r12, 1b"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
-		    "r10", "r11", "r12");				\
-} while (0);
+static __inline__ void
+bus_space_set_multi_2(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int16_t value, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_2(tag, handle, offset, value);
+}
 
-#define	bus_space_set_multi_4(t, h, o, val, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	st	r11, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		bcnd	ne0, r12, 1b"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
-		    "r10", "r11", "r12");				\
-} while (0);
+static __inline__ void
+bus_space_set_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int32_t value, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_4(tag, handle, offset, value);
+}
 
 #if 0	/* Cause a link error for bus_space_set_multi_8 */
 #define	bus_space_set_multi_8						\
@@ -517,50 +406,33 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
  * by tag/handle starting at `offset'.
  */
 
-#define	bus_space_set_region_1(t, h, o, val, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	st.b	r11, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r10, r10, 4"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
-		    "r10", "r11", "r12");				\
-} while (0);
+static __inline__ void
+bus_space_set_region_1(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int8_t value, size_t count)
+{
+	while ((int)--count >= 0)
+		bus_space_write_1(tag, handle, offset++, value);
+}
 
-#define	bus_space_set_region_2(t, h, o, val, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	st.hu	r11, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r10, r10, 4"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
-		    "r10", "r11", "r12");				\
-} while (0);
+static __inline__ void
+bus_space_set_region_2(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int16_t value, size_t count)
+{
+	while ((int)--count >= 0) {
+		bus_space_write_2(tag, handle, offset, value);
+		offset += 2;
+	}
+}
 
-#define	bus_space_set_region_4(t, h, o, val, c) do {			\
-	(void) t;							\
-	__asm __volatile ("						\
-		or	r10, r0, %0				;	\
-		or	r11, r0, %1				;	\
-		or	r12, r0, %2				;	\
-	1:	st	r11, r10, 0				;	\
-		sub	r12, r12, 1				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 add	r10, r10, 4"				:	\
-								:	\
-		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
-		    "r10", "r11", "r12");				\
-} while (0);
+static __inline__ void
+bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
+    bus_addr_t offset, u_int32_t value, size_t count)
+{
+	while ((int)--count >= 0) {
+		bus_space_write_4(tag, handle, offset, value);
+		offset += 4;
+	}
+}
 
 #if 0	/* Cause a link error for bus_space_set_region_8 */
 #define	bus_space_set_region_8						\
@@ -621,8 +493,6 @@ __LUNA88K_copy_region_N(4)
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    bus_size_t len, int flags);
  *
- * Note: the 680x0 does not currently require barriers, but we must
- * provide the flags to MI code.
  */
 #define	bus_space_barrier(t, h, o, l, f)	\
 	((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
