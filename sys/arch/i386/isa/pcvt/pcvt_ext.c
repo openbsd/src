@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.24 1999/11/25 20:24:21 aaron Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.25 1999/11/25 21:00:35 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2561,7 +2561,7 @@ vgapage(int new_screen)
  *	VT_USL ioctl handling 
  *---------------------------------------------------------------------------*/
 int
-usl_vt_ioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
+usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int i, j, error, opri, mode;
 	struct vt_mode newmode;

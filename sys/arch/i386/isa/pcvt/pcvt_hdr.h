@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.29 1999/11/25 20:24:21 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.30 1999/11/25 21:00:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -948,7 +948,7 @@ int	pcopen ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcclose ( Dev_t dev, int flag, int mode, struct proc *p );
 int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
-int	pcioctl ( Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p );
+int	pcioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
 
 struct tty *
@@ -964,7 +964,7 @@ void	pcstart ( struct tty *tp );
 void	pcstop ( struct tty *tp, int flag );
 
 void	switch_screen ( int n, int oldgrafx, int newgrafx );
-int	usl_vt_ioctl (Dev_t dev,int cmd,caddr_t data,int flag,struct proc *);
+int	usl_vt_ioctl (Dev_t dev, u_long cmd,caddr_t data,int flag,struct proc *);
 int	vt_activate ( int newscreen );
 int	vgapage ( int n );
 void	get_usl_keymap( keymap_t *map );
@@ -985,7 +985,7 @@ int	kbd_cmd ( int val );
 void	kbd_code_init ( void );
 void	kbd_code_init1 ( void );
 void	kbd_setmode(int mode);
-int	kbdioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
+int	kbdioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
 void	loadchar ( int fontset, int character, int char_scanlines,
 		   u_char *char_table );
 void	mda2egaorvga ( void );
@@ -1016,7 +1016,7 @@ void	vga_screen_off ( void );
 void	vga_screen_on ( void );
 char   *vga_string ( int number );
 int	vga_test ( void );
-int	vgaioctl ( Dev_t dev, int cmd, caddr_t data, int flag );
+int	vgaioctl ( Dev_t dev, u_long cmd, caddr_t data, int flag );
 void	vgapaletteio ( unsigned idx, struct rgb *val, int writeit );
 void	vt_aln ( struct video_state *svsp );
 void	vt_clearudk ( struct video_state *svsp );

@@ -1,7 +1,9 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.26 1999/11/25 20:24:20 aaron Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.27 1999/11/25 21:00:35 aaron Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
+ *
  * Copyright (c) 1992, 1993 Brian Dunford-Shore and Scott Turner.
+ *
  * Copyright (c) 1993 Charles Hannum.
  *
  * All rights reserved.
@@ -42,6 +44,45 @@
  * @(#)pcvt_drv.c, 3.32, Last Edit-Date: [Tue Oct  3 11:19:47 1995]
  *
  */
+
+/*---------------------------------------------------------------------------*
+ *
+ *      pcvt_drv.c      VT220 Driver Main Module / OS - Interface
+ *      ---------------------------------------------------------
+ *      -hm     ------------ Release 3.00 --------------
+ *      -hm     integrating NetBSD-current patches
+ *      -hm     adding ttrstrt() proto for NetBSD 0.9
+ *      -hm     kernel/console output cursor positioning fixed
+ *      -hm     kernel/console output switches optional to screen 0
+ *      -hm     FreeBSD 1.1 porting
+ *      -hm     the NetBSD 0.9 compiler detected a nondeclared var which was
+ *               NOT detected by neither the NetBSD-current nor FreeBSD 1.x!
+ *      -hm     including Michael's keyboard fifo code
+ *      -hm     Joergs patch for FreeBSD tty-malloc code
+ *      -hm     adjustments for NetBSD-current
+ *      -hm     FreeBSD bugfix from Joerg re timeout/untimeout casts
+ *      -jw     including Thomas Gellekum's FreeBSD 1.1.5 patch
+ *      -hm     adjusting #if's for NetBSD-current
+ *      -hm     applying Joerg's patch for FreeBSD 2.0
+ *      -hm     patch from Onno & Martin for NetBSD-current (post 1.0)
+ *      -hm     some adjustments for NetBSD 1.0
+ *      -hm     NetBSD PR #400: screen size report for new session
+ *      -hm     patch from Rafael Boni/Lon Willett for NetBSD-current
+ *      -hm     bell patch from Thomas Eberhardt for NetBSD
+ *      -hm     multiple X server bugfixes from Lon Willett
+ *      -hm     patch from joerg - pcdevtotty for FreeBSD pre-2.1
+ *      -hm     delay patch from Martin Husemann after port-i386 ml-discussion
+ *      -jw     add some code to provide more FreeBSD pre-2.1 support
+ *      -hm     patches from Michael for NetBSD-current (Apr/21/95) support
+ *      -hm     merged in changes from FreeBSD 2.0.5-RELEASE
+ *      -hm     NetBSD-current patches from John Kohl
+ *      -hm     ---------------- Release 3.30 -----------------------
+ *      -hm     patch from Joerg in pcopen() to make mouse emulator work again
+ *      -hm     patch from Frank van der Linden for keyboard state per VT
+ *      -hm     no TS_ASLEEP anymore in FreeBSD 2.1.0 SNAP 950928
+ *      -hm     ---------------- Release 3.32 -----------------------
+ *
+ *---------------------------------------------------------------------------*/
 
 #include "vt.h"
 #if NVT > 0
@@ -287,7 +328,7 @@ pctty(Dev_t dev)
 }
 
 int
-pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
+pcioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	register int error;
 	register struct tty *tp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.29 1999/11/25 20:24:21 aaron Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.30 1999/11/25 21:00:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1432,7 +1432,7 @@ setkeydef(Ovl_tbl *data)
  *	keyboard ioctl's entry
  *---------------------------------------------------------------------------*/
 int
-kbdioctl(Dev_t dev, int cmd, caddr_t data, int flag)
+kbdioctl(Dev_t dev, u_long cmd, caddr_t data, int flag)
 {
 	int key;
 
