@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.62 2004/08/10 19:34:38 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.63 2004/08/26 20:08:35 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -28,6 +28,7 @@ MACHINE,macppc,powerpc,
 MACHINE,mvme68k,m68k,
 MACHINE,mvme88k,m88k,
 MACHINE,mvmeppc,powerpc,
+MACHINE,sgi,mips64,
 MACHINE,sun3,m68k,
 MACHINE)')dnl
 dnl simulate an include path with a macro 'includeit'.
