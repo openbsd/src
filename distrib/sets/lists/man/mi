@@ -834,6 +834,7 @@
 ./usr/share/man/cat3p/Net::Domain.0
 ./usr/share/man/cat3p/Net::FTP.0
 ./usr/share/man/cat3p/Net::NNTP.0
+./usr/share/man/cat3p/Net::Netmask.0
 ./usr/share/man/cat3p/Net::Netrc.0
 ./usr/share/man/cat3p/Net::POP3.0
 ./usr/share/man/cat3p/Net::Ping.0
