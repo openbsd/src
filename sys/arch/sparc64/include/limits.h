@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.2 2001/08/23 16:12:40 art Exp $	*/
+/*	$OpenBSD: limits.h,v 1.3 2002/04/19 11:04:24 espie Exp $	*/
 /*	$NetBSD: limits.h,v 1.8 2000/08/08 22:31:14 tshiozak Exp $ */
 
 /*
@@ -58,21 +58,13 @@
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
 /* Make sure _LP64 is defined if we have a 64-bit compiler */
-#if	__arch64__||__sparcv9__
 #ifndef _LP64
 #define _LP64
 #endif
-#endif
 
-#ifdef __arch64__
 #define	ULONG_MAX	0xffffffffffffffffUL	/* max value for an unsigned long */
 #define	LONG_MAX	0x7fffffffffffffffL	/* max value for a long */
 #define	LONG_MIN	(-0x7fffffffffffffffL-1)	/* min value for a long */
-#else
-#define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
-#define	LONG_MAX	0x7fffffffL	/* max value for a long */
-#define	LONG_MIN	(-0x7fffffffL-1)	/* min value for a long */
-#endif
 
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
@@ -100,11 +92,7 @@
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)
-#ifdef __arch64__
 #define LONG_BIT	64
-#else
-#define LONG_BIT	32
-#endif
 #define WORD_BIT	32
 
 #define DBL_DIG		15
