@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.2 1998/11/30 21:38:01 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.3 1999/02/25 19:16:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -41,6 +41,8 @@
 
 struct mainbus_softc {
 	struct  device sc_dv;
+
+	hppa_hpa_t sc_hpa;
 };
 
 int	mbmatch __P((struct device *, void *, void *));
@@ -52,6 +54,24 @@ struct cfattach mainbus_ca = {
 
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
+};
+
+struct hppa_bus_dma_tag hppa_dmatag = {
+	NULL,
+	_dmamap_create,
+	_dmamap_destroy,
+	_dmamap_load,
+	_dmamap_load_mbuf,
+	_dmamap_load_uio,
+	_dmamap_load_raw,
+	_dmamap_unload,
+	_dmamap_sync,
+
+	_dmamem_alloc,
+	_dmamem_free,
+	_dmamem_map,
+	_dmamem_unmap,
+	_dmamem_mmap
 };
 
 int
@@ -75,20 +95,49 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	register struct mainbus_softc *sc = (struct mainbus_softc *)self;
+	struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 	struct confargs nca;
 
-	printf("\n");
+	/* fetch the "default" cpu hpa */
+	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
+		panic("mbattach: PDC_HPA failed");
+
+	/* 
+	 * Local-Broadcast the HPA to all modules on the bus
+	 */
+	((struct iomod *)(pdc_hpa.hpa & FLEX_MASK))[FPA_IOMOD].io_flex =
+		(void *)((pdc_hpa.hpa & FLEX_MASK) | DMA_ENABLE);
+
+	sc->sc_hpa = pdc_hpa.hpa;
+	printf (" [flex %x]\n", pdc_hpa.hpa & FLEX_MASK);
 
 	/* PDC first */
 	bzero (&nca, sizeof(nca));
 	nca.ca_name = "pdc";
-	nca.ca_mod = -1;
+	nca.ca_hpa = 0;
+	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
 	bzero (&nca, sizeof(nca));
 	nca.ca_name = "mainbus";
-	nca.ca_mod = -1;
+	nca.ca_hpa = 0;
+	nca.ca_dmatag = &hppa_dmatag;
 	pdc_scanbus(self, &nca, -1, MAXMODBUS);
+}
+
+/*
+ * retrive CPU #N HPA value
+ */
+hppa_hpa_t
+cpu_gethpa(n)
+	int n;
+{
+	register struct mainbus_softc *sc;
+
+	sc = mainbus_cd.cd_devs[0];
+
+	return sc->sc_hpa;
 }
 
 int
@@ -101,8 +150,28 @@ mbprint(aux, pnp)
 	if (pnp)
 		printf("\"%s\" at %s (type %x, sv %x)", ca->ca_name, pnp,
 		       ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
-	if (ca->ca_mod >= 0)
-		printf(" mod %d", ca->ca_mod);
+	if (ca->ca_hpa) {
+		printf(" hpa %x", ca->ca_hpa);
+		if (!pnp && ca->ca_irq >= 0)
+			printf(" irq %d", ca->ca_irq);
+	}
 
 	return (UNCONF);
 }
+
+int
+mbsubmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	register struct cfdata *cf = match;
+	register struct confargs *ca = aux;
+	register int ret;
+
+	if ((ret = (*cf->cf_attach->ca_match)(parent, match, aux))) {
+		ca->ca_irq = cf->hppacf_irq;
+	}
+
+	return ret;
+}
+
