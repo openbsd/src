@@ -4,7 +4,7 @@
  * to pick it up and invokes sendmail (or sendmail-like agent) to
  * deliver it.
  *
- * $Id: smtpfwdd.c,v 1.1.1.1 1997/12/12 05:50:27 beck Exp $
+ * $Id: smtpfwdd.c,v 1.2 1998/03/09 08:14:51 deraadt Exp $
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -41,7 +41,7 @@
  */
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$Id: smtpfwdd.c,v 1.1.1.1 1997/12/12 05:50:27 beck Exp $";
+char *obtuse_rcsid = "$Id: smtpfwdd.c,v 1.2 1998/03/09 08:14:51 deraadt Exp $";
 
 #include <stdio.h>
 #include <signal.h>
@@ -760,7 +760,7 @@ forward(char *fname)
  * The brains of this operation
  */
 
-void
+int
 main(int argc, char **argv)
 {
   int opt;

@@ -2,7 +2,7 @@
  * smtpd, Obtuse SMTP daemon, storing agent. does simple collection of
  * mail messages, for later forwarding by smtpfwdd.
  *
- * $Id: smtpd.c,v 1.4 1998/02/07 21:29:40 beck Exp $
+ * $Id: smtpd.c,v 1.5 1998/03/09 08:14:49 deraadt Exp $
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -40,7 +40,7 @@
 
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$Id: smtpd.c,v 1.4 1998/02/07 21:29:40 beck Exp $";
+char *obtuse_rcsid = "$Id: smtpd.c,v 1.5 1998/03/09 08:14:49 deraadt Exp $";
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -1965,7 +1965,7 @@ snarfdata(int in, int out, long *size, int bin)
  * The brains of this operation
  */
 
-void
+int
 main(int argc, char **argv)
 {
   int opt;
