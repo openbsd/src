@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsbus.h,v 1.3 2000/04/26 03:08:43 bjc Exp $ */
+/*	$OpenBSD: vsbus.h,v 1.4 2000/04/27 07:19:57 bjc Exp $ */
 /*	$NetBSD: vsbus.h,v 1.9 1999/10/22 21:10:13 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -128,6 +128,7 @@ struct	vsbus_attach_args {
 
 u_char	vsbus_setmask __P((unsigned char));
 void	vsbus_clrintr __P((unsigned char));
-void	vsbus_copytoproc(struct proc *, caddr_t, caddr_t, int);
-void	vsbus_copyfromproc(struct proc *, caddr_t, caddr_t, int);
+void	vsbus_intr	__P((void *));
+void	vsbus_copytoproc __P((struct proc *, caddr_t, caddr_t, int));
+void	vsbus_copyfromproc __P((struct proc *, caddr_t, caddr_t, int));
 #endif /* _VAX_VSBUS_H_ */
