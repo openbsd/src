@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.c,v 1.5 1996/10/16 14:18:36 mickey Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.6 1996/11/27 19:52:25 niklas Exp $	*/
 /*	$NetBSD: rpc.c,v 1.12 1996/02/26 23:05:26 gwr Exp $	*/
 
 /*
@@ -183,8 +183,8 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	recv_head -= sizeof(*reply);
 
 	cc = sendrecv(d,
-	    sendudp, send_head, ((int)send_tail - (int)send_head),
-	    recvrpc, recv_head, ((int)recv_tail - (int)recv_head));
+	    sendudp, send_head, send_tail - send_head,
+	    recvrpc, recv_head, recv_tail - recv_head);
 
 #ifdef RPC_DEBUG
 	if (debug)
@@ -223,7 +223,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	}
 	recv_head += sizeof(*reply);
 
-	return (ssize_t)((int)recv_tail - (int)recv_head);
+	return (ssize_t)(recv_tail - recv_head);
 }
 
 /*
