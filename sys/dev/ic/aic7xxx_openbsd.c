@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.28 2005/01/12 00:50:17 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.29 2005/02/12 15:32:12 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -123,24 +123,12 @@ ahc_attach(struct ahc_softc *ahc)
 		ahc_reset_channel(ahc, 'B', TRUE);
 
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
-		/*
-		 * Ensure SCSI_IS_SCSIBUS_B() returns false for sc_channel
-		 * until sc_channel_b has been properly initialized by scsi
-		 * layer.
-		 */
-		ahc->sc_channel_b.scsibus = 0xff;
 		ahc->sc_child = config_found((void *)&ahc->sc_dev,
 		    &ahc->sc_channel, scsiprint);
 		if (ahc->features & AHC_TWIN)
 			ahc->sc_child_b = config_found((void *)&ahc->sc_dev,
 			    &ahc->sc_channel_b, scsiprint);
 	} else {
-		/*
-		 * Ensure SCSI_IS_SCSIBUS_B() returns false for sc_channel_b
-		 * until sc_channel has been properly initialized by scsi
-		 * layer.
-		 */
-		ahc->sc_channel.scsibus = 0xff;
 		if (ahc->features & AHC_TWIN)
 			ahc->sc_child = config_found((void *)&ahc->sc_dev,
 			    &ahc->sc_channel_b, scsiprint);

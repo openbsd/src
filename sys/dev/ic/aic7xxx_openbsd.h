@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.13 2004/10/24 04:28:33 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.14 2005/02/12 15:32:12 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -92,7 +92,8 @@
 #define	SCSI_CHANNEL(ahc, sc_link)	\
 	(SCSI_IS_SCSIBUS_B(ahc, sc_link) ? 'B' : 'A')
 #define BUILD_SCSIID(ahc, sc_link, target_id, our_id) \
-        ((((target_id) << TID_SHIFT) & TID) | (our_id))
+        ((((target_id) << TID_SHIFT) & TID) | (our_id) \
+        | (SCSI_IS_SCSIBUS_B(ahc, sc_link) ? TWIN_CHNLB : 0))
 
 #ifndef offsetof
 #define offsetof(type, member)  ((size_t)(&((type *)0)->member))

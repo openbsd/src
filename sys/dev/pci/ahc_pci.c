@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.45 2004/08/13 23:38:54 krw Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.46 2005/02/12 15:32:11 krw Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.45 2004/08/13 23:38:54 krw Exp $
+ * $Id: ahc_pci.c,v 1.46 2005/02/12 15:32:11 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -739,6 +739,12 @@ ahc_pci_attach(parent, self, aux)
 	ahc->seqctl = FASTMODE;
 	for (i = 0; i < AHC_NUM_TARGETS; i++)
 		TAILQ_INIT(&ahc->untagged_queues[i]);
+
+	/*
+	 * SCSI_IS_SCSIBUS_B() must returns false until sc_channel_b
+	 * has been properly initialized. XXX Breaks if >254 scsi buses.
+	 */
+	ahc->sc_channel_b.scsibus = 0xff;
 
 	ahc->dev_softc = pa;
 
