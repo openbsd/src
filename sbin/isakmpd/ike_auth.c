@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.10 1999/02/26 03:40:50 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.23 1999/02/25 11:39:02 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.11 1999/03/24 14:42:49 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.25 1999/03/24 10:59:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -101,17 +101,10 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   struct ipsec_exch *ie = exchange->data;
   u_int8_t *skeyid;
   u_int8_t *key;
-  struct transport *t = exchange->last_received->transport;
-  struct sockaddr *dst;
-  int dst_len;
   u_int8_t *buf = 0;
   size_t keylen;
 
-  /*
-   * Get the pre-shared key for our peer's IP address, or if that does not
-   * exist, the default.
-   */
-  t->vtbl->get_dst (t, &dst, &dst_len);
+  /* Get the pre-shared key for our peer.  */
   key = conf_get_str (exchange->name, "Authentication");
   if (!key)
     {
@@ -363,7 +356,7 @@ rsa_sig_decode_hash (struct message *msg)
       return -1;
     }
 
-  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, key.n, key.e,
+  if (!pkcs_rsa_decrypt (PKCS_PRIVATE, &key, NULL,
 			 p->p + ISAKMP_SIG_DATA_OFF, hash_p, &len))
     {
       pkcs_free_public_key (&key);
@@ -510,7 +503,7 @@ rsa_sig_encode_hash (struct message *msg)
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
   log_debug_buf (LOG_MISC, 80, header, buf, hashsize);
 
-  if (!pkcs_rsa_encrypt (PKCS_PRIVATE, key.n, key.e, buf, hashsize,
+  if (!pkcs_rsa_encrypt (PKCS_PRIVATE, NULL, &key, buf, hashsize,
 			 &data, &datalen))
     {
       free (buf);
