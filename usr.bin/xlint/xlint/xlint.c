@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlint.c,v 1.13 2003/04/14 03:03:53 deraadt Exp $	*/
+/*	$OpenBSD: xlint.c,v 1.14 2003/04/25 23:22:21 deraadt Exp $	*/
 /*	$NetBSD: xlint.c,v 1.3 1995/10/23 14:29:30 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: xlint.c,v 1.13 2003/04/14 03:03:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xlint.c,v 1.14 2003/04/25 23:22:21 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -294,7 +294,7 @@ main(argc, argv)
 {
 	int	c;
 	char	flgbuf[3], *tmp, *s;
-	size_t	len;
+	size_t	len, l;
 	struct	utsname un;
 
 	if ((tmp = getenv("TMPDIR")) == NULL || (len = strlen(tmp)) == 0) {
@@ -440,8 +440,9 @@ main(argc, argv)
 				usage();
 			Cflag = 1;
 			appstrg(&l2flags, concat2("-C", optarg));
-			p2out = xmalloc(sizeof ("llib-l.ln") + strlen(optarg));
-			(void)sprintf(p2out, "llib-l%s.ln", optarg);
+			l = sizeof ("llib-l.ln") + strlen(optarg);
+			p2out = xmalloc(l);
+			(void)snprintf(p2out, l, "llib-l%s.ln", optarg);
 			freelst(&deflibs);
 			break;
 
