@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.61 2004/12/08 22:35:13 pascoe Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.62 2004/12/22 12:02:47 grange Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1826,48 +1826,29 @@ fxp_mc_setup(sc, doit)
 
 #ifndef SMALL_KERNEL
 #include <dev/microcode/fxp/rcvbundl.h>
-
-const u_int32_t fxp_ucode_d101a[] = D101_A_RCVBUNDLE_UCODE;
-const u_int32_t fxp_ucode_d101b0[] = D101_B0_RCVBUNDLE_UCODE;
-const u_int32_t fxp_ucode_d101ma[] = D101M_B_RCVBUNDLE_UCODE;
-const u_int32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
-const u_int32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
-const u_int32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
-
-#define UCODE(x)	sizeof(x) / sizeof(u_int32_t), x
-
 struct ucode {
 	u_int16_t	revision;
 	u_int16_t	int_delay_offset;
 	u_int16_t	bundle_max_offset;
-	u_int16_t	length;
-	const u_int32_t	*ucode;
+	const char	*uname;
 } const ucode_table[] = {
-	{ FXP_REV_82558_A4,
-	  D101_CPUSAVER_DWORD, 0,
-	  UCODE(fxp_ucode_d101a) },
+	{ FXP_REV_82558_A4, D101_CPUSAVER_DWORD, 0, "fxp-d101a" }, 
 
-	{ FXP_REV_82558_B0,
-	  D101_CPUSAVER_DWORD, 0,
-	  UCODE(fxp_ucode_d101b0), },
+	{ FXP_REV_82558_B0, D101_CPUSAVER_DWORD, 0, "fxp-d101b0" },
 
-	{ FXP_REV_82559_A0,
-	  D101M_CPUSAVER_DWORD, D101M_CPUSAVER_BUNDLE_MAX_DWORD,
-	  UCODE(fxp_ucode_d101ma) },
+	{ FXP_REV_82559_A0, D101M_CPUSAVER_DWORD, 
+	    D101M_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d101ma" },
 
-	{ FXP_REV_82559S_A,
-	  D101S_CPUSAVER_DWORD, D101S_CPUSAVER_BUNDLE_MAX_DWORD,
-	  UCODE(fxp_ucode_d101s) },
+	{ FXP_REV_82559S_A, D101S_CPUSAVER_DWORD,
+	    D101S_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d101s" },
 
-	{ FXP_REV_82550,
-	  D102_B_CPUSAVER_DWORD, D102_B_CPUSAVER_BUNDLE_MAX_DWORD,
-	  UCODE(fxp_ucode_d102) },
+	{ FXP_REV_82550, D102_B_CPUSAVER_DWORD,
+	    D102_B_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d102" },
 
-	{ FXP_REV_82550_C,
-	  D102_C_CPUSAVER_DWORD, D102_C_CPUSAVER_BUNDLE_MAX_DWORD,
-	  UCODE(fxp_ucode_d102c) },
+	{ FXP_REV_82550_C, D102_C_CPUSAVER_DWORD,
+	    D102_C_CPUSAVER_BUNDLE_MAX_DWORD, "fxp-d102c" },
 
-	{ 0, 0, 0, 0, NULL }
+	{ 0, 0, 0, NULL }
 };
 
 void
@@ -1875,22 +1856,31 @@ fxp_load_ucode(struct fxp_softc *sc)
 {
 	const struct ucode *uc;
 	struct fxp_cb_ucode *cbp = &sc->sc_ctrl->u.code;
-	int i;
+	int i, error;
+	u_int32_t *ucode_buf;
+	size_t ucode_len;
 
 	if (sc->sc_flags & FXPF_UCODE)
 		return;
 
-	for (uc = ucode_table; uc->ucode != NULL; uc++)
+	for (uc = ucode_table; uc->revision != 0; uc++)
 		if (sc->sc_revision == uc->revision)
 			break;
-	if (uc->ucode == NULL)
+	if (uc->revision == NULL)
 		return;	/* no ucode for this chip is found */
+
+	error = loadfirmware(uc->uname, (u_char **)&ucode_buf, &ucode_len);
+	if (error) {
+		printf("%s: failed loadfirmware of file %s: errno %d\n",
+		    sc->sc_dev.dv_xname, uc->uname, error);
+		return;
+	}
 
 	cbp->cb_status = 0;
 	cbp->cb_command = htole16(FXP_CB_COMMAND_UCODE|FXP_CB_COMMAND_EL);
 	cbp->link_addr = 0xffffffff;	/* (no) next command */
-	for (i = 0; i < uc->length; i++)
-		cbp->ucode[i] = htole32(uc->ucode[i]);
+	for (i = 0; i < (ucode_len / sizeof(u_int32_t)); i++)
+		cbp->ucode[i] = ucode_buf[i];
 
 	if (uc->int_delay_offset)
 		*((u_int16_t *)&cbp->ucode[uc->int_delay_offset]) =
@@ -1918,6 +1908,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	} while (((cbp->cb_status & htole16(FXP_CB_STATUS_C)) == 0) && --i);
 	if (i == 0) {
 		printf("%s: timeout loading microcode\n", sc->sc_dev.dv_xname);
+		free(ucode_buf, M_DEVBUF);
 		return;
 	}
 
@@ -1931,6 +1922,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 		printf("\n");
 #endif
 
+	free(ucode_buf, M_DEVBUF);
 	sc->sc_flags |= FXPF_UCODE;
 }
 #endif /* SMALL_KERNEL */

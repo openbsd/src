@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.321 2004/11/28 23:39:45 canacar Exp $
+#	$OpenBSD: files,v 1.322 2004/12/22 12:02:47 grange Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -235,7 +235,7 @@ device	xl: ether, ifnet, ifmedia, mii
 file	dev/ic/xl.c		xl
 
 # Intel EtherExpress PRO 10/100B
-device	fxp: ether, ifnet, ifmedia, mii
+device	fxp: ether, ifnet, ifmedia, mii, firmload
 file	dev/ic/fxp.c		fxp
 
 # Myson MTD803

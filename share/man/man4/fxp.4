@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.29 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: fxp.4,v 1.30 2004/12/22 12:02:47 grange Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -114,7 +114,27 @@ There are not enough mbufs available for allocation.
 .It "fxp%d: device timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
+.It "fxp%d: failed loadfirmware of file %s: errno %d"
+The device is able to do interrupt coalescing but required firmware file
+is missing.
 .El
+.Sh FILES
+Some devices are able to do interrupt coalescing but it requires firmware
+updating.
+The following firmware files are potentially loaded on demand when an
+interface is brought up:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/fxp-d101a
+.It Pa /etc/firmware/fxp-d101b0
+.It Pa /etc/firmware/fxp-d101ma
+.It Pa /etc/firmware/fxp-d101s
+.It Pa /etc/firmware/fxp-d102
+.It Pa /etc/firmware/fxp-d102c
+.It Pa /etc/firmware/fxp-license
+.El
+.Pp
+If a file is missing, the driver attempts to operate anyways.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr cardbus 4 ,
