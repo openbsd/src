@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.38 2001/10/31 04:46:12 nate Exp $
+$OpenBSD: usbdevs,v 1.39 2001/11/06 19:06:38 wilfried Exp $
 /* $NetBSD: usbdevs,v 1.194 2001/10/26 03:47:31 mycroft Exp $ */
 
 /*
@@ -125,6 +125,7 @@ vendor DIGI2		0x04d0	Digi
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing
 vendor PANASONIC	0x04da	Panasonic (Matsushita)
+vendor IIYAMA		0x04e1	Iiyama
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor CHICONY		0x04f2	Chicony Electronics
@@ -628,6 +629,9 @@ product HP2 C500		0x6002	PhotoSmart C500
 
 /* IBM Corporation */
 product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
+
+/* Iiyama products */
+product IIYAMA HUB		0x0201	Hub
 
 /* Inside Out Networks products */
 product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
