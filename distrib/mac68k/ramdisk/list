@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2004/10/02 16:10:38 krw Exp $
+#	$OpenBSD: list,v 1.22 2004/12/02 22:11:58 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -23,6 +23,7 @@ LINK	instbin					bin/rm
 LINK	instbin					bin/ksh bin/sh
 ARGVLINK ksh					-sh
 LINK	instbin					bin/stty
+LINK	instbin					bin/sync
 LINK	instbin					sbin/dhclient
 LINK	instbin					sbin/disklabel
 LINK	instbin					sbin/dmesg
@@ -36,15 +37,16 @@ LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs
+LINK	instbin					sbin/pdisk
 LINK	instbin					sbin/ping
 LINK	instbin					sbin/ping6
-LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/route
+LINK	instbin					sbin/rtsol
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/grep usr/bin/fgrep usr/bin/egrep
-LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin					usr/bin/less usr/bin/more
 LINK	instbin					usr/bin/sed
 
 # copy the MAKEDEV script and make some devices
