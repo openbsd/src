@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.25 2002/03/07 00:53:26 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.26 2002/03/17 00:22:04 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,7 +51,6 @@ static char *_dl_getenv(const char *var, const char **env);
 
 const char *_dl_progname;
 int  _dl_pagesz;
-int  _dl_trusted;
 
 char *_dl_libpath;
 char *_dl_preload;
@@ -135,7 +134,7 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 *  Don't allow someone to change the search paths if he runs
 	 *  a suid program without credentials high enough.
 	 */
-	if ((_dl_trusted = !_dl_suid_ok())) {	/* Zap paths if s[ug]id... */
+	if (_dl_issetugid()) {	/* Zap paths if s[ug]id... */
 		if (_dl_preload) {
 			*_dl_preload = '\0';
 		}

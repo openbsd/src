@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.8 2002/03/15 14:52:39 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.9 2002/03/17 00:22:04 art Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -240,50 +240,14 @@ _dl_exit:
 
 	.section ".text"
 	.align 4
-	.global _dl_getegid
-	.type _dl_getegid,@function
-_dl_getegid:
-	mov SYS_getegid | SYSCALL_G2RFLAG, %g1	! call sys_exit
-	add %o7, 8, %g2				! just return on sucess
-	t ST_SYSCALL				! off to wonderland
+	.global _dl_issetugid
+	.type _dl_issetugid,@function
+_dl_issetugid:
+	mov SYS_issetugid | SYSCALL_G2RFLAG, %g1
+	add %o7, 8, %g2
+	t ST_SYSCALL
 	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-
-	.section ".text"
-	.align 4
-	.global _dl_geteuid
-	.type _dl_geteuid,@function
-_dl_geteuid:
-	mov SYS_geteuid | SYSCALL_G2RFLAG, %g1	! call sys_exit
-	add %o7, 8, %g2				! just return on sucess
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-
-	.section ".text"
-	.align 4
-	.global _dl_getgid
-	.type _dl_getgid,@function
-_dl_getgid:
-	mov SYS_getgid | SYSCALL_G2RFLAG, %g1	! call sys_exit
-	add %o7, 8, %g2				! just return on sucess
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
-
-
-	.section ".text"
-	.align 4
-	.global _dl_getuid
-	.type _dl_getuid,@function
-_dl_getuid:
-	mov SYS_getuid | SYSCALL_G2RFLAG, %g1	! call sys_exit
-	add %o7, 8, %g2				! just return on sucess
-	t ST_SYSCALL				! off to wonderland
-	retl
-	 sub %g0, %o0, %o0			! error: result = -errno
+	 sub %g0, %o0, %o0
 
 
 	.section ".text"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.4 2002/02/21 23:17:53 drahn Exp $ */
+/*	$OpenBSD: syscall.h,v 1.5 2002/03/17 00:22:04 art Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -46,10 +46,7 @@
 
 int	_dl_close(int);
 int	_dl_exit(int);
-int	_dl_getegid(void);
-int	_dl_geteuid(void);
-int	_dl_getgid(void);
-int	_dl_getuid(void);
+int	_dl_issetugid(void);
 long	_dl_mmap(void *, unsigned int, unsigned int, unsigned int, int, off_t);
 int	_dl_mprotect(const void *, int, int);
 int	_dl_munmap(const void*, unsigned int);
@@ -59,23 +56,6 @@ int	_dl_read(int, const char*, int);
 int	_dl_stat(const char *, struct stat *);
 #endif
 int	_dl_write(int, const char*, int);
-
-/*
- * Not an actual syscall, but we need something in assembly to say
- * whether this is OK or not.
- */
-
-static inline int
-_dl_suid_ok (void)
-{
-	unsigned int uid, euid, gid, egid;
-
-	uid = _dl_getuid();
-	euid = _dl_geteuid();
-	gid = _dl_getgid();
-	egid = _dl_getegid();
-  	return (uid == euid && gid == egid);
-}
 
 #include <elf_abi.h>
 #endif /*__DL_SYSCALL_H__*/

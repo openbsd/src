@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2001/09/24 21:37:06 art Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.5 2002/03/17 00:22:04 art Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -258,29 +258,11 @@ LEAF_NOPROFILE(_dl_mprotect, 3)
 	RET
 END(_dl_mprotect)
 
-LEAF_NOPROFILE(_dl_getuid, 0)
-	ldiq	v0, SYS_getuid
+LEAF_NOPROFILE(_dl_issetugid, 0)
+	ldiq	v0, SYS_issetugid
 	call_pal PAL_OSF1_callsys
 	RET
-END(_dl_getuid)
-
-LEAF_NOPROFILE(_dl_geteuid, 0)
-	ldiq	v0, SYS_geteuid
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_geteuid)
-
-LEAF_NOPROFILE(_dl_getgid, 0)
-	ldiq	v0, SYS_getgid
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_getgid)
-
-LEAF_NOPROFILE(_dl_getegid, 0)
-	ldiq	v0, SYS_getegid
-	call_pal PAL_OSF1_callsys
-	RET
-END(_dl_getegid)
+END(_dl_issetugid)
 
 #ifdef USE_CACHE
 LEAF_NOPROFILE(_dl_stat, 2)
