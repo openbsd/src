@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.102 2001/08/28 21:40:54 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.103 2001/09/06 03:31:34 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1508,7 +1508,7 @@ hifn_intr(arg)
 {
 	struct hifn_softc *sc = arg;
 	struct hifn_dma *dma = sc->sc_dma;
-	u_int32_t dmacsr, restart, rings = 0;
+	u_int32_t dmacsr, restart;
 	int i, u;
 
 	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
@@ -1524,19 +1524,17 @@ hifn_intr(arg)
 	if ((dmacsr & sc->sc_dmaier) == 0)
 		return (0);
 
+	WRITE_REG_1(sc, HIFN_1_DMA_CSR, dmacsr & sc->sc_dmaier);
+
 	if ((sc->sc_flags & HIFN_HAS_PUBLIC) &&
-	    (dmacsr & HIFN_DMACSR_PUBDONE)) {
-		dmacsr &= ~HIFN_DMACSR_PUBDONE;
+	    (dmacsr & HIFN_DMACSR_PUBDONE))
 		WRITE_REG_1(sc, HIFN_1_PUB_STATUS,
 		    READ_REG_1(sc, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
-	}
 
 	restart = dmacsr & (HIFN_DMACSR_S_OVER | HIFN_DMACSR_D_OVER |
 	    HIFN_DMACSR_R_OVER);
-	if (restart) {
+	if (restart)
 		printf("%s: overrun %x\n", sc->sc_dv.dv_xname, dmacsr);
-		WRITE_REG_1(sc, HIFN_1_DMA_CSR, restart);
-	}
 
 	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
 	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
@@ -1545,10 +1543,6 @@ hifn_intr(arg)
 		hifn_abort(sc);
 		return (1);
 	}
-
-	if (dma->resu > HIFN_D_RES_RSIZE)
-		printf("%s: Internal Error -- ring overflow\n",
-		    sc->sc_dv.dv_xname);
 
 	if ((dmacsr & HIFN_DMACSR_C_WAIT) && (dma->cmdu == 0)) {
 		/*
@@ -1559,7 +1553,6 @@ hifn_intr(arg)
 		sc->sc_dmaier &= ~HIFN_DMAIER_C_WAIT;
 		WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 	}
-
 
 	/* clear the rings */
 	i = dma->resk; u = dma->resu;
@@ -1628,13 +1621,6 @@ hifn_intr(arg)
 	}
 	dma->cmdk = i; dma->cmdu = u;
 
-	/*
-	 * Clear "result done" and "command wait" flags in status register.
-	 * If we still have slots to process and we received a "command wait"
-	 * interrupt, this will interupt us again.
-	 */
-	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
-	    HIFN_DMACSR_R_DONE | HIFN_DMACSR_C_WAIT | rings);
 	return (1);
 }
 
