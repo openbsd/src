@@ -2862,7 +2862,8 @@ pmap_changeprot(pm, va, prot, wired)
 			 * the latter check deals with a writethrough cache
 			 * problem on the 4/300
 			 */
-			if (vactype == VAC_WRITEBACK &&
+			if ((vactype==VAC_WRITEBACK ||
+			    (vactype==VAC_WRITETHROUGH && cputyp==CPU_SUN4)) &&
 			    (tpte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
 				cache_flush_page((int)va);
 		} else {
