@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.807 2004/12/07 11:06:56 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.808 2004/12/08 18:52:22 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1692,6 +1692,7 @@
 #define	PCI_PRODUCT_MENTOR_PCI0661	0x0661		/* PCI-PCI */
 
 /* Mitsubishi Electronics */
+#define	PCI_PRODUCT_MITSUBISHIELEC_4D30T	0x0301		/* Powerstorm 4D30T */
 #define	PCI_PRODUCT_MITSUBISHIELEC_GUI	0x0304		/* GUI Accel */
 
 /* Motorola products */
