@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.20 2000/10/19 16:37:37 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.21 2000/10/23 16:33:20 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -278,6 +278,7 @@ pchbattach(parent, self, aux)
 		case PCI_PRODUCT_INTEL_82810_MCH:
 		case PCI_PRODUCT_INTEL_82810E_MCH:
 		case PCI_PRODUCT_INTEL_82840_HB:
+		case PCI_PRODUCT_INTEL_82820_MCH:
 		case PCI_PRODUCT_INTEL_82815_HUB:
 			sc->bt = pa->pa_memt;
 			if (bus_space_map(sc->bt, I82802_IOBASE, I82802_IOSIZE,
