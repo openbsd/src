@@ -12,5 +12,5 @@ SRCS=	sftp-server.c log-server.c
 
 .include <bsd.prog.mk>
 
-LDADD+=	-lcrypto # -lutil -lz
-DPADD+=	${LIBCRYPTO} # ${LIBDES} ${LIBUTIL} ${LIBZ}
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
