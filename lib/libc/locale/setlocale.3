@@ -56,7 +56,7 @@ function sets the C library's notion
 of natural language formatting style
 for particular sets of routines.
 Each such style is called a
-.Sq locale
+.Dq locale
 and is invoked using an appropriate name passed as a C string.
 The
 .Fn localeconv
@@ -168,7 +168,7 @@ before the decimal point, except for currency values.
 .It Fa grouping
 The sizes of the groups of digits, except for currency values.
 This is a pointer to a vector of integers, each of size
-.Va char ,
+.Li char ,
 representing group size from low order digit groups
 to high order (right to left).
 The list may be terminated with 0 or
@@ -191,7 +191,7 @@ Like
 .Fa grouping
 but for currency values.
 .It Fa positive_sign
-The character used to denote nonnegative currency values,
+The character used to denote non-negative currency values,
 usually the empty string.
 .It Fa negative_sign
 The character used to denote negative currency values,
@@ -204,10 +204,10 @@ The number of digits after the decimal point
 in the local style for currency values.
 .It Fa p_cs_precedes
 1 if the currency symbol precedes the currency value
-for nonnegative values, 0 if it follows.
+for non-negative values, 0 if it follows.
 .It Fa p_sep_by_space
 1 if a space is inserted between the currency symbol
-and the currency value for nonnegative values, 0 otherwise.
+and the currency value for non-negative values, 0 otherwise.
 .It Fa n_cs_precedes
 Like
 .Fa p_cs_precedes
@@ -219,9 +219,10 @@ but for negative values.
 .It Fa p_sign_posn
 The location of the
 .Fa positive_sign
-with respect to a nonnegative quantity and the
+with respect to a non-negative quantity and the
 .Fa currency_symbol ,
 coded as follows:
+.Pp
 .Bl -tag -width 3n -compact
 .It Li 0
 Parentheses around the entire string.
@@ -249,7 +250,7 @@ a value that is not in the current locale.
 A
 .Dv CHAR_MAX
 result similarly denotes an unavailable value.
-.Sh "RETURN VALUES
+.Sh RETURN VALUES
 The
 .Fn setlocale
 function returns
@@ -296,7 +297,9 @@ The current implementation supports only the
 .Li "\&""C""
 and
 .Li "\&""POSIX""
-locales for all but the LC_CTYPE locale.
+locales for all but the
+.Dv LC_CTYPE
+locale.
 .Pp
 In spite of the gnarly currency support in
 .Fn localeconv ,
