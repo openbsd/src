@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.25 2004/01/13 23:56:56 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.26 2004/01/14 01:45:50 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/03/04 05:04:26 cgd Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@
  */
 #define	KERNBASE	0xd0000000
 
-#define	KERNTEXTOFF	(KERNBASE+0x100120)	/* start of kernel text */
+#define	KERNTEXTOFF	(KERNBASE+0x100000)	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
