@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.12 2005/03/05 03:30:29 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.13 2005/03/05 05:00:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -60,7 +60,8 @@
 #define RCS_KWEXP_KVL      (RCS_KWEXP_NAME | RCS_KWEXP_VAL | RCS_KWEXP_LKR)
 
 #define RCS_KWEXP_INVAL(k) \
-	((k & RCS_KWEXP_ERR) || ((k & RCS_KWEXP_OLD) != RCS_KWEXP_OLD))
+	((k & RCS_KWEXP_ERR) || \
+	((k & RCS_KWEXP_OLD) && (RCS_KWEXP_OLD & ~RCS_KWEXP_OLD)))
 
 
 
