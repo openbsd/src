@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.12 1997/05/01 22:14:48 niklas Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.13 1997/08/09 23:10:12 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.12 1997/05/01 22:14:48 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.13 1997/08/09 23:10:12 maja Exp $";
 #endif
 
 /*
@@ -62,6 +62,7 @@ static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.12 1997/05/01 22:14:48 niklas E
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <syslog.h>
+#include <sys/errno.h>
 #include "yplog.h"
 #include "ypdb.h"
 #include "ypdef.h"
@@ -234,7 +235,9 @@ ypdb_open_db(domain, map, status, map_info)
 	struct opt_domain *d = NULL;
 	struct opt_map	*m = NULL;
 	datum	k,v;
-	
+#ifdef OPTDB
+	int	i;
+#endif
 	/*
 	 * check for preloaded domain, map
 	 */
@@ -263,57 +266,53 @@ ypdb_open_db(domain, map, status, map_info)
 		return(m->db);
 	}
 
-	/*
-	 * database not open, first check for "out of fd" and close a db if
-	 * out...
-	 */
-
-	fd = open("/", O_RDONLY);
-	if (fd < 0) 
-		ypdb_close_last();
-	else
-		close(fd);
+	/* Check for illegal charcaters */
 
 	if (strchr(domain, '/')) {
 		*status = YP_NODOM;
 		return (NULL);
 	}
-	if (strchr(domain, '/')) {
+	if (strchr(map, '/')) {
 		*status = YP_NOMAP;
 		return (NULL);
 	}
 
-	/*
-	 * check for domain, file.   
-	 */
-
-	snprintf(map_path, sizeof(map_path), "%s/%s", YP_DB_PATH, domain);
-	if (stat(map_path, &finfo) < 0 ||
-		(finfo.st_mode & S_IFMT) != S_IFDIR) {
-#ifdef DEBUG
-		yplog("  ypdb_open_db: no domain %s (map=%s)", domain, map);
-#endif
-		*status = YP_NODOM;
-		return(NULL);
-	}
-	snprintf(map_path, sizeof(map_path), "%s/%s/%s%s", YP_DB_PATH,
-		domain, map, YPDB_SUFFIX);
-	if (stat(map_path, &finfo) < 0) {
-#ifdef DEBUG
-		yplog("  ypdb_open_db: no map %s (domain=%s)", map, domain);
-#endif
-		*status = YP_NOMAP;
-		return(NULL);
-	}
 
 	/*
 	 * open map
 	 */
-	snprintf(map_path, sizeof(map_path), "%s/%s/%s", YP_DB_PATH, 
-		domain, map);
-	db = ypdb_open(map_path, O_RDONLY, 0444);
+#ifdef OPTDB
+	i = 0;
+	while (i == 0) {
+#endif
+		snprintf(map_path, sizeof(map_path), "%s/%s/%s", YP_DB_PATH, 
+			 domain, map);
+		db = ypdb_open(map_path, O_RDONLY, 0444);
+#ifdef OPTDB
+		if (db == NULL) {
+#ifdef DEBUG
+			yplog("  ypdb_open_db: errno %d (%s)",
+		        errno,sys_errlist[errno]);
+#endif
+			if ((errno == ENFILE) || (errno == EMFILE)) {
+				ypdb_close_last();
+			} else {
+				i = errno;
+			}
+		} else {
+			i = 4711;
+		}
+	};
+#endif
 	*status = YP_NOMAP;		/* see note below */
 	if (db == NULL) {
+		if (errno == ENOENT) {
+#ifdef DEBUG
+			yplog("  ypdb_open_db: no map %s (domain=%s)",
+			      map, domain);
+#endif
+			return(NULL);
+		}
 #ifdef DEBUG
 		yplog("  ypdb_open_db: ypdb_open FAILED: map %s (domain=%s)", 
 			map, domain);
