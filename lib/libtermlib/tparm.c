@@ -1,4 +1,4 @@
-/*	$OpenBSD: tparm.c,v 1.5 1997/07/25 20:30:26 mickey Exp $	*/
+/*	$OpenBSD: tparm.c,v 1.6 1997/12/16 03:10:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tparm.c,v 1.5 1997/07/25 20:30:26 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tparm.c,v 1.6 1997/12/16 03:10:05 millert Exp $";
 #endif
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ static __inline void push __P((int));
 static __inline int popnum __P((void));
 static __inline char *popstr __P((void));
 
-static char *_tparm __P((const char *, char *, va_list));
+static char *_tparm __P((const char *, char *, size_t, va_list));
 
 static union {
     unsigned int	num;
@@ -86,10 +86,15 @@ popstr()
     return stackidx > 0 ? stack[--stackidx].str : NULL;
 }
 
+/*
+ * This function is identical to the GNU tparam() but we don't
+ * advertise it as such since it confuses emacs (and perhaps others).
+ */
 static char *
-_tparm(str, buf, ap)
+_tparm(str, buf, siz, ap)
      const char *str;
      char *buf;
+     size_t siz;
      va_list ap;
 {
     int param[10], variable[26];
@@ -138,21 +143,21 @@ _tparm(str, buf, ap)
 
     while (*str) {
 	if (*str != '%') {
-	    if (bufp >= buf + MAXRETURNSIZE)
-		goto overflow;
+	    if (bufp >= buf + siz)
+		return(NULL);
 	    *bufp++ = *str;
 	}
 	else {
 	    switch (*++str) {
 		case '%':
-		    if (bufp >= buf + MAXRETURNSIZE)
-			goto overflow;
+		    if (bufp >= buf + siz)
+			return(NULL);
 		    *bufp++ = '%';
 		    break;
 		case 'd':
 		    sprintf(scratch, "%d", popnum());
-		    if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
-			goto overflow;
+		    if (bufp + strlen(scratch) >= buf + siz)
+			return(NULL);
 		    strcpy(bufp, scratch);
 		    bufp += strlen(bufp);
 		    break;
@@ -164,8 +169,8 @@ _tparm(str, buf, ap)
 				sprintf(scratch, "%02d", popnum());
 			    else
 				sprintf(scratch, "%03d", popnum());
-			    if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
-				goto overflow;
+			    if (bufp + strlen(scratch) >= buf + siz)
+				return(NULL);
 			    strcpy(bufp, scratch);
 			    bufp += strlen(bufp);
 			}
@@ -174,8 +179,8 @@ _tparm(str, buf, ap)
 				sprintf(scratch, "%02x", popnum());
 			    else
 				sprintf(scratch, "%03x", popnum());
-			    if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
-				goto overflow;
+			    if (bufp + strlen(scratch) >= buf + siz)
+				return(NULL);
 			    strcpy(bufp, scratch);
 			    bufp += strlen(bufp);
 			}
@@ -184,15 +189,15 @@ _tparm(str, buf, ap)
 		case '2':
 		    if (*++str == 'd') {
 			sprintf(scratch, "%2d", popnum());
-			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
-			    goto overflow;
+			if (bufp + strlen(scratch) >= buf + siz)
+			    return(NULL);
 			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
 		    else if (*str == 'x') {
 			sprintf(scratch, "%2x", popnum());
-			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
-			    goto overflow;
+			if (bufp + strlen(scratch) >= buf + siz)
+			    return(NULL);
 			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
@@ -200,27 +205,27 @@ _tparm(str, buf, ap)
 		case '3':
 		    if (*++str == 'd') {
 			sprintf(scratch, "%3d", popnum());
-			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
-			    goto overflow;
+			if (bufp + strlen(scratch) >= buf + siz)
+			    return(NULL);
 			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
 		    else if (*str == 'x') {
 			sprintf(scratch, "%3x", popnum());
-			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
-			    goto overflow;
+			if (bufp + strlen(scratch) >= buf + siz)
+			    return(NULL);
 			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
 		    break;
 		case 'c':
-		    if (bufp >= buf + MAXRETURNSIZE)
-			goto overflow;
+		    if (bufp >= buf + siz)
+			return(NULL);
 		    *bufp++ = (char)popnum();
 		    break;
 		case 's':
-		    if (bufp + strlen(p = popstr()) >= buf + MAXRETURNSIZE)
-			goto overflow;
+		    if (bufp + strlen(p = popstr()) >= buf + siz)
+			return(NULL);
 		    strcpy(bufp, p);
 		    bufp += strlen(bufp);
 		    break;
@@ -356,12 +361,9 @@ _tparm(str, buf, ap)
 	    str++;
     }
 
-    if (bufp >= buf + MAXRETURNSIZE)
-	goto overflow;
+    if (bufp >= buf + siz)
+	return(NULL);
     *bufp = '\0';
-    return(buf);
-overflow:
-    strcpy(buf, "OVERFLOW!");
     return(buf);
 }
 
@@ -385,7 +387,7 @@ tparm(va_alist)
     /* LINTED pointer casts may be troublesome */
     va_start(ap, str);
 #endif
-    p = _tparm(str, buf, ap);
+    p = _tparm(str, buf, sizeof(buf), ap);
     /* LINTED expression has no effect */
     va_end(ap);
     return(p);
