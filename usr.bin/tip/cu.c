@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.4 1997/09/01 23:24:24 deraadt Exp $	*/
+/*	$OpenBSD: cu.c,v 1.5 2001/09/09 17:58:41 millert Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cu.c,v 1.4 1997/09/01 23:24:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cu.c,v 1.5 2001/09/09 17:58:41 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -57,7 +57,7 @@ cumain(argc, argv)
 	static char sbuf[12];
 
 	if (argc < 2) {
-		printf("usage: cu telno [-t] [-s speed] [-a acu] [-l line] [-#]\n");
+		printf("usage: cu [phone-number] [-t] [-s speed] [-a acu] [-l line] [-#]\n");
 		exit(8);
 	}
 	CU = DV = NOSTR;

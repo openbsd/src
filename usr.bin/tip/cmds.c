@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.10 2001/07/12 05:17:23 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.11 2001/09/09 17:58:41 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 2001/07/12 05:17:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.11 2001/09/09 17:58:41 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
 #include "pathnames.h"
+
+#include <vis.h>
 
 /*
  * tip
@@ -782,6 +784,40 @@ variable()
 		vtable[PARITY].v_access &= ~CHANGED;
 		setparity(NOSTR);
 	}
+}
+
+void
+listvariables()
+{
+	value_t *p;
+	char buf[BUFSIZ];
+
+	puts("v\r");
+	for (p = vtable; p->v_name; p++) {
+		fputs(p->v_name, stdout);
+		switch (p->v_type&TMASK) {
+		case STRING:
+			if (p->v_value) {
+				strnvis(buf, p->v_value, sizeof(buf),
+				    VIS_WHITE|VIS_OCTAL);
+				printf(" %s", buf);
+			}
+			putchar('\r');
+			putchar('\n');
+			break;
+		case NUMBER:
+			printf(" %d\r\n", number(p->v_value));
+			break;
+		case BOOL:
+			printf(" %s\r\n",
+			    boolean(p->v_value) == '!' ? "false" : "true");
+			break;
+		case CHAR:
+			vis(buf, character(p->v_value), VIS_WHITE|VIS_OCTAL, 0);
+			printf(" %s\r\n", buf);
+			break;
+		}
+        }
 }
 
 /*

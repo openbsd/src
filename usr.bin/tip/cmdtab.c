@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdtab.c,v 1.2 1996/06/26 05:40:42 deraadt Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.3 2001/09/09 17:58:41 millert Exp $	*/
 /*	$NetBSD: cmdtab.c,v 1.3 1994/12/08 09:30:46 jtc Exp $	*/
 
 /*
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.2 1996/06/26 05:40:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.3 2001/09/09 17:58:41 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
 
 extern	int shell(), getfl(), sendfile(), chdirectory();
 extern	int finish(), help(), pipefile(), pipeout(), consh(), variable();
-extern	int cu_take(), cu_put(), dollar(), genbrk(), suspend();
+extern	int cu_take(), cu_put(), dollar(), genbrk(), suspend(), listvariables();
 
 esctable_t etable[] = {
 	{ '!',	NORM,	"shell",			 shell },
@@ -64,6 +64,7 @@ esctable_t etable[] = {
 	{CTRL('y'),NORM,"suspend tip (local+remote)",	 suspend },
 	{CTRL('z'),NORM,"suspend tip (local only)",	 suspend },
 	{ 's',	NORM,	"set variable",			 variable },
+	{ 'v',	NORM,	"list variables",		 listvariables },
 	{ '?',	NORM,	"get this summary",		 help },
 	{ '#',	NORM,	"send break",			 genbrk },
 	{ 0, 0, 0 }
