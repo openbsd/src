@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.3 1996/08/02 11:23:34 deraadt Exp $
+.\"	$OpenBSD: tunefs.8,v 1.4 1997/11/06 20:27:14 csapuntz Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -118,6 +118,14 @@ are on the selected file system.  More detailed information can be
 obtained in the
 .Xr dumpfs 8
 manual page.
+.It Fl s Ar enable_or_disable
+This option enables soft updates on the file system. Soft updates
+eliminates most synchronous writes to disk by maintaining
+a partial order of writes to the disk. This significantly improves
+meta-data operations (file creation and deletion) at the expense of
+subjecting them to the same potential 30-second delay as file data.
+Recovery is made simpler, however, by maintaining a strict ordering of
+writes to disk.
 .El
 .Sh SEE ALSO
 .Xr fs 5 ,
