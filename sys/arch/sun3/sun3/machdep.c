@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.23 1999/05/22 21:22:31 weingart Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.24 1999/11/09 14:30:39 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -805,7 +805,7 @@ dumpsys()
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);
 		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-			VM_PROT_READ, FALSE);
+			VM_PROT_READ, FALSE, VM_PROT_READ);
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
 		if (error)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 1999/08/17 10:32:18 niklas Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 1999/11/09 14:30:39 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ cpu_fork(p1, p2, stack, stacksize)
 void
 cpu_set_kpc(proc, func, arg)
 	struct proc *proc;
-	void (*func)(void *);
+	void (*func) __P((void *));
 	void *arg;
 {
 	struct pcb *pcbp;
@@ -306,7 +306,8 @@ pagemove(from, to, size)
 		pmap_remove(pmap_kernel(),
 			(vm_offset_t)from, (vm_offset_t)from + NBPG);
 		pmap_enter(pmap_kernel(),
-			(vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+			(vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1,
+			VM_PROT_READ|VM_PROT_WRITE);
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
@@ -374,7 +375,7 @@ vmapbuf(bp, sz)
 #endif
 		pmap_enter(pmap_kernel(), kva,
 			pa | PMAP_NC,
-			VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		addr += NBPG;
 		kva  += NBPG;
 	}
