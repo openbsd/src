@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.89 2002/04/26 17:54:01 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.90 2002/04/28 17:08:18 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -378,9 +378,8 @@ ubsec_intr(arg)
 			ubsec_feed(sc);
 	}
 
-#ifndef UBSEC_NO_RNG
 	/*
-	 * Check to see if we have any Random number waiting for us
+	 * Check to see if we have any key setups/rng's waiting for us
 	 */
 	if ((sc->sc_flags & UBS_FLAGS_KEY) && (stat & BS_STAT_MCR2_DONE)) {
 		struct ubsec_q2 *q2;
@@ -411,7 +410,6 @@ ubsec_intr(arg)
 				ubsec_feed2(sc);
 		}
 	}
-#endif /* UBSEC_NO_RNG */
 
 	/*
 	 * Check to see if we got any DMA Error
@@ -1319,7 +1317,6 @@ ubsec_mcopy(srcm, dstm, hoffset, toffset)
 	}
 }
 
-#ifndef UBSEC_NO_RNG
 /*
  * feed the key generator, must be called at splnet() or higher.
  */
@@ -1364,6 +1361,7 @@ ubsec_callback2(sc, q)
 	    q->q_ctx.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
 	switch (q->q_type) {
+#ifndef UBSEC_NO_RNG
 	case UBS_CTXOP_RNGBYPASS: {
 		struct ubsec_q2_rng *rng = (struct ubsec_q2_rng *)q;
 		u_int32_t *p;
@@ -1378,6 +1376,7 @@ ubsec_callback2(sc, q)
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 		break;
 	}
+#endif
 	case UBS_CTXOP_MODEXP: {
 		struct ubsec_q2_modexp *me = (struct ubsec_q2_modexp *)q;
 
@@ -1415,6 +1414,7 @@ ubsec_callback2(sc, q)
 	}
 }
 
+#ifndef UBSEC_NO_RNG
 void
 ubsec_rng(vsc)
 	void *vsc;
