@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.118 2004/09/25 01:58:21 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.119 2004/09/27 03:50:30 millert Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.115 2004/09/25 01:57:08 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.116 2004/09/27 03:49:14 millert Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -417,6 +417,8 @@
 #define	PCMCIA_PRODUCT_PROXIM_RANGELAN2_7401	0x1158
 #define	PCMCIA_CIS_PROXIM_RANGELANDS_8430	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430	0x8000
+#define	PCMCIA_CIS_PROXIM_HARMONY_80211B	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_PROXIM_HARMONY_80211B	0x0002
 
 /* Ericsson */
 #define	PCMCIA_CIS_ERICSSON_WIRELESSLAN	{ NULL, NULL, NULL, NULL }
