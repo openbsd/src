@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.13 2001/05/23 16:26:39 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.14 2001/05/23 21:42:34 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -391,6 +391,7 @@ VOID     ewprintf		__P((const char *fmt, ...));
 int	 ereply			__P((const char *, char *, int, ...));
 int	 eread			__P((const char *, char *, int, int, ...));
 int	 getxtra		__P((LIST *, LIST *, int, int));
+VOID	 free_file_list	__P((LIST *));
 
 /* fileio.c */
 int	 ffropen		__P((char *, BUFFER *));

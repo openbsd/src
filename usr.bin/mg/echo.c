@@ -1,4 +1,4 @@
-/*	$OpenBSD: echo.c,v 1.7 2001/05/23 20:49:53 art Exp $	*/
+/*	$OpenBSD: echo.c,v 1.8 2001/05/23 21:42:34 art Exp $	*/
 
 /*
  *	Echo line reading and writing.
@@ -27,7 +27,6 @@ static VOID     eputi		__P((int, int));
 static VOID     eputl		__P((long, int));
 static VOID     eputs		__P((char *));
 static VOID     eputc		__P((char));
-static VOID	free_file_list	__P((LIST *));
 static LIST    *copy_list	__P((LIST *));
 
 int             epresf = FALSE;		/* stuff in echo line flag */
@@ -789,7 +788,7 @@ eputc(c)
 	}
 }
 
-static VOID
+VOID
 free_file_list(lp)
 	LIST *lp;
 {
