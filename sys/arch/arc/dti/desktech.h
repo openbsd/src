@@ -1,4 +1,4 @@
-/*	$OpenBSD: desktech.h,v 1.3 1996/09/24 19:37:27 pefo Exp $ */
+/*	$OpenBSD: desktech.h,v 1.4 1996/10/01 20:50:12 pefo Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -63,6 +63,6 @@
 
 #define	TYNE_P_BOUNCE		(0x0100800000LL)	/* Dma bounce buffer */
 #define	TYNE_V_BOUNCE		0xe2000000
-#define	TYNE_S_BOUNCE		0x00100000
+#define	TYNE_S_BOUNCE		0x00020000
 
 #endif	/* _DESKTECH_H_ */
