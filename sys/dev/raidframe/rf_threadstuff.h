@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_threadstuff.h,v 1.2 1999/02/16 00:03:32 niklas Exp $	*/
-/*	$NetBSD: rf_threadstuff.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
+/*	$OpenBSD: rf_threadstuff.h,v 1.3 1999/07/30 14:45:33 peter Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.5 1999/07/06 21:51:22 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -92,7 +92,7 @@ typedef void *RF_ThreadArg_t;
  */
 #define RF_WAIT_COND(_c_,_m_)           { \
 	RF_UNLOCK_MUTEX(_m_); \
-	tsleep(&_c_, PRIBIO | PCATCH, "rfwcond", 0); \
+	tsleep(&_c_, PRIBIO, "rfwcond", 0); \
 	RF_LOCK_MUTEX(_m_); \
 }
 #define RF_SIGNAL_COND(_c_)            wakeup(&(_c_))

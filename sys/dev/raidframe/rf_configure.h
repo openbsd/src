@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_configure.h,v 1.2 1999/02/16 00:02:26 niklas Exp $	*/
-/*	$NetBSD: rf_configure.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+/*	$OpenBSD: rf_configure.h,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$NetBSD: rf_configure.h,v 1.4 1999/03/02 03:18:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -76,6 +76,13 @@ struct RF_Config_s {
 						 * layout-specific info */
 	void   *layoutSpecific;	/* a pointer to a layout-specific structure to
 				 * be copied in */
+	int     force;                          /* if !0, ignore many fatal
+						   configuration conditions */
+	/* 
+	  "force" is used to override cases where the component labels would 
+	  indicate that configuration should not proceed without user 
+	  intervention
+	*/
 };
 #ifndef _KERNEL
 int     rf_MakeConfig(char *configname, RF_Config_t * cfgPtr);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_kintf.h,v 1.2 1999/02/16 00:02:53 niklas Exp $	*/
-/*	$NetBSD: rf_kintf.h,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$OpenBSD: rf_kintf.h,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.4 1999/03/09 03:52:41 oster Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -50,8 +50,7 @@ void    rf_ReconKernelThread(void);
 int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 caddr_t rf_MapToKernelSpace(struct buf * bp, caddr_t addr);
 int     rf_BzeroWithRemap(struct buf * bp, char *databuf, int len);
-int 
-rf_DoAccessKernel(RF_Raid_t * raidPtr, struct buf * bp,
+int	rf_DoAccessKernel(RF_Raid_t * raidPtr, struct buf * bp,
     RF_RaidAccessFlags_t flags, void (*cbFunc) (struct buf *), void *cbArg);
 	int     rf_DispatchKernelIO(RF_DiskQueue_t * queue, RF_DiskQueueData_t * req);
 

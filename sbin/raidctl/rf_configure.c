@@ -1,6 +1,5 @@
-/*	$OpenBSD: rf_configure.c,v 1.2 1999/02/16 21:51:39 niklas Exp $	*/
-
-/*      $NetBSD: rf_configure.c,v 1.5 1999/02/04 14:50:31 oster Exp $   */
+/*	$OpenBSD: rf_configure.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*      $NetBSD: rf_configure.c,v 1.6 1999/03/26 00:45:01 oster Exp $   */
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -83,10 +82,6 @@ that file here in userland..  GO
 
 
 
-#ifndef SIMULATE
-static unsigned int dev_name2num(char *s);
-static unsigned int osf_dev_name2num(char *s);
-#endif
 static int rf_search_file_for_start_of(char *string, char *buf, int len,
 	FILE *fp);
 static int rf_get_next_nonblank_line(char *buf, int len, FILE *fp,
@@ -190,15 +185,6 @@ int rf_MakeConfig(configname, cfgPtr)
 	RF_ERRORMSG2("Config file error: unable to get device file for disk at row %d col %d\n",r,c);
 	retcode = -1; goto out;
       }
-#ifndef SIMULATE
-      val = dev_name2num(&cfgPtr->devnames[r][c][0]);
-
-      if (val < 0) {
-	RF_ERRORMSG3("Config file error: can't get dev num (dev file '%s') for disk at row %d c %d\n",
-		  &cfgPtr->devnames[r][c][0],r,c);
-	retcode = -1; goto out;
-      } else cfgPtr->devs[r][c] = val;
-#endif /* !SIMULATE */
     }
   }
 
@@ -210,14 +196,6 @@ int rf_MakeConfig(configname, cfgPtr)
       RF_ERRORMSG1("Config file error: unable to get device file for spare disk %d\n",c);
       retcode = -1; goto out;
     }
-#ifndef SIMULATE
-    val = dev_name2num(&cfgPtr->spare_names[c][0]);
-    if (val < 0) {
-      RF_ERRORMSG2("Config file error: can't get dev num (dev file '%s') for spare disk %d\n",
-		&cfgPtr->spare_names[c][0],c);
-      retcode = -1; goto out;
-    } else cfgPtr->spare_devs[c] = val;
-#endif /* !SIMULATE */
   }
 
   /* scan the file for the block related to layout */
@@ -368,47 +346,6 @@ int rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
  * utilities
  *
  ***************************************************************************/
-#ifndef SIMULATE
-/* convert a device file name to a device number */
-static unsigned int dev_name2num(s)
-  char  *s;
-{
-  struct stat buf;
-
-  if (stat(s, &buf) < 0) return(osf_dev_name2num(s));
-  else return(buf.st_rdev);
-}
-
-/* converts an osf/1 style device name to a device number.  We use this
- * only if the stat of the device file fails.
- */
-static unsigned int osf_dev_name2num(s)
-  char  *s;
-{
-  int num;
-  char part_ch, lun_ch;
-  unsigned int bus, target, lun, part, dev_major;
-
-  dev_major = RF_SCSI_DISK_MAJOR;
-  if (sscanf(s,"/dev/rrz%d%c", &num, &part_ch) == 2) {
-    bus = num>>3;
-    target = num & 0x7;
-    part = part_ch - 'a';
-    lun = 0;
-  } else if (sscanf(s,"/dev/rrz%c%d%c", &lun_ch, &num, &part_ch) == 3) {
-    bus = num>>3;
-    target = num & 0x7;
-    part = part_ch - 'a';
-    lun = lun_ch - 'a' + 1;
-  } else {
-    RF_ERRORMSG1("Unable to parse disk dev file name %s\n",s);
-    return(-1);
-  }
-
-  return( (dev_major<<20) | (bus<<14) | (target<<10) | (lun<<6) | part );
-}
-#endif
-
 /* searches a file for a line that says "START string", where string is
  * specified as a parameter
  */

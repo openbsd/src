@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_raidframe.h,v 1.2 1999/02/16 00:03:19 niklas Exp $	*/
-/*	$NetBSD: rf_raidframe.h,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$OpenBSD: rf_raidframe.h,v 1.3 1999/07/30 14:45:33 peter Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.5 1999/03/02 03:18:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -137,5 +137,12 @@ typedef struct RF_DeviceConfig_s {
 									 * for device */
 #define RAIDFRAME_KEEP_ACCTOTALS    _IOW ('r', 18, int)	/* turn AccTotals on or
 							 * off for device */
+#define RAIDFRAME_GET_COMPONENT_LABEL _IOWR ('r', 19, RF_ComponentLabel_t *) 
+#define RAIDFRAME_SET_COMPONENT_LABEL _IOW ('r', 20, RF_ComponentLabel_t) 
+
+#define RAIDFRAME_INIT_LABELS _IOW ('r', 21, RF_ComponentLabel_t)
+#define RAIDFRAME_ADD_HOT_SPARE     _IOW ('r', 22, RF_SingleComponent_t)
+#define RAIDFRAME_REMOVE_HOT_SPARE  _IOW ('r', 23, RF_SingleComponent_t)
+#define RAIDFRAME_REBUILD_IN_PLACE  _IOW ('r', 24, RF_SingleComponent_t)
 
 #endif				/* !_RF__RF_RAIDFRAME_H_ */

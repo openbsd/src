@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_cvscan.c,v 1.2 1999/02/16 00:02:28 niklas Exp $	*/
+/*	$OpenBSD: rf_cvscan.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
 /*	$NetBSD: rf_cvscan.c,v 1.4 1999/02/05 00:06:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -354,11 +354,11 @@ rf_CvscanCreate(RF_SectorCount_t sectPerDisk,
 #if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(_KERNEL)
 /* PrintCvscanQueue is not used, so we ignore it... */
 #else
-+ static void 
-+ PrintCvscanQueue(RF_CvscanHeader_t * hdr)
-  {
-  	RF_DiskQueueData_t *tmp;
-  
+static void 
+PrintCvscanQueue(RF_CvscanHeader_t * hdr)
+{
+	RF_DiskQueueData_t *tmp;
+
 	printf("CVSCAN(%d,%d) at %d going %s\n",
 	    (int) hdr->range_for_avg,
 	    (int) hdr->change_penalty,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_openbsd.h,v 1.2 1999/02/16 00:03:01 niklas Exp $	*/
+/*	$OpenBSD: rf_openbsd.h,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,10 +81,49 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#endif /* _KERNEL */
+ 
+/* The per-component label information that the user can set */
+typedef struct RF_ComponentInfo_s {
+	int row;              /* the row number of this component */
+	int column;           /* the column number of this component */
+	int serial_number;    /* a user-specified serial number for this
+				 RAID set */
+} RF_ComponentInfo_t;
 
+/* The per-component label information */
+typedef struct RF_ComponentLabel_s {
+	int version;          /* The version of this label. */
+	int serial_number;    /* a user-specified serial number for this
+				 RAID set */
+	int mod_counter;      /* modification counter.  Changed (usually
+				 by incrementing) every time the label 
+				 is changed */
+	int row;              /* the row number of this component */
+	int column;           /* the column number of this component */
+	int num_rows;         /* number of rows in this RAID set */
+	int num_columns;      /* number of columns in this RAID set */
+	int clean;            /* 1 when clean, 0 when dirty */
+	int status;           /* rf_ds_optimal, rf_ds_dist_spared, whatever. */
+} RF_ComponentLabel_t;
+
+typedef struct RF_SingleComponent_s {
+	int row;
+	int column;
+	char component_name[50]; /* name of the component */
+} RF_SingleComponent_t; 
+ 
+#ifdef _KERNEL
+
+/* XXX this is *not* the place for these... */
+int rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
+int rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr);
+ 
+ 
 struct raidcinfo {
-	struct vnode *ci_vp;		/* device's vnode */
-	dev_t	ci_dev;			/* XXX: device's dev_t */
+	struct vnode *ci_vp;	/* component device's vnode */
+	dev_t   ci_dev;		/* component device's dev_t */
+	RF_ComponentLabel_t ci_label; /* components RAIDframe label */
 #if 0
 	size_t	ci_size; 		/* size */
 	char   *ci_path;		/* path to component */

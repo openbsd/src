@@ -1,4 +1,5 @@
-.\"	$OpenBSD: raid.4,v 1.6 1999/07/09 13:35:48 aaron Exp $
+.\"	$OpenBSD: raid.4,v 1.7 1999/07/30 14:45:31 peter Exp $
+.\"     $NetBSD: raid.4,v 1.5 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,16 +109,41 @@ reconstructed from the data and parity present on the other
 components.  This results in much slower data accesses, but
 does mean that a failure need not bring the system to a complete halt.
 .Pp
+The RAID driver supports and enforces the use of 
+.Sq component labels .
+A
+.Sq component label
+contains important information about the component, including a
+user-specified serial number, the row and column of that component in the RAID
+set, and whether the data (and parity) on the component is 
+.Sq clean .
+If the driver determines that the labels are very inconsistent with
+respect to each other (e.g. two or more serial numbers do not match)
+or that the component label is not consistent with it's assigned place
+in the set (e.g. the component label claims the component should be
+the 3rd one a 6-disk set, but the RAID set has it as the 3rd component
+in a 5-disk set) then the device will fail to configure.  If the
+driver determines that exactly one component label seems to be
+incorrect, and the RAID set is being configured as a set that supports
+a single failure, then the RAID set will be allowed to configure, but
+the incorrectly labeled component will be marked as
+.Sq failed ,
+and the RAID set will begin operation in degraded mode.
+If all of the components are consistent among themselves, the RAID set
+will configure normally.
+.Pp
 The driver supports
 .Sq hot spares ,
 disks which are on-line, but are not
 actively used in an existing filesystem.  Should a disk fail, the
-driver is capable of reconstructing the failed disk onto a hot spare.
+driver is capable of reconstructing the failed disk onto a hot spare
+or back onto a replacment drive.
 If the components are hot swapable, the failed disk can then be
 removed, a new disk put in it's place, and a copyback operation
 performed.  The copyback operation, as its name indicates, will copy
 the reconstructed data from the hot spare to the previously failed
-(and now replaced) disk.
+(and now replaced) disk.  Hot spares can also be hot-added using
+.Xr raidctl 8 .
 .Pp
 If a component cannot be detected when the RAID device is configured,
 that component will be simply marked as 'failed'.
@@ -130,7 +156,7 @@ is
 For any of the RAID flavours which have parity data,
 .Xr raidctl 8
 must be used with the
-.Fl r
+.Fl i
 option to re-write the data when either a) a new RAID device is
 brought up for the first time or b) after an un-clean shutdown of a
 RAID device.  By performing this on-demand recomputation of all parity

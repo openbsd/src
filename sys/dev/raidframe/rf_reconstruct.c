@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_reconstruct.c,v 1.2 1999/02/16 00:03:22 niklas Exp $	*/
-/*	$NetBSD: rf_reconstruct.c,v 1.4 1999/02/05 00:06:16 oster Exp $	*/
+/*	$OpenBSD: rf_reconstruct.c,v 1.3 1999/07/30 14:45:33 peter Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.5 1999/03/02 03:18:49 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,6 +37,17 @@
 #include <sys/time.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#if __NETBSD__
+#include <sys/vnode.h>
+#endif
+
 #include "rf_raid.h"
 #include "rf_reconutil.h"
 #include "rf_revent.h"
@@ -121,6 +132,10 @@ static void ForceReconReadDoneProc(void *arg, int status);
 
 static void rf_ShutdownReconstruction(void *);
 
+/* XXX these should be in a .h file somewhere */
+int raidlookup __P((char *, struct proc *, struct vnode **));
+int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
+int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 
 struct RF_ReconDoneProc_s {
 	void    (*proc) (RF_Raid_t *, void *);
@@ -306,6 +321,7 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 	RF_RowCol_t row;
 	RF_RowCol_t col;
 {
+	RF_ComponentLabel_t c_label;
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
 	RF_RowCol_t srow, scol;
@@ -355,6 +371,256 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 	reconDesc->reconExecTicks = 0;
 	reconDesc->maxReconExecTicks = 0;
 	rc = rf_ContinueReconstructFailedDisk(reconDesc);
+
+	if (!rc) {
+		/* fix up the component label */
+		/* Don't actually need the read here.. */
+		raidread_component_label(
+                        raidPtr->raid_cinfo[srow][scol].ci_dev,
+			raidPtr->raid_cinfo[srow][scol].ci_vp,
+			&c_label);
+		
+		c_label.version = RF_COMPONENT_LABEL_VERSION; 
+		c_label.mod_counter = raidPtr->mod_counter;
+		c_label.serial_number = raidPtr->serial_number;
+		c_label.row = row;
+		c_label.column = col;
+		c_label.num_rows = raidPtr->numRow;
+		c_label.num_columns = raidPtr->numCol;
+		c_label.clean = RF_RAID_DIRTY;
+		c_label.status = rf_ds_optimal;
+		
+		raidwrite_component_label(
+                        raidPtr->raid_cinfo[srow][scol].ci_dev,
+			raidPtr->raid_cinfo[srow][scol].ci_vp,
+			&c_label);
+		
+	}
+	return (rc);
+}
+
+/* 
+
+   Allow reconstructing a disk in-place -- i.e. component /dev/sd2e goes AWOL,
+   and you don't get a spare until the next Monday.  With this function 
+   (and hot-swappable drives) you can now put your new disk containing 
+   /dev/sd2e on the bus, scsictl it alive, and then use raidctl(8) to
+   rebuild the data "on the spot".
+
+*/
+
+int
+rf_ReconstructInPlace(raidPtr, row, col)
+	RF_Raid_t *raidPtr;
+	RF_RowCol_t row;
+	RF_RowCol_t col;
+{
+	RF_RaidDisk_t *spareDiskPtr = NULL;
+	RF_RaidReconDesc_t *reconDesc;
+	RF_LayoutSW_t *lp;
+	RF_RaidDisk_t *badDisk;
+	RF_ComponentLabel_t c_label;
+	int     numDisksDone = 0, rc;
+	struct partinfo dpart;
+	struct vnode *vp;
+	struct vattr va;
+	struct proc *proc;
+	int retcode;
+
+	lp = raidPtr->Layout.map;
+	if (lp->SubmitReconBuffer) {
+		/*
+	         * The current infrastructure only supports reconstructing one
+	         * disk at a time for each array.
+	         */
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		if ((raidPtr->Disks[row][col].status == rf_ds_optimal) &&
+		    (raidPtr->numFailures > 0)) { 
+			/* XXX 0 above shouldn't be constant!!! */
+			/* some component other than this has failed.
+			   Let's not make things worse than they already
+			   are... */
+			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
+			printf("      Row: %d Col: %d   Too many failures.\n",
+			       row, col);
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
+		if (raidPtr->Disks[row][col].status == rf_ds_reconstructing) {
+			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
+			printf("      Row: %d Col: %d   Reconstruction already occuring!\n", row, col);
+
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
+
+
+		if (raidPtr->Disks[row][col].status != rf_ds_failed) {
+			/* "It's gone..." */
+			raidPtr->numFailures++;
+			raidPtr->Disks[row][col].status = rf_ds_failed;
+			raidPtr->status[row] = rf_rs_degraded;
+		}
+
+		while (raidPtr->reconInProgress) {
+			RF_WAIT_COND(raidPtr->waitForReconCond, raidPtr->mutex);
+		}
+
+
+		/* first look for a spare drive onto which to reconstruct 
+		   the data.  spare disk descriptors are stored in row 0. 
+		   This may have to change eventually */
+
+		/* Actually, we don't care if it's failed or not... 
+		   On a RAID set with correct parity, this function
+		   should be callable on any component without ill affects. */
+		/* RF_ASSERT(raidPtr->Disks[row][col].status == rf_ds_failed);
+		 */
+
+		if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
+			RF_ERRORMSG2("Unable to reconstruct to disk at row %d col %d: operation not supported for RF_DISTRIBUTE_SPARE\n", row, col);
+
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}			
+
+		/* XXX need goop here to see if the disk is alive,
+		   and, if not, make it so...  */
+		
+
+
+		badDisk = &raidPtr->Disks[row][col];
+
+		proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
+
+		/* This device may have been opened successfully the 
+		   first time. Close it before trying to open it again.. */
+
+		if (raidPtr->raid_cinfo[row][col].ci_vp != NULL) {
+			printf("Closed the open device: %s\n",
+			       raidPtr->Disks[row][col].devname);
+			VOP_UNLOCK(raidPtr->raid_cinfo[row][col].ci_vp, 0, proc);
+			(void) vn_close(raidPtr->raid_cinfo[row][col].ci_vp,
+					FREAD | FWRITE, proc->p_ucred, proc);
+			raidPtr->raid_cinfo[row][col].ci_vp = NULL;
+		}
+		printf("About to (re-)open the device for rebuilding: %s\n",
+		       raidPtr->Disks[row][col].devname);
+		
+		retcode = raidlookup(raidPtr->Disks[row][col].devname, 
+				     proc, &vp);
+	
+		if (retcode) {
+			printf("raid%d: rebuilding: raidlookup on device: %s failed: %d!\n",raidPtr->raidid,
+			       raidPtr->Disks[row][col].devname, retcode);
+
+			/* XXX the component isn't responding properly... 
+			   must be
+			   * still dead :-( */
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return(retcode);
+
+		} else {
+
+			/* Ok, so we can at least do a lookup... 
+			   How about actually getting a vp for it? */
+
+			if ((retcode = VOP_GETATTR(vp, &va, proc->p_ucred, 
+						   proc)) != 0) {
+				RF_UNLOCK_MUTEX(raidPtr->mutex);
+				return(retcode);
+			}
+			retcode = VOP_IOCTL(vp, DIOCGPART, (caddr_t) & dpart,
+					    FREAD, proc->p_ucred, proc);
+			if (retcode) {
+				RF_UNLOCK_MUTEX(raidPtr->mutex);
+				return(retcode);
+			}
+			raidPtr->Disks[row][col].blockSize =
+				dpart.disklab->d_secsize;
+
+			raidPtr->Disks[row][col].numBlocks = 
+				dpart.part->p_size - rf_protectedSectors;
+			
+			raidPtr->raid_cinfo[row][col].ci_vp = vp;
+			raidPtr->raid_cinfo[row][col].ci_dev = va.va_rdev;
+			
+			raidPtr->Disks[row][col].dev = va.va_rdev;
+			
+			/* we allow the user to specify that only a 
+			   fraction of the disks should be used this is 
+			   just for debug:  it speeds up
+			 * the parity scan */
+			raidPtr->Disks[row][col].numBlocks =
+				raidPtr->Disks[row][col].numBlocks *
+				rf_sizePercentage / 100;
+		}
+
+
+
+		spareDiskPtr = &raidPtr->Disks[row][col];
+		spareDiskPtr->status = rf_ds_used_spare;
+
+		printf("RECON: initiating in-place reconstruction on\n");
+		printf("       row %d col %d -> spare at row %d col %d\n", 
+		       row, col, row, col);
+
+		raidPtr->reconInProgress++;
+
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+		
+		reconDesc = AllocRaidReconDesc((void *) raidPtr, row, col, 
+					       spareDiskPtr, numDisksDone, 
+					       row, col);
+		raidPtr->reconDesc = (void *) reconDesc;
+#if RF_RECON_STATS > 0
+		reconDesc->hsStallCount = 0;
+		reconDesc->numReconExecDelays = 0;
+		reconDesc->numReconEventWaits = 0;
+#endif				/* RF_RECON_STATS > 0 */
+		reconDesc->reconExecTimerRunning = 0;
+		reconDesc->reconExecTicks = 0;
+		reconDesc->maxReconExecTicks = 0;
+		rc = rf_ContinueReconstructFailedDisk(reconDesc);
+	} else {
+		RF_ERRORMSG1("RECON: no way to reconstruct failed disk for arch %c\n",
+			     lp->parityConfig);
+		rc = EIO;
+	}
+	RF_LOCK_MUTEX(raidPtr->mutex);
+	raidPtr->reconInProgress--;
+	
+	if (!rc) {
+		/* Need to set these here, as at this point it'll be claiming
+		   that the disk is in rf_ds_spared!  But we know better :-) */
+		
+		raidPtr->Disks[row][col].status = rf_ds_optimal;
+		raidPtr->status[row] = rf_rs_optimal;
+		
+		/* fix up the component label */
+		/* Don't actually need the read here.. */
+		raidread_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
+					 raidPtr->raid_cinfo[row][col].ci_vp,
+					 &c_label);
+		
+		c_label.version = RF_COMPONENT_LABEL_VERSION; 
+		c_label.mod_counter = raidPtr->mod_counter;
+		c_label.serial_number = raidPtr->serial_number;
+		c_label.row = row;
+		c_label.column = col;
+		c_label.num_rows = raidPtr->numRow;
+		c_label.num_columns = raidPtr->numCol;
+		c_label.clean = RF_RAID_DIRTY;
+		c_label.status = rf_ds_optimal;
+		
+		raidwrite_component_label(raidPtr->raid_cinfo[row][col].ci_dev,
+					  raidPtr->raid_cinfo[row][col].ci_vp,
+					  &c_label);
+
+	}
+	RF_UNLOCK_MUTEX(raidPtr->mutex);
+	RF_SIGNAL_COND(raidPtr->waitForReconCond);
+	wakeup(&raidPtr->waitForReconCond);	
 	return (rc);
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_disks.h,v 1.2 1999/02/16 00:02:40 niklas Exp $	*/
-/*	$NetBSD: rf_disks.h,v 1.3 1999/02/05 00:06:09 oster Exp $	*/
+/*	$OpenBSD: rf_disks.h,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$NetBSD: rf_disks.h,v 1.4 1999/02/24 00:00:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -68,8 +68,8 @@ struct RF_RaidDisk_s {
 	RF_SectorCount_t numBlocks;	/* number of blocks, obtained via READ
 					 * CAPACITY */
 	int     blockSize;
-	/* XXX the folling is needed since we seem to need SIMULATE defined in
-	 * order to get user-land stuff to compile, but we *don't* want this
+	/* XXX the following is needed since we seem to need SIMULATE defined 
+	 * in order to get user-land stuff to compile, but we *don't* want this
 	 * in the structure for the user-land utilities, as the kernel doesn't
 	 * know about it!! (and it messes up the size of the structure, so
 	 * there is a communication problem between the kernel and the
@@ -100,7 +100,6 @@ rf_ConfigureSpareDisks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
 int 
 rf_ConfigureDisk(RF_Raid_t * raidPtr, char *buf, RF_RaidDisk_t * diskPtr,
-    RF_DiskOp_t * rdcap_op, RF_DiskOp_t * tur_op, dev_t dev,
     RF_RowCol_t row, RF_RowCol_t col);
 
 #endif				/* !_RF__RF_DISKS_H_ */
