@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.30 2003/12/30 00:49:48 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.31 2004/04/19 16:10:10 jmc Exp $
  */
 
 #ifndef _calendar_history_
@@ -109,10 +109,9 @@
 04/12	Space Shuttle Columbia launched, 1981
 04/13	Laotian New Year (3 days) in Laos
 04/13	Apollo 13 aborts moon landing due to oxygen tank explosion, 1970
-04/14	Lincoln shot,  1865
+04/14	Lincoln shot in Ford's Theatre by John Wilkes Booth, 1865
 04/14	Titanic hits iceberg and sinks, 1912
 04/15	Ray Kroc opens first McDonalds in Des Plaines, IL, 1955
-04/16	Lincoln shot in Ford's Theatre by John Wilkes Booth, 1865
 04/17	Bay of Pigs invasion crushed by Castro forces, 1961
 04/18	Einstein's Death, 1955
 04/18	First Laundromat opens, Fort Worth Texas, 1934
