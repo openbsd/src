@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_option_space.3,v 1.10 2003/05/01 19:17:37 jmc Exp $
+.\"	$OpenBSD: inet6_option_space.3,v 1.11 2003/05/30 21:37:59 jmc Exp $
 .\"	$KAME: inet6_option_space.3,v 1.7 2000/05/17 14:32:13 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -54,7 +54,7 @@
 .Ft "int"
 .Fn inet6_option_append "struct cmsghdr *cmsg" "const u_int8_t *typep" "int multx" "int plusy"
 .Ft "u_int8_t *"
-.Fn inet6_option_alloc "struct cmsghdr *cmsg" "int datalen" "int multx" "int plusy";
+.Fn inet6_option_alloc "struct cmsghdr *cmsg" "int datalen" "int multx" "int plusy"
 .Ft "int"
 .Fn inet6_option_next "const struct cmsghdr *cmsg" "u_int8_t **tptrp"
 .Ft "int"
@@ -389,6 +389,9 @@ and
 is not
 .Dv NULL .
 .\"
+.Sh EXAMPLES
+RFC2292 gives comprehensive examples in chapter 6.
+.\"
 .Sh DIAGNOSTICS
 .Fn inet6_option_init
 and
@@ -416,9 +419,6 @@ to non
 .Dv NULL
 value.
 .\"
-.Sh EXAMPLES
-RFC2292 gives comprehensive examples in chapter 6.
-.\"
 .Sh SEE ALSO
 .Rs
 .%A W. Stevens
@@ -435,14 +435,14 @@ RFC2292 gives comprehensive examples in chapter 6.
 .%D December 1998
 .Re
 .\"
-.Sh HISTORY
-The implementation first appeared in KAME advanced networking kit.
-.\"
 .Sh STANDARDS
 The functions
 are documented in
 .Dq Advanced Sockets API for IPv6
 .Pq RFC2292 .
+.\"
+.Sh HISTORY
+The implementation first appeared in KAME advanced networking kit.
 .\"
 .Sh BUGS
 The text was shamelessly copied from RFC2292.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.19 2003/05/03 20:05:07 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.20 2003/05/30 21:37:59 jmc Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -275,9 +275,6 @@ The error code can be found in errno.
 .%D June 2000
 .Re
 .\"
-.Sh HISTORY
-The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
-.\"
 .Sh STANDARDS
 The
 .Fn getnameinfo
@@ -285,6 +282,9 @@ function is defined in IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2553 .
+.\"
+.Sh HISTORY
+The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh BUGS
 The current implementation is not thread-safe.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: getrrsetbyname.3,v 1.10 2003/05/01 19:04:02 jmc Exp $
+.\" $OpenBSD: getrrsetbyname.3,v 1.11 2003/05/30 21:37:59 jmc Exp $
 .\"
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
 .\"
@@ -118,7 +118,7 @@ If the EDNS0 option is activated in
 .Xr resolv.conf 5 ,
 .Fn getrrsetbyname
 will request DNSSEC authentication using the EDNS0 DNSSEC OK (DO) bit.
-.Sh "RETURN VALUES"
+.Sh RETURN VALUES
 .Fn getrrsetbyname
 returns zero on success, and one of the following error
 codes if an error occurred:
@@ -139,20 +139,13 @@ other failure
 .Xr resolver 3 ,
 .Xr resolv.conf 5 ,
 .Xr named 8
-.Sh AUTHORS
-Jakob Schlyter
-.Aq jakob@openbsd.org
 .Sh HISTORY
 .Fn getrrsetbyname
 first appeared in
 .Ox 3.0 .
 The API first appeared in ISC BIND version 9.
-.Sh BUGS
-The data in
-.Li *rdi_data
-should be returned in uncompressed wire format.
-Currently, the data is in compressed format and the caller can't
-uncompress since it doesn't have the full message.
+.Sh AUTHORS
+.An Jakob Schlyter Aq jakob@openbsd.org
 .Sh CAVEATS
 The
 .Dv RRSET_VALIDATED
@@ -164,3 +157,9 @@ This flag
 .Em should not
 be trusted unless the transport between the nameserver and the resolver
 is secure (e.g. IPsec, trusted network, loopback communication).
+.Sh BUGS
+The data in
+.Li *rdi_data
+should be returned in uncompressed wire format.
+Currently, the data is in compressed format and the caller can't
+uncompress since it doesn't have the full message.

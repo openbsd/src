@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmdsh.3,v 1.9 2003/05/05 22:13:03 millert Exp $
+.\"	$OpenBSD: rcmdsh.3,v 1.10 2003/05/30 21:37:59 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,12 +89,12 @@ It returns \-1 on error and prints a diagnostic message on the standard error.
 .Xr socketpair 2 ,
 .Xr rcmd 3 ,
 .Xr rshd 8
-.Sh BUGS
-If
-.Xr rsh 1
-encounters an error, a file descriptor is still returned instead of \-1.
 .Sh HISTORY
 The
 .Fn rcmdsh
 function first appeared in
 .Ox 2.0 .
+.Sh BUGS
+If
+.Xr rsh 1
+encounters an error, a file descriptor is still returned instead of \-1.

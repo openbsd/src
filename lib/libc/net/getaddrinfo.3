@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.21 2003/05/01 19:10:09 jmc Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.22 2003/05/30 21:37:59 jmc Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -564,9 +564,6 @@ indicate an unknown error.
 .%D June 2000
 .Re
 .\"
-.Sh HISTORY
-The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
-.\"
 .Sh STANDARDS
 The
 .Fn getaddrinfo
@@ -574,6 +571,9 @@ function is defined in IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2553 .
+.\"
+.Sh HISTORY
+The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh BUGS
 The current implementation is not thread-safe.
