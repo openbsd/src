@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.11 2004/01/04 18:51:23 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.12 2004/01/04 19:44:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -31,7 +31,8 @@
 enum actions {
 	SHOW,
 	SHOW_SUMMARY,
-	SHOW_NEIGHBOR
+	SHOW_NEIGHBOR,
+	RELOAD
 };
 
 struct keywords {
@@ -40,6 +41,7 @@ struct keywords {
 };
 
 static const struct keywords keywords_main[] = {
+	{ "reload",	RELOAD},
 	{ "show",	SHOW}
 };
 
@@ -112,6 +114,12 @@ again:
 		} else
 			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
 		break;
+	case RELOAD:
+		if (argc >= 3)
+			errx(1, "\"reload\" takes no options");
+		imsg_compose(&ibuf, IMSG_CTL_RELOAD, 0, NULL, 0);
+		printf("reload request sent.\n");
+		done = 1;
 	}
 
 	while (!done) {
@@ -134,6 +142,8 @@ again:
 				break;
 			case SHOW_NEIGHBOR:
 				done = show_neighbor_msg(&imsg);
+				break;
+			case RELOAD:
 				break;
 			}
 			imsg_free(&imsg);
