@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.154 2003/05/13 21:37:42 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.155 2003/05/14 00:56:38 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -651,12 +651,6 @@ print_rule(struct pf_rule *r, int verbose)
 			printf("proto %u ", r->proto);
 	}
 	print_fromto(&r->src, &r->dst, r->af, r->proto, verbose);
-	if (!r->anchorname[0] && (r->action == PF_NAT ||
-	    r->action == PF_BINAT || r->action == PF_RDR)) {
-		printf("-> ");
-		print_pool(&r->rpool, r->rpool.proxy_port[0],
-		    r->rpool.proxy_port[1], r->af, r->action);
-	}
 	if (r->uid.op)
 		print_ugid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user",
 		    UID_MAX);
@@ -750,6 +744,12 @@ print_rule(struct pf_rule *r, int verbose)
 		printf("tag %s ", r->tagname);
 	if (r->match_tagname[0])
 		printf("tagged %s ", r->match_tagname);
+	if (!r->anchorname[0] && (r->action == PF_NAT ||
+	    r->action == PF_BINAT || r->action == PF_RDR)) {
+		printf("-> ");
+		print_pool(&r->rpool, r->rpool.proxy_port[0],
+		    r->rpool.proxy_port[1], r->af, r->action);
+	}
 	printf("\n");
 }
 
