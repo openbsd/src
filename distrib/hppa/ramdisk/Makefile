@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2003/02/13 21:42:45 mickey Exp $
+#	$OpenBSD: Makefile,v 1.3 2003/05/06 20:39:26 mickey Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -24,15 +24,17 @@ RDSETROOT?=	elfrdsetroot
 CRUNCHGENOPTS?=-E
 KERNEL?=	RAMDISK
 UTILS?=		${.CURDIR}/../../miniroot
-STRIP?=		strip
 
 LISTS=		${ARCHDIR}/list ${.CURDIR}/list
 MTREE=		${UTILS}/mtree.conf
 
 LIF?=		lif${REV}.fs
+CDROM?=		cd${REV}.iso
 MKBOOT?=	${DESTDIR}/usr/mdec/mkboot
 BOOT?=		${DESTDIR}/usr/mdec/boot
+CDBOOT?=	${DESTDIR}/usr/mdec/cdboot
 
+STRIP?=		strip
 GZIP?=		gzip
 GZIPFLAGS?=	-9
 
@@ -40,10 +42,24 @@ GZIPFLAGS?=	-9
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
 NEWFSOPTS_RD?=	${NEWFSOPTS} -i 16384 -c 64 -s ${IMAGESIZE}
 
-all:	bsd.rd ${LIF}
+all:	bsd.rd ${LIF} ${CDROM}
 
-${LIF}:	bsd ${BOOT} ${BOOTXX}
+${LIF}:	bsd ${BOOT}
 	${MKBOOT} -v ${BOOT} bsd ${LIF}
+
+${CDROM}: bsd ${CDBOOT}
+	-rm -rf ${.OBJDIR}/cd-dir
+	mkdir ${.OBJDIR}/cd-dir
+	cp bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
+	mkhybrid -A "OpenBSD ${OSREV} hppa bootonly CD" \
+	    -P "Copyright (c) 2003 Theo de Raadt, The OpenBSD project" \
+	    -p "Theo de Raadt <deraadt@openbsd.org>" \
+	    -V "OpenBSD/hppa ${OSREV} boot-only CD" \
+	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
+	dd if=${CDBOOT} of=${.OBJDIR}/${CDROM} bs=32k count=1 conv=notrunc
+	vnconfig -v -c ${VND} ${.OBJDIR}/${CDROM}
+	disklabel -w ${VND} fakecdrom "OpenBSD/hppa    "
+	vnconfig -u ${VND}
 
 obsd:
 	cd ${SRCDIR}/sys/arch/${MACHINE}/conf && config ${KERNEL}
@@ -54,7 +70,7 @@ obsd:
 bsd.rd:	obsd ${IMAGE} ${RDSETROOT}
 	cp obsd bsd.rd
 	${.OBJDIR}/${RDSETROOT} bsd.rd < ${IMAGE}
-	${STRIP} bsd.rd
+	@${STRIP} bsd.rd
 
 bsd:	bsd.rd
 	${GZIP} ${GZIPFLAGS} < bsd.rd > bsd
@@ -92,11 +108,12 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF}
+	${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF} ${CDROM}
 
 beforeinstall:
 	cp bsd.rd ${DESTDIR}/snapshot
 	cp ${LIF} ${DESTDIR}/snapshot
+	cp ${CDROM} ${DESTDIR}/snapshot
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
