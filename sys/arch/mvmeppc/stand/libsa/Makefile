@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2004/01/25 14:47:31 miod Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/01/25 14:51:46 miod Exp $
 
 LIB=sa
 
@@ -24,7 +24,7 @@ SRC_kern= ashrdi3.c bzero.c
 
 SRC_mvme= exec_mvme.c
 
-SRC_here= bugdev.c cache.c clock.c conf.c parse_args.c rawfs.c tftpfs.c
+SRC_here= bugdev.c clock.c conf.c parse_args.c rawfs.c tftpfs.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_mvme} ${SRC_here} ${SRC_kern}
 
