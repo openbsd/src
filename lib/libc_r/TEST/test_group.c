@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_group.c,v 1.1 2000/01/08 08:05:43 d Exp $	*/
+/*	$OpenBSD: test_group.c,v 1.2 2000/01/08 09:01:29 d Exp $	*/
 
 /*
  * Test getgrgid_r() across multiple threads to see if the members list changes.
@@ -15,10 +15,11 @@ struct group * getgrgid_r(gid_t, struct group *);
 
 char fail[] = "fail";
 
-int done;
+pthread_cond_t done;
+volatile int done_count;
+
 pthread_mutex_t display;
-pthread_cond_t done1;
-pthread_cond_t test2;
+pthread_mutex_t display2;
 
 void*
 test(void* arg)
@@ -31,23 +32,28 @@ test(void* arg)
 	char buf[2048];
 	char *cpy[128];
 	int i;
+	int count1, count2;
 	char *s;
 	char *oname;
 	char *opasswd;
 
+	/* Acquire lock for running first part. */
 	CHECKr(pthread_mutex_lock(&display));
 
-	printf("gid %d\n", gid);
-
-#if 1
+	/* Store magic name to test for non-alteration */
 	grpbuf.gr_name = fail;
-	CHECKn(grp = getgrgid_r(gid, &grpbuf));
-	ASSERT(grp->gr_name != fail);
-#else
-	CHECKn(grp = getgrgid(gid));
-#endif
 
-	s = buf;
+	/* Call getgrgid_r() */
+	printf("gid %d\n", gid);
+	CHECKn(grp = getgrgid_r(gid, &grpbuf));
+
+	/* Test for non-alteration of group structure */
+	ASSERT(grp->gr_name != fail);
+
+	/* We must get the right group */
+	ASSERT(grp->gr_gid == gid);
+
+	s = buf;	/* Keep our private buffer on the stack */
 
 	/* copy gr_name */
 	strcpy(oname = s, grp->gr_name);
@@ -67,10 +73,12 @@ test(void* arg)
 	}
 	cpy[i] = NULL;
 
+#if 0
 	printf("now:    %s:%s:%d:", grp->gr_name, grp->gr_passwd, grp->gr_gid);
 	for (p = grp->gr_mem; *p; p++) 
 		printf("%s%s", *p, *(p+1) == NULL ? "": ",");
 	printf("\n");
+#endif
 
 #ifdef DEBUG /* debugging this program */
 	printf("buf = \"");
@@ -80,23 +88,45 @@ test(void* arg)
 	printf("\"\n");
 #endif
 
-	CHECKr(pthread_cond_signal(&done1));	/* wake up main */
+	/* Inform main that we have finished */
+	done_count++;
+	CHECKr(pthread_cond_signal(&done));
 
-	CHECKr(pthread_cond_wait(&test2, &display));
-
-	printf("before: %s:%s:%d:", oname, opasswd, ogid);
-	for (p = cpy; *p; p++) 
-		printf("%s%s", *p, *(p+1) == NULL ? "": ",");
-	printf("\n");
-
-	printf("after:  %s:%s:%d:", grp->gr_name, grp->gr_passwd, grp->gr_gid);
-	for (p = grp->gr_mem; *p; p++) 
-		printf("%s%s", *p, *(p+1) == NULL ? "": ",");
-	printf("\n");
-
+	/* Allow other threads to run first part */
 	CHECKr(pthread_mutex_unlock(&display));
-	CHECKr(pthread_cond_signal(&test2));	/* wake another */
 
+	/* Acquire lock for the second part */
+	CHECKr(pthread_mutex_lock(&display2));
+
+	count1 = 0;
+	printf("before: %s:%s:%d:", oname, opasswd, ogid);
+	for (p = cpy; *p; p++)  {
+		count1++;
+		printf("%s%s", *p, *(p+1) == NULL ? "": ",");
+	}
+	printf("\n");
+
+	count2 = 0;
+	printf("after:  %s:%s:%d:", grp->gr_name, grp->gr_passwd, grp->gr_gid);
+	for (p = grp->gr_mem; *p; p++)  {
+		count2++;
+		printf("%s%s", *p, *(p+1) == NULL ? "": ",");
+	}
+	printf("\n");
+
+	CHECKr(pthread_mutex_unlock(&display2));
+
+	if (count1 != count2)
+		return "gr_mem length changed";
+	for (i = 0; i < count1; i++)
+		if (strcmp(cpy[i], grp->gr_mem[i]) != 0)
+			return "gr_mem list changed";
+	if (strcmp(grp->gr_name, oname) != 0)
+		return "gr_name changed";
+	if (strcmp(grp->gr_passwd, opasswd) != 0)
+		return "gr_passwd changed";
+	if (grp->gr_gid != ogid)
+		return "gr_gid changed";
 	return NULL;
 }
 
@@ -111,34 +141,39 @@ main()
 	void *result;
 
 	CHECKr(pthread_mutex_init(&display, NULL));
+	CHECKr(pthread_mutex_init(&display2, NULL));
 
-	CHECKr(pthread_cond_init(&done1, NULL));
-	CHECKr(pthread_cond_init(&test2, NULL));
+	CHECKr(pthread_cond_init(&done, NULL));
+	done_count = 0;
+
+	pthread_mutex_lock(&display);
+	pthread_mutex_lock(&display2);
 
 	/* Get separate threads to do a group open separately */
 	for (gid = 0; gid < NGRPS; gid++) {
 		CHECKr(pthread_create(&thread[gid], NULL, test, (void *)gid));
 	}
 
-	sleep(1); /* XXX */
+	/* Allow all threads to run their first part */
+	while (done_count < NGRPS) 
+		pthread_cond_wait(&done, &display);
 
-	/* now get each thread to print it out again */
-	CHECKr(pthread_cond_signal(&test2));
+	/* Allow each thread to run the 2nd part of its test */
+	CHECKr(pthread_mutex_unlock(&display2));
 
+	/* Wait for each thread to terminate, collecting results. */
 	failed = 0;
 	for (gid = 0; gid < NGRPS; gid++) {
 		CHECKr(pthread_join(thread[gid], &result));
-		if (result != NULL)
+		if (result != NULL) {
+			fprintf(stderr, "gid %d: %s\n", gid, (char *)result);
 			failed++;
+		}
 	}
-
-	/* (I'm too lazy to write the check code at the moment) */
-	fprintf(stderr, "[needs visual check]\n");
 
 	if (!failed) {
 		SUCCEED;
 	} else {
-		fprintf(stderr, "one of the test failed\n");
 		exit(1);
 	}
 }
