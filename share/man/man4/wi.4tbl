@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.10 2002/04/16 17:42:42 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.11 2002/04/21 06:49:33 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -74,7 +74,9 @@ The WaveLAN Gold as well as newer Intersil and Symbol cards support
 The Lucent WaveLAN/IEEE Bronze cards do not support WEP at all.
 To enable encryption, use the
 .Xr wicontrol 8
-utility to set your keys.
+utility to set your keys, or use
+.Xr ifconfig 8
+as shown below.
 .Pp
 By default, the
 .Nm
@@ -92,7 +94,7 @@ One mode, referred to as
 .Dq ad-hoc demo mode ,
 predates the IEEE 802.11 specification and so may not interoperate
 with cards from other vendors.
-The standardized ad-hoc mode, also know as IBSS mode, is not
+The standardized ad-hoc mode, also known as IBSS mode, is not
 supported by cards with very old firmware revisions.
 .Pp
 Cards based on the Intersil PRISM-II and PRISM-2.5 chips also
