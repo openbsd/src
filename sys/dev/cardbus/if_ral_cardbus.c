@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.2 2005/02/18 19:57:26 damien Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.3 2005/02/19 12:10:03 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -107,8 +107,6 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf("\n");
-
 	/* power management hooks */
 	sc->sc_enable = ral_cardbus_enable;
 	sc->sc_disable = ral_cardbus_disable;
@@ -132,6 +130,8 @@ ral_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set up the PCI configuration registers */
 	ral_cardbus_setup(csc);
+
+	printf(": irq %d", csc->sc_intrline);
 
 	ral_attach(sc);
 
@@ -183,11 +183,11 @@ ral_cardbus_enable(struct ral_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    ral_intr, sc);
 	if (csc->sc_ih == NULL) {
-		printf(": could not establish interrupt\n");
+		printf("%s: could not establish interrupt at %d\n",
+		    sc->sc_dev.dv_xname, csc->sc_intrline);
 		Cardbus_function_disable(ct);
 		return 1;
 	}
-	printf(" irq %d\n", csc->sc_intrline);
 
 	return 0;
 }
