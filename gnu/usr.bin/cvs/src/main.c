@@ -43,6 +43,7 @@ int noexec = FALSE;
 int readonlyfs = FALSE;
 int logoff = FALSE;
 mode_t cvsumask = UMASK_DFLT;
+char *RCS_citag = NULL;
 
 char *CurDir;
 
@@ -956,9 +957,18 @@ parseopts(root)
 		*q = '\0';
 
 	    if (!strncmp(buf, "tag=", 4)) {
-		char *RCS_citag = strdup(buf+4);
-		char *what = malloc(sizeof("RCSLOCALID")+1+strlen(RCS_citag)+1);
-		
+		char *what;
+
+		RCS_citag = strdup(buf+4);
+		if (RCS_citag == NULL) {
+			printf("no memory for local tag\n");
+			return;
+		}
+		what = malloc(sizeof("RCSLOCALID")+1+strlen(RCS_citag)+1);
+		if (what == NULL) {
+			printf("no memory for local tag\n");
+			return;
+		}
 		sprintf(what, "RCSLOCALID=%s", RCS_citag);
 		putenv(what);
 	    } else if (!strncmp(buf, "umask=", 6)) {

@@ -363,6 +363,7 @@ extern int really_quiet, quiet;
 extern int use_editor;
 extern int cvswrite;
 extern mode_t cvsumask;
+extern char *RCS_citag;
 
 /* Access method specified in CVSroot. */
 typedef enum {
