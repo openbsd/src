@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.34 2001/05/16 12:53:34 ho Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.35 2001/06/15 03:38:34 itojun Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -341,8 +341,6 @@ tun_output(ifp, m0, dst, rt)
 		m_freem (m0);
 		return EHOSTDOWN;
 	}
-	ifp->if_lastchange = time;
-
 
 	M_PREPEND(m0, sizeof(*af), M_DONTWAIT);
 	af = mtod(m0, u_int32_t *);

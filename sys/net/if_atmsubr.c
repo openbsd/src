@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.14 2001/05/11 17:20:10 aaron Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.15 2001/06/15 03:38:33 itojun Exp $       */
 
 /*
  *
@@ -116,7 +116,6 @@ atm_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 
 	/*
 	 * check route
@@ -275,7 +274,6 @@ atm_input(ifp, ah, m, rxhand)
 		m_freem(m);
 		return;
 	}
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	if (rxhand) {

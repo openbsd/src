@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_x25subr.c,v 1.6 2001/05/27 12:19:04 angelos Exp $	*/
+/*	$OpenBSD: if_x25subr.c,v 1.7 2001/06/15 03:38:35 itojun Exp $	*/
 /*	$NetBSD: if_x25subr.c,v 1.13 1996/05/09 22:29:25 scottr Exp $	*/
 
 /*
@@ -182,7 +182,6 @@ x25_ifinput(m, v)
 
 	pk_flowcontrol(lcp, 0, 1);	/* Generate RR */
 	ifp = m->m_pkthdr.rcvif;
-	ifp->if_lastchange = time;
 	switch (m->m_type) {
 	default:
 		if (m)

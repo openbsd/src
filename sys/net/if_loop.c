@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.17 2001/02/06 03:34:59 mickey Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.18 2001/06/15 03:38:34 itojun Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -187,7 +187,6 @@ looutput(ifp, m, dst, rt)
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
-	ifp->if_lastchange = time;
 #if NBPFILTER > 0
 	/*
 	 * only send packets to bpf if they are real loopback packets;

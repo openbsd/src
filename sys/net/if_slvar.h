@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_slvar.h,v 1.8 2001/06/12 21:41:32 deraadt Exp $	*/
+/*	$OpenBSD: if_slvar.h,v 1.9 2001/06/15 03:38:34 itojun Exp $	*/
 /*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ struct sl_softc {
 	struct	slcompress sc_comp;	/* tcp compression data */
 #endif
 	caddr_t	sc_bpf;			/* BPF data */
+	struct timeval sc_lastpacket;	/* for watchdog */
 };
 
 /*

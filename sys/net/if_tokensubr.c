@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tokensubr.c,v 1.2 2000/01/21 13:44:27 fgsch Exp $	*/
+/*	$OpenBSD: if_tokensubr.c,v 1.3 2001/06/15 03:38:34 itojun Exp $	*/
 /*	$NetBSD: if_tokensubr.c,v 1.7 1999/05/30 00:39:07 bad Exp $	*/
 
 /*
@@ -155,7 +155,6 @@ token_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 	if ((rt = rt0)) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = RTALLOC1(dst, 1)))
@@ -487,7 +486,6 @@ token_input(ifp, m)
 
 	trh = mtod(m, struct token_header *);
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	if (bcmp((caddr_t)tokenbroadcastaddr, (caddr_t)trh->token_dhost,
 	    sizeof(tokenbroadcastaddr)) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.10 2001/05/27 12:26:05 angelos Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.11 2001/06/15 03:38:35 itojun Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -365,7 +365,6 @@ eonoutput(ifp, m, sdst, rt)
 	}
 #endif
 
-	ifp->if_lastchange = time;
 	ifp->if_opackets++;
 	if (rt == 0 || (el = (struct eon_llinfo *) rt->rt_llinfo) == 0) {
 		if (dst->siso_family == AF_LINK) {
@@ -498,7 +497,6 @@ eoninput(m, va_alist)
 		}
 	}
 	eonif->if_ibytes += m->m_pkthdr.len;
-	eonif->if_lastchange = time;
 	iphdr = mtod(m, struct ip *);
 	/* do a few checks for debugging */
 	if (iphdr->ip_p != IPPROTO_EON) {

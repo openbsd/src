@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.26 2001/06/09 06:16:37 angelos Exp $	*/
+/*	$OpenBSD: if.h,v 1.27 2001/06/15 03:38:33 itojun Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ struct	if_data {
 	u_long	ifi_omcasts;		/* packets sent via multicast */
 	u_long	ifi_iqdrops;		/* dropped on input, this interface */
 	u_long	ifi_noproto;		/* destined for unsupported protocol */
-	struct	timeval ifi_lastchange;	/* last updated */
+	struct	timeval ifi_lastchange;	/* last operational state change */
 };
 
 /*

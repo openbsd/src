@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.19 2001/05/28 07:53:04 angelos Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.20 2001/06/15 03:38:34 itojun Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -771,7 +771,6 @@ pppoutput(ifp, m0, dst, rtp)
 	IF_ENQUEUE(ifq, m0);
 	(*sc->sc_start)(sc);
     }
-    ifp->if_lastchange = time;
     ifp->if_opackets++;
     ifp->if_obytes += len;
 
@@ -1426,7 +1425,6 @@ ppp_inproc(sc, m)
     splx(s);
     ifp->if_ipackets++;
     ifp->if_ibytes += ilen;
-    ifp->if_lastchange = time;
 
     if (rv)
 	(*sc->sc_ctlp)(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.59 2001/06/07 04:12:58 mickey Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.60 2001/06/15 03:38:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -815,7 +815,6 @@ bridge_output(ifp, m, sa, rt)
 
 			sc->sc_if.if_opackets++;
 			sc->sc_if.if_obytes += mc->m_pkthdr.len;
-			dst_if->if_lastchange = time;
 			dst_if->if_obytes += mc->m_pkthdr.len;
 			IF_ENQUEUE(&dst_if->if_snd, mc);
 			if (mc->m_flags & M_MCAST)
@@ -844,7 +843,6 @@ sendunicast:
 	}
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += m->m_pkthdr.len;
-	dst_if->if_lastchange = time;
 	dst_if->if_obytes += m->m_pkthdr.len;
 	IF_ENQUEUE(&dst_if->if_snd, m);
 	if (m->m_flags & M_MCAST)
@@ -913,7 +911,6 @@ bridgeintr_frame(sc, m)
 		bpf_mtap(sc->sc_if.if_bpf, m);
 #endif
 
-	sc->sc_if.if_lastchange = time;
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
@@ -1074,7 +1071,6 @@ bridgeintr_frame(sc, m)
 	}
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += m->m_pkthdr.len;
-	dst_if->if_lastchange = time;
 	dst_if->if_obytes += m->m_pkthdr.len;
 	IF_ENQUEUE(&dst_if->if_snd, m);
 	if (m->m_flags & M_MCAST)
@@ -1295,7 +1291,6 @@ bridge_broadcast(sc, ifp, eh, m)
 		sc->sc_if.if_opackets++;
 		sc->sc_if.if_obytes += mc->m_pkthdr.len;
 		dst_if->if_obytes += m->m_pkthdr.len;
-		dst_if->if_lastchange = time;
 		IF_ENQUEUE(&dst_if->if_snd, mc);
 		if (mc->m_flags & M_MCAST)
 			dst_if->if_omcasts++;

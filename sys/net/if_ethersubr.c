@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.46 2001/06/14 02:13:58 itojun Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.47 2001/06/15 03:38:33 itojun Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -255,7 +255,6 @@ ether_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL)
@@ -605,7 +604,6 @@ ether_input(ifp, eh, m)
 		ifp->if_imcasts++;
 	}
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*eh);
 
 	etype = ntohs(eh->ether_type);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.17 2001/06/09 06:27:08 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.18 2001/06/15 03:38:34 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -166,8 +166,6 @@ gif_output(ifp, m, dst, rt)
 		error = EIO;	/* is there better errno? */
 		goto end;
 	}
-
-	ifp->if_lastchange = time;	
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||

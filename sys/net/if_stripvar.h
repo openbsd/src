@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stripvar.h,v 1.6 2001/06/09 06:16:38 angelos Exp $	*/
+/*	$OpenBSD: if_stripvar.h,v 1.7 2001/06/15 03:38:34 itojun Exp $	*/
 /*	$NetBSD: if_stripvar.h,v 1.2.4.1 1996/08/05 20:37:51 jtc Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
@@ -39,6 +39,8 @@ struct st_softc {
 
 	caddr_t	sc_bpf;			/* BPF data */
 	struct timeout sc_timo;
+
+	struct timeval sc_lastpacket;	/* for watchdog */
 };
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.23 2001/05/28 19:51:06 dugsong Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.24 2001/06/15 03:38:33 itojun Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -160,7 +160,6 @@ fddi_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = RTALLOC1(dst, 1)) != NULL)
@@ -480,7 +479,6 @@ fddi_input(ifp, fh, m)
 		m_freem(m);
 		return;
 	}
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*fh);
 	if (bcmp((caddr_t)fddibroadcastaddr, (caddr_t)fh->fddi_dhost,
 	    sizeof(fddibroadcastaddr)) == 0)
