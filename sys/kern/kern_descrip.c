@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.19 2000/02/28 18:04:08 provos Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.20 2000/04/01 23:29:25 provos Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -619,6 +619,13 @@ fdalloc(p, want, result)
 			i = find_next_zero(&fdp->fd_lomap[new], 
 					   new > off ? 0 : i & NDENTRYMASK,
 					   NDENTRIES);
+			if (i == -1) {
+				/* free file descriptor in this block was
+				 * below want, try again with higher want.
+				 */
+				want = (new + 1) << NDENTRYSHIFT;
+				continue;
+			}
 			i += (new << NDENTRYSHIFT);
 			if (i < last) {
 				fd_used(fdp, i);
