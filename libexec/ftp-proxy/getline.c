@@ -39,6 +39,7 @@
 #include <netinet/in.h>
 #include <arpa/telnet.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -262,6 +263,10 @@ telnet_getline(register struct csiob *iobp, struct csiob *telnet_passthrough)
 		
 		/* +1 is for the newline */
 		clen = (ix+1) - iobp->next_byte;
+		while (clen > 0 && isspace(iobp->io_buffer[iobp->next_byte])) {
+			iobp->next_byte++;
+			clen--;
+		}
 		memcpy(iobp->line_buffer, &iobp->io_buffer[iobp->next_byte],
 		    clen);
 		iobp->next_byte += clen;
