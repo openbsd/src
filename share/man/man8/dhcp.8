@@ -1,4 +1,4 @@
-.\"     $OpenBSD: dhcp.8,v 1.15 2004/08/15 23:06:02 jaredy Exp $
+.\"     $OpenBSD: dhcp.8,v 1.16 2004/11/21 22:16:55 henning Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
@@ -100,7 +100,7 @@ Be sure to leave this file empty (or even delete it) if this is the case.
 Edit
 .Pa /etc/rc.conf.local
 and set
-.Cm dhcpd_flags="-q" .
+.Cm dhcpd_flags="" .
 This will cause
 .Ox
 to start the
