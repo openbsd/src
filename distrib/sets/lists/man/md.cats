@@ -23,5 +23,4 @@
 ./usr/share/man/cat1/addr2line.0
 ./usr/share/man/cat1/ld.so.0
 ./usr/share/man/cat1/ldd.0
-./usr/share/man/cat8/cats/wsconsctl.0
 ./usr/share/man/cat8/ldconfig.0
