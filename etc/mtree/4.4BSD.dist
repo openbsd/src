@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.38 1997/08/01 23:17:34 weingart Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.39 1997/08/01 23:44:42 weingart Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -72,6 +72,11 @@ sliphome
 # ./etc/uucp
 uucp
 # ./etc/uucp
+..
+
+# ./etc/photuris
+photuris
+# ./etc/photuris
 ..
 
 # ./etc
