@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.12 1999/07/22 22:05:55 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.13 1999/11/23 01:56:39 ian Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -81,6 +81,7 @@ static struct part_type {
 	{ 0x83, "Linux files*", "Linux filesystem"},
 	{ 0x93, "Amoeba file*", "Amoeba filesystem"},
 	{ 0x94, "Amoeba BBT  ", "Amoeba bad block table"},
+	{ 0xA0, "NotebookSave", "Phoenix NoteBIOS save-to-disk"},
 	{ 0xA5, "FreeBSD     ",	"FreeBSD"},
 	{ 0xA6, "OpenBSD     ", "OpenBSD"},
 	{ 0xA7, "NEXTSTEP    ", "NEXTSTEP"},
