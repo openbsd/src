@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.103 2001/12/07 10:39:46 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.104 2001/12/07 10:44:52 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3346,35 +3346,6 @@ pmap_init()
         }
 #endif
 }
-
-/*
- * Called just after enabling cache (so that CPUFLG_CACHEPAGETABLES is
- * set correctly).
- */
-void
-pmap_cache_enable()
-{
-#ifdef SUN4M
-	if (CPU_ISSUN4M) {
-		int pte;
-
-		/*
-		 * Deal with changed CPUFLG_CACHEPAGETABLES.
-		 *
-		 * If the tables were uncached during the initial mapping
-		 * and cache_enable set the flag we recache the tables.
-		 */
-
-		pte = getpte4m(pagetables_start);
-
-		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0 &&
-		    (pte & SRMMU_PG_C) == 0)
-			kvm_recache((caddr_t)pagetables_start,
-				    atop(pagetables_end - pagetables_start));
-	}
-#endif
-}
-
 
 /*
  * Map physical addresses into kernel VM.
