@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.49 2001/06/23 06:38:10 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.50 2001/06/24 23:33:55 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -505,6 +505,7 @@ int	   in_broadcast __P((struct in_addr, struct ifnet *));
 int	   in_canforward __P((struct in_addr));
 int	   in_cksum __P((struct mbuf *, int));
 int	   in4_cksum __P((struct mbuf *, u_int8_t, int, int));
+void	   in_delayed_cksum __P((struct mbuf *));
 int	   in_localaddr __P((struct in_addr));
 void	   in_socktrim __P((struct sockaddr_in *));
 char	  *inet_ntoa __P((struct in_addr));
