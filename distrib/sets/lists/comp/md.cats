@@ -1,9 +1,7 @@
 ./usr/bin/addr2line
 ./usr/bin/gasp
 ./usr/bin/objcopy
-./usr/bin/protoize
 ./usr/bin/readelf
-./usr/bin/unprotoize
 ./usr/include/arm
 ./usr/include/arm/ansi.h
 ./usr/include/arm/armreg.h
@@ -320,5 +318,3 @@
 ./usr/lib/libgcc_s.so
 ./usr/lib/libgcc_s.so.1
 ./usr/share/man/cat1/objcopy.0
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/unprotoize.0

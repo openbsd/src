@@ -1,5 +1,3 @@
-./usr/bin/protoize
-./usr/bin/unprotoize
 ./usr/include/f2c.h
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/PlotFile.h
@@ -309,5 +307,3 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/unprotoize.0

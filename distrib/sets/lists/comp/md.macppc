@@ -1,7 +1,5 @@
 ./usr/bin/gasp
 ./usr/bin/objcopy
-./usr/bin/protoize
-./usr/bin/unprotoize
 ./usr/include/f2c.h
 ./usr/include/g++/FlexLexer.h
 ./usr/include/g++/PlotFile.h
@@ -347,5 +345,3 @@
 ./usr/libdata/ldscripts/elf32ppcsim.xu
 ./usr/libdata/ldscripts/elf32ppcsim.xz
 ./usr/share/man/cat1/objcopy.0
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/unprotoize.0

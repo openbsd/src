@@ -1,9 +1,7 @@
 ./usr/bin/addr2line
 ./usr/bin/gasp
 ./usr/bin/objcopy
-./usr/bin/protoize
 ./usr/bin/readelf
-./usr/bin/unprotoize
 ./usr/include/alpha
 ./usr/include/alpha/alpha_cpu.h
 ./usr/include/alpha/ansi.h
@@ -328,5 +326,3 @@
 ./usr/libdata/ldscripts/elf64alpha.xu
 ./usr/libdata/ldscripts/elf64alpha.xz
 ./usr/share/man/cat1/objcopy.0
-./usr/share/man/cat1/protoize.0
-./usr/share/man/cat1/unprotoize.0
