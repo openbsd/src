@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.3 1996/06/26 05:35:56 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.4 1996/07/25 01:54:39 deraadt Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.3 1996/06/26 05:35:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.4 1996/07/25 01:54:39 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -116,8 +116,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr,
-			    "usage: lock [-p] [-t timeout]\n");
+			fprintf(stderr, "usage: lock [-p] [-t timeout]\n");
 			exit(1);
 	}
 	timeout.tv_sec = sectimeout * 60;
@@ -144,10 +143,10 @@ main(argc, argv)
 
 	if (!mypw) {
 		/* get key and check again */
-		(void)printf("Key: ");
+		printf("Key: ");
 		if (!fgets(s, sizeof(s), stdin) || *s == '\n')
 			quit();
-		(void)printf("\nAgain: ");
+		printf("\nAgain: ");
 		/*
 		 * Don't need EOF test here, if we get EOF, then s1 != s
 		 * and the right things will happen.
@@ -174,11 +173,11 @@ main(argc, argv)
 	setitimer(ITIMER_REAL, &ntimer, &otimer);
 
 	/* header info */
-(void)printf("lock: %s on %s. timeout in %d minutes\ntime now is %.20s%s%s",
+	printf("lock: %s on %s. timeout in %d minutes\ntime now is %.20s%s%s",
 	    ttynam, hostname, sectimeout, ap, tzn, ap + 19);
 
 	for (;;) {
-		(void)printf("Key: ");
+		printf("Key: ");
 		if (!fgets(s, sizeof(s), stdin)) {
 			clearerr(stdin);
 			hi();
@@ -197,7 +196,7 @@ main(argc, argv)
 		}
 		else if (!strcmp(s, s1))
 			break;
-		(void)printf("\a\n");
+		printf("\a\n");
 		if (tcsetattr(0, TCSADRAIN, &ntty) < 0)
 			exit(1);
 	}
@@ -237,14 +236,14 @@ hi()
 	struct timeval timval;
 
 	if (!gettimeofday(&timval, (struct timezone *)NULL))
-(void)printf("lock: type in the unlock key. timeout in %ld:%ld minutes\n",
+	printf("lock: type in the unlock key. timeout in %ld:%ld minutes\n",
 	    (nexttime - timval.tv_sec) / 60, (nexttime - timval.tv_sec) % 60);
 }
 
 void
 quit()
 {
-	(void)putchar('\n');
+	putchar('\n');
 	(void)tcsetattr(0, TCSADRAIN, &tty);
 	exit(0);
 }
@@ -253,6 +252,6 @@ void
 bye()
 {
 	(void)tcsetattr(0, TCSADRAIN, &tty);
-	(void)printf("lock: timeout\n");
+	printf("lock: timeout\n");
 	exit(1);
 }
