@@ -1,4 +1,5 @@
-/*	$OpenBSD: ns_input.c,v 1.2 1996/03/04 08:20:26 niklas Exp $	*/
+
+/*	$OpenBSD: ns_input.c,v 1.3 1996/12/23 08:47:07 mickey Exp $	*/
 /*	$NetBSD: ns_input.c,v 1.9 1996/02/13 22:13:56 christos Exp $	*/
 
 /*
@@ -277,7 +278,7 @@ idp_ctlinput(cmd, sa, arg)
 	case PRC_HOSTDEAD:
 	case PRC_HOSTUNREACH:
 		sns = arg;
-		if (sns->sns_family != AF_NS)
+		if (arg == NULL || sns->sns_family != AF_NS)
 			return NULL;
 		ns = &sns->sns_addr;
 		break;

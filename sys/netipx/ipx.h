@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.4 1996/11/25 08:19:58 mickey Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.5 1996/12/23 08:47:03 mickey Exp $	*/
 
 /*-
  *
@@ -79,29 +79,29 @@
 
 /* flags passed to ipx_outputfl as last parameter */
 
-#define	IPX_FORWARDING		0x1	/* most of ipx header exists */
-#define	IPX_ROUTETOIF		0x10	/* same as SO_DONTROUTE */
-#define	IPX_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
+#define IPX_FORWARDING		0x1	/* most of ipx header exists */
+#define IPX_ROUTETOIF		0x10	/* same as SO_DONTROUTE */
+#define IPX_ALLOWBROADCAST		SO_BROADCAST   /* can send broadcast packets */
 
 #define IPX_MAXHOPS		15
 
 /* flags passed to get/set socket option */
-#define	SO_HEADERS_ON_INPUT	1
-#define	SO_HEADERS_ON_OUTPUT	2
-#define	SO_DEFAULT_HEADERS	3
-#define	SO_LAST_HEADER		4
-#define	SO_IPXIP_ROUTE		5
-#define SO_SEQNO		6
-#define	SO_ALL_PACKETS		7
+#define SO_HEADERS_ON_INPUT	1
+#define SO_HEADERS_ON_OUTPUT	2
+#define SO_DEFAULT_HEADERS		3
+#define SO_LAST_HEADER		4
+#define SO_IPXIP_ROUTE		5
+#define SO_SEQNO			6
+#define SO_ALL_PACKETS		7
 #define SO_MTU			8
 #define SO_IPXTUN_ROUTE		9
 
 /*
  * IPX addressing
  */
-#define	IPX_HOSTADDRLEN	6
-#define	IPX_NETADDRLEN	4
-#define	XXX	__attribute__((packed))
+#define IPX_HOSTADDRLEN	6
+#define IPX_NETADDRLEN	4
+#define XXX	__attribute__((packed))
 
 typedef
 union ipx_host {

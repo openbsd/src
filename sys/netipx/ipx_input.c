@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.3 1996/10/26 09:34:51 mickey Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.4 1996/12/23 08:47:04 mickey Exp $	*/
 
 /*-
  *
@@ -342,7 +342,7 @@ ipx_ctlinput(cmd, arg_as_sa, dummy)
 	case PRC_HOSTDEAD:
 	case PRC_HOSTUNREACH:
 		sipx = (struct sockaddr_ipx *)arg;
-		if (sipx->sipx_family != AF_IPX)
+		if (sipx == NULL || sipx->sipx_family != AF_IPX)
 			return NULL;
 		ipx = &sipx->sipx_addr;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.3 1996/11/25 08:20:01 mickey Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.4 1996/12/23 08:47:04 mickey Exp $	*/
 
 /*-
  *
@@ -125,8 +125,8 @@ ipx_input(m, va_alist)
 		m->m_pkthdr.len -= sizeof (struct ipx);
 		m->m_data += sizeof (struct ipx);
 	}
-	if (sbappendaddr(&ipxp->ipxp_socket->so_rcv, (struct sockaddr *)&ipx_ipx,
-	    m, (struct mbuf *)0) == 0)
+	if (sbappendaddr(&ipxp->ipxp_socket->so_rcv, sipxtosa(&ipx_ipx), m,
+	    (struct mbuf *)0) == 0)
 		goto bad;
 	sorwakeup(ipxp->ipxp_socket);
 	return;

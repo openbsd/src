@@ -1,4 +1,4 @@
-/*	$OpenBSD: idp_usrreq.c,v 1.2 1996/03/04 08:20:20 niklas Exp $	*/
+/*	$OpenBSD: idp_usrreq.c,v 1.3 1996/12/23 08:47:06 mickey Exp $	*/
 /*	$NetBSD: idp_usrreq.c,v 1.9 1996/02/13 22:13:43 christos Exp $	*/
 
 /*
@@ -58,11 +58,10 @@
 #include <netns/ns_error.h>
 
 #include <machine/stdarg.h>
+
 /*
  * IDP protocol implementation.
  */
-
-struct	sockaddr_ns idp_ns = { sizeof(idp_ns), AF_NS };
 
 /*
  *  This may also be called for raw listeners.
@@ -79,13 +78,14 @@ idp_input(m, va_alist)
 	register struct nspcb *nsp;
 	register struct idp *idp = mtod(m, struct idp *);
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct	sockaddr_ns idp_ns = { sizeof(idp_ns), AF_NS };
 	va_list ap;
 
 	va_start(ap, m);
 	nsp = va_arg(ap, struct nspcb *);
 	va_end(ap);
 
-	if (nsp==0)
+	if (nsp == NULL)
 		panic("No nspcb");
 	/*
 	 * Construct sockaddr format source address.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.3 1996/04/21 22:30:14 deraadt Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.4 1996/12/23 08:47:07 mickey Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -620,7 +620,7 @@ spp_ctlinput(cmd, sa, arg)
 	case PRC_HOSTDEAD:
 	case PRC_HOSTUNREACH:
 		sns = arg;
-		if (sns->sns_family != AF_NS)
+		if (sns == NULL || sns->sns_family != AF_NS)
 			return NULL;
 		na = &sns->sns_addr;
 		break;
