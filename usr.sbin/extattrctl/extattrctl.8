@@ -1,4 +1,4 @@
-.\"       $OpenBSD: extattrctl.8,v 1.1 2002/02/22 21:09:06 drahn Exp $
+.\"       $OpenBSD: extattrctl.8,v 1.2 2002/03/27 19:17:11 drahn Exp $
 .\"-
 .\" Copyright (c) 2000, 2001 Robert N. M. Watson
 .\" All rights reserved.
@@ -33,33 +33,33 @@
 .Nm extattrctl
 .Nd manage FFS extended attributes
 .Sh SYNOPSIS
-.Nm
+.Nm extattrctl
 .Cm start
 .Ar path
-.Nm
+.Nm extattrctl
 .Cm stop
 .Ar path
-.Nm
+.Nm extattrctl
 .Cm initattr
 .Op Fl f
 .Op Fl p Ar path
 .Ar attrsize
 .Ar attrfile
-.Nm
+.Nm extattrctl
 .Cm enable
 .Ar path
 .Ar attrnamespace
 .Ar attrname
 .Ar attrfile
-.Nm
+.Nm extattrctl
 .Cm disable
 .Ar path
 .Ar attrnamespace
 .Ar attrname
 .Sh DESCRIPTION
-.Nm
+.Nm extattrctl
 is the management utility for extended attributes over the FFS file system.
-.Nm
+.Nm extattrctl
 allows the starting and stopping of extended attributes on a file system,
 as well as initialization of attribute backing files, and enabling and
 disabling of specific extended attributes on a file system.
