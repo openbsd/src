@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errno.c,v 1.3 2003/08/15 23:13:07 deraadt Exp $	*/
+/*	$OpenBSD: malloc_errno.c,v 1.4 2003/12/25 18:49:57 miod Exp $	*/
 /*
  * Public domain.  2003, Otto Moerbeek
  */
@@ -39,6 +39,7 @@ main(int argc, char *argv[])
 	testerrno(-1);
 	testerrno(-1000);
 	testerrno(-10000);
+	testerrno(-10000000);
 	for (i = 0; i < 0x10; i++)
 		testerrno(i * 0x10000000);
 	return 0;
