@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.6 2002/09/07 01:25:34 marc Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.7 2002/11/29 22:31:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$OpenBSD: malloc.c,v 1.6 2002/09/07 01:25:34 marc Exp $";
+static char *rcsid = "$OpenBSD: malloc.c,v 1.7 2002/11/29 22:31:41 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -67,7 +67,9 @@ static char *rcsid = "$OpenBSD: malloc.c,v 1.6 2002/09/07 01:25:34 marc Exp $";
 #define NEED_DEV_ZERO	1
 #endif
 
+#ifndef NULL
 #define	NULL 0
+#endif
 
 /*
  * Pre-allocate mmap'ed pages
