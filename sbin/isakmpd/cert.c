@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.c,v 1.12 2000/02/19 19:32:53 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.14 2000/02/19 07:58:54 niklas Exp $	*/
+/*	$OpenBSD: cert.c,v 1.13 2000/03/08 08:42:48 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.15 2000/03/07 23:37:54 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -40,9 +40,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ssl/ssl.h>
-
 #include "sysdep.h"
+
+#ifdef KAME
+#  include <openssl/ssl.h>
+#else
+#  include <ssl/ssl.h>
+#endif
 
 #include "cert.h"
 #include "isakmp_num.h"

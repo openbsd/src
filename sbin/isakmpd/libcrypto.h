@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.h,v 1.5 2000/02/07 01:32:54 niklas Exp $	*/
-/*	$EOM: libcrypto.h,v 1.11 2000/02/07 01:30:36 angelos Exp $	*/
+/*	$OpenBSD: libcrypto.h,v 1.6 2000/03/08 08:42:48 niklas Exp $	*/
+/*	$EOM: libcrypto.h,v 1.12 2000/03/07 23:37:54 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -39,12 +39,21 @@
 #define _LIBCRYPTO_H_
 
 #include <stdio.h>
+
+#ifdef KAME
+#  include <openssl/ssl.h>
+#  include <openssl/bio.h>
+#  include <openssl/pem.h>
+#  include <openssl/x509_vfy.h>
+#  include <openssl/x509.h>
+#else
 /* XXX I want #include <ssl/cryptall.h> but we appear to not install meth.h  */
-#include <ssl/ssl.h>
-#include <ssl/bio.h>
-#include <ssl/pem.h>
-#include <ssl/x509_vfy.h>
-#include <ssl/x509.h>
+#  include <ssl/ssl.h>
+#  include <ssl/bio.h>
+#  include <ssl/pem.h>
+#  include <ssl/x509_vfy.h>
+#  include <ssl/x509.h>
+#endif /* KAME */
 
 extern void *libcrypto;
 
