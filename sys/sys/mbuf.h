@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.31 2001/05/24 11:00:08 angelos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.32 2001/05/24 18:53:46 angelos Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -413,7 +413,6 @@ void _sk_mclget(struct mbuf *, int);
 #define M_DUP_HDR(to, from) { \
 	M_COPY_HDR((to), (from)); \
 	m_tag_copy_chain((to), (from)); \
-	TAILQ_INIT(&(from)->m_pkthdr.tags); \
 }
 
 /*
@@ -421,8 +420,8 @@ void _sk_mclget(struct mbuf *, int);
  * from must have M_PKTHDR set, and to must be empty.
  */
 #define M_DUP_PKTHDR(to, from) { \
-	M_DUP_HDR((to), (from)); \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
+	M_DUP_HDR((to), (from)); \
 	(to)->m_data = (to)->m_pktdat; \
 }
 
