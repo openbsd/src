@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.19 1996/11/10 10:18:56 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.20 1996/11/10 10:23:46 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ static const char *devname[] = {
 	"sd",		/* 4 = sd */
 	"",		/* 5 */
 	"",		/* 6 */
-	"mcd",		/* 7 */
+	"mcd",		/* 7 = mcd */
 	"",		/* 8 */
 	"",		/* 9 */
 	"",		/* 10 */
