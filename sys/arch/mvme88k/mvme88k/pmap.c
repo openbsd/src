@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.90 2003/10/28 17:33:01 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.91 2003/10/28 21:43:44 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -64,10 +64,10 @@
 #include <machine/pmap_table.h>
 
 /*
- *  VM externals
+ * VM externals
  */
-extern vaddr_t      avail_start, avail_end;
-extern vaddr_t      virtual_avail, virtual_end;
+extern vaddr_t	avail_start, avail_end;
+extern vaddr_t	virtual_avail, virtual_end;
 
 /*
  * Macros to operate pm_cpus field
@@ -116,7 +116,7 @@ int pmap_con_dbg = 0;
 #define PAGE_ALIGNED(ad)	(((vaddr_t)(ad) & PAGE_MASK) == 0)
 #define	CHECK_PAGE_ALIGN(ad,who) \
 	if (!PAGE_ALIGNED(ad)) \
-		printf("%s: addr  %x not page aligned.\n", who, ad)
+		printf("%s: addr %x not page aligned.\n", who, ad)
 
 #else	/* DEBUG */
 
@@ -239,6 +239,7 @@ vaddr_t kmapva = 0;
  */
 void flush_atc_entry(long, vaddr_t, boolean_t);
 pt_entry_t *pmap_expand_kmap(vaddr_t, vm_prot_t);
+void pmap_remove_pte(pmap_t, vaddr_t, pt_entry_t *);
 void pmap_remove_range(pmap_t, vaddr_t, vaddr_t);
 void pmap_expand(pmap_t, vaddr_t);
 void pmap_release(pmap_t);
@@ -293,13 +294,13 @@ m88k_protection(pmap_t pmap, vm_prot_t prot)
  * Function:
  *	Flush atc(TLB) which maps given virtual address, in the CPUs which
  *	are specified by 'users', for the operating mode specified by
- *      'kernel'.
+ *	'kernel'.
  *
  * Parameters:
  *	users	bit patterns of the CPUs which may hold the TLB, and
  *		should be flushed
  *	va	virtual address that should be flushed
- *      kernel  TRUE if supervisor mode, FALSE if user mode
+ *	kernel	TRUE if supervisor mode, FALSE if user mode
  */
 void
 flush_atc_entry(long users, vaddr_t va, boolean_t kernel)
@@ -400,7 +401,7 @@ pmap_expand_kmap(vaddr_t virt, vm_prot_t prot)
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_KMAP | CD_FULL)) == (CD_KMAP | CD_FULL))
-		printf("(pmap_expand_kmap: %x) v %x\n", curproc,virt);
+		printf("(pmap_expand_kmap: %x) v %x\n", curproc, virt);
 #endif
 
 	template = m88k_protection(kernel_pmap, prot) | SG_V;
@@ -606,7 +607,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 
 #ifdef DEBUG
 	if ((mode & CACHE_MASK) != mode) {
-		printf("(cache_ctrl) illegal mode %x\n",mode);
+		printf("(cache_ctrl) illegal mode %x\n", mode);
 		return;
 	}
 	if (pmap_con_dbg & CD_CACHE) {
@@ -731,7 +732,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	/*
 	 * The calling sequence is
 	 *    ...
-	 *  pmap_bootstrap(&kernelstart,...);
+	 *  pmap_bootstrap(&kernelstart, ...);
 	 *  kernelstart is the first symbol in the load image.
 	 *  We link the kernel such that &kernelstart == 0x10000 (size of
 	 *							BUG ROM)
@@ -754,8 +755,8 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kernel_pmap->pm_stpa = 0x%x\n",kernel_pmap->pm_stpa);
-		printf("kernel_pmap->pm_stab = 0x%x\n",kernel_pmap->pm_stab);
+		printf("kernel_pmap->pm_stpa = 0x%x\n", kernel_pmap->pm_stpa);
+		printf("kernel_pmap->pm_stab = 0x%x\n", kernel_pmap->pm_stab);
 	}
 #endif
 
@@ -813,10 +814,10 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kpdt_phys = 0x%x\n",kpdt_phys);
-		printf("kpdt_virt = 0x%x\n",kpdt_virt);
+		printf("kpdt_phys = 0x%x\n", kpdt_phys);
+		printf("kpdt_virt = 0x%x\n", kpdt_virt);
 		printf("end of kpdt at (virt)0x%08x, (phys)0x%08x\n",
-		       *virt_start,*phys_start);
+		    *virt_start, *phys_start);
 	}
 #endif
 	/*
@@ -835,7 +836,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * Map the kernel image into virtual space
 	 */
 
-	s_text = load_start;	     /* paddr of text */
+	s_text = load_start;	/* paddr of text */
 	e_text = load_start +
 	    ((vaddr_t)&etext - trunc_page((vaddr_t)&kernelstart));
 	/* paddr of end of text section*/
@@ -848,7 +849,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	/* map the kernel text read only */
 	vaddr = pmap_map(trunc_page((vaddr_t)&kernelstart),
 	    s_text, e_text, VM_PROT_WRITE | VM_PROT_READ,
-	    CACHE_GLOBAL);  /* shouldn't it be RO? XXX*/
+	    CACHE_GLOBAL);	/* shouldn't it be RO? XXX*/
 
 	vaddr = pmap_map(vaddr, e_text, (paddr_t)kmap,
 	    VM_PROT_WRITE | VM_PROT_READ, CACHE_GLOBAL);
@@ -880,7 +881,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 		 */
 		if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 			printf("1: vaddr %x *virt_start 0x%x *phys_start 0x%x\n", vaddr,
-			       *virt_start, *phys_start);
+			    *virt_start, *phys_start);
 		}
 		*virt_start = vaddr;
 		*phys_start = round_page(*phys_start);
@@ -889,10 +890,10 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 
 #if defined (MVME187) || defined (MVME197)
 	/*
-	 *  Get ethernet buffer - need etherlen bytes physically contiguous.
-	 *  1 to 1 mapped as well???. There is actually a bug in the macros
-	 *  used by the 1x7 ethernet driver. Remove this when that is fixed.
-	 *  XXX -nivas
+	 * Get ethernet buffer - need etherlen bytes physically contiguous.
+	 * 1 to 1 mapped as well???. There is actually a bug in the macros
+	 * used by the 1x7 ethernet driver. Remove this when that is fixed.
+	 * XXX -nivas
 	 */
 	if (brdtyp == BRD_187 || brdtyp == BRD_197) {
 		*phys_start = vaddr;
@@ -909,7 +910,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 				printf("2: vaddr %x *virt_start %x *phys_start %x\n", vaddr,
-				       *virt_start, *phys_start);
+				    *virt_start, *phys_start);
 			}
 #endif
 			*virt_start = vaddr;
@@ -975,8 +976,8 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 #define	SYSMAP(c, p, v, n)	\
 ({ \
 	v = (c)virt; \
-    	if ((p = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL) \
-    		pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE); \
+	if ((p = pmap_pte(kernel_pmap, virt)) == PT_ENTRY_NULL) \
+		pmap_expand_kmap(virt, VM_PROT_READ | VM_PROT_WRITE); \
 	virt += ((n) * PAGE_SIZE); \
 })
 
@@ -1161,7 +1162,7 @@ pmap_create(void)
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_CREAT) {
 		printf("(pmap_create: %x) need %d pages for sdt\n",
-		       curproc, atop(s));
+		    curproc, atop(s));
 	}
 #endif
 
@@ -1184,7 +1185,7 @@ pmap_create(void)
 
 	if (pmap_con_dbg & CD_CREAT) {
 		printf("(pmap_create: %x) pmap=0x%p, pm_stab=0x%x, pm_stpa=0x%x\n",
-		       curproc, pmap, pmap->pm_stab, pmap->pm_stpa);
+		    curproc, pmap, pmap->pm_stab, pmap->pm_stpa);
 	}
 #endif
 
@@ -1261,7 +1262,7 @@ pmap_release(pmap_t pmap)
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_FREE | CD_FULL)) == (CD_FREE | CD_FULL))
 				printf("(pmap_release: %x) free page table = 0x%x\n",
-				       curproc, gdttbl);
+				    curproc, gdttbl);
 #endif
 			PT_FREE(gdttbl);
 		}
@@ -1270,11 +1271,11 @@ pmap_release(pmap_t pmap)
 	/*
 	 * Freeing both *actual* and *shadow* segment tables
 	 */
-	sdttbl = pmap->pm_stab;    /* addr of segment table */
+	sdttbl = pmap->pm_stab;		/* addr of segment table */
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_FREE | CD_FULL)) == (CD_FREE | CD_FULL))
 		printf("(pmap_release: %x) free segment table = 0x%x\n",
-		       curproc, sdttbl);
+		    curproc, sdttbl);
 #endif
 	uvm_km_free(kernel_map, (vaddr_t)sdttbl, round_page(2 * SDT_SIZE));
 
@@ -1330,7 +1331,7 @@ pmap_destroy(pmap_t pmap)
  * Routine:	PMAP_REFERENCE
  *
  * Function:
- *	Add a reference to the specified  pmap.
+ *	Add a reference to the specified pmap.
  *
  * Parameters:
  *	pmap		pointer to pmap structure
@@ -1345,6 +1346,138 @@ pmap_reference(pmap_t pmap)
 	simple_lock(&pmap->pm_lock);
 	pmap->pm_count++;
 	simple_unlock(&pmap->pm_lock);
+}
+
+/*
+ * Routine:	PMAP_REMOVE_PTE (internal)
+ *
+ * Function:
+ *	Invalidate a given page table entry associated with the
+ *	given virtual address.
+ *
+ * Parameters:
+ *	pmap		pointer to pmap structure
+ *	va		virtual address of page to remove
+ *	pte		existing pte
+ *
+ * External/Global:
+ *	pv lists
+ *
+ * Calls:
+ *	pool_put
+ *	invalidate_pte
+ *	flush_atc_entry
+ *
+ * Special Assumptions:
+ *	The pmap must be locked.
+ *
+ *  If the PTE is valid, the routine must invalidate the entry. The
+ * 'modified' bit, if on, is referenced to the VM, and into the appropriate
+ * entry in the PV list entry. Next, the function must find the PV
+ * list entry associated with this pmap/va (if it doesn't exist - the function
+ * panics). The PV list entry is unlinked from the list, and returned to
+ * its zone.
+ */
+void
+pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
+{
+	pt_entry_t opte;
+	pv_entry_t prev, cur, pvl = PV_ENTRY_NULL;
+	struct vm_page *pg;
+	paddr_t pa;
+	u_int users;
+	boolean_t kflush;
+
+#ifdef DEBUG
+	if (pmap_con_dbg & CD_RM) {
+		if (pmap == kernel_pmap)
+			printf("(pmap_remove_pte: %x) pmap kernel va %x\n", curproc, va);
+		else
+			printf("(pmap_remove: %x) pmap %x va %x\n", curproc, pmap, va);
+	}
+#endif
+
+	if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+		return;	 	/* no page mapping, nothing to do! */
+	}
+
+	users = pmap->pm_cpus;
+	if (pmap == kernel_pmap) {
+		kflush = TRUE;
+	} else {
+		kflush = FALSE;
+	}
+
+	/*
+	 * Update statistics.
+	 */
+	pmap->pm_stats.resident_count--;
+	if (pmap_pte_w(pte))
+		pmap->pm_stats.wired_count--;
+
+	pa = ptoa(PG_PFNUM(*pte));
+
+	/*
+	 * Invalidate the pte.
+	 */
+
+	opte = invalidate_pte(pte) & (PG_U | PG_M);
+	flush_atc_entry(users, va, kflush);
+
+	pg = PHYS_TO_VM_PAGE(pa);
+
+	if (pg != NULL) {
+		/*
+		 * Remove the mapping from the pvlist for
+		 * this physical page.
+		 */
+		pvl = pg_to_pvh(pg);
+
+#ifdef DIAGNOSTIC
+		if (pvl->pv_pmap == PMAP_NULL)
+			panic("pmap_remove_pte: null pv_list");
+#endif
+
+		prev = PV_ENTRY_NULL;
+		for (cur = pvl; cur != PV_ENTRY_NULL;
+		    cur = cur->pv_next) {
+			if (cur->pv_va == va && cur->pv_pmap == pmap)
+				break;
+			prev = cur;
+		}
+		if (cur == PV_ENTRY_NULL) {
+			panic("pmap_remove_pte: mapping for va "
+			    "0x%x (pa 0x%x) not in pv list at 0x%p",
+			    va, pa, pvl);
+		}
+
+		if (prev == PV_ENTRY_NULL) {
+			/*
+			 * Hander is the pv_entry. Copy the next one
+			 * to hander and free the next one (we can't
+			 * free the hander)
+			 */
+			cur = cur->pv_next;
+			if (cur != PV_ENTRY_NULL) {
+				cur->pv_flags = pvl->pv_flags;
+				*pvl = *cur;
+				pool_put(&pvpool, cur);
+			} else {
+				pvl->pv_pmap = PMAP_NULL;
+			}
+		} else {
+			prev->pv_next = cur->pv_next;
+			pool_put(&pvpool, cur);
+		}
+	} /* if (pg != NULL) */
+
+	/*
+	 * Reflect modify bits to pager.
+	 */
+
+	if (opte != 0 && pvl != PV_ENTRY_NULL) {
+		pvl->pv_flags |= opte;
+	}
 }
 
 /*
@@ -1365,36 +1498,21 @@ pmap_reference(pmap_t pmap)
  *
  * Calls:
  *	pmap_pte
- *	pool_put
- *	invalidate_pte
- *	flush_atc_entry
+ *	pmap_remove_pte
  *
  * Special Assumptions:
  *	The pmap must be locked.
  *
  *   This routine sequences through the pages defined by the given
- * range. For each page, pmap_pte is called to obtain a (virtual)
- * pointer to the page table  entry (PTE) associated with the page's
- * virtual address. If the page table entry does not exist, or is invalid,
- * nothing need be done.
+ * range. For each page, the associated page table entry (PTE) is
+ * invalidated via pmap_remove_pte().
  *
- *  If the PTE is valid, the routine must invalidated the entry. The
- * 'modified' bit, if on, is referenced to the VM, and into the appropriate
- * entry in the PV list entry. Next, the function must find the PV
- * list entry associated with this pmap/va (if it doesn't exist - the function
- * panics). The PV list entry is unlinked from the list, and returned to
- * its zone.
+ * Empty segments are skipped for performance.
  */
 void
 pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 {
-	pt_entry_t *pte, opte;
-	pv_entry_t prev, cur, pvl = PV_ENTRY_NULL;
-	struct vm_page *pg;
-	paddr_t pa;
 	vaddr_t va;
-	u_int users;
-	boolean_t kflush;
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_RM) {
@@ -1406,22 +1524,12 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 #endif
 
 	/*
-	 * pmap has been locked by the caller.
-	 */
-	users = pmap->pm_cpus;
-	if (pmap == kernel_pmap) {
-		kflush = TRUE;
-	} else {
-		kflush = FALSE;
-	}
-
-	/*
 	 * Loop through the range in vm_page_size increments.
 	 */
 	for (va = s; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
 
-		sdt = SDTENT(pmap,va);
+		sdt = SDTENT(pmap, va);
 
 		/* If no segment table, skip a whole segment */
 		if (!SDT_VALID(sdt)) {
@@ -1430,83 +1538,8 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 			continue;
 		}
 
-		pte = pmap_pte(pmap, va);
-		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
-			continue;	 /* no page mapping */
-		}
-
-		/*
-		 * Update statistics.
-		 */
-		pmap->pm_stats.resident_count--;
-		if (pmap_pte_w(pte))
-			pmap->pm_stats.wired_count--;
-
-		pa = ptoa(PG_PFNUM(*pte));
-
-		/*
-		 * Invalidate the pte.
-		 */
-
-		opte = invalidate_pte(pte) & (PG_U | PG_M);
-		flush_atc_entry(users, va, kflush);
-
-		pg = PHYS_TO_VM_PAGE(pa);
-
-		if (pg != NULL) {
-			/*
-			 * Remove the mapping from the pvlist for
-			 * this physical page.
-			 */
-			pvl = pg_to_pvh(pg);
-
-#ifdef DIAGNOSTIC
-			if (pvl->pv_pmap == PMAP_NULL)
-				panic("pmap_remove_range: null pv_list");
-#endif
-
-			prev = PV_ENTRY_NULL;
-			for (cur = pvl; cur != PV_ENTRY_NULL;
-			    cur = cur->pv_next) {
-				if (cur->pv_va == va && cur->pv_pmap == pmap)
-					break;
-				prev = cur;
-			}
-			if (cur == PV_ENTRY_NULL) {
-				panic("pmap_remove_range: mapping for va "
-				    "0x%x (pa 0x%x) not in pv list at 0x%p",
-				    va, pa, pvl);
-			}
-
-			if (prev == PV_ENTRY_NULL) {
-				/*
-				 * Hander is the pv_entry. Copy the next one
-				 * to hander and free the next one (we can't
-				 * free the hander)
-				 */
-				cur = cur->pv_next;
-				if (cur != PV_ENTRY_NULL) {
-					cur->pv_flags = pvl->pv_flags;
-					*pvl = *cur;
-					pool_put(&pvpool, cur);
-				} else {
-					pvl->pv_pmap = PMAP_NULL;
-				}
-			} else {
-				prev->pv_next = cur->pv_next;
-				pool_put(&pvpool, cur);
-			}
-		} /* if (pg != NULL) */
-
-		/*
-		 * Reflect modify bits to pager.
-		 */
-
-		if (opte != 0 && pvl != PV_ENTRY_NULL) {
-			pvl->pv_flags |= opte;
-		}
-
-	} /* for (va = s; ...) */
+		pmap_remove_pte(pmap, va, pmap_pte(pmap, va));
+	}
 }
 
 /*
@@ -1639,7 +1672,7 @@ remove_all_Retry:
 			goto next;
 		}
 
-		pmap_remove_range(pmap, va, va + PAGE_SIZE);
+		pmap_remove_pte(pmap, va, pte);
 
 		/*
 		 * Do not free any page tables,
@@ -1713,7 +1746,7 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 	for (va = s; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
 
-		sdt = SDTENT(pmap,va);
+		sdt = SDTENT(pmap, va);
 
 		/* If no segment table, skip a whole segment */
 		if (!SDT_VALID(sdt)) {
@@ -1768,7 +1801,7 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
  *
  * Special Assumptions
  *	no pmap locks held
- *      pmap != kernel_pmap
+ *	pmap != kernel_pmap
  *
  * 1:	This routine immediately allocates space for a page table.
  *
@@ -1820,15 +1853,15 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 	}
 	/*
 	 * Apply a mask to V to obtain the vaddr of the beginning of
-	 * its containing page 'table group',i.e. the group of
-	 * page  tables that fit eithin a single VM page.
+	 * its containing page 'table group', i.e. the group of
+	 * page tables that fit eithin a single VM page.
 	 * Using that, obtain the segment table pointer that references the
 	 * first page table in the group, and initialize all the
 	 * segment table descriptions for the page 'table group'.
 	 */
 	v &= ~((1 << (PDT_BITS + PG_BITS)) - 1);
 
-	sdt = SDTENT(pmap,v);
+	sdt = SDTENT(pmap, v);
 
 	/*
 	 * Init each of the segment entries to point the freshly allocated
@@ -1867,7 +1900,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
  *	m88k_protection
  *	pmap_pte
  *	pmap_expand
- *	pmap_remove_range
+ *	pmap_remove_pte
  *	PT_FREE
  *
  *	This routine starts off by calling pmap_pte to obtain a (virtual)
@@ -1875,7 +1908,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
  * address. If the page table itself does not exist, pmap_expand is
  * called to allocate it.
  *
- *      If the page table entry (PTE) already maps the given physical page,
+ *	If the page table entry (PTE) already maps the given physical page,
  * all that is needed is to set the protection and wired attributes as
  * given. TLB entries are flushed and pmap_enter returns.
  *
@@ -1891,7 +1924,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
  *
  *	get machine-dependent prot code
  *	get the pte for this page
- *	if necessary pmap expand(pmap,v)
+ *	if necessary pmap_expand(pmap, v)
  *	if (changing wired attribute or protection) {
  * 		flush entry from TLB
  *		update template
@@ -1899,7 +1932,7 @@ pmap_expand(pmap_t pmap, vaddr_t v)
  *			stuff pte
  *	} else if (mapped at wrong addr)
  *		flush entry from TLB
- *		pmap_remove_range
+ *		pmap_remove_pte
  *	} else {
  *		enter mapping in pv_list
  *		setup template and stuff ptes
@@ -2010,7 +2043,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
 			flush_atc_entry(users, va, TRUE);
 		} else {
-			pmap_remove_range(pmap, va, va + PAGE_SIZE);
+			pmap_remove_pte(pmap, va, pte);
 		}
 
 		pg = PHYS_TO_VM_PAGE(pa);
@@ -2018,10 +2051,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if (pmap_con_dbg & CD_ENT) {
 			if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end) {
 				printf("vaddr1 0x%x vaddr2 0x%x va 0x%x pa 0x%x managed %x\n",
-				       phys_map_vaddr1, phys_map_vaddr2, va, old_pa,
-				       pg != NULL ? 1 : 0);
+				    phys_map_vaddr1, phys_map_vaddr2, va, old_pa,
+				    pg != NULL ? 1 : 0);
 				printf("pte %x pfn %x valid %x\n",
-				       pte, PG_PFNUM(*pte), PDT_VALID(pte));
+				    pte, PG_PFNUM(*pte), PDT_VALID(pte));
 			}
 		}
 #endif
@@ -2379,7 +2412,7 @@ pmap_activate(struct proc *p)
 #ifdef	PMAP_USE_BATC
 		/*
 		 * cmmu_pmap_activate will set the uapr and the batc entries,
-		 * then flush the *USER* TLB.  IF THE KERNEL WILL EVER CARE
+		 * then flush the *USER* TLB. IF THE KERNEL WILL EVER CARE
 		 * ABOUT THE BATC ENTRIES, THE SUPERVISOR TLBs SHOULB BE
 		 * FLUSHED AS WELL.
 		 */
@@ -2409,7 +2442,7 @@ pmap_activate(struct proc *p)
  *	i.e. the pmap i no longer is use on the processor.
  *
  * Parameters:
- *     	p		pointer to proc structure
+ *	p		pointer to proc structure
  *
  * pmap_deactive simply clears the pm_cpus field in given pmap structure.
  *
@@ -2484,7 +2517,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	 * Map destination physical address.
 	 */
 	cmmu_flush_tlb(TRUE, dstva, PAGE_SIZE);
-	*dstpte  = template | trunc_page(dst);
+	*dstpte = template | trunc_page(dst);
 	SPLX(spl);
 
 	bcopy((void *)srcva, (void *)dstva, PAGE_SIZE);
@@ -2567,7 +2600,7 @@ changebit_Retry:
 		 * Check for existing and valid pte
 		 */
 		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
-			goto next;	 /*  no page mapping */
+			goto next;	 /* no page mapping */
 		}
 #ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
@@ -2843,7 +2876,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		sdt_entry_t *sdt;
 		pt_entry_t *pte;
 
-		sdt = SDTENT(kernel_pmap,va);
+		sdt = SDTENT(kernel_pmap, va);
 
 		/* If no segment table, skip a whole segment */
 		if (!SDT_VALID(sdt)) {
