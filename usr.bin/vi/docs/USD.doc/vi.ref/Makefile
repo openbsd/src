@@ -1,17 +1,17 @@
-#	$OpenBSD: Makefile,v 1.5 2004/01/14 23:40:01 millert Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/01/30 23:39:22 jmc Exp $
 
 
 DIR=	usd/13.viref
 SRCS=	vi.ref ex.cmd.roff set.opt.roff vi.cmd.roff ref.so
 EXTRA=	merge.awk spell.ok
 MACROS=	-me
-CLEANFILES+=vi.ref.txt index index.so
+CLEANFILES+=index index.so
 
 paper.ps: vi.ref index.so
 	soelim vi.ref | ${TBL} | ${ROFF} -U > ${.TARGET}
 
-vi.ref.txt: vi.ref index.so
-	soelim vi.ref | ${TBL} | groff -U ${MACROS} -Tascii > $@
+paper.txt: vi.ref index.so
+	soelim vi.ref | ${TBL} | ${ROFF} -U -Tascii > ${.TARGET}
 
 index.so: vi.ref
 	# Build index.so, side-effect of building the paper.
