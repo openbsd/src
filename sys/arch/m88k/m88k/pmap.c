@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.1 2004/07/25 11:06:42 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.2 2004/07/26 11:08:20 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -2677,4 +2677,27 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		flush_atc_entry(users, va, TRUE);
 	}
 	PMAP_UNLOCK(map, spl);
+}
+
+void
+pmap_proc_iflush(struct proc *p, vaddr_t va, vsize_t len)
+{
+	pmap_t pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	vaddr_t eva;
+	paddr_t pa;
+	u_int cpu, users;
+
+	eva = round_page(va + len);
+	va = trunc_page(va);
+
+	while (va < eva) {
+		if (pmap_extract(pmap, va, &pa)) {
+			users = pmap->pm_cpus;
+			while ((cpu = ff1(users)) != 32) {
+				cmmu_flush_inst_cache(cpu, pa, PAGE_SIZE);
+				users &= ~(1 << cpu);
+			}
+		}
+		va += PAGE_SIZE;
+	}
 }
