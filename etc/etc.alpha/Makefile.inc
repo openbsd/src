@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.9 1997/09/21 11:50:13 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 1997/10/31 22:20:45 deraadt Exp $
 #	etc.alpha/Makefile.inc -- alpha-specific etc Makefile targets
 
 .ifdef DESTDIR
 
-snap_md: binutils bsd distrib
+snap_md: binutils bsd distrib boot
 
 binutils:
 	cd ${DESTDIR} && tar cf - usr/*openbsd* \
@@ -19,5 +19,8 @@ bsd:
 distrib:
 	cd ${.CURDIR}/../distrib && \
 	    make cleandir && make && make install
+
+boot:
+	cp ${DESTDIR}/usr/mdec/boot ${DESTDIR}/snapshot
 
 .endif	# DESTDIR check
