@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.177 2004/10/17 19:21:37 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.178 2004/10/19 13:07:00 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -6285,7 +6285,7 @@ serverworks_setup_channel(chp)
 		if ((chp->wdc->cap & WDC_CAPABILITY_UDMA) &&
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA, check for 80-pin cable */
-			if (drvp->UDMA_mode > 2 &&
+			if (sc->sc_rev <= 0x92 && drvp->UDMA_mode > 2 &&
 			    (PCI_PRODUCT(pci_conf_read(sc->sc_pc, sc->sc_tag,
 			    PCI_SUBSYS_ID_REG)) &
 			    (1 << (14 + channel))) == 0) {
