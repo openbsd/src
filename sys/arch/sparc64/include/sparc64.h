@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64.h,v 1.5 2003/12/16 20:00:16 jason Exp $	*/
+/*	$OpenBSD: sparc64.h,v 1.6 2003/12/17 03:51:48 jason Exp $	*/
 /*	$NetBSD: sparc64.h,v 1.3 2000/10/20 05:47:03 mrg Exp $	*/
 
 /*
@@ -50,12 +50,6 @@ paddr_t prom_alloc_phys(int len, int align);
 paddr_t prom_claim_phys(paddr_t phys, int len);
 int prom_free_phys(paddr_t paddr, int len);
 paddr_t prom_get_msgbuf(int len, int align);
-
-/*
- * Compatibility stuff.
- */
-// #define OF_findroot()	OF_peer(0)
-// #define OF_fd_phandle(x) OF_instance_to_package(x)
 
 /*
  * Debug
