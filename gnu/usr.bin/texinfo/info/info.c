@@ -1,5 +1,5 @@
 /* info.c -- Display nodes of Info files in multiple windows.
-   $Id: info.c,v 1.3 1999/02/11 19:44:09 deraadt Exp $
+   $Id: info.c,v 1.4 1999/11/22 05:00:15 deraadt Exp $
 
    Copyright (C) 1993, 96, 97, 98 Free Software Foundation, Inc.
 
@@ -621,7 +621,7 @@ Any remaining arguments are treated as the names of menu\n\
 items in the initial node visited.  For example, `info emacs buffers'\n\
 moves to the node `buffers' in the info file `emacs'.\n\
 \n\
-Email bug reports to bug-texinfo@gnu.org."), program_name);
+Email bug reports to bug-texinfo@gnu.org.\n"), program_name);
 
   exit (0);
 }
