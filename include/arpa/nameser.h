@@ -1,4 +1,4 @@
-/*	$OpenBSD: nameser.h,v 1.8 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: nameser.h,v 1.9 2004/01/17 21:01:31 jakob Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1989, 1993
@@ -179,13 +179,26 @@
 #define T_SRV		33		/* Server selection */
 #define T_ATMA		34		/* ATM Address */
 #define T_NAPTR		35		/* Naming Authority PoinTeR */
+#define T_KX		36		/* Key Exchanger */
+#define T_CERT		37		/* CERT */
+#define T_A6		38		/* A6 */
+#define T_DNAME		39		/* DNAME */
+#define T_SINK		40		/* SINK */
 #define T_OPT		41		/* OPT pseudo-RR, RFC2671 */
+#define T_APL		42		/* APL */
+#define T_DS		43		/* Delegation Signer */
+#define T_SSHFP		44		/* SSH Key Fingerprint */
+#define T_RRSIG		46		/* RRSIG */
+#define T_NSEC		47		/* NSEC */
+#define T_DNSKEY	48		/* DNSKEY */
 	/* non standard */
 #define T_UINFO		100		/* user (finger) information */
 #define T_UID		101		/* user ID */
 #define T_GID		102		/* group ID */
 #define T_UNSPEC	103		/* Unspecified format (binary data) */
 	/* Query type values which do not appear in resource records */
+#define	T_TKEY		249		/* Transaction Key */
+#define	T_TSIG		250		/* Transaction Signature */
 #define	T_IXFR		251		/* incremental zone transfer */
 #define T_AXFR		252		/* transfer zone of authority */
 #define T_MAILB		253		/* transfer mailbox records */
