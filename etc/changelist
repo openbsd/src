@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.32 2003/10/08 20:30:04 grange Exp $
+#	$OpenBSD: changelist,v 1.33 2003/11/17 19:00:10 millert Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -76,7 +76,7 @@
 /etc/rc.shutdown
 /etc/remote
 /etc/resolv.conf
-/etc/rndc.key
++/etc/rndc.key
 /etc/rpc
 /etc/security
 /etc/sensorsd.conf
@@ -117,7 +117,7 @@
 /var/cron/deny
 /var/cron/tabs/root
 /var/named/etc/named.conf
-/var/named/etc/rndc.key
++var/named/etc/rndc.key
 /var/www/conf/httpd.conf
 /var/www/conf/srm.conf
 /var/www/conf/access.conf
