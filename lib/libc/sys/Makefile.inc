@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.22 1997/05/08 20:10:06 kstailey Exp $
+#	$OpenBSD: Makefile.inc,v 1.23 1997/05/30 21:53:10 kstailey Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -23,6 +23,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o getdirentries.o getegid.o geteuid.o \
 	getfh.o getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o \
+	getpgid.o \
 	getpgrp.o getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o getuid.o issetugid.o \
 	ioctl.o kill.o \
@@ -145,6 +146,7 @@ MLINKS+=clock_gettime.2 clock_getres.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2
+MLINKS+=getpgrp.2 getpgid.2
 MLINKS+=getpid.2 getppid.2
 MLINKS+=getpriority.2 setpriority.2
 MLINKS+=getrlimit.2 setrlimit.2

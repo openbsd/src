@@ -1,3 +1,4 @@
+.\"	$OpenBSD: getpgrp.2,v 1.2 1997/05/30 21:53:10 kstailey Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -43,9 +44,15 @@
 .Fd #include <unistd.h>
 .Ft pid_t
 .Fn getpgrp "void"
+.Ft pid_t
+.Fn getpgid "pid_t pid"
 .Sh DESCRIPTION
 The process group of the current process is returned by
 .Fn getpgrp .
+The process group of the
+.Fa pid
+process is returned by
+.Fn getpgid .
 .Pp
 Process groups are used for distribution of signals, and
 by terminals to arbitrate requests for their input: processes
@@ -77,6 +84,10 @@ The
 .Fn getpgrp
 function conforms to
 .St -p1003.1-88 .
+The
+.Fn getpgid
+function call is derived from it's usage in System V Release 4, and
+first appeared in NetBSD 1.2A.
 .Sh COMPATIBILITY
 This version of
 .Fn getpgrp
