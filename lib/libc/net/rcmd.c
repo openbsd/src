@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.47 2003/07/11 22:39:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.48 2003/09/25 21:14:46 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -485,7 +485,7 @@ __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 		p = buf;
 		if (*p == '#')
 			continue;
-		while (*p != '\n' && *p != ' ' && *p != '\t' && p < buf + buflen) {
+		while (p < buf + buflen && *p != '\n' && *p != ' ' && *p != '\t') {
 			if (!isprint(*p))
 				goto bail;
 			*p = isupper(*p) ? tolower(*p) : *p;
@@ -495,13 +495,13 @@ __ivaliduser_sa(hostf, raddr, salen, luser, ruser)
 			continue;
 		if (*p == ' ' || *p == '\t') {
 			*p++ = '\0';
-			while ((*p == ' ' || *p == '\t') && p < buf + buflen)
+			while (p < buf + buflen && (*p == ' ' || *p == '\t'))
 				p++;
 			if (p >= buf + buflen)
 				continue;
 			user = p;
-			while (*p != '\n' && *p != ' ' &&
-			    *p != '\t' && p < buf + buflen) {
+			while (p < buf + buflen && *p != '\n' && *p != ' ' &&
+			    *p != '\t') {
 				if (!isprint(*p))
 					goto bail;
 				p++;
