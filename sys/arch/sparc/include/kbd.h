@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.6 1999/07/20 07:38:33 maja Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.7 1999/08/21 20:31:39 maja Exp $	*/
 /*	$NetBSD: kbd.h,v 1.6 1996/03/31 22:21:35 pk Exp $ */
 
 /*
@@ -120,6 +120,44 @@
 #define	FA_ACUTE	0x404
 #define	FA_GRAVE	0x405
 #define	FA_CLASS_LAST	0x405
+
+#define	STRING		0x500
+#define	KTAB_STRLEN	10
+#define	HOMEARROW	0x00
+#define	UPARROW		0x01
+#define	DOWNARROW	0x02
+#define	LEFTARROW	0x03
+#define	RIGHTARROR	0x04
+
+#define	FUNCKEYS	0x600
+#define	LEFTFUNC	0x600
+#define	RIGHTFUNC	0x610
+#define	TOPFUNC		0x620
+#define	BOTTOMFUNC	0x630
+#define	LF(n)		(LEFTFUNC+(n)-1)
+#define	RF(n)		(RIGHTFUNC+(n)-1)
+#define	TF(n)		(TOPFUNC+(n)-1)
+#define	BF(n)		(BOTTOMFUNC+(n)-1)
+
+#define	PADKEYS		0x700
+#define	PADEQUAL	0x700
+#define	PADSLASH	0x701
+#define	PADSTAR		0x702
+#define	PADMINUS	0x703
+#define	PADSEP		0x704
+#define	PAD7		0x705
+#define	PAD8		0x706
+#define	PAD9		0x707
+#define	PADPLUS		0x708
+#define	PAD4		0x709
+#define	PAD5		0x70A
+#define	PAD6		0x70B
+#define	PAD1		0x70C
+#define	PAD2		0x70D
+#define	PAD3		0x70E
+#define	PAD0		0x70F
+#define	PADDOT		0x710
+#define	PADENTER	0x711
 
 #ifdef _KERNEL
 void 	kbd_serial __P((struct tty *,
