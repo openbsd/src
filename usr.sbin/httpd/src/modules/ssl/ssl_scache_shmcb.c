@@ -67,8 +67,6 @@
  * and as a contribution to Ralf Engelschall's mod_ssl project.
  */
 
-#ifdef SSL_EXPERIMENTAL_SHMCB
-
 /*
  * The shared-memory segment header can be cast to and from the
  * SHMCBHeader type, all other structures need to be initialised by
@@ -1342,6 +1340,4 @@ end:
     ssl_log(s, SSL_LOG_TRACE, "leaving shmcb_remove_session_id");
     return to_return;
 }
-
-#endif /* SSL_EXPERIMENTAL_SHMCB */
 

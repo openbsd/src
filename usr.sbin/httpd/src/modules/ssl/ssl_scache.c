@@ -79,10 +79,8 @@ void ssl_scache_init(server_rec *s, pool *p)
         ssl_scache_dbm_init(s, p);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMHT)
         ssl_scache_shmht_init(s, p);
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMCB)
         ssl_scache_shmcb_init(s, p);
-#endif
 #ifdef SSL_VENDOR
     else
         ap_hook_use("ap::mod_ssl::vendor::scache_init",
@@ -99,10 +97,8 @@ void ssl_scache_kill(server_rec *s)
         ssl_scache_dbm_kill(s);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMHT)
         ssl_scache_shmht_kill(s);
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMCB)
         ssl_scache_shmcb_kill(s);
-#endif
 #ifdef SSL_VENDOR
     else
         ap_hook_use("ap::mod_ssl::vendor::scache_kill",
@@ -120,10 +116,8 @@ BOOL ssl_scache_store(server_rec *s, UCHAR *id, int idlen, time_t expiry, SSL_SE
         rv = ssl_scache_dbm_store(s, id, idlen, expiry, sess);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMHT)
         rv = ssl_scache_shmht_store(s, id, idlen, expiry, sess);
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMCB)
         rv = ssl_scache_shmcb_store(s, id, idlen, expiry, sess);
-#endif
 #ifdef SSL_VENDOR
     else
         ap_hook_use("ap::mod_ssl::vendor::scache_store",
@@ -142,10 +136,8 @@ SSL_SESSION *ssl_scache_retrieve(server_rec *s, UCHAR *id, int idlen)
         sess = ssl_scache_dbm_retrieve(s, id, idlen);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMHT)
         sess = ssl_scache_shmht_retrieve(s, id, idlen);
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMCB)
         sess = ssl_scache_shmcb_retrieve(s, id, idlen);
-#endif
 #ifdef SSL_VENDOR
     else
         ap_hook_use("ap::mod_ssl::vendor::scache_retrieve",
@@ -163,10 +155,8 @@ void ssl_scache_remove(server_rec *s, UCHAR *id, int idlen)
         ssl_scache_dbm_remove(s, id, idlen);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMHT)
         ssl_scache_shmht_remove(s, id, idlen);
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMCB)
         ssl_scache_shmcb_remove(s, id, idlen);
-#endif
 #ifdef SSL_VENDOR
     else
         ap_hook_use("ap::mod_ssl::vendor::scache_remove",
@@ -183,10 +173,8 @@ void ssl_scache_status(server_rec *s, pool *p, void (*func)(char *, void *), voi
         ssl_scache_dbm_status(s, p, func, arg);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMHT)
         ssl_scache_shmht_status(s, p, func, arg);
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMCB)
         ssl_scache_shmcb_status(s, p, func, arg);
-#endif
 #ifdef SSL_VENDOR
     else
         ap_hook_use("ap::mod_ssl::vendor::scache_status",
@@ -204,10 +192,8 @@ void ssl_scache_expire(server_rec *s)
         ssl_scache_dbm_expire(s);
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMHT)
         ssl_scache_shmht_expire(s);
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (mc->nSessionCacheMode == SSL_SCMODE_SHMCB)
         ssl_scache_shmcb_expire(s);
-#endif
 #ifdef SSL_VENDOR
     else
         ap_hook_use("ap::mod_ssl::vendor::scache_expire",

@@ -71,7 +71,7 @@ MOD_SSL_VERS_STR = 0.0.0
 CC       = cl.exe
 CFLAGS   = /nologo /c /O2 /MD /W3 /GX /DNDEBUG /DWIN32 /D_WINDOWS /DSHARED_MODULE /DEAPI
 CFLAGS   = $(CFLAGS) /DMOD_SSL=$(MOD_SSL_VERS_NUM) /DMOD_SSL_VERSION=\"$(MOD_SSL_VERS_STR)\"
-CFLAGS   = $(CFLAGS) /I..\..\include /I$(SSL_INC)
+CFLAGS   = $(CFLAGS) /I..\..\include /I..\..\os\win32 /I$(SSL_INC)
 LD       = link.exe
 LDFLAGS  = /nologo
 RM       = del

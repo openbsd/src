@@ -396,7 +396,9 @@ ConfigStart
             exit 1
         fi
     fi
-    SSL_CFLAGS="$SSL_CFLAGS -I\$(SSL_INCDIR)"
+    if [ ".$SSL_INCDIR" != "./usr/include" ]; then
+        SSL_CFLAGS="$SSL_CFLAGS -I\$(SSL_INCDIR)"
+    fi
 
     #
     #  determine location of OpenSSL libraries

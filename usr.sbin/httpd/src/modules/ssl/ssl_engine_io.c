@@ -511,7 +511,7 @@ static int SSL_sendwithtimeout(BUFF *fb, const char *buf, int len)
     if (rv <= 0) {
         if (BIO_sock_should_retry(rv)) {
             do {
-                retry=0;
+                retry = 0;
                 FD_ZERO(&fdset);
                 FD_SET((unsigned int)sock, &fdset);
                 tv.tv_usec = 0;
@@ -532,7 +532,7 @@ static int SSL_sendwithtimeout(BUFF *fb, const char *buf, int len)
                                      "select claimed we could write, "
                                      "but in fact we couldn't. "
                                      "This is a bug in Windows.");
-                        retry=1;
+                        retry = 1;
                         Sleep(100);
                     }
                 }
@@ -554,6 +554,7 @@ static int SSL_recvwithtimeout(BUFF *fb, char *buf, int len)
     int rv;
     int sock = fb->fd_in;
     SSL *ssl;
+    int retry;
 
     ssl = ap_ctx_get(fb->ctx, "ssl");
 
@@ -566,23 +567,37 @@ static int SSL_recvwithtimeout(BUFF *fb, char *buf, int len)
     rv = SSL_read(ssl, buf, len);
     if (rv <= 0) {
         if (BIO_sock_should_retry(rv)) {
-            FD_ZERO(&fdset);
-            FD_SET((unsigned int)sock, &fdset);
-            tv.tv_usec = 0;
-            rv = select(FD_SETSIZE, &fdset, NULL, NULL, &tv);
-            if (rv == SOCKET_ERROR)
-                err = WSAGetLastError();
-            else if (rv == 0) {
-                ioctlsocket(sock, FIONBIO, &iostate);
-                ap_check_alarm();
-                WSASetLastError(WSAEWOULDBLOCK);
-                return (SOCKET_ERROR);
-            }
-            else {
-                rv = SSL_read(ssl, buf, len);
+            do {
+                retry = 0;
+                FD_ZERO(&fdset);
+                FD_SET((unsigned int)sock, &fdset);
+                tv.tv_usec = 0;
+                rv = select(FD_SETSIZE, &fdset, NULL, NULL, &tv);
                 if (rv == SOCKET_ERROR)
                     err = WSAGetLastError();
-            }
+                else if (rv == 0) {
+                    ioctlsocket(sock, FIONBIO, &iostate);
+                    ap_check_alarm();
+                    WSASetLastError(WSAEWOULDBLOCK);
+                    return (SOCKET_ERROR);
+                }
+                else {
+                    rv = SSL_read(ssl, buf, len);
+                    if (rv == SOCKET_ERROR) {
+                        if (BIO_sock_should_retry(rv)) {
+                          ap_log_error(APLOG_MARK,APLOG_DEBUG, NULL,
+                                       "select claimed we could read, "
+                                       "but in fact we couldn't. "
+                                       "This is a bug in Windows.");
+                          retry = 1;
+                          Sleep(100);
+                        }
+                        else {
+                            err = WSAGetLastError();
+                        }
+                    }
+                }
+            } while(retry);
         }
     }
     ioctlsocket(sock, FIONBIO, &iostate);

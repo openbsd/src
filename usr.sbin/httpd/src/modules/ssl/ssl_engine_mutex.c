@@ -222,15 +222,13 @@ BOOL ssl_mutex_file_acquire(void)
     lock_it.l_pid    = 0;        /* pid not actually interesting */
 
     while (   ((rc = fcntl(mc->nMutexFD, F_SETLKW, &lock_it)) < 0)
-              && (errno == EINTR)                               ) {
-        continue;
-    }
+           && (errno == EINTR)                                    ) 
+        ;
 #endif
 #ifdef SSL_USE_FLOCK
     while (   ((rc = flock(mc->nMutexFD, LOCK_EX)) < 0)
-              && (errno == EINTR)               ) {
-        continue;
-    }
+           && (errno == EINTR)                         )
+        ;
 #endif
 #endif
 
@@ -253,10 +251,14 @@ BOOL ssl_mutex_file_release(void)
     unlock_it.l_type   = F_UNLCK;  /* unlock */
     unlock_it.l_pid    = 0;        /* pid not actually interesting */
 
-    rc = fcntl(mc->nMutexFD, F_SETLKW, &unlock_it);
+    while (   (rc = fcntl(mc->nMutexFD, F_SETLKW, &unlock_it)) < 0
+           && (errno == EINTR)                                    )
+        ;
 #endif
 #ifdef SSL_USE_FLOCK
-    rc = flock(mc->nMutexFD, LOCK_UN);
+    while (   (rc = flock(mc->nMutexFD, LOCK_UN)) < 0
+           && (errno == EINTR)                       ) 
+        ;
 #endif
 #endif
 
@@ -354,13 +356,18 @@ BOOL ssl_mutex_sem_acquire(void)
         { 0, 1, SEM_UNDO } /* increment semaphore */
     };
 
-    rc = (semop(mc->nMutexSEMID, sb, 2) == 0);
+    while (   (rc = semop(mc->nMutexSEMID, sb, 2)) < 0
+           && (errno == EINTR)                        ) 
+        ;
 #endif
 #ifdef SSL_HAVE_W32SEM
-    rc = (ap_acquire_mutex((mutex *)mc->nMutexSEMID) == 0);
+    rc = ap_acquire_mutex((mutex *)mc->nMutexSEMID);
 #endif
 #endif
-    return rc;
+    if (rc != 0)
+        return FALSE;
+    else
+        return TRUE;
 }
 
 BOOL ssl_mutex_sem_release(void)
@@ -374,12 +381,17 @@ BOOL ssl_mutex_sem_release(void)
         { 0, -1, SEM_UNDO } /* decrements semaphore */
     };
 
-    rc = (semop(mc->nMutexSEMID, sb, 1) == 0);
+    while (   (rc = semop(mc->nMutexSEMID, sb, 1)) < 0 
+           && (errno == EINTR)                        ) 
+        ;
 #endif
 #ifdef SSL_HAVE_W32SEM
     rc = ap_release_mutex((mutex *)mc->nMutexSEMID);
 #endif
 #endif
-    return rc;
+    if (rc != 0)
+        return FALSE;
+    else
+        return TRUE;
 }
 

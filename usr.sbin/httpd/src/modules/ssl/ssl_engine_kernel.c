@@ -800,7 +800,7 @@ int ssl_hook_Access(request_rec *r)
     if (dc->nVerifyDepth != UNSET) {
         apctx = SSL_get_app_data2(ssl);
         if ((vp = ap_ctx_get(apctx, "ssl::verify::depth")) != NULL)
-            n = AP_CTX_PTR2NUM(vp);
+            n = (int)AP_CTX_PTR2NUM(vp);
         else
             n = sc->nVerifyDepth;
         ap_ctx_set(apctx, "ssl::verify::depth",
@@ -1071,10 +1071,12 @@ int ssl_hook_Access(request_rec *r)
     }
 
     /*
-     * Else access is granted...
-     * (except vendor handlers override)
+     * Else access is granted from our point of view (except vendor
+     * handlers override). But we have to return DECLINED here instead
+     * of OK, because mod_auth and other modules still might want to
+     * deny access.
      */
-    rc = OK;
+    rc = DECLINED;
 #ifdef SSL_VENDOR
     ap_hook_use("ap::mod_ssl::vendor::access_handler",
                 AP_HOOK_SIG2(int,ptr), AP_HOOK_DECLINE(DECLINED),

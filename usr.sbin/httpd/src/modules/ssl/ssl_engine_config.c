@@ -755,7 +755,6 @@ const char *ssl_cmd_SSLSessionCache(
                                    "size has to be < %d bytes on this platform", maxsize);
         }
     }
-#ifdef SSL_EXPERIMENTAL_SHMCB
     else if (strlen(arg) > 6 && strcEQn(arg, "shmcb:", 6)) {
         if (!ap_mm_useable())
             return "SSLSessionCache: shared memory cache not useable on this platform";
@@ -778,7 +777,6 @@ const char *ssl_cmd_SSLSessionCache(
                                    "size has to be < %d bytes on this platform", maxsize);
         }
     }
-#endif
 	else
 #ifdef SSL_VENDOR
         if (!ap_hook_use("ap::mod_ssl::vendor::cmd_sslsessioncache",
