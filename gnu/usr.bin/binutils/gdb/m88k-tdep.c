@@ -607,7 +607,7 @@ m88k_analyze_prologue (CORE_ADDR pc, CORE_ADDR limit,
              the instruction in the delay slot might be.  Limit the
              prologue analysis to the delay slot and record the branch
              instruction as the end of the prologue.  */
-	  limit = pc + M88K_INSN_SIZE;
+	  limit = min (limit, pc + 2 * M88K_INSN_SIZE);
 	  end = pc;
 	  break;
 
@@ -736,11 +736,9 @@ m88k_frame_prev_register (struct frame_info *next_frame, void **this_cache,
 				    lvalp, addrp, realnump, valuep);
 
 	  pc = extract_unsigned_integer (valuep, 4);
-	  if (regnum == M88K_SNIP_REGNUM)
+	  if (regnum == M88K_SFIP_REGNUM)
 	    pc += 4;
-	  else if (regnum == M88K_SFIP_REGNUM)
-	    pc += 8;
-	  store_unsigned_integer (valuep, 4, pc);
+	  store_unsigned_integer (valuep, 4, pc + 4);
 	}
 
       /* It's a computed value.  */
