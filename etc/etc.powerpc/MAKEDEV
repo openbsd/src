@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.30 2000/09/06 02:54:26 rahnds Exp $
+#	$OpenBSD: MAKEDEV,v 1.31 2000/09/07 01:35:16 rahnds Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -577,6 +577,35 @@ ss*)
 	rm -f scan$unit
 	ln -s ss$unit scan$unit
 	;;
+wscons*)
+	unit=${i##*[a-z]}
+	sh $this wsdisplay${unit} wskbd${unit} wsmouse${unit}
+	;;
+wsdisplay*)
+	unit=${i##*[a-z]}
+	rm -f wsdisplay${unit} 
+	mknod wsdisplay${unit} c 67 ${unit}
+	# XXX
+	chmod 660 wsdisplay${unit}
+	chown root.wheel wsdisplay${unit}
+	;;
+wskbd*)
+	unit=${i##*[a-z]}
+	rm -f wskbd${unit} 
+	mknod wskbd${unit} c 68 ${unit}
+	# XXX
+	chmod 660 wskbd${unit}
+	chown root.wheel wskbd${unit}
+	;;
+wsmouse*)
+	unit=${i##*[a-z]}
+	rm -f wsmouse${unit} 
+	mknod wsmouse${unit} c 69 ${unit}
+	# XXX
+	chmod 660 wsmouse${unit}
+	chown root.wheel wsmouse${unit}
+	;;
+
 xfs*)
 	rm -f xfs$unit
 	mknod xfs$unit c 51 $unit 
