@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_cond_timedwait.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
+/*	$OpenBSD: pthread_cond_timedwait.c,v 1.3 2003/07/08 00:15:06 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -71,35 +71,44 @@ void* thread_2(void * new_buf)
 int
 main()
 {
-	struct timespec abstime = { 0, 0 };
-	struct timeval curtime;
+	struct timespec abstime;
+	struct timeval begtime;
+	struct timeval endtime;
 	pthread_t thread;
 	int ret;
+	int ix;
 
 	printf("pthread_cond_timedwait START\n");
 
 	CHECKr(pthread_mutex_lock(&mutex));
-	CHECKe(gettimeofday(&curtime, NULL));
-	abstime.tv_sec = curtime.tv_sec + 5; 
+	CHECKe(gettimeofday(&begtime, NULL));
+	TIMEVAL_TO_TIMESPEC(&begtime, &abstime);
 
-	/* Test a condition timeout */
-	switch((ret = pthread_cond_timedwait(&cond, &mutex, &abstime))) {
-	case 0:
-		PANIC("pthread_cond_timedwait #0 failed to timeout");
-		/* NOTREACHED */
-	case ETIMEDOUT:
-		/* expected behaviour */
-		printf("Got first timeout ok\n");	/* Added by monty */
-		break;
-	default:
-		DIE(ret, "pthread_cond_timedwait");
-		/* NOTREACHED */
+	for (ix = 0; ix < 5; ix++) {
+		abstime.tv_sec += 5; 
+
+		/* Test a condition timeout */
+		switch((ret = pthread_cond_timedwait(&cond, &mutex, &abstime))) {
+		case 0:
+			PANIC("pthread_cond_timedwait #0 failed to timeout");
+			/* NOTREACHED */
+		case ETIMEDOUT:
+			/* expected behaviour */
+			CHECKe(gettimeofday(&endtime, NULL));
+			timersub(&endtime, &begtime, &endtime);
+			printf("Got timeout %d in %ld.%06ld seconds\n", ix,
+			       endtime.tv_sec, endtime.tv_usec);
+			break;
+		default:
+			DIE(ret, "pthread_cond_timedwait");
+			/* NOTREACHED */
+		}
 	}
 
 	/* Test a normal condition signal */
 	CHECKr(pthread_create(&thread, NULL, thread_1, NULL));
 
-	abstime.tv_sec = curtime.tv_sec + 10; 
+	abstime.tv_sec += 5;
 	CHECKr(pthread_cond_timedwait(&cond, &mutex, &abstime));
 
 	/* Test a normal condition signal after a sleep */
@@ -107,7 +116,6 @@ main()
 
 	pthread_yield();
 
-	abstime.tv_sec = curtime.tv_sec + 10; 
 	CHECKr(pthread_cond_timedwait(&cond, &mutex, &abstime));
 
 	SUCCEED;
