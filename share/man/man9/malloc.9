@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.27 2003/06/21 00:57:43 tedu Exp $
+.\"	$OpenBSD: malloc.9,v 1.28 2003/06/21 01:05:09 tedu Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -129,29 +129,29 @@ Device driver memory.
 .Nm malloc
 debug structures.
 .It Dv M_PCB
-Protocol control block.
+Protocol control blocks.
 .It Dv M_RTABLE
 Routing tables.
 .It Dv M_FTABLE
-Fragment reassembly header.
+Fragment reassembly headers.
 .It Dv M_IFADDR
-Interface address.
+Interface addresses.
 .It Dv M_SOOPTS
 Socket options.
 .It Dv M_SYSCTL
 Sysctl persistent buffers.
 .It Dv M_NAMEI
-Namei path name buffer.
+Namei path name buffers.
 .It Dv M_IOCTLOPS
-Ioctl data buffer.
+Ioctl data buffers.
 .It Dv M_IOV
 Large IOVs.
 .It Dv M_MOUNT
-Vfs mount struct.
+VFS mount structs.
 .It Dv M_NFSREQ
-NFS request header.
+NFS request headers.
 .It Dv M_NFSMNT
-NFS mount structure.
+NFS mount structures.
 .It Dv M_NFSNODE
 NFS vnode private part.
 .It Dv M_VNODE
@@ -161,7 +161,7 @@ Dynamically allocated cache entries.
 .It Dv M_DQUOT
 UFS quota entries.
 .It Dv M_UFSMNT
-UFS mount structure.
+UFS mount structures.
 .It Dv M_SHM
 SVID compatible shared memory segments.
 .It Dv M_VMMAP
@@ -169,9 +169,9 @@ VM map structures.
 .It Dv M_VMPMAP
 VM pmap data.
 .It Dv M_FILE
-Open file structure.
+Open file structures.
 .It Dv M_FILEDESC
-Open file descriptor table.
+Open file descriptor tables.
 .It Dv M_LOCKF
 Byte-range locking structures.
 .It Dv M_PROC
@@ -183,29 +183,29 @@ Cluster for VFS.
 .It Dv M_MFSNODE
 MFS vnode private part.
 .It Dv M_NETADDR
-Export host address structure.
+Export host address structures.
 .It Dv M_NFSSVC
-NFS server structure.
+NFS server structures.
 .It Dv M_NFSUID
-NFS uid mapping structure.
+NFS uid mapping structures.
 .It Dv M_NFSD
-NFS server daemon structure.
+NFS server daemon structures.
 .It Dv M_IPMOPTS
 Internet multicast options.
 .It Dv M_IPMADDR
-Internet multicast address.
+Internet multicast addresses.
 .It Dv M_IFMADDR
-Link-level multicast address.
+Link-level multicast addresses.
 .It Dv M_MRTABLE
 Multicast routing tables.
 .It Dv M_ISOFSMNT
-ISOFS mount structure.
+ISOFS mount structures.
 .It Dv M_ISOFSNODE
 ISOFS vnode private part.
 .It Dv M_MSDOSFSMNT
-MSDOS FS mount structure.
+MSDOS FS mount structures.
 .It Dv M_MSDOSFSFAT
-MSDOS FS fat table.
+MSDOS FS FAT tables.
 .It Dv M_MSDOSFSNODE
 MSDOS FS vnode private part.
 .It Dv M_TTYS
@@ -213,13 +213,13 @@ Allocated tty structures.
 .It Dv M_EXEC
 Argument lists & other mem used by exec.
 .It Dv M_MISCFSMNT
-Miscfs mount structures.
+Misc. FS mount structures.
 .It Dv M_ADOSFSMNT
-Adosfs mount structures.
+ADOSFS mount structures.
 .It Dv M_ANODE
-Adosfs anode structures and tables.
+ADOSFS anode structures and tables.
 .It Dv M_ADOSFSBITMAP
-Adosfs bitmap.
+ADOSFS bitmap.
 .It Dv M_EXT2FSNODE
 EXT2FS vnode private part.
 .It Dv M_PFKEY
