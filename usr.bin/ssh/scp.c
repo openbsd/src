@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.14 1999/10/27 02:14:38 aaron Exp $
+ *	$Id: scp.c,v 1.15 1999/11/12 17:10:51 markus Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.14 1999/10/27 02:14:38 aaron Exp $");
+RCSID("$Id: scp.c,v 1.15 1999/11/12 17:10:51 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -70,7 +70,7 @@ static struct timeval start;
 volatile unsigned long statbytes;
 
 /* Total size of current file. */
-unsigned long totalbytes = 0;
+off_t totalbytes = 0;
 
 /* Name of current file being transferred. */
 char *curfile;
@@ -976,7 +976,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.14 1999/10/27 02:14:38 aaron Exp $
+ *	$Id: scp.c,v 1.15 1999/11/12 17:10:51 markus Exp $
  */
 
 char *
