@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.h,v 1.6 1997/08/16 18:26:30 dm Exp $	*/
+/*	$OpenBSD: pctr.h,v 1.7 1997/09/08 21:21:42 dm Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -111,7 +111,7 @@ struct pctrst {
 
 #ifdef _KERNEL
 
-#define CR4_TSD 0x040         /* Time stamp disable */
+#define CR4_TSD 0x004         /* Time stamp disable */
 #define CR4_PCE 0x100         /* Performance counter enable */
 
 #define MSR_TSC 0x10          /* MSR for TSC */
