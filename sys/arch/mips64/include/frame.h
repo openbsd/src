@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
+/*	$OpenBSD: frame.h,v 1.4 2004/09/27 17:42:23 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -114,86 +114,5 @@ struct trap_frame {
 	f_register_t	f31;
 	register_t	fsr;
 };
-
-#if 0
-struct trap_frame32 {
-	int32_t	zero;
-	int32_t	ast;
-	int32_t	v0;
-	int32_t	v1;
-	int32_t	a0;
-	int32_t	a1;
-	int32_t	a2;
-	int32_t	a3;
-	int32_t	t0;
-	int32_t	t1;
-	int32_t	t2;
-	int32_t	t3;
-	int32_t	t4;
-	int32_t	t5;
-	int32_t	t6;
-	int32_t	t7;
-	int32_t	s0;
-	int32_t	s1;
-	int32_t	s2;
-	int32_t	s3;
-	int32_t	s4;
-	int32_t	s5;
-	int32_t	s6;
-	int32_t	s7;
-	int32_t	t8;
-	int32_t	t9;
-	int32_t	k0;
-	int32_t	k1;
-	int32_t	gp;
-	int32_t	sp;
-	int32_t	s8;
-	int32_t	ra;
-	int32_t	sr;
-	int32_t	mullo;
-	int32_t	mulhi;
-	int32_t	badvaddr;
-	int32_t	cause;
-	int32_t	pc;
-	int32_t	ic;
-	int32_t	cpl;
-
-/* From here and on, only saved user processes. */
-
-	f_register_t	f0;
-	f_register_t	f1;
-	f_register_t	f2;
-	f_register_t	f3;
-	f_register_t	f4;
-	f_register_t	f5;
-	f_register_t	f6;
-	f_register_t	f7;
-	f_register_t	f8;
-	f_register_t	f9;
-	f_register_t	f10;
-	f_register_t	f11;
-	f_register_t	f12;
-	f_register_t	f13;
-	f_register_t	f14;
-	f_register_t	f15;
-	f_register_t	f16;
-	f_register_t	f17;
-	f_register_t	f18;
-	f_register_t	f19;
-	f_register_t	f20;
-	f_register_t	f21;
-	f_register_t	f22;
-	f_register_t	f23;
-	f_register_t	f24;
-	f_register_t	f25;
-	f_register_t	f26;
-	f_register_t	f27;
-	f_register_t	f28;
-	f_register_t	f29;
-	f_register_t	f30;
-	f_register_t	f31;
-	register_t	fsr;
-};
-#endif
 
 #endif	/* !_MIPS64_FRAME_H_ */
