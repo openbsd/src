@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.27 2005/02/21 13:33:29 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.28 2005/03/12 13:25:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -237,8 +237,8 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_state = IEEE80211_S_INIT;
 
 	/* set device capabilities */
-	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_PMGT | IEEE80211_C_WEP |
-	    IEEE80211_C_TXPMGT | IEEE80211_C_SHPREAMBLE | IEEE80211_C_SCANALL;
+	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_WEP | IEEE80211_C_TXPMGT |
+	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_SCANALL;
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
