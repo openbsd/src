@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.10 2004/08/11 06:57:42 dlg Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.11 2004/10/25 22:30:04 dlg Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -282,6 +282,7 @@ typedef struct {
 	ehci_link_t	qtd_altnext;
 	u_int32_t	qtd_status;
 #define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
+#define EHCI_QTD_SET_STATUS(x)	((x) << 0)
 #define  EHCI_QTD_ACTIVE	0x80
 #define  EHCI_QTD_HALTED	0x40
 #define  EHCI_QTD_BUFERR	0x20
