@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.24 1998/04/04 08:09:23 deraadt Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.25 1998/04/28 07:39:53 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1335,7 +1335,7 @@ epioctl(ifp, cmd, data)
 			 * IFF_LINK0, IFF_LINK1.
 			 */
 			epsetfilter(sc);
-			epsetmedia(sc, 0);	/* XXX */
+			epsetmedia(sc, sc->sc_media);	/* XXX */
 		}
 		break;
 
