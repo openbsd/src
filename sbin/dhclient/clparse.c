@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.6 2004/02/07 11:35:59 henning Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.7 2004/02/07 21:10:26 henning Exp $	*/
 
 /* Parser for dhclient config and lease files... */
 
@@ -694,7 +694,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 			skip_to_semi(cfile);
 		return (NULL);
 	}
-	if (asprintf(&vendor, "%s", val) == -1)
+	if ((vendor = strdup(val)) == NULL)
 		error("no memory for vendor information.");
 
 	token = peek_token(&val, cfile);
