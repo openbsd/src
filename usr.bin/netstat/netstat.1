@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.35 2004/04/01 07:55:17 markus Exp $
+.\"	$OpenBSD: netstat.1,v 1.36 2004/06/06 16:55:31 cedric Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm netstat
-.Op Fl bdgilmnqrstu
+.Op Fl bdgilmnqrSstu
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -223,6 +223,10 @@ Show the routing tables.
 If the
 .Fl s
 option is also specified, show routing statistics instead.
+.It Fl S
+Makes the the
+.Fl r
+command display the source selector part of the routes.
 .It Fl s
 Show per-protocol statistics.
 If this option is repeated, counters with a value of zero are suppressed.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.63 2004/05/04 22:50:18 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.64 2004/06/06 16:55:31 cedric Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.63 2004/05/04 22:50:18 claudio Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.64 2004/06/06 16:55:31 cedric Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,6 +110,7 @@ struct bits {
 	{ RTF_PROTO2,	'2' },
 	{ RTF_PROTO3,	'3' },
 	{ RTF_CLONED,	'c' },
+	{ RTF_SOURCE,	's' },
 	{ 0 }
 };
 
@@ -136,6 +137,7 @@ static void p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 static void p_flags(int, char *);
 static void p_rtentry(struct rtentry *);
 static void encap_print(struct rtentry *);
+static void sa_src2dst(struct sockaddr *);
 
 /*
  * Print routing tables.
@@ -250,8 +252,12 @@ pr_rthdr(int af)
 
 	if (Aflag)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
-	printf("%-*.*s %-*.*s %-6.6s  %6.6s  %6.6s %6.6s  %s\n",
-	    WID_DST(af), WID_DST(af), "Destination",
+	if (Sflag)
+		printf("%-*.*s ",
+		    WID_DST(af), WID_DST(af), "Source");
+	printf("%-*.*s ",
+	    WID_DST(af), WID_DST(af), "Destination");
+	printf("%-*.*s %-6.6s  %6.6s  %6.6s %6.6s  %s\n",
 	    WID_GW(af), WID_GW(af), "Gateway",
 	    "Flags", "Refs", "Use", "Mtu", "Interface");
 }
@@ -462,7 +468,7 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 		struct sockaddr_in *msin = (struct sockaddr_in *)mask;
 
 		cp = (sin->sin_addr.s_addr == 0) ? "default" :
-		    ((flags & RTF_HOST) || mask == NULL ?
+		    (mask == NULL || msin->sin_addr.s_addr == (in_addr_t)-1 ?
 		    routename(sin->sin_addr.s_addr) :
 		    netname(sin->sin_addr.s_addr, msin->sin_addr.s_addr));
 
@@ -627,6 +633,13 @@ p_rtentry(struct rtentry *rt)
 	} else
 		mask = 0;
 
+	if (Sflag && sa->sa_family == AF_INET) {
+		sa_src2dst(sa);
+		sa_src2dst(mask);
+		p_sockaddr(sa, mask, rt->rt_flags, WID_DST(sa->sa_family));
+		sa_src2dst(sa);
+		sa_src2dst(mask);
+	}
 	p_sockaddr(sa, mask, rt->rt_flags, WID_DST(sa->sa_family));
 	p_sockaddr(kgetsa(rt->rt_gateway), 0, RTF_HOST, WID_GW(sa->sa_family));
 	p_flags(rt->rt_flags, "%-6.6s ");
@@ -1147,5 +1160,18 @@ upHex(char *p0)
 		case 'f':
 			*p += ('A' - 'a');
 			break;
+	}
+}
+
+void
+sa_src2dst(struct sockaddr *sa)
+{
+	struct sockaddr_rtin	*rtin = satortin(sa);
+	struct in_addr		 tmp;
+
+	if (sa != NULL) {
+		tmp = rtin->rtin_dst;
+		rtin->rtin_dst = rtin->rtin_src;
+		rtin->rtin_src = tmp;
 	}
 }
