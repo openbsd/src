@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2001/03/29 00:12:54 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.41 2001/04/29 20:57:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -980,18 +980,17 @@ pmap_destroy(pmap)
  *	translation is wired then we can not allow a page fault to occur
  *	for this mapping.
  */
-int
-_pmap_enter(pmap, va, pa, prot, flags)
+void
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	pmap_t pmap;
 	vaddr_t va;
 	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+	vm_prot_t prot, access_type;
+	boolean_t wired;
 {
 	register struct pv_entry *pv, *ppv;
 	u_int tlbpage, tlbprot;
 	pa_space_t space;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	boolean_t waswired;
 	int s;
 
@@ -1003,16 +1002,16 @@ _pmap_enter(pmap, va, pa, prot, flags)
 		    prot, wired? "" : "un");
 #endif
 
-	if (!(pv = pmap_find_pv(pa))) {
-		if (flags & PMAP_CANFAIL)
-			return (KERN_RESOURCE_SHORTAGE);
+	if (!(pv = pmap_find_pv(pa)))
 		panic("pmap_enter: pmap_find_pv failed");
-	}
 
 	va = hppa_trunc_page(va);
 	space = pmap_sid(pmap, va);
 	tlbpage = tlbbtop(pa);
 	tlbprot = TLB_REF | pmap_prot(pmap, prot) | pmap->pmap_pid;
+
+	if (access_type & VM_PROT_WRITE)
+		tlbprot |= TLB_DIRTY;
 
 	if (!(ppv = pmap_find_va(space, va))) {
 		/*
@@ -1074,7 +1073,6 @@ _pmap_enter(pmap, va, pa, prot, flags)
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: leaving\n");
 #endif
-	return (KERN_SUCCESS);
 }
 
 /*
