@@ -1,6 +1,12 @@
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
+/*
+ * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
+ *
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,37 +36,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: __stdlib.h,v 1.1.1.1 1998/07/21 13:19:41 peter Exp $
+ *	from: @(#)time.h	5.12 (Berkeley) 3/9/91
+ *	$Id: __time.h,v 1.1 1998/07/21 16:28:08 peter Exp $
  */
 
-#ifndef _SYS___STDLIB_H_
-#define _SYS___STDLIB_H_
+#ifndef _SYS__TIME_H_
+#define	_SYS__TIME_H_
 
 #include <machine/ansi.h>
+#include <machine/limits.h>
+
+#ifdef	_BSD_CLOCK_T_
+typedef	_BSD_CLOCK_T_	clock_t;
+#undef	_BSD_CLOCK_T_
+#endif
+
+#ifdef	_BSD_TIME_T_
+typedef	_BSD_TIME_T_	time_t;
+#undef	_BSD_TIME_T_
+#endif
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_	size_t;
 #undef	_BSD_SIZE_T_
 #endif
 
-#ifdef	_BSD_WCHAR_T_
-typedef	_BSD_WCHAR_T_	wchar_t;
-#ifdef  _BSD_RUNE_T_
-typedef _BSD_RUNE_T_    rune_t;
-#undef  _BSD_RUNE_T_
-#else
-typedef	_BSD_WCHAR_T_	rune_t;
-#endif
-#undef	_BSD_WCHAR_T_
-#endif
+#define CLOCKS_PER_SEC	100
 
-#ifndef __NORETURN
-#define __NORETURN
-#endif
+#if !defined(CLK_TCK)
+#define CLK_TCK		100
+#endif /* not CLK_TCK */
 
-#ifndef	NULL
-#define	NULL	0
-#endif
-
-#endif /* _STDLIB_H_ */
+#endif /* !_SYS__TIME_H_ */

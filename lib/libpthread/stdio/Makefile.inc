@@ -1,9 +1,7 @@
-
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$Id: Makefile.inc,v 1.1.1.2 1998/07/21 13:20:28 peter Exp $
+#	$Id: Makefile.inc,v 1.2 1998/07/21 16:28:45 peter Exp $
 
-# Thread safe stdio sources
-.PATH: ${srcdir}/stdio
+.PATH: ${.CURDIR}/stdio
 
 # SRCS+= tempnam.c tmpfile.c tmpnam.c
 
@@ -17,4 +15,4 @@ SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	stdio.c ungetc.c \
 	vfscanf.c vscanf.c vsscanf.c \
 	wsetup.c putc_unlocked.c putchar_unlocked.c getc_unlocked.c \
-    getchar_unlocked.c strerror.c wbuf.c xprintf.c
+	getchar_unlocked.c strerror.c wbuf.c xprintf.c

@@ -1,4 +1,4 @@
-/* ==== compat.h ============================================================
+/* ==== timers.h ============================================================
  * Copyright (c) 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
@@ -29,15 +29,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $Id: compat.h,v 1.1.1.1 1998/07/21 13:19:41 peter Exp $
+ * $Id: timers.h,v 1.1 1998/07/21 16:28:09 peter Exp $
  *
- * Description : COmpat header to make socket code compile.
+ * Description : Basic timers header.
  *
- *  1.00 94/08/01 proven
+ *  1.00 94/06/13 proven
  *      -Started coding this file.
  */
  
-#ifndef _SYS_COMPAT_H_
-#define	_SYS_COMPAT_H_
+#ifndef _SYS_TIMERS_H_
+#define	_SYS_TIMERS_H_
+
+#include <sys/time.h>
 
 #endif

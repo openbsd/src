@@ -1,8 +1,7 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.1.1.1 1998/07/21 13:19:44 peter Exp $
+#	$Id: Makefile.inc,v 1.2 1998/07/21 16:28:42 peter Exp $
 
-# gen sources
-.PATH: ${srcdir}/net
+.PATH: ${.CURDIR}/net
 
 SRCS+=	gethostbyaddr.c gethostbyname.c gethostent.c getnetbyaddr.c \
 	getnetbyname.c getnetent.c getproto.c getprotoent.c getprotoname.c \

@@ -1,7 +1,5 @@
 /* ==== machdep.c ============================================================
- * Copyright (c) 1993, 1994 Chris Provenzano, proven@athena.mit.edu
- *
- * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
+ * Copyright (c) 1995 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,17 +36,32 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: machdep.c,v 1.1.1.1 1995/10/18 08:43:03 deraadt Exp $";
+static const char rcsid[] = "engine-i386-freebsd-2.0.c,v 1.1 1995/03/01 01:21:20 proven Exp";
 #endif
 
-#include "pthread.h"
+#include <pthread.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <stdio.h>
 
 /* ==========================================================================
  * machdep_save_state()
  */
 int machdep_save_state(void)
 {
-    return(_setjmp(pthread_run->machdep_data.machdep_state));
+    return(machdep_sys_setjmp(pthread_run->machdep_data.machdep_state));
+}
+
+/* ==========================================================================
+ * machdep_save_state()
+ */
+int machdep_save_float_state(struct pthread * pthread)
+{
+	char * fdata = (char *)pthread->machdep_data.machdep_float_state;
+
+	__asm__ ("fsave %0"::"m" (*fdata));
 }
 
 /* ==========================================================================
@@ -56,7 +69,17 @@ int machdep_save_state(void)
  */
 void machdep_restore_state(void)
 {
-    _longjmp(pthread_run->machdep_data.machdep_state, 1);
+    machdep_sys_longjmp(pthread_run->machdep_data.machdep_state, 1);
+}
+
+/* ==========================================================================
+ * machdep_restore_float_state()
+ */
+int machdep_restore_float_state(void)
+{
+	char * fdata = (char *)pthread_run->machdep_data.machdep_float_state;
+
+	__asm__ ("frstor %0"::"m" (*fdata));
 }
 
 /* ==========================================================================
@@ -74,11 +97,19 @@ void machdep_set_thread_timer(struct machdep_pthread *machdep_pthread)
  */
 void machdep_unset_thread_timer(struct machdep_pthread *machdep_pthread)
 {
-    struct itimerval zeroval = { { 0, 0 }, { 0, 0} };
+    struct itimerval zeroval = { { 0, 0 }, { 0, 0 } };
+	int ret;
 
-    if (setitimer(ITIMER_VIRTUAL, &zeroval, NULL)) {
-        PANIC();
+	if (machdep_pthread) {
+    	ret = setitimer(ITIMER_VIRTUAL, &zeroval, 
+		  &(machdep_pthread->machdep_timer));
+	} else {
+    	ret = setitimer(ITIMER_VIRTUAL, &zeroval, NULL); 
     }
+
+	if (ret) {
+       	PANIC();
+	}
 }
 
 /* ==========================================================================
@@ -95,7 +126,7 @@ void *machdep_pthread_cleanup(struct machdep_pthread *machdep_pthread)
 void machdep_pthread_start(void)
 {
 	context_switch_done();
-	sig_check_and_resume();
+	pthread_sched_resume();
 
     /* Run current threads start routine with argument */
     pthread_exit(pthread_run->machdep_data.start_routine
@@ -106,14 +137,30 @@ void machdep_pthread_start(void)
 }
 
 /* ==========================================================================
- * machdep_pthread_create()
- */
-void machdep_pthread_create(struct machdep_pthread *machdep_pthread,
-  void *(* start_routine)(), void *start_argument, long stack_size,
-  void *stack_start, long nsec)
-{
-    machdep_pthread->machdep_stack = stack_start;
+ * __machdep_stack_free()
+ */ 
+void __machdep_stack_free(void * stack)
+{   
+    free(stack);
+}
 
+/* ==========================================================================
+ * __machdep_stack_alloc()
+ */
+void * __machdep_stack_alloc(size_t size)
+{
+    void * stack;
+   
+    return(malloc(size));
+}  
+
+/* ==========================================================================
+ * __machdep_pthread_create()
+ */
+void __machdep_pthread_create(struct machdep_pthread *machdep_pthread,
+  void *(* start_routine)(), void *start_argument, 
+  long stack_size, long nsec, long flags)
+{
     machdep_pthread->start_routine = start_routine;
     machdep_pthread->start_argument = start_argument;
 
@@ -122,7 +169,7 @@ void machdep_pthread_create(struct machdep_pthread *machdep_pthread,
     machdep_pthread->machdep_timer.it_interval.tv_usec = 0;
     machdep_pthread->machdep_timer.it_value.tv_usec = nsec / 1000;
 
-    _setjmp(machdep_pthread->machdep_state);
+    machdep_sys_setjmp(machdep_pthread->machdep_state);
     /*
      * Set up new stact frame so that it looks like it
      * returned from a longjmp() to the beginning of
@@ -134,3 +181,35 @@ void machdep_pthread_create(struct machdep_pthread *machdep_pthread,
     machdep_pthread->machdep_state[2] =
       (int)machdep_pthread->machdep_stack + stack_size;
 }
+
+/* ==========================================================================
+ * machdep_sys_creat()
+ */
+machdep_sys_creat(char * path, int mode)
+{
+        return(machdep_sys_open(path, O_WRONLY | O_CREAT | O_TRUNC, mode));
+}
+ 
+/* ==========================================================================
+ * machdep_sys_wait3() 
+ */
+machdep_sys_wait3(int * b, int c, int * d)
+{
+        return(machdep_sys_wait4(0, b, c, d));
+}
+ 
+/* ==========================================================================
+ * machdep_sys_waitpid()
+ */
+machdep_sys_waitpid(int a, int * b, int c)
+{
+        return(machdep_sys_wait4(a, b, c, NULL));
+}  
+
+/* ==========================================================================
+ * machdep_sys_getdtablesize()
+ */
+machdep_sys_getdtablesize()
+{
+        return(sysconf(_SC_OPEN_MAX));
+}  

@@ -2,16 +2,19 @@
 #	@(#)Makefile	5.2 (Berkeley) 3/5/91
 #
 
+.include <bsd.own.mk>
+
 LIB=pthread
 NOPIC= no
-CPPFLAGS+= -DPTHREAD_KERNEL -I. -I${.CURDIR}/include -I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+= -I. -I${.CURDIR}/include -I${.CURDIR}/arch/${MACHINE_ARCH}
 
-.include "${srcdir}/pthreads/Makefile.inc"
-.include "${srcdir}/stdlib/Makefile.inc"
-.include "${srcdir}/stdio/Makefile.inc"
-.include "${srcdir}/string/Makefile.inc"
-.include "${srcdir}/gen/Makefile.inc"
-.include "${srcdir}/net/Makefile.inc"
-.include "${srcdir}/scripts/Makefile.inc"
+.include "${.CURDIR}/arch/${MACHINE}/Makefile.inc"
+#.include "${.CURDIR}/pthreads/Makefile.inc"
+#.include "${.CURDIR}/stdlib/Makefile.inc"
+#.include "${.CURDIR}/stdio/Makefile.inc"
+#.include "${.CURDIR}/string/Makefile.inc"
+#.include "${.CURDIR}/gen/Makefile.inc"
+#.include "${.CURDIR}/net/Makefile.inc"
+#.include "${.CURDIR}/scripts/Makefile.inc"
 
 .include <bsd.lib.mk>

@@ -1,6 +1,6 @@
 /* ==== syscall.S ============================================================
  * Copyright (c) 1990 The Regents of the University of California.
- * Copyright (c) 1993 Chris Provenzano, proven@mit.edu
+ * Copyright (c) 1995 Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,24 +36,32 @@
  *
  * Description : Machine dependent syscalls for i386/i486/i586
  *
- *  1.00 93/08/26 proven
- *      -Started coding this file.
- *
- *	1.01 93/11/13 proven
- *		-The functions readv() and writev() added.
  */
 
 #ifndef lint
-    .text
-    .asciz "$Id: syscall.S,v 1.1.1.1 1995/10/18 08:43:03 deraadt Exp $";
+	.text
+	.asciz "syscall-i386-freebsd-2.0.S,v 1.2 1995/05/26 07:44:29 proven Exp";
 #endif
  
 #if defined(SYSLIBC_SCCS) && !defined(lint)
         .asciz "@(#)syscall.s   5.1 (Berkeley) 4/23/90"
 #endif /* SYSLIBC_SCCS and not lint */
 
-#include <machine/asm.h>
 #include <sys/syscall.h>
+
+#ifdef __STDC__
+
+#define	SYSCALL(x)					\
+	.globl _machdep_sys_##x##;		\
+									\
+_machdep_sys_##x##:;				\
+									\
+	movl $(SYS_##x##), %eax;		\
+	.byte 0x9a; .long 0; .word 7;	\
+	jb	1b;							\
+	ret;							
+
+#else
 
 #define	SYSCALL(x)					\
 	.globl _machdep_sys_/**/x;		\
@@ -64,6 +72,9 @@ _machdep_sys_/**/x:;				\
 	.byte 0x9a; .long 0; .word 7;	\
 	jb	1b;							\
 	ret;							
+
+#endif
+
 
 /*
  * Initial asm stuff for all functions.
@@ -82,93 +93,145 @@ _machdep_sys_/**/x:;				\
 	ret
 
 /* ==========================================================================
- * machdep_sys_write()
+ * machdep_sys_fork()
  */
-SYSCALL(write)
+	.globl _machdep_sys_fork;		
+									
+_machdep_sys_fork:;				
+									
+	movl $(SYS_fork), %eax;		
+	.byte 0x9a; .long 0; .word 7;	
+	cmpl $0, %edx
+	je	2f
+	movl $0, %eax
+2:	
+	ret;							
 
 /* ==========================================================================
- * machdep_sys_read()
+ * machdep_sys___syscall()
  */
-SYSCALL(read)
+
+_machdep_sys___syscall:;				
+
+	movl $(SYS___syscall), %eax;		
+	.byte 0x9a; .long 0; .word 7;	
+	jb 3f;
+	ret
 
 /* ==========================================================================
- * machdep_sys_open()
+ * machdep_sys_sigsuspend()
  */
-SYSCALL(open)
+	.globl _machdep_sys_sigsuspend;		
+
+_machdep_sys_sigsuspend:;
+
+	movl    4(%esp),%eax            # fetch mask arg
+    movl    (%eax),%eax             # indirect to mask arg
+    movl    %eax,4(%esp)
+	movl $(SYS_sigsuspend), %eax;		
+	.byte 0x9a; .long 0; .word 7;	
+	jb 3f;
+	ret
+
+3:
+	
+	neg		%eax
+	movl	$0xffffffff,%edx
+	ret
 
 /* ==========================================================================
- * machdep_sys_close()
+ * machdep_sys_sigprocmask()
  */
-SYSCALL(close)
+	.globl _machdep_sys_sigprocmask;		
 
-/* ==========================================================================
- * machdep_sys_fcntl()
- */
-SYSCALL(fcntl)
+_machdep_sys_sigprocmask:;
+
+	movl    8(%esp),%ecx
+	movl    (%ecx),%ecx
+	movl    %ecx,8(%esp)
+	movl    $ SYS_sigprocmask , %eax
+	.byte 0x9a; .long 0; .word 7;
+	jb 4f;
+	ret
+
+4:
+	neg     %eax
+	movl    $0xffffffff,%edx
+	ret
 
 /* ==========================================================================
  * machdep_sys_lseek()
  */
-SYSCALL(lseek)
+	.globl _machdep_sys_lseek;		
 
-/* ========================================================================== 
- * Nonstandard calls used to make the system work
- *
- * ==========================================================================
- * machdep_sys_select()
- */
-SYSCALL(select)
-
-/* ========================================================================== 
- * Berkeley socket stuff
- * 
- * ==========================================================================
- * machdep_sys_socket()
- */
-SYSCALL(socket)
-
-/* ==========================================================================
- * machdep_sys_bind()
- */
-SYSCALL(bind)
+_machdep_sys_lseek:;				
+									
+	pushl  %ebp;
+	movl   %esp,%ebp;
+	pushl  0x14(%ebp);
+	pushl  0x10(%ebp);
+	pushl  0xc(%ebp);
+	pushl  $0x0;
+	pushl  0x8(%ebp);
+	pushl  $0x0;
+	pushl $(SYS_lseek);
+	call _machdep_sys___syscall;
+	leave
+	ret
 
 /* ==========================================================================
- * machdep_sys_connect()
+ * machdep_sys_ftruncate() ; Added by Monty
  */
-SYSCALL(connect)
+        .globl _machdep_sys_ftruncate;
+ 
+_machdep_sys_ftruncate:;
+ 
+        pushl  %ebp; 
+        movl   %esp,%ebp;
+        pushl  0x10(%ebp);
+        pushl  0xc(%ebp);
+        pushl  $0x0;			# Why this?
+        pushl  0x8(%ebp);
+        pushl  $0x0;			# And this?
+        pushl $(SYS_ftruncate);
+        call _machdep_sys___syscall;
+        leave
+        ret  
 
 /* ==========================================================================
- * machdep_sys_accept()
+ * machdep_sys_setjmp()
  */
-SYSCALL(accept)
+	.globl _machdep_sys_setjmp;		
+
+_machdep_sys_setjmp:;				
+    movl    4(%esp),%eax
+    movl    0(%esp),%edx
+    movl    %edx, 0(%eax)       /* rta */
+    movl    %ebx, 4(%eax)
+    movl    %esp, 8(%eax)
+    movl    %ebp,12(%eax)
+    movl    %esi,16(%eax)
+    movl    %edi,20(%eax)
+    xorl    %eax,%eax
+    ret
 
 /* ==========================================================================
- * machdep_sys_listen()
+ * machdep_sys_longjmp()
  */
-SYSCALL(listen)
-
-/* ==========================================================================
- * machdep_sys_getsockopt()
- */
-SYSCALL(getsockopt)
-
-/* ==========================================================================
- * machdep_sys_readv()
- */
-SYSCALL(readv)
-
-/* ==========================================================================
- * machdep_sys_writev()
- */
-SYSCALL(writev)
-
-/* ==========================================================================
- * machdep_sys_getpeername()
- */
-SYSCALL(getpeername)
-
-/* ==========================================================================
- * machdep_sys_getsockname()
- */
-SYSCALL(getsockname)
+    .globl _machdep_sys_longjmp;
+    
+_machdep_sys_longjmp:;
+    movl    4(%esp),%edx
+    movl    8(%esp),%eax
+    movl    0(%edx),%ecx
+    movl    4(%edx),%ebx
+    movl    8(%edx),%esp
+    movl    12(%edx),%ebp
+    movl    16(%edx),%esi
+    movl    20(%edx),%edi
+    testl   %eax,%eax
+    jnz 1f
+    incl    %eax
+1:  movl    %ecx,0(%esp)
+    ret
 

@@ -1,36 +1,13 @@
 /* ==== machdep.h ============================================================
- * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
- * All rights reserved.
+ * Copyright (c) 1993 Chris Provenzano, proven@athena.mit.edu
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *  This product includes software developed by Chris Provenzano.
- * 4. The name of Chris Provenzano may not be used to endorse or promote 
- *	  products derived from this software without specific prior written
- *	  permission.
- *
- * THIS SOFTWARE IS PROVIDED BY CHRIS PROVENZANO ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL CHRIS PROVENZANO BE LIABLE FOR ANY 
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE.
+ * $Id: machdep.h,v 1.2 1998/07/21 16:28:02 peter Exp $
  *
  */
 
+#include <unistd.h>
+#include <setjmp.h>
+#include <sys/time.h>
 
 /*
  * The first machine dependent functions are the SEMAPHORES
@@ -41,9 +18,9 @@
 
 #define SEMAPHORE_TEST_AND_SET(lock)    \
 ({										\
-volatile long temp = SEMAPHORE_SET;     \
+long temp = SEMAPHORE_SET;              \
 										\
-__asm__("xchgl %0,(%2)"                 \
+__asm__ volatile ("xchgl %0,(%2)"       \
         :"=r" (temp)                    \
         :"0" (temp),"r" (lock));        \
 temp;                                   \
@@ -52,7 +29,69 @@ temp;                                   \
 #define SEMAPHORE_RESET(lock)           *lock = SEMAPHORE_CLEAR
 
 /*
+ * New types
+ */
+typedef long    semaphore;
+
+/*
+ * sigset_t macros
+ */
+#define	SIG_ANY(sig)		(sig)
+#define SIGMAX				31
+
+/*
+ * New Strutures
+ */
+struct machdep_pthread {
+    void        		*(*start_routine)(void *);
+    void        		*start_argument;
+    void        		*machdep_stack;
+	struct itimerval	machdep_timer;
+    jmp_buf     		machdep_state;
+    char 	    		machdep_float_state[108];
+};
+
+/*
+ * Static machdep_pthread initialization values.
+ * For initial thread only.
+ */
+#define MACHDEP_PTHREAD_INIT    \
+{ NULL, NULL, NULL, { { 0, 0 }, { 0, 100000 } }, 0 }
+
+/*
  * Minimum stack size
  */
 #define PTHREAD_STACK_MIN	1024
 
+/*
+ * Some fd flag defines that are necessary to distinguish between posix
+ * behavior and bsd4.3 behavior.
+ */
+#define __FD_NONBLOCK 		O_NONBLOCK
+
+/*
+ * New functions
+ */
+
+__BEGIN_DECLS
+
+#if defined(PTHREAD_KERNEL)
+
+#define __machdep_stack_get(x)      (x)->machdep_stack
+#define __machdep_stack_set(x, y)   (x)->machdep_stack = y
+#define __machdep_stack_repl(x, y)                          \
+{                                                           \
+    if (stack = __machdep_stack_get(x)) {                   \
+        __machdep_stack_free(stack);                        \
+    }                                                       \
+    __machdep_stack_set(x, y);                              \
+}   
+   
+void *  __machdep_stack_alloc       __P_((size_t));
+void    __machdep_stack_free        __P_((void *));
+
+int machdep_save_state      __P_((void));
+
+#endif
+
+__END_DECLS
