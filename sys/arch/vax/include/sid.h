@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.12 2002/01/31 11:42:52 hugh Exp $	*/
+/*	$OpenBSD: sid.h,v 1.13 2002/05/25 04:29:53 hugh Exp $	*/
 /*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
@@ -194,6 +194,7 @@
 #define VAX_STYP_48	0x000001	/* VAXstation 4000 VLC */
 #define VAX_VTYP_48	0x00000002	/* VAXstation 4000 VLC */
 #define VAX_BTYP_550	0x14000007	/* VAXft model 410, 610 */
+#define VAX_BTYP_VXT	0x14000008	/* VXT 2000+ */
  
 /*
  * NVAX+ chip series (1991)
