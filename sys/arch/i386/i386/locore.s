@@ -437,6 +437,13 @@ try586:	/* Use the `cpuid' instruction. */
 	jb	is486			# less than a Pentium
 	movl	$CPU_586,RELOC(_cpu)
 
+#ifdef NTP
+	xorl %eax,%eax
+	xorl %edx,%edx
+	movl $10,%ecx
+	.byte 0xf, 0x30			# wrmsr (or trap on non-pentium :-)
+#endif
+
 2:
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
