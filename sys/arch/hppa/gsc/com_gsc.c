@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.3 1999/02/25 19:31:56 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.4 1999/07/08 18:24:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -63,20 +63,14 @@ com_gsc_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	register struct confargs *ca = aux;
-	bus_space_handle_t ioh;
-	int rv;
+	register struct gsc_attach_args *ga = aux;
 
-	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO ||
-	    (ca->ca_type.iodc_sv_model != HPPA_FIO_GRS232 &&
-	     (ca->ca_type.iodc_sv_model != HPPA_FIO_RS232)))
+	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
+	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GRS232 &&
+	     (ga->ga_type.iodc_sv_model != HPPA_FIO_RS232)))
 		return 0;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))
-		return 0;
-	rv = comprobe1(ca->ca_iot, ioh + COMGSC_OFFSET);
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
-	return rv;
+	return comprobe1(ga->ga_iot, ga->ga_hpa + COMGSC_OFFSET);
 }
 
 void
@@ -89,17 +83,12 @@ com_gsc_attach(parent, self, aux)
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-	sc->sc_iobase = (bus_addr_t)ga->ga_hpa + COMGSC_OFFSET;
 	sc->sc_iot = ga->ga_iot;
+	sc->sc_ioh = ga->ga_hpa + COMGSC_OFFSET;
+	sc->sc_iobase = (bus_addr_t)ga->ga_hpa + COMGSC_OFFSET;
 
-	if (bus_space_map(sc->sc_iot, ga->ga_hpa, IOMOD_HPASIZE,
-			  0, &sc->sc_ioh))
-		panic ("com_gsc_attach: mapping io space");
-	/* sc->sc_regs = (void *)sc->sc_ioh; */
-	sc->sc_ioh += COMGSC_OFFSET;
-
-#if 0
-	r->reset = 0;
+#if notyet
+	*(volatile u_int8_t *)ga->ga_hpa = 0xd0;	/* reset */
 	DELAY(1000);
 #endif
 
