@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.6 2001/07/10 11:05:40 dhartmei Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.7 2001/07/18 10:52:34 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -34,14 +34,13 @@
 The rules file for network address translation specify which addresses
 are to be mapped and which are to be redirected.
 .Pp
-.A
-.Li nat
-rule specifies that IP addresses are to be changed as the 
-packet traverses the given interface.
-This technique of network address translation (NAT, also called
-.Dq IP masquerading
-on Linux) allows a single IP address to support a large range of machines on
-an inside network.
+A
+.Em nat
+rule specifies that IP addresses are to be changed as the packet
+traverses the given interface.
+This technique of network address translation (NAT) allows a single
+IP address on the translating host to support network traffic for a
+larger range of machines on an inside network.
 Although in theory any IP address can be used on the inside, it is strongly
 recommended that one of the address ranges defined by RFC 1918 be used.
 These netblocks are:
@@ -52,7 +51,7 @@ These netblocks are:
 .Ed
 .Pp
 An
-.Li rdr 
+.Em rdr 
 rule specifies an incoming connection to be redirected
 to another host and optionally a different port.
 .Sh GRAMMAR
@@ -75,36 +74,35 @@ host      = [ "!" ] address [ "/" mask-bits ]
 portspec  = "port" ( number | name )
 .Ed
 .Pp
-Rules are processed in the order written.
-Each rule must be on a line by itself.
+Rules are processed in the order read, one rule per line.
 Comments begin with the character `#'; empty lines are ignored.
 .Pp
 An
-.Li ifname
-is a network name such as fxp4, ne0, or ep1.
+.Em ifname
+is a network interface such as fxp4, ne0, or ep1.
 An
-.Li address
+.Em address
 is an IP address.
 If specified,
-.Li mask-bits
+.Em mask-bits
 refers to the number of bits in the netmask.
 The negation character,
 .Sq ! ,
 may be used before an
-.Li ifname
+.Em ifname
 or an
-.Li address .
+.Em address .
 The protocol specification is optional.
 If it is omitted from a
-.Li nat
+.Em nat
 rule, "tcp", "udp", and "icmp" connections will be translated.
-If the protocol specification omitted from an
-.Li rdr
+If the protocol specification is omitted from an
+.Em rdr
 rule, only "tcp" connections will be redirected.
 .Sh EXAMPLES
 This example maps incoming requests on port 80 to port 8080, on
-which Apache Tomcat is running (I don't run Tomcat as root, therefore it
-doesn't have permission to bind to port 80).
+which Apache Tomcat is running (say Tomcat is not run as root,
+therefore lacks permission to bind to port 80).
 .Bd -literal
 # map tomcat on 8080 to appear to be on 80
 rdr on ne3 proto tcp from any to any port 80 -> 127.0.0.1 port 8080
@@ -129,19 +127,13 @@ nat on fxp1 from 144.19.74/24 to any -> 204.92.77.100
 This longer example uses both a NAT and a redirection. Interface
 kue0 is the outside interface, and its external address is 157.161.48.183.
 .Bd -literal
-# --------------------------------------------------------------------
 # NAT
-# --------------------------------------------------------------------
-
 # translate outgoing packets' source addresses (any protocol)
 # in my case, any address but the gateway's external address is mapped
 #
 nat on kue0 ! 157.161.48.183 to any -> 157.161.48.183
 
-# --------------------------------------------------------------------
 # RDR
-# --------------------------------------------------------------------
-
 # translate incoming packets' destination addresses
 # as an example, redirect a TCP and UDP port to an internal machine
 # NOTE: the lines below are split for readability
