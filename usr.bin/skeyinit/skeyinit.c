@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.36 2002/05/19 02:09:28 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.37 2002/06/06 20:56:02 aaron Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -379,6 +379,9 @@ normal_mode(char *username, int n, char *key, char *seed, char *defaultseed)
 
 	/* Get user's secret passphrase */
 	for (i = 0; ; i++) {
+		memset(passwd, 0, sizeof(passwd));
+		memset(passwd2, 0, sizeof(passwd2));
+
 		if (i > 2)
 			exit(1);
 
@@ -399,7 +402,8 @@ normal_mode(char *username, int n, char *key, char *seed, char *defaultseed)
 		    strlen(passwd)) {
 			(void)fputs("ERROR: Your passphrase must contain more "
 			    "than just lower case letters.\nWhitespace, "
-			    "numbers, and puctuation are suggested.\n", stderr);
+			    "numbers, and punctuation are suggested.\n",
+			    stderr);
 			continue;
 		} else if (strlen(passwd) > 63) {
 			(void)fprintf(stderr, "WARNING: Your passphrase is "
