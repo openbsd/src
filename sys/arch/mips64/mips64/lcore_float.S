@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.8 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.9 2004/10/30 14:48:59 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -430,18 +430,20 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
 	PTR_S	ra, CF_RA_OFFS(sp)
 	.mask	0x80000000, (CF_RA_OFFS - FRAMESZ(CF_SZ))
 
+	PTR_S	a2, 2*REGSZ(sp)
+	PTR_S	a3, 3*REGSZ(sp)
 	or	t1, t0, SR_COP_1_BIT
 	mtc0	t1, COP_0_STATUS_REG
 	ITLBNOPFIX
-	cfc1	t1, FPC_CSR	# stall til FP done
-	cfc1	t1, FPC_CSR	# now get status
+	cfc1	t1, FPC_CSR		# stall til FP done
+	cfc1	t1, FPC_CSR		# now get status
 	nop
-	sll	t2, t1, (31 - 17)	# unimplemented operation?
+	sll	t2, t1, (31-17)		# unimplemented operation?
 	bgez	t2, 3f			# no, normal trap
 	nop
 /*
- * We got an unimplemented operation trap so
- * fetch the instruction, compute the next PC and emulate the instruction.
+ * We got an unimplemented operation trap so fetch the instruction,
+ * compute the next PC and emulate the instruction.
  */
 	bgez	a1, 1f			# Check the branch delay bit.
 	nop
@@ -449,42 +451,56 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
  * The instruction is in the branch delay slot so the branch will have to
  * be emulated to get the resulting PC.
  */
-	PTR_S	a2, FRAMESZ(CF_SZ) + 2 * REGSZ(sp)
-	PTR_L	a0, curprocpaddr		# first arg is ptr to CPU regs
-	move	a1, a2				# second arg is instruction PC
-	move	a2, t1				# third arg is floating point CSR
-	jal	MipsEmulateBranch		# compute PC after branch
-	move	a3, zero			# fourth arg is FALSE
+	PTR_L	a0, curprocpaddr	# first arg is ptr to CPU regs
+	move	a1, a2			# second arg is instruction PC
+	move	a2, t1			# third arg is the FP CSR
+	jal	MipsEmulateBranch	# compute PC after branch
+	move	a3, zero		# fourth arg is FALSE
 /*
  * Now load the floating-point instruction in the branch delay slot
  * to be emulated.
  */
-	PTR_L	a2, FRAMESZ(CF_SZ) + 2 * REGSZ(sp)	# restore EXC pc
+	PTR_L	a2, 2*REGSZ(sp)		# restore EXC pc
 	b	2f
-	lw	a0, 4(a2)			# a0 = coproc instruction
+	lw	a0, 4(a2)		# a0 = coproc instruction
 /*
  * This is not in the branch delay slot so calculate the resulting
  * PC (epc + 4) into v0 and continue to MipsEmulateFP().
  */
 1:
-	lw	a0, 0(a2)			# a0 = coproc instruction
-	PTR_ADDU v0, a2, 4			# v0 = next pc
+	lw	a0, 0(a2)		# a0 = coproc instruction
+	PTR_ADDU v0, a2, 4		# v0 = next pc
 2:
-	PTR_L	a3, curprocpaddr		# first arg is ptr to CPU regs
+	PTR_L	a3, curprocpaddr	# first arg is ptr to CPU regs
 	PTR_S	v0, U_PCB_REGS+(PC * REGSZ)(a3)	# save new pc
 /*
  * Check to see if the instruction to be emulated is a floating-point
  * instruction.
  */
 	srl	a3, a0, OPCODE_SHIFT
-	beq	a3, OPCODE_C1, 4f		# this should never fail
+	beq	a3, OPCODE_C1, 5f	# this should never fail
 	nop
 /*
  * Send a floating point exception signal to the current process.
  */
 3:
-	PTR_L	a0, curproc		# get current process
 	cfc1	a2, FPC_CSR		# code = FP execptions
+	PTR_L	a0, curproc		# get current process
+	PTR_L	a4, 3*REGSZ(sp)
+	and	v0, a2, FPC_EXCEPTION_INEXACT
+	bnez	v0, 4f
+	li	a3, 6
+	and	v0, a2, FPC_EXCEPTION_UNDERFLOW
+	bnez	v0, 4f
+	li	a3, 5
+	and	v0, a2, FPC_EXCEPTION_OVERFLOW
+	bnez	v0, 4f
+	li	a3, 4
+	and	v0, a2, FPC_EXCEPTION_DIV0
+	bnez	v0, 4f
+	li	a3, 3
+	li	a3, 7			# XXX FPE_FLTINV
+4:
 	ctc1	zero, FPC_CSR		# Clear exceptions
 	jal	trapsignal
 	li	a1, SIGFPE
@@ -494,7 +510,7 @@ NON_LEAF(MipsFPTrap, FRAMESZ(CF_SZ), ra)
 /*
  * Finally, we can call MipsEmulateFP() where a0 is the instruction to emulate.
  */
-4:
+5:
 	jal	MipsEmulateFP
 	nop
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 2004/08/23 14:24:56 pefo Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.6 2004/10/30 14:48:59 pefo Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -848,12 +848,12 @@ void
 map_sgi_label(struct disklabel *lp, struct sgilabel *dlp)
 {
 static struct {int m; int b;} maptab[] = {
-        { 0,      FS_BSDFFS}, { 1,      FS_SWAP}, { 10,     FS_BSDFFS},
-        { 3,      FS_BSDFFS}, { 4,      FS_BSDFFS}, { 5,      FS_BSDFFS},
-        { 6,      FS_BSDFFS}, { 7,      FS_BSDFFS}, { 8,      FS_OTHER},
-        { 9,      FS_BSDFFS}, { 2,      FS_UNUSED}, { 11,     FS_BSDFFS},
-        { 12,     FS_BSDFFS}, { 13,     FS_BSDFFS}, { 14,     FS_BSDFFS},
-        { 15,     FS_BSDFFS}
+        { 0,	FS_BSDFFS},	{ 1,	FS_SWAP},	{ 10,	FS_BSDFFS},
+        { 3,	FS_BSDFFS},	{ 4,	FS_BSDFFS},	{ 5,	FS_BSDFFS},
+        { 6,	FS_BSDFFS},	{ 7,	FS_BSDFFS},	{ 15,	FS_OTHER},
+        { 9,	FS_BSDFFS},	{ 2,	FS_UNUSED},	{ 11,	FS_BSDFFS},
+        { 12,	FS_BSDFFS},	{ 13,	FS_BSDFFS},	{ 14,	FS_BSDFFS},
+        { 8,	FS_BSDFFS}
 };
 	int i;
 

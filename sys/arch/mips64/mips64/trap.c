@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 2004/10/20 12:49:15 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2004/10/30 14:48:59 pefo Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -146,7 +146,7 @@ int  kdb_trap(int, db_regs_t *);
 extern u_long intrcnt[];
 extern void MipsSwitchFPState(struct proc *, struct trap_frame *);
 extern void MipsSwitchFPState16(struct proc *, struct trap_frame *);
-extern void MipsFPTrap(u_int, u_int, u_int);
+extern void MipsFPTrap(u_int, u_int, u_int, union sigval);
 
 register_t trap(struct trap_frame *);
 int cpu_singlestep(struct proc *);
@@ -740,7 +740,9 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		goto err;
 
 	case T_FPE+T_USER:
-		MipsFPTrap(trapframe->sr, trapframe->cause, trapframe->pc);
+printf("FPU Trap, pc=%p instr=0x%08x\n", trapframe->pc, *(int *)trapframe->pc);
+		sv.sival_ptr = (void *)trapframe->pc;
+		MipsFPTrap(trapframe->sr, trapframe->cause, trapframe->pc, sv);
 		goto out;
 
 	case T_OVFLOW+T_USER:
@@ -774,7 +776,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 	p->p_md.md_regs->pc = trapframe->pc;
 	p->p_md.md_regs->cause = trapframe->cause;
 	p->p_md.md_regs->badvaddr = trapframe->badvaddr;
-	sv.sival_int = trapframe->badvaddr;
+	sv.sival_ptr = (void *)trapframe->badvaddr;
 	trapsignal(p, i, ucode, typ, sv);
 out:
 	/*
