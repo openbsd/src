@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.20 2000/01/26 15:24:32 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.32 2000/01/25 13:35:24 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.21 2000/01/26 15:36:19 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.34 2000/01/26 15:37:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -136,12 +136,12 @@ pf_key_v2_register_sa_seq (u_int8_t *spi, size_t sz, u_int8_t proto,
   node->sz = sz;
   node->proto = proto;
   node->seq = seq;
-  TAILQ_INSERT_TAIL(&pf_key_v2_sa_seq_map, node, link);
+  TAILQ_INSERT_TAIL (&pf_key_v2_sa_seq_map, node, link);
   return 1;
 
  cleanup:
   if (node->dst)
-    free(node->dst);
+    free (node->dst);
   if (node)
     free (node);
   return 0;
@@ -560,7 +560,7 @@ pf_key_v2_open ()
   /* XXX Register the accepted transforms.  */
 
 #ifdef __FreeBSD__
-  TAILQ_INIT(&pf_key_v2_sa_seq_map);
+  TAILQ_INIT (&pf_key_v2_sa_seq_map);
 #endif
 
   pf_key_v2_msg_free (ret);
@@ -693,9 +693,9 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
     goto cleanup;
   memcpy (spi, &sa->sadb_sa_spi, *sz);
 #ifdef __FreeBSD__
-  if (!pf_key_v2_register_sa_seq(spi, *sz, proto, dst, dstlen,
-				 ((struct sadb_msg *)(TAILQ_FIRST (ret)->seg))
-				 ->sadb_msg_seq))
+  if (!pf_key_v2_register_sa_seq (spi, *sz, proto, dst, dstlen,
+				  ((struct sadb_msg *)(TAILQ_FIRST (ret)->seg))
+				  ->sadb_msg_seq))
     goto cleanup;
 #endif
   pf_key_v2_msg_free (ret);
@@ -1476,37 +1476,37 @@ pf_key_v2_enable_sa (struct sa *sa)
     return error;
 
   /* Ingress flows */
-  while (TAILQ_NEXT(proto, link))
-  {
-      error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			     hostmask,
-			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			     hostmask, proto->spi[1], proto->proto,
-			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			     ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			     0, 1);
+  while (TAILQ_NEXT (proto, link))
+    {
+      error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			      hostmask,
+			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			      hostmask, proto->spi[1], proto->proto,
+			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			      0, 1);
       if (error)
 	return error;
-      proto = TAILQ_NEXT(proto, link);
-  }
+      proto = TAILQ_NEXT (proto, link);
+    }
 
   /* The remote gateway is also allowed to talk to the subnet */
-  error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			 hostmask, isa->src_net, isa->src_mask,
-			 proto->spi[1], proto->proto,
-			 ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			 ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1);
+  error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			  hostmask, isa->src_net, isa->src_mask,
+			  proto->spi[1], proto->proto,
+			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			  ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1);
   if (error)
     return error;
 
   /* The remote gateway is also allowed to talk to the local gateway */
-  error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			 hostmask,
-			 ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			 hostmask, proto->spi[1], proto->proto,
-			 ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			 ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			 0, 1);
+  error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			  hostmask,
+			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			  hostmask, proto->spi[1], proto->proto,
+			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			  ((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			  0, 1);
   if (error)
     return error;
 
@@ -1536,38 +1536,38 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 			   ((struct sockaddr_in *)src)->sin_addr.s_addr, 1, 0);
 
   else
-  {
+    {
       /* Ingress flow */
-      while (TAILQ_NEXT(proto, link))
-      {
-          error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			         hostmask,
-			         ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			         hostmask, proto->spi[1], proto->proto,
-			         ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			         ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			         1, 1);
+      while (TAILQ_NEXT (proto, link))
+	{
+          error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
+				  hostmask,
+				  ((struct sockaddr_in *)src)->sin_addr.s_addr,
+				  hostmask, proto->spi[1], proto->proto,
+				  ((struct sockaddr_in *)src)->sin_addr.s_addr,
+				  ((struct sockaddr_in *)dst)->sin_addr.s_addr,
+				  1, 1);
           if (error)
 	    return error;
-          proto = TAILQ_NEXT(proto, link);
-      }
+          proto = TAILQ_NEXT (proto, link);
+	}
 
-      error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			     hostmask,
-			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			     hostmask, proto->spi[1], proto->proto,
-			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			     ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			     1, 1);
+      error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			      hostmask,
+			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			      hostmask, proto->spi[1], proto->proto,
+			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			      1, 1);
       if (error)
 	return error;
 
-      error = pf_key_v2_flow(((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			     hostmask, isa->src_net, isa->src_mask,
-			     proto->spi[1], proto->proto,
-			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			     ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			     1, 1);
+      error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			      hostmask, isa->src_net, isa->src_mask,
+			      proto->spi[1], proto->proto,
+			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
+			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
+			      1, 1);
       if (error)
 	return error;
 
@@ -1576,7 +1576,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
 			     ((struct sockaddr_in *)dst)->sin_addr.s_addr,
                              1, 1);
-  }
+    }
 }
 
 /*
