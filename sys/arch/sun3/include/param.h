@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 1997/02/14 17:52:26 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 1997/02/14 17:57:06 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -149,30 +149,20 @@
 #define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 
+/*
+ * spl functions; all but spl0 are done in-line
+ */
+
 #include <machine/psl.h>
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-
-#ifndef __GNUC__
-/* No inline, use real function in locore.s */
-extern int _spl(int new);
-#else	/* GNUC */
-/*
- * Define an inline function for PSL manipulation.
- * This is as close to a macro as one can get.
- * If not optimizing, the one in locore.s is used.
- * (See the GCC extensions info document.)
- */
-extern __inline__ int _spl(int new)
-{
-	register int old;
-
-	__asm __volatile (
-		"clrl %0; movew sr,%0; movew %1,sr" :
-			"&=d" (old) : "di" (new));
-	return (old);
-}
-#endif	/* GNUC */
+#define _spl(s) \
+({ \
+	register int _spl_r; \
+\
+	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
+		"&=d" (_spl_r) : "di" (s)); \
+	_spl_r; \
+})
 
 /*
  * The rest of this is sun3 specific, because other ports may
@@ -221,6 +211,7 @@ extern __inline__ int _spl(int new)
 /* Get current sr value (debug, etc.) */
 extern int getsr __P((void));
 
+#if defined(_KERNEL) && !defined(_LOCORE)
 extern void _delay __P((unsigned));
 #define delay(us)	_delay((us)<<8)
 #define	DELAY(n)	delay(n)
