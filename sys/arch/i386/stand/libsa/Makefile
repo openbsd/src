@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 1997/08/12 21:39:00 mickey Exp $
+#	$OpenBSD: Makefile,v 1.22 1997/08/13 03:28:11 mickey Exp $
 
 
 LIB=	sa
@@ -15,7 +15,7 @@ DIR_KERN=$S/lib/libkern
 # i386 stuff (so, it will possibly load in the same 64k)
 SRCS=	unixsys.S gidt.S debug_i386.S \
 	bioscons.c dev_i386.c exec_i386.c biosdev.c gateA20.c memprobe.c \
-	time.c alloca.S apm_init.S machdep.c
+	time.c alloca.S machdep.c
 
 # stand routines
 SRCS+=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \

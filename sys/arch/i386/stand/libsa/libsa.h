@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.11 1997/08/05 17:45:56 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.12 1997/08/13 03:28:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -39,7 +39,6 @@ void memprobe __P((void));
 void devboot __P((dev_t, char *));
 void *alloca __P((size_t));
 void machdep __P((void));
-u_int apm_init __P((void));
 int kentry __P((u_int, u_int));
 
 extern int	boothowto;
