@@ -26,7 +26,8 @@
 
 TOUCH=	touch -f -c
 HOSTCC= gcc
-HOST=sparc-sun-sunos4-
+#HOST=sparc-sun-sunos4-
+HOST=
 AS=	$(HOST)as
 LD=	$(HOST)ld
 CC=	$(HOST)gcc 
@@ -71,8 +72,10 @@ SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o ${LIBKERN} \
 	${LIBCOMPAT}
 SYSTEM_DEP=Makefile ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
-SYSTEM_LD= ${LD} -T ${KBUS}/kbus/ldscript -e start -d -o $@ -X ${SYSTEM_OBJS} vers.o
-SYSTEM_LD_TAIL= $(HOST)size $@ ; $(HOST)nm -n $@ > SYMMS ; chmod 755 $@; cp $@ /tftpboot
+#SYSTEM_LD= ${LD} -T ${KBUS}/kbus/ldscript -e start -d -o $@ -X ${SYSTEM_OBJS} vers.o
+SYSTEM_LD= ${LD} -N -p -Ttext FF060000 -e start -o $@ ${SYSTEM_OBJS} vers.o
+#SYSTEM_LD_TAIL= $(HOST)size $@ ; $(HOST)nm -n $@ > SYMMS ; chmod 755 $@; cp $@ /tftpboot
+SYSTEM_LD_TAIL= $(HOST)size $@ ; $(HOST)nm -n $@ > SYMMS ; chmod 755 $@
 
 %OBJS
 
