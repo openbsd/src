@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.25 2002/07/03 21:19:08 miod Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.26 2003/05/13 04:51:05 itojun Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -66,23 +66,7 @@ struct	ether_header {
 	u_int16_t ether_type;
 };
 
-#define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
-#define	ETHERTYPE_IP		0x0800	/* IP protocol */
-#define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
-#define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
-#define	ETHERTYPE_8021Q		0x8100	/* IEEE 802.1Q VLAN tagging */
-#define	ETHERTYPE_IPV6		0x86DD	/* IPv6 protocol */
-#define	ETHERTYPE_PPPOEDISC	0x8863	/* PPP Over Ethernet Discovery Stage */
-#define	ETHERTYPE_PPPOE		0x8864	/* PPP Over Ethernet Session Stage */
-#define	ETHERTYPE_LOOPBACK	0x9000	/* used to test interfaces */
-
-/*
- * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
- * (type-ETHERTYPE_TRAIL)*512 bytes of data followed
- * by an ETHER type (as given above) and then the (variable-length) header.
- */
-#define	ETHERTYPE_TRAIL		0x1000		/* Trailer packet */
-#define	ETHERTYPE_NTRAILER	16
+#include <net/ethertypes.h>
 
 #define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
 
