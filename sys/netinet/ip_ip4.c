@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.37 1999/12/09 04:00:07 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.38 1999/12/09 09:07:54 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -64,6 +64,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip_ecn.h>
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
@@ -82,6 +83,10 @@
 #define DPRINTF(x)
 #endif
 
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
+#endif
+
 /*
  * We can control the acceptance of IP4 packets by altering the sysctl
  * net.inet.ip4.allow value.  Zero means drop them, all else is acceptance.
@@ -91,7 +96,7 @@ int ip4_allow = 0;
 struct ip4stat ip4stat;
 
 /*
- * ip4_input gets called when we receive an encapsulated packet,
+ * ip4_input gets called when we receive an IPv4 encapsulated packet,
  * either because we got it at a real interface, or because AH or ESP
  * were being used in tunnel mode (in which case the rcvif element will 
  * contain the address of the encX interface associated with the tunnel.
@@ -164,7 +169,6 @@ ip4_input(m, va_alist)
 	{
 	    DPRINTF(("ip4_input(): m_pullup() failed\n"));
 	    ip4stat.ip4s_hdrops++;
-	    m_freem(m);
 	    return;
 	}
     }
@@ -181,7 +185,7 @@ ip4_input(m, va_alist)
     if (ipo->ip_v != IPVERSION)
     {
 	DPRINTF(("ip4_input(): wrong version %d on packet from %s to %s (%s->%s)\n", ipo->ip_v, inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst)));
-	ip4stat.ip4s_notip4++;
+	ip4stat.ip4s_family++;
 	m_freem(m);
 	return;
     }
@@ -265,63 +269,178 @@ int
 ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	    int protoff)
 {
-    struct ip *ipo, *ipi;
-    ushort ilen;
+    u_int8_t itos, otos;
+    u_int8_t tp;
 
-    /* Check that the source address, if present, is from AF_INET */
-    if ((tdb->tdb_src.sa.sa_family != 0) &&
-	(tdb->tdb_src.sa.sa_family != AF_INET))
-    {
-	DPRINTF(("ipe4_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_src.sa.sa_family));
-	m_freem(m);
-	return EINVAL;
-    }
+#ifdef INET
+    struct ip *ipo;
+#endif /* INET */
 
-    /* Check that the destination address are AF_INET */
-    if (tdb->tdb_dst.sa.sa_family != AF_INET)
+#ifdef INET6    
+    struct ip6_hdr *ip6o;
+#endif /* INET6 */
+
+    /* Deal with empty TDB source/destination addresses */
+    /* XXX */
+
+    m_copydata(m, 0, 1, &tp);
+    tp = (tp >> 4) & 0xff;  /* Get the IP version number */
+
+    switch (tdb->tdb_dst.sa.sa_family)
     {
-	DPRINTF(("ipe4_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_dst.sa.sa_family));
-	m_freem(m);
-	return EINVAL;
+#ifdef INET
+	case AF_INET:
+	    if ((tdb->tdb_src.sa.sa_family != AF_INET) ||
+		(tdb->tdb_src.sin.sin_addr.s_addr == INADDR_ANY) ||
+		(tdb->tdb_dst.sin.sin_addr.s_addr == INADDR_ANY))
+	    {
+		DPRINTF(("ipe4_output(): unspecified tunnel endpoind address in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ip4stat.ip4s_unspec++;
+		return ENOBUFS;
+	    }
+
+	    M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
+	    if (m == 0)
+	    {
+		DPRINTF(("ipe4_output(): M_PREPEND failed\n"));
+		ip4stat.ip4s_hdrops++;
+		return ENOBUFS;
+	    }
+	    
+	    ipo = mtod(m, struct ip *);
+
+	    ipo->ip_v = IPVERSION;
+	    ipo->ip_hl = 5;
+	    ipo->ip_len = htons(m->m_pkthdr.len);
+	    ipo->ip_ttl = ip_defttl;
+	    ipo->ip_sum = 0;
+	    ipo->ip_src = tdb->tdb_src.sin.sin_addr;
+	    ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
+
+	    /*
+	     * We do the htons() to prevent snoopers from determining our
+	     * endianness.
+	     */
+	    ipo->ip_id = htons(ip_randomid());
+
+	    /* If the inner protocol is IP */
+	    if (tp == IPVERSION)
+	    {
+		/* Save ECN notification */
+		m_copydata(m, sizeof(struct ip) + offsetof(struct ip, ip_tos),
+			   sizeof(u_int8_t), (caddr_t) &itos);
+
+		ipo->ip_p = IPPROTO_IPIP;
+
+		/*
+		 * We should be keeping tunnel soft-state and send back ICMPs
+		 * if needed.
+		 */
+		m_copydata(m, sizeof(struct ip) + offsetof(struct ip, ip_off),
+			   sizeof(u_int16_t), (caddr_t) &ipo->ip_off);
+		ipo->ip_off &= ~(IP_DF | IP_MF | IP_OFFMASK);
+	    }
+	    else
+	    {
+		/* Save ECN notification */
+		m_copydata(m, sizeof(struct ip) +
+			   offsetof(struct ip6_hdr, ip6_flow),
+			   sizeof(u_int32_t), (caddr_t) &itos);
+		itos = ntohl(itos) >> 20;
+
+		ipo->ip_p = IPPROTO_IPV6;
+		ipo->ip_off = 0;
+	    }
+
+	    ip_ecn_ingress(ECN_ALLOWED, &ipo->ip_tos, &itos);
+	    break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+	    if (IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_dst.sin6.sin6_addr) ||
+		(tdb->tdb_src.sa.sa_family != AF_INET6) ||
+		IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_src.sin6.sin6_addr))
+	    {
+		DPRINTF(("ipe4_output(): unspecified tunnel endpoind address in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ip4stat.ip4s_unspec++;
+		return ENOBUFS;
+	    }
+
+	    M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
+	    if (m == 0)
+	    {
+		DPRINTF(("ipe4_output(): M_PREPEND failed\n"));
+		ip4stat.ip4s_hdrops++;
+		return ENOBUFS;
+	    }
+
+	    /* Initialize IPv6 header */
+	    ip6o = mtod(m, struct ip6_hdr *);
+	    ip6o->ip6_flow = 0;
+	    ip6o->ip6_vfc = IPV6_VERSION;
+	    ip6o->ip6_plen = htons(m->m_pkthdr.len);
+	    ip6o->ip6_hlim = ip_defttl;
+	    ip6o->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
+	    ip6o->ip6_src = tdb->tdb_src.sin6.sin6_addr;
+
+	    if (tp == IPVERSION)
+	    {
+		/* Save ECN notification */
+		m_copydata(m, sizeof(struct ip6_hdr) +
+			   offsetof(struct ip, ip_tos), sizeof(u_int8_t),
+			   (caddr_t) &itos);
+
+		ip6o->ip6_nxt = IPPROTO_IPIP; /* This is really IPVERSION */
+	    }
+	    else
+	    {
+		/* Save ECN notification */
+		m_copydata(m, sizeof(struct ip6_hdr) +
+			   offsetof(struct ip6_hdr, ip6_flow),
+			   sizeof(u_int32_t), (caddr_t) &itos);
+		itos = ntohl(itos) >> 20;
+
+		ip6o->ip6_nxt = IPPROTO_IPV6;
+	    }
+
+	    ip_ecn_ingress(ECN_ALLOWED, &otos, &itos);
+	    ip6o->ip6_flow |= htonl((u_int32_t) otos << 20);
+	    break;
+#endif /* INET6 */
+
+	default:
+	    DPRINTF(("ipe4_output(): unsupported protocol family %d\n",
+		     tdb->tdb_dst.sa.sa_family));
+	    m_freem(m);
+	    ip4stat.ip4s_family++;
+	    return ENOBUFS;
     }
 
     ip4stat.ip4s_opackets++;
-    ipi = mtod(m, struct ip *);
-    ilen = ntohs(ipi->ip_len);
-
-    M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
-    if (m == 0)
-    {
-	DPRINTF(("ipe4_output(): M_PREPEND failed\n"));
-      	return ENOBUFS;
-    }
-
-    ipo = mtod(m, struct ip *);
-
-    ipo->ip_v = IPVERSION;
-    ipo->ip_hl = 5;
-    ipo->ip_tos = ipi->ip_tos;
-    ipo->ip_len = htons(ilen + sizeof(struct ip));
-    ipo->ip_ttl = ip_defttl;
-    ipo->ip_p = IPPROTO_IPIP;
-    ipo->ip_id = ip_randomid();
-    HTONS(ipo->ip_id);
-
-    /* We should be keeping tunnel soft-state and send back ICMPs if needed. */
-    ipo->ip_off = ipi->ip_off & ~(IP_DF | IP_MF | IP_OFFMASK);
-
-    ipo->ip_sum = 0;
-
-    ipo->ip_src = tdb->tdb_src.sin.sin_addr;
-    ipo->ip_dst = tdb->tdb_dst.sin.sin_addr;
 
     *mp = m;
 
-    /* Update the counters */
-    if (tdb->tdb_xform->xf_type == XF_IP4)
-      tdb->tdb_cur_bytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
+#ifdef INET
+    if (tdb->tdb_dst.sa.sa_family == AF_INET)
+    {
+	if (tdb->tdb_xform->xf_type == XF_IP4)
+	  tdb->tdb_cur_bytes += m->m_pkthdr.len - sizeof(struct ip);
 
-    ip4stat.ip4s_obytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
+	ip4stat.ip4s_obytes += m->m_pkthdr.len - sizeof(struct ip);
+    }
+#endif /* INET */
+
+#ifdef INET6
+    if (tdb->tdb_dst.sa.sa_family == AF_INET6)
+    {
+	if (tdb->tdb_xform->xf_type == XF_IP4)
+	  tdb->tdb_cur_bytes += m->m_pkthdr.len - sizeof(struct ip6_hdr);
+
+	ip4stat.ip4s_obytes += m->m_pkthdr.len - sizeof(struct ip6_hdr);
+    }
+#endif /* INET6 */
+
     return 0;
 }
 
