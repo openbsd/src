@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_stripvar.h,v 1.4 1997/02/24 13:34:02 niklas Exp $	*/
 /*	$NetBSD: if_stripvar.h,v 1.2.4.1 1996/08/05 20:37:51 jtc Exp $	*/
 
 /*

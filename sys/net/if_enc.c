@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_enc.c,v 1.2 1997/02/24 13:33:58 niklas Exp $	*/
+
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -73,9 +75,11 @@ struct enc_softc *enc_softc;
 
 int nencap;
 
-int encoutput(struct ifnet *, struct mbuf *, struct sockaddr *, struct rtentry *);
-int encioctl(struct ifnet *, u_long, caddr_t);
-void encrtrequest(int, struct rtentry *, struct sockaddr *);
+void	encattach __P((int));
+int	encoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+	    struct rtentry *));
+int	encioctl __P((struct ifnet *, u_long, caddr_t));
+void	encrtrequest __P((int, struct rtentry *, struct sockaddr *));
 
 void
 encattach(int nenc)

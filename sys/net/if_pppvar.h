@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_pppvar.h,v 1.5 1997/02/24 13:34:00 niklas Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.4 1996/05/07 02:40:39 thorpej Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: zlib.h,v 1.2 1997/02/24 13:34:07 niklas Exp $	*/
 /*	$NetBSD: zlib.h,v 1.1 1996/03/15 02:28:17 paulus Exp $	*/
 
 /*

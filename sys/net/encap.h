@@ -1,3 +1,5 @@
+/*	$OpenBSD: encap.h,v 1.2 1997/02/24 13:33:56 niklas Exp $	*/
+
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).

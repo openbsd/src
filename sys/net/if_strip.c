@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_strip.c,v 1.6 1997/02/24 13:34:01 niklas Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 

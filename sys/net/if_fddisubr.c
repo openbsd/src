@@ -1,3 +1,4 @@
+/*	$OpenBSD: if_fddisubr.c,v 1.11 1997/02/24 13:33:59 niklas Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
