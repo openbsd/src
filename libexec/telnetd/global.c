@@ -1,6 +1,3 @@
-/*	$OpenBSD: global.c,v 1.4 1998/06/23 22:40:29 millert Exp $	*/
-/*	$NetBSD: global.c,v 1.6 1996/02/28 20:38:14 thorpej Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,27 +31,63 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)global.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$NetBSD: global.c,v 1.6 1996/02/28 20:38:14 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: global.c,v 1.4 1998/06/23 22:40:29 millert Exp $";
-#endif
-#endif /* not lint */
-
-/*
- * Allocate global variables.  We do this
- * by including the header file that defines
- * them all as externs, but first we define
- * the keyword "extern" to be nothing, so that
- * we will actually allocate the space.
+/* a *lot* of ugly global definitions that really should be removed...
  */
 
-#include <stdarg.h>
-#include <defs.h>
-#define extern
-#include <ext.h>
+#include "telnetd.h"
+
+/* RCSID("$KTH: global.c,v 1.12 1997/05/11 06:29:59 assar Exp $"); */
+
+/*
+ * Telnet server variable declarations
+ */
+char	options[256];
+char	do_dont_resp[256];
+char	will_wont_resp[256];
+int	linemode;	/* linemode on/off */
+int	flowmode;	/* current flow control state */
+int	restartany;	/* restart output on any character state */
+#ifdef DIAGNOSTICS
+int	diagnostic;	/* telnet diagnostic capabilities */
+#endif /* DIAGNOSTICS */
+int	require_otp;
+
+slcfun	slctab[NSLC + 1];	/* slc mapping table */
+
+char	*terminaltype;
+
+/*
+ * I/O data buffers, pointers, and counters.
+ */
+char	ptyobuf[BUFSIZ+NETSLOP], *pfrontp, *pbackp;
+
+char	netibuf[BUFSIZ], *netip;
+
+char	netobuf[BUFSIZ+NETSLOP], *nfrontp, *nbackp;
+char	*neturg;		/* one past last bye of urgent data */
+
+int	pcc, ncc;
+
+int	ourpty, net;
+int	SYNCHing;		/* we are in TELNET SYNCH mode */
+
+/*
+ * The following are some clocks used to decide how to interpret
+ * the relationship between various variables.
+ */
+
+struct clocks_t clocks;
+
+
+/* whether to log unauthenticated login attempts */
+int log_unauth;
+
+/* do not print warning if connection is not encrypted */
+int no_warn;
+
+/*
+ * This function appends data to nfrontp and advances nfrontp.
+ */
 
 int
 output_data (const char *format, ...)
@@ -65,11 +98,9 @@ output_data (const char *format, ...)
   va_start(args, format);
   remaining = BUFSIZ - (nfrontp - netobuf);
   ret = vsnprintf (nfrontp,
-                   remaining,
-                   format,
-                   args);
-  if (ret >= remaining)
-	ret = remaining - 1;
+		   remaining,
+		   format,
+		   args);
   nfrontp += ret;
   va_end(args);
   return ret;

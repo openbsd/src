@@ -1,6 +1,3 @@
-.\"	$OpenBSD: telnetd.8,v 1.17 2000/10/30 17:46:29 aaron Exp $
-.\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
-.\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,11 +29,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)telnetd.8	8.3 (Berkeley) 3/1/94
+.\"	@(#)telnetd.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd March 1, 1994
+.Dd June 1, 1994
 .Dt TELNETD 8
-.Os
+.Os BSD 4.2
 .Sh NAME
 .Nm telnetd
 .Nd DARPA
@@ -44,25 +41,25 @@
 protocol server
 .Sh SYNOPSIS
 .Nm telnetd
-.Op Fl Uhlkn46
+.Op Fl BUhkln
 .Op Fl D Ar debugmode
-.Op Fl I Ns Ar initid
 .Op Fl S Ar tos
 .Op Fl X Ar authtype
 .Op Fl a Ar authmode
-.Op Fl g Ar gettyent
 .Op Fl r Ns Ar lowpty-highpty
 .Op Fl u Ar len
-.Op Fl debug Op Ar port
+.Op Fl debug
+.Op Fl L Ar /bin/login
+.Op Ar port
 .Sh DESCRIPTION
 The
-.Nm
+.Nm telnetd
 command is a server which supports the
 .Tn DARPA
 standard
 .Tn TELNET
 virtual terminal protocol.
-.Nm
+.Nm Telnetd
 is normally invoked by the internet server (see
 .Xr inetd 8 )
 for requests to connect to the
@@ -74,28 +71,28 @@ file (see
 The
 .Fl debug
 option may be used to start up
-.Nm
+.Nm telnetd
 manually, instead of through
 .Xr inetd 8 .
-If started up this way,
+If started up this way, 
 .Ar port
 may be specified to run
-.Nm
+.Nm telnetd
 on an alternate
 .Tn TCP
 port number.
 .Pp
 The
-.Nm
+.Nm telnetd
 command accepts the following options:
 .Bl -tag -width "-a authmode"
 .It Fl a Ar authmode
 This option may be used for specifying what mode should
 be used for authentication.
 Note that this option is only useful if
-.Nm
+.Nm telnetd
 has been compiled with support for the
-.Cm AUTHENTICATION
+.Dv AUTHENTICATION
 option.
 There are several valid values for
 .Ar authmode :
@@ -103,43 +100,59 @@ There are several valid values for
 .It debug
 Turns on authentication debugging code.
 .It user
-Only allow connections when the remote user can provide valid authentication
-information to identify the remote user, and is allowed access to the
-specified account without providing a password.
+Only allow connections when the remote user
+can provide valid authentication information
+to identify the remote user,
+and is allowed access to the specified account
+without providing a password.
 .It valid
-Only allow connections when the remote user can provide valid authentication
-information to identify the remote user.
+Only allow connections when the remote user
+can provide valid authentication information
+to identify the remote user.
 The
 .Xr login 1
-command will provide any additional user verification needed if the remote
-user is not allowed automatic access to the specified account.
+command will provide any additional user verification
+needed if the remote user is not allowed automatic
+access to the specified account.
 .It other
 Only allow connections that supply some authentication information.
-This option is currently not supported by any of the existing authentication
-mechanisms, and is thus the same as specifying
+This option is currently not supported
+by any of the existing authentication mechanisms,
+and is thus the same as specifying
 .Fl a
 .Cm valid .
+.It otp
+Only allow authenticated connections (as with
+.Fl a
+.Cm user )
+and also logins with one-time passwords (OTPs).  This option will call
+login with an option so that only OTPs are accepted.  The user can of
+course still type secret information at the prompt.
 .It none
 This is the default state.
 Authentication information is not required.
-If no or insufficient authentication information is provided, then the
+If no or insufficient authentication information
+is provided, then the
 .Xr login 1
-program will provide the necessary user verification.
+program will provide the necessary user
+verification.
 .It off
 This disables the authentication code.
 All user verification will happen through the
 .Xr login 1
 program.
 .El
+.It Fl B
+Ignored.
 .It Fl D Ar debugmode
 This option may be used for debugging purposes.
 This allows
-.Nm
+.Nm telnetd
 to print out debugging information
 to the connection, allowing the user to see what
-.Nm
+.Nm telnetd
 is doing.
-There are several possible values for
+There are several possible values for 
 .Ar debugmode :
 .Bl -tag -width exercise
 .It Cm options
@@ -147,10 +160,10 @@ Prints information about the negotiation of
 .Tn TELNET
 options.
 .It Cm report
-Prints the
+Prints the 
 .Cm options
-information, plus some additional information about what processing
-is going on.
+information, plus some additional information
+about what processing is going on.
 .It Cm netdata
 Displays the data stream received by
 .Nm telnetd .
@@ -159,72 +172,17 @@ Displays data written to the pty.
 .It Cm exercise
 Has not been implemented yet.
 .El
-.It Fl debug
-Enables debugging on each socket created by
-.Nm
-(see
-.Dv SO_DEBUG
-in
-.Xr socket 2 ) .
-.It Fl g Ar gettyent
-Specifies which entry from
-.Pa /etc/gettytab
-should be used to get banner strings, login program and other information.
-The default entry is
-.Dq default.
 .It Fl h
 Disables the printing of host-specific information before
 login has been completed.
-.It Fl I Ar initid
-This option is only applicable to
-.Tn UNICOS
-systems prior to 7.0.
-It specifies the
-.Em ID
-from
-.Pa /etc/inittab
-to use when init starts login sessions.
-The default ID is
-.Dq fe .
 .It Fl k
-This option is only useful if
-.Nm
-has been compiled with both linemode and kludge linemode support.
-If the
-.Fl k
-option is specified, then if the remote client does not support the
-.Cm LINEMODE
-option, then
-.Nm
-will operate in character at a time mode.
-It will still support kludge linemode, but will only
-go into kludge linemode if the remote client requests
-it.
-(This is done by the client sending
-.Tn DONT SUPPRESS-GO-AHEAD
-and
-.Tn DONT ECHO . )
-The
-.Fl k
-option is most useful when there are remote clients
-that do not support kludge linemode, but pass the heuristic
-(if they respond with
-.Tn WILL TIMING-MARK
-in response to a
-.Tn DO TIMING-MARK)
-for kludge linemode support.
 .It Fl l
-Specifies line mode.
-Tries to force clients to use line-at-a-time mode.
-If the
-.Tn LINEMODE
-option is not supported, it will go into kludge linemode.
+Ignored.
 .It Fl n
 Disable
-.Tn TCP
-keep-alives.
-Normally
-.Nm
+.Dv TCP
+keep-alives.  Normally
+.Nm telnetd
 enables the
 .Tn TCP
 keep-alive mechanism to probe connections that
@@ -234,32 +192,32 @@ from machines that have crashed or can no longer
 be reached may be cleaned up.
 .It Fl r Ar lowpty-highpty
 This option is only enabled when
-.Nm
+.Nm telnetd
 is compiled for
-.Tn UNICOS .
-It specifies an inclusive range of pseudo-terminal devices to use.
-If the system has sysconf variable
+.Dv UNICOS .
+It specifies an inclusive range of pseudo-terminal devices to
+use.  If the system has sysconf variable
 .Dv _SC_CRAY_NPTY
 configured, the default pty search range is 0 to
-.Dv _SC_CRAY_NPTY;
-otherwise, the default range is 0 to 128.
-Either
+.Dv _SC_CRAY_NPTY ;
+otherwise, the default range is 0 to 128.  Either
 .Ar lowpty
 or
 .Ar highpty
-may be omitted to allow changing either end of the search range.
-If
+may be omitted to allow changing
+either end of the search range.  If
 .Ar lowpty
 is omitted, the - character is still required so that
-.Nm
+.Nm telnetd
 can differentiate
 .Ar highpty
 from
 .Ar lowpty .
 .It Fl S Ar tos
 .It Fl u Ar len
-This option is used to specify the size of the field in the
-.Li utmp
+This option is used to specify the size of the field
+in the
+.Dv utmp
 structure that holds the remote host name.
 If the resolved host name is longer than
 .Ar len ,
@@ -274,46 +232,36 @@ should be put into the
 file.
 .It Fl U
 This option causes
-.Nm
-to refuse connections from addresses that cannot be mapped back into a
-symbolic name via the
+.Nm telnetd
+to refuse connections from addresses that
+cannot be mapped back into a symbolic name
 via the
 .Xr gethostbyaddr 3
 routine.
 .It Fl X Ar authtype
 This option is only valid if
-.Nm
+.Nm telnetd
 has been built with support for the authentication option.
 It disables the use of
 .Ar authtype
-authentication, and can be used to temporarily disable
+authentication, and
+can be used to temporarily disable
 a specific authentication type without having to recompile
 .Nm telnetd .
-.It Fl 4
-.It Fl 6
-Specifies address family to be used on
-.Fl debug
-mode.
-During normal operation
-.Po
-called from
-.Xr inetd 8
-.Pc
-.Nm
-will use the file descriptor passed from
-.Xr inetd 8 .
+.It Fl L pathname
+Specify pathname to an alternative login program.
 .El
 .Pp
-.Nm
+.Nm Telnetd
 operates by allocating a pseudo-terminal device (see
 .Xr pty 4 )
 for a client, then creating a login process which has
-the slave side of the pseudo-terminal as
-.Li stdin ,
-.Li stdout ,
+the slave side of the pseudo-terminal as 
+.Dv stdin ,
+.Dv stdout
 and
-.Li stderr .
-.Nm
+.Dv stderr .
+.Nm Telnetd
 manipulates the master side of the pseudo-terminal,
 implementing the
 .Tn TELNET
@@ -322,8 +270,8 @@ between the remote client and the login process.
 .Pp
 When a
 .Tn TELNET
-session is started up,
-.Nm
+session is started up, 
+.Nm telnetd
 sends
 .Tn TELNET
 options to the client side indicating
@@ -349,34 +297,36 @@ DO TIMING-MARK
 .Ed
 .Pp
 The pseudo-terminal allocated to the client is configured
-to operate in \*(lqcooked\*(rq mode, and with
+to operate in
+.Dq cooked
+mode, and with
 .Dv XTABS and
 .Dv CRMOD
 enabled (see
 .Xr tty 4 ) .
 .Pp
-.Nm
+.Nm Telnetd
 has support for enabling locally the following
 .Tn TELNET
 options:
 .Bl -tag -width "DO AUTHENTICATION"
 .It "WILL ECHO"
 When the
-.Cm LINEMODE
+.Dv LINEMODE
 option is enabled, a
-.Tn WILL ECHO
+.Dv WILL ECHO
 or
-.Tn WONT ECHO
+.Dv WONT ECHO
 will be sent to the client to indicate the
 current state of terminal echoing.
 When terminal echo is not desired, a
-.Tn WILL ECHO
+.Dv WILL ECHO
 is sent to indicate that
 .Tn telnetd
 will take care of echoing any data that needs to be
 echoed to the terminal, and then nothing is echoed.
 When terminal echo is desired, a
-.Tn WONT ECHO
+.Dv WONT ECHO
 is sent to indicate that
 .Tn telnetd
 will not be doing any terminal echoing, so the
@@ -387,7 +337,7 @@ Indicates that the client is willing to send a
 of the Network Virtual Terminal.
 .It "WILL SGA"
 Indicates that it will not be sending
-.Tn IAC GA ,
+.Dv IAC GA ,
 go ahead, commands.
 .It "WILL STATUS"
 Indicates a willingness to send the client, upon
@@ -396,27 +346,27 @@ request, of the current status of all
 options.
 .It "WILL TIMING-MARK"
 Whenever a
-.Tn DO TIMING-MARK
+.Dv DO TIMING-MARK
 command is received, it is always responded
 to with a
-.Tn WILL TIMING-MARK
+.Dv WILL TIMING-MARK
 .It "WILL LOGOUT"
 When a
-.Tn DO LOGOUT
+.Dv DO LOGOUT
 is received, a
-.Tn WILL LOGOUT
+.Dv WILL LOGOUT
 is sent in response, and the
 .Tn TELNET
 session is shut down.
 .It "WILL ENCRYPT"
 Only sent if
-.Nm
+.Nm telnetd
 is compiled with support for data encryption, and
 indicates a willingness to decrypt
 the data stream.
 .El
 .Pp
-.Nm
+.Nm Telnetd
 has support for enabling remotely the following
 .Tn TELNET
 options:
@@ -429,15 +379,14 @@ is willing to receive an 8 bit data stream.
 Requests that the client handle flow control
 characters remotely.
 .It "DO ECHO"
-This is not really supported, but is sent to identify a
-.Bx 4.2
+This is not really supported, but is sent to identify a 4.2BSD
 .Xr telnet 1
 client, which will improperly respond with
-.Tn WILL ECHO .
+.Dv WILL ECHO .
 If a
-.Tn WILL ECHO
+.Dv WILL ECHO
 is received, a
-.Tn DONT ECHO
+.Dv DONT ECHO
 will be sent in response.
 .It "DO TERMINAL-TYPE"
 Indicates a desire to be able to request the
@@ -445,7 +394,7 @@ name of the type of terminal that is attached
 to the client side of the connection.
 .It "DO SGA"
 Indicates that it does not need to receive
-.Tn IAC GA ,
+.Dv IAC GA ,
 the go ahead command.
 .It "DO NAWS"
 Requests that the client inform the server when
@@ -466,17 +415,17 @@ Indicates a desire to be able to request environment
 variable information, as described in RFC 1408.
 .It "DO LINEMODE"
 Only sent if
-.Nm
+.Nm telnetd
 is compiled with support for linemode, and
 requests that the client do line by line processing.
 .It "DO TIMING-MARK"
 Only sent if
-.Nm
+.Nm telnetd
 is compiled with support for both linemode and
 kludge linemode, and the client responded with
-.Tn WONT LINEMODE .
+.Dv WONT LINEMODE .
 If the client responds with
-.Tn WILL TM ,
+.Dv WILL TM ,
 the it is assumed that the client supports
 kludge linemode.
 Note that the
@@ -484,18 +433,18 @@ Note that the
 option can be used to disable this.
 .It "DO AUTHENTICATION"
 Only sent if
-.Nm
+.Nm telnetd
 is compiled with support for authentication, and
 indicates a willingness to receive authentication
 information for automatic login.
 .It "DO ENCRYPT"
 Only sent if
-.Nm
+.Nm telnetd
 is compiled with support for data encryption, and
 indicates a willingness to decrypt
 the data stream.
 .El
-.\" .Sh ENVIRONMENT
+.Sh ENVIRONMENT
 .Sh FILES
 .Bl -tag -width /etc/services -compact
 .It Pa /etc/services
@@ -504,9 +453,9 @@ the data stream.
 .It Pa /etc/iptos
 (if supported)
 .El
-.Sh SEE ALSO
-.Xr login 1 ,
-.Xr telnet 1
+.Sh "SEE ALSO"
+.Xr telnet 1 ,
+.Xr login 1
 .Sh STANDARDS
 .Bl -tag -compact -width RFC-1572
 .It Cm RFC-854
@@ -560,7 +509,7 @@ commands are only partially implemented.
 .Pp
 Because of bugs in the original 4.2 BSD
 .Xr telnet 1 ,
-.Nm
+.Nm telnetd
 performs some dubious protocol exchanges to try to discover if the remote
 client is, in fact, a 4.2 BSD
 .Xr telnet 1 .
@@ -572,15 +521,8 @@ has no common interpretation except between similar operating systems
 The terminal type name received from the remote client is converted to
 lower case.
 .Pp
-.Nm
+.Nm Telnetd
 never sends
 .Tn TELNET
-.Tn IAC GA
+.Dv IAC GA
 (go ahead) commands.
-.Pp
-.Tn WONT CRYPT .
-.Nm
-talks over insecure, unencrypted communications channels.
-Please use
-.Xr sshd 8
-instead.

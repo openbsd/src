@@ -1,6 +1,3 @@
-/*	$OpenBSD: ext.h,v 1.10 2001/05/25 10:25:22 hin Exp $	*/
-/*	$NetBSD: ext.h,v 1.6 1996/02/28 20:38:13 thorpej Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +30,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ext.h	8.2 (Berkeley) 12/15/93
+ *	@(#)ext.h	8.2 (Berkeley) 12/15/93
  */
+
+/* $KTH: ext.h,v 1.22 2001/04/24 23:12:11 assar Exp $ */
+
+#ifndef __EXT_H__
+#define __EXT_H__
+
+#include <arpa/telnet.h>
 
 /*
  * Telnet server variable declarations
@@ -42,31 +46,20 @@
 extern char	options[256];
 extern char	do_dont_resp[256];
 extern char	will_wont_resp[256];
-extern int	linemode;	/* linemode on/off */
-#ifdef	LINEMODE
-extern int	uselinemode;	/* what linemode to use (on/off) */
-extern int	editmode;	/* edit modes in use */
-extern int	useeditmode;	/* edit modes to use */
-extern int	alwayslinemode;	/* command line option */
-# ifdef	KLUDGELINEMODE
-extern int	lmodetype;	/* Client support for linemode */
-# endif	/* KLUDGELINEMODE */
-#endif	/* LINEMODE */
 extern int	flowmode;	/* current flow control state */
 extern int	restartany;	/* restart output on any character state */
 #ifdef DIAGNOSTICS
 extern int	diagnostic;	/* telnet diagnostic capabilities */
 #endif /* DIAGNOSTICS */
-#ifdef BFTPDAEMON
-extern int	bftpd;		/* behave as bftp daemon */
-#endif /* BFTPDAEMON */
-#if	defined(AUTHENTICATION)
+extern int	require_otp;
+#ifdef AUTHENTICATION
 extern int	auth_level;
 #endif
+extern const char *new_login;
 
 extern slcfun	slctab[NSLC + 1];	/* slc mapping table */
 
-char	*terminaltype;
+extern char	*terminaltype;
 
 /*
  * I/O data buffers, pointers, and counters.
@@ -76,133 +69,103 @@ extern char	ptyobuf[BUFSIZ+NETSLOP], *pfrontp, *pbackp;
 extern char	netibuf[BUFSIZ], *netip;
 
 extern char	netobuf[BUFSIZ+NETSLOP], *nfrontp, *nbackp;
-extern char	*neturg;		/* one past last byte of urgent data */
+extern char	*neturg;		/* one past last bye of urgent data */
 
 extern int	pcc, ncc;
 
-#if defined(CRAY2) && defined(UNICOS5)
-extern int unpcc;  /* characters left unprocessed by CRAY-2 terminal routine */
-extern char *unptyip;  /* pointer to remaining characters in buffer */
-#endif
-
-extern int	pty, net;
-extern char	line[16];
+extern int	ourpty, net;
+extern char	*line;
 extern int	SYNCHing;		/* we are in TELNET SYNCH mode */
 
-#include <sys/cdefs.h>
-#define P __P
-
-extern void
-	_termstat P((void)),
-	add_slc P((int, int, int)),
-	check_slc P((void)),
-	change_slc P((int, int, int)),
-	cleanup P((int)),
-	clientstat P((int, int, int)),
-	copy_termbuf P((char *, int)),
-	deferslc P((void)),
-	defer_terminit P((void)),
-	do_opt_slc P((unsigned char *, int)),
-	doeof P((void)),
-	dooption P((int)),
-	dontoption P((int)),
-	edithost P((char *, char *)),
-	fatal P((int, char *)),
-	fatalperror P((int, char *)),
-	get_slc_defaults P((void)),
-	init_env P((void)),
-	init_termbuf P((void)),
-	interrupt P((void)),
-	localstat P((void)),
-	flowstat P((void)),
-	netclear P((void)),
-	netflush P((void)),
-#ifdef DIAGNOSTICS
-	printoption P((char *, int)),
-	printdata P((char *, char *, int)),
-	printsub P((int, unsigned char *, int)),
-#endif
-	ptyflush P((void)),
-	putchr P((int)),
-	putf P((char *, char *)),
-	recv_ayt P((void)),
-	send_do P((int, int)),
-	send_dont P((int, int)),
-	send_slc P((void)),
-	send_status P((void)),
-	send_will P((int, int)),
-	send_wont P((int, int)),
-	sendbrk P((void)),
-	sendsusp P((void)),
-	set_termbuf P((void)),
-	start_login P((char *, int, char *)),
-	start_slc P((int)),
-#if	defined(AUTHENTICATION)
-	start_slave P((char *)),
-#else
-	start_slave P((char *, int, char *)),
-#endif
-	suboption P((void)),
-	telrcv P((void)),
-	ttloop P((void)),
-	tty_binaryin P((int)),
-	tty_binaryout P((int));
-
-extern char*
-	gtgetstr P((char  *, char **));
-
-extern int
-	end_slc P((unsigned char **)),
-	gtgetent P((char *, char *)),
-	getnpty P((void)),
-#ifndef convex
-	getpty P((int *)),
-#endif
-	login_tty P((int)),
-	output_data P((const char *, ...)),
-	spcset P((int, cc_t *, cc_t **)),
-	stilloob P((int)),
-	terminit P((void)),
-	termstat P((void)),
-	tty_flowmode P((void)),
-	tty_restartany P((void)),
-	tty_isbinaryin P((void)),
-	tty_isbinaryout P((void)),
-	tty_iscrnl P((void)),
-	tty_isecho P((void)),
-	tty_isediting P((void)),
-	tty_islitecho P((void)),
-	tty_isnewmap P((void)),
-	tty_israw P((void)),
-	tty_issofttab P((void)),
-	tty_istrapsig P((void)),
-	tty_linemode P((void));
-
-extern void
-	tty_rspeed P((int)),
-	tty_setecho P((int)),
-	tty_setedit P((int)),
-	tty_setlinemode P((int)),
-	tty_setlitecho P((int)),
-	tty_setsig P((int)),
-	tty_setsofttab P((int)),
-	tty_tspeed P((int)),
-	willoption P((int)),
-	wontoption P((int)),
-	writenet P((unsigned char *, int));
+int telnet_net_write (unsigned char *str, int len);
+void net_encrypt (void);
+int telnet_spin (void);
+char *telnet_getenv (const char *val);
+char *telnet_gets (char *prompt, char *result, int length, int echo);
+void get_slc_defaults (void);
+void telrcv (void);
+void send_do (int option, int init);
+void willoption (int option);
+void send_dont (int option, int init);
+void wontoption (int option);
+void send_will (int option, int init);
+void dooption (int option);
+void send_wont (int option, int init);
+void dontoption (int option);
+void suboption (void);
+void doclientstat (void);
+void send_status (void);
+void init_termbuf (void);
+void set_termbuf (void);
+int spcset (int func, cc_t *valp, cc_t **valpp);
+void set_utid (void);
+int getpty (int *ptynum);
+int tty_isecho (void);
+int tty_flowmode (void);
+int tty_restartany (void);
+void tty_setecho (int on);
+int tty_israw (void);
+void tty_binaryin (int on);
+void tty_binaryout (int on);
+int tty_isbinaryin (void);
+int tty_isbinaryout (void);
+int tty_issofttab (void);
+void tty_setsofttab (int on);
+int tty_islitecho (void);
+void tty_setlitecho (int on);
+int tty_iscrnl (void);
+void tty_tspeed (int val);
+void tty_rspeed (int val);
+void getptyslave (void);
+int cleanopen (char *line);
+void startslave (const char *host, const char *, int autologin, char *autoname);
+void init_env (void);
+void start_login (const char *host, int autologin, char *name);
+void cleanup (int sig);
+int main (int argc, char **argv);
+int getterminaltype (char *name, size_t);
+void _gettermname (void);
+int terminaltypeok (char *s);
+void my_telnet (int f, int p, const char*, const char *, int, char*);
+void interrupt (void);
+void sendbrk (void);
+void sendsusp (void);
+void recv_ayt (void);
+void doeof (void);
+void flowstat (void);
+void clientstat (int code, int parm1, int parm2);
+int ttloop (void);
+int stilloob (int s);
+void ptyflush (void);
+char *nextitem (char *current);
+void netclear (void);
+void netflush (void);
+void writenet (unsigned char *ptr, int len);
+void fatal (int f, char *msg);
+void fatalperror (int f, const char *msg);
+void fatalperror_errno (int f, const char *msg, int error);
+void edithost (char *pat, char *host);
+void putstr (char *s);
+void putchr (int cc);
+void putf (char *cp, char *where);
+void printoption (char *fmt, int option);
+void printsub (int direction, unsigned char *pointer, int length);
+void printdata (char *tag, char *ptr, int cnt);
+int login_tty(int t);
 
 #ifdef ENCRYPTION
-extern void     (*encrypt_output) (unsigned char *, int);
-extern int      (*decrypt_input) (int);
-extern char     *nclearto;
+extern void	(*encrypt_output) (unsigned char *, int);
+extern int	(*decrypt_input) (int);
+extern char	*nclearto;
 #endif
+
 
 /*
  * The following are some clocks used to decide how to interpret
  * the relationship between various variables.
  */
 
-extern struct {
+struct clocks_t{
     int
 	system,			/* what the current time is */
 	echotoggle,		/* last time user entered echo character */
@@ -215,25 +178,28 @@ extern struct {
 	xdisplocsubopt,		/* xdisploc subopt is received */
 	baseline,		/* time started to do timed action */
 	gotDM;			/* when did we last see a data mark */
-} clocks;
+};
+extern struct clocks_t clocks;
 
+extern int log_unauth;
+extern int no_warn;
 
-#if	defined(CRAY2) && defined(UNICOS5)
-extern int	needtermstat;
+#ifdef STREAMSPTY
+extern int really_stream;
 #endif
 
-#ifndef	DEFAULT_IM
+#ifndef USE_IM
 # ifdef CRAY
-#  define DEFAULT_IM	"\r\n\r\nCray UNICOS (%h) (%t)\r\n\r\r\n\r"
-# else
-#  ifdef sun
-#   define DEFAULT_IM	"\r\n\r\nSunOS UNIX (%h) (%t)\r\n\r\r\n\r"
-#  else
-#   ifdef ultrix
-#    define DEFAULT_IM	"\r\n\r\nULTRIX (%h) (%t)\r\n\r\r\n\r"
-#   else
-#    define DEFAULT_IM	"\r\n\r\n4.4 BSD UNIX (%h) (%t)\r\n\r\r\n\r"
-#   endif
-#  endif
+#  define USE_IM "Cray UNICOS (%h) (%t)"
+# endif
+# ifdef _AIX
+#  define USE_IM "%s %v.%r (%h) (%t)"
+# endif
+# ifndef USE_IM
+#  define USE_IM "%s %r (%h) (%t)"
 # endif
 #endif
+
+#define DEFAULT_IM "\r\n\r\n" USE_IM "\r\n\r\n\r\n"
+
+#endif /* __EXT_H__ */

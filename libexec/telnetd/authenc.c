@@ -1,6 +1,3 @@
-/*	$OpenBSD: authenc.c,v 1.4 2001/05/25 10:25:22 hin Exp $	*/
-/*	$NetBSD: authenc.c,v 1.3 1996/02/28 20:38:08 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,66 +31,50 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)authenc.c	8.2 (Berkeley) 5/30/95";
-static char rcsid[] = "$NetBSD: authenc.c,v 1.3 1996/02/28 20:38:08 thorpej Exp $";
-#else
-static char rcsid[] = "$OpenBSD: authenc.c,v 1.4 2001/05/25 10:25:22 hin Exp $";
-#endif
-#endif /* not lint */
-
-#if	defined(AUTHENTICATION)
 #include "telnetd.h"
-#include <libtelnet/misc.h>
 
-	int
-telnet_net_write(str, len)
-	unsigned char *str;
-	int len;
+/* RCSID("$KTH: authenc.c,v 1.10 2000/11/15 23:20:43 assar Exp $"); */
+
+#ifdef AUTHENTICATION
+
+int
+telnet_net_write(unsigned char *str, int len)
 {
-	if (nfrontp + len < netobuf + BUFSIZ) {
-		memmove((void *)nfrontp, (void *)str, len);
-		nfrontp += len;
-		return(len);
-	}
-	return(0);
+    if (nfrontp + len < netobuf + BUFSIZ) {
+	memmove(nfrontp, str, len);
+	nfrontp += len;
+	return(len);
+    }
+    return(0);
 }
 
-	void
-net_encrypt()
+void
+net_encrypt(void)
 {
 #ifdef ENCRYPTION
-	char *s = (nclearto > nbackp) ? nclearto : nbackp;
-	if (s < nfrontp && encrypt_output) {
-		(*encrypt_output)((unsigned char *)s, nfrontp - s);
-	}
-	nclearto = nfrontp;
+    char *s = (nclearto > nbackp) ? nclearto : nbackp;
+    if (s < nfrontp && encrypt_output) {
+	(*encrypt_output)((unsigned char *)s, nfrontp - s);
+    }
+    nclearto = nfrontp;
 #endif
 }
 
-	int
-telnet_spin()
+int
+telnet_spin(void)
 {
-	ttloop();
-	return(0);
+    return ttloop();
 }
 
-	char *
-telnet_getenv(val)
-	const char *val;
+char *
+telnet_getenv(const char *val)
 {
-	extern char *getenv(const char *);
-	return(getenv(val));
+    return(getenv(val));
 }
 
-	char *
-telnet_gets(prompt, result, length, echo)
-	char *prompt;
-	char *result;
-	int length;
-	int echo;
+char *
+telnet_gets(char *prompt, char *result, int length, int echo)
 {
-	return NULL;
+    return NULL;
 }
-#endif	/* defined(AUTHENTICATION) */
+#endif

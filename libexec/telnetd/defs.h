@@ -1,6 +1,3 @@
-/*	$OpenBSD: defs.h,v 1.4 1998/05/08 19:47:05 deraadt Exp $	*/
-/*	$NetBSD: defs.h,v 1.6 1996/02/28 20:38:10 thorpej Exp $	*/
-
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,65 +30,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)defs.h	8.1 (Berkeley) 6/4/93
+ *	@(#)defs.h	8.1 (Berkeley) 6/4/93
  */
 
 /*
  * Telnet server defines
  */
-#include <sys/types.h>
-#include <sys/param.h>
 
-#ifndef	BSD
-# define	BSD 43
-#endif
+#ifndef __DEFS_H__
+#define __DEFS_H__
 
 #if defined(PRINTOPTIONS) && defined(DIAGNOSTICS)
 #define TELOPTS
 #define TELCMDS
 #define	SLC_NAMES
 #endif
-
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/ioctl.h>
-
-#include <netinet/in.h>
-
-#include <arpa/telnet.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <errno.h>
-#include <netdb.h>
-#include <syslog.h>
-#ifndef	LOG_DAEMON
-#define	LOG_DAEMON	0
-#endif
-#ifndef	LOG_ODELAY
-#define	LOG_ODELAY	0
-#endif
-#include <ctype.h>
-#include <string.h>
-
-#ifndef	USE_TERMIO
-#include <sgtty.h>
-#else
-# ifdef	SYSV_TERMIO
-# include <termio.h>
-# else
-# include <termios.h>
-# endif
-#endif
-#if !defined(USE_TERMIO) || defined(NO_CC_T)
-typedef unsigned char cc_t;
-#endif
-#include <unistd.h>
 
 #if	!defined(TIOCSCTTY) && defined(TCSETCTTY)
 # define	TIOCSCTTY TCSETCTTY
@@ -100,11 +53,11 @@ typedef unsigned char cc_t;
 #ifndef TIOCPKT_FLUSHWRITE
 #define TIOCPKT_FLUSHWRITE      0x02
 #endif
-
+ 
 #ifndef TIOCPKT_NOSTOP
 #define TIOCPKT_NOSTOP  0x10
 #endif
-
+ 
 #ifndef TIOCPKT_DOSTOP
 #define TIOCPKT_DOSTOP  0x20
 #endif
@@ -112,8 +65,8 @@ typedef unsigned char cc_t;
 /*
  * I/O data buffers defines
  */
-#define	NETSLOP	4096
-#ifdef CRAY
+#define	NETSLOP	64
+#ifdef _CRAY
 #undef BUFSIZ
 #define BUFSIZ  2048
 #endif
@@ -125,15 +78,6 @@ typedef unsigned char cc_t;
 /* clock manipulations */
 #define	settimer(x)	(clocks.x = ++clocks.system)
 #define	sequenceIs(x,y)	(clocks.x < clocks.y)
-
-/*
- * Linemode support states, in decreasing order of importance
- */
-#define REAL_LINEMODE	0x04
-#define KLUDGE_OK	0x03
-#define	NO_AUTOKLUDGE	0x02
-#define KLUDGE_LINEMODE	0x01
-#define NO_LINEMODE	0x00
 
 /*
  * Structures of information for each special character function.
@@ -238,3 +182,5 @@ typedef struct {
 
 #define his_will_wont_is_changing	my_do_dont_is_changing
 #define his_do_dont_is_changing		my_will_wont_is_changing
+
+#endif /* __DEFS_H__ */
