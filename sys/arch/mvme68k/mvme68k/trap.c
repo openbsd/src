@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 1997/02/21 06:07:27 deraadt Exp $ */
+/*	$OpenBSD: trap.c,v 1.15 1997/02/24 13:00:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1172,7 +1172,13 @@ hardintr(pc, evec, frame)
 	cnt.v_intr++;
 /*	intrcnt[level]++; */
 	for (ih = intrs[vec]; ih; ih = ih->ih_next) {
-		r = (*ih->ih_fn)(ih->ih_wantframe ? frame : ih->ih_arg);
+#if 0
+		if (vec >= 0x70 && vec <= 0x73) {
+			zscnputc(0, '[');
+			zscnputc(0, '0' + (vec - 0x70));
+		}
+#endif
+		r = (*ih->ih_fn)(ih->ih_wantframe ? frame : ih->ih_arg, vec);
 		if (r > 0)
 			count++;
 	}
