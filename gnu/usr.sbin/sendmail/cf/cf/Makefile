@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2002/07/03 16:08:27 millert Exp $
+#	$OpenBSD: Makefile,v 1.19 2003/06/12 01:05:14 millert Exp $
 #
 #  Makefile for configuration files.
 #
@@ -27,7 +27,7 @@ RM=	rm -f
 
 ALL=	submit.cf clientproto.cf tcpproto.cf openbsd-localhost.cf \
 	openbsd-proto.cf courtesan.cf courtesan-nonet.cf openbsd-lists.cf \
-	openbsd-bulk.cf lucifier.cf elbereth.cf corpse.cf knecht.cf
+	openbsd-bulk.cf lucifier.cf corpse.cf knecht.cf
 
 all: $(ALL)
 
