@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.21 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: extend.c,v 1.22 2002/03/10 13:22:56 ho Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -686,8 +686,9 @@ excline(line)
 	PF	 fp;
 	LINE	*lp, *np;
 	int	 status, c, f, n;
-	char	*funcp;
+	char	*funcp, *tmp;
 	char	*argp = NULL;
+	long	 nl;
 #ifdef	FKEYS
 	int	 bind;
 	KEYMAP	*curmap;
@@ -721,15 +722,14 @@ excline(line)
 		}
 	}
 	if (argp != NULL) {
-		char *tmp;
 		f = FFARG;
 		errno = 0;
-		n = strtol(argp, &tmp, 10);
+		nl = strtol(argp, &tmp, 10);
 		if (*tmp != '\0')
 			return FALSE;
-		if ((errno == ERANGE && (n == LONG_MAX || n == LONG_MIN)) ||
-		    (n > INT_MAX || n < INT_MIN))
+		if (nl >= INT_MAX || nl <= INT_MIN)
 			return FALSE;
+		n = (int)nl;
 	}
 	if ((fp = name_function(funcp)) == NULL) {
 		ewprintf("Unknown function: %s", funcp);
