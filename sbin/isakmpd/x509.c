@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.30 2000/11/23 12:57:07 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.31 2000/11/30 06:36:37 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.45 2000/11/23 12:51:21 niklas Exp $	*/
 
 /*
@@ -315,7 +315,7 @@ x509_hash (u_int8_t *id, size_t len)
   u_int16_t bucket = 0;
 
   /* XXX We might resize if we are crossing a certain threshold.  */
-  for (i = 0; i < (len & ~1); i += 2)
+  for (i = 4; i < (len & ~1); i += 2)
     {
       /* Doing it this way avoids alignment problems.  */
       bucket ^= (id[i] + 1) * (id[i + 1] + 257);
