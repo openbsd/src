@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.40 2002/06/30 13:47:07 miod Exp $
+dnl	$OpenBSD: hardware,v 1.41 2002/08/12 10:49:00 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
     * sun4: the VME series
 	- 4/100: Original sparc with VME. Many hardware bugs.
@@ -102,11 +102,13 @@ Supported devices {:-include-:}:
 	  + cgsix - 8-bit color, accelerated (GX, GX+, TGX, TGX+)
 	    This driver should also work with faithful emulations or clones
 	    of the SBus cgsix.
-	  + cgfourteen - 8-bt color (24-bit MBus accelerated card, but the
-	    driver only properly emulates a cgthree)
+	  + cgtwelve - 24-bit color, 1-bit overlay, accelerated (but the
+	    driver does not support hardware acceleration)
+	  + cgfourteen - 8-bit color (24-bit MBus accelerated card, but the
+	    driver only properly supports 8-bit color)
 	  + p9100 ("pnozz") framebuffer found in Tapdole SPARCbook 3GS and
-	    3GX (8-bit unaccelerated)
-	  + TCX - 8-bit color (24-bit, but driver emulates a cgthree)
+	    3GX (8, 16 or 32-bit unaccelerated)
+	  + TCX - 8/24-bit color
 	- 4/200 on-board bwtwo
 	- P4 video (4/100 and 4/300):
 	  + bwtwo - black and white
@@ -180,8 +182,6 @@ Hardware the we do NOT currently support, but get many questions about:
 	  unaccelerated without GP/GP2
         - VME GP/GP2 Graphics Processor (drives a cgfive or cgnine)
         - SBus cgeight, 24-bit color, unaccelerated
-        - SBus GS, 24-bit color, 8-bit color, overlay planes,
-	  double-buffered, 3-D acceleration (aka cgtwelve)
         - SBus GT, 24-bit color, 8-bit color, overlay planes,
 	  double-buffered, 3-D acceleration (aka "Graphics Tower")
         - SBus ZX, 24-bit color, 8-bit color, overlay planes,
