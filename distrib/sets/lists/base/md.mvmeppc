@@ -1782,7 +1782,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/vmparam.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/vuid_event.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/wsconsio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols/dumprestore.ph

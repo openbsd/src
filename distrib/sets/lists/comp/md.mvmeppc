@@ -53,7 +53,6 @@
 ./usr/include/mvmeppc/va-ppc.h
 ./usr/include/mvmeppc/varargs.h
 ./usr/include/mvmeppc/vmparam.h
-./usr/include/mvmeppc/vuid_event.h
 ./usr/include/mvmeppc/wsconsio.h
 ./usr/include/powerpc
 ./usr/include/powerpc/db_machdep.h

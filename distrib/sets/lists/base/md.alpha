@@ -631,7 +631,6 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/types.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/varargs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/vmparam.ph
-./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/vuid_event.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/alpha/wsconsio.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq
 ./usr/libdata/perl5/site_perl/alpha-openbsd/altq/altq.ph

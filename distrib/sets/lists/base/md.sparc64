@@ -1374,7 +1374,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/varargs.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/vmparam.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/vuid_event.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/z8530var.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/spinlock.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl

@@ -1494,7 +1494,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/vmparam.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/vuid_event.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/wsconsio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/macppc/z8530var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/malloc.ph
@@ -1834,7 +1833,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/va-ppc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/varargs.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/vuid_event.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/wsconsio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/protocols/dumprestore.ph

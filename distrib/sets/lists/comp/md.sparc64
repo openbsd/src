@@ -64,7 +64,6 @@
 ./usr/include/sparc64/types.h
 ./usr/include/sparc64/varargs.h
 ./usr/include/sparc64/vmparam.h
-./usr/include/sparc64/vuid_event.h
 ./usr/include/sparc64/z8530var.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o

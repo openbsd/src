@@ -62,6 +62,7 @@
 ./etc/newsyslog.conf
 ./etc/passwd
 ./etc/pf.conf
+./etc/pf.os
 ./etc/phones
 ./etc/portal.conf
 ./etc/ppp/chap-secrets
@@ -174,6 +175,9 @@
 ./var/www/htdocs/manual/configuring.html.html
 ./var/www/htdocs/manual/configuring.html.ja.jis
 ./var/www/htdocs/manual/content-negotiation.html
+./var/www/htdocs/manual/content-negotiation.html.en
+./var/www/htdocs/manual/content-negotiation.html.html
+./var/www/htdocs/manual/content-negotiation.html.ja.jis
 ./var/www/htdocs/manual/custom-error.html.en
 ./var/www/htdocs/manual/custom-error.html.fr
 ./var/www/htdocs/manual/custom-error.html.html
@@ -262,6 +266,7 @@
 ./var/www/htdocs/manual/mod/core.html.en
 ./var/www/htdocs/manual/mod/core.html.fr
 ./var/www/htdocs/manual/mod/core.html.html
+./var/www/htdocs/manual/mod/core.html.ja.jis
 ./var/www/htdocs/manual/mod/directive-dict.html.en
 ./var/www/htdocs/manual/mod/directive-dict.html.fr
 ./var/www/htdocs/manual/mod/directive-dict.html.html
@@ -288,11 +293,13 @@
 ./var/www/htdocs/manual/mod/mod_actions.html.html
 ./var/www/htdocs/manual/mod/mod_actions.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_alias.html.en
+./var/www/htdocs/manual/mod/mod_alias.html.html
 ./var/www/htdocs/manual/mod/mod_alias.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_asis.html.en
 ./var/www/htdocs/manual/mod/mod_asis.html.html
 ./var/www/htdocs/manual/mod/mod_asis.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_auth.html.en
+./var/www/htdocs/manual/mod/mod_auth.html.html
 ./var/www/htdocs/manual/mod/mod_auth.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_auth_anon.html
 ./var/www/htdocs/manual/mod/mod_auth_db.html
@@ -326,6 +333,9 @@
 ./var/www/htdocs/manual/mod/mod_log_agent.html
 ./var/www/htdocs/manual/mod/mod_log_common.html
 ./var/www/htdocs/manual/mod/mod_log_config.html
+./var/www/htdocs/manual/mod/mod_log_config.html.en
+./var/www/htdocs/manual/mod/mod_log_config.html.html
+./var/www/htdocs/manual/mod/mod_log_config.html.ja.jis
 ./var/www/htdocs/manual/mod/mod_log_referer.html
 ./var/www/htdocs/manual/mod/mod_mime.html.en
 ./var/www/htdocs/manual/mod/mod_mime.html.html
