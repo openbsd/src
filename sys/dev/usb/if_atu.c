@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.2 2004/11/08 22:41:55 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.3 2004/11/09 14:42:26 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -85,10 +85,6 @@
 #include <dev/usb/usbdivar.h>
 #if 0
 #include <dev/usb/usb_ethersubr.h>
-#endif
-
-#if 0
-#include <dev/ic/anreg.h>
 #endif
 
 #include <dev/usb/usbdevs.h>
@@ -182,11 +178,6 @@ int atu_start_scan(struct atu_softc *sc);
 int atu_switch_radio(struct atu_softc *sc, int state);
 int atu_initial_config(struct atu_softc *sc);
 int atu_join(struct atu_softc *sc);
-#if 0
-void
-atu_airo_tap(struct atu_softc *sc, u_int8_t *pkt, u_int length,
-    struct at76c503_rx_buffer *at_hdr);
-#endif
 int
 atu_send_packet(struct atu_softc *sc, struct atu_chain *c);
 int atu_send_mgmt_packet(struct atu_softc *sc,
@@ -750,114 +741,15 @@ atu_join(struct atu_softc *sc)
 	return err;
 }
 
-#if 0
-void
-atu_airo_tap(struct atu_softc *sc, u_int8_t *pkt, u_int length,
-    struct at76c503_rx_buffer *at_hdr)
-{
-	struct mbuf		*airo_pkt;
-	struct an_rxframe	*airo_hdr;
-	struct wi_80211_hdr	*wi_hdr;
-	struct wi_80211_hdr	*wi_hdr_dst;
-	int			wi_hdr_len;
-	u_int8_t		*payload_ptr;
-	int s;
-
-	MGETHDR(airo_pkt, M_DONTWAIT, MT_DATA);
-	if (airo_pkt == NULL) {
-		DPRINTF(("%s: airo_tap: could not get an mbuf!\n",
-		    USBDEVNAME(sc->atu_dev)));
-		return;
-	}
-
-	MCLGET(airo_pkt, M_DONTWAIT);
-	if (!(airo_pkt->m_flags & M_EXT)) {
-		DPRINTF(("%s: airo_tap: could not get an mbuf!\n",
-		    USBDEVNAME(sc->atu_dev)));
-		m_freem(airo_pkt);
-		return;
-	}
-
-	airo_pkt->m_len = airo_pkt->m_pkthdr.len =
-	    MCLBYTES;
-
-	airo_hdr = mtod(airo_pkt, struct an_rxframe *);
-	wi_hdr_dst = (struct wi_80211_hdr *)&airo_hdr->an_frame_ctl;
-	wi_hdr = (struct wi_80211_hdr *)pkt;
-	payload_ptr = mtod(airo_pkt, u_int8_t *) + sizeof(struct an_rxframe);
-
-	bzero(airo_hdr, sizeof(struct an_rxframe));
-
-	if (at_hdr != NULL) {
-		/* It's a received packet : fill in receiver info */
-		airo_hdr->an_rx_time = at_hdr->rx_time;
-		airo_hdr->an_rx_signal_strength = at_hdr->rssi;
-		airo_hdr->an_rx_rate = at_hdr->rx_rate;
-
-		/* this is inaccurate when scanning! */
-		airo_hdr->an_rx_chan = sc->atu_channel;
-
-	} else {
-		/* It's a transmitted packet : make up as much as we can */
-		airo_hdr->an_rx_time = 0;
-		airo_hdr->an_rx_signal_strength = 0xff;
-		airo_hdr->an_rx_rate = 4;
-
-		airo_hdr->an_rx_chan = sc->atu_channel;
-	}
-
-	if ((wi_hdr->frame_ctl & WI_FCTL_FTYPE) == WI_FTYPE_DATA) {
-		wi_hdr_len = sizeof(struct wi_80211_hdr);
-	} else {
-		wi_hdr_len = sizeof(struct wi_mgmt_hdr);
-	}
-
-	airo_hdr->an_rx_payload_len = length - wi_hdr_len;
-
-	bcopy(wi_hdr, wi_hdr_dst, wi_hdr_len);
-	airo_hdr->an_gaplen = 0;
-
-	m_copyback(airo_pkt, sizeof(struct an_rxframe), length - wi_hdr_len,
-	    pkt + wi_hdr_len);
-
-	airo_pkt->m_pkthdr.rcvif = &sc->arpcom.ac_if;
-	s = splnet();
-	IF_INPUT(&sc->arpcom.ac_if, airo_pkt);
-	splx(s);
-
-	airo_pkt->m_pkthdr.len = airo_pkt->m_len = length - wi_hdr_len +
-	    sizeof(struct an_rxframe);
-
-	bpf_mtap(sc->atu_airobpf, airo_pkt);
-	m_free(airo_pkt);
-}
-#endif /* 0 */
-
 int
 atu_send_packet(struct atu_softc *sc, struct atu_chain *c)
 {
 	usbd_status		err;
 	struct atu_txpkt	*pkt;
-#if 0
-	struct ifnet		*ifp = &sc->arpcom.ac_if;
-#endif
+
 	/* Don't try to send when we're shutting down the driver */
 	if (sc->atu_dying)
 		return(EIO);
-
-#if 0
-	if (ifp->if_bpf) {
-		DPRINTF(("%s: bpf_tap on tx\n", USBDEVNAME(sc->atu_dev)));
-		bpf_tap(ifp->if_bpf, c->atu_buf, c->atu_length);
-	}
-
-	/* drop the raw 802.11b packets to bpf */
-	if (sc->atu_rawbpf) {
-		DPRINTF(("%s: raw bpf tap on TX :)\n",
-		    USBDEVNAME(sc->atu_dev)));
-		bpf_tap(sc->atu_rawbpf, c->atu_buf, c->atu_length);
-	}
-#endif
 
 	pkt = (struct atu_txpkt *)c->atu_buf;
 	if (pkt->WiHeader.addr1[0]==0xff) {
@@ -891,21 +783,6 @@ atu_send_packet(struct atu_softc *sc, struct atu_chain *c)
 		pkt->WiHeader.addr1[5]=0x0;
 		*/
 	}
-
-#if 0
-	/* drop the raw 802.11b packets to bpf with aironet header */
-	if (sc->atu_airobpf) {
-
-		DPRINTF(("%s: aironet bpf tap on TX :)\n",
-		    USBDEVNAME(sc->atu_dev)));
-
-		pkt = (struct atu_txpkt *)c->atu_buf;
-
-		atu_airo_tap(sc, (u_int8_t *)&pkt->WiHeader,
-		    c->atu_length - sizeof(struct at76c503_tx_buffer),
-		    NULL);
-	}
-#endif
 
 #ifdef ATU_NO_COPY_TX
 	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_TX],
@@ -1953,14 +1830,6 @@ USB_ATTACH(atu)
 	    0));
 #undef ADD
 
-	/* attach to bpf for raw 802.11 packets */
-#if 0
-#if NBPFILTER > 0
-	bpfattach(&sc->atu_rawbpf, ifp, DLT_IEEE802_11_RADIO,
-	    sizeof(struct ieee80211_frame) + 64);
-#endif
-#endif
-
 	splx(s);
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -1971,12 +1840,6 @@ USB_DETACH(atu)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 
 	atu_stop(sc);
-
-#if 0
-#if NBPFILTER > 0
-	bpfdetach(ipf);
-#endif
-#endif
 
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
@@ -2488,44 +2351,6 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	pkt = mtod(m, struct atu_rxpkt *);
 
-#if 0
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_tap(ifp->if_bpf, (u_int8_t *)&pkt->WiHeader,
-		     pkt->AtHeader.wlength);
-#if 0
-	if (ifp->if_bpf) {
-		printf("HELKLO@#\n");
-		BPF_MTAP(ifp, m);
-	}
-#endif
-#endif
-#endif
-
-#if 0
-	/* drop the raw 802.11b packets to bpf (including 4-byte FCS) */
-	if (sc->atu_rawbpf) {
-		/*
-		 * TODO: could drop mbuf's to bpf
-		 */
-		DPRINTF(("%s: bpf raw tap on RX :)\n",
-		    USBDEVNAME(sc->atu_dev)));
-
-		bpf_tap(sc->atu_rawbpf, (u_int8_t *)&pkt->WiHeader,
-		     pkt->AtHeader.wlength);
-	}
-#endif
-#if 0
-	/* drop the raw 802.11b packets to bpf (with aironet header) */
-	if (sc->atu_airobpf) {
-		DPRINTF(("%s: bpf aironet tap on RX\n",
-		    USBDEVNAME(sc->atu_dev)));
-
-		atu_airo_tap(sc, (u_int8_t *)&pkt->WiHeader,
-		    pkt->AtHeader.wlength - 4, &pkt->AtHeader);
-	}
-#endif
-
 	DPRINTFN(10, ("%s: -- RX (rate=%d enc=%d) mac=%s",
 	    USBDEVNAME(sc->atu_dev), pkt->AtHeader.rx_rate,
 	    (pkt->WiHeader.frame_ctl & WI_FCTL_WEP) != 0,
@@ -2897,11 +2722,6 @@ atu_start(struct ifnet *ifp)
 		}
 
 #if NBPFILTER > 0
-#if 0
-		if (sc->atu_airobpf)
-			bpf_mtap(sc->atu_airobpf, m_head);
-#endif
-
 		if (ifp->if_bpf)
 			BPF_MTAP(ifp, m_head);
 #endif
