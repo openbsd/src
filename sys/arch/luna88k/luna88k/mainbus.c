@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.2 2004/08/06 14:22:43 aoyama Exp $ */
+/* $OpenBSD: mainbus.c,v 1.3 2004/08/10 17:07:20 aoyama Exp $ */
 /* $NetBSD: mainbus.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -42,18 +42,19 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/board.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 
 static const struct mainbus_attach_args devs[] = {
-	{ "clock",  0x45000000, -1 },	/* Mostek/Dallas TimeKeeper */
-	{ "le",	    0xf1000000, 4 },	/* Am7990 */
-	{ "sio",    0x51000000, 5 },	/* uPD7201A */
-	{ "fb",	    0xc1100000, -1 },	/* BrookTree RAMDAC */
-	{ "spc",    0xe1000000, 3 },	/* MB89352 */
-	{ "spc",    0xe1000040, 3 },	/* ditto */
+	{ "clock", 0x45000000, -1, LUNA_88K|LUNA_88K2 }, /* Mostek/Dallas TimeKeeper */
+	{ "le",	   0xf1000000, 4,  LUNA_88K|LUNA_88K2 }, /* Am7990 */
+	{ "sio",   0x51000000, 5,  LUNA_88K|LUNA_88K2 }, /* uPD7201A */
+	{ "fb",	   0xc1100000, -1, LUNA_88K|LUNA_88K2 }, /* BrookTree RAMDAC */
+	{ "spc",   0xe1000000, 3,  LUNA_88K|LUNA_88K2 }, /* MB89352 */
+	{ "spc",   0xe1000040, 3,  LUNA_88K2 },          /* ditto, LUNA-88K2 only */
 #if NPCM > 0
-	{ "pcm",    0x91000000, 4 },	/* NEC-9801-86 Sound board (under testing) */
+	{ "pcm",   0x91000000, 4,  LUNA_88K|LUNA_88K2 }, /* NEC-9801-86 Sound board (under testing) */
 #endif
 };
 
@@ -88,6 +89,7 @@ mainbus_attach(parent, self, args)
 	void *args;
 {
 	int i;
+	extern int machtype;
 	extern char cpu_model[];
 
 	printf(": %s\n", cpu_model);
@@ -98,7 +100,8 @@ mainbus_attach(parent, self, args)
 	cpu_configuration_print(1);
 
 	for (i = 0; i < sizeof(devs)/sizeof(devs[0]); i++)
-		config_found(self, (void *)&devs[i], mainbus_print);
+		if (devs[i].ma_machine & machtype)
+			config_found(self, (void *)&devs[i], mainbus_print);
 }
 
 int
