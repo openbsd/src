@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2001/09/19 19:15:08 espie Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/09/29 15:49:18 espie Exp $
 #	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
 
 NOMAN=
@@ -11,7 +11,7 @@ M4=m4
 CLEANFILES+= ff_after_dnl.m4 strangequotes.m4 fibo.out
 
 ALL_TESTS= test-ff_after_dnl test-m4wrap test-fibo test-patterns trip \
-    test-strangequotes test-redef
+    test-strangequotes test-redef test-quotes
 
 regress: ${ALL_TESTS}
 
@@ -35,6 +35,12 @@ test-fibo: fibo.out
 
 trip:
 	echo "undefine(\`errprint')"|MALLOC_OPTIONS=A ${M4} -Derrprint=a >/dev/null
+
+test-quotes:
+	${M4} ${.CURDIR}/quotes.m4 2>&1|	\
+		sed -e 's,\( *\).*/quotes.m4,\1quotes.m4,' | \
+		diff - ${.CURDIR}/quotes.out
+	${M4} -g ${.CURDIR}/quotes.m4 2>&1|diff - ${.CURDIR}/quotes.gnu.out
 
 test-strangequotes: strangequotes.m4
 	${M4} strangequotes.m4| diff - ${.CURDIR}/strangequotes.out
