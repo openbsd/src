@@ -2059,7 +2059,7 @@ setmachdep()
 		IOBase = 0x50f00000;
 		Via1Base = (volatile u_char *) IOBase;
 		mac68k_machine.scsi80 = 1;
-		mac68k_machine.sccClkConst = 122400;
+		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
