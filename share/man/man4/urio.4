@@ -1,4 +1,4 @@
-.\" $OpenBSD: urio.4,v 1.5 2000/09/17 00:53:35 aaron Exp $
+.\" $OpenBSD: urio.4,v 1.6 2000/10/26 01:27:55 aaron Exp $
 .\" $NetBSD: urio.4,v 1.1 2000/04/14 14:48:29 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,14 +40,15 @@
 .Os
 .Sh NAME
 .Nm urio
-.Nd USB driver for the Diamond Multimedia Rio500 MP3 player
+.Nd USB driver for Diamond Multimedia Rio MP3 players
 .Sh SYNOPSIS
 .Cd "urio* at uhub?"
 .Pp
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Rio500 MP3 player from Diamond MultiMedia.
+driver provides support for Rio500 and Rio600 MP3 players from
+Diamond MultiMedia.
 .Pp
 The driver implements minimal support to access the device and requires
 a user application for up and downloading music.
