@@ -1,8 +1,8 @@
-/*      $OpenBSD: if_atm.h,v 1.1 1996/06/21 15:13:39 chuck Exp $       */
+/*      $OpenBSD: if_atm.h,v 1.2 1996/06/21 21:35:18 chuck Exp $       */
 
 /*
  *
- * Copyright (c) 1996 Charles D. Cranor
+ * Copyright (c) 1996 Charles D. Cranor and Washington University.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor.
+ *      This product includes software developed by Charles D. Cranor and
+ *	Washington University.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
