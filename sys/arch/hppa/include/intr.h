@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 1998/11/23 03:32:19 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 1998/12/05 17:42:10 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -31,6 +31,8 @@
 
 /* hardwired clock int line */
 #define	INT_ITMR	(0x80000000)
+#define	INT_IO		(0x80000000)
+#define	INT_ALL		(0xffffffff)
 
 #define	IPL_NONE	0
 #define	IPL_BIO		1
@@ -71,14 +73,14 @@
 	_ctl_r;							\
 })
 
-#define	spl0()		__spllow(0xffffffff)
+#define	spl0()		__spllow(INT_ALL)
 #define	splsoft()	__spllow(INT_ITMR)
 #define	splsoftnet()	splsoft()
 #define	splsoftclock()	splsoft()
-#define	splnet()	__spllow(INT_ITMR)
-#define	splbio()	__spllow(INT_ITMR)
-#define	splimp()	__spllow(INT_ITMR)
-#define	spltty()	__spllow(INT_ITMR)
+#define	splnet()	__spllow(INT_IO)
+#define	splbio()	__spllow(INT_IO)
+#define	splimp()	__spllow(INT_IO)
+#define	spltty()	__spllow(INT_IO)
 #define	splclock()	__spllow(0)
 #define	splstatclock()	__spllow(0)
 #define	splhigh()	__splhigh(0)
