@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 2003/06/23 09:24:58 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2003/06/23 20:32:23 mickey Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -160,17 +160,6 @@ bus_space_read_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
 		*dest++ = bus_space_read_4(tag, handle, offset);
 }
 
-static void bus_space_read_raw_multi_1(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int8_t *, size_t);
-
-static __inline__ void
-bus_space_read_raw_multi_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t *dest, size_t size)
-{
-	while ((int)--size >= 0)
-		*dest++ = bus_space_read_1(tag, handle, offset);
-}
-
 static void bus_space_read_raw_multi_2(bus_space_tag_t, bus_space_handle_t,
     bus_addr_t, u_int8_t *, size_t);
 
@@ -239,17 +228,6 @@ bus_space_write_multi_4(bus_space_tag_t tag, bus_space_handle_t handle,
 {
 	while ((int)--count >= 0)
 		bus_space_write_4(tag, handle, offset, *dest);
-}
-
-static void bus_space_write_raw_multi_1(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int8_t *, size_t);
-
-static __inline__ void
-bus_space_write_raw_multi_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t *dest, size_t size)
-{
-	while ((int)--size >= 0)
-		bus_space_write_1(tag, handle, offset, *dest++);
 }
 
 static void bus_space_write_raw_multi_2(bus_space_tag_t, bus_space_handle_t,
@@ -348,17 +326,6 @@ bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
 		bus_space_write_4(tag, handle, offset, *dest++);
 		offset +=4;
 	}
-}
-
-static void bus_space_write_raw_region_1(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int8_t *, size_t);
-
-static __inline__ void
-bus_space_write_raw_region_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t *dest, size_t size)
-{
-	while ((int)--size >= 0)
-		bus_space_write_1(tag, handle, offset++, *dest++);
 }
 
 static void bus_space_write_raw_region_2(bus_space_tag_t, bus_space_handle_t,
@@ -463,17 +430,6 @@ bus_space_set_region_4(bus_space_tag_t tag, bus_space_handle_t handle,
 		bus_space_write_4(tag, handle, offset, *dest);
 		offset += 4;
 	}
-}
-
-static void bus_space_read_raw_region_1(bus_space_tag_t, bus_space_handle_t,
-    bus_addr_t, u_int8_t *, size_t);
-
-static __inline__ void
-bus_space_read_raw_region_1(bus_space_tag_t tag, bus_space_handle_t handle,
-    bus_addr_t offset, u_int8_t *dest, size_t size)
-{
-	while ((int)--size >= 0)
-		*dest++ = bus_space_read_1(tag, handle, offset++);
 }
 
 static void bus_space_read_raw_region_2(bus_space_tag_t, bus_space_handle_t,
