@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.12 1997/07/10 23:06:37 provos Exp $	*/
+/*	$OpenBSD: sb.c,v 1.13 1997/08/07 05:27:32 deraadt Exp $	*/
 /*	$NetBSD: sb.c,v 1.36 1996/05/12 23:53:33 mycroft Exp $	*/
 
 /*
@@ -138,10 +138,8 @@ sbmatch(sc)
 		-1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
 	};
 
-	if (sbdsp_probe(sc) == 0) {
-		printf("%s: sbdsp probe failed\n", sc->sc_dev.dv_xname);
+	if (sbdsp_probe(sc) == 0)
 		return 0;
-	}
 
 	/*
 	 * Cannot auto-discover DMA channel.
