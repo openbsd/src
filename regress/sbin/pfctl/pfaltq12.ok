@@ -1,8 +1,8 @@
 queue root_lo0 bandwidth 10Mb priority 0 {eins, zwei, drei}
-  [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=1 ifname=lo0 ifbandwidth=10Mb ]
 queue  eins bandwidth 1Mb hfsc( default linkshare(2Mb 20 500Kb) ) 
-  [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
 queue  zwei bandwidth 4Mb hfsc( linkshare 3.50Mb upperlimit 5Mb ) 
-  [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
 queue  drei bandwidth 5Mb hfsc( linkshare(6Mb 20 4Mb) upperlimit(6.50Mb 10 4.50Mb) ) 
-  [ qid=5 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=4 ifname=lo0 ifbandwidth=10Mb ]

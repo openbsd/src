@@ -1,20 +1,20 @@
 queue root_lo0 bandwidth 10Mb priority 0 {one, two}
-  [ qid=2 ifname=lo0 ifbandwidth=10Mb ]
+  [ qid=1 ifname=lo0 ifbandwidth=10Mb ]
 queue  one bandwidth 1Mb hfsc( default ) 
+  [ qid=3 ifname=lo0 ifbandwidth=10Mb ]
+queue  two bandwidth 9Mb {three, four}
   [ qid=4 ifname=lo0 ifbandwidth=10Mb ]
-queue  two bandwidth 9Mb {three, four}
+queue   three bandwidth 4.50Mb 
   [ qid=5 ifname=lo0 ifbandwidth=10Mb ]
-queue   three bandwidth 4.50Mb 
+queue   four bandwidth 3.60Mb 
   [ qid=6 ifname=lo0 ifbandwidth=10Mb ]
-queue   four bandwidth 3.60Mb 
-  [ qid=7 ifname=lo0 ifbandwidth=10Mb ]
 queue root_tun1000000 bandwidth 10Mb priority 0 {one, two}
-  [ qid=3 ifname=tun1000000 ifbandwidth=10Mb ]
+  [ qid=2 ifname=tun1000000 ifbandwidth=10Mb ]
 queue  one bandwidth 1Mb hfsc( default ) 
-  [ qid=4 ifname=tun1000000 ifbandwidth=10Mb ]
+  [ qid=3 ifname=tun1000000 ifbandwidth=10Mb ]
 queue  two bandwidth 9Mb {three, four}
-  [ qid=5 ifname=tun1000000 ifbandwidth=10Mb ]
+  [ qid=4 ifname=tun1000000 ifbandwidth=10Mb ]
 queue   three bandwidth 4.50Mb 
-  [ qid=6 ifname=tun1000000 ifbandwidth=10Mb ]
+  [ qid=5 ifname=tun1000000 ifbandwidth=10Mb ]
 queue   four bandwidth 3.60Mb 
-  [ qid=7 ifname=tun1000000 ifbandwidth=10Mb ]
+  [ qid=6 ifname=tun1000000 ifbandwidth=10Mb ]
