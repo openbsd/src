@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.59 2000/12/12 18:37:12 art Exp $
+#	$OpenBSD: Makefile,v 1.60 2000/12/30 06:45:52 angelos Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -74,7 +74,7 @@ afterinstall:
 
 build:
 .ifdef GLOBAL_AUTOCONF_CACHE
-	rm -f ${GLOBAL_AUTOCONF_CACHE}
+	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
 .endif
 	(cd ${.CURDIR}/share/mk && ${SUDO} ${MAKE} install)
 	(cd ${.CURDIR}/include; ${MAKE} prereq; ${SUDO} ${MAKE} includes)
