@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.8 2000/01/18 10:20:00 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.9 2000/01/26 06:51:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -156,8 +156,6 @@ static int explore_numeric __P((const struct addrinfo *, const char *,
 	const char *, struct addrinfo **));
 static int explore_numeric_scope __P((const struct addrinfo *, const char *,
 	const char *, struct addrinfo **));
-static int get_name __P((const char *, const struct afd *, struct addrinfo **,
-	char *, const struct addrinfo *, const char *));
 static int get_canonname __P((const struct addrinfo *,
 	struct addrinfo *, const char *));
 static struct addrinfo *get_ai __P((const struct addrinfo *,
@@ -551,22 +549,15 @@ explore_fqdn(pai, hostname, servname, res)
 		if (af != pai->ai_family)
 			continue;
 
-		if ((pai->ai_flags & AI_CANONNAME) == 0) {
-			GET_AI(cur->ai_next, afd, ap);
-			GET_PORT(cur->ai_next, servname);
-		} else {
+		GET_AI(cur->ai_next, afd, ap);
+		GET_PORT(cur->ai_next, servname);
+		if ((pai->ai_flags & AI_CANONNAME) != 0) {
 			/*
-			 * if AI_CANONNAME and if reverse lookup
-			 * fail, return ai anyway to pacify
-			 * calling application.
-			 *
-			 * XXX getaddrinfo() is a name->address
-			 * translation function, and it looks
-			 * strange that we do addr->name
-			 * translation here.
+			 * RFC2553 says that ai_canonname will be set only for
+			 * the first element.  we do it for all the elements,
+			 * just for convenience.
 			 */
-			get_name(ap, afd, &cur->ai_next,
-				ap, pai, servname);
+			GET_CANONNAME(cur->ai_next, hp->h_name);
 		}
 
 		while (cur && cur->ai_next)
@@ -686,48 +677,10 @@ explore_numeric(pai, hostname, servname, res)
 	flags = pai->ai_flags;
 
 	if (inet_pton(afd->a_af, hostname, pton) == 1) {
-		u_int32_t v4a;
-#ifdef INET6
-		u_char pfx;
-#endif
-
-		switch (afd->a_af) {
-		case AF_INET:
-			v4a = (u_int32_t)ntohl(((struct in_addr *)pton)->s_addr);
-			if (IN_MULTICAST(v4a) || IN_EXPERIMENTAL(v4a))
-				flags &= ~AI_CANONNAME;
-			v4a >>= IN_CLASSA_NSHIFT;
-			if (v4a == 0 || v4a == IN_LOOPBACKNET)
-				flags &= ~AI_CANONNAME;
-			break;
-#ifdef INET6
-		case AF_INET6:
-			pfx = ((struct in6_addr *)pton)->s6_addr[0];
-			if (pfx == 0 || pfx == 0xfe || pfx == 0xff)
-				flags &= ~AI_CANONNAME;
-			break;
-#endif
-		}
-
 		if (pai->ai_family == afd->a_af ||
 		    pai->ai_family == PF_UNSPEC /*?*/) {
-			if ((flags & AI_CANONNAME) == 0) {
-				GET_AI(cur->ai_next, afd, pton);
-				GET_PORT(cur->ai_next, servname);
-			} else {
-				/*
-				 * if AI_CANONNAME and if reverse lookup
-				 * fail, return ai anyway to pacify
-				 * calling application.
-				 *
-				 * XXX getaddrinfo() is a name->address
-				 * translation function, and it looks
-				 * strange that we do addr->name
-				 * translation here.
-				 */
-				get_name(pton, afd, &cur->ai_next,
-					pton, pai, servname);
-			}
+			GET_AI(cur->ai_next, afd, pton);
+			GET_PORT(cur->ai_next, servname);
 			while (cur && cur->ai_next)
 				cur = cur->ai_next;
 		} else 
@@ -816,75 +769,6 @@ explore_numeric_scope(pai, hostname, servname, res)
 
 	return error;
 #endif
-}
-
-static int
-get_name(addr, afd, res, numaddr, pai, servname)
-	const char *addr;
-	const struct afd *afd;
-	struct addrinfo **res;
-	char *numaddr;
-	const struct addrinfo *pai;
-	const char *servname;
-{
-	struct hostent *hp = NULL;
-	struct addrinfo *cur = NULL;
-	int error = 0;
-	char *ap = NULL, *cn = NULL;
-#ifdef USE_GETIPNODEBY
-	int h_error;
-
-	hp = getipnodebyaddr(addr, afd->a_addrlen, afd->a_af, &h_error);
-#else
-	hp = gethostbyaddr(addr, afd->a_addrlen, afd->a_af);
-#endif
-	if (hp && hp->h_name && hp->h_name[0] && hp->h_addr_list[0]) {
-#ifdef USE_GETIPNODEBY
-		GET_AI(cur, afd, hp->h_addr_list[0]);
-		GET_PORT(cur, servname);
-		GET_CANONNAME(cur, hp->h_name);
-#else
-		/* hp will be damaged if we use gethostbyaddr() */
-		if ((ap = (char *)malloc(hp->h_length)) == NULL) {
-			error = EAI_MEMORY;
-			goto free;
-		}
-		memcpy(ap, hp->h_addr_list[0], hp->h_length);
-		if ((cn = strdup(hp->h_name)) == NULL) {
-			error = EAI_MEMORY;
-			goto free;
-		}
-
-		GET_AI(cur, afd, ap);
-		GET_PORT(cur, servname);
-		GET_CANONNAME(cur, cn);
-		free(ap); ap = NULL;
-		free(cn); cn = NULL;
-#endif
-	} else {
-		GET_AI(cur, afd, numaddr);
-		GET_PORT(cur, servname);
-	}
-	
-#ifdef USE_GETIPNODEBY
-	if (hp)
-		freehostent(hp);
-#endif
-	*res = cur;
-	return SUCCESS;
- free:
-	if (cur)
-		freeaddrinfo(cur);
-	if (ap)
-		free(ap);
-	if (cn)
-		free(cn);
-#ifdef USE_GETIPNODEBY
-	if (hp)
-		freehostent(hp);
-#endif
-	*res = NULL;
-	return error;
 }
 
 static int
