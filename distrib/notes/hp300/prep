@@ -70,9 +70,21 @@ manual page on your server system.
 
 Once `rbootd' is configured and running, you will be ready to continue.
 
-Make sure that the ramdisk kernel image (`bsd.rd') resides in a filesystem
-that is NFS exported to the client.  See the manual pages on your server
-system if you need more information about exporting filesystems.
+Next, add the client to /etc/ethers on your server.  For example:
+
+	08:00:09:04:AA:33	thunder-egg
+
+Then start `rarpd' on your server; `rarpd -a' should do the trick.
+
+Finally, you need to add an entry in /etc/bootparams.  For example:
+
+	thunder-egg	root=myserver:/export/hp300
+
+Where myserver is the name of your server machine and `/export/hp300'
+is the directory that holds the ramdisk kernel image (`bsd.rd').
+Now run `rpc.bootparamd' and make sure that this directory is NFS
+exported to the client.  See the manual pages on your server system
+if you need more information about exporting filesystems.
 
 You are now ready to load SYS_UBOOT.  During the client's self-test cycle,
 press the space bar.  Shortly, you should see a menu of possible boot
