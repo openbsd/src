@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.6 1998/11/17 11:10:17 niklas Exp $	*/
-/*	$EOM: message.c,v 1.100 1998/11/12 13:02:29 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.7 1998/11/20 07:32:50 niklas Exp $	*/
+/*	$EOM: message.c,v 1.101 1998/11/20 07:12:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -1394,9 +1394,10 @@ step_transform (struct payload *tp, struct payload **propp,
  * SA payload) we accept as a full protection suite.
  */
 int
-message_negotiate_sa (struct message *msg)
+message_negotiate_sa (struct message *msg, int (*validate) (struct sa *))
 {
   struct payload *tp, *propp, *sap, *next_tp = 0, *next_propp, *next_sap;
+  struct payload *saved_tp = 0, *saved_propp = 0, *saved_sap = 0;
   struct sa *sa;
   struct proto *proto;
   int suite_ok_so_far = 0;
@@ -1450,12 +1451,16 @@ message_negotiate_sa (struct message *msg)
 	    goto cleanup;
 	  suite_ok_so_far = 1;
 
+	  saved_tp = next_tp;
+	  saved_propp = next_propp;
+	  saved_sap = next_sap;
 	  /* Skip to last transform of this protocol proposal.  */
 	  while ((next_tp = step_transform (tp, &next_propp, &next_sap))
 		 && next_propp == propp)
 	    tp = next_tp;
 	}
 
+    retry_transform:
       /*
        * Figure out if we will be looking at a new protocol proposal
        * inside the current protection suite.
@@ -1492,34 +1497,56 @@ message_negotiate_sa (struct message *msg)
 	  || sap != next_sap)
 	{
 	  /*
-	   * Check if the suite we just considered was OK, if so we're done.
+	   * Check if the suite we just considered was OK, if so we check
+	   * it against the accepted ones. 
 	   */
 	  if (suite_ok_so_far)
 	    {
-	      log_debug (LOG_MESSAGE, 30,
-			 "message_negotiate_sa: proposal %d succeeded",
-			 GET_ISAKMP_PROP_NO (propp->p));
-
-	      /* Record the other guy's SPI.  */
-	      spi_sz = GET_ISAKMP_PROP_SPI_SZ (propp->p);
-	      if (spi_sz)
+	      if (!validate || validate (sa))
 		{
-		  spi = malloc (spi_sz);
-		  if (!spi)
-		    goto cleanup;
-		  memcpy (spi, propp->p + ISAKMP_PROP_SPI_OFF, spi_sz);
+		  log_debug (LOG_MESSAGE, 30,
+			     "message_negotiate_sa: proposal %d succeeded",
+			     GET_ISAKMP_PROP_NO (propp->p));
+
+		  /* Record the other guy's SPI.  */
+		  spi_sz = GET_ISAKMP_PROP_SPI_SZ (propp->p);
+		  if (spi_sz)
+		    {
+		      spi = malloc (spi_sz);
+		      if (!spi)
+			goto cleanup;
+		      memcpy (spi, propp->p + ISAKMP_PROP_SPI_OFF, spi_sz);
+		    }
+		  else
+		    spi = 0;
+		  TAILQ_FIRST (&sa->protos)->spi[!msg->exchange->initiator]
+		    = spi;
+		  log_debug_buf (LOG_MESSAGE, 40, "message_negotiate_sa: SPI",
+				 spi, spi_sz);
+
+		  /* Skip to the last transform of this SA.  */
+		  while ((next_tp
+			  = step_transform (tp, &next_propp, &next_sap))
+			 && next_sap == sap)
+		    tp = next_tp;
 		}
 	      else
-		spi = 0;
-	      TAILQ_FIRST (&sa->protos)->spi[!msg->exchange->initiator]
-		= spi;
-	      log_debug_buf (LOG_MESSAGE, 40, "message_negotiate_sa: SPI", spi,
-			     spi_sz);
+		{
+		  /* Backtrack.  */
+		  log_debug (LOG_MESSAGE, 30,
+			     "message_negotiate_sa: proposal %d failed", 
+			     GET_ISAKMP_PROP_NO (propp->p));
+		  next_tp = saved_tp;
+		  next_propp = saved_propp;
+		  next_sap = saved_sap;
+		  suite_ok_so_far = 0;
 
-	      /* Skip to the last transform of this SA.  */
-	      while ((next_tp = step_transform (tp, &next_propp, &next_sap))
-		     && next_sap == sap)
-		tp = next_tp;
+		  /* Remove potentially succeeded choices from the SA.  */
+		  while (TAILQ_FIRST (&sa->protos))
+		    TAILQ_REMOVE (&sa->protos, TAILQ_FIRST (&sa->protos),
+				  link);
+		  goto retry_transform;
+		}
 	    }
 	}
 
