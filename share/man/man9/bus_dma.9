@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_dma.9,v 1.13 2002/11/08 08:08:47 mpech Exp $ 
+.\"	$OpenBSD: bus_dma.9,v 1.14 2003/01/11 06:14:35 wcobb Exp $ 
 .\" $NetBSD: bus_dma.9,v 1.14 2000/06/14 06:49:19 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,58 +40,10 @@
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
-.Nm bus_dma ,
-.Nm bus_dmamap_create ,
-.Nm bus_dmamap_destroy ,
-.Nm bus_dmamap_load ,
-.Nm bus_dmamap_load_mbuf ,
-.Nm bus_dmamap_load_uio ,
-.Nm bus_dmamap_load_raw ,
-.Nm bus_dmamap_unload ,
-.Nm bus_dmamap_sync ,
-.Nm bus_dmamem_alloc ,
-.Nm bus_dmamem_free ,
-.Nm bus_dmamem_map ,
-.Nm bus_dmamem_unmap ,
-.Nm bus_dmamem_mmap
+.Nm bus_dma
 .Nd bus and machine independent DMA mapping interface
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
-.Ft int
-.Fn bus_dmamap_create "bus_dma_tag_t tag" "bus_size_t size" "int nsegments" \
-"bus_size_t maxsegsz" "bus_size_t boundary" "int flags" "bus_dmamap_t *dmamp"
-.Ft void
-.Fn bus_dmamap_destroy "bus_dma_tag_t tag" "bus_dmamap_t dmam"
-.Ft int
-.Fn bus_dmamap_load "bus_dma_tag_t tag" "bus_dmamap_t dmam" "void *buf" \
-"bus_size_t buflen" "struct proc *p" "int flags"
-.Ft int
-.Fn bus_dmamap_load_mbuf "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"struct mbuf *chain" "int flags"
-.Ft int
-.Fn bus_dmamap_load_uio "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"struct uio *uio" "int flags"
-.Ft int
-.Fn bus_dmamap_load_raw "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
-"bus_dma_segment_t *segs" "int nsegs" "bus_size_t size" "int flags"
-.Ft void
-.Fn bus_dmamap_unload "bus_dma_tag_t tag" "bus_dmamap_t dmam"
-.Ft void
-.Fn bus_dmamap_sync "bus_dma_tag_t tag" "bus_dmamap_t dmam" "bus_dmasync_op_t ops"
-.Ft int
-.Fn bus_dmamem_alloc "bus_dma_tag_t tag" "bus_size_t size" \
-"bus_size_t alignment" "bus_size_t boundary" "bus_dma_segment_t *segs" \
-"int nsegs" "int *rsegs" "int flags"
-.Ft void
-.Fn bus_dmamem_free "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs"
-.Ft int
-.Fn bus_dmamem_map "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs" \
-"size_t size" "caddr_t *kvap" "int flags"
-.Ft void
-.Fn bus_dmamem_unmap "bus_dma_tag_t tag" "caddr_t kva" "size_t size"
-.Ft paddr_t
-.Fn bus_dmamem_mmap "bus_dma_tag_t tag" "bus_dma_segment_t *segs" \
-"int nsegs" "off_t off" "int prot" "int flags"
 .Sh DESCRIPTION
 The
 .Nm
@@ -154,46 +106,44 @@ for each dma xfer {
 
 bus_dmamap_destroy();        /* release any resources used by dmamap */
 .Ed
-.Sh NOTES
-All data structures, function prototypes, and macros are defined in
-the architecture-specific header
-.Aq Pa machine/bus.h .
-Note that this document assumes the existence of types already defined
-by the current "bus.h" interface.
-.Pp
-Unless otherwise noted, all function calls in this interface may be
-defined as
-.Xr cpp 1
-macros.
 .Sh DATA TYPES
 Individual implementations may name these structures whatever they wish,
 providing that the external representations are:
-.Bl -tag -width compact
+.Bl -tag -width "bus_dma_segment_t"
+.It Fa bus_addr_t
+A device bus address to be used for CPU access or DMA.
+.It Fa bus_size_t
+The size of a bus address range.
 .It Fa bus_dma_tag_t
 A machine-dependent opaque type describing the implementation of DMA for
-a given bus.
+a given host/bus.
+Machine-dependent code is responsible for passing these structures to a
+bus's autoconfiguration machinery, which in turn passes it down to the device
+drivers.
 .It Fa bus_dma_segment_t
-A structure with at least the following members:
+A structure describing an individual DMA segment.
+The structure may have machine-dependent members and arbitrary layout, but
+has at least the following members:
 .Bd -literal
 	bus_addr_t	ds_addr;
 	bus_size_t	ds_len;
 .Ed
-.sp
-The structure may have machine-dependent members and arbitrary layout.
+.Pp
 The values in
 .Fa ds_addr
 and
 .Fa ds_len
-are suitable for programming into DMA controller address and length
+are suitable for programming into a DMA controller's address and length
 registers.
 .It Fa bus_dmamap_t
-A pointer to a structure with at least the following members:
+A pointer to a structure describing an individual DMA mapping.
+The structure may have machine-dependent members and arbitrary layout, but
+has at least the following members:
 .Bd -literal
 	int		   dm_nsegs;
 	bus_dma_segment_t *dm_segs;
 .Ed
-.sp
-The structure may have machine-dependent members and arbitrary layout.
+.Pp
 The
 .Fa dm_segs
 member may be an array of segments or a pointer to an array of segments.
@@ -202,12 +152,26 @@ The
 member indicates the number of segments in
 .Fa dm_segs .
 .El
-.Sh FUNCTIONS
+.Sh DMA MAPS
 .Bl -tag -width compact
-.It Fn bus_dmamap_create "tag" "size" "nsegments" "maxsegsz" "boundary" "flags" "dmamp"
-Allocates a DMA handle and initializes it according to the parameters
+.nr nS 1
+.Ft int
+.Fn bus_dmamap_create "bus_dma_tag_t tag" "bus_size_t size" "int nsegments" \
+                      "bus_size_t maxsegsz" "bus_size_t boundary" "int flags" \
+                      "bus_dmamap_t *dmamp"
+.Ft void
+.Fn bus_dmamap_destroy "bus_dma_tag_t tag" "bus_dmamap_t dmam"
+.nr nS 0
+.Pp
+The
+.Fn bus_dmamap_create
+function allocates a DMA handle and initializes it according to the parameters
 provided.
-Arguments are as follows:
+This function returns 0 on success, an error code otherwise.
+.Pp
+The
+.Fn bus_dmamap_create
+arguments are as follows:
 .Bl -tag -width nsegments -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -258,13 +222,14 @@ A DMA map will be allocated and pointed to by
 upon successful completion of this routine.
 .El
 .Pp
-Behavior is not defined if invalid arguments are passed to
-.Fn bus_dmamap_create .
+The
+.Fn bus_dmamap_destroy
+function frees all resources associated with a given DMA handle.
+This function always succeeds if given valid arguments.
 .Pp
-Returns 0 on success, or an error code to indicate mode of failure.
-.It Fn bus_dmamap_destroy "tag" "dmam"
-Frees all resources associated with a given DMA handle.
-Arguments are as follows:
+The
+.Fn bus_dmamap_destroy
+arguments are as follows:
 .Bl -tag -width dmam -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -276,17 +241,34 @@ The DMA handle to destroy.
 In the event that the DMA handle contains a valid mapping, the mapping
 will be unloaded via the same mechanism used by
 .Fn bus_dmamap_unload .
+.Sh DMA MAP SEGMENTS
+.nr nS 1
+.Ft int
+.Fn bus_dmamap_load "bus_dma_tag_t tag" "bus_dmamap_t dmam" "void *buf" \
+                    "bus_size_t buflen" "struct proc *p" "int flags"
+.Ft int
+.Fn bus_dmamap_load_mbuf "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
+                         "struct mbuf *chain" "int flags"
+.Ft int
+.Fn bus_dmamap_load_uio "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
+                        "struct uio *uio" "int flags"
+.Ft int
+.Fn bus_dmamap_load_raw "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
+                        "bus_dma_segment_t *segs" "int nsegs" \
+                        "bus_size_t size" "int flags"
+.Ft void
+.Fn bus_dmamap_unload "bus_dma_tag_t tag" "bus_dmamap_t dmam"
+.nr nS 0
 .Pp
-Behavior is not defined if invalid arguments are passed to
-.Fn bus_dmamap_destroy .
-.Pp
-If given valid arguments,
-.Fn bus_dmamap_destroy
-always succeeds.
-.It Fn bus_dmamap_load "tag" "dmam" "buf" "buflen" "p" "flags"
-Loads a DMA handle with mappings for a DMA transfer.
+The
+.Fn bus_dmamap_load
+function loads a DMA handle with mappings for a DMA transfer.
 It assumes that all pages involved in a DMA transfer are wired.
-Arguments are as follows:
+This function returns 0 on success, an error code otherwise.
+.Pp
+The
+.Fn bus_dmamap_load
+arguments are as follows:
 .Bl -tag -width buflen -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -363,17 +345,16 @@ fails, the mapping in the DMA handle will be invalid.
 It is the responsibility of the caller to clean up any inconsistent
 device state resulting from incomplete iteration through the uio.
 .Pp
-Behavior is not defined if invalid arguments are passed to
-.Fn bus_dmamap_load .
-.Pp
-Returns 0 on success, or an error code to indicate mode of failure.
-.It Fn bus_dmamap_load_mbuf "tag" "dmam" "chain" "flags"
-This is a variation of
+The
+.Fn bus_dmamap_load_mbuf
+function is a variation of
 .Fn bus_dmamap_load
 which maps mbuf chains for DMA transfers.
 Mbuf chains are assumed to be in kernel virtual address space.
-.It Fn bus_dmamap_load_uio "tag" "dmam" "uio" "flags"
-This is a variation of
+.Pp
+The
+.Fn bus_dmamap_load_uio
+function is a variation of
 .Fn bus_dmamap_load
 which maps buffers pointed to by
 .Fa uio
@@ -386,8 +367,10 @@ If the buffers are in user address space, the buffers are assumed to be
 in
 .Fa "uio->uio_procp" Ns 's
 address space.
-.It Fn bus_dmamap_load_raw "tag" "dmam" "segs" "nsegs" "size" "flags"
-This is a variation of
+.Pp
+The
+.Fn bus_dmamap_load_raw
+function is a variation of
 .Fn bus_dmamap_load
 which maps buffers allocated by
 .Fn bus_dmamem_alloc
@@ -402,9 +385,15 @@ argument is the number of segments in the array.
 The
 .Fa size
 argument is the size of the DMA transfer.
-.It Fn bus_dmamap_unload "tag" "dmam"
-Deletes the mappings for a given DMA handle.
-Arguments are as follows:
+.Pp
+The
+.Fn bus_dmamap_unload
+function deletes the mappings for a given DMA handle.
+This function always succeeds if given valid arguments.
+.Pp
+The
+.Fn bus_dmamap_unload
+arguments are as follows:
 .Bl -tag -width dmam -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -423,16 +412,23 @@ This is to ensure that
 will never block on resources if the handle was created with
 .Dv BUS_DMA_ALLOCNOW .
 .Pp
-Behavior is not defined if invalid arguments are passed to
-.Fn bus_dmamap_unload .
+.Sh SYNCHRONIZATION
+.nr nS 1
+.Ft void
+.Fn bus_dmamap_sync "bus_dma_tag_t tag" "bus_dmamap_t dmam" \
+                    "bus_dmasync_op_t ops"
+.nr nS 0
 .Pp
-If given valid arguments,
-.Fn bus_dmamap_unload
-always succeeds.
-.It Fn bus_dmamap_sync "tag" "dmam" "ops"
-Performs pre- and post-DMA operation cache and/or buffer synchronization.
-Arguments are as follows:
-.Bl -tag -width offset -compact
+The
+.Fn bus_dmamap_sync
+function performs pre- and post-DMA operation cache and/or buffer
+synchronization.
+This function always succeeds if given valid arguments.
+.Pp
+The
+.Fn bus_dmamap_sync
+arguments are as follows:
+.Bl -tag -width "dmam" -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
 .Fa <bus>_attach_args .
@@ -527,17 +523,23 @@ bus_dmamap_unload(...);
 .Pp
 If DMA read and write operations are not preceded and followed by the
 appropriate synchronization operations, behavior is undefined.
+.Sh DMA-SAFE MEMORY
+.nr nS 1
+.Ft int
+.Fn bus_dmamem_alloc "bus_dma_tag_t tag" "bus_size_t size" \
+                     "bus_size_t alignment" "bus_size_t boundary" \
+                     "bus_dma_segment_t *segs" "int nsegs" "int *rsegs" \
+                     "int flags"
+.Ft void
+.Fn bus_dmamem_free "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs"
+.nr nS 0
 .Pp
-Behavior is not defined if invalid arguments are passed to
-.Fn bus_dmamap_sync .
-.Pp
-If given valid arguments,
-.Fn bus_dmamap_sync
-always succeeds.
-.\" XXX: This does not work with all the arguments.
-.It Fn bus_dmamem_alloc "tag" "size" "alignment" "boundary" "segs" "..."
-Allocates memory that is "DMA safe" for the bus corresponding to the
+The
+.Fn bus_dmamem_alloc
+function allocates memory that is "DMA safe" for the bus corresponding to the
 given tag.
+This function returns 0 on success, or an error code indicating mode of
+failure.
 .Pp
 The mapping of this memory is machine-dependent (or "opaque");
 machine-independent code is not to assume that the addresses returned
@@ -555,7 +557,10 @@ can be used for this purpose.
 Allocations will always be rounded to the hardware page size.
 Callers may wish to take advantage of this, and cluster allocation of
 small data structures.
-Arguments are as follows:
+.Pp
+The
+.Fn bus_dmamem_alloc
+arguments are as follows:
 .Bl -tag -width alignment -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -615,15 +620,16 @@ All pages allocated by
 will be wired down until they are freed by
 .Fn bus_dmamem_free .
 .Pp
-Behavior is undefined if invalid arguments are passed to
-.Fn bus_dmamem_alloc .
+The
+.Fn bus_dmamem_free
+function frees memory previously allocated by
+.Fn bus_dmamem_alloc ,
+invalidating any mapping.
+This function always succeeds if given valid arguments.
 .Pp
-Returns 0 on success, or an error code indicating mode of failure.
-.It Fn bus_dmamem_free "tag" "segs" "nsegs"
-Frees memory previously allocated by
-.Fn bus_dmamem_alloc .
-Any mappings will be invalidated.
-Arguments are as follows:
+The
+.Fn bus_dmamem_free
+arguments are as follows:
 .Bl -tag -width nsegs -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -635,18 +641,29 @@ The array of bus_dma_segment_t's filled in by
 The number of segments in
 .Fa segs .
 .El
+.Sh MAPPING DMA-SAFE MEMORY
+.nr nS 1
+.Ft int
+.Fn bus_dmamem_map "bus_dma_tag_t tag" "bus_dma_segment_t *segs" "int nsegs" \
+                   "size_t size" "caddr_t *kvap" "int flags"
+.Ft void
+.Fn bus_dmamem_unmap "bus_dma_tag_t tag" "caddr_t kva" "size_t size"
+.Ft paddr_t
+.Fn bus_dmamem_mmap "bus_dma_tag_t tag" "bus_dma_segment_t *segs" \
+                    "int nsegs" "off_t off" "int prot" "int flags"
+.nr nS 0
 .Pp
-Behavior is undefined if invalid arguments are passed to
-.Fn bus_dmamem_free .
-.Pp
-If given valid arguments,
-.Fn bus_dmamem_free
-always succeeds.
-.It Fn bus_dmamem_map "tag" "segs" "nsegs" "size" "kvap" "flags"
-Maps memory allocated with
+The
+.Fn bus_dmamem_map
+function maps memory allocated with
 .Fn bus_dmamem_alloc
 into kernel virtual address space.
-Arguments are as follows:
+This function returns 0 on success, an error code otherwise, and must not be
+called from an interrupt context.
+.Pp
+The
+.Fn bus_dmamem_map
+arguments are as follows:
 .Bl -tag -width flags -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -695,16 +712,16 @@ placed into the DMA map for use by later calls to
 .El
 .El
 .Pp
-Behavior is undefined if invalid arguments are passed to
-.Fn bus_dmamem_map .
-This function must not be called from an interrupt context.
-.Pp
-Returns 0 on success, or an error code indicating mode of failure.
-.It Fn bus_dmamem_unmap "tag" "kva" "size"
-Unmaps memory previously mapped with
+The
+.Fn bus_dmamem_unmap
+function unmaps memory previously mapped with
 .Fn bus_dmamem_map ,
 freeing the kernel virtual address space used by the mapping.
-The arguments are as follows:
+This function always succeeds if given valid arguments, but must not be
+called from an interrupt context.
+.Pp
+.Fn bus_dmamem_unmap
+arguments are as follows:
 .Bl -tag -width size -compact
 .It Fa tag
 This is the bus_dma_tag_t passed down from the parent driver via
@@ -715,20 +732,18 @@ The kernel virtual address of the mapped memory.
 The size of the mapping.
 .El
 .Pp
-Behavior is undefined if invalid arguments are passed to
-.Fn bus_dmamem_unmap .
-This function must not be called from an interrupt context.
-.Pp
-If given valid arguments,
-.Fn bus_dmamem_unmap
-always succeeds.
-.It Fn bus_dmamem_mmap "tag" "segs" "nsegs" "off" "prot" "flags"
-Provides support for user
+The
+.Fn bus_dmamem_mmap
+function provides support for user
 .Xr mmap 2 Ns 'ing
 of DMA-safe memory.
-This function is to be called by a device driver's (*d_mmap)() entry
+.Fn bus_dmamem_mmap
+is to be called by a device driver's (*d_mmap)() entry
 point, which is called by the device pager for each page to be mapped.
-The arguments are
+This function returns an opaque value to be interpreted by the device
+pager, or -1 on failure.
+.Fn bus_dmamem_mmap
+arguments are
 as follows:
 .Bl -tag -width nsegs -compact
 .It Fa tag
@@ -762,15 +777,6 @@ See
 .Fn bus_dmamem_map
 above for a description of this flag.
 .El
-.El
-.Pp
-Behavior is undefined if invalid arguments are passed
-to
-.Fn bus_dmamem_mmap .
-.Pp
-Returns -1 to indicate failure.
-Otherwise, returns an opaque value to be interpreted by the device
-pager.
 .El
 .Sh SEE ALSO
 .Xr bus_space 9
