@@ -1,11 +1,11 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.1 2004/02/21 19:07:29 espie Exp $
+# $OpenBSD: check-name,v 1.2 2004/10/19 09:51:45 espie Exp $
 # Written by Marc Espie
 # Public domain
 
 use Test::Simple tests => 1;
-use OpenBSD::PackageName;
+use OpenBSD::PkgSpec;
 
 my @list=qw(py-MxDateTime-2.0.1-py2.1);
 
-ok(OpenBSD::PackageName::pkgspec_match('py-MxDateTime->=2.0-py2.1', @list) == 1);
+ok(OpenBSD::PkgSpec::match('py-MxDateTime->=2.0-py2.1', @list) == 1);
