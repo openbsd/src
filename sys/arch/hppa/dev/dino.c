@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.13 2004/09/15 20:11:28 mickey Exp $	*/
+/*	$OpenBSD: dino.c,v 1.14 2004/09/15 21:30:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -262,37 +262,6 @@ dino_intr_disestablish(void *v, void *cookie)
 #endif
 }
 
-#if NCARDBUS > 0
-void *
-dino_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
-{
-	struct dino_softc *sc = pa->pa_pc->_cookie;
-	struct extent *ex;
-	bus_space_tag_t tag;
-	bus_addr_t start;
-	bus_size_t size;
-
-	if (io) {
-		ex = sc->sc_ioex;
-		tag = pa->pa_iot;
-		start = 0xa000;
-		size = 0x1000;
-	} else {
-		ex = sc->sc_memex;
-		tag = pa->pa_memt;
-		start = ex->ex_start;
-		size = DINO_MEM_CHUNK;
-	}
-
-	if (extent_alloc_subregion(ex, start, ex->ex_end, size, size, 0,
-	    EX_NOBOUNDARY, EX_NOWAIT, &start))
-		return (NULL);
-
-	extent_free(ex, start, size, EX_NOWAIT);
-	return rbus_new_root_share(tag, ex, start, size, 0);
-}
-#endif
-
 int
 dino_iomap(void *v, bus_addr_t bpa, bus_size_t size,
     int flags, bus_space_handle_t *bshp)
@@ -431,6 +400,57 @@ dino_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op)
 {
 	sync_caches();
 }
+
+#if NCARDBUS > 0
+void *
+dino_alloc_parent(struct device *self, struct pci_attach_args *pa, int io)
+{
+	struct dino_softc *sc = pa->pa_pc->_cookie;
+	struct extent *ex;
+	bus_space_tag_t tag;
+	bus_addr_t start;
+	bus_size_t size;
+
+	if (io) {
+		ex = sc->sc_ioex;
+		tag = pa->pa_iot;
+		start = 0xa000;
+		size = 0x1000;
+	} else {
+		if (!sc->sc_memex) {
+			bus_space_handle_t memh;
+			bus_addr_t mem_start;
+
+			if (dino_memalloc(sc, 0xf0800000, 0xff7fffff,
+			    DINO_MEM_WINDOW, DINO_MEM_WINDOW, EX_NOBOUNDARY,
+			    0, &mem_start, &memh))
+				return (NULL);
+
+			snprintf(sc->sc_memexname, sizeof(sc->sc_memexname),
+			    "%s_mem", sc->sc_dv.dv_xname);
+			if ((sc->sc_memex = extent_create(sc->sc_memexname,
+			    mem_start, mem_start + DINO_MEM_WINDOW, M_DEVBUF,
+			    NULL, 0, EX_NOWAIT | EX_MALLOCOK)) == NULL) {
+				extent_destroy(sc->sc_ioex);
+				bus_space_free(sc->sc_bt, memh,
+				    DINO_MEM_WINDOW);
+				return (NULL);
+			}
+		}
+		ex = sc->sc_memex;
+		tag = pa->pa_memt;
+		start = ex->ex_start;
+		size = DINO_MEM_CHUNK;
+	}
+
+	if (extent_alloc_subregion(ex, start, ex->ex_end, size, size, 0,
+	    EX_NOBOUNDARY, EX_NOWAIT, &start))
+		return (NULL);
+
+	extent_free(ex, start, size, EX_NOWAIT);
+	return rbus_new_root_share(tag, ex, start, size, 0);
+}
+#endif
 
 u_int8_t
 dino_r1(void *v, bus_space_handle_t h, bus_size_t o)
@@ -1470,11 +1490,9 @@ dinoattach(parent, self, aux)
 	struct confargs *ca = (struct confargs *)aux;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
-	bus_space_handle_t memh;
-	bus_addr_t mem_start;
-	const char *p;
+	const char *p = NULL;
 	u_int data;
-	int s, ver;
+	int s;
 
 	sc->sc_bt = ca->ca_iot;
 	sc->sc_dmat = ca->ca_dmatag;
@@ -1516,25 +1534,6 @@ dinoattach(parent, self, aux)
 
 	/* TODO reserve dino's pci space ? */
 
-	if (dino_memalloc(sc, 0xf0800000, 0xff7fffff, DINO_MEM_WINDOW,
-	    DINO_MEM_WINDOW, EX_NOBOUNDARY, 0, &mem_start, &memh)) {
-		printf(": cannot allocate memory window\n");
-		bus_space_unmap(sc->sc_bt, sc->sc_bh, PAGE_SIZE);
-		return;
-	}
-
-	snprintf(sc->sc_memexname, sizeof(sc->sc_memexname),
-	    "%s_mem", sc->sc_dv.dv_xname);
-	if ((sc->sc_memex = extent_create(sc->sc_memexname, mem_start,
-	    mem_start + DINO_MEM_WINDOW, M_DEVBUF, NULL, 0,
-	    EX_NOWAIT | EX_MALLOCOK)) == NULL) {
-		printf(": cannot allocate MEM extent map\n");
-		extent_destroy(sc->sc_ioex);
-		bus_space_unmap(sc->sc_bt, sc->sc_bh, PAGE_SIZE);
-		bus_space_free(sc->sc_bt, memh, DINO_MEM_WINDOW);
-		return;
-	}
-
 	s = splhigh();
 	r->imr = ~0;
 	data = r->irr0;
@@ -1549,36 +1548,39 @@ dinoattach(parent, self, aux)
 	    dino_intr, (void *)sc->sc_regs, sc->sc_dv.dv_xname);
 	/* TODO establish the bus error interrupt */
 
-	r->iodc = 0;
-	data = r->iodc;
-	ver = (ca->ca_type.iodc_model << 4) |
-	    (ca->ca_type.iodc_revision >> 4);
-	switch (ver) {
-	case 0x05d:	p = "Dino";	/* j2240 */
-	case 0x680:	p = "Dino";
-		switch (data >> 16) {
-		case 0x6800:	ver = 0x20;	break;
-		case 0x6801:	ver = 0x21;	break;
-		case 0x6802:	ver = 0x30;	break;
-		case 0x6803:	ver = 0x31;	break;
-		default:	ver = 0x40;	break;
+	sc->sc_ver = ca->ca_type.iodc_revision;
+	switch ((ca->ca_type.iodc_model << 4) |
+	    (ca->ca_type.iodc_revision >> 4)) {
+	case 0x05d:	/* j2240 */
+		p = "Dino(card)";
+	case 0x680:
+		if (!p)
+			p = "Dino";
+		switch (ca->ca_type.iodc_revision & 0xf) {
+		case 0:	sc->sc_ver = 0x20;	break;
+		case 1:	sc->sc_ver = 0x21;	break;
+		case 2:	sc->sc_ver = 0x30;	break;
+		case 3:	sc->sc_ver = 0x31;	break;
 		}
 		break;
 
-	case 0x682:	p = "Cujo";
-		switch (data >> 16) {
-		case 0x6820:	ver = 0x10;	break;
-		case 0x6821:	ver = 0x20;	break;
-		default:	ver = 0x30;	break;
+	case 0x682:
+		p = "Cujo";
+		switch (ca->ca_type.iodc_revision & 0xf) {
+		case 0:	sc->sc_ver = 0x10;	break;
+		case 1:	sc->sc_ver = 0x20;	break;
 		}
 		break;
 
-	default:	p = "Mojo";
-		ver = (data >> 16) & 0xff;
+	/* case 0x782:	p = "Elroy"; */
+	/* case 0x783:	p = "Mercury"; */
+	/* case 0x783:	p = "Quicksilver"; AGP */
+	default:
+		p = "Mojo";
 		break;
 	}
-	sc->sc_ver = ver;
-	printf(": %s V%d.%d\n", p, ver >> 4, ver & 0xf);
+
+	printf(": %s V%d.%d\n", p, sc->sc_ver >> 4, sc->sc_ver & 0xf);
 
 	sc->sc_iot = dino_iomemt;
 	sc->sc_iot.hbt_cookie = sc;
