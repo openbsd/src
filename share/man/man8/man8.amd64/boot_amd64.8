@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_amd64.8,v 1.1 2004/03/08 22:53:57 deraadt Exp $
+.\"	$OpenBSD: boot_amd64.8,v 1.2 2004/03/09 23:17:47 miod Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 4, 1997
+.Dd March 9, 2004
 .Dt BOOT_AMD64 8 amd64
 .Os
 .Sh NAME
@@ -34,20 +34,15 @@
 .Sh DESCRIPTION
 .Ss Cold starts
 The
-.Tn "PC AT"
-clones will perform a POST (Power On Self Test) upon being booted cold.
+.Tn Athlon64
+computers and clones will perform a POST (Power On Self Test) upon
+being booted cold.
 This test will find and initialize memory, keyboard, and other devices.
 It will search for and initialize any extension ROMs that are present,
 and then attempt to boot the operating system from an available boot
 drive.
-Failing this, older IBM systems come up in ROM BASIC.
 .Pp
-The newer
-.Tn "PC AT"
-clones attempt to boot off the drive specified in the BIOS setup, or
-if it is an older BIOS, it will start with checking for a disk in floppy
-drive A (otherwise known as drive 0) first, and failing that, attempt to
-boot the hard disk C (otherwise known as hard disk controller 1, drive 0).
+The boot drive is usually specified in the BIOS setup.
 .Ss Warm starts
 The BIOS loads the first block (at physical location: track 0, head 0,
 sector 1) off the boot device into memory, and if the last two bytes in the
@@ -183,5 +178,3 @@ wonderful interactions between different operating systems.
 .Pp
 There is no published standard to the MBR and PBR,
 which makes coding these a nightmare.
-.\" .Pp
-.\" Somebody *please* write me a decent BIOS, and make them (the masses) use it!
