@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.8 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.9 2004/05/04 21:48:16 deraadt Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -60,9 +60,9 @@
 void
 skip_to_semi(FILE *cfile)
 {
+	int brace_count = 0;
 	int token;
 	char *val;
-	int brace_count = 0;
 
 	do {
 		token = peek_token(&val, cfile);
@@ -150,10 +150,9 @@ parse_ip_addr(FILE *cfile, struct iaddr *addr)
 void
 parse_hardware_param(FILE *cfile, struct hardware *hardware)
 {
-	char *val;
-	int token;
-	int hlen;
 	unsigned char *t;
+	int token, hlen;
+	char *val;
 
 	token = next_token(&val, cfile);
 	switch (token) {
@@ -239,11 +238,9 @@ unsigned char *
 parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
     int separator, int base, int size)
 {
-	char *val;
-	int token;
 	unsigned char *bufp = buf, *s = NULL;
-	char *t;
-	int count = 0;
+	int token, count = 0;
+	char *val, *t;
 	pair c = NULL;
 
 	if (!bufp && *max) {
@@ -321,11 +318,9 @@ parse_numeric_aggregate(FILE *cfile, unsigned char *buf, int *max,
 void
 convert_num(unsigned char *buf, char *str, int base, int size)
 {
-	char *ptr = str;
-	int negative = 0;
+	int negative = 0, tval, max;
 	u_int32_t val = 0;
-	int tval;
-	int max;
+	char *ptr = str;
 
 	if (*ptr == '-') {
 		negative = 1;

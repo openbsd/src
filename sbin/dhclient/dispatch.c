@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.25 2004/05/04 20:28:40 deraadt Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.26 2004/05/04 21:48:16 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -146,7 +146,6 @@ dispatch(void)
 	struct pollfd *fds;
 	time_t howlong;
 
-	nfds = 0;
 	for (l = protocols; l; l = l->next)
 		nfds++;
 
@@ -162,6 +161,7 @@ dispatch(void)
 another:
 		if (timeouts) {
 			struct timeout *t;
+
 			if (timeouts->when <= cur_time) {
 				t = timeouts;
 				timeouts = timeouts->next;
@@ -187,6 +187,7 @@ another:
 		/* Set up the descriptors to be polled. */
 		for (i = 0, l = protocols; l; l = l->next) {
 			struct interface_info *ip = l->local;
+
 			if (ip && (l->handler != got_one || !ip->dead)) {
 				fds[i].fd = l->fd;
 				fds[i].events = POLLIN;
@@ -206,8 +207,7 @@ another:
 			if (errno == EAGAIN || errno == EINTR) {
 				time(&cur_time);
 				continue;
-			}
-			else
+			} else
 				error("poll: %m");
 		}
 
@@ -295,13 +295,14 @@ interface_status(struct interface_info *ifinfo)
 		syslog(LOG_ERR, "ioctl(SIOCGIFFLAGS) on %s: %m", ifname);
 		goto inactive;
 	}
+
 	/*
 	 * if one of UP and RUNNING flags is dropped,
 	 * the interface is not active.
 	 */
-	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
+	if ((ifr.ifr_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		goto inactive;
-	}
+
 	/* Next, check carrier on the interface, if possible */
 	if (ifinfo->noifmedia)
 		goto active;
