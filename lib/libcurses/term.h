@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.3 1998/09/13 19:16:30 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.4 1998/11/17 03:16:22 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,14 +33,14 @@
 /*    and: Eric S. Raymond <esr@snark.thyrsus.com>                          */
 /****************************************************************************/
 
-/* $From: MKterm.h.awk.in,v 1.25 1998/09/05 22:19:41 tom Exp $ */
+/* $From: MKterm.h.awk.in,v 1.26 1998/11/07 21:10:18 tom Exp $ */
 
 /*
 **	term.h -- Definition of struct term
 */
 
-#ifndef _TERM_H
-#define _TERM_H
+#ifndef _NCU_TERM_H
+#define _NCU_TERM_H 1
 
 #ifdef _USE_OLD_CURSES_
 #error	Cannot mix new term.h with old curses.h
@@ -54,7 +54,8 @@ extern "C" {
 #endif
 
 /* Make this file self-contained by providing defaults for the HAVE_TERMIO[S]_H
- * and BROKEN_LINKER definition (based on the system for which this was configured).
+ * and BROKEN_LINKER definition (based on the system for which this was
+ * configured).
  */
 
 #ifdef __OpenBSD__
@@ -67,56 +68,84 @@ extern "C" {
 
 #else
 
-#ifndef HAVE_TERMIOS_H
+#undef  HAVE_TERMIOS_H
 #define HAVE_TERMIOS_H 1
-#endif
 
-#ifndef HAVE_TERMIO_H
+#undef  HAVE_TERMIO_H
 #define HAVE_TERMIO_H 0
-#endif
 
-#ifndef HAVE_TCGETATTR
+#undef  HAVE_TCGETATTR
 #define HAVE_TCGETATTR 1
-#endif
 
-#ifndef BROKEN_LINKER
+#undef  BROKEN_LINKER
 #define BROKEN_LINKER 0
-#endif
 
-#ifndef NCURSES_CONST
+#undef  NCURSES_CONST
 #define NCURSES_CONST /*nothing*/
-#endif
+
+/* We will use these symbols to hide differences between
+ * termios/termio/sgttyb interfaces.
+ */
+#undef  TTY
+#undef  SET_TTY
+#undef  GET_TTY
 
 /* Assume Posix termio if we have the header and function */
 #if HAVE_TERMIOS_H && HAVE_TCGETATTR
-#ifndef TERMIOS
+#undef  TERMIOS
 #define TERMIOS 1
-#endif
+
 #include <termios.h>
 #define TTY struct termios
 
 #else /* !HAVE_TERMIOS_H */
 
 #if HAVE_TERMIO_H
-#ifndef TERMIOS
+
+#undef  TERMIOS
 #define TERMIOS 1
-#endif
+
 #include <termio.h>
 #define TTY struct termio
+
+/* Add definitions to make termio look like termios.
+ * But ifdef it, since there are some implementations
+ * that try to do this for us in a fake <termio.h>.
+ */
+#ifndef TCSANOW
 #define TCSANOW TCSETA
+#endif
+#ifndef TCSADRAIN
 #define TCSADRAIN TCSETAW
+#endif
+#ifndef TCSAFLUSH
 #define TCSAFLUSH TCSETAF
+#endif
+#ifndef tcsetattr
 #define tcsetattr(fd, cmd, arg) ioctl(fd, cmd, arg)
+#endif
+#ifndef tcgetattr
 #define tcgetattr(fd, arg) ioctl(fd, TCGETA, arg)
+#endif
+#ifndef cfgetospeed
 #define cfgetospeed(t) ((t)->c_cflag & CBAUD)
+#endif
+#ifndef TCIFLUSH
 #define TCIFLUSH 0
+#endif
+#ifndef TCOFLUSH
 #define TCOFLUSH 1
+#endif
+#ifndef TCIOFLUSH
 #define TCIOFLUSH 2
+#endif
+#ifndef tcflush
 #define tcflush(fd, arg) ioctl(fd, TCFLSH, arg)
+#endif
 
 #else /* !HAVE_TERMIO_H */
 
-#undef TERMIOS
+#undef  TERMIOS
 #include <sgtty.h>
 #include <sys/ioctl.h>
 #define TTY struct sgttyb
@@ -748,4 +777,4 @@ extern int tgetnum(const char *);
 }
 #endif
 
-#endif /* TERM_H */
+#endif /* _NCU_TERM_H */

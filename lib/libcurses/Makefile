@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 1998/10/31 06:30:28 millert Exp $
+#	$OpenBSD: Makefile,v 1.30 1998/11/17 03:16:20 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -10,10 +10,10 @@ FALLBACK_LIST=
 AWK?=	/usr/bin/awk
 
 LIB=    curses
-SRCS=   access.c alloc_entry.c captoinfo.c codes.c comp_captab.c comp_error.c \
-        comp_expand.c comp_hash.c comp_parse.c comp_scan.c define_key.c \
-        doalloc.c expanded.c fallback.c getenv_num.c hardscroll.c hashmap.c \
-	home_terminfo.c keyok.c lib_acs.c lib_adabind.c lib_addch.c \
+SRCS=   access.c add_tries.c alloc_entry.c captoinfo.c codes.c comp_captab.c \
+	comp_error.c comp_expand.c comp_hash.c comp_parse.c comp_scan.c \
+	define_key.c doalloc.c expanded.c fallback.c getenv_num.c hardscroll.c \
+	hashmap.c home_terminfo.c keyok.c lib_acs.c lib_adabind.c lib_addch.c \
 	lib_addstr.c lib_baudrate.c lib_beep.c lib_bkgd.c lib_box.c \
 	lib_chgat.c lib_clear.c lib_clearok.c lib_clrbot.c lib_clreol.c \
 	lib_color.c lib_colorset.c lib_cur_term.c lib_data.c lib_delch.c \
@@ -32,12 +32,13 @@ SRCS=   access.c alloc_entry.c captoinfo.c codes.c comp_captab.c comp_error.c \
         lib_slkclear.c lib_slkcolor.c lib_slkinit.c lib_slklab.c \
         lib_slkrefr.c lib_slkset.c lib_slktouch.c lib_termcap.c \
         lib_ti.c lib_touch.c lib_tparm.c lib_tputs.c lib_trace.c \
-        lib_traceatr.c lib_tracechr.c lib_tracedmp.c lib_tracemse.c \
-        lib_tstp.c lib_twait.c lib_ungetch.c lib_vidattr.c lib_vline.c \
-        lib_wattroff.c lib_wattron.c lib_window.c name_match.c names.c \
-	nc_panel.c parse_entry.c read_bsd_terminfo.c read_entry.c \
-	read_termcap.c resizeterm.c safe_sprintf.c sigaction.c softscroll.c \
-	trace_buf.c tries.c unctrl.c wresize.c write_entry.c
+        lib_traceatr.c lib_tracebits.c lib_tracechr.c lib_tracedmp.c \
+	lib_tracemse.c lib_tstp.c lib_twait.c lib_ungetch.c lib_vidattr.c \
+	lib_vline.c lib_wattroff.c lib_wattron.c lib_winch.c lib_window.c \
+	name_match.c names.c nc_panel.c parse_entry.c read_bsd_terminfo.c \
+	read_entry.c read_termcap.c resizeterm.c safe_sprintf.c setbuf.c \
+	sigaction.c softscroll.c trace_buf.c tries.c unctrl.c wresize.c \
+	write_entry.c
 CFLAGS+= -I. -I${.CURDIR} ${CURSESTRACE}
 # XXX - missing stuff here
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \

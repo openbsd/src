@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.13 1998/10/31 06:30:28 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.14 1998/11/17 03:16:20 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.68 1998/09/05 22:03:59 tom Exp $ */
+/* $From: curses.h.in,v 1.71 1998/09/05 22:03:59 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 4
 #define NCURSES_VERSION_MINOR 2
-#define NCURSES_VERSION_PATCH 981017
+#define NCURSES_VERSION_PATCH 981114
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -64,9 +64,8 @@
 #define NCURSES_ATTR_T int
 #endif
 
-#ifndef NCURSES_CONST
+#undef	NCURSES_CONST
 #define NCURSES_CONST 
-#endif
 
 typedef unsigned long chtype;
 
@@ -794,7 +793,7 @@ extern int whline(WINDOW *, chtype, int);		/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int whline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern chtype winch(WINDOW *);				/* generated */
+extern chtype winch(WINDOW *);				/* implemented */
 extern int winchnstr(WINDOW *, chtype *, int);		/* implemented */
 extern int winchstr(WINDOW *, chtype *);		/* generated */
 extern int winnstr(WINDOW *, char *, int);		/* implemented */
@@ -918,7 +917,6 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define getparx(win)		((win)?(win)->_parx:ERR)
 #define getpary(win)		((win)?(win)->_pary:ERR)
 
-#define winch(win)       	((win)?(win)->_line[(win)->_cury].text[(win)->_curx]:0)
 #define wstandout(win)      	(wattrset(win,A_STANDOUT))
 #define wstandend(win)      	(wattrset(win,A_NORMAL))
 #define wattr_set(win,a,p,opts) ((win)->_attrs = (((a) & ~A_COLOR) | COLOR_PAIR(p)), OK)
@@ -1302,7 +1300,7 @@ extern void _tracef(const char *, ...) GCC_PRINTFLIKE(1,2);
 extern void _tracedump(const char *, WINDOW *);
 extern char *_traceattr(attr_t);
 extern char *_traceattr2(int, chtype);
-extern char *_tracebits(void);
+extern char *_nc_tracebits(void);
 extern char *_tracechar(const unsigned char);
 extern char *_tracechtype(chtype);
 extern char *_tracechtype2(int, chtype);

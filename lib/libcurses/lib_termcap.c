@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_termcap.c,v 1.3 1998/10/31 06:30:30 millert Exp $	*/
+/*	$OpenBSD: lib_termcap.c,v 1.4 1998/11/17 03:16:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -41,7 +41,7 @@
 #define __INTERNAL_CAPS_VISIBLE
 #include <term.h>
 
-MODULE_ID("$From: lib_termcap.c,v 1.21 1998/07/25 20:58:56 tom Exp $")
+MODULE_ID("$From: lib_termcap.c,v 1.22 1998/09/26 12:27:03 tom Exp $")
 
 /*
    some of the code in here was contributed by:

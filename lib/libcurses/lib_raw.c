@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_raw.c,v 1.5 1998/07/23 21:19:14 millert Exp $	*/
+/*	$OpenBSD: lib_raw.c,v 1.6 1998/11/17 03:16:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -51,7 +51,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* cur_term */
 
-MODULE_ID("$From: lib_raw.c,v 1.26 1998/04/11 23:00:07 tom Exp $")
+MODULE_ID("$From: lib_raw.c,v 1.1 1998/11/08 00:26:05 tom Exp $")
 
 #if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
@@ -66,174 +66,11 @@ MODULE_ID("$From: lib_raw.c,v 1.26 1998/04/11 23:00:07 tom Exp $")
 #include <fcntl.h>
 #endif
 
-/* may be undefined if we're using termio.h */
-#ifndef TOSTOP
-#define TOSTOP 0
-#endif
-#ifndef IEXTEN
-#define IEXTEN 0
-#endif
-
 #define COOKED_INPUT	(IXON|BRKINT|PARMRK)
 
 #ifdef TRACE
-
-typedef struct {unsigned int val; const char *name;} BITNAMES;
-
-static void lookup_bits(char *buf, const BITNAMES *table, const char *label, unsigned int val)
-{
-	const BITNAMES *sp;
-
-	(void) strcat(buf, label);
-	(void) strcat(buf, ": {");
-	for (sp = table; sp->name; sp++)
-		if (sp->val != 0
-		&& (val & sp->val) == sp->val)
-		{
-			(void) strcat(buf, sp->name);
-			(void) strcat(buf, ", ");
-		}
-	if (buf[strlen(buf) - 2] == ',')
-		buf[strlen(buf) - 2] = '\0';
-	(void) strcat(buf,"} ");
-}
-
-char *_tracebits(void)
-/* describe the state of the terminal control bits exactly */
-{
-char	*buf;
-static const	BITNAMES
-
-#ifdef TERMIOS
-iflags[] =
-    {
-	{BRKINT,	"BRKINT"},
-	{IGNBRK,	"IGNBRK"},
-	{IGNPAR,	"IGNPAR"},
-	{PARMRK,	"PARMRK"},
-	{INPCK, 	"INPCK"},
-	{ISTRIP,	"ISTRIP"},
-	{INLCR, 	"INLCR"},
-	{IGNCR, 	"IGNC"},
-	{ICRNL, 	"ICRNL"},
-	{IXON,  	"IXON"},
-	{IXOFF, 	"IXOFF"},
-	{0,		NULL}
-#define ALLIN	(BRKINT|IGNBRK|IGNPAR|PARMRK|INPCK|ISTRIP|INLCR|IGNCR|ICRNL|IXON|IXOFF)
-    },
-oflags[] =
-    {
-	{OPOST, 	"OPOST"},
-	{0,		NULL}
-#define ALLOUT	(OPOST)
-    },
-cflags[] =
-    {
-	{CLOCAL,	"CLOCAL"},
-	{CREAD, 	"CREAD"},
-	{CSTOPB,	"CSTOPB"},
-#if !defined(CS5) || !defined(CS8)
-	{CSIZE, 	"CSIZE"},
-#endif
-	{HUPCL, 	"HUPCL"},
-	{PARENB,	"PARENB"},
-	{PARODD|PARENB,	"PARODD"},	/* concession to readability */
-	{0,		NULL}
-#define ALLCTRL	(CLOCAL|CREAD|CSIZE|CSTOPB|HUPCL|PARENB|PARODD)
-    },
-lflags[] =
-    {
-	{ECHO,  	"ECHO"},
-	{ECHOE|ECHO, 	"ECHOE"},	/* concession to readability */
-	{ECHOK|ECHO, 	"ECHOK"},	/* concession to readability */
-	{ECHONL,	"ECHONL"},
-	{ICANON,	"ICANON"},
-	{ISIG,  	"ISIG"},
-	{NOFLSH,	"NOFLSH"},
-	{TOSTOP,	"TOSTOP"},
-	{IEXTEN,	"IEXTEN"},
-	{0,		NULL}
-#define ALLLOCAL	(ECHO|ECHONL|ICANON|ISIG|NOFLSH|TOSTOP|IEXTEN)
-    };
-
-
-    buf = _nc_trace_buf(0,
-    	8 + sizeof(iflags) +
-    	8 + sizeof(oflags) +
-    	8 + sizeof(cflags) +
-    	8 + sizeof(lflags) +
-	8);
-
-    if (cur_term->Nttyb.c_iflag & ALLIN)
-	lookup_bits(buf, iflags, "iflags", cur_term->Nttyb.c_iflag);
-
-    if (cur_term->Nttyb.c_oflag & ALLOUT)
-	lookup_bits(buf, oflags, "oflags", cur_term->Nttyb.c_oflag);
-
-    if (cur_term->Nttyb.c_cflag & ALLCTRL)
-	lookup_bits(buf, cflags, "cflags", cur_term->Nttyb.c_cflag);
-
-#if defined(CS5) && defined(CS8)
-    switch (cur_term->Nttyb.c_cflag & CSIZE) {
-    case CS5:	strcat(buf, "CS5 ");	break;
-    case CS6:	strcat(buf, "CS6 ");	break;
-    case CS7:	strcat(buf, "CS7 ");	break;
-    case CS8:	strcat(buf, "CS8 ");	break;
-    default:	strcat(buf, "CSIZE? ");	break;
-    }
-#endif
-
-    if (cur_term->Nttyb.c_lflag & ALLLOCAL)
-	lookup_bits(buf, lflags, "lflags", cur_term->Nttyb.c_lflag);
-
-#else
-    /* reference: ttcompat(4M) on SunOS 4.1 */
-#ifndef EVENP
-#define EVENP 0
-#endif
-#ifndef LCASE
-#define LCASE 0
-#endif
-#ifndef LLITOUT
-#define LLITOUT 0
-#endif
-#ifndef ODDP
-#define ODDP 0
-#endif
-#ifndef TANDEM
-#define TANDEM 0
-#endif
-
-cflags[] =
-    {
-	{CBREAK,	"CBREAK"},
-	{CRMOD,		"CRMOD"},
-	{ECHO,		"ECHO"},
-	{EVENP,		"EVENP"},
-	{LCASE,		"LCASE"},
-	{LLITOUT,	"LLITOUT"},
-	{ODDP,		"ODDP"},
-	{RAW,		"RAW"},
-	{TANDEM,	"TANDEM"},
-	{XTABS,		"XTABS"},
-	{0,		NULL}
-#define ALLCTRL	(CBREAK|CRMOD|ECHO|EVENP|LCASE|LLITOUT|ODDP|RAW|TANDEM|XTABS)
-    };
-
-    buf = _nc_trace_buf(0,
-    	8 + sizeof(cflags));
-
-    if (cur_term->Nttyb.sg_flags & ALLCTRL)
-    {
-	lookup_bits(buf, cflags, "cflags", cur_term->Nttyb.sg_flags);
-    }
-
-#endif
-    return(buf);
-}
-
-#define BEFORE(N)	if (_nc_tracing&TRACE_BITS) _tracef("%s before bits: %s", N, _tracebits())
-#define AFTER(N)	if (_nc_tracing&TRACE_BITS) _tracef("%s after bits: %s", N, _tracebits())
+#define BEFORE(N)	if (_nc_tracing&TRACE_BITS) _tracef("%s before bits: %s", N, _nc_tracebits())
+#define AFTER(N)	if (_nc_tracing&TRACE_BITS) _tracef("%s after bits: %s", N, _nc_tracebits())
 #else
 #define BEFORE(s)
 #define AFTER(s)

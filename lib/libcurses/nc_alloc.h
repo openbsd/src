@@ -1,4 +1,4 @@
-/*	$OpenBSD: nc_alloc.h,v 1.3 1998/07/23 21:19:53 millert Exp $	*/
+/*	$OpenBSD: nc_alloc.h,v 1.4 1998/11/17 03:16:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -31,7 +31,7 @@
 /****************************************************************************
  *  Author: Thomas E. Dickey <dickey@clark.net> 1996,1997                   *
  ****************************************************************************/
-/* $From: nc_alloc.h,v 1.5 1998/02/11 12:13:45 tom Exp $ */
+/* $From: nc_alloc.h,v 1.6 1998/11/08 01:32:17 tom Exp $ */
 
 #ifndef NC_ALLOC_included
 #define NC_ALLOC_included 1
@@ -54,17 +54,18 @@
 #define NO_LEAKS 0
 #endif
 
-#ifndef HAVE_NC_FREEALL
-#define HAVE_NC_FREEALL 0
-#endif
-
-#if HAVE_LIBDBMALLOC || HAVE_LIBDMALLOC || NO_LEAKS || HAVE_NC_FREEALL
+#if HAVE_LIBDBMALLOC || HAVE_LIBDMALLOC || NO_LEAKS
+#define HAVE_NC_FREEALL 1
 struct termtype;
 extern void _nc_free_and_exit(int) GCC_NORETURN;
 extern void _nc_free_tparm(void);
 extern void _nc_leaks_dump_entry(void);
 extern void _nc_free_termtype(struct termtype *, int);
 #define ExitProgram(code) _nc_free_and_exit(code)
+#endif
+
+#ifndef HAVE_NC_FREEALL
+#define HAVE_NC_FREEALL 0
 #endif
 
 #ifndef ExitProgram

@@ -1,5 +1,3 @@
-/*	$OpenBSD: comp_scan.c,v 1.1 1998/07/23 21:17:26 millert Exp $	*/
-
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
  *                                                                          *
@@ -51,7 +49,7 @@
 #include <ctype.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.33 1998/05/16 22:48:23 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.34 1998/11/01 00:56:39 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -132,7 +130,9 @@ static const char terminfo_punct[] = "@%&*!#";
 long		number;
 int		type;
 int		ch;
-bool		found;
+char *		numchk;
+char		numbuf[80];
+unsigned	found;
 static char	buffer[MAX_ENTRY_SIZE];
 char		*ptr;
 int		dot_flag = FALSE;
@@ -341,15 +341,17 @@ start_token:
 				break;
 
 			case '#':
-				number = 0;
-				found  = FALSE;
-				while (isdigit(ch = next_char())) {
-					number = number * 10 + ch - '0';
-					found  = TRUE;
+				found  = 0;
+				while (isalnum(ch = next_char())) {
+					numbuf[found++] = ch;
+					if (found >= sizeof(numbuf)-1)
+						break;
 				}
-				if (found == FALSE)
+				numbuf[found] = '\0';
+				number = strtol(numbuf, &numchk, 0);
+				if (numchk == numbuf)
 					_nc_warning("no value given for `%s'", buffer);
-				if (ch != separator)
+				if ((*numchk != '\0') || (ch != separator))
 					_nc_warning("Missing separator");
 				_nc_curr_token.tk_name = buffer;
 				_nc_curr_token.tk_valnumber = number;

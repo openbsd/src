@@ -1,4 +1,4 @@
-/*	$OpenBSD: tries.c,v 1.3 1998/07/23 21:20:07 millert Exp $	*/
+/*	$OpenBSD: tries.c,v 1.4 1998/11/17 03:16:22 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -41,89 +41,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: tries.c,v 1.7 1998/02/11 12:13:57 tom Exp $")
-
-#define SET_TRY(dst,src) if ((dst->ch = *src++) == 128) dst->ch = '\0'
-#define CMP_TRY(a,b) ((a)? (a == b) : (b == 128))
-
-void _nc_add_to_try(struct tries **tree, char *str, unsigned short code)
-{
-	static bool     out_of_memory = FALSE;
-	struct tries    *ptr, *savedptr;
-	unsigned char	*txt = (unsigned char *)str;
-
-	if (txt == 0 || *txt == '\0' || out_of_memory || code == 0)
-		return;
-
-	if ((*tree) != 0) {
-		ptr = savedptr = (*tree);
-
-		for (;;) {
-			unsigned char cmp = *txt;
-
-			while (!CMP_TRY(ptr->ch, cmp)
-			       &&  ptr->sibling != 0)
-				ptr = ptr->sibling;
-	
-			if (CMP_TRY(ptr->ch, cmp)) {
-				if (*(++txt) == '\0') {
-					ptr->value = code;
-					return;
-				}
-				if (ptr->child != 0)
-					ptr = ptr->child;
-				else
-					break;
-			} else {
-				if ((ptr->sibling = typeCalloc(struct tries,1)) == 0) {
-					out_of_memory = TRUE;
-					return;
-				}
-
-				savedptr = ptr = ptr->sibling;
-				SET_TRY(ptr,txt);
-				ptr->value = 0;
-
-				break;
-			}
-		} /* end for (;;) */
-	} else {   /* (*tree) == 0 :: First sequence to be added */
-		savedptr = ptr = (*tree) = typeCalloc(struct tries,1);
-
-		if (ptr == 0) {
-			out_of_memory = TRUE;
-			return;
-		}
-
-		SET_TRY(ptr,txt);
-		ptr->value = 0;
-	}
-
-	    /* at this point, we are adding to the try.  ptr->child == 0 */
-
-	while (*txt) {
-		ptr->child = typeCalloc(struct tries,1);
-
-		ptr = ptr->child;
-
-		if (ptr == 0) {
-			out_of_memory = TRUE;
-
-			while ((ptr = savedptr) != 0) {
-				savedptr = ptr->child;
-				free(ptr);
-			}
-
-			return;
-		}
-
-		SET_TRY(ptr,txt);
-		ptr->value = 0;
-	}
-
-	ptr->value = code;
-	return;
-}
+MODULE_ID("$From: tries.c,v 1.8 1998/11/07 22:54:48 tom Exp $")
 
 /*
  * Expand a keycode into the string that it corresponds to, returning null if

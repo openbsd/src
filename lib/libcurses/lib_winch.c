@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_freeall.c,v 1.2 1998/11/17 03:16:21 millert Exp $	*/
+/*	$OpenBSD: lib_winch.c,v 1.1 1998/11/17 03:16:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,116 +29,26 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1996,1997                   *
+ *  Author: Thomas E. Dickey <dickey@clark.net> 1998                        *
  ****************************************************************************/
 
-#include <curses.priv.h>
-#include <term.h>
-
-#if HAVE_NC_FREEALL
-
-#if HAVE_LIBDBMALLOC
-extern int malloc_errfd;	/* FIXME */
-#endif
-
-MODULE_ID("$From: lib_freeall.c,v 1.12 1998/11/08 01:33:09 tom Exp $")
-
-static void free_slk(SLK *p)
-{
-	if (p != 0) {
-		FreeIfNeeded(p->ent);
-		FreeIfNeeded(p->buffer);
-		free(p);
-	}
-}
-
-void _nc_free_termtype(struct termtype *p, int base)
-{
-	if (p != 0) {
-		FreeIfNeeded(p->term_names);
-		FreeIfNeeded(p->str_table);
-		if (base)
-			free(p);
-	}
-}
-
-static void free_tries(struct tries *p)
-{
-	struct tries *q;
-
-	while (p != 0) {
-		q = p->sibling;
-		if (p->child != 0)
-			free_tries(p->child);
-		free(p);
-		p = q;
-	}
-}
-
 /*
- * Free all ncurses data.  This is used for testing only (there's no practical
- * use for it as an extension).
- */
-void _nc_freeall(void)
+**	lib_winch.c
+**
+**	The routine winch().
+**
+*/
+
+#include <curses.priv.h>
+
+MODULE_ID("$From: lib_winch.c,v 1.1 1998/11/14 22:06:09 tom Exp $")
+
+chtype winch(WINDOW *win)
 {
-	WINDOWLIST *p, *q;
-
-#if NO_LEAKS
-	_nc_free_tparm();
-#endif
-	while (_nc_windows != 0) {
-		/* Delete only windows that're not a parent */
-		for (p = _nc_windows; p != 0; p = p->next) {
-			bool found = FALSE;
-
-			for (q = _nc_windows; q != 0; q = q->next) {
-				if ((p != q)
-				 && (q->win->_flags & _SUBWIN)
-				 && (p->win == q->win->_parent)) {
-					found = TRUE;
-					break;
-				}
-			}
-
-			if (!found) {
-				delwin(p->win);
-				break;
-			}
-		}
+	T((T_CALLED("winch(%p)"), win));
+	if (win != 0) {
+		returnCode(win->_line[win->_cury].text[win->_curx]);
+	} else {
+		returnCode(0);
 	}
-
-	if (SP != 0) {
-		free_tries (SP->_keytry);
-		free_tries (SP->_key_ok);
-	    	free_slk(SP->_slk);
-		FreeIfNeeded(SP->_color_pairs);
-		FreeIfNeeded(SP->_color_table);
-		_nc_set_buffer(SP->_ofp, FALSE);
-#if !BROKEN_LINKER
-		FreeAndNull(SP);
-#endif
-	}
-
-	if (cur_term != 0) {
-		_nc_free_termtype(&(cur_term->type), TRUE);
-	}
-
-#ifdef TRACE
-	(void) _nc_trace_buf(-1, 0);
-#endif
-#if HAVE_LIBDBMALLOC
-	malloc_dump(malloc_errfd);
-#elif HAVE_LIBDMALLOC
-#elif HAVE_PURIFY
-	purify_all_inuse();
-#endif
 }
-
-void _nc_free_and_exit(int code)
-{
-	_nc_freeall();
-	exit(code);
-}
-#else
-void _nc_freeall(void) { }
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_parse.c,v 1.1 1998/07/23 21:17:25 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.2 1998/11/17 03:16:20 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -130,20 +130,23 @@ bool _nc_entry_match(char *n1, char *n2)
 {
     char	*pstart, *qstart, *pend, *qend;
     char	nc1[MAX_NAME_SIZE+1], nc2[MAX_NAME_SIZE+1];
+    size_t	n;
 
     if (strchr(n1, '|') == NULL)
     {
-	(void) strncpy(nc1, n1, sizeof(nc1) - 2);
-	nc1[sizeof(nc1) - 2] = '\0';
-	(void) strcat(nc1, "|");
+	if ((n = strlcpy(nc1, n1, sizeof(nc1))) > sizeof(nc1) - 2)
+	    n = sizeof(nc1) - 2;
+	nc1[n++] = '|';
+	nc1[n] = '\0';
 	n1 = nc1;
     }
 
     if (strchr(n2, '|') == NULL)
     {
-	(void) strncpy(nc2, n2, sizeof(nc2) - 2);
-	nc2[sizeof(nc2) - 2] = '\0';
-	(void) strcat(nc2, "|");
+	if ((n = strlcpy(nc2, n2, sizeof(nc2))) > sizeof(nc2) - 2)
+	    n = sizeof(nc2) - 2;
+	nc2[n++] = '|';
+	nc2[n] = '\0';
 	n2 = nc2;
     }
 
