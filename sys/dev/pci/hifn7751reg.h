@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.5 2000/03/10 08:45:00 mickey Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.6 2000/03/15 14:55:52 jason Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -40,8 +40,8 @@
  * Some PCI configuration space offset defines.  The names were made
  * identical to the names used by the Linux kernel.
  */
-#define  PCI_BASE_ADDRESS_0	0x10	/* 32 bits */
-#define  PCI_BASE_ADDRESS_1	0x14	/* 32 bits */
+#define  AEON_BAR0		(PCI_MAPREG_START + 0)	/* PUC register map */
+#define  AEON_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
 
 /*
  *  Some configurable values for the driver
@@ -131,14 +131,181 @@ struct aeon_softc {
 };
 
 /*
- * Register offsets in register set 0
+ * Processing Unit Registers (offset from BASEREG0)
  */
-#define AEON_INIT_1			0x04
-#define AEON_RAM_CONFIG			0x0c
-#define AEON_EXPAND			0x08
-#define AEON_CRYPTLEVEL		0x14
-#define AEON_INIT_3			0x10
-#define AEON_INIT_2			0x1c
+#define	AEON_0_PUDATA		0x00	/* Processing Unit Data */
+#define	AEON_0_PUCTRL		0x04	/* Processing Unit Control */
+#define	AEON_0_PUISR		0x08	/* Processing Unit Interrupt Status */
+#define	AEON_0_PUCNFG		0x0c	/* Processing Unit Configuration */
+#define	AEON_0_PUIER		0x10	/* Processing Unit Interrupt Enable */
+#define	AEON_0_PUSTAT		0x14	/* Processing Unit Status/Chip ID */
+#define	AEON_0_FIFOSTAT		0x18	/* FIFO Status */
+#define	AEON_0_FIFOCNFG		0x1c	/* FIFO Configuration */
+#define	AEON_0_SPACESIZE	0x20	/* Register space size */
+
+/* Processing Unit Control Register (AEON_0_PUCTRL) */
+#define	AEON_PUCTRL_CLRSRCFIFO	0x0010	/* clear source fifo */
+#define	AEON_PUCTRL_STOP	0x0008	/* stop pu */
+#define	AEON_PUCTRL_LOCKRAM	0x0004	/* lock ram */
+#define	AEON_PUCTRL_DMAENA	0x0002	/* enable dma */
+#define	AEON_PUCTRL_RESET	0x0001	/* Reset processing unit */
+
+/* Processing Unit Interrupt Status Register (AEON_0_PUISR) */
+#define	AEON_PUISR_CMDINVAL	0x8000	/* Invalid command interrupt */
+#define	AEON_PUISR_DATAERR	0x4000	/* Data error interrupt */
+#define	AEON_PUISR_SRCFIFO	0x2000	/* Source FIFO ready interrupt */
+#define	AEON_PUISR_DSTFIFO	0x1000	/* Destination FIFO ready interrupt */
+#define	AEON_PUISR_DSTOVER	0x0200	/* Destination overrun interrupt */
+#define	AEON_PUISR_SRCCMD	0x0080	/* Source command interrupt */
+#define	AEON_PUISR_SRCCTX	0x0040	/* Source context interrupt */
+#define	AEON_PUISR_SRCDATA	0x0020	/* Source data interrupt */
+#define	AEON_PUISR_DSTDATA	0x0010	/* Destination data interrupt */
+#define	AEON_PUISR_DSTRESULT	0x0004	/* Destination result interrupt */
+
+/* Processing Unit Configuration Register (AEON_0_PUCNFG) */
+#define	AEON_PUCNFG_DRAMMASK	0xe000	/* DRAM size mask */
+#define	AEON_PUCNFG_DSZ_256K	0x0000	/* 256k dram */
+#define	AEON_PUCNFG_DSZ_512K	0x2000	/* 512k dram */
+#define	AEON_PUCNFG_DSZ_1M	0x4000	/* 1m dram */
+#define	AEON_PUCNFG_DSZ_2M	0x6000	/* 2m dram */
+#define	AEON_PUCNFG_DSZ_4M	0x8000	/* 4m dram */
+#define	AEON_PUCNFG_DSZ_8M	0xa000	/* 8m dram */
+#define	AEON_PUNCFG_DSZ_16M	0xc000	/* 16m dram */
+#define	AEON_PUCNFG_DSZ_32M	0xe000	/* 32m dram */
+#define	AEON_PUCNFG_DRAMREFRESH	0x1800	/* DRAM refresh rate mask */
+#define	AEON_PUCNFG_DRFR_512	0x0000	/* 512 divisor of ECLK */
+#define	AEON_PUCNFG_DRFR_256	0x0800	/* 256 divisor of ECLK */
+#define	AEON_PUCNFG_DRFR_128	0x1000	/* 128 divisor of ECLK */
+#define	AEON_PUCNFG_TCALLPHASES	0x0200	/* your guess is as good as mine... */
+#define	AEON_PUCNFG_TCDRVTOTEM	0x0100	/* your guess is as good as mine... */
+#define	AEON_PUCNFG_BIGENDIAN	0x0080	/* DMA big endian mode */
+#define	AEON_PUCNFG_BUS32	0x0040	/* Bus width 32bits */
+#define	AEON_PUCNFG_BUS16	0x0000	/* Bus width 16 bits */
+#define	AEON_PUCNFG_CHIPID	0x0020	/* Allow chipid from PUSTAT */
+#define	AEON_PUCNFG_DRAM	0x0010	/* Context RAM is DRAM */
+#define	AEON_PUCNFG_SRAM	0x0000	/* Context RAM is SRAM */
+#define	AEON_PUCNFG_COMPSING	0x0004	/* Enable single compression context */
+#define	AEON_PUCNFG_ENCCNFG	0x0002	/* Encryption configuration */
+
+/* Processing Unit Interrupt Enable Register (AEON_0_PUIER) */
+#define	AEON_PUIER_CMDINVAL	0x8000	/* Invalid command interrupt */
+#define	AEON_PUIER_DATAERR	0x4000	/* Data error interrupt */
+#define	AEON_PUIER_SRCFIFO	0x2000	/* Source FIFO ready interrupt */
+#define	AEON_PUIER_DSTFIFO	0x1000	/* Destination FIFO ready interrupt */
+#define	AEON_PUIER_DSTOVER	0x0200	/* Destination overrun interrupt */
+#define	AEON_PUIER_SRCCMD	0x0080	/* Source command interrupt */
+#define	AEON_PUIER_SRCCTX	0x0040	/* Source context interrupt */
+#define	AEON_PUIER_SRCDATA	0x0020	/* Source data interrupt */
+#define	AEON_PUIER_DSTDATA	0x0010	/* Destination data interrupt */
+#define	AEON_PUIER_DSTRESULT	0x0004	/* Destination result interrupt */
+
+/* Processing Unit Status Register/Chip ID (AEON_0_PUSTAT) */
+#define	AEON_PUSTAT_CMDINVAL	0x8000	/* Invalid command interrupt */
+#define	AEON_PUSTAT_DATAERR	0x4000	/* Data error interrupt */
+#define	AEON_PUSTAT_SRCFIFO	0x2000	/* Source FIFO ready interrupt */
+#define	AEON_PUSTAT_DSTFIFO	0x1000	/* Destination FIFO ready interrupt */
+#define	AEON_PUSTAT_DSTOVER	0x0200	/* Destination overrun interrupt */
+#define	AEON_PUSTAT_SRCCMD	0x0080	/* Source command interrupt */
+#define	AEON_PUSTAT_SRCCTX	0x0040	/* Source context interrupt */
+#define	AEON_PUSTAT_SRCDATA	0x0020	/* Source data interrupt */
+#define	AEON_PUSTAT_DSTDATA	0x0010	/* Destination data interrupt */
+#define	AEON_PUSTAT_DSTRESULT	0x0004	/* Destination result interrupt */
+#define	AEON_PUSTAT_CHIPREV	0x00ff	/* Chip revision mask */
+#define	AEON_PUSTAT_CHIPENA	0xff00	/* Chip enabled mask */
+#define	AEON_PUSTAT_ENA_2	0x1100	/* Level 2 enabled */
+#define	AEON_PUSTAT_ENA_1	0x1000	/* Level 1 enabled */
+#define	AEON_PUSTAT_ENA_0	0x3000	/* Level 0 enabled */
+#define	AEON_PUSTAT_REV_2	0x0020	/* 7751 PT6/2 */
+#define	AEON_PUSTAT_REV_3	0x0030	/* 7751 PT6/3 */
+
+/* FIFO Status Register (AEON_0_FIFOSTAT) */
+#define	AEON_FIFOSTAT_SRC	0x7f00	/* Source FIFO available */
+#define	AEON_FIFOSTAT_DST	0x007f	/* Destination FIFO available */
+
+/* FIFO Configuration Register (AEON_0_FIFOCNFG) */
+#define	AEON_FIFOCNFG_THRESHOLD	0x0400	/* must be written as 1 */
+
+/*
+ * DMA Interface Registers (offset from BASEREG1)
+ */
+#define	AEON_1_DMA_CRAR		0x0c	/* DMA Command Ring Address */
+#define	AEON_1_DMA_SRAR		0x1c	/* DMA Source Ring Address */
+#define	AEON_1_DMA_RRAR		0x2c	/* DMA Resultt Ring Address */
+#define	AEON_1_DMA_DRAR		0x3c	/* DMA Destination Ring Address */
+#define	AEON_1_DMA_CSR		0x40	/* DMA Status and Control */
+#define	AEON_1_DMA_IER		0x44	/* DMA Interrupt Enable */
+#define	AEON_1_DMA_CNFG		0x48	/* DMA Configuration */
+#define	AEON_1_REVID		0x98	/* Revision ID */
+
+/* DMA Status and Control Register (AEON_1_DMA_CSR) */
+#define	AEON_DMACSR_D_CTRLMASK	0xc0000000	/* Destinition Ring Control */
+#define	AEON_DMACSR_D_CTRL_NOP	0x00000000	/* Dest. Control: no-op */
+#define	AEON_DMACSR_D_CTRL_DIS	0x40000000	/* Dest. Control: disable */
+#define	AEON_DMACSR_D_CTRL_ENA	0x80000000	/* Dest. Control: enable */
+#define	AEON_DMACSR_D_ABORT	0x20000000	/* Destinition Ring PCIAbort */
+#define	AEON_DMACSR_D_DONE	0x10000000	/* Destinition Ring Done */
+#define	AEON_DMACSR_D_LAST	0x08000000	/* Destinition Ring Last */
+#define	AEON_DMACSR_D_WAIT	0x04000000	/* Destinition Ring Waiting */
+#define	AEON_DMACSR_D_OVER	0x02000000	/* Destinition Ring Overflow */
+#define	AEON_DMACSR_R_CTRL	0x00c00000	/* Result Ring Control */
+#define	AEON_DMACSR_R_CTRL_NOP	0x00000000	/* Result Control: no-op */
+#define	AEON_DMACSR_R_CTRL_DIS	0x00400000	/* Result Control: disable */
+#define	AEON_DMACSR_R_CTRL_ENA	0x00800000	/* Result Control: enable */
+#define	AEON_DMACSR_R_ABORT	0x00200000	/* Result Ring PCI Abort */
+#define	AEON_DMACSR_R_DONE	0x00100000	/* Result Ring Done */
+#define	AEON_DMACSR_R_LAST	0x00080000	/* Result Ring Last */
+#define	AEON_DMACSR_R_WAIT	0x00040000	/* Result Ring Waiting */
+#define	AEON_DMACSR_R_OVER	0x00020000	/* Result Ring Overflow */
+#define	AEON_DMACSR_S_CTRL	0x0000c000	/* Source Ring Control */
+#define	AEON_DMACSR_S_CTRL_NOP	0x00000000	/* Source Control: no-op */
+#define	AEON_DMACSR_S_CTRL_DIS	0x00004000	/* Source Control: disable */
+#define	AEON_DMACSR_S_CTRL_ENA	0x00008000	/* Source Control: enable */
+#define	AEON_DMACSR_S_ABORT	0x00002000	/* Source Ring PCI Abort */
+#define	AEON_DMACSR_S_DONE	0x00001000	/* Source Ring Done */
+#define	AEON_DMACSR_S_LAST	0x00000800	/* Source Ring Last */
+#define	AEON_DMACSR_S_WAIT	0x00000400	/* Source Ring Waiting */
+#define	AEON_DMACSR_S_OVER	0x00000200	/* Source Ring Overflow */
+#define	AEON_DMACSR_C_CTRL	0x000000c0	/* Command Ring Control */
+#define	AEON_DMACSR_C_CTRL_NOP	0x00000000	/* Command Control: no-op */
+#define	AEON_DMACSR_C_CTRL_DIS	0x00000040	/* Command Control: disable */
+#define	AEON_DMACSR_C_CTRL_ENA	0x00000080	/* Command Control: enable */
+#define	AEON_DMACSR_C_ABORT	0x00000020	/* Command Ring PCI Abort */
+#define	AEON_DMACSR_C_DONE	0x00000010	/* Command Ring Done */
+#define	AEON_DMACSR_C_LAST	0x00000008	/* Command Ring Last */
+#define	AEON_DMACSR_C_WAIT	0x00000004	/* Command Ring Waiting */
+#define	AEON_DMACSR_C_EIRQ	0x00000001	/* Command Ring Engine IRQ */
+
+/* DMA Interrupt Enable Register (AEON_1_DMA_IER) */
+#define	AEON_DMAIER_D_ABORT	0x20000000	/* Destination Ring PCIAbort */
+#define	AEON_DMAIER_D_DONE	0x10000000	/* Destination Ring Done */
+#define	AEON_DMAIER_D_LAST	0x08000000	/* Destination Ring Last */
+#define	AEON_DMAIER_D_WAIT	0x04000000	/* Destination Ring Waiting */
+#define	AEON_DMAIER_D_OVER	0x02000000	/* Destination Ring Overflow */
+#define	AEON_DMAIER_R_ABORT	0x00200000	/* Result Ring PCI Abort */
+#define	AEON_DMAIER_R_DONE	0x00100000	/* Result Ring Done */
+#define	AEON_DMAIER_R_LAST	0x00080000	/* Result Ring Last */
+#define	AEON_DMAIER_R_WAIT	0x00040000	/* Result Ring Waiting */
+#define	AEON_DMAIER_R_OVER	0x00020000	/* Result Ring Overflow */
+#define	AEON_DMAIER_S_ABORT	0x00002000	/* Source Ring PCI Abort */
+#define	AEON_DMAIER_S_DONE	0x00001000	/* Source Ring Done */
+#define	AEON_DMAIER_S_LAST	0x00000800	/* Source Ring Last */
+#define	AEON_DMAIER_S_WAIT	0x00000400	/* Source Ring Waiting */
+#define	AEON_DMAIER_S_OVER	0x00000200	/* Source Ring Overflow */
+#define	AEON_DMAIER_C_ABORT	0x00000020	/* Command Ring PCI Abort */
+#define	AEON_DMAIER_C_DONE	0x00000010	/* Command Ring Done */
+#define	AEON_DMAIER_C_LAST	0x00000008	/* Command Ring Last */
+#define	AEON_DMAIER_C_WAIT	0x00000004	/* Command Ring Waiting */
+#define	AEON_DMAIER_ENGINE	0x00000001	/* Engine IRQ */
+
+/* DMA Configuration Register (AEON_1_DMA_CNFG) */
+#define	AEON_DMACNFG_BIGENDIAN	0x10000000	/* big endian mode */
+#define	AEON_DMACNFG_POLLFREQ	0x00ff0000	/* Poll frequency mask */
+#define	AEON_DMACNFG_UNLOCK	0x00000800
+#define	AEON_DMACNFG_POLLINVAL	0x00000700	/* Invalid Poll Scalar */
+#define	AEON_DMACNFG_LAST	0x00000010	/* Host control LAST bit */
+#define	AEON_DMACNFG_MODE	0x00000004	/* DMA mode */
+#define	AEON_DMACNFG_DMARESET	0x00000002	/* DMA Reset # */
+#define	AEON_DMACNFG_MSTRESET	0x00000001	/* Master Reset # */
 
 #define WRITE_REG_0(sc,reg,val) \
     bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0, reg, val)
@@ -148,18 +315,6 @@ struct aeon_softc {
 /*
  * Register offsets in register set 1
  */
-#define AEON_CMDR_ADDR		0x0c
-#define AEON_SRCR_ADDR		0x1c
-#define AEON_RESR_ADDR		0x2c
-#define AEON_DSTR_ADDR		0x3c
-#define	AEON_STATUS		0x40
-#define	AEON_IRQEN		0x44
-
-#define	AEON_DMA_CFG			0x48
-#define AEON_DMA_CFG_NOBOARDRESET	0x00000001
-#define AEON_DMA_CFG_NODMARESET		0x00000002
-#define AEON_DMA_CFG_NEED		0x00000004
-#define AEON_DMA_CFG_HOSTLAST		0x00000010
 
 #define	AEON_UNLOCK_SECRET1	0xf4
 #define	AEON_UNLOCK_SECRET2	0xfc
@@ -168,65 +323,6 @@ struct aeon_softc {
     bus_space_write_4((sc)->sc_st1, (sc)->sc_sh1, reg, val)
 #define READ_REG_1(sc,reg) \
     bus_space_read_4((sc)->sc_st1, (sc)->sc_sh1, reg)
-
-/*
- * Initial register values
- */
-
-/*
- *  Status Register
- *  
- *  The value below enables polling on all 4 descriptor rings and
- *  writes a "1" to every status bit in the register.  (Writing "1"
- *  clears the bit.)
- */
-#define AEON_INIT_STATUS_REG		((1<<31)|(1<<23)|(1<<15)|(1<<7))
-
-/*
- *  Interrupt Enable Register 
- *
- *  Initial value sets all interrupts to off except the "mask done"
- *  interrupt of the the result descriptor ring.
- */
-#define	AEON_INIT_INTERRUPT_ENABLE_REG	(AEON_INTR_ON_RESULT_DONE)
-
-/*
- *  DMA Configuration Register
- *  
- *  Initial value sets the polling scalar and frequency, and puts
- *  the host (not the AEON board) in charge of "last" bits in the
- *  dest data and result descriptor rings.
- */
-#define	AEON_INIT_DMA_CONFIG_REG					   \
-    (AEON_DMA_CFG_NOBOARDRESET | AEON_DMA_CFG_NODMARESET | \
-    AEON_DMA_CFG_NEED | \
-    AEON_DMA_CFG_HOSTLAST |		/* host controls last bit in all rings */  \
-    (AEON_POLL_SCALAR << 8) |		/* setting poll scalar value */		   \
-    (AEON_POLL_FREQUENCY << 16))	/* setting poll frequency value */
-
-/*
- *  RAM Configuration Register
- *
- *  Initial value sets the ecryption context size to 128 bytes (if using
- *  RC4 bump it to 512, but you'll decrease the number of available
- *  sessions).  We don't configure multiple compression histories -- since
- *  IPSec doesn't use them.
- *
- *  NOTE:  Use the AEON_RAM_CONFIG_INIT() macro instead of the
- *  variable, since DRAM/SRAM detection is not determined staticly.
- */
-#define AEON_INIT_RAM_CONFIG_REG				\
-  ((0x0 << 1) |		/* RAM Encrypt: 0 for 128 bytes, 1 for 512 bytes */  \
-   (0x1 << 2) |		/* RAM Comp cfg: 1 for single compression history */ \
-   0x4B40)		/* Setting fixed bits required by the register */
-
-/*
- *  Expand Register
- *
- *  The only bit in this register is the expand bit at position 9.  It's
- *  cleared by writing a 1 to it.
- */
-#define AEON_INIT_EXPAND_REG 	(0x1 << 9)
 
 /*********************************************************************
  * Structs for board commands 
@@ -297,12 +393,6 @@ typedef struct aeon_command_buf_data {
 	const u_int8_t *ck;
 	const u_int8_t *iv;
 } aeon_command_buf_data_t;
-
-/*
- * Values for the interrupt enable register
- */
-#define AEON_INTR_ON_RESULT_DONE     (1 << 20)
-#define AEON_INTR_ON_COMMAND_WAITING  (1 << 2)
 
 /*
  * The poll frequency and poll scalar defines are unshifted values used

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.8 2000/03/10 19:54:24 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.9 2000/03/15 14:55:51 jason Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -135,8 +135,7 @@ aeon_attach(parent, self, aux)
 		return;
 	}
 
-	if (pci_mem_find(pc, pa->pa_tag, PCI_BASE_ADDRESS_0, &iobase, &iosize,
-	    NULL)){
+	if (pci_mem_find(pc, pa->pa_tag, AEON_BAR0, &iobase, &iosize, NULL)) {
 		printf(": can't find mem space\n");
 		return;
 	}
@@ -146,8 +145,7 @@ aeon_attach(parent, self, aux)
 	}
 	sc->sc_st0 = pa->pa_memt;
 
-	if (pci_mem_find(pc, pa->pa_tag, PCI_BASE_ADDRESS_1, &iobase, &iosize,
-	    NULL)){
+	if (pci_mem_find(pc, pa->pa_tag, AEON_BAR1, &iobase, &iosize, NULL)) {
 		printf(": can't find mem space\n");
 		return;
 	}
@@ -247,8 +245,8 @@ aeon_reset_board(sc)
 	 * Set polling in the DMA configuration register to zero.  0x7 avoids
 	 * resetting the board and zeros out the other fields.
 	 */
-	WRITE_REG_1(sc, AEON_DMA_CFG, AEON_DMA_CFG_NOBOARDRESET |
-	    AEON_DMA_CFG_NODMARESET | AEON_DMA_CFG_NEED);
+	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MSTRESET |
+	    AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE);
 
 	/*
 	 * Now that polling has been disabled, we have to wait 1 ms
@@ -260,7 +258,7 @@ aeon_reset_board(sc)
 	 * field, the BRD reset field, and the manditory 1 at position 2.
 	 * Every other field is set to zero.
 	 */
-	WRITE_REG_1(sc, AEON_DMA_CFG, AEON_DMA_CFG_NEED);
+	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MODE);
 
 	/*
 	 * Wait another millisecond for the board to reset.
@@ -270,8 +268,8 @@ aeon_reset_board(sc)
 	/*
 	 * Turn off the reset!  (No joke.)
 	 */
-	WRITE_REG_1(sc, AEON_DMA_CFG, AEON_DMA_CFG_NOBOARDRESET |
-	    AEON_DMA_CFG_NODMARESET | AEON_DMA_CFG_NEED);
+	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MSTRESET |
+	    AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE);
 }
 
 u_int32_t
@@ -310,7 +308,7 @@ struct pci2id {
 		PCI_VENDOR_HIFN,
 		PCI_PRODUCT_HIFN_7751,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		  0x00, 0x00, 0x00, 0x00, 0x00 }	/* XXX incorrect */
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
 	},
 };
 
@@ -342,16 +340,16 @@ aeon_enable_crypto(sc, pciid)
 		return (1);
 	}
 
-	ramcfg = READ_REG_0(sc, AEON_RAM_CONFIG);
-	dmacfg = READ_REG_1(sc, AEON_DMA_CFG);
+	ramcfg = READ_REG_0(sc, AEON_0_PUCNFG);
+	dmacfg = READ_REG_1(sc, AEON_1_DMA_CNFG);
 
 	/*
 	 * The RAM config register's encrypt level bit needs to be set before
 	 * every read performed on the encryption level register.
 	 */
-	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg | 0x20);
+	WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg | AEON_PUCNFG_CHIPID);
 
-	encl = READ_REG_0(sc, AEON_CRYPTLEVEL);
+	encl = READ_REG_0(sc, AEON_0_PUSTAT);
 
 	/*
 	 * Make sure we don't re-unlock.  Two unlocks kills chip until the
@@ -362,8 +360,8 @@ aeon_enable_crypto(sc, pciid)
 		printf("%s: Strong Crypto already enabled!\n",
 		    sc->sc_dv.dv_xname);
 #endif
-		WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg);
-		WRITE_REG_1(sc, AEON_DMA_CFG, dmacfg);
+		WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg);
+		WRITE_REG_1(sc, AEON_1_DMA_CNFG, dmacfg);
 		return 0;	/* success */
 	}
 
@@ -374,7 +372,8 @@ aeon_enable_crypto(sc, pciid)
 		return 1;
 	}
 
-	WRITE_REG_1(sc, AEON_DMA_CFG, 0x807);
+	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_UNLOCK |
+	    AEON_DMACNFG_MSTRESET | AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE);
 	addr = READ_REG_1(sc, AEON_UNLOCK_SECRET1);
 	WRITE_REG_1(sc, AEON_UNLOCK_SECRET2, 0);
 
@@ -385,8 +384,8 @@ aeon_enable_crypto(sc, pciid)
 		DELAY(1000);
 	}
 
-	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg | 0x20);
-	encl = READ_REG_0(sc, AEON_CRYPTLEVEL);
+	WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg | AEON_PUCNFG_CHIPID);
+	encl = READ_REG_0(sc, AEON_0_PUSTAT);
 
 #ifdef AEON_DEBUG
 	if (encl != 0x1020 && encl != 0x1120)
@@ -395,8 +394,8 @@ aeon_enable_crypto(sc, pciid)
 		printf("Encryption engine enabled successfully!");
 #endif
 
-	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg);
-	WRITE_REG_1(sc, AEON_DMA_CFG, dmacfg);
+	WRITE_REG_0(sc, AEON_0_PUCNFG, ramcfg);
+	WRITE_REG_1(sc, AEON_1_DMA_CNFG, dmacfg);
 
 	switch(encl) {
 	case 0x3020:
@@ -425,30 +424,38 @@ aeon_init_pci_registers(sc)
 	struct aeon_softc *sc;
 {
 	/* write fixed values needed by the Initialization registers */
-	WRITE_REG_0(sc, AEON_INIT_1, 0x2);
-	WRITE_REG_0(sc, AEON_INIT_2, 0x400);
-	WRITE_REG_0(sc, AEON_INIT_3, 0x200);
+	WRITE_REG_0(sc, AEON_0_PUCTRL, AEON_PUCTRL_DMAENA);
+	WRITE_REG_0(sc, AEON_0_FIFOCNFG, AEON_FIFOCNFG_THRESHOLD);
+	WRITE_REG_0(sc, AEON_0_PUIER, AEON_PUIER_DSTOVER);
 
 	/* write all 4 ring address registers */
-	WRITE_REG_1(sc, AEON_CMDR_ADDR, vtophys(sc->sc_dma->cmdr));
-	WRITE_REG_1(sc, AEON_SRCR_ADDR, vtophys(sc->sc_dma->srcr));
-	WRITE_REG_1(sc, AEON_DSTR_ADDR, vtophys(sc->sc_dma->dstr));
-	WRITE_REG_1(sc, AEON_RESR_ADDR, vtophys(sc->sc_dma->resr));
+	WRITE_REG_1(sc, AEON_1_DMA_CRAR, vtophys(sc->sc_dma->cmdr));
+	WRITE_REG_1(sc, AEON_1_DMA_SRAR, vtophys(sc->sc_dma->srcr));
+	WRITE_REG_1(sc, AEON_1_DMA_DRAR, vtophys(sc->sc_dma->dstr));
+	WRITE_REG_1(sc, AEON_1_DMA_RRAR, vtophys(sc->sc_dma->resr));
 
 	/* write status register */
-	WRITE_REG_1(sc, AEON_STATUS, AEON_INIT_STATUS_REG);
-	WRITE_REG_1(sc, AEON_IRQEN, AEON_INIT_INTERRUPT_ENABLE_REG);
+	WRITE_REG_1(sc, AEON_1_DMA_CSR, AEON_DMACSR_D_CTRL_ENA |
+	    AEON_DMACSR_R_CTRL_ENA | AEON_DMACSR_S_CTRL_ENA |
+	    AEON_DMACSR_C_CTRL_ENA);
+	WRITE_REG_1(sc, AEON_1_DMA_IER, AEON_DMAIER_R_DONE);
 
 #if 0
 #if BYTE_ORDER == BIG_ENDIAN
 	    (0x1 << 7) |
 #endif
 #endif
-	WRITE_REG_0(sc, AEON_RAM_CONFIG, AEON_INIT_RAM_CONFIG_REG |
-	    sc->sc_drammodel << 4);
+	WRITE_REG_0(sc, AEON_0_PUCNFG, AEON_PUCNFG_COMPSING |
+	    AEON_PUCNFG_DRFR_128 | AEON_PUCNFG_TCALLPHASES |
+	    AEON_PUCNFG_TCDRVTOTEM | AEON_PUCNFG_BUS32 |
+	    (sc->sc_drammodel ? AEON_PUCNFG_DRAM : AEON_PUCNFG_SRAM));
 
-	WRITE_REG_0(sc, AEON_EXPAND, AEON_INIT_EXPAND_REG);
-	WRITE_REG_1(sc, AEON_DMA_CFG, AEON_INIT_DMA_CONFIG_REG);
+	WRITE_REG_0(sc, AEON_0_PUISR, AEON_PUISR_DSTOVER);
+	WRITE_REG_1(sc, AEON_1_DMA_CNFG, AEON_DMACNFG_MSTRESET |
+	    AEON_DMACNFG_DMARESET | AEON_DMACNFG_MODE |
+	    AEON_DMACNFG_LAST |
+	    ((AEON_POLL_FREQUENCY << 16 ) & AEON_DMACNFG_POLLFREQ) |
+	    ((AEON_POLL_SCALAR << 8) & AEON_DMACNFG_POLLINVAL));
 }
 
 /*
@@ -905,7 +912,7 @@ aeon_crypto(struct aeon_command *cmd)
 
 	printf("%s: Entering cmd: stat %8x ien %8x u %d/%d/%d/%d n %d/%d\n",
 	    sc->sc_dv.dv_xname,
-	    READ_REG_1(sc, AEON_STATUS), READ_REG_1(sc, AEON_IRQEN),
+	    READ_REG_1(sc, AEON_1_DMA_CSR), READ_REG_1(sc, AEON_1_DMA_IER),
 	    dma->cmdu, dma->srcu, dma->dstu, dma->resu, cmd->src_npa,
 	    cmd->dst_npa);
 
@@ -993,8 +1000,8 @@ aeon_crypto(struct aeon_command *cmd)
 	 * than one command in the queue.
 	 */
 	if (dma->slots_in_use > 1) {
-		WRITE_REG_1(sc, AEON_IRQEN,
-		    AEON_INTR_ON_RESULT_DONE | AEON_INTR_ON_COMMAND_WAITING);
+		WRITE_REG_1(sc, AEON_1_DMA_IER,
+		    AEON_DMAIER_R_DONE | AEON_DMAIER_C_WAIT);
 	}
 
 	/*
@@ -1014,7 +1021,7 @@ aeon_crypto(struct aeon_command *cmd)
 
 	printf("%s: command: stat %8x ier %8x\n",
 	    sc->sc_dv.dv_xname,
-	    READ_REG_1(sc, AEON_STATUS), READ_REG_1(sc, AEON_IRQEN));
+	    READ_REG_1(sc, AEON_1_DMA_CSR), READ_REG_1(sc, AEON_1_DMA_IER));
 
 	splx(s);
 	return 0;		/* success */
@@ -1026,19 +1033,25 @@ aeon_intr(arg)
 {
 	struct aeon_softc *sc = arg;
 	struct aeon_dma *dma = sc->sc_dma;
+	u_int32_t dmacsr;
+
+	dmacsr = READ_REG_1(sc, AEON_1_DMA_CSR);
 
 	printf("%s: irq: stat %8x ien %8x u %d/%d/%d/%d\n",
 	    sc->sc_dv.dv_xname,
-	    READ_REG_1(sc, AEON_STATUS), READ_REG_1(sc, AEON_IRQEN),
+	    dmacsr, READ_REG_1(sc, AEON_1_DMA_IER),
 	    dma->cmdu, dma->srcu, dma->dstu, dma->resu);
-	
-	if (dma->slots_in_use == 0 && (READ_REG_1(sc, AEON_STATUS) & (1 << 2))) {
+
+	if ((dmacsr & (AEON_DMACSR_C_WAIT|AEON_DMACSR_R_DONE)) == 0)
+		return (0);
+
+	if ((dma->slots_in_use == 0) && (dmacsr & AEON_DMACSR_C_WAIT)) {
 		/*
 		 * If no slots to process and we received a "waiting on
 		 * result" interrupt, we disable the "waiting on result"
 		 * (by clearing it).
 		 */
-		WRITE_REG_1(sc, AEON_IRQEN, AEON_INTR_ON_RESULT_DONE);
+		WRITE_REG_1(sc, AEON_1_DMA_IER, AEON_DMAIER_R_DONE);
 	} else {
 		if (dma->slots_in_use > AEON_D_RSIZE)
 			printf("%s: Internal Error -- ring overflow\n",
@@ -1078,6 +1091,6 @@ aeon_intr(arg)
 	 * register.  If we still have slots to process and we received a
 	 * waiting interrupt, this will interupt us again.
 	 */
-	WRITE_REG_1(sc, AEON_STATUS, (1 << 20) | (1 << 2));
+	WRITE_REG_1(sc, AEON_1_DMA_CSR, AEON_DMACSR_R_DONE|AEON_DMACSR_C_WAIT);
 	return (1);
 }
