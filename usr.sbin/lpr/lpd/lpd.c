@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.6 1996/08/07 00:20:49 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.7 1996/09/21 07:56:31 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -253,6 +253,10 @@ main(argc, argv)
 			domain = AF_INET, fromlen = sizeof(frominet);
 			s = accept(finet,
 			    (struct sockaddr *)&frominet, &fromlen);
+			if (frominet.s_port == 20) {
+				close(s);
+				continue;
+			}
 		}
 		if (s < 0) {
 			if (errno != EINTR)
@@ -503,6 +507,7 @@ chkhost(f)
 	register FILE *hostf;
 	int first = 1;
 	extern char *inet_ntoa();
+	int good = 0;
 
 	f->sin_port = ntohs(f->sin_port);
 	if (f->sin_family != AF_INET || f->sin_port >= IPPORT_RESERVED ||
@@ -516,9 +521,23 @@ chkhost(f)
 		fatal("Host name for your address (%s) unknown",
 			inet_ntoa(f->sin_addr));
 
-	(void) strncpy(fromb, hp->h_name, sizeof(fromb));
+	(void) strncpy(fromb, hp->h_name, sizeof(fromb)-1);
 	from[sizeof(fromb) - 1] = '\0';
 	from = fromb;
+
+	/* Check for spoof, ala rlogind */
+	hp = gethostbyname(fromb);
+	if (!hp)
+		fatal("hostname for your address (%s) unknown",
+		    inet_ntoa(f->sin_addr));
+	for (; good == 0 && hp->h_addr_list[0] != NULL; hp->h_addr_list++) {
+		if (!bcmp(hp->h_addr_list[0], (caddr_t)&f->sin_addr,
+		    sizeof(f->sin_addr)))
+			good = 1;
+	}
+	if (good == 0)
+		fatal("address for your hostname (%s) not matched",
+		    inet_ntoa(f->sin_addr));
 
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
 again:
