@@ -35,14 +35,21 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: remove.c,v 1.2 1996/08/19 08:33:01 tholo Exp $";
+static char rcsid[] = "$OpenBSD: remove.c,v 1.3 1996/10/28 04:55:25 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <unistd.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 remove(file)
 	const char *file;
 {
+	struct stat st;
+
+	if (stat(file, &st) < 0)
+		return (-1);
+	if (S_ISDIR(st.st_mode))
+		return (rmdir(file));
 	return (unlink(file));
 }
