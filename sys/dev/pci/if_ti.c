@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.22 2001/06/24 20:27:00 fgsch Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.23 2001/06/24 22:58:01 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1788,11 +1788,8 @@ void ti_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-
 #ifdef TI_CSUM_OFFLOAD
-		ip = mtod(m, struct ip *);
+		ip = (struct ip *)(mtod(m, caddr_t) + ETHER_HDR_LEN);
 		if (!(cur_rx->ti_tcp_udp_cksum ^ 0xFFFF) &&
 		    !(ip->ip_off & htons(IP_MF | IP_OFFMASK | IP_RF)))
 			m->m_flags |= M_HWCKSUM;
@@ -1804,10 +1801,7 @@ void ti_rxeof(sc)
 		 * to vlan_input() instead of ether_input().
 		 */
 		if (have_tag) {
-			struct ether_header *eh;
-
-			eh = mtod(m, struct ether_header *);
-			if (vlan_input_tag(eh, m, vlan_tag) < 0)
+			if (vlan_input_tag(m, vlan_tag) < 0)
 				ifp->if_data.ifi_noproto++;
 			have_tag = vlan_tag = 0;
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.46 2001/06/23 22:56:51 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.47 2001/06/24 22:58:01 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -670,11 +670,7 @@ txp_rx_reclaim(sc, r)
 
 #if NVLAN > 0
 		if (rxd->rx_stat & RX_STAT_VLAN) {
-			struct ether_header *eh;
-
-			eh = mtod(m, struct ether_header *);
-			m_adj(m, sizeof(struct ether_header));
-			if (vlan_input_tag(eh, m, htons(rxd->rx_vlan >> 16)) < 0)
+			if (vlan_input_tag(m, htons(rxd->rx_vlan >> 16)) < 0)
 				ifp->if_noproto++;
 			goto next;
 		}

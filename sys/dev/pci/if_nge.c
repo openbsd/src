@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.1 2001/06/08 02:26:13 nate Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.2 2001/06/24 22:58:01 fgsch Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1240,7 +1240,6 @@ void nge_jfree(buf, size, arg)
 void nge_rxeof(sc)
 	struct nge_softc	*sc;
 {
-        struct ether_header	*eh;
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct nge_desc		*cur_rx;
@@ -1294,7 +1293,6 @@ void nge_rxeof(sc)
 		m = m0;
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 		/*
@@ -1304,12 +1302,8 @@ void nge_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-
-		/* Do IP checksum checking. */
 #ifdef NGE_CSUM_OFFLOAD
+		/* Do IP checksum checking. */
 		if (extsts & NGE_RXEXTSTS_IPPKT)
 			m->m_pkthdr.csum_flags |= CSUM_IP_CHECKED;
 		if (!(extsts & NGE_RXEXTSTS_IPCSUMERR))
@@ -1322,14 +1316,13 @@ void nge_rxeof(sc)
 		 * to vlan_input() instead of ether_input().
 		 */
 		if (extsts & NGE_RXEXTSTS_VLANPKT) {
-			if (vlan_input_tag(eh, m,
-					   extsts & NGE_RXEXTSTS_VTCI) < 0)
+			if (vlan_input_tag(m, extsts & NGE_RXEXTSTS_VTCI) < 0)
 				ifp->if_data.ifi_noproto++;
                         continue;
                 }
 #endif
 
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 	}
 
 	sc->nge_cdata.nge_rx_prod = i;
