@@ -224,7 +224,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    On sparc64, all structs are returned via a pointer.  */
 
 #undef  USE_STRUCT_CONVENTION
-#define USE_STRUCT_CONVENTION(gcc_p, type) 1
+#define USE_STRUCT_CONVENTION(gcc_p, type) \
+    (TYPE_LENGTH (type) > 32)
 
 /* Store the address of the place in which to copy the structure the
    subroutine will return.  This is called from call_function. */
@@ -293,3 +294,7 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 #define TARGET_WRITE_FP(val) \
     sparc64_write_fp(val)
+
+#undef REG_STRUCT_HAS_ADDR
+#define REG_STRUCT_HAS_ADDR(gcc_p, type) \
+    (TYPE_LENGTH (type) > 32)
