@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.100 2003/03/17 09:52:20 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.101 2003/04/25 20:12:02 grange Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -230,6 +230,7 @@ privileges may change the value.
 .It Dv HW_DISKNAMES No "	string	no"
 .It Dv HW_DISKSTATS No "	struct	no"
 .It Dv HW_DISKCOUNT No "	integer	no"
+.It Dv HW_SENSORS No "	struct	no"
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -255,6 +256,10 @@ An array of
 structures containing disk statistics.
 .It Dv HW_DISKCOUNT
 The number of disks currently attached to the system.
+.It Dv HW_SENSORS
+An array of
+.Li struct sensor
+structures containing information from the hardware monitoring sensors.
 .El
 .Ss CTL_KERN
 The string and integer information available for the
