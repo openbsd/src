@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.598 2003/02/27 00:19:00 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.600 2003/02/27 18:25:51 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4467,6 +4467,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CSB5 IDE",
 	},
 	{
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_CSB6_IDE,
+	    "CSB6 IDE",
+	},
+	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_USB,
 	    "OSB4/CSB5 USB",
 	},
@@ -4531,6 +4535,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PDC20262",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20263,
+	    "PDC20263",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
 	    "PDC20265",
 	},
@@ -4565,6 +4573,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20277,
 	    "PDC20277",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20318,
+	    "PDC20318",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20319,
+	    "PDC20319",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20371,
+	    "PDC20371",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20375,
+	    "PDC20375",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20376,
