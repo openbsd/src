@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.121 2003/05/05 13:51:58 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.122 2003/05/13 22:50:01 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -257,6 +257,11 @@ structures is detected.
 Removes some optimizations from the kernel to reduce the size of the
 resulting kernel binary.
 This option can decrease system performance.
+.It Cd option NO_PROPOLICE
+Do not compile the kernel with the propolice stack protection.
+See
+.Xr gcc-local 1
+for more information about propolice.
 .It Cd option GPROF
 Adds code to the kernel for kernel profiling with
 .Xr kgmon 8 .
@@ -1039,6 +1044,7 @@ Double quotes are needed when specifying a negative
 .\" .Sh FILES
 .\" .Sh EXAMPLES
 .Sh SEE ALSO
+.Xr gcc-local 1 ,
 .Xr gdb 1 ,
 .Xr ktrace 1 ,
 .Xr quota 1 ,
