@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: route.c,v 1.9 2000/07/20 10:39:10 brian Exp $
+ * $OpenBSD: route.c,v 1.10 2000/09/02 22:12:41 brian Exp $
  *
  */
 
@@ -566,18 +566,6 @@ route_Change(struct bundle *bundle, struct sticky_route *r,
     } else if ((r->type & ROUTE_GWHISADDR) && r->gw.s_addr != peer.s_addr)
       r->gw = peer;
     bundle_SetRoute(bundle, RTM_ADD, r->dst, r->gw, r->mask, 1, 0);
-  }
-}
-
-void
-route_Clean(struct bundle *bundle, struct sticky_route *r)
-{
-  struct in_addr none, del;
-
-  none.s_addr = INADDR_ANY;
-  for (; r; r = r->next) {
-    del.s_addr = r->dst.s_addr & r->mask.s_addr;
-    bundle_SetRoute(bundle, RTM_DELETE, del, none, none, 1, 0);
   }
 }
 

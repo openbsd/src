@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: ipcp.c,v 1.26 2000/08/28 22:44:41 brian Exp $
+ * $OpenBSD: ipcp.c,v 1.27 2000/09/02 22:12:41 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -923,8 +923,6 @@ void
 ipcp_CleanInterface(struct ipcp *ipcp)
 {
   struct iface *iface = ipcp->fsm.bundle->iface;
-
-  route_Clean(ipcp->fsm.bundle, ipcp->route);
 
   if (iface->in_addrs && (Enabled(ipcp->fsm.bundle, OPT_PROXY) ||
                           Enabled(ipcp->fsm.bundle, OPT_PROXYALL))) {
