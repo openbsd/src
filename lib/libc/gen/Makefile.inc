@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.19 1998/11/20 11:18:37 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.20 1999/08/16 23:24:00 deraadt Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -67,7 +67,7 @@ MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 exect.3 \
 	exec.3 execv.3 exec.3 execvp.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
 	fts.3 fts_set.3 fts.3 fts_close.3
-MLINKS+=isinf.3 isnan.3
+MLINKS+=isinf.3 isnan.3 isinf.3 isnanf.3 isinf.3 isinff.3
 MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
 	getcap.3 cgetfirst.3 getcap.3 cgetmatch.3 getcap.3 cgetnext.3 \
 	getcap.3 cgetnum.3 getcap.3 cgetset.3 getcap.3 cgetstr.3 \

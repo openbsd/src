@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isinf.3,v 1.6 1999/07/09 13:35:17 aaron Exp $
+.\"	$OpenBSD: isinf.3,v 1.7 1999/08/16 23:24:00 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,25 +36,35 @@
 .Os
 .Sh NAME
 .Nm isinf ,
-.Nm isnan
+.Nm isinff ,
+.Nm isnan ,
+.Nm isnanf
 .Nd test for infinity or not-a-number
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft int
 .Fn isinf "double n"
 .Ft int
+.Fn isinff "float n"
+.Ft int
 .Fn isnan "double n"
+.Ft int
+.Fn isnanf "float n"
 .Sh DESCRIPTION
 The
 .Fn isinf
-function
+and
+.Fn isinff
+functions
 returns 1 if the number
 .Fa n
 is \*(If, otherwise 0.
 .Pp
 The
 .Fn isnan
-function
+and
+.Fn isnanf
+functions
 returns 1 if the number
 .Fa n
 is
