@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.8 2005/02/11 17:17:45 millert Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.9 2005/03/02 21:45:53 otto Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.8 2005/02/11 17:17:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.9 2005/03/02 21:45:53 otto Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -504,14 +504,12 @@ makelist(struct listhead *head, enum listtype type, char *src)
 		switch (type) {
 		case LT_USER:
 			if ((pw = getpwnam(sp)) == NULL)
-				errx(STATUS_BADUSAGE, "unknown user `%s'",
-				    optarg);
+				errx(STATUS_BADUSAGE, "unknown user `%s'", sp);
 			li->li_number = pw->pw_uid;
 			break;
 		case LT_GROUP:
 			if ((gr = getgrnam(sp)) == NULL)
-				errx(STATUS_BADUSAGE, "unknown group `%s'",
-				    optarg);
+				errx(STATUS_BADUSAGE, "unknown group `%s'", sp);
 			li->li_number = gr->gr_gid;
 			break;
 		case LT_TTY:
