@@ -1,5 +1,5 @@
-/*	$OpenBSD: kerberos.c,v 1.3 2000/07/11 09:29:28 hin Exp $	*/
-/* $Id: kerberos.c,v 1.3 2000/07/11 09:29:28 hin Exp $ */
+/*	$OpenBSD: kerberos.c,v 1.4 2000/07/11 15:52:13 deraadt Exp $	*/
+/* $Id: kerberos.c,v 1.4 2000/07/11 15:52:13 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -657,7 +657,7 @@ unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
     p += krb_get_int(p, (u_int32_t *)&cred->issue_date, 4, 0);
     p += krb_get_nir(p,
 		     cred->pname, sizeof(cred->pname),
-		     cred->pinst, sizeof(cred->pinst)
+		     cred->pinst, sizeof(cred->pinst),
 		     NULL, 0);
     return 0;
 }
