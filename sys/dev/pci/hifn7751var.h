@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.2 1999/02/21 00:05:15 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.3 1999/02/24 06:09:45 deraadt Exp $	*/
 
 /*
  *  Invertex AEON driver
@@ -51,6 +51,8 @@
 #define AEON_MD5_LENGTH       16
 #define AEON_SHA1_LENGTH      20
 #define AEON_MAC_TRUNC_LENGTH 12
+
+#define MAX_SCATTER 10
 
 /*
  *  aeon_command_t
@@ -117,23 +119,9 @@
  *  Warning:  Using session numbers and multiboard at the same time
  *            is currently broken.
  *
- *  source_buf
- *  ----------
- *  The source buffer is used for DMA -- it must be a 4-byte aligned
- *  address to physically contiguous memory where encode / decode
- *  input is read from.  In a decode operation using authentication,
- *  the final bytes of the buffer should contain the appropriate hash
- *  data.
- *  
- *  dest_buf
- *  --------
- *  The dest buffer is used for DMA -- it must be a 4-byte aligned
- *  address to physically contiguous memory where encoded / decoded
- *  output is written to.  If desired, this buffer can be the same
- *  as the source buffer with no performance penalty.  If 
- *  authentication is used, the final bytes will always consist of
- *  the hashed value (even on decode operations).
- *  
+ * mbuf: either fill in the mbuf pointer and npa=0 or
+ *	 fill packp[] and packl[] and set npa to > 0
+ * 
  *  mac_header_skip
  *  ---------------
  *  The number of bytes of the source_buf that are skipped over before
@@ -196,19 +184,23 @@ typedef struct aeon_command {
 
 	u_short	session_num;
 
-	/*
-	 *  You should be able to convert any of these arrays into pointers
-	 *  (if desired) without modifying code in aeon.c.
-	 */
 	u_char	*iv, *ck, *mac;
 	int	iv_len, ck_len, mac_len;
 
-	struct mbuf *m;
+	struct mbuf *src_m;
+	long	src_packp[MAX_SCATTER];
+	int	src_packl[MAX_SCATTER];
+	int	src_npa;
+	int	src_l;
+
+	struct mbuf *dst_m;
+	long	dst_packp[MAX_SCATTER];
+	int	dst_packl[MAX_SCATTER];
+	int	dst_npa;
+	int	dst_l;
 
 	u_short mac_header_skip;
 	u_short crypt_header_skip;
-	u_short source_length;
-	u_short dest_length;
 
 	void (*dest_ready_callback)(struct aeon_command *);
 	u_long private_data;
@@ -278,7 +270,7 @@ typedef struct aeon_command {
  *                              behaviour was requested.
  *
  *************************************************************************/
-int aeon_crypto(aeon_command_t *command);
+int aeon_crypto __P((aeon_command_t *command));
 
 #endif /* _KERNEL */
 

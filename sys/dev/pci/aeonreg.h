@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeonreg.h,v 1.2 1999/02/21 00:05:14 deraadt Exp $	*/
+/*	$OpenBSD: aeonreg.h,v 1.3 1999/02/24 06:09:45 deraadt Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -48,6 +48,11 @@
  */
 #define AEON_D_RSIZE	24
 #define AEON_MAX_DEVICES	4
+
+#define AEON_D_CMD_RSIZE	24
+#define AEON_D_SRC_RSIZE	80
+#define AEON_D_DST_RSIZE	80
+#define AEON_D_RES_RSIZE	24
 
 /*
  * The values below should multiple of 4 -- and be large enough to handle

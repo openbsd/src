@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeon.c,v 1.2 1999/02/21 00:05:14 deraadt Exp $	*/
+/*	$OpenBSD: aeon.c,v 1.3 1999/02/24 06:09:45 deraadt Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -75,12 +75,12 @@ void	aeon_init_dma	__P((struct aeon_softc *));
 void	aeon_init_pci_registers __P((struct aeon_softc *));
 int	aeon_checkram __P((struct aeon_softc *));
 int	aeon_intr		__P((void *));
-u_int32_t aeon_write_command __P((const struct aeon_command_buf_data *,
-    u_int8_t *));
-int aeon_build_command __P((const struct aeon_command * cmd,
-    struct aeon_command_buf_data *));
-void aeon_intr_process_ring __P((struct aeon_softc *, struct aeon_dma *));
-
+u_int	aeon_write_command __P((const struct aeon_command_buf_data *,
+	    u_int8_t *));
+int	aeon_build_command __P((const struct aeon_command * cmd,
+	    struct aeon_command_buf_data *));
+int	aeon_mbuf __P((struct mbuf *, int *np, long *pp, int *lp, int maxp,
+	    int *nicealign));
 
 /*
  * Used for round robin crypto requests
@@ -406,21 +406,22 @@ aeon_init_dma(sc)
 	int i;
 
 	/* initialize static pointer values */
-	for (i = 0; i < AEON_D_RSIZE; i++) {
+	for (i = 0; i < AEON_D_CMD_RSIZE; i++)
 		dma->cmdr[i].p = vtophys(dma->command_bufs[i]);
+	for (i = 0; i < AEON_D_RES_RSIZE; i++)
 		dma->resr[i].p = vtophys(dma->result_bufs[i]);
-	}
-	dma->cmdr[AEON_D_RSIZE].p = vtophys(dma->cmdr);
-	dma->srcr[AEON_D_RSIZE].p = vtophys(dma->srcr);
-	dma->dstr[AEON_D_RSIZE].p = vtophys(dma->dstr);
-	dma->resr[AEON_D_RSIZE].p = vtophys(dma->resr);
+
+	dma->cmdr[AEON_D_CMD_RSIZE].p = vtophys(dma->cmdr);
+	dma->srcr[AEON_D_SRC_RSIZE].p = vtophys(dma->srcr);
+	dma->dstr[AEON_D_DST_RSIZE].p = vtophys(dma->dstr);
+	dma->resr[AEON_D_RES_RSIZE].p = vtophys(dma->resr);
 }
 
 /*
  * Writes out the raw command buffer space.  Returns the
  * command buffer size.
  */
-u_int32_t 
+u_int
 aeon_write_command(const struct aeon_command_buf_data *cmd_data,
     u_int8_t *command_buf)
 {
@@ -538,14 +539,14 @@ aeon_build_command(const struct aeon_command *cmd,
 	 *           checks!!!!
 	 */
 
-	if (cmd->source_length <= mac_length) {
+	if (cmd->src_npa <= mac_length) {
 		printf("aeon:  command source buffer has no data\n");
 		return -1;
 	}
 	dest_diff = (flags & AEON_ENCODE) ? mac_length : -mac_length;
-	if (cmd->dest_length < cmd->source_length + dest_diff) {
+	if (cmd->dst_npa < cmd->dst_npa + dest_diff) {
 		printf("aeon:  command dest length %u too short -- needed %u\n",
-		    cmd->dest_length, cmd->source_length + dest_diff);
+		    cmd->dst_npa, cmd->dst_npa + dest_diff);
 		return -1;
 	}
 #endif
@@ -570,8 +571,8 @@ aeon_build_command(const struct aeon_command *cmd,
 	 * Set total source and dest counts.  These values are the same as the
 	 * values set in the length field of the source and dest descriptor rings.
 	 */
-	base_cmd->total_source_count = cmd->source_length;
-	base_cmd->total_dest_count = cmd->dest_length;
+	base_cmd->total_source_count = cmd->src_l;
+	base_cmd->total_dest_count = cmd->dst_l;
 
 	/*
 	 * XXX -- We need session number range checking...
@@ -612,7 +613,7 @@ aeon_build_command(const struct aeon_command *cmd,
 	         * Set the mac header skip and source count.
 	         */
 		mac_cmd->header_skip = cmd->mac_header_skip;
-		mac_cmd->source_count = cmd->source_length - cmd->mac_header_skip;
+		mac_cmd->source_count = cmd->src_npa - cmd->mac_header_skip;
 		if (flags & AEON_DECODE)
 			mac_cmd->source_count -= mac_length;
 	}
@@ -639,7 +640,7 @@ aeon_build_command(const struct aeon_command *cmd,
 	         * Set the encrypt header skip and source count.
 	         */
 		crypt_cmd->header_skip = cmd->crypt_header_skip;
-		crypt_cmd->source_count = cmd->source_length - cmd->crypt_header_skip;
+		crypt_cmd->source_count = cmd->src_npa - cmd->crypt_header_skip;
 		if (flags & AEON_DECODE)
 			crypt_cmd->source_count -= mac_length;
 
@@ -671,6 +672,69 @@ aeon_build_command(const struct aeon_command *cmd,
 	return 0;		/* success */
 }
 
+int
+aeon_mbuf(m, np, pp, lp, maxp, nicep)
+	struct mbuf *m;
+	int *np;
+	long *pp;
+	int *lp;
+	int maxp;
+	int *nicep;
+{
+	struct	mbuf *m0;
+	int npa = *np;
+	int tlen = 0;
+
+	/* generate a [pa,len] array from an mbuf */
+	npa = 0;
+	for (m0 = m; m; m = m->m_next) {
+		void *va;
+		long pg, npg;
+		int len, off;
+
+		va = m->m_data;
+		len = m->m_len;
+		tlen += len;
+
+		lp[npa] = len;
+		pp[npa] = vtophys(va);
+		pg = pp[npa] & ~PAGE_MASK;
+		off = (long)va & PAGE_MASK;
+
+		while (len + off > PAGE_SIZE) {
+			va = va + PAGE_SIZE - off;
+			npg = vtophys(va);
+			if (npg != pg) {
+				/* FUCKED UP condition */
+				npa++;
+				continue;
+			}
+			lp[npa] = PAGE_SIZE - off;
+			off = 0;
+			++npa;
+			if (npa > maxp)
+				return (0);
+			lp[npa] = len - (PAGE_SIZE - off);
+			len -= lp[npa];
+			pp[npa] = vtophys(va);
+		} 
+	}
+
+	if (nicep) {
+		int nice = 1;
+		int i;
+
+		/* see if each [pa,len] entry is long-word aligned */
+		for (i = 0; i < npa; i++)
+			if ((lp[i] & 3) || (pp[i] & 3))
+				nice = 0;
+		*nicep = nice;
+	}
+
+	*np = npa;
+	return (tlen);
+}
+
 int 
 aeon_crypto(struct aeon_command *cmd)
 {
@@ -679,18 +743,8 @@ aeon_crypto(struct aeon_command *cmd)
 	struct	aeon_softc *sc;
 	struct	aeon_dma *dma;
 	struct	aeon_command_buf_data cmd_buf_data;
-	int	cmdi, srci, dsti, resi;
-	int     error, s;
-#define MAX_SCATTER 10
-	long	packp[MAX_SCATTER];
-	int	packl[MAX_SCATTER];
-	struct	mbuf *m0, *m = cmd->m;
-	int	nchunks, i;
-
-	if (aeon_build_command(cmd, &cmd_buf_data) != 0)
-		return AEON_CRYPTO_BAD_INPUT;
-
-	s = splimp();
+	int	cmdi, srci, dsti, resi, nicealign = 0;
+	int     error, s, i;
 
 	/* Pick the aeon board to send the data to.  Right now we use a round
 	 * robin approach. */
@@ -699,125 +753,118 @@ aeon_crypto(struct aeon_command *cmd)
 		current_device = 0;
 	dma = sc->sc_dma;
 
-#if 1
-	printf("%s: Entering command"
-	    " -- Status Reg 0x%08x"
-	    " -- Interrupt Enable Reg 0x%08x"
-	    " -- slots in use %u"
-	    " -- source length %u"
-	    " -- dest length %u\n",
+	if (cmd->src_npa == 0 && cmd->src_m)
+		cmd->src_l = aeon_mbuf(cmd->src_m, &cmd->src_npa,
+		    cmd->src_packp, cmd->src_packl, MAX_SCATTER, &nicealign);
+	if (cmd->src_l == 0)
+		return (-1);
+
+	if (nicealign == 0) {
+		cmd->dst_l = cmd->src_l;
+		MGETHDR(cmd->dst_m, M_DONTWAIT, MT_DATA);
+		if (cmd->dst_m == NULL)
+			return (-1);
+		if (cmd->src_l > MHLEN) {
+			MCLGET(cmd->dst_m, M_DONTWAIT);
+			if ((cmd->dst_m->m_flags & M_EXT) == 0) {
+				m_freem(cmd->dst_m);
+				return (-1);
+			}
+		}
+	} else
+		cmd->dst_m = cmd->src_m;
+
+	cmd->dst_l = aeon_mbuf(cmd->dst_m, &cmd->dst_npa,
+	    cmd->dst_packp, cmd->dst_packl, MAX_SCATTER, NULL);
+	if (cmd->dst_l == 0)
+		return (-1);
+
+	if (aeon_build_command(cmd, &cmd_buf_data) != 0)
+		return AEON_CRYPTO_BAD_INPUT;
+
+	printf("%s: Entering cmd: stat %8x ien %8x u %d/%d/%d/%d n %d/%d\n",
 	    sc->sc_dv.dv_xname,
 	    READ_REG_1(sc, AEON_STATUS), READ_REG_1(sc, AEON_IRQEN),
-	    dma->slots_in_use, cmd->source_length, cmd->dest_length);
-#endif
+	    dma->cmdu, dma->srcu, dma->dstu, dma->resu, cmd->src_npa,
+	    cmd->dst_npa);
 
-	/*
-	 * Generate a [pa,len] array from an mbuf.
-	 * This is very broken
-	 */
-	nchunks = 0;
-	for (m0 = m; m; m = m->m_next) {
-		void *va;
-		long pg, npg;
-		int len, off;
-
-		va = m->m_data;
-		len = m->m_len;
-
-		packl[nchunks] = len;
-		packp[nchunks] = vtophys(va);
-		pg = packp[nchunks] & ~PAGE_MASK;
-		off = (long)va & PAGE_MASK;
-
-		while (len + off > PAGE_SIZE) {
-			va = va + PAGE_SIZE - off;
-			npg = vtophys(va);
-			if (npg != pg) {
-				nchunks++;
-				break;
-			}
-			packl[nchunks] = PAGE_SIZE - off;
-			off = 0;
-			++nchunks;
-			packl[nchunks] = len - (PAGE_SIZE - off);
-			len -= packl[nchunks];
-			packp[nchunks] = vtophys(va);
-		} 
-	}
+	s = splimp();
 
 	/*
 	 * need 1 cmd, and 1 res
 	 * need N src, and N dst
 	 */
-	while (dma->cmdu+1 == AEON_D_RSIZE || dma->srcu+nchunks == AEON_D_RSIZE ||
-	    dma->dstu+nchunks == AEON_D_RSIZE || dma->resu+1 == AEON_D_RSIZE) {
-		if (cmd->flags & AEON_DMA_FULL_NOBLOCK)
+	while (dma->cmdu+1 > AEON_D_CMD_RSIZE ||
+	    dma->srcu+cmd->src_npa > AEON_D_SRC_RSIZE ||
+	    dma->dstu+cmd->dst_npa > AEON_D_DST_RSIZE ||
+	    dma->resu+1 > AEON_D_RES_RSIZE) {
+		if (cmd->flags & AEON_DMA_FULL_NOBLOCK) {
 			splx(s);
 			return (AEON_CRYPTO_RINGS_FULL);
+		}
 		tsleep((caddr_t) dma, PZERO, "aeonring", 1);
 	}
-	dma->cmdu += 1;
-	dma->resu += 1;
 
-	if (dma->cmdi == AEON_D_RSIZE) {
+	if (dma->cmdi == AEON_D_CMD_RSIZE) {
 		cmdi = 0, dma->cmdi = 1;
-		dma->cmdr[AEON_D_RSIZE].l = AEON_D_VALID | AEON_D_LAST |
+		dma->cmdr[AEON_D_CMD_RSIZE].l = AEON_D_VALID | AEON_D_LAST |
 		    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
 	} else
 		cmdi = dma->cmdi++;
 
-	if (dma->resi == AEON_D_RSIZE) {
+	if (dma->resi == AEON_D_RES_RSIZE) {
 		resi = 0, dma->resi = 1;
-		dma->resr[AEON_D_RSIZE].l = AEON_D_VALID | AEON_D_LAST |
+		dma->resr[AEON_D_RES_RSIZE].l = AEON_D_VALID | AEON_D_LAST |
 		    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
 	} else
 		resi = dma->resi++;
 
 	cmdlen = aeon_write_command(&cmd_buf_data, dma->command_bufs[cmdi]);
 	dma->aeon_commands[cmdi] = cmd;
-
-	/*
-	 * .p for command/result already set
-	 */
+	/* .p for command/result already set */
 	dma->cmdr[cmdi].l = cmdlen | AEON_D_VALID | AEON_D_LAST |
 	    AEON_D_MASKDONEIRQ;
+	dma->cmdu += 1;
 
-	for (i = 0; i < nchunks; i++) {
+	for (i = 0; i < cmd->src_npa; i++) {
 		int last = 0;
 
-		if (i == nchunks-1)
+		if (i == cmd->src_npa-1)
 			last = AEON_D_LAST;
 
-		if (dma->srci == AEON_D_RSIZE) {
+		if (dma->srci == AEON_D_SRC_RSIZE) {
 			srci = 0, dma->srci = 1;
-			dma->srcr[AEON_D_RSIZE].l = AEON_D_VALID |
+			dma->srcr[AEON_D_SRC_RSIZE].l = AEON_D_VALID |
 			    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
 		} else
 			srci = dma->srci++;
-		dma->srcu++;
-
-		dma->srcr[srci].p = vtophys(packp[i]);
-		dma->srcr[srci].l = packl[i] | AEON_D_VALID |
+		dma->srcr[srci].p = vtophys(cmd->src_packp[i]);
+		dma->srcr[srci].l = cmd->src_packl[i] | AEON_D_VALID |
 		    AEON_D_MASKDONEIRQ | last;
+	}
+	dma->srcu += cmd->src_npa;
 
-		if (dma->dsti == AEON_D_RSIZE) {
+	for (i = 0; i < cmd->dst_npa; i++) {
+		int last = 0;
+
+		if (dma->dsti == AEON_D_DST_RSIZE) {
 			dsti = 0, dma->dsti = 1;
-			dma->dstr[AEON_D_RSIZE].l = AEON_D_VALID |
+			dma->dstr[AEON_D_DST_RSIZE].l = AEON_D_VALID |
 			    AEON_D_MASKDONEIRQ | AEON_D_JUMP;
 		} else
 			dsti = dma->dsti++;
-		dma->dstu++;
-
-		dma->dstr[dsti].p = vtophys(packp[i]);
-		dma->dstr[dsti].l = packl[i] | AEON_D_VALID |
+		dma->dstr[dsti].p = vtophys(cmd->dst_packp[i]);
+		dma->dstr[dsti].l = cmd->dst_packl[i] | AEON_D_VALID |
 		    AEON_D_MASKDONEIRQ | last;
 	}
+	dma->dstu += cmd->dst_npa;
 
 	/*
 	 * Unlike other descriptors, we don't mask done interrupt from
 	 * result descriptor.
 	 */
 	dma->resr[resi].l = AEON_MAX_RESULT | AEON_D_VALID | AEON_D_LAST;
+	dma->resu += 1;
 
 	/*
 	 * We don't worry about missing an interrupt (which a waiting
@@ -844,52 +891,12 @@ aeon_crypto(struct aeon_command *cmd)
 			    sc->sc_dv.dv_xname, error);
 	}
 
-	printf("%s: command executed"
-	    " -- Status Register 0x%08x"
-	    " -- Interrupt Enable Reg 0x%08x\n",
+	printf("%s: command: stat %8x ier %8x\n",
 	    sc->sc_dv.dv_xname,
 	    READ_REG_1(sc, AEON_STATUS), READ_REG_1(sc, AEON_IRQEN));
 
 	splx(s);
 	return 0;		/* success */
-}
-
-/*
- * Part of interrupt handler--cleans out done jobs from rings
- */
-void
-aeon_intr_process_ring(struct aeon_softc *sc, struct aeon_dma *dma)
-{
-	if (dma->slots_in_use > AEON_D_RSIZE)
-		printf("%s: Internal Error -- ring overflow\n",
-		    sc->sc_dv.dv_xname);
-
-	while (dma->slots_in_use > 0) {
-		u_int32_t wake_pos = dma->wakeup_rpos;
-		struct aeon_command *cmd = dma->aeon_commands[wake_pos];
-
-		/* if still valid, stop processing */
-		if (dma->resr[wake_pos].l & AEON_D_VALID)
-			break;
-
-		if (AEON_USING_MAC(cmd->flags) && (cmd->flags & AEON_DECODE)) {
-			u_int8_t *result_buf = dma->result_bufs[wake_pos];
-
-			cmd->result_status = (result_buf[8] & 0x2) ? AEON_MAC_BAD : 0;
-			printf("%s: byte index 8 of result 0x%02x\n",
-			    sc->sc_dv.dv_xname, (u_int32_t) result_buf[8]);
-		}
-
-		/* position is done, notify producer with wakup or callback */
-		if (cmd->dest_ready_callback == NULL)
-			wakeup((caddr_t) &dma->resr[wake_pos]);
-		else
-			cmd->dest_ready_callback(cmd);
-
-		if (++dma->wakeup_rpos == AEON_D_RSIZE)
-			dma->wakeup_rpos = 0;
-		dma->slots_in_use--;
-	}
 }
 
 int 
@@ -898,18 +905,12 @@ aeon_intr(arg)
 {
 	struct aeon_softc *sc = arg;
 	struct aeon_dma *dma = sc->sc_dma;
-	int r = 0;
 
-#if 1
-	printf("%s: Processing Interrupt"
-	    " -- Status Reg 0x%08x"
-	    " -- Interrupt Enable Reg 0x%08x"
-	    " -- slots in use %u\n",
+	printf("%s: irq: stat %8x ien %8x u %d/%d/%d/%d\n",
 	    sc->sc_dv.dv_xname,
 	    READ_REG_1(sc, AEON_STATUS), READ_REG_1(sc, AEON_IRQEN),
-	    dma->slots_in_use);
-#endif
-
+	    dma->cmdu, dma->srcu, dma->dstu, dma->resu);
+	
 	if (dma->slots_in_use == 0 && (READ_REG_1(sc, AEON_STATUS) & (1 << 2))) {
 		/*
 		 * If no slots to process and we received a "waiting on
@@ -917,16 +918,39 @@ aeon_intr(arg)
 		 * (by clearing it).
 		 */
 		WRITE_REG_1(sc, AEON_IRQEN, AEON_INTR_ON_RESULT_DONE);
-		r = 1;
 	} else {
-		aeon_intr_process_ring(sc, dma);
-		r = 1;
-	}
+		if (dma->slots_in_use > AEON_D_RSIZE)
+			printf("%s: Internal Error -- ring overflow\n",
+			    sc->sc_dv.dv_xname);
 
-#if 1
-	printf("%s: exiting interrupt handler -- slots in use %u\n",
-	    sc->sc_dv.dv_xname, dma->slots_in_use);
-#endif
+		while (dma->slots_in_use > 0) {
+			u_int32_t wake_pos = dma->wakeup_rpos;
+			struct aeon_command *cmd = dma->aeon_commands[wake_pos];
+	
+			/* if still valid, stop processing */
+			if (dma->resr[wake_pos].l & AEON_D_VALID)
+				break;
+	
+			if (AEON_USING_MAC(cmd->flags) && (cmd->flags & AEON_DECODE)) {
+				u_int8_t *result_buf = dma->result_bufs[wake_pos];
+	
+				cmd->result_status = (result_buf[8] & 0x2) ?
+				    AEON_MAC_BAD : 0;
+				printf("%s: byte index 8 of result 0x%02x\n",
+				    sc->sc_dv.dv_xname, (u_int32_t) result_buf[8]);
+			}
+	
+			/* position is done, notify producer with wakup or callback */
+			if (cmd->dest_ready_callback == NULL)
+				wakeup((caddr_t) &dma->resr[wake_pos]);
+			else
+				cmd->dest_ready_callback(cmd);
+	
+			if (++dma->wakeup_rpos == AEON_D_RSIZE)
+				dma->wakeup_rpos = 0;
+			dma->slots_in_use--;
+		}
+	}
 
 	/*
 	 * Clear "result done" and "waiting on command ring" flags in status
@@ -934,5 +958,5 @@ aeon_intr(arg)
 	 * waiting interrupt, this will interupt us again.
 	 */
 	WRITE_REG_1(sc, AEON_STATUS, (1 << 20) | (1 << 2));
-	return (r);
+	return (1);
 }
