@@ -1298,7 +1298,7 @@ sweep_string_in_operand (insn, loc, sweep_offset, sweep_size)
 {
   register rtx x = *loc;
   register enum rtx_code code;
-  int i, j;
+  int i, j, k = 0;
   HOST_WIDE_INT offset;
   const char *fmt;
 
@@ -1355,10 +1355,11 @@ sweep_string_in_operand (insn, loc, sweep_offset, sweep_size)
 	  if (x->used) goto single_use_of_virtual_reg;
 	  
 	  offset = AUTO_OFFSET(x);
+	  if (RTX_INTEGRATED_P (x)) k = -1; /* for inline base ptr */
 
 	  /* the operand related to the sweep variable */
-	  if (sweep_offset <= offset
-	      && offset < sweep_offset + sweep_size)
+	  if (sweep_offset <= offset + k
+	      && offset + k < sweep_offset + sweep_size)
 	    {
 	      offset += sweep_frame_offset - sweep_size - sweep_offset;
 
@@ -1366,8 +1367,8 @@ sweep_string_in_operand (insn, loc, sweep_offset, sweep_size)
 	      XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset);
 	      x->used = 1;
 	    }
-	  else if (sweep_offset <= offset
-		   && offset < sweep_frame_offset)
+	  else if (sweep_offset <= offset + k
+		   && offset + k < sweep_frame_offset)
 	    {	/* the rest of variables under sweep_frame_offset, so shift the location */
 	      XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset - sweep_size);
 	      x->used = 1;
