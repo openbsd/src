@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.19 2000/07/28 13:02:12 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.20 2000/10/24 02:05:36 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -351,6 +351,18 @@ pmap_bootstrap(kernelstart, kernelend)
 	 */
 	kernelstart &= ~PGOFSET;
 	kernelend = (kernelend + PGOFSET) & ~PGOFSET;
+
+	/* make certain that each section is page aligned for base and size */
+	for (mp = avail; mp->size; mp++) {
+		u_int32_t end;
+		s = mp->start - round_page(mp->start);
+		if (s != 0) {
+			mp->start = round_page(mp->start);
+			end = trunc_page(mp->size + mp->start);
+			mp->size = end - mp->start;
+		}
+		mp->size = trunc_page(mp->size);
+	}
 	for (mp = avail; mp->size; mp++) {
 		/*
 		 * Check whether this region holds all of the kernel.
@@ -479,7 +491,7 @@ avail_end = npgs * NBPG;
 	potable = (struct pte_ovtab *)mp->start;
 	mp->size -= sz;
 	mp->start += sz;
-	if (mp->size <= 0)
+	if (mp->size == 0)
 		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
 	for (i = 0; i < ptab_cnt; i++)
 		LIST_INIT(potable + i);
