@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 1999/01/23 19:41:30 rahnds Exp $
+#	$OpenBSD: GENERIC,v 1.11 1999/11/09 05:07:08 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -13,6 +13,8 @@ option		SYS_TYPE=OFWMACH
 
 option		FIREPOWERBUGS
 options		PPC_MPC106_BUG
+option		IPX		# IPX+SPX
+option		IPXIP		# IPX tunneling over IP
 
 include "../../../conf/GENERIC"
 
