@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.5 2001/06/25 06:40:52 angelos Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.6 2001/06/27 03:50:49 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -245,9 +245,9 @@ in packet
 .Va mbuf .
 .Pp
 The
-.Fn M_COPY_PKTHDR
+.Fn M_MOVE_PKTHDR
 and
-.Fn M_COPY_HDR
+.Fn M_MOVE_HDR
 macros defined in
 .Pa sys/sys/mbuf.h
 move the tags from the old to the new mbuf.
