@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.3 2000/04/27 03:25:36 chris Exp $
+.\" $OpenBSD: vlan.4,v 1.4 2000/04/28 05:26:22 chris Exp $
 .\"
 .Dd 09 January 2000
 .Dt VLAN 4
@@ -17,20 +17,23 @@ conjunction with IEEE 802.1Q-compliant ethernet devices.
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc
 .It 802.1Q encapsulation over ethernet (Ethernet protocol 0x8100)
+.Pp
+The 802.1Q header specifies the virtual LAN number, and thus allows an
+ethernet switch (or other 802.1Q compliant network devices) to be aware of
+which LAN the frame is part of, and in the case of a switch, which
+port(s) the frame can go to.  Frames transmitted through the vlan
+interface will be diverted to the specified physical interface with
+802.1Q vlan encapsulation. Frames with 802.1Q encapsulation received by
+the parent interface with the correct vlan tag will be diverted to the
+associated vlan pseudo-interface.
+.El
+.Pp
 Frame headers which normally contain the destination host, source host, and
 protocol, are altered with additional information.  After the source host,
-a 32-bit 802.1Q header is included, with 16 bits for the ether type (0x8100), 3 
-bits for the priority field (not used in this implementation), 1 bit for
+a 32-bit 802.1Q header is included, with 16 bits for the ether type (0x8100), 3
+bits for the priority field (not used in this implementation), 1 bit for 
 the canonical field (always 0), and 12 bits for the vlan identifier.  Following
-the vlan header is the actual ether type for the packet and length information.
-.Pp
-The 802.1Q header specifies the virtual LAN number,
-and thus allows an ethernet switch (or other 802.1Q compliant
-network devices) to be aware of which LAN the packet is part of, and
-in the case of a switch, which port(s) the packet can go to.
-This driver allows OpenBSD to separate packets logically with separate
-virtual ethernet network interfaces.
-.El
+the vlan header is the actual ether type for the frame and length information.
 .Pp
 The network interfaces are named
 .Sy vlan Ns Ar 0 ,
