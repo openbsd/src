@@ -1,7 +1,10 @@
 .rn '' }`
-''' $RCSfile: sudoers.5,v $$Revision: 1.5 $$Date: 2000/03/27 03:44:39 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.6 $$Date: 2001/01/09 18:15:31 $
 '''
 ''' $Log: sudoers.5,v $
+''' Revision 1.6  2001/01/09 18:15:31  krw
+''' Typos: 'eg.' -> 'e.g.'
+'''
 ''' Revision 1.5  2000/03/27 03:44:39  millert
 ''' sudo 1.6.3; see http://www.courtesan.com/sudo/current.html for a list
 ''' of changes.
@@ -318,8 +321,8 @@ network numbers, netgroups (prefixed with \*(L'+') and other aliases.
 Again, the value of an item may be negated with the \*(L'!\*(R' operator.
 If you do not specify a netmask with a network number, the netmask
 of the host's ethernet \fIinterface\fR\|(s) will be used when matching.
-The netmask may be specified either in dotted quad notation (eg.
-255.255.255.0) or \s-1CIDR\s0 notation (number of bits, eg. 24).  A hostname
+The netmask may be specified either in dotted quad notation (e.g.
+255.255.255.0) or \s-1CIDR\s0 notation (number of bits, e.g. 24).  A hostname
 may include shell-style wildcards (see `Wildcards\*(R' section below),
 but unless the \f(CWhostname\fR command on your machine returns the fully
 qualified hostname, you'll need to use the \fIfqdn\fR option for wildcards
@@ -756,7 +759,7 @@ Whitespace between elements in a list as well as specicial syntactic
 characters in a \fIUser Specification\fR ('=\*(R', \*(L':\*(R', \*(L'(\*(R', \*(L')') is optional.
 .PP
 The following characters must be escaped with a backslash (\*(R'\e') when
-used as part of a word (eg. a username or hostname):
+used as part of a word (e.g. a username or hostname):
 \&'@\*(R', \*(L'!\*(R', \*(L'=\*(R', \*(L':\*(R', \*(L',\*(R', \*(L'(\*(R', \*(L')\*(R', \*(L'\e\*(R'.
 .SH "EXAMPLES"
 Below are example \fIsudoers\fR entries.  Admittedly, some of
