@@ -37,13 +37,6 @@ prompt.  Sun PROM monitor commands and setup differ considerably depending
 on the system architecture and age, you may needed to reference the PROM
 monitor manual for your system for details.
 
-dnl XXX to check
-dnl Note that OpenBoot Proms also do the Sun SCSI-ID shuffle for disks, this
-dnl is described elsewhere in some detail.  For the purposes of this section,
-dnl drive 0 refers to the internal or first SCSI drive, which usually has a
-dnl SCSI-ID of 3.
-dnl
-dnl 
 dnl XXX no floppy available yet
 dnl Booting from Floppy Disk installation media:
 dnl

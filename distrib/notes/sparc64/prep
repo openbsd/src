@@ -1,5 +1,4 @@
 
-dnl XXX is security-mode still present?
 Your OpenBOOT ROM may need some setup.  You cannot use the security modes
 of the OpenBOOT ROM.  Make sure that the ROM security modes are disabled:
 
