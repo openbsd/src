@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.1.1.1 1995/10/18 08:47:30 deraadt Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.2 1996/09/15 09:28:14 deraadt Exp $";
 #endif
 
 
@@ -46,7 +46,12 @@ static	void	usage __P((void)),
 
 static void
 usage() {
-	fprintf(stderr, "usage:  %s [-x debugflag[,...]]\n", ProgramName);
+	char **dflags;
+
+	fprintf(stderr, "usage:  %s [-x [", ProgramName);
+	for(dflags = DebugFlagNames; *dflags; dflags++)
+		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
+	fprintf(stderr, "]\n");
 	exit(ERROR_EXIT);
 }
 
