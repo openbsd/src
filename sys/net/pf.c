@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.240 2002/07/24 17:56:03 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.241 2002/08/08 14:31:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1862,8 +1862,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 
 		s->src.seqlo = ntohl(th->th_seq);
 		s->src.seqhi = s->src.seqlo + len + 1;
-		if (th->th_flags == TH_SYN && *rm != NULL
-		    && (*rm)->keep_state == PF_STATE_MODULATE) {
+		if (th->th_flags & TH_SYN && !(th->th_flags & TH_ACK) &&
+		    *rm != NULL && (*rm)->keep_state == PF_STATE_MODULATE) {
 			/* Generate sequence number modulator */
 			while ((s->src.seqdiff = arc4random()) == 0)
 				;
