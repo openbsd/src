@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.314 2003/02/12 12:48:40 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.315 2003/02/12 13:03:54 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2328,7 +2328,7 @@ natrule		: nataction interface af proto fromto redirpool pooltype staticport
 
 				switch (r.action) {
 				case PF_RDR:
-				    	if (!$6->rport.b && $6->rport.t &&
+					if (!$6->rport.b && $6->rport.t &&
 					    $5.dst.port != NULL) {
 						r.rpool.proxy_port[1] =
 						    ntohs($6->rport.a) +
@@ -2812,15 +2812,15 @@ rdr_consistent(struct pf_rule *r)
 	struct pf_pooladdr	*pa;
 
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP) {
-	    	if (r->src.port_op) {
+		if (r->src.port_op) {
 			yyerror("src port only applies to tcp/udp");
 			problems++;
 		}
-	    	if (r->dst.port_op) {
+		if (r->dst.port_op) {
 			yyerror("dst port only applies to tcp/udp");
 			problems++;
 		}
-	    	if (r->rpool.proxy_port[0]) {
+		if (r->rpool.proxy_port[0]) {
 			yyerror("rpool port only applies to tcp/udp");
 			problems++;
 		}
