@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_kern.c,v 1.2 1998/11/09 03:13:20 d Exp $
- * $OpenBSD: uthread_kern.c,v 1.2 1998/11/09 03:13:20 d Exp $
+ * $Id: uthread_kern.c,v 1.3 1998/11/20 12:13:32 d Exp $
+ * $OpenBSD: uthread_kern.c,v 1.3 1998/11/20 12:13:32 d Exp $
  *
  */
 #include <errno.h>
@@ -574,6 +574,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				 * Do a sigreturn to restart the thread that
 				 * was interrupted by a signal: 
 				 */
+		                _thread_kern_in_sched = 0;
 				_thread_sys_sigreturn(&_thread_run->saved_sigcontext);
 			} else
 				/*
@@ -599,6 +600,22 @@ _thread_kern_sched_state(enum pthread_state state, const char *fname, int lineno
 	_thread_run->state = state;
 	_thread_run->fname = fname;
 	_thread_run->lineno = lineno;
+
+	/* Schedule the next thread that is ready: */
+	_thread_kern_sched(NULL);
+	return;
+}
+
+void
+_thread_kern_sched_state_unlock(enum pthread_state state,
+    spinlock_t *lock, char *fname, int lineno)
+{
+	/* Change the state of the current thread: */
+	_thread_run->state = state;
+	_thread_run->fname = fname;
+	_thread_run->lineno = lineno;
+
+	_SPINUNLOCK(lock);
 
 	/* Schedule the next thread that is ready: */
 	_thread_kern_sched(NULL);

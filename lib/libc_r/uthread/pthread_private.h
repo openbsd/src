@@ -552,7 +552,9 @@ void    _thread_cleanupspecific(void);
 void    _thread_dump_info(void);
 void    _thread_init(void) /* __attribute__((constructor)) */;
 void    _thread_kern_sched(struct sigcontext *);
-void    _thread_kern_sched_state(enum pthread_state,const char *fname,int lineno);
+void    _thread_kern_sched_state(enum pthread_state, const char *, int);
+void	_thread_kern_sched_state_unlock(enum pthread_state state,
+	    spinlock_t *lock, char *fname, int lineno);
 void    _thread_kern_set_timeout(struct timespec *);
 void    _thread_sig_handler(int, int, struct sigcontext *);
 void    _thread_start(void);
@@ -564,8 +566,7 @@ int     _thread_queue_remove(struct pthread_queue *, struct pthread *);
 int     _thread_fd_table_init(int fd);
 struct pthread *_thread_queue_get(struct pthread_queue *);
 struct pthread *_thread_queue_deq(struct pthread_queue *);
-pthread_addr_t	_thread_gc(pthread_addr_t);
-
+pthread_addr_t _thread_gc(pthread_addr_t);
 
 /* #include <signal.h> */
 #ifdef _USER_SIGNAL_H

@@ -96,10 +96,10 @@ _thread_dump_info(void)
 			/* Output a record for the current thread: */
 			snprintf(s, sizeof(s),
 			    "--------------------\nThread %p (%s) prio %3d state %s [%s:%d]\n",
-				pthread, (pthread->name == NULL) ?
-				"":pthread->name, pthread->pthread_priority,
-				thread_info[j].name,
-				pthread->fname,pthread->lineno);
+			    pthread, (pthread->name == NULL) ?
+			    "":pthread->name, pthread->pthread_priority,
+			    thread_info[j].name,
+			    pthread->fname,pthread->lineno);
 			_thread_sys_write(fd, s, strlen(s));
 
 			/* Check if this is the running thread: */

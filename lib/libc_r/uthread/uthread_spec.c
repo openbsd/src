@@ -95,10 +95,10 @@ _thread_cleanupspecific(void)
 	for (itr = 0; itr < PTHREAD_DESTRUCTOR_ITERATIONS; itr++) {
 		for (key = 0; key < PTHREAD_KEYS_MAX; key++) {
 			if (_thread_run->specific_data_count) {
-				destructor = data = NULL;
-
 				/* Lock the key table entry: */
 				_SPINLOCK(&key_table[key].lock);
+				destructor = data = NULL;
+
 				if (key_table[key].allocated) {
 					if (_thread_run->specific_data[key]) {
 						data = (void *) _thread_run->specific_data[key];

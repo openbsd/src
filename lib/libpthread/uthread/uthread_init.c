@@ -135,19 +135,19 @@ _thread_init(void)
 		 * Setup a new session for this process which is
 		 * assumed to be running as root.
 		 */
-		if (setsid() == -1)
+    		if (setsid() == -1)
 			PANIC("Can't set session ID");
-		if (revoke(_PATH_CONSOLE) != 0)
+    		if (revoke(_PATH_CONSOLE) != 0)
 			PANIC("Can't revoke console");
-		if ((fd = _thread_sys_open(_PATH_CONSOLE, O_RDWR)) < 0)
+    		if ((fd = _thread_sys_open(_PATH_CONSOLE, O_RDWR)) < 0)
 			PANIC("Can't open console");
-		if (setlogin("root") == -1)
+    		if (setlogin("root") == -1)
 			PANIC("Can't set login to root");
-		if (_thread_sys_ioctl(fd,TIOCSCTTY, (char *) NULL) == -1)
+    		if (_thread_sys_ioctl(fd,TIOCSCTTY, (char *) NULL) == -1)
 			PANIC("Can't set controlling terminal");
-		if (_thread_sys_dup2(fd,0) == -1 ||
-		    _thread_sys_dup2(fd,1) == -1 ||
-		    _thread_sys_dup2(fd,2) == -1)
+    		if (_thread_sys_dup2(fd,0) == -1 ||
+    		    _thread_sys_dup2(fd,1) == -1 ||
+    		    _thread_sys_dup2(fd,2) == -1)
 			PANIC("Can't dup2");
 	}
 

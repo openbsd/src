@@ -46,7 +46,7 @@ pthread_create(pthread_t * thread, const pthread_attr_t * attr,
 {
 	int		f_gc = 0;
 	int             ret = 0;
-	pthread_t	gc_thread;
+	pthread_t       gc_thread;
 	pthread_t       new_thread;
 	pthread_attr_t	pattr;
 	void           *stack;
