@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.13 1997/12/29 14:31:18 deraadt Exp $
+.\"	$OpenBSD: sysctl.8,v 1.14 1998/01/31 19:40:00 millert Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -224,6 +224,14 @@ sysctl kern.clockrate
 Information about the load average history may be obtained with
 .Bd -literal -offset indent -compact
 sysctl vm.loadavg
+.Ed
+.Pp
+To make the
+.Xr chown 2
+system call use traditional BSD semantics (don't clear setuid/setgid bits),
+one would do the following:
+.Bd -literal -offset indent -compact
+sysctl -w fs.posix.setuid=0
 .Ed
 .Pp
 Set the list of reserved TCP ports that should not be allocated
