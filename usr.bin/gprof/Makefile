@@ -1,14 +1,22 @@
-#	$OpenBSD: Makefile,v 1.8 2000/10/05 15:28:15 mickey Exp $
+#	$OpenBSD: Makefile,v 1.9 2001/03/21 22:27:36 miod Exp $
 
-.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "mips") || \
-	(${MACHINE_ARCH} == "powerpc") || (${MACHINE_ARCH} == "hppa")
+TARGET_MACHINE_ARCH?=	${MACHINE_ARCH}
+
+.if (${TARGET_MACHINE_ARCH} == "alpha") || \
+    (${TARGET_MACHINE_ARCH} == "mips") || \
+    (${TARGET_MACHINE_ARCH} == "powerpc") || \
+    (${TARGET_MACHINE_ARCH} == "hppa")
 NOPROG=
 .else
 PROG=	gprof
-SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE_ARCH}.c hertz.c \
+SRCS=	gprof.c arcs.c dfn.c lookup.c machine.c hertz.c \
 	printgprof.c printlist.c
-CFLAGS+= -D${MACHINE_ARCH}
+CFLAGS+= -I${.CURDIR} -I.
 .endif
+
+beforedepend:
+	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.h machine.h
+	ln -sf ${.CURDIR}/${TARGET_MACHINE_ARCH}.c machine.c
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \

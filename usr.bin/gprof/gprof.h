@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.4 1996/12/22 20:24:24 rahnds Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.5 2001/03/21 22:27:36 miod Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -44,40 +44,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if alpha
-#   include "alpha.h"
-#endif
-#if arm32
-#   include "arm32.h"
-#endif
-#if i386
-#   include "i386.h"
-#endif
-#if m68k
-#   include "m68k.h"
-#endif
-#if mips
-#   include "mips.h"
-#endif
-#if ns32k
-#   include "ns32k.h"
-#endif
-#if powerpc
-#   include "powerpc.h"
-#endif
-#if pmax
-#   include "pmax.h"
-#endif
-#if sparc
-#   include "sparc.h"
-#endif
-#if tahoe
-#   include "tahoe.h"
-#endif
-#if vax
-#   include "vax.h"
-#endif
-
+#include "machine.h"
 
     /*
      *	who am i, for error messages.
