@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.25 1999/12/20 09:43:01 itojun Exp $	*/
+/*	$OpenBSD: commands.c,v 1.26 2000/01/29 16:07:08 itojun Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2382,37 +2382,6 @@ tn(argc, argv)
 	    return 0;
 	}
     }
-#if 0
-    if (portp) {
-	if (*portp == '-') {
-	    portp++;
-	    telnetport = 1;
-	} else
-	    telnetport = 0;
-	port = atoi(portp);
-	if (port == 0) {
-	    sp = getservbyname(portp, "tcp");
-	    if (sp)
-		port = sp->s_port;
-	    else {
-		printf("%s: bad port number\r\n", portp);
-		return 0;
-	    }
-	} else {
-	    port = htons(port);
-	}
-    } else {
-	if (sp == 0) {
-	    sp = getservbyname("telnet", "tcp");
-	    if (sp == 0) {
-		fprintf(stderr, "telnet: tcp/telnet: unknown service\r\n");
-		return 0;
-	    }
-	    port = sp->s_port;
-	}
-	telnetport = 1;
-    }
-#endif
 
     net = -1;
     retry = 0;
