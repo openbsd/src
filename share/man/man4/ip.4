@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.14 2001/01/29 19:44:02 aaron Exp $
+.\"	$OpenBSD: ip.4,v 1.15 2001/05/14 09:12:06 markus Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -129,7 +129,7 @@ that contains a cmsghdr structure followed by the
 address.
 The cmsghdr fields have the following values:
 .Bd -literal
-cmsg_len = sizeof(struct in_addr)
+cmsg_len = CMSG_LEN(sizeof(struct in_addr))
 cmsg_level = IPPROTO_IP
 cmsg_type = IP_RECVDSTADDR
 .Ed
