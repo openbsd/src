@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.4 1998/06/10 03:49:38 beck Exp $
+#	$Id: Makefile,v 1.5 2000/04/10 20:39:05 ericj Exp $
 
 PROG=	identd
-SRCS=	identd.c openbsd.c parse.c proxy.c version.c
+SRCS=	identd.c openbsd.c parse.c version.c
 MAN=	identd.8
 
 CFLAGS+= -Wall -Werror 
