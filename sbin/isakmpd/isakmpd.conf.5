@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.81 2003/06/03 14:28:16 ho Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.82 2003/07/09 08:16:44 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -116,7 +116,6 @@ same section and tag names in the configuration file.
 In particular, the default phase 1 (Main or Aggressive Mode) and phase 2
 (Quick Mode) lifetimes can be overridden by these tags under the "General"
 section;
-.Pp
 .Bd -literal
 [General]
 Default-phase-1-lifetime=	3600,60:86400
@@ -126,13 +125,10 @@ Default-phase-2-lifetime=	1200,60:86400
 The Main Mode lifetime currently defaults to one hour (minimum 60
 seconds, maximum 1 day). The Quick Mode lifetime defaults to 20
 minutes (minimum 60 seconds, maximum 1 day).
-.\"XXX Following empty .Ss works around a nroff bug, we want the new line."
-.Ss
 .Pp
 Also, the default phase 1 ID can be set by creating a <Phase1-ID>
 section, as shown below, and adding this tag under the "General"
 section;
-.Pp
 .Bd -literal
 [General]
 Default-phase-1-ID=		Phase1-ID-name
@@ -141,9 +137,6 @@ Default-phase-1-ID=		Phase1-ID-name
 ID-type=			USER_FQDN
 Name=				foo@bar.com
 .Ed
-.\"XXX Following empty .Ss works around a nroff bug, we want the new line."
-.Ss
-.Pp
 .Ss Roots
 .Bl -hang -width 12n
 .It Em General
@@ -700,7 +693,6 @@ configuration files.
 .El
 .Sh EXAMPLES
 An example of a configuration file:
-.Pp
 .Bd -literal
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 

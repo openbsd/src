@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.32 2003/06/04 07:31:17 ho Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.33 2003/07/09 08:16:44 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -139,21 +139,21 @@ For more details on KeyNote assertion format, please see
 .Xr keynote 5 .
 Briefly, KeyNote policy assertions used in IKE have the following
 characteristics:
-.Pp
-.nf
-* The Authorizer field is typically "POLICY" (but see the examples
-  below, for use of policy delegation).
-
-* The Licensees field can be an expression of passphrases used for
-  authentication of the Main Mode exchanges, and/or public keys
-  (typically, X509 certificates), and/or X509 distinguished names.
-
-* The Conditions field contains an expression of attributes from the
-  IPsec policy action set (see below as well as the keynote syntax man
-  page for more details).
-
-* The ordered return-values set for IPsec policy is "false, true".
-.fi
+.Bl -bullet
+.It
+The Authorizer field is typically "POLICY" (but see the examples
+below, for use of policy delegation).
+.It
+The Licensees field can be an expression of passphrases used for
+authentication of the Main Mode exchanges, and/or public keys
+(typically, X509 certificates), and/or X509 distinguished names.
+.It
+The Conditions field contains an expression of attributes from the
+IPsec policy action set (see below as well as the keynote syntax man
+page for more details).
+.It
+The ordered return-values set for IPsec policy is "false, true".
+.El
 .Pp
 For an explanation of these fields and their semantics, see
 .Xr keynote 5 .
