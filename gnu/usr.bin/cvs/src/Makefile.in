@@ -144,10 +144,10 @@ dist-dir:
 
 # Linking rules.
 
-$(PROGS): ../lib/libcvs.a $(ZLIB)
+$(PROGS): ../lib/libcvs.a ../zlib/libz.a
 
 cvs: $(OBJECTS)
-	$(CC) $(OBJECTS) ../lib/libcvs.a $(LIBS) $(LDFLAGS) -o $@ 
+	$(CC) $(OBJECTS) ../lib/libcvs.a ../zlib/libz.a $(LIBS) $(LDFLAGS) -o $@ 
 
 xlint: $(SOURCES)
 	files= ; \
