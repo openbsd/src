@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.98 2004/06/22 20:28:58 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.99 2004/06/25 18:48:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,6 +48,11 @@ struct kroute_node {
 	struct kroute		 r;
 };
 
+struct kroute6_node {
+	RB_ENTRY(kroute6_node)	 entry;
+	struct kroute6		 r;
+};
+
 struct knexthop_node {
 	RB_ENTRY(knexthop_node)	 entry;
 	struct bgpd_addr	 nexthop;
@@ -68,6 +73,7 @@ struct kif_node {
 };
 
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
+int	kroute6_compare(struct kroute6_node *, struct kroute6_node *);
 int	knexthop_compare(struct knexthop_node *, struct knexthop_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
 
@@ -110,6 +116,10 @@ int		fetchifs(int);
 RB_HEAD(kroute_tree, kroute_node)	kroute_tree, krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
 RB_GENERATE(kroute_tree, kroute_node, entry, kroute_compare)
+
+RB_HEAD(kroute6_tree, kroute6_node)	kroute6_tree, krt6;
+RB_PROTOTYPE(kroute6_tree, kroute6_node, entry, kroute6_compare)
+RB_GENERATE(kroute6_tree, kroute6_node, entry, kroute6_compare)
 
 RB_HEAD(knexthop_tree, knexthop_node)	knexthop_tree, knt;
 RB_PROTOTYPE(knexthop_tree, knexthop_node, entry, knexthop_compare)
@@ -381,6 +391,25 @@ kroute_compare(struct kroute_node *a, struct kroute_node *b)
 		return (-1);
 	if (ntohl(a->r.prefix.s_addr) > ntohl(b->r.prefix.s_addr))
 		return (1);
+	if (a->r.prefixlen < b->r.prefixlen)
+		return (-1);
+	if (a->r.prefixlen > b->r.prefixlen)
+		return (1);
+	return (0);
+}
+
+int
+kroute6_compare(struct kroute6_node *a, struct kroute6_node *b)
+{
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		if (a->r.prefix.s6_addr[i] < b->r.prefix.s6_addr[i])
+			return (-1);
+		if (a->r.prefix.s6_addr[i] > b->r.prefix.s6_addr[i])
+			return (1);
+	}
+
 	if (a->r.prefixlen < b->r.prefixlen)
 		return (-1);
 	if (a->r.prefixlen > b->r.prefixlen)
