@@ -1,4 +1,4 @@
-/* 	$OpenBSD: modload.c,v 1.30 2002/01/08 21:51:50 ericj Exp $	*/
+/* 	$OpenBSD: modload.c,v 1.31 2002/01/08 22:07:26 ericj Exp $	*/
 /*	$NetBSD: modload.c,v 1.30 2001/11/08 15:33:15 christos Exp $	*/
 
 /*
@@ -278,12 +278,8 @@ main(int argc, char **argv)
 		case 'S':
 			Sflag = 1;
 			break;
-		case '?':
-			usage();
-			/* NOTREACHED */
 		default:
-			printf("default!\n");
-			break;
+			usage();
 		}
 	}
 	argc -= optind;
