@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.20 2002/08/13 03:49:51 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.21 2003/01/14 23:29:50 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -272,7 +272,7 @@ wihap_shutdown(struct wi_softc *sc)
 {
 	struct wihap_info	*whi = &sc->wi_hostap_info;
 	struct wihap_sta_info	*sta, *next;
-	int s;
+	int i, s;
 
 	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 		printf("wihap_shutdown: sc=0x%x whi=0x%x\n", sc, whi);
@@ -281,34 +281,32 @@ wihap_shutdown(struct wi_softc *sc)
 		return;
 	whi->apflags = 0;
 
-	/* XXX: I read somewhere you can deauth all the stations with
-	 * a single broadcast.  Maybe try that someday.
-	 */
-
 	s = splimp();
-	sta = LIST_FIRST(&whi->sta_list);
-	while (sta) {
 
+	/* Delete all stations from the list. */
+	for (sta = LIST_FIRST(&whi->sta_list);
+	    sta != LIST_END(&whi->sta_list); sta = next) {
 		timeout_del(&sta->tmo);
-
-		if (sc->wi_flags & WI_FLAGS_ATTACHED) {
-			/* Disassociate station. */
-			if (sta->flags & WI_SIFLAGS_ASSOC)
-				wihap_sta_disassoc(sc, sta->addr,
-				    IEEE80211_REASON_ASSOC_LEAVE);
-			/* Deauth station. */
-			if (sta->flags & WI_SIFLAGS_AUTHEN)
-				wihap_sta_deauth(sc, sta->addr,
-				    IEEE80211_REASON_AUTH_LEAVE);
-		}
-
-		/* Delete the structure. */
 		if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
 			printf("wihap_shutdown: FREE(sta=0x%x)\n", sta);
 		next = LIST_NEXT(sta, list);
+		if (sta->challenge)
+			FREE(sta->challenge, M_TEMP);
 		FREE(sta, M_DEVBUF);
-		sta = next;
 	}
+	LIST_INIT(&whi->sta_list);
+
+	/* Broadcast disassoc and deauth to all the stations. */
+	if (sc->wi_flags & WI_FLAGS_ATTACHED) {
+		for (i = 0; i < 5; i++) {
+			wihap_sta_disassoc(sc, etherbroadcastaddr,
+			    IEEE80211_REASON_ASSOC_LEAVE);
+			wihap_sta_deauth(sc, etherbroadcastaddr,
+			    IEEE80211_REASON_AUTH_LEAVE);
+			DELAY(50);
+		}
+	}
+
 	splx(s);
 }
 
