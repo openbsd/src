@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lasi.4,v 1.9 2002/05/23 09:30:34 mpech Exp $
+.\"	$OpenBSD: lasi.4,v 1.10 2002/12/19 03:12:18 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -39,6 +39,7 @@
 workstations and single-board computers.
 .Sh SYNOPSIS
 .Cd "lasi0   at mainbus? irq 28"
+.Cd "lasi0   at phantomas? irq 28"
 .Cd "gsc* at lasi?"
 .Sh INTRODUCTION
 The supported Core bus controllers are those used in conjuction with
@@ -78,6 +79,7 @@ Optional Telephone interface (voice/modem/fax two channels)
 .Xr asp 4 ,
 .Xr gsc 4 ,
 .Xr intro 4 ,
+.Xr phantomas 4 ,
 .Xr wax 4
 .Rs
 "Precision I/O Architecture Reference Specification"
