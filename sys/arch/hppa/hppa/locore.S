@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.112 2003/09/25 22:17:40 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.113 2003/09/26 00:07:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1203,9 +1203,9 @@ EXIT(TLABEL(emu))
 #if 0
 	.export	dtlb_c, data
 	BSS(dtlb_c, 8)
-	.export	dtlb_c, data
+	.export	tlbd_c, data
 	BSS(tlbd_c, 8)
-	.export	dtlb_c, data
+	.export	itlb_c, data
 	BSS(itlb_c, 8)
 
 	.text
