@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.573 2003/01/05 12:47:20 grange Exp $
+	$OpenBSD: pcidevs,v 1.574 2003/01/08 22:04:17 millert Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -549,9 +549,10 @@ vendor CONEXANT		0x14f1	Conexant
 vendor DELTA		0x1500	Delta
 vendor TOPIC		0x151f	Topic/SmartLink
 vendor TERRATEC		0x153b	TerraTec Electronic Gmbh
+vendor SYMBOL		0x1562	Symbol
+vendor SYBA		0x1592	Syba
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
-vendor SYBA		0x1592	Syba
 vendor NDC		0x15e8	National Datacomm Corp
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
@@ -2153,6 +2154,9 @@ product SURECOM NE34		0x0e34	Surecom NE-34
 
 /* Syba */
 product SYBA 4S2P		0x0781	4S2P
+
+/* Symbol */
+product SYMBOL LA41X3		0x0001	Spectrum24 LA41X3 Series WLAN
 
 /* Symphony Labs products */
 product SYMPHONY 82C101		0x0001	82C101
