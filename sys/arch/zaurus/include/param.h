@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.2 2004/12/31 14:57:13 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.3 2004/12/31 14:57:57 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.4 2002/02/12 06:58:19 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #include <arm/param.h>
 
-#define	_MACHINE	cats
-#define	MACHINE		"cats"
+#define	_MACHINE	zaurus
+#define	MACHINE		"zaurus"
 
 #endif	/* _ZAURUS_PARAM_H_ */
