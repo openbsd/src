@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.16 1998/04/08 03:00:44 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.17 1998/07/24 17:40:43 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -160,7 +160,7 @@ The second form of the command, with the
 flag, is used to write a standard label on the designated drive.
 The required arguments to
 .Nm disklabel
-are the drive to be labelled (e.g. sd0), and
+are the drive to be labeled (e.g. sd0), and
 the drive type as described in the
 .Xr disktab 5
 file.
@@ -236,7 +236,7 @@ flag to
 .Nm disklabel
 will drop you into a simple initial label editor.  This mode is
 only intended for new disks as it will move partitions around as
-necessary to maintain a contiguous pool of free blocks.  Some command
+necessary to maintain a contiguous pool of free blocks.  Some commands
 or prompts take an optional unit.  Available units are 'b' for
 bytes, 'c' for cylinders, 'k' for kilobytes, 'm' for megabytes, 'g'
 for gigabytes.  Quantities will be rounded to the nearest
@@ -268,32 +268,32 @@ rpm, disk type, and a descriptive label string.
 .It b
 Set OpenBSD disk boundaries.  This option tells
 .Nm disklabel
-which parts of the disk it is allow to modify.  This option is
+which parts of the disk it is allowed to modify.  This option is
 probably only useful for ports with fdisk partition tables where the
 ending sector in the MBR is incorrect.  The user may enter '*' at
 the ``Size'' prompt to indicate the entire size of the disk (minus
 the starting sector).  This is useful for large disks where the
-fdisk partition table is incapable if storing the real size.
+fdisk partition table is incapable of storing the real size.
 .\" What is this limit?  [somewhere between 8 and 9 gig]
 .It r
 Recalculate free space.  This option should really not be necessary
 under normal circumstances.
 .It a Op part
 Add new partition.  This option adds a new BSD partition.  If no
-partion letter is specified (a-p), the user will be prompted for
+partition letter is specified (a-p), the user will be prompted for
 one.
 .It c Op part
-Change the size of an existing partition.  If no parition is
+Change the size of an existing partition.  If no partition is
 specified, the user will be prompted for one.  The new size may be
 in terms of the aforementioned units and may also be prefixed with
 \'+' or '-' to change the size by a relative amount.
 .It d Op part
-Delete an existing partition.  If no parition is specified, the
+Delete an existing partition.  If no partition is specified, the
 user will be prompted for one.
 .It m Op part
-Modify parameters for an existing partition.  If no parition is
+Modify parameters for an existing partition.  If no partition is
 specified, the user will be prompted for one.  This option allows
-the user to change the filesystem type, starting offset, parition
+the user to change the filesystem type, starting offset, partition
 size, block fragment size, block size, and cylinders per group for
 the specified partition (not all parameters are configurable for
 non-BSD partitions).
@@ -315,7 +315,7 @@ Exit the editor without saving any changes to the label.
 .Pp
 The final three forms of
 .Nm disklabel
-are used to install boostrap code on machines where the bootstrap
+are used to install bootstrap code on machines where the bootstrap
 is part of the label.  The bootstrap code is comprised of one or
 two boot programs depending on the machine.  The
 .Fl B
@@ -459,4 +459,4 @@ free block list and only move partitions around with the user's
 permission.  Also in
 .Fl E
 mode, partitions outside the OpenBSD portion of the disk should
-be changable.
+be changeable..
