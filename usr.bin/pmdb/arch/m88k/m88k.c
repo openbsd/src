@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k.c,v 1.1 2003/05/30 20:50:31 miod Exp $	*/
+/*	$OpenBSD: m88k.c,v 1.2 2004/01/14 07:24:12 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -66,18 +66,18 @@ md_getframe(struct pstate *ps, int framenum, struct md_frame *fram)
 	if (process_getregs(ps, &r) != 0)
 		return (-1);
 
-	fr.F_t.tf_sp = r.tf_sp;
-	fr.F_t.sxip = r.sxip;
+	fr.F_t.tf_sp = r.r[31];
+	fr.F_t.tf_sxip = r.sxip;
 
 	for (count = 0; count < framenum; count++) {
 		if (process_read(ps, fr.F_t.tf_sp, &fr, sizeof(fr)) < 0)
 			return (-1);
 
-		if (fr.F_t.sxip < 0x1000)
+		if (fr.F_t.tf_sxip < 0x1000)
 			return (-1);
 	}
 
-	fram->pc = fr.F_t.sxip;
+	fram->pc = fr.F_t.tf_sxip;
 	fram->fp = fr.F_t.tf_sp;
 
 	return (0);
