@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.17 2001/04/13 20:13:30 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.18 2001/04/15 21:03:21 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -267,6 +267,8 @@ txp_attach(parent, self, aux)
 	ifp->if_baudrate = 10000000;
 	ifp->if_snd.ifq_maxlen = TX_ENTRIES;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	timeout_set(&sc->sc_tick, txp_tick, sc);
 
 	/*
 	 * Attach us everywhere
@@ -648,16 +650,11 @@ txp_rxbuf_reclaim(sc)
 		rbd = &sc->sc_rxbufs[i];
 
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
-			printf("%s: rxbuf alloc failed\n",
-			    sc->sc_dev.dv_xname);
+		if (m == NULL)
 			break;
-		}
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			printf("%s: rxbuf cluster alloc failed\n",
-			    sc->sc_dev.dv_xname);
 			break;
 		}
 		m->m_pkthdr.rcvif = ifp;
@@ -1004,15 +1001,6 @@ txp_dma_free(sc, dma)
 	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 }
 
-void
-txp_tick(vsc)
-	void *vsc;
-{
-	struct txp_softc *sc = vsc;
-
-	timeout_add(&sc->sc_tick_tmo, hz);
-}
-
 int
 txp_ioctl(ifp, command, data)
 	struct ifnet *ifp;
@@ -1110,9 +1098,24 @@ txp_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 
+	if (!timeout_pending(&sc->sc_tick))
+		timeout_add(&sc->sc_tick, hz);
+
 	splx(s);
 }
 
+void
+txp_tick(vsc)
+	void *vsc;
+{
+	struct txp_softc *sc = vsc;
+	int s;
+
+	s = splimp();
+	txp_rxbuf_reclaim(sc);
+	timeout_add(&sc->sc_tick, hz);
+	splx(s);
+}
 
 void
 txp_start(ifp)
@@ -1363,9 +1366,10 @@ txp_stop(sc)
 	struct txp_softc *sc;
 {
 	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
-#if 0
 	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
-#endif
+
+	if (timeout_pending(&sc->sc_tick))
+		timeout_del(&sc->sc_tick);
 }
 
 void

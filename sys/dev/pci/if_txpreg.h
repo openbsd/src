@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.16 2001/04/13 17:50:30 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.17 2001/04/15 21:03:22 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -30,8 +30,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#define	TXP_INTR	TXP_INT_STATUS_REGISTER
 
 #define	TXP_PCI_LOMEM			0x14	/* pci conf, memory map BAR */
 #define	TXP_PCI_LOIO			0x10	/* pci conf, IO map BAR */
@@ -226,8 +224,8 @@ struct txp_tx_desc {
 	volatile u_int8_t	tx_flags;	/* type/descriptor flags */
 	volatile u_int8_t	tx_numdesc;	/* number of descriptors */
 	volatile u_int16_t	tx_totlen;	/* total packet length */
-/*XXX*/	u_int32_t		tx_addrlo;	/* virt addr low word */
-/*XXX*/	u_int32_t		tx_addrhi;	/* virt addr high word */
+	volatile u_int32_t	tx_addrlo;	/* virt addr low word */
+	volatile u_int32_t	tx_addrhi;	/* virt addr high word */
 	volatile u_int32_t	tx_pflags;	/* processing flags */
 };
 #define	TX_FLAGS_TYPE_M		0x07		/* type mask */
@@ -558,7 +556,7 @@ struct txp_softc {
 	struct txp_cmd_ring	sc_cmdring;
 	struct txp_rsp_ring	sc_rspring;
 	void *			sc_ih;
-	struct timeout		sc_tick_tmo;
+	struct timeout		sc_tick;
 	struct ifmedia		sc_ifmedia;
 	struct txp_tx_ring	sc_txhir, sc_txlor;
 	struct txp_rxbuf_desc	*sc_rxbufs;
