@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e2,v 1.4 2003/07/27 13:22:12 jmc Exp $
+.\"	$OpenBSD: e2,v 1.5 2004/04/05 10:58:08 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -112,9 +112,9 @@ or
 .UL % ).
 At
 this point your buffer vanishes, with all its text,
-which is why you want to write it out before quitting.\(dg
+which is why you want to write it out before quitting.**
 .FS
-\(dg Actually,
+** Actually,
 .IT ed
 will print 
 .UL ?
@@ -336,8 +336,8 @@ of it) on the terminal, use the print command
 .P1
 p
 .P2
-The way this is done is as follows.
-Specify the lines where
+The way this is done is as follows:
+specify the lines where
 you want printing to begin and where you want it to end,
 separated by a comma, and
 followed by the letter
@@ -363,7 +363,7 @@ You could use
 .UL 1,3p
 as above if you knew there were exactly
 3 lines in the buffer.
-But in general, you don't
+But, in general, you don't
 know how many there are, so what do you use for the ending
 line number?
 .ul
@@ -379,7 +379,7 @@ way:
 This will print
 .ul
 all
-the lines in the buffer (line 1 to last line.)
+the lines in the buffer (line 1 to last line).
 If you want to stop the printing before it is finished,
 it can be interrupted with
 .UC ^C

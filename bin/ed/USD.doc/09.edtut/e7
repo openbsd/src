@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e7,v 1.3 2003/07/26 20:22:13 jmc Exp $
+.\"	$OpenBSD: e7,v 1.4 2004/04/05 10:58:08 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ command may follow any other command
 (except for
 .UL e ,
 .UL r ,
-.UL w
+.UL w ,
 and
 .UL q ).
 .LP

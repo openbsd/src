@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e.mac,v 1.1 2003/06/26 15:22:51 mickey Exp $
+.\"	$OpenBSD: e.mac,v 1.2 2004/04/05 10:58:08 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 .DE
 .bd 1
 .tr --
-.if n .ls 2
+.if n .ls 1
 ..
 .hy 14
 .\"	2=not last lines; 4= no -xx; 8=no xx-

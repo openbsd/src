@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e6,v 1.2 2003/06/26 16:24:16 mickey Exp $
+.\"	$OpenBSD: e6,v 1.3 2004/04/05 10:58:08 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -59,8 +59,7 @@ means ``any character,'' not a period, so
 .P2
 means ``a line with an
 .UL x ,
-.ul
-any character,
+.UL "any character" ,
 and a
 .UL y ,''
 .ul
@@ -72,15 +71,14 @@ a period, and a
 A complete list of the special characters
 that can cause trouble is the following:
 .P1
-^    \*.    $    [    *    \e
+^    \*.    $    [    *    \e    &
 .P2
 .ul
 Warning:
 The backslash character
 .UL \e
 is special to
-.ul
-ed.
+.UL ed .
 For safety's sake, 
 avoid it where possible.
 If you have to use one of the special characters

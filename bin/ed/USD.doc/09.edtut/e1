@@ -1,4 +1,4 @@
-.\"	$OpenBSD: e1,v 1.3 2003/07/26 20:22:13 jmc Exp $
+.\"	$OpenBSD: e1,v 1.4 2004/04/05 10:58:08 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -47,12 +47,11 @@ using directions provided by a user at
 a terminal.
 The text is often a document
 like this one,
-or a program
+or a program,
 or perhaps data for a program.
 .PP
 This introduction is meant to simplify learning
-.ul
-ed.
+.UL ed .
 The recommended way to learn
 .ul
 ed
@@ -64,12 +63,10 @@ to follow the examples,
 then to read the description in section I of the
 .ul
 .UC UNIX
-.ul
-Programmer's Manual,
+.UL "Programmer's Manual" ,
 all the while
 experimenting with
-.ul
-ed.
+.UL ed .
 (Solicitation of advice from experienced users is also useful.)
 .PP
 Do the exercises!
@@ -104,8 +101,7 @@ of what a file is.
 For more on that, read
 .ul
 .UC UNIX
-.ul
-for Beginners.
+.UL "for Beginners" .
 .PP
 You must also know what character to type as the end-of-line
 on your particular terminal.
@@ -157,8 +153,7 @@ is first started, it is rather like working
 with a blank piece of paper \- there is no text
 or information present.
 This must be supplied by the person using
-.ul
-ed;
+.UL ed ;
 it is usually done
 by typing in the text, or by reading it into
 .ul
@@ -203,8 +198,7 @@ or typing of messages like ``ready''.
 by experienced users, but sometimes a hangup for beginners.)
 .PP
 The first command is
-.ul
-append,
+.UL append ,
 written as the letter
 .P1
 a
@@ -267,12 +261,11 @@ command, and continue typing.
 Error Messages \- ``?''
 .PP
 If at any time you make an error in the commands you type to
-.ul
-ed,
+.UL ed ,
 it will tell you by typing
 .P1
 ?
 .P2
 This is about as cryptic as it can be,
-but with practice, you can usually
+but with practice you can usually
 figure out how you goofed.
