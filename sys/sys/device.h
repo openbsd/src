@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.17 1999/08/08 00:37:09 niklas Exp $	*/
+/*	$OpenBSD: device.h,v 1.18 2000/04/09 19:23:18 csapuntz Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -71,6 +71,8 @@ enum devact {
 	DVACT_DEACTIVATE,	/* deactivate the device */
 };
 
+#include <sys/lock.h>
+
 struct device {
 	enum	devclass dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -79,6 +81,7 @@ struct device {
 	char	dv_xname[16];		/* external name (name + unit) */
 	struct	device *dv_parent;	/* pointer to parent device */
 	int	dv_flags;		/* misc. flags; see below */
+	int     dv_ref;                 /* ref count */
 };
 
 /* dv_flags */
@@ -142,6 +145,7 @@ struct cfattach {
 	void	(*ca_attach) __P((struct device *, struct device *, void *));
 	int	(*ca_detach) __P((struct device *, int));
 	int	(*ca_activate) __P((struct device *, enum devact));
+	void    (*ca_zeroref) __P((struct device *));
 };
 
 /* Flags given to config_detach(), and the ca_detach function. */
@@ -197,12 +201,18 @@ struct device *config_rootfound __P((char *, void *));
 void config_scan __P((cfscan_t, struct device *));
 struct device *config_attach __P((struct device *, void *, void *, cfprint_t));
 int config_detach __P((struct device *, int));
+int config_detach_children __P((struct device *, int));
 int config_activate __P((struct device *));
 int config_deactivate __P((struct device *));
+int config_activate_children __P((struct device *, enum devact));
 struct device *config_make_softc __P((struct device *parent,
     struct cfdata *cf));
 void config_defer __P((struct device *, void (*)(struct device *)));
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
+
+struct device *device_lookup __P((struct cfdriver *, int unit));
+void device_ref __P((struct device *));
+void device_unref __P((struct device *));
 
 /* compatibility definitions */
 #define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.25 1999/08/08 00:37:09 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.26 2000/04/09 19:23:18 csapuntz Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -400,6 +400,7 @@ config_attach(parent, match, aux, print)
 		cf->cf_fstate = FSTATE_FOUND;
 
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);
+	device_ref(dev);
 
 	if (parent == ROOT)
 		printf("%s (root)", dev->dv_xname);
@@ -508,6 +509,8 @@ config_make_softc(parent, cf)
 	if (cd->cd_devs[dev->dv_unit])
 		panic("config_make_softc: duplicate %s", dev->dv_xname);
 
+	dev->dv_ref = 1;
+
 	return (dev);
 }
 
@@ -607,6 +610,7 @@ config_detach(dev, flags)
 	 * Unlink from device list.
 	 */
 	TAILQ_REMOVE(&alldevs, dev, dv_list);
+	device_unref(dev);
 
 	/*
 	 * Remove from cfdriver's array, tell the world, and free softc.
@@ -614,8 +618,8 @@ config_detach(dev, flags)
 	cd->cd_devs[dev->dv_unit] = NULL;
 	if ((flags & DETACH_QUIET) == 0)
 		printf("%s detached\n", dev->dv_xname);
-	free(dev, M_DEVBUF);
 
+	device_unref(dev);
 	/*
 	 * If the device now has no units in use, deallocate its softc array.
 	 */
@@ -719,6 +723,139 @@ config_process_deferred_children(parent)
 			(*dc->dc_func)(dc->dc_dev);
 			free(dc, M_DEVBUF);
 		}
+	}
+}
+
+int
+config_detach_children(parent, flags)
+	struct device *parent;
+	int flags;
+{
+	struct device *dev, *next_dev;
+	int  rv = 0;
+
+	/* The config_detach routine may sleep, meaning devices
+	   may be added to the queue. However, all devices will
+	   be added to the tail of the queue, the queue won't
+	   be re-organized, and the subtree of parent here should be locked
+	   for purposes of adding/removing children.
+	*/
+	for (dev  = TAILQ_FIRST(&alldevs);
+	     dev != NULL; dev = next_dev) {
+		next_dev = TAILQ_NEXT(dev, dv_list);
+		if (dev->dv_parent == parent &&
+		    (rv = config_detach(dev, flags)))
+			return (rv);
+	}
+
+	return  (rv);
+}
+
+int
+config_activate_children(parent, act)
+	struct device *parent;
+	enum devact act;
+{
+	struct device *dev, *next_dev;
+	int  rv = 0;
+
+	/* The config_deactivate routine may sleep, meaning devices
+	   may be added to the queue. However, all devices will
+	   be added to the tail of the queue, the queue won't
+	   be re-organized, and the subtree of parent here should be locked
+	   for purposes of adding/removing children.
+	*/
+	for (dev = TAILQ_FIRST(&alldevs);
+	     dev != NULL; dev = next_dev) {
+		next_dev = TAILQ_NEXT(dev, dv_list);
+		if (dev->dv_parent == parent) {
+			switch (act) {
+			case DVACT_ACTIVATE:
+				rv = config_activate(dev);
+				break;
+			case DVACT_DEACTIVATE:
+				rv = config_deactivate(dev);
+				break;
+			default:
+#ifdef DIAGNOSTIC
+				printf ("config_activate_children: shouldn't get here");
+#endif
+				rv = EOPNOTSUPP;
+				break;
+
+			}
+						
+			if (rv)
+				break;
+		}
+	}
+
+	return  (rv);
+}
+
+/* 
+ * Lookup a device in the cfdriver device array.  Does not return a
+ * device if it is not active.
+ *
+ * Increments ref count on the device by one, reflecting the
+ * new reference created on the stack.
+ *
+ * Context: process only 
+ */
+struct device *
+device_lookup(cd, unit)
+	struct cfdriver *cd;
+	int unit;
+{
+	struct device *dv = NULL;
+
+	if (unit >= 0 && unit <= cd->cd_ndevs)
+		dv = (struct device *)(cd->cd_devs[unit]);
+	
+	if (!dv)
+		return (NULL);
+
+	if (!(dv->dv_flags & DVF_ACTIVE))
+		dv = NULL;
+
+	if (dv != NULL)
+		device_ref(dv);
+
+	return (dv);
+}
+
+
+/*
+ * Increments the ref count on the device structure. The device
+ * structure is freed when the ref count hits 0.
+ *
+ * Context: process or interrupt
+ */
+void
+device_ref(dv)
+	struct device *dv;
+{
+	dv->dv_ref++;
+}
+
+/*
+ * Decrement the ref count on the device structure.
+ *
+ * free's the structure when the ref count hits zero and calls the zeroref
+ * function.
+ *
+ * Context: process or interrupt
+ */
+void
+device_unref(dv)
+	struct device *dv;
+{
+	dv->dv_ref--;
+	if (dv->dv_ref == 0) {
+		if (dv->dv_cfdata->cf_attach->ca_zeroref)
+			(*dv->dv_cfdata->cf_attach->ca_zeroref)(dv);
+		
+		free(dv, M_DEVBUF);
 	}
 }
 
