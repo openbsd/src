@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.8 1998/12/16 17:46:06 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.9 1998/12/16 17:54:32 deraadt Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: func.c,v 1.8 1998/12/16 17:46:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: func.c,v 1.9 1998/12/16 17:54:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1520,13 +1520,13 @@ doprintf(v, t)
     gflag = 0;
     tglob(v);
     if (gflag) {
-        newv = globall(v);
-        if (newv == 0) {
-            stderror(ERR_NAME | ERR_NOMATCH);
-            return;
-        }
-        v = newv;
-        gargv=0;
+	newv = globall(v);
+	if (newv == 0) {
+	    stderror(ERR_NAME | ERR_NOMATCH);
+	    return;
+	}
+	v = newv;
+	gargv = 0;
     }
 
     ret = progprintf(blklen(v), c = short2blk(v));
