@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.7 2000/02/25 17:23:41 niklas Exp $	*/
+/*	$OpenBSD: timer.c,v 1.8 2001/07/06 14:37:11 ho Exp $	*/
 /*	$EOM: timer.c,v 1.13 2000/02/20 19:58:42 niklas Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 static TAILQ_HEAD (event_list, event) events;
 
 void
-timer_init ()
+timer_init (void)
 {
   TAILQ_INIT (&events);
 }
@@ -69,7 +69,7 @@ timer_next_event (struct timeval **timeout)
 }
 
 void
-timer_handle_expirations ()
+timer_handle_expirations (void)
 {
   struct timeval now;
   struct event *n;

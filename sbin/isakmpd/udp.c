@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.43 2001/07/05 12:36:57 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.44 2001/07/06 14:37:11 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ udp_report (struct transport *t)
  * for the generic case when we are the initiator.
  */
 void
-udp_init ()
+udp_init (void)
 {
   struct sockaddr_storage dflt_stor;
   struct sockaddr_in *dflt = (struct sockaddr_in *)&dflt_stor;

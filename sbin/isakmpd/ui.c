@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.19 2001/04/30 12:16:44 ho Exp $	*/
+/*	$OpenBSD: ui.c,v 1.20 2001/07/06 14:37:12 ho Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ int ui_socket;
 
 /* Create and open the FIFO used for user control.  */
 void
-ui_init ()
+ui_init (void)
 {
   struct stat st;
 
@@ -323,7 +323,7 @@ ui_handle_command (char *line)
  * troubles with non-blocking fifos.
  */
 void
-ui_handler ()
+ui_handler (void)
 {
   static char *buf = 0;
   static char *p;

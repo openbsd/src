@@ -1,4 +1,4 @@
-/*	$OpenBSD: app.c,v 1.6 1999/05/01 20:43:42 niklas Exp $	*/
+/*	$OpenBSD: app.c,v 1.7 2001/07/06 14:37:11 ho Exp $	*/
 /*	$EOM: app.c,v 1.6 1999/05/01 20:21:06 niklas Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ int app_none = 0;
 
 /* Initialize applications.  */
 void
-app_init ()
+app_init (void)
 {
   if (app_none)
     return;
@@ -62,7 +62,7 @@ app_init ()
 }
 
 void
-app_handler ()
+app_handler (void)
 {
   sysdep_app_handler (app_socket);
 }

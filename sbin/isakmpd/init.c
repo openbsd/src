@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.16 2001/06/25 00:00:44 ho Exp $	*/
+/*	$OpenBSD: init.c,v 1.17 2001/07/06 14:37:11 ho Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 #endif
 
 void
-init ()
+init (void)
 {
   log_init ();
   app_init ();
