@@ -107,6 +107,7 @@ static char
 	*sc_deinit;		/* Exit terminal de-initialization */
 
 static int init_done = 0;
+static int tty_fd = -1;
 
 public int auto_wrap;		/* Terminal does \r\n when write past margin */
 public int ignaw;		/* Terminal ignores \n immediately after wrap */
@@ -165,6 +166,10 @@ raw_mode(on)
 
 	if (on == curr_on)
 		return;
+
+	if (tty_fd == -1 && (tty_fd = open("/dev/tty", O_RDWR)) < 0)
+		tty_fd = 2;
+
 #if OS2
 	signal(SIGINT, SIG_IGN);
 	erase_char = '\b';
@@ -180,7 +185,8 @@ raw_mode(on)
 		/*
 		 * Get terminal modes.
 		 */
-		tcgetattr(2, &s);
+		if (tcgetattr(tty_fd, &s) == -1)
+			return;
 
 		/*
 		 * Save modes and set certain variables dependent on modes.
@@ -318,7 +324,8 @@ raw_mode(on)
 		 */
 		s = save_term;
 	}
-	tcsetattr(2, TCSANOW, &s);
+	if (tcsetattr(tty_fd, TCSANOW, &s) == -1)
+		return;
     }
 #else
 #ifdef TCGETA
@@ -331,7 +338,7 @@ raw_mode(on)
 		/*
 		 * Get terminal modes.
 		 */
-		ioctl(2, TCGETA, &s);
+		ioctl(tty_fd, TCGETA, &s);
 
 		/*
 		 * Save modes and set certain variables dependent on modes.
@@ -363,7 +370,7 @@ raw_mode(on)
 		 */
 		s = save_term;
 	}
-	ioctl(2, TCSETAW, &s);
+	ioctl(tty_fd, TCSETAW, &s);
     }
 #else
     {
@@ -375,7 +382,7 @@ raw_mode(on)
 		/*
 		 * Get terminal modes.
 		 */
-		ioctl(2, TIOCGETP, &s);
+		ioctl(tty_fd, TIOCGETP, &s);
 
 		/*
 		 * Save modes and set certain variables dependent on modes.
@@ -400,7 +407,7 @@ raw_mode(on)
 		 */
 		s = save_term;
 	}
-	ioctl(2, TIOCSETN, &s);
+	ioctl(tty_fd, TIOCSETN, &s);
     }
 #endif
 #endif
@@ -453,13 +460,16 @@ scrsize()
 #endif
 #endif
 
+	if (tty_fd == -1 && (tty_fd = open("/dev/tty", O_RDWR)) < 0)
+		tty_fd = 2;
+
 #ifdef TIOCGWINSZ
-	if (ioctl(2, TIOCGWINSZ, &w) == 0 && w.ws_row > 0)
+	if (ioctl(tty_fd, TIOCGWINSZ, &w) == 0 && w.ws_row > 0)
 		sc_height = w.ws_row;
 	else
 #else
 #ifdef WIOCGETD
-	if (ioctl(2, WIOCGETD, &w) == 0 && w.uw_height > 0)
+	if (ioctl(tty_fd, WIOCGETD, &w) == 0 && w.uw_height > 0)
 		sc_height = w.uw_height/w.uw_vs;
 	else
 #endif
@@ -473,11 +483,11 @@ scrsize()
 		sc_height = 24;
 
 #ifdef TIOCGWINSZ
- 	if (ioctl(2, TIOCGWINSZ, &w) == 0 && w.ws_col > 0)
+ 	if (ioctl(tty_fd, TIOCGWINSZ, &w) == 0 && w.ws_col > 0)
 		sc_width = w.ws_col;
 	else
 #ifdef WIOCGETD
-	if (ioctl(2, WIOCGETD, &w) == 0 && w.uw_width > 0)
+	if (ioctl(tty_fd, WIOCGETD, &w) == 0 && w.uw_width > 0)
 		sc_width = w.uw_width/w.uw_hs;
 	else
 #endif
