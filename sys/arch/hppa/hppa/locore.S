@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.123 2004/04/02 20:56:31 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.124 2004/04/06 18:25:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1061,8 +1061,7 @@ ENTRY(TLABEL(excpt),0)
 	ldw	0(r9), r1
 	bb,>=,n	r1, HPPA_FPU_T_POS, excpt_notrap
 	ldw	8(r9), r1
-	extru	r1, 5, 6, r1
-	bb,<,n	r1, HPPA_FPU_UNMPL, excpt_notrap
+	bb,>=,n r1, 5, excpt_notrap	/* HPPA_FPU_UNMPL not set */
 
 	ldw	0(r9), r1
 	depi	0, HPPA_FPU_T_POS, 1, r1
