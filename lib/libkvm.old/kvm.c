@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.9 1998/08/19 18:54:48 millert Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.10 1998/08/24 05:32:10 millert Exp $	*/
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ static char rcsid[] = "$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $";
 #include <db.h>
 #include <fcntl.h>
 #include <kvm.h>
+#include <libgen.h>
 #include <limits.h>
 #include <nlist.h>
 #include <paths.h>
@@ -194,9 +195,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->vmst = 0;
 	kd->vm_page_buckets = 0;
 
-	if (uf == 0)
-		uf = _PATH_UNIX;
-	else if (strlen(uf) >= MAXPATHLEN) {
+	if (uf && strlen(uf) >= MAXPATHLEN) {
 		_kvm_err(kd, kd->program, "exec file name too long");
 		goto failed;
 	}
@@ -244,9 +243,13 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * a kvm_nlist(), this probably won't be a wasted effort.
 		 * If the database cannot be opened, open the namelist
 		 * argument so we revert to slow nlist() calls.
+		 * If no file is specified, try opening _PATH_KSYMS and
+		 * fall back to _PATH_UNIX.
 		 */
-		if (kvm_dbopen(kd, uf) < 0 && 
-		    (kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
+		if (kvm_dbopen(kd, uf ? uf : _PATH_UNIX) == -1 &&
+		    ((uf && (kd->nlfd = open(uf, O_RDONLY)) == -1) || (!uf &&
+		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY)) == -1 &&
+		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY)) == -1))) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -255,8 +258,12 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * This is a crash dump.
 		 * Initalize the virtual address translation machinery,
 		 * but first setup the namelist fd.
+		 * If no file is specified, try opening _PATH_KSYMS and
+		 * fall back to _PATH_UNIX.
 		 */
-		if ((kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
+		if ((uf && (kd->nlfd = open(uf, O_RDONLY)) == -1) || (!uf &&
+		    (kd->nlfd = open((uf = _PATH_KSYMS), O_RDONLY)) == -1 &&
+		    (kd->nlfd = open((uf = _PATH_UNIX), O_RDONLY)) == -1)) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -362,34 +369,28 @@ kvm_dbopen(kd, uf)
 	char kversion[_POSIX2_LINE_MAX];
 	char dbname[MAXPATHLEN];
 
-	if ((cp = strrchr(uf, '/')) != 0)
-		uf = cp + 1;
+	uf = basename((char *)uf);
 
 	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
 	kd->db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL);
-	if (kd->db == 0)
-	{
-		switch (errno)
-		{
-			case ENOENT:
-				/* No kvm_bsd.db, fall back to /bsd silently */
-				break;
-			case EFTYPE:
-				_kvm_err(kd, kd->program,
-					 "file %s is incorrectly formatted",
-					 dbname);
-				break;
-			case EINVAL:
-				_kvm_err(kd, kd->program,
-					 "invalid argument to dbopen()");
-				break;
+	if (kd->db == NULL) {
+		switch (errno) {
+		case ENOENT:
+			/* No kvm_bsd.db, fall back to /bsd silently */
+			break;
+		case EFTYPE:
+			_kvm_err(kd, kd->program,
+			     "file %s is incorrectly formatted", dbname);
+			break;
+		case EINVAL:
+			_kvm_err(kd, kd->program,
+			     "invalid argument to dbopen()");
+			break;
 
-			default:
-				_kvm_err(kd, kd->program,
-					 "unknown dbopen() error");
-				break;
+		default:
+			_kvm_err(kd, kd->program, "unknown dbopen() error");
+			break;
 		}
-
 		return (-1);
 	}
 
