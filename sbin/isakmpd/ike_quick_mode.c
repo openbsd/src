@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.58 2002/01/23 18:44:47 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.59 2002/03/06 09:43:08 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -213,7 +213,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       MD5 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 16; i++)
 	snprintf (principal[1] + 2 * i + sizeof "passphrase-md5-hex:" - 1,
-		  2, "%02x", hashbuf[i]);
+		  3, "%02x", hashbuf[i]);
 
       len = sizeof "passphrase-sha1-hex:" + 2 * 20;
       principal[2] = calloc (len, sizeof (char));
@@ -228,7 +228,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       SHA1 (isakmp_sa->recv_key, strlen (isakmp_sa->recv_key), hashbuf);
       for (i = 0; i < 20; i++)
 	snprintf (principal[2] + 2 * i + sizeof "passphrase-sha1-hex:" - 1,
-		  2, "%02x", hashbuf[i]);
+		  3, "%02x", hashbuf[i]);
       break;
 
     case ISAKMP_CERTENC_KEYNOTE:
