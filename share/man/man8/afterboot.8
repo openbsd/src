@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.92 2004/07/07 06:01:02 henning Exp $
+.\"	$OpenBSD: afterboot.8,v 1.93 2004/07/08 10:56:22 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -136,15 +136,6 @@ Set the current date to January 27th, 1999 3:04pm:
 .Pp
 Set the time zone to Atlantic Standard Time:
 .Dl # ln -fs /usr/share/zoneinfo/Canada/Atlantic /etc/localtime
-.Ss System daemon configuration database
-The file
-.Pa /etc/rc.conf
-is used to configure the system daemons.
-Administrators should make changes to the default settings by editing a
-separate file,
-.Pa /etc/rc.conf.local
-.Pq this may need to be created from scratch .
-Values can then be added in as desired.
 .Ss Check hostname
 Use the
 .Ic hostname
@@ -465,13 +456,38 @@ Follow instructions for
 if using
 Kerberos
 for authentication.
-.Ss rc.conf, rc.conf.local, rc.local, rc.securelevel, rc.shutdown
-Check for any local changes needed in the files
-.Pa /etc/rc.conf ,
-.Pa /etc/rc.local ,
+.Ss System command scripts
+The
+.Pa /etc/rc.*\&
+scripts are invoked at boot time, after single user mode has exited,
+and at shutdown.
+The whole process is controlled, more or less, by the master script
+.Pa /etc/rc .
+This script should not be changed by administrators.
+.Pp
+.Pa /etc/rc
+is in turn influenced by the configuration variables present in
+.Pa /etc/rc.conf .
+Again this script should not be changed by administrators:
+site-specific changes should be made to
+.Pq freshly created if necessary
+.Pa /etc/rc.conf.local .
+.Pp
+Any commands which should be run before the system sets its
+secure level should be made to
 .Pa /etc/rc.securelevel ,
-and
+and commands to be run after the system sets its
+secure level should be made to
+.Pa /etc/rc.local .
+Commands to be run before system shutdown should be set in
 .Pa /etc/rc.shutdown .
+.Pp
+For more information about system startup/shutdown files, see
+.Xr rc 8 ,
+.Xr rc.conf 8 ,
+.Xr securelevel 7 ,
+and
+.Xr rc.shutdown 8 .
 .Pp
 If you've installed X, you may want to turn on
 .Xr xdm 1 ,

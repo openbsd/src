@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.8,v 1.21 2003/07/29 12:42:37 jmc Exp $
+.\"	$OpenBSD: rc.8,v 1.22 2004/07/08 10:56:22 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,21 +37,18 @@
 .Nd command scripts for system startup
 .Sh SYNOPSIS
 .Nm /etc/rc
-.Nm /etc/rc.conf
 .Nm /etc/rc.local
 .Nm /etc/rc.securelevel
-.Nm /etc/netstart
-.Nm /etc/rc.shutdown
 .Sh DESCRIPTION
 .Nm rc
 is the command script that is invoked by
 .Xr init 8
 during an automatic reboot and after single user mode is exited;
 it performs system housekeeping chores and starts up system daemons.
-As well,
+Additionally,
 .Nm rc
 is intricately tied to the
-.Nm netstart
+.Xr netstart 8
 script, which runs commands and daemons pertaining to the network.
 The
 .Nm rc.securelevel
@@ -61,8 +58,10 @@ scripts hold commands which are pertinent only to a specific site.
 .Pp
 All four of these startup scripts are (or can be) controlled to some
 extent by variables defined in
-.Nm rc.conf ,
-which specifies which daemons and services are to be run.
+.Xr rc.conf 8
+and
+.Xr rc.conf.local 8 ,
+which specify which daemons and services to run.
 .Pp
 When an automatic reboot is in progress,
 .Nm rc
@@ -97,7 +96,7 @@ which is run after an auto-reboot succeeds and also if
 is invoked when a single user shell terminates (see
 .Xr init 8 ) ,
 then asks
-.Nm rc.conf
+.Xr rc.conf 8
 for configuration variables,
 mounts filesystems, starts system daemons,
 preserves editor files,
@@ -116,25 +115,28 @@ is executed.
 .Nm rc.securelevel
 is executed by
 .Nm rc
-to start daemons that must run before the security level changes.
+to start daemons that must be run before the security level changes.
 Following this,
 .Nm rc
 then sets the security level to the value specified in the
 .Va securelevel
 variable in that file.
+See
+.Xr securelevel 7
+for the effects of setting the security level.
 .Pp
 .Nm rc.local
 is executed towards the end of
 .Nm rc
 (it is not the very last as there are a few services that must be
-the started at the very end).
+started at the very end).
 Normally,
 .Nm rc.local
 contains commands and daemons that are not part of the
 stock installation.
 .Sh CONFIGURATION EXAMPLES
 The
-.Nm rc.conf
+.Xr rc.conf 8
 file contains a series of Bourne-shell syntax assignments that
 are used to configure kernel configurations, network configuration,
 and various other system daemons.
@@ -143,14 +145,14 @@ As described above, this file is sourced (using
 of course) by
 .Pa /etc/rc .
 Various comments in
-.Nm rc.conf
+.Xr rc.conf 8
 make it clear what each variable does.
 Refer to the specific man pages for each daemon to determine what that
 subsystem does.
 .Pp
 For example, the
 .Xr lpd 8
-daemon is controlled by the line
+daemon is controlled by the following line:
 .Bd -literal -offset indent
 lpd_flags=NO        # for normal use: "" (or "-l" for debugging)
 .Ed
@@ -160,7 +162,7 @@ This does not start
 at system startup.
 To start
 .Xr lpd 8 ,
-the following entry can be used.
+the following entry can be used:
 .Bd -literal -offset indent
 lpd_flags=""        # for normal use: "" (or "-l" for debugging)
 .Ed
@@ -169,7 +171,7 @@ Alternately,
 .Xr lpd 8
 can be started with the
 .Fl l
-flag (to log remote connections).
+flag (to log remote connections):
 .Bd -literal -offset indent
 lpd_flags="-l"      # for normal use: "" (or "-l" for debugging)
 .Ed
@@ -181,10 +183,30 @@ starts
 it sets the process priority, umask, and resource limits according to the
 .Dq daemon
 login class as described in
-.Pa /etc/login.conf .
+.Xr login.conf 5 .
+.Sh FILES
+.Bl -tag -width "/etc/rc.securelevelXX" -compact
+.It /etc/rc
+Command scripts for system startup.
+.It /etc/rc.local
+Site specific command scripts for system startup.
+.It /etc/rc.conf
+System daemon configuration database.
+.It /etc/rc.conf.local
+Site specific daemon configuration database.
+.It /etc/rc.securelevel
+Commands run before the security level changes.
+.It /etc/rc.shutdown
+Commands run at system shutdown.
+.It /etc/login.conf
+Login class capability database.
+.It /etc/netstart
+Command script for network startup.
+.El
 .Sh SEE ALSO
 .Xr login.conf 5 ,
 .Xr sysctl.conf 5 ,
+.Xr securelevel 7 ,
 .Xr init 8 ,
 .Xr netstart 8 ,
 .Xr rc.conf 8 ,
