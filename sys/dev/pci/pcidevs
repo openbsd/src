@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.528 2002/07/13 22:36:16 mickey Exp $
+	$OpenBSD: pcidevs,v 1.529 2002/07/18 17:24:04 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1186,6 +1186,7 @@ product DTCTECH DMX3194U	0x0002	DMX3194U SCSI
 
 /* Emulex products */
 product EMULEX LPPFC		0x10df	Light Pulse FibreChannel
+product EMULEX LP8000		0xf800	Light Pulse 8000
 
 /* Ensoniq products */
 product ENSONIQ	AUDIOPCI97	0x1371	AudioPCI97
