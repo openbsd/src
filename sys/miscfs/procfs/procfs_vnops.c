@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.9 1997/11/06 05:58:43 csapuntz Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.10 1998/06/09 18:13:48 deraadt Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -219,6 +219,7 @@ procfs_open(v)
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct proc *p1 = ap->a_p;	/* tracer */
 	struct proc *p2;		/* traced */
+	struct vattr va;
 	int error;
 
 	if ((p2 = PFIND(pfs->pfs_pid)) == 0)
@@ -232,6 +233,12 @@ procfs_open(v)
 
 		if ((error = procfs_checkioperm(p1, p2)) != 0)
 			return (error);
+
+		error = VOP_GETATTR(p2->p_textvp, &va, p1->p_ucred, p1);
+		if (error)
+			return (error);
+		if (va.va_flags & IMMUTABLE)
+			return (EPERM);
 
 		if (ap->a_mode & FWRITE)
 			pfs->pfs_flags = ap->a_mode & (FWRITE|O_EXCL);
