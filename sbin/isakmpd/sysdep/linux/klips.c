@@ -1,4 +1,4 @@
-/*	$OpenBSD: klips.c,v 1.4 2001/02/24 04:42:49 angelos Exp $	*/
+/*	$OpenBSD: klips.c,v 1.5 2001/05/05 00:51:48 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -209,7 +209,8 @@ klips_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
 
 /* Store/update a SPI with full information into the kernel.  */
 int
-klips_set_spi (struct sa *sa, struct proto *proto, int incoming)
+klips_set_spi (struct sa *sa, struct proto *proto, int incoming,
+	       struct sa *isakmp_sa)
 {
   struct encap_msghdr *emsg = 0;
   struct ipsec_proto *iproto = proto->data;
