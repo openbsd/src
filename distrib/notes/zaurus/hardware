@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.5 2005/03/18 06:51:00 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.6 2005/03/18 08:10:20 jsg Exp $
 dnl When more than one models is supported, turn this into a list...
 OpenBSD/MACHINE runs on the Sharp Zaurus C3000 only at the moment.
 Support for the C-760 and C-860 is under development.
@@ -170,6 +170,24 @@ Supported devices {:-include-:}:
 		    ELSA XI800
 		    Linksys WCF12
 		    Netgear MA701
+		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters
+		    AMIT WL532U
+		    ASUS WL-167g
+		    Buffalo WLI-U2-KG54-AI
+		    CNet CWD-854
+		    Compex WLU54G
+		    Conceptronic C54RU
+		    D-Link DWL-G122 (b1)
+		    E-Tech WGUS02
+		    Gigabyte GN-WBKG
+		    Linksys WUSB54G v4
+		    Linksys WUSB54GP v4
+		    MSI MS-6861
+		    MSI MS-6865
+		    MSI MS-6869
+		    Repotec RP-WU0402
+		    Surecom EP-9001-g
+		    Zinwell ZWX-G261
 	Serial ports
 		Onboard serial (pxacom) port
 	Universal Serial Bus (USB) Devices
