@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.5 2001/09/26 01:24:36 jason Exp $
+# 	$OpenBSD: RAMDISK,v 1.6 2001/09/29 03:17:21 art Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -48,6 +48,8 @@ gem*	at pci? dev ? function ?
 #### Standard system devices -- all required for a given architecture
 
 auxio*	at ebus?
+
+com*	at ebus?
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0				# PROM console
