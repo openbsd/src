@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.7 2000/08/24 16:20:41 deraadt Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.8 2000/11/21 07:22:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpc.c,v 1.7 2000/08/24 16:20:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lpc.c,v 1.8 2000/11/21 07:22:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,11 +85,11 @@ uid_t	uid, euid;
 
 jmp_buf	toplevel;
 
-static void		 cmdscanner __P((int));
-static struct cmd	*getcmd __P((char *));
-static void		 intr __P((int));
-static void		 makeargv __P((void));
-static int		 ingroup __P((char *));
+void		 cmdscanner __P((int));
+struct cmd	*getcmd __P((char *));
+void		 intr __P((int));
+void		 makeargv __P((void));
+int		 ingroup __P((char *));
 
 int
 main(argc, argv)
@@ -122,7 +122,7 @@ main(argc, argv)
 		exit(0);
 	}
 	fromatty = isatty(fileno(stdin));
-	top = setjmp(toplevel) == 0;
+	top = sigsetjmp(toplevel, 1) == 0;
 	if (top)
 		signal(SIGINT, intr);
 	for (;;) {
@@ -131,19 +131,19 @@ main(argc, argv)
 	}
 }
 
-static void
+void
 intr(signo)
 	int signo;
 {
 	if (!fromatty)
 		exit(0);
-	longjmp(toplevel, 1);
+	siglongjmp(toplevel, 1);
 }
 
 /*
  * Command parser.
  */
-static void
+void
 cmdscanner(top)
 	int top;
 {
@@ -176,10 +176,10 @@ cmdscanner(top)
 		}
 		(*c->c_handler)(margc, margv);
 	}
-	longjmp(toplevel, 0);
+	siglongjmp(toplevel, 0);
 }
 
-static struct cmd *
+struct cmd *
 getcmd(name)
 	register char *name;
 {
@@ -211,7 +211,7 @@ getcmd(name)
 /*
  * Slice a string up into argc/argv.
  */
-static void
+void
 makeargv()
 {
 	register char *cp;
@@ -300,7 +300,7 @@ help(argc, argv)
 /*
  * return non-zero if the user is a member of the given group
  */
-static int
+int
 ingroup(grname)
 	char *grname;
 {

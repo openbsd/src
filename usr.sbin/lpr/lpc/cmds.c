@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.9 1997/07/25 18:57:24 grr Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.10 2000/11/21 07:22:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.9 1997/07/25 18:57:24 grr Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 2000/11/21 07:22:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,20 +74,20 @@ static char rcsid[] = "$OpenBSD: cmds.c,v 1.9 1997/07/25 18:57:24 grr Exp $";
 
 extern uid_t	uid, euid;
 
-static void	abortpr __P((int));
-static void	cleanpr __P((void));
-static void	disablepr __P((void));
-static int	doarg __P((char *));
-static int	doselect __P((struct dirent *));
-static void	enablepr __P((void));
-static void	prstat __P((void));
-static void	putmsg __P((int, char **));
-static int	sortq __P((const void *, const void *));
-static void	startpr __P((int));
-static void	stoppr __P((void));
-static int	touch __P((struct queue *));
-static void	unlinkf __P((char *));
-static void	upstat __P((char *));
+void	abortpr __P((int));
+void	cleanpr __P((void));
+void	disablepr __P((void));
+int	doarg __P((char *));
+int	doselect __P((struct dirent *));
+void	enablepr __P((void));
+void	prstat __P((void));
+void	putmsg __P((int, char **));
+int	sortq __P((const void *, const void *));
+void	startpr __P((int));
+void	stoppr __P((void));
+int	touch __P((struct queue *));
+void	unlinkf __P((char *));
+void	upstat __P((char *));
 
 /*
  * kill an existing daemon and disable printing.
@@ -132,7 +132,7 @@ doabort(argc, argv)
 	}
 }
 
-static void
+void
 abortpr(dis)
 	int dis;
 {
@@ -201,7 +201,7 @@ out:
 /*
  * Write a message into the status file.
  */
-static void
+void
 upstat(msg)
 	char *msg;
 {
@@ -269,7 +269,7 @@ clean(argc, argv)
 	}
 }
 
-static int
+int
 doselect(d)
 	struct dirent *d;
 {
@@ -284,7 +284,7 @@ doselect(d)
  * Comparison routine for scandir. Sort by job number and machine, then
  * by `cf', `tf', or `df', then by the sequence letter A-Z, a-z.
  */
-static int
+int
 sortq(a, b)
 	const void *a, *b;
 {
@@ -309,7 +309,7 @@ sortq(a, b)
 /*
  * Remove incomplete jobs from spooling area.
  */
-static void
+void
 cleanpr()
 {
 	register int i, n;
@@ -364,7 +364,7 @@ cleanpr()
      	} while (++i < nitems);
 }
  
-static void
+void
 unlinkf(name)
 	char	*name;
 {
@@ -420,7 +420,7 @@ enable(argc, argv)
 	}
 }
 
-static void
+void
 enablepr()
 {
 	struct stat stbuf;
@@ -489,7 +489,7 @@ disable(argc, argv)
 	}
 }
 
-static void
+void
 disablepr()
 {
 	register int fd;
@@ -565,7 +565,7 @@ down(argc, argv)
 	putmsg(argc - 2, argv + 2);
 }
 
-static void
+void
 putmsg(argc, argv)
 	int argc;
 	char **argv;
@@ -735,7 +735,7 @@ startcmd(argc, argv)
 	}
 }
 
-static void
+void
 startpr(enable)
 	int enable;
 {
@@ -808,7 +808,7 @@ status(argc, argv)
 /*
  * Print the status of the printer queue.
  */
-static void
+void
 prstat()
 {
 	struct stat stbuf;
@@ -912,7 +912,7 @@ stop(argc, argv)
 	}
 }
 
-static void
+void
 stoppr()
 {
 	register int fd;
@@ -1029,7 +1029,7 @@ out:
  * Reposition the job by changing the modification time of
  * the control file.
  */
-static int
+int
 touch(q)
 	struct queue *q;
 {
@@ -1048,7 +1048,7 @@ touch(q)
  * Checks if specified job name is in the printer's queue.
  * Returns:  negative (-1) if argument name is not in the queue.
  */
-static int
+int
 doarg(job)
 	char *job;
 {
