@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.4 2000/07/19 16:06:12 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.5 2000/09/17 20:31:20 marc Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -692,13 +692,10 @@ cs4280_intr(p)
 	char * empty_dma;
 	int handled = 0;
 
+	/* grab interrupt register then clear it */
 	intr = BA0READ4(sc, CS4280_HISR);
+	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 
-	if ((intr & HISR_INTENA) == 0) {
-		BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
-		return (0);
-	}
-	
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
 		handled = 1;
@@ -820,8 +817,7 @@ cs4280_intr(p)
 		DPRINTF(("\n"));
 	}
 #endif
-	/* Throw EOI */
-	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
+
 	return handled;
 }
 
@@ -1618,6 +1614,7 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 	return (0);
 }
 
+
 int
 cs4280_init(sc, init)
 	struct cs4280_softc *sc;
@@ -1662,7 +1659,8 @@ cs4280_init(sc, init)
 	delay(50*1000); /* delay 50ms */
 	
 	/* Turn on clock */
-	BA0WRITE4(sc, CS4280_CLKCR1, CLKCR1_PLLP | CLKCR1_SWCE);
+	mem = BA0READ4(sc, CS4280_CLKCR1) | CLKCR1_SWCE;
+	BA0WRITE4(sc, CS4280_CLKCR1, mem);
 	
 	/* Set the serial port FIFO pointer to the
 	 * first sample in FIFO. (not documented) */
@@ -1694,7 +1692,8 @@ cs4280_init(sc, init)
 
 	/* Wait for valid AC97 input slot */
 	n = 0;
-	while (BA0READ4(sc, CS4280_ACISV) != (ACISV_ISV3 | ACISV_ISV4)) {
+	while ((BA0READ4(sc, CS4280_ACISV) & (ACISV_ISV3 | ACISV_ISV4)) !=
+	       (ACISV_ISV3 | ACISV_ISV4)) {
 		delay(1000);
 		if (++n > 1000) {
 			printf("AC97 inputs slot ready timeout\n");
@@ -1729,6 +1728,8 @@ cs4280_init(sc, init)
 	mem = BA1READ4(sc, CS4280_CCTL);
 	sc->cctl = mem & CCTL_MASK; /* save startup value */
 	cs4280_halt_input(sc);
+
+	/* MSH: need to power up ADC and DAC? */
 
 	/* Processor Startup Procedure */
 	BA1WRITE4(sc, CS4280_FRMT, FRMT_FTV);
