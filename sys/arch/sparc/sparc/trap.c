@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2002/07/24 00:55:52 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2003/05/12 04:42:58 jason Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -130,7 +130,8 @@ const char *trap_type[] = {
 	"fp exception",		/* 8 */
 	"data fault",		/* 9 */
 	"tag overflow",		/* 0a */
-	T, T, T, T, T, T,	/* 0b..10 */
+	"watchpoint",		/* 0b */
+	T, T, T, T, T,		/* 0c..10 */
 	"level 1 int",		/* 11 */
 	"level 2 int",		/* 12 */
 	"level 3 int",		/* 13 */
@@ -156,9 +157,12 @@ const char *trap_type[] = {
 	"v8 data error",	/* 29 */
 	"v8 idiv by zero",	/* 2a */
 	"v8 store error",	/* 2b */
-	T, T, T, T,		/* 2c..2f */
+	"v8 data access MMU miss",/* 2c */
+	T, T, T,		/* 2d..2f */
 	T, T, T, T, T, T, T, T,	/* 30..37 */
-	T, T, T, T, T, T, T, T,	/* 38..3f */
+	T, T, T, T,		/* 38..3b */
+	"v8 insn access MMU miss",/* 3c */
+	T, T, T,	/* 3d..3f */
 	T, T, T, T, T, T, T, T,	/* 40..48 */
 	T, T, T, T, T, T, T, T,	/* 48..4f */
 	T, T, T, T, T, T, T, T,	/* 50..57 */
