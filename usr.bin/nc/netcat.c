@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.29 2001/06/27 02:45:08 smart Exp $ */
+/* $OpenBSD: netcat.c,v 1.30 2001/06/27 03:14:28 smart Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -189,7 +189,7 @@ main(argc, argv)
 		/* Allow only one connection at a time, but stay alive */
 		for (;;) {
 			if ((s = local_listen(host, uport, hints)) < 0)
-				exit(1);
+				err(1, NULL);
 			/*
 			 * For UDP, we will use recvfrom() initially
 			 * to wait for a caller, then use the regular
@@ -370,7 +370,7 @@ local_listen(host, port, hints)
 
 		ret = setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &x, sizeof(x));
 		if (ret == -1)
-			exit(1);
+			err(1, NULL);
 
 		if (bind(s, (struct sockaddr *)res0->ai_addr,
 						res0->ai_addrlen) == 0)
