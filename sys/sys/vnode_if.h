@@ -3,7 +3,7 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp 
+ *	OpenBSD: vnode_if.src,v 1.19 2002/02/22 20:37:45 drahn Exp 
  * by the script:
  *	OpenBSD: vnode_if.sh,v 1.8 2001/02/26 17:34:18 art Exp 
  */
@@ -396,6 +396,33 @@ struct vop_whiteout_args {
 };
 extern struct vnodeop_desc vop_whiteout_desc;
 int VOP_WHITEOUT __P((struct vnode *, struct componentname *, int));
+
+struct vop_getextattr_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_attrnamespace;
+	const char *a_name;
+	struct uio *a_uio;
+	size_t *a_size;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+extern struct vnodeop_desc vop_getextattr_desc;
+int VOP_GETEXTATTR __P((struct vnode *, int, const char *, struct uio *, 
+    size_t *, struct ucred *, struct proc *));
+
+struct vop_setextattr_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_attrnamespace;
+	const char *a_name;
+	struct uio *a_uio;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+extern struct vnodeop_desc vop_setextattr_desc;
+int VOP_SETEXTATTR __P((struct vnode *, int, const char *, struct uio *, 
+    struct ucred *, struct proc *));
 
 /* Special cases: */
 #include <sys/buf.h>
