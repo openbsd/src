@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.5 2001/07/13 22:24:53 mickey Exp $
+#	$OpenBSD: zipcodes,v 1.6 2001/10/08 03:42:09 mickey Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -39560,14 +39560,16 @@
 94297:Sacramento, CA
 94298:Sacramento, CA
 94299:Sacramento, CA
-94300:Palo Alto, CA
 94301:Palo Alto, CA
 94302:Palo Alto, CA
 94303:Palo Alto, CA
 94304:Palo Alto, CA
-94305:Palo Alto, CA
+94305:Stanford, CA
 94306:Palo Alto, CA
+94307:Palo Alto, CA
+94308:Palo Alto, CA
 94309:Palo Alto, CA
+94310:Palo Alto, CA
 94400:San Mateo, CA
 94401:San Mateo, CA
 94402:San Mateo, CA
