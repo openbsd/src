@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.8 1997/01/04 08:50:22 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.9 1997/05/14 15:32:46 niklas Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -49,9 +49,11 @@
  * Block/character interface to a vnode.  Allows one to treat a file
  * as a disk (e.g. build a filesystem in it, mount it, etc.).
  *
- * NOTE 1: This uses the VOP_BMAP/VOP_STRATEGY interface to the vnode
- * instead of a simple VOP_RDWR.  We do this to avoid distorting the
- * local buffer cache.
+ * NOTE 1: This uses either the VOP_BMAP/VOP_STRATEGY interface to the
+ * vnode or simple VOP_READ/VOP_WRITE.  The former is suitable for swapping
+ * as it doesn't distort the local buffer cache.  The latter is good for
+ * building disk images as it keeps the cache consistent after the block
+ * device is closed.
  *
  * NOTE 2: There is a security issue involved with this driver.
  * Once mounted all access to the contents of the "mapped" file via
@@ -94,7 +96,8 @@ int vnddebug = 0x00;
 
 #define b_cylin	b_resid
 
-#define	vndunit(x)	DISKUNIT(x)
+#define	vndunit(x)	DISKUNIT((x) & 0x7f)
+#define vndsimple(x)	((x) & 0x80)
 #define	MAKEVNDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define	VNDLABELDEV(dev) (MAKEVNDDEV(major(dev), vndunit(dev), RAW_PART))
@@ -110,8 +113,8 @@ struct vndbuf {
 	free((caddr_t)(vbp), M_DEVBUF)
 
 struct vnd_softc {
-	struct device	sc_dev;
-	struct disk	sc_dk;
+	struct device	 sc_dev;
+	struct disk	 sc_dk;
 
 	int		 sc_flags;	/* flags */
 	size_t		 sc_size;	/* size of vnd */
@@ -122,13 +125,15 @@ struct vnd_softc {
 };
 
 /* sc_flags */
-#define	VNF_ALIVE	0x001
-#define VNF_INITED	0x002
-#define VNF_WANTED	0x040
-#define VNF_LOCKED	0x080
-#define	VNF_LABELLING	0x100
-#define	VNF_WLABEL	0x200
-#define	VNF_HAVELABEL	0x100
+#define	VNF_ALIVE	0x0001
+#define VNF_INITED	0x0002
+#define VNF_WANTED	0x0040
+#define VNF_LOCKED	0x0080
+#define	VNF_LABELLING	0x0100
+#define	VNF_WLABEL	0x0200
+#define	VNF_HAVELABEL	0x0400
+#define VNF_BUSY	0x0800
+#define VNF_SIMPLE	0x1000
 
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
@@ -190,13 +195,29 @@ vndopen(dev, flags, mode, p)
 	if ((error = vndlock(sc)) != 0)
 		return (error);
 
-	if ((sc->sc_flags & VNF_INITED) && (sc->sc_flags & VNF_HAVELABEL) == 0) {
+	if ((sc->sc_flags & VNF_INITED) &&
+	    (sc->sc_flags & VNF_HAVELABEL) == 0) {
 		sc->sc_flags |= VNF_HAVELABEL;
 		vndgetdisklabel(dev, sc);
 	}
 
 	part = DISKPART(dev);
-	pmask = (1 << part);
+	pmask = 1 << part;
+
+	/*
+	 * If any partition is open, all succeeding openings must be of the
+	 * same type.
+	 */
+	if (sc->sc_dk.dk_openmask) {
+		if (((sc->sc_flags & VNF_SIMPLE) != 0) !=
+		    (vndsimple(dev) != 0)) {
+			error = EBUSY;
+			goto bad;
+		}
+	} else if (vndsimple(dev))
+		sc->sc_flags |= VNF_SIMPLE;
+	else
+		sc->sc_flags &= ~VNF_SIMPLE;
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -322,9 +343,19 @@ vndclose(dev, flags, mode, p)
 }
 
 /*
+ * Two methods are used, the traditional buffercache bypassing and the
+ * newer, cache-coherent on unmount, one.
+ *
+ * Former method:
  * Break the request into bsize pieces and submit using VOP_BMAP/VOP_STRATEGY.
  * Note that this driver can only be used for swapping over NFS on the hp
  * since nfs_strategy on the vax cannot handle u-areas and page tables.
+ *
+ * Latter method:
+ * Repack the buffer into an uio structure and use VOP_READ/VOP_WRITE to
+ * access the underlying file.  Things are complicated by the fact that we
+ * might get recursively called due to buffer flushes.  In those cases we
+ * queue one write.
  */
 void
 vndstrategy(bp)
@@ -335,7 +366,9 @@ vndstrategy(bp)
 	register struct vndbuf *nbp;
 	register int bn, bsize, resid;
 	register caddr_t addr;
-	int sz, flags, error;
+	int sz, flags, error, s;
+	struct iovec aiov;
+	struct uio auio;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -347,6 +380,7 @@ vndstrategy(bp)
 		biodone(bp);
 		return;
 	}
+
 	bn = bp->b_blkno;
 	sz = howmany(bp->b_bcount, DEV_BSIZE);
 	bp->b_resid = bp->b_bcount;
@@ -358,6 +392,73 @@ vndstrategy(bp)
 		biodone(bp);
 		return;
 	}
+
+	/* No bypassing of buffer cache?  */
+	if (vndsimple(bp->b_dev)) {
+		/*
+		 * In order to avoid "locking against myself" panics, we
+		 * must be prepared to queue operations during another I/O
+		 * operation.  This situation comes up where a dirty cache
+		 * buffer needs to be flushed in order to provide the current
+		 * operation with a fresh buffer.
+		 *
+		 * XXX do we really need to protect stuff relating to this with
+		 * splbio?
+		 */
+		if (vnd->sc_flags & VNF_BUSY) {
+			s = splbio();
+			bp->b_actf = vnd->sc_tab.b_actf;
+			vnd->sc_tab.b_actf = bp;
+			vnd->sc_tab.b_active++;
+			splx(s);
+			return;
+		}
+
+		/* Loop until all queued requests are handled.  */
+		for (;;) {
+			aiov.iov_base = bp->b_data;
+			auio.uio_resid = aiov.iov_len = bp->b_bcount;
+			auio.uio_iov = &aiov;
+			auio.uio_iovcnt = 1;
+			auio.uio_offset = dbtob(bp->b_blkno);
+			auio.uio_segflg = UIO_SYSSPACE;
+			auio.uio_procp = bp->b_proc;
+
+			VOP_LOCK(vnd->sc_vp);
+			vnd->sc_flags |= VNF_BUSY;
+			if (bp->b_flags & B_READ) {
+				auio.uio_rw = UIO_READ;
+				bp->b_error = VOP_READ(vnd->sc_vp, &auio, 0,
+				    vnd->sc_cred);
+			} else {
+				auio.uio_rw = UIO_WRITE;
+				bp->b_error = VOP_WRITE(vnd->sc_vp, &auio, 0,
+				    vnd->sc_cred);
+			}
+			vnd->sc_flags &= ~VNF_BUSY;
+			VOP_UNLOCK(vnd->sc_vp);
+			if (bp->b_error)
+				bp->b_flags |= B_ERROR;
+			bp->b_resid = auio.uio_resid;
+			biodone(bp);
+
+			/* If nothing more is queued, we are done.  */
+			if (!vnd->sc_tab.b_active)
+				return;
+
+			/*
+			 * Dequeue now since lower level strategy
+			 * routine might queue using same links.
+			 */
+			s = splbio();
+			bp = vnd->sc_tab.b_actf;
+			vnd->sc_tab.b_actf = bp->b_actf;
+			vnd->sc_tab.b_active--;
+			splx(s);
+		}
+	}
+
+	/* The old-style buffercache bypassing method.  */
 	bn = dbtob(bn);
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
