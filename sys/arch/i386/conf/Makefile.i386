@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.i386,v 1.12 1996/05/10 12:19:12 mickey Exp $
-#	$NetBSD: Makefile.i386,v 1.66 1996/02/29 20:56:16 cgd Exp $
+#	$OpenBSD: Makefile.i386,v 1.13 1996/05/27 08:04:52 deraadt Exp $
+#	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
 #
@@ -151,7 +151,7 @@ locore.o: ${APMINC}
 
 SRCS=	${I386}/i386/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c ${APMINC}
 	mkdep ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
