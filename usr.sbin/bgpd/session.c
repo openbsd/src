@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.48 2003/12/28 14:34:30 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.49 2003/12/30 13:03:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -911,7 +911,7 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 	if (peer->state == STATE_CONNECT) {
 		if (pfd->revents & POLLOUT) {
 			if (pfd->revents & POLLIN) {
-				/* error occured */
+				/* error occurred */
 				len = sizeof(error);
 				if (getsockopt(pfd->fd, SOL_SOCKET, SO_ERROR,
 				    &error, &len) == -1)

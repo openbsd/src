@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.11 2003/12/26 20:06:01 jakob Exp $ */
+/*	$OpenBSD: log.c,v 1.12 2003/12/30 13:03:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -82,7 +82,7 @@ static const char *suberr_open_names[] = {
 	"AS unacceptable",
 	"BGPID invalid",
 	"optional parameter error",
-	"Authentification error",
+	"Authentication error",
 	"unacceptable holdtime"
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.11 2003/12/27 18:43:36 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.12 2003/12/30 13:03:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -102,7 +102,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 		free(p);
 	}
 
-	/* merge peers done by session egine except for initial config */
+	/* merge peers done by session engine except for initial config */
 	xconf->peers = conf->peers;
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.43 2003/12/28 14:43:18 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.44 2003/12/30 13:03:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -94,7 +94,7 @@ kroute_init(int fs)
 		return (-1);
 	}
 
-	/* not intrested in my own messages */
+	/* not interested in my own messages */
 	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
 		log_err("kroute_init: setsockopt");	/* not fatal */
@@ -557,7 +557,7 @@ kroute_dispatch_msg(void)
 				return (-1);
 			break;
 		default:
-			/* ingnore for now */
+			/* ignore for now */
 			break;
 		}
 	}

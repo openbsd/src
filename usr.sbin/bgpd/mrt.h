@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.4 2003/12/21 23:26:37 henning Exp $ */
+/*	$OpenBSD: mrt.h,v 1.5 2003/12/30 13:03:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <cjeker@diehard.n-r-g.com>
@@ -96,7 +96,7 @@ struct mrt_dump_v6_header {
 
 
 /*
- * Main zebra dump format is in MSG_PROTOCOL_BGP4MP exptions are table dumps
+ * Main zebra dump format is in MSG_PROTOCOL_BGP4MP exceptions are table dumps
  * that are normaly saved as MSG_TABLE_DUMP.
  * In most cases this is the format to choose to dump updates et al.
  */
@@ -116,7 +116,7 @@ struct mrt_bgp4mp_header {
 	u_int16_t	afi;
 	/*
 	 * Next comes either a struct mrt_bgp4mp_IPv4 or a
-	 * struct mrt_bgp4mp_IPv6 dependant on afi type.
+	 * struct mrt_bgp4mp_IPv6 dependent on afi type.
 	 *
 	 * Last but not least the payload.
 	 */
@@ -160,7 +160,7 @@ struct mrt_bgp4mp_entry_header {
 	 * u_int8_t  prefixlen
 	 * variable prefix (prefixlen bits long rounded to the next octet)
 	 * u_int16_t attrlen
-	 * variable lenght bgp attributes attrlen bytes long
+	 * variable length bgp attributes attrlen bytes long
 	 */
 };
 
@@ -175,7 +175,7 @@ struct mrt_bgp_sync_header {
 };
 
 /*
- * OLD MRT message headers. These structs are here for completition but
+ * OLD MRT message headers. These structs are here for completion but
  * will not be used to generate dumps. It seems that nobody uses those.
  */
 

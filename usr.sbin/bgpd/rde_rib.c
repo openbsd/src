@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.12 2003/12/26 22:41:01 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.13 2003/12/30 13:03:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -339,7 +339,7 @@ aspath_neighbour(struct aspath *aspath)
 	return 0;
 }
 
-#define AS_HASH_INITAL 8271
+#define AS_HASH_INITIAL 8271
 
 u_long
 aspath_hash(struct aspath *aspath)
@@ -349,7 +349,7 @@ aspath_hash(struct aspath *aspath)
 	u_int16_t	 len, seg_size;
 	u_int8_t	 i, seg_len, seg_type;
 
-	hash = AS_HASH_INITAL;
+	hash = AS_HASH_INITIAL;
 	seg = aspath->data;
 	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
@@ -518,9 +518,9 @@ path_empty(struct rde_aspath *asp)
 /*
  * the path object is linked into multiple lists for fast access.
  * These are peer_l, path_l and nexthop_l.
- * peer_l: list of all aspathes that belong to that peer
- * path_l: hash list to find pathes quickly
- * nexthop_l: list of all aspathes with an equal exit nexthop
+ * peer_l: list of all aspaths that belong to that peer
+ * path_l: hash list to find paths quickly
+ * nexthop_l: list of all aspaths with an equal exit nexthop
  */
 static void
 path_link(struct rde_aspath *asp, struct rde_peer *peer)
@@ -558,7 +558,7 @@ path_unlink(struct rde_aspath *asp)
 	asp->flags.aspath = NULL;
 
 	/*
-	 * astags_destory(asp->flags.astags);
+	 * astags_destroy(asp->flags.astags);
 	 * asp->flags.astags = NULL;
 	 */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.9 2003/12/26 22:41:01 henning Exp $ */
+/*	$OpenBSD: rde.h,v 1.10 2003/12/30 13:03:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org> and
@@ -52,7 +52,7 @@ LIST_HEAD(aspath_head, rde_aspath);
 struct rde_peer {
 	LIST_ENTRY(rde_peer)		hash_l;	/* hash list over all peers */
 	LIST_ENTRY(rde_peer)		peer_l; /* list of all peers */
-	struct aspath_head		path_h; /* list of all as pathes */
+	struct aspath_head		path_h; /* list of all as paths */
 	struct peer_config		conf;
 	u_int32_t			remote_bgpid;
 	enum peer_state			state;
@@ -91,7 +91,7 @@ struct astags {
 	}				astag[1];
 	/* this beast is variable sized */
 	/*
-	 * XXX does not work. Because of possible unalignd access to
+	 * XXX does not work. Because of possible unaligned access to
 	 * u_int16_t. This needs to be solved somewhat differently.
 	 */
 };
@@ -186,7 +186,7 @@ struct pt_entry {
 	/*
 	 * Route Flap Damping structures
 	 * Currently I think they belong into the prefix but for the moment
-	 * we just ignore the dumpening at all.
+	 * we just ignore the dampening at all.
 	 */
 };
 
