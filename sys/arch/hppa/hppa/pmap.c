@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.78 2002/07/18 04:35:03 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.79 2002/07/23 16:08:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -353,7 +353,8 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 			if (!(pte = pmap_pte_get(pde, va)))
 				continue;
 
-			printf("0x%08x-0x%08x\n", va, pte);
+			printf("0x%08x-0x%08x:%b\n", va, pte & ~PAGE_MASK,
+			    TLB_PROT(pte & PAGE_MASK), TLB_BITS);
 		}
 	}
 }
