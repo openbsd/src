@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsid.2,v 1.7 2000/03/01 17:31:23 todd Exp $
+.\"	$OpenBSD: getsid.2,v 1.8 2000/09/12 17:30:45 millert Exp $
 .\"
 .\" Copyright (c) 1997 Peter Wemm <peter@freebsd.org>
 .\"
@@ -56,13 +56,14 @@ to indicate an error.
 .Fn getsid
 will succeed unless:
 .Bl -tag -width Er
+.It Bq Er EPERM
+if the current process and the process
+.Fa pid
+are not in the same session.
 .It Bq Er ESRCH
 if there is no process with a process ID equal to
 .Fa pid .
 .El
-.Pp
-Note that an implementation may restrict this function call to
-processes within the same session ID as the calling process.
 .Sh SEE ALSO
 .Xr getpgid 2 ,
 .Xr getpgrp 2 ,

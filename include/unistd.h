@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.32 2000/07/19 19:26:04 mickey Exp $ */
+/*	$OpenBSD: unistd.h,v 1.33 2000/09/12 17:30:45 millert Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ pid_t	 getpgrp __P((void));
 pid_t	 getpid __P((void));
 pid_t	 getpgid __P((pid_t));
 pid_t	 getppid __P((void));
+pid_t	 getsid __P((pid_t));
 uid_t	 getuid __P((void));
 int	 isatty __P((int));
 int	 link __P((const char *, const char *));

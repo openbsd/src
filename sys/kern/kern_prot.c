@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.12 1997/11/17 05:57:45 deraadt Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.13 2000/09/12 17:30:45 millert Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -100,42 +100,51 @@ sys_getpgrp(p, v, retval)
 /*
  * SysVR.4 compatible getpgid()
  */
-int
-sys_getpgid(p, v, retval)
-	struct proc *p;
+pid_t
+sys_getpgid(curp, v, retval)
+	struct proc *curp;
 	void *v;
 	register_t *retval;
 {
 	register struct sys_getpgid_args /* {
 		syscallarg(pid_t) pid;
 	} */ *uap = v;
+        struct proc *targp = curp;
 
-	if (SCARG(uap, pid) == 0)
+	if (SCARG(uap, pid) == 0 || SCARG(uap, pid) == curp->p_pid)
 		goto found;
-	if ((p = pfind(SCARG(uap, pid))) == 0)
+	if ((targp = pfind(SCARG(uap, pid))) == NULL)
 		return (ESRCH);
+	if (targp->p_session != curp->p_session)
+		return (EPERM);
 found:
-	*retval = p->p_pgid;
-	return 0;
+	*retval = targp->p_pgid;
+	return (0);
 }
 
-int
-sys_getsid(p, v, retval)
-        struct proc *p;
+pid_t
+sys_getsid(curp, v, retval)
+        struct proc *curp;
         void *v;
         register_t *retval;
 {
         register struct sys_getsid_args /* {
                 syscallarg(pid_t) pid;
         } */ *uap = v;
+        struct proc *targp = curp;
 
-	if (SCARG(uap, pid) == 0)
+	if (SCARG(uap, pid) == 0 || SCARG(uap, pid) == curp->p_pid)
 		goto found;
-	if ((p == pfind(SCARG(uap, pid))) == 0)
+	if ((targp = pfind(SCARG(uap, pid))) == NULL)
 		return (ESRCH);
+	if (targp->p_session != curp->p_session)
+		return (EPERM);
 found:
-	*retval = p->p_pgrp->pg_session->s_leader->p_pid;
-	return 0;
+	/* Skip exiting processes */
+	if (targp->p_pgrp->pg_session->s_leader == NULL)
+		return (ESRCH);
+	*retval = targp->p_pgrp->pg_session->s_leader->p_pid;
+	return (0);
 }
 
 /* ARGSUSED */
