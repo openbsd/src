@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.13 1999/12/03 19:24:17 art Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.14 2000/09/22 19:21:30 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.13 1999/12/03 19:24:17 art Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.14 2000/09/22 19:21:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,7 @@ mkfs(pp, fsys, fi, fo)
 	if (fssize <= 0)
 		printf("preposterous size %d\n", fssize), exit(13);
 	wtfs(fssize - 1, sectorsize, (char *)&sblock);
+recalc:
 	/*
 	 * collect and verify the sector and track info
 	 */
@@ -304,6 +305,12 @@ mkfs(pp, fsys, fi, fo)
 	if (maxcontig > 1)
 		sblock.fs_contigsumsize = MIN(maxcontig, FS_MAXCONTIG);
 	mapcramped = 0;
+	/* A cylinder group *must* fit inside one block so force it if not. */
+	if (CGSIZE(&sblock) > sblock.fs_bsize && secpercyl > 1024 && ntracks > 1) {
+		secpercyl /= 2;
+		ntracks /= 2;
+		goto recalc;
+	}
 	while (CGSIZE(&sblock) > sblock.fs_bsize) {
 		mapcramped = 1;
 		if (sblock.fs_bsize < MAXBSIZE) {
@@ -409,6 +416,11 @@ mkfs(pp, fsys, fi, fo)
 	/*
 	 * Must ensure there is enough space to hold block map.
 	 */
+	if (CGSIZE(&sblock) > sblock.fs_bsize && secpercyl > 1024 && ntracks > 1) {
+		secpercyl /= 2;
+		ntracks /= 2;
+		goto recalc;
+	}
 	while (CGSIZE(&sblock) > sblock.fs_bsize) {
 		mapcramped = 1;
 		sblock.fs_cpg -= mincpc;
