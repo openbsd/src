@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1995/04/24 12:24:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7.6.1 1996/05/27 15:54:26 mrg Exp $";
 #endif /* not lint */
 
 /*	main.c		*/
@@ -13,6 +13,7 @@ int srcount=0;	/* line counter for showstr()	*/
 int dropflag=0; /* if 1 then don't lookforobject() next round */
 int rmst=80;	/*	random monster creation counter		*/
 int userid;		/* the players login user id number */
+uid_t uid, euid;	/* used for security */
 char nowelcome=0,nomove=0; /* if (nomove) then don't count next iteration as a move */
 static char viewflag=0;
 	/*	if viewflag then we have done a 99 stay here and don't showcell in the main loop */
@@ -48,6 +49,9 @@ main(argc,argv)
 	char *ptr=0,*ttype;
 	struct passwd *pwe;
 
+	euid = geteuid();
+	uid = getuid();
+	seteuid(uid);	/* give up "games" if we have it */
 /*
  *	first task is to identify the player
  */

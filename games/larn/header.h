@@ -1,6 +1,8 @@
-/*	$NetBSD: header.h,v 1.7 1995/04/24 12:23:54 cgd Exp $	*/
+/*	$NetBSD: header.h,v 1.7.6.1 1996/05/27 15:54:20 mrg Exp $	*/
 
 /*	header.h		Larn is copyrighted 1986 by Noah Morgan. */
+
+#include <sys/types.h>
 
 #define MAXLEVEL 11
 	/*	max # levels in the dungeon			*/
@@ -346,6 +348,7 @@ extern short diroffx[],diroffy[],hitflag,hit2flag,hit3flag,hitp[MAXX][MAXY];
 extern short iarg[MAXX][MAXY],ivenarg[],lasthx,lasthy,lastnum,lastpx,lastpy;
 extern short nobeep,oldx,oldy,playerx,playery;
 extern int dayplay,enable_scroll,srcount,yrepcount,userid,wisid,lfd,fd;
+extern uid_t uid, euid;
 extern long initialtime,outstanding_taxes,skill[],gtime,c[],cbak[];
 extern unsigned long randx;
 extern struct cel *cell;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bill.c,v 1.3 1995/03/23 08:33:10 cgd Exp $	*/
+/*	$NetBSD: bill.c,v 1.3.6.1 1996/05/27 15:54:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bill.c	5.2 (Berkeley) 5/28/91";
 #else
-static char rcsid[] = "$NetBSD: bill.c,v 1.3 1995/03/23 08:33:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: bill.c,v 1.3.6.1 1996/05/27 15:54:11 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -134,8 +134,8 @@ mailbill()
 		cp = mail;
 		sprintf(fname, "/tmp/#%dlarnmail", getpid());
 		for (i = 0; i < 6; i++) {
-			if ((fd = open(fname, O_WRONLY | O_TRUNC | O_CREAT),
-			    0666) == -1)
+			if ((fd = open(fname, O_WRONLY | O_TRUNC | O_CREAT,
+			    0666)) == -1)
 				exit(0);
 			while (*cp != NULL) {
 				if (*cp[0] == '1') {

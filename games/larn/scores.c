@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: scores.c,v 1.5 1995/04/24 12:24:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: scores.c,v 1.5.6.1 1996/05/27 15:54:33 mrg Exp $";
 #endif /* not lint */
 
 /* scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -101,7 +101,12 @@ static char *whydead[] = {
  */
 readboard()
 	{
-	if (lopen(scorefile)<0)
+	int i;
+
+	seteuid(euid);
+	i = lopen(scorefile);
+	seteuid(uid);
+	if (i<0)
 	  { lprcat("Can't read scoreboard\n"); lflush(); return(-1); }
 	lrfill((char*)sco,sizeof(sco));		lrfill((char*)winr,sizeof(winr));
 	lrclose();  lcreat((char*)0);  return(0);
@@ -114,8 +119,13 @@ readboard()
  */
 writeboard()
 	{
+	int i;
+
 	set_score_output();
-	if (lcreat(scorefile)<0)
+	seteuid(euid);
+	i = lcreat(scorefile);
+	seteuid(uid);
+	if (i<0)
 	  { lprcat("Can't write scoreboard\n"); lflush(); return(-1); }
 	lwrite((char*)sco,sizeof(sco));		lwrite((char*)winr,sizeof(winr));
 	lwclose();  lcreat((char*)0);  return(0);
@@ -135,7 +145,9 @@ makeboard()
 		winr[i].order = sco[i].order = i;
 		}
 	if (writeboard()) return(-1);
+	seteuid(euid);
 	chmod(scorefile,0660);
+	seteuid(uid);
 	return(0);
 	}
 
@@ -512,7 +524,9 @@ invalid:
 				lprcat("\nCan't open record file:  I can't post your score.\n");
 				sncbr();  resetscroll();  lflush();  exit();
 				}
+			seteuid(euid);
 			chmod(logfile,0660);
+			seteuid(uid);
 			}
 		strcpy(logg.who,loginname);
 		logg.score = c[GOLD];		logg.diff = c[HARDGAME];
