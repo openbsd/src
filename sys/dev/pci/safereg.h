@@ -1,4 +1,4 @@
-/*	$OpenBSD: safereg.h,v 1.3 2003/08/14 18:53:36 jason Exp $	*/
+/*	$OpenBSD: safereg.h,v 1.4 2003/08/20 16:28:35 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -77,14 +77,6 @@
 #define	SAFE_DMA_STAT		0x00cc	/* DMA Current Status */
 #define	SAFE_DMA_CFG		0x00d4	/* DMA Configuration/Status */
 #define	SAFE_ENDIAN		0x00e0	/* Endian Configuration */
-#define	SAFE_PK_A_ADDR		0x0800	/* Public Key A Address */
-#define	SAFE_PK_B_ADDR		0x0804	/* Public Key B Address */
-#define	SAFE_PK_C_ADDR		0x0808	/* Public Key C Address */
-#define	SAFE_PK_D_ADDR		0x080c	/* Public Key D Address */
-#define	SAFE_PK_A_LEN		0x0810	/* Public Key A Length */
-#define	SAFE_PK_B_LEN		0x0814	/* Public Key B Length */
-#define	SAFE_PK_SHIFT		0x0818	/* Public Key Shift */
-#define	SAFE_PK_FUNC		0x081c	/* Public Key Function */
 #define	SAFE_RNG_OUT		0x0100	/* RNG Output */
 #define	SAFE_RNG_STAT		0x0104	/* RNG Status */
 #define	SAFE_RNG_CTRL		0x0108	/* RNG Control */
@@ -100,6 +92,16 @@
 #define	SAFE_RNG_LFSR1_HI	0x0130	/* RNG LFSR1 [47:32] */
 #define	SAFE_RNG_LFSR2_LO	0x0134	/* RNG LFSR1 [31:0] */
 #define	SAFE_RNG_LFSR2_HI	0x0138	/* RNG LFSR1 [47:32] */
+#define	SAFE_PK_A_ADDR		0x0800	/* Public Key A Address */
+#define	SAFE_PK_B_ADDR		0x0804	/* Public Key B Address */
+#define	SAFE_PK_C_ADDR		0x0808	/* Public Key C Address */
+#define	SAFE_PK_D_ADDR		0x080c	/* Public Key D Address */
+#define	SAFE_PK_A_LEN		0x0810	/* Public Key A Length */
+#define	SAFE_PK_B_LEN		0x0814	/* Public Key B Length */
+#define	SAFE_PK_SHIFT		0x0818	/* Public Key Shift */
+#define	SAFE_PK_FUNC		0x081c	/* Public Key Function */
+#define	SAFE_PK_RAM_START	0x1000	/* Public Key RAM start address */
+#define	SAFE_PK_RAM_END		0x1fff	/* Public Key RAM end address */
 
 #define	SAFE_PE_CSR_READY	0x00000001	/* ready for processing */
 #define	SAFE_PE_CSR_DONE	0x00000002	/* h/w completed processing */
@@ -265,6 +267,7 @@
 #define	SAFE_PK_FUNC_COPY	0x00000800	/* Copy function */
 #define	SAFE_PK_FUNC_EXP16	0x00002000	/* Exponentiate (4-bit ACT) */
 #define	SAFE_PK_FUNC_EXP4	0x00004000	/* Exponentiate (2-bit ACT) */
+#define	SAFE_PK_FUNC_RUN	0x00008000	/* start/status */
 
 #define	SAFE_RNG_STAT_BUSY	0x00000001	/* busy, data not valid */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: safevar.h,v 1.4 2003/08/14 15:26:03 jason Exp $	*/
+/*	$OpenBSD: safevar.h,v 1.5 2003/08/20 16:28:35 jason Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -30,6 +30,11 @@
  */
 #ifndef _SAFE_SAFEVAR_H_
 #define	_SAFE_SAFEVAR_H_
+
+/* public key parameter locations */
+#define	SAFE_CRK_PARAM_BASE	0
+#define	SAFE_CRK_PARAM_EXP	1
+#define	SAFE_CRK_PARAM_MOD	2
 
 /* Maximum queue length */
 #ifndef SAFE_MAX_NQUEUE
@@ -137,6 +142,11 @@ struct safe_session {
 	u_int32_t	ses_iv[4];		/* DES/3DES/AES iv */
 };
 
+struct safe_pkq {
+	SIMPLEQ_ENTRY(safe_pkq)	pkq_next;
+	struct cryptkop *pkq_krp;
+};
+
 struct safe_softc {
 	struct device		sc_dev;		/* device backpointer */
 	struct resource		*sc_irq;
@@ -167,6 +177,10 @@ struct safe_softc {
 	struct safe_session	*sc_sessions;	/* sessions */
 
 	struct timeout		sc_rngto;	/* rng timeout */
+	struct timeout		sc_pkto;	/* pk timeout */
+	SIMPLEQ_HEAD(, safe_pkq)	sc_pkq;
+	struct safe_pkq		*sc_pkq_cur;
+	u_int32_t		sc_pk_reslen, sc_pk_resoff;
 };
 #endif /* _KERNEL */
 
