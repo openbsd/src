@@ -349,13 +349,6 @@
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/ic/z8530sc.h
 ./usr/include/dev/ic/z8536reg.h
-./usr/include/dev/ieee1394
-./usr/include/dev/ieee1394/fwnodereg.h
-./usr/include/dev/ieee1394/fwnodevar.h
-./usr/include/dev/ieee1394/fwohcireg.h
-./usr/include/dev/ieee1394/fwohcivar.h
-./usr/include/dev/ieee1394/ieee1394reg.h
-./usr/include/dev/ieee1394/ieee1394var.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
 ./usr/include/dev/isa/ahareg.h
@@ -689,11 +682,6 @@
 ./usr/include/dev/sbus/xboxvar.h
 ./usr/include/dev/sbus/zxreg.h
 ./usr/include/dev/sequencervar.h
-./usr/include/dev/std
-./usr/include/dev/std/ieee1212reg.h
-./usr/include/dev/std/ieee1212var.h
-./usr/include/dev/std/sbp2reg.h
-./usr/include/dev/std/sbp2var.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/sunkbdreg.h
