@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.9 1999/12/16 16:41:41 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.10 1999/12/16 16:46:38 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
@@ -52,20 +52,20 @@
 #include    "sprite.h"
 
 typedef struct Buffer {
-    size_t  size; 	/* Current size of the buffer */
-    size_t  left;	/* Space left (== size - (inPtr - buffer)) */
-    char    *buffer;	/* The buffer itself */
-    char    *inPtr;	/* Place to write to */
-    char    *outPtr;	/* Place to read from */
+    char    *buffer;	/* The buffer itself. */
+    char    *inPtr;	/* Place to write to. */
+    char    *endPtr;	/* End of allocated space. */
 } *Buffer;
 
 /* Internal support for Buf_AddChar.  */
 void BufOverflow __P((Buffer));
 
-/* Buf_AddChar -- Add a single char to a buffer. */
+/* User interface */
+
+/* Buf_AddChar -- Add a single char to buffer. */
 #define	Buf_AddChar(bp, byte) 			\
 do {			      			\
-	if (--(bp)->left == 0)			\
+	if ((bp)->endPtr - (bp)->inPtr <= 1)	\
 	    BufOverflow(bp);			\
 	*(bp)->inPtr++ = (byte);		\
 } while (0)					
@@ -74,6 +74,8 @@ do {			      			\
 
 /* Buf_AddChars -- Add a number of chars to the buffer.  */
 void Buf_AddChars __P((Buffer, size_t, const char *));
+/* Buf_Reset -- Remove all chars from a buffer.  */
+#define Buf_Reset(bp)	((void)((bp)->inPtr = (bp)->buffer))
 /* Buf_AddSpace -- Add a space to buffer.  */
 #define Buf_AddSpace(b)			Buf_AddChar((b), ' ')
 /* Buf_AddString -- Add the contents of a NULL terminated string to buffer.  */
@@ -82,15 +84,18 @@ void Buf_AddChars __P((Buffer, size_t, const char *));
 #define Buf_AddInterval(b, s, e) 	Buf_AddChars((b), (e) - (s), (s))
 
 /* Buf_Retrieve -- Retrieve data from a buffer, as a NULL terminated string.  */
-#define Buf_Retrieve(bp)	(*(bp)->inPtr = '\0', (bp)->outPtr)
+#define Buf_Retrieve(bp)	(*(bp)->inPtr = '\0', (bp)->buffer)
 
 /* Buf_Size -- Return the number of chars in the given buffer. 
  *	Doesn't include the null-terminating char.  */
-#define Buf_Size(bp)	((size_t)((bp)->inPtr - (bp)->outPtr))
+#define Buf_Size(bp)	((size_t)((bp)->inPtr - (bp)->buffer))
 
-void Buf_Reset __P((Buffer));
+/* Buf_Init -- Initialize a buffer. If no initial size is given, 
+ *	a reasonable default is used.  */
 Buffer Buf_Init __P((size_t));
+/* Buf_Destroy -- Nuke a buffer and all its resources if Boolean is TRUE. */
 void Buf_Destroy __P((Buffer, Boolean));
+/* Buf_ReplaceLastChar -- Replace the last char in a buffer.  */
 void Buf_ReplaceLastChar __P((Buffer, char));
 
 #endif /* _BUF_H */

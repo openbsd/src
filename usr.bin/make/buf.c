@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.10 1999/12/16 16:41:41 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.11 1999/12/16 16:46:38 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.10 1999/12/16 16:41:41 espie Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.11 1999/12/16 16:46:38 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,32 +83,23 @@ static char rcsid[] = "$OpenBSD: buf.c,v 1.10 1999/12/16 16:41:41 espie Exp $";
 #include    "make.h"
 #include    "buf.h"
 
-#ifndef max
-#define max(a,b)  ((a) > (b) ? (a) : (b))
-#endif
-
-/*
- * BufExpand --
+/* BufExpand --
  * 	Expand the given buffer to hold the given number of additional
- *	chars.
- *	Makes sure there's room for an extra NULL char at the end of the
- *	buffer in case it holds a string.
- */
-#define BufExpand(bp,nb) 					\
-do {								\
-    char  *newBuf; 						\
-    size_t   newSize = (bp)->size; 				\
-								\
-    do { 							\
-	newSize *= 2 ; 						\
-	(bp)->left = newSize - ((bp)->inPtr - (bp)->buffer); 	\
-    } while ((bp)->left < (nb)+1+BUF_MARGIN);			\
-    newBuf = erealloc((bp)->buffer, newSize); 		\
-    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); 	\
-    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer); 	\
-    (bp)->buffer = newBuf; 					\
-    (bp)->size = newSize; 					\
-} while (0)
+ *	chars.  Makes sure there's room for an extra '\0' char at 
+ *	the end of the buffer to terminate the string.  */
+#define BufExpand(bp,nb) 				\
+do {							\
+    size_t   occupied = (bp)->inPtr - (bp)->buffer;	\
+    size_t   size = (bp)->endPtr - (bp)->buffer;	\
+							\
+    do { 						\
+	size *= 2 ; 					\
+    } while (size - occupied < (nb)+1+BUF_MARGIN);	\
+    (bp)->buffer = (bp)->inPtr = (bp)->endPtr = 	\
+	erealloc((bp)->buffer, size); 			\
+    (bp)->inPtr += occupied;				\
+    (bp)->endPtr += size;				\
+} while (0);
 
 #define BUF_DEF_SIZE	256 	/* Default buffer size */
 #define BUF_MARGIN	256	/* Make sure we are comfortable */
@@ -121,17 +112,7 @@ BufOverflow(bp)
 {
     BufExpand(bp, 1);
 }
-
-/*-
- *-----------------------------------------------------------------------
- * Buf_AddChars --
- *	Add a number of chars to the buffer.
- *
- * Side Effects:
- *	Guess what?
- *
- *-----------------------------------------------------------------------
- */
+
 void
 Buf_AddChars(bp, numBytes, bytesPtr)
     Buffer 	bp;
@@ -139,48 +120,13 @@ Buf_AddChars(bp, numBytes, bytesPtr)
     const char 	*bytesPtr;
 {
 
-    if (bp->left < numBytes+1)
+    if (bp->endPtr - bp->inPtr < numBytes+1)
 	BufExpand(bp, numBytes);
 
     memcpy(bp->inPtr, bytesPtr, numBytes);
     bp->inPtr += numBytes;
-    bp->left -= numBytes;
 }
-
-/*-
- *-----------------------------------------------------------------------
- * Buf_Reset -
- *	Throw away all chars in a buffer.
- *
- * Side Effects:
- *	The chars are discarded.
- *
- *-----------------------------------------------------------------------
- */
-void
-Buf_Reset(bp)
-    Buffer 	bp;
-{
 
-    bp->inPtr = bp->outPtr = bp->buffer;
-    bp->left = bp->size;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Buf_Init --
- *	Initialize a buffer. If no initial size is given, a reasonable
- *	default is used.
- *
- * Results:
- *	A buffer to be given to other functions in this library.
- *
- * Side Effects:
- *	The buffer is created, the space allocated and pointers
- *	initialized.
- *
- *-----------------------------------------------------------------------
- */
 Buffer
 Buf_Init(size)
     size_t    	size;	/* Initial size for the buffer */
@@ -192,23 +138,12 @@ Buf_Init(size)
     if (size == 0) {
 	size = BUF_DEF_SIZE;
     }
-    bp->left = bp->size = size;
-    bp->buffer = emalloc(size);
-    bp->inPtr = bp->outPtr = bp->buffer;
+    bp->inPtr = bp->endPtr = bp->buffer = emalloc(size);
+    bp->endPtr += size;
 
     return (bp);
 }
-
-/*-
- *-----------------------------------------------------------------------
- * Buf_Destroy --
- *	Nuke a buffer and all its resources.
- *
- * Side Effects:
- *	The buffer is freed.
- *
- *-----------------------------------------------------------------------
- */
+
 void
 Buf_Destroy(buf, freeData)
     Buffer  buf;  	/* Buffer to destroy */
@@ -220,24 +155,13 @@ Buf_Destroy(buf, freeData)
     }
     free ((char *)buf);
 }
-
-/*-
- *-----------------------------------------------------------------------
- * Buf_ReplaceLastChar --
- *     Replace the last char in a buffer.
- *
- * Side Effects:
- *     If the buffer was empty intially, then a new byte will be added.
- *     Otherwise, the last byte is overwritten.
- *
- *-----------------------------------------------------------------------
- */
+
 void
 Buf_ReplaceLastChar(buf, byte)
     Buffer 	buf;	/* buffer to augment */
     char 	byte;	/* byte to be written */
 {
-    if (buf->inPtr == buf->outPtr)
+    if (buf->inPtr == buf->buffer)
         Buf_AddChar(buf, byte);
     else
         *(buf->inPtr - 1) = byte;
