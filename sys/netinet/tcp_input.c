@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.74 2000/09/20 17:00:22 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.75 2000/09/21 17:30:48 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2864,6 +2864,18 @@ tcp_mss(tp, offer)
 
  out:
 	/*
+	 * The current mss, t_maxseg, is initialized to the default value.
+	 * If we compute a smaller value, reduce the current mss.
+	 * If we compute a larger value, return it for use in sending
+	 * a max seg size option, but don't store it for use
+	 * unless we received an offer at least that large from peer.
+	 * However, do not accept offers under 32 bytes.
+	 */
+	if (offer && offer != -1)
+		mss = min(mss, offer);
+	mss = max(mss, 64);		/* sanity - at least max opt. space */
+
+	/*
 	 * maxopd stores the maximum length of data AND options
 	 * in a segment; maxseg is the amount of data in a normal
 	 * segment.  We need to store this value (maxopd) apart
@@ -2875,18 +2887,6 @@ tcp_mss(tp, offer)
  	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
 	    (tp->t_flags & TF_RCVD_TSTMP) == TF_RCVD_TSTMP)
 		mss -= TCPOLEN_TSTAMP_APPA;
-
-	/*
-	 * The current mss, t_maxseg, is initialized to the default value.
-	 * If we compute a smaller value, reduce the current mss.
-	 * If we compute a larger value, return it for use in sending
-	 * a max seg size option, but don't store it for use
-	 * unless we received an offer at least that large from peer.
-	 * However, do not accept offers under 32 bytes.
-	 */
-	if (offer && offer != -1)
-		mss = min(mss, offer);
-	mss = max(mss, 64);		/* sanity - at least max opt. space */
 
 	if (offer == -1) {
 		/* mss changed due to Path MTU discovery */
