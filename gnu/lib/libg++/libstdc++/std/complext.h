@@ -31,54 +31,62 @@
 #pragma interface
 #endif
 
-#include <std/cmath.h>
+#include <cmath>
 
 #if ! defined (__GNUG__) && ! defined (__attribute__)
-#define __attribute__ (foo) /* Ignore.  */
+#define __attribute__(foo) /* Ignore.  */
 #endif
 
+class istream;
+class ostream;
+
 extern "C++" {
-template <class FLOAT>
+template <class _FLT>
 class complex
 {
 public:
-  complex (FLOAT r = 0, FLOAT i = 0): re (r), im (i) { }
+  complex (_FLT r = 0, _FLT i = 0): re (r), im (i) { }
   complex& operator += (const complex&);
   complex& operator -= (const complex&);
   complex& operator *= (const complex&);
   complex& operator /= (const complex&);
-  FLOAT real () const { return re; }
-  FLOAT imag () const { return im; }
+  _FLT real () const { return re; }
+  _FLT imag () const { return im; }
 private:
-  FLOAT re, im;
+  _FLT re, im;
+
+  friend complex& __doapl (complex *, const complex&);
+  friend complex& __doami (complex *, const complex&);
+  friend complex& __doaml (complex *, const complex&);
+  friend complex& __doadv (complex *, const complex&);
 
   // These functions are specified as friends for purposes of name injection;
   // they do not actually reference private members.
-  friend FLOAT real (const complex&) __attribute__ ((const));
-  friend FLOAT imag (const complex&) __attribute__ ((const));
+  friend _FLT real (const complex&) __attribute__ ((const));
+  friend _FLT imag (const complex&) __attribute__ ((const));
   friend complex operator + (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator + (const complex&, FLOAT) __attribute__ ((const));
-  friend complex operator + (FLOAT, const complex&) __attribute__ ((const));
+  friend complex operator + (const complex&, _FLT) __attribute__ ((const));
+  friend complex operator + (_FLT, const complex&) __attribute__ ((const));
   friend complex operator - (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator - (const complex&, FLOAT) __attribute__ ((const));
-  friend complex operator - (FLOAT, const complex&) __attribute__ ((const));
+  friend complex operator - (const complex&, _FLT) __attribute__ ((const));
+  friend complex operator - (_FLT, const complex&) __attribute__ ((const));
   friend complex operator * (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator * (const complex&, FLOAT) __attribute__ ((const));
-  friend complex operator * (FLOAT, const complex&) __attribute__ ((const));
+  friend complex operator * (const complex&, _FLT) __attribute__ ((const));
+  friend complex operator * (_FLT, const complex&) __attribute__ ((const));
   friend complex operator / (const complex&, const complex&) __attribute__ ((const));
-  friend complex operator / (const complex&, FLOAT) __attribute__ ((const));
-  friend complex operator / (FLOAT, const complex&) __attribute__ ((const));
+  friend complex operator / (const complex&, _FLT) __attribute__ ((const));
+  friend complex operator / (_FLT, const complex&) __attribute__ ((const));
   friend bool operator == (const complex&, const complex&) __attribute__ ((const));
-  friend bool operator == (const complex&, FLOAT) __attribute__ ((const));
-  friend bool operator == (FLOAT, const complex&) __attribute__ ((const));
+  friend bool operator == (const complex&, _FLT) __attribute__ ((const));
+  friend bool operator == (_FLT, const complex&) __attribute__ ((const));
   friend bool operator != (const complex&, const complex&) __attribute__ ((const));
-  friend bool operator != (const complex&, FLOAT) __attribute__ ((const));
-  friend bool operator != (FLOAT, const complex&) __attribute__ ((const));
-  friend complex polar (FLOAT, FLOAT) __attribute__ ((const));
+  friend bool operator != (const complex&, _FLT) __attribute__ ((const));
+  friend bool operator != (_FLT, const complex&) __attribute__ ((const));
+  friend complex polar (_FLT, _FLT) __attribute__ ((const));
   friend complex pow (const complex&, const complex&) __attribute__ ((const));
-  friend complex pow (const complex&, FLOAT) __attribute__ ((const));
+  friend complex pow (const complex&, _FLT) __attribute__ ((const));
   friend complex pow (const complex&, int) __attribute__ ((const));
-  friend complex pow (FLOAT, const complex&) __attribute__ ((const));
+  friend complex pow (_FLT, const complex&) __attribute__ ((const));
   friend istream& operator>> (istream&, complex&);
   friend ostream& operator<< (ostream&, const complex&);
 };
@@ -88,151 +96,239 @@ class complex<float>;
 class complex<double>;
 class complex<long double>;
 
-template <class FLOAT>
-inline complex<FLOAT>&
-complex<FLOAT>::operator += (const complex<FLOAT>& r)
+template <class _FLT>
+inline complex<_FLT>&
+__doapl (complex<_FLT>* ths, const complex<_FLT>& r)
 {
-  re += r.re;
-  im += r.im;
-  return *this;
+  ths->re += r.re;
+  ths->im += r.im;
+  return *ths;
+}
+template <class _FLT>
+inline complex<_FLT>&
+complex<_FLT>::operator += (const complex<_FLT>& r)
+{
+  return __doapl (this, r);
 }
 
-template <class FLOAT>
-inline complex<FLOAT>&
-complex<FLOAT>::operator -= (const complex<FLOAT>& r)
+template <class _FLT>
+inline complex<_FLT>&
+__doami (complex<_FLT>* ths, const complex<_FLT>& r)
 {
-  re -= r.re;
-  im -= r.im;
-  return *this;
+  ths->re -= r.re;
+  ths->im -= r.im;
+  return *ths;
+}
+template <class _FLT>
+inline complex<_FLT>&
+complex<_FLT>::operator -= (const complex<_FLT>& r)
+{
+  return __doami (this, r);
 }
 
-template <class FLOAT>
-inline complex<FLOAT>&
-complex<FLOAT>::operator *= (const complex<FLOAT>& r)
+template <class _FLT>
+inline complex<_FLT>&
+__doaml (complex<_FLT>* ths, const complex<_FLT>& r)
 {
-  FLOAT f = re * r.re - im * r.im;
-  im = re * r.im + im * r.re;
-  re = f;
-  return *this;
+  _FLT f = ths->re * r.re - ths->im * r.im;
+  ths->im = ths->re * r.im + ths->im * r.re;
+  ths->re = f;
+  return *ths;
+}
+template <class _FLT>
+inline complex<_FLT>&
+complex<_FLT>::operator *= (const complex<_FLT>& r)
+{
+  return __doaml (this, r);
 }
 
-template <class FLOAT> inline FLOAT
-imag (const complex<FLOAT>& x) __attribute__ ((const))
+template <class _FLT> complex<_FLT>&
+  __doadv (complex<_FLT>* ths, const complex<_FLT>& r);
+
+template <class _FLT>
+inline complex<_FLT>&
+complex<_FLT>::operator /= (const complex<_FLT>& r)
+{
+  return __doadv (this, r);
+}
+
+template <class _FLT> inline _FLT
+imag (const complex<_FLT>& x) __attribute__ ((const));
+
+template <class _FLT> inline _FLT
+imag (const complex<_FLT>& x)
 {
   return x.imag ();
 }
 
-template <class FLOAT> inline FLOAT
-real (const complex<FLOAT>& x) __attribute__ ((const))
+template <class _FLT> inline _FLT
+real (const complex<_FLT>& x) __attribute__ ((const));
+
+template <class _FLT> inline _FLT
+real (const complex<_FLT>& x)
 {
   return x.real ();
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator + (const complex<FLOAT>& x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator + (const complex<_FLT>& x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator + (const complex<_FLT>& x, const complex<_FLT>& y)
 {
-  return complex<FLOAT> (real (x) + real (y), imag (x) + imag (y));
+  return complex<_FLT> (real (x) + real (y), imag (x) + imag (y));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator + (const complex<FLOAT>& x, FLOAT y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator + (const complex<_FLT>& x, _FLT y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator + (const complex<_FLT>& x, _FLT y)
 {
-  return complex<FLOAT> (real (x) + y, imag (x));
+  return complex<_FLT> (real (x) + y, imag (x));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator + (FLOAT x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator + (_FLT x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator + (_FLT x, const complex<_FLT>& y)
 {
-  return complex<FLOAT> (x + real (y), imag (y));
+  return complex<_FLT> (x + real (y), imag (y));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator - (const complex<FLOAT>& x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator - (const complex<_FLT>& x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator - (const complex<_FLT>& x, const complex<_FLT>& y)
 {
-  return complex<FLOAT> (real (x) - real (y), imag (x) - imag (y));
+  return complex<_FLT> (real (x) - real (y), imag (x) - imag (y));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator - (const complex<FLOAT>& x, FLOAT y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator - (const complex<_FLT>& x, _FLT y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator - (const complex<_FLT>& x, _FLT y)
 {
-  return complex<FLOAT> (real (x) - y, imag (x));
+  return complex<_FLT> (real (x) - y, imag (x));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator - (FLOAT x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator - (_FLT x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator - (_FLT x, const complex<_FLT>& y)
 {
-  return complex<FLOAT> (x - real (y), - imag (y));
+  return complex<_FLT> (x - real (y), - imag (y));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator * (const complex<FLOAT>& x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator * (const complex<_FLT>& x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator * (const complex<_FLT>& x, const complex<_FLT>& y)
 {
-  return complex<FLOAT> (real (x) * real (y) - imag (x) * imag (y),
+  return complex<_FLT> (real (x) * real (y) - imag (x) * imag (y),
 			   real (x) * imag (y) + imag (x) * real (y));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator * (const complex<FLOAT>& x, FLOAT y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator * (const complex<_FLT>& x, _FLT y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator * (const complex<_FLT>& x, _FLT y)
 {
-  return complex<FLOAT> (real (x) * y, imag (x) * y);
+  return complex<_FLT> (real (x) * y, imag (x) * y);
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator * (FLOAT x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator * (_FLT x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator * (_FLT x, const complex<_FLT>& y)
 {
-  return complex<FLOAT> (x * real (y), x * imag (y));
+  return complex<_FLT> (x * real (y), x * imag (y));
 }
 
-template <class FLOAT> complex<FLOAT>
-operator / (const complex<FLOAT>& x, FLOAT y) __attribute__ ((const))
+template <class _FLT> complex<_FLT>
+operator / (const complex<_FLT>& x, _FLT y) __attribute__ ((const));
+
+template <class _FLT> complex<_FLT>
+operator / (const complex<_FLT>& x, _FLT y)
 {
-  return complex<FLOAT> (real (x) / y, imag (x) / y);
+  return complex<_FLT> (real (x) / y, imag (x) / y);
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator + (const complex<FLOAT>& x) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator + (const complex<_FLT>& x) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator + (const complex<_FLT>& x)
 {
   return x;
 }
 
-template <class FLOAT> inline complex<FLOAT>
-operator - (const complex<FLOAT>& x) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+operator - (const complex<_FLT>& x) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+operator - (const complex<_FLT>& x)
 {
-  return complex<FLOAT> (-real (x), -imag (x));
+  return complex<_FLT> (-real (x), -imag (x));
 }
 
-template <class FLOAT> inline bool
-operator == (const complex<FLOAT>& x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline bool
+operator == (const complex<_FLT>& x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline bool
+operator == (const complex<_FLT>& x, const complex<_FLT>& y)
 {
   return real (x) == real (y) && imag (x) == imag (y);
 }
 
-template <class FLOAT> inline bool
-operator == (const complex<FLOAT>& x, FLOAT y) __attribute__ ((const))
+template <class _FLT> inline bool
+operator == (const complex<_FLT>& x, _FLT y) __attribute__ ((const));
+
+template <class _FLT> inline bool
+operator == (const complex<_FLT>& x, _FLT y)
 {
   return real (x) == y && imag (x) == 0;
 }
 
-template <class FLOAT> inline bool
-operator == (FLOAT x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline bool
+operator == (_FLT x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline bool
+operator == (_FLT x, const complex<_FLT>& y)
 {
   return x == real (y) && imag (y) == 0;
 }
 
-template <class FLOAT> inline bool
-operator != (const complex<FLOAT>& x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline bool
+operator != (const complex<_FLT>& x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline bool
+operator != (const complex<_FLT>& x, const complex<_FLT>& y)
 {
   return real (x) != real (y) || imag (x) != imag (y);
 }
 
-template <class FLOAT> inline bool
-operator != (const complex<FLOAT>& x, FLOAT y) __attribute__ ((const))
+template <class _FLT> inline bool
+operator != (const complex<_FLT>& x, _FLT y) __attribute__ ((const));
+
+template <class _FLT> inline bool
+operator != (const complex<_FLT>& x, _FLT y)
 {
   return real (x) != y || imag (x) != 0;
 }
 
-template <class FLOAT> inline bool
-operator != (FLOAT x, const complex<FLOAT>& y) __attribute__ ((const))
+template <class _FLT> inline bool
+operator != (_FLT x, const complex<_FLT>& y) __attribute__ ((const));
+
+template <class _FLT> inline bool
+operator != (_FLT x, const complex<_FLT>& y)
 {
   return x != real (y) || imag (y) != 0;
 }
@@ -240,69 +336,82 @@ operator != (FLOAT x, const complex<FLOAT>& y) __attribute__ ((const))
 // Some targets don't provide a prototype for hypot when -ansi.
 extern "C" double hypot (double, double) __attribute__ ((const));
 
-template <class FLOAT> inline FLOAT
-abs (const complex<FLOAT>& x) __attribute__ ((const))
+template <class _FLT> inline _FLT
+abs (const complex<_FLT>& x) __attribute__ ((const));
+
+template <class _FLT> inline _FLT
+abs (const complex<_FLT>& x)
 {
   return hypot (real (x), imag (x));
 }
 
-template <class FLOAT> inline FLOAT
-arg (const complex<FLOAT>& x) __attribute__ ((const))
+template <class _FLT> inline _FLT
+arg (const complex<_FLT>& x) __attribute__ ((const));
+
+template <class _FLT> inline _FLT
+arg (const complex<_FLT>& x)
 {
   return atan2 (imag (x), real (x));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-polar (FLOAT r, FLOAT t) __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+polar (_FLT r, _FLT t) __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+polar (_FLT r, _FLT t)
 {
-  return complex<FLOAT> (r * cos (t), r * sin (t));
+  return complex<_FLT> (r * cos (t), r * sin (t));
 }
 
-template <class FLOAT> inline complex<FLOAT>
-conj (const complex<FLOAT>& x)  __attribute__ ((const))
+template <class _FLT> inline complex<_FLT>
+conj (const complex<_FLT>& x)  __attribute__ ((const));
+
+template <class _FLT> inline complex<_FLT>
+conj (const complex<_FLT>& x) 
 {
-  return complex<FLOAT> (real (x), -imag (x));
+  return complex<_FLT> (real (x), -imag (x));
 }
 
-template <class FLOAT> inline FLOAT
-norm (const complex<FLOAT>& x) __attribute__ ((const))
+template <class _FLT> inline _FLT
+norm (const complex<_FLT>& x) __attribute__ ((const));
+
+template <class _FLT> inline _FLT
+norm (const complex<_FLT>& x)
 {
   return real (x) * real (x) + imag (x) * imag (x);
 }
 
 // Declarations of templates in complext.ccI
 
-template <class FLOAT> complex<FLOAT>
-  operator / (const complex<FLOAT>&, const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  operator / (FLOAT, const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  cos (const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  cosh (const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  exp (const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  log (const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  pow (const complex<FLOAT>&, const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  pow (const complex<FLOAT>&, FLOAT) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  pow (const complex<FLOAT>&, int) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  pow (FLOAT, const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  sin (const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  sinh (const complex<FLOAT>&) __attribute__ ((const));
-template <class FLOAT> complex<FLOAT>
-  sqrt (const complex<FLOAT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  operator / (const complex<_FLT>&, const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  operator / (_FLT, const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  cos (const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  cosh (const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  exp (const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  log (const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  pow (const complex<_FLT>&, const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  pow (const complex<_FLT>&, _FLT) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  pow (const complex<_FLT>&, int) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  pow (_FLT, const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  sin (const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  sinh (const complex<_FLT>&) __attribute__ ((const));
+template <class _FLT> complex<_FLT>
+  sqrt (const complex<_FLT>&) __attribute__ ((const));
 
-class istream;
-class ostream;
-template <class FLOAT> istream& operator >> (istream&, complex<FLOAT>&);
-template <class FLOAT> ostream& operator << (ostream&, const complex<FLOAT>&);
+template <class _FLT> istream& operator >> (istream&, complex<_FLT>&);
+template <class _FLT> ostream& operator << (ostream&, const complex<_FLT>&);
 } // extern "C++"
 
 // Specializations and such
@@ -310,8 +419,5 @@ template <class FLOAT> ostream& operator << (ostream&, const complex<FLOAT>&);
 #include <std/fcomplex.h>
 #include <std/dcomplex.h>
 #include <std/ldcomplex.h>
-
-// Declare the instantiations.
-#include <std/cinst.h>
 
 #endif

@@ -25,7 +25,7 @@
 // Written by Jason Merrill based upon the specification in the 27 May 1994
 // C++ working paper, ANSI document X3J16/94-0098.
 
-#include <std/complex.h>
+#include <complex>
 
 extern "C++" {
 template <class FLOAT> complex<FLOAT>
@@ -152,8 +152,8 @@ arising out of or in connection with the use or performance of
 this software.
 ****************************************************************/
 
-template <class FLOAT> complex<FLOAT>& complex<FLOAT>::
-operator /= (const complex& y)
+template <class FLOAT> complex<FLOAT>&
+__doadv (complex<FLOAT>* ths, const complex<FLOAT>& y)
 {
   FLOAT ar = abs (y.re);
   FLOAT ai = abs (y.im);
@@ -163,19 +163,19 @@ operator /= (const complex& y)
     {
       t = y.re / y.im;
       d = y.im * (1 + t*t);
-      nr = (re * t + im) / d;
-      ni = (im * t - re) / d;
+      nr = (ths->re * t + ths->im) / d;
+      ni = (ths->im * t - ths->re) / d;
     }
   else
     {
       t = y.im / y.re;
       d = y.re * (1 + t*t);
-      nr = (re + im * t) / d;
-      ni = (im - re * t) / d;
+      nr = (ths->re + ths->im * t) / d;
+      ni = (ths->im - ths->re * t) / d;
     }
-  re = nr;
-  im = ni;
-  return *this;
+  ths->re = nr;
+  ths->im = ni;
+  return *ths;
 }
 
 template <class FLOAT> complex<FLOAT>
