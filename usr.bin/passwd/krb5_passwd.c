@@ -31,59 +31,45 @@
  * SUCH DAMAGE. 
  */
 
-#include "kpasswd_locl.h"
-RCSID("$KTH: kpasswd.c,v 1.23 2000/12/31 07:48:34 assar Exp $");
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/uio.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <sys/time.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <errno.h>
+#include <dlfcn.h>
+#include <util.h>
+#include <err.h>
+#include <kerberosV/krb5.h>
 
-static int version_flag;
-static int help_flag;
-
-static struct getargs args[] = {
-    { "version", 		0,   arg_flag, &version_flag },
-    { "help",			0,   arg_flag, &help_flag }
-};
-
-static void
-usage (int ret, struct getargs *a, int num_args)
-{
-    arg_printusage (a, num_args, NULL, "[principal]");
-    exit (ret);
-}
+/* RCSID("$KTH: kpasswd.c,v 1.23 2000/12/31 07:48:34 assar Exp $"); */
 
 int
-main (int argc, char **argv)
+krb5_passwd (int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_context context;
     krb5_principal principal;
-    int optind = 0;
     krb5_get_init_creds_opt opt;
     krb5_creds cred;
     int result_code;
     krb5_data result_code_string, result_string;
     char pwbuf[BUFSIZ];
 
-    optind = krb5_program_setup(&context, argc, argv,
-				args, sizeof(args) / sizeof(args[0]), usage);
-
-    if (help_flag)
-	usage (0, args, sizeof(args) / sizeof(args[0]));
-
-    if(version_flag){
-	print_version (NULL);
-	exit(0);
-    }
-
     krb5_get_init_creds_opt_init (&opt);
     
     krb5_get_init_creds_opt_set_tkt_life (&opt, 300);
     krb5_get_init_creds_opt_set_forwardable (&opt, FALSE);
     krb5_get_init_creds_opt_set_proxiable (&opt, FALSE);
-
-    argc -= optind;
-    argv += optind;
-
-    if (argc > 1)
-	usage (1, args, sizeof(args) / sizeof(args[0]));
 
     ret = krb5_init_context (&context);
     if (ret)
