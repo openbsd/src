@@ -1,8 +1,8 @@
-.\"	$OpenBSD: crypto.9,v 1.9 2001/06/23 18:43:36 deraadt Exp $
+.\"	$OpenBSD: crypto.9,v 1.10 2001/06/25 04:55:51 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
-.\" Copyright (c) 2000 Angelos D. Keromytis
+.\" Copyright (c) 2000, 2001 Angelos D. Keromytis
 .\"
 .\" Permission to use, copy, and modify this software without fee
 .\" is hereby granted, provided that this entire notice is included in
@@ -461,8 +461,8 @@ most of the framework code
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
-.Xr pcmcia 4 ,
 .Xr malloc 9 ,
+.Xr pcmcia 4 ,
 .Xr tsleep 9
 .Sh BUGS
 The framework currently assumes that all the algorithms in a
@@ -486,12 +486,10 @@ at some software
 level, to avoid overall system latency issues, and potential kernel
 stack exhaustion while processing a callback.
 .Pp
-We need a userland device for exposing the framework to userland.
-This will be particularly useful for public key operations in hardware.
-.Pp
-We have not experimented yet with public key operations hardware.
-The framework should support this.
-.Pp
 When SMP time comes, we will support use of a second processor (or
 more) as a crypto device (this is actually AMP, but we need the same
 basic support).
+.Sh HISTORY
+The cryptographic framework first appeared in
+.Ox 2.7
+and was written by Angelos D. Keromytis <angelos@openbsd.org>.
