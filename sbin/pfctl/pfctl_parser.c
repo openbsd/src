@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.43 2001/08/19 17:03:00 frantzen Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.44 2001/08/23 04:10:51 deraadt Exp $ */
 
 /*
- * Copyright (c) 2001, Daniel Hartmeier
+ * Copyright (c) 2001 Daniel Hartmeier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -9,11 +9,11 @@
  * are met:
  *
  *    - Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer. 
+ *      notice, this list of conditions and the following disclaimer.
  *    - Redistributions in binary form must reproduce the above
  *      copyright notice, this list of conditions and the following
  *      disclaimer in the documentation and/or other materials provided
- *      with the distribution. 
+ *      with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -91,22 +91,22 @@ struct icmptypeent icmp_type[] = {
 };
 
 struct icmpcodeent icmp_code[] = {
-	{ "net-unr",		ICMP_UNREACH, 	ICMP_UNREACH_NET },
-	{ "host-unr",		ICMP_UNREACH, 	ICMP_UNREACH_HOST },
-	{ "proto-unr",		ICMP_UNREACH, 	ICMP_UNREACH_PROTOCOL },
-	{ "port-unr",		ICMP_UNREACH, 	ICMP_UNREACH_PORT },
-	{ "needfrag",		ICMP_UNREACH, 	ICMP_UNREACH_NEEDFRAG },
-	{ "srcfail",		ICMP_UNREACH, 	ICMP_UNREACH_SRCFAIL },
-	{ "net-unk",		ICMP_UNREACH, 	ICMP_UNREACH_NET_UNKNOWN },
-	{ "host-unk",		ICMP_UNREACH, 	ICMP_UNREACH_HOST_UNKNOWN },
-	{ "isolate",		ICMP_UNREACH, 	ICMP_UNREACH_ISOLATED },
-	{ "net-prohib",		ICMP_UNREACH, 	ICMP_UNREACH_NET_PROHIB },
-	{ "host-prohib",	ICMP_UNREACH, 	ICMP_UNREACH_HOST_PROHIB },
-	{ "net-tos",		ICMP_UNREACH, 	ICMP_UNREACH_TOSNET },
-	{ "host-tos",		ICMP_UNREACH, 	ICMP_UNREACH_TOSHOST },
-	{ "filter-prohib",	ICMP_UNREACH, 	ICMP_UNREACH_FILTER_PROHIB },
-	{ "host-preced",	ICMP_UNREACH, 	ICMP_UNREACH_HOST_PRECEDENCE },
-	{ "cutoff-preced",	ICMP_UNREACH, 	ICMP_UNREACH_PRECEDENCE_CUTOFF },
+	{ "net-unr",		ICMP_UNREACH,	ICMP_UNREACH_NET },
+	{ "host-unr",		ICMP_UNREACH,	ICMP_UNREACH_HOST },
+	{ "proto-unr",		ICMP_UNREACH,	ICMP_UNREACH_PROTOCOL },
+	{ "port-unr",		ICMP_UNREACH,	ICMP_UNREACH_PORT },
+	{ "needfrag",		ICMP_UNREACH,	ICMP_UNREACH_NEEDFRAG },
+	{ "srcfail",		ICMP_UNREACH,	ICMP_UNREACH_SRCFAIL },
+	{ "net-unk",		ICMP_UNREACH,	ICMP_UNREACH_NET_UNKNOWN },
+	{ "host-unk",		ICMP_UNREACH,	ICMP_UNREACH_HOST_UNKNOWN },
+	{ "isolate",		ICMP_UNREACH,	ICMP_UNREACH_ISOLATED },
+	{ "net-prohib",		ICMP_UNREACH,	ICMP_UNREACH_NET_PROHIB },
+	{ "host-prohib",	ICMP_UNREACH,	ICMP_UNREACH_HOST_PROHIB },
+	{ "net-tos",		ICMP_UNREACH,	ICMP_UNREACH_TOSNET },
+	{ "host-tos",		ICMP_UNREACH,	ICMP_UNREACH_TOSHOST },
+	{ "filter-prohib",	ICMP_UNREACH,	ICMP_UNREACH_FILTER_PROHIB },
+	{ "host-preced",	ICMP_UNREACH,	ICMP_UNREACH_HOST_PRECEDENCE },
+	{ "cutoff-preced",	ICMP_UNREACH,	ICMP_UNREACH_PRECEDENCE_CUTOFF },
 	{ "redir-net",		ICMP_REDIRECT,	ICMP_REDIRECT_NET },
 	{ "redir-host",		ICMP_REDIRECT,	ICMP_REDIRECT_HOST },
 	{ "redir-tos-net",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSNET },
@@ -552,7 +552,7 @@ print_rule(struct pf_rule *r)
 			printf("icmp-type %u ", r->type-1);
 		if (r->code) {
 			struct icmpcodeent *p;
-			
+
 			p = geticmpcodebynumber(r->type-1, r->code-1);
 			if (p != NULL)
 				printf("code %s ", p->name);
@@ -566,7 +566,7 @@ print_rule(struct pf_rule *r)
 		printf("no-df ");
 	if (r->min_ttl)
 		printf("min-ttl %d ", r->min_ttl);
-	
+
 	printf("\n");
 }
 
