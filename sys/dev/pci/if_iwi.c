@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.19 2004/12/06 19:58:44 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.20 2004/12/06 20:27:15 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1026,6 +1026,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	struct ieee80211_frame *wh;
 	struct iwi_tx_buf *buf;
 	struct iwi_tx_desc *desc;
+	struct mbuf *mnew;
 	int error, i;
 
 #if NBPFILTER > 0
@@ -1055,11 +1056,42 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	desc = &sc->tx_desc[sc->tx_cur];
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m, BUS_DMA_NOWAIT);
-	if (error != 0) {
+	if (error != 0 && error != EFBIG) {
 		printf("%s: could not map mbuf (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
 		m_freem(m);
 		return error;
+	}
+	if (error != 0) {
+		/* too many fragments, linearize */
+
+		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		if (mnew == NULL) {
+			m_freem(m);
+			return ENOMEM;
+		}
+
+		M_DUP_PKTHDR(mnew, m);
+		MCLGET(mnew, M_DONTWAIT);
+		if (!(mnew->m_flags & M_EXT)) {
+			m_freem(m);
+			m_freem(mnew);
+			return ENOMEM;
+		}
+
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
+		m_freem(m);
+		m->m_len = m->m_pkthdr.len;
+		m = mnew;
+
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, buf->map, m,
+		    BUS_DMA_NOWAIT);
+		if (error != 0) {
+			printf("%s: could not map mbuf (error %d)\n",
+			    sc->sc_dev.dv_xname, error);
+			m_freem(m);
+			return error;
+		}
 	}
 
 	buf->m = m;
