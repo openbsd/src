@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vn_lock.9,v 1.5 2002/08/26 20:18:07 art Exp $
+.\"     $OpenBSD: vn_lock.9,v 1.6 2003/04/20 20:38:28 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -40,7 +40,9 @@ The
 function is used to acquire the vnode lock.
 Certain file system operations require that the vnode lock be held when
 they are called.
-See sys/kern/vnode_if.src for more details.
+See
+.Pa sys/kern/vnode_if.src
+for more details.
 .Pp
 The
 .Fn vn_lock
@@ -50,8 +52,8 @@ Instead, the
 .Fn vget
 function should be used.
 .Pp
-The 
-.Fa flags 
+The
+.Fa flags
 fields may contain the following flags:
 .Bl -column LK_INTERLOCK -offset indent
 .It Dv LK_RETRY Ta
@@ -63,9 +65,9 @@ Don't wait if the vnode lock is held by someone else (may still
 wait on reclamation lock on or interlock).
 Must not be used with LK_RETRY.
 .It Dv LK_EXCLUSIVE Ta
-Acquire an exclusive lock
+Acquire an exclusive lock.
 .It Dv LK_SHARED Ta
-Acquire a shared lock
+Acquire a shared lock.
 .El
 .Pp
 The
@@ -87,7 +89,7 @@ The LK_NOWAIT flag was set and the vn_lock would have slept.
 .El
 .Sh SEE ALSO
 .Xr vnode 9
-.Sh BUGS 
+.Sh BUGS
 The locking discipline is bizarre.
 Many vnode operations are passed locked vnodes on entry but release
 the lock before they exit.

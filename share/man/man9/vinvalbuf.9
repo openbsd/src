@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vinvalbuf.9,v 1.3 2003/03/10 19:56:29 tedu Exp $
+.\"     $OpenBSD: vinvalbuf.9,v 1.4 2003/04/20 20:38:28 jmc Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -49,7 +49,7 @@ flag is specified then the buffers on the dirty list are synced prior to being
 released.
 If the
 .Dv V_SAVEMETA
-flag is set indirect blocks will not be flushed.
+flag is set, indirect blocks will not be flushed.
 .Pp
 Its arguments are:
 .Bl -tag -width ".Fa spltimeo"
@@ -63,7 +63,7 @@ and
 .Dv V_SAVE
 indicates that dirty buffers should be synced with the disk.
 .Dv V_SAVEMETA
-indicates the indirect blocks should not be flushed
+indicates the indirect blocks should not be flushed.
 .It Fa cred
 The user credentials that are used to
 .Xr VOP_FSYNC 9
