@@ -92,7 +92,8 @@ A few configuration files need to be edited:
 
 Now you must populate the the `/dev' directory for your client. If you server
 runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
-and run the MAKEDEV script: `sh MAKEDEV all'.
+and run the MAKEDEV script: `sh MAKEDEV all' (this might require the edition
+of MAKEDEV to change the PATH for it to work properly).
 
 On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
 messages about unknown user and groups. These errors are inconsequential

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.23 2002/04/09 01:22:23 miod Exp $
+dnl	$OpenBSD: install,v 1.24 2002/04/17 23:32:12 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -362,7 +362,8 @@ A few configuration files need to be edited:
 
 Now you must populate the the `/dev' directory for your client. If you server
 runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
-and run the MAKEDEV script: `sh MAKEDEV all'.
+and run the MAKEDEV script: `sh MAKEDEV all' (this might require the edition
+of MAKEDEV to change the PATH for it to work properly).
 
 On Solaris (SunOS 5.x) systems, MAKEDEV can also be used, but there'll be
 error messages about unknown user and groups. These errors are
