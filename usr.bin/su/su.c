@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.24 1997/06/20 22:09:53 deraadt Exp $	*/
+/*	$OpenBSD: su.c,v 1.25 1997/06/21 12:18:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.24 1997/06/20 22:09:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.25 1997/06/21 12:18:05 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,6 +71,7 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.24 1997/06/20 22:09:53 deraadt Exp $";
 #define	ARGSTR	"-Kflm"
 
 int use_kerberos = 1;
+int got_ticket;
 #else
 #define	ARGSTR	"-flm"
 #endif
@@ -246,7 +247,7 @@ badlogin:
 			if (p)
 				(void)setenv("TERM", p, 1);
 #ifdef KERBEROS
-			if (k)
+			if (k && got_ticket)
 				(void)setenv("KRBTKFILE", k, 1);
 #endif
 
@@ -434,6 +435,7 @@ kerberos(username, user, uid)
 			return (1);
 		}
 	}
+	got_ticket = 1;
 	return (0);
 }
 
