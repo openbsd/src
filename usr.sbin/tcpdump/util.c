@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 2004/06/23 06:12:07 markus Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2004/07/28 09:37:26 markus Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.17 2004/06/23 06:12:07 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.18 2004/07/28 09:37:26 markus Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -142,11 +142,13 @@ ts_print(register const struct bpf_timeval *tvp)
 		printf("%s.%06u ", buf, (u_int32_t)tvp->tv_usec);
 		break;
 	case -3:
-		/* time since last frame */
+	case -4:
+		/* time since first/last frame */
 		timersub(tvp, &last, &diff);
 		(void)printf("%u.%06u ",
 		    (u_int32_t)diff.tv_sec, (u_int32_t)diff.tv_usec);
-		last = *tvp;
+		if (tflag == -3 || (last.tv_sec == 0 && last.tv_usec == 0))
+			last = *tvp;
 		break;
 	default:
 		/* Default */
