@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.14 2000/04/05 21:54:48 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.15 2001/02/08 23:06:32 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -121,8 +121,8 @@ db_hang(tries, word, abc)
 	}
 
 	for (p = word; *p; p++)
-		if (ISALPHA(*p))
-			cnputc(abc[TOLOWER(*p) - 'a']);
+		if (ISALPHA(*p) && abc[TOLOWER(*p) - 'a'] == '-')
+			cnputc('-');
 		else
 			cnputc(*p);
 
@@ -158,23 +158,23 @@ db_hangon(void)
 	}
 
 	{
-		register char	c, c1;
+		register char	c;
 
 		db_hang(tries, word, abc);
-		c1 = cngetc();
+		c = cngetc();
+		c = TOLOWER(c);
 
-		c = TOLOWER(c1);
 		if (ISALPHA(c) && abc[c - 'a'] == '-') {
 			register char	*p;
 			register size_t	n;
 
 				/* strchr(word,c) */
 			for (n = 0, p = word; *p ; p++)
-				if (*p == c)
+				if (TOLOWER(*p) == c)
 					n++;
 
 			if (n) {
-				abc[c - 'a'] = c1;
+				abc[c - 'a'] = c;
 				len -= n;
 			} else {
 				abc[c - 'a'] = '_';
