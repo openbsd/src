@@ -1,4 +1,4 @@
-.\" $OpenBSD: audioctl.1,v 1.16 2003/10/22 20:41:36 jmc Exp $
+.\" $OpenBSD: audioctl.1,v 1.17 2004/05/09 03:37:45 beck Exp $
 .\" $NetBSD: audioctl.1,v 1.7 1998/04/27 16:55:23 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,13 +98,15 @@ To set the playing sampling rate to 11025 you can enter
 .Dl $ audioctl -w play.sample_rate=11025
 .Pp
 Note that many of the variables that can be inspected and changed
-are reset when the device is opened.
+are reset when the
+.Pa /dev/audio
+device is opened.
 This can be circumvented like so:
 .Pp
-.Dl $ (cat file.au; audioctl -f /dev/stdout -a) > /dev/audio
+.Dl $ (cat file.au; audioctl -f /dev/audioctl -a) > /dev/audio
 or
 .Bd -literal -offset indent -compact
-$ (audioctl -f /dev/stdout -w blocksize=1024; cat file.au) \e
+$ (audioctl -f /dev/audioctl -w blocksize=1024; cat file.au) \e
 	> /dev/audio
 .Ed
 .Sh SEE ALSO
