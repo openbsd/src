@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 1997/09/12 04:35:18 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 1998/05/18 20:36:14 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 1997/09/12 04:35:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 1998/05/18 20:36:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ int sigflags = 0;		/* if set, signals received while mutex set */
 int sigactive = 0;		/* if set, signal handlers are enabled */
 int interactive = 0;		/* if set, we are in interactive mode */
 
-char old_filename[MAXPATHLEN + 1] = "";	/* default filename */
+char old_filename[MAXPATHLEN] = "";	/* default filename */
 long current_addr;		/* current address in editor buffer */
 long addr_last;			/* last address in editor buffer */
 int lineno;			/* script line number */
@@ -192,8 +192,10 @@ top:
 		if (argc && **argv && is_legal_filename(*argv)) {
 			if (read_file(*argv, 0) < 0 && !interactive)
 				quit(2);
-			else if (**argv != '!')
-				strcpy(old_filename, *argv);
+			else if (**argv != '!') {
+				strncpy(old_filename, *argv, sizeof old_filename-1);
+				old_filename[sizeof old_filename-1] = '\0';
+			}
 		} else if (argc) {
 			fputs("?\n", stderr);
 			if (**argv == '\0')
@@ -528,7 +530,10 @@ exec_command()
 			return ERR;
 		else if (open_sbuf() < 0)
 			return FATAL;
-		if (*fnp && *fnp != '!') strcpy(old_filename, fnp);
+		if (*fnp && *fnp != '!') {
+			strncpy(old_filename, fnp, sizeof old_filename-1);
+			old_filename[sizeof old_filename-1] = '\0';
+		}
 #ifdef BACKWARDS
 		if (*fnp == '\0' && *old_filename == '\0') {
 			strcpy(errmsg, "no current filename");
@@ -555,7 +560,10 @@ exec_command()
 			return ERR;
 		}
 		GET_COMMAND_SUFFIX();
-		if (*fnp) strcpy(old_filename, fnp);
+		if (*fnp) {
+			strncpy(old_filename, fnp, sizeof old_filename-1);
+			old_filename[sizeof old_filename-1] = '\0';
+		}
 		puts(strip_escapes(old_filename));
 		break;
 	case 'g':
@@ -685,8 +693,10 @@ exec_command()
 			return ERR;
 		GET_COMMAND_SUFFIX();
 		if (!isglobal) clear_undo_stack();
-		if (*old_filename == '\0' && *fnp != '!')
-			strcpy(old_filename, fnp);
+		if (*old_filename == '\0' && *fnp != '!') {
+			strncpy(old_filename, fnp, sizeof old_filename-1);
+			old_filename[sizeof old_filename-1] = '\0';
+		}
 #ifdef BACKWARDS
 		if (*fnp == '\0' && *old_filename == '\0') {
 			strcpy(errmsg, "no current filename");
@@ -819,8 +829,10 @@ exec_command()
 		else if (check_addr_range(1, addr_last) < 0)
 			return ERR;
 		GET_COMMAND_SUFFIX();
-		if (*old_filename == '\0' && *fnp != '!')
-			strcpy(old_filename, fnp);
+		if (*old_filename == '\0' && *fnp != '!') {
+			strncpy(old_filename, fnp, sizeof old_filename-1);
+			old_filename[sizeof old_filename-1] = '\0';
+		}
 #ifdef BACKWARDS
 		if (*fnp == '\0' && *old_filename == '\0') {
 			strcpy(errmsg, "no current filename");
@@ -1408,8 +1420,10 @@ handle_hup(signo)
 	    (n = strlen(s)) + 8 <= MAXPATHLEN &&	/* "ed.hup" + '/' */
 	    (hup = (char *) malloc(n + 10)) != NULL) {
 		strcpy(hup, s);
-		if (hup[n - 1] != '/')
-			hup[n] = '/', hup[n+1] = '\0';
+		if (hup[n - 1] != '/') {
+			hup[n] = '/';
+			hup[n+1] = '\0';
+		}
 		strcat(hup, "ed.hup");
 		write_file(hup, "w", 1, addr_last);
 	}
