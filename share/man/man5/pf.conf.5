@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.140 2002/12/07 23:15:53 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.141 2002/12/08 00:18:42 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1534,19 +1534,19 @@ Syntax for
 .Nm
 in BNF:
 .Bd -literal
-line           = ( option | pf_rule | nat_rule | binat_rule | rdr_rule |
-		 antispoof_rule | altq_rule | queue_rule )
+line           = ( option | pf-rule | nat-rule | binat-rule | rdr-rule |
+                 antispoof-rule | altq-rule | queue-rule )
 
 option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "optimization" [ "default" | "normal" |
-		 "high-latency" | "satellite" |
-		 "aggressive" | "conservative" ] ]
+                 "high-latency" | "satellite" |
+                 "aggressive" | "conservative" ] ]
                  [ "limit" ( limit | "{" limit-list "}" ) ] |
                  [ "loginterface" ( interface-name | "none" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
                  [ "require-order" ( "yes" | "no" ) ] )
 
-pf_rule        = action ( "in" | "out" )
+pf-rule        = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
                  [ "on" ifspec ] [ route ] [ af ] [ protospec ]
                  hosts [filteropt-list]
@@ -1559,52 +1559,52 @@ filteropt      = [ user ] | [ group ] | [ flags ] |
                  [ "max-mss" number ] [ fragmentation ] [ "allow-opts" ] |
                  [ "label" string ] | [ "queue" string ]
 
-nat_rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
-		 "from" ipspec "to" ipspec [ portspec ]
-		 [ "->" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] ] [ pooltype ] [ "static-port" ]
+nat-rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
+                 "from" ipspec "to" ipspec [ portspec ]
+                 [ "->" ( redirhost | "{" redirhost-list "}" )
+                 [ portspec ] ] [ pooltype ] [ "static-port" ]
 
-binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
-		 [ "proto" ( proto-name | proto-number ) ]
-		 "from" address [ "/" mask-bits ] "to" ipspec
-		 [ "->" address [ "/" mask-bits ] ]
+binat-rule     = [ "no" ] "binat" "on" interface-name [ af ]
+                 [ "proto" ( proto-name | proto-number ) ]
+                 "from" address [ "/" mask-bits ] "to" ipspec
+                 [ "->" address [ "/" mask-bits ] ]
 
-rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
-		 "from" ipspec "to" ipspec [ portspec ]
-		 [ "->" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] ] [ pooltype ]
+rdr-rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
+                 "from" ipspec "to" ipspec [ portspec ]
+                 [ "->" ( redirhost | "{" redirhost-list "}" )
+                 [ portspec ] ] [ pooltype ]
 
-antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
-		 "for" ( interface-name | "{" interface-list "}" )
-		 [ af ]
+antispoof-rule = "antispoof" [ "log" ] [ "quick" ]
+                 "for" ( interface-name | "{" interface-list "}" ) [ af ]
 
-altq_rule      = "altq" "on" interface-name "scheduler" "cbq"
-		 [ "bandwidth" number ( "b" | "Kb" | "Mb" | "Gb" ) ]
-		 [ "qlimit" number ] [ "tbrsize" number ]
-		 "queue" ( string | "{" queue-list "}" )
+altq-rule      = "altq" "on" interface-name queueopts-list
+                 "queue" queue-list
+queue-rule     = "queue" string queueopts-list queue-list
 
-queue_rule     = "queue" string "bandwidth" number
-		 ( "b" | "Kb" | "Mb" | "Gb" | "%" )
-		 [ "priority" number ] [ "qlimit" number ] [ cbq-def ]
-	         [ string | "{" queue-list "}" ]
+queueopts-list = queueopts-list queueopts | queueopts
+queueopts      = [ "bandwidth" number ( "b" | "Kb" | "Mb" | "Gb" | " %") ] |
+                 [ "qlimit" number ] | [ "tbrsize" number ] |
+                 [ "priority" number ] | [ "scheduler" schedulers ] | 
+                 [ "qlimit" number ]
+schedulers     = cbq-def
 
 action         = "pass" | "block" [ return ] | "scrub"
 return         = "drop" | "return" | "return-rst" [ "(" "ttl" number ")" ] |
                  "return-icmp" [ "(" icmpcode ["," icmp6code ] ")" ] |
                  "return-icmp6" [ "(" icmp6code ")" ]
-icmpcode	= ( icmp-code-name | icmp-code-number )
-icmp6code	= ( icmp6-code-name | icmp6-code-number )
+icmpcode       = ( icmp-code-name | icmp-code-number )
+icmp6code      = ( icmp6-code-name | icmp6-code-number )
 
 ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
 interface-list = [ "!" ] interface-name [ [ "," ] interface-list ]
 route          = "fastroute" |
                  ( "route-to" | "reply-to" | "dup-to" )
-		 ( routehost | "{" routehost-list "}" )
-		 [ pooltype ]
-af	       = "inet" | "inet6"
+                 ( routehost | "{" routehost-list "}" )
+                 [ pooltype ]
+af             = "inet" | "inet6"
 
 protospec      = "proto" ( proto-name | proto-number |
-		 "{" proto-list "}" )
+                 "{" proto-list "}" )
 proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ]
 
 hosts          = "all" |
@@ -1665,13 +1665,14 @@ limit-list     = limit [ [ "," ] limit-list ]
 limit          = ( "states" | "frags" ) number
 
 pooltype       = ( "bitmask" | "random" |
-		 "source-hash" [ ( hex-key | string-key ) ] |
-		 "round-robin" )
+                 "source-hash" [ ( hex-key | string-key ) ] |
+                 "round-robin" )
 
+subqueue       = string | "{" queue-list "}"
 queue-list     = string [ [ "," ] string ]
 cbq-def        = "cbq" [ "(" cbq-type [ [ "," ] cbq-type ] ")" ]
 cbq-type       = ( "default" | "control" | "borrow" |
-		 "red" | "ecn" | "rio" )
+                 "red" | "ecn" | "rio" )
 
 .Ed
 .Sh FILES
