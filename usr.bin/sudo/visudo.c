@@ -170,7 +170,7 @@ main(argc, argv)
     if (sudoers_fd == -1) {
 	(void) fprintf(stderr, "%s: %s: %s\n", Argv[0], sudoers,
 	    strerror(errno));
-	Exit(-1);
+	exit(1);
     }
     if (!lock_file(sudoers_fd, SUDO_TLOCK)) {
 	(void) fprintf(stderr, "%s: sudoers file busy, try again later.\n",
@@ -184,7 +184,7 @@ main(argc, argv)
 #endif
 	(void) fprintf(stderr, "%s: can't stat %s: %s\n",
 	    Argv[0], sudoers, strerror(errno));
-	Exit(-1);
+	exit(1);
     }
 
     /*
@@ -499,18 +499,22 @@ setup_signals()
 /*
  * Unlink the sudoers temp file (if it exists) and exit.
  * Used in place of a normal exit() and as a signal handler.
- * A positive parameter is considered to be a signal and is reported.
+ * A positive parameter indicates we were called as a signal handler.
  */
 static RETSIGTYPE
 Exit(sig)
     int sig;
 {
+    char *emsg = " exiting due to signal.\n";
+
     (void) unlink(stmp);
 
-    if (sig > 0)	/* XXX signal race */
-	(void) fprintf(stderr, "%s exiting, caught signal %d.\n", Argv[0], sig);
-
-    exit(-sig);		/* XXX for signal case, should be _exit() */
+    if (sig > 0) {
+	write(STDERR_FILENO, Argv[0], strlen(Argv[0]));
+	write(STDERR_FILENO, emsg, sizeof(emsg) - 1);
+	_exit(-sig);
+    }
+    exit(-sig);
 }
 
 static void
