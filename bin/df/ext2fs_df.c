@@ -1,3 +1,5 @@
+/*	$OpenBSD: ext2fs_df.c,v 1.6 2001/01/28 23:04:55 niklas Exp $	*/
+
 /*
  * This file is substantially derived from src/sys/ufs/ext2fs/ext2fs_vfsops.c:e2fs_statfs().
  * That file's copyright is applied here.

@@ -1,3 +1,5 @@
+#	$OpenBSD: regress.t,v 1.11 2001/01/28 23:04:56 niklas Exp $
+
 #
 # The first 39 of these tests are from the old Bugs script.
 #

@@ -1,4 +1,6 @@
 #!/usr/local/bin/perl
+#	$OpenBSD: th,v 1.8 2001/01/28 23:04:56 niklas Exp $
+
 
 #
 # Test harness for pdksh tests.

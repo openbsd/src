@@ -1,3 +1,5 @@
+/*	$OpenBSD: lfs_df.c,v 1.5 2001/01/28 23:04:55 niklas Exp $	*/
+
 /*
  * This file is substantially duplicated from src/sys/ufs/lfs/lfs_vfsops.c:lfs_statfs().
  * That file's copyright is applied here.

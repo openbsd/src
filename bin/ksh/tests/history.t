@@ -1,3 +1,5 @@
+#	$OpenBSD: history.t,v 1.5 2001/01/28 23:04:56 niklas Exp $
+
 # Not tested yet:
 #	- commands in history file are not numbered negatively
 # (and a few hundred other things)

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ffs_df.c,v 1.5 2001/01/28 23:04:55 niklas Exp $	*/
+
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
