@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.11 1997/09/17 17:56:09 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.12 1997/09/21 23:00:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -65,6 +65,23 @@
 #define	BIOSM_HD	0xf8	/* hard drive */
 #define	BIOSM_F144K	0xf0	/* floppy ds/hd 18 spt 3.50" */
 #define	BIOSM_OTHER	0xf0	/* any other */
+
+/* 
+ * CTL_BIOS definitions.
+ */
+#define	BIOS_DEV		1	/* int: BIOS boot device */
+#define	BIOS_GEOMETRY		2	/* int: BIOS boot device geometry */
+#define	BIOS_CNVMEM		3	/* int: amount of conventional memory */
+#define	BIOS_EXTMEM		4	/* int: amount of extended memory */
+#define	BIOS_MAXID		5	/* number of valid machdep ids */
+
+#define	CTL_BIOS_NAMES { \
+	{ 0, 0 }, \
+	{ "biosdev", CTLTYPE_INT }, \
+	{ "biosgeo", CTLTYPE_INT }, \
+	{ "cnvmem", CTLTYPE_INT }, \
+	{ "extmem", CTLTYPE_INT }, \
+}
 
 /*
  * Advanced Power Management (APM) BIOS driver for laptop PCs.
@@ -243,6 +260,10 @@ struct bios_attach_args {
 };
 
 struct consdev;
+struct proc;
+
+int bios_sysctl
+	__P((int *, u_int, void *, size_t *, void *, size_t, struct proc *));
 
 void bioscnprobe __P((struct consdev *));
 void bioscninit __P((struct consdev *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.3 1997/09/21 22:08:07 weingart Exp $	*/
+/*	$OpenBSD: bios.c,v 1.4 1997/09/21 23:00:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -302,11 +302,8 @@ bioscnpollc(dev, on)
 {
 }
 
-/*  
- * machine dependent system variables.
- */ 
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+bios_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
@@ -316,29 +313,22 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	extern u_int cnvmem, extmem, bootapiver; /* locore.s */
-	dev_t consdev;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);		/* overloaded */
 
-	if (bootapiver == 0 && name[0] != CPU_CONSDEV)
+	if (bootapiver == 0)
 		return EOPNOTSUPP;
 
 	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return sysctl_rdstruct(oldp, oldlenp, newp, &consdev, sizeof consdev);
-	case CPU_BIOSDEV:
+	case BIOS_DEV:
 		return sysctl_rdint(oldp, oldlenp, newp, BIOS_vars.bios_dev);
-	case CPU_BIOSGEOMETRY:
+	case BIOS_GEOMETRY:
 		return sysctl_rdint(oldp, oldlenp, newp, BIOS_vars.bios_geometry);
-	case CPU_CNVMEM:
+	case BIOS_CNVMEM:
 		return sysctl_rdint(oldp, oldlenp, newp, cnvmem);
-	case CPU_EXTMEM:
+	case BIOS_EXTMEM:
 		return sysctl_rdint(oldp, oldlenp, newp, extmem);
 	default:
 		return EOPNOTSUPP;

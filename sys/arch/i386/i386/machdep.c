@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 1997/09/21 04:27:55 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.49 1997/09/21 23:00:42 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -97,8 +97,12 @@
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
 
-#include "apm.h"
+#include "bios.h"
+#if NBIOS > 0
+#include <machine/biosvar.h>
+#endif
 
+#include "apm.h"
 #if NAPM > 0
 #include <machine/apmvar.h>
 #endif
@@ -1423,6 +1427,43 @@ cpu_reset()
 	pmap_update(); 
 
 	for (;;);
+}
+
+/*  
+ * machine dependent system variables.
+ */ 
+int
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (namelen != 1)
+			return (ENOTDIR);		/* overloaded */
+
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return sysctl_rdstruct(oldp, oldlenp, newp,
+				       &consdev, sizeof consdev);
+#if NBIOS > 0
+	case CPU_BIOS:
+		return bios_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+				   newp, newlen, p);
+#endif
+	default:
+		return EOPNOTSUPP;
+	}
+	/* NOTREACHED */
 }
 
 int
