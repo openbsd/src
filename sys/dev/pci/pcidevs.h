@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.105 1998/12/16 01:36:07 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.106 1998/12/17 18:36:59 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1241,6 +1241,9 @@
 
 /* Winbond Electronics products (PCI products set 2) */
 #define	PCI_PRODUCT_WINBOND2_W89C940	0x1980		/* Linksys EtherPCI */
+
+/* Yamaha products */
+#define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
 
 /* Zeinet products */
 #define	PCI_PRODUCT_ZEINET_1221	0x0001		/* 1221 */
