@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.169 2000/06/17 17:16:04 provos Exp $
+#	$OpenBSD: files,v 1.170 2000/06/18 17:32:42 itojun Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -778,6 +778,7 @@ file netinet6/nd6_rtr.c			inet6
 #file netinet6/tcp6_timer.c		inet6 & tcp6
 #file netinet6/tcp6_usrreq.c		inet6 & tcp6
 #file netinet6/udp6_usrreq.c		inet6
+file netinet6/udp6_output.c		inet6
 
 # ... PF_KEY
 file net/pfkey.c			key | ipsec | tcp_signature

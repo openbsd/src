@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.21 2000/05/25 01:22:00 itojun Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.22 2000/06/18 17:32:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -125,7 +125,7 @@ struct ip6protosw inet6sw[] = {
 },
 { SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC | PR_ADDR,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
- udp6_usrreq,	0,
+  udp6_usrreq,	0,
   0,		0,		0,
   udp_sysctl,
 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.44 2000/06/13 11:47:24 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.45 2000/06/18 17:32:48 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1165,7 +1165,14 @@ udp_usrreq(so, req, m, addr, control)
 		if (error)
 			return (error);
 #endif
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			return (udp6_output(inp, m, addr, control));
+		else
+			return (udp_output(m, inp, addr, control));
+#else
 		return (udp_output(m, inp, addr, control));
+#endif
 
 	case PRU_ABORT:
 		soisdisconnected(so);
