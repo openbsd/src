@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.4 2004/07/31 01:14:21 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.5 2004/08/13 13:37:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -49,7 +49,9 @@
 #define CVS_GETLOG_REVEND \
  "============================================================================="
 
+#ifdef notyet
 static void cvs_getlog_print   (const char *, RCSFILE *, u_int);
+#endif
 
 
 
@@ -63,14 +65,11 @@ static void cvs_getlog_print   (const char *, RCSFILE *, u_int);
 int
 cvs_getlog(int argc, char **argv)
 {
-	int i, rfonly, honly, recurse;
-	u_int flags;
-	char rcspath[MAXPATHLEN];
-	RCSFILE *rfp;
+	int i, rfonly, honly, flags;
 
+	flags = CF_RECURSE;
 	rfonly = 0;
 	honly = 0;
-	recurse = 1;
 
 	while ((i = getopt(argc, argv, "d:hlRr:")) != -1) {
 		switch (i) {
@@ -80,7 +79,7 @@ cvs_getlog(int argc, char **argv)
 			honly = 1;
 			break;
 		case 'l':
-			recurse = 0;
+			flags &= ~CF_RECURSE;
 			break;
 		case 'R':
 			rfonly = 1;
@@ -96,16 +95,22 @@ cvs_getlog(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 0) {
+		cvs_files = cvs_file_get(".", flags);
 	}
 	else {
-		for (i = 0; i < argc; i++) {
-		}
+		cvs_files = cvs_file_getspec(argv, argc, flags);
 	}
+	if (cvs_files == NULL)
+		return (EX_DATAERR);
 
 	return (0);
 }
 
 
+
+
+
+#ifdef notyet
 static void
 cvs_getlog_print(const char *file, RCSFILE *rfp, u_int flags)
 {
@@ -114,7 +119,7 @@ cvs_getlog_print(const char *file, RCSFILE *rfp, u_int flags)
 
 	printf("RCS file: %s\nWorking file: %s\n",
 	    rfp->rf_path, file);
-	printf("Working file: %s\n", NULL);
+	printf("Working file: %s\n", (char *)NULL);
 	printf("head: %s\nbranch:\nlocks:\naccess list:\n");
 	printf("symbolic names:\nkeyword substitutions:\n");
 	printf("total revisions: %u;\tselected revisions: %u\n", 1, 1);
@@ -123,7 +128,7 @@ cvs_getlog_print(const char *file, RCSFILE *rfp, u_int flags)
 
 	for (;;) {
 		printf(CVS_GETLOG_REVSEP "\n");
-		rcsnum_tostr(&(rdp->rd_num), numbuf, sizeof(numbuf));
+		rcsnum_tostr(rdp->rd_num, numbuf, sizeof(numbuf));
 		printf("revision %s\n", numbuf);
 		printf("date: %d/%02d/%d %02d:%02d:%02d;  author: %s;"
 		    "  state: %s;  lines:",
@@ -136,3 +141,4 @@ cvs_getlog_print(const char *file, RCSFILE *rfp, u_int flags)
 	printf(CVS_GETLOG_REVEND "\n");
 
 }
+#endif
