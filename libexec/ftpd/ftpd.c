@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.33 1997/03/25 22:47:10 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.34 1997/04/25 11:06:28 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1191,7 +1191,8 @@ dataconn(name, size, mode)
 	 * attempt to connect to reserved port on client machine;
 	 * this looks like an attack
 	 */
-	if (ntohs(data_dest.sin_port) < IPPORT_RESERVED) {
+	if (ntohs(data_dest.sin_port) < IPPORT_RESERVED ||
+	    ntohs(data_dest.sin_port) == 2049) {		/* XXX */
 		perror_reply(425, "Can't build data connection");
 		(void) fclose(file);
 		data = -1;
