@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: exec.c,v 1.13 2000/06/13 09:57:51 brian Exp $
+ *	$OpenBSD: exec.c,v 1.14 2000/06/22 20:50:44 brian Exp $
  */
 
 #include <sys/param.h>
@@ -89,7 +89,7 @@ exec_iov2device(int type, struct physical *p, struct iovec *iov,
 {
   if (type == EXEC_DEVICE) {
     free(iov[(*niov)++].iov_base);
-    physical_SetupStack(p, execdevice.name, PHYSICAL_FORCE_ASYNC);
+    physical_SetupStack(p, execdevice.name, PHYSICAL_NOFORCE);
     return &execdevice;
   }
 
