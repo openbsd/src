@@ -1,5 +1,6 @@
-.\"	$OpenBSD: mgx.4,v 1.5 2005/03/05 01:48:59 miod Exp $
-.\" Copyright (c) 2003 Miodrag Vallat.  All rights reserved.
+.\"	$OpenBSD: mgx.4,v 1.6 2005/03/06 21:09:53 miod Exp $
+.\"
+.\" Copyright (c) 2003, 2005 Miodrag Vallat
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -22,12 +23,12 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 20, 2004
+.Dd March 6, 2005
 .Dt MGX 4 sparc64
 .Os
 .Sh NAME
 .Nm mgx
-.Nd SMS MGX and MGXPlus accelerated 24-bit color frame buffers
+.Nd SMS MGX and MGXPlus accelerated 8/24-bit color frame buffers
 .Sh SYNOPSIS
 .Cd "mgx* at sbus?"
 .Cd "wsdisplay* at mgx?"
@@ -47,6 +48,41 @@ It does not provide direct device driver entry points
 but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
+.Sh DISPLAY RESOLUTION
+The MGX and MGXPlus frame buffers will adapt their resolution to the monitor
+they are connected to.
+However, when not connected to a Sun monitor, the device will default to the
+.Xr cgthree 4 -compatible
+1152x900 resolution, with a refresh rate of 66Hz.
+A different resolution can be forced using the set of dip switches located
+near the SBus connector on the board itself.
+.Pp
+The dip switch settings are as follows:
+.Bl -column "   1   2   3   4" "Resolution" "Refresh"
+.It Li Switches Ta Resolution Ta Refresh Ta Details
+.It Li "  1   2   3   4" Ta "" Ta "Rate" Ta ""
+.It " "
+.\" 0
+.It Li "OFF OFF OFF OFF" Ta 1024x768 Ta 77Hz
+.\" 2
+.It Li "OFF ON  OFF OFF" Ta 1280x1024 Ta 76Hz
+.\" 3 (exactly the same as #7. Not a typo)
+.It Li "ON  ON  OFF OFF" Ta 1152x900 Ta 66Hz
+.\" 4
+.It Li "OFF OFF ON  OFF" Ta 1152x900 Ta 76Hz
+.\" 6
+.It Li "OFF ON  ON  OFF" Ta 1152x900 Ta 77Hz
+.\" 7
+.It Li "ON  ON  ON  OFF" Ta 1152x900 Ta 66Hz Ta cgthree compatible
+.\" 11
+.It Li "ON  ON  OFF ON " Ta 1152x900 Ta 66Hz Ta cgsix compatible
+.\" 12
+.It Li "OFF OFF ON  ON " Ta 1280x1024 Ta 67Hz
+.\" 15
+.It Li "ON  ON  ON  ON " Ta probed Ta probed Ta factory default
+.El
+.Pp
+All other combinations are unsupported and may damage the hardware.
 .Sh SEE ALSO
 .Xr agten 4 ,
 .Xr bwtwo 4 ,
