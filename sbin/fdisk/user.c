@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.3 1997/09/29 23:33:40 mickey Exp $	*/
+/*	$OpenBSD: user.c,v 1.4 1997/09/30 00:02:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -94,10 +94,17 @@ USER_init(disk, tt)
 	PRT_fix_BN(disk, &tt->part[3]);
 
 	/* Write sector 0 */
-	fd = DISK_open(disk->name, O_RDWR);
-	MBR_make(tt, mbr_buf);
-	MBR_write(fd, (off_t)0, mbr_buf);
-	DISK_close(fd);
+	printf("\a\n"
+	   "\t-----------------------------------------------------\n"
+	   "\t------ ATTENTION - UPDATING MASTER BOOT RECORD ------\n"
+	   "\t-----------------------------------------------------\n");
+	if(ask_yn("\nDo you wish to write new MBR?")){
+		fd = DISK_open(disk->name, O_RDWR);
+		MBR_make(tt, mbr_buf);
+		MBR_write(fd, (off_t)0, mbr_buf);
+		DISK_close(fd);
+	} else
+		printf("MBR is unchanged\n");
 
 	return(0);
 }
@@ -156,8 +163,7 @@ USER_modify(disk, tt, offset)
 		if(st == CMD_DIRTY) modified = 1;
 	} while(1);
 
-
-	/* XXX - Write out MBR */
+	/* Write out MBR */
 	if(modified){
 		printf("\a\n"
 		   "\t-----------------------------------------------------\n"
