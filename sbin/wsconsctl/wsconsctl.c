@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsconsctl.c,v 1.6 2001/07/07 18:26:22 deraadt Exp $	*/
+/*	$OpenBSD: wsconsctl.c,v 1.7 2001/07/15 19:29:04 mickey Exp $	*/
 /*	$NetBSD: wsconsctl.c,v 1.2 1998/12/29 22:40:20 hannken Exp $ */
 
 /*-
@@ -56,22 +56,23 @@ extern struct field display_field_tab[];
 
 void usage __P((char *));
 
-const struct vartypesw {
+struct vartypesw {
 	const char *name, *file;
+	int fd;
 	struct field *field_tab;
 	void (*getval) __P((const char *pre, int));
 	void (*putval) __P((const char *pre, int));
 } typesw[] = {
-	{ "keyboard", PATH_KEYBOARD, keyboard_field_tab,
+	{ "keyboard", PATH_KEYBOARD, -1, keyboard_field_tab,
 	  keyboard_get_values, keyboard_put_values },
-	{ "mouse", PATH_MOUSE, mouse_field_tab,
+	{ "mouse", PATH_MOUSE, -1, mouse_field_tab,
 	  mouse_get_values, mouse_put_values },
-	{ "display", PATH_DISPLAY, display_field_tab,
+	{ "display", PATH_DISPLAY, -1, display_field_tab,
 	  display_get_values, display_put_values },
 	{ NULL }
 };
 
-const struct vartypesw *tab_by_name __P((const char *));
+struct vartypesw *tab_by_name __P((const char *));
 
 void
 usage(msg)
@@ -94,10 +95,10 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int i, ch, fd = -1, error;
+	int i, ch, error;
 	int aflag, wflag;
 	char *sep, *p;
-	const struct vartypesw *sw;
+	struct vartypesw *sw;
 	struct field *f;
 	int do_merge;
 
@@ -132,8 +133,9 @@ main(argc, argv)
 
 	if (aflag != 0) {
 		for (sw = typesw; sw->name; sw++) {
-			if ((fd = open(sw->file, O_WRONLY)) < 0 &&
-			    (fd = open(sw->file, O_RDONLY)) < 0) {
+			if (sw->fd < 0 &&
+			    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
+			    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
 				warn("%s", sw->file);
 				error = 1;
 				continue;
@@ -142,17 +144,16 @@ main(argc, argv)
 				if ((sw->field_tab[i].flags &
 				    (FLG_NOAUTO|FLG_WRONLY)) == 0)
 					sw->field_tab[i].flags |= FLG_GET;
-			(*sw->getval)(sw->name, fd);
+			(*sw->getval)(sw->name, sw->fd);
 			for (i = 0; sw->field_tab[i].name; i++)
 				if (sw->field_tab[i].flags & FLG_NOAUTO)
 					warnx("Use explicit arg to view %s.%s.",
 					      sw->name, sw->field_tab[i].name);
 				else if (sw->field_tab[i].flags & FLG_GET)
 					pr_field(sw->name, sw->field_tab + i, sep);
-			close(fd);
 		}
 	} else if (argc > 0) {
-		if (wflag != 0) {
+		if (wflag != 0)
 			for (i = 0; i < argc; i++) {
 				p = strchr(argv[i], '=');
 				if (p == NULL) {
@@ -168,6 +169,13 @@ main(argc, argv)
 				sw = tab_by_name(argv[i]);
 				if (!sw)
 					continue;
+				if (sw->fd < 0 &&
+				    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
+				    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
+					warn("open: %s", sw->file);
+					error = 1;
+					continue;
+				}
 				f = field_by_name(sw->field_tab, argv[i]);
 				if ((f->flags & FLG_RDONLY) != 0) {
 					warnx("%s: read only", argv[i]);
@@ -178,40 +186,46 @@ main(argc, argv)
 						errx(1, "%s: can only be set",
 						     argv[i]);
 					f->flags |= FLG_GET;
-					(*sw->getval)(sw->name, fd);
+					(*sw->getval)(sw->name, sw->fd);
 					f->flags &= ~FLG_GET;
 				}
 				rd_field(f, p, do_merge);
 				f->flags |= FLG_SET;
-				(*sw->putval)(sw->name, fd);
+				(*sw->putval)(sw->name, sw->fd);
 				f->flags &= ~FLG_SET;
 			}
-		} else {
+		else
 			for (i = 0; i < argc; i++) {
 				sw = tab_by_name(argv[i]);
 				if (!sw)
 					continue;
+				if (sw->fd < 0 &&
+				    (sw->fd = open(sw->file, O_WRONLY)) < 0 &&
+				    (sw->fd = open(sw->file, O_RDONLY)) < 0) {
+					warn("open: %s", sw->file);
+					error = 1;
+					continue;
+				}
 				f = field_by_name(sw->field_tab, argv[i]);
 				if ((f->flags & FLG_WRONLY) != 0) {
 					warnx("%s: write only", argv[i]);
 					continue;
 				}
 				f->flags |= FLG_GET;
-				(*sw->getval)(sw->name, fd);
+				(*sw->getval)(sw->name, sw->fd);
 				pr_field(sw->name, f, sep);
 			}
-		}
 	} else
 		usage(NULL);
 
 	return (error);
 }
 
-const struct vartypesw *
+struct vartypesw *
 tab_by_name(var)
 	const char *var;
 {
-	const struct vartypesw *sw;
+	struct vartypesw *sw;
 	const char *p = strchr(var, '.');
 
 	if (!p) {
