@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.53 2002/01/14 03:11:55 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.54 2002/01/15 16:59:08 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -143,6 +143,8 @@ int	tcbhashsize = TCBHASHSIZE;
 extern int ip6_defhlim;
 #endif /* INET6 */
 
+struct pool tcpcb_pool;
+
 struct tcpstat tcpstat;		/* tcp statistics */
 
 /*
@@ -154,6 +156,8 @@ tcp_init()
 #ifdef TCP_COMPAT_42
 	tcp_iss = 1;		/* wrong */
 #endif /* TCP_COMPAT_42 */
+	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
+	    0, NULL, NULL, M_PCB);
 	in_pcbinit(&tcbtable, tcbhashsize);
 	tcp_now = arc4random() / 2;
 
@@ -451,7 +455,7 @@ tcp_newtcpcb(struct inpcb *inp)
 	struct tcpcb *tp;
 	int i;
 
-	tp = malloc(sizeof(*tp), M_PCB, M_NOWAIT);
+	tp = pool_get(&tcpcb_pool, PR_NOWAIT);
 	if (tp == NULL)
 		return ((struct tcpcb *)0);
 	bzero((char *) tp, sizeof(struct tcpcb));
@@ -682,7 +686,7 @@ tcp_close(tp)
 #endif
 	if (tp->t_template)
 		(void) m_free(tp->t_template);
-	free(tp, M_PCB);
+	pool_put(&tcpcb_pool, tp);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);
 	in_pcbdetach(inp);
