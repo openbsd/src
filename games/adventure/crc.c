@@ -1,4 +1,4 @@
-/*	$OpenBSD: crc.c,v 1.4 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: crc.c,v 1.5 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: crc.c,v 1.2 1995/03/21 12:04:59 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-static char rcsid[] = "$OpenBSD: crc.c,v 1.4 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: crc.c,v 1.5 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,15 +111,14 @@ unsigned long crcval;
 unsigned int step;
 
 void
-crc_start()
+crc_start(void)
 {
 	crcval = step = 0;
 }
 
+/* Process nr bytes at a time; ptr points to them */	
 unsigned long
-crc(ptr, nr)		/* Process nr bytes at a time; ptr points to them */
-	const char *ptr;
-	int     nr;
+crc(const char *ptr, int nr)
 {
 	int     i;
 	const char *p;

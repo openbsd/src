@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.8 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: subr.c,v 1.9 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.2 1995/03/21 12:05:11 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subr.c,v 1.8 2003/07/10 00:03:01 david Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.9 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,7 @@ static char rcsid[] = "$OpenBSD: subr.c,v 1.8 2003/07/10 00:03:01 david Exp $";
 
 /*		Statement functions	*/
 int
-toting(objj)
-	int     objj;
+toting(int objj)
 {
 	if (place[objj] == -1)
 		return (TRUE);
@@ -61,8 +60,7 @@ toting(objj)
 }
 
 int
-here(objj)
-	int     objj;
+here(int objj)
 {
 	if (place[objj] == loc || toting(objj))
 		return (TRUE);
@@ -70,8 +68,7 @@ here(objj)
 }
 
 int
-at(objj)
-	int     objj;
+at(int objj)
 {
 	if (place[objj] == loc || fixed[objj] == loc)
 		return (TRUE);
@@ -80,14 +77,13 @@ at(objj)
 }
 
 int
-liq2(pbotl)
-	int     pbotl;
+liq2(int pbotl)
 {
 	return ((1 - pbotl) * water + (pbotl / 2) * (water + oil));
 }
 
 int
-liq()
+liq(void)
 {
 	int     i;
 
@@ -98,8 +94,7 @@ liq()
 }
 
 int
-liqloc(locc)	/* may want to clean this one up a bit */
-	int     locc;
+liqloc(int locc)	/* may want to clean this one up a bit */
 {
 	int     i, j, l;
 
@@ -111,8 +106,7 @@ liqloc(locc)	/* may want to clean this one up a bit */
 }
 
 int
-bitset(l, n)
-	int     l, n;
+bitset(int l, int n)
 {
 	if (cond[l] & setbit[n])
 		return (TRUE);
@@ -120,8 +114,7 @@ bitset(l, n)
 }
 
 int
-forced(locc)
-	int     locc;
+forced(int locc)
 {
 	if (cond[locc] == 2)
 		return (TRUE);
@@ -129,7 +122,7 @@ forced(locc)
 }
 
 int
-dark()
+dark(void)
 {
 	if ((cond[loc] % 2) == 0 && (prop[lamp] == 0 || !here(lamp)))
 		return (TRUE);
@@ -137,8 +130,7 @@ dark()
 }
 
 int
-pct(n)
-	int     n;
+pct(int n)
 {
 	if (ran(100) < n)
 		return (TRUE);
@@ -147,7 +139,7 @@ pct(n)
 
 
 int
-fdwarf()	/* 71 */
+fdwarf(void)	/* 71 */
 {
 	int     i, j;
 	struct travlist *kk;
@@ -294,7 +286,7 @@ l82:		if (stick <= 1)	{		/* 82 */
 
 
 int
-march()				/* label 8	*/
+march(void)			/* label 8	*/
 {
 	int     ll1, ll2;
 
@@ -372,7 +364,7 @@ l12:	/* alternative to probability move	*/
 
 
 int
-mback()				/* 20			*/
+mback(void)			/* 20			*/
 {
 	struct travlist *tk2,*j;
 	int     ll;
@@ -411,7 +403,7 @@ mback()				/* 20			*/
 
 
 int
-specials()			/* 30000		*/
+specials(void)			/* 30000		*/
 {
 	switch(newloc -= 300) {
 	case 1:			/* 30100		*/
@@ -433,7 +425,7 @@ specials()			/* 30000		*/
 
 
 int
-trbridge()			/* 30300		*/
+trbridge(void)			/* 30300		*/
 {
 	if (prop[troll] == 1) {
 		pspeak(troll, 1);
@@ -465,7 +457,7 @@ trbridge()			/* 30300		*/
 
 
 void
-badmove()					/* 20			*/
+badmove(void)					/* 20			*/
 {
 	spk = 12;
 	if (k >= 43 && k <= 50)
@@ -486,8 +478,7 @@ badmove()					/* 20			*/
 }
 
 void
-bug(n)
-	int     n;
+bug(int n)
 {
 /*	printf("Please tell jim@rand.org that fatal bug %d happened.\n",n); */
 	fprintf(stderr,
@@ -497,7 +488,7 @@ bug(n)
 
 
 void
-checkhints()					/* 2600 &c		*/
+checkhints(void)				/* 2600 &c		*/
 {
 	int     hint;
 
@@ -548,7 +539,7 @@ l40020:		hintlc[hint] = 0;
 
 
 int
-trsay()				/* 9030			*/
+trsay(void)			/* 9030			*/
 {
 	int i;
 
@@ -566,7 +557,7 @@ trsay()				/* 9030			*/
 
 
 int
-trtake()			/* 9010			*/
+trtake(void)			/* 9010			*/
 {
 	if (toting(obj))
 		return (2011);	/* 9010 */
@@ -621,7 +612,7 @@ l9014:	if ((obj == bird || obj == cage) && prop[bird] != 0)
 
 
 int
-dropper()			/* 9021			*/
+dropper(void)			/* 9021			*/
 {
 	k = liq();
 	if (k == obj)
@@ -637,7 +628,7 @@ dropper()			/* 9021			*/
 }
 
 int
-trdrop()			/* 9020			*/
+trdrop(void)			/* 9020			*/
 {
 	if (toting(rod2) && obj == rod && !toting(rod))
 		obj = rod2;
@@ -690,7 +681,7 @@ trdrop()			/* 9020			*/
 
 
 int
-tropen()					/* 9040			*/
+tropen(void)					/* 9040			*/
 {
 	if (obj == clam || obj == oyster) {
 		k = 0;				/* 9046			*/
@@ -768,7 +759,7 @@ tropen()					/* 9040			*/
 
 
 int
-trkill()				/* 9120				*/
+trkill(void)				/* 9120				*/
 {
 	int i;
 
@@ -851,7 +842,7 @@ trkill()				/* 9120				*/
 
 
 int
-trtoss()				/* 9170: throw			*/
+trtoss(void)				/* 9170: throw			*/
 {
 	int i;
 
@@ -914,7 +905,7 @@ l9175:
 
 
 int
-trfeed()					/* 9210			*/
+trfeed(void)					/* 9210			*/
 {
 	if (obj == bird) {
 		spk = 100;
@@ -961,7 +952,7 @@ trfeed()					/* 9210			*/
 
 
 int
-trfill()					/* 9220 */
+trfill(void)					/* 9220 */
 {
 	if (obj == vase) {
 		spk = 29;
@@ -996,7 +987,7 @@ trfill()					/* 9220 */
 
 
 void
-closing()				/* 10000 */
+closing(void)				/* 10000 */
 {
 	int i;
 
@@ -1023,7 +1014,7 @@ closing()				/* 10000 */
 
 
 void
-caveclose()				/* 11000 */
+caveclose(void)				/* 11000 */
 {
 	int i;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unstr.c,v 1.8 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: unstr.c,v 1.9 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: unstr.c,v 1.3 1995/03/23 08:29:00 cgd Exp $	*/
 
 /*-
@@ -74,9 +74,7 @@ void order_unstr(STRFILE *);
 
 /* ARGSUSED */
 int
-main(ac, av)
-	int	ac;
-	char	**av;
+main(int ac, char *av[])
 {
 	static STRFILE	tbl;		/* description table */
 
@@ -101,8 +99,7 @@ main(ac, av)
 }
 
 void
-getargs(av)
-	char	*av[];
+getargs(char *av[])
 {
 	if (!*++av) {
 		(void) fprintf(stderr, "usage: unstr datafile\n");
@@ -115,8 +112,7 @@ getargs(av)
 }
 
 void
-order_unstr(tbl)
-	STRFILE	*tbl;
+order_unstr(STRFILE *tbl)
 {
 	unsigned int	i;
 	char	*sp;

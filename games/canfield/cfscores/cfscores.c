@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.11 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.12 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cfscores.c,v 1.11 2003/07/10 00:03:01 david Exp $";
+static char rcsid[] = "$OpenBSD: cfscores.c,v 1.12 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,9 +70,7 @@ int dbfd;
 void	printuser(const struct passwd *, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct passwd *pw;
 	int uid;
@@ -118,9 +116,7 @@ main(argc, argv)
  * print out info for specified password entry
  */
 void
-printuser(pw, printfail)
-	const struct passwd *pw;
-	int printfail;
+printuser(const struct passwd *pw, int printfail)
 {
 	struct betinfo total;
 	int i;

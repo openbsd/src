@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.6 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: save.c,v 1.7 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: save.c,v 1.2 1995/03/21 12:05:08 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.6 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.7 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,9 +119,12 @@ struct savestruct save_array[] =
 	{NULL,    0}
 };
 
+/*
+ * Two passes on data: first to get checksum, second
+ * to output the data using checksum to start random #s
+ */
 int
-save(outfile)	/* Two passes on data: first to get checksum, second */
-	const char *outfile;  /* to output the data using checksum to start random #s */
+save(const char *outfile)	
 {
 	FILE   *out;
 	struct savestruct *p;
@@ -152,8 +155,7 @@ save(outfile)	/* Two passes on data: first to get checksum, second */
 }
 
 int
-restore(infile)
-	const char *infile;
+restore(const char *infile)
 {
 	FILE   *in;
 	struct savestruct *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.14 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: factor.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.14 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,9 +95,7 @@ void	pr_bigfact(u_int64_t);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	u_int64_t val;
 	int ch;
@@ -166,8 +164,7 @@ main(argc, argv)
  * Factors are printed with leading tabs.
  */
 void
-pr_fact(val)
-	u_int64_t val;		/* Factor this value. */
+pr_fact(u_int64_t val)		/* Factor this value. */
 {
 	const ubig *fact;	/* The factor found. */
 
@@ -216,8 +213,7 @@ pr_fact(val)
  * sufficient to factor a 64-bit quad.
  */
 void
-pr_bigfact(val)
-	u_int64_t val;		/* Factor this value. */
+pr_bigfact(u_int64_t val)	/* Factor this value. */
 {
 	ubig start, stop, factor;
 	char *q;
@@ -299,7 +295,7 @@ pr_bigfact(val)
 
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: factor [value ...]\n");
 	exit (0);

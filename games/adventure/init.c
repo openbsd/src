@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.8 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.9 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1996/05/21 21:53:05 mrg Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.8 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.9 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ int     setbit[16] = {1, 2, 4, 010, 020, 040, 0100, 0200, 0400, 01000, 02000,
 
 
 void
-init()				/* everything for 1st time run */
+init(void)			/* everything for 1st time run */
 {
 	rdata();		/* read data from orig. file */
 	linkdata();
@@ -70,8 +70,7 @@ init()				/* everything for 1st time run */
 }
 
 char *
-decr(a, b, c, d, e)
-	char a, b, c, d, e;
+decr(char a, char b, char c, char d, char e)
 {
 	static char buf[6];
 
@@ -85,7 +84,7 @@ decr(a, b, c, d, e)
 }
 
 void
-linkdata()			/* secondary data manipulation */
+linkdata(void)			/* secondary data manipulation */
 {
 	int     i, j;
 
@@ -211,8 +210,7 @@ linkdata()			/* secondary data manipulation */
 
 
 void
-trapdel(n)			/* come here if he hits a del	*/
-	int n;
+trapdel(int n)			/* come here if he hits a del	*/
 {
 	delhit = 1;		/* main checks, treats as QUIT	*/
 	signal(SIGINT, trapdel);/* catch subsequent DELs	*/
@@ -220,7 +218,7 @@ trapdel(n)			/* come here if he hits a del	*/
 
 
 void
-startup()
+startup(void)
 {
 	demo = Start();
 	srandomdev();

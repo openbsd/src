@@ -1,4 +1,4 @@
-/*	$OpenBSD: caesar.c,v 1.12 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: caesar.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: caesar.c,v 1.12 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: caesar.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,7 @@ void usage(void);
 
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch, dot, i, nread, winnerdot;
 	char *inbuf, *p, **av;
@@ -148,8 +146,7 @@ main(argc, argv)
 }
 
 void
-printit(rot)
-	int rot;
+printit(int rot)
 {
 	int ch;
 
@@ -162,7 +159,7 @@ printit(rot)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,"usage: caesar [rotation]\n");
 	exit(1);

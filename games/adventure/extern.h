@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2003/04/07 18:19:37 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ void die(int);
 
 /* init.c */
 void init(void);
-char   *decr(int, int, int, int, int);
+char   *decr(char, char, char, char, char);
 void linkdata(void);
 void trapdel(int);
 void startup(void);

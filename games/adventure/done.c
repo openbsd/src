@@ -1,4 +1,4 @@
-/*	$OpenBSD: done.c,v 1.6 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: done.c,v 1.7 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: done.c,v 1.2 1995/03/21 12:05:01 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)done.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: done.c,v 1.6 2003/07/10 00:03:01 david Exp $";
+static char rcsid[] = "$OpenBSD: done.c,v 1.7 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ static char rcsid[] = "$OpenBSD: done.c,v 1.6 2003/07/10 00:03:01 david Exp $";
 #include "extern.h"
 
 int
-score()			/* sort of like 20000 */
+score(void)			/* sort of like 20000 */
 {
 	int     scor, i;
 
@@ -104,8 +104,8 @@ score()			/* sort of like 20000 */
 }
 
 void
-done(entry)		/* entry=1 means goto 13000 */	/* game is over */
-	int     entry;	/* entry=2 means goto 20000 */	/* 3=19000 */
+done(int entry)		/* entry=1 means goto 13000 */	/* game is over */
+			/* entry=2 means goto 20000 */	/* 3=19000 */
 {
 	int     i, sc;
 
@@ -139,8 +139,7 @@ done(entry)		/* entry=1 means goto 13000 */	/* game is over */
 
 
 void
-die(entry)			/* label 90 */
-	int     entry;
+die(int entry)			/* label 90 */
 {
 	int     i;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: primes.c,v 1.12 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: primes.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: primes.c,v 1.12 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: primes.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,9 +110,7 @@ ubig	read_num_buf(void);
 void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	ubig start;		/* where to start generating */
 	ubig stop;		/* don't generate at or above this value */
@@ -187,7 +185,7 @@ main(argc, argv)
  *	This routine returns a number n, where 0 <= n && n <= BIG.
  */
 ubig
-read_num_buf()
+read_num_buf(void)
 {
 	ubig val;
 	char *p, buf[100];		/* > max number of digits. */
@@ -218,11 +216,11 @@ read_num_buf()
 
 /*
  * primes - sieve and print primes from start up to and but not including stop
+ * start: where to start generating
+ * stop : don't generate at or above this value
  */
 void
-primes(start, stop)
-	ubig start;	/* where to start generating */
-	ubig stop;	/* don't generate at or above this value */
+primes(ubig start, ubig stop)
 {
 	char *q;		/* sieve spot */
 	ubig factor;		/* index and factor */
@@ -333,7 +331,7 @@ primes(start, stop)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: primes [start [stop]]\n");
 	exit(1);

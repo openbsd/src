@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.7 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: setup.c,v 1.8 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.2 1995/03/21 12:05:10 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.7 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.8 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,9 +73,7 @@ static char rcsid[] = "$OpenBSD: setup.c,v 1.7 2003/06/03 03:01:37 millert Exp $
 #define LINE 10		/* How many values do we get on a line? */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE	*infile;
 	int	c, count, linestart;

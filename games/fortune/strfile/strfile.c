@@ -1,4 +1,4 @@
-/*	$OpenBSD: strfile.c,v 1.13 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: strfile.c,v 1.14 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: strfile.c,v 1.13 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: strfile.c,v 1.14 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,9 +138,7 @@ void usage(void);
  *	and then seek back to the beginning to write in the table.
  */
 int
-main(ac, av)
-	int	ac;
-	char	**av;
+main(int ac, char *av[])
 {
 	char		*sp, dc;
 	FILE		*inf, *outf;
@@ -256,9 +254,7 @@ main(ac, av)
  *	This routine evaluates arguments from the command line
  */
 void
-getargs(argc, argv)
-	int	argc;
-	char	**argv;
+getargs(int argc, char *argv[])
 {
 	extern char	*optarg;
 	extern int	optind;
@@ -311,7 +307,7 @@ getargs(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr,
 	    "strfile [-iorsx] [-c char] sourcefile [datafile]\n");
@@ -323,9 +319,7 @@ usage()
  *	Add an offset to the list, or write it out, as appropriate.
  */
 void
-add_offset(fp, off)
-	FILE	*fp;
-	int32_t	off;
+add_offset(FILE *fp, int32_t off)
 {
 	int32_t net;
 
@@ -344,7 +338,7 @@ add_offset(fp, off)
  *	Order the strings alphabetically (possibly ignoring case).
  */
 void
-do_order()
+do_order(void)
 {
 	int	i;
 	int32_t	*lp;
@@ -368,8 +362,7 @@ do_order()
  *	Compare two strings in the file
  */
 char *
-unctrl(c)
-	char c;
+unctrl(char c)
 {
 	static char	buf[3];
 
@@ -389,8 +382,7 @@ unctrl(c)
 }
 
 int
-cmp_str(p1, p2)
-	const void	*p1, *p2;
+cmp_str(const void *p1, const void *p2)
 {
 	int	c1, c2;
 	int	n1, n2;
@@ -441,7 +433,7 @@ cmp_str(p1, p2)
  *	randomization is done within each block.
  */
 void
-randomize()
+randomize(void)
 {
 	int	cnt, i;
 	int32_t	tmp;

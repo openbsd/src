@@ -1,4 +1,4 @@
-/*	$OpenBSD: arithmetic.c,v 1.14 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: arithmetic.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.14 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: arithmetic.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,9 +109,7 @@ time_t qtime;
  * so far are printed.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -157,8 +155,7 @@ main(argc, argv)
 
 /* Handle interrupt character.  Print score and exit. */
 void
-intr(dummy)
-	int dummy;
+intr(int dummy)
 {
 	showstats();
 	exit(0);
@@ -166,7 +163,7 @@ intr(dummy)
 
 /* Print score.  Original `arithmetic' had a delay after printing it. */
 void
-showstats()
+showstats(void)
 {
 	if (nright + nwrong > 0) {
 		(void)printf("\n\nRights %d; Wrongs %d; Score %d%%",
@@ -187,7 +184,7 @@ showstats()
  * more likely to appear in subsequent problems.
  */
 int
-problem()
+problem(void)
 {
 	char *p;
 	time_t start, finish;
@@ -299,8 +296,7 @@ struct penalty {
  * forget about the penalty (how likely is this, anyway?).
  */
 void
-penalise(value, op, operand)
-	int value, op, operand;
+penalise(int value, int op, int operand)
 {
 	struct penalty *p;
 
@@ -320,8 +316,7 @@ penalise(value, op, operand)
  * we find the corresponding value and return that, decreasing its penalty.
  */
 int
-getrandom(maxval, op, operand)
-	int maxval, op, operand;
+getrandom(int maxval, int op, int operand)
 {
 	int value;
 	struct penalty **pp, *p;
@@ -365,8 +360,7 @@ getrandom(maxval, op, operand)
 
 /* Return an index for the character op, which is one of [+-x/]. */
 int
-opnum(op)
-	int op;
+opnum(int op)
 {
 	char *p;
 
@@ -377,7 +371,7 @@ opnum(op)
 
 /* Print usage message and quit. */
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: arithmetic [-o +-x/] [-r range]\n");
 	exit(1);

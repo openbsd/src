@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.14 2003/09/25 22:31:43 aaron Exp $	*/
+/*	$OpenBSD: io.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.14 2003/09/25 22:31:43 aaron Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.15 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,13 +52,9 @@ static char rcsid[] = "$OpenBSD: io.c,v 1.14 2003/09/25 22:31:43 aaron Exp $";
 #include "hdr.h"
 #include "extern.h"
 
-
+/* Get command from user. No prompt, usually.	*/
 void
-getin(wrd1, siz1, wrd2, siz2)	/* get command from user	*/
-	char *wrd1; 		/* no prompt, usually		*/
-	size_t siz1;
-	char *wrd2;
-	size_t siz2;
+getin(char *wrd1, size_t siz1, char *wrd2, size_t siz2)	
 {
 	char   *s, *slast;
 	int     ch, first;
@@ -104,8 +100,7 @@ getin(wrd1, siz1, wrd2, siz2)	/* get command from user	*/
 
 #if 0		/* Not used */
 int
-confirm(mesg)			/* confirm irreversible action	*/
-	char	*mesg;
+confirm(char *mesg)		/* confirm irreversible action	*/
 {
 	int     result;
 	int     ch;
@@ -124,8 +119,7 @@ confirm(mesg)			/* confirm irreversible action	*/
 #endif
 
 int
-yes(x, y, z)			/* confirm with rspeak		*/
-	int     x, y, z;
+yes(int x, int y, int z)	/* confirm with rspeak		*/
 {
 	int     result;
 	int     ch;
@@ -154,8 +148,7 @@ yes(x, y, z)			/* confirm with rspeak		*/
 }
 
 int
-yesm(x, y, z)			/* confirm with mspeak		*/
-	int     x, y, z;
+yesm(int x, int y, int z)	/* confirm with mspeak		*/
 {
 	int     result;
 	int    ch;
@@ -193,7 +186,7 @@ const char iotape[] = "Ax3F'\003tt$8h\315qer*h\017nGKrX\207:!l";
 const char *tape = iotape;	/* pointer to encryption tape	*/
 
 int
-next()				/* next virtual char, bump adr	*/
+next(void)			/* next virtual char, bump adr	*/
 {
 	int ch;
 
@@ -210,7 +203,7 @@ next()				/* next virtual char, bump adr	*/
 char	breakch;		/* tell which char ended rnum	*/
 
 void
-rdata()			/* "read" data from virtual file */
+rdata(void)			/* "read" data from virtual file */
 {
 	int     sect;
 	char    ch;
@@ -287,7 +280,7 @@ char	nbf[12];
 
 
 int
-rnum()				/* read initial location num	*/
+rnum(void)			/* read initial location num	*/
 {
 	char	*s;
 
@@ -305,8 +298,7 @@ rnum()				/* read initial location num	*/
 char	*seekhere;
 
 void
-rdesc(sect)			/* read description-format msgs */
-	int     sect;
+rdesc(int sect)			/* read description-format msgs */
 {
 	int     locc;
 	char   *seekstart, *maystart;
@@ -369,7 +361,7 @@ rdesc(sect)			/* read description-format msgs */
 
 
 void
-rtrav()				/* read travel table		*/
+rtrav(void)				/* read travel table		*/
 {
 	int     locc;
 	struct travlist *t;
@@ -424,8 +416,7 @@ rtrav()				/* read travel table		*/
 #ifdef DEBUG
 
 void
-twrite(loq)			/* travel options from this loc */
-	int     loq;
+twrite(int loq)			/* travel options from this loc */
 {
 	struct	travlist *t;
 
@@ -446,7 +437,7 @@ twrite(loq)			/* travel options from this loc */
 #endif /* DEBUG */
 
 void
-rvoc()
+rvoc(void)
 {
 	char   *s;		/* read the vocabulary		*/
 	int     index;
@@ -472,7 +463,7 @@ rvoc()
 
 
 void
-rlocs()				/* initial object locations	*/
+rlocs(void)				/* initial object locations	*/
 {
 	for (;;) {
 		if ((obj = rnum()) < 0)
@@ -486,7 +477,7 @@ rlocs()				/* initial object locations	*/
 }
 
 void
-rdflt()				/* default verb messages	*/
+rdflt(void)			/* default verb messages	*/
 {
 	for (;;) {
 		if ((verb = rnum()) < 0)
@@ -496,7 +487,7 @@ rdflt()				/* default verb messages	*/
 }
 
 void
-rliq()				/* liquid assets &c: cond bits	*/
+rliq(void)			/* liquid assets &c: cond bits	*/
 {
 	int bitnum;
 
@@ -512,7 +503,7 @@ rliq()				/* liquid assets &c: cond bits	*/
 }
 
 void
-rhints()
+rhints(void)
 {
 	int     hintnum, i;
 
@@ -529,8 +520,7 @@ rhints()
 
 
 void
-rspeak(msg)
-	int     msg;
+rspeak(int msg)
 {
 	if (msg != 0)
 		speak(&rtext[msg]);
@@ -538,18 +528,18 @@ rspeak(msg)
 
 
 void
-mspeak(msg)
-	int     msg;
+mspeak(int msg)
 {
 	if (msg != 0)
 		speak(&mtext[msg]);
 }
 
-
+/*
+ * Read, decrypt, and print a message (not ptext)
+ * msg is a pointer to seek address and length of mess
+ */
 void
-speak(msg)	/* read, decrypt, and print a message (not ptext)	*/
-	const struct text *msg; /* msg is a pointer to seek address and length
-				 * of mess */
+speak(const struct text *msg)	
 {
 	char   *s, nonfirst;
 
@@ -574,11 +564,13 @@ speak(msg)	/* read, decrypt, and print a message (not ptext)	*/
 	}
 }
 
-
+/*
+ * Read, decrypt an print a ptext message
+ * msg is the number of all the p msgs for this place
+ * assumes object 1 doesn't have prop 1, obj 2 no prop 2 &c
+ */
 void
-pspeak(m, skip) /* read, decrypt an print a ptext message	      */
-	int     m;	/* msg is the number of all the p msgs for this place */
-	int     skip;	/* assumes object 1 doesn't have prop 1, obj 2 no prop 2 &c*/
+pspeak(int m, int skip) 
 {
 	char   *s, nonfirst;
 	char   *numst, save;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wizard.c,v 1.12 2003/06/03 03:01:37 millert Exp $	*/
+/*	$OpenBSD: wizard.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $	*/
 /*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: wizard.c,v 1.12 2003/06/03 03:01:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: wizard.c,v 1.13 2004/07/09 15:59:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,7 @@ static char rcsid[] = "$OpenBSD: wizard.c,v 1.12 2003/06/03 03:01:37 millert Exp
 
 #if 0
 void
-datime(d, t)
-	int    *d, *t;
+datime(int *d, int *t)
 {
 	time_t  tvec;
 	struct tm *tptr;
@@ -75,14 +74,14 @@ datime(d, t)
 char    magic[6];
 
 void
-poof()
+poof(void)
 {
 	strlcpy(magic, DECR(d,w,a,r,f), sizeof magic);
 	latncy = 45;
 }
 
 int
-Start()
+Start(void)
 {
 	time_t  t, delay;
 
@@ -107,7 +106,7 @@ Start()
 }
 
 int
-wizard()		/* not as complex as advent/10 (for now)	*/
+wizard(void)		/* not as complex as advent/10 (for now)	*/
 {
 	if (!yesm(16, 0, 7))
 		return (FALSE);
@@ -122,7 +121,7 @@ wizard()		/* not as complex as advent/10 (for now)	*/
 }
 
 void
-ciao()
+ciao(void)
 {
 	int	ch;
 	char   *c;
@@ -148,8 +147,7 @@ ciao()
 
 
 int
-ran(range)
-	int     range;
+ran(int range)
 {
 	long    i;
 
