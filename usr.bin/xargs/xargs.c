@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.10 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.11 2002/02/18 18:22:54 millert Exp $	*/
 /*	$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: xargs.c,v 1.10 2002/02/16 21:27:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: xargs.c,v 1.11 2002/02/18 18:22:54 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,9 +125,6 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
-
-	if (xflag && !nflag)
-		usage();
 
 	/*
 	 * Allocate pointers for the utility name, the utility arguments,
