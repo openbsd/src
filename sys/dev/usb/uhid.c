@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhid.c,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
-/*	$NetBSD: uhid.c,v 1.35 2000/03/19 22:23:28 augustss Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: uhid.c,v 1.36 2000/03/27 12:33:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhid.c,v 1.22 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ d_poll_t	uhidpoll;
 
 #define		UHID_CDEV_MAJOR 122
 
-static struct cdevsw uhid_cdevsw = {
+Static struct cdevsw uhid_cdevsw = {
 	/* open */	uhidopen,
 	/* close */	uhidclose,
 	/* read */	uhidread,
@@ -148,12 +148,12 @@ static struct cdevsw uhid_cdevsw = {
 };
 #endif
 
-static void uhid_intr __P((usbd_xfer_handle, usbd_private_handle,
+Static void uhid_intr __P((usbd_xfer_handle, usbd_private_handle,
 			   usbd_status));
 
-static int uhid_do_read __P((struct uhid_softc *, struct uio *uio, int));
-static int uhid_do_write __P((struct uhid_softc *, struct uio *uio, int));
-static int uhid_do_ioctl __P((struct uhid_softc *, u_long, caddr_t, int,
+Static int uhid_do_read __P((struct uhid_softc *, struct uio *uio, int));
+Static int uhid_do_write __P((struct uhid_softc *, struct uio *uio, int));
+Static int uhid_do_ioctl __P((struct uhid_softc *, u_long, caddr_t, int,
 			      struct proc *));
 
 USB_DECLARE_DRIVER(uhid);

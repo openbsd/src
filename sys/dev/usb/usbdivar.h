@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdivar.h,v 1.8 2000/03/28 19:37:53 aaron Exp $ */
-/*	$NetBSD: usbdivar.h,v 1.52 2000/03/25 18:02:33 augustss Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: usbdivar.h,v 1.55 2000/03/30 00:18:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -39,10 +39,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__)
 #include <sys/callout.h>
-#else
-#include <sys/timeout.h>
 #endif
 
 /* From usb_mem.h */
@@ -163,6 +161,7 @@ struct usbd_pipe {
 	struct usbd_endpoint   *endpoint;
 	int			refcnt;
 	char			running;
+	char			aborting;
 	SIMPLEQ_HEAD(, usbd_xfer) queue;
 	LIST_ENTRY(usbd_pipe)	next;
 
@@ -251,7 +250,6 @@ void		usb_schedsoftintr __P((struct usbd_bus *));
 #ifdef DIAGNOSTIC
 #define SPLUSBCHECK \
 	do { int _s = splusb(), _su = splusb(); \
-	     extern int cold; \
              if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
 				   _s, _su, __FILE__, __LINE__); \
 	     splx(_s); \

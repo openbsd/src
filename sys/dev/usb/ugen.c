@@ -1,5 +1,5 @@
-/*	$OpenBSD: ugen.c,v 1.9 2000/03/28 19:37:49 aaron Exp $ */
-/*	$NetBSD: ugen.c,v 1.36 2000/03/06 20:59:17 augustss Exp $	*/
+/*	$OpenBSD: ugen.c,v 1.10 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: ugen.c,v 1.37 2000/03/27 12:33:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ d_poll_t  ugenpoll;
 
 #define UGEN_CDEV_MAJOR	114
 
-static struct cdevsw ugen_cdevsw = {
+Static struct cdevsw ugen_cdevsw = {
 	/* open */	ugenopen,
 	/* close */	ugenclose,
 	/* read */	ugenread,
@@ -137,18 +137,18 @@ static struct cdevsw ugen_cdevsw = {
 };
 #endif
 
-static void ugenintr __P((usbd_xfer_handle xfer, usbd_private_handle addr, 
+Static void ugenintr __P((usbd_xfer_handle xfer, usbd_private_handle addr, 
 			  usbd_status status));
 
-static int ugen_do_read __P((struct ugen_softc *, int, struct uio *, int));
-static int ugen_do_write __P((struct ugen_softc *, int, struct uio *, int));
-static int ugen_do_ioctl __P((struct ugen_softc *, int, u_long, 
+Static int ugen_do_read __P((struct ugen_softc *, int, struct uio *, int));
+Static int ugen_do_write __P((struct ugen_softc *, int, struct uio *, int));
+Static int ugen_do_ioctl __P((struct ugen_softc *, int, u_long, 
 			      caddr_t, int, struct proc *));
-static int ugen_set_config __P((struct ugen_softc *sc, int configno));
-static usb_config_descriptor_t *ugen_get_cdesc __P((struct ugen_softc *sc, 
+Static int ugen_set_config __P((struct ugen_softc *sc, int configno));
+Static usb_config_descriptor_t *ugen_get_cdesc __P((struct ugen_softc *sc, 
 						    int index, int *lenp));
-static usbd_status ugen_set_interface __P((struct ugen_softc *, int, int));
-static int ugen_get_alt_index __P((struct ugen_softc *sc, int ifaceidx));
+Static usbd_status ugen_set_interface __P((struct ugen_softc *, int, int));
+Static int ugen_get_alt_index __P((struct ugen_softc *sc, int ifaceidx));
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
 #define UGENENDPOINT(n) (minor(n) & 0xf)
@@ -215,7 +215,7 @@ USB_ATTACH(ugen)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
-static int
+Static int
 ugen_set_config(sc, configno)
 	struct ugen_softc *sc;
 	int configno;
@@ -410,7 +410,7 @@ ugenclose(dev, flag, mode, p)
 	return (0);
 }
 
-static int
+Static int
 ugen_do_read(sc, endpt, uio, flag)
 	struct ugen_softc *sc;
 	int endpt;
@@ -538,7 +538,7 @@ ugenread(dev, uio, flag)
 	return (error);
 }
 
-static int
+Static int
 ugen_do_write(sc, endpt, uio, flag)
 	struct ugen_softc *sc;
 	int endpt;
@@ -694,7 +694,7 @@ USB_DETACH(ugen)
 	return (0);
 }
 
-static void
+Static void
 ugenintr(xfer, addr, status)
 	usbd_xfer_handle xfer;
 	usbd_private_handle addr;
@@ -732,7 +732,7 @@ ugenintr(xfer, addr, status)
 	selwakeup(&sce->rsel);
 }
 
-static usbd_status
+Static usbd_status
 ugen_set_interface(sc, ifaceidx, altno)
 	struct ugen_softc *sc;
 	int ifaceidx, altno;
@@ -789,7 +789,7 @@ ugen_set_interface(sc, ifaceidx, altno)
 }
 
 /* Retrieve a complete descriptor for a certain device and index. */
-static usb_config_descriptor_t *
+Static usb_config_descriptor_t *
 ugen_get_cdesc(sc, index, lenp)
 	struct ugen_softc *sc;
 	int index;
@@ -825,7 +825,7 @@ ugen_get_cdesc(sc, index, lenp)
 	return (cdesc);
 }
 
-static int
+Static int
 ugen_get_alt_index(sc, ifaceidx)
 	struct ugen_softc *sc;
 	int ifaceidx;
@@ -839,7 +839,7 @@ ugen_get_alt_index(sc, ifaceidx)
 	return (usbd_get_interface_altindex(iface));
 }
 
-static int
+Static int
 ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 	struct ugen_softc *sc;
 	int endpt;

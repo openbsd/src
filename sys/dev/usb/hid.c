@@ -1,5 +1,5 @@
-/*	$OpenBSD: hid.c,v 1.5 2000/03/28 19:37:46 aaron Exp $ */
-/*	$NetBSD: hid.c,v 1.12 2000/03/17 18:16:18 augustss Exp $	*/
+/*	$OpenBSD: hid.c,v 1.6 2000/03/30 16:19:32 aaron Exp $ */
+/*	$NetBSD: hid.c,v 1.13 2000/03/27 12:33:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -60,7 +60,7 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-static void hid_clear_local __P((struct hid_item *));
+Static void hid_clear_local __P((struct hid_item *));
 
 #define MAXUSAGE 100
 struct hid_data {
@@ -76,7 +76,7 @@ struct hid_data {
 	int kindset;
 };
 
-static void
+Static void
 hid_clear_local(c)
 	struct hid_item *c;
 {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_subr.c,v 1.8 2000/03/28 19:37:51 aaron Exp $ */
-/*	$NetBSD: usb_subr.c,v 1.68 2000/03/25 18:02:33 augustss Exp $	*/
+/*	$OpenBSD: usb_subr.c,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: usb_subr.c,v 1.71 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -76,22 +76,22 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-static usbd_status	usbd_set_config __P((usbd_device_handle, int));
-static char *usbd_get_string __P((usbd_device_handle, int, char *));
-static int usbd_getnewaddr __P((usbd_bus_handle bus));
+Static usbd_status	usbd_set_config __P((usbd_device_handle, int));
+Static char *usbd_get_string __P((usbd_device_handle, int, char *));
+Static int usbd_getnewaddr __P((usbd_bus_handle bus));
 #if defined(__NetBSD__)
-static int usbd_print __P((void *aux, const char *pnp));
-static int usbd_submatch __P((device_ptr_t, struct cfdata *cf, void *));
+Static int usbd_print __P((void *aux, const char *pnp));
+Static int usbd_submatch __P((device_ptr_t, struct cfdata *cf, void *));
 #elif defined(__OpenBSD__)
-static int usbd_print __P((void *aux, const char *pnp));
-static int usbd_submatch __P((device_ptr_t, void *, void *));
+Static int usbd_print __P((void *aux, const char *pnp));
+Static int usbd_submatch __P((device_ptr_t, void *, void *));
 #endif
-static void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));
-static void usbd_kill_pipe __P((usbd_pipe_handle));
-static usbd_status usbd_probe_and_attach 
+Static void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));
+Static void usbd_kill_pipe __P((usbd_pipe_handle));
+Static usbd_status usbd_probe_and_attach 
 	__P((device_ptr_t parent, usbd_device_handle dev, int port, int addr));
 
-static u_int32_t usb_cookie_no = 0;
+Static u_int32_t usb_cookie_no = 0;
 
 #ifdef USBVERBOSE
 typedef u_int16_t usb_vendor_id_t;
@@ -111,7 +111,7 @@ struct usb_knowndev {
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
-static const char *usbd_error_strs[] = {
+Static const char *usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
 	"PENDING_REQUESTS",
@@ -514,7 +514,7 @@ usbd_free_iface_data(dev, ifcno)
 		free(ifc->endpoints, M_USB);
 }
 
-static usbd_status
+Static usbd_status
 usbd_set_config(dev, conf)
 	usbd_device_handle dev;
 	int conf;
@@ -697,6 +697,7 @@ usbd_setup_pipe(dev, iface, ep, ival, pipe)
 	p->refcnt = 1;
 	p->intrxfer = 0;
 	p->running = 0;
+	p->aborting = 0;
 	p->repeat = 0;
 	p->interval = ival;
 	SIMPLEQ_INIT(&p->queue);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ohcivar.h,v 1.8 2000/03/28 19:37:48 aaron Exp $ */
-/*	$NetBSD: ohcivar.h,v 1.20 2000/02/22 11:30:55 augustss Exp $	*/
+/*	$OpenBSD: ohcivar.h,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: ohcivar.h,v 1.21 2000/03/29 01:46:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -47,6 +47,7 @@ typedef struct ohci_soft_ed {
 #define OHCI_SED_SIZE ((sizeof (struct ohci_soft_ed) + OHCI_ED_ALIGN - 1) / OHCI_ED_ALIGN * OHCI_ED_ALIGN)
 #define OHCI_SED_CHUNK 128
 
+
 typedef struct ohci_soft_td {
 	ohci_td_t td;
 	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
@@ -62,13 +63,22 @@ typedef struct ohci_soft_td {
 #define OHCI_STD_SIZE ((sizeof (struct ohci_soft_td) + OHCI_TD_ALIGN - 1) / OHCI_TD_ALIGN * OHCI_TD_ALIGN)
 #define OHCI_STD_CHUNK 128
 
+
 typedef struct ohci_soft_itd {
 	ohci_itd_t itd;
 	struct ohci_soft_itd *nextitd; /* mirrors nexttd in ITD */
+	struct ohci_soft_itd *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
+	LIST_ENTRY(ohci_soft_itd) hnext;
+	usbd_xfer_handle xfer;
+	u_int16_t flags;
+#ifdef DIAGNOSTIC
+	char isdone;
+#endif
 } ohci_soft_itd_t;
 #define OHCI_SITD_SIZE ((sizeof (struct ohci_soft_itd) + OHCI_ITD_ALIGN - 1) / OHCI_ITD_ALIGN * OHCI_ITD_ALIGN)
 #define OHCI_SITD_CHUNK 64
+
 
 #define OHCI_NO_EDS (2*OHCI_NO_INTRS-1)
 
@@ -89,7 +99,8 @@ typedef struct ohci_softc {
 	ohci_soft_ed_t *sc_ctrl_head;
 	ohci_soft_ed_t *sc_bulk_head;
 
-	LIST_HEAD(, ohci_soft_td) sc_hash_tds[OHCI_HASH_SIZE];
+	LIST_HEAD(, ohci_soft_td)  sc_hash_tds[OHCI_HASH_SIZE];
+	LIST_HEAD(, ohci_soft_itd) sc_hash_itds[OHCI_HASH_SIZE];
 
 	int sc_noport;
 	u_int8_t sc_addr;		/* device address */
@@ -103,7 +114,8 @@ typedef struct ohci_softc {
 
 	usbd_xfer_handle sc_intrxfer;
 
-	ohci_physaddr_t sc_done;
+	ohci_soft_itd_t *sc_sidone;
+	ohci_soft_td_t  *sc_sdone;
 
 	char sc_vendor[16];
 	int sc_id_vendor;
@@ -114,6 +126,8 @@ typedef struct ohci_softc {
 #endif
 
 	device_ptr_t sc_child;
+
+	char sc_dying;
 } ohci_softc_t;
 
 usbd_status	ohci_init __P((ohci_softc_t *));

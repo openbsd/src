@@ -1,5 +1,5 @@
-/*	$OpenBSD: ulpt.c,v 1.1 2000/03/28 19:37:50 aaron Exp $ */
-/*	$NetBSD: ulpt.c,v 1.33 2000/03/06 20:58:39 augustss Exp $	*/
+/*	$OpenBSD: ulpt.c,v 1.2 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: ulpt.c,v 1.35 2000/03/29 18:24:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -119,14 +119,14 @@ struct ulpt_softc {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 cdev_decl(ulpt);
 #elif defined(__FreeBSD__)
-static d_open_t ulptopen;
-static d_close_t ulptclose;
-static d_write_t ulptwrite;
-static d_ioctl_t ulptioctl;
+Static d_open_t ulptopen;
+Static d_close_t ulptclose;
+Static d_write_t ulptwrite;
+Static d_ioctl_t ulptioctl;
 
 #define ULPT_CDEV_MAJOR 113
 
-static struct cdevsw ulpt_cdevsw = {
+Static struct cdevsw ulpt_cdevsw = {
 	/* open */	ulptopen,
 	/* close */	ulptclose,
 	/* read */	noread,

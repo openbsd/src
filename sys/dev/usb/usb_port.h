@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_port.h,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
-/*	$NetBSD: usb_port.h,v 1.23 2000/03/24 22:03:32 augustss Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: usb_port.h,v 1.28 2000/03/30 08:53:31 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -64,6 +64,10 @@
 #define AUE_DEBUG 1
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
+#define UMASS_DEBUG 1
+#define Static
+#else
+#define Static static
 #endif
 
 typedef struct device *device_ptr_t;
@@ -85,6 +89,12 @@ typedef struct callout usb_callout_t;
 #define usb_callout_init(h)	callout_init(&(h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
+
+#define usb_kthread_create1	kthread_create1
+#define usb_kthread_create	kthread_create
+
+#define Ether_ifattach ether_ifattach
+#define IF_INPUT(ifp, m) (*(ifp)->if_input)((ifp), (m))
 
 #define logprintf printf
 
@@ -172,12 +182,30 @@ __CONCAT(dname,_detach)(self, flags) \
 #define AUE_DEBUG 1
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
+#define UMASS_DEBUG 1
 #endif
+
+#define Static
 
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define kthread_create1		kthread_create
+#define usb_kthread_create1	kthread_create
+#define usb_kthread_create	kthread_create_deferred
+
+#define	config_pending_incr()
+#define	config_pending_decr()
+
+#define mii_attach(x1,x2,x3,x4,x5,x6) mii_phy_probe(x1,x2,x3)
+#define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
+#define if_deactivate(x)
+#define IF_INPUT(ifp, m) do {						\
+	struct ether_header *eh;					\
+									\
+	eh = mtod(m, struct ether_header *);				\
+	m_adj(m, sizeof(struct ether_header));				\
+	ether_input((ifp), (eh), (m));					\
+} while (0)
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
@@ -195,6 +223,8 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define realloc usb_realloc
 void *usb_realloc __P((void *, u_int, int, int));
+
+extern int cold;
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -292,6 +322,8 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #include "opt_usb.h"
 
+#define Static
+
 #define USBVERBOSE
 
 #define device_ptr_t device_t
@@ -309,9 +341,9 @@ __CONCAT(dname,_detach)(self, flags) \
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
 #define	memset(d, v, l)		bzero((d),(l))
 #define bswap32(x)		swap32(x)
-#define kthread_create1(function, sc, priv, string, name)
-#define kthread_create(create_function, sc)
-#define kthread_exit(err)
+#define usb_kthread_create1(function, sc, priv, string, name)
+#define usb_kthread_create(create_function, sc)
+#define usb_kthread_exit(err)
 
 typedef struct callout_handle usb_callout_t;
 #define usb_callout_init(h) callout_handle_init(&(h))
@@ -326,13 +358,13 @@ typedef struct callout_handle usb_callout_t;
 #define PWR_RESUME 0
 
 #define USB_DECLARE_DRIVER_INIT(dname, init) \
-static device_probe_t __CONCAT(dname,_match); \
-static device_attach_t __CONCAT(dname,_attach); \
-static device_detach_t __CONCAT(dname,_detach); \
+Static device_probe_t __CONCAT(dname,_match); \
+Static device_attach_t __CONCAT(dname,_attach); \
+Static device_detach_t __CONCAT(dname,_detach); \
 \
-static devclass_t __CONCAT(dname,_devclass); \
+Static devclass_t __CONCAT(dname,_devclass); \
 \
-static device_method_t __CONCAT(dname,_methods)[] = { \
+Static device_method_t __CONCAT(dname,_methods)[] = { \
         DEVMETHOD(device_probe, __CONCAT(dname,_match)), \
         DEVMETHOD(device_attach, __CONCAT(dname,_attach)), \
         DEVMETHOD(device_detach, __CONCAT(dname,_detach)), \
@@ -340,7 +372,7 @@ static device_method_t __CONCAT(dname,_methods)[] = { \
         {0,0} \
 }; \
 \
-static driver_t __CONCAT(dname,_driver) = { \
+Static driver_t __CONCAT(dname,_driver) = { \
         #dname, \
         __CONCAT(dname,_methods), \
         sizeof(struct __CONCAT(dname,_softc)) \
@@ -350,14 +382,14 @@ static driver_t __CONCAT(dname,_driver) = { \
 
 
 #define USB_MATCH(dname) \
-static int \
+Static int \
 __CONCAT(dname,_match)(device_t self)
 
 #define USB_MATCH_START(dname, uaa) \
         struct usb_attach_arg *uaa = device_get_ivars(self)
 
 #define USB_ATTACH(dname) \
-static int \
+Static int \
 __CONCAT(dname,_attach)(device_t self)
 
 #define USB_ATTACH_START(dname, sc, uaa) \
@@ -373,7 +405,7 @@ __CONCAT(dname,_attach)(device_t self)
 	device_set_desc_copy(self, devinfo)
 
 #define USB_DETACH(dname) \
-static int \
+Static int \
 __CONCAT(dname,_detach)(device_t self)
 
 #define USB_DETACH_START(dname, sc) \

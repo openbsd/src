@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_mem.c,v 1.8 2000/03/28 19:37:50 aaron Exp $ */
-/*	$NetBSD: usb_mem.c,v 1.18 2000/03/27 08:27:03 augustss Exp $	*/
+/*	$OpenBSD: usb_mem.c,v 1.9 2000/03/30 16:19:33 aaron Exp $ */
+/*	$NetBSD: usb_mem.c,v 1.19 2000/03/27 12:33:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,18 +82,18 @@ struct usb_frag_dma {
 	LIST_ENTRY(usb_frag_dma) next;
 };
 
-static usbd_status	usb_block_allocmem __P((bus_dma_tag_t, size_t, size_t,
+Static usbd_status	usb_block_allocmem __P((bus_dma_tag_t, size_t, size_t,
 						usb_dma_block_t **));
-static void		usb_block_freemem  __P((usb_dma_block_t *));
+Static void		usb_block_freemem  __P((usb_dma_block_t *));
 
-static LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
+Static LIST_HEAD(, usb_dma_block) usb_blk_freelist = 
 	LIST_HEAD_INITIALIZER(usb_blk_freelist);
-int usb_blk_nfree = 0;
+Static int usb_blk_nfree = 0;
 /* XXX should have different free list for different tags (for speed) */
-static LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
+Static LIST_HEAD(, usb_frag_dma) usb_frag_freelist =
 	LIST_HEAD_INITIALIZER(usb_frag_freelist);
 
-static usbd_status
+Static usbd_status
 usb_block_allocmem(tag, size, align, dmap)
 	bus_dma_tag_t tag;
 	size_t size;
@@ -200,7 +200,7 @@ usb_block_real_freemem(p)
  * from an interrupt context and that is BAD.
  * XXX when should we really free?
  */
-static void
+Static void
 usb_block_freemem(p)
         usb_dma_block_t *p;
 {
