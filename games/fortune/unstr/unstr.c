@@ -93,12 +93,12 @@ char	**av;
 		perror(Datafile);
 		exit(1);
 	}
-	(void) fread((char *) &tbl, sizeof tbl, 1, Dataf);
-	tbl.str_version = ntohl(tbl.str_version);
-	tbl.str_numstr = ntohl(tbl.str_numstr);
-	tbl.str_longlen = ntohl(tbl.str_longlen);
-	tbl.str_shortlen = ntohl(tbl.str_shortlen);
-	tbl.str_flags = ntohl(tbl.str_flags);
+	(void) fread(&tbl.str_version,  sizeof(tbl.str_version),  1, Dataf);
+	(void) fread(&tbl.str_numstr,   sizeof(tbl.str_numstr),   1, Dataf);
+	(void) fread(&tbl.str_longlen,  sizeof(tbl.str_longlen),  1, Dataf);
+	(void) fread(&tbl.str_shortlen, sizeof(tbl.str_shortlen), 1, Dataf);
+	(void) fread(&tbl.str_flags,    sizeof(tbl.str_flags),    1, Dataf);
+	(void) fread( tbl.stuff,        sizeof(tbl.stuff),        1, Dataf);
 	if (!(tbl.str_flags & (STR_ORDERED | STR_RANDOM))) {
 		fprintf(stderr, "nothing to do -- table in file order\n");
 		exit(1);
@@ -127,7 +127,7 @@ register STRFILE	*tbl;
 {
 	register int	i;
 	register char	*sp;
-	auto off_t	pos;
+	auto int32_t	pos;
 	char		buf[BUFSIZ];
 
 	for (i = 0; i < tbl->str_numstr; i++) {

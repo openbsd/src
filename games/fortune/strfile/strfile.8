@@ -103,19 +103,22 @@ field to be set.
 .Pp
 The format of the header is:
 .Bd -literal
-#define	VERSION	1
-unsigned long	str_version;	/* version number */
-unsigned long	str_numstr;	/* # of strings in the file */
-unsigned long	str_longlen;	/* length of longest string */
-unsigned long	str_shortlen;	/* length of shortest string */
+#define	VERSION	2
+u_int32_t	str_version;	/* version number */
+u_int32_t	str_numstr;	/* # of strings in the file */
+u_int32_t	str_longlen;	/* length of longest string */
+u_int32_t	str_shortlen;	/* length of shortest string */
 #define	STR_RANDOM	0x1	/* randomized pointers */
 #define	STR_ORDERED	0x2	/* ordered pointers */
 #define	STR_ROTATED	0x4	/* rot-13'd text */
-unsigned long	str_flags;	/* bit field for flags */
-char str_delim;			/* delimiting character */
+u_int32_t	str_flags;	/* bit field for flags */
+u_int8_t	str_delim;	/* delimiting character */
+u_int8_t	str_pad[3];	/* padding */
 .Ed
 .Pp
-All fields are written in network byte order.
+All fields are written in network byte order.  Each field is also
+written independantly so as to avoid structure padding problems on
+some architectures.
 .Pp
 The purpose of
 .Nm unstr

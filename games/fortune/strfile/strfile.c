@@ -112,7 +112,7 @@ static char rcsid[] = "$NetBSD: strfile.c,v 1.4 1995/04/24 12:23:09 cgd Exp $";
 
 typedef struct {
 	char	first;
-	off_t	pos;
+	int32_t	pos;
 } STR;
 
 char	*Infile		= NULL,		/* input file name */
@@ -126,7 +126,7 @@ int	Rflag		= FALSE;	/* randomize order flag */
 int	Xflag		= FALSE;	/* set rotated bit */
 long	Num_pts		= 0;		/* number of pointers/strings */
 
-off_t	*Seekpts;
+int32_t	*Seekpts;
 
 FILE	*Sort_1, *Sort_2;		/* pointers for sorting */
 
@@ -153,7 +153,8 @@ char	**av;
 {
 	register char		*sp, dc;
 	register FILE		*inf, *outf;
-	register off_t		last_off, length, pos, *p;
+	register int32_t	last_off, length, pos;
+	register int32_t	*p;
 	register int		first, cnt;
 	register char		*nsp;
 	register STR		*fp;
@@ -239,18 +240,23 @@ char	**av;
 		       Tbl.str_shortlen == 1 ? "" : "s");
 	}
 
-	(void) fseek(outf, (off_t) 0, 0);
+	(void) fseek(outf, (long) 0, 0);
 	Tbl.str_version = htonl(Tbl.str_version);
 	Tbl.str_numstr = htonl(Num_pts - 1);
 	Tbl.str_longlen = htonl(Tbl.str_longlen);
 	Tbl.str_shortlen = htonl(Tbl.str_shortlen);
 	Tbl.str_flags = htonl(Tbl.str_flags);
-	(void) fwrite((char *) &Tbl, sizeof Tbl, 1, outf);
-	if (STORING_PTRS) {
-		for (p = Seekpts, cnt = Num_pts; cnt--; ++p)
+	(void) fwrite(&Tbl.str_version,  sizeof(Tbl.str_version),  1, outf);
+	(void) fwrite(&Tbl.str_numstr,   sizeof(Tbl.str_numstr),   1, outf);
+	(void) fwrite(&Tbl.str_longlen,  sizeof(Tbl.str_longlen),  1, outf);
+	(void) fwrite(&Tbl.str_shortlen, sizeof(Tbl.str_shortlen), 1, outf);
+	(void) fwrite(&Tbl.str_flags,    sizeof(Tbl.str_flags),    1, outf);
+	(void) fwrite( Tbl.stuff,        sizeof(Tbl.stuff),        1, outf);
+	if (STORING_PTRS)
+		for (p = Seekpts, cnt = Num_pts; cnt--; ++p) {
 			*p = htonl(*p);
-		(void) fwrite((char *) Seekpts, sizeof *Seekpts, (int) Num_pts, outf);
-	}
+			(void) fwrite(p, sizeof(*p), 1, outf);
+		}
 	(void) fclose(outf);
 	exit(0);
 }
@@ -324,9 +330,9 @@ usage()
  */
 add_offset(fp, off)
 FILE	*fp;
-off_t	off;
+int32_t	off;
 {
-	off_t net;
+	int32_t net;
 
 	if (!STORING_PTRS) {
 		net = htonl(off);
@@ -344,10 +350,10 @@ off_t	off;
  */
 do_order()
 {
-	register int	i;
-	register off_t	*lp;
-	register STR	*fp;
-	extern int	cmp_str();
+	register int		i;
+	register int32_t	*lp;
+	register STR		*fp;
+	extern int		cmp_str();
 
 	Sort_1 = fopen(Infile, "r");
 	Sort_2 = fopen(Infile, "r");
@@ -440,10 +446,10 @@ STR	*p1, *p2;
  */
 randomize()
 {
-	register int	cnt, i;
-	register off_t	tmp;
-	register off_t	*sp;
-	extern time_t	time();
+	register int		cnt, i;
+	register int32_t	tmp;
+	register int32_t	*sp;
+	extern time_t		time();
 
 	srandom((int)(time((time_t *) NULL) + getpid()));
 
