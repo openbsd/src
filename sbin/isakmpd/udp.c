@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.12 1999/04/27 21:09:01 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.39 1999/04/25 22:01:58 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.13 1999/04/30 11:46:59 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.40 1999/04/29 18:46:54 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -378,9 +378,11 @@ void
 udp_report (struct transport *t)
 {
   struct udp_transport *u = (struct udp_transport *)t;
- 
-  log_debug (LOG_REPORT, 0, "udp_report: fd %d src %s dst %s", u->s,
-	     inet_ntoa (u->src.sin_addr), inet_ntoa (u->dst.sin_addr));
+  char src[16], dst[16];
+
+  snprintf (src, 16, "%s", inet_ntoa (u->src.sin_addr));
+  snprintf (dst, 16, "%s", inet_ntoa (u->dst.sin_addr));
+  log_debug (LOG_REPORT, 0, "udp_report: fd %d src %s dst %s", u->s, src, dst);
 }
 
 /*
