@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_nqlease.c,v 1.6 1996/04/21 22:30:20 deraadt Exp $	*/
+/*	$OpenBSD: nfs_nqlease.c,v 1.7 1996/06/01 04:43:58 mickey Exp $	*/
 /*	$NetBSD: nfs_nqlease.c,v 1.14 1996/02/18 14:06:50 fvdl Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
 extern struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
 extern int nfsd_waiting;
-extern struct nfsstats nfsstats;
+struct nfsstats nfsstats;
 
 
 #define TRUE	1

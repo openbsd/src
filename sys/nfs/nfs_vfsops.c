@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.10 1996/05/28 13:44:08 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.11 1996/06/01 04:43:59 mickey Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
-struct nfsstats nfsstats;
+extern struct nfsstats nfsstats;
 extern int nfs_ticks;
 
 #ifdef notyet
