@@ -1,5 +1,4 @@
-/* $NetBSD: awivar.h,v 1.4 1999/11/09 14:58:07 sommerfeld Exp $ */
-/* $OpenBSD: awivar.h,v 1.1 1999/12/16 02:56:56 deraadt Exp $ */
+/* $NetBSD: awivar.h,v 1.12 2000/07/21 04:48:56 onoe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,119 +36,136 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* timer values in msec */
+#define	AWI_SELFTEST_TIMEOUT	5000
+#define	AWI_CMD_TIMEOUT		2000
+#define	AWI_LOCKOUT_TIMEOUT	50
+#define	AWI_ASCAN_DURATION	100
+#define	AWI_ASCAN_WAIT		3000
+#define	AWI_PSCAN_DURATION	200
+#define	AWI_PSCAN_WAIT		5000
+#define	AWI_TRANS_TIMEOUT	2000
 
-enum awi_state {
-	AWI_ST_OFF,		/* powered off */
-	AWI_ST_SELFTEST,		/* waiting for selftest to complete*/
-	AWI_ST_IFTEST,		/* waiting for interface to respond */
-	AWI_ST_MIB_GET,		/* fetching MIB variables */
-	AWI_ST_MIB_SET,		/* stuffing MIB variables */
-	AWI_ST_TXINIT,		/* initializing TX side */
-	AWI_ST_RXINIT,		/* initializing RX side */
-	AWI_ST_SCAN,		/* hunting for a BSS */
-	AWI_ST_SYNCED,		/* synced?  trying to auth.. */
-	/* there are probably some missing 802.11 states here.. */
-	AWI_ST_AUTHED,		/* authenticated */
-	AWI_ST_RUNNING,		/* ready to send user data.. */
-	AWI_ST_INSANE,		/* failed to respond.. */
+#define	AWI_NTXBUFS		4
+#define	AWI_MAX_KEYLEN		16
+
+enum awi_status {
+	AWI_ST_INIT,
+	AWI_ST_SCAN,
+	AWI_ST_SETSS,
+	AWI_ST_SYNC,
+	AWI_ST_AUTH,
+	AWI_ST_ASSOC,
+	AWI_ST_RUNNING
 };
 
-#define AWI_FL_CMD_INPROG 		0x0001
-
-#define AWI_SSID_LEN 33
-
-struct awi_bss_binding 
+struct awi_bss 
 {
-	u_int8_t	chanset; /* channel set to use */
-	u_int8_t	pattern; /* hop pattern to use */
-	u_int8_t	index;	/* index to use */
-	u_int8_t	rssi;	/* strenght of this beacon */
-	u_int16_t	dwell_time; /* dwell time */
-	u_int8_t	bss_timestamp[8]; /* timestamp of this bss */
-	u_int8_t	bss_id[6];
-	u_int32_t	rxtime;	/* unit's local time */
-	u_int8_t	sslen;
-	u_int8_t	ssid[AWI_SSID_LEN];
+	TAILQ_ENTRY(awi_bss)	list;
+	u_int8_t	esrc[ETHER_ADDR_LEN];
+	u_int8_t	chanset;	/* channel set to use */
+	u_int8_t	pattern;	/* hop pattern to use */
+	u_int8_t	index;		/* index to use */
+	u_int8_t	rssi;		/* strength of this beacon */
+	u_int16_t	dwell_time;	/* dwell time */
+	u_int8_t	timestamp[8];	/* timestamp of this bss */
+	u_int8_t	bssid[ETHER_ADDR_LEN];
+	u_int16_t	capinfo;
+	u_int32_t	rxtime;		/* unit's local time */
+	u_int16_t	interval;	/* beacon interval */
+	u_int8_t	txrate;
+	u_int8_t	fails;
+	u_int8_t	essid[IEEE80211_NWID_LEN + 2];
 };
 
-#define NBND 4
-#define NTXD 4
-
-struct awi_txbd 
-{
-	u_int32_t	descr;	/* offset to descriptor */
-	u_int32_t	frame;	/* offset to frame */
-	u_int32_t	len;	/* frame length */	
+struct awi_wep_algo {
+	char		*awa_name;
+	int		(*awa_ctxlen) __P((void));
+	void		(*awa_setkey) __P((void *, u_char *, int));
+	void		(*awa_encrypt) __P((void *, u_char *, u_char *, int));
+	void		(*awa_decrypt) __P((void *, u_char *, u_char *, int));
 };
 
 struct awi_softc 
 {
+#ifdef __NetBSD__
 	struct device 		sc_dev;
-	struct am79c930_softc 	sc_chip;
-	struct arpcom		sc_ec;
-	int 			sc_enabled;
-	enum awi_state		sc_state;
-	int			sc_flags;
+	struct ethercom		sc_ec;
 	void			*sc_ih; /* interrupt handler */
-	struct ifnet		*sc_ifp;	/* XXX */
+#endif
+#ifdef __FreeBSD__
+#if __FreeBSD__ >= 4
+	struct {
+		char	dv_xname[64];	/*XXX*/
+	}			sc_dev;
+#else
+	struct device		sc_dev;
+#endif
+#endif
+#ifdef __OpenBSD__
+	struct device 		sc_dev;
+	struct arpcom		sc_ec;
+	void			*sc_ih; /* interrupt handler */
+#endif
+	struct am79c930_softc 	sc_chip;
+	struct ifnet		*sc_ifp;
 	int			(*sc_enable) __P((struct awi_softc *));
 	void			(*sc_disable) __P((struct awi_softc *));
-	void			(*sc_completion) __P((struct awi_softc *,
-	    u_int8_t));
 
-	struct ifqueue		sc_mgtq;
-	
-	u_int32_t		sc_txbase;
-	u_int32_t		sc_txlen;
-	u_int32_t		sc_rxbase;
-	u_int32_t		sc_rxlen;
+	struct ifmedia		sc_media;
+	enum awi_status		sc_status;
+	unsigned int		sc_enabled:1,
+				sc_busy:1,
+				sc_cansleep:1,
+				sc_invalid:1,
+				sc_enab_intr:1,
+				sc_format_llc:1,
+				sc_start_bss:1,
+				sc_rawbpf:1,
+				sc_no_bssid:1,
+				sc_active_scan:1,
+				sc_attached:1;	/* attach has succeeded */
+	u_int8_t		sc_cmd_inprog;
+	int			sc_sleep_cnt;
 
-	u_int32_t		sc_rx_data_desc;
-	u_int32_t		sc_rx_mgt_desc;
-
-	u_int16_t		sc_scan_duration;
-	u_int8_t		sc_scan_chanset;
-	u_int8_t		sc_scan_pattern;
-
-	int			sc_nbindings;
-
-	u_int8_t		sc_my_addr[6];
-	
-	int			sc_new_bss;
-	struct awi_bss_binding	sc_active_bss;
-	/*
-	 * BSS's found during a scan.. XXX doesn't need to be in-line
-	 */
-	struct awi_bss_binding	sc_bindings[NBND];
-	
-	int			sc_txpending;
-	int			sc_ntxd;
-	int			sc_txnext; /* next txd to be given to driver */
-	int			sc_txfirst; /* first unsent txd dev has */
-	struct awi_txbd	sc_txd[NTXD];
-	u_int8_t		sc_curmib;
-
-	int			sc_scan_timer;
-	int			sc_tx_timer;
 	int			sc_mgt_timer;
-	int			sc_cmd_timer;
-	int			sc_selftest_tries;
 
-	/*
-	 * packet parsing state.
-	 */
+	TAILQ_HEAD(, awi_bss)	sc_scan;
+	u_int8_t		sc_scan_cur;
+	u_int8_t		sc_scan_min;
+	u_int8_t		sc_scan_max;
+	u_int8_t		sc_scan_set;
+	struct awi_bss		sc_bss;
+	u_int8_t		sc_ownssid[IEEE80211_NWID_LEN + 2];
+	u_int8_t		sc_ownch;
 
-	struct mbuf		*sc_nextpkt;
-	struct mbuf		*sc_m;
-	u_int8_t		*sc_mptr;
-	u_int32_t		sc_mleft;
-	int			sc_flushpkt;
+	int			sc_rx_timer;
+	u_int32_t		sc_rxdoff;
+	u_int32_t		sc_rxmoff;
+	struct mbuf		*sc_rxpend;
+
+	int			sc_tx_timer;
+	u_int8_t		sc_tx_rate;
+	struct ifqueue		sc_mgtq;
+	u_int32_t		sc_txbase;
+	u_int32_t		sc_txend;
+	u_int32_t		sc_txnext;
+	u_int32_t		sc_txdone;
+
+	int			sc_wep_keylen[IEEE80211_WEP_NKID]; /* keylen */
+	u_int8_t		sc_wep_key[IEEE80211_WEP_NKID][AWI_MAX_KEYLEN];
+	int			sc_wep_defkid;
+	void			*sc_wep_ctx;	/* work area */
+	struct awi_wep_algo	*sc_wep_algo;
+
+	u_char			sc_banner[AWI_BANNER_LEN];
+	struct awi_mib_local	sc_mib_local;
+	struct awi_mib_addr	sc_mib_addr;
+	struct awi_mib_mac	sc_mib_mac;
+	struct awi_mib_stat	sc_mib_stat;
+	struct awi_mib_mgt	sc_mib_mgt;
+	struct awi_mib_phy	sc_mib_phy;
 };
-
-extern int awi_activate __P((struct device *, enum devact));
-extern int awi_attach __P((struct awi_softc *, u_int8_t *macaddr));
-extern void awi_init __P((struct awi_softc *));
-extern void awi_stop __P((struct awi_softc *));
 
 #define awi_read_1(sc, off) ((sc)->sc_chip.sc_ops->read_1)(&sc->sc_chip, off)
 #define awi_read_2(sc, off) ((sc)->sc_chip.sc_ops->read_2)(&sc->sc_chip, off)
@@ -167,17 +183,59 @@ extern void awi_stop __P((struct awi_softc *));
 
 #define awi_drvstate(sc, state) \
 	awi_write_1(sc, AWI_DRIVERSTATE, \
-	    ((state) | AWI_DRV_AUTORXLED|AWI_DRV_AUTOTXLED));
+	    ((state) | AWI_DRV_AUTORXLED|AWI_DRV_AUTOTXLED))
 
-/* Number of trips around the loop waiting for the device.. */
+/* unalligned little endian access */
+#define	LE_READ_2(p)							\
+	(((u_int8_t *)(p))[0] | (((u_int8_t *)(p))[1] << 8))
+#define	LE_READ_4(p)							\
+	(((u_int8_t *)(p))[0] | (((u_int8_t *)(p))[1] << 8) |		\
+	 (((u_int8_t *)(p))[2] << 16) | (((u_int8_t *)(p))[3] << 24))
+#define	LE_WRITE_2(p, v)						\
+	((((u_int8_t *)(p))[0] = ((u_int32_t)(v) & 0xff)),		\
+	 (((u_int8_t *)(p))[1] = (((u_int32_t)(v) >> 8) & 0xff)))
+#define	LE_WRITE_4(p, v)						\
+	((((u_int8_t *)(p))[0] = ((u_int32_t)(v) & 0xff)),		\
+	 (((u_int8_t *)(p))[1] = (((u_int32_t)(v) >> 8) & 0xff)),	\
+	 (((u_int8_t *)(p))[2] = (((u_int32_t)(v) >> 16) & 0xff)),	\
+	 (((u_int8_t *)(p))[3] = (((u_int32_t)(v) >> 24) & 0xff)))
 
-#define AWI_LOCKOUT_SPIN	10000 /* 10ms */
+#define	AWI_80211_RATE(rate)	(((rate) & 0x7f) * 5)
 
-/* 24-byte mac header + 8 byte SNAP header + 1500-byte ether MTU */
-#define AWI_FRAME_SIZE		1532
+int	awi_attach __P((struct awi_softc *));
+int	awi_intr __P((void *));
+void	awi_reset __P((struct awi_softc *));
+#ifndef __FreeBSD__
+int	awi_activate __P((struct device *, enum devact));
+int	awi_detach __P((struct awi_softc *));
+void	awi_power __P((struct awi_softc *, int));
+#endif
 
-/* refresh associations every 300s */
-  
-#define AWI_ASSOC_REFRESH	300
+void awi_stop __P((struct awi_softc *sc));
+int awi_init __P((struct awi_softc *sc));
+int awi_init_region __P((struct awi_softc *));
+int awi_wicfg __P((struct ifnet *, u_long, caddr_t));
 
-extern int awi_intr __P((void *));
+int awi_wep_setnwkey __P((struct awi_softc *, struct ieee80211_nwkey *));
+int awi_wep_getnwkey __P((struct awi_softc *, struct ieee80211_nwkey *));
+int awi_wep_getalgo __P((struct awi_softc *));
+int awi_wep_setalgo __P((struct awi_softc *, int));
+int awi_wep_setkey __P((struct awi_softc *, int, unsigned char *, int));
+int awi_wep_getkey __P((struct awi_softc *, int, unsigned char *, int *));
+struct mbuf *awi_wep_encrypt __P((struct awi_softc *, struct mbuf *, int));
+
+#ifdef __FreeBSD__
+/* Provide mem* for compat with NetBSD to fix LINT */
+static __inline int
+memcmp(const void *b1, const void *b2, size_t len)
+{
+	return (bcmp(b1, b2, len));
+}
+
+static __inline void *
+memset(void *b, int c, size_t len)
+{
+	bzero(b, len);
+	return (b);
+}
+#endif

@@ -1,5 +1,4 @@
-/* $NetBSD: am79c930var.h,v 1.2 1999/11/05 05:13:36 sommerfeld Exp $ */
-/* $OpenBSD: am79c930var.h,v 1.1 1999/12/16 02:56:56 deraadt Exp $ */
+/* $NetBSD$ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
