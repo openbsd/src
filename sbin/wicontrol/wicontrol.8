@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.5 2000/01/02 07:33:01 deraadt Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.6 2000/02/03 00:53:59 angelos Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -42,6 +42,8 @@
 .Nm wicontrol
 .Ar interface
 .Op Fl o
+.Op Fl e Ar 0|1
+.Op Fl k Ar key "[ -v 1|2|3|4 ]"
 .Op Fl t Ar tx rate
 .Op Fl n Ar network name
 .Op Fl s Ar station name
@@ -55,6 +57,7 @@
 .Op Fl f Ar frequency
 .Op Fl P Ar 0|1
 .Op Fl S Ar max sleep duration
+.Op Fl T Ar 1|2|3|4
 .Sh DESCRIPTION
 The
 .Nm
@@ -90,6 +93,28 @@ out. Using the additional
 flag will cause
 .Nm
 to print out the statistics counters instead of the card settings.
+.It Fl e Ar 0|1
+Enable or disable WEP encryption. Permitted values are
+.Ar 0
+(encryption disabled) or
+.Ar 1
+(encryption enabled). Encryption is off by default.
+.It Fl k Ar key "[ -v 1|2|3|4 ]"
+Set WEP encryption keys. There are four default encryption keys that can be
+programmed. A specific key can be set using the
+.Fl v
+flag. If the
+.Fl v
+flag is not specified, the first key will be set. Encryption keys can either
+be normal text (i.e., "hello") or a series of hexadecimal digits
+(i.e., "0x1234512345"). For WaveLAN Silver cards, the key is
+restricted to 40 bits, hence the key can be either a 5-character text string
+or 10 hexadecimal digits. For WaveLAN Gold cards, the key can be up to
+128 bits, which means the key can be specified as either a 16-character
+text string or 32 hexadecimal digits.
+.It Fl T Ar 1|2|3|4
+Specify which of the four WEP encryption keys will be used to encrypt
+transmitted packets.
 .It Fl t Ar tx rate
 Set the transmit rate of the specified interface. The legal values
 for the transmit rate vary depending on whether the interface is a
