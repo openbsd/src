@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.47 2002/03/14 01:26:55 millert Exp $     */
+/*      $OpenBSD: wdc.c,v 1.48 2002/03/16 17:12:09 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -86,6 +86,7 @@
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/ic/wdcevent.h>
 
 #include "atapiscsi.h"
 
@@ -148,6 +149,128 @@ struct channel_softc_vtbl wdc_default_vtbl = {
 	wdc_default_read_raw_multi_4,
 	wdc_default_write_raw_multi_4
 };
+
+static char *wdc_log_buf = NULL;
+static int wdc_tail = 0;
+static int wdc_head = 0;
+static int wdc_size = 16 * 1024;
+static int chp_idx = 1;
+
+void
+wdc_log(struct channel_softc *chp, int type, 
+    unsigned int size, char val[]) 
+{
+	unsigned int request_size;
+	int idx;
+	char *ptr;
+	int nbytes;
+
+	if (wdc_head < 0 || wdc_head > wdc_size ||
+	    wdc_tail < 0 || wdc_tail > wdc_size) {
+		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head, wdc_tail);
+		return;
+	}
+
+	if (size > wdc_size / 2) {
+		printf ("wdc_log: type %d size %x\n", type, size);
+	}
+
+	if (wdc_log_buf == NULL) {
+		wdc_log_buf = malloc(wdc_size, M_DEVBUF, M_NOWAIT);
+		if (wdc_log_buf == NULL) 
+			return;
+	}
+	if (chp->ch_log_idx == 0)
+		chp->ch_log_idx = chp_idx++;
+
+	request_size = size + 2;
+
+	/* Check how many bytes are left */
+	nbytes = wdc_head - wdc_tail;
+	if (nbytes < 0) nbytes += wdc_size;
+
+	if (nbytes + request_size >= wdc_size) {
+		wdc_tail = (wdc_tail + request_size * 2) % wdc_size;
+	}
+
+	/* Avoid wrapping in the middle of a request */
+	if (wdc_head + request_size >= wdc_size) {
+		memset(&wdc_log_buf[wdc_head], 0, wdc_size - wdc_head);
+		wdc_head = 0;
+	}
+
+	ptr = &wdc_log_buf[wdc_head];
+	*ptr++ = type & 0xff;		
+	*ptr++ = ((chp->ch_log_idx & 0x7) << 5) | (size & 0x1f);
+				  
+	idx = 0;
+	while (size--) {
+		*ptr++ = val[idx];
+		idx++;
+	}
+	wdc_head += request_size;
+}
+
+char *wdc_get_log(unsigned int *, unsigned int *);
+
+char *
+wdc_get_log(unsigned int * size, unsigned int *left)
+{
+        int  bytes = (wdc_head - wdc_tail);
+        char *retbuf;
+        int  ot, c1, c2;
+
+	if (left != NULL)
+		*left = 0;
+
+        if (bytes < 0) bytes += wdc_size;
+	if (bytes > *size) { 
+		if (left != NULL) {
+			*left = bytes - *size;
+		}
+		bytes = *size;
+	}
+
+	if (wdc_log_buf == NULL) {
+		*size = 0;
+		*left = 0;
+		return (NULL);
+	}
+
+	if (wdc_head < 0 || wdc_head > wdc_size ||
+	    wdc_tail < 0 || wdc_tail > wdc_size) {
+		printf ("wdc_log: wdc_head %x wdc_tail %x\n", wdc_head, wdc_tail);
+		*size = 0;
+		*left = 0;
+		return (NULL);
+	}
+
+        retbuf = malloc(bytes, M_TEMP, M_NOWAIT);
+	if (retbuf == NULL) {
+		*size = 0;
+		*left = bytes;
+		return (NULL);
+	}
+
+	*size = bytes;
+
+        ot = wdc_tail;
+        wdc_tail += bytes;
+        if (wdc_tail > wdc_size) {
+                wdc_tail -= wdc_size;
+                c2 = wdc_tail;
+                c1 = bytes - wdc_tail;
+        } else {
+                c1 = bytes;
+                c2 = 0;
+        }
+
+        memcpy(retbuf, &wdc_log_buf[ot], c1);
+        memcpy(&retbuf[c1], &wdc_log_buf[0], c2);
+
+        return (retbuf);
+}
+
 
 u_int8_t
 wdc_default_read_reg(chp, reg)
@@ -316,6 +439,13 @@ wdc_enable_intr(chp)
         CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
 }
 
+void
+wdc_set_drive(struct channel_softc *chp, int drive) 
+{
+	CHP_WRITE_REG(chp, wdr_sdh, (drive << 4) | WDSD_IBM);
+	WDC_LOG_SET_DRIVE(chp, drive);
+}
+
 int
 wdc_floating_bus(chp, drive)
 	struct channel_softc *chp;
@@ -325,7 +455,7 @@ wdc_floating_bus(chp, drive)
 	u_int8_t cumulative_status, status;
 	int      iter;
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	wdc_set_drive(chp, drive);
 	delay(10);
 
 	/* Stolen from Phoenix BIOS Drive Autotyping document */
@@ -365,7 +495,7 @@ wdc_preata_drive(chp, drive)
 		return 0;
 	}
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	wdc_set_drive(chp, drive);
 	delay(100);
 	if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY, 10000) != 0) {
 		WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
@@ -375,6 +505,7 @@ wdc_preata_drive(chp, drive)
 	}
 	
 	CHP_WRITE_REG(chp, wdr_command, WDCC_RECAL);
+	WDC_LOG_ATA_CMDSHORT(chp, WDCC_RECAL);
 	if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY, 10000) != 0) {
 		WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
 		    chp->wdc->sc_dev.dv_xname,
@@ -393,7 +524,7 @@ wdc_ata_present(chp, drive)
 	int time_to_done;
 	int retry_cnt = 0;
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	wdc_set_drive(chp, drive);
 	delay(10);
 
  retry:
@@ -488,12 +619,14 @@ wdcprobe(chp)
 	if (chp->wdc == NULL ||
 	    (chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
 		/* Sample the statuses of drive 0 and 1 into st0 and st1 */
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM);
+		wdc_set_drive(chp, 0);
 		delay(10);
 		st0 = CHP_READ_REG(chp, wdr_status);
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10);
+		WDC_LOG_STATUS(chp, st0);
+		wdc_set_drive(chp, 1);
 		delay(10);
 		st1 = CHP_READ_REG(chp, wdr_status);
+		WDC_LOG_STATUS(chp, st1);
 
 		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
@@ -531,7 +664,7 @@ wdcprobe(chp)
 	for (drive = 0; drive < 2; drive++) {
  		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+		wdc_set_drive(chp, drive);
 		delay(10);
 		/* Save registers contents */
 		st0 = CHP_READ_REG(chp, wdr_status);
@@ -539,6 +672,7 @@ wdcprobe(chp)
 		sn = CHP_READ_REG(chp, wdr_sector);
 		cl = CHP_READ_REG(chp, wdr_cyl_lo);
 		ch = CHP_READ_REG(chp, wdr_cyl_hi);
+		WDC_LOG_REG(chp, wdr_cyl_lo, (ch << 8) | cl);
 
 		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%x, sc=0x%x"
 		    " sn=0x%x cl=0x%x ch=0x%x\n",
@@ -925,10 +1059,10 @@ __wdcwait_reset(chp, drv_mask)
 
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM); /* master */
+		wdc_set_drive(chp, 0);
 		delay(10);
 		st0 = CHP_READ_REG(chp, wdr_status);
-		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10); /* slave */
+		wdc_set_drive(chp, 1);
 		delay(10);
 		st1 = CHP_READ_REG(chp, wdr_status);
 
@@ -986,11 +1120,13 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 
 	for (;;) {
 		chp->ch_status = status = CHP_READ_REG(chp, wdr_status);
+		WDC_LOG_STATUS(chp, chp->ch_status);
 
 		if (status == 0xff && (chp->ch_flags & WDCF_ONESLAVE)) {
-			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | 0x10);
+			wdc_set_drive(chp, 1);
 			chp->ch_status = status = 
 			    CHP_READ_REG(chp, wdr_status);
+			WDC_LOG_STATUS(chp, chp->ch_status);
 		}
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
 			break;
@@ -1005,6 +1141,8 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 	}
 	if (status & WDCS_ERR) {
 		chp->ch_error = CHP_READ_REG(chp, wdr_error);
+		WDC_LOG_ERROR(chp, chp->ch_error);
+
 		WDCDEBUG_PRINT(("wdcwait: error %x\n", chp->ch_error),
 			       DEBUG_STATUSX | DEBUG_STATUS);
 	}
@@ -1512,7 +1650,7 @@ __wdccommand_start(chp, xfer)
 		wdc_disable_intr(chp);
 	}
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	wdc_set_drive(chp, drive);
 	DELAY(1);
 
 	/*
@@ -1640,6 +1778,8 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
 	    "sector=%d count=%d precomp=%d\n", chp->wdc->sc_dev.dv_xname,
 	    chp->channel, drive, command, cylin, head, sector, count, precomp),
 	    DEBUG_FUNCS);
+	WDC_LOG_ATA_CMDLONG(chp, head, precomp, cylin, cylin >> 8, sector,
+	    count, command);
 
 	/* Select drive, head, and addressing mode. */
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4) | head);
@@ -1670,6 +1810,7 @@ wdccommandshort(chp, drive, command)
 	WDCDEBUG_PRINT(("wdccommandshort %s:%d:%d command 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drive, command),
 	    DEBUG_FUNCS);
+	WDC_LOG_ATA_CMDSHORT(chp, command);
 
 	/* Select drive. */
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
@@ -1993,6 +2134,27 @@ wdc_ioctl(drvp, xfer, addr, flag, p)
 	int error = 0;
 
 	switch (xfer) {
+	case ATAIOGETTRACE: {
+		struct atagettrace *agt = (struct atagettrace *)addr;
+		unsigned int size = 0;
+		char *log_to_copy;
+		
+		size = agt->buf_size;
+		if (size > 65536) {
+			size = 65536;
+		}
+
+		log_to_copy = wdc_get_log(&size, &agt->bytes_left);
+
+		if (log_to_copy != NULL) {
+			error = copyout(log_to_copy, agt->buf, size);
+			free(log_to_copy, M_TEMP);
+		}
+
+		agt->bytes_copied = size;
+		break;
+	}
+
 	case ATAIOCCOMMAND:
 		/*
 		 * Make sure this command is (relatively) safe first

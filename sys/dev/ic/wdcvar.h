@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.23 2002/03/14 03:16:05 millert Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.24 2002/03/16 17:12:09 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -70,6 +70,8 @@ struct channel_softc { /* Per channel data */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
 #define WDCF_VERBOSE_PROBE 0x40 /* verbose probe */
 	u_int8_t ch_status;         /* copy of status register */
+	u_int8_t ch_prev_log_status; /* previous logged value of status reg */
+	u_int8_t ch_log_idx;
 	u_int8_t ch_error;          /* copy of error register */
 	/* per-drive infos */
 	struct ata_drive_datas ch_drive[2];
@@ -283,10 +285,11 @@ int   atapi_print(void *, const char *);
 void wdc_disable_intr(struct channel_softc *);
 void wdc_enable_intr(struct channel_softc *);
 int wdc_select_drive(struct channel_softc *, int, int);
-
+void wdc_set_drive(struct channel_softc *, int drive);
 void wdc_output_bytes(struct ata_drive_datas *drvp, void *, unsigned int);
 void wdc_input_bytes(struct ata_drive_datas *drvp, void *, unsigned int);
 
 void wdc_print_current_modes(struct channel_softc *);
 
 int wdc_ioctl(struct ata_drive_datas *, u_long, caddr_t, int, struct proc *);
+
