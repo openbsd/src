@@ -90,6 +90,11 @@ version.@O@: version.c
 		-DLIBAGE=${LIBAGE} \
 		-c ${srcdir}/version.c
 
+.if ${MACHINE_ARCH:Msparc64}
+rdata.@O@: rdata.c
+	${LIBTOOL} ${CC} ${ALL_CFLAGS} -O0 -c $<
+.endif
+ 
 libdns.@SA@: ${OBJS}
 	${AR} ${ARFLAGS} $@ ${OBJS}
 	${RANLIB} $@
