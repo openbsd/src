@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.17 1999/06/15 01:18:33 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.18 1999/06/23 10:30:51 millert Exp $	*/
 
 /*
  * execute command tree
@@ -1359,11 +1359,21 @@ iosetup(iop, tp)
 	  }
 	}
 	if (do_open) {
+		int nfd;
+
 		if (Flag(FRESTRICTED) && (flags & O_CREAT)) {
 			warningf(TRUE, "%s: restricted", cp);
 			return -1;
 		}
 		u = open(cp, flags, 0666);
+		if (u >= 0 && u < 3) {
+			/* Don't reuse stdin/stdout/stderr */
+			nfd = ksh_dupbase(u, 3);
+			if (nfd != -1) {
+				close(u);
+				u = nfd;
+			}
+		}
 #ifdef OS2
 		if (u < 0 && strcmp(cp, "/dev/null") == 0)
 			u = open("nul", flags, 0666);
