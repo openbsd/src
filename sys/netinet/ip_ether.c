@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.13 2001/01/09 03:09:10 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.14 2001/01/15 22:40:30 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -142,13 +142,13 @@ va_dcl
 	 * second nibble of the EtherIP header (the reserved part) is not
 	 * zero; this is also invalid protocol behaviour.
 	 */
-	if (v & 0xffff)
+	if (v & 0x0f)
 	{
 	    DPRINTF(("etherip_input(): received invalid EtherIP header (reserved field non-zero\n"));
 	}
 	else
 	{
-	    DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xffff));
+	    DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xff));
 	}
 	etheripstat.etherip_adrops++;
 	m_freem(m);
@@ -392,7 +392,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     }
 
     /* Set the version number */
-    v = (ETHERIP_VERSION << 4) & 0xffff0000;
+    v = (ETHERIP_VERSION << 4) & 0xf0;
     m_copyback(m, hlen - sizeof(u_int8_t), sizeof(u_int8_t), &v);
 
     *mp = m;
