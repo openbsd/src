@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.102 1998/11/26 17:12:12 deraadt Exp $
+$OpenBSD: pcidevs,v 1.103 1998/11/29 02:29:04 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -891,6 +891,9 @@ product INTEL 82443BX_AGP	0x7191	82443BX AGP Device (PAC)
 product INTEL PCI450_PB		0x84c4	450 PCIset (Orion) Host-PCI bridge
 product INTEL PCI450_MC		0x84c5	450 PCIset (Orion) Memory Controller
 
+/* Intergraph products */
+product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
+
 /* I. T. T. products */
 product ITT AGX016		0x0001	AGX016
 product ITT ITT3204		0x0002	ITT3204 MPEG Decoder
@@ -1170,7 +1173,7 @@ product V3 V96DPC		0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 /* VIA Technologies products */
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
 product VIATECH VT82C561	0x0561	VT82C561
-product VIATECH VT82C586_IDE	0x0571	VT82C586 (Apollo VP) IDE
+product VIATECH VT82C586A_IDE	0x0571	VT82C586A IDE
 product VIATECH VT82C576	0x0576	VT82C576 3V
 product VIATECH VT82C585	0x0585	VT82C585 (Apollo) PCI-ISA Bridge
 product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
@@ -1180,7 +1183,7 @@ product VIATECH VT82C598PCI	0x0598	VT82C598 (Apollo MVP3) Host-PCI Bridge
 product VIATECH VT86C926	0x0926	VT86C926 Amazon
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
-product VIATECH VT82C416MV	0x1571	VT82C416MV
+product VIATECH VT82C586_IDE	0x1571	VT82C586 (Apollo VP) IDE Controller
 product VIATECH VT82C1595	0x1595	VT82C1595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 (Apollo VP) Power Management Controller
