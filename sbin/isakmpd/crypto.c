@@ -1,5 +1,5 @@
-/*	$OpenBSD: crypto.c,v 1.3 1998/11/17 11:10:09 niklas Exp $	*/
-/*	$EOM: crypto.c,v 1.21 1998/11/12 15:31:04 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.4 1999/02/26 03:35:54 niklas Exp $	*/
+/*	$EOM: crypto.c,v 1.22 1999/02/25 11:38:50 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "crypto.h"
 #include "log.h"
