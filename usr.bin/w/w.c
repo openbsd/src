@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.29 2000/07/07 21:07:41 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.30 2000/07/07 21:09:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.29 2000/07/07 21:07:41 deraadt Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.30 2000/07/07 21:09:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,9 +238,9 @@ main(argc, argv)
 			exit (0);
 	}
 
-#define HEADER	"USER    TTY FROM              LOGIN@  IDLE WHAT\n"
-#define WUSED	(sizeof (HEADER) - sizeof ("WHAT\n"))
-	(void)printf("%s", HEADER);
+#define HEADER	"USER    TTY FROM              LOGIN@  IDLE WHAT"
+#define WUSED	(sizeof (HEADER) - sizeof ("WHAT"))
+	(void)puts(HEADER);
 
 	if ((kp = kvm_getprocs(kd, KERN_PROC_ALL, 0, &nentries)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
