@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.2 1999/02/26 05:32:07 art Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.3 1999/06/04 00:17:29 art Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.15 1998/10/11 23:18:20 chuck Exp $	*/
 
 /*
@@ -414,21 +414,7 @@ is_anon:		/* label for SunOS style /dev/zero */
 }
 
 /*
- * XXX
- * XXX
- * XXX
- */
-int
-sys_omsync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return EOPNOTSUPP;
-}
-
-/*
- * sys___msync13: the msync system call (a front-end for flush)
+ * sys_msync: the msync system call (a front-end for flush)
  */
 
 int
