@@ -28,25 +28,11 @@ CPPFLAGS+=	-DFIRMWORKSBUGS
 CPPFLAGS+=	-DPOWERPC_BOOT_ELF
 CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
-### find out what to use for libkern
-KERN_AS=	library
-.include "${S}/lib/libkern/Makefile.inc"
-LIBKERN=	${KERNLIB}
-
-### find out what to use for libz
-Z_AS=		library
-.include "${S}/lib/libz/Makefile.inc"
-LIBZ=		${ZLIB}
-
-### find out what to use for libsa
-SA_AS=		library
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes
-.include "${S}/lib/libsa/Makefile.inc"
-LIBSA=		${SALIB}
+LIBS!=          cd $(.CURDIR)/$(R); $(MAKE) libdep
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -X -Ttext ${RELOC} -e ${ENTRY} -o ${PROG} \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} ${LIBS}
 #	mv ${PROG} ${PROG}.elf
 #	${OBJCOPY} --input-target=elf32-powerpc \
 #	    --output-target=xcoff-powermac ${PROG}.elf ${PROG}.xcf
