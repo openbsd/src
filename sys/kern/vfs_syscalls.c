@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.91 2002/02/08 19:47:50 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.92 2002/02/08 19:58:03 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2721,7 +2721,7 @@ sys_pwrite(p, v, retval)
 	struct file *fp;
 	struct vnode *vp;
 	off_t offset;
-	int error, fd = SCARG(uap, fd);
+	int fd = SCARG(uap, fd);
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
@@ -2730,18 +2730,16 @@ sys_pwrite(p, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
+		return (ESPIPE);
 	}
+
+	FREF(fp);
 
 	offset = SCARG(uap, offset);
 
-	/* dofilewrite() will unuse the descriptor for us */
+	/* dofilewrite() will FRELE the descriptor for us */
 	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &offset, retval));
-
- out:
-	return (error);
 }
 
 
@@ -2765,7 +2763,7 @@ sys_pwritev(p, v, retval)
 	struct file *fp;
 	struct vnode *vp;
 	off_t offset;
-	int error, fd = SCARG(uap, fd);
+	int fd = SCARG(uap, fd);
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
@@ -2774,16 +2772,14 @@ sys_pwritev(p, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
+		return (ESPIPE);
 	}
+
+	FREF(fp);
 
 	offset = SCARG(uap, offset);
 
-	/* dofilewritev() will unuse the descriptor for us */
+	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &offset, retval));
-
- out:
-	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.35 2002/02/08 19:47:50 art Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.36 2002/02/08 19:58:03 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -302,7 +302,9 @@ sys_write(p, v, retval)
 	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
-	/* dofilewrite() will unuse the descriptor for us */
+	FREF(fp);
+
+	/* dofilewrite() will FRELE the descriptor for us */
 	return (dofilewrite(p, fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
 	    &fp->f_offset, retval));
 }
@@ -366,6 +368,7 @@ dofilewrite(p, fd, fp, buf, nbyte, offset, retval)
 #endif
 	*retval = cnt;
  out:
+	FRELE(fp);
 	return (error);
 }
 
@@ -392,7 +395,9 @@ sys_writev(p, v, retval)
 	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
-	/* dofilewritev() will unuse the descriptor for us */
+	FREF(fp);
+
+	/* dofilewritev() will FRELE the descriptor for us */
 	return (dofilewritev(p, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
 	    &fp->f_offset, retval));
 }
@@ -485,6 +490,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, retval)
 	if (needfree)
 		free(needfree, M_IOV);
  out:
+	FRELE(fp);
 	return (error);
 }
 
