@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.31 2003/07/06 20:03:57 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.32 2003/07/18 14:09:02 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -266,7 +266,7 @@ again:
 				    "minor version >= %d expected, "
 				    "using it anyway\n",
 				    sod.sod_name, sod.sod_major,
-				    sod.sod_minor, req_sod.sod_minor);
+				    req_sod.sod_minor, sod.sod_minor);
 			object = _dl_tryload_shlib(hint, type);
 			if (object != NULL) {
 				_dl_free((char *)sod.sod_name);
@@ -287,7 +287,7 @@ again:
 				    "minor version >= %d expected, "
 				    "using it anyway\n",
 				    sod.sod_name, sod.sod_major,
-				    sod.sod_minor, req_sod.sod_minor);
+				    req_sod.sod_minor, sod.sod_minor);
 			object = _dl_tryload_shlib(hint, type);
 			if (object != NULL) {
 				_dl_free((char *)sod.sod_name);
@@ -304,7 +304,7 @@ again:
 			    "minor version >= %d expected, "
 			    "using it anyway\n",
 			    sod.sod_name, sod.sod_major,
-			    sod.sod_minor, req_sod.sod_minor);
+			    req_sod.sod_minor, sod.sod_minor);
 		object = _dl_tryload_shlib(hint, type);
 		if (object != NULL) {
 			_dl_free((char *)sod.sod_name);
