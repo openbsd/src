@@ -1052,6 +1052,7 @@
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/az.0
+./usr/share/man/cat4/bce.0
 ./usr/share/man/cat4/bge.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/bio.0
@@ -1794,6 +1795,7 @@
 ./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/cats
+./usr/share/man/cat8/cats/boot_cats.0
 ./usr/share/man/cat8/cats/fdisk.0
 ./usr/share/man/cat8/cats/kbd.0
 ./usr/share/man/cat8/cats/wsconscfg.0
