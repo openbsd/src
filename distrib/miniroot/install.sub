@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.35 1997/05/18 23:12:02 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.36 1997/05/29 09:15:47 niklas Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1103,6 +1103,7 @@ mount_a_disk() {
 	# returns 0 on failure.
 
 	local _drive
+	local _def_partition
 	local _partition_range
 	local _partition
 	local _fstype
@@ -1131,11 +1132,34 @@ mount_a_disk() {
 	esac
 
 	# Get partition
-	_partition_range=`md_get_partition_range`
+	cat <<__mount_a_disk_1
+
+The following partitions have been found on $_drive:
+
+__mount_a_disk_1
+	disklabel $_drive 2>/dev/null | grep '^  .:'
+	echo
+	_likely_partition_range=`disklabel $_drive 2>/dev/null | \
+	    sed -n -e '/swap/s/.*//' -e '/unused/s/.*//' \
+		-e '/^  .:/{s/^  \(.\).*/\1/;H;}' \
+		-e '${g;s/\n//g;s/^/[/;s/$/]/p;}'`
+	_partition_range=`disklabel $_drive 2>/dev/null | \
+	    sed -n -e '/^  .:/{s/^  \(.\).*/\1/;H;}' \
+		-e '${g;s/\n//g;s/^/[/;s/$/]/p;}'`
+	_def_partition=`echo $_likely_partition_range | \
+	    sed -n 's/^\[\(.\)\]/\1/p'`
+	if [ -z "$_def_partition" ]; then
+		_def_partition=`echo $_partition_range | \
+		    sed -n 's/^\[\(.\)\]/\1/p'`
+		if [ -z "$_def_partition" ]; then
+			echo "There are no usable partitions on that disk"
+			return 0
+		fi
+	fi 
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Partition? [d] "
-		getresp "d"
+		echo -n "Partition? [$_def_partition] "
+		getresp "$_def_partition"
 		case "$resp" in
 			$_partition_range)
 				_partition=$resp
@@ -1152,26 +1176,31 @@ mount_a_disk() {
 	cat << \__mount_a_disk_2
 
 The following filesystem types are supported:
-	1) ffs
+	1) default (deduced from the disklabel)
+	2) ffs
 __mount_a_disk_2
 	_md_fstype=`md_native_fstype`
 	_md_fsopts=`md_native_fsopts`
 	if [ ! -z "$_md_fstype" ]; then
-		echo "	2) $_md_fstype"
+		echo "	3) $_md_fstype"
 	else
 		_md_fstype="_undefined_"
 	fi
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Which filesystem type? [ffs] "
-		getresp "ffs"
+		echo -n "Which filesystem type? [default] "
+		getresp "default"
 		case "$resp" in
+			default)
+				_fstype=""
+				_fsopts="ro"
+				;;
 			ffs)
-				_fstype=$resp
+				_fstype="-t $resp"
 				_fsopts="ro"
 				;;
 			$_md_fstype)
-				_fstype=$resp
+				_fstype="-t $resp"
 				_fsopts=$_md_fsopts
 				;;
 			*)
@@ -1182,8 +1211,7 @@ __mount_a_disk_2
 	done
 
 	# Mount the disk
-	if ! mount -t ${_fstype} -o $_fsopts \
-	    /dev/${_drive}${_partition} /mnt2 ; then
+	if ! mount $_fstype -o $_fsopts /dev/${_drive}${_partition} /mnt2; then
 		echo "Cannot mount disk.  Aborting."
 		return 0
 	fi
