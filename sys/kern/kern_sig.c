@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.65 2003/08/03 19:25:49 millert Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.66 2003/08/04 16:27:01 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1339,7 +1339,7 @@ coredump(p)
 	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
 
 	core.c_midmag = 0;
-	strncpy(core.c_name, p->p_comm, MAXCOMLEN);
+	strlcpy(core.c_name, p->p_comm, sizeof(core.c_name));
 	core.c_nseg = 0;
 	core.c_signo = p->p_sigacts->ps_sig;
 	core.c_ucode = p->p_sigacts->ps_code;
