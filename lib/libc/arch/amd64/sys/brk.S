@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: brk.S,v 1.2 2004/02/10 00:22:51 drahn Exp $	*/
 /*	$NetBSD: brk.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -45,13 +45,15 @@
 
 	.globl	_end
 	.globl	_C_LABEL(__minbrk)
-	.globl	CURBRK
+	.globl	_C_LABEL(minbrk)
+	.globl	__curbrk
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(brk, _brk)
 #endif
 
 	.data
+_C_LABEL(minbrk):
 _C_LABEL(__minbrk):
 	.quad	_end
 	.text
@@ -65,7 +67,7 @@ SYSENTRY(_brk)
 1:
 	SYSTRAP(break)
 	jc	err
-	movq	PIC_GOT(CURBRK),%rdx	# set up GOT addressing
+	movq	PIC_GOT(__curbrk),%rdx	# set up GOT addressing
 	movq	%rdi,(%rdx)
 	xorl	%eax,%eax
 	ret
@@ -79,7 +81,7 @@ err:
 1:
 	SYSTRAP(break)
 	jc	err
-	movq	%rdi,CURBRK(%rip)
+	movq	%rdi,__curbrk(%rip)
 	xorl	%eax,%eax
 	ret
 err:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.2 2004/02/10 00:22:51 drahn Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -44,24 +44,24 @@
 #include "SYS.h"
 
 	.globl	_end
-	.globl	CURBRK
+	.globl	__curbrk
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(sbrk, _sbrk)
 #endif
 
 	.data
-CURBRK:	.quad	_end
+__curbrk:	.quad	_end
 	.text
 
 SYSENTRY(_sbrk)
 #ifdef PIC
-	movq	PIC_GOT(CURBRK),%rdx
+	movq	PIC_GOT(__curbrk),%rdx
 	movq	(%rdx),%rax
 	addq	%rax,%rdi
 	SYSTRAP(break)
 	jc	err
-	movq	PIC_GOT(CURBRK),%rdx
+	movq	PIC_GOT(__curbrk),%rdx
 	movq	(%rdx),%rax
 	movq	%rdi,(%rdx)
 	ret
@@ -69,13 +69,13 @@ err:
 	mov	PIC_GOT(CERROR),%rdx
 	jmp	*%rdx
 #else
-	movq	CURBRK(%rip),%rax
+	movq	__curbrk(%rip),%rax
 	movq	%rdi,%rsi
 	addq	%rax,%rdi
 	SYSTRAP(break)
 	jc	err
-	movq	CURBRK(%rip),%rax
-	addq	%rsi,CURBRK(%rip)
+	movq	__curbrk(%rip),%rax
+	addq	%rsi,__curbrk(%rip)
 	ret
 err:
 	jmp	CERROR
