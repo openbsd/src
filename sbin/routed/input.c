@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.10 2001/01/05 05:23:46 angelos Exp $	*/
+/*	$OpenBSD: input.c,v 1.11 2001/02/26 19:45:17 todd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.10 2001/01/05 05:23:46 angelos Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.11 2001/02/26 19:45:17 todd Exp $";
 #endif
 
 #include "defs.h"
@@ -133,7 +133,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 	 * RIPv2 authentication is lame, since snooping on the wire makes
 	 * its simple passwords evident.  Also, why authenticate queries?
 	 * Why should a RIPv2 implementation with authentication disabled
-	 * not be able to listen to RIPv2 packets with authenication, while
+	 * not be able to listen to RIPv2 packets with authentication, while
 	 * RIPv1 systems will listen?  Crazy!
 	 */
 	if (!auth_ok
