@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.7 2003/04/16 07:20:50 mickey Exp $	*/
+/*	$OpenBSD: ct.c,v 1.8 2003/04/29 22:38:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -62,33 +62,13 @@
 
 #include "dev_hppa.h"
 
-struct pz_device ctdev;
-iodcio_t ctiodc;	/* cartridge tape IODC entry point */
-int ctcode[IODC_MAXSIZE/sizeof(int)];
-
 int
 ctopen(struct open_file *f, ...)
 {
 	struct hppa_dev *dp = f->f_devdata;
-	int ret;
 
-	if (ctiodc == 0) {
-
-		if ((ret = (*pdc)(PDC_IODC, PDC_IODC_READ, pdcbuf, ctdev.pz_hpa,
-				  IODC_IO, ctcode, IODC_MAXSIZE)) < 0) {
-			printf("ct: device ENTRY_IO Read ret'd %d\n", ret);
-			return (EIO);
-		} else
-			ctdev.pz_iodc_io = ctiodc = (iodcio_t) ctcode;
-	}
-
-	dp->pz_dev = &ctdev;
-
-	if (ctiodc != NULL)
-		if ((ret = (*ctiodc)(ctdev.pz_hpa, IODC_IO_READ, ctdev.pz_spa,
-				     ctdev.pz_layers, pdcbuf, 0,
-				     dp->buf, 0, 0)) < 0)
-			printf("ct: device rewind ret'd %d\n", ret);
+	if (!(dp->pz_dev = pdc_findev(-1, PCL_SEQU)))
+		return (ENXIO);
 
 	return (0);
 }

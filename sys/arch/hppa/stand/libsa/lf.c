@@ -1,4 +1,4 @@
-/*	$OpenBSD: lf.c,v 1.5 2003/04/16 07:20:50 mickey Exp $	*/
+/*	$OpenBSD: lf.c,v 1.6 2003/04/29 22:38:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,7 +40,7 @@
 int
 lfopen(struct open_file *f, ...)
 {
-	struct hppa_dev *dp = f->f_devdata;;
+	struct hppa_dev *dp = f->f_devdata;
 
 	if (!(dp->pz_dev = pdc_findev(-1, PCL_NET_MASK|PCL_SEQU)))
 		return ENXIO;

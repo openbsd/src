@@ -1,4 +1,4 @@
-/*	$OpenBSD: dk.c,v 1.9 2003/04/16 07:20:50 mickey Exp $	*/
+/*	$OpenBSD: dk.c,v 1.10 2003/04/29 22:38:50 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -31,8 +31,6 @@
 #include <machine/iomod.h>
 
 #include "dev_hppa.h"
-
-iodcio_t dkiodc;	/* boot IODC entry point */
 
 const char *
 dk_disklabel(dp, label)
