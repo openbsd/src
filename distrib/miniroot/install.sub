@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.355 2004/10/12 21:57:07 krw Exp $
+#	$OpenBSD: install.sub,v 1.356 2004/11/11 21:48:06 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1148,7 +1148,7 @@ install_nfs() {
 		return
 	fi
 
-	Install_mounted_fs /mnt2
+	install_mounted_fs /mnt2
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
