@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.2 2004/07/21 08:00:24 dhartmei Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.3 2004/07/21 15:49:43 dhartmei Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -87,7 +87,7 @@ Static int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
 Static void	 cdce_init(void *);
 Static void	 cdce_watchdog(struct ifnet *);
 Static void	 cdce_stop(struct cdce_softc *);
-static uint32_t	 crc32(const void *, size_t);
+static uint32_t	 cdce_crc32(const void *, size_t);
 
 Static const struct cdce_type cdce_devs[] = {
     {{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2501 }, CDCE_NO_UNION },
@@ -319,7 +319,7 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 		/* Zaurus wants a 32-bit CRC appended to every frame */
 		u_int32_t crc;
 
-		crc = crc32(c->cdce_buf, m->m_pkthdr.len);
+		crc = cdce_crc32(c->cdce_buf, m->m_pkthdr.len);
 		bcopy(&crc, c->cdce_buf + m->m_pkthdr.len, 4);
 		extra = 4;
 	}
@@ -764,7 +764,7 @@ cdce_activate(device_ptr_t self, enum devact act)
  *  code or tables extracted from it, as desired without restriction.
  */
 
-uint32_t crc32_tab[] = {
+static uint32_t cdce_crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
 	0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -811,7 +811,7 @@ uint32_t crc32_tab[] = {
 };
 
 uint32_t
-crc32(const void *buf, size_t size)
+cdce_crc32(const void *buf, size_t size)
 {
 	const uint8_t *p;
 	uint32_t crc;
@@ -820,7 +820,7 @@ crc32(const void *buf, size_t size)
 	crc = ~0U;
 
 	while (size--)
-		crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+		crc = cdce_crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
 
 	return (crc ^ ~0U);
 }
