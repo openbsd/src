@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.45 2002/02/23 08:07:59 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.46 2002/03/01 02:52:51 provos Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -166,7 +166,8 @@ struct ctlname {
 #define	KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
 #define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
 #define KERN_USERCRYPTO		52	/* int: usercrypto */
-#define	KERN_MAXID		53	/* number of valid kern ids */
+#define KERN_CRYPTODEVALLOWSOFT	53	/* int: cryptodevallowsoft */
+#define	KERN_MAXID		54	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -222,6 +223,7 @@ struct ctlname {
 	{ "stackgap_random", CTLTYPE_INT }, \
 	{ "sysvipc_info", CTLTYPE_INT }, \
 	{ "usercrypto", CTLTYPE_INT }, \
+	{ "cryptodevallowsoft", CTLTYPE_INT }, \
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.30 2002/02/23 08:07:59 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.31 2002/03/01 02:52:51 provos Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -113,6 +113,7 @@ int	csefree(struct csession *);
 int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
 
 int	usercrypto = 1;		/* userland may do crypto requests */
+int	cryptodevallowsoft = 0;	/* only use hardware crypto */
 
 /* ARGSUSED */
 int
@@ -244,7 +245,8 @@ cryptof_ioctl(fp, cmd, data, p)
 				goto bail;
 		}
 
-		error = crypto_newsession(&sid, (txform ? &crie : &cria), 1);
+		error = crypto_newsession(&sid, (txform ? &crie : &cria),
+		    !cryptodevallowsoft);
 
 bail:
 		if (error) {
