@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.399 2003/11/04 21:43:15 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.400 2003/11/09 11:25:01 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -86,7 +86,6 @@
 
 
 #define DPFPRINTF(n, x)	if (pf_status.debug >= (n)) printf x
-struct pf_state_tree;
 
 /*
  * Global variables
