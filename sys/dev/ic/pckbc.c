@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.4 2002/04/30 20:56:15 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.5 2002/06/09 00:58:03 nordin Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -284,6 +284,8 @@ pckbc_attach_slot(sc, slot)
 	if (found && !t->t_slotdata[slot]) {
 		t->t_slotdata[slot] = malloc(sizeof(struct pckbc_slotdata),
 					     M_DEVBUF, M_NOWAIT);
+		if (t->t_slotdata[slot] == NULL)
+			return 0;
 		pckbc_init_slotdata(t->t_slotdata[slot]);
 	}
 	return (found);
