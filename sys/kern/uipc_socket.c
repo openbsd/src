@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.3 1996/03/03 17:20:19 niklas Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.4 1996/08/05 01:00:53 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -83,6 +83,7 @@ socreate(dom, aso, type, proto)
 	so->so_type = type;
 	if (p->p_ucred->cr_uid == 0)
 		so->so_state = SS_PRIV;
+	so->so_ucred = crdup(p->p_ucred);
 	so->so_proto = prp;
 	error =
 	    (*prp->pr_usrreq)(so, PRU_ATTACH, NULL, (struct mbuf *)(long)proto,
@@ -151,6 +152,8 @@ sofree(so)
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
+	if (so->so_ucred)
+		crfree(so->so_ucred);
 	FREE(so, M_SOCKET);
 }
 

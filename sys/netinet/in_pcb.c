@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.8 1996/07/29 07:54:58 downsj Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.9 1996/08/05 01:00:57 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -165,13 +165,10 @@ in_pcbbind(v, nam)
 			if (ntohs(lport) < IPPORT_RESERVED &&
 			    (error = suser(p->p_ucred, &p->p_acflag)))
 				return (EACCES);
-			/*
-			 * treat port 2049 as a reserved port, but indicate
-			 * that it is used to not confuse a bindresvport()
-			 * type function
-			 */
-			if (ntohs(lport) == 2049 &&
-			    suser(p->p_ucred, &p->p_acflag))
+			t = in_pcblookup(table, zeroin_addr, 0,
+			    sin->sin_addr, lport, INPLOOKUP_WILDCARD);
+			if (t && so->so_ucred->cr_uid && (so->so_ucred->cr_uid
+			    != t->inp_socket->so_ucred->cr_uid))
 				return (EADDRINUSE);
 			t = in_pcblookup(table, zeroin_addr, 0,
 			    sin->sin_addr, lport, wild);
@@ -613,7 +610,7 @@ in_pcblookup(table, faddr, fport_arg, laddr, lport_arg, flags)
 				continue;
 		} else {
 			if (faddr.s_addr != INADDR_ANY)
-					wildcard++;
+				wildcard++;
 		}
 		if (inp->inp_laddr.s_addr != INADDR_ANY) {
 			if (laddr.s_addr == INADDR_ANY)
