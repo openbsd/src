@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.91 2002/04/30 00:26:10 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.92 2002/05/01 21:35:08 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1759,7 +1759,7 @@ ubsec_kprocess_modexp(sc, krp)
 	struct ubsec_softc *sc;
 	struct cryptkop *krp;
 {
-	struct ubsec_q2_modexp *me;
+	struct ubsec_q2_modexp *me = NULL;
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_modexp *ctx;
 	struct ubsec_pktbuf *epb;
@@ -1773,6 +1773,22 @@ ubsec_kprocess_modexp(sc, krp)
 		    s, krp->krp_param[s].crp_nbits);
 	}
 #endif
+
+	modbits = krp->krp_param[2].crp_nbits;
+	if (modbits <= 512)
+		modbits = 512;
+	else if (modbits <= 768)
+		modbits = 768;
+	else if (modbits <= 1024)
+		modbits = 1024;
+	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && modbits <= 1536)
+		modbits = 1536;
+	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && modbits <= 2048)
+		modbits = 2048;
+	else {
+		err = E2BIG;
+		goto errout;
+	}
 
 	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
 	if (me == NULL)
@@ -1805,10 +1821,11 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, 1024 / 8, &me->me_C, 0)) {
+	if (ubsec_dma_malloc(sc, modbits/8, &me->me_C, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
+	bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
 
 	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_pktbuf),
 	    &me->me_epb, 0)) {
@@ -1848,11 +1865,20 @@ ubsec_kprocess_modexp(sc, krp)
 
 	mcr->mcr_opktbuf.pb_addr = htole32(me->me_C.dma_paddr);
 	mcr->mcr_opktbuf.pb_next = 0;
-	mcr->mcr_opktbuf.pb_len = htole32(me->me_C.dma_size);
+	mcr->mcr_opktbuf.pb_len = htole32(modbits / 8);
+
+#ifdef DIAGNOSTIC
+	/* Misaligned output buffer will hang the chip. */
+	if ((letoh32(mcr->mcr_opktbuf.pb_addr) & 3) != 0)
+		panic("%s: modexp invalid addr 0x%x\n",
+		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_addr));
+	if ((letoh32(mcr->mcr_opktbuf.pb_len) & 3) != 0)
+		panic("%s: modexp invalid len 0x%x\n",
+		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_len));
+#endif
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
 	bzero(ctx, sizeof(*ctx));
-	modbits = krp->krp_param[2].crp_nbits;
 	if (ubsec_kcopyin(&krp->krp_param[2], ctx->me_N,
 	    1024 / 8, &len)) {
 		err = EOPNOTSUPP;
@@ -1865,8 +1891,6 @@ ubsec_kprocess_modexp(sc, krp)
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
 	ctx->me_E_len = htole16(((krp->krp_param[1].crp_nbits + 31) / 32) * 32);
 	ctx->me_N_len = htole16(len);
-
-	mcr->mcr_opktbuf.pb_len = htole32(modbits / 8);
 
 #ifdef UBSEC_DEBUG
 	ubsec_dump_mcr(mcr);
