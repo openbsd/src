@@ -1,4 +1,4 @@
-/*	$OpenBSD: pt_file.c,v 1.4 1997/03/23 03:52:16 millert Exp $	*/
+/*	$OpenBSD: pt_file.c,v 1.5 1997/06/18 13:26:38 deraadt Exp $	*/
 /*	$NetBSD: pt_file.c,v 1.7 1995/06/06 19:54:30 mycroft Exp $	*/
 
 /*
@@ -66,7 +66,8 @@ portal_file(pcr, key, v, so, fdp)
 	int error;
 
 	pbuf[0] = '/';
-	(void)strcpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0));
+	(void)strncpy(pbuf+1, key + (v[1] ? strlen(v[1]) : 0), sizeof pbuf-2);
+	pbuf[sizeof pbuf-1] = '\0';
 
 #ifdef DEBUG
 	(void)printf("path = %s, uid = %d, gid = %d\n", pbuf, pcr->pcr_uid,
