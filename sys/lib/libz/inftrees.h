@@ -1,5 +1,6 @@
+/*	$OpenBSD: inftrees.h,v 1.6 2002/03/12 00:26:30 millert Exp $	*/
 /* inftrees.h -- header to use inftrees.c
- * Copyright (C) 1995-1998 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 

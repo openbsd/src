@@ -1,6 +1,6 @@
-/*	$OpenBSD: zutil.h,v 1.5 2000/03/02 00:29:52 todd Exp $	*/
+/*	$OpenBSD: zutil.h,v 1.6 2002/03/12 00:25:58 millert Exp $	*/
 /* zutil.h -- internal interface and configuration of the compression library
- * Copyright (C) 1995-1998 Jean-loup Gailly.
+ * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
