@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.3 1996/11/28 23:33:05 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 1997/02/21 10:59:16 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -54,7 +54,7 @@ struct amiga_bus_space {
 	void	*bs_data;
 
 	int	(*bs_map)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
-	    bus_space_handle_t *);
+		    bus_space_handle_t *);
 	int	(*bs_unmap)(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 	/* We need swapping of 16-bit entities */
@@ -113,6 +113,23 @@ bus_space_read_multi(4,32)
 
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
 
+#define bus_space_read_region(n, m)					      \
+static __inline void						       	      \
+CAT(bus_space_read_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
+    bus_addr_t ba, CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
+{									      \
+	while (cnt--) {							      \
+		*buf++ = CAT(bus_space_read_,n)(bst, bsh, ba);		      \
+		ba += n;						      \
+	}								      \
+}
+
+bus_space_read_region(1,8)
+bus_space_read_region(2,16)
+bus_space_read_region(4,32)
+
+#define	bus_space_read_region_8	!!! bus_space_read_region_8 not implemented !!!
+
 static __inline void
 bus_space_write_1(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba,
     u_int8_t x)
@@ -152,6 +169,24 @@ bus_space_write_multi(2,16)
 bus_space_write_multi(4,32)
 
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
+
+#define bus_space_write_region(n, m)					      \
+static __inline void						       	      \
+CAT(bus_space_write_region_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,   \
+    bus_addr_t ba, const CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
+{									      \
+	while (cnt--) {							      \
+		CAT(bus_space_write_,n)(bst, bsh, ba, *buf++);		      \
+		ba += n;						      \
+	}								      \
+}
+
+bus_space_write_region(1,8)
+bus_space_write_region(2,16)
+bus_space_write_region(4,32)
+
+#define	bus_space_write_region_8 \
+    !!! bus_space_write_region_8 not implemented !!!
 
 /* OpenBSD extensions */
 static __inline void
