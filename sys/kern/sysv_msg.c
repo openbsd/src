@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.7 1999/04/18 18:24:40 deraadt Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.8 1999/08/09 21:44:24 deraadt Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -214,9 +214,9 @@ sys_omsgctl(p, v, retval)
 
 #ifdef DIAGNOSTIC
 		if (msqptr->msg_cbytes != 0)
-			panic("msg_cbytes is screwed up");
+			panic("sys_omsgctl: msg_cbytes is screwed up");
 		if (msqptr->msg_qnum != 0)
-			panic("msg_qnum is screwed up");
+			panic("sys_omsgctl: msg_qnum is screwed up");
 #endif
 
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
@@ -350,9 +350,9 @@ sys_msgctl(p, v, retval)
 
 #ifdef DIAGNOSTIC
 		if (msqptr->msg_cbytes != 0)
-			panic("msg_cbytes is screwed up");
+			panic("sys_msgctl: msg_cbytes is screwed up");
 		if (msqptr->msg_qnum != 0)
-			panic("msg_qnum is screwed up");
+			panic("sys_msgctl: msg_qnum is screwed up");
 #endif
 
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
