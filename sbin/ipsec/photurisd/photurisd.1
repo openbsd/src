@@ -1,0 +1,219 @@
+.\" $OpenBSD: photurisd.1,v 1.1.1.1 1997/07/18 22:48:51 provos Exp $
+.\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Niels Provos.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" Manual page, using -mandoc macros
+.\"
+.Dd April 15, 1997
+.Dt PHOTURISD 1
+.Os OpenBSD 2.1
+.Sh NAME
+.Nm photurisd
+.Nd IPSec key management daemon
+.Sh SYNOPSIS
+.Nm photurisd
+.Op Fl fi
+.Op Fl d Ar directory
+.Sh DESCRIPTION
+The
+.Nm photuris
+daemon establisches security associations for encrypted
+and/or authenticated network traffic. 
+.Pp
+The daemon listens to a named pipe 
+.Pa photuris.pipe
+for user requests and on a
+.Nm PF_ENCAP
+socket for kernel requests.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl f
+The
+.Fl f
+option is used to obmit the primality check of the bootstrapped moduli.
+.It Fl i
+The
+.Fl i
+option can be used to ignore the 
+.Pa photuris.startup
+file. Otherwise the exchanges in that file will be initiated
+on startup.
+.It Fl d
+The
+.Fl d
+option specifies the directory in wich
+.Nm photurisd
+looks for its startup files. The default is
+.Pa /etc/photuris/
+.El
+.Pp
+The file
+.Pa photuris.conf
+contains the moduli for the DH exchange and the actual exchange
+schemes used to establish a shared secret.
+.Pp
+The file
+.Pa attributes.conf
+contains the attributes, i.e. different choices of encryption
+and authenication, offered to the other peer.
+.Pp
+The file
+.Pa secrets.conf
+contains the party preconfigured symmetric secrets for the
+identity exchange. User secrets files can be included.
+.Pp
+Finally the file
+.Pa photuris.startup
+contains parameters for exchanges which are created during
+startup.
+.Pp
+.Sh EXAMPLE
+The keywords 
+.Nm dst ,
+.Nm port ,
+.Nm options ,
+.Nm tsrc ,
+.Nm tdsr
+and
+.Nm user
+are understood in the 
+.Pa photuris.startup
+file. The values are as follow:
+.Bl -tag -width options -offser indent
+.It dst
+The destination IP address with which the exchange is to be established.
+.It port
+The port number of the destination
+.Nm photuris
+daemon.
+.It options
+The options to be used in the exchange. Possible values are
+.Nm enc
+and
+.Nm auth .
+.It tsrc
+The source address with netmask from which packets are accepted
+for the tunnel to be created.
+.It tdst
+The destination address with netmask for which packets are
+accepted for the tunnel being created.
+.It user
+The user name for whom the keying shall be done. Preconfigured
+secrets are taken from the users secret file.
+.El
+.Pp
+Exchanges are separated by newlines.
+.Pp
+Example:
+.Pp
+	dst=134.100.106.2 port=468 options=auth
+.Pp
+	tsrc=134.100.104.0/255.255.255.255
+.Pp
+	tdst=134.100.106.0/255.255.255.255
+.Pp
+If the file
+.Pa /etc/fbtab
+exists,
+.Nm login
+changes the protection and ownership of certain devices specified in this
+file.
+.Pp
+If the file                                                           
+.Pa /var/log/failedlogin
+exists,                                                                   
+.Nm login                                                                  
+will record failed login attempts in this file.
+.Pp
+Immediately after logging a user in,
+.Nm login
+displays the system copyright notice, the date and time the user last
+logged in, the date and time of the last unsucessful login (if the file
+.Pa /var/log/failedlogin
+exists), the message of the day as well as other information.
+If the file
+.Dq Pa .hushlogin
+exists in the user's home directory, all of these messages are suppressed.
+This is to simplify logins for non-human users, such as
+.Xr uucp 1 .
+.Nm Login
+then records an entry in the
+.Xr wtmp 5
+and
+.Xr utmp 5
+files and executes the user's command interpreter.
+.Pp
+Login enters information into the environment (see
+.Xr environ 7 )
+specifying the user's home directory (HOME), command interpreter (SHELL),
+search path (PATH), terminal type (TERM) and user name (both LOGNAME and
+USER).
+.Pp
+The standard shells,
+.Xr csh 1
+and
+.Xr sh 1 ,
+do not fork before executing the
+.Nm login
+utility.
+.Sh FILES
+.Bl -tag -width /var/mail/userXXX -compact
+.It Pa /etc/fbtab
+changes device protections
+.It Pa /etc/motd
+message-of-the-day
+.It Pa /etc/nologin
+disallows logins
+.It Pa /var/run/utmp
+current logins
+.It Pa /var/log/lastlog
+last login account records
+.It Pa /var/log/wtmp
+login account records
+.It Pa /var/log/failedlogin
+failed login account records
+.It Pa /var/mail/user
+system mailboxes
+.It Pa \&.hushlogin
+makes login quieter
+.El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr passwd 1 ,
+.Xr rlogin 1 ,
+.Xr skey 1 ,
+.Xr getpass 3 ,
+.Xr utmp 5 ,
+.Xr environ 7,
+.Xr fbtab 5
+.Sh HISTORY
+A
+.Nm login
+appeared in
+.At v6 .
