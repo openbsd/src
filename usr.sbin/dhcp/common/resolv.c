@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: resolv.c,v 1.1 1998/08/18 03:43:27 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: resolv.c,v 1.2 2001/01/03 16:04:39 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -58,10 +58,8 @@ void read_resolv_conf (parse_time)
 	FILE *cfile;
 	char *val;
 	int token;
-	int declaration = 0;
 	struct name_server *sp, *sl, *ns;
 	struct domain_search_list *dp, *dl, *nd;
-	struct iaddr *iaddr;
 
 	new_parse (path_resolv_conf);
 
@@ -181,7 +179,6 @@ void read_resolv_conf (parse_time)
 
 struct sockaddr_in *pick_name_server ()
 {
-	FILE *rc;
 	static TIME rcdate;
 	struct stat st;
 
@@ -192,8 +189,6 @@ struct sockaddr_in *pick_name_server ()
 			return (struct sockaddr_in *)0;
 		}
 		if (st.st_mtime > rcdate) {
-			char rcbuf [512];
-			char *s, *t, *u;
 			rcdate = cur_time + 1;
 			
 			read_resolv_conf (rcdate);

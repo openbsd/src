@@ -473,6 +473,7 @@ int warn PROTO ((char *, ...));
 int note PROTO ((char *, ...));
 int debug PROTO ((char *, ...));
 int parse_warn PROTO ((char *, ...));
+void write_pidfile PROTO((char *, pid_t));
 
 /* dhcpd.c */
 extern TIME cur_time;

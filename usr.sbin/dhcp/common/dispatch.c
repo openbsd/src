@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.3 2000/07/21 00:33:53 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.4 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -61,6 +61,7 @@ void (*bootp_packet_handler) PROTO ((struct interface_info *,
 				     unsigned char *, int, unsigned short,
 				     struct iaddr, struct hardware *));
 
+int interface_status PROTO((struct interface_info *));
 static void got_one PROTO ((struct protocol *));
 int quiet_interface_discovery;
 
@@ -80,7 +81,6 @@ void discover_interfaces (state)
 	struct ifreq ifr;
 	int i;
 	int sock;
-	int address_count = 0;
 	struct subnet *subnet;
 	struct shared_network *share;
 	struct sockaddr_in foo;
@@ -515,7 +515,6 @@ static void got_one (l)
 	struct sockaddr_in from;
 	struct hardware hfrom;
 	struct iaddr ifrom;
-	static int death = 0;
 	size_t result;
 	static unsigned char packbuf [4095]; /* Packet input buffer.
 						Must be as large as largest

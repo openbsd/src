@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.2 2000/11/10 15:33:13 provos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.3 2001/01/03 16:04:39 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -192,9 +192,6 @@ int parse_ip_addr (cfile, addr)
 	FILE *cfile;
 	struct iaddr *addr;
 {
-	char *val;
-	int token;
-
 	addr -> len = 4;
 	if (parse_numeric_aggregate (cfile, addr -> iabuf,
 				     &addr -> len, DOT, 10, 8))

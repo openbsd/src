@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.1 1998/08/18 03:43:25 deraadt Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.2 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -174,9 +174,7 @@ void if_register_receive (info)
 {
 	int flag = 1;
 	struct bpf_version v;
-	u_int32_t addr;
 	struct bpf_program p;
-	u_int32_t bits;
 
 	/* Open a BPF device and hang it on this interface... */
 	info -> rfdesc = if_register_bpf (info);

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.2 2000/07/21 00:33:55 beck Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.3 2001/01/03 16:04:40 ericj Exp $ Copyright 1995, 1996 The Internet Software Consortium.";
 #endif
 
 static char copyright[] =
@@ -76,7 +76,6 @@ int log_perror = 1;
 
 char *path_dhcpd_conf = _PATH_DHCPD_CONF;
 char *path_dhcpd_db = _PATH_DHCPD_DB;
-char *path_dhcpd_pid = _PATH_DHCPD_PID;
 
 int main (argc, argv, envp)
 	int argc;
@@ -88,7 +87,7 @@ int main (argc, argv, envp)
 	int cftest = 0;
 #ifndef DEBUG
 	int pidfilewritten = 0;
-	int pid;
+	pid_t pid;
 	char pbuf [20];
 	int daemon = 1;
 #endif
@@ -162,7 +161,7 @@ int main (argc, argv, envp)
 				error ("Insufficient memory to %s %s",
 				       "record interface", argv [i]);
 			memset (tmp, 0, sizeof *tmp);
-			strcpy (tmp -> name, argv [i]);
+			strlcpy(tmp->name, argv[i], IFNAMSIZ);
 			tmp -> next = interfaces;
 			tmp -> flags = INTERFACE_REQUESTED;
 			interfaces = tmp;
@@ -220,23 +219,17 @@ int main (argc, argv, envp)
 	}
 
 	/* Read previous pid file. */
-	if ((i = open (path_dhcpd_pid, O_RDONLY)) >= 0) {
+	if ((i = open (_PATH_DHCPD_PID, O_RDONLY)) >= 0) {
 		status = read (i, pbuf, (sizeof pbuf) - 1);
 		close (i);
 		pbuf [status] = 0;
-		pid = atoi (pbuf);
+		pid = (pid_t)atoi(pbuf);
 
 		/* If the previous server process is not still running,
 		   write a new pid file immediately. */
 		if (pid && kill (pid, 0) < 0) {
-			unlink (path_dhcpd_pid);
-			if ((i = open (path_dhcpd_pid,
-				       O_WRONLY | O_CREAT, 0640)) >= 0) {
-				sprintf (pbuf, "%d\n", (int)getpid ());
-				write (i, pbuf, strlen (pbuf));
-				close (i);
-				pidfilewritten = 1;
-			}
+			write_pidfile(_PATH_DHCPD_PID, getpid());
+			pidfilewritten = 1;
 		}
 	}
 
@@ -260,14 +253,8 @@ int main (argc, argv, envp)
 	   meaning nothing is listening on the bootp port, then write
 	   the pid file out - what's in it now is bogus anyway. */
 	if (!pidfilewritten) {
-		unlink (path_dhcpd_pid);
-		if ((i = open (path_dhcpd_pid,
-			       O_WRONLY | O_CREAT, 0640)) >= 0) {
-			sprintf (pbuf, "%d\n", (int)getpid ());
-			write (i, pbuf, strlen (pbuf));
-			close (i);
-			pidfilewritten = 1;
-		}
+		write_pidfile(_PATH_DHCPD_PID, getpid());
+		pidfilewritten = 1;
 	}
 #endif /* !DEBUG */
 

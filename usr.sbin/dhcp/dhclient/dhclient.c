@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.12 2000/12/29 14:36:04 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.13 2001/01/03 16:04:39 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -82,7 +82,6 @@ struct tree_cache *global_options [256];
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_dhclient_db = _PATH_DHCLIENT_DB;
-char *path_dhclient_pid = _PATH_DHCLIENT_PID;
 
 int interfaces_requested = 0;
 
@@ -243,7 +242,7 @@ static void usage ()
 void cleanup ()
 {
 	/* Make sure the pidfile is gone. */
-	(void) unlink (path_dhclient_pid);
+	(void) unlink (_PATH_DHCLIENT_PID);
 }
 
 /* Individual States:
@@ -2073,7 +2072,7 @@ void go_daemon ()
 
 	/* Don't become a daemon if the user requested otherwise. */
 	if (no_daemon) {
-		write_client_pid_file ();
+		write_pidfile(_PATH_DHCLIENT_PID, getpid());
 		return;
 	}
 
@@ -2093,28 +2092,7 @@ void go_daemon ()
 	/* Become session leader and get pid... */
 	pid = setsid ();
 
-	write_client_pid_file ();
-}
-
-void write_client_pid_file ()
-{
-	FILE *pf;
-	int pfdesc;
-
-	pfdesc = open (path_dhclient_pid, O_CREAT | O_TRUNC | O_WRONLY, 0644);
-
-	if (pfdesc < 0) {
-		warn ("Can't create %s: %m", path_dhclient_pid);
-		return;
-	}
-
-	pf = fdopen (pfdesc, "w");
-	if (!pf)
-		warn ("Can't fdopen %s: %m", path_dhclient_pid);
-	else {
-		fprintf (pf, "%ld\n", (long)getpid ());
-		fclose (pf);
-	}
+	write_pidfile(_PATH_DHCLIENT_PID, getpid());
 }
 
 int check_option (struct client_lease *l, int option) {

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.1 1998/08/18 03:43:26 deraadt Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.2 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -61,8 +61,6 @@ void icmp_startup (routep, handler)
 {
 	struct protoent *proto;
 	int protocol = 1;
-	struct sockaddr_in from;
-	int fd;
 	int state;
 
 	/* Only initialize icmp once. */

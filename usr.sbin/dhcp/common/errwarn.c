@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: errwarn.c,v 1.2 2000/06/29 00:25:42 deraadt Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: errwarn.c,v 1.3 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -62,7 +62,6 @@ void error (ANSI_DECL(char *) fmt, VA_DOTDOTDOT)
      va_dcl
 {
   va_list list;
-  extern int logged_in;
 
   do_percentm (fbuf, fmt);
 
@@ -250,6 +249,21 @@ int parse_warn (ANSI_DECL (char *) fmt, VA_DOTDOTDOT)
 	warnings_occurred = 1;
 
 	return 0;
+}
+
+void
+write_pidfile(file, pid)
+        char *file;
+        pid_t pid;
+{
+	FILE *fp;
+
+	(void)unlink(file);
+
+	if ((fp = fopen(file , "w")) != NULL) {
+		fprintf(fp, "%d\n", pid);
+		(void)fclose(fp);
+	}
 }
 
 #ifdef NO_STRERROR

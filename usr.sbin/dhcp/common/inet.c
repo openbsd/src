@@ -114,7 +114,7 @@ struct iaddr broadcast_addr (subnet, mask)
 	struct iaddr subnet;
 	struct iaddr mask;
 {
-	int i, j, k;
+	int i;
 	struct iaddr rv;
 
 	if (subnet.len != mask.len) {

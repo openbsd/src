@@ -48,7 +48,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.2 2000/11/10 15:33:13 provos Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.3 2001/01/03 16:04:38 ericj Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -69,7 +69,6 @@ u_int16_t dns_port;
 void dns_startup ()
 {
 	struct servent *srv;
-	struct sockaddr_in from;
 
 	/* Only initialize icmp once. */
 	if (dns_protocol_initialized)
@@ -194,8 +193,7 @@ static int nslookup (id, qname, namelen, qtype, qclass)
 	HEADER *hdr;
 	unsigned char query [512];
 	u_int8_t *s;
-	int len;
-	int i, status;
+	int status;
 	struct sockaddr_in *server = pick_name_server ();
 	
 	if (!server)
@@ -254,8 +252,7 @@ static int zonelookup (id, qname, namelen, qclass)
 	HEADER *hdr;
 	unsigned char query [512];
 	u_int8_t *s, *nptr;
-	int len;
-	int i, status, count;
+	int status, count;
 	struct sockaddr_in *server = pick_name_server ();
 	
 	if (!server)
@@ -321,7 +318,6 @@ void dns_packet (protocol)
 {
 	HEADER *ns_header;
 	struct sockaddr_in from;
-	int fl;
 	unsigned char buf [4096];
 	unsigned char nbuf [512];
 	unsigned char *base;
