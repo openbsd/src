@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.21 2005/01/13 20:50:57 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.22 2005/01/14 00:47:44 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -754,13 +754,13 @@ void
 rcs_kflag_usage(void)
 {
 	fprintf(stderr, "Valid expansion modes include:\n"
-	    "\t-kkv\t\tGenerate keywords using the default form.\n"
-	    "\t-kkvl\t\tLike -kkv, except locker's name inserted.\n"
-	    "\t-kk\t\tGenerate only keyword names in keyword strings.\n"
-	    "\t-kv\t\tGenerate only keyword values in keyword strings.\n"
-	    "\t-ko\t\tGenerate the old keyword string "
+	    "\t-kkv\tGenerate keywords using the default form.\n"
+	    "\t-kkvl\tLike -kkv, except locker's name inserted.\n"
+	    "\t-kk\tGenerate only keyword names in keyword strings.\n"
+	    "\t-kv\tGenerate only keyword values in keyword strings.\n"
+	    "\t-ko\tGenerate old keyword string "
 	    "(no changes from checked in file).\n"
-	    "\t-kb\t\tGenerate binary file unmodified (merges not allowed).\n");
+	    "\t-kb\tGenerate binary file unmodified (merges not allowed).\n");
 }
 
 /*
