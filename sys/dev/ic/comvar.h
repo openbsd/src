@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.32 2003/06/03 21:09:02 deraadt Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.33 2003/07/15 03:15:58 jason Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ void	comcnputc(dev_t, int);
 void	comcnpollc(dev_t, int);
 int	com_common_getc(bus_space_tag_t, bus_space_handle_t);
 void	com_common_putc(bus_space_tag_t, bus_space_handle_t, int);
+void	com_raisedtr(void *);
 
 #ifdef KGDB
 int	com_kgdb_attach(bus_space_tag_t, int, int, int, tcflag_t);
