@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.1 2005/01/26 06:34:54 uwe Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.2 2005/03/11 00:18:17 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -47,33 +47,41 @@ struct cfattach apm_pxaip_ca = {
 #define	BATT_AD			4
 #define JK_VAD			6
 
-/* Battery-related GPIO pins */
+/* battery-related GPIO pins */
 #define GPIO_AC_IN_C3000	115	/* active low */
 #define GPIO_CHRG_FULL_C3000	101
 #define GPIO_BATT_COVER_C3000	90	/* active low */
 
-/* Internal software power states */
-#define PS_UNKNOWN		0
-#define PS_BATT_ABSENT		1
-#define PS_NOT_CHARGING		2
-#define PS_CHARGING		3
-#define PS_BATT_FULL		4
+/* battery state */
+#define BATT_RESET		0
+#define BATT_ABSENT		1
+#define BATT_NOT_CHARGING	2
+#define BATT_CHARGING		3
+#define BATT_FULL		4
 
 #ifdef APMDEBUG
-const	char *zaurus_power_state_names[5] = {
-	"unknown", "absent", "not charging", "charging", "full"
+const	char *zaurus_batt_state_names[5] = {
+	"reset", "absent", "not charging", "charging", "full"
 };
 #endif
 
-int	zaurus_power_state = PS_UNKNOWN;
+int	zaurus_batt_state = BATT_RESET;
 
-struct battery_voltage_threshold {
-	int	voltage;
-	int	life;
-	int	state;
+struct battery_threshold {
+	int	bt_volt;
+	int	bt_life;
+	int	bt_state;
 };
 
-struct battery_voltage_threshold zaurus_battery_c3000[] = {
+struct battery_info {
+	int	bi_minutes;	/* minutes left at 100% battery life */
+	const	struct battery_threshold *bi_thres;
+};
+
+const struct battery_threshold zaurus_battery_life_c3000[] = {
+#if 0
+	{224,	125,	APM_BATT_HIGH},	/* XXX untested */
+#endif
 	{194,	100,	APM_BATT_HIGH},
 	{188,	75,	APM_BATT_HIGH},
 	{184,	50,	APM_BATT_HIGH},
@@ -82,9 +90,16 @@ struct battery_voltage_threshold zaurus_battery_c3000[] = {
 	{0,	0,	APM_BATT_CRITICAL},
 };
 
-struct battery_voltage_threshold *zaurus_main_battery =
-    zaurus_battery_c3000;
+const struct battery_info zaurus_battery_c3000 = {
+	360 /* minutes */,
+	zaurus_battery_life_c3000
+};
 
+const struct battery_info *zaurus_main_battery = &zaurus_battery_c3000;
+
+#if 0
+void	zaurus_shutdownhook(void *);
+#endif
 int	max1111_adc_value(int);
 int	max1111_adc_value_avg(int, int);
 #if 0
@@ -94,6 +109,7 @@ int	zaurus_battery_temp(void);
 int	zaurus_battery_voltage(void);
 int	zaurus_battery_life(void);
 int	zaurus_battery_state(void);
+int	zaurus_minutes_left(void);
 int	zaurus_ac_present(void);
 int	zaurus_charge_complete(void);
 void	zaurus_charge_control(int);
@@ -128,7 +144,20 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 	zaurus_power_check(sc);
 
 	pxa2x0_apm_attach_sub(sc);
+
+#if 0
+	(void)shutdownhook_establish(zaurus_shutdownhook, NULL);
+#endif
 }
+
+#if 0
+void
+zaurus_shutdownhook(void *v)
+{
+	/* XXX */
+	zaurus_charge_control(BATT_NOT_CHARGING);
+}
+#endif
 
 int
 max1111_adc_value(int chan)
@@ -214,35 +243,52 @@ zaurus_battery_voltage(void)
 }
 
 int
-zaurus_battery_life(void)
+zaurus_battery_state(void)
 {
+	const struct battery_threshold *bthr;
+	int volt;
 	int i;
-	int voltage;
 
-	voltage = zaurus_battery_voltage();
+	bthr = zaurus_main_battery->bi_thres;
+	volt = zaurus_battery_voltage();
 
-	for (i = 0; zaurus_main_battery[i].voltage > 0; i++) {
-		if (voltage >= zaurus_main_battery[i].voltage)
+	for (i = 0; bthr[i].bt_volt > 0; i++)
+		if (bthr[i].bt_volt <= volt)
 			break;
-	}
 
-	return zaurus_main_battery[i].life;
+	return (bthr[i].bt_state);
 }
 
 int
-zaurus_battery_state(void)
+zaurus_battery_life(void)
 {
+	const struct battery_threshold *bthr;
+	int volt;
 	int i;
-	int voltage;
 
-	voltage = zaurus_battery_voltage();
+	bthr = zaurus_main_battery->bi_thres;
+	volt = zaurus_battery_voltage();
 
-	for (i = 0; zaurus_main_battery[i].voltage > 0; i++) {
-		if (voltage >= zaurus_main_battery[i].voltage)
+	for (i = 0; bthr[i].bt_volt > 0; i++)
+		if (bthr[i].bt_volt <= volt)
 			break;
-	}
 
-	return zaurus_main_battery[i].state;
+	if (i == 0)
+		return (bthr[i].bt_life);
+
+	return (bthr[i].bt_life +
+	    ((bthr[i-1].bt_volt - volt) * 100) /
+	    (bthr[i-1].bt_volt - bthr[i].bt_volt) *
+	    (bthr[i-1].bt_life - bthr[i].bt_life) / 100);
+}
+
+int
+zaurus_minutes_left(void)
+{
+	int life;
+
+	life = zaurus_battery_life();
+	return (zaurus_main_battery->bi_minutes * life / 100);
 }
 
 int
@@ -268,23 +314,23 @@ zaurus_charge_control(int state)
 {
 
 	switch (state) {
-	case PS_CHARGING:
-		scoop_charge_battery(1, 0);
-		scoop_led_set(SCOOP_LED_ORANGE, 1);
-		break;
-	case PS_NOT_CHARGING:
-	case PS_BATT_FULL:
+	case BATT_RESET:
+	case BATT_ABSENT:
+	case BATT_NOT_CHARGING:
+	case BATT_FULL:
 		scoop_charge_battery(0, 0);
 		scoop_led_set(SCOOP_LED_ORANGE, 0);
 		/* Always force a 15 ms delay before charging again. */
 		delay(15000);
 		break;
+	case BATT_CHARGING:
+		scoop_charge_battery(1, 0);
+		scoop_led_set(SCOOP_LED_ORANGE, 1);
+		break;
 	default:
 		printf("zaurus_charge_control: bad state %d\n", state);
 		break;
 	}
-
-	zaurus_power_state = state;
 }
 
 /*
@@ -294,30 +340,30 @@ zaurus_charge_control(int state)
 void
 zaurus_power_check(struct pxa2x0_apm_softc *sc)
 {
-	int state = zaurus_power_state;
+	int state = zaurus_batt_state;
 
 	switch (state) {
-	case PS_UNKNOWN:
-	case PS_BATT_ABSENT:
-		state = PS_NOT_CHARGING;
+	case BATT_RESET:
 		zaurus_charge_control(state);
 		/* FALLTHROUGH */
-
-	case PS_NOT_CHARGING:
+	case BATT_ABSENT:
+		state = BATT_NOT_CHARGING;
+		/* FALLTHROUGH */
+	case BATT_NOT_CHARGING:
 		if (zaurus_ac_present())
-			state = PS_CHARGING;
+			state = BATT_CHARGING;
 		break;
 
-	case PS_CHARGING:
+	case BATT_CHARGING:
 		if (!zaurus_ac_present())
-			state = PS_NOT_CHARGING;
+			state = BATT_NOT_CHARGING;
 		else if (zaurus_charge_complete())
-			state = PS_BATT_FULL;
+			state = BATT_FULL;
 		break;
 
-	case PS_BATT_FULL:
+	case BATT_FULL:
 		if (!zaurus_ac_present())
-			state = PS_NOT_CHARGING;
+			state = BATT_NOT_CHARGING;
 		break;
 
 	default:
@@ -325,14 +371,16 @@ zaurus_power_check(struct pxa2x0_apm_softc *sc)
 		break;
 	}
 
-	if (state != zaurus_power_state) {
+	if (zaurus_batt_state != state) {
 #ifdef APMDEBUG
-		printf("zaurus_power_check: battery state %s -> %s volt %d\n",
-		    zaurus_power_state_names[zaurus_power_state],
-		    zaurus_power_state_names[state],
+		printf("%s: battery state %s -> %s volt %d\n",
+		    sc->sc_dev.dv_xname,
+		    zaurus_batt_state_names[zaurus_batt_state],
+		    zaurus_batt_state_names[state],
 		    zaurus_battery_voltage());
 #endif
 		zaurus_charge_control(state);
+		zaurus_batt_state = state;
 	}
 }
 
@@ -344,14 +392,16 @@ zaurus_power_info(struct pxa2x0_apm_softc *sc,
     struct apm_power_info *power)
 {
 
-	if (zaurus_power_state == PS_CHARGING) {
+	if (zaurus_batt_state == BATT_CHARGING) {
 		power->ac_state = APM_AC_ON;
 		power->battery_state = APM_BATT_CHARGING;
 		power->battery_life = 100;
+		power->minutes_left = zaurus_main_battery->bi_minutes;
 	} else {
 		power->ac_state = zaurus_ac_present() ? APM_AC_ON :
 		    APM_AC_OFF;
 		power->battery_state = zaurus_battery_state();
 		power->battery_life = zaurus_battery_life();
+		power->minutes_left = zaurus_minutes_left();
 	}
 }
