@@ -1,0 +1,5 @@
+stdin:6: queue has no parent
+pfctl: Syntax error in file: pf rules not loaded
+altq on lo0 cbq bandwidth 10.00Mb tbrsize 1824 queue { frenchs eat frogs }
+queue frenchs bandwidth 3.00Mb cbq( default ) 
+queue eat bandwidth 3.00Mb 
