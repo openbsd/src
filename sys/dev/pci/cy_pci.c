@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.12 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.13 2004/06/13 17:30:27 pvalchev Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -96,6 +96,7 @@ cy_pci_attach(parent, self, aux)
 	struct cy_pci_softc *psc = (struct cy_pci_softc *)self;
 	struct cy_softc *sc = (struct cy_softc *)self;
 	struct pci_attach_args *pa = aux;
+	const char *intrstr = NULL;
 	pci_intr_handle_t ih;
 	pcireg_t memtype;
 	int plx_ver;
@@ -117,32 +118,38 @@ cy_pci_attach(parent, self, aux)
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_IO, 0,
 	    &psc->sc_iot, &psc->sc_ioh, NULL, NULL, 0) != 0) {
-		printf("%s: unable to map PLX registers\n",
-		    sc->sc_dev.dv_xname);
+		printf(": unable to map PLX registers\n");
 		return;
 	}
 
 	if (pci_mapreg_map(pa, 0x18, memtype, 0, &sc->sc_memt,
 	    &sc->sc_memh, NULL, NULL, 0) != 0) {
-                printf("%s: couldn't map device registers\n",
-		    sc->sc_dev.dv_xname);
+                printf(": couldn't map device registers\n");
                 return;
         }
 
 	if ((sc->sc_nr_cd1400s = cy_probe_common(sc->sc_memt, sc->sc_memh,
 	    CY_BUSTYPE_PCI)) == 0) {
-		printf("%s: PCI Cyclom card with no CD1400s\n",
-		    sc->sc_dev.dv_xname);
+		printf(": PCI Cyclom card with no CD1400s\n");
 		return;
 	}
 
-	if (pci_intr_map(pa, &ih) != 0)
-		panic("%s: couldn't map PCI interrupt", sc->sc_dev.dv_xname);
+	if (pci_intr_map(pa, &ih) != 0) {
+		printf(": couldn't map interrupt\n");
+		return;
+	}
 
+	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, cy_intr,
 	    sc, sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL)
-		panic("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf(": %s", intrstr);
 
 	cy_attach(parent, self);
 
