@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.12 2004/11/01 15:44:11 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.13 2004/12/11 14:05:13 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -37,6 +37,8 @@ use OpenBSD::IdCache;
 
 my $uidcache = new OpenBSD::UidCache;
 my $gidcache = new OpenBSD::GidCache;
+
+# This is a multiple of st_blksize everywhere....
 my $buffsize = 2 * 1024 * 1024;
 
 sub new
@@ -207,6 +209,36 @@ sub isSymLink() { 1 }
 package OpenBSD::Ustar::File;
 our @ISA=qw(OpenBSD::Ustar::Object);
 
+my $bs;
+my $zeroes;
+sub print_compact
+{
+	my ($fh, $buffer) = @_;
+	my $newbs = (stat $fh)[11];
+	if (!defined $bs or $newbs != $bs) {
+		$bs = $newbs;
+		$zeroes = "\x00"x$bs;
+	}
+START:
+	if (defined $bs) {
+		for (my $i = 0; $i + $bs <= length($buffer); $i+= $bs) {
+			if (substr($buffer, $i, $bs) eq $zeroes) {
+				syswrite($fh, $buffer, $i) or return 0;
+				$i+=$bs;
+				my $seek_forward = $bs;
+				while (substr($buffer, $i, $bs) eq $zeroes) {
+					$i += $bs;
+					$seek_forward += $bs;
+				}
+				sysseek($fh, $seek_forward, 1) or return 0;
+				$buffer = substr($buffer, $i);
+				goto START;
+			}
+		}
+	}
+	syswrite($fh, $buffer) or return 0;
+}
+
 sub create
 {
 	my $self = shift;
@@ -224,7 +256,7 @@ sub create
 			die "Error reading from archive: $!";
 		}
 		$self->{archive}->{swallow} -= $maxread;
-		unless (print $out $buffer) {
+		unless (print_compact($out, $buffer)) {
 			die "Error writing to $self->{destdir}$self->{name}: $!";
 		}
 			
