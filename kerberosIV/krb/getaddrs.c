@@ -44,6 +44,14 @@
 #include <net/if.h>
 #include <sys/sockio.h>
 
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif /* MAX */
+
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif /* MIN */
+
 /*
  * Return number and list of all local adresses.
  */
@@ -78,7 +86,7 @@ k_get_all_addrs (struct in_addr **l)
      for (p = ifconf.ifc_buf; p < ifconf.ifc_buf + ifconf.ifc_len;) {
           struct ifreq *ifr = (struct ifreq *)p;
 	  size_t sz = sizeof(*ifr);
-	  sz = max(sz, sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len);
+	  sz = MAX(sz, sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len);
 
 	  if(strncmp(ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name))) {
 	       if(ioctl(fd, SIOCGIFFLAGS, ifr) < 0) {

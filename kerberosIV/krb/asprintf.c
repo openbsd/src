@@ -45,6 +45,15 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif /* MAX */
+
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif /* MIN */
+
+
 enum format_flags {
     minus_flag     =  1,
     plus_flag      =  2,
@@ -97,7 +106,7 @@ as_reserve (struct state *state, size_t n)
       return 1;
 
     if (state->max_sz)
-      state->sz = min(state->max_sz, state->sz*2);
+      state->sz = MIN(state->max_sz, state->sz*2);
     else
       state->sz *= 2;
     tmp = realloc (state->str, state->sz);
@@ -521,7 +530,7 @@ vasnprintf (char **ret, size_t max_sz, const char *format, va_list args)
 
   state.max_sz = max_sz;
   if (max_sz)
-    state.sz   = min(1, max_sz);
+    state.sz   = MIN(1, max_sz);
   else
     state.sz   = 1;
   state.str    = malloc(state.sz);

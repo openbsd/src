@@ -23,6 +23,14 @@ or implied warranty.
 
 #include "krb_locl.h"
 
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif /* MAX */
+
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif /* MIN */
+
 /*
  * krb_recvauth() reads (and optionally responds to) a message sent
  * using krb_sendauth().  The "options" argument is a bit-field of
@@ -115,7 +123,7 @@ krb_recvauth(int32_t options,	/* bit-pattern of options */
     char krb_vers[KRB_SENDAUTH_VLEN + 1]; /* + 1 for the null terminator */
     int rem;
     int32_t priv_len;
-    u_char tmp_buf[MAX_KTXT_LEN+max(KRB_SENDAUTH_VLEN+1,21)];
+    u_char tmp_buf[MAX_KTXT_LEN+MAX(KRB_SENDAUTH_VLEN+1,21)];
 
     if (!(options & KOPT_IGNORE_PROTOCOL)) {
 	/* read the protocol version number */
