@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2003/07/29 00:24:15 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1995/09/07 06:43:02 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.9 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.10 2003/07/29 00:24:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,6 @@ usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: %s [-1ACFLRSTWacdfiklmnopqrstux] [file ...]\n",
-             __progname);
+	     __progname);
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kill.c,v 1.7 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: kill.c,v 1.8 2003/07/29 00:24:15 deraadt Exp $	*/
 /*	$NetBSD: kill.c,v 1.11 1995/09/07 06:30:27 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: kill.c,v 1.7 2003/06/02 23:32:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: kill.c,v 1.8 2003/07/29 00:24:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,11 +178,11 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-s signal_name] pid ...\n",
-            __progname);
+	    __progname);
 	(void)fprintf(stderr, "       %s -l [exit_status]\n", __progname);
 	(void)fprintf(stderr, "       %s -signal_name pid ...\n",
-            __progname);
+	    __progname);
 	(void)fprintf(stderr, "       %s -signal_number pid ...\n",
-            __progname);
+	    __progname);
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.28 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.29 2003/07/29 00:24:15 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.28 2003/06/02 23:32:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.29 2003/07/29 00:24:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -401,6 +401,6 @@ usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-fi] source target\n", __progname);
 	(void)fprintf(stderr, "       %s [-fi] source ... directory\n",
-            __progname);
+	    __progname);
 	exit(1);
 }

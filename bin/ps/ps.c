@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.33 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: ps.c,v 1.34 2003/07/29 00:24:15 deraadt Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.33 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.34 2003/07/29 00:24:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,9 +118,9 @@ main(int argc, char *argv[])
 	size_t size;
 
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
-	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
-	     ioctl(STDIN_FILENO,  TIOCGWINSZ, (char *)&ws) == -1) ||
-	     ws.ws_col == 0)
+	    ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
+	    ioctl(STDIN_FILENO,  TIOCGWINSZ, (char *)&ws) == -1) ||
+	    ws.ws_col == 0)
 		termwidth = 79;
 	else
 		termwidth = ws.ws_col - 1;
@@ -501,8 +501,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-            "usage: %s [-][acCehjklmrSTuvwx] [-O|o fmt] [-p pid] [-t tty] [-U user]\n",
-	     __progname);	
+	    "usage: %s [-][acCehjklmrSTuvwx] [-O|o fmt] [-p pid] [-t tty] [-U user]\n",
+	    __progname);	
 	(void)fprintf(stderr,
 	    "%-*s[-M core] [-N system] [-W swap]\n", strlen(__progname) + 8, "");
 	(void)fprintf(stderr, "       %s [-L]\n", __progname);
