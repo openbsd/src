@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.36 2000/10/09 17:01:10 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.37 2000/10/18 04:31:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -584,7 +584,7 @@ bridge_bifconf(sc, bifc)
 
 	p = LIST_FIRST(&sc->sc_iflist);
 	i = 0;
-	while (p != NULL && bifc->ifbic_len > i * sizeof(breq)) {
+	while (p != NULL && bifc->ifbic_len >= sizeof(breq)) {
 		strncpy(breq.ifbr_name, sc->sc_if.if_xname,
 		    sizeof(breq.ifbr_name)-1);
 		breq.ifbr_name[sizeof(breq.ifbr_name) - 1] = '\0';
@@ -646,7 +646,7 @@ bridge_brlconf(sc, bc)
 
 	i = 0;
 	n = SIMPLEQ_FIRST(&ifl->bif_brlin);
-	while (n != NULL && bc->ifbrl_len > i * sizeof(req)) {
+	while (n != NULL && bc->ifbrl_len >= sizeof(req)) {
 		strncpy(req.ifbr_name, sc->sc_if.if_xname,
 		    sizeof(req.ifbr_name) - 1);
 		req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
@@ -667,7 +667,7 @@ bridge_brlconf(sc, bc)
 	}
 
 	n = SIMPLEQ_FIRST(&ifl->bif_brlout);
-	while (n != NULL && bc->ifbrl_len > i * sizeof(req)) {
+	while (n != NULL && bc->ifbrl_len >= sizeof(req)) {
 		strncpy(req.ifbr_name, sc->sc_if.if_xname,
 		    sizeof(req.ifbr_name) - 1);
 		req.ifbr_name[sizeof(req.ifbr_name) - 1] = '\0';
@@ -1632,8 +1632,7 @@ bridge_rtfind(sc, baconf)
 	for (i = 0, cnt = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
 		while (n != NULL) {
-			if (baconf->ifbac_len <
-			    (cnt + 1) * sizeof(struct ifbareq))
+			if (baconf->ifbac_len < sizeof(struct ifbareq))
 				goto done;
 			bcopy(sc->sc_if.if_xname, bareq.ifba_name,
 			    sizeof(bareq.ifba_name));
@@ -1649,6 +1648,7 @@ bridge_rtfind(sc, baconf)
 				goto done;
 			n = LIST_NEXT(n, brt_next);
 			cnt++;
+			baconf->ifbac_len -= sizeof(struct ifbareq);
 		}
 	}
 done:
