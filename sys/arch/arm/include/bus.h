@@ -985,7 +985,6 @@ int	_bus_dmamem_alloc_range (bus_dma_tag_t tag, bus_size_t size,
 	    vaddr_t low, vaddr_t high);
 #endif /* _ARM32_BUS_DMA_PRIVATE */
 /* These are OpenBSD extensions to the general NetBSD bus interface.  */
-#if 0
 void
 bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, u_int8_t *dst, bus_size_t size);
@@ -1003,70 +1002,6 @@ bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 	bus_addr_t ba, const u_int8_t *src, bus_size_t size);
 #define	bus_space_write_raw_multi_8 \
     !!! bus_space_write_raw_multi_8 not implemented !!!
-
-#else
-/* BLECH XXXDSR */
-static inline void
-bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, u_int8_t *dst, bus_size_t size);
-static inline void
-bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, u_int8_t *dst, bus_size_t size)
-{
-	u_int16_t *datap = (u_int16_t *)dst;
-	while (size > 0) {
-		*datap =bus_space_read_2(bst, bsh, ba);
-		datap++;
-		size -= 2;
-	}
-}
-static inline void
-bus_space_read_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, u_int8_t *dst, bus_size_t size);
-static inline void
-bus_space_read_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, u_int8_t *dst, bus_size_t size)
-{
-	u_int32_t *datap = (u_int32_t *)dst;
-	while (size > 0) {
-		*datap =bus_space_read_4(bst, bsh, ba);
-		datap++;
-		size -= 4;
-	}
-}
-
-static inline void
-bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, const u_int8_t *src, bus_size_t size);
-static inline void
-bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, const u_int8_t *src, bus_size_t size)
-{
-	u_int16_t *datap = (u_int16_t *)src;
-	while (size > 0) {
-		bus_space_write_2(bst, bsh, ba, *datap);
-		datap++;
-		size -= 2;
-	}
-}
-static inline void
-bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, const u_int8_t *src, bus_size_t size);
-static inline void
-bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
-    bus_addr_t ba, const u_int8_t *src, bus_size_t size)
-{
-	u_int32_t *datap = (u_int32_t *)src;
-	while (size > 0) {
-		bus_space_write_4(bst, bsh, ba, *datap);
-		datap++;
-		size -= 4;
-	}
-}
-#define	bus_space_write_raw_multi_8 \
-    !!! bus_space_write_raw_multi_8 not implemented !!!
-
-#endif
 
 /*
  *	void bus_space_read_raw_region_N(bus_space_tag_t tag,

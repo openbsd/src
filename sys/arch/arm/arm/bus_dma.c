@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.4 2004/12/25 23:02:23 miod Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.5 2004/12/30 23:24:57 drahn Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
@@ -1070,3 +1070,44 @@ arm32_dma_range_intersect(struct arm32_dma_range *ranges, int nranges,
 	/* No intersection found. */
 	return (0);
 }
+
+/*
+ * probably should be ppc_space_copy
+ */
+
+#define _CONCAT(A,B) A ## B
+#define __C(A,B)	_CONCAT(A,B)
+
+#define BUS_SPACE_READ_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
+void									\
+__C(bus_space_read_raw_multi_,BYTES)(bus_space_tag_t bst,		\
+    bus_space_handle_t h, bus_addr_t o, u_int8_t *dst, bus_size_t size)	\
+{									\
+	TYPE *rdst = (TYPE *)dst;					\
+	int i;								\
+	int count = size >> SHIFT;					\
+									\
+	for (i = 0; i < count; i++) {					\
+		rdst[i] = __bs_rs(BYTES, bst, h, o);			\
+	}								\
+}
+BUS_SPACE_READ_RAW_MULTI_N(2,1,u_int16_t)
+BUS_SPACE_READ_RAW_MULTI_N(4,2,u_int32_t)
+
+#define BUS_SPACE_WRITE_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
+void									\
+__C(bus_space_write_raw_multi_,BYTES)( bus_space_tag_t bst,		\
+    bus_space_handle_t h, bus_addr_t o, const u_int8_t *src,		\
+    bus_size_t size)							\
+{									\
+	int i;								\
+	TYPE *rsrc = (TYPE *)src;					\
+	int count = size >> SHIFT;					\
+									\
+	for (i = 0; i < count; i++) {					\
+		__bs_ws(BYTES, bst, h, o, rsrc[i]);			\
+	}								\
+}
+
+BUS_SPACE_WRITE_RAW_MULTI_N(2,1,u_int16_t)
+BUS_SPACE_WRITE_RAW_MULTI_N(4,2,u_int32_t)
