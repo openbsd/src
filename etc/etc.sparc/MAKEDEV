@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.69 2001/06/28 02:58:56 kjc Exp $
+#	$OpenBSD: MAKEDEV,v 1.70 2001/09/06 19:45:34 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -196,7 +196,7 @@ unit=`unt $i`
 case $i in
 
 all)
-	sh $this std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
+	sh $this std fd sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
 	sh $this cd0 st0 st1 rd0
 	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	sh $this uk0 uk1
