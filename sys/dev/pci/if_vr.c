@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.38 2003/10/12 02:53:59 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.39 2003/10/13 04:25:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -894,6 +894,11 @@ vr_list_tx_init(sc)
 		cd->vr_tx_chain[i].vr_paddr =
 		    sc->sc_listmap->dm_segs[0].ds_addr +
 		    offsetof(struct vr_list_data, vr_tx_list[i]);
+
+		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &cd->vr_tx_chain[i].vr_map))
+			return (ENOBUFS);
+
 		if (i == (VR_TX_LIST_CNT - 1))
 			cd->vr_tx_chain[i].vr_nextdesc = 
 				&cd->vr_tx_chain[0];
@@ -905,7 +910,7 @@ vr_list_tx_init(sc)
 	cd->vr_tx_free = &cd->vr_tx_chain[0];
 	cd->vr_tx_tail = cd->vr_tx_head = NULL;
 
-	return(0);
+	return (0);
 }
 
 
@@ -1170,16 +1175,11 @@ vr_txeof(sc)
 		ifp->if_collisions +=(txstat & VR_TXSTAT_COLLCNT) >> 3;
 
 		ifp->if_opackets++;
+		if (cur_tx->vr_map != NULL && cur_tx->vr_map->dm_segs > 0)
+			bus_dmamap_unload(sc->sc_dmat, cur_tx->vr_map);
 		if (cur_tx->vr_mbuf != NULL) {
 			m_freem(cur_tx->vr_mbuf);
 			cur_tx->vr_mbuf = NULL;
-		}
-
-		if (cur_tx->vr_map != NULL) {
-			if (cur_tx->vr_map->dm_nsegs > 0)
-				bus_dmamap_unload(sc->sc_dmat, cur_tx->vr_map);
-			bus_dmamap_destroy(sc->sc_dmat, cur_tx->vr_map);
-			cur_tx->vr_map = NULL;
 		}
 
 		if (sc->vr_cdata.vr_tx_head == sc->vr_cdata.vr_tx_tail) {
@@ -1334,50 +1334,56 @@ vr_encap(sc, c, m_head)
 	struct mbuf		*m_head;
 {
 	struct vr_desc		*f = NULL;
-	int			total_len;
 	struct mbuf		*m = m_head;
 	struct mbuf		*m_new = NULL;
 
 	m = m_head;
-	total_len = 0;
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL)
-		return(1);
+		return (1);
 	if (m_head->m_pkthdr.len > MHLEN) {
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			m_freem(m_new);
-			return(1);
+			return (1);
 		}
 	}
 	m_copydata(m_head, 0, m_head->m_pkthdr.len, mtod(m_new, caddr_t));
 	m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-	m_freem(m_head);
-	m_head = m_new;
+
 	/*
 	 * The Rhine chip doesn't auto-pad, so we have to make
 	 * sure to pad short frames out to the minimum frame length
 	 * ourselves.
 	 */
-	if (m_head->m_len < VR_MIN_FRAMELEN) {
+	if (m_new->m_len < VR_MIN_FRAMELEN) {
 		/* data field should be padded with octets of zero */
-		bzero(&m_new->m_data[m_head->m_len],
-		    VR_MIN_FRAMELEN-m_head->m_len);
+		bzero(&m_new->m_data[m_new->m_len],
+		    VR_MIN_FRAMELEN-m_new->m_len);
 		m_new->m_pkthdr.len += VR_MIN_FRAMELEN - m_new->m_len;
 		m_new->m_len = m_new->m_pkthdr.len;
 	}
+
+	if (bus_dmamap_load_mbuf(sc->sc_dmat, c->vr_map, m_new,
+	    BUS_DMA_NOWAIT | BUS_DMA_WRITE)) {
+		m_freem(m_new);
+		return (1);
+	}
+
+	m_freem(m_head);
+
 	f = c->vr_ptr;
-	f->vr_data = vtophys(mtod(m_new, caddr_t));
-	f->vr_ctl = total_len = m_new->m_len;
-	f->vr_ctl |= VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG;
+	f->vr_data = htole32(c->vr_map->dm_segs[0].ds_addr);
+	f->vr_ctl = htole32(c->vr_map->dm_mapsize);
+	f->vr_ctl |= htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG);
 	f->vr_status = 0;
 
-	c->vr_mbuf = m_head;
-	c->vr_ptr->vr_ctl |= VR_TXCTL_LASTFRAG|VR_TXCTL_FINT;
+	c->vr_mbuf = m_new;
+	c->vr_ptr->vr_ctl |= htole32(VR_TXCTL_LASTFRAG|VR_TXCTL_FINT);
 	c->vr_ptr->vr_next = htole32(c->vr_nextdesc->vr_paddr);
 
-	return(0);
+	return (0);
 }
 
 /*
@@ -1510,7 +1516,7 @@ vr_init(xsc)
 	/* Init circular RX list. */
 	if (vr_list_rx_init(sc) == ENOBUFS) {
 		printf("%s: initialization failed: no memory for rx buffers\n",
-							sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		vr_stop(sc);
 		splx(s);
 		return;
@@ -1519,7 +1525,13 @@ vr_init(xsc)
 	/*
 	 * Init tx descriptors.
 	 */
-	vr_list_tx_init(sc);
+	if (vr_list_tx_init(sc) == ENOBUFS) {
+		printf("%s: initialization failed: no memory for tx buffers\n",
+		    sc->sc_dev.dv_xname);
+		vr_stop(sc);
+		splx(s);
+		return;
+	}
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
