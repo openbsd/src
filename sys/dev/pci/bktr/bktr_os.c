@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.7 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.8 2002/01/23 18:41:07 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -137,6 +137,8 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 /**************************/
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 
+#include "radio.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -147,6 +149,10 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/vnode.h>
+#if NRADIO > 0
+#include <sys/radioio.h>
+#include <dev/radio_if.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -1326,6 +1332,20 @@ struct cfdriver bktr_cd = {
 };
 #endif
 
+#if NRADIO > 0
+/* for radio(4) */
+int	bktr_get_info(void *, struct radio_info *);
+int	bktr_set_info(void *, struct radio_info *);
+
+struct radio_hw_if bktr_hw_if = {
+	NULL,	/* open */
+	NULL,	/* close */
+	bktr_get_info,
+	bktr_set_info,
+	NULL	/* search */
+};
+#endif
+
 int
 bktr_probe(parent, match, aux)
 	struct device *parent;
@@ -1458,6 +1478,11 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
         rev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0x000000ff;
 
 	common_bktr_attach(bktr, unit, fun, rev);
+
+#if NRADIO > 0
+	if (bktr->card.tuner->pllControl[3] != 0x00)
+		radio_attach_mi(&bktr_hw_if, bktr, &bktr->bktr_dev);
+#endif
 }
 
 
@@ -1690,5 +1715,61 @@ bktr_mmap(dev_t dev, off_t offset, int nprot)
 	return (bus_dmamem_mmap(bktr->dmat, bktr->dm_mem->dm_segs, 1,
 				(vaddr_t)offset, nprot, BUS_DMA_WAITOK));
 }
+
+#if NRADIO > 0
+int
+bktr_set_info(void *v, struct radio_info *ri)
+{
+	struct bktr_softc *sc = v;
+	u_int32_t freq;
+
+	if (ri->mute) {
+		/* mute the audio stream by switching the mux */
+		set_audio(sc, AUDIO_MUTE);
+
+		/* disable drivers on the GPIO port that controls the MUXes */
+		OUTL(sc, BKTR_GPIO_OUT_EN, INL(sc, BKTR_GPIO_OUT_EN) &
+		~sc->card.gpio_mux_bits);
+	} else {
+		/* enable drivers on the GPIO port that controls the MUXes */
+		OUTL(sc, BKTR_GPIO_OUT_EN, INL(sc, BKTR_GPIO_OUT_EN) |
+		sc->card.gpio_mux_bits);
+
+		/* unmute the audio stream */
+		set_audio(sc, AUDIO_UNMUTE);
+		init_audio_devices(sc);
+	}
+
+	freq = ri->freq / 10;
+	set_audio(sc, AUDIO_INTERN);	/* use internal audio */
+	temp_mute(sc, TRUE);
+	ri->freq = tv_freq(sc, freq, FM_RADIO_FREQUENCY) * 10;
+	temp_mute(sc, FALSE);
+
+	return (0);
+}
+
+int
+bktr_get_info(void *v, struct radio_info *ri)
+{
+	struct bktr_softc *sc = v;
+	struct TVTUNER *tv = &sc->tuner;
+	int status;
+
+	status = get_tuner_status(sc);
+
+#define	STATUSBIT_STEREO	0x10
+	ri->mute = (int)sc->audio_mute_state ? 1 : 0;
+	ri->stereo = (status & STATUSBIT_STEREO) ? 1 : 0;
+	ri->caps = RADIO_CAPS_DETECT_STEREO | RADIO_CAPS_HW_AFC;
+	ri->freq = tv->frequency * 10;
+	ri->info = (status & STATUSBIT_STEREO) ? RADIO_INFO_STEREO : 0;
+
+	/* not yet supported */
+	ri->volume = ri->rfreq = ri->lock = 0;
+
+	return (0);
+}
+#endif /* NRADIO */
 
 #endif /* __NetBSD__ || __OpenBSD__ */
