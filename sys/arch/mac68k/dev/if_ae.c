@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.19 2003/01/27 20:11:39 jason Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.20 2003/01/28 04:15:38 jason Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -425,15 +425,8 @@ outloop:
 	buffer = (sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT;
 
 	len = ae_put(sc, m0, buffer);
-#if DIAGNOSTIC
-	if (len != m0->m_pkthdr.len)
-		printf("aestart: len %d != m0->m_pkthdr.len %d.\n",
-			len, m0->m_pkthdr.len);
-#endif
-	len = m0->m_pkthdr.len;
-
 	m_freem(m0);
-	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
+	sc->txb_len[sc->txb_new] = len;
 
 	/* Start the first packet transmitting. */
 	if (sc->txb_inuse == 0)
