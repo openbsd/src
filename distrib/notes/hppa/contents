@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.10 2004/06/07 20:04:34 mickey Exp $
+dnl	$OpenBSD: contents,v 1.11 2004/06/22 00:42:11 matthieu Exp $
 TopPart
 
 OpenBSDdistsets
@@ -29,6 +29,8 @@ OpenBSDman(7202111,27484160)
 OpenBSDmisc(2154743,7413760)
 
 OpenBSDxbase(8688529,23316480)
+
+OpenBSDxetc(500550,3020800)
 
 OpenBSDxfont(33473489,40878080)
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.10 2004/03/17 09:25:09 jmc Exp $
+dnl	$OpenBSD: xfer,v 1.11 2004/06/22 00:42:12 matthieu Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -19,6 +19,6 @@ Note: Once an OpenBSD partition exists, it is not possible to load the
 kernel (bsd.rd) from an HFS partition on that disk.
 
 
-OpenBSDXferBareTape(xbase xfont xserv xshare)
+OpenBSDXferBareTape(xbase xetc xfont xserv xshare)
 
 OpenBSDXferFFS

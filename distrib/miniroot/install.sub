@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.340 2004/06/20 05:13:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.341 2004/06/22 00:42:11 matthieu Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1740,8 +1740,8 @@ DEVSMADE=
 # the contents of the other sets, not the other way around.
 THESETS="bsd bsd.rd bsd.mp $MDSETS"
 DEFAULTSETS="bsd"
-for _set in base etc misc comp man game xbase xshare xfont xserv site ; do
-	[[ $MODE == upgrade && $_set == etc ]] && continue
+for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
+	[[ $MODE == upgrade && ( $_set == etc || $_set == xetc ) ]] && continue
 	THESETS="$THESETS ${_set}${VERSION}.tgz"
 	isin $_set xbase xshare xfont xserv site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"

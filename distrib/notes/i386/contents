@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.49 2004/06/07 11:14:15 mickey Exp $
+dnl	$OpenBSD: contents,v 1.50 2004/06/22 00:42:11 matthieu Exp $
 TopPart
 
 OpenBSDfloppy
@@ -52,6 +52,8 @@ OpenBSDman(6934906,26480640)
 OpenBSDmisc(2155646,7413760)
 
 OpenBSDxbase(10999893,33935360)
+
+OpenBSDxetc(500550,3020800)
 
 OpenBSDxfont(32497727,39485440)
 

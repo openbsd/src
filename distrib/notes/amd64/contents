@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.10 2004/06/07 11:14:15 mickey Exp $
+dnl	$OpenBSD: contents,v 1.11 2004/06/22 00:42:11 matthieu Exp $
 TopPart
 
 dnl uncomment as stuff becomes available
@@ -56,6 +56,8 @@ OpenBSDman(7213636,27535360)
 OpenBSDmisc(2155649,7413760)
 
 OpenBSDxbase(11176888,37027840)
+
+OpenBSDxetc(500550,3020800)
 
 OpenBSDxfont(32501778,39485440)
 

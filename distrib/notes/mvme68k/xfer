@@ -10,7 +10,7 @@ Installation is supported from several media types, including:
 OpenBSDXferPrelude
 
 
-OpenBSDXferBootTape(xbase xfont xshare,stboot obs=512,bootst obs=512,bsd.rd obs=8k conv=sync)
+OpenBSDXferBootTape(xbase xetc xfont xshare,stboot obs=512,bootst obs=512,bsd.rd obs=8k conv=sync)
 
 OpenBSDXferNFS
 

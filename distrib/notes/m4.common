@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.60 2004/06/07 11:14:14 mickey Exp $
+dnl	$OpenBSD: m4.common,v 1.61 2004/06/22 00:42:11 matthieu Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -169,7 +169,15 @@ dnl Describes xbaseXX.tgz.
 dnl
 define({:-OpenBSDxbase-:},
 {:-	xbase{:--:}OSrev  This set includes the base X distribution.  This includes
-		 programs, headers, libraries, and configuration files.showsize($1,$2)-:})dnl
+		 programs, headers and libraries.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDxetc( compressed size, uncompressed size )
+dnl Describes xetcXX.tgz.
+dnl
+define({:-OpenBSDxetc-:},
+{:-	xetc{:--:}OSrev	 This set includes the X window system configuration files
+		 that reside in /etc. It's the equivalent of etc{:--:}OSrev for X.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxshare( compressed size, uncompressed size )

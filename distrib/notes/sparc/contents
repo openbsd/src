@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.49 2004/06/07 11:14:15 mickey Exp $
+dnl	$OpenBSD: contents,v 1.50 2004/06/22 00:42:12 matthieu Exp $
 TopPart
 
 OpenBSDminiroot
@@ -50,6 +50,8 @@ OpenBSDman(6931205,26460160)
 OpenBSDmisc(2154773,7413760)
 
 OpenBSDxbase(10232033,32071680)
+
+OpenBSDxetc(500550,3020800)
 
 OpenBSDxfont(33471756,40878080)
 
