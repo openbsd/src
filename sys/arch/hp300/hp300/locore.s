@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.15 1997/04/17 10:28:38 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.16 1997/04/17 11:40:37 downsj Exp $	*/
 /*	$NetBSD: locore.s,v 1.67 1997/03/16 10:49:43 thorpej Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ Lnot68030:
 	movl	d0,a0@			| save MMU ID
 	RELOC(_machineid, a0)
 	cmpb	#7,d0			| id == 7?
-	jeq	Lis433			| XXX 433 underclocked?
+	jeq	Lis425			| yes, we have a 425s
 	cmpb	#6,d0			| id == 6?
 	jeq	Lis433			| yes, we have a 433s
 	cmpb	#5,d0			| id == 5?
@@ -236,7 +236,7 @@ Lis425:
 	movl	#HP_425,a0@		| 425t
 	jra	Lstart1
 Lis433:
-	movl	#HP_433,a0@		| 433s (XXX 425s returns same ID, ugh!)
+	movl	#HP_433,a0@		| 433s
 	jra	Lstart1
 Lis68020:
 	movl	#1,a1@(MMUCMD)		| a 68020, write HP MMU location
