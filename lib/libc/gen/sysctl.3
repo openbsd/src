@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.28 1999/07/26 12:50:54 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.29 1999/10/07 02:17:02 provos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -532,6 +532,9 @@ The currently defined protocols and names are:
 .It tcp	rfc1323	integer	yes
 .It tcp	baddynamic	array	yes
 .It tcp	ident	structure	no
+.It tcp	keepidle	integer	yes
+.It tcp	keepintvl	integer	yes
+.It tcp	slowhz	integer	yes
 .It tcp	sack	integer	yes
 .It tcp	mssdflt	integer	yes
 .It udp	checksum	integer	yes
@@ -583,7 +586,21 @@ specifying a local and foreign endpoint of a
 .Tn TCP
 socket is filled in with the euid and ruid of the process that owns the socket.
 If no such socket exists then the euid and ruid values are both
-set to \-1.
+set to -1.
+.It Li tcp.keepidle
+If the socket option 
+.Pa SO_KEEPALIVE 
+has been set, time a connection needs to be idle before keepalives are sent.
+See also tcp.slowhz.
+.It Li tcp.keepintvl
+Time after a keepalive probe is sent until, in the absence of any response,
+another probe is sent.
+See also tcp.slowhz.
+.It Li tcp.slowhz
+The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
+of a clock that ticks tcp.slowhz times per second.
+(That is, their values must be divided by the tcp.slowhz value to get times
+in seconds.)
 .It Li tcp.sack
 Returns 1 if RFC2018 Selective Acknowledgements are enabled.
 .It Li tcp.mssdflt
