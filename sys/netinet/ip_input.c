@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.123 2004/09/23 17:38:10 brad Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.124 2004/10/18 07:41:28 otto Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1426,7 +1426,6 @@ ip_forward(m, srcrt)
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
 		return;
 	}
-	ip->ip_ttl -= IPTTLDEC;
 
 	sin = satosin(&ipforward_rt.ro_dst);
 	if ((rt = ipforward_rt.ro_rt) == 0 ||
@@ -1455,6 +1454,8 @@ ip_forward(m, srcrt)
 	mcopy = m_copym(m, 0, imin(ntohs(ip->ip_len), 68), M_DONTWAIT);
 	if (mcopy)
 		mcopy = m_pullup(mcopy, ip->ip_hl << 2);
+
+	ip->ip_ttl -= IPTTLDEC;
 
 	/*
 	 * If forwarding packet using same interface that it came in on,
