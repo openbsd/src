@@ -1,8 +1,8 @@
-#	$OpenBSD: GECKO,v 1.8 2000/04/18 19:30:59 mickey Exp $
+#	$OpenBSD: GECKO,v 1.9 2001/11/29 17:31:38 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
-# neverseen devices: telephony, X.21 m-proto adapter, TR/9000, IEEE488
+# neverseen devices: telephony, X.21 m-proto adapter, IEEE488
 
 include	"arch/hppa/conf/std.hppa"
 include	"conf/GENERIC"
@@ -11,14 +11,6 @@ maxusers	16
 
 option		HP7100LC_CPU
 option		HP7300LC_CPU
-
-#option		NS		# XNS
-#option		NSIP		# XNS tunneling over IP
-#option		IPX		# IPX+SPX
-#option		IPXIP		# IPX tunneling over IP
-#option		ISO,TPIP	# OSI
-#option		EON		# OSI tunneling over IP
-#option		CCITT,LLC,HDLC	# X.25
 
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
 #option		COMPAT_LINUX	# MkLinux/Linux binary compatibility
@@ -35,23 +27,25 @@ sti0	at mainbus0 		# onboard HCRX-8 graphics
 # internal I/O space
 gsc0	at lasi0
 #gsc1	at wax0
-com0	at gsc? irq 5	# serial port
-#com1	at gsc?	irq 6?	# serial port (add-in card)
-lpt*	at gsc?	irq 7	# both com and lpt are on LASI
-ie0	at gsc?	irq 8	# 82C596 ether
-#ie1	at gsc?	irq 10?	# 82C596 ether (add-in card)
-siop0	at gsc?	irq 9	# NCR 53C710
-scsibus* at siop?
-#harmony*	at gsc?	irq 13	# Audio Type 2 (CS4215)
-#audio*	at harmony?
-#com0	at harmony? irq 16	# Telephone add-in card #0
-#com1	at harmony? irq 17	# Telephone add-in card #1
-#isdn	at gsc? irq 18	# ISDN add-in card
+#gsc2	at lasi1
+com0	at gsc0 irq 5	# serial port
+#com1	at gsc1	irq 6?	# serial port
+lpt0	at gsc0	irq 7	# both com0 and lpt0 are on LASI
+ie0	at gsc0	irq 8	# 82C596 ether
+#ie1	at gsc1	irq 10?	# 82C596 ether
+#tms0	at gsc1 irq ?	# TMS380C26 TR/9000
+siop0	at gsc0	irq 9	# NCR 53C710
+scsibus0 at siop?
+#harmony0	at gsc0	irq 13	# Audio Type 2 (CS4215)
+#audio0	at harmony?
+#com2	at harmony? irq 16	# Telephony ch#0
+#com3	at harmony? irq 17	# Telephony ch#1
+#isdn	at gsc1 irq 18	# ISDN add-in card
 #SCSI Snoop irq 19
-fdc0	at gsc?	irq 20	# PC floppy controller (WD37C65C)
-pckbc0	at gsc? irq 26
+fdc0	at gsc0	irq 20	# PC floppy controller (WD37C65C)
+pckbc0	at gsc0 irq 26
 pckbd0	at pckbc0	# PS/2 keyboard
-pms0	at pckbc0	# PS/2 mouse
+pms0	at pckbc0	# PS/2 mouse (shares irq w/ kbd)
 
 # MI devices
 wsdisplay*	at sti?
