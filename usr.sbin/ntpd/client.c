@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.47 2004/12/09 20:24:46 mickey Exp $ */
+/*	$OpenBSD: client.c,v 1.48 2004/12/13 12:22:52 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -196,6 +196,10 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime)
 
 	if (msg.orgtime.int_partl != p->query->msg.xmttime.int_partl ||
 	    msg.orgtime.fractionl != p->query->msg.xmttime.fractionl)
+		return (0);
+
+	if ((msg.status & LI_ALARM) == LI_ALARM || msg.stratum == 0 ||
+	    msg.stratum > NTP_MAXSTRATUM)
 		return (0);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.10 2004/12/08 15:47:38 mickey Exp $ */
+/*	$OpenBSD: ntp.h,v 1.11 2004/12/13 12:22:52 dtucker Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -145,5 +145,6 @@ struct ntp_query {
 #define	JAN_1970	2208988800UL	/* 1970 - 1900 in seconds */
 
 #define	NTP_VERSION	4
+#define	NTP_MAXSTRATUM	15
 
 #endif	/* _NTP_H_ */
