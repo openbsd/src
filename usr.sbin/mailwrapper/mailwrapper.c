@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.8 2000/01/10 05:34:32 imp Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.9 2001/08/08 00:47:52 jakob Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -129,7 +129,6 @@ main(argc, argv, envp)
 		closelog();
 		execve(_PATH_DEFAULTMTA, al.argv, envp);
 		freearg(&al, 0);
-		free(line);
 		err(1, "mailwrapper: execing %s", _PATH_DEFAULTMTA);
 		/*NOTREACHED*/
 	}
