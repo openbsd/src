@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 1998/10/30 19:18:32 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 1998/12/14 01:19:18 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -58,11 +58,6 @@
 #define	signotify(p)		(void)(p)
 #define	need_resched()		{(void)1;}
 #define	need_proftick(p)	{(void)(p);}
-
-/*
- * Expected (and optimized for) cache line size (in bytes).
- */
-#define CACHE_LINE_SIZE 32
 
 #ifdef _KERNEL
 #define DELAY(x) delay(x)
