@@ -160,8 +160,6 @@ depend:: .depend
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${PPC}/powerpc/genassym.c
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
