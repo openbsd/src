@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.3 1998/11/17 11:10:13 niklas Exp $	*/
-/*	$EOM: init.c,v 1.10 1998/09/12 19:34:36 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.4 1999/02/26 03:43:00 niklas Exp $	*/
+/*	$EOM: init.c,v 1.11 1999/02/25 11:39:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -35,6 +35,8 @@
  */
 
 /* XXX This file could easily be built dynamically instead.  */
+
+#include "sysdep.h"
 
 #include "app.h"
 #include "conf.h"
