@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.12 2000/04/27 09:23:21 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.13 2000/05/28 23:58:51 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -190,7 +190,9 @@ in6_pcbbind(inp, nam)
       if (lport)
 	{
 	  struct inpcb *t;
+#if 0 /* we don't support IPv4 mapped address */
 	  struct in_addr fa,la;
+#endif
 
 	  /* Question:  Do we wish to continue the Berkeley tradition of
 	     ports < IPPORT_RESERVED be only for root? 
@@ -204,6 +206,7 @@ in6_pcbbind(inp, nam)
 	      (error = suser(p->p_ucred, &p->p_acflag)))
 	    return error;
 
+#if 0 /* we don't support IPv4 mapped address */
 	  if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 	    {
 	      fa.s_addr = 0;
@@ -214,6 +217,7 @@ in6_pcbbind(inp, nam)
 			       (struct in_addr *)&la, lport, wild);
 	    }
 	  else
+#endif
 	    {
 	      t = in_pcblookup(head, (struct in_addr *)&zeroin6_addr, 0,
 			(struct in_addr *)&sin6->sin6_addr, lport, wild);
