@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.19 2000/04/01 03:44:20 deraadt Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.20 2000/04/01 22:18:13 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -34,7 +34,6 @@ SSLCONF=	--openssldir=/etc/ssl OpenBSD
 MUNGEDFILES =  	${.OBJDIR}/${SSL_SRC}/crypto/opensslconf.h ${.OBJDIR}/${SSL_SRC}/crypto/objects/obj_dat.h ${.OBJDIR}/${SSL_SRC}/Makefile.ssl ${.OBJDIR}/${SSL_SRC}/Makefile ${.OBJDIR}/${SSL_SRC}/apps/der_chop ${.OBJDIR}/${SSL_SRC}/tools/c_rehash
 
 .ifndef NOMAN
-# skipped err.cat3 rand.cat3 rc4.cat3 threads.cat3 ripemd.cat3 
 MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	\
 	BN_CTX_new.cat3 OPENSSL_VERSION_NUMBER.cat3 BN_CTX_start.cat3 \
@@ -53,20 +52,103 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	DSA_do_sign.cat3 DSA_dup_DH.cat3 crypto.cat3 DSA_generate_key.cat3 \
 	DSA_generate_parameters.cat3 d2i_DHparams.cat3 d2i_RSAPublicKey.cat3 \
 	DSA_get_ex_new_index.cat3 des_modes.cat3 DSA_new.cat3 dh.cat3 \
-	DSA_set_method.cat3 dsa.cat3 DSA_sign.cat3 DSA_size.cat3 hmac.cat3 \
+	DSA_set_method.cat3 dsa.cat3 DSA_sign.cat3 DSA_size.cat3 HMAC.cat3 \
 	ERR_GET_LIB.cat3 lh_stats.cat3 ERR_clear_error.cat3 lhash.cat3 \
-	ERR_error_string.cat3 md5.cat3 ERR_get_error.cat3 mdc2.cat3 \
+	ERR_error_string.cat3 MD5.cat3 ERR_get_error.cat3 MDC2.cat3 \
 	ERR_load_crypto_strings.cat3 ERR_load_strings.cat3  \
 	ERR_print_errors.cat3 ERR_put_error.cat3 rsa.cat3 \
-	ERR_remove_state.cat3 sha.cat3 EVP_DigestInit.cat3 \
+	ERR_remove_state.cat3 SHA1.cat3 EVP_DigestInit.cat3 \
 	EVP_EncryptInit.cat3 BUF_MEM_new.cat3 \
 	\
-	openssl.cat1
+	openssl.cat1 \
+	\
+	BUF_MEM_new.cat3 RC4.cat3 \
+	RIPEMD160.cat3 CRYPTO_set_locking_callback.cat3
+	
+# these are is a real problem, since they re-document functions described in
+# other pages.
+#
+# err.pod -> ERR_get_error.pod
+# ERR_peek_error ERR_get_error_line
+# ERR_peek_error_line ERR_get_error_line_data ERR_peek_error_line_data
+# ERR_GET_LIB ERR_GET_FUNC ERR_GET_REASON ERR_clear_error ERR_error_string
+# ERR_lib_error_string ERR_func_error_string ERR_reason_error_string
+# ERR_print_errors ERR_print_errors_fp ERR_load_crypto_strings ERR_free_strings
+# ERR_remove_state ERR_put_error ERR_add_error_data ERR_load_strings ERR_PACK
+# ERR_get_next_error_library
+#
+# rand.pod -> RAND_bytes.pod
+# RAND_pseudo_bytes RAND_seed RAND_add RAND_status
+# RAND_screen RAND_load_file RAND_write_file RAND_file_name RAND_egd
+# RAND_set_rand_method RAND_get_rand_method RAND_SSLeay RAND_cleanup
 
+
+# buffer.pod -> BUF_MEM_new.pod
+# BUF_MEM_free BUF_MEM_grow BUF_strdup
+#
 BUF_MEM_new.cat3: buffer.pod
-	( cp ${.ALLSRC} BUF_MEM_new.pod && pod2man --section=3 --official \
-	  --center='OpenBSD Reference Manual' --release="OpenBSD `uname -r`" \
-	  BUF_MEM_new.pod ) | nroff -Tascii -man > ${.TARGET}
+	( cp ${.ALLSRC} BUF_MEM_new.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  BUF_MEM_new.pm ) | nroff -Tascii -man > ${.TARGET}
+
+# rc4.pod -> RC4.pod
+# RC4_set_key
+#
+RC4.cat3: rc4.pod
+	( cp ${.ALLSRC} RC4.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  RC4.pm ) | nroff -Tascii -man > ${.TARGET}
+
+
+# threads.pod -> CRYPTO_set_locking_callback.pod
+# CRYPTO_set_id_callback CRYPTO_num_locks
+#
+CRYPTO_set_locking_callback.cat3: threads.pod
+	( cp ${.ALLSRC} CRYPTO_set_locking_callback.pm && \
+	  pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  CRYPTO_set_locking_callback.pm ) | nroff -Tascii -man > ${.TARGET}
+
+# ripemd.pod -> RIPEMD160.pod
+# RIPEMD160_Init RIPEMD160_Update RIPEMD160_Final
+#
+RIPEMD160.cat3: ripemd.pod
+	( cp ${.ALLSRC} RIPEMD160.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  RIPEMD160.pm ) | nroff -Tascii -man > ${.TARGET}
+
+# sha.pod -> SHA1.pod
+# ...
+#
+SHA1.cat3: sha.pod
+	( cp ${.ALLSRC} SHA1.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  SHA1.pm ) | nroff -Tascii -man > ${.TARGET}
+
+# md5.pod -> MD5.pod
+# ...
+#
+MD5.cat3: md5.pod
+	( cp ${.ALLSRC} MD5.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  MD5.pm ) | nroff -Tascii -man > ${.TARGET}
+
+# mdc2.pod -> MDC2.pod
+# ...
+#
+MDC2.cat3: mdc2.pod
+	( cp ${.ALLSRC} MDC2.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  MDC2.pm ) | nroff -Tascii -man > ${.TARGET}
+
+# hmac.pod -> HMAC.pod
+# ...
+#
+HMAC.cat3: hmac.pod
+	( cp ${.ALLSRC} HMAC.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  HMAC.pm ) | nroff -Tascii -man > ${.TARGET}
+
 
 MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	BN_CTX_start.3 BN_CTX_get.3 BN_CTX_start.3 BN_CTX_end.3 \
@@ -180,9 +262,9 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	blowfish.3 BF_ofb64_encrypt.3 blowfish.3 BF_options.3 \
 	blowfish.3 BF_ecb_encrypt.3 blowfish.3 BF_cbc_encrypt.3 \
 	des_crypt.3 des_string_to_2keys.3 \
-	md5.3 MD2.3 md5.3 MD2_Init.3 md5.3 MD2_Update.3 \
-	md5.3 MD2_Final.3 md5.3 MD5.3 md5.3 MD5_Init.3 \
-	md5.3 MD5_Update.3 md5.3 MD5_Final.3 \
+	MD5.3 MD2.3 MD5.3 MD2_Init.3 MD5.3 MD2_Update.3 \
+	MD5.3 MD2_Final.3 MD5.3 MD5_Init.3 \
+	MD5.3 MD5_Update.3 MD5.3 MD5_Final.3 \
 	bn_internal.3 bn_mul_words.3 \
 	bn_internal.3 bn_mul_add_words.3 \
 	bn_internal.3 bn_sqr_words.3 \
@@ -299,12 +381,24 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	lh_stats.3 lh_node_stats.3 lh_stats.3 lh_node_usage_stats.3 \
 	lh_stats.3 lh_stats_bio.3 lh_stats.3 lh_node_stats_bio.3 \
 	lh_stats.3 lh_node_usage_stats_bio.3 \
-	hmac.3 HMAC.3 hmac.3 HMAC_Init.3 hmac.3 HMAC_Update.3 \
-	hmac.3 HMAC_Final.3 hmac.3 HMAC_cleanup.3 \
-	mdc2.3 MDC2.3 mdc2.3 MDC2_Init.3 mdc2.3 MDC2_Update.3 \
-	mdc2.3 MDC2_Final.3 \
-	sha.3 SHA1.3 sha.3 SHA1_Init.3 \
-	sha.3 SHA1_Update.3 sha.3 SHA1_Final.3
+	HMAC.3 HMAC_Init.3 HMAC.3 HMAC_Update.3 \
+	HMAC.3 HMAC_Final.3 HMAC.3 HMAC_cleanup.3 \
+	MDC2.3 MDC2_Init.3 MDC2.3 MDC2_Update.3 \
+	MDC2.3 MDC2_Final.3 \
+	SHA1.3 SHA1_Init.3 SHA1.3 SHA1_Update.3 SHA1.3 SHA1_Final.3 \
+	RC4.3 RC4_set_key.3 \
+	RAND_bytes.3 RAND_pseudo_bytes.3 RAND_bytes.3 RAND_seed.3 \
+	RAND_bytes.3 RAND_add.3 RAND_bytes.3 RAND_status.3 \
+	RAND_bytes.3 RAND_screen.3 RAND_bytes.3 RAND_load_file.3 \
+	RAND_bytes.3 RAND_write_file.3 RAND_bytes.3 RAND_file_name.3 \
+	RAND_bytes.3 RAND_egd.3 RAND_bytes.3 RAND_set_rand_method.3 \
+	RAND_bytes.3 RAND_get_rand_method.3 RAND_bytes.3 RAND_SSLeay.3 \
+	RAND_bytes.3 RAND_cleanup.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_set_id_callback.3 \
+	CRYPTO_set_locking_callback.3 CRYPTO_num_locks.3 \
+	RIPEMD160.3 RIPEMD160_Init.3 RIPEMD160.3 RIPEMD160_Update.3 \
+	RIPEMD160.3 RIPEMD160_Final.3 \
+
 
 .else
 MANALL=
@@ -318,12 +412,12 @@ MANALL=
 .SUFFIXES: .pod
 .pod.cat3:
 	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
-	  --center='OpenBSD Reference Manual' --release="OpenBSD `uname -r`" \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
 
 .pod.cat1:
 	( cd `dirname ${.ALLSRC}` && pod2man --section=1 --official \
-	  --center='OpenBSD Reference Manual' --release="OpenBSD `uname -r`" \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
 
 
