@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.9 1997/01/17 07:13:04 millert Exp $	*/
+/*	$OpenBSD: patch.c,v 1.10 1997/09/22 05:45:27 millert Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.9 1997/01/17 07:13:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.10 1997/09/22 05:45:27 millert Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -36,7 +36,11 @@ void dump_line();
 bool patch_match();
 bool similar();
 void re_input();
+#ifdef __GNUC__
+void my_exit() __attribute__((noreturn));
+#else
 void my_exit();
+#endif
 
 /* TRUE if -E was specified on command line.  */
 static int remove_empty_files = FALSE;
@@ -327,6 +331,7 @@ char **argv;
 	set_signals(1);
     }
     my_exit(failtotal);
+    /* NOTREACHED */
 }
 
 /* Prepare to find the next patch to do in the patch file. */

@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.5 1996/09/24 04:19:26 millert Exp $	*/
+/*	$OpenBSD: inp.c,v 1.6 1997/09/22 05:45:26 millert Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: inp.c,v 1.5 1996/09/24 04:19:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: inp.c,v 1.6 1997/09/22 05:45:26 millert Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -13,7 +13,7 @@ static char rcsid[] = "$OpenBSD: inp.c,v 1.5 1996/09/24 04:19:26 millert Exp $";
 
 /* Input-file-with-indexable-lines abstract type */
 
-static long i_size;			/* size of the input file */
+static off_t i_size;			/* size of the input file */
 static char *i_womp;			/* plan a buffer for entire file */
 static char **i_ptr;			/* pointers to lines in i_womp */
 
@@ -157,10 +157,10 @@ char *filename;
 #endif
     if (i_womp == Nullch)
 	return FALSE;
-    if ((ifd = open(filename, 0)) < 0)
+    if ((ifd = open(filename, O_RDONLY)) < 0)
 	pfatal2("can't open file %s", filename);
 #ifndef lint
-    if (read(ifd, i_womp, (int)i_size) != i_size) {
+    if (read(ifd, i_womp, (size_t)i_size) != i_size) {
 	Close(ifd);	/* probably means i_size > 15 or 16 bits worth */
 	free(i_womp);	/* at this point it doesn't matter if i_womp was */
 	return FALSE;	/*   undersized. */
@@ -296,7 +296,7 @@ char *filename;
     }
     Fclose(ifp);
     Close(tifd);
-    if ((tifd = open(TMPINNAME, 0)) < 0) {
+    if ((tifd = open(TMPINNAME, O_RDONLY)) < 0) {
 	pfatal2("can't reopen file %s", TMPINNAME);
     }
 }
@@ -323,7 +323,7 @@ int whichbuf;				/* ignored when file in memory */
 	else {
 	    tiline[whichbuf] = baseline;
 #ifndef lint		/* complains of long accuracy */
-	    Lseek(tifd, (long)baseline / lines_per_buf * BUFFERSIZE, 0);
+	    Lseek(tifd, (off_t)(baseline / lines_per_buf * BUFFERSIZE), 0);
 #endif
 	    if (read(tifd, tibuf[whichbuf], BUFFERSIZE) < 0)
 		pfatal2("error reading tmp file %s", TMPINNAME);

@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.3 1996/09/24 04:19:30 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 1997/09/22 05:45:27 millert Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.3 1996/09/24 04:19:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.4 1997/09/22 05:45:27 millert Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -10,7 +10,11 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.3 1996/09/24 04:19:30 millert Exp $"
 #include "util.h"
 #include "backupfile.h"
 
+#ifdef __GNUC__
+void my_exit() __attribute__((noreturn));
+#else
 void my_exit();
+#endif
 
 /* Rename a file, copying it if necessary. */
 
@@ -18,7 +22,7 @@ int
 move_file(from,to)
 char *from, *to;
 {
-    char bakname[512];
+    char bakname[MAXPATHLEN];
     Reg1 char *s;
     Reg2 int i;
     Reg3 int fromfd;
@@ -30,7 +34,7 @@ char *from, *to;
 	if (debug & 4)
 	    say2("Moving %s to stdout.\n", from);
 #endif
-	fromfd = open(from, 0);
+	fromfd = open(from, O_RDONLY);
 	if (fromfd < 0)
 	    pfatal2("internal error, can't reopen %s", from);
 	while ((i=read(fromfd, buf, sizeof buf)) > 0)
@@ -95,7 +99,7 @@ char *from, *to;
 		     strerror(errno));
 		return -1;
 	    }
-	    tofd = open(to, 0);
+	    tofd = open(to, O_RDONLY);
 	    if (tofd < 0)
 		pfatal2("internal error, can't open %s", to);
 	    while ((i=read(tofd, buf, sizeof buf)) > 0)
@@ -119,7 +123,7 @@ char *from, *to;
 	      to, from, strerror(errno));
 	    return -1;
 	}
-	fromfd = open(from, 0);
+	fromfd = open(from, O_RDONLY);
 	if (fromfd < 0)
 	    pfatal2("internal error, can't reopen %s", from);
 	while ((i=read(fromfd, buf, sizeof buf)) > 0)
@@ -145,7 +149,7 @@ char *from, *to;
     tofd = creat(to, 0666);
     if (tofd < 0)
 	pfatal2("can't create %s", to);
-    fromfd = open(from, 0);
+    fromfd = open(from, O_RDONLY);
     if (fromfd < 0)
 	pfatal2("internal error, can't reopen %s", from);
     while ((i=read(fromfd, buf, sizeof buf)) > 0)
@@ -177,7 +181,8 @@ Reg1 char *s;
     }
     else {
 	t = rv;
-	while (*t++ = *s++);
+	while ((*t++ = *s++))
+	    ;
     }
     return rv;
 }
@@ -255,7 +260,7 @@ long arg1,arg2,arg3;
 	write(1, buf, strlen(buf));
 	r = read(1, buf, sizeof buf);
     }
-    else if ((ttyfd = open("/dev/tty", 2)) >= 0 && isatty(ttyfd)) {
+    else if ((ttyfd = open(_PATH_TTY, O_RDWR)) >= 0 && isatty(ttyfd)) {
 					/* might be deleted or unwriteable */
 	write(ttyfd, buf, strlen(buf));
 	r = read(ttyfd, buf, sizeof buf);
@@ -286,27 +291,15 @@ set_signals(reset)
 int reset;
 {
 #ifndef lint
-#ifdef VOIDSIG
-    static void (*hupval)(),(*intval)();
-#else
-    static int (*hupval)(),(*intval)();
-#endif
+    static sig_t hupval, intval;
 
     if (!reset) {
 	hupval = signal(SIGHUP, SIG_IGN);
 	if (hupval != SIG_IGN)
-#ifdef VOIDSIG
-	    hupval = my_exit;
-#else
-	    hupval = (int(*)())my_exit;
-#endif
+	    hupval = (sig_t)my_exit;
 	intval = signal(SIGINT, SIG_IGN);
 	if (intval != SIG_IGN)
-#ifdef VOIDSIG
-	    intval = my_exit;
-#else
-	    intval = (int(*)())my_exit;
-#endif
+	    intval = (sig_t)my_exit;
     }
     Signal(SIGHUP, hupval);
     Signal(SIGINT, intval);
@@ -430,7 +423,7 @@ int assume_exists;
 
 #define try(f, a1, a2) (Snprintf(tmpbuf + pathlen, sizeof tmpbuf - pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
 	if (   try("RCS/%s%s", filebase, RCSSUFFIX)
-	    || try("RCS/%s"  , filebase,         0)
+	    || try("RCS/%s%s", filebase,        "")
 	    || try(    "%s%s", filebase, RCSSUFFIX)
 	    || try("SCCS/%s%s", SCCSPREFIX, filebase)
 	    || try(     "%s%s", SCCSPREFIX, filebase))
