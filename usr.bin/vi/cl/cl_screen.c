@@ -195,7 +195,8 @@ cl_vi_init(sp)
 	/* Curses vi always reads from (and writes to) a terminal. */
 	if (!F_ISSET(clp, CL_STDIN_TTY) || !isatty(STDOUT_FILENO)) {
 		msgq(sp, M_ERR,
-		    "016|Vi's standard input and output must be a terminal");
+		    "016|vi's standard input and output must both refer to a
+		     terminal");
 		return (1);
 	}
 
