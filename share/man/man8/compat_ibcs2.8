@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ibcs2.8,v 1.11 2003/06/06 19:28:06 jmc Exp $
+.\"	$OpenBSD: compat_ibcs2.8,v 1.12 2003/07/21 12:33:18 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Scott Bartram
 .\" Copyright (c) 1995 Frank van der Linden
@@ -55,17 +55,14 @@ iBCS2 supports COFF, ELF, and x.out (XENIX) binary formats.
 Binaries from SCO OpenServer (version 5.x) are the only ELF binaries
 that have been tested.
 Most programs should work, but not ones that use or depend on:
-.sp
+.Pp
 .Bl -tag -width 123 -compact -offset indent
 .It kernel internal data structures
-.br
 .It STREAMS drivers (other than TCP/IP sockets)
-.br
 .It local X displays (uses a STREAMS pipe)
-.br
 .It virtual 8086 mode
 .El
-.sp
+.Pp
 The iBCS2 compatibility feature is active for kernels compiled with
 the
 .Nm COMPAT_IBCS2
