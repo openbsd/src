@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.469 2001/11/26 16:37:32 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.470 2001/11/29 17:10:57 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1481,6 +1481,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMZ_2,
 	    "Cyclom-Z",
+	},
+	{
+	    PCI_VENDOR_CYCLONE, PCI_PRODUCT_CYCLONE_PCI_700,
+	    "IQ80310 (PCI-700)",
 	},
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_GXMPCI,

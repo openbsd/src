@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.469 2001/11/26 16:37:32 mickey Exp 
+ *		OpenBSD: pcidevs,v 1.470 2001/11/29 17:10:57 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1045,6 +1045,9 @@
 #define	PCI_PRODUCT_CYCLADES_CYCLOM8Y_2	0x0105		/* Cyclom-8Y */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_1	0x0200		/* Cyclom-Z below 1M */
 #define	PCI_PRODUCT_CYCLADES_CYCLOMZ_2	0x0201		/* Cyclom-Z */
+
+/* Cyclone Microsystems products */
+#define	PCI_PRODUCT_CYCLONE_PCI_700	0x0700		/* IQ80310 (PCI-700) */
 
 /* Cyrix/National Semiconductor products */
 #define	PCI_PRODUCT_CYRIX_GXMPCI	0x0001		/* GXm Host-PCI */
