@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.26 2000/03/24 21:03:46 aaron Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.27 2000/05/19 18:19:46 aaron Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -619,7 +619,7 @@ macros are themselves a type of command;
 the general syntax for a
 .Xr troff
 command is:
-.Bd -filled -offset indent
+.Bd -literal -offset indent
 \&.Va argument1 argument2 ... argument9
 .Ed
 .Pp
@@ -1048,7 +1048,9 @@ The
 .Ql \&.Fl
 macro is parsed and is callable.
 .Ss Functions (library routines)
-The .Fn macro is modeled on ANSI C conventions.
+The
+.Ql \&.Fn
+macro is modeled on ANSI C conventions.
 .Bd -literal
 Usage: .Fn [type] function [[type] parameters ... \*(Pu]
 .Ed
@@ -1588,14 +1590,14 @@ of them.
 .Bd -filled -offset indent
 .Bl -column "quote " "close " "open " "Enclose Stringx(in XX) " XXstringXX
 .Em " Quote	 Close	 Open	Function	Result"
-\&.Aq	.Ac	.Ao	Angle Bracket Enclosure	<string>
-\&.Bq	.Bc	.Bo	Bracket Enclosure	[string]
-\&.Dq	.Dc	.Do	Double Quote	``string''
-	.Ec	.Eo	Enclose String (in XX)	XXstringXX
-\&.Pq	.Pc	.Po	Parenthesis Enclosure	(string)
-\&.Ql			Quoted Literal	`st' or string
-\&.Qq	.Qc	.Qo	Straight Double Quote	"string"
-\&.Sq	.Sc	.So	Single Quote	`string'
+.It Li ".Aq	.Ac	.Ao" Ta No Angle Bracket Enclosure	<string>
+.It Li ".Bq	.Bc	.Bo" Ta No Bracket Enclosure	[string]
+.It Li ".Dq	.Dc	.Do" Ta No Double Quote	``string''
+.It Li "	.Ec	.Eo" Ta No Enclose String (in XX)	XXstringXX
+.It Li ".Pq	.Pc	.Po" Ta No Parenthesis Enclosure	(string)
+.It Li ".Ql		" Ta No Quoted Literal	`st' or string
+.It Li ".Qq	.Qc	.Qo" Ta No Straight Double Quote	"string"
+.It Li ".Sq	.Sc	.So" Ta No Single Quote	`string'
 .El
 .Ed
 .Pp
@@ -1935,7 +1937,7 @@ The
 macro can take up to nine arguments.
 It is parsed and but is not callable.
 .Bl -tag -width ".Sh SYNOPSIS"
-.It \&.Sh NAME
+.It Li \&.Sh NAME
 The
 .Ql \&.Sh NAME
 macro is mandatory.
@@ -1955,7 +1957,7 @@ name from the third item, which is the description.
 The
 description should be the most terse and lucid possible,
 as the space available is small.
-.It \&.Sh SYNOPSIS
+.It Li \&.Sh SYNOPSIS
 The
 .Sx SYNOPSIS
 section describes the typical usage of the
@@ -2018,7 +2020,7 @@ See
 .Sx PREDEFINED STRINGS
 for a usable \*(Ba
 character in other situations.
-.It \&.Sh DESCRIPTION
+.It Li \&.Sh DESCRIPTION
 In most cases the first text in the
 .Sx DESCRIPTION
 section
@@ -2045,27 +2047,27 @@ to maintain consistency.
 They are listed in the order
 in which they would be used.
 .Bl -tag -width SYNOPSIS
-.It \&.Sh ENVIRONMENT
+.It Li \&.Sh ENVIRONMENT
 The
 .Sx ENVIRONMENT
 section should reveal any related
 environment
 variables and clues to their behavior and/or usage.
-.It \&.Sh EXAMPLES
+.It Li \&.Sh EXAMPLES
 There are several ways to create examples.
 See
 the
 .Sx EXAMPLES
 section below
 for details.
-.It \&.Sh FILES
+.It Li \&.Sh FILES
 Files which are used or created by the man page subject
 should be listed via the
 .Ql \&.Pa
 macro in the
 .Sx FILES
 section.
-.It \&.Sh SEE ALSO
+.It Li \&.Sh SEE ALSO
 References to other material on the man page topic and
 cross references to other relevant man pages should
 be placed in the
@@ -2089,7 +2091,7 @@ For example:
 At this time
 .Xr refer 1
 style references are not accommodated.
-.It \&.Sh STANDARDS
+.It Li \&.Sh STANDARDS
 If the command, library function or file adheres to a
 specific implementation such as
 .St -p1003.2
@@ -2101,20 +2103,20 @@ command does not adhere to any standard, its history
 should be noted in the
 .Sx HISTORY
 section.
-.It \&.Sh HISTORY
+.It Li \&.Sh HISTORY
 Any command which does not adhere to any specific standards
 should be outlined historically in this section.
-.It \&.Sh AUTHORS
+.It Li \&.Sh AUTHORS
 Credits, if need be, should be placed here.
-.It \&.Sh DIAGNOSTICS
+.It Li \&.Sh DIAGNOSTICS
 Diagnostics from a command should be placed in this section.
-.It \&.Sh ERRORS
+.It Li \&.Sh ERRORS
 Specific error handling, especially from library functions
 (man page sections 2 and 3) should go here.
 The
 .Ql \&.Er
 macro is used to specify an errno.
-.It \&.Sh BUGS
+.It Li \&.Sh BUGS
 Blatant problems with the topic go here...
 .El
 .Pp
@@ -2127,7 +2129,7 @@ for example, this section was set with:
 .Ed
 .Ss Paragraphs and Line Spacing.
 .Bl -tag -width 6n
-.It \&.Pp
+.It Li \&.Pp
 The
 .Ql \&.Pp
 paragraph command may be used to specify a line space where necessary.
@@ -2415,7 +2417,7 @@ work and perhaps may never do the right thing by
 .Xr troff .
 .El
 .El
-.It ".Ed"
+.It Li ".Ed"
 End-display.
 .El
 .Ss Tagged Lists and Columns
@@ -2856,15 +2858,16 @@ If one or more files are involved
 may be bogus.
 If there is only one file, it should be accurate.
 The second line gives the argument count, the argument
-.Pq Ql \&Fl
+.Pq Li \&Fl
 and its length.
 If the length of an argument is two characters, the
 argument is tested to see if it is executable (unfortunately, any
 register which contains a non-zero value appears executable).
 The third line gives the space allotted for a class, and the
 class type.
-The problem here is the argument aC should not be
-executable.
+The problem here is the argument
+.Ql \&aC
+should not be executable.
 The four types of classes are string, executable, closing
 punctuation and opening punctuation.
 The last line shows the entire
