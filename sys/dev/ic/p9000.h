@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.h,v 1.1 2003/06/17 21:21:33 miod Exp $	*/
+/*	$OpenBSD: p9000.h,v 1.2 2005/04/02 23:27:25 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -183,26 +183,26 @@
 /* Control and conditions registers */
 
 /* Out of range */
-#define	P9000_PE_OOR					0x00000084
+#define	P9000_PE_OOR					0x00000184
 /* Index register (0-3, for meta coordinates) */
-#define	P9000_PE_INDEX					0x0000008c
+#define	P9000_PE_INDEX					0x0000018c
 /* Window offset (16x16)*/
-#define	P9000_PE_WINOFFSET				0x00000090
+#define	P9000_PE_WINOFFSET				0x00000190
 /* Clipping window */
-#define	P9000_PE_WINMIN					0x00000094
-#define	P9000_PE_WINMAX					0x00000098
+#define	P9000_PE_WINMIN					0x00000194
+#define	P9000_PE_WINMAX					0x00000198
 /* X Clip register */
-#define	P9000_X_CLIPPING				0x000000a0
+#define	P9000_X_CLIPPING				0x000001a0
 /* Y Clip register */
-#define	P9000_Y_CLIPPING				0x000000a4
+#define	P9000_Y_CLIPPING				0x000001a4
 /* X Edge Less Than register */
-#define	P9000_X_EDGE_LESS				0x000000a8
+#define	P9000_X_EDGE_LESS				0x000001a8
 /* X Edge Greater Than register */
-#define	P9000_X_EDGE_GREATER				0x000000ac
+#define	P9000_X_EDGE_GREATER				0x000001ac
 /* Y Edge Less Than register */
-#define	P9000_Y_EDGE_LESS				0x000000b0
+#define	P9000_Y_EDGE_LESS				0x000001b0
 /* Y Edge Greater Than register */
-#define	P9000_Y_EDGE_GREATER				0x000000b4
+#define	P9000_Y_EDGE_GREATER				0x000001b4
 
 /*
  * Drawing engine
