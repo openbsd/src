@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.4 2003/11/09 20:13:57 otto Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.5 2004/01/07 18:16:42 canacar Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -71,7 +71,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.4 2003/11/09 20:13:57 otto Exp $";
+static const char rcsid[] = "$OpenBSD: diff3prog.c,v 1.5 2004/01/07 18:16:42 canacar Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -301,7 +301,7 @@ merge(int m1, int m2)
 			d2->new.from,d2->new.to);
 		}
 		/* first file is different from others */
-		if ((!t2 || t1) && d1->new.to < d2->new.from) {
+		if (!t2 || (t1 && d1->new.to < d2->new.from)) {
 			/* stuff peculiar to 1st file */
 			if (eflag==0) {
 				separate("1");
@@ -313,7 +313,7 @@ merge(int m1, int m2)
 			continue;
 		}
 		/* second file is different from others */
-		if ((!t1 || t2) && d2->new.to < d1->new.from) {
+		if (!t1 || (t2 && d2->new.to < d1->new.from)) {
 			if (eflag==0) {
 				separate("2");
 				keep(1, &d2->new);
