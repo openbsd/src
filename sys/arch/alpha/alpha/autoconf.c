@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 1996/10/30 22:37:57 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 1996/11/06 02:01:19 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.14 1996/10/13 02:59:23 christos Exp $	*/
 
 /*
@@ -269,16 +269,11 @@ setroot()
         register int len;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128], *rootdevname;
-	extern int (*mountroot) __P((void *));
 	dev_t temp;
 	struct device *bootdv, *rootdv, *swapdv;
 	int bootpartition;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
-	extern int nfs_mountroot __P((void *));
-#endif
-#if defined(FFS)
-	extern int ffs_mountroot __P((void *));
 #endif
 
 #ifdef RAMDISK_HOOKS
@@ -426,9 +421,8 @@ gotswap:
 		nfsbootdevname = rootdv->dv_xname;
 		return;
 #endif
-#if defined(FFS)
 	case DV_DISK:
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 		sprintf(root_device, "%s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
 		printf("root on %s", root_device);
@@ -437,7 +431,6 @@ gotswap:
 			    DISKPART(nswapdev) + 'a');
 		printf("\n");
 		break;
-#endif
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
