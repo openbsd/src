@@ -270,6 +270,7 @@ gethostbyname(name)
 	register struct hostent *hp;
 	char lookups[MAXDNSLUS];
 
+#ifdef insecure
 	/*
 	 * disallow names consisting only of digits/dots, unless
 	 * they end in a dot.
@@ -301,6 +302,7 @@ gethostbyname(name)
 			if (!isdigit(*cp) && *cp != '.') 
 				break;
 		}
+#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return (_gethtbyname(name));
