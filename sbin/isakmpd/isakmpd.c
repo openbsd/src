@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmpd.c,v 1.23 2000/05/03 13:47:27 niklas Exp $	*/
-/*	$EOM: isakmpd.c,v 1.51 2000/05/03 13:22:20 ho Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.24 2000/06/08 20:51:31 niklas Exp $	*/
+/*	$EOM: isakmpd.c,v 1.52 2000/05/14 20:24:13 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -113,7 +113,7 @@ parse_args (int argc, char *argv[])
   int cls, level;
 #endif
 
-  while ((ch = getopt (argc, argv, "c:dD:f:i:np:P:r:")) != -1) {
+  while ((ch = getopt (argc, argv, "c:dD:f:i:np:P:r:R:")) != -1) {
     switch (ch) {
     case 'c':
       conf_path = optarg;
