@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.12 2001/02/19 09:49:51 camield Exp $	*/
+/*	$OpenBSD: edit.c,v 1.13 2001/02/19 19:32:13 camield Exp $	*/
 
 /*
  * Command line editing - common code
@@ -781,7 +781,6 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 		for (p = start - 1; p >= 0 && isspace(buf[p]); p--)
 			;
 		iscmd = p < 0 || strchr(";|&()`", buf[p]);
-#if 0
 		if (iscmd) {
 			/* If command has a /, path, etc. is not searched;
 			 * only current directory is searched, which is just
@@ -792,7 +791,6 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 					break;
 			iscmd = p == end;
 		}
-#endif
 		*is_commandp = iscmd;
 	}
 
