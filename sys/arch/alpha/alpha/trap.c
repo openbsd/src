@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1997/01/24 19:56:46 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1997/02/03 13:09:16 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.19 1996/11/27 01:28:30 cgd Exp $	*/
 
 /*
@@ -161,6 +161,10 @@ trap(a0, a1, a2, entry, framep)
 				goto out;
 
 			ucode = a0;		/* VA */
+			if (i == SIGBUS)
+				typ = BUS_ADRALN;
+			else
+				typ = SEGV_MAPERR;
 			break;
 		}
 
@@ -185,7 +189,8 @@ trap(a0, a1, a2, entry, framep)
 		 */
 		if (user) {
 sigfpe:			i = SIGFPE;
-			ucode =  a0;		/* exception summary */
+			vv = ucode = a0;	/* exception summary */
+			typ = FPE_FLTINV;	/* XXX? */
 			break;
 		}
 
@@ -208,6 +213,7 @@ sigfpe:			i = SIGFPE;
 		case ALPHA_IF_CODE_BUGCHK:
 			ucode = a0;		/* trap type */
 			i = SIGTRAP;
+			typ = TRAP_BRKPT;
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
@@ -222,6 +228,7 @@ panic("foo");
 }
 #endif
 			i = SIGILL;
+			typ = ILL_ILLOPC;
 			break;
 
 		case ALPHA_IF_CODE_FEN:
@@ -394,6 +401,7 @@ panic("foo");
 			}
 			ucode = a0;
 			i = SIGSEGV;
+			typ = SEGV_MAPERR;
 			break;
 		    }
 
@@ -407,7 +415,7 @@ panic("foo");
 		goto dopanic;
 	}
 
-	trapsignal(p, i, ucode);
+	trapsignal(p, i, ucode, typ, ucode);
 out:
 	if (user)
 		userret(p, framep->tf_regs[FRAME_PC], sticks);
@@ -927,6 +935,7 @@ unaligned_fixup(va, opcode, reg, p)
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
 	signal = SIGBUS;
+	typ = BUS_ADRALN;
 	if (dofix && size != 0) {
 		switch (opcode) {
 #ifdef FIX_UNALIGNED_VAX_FP
