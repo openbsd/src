@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.16 2002/12/05 04:30:21 kjc Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.17 2003/04/13 22:55:43 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -52,6 +52,8 @@ _mkdev(s64_czs, cua[a-z], {-u=${i#cua*}
 	*) echo unknown cua device $i ;;
 	esac
 	M cua$u c major_s64_czs_c Add($n, 128) 660 dialer uucp-})dnl
+__devitem(presto, presto*, Prestoserve NVRAM memory)dnl
+disk_q(presto)dnl
 dnl
 dnl *** MAKEDEV itself
 dnl
@@ -73,6 +75,7 @@ _DEV(xd, 42, 10)
 _DEV(flo, 54, 16)
 _DEV(vnd, 110, 8)
 _DEV(ccd, 23, 9)
+_DEV(presto, 25, 26)
 _TITLE(pty)
 _DEV(tty, 20)
 _DEV(pty, 21)
@@ -137,6 +140,7 @@ target(all, cd, 0, 1)dnl
 target(all, sd, 0, 1, 2, 3, 4)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
+target(all, presto, 0)dnl
 target(ramd, fd, 0)dnl
 target(ramd, sd, 0, 1, 2, 3)dnl
 target(ramd, rd, 0)dnl

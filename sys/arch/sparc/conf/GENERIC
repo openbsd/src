@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.62 2003/03/09 02:30:45 miod Exp $
+#	$OpenBSD: GENERIC,v 1.63 2003/04/13 22:55:48 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -319,5 +319,8 @@ fd*	at fdc0					# the drive itself
 #fga0	at iommu0				# FORCE CPU-5V VME/SBus bridge
 #fvme*	at fga0					# FORCE CPU-5V
 #daadio*	at fvme? addr 0x0 level 1 vect 0x1f	# Matrix MD-DAADIO board
+
+# Prestoserve NVRAM
+#presto*	at sbus? slot ? offset ?
 
 #pseudo-device	strip	1	# radio clock

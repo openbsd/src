@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2002/12/05 02:49:55 kjc Exp $	*/
+/*	$OpenBSD: conf.c,v 1.36 2003/04/13 22:55:52 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.40 1996/04/11 19:20:03 thorpej Exp $ */
 
 /*
@@ -70,6 +70,7 @@
 #include "st.h"
 #include "cd.h"
 #include "rd.h"
+#include "presto.h"
 
 #include "zstty.h"
 
@@ -123,6 +124,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 23 */
 	bdev_lkm_dummy(),		/* 24 */
 	bdev_disk_init(NRAID,raid),	/* 25: RAIDframe disk driver */
+	bdev_disk_init(NPRESTO,presto),	/* 26: Prestoserve NVRAM */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -157,7 +159,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 22: was /dev/fb */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
-	cdev_notdef(),			/* 25 */
+	cdev_disk_init(NPRESTO,presto),	/* 25: Prestoserve NVRAM */
 	cdev_notdef(),			/* 26 */
 	cdev_notdef(),			/* 27: was /dev/bwtwo */
 	cdev_notdef(),			/* 28 */
@@ -332,7 +334,7 @@ static int chrtoblktbl[] = {
 	/* 22 */	NODEV,
 	/* 23 */	9,
 	/* 24 */	NODEV,
-	/* 25 */	NODEV,
+	/* 25 */	26,
 	/* 26 */	NODEV,
 	/* 27 */	NODEV,
 	/* 28 */	NODEV,

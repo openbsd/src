@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.50 2003/03/09 02:30:45 miod Exp $
+#	$OpenBSD: files.sparc,v 1.51 2003/04/13 22:55:48 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -321,7 +321,7 @@ device mtty
 attach mtty at magma
 device mbpp
 attach mbpp at magma
-file    arch/sparc/dev/magma.c          magma | mtty | mbpp needs-flag
+file    arch/sparc/dev/magma.c		magma | mtty | mbpp needs-flag
 
 device spif {}
 attach spif at sbus
@@ -362,3 +362,8 @@ file	arch/sparc/dev/daadio.c		daadio needs-flag
 device tctrl {}
 attach tctrl at obio
 file	arch/sparc/dev/tctrl.c		tctrl needs-flag
+
+# Prestoserve NVRAM
+device	presto: disk
+attach	presto at sbus
+file	arch/sparc/dev/presto.c		presto needs-flag
