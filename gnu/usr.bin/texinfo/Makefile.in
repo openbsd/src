@@ -61,7 +61,7 @@ DEFAULT_INFOPATH = $(infodir):.
 
 #### End of system configuration section. ####
 
-VERSION = 3.6
+VERSION = 3.7
 DISTNAME = texinfo-$(VERSION)
 
 # Subdirectories that have makefiles
@@ -81,7 +81,7 @@ all: sub-all texinfo
 install: all installdirs
 	for dir in $(SUBDIRS); do \
 	   echo making $@ in $$dir; \
-	   (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	   (cd $$dir && $(MAKE) $(MDEFINES) $@ || exit 1); \
 	done
 	d=$(srcdir); test -f ./texinfo && d=.; \
 	(cd $$d; \
@@ -95,7 +95,7 @@ installdirs:
 uninstall:
 	for dir in $(SUBDIRS); do \
 	  echo making $@ in $$dir; \
-	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	  (cd $$dir && $(MAKE) $(MDEFINES) $@ || exit 1); \
 	done
 	$(RM) $(infodir)/texinfo $(infodir)/texinfo-*
 
@@ -111,19 +111,19 @@ configure: configure.in
 sub-all TAGS:
 	for dir in $(SUBDIRS); do \
 	  echo making $@ in $$dir; \
-	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	  (cd $$dir && $(MAKE) $(MDEFINES) $@ || exit 1); \
 	done
 
 clean mostlyclean:
 	for dir in $(SUBDIRS); do \
 	  echo making $@ in $$dir; \
-	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	  (cd $$dir && $(MAKE) $(MDEFINES) $@ || exit 1); \
 	done
 
 distclean: clean texclean
 	for dir in $(SUBDIRS); do \
 	  echo making $@ in $$dir; \
-	  (cd $$dir; $(MAKE) $(MDEFINES) $@); \
+	  (cd $$dir && $(MAKE) $(MDEFINES) $@ || exit 1); \
 	done
 	$(RM) Makefile *.status *.cache *.log texinfo texinfo-?	texinfo-??
 
