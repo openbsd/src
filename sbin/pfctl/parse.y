@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.436 2004/01/05 22:04:24 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.437 2004/02/03 19:29:50 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3948,11 +3948,18 @@ expand_rule(struct pf_rule *r,
 	int			 added = 0, error = 0;
 	char			 ifname[IF_NAMESIZE];
 	char			 label[PF_RULE_LABEL_SIZE];
+	char			 tagname[PF_TAG_NAME_SIZE];
+	char			 match_tagname[PF_TAG_NAME_SIZE];
 	struct pf_pooladdr	*pa;
 	struct node_host	*h;
 	u_int8_t		 flags, flagset;
 
 	if (strlcpy(label, r->label, sizeof(label)) >= sizeof(label))
+		errx(1, "expand_rule: strlcpy");
+	if (strlcpy(tagname, r->tagname, sizeof(tagname)) >= sizeof(tagname))
+		errx(1, "expand_rule: strlcpy");
+	if (strlcpy(match_tagname, r->match_tagname, sizeof(match_tagname)) >=
+	    sizeof(match_tagname))
 		errx(1, "expand_rule: strlcpy");
 	flags = r->flags;
 	flagset = r->flagset;
@@ -3995,6 +4002,12 @@ expand_rule(struct pf_rule *r,
 
 		if (strlcpy(r->label, label, sizeof(r->label)) >=
 		    sizeof(r->label))
+			errx(1, "expand_rule: strlcpy");
+		if (strlcpy(r->tagname, tagname, sizeof(r->tagname)) >=
+		    sizeof(r->tagname))
+			errx(1, "expand_rule: strlcpy");
+		if (strlcpy(r->match_tagname, match_tagname,
+		    sizeof(r->match_tagname)) >= sizeof(r->match_tagname))
 			errx(1, "expand_rule: strlcpy");
 		expand_label(r->label, PF_RULE_LABEL_SIZE, r->ifname, r->af,
 		    src_host, src_port, dst_host, dst_port, proto->proto);
