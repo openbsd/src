@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.11 2002/04/09 01:22:23 miod Exp $
+dnl	$OpenBSD: install,v 1.12 2002/05/23 01:58:36 hugh Exp $
 OpenBSDInstallPrelude
 
 For most systems, the easiest way to install OpenBSD/MACHINE OSREV is via
@@ -13,12 +13,12 @@ skip ahead to the "ready to install OpenBSD" section.
 
 Booting from Network:
 
-If you wish to boot over the network, you need to either have another
-OpenBSD system on the network, or something else capable of running the
-mopd(8) program.  Source code may be found under usr.sbin/mopd in the
-OpenBSD source tree, and is reasonably portable among UN*X-like operating
-systems.  For more information on diskless booting under OpenBSD, see
-the diskless(8) manual page.
+In order to bootstrap via the network, you must provide a second system to
+act as a boot server. It is convenient if this is a second OpenBSD machine
+as the necessary services are already installed, although source code for
+such programs as mopd can be found in OpenBSD's source tree, and should be
+reasonably portable to other UN*X-like operating systems. More information
+on diskless booting can be found in the OpenBSD diskless(8) manual page.
 
 When you turn on your VAX, it will run a set of self-diagnostic ROM
 routines. Depending on the model of VAX you have, it may take quite a while.
@@ -34,29 +34,38 @@ name or address.  Here is an example:
 
 	08:00:2b:24:72:00		quickvax
 
+Note that the server must be able to resolve "quickvax" to the IP address
+you intend to use for your new vax system. This can be accomplished by an
+entry in /etc/hosts.
+
 Then start rarpd (or configure /etc/rc.conf to always start rarpd).
 
 Copy boot.mop into /tftpboot/mop/1a2b3c4d5e6f.SYS, where "1a2b3c4d5e6f"
 represents the six octets of your ethernet address.  For example, the 
 filename for the machine described above would be "08002b247200.SYS".
 Note that all non alphanumeric characters must be stripped and the
-mac portion must be lower case, the extension upper.
-Start mopd by typing "mopd -a".
+mac portion must be lower case, the extension upper.  Start mopd by
+typing "mopd -a", if you've not configured it to run by default.
 
-Finally, you need to add an entry for your MACHINE in /etc/bootparams.  For
-example:
+Next you need to export a directory for your new machine to mount over
+NFS. This is accomplished by adding an entry to /etc/exports such as:
+
+/export/MACHINE -maproot=root quickvax
+
+In a typical NFS install, the directory `/export/MACHINE' will contain
+the ramdisk kernel image `bsd.rd', although it is possible to populate
+it with a full VAX filesystem to act as a true NFS root. Ensure that your
+server is configured to export NFS properly, and is running nfsd, mountd,
+and the rpc portmapper. See the exports(5) manpage for more information.
+
+
+Finally, you need to add an entry for your MACHINE in /etc/bootparams.
+For example:
 
 	quickvax	root=myserver:/export/MACHINE
 
-Where myserver is the name of your server machine and `/export/MACHINE' is
-the directory that holds the ramdisk kernel image (`bsd.rd').
-Enable rpc.bootparamd in /etc/rc.conf by changing the value of
-"bootparamd_flags". Also, make sure "portmap" is "YES"; you will need
-portmap running.
-
-Now run `rpc.bootparamd' and make sure that the directory is NFS exported to
-the client.  See the manual pages on your server system if you need more
-information about exporting filesystems.
+Enable rpc.bootparamd either by turning it on in /etc/rc.conf and rebooting,
+or by running it manually.
 
 You are now ready to mopboot your MACHINE. 
 
