@@ -1,5 +1,4 @@
-/*     $OpenBSD: encrypt.c,v 1.6 2001/09/18 00:48:58 jcs Exp $     */
-/* $KTH: encrypt.c,v 1.19 1997/11/02 03:58:03 assar Exp $ */
+/*     $OpenBSD: encrypt.c,v 1.7 2002/03/22 13:49:28 hin Exp $     */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +65,9 @@
  * or implied warranty.
  */
 
-/* $KTH: encrypt.c,v 1.22 2000/01/18 03:10:35 assar Exp $ */
+/*
+RCSID("$KTH: encrypt.c,v 1.22.8.1 2002/02/06 03:39:13 assar Exp $");
+*/
 
 #if	defined(ENCRYPTION)
 
@@ -954,6 +955,13 @@ encrypt_delay(void)
        (I_SUPPORT_DECRYPT & remote_supports_encrypt) == 0)
 	return 0;
     if(!(encrypt_output && decrypt_input))
+	return 1;
+    return 0;
+}
+
+int encrypt_is_encrypting()
+{
+    if (encrypt_output && decrypt_input)
 	return 1;
     return 0;
 }

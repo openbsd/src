@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenc.c,v 1.4 2001/05/25 10:24:25 hin Exp $	*/
+/*	$OpenBSD: authenc.c,v 1.5 2002/03/22 13:49:28 hin Exp $	*/
 /*	$NetBSD: authenc.c,v 1.5 1996/02/28 21:03:52 thorpej Exp $	*/
 
 /*-
@@ -34,6 +34,10 @@
  * SUCH DAMAGE.
  */
 
+/*
+RCSID("$Id: authenc.c,v 1.5 2002/03/22 13:49:28 hin Exp $");
+*/
+
 #include "telnet_locl.h"
 
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
@@ -66,7 +70,14 @@ net_encrypt()
 	int
 telnet_spin()
 {
-	return(-1);
+    extern int scheduler_lockout_tty;
+
+    scheduler_lockout_tty = 1;
+    Scheduler(0);
+    scheduler_lockout_tty = 0;
+    
+    return 0;
+
 }
 
 	char *

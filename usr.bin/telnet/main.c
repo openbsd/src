@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2001/11/03 00:07:53 hin Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2002/03/22 13:49:28 hin Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ krb5_init(void)
         "libdefaults", "encrypt", NULL)) {
           encrypt_auto(1);
           decrypt_auto(1); 
+	  wantencryption = 1;
           EncryptVerbose(1);
         }
 #endif
@@ -337,6 +338,7 @@ main(argc, argv)
 #ifdef ENCRYPTION
 			encrypt_auto(1);
 			decrypt_auto(1);
+			wantencryption = 1;
 			EncryptVerbose(1);
 #else
 			fprintf(stderr,
@@ -353,15 +355,15 @@ main(argc, argv)
 
 	if (autologin == -1) {
 #if defined(AUTHENTICATION)
-	    if(check_krb4_tickets() || check_krb5_tickets())
-		autologin = 1;
+		if(check_krb4_tickets() || check_krb5_tickets())
+			autologin = 1;
 #endif
 #if defined(ENCRYPTION)
 		encrypt_auto(1);
 		decrypt_auto(1);
 #endif
 	}
-	
+
 	if (autologin == -1)
 		autologin = (rlogin == _POSIX_VDISABLE) ? 0 : 1;
 

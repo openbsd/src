@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnet.1,v 1.28 2001/06/23 22:14:27 hin Exp $
+.\"	$OpenBSD: telnet.1,v 1.29 2002/03/22 13:49:28 hin Exp $
 .\"	$NetBSD: telnet.1,v 1.5 1996/02/28 21:04:12 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -186,7 +186,10 @@ unless modified by the
 .Fl e
 option.
 .It Fl x
-Turns on encryption of the data stream if Kerberos is used.
+Turn on encryption of the data stream.  When this option is turned on,
+.Nm
+will exit with an error if authentication cannot be negotiated or if
+encryption cannot be turned on.
 .It Ar host
 Indicates the official name, an alias, or the Internet address
 of a remote host.

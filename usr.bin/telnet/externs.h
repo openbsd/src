@@ -1,4 +1,4 @@
-/*	$OpenBSD: externs.h,v 1.8 2002/02/17 17:20:49 millert Exp $	*/
+/*	$OpenBSD: externs.h,v 1.9 2002/03/22 13:49:28 hin Exp $	*/
 /* $KTH: externs.h,v 1.16 1997/11/29 02:28:35 joda Exp $ */
 
 /*
@@ -68,6 +68,7 @@ extern int
     localchars,		/* we recognize interrupt/quit */
     donelclchars,	/* the user has set "localchars" */
     showoptions,
+    wantencryption,	/* User has requested encryption */
     net,		/* Network file descriptor */
     tin,		/* Terminal input file descriptor */
     tout,		/* Terminal output file descriptor */
@@ -86,6 +87,8 @@ extern int
 #endif /* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
     debug;		/* Debug level */
+
+extern sig_atomic_t intr_happened, intr_waiting;	/* for interrupt handling */
 
 extern cc_t escape;	/* Escape to command mode */
 extern cc_t rlogin;	/* Rlogin mode escape character */
