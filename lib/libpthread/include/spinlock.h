@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: spinlock.h,v 1.7 2002/02/16 21:27:25 millert Exp $
- * $OpenBSD: spinlock.h,v 1.7 2002/02/16 21:27:25 millert Exp $
+ * $Id: spinlock.h,v 1.8 2003/01/31 04:46:17 marc Exp $
+ * $OpenBSD: spinlock.h,v 1.8 2003/01/31 04:46:17 marc Exp $
  *
  * Lock definitions used in both libc and libpthread.
  *
@@ -48,7 +48,7 @@
 typedef volatile struct {
 	_spinlock_lock_t	access_lock;
 	void *			lock_owner;
-	char *			fname;
+	const char *		fname;
 	int			lineno;
 } spinlock_t;
 
@@ -68,7 +68,7 @@ typedef volatile struct {
  */
 __BEGIN_DECLS
 void	_spinlock(spinlock_t *);
-void	_spinlock_debug(spinlock_t *, char *, int);
+void	_spinlock_debug(spinlock_t *, const char *, int);
 
 /* lock() functions return 0 if lock was acquired. */
 /* is_locked functions() return 1 if lock is locked. */

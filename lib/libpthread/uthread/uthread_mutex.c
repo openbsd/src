@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.16 2003/01/27 22:22:30 marc Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.17 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -75,10 +75,6 @@ static inline void	mutex_queue_enq(pthread_mutex_t, pthread_t);
 
 
 static spinlock_t static_init_lock = _SPINLOCK_INITIALIZER;
-
-static struct pthread_mutex_attr	static_mutex_attr =
-    PTHREAD_MUTEXATTR_STATIC_INITIALIZER;
-static pthread_mutexattr_t		static_mattr = &static_mutex_attr;
 
 /* Reinitialize a mutex to defaults. */
 int
@@ -268,23 +264,6 @@ init_static(pthread_mutex_t *mutex)
 }
 
 static int
-init_static_private(pthread_mutex_t *mutex)
-{
-	int	ret;
-
-	_SPINLOCK(&static_init_lock);
-
-	if (*mutex == NULL)
-		ret = pthread_mutex_init(mutex, &static_mattr);
-	else
-		ret = 0;
-
-	_SPINUNLOCK(&static_init_lock);
-
-	return(ret);
-}
-
-static int
 mutex_trylock_common(pthread_mutex_t *mutex)
 {
 	struct pthread	*curthread = _get_curthread();
@@ -430,24 +409,6 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 	 * initialization:
 	 */
 	else if ((*mutex != NULL) || (ret = init_static(mutex)) == 0)
-		ret = mutex_trylock_common(mutex);
-
-	return (ret);
-}
-
-int
-_pthread_mutex_trylock(pthread_mutex_t *mutex)
-{
-	int	ret = 0;
-
-	if (mutex == NULL)
-		ret = EINVAL;
-
-	/*
-	 * If the mutex is statically initialized, perform the dynamic
-	 * initialization marking the mutex private (delete safe):
-	 */
-	else if ((*mutex != NULL) || (ret = init_static_private(mutex)) == 0)
 		ret = mutex_trylock_common(mutex);
 
 	return (ret);
@@ -1438,50 +1399,6 @@ mutex_rescan_owned(pthread_t pthread, pthread_mutex_t mutex)
 			pthread->active_priority = active_prio;
 		}
 	}
-}
-
-void
-_mutex_unlock_private(pthread_t pthread)
-{
-	struct pthread_mutex volatile	*m, *m_next;
-
-	for (m = TAILQ_FIRST(&pthread->mutexq); m != NULL; m = m_next) {
-		m_next = TAILQ_NEXT(m, m_qe);
-		if ((m->m_flags & MUTEX_FLAGS_PRIVATE) != 0)
-			pthread_mutex_unlock(&m);
-	}
-}
-
-void
-_mutex_lock_backout(pthread_t pthread)
-{
-	struct pthread_mutex volatile	*mutex;
-
-	/*
-	 * Defer signals to protect the scheduling queues from
-	 * access by the signal handler:
-	 */
-	_thread_kern_sig_defer();
-	if ((pthread->flags & PTHREAD_FLAGS_IN_MUTEXQ) != 0) {
-		mutex = pthread->data.mutex;
-
-		/* Lock the mutex structure: */
-		_SPINLOCK(&mutex->lock);
-
-		mutex_queue_remove(mutex, pthread);
-
-		/* This thread is no longer waiting for the mutex: */
-		pthread->data.mutex = NULL;
-
-		/* Unlock the mutex structure: */
-		_SPINUNLOCK(&mutex->lock);
-
-	}
-	/*
-	 * Undefer and handle pending signals, yielding if
-	 * necessary:
-	 */
-	_thread_kern_sig_undefer();
 }
 
 /*

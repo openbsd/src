@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.25 2003/01/27 22:22:30 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.26 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -59,7 +59,7 @@ void		_dequeue_signals(void);
 inline void	_thread_run_switch_hook(pthread_t, pthread_t);
 
 /* Static variables: */
-static int	last_tick = 0;
+static unsigned int	last_tick = 0;
 
 void
 _thread_kern_sched(struct sigcontext * scp)
@@ -513,7 +513,8 @@ _thread_kern_sched(struct sigcontext * scp)
 }
 
 void
-_thread_kern_sched_state(enum pthread_state state, char *fname, int lineno)
+_thread_kern_sched_state(enum pthread_state state, const char *fname,
+			 int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 
@@ -540,8 +541,8 @@ _thread_kern_sched_state(enum pthread_state state, char *fname, int lineno)
 }
 
 void
-_thread_kern_sched_state_unlock(enum pthread_state state,
-    spinlock_t *lock, char *fname, int lineno)
+_thread_kern_sched_state_unlock(enum pthread_state state, spinlock_t *lock,
+				const char *fname, int lineno)
 {
 	struct pthread	*curthread = _get_curthread();
 

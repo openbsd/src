@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_file.c,v 1.9 2002/11/07 03:51:21 marc Exp $	*/
+/*	$OpenBSD: uthread_file.c,v 1.10 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -239,7 +239,7 @@ _flockfile_debug(FILE * fp, char *fname, int lineno)
 void
 flockfile(FILE * fp)
 {
-	_flockfile_debug(fp, "?", 1);
+	_flockfile_debug(fp, (char *) "?", 1);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.5 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.6 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -51,15 +51,15 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 	int	blocking;
 	int	idx = 0;
 	int	type;
-	ssize_t cnt;
+	size_t num = 0;
+	size_t cnt;
 	ssize_t n;
-	ssize_t num = 0;
 	ssize_t	ret;
 	struct iovec liov[20];
 	struct iovec *p_iov = liov;
 
 	/* Check if the array size exceeds to compiled in size: */
-	if (iovcnt > (sizeof(liov) / sizeof(struct iovec))) {
+	if (iovcnt > (int) (sizeof(liov) / sizeof(struct iovec))) {
 		/* Allocate memory for the local array: */
 		if ((p_iov = (struct iovec *)
 		    malloc(iovcnt * sizeof(struct iovec))) == NULL) {
@@ -134,7 +134,7 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 						 * for the next write:
 						 */
 						p_iov[idx].iov_len -= cnt;
-						p_iov[idx].iov_base += cnt;
+						(char *)p_iov[idx].iov_base += cnt;
 						cnt = 0;
 					}
 				}

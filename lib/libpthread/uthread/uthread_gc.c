@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_gc.c,v 1.11 2001/12/11 00:19:47 fgsch Exp $	*/
+/*	$OpenBSD: uthread_gc.c,v 1.12 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -69,7 +69,7 @@ _thread_gc(pthread_addr_t arg)
 	f_debug = (getenv("LIBC_R_DEBUG") != NULL);
 
 	/* Set the name of this thread. */
-	pthread_set_name_np(curthread,"GC");
+	pthread_set_name_np(curthread, (char *)"GC");
 
 	while (!f_done) {
 		/* Check if debugging this application. */

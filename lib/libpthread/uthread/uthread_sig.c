@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.18 2003/01/27 22:22:30 marc Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.19 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -50,6 +50,7 @@ _thread_sig_init(void)
 
 	/* Clear local state */
 	for (i = 1; i < NSIG; i++) {
+		_SPINLOCK_INIT(&_thread_sigq[i - 1].lock);
 		_thread_sigq[i - 1].pending = 0;
 	}
 }
@@ -104,12 +105,14 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 		 * one.  Per a POSIX suggestion, only the info for the first
 		 * of multiple activations of the same signal is kept.
 		 */
+		_SPINLOCK(&_thread_sigq[sig - 1].lock);
 		if (_thread_sigq[sig - 1].pending == 0) {
 			sigaddset(&_process_sigpending, sig);
 			_thread_sigq[sig - 1].pending++;
 			memcpy(&_thread_sigq[sig - 1].siginfo, info,
 			       sizeof *info);
 		}
+		_SPINUNLOCK(&_thread_sigq[sig - 1].lock);
 
 		if ((_queue_signals != 0) ||
 		    ((_thread_kern_in_sched == 0) &&
@@ -144,8 +147,8 @@ _thread_clear_pending(int sig, pthread_t thread)
 {
 	pthread_t pthread;
 
+	_thread_sigq[sig - 1].pending = 0;
 	if (sigismember(&_process_sigpending, sig)) {
-		_thread_sigq[sig - 1].pending = 0;
 		sigdelset(&_process_sigpending, sig);
 		TAILQ_FOREACH(pthread, &_thread_list, tle) {
 			sigdelset(&pthread->sigpend, sig);
@@ -363,8 +366,6 @@ _dispatch_signal(int sig, struct sigcontext * scp)
 	struct sigaction act;
 	void (*action)(int, siginfo_t *, void *);
 
-	_thread_clear_pending(sig, curthread);
-
 	/* save off the action and set the signal mask */
 	action = _thread_sigact[sig - 1].sa_sigaction;
 	set = _thread_sigact[sig - 1].sa_mask;
@@ -381,7 +382,11 @@ _dispatch_signal(int sig, struct sigcontext * scp)
 		sigaction(sig, &act, NULL);
 	}
 
-	/* call the action and reset the signal mask */
+	/*
+	 * clear the pending flag, deliver the signal, then reset the
+	 * signal mask
+	 */
+	_thread_clear_pending(sig, curthread);
 	(*action)(sig, &_thread_sigq[sig - 1].siginfo, scp);
 	curthread->sigmask = oset;
 }

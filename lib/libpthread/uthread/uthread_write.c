@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_write.c,v 1.8 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_write.c,v 1.9 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -48,8 +48,8 @@ write(int fd, const void *buf, size_t nbytes)
 	struct pthread	*curthread = _get_curthread();
 	int	blocking;
 	int	type;
+	size_t num = 0;
 	ssize_t n;
-	ssize_t num = 0;
 	ssize_t	ret;
 
 	/* This is a cancellation point: */

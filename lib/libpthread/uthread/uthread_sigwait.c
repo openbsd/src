@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigwait.c,v 1.12 2003/01/27 22:22:30 marc Exp $	*/
+/*	$OpenBSD: uthread_sigwait.c,v 1.13 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -52,7 +52,7 @@ sigwait(const sigset_t * set, int *sig)
 	/*
 	 * Specify the thread kernel signal handler.
 	 */
-	act.sa_handler = (void (*) ()) _thread_sig_handler;
+	act.sa_handler = (void (*) (int)) _thread_sig_handler;
 	act.sa_flags = SA_SIGINFO | SA_RESTART;
 
 	/* Ensure the signal handler cannot be interrupted by other signals: */

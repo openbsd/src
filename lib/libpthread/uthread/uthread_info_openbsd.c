@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_info_openbsd.c,v 1.7 2002/12/11 23:21:19 marc Exp $	*/
+/*	$OpenBSD: uthread_info_openbsd.c,v 1.8 2003/01/31 04:46:17 marc Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
@@ -48,7 +48,7 @@ int _thread_dump_verbose = 0;
 
 struct s_thread_info {
 	enum pthread_state state;
-	char           *name;
+	const char         *name;
 };
 
 /* Static variables: */
@@ -96,15 +96,12 @@ truncname(const char *name, int maxlen)
 }
 
 static void
-_thread_dump_entry(pthread, fd, verbose)
-	pthread_t pthread;
-	int fd;
-	int verbose;
+_thread_dump_entry(pthread_t pthread, int fd, int verbose)
 {
 	const char	*state;
 	char		s[512];
 	char		location[30];
-	int		j;
+	unsigned int	j;
 
 	/* Find last known file:line checkpoint: */
 	if (pthread->fname && pthread->state != PS_RUNNING)
@@ -440,7 +437,7 @@ _thread_dump_data(const void *addr, int len)
 				len = 0;
 				memset(data, ' ', DUMP_BUFLEN);
 			}
-			addr += 8;
+			(char *) addr += 8;
 
 			sprintf( data, "%18p:   ", d );
 			while (count--) {

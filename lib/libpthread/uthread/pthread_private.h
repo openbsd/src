@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_private.h,v 1.42 2003/01/27 22:22:30 marc Exp $	*/
+/*	$OpenBSD: pthread_private.h,v 1.43 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -341,7 +341,7 @@ struct sem {
  */
 struct pthread_cleanup {
 	struct pthread_cleanup	*next;
-	void			(*routine) ();
+	void			(*routine)(void*);
 	void			*routine_arg;
 };
 
@@ -353,7 +353,7 @@ struct pthread_attr {
 	int	suspend;
 	int	flags;
 	void	*arg_attr;
-	void	(*cleanup_attr) ();
+	void	(*cleanup_attr)(void*);
 	void	*stackaddr_attr;
 	size_t	stacksize_attr;
 	size_t	guardsize_attr;
@@ -442,7 +442,7 @@ struct pthread_key {
 	spinlock_t	lock;
 	volatile int	allocated;
 	volatile int	count;
-	void            (*destructor) ();
+	void            (*destructor)(void*);
 };
 
 struct pthread_rwlockattr {
@@ -523,9 +523,9 @@ union pthread_wait_data {
 	pthread_cond_t	cond;
 	const sigset_t	*sigwait;	/* Waiting on a signal in sigwait */
 	struct {
-		short	fd;		/* Used when thread waiting on fd */
-		short	branch;		/* Line number, for debugging.    */
-		char	*fname;		/* Source file name for debugging.*/
+		short		fd;	/* Used when thread waiting on fd */
+		short		branch;	/* Line number, for debugging.    */
+		const char	*fname;	/* Source file name for debugging.*/
 	} fd;
 	FILE		*fp;
 	struct pthread_poll_data *poll_data;
@@ -776,7 +776,7 @@ struct pthread {
 
 	/* Cleanup handlers Link List */
 	struct pthread_cleanup *cleanup;
-	char			*fname;	/* Ptr to source file name  */
+	const char		*fname;	/* Ptr to source file name  */
 	int			lineno;	/* Source line number.      */
 };
 
@@ -1014,6 +1014,7 @@ SCLASS volatile int	_spinblock_count
 
 /* Used to maintain pending and active signals: */
 struct sigstatus {
+	spinlock_t	lock;		/* structure access lock */
 	int		pending;	/* Is this a pending signal? */
 	siginfo_t	siginfo;	/* arg 2 to signal handler */
 };
@@ -1060,11 +1061,13 @@ SCLASS int	_thread_kern_new_state
  * Function prototype definitions.
  */
 __BEGIN_DECLS
+int	*__error(void);
 int     _find_thread(pthread_t);
 struct pthread *_get_curthread(void);
 void	_set_curthread(struct pthread *);
 int     _thread_create(pthread_t *, const pthread_attr_t *,
 		       void *(*start_routine)(void *), void *,pthread_t);
+void    _dispatch_signal(int, struct sigcontext *);
 void    _dispatch_signals(struct sigcontext *);
 void    _thread_signal(pthread_t, int);
 int	_mutex_cv_lock(pthread_mutex_t *);
@@ -1092,12 +1095,13 @@ void	_thread_dump_data(const void *, int);
 void    _thread_dump_info(void);
 void    _thread_init(void);
 void    _thread_kern_sched(struct sigcontext *);
-void    _thread_kern_sched_state(enum pthread_state,char *fname,int lineno);
-void	_thread_kern_sched_state_unlock(enum pthread_state state,
-	    spinlock_t *lock, char *fname, int lineno);
+void    _thread_kern_sched_state(enum pthread_state, const char *, int);
+void	_thread_kern_sched_state_unlock(enum pthread_state, spinlock_t *,
+					const char *, int);
 void    _thread_kern_set_timeout(const struct timespec *);
 void    _thread_kern_sig_defer(void);
 void    _thread_kern_sig_undefer(void);
+void	_thread_kill_siginfo(int);
 void    _thread_sig_handler(int, siginfo_t *, struct sigcontext *);
 int	_thread_sig_handle(int, struct sigcontext *);
 void	_thread_sig_init(void);
@@ -1105,6 +1109,8 @@ void    _thread_start(void);
 void    _thread_start_sig_handler(void);
 void	_thread_seterrno(pthread_t,int);
 int     _thread_fd_table_init(int fd);
+void	_thread_fd_unlock_owned(pthread_t);
+void	_thread_fd_unlock_thread(struct pthread	*, int, int, const char *, int);
 pthread_addr_t _thread_gc(pthread_addr_t);
 void	_thread_enter_cancellation_point(void);
 void	_thread_leave_cancellation_point(void);
@@ -1119,6 +1125,8 @@ void	_thread_stack_free(struct stack *);
 #ifdef _USER_SIGNAL_H
 int	_thread_sys_kill(pid_t, int);
 int     _thread_sys_sigaction(int, const struct sigaction *, struct sigaction *);
+int	_thread_sys_sigblock(int);
+int	_thread_sys_sigsetmask(int);
 int     _thread_sys_sigpending(sigset_t *);
 int     _thread_sys_sigprocmask(int, const sigset_t *, sigset_t *);
 int     _thread_sys_sigsuspend(const sigset_t *);

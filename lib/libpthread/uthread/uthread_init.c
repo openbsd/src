@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.26 2003/01/20 19:43:51 marc Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.27 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -276,7 +276,7 @@ _thread_init(void)
 		_thread_initial->last_active = (long) _sched_ticks;
 
 		/* Give it a useful name */
-		pthread_set_name_np(_thread_initial, "main");
+		pthread_set_name_np(_thread_initial, (char *)"main");
 
 		/* Initialise the rest of the fields: */
 		_thread_initial->poll_data.nfds = 0;
@@ -296,7 +296,7 @@ _thread_init(void)
 
 		/* Initialise the global signal action structure: */
 		sigfillset(&act.sa_mask);
-		act.sa_handler = (void (*) ()) _thread_sig_handler;
+		act.sa_handler = (void (*) (int)) _thread_sig_handler;
 		act.sa_flags = SA_SIGINFO;
 
 		/* Clear pending signals for the process: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sigaction.c,v 1.6 2002/10/30 19:11:56 marc Exp $	*/
+/*	$OpenBSD: uthread_sigaction.c,v 1.7 2003/01/31 04:46:17 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -90,7 +90,7 @@ sigaction(int sig, const struct sigaction * act, struct sigaction * oact)
 			else
 				/* Specify the thread kernel signal handler */
 				gact.sa_handler =
-					(void (*) ()) _thread_sig_handler;
+					(void (*) (int)) _thread_sig_handler;
 
 			/* Change the signal action in the kernel: */
 		    	if (_thread_sys_sigaction(sig, &gact, NULL) != 0)
