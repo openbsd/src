@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.6 2000/06/20 05:48:41 angelos Exp $
+.\"	$OpenBSD: crypto.9,v 1.7 2000/11/07 01:52:08 aaron Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -234,7 +234,7 @@ only when enough information is not present to call the callback
 routine (i.e., if the pointer passed is
 .Dv NULL
 or if no callback routine was specified).
-.It crp_flags
+.It Fa crp_flags
 Is a bitmask of flags associated with this request.
 Currently defined flags are:
 .Bl -tag -width CRYPTO_F_IMBUF
