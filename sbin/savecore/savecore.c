@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.39 2004/01/13 21:03:34 otto Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.40 2004/07/02 13:09:04 tholo Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.39 2004/01/13 21:03:34 otto Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.40 2004/07/02 13:09:04 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ struct nlist current_nl[] = {	/* Namelist for currently running system. */
 #define X_DUMPLO	1
 	{ "_dumplo" },
 #define X_TIME		2
-	{ "_time" },
+	{ "_time_second" },
 #define	X_DUMPSIZE	3
 	{ "_dumpsize" },
 #define X_VERSION	4
@@ -94,7 +94,7 @@ int dumpsyms[] = { X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG, -1 };
 struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ "_dumpdev" },		/* Entries MUST be the same as */
 	{ "_dumplo" },		/*	those in current_nl[].  */
-	{ "_time" },
+	{ "_time_second" },
 	{ "_dumpsize" },
 	{ "_version" },
 	{ "_panicstr" },
