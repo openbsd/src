@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.13 1997/02/10 01:34:08 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 1997/02/16 10:40:50 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -74,10 +74,17 @@ case $i in
 
 all)
 	sh MAKEDEV std fd ct0 ct1 st0 st1 ccd0 ccd1 ccd2 hd0 hd1 hd2
-	sh MAKEDEV sd0 sd1 sd2 pty0 vnd0 vnd1 vnd2 vnd3
+	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0 vnd0 vnd1 vnd2 vnd3
 	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1 dcm2 dcm3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2 tun3 lkm random
 	sh MAKEDEV local
+	;;
+
+raminst)
+	sh MAKEDEV std fd ct0 ct1 st0 st1 hd0 hd1 hd2
+	sh MAKEDEV sd0 sd1 sd2 rd0 rd1 pty0
+	sh MAKEDEV hil grf0 ite0 dca0 dcm0 dcm1
+	sh MAKEDEV bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
 std)
@@ -163,6 +170,17 @@ tun*)
 	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
+	;;
+
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod rd${unit}a b 8 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 8 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 34 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 34 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
+	umask 77
 	;;
 
 ccd*|hd*|sd*|vnd*)
