@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.54 2001/08/24 19:26:15 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.55 2001/08/24 22:54:51 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1701,7 +1701,7 @@ m188_ext_int(u_int v, struct m88100_saved_state *eframe)
 out_m188:
 	disable_interrupt();
 	if (eframe->dmt0 & DMT_VALID) {
-		trap(T_DATAFLT, eframe);
+		trap18x(T_DATAFLT, eframe);
 		data_access_emulation((unsigned *)eframe);
 		eframe->dmt0 &= ~DMT_VALID;
 	}
@@ -1827,13 +1827,15 @@ sbc_ext_int(u_int v, struct m88100_saved_state *eframe)
 	disable_interrupt();
 
 out:
+#ifdef MVME187
 	if (cputyp != CPU_197) {
 		if (eframe->dmt0 & DMT_VALID) {
-			trap(T_DATAFLT, eframe);
+			trap18x(T_DATAFLT, eframe);
 			data_access_emulation((unsigned *)eframe);
 			eframe->dmt0 &= ~DMT_VALID;
 		}
 	}
+#endif
 	mask = eframe->mask;
 
 	/*
@@ -1852,14 +1854,13 @@ cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
 {
-#if 1
+#ifdef COMPAT_25
 	/*
 	 * Keep compatibility with older OpenBSD/mvme88k binaries
 	 * for a while, to make transition easier.
 	 */
 	u_long midmag, magic;
 	u_short mid;
-	int error;
 	struct exec *execp = epp->ep_hdr;
 
 	midmag = ntohl(execp->a_midmag);
