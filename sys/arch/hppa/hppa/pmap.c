@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2000/08/15 20:04:36 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.35 2000/08/15 20:22:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -726,6 +726,7 @@ pmap_bootstrap(vstart, vend)
 	*vstart = hppa_round_page(addr + (totalphysmem - physmem) *
 				  (sizeof(struct pv_entry) * maxproc / 8 +
 				   sizeof(struct vm_page)));
+	/* XXX PCXS needs two separate inserts in separate btlbs */
 	if (btlb_insert(kernel_pmap->pmap_space, 0, 0, vstart,
 			kernel_pmap->pmap_pid |
 			pmap_prot(kernel_pmap, VM_PROT_ALL)) < 0)
