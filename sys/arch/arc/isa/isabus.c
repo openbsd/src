@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.4 1996/09/19 00:30:39 imp Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.5 1996/09/20 17:12:08 pefo Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -393,6 +393,7 @@ isabr_iointr(mask, cf)
 	case ACER_PICA_61:
 		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 		break;
+
 	case DESKSTATION_TYNE:
 		isa_outb(IO_ICU1, 0x0f);	/* Poll */
 		vector = isa_inb(IO_ICU1);
@@ -405,6 +406,8 @@ isabr_iointr(mask, cf)
 			}
 			isa_vector = (vector & 7) | 8;
 		}
+		break;
+
 	case DESKSTATION_RPC44:
 		isa_outb(IO_ICU1, 0x0f);	/* Poll */
 		vector = isa_inb(IO_ICU1);
@@ -417,6 +420,7 @@ isabr_iointr(mask, cf)
 			}
 			isa_vector = (vector & 7) | 8;
 		}
+		break;
 	}
 
 	o_imen = imen;
