@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.29 1998/02/22 21:26:57 niklas Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.30 1998/05/22 21:37:04 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -2235,7 +2235,13 @@ tulip_identify_cogent_nic(
     strcpy(sc->tulip_boardid, "Cogent ");
     if (sc->tulip_chipid == TULIP_21140 || sc->tulip_chipid == TULIP_21140A) {
 	if (sc->tulip_rombuf[32] == TULIP_COGENT_EM100TX_ID) {
-	    strcat(sc->tulip_boardid, "EM100FX ");
+	    strcat(sc->tulip_boardid, "EM100TX ");
+	    sc->tulip_boardsw = &tulip_21140_cogent_em100_boardsw;
+#if defined(TULIP_COGENT_EM110TX_ID)
+	} else if (sc->tulip_rombuf[32] == TULIP_COGENT_EM110TX_ID) {
+	    strcat(sc->tulip_boardid, "EM110TX ");
+	    sc->tulip_boardsw = &tulip_21140_cogent_em100_boardsw;
+#endif
 	    sc->tulip_boardsw = &tulip_21140_cogent_em100_boardsw;
 	} else if (sc->tulip_rombuf[32] == TULIP_COGENT_EM100FX_ID) {
 	    strcat(sc->tulip_boardid, "EM100FX ");
