@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.26 2002/07/05 13:48:11 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.27 2002/07/31 16:58:20 jason Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1081,16 +1081,17 @@ void sis_rxeof(sc)
 	while(SIS_OWNDESC(&sc->sis_ldata->sis_rx_list[i])) {
 
 		cur_rx = &sc->sis_ldata->sis_rx_list[i];
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
+		    ((caddr_t)cur_rx - sc->sc_listkva),
+		    sizeof(struct sis_desc),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 		rxstat = cur_rx->sis_rxstat;
 		m = cur_rx->sis_mbuf;
 		cur_rx->sis_mbuf = NULL;
 		total_len = SIS_RXBYTES(cur_rx);
 		SIS_INC(i, SIS_RX_LIST_CNT);
 
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-		    ((caddr_t)cur_rx - sc->sc_listkva),
-		    sizeof(struct sis_desc),
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		/*
 		 * If an error occurs, update stats, clear the
