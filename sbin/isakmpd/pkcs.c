@@ -1,5 +1,5 @@
-/*	$OpenBSD: pkcs.c,v 1.5 1998/11/17 11:10:18 niklas Exp $	*/
-/*	$EOM: pkcs.c,v 1.11 1998/08/20 14:08:59 provos Exp $	*/
+/*	$OpenBSD: pkcs.c,v 1.6 1999/02/26 03:49:16 niklas Exp $	*/
+/*	$EOM: pkcs.c,v 1.12 1999/02/25 11:39:18 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -39,9 +39,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "sysdep.h"
+
 #include "gmp_util.h"
 #include "log.h"
-#include "sysdep.h"
 #include "asn.h"
 #include "asn_useful.h"
 #include "pkcs.h"
