@@ -1,4 +1,4 @@
-/*	$OpenBSD: fish.c,v 1.7 2000/04/08 12:18:25 pjanzen Exp $	*/
+/*	$OpenBSD: fish.c,v 1.8 2000/04/08 12:22:39 pjanzen Exp $	*/
 /*	$NetBSD: fish.c,v 1.3 1995/03/23 08:28:18 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fish.c,v 1.7 2000/04/08 12:18:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fish.c,v 1.8 2000/04/08 12:22:39 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -466,8 +466,10 @@ getans(prompt)
 	for (;;) {
 		(void)printf("%s", prompt);
 		(void)fflush(stdout);
-		if (!fgets(buf, sizeof(buf), stdin))
-			return(0);
+		if (!fgets(buf, sizeof(buf), stdin)) {
+			(void)printf("\n");
+			exit(0);
+		}
 		if (*buf == 'N' || *buf == 'n')
 			return(0);
 		if (*buf == 'Y' || *buf == 'y')
