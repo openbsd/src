@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.53 2003/06/20 18:15:35 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.54 2003/06/21 23:27:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.53 2003/06/20 18:15:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.54 2003/06/21 23:27:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ void	auth_errx(auth_session_t *, int, const char *, ...);
 int
 main(int argc, char **argv)
 {
-	int asme = 0, asthem = 0, ch, fastlogin = 0, emlogin = 0, flags, prio;
+	int asme = 0, asthem = 0, ch, fastlogin = 0, emlogin = 0, prio;
 	char *user, *shell = NULL, *avshell, *username, **np;
 	char *class = NULL, *style = NULL, *p;
 	enum { UNSET, YES, NO } iscsh = UNSET;
@@ -84,6 +84,7 @@ main(int argc, char **argv)
 	struct passwd *pwd;
 	login_cap_t *lc;
 	uid_t ruid;
+	u_int flags;
 
 	while ((ch = getopt(argc, argv, "a:c:fKLlm-")) != -1)
 		switch (ch) {
