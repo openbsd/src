@@ -1613,7 +1613,7 @@ st_rewind(st, immediate, flags)
  */ 
 int 
 st_erase(st, immediate, flags)
-	struct st_data *st;
+	struct st_softc *st;
 	u_int immediate;
 	int flags;
 {
@@ -1635,7 +1635,7 @@ st_erase(st, immediate, flags)
 		return (error);
 	st->flags &= ~ST_PER_ACTION;
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.op_code = ERASE;
+	scsi_cmd.opcode = ERASE;
 	scsi_cmd.byte2 = SE_LONG | (immediate ? SE_IMMED : 0);
 	return (scsi_scsi_cmd(st->sc_link, (struct scsi_generic *) &scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, ST_RETRIES,
