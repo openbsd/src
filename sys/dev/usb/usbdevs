@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.125 2004/11/28 18:59:27 pvalchev Exp $
+$OpenBSD: usbdevs,v 1.126 2004/11/29 09:41:59 grange Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -685,6 +685,7 @@ product CREATIVE2 VOIP_BLASTER	0x0258	Voip Blaster
 
 /* Cambridge Silicon Radio products */
 product CSR BLUETOOTH		0x0001	Bluetooth
+product CSR BLUECORE		0x1000	BlueCore
 
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
