@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getty.8	8.1 (Berkeley) 6/4/93
-.\"	$Id: getty.8,v 1.1.1.1 1995/10/18 08:43:17 deraadt Exp $
+.\"	$Id: getty.8,v 1.2 1998/10/20 21:38:22 angelos Exp $
 .\"
 .Dd June 4, 1993
 .Dt GETTY 8
@@ -68,7 +68,7 @@ argument can be used to make
 .Nm getty
 treat the terminal line specially.
 This argument is used as an index into the
-.Nm gettytab 5
+.Xr gettytab 5
 database, to determine the characteristics of the line.
 If there is no argument, or there is no such table, the
 .Em default
@@ -87,7 +87,7 @@ the system hostname.
 Most of the default actions of
 .Nm getty
 can be circumvented, or modified, by a suitable
-.Nm gettytab
+.Xr gettytab 5
 table.
 .Pp
 The
