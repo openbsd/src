@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.93 2004/01/23 17:59:28 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.94 2004/01/23 18:06:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -700,8 +700,12 @@ session_accept(int listenfd)
 
 	if (p != NULL &&
 	    (p->state == STATE_CONNECT || p->state == STATE_ACTIVE)) {
-		p->sock = connfd;
-		p->wbuf.sock = connfd;
+		if (p->sock != -1) {
+			shutdown(connfd, SHUT_RDWR);
+			close(connfd);
+			return;
+		}
+		p->sock = p->wbuf.sock = connfd;
 		if (session_setup_socket(p)) {
 			shutdown(connfd, SHUT_RDWR);
 			close(connfd);
@@ -720,9 +724,12 @@ session_connect(struct peer *peer)
 {
 	int		n;
 
-	/* collision detection, 6.8, missing */
-
-	if (peer->sock != -1)	/* what do we do here? */
+	/*
+	 * we do not need the overcomplicated collision detection rfc1771
+	 * decribes; we simply make sure there is only ever one concurrent
+	 * tcp connection per peer.
+	 */
+	if (peer->sock != -1)
 		return (-1);
 
 	if ((peer->sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
