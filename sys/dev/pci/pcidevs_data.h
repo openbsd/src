@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.642 2003/06/16 10:16:50 kevlo Exp 
+ *		OpenBSD: pcidevs,v 1.643 2003/06/16 19:34:36 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3913,30 +3913,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83820,
 	    "DP83820 1/10/100/1000",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200,
-	    "SCx200 Bridge",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200,
-	    "SCx200 SMI",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200,
-	    "SCx200 IDE",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200,
-	    "SCx200 Audio",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200,
-	    "SCx200 Video",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SCx200,
-	    "SCx200 XBus",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,

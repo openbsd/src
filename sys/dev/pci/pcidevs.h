@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.642 2003/06/16 10:16:50 kevlo Exp 
+ *		OpenBSD: pcidevs,v 1.643 2003/06/16 19:34:36 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1821,12 +1821,6 @@
 #define	PCI_PRODUCT_NS_USB	0x0012		/* USB */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 */
 #define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 1/10/100/1000 */
-#define	PCI_PRODUCT_NS_SCx200	0x0500		/* SCx200 Bridge */
-#define	PCI_PRODUCT_NS_SCx200	0x0501		/* SCx200 SMI */
-#define	PCI_PRODUCT_NS_SCx200	0x0502		/* SCx200 IDE */
-#define	PCI_PRODUCT_NS_SCx200	0x0503		/* SCx200 Audio */
-#define	PCI_PRODUCT_NS_SCx200	0x0504		/* SCx200 Video */
-#define	PCI_PRODUCT_NS_SCx200	0x0505		/* SCx200 XBus */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
 /* NEC */
