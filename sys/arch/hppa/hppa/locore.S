@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.43 2001/03/29 00:03:34 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.44 2001/03/29 02:18:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -117,7 +117,7 @@ fpu_curpcb
 /*
  * This is the starting location for the kernel
  */
-ENTRY($start)
+ENTRY($start,0)
 /*
  *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
@@ -321,7 +321,7 @@ EXIT($start)
  *	iodcio_t func;
  *	int pdc_flag;
  */
-ENTRY(pdc_call)
+ENTRY(pdc_call,160)
 
 	mfctl	eiem, t1
 	mtctl	r0, eiem
@@ -992,7 +992,7 @@ hpmc_v
 					/* 64 */
 
 	.export	TLABEL(hpmc), entry
-ENTRY(TLABEL(hpmc))
+ENTRY(TLABEL(hpmc),0)
 	/* TODO: save cpu context */
 	/* TODO: save PIM info */
 	/* TODO: call pdc appropriately */
@@ -1012,7 +1012,7 @@ hpmc_never_dies
 EXIT(TLABEL(hpmc))
 
 	.export TLABEL(emu), entry
-ENTRY(TLABEL(emu))
+LEAF_ENTRY(TLABEL(emu))
 	/* restore %r1 from CTRAP() */
 	mfctl	tr7, r1
 
@@ -1140,7 +1140,7 @@ EXIT(TLABEL(emu))
 	 *
 	 * iisq:iioq - exception triggered instruction
 	 */
-ENTRY(TLABEL(excpt))
+ENTRY(TLABEL(excpt),0)
 	mtctl	sp, tr3
 	mtctl	r31, tr2
 
@@ -1169,6 +1169,7 @@ ENTRY(TLABEL(excpt))
 	extru,<> arg0, 10, 1, r0
 	extru,= arg0, 11, 1, r0
 	or,tr	r0, r0, r0
+	.call
 	bl,n	$sfu_emu, rp
 
 	.import	fpu_emulate, code
@@ -1211,7 +1212,7 @@ ENTRY(TLABEL(excpt))
 EXIT(TLABEL(excpt))
 
 	.export	$sfu_emu, entry
-ENTRY($sfu_emu)
+ENTRY($sfu_emu,0)
 	bv	r0(rp)
 	ldo	1(r0), ret0	/* none supported by now */
 EXIT($sfu_emu)
@@ -1239,7 +1240,7 @@ EXIT($sfu_emu)
  * void desidhash_s(void)
  */
 #if defined(HP7000_CPU) || defined(HP7100_CPU)
-ENTRY(desidhash_s)
+LEAF_ENTRY(desidhash_s)
 ALTENTRY(desidhash_x)
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
@@ -1258,7 +1259,7 @@ EXIT(desidhash_s)
 /*
  * void desidhash_t(void)
  */
-ENTRY(desidhash_t)
+LEAF_ENTRY(desidhash_t)
 	MFCPU_T(DR_CPUCFG,22)	/* t1 */
 	MFCPU_T(DR_CPUCFG,22)
 	depi	0, DR0_PCXT_IHE, 1, t1
@@ -1398,7 +1399,7 @@ $tlb_itlb_t
  * int
  * ibtlb_l(int i, pa_space_t sp, vaddr_t va, paddr_t pa, vsize_t sz, u_int prot)
  */
-ENTRY(ibtlb_l)
+LEAF_ENTRY(ibtlb_l)
 	rsm	(PSW_R|PSW_I), t4
 
 	bv	0(rp)
@@ -1409,7 +1410,7 @@ EXIT(ibtlb_l)
  * int
  * pbtlb_l(int i)
  */
-ENTRY(pbtlb_l)
+LEAF_ENTRY(pbtlb_l)
 	; DR_PAGE0
 	rsm	(PSW_R|PSW_I), t4
 	ldil	L%0xc041, t1
@@ -1427,7 +1428,7 @@ EXIT(pbtlb_l)
 /*
  * int desidhash_l(void)
  */
-ENTRY(desidhash_l)
+LEAF_ENTRY(desidhash_l)
 	MFCPU_C(DR_CPUCFG,22)	/* t1 */
 	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* + DR0_PCXL_L2DHASH_EN */
 	depi	0, DR0_PCXL_L2IHPMC, 1, t1	/* don't reset */
@@ -1585,7 +1586,7 @@ $tlb_missend
 
 	.align	64
 	.export	TLABEL(all), entry
-ENTRY(TLABEL(all))
+ENTRY(TLABEL(all),0)
 	/* r1 still has trap type */
 
 	/*
@@ -1855,7 +1856,7 @@ EXIT(TLABEL(all))
 
 	.align	32
 	.export	TLABEL(ibrk), entry
-ENTRY(TLABEL(ibrk))
+ENTRY(TLABEL(ibrk),0)
 	mtctl	t1, tr2
 	mtctl	t2, tr3
 
@@ -1917,7 +1918,7 @@ $ibrk_exit
 EXIT(TLABEL(ibrk))
 
 	.import	dcache_stride, data
-ENTRY(fdcache)
+LEAF_ENTRY(fdcache)
 	ldil	L%dcache_stride,t1
 	ldw	R%dcache_stride(t1), arg3
 
@@ -1964,7 +1965,7 @@ fdc_short				/* flush one line at a time */
 EXIT(fdcache)
 
 	.import	dcache_stride, data
-ENTRY(pdcache)
+LEAF_ENTRY(pdcache)
 	ldil	L%dcache_stride,t1
 	ldw	R%dcache_stride(t1), arg3
 
@@ -2011,7 +2012,7 @@ pdc_short				/* flush one line at a time */
 EXIT(pdcache)
 
 	.import	icache_stride, data
-ENTRY(ficache)
+LEAF_ENTRY(ficache)
 	ldil	L%icache_stride,t1
 	ldw	R%icache_stride(t1), arg3
 
@@ -2058,7 +2059,7 @@ fic_short				/* flush one line at a time */
 EXIT(ficache)
 
 
-ENTRY(setjmp)
+LEAF_ENTRY(setjmp)
 /*
  * Save the other general registers whose contents are expected to remain
  * across function calls.  According to the "HP9000 Series 800 Assembly
@@ -2089,7 +2090,7 @@ ENTRY(setjmp)
 	copy	r0, ret0
 EXIT(setjmp)
 
-ENTRY(longjmp)
+LEAF_ENTRY(longjmp)
 /*
  * Restore general registers.
  */
@@ -2121,7 +2122,7 @@ EXIT(longjmp)
 	.align	NBPG	/* let's fit 'em on a single page */
 
 #define	FUSUX(name)				  \
-ENTRY(name)					! \
+LEAF_ENTRY(name)				! \
 	ldil	L%VM_MAXUSER_ADDRESS, t1	! \
 	comb,>>= arg0, t1, fusubadaddr		! \
 	ldil	L%curproc, t1			! \
@@ -2148,7 +2149,7 @@ EXIT(name)
 	stw	r0, u_pcb+pcb_onfault(t1)	! \
 EXIT(name)
 
-ENTRY(fusufault)
+LEAF_ENTRY(fusufault)
 	stw	r0, u_pcb+pcb_onfault(t1)
 ALTENTRY(fusubadaddr)
 	bv	0(rp)
@@ -2166,7 +2167,7 @@ SUX(suswintr, sth)
 
 	.align	64
 
-ENTRY(copy_on_fault)
+LEAF_ENTRY(copy_on_fault)
 	bv	0(rp)
 	ldi	EFAULT, %ret0
 EXIT(copy_on_fault)
@@ -2176,7 +2177,7 @@ EXIT(copy_on_fault)
  *		 size_t size, size_t *rsize)
  * do a space to space strncpy, return actual copy size in the rsize;
  */
-ENTRY(spstrcpy)
+LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
 	ldil	L%curproc, r31
 	ldw	R%curproc(r31), r31
@@ -2214,7 +2215,7 @@ EXIT(spstrcpy)
  * adjust the time value
  * XXX: do it the easy way, later we will calculate actual fuzz from itr
  */
-ENTRY(microtime)
+LEAF_ENTRY(microtime)
 
 	.import time, data
 	ldil	L%-1000000, t3
@@ -2251,7 +2252,7 @@ EXIT(microtime)
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
 	.align	32
-ENTRY(setrunqueue)
+ENTRY(setrunqueue,0)
 #ifdef DIAGNOSTIC
 	ldw	p_back(arg0), t1
 	comb,<>,n r0, t1, $setrunqueue_panic
@@ -2315,7 +2316,7 @@ EXIT(setrunqueue)
  * Remove a process from its queue.  Should be called at splclock().
  */
 	.align	32
-ENTRY(remrunqueue)
+ENTRY(remrunqueue,0)
 	ldb	p_priority(arg0), t2
 	extru	t2, 29, 5, t1
 	mtsar	t1
@@ -2361,7 +2362,7 @@ EXIT(remrunqueue)
  * Find the highest priority process and resume it.
  */
 	.align	32
-ENTRY(cpu_switch)
+ENTRY(cpu_switch,128)
 
 	/*
 	 * Clear curproc so that we don't accumulate system time while idle.
@@ -2546,7 +2547,7 @@ EXIT(cpu_switch)
 	.import	kernel_map, data
 	.import	uvmspace_free, code
 	.import	uvm_km_free, code
-ENTRY(switch_exit)
+ENTRY(switch_exit,0)
 
 	/* setup kernel context */
 	mtctl	r0, sr0
@@ -2571,17 +2572,19 @@ ENTRY(switch_exit)
 	bv,n	%r0(t2)
 	nop
 
+	.call
 	b	switch_search
 	copy	r0, arg2	/* no old proc */
 EXIT(switch_exit)
 
-ENTRY(switch_trampoline)
+ENTRY(switch_trampoline,0)
 	.call
 	blr	r0, rp
 	bv,n	r0(t3)
 	nop
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
+	.call
 	b	$syscall_return
 	ldw	p_md(t2), t3
 EXIT(switch_trampoline)
@@ -2589,22 +2592,24 @@ EXIT(switch_trampoline)
 /*
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
-ENTRY(sigcode)
+ENTRY(sigcode,0)
 	/* TODO call signal handler */
 
 	/*ldo	SIGF_SC(sp), arg0*/
 	ldil	L%SYSCALLGATE, r1
+	.call
 	ble	4(sr7, r1)
 	ldi	SYS_sigreturn, t1
 	copy	ret0, arg0
 	ldil	L%SYSCALLGATE, r1
+	.call
 	ble	4(sr7, r1)
 	ldi	SYS_exit, t1
 ALTENTRY(esigcode)
 EXIT(sigcode)
 
 #ifdef COMPAT_LINUX
-ENTRY(linux_sigcode)
+ENTRY(linux_sigcode,0)
 
 	/* TODO linux signal trampoline */
 	bv	0(rp)
