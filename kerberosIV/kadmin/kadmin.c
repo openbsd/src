@@ -1,4 +1,4 @@
-/*	$Id: kadmin.c,v 1.2 1995/12/14 08:43:44 tholo Exp $	*/
+/*	$Id: kadmin.c,v 1.3 1996/09/15 23:30:52 millert Exp $	*/
 
 /* 
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -362,7 +362,8 @@ main(int argc, char **argv)
 	ss_perror(sci_idx, code, "creating invocation");
 	exit(1);
     }
-    (void) sprintf(tktstring, "/tmp/tkt_adm_%d",(int)getpid());
+    (void) snprintf(tktstring, sizeof(tktstring), "/tmp/tkt_adm_%d",
+	(int)getpid());
     krb_set_tkt_string(tktstring);
 
     do_init(argc, argv);
@@ -435,7 +436,8 @@ change_password(int argc, char **argv)
 	    return;
 
 	/* get the new password */
-	(void) sprintf(pw_prompt, "New password for %s:", argv[1]);
+	(void) snprintf(pw_prompt, sizeof(pw_prompt), "New password for %s:",
+	    argv[1]);
 	
 	if (get_password(&new.key_low, &new.key_high,
 			 pw_prompt, SWAP) == GOOD_PW) {
@@ -474,7 +476,8 @@ change_admin_password(int argc, char **argv)
     if (get_admin_password() != GOOD_PW)
 	return;
 
-    (void) sprintf(prompt_pw, "New password for %s.admin:",myname);
+    (void) snprintf(prompt_pw, sizeof(prompt_pw), "New password for %s.admin:",
+	myname);
     if (get_password(&low, &high, prompt_pw, DONTSWAP) == GOOD_PW) {
 	bcopy((char *)&low,(char *) newkey,4);
 	bcopy((char *)&high, (char *)(((int32_t *) newkey) + 1),4);
@@ -524,7 +527,8 @@ add_new_key(int argc, char **argv)
 	get_expdate(&new);
 
 	/* get the new password */
-	(void) sprintf(pw_prompt, "Password for %s:", argv[1]);
+	(void) snprintf(pw_prompt, sizeof(pw_prompt), "Password for %s:",
+	    argv[1]);
 	
 	if (get_password(&new.key_low, &new.key_high,
 			 pw_prompt, SWAP) == GOOD_PW) {

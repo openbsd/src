@@ -1,5 +1,5 @@
 %{
-/*	$Id: error_table.y,v 1.1.1.1 1995/12/14 06:52:49 tholo Exp $	*/
+/*	$Id: error_table.y,v 1.2 1996/09/15 23:27:09 millert Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -101,7 +101,7 @@ description	:	QUOTED_STRING
 
 #ifndef	lint
 static char const rcsid_error_table_y[] =
-    "$Id: error_table.y,v 1.1.1.1 1995/12/14 06:52:49 tholo Exp $";
+    "$Id: error_table.y,v 1.2 1996/09/15 23:27:09 millert Exp $";
 #endif
 
 #include "et_lex.lex.c"
@@ -122,7 +122,7 @@ gensym(x)
 	}
 	symbol = (char *)malloc(32 * sizeof(char));
 	gensym_n++;
-	sprintf(symbol, "et%ld", gensym_n);
+	snprintf(symbol, 32 * sizeof(char), "et%ld", gensym_n);
 	return(symbol);
 }
 

@@ -1,4 +1,4 @@
-/*	$Id: ext_srvtab.c,v 1.1.1.1 1995/12/14 06:52:41 tholo Exp $	*/
+/*	$Id: ext_srvtab.c,v 1.2 1996/09/15 23:28:08 millert Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -124,7 +124,7 @@ main(int argc, char **argv)
     for (arg = 1; arg < argc; arg++) {
 	if (argv[arg][0] == '-')
 	    continue;
-	sprintf(fname, "%s-new-srvtab", argv[arg]);
+	snprintf(fname, sizeof(fname), "%s-new-srvtab", argv[arg]);
 	if ((fout = fopen(fname, "w")) == NULL) {
 	    fprintf(stderr, "Couldn't create file '%s'.\n", fname);
 	    fopen_errs++;
