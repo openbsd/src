@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.62 2001/06/23 22:02:55 angelos Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.63 2001/06/29 16:19:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -131,8 +131,9 @@ ubsec_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
+	struct ubsec_dma *dmap;
 	bus_size_t iosize;
-	u_int32_t cmd;
+	u_int32_t cmd, i;
 
 	SIMPLEQ_INIT(&sc->sc_queue);
 	SIMPLEQ_INIT(&sc->sc_qchip);
@@ -190,6 +191,15 @@ ubsec_attach(parent, self, aux)
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 		return;
+	}
+
+	SIMPLEQ_INIT(&sc->sc_dma);
+	dmap = sc->sc_dmaa;
+	for (i = 0; i < UBS_MAX_NQUEUE; i++, dmap++) {
+		if (ubsec_dma_malloc(sc, MAX(sizeof(struct ubsec_pktctx_long),
+		    sizeof(struct ubsec_pktctx)), &dmap->d_ctx, 0))
+			break;
+		SIMPLEQ_INSERT_TAIL(&sc->sc_dma, dmap, d_next);
 	}
 
 	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0,
@@ -579,6 +589,7 @@ ubsec_process(crp)
 	int16_t coffset;
 	struct ubsec_session *ses;
 	struct ubsec_pktctx ctx;
+	struct ubsec_dma *dmap = NULL;
 
 	if (crp == NULL || crp->crp_callback == NULL)
 		return (EINVAL);
@@ -595,6 +606,13 @@ ubsec_process(crp)
 		err = ENOMEM;
 		goto errout;
 	}
+	if (SIMPLEQ_EMPTY(&sc->sc_dma)) {
+		splx(s);
+		err = ENOMEM;
+		goto errout;
+	}
+	dmap = SIMPLEQ_FIRST(&sc->sc_dma);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_dma, dmap, d_next);
 	splx(s);
 
 	q = (struct ubsec_q *)malloc(sizeof(struct ubsec_q),
@@ -607,6 +625,7 @@ ubsec_process(crp)
 	bzero(&ctx, sizeof(ctx));
 
 	q->q_sesn = UBSEC_SESSION(crp->crp_sid);
+	q->q_dma = dmap;
 	ses = &sc->sc_sessions[q->q_sesn];
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
@@ -985,17 +1004,12 @@ ubsec_process(crp)
 #endif
 	}
 
-	if (ubsec_dma_malloc(sc, MAX(sizeof(struct ubsec_pktctx_long),
-	    sizeof(struct ubsec_pktctx)), &q->q_ctx_dma, 0)) {
-		err = ENOMEM;
-		goto errout;
-	}	
-	q->q_mcr->mcr_cmdctxp = q->q_ctx_dma.dma_paddr;
+	q->q_mcr->mcr_cmdctxp = dmap->d_ctx.dma_paddr;
 
 	if (sc->sc_flags & UBS_FLAGS_LONGCTX) {
 		struct ubsec_pktctx_long *ctxl;
 
-		ctxl = (struct ubsec_pktctx_long *)q->q_ctx_dma.dma_vaddr;
+		ctxl = (struct ubsec_pktctx_long *)dmap->d_ctx.dma_vaddr;
 		
 		/* transform small context into long context */
 		ctxl->pc_len = sizeof(struct ubsec_pktctx_long);
@@ -1011,8 +1025,9 @@ ubsec_process(crp)
 		ctxl->pc_iv[0] = ctx.pc_iv[0];
 		ctxl->pc_iv[1] = ctx.pc_iv[1];
 	} else
-		bcopy(&ctx, q->q_ctx_dma.dma_vaddr, sizeof(struct ubsec_pktctx));
-	bus_dmamap_sync(sc->sc_dmat, q->q_ctx_dma.dma_map, BUS_DMASYNC_PREREAD);
+		bcopy(&ctx, dmap->d_ctx.dma_vaddr,
+		    sizeof(struct ubsec_pktctx));
+	bus_dmamap_sync(sc->sc_dmat, dmap->d_ctx.dma_map, BUS_DMASYNC_PREREAD);
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
@@ -1025,8 +1040,11 @@ errout:
 	if (q != NULL) {
 		if (q->q_mcr != NULL)
 			free(q->q_mcr, M_DEVBUF);
-		if (q->q_ctx_dma.dma_map != NULL)
-			ubsec_dma_free(sc, &q->q_ctx_dma);
+		if (dmap != NULL) {
+			s = splnet();
+			SIMPLEQ_INSERT_TAIL(&sc->sc_dma, dmap, d_next);
+			splx(s);
+		}
 		if ((q->q_dst_m != NULL) && (q->q_src_m != q->q_dst_m))
 			m_freem(q->q_dst_m);
 		free(q, M_DEVBUF);
@@ -1043,9 +1061,10 @@ ubsec_callback(sc, q)
 {
 	struct cryptop *crp = (struct cryptop *)q->q_crp;
 	struct cryptodesc *crd;
+	struct ubsec_dma *dmap = q->q_dma;
 
-	bus_dmamap_sync(sc->sc_dmat, q->q_ctx_dma.dma_map, BUS_DMASYNC_POSTREAD);
-	ubsec_dma_free(sc, &q->q_ctx_dma);
+	bus_dmamap_sync(sc->sc_dmat, dmap->d_ctx.dma_map, BUS_DMASYNC_POSTREAD);
+	SIMPLEQ_INSERT_TAIL(&sc->sc_dma, dmap, d_next);
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {
 		m_freem(q->q_src_m);

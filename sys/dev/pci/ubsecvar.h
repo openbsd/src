@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.19 2001/06/08 01:59:32 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.20 2001/06/29 16:19:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -27,6 +27,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Maximum queue length */
+#ifndef UBS_MAX_NQUEUE
+#define UBS_MAX_NQUEUE		60
+#endif
+
 struct ubsec_dma_alloc {
 	u_int32_t		dma_paddr;
 	caddr_t			dma_vaddr;
@@ -49,6 +54,11 @@ struct ubsec_q2_rng {
 };
 #define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */
 
+struct ubsec_dma {
+	SIMPLEQ_ENTRY(ubsec_dma)	d_next;
+	struct ubsec_dma_alloc		d_ctx;
+};
+
 struct ubsec_softc {
 	struct	device		sc_dv;		/* generic device */
 	void			*sc_ih;		/* interrupt handler cookie */
@@ -69,6 +79,8 @@ struct ubsec_softc {
 	struct timeout		sc_rngto;	/* rng timeout */
 	int			sc_rnghz;	/* rng poll time */
 	struct ubsec_q2_rng	sc_rng;
+	struct ubsec_dma	sc_dmaa[UBS_MAX_NQUEUE];
+	SIMPLEQ_HEAD(,ubsec_dma) sc_dma;
 };
 
 #define	UBS_FLAGS_KEY		0x01		/* has key accelerator */
@@ -80,7 +92,7 @@ struct ubsec_q {
 	struct ubsec_mcr		*q_mcr;
 	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
 	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
-	struct ubsec_dma_alloc		q_ctx_dma;
+	struct ubsec_dma		*q_dma;
 
 	struct mbuf 		      	*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
@@ -105,8 +117,3 @@ struct ubsec_session {
 	u_int32_t       ses_hmouter[5];		/* hmac outer state */
 	u_int32_t       ses_iv[2];		/* [3]DES iv */
 };
-
-/* Maximum queue length */
-#ifndef UBS_MAX_NQUEUE
-#define UBS_MAX_NQUEUE		60
-#endif
