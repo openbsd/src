@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.25 1999/03/13 19:07:35 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.26 1999/03/16 04:47:15 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -65,6 +65,7 @@
 .Ar disk
 .Nm disklabel
 .Fl E
+.Op Fl F Ar tempfile
 .Op Fl n
 .Op Fl d Li \&| Fl r
 .Op Fl v
@@ -349,6 +350,14 @@ the user to change the filesystem type, starting offset, partition
 size, block fragment size, block size, and cylinders per group for
 the specified partition (not all parameters are configurable for
 non-BSD partitions).
+.It n Op part
+Name the mount point for an existing partition.  If no partition is
+specified, the user will be prompted for one.  This option is only
+valid if
+.Nm
+was invoked with the
+.Fl F
+flag.
 .It s Op path
 Save the label to a file in ASCII format (suitable for loading via
 the
@@ -364,6 +373,21 @@ asked whether or not to save the changes to the on-disk label.
 .It x
 Exit the editor without saving any changes to the label.
 .El
+.Pp
+The
+.Fl F Ar tempfile
+flag to
+.Nm
+is only valid in conjunction with the
+.Fl E
+flag.  When specified,
+.Nm
+will write entries to
+.Ar tempfile
+in
+.Xr fstab 5
+format for any partitions for which mount point information has been
+specified.
 .Pp
 The final three forms of
 .Nm

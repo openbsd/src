@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.60 1999/03/14 19:31:19 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.61 1999/03/16 04:47:16 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.60 1999/03/14 19:31:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.61 1999/03/16 04:47:16 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,9 +126,9 @@ void	l_perror __P((char *));
 struct disklabel *readlabel __P((int));
 struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 void	display __P((FILE *, struct disklabel *));
-void	display_partition __P((FILE *, struct disklabel *, int, char, int));
+void	display_partition __P((FILE *, struct disklabel *, char **, int, char, int));
 int	width_partition __P((struct disklabel *, int));
-int	editor __P((struct disklabel *, int, char *));
+int	editor __P((struct disklabel *, int, char *, char *));
 int	edit __P((struct disklabel *, int));
 int	editit __P((void));
 char	*skip __P((char *));
@@ -146,10 +146,11 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, f, writeable, error = 0;
+	char *fstabfile = NULL;
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "BENRWb:denrs:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "BEF:NRWb:denrs:tvw")) != -1)
 		switch (ch) {
 #if NUMBOOT > 0
 		case 'B':
@@ -194,6 +195,9 @@ main(argc, argv)
 				usage();
 			op = EDITOR;
 			break;
+		case 'F':
+			fstabfile = optarg;
+			break;
 		case 'r':
 			++rflag;
 			break;
@@ -232,7 +236,7 @@ main(argc, argv)
 		op = READ;
 #endif
 
-	if (argc < 1 || (rflag && dflag))
+	if (argc < 1 || (rflag && dflag) || (fstabfile && op != EDITOR))
 		usage();
 
 	dkname = argv[0];
@@ -266,7 +270,7 @@ main(argc, argv)
 			usage();
 		if ((lp = readlabel(f)) == NULL)
 			exit(1);
-		error = editor(lp, f, specname);
+		error = editor(lp, f, specname, fstabfile);
 		break;
 	case READ:
 		if (argc != 1)
@@ -971,9 +975,10 @@ width_partition(lp, unit)
  * Display a particular partion.
  */
 void
-display_partition(f, lp, i, unit, width)
+display_partition(f, lp, mp, i, unit, width)
 	FILE *f;
 	struct disklabel *lp;
+	char **mp;
 	int i;
 	char unit;
 	int width;
@@ -1040,10 +1045,13 @@ display_partition(f, lp, i, unit, width)
 			break;
 
 		default:
-			fprintf(f, "%20.20s", "");
+			fprintf(f, "%22.22s", "");
 			break;
 		}
-		if (lp->d_secpercyl) {
+		if (mp != NULL) {
+			if (mp[i] != NULL)
+				fprintf(f, " # %s", mp[i]);
+		} else if (lp->d_secpercyl) {
 			fprintf(f, "\t# (Cyl. %4d",
 			    pp->p_offset / lp->d_secpercyl);
 			if (pp->p_offset % lp->d_secpercyl)
@@ -1113,7 +1121,7 @@ display(f, lp)
 	    "#    %*.*s %*.*s    fstype   [fsize bsize   cpg]\n",
 	    width, width, "size", width, width, "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(f, lp, i, 0, width);
+		display_partition(f, lp, NULL, i, 0, width);
 	fflush(f);
 }
 
@@ -1724,13 +1732,13 @@ usage()
 
 	fprintf(stderr, "usage:\n");
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-d] [-t] disk%s         (read)\n",
+	    "  disklabel [-nv] [-r|-d] [-t] disk%s      (read)\n",
 	    blank);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-d] -e disk%s           (edit)\n",
+	    "  disklabel [-nv] [-r|-d] -e disk%s        (edit)\n",
 	    blank);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-d] -E disk%s           (simple editor)\n",
+	    "  disklabel [-nv] [-r|-d] [-F temp] -E disk%s(simple editor)\n",
 	    blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r]%s -R disk proto     (restore)\n",
@@ -1739,7 +1747,7 @@ usage()
 	    "  disklabel [-nv] [-r]%s -w disk dtab [id] (write)\n",
 	    boot);
 	fprintf(stderr,
-	    "  disklabel [-nv] -[NW] disk%s             (protect)\n", blank);
+	    "  disklabel [-nv] [-N|-W] disk%s           (protect)\n", blank);
 	fprintf(stderr,
 	    "`disk' may be of the forms: sd0 or /dev/rsd0%c.\n", 'a'+RAW_PART);
 	fprintf(stderr,
