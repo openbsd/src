@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.24 1999/09/28 20:36:04 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.25 1999/09/29 22:29:10 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -603,7 +603,7 @@
 #define SYS_FKL		0	/* in hp mode, sys-fkls are active */
 #define USR_FKL		1	/* in hp mode, user-fkls are active */
 
-/* scrollback buffer size (in pages) */
+/* initial default scrollback buffer size (in pages) */
 #define SCROLLBACK_PAGES	8
 
 /* variables */
@@ -829,6 +829,7 @@ struct tty *pcconsp;		/* ptr to current device, see pcattach() */
 u_short *Crtat;			/* screen start address */
 
 u_short *Scrollbuffer;		/* scrollback buffer */
+u_short scrollback_pages;	/* size of scrollback buffer (pages) */
 
 #if PCVT_EMU_MOUSE
 struct mousestat	mouse = {{0}};
@@ -988,6 +989,7 @@ extern u_char		keyboard_is_initialized;
 extern u_char		kbd_polling;
 
 extern u_short		*Scrollbuffer;
+extern u_short		scrollback_pages;
 
 #if PCVT_SHOWKEYS
 extern u_char		keyboard_show;

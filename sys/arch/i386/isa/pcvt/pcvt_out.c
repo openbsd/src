@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.11 1999/09/29 21:01:01 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.12 1999/09/29 22:29:10 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1392,8 +1392,9 @@ vt_coldmalloc(void)
 					MAXROW_VGA * MAXCOL_VGA * CHR;
 	}
 
+	scrollback_pages = SCROLLBACK_PAGES;
 	if ((Scrollbuffer = (u_short *)malloc(vs[0].maxcol *
-	     vs[0].screen_rows * SCROLLBACK_PAGES * CHR, M_DEVBUF,
+	     vs[0].screen_rows * scrollback_pages * CHR, M_DEVBUF,
 	     M_WAITOK)) == NULL)
 	{
 		printf("pcvt: scrollback memory malloc failed\n");
@@ -1966,7 +1967,7 @@ vt_col(struct video_state *svsp, int cols)
 #endif /* PCVT_SIGWINCH */
 
 	}
-	reallocate_scrollbuffer(svsp, SCROLLBACK_PAGES);
+	reallocate_scrollbuffer(svsp, scrollback_pages);
 	return(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_sup.c,v 1.9 1999/09/28 20:36:05 aaron Exp $	*/
+/*	$OpenBSD: pcvt_sup.c,v 1.10 1999/09/29 22:29:10 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -222,6 +222,17 @@ vgaioctl(Dev_t dev, int cmd, caddr_t data, int flag)
 			}
 			else
 				return EINVAL;
+			break;
+
+		case SETSCROLLSIZE:
+			if (*(u_short *)data < 2)
+				scrollback_pages = 2;
+			else if (*(u_short *)data > 100)
+				scrollback_pages = 100;
+			else
+				scrollback_pages = *(u_short *)data;
+
+			reallocate_scrollbuffer(vsp, scrollback_pages);
 			break;
 
 		case TIOCSWINSZ:
@@ -739,7 +750,7 @@ set_screen_size(struct video_state *svsp, int size)
 				pgsignal(svsp->vs_tty->t_pgrp, SIGWINCH, 1);
 #endif /* PCVT_SIGWINCH */
 
-			reallocate_scrollbuffer(svsp, SCROLLBACK_PAGES);
+			reallocate_scrollbuffer(svsp, scrollback_pages);
 			break;
 		}
  	}

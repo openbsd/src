@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scon.1,v 1.8 1999/07/09 13:35:32 aaron Exp $
+.\"	$OpenBSD: scon.1,v 1.9 1999/09/29 22:29:10 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
 .\"
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Nm scon
 .Op Fl a
+.Op Fl b Ar num
 .Op Fl c Ar screenno
 .Op Fl d Ar device
 .Op Fl f Ar on|off
@@ -83,6 +84,10 @@ The options are as follows:
 .It Fl a
 Returns a string describing the video adaptor found by pcvt, the string
 returned could be MDA, HGC, CGA, EGA, VGA or UNKNOWN.
+.It Fl b
+Set the number of scrollback buffer pages to
+.Ar num .
+The minimum value is 2, maximum 100.
 .It Fl c
 Specify the screen number the current (displayed) screen should be switched
 to.
@@ -206,7 +211,7 @@ Invoking
 will result in green on gray output for normal text.
 Note that normal text color is light gray, and not white as one might expect.
 .Sh BUGS
-the
+The
 .Fl c
 and
 .Fl d

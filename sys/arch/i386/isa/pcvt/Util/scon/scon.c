@@ -1,4 +1,4 @@
-/*	$OpenBSD: scon.c,v 1.12 1999/05/24 15:37:44 aaron Exp $	*/
+/*	$OpenBSD: scon.c,v 1.13 1999/09/29 22:29:10 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -68,6 +68,8 @@ static char *id =
 #define DEFAULTFD 0
 
 int aflag = -1;
+int bflag = -1;
+unsigned int scrollback_pages = 8;
 int lflag = -1;
 int mflag = -1;
 int current = -1;
@@ -206,12 +208,17 @@ char *argv[];
 	int c;
 	int fd;
 	
-	while( (c = getopt(argc, argv, "ac:d:f:HVlms:t:vp:18")) != -1)
+	while( (c = getopt(argc, argv, "ab:c:d:f:HVlms:t:vp:18")) != -1)
 	{
 		switch(c)
 		{
 			case 'a':
 				aflag = 1;
+				break;
+
+			case 'b':
+				bflag = 1;
+				scrollback_pages = atoi(optarg);
 				break;
 				
 			case 'l':
@@ -336,7 +343,7 @@ char *argv[];
 
 	if(dflag == -1 && lflag == -1 && current == -1 && pflag == -1 &&
 	   hflag == -1 && res == -1 && Pflag == 0 && tflag == 0 && fflag == -1
-	   && colms == 0 && mflag == -1)
+	   && colms == 0 && mflag == -1 && bflag == -1)
 	{
 		lflag = 1;
 	}
@@ -364,6 +371,20 @@ char *argv[];
 	if(aflag == 1)	/* return adaptor type */
 	{
 		printadaptor(fd);
+		exit(0);
+	}
+
+	if (bflag == 1)
+	{
+		if(vflag)
+			printf("Setting number of scrollback buffer pages ");
+			printf("to %d.\n", scrollback_pages);
+
+		if(ioctl(fd, SETSCROLLSIZE, &scrollback_pages) < 0)
+		{
+			perror("ioctl(SETSCROLLSIZE)");
+			exit(2);
+		}
 		exit(0);
 	}
 
