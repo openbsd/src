@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.3 2001/09/12 00:23:33 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.4 2001/09/12 05:28:42 pvalchev Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -513,7 +513,7 @@ cpu_startup()
 
 	printf("%s", version);
 
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem = %d (%dK)\n", ctob(physmem), ctob(physmem)/1024);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -581,7 +581,8 @@ cpu_startup()
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 
-	printf("avail mem = %d\n", ptoa(uvmexp.free));
+	printf("avail mem = %d (%dK)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
 
