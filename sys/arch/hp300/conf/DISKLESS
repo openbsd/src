@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.15 1997/07/06 08:01:41 downsj Exp $
+#	$OpenBSD: DISKLESS,v 1.16 1999/06/13 06:27:12 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -100,5 +100,3 @@ dca*		at dio? scode ?
 dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
 le*		at dio? scode ?		# LANCE ethernet interfaces
-
-pseudo-device	rd 2

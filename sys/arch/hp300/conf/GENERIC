@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 1997/11/06 19:42:30 millert Exp $
+#	$OpenBSD: GENERIC,v 1.23 1999/06/13 06:27:12 downsj Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -121,5 +121,3 @@ oscsi*		at dio? scode ?		# Old HP SCSI
 sd*		at oscsi? target ? lun ?	# SCSI disks
 st*		at oscsi? target ? lun ?	# SCSI tapes
 ac*		at oscsi? target ? lun ?	# SCSI changers
-
-pseudo-device	rd 2
