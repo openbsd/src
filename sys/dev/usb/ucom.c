@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.23 2005/01/19 07:49:35 dlg Exp $ */
+/*	$OpenBSD: ucom.c,v 1.24 2005/01/28 22:36:46 djm Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -416,6 +416,15 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 		s = spltty();
 		ttsetwater(tp);
+
+		/*
+		 * Turn on DTR.  We must always do this, even if carrier is not
+		 * present, because otherwise we'd have to use TIOCSDTR
+		 * immediately after setting CLOCAL, which applications do not
+		 * expect.  We always assert DTR while the device is open
+		 * unless explicitly requested to deassert it.
+		 */
+		ucom_dtr(sc, 1);
 
 		/* XXX CLR(sc->sc_rx_flags, RX_ANY_BLOCK);*/
 		ucom_hwiflow(sc);
