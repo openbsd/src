@@ -110,9 +110,11 @@ usage(void)
     };
     size_t j;
 
-    printf("Usage: %s %s\n", _nc_progname, usage_string);
-    for (j = 0; j < sizeof(tbl) / sizeof(tbl[0]); j++)
-	puts(tbl[j]);
+    fprintf(stderr, "Usage: %s %s\n", _nc_progname, usage_string);
+    for (j = 0; j < sizeof(tbl) / sizeof(tbl[0]); j++) {
+	fputs(tbl[j], stderr);
+	putc('\n', stderr);
+    }
     exit(EXIT_FAILURE);
 }
 
