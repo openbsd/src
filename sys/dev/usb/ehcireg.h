@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.4 2004/05/30 01:25:17 tedu Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.5 2004/07/05 03:07:45 deraadt Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.14 2003/10/13 00:05:10 enami Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 
 #define EHCI_HCSPARAMS		0x04	/* RO Structural parameters */
 #define  EHCI_HCS_DEBUGPORT(x)	(((x) >> 20) & 0xf)
-#define  EHCI_HCS_P_INCICATOR(x) ((x) & 0x10000)
+#define  EHCI_HCS_P_INDICATOR(x) ((x) & 0x10000)
 #define  EHCI_HCS_N_CC(x)	(((x) >> 12) & 0xf) /* # of companion ctlrs */
 #define  EHCI_HCS_N_PCC(x)	(((x) >> 8) & 0xf) /* # of ports per comp. */
 #define  EHCI_HCS_PPC(x)	((x) & 0x10) /* port power control */
@@ -258,7 +258,7 @@ typedef struct {
 #define EHCI_QH_HRECL		0x00008000
 #define EHCI_QH_GET_MPL(x)	(((x) >> 16) & 0x7ff) /* max packet len */
 #define EHCI_QH_SET_MPL(x)	((x) << 16)
-#define EHCI_QG_MPLMASK		0x07ff0000
+#define EHCI_QH_MPLMASK		0x07ff0000
 #define EHCI_QH_GET_CTL(x)	(((x) >> 26) & 0x01) /* control endpoint */
 #define EHCI_QH_CTL		0x08000000
 #define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */

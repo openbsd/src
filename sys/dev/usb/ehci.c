@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.7 2004/06/24 00:00:20 jolan Exp $ */
+/*	$OpenBSD: ehci.c,v 1.8 2004/07/05 03:07:45 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $	*/
 
 /*
@@ -1760,7 +1760,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		v = EOREAD4(sc, EHCI_HCSPARAMS);
 		USETW(hubd.wHubCharacteristics,
 		    EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH |
-		    EHCI_HCS_P_INCICATOR(EREAD4(sc, EHCI_HCSPARAMS))
+		    EHCI_HCS_P_INDICATOR(EREAD4(sc, EHCI_HCSPARAMS))
 		        ? UHD_PORT_IND : 0);
 		hubd.bPwrOn2PwrGood = 200; /* XXX can't find out? */
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
@@ -2542,7 +2542,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	/* XXX This only needs to be done once, but it's too early in open. */
 	/* XXXX Should not touch ED here! */
 	sqh->qh.qh_endp =
-	    (sqh->qh.qh_endp & htole32(~(EHCI_QH_ADDRMASK | EHCI_QG_MPLMASK))) |
+	    (sqh->qh.qh_endp & htole32(~(EHCI_QH_ADDRMASK | EHCI_QH_MPLMASK))) |
 	    htole32(
 	     EHCI_QH_SET_ADDR(addr) |
 	     /* EHCI_QH_DTC | */
