@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.17 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.18 2001/10/06 14:37:48 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -311,6 +311,9 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
+
+			dc_eeprom_width(sc);
+			dc_read_srom(sc, sc->dc_romwidth);
 		}
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713) {
 			found = 1;
