@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.6 2004/01/28 14:24:29 markus Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.7 2004/01/28 17:27:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 #include "bgpd.h"
+#include "session.h"
 
 #define	PFKEY2_CHUNK sizeof(u_int64_t)
 #define	ROUNDUP(x) (((x) + (PFKEY2_CHUNK - 1)) & ~(PFKEY2_CHUNK - 1))
@@ -39,6 +40,8 @@ static u_int32_t	sadb_msg_seq = 1;
 int	pfkey_reply(int, u_int32_t *);
 int	pfkey_send(int, uint8_t, struct bgpd_addr *, struct bgpd_addr *,
     u_int32_t, char *);
+int	pfkey_setkey(struct bgpd_addr *, struct bgpd_addr *, char *,
+	    u_int32_t *);
 
 int
 pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
@@ -269,9 +272,9 @@ pfkey_reply(int sd, u_int32_t *spip)
 }
 
 int
-pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key)
+pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key,
+    u_int32_t *spi)
 {
-	u_int32_t	spi = 0;
 	int		sd;
 	int		ret = -1;
 
@@ -284,9 +287,9 @@ pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key)
 	}
 	if (pfkey_send(sd, SADB_GETSPI, src, dst, 0, NULL) < 0)
 		goto done;
-	if (pfkey_reply(sd, &spi) < 0)
+	if (pfkey_reply(sd, spi) < 0)
 		goto done;
-	if (pfkey_send(sd, SADB_UPDATE, src, dst, spi, key) < 0)
+	if (pfkey_send(sd, SADB_UPDATE, src, dst, *spi, key) < 0)
 		goto done;
 	if (pfkey_reply(sd, NULL) < 0)
 		goto done;
@@ -294,4 +297,29 @@ pfkey_setkey(struct bgpd_addr *src, struct bgpd_addr *dst, char *key)
 done:
 	close(sd);
 	return (ret);
+}
+
+int
+pfkey_auth_establish(struct peer *p)
+{
+	if (!p->conf.tcp_sign_key[0])
+		return (0);
+
+	if (!p->auth.spi_out)
+		if (pfkey_setkey(&p->conf.local_addr, &p->conf.remote_addr,
+		    p->conf.tcp_sign_key, &p->auth.spi_out) == -1)
+			return (-1);
+
+	if (!p->auth.spi_in)
+		if (pfkey_setkey(&p->conf.remote_addr, &p->conf.local_addr,
+		    p->conf.tcp_sign_key, &p->auth.spi_in) == -1)
+			return (-1);
+
+	return (0);
+}
+
+int
+pfkey_auth_remove(struct peer *p)
+{
+	return (0);
 }
