@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_signal.c,v 1.8 2001/04/02 21:43:11 niklas Exp $	*/
+/*	$OpenBSD: linux_signal.c,v 1.9 2001/04/09 06:52:26 tholo Exp $	*/
 /*	$NetBSD: linux_signal.c,v 1.10 1996/04/04 23:51:36 christos Exp $	*/
 
 /*
@@ -399,8 +399,18 @@ linux_sys_sigaction(p, v, retval)
 	SCARG(&sa, nsa) = nbsa;
 	SCARG(&sa, osa) = obsa;
 
-	if ((error = sys_sigaction(p, &sa, retval)) != 0)
-		return (error);
+	/* Silently ignore unknown signals */
+	if (SCARG(&sa, signum) == 0) {
+		if (obsa != NULL) {
+			obsa->sa_handler = SIG_IGN;
+			sigemptyset(&obsa->sa_mask);
+			obsa->sa_flags = 0;
+		}
+	}
+	else {
+		if ((error = sys_sigaction(p, &sa, retval)) != 0)
+			return (error);
+	}
 
 	if (olsa != NULL) {
 		if ((error = copyin(obsa, &tmpbsa, sizeof(tmpbsa))) != 0)
@@ -461,8 +471,18 @@ linux_sys_rt_sigaction(p, v, retval)
 	SCARG(&sa, nsa) = nbsa;
 	SCARG(&sa, osa) = obsa;
 
-	if ((error = sys_sigaction(p, &sa, retval)) != 0)
-		return (error);
+	/* Silently ignore unknown signals */
+	if (SCARG(&sa, signum) == 0) {
+		if (obsa != NULL) {
+			obsa->sa_handler = SIG_IGN;
+			sigemptyset(&obsa->sa_mask);
+			obsa->sa_flags = 0;
+		}
+	}
+	else {
+		if ((error = sys_sigaction(p, &sa, retval)) != 0)
+			return (error);
+	}
 
 	if (olsa != NULL) {
 		if ((error = copyin(obsa, &tmpbsa, sizeof(tmpbsa))) != 0)
@@ -512,8 +532,12 @@ linux_sys_signal(p, v, retval)
 	SCARG(&sa_args, signum) = linux_to_bsd_sig[SCARG(uap, sig)];
 	SCARG(&sa_args, osa) = osa;
 	SCARG(&sa_args, nsa) = nsa;
-	if ((error = sys_sigaction(p, &sa_args, retval)))
-		return (error);
+
+	/* Silently ignore unknown signals */
+	if (SCARG(&sa_args, signum) != 0) {
+		if ((error = sys_sigaction(p, &sa_args, retval)))
+			return (error);
+	}
 
 	if ((error = copyin(osa, &tmpsa, sizeof *osa)))
 		return (error);
