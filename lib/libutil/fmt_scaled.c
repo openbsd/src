@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.3 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.4 2004/09/16 10:56:35 otto Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char ident[] = "$OpenBSD: fmt_scaled.c,v 1.3 2004/05/28 07:03:47 deraadt Exp $";
+static const char ident[] = "$OpenBSD: fmt_scaled.c,v 1.4 2004/09/16 10:56:35 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -228,7 +228,7 @@ fmt_scaled(long long number, char *result)
 
 	/* scale fraction to one digit (by rounding) - thnx pjanzen */
 	for (i = SCALE_LENGTH-1; i > 0; i--) {
-		if (fract > scale_factors[i]) {
+		if (fract >= scale_factors[i]) {
 			fract /= scale_factors[i];
 			break;
 		}
