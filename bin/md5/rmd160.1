@@ -1,11 +1,11 @@
-.\"	$OpenBSD: rmd160.1,v 1.3 1998/01/02 07:04:24 deraadt Exp $
+.\"	$OpenBSD: rmd160.1,v 1.4 1998/09/23 00:13:49 aaron Exp $
 .\"
 .Dd July 16, 1997
 .Dt RMD160 1
 .Os
 .Sh NAME
 .Nm rmd160
-.Nd "calculate a message-digest fingerprint (checksum) for a file"
+.Nd calculate a message-digest fingerprint (checksum) for a file
 .Sh SYNOPSIS
 .Nm
 .Op Fl ptx
@@ -32,15 +32,16 @@ sum of each file listed on the command line is printed after the options
 are processed.
 .Bl -tag -width Fl
 .It Fl s Ar string
-prints a checksum of the given string.
+Prints a checksum of the given
+.Ar string .
 .It Fl p
-echos stdin to stdout and appends the
+Echos stdin to stdout and appends the
 .Em RMD-160
 sum to stdout.
 .It Fl t
-runs a built-in time trial.
+Runs a built-in time trial.
 .It Fl x
-runs a built-in test script.
+Runs a built-in test script.
 .El
 .Sh SEE ALSO
 .Xr cksum 1 ,
