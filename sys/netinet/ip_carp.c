@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.40 2004/03/22 04:54:18 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.41 2004/03/24 06:13:56 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -131,7 +131,7 @@ struct carp_softc {
 
 };
 
-int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 1, 0 };	/* XXX for now */
+int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
 struct carpstats carpstats;
 
 struct carp_if {
