@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.14 2002/07/24 04:00:44 deraadt Exp $ */
+/*	$OpenBSD: resolve.h,v 1.15 2002/07/24 04:11:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -122,8 +122,8 @@ typedef struct elf_object {
 extern void _dl_rt_resolve(void);
 
 extern elf_object_t *_dl_add_object(const char *objname, Elf_Dyn *dynp,
-				    const u_long *, const int objtype,
-				    const long laddr, const long loff);
+	    const u_long *, const int objtype,
+	    const long laddr, const long loff);
 extern void	_dl_remove_object(elf_object_t *object);
 
 extern elf_object_t *_dl_lookup_object(const char *objname);
@@ -134,7 +134,7 @@ extern int  _dl_md_reloc(elf_object_t *object, int rel, int relsz);
 extern void _dl_md_reloc_got(elf_object_t *object, int lazy);
 
 Elf_Addr _dl_find_symbol(const char *name, elf_object_t *startlook,
-			const Elf_Sym **ref, int myself, int warnnotfound);
+	    const Elf_Sym **ref, int myself, int warnnotfound);
 
 void _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);

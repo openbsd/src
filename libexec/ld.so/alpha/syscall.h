@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.8 2002/07/24 04:00:44 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.9 2002/07/24 04:11:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -46,13 +46,13 @@
 int	_dl_close(int);
 int	_dl_exit(int);
 int	_dl_issetugid(void);
-long	_dl_mmap(void *, unsigned int, unsigned int, unsigned int, int, off_t);
-int	_dl_mprotect(const void *, int, int);
-int	_dl_munmap(const void*, unsigned int);
-int	_dl_open(const char*, unsigned int);
-int	_dl_read(int, const char*, int);
+void *	_dl_mmap(void *, size_t, int, int, int, off_t);
+int	_dl_mprotect(const void *, size_t, int);
+int	_dl_munmap(const void*, size_t);
+int	_dl_open(const char*, int);
+ssize_t	_dl_read(int, const char*, size_t);
 int	_dl_stat(const char *, struct stat *);
-int	_dl_write(int, const char*, int);
+ssize_t	_dl_write(int, const char*, size_t);
 int	_dl_fstat(int, struct stat *);
 int	_dl_fcntl(int, int, ...);
 int	_dl_getdirentries(int, char*, int, long *);

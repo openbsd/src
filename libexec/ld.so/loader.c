@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.40 2002/07/24 04:00:44 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.41 2002/07/24 04:11:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -73,7 +73,7 @@ _dl_debug_state(void)
 }
 
 /*
- * Routine to walk through all of the objects except the first 
+ * Routine to walk through all of the objects except the first
  * (main executable).
  */
 void
@@ -192,7 +192,7 @@ _dl_boot(const char **argv, char **envp, const long loff,
 		phdp++;
 	}
 
-	if (_dl_preload != NULL) 
+	if (_dl_preload != NULL)
 		_dl_dopreload(_dl_preload);
 
 	/*
@@ -232,7 +232,7 @@ _dl_boot(const char **argv, char **envp, const long loff,
 	 * Everything should be in place now for doing the relocation
 	 * and binding. Call _dl_rtld to do the job. Fingers crossed.
 	 */
-	if (_dl_traceld == NULL) 
+	if (_dl_traceld == NULL)
 		_dl_rtld(_dl_objects);
 
 	/*

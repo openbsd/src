@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.11 2002/07/24 04:00:45 deraadt Exp $ */
+/*	$OpenBSD: archdep.h,v 1.12 2002/07/24 04:11:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,11 +49,11 @@
 #include "syscall.h"
 #include "util.h"
 
-static inline long
+static inline void *
 _dl_mmap(void *addr, unsigned int len, unsigned int prot,
 	unsigned int flags, int fd, off_t offset)
 {
-	return(_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
+	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
 		flags, fd, 0, offset));
 }
 
