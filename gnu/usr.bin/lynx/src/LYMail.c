@@ -1,34 +1,62 @@
-#include "HTUtils.h"
-#include "tcp.h"
-#include "HTParse.h"
-#include "LYGlobalDefs.h"
-#include "HTAlert.h"
-#include "LYCurses.h"
-#include "LYSignal.h"
-#include "LYUtils.h"
-#include "LYClean.h"
-#include "LYStrings.h"
-#include "GridText.h"
-#include "LYSystem.h"
-#include "LYMail.h"
-#include "LYCharSets.h"  /* to get current charset for mail header */
+/*
+ * This file checked for sprintf() buffer overruns on 1998/05/06 by Bela
+ * Lubkin <filbo@armory.com>.  Please don't introduce any new ones...
+ *
+ * See comments marked "- BL" for two still-possible overruns in the VMS
+ * code.
+ *
+ * Not yet checked for any other sort of buffer overrun.
+ */
 
-#include "LYLeaks.h"
+#include <HTUtils.h>
+#include <HTParse.h>
+#include <LYGlobalDefs.h>
+#include <HTAlert.h>
+#include <LYCurses.h>
+#include <LYSignal.h>
+#include <LYUtils.h>
+#include <LYClean.h>
+#include <LYStrings.h>
+#include <GridText.h>
+#include <LYMail.h>
+#include <LYCharSets.h>  /* to get current charset for mail header */
 
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <LYLeaks.h>
 
 BOOLEAN term_letter;	/* Global variable for async i/o. */
 PRIVATE void terminate_letter  PARAMS((int sig));
 PRIVATE void remove_tildes PARAMS((char *string));
 
+/* HTUnEscape with control-code nuking */
+PRIVATE void SafeHTUnEscape ARGS1(
+	char *,	string)
+{
+     int i;
+     int flg = FALSE;
+
+     HTUnEscape(string);
+     for (i=0; string[i] != '\0'; i++)
+     {
+	/* FIXME: this is no longer explicitly 7-bit ASCII,
+	   but are there portability problems? */
+	if ((!LYIsASCII(string[i])) || !isprint(string[i]))
+	{
+	   string[i] = '?';
+	   flg = TRUE;
+	}
+     }
+     if (flg)
+	HTAlert(MAILTO_SQUASH_CTL);
+}
+
 /*
 **  mailform() sends form content to the mailto address(es). - FM
 */
 PUBLIC void mailform ARGS4(
-	char *, 	mailto_address,
-	char *, 	mailto_subject,
-	char *, 	mailto_content,
-	char *, 	mailto_type)
+	CONST char *, 	mailto_address,
+	CONST char *, 	mailto_subject,
+	CONST char *, 	mailto_content,
+	CONST char *, 	mailto_type)
 {
     FILE *fd;
     char *address = NULL;
@@ -41,12 +69,14 @@ PUBLIC void mailform ARGS4(
     char cmd[512];
     int len, i, ch;
 #if defined(VMS) || defined(DOSPATH)
-    char my_tmpfile[256];
-    char *address_ptr1, *address_ptr2;
+    char my_tmpfile[LY_MAXPATH];
     char *command = NULL;
+#ifdef VMS
+    char *address_ptr1, *address_ptr2;
     BOOLEAN first = TRUE;
+#endif
     BOOLEAN isPMDF = FALSE;
-    char hdrfile[256];
+    char hdrfile[LY_MAXPATH];
     FILE *hfd;
 
     if (!strncasecomp(system_mail, "PMDF SEND", 9)) {
@@ -88,7 +118,7 @@ PUBLIC void mailform ARGS4(
 		    *cp1 = '\0';
 		}
 		if (*cp) {
-		    HTUnEscape(subject);
+		    SafeHTUnEscape(subject);
 		    LYstrncpy(subject, cp, 70);
 		}
 		if (cp1) {
@@ -195,7 +225,7 @@ PUBLIC void mailform ARGS4(
 	    }
 	    if (keywords != NULL) {
 		if (*keywords != '\0') {
-		    HTUnEscape(keywords);
+		    SafeHTUnEscape(keywords);
 		} else {
 		    FREE(keywords);
 		}
@@ -248,9 +278,9 @@ PUBLIC void mailform ARGS4(
     /*
      *	Unescape the address and ccaddr fields. - FM
      */
-    HTUnEscape(address);
+    SafeHTUnEscape(address);
     if (ccaddr != NULL) {
-	HTUnEscape(ccaddr);
+	SafeHTUnEscape(ccaddr);
     }
 
     /*
@@ -269,8 +299,7 @@ PUBLIC void mailform ARGS4(
 	/*
 	 * User cancelled via ^G. - FM
 	 */
-	_statusline(FORM_MAILTO_CANCELLED);
-	sleep(InfoSecs);
+	HTInfoMsg(FORM_MAILTO_CANCELLED);
 	FREE(address);
 	FREE(ccaddr);
 	FREE(keywords);
@@ -290,8 +319,7 @@ PUBLIC void mailform ARGS4(
 	    /*
 	     * User cancelled via ^G. - FM
 	     */
-	    _statusline(FORM_MAILTO_CANCELLED);
-	    sleep(InfoSecs);
+	    HTInfoMsg(FORM_MAILTO_CANCELLED);
 	    FREE(address);
 	    FREE(ccaddr);
 	    FREE(keywords);
@@ -307,14 +335,7 @@ PUBLIC void mailform ARGS4(
     }
 
 #if defined(VMS) || defined(DOSPATH)
-    tempname(my_tmpfile, NEW_FILE);
-    if (((cp = strrchr(my_tmpfile, '.')) != NULL) &&
-	NULL == strchr(cp, ']') &&
-	NULL == strchr(cp, '/')) {
-	*cp = '\0';
-	strcat(my_tmpfile, ".txt");
-    }
-    if ((fd = LYNewTxtFile(my_tmpfile)) == NULL) {
+    if ((fd = LYOpenTemp(my_tmpfile, ".txt", "w")) == NULL) {
 	HTAlert(FORM_MAILTO_FAILED);
 	FREE(address);
 	FREE(ccaddr);
@@ -322,15 +343,9 @@ PUBLIC void mailform ARGS4(
 	return;
     }
     if (isPMDF) {
-	tempname(hdrfile, NEW_FILE);
-	if (((cp = strrchr(hdrfile, '.')) != NULL) &&
-	    NULL == strchr(cp, ']') &&
-	    NULL == strchr(cp, '/')) {
-	    *cp = '\0';
-	    strcat(hdrfile, ".txt");
-	}
-	if ((hfd = LYNewTxtFile(hdrfile)) == NULL) {
+	if ((hfd = LYOpenTemp(hdrfile, ".txt", "w")) == NULL) {
 	    HTAlert(FORM_MAILTO_FAILED);
+	    LYCloseTempFP(fd);
 	    FREE(address);
 	    FREE(ccaddr);
 	    FREE(keywords);
@@ -402,33 +417,33 @@ PUBLIC void mailform ARGS4(
 	i = 0;
 	len = strlen(mailto_content);
 	while (len > 78) {
-	    strncpy(cmd, (char *)&mailto_content[i], 78);
+	    strncpy(cmd, &mailto_content[i], 78);
 	    cmd[78] = '\0';
 	    fprintf(fd, "%s\n", cmd);
 	    i += 78;
-	    len = strlen((char *)&mailto_content[i]);
+	    len = strlen(&mailto_content[i]);
 	}
-	fprintf(fd, "%s\n", (char *)&mailto_content[i]);
+	fprintf(fd, "%s\n", &mailto_content[i]);
 	mailto_content = (cp+1);
     }
     i = 0;
     len = strlen(mailto_content);
     while (len > 78) {
-	strncpy(cmd, (char *)&mailto_content[i], 78);
+	strncpy(cmd, &mailto_content[i], 78);
 	cmd[78] = '\0';
 	fprintf(fd, "%s\n", cmd);
 	i += 78;
-	len = strlen((char *)&mailto_content[i]);
+	len = strlen(&mailto_content[i]);
     }
     if (len)
-	fprintf(fd, "%s\n", (char *)&mailto_content[i]);
+	fprintf(fd, "%s\n", &mailto_content[i]);
 
 #ifdef UNIX
     pclose(fd);
     sleep(MessageSecs);
 #endif /* UNIX */
 #if defined(VMS) || defined(DOSPATH)
-    fclose(fd);
+    LYCloseTempFP(fd);
 #ifdef VMS
     /*
      *	Set the mail command. - FM
@@ -442,7 +457,7 @@ PUBLIC void mailform ARGS4(
 	    fprintf(hfd, "Keywords: %s\n", keywords);
 	}
 	fprintf(hfd, "Subject: %s\n\n", subject);
-	fclose(hfd);
+	LYCloseTempFP(hfd);
 	/*
 	 *  Now set up the command. - FM
 	 */
@@ -458,6 +473,8 @@ PUBLIC void mailform ARGS4(
 	 *  command, and ignore any keywords to minimize risk
 	 *  of them making the line too long or having problem
 	 *  characters. - FM
+	 *
+	 *  Possibly still a problem if user supplies long subject. - BL
 	 */
 	sprintf(cmd,
 		"%s %s%s/subject=\"%s\" %s ",
@@ -485,8 +502,12 @@ PUBLIC void mailform ARGS4(
 	 *  4 letters is arbitrarily the smallest possible mail
 	 *  address, at least for lynx.  That way extra spaces
 	 *  won't confuse the mailer and give a blank address.
+	 *
+	 *  ignore addresses so long that they would overflow the
+	 *  temporary buffer (i.e., about 500 chars). - BL
 	 */
-	if (strlen(address_ptr1) > 3) {
+	if (strlen(address_ptr1) > 3 &&
+	    strlen(address_ptr1) + strlen(mail_adrs) < sizeof(cmd)) {
 	    if (!first) {
 		StrAllocCat(command, ",");
 	    }
@@ -514,8 +535,12 @@ PUBLIC void mailform ARGS4(
 	     *	4 letters is arbitrarily the smallest possible mail
 	     *	address, at least for lynx.  That way extra spaces
 	     *	won't confuse the mailer and give a blank address.
+	     *
+	     *  ignore addresses so long that they would overflow the
+	     *  temporary buffer (i.e., about 500 chars). - BL
 	     */
-	    if (strlen(address_ptr1) > 3) {
+	    if (strlen(address_ptr1) > 3 &&
+		strlen(address_ptr1) + strlen(mail_adrs) < sizeof(cmd)) {
 		StrAllocCat(command, ",");
 		sprintf(cmd, mail_adrs, address_ptr1);
 		if (isPMDF) {
@@ -528,21 +553,26 @@ PUBLIC void mailform ARGS4(
     }
 
     stop_curses();
-    printf("Sending form content:\n\n$ %s\n\nPlease wait...", command);
-    system(command);
+    printf("%s\n\n$ %s\n\n%s", SENDING_FORM_CONTENT, command, PLEASE_WAIT);
+    LYSystem(command);
     FREE(command);
     sleep(AlertSecs);
     start_curses();
-    remove(my_tmpfile);
-    remove(hdrfile);
+    LYRemoveTemp(my_tmpfile);
+    LYRemoveTemp(hdrfile);
 #else /* DOSPATH */
-    sprintf(cmd, "%s -t \"%s\" -F %s", system_mail, address, my_tmpfile);
+    StrAllocCopy(command, system_mail);
+    StrAllocCat(command, " -t \"");
+    StrAllocCat(command, address);
+    StrAllocCat(command, "\" -F ");
+    StrAllocCat(command, my_tmpfile);
     stop_curses();
-    printf("Sending form content:\n\n$ %s\n\nPlease wait...", cmd);
-    system(cmd);
+    printf("%s\n\n$ %s\n\n%s", SENDING_FORM_CONTENT, command, PLEASE_WAIT);
+    LYSystem(command);
+    FREE(command);
     sleep(MessageSecs);
     start_curses();
-    remove(my_tmpfile);
+    LYRemoveTemp(my_tmpfile);
 #endif
 #endif /* VMS */
 
@@ -565,15 +595,22 @@ PUBLIC void mailmsg ARGS4(
     FILE *fd, *fp;
     char *address = NULL;
     char *searchpart = NULL;
-    char cmd[512], *cp, *cp0, *cp1;
+    char *cmd = NULL, *cp, *cp0, *cp1;
 #if defined(VMS) || defined(DOSPATH)
-    char my_tmpfile[256];
-    char *address_ptr1, *address_ptr2;
+    char my_tmpfile[LY_MAXPATH];
     char *command = NULL;
+#ifdef VMS
+    char *address_ptr1, *address_ptr2;
     BOOLEAN first = TRUE;
+#endif
     BOOLEAN isPMDF = FALSE;
-    char hdrfile[256];
+    char hdrfile[LY_MAXPATH];
     FILE *hfd;
+
+    CTRACE(tfp, "mailmsg(%d, \"%s\", \"%s\", \"%s\")\n", cur,
+	owner_address?owner_address:"<nil>",
+	filename?filename:"<nil>",
+	linkname?linkname:"<nil>");
 
     if (!strncasecomp(system_mail, "PMDF SEND", 9)) {
 	isPMDF = TRUE;
@@ -646,28 +683,22 @@ PUBLIC void mailmsg ARGS4(
     /*
      *	Unescape the address field. - FM
      */
-    HTUnEscape(address);
+    SafeHTUnEscape(address);
     if (address[(strlen(address) - 1)] == ',')
 	address[(strlen(address) - 1)] = '\0';
     if (*address == '\0') {
 	FREE(address);
-	if (TRACE) {
-	    fprintf(stderr,
-		    "mailmsg: No address in '%s'.\n",
+	CTRACE(tfp, "mailmsg: No address in '%s'.\n",
 		    owner_address);
-	}
 	return;
     }
 
 #ifdef UNIX
-    sprintf(cmd, "%s %s", system_mail, system_mail_flags);
+    HTSprintf0(&cmd, "%s %s", system_mail, system_mail_flags);
     if ((fd = popen(cmd, "w")) == NULL) {
 	FREE(address);
-	if (TRACE) {
-	    fprintf(stderr,
-		    "mailmsg: '%s' failed.\n",
+	CTRACE(tfp, "mailmsg: '%s' failed.\n",
 		    cmd);
-	}
 	return;
     }
 
@@ -680,36 +711,16 @@ PUBLIC void mailmsg ARGS4(
     fprintf(fd, "X-Mailer: Lynx, Version %s\n\n", LYNX_VERSION);
 #endif /* UNIX */
 #if defined(VMS) || defined(DOSPATH)
-    tempname(my_tmpfile, NEW_FILE);
-    if (((cp = strrchr(my_tmpfile, '.')) != NULL) &&
-	NULL == strchr(cp, ']') &&
-	NULL == strchr(cp, '/')) {
-	*cp = '\0';
-	strcat(my_tmpfile, ".txt");
-    }
-    if ((fd = LYNewTxtFile(my_tmpfile)) == NULL) {
-	if (TRACE) {
-	    fprintf(stderr,
-		    "mailmsg: Could not fopen '%s'.\n",
+    if ((fd = LYOpenTemp(my_tmpfile, ".txt", "w")) == NULL) {
+	CTRACE(tfp, "mailmsg: Could not fopen '%s'.\n",
 		    my_tmpfile);
-	}
 	FREE(address);
 	return;
     }
     if (isPMDF) {
-	tempname(hdrfile, NEW_FILE);
-	if (((cp = strrchr(hdrfile, '.')) != NULL) &&
-	    NULL == strchr(cp, ']') &&
-	    NULL == strchr(cp, '/')) {
-	    *cp = '\0';
-	    strcat(hdrfile, ".txt");
-	}
-	if ((hfd = LYNewTxtFile(hdrfile)) == NULL) {
-	    if (TRACE) {
-		fprintf(stderr,
-			"mailmsg: Could not fopen '%s'.\n",
+	if ((hfd = LYOpenTemp(hdrfile, ".txt", "w")) == NULL) {
+	    CTRACE(tfp, "mailmsg: Could not fopen '%s'.\n",
 			hdrfile);
-	    }
 	    FREE(address);
 	    return;
 	}
@@ -722,20 +733,19 @@ PUBLIC void mailmsg ARGS4(
     }
 #endif /* VMS */
 
-    fprintf(fd, "The link   %s :?: %s \n",
+    fprintf(fd, gettext("The link   %s :?: %s \n"),
 		links[cur].lname, links[cur].target);
-    fprintf(fd, "called \"%s\"\n", links[cur].hightext);
-    fprintf(fd, "in the file \"%s\" called \"%s\"", filename, linkname);
+    fprintf(fd, gettext("called \"%s\"\n"), links[cur].hightext);
+    fprintf(fd, gettext("in the file \"%s\" called \"%s\"\n"), filename, linkname);
+    fprintf(fd, "%s\n\n", gettext("was requested but was not available."));
+    fprintf(fd, "%s\n\n", gettext("Thought you might want to know."));
 
-    fputs("\nwas requested but was not available.", fd);
-    fputs("\n\nThought you might want to know.", fd);
-
-    fputs("\n\nThis message was automatically generated by\n", fd);
-    fprintf(fd, "Lynx ver. %s", LYNX_VERSION);
+    fprintf(fd, "%s\n", gettext("This message was automatically generated by"));
+    fprintf(fd, gettext("Lynx ver. %s"), LYNX_VERSION);
     if ((LynxSigFile != NULL) &&
 	(fp = fopen(LynxSigFile, "r")) != NULL) {
 	fputs("-- \n", fd);
-	while (fgets(cmd, sizeof(cmd), fp) != NULL)
+	while (LYSafeGets(&cmd, fp) != NULL)
 	    fputs(cmd, fd);
 	fclose(fp);
     }
@@ -743,7 +753,7 @@ PUBLIC void mailmsg ARGS4(
     pclose(fd);
 #endif /* UNIX */
 #if defined(VMS) || defined(DOSPATH)
-    fclose(fd);
+    LYCloseTempFP(fd);
 #ifdef VMS
     if (isPMDF) {
 	/*
@@ -751,11 +761,11 @@ PUBLIC void mailmsg ARGS4(
 	 *  header file and close it. - FM
 	 */
 	fprintf(hfd, "Subject: Lynx Error in %.56s\n\n", filename);
-	fclose(hfd);
+	LYCloseTempFP(hfd);
 	/*
 	 *  Now set up the command. - FM
 	 */
-	sprintf(cmd,
+	HTSprintf0(&command,
 		"%s %s %s,%s ",
 		system_mail,
 		system_mail_flags,
@@ -766,14 +776,13 @@ PUBLIC void mailmsg ARGS4(
 	 *  For "generic" VMS MAIL, include the
 	 *  subject in the command. - FM
 	 */
-	sprintf(cmd,
+	HTSprintf0(&command,
 		"%s %s/self/subject=\"Lynx Error in %.56s\" %s ",
 		system_mail,
 		system_mail_flags,
 		filename,
 		my_tmpfile);
     }
-    StrAllocCopy(command, cmd);
     address_ptr1 = address;
     do {
 	if ((cp = strchr(address_ptr1, ',')) != NULL) {
@@ -782,27 +791,39 @@ PUBLIC void mailmsg ARGS4(
 	} else
 	    address_ptr2 = NULL;
 
-	if (strlen(address) > 3) {
-	    if (!first) {
-		StrAllocCat(command, ",");
-	    }
-	    sprintf(cmd, mail_adrs, address_ptr1);
-	    StrAllocCat(command, cmd);
-	    first = FALSE;
+	/*
+	 *  4 letters is arbitrarily the smallest possible mail
+	 *  address, at least for lynx.  That way extra spaces
+	 *  won't confuse the mailer and give a blank address.
+	 *
+	 *  ignore addresses so long that they would overflow the
+	 *  temporary buffer (i.e., about 500 chars). - BL
+	 */
+	if (!first) {
+	    StrAllocCat(command, ",");
 	}
+	HTSprintf0(&cmd, mail_adrs, address_ptr1);
+	StrAllocCat(command, cmd);
+	first = FALSE;
 	address_ptr1 = address_ptr2;
     } while (address_ptr1 != NULL);
 
-    system(command);
+    LYSystem(command);
     FREE(command);
-    remove(my_tmpfile);
+    FREE(cmd);
+    LYRemoveTemp(my_tmpfile);
     if (isPMDF) {
-	remove(hdrfile);
+	LYRemoveTemp(hdrfile);
     }
 #else /* DOSPATH */
-    sprintf(cmd, "%s -t \"%s\" -F %s", system_mail, address, my_tmpfile);
-    system(cmd);
-    remove(my_tmpfile);
+    StrAllocCopy(command, system_mail);
+    StrAllocCat(command, " -t \"");
+    StrAllocCat(command, address);
+    StrAllocCat(command, "\" -F ");
+    StrAllocCat(command, my_tmpfile);
+    LYSystem(command);
+    FREE(command);
+    LYRemoveTemp(my_tmpfile);
 #endif
 #endif /* VMS */
 
@@ -812,18 +833,7 @@ PUBLIC void mailmsg ARGS4(
 	if ((ofp = LYAppendToTxtFile(TRAVERSE_ERRORS)) == NULL) {
 	    if ((ofp = LYNewTxtFile(TRAVERSE_ERRORS)) == NULL) {
 		perror(NOOPEN_TRAV_ERR_FILE);
-#ifndef NOSIGHUP
-		(void) signal(SIGHUP, SIG_DFL);
-#endif /* NOSIGHUP */
-		(void) signal(SIGTERM, SIG_DFL);
-#ifndef VMS
-		(void) signal(SIGINT, SIG_DFL);
-#endif /* !VMS */
-#ifdef SIGTSTP
-		if (no_suspend)
-		    (void) signal(SIGTSTP,SIG_DFL);
-#endif /* SIGTSTP */
-		exit(-1);
+		exit_immediately(-1);
 	    }
 	}
 
@@ -840,10 +850,11 @@ PUBLIC void mailmsg ARGS4(
 **  reply_by_mail() invokes sendmail on Unix or mail on VMS to send
 **  a comment  from the users to the owner
 */
-PUBLIC void reply_by_mail ARGS3(
+PUBLIC void reply_by_mail ARGS4(
 	char *, 	mail_address,
 	char *, 	filename,
-	CONST char *,	title)
+	CONST char *,	title,
+	CONST char *,	refid)
 {
     char user_input[1000];
     FILE *fd, *fp;
@@ -856,18 +867,22 @@ PUBLIC void reply_by_mail ARGS3(
     char *temp = NULL;
     int i, len;
     int c = 0;	/* user input */
-    char my_tmpfile[256], cmd[512];
+    char my_tmpfile[LY_MAXPATH], cmd[512];
 #ifdef DOSPATH
-    char tmpfile2[256];
+    char tmpfile2[LY_MAXPATH];
 #endif
+#if defined(DOSPATH) || defined(VMS)
+    char *command = NULL;
+#endif
+#ifndef NO_ANONYMOUS_EMAIL
     static char *personal_name = NULL;
+#endif
     char subject[80];
 #ifdef VMS
     char *address_ptr1 = NULL, *address_ptr2 = NULL;
-    char *command = NULL;
     BOOLEAN first = TRUE;
     BOOLEAN isPMDF = FALSE;
-    char hdrfile[256];
+    char hdrfile[LY_MAXPATH];
     FILE *hfd;
 
     if (!strncasecomp(system_mail, "PMDF SEND", 9)) {
@@ -879,6 +894,12 @@ PUBLIC void reply_by_mail ARGS3(
     int n;
 #endif /* VMS */
 
+    CTRACE(tfp, "reply_by_mail(\"%s\", \"%s\", \"%s\", \"%s\")\n",
+	mail_address?mail_address:"<nil>",
+	filename?filename:"<nil>",
+	title?title:"<nil>",
+	refid?refid:"<nil>");
+
     term_letter = FALSE;
 
     if (mail_address && *mail_address) {
@@ -888,29 +909,13 @@ PUBLIC void reply_by_mail ARGS3(
 	return;
     }
 
-    tempname(my_tmpfile, NEW_FILE);
-    if (((cp = strrchr(my_tmpfile, '.')) != NULL) &&
-#ifdef VMS
-	NULL == strchr(cp, ']') &&
-#endif /* VMS */
-	NULL == strchr(cp, '/')) {
-	*cp = '\0';
-	strcat(my_tmpfile, ".txt");
-    }
-    if ((fd = LYNewTxtFile(my_tmpfile)) == NULL) {
+    if ((fd = LYOpenTemp(my_tmpfile, ".txt", "w")) == NULL) {
 	HTAlert(MAILTO_URL_TEMPOPEN_FAILED);
 	return;
     }
 #ifdef VMS
     if (isPMDF) {
-	tempname(hdrfile, NEW_FILE);
-	if (((cp = strrchr(hdrfile, '.')) != NULL) &&
-	    NULL == strchr(cp, ']') &&
-	    NULL == strchr(cp, '/')) {
-	    *cp = '\0';
-	    strcat(hdrfile, ".txt");
-	}
-	if ((hfd = LYNewTxtFile(hdrfile)) == NULL) {
+	if ((hfd = LYOpenTemp(hdrfile, ".txt", "w")) == NULL) {
 	    HTAlert(MAILTO_URL_TEMPOPEN_FAILED);
 	    return;
 	}
@@ -943,7 +948,7 @@ PUBLIC void reply_by_mail ARGS3(
 		if (*cp) {
 		    strncpy(subject, cp, 70);
 		    subject[70] = '\0';
-		    HTUnEscape(subject);
+		    SafeHTUnEscape(subject);
 		}
 		if (cp1) {
 		    *cp1 = '&';
@@ -1050,7 +1055,7 @@ PUBLIC void reply_by_mail ARGS3(
 	    }
 	    if (keywords != NULL) {
 		if (*keywords != '\0') {
-		    HTUnEscape(keywords);
+		    SafeHTUnEscape(keywords);
 		} else {
 		    FREE(keywords);
 		}
@@ -1147,8 +1152,8 @@ PUBLIC void reply_by_mail ARGS3(
 	FREE(ccaddr);
 	FREE(keywords);
 	FREE(body);
-	fclose(fd);		/* Close the tmpfile.  */
-	remove(my_tmpfile);	/* Delete the tmpfile. */
+	LYCloseTempFP(fd);		/* Close the tmpfile.  */
+	LYRemoveTemp(my_tmpfile);	/* Delete the tmpfile. */
 	HTAlert(NO_ADDRESS_IN_MAILTO_URL);
 	return;
     }
@@ -1173,9 +1178,9 @@ PUBLIC void reply_by_mail ARGS3(
     /*
      *	Unescape the address and ccaddr fields. - FM
      */
-    HTUnEscape(address);
+    SafeHTUnEscape(address);
     if (ccaddr != NULL) {
-	HTUnEscape(ccaddr);
+	SafeHTUnEscape(ccaddr);
     }
 
     /*
@@ -1216,11 +1221,9 @@ PUBLIC void reply_by_mail ARGS3(
      *	Put the To: line in the header.
      */
 #ifndef DOSPATH
-    asprintf(&header, "To: %s\n", address);
-    if (!header) {
-	fprintf(stderr, "Out of memory, you loose!\n");
-	exit(1);
-    }
+    StrAllocCopy(header, "To: ");
+    StrAllocCat(header, address);
+    StrAllocCat(header, "\n");
 #endif
 
     /*
@@ -1250,13 +1253,23 @@ PUBLIC void reply_by_mail ARGS3(
     /*
      *	Put the X-URL and X-Mailer lines in the header.
      */
-    sprintf(buf,
-	    "X-URL: %s%s\n",
-	    (filename && *filename) ? filename : "mailto:",
-	    (filename && *filename) ? "" : address);
-    StrAllocCat(header, buf);
+    StrAllocCat(header, "X-URL: ");
+    if (filename && *filename) {
+	StrAllocCat(header, filename);
+    }
+    else {
+	StrAllocCat(header, "mailto:");
+	StrAllocCat(header, address);
+    }
+    StrAllocCat(header, "\n");
     sprintf(buf, "X-Mailer: Lynx, Version %s\n", LYNX_VERSION);
     StrAllocCat(header, buf);
+
+    if (refid && *refid) {
+	StrAllocCat(header, "In-Reply-To: <");
+	StrAllocCat(header, refid);
+	StrAllocCat(header, ">\n");
+    }
 #endif /* VMS */
 
     /*
@@ -1329,19 +1342,18 @@ PUBLIC void reply_by_mail ARGS3(
     }
 #ifdef VMS
     if (isPMDF) {
-	addstr("Personal_name: ");
+	addstr(gettext("Personal_name: "));
     } else {
-	addstr("X_Personal_name: ");
+	addstr(gettext("X_Personal_name: "));
     }
 #else
-    addstr("Personal Name: ");
+    addstr(gettext("Personal Name: "));
 #endif /* VMS */
     if (LYgetstr(user_input, VISIBLE, sizeof(user_input), NORECALL) < 0 ||
 	term_letter) {
 	addstr("\n");
-	_statusline(COMMENT_REQUEST_CANCELLED);
-	sleep(InfoSecs);
-	fclose(fd);		/* Close the tmpfile. */
+	HTInfoMsg(COMMENT_REQUEST_CANCELLED);
+	LYCloseTempFP(fd);	/* Close the tmpfile. */
 	scrollok(stdscr,FALSE); /* Stop scrolling.    */
 	goto cleanup;
     }
@@ -1354,8 +1366,9 @@ PUBLIC void reply_by_mail ARGS3(
 	fprintf((isPMDF ? hfd : fd),
 		"X-Personal_name: %s\n",user_input);
 #else
-	sprintf(buf, "X-Personal_name: %s\n", user_input);
-	StrAllocCat(header, buf);
+	StrAllocCat(header, "X-Personal_name: ");
+	StrAllocCat(header, user_input);
+	StrAllocCat(header, "\n");
 #endif /* VMS */
     }
 
@@ -1381,9 +1394,8 @@ PUBLIC void reply_by_mail ARGS3(
     if (LYgetstr(user_input, VISIBLE, sizeof(user_input), NORECALL) < 0 ||
 	term_letter) {
 	addstr("\n");
-	_statusline(COMMENT_REQUEST_CANCELLED);
-	sleep(InfoSecs);
-	fclose(fd);		/* Close the tmpfile. */
+	HTInfoMsg(COMMENT_REQUEST_CANCELLED);
+	LYCloseTempFP(fd);	/* Close the tmpfile. */
 	scrollok(stdscr,FALSE); /* Stop scrolling.    */
 	goto cleanup;
     }
@@ -1400,8 +1412,9 @@ PUBLIC void reply_by_mail ARGS3(
 	fprintf(fd, "\n");
     }
 #else
-    sprintf(buf, "From: %s\n", user_input);
-    StrAllocCat(header, buf);
+    StrAllocCat(header, "From: ");
+    StrAllocCat(header, user_input);
+    StrAllocCat(header, "\n");
 #endif /* VMS */
 #endif /* !NO_ANONYMOUS_EMAIL */
 #ifdef VMS
@@ -1413,7 +1426,7 @@ PUBLIC void reply_by_mail ARGS3(
      */
     addstr(ENTER_SUBJECT_LINE);
     addstr(CTRL_U_TO_ERASE);
-    addstr("Subject: ");
+    addstr(SUBJECT_PROMPT);
     /* Add the default subject. */
     sprintf(user_input, "%.70s%.63s",
 			(subject[0] != '\0') ?
@@ -1427,9 +1440,8 @@ PUBLIC void reply_by_mail ARGS3(
     if (LYgetstr(user_input, VISIBLE, 71, NORECALL) < 0 ||
 	term_letter) {
 	addstr("\n");
-	_statusline(COMMENT_REQUEST_CANCELLED);
-	sleep(InfoSecs);
-	fclose(fd);		/* Close the tmpfile. */
+	HTInfoMsg(COMMENT_REQUEST_CANCELLED);
+	LYCloseTempFP(fd);	/* Close the tmpfile. */
 	scrollok(stdscr,FALSE); /* Stop scrolling.    */
 	goto cleanup;
     }
@@ -1438,8 +1450,9 @@ PUBLIC void reply_by_mail ARGS3(
 #ifdef VMS
     sprintf(subject, "%.70s", user_input);
 #else
-    sprintf(buf, "Subject: %s\n", user_input);
-    StrAllocCat(header, buf);
+    StrAllocCat(header, "Subject: ");
+    StrAllocCat(header, user_input);
+    StrAllocCat(header, "\n");
 #endif /* VMS */
 
     /*
@@ -1460,16 +1473,15 @@ PUBLIC void reply_by_mail ARGS3(
 	if (LYgetstr(user_input, VISIBLE, sizeof(user_input), NORECALL) < 0 ||
 	    term_letter) {
 	    addstr("\n");
-	    _statusline(COMMENT_REQUEST_CANCELLED);
-	    sleep(InfoSecs);
-	    fclose(fd); 		/* Close the tmpfile. */
+	    HTInfoMsg(COMMENT_REQUEST_CANCELLED);
+	    LYCloseTempFP(fd); 		/* Close the tmpfile. */
 	    scrollok(stdscr, FALSE);	/* Stop scrolling.    */
 	    goto cleanup;
 	}
 	addstr("\n");
     }
     remove_tildes(user_input);
-#if defined (VMS) || defined (DOSPATH)
+
     if (*user_input) {
 	cp = user_input;
 	while (*cp == ',' || isspace((unsigned char)*cp))
@@ -1483,11 +1495,12 @@ PUBLIC void reply_by_mail ARGS3(
 	    }
 	}
     }
-#endif
+
 #ifdef DOSPATH
     if (*address) {
-	sprintf(buf, "To: %s\n", address);
-	StrAllocCat(header, buf);
+	StrAllocCat(header, "To: ");
+	StrAllocCat(header, address);
+	StrAllocCat(header, "\n");
     }
 #endif
 
@@ -1515,6 +1528,7 @@ PUBLIC void reply_by_mail ARGS3(
      */
     sprintf(buf, "\n");
     StrAllocCat(header, buf);
+    CTRACE(tfp,"**header==\n%s",header);
 #endif /* !VMS */
 
     if (!no_editor && editor && *editor != '\0') {
@@ -1536,15 +1550,9 @@ PUBLIC void reply_by_mail ARGS3(
 	     */
 	    BOOLEAN is_preparsed = (LYPreparsedSource &&
 				    HTisDocumentSource());
-	    if (is_preparsed)
-		_statusline(INC_PREPARSED_MSG_PROMPT);
-	    else
-		_statusline(INC_ORIG_MSG_PROMPT);
-	    c = 0;
-	    while (TOUPPER(c) != 'Y' && TOUPPER(c) != 'N' &&
-		   !term_letter && c != 7   && c != 3)
-		c = LYgetch();
-	    if (TOUPPER(c) == 'Y') {
+	    if (HTConfirm(is_preparsed
+	    	? INC_PREPARSED_MSG_PROMPT
+		: INC_ORIG_MSG_PROMPT) == YES) {
 		/*
 		 *  The 1 will add the reply "> " in front of every line.
 		 */
@@ -1554,7 +1562,7 @@ PUBLIC void reply_by_mail ARGS3(
 		    print_wwwfile_to_fd(fd, 1);
 	    }
 	}
-	fclose(fd);		/* Close the tmpfile. */
+	LYCloseTempFP(fd);	/* Close the tmpfile. */
 	scrollok(stdscr,FALSE); /* Stop scrolling.    */
 
 	if (term_letter || c == 7 || c == 3)
@@ -1569,10 +1577,9 @@ PUBLIC void reply_by_mail ARGS3(
 	sprintf(user_input, "%s%s %s", editor, editor_arg, my_tmpfile);
 	_statusline(SPAWNING_EDITOR_FOR_MAIL);
 	stop_curses();
-	if (system(user_input)) {
+	if (LYSystem(user_input)) {
 	    start_curses();
-	    _statusline(ERROR_SPAWNING_EDITOR);
-	    sleep(AlertSecs);
+	    HTAlert(ERROR_SPAWNING_EDITOR);
 	} else {
 	    start_curses();
 	}
@@ -1596,16 +1603,16 @@ PUBLIC void reply_by_mail ARGS3(
 		if (term_letter || c == 7 || c == 3) {
 		    addstr(CANCELLED);
 		    sleep(InfoSecs);
-		    fclose(fd); 		/* Close the tmpfile. */
+		    LYCloseTempFP(fd); 		/* Close the tmpfile. */
 		    scrollok(stdscr, FALSE);	/* Stop scrolling.    */
 		    goto cleanup;
 		}
 		i = (LYlines - 2);
 	    }
 	    *cp++ = '\0';
-	    sprintf(cmd, "%s\n", cp1);
-	    fprintf(fd, cmd);
-	    addstr(cmd);
+	    fprintf(fd, "%s\n", cp1);
+	    addstr(cp1);
+	    addstr("\n");
 	    cp1 = cp;
 	    i--;
 	}
@@ -1614,7 +1621,7 @@ PUBLIC void reply_by_mail ARGS3(
 	    i--;
 	}
 	refresh();
-	fclose(fd);		/* Close the tmpfile.	  */
+	LYCloseTempFP(fd);	/* Close the tmpfile.	  */
 	scrollok(stdscr,FALSE); /* Stop scrolling.	  */
 
     } else {
@@ -1629,9 +1636,8 @@ PUBLIC void reply_by_mail ARGS3(
 	*user_input = '\0';
 	if (LYgetstr(user_input, VISIBLE, sizeof(user_input), NORECALL) < 0 ||
 	    term_letter || STREQ(user_input, ".")) {
-	    _statusline(COMMENT_REQUEST_CANCELLED);
-	    sleep(InfoSecs);
-	    fclose(fd); 		/* Close the tmpfile. */
+	    HTInfoMsg(COMMENT_REQUEST_CANCELLED);
+	    LYCloseTempFP(fd); 		/* Close the tmpfile. */
 	    scrollok(stdscr,FALSE);	/* Stop scrolling.    */
 	    goto cleanup;
 	}
@@ -1643,16 +1649,15 @@ PUBLIC void reply_by_mail ARGS3(
 	    *user_input = '\0';
 	    if (LYgetstr(user_input, VISIBLE,
 			 sizeof(user_input), NORECALL) < 0) {
-		_statusline(COMMENT_REQUEST_CANCELLED);
-		sleep(InfoSecs);
-		fclose(fd);		/* Close the tmpfile. */
+		HTInfoMsg(COMMENT_REQUEST_CANCELLED);
+		LYCloseTempFP(fd);	/* Close the tmpfile. */
 		scrollok(stdscr,FALSE); /* Stop scrolling.    */
 		goto cleanup;
 	    }
 	}
 
 	fprintf(fd, "\n");	/* Terminate the message. */
-	fclose(fd);		/* Close the tmpfile.	  */
+	LYCloseTempFP(fd);	/* Close the tmpfile.	  */
 	scrollok(stdscr,FALSE); /* Stop scrolling.	  */
     }
 
@@ -1663,33 +1668,31 @@ PUBLIC void reply_by_mail ARGS3(
     signal(SIGINT, SIG_IGN);
 #endif /* !VMS */
     LYStatusLine = (LYlines - 1);
-    if (body)
-	_statusline(SEND_MESSAGE_PROMPT);
-    else
-	_statusline(SEND_COMMENT_PROMPT);
+    c = HTConfirm (body ? SEND_MESSAGE_PROMPT : SEND_COMMENT_PROMPT);
     LYStatusLine = -1;
-    c = 0;
-    while (TOUPPER(c) != 'Y' && TOUPPER(c) != 'N' &&
-	   !term_letter && c != 7   && c != 3)
-	c = LYgetch();
-    if (TOUPPER(c) != 'Y') {
+    if (c != YES) {
 	clear();  /* clear the screen */
 	goto cleanup;
     }
     if ((body == NULL && LynxSigFile != NULL) &&
 	(fp = fopen(LynxSigFile, "r")) != NULL) {
 	LYStatusLine = (LYlines - 1);
-	_user_message(APPEND_SIG_FILE, LynxSigFile);
-	c = 0;
+	if (term_letter) {
+	    _user_message(APPEND_SIG_FILE, LynxSigFile);
+	    c = 0;
+	} else {
+	    char *msg = NULL;
+	    HTSprintf0(&msg, APPEND_SIG_FILE, LynxSigFile);
+	    c = HTConfirm(msg);
+	    FREE(msg);
+	}
 	LYStatusLine = -1;
-	while (TOUPPER(c) != 'Y' && TOUPPER(c) != 'N' &&
-	       !term_letter && c != 7	&& c != 3)
-	    c = LYgetch();
-	if (TOUPPER(c) == 'Y') {
+	if (c == YES) {
 	    if ((fd = fopen(my_tmpfile, "a")) != NULL) {
+		char *buffer = NULL;
 		fputs("-- \n", fd);
-		while (fgets(user_input, sizeof(user_input), fp) != NULL) {
-		    fputs(user_input, fd);
+		while (LYSafeGets(&buffer, fp) != NULL) {
+		    fputs(buffer, fd);
 		}
 		fclose(fd);
 	    }
@@ -1714,7 +1717,7 @@ PUBLIC void reply_by_mail ARGS3(
 	    fprintf(hfd, "Keywords: %s\n", keywords);
 	}
 	fprintf(hfd, "Subject: %s\n\n", subject);
-	fclose(hfd);
+	LYCloseTempFP(hfd);
 	/*
 	 *  Now set up the command. - FM
 	 */
@@ -1730,6 +1733,8 @@ PUBLIC void reply_by_mail ARGS3(
 	 *  command, and ignore any keywords to minimize risk
 	 *  of them making the line too long or having problem
 	 *  characters. - FM
+	 *
+	 *  Possibly still a problem if user supplies long subject. - BL
 	 */
 	sprintf(cmd,
 		"%s %s%s/subject=\"%s\" %s ",
@@ -1757,8 +1762,12 @@ PUBLIC void reply_by_mail ARGS3(
 	 *  4 letters is arbitrarily the smallest possible mail
 	 *  address, at least for lynx.  That way extra spaces
 	 *  won't confuse the mailer and give a blank address.
+	 *
+	 *  ignore addresses so long that they would overflow the
+	 *  temporary buffer (i.e., about 500 chars). - BL
 	 */
-	if (strlen(address_ptr1) > 3) {
+	if (strlen(address_ptr1) > 3 &&
+	    strlen(address_ptr1) + strlen(mail_adrs) < sizeof(cmd)) {
 	    if (!first) {
 		StrAllocCat(command, ",");
 	    }
@@ -1786,8 +1795,12 @@ PUBLIC void reply_by_mail ARGS3(
 	     *	4 letters is arbitrarily the smallest possible mail
 	     *	address, at least for lynx.  That way extra spaces
 	     *	won't confuse the mailer and give a blank address.
+	     *
+	     *  ignore addresses so long that they would overflow the
+	     *  temporary buffer (i.e., about 500 chars). - BL
 	     */
-	    if (strlen(address_ptr1) > 3) {
+	    if (strlen(address_ptr1) > 3 &&
+		strlen(address_ptr1) + strlen(mail_adrs) < sizeof(cmd)) {
 		StrAllocCat(command, ",");
 		sprintf(cmd, mail_adrs, address_ptr1);
 		if (isPMDF) {
@@ -1800,8 +1813,8 @@ PUBLIC void reply_by_mail ARGS3(
     }
 
     stop_curses();
-    printf("Sending your comment:\n\n$ %s\n\nPlease wait...", command);
-    system(command);
+    printf("%s\n\n$ %s\n\n%s", SENDING_COMMENT, command, PLEASE_WAIT);
+    LYSystem(command);
     FREE(command);
     sleep(AlertSecs);
     start_curses();
@@ -1813,13 +1826,7 @@ PUBLIC void reply_by_mail ARGS3(
     _statusline(SENDING_YOUR_MSG);
     sprintf(cmd, "%s %s", system_mail, system_mail_flags);
 #ifdef DOSPATH
-    tempname(tmpfile2, NEW_FILE);
-    if (((cp = strrchr(tmpfile2, '.')) != NULL) &&
-	NULL == strchr(cp, '/')) {
-	*cp = '\0';
-	strcat(tmpfile2, ".txt");
-    }
-    if ((fp = LYNewTxtFile(tmpfile2)) == NULL) {
+    if ((fp = LYOpenTemp(tmpfile2, ".txt", "w")) == NULL) {
 	HTAlert(MAILTO_URL_TEMPOPEN_FAILED);
 	return;
     }
@@ -1827,15 +1834,13 @@ PUBLIC void reply_by_mail ARGS3(
     signal(SIGINT, SIG_IGN);
     fp = popen(cmd, "w");
     if (fp == NULL) {
-	_statusline(COMMENT_REQUEST_CANCELLED);
-	sleep(InfoSecs);
+	HTInfoMsg(COMMENT_REQUEST_CANCELLED);
 	goto cleanup;
     }
 #endif /* DOSPATH */
     fd = fopen(my_tmpfile, "r");
     if (fd == NULL) {
-	_statusline(COMMENT_REQUEST_CANCELLED);
-	sleep(InfoSecs);
+	HTInfoMsg(COMMENT_REQUEST_CANCELLED);
 	pclose(fp);
 	goto cleanup;
     }
@@ -1843,21 +1848,25 @@ PUBLIC void reply_by_mail ARGS3(
     while ((n = fread(buf, 1, sizeof(buf), fd)) != 0)
 	fwrite(buf, 1, n, fp);
 #ifdef DOSPATH
-	sprintf(cmd, "%s -t \"%s\" -F %s", system_mail, address, tmpfile2);
-	fclose(fp);		/* Close the tmpfile. */
-	stop_curses();
-	printf("Sending your comment:\n\n$ %s\n\nPlease wait...", cmd);
-	system(cmd);
-	sleep(MessageSecs);
-	start_curses();
-	remove(tmpfile2);	/* Delete the tmpfile. */
+    StrAllocCopy(command, system_mail);
+    StrAllocCat(command, " -t \"");
+    StrAllocCat(command, address);
+    StrAllocCat(command, "\" -F ");
+    StrAllocCat(command, tmpfile2);
+    LYCloseTempFP(fp);	/* Close the tmpfile. */
+    stop_curses();
+    printf("%s\n\n$ %s\n\n%s", SENDING_COMMENT, command, PLEASE_WAIT);
+    LYSystem(command);
+    FREE(command);
+    sleep(MessageSecs);
+    start_curses();
+    LYRemoveTemp(tmpfile2);	/* Delete the tmpfile. */
 #else
     pclose(fp);
 #endif
-    fclose(fd); /* Close the tmpfile. */
+    LYCloseTempFP(fd); /* Close the tmpfile. */
 
-    if (TRACE)
-	printf("%s\n", cmd);
+    CTRACE(tfp, "%s\n", cmd);
 #endif /* VMS */
 
     /*
@@ -1875,14 +1884,11 @@ cleandown:
     term_letter = FALSE;
 #ifdef VMS
     FREE(command);
-    while (remove(my_tmpfile) == 0)
-	;		 /* Delete the tmpfile(s). */
     if (isPMDF) {
-	remove(hdrfile); /* Delete the hdrfile. */
+	LYRemoveTemp(hdrfile);
     }
-#else
-    remove(my_tmpfile);  /* Delete the tmpfile. */
 #endif /* VMS */
+    LYRemoveTemp(my_tmpfile);
     FREE(address);
     FREE(ccaddr);
     FREE(keywords);

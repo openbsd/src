@@ -5,7 +5,7 @@
 #ifndef HTTP_H
 #define HTTP_H
 
-#include "HTAccess.h"
+#include <HTAccess.h>
 
 #ifdef GLOBALREF_IS_MACRO
 extern GLOBALREF (HTProtocol,HTTP);

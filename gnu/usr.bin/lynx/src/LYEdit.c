@@ -1,32 +1,35 @@
-#include "HTUtils.h"
-#include "tcp.h"
-#include "HTParse.h"
-#include "HTAlert.h"
-#include "LYCurses.h"
-#include "LYSignal.h"
-#include "LYUtils.h"
-#include "LYClean.h"
-#include "LYGlobalDefs.h"
-#include "LYEdit.h"
-#include "LYStrings.h"
-#include "LYSystem.h"
+#include <HTUtils.h>
+#include <HTParse.h>
+#include <HTAlert.h>
+#include <LYCurses.h>
+#include <LYUtils.h>
+#include <LYGlobalDefs.h>
+#include <LYEdit.h>
 #ifdef VMS
 #include <unixio.h>
-#include "HTVMSUtils.h"
 #endif /* VMS */
-#ifdef DOSPATH
-#include "HTDOS.h"
+
+#include <LYLeaks.h>
+
+PUBLIC BOOLEAN editor_can_position NOARGS
+{
+#ifdef VMS
+    return (strstr(editor, "sedt") || strstr(editor, "SEDT"));
+#else
+    return (strstr(editor, "emacs") || strstr(editor, "vi") ||
+	strstr(editor, "pico")  || strstr(editor, "jove")   ||
+ 	strstr(editor, "jed")   || strstr(editor, "joe")    ||
+ 	strstr(editor, "jstar") || strstr(editor, "jmacs")  ||
+ 	strstr(editor, "rjoe")  || strstr(editor, "jpico"));
 #endif
-
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
+}
 
 /*
- *  In edit mode invoke either emacs, vi, pico, jove, jed sedt or the
- *  default editor to display and edit the current file.
- *  For emacs, vi, pico, jove and jed, Lynx will open the file to the
- *  same line that the screen cursor is on when editing is invoked.
+ *  In edit mode invoke the given (or default) editor to display and edit the
+ *  current file.  For editors listed in 'editor_can_position()', Lynx
+ *  will open the file to the same line that the screen cursor is on (or
+ *  close...) when editing is invoked.
+ *
  *  Returns FALSE if file is uneditable.
  */
 PUBLIC int edit_current_file ARGS3(
@@ -34,17 +37,20 @@ PUBLIC int edit_current_file ARGS3(
 	int,		cur,
 	int,		lineno)
 {
-    char command[512];
+    int result = FALSE;
+    int params = 1;
+    char *format = "%s %s";
+    char *command = NULL;
     char *filename = NULL;
     char *colon, *number_sign;
+    char position[80];
     FILE *fp;
 
     /*
      *  If its a remote file then we can't edit it.
      */
     if (!LYisLocalFile(newfile)) {
-	_statusline(CANNOT_EDIT_REMOTE_FILES);
-	sleep(MessageSecs);
+	HTUserMsg(CANNOT_EDIT_REMOTE_FILES);
 	return FALSE;
     }
 
@@ -61,7 +67,7 @@ PUBLIC int edit_current_file ARGS3(
      *
      * On VMS, only try the path.
      */
-#if !defined (VMS) && !defined (DOSPATH)
+#if !defined (VMS) && !defined (DOSPATH) && !defined (__EMX__)
     colon = strchr(newfile, ':');
     StrAllocCopy(filename, (colon + 1));
     HTUnEscape(filename);
@@ -70,23 +76,14 @@ PUBLIC int edit_current_file ARGS3(
 #endif /* !VMS */
 	filename = HTParse(newfile, "", PARSE_PATH+PARSE_PUNCTUATION);
 	HTUnEscape(filename);
-#ifdef DOSPATH
-	if (strlen(filename)>1) filename++;
-#endif
-#ifdef DOSPATH
-	if ((fp = fopen(HTDOS_name(filename),"r")) == NULL) {
-#else
-#ifdef VMS
-	if ((fp = fopen(HTVMS_name("", filename), "r")) == NULL) {
-#else
-	if ((fp = fopen(filename, "r")) == NULL) {
-#endif /* VMS */
-#endif /* DOSPATH */
+	StrAllocCopy(filename, HTSYS_name(filename));
+	if ((fp = fopen(filename, "r")) == NULL)
+	{
 	    HTAlert(COULD_NOT_ACCESS_FILE);
-	    FREE(filename);
-	    goto failure;
+	    CTRACE(tfp, "filename: '%s'\n", filename);
+	    goto done;
 	}
-#if !defined (VMS) && !defined (DOSPATH)
+#if !defined (VMS) && !defined (DOSPATH) && !defined (__EMX__)
     }
 #endif /* !VMS */
     fclose(fp);
@@ -95,18 +92,10 @@ PUBLIC int edit_current_file ARGS3(
     /*
      *  Don't allow editing if user lacks append access.
      */
-#ifdef DOSPATH
-    if ((fp = fopen(HTDOS_name("", filename), "a")) == NULL) {
-#else
-#ifdef VMS
-    if ((fp = fopen(HTVMS_name("", filename), "a")) == NULL) {
-#else
-    if ((fp = fopen(filename, "a")) == NULL) {
-#endif /* VMS */
-#endif /* DOSPATH */
-	_statusline(NOAUTH_TO_EDIT_FILE);
-	sleep(MessageSecs);
-	goto failure;
+    if ((fp = fopen(filename, "a")) == NULL)
+    {
+	HTUserMsg(NOAUTH_TO_EDIT_FILE);
+	goto done;
     }
     fclose(fp);
 #endif /* VMS || CANT_EDIT_UNWRITABLE_FILES */
@@ -121,69 +110,54 @@ PUBLIC int edit_current_file ARGS3(
     /*
      *  Set up the command for the editor. - FM
      */
+    *position = 0;
 #ifdef VMS
-    if ((strstr(editor, "sedt") || strstr(editor, "SEDT")) &&
-	((lineno - 1) + (nlinks ? links[cur].ly : 0)) > 0) {
-	sprintf(command, "%s %s -%d",
-			 editor,
-			 HTVMS_name("", filename),
-			 ((lineno - 1) + (nlinks ? links[cur].ly : 0)));
+    lineno--;
+#endif
+    lineno += (nlinks ? links[cur].ly : 0);
+    if (lineno > 0)
+	sprintf(position, "%d", lineno);
+
+    if (editor_can_position() && *position) {
+#ifdef VMS
+	format = "%s %s -%s";
+	HTAddXpand(&command, format, params++, editor);
+	HTAddParam(&command, format, params++, filename);
+	HTAddParam(&command, format, params++, position);
+	HTEndParam(&command, format, params);
+#else
+	format = "%s +%s %s";
+	HTAddXpand(&command, format, params++, editor);
+	HTAddParam(&command, format, params++, position);
+	HTAddParam(&command, format, params++, filename);
+	HTEndParam(&command, format, params);
+#endif
     } else {
-	sprintf(command, "%s %s", editor, HTVMS_name("", filename));
+	HTAddXpand(&command, format, params++, editor);
+	HTAddParam(&command, format, params++, filename);
+	HTEndParam(&command, format, params);
     }
-#else
-    if (strstr(editor, "emacs") || strstr(editor, "vi") ||
-	strstr(editor, "pico") || strstr(editor, "jove") ||
-	strstr(editor, "jed"))
-	sprintf(command, "%s +%d \"%s\"",
-			 editor,
-			 (lineno + (nlinks ? links[cur].ly : 0)),
-#ifdef DOSPATH
-			 HTDOS_name(filename));
-#else
-			 filename);
-#endif /* DOSPATH */
-    else
-#ifdef __DJGPP__
-	sprintf(command, "%s %s", editor, HTDOS_name(filename));
-#else
-	sprintf(command, "%s \"%s\"", editor,
-#ifdef DOSPATH
-				 HTDOS_name(filename));
-#else
-				 filename);
-#endif /* DOSPATH */
-#endif /* __DJGPP__ */
-#endif /* VMS */
-    if (TRACE) {
-	fprintf(stderr, "LYEdit: %s\n", command);
-	sleep(MessageSecs);
-    }
-    FREE(filename);
+
+    CTRACE(tfp, "LYEdit: %s\n", command);
+    CTRACE_SLEEP(MessageSecs);
 
     /*
      *  Invoke the editor. - FM
      */
-    fflush(stderr);
-    fflush(stdout);
     stop_curses();
-    system(command);
-    fflush(stdout);
-    fflush(stderr);
+    LYSystem(command);
     start_curses();
 
-    /*
-     *  Restore the fragment if there was one. - FM
-     */
-    if (number_sign)
-	*number_sign = '#';
-    return TRUE;
+    result = TRUE;
 
-failure:
+done:
     /*
      *  Restore the fragment if there was one. - FM
      */
     if (number_sign)
 	*number_sign = '#';
-    return FALSE;
+
+    FREE(command);
+    FREE(filename);
+    return (result);
 }

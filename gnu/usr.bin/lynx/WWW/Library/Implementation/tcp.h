@@ -1,20 +1,20 @@
 /*                System dependencies in the W3 library
                                    SYSTEM DEPENDENCIES
-                                             
-   System-system differences for TCP include files and macros. This
+
+   System-system differences for TCP include files and macros.  This
    file includes for each system the files necessary for network and
    file I/O.  It should be used in conjunction with HTUtils.h to help
    ensure portability across as many platforms and flavors of platforms
    as possible.
-   
+
   AUTHORS
-  
+
   TBL                Tim Berners-Lee, W3 project, CERN, <timbl@info.cern.ch>
   EvA                     Eelco van Asperen <evas@cs.few.eur.nl>
   MA                      Marc Andreessen NCSA
   AT                      Aleksandar Totic <atotic@ncsa.uiuc.edu>
   SCW                     Susan C. Weber <sweber@kyle.eitech.com>
-                         
+
   HISTORY:
   22 Feb 91               Written (TBL) as part of the WWW library.
   16 Jan 92               PC code from EvA
@@ -29,17 +29,13 @@
 #ifndef TCP_H
 #define TCP_H
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* !HTUTILS_H */
-
 /*
 
 Default values
 
    These values may be reset and altered by system-specific sections
    later on.  there are also a bunch of defaults at the end .
-   
+
  */
 /* Default values of those: */
 #define NETCLOSE close      /* Routine to close a TCP-IP socket         */
@@ -57,75 +53,98 @@ Default values
 #define GOT_PIPE
 #endif /* unix */
 
+#define INVSOC (-1)             /* Unix invalid socket */
+		/* NB: newer libwww has something different for Windows */
+
 typedef struct sockaddr_in SockA;  /* See netinet/in.h */
-
-
-#ifndef STDIO_H
-#include <stdio.h>
-#define STDIO_H
-#endif /* !STDIO_H */
 
 #ifndef VMS
 #include <sys/types.h>
 
-#if HAVE_DIRENT_H
+#if defined(__DJGPP__) || defined(__BORLANDC__)
+#undef HAVE_DIRENT_H
+#define HAVE_DIRENT_H
+#undef HAVE_SYS_FILIO_H
+#endif /* DJGPP or __BORLANDC__ */
+
+#ifdef HAVE_DIRENT_H
 # include <dirent.h>
 # define D_NAMLEN(dirent) strlen((dirent)->d_name)
 # define STRUCT_DIRENT struct dirent
 #else
 # define D_NAMLEN(dirent) (dirent)->d_namlen
 # define STRUCT_DIRENT struct direct
-# define direct dirent	/* FIXME */
-# if HAVE_SYS_NDIR_H
+# ifdef HAVE_SYS_NDIR_H
 #  include <sys/ndir.h>
 # endif
-# if HAVE_SYS_DIR_H
+# ifdef HAVE_SYS_DIR_H
 #  include <sys/dir.h>
 # endif
-# if HAVE_NDIR_H
+# ifdef HAVE_NDIR_H
 #  include <ndir.h>
 # endif
 #endif /* HAVE_DIRENT_H */
 #endif /* !VMS */
 
-#if TIME_WITH_SYS_TIME
+#ifdef TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
 #else
-# if HAVE_SYS_TIME_H
+# ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 # else
 #  include <time.h>
 # endif
 #endif
 
-#ifdef _AIX
+#if defined(_AIX) && !defined(AIX)
 #define AIX
 #endif /* _AIX */
-#ifdef AIX
+
+#if defined(AIX) && !defined(unix)
 #define unix
 #endif /* AIX */
 
-#if HAVE_FCNTL_H
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #else
-#if HAVE_SYS_FCNTL_H
+#ifdef HAVE_SYS_FCNTL_H
 #include <sys/fcntl.h>
 #endif
 #endif
 
-#if HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>             /* For bzero etc */
 #endif /* HAVE_STRING_H */
 
 /*
 
-  M ACROS FOR CONVERTING CHARACTERS
+  MACROS FOR CONVERTING CHARACTERS
 
  */
 #ifndef TOASCII
+#ifdef EBCDIC  /* S/390 -- gil -- 1327 */
+
+extern       char un_IBM1047[];
+extern unsigned char IBM1047[];
+/* For debugging
+#include <assert.h>
+#define   TOASCII(c) (assert((c)>=0 && (c)<256), un_IBM1047[c])
+*/ /* for production */
+#define   TOASCII(c) (un_IBM1047[c])
+
+#define FROMASCII(c) (IBM1047[c])
+
+#else  /* EBCDIC */
+
+#if '0' != 48
+ error Host character set is not ASCII.
+#endif
+
 #define TOASCII(c) (c)
 #define FROMASCII(c) (c)
+
+#endif /* EBCDIC */
 #endif /* !TOASCII */
 
 
@@ -136,9 +155,10 @@ IBM-PC running Windows NT
 */
 
 #ifdef _WINDOWS
-#include "fcntl.h"                      /* For HTFile.c */
-#include "sys\types.h"                  /* For HTFile.c */
-#include "sys\stat.h"                   /* For HTFile.c */
+#define _WINDOWS_NSL
+#include <fcntl.h>                      /* For HTFile.c */
+#include <sys\types.h>                  /* For HTFile.c */
+#include <sys\stat.h>                   /* For HTFile.c */
 #undef NETREAD
 #undef NETWRITE
 #undef NETCLOSE
@@ -153,7 +173,6 @@ IBM-PC running Windows NT
 #include <time.h>
 #include <errno.h>
 #include <direct.h>
-#include <stdio.h>
 #include <winsock.h>
 typedef struct sockaddr_in SockA;  /* See netinet/in.h */
 #define EINPROGRESS          (WSABASEERR+36)
@@ -176,23 +195,23 @@ VAX/VMS
 
    Under VMS, there are many versions of TCP-IP. Define one if you do
    not use Digital's UCX product:
-   
+
   UCX                     DEC's "Ultrix connection" (default)
   CMU_TCP                 Available via FTP from sacusr.mp.usbr.gov
   SOCKETSHR		  Eckhart Meyer's interface to NETLIB
   WIN_TCP                 From Wollongong, now GEC software.
   MULTINET                From SRI, became TGV, then Cisco.
   DECNET                  Cern's TCP socket emulation over DECnet
-                           
+
    The last three do not interfere with the
    unix i/o library, and so they need special calls to read, write and
-   close sockets. In these cases the socket number is a VMS channel
+   close sockets.  In these cases the socket number is a VMS channel
    number, so we make the @@@ HORRIBLE @@@ assumption that a channel
    number will be greater than 10 but a unix file descriptor less than
    10.  It works.
-   
+
  */
-#ifdef VMS 
+#ifdef VMS
 
 #ifdef UCX
 #undef IOCTL
@@ -266,11 +285,6 @@ extern int socket_ioctl();
 
 #include <string.h>
 
-#ifndef STDIO_H
-#include <stdio.h>
-#define STDIO_H
-#endif /* !STDIO_H */
-
 #include <file.h>
 #include <stat.h>
 #include <unixio.h>
@@ -289,7 +303,6 @@ extern int socket_ioctl();
 */
 extern int multinet_accept();
 extern int multinet_bind();
-extern int bzero();
 extern int multinet_connect();
 extern int multinet_gethostname();
 extern int multinet_getsockname();
@@ -306,6 +319,7 @@ extern char *vms_errno_string();
 #include <time.h>
 #include <types.h>
 #ifdef __TIME_T
+#undef  __TYPES
 #define __TYPES 1
 #define __TYPES_LOADED 1
 #endif /* __TIME_T */
@@ -318,9 +332,11 @@ extern char *vms_errno_string();
 #endif /* !__SOCKET_TYPEDEFS */
 #include "multinet_root:[multinet.include]errno.h"
 #ifdef __TYPES
+#undef  __TIME_T
 #define __TIME_T 1
 #endif /* __TYPE */
 #ifdef __TIME_LOADED
+#undef  __TIME
 #define __TIME 1  /* to avoid double definitions in in.h */
 #endif /* __TIME_LOADED */
 #include "multinet_root:[multinet.include.sys]time.h"
@@ -348,10 +364,10 @@ struct timeval {
 #include <types.h>
 #include <errno.h>
 #include <time.h>
-#include "types.h"  /* for socket.h */
-#include "socket.h"
-#include "dn"
-#include "dnetdb"
+#include <types.h>  /* for socket.h */
+#include <socket.h>
+#include <dn>
+#include <dnetdb>
 /* #include "vms.h" */
 #define TCP_INCLUDES_DONE
 #endif /* DECNET */
@@ -445,7 +461,7 @@ struct timeval {
    On VMS machines, the linker needs to be told to put global data sections into
  a data
    segment using these storage classes. (MarkDonszelmann)
-  
+
  */
 #if defined(VAXC) && !defined(__DECC)
 #define GLOBALDEF globaldef
@@ -483,26 +499,23 @@ struct timeval {
 #define NETREAD read_s
 #undef NETCLOSE
 #define NETCLOSE close_s
+#define getsockname getsockname_s
+#ifdef HAVE_GETTEXT
+#define gettext gettext__
 #endif
+#endif /* DJGPP */
 
-/*
-SCO ODT unix version
- */
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif /* HAVE_UNISTD_H */
 
-#if HAVE_SYS_FILIO_H
+#ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>
 #endif /* HAVE_SYS_FILIO_H */
 
-/*
-MIPS unix
- */
-/* Mips hack (bsd4.3/sysV mixture...) */
-#ifdef mips
+#ifdef DECL_ERRNO
 extern int errno;
-#endif /* mips */
+#endif /* DECL_ERRNO */
 
 /*
 Regular BSD unix versions
@@ -511,11 +524,13 @@ Regular BSD unix versions
  */
 #ifndef INCLUDES_DONE
 #include <sys/types.h>
-/* #include <streams/streams.h>                 not ultrix */
-#if HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #endif /* HAVE_STRING_H */
 #include <errno.h>          /* independent */
+#ifdef __MVS__  /* S/390 -- gil -- 1361 */
+#include <time.h>
+#endif /* __MVS__ */
 #ifdef SCO
 #include <sys/timeb.h>
 #include <time.h>
@@ -525,18 +540,20 @@ Regular BSD unix versions
 #endif /* AIX || SVR4 */
 #include <sys/time.h>       /* independent */
 #include <sys/stat.h>
+#ifndef __MVS__  /* S/390 -- gil -- 1373 */
 #include <sys/param.h>
+#endif /* __MVS__ */
 #include <sys/file.h>       /* For open() etc */
+
 #if defined(NeXT) || defined(sony_news)
 #ifndef mode_t
 typedef unsigned short mode_t;
 #endif /* !mode_t */
+
 #ifndef pid_t
 typedef int pid_t;
 #endif /* !pid_t */
-#ifndef S_ISREG
-#define S_ISREG(m) (((m) & 0170000) == 0100000)
-#endif /* S_ISREG */
+
 #ifndef WEXITSTATUS
 #ifdef sony_news
 #define WEXITSTATUS(s) WIFEXITED(s)
@@ -544,6 +561,7 @@ typedef int pid_t;
 #define WEXITSTATUS(s) (((s).w_status >> 8) & 0377)
 #endif /* sony_news */
 #endif /* !WEXITSTATUS */
+
 #ifndef WTERMSIG
 #ifdef sony_news
 #define WTERMSIG(s) (s).w_termsig
@@ -551,7 +569,9 @@ typedef int pid_t;
 #define WTERMSIG(s) (((s).w_status >> 8) & 0177)
 #endif /* sony_news */
 #endif /* !WTERMSIG */
+
 #endif /* NeXT || sony_news */
+
 #define INCLUDES_DONE
 #endif  /* Normal includes */
 
@@ -593,28 +613,6 @@ typedef int pid_t;
 
 #else
 
-/* FIXME: remove after completing configure-script */
-#ifdef unix                    /* if this is to compile on a UNIX machine */
-#define HAVE_READDIR 1    /* if directory reading functions are available */
-#ifdef USE_DIRENT             /* sys v version */
-#include <dirent.h>
-#define direct dirent
-#else
-#include <sys/dir.h>
-#endif /* USE_DIRENT */
-#if defined(sun) && defined(__svr4__)
-#include <sys/fcntl.h>
-#include <limits.h>
-#else
-#if defined(__hpux) || defined(LINUX) || defined (__FreeBSD__) 
-#include <limits.h>
-#endif /* __hpux || LINUX || __FreeBSD__ */
-#endif /* sun && __svr4__ */
-#if !defined(MAXINT) && defined(INT_MAX)
-#define MAXINT INT_MAX
-#endif /* !MAXINT && INT_MAX */
-#endif /* unix */
-
 #ifndef VM
 #ifndef VMS
 #ifndef THINK_C
@@ -624,6 +622,14 @@ typedef int pid_t;
 #endif /* !VM */
 
 #endif /* !HAVE_CONFIG_H */
+
+#ifdef HAVE_LIBINTL_H
+#include <libintl.h>
+#endif
+
+#ifndef HAVE_GETTEXT
+#define gettext(s) s
+#endif
 
 /*
 Defaults
@@ -641,6 +647,70 @@ Defaults
 #endif /* !__hpux */
 #include <netdb.h>
 #endif  /* TCP includes */
+
+#ifndef S_ISLNK
+#define S_ISLNK(m)	(((m) & S_IFMT) == S_IFLNK)
+#endif /* S_ISLNK */
+
+#ifndef S_ISDIR
+#define S_ISDIR(m)	(((m) & S_IFMT) == S_IFDIR)
+#endif /* S_ISDIR */
+
+#ifndef S_ISREG
+#define S_ISREG(m)	(((m) & S_IFMT) == S_IFREG)
+#endif /* S_ISREG */
+
+#ifndef S_ISUID
+#define S_ISUID  0004000
+#endif
+#ifndef S_ISGID
+#define S_ISGID  0002000
+#endif
+#ifndef S_ISVTX
+#define S_ISVTX  0001000
+#endif
+
+#ifndef S_IRWXU
+#define S_IRWXU 00700
+#endif
+
+#ifndef S_IRUSR
+#define S_IRUSR 00400
+#endif
+#ifndef S_IWUSR
+#define S_IWUSR 00200
+#endif
+#ifndef S_IXUSR
+#define S_IXUSR 00100
+#endif
+
+#ifndef S_IRWXG
+#define S_IRWXG 00070
+#endif
+
+#ifndef S_IRGRP
+#define S_IRGRP 00040
+#endif
+#ifndef S_IWGRP
+#define S_IWGRP 00020
+#endif
+#ifndef S_IXGRP
+#define S_IXGRP 00010
+#endif
+
+#ifndef S_IRWXO
+#define S_IRWXO 00007
+#endif
+
+#ifndef S_IROTH
+#define S_IROTH 00004
+#endif
+#ifndef S_IWOTH
+#define S_IWOTH 00002
+#endif
+#ifndef S_IXOTH
+#define S_IXOTH 00001
+#endif
 
 /*
 

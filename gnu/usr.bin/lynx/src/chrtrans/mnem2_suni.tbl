@@ -1,4 +1,4 @@
-#The MIME name of this charset. 
+#The MIME name of this charset.
 # (this file was renamed from mnemonic_suni.tbl)
 M mnemonic
 
@@ -7,7 +7,7 @@ O RFC 1345 Mnemonic
 
 # Don't fall back to default table for unicode -> 8bit
 Fallback NO
- 
+
 # U+0020:&SP
 U+0021:!
 U+0022:"

@@ -23,39 +23,33 @@
  *
  */
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif
-
-#ifdef DEBUG
-/*#include <stdio.h>  included by HTUTils.h - FM */
-#endif
+#include <HTUtils.h>
 
 #ifndef STATIC
 #define STATIC static
 #endif
 
 #ifndef DOS
-#include "patchlevel.h"
-#include "ufc-crypt.h"
+#include <patchlevel.h>
+#include <ufc-crypt.h>
 #else
 /*
  * Thanks to greg%wind@plains.NoDak.edu (Greg W. Wettstein)
  * for DOS patches
  */
-#include "pl.h"
-#include "ufc.h"
+#include <pl.h>
+#include <ufc.h>
 #endif
 
-#include "LYLeaks.h"
+#include <LYLeaks.h>
 
 static char patchlevel_str[] = PATCHLEVEL;
 
-/* 
- * Permutation done once on the 56 bit 
+/*
+ * Permutation done once on the 56 bit
  *  key derived from the original 8 byte ASCII key.
  */
-static int pc1[56] = { 
+static int pc1[56] = {
   57, 49, 41, 33, 25, 17,  9,  1, 58, 50, 42, 34, 26, 18,
   10,  2, 59, 51, 43, 35, 27, 19, 11,  3, 60, 52, 44, 36,
   63, 55, 47, 39, 31, 23, 15,  7, 62, 54, 46, 38, 30, 22,
@@ -66,15 +60,15 @@ static int pc1[56] = {
  * How much to rotate each 28 bit half of the pc1 permutated
  *  56 bit key before using pc2 to give the i' key
  */
-static int rots[16] = { 
-  1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 
+static int rots[16] = {
+  1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1
 };
 
-/* 
- * Permutation giving the key 
- * of the i' DES round 
+/*
+ * Permutation giving the key
+ * of the i' DES round
  */
-static int pc2[48] = { 
+static int pc2[48] = {
   14, 17, 11, 24,  1,  5,  3, 28, 15,  6, 21, 10,
   23, 19, 12,  4, 26,  8, 16,  7, 27, 20, 13,  2,
   41, 52, 31, 37, 47, 55, 30, 40, 51, 45, 33, 48,
@@ -85,7 +79,7 @@ static int pc2[48] = {
  * The E expansion table which selects
  * bits from the 32 bit intermediate result.
  */
-static int esel[48] = { 
+static int esel[48] = {
   32,  1,  2,  3,  4,  5,  4,  5,  6,  7,  8,  9,
    8,  9, 10, 11, 12, 13, 12, 13, 14, 15, 16, 17,
   16, 17, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25,
@@ -93,16 +87,16 @@ static int esel[48] = {
 };
 static int e_inverse[64];
 
-/* 
- * Permutation done on the 
- * result of sbox lookups 
+/*
+ * Permutation done on the
+ * result of sbox lookups
  */
 static int perm32[32] = {
   16,  7, 20, 21, 29, 12, 28, 17,  1, 15, 23, 26,  5, 18, 31, 10,
   2,   8, 24, 14, 32, 27,  3,  9, 19, 13, 30,  6, 22, 11,  4, 25
 };
 
-/* 
+/*
  * The sboxes
  */
 static int sbox[8][4][16]= {
@@ -155,19 +149,19 @@ static int sbox[8][4][16]= {
         }
 };
 
-/* 
- * This is the initial 
+/*
+ * This is the initial
  * permutation matrix
  */
-static int initial_perm[64] = { 
+static int initial_perm[64] = {
   58, 50, 42, 34, 26, 18, 10,  2, 60, 52, 44, 36, 28, 20, 12, 4,
   62, 54, 46, 38, 30, 22, 14,  6, 64, 56, 48, 40, 32, 24, 16, 8,
   57, 49, 41, 33, 25, 17,  9,  1, 59, 51, 43, 35, 27, 19, 11, 3,
   61, 53, 45, 37, 29, 21, 13,  5, 63, 55, 47, 39, 31, 23, 15, 7
 };
 
-/* 
- * This is the final 
+/*
+ * This is the final
  * permutation matrix
  */
 static int final_perm[64] = {
@@ -177,8 +171,8 @@ static int final_perm[64] = {
   34,  2, 42, 10, 50, 18, 58, 26, 33,  1, 41,  9, 49, 17, 57, 25
 };
 
-/* 
- * The 16 DES keys in BITMASK format 
+/*
+ * The 16 DES keys in BITMASK format
  */
 #ifdef _UFC_32_
 long32 _ufc_keytab[16][2];
@@ -205,15 +199,15 @@ long64 _ufc_keytab[16];
 
 #ifdef _UFC_32_
 long32 _ufc_sb0[8192], _ufc_sb1[8192], _ufc_sb2[8192], _ufc_sb3[8192];
-static long32 *sb[4] = {_ufc_sb0, _ufc_sb1, _ufc_sb2, _ufc_sb3}; 
+static long32 *sb[4] = {_ufc_sb0, _ufc_sb1, _ufc_sb2, _ufc_sb3};
 #endif
 
 #ifdef _UFC_64_
 long64 _ufc_sb0[4096], _ufc_sb1[4096], _ufc_sb2[4096], _ufc_sb3[4096];
-static long64 *sb[4] = {_ufc_sb0, _ufc_sb1, _ufc_sb2, _ufc_sb3}; 
+static long64 *sb[4] = {_ufc_sb0, _ufc_sb1, _ufc_sb2, _ufc_sb3};
 #endif
 
-/* 
+/*
  * eperm32tab: do 32 bit permutation and E selection
  *
  * The first index is the byte number in the 32 bit value to be permuted
@@ -224,7 +218,7 @@ static long64 *sb[4] = {_ufc_sb0, _ufc_sb1, _ufc_sb2, _ufc_sb3};
  */
 static ufc_long eperm32tab[4][256][2];
 
-/* 
+/*
  * do_pc1: permform pc1 permutation in the key schedule generation.
  *
  * The first   index is the byte number in the 8 byte ASCII key
@@ -252,7 +246,7 @@ static ufc_long do_pc2[8][128];
 /*
  * efp: undo an extra e selection and do final
  *      permutation giving the DES result.
- * 
+ *
  *      Invoked 6 bit a time on two 48 bit values
  *      giving two 32 bit longs.
  */
@@ -353,7 +347,7 @@ void init_des()
       mask1 = bytemask[comes_from_bit % 8 + 1];
       mask2 = longmask[bit % 28 + 4];
       for(j = 0; j < 128; j++) {
-	if(j & mask1) 
+	if(j & mask1)
 	  do_pc1[comes_from_bit / 8][bit / 28][j] |= mask2;
       }
     }
@@ -373,14 +367,14 @@ void init_des()
       }
     }
 
-    /* 
+    /*
      * Now generate the table used to do combined
      * 32 bit permutation and e expansion
      *
      * We use it because we have to permute 16384 32 bit
      * longs into 48 bit in order to initialize sb.
      *
-     * Looping 48 rounds per permutation becomes 
+     * Looping 48 rounds per permutation becomes
      * just too slow...
      *
      */
@@ -389,17 +383,17 @@ void init_des()
 
     for(bit = 0; bit < 48; bit++) {
       ufc_long mask1,comes_from;
-	
+
       comes_from = perm32[esel[bit]-1]-1;
       mask1      = bytemask[comes_from % 8];
-	
+
       for(j = 256; j--;) {
 	if(j & mask1)
 	  eperm32tab[comes_from / 8][j][bit / 24] |= BITMASK(bit % 24);
       }
     }
-    
-    /* 
+
+    /*
      * Create the sb tables:
      *
      * For each 12 bit segment of an 48 bit intermediate
@@ -414,14 +408,14 @@ void init_des()
     for(sg = 0; sg < 4; sg++) {
       int j1, j2;
       int s1, s2;
-    
+
       for(j1 = 0; j1 < 64; j1++) {
 	s1 = s_lookup(2 * sg, j1);
 	for(j2 = 0; j2 < 64; j2++) {
 	  ufc_long to_permute, inx;
-    
+
 	  s2         = s_lookup(2 * sg + 1, j2);
-	  to_permute = (((ufc_long)s1 << 4)  | 
+	  to_permute = (((ufc_long)s1 << 4)  |
 	               (ufc_long)s2) << (24 - 8 * (ufc_long)sg);
 
 #ifdef _UFC_32_
@@ -437,13 +431,13 @@ void init_des()
 #endif
 #ifdef _UFC_64_
 	  inx = ((j1 << 6)  | j2);
-	  sb[sg][inx]  = 
+	  sb[sg][inx]  =
 	    ((long64)eperm32tab[0][(to_permute >> 24) & 0xff][0] << 32) |
 	     (long64)eperm32tab[0][(to_permute >> 24) & 0xff][1];
 	  sb[sg][inx] |=
 	    ((long64)eperm32tab[1][(to_permute >> 16) & 0xff][0] << 32) |
 	     (long64)eperm32tab[1][(to_permute >> 16) & 0xff][1];
-  	  sb[sg][inx] |= 
+  	  sb[sg][inx] |=
 	    ((long64)eperm32tab[2][(to_permute >>  8) & 0xff][0] << 32) |
 	     (long64)eperm32tab[2][(to_permute >>  8) & 0xff][1];
 	  sb[sg][inx] |=
@@ -452,9 +446,9 @@ void init_des()
 #endif
 	}
       }
-    }  
+    }
 
-    /* 
+    /*
      * Create an inverse matrix for esel telling
      * where to plug out bits if undoing it
      */
@@ -463,7 +457,7 @@ void init_des()
       e_inverse[esel[bit] - 1 + 32] = bit + 48;
     }
 
-    /* 
+    /*
      * create efp: the matrix used to
      * undo the E expansion and effect final permutation
      */
@@ -478,11 +472,11 @@ void init_des()
       o_long = bit / 32; /* 0..1  */
       o_bit  = bit % 32; /* 0..31 */
 
-      /* 
+      /*
        * And find a bit in the e permutated value setting this bit.
        *
        * Note: the e selection may have selected the same bit several
-       * times. By the initialization of e_inverse, we only look
+       * times.  By the initialization of e_inverse, we only look
        * for one specific instance.
        */
       comes_from_f_bit = final_perm[bit] - 1;         /* 0..63 */
@@ -499,7 +493,7 @@ void init_des()
       }
     }
 
-    
+
     /*
      * Create revfinal: an array to undo final
      * the effects of efp
@@ -519,7 +513,7 @@ void init_des()
     initialized++;
   }
 
-/* 
+/*
  * Process the elements of the sb table permuting the
  * bits swapped in the expansion by the current salt.
  */
@@ -551,7 +545,7 @@ STATIC void shuffle_sb(k, saltbits)
   }
 #endif
 
-/* 
+/*
  * Setup the unit for a new salt
  * Hopefully we'll not see a new salt in each crypt call.
  */
@@ -570,8 +564,8 @@ STATIC void setup_salt(s)
     if(s[0] == current_salt[0] && s[1] == current_salt[1])
       return;
     current_salt[0] = s[0]; current_salt[1] = s[1];
-    
-    /* 
+
+    /*
      * This is the only crypt change to DES:
      * entries are swapped in the expansion table
      * according to the bits set in the salt.
@@ -580,10 +574,10 @@ STATIC void setup_salt(s)
     for(i = 0; i < 2; i++) {
       long c=ascii_to_bin(s[i]);
 #ifdef notdef
-      /* 
+      /*
        * Some applications do rely on illegal
-       * salts. It seems that UFC-crypt behaves
-       * identically to standard crypt 
+       * salts.  It seems that UFC-crypt behaves
+       * identically to standard crypt
        * implementations on illegal salts -- glad
        */
       if(c < 0 || c > 63)
@@ -600,7 +594,7 @@ STATIC void setup_salt(s)
      * to reflect the changed e
      * selection table
      */
-    shuffle_sb(_ufc_sb0, current_saltbits ^ saltbits); 
+    shuffle_sb(_ufc_sb0, current_saltbits ^ saltbits);
     shuffle_sb(_ufc_sb1, current_saltbits ^ saltbits);
     shuffle_sb(_ufc_sb2, current_saltbits ^ saltbits);
     shuffle_sb(_ufc_sb3, current_saltbits ^ saltbits);
@@ -654,7 +648,7 @@ STATIC void ufc_mk_keytab(key)
     direction = 0;
   }
 
-/* 
+/*
  * Undo an extra E selection and do final permutations
  */
 
@@ -692,8 +686,8 @@ ufc_long *_ufc_dofinalperm(l1, l2, r1, r2)
     return ary;
   }
 
-/* 
- * crypt only: convert from 64 bit to 11 bit ASCII 
+/*
+ * crypt only: convert from 64 bit to 11 bit ASCII
  * prefixing with the salt
  */
 
@@ -727,10 +721,10 @@ STATIC char *output_conversion(v1, v2, salt)
 
 ufc_long *_ufc_doit();
 
-/* 
+/*
  * UNIX crypt function
  */
-   
+
 char *crypt(key, salt)
   char *key, *salt;
   { ufc_long *s;
@@ -751,7 +745,7 @@ char *crypt(key, salt)
     /*
      * Go for the 25 DES encryptions
      */
-    s = _ufc_doit((ufc_long)0, (ufc_long)0, 
+    s = _ufc_doit((ufc_long)0, (ufc_long)0,
 		  (ufc_long)0, (ufc_long)0, (ufc_long)25);
     /*
      * Do final permutations
@@ -764,7 +758,7 @@ char *crypt(key, salt)
     return output_conversion(s[0], s[1], salt);
   }
 
-/* 
+/*
  * To make fcrypt users happy.
  * They don't need to call init_des.
  */
@@ -775,8 +769,8 @@ char *fcrypt(key, salt)
   { return crypt(key, salt);
   }
 
-/* 
- * UNIX encrypt function. Takes a bitvector
+/*
+ * UNIX encrypt function.  Takes a bitvector
  * represented by one byte per bit and
  * encrypt/decrypt according to edflag
  */
@@ -800,12 +794,12 @@ void encrypt(block, edflag)
       for(i = 0; i < 8; i++) {
 #ifdef _UFC_32_
 	long32 x;
-	x = _ufc_keytab[15-i][0]; 
-        _ufc_keytab[15-i][0] = _ufc_keytab[i][0]; 
+	x = _ufc_keytab[15-i][0];
+        _ufc_keytab[15-i][0] = _ufc_keytab[i][0];
         _ufc_keytab[i][0] = x;
 
-	x = _ufc_keytab[15-i][1]; 
-        _ufc_keytab[15-i][1] = _ufc_keytab[i][1]; 
+	x = _ufc_keytab[15-i][1];
+        _ufc_keytab[15-i][1] = _ufc_keytab[i][1];
         _ufc_keytab[i][1] = x;
 #endif
 #ifdef _UFC_64_
@@ -860,11 +854,11 @@ void encrypt(block, edflag)
     for(i = 0; i < 32; i++) {
       *block++ = (r1 & longmask[i]) != 0;
     }
-    
+
   }
 
-/* 
- * UNIX setkey function. Take a 64 bit DES
+/*
+ * UNIX setkey function.  Take a 64 bit DES
  * key and setup the machinery.
  */
 
@@ -881,14 +875,14 @@ void setkey(key)
 	c = c << 1 | *key++;
       ktab[i] = c >> 1;
     }
-    
+
     ufc_mk_keytab(ktab);
   }
 
-/* 
+/*
  * Ultrix crypt16 function, thanks to pcl@convex.oxford.ac.uk (Paul Leyland)
  */
-   
+
 char *crypt16(key, salt)
   char *key, *salt;
   { ufc_long *s, *t;
@@ -898,44 +892,44 @@ char *crypt16(key, salt)
      * Hack DES tables according to salt
      */
     setup_salt(salt);
-    
+
     /*
      * Setup key schedule
      */
     clearmem(ktab, sizeof ktab);
     (void)strncpy(ktab, key, 8);
     ufc_mk_keytab(ktab);
-    
+
     /*
      * Go for first 20 DES encryptions
      */
-    s = _ufc_doit((ufc_long)0, (ufc_long)0, 
+    s = _ufc_doit((ufc_long)0, (ufc_long)0,
 		  (ufc_long)0, (ufc_long)0, (ufc_long)20);
-    
+
     /*
      * And convert back to 6 bit ASCII
      */
     strcpy (res, output_conversion(s[0], s[1], salt));
-    
+
     clearmem(ttab, sizeof ttab);
     if (strlen (key) > 8) (void)strncpy(ttab, key+8, 8);
     ufc_mk_keytab(ttab);
-    
+
     /*
      * Go for second 5 DES encryptions
      */
-    t = _ufc_doit((ufc_long)0, (ufc_long)0, 
+    t = _ufc_doit((ufc_long)0, (ufc_long)0,
 		  (ufc_long)0, (ufc_long)0, (ufc_long)5);
     /*
      * And convert back to 6 bit ASCII
      */
     strcpy (q, output_conversion(t[0], t[1], salt));
     strcpy (res+13, q+2);
-    
+
     clearmem(ktab, sizeof ktab);
     (void)strncpy(ktab, key, 8);
     ufc_mk_keytab(ktab);
-    
+
     return res;
   }
 
@@ -967,14 +961,14 @@ void ufc_setup_password(cookie, s)
   }
 
 void ufc_do_pw(cookie, guess)
-  long *cookie;  
+  long *cookie;
   char *guess;
   { char ktab[9];
     ufc_long *s;
     clearmem(ktab, sizeof ktab);
     (void)strncpy(ktab, guess, 8);
     ufc_mk_keytab(ktab);
-    s = _ufc_doit((ufc_long)0, (ufc_long)0, 
+    s = _ufc_doit((ufc_long)0, (ufc_long)0,
 		  (ufc_long)0, (ufc_long)0, (ufc_long)25);
     cookie[0] = s[0];    cookie[1] = s[1];
     cookie[2] = s[2];    cookie[3] = s[3];

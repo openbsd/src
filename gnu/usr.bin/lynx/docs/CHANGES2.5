@@ -9,7 +9,7 @@
   site-specific libraries associated with any site-specific patches. - FM
 * Fixed an unsigned char typecast in GridText.c - FM
 * Eliminated statusline and TRACE warnings about possibly strange formatting
-  when TABLEs are in a document. - FM 
+  when TABLEs are in a document. - FM
 05-01-96
 * Renamed Lynx2-4-FM for pre-release as Lynx2-5
 04-30-96
@@ -27,7 +27,7 @@
   Any execution links or form ACTIONs are permitted if obtained from
   documents in the realm, but any switches that restrict bookmark operations
   will still apply.  For example, -book -realm will use the bookmark file
-  as the startfile, and restrict URLs to files in the user's account. Adding
+  as the startfile, and restrict URLs to files in the user's account.  Adding
   -restrictions=bookmark_exec will block execution links in the bookmark
   file, but not in other files within the realm (i.e., in the user's
   account).  If the startfile is an http URL, the realm will be equivalent
@@ -229,7 +229,7 @@
    gopher://cegt201.bradley.edu:79/0/w%20davidh   or:
    finger://cegt201.bradley.edu/w/davidh          as URL.s - FM
 * Added LYK_INTERRUPT handling for the CSO/PH and finger gateways, and
-  made their memory management more efficient. - FM 
+  made their memory management more efficient. - FM
 * Made the my_spawn() function in LYLocal.c more portable by using
   waitpid() instead of wait(). - FM
 * Restored the Lynx2-3 behavior of seeking the current position and link
@@ -322,7 +322,7 @@
   or request will be dumped, and the submission or request will be made
   with the  "Pragma: no-cache"  and  "Cache-Control: no-cache"  headers
   included, to ensure that a proxy/cache server also will not return a
-  cached copy (assuming it respects either of those headers). - FM 
+  cached copy (assuming it respects either of those headers). - FM
 03-01-96
 * Converted the client-side image MAP code to a protocol which returns
   a stream, rather than using a temporary file.  This allows saving
@@ -740,7 +740,7 @@
   to the appropriate case before entering them into the anchor hash table
   or otherwise acting on them. - FM
 * Added ability to change the default reply to the "really quit" prompt
-  from "[Y]" to "[N]" via a compilation symbol in userdefs.h. - DT 
+  from "[Y]" to "[N]" via a compilation symbol in userdefs.h. - DT
 11-29-95
 * Added ALIGN attribute for HR (default is "center"). - FM
 11-28-95
@@ -913,7 +913,7 @@
   editor. - FM
 10-25-95
 * Handle all characters in strings for the new line editor as unsigned
-  so they don't go negative if 8-bit. - DW 
+  so they don't go negative if 8-bit. - DW
 * Restored proper handling of the MAXLENGTH attribute in INPUTs for
   strings entered with the new line editor. - FM
 10-24-95
@@ -955,7 +955,7 @@
   "zzz.").  The Roman TYPES are "I" (upper case) and "i" (lower case),
   and can range from 1 (" I." or " i.") to 3000 ("MMM." or  "mmm.").
   SEQNUM values should always be Arabic, and will be converted to
-  other types (e.g. SEQNUM="27" TYPE="a" will yield "aa." for the
+  other types (e.g., SEQNUM="27" TYPE="a" will yield "aa." for the
   next LI). The CONTINUE attribute will cause the sequence and TYPE
   of the preceding OL to be continued for LIs in the current OL. - FM
 10-16-95
@@ -983,7 +983,7 @@
 * Typo fix in HTTCP.c for non-MULTINET VMS builds. - Gary Chow (garyc@mrs.com)
 10-09-95
 * Assume the root as path in HTParse() of HTParse.c if the access and host
-  but no path are given, and the access is http, https, or ftp. - FM 
+  but no path are given, and the access is http, https, or ftp. - FM
 10-05-95
 * Make sure the FREE(x) macro gets defined for HTTCP.c. - FM
 10-04-95
@@ -1082,7 +1082,7 @@
   documents now include emphasis tags for NAME (ID) anchors if it's desired,
   because the most common graphic clients don't emphasize them by default,
   so we should adjust to that in Lynx as well (IMHO 8-).  Added emphasis
-  tags for the NAME anchors in the Lynx help files. - FM 
+  tags for the NAME anchors in the Lynx help files. - FM
 * Eliminated forced uppercasing of H1 headers.  Most documents have mixed
   casing and we should preserve it (IMHO 8-).  Added a BOLD_H1 configuration
   symbol, set FALSE by default, for making H1 headers bold even if BOLD_HEADERS
@@ -1122,7 +1122,7 @@
 09-05-95
 * Enabled the -help switch when no configuration file is available and
   Lynx would otherwise exit (i.e., it now outputs the help message before
-  it exits). - FM 
+  it exits). - FM
 * Documented the -child switch. - FM
 * Fixed and documented the -nolog switch. - FM
 * Changed the -linknums switch to -number_links, fixed the code to work,
@@ -1135,7 +1135,7 @@
   to HTML 3.0, added LH, and implemented full HTML 3.0 ID handling for those,
   and B, BLINK, BR, CENTER, CITE, CODE, DFN, DIR, EM, FORM, KBD, I, LEFT,
   LISTING, MENU, PLAINTEXT, PRE, RIGHT, SAMP, STRONG, TT, U, VAR and XMP
-  (some of which are obsoleted in HTML 3.0, but what the heck 8-). - FM 
+  (some of which are obsoleted in HTML 3.0, but what the heck 8-). - FM
 09-03-95
 * Made bolding of NAME (ID) anchor contents configurable in lynx.cfg. - FM
 09-02-95
@@ -1217,7 +1217,7 @@
   added to lynx2-4-FM.  This is the new stuff. - FM:
 ---------------------------------------------------
   08-16-95
-  * Applied patch from Peter van Heusden (pch@ucthpx.uct.ac.za) to fix 
+  * Applied patch from Peter van Heusden (pch@ucthpx.uct.ac.za) to fix
     a bug when lynx encounters an OPTION tag before the style is
     ever updated. - CL
   08-09-95
@@ -1353,7 +1353,7 @@
   and doesn't send one. - FM
 * Added GNUC support to the VMS descrip.mms files. - FM
 * Tweaks of HTWAIS.c socket handling on VMS (I can't reproduce a reported
-  problem with SOCKETSHR/NetLIB, but these tweaks might help). - FM 
+  problem with SOCKETSHR/NetLIB, but these tweaks might help). - FM
 * Added my guesses at code for HTTelnet.c to implement telnet, tn3270 and
   rlogin support, if available, when building with SOCKETSHR/NetLIB on
   VMS. - FM
@@ -1368,11 +1368,11 @@
    must be uncommented in userdefs.h and TRUSTED_LYNXCGI must be fixed
    in lynx.cfg.  It doesn't handle redirection or mime-types and
    scripts should probably generate partial URLs when referring back to
-   itself. If the file you're going after isn't an executable then it
-   will be loaded as regular file. This makes it possible to go back
-   and forth between cgi-scripts and .html files. 
+   itself.  If the file you're going after isn't an executable then it
+   will be loaded as regular file.  This makes it possible to go back
+   and forth between cgi-scripts and .html files.
    I changed the way TRUSTED_LYNXCGIs are recorded because they don't
-   work quite the same as TRUSTED_EXECs do. Also, George says it works
+   work quite the same as TRUSTED_EXECs do.  Also, George says it works
    fine on SunOS and Solaris, and it seems to work fine on Linux. - CL
   --------------------------------------------
 * Don't block access to the download menu when both no_download and
@@ -1396,7 +1396,7 @@
   Pat Rankin (rankin@eql.caltech.edu).  Needs testing, and the linking
   procedure still needs to be addressed explicitly. - FM
 * Prevent possibility of a null pointer dereference if an ISMAP anchor
-  fetch fails. - David Trueman (david@cs.dal.ca)  
+  fetch fails. - David Trueman (david@cs.dal.ca)
 07-21-95
 * Added LYK_HEAD (mapped by default to ']') to send HEAD requests for the
   current document or link (always sent with LYforce_no_cache). - FM
@@ -1452,12 +1452,12 @@
 		I think.)
 	(Replaced Peter's strdup()'s with more portable code. - FM)
    07-11-95
-* Added Erik Olson's (olson@phys.washngton.edu) patch to use the 
+* Added Erik Olson's (olson@phys.washngton.edu) patch to use the
   _underline_ format when using the -dump option. - CL
   (Kept the old code, #ifdef'ed out, to make this optional someday. - FM)
    07-07-95
 * Fixed a bug in local_dired.  Specifically, a pointer to a fixed array
-  was being fed into StrAllocCopy as the destination. Linux was choking
+  was being fed into StrAllocCopy as the destination.  Linux was choking
   on this although OSF/1 and AIX seemed to handle it better. - CL
 ---------------------------------------------------
 07-15-95
@@ -1680,7 +1680,7 @@
   - JP
 06-12-95
 * Added George Lindholm's new file permission patch.  Here's his description:
-  "Here is a rewamped version of my earlier file permission patch. This version
+  "Here is a rewamped version of my earlier file permission patch.  This version
    uses a html page to prompt for user input (rather than having the user
    enter a obscure unix chmod string) using checkboxes." - JP
 * Added George Lindholm's addition of a compiler flag (NO_ANONYMOUS_EMAIL).

@@ -97,12 +97,12 @@ lynx.exe : library exe
 library :
 	Set Default [.www.library.implementation]
 .ifdef DEC_C
-	$(MMS) /Description = [-.VMS]DESCRIP.MMS /Macro = ($(TCPM)=1, DEC_C=1) Library
+	$(MMS) $(MMSQUALIFIERS) /Description = [-.VMS]DESCRIP.MMS /Macro = ($(TCPM)=1, DEC_C=1) Library
 .else
 .ifdef GNU_C
-	$(MMS) /Description = [-.VMS]DESCRIP.MMS /Macro = ($(TCPM)=1, GNU_C=1) Library
+	$(MMS) $(MMSQUALIFIERS) /Description = [-.VMS]DESCRIP.MMS /Macro = ($(TCPM)=1, GNU_C=1) Library
 .else
-	$(MMS) /Description = [-.VMS]DESCRIP.MMS /Macro = ($(TCPM)=1) Library
+	$(MMS) $(MMSQUALIFIERS) /Description = [-.VMS]DESCRIP.MMS /Macro = ($(TCPM)=1) Library
 .endif
 .endif
 	Set Default [---]
@@ -110,12 +110,12 @@ library :
 exe :
 	Set Default [.src]
 .ifdef DEC_C
-	$(MMS) /Macro = ($(TCPM)=1, DEC_C=1) Lynx
+	$(MMS) $(MMSQUALIFIERS) /Macro = ($(TCPM)=1, DEC_C=1) Lynx
 .else
 .ifdef GNU_C
-	$(MMS) /Macro = ($(TCPM)=1, GNU_C=1) Lynx
+	$(MMS) $(MMSQUALIFIERS) /Macro = ($(TCPM)=1, GNU_C=1) Lynx
 .else
-	$(MMS) /Macro = ($(TCPM)=1) Lynx
+	$(MMS) $(MMSQUALIFIERS) /Macro = ($(TCPM)=1) Lynx
 .endif
 .endif
 	Copy /NoLog /NoConfirm lynx.exe [-]
@@ -124,9 +124,9 @@ exe :
 
 clean :
 	Set Default [.www.library.implementation]
-	$(MMS) /Description = [-.VMS]DESCRIP.MMS clean
+	$(MMS) $(MMSQUALIFIERS) /Description = [-.VMS]DESCRIP.MMS clean
 	Set Default [---]
 	Set Default [.src]
-	$(MMS) clean
+	$(MMS) $(MMSQUALIFIERS) clean
 	Set Default [-]
 	- Purge /NoLog /NoConfirm

@@ -1,46 +1,51 @@
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Mwindows-1253
 
 #Name as a Display Charset (used on Options screen)
-OWinGreek (cp1253)
+OGreek (windows-1253)
 
-#    Name:     cp1253_WinGreek to Unicode table
+#Codepage number
+C1253
+
+#
+#    Name:     cp1253 to Unicode table
 #    Unicode version: 2.0
-#    Table version: 2.00
+#    Table version: 2.01
 #    Table format:  Format A
-#    Date:          04/24/96
-#    Authors:       Lori Brownell <loribr@microsoft.com>
-#                   K.D. Chang    <a-kchang@microsoft.com>
+#    Date:          04/15/98
+#
+#    Contact:       cpxlate@microsoft.com
+#
 #    General notes: none
 #
 #    Format: Three tab-separated columns
-#        Column #1 is the cp1253_WinGreek code (in hex)
+#        Column #1 is the cp1253 code (in hex)
 #        Column #2 is the Unicode (in hex as 0xXXXX)
 #        Column #3 is the Unicode name (follows a comment sign, '#')
 #
-#    The entries are in cp1253_WinGreek order
+#    The entries are in cp1253 order
 #
 ##################
 
-0x20-0x7f       idem
+0x20-0x7e       idem
 #
-#0x80		#UNDEFINED
-#0x81		#UNDEFINED
+0x80	U+20AC	#EURO SIGN
+0x81		#UNDEFINED
 0x82	U+201A	#SINGLE LOW-9 QUOTATION MARK
 0x83	U+0192	#LATIN SMALL LETTER F WITH HOOK
 0x84	U+201E	#DOUBLE LOW-9 QUOTATION MARK
 0x85	U+2026	#HORIZONTAL ELLIPSIS
 0x86	U+2020	#DAGGER
 0x87	U+2021	#DOUBLE DAGGER
-#0x88		#UNDEFINED
+0x88		#UNDEFINED
 0x89	U+2030	#PER MILLE SIGN
-#0x8A		#UNDEFINED
+0x8A		#UNDEFINED
 0x8B	U+2039	#SINGLE LEFT-POINTING ANGLE QUOTATION MARK
-#0x8C		#UNDEFINED
-#0x8D		#UNDEFINED
-#0x8E		#UNDEFINED
-#0x8F		#UNDEFINED
-#0x90		#UNDEFINED
+0x8C		#UNDEFINED
+0x8D		#UNDEFINED
+0x8E		#UNDEFINED
+0x8F		#UNDEFINED
+0x90		#UNDEFINED
 0x91	U+2018	#LEFT SINGLE QUOTATION MARK
 0x92	U+2019	#RIGHT SINGLE QUOTATION MARK
 0x93	U+201C	#LEFT DOUBLE QUOTATION MARK
@@ -48,14 +53,14 @@ OWinGreek (cp1253)
 0x95	U+2022	#BULLET
 0x96	U+2013	#EN DASH
 0x97	U+2014	#EM DASH
-#0x98		#UNDEFINED
+0x98		#UNDEFINED
 0x99	U+2122	#TRADE MARK SIGN
-#0x9A		#UNDEFINED
+0x9A		#UNDEFINED
 0x9B	U+203A	#SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
-#0x9C		#UNDEFINED
-#0x9D		#UNDEFINED
-#0x9E		#UNDEFINED
-#0x9F		#UNDEFINED
+0x9C		#UNDEFINED
+0x9D		#UNDEFINED
+0x9E		#UNDEFINED
+0x9F		#UNDEFINED
 0xA0	U+00A0	#NO-BREAK SPACE
 0xA1	U+0385	#GREEK DIALYTIKA TONOS
 0xA2	U+0386	#GREEK CAPITAL LETTER ALPHA WITH TONOS
@@ -66,7 +71,7 @@ OWinGreek (cp1253)
 0xA7	U+00A7	#SECTION SIGN
 0xA8	U+00A8	#DIAERESIS
 0xA9	U+00A9	#COPYRIGHT SIGN
-#0xAA		#UNDEFINED
+0xAA		#UNDEFINED
 0xAB	U+00AB	#LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
 0xAC	U+00AC	#NOT SIGN
 0xAD	U+00AD	#SOFT HYPHEN
@@ -106,7 +111,7 @@ OWinGreek (cp1253)
 0xCF	U+039F	#GREEK CAPITAL LETTER OMICRON
 0xD0	U+03A0	#GREEK CAPITAL LETTER PI
 0xD1	U+03A1	#GREEK CAPITAL LETTER RHO
-#0xD2		#UNDEFINED
+0xD2		#UNDEFINED
 0xD3	U+03A3	#GREEK CAPITAL LETTER SIGMA
 0xD4	U+03A4	#GREEK CAPITAL LETTER TAU
 0xD5	U+03A5	#GREEK CAPITAL LETTER UPSILON
@@ -151,4 +156,4 @@ OWinGreek (cp1253)
 0xFC	U+03CC	#GREEK SMALL LETTER OMICRON WITH TONOS
 0xFD	U+03CD	#GREEK SMALL LETTER UPSILON WITH TONOS
 0xFE	U+03CE	#GREEK SMALL LETTER OMEGA WITH TONOS
-#0xFF		#UNDEFINED
+0xFF		#UNDEFINED

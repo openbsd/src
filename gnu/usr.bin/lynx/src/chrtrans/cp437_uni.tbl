@@ -2,24 +2,28 @@
 #There has to be exactly one table marked as "default".
 D0
 #
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Mcp437
 
 #Name as a Display Charset (used on Options screen)
-ODosLatinUS (cp437)
+OIBM PC US codepage (cp437)
+
+#Codepage number
+C437
+
 #
 #    Name:     cp437_DOSLatinUS to Unicode table
-#    Unicode version: 1.1
-#    Table version: 1.1
+#    Unicode version: 2.0
+#    Table version: 2.00
 #    Table format:  Format A
-#    Date:          03/31/95
-#    Authors:       Michel Suignard <michelsu@microsoft.com>
-#                   Lori Hoerth <lorih@microsoft.com>
+#    Date:          04/24/96
+#    Authors:       Lori Brownell <loribr@microsoft.com>
+#                   K.D. Chang    <a-kchang@microsoft.com>
 #    General notes: none
 #
 #    Format: Three tab-separated columns
-#        Column #1 is the cp437_DosLatinUS code (in hex)
-#        Column #2 is the Unicode (in hex as U+XXXX)
+#        Column #1 is the cp437_DOSLatinUS code (in hex)
+#        Column #2 is the Unicode (in hex as 0xXXXX)
 #        Column #3 is the Unicode name (follows a comment sign, '#')
 #
 #    The entries are in cp437_DosLatinUS order
@@ -27,6 +31,8 @@ ODosLatinUS (cp437)
 # some mapppings of greek letters to latin letters added,
 #  just for fun.. - KW
 #
+#######################################
+
 0x20-0x7f	idem
 #
 0x80	U+00c7	#LATIN CAPITAL LETTER C WITH CEDILLA

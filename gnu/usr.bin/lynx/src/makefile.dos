@@ -7,12 +7,17 @@ LYForms.o LYPrint.o LYrcFile.o LYDownload.o LYNews.o LYKeymap.o \
 HTML.o HTFWriter.o HTInit.o DefaultStyle.o LYLocal.o LYUpload.o \
 LYLeaks.o LYexit.o LYJump.o LYList.o LYCgi.o LYTraversal.o \
 LYEditmap.o LYCharSets.o LYCharUtils.o LYMap.o LYCookie.o LYExtern.o \
-LYStyle.o LYHash.o
+LYStyle.o LYHash.o LYPrettySrc.o
 
 CFLAGS= $(MCFLAGS) -I. -I.. $(SLANGINC)
 
 CC = gcc
-MCFLAGS = -O3 -DRAWDOSKEYHACK -DUSE_ZLIB -DUSE_EXTERNALS -DCOLOR_CURSES -DNCURSES -DFANCY_CURSES -DACCESS_AUTH -DNO_CUSERID -DNOUSERS -DDOSPATH -DNO_TTYTYPE -DNO_UTMP -Ichrtrans -I../WWW/library/implementation -I../curses  -I../djgpp/tcplib/include -I../djgpp/tcplib/include/tcp
+MCFLAGS = -O2 -DHAVE_GETBKGD -DDISP_PARTIAL -DUSE_ZLIB \
+ -DSOURCE_CACHE -DUSE_PSRC \
+ -DUSE_EXTERNALS -DCOLOR_CURSES -DNCURSES -DFANCY_CURSES \
+ -DACCESS_AUTH -DNO_CUSERID -DNOUSERS -DDOSPATH -DNO_TTYTYPE -DNO_UTMP \
+ -Ichrtrans -I../WWW/library/implementation \
+ -I../curses  -I../djgpp/tcplib/include -I../djgpp/tcplib/include/tcp
 WWWLIB = ../WWW/library/djgpp/libwww.a ../curses/pdcurses.a ../djgpp/tcplib/obj/libtcp.a
 LIBS=-lz
 
@@ -20,7 +25,7 @@ all: lynx
 
 lynx:   message $(OBJS) $(WWWLIB)
 	@echo "Linking and creating Lynx executable"
-	$(CC) $(CFLAGS) -o lynx  $(OBJS) $(WWWLIB) $(SLANGLIB) $(LIBS)
+	$(CC) $(CFLAGS) -o lynx.exe  $(OBJS) $(WWWLIB) $(SLANGLIB) $(LIBS)
 	@echo "Welcome to Lynx!"
 
 message:
@@ -34,30 +39,24 @@ lint:
 	lint *.c  > ../lint.out
 
 clean:
-	rm -f lynx core *.[ob]
+	rm -f lynx.exe core *.[ob]
 
-LYMain.o: ../userdefs.h
-LYMainLoop.o: LYMainLoop.c ../userdefs.h
-LYReadCFG.o: LYReadCFG.c ../userdefs.h
-HTFWriter.o: HTFWriter.c ../userdefs.h
-LYGetFile.o: LYGetFile.c ../userdefs.h
-LYOptions.o: LYOptions.c ../userdefs.h
-LYReadCFG.o: LYReadCFG.c ../userdefs.h
-LYTraversal.o: LYTraversal.c ../userdefs.h
-LYCharSets.o: LYCharSets.c ../userdefs.h
-LYShowInfo.o: LYShowInfo.c ../userdefs.h
-LYStrings.o: LYStrings.c ../userdefs.h
-LYBookmark.o: LYBookmark.c ../userdefs.h
-LYHistory.o: LYHistory.c ../userdefs.h
-LYDownload.o: LYDownload.c ../userdefs.h
-DefaultStyle.o: DefaultStyle.c ../userdefs.h
-LYEditmap.o: LYEditmap.c ../userdefs.h
-LYCharUtils.o: LYCharUtils.c ../userdefs.h
-LYExtern.o: LYExtern.c ../userdefs.h
-LYCookie.o: ../userdefs.h
-
-#UCdomap.o: UCdomap.c ../userdefs.h lycharsets.h
-#UCdomap.o: UCdomap.c chrtrans/UCkd.h chrtrans/makeuctb chrtrans/makeuctb.c \
-#                UCdomap.h UCMap.h ../userdefs.h
-#UCAux.o : UCAux.c $(CMN)UCAux.h $(CMN)UCDefs.h
-
+DefaultStyle.o:	../userdefs.h
+HTFWriter.o:	../userdefs.h
+LYBookmark.o:	../userdefs.h
+LYCharSets.o:	../userdefs.h
+LYCharUtils.o:	../userdefs.h
+LYCookie.o:	../userdefs.h
+LYDownload.o:	../userdefs.h
+LYEditmap.o:	../userdefs.h
+LYExtern.o:	../userdefs.h
+LYGetFile.o:	../userdefs.h
+LYHistory.o:	../userdefs.h
+LYKeymap.o:	../userdefs.h
+LYMain.o:	../userdefs.h
+LYMainLoop.o:	../userdefs.h
+LYOptions.o:	../userdefs.h
+LYReadCFG.o:	../userdefs.h
+LYShowInfo.o:	../userdefs.h
+LYStrings.o:	../userdefs.h
+LYTraversal.o:	../userdefs.h

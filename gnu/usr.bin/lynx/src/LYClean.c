@@ -1,18 +1,17 @@
-#include "HTUtils.h"
-#include "tcp.h"
-#include "LYCurses.h"
-#include "LYUtils.h"
-#include "LYSignal.h"
-#include "LYClean.h"
-#include "LYGlobalDefs.h"
-#include "LYStrings.h"
-#include "LYTraversal.h"
-#include "UCAuto.h"
+#include <HTUtils.h>
+#include <LYCurses.h>
+#include <LYUtils.h>
+#include <LYSignal.h>
+#include <LYClean.h>
+#include <LYMainLoop.h>
+#include <LYGlobalDefs.h>
+#include <LYTraversal.h>
+#include <LYCookie.h>
+#include <UCAuto.h>
+#include <HTAlert.h>
 
-#include "LYexit.h"
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <LYexit.h>
+#include <LYLeaks.h>
 
 #ifdef VMS
 BOOLEAN HadVMSInterrupt = FALSE;
@@ -58,17 +57,15 @@ PUBLIC void cleanup_sig ARGS1(
 	 *  Ask if exit is intended.
 	 */
 	if (LYQuitDefaultYes == TRUE) {
-	    _statusline(REALLY_EXIT_Y);
+	    c = HTConfirmDefault(REALLY_EXIT_Y, YES);
 	} else {
-	    _statusline(REALLY_EXIT_N);
+	    c = HTConfirmDefault(REALLY_EXIT_N, NO);
 	}
-	c = LYgetch();
 	if (LYQuitDefaultYes == TRUE) {
-	    if (TOUPPER(c) == 'N' ||
-		c == 7) {
+	    if (c == NO) {
 		return;
 	    }
-	} else if (TOUPPER(c) != 'Y') {
+	} else if (c != YES) {
 	    return;
 	}
     }
@@ -106,7 +103,10 @@ PUBLIC void cleanup_sig ARGS1(
 	    cleanup();
 	}
 	if (sig != 0) {
-	    printf("\r\nExiting via interrupt: %d\r\n", sig);
+	    SetOutputMode(O_TEXT);
+	    printf("\n\n%s %d\n\n",
+		   gettext("Exiting via interrupt:"),
+		   sig);
 	    fflush(stdout);
 	}
 #ifndef NOSIGHUP
@@ -133,19 +133,11 @@ PUBLIC void cleanup_sig ARGS1(
 
 /*
  *  Called by Interrupt handler or at quit time.
- *  Erases the temporary files that lynx created
- *  temporary files are removed by tempname
- *  which created them.
+ *  Erases the temporary files that lynx created.
  */
 PUBLIC void cleanup_files NOARGS
 {
-    char filename[256];
-
-    tempname(filename, REMOVE_FILES);
-
-    if (rmdir(lynx_temp_space))
-	perror("Could not remove the temp-directory");
-
+    LYCleanupTemp();
     FREE(lynx_temp_space);
 }
 
@@ -188,6 +180,18 @@ PUBLIC void cleanup NOARGS
 #endif /* LINUX */
 #endif /* EXP_CHARTRANS_AUTOSWITCH */
 
+#ifdef EXP_PERSISTENT_COOKIES
+    /*
+     * This can go right here for now.  We need to work up a better place
+     * to save cookies for the next release, preferably whenever a new
+     * persistent cookie is received or used.  Some sort of protocol to
+     * handle two processes writing to the cookie file needs to be worked
+     * out as well.
+     */
+    if (persistent_cookies)
+	LYStoreCookies (LYCookieFile);
+#endif
+
     cleanup_files();
     for (i = 0; i < nhist; i++) {
 	FREE(history[i].title);
@@ -202,13 +206,5 @@ PUBLIC void cleanup NOARGS
     DidCleanup = TRUE;
 #endif /* VMS */
 
-    fflush(stdout);
-    fflush(stderr);
-    if (LYTraceLogFP != NULL) {
-	fclose(LYTraceLogFP);
-	LYTraceLogFP = NULL;
-#if !defined(VMS) || (defined(VMS) && !defined(VAXC) && !defined(UCX))
-	*stderr = LYOrigStderr;
-#endif /* !VMS || (VMS && !VAXC && !UCX) */
-    }
+    LYCloseTracelog();
 }

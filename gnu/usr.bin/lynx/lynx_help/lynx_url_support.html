@@ -1,12 +1,12 @@
 <!DOCTYPE html public "-//IETF//DTD HTML 3.0//EN">
-<HTML> 
+<HTML>
 <HEAD>
 <TITLE>URL Schemes Supported in Lynx</TITLE>
 <LINK rev=made href="mailto:lynx-dev@sig.net">
 </HEAD>
 
 <BODY>
-<BANNER>
+<blockquote>
 <em>[</em><a href="#http">http, https</a> <em>|</em>
 <a href="#telnet">telnet, tn3270, rlogin</a> <em>|</em>
 <a href="#gopher">gopher</a> <em>|</em>
@@ -21,31 +21,31 @@
 <a href="#exec">lynxexec, lynxprog</a> <em>|</em>
 <a href="#cgi">lynxcgi</a><em>|</em>
 <a href="#internal">internal</a><em>]</em>
-</BANNER>
+</blockquote>
 
 <H1><em>URL Schemes Supported in Lynx</em></H1>
 
 Lynx handles a number of URL types, that are enumerated below.  For
 more details about URLs (Uniform Resource Locators) see <em>RFC1738</em>:
-<ul plain>
+<ul>
 <li><a href="http://www.w3.org/Addressing/rfc1738.txt"
 >http://www.w3.org/Addressing/rfc1738.txt</a>
 <li><a href="ftp://ds.internic.net/rfc/rfc1738.txt"
->ftp://ds.internic.net/rfc/rfc1738.txt</a>  
+>ftp://ds.internic.net/rfc/rfc1738.txt</a>
 </ul>
 
 <p>Lynx resolves partial or relative URLs in documents with respect to
 the BASE if one was specified, otherwise with respect to the document's
 absolute URL, using the rules described in <em>RFC1808</em>:
-<ul plain>
+<ul>
 <li><a href="http://www.w3.org/Addressing/rfc1808.txt"
 >http://www.w3.org/Addressing/rfc1808.txt</a>
 <li><a href="ftp://ds.internic.net/rfc/rfc1808.txt"
->ftp://ds.internic.net/rfc/rfc1808.txt</a>  
+>ftp://ds.internic.net/rfc/rfc1808.txt</a>
 </ul>
 
 and in subsequent drafts of the <em>IETF</em>:
-<ul plain>
+<ul>
 <li><a href="http://www.ics.uci.edu/pub/ietf/uri/"
 >Uniform Resource Identifiers (URI) Working Group</a>
 </ul>
@@ -71,7 +71,7 @@ DCL into a valid URL, e.g., <em>[]</em> will be expanded to
 are <em>SOLELY</em> for <em>startfile</em> or '<em>g</em>'oto entries!
 Any partial or relative URLs within HTML documents are resolved
 according to the rules specified in RFC1808 and subsequent IETF drafts.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="http">The <em>http</em> and <em>https</em> URLs:</a></H2>
 
@@ -90,17 +90,17 @@ which can correspond to positions in the rendering of the document.
 
 <p>The https URL has the same format, but the default port is <em>:443</em>.
 Patches for support of https URLs and the CONNECT procedure are available
-for qualified recipients via <a 
+for qualified recipients via <a
 href="http://www.crl.com/~subir/lynx.html">Lynx links</a>.  US Export laws
 and associated red tape pose severe impediments to inclusion of this support
 in the general distributions of freeware WWW clients such as Lynx.  Sorry.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="telnet"
 >The <em>telnet</em>, <em>tn3270</em>, and <em>rlogin</em> URLs:</a></H2>
 
 A <em>telnet</em> URL generally results in Lynx spawning a telnet
-session. Lynx implements the complete telnet URL scheme, i.e.:<BR>
+session.  Lynx implements the complete telnet URL scheme, i.e.:<BR>
 <tab indent="12"><em>telnet://user:password@host:port</em>
 
 <p>The <em>user</em> and/or <em>:password</em> fields may be omitted, and
@@ -116,7 +116,7 @@ hosts.
 URLs which point to anonymous or other public access accounts, and
 for most TCP-IP software you will be prompted for a password whether
 or not one was included in the URL.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="gopher">The <em>gopher</em> URL:</a></H2>
 
@@ -159,7 +159,7 @@ adopted during development of the University of Minnesota gopher software
 to facilitate the offering of links to MIME-capable http servers in the
 listings returned by gopher servers, but should be considered Lynxisms
 and UMN Gopherisms.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="file">The <em>file</em> URL:</a></H2>
 
@@ -189,7 +189,7 @@ VMS, invoke Lynx with the desired file or directory as the
 <em>startfile</em> using any spec acceptable to DCL, and then
 use the <em>showinfo</em> command (<em>=</em>) to see the file
 URL which Lynx created for it.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="ftp">The <em>ftp</em> URL:</a></H2>
 
@@ -237,7 +237,7 @@ do wish to get a listing of the login directory or have the <em>path</em>
 string treated as a file or path under the login directory, include a
 tilde (<em>~</em>) as for <a href="#file">file</a> URLs, e.g.:<BR>
 <tab indent="12"><em>ftp://user@myhost/~</em>
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="wais">The <em>wais</em> URL:</a></H2>
 
@@ -257,7 +257,7 @@ submit your search with the <em>wais_query</em> appended.  Lynx will
 convert the server's reply into a hit list with URLs that include the
 <em>wais_type</em> and <em>wais_path</em> for retrieving items from
 the hit list.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="news"
 >The <em>news</em>, <em>nntp</em>, and <em>snews</em> URLs:</a></H2>
@@ -316,7 +316,7 @@ to="ngno">(retrieves the message by number)<BR>
 Use of this scheme is not recommended, because the message numbers
 are specific to each nntp server, unlike the unique identifiers for
 news messages.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="newspost"
 >The <em>newspost</em>, <em>newsreply</em>, <em>snewspost</em>, and
@@ -334,7 +334,7 @@ respectively, to standard nntp servers, with default port <em>:119</em>.
 Lynx now also supports homologous snewspost and snewsreply URLs for use
 with SSL capable nntp servers, but the latter requires patches for built
 in SSL support, or use of a daemon which handles the secure communications
-on behalf of Lynx. 
+on behalf of Lynx.
 
 <p>The formats are:<BR>
 <tab indent="12"><em>newspost://host:port/newsgroup(s)</em>&nbsp;&nbsp;<tab
@@ -362,7 +362,7 @@ degrade to newspost or snewpost URLs, respectively).  They also can be used
 as HREF attribute values in any HTML document homologously to <a
 href="#mailto">mailto</a> URLs, with the qualification that they presently
 are supported only by Lynx.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="mailto">The <em>mailto</em> URL:</a></H2>
 
@@ -448,7 +448,7 @@ an option to include the currently displayed document.  If this option is
 accepted, each line of that document is prefixed with a right-angle-bracket,
 and the prefixed inclusion should be trimmed by the user to just those
 passages relevant to the message which will be sent.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="finger">The <em>finger</em> URL:</a></H2>
 
@@ -482,7 +482,7 @@ port 79 and the plain text (<em>0</em>) <em>gophertype</em> specified:<BR>
 <em>gopher://host:79/0</em><BR>
 Lynx will handle such URLs equivalently to overt finger URLs, including
 creation of links for any strings which appear to be supported URLs.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="cso">The <em>cso</em> URL:</a></H2>
 
@@ -500,20 +500,7 @@ URLs and create a FORM for submitting additional requests (searches)
 to the server.   Any strings in the reports returned for these requests
 (searches) which appear to be a URL with a supported scheme will be
 converted into a link for accessing that URL.
-<HR WIDTH="100%">
-
-<H2><a name="chargen">The <em>chargen</em> URL:</a></H2>
-
-The chargen URL is intended to provide a gateway to the chargen service.
-The requests are made on port 19 (<em>:19</em>).  You can omit the port,
-and no other value is allowed.  The format is:<BR>
-<tab indent="12"><em>chargen://host</em><BR>
-
-<p>Lynx will accept approximately 55 lines of characters in the stream
-returned by the server, then close the connection and display the lines
-as PRE formatted text.  Note that if port 19 is used for a URL with a
-scheme other than chargen, the URL will be rejected by Lynx.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="exec">The <em>lynxexec</em> and <em>lynxprog</em> URLs:</a></H2>
 
@@ -540,7 +527,7 @@ from the utility invoked via lynxprog.
 
 <p>These are Lynxisms and should be used only in local documents intended
 solely for Lynx.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="cgi">The <em>lynxcgi</em> URL:</a></H2>
 
@@ -563,7 +550,7 @@ from <a href="ftp://osu.edu"
 server.  It can be installed as a purely local script server, and is far
 more efficient and comprehensive than any code which might be incorporated
 within Lynx.
-<HR WIDTH="100%">
+<HR>
 
 <H2><a name="internal">The <em>LYNXfoo</em> internal URLs:</a></H2>
 
@@ -577,7 +564,7 @@ find the self-restraint to <em>resist</em> that temptation!!!
 ><em>Return to your &lt;A HREF="LYNXHIST:0"&gt;Startfile&lt;/A&gt;</em><BR>
 <tab indent="12"
 ><em>Review your &lt;A HREF="LYNXKEYMAP:"&gt;Keymap&lt;/A&gt;</em><BR>
-(Yes, they'll work. No, they won't do any harm. But...)
+(Yes, they'll work.  No, they won't do any harm.  But...)
 
 <p>If you <em>must</em> try one, the second is OK from the command line:<BR>
 <tab indent="12"><em>lynx LYNXKEYMAP:</em><BR>

@@ -1,23 +1,15 @@
 /*                                                                     File Writer for libwww
                                       C FILE WRITER
-                                             
+
    It is useful to have both FWriter and Writer for environments in which fdopen() doesn't
    exist for example.
-   
+
  */
 #ifndef HTFWRITE_H
 #define HTFWRITE_H
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-#include "HTStream.h"
-/*#include <stdio.h> included by HTUtils.h -- FM */
-#include "HTFormat.h"
-
-#ifdef SHORT_NAMES
-#define HTFWriter_new   HTFWnew
-#endif
+#include <HTStream.h>
+#include <HTFormat.h>
 
 extern HTStream * HTFWriter_new PARAMS((FILE * fp));
 

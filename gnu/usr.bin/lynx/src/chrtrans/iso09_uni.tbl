@@ -1,9 +1,12 @@
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Miso-8859-9
 
 #Name as a Display Charset (used on Options screen)
-OISO 8859-9 (Latin 5)
- 
+OTurkish (ISO-8859-9)
+
+#Codepage number
+C920
+
 #
 #	Name:             ISO 8859-9 (1989) to Unicode
 #	Unicode version:  1.1

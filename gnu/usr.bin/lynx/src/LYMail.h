@@ -3,16 +3,16 @@
 #define LYMAIL_H
 
 #ifndef LYSTRUCTS_H
-#include "LYStructs.h"
+#include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
 extern BOOLEAN term_letter;
 
 extern void mailform PARAMS((
-	char *		mailto_address,
-	char *		mailto_subject,
-	char *		mailto_content,
-	char *		mailto_type));
+	CONST char *	mailto_address,
+	CONST char *	mailto_subject,
+	CONST char *	mailto_content,
+	CONST char *	mailto_type));
 extern void mailmsg PARAMS((
 	int 		cur,
 	char *		owner_address,
@@ -21,6 +21,7 @@ extern void mailmsg PARAMS((
 extern void reply_by_mail PARAMS((
 	char *		mail_address,
 	char *		filename,
-	CONST char *	title));
+	CONST char *	title,
+	CONST char *	refid));
 
 #endif /* LYMAIL_H */

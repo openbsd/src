@@ -6,15 +6,10 @@
 **	New nodes are inserted between the header and the rest of the list.
 */
 
-#include "HTUtils.h"
-#include "HTList.h"
+#include <HTUtils.h>
+#include <HTList.h>
 
-/*#include <stdio.h> included by HTUtils.h -- FM *//* joe@athena, TBL 921019 */
-
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
-
+#include <LYLeaks.h>
 
 /*	Create list.
 */
@@ -47,6 +42,50 @@ PUBLIC void HTList_delete ARGS1(
     return;
 }
 
+/*	Reverse order of elements in list.
+ */
+PUBLIC HTList * HTList_reverse ARGS1(
+    HTList *,		start)
+{
+    HTList *cur, *succ;
+    if (!(start && start->next && (cur = start->next->next)))
+	return start;
+    start->next->next = NULL;
+    while (cur) {
+	succ = cur->next;
+	cur->next = start->next;
+	start->next = cur;
+	cur = succ;
+    }
+    return start;
+}
+
+/*	Append a list to another.
+ *
+ *	If successful, the second list will become empty but not freed.
+ */
+PUBLIC HTList * HTList_appendList ARGS2(
+    HTList *,		start,
+    HTList *,		tail)
+{
+    HTList * temp = start;
+
+    if (!start) {
+        CTRACE(tfp, "HTList: Trying to append list %p to a nonexisting list\n",
+		    tail);
+        return NULL;
+    }
+    if (!(tail && tail->next))
+	return start;
+
+    while (temp->next)
+	temp = temp->next;
+
+    temp->next = tail->next;
+    tail->next = NULL;		/* tail is now an empty list */
+    return start;
+}
+
 
 /*      Add object to START of list (so it is pointed to by the head).
 */
@@ -63,10 +102,9 @@ PUBLIC void HTList_addObject ARGS2(
 	newNode->next = me->next;
 	me->next = newNode;
 
-    } else if (TRACE) {
-        fprintf(stderr,
-		"HTList: Trying to add object %p to a nonexisting list\n",
-		newObject);
+    } else {
+        CTRACE(tfp, "HTList: Trying to add object %p to a nonexisting list\n",
+		    newObject);
     }
 
     return;
@@ -106,20 +144,14 @@ PUBLIC void HTList_insertObjectAt ARGS3(
     int Pos = pos;
 
     if (!temp) {
-	if (TRACE) {
-	    fprintf(stderr,
-		    "HTList: Trying to add object %p to a nonexisting list\n",
+	CTRACE(tfp, "HTList: Trying to add object %p to a nonexisting list\n",
 		    newObject);
-	}
 	return;
     }
     if (Pos < 0) {
 	Pos = 0;
-	if (TRACE) {
-	    fprintf(stderr,
-		    "HTList: Treating negative object position %d as %d.\n",
+	CTRACE(tfp, "HTList: Treating negative object position %d as %d.\n",
 		    pos, Pos);
-	}
     }
 
     prevNode = temp;
@@ -133,7 +165,7 @@ PUBLIC void HTList_insertObjectAt ARGS3(
 	        prevNode->next = newNode;
 	    return;
 	}
-	prevNode = temp; 
+	prevNode = temp;
 	Pos--;
     }
     if (Pos >= 0)

@@ -3,7 +3,7 @@
 #define LYBOOKMARK_H
 
 #ifndef LYSTRUCTS_H
-#include "LYStructs.h"
+#include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
 extern char * get_bookmark_filename PARAMS((char **name));

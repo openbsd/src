@@ -63,13 +63,13 @@
   not to work.  So HTTP redirection appears to work now!
 * Added Referer: header to HTTP requests to list the URL of
   the document listing the requsted URL.   Here's an extract from CERN:
-     This optional header field allows the client to specify, 
-     for the server's benefit, the address ( URI ) of the document 
-     (or element within the document) from which the URI in the 
-     request was obtained. 
+     This optional header field allows the client to specify,
+     for the server's benefit, the address ( URI ) of the document
+     (or element within the document) from which the URI in the
+     request was obtained.
 
-     This allows a server to generate lists of back-links to documents, 
-     for interest, logging, etc. It allows bad links to be traced 
+     This allows a server to generate lists of back-links to documents,
+     for interest, logging, etc.  It allows bad links to be traced
      for maintenance.
 
 2-8-94
@@ -140,7 +140,7 @@
   transfer to abort.  If there is a partial file to show, it
   will be shown.
 * Added command line option -show_curser.  If enabled the curser
-  will not be hidden in the right hand corner but will instead 
+  will not be hidden in the right hand corner but will instead
   be positioned at the start of the currently selected link.
   show curser is the default for systems without FANCY_CURSES
   capibilities, and the default configuration can be changed in
@@ -175,10 +175,10 @@
 -grey area-
 * Ability to FTP to VMS systems. (Foteos Macrides)
 * Fixed lots of display and interupt problems (Foteos Macrides)
-* The Lynx Bookmark file is now interpreted as an HTML document.  
+* The Lynx Bookmark file is now interpreted as an HTML document.
   Old Lynx bookmark files must be converted using the lynx2html
   program or deleted.
-* HTML+ forms as implemented by XMosaic now work. 
+* HTML+ forms as implemented by XMosaic now work.
   fill in the empty spaces and press the submit button to
   submit the form.
 * The TEXTAREA tag isn't done yet.  It will currently only
@@ -188,7 +188,7 @@
 * Incorporated WWWlib 2.14 and fixed up the descrip.mms files.
   Foteos Macrides made VMS port changes and wrote a really nice
   build.com script to make compilation on VMS systems really easy.
-  Foteos also ported Lynx to OpenVMS for alpha axp systems. 
+  Foteos also ported Lynx to OpenVMS for alpha axp systems.
 * 's' now means search a searchable indexed document through the
   server, and can no longer be used to search for strings within
   the displayed document.
@@ -214,14 +214,14 @@
 * '/' always means search within the document.
 
 -grey area-
-* still doing massive rewrite. Debugging!!
+* still doing massive rewrite.  Debugging!!
 
 11-30-93
 * anonymous users cannot change the bookmark page! (thanks to Jyrki Kuoppal for
   pointing out a security hole)
 
 -grey area-
-* massive rewrite.  Removed all Lynx internal format code and 
+* massive rewrite.  Removed all Lynx internal format code and
   restructured all the source files.
 
 11-8-93
@@ -259,7 +259,7 @@
 
 10-12-93
 * The users specified editor is now spawned for mail messages.
-  If no editor is defined or if the user is anonymous, the built-in 
+  If no editor is defined or if the user is anonymous, the built-in
   lynx mail sender is used.
 
 10-11-93
@@ -286,7 +286,7 @@
 * fixed coredump bug for some files with no links.
 
 9-3-93
-* Moved many configuration options including printer setup to 
+* Moved many configuration options including printer setup to
   lynx.cfg file.  The default placement of the lynx.cfg file
   will be /usr/local/lib & sys$public
 
@@ -298,7 +298,7 @@
 * Fixed bug with only one link selectable out of many on the last line
   of the display.
 * Ported to SVR4 courtesy of Nickolay Saukh (from Russia, Wow this is
-  really getting around!) 
+  really getting around!)
 * Uneditable documents don't get refetched. (Nickolay Saukh)
 * National language support through LOCALE
   (instead of ISOLATIN1), protected by #ifdef LOCALE (Nickolay Saukh)
@@ -324,7 +324,7 @@
 
 8-19-93
 * updated help and converted it to HTML.  Made a new help location and
-  server.  The new default help file is 
+  server.  The new default help file is
   http://kufacts.cc.ukans.edu/lynx_help/lynx_help_main.html
 
 8-15-93
@@ -339,10 +339,10 @@
 8-14-93
 * Added document reload command.  CTRL-R when pressed will reload
   the document into memory and redisplay it, clearing the screen.
-  This is very useful when editing documents, outside of Lynx while 
+  This is very useful when editing documents, outside of Lynx while
   using Lynx for rendering.
 * Added source view mode.  '\' when pressed will reload the document
-  and display the HTML source. (doesn't work for gopher directoryies right 
+  and display the HTML source. (doesn't work for gopher directoryies right
   now, but gopher isn't HTML anyways)
 * fixed bug in LibWWW that caused it not to be able to convert to
   www/source.
@@ -354,16 +354,16 @@
 
 ??-??-??
 * At some point I added the ability to edit HTML files on the local
-  machine.  
+  machine.
 
 8-12-93
 * Added Nested Lists, up to six levels, with different bullets
   for each level.
 * Due to the fact that nearly everyone seems to use P to mean
-  two returns within the same style, and Mosaic has been kind 
+  two returns within the same style, and Mosaic has been kind
   enough to support this meaning, :( :( :(  I have changed
   the P tag to reflect this interpretation.  P can be used
-  anywhere and will mean insert two returns.  (i.e. two BR tags)
+  anywhere and will mean insert two returns.  (i.e., two BR tags)
 
 8-11-93
 * Made the default Mime type for unknown file types on ftp servers

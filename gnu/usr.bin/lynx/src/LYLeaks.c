@@ -9,15 +9,10 @@
 */
 #define NO_MEMORY_TRACKING
 
-#include "HTUtils.h"
-#include "tcp.h"
-#include "LYexit.h"
-#include "LYLeaks.h"
-#include "LYUtils.h"
-#include <ctype.h>
-/*#include <stdio.h> included by HTUtils.h -- FM */
-
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <HTUtils.h>
+#include <LYexit.h>
+#include <LYLeaks.h>
+#include <LYUtils.h>
 
 PRIVATE AllocationList *ALp_RunTimeAllocations = NULL;
 
@@ -79,10 +74,10 @@ PUBLIC void LYLeaks NOARGS
 	     *	bad request, then it was a bad pointer
 	     *	value in a realloc statement.
 	     */
-	    fprintf(Fp_leakagesink,
-		    "Invalid pointer detected.\n");
-	    fprintf(Fp_leakagesink,
-		    "Pointer:\t%p\n", ALp_head->vp_BadRequest);
+	    fprintf(Fp_leakagesink, "%s.\n",
+		    gettext("Invalid pointer detected."));
+	    fprintf(Fp_leakagesink, "%s\t%p\n",
+		    gettext("Pointer:"), ALp_head->vp_BadRequest);
 
 	    /*
 	     *	Don't free the bad request, it is an invalid pointer.
@@ -92,18 +87,23 @@ PUBLIC void LYLeaks NOARGS
 	     *	values also.
 	     */
 	    if (ALp_head->SL_memory.cp_FileName == NULL) {
-		fprintf(Fp_leakagesink, "FileName:\t%s\n",
+		fprintf(Fp_leakagesink, "%s\t%s\n",
+			gettext("FileName:"),
 			ALp_head->SL_realloc.cp_FileName);
-		fprintf(Fp_leakagesink, "LineCount:\t%d\n",
+		fprintf(Fp_leakagesink, "%s\t%d\n",
+			gettext("LineCount:"),
 			ALp_head->SL_realloc.ssi_LineNumber);
 	    } else {
-		fprintf(Fp_leakagesink, "FileName:\t%s\n",
-				ALp_head->SL_memory.cp_FileName);
-		fprintf(Fp_leakagesink, "LineCount:\t%d\n",
-				ALp_head->SL_memory.ssi_LineNumber);
+		fprintf(Fp_leakagesink, "%s\t%s\n",
+			gettext("FileName:"),
+			ALp_head->SL_memory.cp_FileName);
+		fprintf(Fp_leakagesink, "%s\t%d\n",
+			gettext("LineCount:"),
+			ALp_head->SL_memory.ssi_LineNumber);
 	    }
 	} else {
 	    size_t i_counter;
+	    char *value = (char *)(ALp_head->vp_Alloced);
 
 	    /*
 	     *	Increment the count of total memory lost and
@@ -111,36 +111,44 @@ PUBLIC void LYLeaks NOARGS
 	     */
 	    st_total += ALp_head->st_Bytes;
 
-	    fprintf(Fp_leakagesink, "Memory leak detected.\n");
-	    fprintf(Fp_leakagesink, "Pointer:\t%p\n", ALp_head->vp_Alloced);
-	    fprintf(Fp_leakagesink, "Contains:\t");
+	    fprintf(Fp_leakagesink, "%s\n",
+		    gettext("Memory leak detected."));
+	    fprintf(Fp_leakagesink, "%s\t%p\n",
+		    gettext("Pointer:"),
+		    ALp_head->vp_Alloced);
+	    fprintf(Fp_leakagesink, "%s:\t",
+		    gettext("Contains:"));
 	    for (i_counter = 0;
 		 i_counter < ALp_head->st_Bytes &&
 		 i_counter < MAX_CONTENT_LENGTH;
 		 i_counter++) {
-		if (isprint(((char *)(ALp_head->vp_Alloced))[i_counter])) {
-		    fprintf(Fp_leakagesink, "%c",
-			    ((char *)(ALp_head->vp_Alloced))[i_counter]);
+		if (isprint(value[i_counter])) {
+		    fprintf(Fp_leakagesink, "%c", value[i_counter]);
 		} else {
 		    fprintf(Fp_leakagesink, "|");
 		}
 	    }
 	    fprintf(Fp_leakagesink, "\n");
 	    FREE(ALp_head->vp_Alloced);
-	    fprintf(Fp_leakagesink, "ByteSize:\t%d\n",
+	    fprintf(Fp_leakagesink, "%s\t%d\n",
+				    gettext("ByteSize:"),
 				    (int)(ALp_head->st_Bytes));
-	    fprintf(Fp_leakagesink, "FileName:\t%s\n",
+	    fprintf(Fp_leakagesink, "%s\t%s\n",
+				    gettext("FileName:"),
 				    ALp_head->SL_memory.cp_FileName);
-	    fprintf(Fp_leakagesink, "LineCount:\t%d\n",
+	    fprintf(Fp_leakagesink, "%s\t%d\n",
+				    gettext("LineCount:"),
 				    ALp_head->SL_memory.ssi_LineNumber);
 	    /*
 	     *	Give the last time the pointer was realloced
 	     *	if it happened also.
 	     */
 	    if (ALp_head->SL_realloc.cp_FileName != NULL) {
-		fprintf(Fp_leakagesink, "realloced:\t%s\n",
+		fprintf(Fp_leakagesink, "%s\t%s\n",
+			gettext("realloced:"),
 			ALp_head->SL_realloc.cp_FileName);
-		fprintf(Fp_leakagesink, "LineCount:\t%d\n",
+		fprintf(Fp_leakagesink, "%s\t%d\n",
+			gettext("LineCount:"),
 			ALp_head->SL_realloc.ssi_LineNumber);
 	    }
 	}
@@ -157,25 +165,12 @@ PUBLIC void LYLeaks NOARGS
      *	Give a grand total of the leakage.
      *	Close the output file.
      */
-    fprintf(Fp_leakagesink, "\nTotal memory leakage this run:\t%u\n",
-		(unsigned)st_total);
+    fprintf(Fp_leakagesink, "\n%s\t%u\n",
+	    gettext("Total memory leakage this run:"),
+	    (unsigned)st_total);
     fclose(Fp_leakagesink);
-#ifdef VMS
-    {
-	char VMSfilename[256];
-	/*
-	 *  Purge lower versions of the file.
-	 */
-	sprintf(VMSfilename, "%s;-1", LEAKAGE_SINK);
-	while (remove(VMSfilename) == 0)
-	    ;
-	/*
-	 *  Reset version number.
-	 */
-	sprintf(VMSfilename, "%s;1", LEAKAGE_SINK);
-	rename(LEAKAGE_SINK, VMSfilename);
-    }
-#endif /* VMS */
+
+    HTSYS_purge(LEAKAGE_SINK);
 }
 
 /*
@@ -183,7 +178,7 @@ PUBLIC void LYLeaks NOARGS
 **		the information in a list.
 **  Arguments:	st_bytes	The size of the allocation requested
 **				in bytes.
-**		cp_File 	The file from which the request for
+**		cp_File		The file from which the request for
 **				allocation came from.
 **		ssi_Line	The line number in cp_File where the
 **				allocation request came from.
@@ -196,7 +191,7 @@ PUBLIC void LYLeaks NOARGS
 **	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
 */
 PUBLIC void *LYLeakMalloc ARGS3(
-	size_t, 	st_bytes,
+	size_t,		st_bytes,
 	CONST char *,	cp_File,
 	CONST short,	ssi_Line)
 {
@@ -243,7 +238,7 @@ PUBLIC void *LYLeakMalloc ARGS3(
 **		save relevant information in a list.
 **  Arguments:	st_number	The number of items to allocate.
 **		st_bytes	The size of each item.
-**		cp_File 	The file which wants to allocation.
+**		cp_File		The file which wants to allocation.
 **		ssi_Line	The line number in cp_File requesting
 **				the allocation.
 **  Return Value:	void *	The allocated memory, or NULL on failure as
@@ -255,8 +250,8 @@ PUBLIC void *LYLeakMalloc ARGS3(
 **		05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
 */
 PUBLIC void *LYLeakCalloc ARGS4(
-	size_t, 	st_number,
-	size_t, 	st_bytes,
+	size_t,		st_number,
+	size_t,		st_bytes,
 	CONST char *,	cp_File,
 	CONST short,	ssi_Line)
 {
@@ -308,7 +303,7 @@ PUBLIC void *LYLeakCalloc ARGS4(
 **				realloc works just like
 **				malloc.
 **		st_newBytes	The new size of the chunk of memory.
-**		cp_File 	The file containing the realloc.
+**		cp_File		The file containing the realloc.
 **		ssi_Line	The line containing the realloc in cp_File.
 **  Return Value:	void *	The new pointer value (could be the same) or
 **				NULL if unable to resize (old block
@@ -322,8 +317,8 @@ PUBLIC void *LYLeakCalloc ARGS4(
 **	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
 */
 PUBLIC void *LYLeakRealloc ARGS4(
-	void *, 	vp_Alloced,
-	size_t, 	st_newBytes,
+	void *,		vp_Alloced,
+	size_t,		st_newBytes,
 	CONST char *,	cp_File,
 	CONST short,	ssi_Line)
 {
@@ -397,7 +392,7 @@ PUBLIC void *LYLeakRealloc ARGS4(
 **  Purpose:	Capture all requests to free information and also
 **		remove items from the allocation list.
 **  Arguments:	vp_Alloced	The memory to free.
-**		cp_File 	The file calling free.
+**		cp_File		The file calling free.
 **		ssi_Line	The line of cp_File calling free.
 **  Return Value:	void
 **  Remarks/Portability/Dependencies/Restrictions:
@@ -409,7 +404,7 @@ PUBLIC void *LYLeakRealloc ARGS4(
 **	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
 */
 PUBLIC void LYLeakFree ARGS3(
-	void *, 	vp_Alloced,
+	void *,		vp_Alloced,
 	CONST char *,	cp_File,
 	CONST short,	ssi_Line)
 {
@@ -470,6 +465,12 @@ PUBLIC char * LYLeakSACopy ARGS4(
 	CONST char *,	cp_File,
 	CONST short,	ssi_Line)
 {
+    if (src != NULL && src == *dest) {
+	CTRACE(tfp,
+	       "LYLeakSACopy: *dest equals src, contains \"%s\"\n",
+	       src);
+	return *dest;
+    }
     if (*dest) {
 	LYLeakFree(*dest, cp_File, ssi_Line);
 	*dest = NULL;
@@ -495,6 +496,12 @@ PUBLIC char * LYLeakSACat ARGS4(
 	CONST short,	ssi_Line)
 {
     if (src && *src) {
+	if (src == *dest) {
+	    CTRACE(tfp,
+		   "LYLeakSACat:  *dest equals src, contains \"%s\"\n",
+		   src);
+	    return *dest;
+	}
 	if (*dest) {
 	    int length = strlen(*dest);
 	    *dest = (char *)LYLeakRealloc(*dest,
@@ -549,7 +556,7 @@ PRIVATE void AddToList ARGS1(
 **	05-26-94	created Lynx 2-3-1 Garrett Arch Blythe
 */
 PRIVATE AllocationList *FindInList ARGS1(
-	void *, 	vp_find)
+	void *,		vp_find)
 {
     AllocationList *ALp_find = ALp_RunTimeAllocations;
 

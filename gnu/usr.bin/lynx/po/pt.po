@@ -1,0 +1,27 @@
+msgid ""
+msgstr ""
+"Date: 1998-08-22 16:12:20-0400\n"
+"From: Webmaster Jim <jspath@bcpl.net>\n"
+"Content-Type: text/plain; charset=\n"
+"Xgettext-Options: --default-domain=po/de\n"
+"Files: src/LYMain.c\n"
+
+#: src/LYMain.c:2502
+msgid "%s Version %s %s"
+msgstr "%s Versão %s %s"
+
+#: src/LYMain.c:2504
+msgid "Copyrights held by the University of Kansas, CERN, and other contributors.\n"
+msgstr "O copyright prendeu pela universidade de Kansas, de CERN, e de outros contribuinte.\n"
+
+#: src/LYMain.c:2506
+msgid "Distributed under the GNU General Public License.\n"
+msgstr "Distribuído sob a licença do general público de GNU.\n"
+
+#: src/LYMain.c:2508
+msgid ""
+"See http://lynx.browser.org/ and the online help for more information.\n"
+"\n"
+msgstr ""
+"Veja http://lynx.browser.org / e a ajuda em linha para mais informação.\n"
+"\n"

@@ -1,5 +1,3 @@
-/*  */
-
 /*      Displaying messages and getting input for WWW Library
 **      =====================================================
 **
@@ -7,10 +5,14 @@
 **         Feb 93 Portablized etc TBL
 */
 
+#ifndef HTALERT_H
+#define HTALERT_H 1
+
 #ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-#include "tcp.h"
+#include <HTUtils.h>
+#endif
+
+#define ALERT_PREFIX_LEN 5
 
 /*      Display a message and get the input
 **
@@ -29,6 +31,10 @@ extern char * HTPrompt PARAMS((CONST char * Msg, CONST char * deflt));
 **              The input is a list of parameters for printf.
 */
 extern void HTAlert PARAMS((CONST char * Msg));
+extern void HTAlwaysAlert PARAMS((CONST char * extra_prefix, CONST char * Msg));
+extern void HTInfoMsg PARAMS((CONST char * Msg));
+extern void HTUserMsg PARAMS((CONST char * Msg));
+extern void HTUserMsg2 PARAMS((CONST char * Msg, CONST char * Arg));
 
 
 /*      Display a progress message for information (and diagnostics) only
@@ -37,7 +43,7 @@ extern void HTAlert PARAMS((CONST char * Msg));
 **              The input is a list of parameters for printf.
 */
 extern void HTProgress PARAMS((CONST char * Msg));
-extern BOOLEAN mustshow;
+extern void HTReadProgress PARAMS((long bytes, long total));
 #define _HTProgress(msg)	mustshow = TRUE, HTProgress(msg)
 
 /*
@@ -45,6 +51,19 @@ extern BOOLEAN mustshow;
  *  resets flag. (so only call once!) - kw
  */
 extern BOOL HTLastConfirmCancelled NOPARAMS;
+
+/*      Display a message, then wait for 'yes' or 'no', allowing default
+**	response if a return or left-arrow is used.
+**
+**      On entry,
+**              Takes a list of parameters for printf.
+**
+**      On exit,
+**              If the user enters 'YES', returns TRUE, returns FALSE
+**              otherwise.
+*/
+extern BOOL HTConfirmDefault PARAMS ((CONST char * Msg, int Dft));
+
 
 /*      Display a message, then wait for 'yes' or 'no'.
 **
@@ -107,8 +126,6 @@ extern void HTPromptUsernameAndPassword PARAMS((
 extern BOOL HTConfirmCookie PARAMS((
 	void *		dp,
 	CONST char *	server,
-	CONST char *	domain,
-	CONST char *	path,
 	CONST char *	name,
 	CONST char *	value));
 
@@ -128,6 +145,4 @@ extern int HTConfirmPostRedirect PARAMS((
 	CONST char *	Redirecting_url,
 	int		server_status));
 
-/*
-
-    */
+#endif /* HTALERT_H */

@@ -1,0 +1,53 @@
+# From: Vlad Harchev <hvv@hippo.ru> 
+# Notes:
+# better for eyes - it sets black background with mild colors that
+# have approximately the same intensity.
+#
+# grey normal text on black background with green links and brightgreen  
+# highlighted links. 
+#it's best to put these in a .lss file and use  
+#"lynx -lss=file.lss whatever" for now. 
+em:bold:cyan
+strong:bold:cyan
+dt:bold:cyan
+var:bold:cyan
+samp:bold:cyan
+b:bold:cyan
+i:bold:cyan
+alink:reverse:brightgreen:black
+a:bold:green
+img:dim:cyan:black
+status:reverse:cyan:black
+fig:normal:gray
+caption:reverse:cyan
+hr:normal:gray
+blockquote:normal:cyan:black
+address:normal:cyan
+title:normal:cyan:default
+tt:normal:white:black
+h1:bold:cyan:black
+label:normal:cyan
+value:normal:cyan
+high:bold:cyan
+q:normal:cyan
+small:dim:cyan
+big:bold:cyan
+sup:bold:cyan
+sub:dim:cyan
+lh:bold:cyan
+code:normal:cyan
+
+span.htmlsrc_comment:normal:white
+span.htmlsrc_tag:normal:cyan
+##the following makes no difference (except increasing the speed) since tag
+##is already in cyan.
+#span.htmlsrc_attrib:normal:cyan
+#span.htmlsrc_attrval:normal:magenta
+span.htmlsrc_abracket:normal:cyan
+span.htmlsrc_entity:normal:white
+##span.htmlsrc_href:
+##span.htmlsrc_entire:
+span.htmlsrc_badseq:normal:red
+span.htmlsrc_badtag:normal:red
+span.htmlsrc_badattr:normal:red
+span.htmlsrc_sgmlspecial:normal:yellow

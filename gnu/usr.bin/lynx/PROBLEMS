@@ -10,10 +10,22 @@ they will be outlined in this file.
     with no attempt to suspend the Lynx process only temporarily).
     Control-Z on Unix often works better with slang.
 
-    Screen resizing can be a bit funny.  If you resize the screen, 
-    documents that have been cached will be out of whack.  Any further 
+    Screen resizing can be a bit funny.  If you resize the screen,
+    documents that have been cached will be out of whack.  Any further
     documents will look fine.  You can reload documents to the current
     window size with CTRL-R
+
+    If the configure script dies when it discovers that gcc is broken,
+    despite the fact there is a perfectly good ANSI cc in the PATH,
+    try setting the CC environment variable to your working cc compiler
+    before running configure: e.g.
+
+      setenv CC cc   (or   set CC=cc; export CC  , depending on the shell)
+      ./configure
+
+    If you run into a problem compiling LYMainLoop.c or GridText.c, try
+    omitting -O from the compiler flags; these are very big files and may not
+    compile successfully if you include optimisation.
 
     On a Sun system, the message:
         "Alert!:  Unable to connect to remote host"
@@ -28,21 +40,31 @@ they will be outlined in this file.
     you have upgraded to the bind-8.1 or later library, you should try
     changing -lresolv to -lbind.
 
-    The Sun `shelltool' and `cmdtool' terminals are stupid by default.  
-    In order to get bold text to appear differently than inverse video, 
+    On Sun systems when accessing sites that use multiple IPs for one URL,
+    you may experience a core dump.  It's a bug in the resolver library,
+    which can be fixed by downloading & installing Sun's jumbo patch:
+    search Sun support information, e.g., Solaris newsgroups,
+    or see the following Lynx Archive items:
+
+      http://www.flora.org/lynx-dev/lynx-dev/9606/0422.html
+      http://www.flora.org/lynx-dev/html/month0497/msg01018.html
+      http://www.flora.org/lynx-dev/html/month0497/msg01064.html
+
+    The Sun `shelltool' and `cmdtool' terminals are stupid by default.
+    In order to get bold text to appear differently than inverse video,
     the user should put this line in ~/.Xdefaults:
 
         Term*boldStyle:         Offset_X
 
-    From the `shelltool' man page, it seems that an analogous line 
+    From the `shelltool' man page, it seems that an analogous line
     in ~/.defaults
 
         /Tty/Bold_style "Offset_X"
 
     ought to work just as well, but you may not get the desired
     behavior until you modify your .Xdefaults file (and run `xrdb
-    ~/.Xdefaults').  Note also that there are other supported values 
-    for the boldStyle resource/Bold_style default, all of which begin 
+    ~/.Xdefaults').  Note also that there are other supported values
+    for the boldStyle resource/Bold_style default, all of which begin
     with "Offset_". (helpful hint from kevin@traffic.den.mmc.com)
 
     Directory browsing has been implemented for VMS, but there are no
@@ -91,7 +113,7 @@ they will be outlined in this file.
     Updated NOTE (1996-09-02):  A patch reportedly is available from HP to
           fix the select() problem, so that "-lc" is no longer needed, but
 	  the curses glitch is not yet fixed, and you should still include
-	  "-lHcurses". 
+	  "-lHcurses".
     Updated NOTE (1997-02-03): The problems reportedly are fixed with
 	  patches PHCO_8086 and PHCO_8947 from HP.
     Updated NOTE (1997-12-15): PHCO_8086 & PHCO_8947 are very old and are
@@ -115,7 +137,7 @@ they will be outlined in this file.
     screen (separating different sorts of highlight); or sections of the
     screen may be unexpectedly highlighted.
     There is a workaround which works by restricting the terminal to a
-    single standout attribute (e.g.  normal and reverse, but no others).
+    single standout attribute (e.g., normal and reverse, but no others).
     Implementing the workaround is specific to your curses implementation.
     Most versions of curses use one of two terminal databases, called
     "termcap" and "terminfo".  Updating these databases is system-specific.

@@ -10,7 +10,7 @@
 The Cookie Jar Page displays all of the unexpired cookies you have
 accumulated in the hypothetical <em>Cookie Jar</em>.  The cookies are
 obtained via <em>Set-Cookie</em> MIME headers in replies from http servers,
-and are used for <A HREF="../Lynx_users_guide.html#30">State Management</A>
+and are used for <A HREF="../Lynx_users_guide.html#Cookies">State Management</A>
 across successive requests to the servers.
 
 <p>The cookies are listed by <em>domain</em> (server's Fully Qualified
@@ -29,13 +29,10 @@ for the request which caused the cookie to be sent, and whether the
 <em>secure</em> flag is set for the cookie, in which case it will be
 sent only via secure connections (presently, only SSL).  The
 <em>Maximum Gobble Date</em>, i.e., when the cookie is intended to
-expire, also is indicated.  Note, however, that Lynx presently gobbles
-all of it's accumulated cookies on exit from the current session, even
-if the server indicated an expiration in the distant future.  Also, a
-server may change the expiration date, or cause the cookie to be deleted,
-in its replies to subsequent requests from Lynx.  If the server included
-any explanatory comments in its <em>Set-Cookie</em> MIME headers, those
-also are displayed in the listing.
+expire, also is indicated.  Also, a server may change the expiration date,
+or cause the cookie to be deleted, in its replies to subsequent requests
+from Lynx.  If the server included any explanatory comments in its
+<em>Set-Cookie</em> MIME headers, those also are displayed in the listing.
 
 <p>The <em>domain</em>=value pairs, and each cookie's name=value, are
 links in the listing.  Activating a <em>domain</em>=value link will
@@ -44,7 +41,7 @@ should be <em>Gobbled</em> (deleted from the <em>Cookie Jar</em>),
 and/or whether the <em>domain</em> entry should be <em>Gobbled</em>
 if all of its cookies have been <em>Gobbled</em>, or whether to change
 the 'allow' setting for that <em>domain</em>.  Activating a cookie's
-name=value link will cause that particular cookie to be <em>Gobbled</em>. 
+name=value link will cause that particular cookie to be <em>Gobbled</em>.
 You will be prompted for confirmations of deletions, to avoid any
 accidental <em>Gobbling</em>.
 </BODY>

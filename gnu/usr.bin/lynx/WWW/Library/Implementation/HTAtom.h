@@ -21,15 +21,7 @@
 #ifndef HTATOM_H
 #define HTATOM_H
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-#include "HTList.h"
-
-#ifdef SHORT_NAMES
-#define HTAt_for        HTAtom_for
-#define HTAt_tMa        HTAtom_templateMatches
-#endif /*SHORT_NAMES*/
+#include <HTList.h>
 
 typedef struct _HTAtom HTAtom;
 struct _HTAtom {

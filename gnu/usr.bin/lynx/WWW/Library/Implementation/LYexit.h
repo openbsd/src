@@ -19,8 +19,10 @@
 /*
  *	Required includes
  */
-#include <stdlib.h>
-#include "HTUtils.h"
+
+#ifndef HTUTILS_H
+#include <HTUtils.h>
+#endif
 
 /*
  *	Constant defines
@@ -30,8 +32,9 @@
 #endif /* _WINDOWS */
 
 #define exit LYexit
+
 #define atexit LYatexit
-#define ATEXITSIZE 32
+#define ATEXITSIZE 40
 
 /*
  *	Data structures
@@ -48,6 +51,7 @@
 /*
  *	Function declarations
  */
+extern void exit_immediately PARAMS((int status));  /* in LYMain.c */
 extern void LYexit PARAMS((int status));
 #ifdef __STDC__
 extern int LYatexit(void (*function)(void));

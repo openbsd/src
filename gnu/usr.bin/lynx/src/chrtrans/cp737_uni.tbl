@@ -1,8 +1,11 @@
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Mcp737
 
 #Name as a Display Charset (used on Options screen)
-ODosGreek (cp737)
+OGreek (cp737)
+
+#Codepage number
+C737
 
 #
 #    Name:     cp737_DOSGreek to Unicode table

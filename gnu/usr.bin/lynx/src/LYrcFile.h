@@ -3,7 +3,7 @@
 #define LYRCFILE_H
 
 #ifndef LYSTRUCTS_H
-#include "LYStructs.h"
+#include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
 extern void read_rc NOPARAMS;

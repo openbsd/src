@@ -14,23 +14,17 @@
 **  Any ideas how to do this for other systems?
 */
 
-#include "HTUtils.h"
-#include "tcp.h"
+#include <HTUtils.h>
+#include <LYUtils.h>
 
-#include "UCMap.h"
-#include "UCDefs.h"
-#include "UCAuto.h"
-#include "LYGlobalDefs.h"
-#include "LYClean.h"
-#include "LYUtils.h"
+#include <UCMap.h>
+#include <UCDefs.h>
+#include <UCAuto.h>
+#include <LYGlobalDefs.h>
+#include <LYClean.h>
+#include <LYLeaks.h>
 
 #ifdef EXP_CHARTRANS_AUTOSWITCH
-
-#ifdef VMS
-#define DISPLAY "DECW$DISPLAY"
-#else
-#define DISPLAY "DISPLAY"
-#endif /* VMS */
 
 #ifdef LINUX
 typedef enum {
@@ -43,9 +37,9 @@ typedef enum {
     GN_Blat1, GN_0decgraf, GN_Ucp437, GN_Kuser, GN_dunno, GN_dontCare
 } TTransT_t;
 
-static char T_font_fn[100] = "\0";
-static char T_umap_fn[100] = "\0";
-static char T_setfont_cmd[200] = "\0";
+static char *T_font_fn = NULL;
+static char *T_umap_fn = NULL;
+
 #define SETFONT "setfont"
 #define NOOUTPUT "2>/dev/null >/dev/null"
 
@@ -54,39 +48,38 @@ PRIVATE void call_setfont ARGS3(
 	char *, 	fnsuffix,
 	char *, 	umap)
 {
-    if (font && *font && umap && *umap &&
-	!strcmp(font, T_font_fn) && !strcmp(umap, T_umap_fn)) {
+    char *T_setfont_cmd = NULL;
+
+    if ((font && T_font_fn && !strcmp(font, T_font_fn))
+     && (umap && T_umap_fn && !strcmp(umap, T_umap_fn))) {
 	/*
 	 *  No need to repeat.
 	 */
 	return;
     }
     if (font)
-	strcpy(T_font_fn, font);
+	StrAllocCopy(T_font_fn, font);
     if (umap)
-	strcpy(T_umap_fn, umap);
+	StrAllocCopy(T_umap_fn, umap);
 
     if (!*fnsuffix)
 	fnsuffix = "";
 
     if (umap &&*umap && font && *font) {
-	sprintf(T_setfont_cmd, "%s %s%s -u %s %s",
+	HTSprintf0(&T_setfont_cmd, "%s %s%s -u %s %s",
 		SETFONT, font, fnsuffix,	umap,	NOOUTPUT);
     } else if (font && *font) {
-	sprintf(T_setfont_cmd, "%s %s%s %s",
+	HTSprintf0(&T_setfont_cmd, "%s %s%s %s",
 		SETFONT, font, fnsuffix,		NOOUTPUT);
     } else if (umap && *umap) {
-	sprintf(T_setfont_cmd, "%s -u %s %s",
+	HTSprintf0(&T_setfont_cmd, "%s -u %s %s",
 		SETFONT,			umap,	NOOUTPUT);
-    } else {
-	*T_setfont_cmd = '\0';
     }
 
-    if (*T_setfont_cmd) {
-	if (TRACE) {
-	    fprintf(stderr, "Executing setfont: '%s'\n", T_setfont_cmd);
-	}
-	system(T_setfont_cmd);
+    if (T_setfont_cmd) {
+	CTRACE(tfp, "Executing setfont: '%s'\n", T_setfont_cmd);
+	LYSystem(T_setfont_cmd);
+	FREE(T_setfont_cmd);
     }
 }
 
@@ -107,7 +100,7 @@ PRIVATE int nonempty_file ARGS1(
     struct stat sb;
 
     return (stat(p, &sb) == 0 &&
-	    (sb.st_mode & S_IFMT) == S_IFREG &&
+	    S_ISREG(sb.st_mode) &&
 	    (sb.st_size != 0));
 }
 
@@ -132,8 +125,8 @@ PUBLIC void UCChangeTerminalCodepage ARGS2(
     TGen_state_t Utf = Dunno;
     TGen_state_t HasUmap = Dunno;
 
-    char tmpbuf1[100], tmpbuf2[20];
-    char *cp;
+    char *tmpbuf1 = NULL;
+    char *tmpbuf2 = NULL;
 
     /*
      *	Restore the original character set.
@@ -146,30 +139,32 @@ PUBLIC void UCChangeTerminalCodepage ARGS2(
 
 	    if (have_font) {
 		if (have_umap) {
-		    sprintf(tmpbuf1, "%s %s -u %s %s",
+		    HTSprintf0(&tmpbuf1, "%s %s -u %s %s",
 			    SETFONT, old_font, old_umap, NOOUTPUT);
 		} else {
-		    sprintf(tmpbuf1, "%s %s %s",
+		    HTSprintf0(&tmpbuf1, "%s %s %s",
 			    SETFONT, old_font, NOOUTPUT);
 		}
-		system(tmpbuf1);
+		LYSystem(tmpbuf1);
+		FREE(tmpbuf1);
 	    }
 
 	    remove(old_font);
-	    free(old_font);
+	    FREE(old_font);
 	    old_font = 0;
 
 	    remove(old_umap);
-	    free(old_umap);
+	    FREE(old_umap);
 	    old_umap = 0;
 	}
 	return;
     } else if (lastcs < 0 && old_umap == 0 && old_font == 0) {
 	old_umap = tempnam((char *)0, "umap");
 	old_font = tempnam((char *)0, "font");
-	sprintf(tmpbuf1, "%s -o %s -ou %s %s",
+	HTSprintf0(&tmpbuf1, "%s -o %s -ou %s %s",
 		SETFONT, old_font, old_umap, NOOUTPUT);
-	system(tmpbuf1);
+	LYSystem(tmpbuf1);
+	FREE(tmpbuf1);
     }
 
     name = p->MIMEname;
@@ -185,8 +180,8 @@ PUBLIC void UCChangeTerminalCodepage ARGS2(
     /*
      *	Use this for output of escape sequences.
      */
-    if ((display != NULL) ||
-	((cp = getenv(DISPLAY)) != NULL && *cp != '\0')) {
+    if ((x_display != NULL) ||
+	LYgetXDisplay() != NULL) {
 	/*
 	 *  We won't do anything in an xterm.  Better that way...
 	 */
@@ -232,12 +227,13 @@ PUBLIC void UCChangeTerminalCodepage ARGS2(
 	HasUmap = Is_Set;
 	Utf = Is_Unset;
     } else if (!strncmp(name, "iso-8859-", 9)) {
-	sprintf(tmpbuf1, "iso0%s", &name[9]);
-	sprintf(tmpbuf2, "iso0%s%s", &name[9],".uni");
+	HTSprintf0(&tmpbuf1, "iso0%s", &name[9]);
+	HTSprintf0(&tmpbuf2, "iso0%s%s", &name[9],".uni");
 	/*
 	 *  "setfont iso0N.f16 -u iso0N.uni"
 	 */
 	call_setfont(tmpbuf1, SUFF1, tmpbuf2);
+	FREE(tmpbuf2);
 	TransT = GN_Kuser;
 	HasUmap = Is_Set;
 	Utf = Is_Unset;
@@ -339,10 +335,16 @@ PUBLIC void UCChangeTerminalCodepage ARGS2(
 	int,		newcs,
 	LYUCcharset *,	p)
 {
-    if (TRACE) {
-	fprintf(stderr,
-		"UCChangeTerminalCodepage: Called, but not implemented!");
+#ifdef __EMX__
+    int res = 0;
+
+    if (p->codepage) {
+	res = VioSetCp(0, p->codepage, 0);
+	CTRACE(tfp, "UCChangeTerminalCodepage: VioSetCp(%d) returned %d\n", p->codepage, res);
     }
+#else
+    CTRACE(tfp, "UCChangeTerminalCodepage: Called, but not implemented!");
+#endif
 }
 #endif /* LINUX */
 
@@ -354,9 +356,6 @@ PUBLIC void UCChangeTerminalCodepage ARGS2(
 	int,		newcs GCC_UNUSED,
 	LYUCcharset *,	p GCC_UNUSED)
 {
-    if (TRACE) {
-	fprintf(stderr,
-		"UCChangeTerminalCodepage: Called, but not implemented!");
-    }
+    CTRACE(tfp, "UCChangeTerminalCodepage: Called, but not implemented!");
 }
 #endif /* EXP_CHARTRANS_AUTOSWITCH */

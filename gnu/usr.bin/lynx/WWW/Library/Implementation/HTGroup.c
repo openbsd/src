@@ -42,14 +42,13 @@
 */
 
 
+#include <HTUtils.h>
 
-#include "HTUtils.h"
-#include <string.h>
-#include "HTAAUtil.h"
-#include "HTLex.h"	/* Lexical analysor	*/
-#include "HTGroup.h"	/* Implemented here	*/
+#include <HTAAUtil.h>
+#include <HTLex.h>	/* Lexical analysor	*/
+#include <HTGroup.h>	/* Implemented here	*/
 
-#include "LYLeaks.h"
+#include <LYLeaks.h>
 
 /*
 ** Group file parser
@@ -68,7 +67,7 @@ typedef struct {
     GroupDef *	translation;
 } Ref;
 
-	
+
 
 PRIVATE void syntax_error ARGS3(FILE *,	 fp,
 				char *,	 msg,
@@ -82,8 +81,7 @@ PRIVATE void syntax_error ARGS3(FILE *,	 fp,
 	if (cnt < 40) buffer[cnt++] = ch;
     buffer[cnt] = (char)0;
 
-    if (TRACE)
-	fprintf(stderr, "%s %d before: '%s'\nHTGroup.c: %s (got %s)\n",
+    CTRACE(tfp, "%s %d before: '%s'\nHTGroup.c: %s (got %s)\n",
 		"HTGroup.c: Syntax error in rule file at line",
 		HTlex_line, buffer, msg, lex_verbose(lex_item));
     HTlex_line++;
@@ -110,10 +108,12 @@ PRIVATE AddressDefList *parse_address_part ARGS1(FILE *, fp)
 
     for(;;) {
 	Ref *ref = (Ref*)calloc(1, sizeof(Ref));
+	if (ref == NULL)
+	    outofmem(__FILE__, "parse_address_part");
 	ref->name = NULL;
 	ref->translation = NULL;
 	StrAllocCopy(ref->name, HTlex_buffer);
-	
+
 	HTList_addObject(address_def_list, (void*)ref);
 
 	if (only_one || (lex_item = lex(fp)) != LEX_ITEM_SEP)
@@ -164,12 +164,14 @@ PRIVATE UserDefList *parse_user_part ARGS1(FILE *, fp)
 
     for (;;) {
 	Ref *ref = (Ref*)calloc(1, sizeof(Ref));
+	if (ref == NULL)
+	    outofmem(__FILE__, "parse_user_part");
 	ref->name = NULL;
 	ref->translation = NULL;
 	StrAllocCopy(ref->name, HTlex_buffer);
 
 	HTList_addObject(user_def_list, (void*)ref);
-	
+
 	if (only_one || (lex_item = lex(fp)) != LEX_ITEM_SEP)
 	    break;
 	/*
@@ -222,7 +224,7 @@ PRIVATE Item *parse_item ARGS1(FILE *, fp)
 	}
 	else {
 	    if (user_def_list) {
-	        HTList_delete(user_def_list);	/* @@@@ */
+		HTList_delete(user_def_list);	/* @@@@ */
 		user_def_list = NULL;
 	    }
 	    syntax_error(fp, "Expected address part (single address or list)",
@@ -237,6 +239,8 @@ PRIVATE Item *parse_item ARGS1(FILE *, fp)
 	return NULL;
     }
     item = (Item*)calloc(1, sizeof(Item));
+    if (item == NULL)
+	outofmem(__FILE__, "parse_item");
     item->user_def_list = user_def_list;
     item->address_def_list = address_def_list;
     return item;
@@ -284,15 +288,17 @@ PUBLIC GroupDef *HTAA_parseGroupDef ARGS1(FILE *, fp)
 	return NULL;
     }
     group_def = (GroupDef*)calloc(1, sizeof(GroupDef));
+    if (group_def == NULL)
+	outofmem(__FILE__, "HTAA_parseGroupDef");
     group_def->group_name = NULL;
     group_def->item_list = item_list;
 
     if ((lex_item = lex(fp)) != LEX_REC_SEP) {
 	syntax_error(fp, "Garbage after group definition", lex_item);
     }
-    
+
     return group_def;
-}    
+}
 
 
 PRIVATE GroupDef *parse_group_decl ARGS1(FILE *, fp)
@@ -326,7 +332,7 @@ PRIVATE GroupDef *parse_group_decl ARGS1(FILE *, fp)
 
     return group_def;
 }
-	
+
 
 
 /*
@@ -343,8 +349,8 @@ PRIVATE GroupDef *find_group_def ARGS2(GroupDefList *,	group_list,
 	while (NULL != (group_def = (GroupDef*)HTList_nextObject(cur))) {
 	    if (!strcmp(group_name, group_def->group_name)) {
 		return group_def;
-            }
-        }
+	    }
+	}
     }
     return NULL;
 }
@@ -382,10 +388,10 @@ PRIVATE GroupDefList *parse_group_file ARGS1(FILE *, fp)
 {
     GroupDefList *group_def_list = HTList_new();
     GroupDef *group_def;
-    
+
     while (NULL != (group_def = parse_group_decl(fp)))
 	add_group_def(group_def_list, group_def);
-    
+
     return group_def_list;
 }
 
@@ -397,7 +403,7 @@ PRIVATE GroupDefList *parse_group_file ARGS1(FILE *, fp)
 PRIVATE void print_item ARGS1(Item *, item)
 {
     if (!item)
-	fprintf(stderr, "\tNULL-ITEM\n");
+	fprintf(tfp, "\tNULL-ITEM\n");
     else {
 	UserDefList *cur1 = item->user_def_list;
 	AddressDefList *cur2 = item->address_def_list;
@@ -405,20 +411,20 @@ PRIVATE void print_item ARGS1(Item *, item)
 	Ref *addr_ref = (Ref*)HTList_nextObject(cur2);
 
 	if (user_ref) {
-	    fprintf(stderr, "\t[%s%s", user_ref->name,
+	    fprintf(tfp, "\t[%s%s", user_ref->name,
 		    (user_ref->translation ? "*REF*" : ""));
 	    while (NULL != (user_ref = (Ref*)HTList_nextObject(cur1)))
-		fprintf(stderr, "; %s%s", user_ref->name,
+		fprintf(tfp, "; %s%s", user_ref->name,
 			(user_ref->translation ? "*REF*" : ""));
-	    fprintf(stderr, "] ");
-	} else fprintf(stderr, "\tANYBODY ");
+	    fprintf(tfp, "] ");
+	} else fprintf(tfp, "\tANYBODY ");
 
 	if (addr_ref) {
-	    fprintf(stderr, "@ [%s", addr_ref->name);
+	    fprintf(tfp, "@ [%s", addr_ref->name);
 	    while (NULL != (addr_ref = (Ref*)HTList_nextObject(cur2)))
-		fprintf(stderr, "; %s", addr_ref->name);
-	    fprintf(stderr, "]\n");
-	} else fprintf(stderr, "@ ANYADDRESS\n");
+		fprintf(tfp, "; %s", addr_ref->name);
+	    fprintf(tfp, "]\n");
+	} else fprintf(tfp, "@ ANYADDRESS\n");
     }
 }
 
@@ -429,7 +435,7 @@ PRIVATE void print_item_list ARGS1(ItemList *, item_list)
     Item *item;
 
     if (!item_list)
-	fprintf(stderr, "EMPTY");
+	fprintf(tfp, "EMPTY");
     else while (NULL != (item = (Item*)HTList_nextObject(cur)))
 	print_item(item);
 }
@@ -438,15 +444,15 @@ PRIVATE void print_item_list ARGS1(ItemList *, item_list)
 PUBLIC void HTAA_printGroupDef ARGS1(GroupDef *, group_def)
 {
     if (!group_def) {
-	fprintf(stderr, "\nNULL RECORD\n");
+	fprintf(tfp, "\nNULL RECORD\n");
 	return;
     }
 
-    fprintf(stderr, "\nGroup %s:\n",
+    fprintf(tfp, "\nGroup %s:\n",
 	    (group_def->group_name ? group_def->group_name : "NULL"));
 
     print_item_list(group_def->item_list);
-    fprintf(stderr, "\n");
+    fprintf(tfp, "\n");
 }
 
 
@@ -454,7 +460,7 @@ PRIVATE void print_group_def_list ARGS1(GroupDefList *, group_list)
 {
     GroupDefList *cur = group_list;
     GroupDef *group_def;
-    
+
     while (NULL != (group_def = (GroupDef*)HTList_nextObject(cur)))
 	HTAA_printGroupDef(group_def);
 }
@@ -483,6 +489,7 @@ PRIVATE BOOL part_match ARGS2(CONST char *, tcur,
     char actual[4];
     CONST char *cur;
     int cnt;
+    BOOL status;
 
     if (!tcur || !icur) return NO;
 
@@ -498,14 +505,11 @@ PRIVATE BOOL part_match ARGS2(CONST char *, tcur,
 	actual[cnt++] = *(cur++);
     actual[cnt] = (char)0;
 
-    if (TRACE) {
-	BOOL status = HTAA_templateMatch(required, actual);
-	fprintf(stderr, "part_match: req: '%s' act: '%s' match: %s\n",
+    status = HTAA_templateMatch(required, actual);
+    CTRACE(tfp, "part_match: req: '%s' act: '%s' match: %s\n",
 		required, actual, (status ? "yes" : "no"));
-	return status;
-    }
 
-    return HTAA_templateMatch(required, actual);
+    return status;
 }
 
 
@@ -513,8 +517,8 @@ PRIVATE BOOL part_match ARGS2(CONST char *, tcur,
 /* PRIVATE						ip_number_match()
 **		MATCH INET NUMBER AGAINST AN INET NUMBER MASK
 ** ON ENTRY:
-**	template	mask to match agaist, e.g. 128.141.*.*
-**	the_inet_addr	actual inet address, e.g. 128.141.201.74
+**	template	mask to match agaist, e.g., 128.141.*.*
+**	the_inet_addr	actual inet address, e.g., 128.141.201.74
 **
 ** ON EXIT:
 **	returns		YES, if match;  NO, if not.
@@ -525,7 +529,7 @@ PRIVATE BOOL ip_number_match ARGS2(CONST char *,	template,
     CONST char *tcur = template;
     CONST char *icur = the_inet_addr;
     int cnt;
-    
+
     for (cnt=0; cnt<4; cnt++) {
 	if (!tcur || !icur || !part_match(tcur, icur))
 	    return NO;
@@ -572,9 +576,9 @@ PRIVATE BOOL is_domain_mask ARGS1(CONST char *,	mask)
 /* PRIVATE							ip_mask_match()
 **		MATCH AN IP NUMBER MASK OR IP NAME MASK
 **		AGAINST ACTUAL IP NUMBER OR IP NAME
-**		
+**
 ** ON ENTRY:
-**	mask		mask. Mask may be either an inet number
+**	mask		mask.  Mask may be either an inet number
 **			mask or a domain name mask,
 **			e.g.
 **				128.141.*.*
@@ -618,7 +622,7 @@ PRIVATE BOOL ip_in_def_list ARGS3(AddressDefList *,	address_def_list,
 	Ref *ref;
 
 	while (NULL != (ref = (Ref*)HTList_nextObject(cur))) {
-	    /* Value of ref->translation is ignored, i.e. */
+	    /* Value of ref->translation is ignored, i.e., */
 	    /* no recursion for ip address tamplates.	  */
 	    if (ip_mask_match(ref->name, ip_number, ip_name))
 		return YES;
@@ -656,21 +660,21 @@ PUBLIC GroupDefList *HTAA_readGroupFile ARGS1(CONST char *, filename)
 
 	while (NULL != (group_cache = (GroupCache*)HTList_nextObject(cur))) {
 	    if (!strcmp(filename, group_cache->group_filename)) {
-		if (TRACE) fprintf(stderr, "%s '%s' %s\n",
-				   "HTAA_readGroupFile: group file",
-				   filename, "already found in cache");
+		CTRACE(tfp, "%s '%s' %s\n",
+			    "HTAA_readGroupFile: group file",
+			    filename, "already found in cache");
 		return group_cache->group_list;
 	    } /* if cache match */
 	} /* while cached files remain */
     } /* cache exists */
 
-    if (TRACE) fprintf(stderr, "HTAA_readGroupFile: reading group file `%s'\n",
-		       filename);
+    CTRACE(tfp, "HTAA_readGroupFile: reading group file `%s'\n",
+		filename);
 
     if (!(fp = fopen(filename, "r"))) {
-	if (TRACE) fprintf(stderr, "%s '%s'\n",
-			   "HTAA_readGroupFile: unable to open group file",
-			   filename);
+	CTRACE(tfp, "%s '%s'\n",
+		    "HTAA_readGroupFile: unable to open group file",
+		    filename);
 	return NULL;
     }
 
@@ -683,10 +687,9 @@ PUBLIC GroupDefList *HTAA_readGroupFile ARGS1(CONST char *, filename)
     HTList_addObject(group_cache_list, (void*)group_cache);
     fclose(fp);
 
-    if (TRACE) {
-	fprintf(stderr, "Read group file '%s', results follow:\n", filename);
+    CTRACE(tfp, "Read group file '%s', results follow:\n", filename);
+    if (TRACE)
 	print_group_def_list(group_cache->group_list);
-    }
 
     return group_cache->group_list;
 }
@@ -724,7 +727,7 @@ PUBLIC HTAAFailReasonType HTAA_userAndInetInGroup ARGS4(GroupDef *, group,
 	while (NULL != (item = (Item*)HTList_nextObject(cur1))) {
 	    if (!item->address_def_list ||	/* Any address allowed */
 		ip_in_def_list(item->address_def_list, ip_number, ip_name)) {
-		    
+
 		if (!item->user_def_list)	/* Any user allowed */
 		    return HTAA_OK;
 		else {
@@ -732,7 +735,7 @@ PUBLIC HTAAFailReasonType HTAA_userAndInetInGroup ARGS4(GroupDef *, group,
 		    Ref *ref;
 
 		    while (NULL != (ref = (Ref*)HTList_nextObject(cur2))) {
-			
+
 			if (ref->translation) {	/* Group, check recursively */
 			    reason = HTAA_userAndInetInGroup(ref->translation,
 							     username,
@@ -753,7 +756,7 @@ PUBLIC HTAAFailReasonType HTAA_userAndInetInGroup ARGS4(GroupDef *, group,
 	    }
 	} /* while items in group */
     } /* valid parameters */
-    
+
     return reason;		/* No match, or invalid parameters */
 }
 

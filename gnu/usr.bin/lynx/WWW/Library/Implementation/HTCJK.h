@@ -11,13 +11,17 @@
 #ifndef HTCJK_H
 #define HTCJK_H
 
+#ifndef HTUTILS_H
+#include <HTUtils.h>
+#endif
+
 /*
 **	STATUS CHANGE CODES
 */
 #ifdef ESC
 #undef ESC
 #endif /* ESC */
-#define ESC		'\033'
+#define ESC		CH_ESC  /* S/390 -- gil -- 0098 */
 #define TO_2BCODE	'$'
 #define TO_1BCODE	'('
 
@@ -96,15 +100,15 @@ extern unsigned char * EUC_TO_JIS PARAMS((
 	CONST char *		toA));
 
 extern unsigned char * TO_EUC PARAMS((
-	unsigned char *		jis,
+	CONST unsigned char *	jis,
 	unsigned char *		euc));
 
 extern void TO_SJIS PARAMS((
-	unsigned char *		any,
+	CONST unsigned char *	any,
 	unsigned char *		sjis));
 
 extern void TO_JIS PARAMS((
-	unsigned char *		any,
+	CONST unsigned char *	any,
 	unsigned char *		jis));
 
 #endif /* HTCJK_H */

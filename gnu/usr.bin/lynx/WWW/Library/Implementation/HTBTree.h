@@ -1,24 +1,21 @@
 /*                  /Net/dxcern/userd/timbl/hypertext/WWW/Library/Implementation/HTBTree.html
                          BALANCED BINARY TREE FOR SORTING THINGS
-                                             
+
    Tree creation, traversal and freeing.  User-supplied comparison routine.
-   
+
    Author: Arthur Secret, CERN. Public domain.  Please mail bugs and changes to
    www-request@info.cern.ch
-   
+
    part of libWWW
-   
+
  */
-#ifdef SHORT_NAMES
-#define HTBTree_new             HTBTNew
-#define HTBTree_free            HTBTFree
-#define HTBTreeAndObject_free   HTBTAOFr
-#define HTBTree_add             HTBTAdd
-#define HTBTree_next            HTBTNext
-/* #define      HTBTree_object          HTBTObje already a macro */
+#ifndef HTBTREE_H
+#define HTBTREE_H 1
+
+#ifndef HTUTILS_H
+#include <HTUtils.h>
 #endif
-
-
+ 
 /*
 
 Data structures
@@ -90,15 +87,13 @@ Find user object for element
 Find next element in depth-first order
 
   ON ENTRY,
-  
+
   ele                    if NULL, start with leftmost element. if != 0 give next object to
                          the right.
-                         
+
   returns                Pointer to element ot NULL if none left.
-                         
+
  */
 extern HTBTElement * HTBTree_next PARAMS((HTBTree* tree, HTBTElement * ele));
 
-/*
-
-   end  */
+#endif /* HTBTREE_H */

@@ -3,7 +3,7 @@
 #define LYSEARCH_H
 
 #ifndef LYSTRUCTS_H
-#include "LYStructs.h"
+#include <LYStructs.h>
 #endif /* LYSTRUCT_H */
 
 extern BOOL textsearch PARAMS((document *cur_doc,

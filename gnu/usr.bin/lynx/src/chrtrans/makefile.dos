@@ -13,8 +13,11 @@ CFLAGS = $(MCFLAGS)
 
 CC = gcc
 MCFLAGS = -O3 -DDOSPATH -DNO_TTYTYP \
--I../../WWW/library/implement -I../../djgpp/tcplib/include \
--I../../djgpp/tcplib/include/tcp
+-I. \
+-I../../WWW/Library/Implementation \
+-I../../djgpp/tcplib/include \
+-I../../djgpp/tcplib/include/tcp \
+-I../..
 
 .SUFFIXES: .tbl
 #
@@ -39,9 +42,11 @@ TABLES= \
  cp862_uni.h \
  cp864_uni.h \
  cp866_uni.h \
+ cp866u_uni.h \
  cp869_uni.h \
  def7_uni.h \
  dmcs_uni.h \
+ hp_uni.h \
  iso01_uni.h \
  iso02_uni.h \
  iso03_uni.h \
@@ -52,10 +57,12 @@ TABLES= \
  iso08_uni.h \
  iso09_uni.h \
  iso10_uni.h \
+ iso15_uni.h \
  koi8r_uni.h \
+ koi8u_uni.h \
  mac_uni.h \
- mnem_suni.h \
  mnem2_suni.h \
+ mnem_suni.h \
  next_uni.h \
  rfc_suni.h \
  utf8_uni.h \
@@ -81,14 +88,17 @@ cp1256_uni.h:		cp1256_uni.tbl		makeuctb.exe
 cp1257_uni.h:		cp1257_uni.tbl		makeuctb.exe
 cp437_uni.h:		cp437_uni.tbl		makeuctb.exe
 cp737_uni.h:		cp737_uni.tbl		makeuctb.exe
+cp775_uni.h:		cp775_uni.tbl		makeuctb.exe
 cp850_uni.h:		cp850_uni.tbl		makeuctb.exe
 cp852_uni.h:		cp852_uni.tbl		makeuctb.exe
 cp862_uni.h:		cp862_uni.tbl		makeuctb.exe
 cp864_uni.h:		cp864_uni.tbl		makeuctb.exe
 cp866_uni.h:		cp866_uni.tbl		makeuctb.exe
+cp866u_uni.h:		cp866u_uni.tbl		makeuctb.exe
 cp869_uni.h:		cp869_uni.tbl		makeuctb.exe
 def7_uni.h:		def7_uni.tbl		makeuctb.exe
 dmcs_uni.h:		dmcs_uni.tbl		makeuctb.exe
+hp_uni.h:               hp_uni.tbl              makeuctb.exe 
 iso01_uni.h:		iso01_uni.tbl		makeuctb.exe
 iso02_uni.h:		iso02_uni.tbl		makeuctb.exe
 iso03_uni.h:		iso03_uni.tbl		makeuctb.exe
@@ -99,10 +109,12 @@ iso07_uni.h:		iso07_uni.tbl		makeuctb.exe
 iso08_uni.h:		iso08_uni.tbl		makeuctb.exe
 iso09_uni.h:		iso09_uni.tbl		makeuctb.exe
 iso10_uni.h:		iso10_uni.tbl		makeuctb.exe
+iso15_uni.h:		iso15_uni.tbl		makeuctb.exe
 koi8r_uni.h:		koi8r_uni.tbl		makeuctb.exe
+koi8u_uni.h:		koi8u_uni.tbl		makeuctb.exe
 mac_uni.h:		mac_uni.tbl		makeuctb.exe
-mnem_suni.h:		mnem_suni.tbl		makeuctb.exe
 mnem2_suni.h:		mnem2_suni.tbl		makeuctb.exe
+mnem_suni.h:		mnem_suni.tbl		makeuctb.exe
 next_uni.h:		next_uni.tbl		makeuctb.exe
 rfc_suni.h:		rfc_suni.tbl		makeuctb.exe
 utf8_uni.h:		utf8_uni.tbl		makeuctb.exe

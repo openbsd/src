@@ -10,10 +10,10 @@
 #ifndef HTFILE_H
 #define HTFILE_H
 
-#include "HTFormat.h"
-#include "HTAccess.h"
+#include <HTFormat.h>
+#include <HTAccess.h>
 #ifndef HTML_H
-#include "HTML.h"               /* SCW */
+#include <HTML.h>               /* SCW */
 #endif /* HTML_H */
 
 /*
@@ -42,12 +42,15 @@ extern int HTDirReadme;         /* Include readme files in listing? */
 /*
 **  Convert filenames between local and WWW formats
 */
-extern char * HTLocalName PARAMS((CONST char * name));
+extern char * HTnameOfFile_WWW PARAMS((CONST char * name, BOOL WWW_prefix, BOOL expand_all));
+#define HTLocalName(name)      HTnameOfFile_WWW(name,TRUE,TRUE)
+#define HTfullURL_toFile(name) HTnameOfFile_WWW(name,FALSE,TRUE)
+#define HTpartURL_toFile(name) HTnameOfFile_WWW(name,FALSE,FALSE)
 
 /*
 **  Make a WWW name from a full local path name
 */
-extern char * WWW_nameOfFile PARAMS((const char * name));
+extern char * WWW_nameOfFile PARAMS((CONST char * name));
 
 /*
 **  Generate the name of a cache file

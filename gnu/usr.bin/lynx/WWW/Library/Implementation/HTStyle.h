@@ -5,7 +5,7 @@
    physical representation.
 
    A StyleSheet is a collection of styles, defining the translation necessary to represent
-   a document. It is a linked list of styles.
+   a document.  It is a linked list of styles.
 
 Overriding this module
 
@@ -21,7 +21,7 @@ Overriding this module
    be compiled with a knowledge of the
 
    It we take it out of the library, then of course HTStyle could be declared as an
-   undefined structure. The only references to it are in the structure-flattening code
+   undefined structure.  The only references to it are in the structure-flattening code
    HTML.c and HTPlain.c, which only use HTStypeNamed().
 
    You can in any case override this function in your own code, which will prevent the
@@ -32,29 +32,9 @@ Overriding this module
 #ifndef HTStyle_H
 #define HTStyle_H
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-#include "HTAnchor.h"
+#include <HTAnchor.h>
 
 typedef long int HTFont;        /* Dummy definition instead */
-
-#ifdef SHORT_NAMES
-#define HTStyleNew                      HTStNew
-#define HTStyleFree                     HTStFree
-#define HTStyleRead                     HTStRead
-#define HTStyleWrite                    HTStWrite
-#define HTStyleSheetNew                 HTStShNe
-#define HTStyleSheetFree                HTStShFr
-#define HTStyleNamed                    HTStName
-#define HTStyleForParagraph             HTStFoPa
-#define HTStyleMatching                 HTStMatc
-#define HTStyleForRun                   HTStFoRu
-#define HTStyleSheetAddStyle            HTStShAd
-#define HTStyleSheetRemoveStyle         HTStShRm
-#define HTStyleSheetRead                HTStShRe
-#define HTStyleSheetWrite               HTStShWr
-#endif
 
 #ifdef NeXT_suppressed
 #include <appkit/appkit.h>

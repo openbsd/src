@@ -7,8 +7,8 @@ What is SocketShr?
 
 SOCKETSHR is Eckhart Meyer's socket library interface to the MadGoat NETLIB
 package, which provides a vendor-independent interface to the VMS TCP/IP
-transports. Using this, the same image will run over any of the available
-packages, including UCX, Multinet, CMU, Pathway access and TCPWARE. 
+transports.  Using this, the same image will run over any of the available
+packages, including UCX, Multinet, CMU, Pathway access and TCPWARE.
 
 SocketShr and NETLIB are separately available libraries that MUST be installed
 before LYNX can use them.
@@ -58,7 +58,7 @@ Both should be defined /system /exec
 Building LYNX
 -------------
 
-Run the BUILD.COM procedures and select the SOCKETSHR_TCP option. This will
+Run the BUILD.COM procedures and select the SOCKETSHR_TCP option.  This will
 build an image that will run over the SOCKETSHR/NETLIB routines.
 
 

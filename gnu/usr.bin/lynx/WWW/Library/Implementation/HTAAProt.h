@@ -1,25 +1,13 @@
 /*                                   PROTECTION SETUP FILE
-                                             
+
  */
 
 #ifndef HTAAPROT_H
 #define HTAAPROT_H
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-#include "HTGroup.h"
-#include "HTAssoc.h"
+#include <HTGroup.h>
+#include <HTAssoc.h>
 
-#ifdef SHORT_NAMES
-#define HTAAgUid        HTAA_getUid
-#define HTAAgGid        HTAA_getGid
-#define HTAAgDPr        HTAA_setDefaultProtection
-#define HTAAsCPr        HTAA_setCurrentProtection
-#define HTAAgCPr        HTAA_getCurrentProtection
-#define HTAAgDPr        HTAA_getDefaultProtection
-#define HTAAclPr        HTAA_clearProtections
-#endif /*SHORT_NAMES*/
 /*
 
 Server's Representation of Document (Tree) Protections
@@ -41,15 +29,15 @@ typedef struct {
 Callbacks for rule system
 
    The following three functioncs are called by the rule system:
-   
+
       HTAA_clearProtections() when starting to translate a filename
-      
+
       HTAA_setDefaultProtection() when "defprot" rule is matched
-      
+
       HTAA_setCurrentProtection() when "protect" rule is matched
-      
+
    Protection setup files are cached by these functions.
-   
+
  */
 
 /* PUBLIC                                       HTAA_setDefaultProtection()
@@ -71,7 +59,7 @@ Callbacks for rule system
 **      returns         nothing.
 **                      Sets the module-wide variable default_prot.
 */
-PUBLIC void HTAA_setDefaultProtection PARAMS((CONST char *      cur_docname,
+extern void HTAA_setDefaultProtection PARAMS((CONST char *      cur_docname,
                                               CONST char *      prot_filename,
                                               CONST char *      eff_ids));
 
@@ -96,7 +84,7 @@ PUBLIC void HTAA_setDefaultProtection PARAMS((CONST char *      cur_docname,
 **      returns         nothing.
 **                      Sets the module-wide variable current_prot.
 */
-PUBLIC void HTAA_setCurrentProtection PARAMS((CONST char *      cur_docname,
+extern void HTAA_setCurrentProtection PARAMS((CONST char *      cur_docname,
                                               CONST char *      prot_filename,
                                               CONST char *      eff_ids));
 
@@ -112,18 +100,18 @@ PUBLIC void HTAA_setCurrentProtection PARAMS((CONST char *      cur_docname,
 **      returns nothing.
 **              Frees the memory used by protection information.
 */
-PUBLIC void HTAA_clearProtections NOPARAMS;
+extern void HTAA_clearProtections NOPARAMS;
 /*
 
 Getting Protection Settings
 
       HTAA_getCurrentProtection() returns the current protection mode (if there was a
       "protect" rule). NULL, if no "protect" rule has been matched.
-      
+
       HTAA_getDefaultProtection() sets the current protection mode to what it was set to
       by "defprot" rule and also returns it (therefore after this call also
       HTAA_getCurrentProtection() returns the same structure.
-      
+
  */
 
 /* PUBLIC                                       HTAA_getCurrentProtection()
@@ -140,7 +128,7 @@ Getting Protection Settings
 **              protection setup of the HTTranslate()'d file.
 **              This must not be free()'d.
 */
-PUBLIC HTAAProt *HTAA_getCurrentProtection NOPARAMS;
+extern HTAAProt *HTAA_getCurrentProtection NOPARAMS;
 
 
 
@@ -157,12 +145,12 @@ PUBLIC HTAAProt *HTAA_getCurrentProtection NOPARAMS;
 **      returns a HTAAProt structure representing the
 **              default protection setup of the HTTranslate()'d
 **              file (if HTAA_getCurrentProtection() returned
-**              NULL, i.e. if there is no "protect" rule
+**              NULL, i.e., if there is no "protect" rule
 **              but ACL exists, and we need to know default
 **              protection settings).
 **              This must not be free()'d.
 */
-PUBLIC HTAAProt *HTAA_getDefaultProtection NOPARAMS;
+extern HTAAProt *HTAA_getDefaultProtection NOPARAMS;
 /*
 
 Get User and Group IDs to Which Set to
@@ -179,7 +167,7 @@ Get User and Group IDs to Which Set to
 **      returns the uid number to give to setuid() system call.
 **              Default is 65534 (nobody).
 */
-PUBLIC int HTAA_getUid NOPARAMS;
+extern int HTAA_getUid NOPARAMS;
 
 
 /* PUBLIC                                                       HTAA_getGid()
@@ -191,12 +179,12 @@ PUBLIC int HTAA_getUid NOPARAMS;
 **      returns the uid number to give to setgid() system call.
 **              Default is 65534 (nogroup).
 */
-PUBLIC int HTAA_getGid NOPARAMS;
+extern int HTAA_getGid NOPARAMS;
 #endif /* not VMS */
 /*
 
    For VMS:
-   
+
  */
 
 #ifdef VMS
@@ -209,7 +197,7 @@ PUBLIC int HTAA_getGid NOPARAMS;
 **      returns the user name
 **              Default is "" (nobody).
 */
-PUBLIC char * HTAA_getUidName NOPARAMS;
+extern char * HTAA_getUidName NOPARAMS;
 
 /* PUBLIC                                                       HTAA_getFileName
 **              GET THE FILENAME (VMS ONLY)
@@ -219,8 +207,46 @@ PUBLIC char * HTAA_getUidName NOPARAMS;
 ** ON EXIT:
 **      returns the filename
 */
-PUBLIC char * HTAA_getFileName NOPARAMS;
+extern char * HTAA_getFileName NOPARAMS;
 #endif /* VMS */
+
+/* PUBLIC                                                       HTAA_UidToName
+**              GET THE USER NAME
+** ON ENTRY:
+**      The user-id
+**
+** ON EXIT:
+**      returns the user name
+*/
+extern char * HTAA_UidToName PARAMS((int uid));
+/* PUBLIC                                                       HTAA_NameToUid
+**              GET THE USER ID
+** ON ENTRY:
+**      The user-name
+**
+** ON EXIT:
+**      returns the user id
+*/
+extern int HTAA_NameToUid PARAMS((char *name));
+/* PUBLIC                                                       HTAA_GidToName
+**              GET THE GROUP NAME
+** ON ENTRY:
+**      The group-id
+**
+** ON EXIT:
+**      returns the group name
+*/
+extern char * HTAA_GidToName PARAMS((int gid));
+/* PUBLIC                                                       HTAA_NameToGid
+**              GET THE GROUP ID
+** ON ENTRY:
+**      The group-name
+**
+** ON EXIT:
+**      returns the group id
+*/
+extern int HTAA_NameToGid PARAMS((char *name));
+
 /*
 
  */

@@ -16,16 +16,11 @@
 **
 */
 
+#include <HTUtils.h>
 
-#include "HTUtils.h"
+#include <HTAssoc.h>
 
-#include <string.h>
-
-#include "HTAAUtil.h"
-#include "HTAssoc.h"
-#include "HTString.h"
-
-#include "LYLeaks.h"
+#include <LYLeaks.h>
 
 PUBLIC HTAssocList *HTAssocList_new NOARGS
 {
@@ -66,8 +61,8 @@ PUBLIC void HTAssocList_add ARGS3(HTAssocList *,	alist,
 	if (value)
 	    StrAllocCopy(assoc->value, value);
 	HTList_addObject(alist, (void*)assoc);
-    } else if (TRACE) {
-        fprintf(stderr, "HTAssoc_add: ERROR: assoc list NULL!!\n");
+    } else {
+        CTRACE(tfp, "HTAssoc_add: ERROR: assoc list NULL!!\n");
     }
 }
 

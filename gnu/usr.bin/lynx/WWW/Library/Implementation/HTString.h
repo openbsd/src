@@ -1,4 +1,4 @@
-/*                                                                 String handling for libwww
+/*                                                   String handling for libwww
                                          STRINGS
                                              
    Case-independent string comparison and allocations with copies etc
@@ -8,12 +8,28 @@
 #define HTSTRING_H
 
 #ifndef HTUTILS_H
-#include "HTUtils.h"
+#include <HTUtils.h>
 #endif /* HTUTILS_H */
 
 extern int WWW_TraceFlag;       /* Global flag for all W3 trace */
 
 extern CONST char * HTLibraryVersion;   /* String for help screen etc */
+
+/*
+    EBCDIC string comparison using ASCII collating sequence
+*/
+#ifdef    NOT_ASCII
+extern int AS_casecomp  PARAMS((CONST char *a, CONST char *b));
+extern int AS_ncmp PARAMS((CONST char *a, CONST char *b, unsigned int n));
+#define    AS_cmp( a, b )  ( AS_ncmp( ( a ), ( b ), -1 ) )
+extern int AS_cmp PARAMS((CONST char *a, CONST char *b));
+
+#else
+#define AS_casecomp( a, b ) ( strcasecomp( ( a ), ( b ) ) )
+#define AS_ncmp( a, b, c )  ( strncmp( ( a ), ( b ), ( c ) ) )
+#define AS_cmp strcmp
+
+#endif /* NOT_ASCII */
 
 /*
 
@@ -53,11 +69,37 @@ extern char * HTNextField PARAMS ((char** pstr));
 
 /* A more general parser - kw */
 extern char * HTNextTok PARAMS((char ** pstr,
-		      const char * delims, const char * bracks, char * found));
+		      CONST char * delims, CONST char * bracks, char * found));
 
+#if ANSI_VARARGS
+extern char * HTSprintf (char ** pstr, CONST char * fmt, ...)
+			GCC_PRINTFLIKE(2,3);
+extern char * HTSprintf0 (char ** pstr, CONST char * fmt, ...)
+			 GCC_PRINTFLIKE(2,3);
+#else
+extern char * HTSprintf () GCC_PRINTFLIKE(2,3);
+extern char * HTSprintf0 () GCC_PRINTFLIKE(2,3);
 #endif
-/*
 
-   end
-   
-    */
+#if defined(VMS) || defined(DOSPATH) || defined(__EMX__)
+#define USE_QUOTED_PARAMETER 0
+#else
+#define USE_QUOTED_PARAMETER 1
+#endif
+
+#if USE_QUOTED_PARAMETER
+extern char *HTQuoteParameter PARAMS((CONST char *parameter));
+extern void HTAddXpand PARAMS((char ** result, CONST char * command, int number, CONST char * parameter));
+#else
+#define HTQuoteParameter(parameter) parameter	/* simplify ifdef'ing */
+#define HTAddXpand(result,command,number,parameter)  HTAddParam(result,command,number,parameter)
+#endif
+
+extern int HTCountCommandArgs PARAMS((CONST char * command));
+extern void HTAddParam PARAMS((char ** result, CONST char * command, int number, CONST char * parameter));
+extern void HTEndParam PARAMS((char ** result, CONST char * command, int number));
+
+/* Force an option, with leading blanks, to be appended without quoting them */
+#define HTOptParam(result, command, number, parameter) HTSACat(result, parameter)
+
+#endif /* HTSTRING_H */

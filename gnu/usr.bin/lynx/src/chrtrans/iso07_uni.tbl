@@ -1,9 +1,12 @@
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Miso-8859-7
 
 #Name as a Display Charset (used on Options screen)
-OISO 8859-7 Greek
- 
+OGreek (ISO-8859-7)
+
+#Codepage number
+C813
+
 #
 #	Name:             ISO 8859-7 (1987) to Unicode
 #	Unicode version:  1.1

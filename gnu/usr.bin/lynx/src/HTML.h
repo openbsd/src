@@ -8,17 +8,13 @@
 #define HTML_H
 
 #ifndef HTUTILS_H
-#include "HTUtils.h"
+#include <HTUtils.h>
 #endif /* HTUTILS_H */
-#include "UCDefs.h"
-#include "UCAux.h"
-#include "HTAnchor.h"
-#include "HTMLDTD.h"
 
-#ifdef SHORT_NAMES
-#define HTMLPresentation        HTMLPren
-#define HTMLPresent             HTMLPres
-#endif /* SHORT_NAMES */
+#include <UCDefs.h>
+#include <UCAux.h>
+#include <HTAnchor.h>
+#include <HTMLDTD.h>
 
 /* #define ATTR_CS_IN (me->T.output_utf8 ? me->UCLYhndl : 0) */
 #define ATTR_CS_IN me->tag_charset
@@ -207,9 +203,7 @@ struct _HTStructured {
     int 		tag_charset; /* charset for attribute values etc. */
 };
 
-extern  HTStyle *styles[HTML_ELEMENTS+31]; /* adding 24 nested list styles  */
-					   /* and 3 header alignment styles */
-					   /* and 3 div alignment styles    */
+extern  HTStyle *LYstyles PARAMS((int style_number));
 
 /*
  *	Semi-Private functions. - FM

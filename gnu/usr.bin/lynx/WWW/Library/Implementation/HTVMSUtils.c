@@ -13,16 +13,13 @@
 **
 */
 
-#include "HTUtils.h"
-#include "tcp.h"
-#include "HTFormat.h"
-#include "HTStream.h"
-#include "UCDefs.h"
-#include "UCMap.h"
-#include "UCAux.h"
-#include "HTVMSUtils.h"
-/*#include <stdio.h> included by HTUtils.h -- FM */
-/*#include <unixlib.h> included by HTUtils.h -- FM */
+#include <HTUtils.h>
+#include <HTFormat.h>
+#include <HTStream.h>
+#include <UCDefs.h>
+#include <UCMap.h>
+#include <UCAux.h>
+#include <HTVMSUtils.h>
 #include <ssdef.h>
 #include <jpidef.h>
 #include <prvdef.h>
@@ -33,9 +30,8 @@
 #include <starlet.h>
 #include <rmsdef.h>
 
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <LYUtils.h>
+#include <LYLeaks.h>
 
 #define INFINITY 512            	/* File name length @@ FIXME */
 
@@ -79,12 +75,12 @@ unsigned long Buffer[2];
   Result = sys$getjpiw(0, 0, 0, ItemList, 0, 0, 0);
 
   if (Result != SS$_NORMAL)
-     return(NO);  
+     return(NO);
 
   if (Buffer[0] & PRV$M_SYSPRV)
      return(YES);
 
-  return(NO);  
+  return(NO);
 }
 
 
@@ -95,7 +91,7 @@ unsigned long Buffer[2];
 **	No arguments.
 **
 ** ON EXIT:
-**	
+**
 */
 PUBLIC void HTVMS_enableSysPrv NOARGS
 {
@@ -106,12 +102,10 @@ unsigned long Prv[2], PreviousPrv[2];
    Prv[1] = 0;
    Result = sys$setprv(1,&Prv,0,&PreviousPrv);
 
-   if (TRACE) {
-      if (Result == SS$_NORMAL) {
-         if (!(PreviousPrv[0] & PRV$M_SYSPRV)) {
-            fprintf(stderr, "HTVMS_enableSysPrv: Enabled SYSPRV\n");
-         }
-      }
+   if (Result == SS$_NORMAL) {
+       if (!(PreviousPrv[0] & PRV$M_SYSPRV)) {
+           CTRACE(tfp, "HTVMS_enableSysPrv: Enabled SYSPRV\n");
+       }
    }
 }
 
@@ -123,7 +117,7 @@ unsigned long Prv[2], PreviousPrv[2];
 **	No arguments.
 **
 ** ON EXIT:
-**	
+**
 */
 PUBLIC void HTVMS_disableSysPrv NOARGS
 {
@@ -134,12 +128,10 @@ unsigned long Prv[2], PreviousPrv[2];
    Prv[1] = 0;
    Result = sys$setprv(0,&Prv,0,&PreviousPrv);
 
-   if (TRACE) {
-      if (Result == SS$_NORMAL) {
-         if (PreviousPrv[0] & PRV$M_SYSPRV) {
-            fprintf(stderr, "HTVMS_disableSysPrv: Disabled SYSPRV\n");
-         }
-      }
+   if (Result == SS$_NORMAL) {
+       if (PreviousPrv[0] & PRV$M_SYSPRV) {
+           CTRACE(tfp, "HTVMS_disableSysPrv: Disabled SYSPRV\n");
+       }
    }
 }
 
@@ -155,7 +147,7 @@ unsigned long Prv[2], PreviousPrv[2];
 **
 ** ON EXIT:
 **	returns YES if access is allowed
-**	
+**
 */
 PUBLIC BOOL HTVMS_checkAccess ARGS3(
 	CONST char *, FileName,
@@ -226,7 +218,7 @@ char *colon;
 
 
 /* PUBLIC							HTVMS_wwwName()
-**		CONVERTS VMS Name into WWW Name 
+**		CONVERTS VMS Name into WWW Name
 ** ON ENTRY:
 **	vmsname		VMS file specification (NO NODE)
 **
@@ -245,10 +237,10 @@ char *colon;
 **	[DUNS.ECHO.--.TRANS] 		duns/echo/../../trans
 **	[.DUNS] 			duns
 **	[.DUNS.ECHO] 			duns/echo
-**	[.DUNS.ECHO]TEST.COM 		duns/echo/test.com 
+**	[.DUNS.ECHO]TEST.COM 		duns/echo/test.com
 **	TEST.COM 			test.com
 **
-**	
+**
 */
 PUBLIC char * HTVMS_wwwName ARGS1(
 	char *, vmsname)
@@ -267,11 +259,11 @@ int dir;
          case ':':  *(dst++) = '/'; break;
          case '-': if (dir)
 	 	   {
-	 	      if ((*(src-1)=='[' || *(src-1)=='.' || *(src-1)=='-') && 
+	 	      if ((*(src-1)=='[' || *(src-1)=='.' || *(src-1)=='-') &&
 		          (*(src+1)=='.' || *(src+1)=='-'))
 		      {
 		          *(dst++) = '/';
-                          *(dst++) = '.'; 
+                          *(dst++) = '.';
                           *(dst++) = '.';
 		      }
 		      else
@@ -296,7 +288,7 @@ int dir;
          case '[': dir = 1; break;
          case ']': dir = 0; break;
          default:  if (*(src-1) == ']') *(dst++) = '/';
-                   *(dst++) = *src; 
+                   *(dst++) = *src;
                    break;
       }
    }
@@ -317,14 +309,14 @@ int dir;
 ** Bug:	Returns pointer to static -- non-reentrant
 */
 PUBLIC char * HTVMS_name ARGS2(
-	CONST char *, nn, 
+	CONST char *, nn,
 	CONST char *, fn)
 {
 
-/*	We try converting the filename into Files-11 syntax. That is, we assume
-**	first that the file is, like us, on a VMS node. We try remote
-**	(or local) DECnet access. Files-11, VMS, VAX and DECnet
-**	are trademarks of Digital Equipment Corporation. 
+/*	We try converting the filename into Files-11 syntax.  That is, we assume
+**	first that the file is, like us, on a VMS node.  We try remote
+**	(or local) DECnet access.  Files-11, VMS, VAX and DECnet
+**	are trademarks of Digital Equipment Corporation.
 **	The node is assumed to be local if the hostname WITHOUT DOMAIN
 **	matches the local one. @@@
 */
@@ -333,12 +325,12 @@ PUBLIC char * HTVMS_name ARGS2(
     char * nodename = (char*)malloc(strlen(nn)+2+1);	/* Copies to hack */
     char *second;		/* 2nd slash */
     char *last;			/* last slash */
-    
+
     char * hostname = (char *)HTHostName();
 
     if (!filename || !nodename) outofmem(__FILE__, "HTVMSname");
     strcpy(filename, fn);
-    strcpy(nodename, "");	/* On same node? Yes if node names match */
+    strcpy(nodename, "");	/* On same node?  Yes if node names match */
     if (strncmp(nn,"localhost",9)) {
         char *p, *q;
         for (p=hostname, q=(char *)nn;
@@ -355,7 +347,7 @@ PUBLIC char * HTVMS_name ARGS2(
 
     second = strchr(filename+1, '/');		/* 2nd slash */
     last = strrchr(filename, '/');	/* last slash */
-        
+
     if (!second) {				/* Only one slash */
 	sprintf(vmsname, "%s%s", nodename, filename + 1);
     } else if(second==last) {		/* Exactly two slashes */
@@ -382,19 +374,19 @@ PUBLIC char * HTVMS_name ARGS2(
 **	It is based on the newer WWWLib's HTDirBrw.c. - Foteos Macrides
 */
 PUBLIC int HTStat ARGS2(
-	CONST char *, filename, 
-	stat_t *, info)
+	CONST char *, filename,
+	struct stat *, info)
 {
-   /* 
+   /*
       the following stuff does not work in VMS with a normal stat...
       -->   /disk$user/duns/www if www is a directory
-		is statted like: 	/disk$user/duns/www.dir 
+		is statted like: 	/disk$user/duns/www.dir
 		after a normal stat has failed
       -->   /disk$user/duns	if duns is a toplevel directory
 		is statted like:	/disk$user/000000/duns.dir
       -->   /disk$user since disk$user is a device
 		is statted like:	/disk$user/000000/000000.dir
-      -->   /			
+      -->   /
 		searches all devices, no solution yet...
       -->   /vxcern!/disk$cr/wwwteam/login.com
 		is not statted but granted with fake information...
@@ -414,7 +406,7 @@ char Name[256];
 
 #ifdef NOT_USED
    /* if filename contains a node specification (! or ::), we will try to access
-      the file via DECNET, but we do not stat it..., just return success 
+      the file via DECNET, but we do not stat it..., just return success
       with some fake information... */
    if (HTVMS_checkDecnet(Name))
    {
@@ -442,19 +434,19 @@ char Name[256];
    {  /* root requested */
       return(-1);
    }
-   
+
    /* failed so this might be a directory, add '.dir' */
    Len = strlen(Name);
    if (Name[Len-1] == '/')
       Name[Len-1] = '\0';
-   
+
    /* fail in case of device */
    Ptr = strchr(Name+1,'/');
    if ((Ptr == NULL) && (Name[0] == '/'))
    {  /* device only... */
       strcat(Name,"/000000/000000");
    }
-   
+
    if (Ptr != NULL)
    {  /* correct filename in case of toplevel dir */
       Ptr2 = strchr(Ptr+1,'/');
@@ -478,9 +470,6 @@ char Name[256];
    Result = stat(Name,info);
    return(Result);
 }
-
-/*** "dirent.h" ***/
-/* #include <types.h>	already in tcp.h */
 
 #ifndef	_POSIX_SOURCE
 #define	d_ino	d_fileno	/* compatability */
@@ -518,7 +507,7 @@ extern	void rewinddir(/* DIR *dirp */);
 #endif
 #endif /* not defined for VMS */
 
-/*** #include "sys_dirent.h" ***/
+/*** #include <sys_dirent.h> ***/
 /*** "sys_dirent.h" ***/
 struct	dirent {
 #if 0
@@ -601,7 +590,7 @@ char *dot;
    }
    else
    {
-      *dot = ']';   
+      *dot = ']';
       strcat(DirEntry,".dir");
    }
 
@@ -617,8 +606,8 @@ char *dot;
    entryname_desc.dsc$b_class = DSC$K_CLASS_S;
    entryname_desc.dsc$a_pointer = VMSentry;
 
-   status = lib$find_file(&(dirname_desc), 
-                          &entryname_desc, 
+   status = lib$find_file(&(dirname_desc),
+                          &entryname_desc,
                           &(dir.context),
                           0,0,0,0);
    if (!(status & 0x01))
@@ -662,8 +651,8 @@ char *UnixEntry;
    entryname_desc.dsc$b_class = DSC$K_CLASS_S;
    entryname_desc.dsc$a_pointer = VMSentry;
 
-   status = lib$find_file(&(dirp->dirname_desc), 
-                          &entryname_desc, 
+   status = lib$find_file(&(dirp->dirname_desc),
+                          &entryname_desc,
                           &(dirp->context),
                           0,0,0,0);
    if (status == RMS$_NMF)
@@ -700,15 +689,15 @@ long status;
    return(0);
 }
 
-#include "HTAnchor.h"
-#include "HTParse.h"
-#include "HTBTree.h"
-#include "HTFile.h"	/* For HTFileFormat() */
-#include "HTAlert.h"
+#include <HTAnchor.h>
+#include <HTParse.h>
+#include <HTBTree.h>
+#include <HTFile.h>	/* For HTFileFormat() */
+#include <HTAlert.h>
 /*
 **  Hypertext object building machinery.
 */
-#include "HTML.h"
+#include <HTML.h>
 #define PUTC(c) (*targetClass.put_character)(target, c)
 #define PUTS(s) (*targetClass.put_string)(target, s)
 #define START(e) (*targetClass.start_element)(target, e, 0, 0, -1, 0)
@@ -734,7 +723,7 @@ typedef struct _VMSEntryInfo {
     BOOLEAN      display;  /* show this entry? */
 } VMSEntryInfo;
 
-PRIVATE void free_VMSEntryInfo_struct_contents ARGS1(VMSEntryInfo *,entry_info)
+PRIVATE void free_VMSEntryInfo_contents ARGS1(VMSEntryInfo *,entry_info)
 {
     if (entry_info) {
 	FREE(entry_info->filename);
@@ -744,13 +733,13 @@ PRIVATE void free_VMSEntryInfo_struct_contents ARGS1(VMSEntryInfo *,entry_info)
    /* dont free the struct */
 }
 
-#define FILE_BY_NAME 0 
+#define FILE_BY_NAME 0
 #define FILE_BY_TYPE 1
 #define FILE_BY_SIZE 2
 #define FILE_BY_DATE 3
 extern BOOLEAN HTfileSortMethod;  /* specifies the method of sorting */
 
-PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1, 
+PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
 					      VMSEntryInfo *,entry2)
 {
     int i, status;
@@ -761,7 +750,7 @@ PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
         case FILE_BY_SIZE:
 			/* both equal or both 0 */
                         if(entry1->size == entry2->size)
-			    return(strcasecomp(entry1->filename, 
+			    return(strcasecomp(entry1->filename,
 					       entry2->filename));
 			else
 			    if(entry1->size > entry2->size)
@@ -776,7 +765,7 @@ PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
 				return(status);
 			    /* else fall to filename comparison */
 			}
-                        return (strcasecomp(entry1->filename, 
+                        return (strcasecomp(entry1->filename,
 					    entry2->filename));
                         break;
         case FILE_BY_DATE:
@@ -786,7 +775,7 @@ PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
 			    */
 			    if (strlen(entry1->date) != 12 ||
 			        strlen(entry2->date) != 12) {
-				return (strcasecomp(entry1->filename, 
+				return (strcasecomp(entry1->filename,
 						    entry2->filename));
 			    }
 			    /*
@@ -852,7 +841,7 @@ PUBLIC int compare_VMSEntryInfo_structs ARGS2(VMSEntryInfo *,entry1,
                         break;
         case FILE_BY_NAME:
         default:
-                        return (strcmp(entry1->filename, 
+                        return (strcmp(entry1->filename,
 					    entry2->filename));
       }
 }
@@ -900,7 +889,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
     extern BOOLEAN no_dotfiles, show_dotfiles;
 
     HTUnEscape(pathname);
-    CTRACE(stderr,"HTVMSBrowseDir: Browsing `%s\'\n", pathname);
+    CTRACE(tfp,"HTVMSBrowseDir: Browsing `%s\'\n", pathname);
 
     /*
      *  Require at least two elements (presumably a device and directory)
@@ -914,13 +903,13 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	 0==strncmp((cp+1), "000000", 6)) ||
         (dp=HTVMSopendir(pathname)) == NULL) {
         FREE(pathname);
-    	return HTLoadError(sink, 403, "Could not access directory.");
+    	return HTLoadError(sink, 403, COULD_NOT_ACCESS_DIR);
     }
 
     /*
      *  Set up the output stream.
      */
-    _HTProgress ("Building directory listing...");
+    _HTProgress (BUILDING_DIR_LIST);
     if (UCLYhndl_HTFile_for_unspec >= 0) {
 	HTAnchor_setUCInfoStage(anchor,
 				UCLYhndl_HTFile_for_unspec,
@@ -960,30 +949,30 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	StrAllocCat(pathname, "/");
 	pathend++;
     }
-    
+
     /*
      *  Output the title and header.
      */
     START(HTML_HTML);
-    PUTS("\n");
+    PUTC('\n');
     START(HTML_HEAD);
-    PUTS("\n");
+    PUTC('\n');
     HTUnEscape(title);
     START(HTML_TITLE);
     PUTS(title);
     PUTS(" directory");
     END(HTML_TITLE);
-    PUTS("\n");
+    PUTC('\n');
     FREE(title);
     END(HTML_HEAD);
-    PUTS("\n");
+    PUTC('\n');
     START(HTML_BODY);
-    PUTS("\n");
+    PUTC('\n');
     HTUnEscape(header);
     START(HTML_H1);
     PUTS(header);
     END(HTML_H1);
-    PUTS("\n");
+    PUTC('\n');
     if (HTDirReadme == HT_DIR_README_TOP) {
         FILE * fp;
 	if (header[strlen(header)-1] != '/')
@@ -1015,7 +1004,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    }
 	    END(HTML_PRE);
 	    fclose(fp);
-        } 
+        }
     }
     FREE(header);
     if (parent) {
@@ -1029,7 +1018,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	PUTS(parent);
 	END(HTML_A);
 	START(HTML_P);
-	PUTS("\n");
+	PUTC('\n');
 	FREE(relative);
 	FREE(parent);
     }
@@ -1061,7 +1050,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    if (!dirbuf->d_ino)	{
 		continue;
 	    }
-	    
+
 	    /* Current and parent directories are never shown in list */
 	    if (dottest && (!strcmp(dirbuf->d_name, ".") ||
 			    !strcmp(dirbuf->d_name, ".."))) {
@@ -1088,7 +1077,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 		   we however continue to browse through the directory... */
                 continue;
 	    }
-            entry_info = (VMSEntryInfo *)malloc(sizeof(VMSEntryInfo));    
+            entry_info = (VMSEntryInfo *)malloc(sizeof(VMSEntryInfo));
 	    if (entry_info == NULL)
 		outofmem(__FILE__, "HTVMSBrowseDir");
 	    entry_info->type = 0;
@@ -1101,7 +1090,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    format = HTFileFormat(dirbuf->d_name, &encoding,
 				  (CONST char **)&cp);
 	    if (!cp) {
-		if(!strncmp(HTAtom_name(format), "application",11)) 
+		if(!strncmp(HTAtom_name(format), "application",11))
 		{
 		    cp = HTAtom_name(format) + 12;
 		    if(!strncmp(cp,"x-", 2))
@@ -1113,17 +1102,13 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    StrAllocCopy(entry_info->type, cp);
 
 	    StrAllocCopy(entry_info->filename, dirbuf->d_name);
-	    if ((file_info.st_mode & S_IFMT) == S_IFDIR) {
+	    if (S_ISDIR(file_info.st_mode)) {
 	        /* strip .DIR part... */
                 char *dot;
                 dot = strstr(entry_info->filename, ".DIR");
                 if (dot)
                    *dot = '\0';
-		cp = entry_info->filename;
-		while (cp && *cp) {
-		    *cp = TOLOWER(*cp);
-		    cp++;
-		}
+		LYLowerCase(entry_info->filename);
 		StrAllocCopy(entry_info->type, "Directory");
 	    } else {
 	        if ((cp = strstr(entry_info->filename, "READ")) == NULL) {
@@ -1142,10 +1127,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 		        cp = entry_info->filename;
 		    }
 		}
-		while (cp && *cp) {
-		    *cp = TOLOWER(*cp);
-		    cp++;
-		}
+		LYLowerCase(cp);
 		if (((len = strlen(entry_info->filename)) > 2) &&
 		    entry_info->filename[len-1] == 'z') {
 		    if (entry_info->filename[len-2] == '.' ||
@@ -1170,7 +1152,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    }
 
 	    /* Get the size */
-	    if ((file_info.st_mode & S_IFMT) != S_IFDIR)
+	    if (!S_ISDIR(file_info.st_mode))
 	        entry_info->size = (unsigned int)file_info.st_size;
 	    else
 	        entry_info->size = 0;
@@ -1178,9 +1160,9 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 	    /* Now, update the BTree etc. */
 	    if(entry_info->display)
 	      {
-		 CTRACE(stderr,"Adding file to BTree: %s\n",
+		 CTRACE(tfp,"Adding file to BTree: %s\n",
 						      entry_info->filename);
-	         HTBTree_add(bt, (VMSEntryInfo *)entry_info); 
+	         HTBTree_add(bt, (VMSEntryInfo *)entry_info);
 	      }
 
 	} /* End while HTVMSreaddir() */
@@ -1202,7 +1184,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 		entry_info = (VMSEntryInfo *)HTBTree_object(ele);
 
 		/* Output the date */
-		if(entry_info->date) 
+		if(entry_info->date)
 		       {
 		             PUTS(entry_info->date);
 		             PUTS("  ");
@@ -1211,7 +1193,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 			PUTS("     * ");
 
 		/* Output the type */
-		if(entry_info->type) 
+		if(entry_info->type)
 		  {
 		    for(i = 0; entry_info->type[i] != '\0' && i < 15; i++)
 		        PUTC(entry_info->type[i]);
@@ -1221,12 +1203,12 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 		  }
 
 		/* Output the link for the name */
-		HTDirEntry(target, tail, entry_info->filename);  
+		HTDirEntry(target, tail, entry_info->filename);
 		PUTS(entry_info->filename);
 		END(HTML_A);
 
                 /* Output the size */
-		if(entry_info->size) 
+		if(entry_info->size)
 		  {
 		          if(entry_info->size < 1024)
 			      sprintf(string_buffer,"  %d bytes",
@@ -1239,7 +1221,7 @@ PUBLIC int HTVMSBrowseDir ARGS4(
 
 		PUTC('\n'); /* end of this entry */
 
-		free_VMSEntryInfo_struct_contents(entry_info);
+		free_VMSEntryInfo_contents(entry_info);
 	    }
 	}
 
@@ -1251,14 +1233,56 @@ PUBLIC int HTVMSBrowseDir ARGS4(
      *  Complete the output stream.
      */
     END(HTML_PRE);
-    PUTS("\n");
+    PUTC('\n');
     END(HTML_BODY);
-    PUTS("\n");
+    PUTC('\n');
     END(HTML_HTML);
-    PUTS("\n");
+    PUTC('\n');
     FREE(tail);
     FREE_TARGET;
 
     return HT_LOADED;
 
 } /* End of directory reading section */
+
+/*
+ * Remove all versions of the given file.  We assume there are no permissions
+ * problems, since we do this mainly for removing temporary files.
+ */
+int HTVMS_remove(char *filename)
+{
+    int code = remove(filename);	/* return the first status code */
+    while (remove(filename) == 0)
+	;
+    return code;
+}
+
+/*
+ * Remove all older versions of the given file.  We may fail to remove some
+ * version due to permissions -- the loop stops either at that point, or when
+ * we run out of older versions to remove.
+ */
+void HTVMS_purge(char *filename)
+{
+    char *older_file = 0;
+    char *oldest_file = 0;
+    struct stat sb;
+
+    StrAllocCopy(older_file, filename);
+    StrAllocCat(older_file, ";-1");
+
+    while (remove(older_file) == 0)
+	;
+    /*
+     * If we do not have any more older versions, it is safe to rename the
+     * current file to version #1.
+     */
+    if (stat(older_file, &sb) != 0) {
+	StrAllocCopy(oldest_file, filename);
+	StrAllocCat(oldest_file, ";1");
+	rename(older_file, oldest_file);
+	FREE(oldest_file);
+    }
+
+    FREE(older_file);
+}

@@ -6,23 +6,22 @@
 **
 **	A StyleSheet is a collection of styles, defining the
 **	translation necessary to
-**	represent a document. It is a linked list of styles.
+**	represent a document.  It is a linked list of styles.
 */
-#include "HTUtils.h"
-#include "HTStyle.h"
 
-#include "LYLeaks.h"
+#include <HTUtils.h>
+#include <HTStyle.h>
 
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <LYLeaks.h>
 
 /*	Create a new style
 */
 PUBLIC HTStyle* HTStyleNew NOARGS
 {
     HTStyle * self = (HTStyle *)malloc(sizeof(*self));
+    if (self == NULL)
+	outofmem(__FILE__, "HTStyleNew");
     memset((void *)self, 0, sizeof(*self));
-    self->font = (HTFont) 0;
-    self->color = 0;
     return self;
 }
 
@@ -73,6 +72,8 @@ HTStyle * HTStyleRead (HTStyle * style, HTStream * stream)
     if (gotpara) {
 	if (!style->paragraph) {
 	    style->paragraph = malloc(sizeof(*(style->paragraph)));
+	    if (!style->paragraph)
+		outofmem(__FILE__, "HTStyleRead");
 	    style->paragraph->tabs = 0;
 	}
 	p = style->paragraph;
@@ -87,6 +88,8 @@ HTStyle * HTStyleRead (HTStyle * style, HTStream * stream)
 	    &p->numTabs);
 	FREE(p->tabs);
 	p->tabs = malloc(p->numTabs * sizeof(p->tabs[0]));
+	if (!p->tabs)
+	    outofmem(__FILE__, "HTStyleRead");
 	for (tab=0; tab < p->numTabs; tab++) {
 	    NXScanf(stream, "%hd%f",
 		    &p->tabs[tab].kind,
@@ -142,27 +145,26 @@ HTStyle * HTStyleDump (HTStyle * style)
 {
     int tab;
     NXTextStyle *p = style->paragraph;
-    printf("Style %d `%s' SGML:%s. Font %s %.1f point.\n",
+    printf(STYLE_DUMP_FONT,
 	style,
 	style->name,
 	style->SGMLTag,
 	[style->font name],
 	style->fontSize);
     if (p) {
-	printf(
-	"\tIndents: first=%.0f others=%.0f, Height=%.1f Desc=%.1f\n"
-	"\tAlign=%d, %d tabs. (%.0f before, %.0f after)\n",
+	printf(STYLE_DUMP_IDENT,
 	    p->indent1st,
 	    p->indent2nd,
 	    p->lineHt,
-	    p->descentLine,
+	    p->descentLine);
+	printf(STYLE_DUMP_ALIGN,
 	    p->alignment,
 	    p->numTabs,
 	    style->spaceBefore,
 	    style->spaceAfter);
 
 	for (tab=0; tab < p->numTabs; tab++) {
-	    printf("\t\tTab kind=%d at %.0f\n",
+	    printf(STYLE_DUMP_TAB,
 		    p->tabs[tab].kind,
 		    p->tabs[tab].x);
 	}
@@ -184,7 +186,7 @@ HTStyle * HTStyleNamed ARGS2 (HTStyleSheet *,self, CONST char *,name)
     HTStyle * scan;
     for (scan=self->styles; scan; scan=scan->next)
 	if (0==strcmp(scan->name, name)) return scan;
-    if (TRACE) fprintf(stderr, "StyleSheet: No style named `%s'\n", name);
+    CTRACE(tfp, "StyleSheet: No style named `%s'\n", name);
     return NULL;
 }
 
@@ -202,7 +204,7 @@ HTStyle * HTStyleMatching (HTStyleSheet * self, HTStyle *style)
 **	------------------------------------------
 **
 **	This heuristic is used for guessing the style for a run of
-**	text which has been pasted in. In order, we try:
+**	text which has been pasted in.  In order, we try:
 **
 **	A style whose paragraph structure is actually used by the run.
 **	A style matching in font
@@ -235,8 +237,8 @@ HTStyle * HTStyleForRun (HTStyleSheet *self, NXRun *run)
 	    }
 	}
     }
-    if (TRACE) fprintf(stderr, "HTStyleForRun: Best match for style is %d out of 18\n",
-			 bestMatch);
+    CTRACE(tfp, "HTStyleForRun: Best match for style is %d out of 18\n",
+		 bestMatch);
     return best;
 }
 #endif /* NEXT_SUPRESS */
@@ -286,6 +288,8 @@ HTStyleSheet * HTStyleSheetRemoveStyle ARGS2
 HTStyleSheet * HTStyleSheetNew NOARGS
 {
     HTStyleSheet * self = (HTStyleSheet *)malloc(sizeof(*self));
+    if (self == NULL)
+	outofmem(__FILE__, "HTStyleSheetNew");
 
     memset((void*)self, 0, sizeof(*self));	/* ANSI */
 /* Harbison c ref man says (char*)self
@@ -325,7 +329,7 @@ HTStyleSheet * HTStyleSheetRead(HTStyleSheet * self, NXStream * stream)
     HTStyle * style;
     char styleName[80];
     NXScanf(stream, " %d ", &numStyles);
-    if (TRACE) fprintf(stderr, "Stylesheet: Reading %d styles\n", numStyles);
+    CTRACE(tfp, "Stylesheet: Reading %d styles\n", numStyles);
     for (i=0; i<numStyles; i++) {
 	NXScanf(stream, "%s", styleName);
 	style = HTStyleNamed(self, styleName);
@@ -353,7 +357,7 @@ HTStyleSheet * HTStyleSheetWrite(HTStyleSheet * self, NXStream * stream)
     for(style=self->styles; style; style=style->next) numStyles++;
     NXPrintf(stream, "%d\n", numStyles);
 
-    if (TRACE) fprintf(stderr, "StyleSheet: Writing %d styles\n", numStyles);
+    CTRACE(tfp, "StyleSheet: Writing %d styles\n", numStyles);
     for (style=self->styles; style; style=style->next) {
 	NXPrintf(stream, "%s ", style->name);
 	(void) HTStyleWrite(style, stream);

@@ -4,11 +4,14 @@
 #but there has to be exactly one table marked as "default".
 D0
 #
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Miso-8859-1
 
 #Name as a Display Charset (used on Options screen)
-OISO Latin 1
+OWestern (ISO-8859-1)
+
+#Codepage number
+C819
 
 #
 #	Name:             ISO 8859-1 (1987) to Unicode

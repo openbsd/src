@@ -16,21 +16,23 @@
 **	16 Jul 95  S. Bjorndahl added kluge to deal with LIBCMU bug
 */
 
-#include "HTUtils.h"
-#include "tcp.h"		/* Defines SHORT_NAMES if necessary */
-#include "HTAccess.h"
-#include "HTParse.h"
-#include "HTAlert.h"
-#include "HTTCP.h"
+#include <HTUtils.h>
+#include <HTParse.h>
+#include <HTAlert.h>
+#include <HTTCP.h>
+#include <LYGlobalDefs.h>	/* added for no_suspend */
+#include <LYUtils.h>
 
 #ifdef NSL_FORK
 #include <signal.h>
 #include <sys/wait.h>
 #endif /* NSL_FORK */
 
-#define FREE(x) if (x) {free(x); x = NULL;}
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
 
-extern int HTCheckForInterrupt NOPARAMS;
+#define OK_HOST(p) ((p) != 0 && ((p)->h_length) != 0)
 
 #ifdef SVR4_BSDSELECT
 PUBLIC int BSDselect PARAMS((
@@ -51,13 +53,7 @@ PUBLIC int BSDselect PARAMS((
 #endif /* SOCKS */
 #endif /* SVR4_BSDSELECT */
 
-#include "LYLeaks.h"
-
-#ifdef SHORT_NAMES
-#define HTInetStatus		HTInStat
-#define HTInetString		HTInStri
-#define HTParseInet		HTPaInet
-#endif /* SHORT_NAMES */
+#include <LYLeaks.h>
 
 #ifndef FD_SETSIZE
 #if defined(UCX) || defined(SOCKETSHR_TCP) || defined(CMU_TCP)
@@ -116,6 +112,19 @@ extern int sys_nerr;
 #endif /* !VM */
 
 #endif	/* !PCNFS */
+
+#ifdef _WINDOWS_NSL
+	 char host[512];
+	 struct hostent  *phost;	/* Pointer to host - See netdb.h */
+	 int donelookup;
+
+unsigned long _fork_func (void *arglist)
+{
+	 phost = gethostbyname(host);
+	 donelookup = TRUE;
+	 return (unsigned long)(phost);
+}
+#endif /* _WINDOWS_NSL */
 
 #if defined(VMS) && defined(UCX)
 /*
@@ -298,6 +307,738 @@ PUBLIC CONST char * HTInetString ARGS1(
 }
 #endif /* !DECNET */
 
+/*	Check whether string is a valid Internet hostname - kw
+**	-------------------------------------------------
+**
+**  Checks whether
+**  - contains only valid chars for domain names (actually, the
+**    restrictions are somewhat relaxed),
+**  - no leading dots or empty segments,
+**  - max. length of dot-separated segment <= 63 (RFC 1034,1035),
+**  - total length <= 254 (if it ends with dot) or 253 (otherwise)
+**     [an interpretation of RFC 1034,1035, although RFC 1123
+**      suggests 255 as limit - kw].
+**
+**  Note: user (before '@') and port (after ':') components from
+**      host part of URL should be already stripped (if appropriate)
+**      from the input string.
+**
+**  On exit,
+**	returns 1 if valid, otherwise 0.
+*/
+PUBLIC BOOL valid_hostname ARGS1(
+	CONST char *,	name)
+{
+    int i=1, iseg = 0;
+    CONST char *cp = name;
+    if (!(name && *name))
+	return NO;
+    for (; (*cp && i <= 253); cp++, i++) {
+	if (*cp == '.') {
+	    if (iseg == 0) {
+		return NO;
+	    } else {
+		iseg = 0;
+		continue;
+	    }
+	} else if (++iseg > 63) {
+		return NO;
+	}
+	if (!isalnum((unsigned char)*cp) &&
+	    *cp != '-' && *cp != '_' &&
+	    *cp != '$' && *cp != '+') {
+	    return NO;
+	}
+    }
+    return (*cp == '\0' || (*cp == '.' && iseg != 0 && cp[1] == '\0'));
+}
+
+#ifdef NSL_FORK
+/*
+**  Function to allow us to be killed with a normal signal (not
+**  SIGKILL), but don't go through normal libc exit() processing, which
+**  would screw up parent's stdio.  -BL
+*/
+PRIVATE void quench ARGS1(
+	int,	sig GCC_UNUSED)
+{
+    _exit(2);
+}
+#endif /* NSL_FORK */
+
+PUBLIC int lynx_nsl_status = HT_OK;
+
+#ifndef DJGPP			/* much excluded! */
+
+#define DEBUG_HOSTENT		/* disable in case of problems */
+#define DEBUG_HOSTENT_CHILD  /* for NSL_FORK, may screw up trace file */
+
+/*
+**  Two auxiliary functions for name lookup and struct hostent.
+**
+**  dump_hostent - dumps the contents of a struct hostent to the
+**  trace log or stderr, including all pointer values, strings, and
+**  addresses, in a format inspired by gdb's print format. - kw
+*/
+PRIVATE void dump_hostent ARGS2(
+    CONST char *,		msgprefix,
+    CONST struct hostent *,	phost)
+{
+    if (TRACE) {
+	int i;
+	char **pcnt;
+	CTRACE(tfp,"%s: %p ", msgprefix, phost);
+	if (phost) {
+	    CTRACE(tfp,"{ h_name = %p", phost->h_name);
+	    if (phost->h_name) {
+		CTRACE(tfp, " \"%s\",", phost->h_name);
+	    } else {
+		CTRACE(tfp, ",");
+	    }
+	    CTRACE(tfp,"\n\t h_aliases = %p", phost->h_aliases);
+	    if (phost->h_aliases) {
+		CTRACE(tfp, " {");
+		for (pcnt = phost->h_aliases; *pcnt; pcnt++) {
+		    CTRACE(tfp,"%s %p \"%s\"",
+			   (pcnt == phost->h_aliases ? " " : ", "),
+			   *pcnt, *pcnt);
+		}
+		CTRACE(tfp, "%s0x0 },\n\t",
+		       (*phost->h_aliases ? ", " : " "));
+	    } else {
+		CTRACE(tfp, ",\n\t");
+	    }
+	    CTRACE(tfp," h_addrtype = %d,", phost->h_addrtype);
+	    CTRACE(tfp," h_length = %d,\n\t", phost->h_length);
+	    CTRACE(tfp," h_addr_list = %p", phost->h_addr_list);
+	    if (phost->h_addr_list) {
+		CTRACE(tfp, " {");
+		for (pcnt = phost->h_addr_list; *pcnt; pcnt++) {
+		    CTRACE(tfp,"%s %p",
+			   (pcnt == phost->h_addr_list ? "" : ","),
+			   *pcnt);
+		    for (i = 0; i < phost->h_length; i++) {
+			CTRACE(tfp, "%s%d%s", (i==0 ? " \"" : "."),
+			       (int)*((unsigned char *)(*pcnt)+i),
+			       (i+1 == phost->h_length ? "\"" : ""));
+		    }
+		}
+		if (*phost->h_addr_list) {
+		    CTRACE(tfp, ", 0x0 } }");
+		} else {
+		    CTRACE(tfp, " 0x0 } }");
+		}
+	    } else {
+		CTRACE(tfp, "}");
+	    }
+	}
+	CTRACE(tfp,"\n");
+	fflush(tfp);
+    }
+}
+
+/*
+**  fill_rehostent - copies as much as possible relevant content from
+**  the struct hostent pointed to by phost to the char buffer given
+**  by rehostent, subject to maximum output length rehostentsize,
+**  following pointers and building self-contained output which can be
+**  cast to a struct hostent. - kw
+**  See also description of LYGetHostByName.
+*/
+PRIVATE size_t fill_rehostent ARGS3(
+    char *,			rehostent,
+    size_t,			rehostentsize,
+    CONST struct hostent *,	phost)
+{
+    int num_addrs = 0;
+    int num_aliases = 0;
+    char **pcnt;
+    char *p_next_char;
+    char **p_next_charptr;
+    size_t name_len = 0;
+    size_t required_per_addr;
+    size_t curlen = sizeof(struct hostent);
+    size_t available = rehostentsize - curlen;
+    size_t chk_available, mem_this_alias, required_this_alias;
+    int i_addr, i_alias;
+
+    if (!phost)
+	return 0;
+    required_per_addr = phost->h_length + sizeof(char *);
+    if (phost->h_addr_list)
+	available -= sizeof(phost->h_addr_list[0]);
+    if (phost->h_aliases)
+	available -= sizeof(phost->h_aliases[0]);
+    if (phost->h_name)
+	available--;
+    if (phost->h_addr_list) {
+	if (phost->h_addr_list[0]) {
+	    if (available >= required_per_addr) {
+		num_addrs++;
+		available -= required_per_addr;
+	    }
+	}
+    }
+    if (phost->h_name) {
+	name_len = strlen(phost->h_name);
+	if (available >= name_len) {
+	    available -= name_len;
+	} else {
+	    name_len = 0;
+	}
+    }
+    if (num_addrs) {
+	for (pcnt=phost->h_addr_list+1; *pcnt; pcnt++) {
+	    if (available >= required_per_addr) {
+		num_addrs++;
+		available -= required_per_addr;
+	    } else {
+		break;
+	    }
+	}
+    }
+    chk_available = available;
+    if (phost->h_aliases) {
+	for (pcnt=phost->h_aliases; *pcnt; pcnt++) {
+	    required_this_alias = sizeof(phost->h_aliases[0]) +
+		strlen(*pcnt) + 1;
+	    if (chk_available >= required_this_alias) {
+		num_aliases++;
+		chk_available -= required_this_alias;
+	    }
+	}
+    }
+
+    ((struct hostent *)rehostent)->h_addrtype = phost->h_addrtype;
+    ((struct hostent *)rehostent)->h_length = phost->h_length;
+    p_next_charptr = (char **)(rehostent + curlen);
+    p_next_char = rehostent + curlen;
+    if (phost->h_addr_list)
+	p_next_char += (num_addrs+1) * sizeof(phost->h_addr_list[0]);
+    if (phost->h_aliases)
+	p_next_char += (num_aliases+1) * sizeof(phost->h_aliases[0]);
+
+    if (phost->h_addr_list) {
+	((struct hostent *)rehostent)->h_addr_list = p_next_charptr;
+	for (pcnt=phost->h_addr_list, i_addr = 0;
+	     i_addr < num_addrs;
+	     pcnt++, i_addr++) {
+	    memcpy(p_next_char, *pcnt, sizeof(phost->h_addr_list[0]));
+	    *p_next_charptr++ = p_next_char;
+	    p_next_char += sizeof(phost->h_addr_list[0]);
+	}
+	*p_next_charptr++ = NULL;
+    } else {
+	((struct hostent *)rehostent)->h_addr_list = NULL;
+    }
+
+    if (phost->h_name) {
+	((struct hostent *)rehostent)->h_name = p_next_char;
+	if (name_len) {
+	    strcpy(p_next_char, phost->h_name);
+	    p_next_char += name_len + 1;
+	} else {
+	    *p_next_char++ = '\0';
+	}
+    } else {
+	((struct hostent *)rehostent)->h_name = NULL;
+    }
+
+    if (phost->h_aliases) {
+	((struct hostent *)rehostent)->h_aliases = p_next_charptr;
+	for (pcnt=phost->h_aliases, i_alias = 0;
+	     (*pcnt && i_alias < num_addrs);
+	     pcnt++, i_alias++) {
+	    mem_this_alias = strlen(*pcnt) + 1;
+	    required_this_alias = sizeof(phost->h_aliases[0]) +
+		mem_this_alias;
+	    if (available >= required_this_alias) {
+		i_alias++;
+		available -= required_this_alias;
+		strcpy(p_next_char, *pcnt);
+		*p_next_charptr++ = p_next_char;
+		p_next_char += mem_this_alias;
+	    }
+	    p_next_char += sizeof(phost->h_aliases[0]);
+	}
+	*p_next_charptr++ = NULL;
+    } else {
+	((struct hostent *)rehostent)->h_aliases = NULL;
+    }
+    curlen = p_next_char - (char *)rehostent;
+    return curlen;
+}
+
+#define REHOSTENT_SIZE 128		/* not bigger than pipe buffer! */
+
+#ifndef HAVE_H_ERRNO
+#undef  h_errno
+#define h_errno my_errno
+static int my_errno;
+#else /* we do HAVE_H_ERRNO: */
+extern int h_errno;
+#endif
+
+/*	Resolve an internet hostname, like gethostbyname
+**	------------------------------------------------
+**
+**  On entry,
+**	str	points to the given host name, not numeric address,
+**		without colon or port number.
+**
+**  On exit,
+**	returns a pointer to a struct hostent in static storage,
+**	or NULL in case of error or user interruption.
+**
+**  The interface is intended to be exactly the same as for (Unix)
+**  gethostbyname(), except for the following:
+**
+**  If NSL_FORK is not used, the result of gethostbyname is returned
+**  directly.  Otherwise:
+**  All lists, addresses, and strings referred to by pointers in the
+**  returned struct are located, together with the returned struct
+**  itself, in a buffer of size REHOSTENT_SIZE.  If not everything fits,
+**  some info is omitted, but the function is careful to still return
+**  a valid structure, without truncating strings; it tries to return,
+**  in order of decreasing priority, the first address (h_addr), the
+**  official name (h_name), the additional addresses, then alias names.
+**
+**  If NULL is returned, the reason is made available in the global
+**  variable lynx_nsl_status, with one of the following values:
+**	HT_INTERRUPTED		Interrupted by user
+**	HT_NOT_ACCEPTABLE	Hostname detected as invalid
+**				(also sets h_errno)
+**	HT_H_ERRNO_VALID	An error occurred, and h_errno holds
+**				an appropriate value
+**	HT_ERROR		Resolver error, reason not known
+**	HT_INTERNAL		Internal error
+*/
+PUBLIC struct hostent * LYGetHostByName ARGS1(
+	CONST char *,	str)
+{
+#ifndef _WINDOWS_NSL
+    CONST char *host = str;
+#endif /* _WINDOWS_NSL */
+#ifdef NSL_FORK
+    /* for transfer of result between from child to parent: */
+    static struct {
+	struct hostent	h;
+	char		rest[REHOSTENT_SIZE];
+    } aligned_full_rehostent;
+    /*
+     * We could define rehosten directly as a
+     * static char rehostent[REHOSTENT_SIZE],
+     * but the indirect approach via the above struct
+     * should automatically take care of alignment requirements.
+     * Note that, in addition,
+     *  - this must be static, as we shall return a pointer to it
+     *    which must remain valid, and
+     *  - we have to use the same rehostent in the child process as
+     *    in the parent (its address in the parent's address space
+     *    must be the same as in the child's, otherwise the internal
+     *    pointers built by the child's call to fill_rehostent would
+     *    be invalid when seen by the parent). - kw
+     */
+    char *rehostent = (char *)&aligned_full_rehostent;
+
+    /* for transfer of status from child to parent: */
+    struct _statuses {
+	size_t rehostentlen;
+	int h_length;
+	int child_errno;  /* maybe not very useful */
+	int child_h_errno;
+	BOOL h_errno_valid;
+    } statuses;
+
+    size_t rehostentlen = 0;
+#endif /* NSL_FORK */
+
+    struct hostent *result_phost = NULL;
+
+    if (!str) {
+	CTRACE(tfp, "LYGetHostByName: Can't parse `NULL'.\n");
+	lynx_nsl_status = HT_INTERNAL;
+	return NULL;
+    }
+    CTRACE(tfp, "LYGetHostByName: parsing `%s'.\n", str);
+
+	/*  Could disable this if all our callers already check - kw */
+    if (HTCheckForInterrupt()) {
+	CTRACE (tfp, "LYGetHostByName: INTERRUPTED for '%s'.\n", str);
+	lynx_nsl_status = HT_INTERRUPTED;
+	return NULL;
+    }
+
+    if (!valid_hostname(host)) {
+	lynx_nsl_status = HT_NOT_ACCEPTABLE;
+#ifdef NO_RECOVERY
+	h_errno = NO_RECOVERY;
+#endif
+	return NULL;
+    }
+
+#ifdef _WINDOWS_NSL
+    strncpy(host, str, (size_t)512);
+#else
+    host = str;
+#endif /*  _WINDOWS_NSL */
+
+#ifdef MVS	/* Outstanding problem with crash in MVS gethostbyname */
+    CTRACE(tfp, "LYGetHostByName: Calling gethostbyname(%s)\n", host);
+#endif /* MVS */
+
+    CTRACE_FLUSH(tfp);  /* so child messages will not mess parent log */
+
+    lynx_nsl_status = HT_INTERNAL;	/* should be set to something else below */
+
+#ifdef NSL_FORK
+    statuses.h_errno_valid = NO;
+	/*
+	**  Start block for fork-based gethostbyname() with
+	**  checks for interrupts. - Tom Zerucha (tz@execpc.com) & FM
+	*/
+    {
+	int got_rehostent = 0;
+	/*
+	**	Pipe, child pid, status buffers, start time, select()
+	**	control variables.
+	*/
+	pid_t fpid, waitret;
+	int pfd[2], selret, readret, waitstat = 0;
+	time_t start_time = time(NULL);
+	fd_set readfds;
+	struct timeval timeout;
+	int dns_patience = 30; /* how many seconds will we wait for DNS? */
+	int child_exited = 0;
+
+	    /*
+	    **  Reap any children that have terminated since last time
+	    **  through.  This might include children that we killed,
+	    **  then waited with WNOHANG before they were actually ready
+	    **  to be reaped.  (Should be max of 1 in this state, but
+	    **  the loop is safe if waitpid() is implemented correctly:
+	    **  returns 0 when children exist but none have exited; -1
+	    **  with errno == ECHILD when no children.)  -BL
+	    */
+	do {
+	    waitret = waitpid(-1, 0, WNOHANG);
+	} while (waitret > 0 || (waitret == -1 && errno == EINTR));
+	waitret = 0;
+
+	pipe(pfd);
+
+	if ((fpid = fork()) == 0 ) {
+	    struct hostent  *phost;	/* Pointer to host - See netdb.h */
+	    /*
+	    **  Child - for the long call.
+	    **
+	    **  Make sure parent can kill us at will.  -BL
+	    */
+	    (void) signal(SIGTERM, quench);
+
+	    /*
+	    **  Also make sure the child does not run one of the
+	    **  signal handlers that may have been installed by
+	    **  Lynx if one of those signals occurs.  For example
+	    **  we don't want the child to remove temp files on
+	    **  ^C, let the parent deal with that. - kw
+	    */
+	    (void) signal(SIGINT, quench);
+#ifndef NOSIGHUP
+	    (void) signal(SIGHUP, quench);
+#endif /* NOSIGHUP */
+#ifdef SIGTSTP
+	    if (no_suspend)
+		(void) signal(SIGTSTP, SIG_IGN);
+	    else
+		(void) signal(SIGTSTP, SIG_DFL);
+#endif /* SIGTSTP */
+#ifdef SIGWINCH
+	    (void) signal(SIGWINCH, SIG_IGN);
+#endif /* SIGWINCH */
+#ifndef __linux__
+#ifndef DOSPATH
+	    signal(SIGBUS, SIG_DFL);
+#endif /* DOSPATH */
+#endif /* !__linux__ */
+	    signal(SIGSEGV, SIG_DFL);
+	    signal(SIGILL, SIG_DFL);
+
+	    /*
+	    **  Child won't use read side.  -BL
+	    */
+	    close(pfd[0]);
+	    phost = gethostbyname(host);
+	    statuses.child_h_errno = h_errno;
+	    statuses.h_errno_valid = YES;
+#ifdef MVS
+	    CTRACE(tfp, "LYGetHostByName: gethostbyname() returned %d\n", phost);
+#endif /* MVS */
+
+#ifdef DEBUG_HOSTENT_CHILD
+	    dump_hostent("CHILD gethostbyname", phost);
+#endif
+	    if (OK_HOST(phost)) {
+		rehostentlen = fill_rehostent(rehostent, REHOSTENT_SIZE, phost);
+#ifdef DEBUG_HOSTENT_CHILD
+		dump_hostent("CHILD fill_rehostent", (struct hostent *)rehostent);
+#endif
+	    }
+	    if (rehostentlen <= sizeof(struct hostent) ||
+		!OK_HOST((struct hostent *)rehostent)) {
+		rehostentlen = 0;
+		statuses.h_length = 0;
+	    } else {
+		statuses.h_length = ((struct hostent *)rehostent)->h_length;
+	    }
+	    /*
+	    **  Send variables indicating status of lookup to parent.
+	    **  That includes rehostentlen, which the parent will use
+	    **  as the size for the second read (if > 0).
+	    */
+	    statuses.child_errno = errno;
+	    statuses.rehostentlen = rehostentlen;
+	    write(pfd[1], &statuses, sizeof(statuses));
+
+
+	    if (rehostentlen) {
+		/*
+		**  Return our resulting rehostent through pipe...
+		*/
+		write(pfd[1], rehostent, rehostentlen);
+		_exit(0);
+	    } else {
+		/*
+		**  ... or return error as exit code.
+		*/
+		_exit(1);
+	    }
+	}
+
+	/*
+	**	(parent) Wait until lookup finishes, or interrupt,
+	**	or cycled too many times (just in case) -BL
+	*/
+
+	close(pfd[1]);      /* parent won't use write side -BL */
+
+	if (fpid < 0) {     /* fork failed */
+		close(pfd[0]);
+		goto failed;
+	}
+
+	while (child_exited || time(NULL) - start_time < dns_patience) {
+
+	    FD_ZERO(&readfds);
+	    /*
+	    **  This allows us to abort immediately, not after 1-second
+	    **  timeout, when user hits abort key.  Can't do this when
+	    **  using SLANG (or at least I don't know how), so SLANG
+	    **  users must live with up-to-1s timeout.  -BL
+	    **
+	    **  Whoops -- we need to make sure stdin is actually
+	    **  selectable!  /dev/null isn't, on some systems, which
+	    **  makes some useful Lynx invocations fail.  -BL
+	    */
+	    {
+		int kbd_fd = LYConsoleInputFD(TRUE);
+		if (kbd_fd != INVSOC) {
+		    FD_SET(kbd_fd, &readfds);
+		}
+	    }
+
+	    timeout.tv_sec = 1;
+	    timeout.tv_usec = 0;
+	    FD_SET(pfd[0], &readfds);
+
+		/*
+		**  Return when data received, interrupted, or failed.
+		**  If nothing is waiting, we sleep for 1 second in
+		**  select(), to be nice to the system.  -BL
+		*/
+#ifdef SOCKS
+	    if (socks_flag)
+		selret = Rselect(pfd[0] + 1, (void *)&readfds, NULL, NULL, &timeout);
+	    else
+#endif /* SOCKS */
+		selret = select(pfd[0] + 1, (void *)&readfds, NULL, NULL, &timeout);
+
+	    if ((selret > 0) && FD_ISSET(pfd[0], &readfds)) {
+		/*
+		**	First get status, including length of address.  -BL, kw
+		*/
+		readret = read(pfd[0], &statuses, sizeof(statuses));
+		if (readret == sizeof(statuses)) {
+		    h_errno = statuses.child_h_errno;
+		    errno = statuses.child_errno;
+		    if (statuses.h_errno_valid)
+			lynx_nsl_status = HT_H_ERRNO_VALID;
+		    if (statuses.rehostentlen > sizeof(struct hostent)) {
+			/*
+			**  Then get the full reorganized hostent.  -BL, kw
+			*/
+			readret = read(pfd[0], rehostent, statuses.rehostentlen);
+#ifdef DEBUG_HOSTENT
+			dump_hostent("Read from pipe", (struct hostent *)rehostent);
+#endif
+			if (readret == (int) statuses.rehostentlen) {
+			    got_rehostent = 1;
+			    result_phost = (struct hostent *)rehostent;
+			    lynx_nsl_status = HT_OK;
+			} else if (!statuses.h_errno_valid) {
+			    lynx_nsl_status = HT_INTERNAL;
+			}
+	    	    }
+		} else {
+		    lynx_nsl_status = HT_ERROR;
+		}
+		/*
+		**  Make sure child is cleaned up.  -BL
+		*/
+		if (!child_exited)
+		    waitret = waitpid(fpid, &waitstat, WNOHANG);
+		if (!WIFEXITED(waitstat) && !WIFSIGNALED(waitstat)) {
+		    kill(fpid, SIGTERM);
+		    waitret = waitpid(fpid, &waitstat, WNOHANG);
+		}
+		break;
+	    }
+
+	    /*
+	    **  Clean up if child exited before & no data received.  -BL
+	    */
+	    if (child_exited) {
+		waitret = waitpid(fpid, &waitstat, WNOHANG);
+		break;
+	    }
+	    /*
+	    **  If child exited, loop once more looking for data.  -BL
+	    */
+	    if ((waitret = waitpid(fpid, &waitstat, WNOHANG)) > 0) {
+		/*
+		**	Data will be arriving right now, so make sure we
+		**	don't short-circuit out for too many loops, and
+		**	skip the interrupt check.  -BL
+		*/
+		child_exited = 1;
+		continue;
+	    }
+
+	    /*
+	    **  Abort if interrupt key pressed.
+	    */
+	    if (HTCheckForInterrupt()) {
+		CTRACE(tfp, "LYGetHostByName: INTERRUPTED gethostbyname.\n");
+		kill(fpid, SIGTERM);
+		waitpid(fpid, NULL, WNOHANG);
+		close(pfd[0]);
+		lynx_nsl_status = HT_INTERRUPTED;
+		return NULL;
+	    }
+	}
+	close(pfd[0]);
+	if (waitret <= 0) {
+	    kill(fpid, SIGTERM);
+	    waitret = waitpid(fpid, &waitstat, WNOHANG);
+	}
+	if (waitret > 0) {
+	    if (WIFEXITED(waitstat)) {
+		CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d exited, status 0x%x.\n",
+		       (int)waitret, waitstat);
+	    } else if (WIFSIGNALED(waitstat)) {
+		CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d got signal, status 0x%x!\n",
+		       (int)waitret, waitstat);
+#ifdef WCOREDUMP
+		if (WCOREDUMP(waitstat)) {
+		    CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d dumped core!\n",
+			   (int)waitret);
+		}
+#endif /* WCOREDUMP */
+	    } else if (WIFSTOPPED(waitstat)) {
+		CTRACE(tfp, "LYGetHostByName: NSL_FORK child %d is stopped, status 0x%x!\n",
+		       (int)waitret, waitstat);
+	    }
+	}
+	if (!got_rehostent) {
+	    goto failed;
+	}
+    }
+#else /* Not NSL_FORK: */
+
+#ifdef _WINDOWS_NSL
+    {
+#ifdef __BORLANDC__
+		HANDLE hThread, dwThreadID;
+#else
+		unsigned long hThread, dwThreadID;
+#endif /* __BORLANDC__ */
+		phost = (struct hostent *) NULL;
+		hThread = CreateThread((void *)NULL, 4096UL,
+#ifdef __BORLANDC__
+			 (LPTHREAD_START_ROUTINE)_fork_func,
+#else
+			 (unsigned long (*)())_fork_func,
+#endif /* __BORLANDC__ */
+			 (void *)NULL, 0UL, (unsigned long *)&dwThreadID);
+		if (!hThread)
+			 MessageBox((void *)NULL, "CreateThread",
+				"CreateThread Failed", 0L);
+
+		donelookup = FALSE;
+		while (!donelookup)
+			if (HTCheckForInterrupt())
+			 {
+			  /* Note that host is a character array and is not freed */
+			  /* to avoid possible subthread problems: */
+			  if (!CloseHandle(hThread))
+				 MessageBox((void *)NULL, "CloseHandle","CloseHandle Failed",
+						0L);
+			  lynx_nsl_status = HT_INTERRUPTED;
+			  return NULL;
+			};
+		if (phost) {
+		    lynx_nsl_status = HT_OK;
+		    result_phost = phost;
+		} else {
+		    lynx_nsl_status = HT_ERROR;
+		    goto failed;
+		}
+    };
+
+#else /* !NSL_FORK, !_WINDOWS_NSL: */
+    {
+	struct hostent  *phost;
+	phost = gethostbyname((char *)host);	/* See netdb.h */
+#ifdef MVS
+	CTRACE(tfp, "LYGetHostByName: gethostbyname() returned %d\n", phost);
+#endif /* MVS */
+	if (phost) {
+	    lynx_nsl_status = HT_OK;
+	    result_phost = phost;
+	} else {
+	    lynx_nsl_status = HT_H_ERRNO_VALID;
+	    goto failed;
+	}
+    }
+#endif /* !NSL_FORK, !_WINDOWS_NSL */
+#endif /* !NSL_FORK */
+
+#ifdef DEBUG_HOSTENT
+    dump_hostent("End of LYGetHostByName", result_phost);
+    CTRACE(tfp, "LYGetHostByName: Resolved name to a hostent.\n");
+#endif
+
+    return result_phost;	/* OK */
+
+failed:
+    CTRACE(tfp, "LYGetHostByName: Can't find internet node name `%s'.\n",
+		host);
+    return NULL;
+}
+
+#endif /* from here on DJGPP joins us again. */
+
+
 /*	Parse a network node address and port
 **	-------------------------------------
 **
@@ -307,7 +1048,7 @@ PUBLIC CONST char * HTInetString ARGS1(
 **	soc_in	points to the binary internet or decnet address field.
 **
 **  On exit,
-**	*soc_in is filled in. If no port is specified in str, that
+**	*soc_in is filled in.  If no port is specified in str, that
 **		field is left unchanged in *soc_in.
 */
 PUBLIC int HTParseInet ARGS2(
@@ -315,24 +1056,25 @@ PUBLIC int HTParseInet ARGS2(
 	CONST char *,	str)
 {
     char *port;
-    char *host = NULL;
     int dotcount_ip = 0;	/* for dotted decimal IP addr */
-    struct hostent  *phost;	/* Pointer to host - See netdb.h */
+#ifndef _WINDOWS_NSL
+    char *host = NULL;
+#endif /* _WINDOWS_NSL */
 
     if (!str) {
-	if (TRACE) {
-	    fprintf(stderr, "HTParseInet: Can't parse `NULL'.\n");
-	}
+	CTRACE(tfp, "HTParseInet: Can't parse `NULL'.\n");
 	return -1;
     }
+    CTRACE(tfp, "HTParseInet: parsing `%s'.\n", str);
     if (HTCheckForInterrupt()) {
-	if (TRACE) {
-	    fprintf (stderr, "HTParseInet: INTERRUPTED for '%s'.\n", str);
-	}
+	CTRACE (tfp, "HTParseInet: INTERRUPTED for '%s'.\n", str);
 	return -1;
     }
+#ifdef _WINDOWS_NSL
+    strncpy(host, str, (size_t)512);
+#else
     StrAllocCopy(host, str);	/* Make a copy we can mutilate */
-
+#endif /*  _WINDOWS_NSL */
     /*
     **	Parse port number if present.
     */
@@ -353,8 +1095,8 @@ PUBLIC int HTParseInet ARGS2(
 	    struct servent * serv = getservbyname(port, (char*)0);
 	    if (serv) {
 		soc_in->sin_port = serv->s_port;
-	    } else if (TRACE) {
-		fprintf(stderr, "TCP: Unknown service %s\n", port);
+	    } else {
+		CTRACE(tfp, "TCP: Unknown service %s\n", port);
 	    }
 #endif /* SUPPRESS */
 	}
@@ -367,11 +1109,8 @@ PUBLIC int HTParseInet ARGS2(
     */
     soc_in->sdn_nam.n_len = min(DN_MAXNAML, strlen(host));  /* <=6 in phase 4 */
     strncpy(soc_in->sdn_nam.n_name, host, soc_in->sdn_nam.n_len + 1);
-    if (TRACE) {
-	fprintf(stderr,
-		"DECnet: Parsed address as object number %d on host %.6s...\n",
+    CTRACE(tfp, "DECnet: Parsed address as object number %d on host %.6s...\n",
 		soc_in->sdn_objnum, host);
-    }
 #else  /* parse Internet host: */
 
     if (*host >= '0' && *host <= '9') {   /* Test for numeric node address: */
@@ -403,223 +1142,101 @@ PUBLIC int HTParseInet ARGS2(
 #ifdef GUSI
 	soc_in->sin_addr = inet_addr(host);		/* See netinet/in.h */
 #else
+#ifdef HAVE_INET_ATON
+	if (!inet_aton(host, &(soc_in->sin_addr))) {
+	    CTRACE(tfp, "inet_aton(%s) returns error\n", host);
+#ifndef _WINDOWS_NSL
+	    FREE(host);
+#endif /* _WINDOWS_NSL */
+	    return -1;
+	}
+#else
 	soc_in->sin_addr.s_addr = inet_addr(host);	/* See arpa/inet.h */
+#endif /* HAVE_INET_ATON */
 #endif /* GUSI */
 #endif /* DGUX_OLD */
 #endif /* DJGPP */
+#ifndef _WINDOWS_NSL
 	FREE(host);
+#endif /* _WINDOWS_NSL */
     } else {		    /* Alphanumeric node name: */
+
 #ifdef MVS	/* Outstanding problem with crash in MVS gethostbyname */
-	if (TRACE) {
-	    fprintf(stderr,
-		    "HTParseInet: Calling gethostbyname(%s)\n", host);
-	}
+	CTRACE(tfp, "HTParseInet: Calling LYGetHostByName(%s)\n", host);
 #endif /* MVS */
 
-#ifdef NSL_FORK
-	/*
-	**  Start block for fork-based gethostbyname() with
-	**  checks for interrupts. - Tom Zerucha (tz@execpc.com) & FM
-	*/
-	{
-	    /*
-	    **	Pipe, child pid, and status buffers.
-	    */
-	    pid_t fpid, waitret = (pid_t)0;
-	    int pfd[2], cstat, cst1 = 0;
-
-	    pipe(pfd);
-
-	    if ((fpid = fork()) == 0 ) {
-		/*
-		**  Child - for the long call.
-		*/
-		phost = gethostbyname(host);
-		cst1 = 0;
-		/*
-		**  Return value (or nulls).
-		*/
-		if (phost != NULL)
-		    write(pfd[1], phost->h_addr, phost->h_length);
-		else
-		    write(pfd[1], &cst1, 4);
-		/*
-		**  Return an error code.
-		*/
-		_exit(phost == NULL);
-	    }
-
-	    /*
-	    **	(parent) Wait until lookup finishes, or interrupt.
-	    */
-	    cstat = 0;
-	    while (cstat <= 0) {
-		/*
-		**  Exit when data sent.
-		*/
-		IOCTL(pfd[0], FIONREAD, &cstat);
-		if (cstat > 0)
-		    break;
-		/*
-		**  Exit if child exited.
-		*/
-		if ((waitret = waitpid(fpid, &cst1, WNOHANG)) > 0) {
-		    break;
-		}
-		/*
-		**  Abort if interrupt key pressed.
-		*/
-		if (HTCheckForInterrupt()) {
-		    if (TRACE) {
-			fprintf(stderr,
-				"HTParseInet: INTERRUPTED gethostbyname.\n");
-		    }
-		    kill(fpid , SIGKILL);
-		    waitpid(fpid, NULL, 0);
-		    FREE(host);
-		    close(pfd[0]);
-		    close(pfd[1]);
-		    return HT_INTERRUPTED;
-		}
-		/*
-		**  Be nice to the system.
-		*/
-		sleep(1);
-	    }
-	    if (waitret <= 0) {
-		waitret = waitpid(fpid, &cst1, WNOHANG);
-	    }
-	    if (TRACE) {
-		if (WIFEXITED(cst1)) {
-		    fprintf(stderr,
-		      "HTParseInet: NSL_FORK child %d exited, status 0x%x.\n",
-			    (int)waitret, cst1);
-		} else if (WIFSIGNALED(cst1)) {
-		    fprintf(stderr,
-		  "HTParseInet: NSL_FORK child %d got signal, status 0x%x!\n",
-			    (int)waitret, cst1);
-#ifdef WCOREDUMP
-		    if (WCOREDUMP(cst1)) {
-			fprintf(stderr,
-			      "HTParseInet: NSL_FORK child %d dumped core!\n",
-				(int)waitret);
-		    }
-#endif /* WCOREDUMP */
-		} else if (WIFSTOPPED(cst1)) {
-		    fprintf(stderr,
-		  "HTParseInet: NSL_FORK child %d is stopped, status 0x%x!\n",
-			    (int)waitret, cst1);
-		}
-	    }
-	    /*
-	    **	Read as much as we can - should be the address.
-	    */
-	    IOCTL(pfd[0], FIONREAD, &cstat);
-	    if (cstat < 4) {
-		if (TRACE) {
-		    fprintf(stderr,
-		       "HTParseInet: NSL_FORK child returns only %d bytes.\n",
-			    cstat);
-		    fprintf(stderr,
-			"             Trying again without forking.\n");
-		}
-		phost = gethostbyname(host);	/* See netdb.h */
-		if (!phost) {
-		    if (TRACE) {
-			fprintf(stderr,
-			 "HTParseInet: Can't find internet node name `%s'.\n",
-				host);
-		    }
-		    memset((void *)&soc_in->sin_addr, 0, sizeof(soc_in->sin_addr));
-		} else {
-		    memcpy((void *)&soc_in->sin_addr,
-			   phost->h_addr, phost->h_length);
-		}
-#ifdef NOTDEFINED
-		cstat = read(pfd[0], (void *)&soc_in->sin_addr , 4);
-#endif /* NOTDEFINED */
-	    } else {
-		cstat = read(pfd[0], (void *)&soc_in->sin_addr , cstat);
-	    }
-	    close(pfd[0]);
-	    close(pfd[1]);
-	}
-	if (soc_in->sin_addr.s_addr == 0) {
-	    if (TRACE) {
-		fprintf(stderr,
-			"HTParseInet: Can't find internet node name `%s'.\n",
-			host);
-	    }
-	    FREE(host);
-	    return -1;
-	}
-	FREE(host);
-#ifdef MVS
-	if (TRACE) {
-	    fprintf(stderr,
-		    "HTParseInet: gethostbyname() returned %d\n", phost);
-	}
-#endif /* MVS */
-
-#else /* Not NSL_FORK: */
 #ifdef DJGPP
-	soc_in->sin_addr.s_addr = htonl(resolve(host));
-	FREE(host);
-	if (soc_in->sin_addr.s_addr == 0) {
-		 if (TRACE)
-			  fprintf(stderr,
-			 "HTTPAccess: Can't find internet node name `%s'.\n",host);
-		 return -1;  /* Fail? */
-	}
-#else
-	phost = gethostbyname(host);	/* See netdb.h */
-#ifdef MVS
-	if (TRACE) {
-	    fprintf(stderr,
-		    "HTParseInet: gethostbyname() returned %d\n", phost);
-	}
-#endif /* MVS */
-	if (!phost) {
-	    if (TRACE) {
-		fprintf(stderr,
-			"HTParseInet: Can't find internet node name `%s'.\n",
-			host);
-	    }
+	if (!valid_hostname(host)) {
 	    FREE(host);
-	    return -1;	/* Fail? */
+	    return HT_NOT_ACCEPTABLE; /* only HTDoConnect checks this. */
 	}
-	FREE(host);
-#if defined(VMS) && defined(CMU_TCP)
-	/*
-	**  In LIBCMU, phost->h_length contains not the length of one address
-	**  (four bytes) but the number of bytes in *h_addr, i.e. some multiple
-	**  of four. Thus we need to hard code the value here, and remember to
-	**  change it if/when IP addresses change in size. :-(	LIBCMU is no
-	**  longer supported, and CMU users are encouraged to obtain and use
-	**  SOCKETSHR/NETLIB instead. - S. Bjorndahl
-	*/
-	memcpy((void *)&soc_in->sin_addr, phost->h_addr, 4);
-#else
+	soc_in->sin_addr.s_addr = htonl(resolve(host));
+	if (soc_in->sin_addr.s_addr == 0) {
+	    goto failed;
+	}
+#else /* !DJGPP: */
+#ifdef _WINDOWS_NSL
+	phost = LYGetHostByName(host);	/* See above */
+	if (!phost) goto failed;
 	memcpy((void *)&soc_in->sin_addr, phost->h_addr, phost->h_length);
-#endif /* VMS && CMU_TCP */
-#endif /* DJGPP */
-#endif /* NSL_FORK */
-    }
+#else /* !DJGPP, !_WINDOWS_NSL: */
+	{
+	    struct hostent  *phost;
+	    phost = LYGetHostByName(host);	/* See above */
 
-    if (TRACE) {
-	fprintf(stderr,
-	   "HTParseInet: Parsed address as port %d, IP address %d.%d.%d.%d\n",
+	    if (!phost) goto failed;
+#if defined(VMS) && defined(CMU_TCP)
+	    /*
+	    **  In LIBCMU, phost->h_length contains not the length of one address
+	    **  (four bytes) but the number of bytes in *h_addr, i.e., some multiple
+	    **  of four.  Thus we need to hard code the value here, and remember to
+	    **  change it if/when IP addresses change in size. :-(	LIBCMU is no
+	    **  longer supported, and CMU users are encouraged to obtain and use
+	    **  SOCKETSHR/NETLIB instead. - S. Bjorndahl
+	    */
+	    memcpy((void *)&soc_in->sin_addr, phost->h_addr, 4);
+#else
+	    if (!phost) goto failed;
+	    if (phost->h_length != sizeof soc_in->sin_addr) {
+		HTAlwaysAlert(host, gettext("Address length looks invalid"));
+	    }
+	    memcpy((void *)&soc_in->sin_addr, phost->h_addr, phost->h_length);
+#endif /* VMS && CMU_TCP */
+	}
+#endif /* !DJGPP, !_WINDOWS_NSL */
+#endif /* !DJGPP */
+#ifndef _WINDOWS_NSL
+	FREE(host);
+#endif /* _WINDOWS_NSL */
+
+    }	/* Alphanumeric node name */
+
+    CTRACE(tfp, "HTParseInet: Parsed address as port %d, IP address %d.%d.%d.%d\n",
 		(int)ntohs(soc_in->sin_port),
 		(int)*((unsigned char *)(&soc_in->sin_addr)+0),
 		(int)*((unsigned char *)(&soc_in->sin_addr)+1),
 		(int)*((unsigned char *)(&soc_in->sin_addr)+2),
 		(int)*((unsigned char *)(&soc_in->sin_addr)+3));
-    }
 #endif	/* Internet vs. Decnet */
 
     return 0;	/* OK */
+
+failed:
+    CTRACE(tfp, "HTParseInet: Can't find internet node name `%s'.\n",
+		host);
+#ifndef _WINDOWS_NSL
+    FREE(host);
+#endif /* _WINDOWS_NSL */
+    switch (lynx_nsl_status) {
+    case HT_NOT_ACCEPTABLE:
+    case HT_INTERRUPTED:
+	return lynx_nsl_status;
+    default:
+    return -1;
+}
 }
 
+#ifdef LY_FIND_LEAKS
 /*	Free our name for the host on which we are - FM
 **	-------------------------------------------
 **
@@ -628,6 +1245,7 @@ PRIVATE void free_HTTCP_hostname NOARGS
 {
     FREE(hostname);
 }
+#endif /* LY_FIND_LEAKS */
 
 /*	Derive the name of the host on which we are
 **	-------------------------------------------
@@ -652,7 +1270,9 @@ PRIVATE void get_host_details NOARGS
 	return; 			/* Already done */
     gethostname(name, namelength);	/* Without domain */
     StrAllocCopy(hostname, name);
+#ifdef LY_FIND_LEAKS
     atexit(free_HTTCP_hostname);
+#endif
 #ifdef UCX
     /*
     **	UCX doesn't give the complete domain name.
@@ -671,16 +1291,15 @@ PRIVATE void get_host_details NOARGS
 #ifndef DECNET	/* Decnet ain't got no damn name server 8#OO */
 #ifdef NEED_HOST_ADDRESS		/* no -- needs name server! */
     phost = gethostbyname(name);	/* See netdb.h */
-    if (!phost) {
-	if (TRACE) fprintf(stderr,
-		"TCP: Can't find my own internet node address for `%s'!!\n",
-		name);
+    if (!OK_HOST(phost)) {
+	CTRACE(tfp, "TCP: Can't find my own internet node address for `%s'!!\n",
+		    name);
 	return;  /* Fail! */
     }
     StrAllocCopy(hostname, phost->h_name);
     memcpy(&HTHostAddress, &phost->h_addr, phost->h_length);
-    if (TRACE) fprintf(stderr, "     Name server says that I am `%s' = %s\n",
-	    hostname, HTInetString(&HTHostAddress));
+    CTRACE(tfp, "     Name server says that I am `%s' = %s\n",
+		hostname, HTInetString(&HTHostAddress));
 #endif /* NEED_HOST_ADDRESS */
 
 #endif /* !DECNET */
@@ -714,6 +1333,7 @@ PUBLIC int HTDoConnect ARGS4(
     /*
     **	Set up defaults.
     */
+    memset(soc_in, 0, sizeof(*soc_in));
     soc_in->sin_family = AF_INET;
     soc_in->sin_port = htons(default_port);
 
@@ -731,16 +1351,22 @@ PUBLIC int HTDoConnect ARGS4(
     }
     FREE(p1);
 
-    line = (char *)calloc(1, (strlen(host) + strlen(protocol) + 128));
-    if (line == NULL)
-	outofmem(__FILE__, "HTDoConnect");
-    sprintf (line, "Looking up %s.", host);
+    HTSprintf0 (&line, gettext("Looking up %s."), host);
     _HTProgress (line);
     status = HTParseInet(soc_in, host);
     if (status) {
 	if (status != HT_INTERRUPTED) {
-	    sprintf (line, "Unable to locate remote host %s.", host);
-	    _HTProgress(line);
+	    if (status == HT_NOT_ACCEPTABLE) {
+		/*  Not HTProgress, so warning won't be overwritten
+		 *  immediately; but not HTAlert, because typically
+		 *  there will be other alerts from the callers. - kw
+		 */
+		HTUserMsg2(gettext("Invalid hostname %s"), host);
+	    } else {
+		HTSprintf0 (&line,
+			 gettext("Unable to locate remote host %s."), host);
+		_HTProgress(line);
+	    }
 	    status = HT_NO_DATA;
 	}
 	FREE(host);
@@ -748,17 +1374,17 @@ PUBLIC int HTDoConnect ARGS4(
 	return status;
     }
 
-    sprintf (line, "Making %s connection to %s.", protocol, host);
+    HTSprintf0 (&line, gettext("Making %s connection to %s."), protocol, host);
     _HTProgress (line);
     FREE(host);
+    FREE(line);
 
     /*
     **	Now, let's get a socket set up from the server for the data.
     */
     *s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (*s == -1) {
-	HTAlert("socket failed.");
-	FREE(line);
+	HTAlert(gettext("socket failed."));
 	return HT_NO_DATA;
     }
 
@@ -777,7 +1403,7 @@ PUBLIC int HTDoConnect ARGS4(
 	int ret = IOCTL(*s, FIONBIO, &val);
 #endif /* USE_FCNTL */
 	if (ret == -1)
-	    _HTProgress("Could not make connection non-blocking.");
+	    _HTProgress(gettext("Could not make connection non-blocking."));
     }
 #endif /* !NO_IOCTL || USE_FCNTL */
 #endif /* !DOSPATH */
@@ -831,12 +1457,15 @@ PUBLIC int HTDoConnect ARGS4(
 	    **	Protect against an infinite loop.
 	    */
 	    if (tries++ >= 180000) {
-		HTAlert("Connection failed for 180,000 tries.");
-		FREE(line);
+		HTAlert(gettext("Connection failed for 180,000 tries."));
 		return HT_NO_DATA;
 	    }
 
+#ifdef _WINDOWS_NSL
+	    timeout.tv_sec = 100;
+#else
 	    timeout.tv_sec = 0;
+#endif /* _WINDOWS_NSL */
 	    timeout.tv_usec = 100000;
 	    FD_ZERO(&writefds);
 	    FD_SET(*s, &writefds);
@@ -934,8 +1563,7 @@ PUBLIC int HTDoConnect ARGS4(
 		}
 	    }
 	    if (HTCheckForInterrupt()) {
-		if (TRACE)
-		    fprintf(stderr, "*** INTERRUPTED in middle of connect.\n");
+		CTRACE(tfp, "*** INTERRUPTED in middle of connect.\n");
 		status = HT_INTERRUPTED;
 		SOCKET_ERRNO = EINTR;
 		break;
@@ -963,12 +1591,11 @@ PUBLIC int HTDoConnect ARGS4(
 	int ret = IOCTL(*s, FIONBIO, &val);
 #endif /* USE_FCNTL */
 	if (ret == -1)
-	    _HTProgress("Could not restore socket to blocking.");
+	    _HTProgress(gettext("Could not restore socket to blocking."));
     }
 #endif /* !NO_IOCTL || USE_FCNTL */
 #endif /* !DOSPATH */
 
-    FREE(line);
     return status;
 }
 
@@ -984,10 +1611,22 @@ PUBLIC int HTDoRead ARGS3(
     fd_set readfds;
     struct timeval timeout;
     int tries=0;
-#ifdef UCX
+#if defined(UNIX) || defined(UCX)
     int nb;
 #endif /* UCX, BSN */
 
+#ifdef UNIX
+    if (fildes == 0) {
+	/*
+	 *  0 can be a valid socket fd, but if it's a tty something must
+	 *  have gone wrong. - kw
+	 */
+	if (isatty(fildes)) {
+	    CTRACE(tfp, "HTDoRead - refusing to read fd 0 which is a tty!\n");
+	    return -1;
+	}
+    } else
+#endif
     if (fildes <= 0)
 	return -1;
 
@@ -1006,7 +1645,7 @@ PUBLIC int HTDoRead ARGS3(
 	**  Protect against an infinite loop.
 	*/
 	if (tries++ >= 180000) {
-	    HTAlert("Socket read failed for 180,000 tries.");
+	    HTAlert(gettext("Socket read failed for 180,000 tries."));
 	    SOCKET_ERRNO = EINTR;
 	    return HT_INTERRUPTED;
 	}
@@ -1041,8 +1680,25 @@ PUBLIC int HTDoRead ARGS3(
     }
 
 #if !defined(UCX) || !defined(VAXC)
+#ifdef UNIX
+    while ((nb = SOCKET_READ (fildes, buf, nbyte)) == -1) {
+	int saved_errno = errno;
+	if (errno == EINTR)
+	    continue;
+#ifdef ERESTARTSYS
+	if (errno == ERESTARTSYS)
+	    continue;
+#endif /* ERESTARTSYS */
+	HTInetStatus("read");
+	errno = saved_errno;	/* our caller may check it */
+	break;
+    }
+    return nb;
+#else  /* UNIX */
     return SOCKET_READ (fildes, buf, nbyte);
-#else
+#endif /* !UNIX */
+
+#else  /* UCX && VAXC */
     /*
     **	VAXC and UCX problem only.
     */

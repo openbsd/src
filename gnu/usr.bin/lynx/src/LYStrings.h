@@ -1,11 +1,7 @@
 #ifndef LYSTRINGS_H
 #define LYSTRINGS_H
 
-#include <string.h>
-
-#if !defined(EXP_8BIT_TOUPPER) && !defined(LOCALE)
-#define EXP_8BIT_TOUPPER
-#endif
+#include <LYCurses.h>
 
 /*  UPPER8(ch1,ch2) is an extension of (TOUPPER(ch1) - TOUPPER(ch2))  */
 extern int UPPER8  PARAMS((
@@ -13,20 +9,36 @@ extern int UPPER8  PARAMS((
 	int		ch2));
 
 extern int get_mouse_link NOPARAMS;
+extern int peek_mouse_link NOPARAMS;
+extern int peek_mouse_levent NOPARAMS;
+extern int fancy_mouse PARAMS((WINDOW *win, int row, int *position));
+
+#ifdef HAVE_STRERROR
+#define LYStrerror strerror
+#else
+extern char *LYStrerror PARAMS((
+	int		code));
+#endif /* HAVE_STRERROR */
+
 extern char * LYstrncpy PARAMS((
 	char *		dst,
 	CONST char *	src,
 	int		n));
 extern void ena_csi PARAMS((BOOLEAN flag));
 extern int LYgetch NOPARAMS;
+extern int LYgetch_for PARAMS((
+	int		code));
 extern int LYgetstr PARAMS((
 	char *		inputline,
 	int		hidden,
 	size_t		bufsize,
 	int		recall));
+extern char *LYstrsep PARAMS((
+	char **		stringp,
+	CONST char *	delim));
 extern char * LYstrstr PARAMS((
 	char *		chptr,
-	char *		tarptr));
+	CONST char *	tarptr));
 extern char * LYmbcsstrncpy PARAMS((
 	char *		dst,
 	CONST char *	src,
@@ -70,7 +82,7 @@ extern char * SNACat PARAMS((
 #define StrnAllocCopy(dest, src, n)  SNACopy (&(dest), src, n)
 #define StrnAllocCat(dest, src, n)   SNACat  (&(dest), src, n)
 
-#define printable(c) (((c)>31 && (c)<=255) || (c)==9 || (c)==10 || (c)<0 )
+extern char *LYSafeGets PARAMS((char ** src, FILE * fp));
 
 /* values for LYgetch */
 #define UPARROW		256	/* 0x100 */
@@ -80,7 +92,7 @@ extern char * SNACat PARAMS((
 #define PGDOWN		260	/* 0x104 */
 #define PGUP		261	/* 0x105 */
 #define HOME		262	/* 0x106 */
-#define END		263	/* 0x107 */
+#define END_KEY		263	/* 0x107 */
 #define F1		264	/* 0x108 */
 #define DO_KEY		265	/* 0x109 */
 #define FIND_KEY	266	/* 0x10A */
@@ -88,6 +100,21 @@ extern char * SNACat PARAMS((
 #define INSERT_KEY	268	/* 0x10C */
 #define REMOVE_KEY	269	/* 0x10D */
 #define DO_NOTHING	270	/* 0x10E */
+#define BACKTAB_KEY	271	/* 0x10F */
+#define MOUSE_KEY	0x11d	/* 0x11D */
+/*  *** NOTE: ***
+    If you add definitions for new lynxkeycodes to the above list that
+    need to be mapped to LYK_* lynxactioncodes -
+    - AT LEAST the tables keymap[] and key_override[] in LYKeymap.c
+      have to be changed/reviewed, AS WELL AS the lineedit binding
+      tables in LYEditmap.c !
+    - KEYMAP_SIZE, defined in LYKeymap.h, may need to be changed !
+*/
+
+
+#  define FOR_PANEL	0
+#  define FOR_CHOICE	1
+#  define FOR_INPUT	2
 
 #define VISIBLE  0
 #define HIDDEN   1
@@ -97,7 +124,7 @@ extern char * SNACat PARAMS((
 /* EditFieldData preserves state between calls to LYEdit1
  */
 typedef struct _EditFieldData {
-	
+
         int  sx;        /* Origin of editfield                       */
         int  sy;
         int  dspwdth;   /* Screen real estate for editting           */
@@ -121,13 +148,17 @@ typedef struct _EditFieldData {
 
 #define LYE_NOP 0		  /* Do Nothing            */
 #define LYE_CHAR  (LYE_NOP   +1)  /* Insert printable char */
-#define LYE_ENTER (LYE_CHAR  +1)  /* Input complete, return char */
+#define LYE_ENTER (LYE_CHAR  +1)  /* Input complete, return char/lynxkeycode */
 #define LYE_TAB   (LYE_ENTER +1)  /* Input complete, return TAB  */
 #define LYE_ABORT (LYE_TAB   +1)  /* Input cancelled       */
 
-#define LYE_DELN  (LYE_ABORT +1)  /* Delete next    char   */
-#define LYE_DELC  (LYE_DELN  +1)  /* Delete current char   */
-#define LYE_DELP  (LYE_DELC  +1)  /* Delete prev    char   */
+#define LYE_FORM_PASS (LYE_ABORT +1)  /* In form fields: input complete,
+					 return char / lynxkeycode;
+					 Elsewhere: Do Nothing */
+
+#define LYE_DELN  (LYE_FORM_PASS +1)  /* Delete next/curr char */
+#define LYE_DELC  (LYE_DELN)      /* Obsolete (DELC case was equiv to DELN) */
+#define LYE_DELP  (LYE_DELN  +1)  /* Delete prev      char */
 #define LYE_DELNW (LYE_DELP  +1)  /* Delete next word      */
 #define LYE_DELPW (LYE_DELNW +1)  /* Delete prev word      */
 
@@ -145,8 +176,37 @@ typedef struct _EditFieldData {
 
 #define LYE_LKCMD (LYE_UPPER +1)  /* Invoke command prompt */
 
-#define LYE_AIX   (LYE_LKCMD +1)  /* Hex 97		   */
+#define LYE_AIX   (LYE_LKCMD +1)  /* Hex 97                */
 
+#define LYE_DELBL (LYE_AIX   +1)  /* Delete back to BOL    */
+#define LYE_DELEL (LYE_DELBL +1)  /* Delete thru EOL       */
+
+#define LYE_SWMAP (LYE_DELEL +1)  /* Switch input keymap   */
+
+#if defined(USE_KEYMAPS)
+extern int lynx_initialize_keymaps NOPARAMS;
+#endif
+
+extern void LYLowerCase PARAMS((
+	char *		buffer));
+extern void LYUpperCase PARAMS((
+	char *		buffer));
+extern void LYRemoveBlanks PARAMS((
+	char *		buffer));
+extern char * LYSkipBlanks PARAMS((
+	char *		buffer));
+extern char * LYSkipNonBlanks PARAMS((
+	char *		buffer));
+extern CONST char * LYSkipCBlanks PARAMS((
+	CONST char *	buffer));
+extern CONST char * LYSkipCNonBlanks PARAMS((
+	CONST char *	buffer));
+extern void LYTrimLeading PARAMS((
+	char *		buffer));
+extern void LYTrimTrailing PARAMS((
+	char *		buffer));
+extern BOOLEAN LYTrimStartfile PARAMS((
+	char *		buffer));
 extern void LYSetupEdit PARAMS((
 	EditFieldData *	edit,
 	char *		old,
@@ -154,19 +214,25 @@ extern void LYSetupEdit PARAMS((
 	int		maxdsp));
 extern void LYRefreshEdit PARAMS((
 	EditFieldData *	edit));
+extern int EditBinding PARAMS((int ch));
 extern int LYEdit1 PARAMS((
 	EditFieldData *	edit,
 	int		ch,
 	int		action,
 	BOOL		maxMessage));
-
+extern void LYOpenCloset NOPARAMS;
+extern void LYCloseCloset NOPARAMS;
 
 extern int current_lineedit;
 extern char * LYLineeditNames[];
 extern char * LYLineEditors[];
 
-/* Push a chacter through the linedit machinery */
+/* Push a character through the lineedit machinery */
+#ifdef    NOT_ASCII  /* S/390 -- gil -- 2080 */
+#define EditBinding(c) (LYLineEditors[current_lineedit][(c)<256 ? TOASCII(c) : c])
+#else  /* NOT_ASCII */
 #define EditBinding(c) (LYLineEditors[current_lineedit][c])
+#endif /* NOT_ASCII */
 #define LYLineEdit(e,c,m) LYEdit1(e,c,EditBinding(c),m)
 
 /* Dummy initializer for LYEditmap.c */

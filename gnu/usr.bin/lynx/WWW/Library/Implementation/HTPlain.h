@@ -5,8 +5,8 @@
 #ifndef HTPLAIN_H
 #define HTPLAIN_H
 
-#include "HTStream.h"
-#include "HTAnchor.h"
+#include <HTStream.h>
+#include <HTAnchor.h>
 
 extern HTStream* HTPlainPresent PARAMS((
         HTPresentation *        pres,

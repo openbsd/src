@@ -7,23 +7,19 @@
 */
 
 
-#include "HTUtils.h"
-#include "HTBTree.h"
+#include <HTUtils.h>
+#include <HTBTree.h>
 #ifndef __STRICT_BSD__
 #include <stdlib.h>
 #endif
-#include <string.h>
 
 #define MAXIMUM(a,b) ((a)>(b)?(a):(b))
 
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
-
+#include <LYLeaks.h>
 
 PUBLIC HTBTree * HTBTree_new ARGS1(HTComparer, comp)
     /*********************************************************
-    ** This function returns an HTBTree with memory allocated 
+    ** This function returns an HTBTree with memory allocated
     ** for it when given a mean to compare things
     */
 {
@@ -73,7 +69,7 @@ PRIVATE void HTBTElementAndObject_free ARGS1(HTBTElement*, element)
     if (element) {     /* Just in case nothing was in the tree anyway */
         if (element->left != NULL)
 	    HTBTElementAndObject_free(element->left);
-	if (element->right != NULL)    
+	if (element->right != NULL)
 	    HTBTElementAndObject_free(element->right);
 	FREE(element->object);
 	FREE(element);
@@ -110,12 +106,12 @@ PUBLIC void HTBTree_add ARGS2(
     int depth,depth2,corrections;
         /* father_of_element is a pointer to the structure that is the father of the
         ** new object "object".
-        ** added_element is a pointer to the structure that contains or will contain 
+        ** added_element is a pointer to the structure that contains or will contain
         ** the new object "object".
         ** father_of_forefather and forefather_of_element are pointers that are used
         ** to modify the depths of upper elements, when needed.
         **
-        ** father_found indicates by a value NO when the future father of "object" 
+        ** father_found indicates by a value NO when the future father of "object"
         ** is found.
         ** top_found indicates by a value NO when, in case of a difference of depths
         **  < 2, the top of the tree is encountered and forbids any further try to
@@ -146,24 +142,24 @@ PUBLIC void HTBTree_add ARGS2(
         tree->top->right_depth = 0;
     }
     else
-    {   
+    {
         father_found = YES;
         father_of_element = tree->top;
         added_element = NULL;
         father_of_forefather = NULL;
-        forefather_of_element = NULL;      
+        forefather_of_element = NULL;
         while (father_found)
         {
             if (tree->compare(object,father_of_element->object)<0)
 	    {
                 if (father_of_element->left != NULL)
                     father_of_element = father_of_element->left;
-                else 
+                else
 	        {
                     father_found = NO;
-                    father_of_element->left = 
+                    father_of_element->left =
                         (HTBTElement *)malloc(sizeof(HTBTElement));
-                    if (father_of_element->left==NULL) 
+                    if (father_of_element->left==NULL)
                         outofmem(__FILE__, "HTBTree_add");
                     added_element = father_of_element->left;
                     added_element->up = father_of_element;
@@ -176,14 +172,14 @@ PUBLIC void HTBTree_add ARGS2(
    	    }
             if (tree->compare(object,father_of_element->object)>=0)
             {
-                if (father_of_element->right != NULL) 
+                if (father_of_element->right != NULL)
                     father_of_element = father_of_element->right;
-                else 
-                {  
+                else
+                {
                     father_found = NO;
-                    father_of_element->right = 
+                    father_of_element->right =
                         (HTBTElement *)malloc(sizeof(HTBTElement));
-                    if (father_of_element->right==NULL) 
+                    if (father_of_element->right==NULL)
                         outofmem(__FILE__, "HTBTree_add");
                     added_element = father_of_element->right;
                     added_element->up = father_of_element;
@@ -191,7 +187,7 @@ PUBLIC void HTBTree_add ARGS2(
                     added_element->left = NULL;
                     added_element->left_depth = 0;
                     added_element->right = NULL;
-                    added_element->right_depth = 0;       
+                    added_element->right_depth = 0;
     	        }
             }
 	}
@@ -205,7 +201,7 @@ PUBLIC void HTBTree_add ARGS2(
             if (father_of_forefather->left == forefather_of_element)
             {
                 depth = father_of_forefather->left_depth;
-                father_of_forefather->left_depth = 1 
+                father_of_forefather->left_depth = 1
                             + MAXIMUM(forefather_of_element->right_depth,
                                   forefather_of_element->left_depth);
                 depth2 = father_of_forefather->left_depth;
@@ -221,7 +217,7 @@ PUBLIC void HTBTree_add ARGS2(
             forefather_of_element = father_of_forefather;
             father_of_forefather = father_of_forefather->up;
         } while ((depth != depth2) && (father_of_forefather != NULL));
-        
+
 
 
             /*
@@ -234,7 +230,7 @@ PUBLIC void HTBTree_add ARGS2(
             if ((abs(father_of_element->left_depth
                       - father_of_element->right_depth)) < 2)
 	    {
-                if (father_of_element->up != NULL) 
+                if (father_of_element->up != NULL)
                     father_of_element = father_of_element->up;
                 else top_found = NO;
 	    }
@@ -242,8 +238,8 @@ PUBLIC void HTBTree_add ARGS2(
  	    {                /* We start the process of balancing */
 
                 corrections = corrections + 1;
-                    /* 
-                    ** corrections is an integer used to avoid infinite 
+                    /*
+                    ** corrections is an integer used to avoid infinite
                     ** loops in cases such as:
                     **
                     **             3                        3
@@ -251,22 +247,22 @@ PUBLIC void HTBTree_add ARGS2(
                     **           5                            5
                     **
                     ** 3 is used to show that it need not be the top of the tree
-		    ** But let's avoid these two exceptions anyhow 
+		    ** But let's avoid these two exceptions anyhow
 		    ** with the two following conditions (4 March 94 - AS)
                     */
 
-		if ((father_of_element->left == NULL) 
-		    && (father_of_element->right->right == NULL) 
-		    && (father_of_element->right->left->left == NULL) 
-		    && (father_of_element->right->left->right == NULL)) 
+		if ((father_of_element->left == NULL)
+		    && (father_of_element->right->right == NULL)
+		    && (father_of_element->right->left->left == NULL)
+		    && (father_of_element->right->left->right == NULL))
 		    corrections = 7;
 
-		if ((father_of_element->right == NULL) 
-		    && (father_of_element->left->left == NULL) 
-		    && (father_of_element->left->right->right == NULL) 
+		if ((father_of_element->right == NULL)
+		    && (father_of_element->left->left == NULL)
+		    && (father_of_element->left->right->right == NULL)
 		    && (father_of_element->left->right->left == NULL))
 		    corrections = 7;
- 
+
 
                 if (father_of_element->left_depth > father_of_element->right_depth)
 	        {
@@ -283,7 +279,7 @@ PUBLIC void HTBTree_add ARGS2(
                         father_of_forefather = father_of_element->up;
                         forefather_of_element = added_element;
 			first_time = YES;
-                        do 
+                        do
                         {
                             if (father_of_forefather->left
                                  == forefather_of_element->up)
@@ -312,7 +308,7 @@ PUBLIC void HTBTree_add ARGS2(
 				      + MAXIMUM(forefather_of_element->left_depth,
 					       forefather_of_element->right_depth);
 				    first_time = NO;
-				}				
+				}
 				else
 				    father_of_forefather->right_depth = 1
 				      + MAXIMUM(forefather_of_element->up->left_depth,
@@ -321,7 +317,7 @@ PUBLIC void HTBTree_add ARGS2(
 			    }
                             forefather_of_element = forefather_of_element->up;
                             father_of_forefather = father_of_forefather->up;
-			} while ((depth != depth2) && 
+			} while ((depth != depth2) &&
 				 (father_of_forefather != NULL));
                         father_of_forefather = father_of_element->up;
                         if (father_of_forefather->left == father_of_element)
@@ -334,7 +330,7 @@ PUBLIC void HTBTree_add ARGS2(
                             **
                             ** 3 is used to show that it may not be the top of the
                             ** tree.
-                            */ 
+                            */
                             father_of_forefather->left = added_element;
                             father_of_element->left = added_element->right;
                             added_element->right = father_of_element;
@@ -364,7 +360,7 @@ PUBLIC void HTBTree_add ARGS2(
                         ** When tree   2   3        becomes    4    1
                         **            4 5                          5 3
                         **
-                        ** 1 is used to show that it is the top of the tree    
+                        ** 1 is used to show that it is the top of the tree
                         */
                         added_element->up = NULL;
                         father_of_element->left = added_element->right;
@@ -378,7 +374,7 @@ PUBLIC void HTBTree_add ARGS2(
 	        {
                     added_element = father_of_element->right;
                     father_of_element->right_depth = added_element->left_depth;
-                    added_element->left_depth = 1 + 
+                    added_element->left_depth = 1 +
                             MAXIMUM(father_of_element->right_depth,
                                 father_of_element->left_depth);
                     if (father_of_element->up != NULL)
@@ -389,9 +385,9 @@ PUBLIC void HTBTree_add ARGS2(
                         father_of_forefather = father_of_element->up;
                         forefather_of_element = added_element;
 			first_time = YES;
-                        do 
+                        do
                         {
-                            if (father_of_forefather->left 
+                            if (father_of_forefather->left
 				== forefather_of_element->up)
                             {
                                 depth = father_of_forefather->left_depth;
@@ -426,7 +422,7 @@ PUBLIC void HTBTree_add ARGS2(
 			    }
                             father_of_forefather = father_of_forefather->up;
                             forefather_of_element = forefather_of_element->up;
-			} while ((depth != depth2) && 
+			} while ((depth != depth2) &&
 				 (father_of_forefather != NULL));
                         father_of_forefather = father_of_element->up;
                         if (father_of_forefather->left == father_of_element)
@@ -496,7 +492,7 @@ PUBLIC HTBTElement * HTBTree_next ARGS2(
                                HTBTElement*,   ele)
     /**************************************************************************
     ** this function returns a pointer to the leftmost element if ele is NULL,
-    ** and to the next object to the right otherways.
+    ** and to the next object to the right otherwise.
     ** If no elements left, returns a pointer to NULL.
     */
 {
@@ -522,7 +518,7 @@ PUBLIC HTBTElement * HTBTree_next ARGS2(
         else
 	{
             father_of_forefather = father_of_element->up;
-	        while (father_of_forefather && 
+	        while (father_of_forefather &&
 		       (father_of_forefather->right == father_of_element))
       	        {
                     father_of_element = father_of_forefather;
@@ -544,7 +540,7 @@ PUBLIC HTBTElement * HTBTree_next ARGS2(
         else printf("Pas de Pere\n");
         if (father_of_element->left != NULL)
             printf("Objet du fils gauche = %s\t",
-		   (char *)father_of_element->left->object); 
+		   (char *)father_of_element->left->object);
         else printf("Pas de fils gauche\t");
         if (father_of_element->right != NULL)
             printf("Objet du fils droit = %s\n",
@@ -567,7 +563,7 @@ main ()
 {
     HTBTree * tree;
     HTBTElement * next_element;
-    
+
     tree = HTBTree_new((HTComparer)strcasecomp);
     HTBTree_add(tree,"hypertext");
     HTBTree_add(tree,"Addressing");

@@ -2,7 +2,10 @@
 Miso-8859-8
 
 #Name as a Display Charset (used on Options screen).
-OISO 8859-8 Hebrew
+OHebrew (ISO-8859-8)
+
+#Codepage number
+C916
 
 #
 #	Name:             ISO 8859-8 (1988) to Unicode

@@ -2,13 +2,10 @@
 **		================================
 */
 
-#include "HTUtils.h"
-#include "tcp.h"
-#include "HTParse.h"
+#include <HTUtils.h>
+#include <HTParse.h>
 
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <LYLeaks.h>
 
 #define HEX_ESCAPE '%'
 
@@ -190,10 +187,15 @@ PUBLIC char * HTParse ARGS3(
     char * acc_method;
     struct struct_parts given, related;
 
-    if (TRACE)
-	fprintf(stderr,
-		"HTParse: aName:%s   relatedName:%s\n", aName, relatedName);
+    CTRACE(tfp, "HTParse: aName:%s   relatedName:%s\n", aName, relatedName);
 
+    if (wanted & (PARSE_STRICTPATH | PARSE_QUERY)) { /* if detail wanted... */
+	if ((wanted & (PARSE_STRICTPATH | PARSE_QUERY))
+	    == (PARSE_STRICTPATH | PARSE_QUERY)) /* if strictpath AND query */
+	    wanted |= PARSE_PATH; /* then treat as if PARSE_PATH wanted */
+	if (wanted & PARSE_PATH) /* if PARSE_PATH wanted */
+	    wanted &= ~(PARSE_STRICTPATH | PARSE_QUERY); /* ignore details */
+    }
     /*
     **	Allocate the output string.
     */
@@ -250,7 +252,7 @@ PUBLIC char * HTParse ARGS3(
     **	this is back to inheriting for identical
     **	schemes whether or not they are "file".
     **	If you want to try it again yourself,
-    **	uncomment the strncasecomp() below. - FM
+    **	uncomment the strcasecomp() below. - FM
     */
     if ((given.access && related.access) &&
 	(/* strcasecomp(given.access, "file") || */
@@ -346,7 +348,11 @@ PUBLIC char * HTParse ARGS3(
     /*
     **	Handle the path.
     */
-    if (wanted & PARSE_PATH) {
+    if (wanted & (PARSE_PATH | PARSE_STRICTPATH | PARSE_QUERY)) {
+	char *tail = NULL;
+	int want_detail = (wanted & (PARSE_STRICTPATH | PARSE_QUERY));
+	if (want_detail)
+	    tail = result + strlen(result);
 	if (acc_method && !given.absolute && given.relative) {
 	    if (!strcasecomp(acc_method, "nntp") ||
 		!strcasecomp(acc_method, "snews") ||
@@ -365,8 +371,7 @@ PUBLIC char * HTParse ARGS3(
 	    if (wanted & PARSE_PUNCTUATION)
 		strcat(result, "/");
 	    strcat(result, given.absolute);
-	    if (TRACE)
-		fprintf(stderr, "1\n");
+	    CTRACE(tfp, "1\n");
 	} else if (related.absolute) {		/* Adopt path not name */
 	    strcat(result, "/");
 	    strcat(result, related.absolute);
@@ -380,16 +385,13 @@ PUBLIC char * HTParse ARGS3(
 		strcat(result, given.relative); /* Add given one */
 		HTSimplify (result);
 	    }
-	    if (TRACE)
-		fprintf(stderr, "2\n");
+	    CTRACE(tfp, "2\n");
 	} else if (given.relative) {
 	    strcat(result, given.relative);		/* what we've got */
-	    if (TRACE)
-		fprintf(stderr, "3\n");
+	    CTRACE(tfp, "3\n");
 	} else if (related.relative) {
 	    strcat(result, related.relative);
-	    if (TRACE)
-		fprintf(stderr, "4\n");
+	    CTRACE(tfp, "4\n");
 	} else {  /* No inheritance */
 	    if (strncasecomp(aName, "lynxcgi:", 8) &&
 		strncasecomp(aName, "lynxexec:", 9) &&
@@ -398,8 +400,24 @@ PUBLIC char * HTParse ARGS3(
 	    }
 	    if (!strcmp(result, "news:/"))
 		result[5] = '*';
-	    if (TRACE)
-		fprintf(stderr, "5\n");
+	    CTRACE(tfp, "5\n");
+	}
+	if (want_detail) {
+	    p = strchr(tail, '?');	/* Search part? */
+	    if (p) {
+		if (PARSE_STRICTPATH) {
+		    *p = '\0';
+		} else {
+		    if (!(wanted & PARSE_PUNCTUATION))
+			p++;
+		    do {
+			*tail++ = *p;
+		    } while (*p++);
+		}
+	    } else {
+		if (wanted & PARSE_QUERY)
+		    *tail = '\0';
+	    }
 	}
     }
 
@@ -414,8 +432,7 @@ PUBLIC char * HTParse ARGS3(
 	    strcat(result, (given.anchor) ?
 			     given.anchor : related.anchor);
 	}
-    if (TRACE)
-	fprintf(stderr, "HTParse: result:%s\n", result);
+    CTRACE(tfp, "HTParse:      result:%s\n", result);
     FREE(rel);
     FREE(name);
 
@@ -588,7 +605,7 @@ PUBLIC void HTSimplify ARGS1(
 **	-------------------
 **
 ** This function creates and returns a string which gives an expression of
-** one address as related to another. Where there is no relation, an absolute
+** one address as related to another.  Where there is no relation, an absolute
 ** address is retured.
 **
 **  On entry,
@@ -647,8 +664,7 @@ PUBLIC char * HTRelative ARGS2(
 	    strcat(result, "../");
 	strcat(result, last_slash+1);
     }
-    if (TRACE)
-	fprintf(stderr, "HT: `%s' expressed relative to\n    `%s' is\n   `%s'.",
+    CTRACE(tfp, "HT: `%s' expressed relative to\n    `%s' is\n   `%s'.",
 		aName, relatedName, result);
     return result;
 }
@@ -785,7 +801,11 @@ PUBLIC char * HTUnEscape ARGS1(
 	    if (*p)
 	        *q = from_hex(*p++) * 16;
 	    if (*p)
-	        *q = FROMASCII(*q + from_hex(*p++));
+		/*
+		** Careful!  FROMASCII() may evaluate its arg more than once!
+		*/  /* S/390 -- gil -- 0221 */
+		*q =           *q + from_hex(*p++) ;
+		*q = FROMASCII(*q                 );
 	    q++;
 	} else {
 	    *q++ = *p++;
@@ -823,9 +843,9 @@ PUBLIC char * HTUnEscapeSome ARGS2(
 	    p[1] && p[2] &&	/* tests shouldn't be needed, but.. */
 	    isxdigit((unsigned char)p[1]) &&
 	    isxdigit((unsigned char)p[2]) &&
-	    (testcode = from_hex(p[1])*16 + from_hex(p[2])) && /* %00 no good*/
+	    (testcode = FROMASCII(from_hex(p[1])*16 + from_hex(p[2]))) && /* %00 no good*/
 	    strchr(do_trans, testcode)) { /* it's one of the ones we want */
-	    *q++ = FROMASCII(testcode);
+	    *q++ = testcode;
 	    p += 3;
 	} else {
 	    *q++ = *p++;
@@ -866,7 +886,7 @@ PUBLIC void HTMake822Word ARGS1(
 	return;
     }
     for (p = *str; *p; p++) {
-	a = *p;
+	a = TOASCII(*p);  /* S/390 -- gil -- 0240 */
 	if (a < 32 || a >= 128 ||
 	    ((crfc[a-32]) & 1)) {
 	    if (!added)
@@ -885,13 +905,19 @@ PUBLIC void HTMake822Word ARGS1(
     if (result == NULL)
 	outofmem(__FILE__, "HTMake822Word");
     result[0] = '"';
+    /*
+    ** Having converted the character to ASCII, we can't use symbolic
+    ** escape codes, since they're in the host character set, which
+    ** is not necessarily ASCII.  Thus we use octal escape codes instead.
+    ** -- gil (Paul Gilmartin) <pg@sweng.stortek.com>
+    */  /* S/390 -- gil -- 0268 */
     for (q = result + 1, p = *str; *p; p++) {
 	a = TOASCII(*p);
-	if ((a != '\t') && ((a & 127) < 32 ||
+	if ((a != '\011') && ((a & 127) < 32 ||
 			    ( a < 128 && ((crfc[a-32]) & 2))))
-	    *q++ = '\\';
+	    *q++ = '\033';
 	*q++ = *p;
-	if (a == '\n' || (a == '\r' && (TOASCII(*(p+1)) != '\n')))
+	if (a == '\012' || (a == '\015' && (TOASCII(*(p+1)) != '\012')))
 	    *q++ = ' ';
     }
     *q++ = '"';

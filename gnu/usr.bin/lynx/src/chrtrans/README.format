@@ -26,13 +26,13 @@ b) directives:
    start with a keyword which may be abbreviated to one letter (first
    letter must be capitalized), followed by space and a value.
    Currently recognized:
- 
+
     OptionName
 	The name under which this should appear on the O)ptions screen
 	in the list for Display Character Set
     MIMEName
 	The name for this charset in MIME syntax (one word with digits
-        and some other non-letters allowed, should be IANA registered)
+	and some other non-letters allowed, should be IANA registered)
     Default
 	If "Y[es]" or "1", this is the default (fallback) translation table,
 	it will be used for Unicode -> 8bit (or 7bit) translation if no
@@ -45,7 +45,10 @@ b) directives:
 
     RawOrEnc
 	a number which flags some special property (encoding) for this
-        charset [see utf8_uni.tbl for example, see UCDefs.h for details].
+	charset [see utf8_uni.tbl for example, see UCDefs.h for details].
+
+    Codepage number (IBM specific)
+	used by OS/2 font-switching code.
 
 c) character translation definitions:
    they look like
@@ -53,7 +56,7 @@ c) character translation definitions:
    0x41    U+0041 U+0391 ...
 
    and are used for "forward" translation (mapping this charset to Unicode)
-   AS WELL AS "back" translation (mapping Unicodes to an 8-bit 
+   AS WELL AS "back" translation (mapping Unicodes to an 8-bit
    [incl. 7-bit ASCII] code).
 
    For the "forward" direction, only the first Unicode is used; for
@@ -63,7 +66,7 @@ c) character translation definitions:
    The above example line would tell the chartrans mechanism:
    "For this charset, code position 65 [hex 0x41] contains Unicode
     U+0041 (LATIN CAPITAL LETTER A).  For translation of Unicodes to
-    this charset, use byte value 65 [hex 0x41] for U+0041 (LATIN CAPITAL 
+    this charset, use byte value 65 [hex 0x41] for U+0041 (LATIN CAPITAL
     LETTER A) as well as for U+0391 (GREEK CAPITAL LETTER ALPHA)."
 
   [Note that for bytes in the ASCII range 0x00-0x7F, the forward translations
@@ -82,6 +85,10 @@ c) character translation definitions:
  * where <range> ::= <fontpos>-<fontpos>
  * and <unicode> ::= U+<h><h><h><h>
  * and <h> ::= <hexadecimal digit>
+ *
+  [Note that <fontpos> _without_ targets assumed notdefined,
+  so tables from ftp.unicode.org need no patching.]
+
 
 d) string replacement definitions:
 
@@ -89,13 +96,14 @@ d) string replacement definitions:
 
   U+00cd:I'
 
-  which would mean "Replace Unicode U+00cd (LATIN CAPITAL LETTER I WITH 
+  which would mean "Replace Unicode U+00cd (LATIN CAPITAL LETTER I WITH
   ACUTE" with the string (consisting of two character) I' (if no other
   translation is available)."  Please note that replacement definitions
-  in certnain charset table will override ones from Default table.
+  in certain charset table will override ones from the Default table.
 
   Note that everything after the ':' is currently taken VERBATIM, so
-  careful with trailing blanks etc.
+  careful with trailing blanks etc.  Please use <C replace> syntax below
+  when you need trailing spaces.
 
  * Syntax accepted:
  *      <unicode>	:<replace>
@@ -111,7 +119,7 @@ d) string replacement definitions:
 
 Motivation:
 
-- It is an extention of the format already in use for Linux (kernel,
+- It is an extension of the format already in use for Linux (kernel,
   kbd package), those files can be used with some minimal editing.
 
 - It is easy to convert Unicode tables for other charsets, as they
@@ -120,11 +128,11 @@ Motivation:
 
 - The format is independent of details of other parts of the Lynx code,
   unlike the "old" LYCharsets.c mechanism.  The tables don't have to
-  be changed in synch when e.g. new entities are added to the entities.h.
+  be changed in synch when e.g., new entities are added to the entities.h.
 
 
 Note: the Default "7bit approximation" table can be used for
 case-insensitive search for non-ascii letters if no upper/lower case
-information provided by other means, e.g. locale.  It is assumed that
+information provided by other means, e.g., locale.  It is assumed that
 upper/lower case letters have their "7bit approximation" images
 in def7_uni.tbl matched case-insensitively.

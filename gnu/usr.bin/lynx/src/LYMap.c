@@ -5,31 +5,28 @@
 **
 */
 
-#include "HTUtils.h"
-#include "tcp.h"
-#include "HTTP.h"
-#include "HTAnchor.h"
-#include "HTAccess.h"
-#include "HTFormat.h"
-#include "HTParse.h"
-#include "HTAlert.h"
-#include "LYUtils.h"
-#include "LYMap.h"
-#include "GridText.h"
-#include "LYSignal.h"
-#include "LYGlobalDefs.h"
-#include "LYKeymap.h"
-#include "LYCharUtils.h"
+#include <HTUtils.h>
+#include <HTTP.h>
+#include <HTAnchor.h>
+#include <HTAccess.h>
+#include <HTFormat.h>
+#include <HTParse.h>
+#include <HTAlert.h>
+#include <LYUtils.h>
+#include <LYMap.h>
+#include <GridText.h>
+#include <LYGlobalDefs.h>
+#include <LYKeymap.h>
+#include <LYCharUtils.h>
+#include <LYCharSets.h>
 
 #ifdef DIRED_SUPPORT
-#include "LYUpload.h"
-#include "LYLocal.h"
+#include <LYUpload.h>
+#include <LYLocal.h>
 #endif
 
-#include "LYexit.h"
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x=NULL;}
+#include <LYexit.h>
+#include <LYLeaks.h>
 
 typedef struct _LYMapElement {
    char * address;
@@ -88,6 +85,7 @@ PUBLIC void ImageMapList_free ARGS1(
     return;
 }
 
+#ifdef LY_FIND_LEAKS
 /*
  *  Utility for freeing the global list of MAPs. - kw
  */
@@ -97,6 +95,7 @@ PRIVATE void LYLynxMaps_free NOARGS
     LynxMaps = NULL;
     return;
 }
+#endif /* LY_FIND_LEAKS */
 
 /*
  *  We keep two kinds of lists:
@@ -107,7 +106,7 @@ PRIVATE void LYLynxMaps_free NOARGS
  *    HTParentAnchor structure and is freed when the document is removed
  *    from memory, in the course of normal removal of anchors.
  *    MAPs from POST responses can only be accessed via internal links,
- *    i.e. from within the same document (with the same post_data).
+ *    i.e., from within the same document (with the same post_data).
  *    The notion of "same document" is extended, so that LYNXIMGMAP:
  *    and List Page screens are logically part of the document on which
  *    they are based. - kw
@@ -163,7 +162,9 @@ PUBLIC BOOL LYAddImageMap ARGS3(
     {
 	if (!LynxMaps) {
 	    LynxMaps = HTList_new();
+#ifdef LY_FIND_LEAKS
 	    atexit(LYLynxMaps_free);
+#endif
 	}
 	theList = LynxMaps;
     }
@@ -171,6 +172,8 @@ PUBLIC BOOL LYAddImageMap ARGS3(
     if (theList) {
 	cur = theList;
 	while (NULL != (old = (LYImageMap *)HTList_nextObject(cur))) {
+	    if (old->address == 0)	/* shouldn't happen */
+	    	continue;
 	    if (!strcmp(old->address, address)) {
 		FREE(old->address);
 		FREE(old->title);
@@ -193,7 +196,7 @@ PUBLIC BOOL LYAddImageMap ARGS3(
     new = (old != NULL) ?
 		    old : (LYImageMap *)calloc(1, sizeof(LYImageMap));
     if (new == NULL) {
-	perror("Out of memory in LYAddImageMap");
+	outofmem(__FILE__, "LYAddImageMap");
 	return FALSE;
     }
     StrAllocCopy(new->address, address);
@@ -318,7 +321,7 @@ PUBLIC BOOL LYHaveImageMap ARGS1(
  *  the underlying resource.  ALso returns a pointer to that anchor in
  *  *punderlying if we are dealing with POST data. - kw
  *
- *  address  is the address of the underlying resource, i.e. the one
+ *  address  is the address of the underlying resource, i.e., the one
  *	     containing the MAP element, the MAP's name appended as
  *	     fragment is ignored.
  *  anAnchor is the LYNXIMGMAP: anchor; if it is associated with POST
@@ -361,7 +364,7 @@ PRIVATE void fill_DocAddress ARGS4(
  *  list if a List Page for a POST response is requested.  Also
  *  fill in the DocAddress structure etc. by calling fill_DocAddress().
  *
- *  address is the address of the underlying resource, i.e. the one
+ *  address is the address of the underlying resource, i.e., the one
  *	    containing the MAP element, the MAP's name appended as
  *	    fragment is ignored.
  *  anchor  is the LYNXIMGMAP: anchor for which LYLoadIMGmap() is
@@ -403,7 +406,7 @@ PRIVATE int LYLoadIMGmap ARGS4 (
 {
     HTFormat format_in = WWW_HTML;
     HTStream *target = NULL;
-    char buf[1024];
+    char *buf = NULL;
     LYMapElement *new = NULL;
     LYImageMap *theMap = NULL;
     char *MapTitle = NULL;
@@ -433,12 +436,8 @@ PRIVATE int LYLoadIMGmap ARGS4 (
     if (!theList) {
 	if (anAnchor->post_data && !WWWDoc.safe &&
 	    ((underlying && underlying->document && !LYforce_no_cache) ||
-	     HTConfirm(
-#if __STDC__
-		"LYNXIMGMAP: "
-#endif
-		CONFIRM_POST_RESUBMISSION) != TRUE)) {
-	    HTAlert("Image map from POST response not available!");
+	     HTConfirm(CONFIRM_POST_RESUBMISSION) != TRUE)) {
+	    HTAlert(FAILED_MAP_POST_REQUEST);
 	    return(HT_NOT_LOADED);
 	}
 	LYforce_no_cache = TRUE;
@@ -474,12 +473,8 @@ PRIVATE int LYLoadIMGmap ARGS4 (
     if (!(theMap && theMap->elements)) {
 	if (anAnchor->post_data && !WWWDoc.safe &&
 	    ((underlying && underlying->document && !LYforce_no_cache) ||
-	    HTConfirm(
-#if __STDC__
-		"LYNXIMGMAP: "
-#endif
-		CONFIRM_POST_RESUBMISSION) != TRUE)) {
-	    HTAlert("Image map from POST response not available!");
+	    HTConfirm(CONFIRM_POST_RESUBMISSION) != TRUE)) {
+	    HTAlert(FAILED_MAP_POST_REQUEST);
 	    return(HT_NOT_LOADED);
 	}
 	LYforce_no_cache = TRUE;
@@ -519,9 +514,10 @@ PRIVATE int LYLoadIMGmap ARGS4 (
 			   sink, anAnchor);
 
     if (!target || target == NULL) {
-	sprintf(buf, CANNOT_CONVERT_I_TO_O,
+	HTSprintf(&buf, CANNOT_CONVERT_I_TO_O,
 		HTAtom_name(format_in), HTAtom_name(format_out));
 	HTAlert(buf);
+	FREE(buf);
 	return(HT_NOT_LOADED);
     }
 
@@ -541,44 +537,63 @@ PRIVATE int LYLoadIMGmap ARGS4 (
 	LYEntify(&MapTitle, TRUE);
     }
 
-    sprintf(buf,"<head>\n<title>%s</title>\n</head>\n<body>\n", MapTitle);
-    (*target->isa->put_block)(target, buf, strlen(buf));
+#define PUTS(buf)    (*target->isa->put_block)(target, buf, strlen(buf))
 
-    sprintf(buf,"<h1><em>%s</em></h1>\n", MapTitle);
-    (*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf, "<html>\n<head>\n");
+    PUTS(buf);
+    HTSprintf0(&buf, "<META %s content=\"text/html;charset=%s\">\n",
+		"http-equiv=\"content-type\"",
+		LYCharSet_UC[current_char_set].MIMEname);
+    PUTS(buf);
+	/*
+	 *  This page is a list of titles and anchors for them.
+	 *  Since titles already passed SGML/HTML stage
+	 *  they converted to current_char_set.
+	 *  That is why we insist on META charset for this page.
+	 */
+    HTSprintf0(&buf, "<title>%s</title>\n", MapTitle);
+    PUTS(buf);
+    HTSprintf0(&buf, "</head>\n<body>\n");
+    PUTS(buf);
+
+    HTSprintf0(&buf,"<h1><em>%s</em></h1>\n", MapTitle);
+    PUTS(buf);
 
     StrAllocCopy(MapAddress, address);
     LYEntify(&MapAddress, FALSE);
-    sprintf(buf,"<h2><em>MAP:</em>&nbsp;%s</h2>\n", MapAddress);
-    (*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf,"<h2><em>MAP:</em>&nbsp;%s</h2>\n", MapAddress);
+    PUTS(buf);
 
-    sprintf(buf, "<%s compact>\n", ((keypad_mode == NUMBERS_AS_ARROWS) ?
+    HTSprintf0(&buf, "<%s compact>\n", ((keypad_mode == NUMBERS_AS_ARROWS) ?
 				    "ol" : "ul"));
-    (*target->isa->put_block)(target, buf, strlen(buf));
+    PUTS(buf);
     cur = theMap->elements;
     while (NULL != (new=(LYMapElement *)HTList_nextObject(cur))) {
 	StrAllocCopy(MapAddress, new->address);
 	LYEntify(&MapAddress, FALSE);
-	(*target->isa->put_block)(target, "<li><a href=\"", 13);
-	(*target->isa->put_block)(target, MapAddress, strlen(MapAddress));
+	PUTS("<li><a href=\"");
+	PUTS(MapAddress);
+	PUTS("\"");
 #ifndef DONT_TRACK_INTERNAL_LINKS
 	if (new->intern_flag)
-	    (*target->isa->put_block)(target, "\" TYPE=\"internal link\"\n>",24);
-	else
+	    PUTS(" TYPE=\"internal link\"");
 #endif
-	    (*target->isa->put_block)(target, "\"\n>", 3);
+	PUTS("\n>");
 	StrAllocCopy(MapTitle, new->title);
 	LYEntify(&MapTitle, TRUE);
-	(*target->isa->put_block)(target, MapTitle, strlen(MapTitle));
-	(*target->isa->put_block)(target, "</a>\n", 5);
+	PUTS(MapTitle);
+	PUTS("</a>\n");
     }
-    sprintf(buf,"</%s>\n</body>\n", ((keypad_mode == NUMBERS_AS_ARROWS) ?
-				     "ol" : "ul"));
-    (*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf, "</%s>\n</body>\n</html>\n",
+		    ((keypad_mode == NUMBERS_AS_ARROWS)
+		    ? "ol"
+		    : "ul"));
+    PUTS(buf);
 
     (*target->isa->_free)(target);
     FREE(MapAddress);
     FREE(MapTitle);
+    FREE(buf);
     return(HT_LOADED);
 }
 

@@ -9,10 +9,11 @@ General Information
 ===================
 Lynx comes with built-in translation tables to map the 8-bit character codes or
 character entities coming in from an HTML document to their equivalent codes,
-where possible, for various character sets.  You should choose display
-character set in Lynx Options Menu according to your font installed locally. 
-Please contact lynx-dev mailing list if you want any new codepage not listed
-there.
+where possible, for various character sets.
+
+IMPORTANT:  you should choose display character set in Lynx Options Menu
+according to your font installed locally.  Probably it would be cpXXX. Please
+contact lynx-dev mailing list if you want any new codepage not listed there.
 
 Note that all points of the connection between the display at your end and Lynx
 at the remote end must be 8-bit clean.  If the high bit is being stripped at
@@ -50,7 +51,7 @@ you're not.  If you see box and line-drawing characters and mismatched letters
 and so on, you are likely displaying 7 bit data, not 8.  Ensure that all points
 of your connection are 8-bit clean:
 
-	On any remote UNIX systems you must pass through, do 
+	On any remote UNIX systems you must pass through, do
 		'stty cs8 -istrip' or 'stty pass8'.  'stty -a' should list
 		your settings.
 	On any remote VMS systems, do 'set terminal /eightbit'.
@@ -62,9 +63,9 @@ of your connection are 8-bit clean:
 		8 bit, some 8-bit character sequences, including those passed
 		by Lynx as well as those which are for your terminal type
 		(vt100, etc.) will be processed by Procomm as ANSI screen
-		control codes and will most likely result in a garbled display. 
+		control codes and will most likely result in a garbled display.
 		Set it to 7 bit.
-	If going through a dialup terminal server, you may have to set the 
+	If going through a dialup terminal server, you may have to set the
 		terminal server itself to pass 8 bit data.  How to do this
 		varies with the make of the server, and in some cases only a
 		system admin in charge of the box will have the authorization

@@ -86,7 +86,7 @@ $ 	read sys$command/prompt="Agent [1,2,3,4,5,6] (RETURN = [1]) " agent
 $   EndIf
 $ ENDIF
 $ option = ""
-$ if agent .eq. 1 .or. agent .eqs. "" .or. p1 .eqs. "MULTINET" then -
+$ if agent .eq. 1 .or. agent .eqs. "" .or. p1 .eqs. "" .or. p1 .eqs. "MULTINET" then - 
     option = "MULTINET"
 $ if agent .eq. 2 .or. p1 .eqs. "UCX" then option = "UCX"
 $ if agent .eq. 3 .or. p1 .eqs. "WIN_TCP" then option = "WIN_TCP"
@@ -94,6 +94,12 @@ $ if agent .eq. 4 .or. p1 .eqs. "CMU_TCP" then option = "CMU_TCP"
 $ if agent .eq. 5 .or. p1 .eqs. "SOCKETSHR_TCP" then option = "SOCKETSHR_TCP"
 $ if agent .eq. 6 .or. p1 .eqs. "TCPWARE" then option = "TCPWARE"
 $!
+$ if option .eqs. "" 
+$ then 
+$    write sys$output "TCP/IP agent could not be determined" 
+$    exit 18 
+$ endif 
+$ 
 $ if option .eqs. "TCPWARE"
 $ then
 $    write sys$output "Building Lynx for TCPWARE with UCX emulation..."
@@ -190,13 +196,14 @@ $ THEN
 $  compiler := "DECC"
 $  if option .eqs. "UCX" then optfile = "UCXSHR"
 $  if option .eqs. "TCPWARE" then optfile = "TCPWARESHR"
+$  if option .eqs. "SOCKETSHR_TCP" then extra = extra + ",_DECC_V4_SOURCE"
 $  if option .eqs. "MULTINET" then -
 	extra = extra + ",_DECC_V4_SOURCE,__SOCKET_TYPEDEFS"
 $  v1 = f$verify(1)
 $! DECC:
-$  cc := cc/decc/prefix=all/nomember'cc_opts'-
-	   /DEFINE=(DEBUG,ACCESS_AUTH,'option''extra',__VMS_CURSES)-
-	   /INCLUDE=([-],[-.WWW.Library.Implementation],[.chrtrans]) 
+$  cc := cc/decc/prefix=all/nomember'cc_opts' -
+	   /DEFINE=(ACCESS_AUTH,'option''extra',__VMS_CURSES)-
+	   /INCLUDE=([],[-],[-.WWW.Library.Implementation],[.chrtrans]) 
 $  v1 = 'f$verify(0)'
 $ ELSE
 $  if option .eqs. "UCX" then optfile = "UCXOLB"
@@ -207,16 +214,16 @@ $   compiler := "GNUC"
 $   v1 = f$verify(1)
 $! GNUC:
 $   cc := gcc'cc_opts' -
-	     /DEFINE=(DEBUG,ACCESS_AUTH,'option''extra')-
-	     /INCLUDE=([-],[-.WWW.Library.Implementation],[.chrtrans]) 
+	     /DEFINE=(ACCESS_AUTH,'option''extra')-
+	     /INCLUDE=([],[-],[-.WWW.Library.Implementation],[.chrtrans]) 
 $   v1 = 'f$verify(0)'
 $  ELSE
 $   compiler := "VAXC"
 $   v1 = f$verify(1)
 $! VAXC:
 $   cc := cc'cc_opts' -
-	    /DEFINE=(DEBUG,ACCESS_AUTH,'option''extra')-
-	    /INCLUDE=([-],[-.WWW.Library.Implementation],[.chrtrans]) 
+	    /DEFINE=(ACCESS_AUTH,'option''extra')-
+	    /INCLUDE=([],[-],[-.WWW.Library.Implementation],[.chrtrans]) 
 $   v1 = 'f$verify(0)'
 $  ENDIF
 $ ENDIF

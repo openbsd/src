@@ -5,7 +5,7 @@
 #include <signal.h>
 
 #ifdef VMS
-extern void *VMSsignal PARAMS((int sig, void (*func)()));
+extern void VMSsignal PARAMS((int sig, void (*func)()));
 #ifdef signal
 #undef signal
 #endif /* signal */

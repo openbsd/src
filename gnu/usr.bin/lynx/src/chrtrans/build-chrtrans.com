@@ -36,7 +36,7 @@ $  CHRcompiler := "DECC"
 $  v1 = f$verify(1)
 $! DECC:
 $  cc := cc/decc/prefix=all /nomember 'CHRcc_opts'-
-	   /INCLUDE=([-],[--],[--.WWW.Library.Implementation]) 
+	   /INCLUDE=([],[-],[--],[--.WWW.Library.Implementation]) 
 $  v1 = 'f$verify(0)'
 $ ELSE
 $  IF f$search("gnu_cc:[000000]gcclib.olb") .nes. ""
@@ -44,13 +44,13 @@ $  THEN
 $   CHRcompiler := "GNUC"
 $   v1 = f$verify(1)
 $! GNUC:
-$   cc := gcc 'CHRcc_opts'/INCLUDE=([-],[--],[--.WWW.Library.Implementation]) 
+$   cc := gcc 'CHRcc_opts'/INCLUDE=([],[-],[--],[--.WWW.Library.Implementation]) 
 $   v1 = 'f$verify(0)'
 $  ELSE
 $   CHRcompiler := "VAXC"
 $   v1 = f$verify(1)
 $! VAXC:
-$   cc := cc 'CHRcc_opts'/INCLUDE=([-],[--],[--.WWW.Library.Implementation]) 
+$   cc := cc 'CHRcc_opts'/INCLUDE=([],[-],[--],[--.WWW.Library.Implementation]) 
 $   v1 = 'f$verify(0)'
 $  ENDIF
 $ ENDIF
@@ -84,6 +84,8 @@ $ define/user sys$output 'CHRwhere'cp1252_uni.h	!WinLatin1 (cp1252)
 $ makeuctb cp1252_uni.tbl
 $ define/user sys$output 'CHRwhere'cp437_uni.h	!DosLatinUS (cp437)
 $ makeuctb cp437_uni.tbl
+$ define/user sys$output 'CHRwhere'hp_uni.h	!HP Roman8
+$ makeuctb hp_uni.tbl
 $ define/user sys$output 'CHRwhere'dmcs_uni.h	!DEC Multinational
 $ makeuctb dmcs_uni.tbl
 $ define/user sys$output 'CHRwhere'mac_uni.h	!Macintosh (8 bit)
@@ -112,10 +114,14 @@ $ define/user sys$output 'CHRwhere'iso05_uni.h	!ISO 8859-5 Cyrillic
 $ makeuctb iso05_uni.tbl
 $ define/user sys$output 'CHRwhere'cp866_uni.h	!DosCyrillic (cp866)
 $ makeuctb cp866_uni.tbl
+$ define/user sys$output 'CHRwhere'cp866u_uni.h	!Ukrainian Cyrillic
+$ makeuctb cp866u_uni.tbl
 $ define/user sys$output 'CHRwhere'cp1251_uni.h	!WinCyrillic (cp1251)
 $ makeuctb cp1251_uni.tbl
 $ define/user sys$output 'CHRwhere'koi8r_uni.h	!KOI8-R Cyrillic
 $ makeuctb koi8r_uni.tbl
+$ define/user sys$output 'CHRwhere'koi8u_uni.h	!KOI8-U Ukranian Cyrillic
+$ makeuctb koi8u_uni.tbl
 $ define/user sys$output 'CHRwhere'iso06_uni.h	!ISO 8859-6 Arabic
 $ makeuctb iso06_uni.tbl
 $ define/user sys$output 'CHRwhere'cp864_uni.h	!DosArabic (cp864)
@@ -140,6 +146,8 @@ $ define/user sys$output 'CHRwhere'iso09_uni.h	!ISO 8859-9 (Latin 5)
 $ makeuctb iso09_uni.tbl
 $ define/user sys$output 'CHRwhere'iso10_uni.h	!ISO 8859-10
 $ makeuctb iso10_uni.tbl
+$ define/user sys$output 'CHRwhere'iso15_uni.h	!ISO 8859-15
+$ makeuctb iso15_uni.tbl
 $ define/user sys$output 'CHRwhere'utf8_uni.h	!UNICODE UTF-8
 $ makeuctb utf8_uni.tbl
 $ define/user sys$output 'CHRwhere'rfc_suni.h	!RFC 1345 w/o Intro

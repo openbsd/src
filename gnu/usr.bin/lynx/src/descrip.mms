@@ -84,7 +84,7 @@ CDEF = __VMS_CURSES
 TCP = SOCKETSHR_TCP
 TCPOPT = SOCKETSHR_TCP
 .ifdef DEC_C
-CDEF = __VMS_CURSES
+CDEF = _DECC_V4_SOURCE,__VMS_CURSES
 .endif
 .endif
 
@@ -133,9 +133,9 @@ CDEF = _DECC_V4_SOURCE,__SOCKET_TYPEDEFS,__VMS_CURSES
 .ifdef DEC_C
 COMPILER = DECC
 .ifdef TCPWARE
-TCPFLAGS = /decc/Prefix=All/NoMember/Define=(DEBUG,ACCESS_AUTH,$(TCP),UCX,$(CDEF))
+TCPFLAGS = /decc/Prefix=All/NoMember/Define=(ACCESS_AUTH,$(TCP),UCX,$(CDEF))
 .else
-TCPFLAGS = /decc/Prefix=All/NoMember/Define=(DEBUG,ACCESS_AUTH,$(TCP),$(CDEF))
+TCPFLAGS = /decc/Prefix=All/NoMember/Define=(ACCESS_AUTH,$(TCP),$(CDEF))
 .endif
 .else
 .ifdef GNU_C
@@ -145,23 +145,30 @@ CC = gcc
 COMPILER = VAXC
 .endif
 .ifdef TCPWARE
-TCPFLAGS = /Define = (DEBUG, ACCESS_AUTH, $(TCP), UCX)
+TCPFLAGS = /Define = (ACCESS_AUTH, $(TCP), UCX)
 .else
-TCPFLAGS = /Define = (DEBUG, ACCESS_AUTH, $(TCP))
+TCPFLAGS = /Define = (ACCESS_AUTH, $(TCP))
 .endif
 .endif
 
 TOPT = sys$disk:[]$(TCPOPT).opt
 COPT = sys$disk:[]$(COMPILER).opt
 WWWLIB = [-.WWW.Library.Implementation]WWWLib_$(TCP).olb
-CFLAGS = $(TCPFLAGS) $(CFLAGS)/Include = ([-], [.chrtrans], [-.WWW.Library.Implementation])
+CFLAGS = $(TCPFLAGS) $(CFLAGS)/Include=([], [-], [.chrtrans], [-.WWW.Library.Implementation])
 
 
 lynx :	lynx.exe
 	@ Continue
 
-lynx.exe :   $(OBJS) $(WWWLIB)
+HDRS = [.chrtrans]iso01_uni.h
+
+lynx.exe :   $(HDRS) $(OBJS) $(WWWLIB)
 	$(LINK) /Executable = Lynx.exe $(OBJS), $(WWWLIB)/lib, $(TOPT)/opt, $(COPT)/opt
+
+$(HDRS) :
+	set default [.chrtrans]
+	@build-chrtrans
+	set default [-]
 
 clean :
 	- Set Protection = (Owner:RWED) *.*;-1

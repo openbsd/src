@@ -1,18 +1,23 @@
-
 #ifndef LYCHARSETS_H
 #define LYCHARSETS_H
 
+#ifndef HTUTILS_H
+#include <HTUtils.h>
+#endif
+
+#include <UCDefs.h>
+
 #ifndef UCMAP_H
-#include "UCMap.h"
+#include <UCMap.h>
 #endif /* !UCMAP_H */
 
 extern BOOLEAN LYHaveCJKCharacterSet;
+extern BOOLEAN DisplayCharsetMatchLocale;
 
 /*
- *  LYchar_set_name[current_char_set] points to the currently active set.
+ *  currently active character set (internal handler)
  */
 extern int current_char_set;
-extern CONST char * LYchar_set_names[];
 
 /*
  *  Initializer, calls initialization function for the
@@ -21,20 +26,20 @@ extern CONST char * LYchar_set_names[];
 extern int LYCharSetsDeclared NOPARAMS;
 
 
-extern char ** LYCharSets[];
-extern char * SevenBitApproximations[];
-extern char ** p_entity_values;
+extern CONST char ** LYCharSets[];
+extern CONST char * SevenBitApproximations[];
+extern CONST char ** p_entity_values;
+extern CONST char * LYchar_set_names[];  /* Full name, not MIME */
 extern int LYlowest_eightbit[];
 extern int LYNumCharsets;
 extern LYUCcharset LYCharSet_UC[];
+extern int UCGetLYhndl_byAnyName PARAMS((char *value));
 extern void HTMLSetCharacterHandling PARAMS((int i));
-extern void HTMLSetRawModeDefault PARAMS((int i));
 extern void HTMLSetUseDefaultRawMode PARAMS((int i, BOOLEAN modeflag));
-extern void HTMLSetHaveCJKCharacterSet PARAMS((int i));
 extern void HTMLUseCharacterSet PARAMS((int i));
 extern UCode_t HTMLGetEntityUCValue PARAMS((CONST char *name));
+extern void Set_HTCJK PARAMS((CONST char *inMIMEname, CONST char *outMIMEname));
 
-extern CONST char * LYEntityNames[];
 extern CONST char * HTMLGetEntityName PARAMS((UCode_t code));
 		/*
 		** HTMLGetEntityName calls LYEntityNames for iso-8859-1 entity
@@ -44,4 +49,6 @@ extern CONST char * HTMLGetEntityName PARAMS((UCode_t code));
 		*/
 
 
+extern BOOL force_old_UCLYhndl_on_reload;
+extern int forced_UCLYhdnl;
 #endif /* LYCHARSETS_H */

@@ -4,11 +4,17 @@ dnl by T.E.Dickey <dickey@clark.net>
 dnl and Jim Spath <jspath@mail.bcpl.lib.md.us>
 
 AC_PREREQ(2.12)
+rm -f config.cache
+
 AC_INIT(userdefs.h)
 AC_CONFIG_HEADER(lynx_cfg.h:config.hin)
 
+CF_CHECK_CACHE
+
+dnl Set of available languages (based on source distribution)
+test -z "$ALL_LINGUAS" && ALL_LINGUAS=`test -d $srcdir/po && cd $srcdir/po && echo *.po|sed -e 's/\.po//g' -e 's/*//'`
+
 AC_PREFIX_DEFAULT(/usr/local)
-AC_CANONICAL_HOST
 
 dnl --------------------------------------------------------------------------
 dnl Checks for location of programs
@@ -18,9 +24,11 @@ AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_RANLIB
 AC_PROG_MAKE_SET
-CF_MAKE_INCLUDE
 AC_PROG_INSTALL
 AC_CHECK_PROGS(LINT, lint alint lclint tdlint, [])
+
+AC_AIX
+AC_ISC_POSIX
 
 dnl --------------------------------------------------------------------------
 dnl Debug/development/test
@@ -30,6 +38,14 @@ CF_HELP_MESSAGE(
 Development Options:)
 
 CF_DISABLE_ECHO
+
+# special case for WWW/*
+if test -n "$ECHO_CC" ; then
+	DONT_ECHO_CC="$SHOW_CC ;"
+else
+	DONT_ECHO_CC=''
+fi
+AC_SUBST(DONT_ECHO_CC)
 
 AC_MSG_CHECKING(if you want to check memory-leaks)
 CF_ARG_ENABLE(find-leaks,
@@ -41,7 +57,7 @@ test "$with_leak_checks" = "yes" && AC_DEFINE(LY_FIND_LEAKS)
 
 AC_MSG_CHECKING(if you want to enable debug-code)
 CF_ARG_ENABLE(debug,
-	[  --enable-debug          logic for traces/debugging],
+	[  --enable-debug          logic for object code debugging],
 	[with_debug=yes],
 	[with_debug=no])
 AC_MSG_RESULT($with_debug)
@@ -56,16 +72,23 @@ if test "$with_debug" = "yes" ; then
 	esac
 else
 	case $host_os in
-	ultrix*|osf*) #(vi
+	osf*) #(vi
+		test -z "$GCC" && CFLAGS="$CFLAGS -std1"
 		CF_STRIP_G_OPT(CFLAGS)
 		;;
 	*)
-			CF_STRIP_G_OPT(CFLAGS)
+		CF_STRIP_G_OPT(CFLAGS)
 		;;
 	esac
 fi
 
-
+AC_MSG_CHECKING(if you want to enable lynx trace code *recommended* )
+CF_ARG_DISABLE(trace,
+	[  --disable-trace         disable logic for trace code],
+	[with_trace=$enableval],
+	[with_trace=yes])
+AC_MSG_RESULT($with_trace)
+test $with_trace = no && AC_DEFINE(NO_LYNX_TRACE)
 
 if test -n "$GCC"
 then
@@ -88,12 +111,84 @@ dnl --------------------------------------------------------------------------
 CF_HELP_MESSAGE(
 Basic Configuration Options:)
 
+dnl internationalization macros
+AM_GNU_GETTEXT
+
+CF_WITH_PATH(nls-datadir,
+[  --with-nls-datadir=DIR  NLS data, parent of locale],
+NLS_DATADIR,
+[PREFIX/DATADIR],
+[$prefix/$DATADIRNAME])
+
+INTLDIR_CPPFLAGS="#"
+INTLDIR_MAKE=
+MSG_DIR_MAKE=
+SUB_MAKEFILE=
+CF_OUR_MESSAGES
+if test "$USE_INCLUDED_LIBINTL" = yes ; then
+        if test "$nls_cv_force_use_gnu_gettext" = yes ; then
+		AC_MSG_WARN(Using included gettext anyway[,] since none was found)
+		SUB_MAKEFILE="intl/makefile"
+	else
+		INTLDIR_MAKE="#"
+	fi
+	if test $use_our_messages = no ; then
+		MSG_DIR_MAKE="#"
+		SUB_MAKEFILE=
+	fi
+	if test "$use_our_messages" = yes ; then
+		SUB_MAKEFILE="$SUB_MAKEFILE po/makefile.in:po/makefile.inn"
+	else
+		MSG_DIR_MAKE="#"
+	fi
+elif test "$USE_NLS" = yes ; then
+	AC_CHECK_HEADERS(libintl.h)
+	INTLDIR_MAKE="#"
+	SUB_MAKEFILE="po/makefile.in:po/makefile.inn"
+else
+	INTLDIR_MAKE="#"
+	MSG_DIR_MAKE="#"
+fi
+
+dnl We might want to use a preinstalled message library rather than the one
+dnl which is bundled with this program.
+if test -z "$MSG_DIR_MAKE" ; then
+	if test $use_our_messages = no ; then
+		MSG_DIR_MAKE="#"
+		SUB_MAKEFILE=
+	fi
+fi
+
+if test -z "$INTLDIR_MAKE" ; then
+	INTLDIR_CPPFLAGS=
+fi
+
+AC_SUBST(INTLDIR_CPPFLAGS)
+AC_SUBST(INTLDIR_MAKE)
+AC_SUBST(MSG_DIR_MAKE)
+
+dnl FIXME:  the underlying AM_GNU_GETTEXT macro either needs some fixes or a
+dnl little documentation.  It doesn't define anything so that we can ifdef our
+dnl own code, except ENABLE_NLS, which is too vague to be of any use.
+
+if test "$USE_INCLUDED_LIBINTL" = yes ; then
+	if test "$nls_cv_force_use_gnu_gettext" = yes ; then
+		AC_DEFINE(HAVE_GETTEXT)
+	elif test "$nls_cv_use_gnu_gettext" = yes ; then
+		AC_DEFINE(HAVE_GETTEXT)
+	fi
+	if test -n "$nls_cv_header_intl" ; then
+		AC_DEFINE(HAVE_LIBINTL_H)
+	fi
+fi
+
 AC_MSG_CHECKING(if you want full utility pathnames)
 CF_ARG_DISABLE(full-paths,
 	[  --disable-full-paths    control whether full utility pathnames are used],
 	[with_full_paths=no],
 	[with_full_paths=yes])
 AC_MSG_RESULT($with_full_paths)
+test $with_full_paths = no && AC_DEFINE(USE_EXECVP)
 
 CF_DEFINE_PROG(system mailer, SYSTEM_MAIL,
 	/usr/mmdf/bin/submit \
@@ -113,9 +208,13 @@ CF_PATH_PROG(TAR,	tar)
 CF_PATH_PROG(TOUCH,	touch)
 CF_PATH_PROG(UNCOMPRESS,gunzip)
 CF_PATH_PROG(UNZIP,	unzip)
+CF_PATH_PROG(BZIP2,	bzip2)
 CF_PATH_PROG(UUDECODE,	uudecode)
 CF_PATH_PROG(ZCAT,	zcat)
 CF_PATH_PROG(ZIP,	zip)
+CF_PATH_PROG(TELNET,	telnet)
+CF_PATH_PROG(TN3270,	tn3270)
+CF_PATH_PROG(RLOGIN,	rlogin)
 
 dnl 'INSTALL' is a special case, since the configure script has to find a
 dnl BSD-compatible one so the build/install works properly.
@@ -142,19 +241,20 @@ AC_C_CONST
 
 dnl Only add to this case statement things that we cannot design tests for.
 PROG_EXT=
+TRY_CFLAGS=
 case $host_os in
 aix4*)
-	CFLAGS="$CFLAGS -DAIX4 -D_BSD=44" 
+	CFLAGS="$CFLAGS -DAIX4 -D_BSD=44 -D_AIX"
 	LIBS="$LIBS -lbsd"
 	;;
 aix*)
 	LIBS="$LIBS -lbsd"
 	;;
 apollo*)
-	CFLAGS="$CFLAGS -D_BUILTINS -W0,-opt,4"
+	TRY_CFLAGS="$TRY_CFLAGS -D_BUILTINS -W0,-opt,4"
 	;;
 bsdi*)
-	CFLAGS="$CFLAGS -DBSDI" 
+	CFLAGS="$CFLAGS -DBSDI"
 	;;
 clix*)
 	# Tested on CLIX 3.1 (T.Dickey).  The original makefile entry
@@ -166,10 +266,11 @@ convex*)
 	CFLAGS="$CFLAGS -D__STDC__ -Dunix"
 	;;
 dgux*)
-	CFLAGS="$CFLAGS -DDGUX" 
+	CFLAGS="$CFLAGS -DDGUX"
 	;;
 hpux*)
-	CFLAGS="$CFLAGS -DSNAKE" 
+	CFLAGS="$CFLAGS -DSNAKE"
+	test -z "$GCC" && TRY_CFLAGS="$TRY_CFLAGS -Wp,-H600000"
 	;;
 isc*)
 	# -DPOSIX_JC is necessary, else LYBookmark.c never finds out what a mode_t is.
@@ -180,10 +281,10 @@ irix*)
 	# The original makefile used the $CFLAGS option -cckr for some form
 	# of K&R compatibility.  However, this causes compilation warnings for
 	# varargs on IRIX 5.2, and does not appear to be needed.
-	#removed: CFLAGS="$CFLAGS -cckr" 
+	#removed: CFLAGS="$CFLAGS -cckr"
 	;;
 linux*)
-	CFLAGS="$CFLAGS -DLINUX" 
+	CFLAGS="$CFLAGS -DLINUX"
 	;;
 next*)
 	CFLAGS="$CFLAGS -DNEXT -DXMOSAIC_HACK"
@@ -197,13 +298,18 @@ os2*)
 	LDFLAGS=`echo "$LDFLAGS -Zmt -Zcrtdll" | sed "s/-Zexe//g"`
 	PROG_EXT=".exe"
 	;;
+osf4*)
+	# The -Olimit flag (see below) is no longer available with
+	# Digital C 5.2, which is bundled with Digital UNIX 4.0.
+	CFLAGS="$CFLAGS -DDSYS5"
+	;;
 osf*)
 	# Increase the maximum size of functions that will be optimized.
-	test -z "$GCC" && CFLAGS="$CFLAGS -O -Olimit 4000"
+	test -z "$GCC" && TRY_CFLAGS="$TRY_CFLAGS -O -Olimit 4000"
 	CFLAGS="$CFLAGS -DDSYS5"
 	;;
 sco3.2v5*)
-	test $ac_cv_prog_gcc != yes && CC="cc -belf"
+	test $ac_cv_prog_gcc != yes && TRY_CFLAGS="$TRY_CFLAGS -belf"
 	;;
 sco*)
 	LIBS="$LIBS -lmalloc"
@@ -238,22 +344,56 @@ sunos4*)
 	;;
 ultrix*)
 	# Increase the maximum size of functions that will be optimized.
-	test -z "$GCC" && CFLAGS="$CFLAGS -O -Olimit 600 -G 7"
-	CFLAGS="$CFLAGS -DULTRIX" 
-	AC_CHECK_HEADERS(cursesX.h, cf_cv_ncurses_header=cursesX.h)
+	test -z "$GCC" && TRY_CFLAGS="$TRY_CFLAGS -O -Olimit 600 -G 7"
+	CFLAGS="$CFLAGS -DULTRIX"
+	AC_CHECK_HEADERS(cursesX.h,
+		[AC_DEFINE(HAVE_CURSESX_H)
+		 cf_cv_ncurses_header=cursesX.h])
 	;;
 esac
 AC_SUBST(PROG_EXT)
+
+dnl Collect tests for compiler options into one place
+if test -n "$TRY_CFLAGS" ; then
+	cf_save_CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS $TRY_CFLAGS"
+	AC_MSG_CHECKING(if we should use compile options $TRY_CFLAGS)
+	AC_TRY_COMPILE([#include <stdio.h>],[FILE *fp = stdin],[cf_result=yes],[cf_result=no])
+	AC_MSG_RESULT($cf_result)
+	test "$cf_result" = no && CFLAGS="$cf_save_CFLAGS"
+fi
 
 dnl --------------------------------------------------------------------------
 dnl Checks for library configuration (added right-to-left)
 dnl --------------------------------------------------------------------------
 
-CF_NETLIBS
+### Look for network libraries first, since some functions (such as gethostname)
+### are used in a lot of places.
+AC_CACHE_CHECK(if you want socks library,cf_cv_use_libsocks,[
+AC_ARG_WITH(socks,
+	[  --with-socks[=path]     link with socks library if available],
+	[cf_cv_use_libsocks=$withval],
+	[cf_cv_use_libsocks=no])
+])
 
-AC_MSG_CHECKING(for screen type)
+AC_CACHE_CHECK(if you want socks5 library,cf_cv_use_libsocks5,[
+AC_ARG_WITH(socks5,
+	[  --with-socks5[=path]    link with socks5 library if available],
+	[cf_cv_use_libsocks5=$withval],
+	[cf_cv_use_libsocks5=no])
+])
+
+if test "x$cf_cv_use_libsocks" != xno ; then
+	CF_SOCKS($cf_cv_use_libsocks)
+elif test "x$cf_cv_use_libsocks5" != xno ; then
+	CF_SOCKS5($cf_cv_use_libsocks5)
+else
+	CF_NETLIBS
+fi
+CF_INET_ADDR
+
 dnl This has to be cached, since there's a lot of interdependent tests.
-AC_CACHE_VAL(cf_cv_screen,[
+AC_CACHE_CHECK(for screen type, cf_cv_screen,[
 AC_ARG_WITH(screen,
 [  --with-screen=XXX       select screen type
                           (XXX is curses (default), ncurses or slang)],
@@ -266,7 +406,6 @@ curses|ncurses|slang)
 	;;
 esac],
 	[cf_cv_screen=curses])])
-AC_MSG_RESULT($cf_cv_screen)
 
 if test $cf_cv_screen != ncurses ; then
 	if eval "test \"`echo '$''{'cf_cv_ncurses_header'+set}'`\" != set"; then
@@ -323,6 +462,10 @@ AC_CHECK_HEADERS( \
 )
 CF_TERMIO_AND_TERMIOS
 CF_FUNC_WAIT
+CF_VARARGS
+AC_TYPE_GETGROUPS
+AC_TYPE_PID_T
+AC_TYPE_UID_T
 AC_TYPE_MODE_T
 
 dnl --------------------------------------------------------------------------
@@ -337,9 +480,12 @@ AC_CHECK_FUNCS( \
 	cuserid \
 	getcwd \
 	getgroups \
+	gettimeofday \
+	popen \
 	putenv \
 	readdir \
 	strerror \
+	unsetenv \
 	waitpid \
 )
 AC_REPLACE_FUNCS( \
@@ -362,6 +508,9 @@ CF_LOCALE
 CF_NGROUPS
 CF_SYS_ERRLIST
 CF_UTMP
+CF_CHECK_EXTERN_DATA(h_errno,int)
+
+CF_EBCDIC
 
 ### These tests must be run after establishing the curses library.
 if test $cf_cv_screen != slang ; then
@@ -374,6 +523,7 @@ if test $cf_cv_screen != slang ; then
 	CF_TTYTYPE
 	AC_CHECK_FUNCS( \
 		cbreak \
+		define_key \
 		keypad \
 		use_default_colors \
 		wborder \
@@ -381,18 +531,43 @@ if test $cf_cv_screen != slang ; then
 fi
 
 dnl --------------------------------------------------------------------------
-dnl Miscellaneous options that don't need to test system features
+dnl Experimental options that don't need to test system features
 dnl --------------------------------------------------------------------------
 
 CF_HELP_MESSAGE(
-Miscellaneous Options:)
+Experimental Options:)
 
-AC_MSG_CHECKING(if experimental 8-bit case-conversion should be used)
-CF_ARG_ENABLE(8bit-toupper,
-[  --enable-8bit-toupper   use experimental 8-bit case-conversion],
-	[use_8bit_toupper=$enableval],
-	[use_8bit_toupper=no])
-test $use_8bit_toupper != no && AC_DEFINE(EXP_8BIT_TOUPPER)
+AC_MSG_CHECKING(if configuration info should be browsable)
+CF_ARG_DISABLE(config-info,
+[  --disable-config-info   disable browsable configuration-info],
+	[use_config_info=$enableval],
+	[use_config_info=yes])
+AC_MSG_RESULT($use_config_info)
+test $use_config_info = no && AC_DEFINE(NO_CONFIG_INFO)
+
+AC_MSG_CHECKING(if new-style forms-based options screen should be used)
+CF_ARG_DISABLE(forms-options,
+[  --disable-forms-options disable experimental forms-based options],
+	[use_forms_options=$enableval],
+	[use_forms_options=yes])
+AC_MSG_RESULT($use_forms_options)
+test $use_forms_options = no && AC_DEFINE(NO_OPTION_FORMS)
+
+AC_MSG_CHECKING(if old-style options menu should be used)
+CF_ARG_DISABLE(menu-options,
+[  --disable-menu-options  disable old-style option menu],
+	[use_menu_options=$enableval],
+	[use_menu_options=yes])
+AC_MSG_RESULT($use_menu_options)
+test $use_menu_options = no && AC_DEFINE(NO_OPTION_MENU)
+
+AC_MSG_CHECKING(if experimental address-list page should be used)
+CF_ARG_ENABLE(addrlist-page,
+[  --enable-addrlist-page  use experimental address-list page],
+	[use_addrlist_page=$enableval],
+	[use_addrlist_page=no])
+AC_MSG_RESULT($use_addrlist_page)
+test $use_addrlist_page != no && AC_DEFINE(EXP_ADDRLIST_PAGE)
 
 AC_MSG_CHECKING(if color-style code should be used)
 CF_ARG_ENABLE(color-style,
@@ -418,7 +593,7 @@ no)
 	;;
 *)
 	AC_DEFINE(USE_COLOR_STYLE)
-	AC_MSG_RESULT(curses-style)
+	AC_MSG_RESULT(yes)
 
 	AC_MSG_CHECKING(for location of style-sheet file)
 	LYNX_LSS_FILE=$cf_libdir/lynx.lss
@@ -443,6 +618,53 @@ AC_MSG_RESULT($use_dft_colors)
 test $use_dft_colors = "yes" && AC_DEFINE(USE_DEFAULT_COLORS)
 fi
 
+AC_MSG_CHECKING(if experimental keyboard-layout logic should be used)
+CF_ARG_ENABLE(kbd-layout,
+[  --enable-kbd-layout     use experimental keyboard-layout support],
+	[use_kbd_layout=$enableval],
+	[use_kbd_layout=no])
+AC_MSG_RESULT($use_kbd_layout)
+test $use_kbd_layout != no && AC_DEFINE(EXP_KEYBOARD_LAYOUT)
+
+dnl AC_MSG_CHECKING(if experimental JavaScript support should be used)
+dnl CF_ARG_ENABLE(libjs,
+dnl [  --enable-libjs          use experimental JavaScript support (Mozilla libjs)],
+dnl 	[use_libjs=$enableval],
+dnl 	[use_libjs=no])
+dnl AC_MSG_RESULT($use_libjs)
+dnl test $use_libjs != no && AC_DEFINE(EXP_LIBJS)
+
+AC_MSG_CHECKING(if html source should be colorized)
+CF_ARG_ENABLE(prettysrc,
+[  --enable-prettysrc      colorize HTML source],
+	[use_prettysrc=$enableval],
+	[use_prettysrc=no])
+AC_MSG_RESULT($use_prettysrc)
+test $use_prettysrc != no && AC_DEFINE(USE_PSRC)
+
+AC_MSG_CHECKING(if source caching should be used)
+CF_ARG_ENABLE(source-cache,
+[  --enable-source-cache   cache HTML source for parse mode changes],
+	[use_source_cache=$enableval],
+	[use_source_cache=no])
+AC_MSG_RESULT($use_source_cache)
+test $use_source_cache != no && AC_DEFINE(SOURCE_CACHE)
+
+dnl --------------------------------------------------------------------------
+dnl Miscellaneous options that don't need to test system features
+dnl --------------------------------------------------------------------------
+
+CF_HELP_MESSAGE(
+Miscellaneous Options:)
+
+AC_MSG_CHECKING(if alternative line-edit bindings should be used)
+CF_ARG_ENABLE(alt-bindings,
+[  --disable-alt-bindings  disable alternative line-edit bindings],
+	[use_alt_bindings=$enableval],
+	[use_alt_bindings=yes])
+AC_MSG_RESULT($use_alt_bindings)
+test $use_alt_bindings != no && AC_DEFINE(EXP_ALT_BINDINGS)
+
 AC_MSG_CHECKING(if you want to use extended HTML DTD logic)
 CF_ARG_DISABLE(extended-dtd,
 [  --disable-extended-dtd  disable extended HTML DTD logic],
@@ -450,6 +672,14 @@ CF_ARG_DISABLE(extended-dtd,
 	[use_ext_htmldtd=yes])
 AC_MSG_RESULT($use_ext_htmldtd)
 test $use_ext_htmldtd = "no" && AC_DEFINE(NO_EXTENDED_HTMLDTD)
+
+AC_MSG_CHECKING(if partial-display should be used)
+CF_ARG_DISABLE(partial,
+[  --disable-partial       use partial-display logic],
+	[use_partial_display=$enableval],
+	[use_partial_display=yes])
+AC_MSG_RESULT($use_partial_display)
+test $use_partial_display != no && AC_DEFINE(DISP_PARTIAL)
 
 AC_MSG_CHECKING(if you want to use external commands)
 CF_ARG_ENABLE(externs,
@@ -467,9 +697,27 @@ CF_ARG_ENABLE(font-switch,
 AC_MSG_RESULT($use_setfont)
 test $use_setfont = yes && AC_DEFINE(EXP_CHARTRANS_AUTOSWITCH)
 
+AC_MSG_CHECKING(if you want cgi-link support)
+CF_ARG_ENABLE(cgi-links,
+[  --enable-cgi-links      support cgi links w/o a http daemon],
+	[AC_DEFINE(LYNXCGI_LINKS)])
+AC_MSG_RESULT($enableval)
+
+AC_MSG_CHECKING(if you want exec-links support)
+CF_ARG_ENABLE(exec-links,
+[  --enable-exec-links     allow lynx to execute programs accessed via a link],
+	[AC_DEFINE(EXEC_LINKS)])
+AC_MSG_RESULT($enableval)
+
+AC_MSG_CHECKING(if you want exec-scripts support)
+CF_ARG_ENABLE(exec-scripts,
+[  --enable-exec-scripts   allow lynx to execute programs inferred from a link],
+	[AC_DEFINE(EXEC_SCRIPTS)])
+AC_MSG_RESULT($enableval)
+
 AC_MSG_CHECKING(if you want internal-links feature)
 CF_ARG_ENABLE(internal-links,
-[  --enable-internal-links  handle following links to same doc differently],
+[  --enable-internal-links handle following links to same doc differently],
 	[use_internal_links=yes],
 	[use_internal_links=no])
 AC_MSG_RESULT($use_internal_links)
@@ -483,6 +731,22 @@ CF_ARG_ENABLE(nsl-fork,
 AC_MSG_RESULT($use_nsl_fork)
 test $use_nsl_fork = yes && AC_DEFINE(NSL_FORK)
 
+AC_MSG_CHECKING(if you want to log URL requests via syslog)
+CF_ARG_ENABLE(syslog,
+[  --enable-syslog         log URL requests via syslog],
+	[use_syslog=yes],
+	[use_syslog=no])
+AC_MSG_RESULT($use_syslog)
+test $use_syslog = yes && AC_DEFINE(SYSLOG_REQUESTED_URLS)
+
+AC_MSG_CHECKING(if persistent-cookie logic should be used)
+CF_ARG_ENABLE(persistent-cookies,
+[  --disable-persistent-cookies  disable persistent-cookie support],
+	[use_filed_cookies=$enableval],
+	[use_filed_cookies=yes])
+AC_MSG_RESULT($use_filed_cookies)
+test $use_filed_cookies != no && AC_DEFINE(EXP_PERSISTENT_COOKIES)
+
 AC_MSG_CHECKING(if you want to underline links)
 CF_ARG_ENABLE(underlines,
 [  --enable-underlines     underline links rather than using boldface],
@@ -490,6 +754,22 @@ CF_ARG_ENABLE(underlines,
 	[use_underline=no])
 AC_MSG_RESULT($use_underline)
 test $use_underline = yes && AC_DEFINE(UNDERLINE_LINKS)
+
+AC_MSG_CHECKING(if help files should be gzip'ed)
+CF_ARG_ENABLE(gzip-help,
+[  --enable-gzip-help      install gzip'ed help files],
+	[use_gzip_help=$enableval],
+	[use_gzip_help=no])
+AC_MSG_RESULT($use_gzip_help)
+
+COMPRESS_PROG=
+COMPRESS_EXT=
+if test $use_gzip_help = yes ; then
+	COMPRESS_PROG=$ac_cv_path_GZIP
+	COMPRESS_EXT=.gz
+fi
+AC_SUBST(COMPRESS_PROG)
+AC_SUBST(COMPRESS_EXT)
 
 AC_MSG_CHECKING(if you want to use zlib for decompression of some gzip files)
 AC_ARG_WITH(zlib,
@@ -506,6 +786,38 @@ if test ".$use_zlib" != ".no" ; then
 	AC_DEFINE(USE_ZLIB)
 fi
 
+AC_MSG_CHECKING(if you want to exclude FINGER code)
+CF_ARG_DISABLE(finger,
+[  --disable-finger        disable FINGER logic],
+	[use_finger=yes],
+	[use_finger=no])
+AC_MSG_RESULT($use_finger)
+test $use_finger != "no" && AC_DEFINE(DISABLE_FINGER)
+
+AC_MSG_CHECKING(if you want to exclude GOPHER code)
+CF_ARG_DISABLE(gopher,
+[  --disable-gopher        disable GOPHER logic],
+	[use_gopher=yes],
+	[use_gopher=no])
+AC_MSG_RESULT($use_gopher)
+test $use_gopher != "no" && AC_DEFINE(DISABLE_GOPHER)
+
+AC_MSG_CHECKING(if you want to exclude NEWS code)
+CF_ARG_DISABLE(news,
+[  --disable-news          disable NEWS logic],
+      [use_news=yes],
+      [use_news=no])
+AC_MSG_RESULT($use_news)
+test $use_news != "no" && AC_DEFINE(DISABLE_NEWS)
+
+AC_MSG_CHECKING(if you want to exclude FTP code)
+CF_ARG_DISABLE(ftp,
+[  --disable-ftp           disable FTP logic],
+      [use_ftp=yes],
+      [use_ftp=no])
+AC_MSG_RESULT($use_ftp)
+test $use_ftp != "no" && AC_DEFINE(DISABLE_FTP)
+
 dnl --------------------------------------------------------------------------
 dnl DirEd (directory-editor) options
 dnl --------------------------------------------------------------------------
@@ -517,7 +829,7 @@ Directory Editor Options:)
 # or modified at run time via DIRED_MENU symbols in lynx.cfg.
 AC_MSG_CHECKING(if directory-editor code should be used)
 CF_ARG_DISABLE(dired,
-[  --disable-dired          enable optional directory-editor, DirEd],
+[  --disable-dired          disable optional directory-editor, DirEd],
 	[use_dired=$enableval],
 	[use_dired=yes])
 AC_MSG_RESULT($use_dired)
@@ -579,21 +891,47 @@ CF_ARG_DISABLE(parent-dir-refs,
 	[AC_DEFINE(NO_PARENT_DIR_REFERENCE)])
 AC_MSG_RESULT($enableval)
 
+dnl --------------------------------------------------------------------------
+dnl Test features that rely on configure-definitions
+dnl --------------------------------------------------------------------------
+CF_TERMIO_AND_CURSES(LYCurses.h)
+
 ### Finally, build config.h and the makefiles
 CFLAGS="$CFLAGS $EXTRA_CFLAGS"
 srcdir="$srcdir"
 SRCDIR_CLEAN="#"
 if test -n "$srcdir" ; then
 	echo srcdir is $srcdir
-	sh $srcdir/mkdirs.sh WWW/Library/unix
-	sh $srcdir/mkdirs.sh src/chrtrans
+	${CONFIG_SHELL-/bin/sh} $srcdir/mkdirs.sh WWW/Library/Implementation
+	${CONFIG_SHELL-/bin/sh} $srcdir/mkdirs.sh src/chrtrans
+	test "$USE_INCLUDED_LIBINTL" = yes && $srcdir/mkdirs.sh intl
 	test "$srcdir" != "." && SRCDIR_CLEAN=""
 fi
 
+test -z "$CONFIG_SHELL" && CONFIG_SHELL=/bin/sh
+AC_SUBST(CONFIG_SHELL)
+
 AC_SUBST(SRCDIR_CLEAN)
 AC_OUTPUT(
-	makefile \
-	WWW/Library/unix/makefile \
+	[makefile \
+	WWW/Library/Implementation/makefile \
 	src/makefile \
 	src/chrtrans/makefile \
+	$SUB_MAKEFILE
+	],[
+	if test "$USE_NLS" = yes ; then
+	if test "$use_our_messages" = yes ; then
+		echo creating po/makefile
+		rm -f	po/temp$$
+		sed	-e 's@^.*LYMessages.c@../LYMessages.c@' \
+			-e '$s/\\//' po/POTFILES >po/temp$$
+		sed	-e "/POTFILES =/r po/temp$$" \
+			po/makefile.in > po/makefile
+		rm -f	po/temp$$
+	fi
+	fi
+	],[
+	USE_NLS=$USE_NLS
+	use_our_messages=$use_our_messages
+	]
 )

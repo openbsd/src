@@ -6,11 +6,6 @@
 #ifdef VMS
 #include <types.h>
 #include <stat.h>
-#else
-#if 0 /* already included in tcp.h */
-#include <sys/types.h>
-#include <sys/stat.h>
-#endif
 #endif /* VMS */
 
 #ifndef S_IRWXU 
@@ -64,9 +59,6 @@ extern void tagflag PARAMS((int flag, int cur));
 extern void showtags PARAMS((HTList *tag));
 extern int local_dired PARAMS((document *doc));
 extern int dired_options PARAMS ((document *doc, char ** newfile));
-
-#define DIRED_MENU_TITLE "File Management Options"
-#define PERMIT_OPTIONS_TITLE "File Permission Options"
 
 extern void add_menu_item PARAMS((char *str));
 

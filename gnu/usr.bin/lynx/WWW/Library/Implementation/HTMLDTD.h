@@ -12,10 +12,7 @@
 #ifndef HTMLDTD_H
 #define HTMLDTD_H
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-#include "SGML.h"
+#include <SGML.h>
 
 /*
 **  Lynx internal character representations.
@@ -23,9 +20,9 @@
 #ifndef HT_NON_BREAK_SPACE
 #define HT_NON_BREAK_SPACE	((char)1)	/* For now */
 #endif /* !HT_NON_BREAK_SPACE */
-#ifndef HT_EM_SPACE
-#define HT_EM_SPACE		((char)2)	/* For now */
-#endif /* !HT_EM_SPACE */
+#ifndef HT_EN_SPACE
+#define HT_EN_SPACE		((char)2)	/* For now */
+#endif /* !HT_EN_SPACE */
 #ifndef LY_SOFT_HYPHEN
 #define LY_SOFT_HYPHEN		((char)7)
 #endif /* !LY_SOFT_HYPHEN */
@@ -301,15 +298,16 @@ Attribute numbers
 #define HTML_BODYTEXT_VALUETYPE  13
 #define HTML_BODYTEXT_ATTRIBUTES 14
 
-#define HTML_BQ_CLASS           0
-#define HTML_BQ_CLEAR           1
-#define HTML_BQ_DIR             2
-#define HTML_BQ_ID              3
-#define HTML_BQ_LANG            4
-#define HTML_BQ_NOWRAP          5
-#define HTML_BQ_STYLE           6
-#define HTML_BQ_TITLE           7
-#define HTML_BQ_ATTRIBUTES      8
+#define HTML_BQ_CITE             0
+#define HTML_BQ_CLASS            1
+#define HTML_BQ_CLEAR            2
+#define HTML_BQ_DIR              3
+#define HTML_BQ_ID               4
+#define HTML_BQ_LANG             5
+#define HTML_BQ_NOWRAP           6
+#define HTML_BQ_STYLE            7
+#define HTML_BQ_TITLE            8
+#define HTML_BQ_ATTRIBUTES       9
 
 #define HTML_BUTTON_CLASS       0
 #define HTML_BUTTON_CLEAR       1
@@ -470,14 +468,15 @@ Attribute numbers
 #define HTML_FORM_TITLE        14
 #define HTML_FORM_ATTRIBUTES   15
 
-#define HTML_FRAME_ID           0
-#define HTML_FRAME_MARGINHEIGHT 1
-#define HTML_FRAME_MARGINWIDTH  2
-#define HTML_FRAME_NAME         3
-#define HTML_FRAME_NORESIZE     4
-#define HTML_FRAME_SCROLLING    5
-#define HTML_FRAME_SRC          6
-#define HTML_FRAME_ATTRIBUTES   7
+#define HTML_FRAME_ID            0
+#define HTML_FRAME_LONGDESC      1
+#define HTML_FRAME_MARGINHEIGHT  2
+#define HTML_FRAME_MARGINWIDTH   3
+#define HTML_FRAME_NAME          4
+#define HTML_FRAME_NORESIZE      5
+#define HTML_FRAME_SCROLLING     6
+#define HTML_FRAME_SRC           7
+#define HTML_FRAME_ATTRIBUTES    8
 
 #define HTML_FRAMESET_COLS      0
 #define HTML_FRAMESET_ROWS      1
@@ -522,38 +521,40 @@ Attribute numbers
 #define HTML_HR_WIDTH          11
 #define HTML_HR_ATTRIBUTES     12
 
-#define HTML_IFRAME_ALIGN       0
-#define HTML_IFRAME_FRAMEBORDER 1
-#define HTML_IFRAME_HEIGHT      2
-#define HTML_IFRAME_ID          3
-#define HTML_IFRAME_MARGINHEIGHT 4
-#define HTML_IFRAME_MARGINWIDTH  5
-#define HTML_IFRAME_NAME        6
-#define HTML_IFRAME_SCROLLING   7
-#define HTML_IFRAME_SRC         8
-#define HTML_IFRAME_STYLE       9
-#define HTML_IFRAME_WIDTH      10
-#define HTML_IFRAME_ATTRIBUTES 11
+#define HTML_IFRAME_ALIGN         0
+#define HTML_IFRAME_FRAMEBORDER   1
+#define HTML_IFRAME_HEIGHT        2
+#define HTML_IFRAME_ID            3
+#define HTML_IFRAME_LONGDESC      4
+#define HTML_IFRAME_MARGINHEIGHT  5
+#define HTML_IFRAME_MARGINWIDTH   6
+#define HTML_IFRAME_NAME          7
+#define HTML_IFRAME_SCROLLING     8
+#define HTML_IFRAME_SRC           9
+#define HTML_IFRAME_STYLE        10
+#define HTML_IFRAME_WIDTH        11
+#define HTML_IFRAME_ATTRIBUTES   12
 
-#define HTML_IMG_ALIGN          0
-#define HTML_IMG_ALT            1
-#define HTML_IMG_BORDER         2
-#define HTML_IMG_CLASS          3
-#define HTML_IMG_CLEAR          4
-#define HTML_IMG_DIR            5
-#define HTML_IMG_HEIGHT         6
-#define HTML_IMG_ID             7
-#define HTML_IMG_ISMAP          8
-#define HTML_IMG_ISOBJECT       9
-#define HTML_IMG_LANG          10
-#define HTML_IMG_MD            11
-#define HTML_IMG_SRC           12
-#define HTML_IMG_STYLE         13
-#define HTML_IMG_TITLE         14
-#define HTML_IMG_UNITS         15
-#define HTML_IMG_USEMAP        16
-#define HTML_IMG_WIDTH         17
-#define HTML_IMG_ATTRIBUTES    18
+#define HTML_IMG_ALIGN           0
+#define HTML_IMG_ALT             1
+#define HTML_IMG_BORDER          2
+#define HTML_IMG_CLASS           3
+#define HTML_IMG_CLEAR           4
+#define HTML_IMG_DIR             5
+#define HTML_IMG_HEIGHT          6
+#define HTML_IMG_ID              7
+#define HTML_IMG_ISMAP           8
+#define HTML_IMG_ISOBJECT        9
+#define HTML_IMG_LANG           10
+#define HTML_IMG_LONGDESC       11
+#define HTML_IMG_MD             12
+#define HTML_IMG_SRC            13
+#define HTML_IMG_STYLE          14
+#define HTML_IMG_TITLE          15
+#define HTML_IMG_UNITS          16
+#define HTML_IMG_USEMAP         17
+#define HTML_IMG_WIDTH          18
+#define HTML_IMG_ATTRIBUTES     19
 
 #define HTML_INPUT_ACCEPT       0
 #define HTML_INPUT_ACCEPT_CHARSET  1 /* RFC 2070 HTML i18n - kw */
@@ -858,45 +859,50 @@ Attribute numbers
 #define HTML_TAB_ATTRIBUTES    11
 
 #define HTML_TABLE_ALIGN        0
-#define HTML_TABLE_BORDER       1
-#define HTML_TABLE_CELLPADDING  2
-#define HTML_TABLE_CELLSPACING  3
-#define HTML_TABLE_CLASS        4
-#define HTML_TABLE_CLEAR        5
-#define HTML_TABLE_COLS         6
-#define HTML_TABLE_COLSPEC      7
-#define HTML_TABLE_DIR          8
-#define HTML_TABLE_DP           9
-#define HTML_TABLE_FRAME       10
-#define HTML_TABLE_ID          11
-#define HTML_TABLE_LANG        12
-#define HTML_TABLE_NOFLOW      13
-#define HTML_TABLE_NOWRAP      14
-#define HTML_TABLE_RULES       15
-#define HTML_TABLE_STYLE       16
-#define HTML_TABLE_TITLE       17
-#define HTML_TABLE_UNITS       18
-#define HTML_TABLE_WIDTH       19
-#define HTML_TABLE_ATTRIBUTES  20
+#define HTML_TABLE_BACKGROUND   1
+#define HTML_TABLE_BORDER       2
+#define HTML_TABLE_CELLPADDING  3
+#define HTML_TABLE_CELLSPACING  4
+#define HTML_TABLE_CLASS        5
+#define HTML_TABLE_CLEAR        6
+#define HTML_TABLE_COLS         7
+#define HTML_TABLE_COLSPEC      8
+#define HTML_TABLE_DIR          9
+#define HTML_TABLE_DP          10
+#define HTML_TABLE_FRAME       11
+#define HTML_TABLE_ID          12
+#define HTML_TABLE_LANG        13
+#define HTML_TABLE_NOFLOW      14
+#define HTML_TABLE_NOWRAP      15
+#define HTML_TABLE_RULES       16
+#define HTML_TABLE_STYLE       17
+#define HTML_TABLE_SUMMARY     18
+#define HTML_TABLE_TITLE       19
+#define HTML_TABLE_UNITS       20
+#define HTML_TABLE_WIDTH       21
+#define HTML_TABLE_ATTRIBUTES  22
 
 #define HTML_TD_ALIGN           0
 #define HTML_TD_AXES            1
 #define HTML_TD_AXIS            2
-#define HTML_TD_CHAR            3
-#define HTML_TD_CHAROFF         4
-#define HTML_TD_CLASS           5
-#define HTML_TD_CLEAR           6
-#define HTML_TD_COLSPAN         7
-#define HTML_TD_DIR             8
-#define HTML_TD_DP              9
-#define HTML_TD_ID             10
-#define HTML_TD_LANG           11
-#define HTML_TD_NOWRAP         12
-#define HTML_TD_ROWSPAN        13
-#define HTML_TD_STYLE          14
-#define HTML_TD_TITLE          15
-#define HTML_TD_VALIGN         16
-#define HTML_TD_ATTRIBUTES     17
+#define HTML_TD_BACKGROUND      3
+#define HTML_TD_CHAR            4
+#define HTML_TD_CHAROFF         5
+#define HTML_TD_CLASS           6
+#define HTML_TD_CLEAR           7
+#define HTML_TD_COLSPAN         8
+#define HTML_TD_DIR             9
+#define HTML_TD_DP             10
+#define HTML_TD_HEIGHT         11
+#define HTML_TD_ID             12
+#define HTML_TD_LANG           13
+#define HTML_TD_NOWRAP         14
+#define HTML_TD_ROWSPAN        15
+#define HTML_TD_STYLE          16
+#define HTML_TD_TITLE          17
+#define HTML_TD_VALIGN         18
+#define HTML_TD_WIDTH          19
+#define HTML_TD_ATTRIBUTES     20
 
 #define HTML_TEXTAREA_ACCEPT_CHARSET  0 /* RFC 2070 HTML i18n - kw */
 #define HTML_TEXTAREA_ALIGN     1
@@ -951,12 +957,21 @@ Attribute numbers
 #define HTML_UL_WRAP           13
 #define HTML_UL_ATTRIBUTES     14
 
+#ifdef USE_PSRC
+/* values of HTML attributes' types */
+#define HTMLA_NORMAL 0 /* nothing specific */
+#define HTMLA_ANAME  1 /* anchor name - 'id' or a's 'name' */
+#define HTMLA_HREF   2 /* href */
+#define HTMLA_CLASS  4 /* class name.  */
+#define HTMLA_AUXCLASS 8 /* attribute, the value of which also designates
+			    a class name */
+#endif
 extern CONST SGML_dtd HTML_dtd;
 
 extern void HTSwitchDTD PARAMS((
     BOOL new));
 
-extern CONST HTTag HTTag_unrecognized;
+extern HTTag HTTag_unrecognized;
 
 /*
 

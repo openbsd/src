@@ -349,7 +349,7 @@ Worked in mods from David Trueman (david@cs.dal.ca) - FM:
 * Fixed glitch in 'p'rint menu. - FM
 01-24-95
 * Enabled SOCKSification for any Unix flavor via the SITE-LYDEFS,
-  SITE-DEFS and SOCKSLIB definitions in the top-level Makefile. Added
+  SITE-DEFS and SOCKSLIB definitions in the top-level Makefile.  Added
   info in INSTALLATION on how to do it for VMS.  Included notes that you
   are better off building Lynx normally, and instead using a SOCKSified
   proxy server to get through a firewall. - FM
@@ -447,7 +447,7 @@ Worked in mods from David Trueman (david@cs.dal.ca) - FM:
   This allows you to set both LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE
   to TRUE and a single TRUSTED_EXEC rule that will always fail (e.g.,
   TRUSTED_EXEC:none), so that *ONLY* the lynxexec URL's in the jumps
-  file will be acted upon. - FM 
+  file will be acted upon. - FM
 * Disallow lynxexec URL's in G)oto if no_shell is set or if
   LOCAL_EXECUTION_LINKS_ON_BUT_NOT_REMOTE is TRUE. - FM
 12-21-94
@@ -470,7 +470,7 @@ Worked in mods from David Trueman (david@cs.dal.ca) - FM:
 * Added possibility of logging URL access via syslog() on Unix (ifdef'd
   with LOGGING).
 * Improved and made more flexible the security for lynxexec URL's.  The
-  default behaviour is the same as now, but source locations and the path 
+  default behaviour is the same as now, but source locations and the path
   (Unix) or name (VMS) of programs to be executed can be restricted via
   TRUSTED_EXEC rules in the lynx.cfg file.
 * Convert ~ in lynxexec paths to $HOME on Unix.
@@ -544,7 +544,7 @@ Worked in mods from David Trueman (david@cs.dal.ca) - FM:
   files, and updated the instruction files. - FM
 12-09-94
 * Modifed PassesTest() in HTInit.c to avoid the overhead of system() calls
-  by using getenv() when   test -n "$DISPLAY"   and   test -z "$DISPLAY" 
+  by using getenv() when   test -n "$DISPLAY"   and   test -z "$DISPLAY"
   commands are encountered in the mailcap file.  Otherwise, needlessly
   expensive system() calls potentially could be made for virtually every
   viewer mapping in that file!.  For Lynx, those two strings in the mailcap
@@ -579,7 +579,7 @@ Worked in mods from David Trueman (david@cs.dal.ca) - FM:
   submissions of forms to servers (i.e., never use cache).  LYK_ACTIVATE
   (with default binding to right-arrow and RETURN) still fetches from cache
   if available.  Statusline help describes these commands when positioned
-  on a submit button. - FM  
+  on a submit button. - FM
 12-08-94
 * Fixed HText_submitForm() in GridText.c to handle submitting INPUT types
   (e.g., type="image") which have name/value pairs. - FM
@@ -599,7 +599,7 @@ Worked in mods from David Trueman (david@cs.dal.ca) - FM:
   These mods are also desireable for builds on Unix. - FM
 12-02-94
 * Fixed the query recall buffer in do_www_search() of GridText.c to restore
-  the +'s to spaces and unescape properly. - FM 
+  the +'s to spaces and unescape properly. - FM
 * Include file and define fix ups, for SOCKETSHR/NETLIB support and convex
   builds, in tcp.h, LYShowInfo.c and top level Makefile. - FM
 11-27-94
@@ -611,7 +611,7 @@ Worked in mods from David Trueman (david@cs.dal.ca) - FM:
 * Check -trace switch earlier in LYMain.c so that trace messages associated
   with setting up the Lynx configuration will actually be displayed. - GL
 11-23-94
-* More fix ups for the SOCKETSHR/NETLIB support. Close to "all set" but needs
+* More fix ups for the SOCKETSHR/NETLIB support.  Close to "all set" but needs
   more field testing with the full range of TCPIP packages for VMS. - FM
 * Added HP_TERMINAL define for the DIM workaround to the REVERSE problem with
   HP terminals.  If not defined, SNAKE builds will not make that substitution

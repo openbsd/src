@@ -1,60 +1,100 @@
+# It's best to put these in a .lss file and use "lynx -lss=file.lss whatever"
+# for now.
 #
-#it's best to put these in a .lss file and use "lynx -lss=file.lss whatever" for now.
+# Normal type styles correspond to HTML tags.
 #
-#----/cut here for my styles/----
-# normal type styles, use bold if mono, otherwise brightblue on <defaultbackground>
+# The next line (beginning with "em") means:  use bold if mono, otherwise
+# brightblue on <defaultbackground>
 em:bold:brightblue
 strong:bold:brightred
 b:bold:red
-i:bold:blue
-alink:reverse:yellow:black
+i:bold:brightblue
 a:bold:green
 img:dim:brown
-status:reverse:yellow:blue
 fig:normal:gray
 caption:reverse:brown
 hr:normal:yellow
 blockquote:normal:brightblue
 ul:normal:brown
 address:normal:magenta
-title:normal:magenta:default
-tt:dim:gray:blue
+title:normal:magenta
+tt:dim:brightmagenta:default
 h1:bold:yellow:blue
 label:normal:magenta
-value:normal:green
-high:bold:brightmagenta
 q:normal:yellow:magenta
-small:dim:gray
+small:dim:default
 big:bold:yellow
 sup:bold:yellow
 sub:dim:gray
 lh:bold:yellow:magenta
+li:normal:magenta
+code:normal:cyan
+cite:normal:cyan
 
-# styles with classes <ul class=red> etc.
+table:normal:brightcyan
+tr:bold:brown
+td:normal:default
+br:normal:default
+
+# Special styles - not corresponding directly to HTML tags
+#	alert	- status bar, when message begins "Alert".
+#	alink	- active link
+#	normal	- default attributes
+#	status	- status bar
+#	whereis	- whereis search target
+#
+#normal:normal:default:blue
+alink:reverse:yellow:black
+status:reverse:yellow:blue
+alert:bold:yellow:red
+whereis:reverse+underline:magenta:cyan
+# currently not used
+#value:normal:green
+#high:bold:brightmagenta
+
+# Styles with classes - <ul class=red> etc.
 ul.red:underline:brightred
 ul.blue:bold:brightblue
 li.red:reverse:red:yellow
-li:normal:magenta
 li.blue:bold:blue
 strong.a:bold:black:red
 em.a:reverse:black:blue
 strong.b:bold:white:red
 em.b:reverse:white:blue
-alert:bold:yellow:red
 strong.debug:reverse:green
-tr:bold:brown
+font.letter:normal:default:blue
+input.submit:normal:cyan
 tr.baone:bold:yellow
 tr.batwo:bold:green
 tr.bathree:bold:red
-# special cases for link - the type is appended after the class
+#
+# Special handling for link.
+link:normal:white
 link.green:bold:brightgreen
-# special cases for link - the rel is appended after the class
+link.red:bold:black:red
+link.blue:bold:white:blue
+link.toc:bold:black:white
+# Special cases for link - the rel or title is appended after the class.
 # <link rel=next class=red href="1">
 link.red.next:bold:red
 link.red.prev:bold:yellow:red
 link.blue.prev:bold:yellow:blue
 link.blue.next:bold:blue
-link.red:bold:black:red
-link.blue:bold:white:blue
-link.toc:bold:black:white
 link.green.toc:bold:white:green
+#
+# Define styles that will be used when syntax highlighting is requested
+# (commandline option -prettysrc). 
+span.htmlsrc_comment:normal:white
+span.htmlsrc_tag:normal:white
+#If you don't like that the tag name and attribute name are displayed 
+#in different colors, comment the following line. 
+span.htmlsrc_attrib:normal:cyan
+span.htmlsrc_attrval:normal:magenta
+span.htmlsrc_abracket:normal:white
+span.htmlsrc_entity:normal:white
+##span.htmlsrc_href:
+##span.htmlsrc_entire:
+span.htmlsrc_badseq:normal:red
+span.htmlsrc_badtag:normal:red
+span.htmlsrc_badattr:normal:red
+span.htmlsrc_sgmlspecial:normal:yellow

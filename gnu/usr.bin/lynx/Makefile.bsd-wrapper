@@ -1,19 +1,20 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1999/12/21 04:07:23 fgsch Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2000/03/25 18:16:42 maja Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.1
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}"
 HTMLDIR=	/usr/share/doc/html
-HELPFILES=	keystrokes/bookmark_help.html keystrokes/cookie_help.html \
-		keystrokes/dired_help.html keystrokes/edit_help.html \
+HELPFILES=	keystrokes/alt_edit_help.html keystrokes/bookmark_help.html \
+		keystrokes/cookie_help.html keystrokes/dired_help.html \
+		keystrokes/edit_help.html keystrokes/environments.html \
 		keystrokes/follow_help.html keystrokes/gopher_types_help.html \
 		keystrokes/history_help.html keystrokes/keystroke_help.html \
 		keystrokes/movement_help.html keystrokes/option_help.html \
 		keystrokes/other_help.html keystrokes/print_help.html \
-		keystrokes/scrolling_help.html keystrokes/visited_help.html \
-		keystrokes/xterm_help.html Lynx_users_guide.html \
-		about_lynx.html lynx-dev.html lynx_help_main.html \
-		lynx_url_support.html
+		keystrokes/scrolling_help.html keystrokes/test_display.html \
+		keystrokes/visited_help.html keystrokes/xterm_help.html \
+		Lynx_users_guide.html about_lynx.html lynx-dev.html \
+		lynx_help_main.html lynx_url_support.html
 
 .include <bsd.own.mk>
 

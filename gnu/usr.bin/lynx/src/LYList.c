@@ -5,24 +5,22 @@
 **
 */
 
-#include "HTUtils.h"
-#include "tcp.h"
-#include "LYUtils.h"
-#include "GridText.h"
-#include "LYList.h"
-#include "LYSignal.h"
-#include "LYGlobalDefs.h"
-#include "LYCharUtils.h"
+#include <HTUtils.h>
+#include <HTAlert.h>
+#include <LYUtils.h>
+#include <GridText.h>
+#include <LYList.h>
+#include <LYClean.h>
+#include <LYGlobalDefs.h>
+#include <LYCharUtils.h>
 
 #ifdef DIRED_SUPPORT
-#include "LYUpload.h"
-#include "LYLocal.h"
+#include <LYUpload.h>
+#include <LYLocal.h>
 #endif /* DIRED_SUPPORT */
 
-#include "LYexit.h"
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <LYexit.h>
+#include <LYLeaks.h>
 
 /*	showlist - F.Macrides (macrides@sci.wfeb.edu)
 **	--------
@@ -34,7 +32,7 @@
 **			Clear:	we only get addresses.
 */
 
-static char list_filename[256] = "\0";
+static char *list_filename = 0;
 
 /*
  *  Returns the name of the file used for the List Page, if one has
@@ -43,7 +41,7 @@ static char list_filename[256] = "\0";
  */
 PUBLIC char * LYlist_temp_url NOARGS
 {
-    return list_filename;
+    return list_filename ? list_filename : "";
 }
 
 PUBLIC int showlist ARGS2(
@@ -52,10 +50,10 @@ PUBLIC int showlist ARGS2(
 {
     int cnt;
     int refs, hidden_links;
-    static char tempfile[256];
-    static BOOLEAN first = TRUE;
+    static char tempfile[LY_MAXPATH];
     FILE *fp0;
     char *Address = NULL, *Title = NULL, *cp = NULL;
+    char *LinkTitle = NULL;  /* Rel stored as property of link, not of dest */
     BOOLEAN intern_w_post = FALSE;
     char *desc = "unknown field or link";
 
@@ -63,73 +61,43 @@ PUBLIC int showlist ARGS2(
     hidden_links = HText_HiddenLinkCount(HTMainText);
     if (refs <= 0 && hidden_links > 0 &&
 	LYHiddenLinks != HIDDENLINKS_SEPARATE) {
-	_statusline(NO_VISIBLE_REFS_FROM_DOC);
-	sleep(MessageSecs);
+	HTUserMsg(NO_VISIBLE_REFS_FROM_DOC);
 	return(-1);
     }
     if (refs <= 0 && hidden_links <= 0) {
-	_statusline(NO_REFS_FROM_DOC);
-	sleep(MessageSecs);
+	HTUserMsg(NO_REFS_FROM_DOC);
 	return(-1);
     }
 
-    if (first) {
-	tempname(tempfile, NEW_FILE);
-	/*
-	 *  Make the file a URL now.
-	 */
-#if defined (VMS) || defined (DOSPATH)
-	sprintf(list_filename, "file://localhost/%s", tempfile);
-#else
-	sprintf(list_filename, "file://localhost%s", tempfile);
-#endif /* VMS */
-	first = FALSE;
-#ifdef VMS
-    } else {
-	remove(tempfile);  /* Remove duplicates on VMS. */
-#endif /* VMS */
-    }
-
-    if ((fp0 = LYNewTxtFile(tempfile)) == NULL) {
-	_statusline(CANNOT_OPEN_TEMP);
-	sleep(MessageSecs);
+    LYRemoveTemp(tempfile);
+    if ((fp0 = LYOpenTemp(tempfile, HTML_SUFFIX, "w")) == NULL) {
+	HTUserMsg(CANNOT_OPEN_TEMP);
 	return(-1);
     }
+
+    LYLocalFileToURL(&list_filename, tempfile);
 
     StrAllocCopy(newdoc->address, list_filename);
     LYforce_HTML_mode = TRUE;	/* force this file to be HTML */
     LYforce_no_cache = TRUE;	/* force this file to be new */
 
+#ifdef EXP_ADDRLIST_PAGE
+    if (titles != TRUE)
+	BeginInternalPage(fp0, ADDRLIST_PAGE_TITLE, LIST_PAGE_HELP);
+    else
+#endif
+    BeginInternalPage(fp0, LIST_PAGE_TITLE, LIST_PAGE_HELP);
 
-    fprintf(fp0, "<head>\n");
-    LYAddMETAcharsetToFD(fp0, -1);
-    if (strchr(HTLoadedDocumentURL(), '"') == NULL) {
-	/*
-	 *  Insert a BASE tag so there is some way to relate the List Page
-	 *  file to its underlying document after we are done.	It won't
-	 *  be actually used for resolving relative URLs. - kw
-	 */
-	StrAllocCopy(Address, HTLoadedDocumentURL());
-	LYEntify(&Address, FALSE);
-	fprintf(fp0, "<base href=\"%s\">\n", Address);
-	FREE(Address);
-    }
-    fprintf(fp0, "<title>%s</title>\n</head>\n<body>\n",
-		 LIST_PAGE_TITLE);
-    fprintf(fp0, "<h1>You have reached the List Page</h1>\n");
-    fprintf(fp0, "<h2>%s Version %s</h2>\n", LYNX_NAME, LYNX_VERSION);
     StrAllocCopy(Address, HTLoadedDocumentURL());
     LYEntify(&Address, FALSE);
-    fprintf(fp0,
-	    "  References in %s<p>\n",
-	    ((Address != NULL && *Address != '\0') ?
-					   Address : "this document:"));
+    fprintf(fp0, "%s%s<p>\n", gettext("References in "),
+	((Address != NULL && *Address != '\0') ? Address : gettext("this document:")));
     FREE(Address);
     if (refs > 0) {
 	fprintf(fp0, "<%s compact>\n", ((keypad_mode == NUMBERS_AS_ARROWS) ?
 				       "ol" : "ul"));
 	if (hidden_links > 0)
-	    fprintf(fp0, "<lh><em>Visible links:</em>\n");
+	    fprintf(fp0, "<lh><em>%s</em>\n", gettext("Visible links:"));
     }
     if (hidden_links > 0) {
 	if (LYHiddenLinks == HIDDENLINKS_IGNORE)
@@ -179,14 +147,24 @@ PUBLIC int showlist ARGS2(
 	    /*
 	     *	Set flag to note that we had at least one internal link,
 	     *	if the document from which we are generating the list
-	     *	has assosiated POST data; after an extra check that the
-	     *	link destination really has hthe same POST data so that
+	     *	has associated POST data; after an extra check that the
+	     *	link destination really has the same POST data so that
 	     *	we can believe it is an internal link.
 	     */
 	    intern_w_post = TRUE;
 	}
 	address =  HTAnchor_address(dest);
 	title = titles ? HTAnchor_title(parent) : NULL;
+	if (dest_intl) {
+	    HTSprintf0(&LinkTitle, "(internal)");
+	} else if (titles && child->mainLink.type &&
+		   dest == child->mainLink.dest &&
+		   !strncmp(HTAtom_name(child->mainLink.type),
+			    "RelTitle: ", 10)) {
+	    HTSprintf0(&LinkTitle, "(%s)", HTAtom_name(child->mainLink.type)+10);
+	} else {
+	    FREE(LinkTitle);
+	}
 	StrAllocCopy(Address, address);
 	FREE(address);
 	LYEntify(&Address, TRUE);
@@ -202,7 +180,7 @@ PUBLIC int showlist ARGS2(
 
 	fprintf(fp0, "<li><a href=\"%s\"%s>%s%s%s%s%s</a>\n", Address,
 			dest_intl ? " TYPE=\"internal link\"" : "",
-			dest_intl ? "(internal) " : "",
+			LinkTitle ? LinkTitle : "",
 			((HTAnchor*)parent != dest) && Title ? "in " : "",
 			(char *)(Title ? Title : Address),
 			(Title && cp) ? " - " : "",
@@ -211,6 +189,7 @@ PUBLIC int showlist ARGS2(
 	FREE(Address);
 	FREE(Title);
     }
+    FREE(LinkTitle);
 
     if (hidden_links > 0) {
 	if (refs > 0)
@@ -219,7 +198,7 @@ PUBLIC int showlist ARGS2(
 							"ol" : "ul"));
 	fprintf(fp0, "<%s compact>\n", ((keypad_mode == NUMBERS_AS_ARROWS) ?
 					"ol continue" : "ul"));
-	fprintf(fp0, "<lh><em>Hidden links:</em>\n");
+	fprintf(fp0, "<lh><em>%s</em>\n", gettext("Hidden links:"));
     }
 
     for (cnt = 0; cnt < hidden_links; cnt++) {
@@ -234,14 +213,16 @@ PUBLIC int showlist ARGS2(
 	FREE(Address);
     }
 
-    fprintf(fp0,"\n</%s>\n</body>\n", ((keypad_mode == NUMBERS_AS_ARROWS) ?
-				       "ol" : "ul"));
+    fprintf(fp0,"\n</%s>\n", ((keypad_mode == NUMBERS_AS_ARROWS) ?
+			     "ol" : "ul"));
+    EndInternalPage(fp0);
+    LYCloseTempFP(fp0);
 
     /*
      *	Make necessary changes to newdoc before returning to caller.
      *	If the intern_w_post flag is set, we keep the POST data in
      *	newdoc that have been passed in.  They should be the same as
-     *	in the loaded locument for which we generated the list.
+     *	in the loaded document for which we generated the list.
      *	In that case the file we have written will be associated with
      *	the same POST data when it is loaded after we are done here,
      *	so that following one of the links we have marked as "internal
@@ -257,7 +238,6 @@ PUBLIC int showlist ARGS2(
     }
     newdoc->isHEAD = FALSE;
     newdoc->safe = FALSE;
-    fclose(fp0);
     return(0);
 }
 
@@ -274,13 +254,10 @@ PUBLIC void printlist ARGS2(
 	FILE *, 	fp,
 	BOOLEAN,	titles)
 {
-#ifdef VMS
-    extern BOOLEAN HadVMSInterrupt;
-#endif /* VMS */
     int cnt;
     int refs, hidden_links;
     char *address = NULL;
-    char *desc = "unknown field or link";
+    char *desc = gettext("unknown field or link");
 
     refs = HText_sourceAnchors(HTMainText);
     if (refs <= 0 && LYHiddenLinks != HIDDENLINKS_SEPARATE)
@@ -289,9 +266,9 @@ PUBLIC void printlist ARGS2(
     if (refs <= 0 && hidden_links <= 0) {
 	return;
     } else {
-	fprintf(fp, "\n%s\n\n", "References");
+	fprintf(fp, "\n%s\n\n", gettext("References"));
 	if (hidden_links > 0) {
-	    fprintf(fp, "   Visible links:\n");
+	    fprintf(fp, "   %s\n", gettext("Visible links"));
 	    if (LYHiddenLinks == HIDDENLINKS_IGNORE)
 		hidden_links = 0;
 	}
@@ -304,7 +281,7 @@ PUBLIC void printlist ARGS2(
 	    if (child == 0) {
 		/*
 		 *  child should not be 0 unless form field numbering is on
-		 *  and cnt is the number of a form intput field.
+		 *  and cnt is the number of a form input field.
 		 *  HText_FormDescNumber() will set desc to a description
 		 *  of what type of input field this is.  We'll create a
 		 *  within-document link to ensure that the link numbers on
@@ -319,7 +296,7 @@ PUBLIC void printlist ARGS2(
 	    }
 	    dest = HTAnchor_followMainLink((HTAnchor *)child);
 	    /*
-	     *	Ignore if child anchor points to itself, i.e. we had
+	     *	Ignore if child anchor points to itself, i.e., we had
 	     *	something like <A NAME=xyz HREF="#xyz"> and it is not
 	     *	treated as a hidden link.  Useful if someone 'P'rints
 	     *	the List Page (which isn't a very useful action to do,
@@ -341,7 +318,7 @@ PUBLIC void printlist ARGS2(
 	}
 
 	if (hidden_links > 0)
-	    fprintf(fp, "%s   Hidden links:\n", ((refs > 0) ? "\n" : ""));
+	    fprintf(fp, "%s   %s\n", ((refs > 0) ? "\n" : ""), gettext("Hidden links:"));
 	for (cnt = 0; cnt < hidden_links; cnt++) {
 	    StrAllocCopy(address, HText_HiddenLinkAt(HTMainText, cnt));
 	    if (!(address && *address)) {

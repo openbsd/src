@@ -12,41 +12,11 @@
 #define HTANCHOR_H
 
 /* Version 0 (TBL) written in Objective-C for the NeXT browser */
-/* Version 1 of 24-Oct-1991 (JFG), written in C, browser-independant */
+/* Version 1 of 24-Oct-1991 (JFG), written in C, browser-independent */
 
-#include "HTList.h"
-#include "HTAtom.h"
-#include "UCDefs.h"
-
-#ifdef SHORT_NAMES
-#define HTAnchor_findChild			HTAnFiCh
-#define HTAnchor_findChildAndLink		HTAnFiLi
-#define HTAnchor_findAddress			HTAnFiAd
-#define HTAnchor_delete 			HTAnDele
-#define HTAnchor_makeLastChild			HTAnMaLa
-#define HTAnchor_parent 			HTAnPare
-#define HTAnchor_setDocument			HTAnSeDo
-#define HTAnchor_document			HTAnDocu
-#define HTAnchor_setFormat			HTAnSeFo
-#define HTAnchor_format 			HTAnForm
-#define HTAnchor_setIndex			HTAnSeIn
-#define HTAnchor_setPrompt			HTAnSePr
-#define HTAnchor_isIndex			HTAnIsIn
-#define HTAnchor_address			HTAnAddr
-#define HTAnchor_hasChildren			HTAnHaCh
-#define HTAnchor_title				HTAnTitl
-#define HTAnchor_setTitle			HTAnSeTi
-#define HTAnchor_appendTitle			HTAnApTi
-#define HTAnchor_link				HTAnLink
-#define HTAnchor_followMainLink 		HTAnFoMa
-#define HTAnchor_followTypedLink		HTAnFoTy
-#define HTAnchor_makeMainLink			HTAnMaMa
-#define HTAnchor_setProtocol			HTAnSePr
-#define HTAnchor_protocol			HTAnProt
-#define HTAnchor_physical			HTAnPhys
-#define HTAnchor_setPhysical			HTAnSePh
-#define HTAnchor_methods			HtAnMeth
-#endif /* SHORT_NAMES */
+#include <HTList.h>
+#include <HTAtom.h>
+#include <UCDefs.h>
 
 /*			Main definition of anchor
 **			=========================
@@ -57,7 +27,7 @@ typedef struct _HTAnchor HTAnchor;
 typedef struct _HTParentAnchor HTParentAnchor;
 
 /*	After definition of HTFormat: */
-#include "HTFormat.h"
+#include <HTFormat.h>
 
 typedef HTAtom HTLinkType;
 
@@ -70,7 +40,7 @@ struct _HTAnchor {		/* Generic anchor : just links */
   HTLink	mainLink;	/* Main (or default) destination of this */
   HTList *	links;		/* List of extra links from this, if any */
   /* We separate the first link from the others to avoid too many small mallocs
-     involved by a list creation. Most anchors only point to one place. */
+     involved by a list creation.  Most anchors only point to one place. */
   HTParentAnchor * parent;	/* Parent of this anchor (self for adults) */
 };
 
@@ -87,8 +57,8 @@ struct _HTParentAnchor {
   char *	address;	/* Absolute address of this node */
   char *	post_data;	/* Posting data */
   char *	post_content_type;  /* Type of post data */
-  char *	bookmark;	/* Bookmark filname */
-  HTFormat	format; 	/* Pointer to node format descriptor */
+  char *	bookmark;	/* Bookmark filename */
+  HTFormat	format;		/* Pointer to node format descriptor */
   char *	charset;	/* Pointer to character set (kludge, for now */
   BOOL		isIndex;	/* Acceptance of a keyword search */
   char *	isIndexAction;	/* URL of isIndex server */
@@ -105,7 +75,7 @@ struct _HTParentAnchor {
   char *	physical;	/* Physical address */
   BOOL		underway;	/* Document about to be attached to it */
   BOOL		isISMAPScript;	/* Script for clickable image map */
-  BOOL		isHEAD; 	/* Document is headers from a HEAD request */
+  BOOL		isHEAD;		/* Document is headers from a HEAD request */
   BOOL		safe;			/* Safe */
   char *	FileCache;	/* Path to a disk-cached copy */
   char *	SugFname;	/* Suggested filename */
@@ -115,14 +85,17 @@ struct _HTParentAnchor {
   char *	content_language;	/* Content-Language */
   char *	content_encoding;	/* Compression algorithm */
   char *	content_base;		/* Content-Base */
-  char *	content_disposition;	/* Content-Dispositon */
+  char *	content_disposition;	/* Content-Disposition */
   char *	content_location;	/* Content-Location */
   char *	content_md5;		/* Content-MD5 */
-  int		content_length; 	/* Content-Length */
+  char *	message_id;		/* Message-ID */
+  char *	subject;		/* Subject */
+  int		content_length;		/* Content-Length */
   char *	date;			/* Date */
   char *	expires;		/* Expires */
   char *	last_modified;		/* Last-Modified */
-  char *	server; 		/* Server */
+  char *	ETag;			/* ETag (HTTP1.1 cache validator) */
+  char *	server;			/* Server */
   UCAnchorInfo *UCStages;		/* chartrans stages */
   HTList *	imaps;			/* client side image maps */
 };
@@ -160,7 +133,7 @@ typedef struct _DocAddress {
 **	---------------------------------
 **
 **	This one is for a new anchor being edited into an existing
-**	document. The parent anchor must already exist.
+**	document.  The parent anchor must already exist.
 */
 extern HTChildAnchor * HTAnchor_findChild PARAMS((
 	HTParentAnchor *	parent,
@@ -174,10 +147,10 @@ extern HTChildAnchor * HTAnchor_findChild PARAMS((
 **	(Code originally in ParseHTML.h)
 */
 extern HTChildAnchor * HTAnchor_findChildAndLink PARAMS((
-      HTParentAnchor * parent,	/* May not be 0 */
-      CONST char * tag, 	/* May be "" or 0 */
-      CONST char * href,	/* May be "" or 0 */
-      HTLinkType * ltype));	/* May be 0 */
+	HTParentAnchor * parent,	/* May not be 0 */
+	CONST char * tag,		/* May be "" or 0 */
+	CONST char * href,		/* May be "" or 0 */
+	HTLinkType * ltype));		/* May be 0 */
 
 /*	Create new or find old named anchor
 **	-----------------------------------
@@ -209,7 +182,7 @@ extern BOOL HTAnchor_delete PARAMS((
 **	is put in the correct order as we load the document.
 */
 extern void HTAnchor_makeLastChild PARAMS((
-	HTChildAnchor * 	me));
+	HTChildAnchor *		me));
 
 /*	Data access functions
 **	---------------------
@@ -223,12 +196,6 @@ extern void HTAnchor_setDocument PARAMS((
 
 extern HyperDoc * HTAnchor_document PARAMS((
 	HTParentAnchor *	me));
-
-/* We don't want code to change an address after anchor creation... yet ?
-extern void HTAnchor_setAddress PARAMS((
-	HTAnchor *		me,
-	char *			addr));
-*/
 
 /*	Returns the full URI of the anchor, child or parent
 **	as a malloc'd string to be freed by the caller.
@@ -357,6 +324,24 @@ extern CONST char * HTAnchor_content_base PARAMS((
 */
 extern CONST char * HTAnchor_content_location PARAMS((
 	HTParentAnchor *	me));
+
+/*	Message-ID, used for mail replies - kw
+*/
+extern CONST char * HTAnchor_messageID PARAMS((
+	HTParentAnchor *	me));
+
+extern BOOL HTAnchor_setMessageID PARAMS((
+	HTParentAnchor *	me,
+	CONST char *		messageid));
+
+/*	Subject, used for mail replies - kw
+*/
+extern CONST char * HTAnchor_subject PARAMS((
+	HTParentAnchor *	me));
+
+extern BOOL HTAnchor_setSubject PARAMS((
+	HTParentAnchor *	me,
+	CONST char *		subject));
 
 /*	Link this Anchor to another given one
 **	-------------------------------------

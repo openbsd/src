@@ -4,7 +4,7 @@
 # 'if (s|<([^ \t]+)>\s+<U([\dA-Z]{4})>\s.*$|U+\L\2\E:\1|) {s|/?(.)|\1|g&&print}'\
 # mnemonic,ds
 
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Mmnemonic+ascii+0
 
 #Name as a Display Charset (used on Options screen)
@@ -12,7 +12,7 @@ ORFC 1345 w/o Intro
 
 # Don't fall back to default table for unicode -> 8bit
 Fallback NO
- 
+
 U+0020:SP
 U+0021:!
 U+0022:"

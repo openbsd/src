@@ -1,4 +1,3 @@
-
 /* MODULE							HTAAUtil.c
 **		COMMON PARTS OF ACCESS AUTHORIZATION MODULE
 **			FOR BOTH SERVER AND BROWSER
@@ -12,7 +11,7 @@
 **
 **	Therefore also all the strings returned by this package
 **	are only valid until the next call to the same function
-**	is made. This approach is selected, because of the nature
+**	is made.  This approach is selected, because of the nature
 **	of access authorization: no string returned by the package
 **	needs to be valid longer than until the next call.
 **
@@ -44,15 +43,14 @@
 **
 */
 
-#include "HTUtils.h"
-#include "tcp.h"	/* NETREAD() etc.	*/
-#include <string.h>
-#include "HTAAUtil.h"	/* Implemented here	*/
-#include "HTAssoc.h"	/* Assoc list		*/
-#include "HTTCP.h"
-#include "HTAlert.h"
+#include <HTUtils.h>
 
-#include "LYLeaks.h"
+#include <HTAAUtil.h>	/* Implemented here	*/
+#include <HTAssoc.h>	/* Assoc list		*/
+#include <HTTCP.h>
+
+#include <LYStrings.h>
+#include <LYLeaks.h>
 
 /* PUBLIC						HTAAScheme_enum()
 **		TRANSLATE SCHEME NAME INTO
@@ -62,22 +60,17 @@
 **	name		is a string representing the scheme name.
 **
 ** ON EXIT:
-**	returns 	the enumerated constant for that scheme.
+**	returns		the enumerated constant for that scheme.
 */
 PUBLIC HTAAScheme HTAAScheme_enum ARGS1(CONST char*, name)
 {
     char *upcased = NULL;
-    char *cur;
 
     if (!name)
 	return HTAA_UNKNOWN;
 
     StrAllocCopy(upcased, name);
-    cur = upcased;
-    while (*cur) {
-	*cur = TOUPPER(*cur);
-	cur++;
-    }
+    LYUpperCase(upcased);
 
     if (!strncmp(upcased, "NONE", 4)) {
 	FREE(upcased);
@@ -108,7 +101,7 @@ PUBLIC HTAAScheme HTAAScheme_enum ARGS1(CONST char*, name)
 **			HTAA_NONE, HTAA_BASIC, HTAA_PUBKEY, ...
 **
 ** ON EXIT:
-**	returns 	the name of the scheme, i.e.
+**	returns		the name of the scheme, i.e.
 **			"None", "Basic", "Pubkey", ...
 */
 PUBLIC char *HTAAScheme_name ARGS1(HTAAScheme, scheme)
@@ -116,22 +109,16 @@ PUBLIC char *HTAAScheme_name ARGS1(HTAAScheme, scheme)
     switch (scheme) {
 	case HTAA_NONE:
 	    return "None";
-	    break;
 	case HTAA_BASIC:
 	    return "Basic";
-	    break;
 	case HTAA_PUBKEY:
 	    return "Pubkey";
-	    break;
 	case HTAA_KERBEROS_V4:
 	    return "KerberosV4";
-	    break;
 	case HTAA_KERBEROS_V5:
 	    return "KerberosV5";
-	    break;
 	case HTAA_UNKNOWN:
 	    return "UNKNOWN";
-	    break;
 	default:
 	    return "THIS-IS-A-BUG";
     }
@@ -144,28 +131,17 @@ PUBLIC char *HTAAScheme_name ARGS1(HTAAScheme, scheme)
 **	name		is the method name to translate.
 **
 ** ON EXIT:
-**	returns 	HTAAMethod enumerated value corresponding
+**	returns		HTAAMethod enumerated value corresponding
 **			to the given name.
 */
 PUBLIC HTAAMethod HTAAMethod_enum ARGS1(CONST char *, name)
 {
-    char tmp[MAX_METHODNAME_LEN+1];
-    CONST char *src = name;
-    char *dest = tmp;
-
     if (!name)
 	return METHOD_UNKNOWN;
 
-    while (*src) {
-	*dest = TOUPPER(*src);
-	dest++;
-	src++;
-    }
-    *dest = 0;
-
-    if (0==strcmp(tmp, "GET"))
+    if (0==strcasecomp(name, "GET"))
 	return METHOD_GET;
-    else if (0==strcmp(tmp, "PUT"))
+    else if (0==strcasecomp(name, "PUT"))
 	return METHOD_PUT;
     else
 	return METHOD_UNKNOWN;
@@ -179,7 +155,7 @@ PUBLIC HTAAMethod HTAAMethod_enum ARGS1(CONST char *, name)
 **			METHOD_GET, METHOD_PUT, ...
 **
 ** ON EXIT:
-**	returns 	the name of the scheme, i.e.
+**	returns		the name of the scheme, i.e.
 **			"GET", "PUT", ...
 */
 PUBLIC char *HTAAMethod_name ARGS1(HTAAMethod, method)
@@ -187,13 +163,10 @@ PUBLIC char *HTAAMethod_name ARGS1(HTAAMethod, method)
     switch (method) {
       case METHOD_GET:
 	  return "GET";
-	  break;
       case METHOD_PUT:
 	  return "PUT";
-	  break;
       case METHOD_UNKNOWN:
 	  return "UNKNOWN";
-	  break;
       default:
 	  return "THIS-IS-A-BUG";
     }
@@ -207,7 +180,7 @@ PUBLIC char *HTAAMethod_name ARGS1(HTAAMethod, method)
 **	list		is a list of method names.
 **
 ** ON EXIT:
-**	returns 	YES, if method was found.
+**	returns		YES, if method was found.
 **			NO, if not found.
 */
 PUBLIC BOOL HTAAMethod_inList ARGS2(HTAAMethod, method,
@@ -217,8 +190,7 @@ PUBLIC BOOL HTAAMethod_inList ARGS2(HTAAMethod, method,
     char *item;
 
     while (NULL != (item = (char*)HTList_nextObject(cur))) {
-	if (TRACE)
-	    fprintf(stderr, " %s", item);
+	CTRACE(tfp, " %s", item);
 	if (method == HTAAMethod_enum(item))
 	    return YES;
     }
@@ -239,14 +211,14 @@ PUBLIC BOOL HTAAMethod_inList ARGS2(HTAAMethod, method,
 **
 ** ON ENTRY:
 **	template	is a template string to match the file name
-**			agaist, may contain a single wildcard
+**			against, may contain a single wildcard
 **			character * which matches zero or more
 **			arbitrary characters.
 **	filename	is the filename (or pathname) to be matched
-**			agaist the template.
+**			against the template.
 **
 ** ON EXIT:
-**	returns 	YES, if filename matches the template.
+**	returns		YES, if filename matches the template.
 **			NO, otherwise.
 */
 PUBLIC BOOL HTAA_templateMatch ARGS2(CONST char *, template,
@@ -290,14 +262,14 @@ PUBLIC BOOL HTAA_templateMatch ARGS2(CONST char *, template,
 **
 ** ON ENTRY:
 **	template	is a template string to match the file name
-**			agaist, may contain a single wildcard
+**			against, may contain a single wildcard
 **			character * which matches zero or more
 **			arbitrary characters.
 **	filename	is the filename (or pathname) to be matched
-**			agaist the template.
+**			against the template.
 **
 ** ON EXIT:
-**	returns 	YES, if filename matches the template.
+**	returns		YES, if filename matches the template.
 **			NO, otherwise.
 */
 PUBLIC BOOL HTAA_templateCaseMatch ARGS2(CONST char *, template,
@@ -367,9 +339,8 @@ PUBLIC char *HTAA_makeProtectionTemplate ARGS1(CONST char *, docname)
     else
 	StrAllocCopy(template, "*");
 
-    if (TRACE)
-	fprintf(stderr, "make_template: made template `%s' for file `%s'\n",
-			template, docname);
+    CTRACE(tfp, "make_template: made template `%s' for file `%s'\n",
+		template, docname);
 
     return template;
 }
@@ -381,7 +352,7 @@ PUBLIC char *HTAA_makeProtectionTemplate ARGS1(CONST char *, docname)
 #define SKIPWS(s) while (*s==' ' || *s=='\t') s++;
 
 /*
-** Kill trailing whitespace starting from *(s-1) backwords
+** Kill trailing whitespace starting from *(s-1) backwards
 */
 #define KILLWS(s) {char *c=s-1; while (*c==' ' || *c=='\t') *(c--)='\0';}
 
@@ -461,8 +432,7 @@ PUBLIC HTAssocList *HTAA_parseArgList ARGS1(char *, str)
 	    if (*cur == ',')
 		*(cur++) = '\0';		/* Terminate value */
 	    /* else last value on line (already terminated by NULL) */
-	    StrAllocCopy(name, "nnn");	/* Room for item order number */
-	    sprintf(name, "%d", n);	/* Item order number for name */
+	    HTSprintf0(&name, "%d", n);		/* Item order number for name */
 	}
 	HTAssocList_add(assoc_list, name, str);
 	str = cur;
@@ -477,13 +447,21 @@ PUBLIC HTAssocList *HTAA_parseArgList ARGS1(char *, str)
 
 #define BUFFER_SIZE	1024
 
-PRIVATE char buffer[BUFFER_SIZE + 1];
-PRIVATE char *start_pointer = buffer;
-PRIVATE char *end_pointer = buffer;
+PRIVATE size_t buffer_length;
+PRIVATE char *buffer = 0;
+PRIVATE char *start_pointer;
+PRIVATE char *end_pointer;
 PRIVATE int in_soc = -1;
 
+#ifdef LY_FIND_LEAKS
+PRIVATE void FreeHTAAUtil NOARGS
+{
+    FREE(buffer);
+}
+#endif /* LY_FIND_LEAKS */
+
 /* PUBLIC						HTAA_setupReader()
-**		SET UP HEADER LINE READER, i.e. give
+**		SET UP HEADER LINE READER, i.e., give
 **		the already-read-but-not-yet-processed
 **		buffer of text to be read before more
 **		is read from the socket.
@@ -496,16 +474,32 @@ PRIVATE int in_soc = -1;
 **	soc		is the socket to use when start_of_headers
 **			buffer is used up.
 ** ON EXIT:
-**	returns 	nothing.
+**	returns		nothing.
 **			Subsequent calls to HTAA_getUnfoldedLine()
 **			will use this buffer first and then
 **			proceed to read from socket.
 */
-PUBLIC void HTAA_setupReader ARGS4(char *,	start_of_headers,
-				   int, 	length,
-				   void *,	handle,
-				   int, 	soc)
+PUBLIC void HTAA_setupReader ARGS3(char *,	start_of_headers,
+				   int,		length,
+				   int,		soc)
 {
+    if (!start_of_headers)
+	length = 0;	       /* initialize length (is this reached at all?) */
+    if (buffer == NULL) {				       /* first call? */
+	buffer_length = length;
+	if (buffer_length < BUFFER_SIZE)     /* would fall below BUFFER_SIZE? */
+	    buffer_length = BUFFER_SIZE;
+	buffer = (char*)malloc((size_t)(sizeof(char)*(buffer_length + 1)));
+    }
+    else if (length > (int)buffer_length) {		  /* need more space? */
+	buffer_length = length;
+	buffer = (char*)realloc((char*)buffer,
+				(size_t)(sizeof(char)*(buffer_length + 1)));
+    }
+    if (buffer == NULL) outofmem(__FILE__, "HTAA_setupReader");
+#ifdef LY_FIND_LEAKS
+    atexit(FreeHTAAUtil);
+#endif
     start_pointer = buffer;
     if (start_of_headers) {
 	strncpy(buffer, start_of_headers, length);
@@ -549,10 +543,9 @@ PUBLIC char *HTAA_getUnfoldedLine NOARGS
     BOOL peek_for_folding = NO;
 
     if (in_soc < 0) {
-	if (TRACE)
-	    fprintf(stderr, "%s %s\n",
-			    "HTAA_getUnfoldedLine: buffer not initialized",
-			    "with function HTAA_setupReader()");
+	CTRACE(tfp, "%s %s\n",
+		    "HTAA_getUnfoldedLine: buffer not initialized",
+		    "with function HTAA_setupReader()");
 	return NULL;
     }
 
@@ -617,5 +610,3 @@ PUBLIC char *HTAA_getUnfoldedLine NOARGS
 
     } /* forever */
 }
-
-

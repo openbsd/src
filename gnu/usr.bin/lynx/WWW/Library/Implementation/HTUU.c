@@ -34,10 +34,10 @@
 **
 */
 
-#include "HTUtils.h"
-#include "HTUU.h"
+#include <HTUtils.h>
+#include <HTUU.h>
 
-#include "LYLeaks.h"
+#include <LYLeaks.h>
 
 PRIVATE char six2pr[64] = {
     'A','B','C','D','E','F','G','H','I','J','K','L','M',
@@ -65,7 +65,7 @@ PRIVATE unsigned char pr2six[256];
  *
  *    Exit     bufcoded contains the coded line.  The first 4*nbytes/3 bytes
  *                      contain printing ASCII characters representing
- *                      those binary bytes. This may include one or
+ *                      those binary bytes.  This may include one or
  *                      two '=' characters used as padding at the end.
  *                      The last byte is a zero byte.
  *             Returns the number of ASCII characters in "bufcoded".
@@ -110,7 +110,7 @@ PUBLIC int HTUU_encode ARGS3(unsigned char *,	bufin,
  *
  *  Decode an ASCII-encoded buffer back to its original binary form.
  *
- *    Entry    bufcoded    points to a uuencoded string.  It is 
+ *    Entry    bufcoded    points to a uuencoded string.  It is
  *                         terminated by any character not in
  *                         the printable character table six2pr, but
  *                         leading whitespace is stripped.
@@ -149,21 +149,21 @@ PUBLIC int HTUU_decode ARGS3(char *,		bufcoded,
 
       for(j=0; j<64; j++) pr2six[(unsigned char)six2pr[j]] = (unsigned char)j;
 #if 0
-      pr2six['A']= 0; pr2six['B']= 1; pr2six['C']= 2; pr2six['D']= 3; 
-      pr2six['E']= 4; pr2six['F']= 5; pr2six['G']= 6; pr2six['H']= 7; 
-      pr2six['I']= 8; pr2six['J']= 9; pr2six['K']=10; pr2six['L']=11; 
-      pr2six['M']=12; pr2six['N']=13; pr2six['O']=14; pr2six['P']=15; 
-      pr2six['Q']=16; pr2six['R']=17; pr2six['S']=18; pr2six['T']=19; 
-      pr2six['U']=20; pr2six['V']=21; pr2six['W']=22; pr2six['X']=23; 
-      pr2six['Y']=24; pr2six['Z']=25; pr2six['a']=26; pr2six['b']=27; 
-      pr2six['c']=28; pr2six['d']=29; pr2six['e']=30; pr2six['f']=31; 
-      pr2six['g']=32; pr2six['h']=33; pr2six['i']=34; pr2six['j']=35; 
-      pr2six['k']=36; pr2six['l']=37; pr2six['m']=38; pr2six['n']=39; 
-      pr2six['o']=40; pr2six['p']=41; pr2six['q']=42; pr2six['r']=43; 
-      pr2six['s']=44; pr2six['t']=45; pr2six['u']=46; pr2six['v']=47; 
-      pr2six['w']=48; pr2six['x']=49; pr2six['y']=50; pr2six['z']=51; 
-      pr2six['0']=52; pr2six['1']=53; pr2six['2']=54; pr2six['3']=55; 
-      pr2six['4']=56; pr2six['5']=57; pr2six['6']=58; pr2six['7']=59; 
+      pr2six['A']= 0; pr2six['B']= 1; pr2six['C']= 2; pr2six['D']= 3;
+      pr2six['E']= 4; pr2six['F']= 5; pr2six['G']= 6; pr2six['H']= 7;
+      pr2six['I']= 8; pr2six['J']= 9; pr2six['K']=10; pr2six['L']=11;
+      pr2six['M']=12; pr2six['N']=13; pr2six['O']=14; pr2six['P']=15;
+      pr2six['Q']=16; pr2six['R']=17; pr2six['S']=18; pr2six['T']=19;
+      pr2six['U']=20; pr2six['V']=21; pr2six['W']=22; pr2six['X']=23;
+      pr2six['Y']=24; pr2six['Z']=25; pr2six['a']=26; pr2six['b']=27;
+      pr2six['c']=28; pr2six['d']=29; pr2six['e']=30; pr2six['f']=31;
+      pr2six['g']=32; pr2six['h']=33; pr2six['i']=34; pr2six['j']=35;
+      pr2six['k']=36; pr2six['l']=37; pr2six['m']=38; pr2six['n']=39;
+      pr2six['o']=40; pr2six['p']=41; pr2six['q']=42; pr2six['r']=43;
+      pr2six['s']=44; pr2six['t']=45; pr2six['u']=46; pr2six['v']=47;
+      pr2six['w']=48; pr2six['x']=49; pr2six['y']=50; pr2six['z']=51;
+      pr2six['0']=52; pr2six['1']=53; pr2six['2']=54; pr2six['3']=55;
+      pr2six['4']=56; pr2six['5']=57; pr2six['6']=58; pr2six['7']=59;
       pr2six['8']=60; pr2six['9']=61; pr2six['+']=62; pr2six['/']=63;
 #endif
    }
@@ -185,7 +185,7 @@ PUBLIC int HTUU_decode ARGS3(char *,		bufcoded,
    }
 
    bufin = bufcoded;
-   
+
    while (nprbytes > 0) {
       *(bufout++) = (unsigned char) (DEC(*bufin) << 2 | DEC(bufin[1]) >> 4);
       *(bufout++) = (unsigned char) (DEC(bufin[1]) << 4 | DEC(bufin[2]) >> 2);
@@ -193,7 +193,7 @@ PUBLIC int HTUU_decode ARGS3(char *,		bufcoded,
       bufin += 4;
       nprbytes -= 4;
    }
-   
+
    if(nprbytes & 03) {
       if(pr2six[(int)bufin[-2]] > MAXVAL) {
          nbytesdecoded -= 2;

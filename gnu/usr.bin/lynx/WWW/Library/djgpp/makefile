@@ -7,8 +7,14 @@ WWW_MACH = djgpp
 # The ASIS repository's name for the machine we are on
 #ASIS_MACH = hardware/os
 
-CFLAGS = -O3 -DUSE_ZLIB -DDOSPATH -DNOUSERS -DDEBUG -I../../../djgpp/tcplib/include -I../../../djgpp/tcplib/include/tcp \
--I../../../src -I../../..
+CFLAGS = -O3 -DUSE_ZLIB -DDOSPATH -DNOUSERS -DDISP_PARTIAL \
+-DSOURCE_CACHE -DUSE_PSRC \
+-I../Implementation \
+-I../../../djgpp/tcplib/include \
+-I../../../djgpp/tcplib/include/tcp \
+-I../../../curses \
+-I../../../src \
+-I../../..
 LFLAGS =
 CC = gcc
 

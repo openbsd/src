@@ -1,4 +1,4 @@
-/*		Configuration-specific Initialialization	HTInit.c
+/*		Configuration-specific Initialization		HTInit.c
 **		----------------------------------------
 */
 
@@ -6,38 +6,27 @@
 **	------------------------------------------------
 */
 
-#include "HTUtils.h"
-#include "tcp.h"
+#include <HTUtils.h>
 
 /* Implements:
 */
-#include "HTInit.h"
+#include <HTInit.h>
 
-#include "HTML.h"
-#include "HTPlain.h"
-#include "HTMLGen.h"
-#include "HTFile.h"
-#include "HTFormat.h"
-#include "HTMIME.h"
-#include "HTWSRC.h"
+#include <HTML.h>
+#include <HTPlain.h>
+#include <HTMLGen.h>
+#include <HTFile.h>
+#include <HTFormat.h>
+#include <HTMIME.h>
+#include <HTWSRC.h>
 
-#include "HTSaveToFile.h"  /* LJM */
-#include "userdefs.h"
-#include "LYUtils.h"
-#include "LYGlobalDefs.h"
-#include "LYSignal.h"
-#include "LYSystem.h"
+#include <HTSaveToFile.h>  /* LJM */
+#include <LYStrings.h>
+#include <LYUtils.h>
+#include <LYGlobalDefs.h>
 
-#include "LYexit.h"
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
-
-#ifdef VMS
-#define DISPLAY "DECW$DISPLAY"
-#else
-#define DISPLAY "DISPLAY"
-#endif /* VMS */
+#include <LYexit.h>
+#include <LYLeaks.h>
 
 PRIVATE int HTLoadTypesConfigFile PARAMS((char *fn));
 PRIVATE int HTLoadExtensionsConfigFile PARAMS((char *fn));
@@ -45,7 +34,6 @@ PRIVATE int HTLoadExtensionsConfigFile PARAMS((char *fn));
 PUBLIC void HTFormatInit NOARGS
 {
  FILE *fp = NULL;
- char *cp = NULL;
 
 #ifdef NeXT
   HTSetPresentation("application/postscript",   "open %s", 1.0, 2.0, 0.0, 0);
@@ -54,7 +42,7 @@ PUBLIC void HTFormatInit NOARGS
   HTSetPresentation("audio/basic",              "open %s", 1.0, 2.0, 0.0, 0);
   HTSetPresentation("*",                        "open %s", 1.0, 0.0, 0.0, 0);
 #else
- if ((cp = getenv(DISPLAY)) != NULL && *cp != '\0') {	/* Must have X11 */
+ if (LYgetXDisplay() != 0) {	/* Must have X11 */
   HTSetPresentation("application/postscript", "ghostview %s&",
   							    1.0, 3.0, 0.0, 0);
   HTSetPresentation("image/gif",        XLoadImageCommand,  1.0, 3.0, 0.0, 0);
@@ -170,13 +158,8 @@ PUBLIC void HTFormatInit NOARGS
      /* These should override everything else. */
      HTLoadTypesConfigFile(personal_type_map);
  } else {
-     char buffer[256];
-#ifdef VMS
-     sprintf(buffer, "sys$login:%s", personal_type_map);
-#else
-     sprintf(buffer, "%s/%s", (Home_Dir() ? Home_Dir() : ""),
-			      personal_type_map);
-#endif
+     char buffer[LY_MAXPATH];
+     LYAddPathToHome(buffer, sizeof(buffer), personal_type_map);
      HTLoadTypesConfigFile(buffer);
  }
 
@@ -237,7 +220,6 @@ PRIVATE int ExitWithError PARAMS((char *txt));
 PRIVATE int PassesTest PARAMS((struct MailcapEntry *mc));
 
 #define LINE_BUF_SIZE		2048
-#define TMPFILE_NAME_SIZE	256
 
 PRIVATE char *GetCommand ARGS2(
 	char *,		s,
@@ -249,7 +231,7 @@ PRIVATE char *GetCommand ARGS2(
     /* marca -- added + 1 for error case -- oct 24, 1993. */
     s2 = malloc(strlen(s)*2 + 1); /* absolute max, if all % signs */
     if (!s2)
-	ExitWithError("Out of memory");
+	ExitWithError(MEMORY_EXHAUSTED_ABORT);
 
     *t = s2;
     while (s && *s) {
@@ -279,38 +261,25 @@ PRIVATE char *GetCommand ARGS2(
 PRIVATE char *Cleanse ARGS1(
 	char *,		s)
 {
-    char *tmp, *news;
-
-    /* strip leading white space */
-    while (*s && isspace((unsigned char) *s))
-	++s;
-    news = s;
-    /* put in lower case */
-    for (tmp=s; *tmp; ++tmp) {
-	*tmp = TOLOWER ((unsigned char)*tmp);
-    }
-    /* strip trailing white space */
-    while ((tmp > news) && *--tmp && isspace((unsigned char) *tmp))
-	*tmp = '\0';
-    return(news);
+    LYTrimLeading(s);
+    LYTrimTrailing(s);
+    LYLowerCase(s);
+    return(s);
 }
 
 PRIVATE int ProcessMailcapEntry ARGS2(
 	FILE *,			fp,
 	struct MailcapEntry *,	mc)
 {
-    int i, j;
     size_t rawentryalloc = 2000, len;
-    char *rawentry, *s, *t, *LineBuf;
+    char *rawentry, *s, *t;
+    char *LineBuf = NULL;
 
-    LineBuf = (char *)malloc(LINE_BUF_SIZE);
-    if (!LineBuf)
-	ExitWithError("Out of memory");
     rawentry = (char *)malloc(1 + rawentryalloc);
     if (!rawentry)
-	ExitWithError("Out of memory");
+	ExitWithError(MEMORY_EXHAUSTED_ABORT);
     *rawentry = '\0';
-    while (fgets(LineBuf, LINE_BUF_SIZE, fp)) {
+    while (LYSafeGets(&LineBuf, fp) != 0) {
 	if (LineBuf[0] == '#')
 	    continue;
 	len = strlen(LineBuf);
@@ -322,7 +291,7 @@ PRIVATE int ProcessMailcapEntry ARGS2(
 	    rawentryalloc += 2000;
 	    rawentry = realloc(rawentry, rawentryalloc+1);
 	    if (!rawentry)
-	        ExitWithError("Out of memory");
+	        ExitWithError(MEMORY_EXHAUSTED_ABORT);
 	}
 	if (len > 0 && LineBuf[len-1] == '\\') {
 	    LineBuf[len-1] = '\0';
@@ -332,11 +301,9 @@ PRIVATE int ProcessMailcapEntry ARGS2(
 	    break;
 	}
     }
-
     FREE(LineBuf);
 
-    for (s = rawentry; *s && isspace((unsigned char) *s); ++s)
-	;
+    s = LYSkipBlanks(rawentry);
     if (!*s) {
 	/* totally blank entry -- quietly ignore */
 	FREE(rawentry);
@@ -344,11 +311,8 @@ PRIVATE int ProcessMailcapEntry ARGS2(
     }
     s = strchr(rawentry, ';');
     if (s == NULL) {
-	if (TRACE) {
-		fprintf(stderr,
-		 "ProcessMailcapEntry: Ignoring invalid mailcap entry: %s\n",
-			rawentry);
-	}
+	CTRACE(tfp, "ProcessMailcapEntry: Ignoring invalid mailcap entry: %s\n",
+		    rawentry);
 	FREE(rawentry);
 	return(0);
     }
@@ -357,20 +321,14 @@ PRIVATE int ProcessMailcapEntry ARGS2(
 	!strncasecomp(rawentry, "text/plain", 10)) {
 	--s;
 	*s = ';';
-	if (TRACE) {
-		fprintf(stderr,
-			"ProcessMailcapEntry: Ignoring mailcap entry: %s\n",
-			rawentry);
-	}
+	CTRACE(tfp, "ProcessMailcapEntry: Ignoring mailcap entry: %s\n",
+		    rawentry);
 	FREE(rawentry);
 	return(0);
     }
-    for (i = 0, j = 0; rawentry[i]; i++) {
-	if (rawentry[i] != ' ') {
-	    rawentry[j++] = TOLOWER(rawentry[i]);
-	}
-    }
-    rawentry[j] = '\0';
+    LYRemoveBlanks(rawentry);
+    LYLowerCase(rawentry);
+
     mc->needsterminal = 0;
     mc->copiousoutput = 0;
     mc->needtofree = 1;
@@ -379,7 +337,7 @@ PRIVATE int ProcessMailcapEntry ARGS2(
     mc->printcommand = NULL;
     mc->contenttype = (char *)malloc(1 + strlen(rawentry));
     if (!mc->contenttype)
-	ExitWithError("Out of memory");
+	ExitWithError(MEMORY_EXHAUSTED_ABORT);
     strcpy(mc->contenttype, rawentry);
     mc->quality = 1.0;
     mc->maxbytes = 0;
@@ -387,8 +345,7 @@ PRIVATE int ProcessMailcapEntry ARGS2(
     if (!t) {
 	goto assign_presentation;
     }
-    s = t;
-    while (s && *s && isspace((unsigned char) *s)) ++s;
+    s = LYSkipBlanks(t);
     while (s) {
 	char *arg, *eq, *mallocd_string;
 
@@ -407,9 +364,7 @@ PRIVATE int ProcessMailcapEntry ARGS2(
 	    } else if (eq && !strcmp(arg, "test")) {
 		mc->testcommand = NULL;
 		StrAllocCopy(mc->testcommand, eq);
-		if (TRACE)
-		    fprintf(stderr,
-		    	    "ProcessMailcapEntry: Found testcommand:%s\n",
+		CTRACE(tfp, "ProcessMailcapEntry: Found testcommand:%s\n",
 			    mc->testcommand);
 	    } else if (eq && !strcmp(arg, "description")) {
 		mc->label = eq;
@@ -429,24 +384,21 @@ PRIVATE int ProcessMailcapEntry ARGS2(
 		if (mc->maxbytes < 0)
 		    mc->maxbytes = 0;
 	    } else if (strcmp(arg, "notes")) { /* IGNORE notes field */
-		if (*arg && TRACE)
-		    fprintf(stderr,
-			"ProcessMailcapEntry: Ignoring mailcap flag '%s'.\n",
-			    arg);
+		if (*arg)
+		    CTRACE(tfp, "ProcessMailcapEntry: Ignoring mailcap flag '%s'.\n",
+			        arg);
 	    }
 
 	}
-      FREE(mallocd_string);
-      s = t;
+	FREE(mallocd_string);
+	s = t;
     }
 
 assign_presentation:
     FREE(rawentry);
 
     if (PassesTest(mc)) {
-	if (TRACE)
-	    fprintf(stderr,
-	    	    "ProcessMailcapEntry Setting up conversion %s : %s\n",
+	CTRACE(tfp, "ProcessMailcapEntry Setting up conversion %s : %s\n",
 		    mc->contenttype, mc->command);
 	HTSetPresentation(mc->contenttype, mc->command,
 			  mc->quality, 3.0, 0.0, mc->maxbytes);
@@ -476,22 +428,15 @@ PRIVATE void BuildCommand ARGS5(
 		    break;
 		case 'n':
 		case 'F':
-		    if (TRACE) {
-		        fprintf(stderr,
-			     "BuildCommand: Bad mailcap \"test\" clause: %s\n",
+		    CTRACE(tfp, "BuildCommand: Bad mailcap \"test\" clause: %s\n",
 				controlstring);
-		    }
 		case 's':
 		    if (TmpFileLen && TmpFileName) {
 			if ((to - *pBuf) + TmpFileLen + 1 > Bufsize) {
 			    *to = '\0';
-			    if (TRACE) {
-				fprintf(stderr,
-			"BuildCommand: Too long mailcap \"test\" clause,\n");
-				fprintf(stderr,
-					"              ignoring: %s%s...\n",
+			    CTRACE(tfp, "BuildCommand: Too long mailcap \"test\" clause,\n");
+			    CTRACE(tfp, "              ignoring: %s%s...\n",
 					*pBuf, TmpFileName);
-			    }
 			    **pBuf = '\0';
 			    return;
 			}
@@ -500,11 +445,9 @@ PRIVATE void BuildCommand ARGS5(
 		    }
 		    break;
 		default:
-		    if (TRACE) {
-			fprintf(stderr,
+		    CTRACE(tfp,
   "BuildCommand: Ignoring unrecognized format code in mailcap file '%%%c'.\n",
 			*from);
-		    }
 		    break;
 	    }
 	} else if (*from == '%') {
@@ -514,13 +457,9 @@ PRIVATE void BuildCommand ARGS5(
 	}
 	if (to >= *pBuf + Bufsize) {
 	    (*pBuf)[Bufsize - 1] = '\0';
-	    if (TRACE) {
-		fprintf(stderr,
-			"BuildCommand: Too long mailcap \"test\" clause,\n");
-		fprintf(stderr,
-			"              ignoring: %s...\n",
+	    CTRACE(tfp, "BuildCommand: Too long mailcap \"test\" clause,\n");
+	    CTRACE(tfp, "              ignoring: %s...\n",
 			*pBuf);
-	    }
 	    **pBuf = '\0';
 	    return;
 	}
@@ -528,12 +467,59 @@ PRIVATE void BuildCommand ARGS5(
     *to = '\0';
 }
 
+#define RTR_forget      0
+#define RTR_lookup      1
+#define RTR_add         2
+
+PRIVATE int RememberTestResult ARGS3(
+	int,		mode,
+	char *,		cmd,
+	int,		result)
+{
+    struct cmdlist_s {
+	char *cmd;
+	int result;
+	struct cmdlist_s *next;
+    };
+    static struct cmdlist_s *cmdlist = NULL;
+    struct cmdlist_s *cur;
+
+    switch(mode) {
+	case RTR_forget:
+	    while(cmdlist) {
+		cur = cmdlist->next;
+		FREE(cmdlist->cmd);
+		FREE(cmdlist);
+		cmdlist = cur;
+	    }
+	    break;
+	case RTR_lookup:
+	    for(cur = cmdlist; cur; cur = cur->next)
+		if(!strcmp(cmd, cur->cmd))
+		    return cur->result;
+	    return -1;
+	case RTR_add:
+	    cur = calloc(1, sizeof(struct cmdlist_s));
+	    if (cur == NULL)
+		outofmem(__FILE__, "RememberTestResult");
+	    cur->next = cmdlist;
+	    cur->cmd = (char *)malloc(strlen(cmd) + 1);
+	    if(cur->cmd)
+		strcpy(cur->cmd, cmd);
+	    else
+		ExitWithError("Out of memory");
+	    cur->result = result;
+	    cmdlist = cur;
+	    break;
+    }
+    return 0;
+}
+
 PRIVATE int PassesTest ARGS1(
 	struct MailcapEntry *,	mc)
 {
     int result;
-    char *cmd, TmpFileName[TMPFILE_NAME_SIZE];
-    char *cp = NULL;
+    char *cmd, TmpFileName[LY_MAXPATH];
 
     /*
      *  Make sure we have a command
@@ -546,31 +532,23 @@ PRIVATE int PassesTest ARGS1(
      */
     if (0 == strcasecomp(mc->testcommand, "test -n \"$DISPLAY\"")) {
 	FREE(mc->testcommand);
-	if (TRACE)
-	    fprintf(stderr,
-		    "PassesTest: Testing for XWINDOWS environment.\n");
-    	if ((cp = getenv(DISPLAY)) != NULL && *cp != '\0') {
-	    if (TRACE)
-	        fprintf(stderr,"PassesTest: Test passed!\n");
+	CTRACE(tfp, "PassesTest: Testing for XWINDOWS environment.\n");
+    	if (LYgetXDisplay() != NULL) {
+	    CTRACE(tfp, "PassesTest: Test passed!\n");
 	    return(0 == 0);
 	} else {
-	    if (TRACE)
-	        fprintf(stderr,"PassesTest: Test failed!\n");
+	    CTRACE(tfp, "PassesTest: Test failed!\n");
 	    return(-1 == 0);
 	}
     }
     if (0 == strcasecomp(mc->testcommand, "test -z \"$DISPLAY\"")) {
 	FREE(mc->testcommand);
-	if (TRACE)
-	    fprintf(stderr,
-		    "PassesTest: Testing for NON_XWINDOWS environment.\n");
-    	if (!((cp = getenv(DISPLAY)) != NULL && *cp != '\0')) {
-	    if (TRACE)
-	        fprintf(stderr,"PassesTest: Test passed!\n");
+	CTRACE(tfp, "PassesTest: Testing for NON_XWINDOWS environment.\n");
+    	if (LYgetXDisplay() == NULL) {
+	    CTRACE(tfp,"PassesTest: Test passed!\n");
 	    return(0 == 0);
 	} else {
-	    if (TRACE)
-	        fprintf(stderr,"PassesTest: Test failed!\n");
+	    CTRACE(tfp,"PassesTest: Test failed!\n");
 	    return(-1 == 0);
 	}
     }
@@ -580,11 +558,8 @@ PRIVATE int PassesTest ARGS1(
      */
     if (0 == strcasecomp(mc->testcommand, "test -n \"$LYNX_VERSION\"")){
 	FREE(mc->testcommand);
-	if (TRACE) {
-	    fprintf(stderr,
-		    "PassesTest: Testing for LYNX environment.\n");
-	    fprintf(stderr,"PassesTest: Test passed!\n");
-	}
+	CTRACE(tfp, "PassesTest: Testing for LYNX environment.\n");
+	CTRACE(tfp, "PassesTest: Test passed!\n");
 	return(0 == 0);
     } else
     /*
@@ -592,29 +567,37 @@ PRIVATE int PassesTest ARGS1(
      */
     if (0 == strcasecomp(mc->testcommand, "test -z \"$LYNX_VERSION\"")) {
 	FREE(mc->testcommand);
-	if (TRACE) {
-	    fprintf(stderr,
-		    "PassesTest: Testing for non-LYNX environment.\n");
-	    fprintf(stderr,"PassesTest: Test failed!\n");
-	}
+	CTRACE(tfp, "PassesTest: Testing for non-LYNX environment.\n");
+	CTRACE(tfp, "PassesTest: Test failed!\n");
 	return(-1 == 0);
     }
 
-    /*
-     *  Build the command and execute it.
-     */
-    tempname(TmpFileName, NEW_FILE);
-    cmd = (char *)malloc(1024);
-    if (!cmd)
-	ExitWithError("Out of memory");
-    BuildCommand(&cmd, 1024,
-		 mc->testcommand,
-		 TmpFileName,
-		 strlen(TmpFileName));
-    if (TRACE)
-	fprintf(stderr,"PassesTest: Executing test command: %s\n", cmd);
-    result = system(cmd);
-    FREE(cmd);
+    result = RememberTestResult(RTR_lookup, mc->testcommand, 0);
+    if(result == -1) {
+	/*
+	 *  Build the command and execute it.
+	 */
+	if (strchr(mc->testcommand, '%')) {
+	    if (LYOpenTemp(TmpFileName, HTML_SUFFIX, "w") == 0)
+		ExitWithError(CANNOT_OPEN_TEMP);
+	    LYCloseTemp(TmpFileName);
+	} else {
+	    /* We normally don't need a temp file name - kw */
+	    TmpFileName[0] = '\0';
+	}
+	cmd = (char *)malloc(1024);
+	if (!cmd)
+	    ExitWithError(MEMORY_EXHAUSTED_ABORT);
+	BuildCommand(&cmd, 1024,
+		     mc->testcommand,
+		     TmpFileName,
+		     strlen(TmpFileName));
+	CTRACE(tfp, "PassesTest: Executing test command: %s\n", cmd);
+	result = LYSystem(cmd);
+	FREE(cmd);
+	LYRemoveTemp(TmpFileName);
+	RememberTestResult(RTR_add, mc->testcommand, result ? 1 : 0);
+    }
 
     /*
      *  Free the test command as well since
@@ -622,10 +605,11 @@ PRIVATE int PassesTest ARGS1(
      */
     FREE(mc->testcommand);
 
-    if (TRACE && result)
-	fprintf(stderr,"PassesTest: Test failed!\n");
-    else if (TRACE)
-	fprintf(stderr,"PassesTest: Test passed!\n");
+    if (result) {
+	CTRACE(tfp,"PassesTest: Test failed!\n");
+    } else {
+	CTRACE(tfp,"PassesTest: Test passed!\n");
+    }
 
     return(result == 0);
 }
@@ -636,14 +620,10 @@ PRIVATE int ProcessMailcapFile ARGS1(
     struct MailcapEntry mc;
     FILE *fp;
 
-    if (TRACE)
-	fprintf(stderr,
-		"ProcessMailcapFile: Loading file '%s'.\n",
+    CTRACE(tfp, "ProcessMailcapFile: Loading file '%s'.\n",
 		file);
     if ((fp = fopen(file, "r")) == NULL) {
-	if (TRACE)
-	    fprintf(stderr,
-		"ProcessMailcapFile: Could not open '%s'.\n",
+	CTRACE(tfp, "ProcessMailcapFile: Could not open '%s'.\n",
 		    file);
 	return(-1 == 0);
     }
@@ -652,6 +632,7 @@ PRIVATE int ProcessMailcapFile ARGS1(
 	ProcessMailcapEntry(fp, &mc);
     }
     fclose(fp);
+    RememberTestResult(RTR_forget, NULL, 0);
     return(0 == 0);
 }
 
@@ -659,27 +640,35 @@ PRIVATE int ExitWithError ARGS1(
 	char *,		txt)
 {
     if (txt)
-	fprintf(stderr, "metamail: %s\n", txt);
-#ifndef NOSIGHUP
-    (void) signal(SIGHUP, SIG_DFL);
-#endif /* NOSIGHUP */
-    (void) signal(SIGTERM, SIG_DFL);
-#ifndef VMS
-    (void) signal(SIGINT, SIG_DFL);
-#endif /* !VMS */
-#ifdef SIGTSTP
-    if (no_suspend)
-	(void) signal(SIGTSTP,SIG_DFL);
-#endif /* SIGTSTP */
-    exit(-1);
+	fprintf(tfp, "metamail: %s\n", txt);
+    exit_immediately(-1);
     return(-1);
 }
 
+#define reverse_mailcap 1
 
 PRIVATE int HTLoadTypesConfigFile ARGS1(
 	char *,		fn)
 {
-  return ProcessMailcapFile(fn);
+    int result = 0;
+    HTList * saved = HTPresentations;
+
+    if (reverse_mailcap) {		/* temporarily hide existing list */
+	HTPresentations = NULL;
+    }
+
+    result = ProcessMailcapFile(fn);
+
+    if (reverse_mailcap) {
+	if (result && HTPresentations) {
+	    HTList_reverse(HTPresentations);
+	    HTList_appendList(HTPresentations, saved);
+	    FREE(saved);
+	} else {
+	    HTPresentations = saved;
+	}
+    }
+    return result;
 }
 
 
@@ -704,9 +693,7 @@ PUBLIC void HTFileInit NOARGS
 {
     FILE *fp;
 
-    if (TRACE)
-	fprintf(stderr,
-		"HTFileInit: Loading default (HTInit) extension maps.\n");
+    CTRACE(tfp, "HTFileInit: Loading default (HTInit) extension maps.\n");
 
     /* default suffix interpretation */
     HTSetSuffix("*",		"text/plain", "7bit", 1.0);
@@ -714,7 +701,7 @@ PUBLIC void HTFileInit NOARGS
 
 #ifdef EXEC_SCRIPTS
     /*
-     *  define these extentions for exec scripts.
+     *  define these extensions for exec scripts.
      */
 #ifndef VMS
     /* for csh exec links */
@@ -760,6 +747,8 @@ PUBLIC void HTFileInit NOARGS
     HTSetSuffix(".wsrc",	"application/x-WAIS-source", "8bit", 1.0);
 
     HTSetSuffix(".zip",		"application/x-Zip File", "binary", 1.0);
+
+    HTSetSuffix(".bz2",		"application/x-bzip2", "binary", 1.0);
 
     HTSetSuffix(".uu",		"application/x-UUencoded", "8bit", 1.0);
 
@@ -907,6 +896,7 @@ PUBLIC void HTFileInit NOARGS
     HTSetSuffix(".ht3",		"text/html", "8bit", 1.0);
     HTSetSuffix(".phtml",	"text/html", "8bit", 1.0);
     HTSetSuffix(".shtml",	"text/html", "8bit", 1.0);
+    HTSetSuffix(".sht",		"text/html", "8bit", 1.0);
     HTSetSuffix(".htmlx",	"text/html", "8bit", 1.0);
     HTSetSuffix(".htm",		"text/html", "8bit", 1.0);
     HTSetSuffix(".html",	"text/html", "8bit", 1.0);
@@ -919,13 +909,8 @@ PUBLIC void HTFileInit NOARGS
 	/* These should override everything else. */
 	HTLoadExtensionsConfigFile(personal_extension_map);
     } else {
-	char buffer[256];
-#ifdef VMS
-	sprintf(buffer, "sys$login:%s", personal_extension_map);
-#else
-	sprintf(buffer, "%s/%s", (Home_Dir() ? Home_Dir() : ""),
-				  personal_extension_map);
-#endif /* VMS */
+	char buffer[LY_MAXPATH];
+	LYAddPathToHome(buffer, sizeof(buffer), personal_extension_map);
 	/* These should override everything else. */
 	HTLoadExtensionsConfigFile(buffer);
     }
@@ -999,48 +984,40 @@ PRIVATE void HTGetWord ARGS4(
 PRIVATE int HTLoadExtensionsConfigFile ARGS1(
 	char *,		fn)
 {
-    char l[MAX_STRING_LEN],w[MAX_STRING_LEN],*ct;
+    char line[MAX_STRING_LEN];
+    char word[MAX_STRING_LEN];
+    char *ct;
     FILE *f;
-    int x, count = 0;
+    int count = 0;
 
-    if (TRACE)
-	fprintf(stderr,
-		"HTLoadExtensionsConfigFile: Loading file '%s'.\n", fn);
+    CTRACE(tfp, "HTLoadExtensionsConfigFile: Loading file '%s'.\n", fn);
 
     if ((f = fopen(fn,"r")) == NULL) {
-	if (TRACE)
-	    fprintf(stderr,
-		    "HTLoadExtensionsConfigFile: Could not open '%s'.\n", fn);
-	    return count;
+	CTRACE(tfp, "HTLoadExtensionsConfigFile: Could not open '%s'.\n", fn);
+	return count;
     }
 
-    while (!(HTGetLine(l,MAX_STRING_LEN,f))) {
-	HTGetWord(w, l, ' ', '\t');
-	if (l[0] == '\0' || w[0] == '#')
+    while (!(HTGetLine(line,sizeof(line),f))) {
+	HTGetWord(word, line, ' ', '\t');
+	if (line[0] == '\0' || word[0] == '#')
 	    continue;
-	ct = (char *)malloc(sizeof(char) * (strlen(w) + 1));
+	ct = (char *)malloc(sizeof(char) * (strlen(word) + 1));
 	if (!ct)
 	    outofmem(__FILE__, "HTLoadExtensionsConfigFile");
-	strcpy(ct,w);
-	for (x = 0; ct[x]; x++)
-	    ct[x] = TOLOWER(ct[x]);
+	strcpy(ct,word);
+	LYLowerCase(ct);
 
-	while(l[0]) {
-	    HTGetWord(w, l, ' ', '\t');
-	    if (w[0] && (w[0] != ' ')) {
-		char *ext = (char *)malloc(sizeof(char) * (strlen(w)+1+1));
-	        if (!ct)
+	while(line[0]) {
+	    HTGetWord(word, line, ' ', '\t');
+	    if (word[0] && (word[0] != ' ')) {
+		char *ext = (char *)malloc(sizeof(char) * (strlen(word)+1+1));
+	        if (!ext)
 	            outofmem(__FILE__, "HTLoadExtensionsConfigFile");
 
-		for (x = 0; w[x]; x++)
-		    ext[x+1] = TOLOWER(w[x]);
-		ext[0] = '.';
-		ext[strlen(w)+1] = '\0';
+		sprintf(ext, ".%s", word);
+		LYLowerCase(ext);
 
-		if (TRACE) {
-		    fprintf (stderr,
-			     "SETTING SUFFIX '%s' to '%s'.\n", ext, ct);
-		}
+		CTRACE (tfp, "SETTING SUFFIX '%s' to '%s'.\n", ext, ct);
 
 	        if (strstr(ct, "tex") != NULL ||
 	            strstr(ct, "postscript") != NULL ||

@@ -1,12 +1,13 @@
-The translation table files in this directory are _examples only_.
-They were collected from several sources (among them ftp://ftp.unicode.org,
-Linux kbd package, ftp://dkuug.dk/) and are believed to be correct
-in their mappings, but not checked in detail.  The Unicode/UCS2 values
-for some of the RFC 1345 Mnemonic codes are out of date, a cleanup and
-update would be needed for serious use.
+The translation table files in this directory were collected from
+several sources (among them ftp://ftp.unicode.org, Linux kbd package,
+ftp://dkuug.dk/) and are believed to be correct in their mappings,
+but not checked in detail.  The Unicode/UCS2 values
+for some of the RFC 1345 Mnemonic codes are out of date,
+a cleanup and update would be needed for serious use.
+[See also http://czyborra.com/charsets/iso8859.html for codepages survey.]
 
 More translation files can be easily provided (and new character entities
-added to entities.h), this set is just to test whether the system works 
+added to entities.h), this set is just to test whether the system works
 in principle (and also how it behaves with incomplete data...)
 
 See the file README.format for a brief explanation of what's in the
@@ -27,7 +28,7 @@ charset known to Lynx) you currently have to manually edit UCdomap.c, in
 two places:
 
 a) Near the top, you will find a bunch of lines (some may be commented out)
-  
+
   #include "<fn>.h"
 
 Add or comment out as you wish.  But it is probably safest to leave the
@@ -44,7 +45,7 @@ did under a)...) [The <something> is derived from the charset's MIME name.
 if in doubt, check the last lines of the corresponding ...uni.h file.]
 
 c) To let make automatically notice when you have changed one of the
-   table files, and automatically regenerate the *uni.h file(s), 
+   table files, and automatically regenerate the *uni.h file(s),
 you also have to add any new tables to both src/Makefile *and*
 src/chrtrans/Makefile.  Or, for auto-config, the equivalent files
 named makefile.in before running ./configure, or makefile after running

@@ -12,20 +12,20 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- 
+
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  * @(#)ufc-crypt.h	1.16 09/21/92
  *
- * Definitions of datatypes 
- * 
+ * Definitions of datatypes
+ *
  */
 
-/* 
+/*
  * Requirements for datatypes:
- * 
+ *
  * A datatype 'ufc_long' of at least 32 bit
  * *and*
  *   A type 'long32' of exactly 32 bits (_UFC_32_)
@@ -54,9 +54,9 @@ typedef long long     long64;
 #endif
 
 #ifdef ksr
-/* 
+/*
  * Note - the KSR machine does not define a unique symbol
- * which we can check. So you MUST add '-Dksr' to your Makefile.
+ * which we can check.  So you MUST add '-Dksr' to your Makefile.
  * Thanks to lijewski@theory.tc.cornell.edu (Mike Lijewski) for
  * the patch.
  */

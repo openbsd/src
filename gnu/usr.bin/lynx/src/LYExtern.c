@@ -15,83 +15,45 @@
  See lynx.cfg for other info.
 */
 
-#include "tcp.h"
-#include "LYGlobalDefs.h"
-#include "LYUtils.h"
-#include "LYExtern.h"
-#include "LYCurses.h"
-
-#include "LYLeaks.h"
+#include <LYUtils.h>
 
 #ifdef USE_EXTERNALS
-#define FREE(x) if (x) {free(x); x = NULL;}
 
-void run_external ARGS1(char *, c)
+#include <HTAlert.h>
+#include <LYGlobalDefs.h>
+#include <LYExtern.h>
+#include <LYLeaks.h>
+#include <LYCurses.h>
+
+void run_external ARGS1(char *, cmd)
 {
-	char command[1024];
-	lynx_html_item_type *externals2=0;
+    char *the_command = 0;
+    lynx_html_item_type *ext = 0;
 
-	if (externals == NULL) return;
+    for (ext = externals; ext != NULL; ext = ext->next) {
 
-	for(externals2=externals; externals2 != NULL;
-		 externals2=externals2->next)
-	{
+	if (ext->command != 0
+	&& !strncasecomp(ext->name, cmd, strlen(ext->name))) {
 
-#ifdef _WINDOWS
-	 if (!strnicmp(externals2->name,c,strlen(externals2->name)))
-#else
-	 if (!strncasecomp(externals2->name,c,strlen(externals2->name)))
-#endif
-	 {
-	     char *cp;
+	    if (no_externals && !ext->always_enabled) {
+		HTUserMsg(EXTERNALS_DISABLED);
+	    } else {
 
-		if(no_externals && !externals2->always_enabled)
-		{
-		  statusline(EXTERNALS_DISABLED);
-		  sleep(MessageSecs);
-		  return;
-		}
+		HTAddParam(&the_command, ext->command, 1, cmd);
+		HTEndParam(&the_command, ext->command, 1);
 
-		/*  Too dangerous to leave any URL that may come along unquoted.
-		 *  They often contain '&', ';', and '?' chars, and who knows
-		 *  what else may occur.
-		 *  Prevent spoofing of the shell.
-		 *  Dunno how this needs to be modified for VMS or DOS. - kw
-		 */
-#if defined(VMS) || defined(DOSPATH)
-		sprintf(command, externals2->command, c);
-#else /* Unix or DOS/Win: */
-		cp = quote_pathname(c);
-		sprintf(command, externals2->command, cp);
-		FREE(cp);
-#endif /* VMS */
+		HTUserMsg(the_command);
 
-		if (*command != '\0')
-		{
+		stop_curses();
+		LYSystem(the_command);
+		FREE(the_command);
+		start_curses();
+	    }
 
-		 statusline(command);
-		 sleep(MessageSecs);
-
-		 stop_curses();
-		 fflush(stdout);
-#ifdef __DJGPP__
-		__djgpp_set_ctrl_c(0);
-		_go32_want_ctrl_break(1);
-#endif /* __DJGPP__ */
-		 system(command);
-#ifdef __DJGPP__
-		__djgpp_set_ctrl_c(1);
-		_go32_want_ctrl_break(0);
-#endif /* __DJGPP__ */
-
-		 fflush(stdout);
-		 start_curses();
-		}
-
-		return;
-	 }
+	    break;
 	}
+    }
 
-	return;
+    return;
 }
 #endif /* USE_EXTERNALS */

@@ -8,18 +8,15 @@
 **	3 June 93	Bug fix: Won't crash if no description
 */
 
-#include "HTUtils.h"
-#include "tcp.h"
+#include <HTUtils.h>
 
-#include "HTWSRC.h"
+#include <HTWSRC.h>
 
 
-#include "HTML.h"
-#include "HTParse.h"
+#include <HTML.h>
+#include <HTParse.h>
 
-#include "LYLeaks.h"
-
-#define FREE(x) if (x) {free(x); x = NULL;}
+#include <LYLeaks.h>
 
 #define BIG 10000		/* Arbitrary limit to value length */
 #define PARAM_MAX BIG
@@ -162,9 +159,8 @@ PRIVATE void WSRCParser_put_character ARGS2(HTStream*, me, char, c)
 		}
 	    }
 	    if (!par_name[me->param_number]) {	/* Unknown field */
-		if (TRACE) fprintf(stderr,
-		    "HTWSRC: Unknown field `%s' in source file\n",
-		    me->param);
+		CTRACE(tfp, "HTWSRC: Unknown field `%s' in source file\n",
+			    me->param);
 		me->param_number = PAR_UNKNOWN;
 		me->state = before_value;	/* Could be better ignore */
 		return;
@@ -286,7 +282,7 @@ PRIVATE void give_parameter ARGS2(HTStream *, me, int, p)
 	PUTS(me->par_value[p]);
 	PUTS("; ");
     } else {
-	PUTS(" NOT GIVEN in source file; ");
+	PUTS(gettext(" NOT GIVEN in source file; "));
     }
 }
 
@@ -307,19 +303,19 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
 	}
 
 	START(HTML_HEAD);
-	PUTS("\n");
+	PUTC('\n');
 	START(HTML_TITLE);
 	PUTS(shortname);
-	PUTS(source_file ? " WAIS source file" : " index");
+	PUTS(source_file ? gettext(" WAIS source file") : INDEX_SEGMENT);
 	END(HTML_TITLE);
-	PUTS("\n");
+	PUTC('\n');
 	END(HTML_HEAD);
 
 	START(HTML_H1);
 	PUTS(shortname);
-	PUTS(source_file ? " description" : " index");
+	PUTS(source_file ? gettext(" description") : INDEX_SEGMENT);
 	END(HTML_H1);
-	PUTS("\n");
+	PUTC('\n');
 	FREE(shortname);
     }
 
@@ -327,7 +323,7 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
 
     if (source_file) {
 	START(HTML_DT);
-	PUTS("Access links");
+	PUTS(gettext("Access links"));
 	MAYBE_END(HTML_DT);
 	START(HTML_DD);
 	if (me->par_value[PAR_IP_NAME] &&
@@ -344,10 +340,10 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
 		www_database);
 
 	    HTStartAnchor(me->target, NULL, WSRC_address);
-	    PUTS("Direct access");
+	    PUTS(gettext("Direct access"));
 	    END(HTML_A);
 	    /** Proxy will be used if defined, so let user know that - FM **/
-	    PUTS(" (or via proxy server, if defined)");
+	    PUTS(gettext(" (or via proxy server, if defined)"));
 
 	    FREE(www_database);
 
@@ -361,7 +357,7 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
 
     if (me->par_value[PAR_MAINTAINER]) {
 	START(HTML_DT);
-	PUTS("Maintainer");
+	PUTS(gettext("Maintainer"));
 	MAYBE_END(HTML_DT);
 	START(HTML_DD);
 	PUTS(me->par_value[PAR_MAINTAINER]);
@@ -369,7 +365,7 @@ PRIVATE void WSRC_gen_html ARGS2(HTStream *, me, BOOL, source_file)
     }
     if (me->par_value[PAR_IP_NAME]) {
 	START(HTML_DT);
-	PUTS("Host");
+	PUTS(gettext("Host"));
 	MAYBE_END(HTML_DT);
 	START(HTML_DD);
 	PUTS(me->par_value[PAR_IP_NAME]);

@@ -1,0 +1,45 @@
+# List of source files containing translatable strings.
+
+# Package source files (use 'gettext()' function).
+
+LYMessages.c
+WWW/Library/Implementation/HTAABrow.c
+WWW/Library/Implementation/HTAccess.c
+WWW/Library/Implementation/HTFTP.c
+WWW/Library/Implementation/HTFile.c
+WWW/Library/Implementation/HTFinger.c
+WWW/Library/Implementation/HTGopher.c
+WWW/Library/Implementation/HTNews.c
+WWW/Library/Implementation/HTTCP.c
+WWW/Library/Implementation/HTTP.c
+WWW/Library/Implementation/HTTelnet.c
+WWW/Library/Implementation/HTWAIS.c
+WWW/Library/Implementation/HTWSRC.c
+src/GridText.c
+src/HTAlert.c
+src/HTML.c
+src/LYBookmark.c
+src/LYCgi.c
+src/LYClean.c
+src/LYCookie.c
+src/LYCurses.c
+src/LYDownload.c
+src/LYHistory.c
+src/LYLeaks.c
+src/LYList.c
+src/LYLocal.c
+src/LYMail.c
+src/LYMain.c
+src/LYMainLoop.c
+src/LYNews.c
+src/LYOptions.c
+src/LYPrint.c
+src/LYReadCFG.c
+src/LYShowInfo.c
+src/LYStyle.c
+src/LYTraversal.c
+src/LYUpload.c
+src/LYUtils.c
+src/LYrcFile.c
+
+# end of file POTFILE.in

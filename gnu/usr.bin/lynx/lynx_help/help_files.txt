@@ -1,0 +1,56 @@
+# Format:
+#	KEYWORD=<filename>.html
+# No space is allowed.
+#
+# Usage:
+# 	... href="@KEYWORD@">whatever keyword says</a>
+# 	... href="@KEYWORD@#section>...</a>
+# 	... href="../@KEYWORD#section>...</a>
+#
+# Help files which are used in Lynx's help directory.
+# Each filename has to end with '.html' otherwise install-help will fail.
+#
+ABOUT_LYNX=about_lynx.html
+ALT_EDIT_HELP=alt_edit_help.html
+BOOKMARK_HELP=bookmark_help.html
+COOKIE_HELP=cookie_help.html
+DIRED_HELP=dired_help.html
+EDIT_HELP=edit_help.html
+ENVIRONMENTS=environments.html
+FOLLOW_HELP=follow_help.html
+GOPHER_TYPES_HELP=gopher_types_help.html
+HISTORY_HELP=history_help.html
+KEYSTROKE_HELP=keystroke_help.html
+LYNX_HELP_MAIN=lynx_help_main.html
+LYNX_URL_SUPPORT=lynx_url_support.html
+LYNX_USERS_GUIDE=Lynx_users_guide.html
+MOVEMENT_HELP=movement_help.html
+OPTION_HELP=option_help.html
+OTHER_HELP=other_help.html
+PRINT_HELP=print_help.html
+SCROLLING_HELP=scrolling_help.html
+TEST_DISPLAY=test_display.html
+VISITED_HELP=visited_help.html
+XTERM_HELP=xterm_help.html
+LYNX_DEV=lynx-dev.html
+#
+# Frequently used or configurable links used in help files.
+# Each link has to contain 'http:' or 'ftp:' otherwise install-help will fail.
+#
+LYNX_DEV_ARCHIVE=http://www.flora.org/lynx-dev/html/
+LYNX_DIST=http://www.slcc.edu/lynx/current/index.html
+LYNX_FAQ=http://www.slcc.edu/lynx/faq.html
+LYNX_FAQ_AL=http://www.access.digex.net/~asgilman/lynx/FAQ/
+LYNX_HOME=http://lynx.browser.org/
+LYNX_SPEECH=http://leb.net/blinux/blynx/
+LYNX_SUBIR=http://www.crl.com/~subir/lynx.html
+WWW_NEWS=http://www.w3.org/hypertext/DataSources/News/Groups/Overview.html
+WWW_HTML2=http://www.w3.org/MarkUp/html-spec/html-spec_toc.html
+WWW_HTML3=http://www.w3.org/MarkUp/html3/Contents.html
+#
+# E-mail addresses used in help files.
+# Each e-mail address has to contain a '@' otherwise install-help will fail.
+#
+LYNX_DEV_MAIL=lynx-dev@sig.net
+LYNX_LIST_HOST=majordomo@sig.net
+LYNX_LIST_OWNER=majordomo-owner@sig.net

@@ -2,7 +2,10 @@
 Miso-8859-6
 
 #Name as a Display Charset (used on Options screen).
-OISO 8859-6 Arabic
+OArabic (ISO-8859-6)
+
+#Codepage number
+C1089
 
 #
 #	Name:             ISO 8859-6 (1987) to Unicode

@@ -1,7 +1,9 @@
 #ifndef LYCURSES_H
 #define LYCURSES_H
 
-#include "userdefs.h"
+#ifndef HTUTILS_H
+#include <HTUtils.h>
+#endif
 
 /*
  * The simple color scheme maps the 8 combinations of bold/underline/reverse
@@ -26,9 +28,6 @@
 #if defined(UNIX) && !defined(unix)
 #define unix
 #endif /* UNIX && !unix */
-#ifdef va_start
-#undef va_start	 /* not used, undef to avoid warnings on some systems */
-#endif /* va_start */
 #include <slang.h>
 
 #else /* Using curses: */
@@ -98,9 +97,14 @@
 extern void LYsubwindow PARAMS((WINDOW * param));
 # endif /* NCURSES */
 
+#if defined(NCURSES_VERSION) && defined(HAVE_DEFINE_KEY)
+#include <term.h>
+#define USE_KEYMAPS		1
+#endif
+
 #else
 # if defined(VMS) && defined(__GNUC__)
-#  include "LYGCurses.h"
+#  include <LYGCurses.h>
 # else
 #  include <curses.h>  /* everything else */
 # endif /* VMS && __GNUC__ */
@@ -145,10 +149,6 @@ extern void LYbox PARAMS((WINDOW *win, BOOLEAN formfield));
 extern int LYlines;  /* replaces LINES */
 extern int LYcols;   /* replaces COLS */
 
-#ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-
 extern void start_curses NOPARAMS;
 extern void stop_curses NOPARAMS;
 extern BOOLEAN setup PARAMS((char *terminal));
@@ -156,24 +156,25 @@ extern void LYstartTargetEmphasis NOPARAMS;
 extern void LYstopTargetEmphasis NOPARAMS;
 
 #ifdef VMS
+extern int DCLsystem (char *command);
 extern void VMSexit();
 extern int ttopen();
 extern int ttclose();
 extern int ttgetc();
-extern void *VMSsignal PARAMS((int sig, void (*func)()));
+extern void VMSsignal PARAMS((int sig, void (*func)()));
 #endif /* VMS */
 
 #if defined(USE_COLOR_STYLE)
 extern void curses_css PARAMS((char * name, int dir));
-extern void curses_style PARAMS((int style, int dir, int previous));
-extern void curses_w_style PARAMS((WINDOW* win, int style, int dir, int previous));
+extern void curses_style PARAMS((int style, int dir));
+extern void curses_w_style PARAMS((WINDOW* win, int style, int dir));
 extern void setHashStyle PARAMS((int style, int color, int cattr, int mono, char* element));
 extern void setStyle PARAMS((int style, int color, int cattr, int mono));
 extern void wcurses_css PARAMS((WINDOW * win, char* name, int dir));
-#define LynxChangeStyle curses_style
+#define LynxChangeStyle(style,dir,previous) curses_style(style,dir)
 #else
 extern int slang_style PARAMS((int style, int dir, int previous));
-#define LynxChangeStyle slang_style
+#define LynxChangeStyle(style,dir,previous) slang_style(style,dir,previous)
 #endif /* USE_COLOR_STYLE */
 
 #if USE_COLOR_TABLE
@@ -184,13 +185,19 @@ extern unsigned int Lynx_Color_Flags;
 #endif
 
 #ifdef USE_SLANG
+
 #if !defined(VMS) && !defined(DJGPP)
 #define USE_SLANG_MOUSE		1
-#endif /* USE_SLANG */
+#endif
+
+#if !defined(__DJGPP__)
+#define USE_KEYMAPS		1
+#endif
 
 #define SL_LYNX_USE_COLOR	1
 #define SL_LYNX_USE_BLINK	2
 #define SL_LYNX_OVERRIDE_COLOR	4
+
 #define start_bold()      	LYaddAttr(1)
 #define start_reverse()   	LYaddAttr(2)
 #define start_underline() 	LYaddAttr(4)
@@ -205,6 +212,9 @@ extern unsigned int Lynx_Color_Flags;
 /*
  *  Map some curses functions to slang functions.
  */
+#ifndef WINDOW
+#define WINDOW void
+#endif
 #define stdscr NULL
 #ifdef SLANG_MBCS_HACK
 extern int PHYSICAL_SLtt_Screen_Cols;
@@ -288,9 +298,7 @@ extern void VTHome NOPARAMS;
  */
 #if USE_COLOR_TABLE
 extern void LYaddWAttr PARAMS((WINDOW *win, int a));
-extern void LYaddAttr PARAMS((int a));
 extern void LYsubWAttr PARAMS((WINDOW *win, int a));
-extern void LYsubAttr PARAMS((int a));
 extern void LYaddWAttr PARAMS((WINDOW *win, int a));
 extern void LYsubWAttr PARAMS((WINDOW *win, int a));
 extern void lynx_set_color PARAMS((int a));
@@ -315,7 +323,11 @@ extern int  lynx_chg_color PARAMS((int, int, int));
 #else /* not UNDERLINE_LINKS: */
 #define start_bold()		LYaddAttr(A_BOLD)
 #define stop_bold()		LYsubAttr(A_BOLD)
+#ifdef USE_COLOR_STYLE
+#define start_underline()	attron(A_UNDERLINE) /* allow combining - kw */
+#else
 #define start_underline()	LYaddAttr(A_UNDERLINE)
+#endif /* USE_COLOR_STYLE */
 #define stop_underline()	LYsubAttr(A_UNDERLINE)
 #endif /* UNDERLINE_LINKS */
 #if defined(SNAKE) && defined(HP_TERMINAL)
@@ -332,6 +344,14 @@ extern int  lynx_chg_color PARAMS((int, int, int));
 #endif /* VMS */
 
 #else /* Not FANCY_CURSES: */
+
+#ifdef COLOR_CURSES
+#undef COLOR_CURSES
+Error FANCY_CURSES
+There is a problem with the configuration.  We expect to have FANCY_CURSES
+defined when COLOR_CURSES is defined, since we build on the attributes used in
+FANCY_CURSES.  Check your config.log to see why the FANCY_CURSES test failed.
+#endif
 
 /*
  *  We only have [w]standout() and [w]standin(),
@@ -377,5 +397,25 @@ extern void lynx_stop_prompt_color NOPARAMS;
 extern void lynx_start_radio_color NOPARAMS;
 extern void lynx_stop_radio_color NOPARAMS;
 extern void lynx_stop_all_colors NOPARAMS;
+
+/*
+ * To prevent corrupting binary data on DOS, MS-WINDOWS or OS/2 we open files
+ * and stdout in BINARY mode by default.  Where necessary we should open and
+ * (close!) TEXT mode.
+ *
+ * Note:  EMX has no corresponding variable like _fmode on DOS, but it does
+ * have setmode.
+ */
+#if defined(_WINDOWS) || defined(DJGPP) || defined(__EMX__)
+#define SetOutputMode(mode) setmode(fileno(stdout), mode)
+#else
+#define SetOutputMode(mode) /* nothing */
+#endif
+
+#if defined(_WINDOWS) || defined(DJGPP)
+#define SetDefaultMode(mode) _fmode = mode
+#else
+#define SetDefaultMode(mode) /* nothing */
+#endif
 
 #endif /* LYCURSES_H */

@@ -10,8 +10,8 @@
 #ifndef HTNEWS_H
 #define HTNEWS_H
 
-#include "HTAccess.h"
-#include "HTAnchor.h"
+#include <HTAccess.h>
+#include <HTAnchor.h>
 
 #ifdef GLOBALREF_IS_MACRO
 extern GLOBALREF(HTProtocol, HTNews);

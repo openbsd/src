@@ -1,13 +1,12 @@
-
 #ifndef HTFORMS_H
 #define HTFORMS_H
 
 #ifndef LYSTRUCTS_H
-#include "LYStructs.h"
+#include <LYStructs.h>
 #endif /* LYSTRUCTS_H */
 
 /* in LYForms.c */
-extern int change_form_link PARAMS((struct link *form_link, int mode,
+extern int change_form_link PARAMS((struct link *form_link,
                                     document *newdoc, BOOLEAN *refresh_screen,
 				    char *link_name, char *link_value));
 
@@ -59,7 +58,7 @@ typedef struct _FormInfo {
 	char *			value;	   /* user entered string data */
 	char *			orig_value;/* the original value */
 	int			size;	   /* width on the screen */
-	int			maxlength; /* max width of data */
+	unsigned		maxlength; /* max width of data */
 	int			group;	   /* a group associated with the link
 					    *  this is used for select's
 					    */
@@ -92,7 +91,7 @@ typedef struct _FormInfo {
 typedef struct _PerFormInfo
 {
 	int			number;	   /* form number, see GridText.c */
-    /* except for the last two, the followign fields aren't actually used.. */ 
+    /* except for the last two, the followign fields aren't actually used.. */
 	int			disabled;  /* If YES, can't change values */
         struct _PerFormInfo *	next; 	   /* pointer to next form in doc */
         int			nfields;   /* number of fields */
@@ -124,14 +123,12 @@ typedef struct _PerFormInfo
 #define WWW_FORM_LINK_TYPE  1
 #define WWW_LINK_TYPE   2
 #define WWW_INTERN_LINK_TYPE   6 /* can be used as a bitflag... - kw */
-#define LINK_LINE_FOUND	8	/* used in follow_link_number - kw */
+#define LINK_LINE_FOUND	8	/* used in follow_link_number, others - kw */
+#define LINK_DO_ARROWUP	16	/* returned by HTGetLinkOrFieldStart - kw */
 
 /* #define different lynx modes */
 #define NORMAL_LYNX_MODE 1
 #define FORMS_LYNX_MODE  2
-
-#define FORM_UP   1
-#define FORM_DOWN 2
 
 #define FIRST_ORDER  1
 #define MIDDLE_ORDER 2

@@ -1,0 +1,247 @@
+# Lynx Italian message catalog
+# created: Sat Aug 22 18:47:32 EDT 1998
+# updated:     Sep  7
+#
+msgid ""
+msgstr ""
+"Date: 1998-08-22 16:12:20-0400\n"
+"From: Webmaster Jim <jspath@bcpl.net>\n"
+"Content-Type: text/plain; charset=\n"
+"Files: src/LYMain.c src/LYMainLoop.c src/LYNews.c WWW/Library/Implementation/HTNews.c\n"
+
+# Lynx message catalog
+# Copyright (C) 1998 Free Software Foundation, Inc.
+# Webmaster Jim <jspath@bcpl.net>, 1998.
+# Lynx development group <lynx-dev@sig.net>, 1998.
+# http://lynx.browser.org/
+#
+# , fuzzy
+#: WWW/Library/Implementation/HTNews.c:350
+msgid "Username for news host '%s':"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:361 WWW/Library/Implementation/HTNews.c:445 WWW/Library/Implementation/HTNews.c:2344 WWW/Library/Implementation/HTNews.c:2402 WWW/Library/Implementation/HTNews.c:2507 WWW/Library/Implementation/HTNews.c:2522 WWW/Library/Implementation/HTNews.c:2530 WWW/Library/Implementation/HTNews.c:2669
+msgid "Connection interrupted."
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:363 WWW/Library/Implementation/HTNews.c:447
+msgid "Connection closed ???"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:403
+msgid "Change username?"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:517
+msgid "Change password?"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:826
+msgid "Cannot open temporary file for news POST."
+msgstr "Impossibile aprire file temporaneo"
+
+#: WWW/Library/Implementation/HTNews.c:1595
+msgid ""
+"\n"
+"No articles in this group.\n"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:1608
+msgid ""
+"\n"
+"No articles in this range.\n"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:1642
+msgid "Earlier articles"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:1655
+msgid ""
+"\n"
+"There are about %d articles currently available in %s, IDs as follows:\n"
+"\n"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:1713
+msgid "All available articles in "
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:1923
+msgid "Later articles"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:1947
+msgid "Post to "
+msgstr "Inviare a aree di conferenza "
+
+#: WWW/Library/Implementation/HTNews.c:2035
+msgid "This client does not contain support for posting to news with SSL."
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2048
+msgid "Invalid URL!"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2125
+msgid "This client does not contain support for SNEWS URLs."
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2306
+msgid "No target for raw text!"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2336
+msgid "Connecting to NewsHost ..."
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2436 WWW/Library/Implementation/HTNews.c:2462 WWW/Library/Implementation/HTNews.c:2619
+msgid "Cannot POST to this host."
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2485
+msgid "Cancelled!"
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2637
+msgid "Reading list of available newsgroups."
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2659
+msgid "Reading list of articles in newsgroup."
+msgstr ""
+
+#: WWW/Library/Implementation/HTNews.c:2665
+msgid "Reading news article."
+msgstr ""
+
+#: src/LYMain.c:2502
+msgid ""
+"\n"
+"%s Version %s (1998)\n"
+msgstr ""
+
+#: src/LYMain.c:2507
+msgid "%s Version %s %s"
+msgstr "%s Versione %s %s"
+
+#: src/LYMain.c:2510
+msgid "Copyrights held by the University of Kansas, CERN, and other contributors.\n"
+msgstr "Il copyright ha tenuto dall' università di Kansas, di CERN e di altri contributori.\n"
+
+#: src/LYMain.c:2512
+msgid "Distributed under the GNU General Public License.\n"
+msgstr "Distribuito sotto l' autorizzazione del grande pubblico di GNU.\n"
+
+#: src/LYMain.c:2514
+msgid ""
+"See http://lynx.browser.org/ and the online help for more information.\n"
+"\n"
+msgstr "Vedere http://lynx.browser.org / e l' aiuto in linea per le più informazioni.\n"
+"\n"
+
+#: src/LYMainLoop.c:2204
+msgid "Are you sure you want to quit? [Y] "
+msgstr " Vuoi abbandonare? [Y] "
+
+#: src/LYMainLoop.c:2206
+msgid "Are you sure you want to quit? [N] "
+msgstr " Vuoi abbandonare? [N] "
+
+#: src/LYMainLoop.c:2214 src/LYMainLoop.c:2219
+msgid "Excellent!!!"
+msgstr "Bene!!!"
+
+#: src/LYNews.c:72 src/LYNews.c:84
+msgid "Can't open temporary file!"
+msgstr "Impossibile aprire file temporaneo!"
+
+#: src/LYNews.c:111
+msgid "You will be posting to:"
+msgstr ""
+
+#: src/LYNews.c:120
+msgid ""
+"\n"
+"\n"
+" Please provide your mail address for the From: header\n"
+msgstr ""
+
+#: src/LYNews.c:127 src/LYNews.c:156 src/LYNews.c:191 src/LYNews.c:265 src/LYNews.c:276
+msgid "News Post Cancelled!!!"
+msgstr "Invio news cancellato!!!"
+
+#: src/LYNews.c:139
+msgid ""
+"\n"
+"\n"
+" Please provide or edit the Subject: header\n"
+msgstr ""
+"\n"
+"\n"
+" Inserire il soggetto.\n"
+
+#: src/LYNews.c:187
+msgid ""
+"\n"
+"\n"
+" Please provide or edit the Organization: header\n"
+msgstr ""
+
+#: src/LYNews.c:217
+msgid "Do you wish to include the original message? (y/n) "
+msgstr "Vuoi includere il messaggio originario? (s/n) "
+
+#: src/LYNews.c:244
+msgid "Spawning your selected editor to edit news message"
+msgstr "Avvio dell'editor selezionato per editare messaggi news"
+
+#: src/LYNews.c:248
+msgid "Error spawning editor, check your editor definition in the options menu"
+msgstr "Errore nell'avvio dell'editor, verifica la definizione dell'editor nelle opzioni"
+
+#: src/LYNews.c:256
+msgid ""
+"\n"
+"\n"
+" Please enter your message below."
+msgstr ""
+
+#: src/LYNews.c:257
+msgid ""
+"\n"
+" When you are done, press enter and put a single period (.)"
+msgstr ""
+
+#: src/LYNews.c:258
+msgid ""
+"\n"
+" on a line and press enter again."
+msgstr ""
+
+#: src/LYNews.c:293
+msgid "Post this message? (y/n) "
+msgstr "Inviare questo messaggio? (s/n)"
+
+#: src/LYNews.c:306
+msgid "Append '%s'?  (y/n) "
+msgstr "Aggiungere '%s'?  (s/n) "
+
+#: src/LYNews.c:364
+msgid "Posting to newsgroup(s)..."
+msgstr "Inviare a aree di conferenza..."
+
+#: src/LYexit.c:112
+msgid ""
+"\n"
+"Memory exhausted!  Program aborted!\n"
+"\n"
+msgstr "\nMemoria esaurita! Fine anomala del programma!\n\n"
+
+#: src/LYexit.c:176
+msgid ""
+"\n"
+"\n"
+"\n"
+"%s %s: out of memory.  Aborting..."
+msgstr "\n\n\n%s %s: Memoria esaurita! Fine anomala del programma!"

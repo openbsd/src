@@ -25,7 +25,7 @@ IDE_LFLAGS32 =  -LD:\BC45\LIB
 LLATC32_lynxdexe =  -LCURSES;D:\BC45\LIB -wdpl -wdup -Tpe -ap -c
 RLATC32_lynxdexe =  -k -w32
 BLATC32_lynxdexe = 
-CNIEAT_lynxdexe = -I.\;CURSES;SRC;WWW\LIBRARY\IMPLEMENTATION;D:\BC45\INCLUDE;SRC\CHRTRANS -DNO_UNISTD_H;_WINDOWS;XMOSAIC_HACK;ACCESS_AUTH;NO_UTMP;NO_CUSERID;NO_TTYTYPE;NOSIGHUP;DOSPATH;NOUSERS;NCURSES;FANCY_CURSES;COLOR_CURSES;HAVE_KEYPAD;VC="2.14FM";NCURSES_VERSION
+CNIEAT_lynxdexe = -I.\;CURSES;SRC;WWW\LIBRARY\IMPLEMENTATION;D:\BC45\INCLUDE;SRC\CHRTRANS -DNO_UNISTD_H;_WINDOWS;XMOSAIC_HACK;ACCESS_AUTH;NO_UTMP;NO_CUSERID;NO_TTYTYPE;NOSIGHUP;DOSPATH;NOUSERS;NCURSES;FANCY_CURSES;COLOR_CURSES;HAVE_KEYPAD;VC="2.14FM";NCURSES_VERSION;DISP_PARTIAL;SOURCE_CACHE;USE_PSRC
 LNIEAT_lynxdexe = -x
 LEAT_lynxdexe = $(LLATC32_lynxdexe)
 REAT_lynxdexe = $(RLATC32_lynxdexe)
@@ -129,6 +129,7 @@ Dep_lynxdexe = \
    OBJ\lymap.obj\
    OBJ\lynews.obj\
    OBJ\lyoption.obj\
+   OBJ\lypretty.obj\
    OBJ\lyprint.obj\
    OBJ\lyrcfile.obj\
    OBJ\lyreadcf.obj\
@@ -220,6 +221,7 @@ OBJ\lymainlo.obj+
 OBJ\lymap.obj+
 OBJ\lynews.obj+
 OBJ\lyoption.obj+
+OBJ\lypretty.obj+
 OBJ\lyprint.obj+
 OBJ\lyrcfile.obj+
 OBJ\lyreadcf.obj+
@@ -620,6 +622,11 @@ OBJ\lynews.obj :  src\lynews.c
 OBJ\lyoption.obj :  src\lyoption.c
   $(BCC32) -P- -c @&&|
  $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lyoption.c
+|
+
+OBJ\lypretty.obj :  src\lypretty.c
+  $(BCC32) -P- -c @&&|
+ $(CEAT_lynxdexe) $(CNIEAT_lynxdexe) -o$@ src\lypretty.c
 |
 
 OBJ\lyprint.obj :  src\lyprint.c

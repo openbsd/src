@@ -28,29 +28,29 @@ addition to access by way of a file management menu.
 There are two possible modes of operation; the first in which a single
 file management menu is invoked via the `f', or `F' key; the second,
 in which the more often used facilities are made available directly
-from the keyboard in addition to access via the menu. The second
+from the keyboard in addition to access via the menu.  The second
 method provides a much better user interface but requires re-mapping
 some of the keys from their standard lynx interpretation, temporarily
-when file management mode is in effect. For example, if OK_OVERRIDE is
+when file management mode is in effect.  For example, if OK_OVERRIDE is
 defined at compile-time, then the line at the bottom of the screen, in
 novice mode, will be
 
-  C)reate  D)ownload  E)dit  F)ull menu  M)odify  R)emove  T)ag  U)pload 
+  C)reate  D)ownload  E)dit  F)ull menu  M)odify  R)emove  T)ag  U)pload
 
 rather than the standard second noviceline,
 
-  H)elp O)ptions P)rint G)o M)ain screen Q)uit /=search [delete]=history list 
+  H)elp O)ptions P)rint G)o M)ain screen Q)uit /=search [delete]=history list
 
-when the user is browsing part of the file system. If OK_OVERRIDE is not
+when the user is browsing part of the file system.  If OK_OVERRIDE is not
 defined then all access to file management functionality must be by way
-of the menu. The only exception is that the facility to tag files for
+of the menu.  The only exception is that the facility to tag files for
 subsequent removal and/or re-location is always available directly from
-the keyboard using `t', and `T'. 
+the keyboard using `t', and `T'.
 
 This is a first release of the file management enhancements and suggestions
-for improvements are welcome. Among the enhancements which are currently
+for improvements are welcome.  Among the enhancements which are currently
 being considered are facilities for changing file access attributes, and
-a facility for listing and extracting part of an archive. 
+a facility for listing and extracting part of an archive.
 
 In order to use the file management facilities you may either point
 the program at a directory on the command line or point the program at
@@ -61,9 +61,9 @@ an html file which contains a link of the following form:
 where the anchor `file://localhost/~/' implies a reference to
 /home/username.  Because the `~/' in a file URL is converted to
 `/home/username' regardless of origin, these facilities also work when
-the anchor shown above is served from an http server as well. In
+the anchor shown above is served from an http server as well.  In
 either case the reference is to files on the local system and not
-files in the domain of the server. 
+files in the domain of the server.
 
 By default the file listing is in standard Unix mixed format, but you
 may use the Options menu to select WWW `directories first' format, or

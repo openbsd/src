@@ -3,7 +3,7 @@
 #define LYCHARUTILS_H
 
 #ifndef HTUTILS_H
-#include "HTUtils.h"
+#include <HTUtils.h>
 #endif /* HTUTILS_H */
 
 #define CHECK_ID(code) LYCheckForID(me, present, value, (int)code)
@@ -38,10 +38,10 @@ extern char *LYFindEndOfComment PARAMS((
 	char *		str));
 extern void LYFillLocalFileURL PARAMS((
 	char ** 	href,
-	char *		base));
+	CONST char *	base));
 extern void LYAddMETAcharsetToFD PARAMS((
-	FILE *			fd,
-	int			disp_chndl));
+	FILE *		fd,
+	int		disp_chndl));
 
 #ifdef Lynx_HTML_Handler
 extern int OL_CONTINUE; 	/* flag for whether CONTINUE is set */

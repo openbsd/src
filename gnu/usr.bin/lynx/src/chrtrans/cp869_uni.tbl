@@ -1,8 +1,11 @@
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Mcp869
 
 #Name as a Display Charset (used on Options screen)
-ODosGreek2 (cp869)
+OGreek2 (cp869)
+
+#Codepage number
+C869
 
 #    Name:     cp869_DOSGreek2 to Unicode table
 #    Unicode version: 2.0

@@ -8,8 +8,8 @@
 #define HTLIST_H
 
 #ifndef HTUTILS_H
-#include "HTUtils.h"  /* for BOOL type and PARAMS and ARGS*/
-#endif /* HTUTILS_H */
+#include <HTUtils.h>
+#endif
 
 typedef struct _HTList HTList;
 
@@ -17,19 +17,6 @@ struct _HTList {
 	void *		object;
 	HTList *	next;
 };
-
-#ifdef SHORT_NAMES
-#define HTList_new                      HTLiNew
-#define HTList_delete                   HTLiDele
-#define HTList_addObject                HTLiAdOb
-#define HTList_removeObject             HTLiReOb
-#define HTList_removeObjectAt           HTLiReAt
-#define HTList_removeLastObject         HTLiReLa
-#define HTList_removeFirstObject        HTLiReFi
-#define HTList_count                    HTLiCoun
-#define HTList_indexOf                  HTLiInOf
-#define HTList_objectAt                 HTLiObAt
-#endif /* SHORT_NAMES */
 
 
 /*	Fast macro to traverse a list.  Call it first with copy of the list
@@ -61,6 +48,17 @@ extern HTList * HTList_new NOPARAMS;
 */
 extern void HTList_delete PARAMS((
 	HTList *	me));
+
+/*	Reverse a list.
+*/
+extern HTList * HTList_reverse PARAMS((
+	HTList *	start));
+
+/*	Append two lists, making second list empty.
+*/
+extern HTList * HTList_appendList PARAMS((
+	HTList *	start,
+	HTList *	tail));
 
 
 /*      Add object to START of list (so it is pointed to by the head).

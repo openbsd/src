@@ -34,7 +34,7 @@ struct unipair {
 };
 struct unipair_str {
 	u16 unicode;
-	char * replace_str;
+	CONST char * replace_str;
 };
 struct unimapdesc {
 	u16 entry_ct;

@@ -6,8 +6,8 @@
 **
 ** History
 **      15 Jun 95   Created as way to provide a lynx based service with
-**                  dynamic pages without the need for a http daemon. GL
-**      27 Jun 95   Added <index> (command line) support. Various cleanup
+**                  dynamic pages without the need for a http daemon.  GL
+**      27 Jun 95   Added <index> (command line) support.  Various cleanup
 **                  and bug fixes. GL
 **	04 Sep 97   Added support for PATH_INFO scripts.  JKT
 **
@@ -17,40 +17,40 @@
 **
 **      Should do something about SIGPIPE, (but then it should never happen)
 **
-**      No support for redirection. Or mime-types.
+**      No support for redirection.  Or mime-types.
 **
 **      Should try and parse for a HTTP 1.1 header in case we are "calling" a
 **      nph- script.
-*/ 
+*/
 
-#include "HTUtils.h"
-#include "tcp.h"
-#include "HTTP.h"
-#include "HTParse.h"
-#include "HTTCP.h"
-#include "HTFormat.h"
-#include "HTFile.h"
-#include "HTAlert.h"
-#include "HTMIME.h"
-#include "HTAABrow.h"
+#include <HTUtils.h>
+#include <HTTP.h>
+#include <HTParse.h>
+#include <HTTCP.h>
+#include <HTFormat.h>
+#include <HTFile.h>
+#include <HTAlert.h>
+#include <HTMIME.h>
+#include <HTAABrow.h>
 
-#include "LYGlobalDefs.h"
-#include "LYUtils.h"
-#include "HTML.h"
-#include "HTInit.h"
-#include "LYGetFile.h"
-#include "LYBookmark.h"
-#include "GridText.h"
-#include <ctype.h>
-#include "LYCgi.h"
-#include "LYSignal.h"
-#include "LYLocal.h"
+#include <LYGlobalDefs.h>
+#include <LYUtils.h>
+#include <HTML.h>
+#include <HTInit.h>
+#include <LYGetFile.h>
+#include <LYBookmark.h>
+#include <GridText.h>
+#include <LYCgi.h>
+#include <LYStrings.h>
+#include <LYLocal.h>
 
-#include "LYLeaks.h"
+#include <LYLeaks.h>
 
-#define FREE(x) if (x) {free(x); x = NULL;}
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 
-struct _HTStream 
+struct _HTStream
 {
   HTStreamClass * isa;
 };
@@ -58,13 +58,44 @@ struct _HTStream
 PRIVATE char **env = NULL;  /* Environment variables */
 PRIVATE int envc_size = 0;  /* Slots in environment array */
 PRIVATE int envc = 0;	    /* Slots used so far */
+PRIVATE HTList *alloced = NULL;
 #ifdef LYNXCGI_LINKS
-PRIVATE char user_agent[64];
-PRIVATE char server_software[64];
+PRIVATE char *user_agent = NULL;
+PRIVATE char *server_software = NULL;
+PRIVATE char *accept_language = NULL;
+PRIVATE char *post_len = NULL;
 #endif /* LYNXCGI_LINKS */
 
 PRIVATE void add_environment_value PARAMS((char *env_value));
 
+#define PERROR(msg) CTRACE(tfp, "LYNXCGI: %s: %s\n", msg, LYStrerror(errno))
+
+#ifdef LY_FIND_LEAKS
+PRIVATE void free_alloced_lynxcgi NOARGS
+{
+    void *ptr;
+    while ((ptr = HTList_removeLastObject(alloced)) != NULL) {
+	FREE(ptr);
+    }
+    FREE(alloced);
+#ifdef LYNXCGI_LINKS
+    FREE(user_agent);
+    FREE(server_software);
+#endif
+}
+#endif /* LY_FIND_LEAKS */
+
+PRIVATE void remember_alloced ARGS1(
+    void *,		ptr)
+{
+    if (!alloced) {
+	alloced = HTList_new();
+#ifdef LY_FIND_LEAKS
+	atexit(free_alloced_lynxcgi);
+#endif
+    }
+    HTList_addObject(alloced, ptr);
+}
 
 /*
  * Simple routine for expanding the environment array and adding a value to
@@ -75,13 +106,15 @@ PRIVATE void add_environment_value ARGS1(
 {
     if (envc == envc_size) {   /* Need some more slots */
 	envc_size += 10;
-	if (env)
+	if (env) {
 	    env = (char **)realloc(env,
 				   sizeof(env[0]) * (envc_size + 2));
 						/* + terminator and base 0 */
-	else
+	} else {
 	    env = (char **)malloc(sizeof(env[0]) * (envc_size + 2));
 						/* + terminator and base 0 */
+	    remember_alloced(env);
+	}
 	if (env == NULL) {
 	    outofmem(__FILE__, "LYCgi");
 	}
@@ -90,7 +123,7 @@ PRIVATE void add_environment_value ARGS1(
     env[envc++] = env_value;
     env[envc] = NULL;      /* Make sure it is always properly terminated */
 }
-    
+
 /*
  * Add the value of an existing environment variable to those passed on to the
  * lynxcgi script.
@@ -113,6 +146,7 @@ PUBLIC void add_lynxcgi_environment ARGS1(
 	strcat(add_value, "=");
 	strcat(add_value, env_value);
 	add_environment_value(add_value);
+	remember_alloced(add_value);
     }
 }
 
@@ -122,7 +156,7 @@ PRIVATE int LYLoadCGI ARGS4(
 	HTFormat,		format_out,
 	HTStream*,		sink)
 {
-    int status;
+    int status = 0;
 #ifdef LYNXCGI_LINKS
 #ifndef VMS
     char *cp;
@@ -176,23 +210,19 @@ PRIVATE int LYLoadCGI ARGS4(
 		*cp = '\0';
 		statrv = 999;	/* force new stat()  - kw */
 	    } else {
-		if (TRACE)
-		    perror("LYNXCGI: strrchr(pgm_buff, '/') returned NULL");
+		PERROR("strrchr(pgm_buff, '/') returned NULL");
 	    	break;
 	    }
         }
 
 	if (statrv < 0) {
 	    /* Did not find PATH_INFO data */
-	    if (TRACE) 
-		perror("LYNXCGI: stat() of pgm_buff failed");
+	    PERROR("stat() of pgm_buff failed");
 	} else {
-	    /* Found PATH_INFO data. Strip it off of pgm and into path_info. */
+	    /* Found PATH_INFO data.  Strip it off of pgm and into path_info. */
 	    StrAllocCopy(path_info, pgm+strlen(pgm_buff));
 	    strcpy(pgm, pgm_buff);
-	    if (TRACE)
-		fprintf(stderr,
-			"LYNXCGI: stat() of %s succeeded, path_info=\"%s\".\n",
+	    CTRACE(tfp, "LYNXCGI: stat() of %s succeeded, path_info=\"%s\".\n",
 			pgm_buff, path_info);
 	}
 	FREE(pgm_buff);
@@ -204,10 +234,8 @@ PRIVATE int LYLoadCGI ARGS4(
 	 *  Neither the path as given nor any components examined by
 	 *  backing up were stat()able. - kw
 	 */
-	HTAlert("Unable to access cgi script");
-	if (TRACE) {
-	    perror("LYNXCGI: stat() failed");
-	}
+	HTAlert(gettext("Unable to access cgi script"));
+	PERROR("stat() failed");
 	status = -4;
 
     } else if (!(S_ISREG(stat_buf.st_mode) &&
@@ -223,25 +251,18 @@ PRIVATE int LYLoadCGI ARGS4(
 	 *  to confusing to know just what file is loaded. - kw
 	 */
 	if (path_info) {
-	    if (TRACE) {
-		fprintf(stderr,
-			"%s is not a file and %s not an executable, giving up.\n",
+	    CTRACE(tfp, "%s is not a file and %s not an executable, giving up.\n",
 			orig_pgm, pgm);
-	    }
 	    FREE(path_info);
 	    FREE(pgm);
 	    FREE(orig_pgm);
 	    status = -4;
 	    return(status);
 	}
-	    
-	StrAllocCopy(new_arg, "file://localhost");
-	StrAllocCat(new_arg, orig_pgm);
 
-	if (TRACE) {
-	    fprintf(stderr,
-		    "%s is not an executable file, passing the buck.\n", arg);
-	}
+	LYLocalFileToURL (&new_arg, orig_pgm);
+
+	CTRACE(tfp, "%s is not an executable file, passing the buck.\n", arg);
 	status = HTLoadFile(new_arg, anAnchor, format_out, sink);
 	FREE(new_arg);
 
@@ -261,8 +282,7 @@ PRIVATE int LYLoadCGI ARGS4(
 	status = HT_NOT_LOADED;
 
     } else if (no_lynxcgi) {
-	_statusline(CGI_DISABLED);
-	sleep(MessageSecs);
+	HTUserMsg(CGI_DISABLED);
 	status = HT_NOT_LOADED;
 
     } else if (no_bookmark_exec &&
@@ -277,8 +297,7 @@ PRIVATE int LYLoadCGI ARGS4(
 	 *  no_bookmark_exec is TRUE an we are not now coming from a
 	 *  bookmark page. - kw
 	 */
-	_statusline(BOOKMARK_EXEC_DISABLED);
-	sleep(MessageSecs);
+	HTUserMsg(BOOKMARK_EXEC_DISABLED);
 	status = HT_NOT_LOADED;
 
     } else if (anAnchor != HTMainAnchor &&
@@ -301,7 +320,7 @@ PRIVATE int LYLoadCGI ARGS4(
 	int fd1[2], fd2[2];
 	char buf[1024];
 	pid_t pid;
-#if HAVE_TYPE_UNIONWAIT
+#ifdef HAVE_TYPE_UNIONWAIT
 	union wait wstatus;
 #else
 	int wstatus;
@@ -312,73 +331,71 @@ PRIVATE int LYLoadCGI ARGS4(
 	    /* Show output as plain text */
 	    format_in = WWW_PLAINTEXT;
 	} else {
-	    
+
 	    /* Decode full HTTP response */
 	    format_in = HTAtom_for("www/mime");
 	}
-		
+
 	target = HTStreamStack(format_in,
 			       format_out,
 			       sink, anAnchor);
-		
+
 	if (!target || target == NULL) {
-	    sprintf(buf, CANNOT_CONVERT_I_TO_O,
-		    HTAtom_name(format_in), HTAtom_name(format_out));
-	    _statusline(buf);
-	    sleep(AlertSecs);
+	    char *tmp = 0;
+	    HTSprintf0(&tmp, CANNOT_CONVERT_I_TO_O,
+		       HTAtom_name(format_in),
+		       HTAtom_name(format_out));
+	    HTAlert(tmp);
+	    FREE(tmp);
 	    status = HT_NOT_LOADED;
 
 	} else if (anAnchor->post_data && pipe(fd1) < 0) {
 	    HTAlert(CONNECT_SET_FAILED);
-	    if (TRACE) {
-		perror("LYNXCGI: pipe() failed");
-	    }
+	    PERROR("pipe() failed");
 	    status = -3;
-	    
+
 	} else if (pipe(fd2) < 0) {
 	    HTAlert(CONNECT_SET_FAILED);
-	    if (TRACE) {
-		perror("LYNXCGI: pipe() failed");
-	    }
+	    PERROR("pipe() failed");
 	    close(fd1[0]);
 	    close(fd1[1]);
 	    status = -3;
-	    
-	} else {	
+
+	} else {
 	    static BOOL first_time = TRUE;      /* One time setup flag */
 
 	    if (first_time) {	/* Set up static environment variables */
 		first_time = FALSE;	/* Only once */
-		
+
 		add_environment_value("REMOTE_HOST=localhost");
 		add_environment_value("REMOTE_ADDR=127.0.0.1");
-		
-		sprintf(user_agent, "HTTP_USER_AGENT=%s/%s libwww/%s",
+
+		HTSprintf0(&user_agent, "HTTP_USER_AGENT=%s/%s libwww/%s",
 			LYNX_NAME, LYNX_VERSION, HTLibraryVersion);
 		add_environment_value(user_agent);
-		
-		sprintf(server_software, "SERVER_SOFTWARE=%s/%s",
+
+		HTSprintf0(&server_software, "SERVER_SOFTWARE=%s/%s",
 			LYNX_NAME, LYNX_VERSION);
 		add_environment_value(server_software);
 	    }
-	    
+	    fflush(stdout);
+	    fflush(stderr);
+	    CTRACE_FLUSH(tfp);
+
 	    if ((pid = fork()) > 0) { /* The good, */
 		int chars, total_chars;
-		
+
 		close(fd2[1]);
-		
+
 		if (anAnchor->post_data) {
 		    int written, remaining, total_written = 0;
 		    close(fd1[0]);
 
 		    /* We have form data to push across the pipe */
-		    if (TRACE) {
-			fprintf(stderr, "LYNXCGI: Doing post, content-type '%s'\n",
+		    CTRACE(tfp, "LYNXCGI: Doing post, content-type '%s'\n",
 				anAnchor->post_content_type);
-			fprintf(stderr,
-				"LYNXCGI: Writing:\n%s----------------------------------\n",
-				anAnchor->post_data);			
-		    }
+		    CTRACE(tfp, "LYNXCGI: Writing:\n%s----------------------------------\n",
+				anAnchor->post_data);
 		    remaining = strlen(anAnchor->post_data);
 		    while ((written = write(fd1[1],
 					    anAnchor->post_data + total_written,
@@ -392,43 +409,52 @@ PRIVATE int LYLoadCGI ARGS4(
 			    if (errno == ERESTARTSYS)
 				continue;
 #endif /* ERESTARTSYS */
-			    if (TRACE) {
-				perror("LYNXCGI: write() of POST data failed");
-			    }
+			    PERROR("write() of POST data failed");
 			    break;
 			}
-			if (TRACE) {
-			    fprintf(stderr,
-				    "LYNXCGI: Wrote %d bytes of POST data.\n",
+			CTRACE(tfp, "LYNXCGI: Wrote %d bytes of POST data.\n",
 				    written);
-			}
 			total_written += written;
 			remaining -= written;
 			if (remaining == 0)
 			    break;
 		    }
 		    if (remaining != 0) {
-			if (TRACE)
-			    fprintf(stderr,
-				    "LYNXCGI: %d bytes remain unwritten!\n",
+			CTRACE(tfp, "LYNXCGI: %d bytes remain unwritten!\n",
 				    remaining);
 		    }
 		    close(fd1[1]);
 		}
-		
-		total_chars = 0;
-		while((chars = read(fd2[0], buf, sizeof(buf))) > 0) {
-		    char line[40];
-		    
-		    total_chars += chars;
-		    sprintf (line, "Read %d bytes of data.", total_chars);
-		    HTProgress(line);
-		    if (TRACE) {
-			fprintf(stderr, "LYNXCGI: Rx: %.*s\n", chars, buf);
+
+		HTReadProgress(total_chars = 0, 0);
+		while((chars = read(fd2[0], buf, sizeof(buf))) != 0) {
+		    if (chars < 0) {
+#ifdef EINTR
+			if (errno == EINTR)
+			    continue;
+#endif /* EINTR */
+#ifdef ERESTARTSYS
+			if (errno == ERESTARTSYS)
+			    continue;
+#endif /* ERESTARTSYS */
+			PERROR("read() of CGI output failed");
+			break;
 		    }
-		    
+		    HTReadProgress(total_chars += chars, 0);
+		    CTRACE(tfp, "LYNXCGI: Rx: %.*s\n", chars, buf);
 		    (*target->isa->put_block)(target, buf, chars);
 		}
+
+		if (chars < 0 && total_chars == 0) {
+		    status = HT_NOT_LOADED;
+		    (*target->isa->_abort)(target, NULL);
+		    target = NULL;
+		} else if (chars != 0) {
+		    status = HT_PARTIAL_CONTENT;
+		} else {
+		    status = HT_LOADED;
+		}
+
 #if !HAVE_WAITPID
 		while (wait(&wstatus) != pid)
 		    ; /* do nothing */
@@ -446,14 +472,12 @@ PRIVATE int LYLoadCGI ARGS4(
 		}
 #endif /* !HAVE_WAITPID */
 		close(fd2[0]);
-		status = HT_LOADED;
-		
+
 	    } else if (pid == 0) { /* The Bad, */
 		char **argv = NULL;
-		char post_len[32];
 		int argv_cnt = 3; /* name, one arg and terminator */
 		char **cur_argv = NULL;
-		char buf[BUFSIZ];
+		int exec_errno;
 
 		/* Set up output pipe */
 		close(fd2[0]);
@@ -461,12 +485,12 @@ PRIVATE int LYLoadCGI ARGS4(
 		dup2(fd2[1], fileno(stderr));
 		close(fd2[1]);
 
-		sprintf(buf, "HTTP_ACCEPT_LANGUAGE=%.*s",
-			     (int)(sizeof(buf) - 22), language);
-		buf[(sizeof(buf) - 1)] = '\0';
-		add_environment_value(buf);
+		if (language && *language) {
+		HTSprintf0(&accept_language, "HTTP_ACCEPT_LANGUAGE=%s", language);
+		add_environment_value(accept_language);
+		}
 
-		if (pref_charset) {
+		if (pref_charset && *pref_charset) {
 		    cp = NULL;
 		    StrAllocCopy(cp, "HTTP_ACCEPT_CHARSET=");
 		    StrAllocCat(cp, pref_charset);
@@ -490,7 +514,7 @@ PRIVATE int LYLoadCGI ARGS4(
 
 		    add_environment_value("REQUEST_METHOD=POST");
 
-		    sprintf(post_len, "CONTENT_LENGTH=%d",
+		    HTSprintf0(&post_len, "CONTENT_LENGTH=%d",
 			    strlen(anAnchor->post_data));
 		    add_environment_value(post_len);
 		} else {
@@ -501,7 +525,7 @@ PRIVATE int LYLoadCGI ARGS4(
 		    }
 		}
 
-		/* 
+		/*
 		 * Set up argument line, mainly for <index> scripts
 		 */
 		if (pgm_args != NULL) {
@@ -517,16 +541,16 @@ PRIVATE int LYLoadCGI ARGS4(
 		    outofmem(__FILE__, "LYCgi");
 		}
 		cur_argv = argv + 1;		/* For argv[0] */
-		if (pgm_args != NULL) {		
+		if (pgm_args != NULL) {
 		    char *cr;
 
 		    /* Data for a get/search form */
 		    if (is_www_index) {
 			add_environment_value("REQUEST_METHOD=SEARCH");
-		    } else if (!anAnchor->isHEAD) {
+		    } else if (!anAnchor->isHEAD && !anAnchor->post_data) {
 			add_environment_value("REQUEST_METHOD=GET");
 		    }
-		    
+
 		    cp = NULL;
 		    StrAllocCopy(cp, "QUERY_STRING=");
 		    StrAllocCat(cp, pgm_args);
@@ -541,7 +565,7 @@ PRIVATE int LYLoadCGI ARGS4(
 			if (*cp == '\0') {
 			    *(cur_argv++) = HTUnEscape(cr);
 			    break;
-			    
+
 			} else if (*cp == '+') {
 			    *cp++ = '\0';
 			    *(cur_argv++) = HTUnEscape(cr);
@@ -549,11 +573,13 @@ PRIVATE int LYLoadCGI ARGS4(
 			}
 			cp++;
 		    }
+		} else if (!anAnchor->isHEAD && !anAnchor->post_data) {
+		    add_environment_value("REQUEST_METHOD=GET");
 		}
-		*cur_argv = NULL;	/* Terminate argv */		
+		*cur_argv = NULL;	/* Terminate argv */
 		argv[0] = pgm;
 
-		/* Begin WebSter Mods  -jkt */                
+		/* Begin WebSter Mods  -jkt */
 		if (LYCgiDocumentRoot != NULL) {
 		    /* Add DOCUMENT_ROOT to env */
 		    cp = NULL;
@@ -571,9 +597,7 @@ PRIVATE int LYLoadCGI ARGS4(
 		if (LYCgiDocumentRoot != NULL && path_info != NULL ) {
 		    /* Construct and add PATH_TRANSLATED to env */
 		    StrAllocCopy(document_root, LYCgiDocumentRoot);
-		    if (document_root[strlen(document_root) - 1] == '/') {
-			document_root[strlen(document_root) - 1] = '\0';
-		    }
+		    LYTrimHtmlSep(document_root);
 		    path_translated = document_root;
 		    StrAllocCat(path_translated, path_info);
 		    cp = NULL;
@@ -585,15 +609,20 @@ PRIVATE int LYLoadCGI ARGS4(
 		/* End WebSter Mods  -jkt */
 
 		execve(argv[0], argv, env);
-		if (TRACE) {
-		    perror("LYNXCGI: execve failed");
+		exec_errno = errno;
+		PERROR("execve failed");
+		printf("Content-Type: text/plain\r\n\r\n");
+		if (!anAnchor->isHEAD) {
+		    printf("exec of %s failed", pgm);
+		    printf(": %s.\r\n", LYStrerror(exec_errno));
 		}
-		
+		fflush(stdout);
+		fflush(stderr);
+		_exit(1);
+
 	    } else {	/* and the Ugly */
 		HTAlert(CONNECT_FAILED);
-		if (TRACE) {
-		    perror("LYNXCGI: fork() failed");
-		}
+		PERROR("fork() failed");
 		status = HT_NO_DATA;
 		close(fd1[0]);
 		close(fd1[1]);
@@ -611,42 +640,42 @@ PRIVATE int LYLoadCGI ARGS4(
     FREE(pgm);
     FREE(orig_pgm);
 #else  /* VMS */
-	HTStream *target;
-	char buf[256];
+    HTStream *target;
+    char *buf = 0;
 
-	target = HTStreamStack(WWW_HTML, 
-			       format_out,
-			       sink, anAnchor);
+    target = HTStreamStack(WWW_HTML,
+			   format_out,
+			   sink, anAnchor);
 
-	sprintf(buf,"<head>\n<title>Good Advice</title>\n</head>\n<body>\n");
-	(*target->isa->put_block)(target, buf, strlen(buf));
-	
-	sprintf(buf,"<h1>Good Advice</h1>\n");
-	(*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf, "<head>\n<title>%s</title>\n</head>\n<body>\n", gettext("Good Advice"));
+    (*target->isa->put_block)(target, buf, strlen(buf));
 
-	sprintf(buf, "An excellent http server for VMS is available via <a\n");
-	(*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf, "<h1>%s</h1>\n", gettext("Good Advice"));
+    (*target->isa->put_block)(target, buf, strlen(buf));
 
-	sprintf(buf,
-	 "href=\"http://kcgl1.eng.ohio-state.edu/www/doc/serverinfo.html\"\n");
-	(*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf, "%s <a\n", gettext("An excellent http server for VMS is available via"));
+    (*target->isa->put_block)(target, buf, strlen(buf));
 
-	sprintf(buf, ">this link</a>.\n");
-	(*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf,
+	       "href=\"http://kcgl1.eng.ohio-state.edu/www/doc/serverinfo.html\"\n");
+    (*target->isa->put_block)(target, buf, strlen(buf));
 
-	sprintf(buf,
-		"<p>It provides <b>state of the art</b> CGI script support.\n");
-	(*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf, ">%s</a>.\n", gettext("this link"));
+    (*target->isa->put_block)(target, buf, strlen(buf));
 
-	sprintf(buf,"</body>\n");
-	(*target->isa->put_block)(target, buf, strlen(buf));
+    HTSprintf0(&buf, "<p>%s\n",
+	       gettext("It provides state of the art CGI script support.\n"));
+    (*target->isa->put_block)(target, buf, strlen(buf));
 
-	(*target->isa->_free)(target);
-	status = HT_LOADED;
+    HTSprintf0(&buf,"</body>\n");
+    (*target->isa->put_block)(target, buf, strlen(buf));
+
+    (*target->isa->_free)(target);
+    FREE(buf);
+    status = HT_LOADED;
 #endif /* VMS */
 #else /* LYNXCGI_LINKS */
-    _statusline(CGI_NOT_COMPILED);
-    sleep(MessageSecs);
+    HTUserMsg(CGI_NOT_COMPILED);
     status = HT_NOT_LOADED;
 #endif /* LYNXCGI_LINKS */
     return(status);

@@ -6,7 +6,7 @@
 #ifndef HTTELNET_H
 #define HTTELNET_H
 
-#include "HTAccess.h"
+#include <HTAccess.h>
 
 #ifdef GLOBALREF_IS_MACRO
 extern GLOBALREF(HTProtocol,HTTelnet);

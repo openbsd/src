@@ -14,7 +14,7 @@ the current session via the <em>Options menu</em>, then hypertext links
 (and form fields, depending on the keypad mode)
 are prefixed with numbers in square brackets.  Entering a keyboard
 or keypad number is treated as an <em>F_LINK_NUM</em> command, and should
-invoke the <em>Follow link (or goto link or page) number:</em> statusline 
+invoke the <em>Follow link (or goto link or page) number:</em> statusline
 prompt for a
 potentially multiple digit number corresponding to an indicated link
 number.  If RETURN is pressed to terminate the number entry (e.g.,
@@ -39,9 +39,32 @@ numbered</em> mode.
 <em>123p</em>), Lynx will make the page corresponding to that number
 the currently displayed page, and the first link on that page, if any,
 the current link.  The '<em>g</em>' and '<em>p</em>' suffixes thus
-convert the 
+convert the
 <em>Follow link (or goto link or page) number:</em> feature to an advanced
 navigation aid.
+
+<p>Finally, a user may add a <em>+</em> or <em>-</em> suffix to a number
+command to indicate jumping forward or back relative to the current link or
+page.
+For example, typing <em>1g+</em> followed by RETURN will move the current
+link to the next numbered link, skipping any intervening pages
+or unnumbered links; <em>1g-</em> goes to the preceding numbered link.
+On a page without links, <em>3g+</em> goes to the 3rd link <em>following</em>
+the page.  <em>5p+</em> skips ahead 5 pages, and so on.
+You can also enter <em>5+</em> or <em>5-</em>, which will activate
+the 5th link ahead/behind where you are currently positioned.
+Note that typing <em>1g+</em> is different from typing a down arrow
+in that <em>1g+</em> may skip pages containing no links, or
+intervening non-numbered links, such as form fields when
+form fields are not numbered.  It also differs from
+the <em>&lt;tab&gt;</em> command in that <em>1g+</em>
+does not skip over whole textareas, unless form fields
+are not numbered.
+
+<p>
+<em>NOTE:</em> <em>1+g 1-g 1+p 1-p</em> are all recognized as equivalent<br>
+to <em>1g+ 1g- 1p+ 1p-</em> .  Any other (mistyped) characters terminate<br>
+the formula: e.g. <em>1gh+</em> is treated as <em>1g</em>.
 
 <p>If the user has set <em>Keypad mode</em> to <em>Numbers act as arrows</em>,
 then only '<em>0</em>', rather than every number, will be treated as an
@@ -74,6 +97,19 @@ command when positioned on the OPTION.  For purposes of paging (e.g., in
 conjunction with the '<em>p</em>' suffix), a <em>page</em> is defined as
 the number of OPTIONs displayed within the vertical dimension of the popup
 window.
+Finally, the <em>+</em> and <em>-</em> suffixes can be used
+to move forward or back from the current option or page in
+a popup menu,
+similarly to the way they are used for links   For example,
+while viewing a popup window, the user can type
+<em>3p+</em> and RETURN
+to skip ahead 3 pages, and <em>50g-</em> will move the
+current selection back 50 options.
+This will work whether or not <em>keypad mode</em> is
+<em>Links and form fields are numbered</em> since options
+are numbered internally.  If form field numbering is
+turned off, the option numbers won't appear on screen,
+but the user can still navigate using these commands.
 
 <p>Note that HTML can be structured so that it includes <em>hidden
 links</em>, i.e., without a visible link name intended for ACTIVATE-ing
@@ -84,7 +120,7 @@ have support for image handling available.  They also can be created by
 having truly empty Anchor content, in cases for which the value of an
 Anchor's HREF attribute is intended as a navigation aid for robots
 (typically indexers) and not as content for a browser's rendition of the
-document.  With the <em>-ismap</em> command line switch, Lynx will 
+document.  With the <em>-ismap</em> command line switch, Lynx will
 additionally treat a link to a server-side image maps as hidden if
 there also is a client-side map for the same image.
 Finally, in some cases links which are not intended to be hidden
@@ -92,14 +128,14 @@ may effectively become <em>hidden links</em> because of bad HTML.
 The <em>hidden links</em> differ from Anchors which have only a
 NAME or ID attribute name/value pair (intended as positioning targets from
 other links which do have HREF attributes and values that include a
-fragment).  
+fragment).
 
 <p>Lynx respects instructions for <em>hidden links</em> and normally does
 not include them in the rendition of the document.  However, if the command
 line switch <em>-hiddenlinks=merge</em> is used, such links will still be
 numbered in sequence with other links which are not hidden, and if <em>Links
 are numbered</em> mode is also on, link numbers will appear for them in the
-displayed text (except for links to image maps which are hidden because of 
+displayed text (except for links to image maps which are hidden because of
 <em>-ismap</em>).  If <em>-hiddenlinks=listonly</em> or
 <em>-hiddenlinks=ignore</em> is in effect, <em>hidden links</em> will not be
 shown in the text even in <em>links are numbered</em> mode.  Not using a
@@ -108,13 +144,13 @@ shown in the text even in <em>links are numbered</em> mode.  Not using a
 
 <p>If a document includes
 <em>hidden links</em>, they will be reported, with appropriate labeling,
-in the menu created for the LIST ('<em>l</em>') command,
-unless <em>-hiddenlinks=ignore</em> is used.  They can then be
-ACTIVATE-ed via that menu.  Also, if a link was hidden due to an ALT
+in the menus created for the LIST ('<em>l</em>') or ADDRLIST ('<em>A</em>')
+commands, unless <em>-hiddenlinks=ignore</em> is used.  They can then be
+ACTIVATE-ed via those menus.  Also, if a link was hidden due to an ALT
 attribute in an IMG element, it will be converted to a <em>visible link</em>
 whenever the IMAGE_TOGGLE ('<em>*</em>') command is used to create links
-for SRC attritute values of IMG elements, because this indicates that the
-user does have some form of image handling enabled via a helper application, 
+for SRC attribute values of IMG elements, because this indicates that the
+user does have some form of image handling enabled via a helper application,
 or wishes to download files for subsequent use with a graphic browsers or
 other suitable software.
 
@@ -124,8 +160,9 @@ for the form, but the value should not be displayed in the rendered form.
 Lynx respects this attribute as well, and neither displays the HIDDEN field,
 nor assigns it a number for the F_LINK_NUM ('<em>0</em>') command and
 <em>Links and form fields are numbered</em> keypad mode handling, nor
-includes an entry for it in the menu created for the LIST ('<em>l</em>')
-command.  However, the HIDDEN name/value pairs are included in any displays
+includes an entry for it in the menus created for the LIST ('<em>l</em>')
+or ADDRLIST ('<em>A</em>')
+commands.  However, the HIDDEN name/value pairs are included in any displays
 of submitted form content in the <em>Information about the current
 document</em> that is invoked by the INFO ('<em>=</em>') command.
 </BODY>

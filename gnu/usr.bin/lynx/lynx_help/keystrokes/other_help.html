@@ -17,7 +17,7 @@
 
        d      -	Downloads the file pointed to by the current link
 		and displays an option menu allowing the file to
-		be saved or transfered by configurable options.
+		be saved or transferred by configurable options.
 		Can also be used when positioned on a form SUBMIT
 		button to download the reply to a form submission.
 
@@ -29,22 +29,22 @@
 
        g      -	Allows you to enter any <a href="http://www.ncsa.uiuc.edu/demoweb/url-primer.html">URL</a> or filename that
 		you wish to view, and then <em>goto</em> it.
-                        
+
        G      -	Allows you to edit the current document's URL and use that
                 as a <em>goto</em> URL.
-                        
+
      ? or H   -	Hypertext help to explain how to navigate in
 		Lynx and use its features.
 
-       i      -	Shows an index of files or subjects.  This is 
-		configurable by the System administrator, or 
+       i      -	Shows an index of files or subjects.  This is
+		configurable by the System administrator, or
 		within documents that you may be viewing.
 
-       j      -	Allows you to enter a "short" name to execute a 
+       j      -	Allows you to enter a "short" name to execute a
 		jump command configured by your system administrator.
 		Press "?" and ENTER to see a list of defined
 		jump commands.
- 
+
        k      -	Shows a list of key mappings.  Keys remapped in
 		"lynx.cfg" show up in this list.
 
@@ -52,34 +52,36 @@
        		document, which can be used for rapid access to the
 		links in large documents.
 
-       m      -	Returns to the first screen and empties the 
+       m      -	Returns to the first screen and empties the
 		history stack.
 
        p      -	Brings up a list of <A HREF="print_help.html">print commands</A>.
 
-       o      -	Brings up a list of setable <A HREF="option_help.html">options</A>.
+       o      - Brings up a list of settable <A HREF="option_help.html">options</A>.
 
-       q      -	Quits Lynx. ('Q' quits without asking)
+       q      - Quits Lynx. ('Q' quits without asking)
 
-       /      -	Search for a string of characters in the current
-		document case insensitive or case sensitive 
-		depending on the options set. (see <A HREF="option_help.html">options)</A>.
+       /      - Search for a string of characters in the current document
+                (case insensitive or case sensitive
+                depending on the <A HREF="option_help.html">options</A> set).
 
        s      -	Search through an external searchable indexed document.
 
-       n      -	Move to the next instance of a search string if you 
+       n      -	Move to the next instance of a search string if you
 		have searched previously.
 
        v      -	View a <A HREF="bookmark_help.html">Bookmark file</A>.
 
+       V      - Go to the <A HREF="visited_help.html">Visited Links Page</A>
+
        x      - Force submission of form or link with no-cache.
 
        z      -	Abort a network transfer in progress.  If any partial
-		data has been transfered it will be displayed.
+                data has been transferred it will be displayed.
 
-  &lt;backspace&gt; - displays the <a href="history_help.html">history page</A>.
+  &lt;backspace&gt; - displays the <a href="history_help.html">History Page</A>.
 
-       =      -	Show information about the file and link that you 
+       =      -	Show information about the file and link that you
 		are currently viewing.
 
        \      -	Toggles between viewing the HTML source of a
@@ -101,7 +103,7 @@
                 Note that any protected documents that are still in cache
                 can still be accessed.
 
-       `      -	Toggles minimal or valid comment parsing. When minimal, any
+       `      -	Toggles minimal or valid comment parsing.  When minimal, any
        		two successive dashes followed by a close-angle-bracket will
 		be treated as a comment terminator, emulating the parsing bug
 		in Netscape v2.0.  If historical comment parsing is set, that
@@ -110,14 +112,15 @@
        *      -	Toggles image_links mode on and off.  When on, links will
                 be created for all images, including inlines.
 
-       @      -	Toggles raw 8-bit translations or CJK mode on and off.
+       @      - Toggles raw 8-bit translations or CJK mode on and off, only
+                for documents which does not specify character set explicitely.
                 Should be on when the document's charset matches the
-		selected character set, and otherwise off so that 8-bit
-		characters will be reverse translated with respect to the
-		ISO-8859-1 conversion table for the character set (see
-		<A HREF="option_help.html">options)</A>.
+                display character set, and otherwise off so that 8-bit
+                characters will be translated by Lynx with respect to the
+                Assumed document charset, using approximations if necessary
+                (see <A HREF="option_help.html">options</A>).
 
-       [      -	Toggles pseudo_inlines mode on and off.  When on, inline
+       [      - Toggles pseudo_inlines mode on and off.  When on, inline
                 images which have no ALT string specified will have an
                 "[INLINE]" pseudo-ALT string inserted in the Lynx display.
                 When off, they will be treated as having ALT="" (i.e.,
@@ -134,7 +137,7 @@
                 cache.  Note that for form submissions, http servers vary
                 in whether they'll treat HEAD requests as valid and return
                 the CGI script's headers, or treat it as invalid and return
-                an error message. 
+                an error message.
 
        "      -	Toggles valid or "soft" double-quote parsing.  When soft,
                 a close-angle-bracket will serve as both a close-double-
@@ -145,7 +148,8 @@
 
      CTRL-V   -	Switches to an alternative way of parsing HTML documents.
                 This may help to get a more readable rendering of some
-                documents with invalidly placed HTML tags.
+                documents with invalidly placed HTML tags, <A
+                HREF="option_help.html#tagsoup">more details</A>.
 
      CTRL-W   -	Resets or cleans up the display.
 

@@ -1,9 +1,21 @@
-# Default 7bit replacements.  If the MIME name is set to us-ascii,
-# this will be identified with the "7 bit approximations" Display
-# character set.
+# Default 7bit replacements.
+#
+# This table is very important and should not be excluded from the distribution
+# since this is a default fallback for any 8bit user's "display character set"
+# which (nearly) of 256 chars and could not map a rich Unicode repertoire.
+#
+# Note: there are a few rare replacement strings with trailing spaces
+# which should be enclosed as C strings like "... " to make things obvious
+# (and doing that we should escape \ as \134 and  escape " as \" or \042
+# but this is really rare).
+#
 
 #The MIME name of this charset.
 Mus-ascii
+
+# Like any other charset this may be selected as "display character set":
+#Name as a Display Charset (used on Options screen)
+O7 bit approximations (US-ASCII)
 
 # Shall this become the "default" translation table?  YES!
 # There has to be exactly one table marked as "default".
@@ -11,7 +23,7 @@ D1
 
 
 # us-ascii characters should not normally pass here,
-# they are always processed directly but let declare it here:
+# they are always processed directly but let declare them here:
 0x20-0x7e  idem
 
 
@@ -418,11 +430,11 @@ U+03cc:o%
 U+03cd:u%
 U+03ce:w%
 # Greek symbols
-U+03d0:beta 
-U+03d1:theta 
-U+03d2:upsi 
-U+03d5:phi 
-U+03d6:pi 
+U+03d0 "beta "
+U+03d1 "theta "
+U+03d2 "upsi "
+U+03d5 "phi "
+U+03d6 "pi "
 U+03da:T3
 U+03db:t3
 U+03dc:M3
@@ -431,8 +443,8 @@ U+03de:K3
 U+03df:k3
 U+03e0:P3
 U+03e1:p3
-U+03f0:kappa 
-U+03f1:rho 
+U+03f0 "kappa "
+U+03f1 "rho "
 U+03f4:'%
 U+03f5:j3
 # Cyrillic capital letters
@@ -1282,12 +1294,13 @@ U+1fef:!*
 U+1ffe:;;
 # General punctuation:
 0x20	U+2000 U+2002	U+2004-U+2009	# spaces
-U+2001:  
-U+2003:  
+U+2001 "  "
+U+2003 "  "
 U+200e:(->)
 U+200f:(<-)
 U+200a:
-0x2d	U+2010	U+2013-U+2015	# hyphen-like
+0x2d	U+2010	U+2013 U+2015	# hyphen-like
+U+2014 "--"
 U+2016:||
 U+2017:=2
 0x60	U+2018		# left single quotation mark  <`>
@@ -1295,7 +1308,7 @@ U+2017:=2
 0x22	U+201c-U+201f	# various double quotation marks <">
 U+2020:/-
 U+2021:/=
-U+2022: o 
+U+2022 " o "
 U+2025:..
 U+2026:...
 
@@ -1350,13 +1363,13 @@ U+208c:_=
 U+208d:(
 U+208e:)
 # Old euro currency sign glyph:
-U+20A0:CE
+#U+20A0:CE
 U+20a3:Ff
 U+20a4:Li
 U+20a7:Pt
 U+20a9:W=
-# New euro currency sign glyph ?
-# U+20AC:EUR
+# New euro currency sign glyph:
+U+20AC:EUR
 U+2103:oC
 U+2105:c/o
 U+2109:oF
@@ -1373,10 +1386,10 @@ U+2126:Ohm
 0x4b	U+212A	# Kelvin sign - K
 U+212b:Ang.
 U+212E:est.
-U+2135:Aleph 
-U+2136:Bet 
-U+2137:Gimel 
-U+2138:Dalet 
+U+2135 "Aleph "
+U+2136 "Bet "
+U+2137 "Gimel "
+U+2138 "Dalet "
 U+2153: 1/3
 U+2154: 2/3
 U+2155: 1/5
@@ -1459,7 +1472,7 @@ U+2214:.+
 U+2217:*
 U+2218:Ob
 U+2219:sb
-U+221a: SQRT 
+U+221a " SQRT "
 U+221d:0(
 U+221e:infty
 U+221f:-L
@@ -1469,7 +1482,7 @@ U+2227:AND
 U+2228:OR
 U+2229:(U
 U+222a:)U
-U+222b:\int 
+U+222b "\134int "
 U+222c:DI
 U+222e:Io
 U+2234:.:
@@ -1754,6 +1767,7 @@ U+266e:Mx
 U+266f:#
 0x58	U+2713	U+2717	# check marks -> x
 U+2720:-X
+#  CJK area:
 0x20	U+3000	# ideographic space
 U+3001:,_
 U+3002:._
@@ -2014,6 +2028,17 @@ U+3229:10c
 U+327f:KSC
 U+33c2:am
 U+33d8:pm
+#
+#
+#There are four special ranges of characters that are represented only by
+#their start and end characters <...>
+#
+#   The CJK Ideographs Area (U+4E00 - U+9FFF)
+#   The Hangul Syllables Area (U+AC00 - U+D7A3)
+#   The Surrogates Area (U+D800 - U+DFFF)
+#   The Private Use Area (U+E000 - U+F8FF)
+#
+#
 U+fb00:ff
 U+fb01:fi
 U+fb02:fl
@@ -2172,12 +2197,12 @@ U+001d:GS
 U+001e:RS
 U+001f:US
 U+007f:DT
-U+0080:PA
-U+0081:HO
-# Most of these characters (82-9F) may be inflicted on us
+# Most of these characters (80-9F) may be inflicted on us
 # by MS FrontPages which uses Unicode notation such as &#153;
 # but there are no assigned letters in Unicode 128-159 range.
 # It is assumed in the code that those codepoints are from windows-1252.
+#U+0080:PA
+#U+0081:HO
 #U+0082:BH
 #U+0083:NH
 #U+0084:IN
@@ -2189,10 +2214,10 @@ U+0081:HO
 #U+008a:VS
 #U+008b:PD
 #U+008c:PU
-U+008d:RI
-U+008e:SS2
-U+008f:SS3
-U+0090:DCS
+#U+008d:RI
+#U+008e:SS2
+#U+008f:SS3
+#U+0090:DCS
 #U+0091:P1
 #U+0092:P2
 #U+0093:TS
@@ -2202,14 +2227,12 @@ U+0090:DCS
 #U+0097:EG
 #U+0098:SS
 #U+0099:GC
-U+009a:SC
+#U+009a:SC
 #U+009b:CSI
 #U+009c:ST
 #U+009d:OC
 #U+009e:PM
 #U+009f:AC
-
-# Characters in Private Use Area (e000-f8ff) do not have ussigned numbers.
 
 # Let's try to show a question mark for character that cannot
 # be shown.  U+fffd is used for invalid characters.

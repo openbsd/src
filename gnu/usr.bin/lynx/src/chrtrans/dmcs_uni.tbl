@@ -9,6 +9,9 @@ ODEC Multinational
 #   Date:             29 October 1997
 #   Author:           Fote
 #
+#   1999-01-01	various corrections, verified against actual DEC VT220
+#		Christian "naddy" Weisgerber <naddy@mips.rhein-neckar.de>
+#
 ##################
 
 #0x20    U+0020  # SPACE
@@ -107,18 +110,18 @@ ODEC Multinational
 #0x7D    U+007D  # RIGHT CURLY BRACKET
 #0x7E    U+007E  # TILDE
 #
-0x20-0x7f       idem
-#
+0x20-0x7E       idem	# ASCII
+
 0xA1    U+00A1  # inverted exclamation mark (&#161;) - iexcl
 0xA2    U+00A2  # cent sign (&#162;) - cent
-0xA3    U+00A3  # pound sign (&#163;) - pound 
-# currency sign (&#164;) - curren
-U+00A4:CUR
-0xA5    U+00A5  # yen sign (&#165;) - yen 
+0xA3    U+00A3  # pound sign (&#163;) - pound
+0xA5    U+00A5  # yen sign (&#165;) - yen
 # broken vertical bar (&#166;) - brvbar, brkbar
 U+00A6:|
 0xA7    U+00A7  # section sign (&#167;) - sect
-0xA8    U+00A8  # spacing diaresis (&#168;) - uml, die
+0xA8    U+00A4  # currency sign (&#164;) - curren
+# spacing diaresis (&#168;) - uml, die
+U+00A8:"
 0xA9    U+00A9  # copyright sign (&#169;) - copy
 0xAA    U+00AA  # feminine ordinal indicator (&#170;) - ordf
 0xAB    U+00AB  # angle quotation mark, left (&#171;) - laquo
@@ -165,7 +168,7 @@ U+00BE: 3/4
 0xCD    U+00CD  # capital I, acute accent (&#205;) - Iacute
 0xCE    U+00CE  # capital I, circumflex accent (&#206;) - Icirc
 0xCF    U+00CF  # capital I, dieresis or umlaut mark (&#207;) - Iuml
-# capital Eth, Icelandic (&#208;) - ETH */ 
+# capital Eth, Icelandic (&#208;) - ETH */
 U+00D0:DH
 #      Dj  # capital D with stroke - Dstrok
 0xD1    U+00D1  # capital N, tilde (&#209;) - Ntilde
@@ -174,6 +177,7 @@ U+00D0:DH
 0xD4    U+00D4  # capital O, circumflex accent (&#212;) - Ocirc
 0xD5    U+00D5  # capital O, tilde (&#213;) - Otilde
 0xD6    U+00D6  # capital O, dieresis or umlaut mark (&#214;) - Ouml
+0xD7    U+0152  # captial OE ligature (&#338;) - OElig
 # multiplication sign (&#215;) - times
 U+00D7:*
 0xD8    U+00D8  # capital O, slash (&#216;) - Oslash
@@ -181,9 +185,11 @@ U+00D7:*
 0xDA    U+00DA  # capital U, acute accent (&#218;) - Uacute
 0xDB    U+00DB  # capital U, circumflex accent (&#219;) - Ucirc
 0xDC    U+00DC  # capital U, dieresis or umlaut mark (&#220;) - Uuml
-0xDD    U+00DD  # capital Y, acute accent (&#221;) - Yacute
-# capital THORN, Icelandic (&#222;) - THORN */ 
-U+00DE:P
+0xDD    U+0178  # capital Y, dieresis or umlaut mark (&#376;) - Yuml
+# capital Y, acute accent (&#221;) - Yacute
+U+00DD:Y'
+# capital THORN, Icelandic (&#222;) - THORN */
+U+00DE:TH
 0xDF    U+00DF  # small sharp s, German (sz ligature) (&#223;) - szlig
 0xE0    U+00E0  # small a, grave accent (&#224;) - agrave
 0xE1    U+00E1  # small a, acute accent (&#225;) - aacute
@@ -209,6 +215,7 @@ U+00F0:dh
 0xF4    U+00F4  # small o, circumflex accent (&#244;) - ocirc
 0xF5    U+00F5  # small o, tilde (&#245;) - otilde
 0xF6    U+00F6  # small o, dieresis or umlaut mark (&#246;) - ouml
+0xF7    U+0153  # small oe ligature (&#339;) - oelig
 # division sign (&#247;) - divide
 U+00F7:/
 0xF8    U+00F8  # small o, slash (&#248;) - oslash
@@ -220,7 +227,7 @@ U+00F7:/
 # small y, acute accent (&#253;) - yacute
 U+00FD:y'
 # small thorn, Icelandic (&#254;) - thorn
-U+00FE:p
+U+00FE:th
 #
 # TRADE MARK SIGN
 U+2122:(TM)

@@ -1,0 +1,116 @@
+# This is a sample key sequence definition file.  It is used by Lynx when
+# built with ncurses or slang, to augment the definitions from your terminal's
+# termcap or terminfo description.
+
+# (Lynx implements this mechanism only if USE_KEYMAPS is defined during
+# compilation, which has nothing to do with the KEYMAP directives in lynx.cfg,
+# see source file LYCurses.h.)
+
+# Lines that start with a '#' are comment lines.  Blank lines are ignored.
+
+# The 'setkey' function may be used in two ways:
+#
+#   1.  setkey ESC-SEQUENCE  KEYSYM
+#   2.  setkey ESC-SEQUENCE  KEYSYM_NAME
+#
+# where KEYSYM is an integer.  A keysym is essentially with the lynx.cfg
+# file calls a 'keystroke', but I think that keysym is a more appropriate
+# name.  The keysym is an integer and may be expressed in various ways:
+#
+#       as a decimal integer:  97
+#       hexadecimal:           0x61
+#       Octal:                 0141
+#       as an ASCII character: 'a'
+#
+# Some keysyms may be expressed symbolically as a keysym name using the
+# second form.  The currently recognized symbolic names are:
+#
+#       UPARROW
+#       DNARROW
+#       RTARROW
+#       LTARROW
+#       PGDOWN
+#       PGUP
+#       HOME
+#       END
+#       F1
+#       DO_KEY
+#       FIND_KEY
+#       SELECT_KEY
+#       INSERT_KEY
+#       REMOVE_KEY
+#       DO_NOTHING
+#
+# It does not matter if your keyboard does not have some of the keys
+# implied by the above names.  The fact is that lynx uses these keys as an
+# an intermediate representation.
+#
+# The ESC-SEQUENCE should be enclosed in double quotes.  The '^' character
+# is special and indicates a control character, e.g., ^K is Ctrl-K.  An ESC
+# character (ascii 27) may be represented as ^[.  As an example, many
+# terminals have arrow keys that emit 'ESC [ A' for the UP arrow.  This may
+# be represented as the escape sequence "^[[A".  The default keymapping is
+# given below:
+#
+setkey "\033[A"		UPARROW
+setkey "\033OA"		UPARROW
+setkey "\033[B"		DNARROW
+setkey "\033OB"		DNARROW
+setkey "\033[C"		RTARROW
+setkey "\033OC"		RTARROW
+setkey "\033[D"		LTARROW
+setkey "\033OD"		LTARROW
+setkey "\033[1~"	FIND_KEY
+setkey "\033[2~"	INSERT_KEY
+setkey "\033[3~"	REMOVE_KEY
+setkey "\033[4~"	SELECT_KEY
+setkey "\033[5~"	PGUP
+setkey "\033[6~"	PGDOWN
+setkey "\033[8~"	END
+setkey "\033[7~"	HOME
+setkey "\033[28~"	F1
+setkey "\033[29~"	DO_KEY
+#
+# All other keys map to themselves, e.g,
+#
+setkey "a"		'a'
+#
+# Now suppose that your terminal produces different escape sequences for
+# HOME and END.  In particular, suppose that the home key produces 'ESC [
+# H' and that the end key produces 'ESC [ K'.  Then these may be defined to
+# map to lynx HOME and END keys via
+#
+setkey "^[[H"		HOME
+setkey "^[[K"		END
+#
+# Similarly, we may map emacs-like sequences to these functions:
+#
+setkey "^[<"		HOME
+setkey "^[>"		END
+#
+# Note that it may be impossible to map several sequences to the same
+# keysym (NCURSES only?), in that case the mapping occurring last wins.
+#
+# The following maps a sequence commonly used for Shift+Tab to the
+# corresponding code.  It should not be needed if the terminfo file
+# has the correct info for kcbt.
+#
+setkey "^[[Z"		0x10F
+#
+# Other special escapes:
+#	\a		bell
+#	\b		backspace
+#	\f		form-feed
+#	\n		newline (line-feed)
+#	\r		carriage-return
+#	\t		tab
+#	\v		vertical tab
+#	\<number>	octal number, up to 3 digits, e.g., "\033".
+#	\d<number>	decimal number, up to 3 digits, e.g., "\d99"
+#	\x<number>	hexidecimal number, up to 2 digits, e.g., "\xFF"
+#
+# For Unix-systems (which have termcap or terminfo) you may also use symbols
+# that refer to the termcap/terminfo, by referencing the name bracketed by
+# "^(" and ")", e.g.,
+setkey "^(cuu1)"	UPARROW
+setkey "^(up)"		UPARROW

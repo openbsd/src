@@ -22,14 +22,13 @@ Cambridge, MA 02139, USA.  */
  * <getpass.c>
  */
 
-#include "HTUtils.h"
-/*#include <stdio.h>  included by HTUtils.h -- FM */
+#include <HTUtils.h>
 #include <descrip.h>
 #include <psldef.h>
 #include <iodef.h>
 #include <starlet.h>
 
-#include "LYLeaks.h"
+#include <LYLeaks.h>
 
 PUBLIC char * getpass ARGS1(CONST char *, prompt)
 {

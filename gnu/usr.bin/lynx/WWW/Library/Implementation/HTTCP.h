@@ -1,24 +1,16 @@
 /*                               /Net/dxcern/userd/timbl/hypertext/WWW/Library/src/HTTCP.html
                                GENERIC TCP/IP COMMUNICATION
-                                             
+
    This module has the common code for handling TCP/IP connections etc.
-   
+
  */
 #ifndef HTTCP_H
 #define HTTCP_H
 
 #ifndef HTUTILS_H
-#include "HTUtils.h"
-#endif /* HTUTILS_H */
-#include "tcp.h"
-
-#ifdef SHORT_NAMES
-#define HTInetStatus            HTInStat
-#define HTInetString            HTInStri
-#define HTParseInet             HTPaInet
+#include <HTUtils.h>
 #endif
-
-
+ 
 /*      Produce a string for an internet address
 **      ---------------------------------------
 **
@@ -27,11 +19,7 @@
 **                it is to be kept.
 */
 #ifndef _WINDOWS
-#ifdef __STDC__
-        extern const char * HTInetString(struct sockaddr_in* mysin);
-#else
-        extern char * HTInetString();
-#endif
+extern CONST char * HTInetString PARAMS((struct sockaddr_in* mysin));
 #endif
 
 
@@ -76,6 +64,33 @@ extern unsigned int HTCardinal PARAMS((int *pstatus,
                 char            **pp,
                 unsigned int    max_value));
 
+/*	Check whether string is a valid Internet hostname
+**	-------------------------------------------------
+*/
+
+extern BOOL valid_hostname PARAMS((CONST char * name));
+
+/*	Resolve an internet hostname, like gethostbyname
+**	------------------------------------------------
+**
+**  On entry,
+**	str	points to the given host name, not numeric address,
+**		without colon or port number.
+**
+**  On exit,
+**	returns a pointer to a struct hostent in static storage,
+**	or NULL in case of error or user interruption.
+**
+**  The interface is intended to be the same as for gethostbyname(),
+**  but additional status is returned in lynx_nsl_status.
+*/
+extern int lynx_nsl_status;
+
+#ifndef DJGPP
+extern struct hostent * LYGetHostByName PARAMS((
+	CONST char *	str));
+#endif /* DJGPP */
+
 
 /*      Parse an internet node address and port
 **      ---------------------------------------
@@ -86,7 +101,7 @@ extern unsigned int HTCardinal PARAMS((int *pstatus,
 **               sin points to the binary internet or decnet address field.
 **
 ** On exit:
-**               *sin is filled in. If no port is specified in str, that
+**               *sin is filled in.  If no port is specified in str, that
 **               field is left unchanged in *sin.
 */
 #ifdef __STDC__
@@ -115,6 +130,3 @@ extern int HTDoRead PARAMS((
 	unsigned 	nbyte));
 
 #endif   /* HTTCP_H */
-/*
-
-   End.  */

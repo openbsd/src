@@ -1,0 +1,18 @@
+/* definitions for help files */
+
+#ifndef LYHELP_H
+#define LYHELP_H
+
+#define COOKIE_JAR_HELP		"@LYNX_USERS_GUIDE@#Cookies"
+#define CURRENT_KEYMAP_HELP	"keystrokes/@KEYSTROKE_HELP@"
+#define DIRED_MENU_HELP		"keystrokes/@DIRED_HELP@"
+#define DOWNLOAD_OPTIONS_HELP	"@LYNX_USERS_GUIDE@#RemoteSource"
+#define HISTORY_PAGE_HELP	"keystrokes/@HISTORY_HELP@"
+#define LIST_PAGE_HELP		"keystrokes/@FOLLOW_HELP@"
+#define LYNXCFG_HELP		"lynx.cfg"
+#define OPTIONS_HELP		"keystrokes/@OPTION_HELP@"
+#define PRINT_OPTIONS_HELP	"keystrokes/@PRINT_HELP@"
+#define UPLOAD_OPTIONS_HELP	"@LYNX_USERS_GUIDE@#DirEd"
+#define VISITED_LINKS_HELP	"keystrokes/@VISITED_HELP@"
+
+#endif /* LYHELP_H */

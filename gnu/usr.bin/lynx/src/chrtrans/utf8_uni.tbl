@@ -3,11 +3,11 @@
 # tells Lynx that "utf-8" is Unicode/UCS2 encoded in UTF8.  Note that
 # "unicode-1-1-utf-8" and "utf8" are treated as synonyms.
 #
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Mutf-8
 
 #Name as a Display Charset (used on Options screen)
-OUNICODE UTF-8
+OUNICODE (UTF-8)
 
 # Some kind of raw Unicode?
 # Use 6 for for really "raw" 16bit UCS-2, 7 for UTF-8, ...
@@ -24,12 +24,12 @@ OUNICODE UTF-8
 #  #define UCT_ENC_UTF8 7
 
 R 7
- 
+
 #Shall this become the "default" translation?
 #There has to be exactly one table marked as "default".
 Default NO
 
 # Don't fall back to default table for unicode -> 8bit
 Fallback NO
- 
+
 0x20-0x7f	idem

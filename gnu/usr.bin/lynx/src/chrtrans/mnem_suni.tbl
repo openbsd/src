@@ -1,9 +1,9 @@
-#The MIME name of this charset. 
+#The MIME name of this charset.
 Mmnem
 
 #Name as a Display Charset (used on Options screen)
 ORFC1345 Mnem
- 
+
 # U+0020: SP
 U+0021:!
 U+0022:"

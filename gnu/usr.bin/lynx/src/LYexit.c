@@ -1,20 +1,24 @@
 /*
  *	Copyright (c) 1994, University of Kansas, All Rights Reserved
  */
-#include "HTUtils.h"
-#include "tcp.h"
-#include "LYexit.h"
+#include <HTUtils.h>
+#include <LYexit.h>
 #ifndef VMS
-#include "LYGlobalDefs.h"
-#include "LYUtils.h"
-#include "LYSignal.h"
-#include "LYClean.h"
+#include <LYGlobalDefs.h>
+#include <LYUtils.h>
+#include <LYSignal.h>
+#include <LYClean.h>
+#include <LYMainLoop.h>
 #ifdef SYSLOG_REQUESTED_URLS
 #include <syslog.h>
 #endif /* SYSLOG_REQUESTED_URLS */
 #endif /* !VMS */
 
-#define FREE(x) if (x) {free(x); x = NULL;}
+/*
+ *  Flag for outofmem macro. - FM
+ */
+PUBLIC BOOL LYOutOfMemory = FALSE;
+
 
 /*
  *  Stack of functions to call upon exit.
@@ -23,14 +27,56 @@ PRIVATE void (*callstack[ATEXITSIZE]) NOPARAMS;
 PRIVATE int topOfStack = 0;
 
 /*
- *  Flag for outofmem macro. - FM
+ *  Purpose:		Registers termination function.
+ *  Arguments:		function	The function to register.
+ *  Return Value:	int	0	registered
+ *				!0	no more space to register
+ *  Remarks/Portability/Dependencies/Restrictions:
+ *  Revision History:
+ *	06-15-94	created Lynx 2-3-1 Garrett Arch Blythe
  */
-PUBLIC BOOL LYOutOfMemory = FALSE;
+
+#ifdef __STDC__
+PUBLIC int LYatexit(void (*function)(void))
+#else /* Not ANSI, ugh! */
+PUBLIC int LYatexit(function)
+void (*function)();
+#endif /* __STDC__ */
+{
+    /*
+     *  Check for available space.
+     */
+    if (topOfStack == ATEXITSIZE) {
+	CTRACE(tfp, "(LY)atexit: Too many functions, ignoring one!\n");
+	return(-1);
+    }
+
+    /*
+     *  Register the function.
+     */
+    callstack[topOfStack] = function;
+    topOfStack++;
+    return(0);
+}
 
 /*
- *  Forward declarations.
+ *  Purpose:		Call the functions registered with LYatexit
+ *  Arguments:		void
+ *  Return Value:	void
+ *  Remarks/Portability/Dependencies/Restrictions:
+ *  Revision History:
+ *	06-15-94	created Lynx 2-3-1 Garrett Arch Blythe
  */
-PRIVATE void LYCompleteExit NOPARAMS;
+PRIVATE void LYCompleteExit NOPARAMS
+{
+    /*
+     *  Just loop through registered functions.
+     *  This is reentrant if more exits occur in the registered functions.
+     */
+    while (--topOfStack >= 0) {
+	callstack[topOfStack]();
+    }
+}
 
 /*
  *  Purpose:		Terminates program.
@@ -113,65 +159,16 @@ PUBLIC void LYexit ARGS1(
 	printf("\r\n%s\r\n\r\n", MEMORY_EXHAUSTED_ABORT);
 	fflush(stdout);
     }
-    if (LYTraceLogFP != NULL) {
-	fflush(stdout);
-	fflush(stderr);
-	fclose(LYTraceLogFP);
-	LYTraceLogFP = NULL;
-	*stderr = LYOrigStderr;
-    }
+    LYCloseTracelog();
 #endif /* !VMS */
     exit(status);
 }
 
-/*
- *  Purpose:		Registers termination function.
- *  Arguments:		function	The function to register.
- *  Return Value:	int	0	registered
- *				!0	no more space to register
- *  Remarks/Portability/Dependencies/Restrictions:
- *  Revision History:
- *	06-15-94	created Lynx 2-3-1 Garrett Arch Blythe
- */
-#ifdef __STDC__
-PUBLIC int LYatexit(void (*function)(void))
-#else /* Not ANSI, ugh! */
-PUBLIC int LYatexit(function)
-void (*function)();
-#endif /* __STDC__ */
+PUBLIC void outofmem ARGS2(
+	CONST char *,	fname,
+	CONST char *,	func)
 {
-    /*
-     *  Check for available space.
-     */
-    if (topOfStack == ATEXITSIZE) {
-	if (TRACE)
-	    fprintf(stderr, "(LY)atexit: Too many functions, ignoring one!\n");
-	return(-1);
-    }
-
-    /*
-     *  Register the function.
-     */
-    callstack[topOfStack] = function;
-    topOfStack++;
-    return(0);
-}
-
-/*
- *  Purpose:		Call the functions registered with LYatexit
- *  Arguments:		void
- *  Return Value:	void
- *  Remarks/Portability/Dependencies/Restrictions:
- *  Revision History:
- *	06-15-94	created Lynx 2-3-1 Garrett Arch Blythe
- */
-PRIVATE void LYCompleteExit NOPARAMS
-{
-    /*
-     *  Just loop through registered functions.
-     *  This is reentrant if more exits occur in the registered functions.
-     */
-    while (--topOfStack >= 0) {
-	callstack[topOfStack]();
-    }
+    fprintf(stderr, "\n\n\n%s %s: %s\n", fname, func, MEMORY_EXHAUSTED_ABORTING);
+    LYOutOfMemory = TRUE;
+    LYexit(-1);
 }
