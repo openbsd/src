@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.22 1999/10/16 20:09:22 angelos Exp $
-#	$EOM: Makefile,v 1.58 1999/08/26 11:21:48 niklas Exp $
+#	$OpenBSD: Makefile,v 1.23 2000/01/26 15:21:49 niklas Exp $
+#	$EOM: Makefile,v 1.60 1999/12/08 20:39:34 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -41,9 +41,11 @@
 #
 
 # openbsd means 2.5 or newer, openbsd-encap is for older kernels with PF_ENCAP
-# linux is the name for Linux with FreeS/WAN integrated
+# linux is the name for Linux with FreeS/WAN integrated, freebsd means FreeBSD
+# with KAME IPsec.
 OS=		openbsd
 #OS=		openbsd-encap
+#OS=		freebsd
 #OS=		linux
 
 .PATH:		${.CURDIR}/sysdep/${OS}
@@ -113,11 +115,12 @@ DEBUG=		-g
 #		})'
 
 SUBDIR=		apps
-.if !make(install)
-SUBDIR+=	regress
-.endif
 
 .include "sysdep/${OS}/Makefile.sysdep"
+
+.if !make(install) && !defined(NO_REGRESS)
+SUBDIR+=	regress
+.endif
 
 .ifdef HAVE_DLOPEN
 X509=		x509.c
