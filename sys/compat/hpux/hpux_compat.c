@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.5 1996/08/02 20:34:53 niklas Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.6 1997/01/27 00:00:03 downsj Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.23 1996/01/06 12:44:11 thorpej Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ hpux_sys_wait3(p, v, retval)
 	/* rusage pointer must be zero */
 	if (SCARG(uap, rusage))
 		return (EINVAL);
-#if __mc68k__
+#ifdef m68k
 	p->p_md.md_regs[PS] = PSL_ALLCC;
 	p->p_md.md_regs[R0] = SCARG(uap, options);
 	p->p_md.md_regs[R1] = SCARG(uap, rusage);
