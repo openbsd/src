@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.108 2004/11/12 19:42:01 espie Exp $
+# $OpenBSD: pkg_add,v 1.109 2004/11/12 23:11:41 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -279,8 +279,8 @@ sub check_lib_specs
 	my $dir;
 	for my $spec (split(/,/, $specs)) {
 		print "checking libspec $spec " if $verbose;
-		if ($spec =~ m|.*/|) {
-			$dir = "$base/$&";
+		if ($spec =~ m|(.*)/|) {
+			$dir = "$base/$1";
 			$spec = $';
 		} else {
 			$dir = "$base/lib";
