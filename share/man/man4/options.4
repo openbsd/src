@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.78 2001/08/08 15:21:20 jjbg Exp $
+.\"	$OpenBSD: options.4,v 1.79 2001/08/08 15:49:41 heko Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -836,6 +836,9 @@ to set up the interface transmission rate.  To use queueing disciplines,
 their options should also be defined.  Queueing disciplines are
 managed by
 .Xr altqd 8 .
+See
+.Xr altq 9
+for details on ALTQ.
 .It Cd option ALTQ_CBQ
 Enables ALTQ's CBQ (Class-based Queueing) module.  CBQ achieves both
 partitioning and sharing of link bandwidth by hierarchically
@@ -1056,7 +1059,8 @@ and/or
 .Xr quotaon 8 ,
 .Xr rpc.rquotad 8 ,
 .Xr sysctl 8 ,
-.Xr xntpd 8
+.Xr xntpd 8 ,
+.Xr altq 9
 .Sh HISTORY
 The
 .Nm
