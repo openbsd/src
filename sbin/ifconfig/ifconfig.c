@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.116 2004/11/02 02:33:26 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.117 2004/11/02 11:38:04 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.116 2004/11/02 02:33:26 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.117 2004/11/02 11:38:04 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ void	setifmetric(const char *, int);
 void	setifmtu(const char *, int);
 void	setifnwid(const char *, int);
 void	setifnwkey(const char *, int);
-void    setifchan(const char *, int);
+void	setifchan(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifpowersavesleep(const char *, int);
 void	setifnetmask(const char *, int);
@@ -184,7 +184,7 @@ void	setia6eui64(const char *, int);
 void	checkatrange(struct sockaddr_at *);
 void	setmedia(const char *, int);
 void	setmediaopt(const char *, int);
-void    setmediamode(const char *, int);
+void	setmediamode(const char *, int);
 void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
@@ -228,7 +228,7 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAOPTCLR	0x0004		/* -mediaopt command */
 #define	A_MEDIAOPT	(A_MEDIAOPTSET|A_MEDIAOPTCLR)
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
-#define A_MEDIAMODE	0x0010		/* mode command */
+#define	A_MEDIAMODE	0x0010		/* mode command */
 
 #define	NEXTARG		0xffffff
 #define NEXTARG2	0xfffffe
@@ -1272,8 +1272,8 @@ setifchan(const char *val, int d)
 		}
 	}
 
-	(void)strlcpy(channel.i_name, name, sizeof(channel.i_name));
-	channel.i_channel = (u_int16_t) chan;
+	strlcpy(channel.i_name, name, sizeof(channel.i_name));
+	channel.i_channel = (u_int16_t)chan;
 	if (ioctl(s, SIOCS80211CHANNEL, (caddr_t)&channel) == -1)
 		warn("SIOCS80211CHANNEL");
 }
