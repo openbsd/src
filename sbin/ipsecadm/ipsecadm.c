@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.12 1999/02/27 07:29:17 deraadt Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.13 1999/03/04 19:58:43 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -777,14 +777,26 @@ main(int argc, char **argv)
 		    }
 	    }
 	    else
-	      proto2 = atoi(argv[i + 1]);
-
-	    if (proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH &&
-		proto2 != IPPROTO_IPIP)
 	    {
-		fprintf(stderr,
-			"%s: unknown security protocol2 %d\n", argv[0], proto);
-		exit(1);
+		proto2 = atoi(argv[i + 1]);
+
+		if (proto2 != IPPROTO_ESP && proto2 != IPPROTO_AH &&
+		    proto2 != IPPROTO_IPIP)
+		{
+		    fprintf(stderr,
+			    "%s: unknown security protocol2 %d\n",
+			    argv[0], proto2);
+		    exit(1);
+		}
+
+		if (proto2 == IPPROTO_ESP)
+		  sprotocol.sadb_protocol_proto = SADB_SATYPE_ESP;
+		else
+		  if (proto2 == IPPROTO_AH)
+		    sprotocol.sadb_protocol_proto = SADB_SATYPE_AH;
+		  else
+		    if (proto2 == IPPROTO_IPIP)
+		      sprotocol.sadb_protocol_proto = SADB_SATYPE_X_IPIP;
 	    }
 
 	    sprotocol.sadb_protocol_exttype = SADB_EXT_X_PROTOCOL;
