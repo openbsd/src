@@ -1,5 +1,5 @@
 #
-# $OpenBSD: COYOTE,v 1.2 1996/11/23 07:54:46 kstailey Exp $
+# $OpenBSD: COYOTE,v 1.3 1996/11/23 18:05:32 kstailey Exp $
 #
 
 #
@@ -7,7 +7,7 @@
 # Root and swap on NFS (no choice)
 #
 
-include "std.sun3"
+include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE

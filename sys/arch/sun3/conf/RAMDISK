@@ -8,7 +8,7 @@
 #	install the miniroot in the swap partition
 #
 
-include "std.sun3"
+include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE		# XXX - Should not be needed!

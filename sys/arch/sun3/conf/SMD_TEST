@@ -5,7 +5,7 @@
 # Like GENERIC, but includes the SMD disk drivers (xd, xy)
 #
 
-include "std.sun3"
+include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
 options 	GENERIC

@@ -5,7 +5,7 @@
 # like GENERIC but supports KGDB (gdb -k on other machine)
 #
 
-include "std.sun3"
+include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
 options 	GENERIC
