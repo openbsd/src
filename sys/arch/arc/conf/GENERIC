@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 1997/08/01 23:53:06 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.23 1997/11/11 20:17:46 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -100,19 +100,21 @@ com0		at isa? port 0x3f8 irq 4
 com1		at isa? port 0x2f8 irq 3
 com2		at isa? port 0x3e8 irq 4
 com3		at isa? port 0x2e8 irq 3
+ast0		at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+com*		at ast? slave ?
+lpt0		at isa? port 0x378 irq 7
 
 wdc0		at isa? port 0x1f0 irq 14	# ST506, ESDI, IDE controllers
-#wdc1		at isa? port 0x170 irq 15
+wdc1		at isa? port 0x170 irq 15
 wd*		at wdc? drive ?
 
 atapibus*	at wdc?
 acd*		at atapibus? drive?
 
-lpt0		at isa? port 0x378 irq 7
 ep0		at isa? port ? irq ?           # 3C509 ethernet cards
-ed0    		at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503, NE[12]000
-ed1    		at isa? port 0x250 iomem 0xd8000 irq 9  #   ethernet cards
-ed2    		at isa? port 0x300 iomem 0xcc000 irq 10 #
+ed0    		at isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC, 3C503,
+ed1    		at isa? port 0x250 iomem 0xd8000 irq 9  # NE[12]000 ethernet
+ed2    		at isa? port 0x300 iomem 0xcc000 irq 10 # cards
 
 btl0		at isa? port 0x330 irq ? drq ?
 scsibus* 	at btl?
