@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clock_gettime.2,v 1.14 2003/08/11 05:38:02 kevlo Exp $
+.\"	$OpenBSD: clock_gettime.2,v 1.15 2003/12/09 11:05:09 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@ which is specified by
 .Fa clock_id .
 .Pp
 .Fa clock_id
-can be one of three values:
+can be one of four values:
 .Dv CLOCK_REALTIME
 for time that increments as
 a wall clock should,
@@ -68,10 +68,9 @@ for time that increments at a steady rate (monotonically).
 The structure pointed to by
 .Fa tp
 is defined in
-.Ao Pa sys/time.h Ac
+.Aq Pa sys/time.h
 as:
-.Pp
-.Bd -literal
+.Bd -literal -offset indent
 struct timespec {
 	time_t	tv_sec;		/* seconds */
 	long	tv_nsec;	/* and nanoseconds */
