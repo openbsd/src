@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.85 2002/10/07 14:34:40 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.86 2002/11/18 22:49:15 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,6 +51,7 @@
 
 #include "pfctl_parser.h"
 #include "pf_print_state.h"
+#include "pfctl_altq.h"
 
 void	 usage(void);
 int	 pfctl_enable(int, int);
@@ -58,10 +59,12 @@ int	 pfctl_disable(int, int);
 int	 pfctl_clear_stats(int, int);
 int	 pfctl_clear_rules(int, int);
 int	 pfctl_clear_nat(int, int);
+int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_states(int, int);
 int	 pfctl_kill_states(int, int);
 int	 pfctl_show_rules(int, int, int);
 int	 pfctl_show_nat(int);
+int	 pfctl_show_altq(int);
 int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
 int	 pfctl_show_timeouts(int);
@@ -148,7 +151,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-deqhnNrROvz] [-f file] ", __progname);
+	fprintf(stderr, "usage: %s [-AdeqhnNrROvz] [-f file] ", __progname);
 	fprintf(stderr, "[-F modifier] [-k host]\n");
 	fprintf(stderr, "             ");
 	fprintf(stderr, "[-s modifier] [-x level]\n");
@@ -166,6 +169,16 @@ pfctl_enable(int dev, int opts)
 	}
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf enabled\n");
+
+	if (ioctl(dev, DIOCSTARTALTQ)) {
+		if (errno == EEXIST)
+			errx(1, "altq already enabled");
+		else
+			err(1, "DIOCSTARTALTQ");
+	}
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "altq enabled\n");
+
 	return (0);
 }
 
@@ -180,6 +193,16 @@ pfctl_disable(int dev, int opts)
 	}
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "pf disabled\n");
+
+	if (ioctl(dev, DIOCSTOPALTQ)) {
+		if (errno == ENOENT)
+			errx(1, "altq not enabled");
+		else
+			err(1, "DIOCSTOPALTQ");
+	}
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "altq disabled\n");
+
 	return (0);
 }
 
@@ -228,6 +251,20 @@ pfctl_clear_nat(int dev, int opts)
 		err(1, "DIOCCOMMITRDRS");
 	if ((opts & PF_OPT_QUIET) == 0)
 		fprintf(stderr, "nat cleared\n");
+	return (0);
+}
+
+int
+pfctl_clear_altq(int dev, int opts)
+{
+	struct pfioc_altq pa;
+
+	if (ioctl(dev, DIOCBEGINALTQS, &pa.ticket))
+		err(1, "DIOCBEGINALTQS");
+	else if (ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
+		err(1, "DIOCCOMMITALTQS");
+	if ((opts & PF_OPT_QUIET) == 0)
+		fprintf(stderr, "altq cleared\n");
 	return (0);
 }
 
@@ -380,6 +417,33 @@ pfctl_show_rules(int dev, int opts, int format)
 				    pr.rule.bytes, pr.rule.states);
 		}
 	}
+	return (0);
+}
+
+int
+pfctl_show_altq(int dev)
+{
+	struct pf_altq_node *root = NULL;
+
+	struct pfioc_altq pa;
+	u_int32_t mnr, nr;
+
+	if (ioctl(dev, DIOCGETALTQS, &pa)) {
+		warnx("DIOCGETALTQS");
+		return (-1);
+	}
+	mnr = pa.nr;
+	for (nr = 0; nr < mnr; ++nr) {
+		pa.nr = nr;
+		if (ioctl(dev, DIOCGETALTQ, &pa)) {
+			warnx("DIOCGETALTQ");
+			return (-1);
+		}
+		pfctl_insert_altq_node(&root, pa.altq);
+	}
+	for (; root != NULL; root = root->next)
+		pfctl_print_altq_node(root, 0);
+	pfctl_free_altq_node(root);
 	return (0);
 }
 
@@ -583,6 +647,24 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 }
 
 int
+pfctl_add_altq(struct pfctl *pf, struct pf_altq *a)
+{
+	if ((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) {
+		memcpy(&pf->paltq->altq, a, sizeof(struct pf_altq));
+		if ((pf->opts & PF_OPT_NOACTION) == 0) {
+			if (ioctl(pf->dev, DIOCADDALTQ, pf->paltq))
+				err(1, "DIOCADDALTQ");
+		}
+		pfaltq_store(&pf->paltq->altq);
+		if (pf->opts & PF_OPT_VERBOSE) {
+			print_altq(&pf->paltq->altq, 0);
+			printf("\n");
+		}
+	}
+	return (0);
+}
+
+int
 pfctl_rules(int dev, char *filename, int opts)
 {
 	FILE *fin;
@@ -590,6 +672,7 @@ pfctl_rules(int dev, char *filename, int opts)
 	struct pfioc_binat	pb;
 	struct pfioc_rdr	pr;
 	struct pfioc_rule	pl;
+	struct pfioc_altq	pa;
 	struct pfctl		pf;
 
 	if (strcmp(filename, "-") == 0) {
@@ -612,6 +695,9 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCBEGINBINATS, &pb.ticket))
 				err(1, "DIOCBEGINBINATS");
 		}
+		if (((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
+		    ioctl(dev, DIOCBEGINALTQS, &pa.ticket))
+			err(1, "DIOCBEGINALTQS");
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
 		    ioctl(dev, DIOCBEGINRULES, &pl.ticket))
 			err(1, "DIOCBEGINRULES");
@@ -622,10 +708,14 @@ pfctl_rules(int dev, char *filename, int opts)
 	pf.pnat = &pn;
 	pf.pbinat = &pb;
 	pf.prdr = &pr;
+	pf.paltq = &pa;
 	pf.prule = &pl;
 	pf.rule_nr = 0;
 	if (parse_rules(fin, &pf) < 0)
 		errx(1, "Syntax error in file: pf rules not loaded");
+	if ((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0)
+		if (check_commit_altq(dev, opts) != 0)
+			errx(1, "errors in altq config");
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if ((loadopt & (PFCTL_FLAG_NAT | PFCTL_FLAG_ALL)) != 0) {
 			if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket))
@@ -635,6 +725,9 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCCOMMITBINATS, &pb.ticket))
 				err(1, "DIOCCOMMITBINATS");
 		}
+		if (((loadopt & (PFCTL_FLAG_ALTQ | PFCTL_FLAG_ALL)) != 0) &&
+		    ioctl(dev, DIOCCOMMITALTQS, &pa.ticket))
+			err(1, "DIOCCOMMITALTQS");
 		if (((loadopt & (PFCTL_FLAG_FILTER | PFCTL_FLAG_ALL)) != 0) &&
 		    ioctl(dev, DIOCCOMMITRULES, &pl.ticket))
 			err(1, "DIOCCOMMITRULES");
@@ -805,7 +898,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqf:F:hk:nNOrRs:Svx:z")) != -1) {
+	while ((ch = getopt(argc, argv, "Adeqf:F:hk:nNOrRs:Svx:z")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -844,6 +937,10 @@ main(int argc, char *argv[])
 		case 'f':
 			rulesopt = optarg;
 			mode = O_RDWR;
+			break;
+		case 'A':
+			loadopt &= ~PFCTL_FLAG_ALL;
+			loadopt |= PFCTL_FLAG_ALTQ;
 			break;
 		case 'R':
 			loadopt &= ~PFCTL_FLAG_ALL;
@@ -905,6 +1002,9 @@ main(int argc, char *argv[])
 		case 'n':
 			pfctl_clear_nat(dev, opts);
 			break;
+		case 'q':
+			pfctl_clear_altq(dev, opts);
+			break;
 		case 's':
 			pfctl_clear_states(dev, opts);
 			break;
@@ -914,6 +1014,7 @@ main(int argc, char *argv[])
 		case 'a':
 			pfctl_clear_rules(dev, opts);
 			pfctl_clear_nat(dev, opts);
+			pfctl_clear_altq(dev, opts);
 			pfctl_clear_states(dev, opts);
 			pfctl_clear_stats(dev, opts);
 			break;
@@ -940,6 +1041,9 @@ main(int argc, char *argv[])
 		case 'n':
 			pfctl_show_nat(dev);
 			break;
+		case 'q':
+			pfctl_show_altq(dev);
+			break;
 		case 's':
 			pfctl_show_states(dev, 0, opts);
 			break;
@@ -955,6 +1059,7 @@ main(int argc, char *argv[])
 		case 'a':
 			pfctl_show_rules(dev, opts, 0);
 			pfctl_show_nat(dev);
+			pfctl_show_altq(dev);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
 			pfctl_show_rules(dev, opts, 1);

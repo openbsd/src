@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.186 2002/11/13 22:44:11 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.187 2002/11/18 22:49:15 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -50,6 +50,7 @@
 #include <grp.h>
 
 #include "pfctl_parser.h"
+#include "pfctl_altq.h"
 
 static struct pfctl *pf = NULL;
 static FILE *fin = NULL;
@@ -153,6 +154,26 @@ struct peer {
 	struct node_port	*port;
 };
 
+struct node_queue {
+	char			 queue[PF_QNAME_SIZE];
+	char			 parent[PF_QNAME_SIZE];
+	char			 ifname[IFNAMSIZ];
+	struct node_queue	*next;
+	struct node_queue	*tail;
+}	*queues = NULL;
+
+struct node_queue_opt {
+	int			 qtype;
+	union {	/* options for other schedulers will follow */
+		struct cbq_opts		 cbq_opts;
+	}			 data;
+};
+
+struct node_queue_bw {
+	u_int32_t	bw_absolute;
+	u_int16_t	bw_percent;
+};
+
 int	yyerror(char *, ...);
 int	rule_consistent(struct pf_rule *);
 int	nat_consistent(struct pf_nat *);
@@ -176,6 +197,9 @@ void	expand_rule(struct pf_rule *, struct node_if *, struct node_proto *,
 	    struct node_host *, struct node_port *, struct node_host *,
 	    struct node_port *, struct node_uid *, struct node_gid *,
 	    struct node_icmp *);
+void	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *);
+int	expand_queue(struct pf_altq *, struct node_queue *,
+	    struct node_queue_bw);
 int	check_rulestate(int);
 int	kw_cmp(const void *, const void *);
 int	lookup(char *);
@@ -186,7 +210,6 @@ int	yylex(void);
 struct	node_host *host(char *, int);
 int	atoul(char *, u_long *);
 int	getservice(char *);
-
 
 struct sym {
 	struct sym *next;
@@ -251,6 +274,9 @@ typedef struct {
 			u_int8_t	log;
 			u_int8_t	quick;
 		}			logquick;
+		struct node_queue	*queue;
+		struct node_queue_opt	queue_options;
+		struct node_queue_bw	queue_bwspec;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -266,6 +292,9 @@ typedef struct {
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY
 %token	REQUIREORDER YES
 %token	ANTISPOOF FOR
+%token	ALTQ SCHEDULER CBQ BANDWIDTH TBRSIZE
+%token	QUEUE PRIORITY QLIMIT
+%token	DEFAULT CONTROL BORROW RED ECN RIO
 %token	<v.string> STRING
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
@@ -289,6 +318,12 @@ typedef struct {
 %type	<v.state_opt>	state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>	logquick
 %type	<v.interface>	antispoof_ifspc antispoof_iflst
+%type	<v.number>	priority qlimit tbrsize
+%type	<v.string>	qname
+%type	<v.queue>	qassign qassign_list qassign_item
+%type	<v.queue_options>	schedtype
+%type	<v.number>	cbqflags_list cbqflags_item
+%type	<v.queue_bwspec>	bandwidth
 %%
 
 ruleset		: /* empty */
@@ -299,6 +334,8 @@ ruleset		: /* empty */
 		| ruleset binatrule '\n'
 		| ruleset rdrrule '\n'
 		| ruleset pfrule '\n'
+		| ruleset altqif '\n'
+		| ruleset queuespec '\n'
 		| ruleset varset '\n'
 		| ruleset antispoof '\n'
 		| ruleset error '\n'		{ errors++; }
@@ -467,8 +504,169 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 		}
 		;
 
+
+/* altq stuff */
+
+altqif		: ALTQ interface SCHEDULER schedtype bandwidth tbrsize
+		  qassign	{
+			struct	pf_altq a;
+
+			memset(&a, 0, sizeof(a));
+			if ($4.qtype == ALTQT_NONE) {
+				yyerror("no scheduler specified!");
+				YYERROR;
+			}
+			a.scheduler = $4.qtype;
+			a.pq_u.cbq_opts.flags = $4.data.cbq_opts.flags;
+			if ((a.ifbandwidth = $5.bw_absolute) == 0) {
+				yyerror("interface bandwidth must be absolute");
+				YYERROR;
+			}
+			a.tbrsize = $6;
+			expand_altq(&a,	$2, $7);
+		}
+		;
+
+qassign		: /* empty */			{ $$ = NULL; }
+		| QUEUE qassign_item		{ $$ = $2; }
+		| QUEUE '{' qassign_list '}'	{ $$ = $3; }
+		;
+
+qassign_list	: qassign_item			{ $$ = $1; }
+		| qassign_list comma qassign_item	{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
+		}
+		;
+
+qassign_item	: STRING			{
+			$$ = malloc(sizeof(struct node_queue));
+			if ($$ == NULL)
+				err(1, "queue_item: malloc");
+			strlcpy($$->queue, $1, PF_QNAME_SIZE);
+			$$->next = NULL;
+			$$->tail = $$;
+		}
+		;
+
+queuespec	: QUEUE STRING bandwidth priority qlimit schedtype qassign {
+			struct	pf_altq a;
+
+			memset(&a, 0, sizeof(a));
+
+			if (strlen($2) >= PF_QNAME_SIZE) {
+				yyerror("queue name too long (max "
+				    "%d chars)", PF_QNAME_SIZE-1);
+				YYERROR;
+			}
+			strlcpy(a.qname, $2, sizeof(a.qname));
+			if ($4 > 255) {
+				yyerror("priority out of range: max 255");
+				YYERROR;
+			}
+			a.priority = $4;
+			a.qlimit = $5;
+			a.scheduler = $6.qtype;
+			a.pq_u.cbq_opts.flags = $6.data.cbq_opts.flags;
+			if (expand_queue(&a, $7, $3))
+				YYERROR;
+
+		}
+		;
+
+schedtype	: /* empty */			{ $$.qtype = ALTQT_NONE; }
+		| CBQ 				{ $$.qtype = ALTQT_CBQ; }
+		| CBQ '(' cbqflags_list ')'	{
+			$$.qtype = ALTQT_CBQ;
+			$$.data.cbq_opts.flags = $3;
+		}
+		;
+
+cbqflags_list	: cbqflags_item				{ $$ |= $1; }
+		| cbqflags_list comma cbqflags_item 	{ $$ |= $3; }
+		;
+
+
+cbqflags_item	: DEFAULT	{ $$ = CBQCLF_DEFCLASS; }
+		| CONTROL	{ $$ = CBQCLF_CTLCLASS; }
+		| BORROW	{ $$ = CBQCLF_BORROW; }
+		| RED		{ $$ = CBQCLF_RED; }
+		| ECN		{ $$ = CBQCLF_RED|CBQCLF_ECN; }
+		| RIO		{ $$ = CBQCLF_RIO; }
+		;
+
+bandwidth	: /* empty */		{
+			$$.bw_absolute = 0;
+			$$.bw_percent = 0;
+		}
+		| BANDWIDTH STRING {
+ 			double bps;
+			char *cp;
+
+			$$.bw_percent = 0;
+
+			bps = strtod($2, &cp);
+			if (cp != NULL) {
+				if (!strcmp(cp, "b")) {
+					/* nothing */
+				} else if (!strcmp(cp, "Kb"))
+					bps *= 1024;
+				else if (!strcmp(cp, "Mb"))
+					bps *= 1024 * 1024;
+				else if (!strcasecmp(cp, "Gb"))
+					bps *= 1024 * 1024 * 1024;
+				else if (*cp == '%') {
+ 					if (bps < 0 || bps > 100) {
+						yyerror("bandwidth spec "
+						    "out of range");
+						YYERROR;
+					}
+					$$.bw_percent = bps;
+					bps = 0;
+				} else {
+					yyerror("unknown unit %s", cp);
+					YYERROR;
+				}
+			}
+			$$.bw_absolute = (u_int32_t)bps;
+		}
+		;
+
+priority	: /* empty */		{ $$ = 0; }
+		| PRIORITY number	{
+			if ($2 > 255) {
+				yyerror("priority out of range: max 255");
+				YYERROR;
+			}
+			$$ = $2; 
+		}
+		;
+
+qlimit		: /* empty */		{ $$ = 0; }
+		| QLIMIT number		{
+			if ($2 > 65535) {
+				yyerror("qlimit out of range: max 65535");
+				YYERROR;
+			}
+			$$ = $2;
+		}
+		;
+
+
+tbrsize		: /* empty */		{ $$ = 0; }
+		| number		{
+			if ($1 > 65535) {
+				yyerror("tbrsize too big: max 65535");
+				YYERROR;
+			}
+			$$ = $1; 
+		}
+		;
+
 pfrule		: action dir logquick interface route af proto fromto
 		  uids gids flags icmpspec tos keep fragment allowopts label
+		  qname
 		{
 			struct pf_rule r;
 			struct node_state_opt *o;
@@ -583,6 +781,16 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				strlcpy(r.label, $17, sizeof(r.label));
 				free($17);
+			}
+
+			if ($18) {
+				if (strlen($18) >= PF_QNAME_SIZE) {
+					yyerror("rule qname too long (max "
+					    "%d chars)", PF_QNAME_SIZE-1);
+					YYERROR;
+				}
+				strlcpy(r.qname, $18, sizeof(r.qname));
+				free($18);
 			}
 
 			expand_rule(&r, $4, $7, $8.src.host, $8.src.port,
@@ -1328,6 +1536,14 @@ label		: /* empty */			{ $$ = NULL; }
 			}
 		}
 		;
+qname		: /* empty */			{ $$ = NULL; }
+		| QUEUE STRING			{
+			if (($$ = strdup($2)) == NULL) {
+				yyerror("qname strdup() failed");
+				YYERROR;
+			}
+		}
+		;
 
 no		: /* empty */			{ $$ = 0; }
 		| NO				{ $$ = 1; }
@@ -2056,6 +2272,102 @@ expand_label(char *label, const char *ifname, sa_family_t af,
 }
 
 void
+expand_altq(struct pf_altq *a, struct node_if *interfaces,
+    struct node_queue *nqueues)
+{
+	struct	pf_altq pa, pb;
+	char	qname[PF_QNAME_SIZE];
+	struct	node_queue *n;
+
+	LOOP_THROUGH(struct node_if, interface, interfaces,
+		memcpy(&pa, a, sizeof(struct pf_altq));
+		strlcpy(pa.ifname, interface->ifname, IFNAMSIZ);
+
+		if (interface->not)
+			yyerror("altq on ! <interface> is not supported");
+		else {
+			eval_pfaltq(pf, &pa);
+			pfctl_add_altq(pf, &pa);
+
+			/* now create a root queue */
+			memset(&pb, 0, sizeof(struct pf_altq));
+			strlcpy(qname, "root_", sizeof(qname));
+			strlcat(qname, interface->ifname, sizeof(qname));
+			strlcpy(pb.qname, qname, PF_QNAME_SIZE);
+			strlcpy(pb.ifname, interface->ifname, IFNAMSIZ);
+			pb.qlimit = pa.qlimit;
+			pb.scheduler = pa.scheduler;
+			pb.pq_u.cbq_opts.flags = pa.pq_u.cbq_opts.flags;
+			eval_pfqueue(pf, &pb, pa.ifbandwidth, 0);
+			pfctl_add_altq(pf, &pb);
+
+			LOOP_THROUGH(struct node_queue, queue, nqueues,
+				n = calloc(1, sizeof(struct node_queue));
+				if (n == NULL)
+					err(1, "expand_altq: malloc");
+				strlcpy(n->parent, qname, PF_QNAME_SIZE);
+				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
+				strlcpy(n->ifname, interface->ifname, IFNAMSIZ);
+				n->next = NULL;
+				n->tail = n;
+				if (queues == NULL)
+					queues = n;
+				else {
+					queues->tail->next = n;
+					queues->tail = n;
+				}
+			);
+		}
+	);
+	FREE_LIST(struct node_if, interfaces);
+	FREE_LIST(struct node_queue, nqueues);
+}
+
+int
+expand_queue(struct pf_altq *a, struct node_queue *nqueues,
+    struct node_queue_bw bwspec)
+{
+	struct	node_queue *n;
+	u_int8_t	added = 0;
+
+	LOOP_THROUGH(struct node_queue, tqueue, queues,
+		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
+			/* found ourselve in queues */
+			LOOP_THROUGH(struct node_queue, queue, nqueues,
+				n = malloc(sizeof(struct node_queue));
+				if (n == NULL)
+					err(1, "expand_queue: malloc");
+				strlcpy(n->parent, a->qname, PF_QNAME_SIZE);
+				strlcpy(n->queue, queue->queue, PF_QNAME_SIZE);
+				strlcpy(n->ifname, tqueue->ifname, IFNAMSIZ);
+				n->next = NULL;
+				n->tail = n;
+				if (queues == NULL)
+					queues = n;
+				else {
+					queues->tail->next = n;
+					queues->tail = n;
+				}
+			);
+			FREE_LIST(struct node_queue, nqueues);
+			strlcpy(a->ifname, tqueue->ifname, IFNAMSIZ);
+			strlcpy(a->parent, tqueue->parent, PF_QNAME_SIZE);
+
+			eval_pfqueue(pf, a, bwspec.bw_absolute,
+			    bwspec.bw_percent);
+			pfctl_add_altq(pf, a);
+			added++;
+		}
+	);
+
+	if (!added) {
+		yyerror("queue has no parent");
+		return (1);
+	} else
+		return (0);
+}
+
+void
 expand_rule(struct pf_rule *r,
     struct node_if *interfaces, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
@@ -2067,9 +2379,11 @@ expand_rule(struct pf_rule *r,
 	int nomatch = 0, added = 0;
 	char	ifname[IF_NAMESIZE];
 	char	label[PF_RULE_LABEL_SIZE];
+	char	qname[PF_QNAME_SIZE];
 	u_int8_t 	flags, flagset;
 
 	strlcpy(label, r->label, sizeof(label));
+	strlcpy(qname, r->qname, sizeof(qname));
 	flags = r->flags;
 	flagset = r->flagset;
 
@@ -2111,6 +2425,8 @@ expand_rule(struct pf_rule *r,
 		strlcpy(r->label, label, PF_RULE_LABEL_SIZE);
 		expand_label(r->label, r->ifname, r->af, src_host, src_port,
 		    dst_host, dst_port, proto->proto);
+		strlcpy(r->qname, qname, PF_QNAME_SIZE);
+		r->qid = qname_to_qid(qname, r->ifname);
 		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
@@ -2343,16 +2659,23 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "all",	ALL},
 		{ "allow-opts",	ALLOWOPTS},
+		{ "altq",	ALTQ},
 		{ "antispoof",	ANTISPOOF},
 		{ "any",	ANY},
+		{ "bandwidth",	BANDWIDTH},
 		{ "binat",	BINAT},
 		{ "block",	BLOCK},
 		{ "block-policy", BLOCKPOLICY},
+		{ "borrow",	BORROW},
+		{ "cbq",	CBQ},
 		{ "code",	CODE},
+		{ "control",	CONTROL},
 		{ "crop",	FRAGCROP},
+		{ "default",	DEFAULT},
 		{ "drop",	DROP},
 		{ "drop-ovl",	FRAGDROP},
 		{ "dup-to",	DUPTO},
+		{ "ecn",	ECN},
 		{ "fastroute",	FASTROUTE},
 		{ "flags",	FLAGS},
 		{ "for", 	FOR},
@@ -2383,20 +2706,27 @@ lookup(char *s)
 		{ "out",	OUT},
 		{ "pass",	PASS},
 		{ "port",	PORT},
+		{ "priority",	PRIORITY},
 		{ "proto",	PROTO},
+		{ "qlimit",	QLIMIT},
+		{ "queue",	QUEUE},
 		{ "quick",	QUICK},
 		{ "rdr",	RDR},
 		{ "reassemble",	FRAGNORM},
+		{ "red",	RED},
 		{ "reply-to",	REPLYTO},
 		{ "require-order", REQUIREORDER},
 		{ "return",	RETURN},
 		{ "return-icmp",RETURNICMP},
 		{ "return-icmp6",RETURNICMP6},
 		{ "return-rst",	RETURNRST},
+		{ "rio",	RIO},
 		{ "route-to",	ROUTETO},
+		{ "scheduler",	SCHEDULER},
 		{ "scrub",	SCRUB},
 		{ "set",	SET},
 		{ "state",	STATE},
+		{ "tbrsize",	TBRSIZE},
 		{ "timeout",	TIMEOUT},
 		{ "to",		TO},
 		{ "tos",	TOS},

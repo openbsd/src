@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.26 2002/10/25 10:40:45 camield Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.27 2002/11/18 22:49:15 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,12 +61,15 @@ struct pfctl {
 	struct pfioc_nat *pnat;
 	struct pfioc_binat *pbinat;
 	struct pfioc_rdr *prdr;
+	struct pfioc_altq *paltq;
+	struct pfioc_queue *pqueue;
 };
 
 int	pfctl_add_rule(struct pfctl *, struct pf_rule *);
 int	pfctl_add_nat(struct pfctl *, struct pf_nat *);
 int	pfctl_add_binat(struct pfctl *, struct pf_binat *);
 int	pfctl_add_rdr(struct pfctl *, struct pf_rdr *);
+int	pfctl_add_altq(struct pfctl *, struct pf_altq *);
 
 int	pfctl_set_timeout(struct pfctl *, const char *, int);
 int	pfctl_set_optimization(struct pfctl *, const char *);
@@ -109,6 +112,7 @@ struct pf_timeout {
 #define PFCTL_FLAG_FILTER	0x02
 #define PFCTL_FLAG_NAT		0x04
 #define PFCTL_FLAG_OPTION	0x08
+#define PFCTL_FLAG_ALTQ		0x10
 
 extern const struct pf_timeout pf_timeouts[];
 
