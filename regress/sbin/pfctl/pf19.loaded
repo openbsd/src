@@ -1,36 +1,45 @@
 @0 rdr on lo0 inet proto tcp from any to 1.2.3.4 port = 2222 -> 10.0.0.10 port 22
 [ Skip steps: i=5 d=end f=end p=end sp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @1 rdr on lo0 inet proto tcp from 127.0.0.0/24 to 1.2.3.0/25 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: i=5 d=end f=end p=end sa=3 sp=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @2 rdr on lo0 inet proto tcp from 127.0.0.0/24 to 2.4.6.8/30 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: i=5 d=end f=end p=end sp=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @3 rdr on lo0 inet proto tcp from 10.0.1.0/24 to 1.2.3.0/25 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: i=5 d=end f=end p=end sa=5 sp=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @4 rdr on lo0 inet proto tcp from 10.0.1.0/24 to 2.4.6.8/30 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: d=end f=end p=end sp=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @5 rdr on lo1 inet proto tcp from 127.0.0.0/24 to 1.2.3.0/25 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: i=end d=end f=end p=end sa=7 sp=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @6 rdr on lo1 inet proto tcp from 127.0.0.0/24 to 2.4.6.8/30 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: i=end d=end f=end p=end sp=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @7 rdr on lo1 inet proto tcp from 10.0.1.0/24 to 1.2.3.0/25 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: i=end d=end f=end p=end sa=end sp=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
 @8 rdr on lo1 inet proto tcp from 10.0.1.0/24 to 2.4.6.8/30 port = ftp -> 127.0.0.1 port 8021
 [ Skip steps: i=end d=end f=end p=end sa=end sp=end da=end dp=end ]
+[ Queue: qname= qid=0 pqname= pqid=0 ]
 [ Evaluations: 0         Packets: 0         Bytes: 0           States: 0     ]
 
