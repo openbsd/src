@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.11 2000/01/22 02:17:54 aaron Exp $
+.\"	$OpenBSD: diskless.8,v 1.12 2000/12/28 22:24:00 miod Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -182,7 +182,7 @@ If booting an HP 300-series machine, ensure that
 is configured properly to transfer the boot program to the client.
 An entry might look like this:
 .Bd -literal -offset indent -compact
-08:00:09:01:23:E6	SYS_NBOOT	# myclient
+08:00:09:01:23:E6	SYS_UBOOT	# myclient
 .Ed
 .Pp
 See the
@@ -213,8 +213,9 @@ If the client's PROM fails to fetch the expected file,
 .Xr tcpdump 8
 can be used to discover which filename the client is trying to read.
 .Pp
-If booting an HP 300-series machine, ensure that the network boot program
-.Pa SYS_NBOOT
+If booting an HP 300-series machine, ensure that the general purpose
+boot program
+.Pa SYS_UBOOT
 (which may be called
 .Pa netboot.lif
 before installation)
