@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.114 1999/01/10 22:26:53 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.115 1999/01/16 08:39:06 fgsch Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -211,6 +211,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M1523 Host-PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531,
+	    0,
+	    "Acer Labs",
+	    "M1531 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
