@@ -1,4 +1,4 @@
-/*	$OpenBSD: rxk_crpt.c,v 1.1.1.1 1998/09/14 21:53:19 art Exp $	*/
+/*	$OpenBSD: rxk_crpt.c,v 1.2 1999/06/16 15:27:34 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -77,7 +77,7 @@ RCSID("$KTH: rxk_crpt.c,v 1.8 1998/07/12 14:38:58 joda Exp $");
 #define ROT32L(x, n) ((((u_int32) x) << (n)) | (((u_int32) x) >> (32-(n))))
 #define bswap32(x) (((ROT32L(x, 16) & 0x00ff00ff)<<8) | ((ROT32L(x, 16)>>8) & 0x00ff00ff))
 
-#if defined(__alpha) || defined(i386) || defined(MIPSEL)
+#if defined(__alpha__) || defined(__i386__) || defined(MIPSEL)
 #define NTOH(x) bswap32(x)
 #else
 #define NTOH(x) (x)
@@ -94,7 +94,7 @@ RCSID("$KTH: rxk_crpt.c,v 1.8 1998/07/12 14:38:58 joda Exp $");
  * all else	ntohl
  */
 
-#if defined(__GNUC__) && defined(i386)
+#if defined(__GNUC__) && defined(__i386__)
 static inline
 u_int32
 bswap(u_int32 x)
@@ -230,7 +230,7 @@ static const u_int32 sbox3[256] = {
  u.l = sched ^ R; \
  L ^= sbox0[u.c[0]] ^ sbox1[u.c[1]] ^ sbox2[u.c[2]] ^ sbox3[u.c[3]]; }
 
-#if defined(i386) || defined(__alpha)
+#if defined(__i386__) || defined(__alpha__)
 /* BEWARE: this code is endian dependent.
  * This should really be inline assembler on the x86.
  */
