@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.6 1996/08/18 18:20:48 tholo Exp $ */
+/*	$OpenBSD: printjob.c,v 1.7 1996/09/21 07:55:35 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -1423,6 +1423,7 @@ struct bauds {
 	9600,	B9600,
 	19200,	B19200,
 	38400,	B38400,
+	57600,	B57600,
 	0,	0
 };
 #endif
