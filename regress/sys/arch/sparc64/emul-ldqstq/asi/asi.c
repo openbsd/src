@@ -1,4 +1,4 @@
-/*	$OpenBSD: asi.c,v 1.1 2003/07/12 06:31:49 jason Exp $	*/
+/*	$OpenBSD: asi.c,v 1.2 2003/07/12 07:09:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -53,7 +53,27 @@ void c_stqa_asi(int, union fpregs *, struct fpquad *);
 void c_ldqa_asi(int, union fpregs *, struct fpquad *);
 void asm_ldqa_asi(int, struct fpquad *);
 void asm_stqa_asi(int, struct fpquad *);
+void asm_ldqa_imm(int asi, struct fpquad *);
+void asm_stqa_imm(int asi, struct fpquad *);
+void asm_stqa_primary(struct fpquad *);
+void asm_ldqa_primary(struct fpquad *);
+void asm_stqa_secondary(struct fpquad *);
+void asm_ldqa_secondary(struct fpquad *);
+void asm_stqa_primary_nofault(struct fpquad *);
+void asm_ldqa_primary_nofault(struct fpquad *);
+void asm_stqa_secondary_nofault(struct fpquad *);
+void asm_ldqa_secondary_nofault(struct fpquad *);
+void asm_stqa_primary_little(struct fpquad *);
+void asm_ldqa_primary_little(struct fpquad *);
+void asm_stqa_secondary_little(struct fpquad *);
+void asm_ldqa_secondary_little(struct fpquad *);
+void asm_stqa_primary_nofault_little(struct fpquad *);
+void asm_ldqa_primary_nofault_little(struct fpquad *);
+void asm_stqa_secondary_nofault_little(struct fpquad *);
+void asm_ldqa_secondary_nofault_little(struct fpquad *);
 void check_asi(int, union fpregs *, union fpregs *, union fpregs *);
+void check_asi_asi(int, union fpregs *, union fpregs *, union fpregs *);
+void check_asi_imm(int, union fpregs *, union fpregs *, union fpregs *);
 int main(int, char *[]);
 
 int
@@ -146,7 +166,80 @@ c_ldqa_asi(int asi, union fpregs *frp, struct fpquad *q)
 }
 
 void
+asm_stqa_imm(int asi, struct fpquad *q)
+{
+	switch (asi) {
+	case ASI_PRIMARY:
+		asm_stqa_primary(q);
+		break;
+	case ASI_SECONDARY:
+		asm_stqa_secondary(q);
+		break;
+	case ASI_PRIMARY_NOFAULT:
+		asm_stqa_primary_nofault(q);
+		break;
+	case ASI_SECONDARY_NOFAULT:
+		asm_stqa_secondary_nofault(q);
+		break;
+	case ASI_PRIMARY_LITTLE:
+		asm_stqa_primary_little(q);
+		break;
+	case ASI_SECONDARY_LITTLE:
+		asm_stqa_secondary_little(q);
+		break;
+	case ASI_PRIMARY_NOFAULT_LITTLE:
+		asm_stqa_primary_nofault_little(q);
+		break;
+	case ASI_SECONDARY_NOFAULT_LITTLE:
+		asm_stqa_secondary_nofault_little(q);
+		break;
+	default:
+		errx(1, "asm_stqa_imm: bad asi %d", asi);
+	}
+}
+
+void
+asm_ldqa_imm(int asi, struct fpquad *q)
+{
+	switch (asi) {
+	case ASI_PRIMARY:
+		asm_ldqa_primary(q);
+		break;
+	case ASI_SECONDARY:
+		asm_ldqa_secondary(q);
+		break;
+	case ASI_PRIMARY_NOFAULT:
+		asm_ldqa_primary_nofault(q);
+		break;
+	case ASI_SECONDARY_NOFAULT:
+		asm_ldqa_secondary_nofault(q);
+		break;
+	case ASI_PRIMARY_LITTLE:
+		asm_ldqa_primary_little(q);
+		break;
+	case ASI_SECONDARY_LITTLE:
+		asm_ldqa_secondary_little(q);
+		break;
+	case ASI_PRIMARY_NOFAULT_LITTLE:
+		asm_ldqa_primary_nofault_little(q);
+		break;
+	case ASI_SECONDARY_NOFAULT_LITTLE:
+		asm_ldqa_secondary_nofault_little(q);
+		break;
+	default:
+		errx(1, "asm_ldqa_imm: bad asi %d", asi);
+	}
+}
+
+void
 check_asi(int asi, union fpregs *fr1, union fpregs *fr2, union fpregs *fr3)
+{
+	check_asi_asi(asi, fr1, fr2, fr3);
+	check_asi_imm(asi, fr1, fr2, fr3);
+}
+
+void
+check_asi_asi(int asi, union fpregs *fr1, union fpregs *fr2, union fpregs *fr3)
 {
 	struct fpquad q1;
 
@@ -161,6 +254,33 @@ check_asi(int asi, union fpregs *fr1, union fpregs *fr2, union fpregs *fr3)
 
 	loadfpregs(fr1);
 	asm_ldqa_asi(asi, &q1);
+	savefpregs(fr2);
+
+	c_ldqa_asi(asi, fr3, &q1);
+
+	if (compare_regs(fr2, fr3)) {
+		printf("ASI 0x%x failed\n", asi);
+		dump_regs(fr1, fr2, fr3);
+		exit(1);
+	}
+}
+
+void
+check_asi_imm(int asi, union fpregs *fr1, union fpregs *fr2, union fpregs *fr3)
+{
+	struct fpquad q1;
+
+	initfpregs(fr1);
+	initfpregs(fr2);
+	initfpregs(fr3);
+
+	q1.x1 = 0x01234567;
+	q1.x2 = 0x89abcdef;
+	q1.x3 = 0x55aa55aa;
+	q1.x4 = 0xa5a5a5a5;
+
+	loadfpregs(fr1);
+	asm_ldqa_imm(asi, &q1);
 	savefpregs(fr2);
 
 	c_ldqa_asi(asi, fr3, &q1);

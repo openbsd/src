@@ -1,4 +1,4 @@
-/*	$OpenBSD: asi_asm.S,v 1.1 2003/07/12 06:31:49 jason Exp $	*/
+/*	$OpenBSD: asi_asm.S,v 1.2 2003/07/12 07:09:25 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -27,6 +27,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/ctlreg.h>
 
 /* void asm_ldq_asi(int asi, struct fpquad *r)	%f0 = *r */
 ENTRY(asm_ldqa_asi)
@@ -43,3 +44,68 @@ ENTRY(asm_stqa_asi)
 	stqa	%f0, [%o1] %asi
 	retl
 	 wr	%o2, 0, %asi
+
+ENTRY(asm_stqa_primary)
+	retl
+	 stqa %f0, [%o0] ASI_PRIMARY
+
+ENTRY(asm_ldqa_primary)
+	retl
+	 ldqa [%o0] ASI_PRIMARY, %f0
+
+ENTRY(asm_stqa_secondary)
+	retl
+	 stqa %f0, [%o0] ASI_SECONDARY
+
+ENTRY(asm_ldqa_secondary)
+	retl
+	 ldqa [%o0] ASI_SECONDARY, %f0
+
+ENTRY(asm_stqa_primary_nofault)
+	retl
+	 stqa %f0, [%o0] ASI_PRIMARY_NOFAULT
+
+ENTRY(asm_ldqa_primary_nofault)
+	retl
+	 ldqa [%o0] ASI_PRIMARY_NOFAULT, %f0
+
+ENTRY(asm_stqa_secondary_nofault)
+	retl
+	 stqa %f0, [%o0] ASI_SECONDARY_NOFAULT
+
+ENTRY(asm_ldqa_secondary_nofault)
+	retl
+	 ldqa [%o0] ASI_SECONDARY_NOFAULT, %f0
+
+ENTRY(asm_stqa_primary_little)
+	retl
+	 stqa %f0, [%o0] ASI_PRIMARY_LITTLE
+
+ENTRY(asm_ldqa_primary_little)
+	retl
+	 ldqa [%o0] ASI_PRIMARY_LITTLE, %f0
+
+ENTRY(asm_stqa_secondary_little)
+	retl
+	 stqa %f0, [%o0] ASI_SECONDARY_LITTLE
+
+ENTRY(asm_ldqa_secondary_little)
+	retl
+	 ldqa [%o0] ASI_SECONDARY_LITTLE, %f0
+
+ENTRY(asm_stqa_primary_nofault_little)
+	retl
+	 stqa %f0, [%o0] ASI_PRIMARY_NOFAULT_LITTLE
+
+ENTRY(asm_ldqa_primary_nofault_little)
+	retl
+	 ldqa [%o0] ASI_PRIMARY_NOFAULT_LITTLE, %f0
+
+ENTRY(asm_stqa_secondary_nofault_little)
+	retl
+	 stqa %f0, [%o0] ASI_SECONDARY_NOFAULT_LITTLE
+
+ENTRY(asm_ldqa_secondary_nofault_little)
+	retl
+	 ldqa [%o0] ASI_SECONDARY_NOFAULT_LITTLE, %f0
+
