@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mx.c,v 1.6 1999/06/28 20:51:09 jason Exp $	*/
+/*	$OpenBSD: if_mx.c,v 1.7 1999/09/13 20:49:01 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_mx.c,v 1.19 1999/06/16 16:27:30 wpaul Exp $
+ *	$FreeBSD: if_mx.c,v 1.21 1999/07/06 19:23:26 des Exp $
  */
 
 /*
@@ -99,56 +99,54 @@
 
 #include <dev/pci/if_mxreg.h>
 
-static int mx_probe	__P((struct device *, void *, void *));
-static void mx_attach	__P((struct device *, struct device *self, void *aux));
+int mx_probe		__P((struct device *, void *, void *));
+void mx_attach		__P((struct device *, struct device *self, void *aux));
 
-static int mx_newbuf		__P((struct mx_softc *,
-						struct mx_chain_onefrag *));
-static int mx_encap		__P((struct mx_softc *, struct mx_chain *,
+int mx_newbuf		__P((struct mx_softc *, struct mx_chain_onefrag *));
+int mx_encap		__P((struct mx_softc *, struct mx_chain *,
 						struct mbuf *));
 
-static void mx_rxeof		__P((struct mx_softc *));
-static void mx_rxeoc		__P((struct mx_softc *));
-static void mx_txeof		__P((struct mx_softc *));
-static void mx_txeoc		__P((struct mx_softc *));
-static int mx_intr		__P((void *));
-static void mx_start		__P((struct ifnet *));
-static int mx_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void mx_init		__P((void *));
-static void mx_stop		__P((struct mx_softc *));
-static void mx_watchdog		__P((struct ifnet *));
-static void mx_shutdown		__P((void *));
-static int mx_ifmedia_upd	__P((struct ifnet *));
-static void mx_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void mx_rxeof		__P((struct mx_softc *));
+void mx_rxeoc		__P((struct mx_softc *));
+void mx_txeof		__P((struct mx_softc *));
+void mx_txeoc		__P((struct mx_softc *));
+int mx_intr		__P((void *));
+void mx_start		__P((struct ifnet *));
+int mx_ioctl		__P((struct ifnet *, u_long, caddr_t));
+void mx_init		__P((void *));
+void mx_stop		__P((struct mx_softc *));
+void mx_watchdog	__P((struct ifnet *));
+void mx_shutdown	__P((void *));
+int mx_ifmedia_upd	__P((struct ifnet *));
+void mx_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-static void mx_delay		__P((struct mx_softc *));
-static void mx_eeprom_idle	__P((struct mx_softc *));
-static void mx_eeprom_putbyte	__P((struct mx_softc *, int));
-static void mx_eeprom_getword	__P((struct mx_softc *, int, u_int16_t *));
-static void mx_read_eeprom	__P((struct mx_softc *, caddr_t, int,
-							int, int));
+void mx_delay		__P((struct mx_softc *));
+void mx_eeprom_idle	__P((struct mx_softc *));
+void mx_eeprom_putbyte	__P((struct mx_softc *, int));
+void mx_eeprom_getword	__P((struct mx_softc *, int, u_int16_t *));
+void mx_read_eeprom	__P((struct mx_softc *, caddr_t, int, int, int));
 
-static void mx_mii_writebit	__P((struct mx_softc *, int));
-static int mx_mii_readbit	__P((struct mx_softc *));
-static void mx_mii_sync		__P((struct mx_softc *));
-static void mx_mii_send		__P((struct mx_softc *, u_int32_t, int));
-static int mx_mii_readreg	__P((struct mx_softc *, struct mx_mii_frame *));
-static int mx_mii_writereg	__P((struct mx_softc *, struct mx_mii_frame *));
-static u_int16_t mx_phy_readreg	__P((struct mx_softc *, int));
-static void mx_phy_writereg	__P((struct mx_softc *, int, int));
+void mx_mii_writebit	__P((struct mx_softc *, int));
+int mx_mii_readbit	__P((struct mx_softc *));
+void mx_mii_sync	__P((struct mx_softc *));
+void mx_mii_send	__P((struct mx_softc *, u_int32_t, int));
+int mx_mii_readreg	__P((struct mx_softc *, struct mx_mii_frame *));
+int mx_mii_writereg	__P((struct mx_softc *, struct mx_mii_frame *));
+void mx_phy_writereg	__P((struct mx_softc *, int, int));
+u_int16_t mx_phy_readreg	__P((struct mx_softc *, int));
 
-static void mx_autoneg_xmit	__P((struct mx_softc *));
-static void mx_autoneg_mii	__P((struct mx_softc *, int, int));
-static void mx_autoneg		__P((struct mx_softc *, int, int));
-static void mx_setmode_mii	__P((struct mx_softc *, int));
-static void mx_setmode		__P((struct mx_softc *, int, int));
-static void mx_getmode_mii	__P((struct mx_softc *));
-static void mx_setcfg		__P((struct mx_softc *, int));
-static u_int32_t mx_calchash	__P((struct mx_softc *, caddr_t));
-static void mx_setfilt		__P((struct mx_softc *));
-static void mx_reset		__P((struct mx_softc *));
-static int mx_list_rx_init	__P((struct mx_softc *));
-static int mx_list_tx_init	__P((struct mx_softc *));
+void mx_autoneg_xmit	__P((struct mx_softc *));
+void mx_autoneg_mii	__P((struct mx_softc *, int, int));
+void mx_autoneg		__P((struct mx_softc *, int, int));
+void mx_setmode_mii	__P((struct mx_softc *, int));
+void mx_setmode		__P((struct mx_softc *, int, int));
+void mx_getmode_mii	__P((struct mx_softc *));
+void mx_setcfg		__P((struct mx_softc *, int));
+u_int32_t mx_calchash	__P((struct mx_softc *, caddr_t));
+void mx_setfilt		__P((struct mx_softc *));
+void mx_reset		__P((struct mx_softc *));
+int mx_list_rx_init	__P((struct mx_softc *));
+int mx_list_tx_init	__P((struct mx_softc *));
 
 #define MX_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
@@ -166,7 +164,7 @@ static int mx_list_tx_init	__P((struct mx_softc *));
 	CSR_WRITE_4(sc, MX_SIO,				\
 		CSR_READ_4(sc, MX_SIO) & ~x)
 
-static void mx_delay(sc)
+void mx_delay(sc)
 	struct mx_softc		*sc;
 {
 	int			idx;
@@ -175,7 +173,7 @@ static void mx_delay(sc)
 		CSR_READ_4(sc, MX_BUSCTL);
 }
 
-static void mx_eeprom_idle(sc)
+void mx_eeprom_idle(sc)
 	struct mx_softc		*sc;
 {
 	register int		i;
@@ -208,7 +206,7 @@ static void mx_eeprom_idle(sc)
 /*
  * Send a read command and address to the EEPROM, check for ACK.
  */
-static void mx_eeprom_putbyte(sc, addr)
+void mx_eeprom_putbyte(sc, addr)
 	struct mx_softc		*sc;
 	int			addr;
 {
@@ -238,7 +236,7 @@ static void mx_eeprom_putbyte(sc, addr)
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-static void mx_eeprom_getword(sc, addr, dest)
+void mx_eeprom_getword(sc, addr, dest)
 	struct mx_softc		*sc;
 	int			addr;
 	u_int16_t		*dest;
@@ -288,7 +286,7 @@ static void mx_eeprom_getword(sc, addr, dest)
 /*
  * Read a sequence of words from the EEPROM.
  */
-static void mx_read_eeprom(sc, dest, off, cnt, swap)
+void mx_read_eeprom(sc, dest, off, cnt, swap)
 	struct mx_softc		*sc;
 	caddr_t			dest;
 	int			off;
@@ -317,7 +315,7 @@ static void mx_read_eeprom(sc, dest, off, cnt, swap)
 /*
  * Write a bit to the MII bus.
  */
-static void mx_mii_writebit(sc, bit)
+void mx_mii_writebit(sc, bit)
 	struct mx_softc		*sc;
 	int			bit;
 {
@@ -335,7 +333,7 @@ static void mx_mii_writebit(sc, bit)
 /*
  * Read a bit from the MII bus.
  */
-static int mx_mii_readbit(sc)
+int mx_mii_readbit(sc)
 	struct mx_softc		*sc;
 {
 	CSR_WRITE_4(sc, MX_SIO, MX_SIO_ROMCTL_READ|MX_SIO_MII_DIR);
@@ -351,7 +349,7 @@ static int mx_mii_readbit(sc)
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-static void mx_mii_sync(sc)
+void mx_mii_sync(sc)
 	struct mx_softc		*sc;
 {
 	register int		i;
@@ -367,7 +365,7 @@ static void mx_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-static void mx_mii_send(sc, bits, cnt)
+void mx_mii_send(sc, bits, cnt)
 	struct mx_softc		*sc;
 	u_int32_t		bits;
 	int			cnt;
@@ -381,7 +379,7 @@ static void mx_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-static int mx_mii_readreg(sc, frame)
+int mx_mii_readreg(sc, frame)
 	struct mx_softc		*sc;
 	struct mx_mii_frame	*frame;
 	
@@ -453,7 +451,7 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-static int mx_mii_writereg(sc, frame)
+int mx_mii_writereg(sc, frame)
 	struct mx_softc		*sc;
 	struct mx_mii_frame	*frame;
 	
@@ -490,7 +488,7 @@ static int mx_mii_writereg(sc, frame)
 	return(0);
 }
 
-static u_int16_t mx_phy_readreg(sc, reg)
+u_int16_t mx_phy_readreg(sc, reg)
 	struct mx_softc		*sc;
 	int			reg;
 {
@@ -509,7 +507,7 @@ static u_int16_t mx_phy_readreg(sc, reg)
 	return(frame.mii_data);
 }
 
-static void mx_phy_writereg(sc, reg, data)
+void mx_phy_writereg(sc, reg, data)
 	struct mx_softc		*sc;
 	int			reg;
 	int			data;
@@ -535,7 +533,7 @@ static void mx_phy_writereg(sc, reg, data)
 #define MX_BITS			9
 #define	MX_BITS_PNIC_II		7
 
-static u_int32_t mx_calchash(sc, addr)
+u_int32_t mx_calchash(sc, addr)
         struct mx_softc *sc;
 	caddr_t			addr;
 {
@@ -559,7 +557,7 @@ static u_int32_t mx_calchash(sc, addr)
 /*
  * Initiate an autonegotiation session.
  */
-static void mx_autoneg_xmit(sc)
+void mx_autoneg_xmit(sc)
 	struct mx_softc		*sc;
 {
 	u_int16_t		phy_sts;
@@ -579,7 +577,7 @@ static void mx_autoneg_xmit(sc)
 /*
  * Invoke autonegotiation on a PHY.
  */
-static void mx_autoneg_mii(sc, flag, verbose)
+void mx_autoneg_mii(sc, flag, verbose)
 	struct mx_softc		*sc;
 	int			flag;
 	int			verbose;
@@ -726,7 +724,7 @@ static void mx_autoneg_mii(sc, flag, verbose)
 /*
  * Invoke autoneg using internal NWAY.
  */
-static void mx_autoneg(sc, flag, verbose)
+void mx_autoneg(sc, flag, verbose)
 	struct mx_softc		*sc;
 	int			flag;
 	int			verbose;
@@ -850,7 +848,7 @@ static void mx_autoneg(sc, flag, verbose)
 	return;
 }
 
-static void mx_getmode_mii(sc)
+void mx_getmode_mii(sc)
 	struct mx_softc		*sc;
 {
 	u_int16_t		bmsr;
@@ -912,7 +910,7 @@ static void mx_getmode_mii(sc)
 /*
  * Set speed and duplex mode.
  */
-static void mx_setmode_mii(sc, media)
+void mx_setmode_mii(sc, media)
 	struct mx_softc		*sc;
 	int			media;
 {
@@ -972,7 +970,7 @@ static void mx_setmode_mii(sc, media)
 /*
  * Set speed and duplex mode on internal transceiver.
  */
-static void mx_setmode(sc, media, verbose)
+void mx_setmode(sc, media, verbose)
 	struct mx_softc		*sc;
 	int			media;
 	int			verbose;
@@ -1122,7 +1120,7 @@ void mx_setfilt(sc)
  * 'full-duplex' and '100Mbps' bits in the netconfig register, we
  * first have to put the transmit and/or receive logic in the idle state.
  */
-static void mx_setcfg(sc, bmcr)
+void mx_setcfg(sc, bmcr)
 	struct mx_softc		*sc;
 	int			bmcr;
 {
@@ -1164,7 +1162,7 @@ static void mx_setcfg(sc, bmcr)
 	return;
 }
 
-static void mx_reset(sc)
+void mx_reset(sc)
 	struct mx_softc		*sc;
 {
 	register int		i;
@@ -1187,7 +1185,7 @@ static void mx_reset(sc)
 /*
  * Initialize the transmit descriptors.
  */
-static int mx_list_tx_init(sc)
+int mx_list_tx_init(sc)
 	struct mx_softc		*sc;
 {
 	struct mx_chain_data	*cd;
@@ -1218,7 +1216,7 @@ static int mx_list_tx_init(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-static int mx_list_rx_init(sc)
+int mx_list_rx_init(sc)
 	struct mx_softc		*sc;
 {
 	struct mx_chain_data	*cd;
@@ -1256,7 +1254,7 @@ static int mx_list_rx_init(sc)
  * MCLBYTES is 2048, so we have to subtract one otherwise we'll
  * overflow the field and make a mess.
  */
-static int mx_newbuf(sc, c)
+int mx_newbuf(sc, c)
 	struct mx_softc		*sc;
 	struct mx_chain_onefrag	*c;
 {
@@ -1284,7 +1282,7 @@ static int mx_newbuf(sc, c)
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-static void mx_rxeof(sc)
+void mx_rxeof(sc)
 	struct mx_softc		*sc;
 {
         struct ether_header	*eh;
@@ -1418,7 +1416,7 @@ void mx_rxeoc(sc)
  * the list buffers.
  */
 
-static void mx_txeof(sc)
+void mx_txeof(sc)
 	struct mx_softc		*sc;
 {
 	struct mx_chain		*cur_tx;
@@ -1474,7 +1472,7 @@ static void mx_txeof(sc)
 /*
  * TX 'end of channel' interrupt handler.
  */
-static void mx_txeoc(sc)
+void mx_txeoc(sc)
 	struct mx_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -1498,7 +1496,7 @@ static void mx_txeoc(sc)
 	return;
 }
 
-static int mx_intr(arg)
+int mx_intr(arg)
 	void			*arg;
 {
 	struct mx_softc		*sc;
@@ -1578,7 +1576,7 @@ static int mx_intr(arg)
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-static int mx_encap(sc, c, m_head)
+int mx_encap(sc, c, m_head)
 	struct mx_softc		*sc;
 	struct mx_chain		*c;
 	struct mbuf		*m_head;
@@ -1673,7 +1671,7 @@ static int mx_encap(sc, c, m_head)
  * physical addresses.
  */
 
-static void mx_start(ifp)
+void mx_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct mx_softc		*sc;
@@ -1746,7 +1744,7 @@ static void mx_start(ifp)
 	return;
 }
 
-static void mx_init(xsc)
+void mx_init(xsc)
 	void			*xsc;
 {
 	struct mx_softc		*sc = xsc;
@@ -1870,7 +1868,7 @@ static void mx_init(xsc)
 /*
  * Set media options.
  */
-static int mx_ifmedia_upd(ifp)
+int mx_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct mx_softc		*sc;
@@ -1900,7 +1898,7 @@ static int mx_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-static void mx_ifmedia_sts(ifp, ifmr)
+void mx_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
@@ -1959,7 +1957,7 @@ static void mx_ifmedia_sts(ifp, ifmr)
 	return;
 }
 
-static int mx_ioctl(ifp, command, data)
+int mx_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -2019,7 +2017,7 @@ static int mx_ioctl(ifp, command, data)
 	return(error);
 }
 
-static void mx_watchdog(ifp)
+void mx_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct mx_softc		*sc;
@@ -2062,7 +2060,7 @@ static void mx_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-static void mx_stop(sc)
+void mx_stop(sc)
 	struct mx_softc		*sc;
 {
 	register int		i;
@@ -2106,7 +2104,7 @@ static void mx_stop(sc)
 	return;
 }
 
-static int
+int
 mx_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
@@ -2138,7 +2136,7 @@ mx_probe(parent, match, aux)
 	return (0);
 }
 
-static void
+void
 mx_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -2322,7 +2320,7 @@ fail:
 	splx(s);
 }
 
-static void
+void
 mx_shutdown(v)
 	void *v;
 {
