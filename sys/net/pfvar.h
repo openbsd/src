@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.186 2004/02/20 19:22:03 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.187 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -592,6 +592,8 @@ struct pf_state_peer {
 	struct pf_state_scrub	*scrub;	/* state is scrubbed		*/
 };
 
+TAILQ_HEAD(pf_state_queue, pf_state);
+
 struct pf_state {
 	u_int64_t	 id;
 	union {
@@ -599,6 +601,7 @@ struct pf_state {
 			RB_ENTRY(pf_state)	 entry_lan_ext;
 			RB_ENTRY(pf_state)	 entry_ext_gwy;
 			RB_ENTRY(pf_state)	 entry_id;
+			TAILQ_ENTRY(pf_state)	 entry_updates;
 			struct pfi_kif		*kif;
 		} s;
 		char	 ifname[IFNAMSIZ];
@@ -617,6 +620,7 @@ struct pf_state {
 	struct pf_src_node	*nat_src_node;
 	u_int32_t	 creation;
 	u_int32_t	 expire;
+	u_int32_t	 pfsync_time;
 	u_int32_t	 packets[2];
 	u_int32_t	 bytes[2];
 	u_int32_t	 creatorid;
@@ -1277,6 +1281,7 @@ RB_HEAD(pf_state_tree_id, pf_state);
 RB_PROTOTYPE(pf_state_tree_id, pf_state,
     entry_id, pf_state_compare_id);
 extern struct pf_state_tree_id tree_id;
+extern struct pf_state_queue state_updates;
 
 extern struct pf_anchorqueue		  pf_anchors;
 extern struct pf_ruleset		  pf_main_ruleset;

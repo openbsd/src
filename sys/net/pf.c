@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.430 2004/03/11 10:15:26 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.431 2004/03/22 04:54:17 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -255,6 +255,7 @@ static __inline int pf_state_compare_id(struct pf_state *,
 struct pf_src_tree tree_src_tracking;
 
 struct pf_state_tree_id tree_id;
+struct pf_state_queue state_updates;
 
 RB_GENERATE(pf_src_tree, pf_src_node, entry, pf_src_compare);
 RB_GENERATE(pf_state_tree_lan_ext, pf_state,
@@ -669,6 +670,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 		RB_REMOVE(pf_state_tree_ext_gwy, &kif->pfik_ext_gwy, state);
 		return (-1);
 	}
+	TAILQ_INSERT_HEAD(&state_updates, state, u.s.entry_updates);
 
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
@@ -816,6 +818,7 @@ pf_purge_expired_states(void)
 					pf_rm_rule(NULL, cur->anchor.ptr);
 			pf_normalize_tcp_cleanup(cur);
 			pfi_detach_state(cur->u.s.kif);
+			TAILQ_REMOVE(&state_updates, cur, u.s.entry_updates);
 			pool_put(&pf_state_pl, cur);
 			pf_status.fcounters[FCNT_STATE_REMOVALS]++;
 			pf_status.states--;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.12 2004/02/20 19:22:03 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.13 2004/03/22 04:54:17 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -120,6 +120,15 @@ struct pfsync_state_clr {
 	u_int32_t		pad;
 } __packed;
 
+struct pfsync_state_bus {
+	u_int32_t		creatorid;
+	u_int32_t		endtime;
+	u_int8_t		status;
+#define PFSYNC_BUS_START	1
+#define PFSYNC_BUS_END		2
+	u_int8_t		pad[7];
+} __packed;
+
 #ifdef _KERNEL
 
 union sc_statep {
@@ -127,8 +136,11 @@ union sc_statep {
 	struct pfsync_state_upd	*u;
 	struct pfsync_state_del	*d;
 	struct pfsync_state_clr	*c;
+	struct pfsync_state_bus	*b;
 	struct pfsync_state_upd_req	*r;
 };
+
+extern int	pfsync_sync_ok;
 
 struct pfsync_softc {
 	struct ifnet		 sc_if;
@@ -136,11 +148,16 @@ struct pfsync_softc {
 
 	struct ip_moptions	 sc_imo;
 	struct timeout		 sc_tmo;
+	struct timeout		 sc_bulk_tmo;
+	struct timeout		 sc_bulkfail_tmo;
 	struct in_addr		 sc_sendaddr;
 	struct mbuf		*sc_mbuf;	/* current cummulative mbuf */
 	struct mbuf		*sc_mbuf_net;	/* current cummulative mbuf */
 	union sc_statep		 sc_statep;
 	union sc_statep		 sc_statep_net;
+	u_int32_t		 sc_ureq_received;
+	u_int32_t		 sc_ureq_sent;
+	int			 sc_bulk_tries;
 	int			 sc_maxcount;	/* number of states in mtu */
 	int			 sc_maxupdates;	/* number of updates/state */
 };
@@ -161,14 +178,18 @@ struct pfsync_header {
 #define	PFSYNC_ACT_INS_F	6	/* insert fragment */
 #define	PFSYNC_ACT_DEL_F	7	/* delete fragments */
 #define	PFSYNC_ACT_UREQ		8	/* request "uncompressed" state */
-#define	PFSYNC_ACT_MAX		9
+#define PFSYNC_ACT_BUS		9	/* Bulk Update Status */
+#define	PFSYNC_ACT_MAX		10
 	u_int8_t count;
 } __packed;
 
+#define PFSYNC_BULKPACKETS	1	/* # of packets per timeout */
+#define PFSYNC_MAX_BULKTRIES	12	
 #define PFSYNC_HDRLEN	sizeof(struct pfsync_header)
 #define	PFSYNC_ACTIONS \
 	"CLR ST", "INS ST", "UPD ST", "DEL ST", \
-	"UPD ST COMP", "DEL ST COMP", "INS FR", "DEL FR", "UPD REQ"
+	"UPD ST COMP", "DEL ST COMP", "INS FR", "DEL FR", \
+	"UPD REQ", "BLK UPD STAT"
 
 #define PFSYNC_DFLTTL		255
 

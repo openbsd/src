@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.39 2004/03/20 11:01:35 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.40 2004/03/22 04:54:18 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -83,6 +83,11 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <net/if_dl.h>
+#endif
+
+#include "pfsync.h"
+#if NPFSYNC > 0
+extern int pfsync_sync_ok;
 #endif
 
 #include "bpfilter.h"
@@ -533,7 +538,11 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 		 * If we're pre-empting masters who advertise slower than us,
 		 * and this one claims to be slower, treat him as down.
 		 */
-		if (carp_opts[CARPCTL_PREEMPT] && timercmp(&sc_tv, &ch_tv, <)) {
+		if (carp_opts[CARPCTL_PREEMPT]
+#if NPFSYNC > 0
+		    && pfsync_sync_ok
+#endif /* NPFSYNC > 0 */
+		    && timercmp(&sc_tv, &ch_tv, <)) {
 			carp_master_down(sc);
 			break;
 		}
@@ -1087,7 +1096,11 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 
 	switch (sc->sc_state) {
 	case INIT:
-		if (carp_opts[CARPCTL_PREEMPT]) {
+		if (carp_opts[CARPCTL_PREEMPT]
+#if NPFSYNC > 0
+		    && pfsync_sync_ok
+#endif /* NPFSYNC > 0 */
+		    ) {
 			carp_send_ad(sc);
 			carp_send_arp(sc);
 #ifdef INET6

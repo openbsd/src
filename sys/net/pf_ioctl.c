@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.111 2004/03/18 23:24:02 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -143,6 +143,7 @@ pfattach(int num)
 	TAILQ_INIT(&pf_pabuf);
 	pf_altqs_active = &pf_altqs[0];
 	pf_altqs_inactive = &pf_altqs[1];
+	TAILQ_INIT(&state_updates);
 
 	/* default rule should never be garbage collected */
 	pf_default_rule.entries.tqe_prev = &pf_default_rule.entries.tqe_next;
@@ -177,7 +178,6 @@ pfattach(int num)
 
 	/* XXX do our best to avoid a conflict */
 	pf_status.hostid = arc4random();
-	pf_status.stateid = 1;	/* might want 0 for something special */
 }
 
 int
@@ -856,6 +856,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		else {
 			pf_status.running = 1;
 			pf_status.since = time.tv_sec;
+			if (pf_status.stateid == 0) {
+				pf_status.stateid = time.tv_sec;
+				pf_status.stateid = pf_status.stateid << 32;
+			}
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
 		}
 		break;
@@ -1364,6 +1368,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		state->anchor.ptr = NULL;
 		state->rt_kif = NULL;
 		state->creation = time.tv_sec;
+		state->pfsync_time = 0;
 		state->packets[0] = state->packets[1] = 0;
 		state->bytes[0] = state->bytes[1] = 0;
 
