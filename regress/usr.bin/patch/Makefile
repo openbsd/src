@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2003/09/02 16:33:33 david Exp $
+# $OpenBSD: Makefile,v 1.5 2004/06/14 18:40:23 otto Exp $
 
 PATCH=patch
 PATCHOPTIONS=-sN
@@ -12,8 +12,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5
 # t1: diff contains invalid line number 0.
 # t2: diff contains invalid line numbers beyond end of input file.
 # t3: a case where it patch should detect a previously applied patch.
-#     Diff transform an empty file into a single line one. Patch cannot
-#     detect this because it has an empty context.
+#     Diff transform an empty file into a single line one.
 # t4: a case where patch has to detect a previously applied patch.
 #     Diff transform an file with a single line without eol into a single
 #     line with eol. Fails because patch does not detect the previously
@@ -31,6 +30,12 @@ all: clean ${REGRESS_TARGET}
 	@cmp -s ${*}.copy ${.CURDIR}/${*}.out || \
 		(echo "XXX ${*} failed" && false)
 
+t3:
+	@echo ${*}
+	@cp ${.CURDIR}/${*}.in ${*}.copy
+	@(! ${PATCH} ${PATCHOPTIONS} ${*}.copy ${.CURDIR}/${*}.diff)
+	@cmp -s ${*}.copy ${.CURDIR}/${*}.out || \
+		(echo "XXX ${*} failed" && false)
 t4:
 	@echo ${*}
 	@cp ${.CURDIR}/${*}.in ${*}.copy
