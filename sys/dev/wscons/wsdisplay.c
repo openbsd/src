@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.39 2002/03/14 04:55:20 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.40 2002/03/16 22:11:55 mickey Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -2215,17 +2215,18 @@ ctrl_event(u_int type, int value, struct wsdisplay_softc *ws_sc, struct proc *p)
 		Paste_avail = 0;
 		return (0);
 	}
-	for (i = 0 ; i < WSDISPLAY_DEFAULTSCREENS ; i++) {
-		sc->sc_scr[i]->mouse =
-			((WS_NCOLS(sc->sc_scr[i]) *
-			  WS_NROWS(sc->sc_scr[i])) / 2);
-		sc->sc_scr[i]->cursor = sc->sc_scr[i]->mouse;
-		sc->sc_scr[i]->cpy_start = 0;
-		sc->sc_scr[i]->cpy_end = 0;
-		sc->sc_scr[i]->orig_start = 0;
-		sc->sc_scr[i]->orig_end = 0;
-		sc->sc_scr[i]->mouse_flags = 0;
-	}
+	for (i = 0 ; i < WSDISPLAY_DEFAULTSCREENS ; i++)
+		if (sc->sc_scr[i]) {
+			sc->sc_scr[i]->mouse =
+				((WS_NCOLS(sc->sc_scr[i]) *
+				  WS_NROWS(sc->sc_scr[i])) / 2);
+			sc->sc_scr[i]->cursor = sc->sc_scr[i]->mouse;
+			sc->sc_scr[i]->cpy_start = 0;
+			sc->sc_scr[i]->cpy_end = 0;
+			sc->sc_scr[i]->orig_start = 0;
+			sc->sc_scr[i]->orig_end = 0;
+			sc->sc_scr[i]->mouse_flags = 0;
+		}
 	return (0);
 }
 
