@@ -1,7 +1,7 @@
-/*	$OpenBSD: pen.c,v 1.4 1997/06/17 08:39:47 deraadt Exp $	*/
+/*	$OpenBSD: pen.c,v 1.5 1997/07/14 14:13:17 graichen Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pen.c,v 1.4 1997/06/17 08:39:47 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: pen.c,v 1.5 1997/07/14 14:13:17 graichen Exp $";
 #endif
 
 /*
@@ -90,10 +90,14 @@ make_playpen(char *pen, size_t sz)
 	    umask(um);
 	    return NULL;
         }
-        if (mkdir(pen, 0755) == FAIL && i++ < 100) {
-	    /* try again! */
-	    continue;
-	}
+
+        if (mkdir(pen, 0755) == FAIL) {
+	    if (i++ < 100) {
+	        /* try again! */
+	        continue;
+	    }
+	} else
+	    break;
 
         barf("Can't mkdir '%s'.", pen);
         umask(um);
