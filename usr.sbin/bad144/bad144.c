@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.7 2000/12/09 14:51:03 deraadt Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.8 2001/07/02 16:51:46 jasoni Exp $";
 #endif not lint
 
 /*
@@ -67,6 +67,7 @@ static char *rcsid = "$Id: bad144.c,v 1.7 2000/12/09 14:51:03 deraadt Exp $";
 #include <stdlib.h>
 #include <stdio.h>
 #include <paths.h>
+#include <string.h>
 
 #define RETRIES	10		/* number of retries on reading old sectors */
 
@@ -468,7 +469,7 @@ int
 blkcopy(f, s1, s2)
 daddr_t s1, s2;
 {
-	register tries, n;
+	register int tries, n;
 
 	if (buf == (char *)NULL) {
 		buf = malloc((unsigned)dp->d_secsize);
