@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.5 2003/05/01 21:11:21 avsm Exp $	*/
 /*	$NetBSD: parse.c,v 1.5 1997/01/11 09:57:08 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.4 2002/02/16 21:27:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: parse.c,v 1.5 2003/05/01 21:11:21 avsm Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 

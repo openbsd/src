@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.3 1997/03/14 05:12:47 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.4 2003/05/01 21:11:21 avsm Exp $	*/
 /*	$NetBSD: emacs.c,v 1.3 1997/01/11 06:47:54 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: emacs.c,v 1.3 1997/03/14 05:12:47 millert Exp $";
+static const char rcsid[] = "$OpenBSD: emacs.c,v 1.4 2003/05/01 21:11:21 avsm Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 

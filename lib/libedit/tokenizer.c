@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.5 2002/02/16 21:27:26 millert Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.6 2003/05/01 21:11:21 avsm Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.2 1997/01/11 06:48:15 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: tokenizer.c,v 1.5 2002/02/16 21:27:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tokenizer.c,v 1.6 2003/05/01 21:11:21 avsm Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
