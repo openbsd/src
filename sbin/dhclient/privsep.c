@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.5 2004/05/04 18:58:50 deraadt Exp $ */
+/*	$OpenBSD: privsep.c,v 1.6 2004/05/04 19:56:18 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -116,7 +116,7 @@ dispatch_imsg(int fd)
 			error("corrupted message received");
 		buf_read(fd, &medium_len, sizeof(medium_len));
 		if (hdr.len < medium_len + sizeof(size_t) + sizeof(hdr)
-		    + sizeof(size_t) || medium_len == UINT_MAX)
+		    + sizeof(size_t) || medium_len == SIZE_T_MAX)
 			error("corrupted message received");
 		if (medium_len > 0) {
 			if ((medium = calloc(1, medium_len + 1)) == NULL)
@@ -127,7 +127,7 @@ dispatch_imsg(int fd)
 
 		buf_read(fd, &reason_len, sizeof(reason_len));
 		if (hdr.len < medium_len + reason_len + sizeof(hdr) ||
-		    reason_len == UINT_MAX)
+		    reason_len == SIZE_T_MAX)
 			error("corrupted message received");
 		if (reason_len > 0) {
 			if ((reason = calloc(1, reason_len + 1)) == NULL)
@@ -149,7 +149,7 @@ dispatch_imsg(int fd)
 
 		buf_read(fd, &filename_len, sizeof(filename_len));
 		totlen += filename_len + sizeof(size_t);
-		if (hdr.len < totlen || filename_len == UINT_MAX)
+		if (hdr.len < totlen || filename_len == SIZE_T_MAX)
 			error("corrupted message received");
 		if (filename_len > 0) {
 			if ((filename = calloc(1, filename_len + 1)) == NULL)
@@ -160,7 +160,7 @@ dispatch_imsg(int fd)
 
 		buf_read(fd, &servername_len, sizeof(servername_len));
 		totlen += servername_len + sizeof(size_t);
-		if (hdr.len < totlen || servername_len == UINT_MAX)
+		if (hdr.len < totlen || servername_len == SIZE_T_MAX)
 			error("corrupted message received");
 		if (servername_len > 0) {
 			if ((servername =
@@ -172,7 +172,7 @@ dispatch_imsg(int fd)
 
 		buf_read(fd, &prefix_len, sizeof(prefix_len));
 		totlen += prefix_len;
-		if (hdr.len < totlen || prefix_len == UINT_MAX)
+		if (hdr.len < totlen || prefix_len == SIZE_T_MAX)
 			error("corrupted message received");
 		if (prefix_len > 0) {
 			if ((prefix = calloc(1, prefix_len + 1)) == NULL)
@@ -190,7 +190,7 @@ dispatch_imsg(int fd)
 			lease.options[i].len = optlen;
 			if (optlen > 0) {
 				totlen += optlen;
-				if (hdr.len < totlen || optlen == UINT_MAX)
+				if (hdr.len < totlen || optlen == SIZE_T_MAX)
 					error("corrupted message received");
 				lease.options[i].data =
 				    calloc(1, optlen + 1);
