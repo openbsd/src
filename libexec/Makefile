@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
-#	$OpenBSD: Makefile,v 1.9 1996/11/11 05:45:57 tholo Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/02/26 06:17:01 downsj Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd \
 	lfs_cleanerd mail.local makewhatis rexecd rlogind rshd rpc.lockd \
 	rpc.rquotad rpc.rstatd rpc.rusersd rpc.rwalld rpc.sprayd \
-	talkd telnetd tftpd uucpd
+	talkd tcpd telnetd tftpd uucpd
 
 .if defined(YP)
 SUBDIR+=rpc.yppasswdd
