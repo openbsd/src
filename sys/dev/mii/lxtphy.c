@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.5 2000/08/26 20:04:17 nate Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.6 2001/04/14 03:22:43 aaron Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -103,6 +103,7 @@ struct cfdriver lxtphy_cd = {
 
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	lxtphy_status __P((struct mii_softc *));
+void	lxtphy_reset __P((struct mii_softc *));
 
 int
 lxtphymatch(parent, match, aux)
@@ -138,7 +139,7 @@ lxtphyattach(parent, self, aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	mii_phy_reset(sc);
+	lxtphy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -256,4 +257,13 @@ lxtphy_status(sc)
 			mii->mii_media_active |= IFM_FDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+lxtphy_reset(sc)
+	struct mii_softc *sc;
+{
+	mii_phy_reset(sc);
+	PHY_WRITE(sc, MII_LXTPHY_IER,
+	    PHY_READ(sc, MII_LXTPHY_IER) & ~IER_INTEN);
 }
