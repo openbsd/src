@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 1997/04/06 06:13:03 deraadt Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.13 1997/04/07 11:21:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -309,9 +309,9 @@ bounds_check_with_label(bp, lp, wlabel)
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	if (bp->b_blkno + p->p_offset <= labelsect &&
+	if (bp->b_blkno + blockpersec(p->p_offset, lp) <= labelsect &&
 #if LABELSECTOR != 0
-	    bp->b_blkno + p->p_offset + sz > labelsect &&
+	    bp->b_blkno + blockpersec(p->p_offset, lp) + sz > labelsect &&
 #endif
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
