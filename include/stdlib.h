@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.20 2002/06/29 00:20:11 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.21 2002/10/25 21:55:28 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ typedef struct {
 #ifdef 	__GNUG__
 #define NULL	__null
 #else
-#define	NULL	0
+#define	NULL	0L
 #endif
 #endif
 

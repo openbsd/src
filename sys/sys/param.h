@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.49 2002/09/10 21:36:57 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.50 2002/10/25 21:55:28 millert Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #ifdef 	__GNUG__
 #define	NULL	__null
 #else
-#define	NULL	0
+#define	NULL	0L
 #endif
 #endif
 

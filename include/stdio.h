@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.22 2002/02/19 19:39:36 millert Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.23 2002/10/25 21:55:28 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ typedef	_BSD_OFF_T_	off_t;
 #ifdef 	__GNUG__
 #define	NULL	__null
 #else
-#define	NULL	0
+#define	NULL	0L
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stddef.h,v 1.4 1999/11/27 13:20:25 espie Exp $	*/
+/*	$OpenBSD: stddef.h,v 1.5 2002/10/25 21:55:28 millert Exp $	*/
 /*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #ifdef 	__GNUG__
 #define NULL	__null
 #else
-#define	NULL	0
+#define	NULL	0L
 #endif
 #endif
 
