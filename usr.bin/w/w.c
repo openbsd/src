@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.13 1997/02/19 11:16:04 angelos Exp $	*/
+/*	$OpenBSD: w.c,v 1.14 1997/03/25 21:24:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -384,8 +384,9 @@ pr_header(nowp, nusers)
 	 * SCCS forces the string manipulation below, as it replaces
 	 * %, M, and % in a character string with the file name.
 	 */
-	(void)strftime(buf, sizeof(buf),
+	(void)strftime(buf, sizeof(buf) - 1,
 	    __CONCAT("%l:%","M%p"), localtime(nowp));
+	buf[sizeof buf -1] = '\0';
 	(void)printf("%s ", buf);
 
 	/*
