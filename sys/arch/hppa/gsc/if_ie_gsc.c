@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.8 2002/02/06 19:07:04 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.9 2002/02/11 21:20:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -330,8 +330,8 @@ ie_gsc_attach(parent, self, aux)
 #else
 	bzero(mem, sizeof(mem));
 	sc->bh = ((u_int)&mem + 15) & ~0xf;
+	sc->sc_maddr = sc->bh;
 #endif
-	sc->sc_maddr = kvtop((caddr_t)sc->bh);
 	sc->sysbus = 0x40 | IE_SYSBUS_82586 | IE_SYSBUS_INTLOW | IE_SYSBUS_TRG | IE_SYSBUS_BE;
 
 	sc->iot = sc->bt = ga->ga_iot;
