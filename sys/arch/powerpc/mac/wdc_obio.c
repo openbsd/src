@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.9 2001/06/25 23:29:57 drahn Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.10 2001/07/09 03:30:20 mickey Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
+#include <dev/ofw/openfirm.h>
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcvar.h>
@@ -227,9 +228,9 @@ static struct {
 	int cycle;	/* minimum cycle time [ns] */
 	int active;	/* minimum command active time [ns] */
 } dma_timing[3] = {
-	480, 215,	/* Mode 0 */
-	150,  80,	/* Mode 1 */
-	120,  70,	/* Mode 2 */
+	{ 480, 215 },	/* Mode 0 */
+	{ 150,  80 },	/* Mode 1 */
+	{ 120,  70 },	/* Mode 2 */
 };
 
 #define TIME_TO_TICK(time) howmany((time), 30)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.6 2001/07/04 08:38:51 niklas Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.7 2001/07/09 03:30:19 mickey Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
 int awacs_set_rate(struct awacs_softc *, int);
+void awacs_mono16_to_stereo16 __P((void *v, u_char *p, int cc));
 
 struct cfattach awacs_ca = {
 	sizeof(struct awacs_softc), awacs_match, awacs_attach
@@ -496,8 +497,8 @@ awacs_query_encoding(h, ae)
 	}
 }
 
-static void
-mono16_to_stereo16(v, p, cc)
+void
+awacs_mono16_to_stereo16(v, p, cc)
 	void *v;
 	u_char *p;
 	int cc;
@@ -563,7 +564,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_SLINEAR_BE:
 			if (p->channels == 1) {
 				p->factor = 2;
-				p->sw_code = mono16_to_stereo16;
+				p->sw_code = awacs_mono16_to_stereo16;
 				break;
 			}
 			if (p->precision != 16)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.3 2001/07/04 08:38:50 niklas Exp $	*/
+/*	$OpenBSD: ams.c,v 1.4 2001/07/09 03:30:19 mickey Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <powerpc/mac/adbvar.h>
 #include <powerpc/mac/aedvar.h>
 #include <powerpc/mac/amsvar.h>
+#include <powerpc/mac/adb_direct.h>
 
 #include "aed.h"
 

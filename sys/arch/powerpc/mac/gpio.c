@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.3 2001/07/04 08:38:51 niklas Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.4 2001/07/09 03:30:20 mickey Exp $	*/
 /*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-
@@ -38,6 +38,9 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+
+#include <dev/ofw/openfirm.h>
+
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 

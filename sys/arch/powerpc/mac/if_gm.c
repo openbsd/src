@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.15 2001/06/26 19:06:17 maja Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.16 2001/07/09 03:30:20 mickey Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -123,6 +123,7 @@ void gmac_setladrf __P((struct gmac_softc *));
 
 int gmac_ioctl __P((struct ifnet *, u_long, caddr_t));
 void gmac_watchdog __P((struct ifnet *));
+void gmac_enable_hack __P((void));
 
 int gmac_mediachange __P((struct ifnet *));
 void gmac_mediastatus __P((struct ifnet *, struct ifmediareq *));
@@ -286,7 +287,7 @@ gmac_attach(parent, self, aux)
 	dp = sc->sc_rxlist;
 	for (i = 0; i < NRXBUF; i++) {
 		sc->sc_rxbuf[i] = p;
-		dp->address = htole32(vtophys(p));
+		dp->address = htole32(vtophys((vaddr_t)p));
 		dp->cmd = htole32(GMAC_OWN);
 		dp++;
 		p += 2048;
@@ -295,7 +296,7 @@ gmac_attach(parent, self, aux)
 	dp = sc->sc_txlist;
 	for (i = 0; i < NTXBUF; i++) {
 		sc->sc_txbuf[i] = p;
-		dp->address = htole32(vtophys(p));
+		dp->address = htole32(vtophys((vaddr_t)p));
 		dp++;
 		p += 2048;
 	}
@@ -677,9 +678,9 @@ gmac_reset(sc)
 	__asm __volatile ("sync");
 
 	gmac_write_reg(sc, GMAC_TXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_TXDMADESCBASELO, vtophys(sc->sc_txlist));
+	gmac_write_reg(sc, GMAC_TXDMADESCBASELO, vtophys((vaddr_t)sc->sc_txlist));
 	gmac_write_reg(sc, GMAC_RXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_RXDMADESCBASELO, vtophys(sc->sc_rxlist));
+	gmac_write_reg(sc, GMAC_RXDMADESCBASELO, vtophys((vaddr_t)sc->sc_rxlist));
 	gmac_write_reg(sc, GMAC_RXDMAKICK, NRXBUF);
 
 	splx(s);
@@ -1133,6 +1134,7 @@ gmac_mii_tick(v)
 
 	timeout(gmac_mii_tick, sc, hz);
 }
+
 void
 gmac_enable_hack()
 {

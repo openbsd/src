@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.7 2001/07/04 08:38:50 niklas Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.8 2001/07/09 03:30:19 mickey Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -54,6 +54,8 @@
 #include <powerpc/mac/akbdmap.h>
 #include <powerpc/mac/akbdvar.h>
 #include <powerpc/mac/amsvar.h>
+#include <powerpc/mac/adb_direct.h>
+#include <powerpc/mac/pm_direct.h>
 
 #include "aed.h"
 
@@ -84,6 +86,7 @@ extern struct cfdriver akbd_cd;
 int akbd_enable __P((void *, int));
 void akbd_set_leds __P((void *, int));
 int akbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int akbd_intr __P((adb_event_t *event));
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -311,7 +314,7 @@ kbd_processevent(event, ksc)
         new_event = *event;
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
-	kbd_intr(&new_event);
+	akbd_intr(&new_event);
 #if NAED > 0
 	aed_input(&new_event);
 #endif
@@ -319,7 +322,7 @@ kbd_processevent(event, ksc)
 		new_event.u.k.key = event->bytes[1];
 		new_event.bytes[0] = event->bytes[1];
 		new_event.bytes[1] = 0xff;
-		kbd_intr(&new_event);
+		akbd_intr(&new_event);
 #if NAED > 0
 		aed_input(&new_event);
 #endif
@@ -466,7 +469,7 @@ static int polledkey;
 extern int adb_polling;
 
 int
-kbd_intr(event)
+akbd_intr(event)
 	adb_event_t *event;
 {
 	int key, press, val;

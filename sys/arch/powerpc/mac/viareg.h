@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.2 2001/07/04 08:38:52 niklas Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.3 2001/07/09 03:30:20 mickey Exp $	*/
 /*	$NetBSD: viareg.h,v 1.2 1998/10/20 14:56:30 tsubai Exp $	*/
 
 /*-
@@ -190,8 +190,7 @@ extern volatile unsigned char *Via1Base;
 #include <machine/pio.h>
 
 static __inline void
-via_reg_and(ign, reg, val) 
-	int ign, reg, val;
+via_reg_and(int ign, int reg, int val)
 {
 	volatile unsigned char *addr = Via1Base + reg;
 
@@ -199,8 +198,7 @@ via_reg_and(ign, reg, val)
 }
 
 static __inline void
-via_reg_or(ign, reg, val) 
-	int ign, reg, val;
+via_reg_or(int ign, int reg, int val)
 {
 	volatile unsigned char *addr = Via1Base + reg;
 
@@ -208,8 +206,7 @@ via_reg_or(ign, reg, val)
 }
 
 static __inline void
-via_reg_xor(ign, reg, val) 
-	int ign, reg, val;
+via_reg_xor(int ign, int reg, int val)
 {
 	volatile unsigned char *addr = Via1Base + reg;
 
@@ -217,8 +214,7 @@ via_reg_xor(ign, reg, val)
 }
 
 static __inline int
-read_via_reg(ign, reg)
-	int ign, reg;
+read_via_reg(int ign, int reg)
 {
 	volatile unsigned char *addr = Via1Base + reg;
 
@@ -226,15 +222,12 @@ read_via_reg(ign, reg)
 }
 
 static __inline void
-write_via_reg(ign, reg, val)
-	int ign, reg, val;
+write_via_reg(int ign, int reg, int val)
 {
 	volatile unsigned char *addr = Via1Base + reg;
 
 	out8(addr, val);
 }
-
-
 
 #define vDirA_ADBState	0x30
 

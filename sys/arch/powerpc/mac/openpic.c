@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.15 2001/06/29 06:55:36 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.16 2001/07/09 03:30:20 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -70,11 +70,12 @@ static int virq_max = 0;
 struct evcnt evirq[ICU_LEN];
 
 static int fakeintr __P((void *));
-static char *intr_typename(int type);
-static void intr_calculatemasks();
-static __inline int cntlzw(int x);
-static int mapirq(int irq);
-void openpic_enable_irq_mask(int irq_mask);
+static char *intr_typename __P((int type));
+static void intr_calculatemasks __P((void));
+static __inline int cntlzw __P((int x));
+static int mapirq __P((int irq));
+int prog_switch __P((void *arg));
+void openpic_enable_irq_mask __P((int irq_mask));
 
 extern u_int32_t *heathrow_FCR;
 
@@ -86,7 +87,7 @@ static __inline u_int openpic_read __P((int));
 static __inline void openpic_write __P((int, u_int));
 void openpic_enable_irq __P((int, int));
 void openpic_disable_irq __P((int));
-void openpic_init();
+void openpic_init __P((void));
 void openpic_set_priority __P((int, int));
 static __inline int openpic_read_irq __P((int));
 static __inline void openpic_eoi __P((int));
@@ -97,8 +98,9 @@ struct openpic_softc {
 
 int	openpic_match __P((struct device *parent, void *cf, void *aux));
 void	openpic_attach __P((struct device *, struct device *, void *));
-void	openpic_do_pending_int();
-void ext_intr_openpic();
+void	openpic_do_pending_int __P((void));
+void	openpic_collect_preconf_intr __P((void));
+void	ext_intr_openpic __P((void));
 
 struct cfattach openpic_ca = { 
 	sizeof(struct openpic_softc),
@@ -133,13 +135,12 @@ openpic_match(parent, cf, aux)
 u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
-static int prog_switch (void *arg);
 
 vaddr_t openpic_base;
 void * openpic_intr_establish( void * lcv, int irq, int type, int level,
 	int (*ih_fun) __P((void *)), void *ih_arg, char *name);
 void openpic_intr_disestablish( void *lcp, void *arg);
-void openpic_collect_preconf_intr();
+void openpic_collect_preconf_intr __P((void));
 
 void
 openpic_attach(parent, self, aux)
@@ -178,6 +179,7 @@ openpic_attach(parent, self, aux)
 
 	printf("\n");
 }
+
 void
 openpic_collect_preconf_intr()
 {
@@ -196,7 +198,7 @@ openpic_collect_preconf_intr()
 	}
 }
 
-static int
+int
 prog_switch (void *arg)
 {
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.6 2001/07/04 08:38:49 niklas Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.7 2001/07/09 03:30:19 mickey Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
@@ -72,6 +72,8 @@
 
 #include <powerpc/mac/viareg.h>
 #include <powerpc/mac/adbvar.h>
+#include <powerpc/mac/adb_direct.h>
+#include <powerpc/mac/pm_direct.h>
 
 #define printf_intr printf
 
@@ -278,7 +280,6 @@ int	get_adb_info __P((ADBDataBlock *, int));
 int	set_adb_info __P((ADBSetInfoBlock *, int));
 void	adb_setup_hw_type __P((void));
 int	adb_op __P((Ptr, Ptr, Ptr, short));
-int	adb_op_sync __P((Ptr, Ptr, Ptr, short));
 void	adb_read_II __P((u_char *));
 void	adb_hw_setup __P((void));
 void	adb_hw_setup_IIsi __P((u_char *));
@@ -1004,9 +1005,8 @@ adb_soft_intr(void)
 
 		/* call default completion routine if it's valid */
 		if (comprout) {
-			int (*f)() = (void *)comprout;
-
-			(*f)(buffer, compdata, cmd);
+			((int (*) __P((u_char *, u_char*, int))) comprout)
+			    (buffer, compdata, cmd);
 #if 0
 #ifdef __NetBSD__
 			asm("	movml #0xffff,sp@-	| save all registers
@@ -2177,7 +2177,6 @@ adb_cuda_autopoll()
 	volatile int flag = 0;
 	int result;
 	u_char output[16];
-	extern void adb_op_comprout();
 
 	output[0] = 0x03;	/* 3-byte message */
 	output[1] = 0x01;	/* to pram/rtc device */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.7 2001/06/25 23:29:55 drahn Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.8 2001/07/09 03:30:20 mickey Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -120,6 +120,10 @@ static int bmac_mediachange __P((struct ifnet *));
 static void bmac_mediastatus __P((struct ifnet *, struct ifmediareq *));
 static void bmac_setladrf __P((struct bmac_softc *));
 void bmac_init_mif __P((struct bmac_softc *sc));
+u_int bmac_mif_readbits __P((struct bmac_softc *sc, int nb));
+void bmac_mif_writebits __P((struct bmac_softc *sc, u_int val, int nb));
+u_int bmac_mif_read __P((struct bmac_softc *sc, u_int addr));
+void bmac_mif_write __P((struct bmac_softc *sc, u_int addr, u_int val));
 
 struct cfattach bm_ca = {
 	sizeof(struct bmac_softc), bmac_match, bmac_attach
@@ -401,13 +405,13 @@ bmac_init_dma(sc)
 
 	for (i = 0; i < BMAC_RXBUFS; i++) {
 		DBDMA_BUILD(cmd, DBDMA_CMD_IN_LAST, 0, BMAC_BUFLEN,
-			vtophys(sc->sc_rxbuf + BMAC_BUFLEN * i),
+			vtophys((vaddr_t)(sc->sc_rxbuf + BMAC_BUFLEN * i)),
 			DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		cmd++;
 	}
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys(sc->sc_rxcmd));
+	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_rxcmd));
 
 	sc->sc_rxlast = 0;
 
@@ -976,7 +980,7 @@ allmulti:
 
 #define MIFDELAY	delay(1)
 
-unsigned int
+u_int
 bmac_mif_readbits(sc, nb)
 	struct bmac_softc *sc;
 	int nb;
@@ -1001,7 +1005,7 @@ bmac_mif_readbits(sc, nb)
 void
 bmac_mif_writebits(sc, val, nb)
 	struct bmac_softc *sc;
-	unsigned int val;
+	u_int val;
 	int nb;
 {
 	int b;
@@ -1015,12 +1019,12 @@ bmac_mif_writebits(sc, val, nb)
 	}
 }
 
-unsigned int
+u_int
 bmac_mif_read(sc, addr)
 	struct bmac_softc *sc;
-	unsigned int addr;
+	u_int addr;
 {
-	unsigned int val;
+	u_int val;
 
 	bmac_write_reg(sc, MIFCSR, 4);
 	MIFDELAY;
@@ -1041,8 +1045,8 @@ bmac_mif_read(sc, addr)
 void
 bmac_mif_write(sc, addr, val)
 	struct bmac_softc *sc;
-	unsigned int addr;
-	unsigned int val;
+	u_int addr;
+	u_int val;
 {
 	bmac_write_reg(sc, MIFCSR, 4);
 	MIFDELAY;
