@@ -450,7 +450,7 @@ initialize_buffers ()
   bzero (zeros_512, 512);
 }
 
-void
+int
 main (argc, argv)
      int argc;
      char *argv[];

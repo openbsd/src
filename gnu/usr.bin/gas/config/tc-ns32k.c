@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-ns32k.c,v 1.2 1996/03/30 15:29:50 niklas Exp $	*/
+/*	$OpenBSD: tc-ns32k.c,v 1.3 1996/04/23 00:16:04 niklas Exp $	*/
 
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
@@ -1073,7 +1073,7 @@ void convert_iif() {
 #ifdef PIC
 			int reloc_mode;
 			if ((i == 4 || i == 6)
-			    && flagseen['k']
+			    && picmode
 			    && (iif.iifP[i].addr_mode == 18 || iif.iifP[i].addr_mode == 26))
 				reloc_mode = RELOC_GLOB_DAT;
 			else
@@ -1339,7 +1339,7 @@ int *sizeP;
 	int	prec;
 	LITTLENUM_TYPE words[MAX_LITTLENUMS];
 	LITTLENUM_TYPE *wordP;
-	extern char *atof_ns32k();
+	extern char *atof_ieee();
 	char *t;
 	
 	switch (type) {
@@ -1354,12 +1354,12 @@ int *sizeP;
 		*sizeP = 0;
 		return "Bad call to MD_ATOF()";
 	}
-	t = atof_ns32k(input_line_pointer, type, words);
+	t = atof_ieee(input_line_pointer, type, words);
 	if (t)
 	    input_line_pointer=t;
 	
 	*sizeP = prec * sizeof(LITTLENUM_TYPE);
-	for (wordP = words +prec; prec--;) {
+	for (wordP = words + prec; prec--;) {
 		md_number_to_chars(litP, (long)(*--wordP), sizeof(LITTLENUM_TYPE));
 		litP+=sizeof(LITTLENUM_TYPE);
 	}
@@ -1571,7 +1571,7 @@ relax_addressT segment_address_in_file;
 	    | ((!S_IS_DEFINED(fixP->fx_addsy)
 	       && fixP->fx_pcrel
 	       && fixP->fx_addsy != got_symbol
-	       && flagseen['k']) ? 0x10 : 0)
+	       && picmode) ? 0x10 : 0)
 #endif
 	    | (fixP->fx_im_disp & 3) << 5;
 
@@ -1580,7 +1580,7 @@ relax_addressT segment_address_in_file;
 	case NO_RELOC:
 	    break;
 	case RELOC_32:
-	    if (flagseen['k'] && S_IS_EXTERNAL(fixP->fx_addsy)) {
+	    if (picmode && S_IS_EXTERNAL(fixP->fx_addsy)) {
 		r_symbolnum = fixP->fx_addsy->sy_number;
 		r_flags |= 8;	/* set extern bit */
 	    }

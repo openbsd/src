@@ -1,3 +1,5 @@
+/*	$OpenBSD: read.c,v 1.2 1996/04/23 00:15:53 niklas Exp $	*/
+
 /* read.c - read a source file -
 
    Copyright (C) 1986, 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -19,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.1.1.1 1995/10/18 08:38:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.2 1996/04/23 00:15:53 niklas Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -631,7 +633,7 @@ int arg;
 	if (temp > max_alignment) {
 		as_bad("Alignment too large: %d. assumed.", temp = max_alignment);
 	}
-	
+
 	/*
 	 * For the sparc, `.align (1<<n)' actually means `.align n'
 	 * so we have to convert it.
@@ -644,6 +646,7 @@ int arg;
 	    as_bad("Alignment not a power of 2");
 	
 	temp = i;
+
 	if (*input_line_pointer == ',') {
 		input_line_pointer ++;
 		temp_fill = get_absolute_expression();

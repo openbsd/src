@@ -522,12 +522,12 @@ object_headers *headers;
 			|| (S_GET_NAME(symbolP)[0] != '\001' &&
 				(flagseen['L'] || ! S_LOCAL_NAME(symbolP))
 #ifdef PIC
-				|| (flagseen['k'] && symbolP->sy_forceout)
+				|| (picmode && symbolP->sy_forceout)
 #endif
 			   )
 			)
 #ifdef PIC
-		     && (!flagseen['k'] ||
+		     && (!picmode ||
 				symbolP != GOT_symbol || got_referenced != 0
 			)
 #endif
@@ -551,7 +551,7 @@ object_headers *headers;
 			 * some its terms may not have had their final values
 			 * set. We defer this until `obj_emit_symbols()'
 			 */
-			if (flagseen['k'] &&
+			if (picmode &&
 				S_GET_TYPE(symbolP) != N_SIZE &&
 #ifndef GRACE_PERIOD_EXPIRED
 				/*Can be enabled when no more old ld's around*/
@@ -585,7 +585,7 @@ object_headers *headers;
 		} else {
 			if ((S_IS_EXTERNAL(symbolP) || !S_IS_DEFINED(symbolP))
 #ifdef PIC
-			     && (!flagseen['k'] ||
+			     && (!picmode ||
 				symbolP != GOT_symbol || got_referenced != 0
 				)
 #endif

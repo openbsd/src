@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.6 1996/03/30 15:29:23 niklas Exp $
-#	$NetBSD: Makefile,v 1.34 1996/02/18 12:28:15 pk Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/04/23 00:15:44 niklas Exp $
+#	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 SUBDIR+=	bc cpio cvs dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar texinfo

@@ -1,3 +1,5 @@
+/*	$OpenBSD: as.h,v 1.2 1996/04/23 00:15:51 niklas Exp $	*/
+
 /* as.h - global header file
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -16,10 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-
-/*
- * $Id: as.h,v 1.1.1.1 1995/10/18 08:38:57 deraadt Exp $
- */
 
 #define GAS 1
 /* #include <ansidecl.h> */
@@ -294,6 +292,8 @@ COMMON char *
     out_file_name;			/* name of emitted object file */
 
 COMMON int	need_pass_2;	/* TRUE if we need a second pass. */
+
+COMMON int	picmode;	/* TRUE if "-k" or "-K" seen. */
 
 typedef struct {
 	char *	poc_name;	/* assembler mnemonic, lower case, no '.' */

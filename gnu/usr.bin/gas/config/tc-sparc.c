@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-sparc.c,v 1.2 1996/04/23 00:16:06 niklas Exp $	*/
+
 /* tc-sparc.c -- Assemble for the SPARC
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -18,7 +20,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-sparc.c,v 1.1.1.1 1995/10/18 08:39:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tc-sparc.c,v 1.2 1996/04/23 00:16:06 niklas Exp $";
 #endif
 
 #define cypress 1234
@@ -435,7 +437,7 @@ void md_begin() {
 	    toHex[i] = i + 10 - 'A';
 
 #if 0
-	if (flagseen['k'])
+	if (picmode)
 		GOT_symbol = symbol_find_or_make("__GLOBAL_OFFSET_TABLE_");
 #endif
 } /* md_begin() */
@@ -885,7 +887,7 @@ char *str;
 			case 'L': /* 30 bit immediate */
 				the_insn.reloc =
 #ifdef PIC
-					flagseen['k']?RELOC_JMP_TBL:
+					picmode ? RELOC_JMP_TBL :
 #endif
 					RELOC_WDISP30;
 				the_insn.pcrel = 1;
@@ -971,7 +973,7 @@ char *str;
 					}
 				}
 
-				if (flagseen['k'] && the_insn.exp.X_add_symbol) {
+				if (picmode && the_insn.exp.X_add_symbol) {
 					switch (the_insn.reloc) {
 					case RELOC_LO10:
 						the_insn.reloc = RELOC_BASE10;
@@ -1386,7 +1388,7 @@ long val;
 			buf[2] = val >> 18;
 			buf[3] = val >> 10;
 		} else {
-			if (flagseen['k'] && fixP->fx_r_type == RELOC_HI22)
+			if (picmode && fixP->fx_r_type == RELOC_HI22)
 				as_warn("non-PIC access to %s",
 						S_GET_NAME(fixP->fx_addsy));
 			buf[2]=0;
@@ -1411,7 +1413,7 @@ long val;
 			buf[2] |= (val >> 8) & 0x03;
 			buf[3] = val & 0xff;
 		} else {
-			if (flagseen['k'] && fixP->fx_r_type == RELOC_LO10)
+			if (picmode && fixP->fx_r_type == RELOC_LO10)
 				as_warn("non-PIC access to %s",
 						S_GET_NAME(fixP->fx_addsy));
 			buf[3]=0;
@@ -1487,7 +1489,7 @@ relax_addressT segment_address_in_file;
 		r_extern = 0;
 		r_index = S_GET_TYPE(fixP->fx_addsy);
 #ifdef PIC
-		if (flagseen['k']) {
+		if (picmode) {
 			switch (fixP->fx_r_type) {
 			case RELOC_BASE10:
 			case RELOC_BASE13:
@@ -1726,7 +1728,7 @@ char ***vecP;
 			architecture_requested = 1;
 		}
 #ifdef PIC
-	} else if (**argP == 'k') {
+	} else if (**argP == 'k' || **argP == 'K') {
 		/* Predefine GOT symbol */
 		GOT_symbol = symbol_find_or_make("__GLOBAL_OFFSET_TABLE_");
 #endif

@@ -1,4 +1,4 @@
-#	$Id: Makefile.ns32k,v 1.1.1.1 1995/10/18 08:39:01 deraadt Exp $
+#	$OpenBSD: Makefile.ns32k,v 1.2 1996/04/23 00:15:57 niklas Exp $
 
 CFLAGS+=	-DPIC -DNS32532 -DNS32381
-SRCS+=		tc-ns32k.c atof-ns32k.c
+SRCS+=		tc-ns32k.c atof-ieee.c

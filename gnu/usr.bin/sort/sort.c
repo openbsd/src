@@ -1451,7 +1451,7 @@ set_ordering (s, key, blanktype)
   return s;
 }
 
-void
+int
 main (argc, argv)
      int argc;
      char *argv[];
