@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.16.2.2 1995/11/24 07:51:27 chopps Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.18 1996/01/28 20:01:10 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -484,7 +484,8 @@ get_cpuid()
 			exit(1);
 		}
 	}
-	if (FindResident("A4000 Bonus") || FindResident("A1000 Bonus"))
+	if (FindResident("A4000 Bonus") || FindResident("A4000 bonus")
+	    || FindResident("A1000 Bonus"))
 		cpuid |= 4000 << 16;
 	else if (FindResident("A3000 Bonus") || FindResident("A3000 bonus"))
 		cpuid |= 3000 << 16;
