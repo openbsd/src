@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 2004/01/26 19:48:31 miod Exp $
-.if ${MACHINE} == "mvme88k"
+#	$OpenBSD: Makefile,v 1.7 2004/01/28 08:46:29 miod Exp $
 
-SUBDIR=  bugcrt libbug libsa libz wrtvid bootsd bootxx bootst netboot
-# not ready yet
-# SUBDIR+=	tftpboot
+.if ${MACHINE} == "mvme88k"
+SUBDIR=  bugcrt libbug libsa libz wrtvid bootsd bootxx bootst netboot tftpboot
 # not really written yet...
 # SUBDIR+=	sboot
 .endif
