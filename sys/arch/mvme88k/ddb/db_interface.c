@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.14 2001/09/20 17:02:31 mpech Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.15 2001/09/23 02:52:02 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -47,6 +47,7 @@
 
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 
@@ -56,7 +57,6 @@ extern unsigned db_trace_get_val(vm_offset_t addr, unsigned *ptr);
 extern int frame_is_sane __P((db_regs_t *));
 extern void cnpollc __P((int));
 void kdbprinttrap __P((int type, int code));
-void kdb_init __P((void));
 
 void m88k_db_trap __P((int type, struct m88100_saved_state *regs));
 int ddb_nmi_trap __P((int level, db_regs_t *eframe));
@@ -539,7 +539,7 @@ db_write_bytes(addr, size, data)
 #endif
 		*dst++ = *data++;    
 	}
-	pmap_extract(kernel_pmap, (vm_offset_t)addr, &physaddr);
+	pmap_extract(pmap_kernel(), (vm_offset_t)addr, &physaddr);
 	cmmu_flush_cache(physaddr, i); 
 }
 
@@ -826,12 +826,9 @@ struct db_command db_machine_cmds[] =
  * Called from "m88k/m1x7_init.c"
  */
 void
-kdb_init()
+db_machine_init()
 {
 	db_machine_commands_install(db_machine_cmds);
-	ddb_init();
-
-	db_printf("ddb enabled\n");
 }
 
 /*
