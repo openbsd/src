@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.264 2002/10/03 00:56:44 krw Exp $
+#	$OpenBSD: install.sub,v 1.265 2002/10/04 01:22:39 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1742,10 +1742,7 @@ check_fs() {
 # on that line as FQDN.
 # $1 = resolv.conf file name
 get_resolv_fqdn () {
-	if [[ ! -f $1 ]]; then
-		FQDN=
-		return
-	fi
+	[[ -f $1 ]] || return
 
 	FQDN=`sed -n \
 		-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
