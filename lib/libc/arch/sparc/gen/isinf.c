@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
- * $Id: isinf.c,v 1.1.1.1 1995/10/18 08:41:40 deraadt Exp $
+ * $Id: isinf.c,v 1.2 1996/02/24 09:12:47 niklas Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -45,6 +45,7 @@ static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #include <sys/types.h>
 #include <machine/ieee.h>
 
+int
 isinf(d)
 	double d;
 {

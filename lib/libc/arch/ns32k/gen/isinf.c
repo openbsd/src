@@ -41,6 +41,7 @@ static char rcsid[] = "";
 
 #include <sys/types.h>
 
+int
 isnan(d)
 	double d;
 {
@@ -54,6 +55,7 @@ isnan(d)
 	return(p->exp == 2047 && (p->manh || p->manl));
 }
 
+int
 isinf(d)
 	double d;
 {

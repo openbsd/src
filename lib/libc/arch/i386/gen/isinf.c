@@ -33,11 +33,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)isinf.c	5.1 (Berkeley) 3/18/91";*/
-static char rcsid[] = "$Id: isinf.c,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $";
+static char rcsid[] = "$Id: isinf.c,v 1.2 1996/02/24 09:12:39 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+int
 isnan(d)
 	double d;
 {
@@ -51,6 +52,7 @@ isnan(d)
 	return(p->exp == 2047 && (p->manh || p->manl));
 }
 
+int
 isinf(d)
 	double d;
 {

@@ -33,10 +33,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93"; */
-static char rcsid[] = "$NetBSD: isinf.c,v 1.1 1995/04/17 12:23:43 ragge Exp $";
+static char rcsid[] = "$NetBSD: isinf.c,v 1.2 1996/02/05 04:31:42 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* ARGSUSED */
+int
 isnan(d)
 	double d;
 {
@@ -44,6 +45,7 @@ isnan(d)
 }
 
 /* ARGSUSED */
+int
 isinf(d)
 	double d;
 {
