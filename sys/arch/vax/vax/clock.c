@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.17 2004/04/21 18:39:57 mickey Exp $	 */
+/*	$OpenBSD: clock.c,v 1.18 2004/07/07 23:10:46 deraadt Exp $	 */
 /*	$NetBSD: clock.c,v 1.35 2000/06/04 06:16:58 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -47,7 +47,7 @@
 int	yeartonum(int);
 int	numtoyear(int);
 
-struct evcnt clock_intrcnt;
+struct evcount clock_intrcnt;
 
 /*
  * microtime() should return number of usecs in struct timeval.
@@ -176,16 +176,9 @@ delay(i)
 void
 cpu_initclocks()
 {
-	/*
-	 * The current evcnt mechanism sucks, so provide a struct
-	 * device for vmstat's sake, until it can be replaced.
-	 */
-	static struct device clockdev;
-	strlcpy(clockdev.dv_xname, "clock", sizeof clockdev.dv_xname);
-
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-	evcnt_attach(&clockdev, "intr", &clock_intrcnt);
+	evcount_attach(&clock_intrcnt, "clock", NULL, &evcount_intr);
 }
 
 /*

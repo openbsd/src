@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.9 2004/05/04 16:59:31 grange Exp $	*/
+/*	$OpenBSD: uba.c,v 1.10 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: uba.c,v 1.57 2001/04/26 19:16:07 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -296,7 +296,7 @@ ubaprint(void *aux, const char *uba)
 {
 	struct uba_attach_args *ua = aux;
 
-	printf(" csr %o vec %o ipl %x", ua->ua_iaddr,
+	printf(" csr %o vec %d ipl %x", ua->ua_iaddr,
 	    ua->ua_cvec & 511, ua->ua_br);
 	return UNCONF;
 }
@@ -310,7 +310,7 @@ uba_intr_establish(icookie, vec, ifunc, iarg, ev)
 	int vec;
 	void (*ifunc)(void *iarg);
 	void *iarg;
-	struct evcnt *ev;
+	struct evcount *ev;
 {
 	scb_vecalloc(vec, ifunc, iarg, SCB_ISTACK, ev);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.11 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.12 2004/07/07 23:10:45 deraadt Exp $	*/
 /*	$NetBSD: if_le.c,v 1.14 1999/08/14 18:40:23 ragge Exp $	*/
 
 /*-
@@ -103,7 +103,8 @@
 
 struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
-	struct  evcnt sc_intrcnt;
+	struct  evcount sc_intrcnt;
+	int	sc_vec;
 	volatile u_short *sc_rap;
 	volatile u_short *sc_rdp;
 };
@@ -163,7 +164,7 @@ le_ibus_attach(parent, self, aux)
 {
 	struct le_softc *sc = (void *)self;
 	int *lance_addr;
-	int i, vec, br;
+	int i, br;
 
 	sc->sc_rdp = (short *)vax_map_physmem(0x20084400, 1);
 	sc->sc_rap = sc->sc_rdp + 2;
@@ -177,14 +178,15 @@ le_ibus_attach(parent, self, aux)
 	DELAY(100);
 	*sc->sc_rdp = LE_C0_INIT|LE_C0_INEA;
 	DELAY(100000);
-	i = scb_vecref(&vec, &br);
-	if (i == 0 || vec == 0)
+	i = scb_vecref(&sc->sc_vec, &br);
+	if (i == 0 || sc->sc_vec == 0)
 		return;
-	scb_vecalloc(vec, (void *)am7990_intr, sc,
+	scb_vecalloc(sc->sc_vec, (void *)am7990_intr, sc,
 	     SCB_ISTACK, &sc->sc_intrcnt);
-	evcnt_attach(self, "intr", &sc->sc_intrcnt);
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
+	    (void *)&sc->sc_vec, &evcount_intr);
 
-	printf(": vec %o ipl %x\n%s", vec, br, self->dv_xname);
+	printf(": vec %d ipl %x\n%s", sc->sc_vec, br, self->dv_xname);
 	/*
 	 * MD functions.
 	 */

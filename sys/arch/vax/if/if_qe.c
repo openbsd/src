@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.17 2003/05/11 19:41:12 deraadt Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.18 2004/07/07 23:10:45 deraadt Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -77,7 +77,8 @@ struct qe_cdata {
 
 struct	qe_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
-	struct evcnt	sc_intrcnt;	/* Interrupt counting		*/
+	struct evcount	sc_intrcnt;	/* Interrupt counting		*/
+	int		sc_cvec;
 	struct arpcom	sc_ac;		/* Ethernet common part		*/
 #define sc_if	sc_ac.ac_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;
@@ -305,15 +306,17 @@ qeattach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ac.ac_enaddr[i] = QE_RCSR(i * 2) & 0xff;
 
 	QE_WCSR(QE_CSR_VECTOR, sc->sc_intvec | 1);
-	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname,
-		QE_RCSR(QE_CSR_VECTOR) & 1 ? "delqa":"deqna",
+	printf(": %s, address %s\n",
+		QE_RCSR(QE_CSR_VECTOR) & 1 ? "delqa" : "deqna",
 		ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	QE_WCSR(QE_CSR_VECTOR, QE_RCSR(QE_CSR_VECTOR) & ~1); /* ??? */
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr,
 		sc, &sc->sc_intrcnt);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	sc->sc_cvec = ua->ua_cvec;
+	evcount_attach(&sc->sc_intrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_cvec, &evcount_intr);
 
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;

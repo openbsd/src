@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.11 2002/03/14 03:16:02 millert Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.12 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -99,14 +99,14 @@ dz_print(void *aux, const char *name)
 #if NDZKBD > 0 || NDZMS > 0
 	struct dz_attach_args *dz_args = aux;
 	if (name == NULL) {
-		printf (" line %d", dz_args->line);
+		printf(" line %d", dz_args->line);
 		if (dz_args->hwflags & DZ_HWFLAG_CONSOLE)
-			printf (" (console)");
+			printf(" (console)");
 	}
 	return (QUIET);
 #else
 	if (name)
-		printf ("lkc at %s", name);
+		printf("lkc at %s", name);
 	return (UNCONF);
 #endif
 #endif
@@ -185,8 +185,14 @@ dz_vsbus_attach(parent, self, aux)
 	    &sc->sc_tintrcnt);
 	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK,
 	    &sc->sc_rintrcnt);
+	sc->sc_rcvec = va->va_cvec;
+	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_rcvec, &evcount_intr);
+	sc->sc_tcvec = va->va_cvec - 4;
+	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_tcvec, &evcount_intr);
 
-	printf("\n%s: 4 lines", self->dv_xname);
+	printf(": 4 lines");
 
 	dzattach(sc);
 

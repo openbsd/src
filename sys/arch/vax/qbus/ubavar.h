@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubavar.h,v 1.5 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: ubavar.h,v 1.6 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: ubavar.h,v 1.31 2001/04/26 19:16:07 ragge Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
-	struct	evcnt uh_intrcnt;		/* interrupt counting */
+	struct	evcount uh_intrcnt;		/* interrupt counting */
 	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
 	SIMPLEQ_HEAD(, uba_reset) uh_resetq;	/* ubareset queue */
 	int	uh_lastiv;		/* last free interrupt vector */
@@ -150,7 +150,7 @@ struct ubinfo {
 #define ubdevreg(addr) ((addr) & 017777)
 
 #ifdef _KERNEL
-void uba_intr_establish(void *, int, void (*)(void *), void *, struct evcnt *);
+void uba_intr_establish(void *, int, void (*)(void *), void *, struct evcount *);
 void uba_reset_establish(void (*)(struct device *), struct device *);
 void uba_attach(struct uba_softc *, unsigned long);
 void uba_enqueue(struct uba_unit *);

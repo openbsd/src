@@ -1,4 +1,4 @@
-/*	$OpenBSD: uda.c,v 1.4 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: uda.c,v 1.5 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: uda.c,v 1.36 2000/06/04 06:17:05 matt Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -59,7 +59,8 @@
  */
 struct	uda_softc {
 	struct	device sc_dev;	/* Autoconfig info */
-	struct	evcnt sc_intrcnt; /* Interrupt counting */
+	struct	evcount sc_intrcnt; /* Interrupt counting */
+	int	sc_cvec;
 	struct	uba_unit sc_unit; /* Struct common for UBA to communicate */
 	struct	mscp_pack *sc_uuda;	/* Unibus address of uda struct */
 	struct	mscp_pack sc_uda;	/* Struct for uda communication */
@@ -198,7 +199,9 @@ udaattach(parent, self, aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
 	    udaintr, sc, &sc->sc_intrcnt);
 	uba_reset_establish(udareset, &sc->sc_dev);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	sc->sc_cvec = ua->ua_cvec;
+	evcount_attach(&sc->sc_intrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_cvec, &evcount_intr);
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_iph = ua->ua_ioh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.4 2003/05/11 19:41:12 deraadt Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.5 2004/07/07 23:10:43 deraadt Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -470,7 +470,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	/* Wait for everything to finish */
 	WAITREG(NI_PSR, PSR_OWN);
 
-	printf("%s: hardware address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bi.c,v 1.6 2002/08/09 20:26:44 jsyn Exp $ */
+/*	$OpenBSD: bi.c,v 1.7 2004/07/07 23:10:43 deraadt Exp $ */
 /*	$NetBSD: bi.c,v 1.17 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -97,7 +97,7 @@ bi_print(aux, name)
 	}
 	printf(" node %d", ba->ba_nodenr);
 	if (bl->bl_havedriver & DT_VEC)
-		printf(" vec %o", ba->ba_ivec & 511);
+		printf(" vec %d", ba->ba_ivec & 511);
 #ifdef DEBUG
 	if (bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_SADR) &&
 	    bus_space_read_4(ba->ba_iot, ba->ba_ioh, BIREG_EADR))

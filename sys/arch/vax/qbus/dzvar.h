@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzvar.h,v 1.5 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: dzvar.h,v 1.6 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: dzvar.h,v 1.8 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -47,8 +47,9 @@
 
 struct	dz_softc {
 	struct	device	sc_dev;		/* Autoconf blaha */
-	struct	evcnt	sc_rintrcnt;	/* recevive interrupt counts */
-	struct	evcnt	sc_tintrcnt;	/* transmit interrupt counts */
+	struct	evcount	sc_rintrcnt;	/* recevive interrupt counts */
+	struct	evcount	sc_tintrcnt;	/* transmit interrupt counts */
+	int	sc_rcvec, sc_tcvec;
 	struct	dz_regs	sc_dr;		/* reg pointers */
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;

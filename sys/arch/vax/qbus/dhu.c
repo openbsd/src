@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.10 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.11 2004/07/07 23:10:45 deraadt Exp $	*/
 /*	$NetBSD: dhu.c,v 1.19 2000/06/04 06:17:01 matt Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
@@ -60,8 +60,9 @@
 
 struct	dhu_softc {
 	struct	device	sc_dev;		/* Device struct used by config */
-	struct	evcnt	sc_rintrcnt;	/* Interrupt statistics */
-	struct	evcnt	sc_tintrcnt;	/* Interrupt statistics */
+	struct	evcount	sc_rintrcnt;	/* Interrupt statistics */
+	struct	evcount	sc_tintrcnt;	/* Interrupt statistics */
+	int	sc_rcvec, sc_tcvec;
 	int		sc_type;	/* controller type, DHU or DHV */
 	int		sc_lines;	/* number of lines */
 	bus_space_tag_t	sc_iot;
@@ -258,8 +259,13 @@ dhu_attach(parent, self, aux)
 	    dhurint, sc, &sc->sc_rintrcnt);
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 4,
 	    dhuxint, sc, &sc->sc_tintrcnt);
-	evcnt_attach(&sc->sc_dev, "rintr", &sc->sc_rintrcnt);
-	evcnt_attach(&sc->sc_dev, "tintr", &sc->sc_tintrcnt);
+
+	sc->sc_rcvec = ua->ua_cvec;
+	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_rcvec, &evcount_intr);
+	sc->sc_tcvec = ua->ua_cvec + 4;
+	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_tcvec, &evcount_intr);
 }
 
 /* Receiver Interrupt */

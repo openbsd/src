@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc_vsbus.c,v 1.6 2003/02/11 19:20:26 mickey Exp $	*/
+/*	$OpenBSD: asc_vsbus.c,v 1.7 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: asc_vsbus.c,v 1.22 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
@@ -70,7 +70,8 @@
 
 struct asc_vsbus_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* Must be first */
-	struct evcnt sc_intrcnt;		/* count interrupts */
+	struct evcount sc_intrcnt;		/* count interrupts */
+	int	sc_cvec;			/* vector */
 	bus_space_tag_t sc_bst;			/* bus space tag */
 	bus_space_handle_t sc_bsh;		/* bus space handle */
 	bus_space_handle_t sc_dirh;		/* scsi direction handle */
@@ -285,7 +286,9 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
 	    &asc->sc_ncr53c9x, SCB_ISTACK, &asc->sc_intrcnt);
-	evcnt_attach(self, "intr", &asc->sc_intrcnt);
+	asc->sc_cvec = va->va_cvec;
+	evcount_attach(&asc->sc_intrcnt, self->dv_xname,
+	    (void *)&asc->sc_cvec, &evcount_intr);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -318,8 +321,6 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_minsync = (1000 / sc->sc_freq);
 	sc->sc_maxxfer = 64 * 1024;
-
-	printf("\n%s", self->dv_xname);	/* Pretty print */
 
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &asc_vsbus_ops, &asc_vsbus_dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scb.c,v 1.4 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: scb.c,v 1.5 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: scb.c,v 1.12 2000/06/04 06:16:59 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -105,7 +105,7 @@ scb_stray(void *arg)
 	ipl = mfpr(PR_IPL);
 
 	if (cold == 0)
-		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
+		printf("stray interrupt: vector %d, ipl %d\n", vector, ipl);
 	else {
 		struct icallsframe *icf = (void *) __builtin_frame_address(0);
 
@@ -158,7 +158,7 @@ scb_vecalloc(vecno, func, arg, stack, ev)
 	void (*func)(void *);
 	void *arg;
 	int stack;
-	struct evcnt *ev;
+	struct evcount *ev;
 {
 	struct ivec_dsp *dsp = &scb_vec[vecno / 4];
 	dsp->hoppaddr = func;

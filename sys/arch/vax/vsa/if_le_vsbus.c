@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_vsbus.c,v 1.8 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: if_le_vsbus.c,v 1.9 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: if_le_vsbus.c,v 1.10 2000/06/29 07:14:18 mrg Exp $	*/
 
 /*-
@@ -101,7 +101,7 @@
 
 struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
-	struct	evcnt sc_intrcnt;
+	struct	evcount sc_intrcnt;
 	bus_dmamap_t sc_dm;
 	volatile u_short *sc_rap;
 	volatile u_short *sc_rdp;
@@ -209,6 +209,7 @@ le_vsbus_attach(parent, self, aux)
 	bus_dma_segment_t seg;
 	int *lance_addr;
 	int i, err, rseg;
+	static int cvec;
 
 	sc->sc_rdp = (short *)vax_map_physmem(NI_BASE, 1);
 	sc->sc_rap = sc->sc_rdp + 2;
@@ -222,7 +223,9 @@ le_vsbus_attach(parent, self, aux)
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc,
 	    SCB_ISTACK, &sc->sc_intrcnt);
-	evcnt_attach(self, "intr", &sc->sc_intrcnt);
+	cvec = va->va_cvec;
+	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
+	    (void *)&cvec, &evcount_intr);
 
         /*
          * Allocate a (DMA-safe) block for all descriptors and buffers.

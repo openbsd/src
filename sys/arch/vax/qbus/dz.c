@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.10 2003/06/02 23:27:58 millert Exp $	*/
+/*	$OpenBSD: dz.c,v 1.11 2004/07/07 23:10:46 deraadt Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -145,9 +145,6 @@ dzattach(struct dz_softc *sc)
 
 	for (n = 0; n < sc->sc_type; n++)
 		sc->sc_dz[n].dz_tty = ttymalloc();
-
-	evcnt_attach(&sc->sc_dev, "rintr", &sc->sc_rintrcnt);
-	evcnt_attach(&sc->sc_dev, "tintr", &sc->sc_tintrcnt);
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
 

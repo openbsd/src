@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.13 2003/06/02 23:27:57 millert Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.14 2004/07/07 23:10:45 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -215,8 +215,8 @@ deattach(parent, self, aux)
 
 	ubarelse((void *)ds->ds_dev.dv_parent, &ds->ds_ubaddr);
 	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
-	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
-		ether_sprintf(myaddr));
+	printf("%s: address %s\n", ds->ds_dev.dv_xname,
+	    ether_sprintf(myaddr));
 	ifp->if_ioctl = deioctl;
 	ifp->if_start = destart;
 	ds->ds_deuba.iff_flags = UBA_CANTWAIT;

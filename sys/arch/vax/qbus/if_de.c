@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.3 2003/06/02 23:27:58 millert Exp $ */
+/*	$OpenBSD: if_de.c,v 1.4 2004/07/07 23:10:46 deraadt Exp $ */
 /*	$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $	*/
 
 /*
@@ -226,8 +226,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	dewait(sc, "read addr ");
 
 	bcopy((caddr_t)&sc->sc_dedata->dc_pcbb.pcbb2, myaddr, sizeof (myaddr));
-	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname, c,
-		ether_sprintf(myaddr));
+	printf(": %s, address %s\n", c, ether_sprintf(myaddr));
 
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, deintr, sc, 
 	    &sc->sc_intrcnt);

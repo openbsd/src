@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgec.c,v 1.6 2003/05/11 19:41:12 deraadt Exp $	*/
+/*	$OpenBSD: sgec.c,v 1.7 2004/07/07 23:10:45 deraadt Exp $	*/
 /*      $NetBSD: sgec.c,v 1.5 2000/06/04 02:14:14 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -175,7 +175,8 @@ sgec_attach(sc)
 
 	/* For vmstat -i
 	 */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcount_attach(&sc->sc_intrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_intvec, &evcount_intr);
 
 	/*
 	 * Create ring loops of the buffer chains.
@@ -209,8 +210,7 @@ sgec_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf("\n%s: hardware address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_ac.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 	return;
 
 	/*

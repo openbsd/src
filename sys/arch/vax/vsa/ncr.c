@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.13 2002/06/12 12:29:15 hugh Exp $ */
+/* $OpenBSD: ncr.c,v 1.14 2004/07/07 23:10:46 deraadt Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -90,7 +90,8 @@ struct si_dma_handle {
 
 struct si_softc {
 	struct	ncr5380_softc	ncr_sc;
-	struct	evcnt		ncr_intrcnt;
+	struct	evcount		ncr_intrcnt;
+	int			ncr_cvec;
 	caddr_t ncr_addr;
 	int	ncr_off;
 	int	ncr_dmaaddr;
@@ -184,7 +185,9 @@ si_attach(parent, self, aux)
 	/* enable interrupts on vsbus too */
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
 	    SCB_ISTACK, &sc->ncr_intrcnt);
-	evcnt_attach(self, "intr", &sc->ncr_intrcnt);
+	sc->ncr_cvec = va->va_cvec;
+	evcount_attach(&sc->ncr_intrcnt, self->dv_xname,
+	    (void *)&sc->ncr_cvec, &evcount_intr);
 
 	/*
 	 * DMA area mapin.

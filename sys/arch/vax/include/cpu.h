@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.16 2004/06/13 21:49:21 niklas Exp $      */
+/*      $OpenBSD: cpu.h,v 1.17 2004/07/07 23:10:45 deraadt Exp $      */
 /*      $NetBSD: cpu.h,v 1.41 1999/10/21 20:01:36 ragge Exp $      */
 
 /*
@@ -37,6 +37,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 
 #include <machine/mtpr.h>
 #include <machine/pte.h>

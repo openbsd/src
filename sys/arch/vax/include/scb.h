@@ -1,4 +1,4 @@
-/*	$OpenBSD: scb.h,v 1.6 2001/08/25 13:33:36 hugh Exp $	*/
+/*	$OpenBSD: scb.h,v 1.7 2004/07/07 23:10:45 deraadt Exp $	*/
 /*	$NetBSD: scb.h,v 1.11 2000/07/10 09:14:34 ragge Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ struct scb {
 /*
  * This struct is used when setting up interrupt vectors dynamically.
  * It put a opaque 32 bit quanity on the stack and also has a placeholder
- * for evcnt structure.
+ * for evcount structure.
  */
 struct ivec_dsp {
 	char	pushr;		/* pushr */
@@ -123,19 +123,19 @@ struct ivec_dsp {
 	long	displacement;
 	void	(*hoppaddr)(void *);
 	void	*pushlarg;
-	struct	evcnt *ev;
+	struct	evcount *ev;
 };
 
 #ifdef _KERNEL
 extern	const struct ivec_dsp idsptch;
 extern	struct scb *scb;
 extern	struct ivec_dsp *scb_vec;
-extern	struct evcnt devipl_intrcnts[4];	/* IPL 2[0123] */
+extern	struct evcount devipl_intrcnts[4];	/* IPL 2[0123] */
 
 extern	paddr_t scb_init (paddr_t);
 extern	int scb_vecref (int *, int *);
 extern	void scb_fake (int, int);
-extern	void scb_vecalloc (int, void(*)(void *), void *, int, struct evcnt *);
+extern	void scb_vecalloc (int, void(*)(void *), void *, int, struct evcount *);
 #endif /* _KERNEL */
 
 #endif /* _VAX_SCB_H */
