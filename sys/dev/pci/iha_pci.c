@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha_pci.c,v 1.2 2001/03/29 23:53:38 krw Exp $ */
+/*	$OpenBSD: iha_pci.c,v 1.3 2001/06/12 15:40:32 niklas Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -103,7 +103,7 @@ iha_pci_attach(parent, self, aux)
 	 *	 rather that IO mapping, but it didn't work at all..
 	 */
 	ioh_valid = pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL);
+	    &iot, &ioh, NULL, NULL, 0);
 
 	if (ioh_valid != 0) {
 		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);

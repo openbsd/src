@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.6 2001/06/05 15:32:27 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.7 2001/06/12 15:40:32 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -186,7 +186,7 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	/* Map control/status registers. */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_memt,
-	    &sc->sc_memh, &membase, &memsize)) {
+	    &sc->sc_memh, &membase, &memsize, 0)) {
 		printf(": can't find mem space\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.14 2001/03/22 01:38:54 angelos Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.15 2001/06/12 15:40:31 niklas Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -243,13 +243,13 @@ epic_openbsd_attach(
 
 	if (command & PCI_COMMAND_MEM_ENABLE) {
 		if (pci_mapreg_map(pa, PCI_BASEMEM, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_st, &sc->sc_sh, NULL, &iosize)) {
+		    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
 			printf(": can't map mem space\n");
 			return;
 		}
 	} else {
 		if (pci_mapreg_map(pa, PCI_BASEIO, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->sc_st, &sc->sc_sh, NULL, &iosize)) {
+		    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
 			printf(": can't map i/o space\n");
 			return;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.10 2000/07/19 09:04:38 csapuntz Exp $	*/
+/*	$OpenBSD: eso.c,v 1.11 2001/06/12 15:40:30 niklas Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -247,28 +247,28 @@ eso_attach(parent, self, aux)
 
 	/* Map I/O registers. */
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_IO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
+	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0)) {
 		printf(", can't map I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_SB, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_sb_iot, &sc->sc_sb_ioh, NULL, NULL)) {
+	    &sc->sc_sb_iot, &sc->sc_sb_ioh, NULL, NULL, 0)) {
 		printf(", can't map SB I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_VC, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_dmac_iot, &sc->sc_dmac_ioh, &vcbase, &sc->sc_vcsize)) {
+	    &sc->sc_dmac_iot, &sc->sc_dmac_ioh, &vcbase, &sc->sc_vcsize, 0)) {
 		vcbase = 0;
 		sc->sc_vcsize = 0x10; /* From the data sheet. */
 	}
 
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_MPU, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL)) {
+	    &sc->sc_mpu_iot, &sc->sc_mpu_ioh, NULL, NULL, 0)) {
 		printf(", can't map MPU I/O space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, ESO_PCI_BAR_GAME, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_game_iot, &sc->sc_game_ioh, NULL, NULL)) {
+	    &sc->sc_game_iot, &sc->sc_game_ioh, NULL, NULL, 0)) {
 		printf(", can't map Game I/O space\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacreg.h,v 1.2 2000/12/06 21:16:45 mickey Exp $	*/
+/*	$OpenBSD: aacreg.h,v 1.3 2001/06/12 15:40:29 niklas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -483,6 +483,8 @@ struct aac_blockwrite_response {
  * Register definitions for the Adaptec AAC-364 'Jalapeno I/II' adapters, based
  * on the SA110 'StrongArm'.
  */
+
+#define AAC_REGSIZE		0x100
 
 /* doorbell 0 (adapter->host) */
 #define AAC_SA_DOORBELL0_CLEAR	0x98

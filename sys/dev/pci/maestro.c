@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.6 2001/05/16 19:27:38 mickey Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.7 2001/06/12 15:40:32 niklas Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -361,7 +361,7 @@ maestro_attach(parent, self, aux)
 
 	/* Map i/o */
 	if ((error = pci_mapreg_map(pa, PCI_MAPS, PCI_MAPREG_TYPE_IO, 
-	    0, &sc->iot, &sc->ioh, NULL, NULL)) != 0) {
+	    0, &sc->iot, &sc->ioh, NULL, NULL, 0)) != 0) {
 		printf(", couldn't map i/o space\n");
 		goto bad;
 	};

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.8 2001/05/02 21:13:37 marc Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.9 2001/06/12 15:40:30 niklas Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -575,13 +575,13 @@ cs4280_attach(parent, self, aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, CSCC_PCI_BA0, 
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->ba0t, &sc->ba0h, NULL, NULL)) {
+	    &sc->ba0t, &sc->ba0h, NULL, NULL, 0)) {
 		printf(": can't map BA0 space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, CSCC_PCI_BA1,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->ba1t, &sc->ba1h, NULL, NULL)) {
+	    &sc->ba1t, &sc->ba1h, NULL, NULL, 0)) {
 		printf(": can't map BA1 space\n");
 		return;
 	}

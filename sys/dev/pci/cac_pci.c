@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_pci.c,v 1.3 2001/04/16 03:18:19 deraadt Exp $	*/
+/*	$OpenBSD: cac_pci.c,v 1.4 2001/06/12 15:40:30 niklas Exp $	*/
 /*	$NetBSD: cac_pci.c,v 1.10 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -198,14 +198,14 @@ cac_pci_attach(parent, self, aux)
 
 	if (memr != -1) {
 		if (pci_mapreg_map(pa, memr, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
+		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0))
 			memr = -1;
 		else
 			ior = -1;
 	}
 	if (ior != -1)
 		if (pci_mapreg_map(pa, ior, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
+		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL, 0))
 			ior = -1;
 	if (memr == -1 && ior == -1) {
 		printf("%s: can't map i/o or memory space\n", self->dv_xname);

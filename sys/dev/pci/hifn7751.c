@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.65 2001/05/14 22:29:28 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.66 2001/06/12 15:40:31 niklas Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -165,13 +165,13 @@ hifn_attach(parent, self, aux)
 	}
 
 	if (pci_mapreg_map(pa, HIFN_BAR0, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0)) {
+	    &sc->sc_st0, &sc->sc_sh0, NULL, &iosize0, 0)) {
 		printf(": can't find mem space %d\n", 0);
 		return;
 	}
 
 	if (pci_mapreg_map(pa, HIFN_BAR1, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st1, &sc->sc_sh1, NULL, &iosize1)) {
+	    &sc->sc_st1, &sc->sc_sh1, NULL, &iosize1, 0)) {
 		printf(": can't find mem space %d\n", 1);
 		goto fail_io0;
 	}

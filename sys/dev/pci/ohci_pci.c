@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.9 2001/01/22 22:43:44 deraadt Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.10 2001/06/12 15:40:32 niklas Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ ohci_pci_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
+	    &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
 		printf(": can't map mem space\n");
 		return;
 	}

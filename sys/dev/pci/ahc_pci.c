@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.21 2001/01/22 22:36:52 deraadt Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.22 2001/06/12 15:40:29 niklas Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ void *aux;
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 			ioh_valid = (pci_mapreg_map(pa, AHC_PCI_MEMADDR,
-				memtype, 0, &iot, &ioh, NULL, NULL) == 0);
+				memtype, 0, &iot, &ioh, NULL, NULL, 0) == 0);
 			break;
 		default:
 			ioh_valid = 0;
@@ -388,7 +388,7 @@ void *aux;
 #endif
 	{
 		ioh_valid = (pci_mapreg_map(pa, AHC_PCI_IOADDR,
-		    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL) == 0);
+		    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL, 0) == 0);
 	}
 
 	if (!ioh_valid) {

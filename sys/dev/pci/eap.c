@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.10 2000/08/16 14:13:13 kevlo Exp $ */
+/*      $OpenBSD: eap.c,v 1.11 2001/06/12 15:40:30 niklas Exp $ */
 /*	$NetBSD: eap.c,v 1.25 1999/02/18 07:59:30 mycroft Exp $	*/
 
 /*
@@ -779,7 +779,7 @@ eap_attach(parent, self, aux)
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->iot, &sc->ioh, NULL, NULL)) {
+			   &sc->iot, &sc->ioh, NULL, NULL, 0)) {
 		printf("\n%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}

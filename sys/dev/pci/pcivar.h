@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.18 2000/06/09 16:09:09 chris Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.19 2001/06/12 15:40:33 niklas Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *));
 int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,
 	    bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *,
-	    bus_size_t *));
+	    bus_size_t *, bus_size_t));
 
 
 int	pci_io_find __P((pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.2 2001/05/24 18:49:50 aaron Exp $	*/
+/*	$OpenBSD: yds.c,v 1.3 2001/06/12 15:40:33 niklas Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -657,7 +657,7 @@ yds_attach(parent, self, aux)
 
 	/* Map register to memory */
 	if (pci_mapreg_map(pa, YDS_PCI_MBA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->memt, &sc->memh, NULL, NULL)) {
+	    &sc->memt, &sc->memh, NULL, NULL, 0)) {
 		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
 		return;
 	}

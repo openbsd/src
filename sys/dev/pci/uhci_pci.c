@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.9 2001/01/21 02:42:49 mickey Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.10 2001/06/12 15:40:33 niklas Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ uhci_pci_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
+	    &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}

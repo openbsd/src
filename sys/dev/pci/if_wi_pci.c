@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.3 2001/06/11 00:50:38 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.4 2001/06/12 15:40:31 niklas Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -165,12 +165,12 @@ wi_pci_attach(parent, self, aux)
 
 	/* Map memory and I/O registers. */
 	if (pci_mapreg_map(pa, WI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &memt, &memh, NULL, NULL) != 0) {
+	    &memt, &memh, NULL, NULL, 0) != 0) {
 		printf(": can't map mem space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, WI_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, NULL, NULL) != 0) {
+	    &iot, &ioh, NULL, NULL, 0) != 0) {
 		printf(": can't map I/O space\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.45 2001/05/05 20:56:58 art Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.46 2001/06/12 15:40:31 niklas Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5419,10 +5419,10 @@ tulip_pci_attach(
     csr_base = 0;
 
     ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-		 &iot, &ioh, NULL, NULL) == 0);
+		 &iot, &ioh, NULL, NULL, 0) == 0);
     memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
 		  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-		  &memt, &memh, NULL, NULL) == 0);
+		  &memt, &memh, NULL, NULL, 0) == 0);
 #endif
 
 #if defined(__OpenBSD__) || defined(__NetBSD__)

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wx.c,v 1.11 2001/04/13 00:27:57 mjacob Exp $ */
+/* $OpenBSD: if_wx.c,v 1.12 2001/06/12 15:40:31 niklas Exp $ */
 /*
  * Principal Author: Matthew Jacob
  * Copyright (c) 1999, 2001 by Traakan Software
@@ -226,7 +226,7 @@ wx_attach(struct device *parent, struct device *self, void *aux)
 	 * Map control/status registers.
 	 */
 	if (pci_mapreg_map(pa, WX_MMBA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->w.st, &sc->w.sh, NULL, NULL)) {
+	    &sc->w.st, &sc->w.sh, NULL, NULL, 0)) {
 		printf(": can't map registers\n");
 		return;
 	}

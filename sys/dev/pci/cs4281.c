@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.2 2001/02/09 21:15:22 aaron Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.3 2001/06/12 15:40:30 niklas Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -306,13 +306,13 @@ cs4281_attach(parent, self, aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, CSCC_PCI_BA0,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->ba0t,
-	    &sc->ba0h, NULL, NULL)) {
+	    &sc->ba0h, NULL, NULL, 0)) {
 		printf("%s: can't map BA0 space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	if (pci_mapreg_map(pa, CSCC_PCI_BA1,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->ba1t,
-	    &sc->ba1h, NULL, NULL)) {
+	    &sc->ba1h, NULL, NULL, 0)) {
 		printf("%s: can't map BA1 space\n", sc->sc_dev.dv_xname);
 		return;
 	}

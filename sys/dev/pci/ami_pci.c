@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.3 2001/04/16 03:18:18 deraadt Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.4 2001/06/12 15:40:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -154,7 +154,7 @@ ami_pci_attach(parent, self, aux)
 #endif
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AMI_BAR);
 	if (pci_mapreg_map(pa, AMI_BAR, csr, 0,
-	    &sc->iot, &sc->ioh, NULL, &size)) {
+	    &sc->iot, &sc->ioh, NULL, &size, 0)) {
 		printf(": can't map controller pci space\n");
 		return;
 	}

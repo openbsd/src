@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.2 2001/05/16 07:15:41 fgsch Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.3 2001/06/12 15:40:33 niklas Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1381,7 +1381,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 				PCI_MAPREG_TYPE_MEM
 				| PCI_MAPREG_MEM_TYPE_32BIT, 0,
 				&bktr->memt, &bktr->memh, NULL,
-				&bktr->obmemsz);
+				&bktr->obmemsz, 0);
 	DPR(("pci_mapreg_map: memt %x, memh %x, size %x\n",
 	     bktr->memt, (u_int)bktr->memh, (u_int)bktr->obmemsz));
 	if (retval) {

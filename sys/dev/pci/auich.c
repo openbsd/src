@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.11 2001/06/06 22:11:29 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.12 2001/06/12 15:40:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -293,12 +293,12 @@ auich_attach(parent, self, aux)
 	int i;
 
 	if (pci_mapreg_map(pa, AUICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
+			   &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
 		printf(": can't map codec i/o space\n");
 		return;
 	}
 	if (pci_mapreg_map(pa, AUICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->iot, &sc->aud_ioh, NULL, &aud_size)) {
+			   &sc->iot, &sc->aud_ioh, NULL, &aud_size, 0)) {
 		printf(": can't map device i/o space\n");
 		bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
 		return;

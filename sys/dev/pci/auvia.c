@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.8 2001/05/16 12:51:49 ho Exp $ */
+/*	$OpenBSD: auvia.c,v 1.9 2001/06/12 15:40:30 niklas Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -248,7 +248,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s\n", intrstr);
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
-	    &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize)) {
+	    &sc->sc_ioh, &sc->sc_ioaddr, &sc->sc_iosize, 0)) {
 		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}

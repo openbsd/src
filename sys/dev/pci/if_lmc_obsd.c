@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.6 2001/02/22 02:01:53 chris Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.7 2001/06/12 15:40:31 niklas Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -303,12 +303,10 @@ lmc_pci_attach(struct device * const parent,
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 
 		ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO,
-					    0, &iot, &ioh, NULL, NULL) == 0);
+		    0, &iot, &ioh, NULL, NULL, 0) == 0);
 		memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
-					     PCI_MAPREG_TYPE_MEM |
-					     PCI_MAPREG_MEM_TYPE_32BIT,
-					     0, &memt, &memh, NULL,
-					     NULL) == 0);
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &memt,
+		    &memh, NULL, NULL, 0) == 0);
 #endif
 
 

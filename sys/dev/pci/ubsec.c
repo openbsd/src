@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.55 2001/06/08 01:59:32 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.56 2001/06/12 15:40:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -161,7 +161,7 @@ ubsec_attach(parent, self, aux)
 	}
 
 	if (pci_mapreg_map(pa, BS_BAR, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, &iosize)) {
+	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
 		printf(": can't find mem space\n");
 		return;
 	}

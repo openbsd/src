@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.52 2001/05/22 15:32:38 ho Exp $     */
+/*      $OpenBSD: pciide.c,v 1.53 2001/06/12 15:40:32 niklas Exp $     */
 /*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 /*
@@ -685,7 +685,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	cp->ih = sc->sc_pci_ih;
 	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->channel),
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &wdc_cp->cmd_iot, &wdc_cp->cmd_ioh, NULL, cmdsizep) != 0) {
+	    &wdc_cp->cmd_iot, &wdc_cp->cmd_ioh, NULL, cmdsizep, 0) != 0) {
 		printf("%s: couldn't map %s cmd regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		return 0;
@@ -693,7 +693,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &wdc_cp->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep) != 0) {
+	    &wdc_cp->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep, 0) != 0) {
 		printf("%s: couldn't map %s ctl regs\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 		bus_space_unmap(wdc_cp->cmd_iot, wdc_cp->cmd_ioh, *cmdsizep);
@@ -762,7 +762,7 @@ pciide_mapreg_dma(sc, pa)
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
-		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
+		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL, 0) == 0);
 		sc->sc_dmat = pa->pa_dmat;
 		if (sc->sc_dma_ok == 0) {
 			printf(", unused (couldn't map registers)");

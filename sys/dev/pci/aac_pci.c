@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.1 2000/11/10 09:39:36 niklas Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.2 2001/06/12 15:40:29 niklas Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -142,7 +142,7 @@ aac_pci_attach(parent, self, aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_memt,
-	    &sc->sc_memh, &membase, &memsize)) {
+	    &sc->sc_memh, &membase, &memsize, AAC_REGSIZE)) {
 		printf("can't find mem space\n");
 		goto bail_out;
 	}

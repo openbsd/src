@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.5 2001/04/15 06:01:30 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.6 2001/06/12 15:40:33 niklas Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.6 2001/01/10 15:50:20 thorpej Exp $	*/
 
 /*
@@ -228,14 +228,14 @@ siop_pci_attach_common(sc, pa)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		memh_valid = (pci_mapreg_map(pa, 0x14, memtype, 0,
-		    &memt, &memh, &memaddr, NULL) == 0);
+		    &memt, &memh, &memaddr, NULL, 0) == 0);
 		break;
 	default:
 		memh_valid = 0;
 	}
 
 	ioh_valid = (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0,
-	    &iot, &ioh, &ioaddr, NULL) == 0);
+	    &iot, &ioh, &ioaddr, NULL, 0) == 0);
 
 	if (memh_valid) {
 		sc->siop.sc_rt = memt;
@@ -263,7 +263,7 @@ siop_pci_attach_common(sc, pa)
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &sc->siop.sc_ramt, &sc->siop.sc_ramh,
-		    &sc->siop.sc_scriptaddr, NULL) != 0)
+		    &sc->siop.sc_scriptaddr, NULL, 0) != 0)
 			sc->siop.features &= ~SF_CHIP_RAM;
 	}
 

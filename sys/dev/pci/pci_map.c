@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.4 2000/09/20 17:39:04 niklas Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.5 2001/06/12 15:40:32 niklas Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -277,7 +277,7 @@ pci_mapreg_info(pc, tag, reg, type, basep, sizep, flagsp)
 }
 
 int
-pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep)
+pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep, maxsize)
 	struct pci_attach_args *pa;
 	int reg, busflags;
 	pcireg_t type;
@@ -285,6 +285,7 @@ pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep)
 	bus_space_handle_t *handlep;
 	bus_addr_t *basep;
 	bus_size_t *sizep;
+	bus_size_t maxsize;
 {
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;
@@ -308,16 +309,25 @@ pci_mapreg_map(pa, reg, type, busflags, tagp, handlep, basep, sizep)
 		tag = pa->pa_memt;
 	}
 
+	/* The caller can request limitation of the mapping's size. */
+	if (maxsize != 0 && size > maxsize) {
+#ifdef DEBUG
+		printf("pci_mapreg_map: limited PCI mapping from %lx to %lx\n",
+		    (u_long)size, (u_long)maxsize):
+#endif
+		size = maxsize;
+	}
+
 	if (bus_space_map(tag, base, size, busflags | flags, &handle))
 		return (1);
 
-	if (tagp != 0)
+	if (tagp != NULL)
 		*tagp = tag;
-	if (handlep != 0)
+	if (handlep != NULL)
 		*handlep = handle;
-	if (basep != 0)
+	if (basep != NULL)
 		*basep = base;
-	if (sizep != 0)
+	if (sizep != NULL)
 		*sizep = size;
 
 	return (0);

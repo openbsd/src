@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.10 2001/05/07 19:43:14 deraadt Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.11 2001/06/12 15:40:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -247,12 +247,12 @@ gdt_pci_attach(parent, self, aux)
 	if (pci_mapreg_map(pa,
 	    GDT_CLASS(gdt) == GDT_PCINEW ? GDT_PCINEW_DPMEM : GDT_PCI_DPMEM,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &dpmemt,
-	    &dpmemh, &dpmembase, &dpmemsize)) {
+	    &dpmemh, &dpmembase, &dpmemsize, 0)) {
 		if (pci_mapreg_map(pa,
 		    GDT_CLASS(gdt) == GDT_PCINEW ? GDT_PCINEW_DPMEM :
 		    GDT_PCI_DPMEM,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT_1M, 0,
-		    &dpmemt,&dpmemh, &dpmembase, &dpmemsize)) {
+		    &dpmemt,&dpmemh, &dpmembase, &dpmemsize, 0)) {
 			printf("cannot map DPMEM\n");
 			goto bail_out;
 		}
@@ -268,14 +268,14 @@ gdt_pci_attach(parent, self, aux)
 	 */
 	if (GDT_CLASS(gdt) == GDT_PCINEW) {
 		if (pci_mapreg_map(pa, GDT_PCINEW_IOMEM, PCI_MAPREG_TYPE_MEM,
-		    0, &iomemt, &iomemh, &iomembase, &iomemsize)) {
+		    0, &iomemt, &iomemh, &iomembase, &iomemsize, 0)) {
 			printf("cannot map memory mapped I/O ports\n");
 			goto bail_out;
 		}
 		status |= IOMEM_MAPPED;
 
 		if (pci_mapreg_map(pa, GDT_PCINEW_IO, PCI_MAPREG_TYPE_IO, 0,
-		    &iot, &ioh, &iobase, &iosize)) {
+		    &iot, &ioh, &iobase, &iosize, 0)) {
 			printf("cannot map I/O ports\n");
 			goto bail_out;
 		}

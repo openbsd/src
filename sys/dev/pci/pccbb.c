@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.19 2001/05/16 12:51:49 ho Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.20 2001/06/12 15:40:32 niklas Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -417,16 +417,17 @@ pccbbattach(parent, self, aux)
 	    PCI_MAPREG_MEM_ADDR(sock_base) != 0xfffffff0) {
 		/* The address must be valid. */
 		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL)) {
+		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, NULL, 0))
+		    {
 			printf("%s: can't map socket base address 0x%x\n",
 			    sc->sc_dev.dv_xname, sock_base);
 			/*
 			 * I think it's funny: socket base registers must be
 			 * mapped on memory space, but ...
 			 */
-			if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_IO,
-			    0, &sc->sc_base_memt, &sc->sc_base_memh, &sockbase,
-			    NULL)) {
+			if (pci_mapreg_map(pa, PCI_SOCKBASE,
+			    PCI_MAPREG_TYPE_IO, 0, &sc->sc_base_memt,
+			    &sc->sc_base_memh, &sockbase, NULL, 0)) {
 				printf("%s: can't map socket base address"
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
 				    sockbase);
@@ -1282,7 +1283,7 @@ struct cb_poll_str {
 static struct cb_poll_str cb_poll[10];
 static int cb_poll_n = 0;
 
-static void cb_pcmcia_poll __P((void *arg));
+STATIC void cb_pcmcia_poll __P((void *arg));
 
 void
 cb_pcmcia_poll(arg)
@@ -2679,7 +2680,7 @@ struct pccbb_poll_str {
 static struct pccbb_poll_str pccbb_poll[10];
 static int pccbb_poll_n = 0;
 
-static void pccbb_pcmcia_poll __P((void *arg));
+STATIC void pccbb_pcmcia_poll __P((void *arg));
 
 void
 pccbb_pcmcia_poll(arg)
