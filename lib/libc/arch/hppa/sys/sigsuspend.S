@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsuspend.S,v 1.6 2001/06/04 23:14:05 mickey Exp $	*/
+/*	$OpenBSD: sigsuspend.S,v 1.7 2002/10/31 23:07:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -35,15 +35,15 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: sigsuspend.S,v 1.6 2001/06/04 23:14:05 mickey Exp $"
+	.asciz "$OpenBSD: sigsuspend.S,v 1.7 2002/10/31 23:07:37 mickey Exp $"
 	.align	4
 #endif
 
-ENTRY(sigsuspend,0)
+SYSENTRY(sigsuspend,0)
 	ldw	0(arg0), arg0
 	stw	arg0, HPPA_FRAME_ARG(0)(sp)
 
 	SYSCALL(sigsuspend)
-EXIT(sigsuspend)
+SYSEXIT(sigsuspend)
 
 	.end

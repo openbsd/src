@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.11 2002/10/31 20:06:46 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.12 2002/10/31 23:07:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -38,9 +38,11 @@
 #include <machine/vmparam.h>
 #undef _LOCORE
 
-#define SYSENTRY(x)				!\
-ENTRY(__CONCAT(_thread_sys_,x),0)		!\
+#define SYSENTRY(x,n)				!\
+ENTRY(__CONCAT(_thread_sys_,x),n)		!\
 	.weak x ! .set x, __CONCAT(_thread_sys_,x)
+#define	SYSEXIT(x)				!\
+EXIT(__CONCAT(_thread_sys_,x))
 
 #define	SYSCALL(x)				!\
 	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
@@ -58,14 +60,14 @@ ENTRY(__CONCAT(_thread_sys_,x),0)		!\
 	.label	__CONCAT(x,$noerr)
 
 #define	PSEUDO(x,y)				!\
-SYSENTRY(x)					!\
+SYSENTRY(x,0)					!\
 	SYSCALL(y)				!\
 	bv	r0(rp)				!\
 	nop					!\
-EXIT(__CONCAT(_thread_sys_,x))
+SYSEXIT(x)
 
 #define	PSEUDO_NOERROR(x,y)			!\
-SYSENTRY(x)					!\
+SYSENTRY(x,0)					!\
 	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
 	ldil	L%SYSCALLGATE, r1		!\
 	ble	4(sr7, r1)			!\
@@ -73,7 +75,7 @@ SYSENTRY(x)					!\
 	ldw	HPPA_FRAME_ERP(sr0,sp), rp	!\
 	bv	r0(rp)				!\
 	nop					!\
-EXIT(__CONCAT(_thread_sys_,x))
+SYSEXIT(x)
 
 #define	RSYSCALL(x)	PSEUDO(x,x)
 

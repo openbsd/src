@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfork.S,v 1.1 2002/02/17 23:40:57 deraadt Exp $	*/
+/*	$OpenBSD: rfork.S,v 1.2 2002/10/31 23:07:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -35,15 +35,15 @@
 
 #ifdef SYSLIBC_SCCS
 	.text
-	.asciz "$OpenBSD: rfork.S,v 1.1 2002/02/17 23:40:57 deraadt Exp $"
+	.asciz "$OpenBSD: rfork.S,v 1.2 2002/10/31 23:07:37 mickey Exp $"
 	.align	4
 #endif
 
-ENTRY(rfork,0)
+SYSENTRY(rfork,0)
 	SYSCALL(rfork)
 	addi	-1, ret1, ret1
 	bv	r0(rp)
 	and	ret0, ret1, ret0
-EXIT(rfork)
+SYSEXIT(rfork)
 
 	.end
