@@ -1,4 +1,4 @@
-/*	$OpenBSD: readpassphrase.h,v 1.2 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.h,v 1.3 2002/06/28 12:32:22 millert Exp $	*/
 
 /*
  * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -36,6 +36,7 @@
 #define RPP_FORCELOWER  0x04		/* Force input to lower case. */
 #define RPP_FORCEUPPER  0x08		/* Force input to upper case. */
 #define RPP_SEVENBIT    0x10		/* Strip the high bit from input. */
+#define RPP_STDIN       0x20		/* Read from stdin, not /dev/tty */
 
 #include <sys/cdefs.h>
 
