@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.45 1999/04/01 21:57:09 millert Exp $
+#	$OpenBSD: install.md,v 1.46 1999/04/02 00:56:20 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="kernel"
+MDSETS=kernel
 
 md_set_term() {
 	test -n "$TERM" && return
@@ -216,24 +216,24 @@ md_copy_kernel() {
 
 md_welcome_banner() {
 {
-	if [ "$MODE" = "install" ]; then
-		echo Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
+	if [ "$MODE" = install ]; then
 		cat << __EOT
+Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} installation program.
 
 This program is designed to help you put OpenBSD on your disk in a simple and
 rational way.
 __EOT
 
 	else
-		echo
-		echo Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 		cat << __EOT
+Welcome to the OpenBSD/i386 ${VERSION_MAJOR}.${VERSION_MINOR} upgrade program.
 
 This program is designed to help you upgrade your OpenBSD system in a simple
 and rational way.  As a reminder, installing the `etc' binary set is NOT
 recommended.  Once the rest of your system has been upgraded, you should
 manually merge any changes to files in the `etc' set into those files which
 already exist on your system.
+
 __EOT
 	fi
 
@@ -264,10 +264,10 @@ __EOT
 
 md_congrats() {
 	local what;
-	if [ "$MODE" = "install" ]; then
-		what="installed";
+	if [ "$MODE" = install ]; then
+		what=installed
 	else
-		what="upgraded";
+		what=upgraded
 	fi
 	cat << __EOT
 
