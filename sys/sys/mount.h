@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.36 2000/05/22 17:29:06 mickey Exp $	*/
+/*	$OpenBSD: mount.h,v 1.37 2000/06/17 17:16:04 provos Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -317,6 +317,7 @@ struct ostatfs {
 #define	MOUNT_EXT2FS	"ext2fs"	/* Second Extended Filesystem */
 #define	MOUNT_NCPFS	"ncpfs"		/* NetWare Network File System */
 #define	MOUNT_XFS	"xfs"		/* xfs */
+#define	MOUNT_TCFS	"tcfs"		/* tcfs */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
