@@ -27,5 +27,7 @@ tags:
 		>> tags
 	sort -o tags tags
 
+obj:   _SUBDIRUSE
+
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

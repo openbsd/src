@@ -13,6 +13,8 @@ SMAC68K=	../m68k/m68k/*.c ../m68k/include/*.h \
 		../mac68k/dev/*.[ch]
 AMAC68K=	../m68k/m68k/*.s ../mac68k/mac68k/*.s
 
+SUBDIR=../m68k
+
 # Directories in which to place mac68k tags links
 DMAC68K=	mac68k dev include
 
@@ -27,5 +29,7 @@ links:
 	-for i in ${DMAC68K}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-.include <bsd.prog.mk>
+obj:	_SUBDIRUSE
 
+.include <bsd.prog.mk>
+.include <bsd.subdir.mk>

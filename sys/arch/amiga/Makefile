@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1997/01/16 09:23:08 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/10/23 13:14:32 deraadt Exp $
 #	$NetBSD: Makefile,v 1.11 1997/01/06 12:33:09 is Exp $
 
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
@@ -12,7 +12,7 @@ COMM=	$S/vm/*.[ch] $S/ufs/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
 
 # Makefile for amiga tags file
 
-SUBDIR=stand
+SUBDIR=stand ../m68k
 
 TAMIGA=	$S/arch/amiga/tags
 SAMIGA=	$S/arch/m68k/m68k/*.c $S/arch/m68k/include/*.h \
@@ -41,5 +41,8 @@ links:
 	    rm -f $$i/tags; rm -f $$i/TAGS ; \
 	    ln -s ../tags $$i/tags; ln -s ../TAGS $$i/TAGS; done
 
+obj:	_SUBDIRUSE
+
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
 
