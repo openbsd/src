@@ -521,7 +521,6 @@
 ./usr/share/man/cat4/alpha/com.0
 ./usr/share/man/cat4/alpha/cy.0
 ./usr/share/man/cat4/alpha/ed.0
-./usr/share/man/cat4/alpha/ep.0
 ./usr/share/man/cat4/alpha/esp.0
 ./usr/share/man/cat4/alpha/intro.0
 ./usr/share/man/cat4/alpha/le.0
@@ -624,7 +623,7 @@
 ./usr/share/man/cat4/i386/eg.0
 ./usr/share/man/cat4/i386/el.0
 ./usr/share/man/cat4/tx.0
-./usr/share/man/cat4/i386/ep.0
+./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/i386/fdc.0
 ./usr/share/man/cat4/i386/gus.0
 ./usr/share/man/cat4/i386/ie.0
