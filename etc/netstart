@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.91 2004/01/09 10:02:23 deraadt Exp $
+#	$OpenBSD: netstart,v 1.92 2004/01/11 06:07:16 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -196,11 +196,7 @@ fi
 
 # Set the address for the loopback interface.
 # It will also initialize IPv6 address for lo0 (::1 and others).
-ifconfig lo0 inet localhost
-
-# Use loopback, not the wire.
-route -qn add -host $hostname localhost > /dev/null
-route -qn add -net 127 127.0.0.1 -reject > /dev/null
+ifconfig lo0 inet 127.0.0.1
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	# IPv6 configurations.
@@ -341,6 +337,10 @@ for hn in /etc/hostname.*; do
 		;;
 	esac
 done
+
+# Use loopback, not the wire.
+route -qn add -host $hostname 127.0.0.1 > /dev/null
+route -qn add -net 127 127.0.0.1 -reject > /dev/null
 
 # Configure all the bridges.
 for bn in /etc/bridgename.*; do
