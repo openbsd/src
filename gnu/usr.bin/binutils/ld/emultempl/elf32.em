@@ -1170,10 +1170,8 @@ ${ELF_INTERPRETER_SET_DEFAULT}
       {
 	asection *s;
 	bfd_size_type sz;
-	bfd_size_type prefix_len;
 	char *msg;
 	bfd_boolean ret;
-	const char * gnu_warning_prefix = _("warning: ");
 
 	if (is->just_syms_flag)
 	  continue;
@@ -1183,14 +1181,11 @@ ${ELF_INTERPRETER_SET_DEFAULT}
 	  continue;
 
 	sz = bfd_section_size (is->the_bfd, s);
-	prefix_len = strlen (gnu_warning_prefix);
-	msg = xmalloc ((size_t) (prefix_len + sz + 1));
-	strcpy (msg, gnu_warning_prefix);
-	if (! bfd_get_section_contents (is->the_bfd, s,	msg + prefix_len,
-					(file_ptr) 0, sz))
+	msg = xmalloc ((size_t) (sz + 1));
+	if (! bfd_get_section_contents (is->the_bfd, s,	msg, (file_ptr) 0, sz))
 	  einfo ("%F%B: Can't read contents of section .gnu.warning: %E\n",
 		 is->the_bfd);
-	msg[prefix_len + sz] = '\0';
+	msg[sz] = '\0';
 	ret = link_info.callbacks->warning (&link_info, msg,
 					    (const char *) NULL,
 					    is->the_bfd, (asection *) NULL,
