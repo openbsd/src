@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.13 1997/07/22 14:43:19 kstailey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.14 1997/07/22 15:06:54 kstailey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.13 1997/07/22 14:43:19 kstailey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.14 1997/07/22 15:06:54 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -198,13 +198,13 @@ listall(prefix, lp)
 	int lvl2;
 	char *cp, name[BUFSIZ];
 
-	if (lp->list == 0)
+	if (lp->list == NULL)
 		return;
 	strncpy(name, prefix, BUFSIZ-1);
 	cp = &name[strlen(name)];
 	*cp++ = '.';
 	for (lvl2 = 0; lvl2 < lp->size; lvl2++) {
-		if (lp->list[lvl2].ctl_name == 0)
+		if (lp->list[lvl2].ctl_name == NULL)
 			continue;
 		strcpy(cp, lp->list[lvl2].ctl_name);
 		parse(name, Aflag);
@@ -591,7 +591,7 @@ struct ctlname encapname[] = ENCAPCTL_NAMES;
 struct ctlname ipsecname[] = CTL_IPSEC_NAMES;
 struct list ipseclist = { ipsecname, IPSECCTL_MAXID };
 struct list ipsecvars[] = {
-        { encapname, ENCAPCTL_MAXID }, 
+	{ encapname, ENCAPCTL_MAXID }, 
 };
 
 /*
@@ -600,23 +600,23 @@ struct list ipsecvars[] = {
 int
 sysctl_ipsec(string, bufpp, mib, flags, typep)
 	char *string;
-        char **bufpp;
-        int mib[];
-        int flags;
-        int *typep;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
 {
-        struct list *lp;
-        int indx;
+	struct list *lp;
+	int indx;
 
-        if (*bufpp == NULL) {
-                listall(string, &ipseclist);
-                return (-1);
-        }
-        if ((indx = findname(string, "third", bufpp, &ipseclist)) == -1)
-                return (-1);
-        mib[2] = indx;
+	if (*bufpp == NULL) {
+		listall(string, &ipseclist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &ipseclist)) == -1)
+		return (-1);
+	mib[2] = indx;
 	if (indx <= IPSECCTL_MAXID && ipsecvars[indx].list != NULL)
-	 	lp = &ipsecvars[indx];
+		lp = &ipsecvars[indx];
 	else if (!flags)
 		return (-1);
 	else {
@@ -624,15 +624,15 @@ sysctl_ipsec(string, bufpp, mib, flags, typep)
 		    string);
 		return (-1);
 	}
-        if (*bufpp == NULL) {
-                listall(string, lp);
-                return (-1);
-        }
-        if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
-                return (-1);
-        mib[3] = indx;
-        *typep = lp->list[indx].ctl_type;
-        return (4);
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "fourth", bufpp, lp)) == -1)
+		return (-1);
+	mib[3] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (4);
 }
 
 struct ctlname inetname[] = CTL_IPPROTO_NAMES;
