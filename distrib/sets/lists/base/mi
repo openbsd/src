@@ -164,6 +164,8 @@
 ./usr/bin/aucat
 ./usr/bin/audioctl
 ./usr/bin/awk
+./usr/bin/b64decode
+./usr/bin/b64encode
 ./usr/bin/banner
 ./usr/bin/basename
 ./usr/bin/batch

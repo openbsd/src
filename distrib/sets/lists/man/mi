@@ -172,6 +172,8 @@
 ./usr/share/man/cat1/aucat.0
 ./usr/share/man/cat1/audioctl.0
 ./usr/share/man/cat1/awk.0
+./usr/share/man/cat1/b64decode.0
+./usr/share/man/cat1/b64encode.0
 ./usr/share/man/cat1/banner.0
 ./usr/share/man/cat1/basename.0
 ./usr/share/man/cat1/batch.0
