@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.4 2002/11/10 22:49:54 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.5 2003/01/16 19:15:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -35,7 +35,7 @@ int	global __asm ("$global$") = 0;
 int	sh_func_adrs __asm ("$$sh_func_adrs") = 0;
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: crt0.c,v 1.4 2002/11/10 22:49:54 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: crt0.c,v 1.5 2003/01/16 19:15:38 mickey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -61,6 +61,7 @@ extern void	__fini(void);
 #ifdef MCRT0
 extern void	monstartup(u_long, u_long);
 extern void	_mcleanup(void);
+extern unsigned char etext, eprol;
 #endif /* MCRT0 */
 
 void __start(char **, void (*)(void), const Obj_Entry *);
@@ -112,5 +113,5 @@ __strrchr(const char *p, char ch)
 }
 
 #ifdef MCRT0
-__asm (".export eprol, entry\neprol");
+__asm (".export eprol, entry\n\t.label eprol");
 #endif
