@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.52 2001/06/27 04:49:46 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.53 2001/06/27 07:21:27 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -177,9 +177,6 @@ sys___sysctl(p, v, retval)
 	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
 		return (error);
 	if (SCARG(uap, old) != NULL) {
-		/* XXX - obsolete now that vslock returns an error? */
-		if (!uvm_useracc(SCARG(uap, old), oldlen, B_WRITE))
-			return (EFAULT);
 		if ((error = lockmgr(&sysctl_lock, LK_EXCLUSIVE, NULL, p)) != 0)
 			return (error);
 		if (dolock)
