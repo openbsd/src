@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_spinlock.c,v 1.4 1998/06/09 23:13:10 jb Exp $
- * $OpenBSD: uthread_spinlock.c,v 1.3 1998/12/23 22:49:47 d Exp $
+ * $OpenBSD: uthread_spinlock.c,v 1.4 1999/01/10 23:13:24 d Exp $
  *
  */
 
@@ -61,12 +61,12 @@ _spinlock(spinlock_t *lck)
 		sched_yield();
 
 		/* Check if already locked by the running thread: */
-		if (lck->lock_owner == (long) _thread_run)
+		if (lck->lock_owner == _thread_run)
 			return;
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = (long) _thread_run;
+	lck->lock_owner = _thread_run;
 }
 
 /*
@@ -91,7 +91,7 @@ _spinlock_debug(spinlock_t *lck, const char *fname, int lineno)
 		sched_yield();
 
 		/* Check if already locked by the running thread: */
-		if (lck->lock_owner == (long) _thread_run) {
+		if (lck->lock_owner == _thread_run) {
 			char str[256];
 			snprintf(str, sizeof(str), "%s - Warning: Thread %p attempted to lock %p from %s (%d) which it had already locked in %s (%d)\n", __progname, _thread_run, lck, fname, lineno, lck->fname, lck->lineno);
 			_thread_sys_write(2,str,strlen(str));
@@ -103,7 +103,7 @@ _spinlock_debug(spinlock_t *lck, const char *fname, int lineno)
 	}
 
 	/* The running thread now owns the lock: */
-	lck->lock_owner = (long) _thread_run;
+	lck->lock_owner = _thread_run;
 	lck->fname = fname;
 	lck->lineno = lineno;
 }
