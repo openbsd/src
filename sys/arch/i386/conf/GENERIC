@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.351 2003/10/31 02:32:55 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.352 2004/01/07 22:00:37 markus Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -62,11 +62,13 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridge
 # power management and other environmental stuff
 #amdpm*	at pci? dev ? function ?	# AMD768MPX
 elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
+geodesc* at pci? dev ? function ?	# Geode SC1100/SCx200 IAOC
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
 #lm1	at isa? port 0x280
 #lm2	at isa? port 0x310
+nsclpcsio*	at isa?			# NS PC87366 hardware monitor
 
 it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
 					# monitors
