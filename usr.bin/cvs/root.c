@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.5 2004/07/27 16:35:48 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.6 2004/07/28 01:59:19 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -54,7 +54,20 @@ const char *cvs_methods[] = {
 };
 
 #define CVS_NBMETHODS  (sizeof(cvs_methods)/sizeof(cvs_methods[0]))
- 
+
+/*
+ * CVSROOT cache
+ *
+ * Whenever cvsroot_parse() gets called for a specific string, it first
+ * checks in the cache to see if there is already a parsed version of the
+ * same string and returns a pointer to it in case one is found (it also
+ * increases the reference count).  Otherwise, it does the parsing and adds
+ * the result to the cache for future hits.
+ */
+
+static struct cvsroot **cvs_rcache = NULL;
+static u_int cvs_rcsz = 0;
+
 
 
 /*
@@ -63,7 +76,7 @@ const char *cvs_methods[] = {
  * Parse a CVS root string (as found in CVS/Root files or the CVSROOT
  * environment variable) and store the fields in a dynamically
  * allocated cvs_root structure.  The format of the string is as follows:
- *	:method:path
+ *	:method:[[user[:pass]@host]:path
  * Returns a pointer to the allocated information on success, or NULL
  * on failure.
  */
@@ -73,7 +86,16 @@ cvsroot_parse(const char *str)
 {
 	u_int i;
 	char *cp, *sp, *pp;
+	void *tmp;
 	struct cvsroot *root;
+
+	for (i = 0; i < cvs_rcsz; i++) {
+		if (strcmp(str, cvs_rcache[i]->cr_str) == 0) {
+			printf("hitting cache for `%s'\n", str);
+			cvs_rcache[i]->cr_ref++;
+			return (cvs_rcache[i]);
+		}
+	}
 
 	root = (struct cvsroot *)malloc(sizeof(*root));
 	if (root == NULL) {
@@ -81,27 +103,30 @@ cvsroot_parse(const char *str)
 		return (NULL);
 	}
 	memset(root, 0, sizeof(*root));
-
+	root->cr_ref = 2;
 	root->cr_method = CVS_METHOD_NONE;
 
+	root->cr_str = strdup(str);
+	if (root->cr_str == NULL) {
+		free(root);
+		return (NULL);
+	}
 	root->cr_buf = strdup(str);
 	if (root->cr_buf == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy CVS root");
-		free(root);
+		cvsroot_free(root);
 		return (NULL);
 	}
 
 	sp = root->cr_buf;
 	cp = root->cr_buf;
-
 	if (*sp == ':') {
 		sp++;
 		cp = strchr(sp, ':');
 		if (cp == NULL) {
 			cvs_log(LP_ERR, "failed to parse CVSROOT: "
 			    "unterminated method");
-			free(root->cr_buf);
-			free(root);
+			cvsroot_free(root);
 			return (NULL);
 		}
 		*(cp++) = '\0';
@@ -118,8 +143,7 @@ cvsroot_parse(const char *str)
 	sp = strchr(cp, '/');
 	if (sp == NULL) {
 		cvs_log(LP_ERR, "no path specification in CVSROOT");
-		free(root->cr_buf);
-		free(root);
+		cvsroot_free(root);
 		return (NULL);
 	}
 
@@ -133,7 +157,7 @@ cvsroot_parse(const char *str)
 
 	if (*(sp - 1) != ':') {
 		cvs_log(LP_ERR, "missing host/path delimiter in CVS root");
-		free(root);
+		cvsroot_free(root);
 		return (NULL);
 	}
 	*(sp - 1) = '\0';
@@ -163,7 +187,7 @@ cvsroot_parse(const char *str)
 		if (*cp != '\0' || root->cr_port > 65535) {
 			cvs_log(LP_ERR,
 			    "invalid port specification in CVSROOT");
-			free(root);
+			cvsroot_free(root);
 			return (NULL);
 		}
 
@@ -177,6 +201,17 @@ cvsroot_parse(const char *str)
 			root->cr_method = CVS_METHOD_SERVER;
 		else
 			root->cr_method = CVS_METHOD_LOCAL;
+	}
+
+	/* add to the cache */
+	tmp = realloc(cvs_rcache, (cvs_rcsz + 1) * sizeof(struct cvsroot *));
+	if (tmp == NULL) {
+		/* just forget about the cache and return anyways */
+		root->cr_ref--;
+	}
+	else {
+		cvs_rcache = (struct cvsroot **)tmp;
+		cvs_rcache[cvs_rcsz++] = root;
 	}
 
 	return (root);
@@ -193,8 +228,14 @@ cvsroot_parse(const char *str)
 void
 cvsroot_free(struct cvsroot *root)
 {
-	free(root->cr_buf);
-	free(root);
+	root->cr_ref--;
+	if (root->cr_ref == 0) {
+		if (root->cr_str != NULL)
+			free(root->cr_str);
+		if (root->cr_buf != NULL)
+			free(root->cr_buf);
+		free(root);
+	}
 }
 
 
