@@ -1,4 +1,4 @@
-/*	$OpenBSD: inflate.c,v 1.6 2003/12/17 00:28:19 millert Exp $	*/
+/*	$OpenBSD: inflate.c,v 1.7 2004/08/26 18:39:18 otto Exp $	*/
 /* inflate.c -- zlib decompression
  * Copyright (C) 1995-2003 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -909,6 +909,9 @@ int flush;
                         state->lens[state->have++] = (unsigned short)len;
                 }
             }
+
+            if (state->mode == BAD)
+                break;
 
             /* build code tables */
             state->next = state->codes;
