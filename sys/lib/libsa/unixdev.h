@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.h,v 1.1 1997/02/16 14:51:59 mickey Exp $	*/
+/*	$OpenBSD: unixdev.h,v 1.2 1997/04/02 05:26:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,6 @@ int unixstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int unixopen __P((struct open_file *, ...));
 int unixclose __P((struct open_file *));
 int unixioctl __P((struct open_file *, u_long, void *));
-off_t ulseek __P((int, off_t, int));
 
 int unix_probe __P((void));
 int unix_getc __P((void));
@@ -51,5 +50,7 @@ int uread __P((int, void *, size_t));
 int uwrite __P((int, void *, size_t));
 int uioctl __P((int, u_long, char *));
 int uclose __P((int));
+off_t ulseek __P((int, off_t, int));
 void uexit __P((int));
 int syscall __P((int, ...));
+int __syscall __P((quad_t, ...));
