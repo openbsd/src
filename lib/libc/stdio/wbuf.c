@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: wbuf.c,v 1.2 1996/08/19 08:33:15 tholo Exp $";
+static char rcsid[] = "$OpenBSD: wbuf.c,v 1.3 1997/05/31 08:45:51 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -60,8 +60,10 @@ __swbuf(c, fp)
 	 * calls might wrap _w from negative to positive.
 	 */
 	fp->_w = fp->_lbfsize;
-	if (cantwrite(fp))
+	if (cantwrite(fp)) {
+		errno = EBADF;
 		return (EOF);
+	}
 	c = (unsigned char)c;
 
 	/*
