@@ -42,10 +42,14 @@ To compile CVS for OS/2, you must install the following packages:
 All packages can be found on ftp://ftp.leo.org/pub/comp/os/os2/leo/gnu
 (You may also try http://www.leo.org/pub/comp/os/os2/leo/gnu).
 
-Change to the `emx' directory, do "make" and get emx\cvs.exe.  Assuming
-you have edited the `install_dir' variable in the Makefile, you may type
-"make install-cvs" to put cvs.exe in the right place.  You may also "make
-clean-cvs" to clean up object and library files.
+Change to the `emx' directory, do "make" and get emx\cvs.exe.  I had
+to comment out the "Makefile" rule in emx/Makefile to avoid a
+complaint about ../config.status not existing.  You also might need to
+edit srcdir to be "." and top_srcdir to be "..".
+
+Assuming you have edited the `install_dir' variable in the Makefile,
+you may type "make install-cvs" to put cvs.exe in the right place.
+You may also "make clean-cvs" to clean up object and library files.
 
 The cvs.exe generated will require emx.dll to run.  You can try
 compiling with -Zomf -Zsys to generate a cvs.exe without this
@@ -63,4 +67,4 @@ them.
 You will get about 5 warnings in lib/regex.c concerning "unused variable
 destination".  Ignore them.
 
-Report bugs to tepting@swol.de and bug-cvs@prep.ai.mit.edu.
+Report bugs to tepting@swol.de and bug-cvs@gnu.org.

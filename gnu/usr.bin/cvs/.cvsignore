@@ -11,7 +11,16 @@ cvsinit
 cvsnt.mdp
 cvsnt.ncb
 cvsnt.vcp
+cvsnt.opt
+cvsnt.dsw
+cvsnt.plg
 cvsnt4.mak
 cvsnt4.mdp
 cvsnt4.ncb
+diff.pdb
+diff.idb
+diff.pch
+vc50.pdb
+vc50.idb
+vc50.pch
 stamp-h

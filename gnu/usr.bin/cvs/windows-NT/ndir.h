@@ -9,10 +9,7 @@
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    $Header: /home/cvs/src/gnu/usr.bin/cvs/windows-NT/ndir.h,v 1.1.1.4 1997/06/28 03:29:35 tholo Exp $
- */
+    GNU General Public License for more details.  */
 
 /* Everything non trivial in this code is taken from: @(#)msd_dir.c 1.4
    87/11/06.  A public domain implementation of BSD directory routines

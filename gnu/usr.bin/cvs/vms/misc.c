@@ -27,42 +27,6 @@
 #include <ctype.h>
 #include <lib$routines.h>
 
-/* Print message and force core dump (unix) or traceback (vms)
- * These are taken from other GNU software more-or-less as-is
- */
-void fatal (char *s)
-{
-  int *x;
-  printf ("%s\n", s);
-  lib$signal(44);
-}
-
-/* GNU's lib implementation (alloca.c) is more portable, so I disabled these
-   for this distribution (benjamin@cyclic.com) */
-#ifdef USE_VMSLIB_MEMORY_ALLOCATION
-void *xmalloc (int size)
-{
-  register void *val;
-  /* Avoid failure if malloc (0) returns 0.  */
-  if (size == 0)
-    size = 1;
-  val = (void *) malloc (size);
-  if (!val) fatal ("xmalloc: can't satisfy request");
-  return val;
-}
-
-void *xrealloc (void *block, int size)
-{
-  register void *val;
-  /* Avoid failure if malloc (0) returns 0.  */
-  if (size == 0)
-    size = 1;
-  val = (void *) realloc (block, size);
-  if (!val) fatal ("xrealloc: can't satisfy request");
-  return val;
-}
-#endif
-
 /* See in misc.h why it is done like this.  */
 void x_free (void *block)
 {
@@ -78,12 +42,6 @@ char *downcase (char *s)
   for (t = s ; *t; t++)
     *t = tolower(*t);
   return (s);
-}
-
-char *strdup (char *src) {
-  char *dst = (char*) xmalloc (strlen(src) + 1);
-  strcpy (dst, src);
-  return (dst);
 }
 
 char *strndup (char *src, int len) {

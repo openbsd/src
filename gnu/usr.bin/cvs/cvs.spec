@@ -4,8 +4,8 @@ Version: @VERSION@
 Release: 1
 Copyright: GPL
 Group: Development/Version Control
-Source: ftp.cyclic.com:/pub/cvs-@VERSION@.tar.gz
-Buildroot: /
+Source: ftp://download.cyclic.com/pub/cvs-@VERSION@/cvs-@VERSION@.tar.gz
+Prefix: /usr
 
 %description
 CVS is a version control system, which allows you to keep old versions

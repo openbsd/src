@@ -1,3 +1,57 @@
+Tue Jan 13 13:17:33 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (DIFF, RCSBIN_DFLT): Remove; no longer used.
+
+Sat Dec 27 16:57:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (HAVE_RCS5): Remove; no longer used.
+
+	* config.h (LINES_CRLF_TERMINATED): Remove; no longer used.
+
+Sat Nov 29 22:21:19 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	See lib/ChangeLog for rationale:
+	* options.h: Remove declaration of getwd
+	* getwd.c: Implement xgetwd not getwd.
+	* stat.c: Call xgetwd not getwd.
+
+Thu Sep 25 15:26:43 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* misc.c, misc.h (fatal, xmalloc, xrealloc): Remove; nowhere used.
+
+	* ndir.c, ndir.h: Change return type of closedir from void to int.
+
+	* config.h (HAVE_NDIR_H): Define.
+	* vms.h: Add comment about the include of ndir.h.
+	* ndir.h: Protect against multiple inclusion.
+
+Tue, 9 Sep 1997  Jim Kingdon
+
+	* config.h: Define HAVE_VPRINTF.
+
+	* pwd.h, vms.h: Define pid_t and mode_t.
+
+Tue Sep  9 18:53:33 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* pwd.h, pwd.c: Remove getpwnam per change to expand_path.
+	* config.h: Define GETPWNAM_MISSING.
+
+	* pwd.c (getpwuid): Declare argument as unsigned int not uid_t.
+
+	* config.h (SYSTEM_GETCALLER): Define.
+	* pwd.c (getpwuid, getpwnam): Always return NULL (see comment
+	for rationale).
+	* options.h: Don't define CVS_BADROOT.
+	* pwd.h: Nuke uid_t and related changes.
+
+	* filesubr.c (fnfold): Further expand comment about how to handle
+	filenames like "y.tab.c".
+
+Sun Sep  7 17:38:58 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h (HAVE_STRDUP): Remove; not used anywhere.
+	* misc.h, misc.c: Remove strdup per change to ../configure.in.
+
 Sun Jun  8 23:42:42 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* config.h (HAVE_MKFIFO): Remove; not used anywhere.

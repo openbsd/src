@@ -3,7 +3,10 @@ has probably only been tested with the CVS client.  Local CVS might or
 might not work, and the server would definitely not work.  You'll need
 to edit the makefile to reflect your system's paths (unless you're our
 customer for this port, in which case the paths are correct because we
-did the port on your machine. :-) ).
+did the port on your machine. :-) ).  You also may need to comment out
+the "Makefile" rule in emx/Makefile to avoid a complaint about
+../config.status not existing.  You also might need to edit srcdir to
+be "." and top_srcdir to be "..".
 
         That should be all -- edit the makefile, do "make" and get
 os2\cvs.exe.  Assuming you have edited the `install_dir' variable in
@@ -19,7 +22,7 @@ such as emacs will generally do this).
         There are two compiler warnings in os2/popen.c which we haven't
 figured out the cause of.  Other than that there probably aren't a whole
 lot of warnings (but there might be a few).
-Report bugs to <bug-cvs@prep.ai.mit.edu>.
+Report bugs to <bug-cvs@gnu.org>.
 
 
 

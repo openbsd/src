@@ -16,18 +16,6 @@
  */
 
 /*
- * CVS provides the most features when used in conjunction with the Version-5
- * release of RCS.  Thus, it is the default.  This also assumes that GNU diff
- * Version-1.15 is being used as well -- you will have to configure your RCS
- * V5 release separately to make this the case. If you do not have RCS V5 and
- * GNU diff V1.15, comment out this define. You should not try mixing and
- * matching other combinations of these tools.
- */
-#ifndef HAVE_RCS5
-#define	HAVE_RCS5
-#endif
-
-/*
  * For portability and heterogeneity reasons, CVS is shipped by default using
  * my own text-file version of the ndbm database library in the src/myndbm.c
  * file.  If you want better performance and are not concerned about
@@ -38,58 +26,12 @@
 #endif
 
 /*
- * The "diff" program to execute when creating patch output.  This "diff"
- * must support the "-c" option for context diffing.  Specify a full
- * pathname if your site wants to use a particular diff.  If you are
- * using the GNU version of diff (version 1.15 or later), this should
- * be "diff -a".  
- * 
- * NOTE: this program is only used for the ``patch'' sub-command (and
- * for ``update'' if you are using the server).  The other commands
- * use rcsdiff which will use whatever version of diff was specified
- * when rcsdiff was built on your system.
- */
-
-#ifndef DIFF
-#define	DIFF	"/usr/local/bin/diff -a"
-#endif
-
-/*
  * The "patch" program to run when using the CVS server and accepting
  * patches across the network.  Specify a full pathname if your site
  * wants to use a particular patch.
  */
 #ifndef PATCH_PROGRAM
 #define PATCH_PROGRAM	"patch"
-#endif
-
-/*
- * By default, RCS programs are executed with the shell or through execlp(),
- * so the user's PATH environment variable is searched.  If you'd like to
- * bind all RCS programs to a certain directory (perhaps one not in most
- * people's PATH) then set the default in RCSBIN_DFLT.  Note that setting
- * this here will cause all RCS programs to be executed from this directory,
- * unless the user overrides the default with the RCSBIN environment variable
- * or the "-b" option to CVS.
- * 
- * If you use the password-authenticating server, then you need to
- * make sure that the server can find the RCS programs to invoke them.
- * The authenticating server starts out running as root, and then
- * switches to run as the appropriate user once authentication is
- * complete.  But no actual shell is ever started by that user, so the
- * PATH environment variable may not contain the directory with the
- * RCS binaries, even though if that user logged in normally, PATH
- * would include the directory.  
- *
- * One way to solve this problem is to set RCSBIN_DFLT here.  An
- * alternative is to make sure that root has the right directory in
- * its path already.  Another, probably better alternative is to
- * specify -b in /etc/inetd.conf. 
- *
- * This define should be either the empty string ("") or a full pathname to the
- * directory containing all the installed programs from the RCS distribution.  */
-#ifndef RCSBIN_DFLT
-#define	RCSBIN_DFLT	""
 #endif
 
 /* Directory used for storing temporary files, if not overridden by
@@ -176,18 +118,16 @@
 /* #define CVS_FUDGELOCKS */
 #endif
 
-/*
- * When committing a permanent change, CVS and RCS make a log entry of
- * who committed the change.  If you are committing the change logged in
- * as "root" (not under "su" or other root-priv giving program), CVS/RCS
- * cannot determine who is actually making the change.
- *
- * As such, by default, CVS disallows changes to be committed by users
- * logged in as "root".  You can disable this option by commenting
- * out the lines below.
- */
+/* There is some pretty unixy code in src/commit.c which tries to
+   prevent people from commiting changes as "root" (which would prevent
+   CVS from making a log entry with the actual user).  On VMS, I suppose
+   one could say that SYSTEM is equivalent, but I would think that it
+   actually is not necessary; at least at the VMS sites I've worked at
+   people just used their own accounts (turning privileges on and off
+   as desired).  */
+
 #ifndef CVS_BADROOT
-#define	CVS_BADROOT
+/* #define	CVS_BADROOT */
 #endif
 
 /*
@@ -241,10 +181,6 @@
  */
 #ifndef STDC_HEADERS
 extern void exit ();
-#endif
-
-#ifndef getwd
-extern char *getwd ();
 #endif
 
 #define NO_SOCKET_TO_FD 1

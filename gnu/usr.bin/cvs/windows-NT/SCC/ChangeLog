@@ -1,3 +1,79 @@
+Tue Jan 27 12:54:05 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt: Update bug-cvs address to gnu.org.
+
+Thu Dec 11 22:17:45 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt: Add Access to list of development environments which
+	implement SCC.
+
+Wed Oct 29 11:45:20 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt: CVSwiz runs the command line CVS; it is not an
+	independent implementation of the protocol.
+
+Sun Oct 26 14:57:33 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt: Add section "OTHER INTERFACES".
+
+Tue Oct 21 23:25:43 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt (TOOLS IMPLEMENTING THE SCC): Add comment about
+	Powerbuilder versions.
+
+Mon Sep  8 08:52:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt (TOOLS IMPLEMENTING THE SCC): Be a little more
+	specific about Powersoft and CodeWright.
+
+	* Makefile.in (DISTFILES): Add pubscc.h.  Thanks to Frederic Van
+	Haren for pointing this out.
+
+Tue Sep  2 13:39:17 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt (SPECIFICATIONS OR OTHER DOCUMENTS DESCRIBING THE
+	SCC): New section.
+
+Mon Aug  4 10:46:59 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* pubscc.h: Add comment listing new CodeWright 5.00c functions.
+	Add comment about CodeWright calling SccQueryInfo without
+	SCC_cap_QueryInfo set.  Thanks to Frederic Van Haren for
+	pointing out these issues.
+
+4 Aug 1997  Jim Kingdon
+
+	Changes for Visual C++ 5.0:
+	* SCC.dsp: New file.
+	* .cvsignore: add SCC.dsw SCC.opt SCC.plg Release.
+
+	* scc.c (SccGet): Replace #if 0'd code with a comment and
+	adjust to avoid compiler warning.
+
+Mon Aug  4 09:58:11 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* scc.c: Split out the interface declarations into a new file
+	pubscc.h.  This should make it easier to handle multiple
+	scc.c-equivalents.
+
+Mon Jul 14 15:58:25 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* scc.c: Add many comments and defines to document additional
+	aspects of the SCC API.
+
+7 Jul 1997  Frederic Van Haren  <Frederic.Van.Haren@lhs.be>
+
+	* scc.c (SccHistory): file_names is LPSTR * not LPSTR.
+
+Mon Jul  7 16:45:16 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* scc.c (SccGetVersion): Change arguments from () to (void).
+	Clarify context_arg.  Also document 'window' arg.
+
+Sat Jul  5 13:01:51 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt: PowerJ and Power++ are also said to implement SCC.
+
 21 Mar 1997  Jim Kingdon
 
 	* scc.c (SccCheckout): Write to debuglog and return

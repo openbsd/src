@@ -10,8 +10,7 @@
 
 void run_arg (const char *s) { }
 void run_print (FILE * fp) { }
-void run_setup (const char *fmt,...) { }
-void run_args (const char *fmt,...) { }
+void run_setup (const char *prog) { }
 int run_exec (char *stin, char *stout, char *sterr, int flags) { return 0; }
 FILE * run_popen(const char *, const char *) { return NULL; }
 int pclose(FILE *fp) { return 0; }

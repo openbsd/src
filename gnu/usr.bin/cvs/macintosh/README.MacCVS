@@ -9,6 +9,14 @@ __________________________________
 
 This is a port of the CVS client to MacOS.
 
+For updated information on MacCVS, or CVS on the Macintosh in general,
+see the CVS web sites at:
+
+    http://www.cyclic.com/
+    http://www.loria.fr/~molli/cvs-index.html
+
+In particular, there is now a MacCVS 3.x which might be worth a try.
+
 1. Setup
 
 In order to use this, you must be willing to consider the Macintosh 

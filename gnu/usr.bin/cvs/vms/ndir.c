@@ -181,7 +181,7 @@ opendir (infilename, filepattern)
   return (DIR *) dirp;		/* I had to cast, for VMS sake.  */
 }
 
-void
+int
 closedir (dirp)
      register DIR *dirp;		/* stream from opendir */
 {
@@ -195,6 +195,7 @@ closedir (dirp)
   }
 
   xfree ((char *) dirp);
+  return 0;
 }
 
 struct direct dir_static;	/* simulated directory contents */

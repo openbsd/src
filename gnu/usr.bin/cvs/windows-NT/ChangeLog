@@ -1,3 +1,132 @@
+Fri Jan 16 00:57:31 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh: Remove.  As far as I know the Windows hacks in this
+	file have been superceded by improvements to Cygwin and/or Ian's
+	recent changes to src/sanity.sh.  The ones I noticed: we had been
+	working around lack of /dev/null (apprently Cygwin now has it); we
+	had been not expecting rm -rf to delete readonly files (apparently
+	it now does); there was an issue with case of arguments passed on
+	command line (it would seem like Cygwin has changed this).
+	I also notice that the file had not even been in the distribution
+	because it was missing from Makefile.in (ugh).
+
+13 Jan 1998  Jim Kingdon
+
+	* run.c (run_exec): Change parameters from char * to const char *.
+
+Tue Jan 13 16:57:56 1998  Ian Lance Taylor  <ian@cygnus.com>
+
+	* config.h (FOLD_FN_CHAR): Don't define; instead move to
+	lib/system.h, where it is defined conditionally.
+	(FILENAMES_CASE_INSENSITIVE, ISDIRSEP): Likewise.
+	(WNT_filename_classes, fncmp, fnfold): Likewise for declarations.
+	* filesubr.c (WNT_filename_classes): Remove; now in lib/fncase.c.
+	(fncmp, fnfold): Likewise.
+
+Tue Jan 13 13:15:34 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c: Adjust run_setup for new calling convention.
+
+	* config.h (DIFF): Remove; no longer used.
+	* options.h (DIFF, RCSBIN_DFLT): Remove; no longer used.
+
+Wed Dec 31 10:56:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h, filesubr.c (convert_file): Remove; no longer used
+	(except for BROKEN_READWRITE_CONVERSION which doesn't apply).
+
+Sat Dec 27 16:57:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (HAVE_RCS5): Remove; no longer used.
+
+	* config.h (LINES_CRLF_TERMINATED): Remove; no longer used.
+
+Tue Dec 23 08:28:44 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Change bug-cvs address from prep.ai.mit.edu to gnu.org
+	per email from Martin Hamilton.
+
+Sun Nov 30 18:03:02 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c (run_args): Remove; nowhere used.
+
+Sat Nov 29 22:21:19 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove declaration of getwd; see lib/ChangeLog for
+	rationale.
+
+Wed, 12 Nov 1997  Jim Kingdon
+
+	* config.h: Define same_file.
+
+Sun, 9 Nov 1997  Jim Kingdon
+
+	* config.h: Define HAVE_SETMODE.
+
+Mon Nov 10 11:15:54 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c (call_diff, call_diff3): Removed, per change to
+	src/rcscmds.c.
+
+Fri Oct 31 16:52:30 1997  Abe Feldman
+
+	* config.h: Define UTIME_EXPECTS_WRITABLE.
+
+Tue Oct 28 14:50:37 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c: Also define call_diff and call_diff3.
+
+Sat Sep 13 20:13:09 1997    <Martin.Sjoelin@ubs.ch>
+	indentation/whitespace fixes by Jim Kingdon
+
+	* run.c (quote): quote any " included in argument string to
+	avoid having ci choke on message string format.
+
+Sun Sep  7 19:59:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Add section on coding standards (win32, ANSI, &c).
+
+Fri Aug 29 19:13:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (isabsolute): Add comment about interaction with
+	strip_trailing_slashes (reported by Jin S Choi <jsc@w3health.com>).
+
+Thu Aug 28 12:06:37 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (link_file): Remove #if 0'd version; the real version
+	is elsewhere in this file.
+
+Sun Aug 10 21:08:12 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* ndir.c, ndir.h, pwd.c, pwd.h: Remove $Header; we decided to
+	get rid of these some time ago.
+
+Sun Aug  3 21:14:33 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Note KLUDGE_FOR_WNT_TESTSUITE when discussing tests.
+
+Fri Jul 18 09:49:52 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Adjust discussion of makefiles to deal with Visual C++
+	5.x.  One doesn't need patch if client and server are current.
+
+10 Jul 1997  Jim Kingdon
+
+	* config.h: Define USE_SETMODE_STDOUT.
+
+8 Jul 1997  Jim Kingdon
+
+	* rcmd.c (rcmd_authenticate): With error message, print the
+	user names that we were attempting to use.
+	* win32.c (win32getlogin): If GetUserName returns "", return
+	NULL.
+
+Sun, 22 Jun 1997  Jim Kingdon
+
+	* win32.c: Also include winsock.h.
+	Include stdlib.h (for exit()).
+	* rcmd.c: Move include of cvs.h above test of HAVE_WINSOCK_H.
+
 Tue Jun 17 16:35:06 1997  Jim Kingdon  (unknown@beezley)
 
 	* rcmd.c: Check HAVE_WINSOCK_H in figuring out which files

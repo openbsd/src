@@ -4,22 +4,13 @@
 
 static struct passwd pw;
 
-struct passwd *getpwuid(uid_t uid)
+/* This is only called from one relevant place, lock.c.  In that context
+   the code is really trying to figure out who owns a directory.  Nothing
+   which has anything to do with getpwuid or anything of the sort can help
+   us on VMS (getuid returns only the group part of the UIC).  */
+struct passwd *getpwuid(unsigned int uid)
 {
-  pw.pw_name = getlogin();
-  pw.pw_uid = getuid();
-  pw.pw_gid = getgid();
-
-  return &pw;
-}
-
-struct passwd *getpwnam(char *name)
-{
-  pw.pw_name = getlogin();
-  pw.pw_uid = getuid();
-  pw.pw_gid = getgid();
-
-  return &pw;
+    return NULL;
 }
 
 char *getlogin()

@@ -61,6 +61,53 @@ the programs which implement the Integrated Development Environment
 worse yet, usenet posting, so it probably should be verified before
 relying on it.
 
-* Microsoft Developer Studio 4.x Professional (not Standard, not 2.x)
-* Powersoft's Optima++
-* CodeWright editor
+* Microsoft Developer Studio 4.x Professional (not Standard, not 2.x).
+* Microsoft Access V7.0
+* Powersoft's Optima++, PowerJ, and Power++
+  (not sure which versions, but this information was added in 1997 if
+   that helps.  Someone on usenet reports 32 bit Powerbuilder version
+   5.03 but not version 4, version 5.0, or 16 bit Powerbuilder.).
+* Premia's CodeWright editor 
+  (versions 5.00b and 5.00c; not sure about older versions).
+
+SPECIFICATIONS OR OTHER DOCUMENTS DESCRIBING THE SCC
+
+The only publicly available document which we are aware of is pubscc.h
+in this directory.  This should be sufficient to get a start at
+playing around with the SCC, and if you have done that and then
+proceed to run into those areas which pubscc.h does not document well,
+you are encouraged to send mail to bug-cvs@gnu.org with your
+questions.
+
+OTHER INTERFACES
+
+There are other interfaces which interface between a development
+environment (or other front-end) and a source control system.  That
+is, in general terms they provide somewhat the function of the SCC,
+although they may be at a somewhat different level and systems may
+support/use several interfaces rather than it being an either/or thing.
+
+If you know of other interfaces which should be added here I guess the
+best place to make suggestions is bug-cvs@prep.ai.mit.edu (although
+this list is not intended to be CVS-centric).
+
+* The CVS remote protocol is documented in doc/cvsclient.texi in the
+CVS distribution and has at least 2 implementations of the client
+(jCVS and CVS command line client), in addition to having been
+implemented at least once by a special-purpose perl script.
+
+* Microsoft's OLE Automation interface.  The spec is available for
+download at http://www.microsoft.com/ssafe.  I'm not sure whether this
+has been implemented by other source control systems.  Metrowerks
+implements this via a module which speaks the Metrowerks API out one
+end and the OLE Automation interface out the other (the module runs on
+Windows, not Mac).
+
+* There is an API (for Java, I think) which is supported by Symantec's
+Visual Cafe 2.0, and will be supported by a service pack which will
+implement it for StarTeam 2.1 (source: usenet post by Steve Reynolds
+of StarBase, Oct 1997).
+
+* Metrowerks publishes and implements the CodeWarrior IDE Version
+Control System API.  I think maybe the way to get a copy of the spec
+is as part of CodeWarrior but I'm not completely clear on that.

@@ -26,7 +26,7 @@ of ftp servers which have VMS GNU resources, taken from
     ftp.spc.edu
     ftp.stacken.kth.se
 
-Please send bug reports to bug-cvs@prep.ai.mit.edu.
+Please send bug reports to bug-cvs@gnu.org.
 
 As of CVS 1.5.something, this port passed most of the tests in
 [.src]sanity.sh.  I say "most" because some tests to not apply to the
@@ -152,6 +152,9 @@ to the link.
 * Ignore the warnings in vms/vmsmunch.c; the system include file
 declares something as an int when it should be void *.  Not *our*
 fault!
+
+* Remove the #define's of mode_t in vms/vms.h and pid_t in vms/pwd.h.
+Add "#include <sys/types.h>" in vms/pwd.h.
 
 Credits:
 

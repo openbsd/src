@@ -12,6 +12,9 @@
 
    Jim Blandy <jimb@cyclic.com> --- August 1995  */
 
+#include "cvs.h"
+#include "rcmd.h"
+
 #include <io.h>
 #include <fcntl.h>
 #include <malloc.h>
@@ -38,9 +41,6 @@
 
 #include <stdio.h>
 #include <assert.h>
-
-#include "cvs.h"
-#include "rcmd.h"
 
 /* The rest of this file contains the rcmd() code, which is used
    only by START_SERVER.  The idea for a long-term direction is
@@ -167,6 +167,11 @@ rcmd_authenticate (int fd, char *locuser, char *remuser, char *command)
 	}
 	if (c != '\0')
 	{
+	    /* All the junk with USER, LOGNAME, GetUserName, &c, is so
+	       confusing that we better give some clue as to what sort
+	       of user name we decided on.  */
+	    error (0, 0, "cannot log in as local user '%s', remote user '%s'",
+		   locuser, remuser);
 	    error (1, 0, "Permission denied by rshd");
 	}
     }

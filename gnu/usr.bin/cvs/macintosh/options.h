@@ -16,18 +16,6 @@
  */
 
 /*
- * CVS provides the most features when used in conjunction with the Version-5
- * release of RCS.  Thus, it is the default.  This also assumes that GNU diff
- * Version-1.15 is being used as well -- you will have to configure your RCS
- * V5 release separately to make this the case. If you do not have RCS V5 and
- * GNU diff V1.15, comment out this define. You should not try mixing and
- * matching other combinations of these tools.
- */
-#ifndef HAVE_RCS5
-#define	HAVE_RCS5
-#endif
-
-/*
  * For portability and heterogeneity reasons, CVS is shipped by default using
  * my own text-file version of the ndbm database library in the src/myndbm.c
  * file.  If you want better performance and are not concerned about
@@ -38,45 +26,12 @@
 #endif
 
 /*
- * The "diff" program to execute when creating patch output.  This "diff"
- * must support the "-c" option for context diffing.  Specify a full
- * pathname if your site wants to use a particular diff.  If you are
- * using the GNU version of diff (version 1.15 or later), this should
- * be "diff -a".
- * 
- * NOTE: this program is only used for the ``patch'' sub-command (and
- * for ``update'' if you are using the server).  The other commands
- * use rcsdiff which will use whatever version of diff was specified
- * when rcsdiff was built on your system.
- */
-
-#ifndef DIFF
-#define	DIFF	"@gdiff_path@"
-#endif
-
-/*
  * The "patch" program to run when using the CVS server and accepting
  * patches across the network.  Specify a full pathname if your site
  * wants to use a particular patch.
  */
 #ifndef PATCH_PROGRAM
 #define PATCH_PROGRAM	"patch"
-#endif
-
-/*
- * By default, RCS programs are executed with the shell or through execlp(),
- * so the user's PATH environment variable is searched.  If you'd like to
- * bind all RCS programs to a certain directory (perhaps one not in most
- * people's PATH) then set the default in RCSBIN_DFLT.  Note that setting
- * this here will cause all RCS programs to be executed from this directory,
- * unless the user overrides the default with the RCSBIN environment variable
- * or the "-b" option to CVS.
- * 
- * This define should be either the empty string ("") or a full pathname to the
- * directory containing all the installed programs from the RCS distribution.
- */
-#ifndef RCSBIN_DFLT
-#define	RCSBIN_DFLT	""
 #endif
 
 /* Directory used for storing temporary files, if not overridden by
@@ -219,12 +174,6 @@
  */
 #undef SETXID_SUPPORT
 
-/*
- * "cvs login" is under construction.  Don't define this unless you're
- * testing it, in which case you're me and you already know that.
- */
-/* #define CVS_LOGIN */
-
 /* End of CVS configuration section */
 
 /*
@@ -234,8 +183,3 @@
 #ifndef STDC_HEADERS
 extern void exit ();
 #endif
-
-#ifndef getwd
-extern char *getwd ();
-#endif
-

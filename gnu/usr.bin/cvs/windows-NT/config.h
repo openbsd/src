@@ -34,6 +34,10 @@
    I have neither the CD-ROM nor a CD-ROM drive to put it in.  */
 #define HAVE_UTIME_NULL 1
 
+/* On Windows NT, when a file is being watched, utime expects a file
+   to be writable */
+#define UTIME_EXPECTS_WRITABLE
+
 /* Define if on MINIX.  */
 /* Hah.  */
 #undef _MINIX
@@ -99,10 +103,6 @@
    CLIENT_SUPPORT or SERVER_SUPPORT to enable the non-remote code;
    that's always there.  */
 #undef SERVER_SUPPORT
-
-/* the path to the gnu diff program on your system  */
-/* We don't need this for CLIENT side.  */
-#undef DIFF
 
 /* Define if you have the connect function.  */
 /* Not used?  */
@@ -254,37 +254,18 @@ unsigned int sleep (unsigned int);
 #define popen _popen
 #define pclose _pclose
 
-/* Under Windows NT, filenames are case-insensitive, and both / and \
-   are path component separators.  */
-#define FOLD_FN_CHAR(c) (WNT_filename_classes[(unsigned char) (c)])
-extern unsigned char WNT_filename_classes[];
-#define FILENAMES_CASE_INSENSITIVE 1
+/* When writing binary data to stdout, we better set
+   stdout to binary mode using setmode.  */
+#define USE_SETMODE_STDOUT 1
 
-/* Is the character C a path name separator?  Under
-   Windows NT, you can use either / or \.  */
-#define ISDIRSEP(c) (FOLD_FN_CHAR(c) == '/')
+/* Diff also has an ifdef for setmode, and it is HAVE_SETMODE.  */
+#define HAVE_SETMODE 1
 
-/* Like strcmp, but with the appropriate tweaks for file names.
-   Under Windows NT, filenames are case-insensitive but case-preserving,
-   and both \ and / are path element separators.  */
-extern int fncmp (const char *n1, const char *n2);
-
-/* Fold characters in FILENAME to their canonical forms.  
-   If FOLD_FN_CHAR is not #defined, the system provides a default
-   definition for this.  */
-extern void fnfold (char *FILENAME);
-
-/* #define this if your system terminates lines in text files with
-   CRLF instead of plain LF, and your I/O functions automatically
-   translate between using LF in memory and CRLF on disk, unless you
-   specifically tell them not to.  */
-#define LINES_CRLF_TERMINATED 1
-
-/* Read data from INFILE, and copy it to OUTFILE. 
-   Open INFILE using INFLAGS, and OUTFILE using OUTFLAGS.
-   This is useful for converting between CRLF and LF line formats.  */
-extern void convert_file (char *INFILE,  int INFLAGS,
-			  char *OUTFILE, int OUTFLAGS);
+/* Diff needs us to define this.  I think it could always be
+   -1 for CVS, because we pass temporary files to diff, but
+   config.h seems like the easiest place to put this, so for
+   now we put it here.  */
+#define same_file(s,t) (-1)
 
 /* This is where old bits go to die under Windows NT.  */
 #define DEVNULL "nul"

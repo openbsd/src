@@ -15,9 +15,6 @@
 /* More issues with how VMS names files, kind of a kludge.  See login.c.  */
 #define NO_SLASH_AFTER_HOME 1
 
-/* Only good for NT or DOS with hacked open */
-/* #undef LINES_CRLF_TERMINATED */
-
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
 
@@ -47,7 +44,7 @@
 /* #undef mode_t */
 
 /* Define if you don't have <dirent.h>, but have <ndir.h>.  */
-/* #undef NDIR */
+#define HAVE_NDIR_H 1
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef pid_t */
@@ -113,9 +110,6 @@
 /* Define if you have the rename function */
 #define HAVE_RENAME 1
 
-/* Define if you have the strdup function */
-#define HAVE_STRDUP 1
-
 /* Define if you have the putenv function.  */
 /* #undef HAVE_PUTENV */
 
@@ -126,7 +120,7 @@
 #define HAVE_VFORK
 
 /* Define if you have the vprintf function.  */
-/* #undef HAVE_VPRINTF */
+#define HAVE_VPRINTF
 
 /* Define if you have the <errno.h> header file.  */
 /* #undef HAVE_ERRNO_H */
@@ -186,6 +180,8 @@ extern void fnfold (char *FILENAME);
 #define NO_SOCKET_TO_FD 1
 #define START_SERVER_RETURNS_SOCKET 1
 #define SEND_NEVER_PARTIAL 1
+#define SYSTEM_GETCALLER() getlogin ()
+#define GETPWNAM_MISSING 1
 
 /* Avoid name conflicts with VMS libraries.  */
 #define getopt cvs_getopt

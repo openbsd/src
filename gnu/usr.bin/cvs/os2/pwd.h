@@ -9,10 +9,7 @@
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    $Header: /home/cvs/src/gnu/usr.bin/cvs/os2/pwd.h,v 1.1.1.3 1997/06/28 03:29:44 tholo Exp $
-*/
+    GNU General Public License for more details.  */
 
 /* This 'implementation' is conjectured from the use of this functions in
    the RCS and BASH distributions.  Of course these functions don't do too

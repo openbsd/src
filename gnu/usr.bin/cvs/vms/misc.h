@@ -17,9 +17,6 @@
  * GNU General Public License for more details.
  */
 
-void fatal ();
-void *xmalloc ();
-void *xrealloc ();
 void x_free();
 /* This is a trick, because the linker wants uppercase symbols, and in
    that case, xfree is confused with Xfree, which is bad.  */
@@ -29,7 +26,6 @@ void x_free();
  * Some string utilities.
  */
 char *downcase ();
-char *strdup ();
 char *strndup ();
 
 int fixpath ();

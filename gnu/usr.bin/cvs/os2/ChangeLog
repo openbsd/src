@@ -1,3 +1,48 @@
+Tue Jan 13 13:17:33 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c: Adjust run_setup for new calling convention.
+
+	* config.h (DIFF): Remove; no longer used.
+	* options.h (DIFF, RCSBIN_DFLT): Remove; no longer used.
+
+Wed Dec 31 10:56:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h, filesubr.c (convert_file): Remove; no longer used
+	(except for BROKEN_READWRITE_CONVERSION which doesn't apply).
+
+Sat Dec 27 16:57:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (HAVE_RCS5): Remove; no longer used.
+
+	* config.h (LINES_CRLF_TERMINATED): Remove; no longer used.
+
+Tue Dec 23 08:28:44 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Change bug-cvs address from prep.ai.mit.edu to gnu.org
+	per email from Martin Hamilton.
+
+Sun Nov 30 18:03:02 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c (run_args): Remove; nowhere used.
+
+Sat Nov 29 22:21:19 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove declaration of getwd; see lib/ChangeLog for
+	rationale.
+
+Sun Aug 10 20:42:51 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* pwd.c, pwd.h: Remove $Header; we decided to get rid of these
+	some time ago.
+
+Wed Jul 30 19:15:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c (os2_chdir): If ENODEV is not defined, return ENOENT.
+
+	* README: Talk about srcdir, top_srcdir, and rule to generate
+	"Makefile".
+	* Makefile.in: Add comment about Makefile rule.
+
 Mon Jun 16 13:49:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* config.h, rcmd.h, rcmd.c: Add "copyright" notice.

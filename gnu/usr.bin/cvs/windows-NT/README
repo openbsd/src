@@ -19,22 +19,29 @@ distribution's top directory.  At least with the tar port I'm using,
 the sources get extracted without carriage returns and you must add
 carriage returns to the end of every line in cvsnt.mak.  I also had to
 add them to src/server.c.  It doesn't seem to be necessary to add them
-to any other file.  This makefile was generated with Visual C++ 2.1.
-As far as is known, it should work with Visual C++ 4.0 also.
+to any other file.  This makefile was generated with Visual C++ 4.x.
+For Visual C++ 5.x use cvsnet.dsp (which is probably more likely to be
+up to date than cvsnt.mak anyway).  For Visual C++ 2.x you probably
+are in the position of digging through old versions of CVS for a
+cvsnt.mak and then updating it.  Feel free to let us know about
+problems of this sort as with other bug reports; our impression thus
+far is that relatively few people care about which versions of Visual
+C++ work.
 
-Send bug reports to bug-cvs@prep.ai.mit.edu.
+Send bug reports to bug-cvs@gnu.org.
 
-This port passes all of the tests in src/sanity.sh, save the one that
-deals with reserved all-upper-case tags (BASE and HEAD), due to a
-limitation in the NT command shell.  sanity.sh provides pretty minimal
-feature coverage, but still gives me some confidence it isn't totally
-broken.
+As of May 1996, this port passed all of the tests in src/sanity.sh,
+save the one that deals with reserved all-upper-case tags (BASE and
+HEAD), due to a limitation in the NT command shell.  sanity.sh
+provides pretty minimal feature coverage, but still gives me some
+confidence it isn't totally broken.  The tests were run by defining
+KLUDGE_FOR_WNT_TESTSUITE (see src/main.c).
 
-To operate in client mode, you will need GNU patch.  To do compressed
-transfers with old versions of CVS (1.8 and older), you also need
-gzip.  Note that you do NOT need an rsh client if you are using the
-:server: access method (which uses the internal rsh client), except
-perhaps for debugging.
+To operate in client mode with old versions of CVS (1.9 and older),
+you will need GNU patch.  To do compressed transfers with old versions
+of CVS (1.8 and older), you also need gzip.  Note that you do NOT need
+an rsh client if you are using the :server: access method (which uses
+the internal rsh client), except perhaps for debugging.
 
 To operate in local mode, you will need GNU patch, GNU diffutils,
 and rcs version 5.7 installed on your system.  Make
@@ -100,3 +107,22 @@ The following harmless warnings are known:
 .\lib\getdate.c(1612) : warning C4102: 'yynewstate' : unreferenced label
 
 
+CODING STANDARDS for Windows
+
+For general coding standards, see ../HACKING.
+
+In my opinion win32 is the right API to write to.  Microsoft seems to
+be better about compatibility across versions than unix vendors (on a
+good day, anyway)--the Visual C++ package I bought has not only win32
+but also win16 too (that is, they also include Visual C++ 1.x).  As
+far as I know there is only one win32 (not counting win32s or win32c
+or whatever), not multiple versions.
+
+ANSI C is also good.  As far as I know these calls work fairly well on
+NT.
+
+What one should avoid like the plague on NT (IMHO) is POSIX calls such
+as stat().  These tend to be very poorly supported, and tend to break
+from version to version or vendor to vendor (the latter being
+particularly an issue on OS/2, with IBM, Watcom, and EMX all having
+_very_ different C libraries).

@@ -146,10 +146,6 @@
    that's always there.  */
 #undef SERVER_SUPPORT
 
-/* the path to the gnu diff program on your system  */
-/* We don't need this for CLIENT side.  */
-#undef DIFF
-
 /* Define if you have the connect function.  */
 /* Not used?  */
 /* It appears to be used in client.c now... don't know yet it OS/2 has it. */
@@ -324,18 +320,6 @@ extern int fncmp (const char *n1, const char *n2);
    If FOLD_FN_CHAR is not #defined, the system provides a default
    definition for this.  */
 extern void fnfold (char *FILENAME);
-
-/* #define this if your system terminates lines in text files with
-   CRLF instead of plain LF, and your I/O functions automatically
-   translate between using LF in memory and CRLF on disk, unless you
-   specifically tell them not to.  */
-#define LINES_CRLF_TERMINATED 1
-
-/* Read data from INFILE, and copy it to OUTFILE. 
-   Open INFILE using INFLAGS, and OUTFILE using OUTFLAGS.
-   This is useful for converting between CRLF and LF line formats.  */
-extern void convert_file (char *INFILE,  int INFLAGS,
-			  char *OUTFILE, int OUTFLAGS);
 
 /* This is where old bits go to die under OS/2 as well as WinNT.  */
 #define DEVNULL "nul"

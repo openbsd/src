@@ -22,19 +22,6 @@
 #include <io.h>
 #include <fcntl.h>
 
-#ifdef HAVE_VPRINTF
-#if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
-#include <stdarg.h>
-#define VA_START(args, lastarg) va_start(args, lastarg)
-#else
-#include <varargs.h>
-#define VA_START(args, lastarg) va_start(args)
-#endif
-#else
-#define va_alist a1, a2, a3, a4, a5, a6, a7, a8
-#define va_dcl char *a1, *a2, *a3, *a4, *a5, *a6, *a7, *a8;
-#endif
-
 static void run_add_arg PROTO((const char *s));
 static void run_init_prog PROTO((void));
 
@@ -53,29 +40,17 @@ extern char *strtok ();
  * The execvp() syscall will be used, so that the PATH is searched correctly.
  * File redirections can be performed in the call to run_exec().
  */
-static char *run_prog;
 static char **run_argv;
 static int run_argc;
 static int run_argc_allocated;
 
-/* VARARGS */
-#if defined (HAVE_VPRINTF) && (defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__))
-void 
-run_setup (const char *fmt,...)
-#else
-void 
-run_setup (fmt, va_alist)
-    char *fmt;
-    va_dcl
-#endif
+void
+run_setup (const char *prog)
 {
-#ifdef HAVE_VPRINTF
-    va_list args;
-#endif
     char *cp;
     int i;
 
-    run_init_prog ();
+    char *run_prog;
 
     /* clean out any malloc'ed values from run_argv */
     for (i = 0; i < run_argc; i++)
@@ -88,18 +63,13 @@ run_setup (fmt, va_alist)
     }
     run_argc = 0;
 
-    /* process the varargs into run_prog */
-#ifdef HAVE_VPRINTF
-    VA_START (args, fmt);
-    (void) vsprintf (run_prog, fmt, args);
-    va_end (args);
-#else
-    (void) sprintf (run_prog, fmt, a1, a2, a3, a4, a5, a6, a7, a8);
-#endif
+    run_prog = xstrdup (prog);
 
     /* put each word into run_argv, allocating it as we go */
     for (cp = strtok (run_prog, " \t"); cp; cp = strtok ((char *) NULL, " \t"))
 	run_add_arg (cp);
+
+    free (run_prog);
 }
 
 void
@@ -109,50 +79,32 @@ run_arg (s)
     run_add_arg (s);
 }
 
-/* VARARGS */
-#if defined (HAVE_VPRINTF) && (defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__))
-void 
-run_args (const char *fmt,...)
-#else
-void 
-run_args (fmt, va_alist)
-    char *fmt;
-    va_dcl
-#endif
-{
-#ifdef HAVE_VPRINTF
-    va_list args;
-#endif
-
-    run_init_prog ();
-
-    /* process the varargs into run_prog */
-#ifdef HAVE_VPRINTF
-    VA_START (args, fmt);
-    (void) vsprintf (run_prog, fmt, args);
-    va_end (args);
-#else
-    (void) sprintf (run_prog, fmt, a1, a2, a3, a4, a5, a6, a7, a8);
-#endif
-
-    /* and add the (single) argument to the run_argv list */
-    run_add_arg (run_prog);
-}
-
 /* Return a malloc'd copy of s, with double quotes around it.  */
 static char *
 quote (const char *s)
 {
-    size_t s_len = strlen (s);
-    char *copy = xmalloc (s_len + 3);
-    char *scan = copy;
+    size_t s_len = 0;
+    char *copy = NULL;
+    char *scan = (char *) s;
 
+    /* scan string for extra quotes ... */
+    while (*scan)
+	if ('"' == *scan++)
+	    s_len += 2;   /* one extra for the quote character */
+	else
+	    s_len++;
+    /* allocate length + byte for ending zero + for double quotes around */
+    scan = copy = xmalloc(s_len + 3);
     *scan++ = '"';
-    strcpy (scan, s);
-    scan += s_len;
+    while (*s)
+    {
+	if ('"' == *s)
+	    *scan++ = '\\';
+	*scan++ = *s++;
+    }
+    /* ending quote and closing zero */
     *scan++ = '"';
     *scan++ = '\0';
-
     return copy;
 }
 
@@ -177,20 +129,11 @@ run_add_arg (s)
 	run_argv[run_argc] = (char *) 0;	/* not post-incremented on purpose! */
 }
 
-static void
-run_init_prog ()
-{
-    /* make sure that run_prog is allocated once */
-    if (run_prog == (char *) 0)
-	run_prog = xmalloc (10 * 1024);	/* 10K of args for _setup and _arg */
-}
-
-
 int
 run_exec (stin, stout, sterr, flags)
-    char *stin;
-    char *stout;
-    char *sterr;
+    const char *stin;
+    const char *stout;
+    const char *sterr;
     int flags;
 {
     int shin, shout, sherr;
@@ -338,7 +281,6 @@ run_exec (stin, stout, sterr, flags)
 	errno = rerrno;
     return (status);
 }
-
 
 void
 run_print (fp)

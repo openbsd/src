@@ -1,3 +1,75 @@
+Tue Jan 13 13:17:33 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (DIFF, RCSBIN_DFLT): Remove; no longer used.
+
+Wed Dec 31 10:56:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h, filesubr.c (convert_file): Remove; no longer used
+	(except for BROKEN_READWRITE_CONVERSION which doesn't apply).
+
+Sat Dec 27 16:57:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (HAVE_RCS5): Remove; no longer used.
+
+	* config.h (LINES_CRLF_TERMINATED): Remove; no longer used.
+
+Tue Dec 23 08:28:44 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Change bug-cvs address from prep.ai.mit.edu to gnu.org
+	per email from Martin Hamilton.
+
+Sat Nov 29 22:20:42 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove declaration of getwd; see lib/ChangeLog for
+	rationale.
+
+Fri Nov 14 13:37:33 1997  Abe Feldman and Jim Kingdon
+
+	* savecwd.c: New file, copied from lib/savecwd.c except it calls
+	_chdir2 not chdir.
+	* Makefile.in: Put savecwd in emx directory not lib directory.
+
+Tue Nov  4 18:20:08 1997  Abe Feldman  <feldman@cyclic.com>
+	and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Adjust to add diff directory.
+
+Sun Sep  7 19:49:36 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* system.c (os2_stat): Adjust comment to reflect removal of
+	same_directories from src/root.c.
+
+Sat Sep 06 14:45:13 1997  Jim Kingdon
+
+	* Makefile.in: Add a cvs-static.exe rule for generating
+	executables which don't need emx.dll (doesn't work yet).
+
+Fri Sep 05 12:21:56 1997  Jim Kingdon
+
+	* filesubr.c (xchmod): Replace with "attrib"-based code from
+	os2/filesubr.c.
+	* config.h (CHMOD_BROKEN): Define.
+
+Wed Jul 30 15:35:33 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: In comment about Makefile rule, remove note about
+	this not being a problem for os2/Makefile.in.  It is a problem
+	there too.
+
+	* README: Add note about srcdir and top_srcdir.
+
+Mon Jul 21 15:36:48 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (DISTFILES): Makefile is not in srcdir.
+
+Wed Jun 18 12:07:25 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (OS2_SOURCES): Fix comment so this is not commented
+	out.  Remove windows-NT/rcmd.c; the make dist for the windows-NT
+	directory can take care of that one.
+
+	* Makefile.in, README: Add comments about Makefile rule.
+
 Tue Jun 17 14:44:02 1997  Jim Kingdon  (unknown@beezley)
 
 	* rcmd.c: Removed; no longer used.

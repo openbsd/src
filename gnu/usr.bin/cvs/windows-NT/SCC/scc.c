@@ -5,70 +5,11 @@
 #include <stdio.h>
 #include <direct.h> /* For chdir */
 
-
-/* Bits of the interface.
-   For paranoia's sake, I'm not using the same names as Microsoft.
-   I don't imagine copying a few names could be a credible copyright
-   case, but it seems safer to stick to only what is necessary for
-   the interface to work.  */
-typedef long SCC_return;
-#define SCC_return_success 0
-#define SCC_return_unknown_project -2
-/* The file is not under SCC control.  */
-#define SCC_return_non_scc_file -11
-/* This operation is not supported.  I believe this status can only
-   be returned from SccGet, SccAdd, SccRemove, SccHistory, or
-   SccQueryInfo.  I'm not really sure what happens if it is returned
-   from other calls.  */
-#define SCC_return_not_supported -14
-#define SCC_return_non_specific_error -15
-enum SCC_command
-{
-	SCC_command_get,
-	SCC_command_checkout,
-	SCC_command_checkin,
-	SCC_command_uncheckout,
-	SCC_command_add,
-	SCC_command_remove,
-	SCC_command_diff,
-	SCC_command_history,
-	SCC_command_rename,
-	SCC_command_properties,
-	SCC_command_options
-};
-
-/* Outproc codes, for second argument to outproc.  */
-#define SCC_outproc_info 1
-#define SCC_outproc_warning 2
-#define SCC_outproc_error 3
-typedef long (*SCC_outproc) (char *, long);
-
-typedef BOOL (*SCC_popul_proc) (LPVOID callerdat, BOOL add_keep,
-                                LONG status, LPCSTR file);
-
-/* Maximum sizes of various strings.  These are arbitrary limits
-   which are imposed by the SCC.  */
-/* Name argument to SccInitialize.  */
-#define SCC_max_name 31
-/* Path argument to SccInitialize.  */
-#define SCC_max_init_path 31
-/* Various paths many places in the interface.  */
-#include <stdlib.h>
-#define SCC_max_path _MAX_PATH
-
-/* Bits to set in the caps used by SccInitialize.  */
-#define SCC_cap_GetProjPath 0x200L
-#define SCC_cap_AddFromScc 0x400L
-#define SCC_cap_want_outproc 0x8000L
-
-/* Flags for SccGet.  */
-#define SCC_RECURSE 2L
-/* This means to get all the files in a directory.  */
-#define SCC_DIR 1L
-
+#include "pubscc.h"
 
 /* We get to put whatever we want here, and the caller will pass it
-   to us, so we don't need any global variables.  */
+   to us, so we don't need any global variables.  This is the
+   "void *context_arg" argument to most of the Scc* functions.  */
 struct context {
     FILE *debuglog;
     /* Value of the CVSROOT we are currently working with (that is, the
@@ -79,6 +20,11 @@ struct context {
     char *local;
     SCC_outproc outproc;
 };
+
+/* In addition to context_arg, most of the Scc* functions take a
+   "HWND window" argument.  This is so that we can put up dialogs.
+   The window which is passed in is the IDE's window, which we
+   should use as the parent of dialogs that we put up.  */
 
 #include <windows.h>
 
@@ -97,7 +43,7 @@ malloc_error (struct context *context)
 /* Return the version of the SCC spec, major version in the high word,
    minor version in the low word.  */
 LONG
-SccGetVersion ()
+SccGetVersion (void)
 {
     /* We implement version 1.1 of the spec.  */
     return 0x10001;
@@ -161,8 +107,9 @@ SccUninitialize (void *context_arg)
 
 SCC_return
 SccOpenProject (void *context_arg, HWND window, LPSTR user,
-                 LPSTR project, LPSTR local_proj, LPSTR aux_proj,
-                 LPSTR comment, SCC_outproc outproc, LONG flags)
+		LPSTR project, LPSTR local_proj, LPSTR aux_proj,
+		LPSTR comment, SCC_outproc outproc,
+		LONG flags)
 {
     struct context *context = (struct context *)context_arg;
 
@@ -218,7 +165,9 @@ SccCloseProject (void *context_arg)
 /* cvs get.  */
 SCC_return
 SccGet (void *context_arg, HWND window, LONG num_files,
-        LPSTR *file_names, LONG options, void *prov_options)
+        LPSTR *file_names,
+	LONG options,
+	void *prov_options)
 {
     struct context *context = (struct context *)context_arg;
     int i;
@@ -232,25 +181,21 @@ SccGet (void *context_arg, HWND window, LONG num_files,
     }
 #endif
     fprintf (context->debuglog, "\n");
-    if (options & SCC_DIR)
+    if (options & SCC_cmdopt_dir)
 	fprintf (context->debuglog, "  Get all\n");
     /* Should be using this flag to set -R vs. -l.  */
-    if (options & SCC_RECURSE)
+    if (options & SCC_cmdopt_recurse)
 	fprintf (context->debuglog, "  recurse\n");
 
     for (i = 0; i < num_files; ++i)
     {
-	FILE *fp;
-
 	/* As with all file names passed to us by the SCC, these
 	   file names are absolute pathnames.  I think they will
 	   tend to be paths within context->local, although I
 	   don't know whether there are any exceptions to that.  */
 	fname = file_names[i];
 	fprintf (context->debuglog, "%s ", fname);
-#if 0
-	fp = fopen (fname, "w");
-#endif
+	/* Here we would write to the file named fname.  */
     }
     fprintf (context->debuglog, "\nExiting SccGet\n");
     fflush (context->debuglog);
@@ -260,7 +205,8 @@ SccGet (void *context_arg, HWND window, LONG num_files,
 /* cvs edit.  */
 SCC_return
 SccCheckout (void *context_arg, HWND window, LONG num_files,
-             LPSTR *file_names, LPSTR comment, LONG options,
+             LPSTR *file_names, LPSTR comment,
+	     LONG options,
              void *prov_options)
 {
     struct context *context = (struct context *)context_arg;
@@ -278,7 +224,8 @@ SccCheckout (void *context_arg, HWND window, LONG num_files,
 /* cvs ci.  */
 SCC_return
 SccCheckin (void *context_arg, HWND window, LONG num_files,
-            LPSTR *file_names, LPSTR comment, LONG options,
+            LPSTR *file_names, LPSTR comment,
+	    LONG options,
             void *prov_options)
 {
     return SCC_return_not_supported;
@@ -287,7 +234,9 @@ SccCheckin (void *context_arg, HWND window, LONG num_files,
 /* cvs unedit.  */
 SCC_return
 SccUncheckout (void *context_arg, HWND window, LONG num_files,
-               LPSTR *file_names, LONG options, void *prov_options)
+               LPSTR *file_names,
+	       LONG options,
+	       void *prov_options)
 {
     return SCC_return_not_supported;
 }
@@ -296,7 +245,8 @@ SccUncheckout (void *context_arg, HWND window, LONG num_files,
    the "keep checked out" flag in options).  */
 SCC_return
 SccAdd (void *context_arg, HWND window, LONG num_files,
-        LPSTR *file_names, LPSTR comment, LONG *options,
+        LPSTR *file_names, LPSTR comment,
+	LONG *options,
         void *prov_options)
 {
     return SCC_return_not_supported;
@@ -307,7 +257,8 @@ SccAdd (void *context_arg, HWND window, LONG num_files,
    it and then done a "copy <saved-file> <filename>".  */
 SCC_return
 SccRemove (void *context_arg, HWND window, LONG num_files,
-           LPSTR *file_names, LPSTR comment, LONG options,
+           LPSTR *file_names, LPSTR comment,
+	   LONG options,
            void *prov_options)
 {
     return SCC_return_not_supported;
@@ -321,15 +272,19 @@ SccRename (void *context_arg, HWND window, LPSTR old_name,
     return SCC_return_not_supported;
 }
 
-/* If "contents flag", then implement this ourself.  For no
-   args or checksum (which we fall back to full compare) basically a
-   call to No_Diff or ? in the client case.  For timestamp, just a
-   Classify_File.  Now, if contents not set, then want to do a
-   cvs diff, and preferably start up WinDiff or something (to be
-   determined, for now perhaps could just shove in the text).  */
+/* If SCC_cmdopt_compare_files, SCC_cmdopt_consult_checksum, or
+   SCC_cmdopt_consult_timestamp, then we are supposed to silently
+   return a status, without providing any information directly to the
+   user.  For no args or checksum (which we fall back to full compare)
+   basically a call to No_Diff or ? in the client case.  For
+   timestamp, just a Classify_File.  Now, if contents not set, then
+   want to do a cvs diff, and preferably start up WinDiff or something
+   (to be determined, for now perhaps could just return text via
+   outproc).  */
 SCC_return
 SccDiff (void *context_arg, HWND window, LPSTR file_name,
-         LONG options, void *prov_options)
+         LONG options,
+	 void *prov_options)
 {
     return SCC_return_not_supported;
 }
@@ -339,7 +294,9 @@ SccDiff (void *context_arg, HWND window, LPSTR file_name,
    do "cvs update -r", etc.  */
 SCC_return
 SccHistory (void *context_arg, HWND window, LONG num_files,
-            LPSTR file_names, LONG options, void *prov_options)
+            LPSTR *file_names,
+	    LONG options,
+	    void *prov_options)
 {
     return SCC_return_not_supported;
 }
@@ -362,7 +319,11 @@ SccRunScc (void *context_arg, HWND window, LONG num_files,
 }
 
 /* Lots of things that we could do here.  Options to get/update
-   such as -r -D -k etc. just for starters.  */
+   such as -r -D -k etc. just for starters.  Note that the terminology is
+   a little confusing here.  This function relates to "provider options"
+   (prov_options) which are a way for us to provide extra dialogs beyond
+   the basic ones for a particular command.  It is unrelated to "command
+   options" (SCC_cmdopt_*).  */
 SCC_return
 SccGetCommandOptions (void *context_arg, HWND window,
                       enum SCC_command command,
@@ -378,7 +339,8 @@ SCC_return
 SccPopulateList (void *context_arg, enum SCC_command command,
                  LONG num_files,
                  LPSTR *file_names, SCC_popul_proc populate,
-                 void *callerdat, LONG options)
+                 void *callerdat,
+		 LONG options)
 {
     return SCC_return_success;
 }
@@ -391,14 +353,18 @@ SccQueryInfo (void *context_arg, LONG num_files, LPSTR *file_names,
     return SCC_return_not_supported;
 }
 
+/* Like QueryInfo, but fast and for only a single file.  For example, the
+   development environment might call this quite frequently to keep its
+   screen display updated.  */
 SCC_return
-SccGetEvents (void *context_arg, LPSTR file_name, LPLONG status,
+SccGetEvents (void *context_arg, LPSTR file_name,
+	      LPLONG status,
               LPLONG events_remaining)
 {
     /* They say this is supposed to only return cached status
-       information, not go to disk or anything.  OK, although I
-       haven't really figured out what calls would cause us to
-       cache status without returning it then.  */
+       information, not go to disk or anything.  I assume that
+       QueryInfo and probably the usual calls like Get would cause
+       us to cache the status in the first place.  */
     return SCC_return_success;
 }
 
@@ -495,7 +461,9 @@ SccAddFromScc (void *context_arg, HWND window, LONG *files,
 
 /* This changes several aspects of how we interact with the IDE.  */
 SCC_return
-SccSetOption (void *context_arg, LONG option, LONG val)
+SccSetOption (void *context_arg,
+	      LONG option,
+	      LONG val)
 {
     return SCC_return_success;
 }

@@ -1,17 +1,20 @@
 #ifndef _PWD_H
 #define _PWD_H
 
-#include <sys/types.h>
+/* Trying to declare uid_t is a mess.  We tried #include <sys/types.h>, which
+   only worked on VAX (VMS 6.2, I think), and we tried defining it here
+   which only worked on alpha, I think.  In any event, the VMS C library's
+   concept of uid_t is fundamentally broken anyway (getuid() returns only
+   the group part of the UIC), so we are better off with higher-level
+   hooks like get_homedir and SYSTEM_GETCALLER.  */
+
+#define pid_t int
 
 struct passwd {
    char  *pw_name;
-   uid_t  pw_uid;  
-   gid_t  pw_gid;
-   char  *pw_dir;
-   };
+};
 
-struct passwd *getpwuid(uid_t);
-struct passwd *getpwnam(char *);
+struct passwd *getpwuid(/* really uid_t, but see above about declaring it */);
 char *getlogin(void); 
 
 #else

@@ -24,7 +24,6 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <fcntl.h>
-#include <stdarg.h>
 #include <errno.h>
 #include <io.h>
 
@@ -51,19 +50,17 @@ extern char *strtok ();
  * The execvp() syscall will be used, so that the PATH is searched correctly.
  * File redirections can be performed in the call to run_exec().
  */
-static char *run_prog;
 static char **run_argv;
 static int run_argc;
 static int run_argc_allocated;
 
 void 
-run_setup (const char *fmt,...)
+run_setup (const char *prog)
 {
-    va_list args;
     char *cp;
     int i;
 
-    run_init_prog ();
+    char *run_prog;
 
     /* clean out any malloc'ed values from run_argv */
     for (i = 0; i < run_argc; i++)
@@ -76,14 +73,13 @@ run_setup (const char *fmt,...)
     }
     run_argc = 0;
 
-    /* process the varargs into run_prog */
-    va_start (args, fmt);
-    (void) vsprintf (run_prog, fmt, args);
-    va_end (args);
+    run_prog = xstrdup (prog);
 
     /* put each word into run_argv, allocating it as we go */
     for (cp = strtok (run_prog, " \t"); cp; cp = strtok ((char *) NULL, " \t"))
 	run_add_arg (cp);
+
+    free (run_prog)
 }
 
 void
@@ -91,22 +87,6 @@ run_arg (s)
     const char *s;
 {
     run_add_arg (s);
-}
-
-void
-run_args (const char *fmt,...)
-{
-    va_list args;
-
-    run_init_prog ();
-
-    /* process the varargs into run_prog */
-    va_start (args, fmt);
-    (void) vsprintf (run_prog, fmt, args);
-    va_end (args);
-
-    /* and add the (single) argument to the run_argv list */
-    run_add_arg (run_prog);
 }
 
 /* Return a malloc'd copy of s, with double quotes around it.  */
@@ -147,15 +127,6 @@ run_add_arg (s)
         /* not post-incremented on purpose! */
 	run_argv[run_argc] = (char *) 0;
 }
-
-static void
-run_init_prog ()
-{
-    /* make sure that run_prog is allocated once */
-    if (run_prog == (char *) 0)
-	run_prog = xmalloc (10 * 1024);	/* 10K of args for _setup and _arg */
-}
-
 
 int
 run_exec (stin, stout, sterr, flags)

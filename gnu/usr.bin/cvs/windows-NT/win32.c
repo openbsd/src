@@ -12,6 +12,8 @@
 #include <windows.h>
 
 #include <config.h>
+#include <winsock.h>
+#include <stdlib.h>
 
 void
 init_winsock ()
@@ -42,11 +44,14 @@ int gethostname(char* name, int namelen)
 }
 #endif
 
-char* win32getlogin()
+char *win32getlogin()
 {
-	static char name[256];
-	DWORD dw = 256;
-	GetUserName(name, &dw);
+    static char name[256];
+    DWORD dw = 256;
+    GetUserName (name, &dw);
+    if (name[0] == '\0')
+	return NULL;
+    else
 	return name;
 }
 

@@ -1,3 +1,28 @@
+Tue Jan 13 13:17:33 1998  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c (run_setup): Adjust for new calling convention.
+
+	* options.h (DIFF, RCSBIN_DFLT, CVS_LOGIN): Remove; no longer used.
+
+Wed Dec 31 15:24:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.MacCVS: Mention web sites as place for MacCVS updates.
+
+Sat Dec 27 16:57:41 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h (HAVE_RCS5): Remove; no longer used.
+
+	* config.h (LINES_CRLF_TERMINATED): Remove; no longer used.
+
+Sun Nov 30 18:03:02 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c (run_args): Remove; nowhere used.
+
+Sat Nov 29 22:21:19 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Remove declaration of getwd; see lib/ChangeLog for
+	rationale.
+
 Fri May 30 22:11:52 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* pwd.c: Remove $Header; we decided to get rid of these some time

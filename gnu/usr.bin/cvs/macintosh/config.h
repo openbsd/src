@@ -41,9 +41,6 @@
 /* Define if 'errno.h' is missing.  */
 #define ERRNO_H_MISSING 1
 
-/* Define if files are crlf terminated.  */
-#define LINES_CRLF_TERMINATED 1
-
 /* Define if you support file names longer than 14 characters.  */
 #define HAVE_LONG_FILE_NAMES 1
 
