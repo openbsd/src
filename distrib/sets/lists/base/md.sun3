@@ -1828,6 +1828,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/ufs/ufs/ufsmount.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/unctrl.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/unistd.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/usb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/util.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/utime.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/utmp.ph

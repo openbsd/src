@@ -1412,6 +1412,7 @@
 ./usr/include/ufs/ufs/ufsmount.h
 ./usr/include/unctrl.h
 ./usr/include/unistd.h
+./usr/include/usb.h
 ./usr/include/util.h
 ./usr/include/utime.h
 ./usr/include/utmp.h
@@ -1618,6 +1619,7 @@
 ./usr/lib/libtermcap_p.a
 ./usr/lib/libtermlib.a
 ./usr/lib/libtermlib_p.a
+./usr/lib/libusb.a
 ./usr/lib/libutil.a
 ./usr/lib/libutil_p.a
 ./usr/lib/libwrap.a
@@ -2960,6 +2962,21 @@
 ./usr/share/man/cat3/hdestroy.0
 ./usr/share/man/cat3/heapsort.0
 ./usr/share/man/cat3/herror.0
+./usr/share/man/cat3/hid_dispose_report_desc.0
+./usr/share/man/cat3/hid_end_parse.0
+./usr/share/man/cat3/hid_get_data.0
+./usr/share/man/cat3/hid_get_item.0
+./usr/share/man/cat3/hid_get_report_desc.0
+./usr/share/man/cat3/hid_init.0
+./usr/share/man/cat3/hid_locate.0
+./usr/share/man/cat3/hid_parse_usage_in_page.0
+./usr/share/man/cat3/hid_parse_usage_page.0
+./usr/share/man/cat3/hid_report_size.0
+./usr/share/man/cat3/hid_set_data.0
+./usr/share/man/cat3/hid_start_parse.0
+./usr/share/man/cat3/hid_usage_in_page.0
+./usr/share/man/cat3/hid_usage_page.0
+./usr/share/man/cat3/hid_use_report_desc.0
 ./usr/share/man/cat3/hide_panel.0
 ./usr/share/man/cat3/history.0
 ./usr/share/man/cat3/history_end.0
@@ -4112,6 +4129,7 @@
 ./usr/share/man/cat3/untouchwin.0
 ./usr/share/man/cat3/unvis.0
 ./usr/share/man/cat3/update_panels.0
+./usr/share/man/cat3/usb.0
 ./usr/share/man/cat3/use_default_colors.0
 ./usr/share/man/cat3/use_env.0
 ./usr/share/man/cat3/use_extended_names.0

@@ -1785,6 +1785,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/ufs/ufs/ufsmount.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/unctrl.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/unistd.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/usb.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/util.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/utime.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/utmp.ph

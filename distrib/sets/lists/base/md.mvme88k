@@ -563,6 +563,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/usb.ph
 ./usr/m88k-unknown-openbsd2.9
 ./usr/m88k-unknown-openbsd2.9/bin
 ./usr/m88k-unknown-openbsd2.9/lib

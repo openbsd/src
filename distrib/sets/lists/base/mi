@@ -458,6 +458,7 @@
 ./usr/bin/unprotoize
 ./usr/bin/unvis
 ./usr/bin/uptime
+./usr/bin/usbhidctl
 ./usr/bin/users
 ./usr/bin/uucp
 ./usr/bin/uudecode
@@ -1750,6 +1751,7 @@
 ./usr/share/misc/termcap.db
 ./usr/share/misc/terminfo.db
 ./usr/share/misc/units.lib
+./usr/share/misc/usb_hid_usages
 ./usr/share/misc/vgrindefs
 ./usr/share/misc/vgrindefs.db
 ./usr/share/misc/zipcodes

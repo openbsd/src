@@ -1341,6 +1341,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/ufsmount.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/unctrl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/unistd.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/usb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/util.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/utime.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/utmp.ph

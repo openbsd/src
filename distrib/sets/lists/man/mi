@@ -624,6 +624,7 @@
 ./usr/share/man/cat1/unlimit.0
 ./usr/share/man/cat1/unvis.0
 ./usr/share/man/cat1/uptime.0
+./usr/share/man/cat1/usbhidctl.0
 ./usr/share/man/cat1/users.0
 ./usr/share/man/cat1/uucp.0
 ./usr/share/man/cat1/uudecode.0

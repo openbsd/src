@@ -1829,6 +1829,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ufs/ufs/ufsmount.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/unctrl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/unistd.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/usb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/util.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/utime.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/utmp.ph
