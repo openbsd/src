@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.1 2002/12/21 01:41:54 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.2 2002/12/21 18:19:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -51,6 +51,7 @@ time_t t;
 #define MAXCON 200
 int maxcon = MAXCON;
 int clients;
+int debug = 0;
 
 struct con {
 	int fd;
@@ -64,6 +65,7 @@ struct con {
 	 */
 	int r;
 	time_t w;
+	time_t s;
 
 	char ibuf[8192];
 	char *ip;
@@ -135,8 +137,23 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	cp->op = cp->obuf;
 	cp->ol = strlen(cp->op);
 	cp->w = t + 1;
+	cp->s = t;
 	strlcpy(cp->rend, "\n\r", sizeof cp->rend);
 	clients++;
+}
+
+void
+closecon(struct con *cp)
+{
+	if (debug > 0) {
+		time_t t;
+
+		time(&t);
+		printf("%s connected for %d seconds.\n", cp->addr, t - cp->s);
+	}
+	close(cp->fd);
+	clients--;
+	cp->fd = -1;
 }
 
 int
@@ -231,9 +248,7 @@ nextstate(struct con *cp)
 		cp->w = t + 1;
 		break;
 	case 99:
-		close(cp->fd);
-		clients--;
-		cp->fd = -1;
+		closecon(cp);
 		break;
 	default:
 		errx(1, "illegal state %d", cp->state);
@@ -250,11 +265,11 @@ handler(struct con *cp)
 	if (cp->r) {
 		n = read(cp->fd, cp->ip, cp->il);
 		if (n == 0) {
-			close(cp->fd);
-			clients--;
-			cp->fd = -1;
+			closecon(cp);
 		} else if (n == -1) {
-			/* XXX */
+			if (debug > 0)
+				perror("read()");
+			closecon(cp);
 		} else {
 			if (cp->rend[0])
 				for (i = 0; i < n; i++)
@@ -279,11 +294,11 @@ handlew(struct con *cp, int one)
 	if (cp->w) {
 		n = write(cp->fd, cp->op, one ? 1 : cp->ol);
 		if (n == 0) {
-			close(cp->fd);
-			clients--;
-			cp->fd = -1;
+			closecon(cp);
 		} else if (n == -1) {
-			/* XXX */
+			if (debug > 0 && errno != EPIPE)
+				perror("write()");
+			closecon(cp);
 		} else {
 			cp->op += n;
 			cp->ol -= n;
@@ -304,7 +319,6 @@ main(int argc, char *argv[])
 	int ch, s, s2, i;
 	int sinlen, one = 1;
 	u_short port = 8025;
-	int debug = 0;
 
 	tzset();
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
@@ -386,6 +400,8 @@ main(int argc, char *argv[])
 
 	if (debug == 0)
 		daemon(1, 1);
+	else
+		printf("listening for incoming connections.\n");
 
 	while (1) {
 		fd_set *fdsr = NULL, *fdsw = NULL;
