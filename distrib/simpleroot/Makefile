@@ -13,8 +13,9 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 DISKTYPE=	simpleroot
 PID!=		echo $$$$
-REALIMAGE!=	echo /var/tmp/image.${PID}
-IMAGE?=		/var/tmp/simpleroot${REV}.fs
+IMAGEDIR?=	/var/tmp
+REALIMAGE!=	echo ${IMAGEDIR}/image.${PID}
+IMAGE?=		${IMAGEDIR}/simpleroot${REV}.fs
 NEWFSOPTS?=
 
 LIST=		${ARCHDIR}/list
@@ -41,12 +42,12 @@ all:
 	  tar xpf - ) && \
 	( cd ${MOUNT_POINT} && \
 	tar cf - .??* * | ${GZIP} ${GZIPFLAGS} \
-	  > /var/tmp/simpleroot${REV}.tar${GZIPEXT} )
+	  > ${IMAGEDIR}/simpleroot${REV}.tar${GZIPEXT} )
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_DEV}
+	vnconfig -u ${VND}
 	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
 .if (${GZIP} == "gzip")
