@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.21 1999/09/30 20:39:08 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.22 1999/10/03 21:50:04 provos Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -57,6 +57,9 @@ Options options;
    command line, or the HostName specified for the user-supplied name
    in a configuration file. */
 char *host;
+
+/* socket address the host resolves to */
+struct sockaddr_in hostaddr;
 
 /* Flag to indicate that we have received a window change signal which has
    not yet been processed.  This will cause a message indicating the new
@@ -520,7 +523,7 @@ main(int ac, char **av)
 
   /* Open a connection to the remote host.  This needs root privileges if
      rhosts_authentication is true. */
-  ok = ssh_connect(host, options.port, options.connection_attempts,
+  ok = ssh_connect(host, &hostaddr, options.port, options.connection_attempts,
 		   !options.rhosts_authentication &&
 		   !options.rhosts_rsa_authentication,
 		   original_real_uid, options.proxy_command);
@@ -581,7 +584,7 @@ main(int ac, char **av)
 
   /* Log into the remote system.  This never returns if the login fails. */
   ssh_login(host_private_key_loaded, host_private_key, 
-	    host, &options, original_real_uid);
+	    host, &hostaddr, &options, original_real_uid);
 
   /* We no longer need the host private key.  Clear it now. */
   if (host_private_key_loaded)

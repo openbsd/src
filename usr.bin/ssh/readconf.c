@@ -14,7 +14,7 @@ Functions for reading the configuration files.
 */
 
 #include "includes.h"
-RCSID("$Id: readconf.c,v 1.7 1999/09/30 08:03:39 deraadt Exp $");
+RCSID("$Id: readconf.c,v 1.8 1999/10/03 21:50:03 provos Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -99,8 +99,8 @@ typedef enum
   oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward, 
   oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
   oGlobalKnownHostsFile, oUserKnownHostsFile, oConnectionAttempts,
-  oBatchMode, oStrictHostKeyChecking, oCompression, oCompressionLevel,
-  oKeepAlives, oTISAuthentication
+  oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
+  oCompressionLevel, oKeepAlives, oTISAuthentication
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -141,6 +141,7 @@ static struct
   { "userknownhostsfile", oUserKnownHostsFile },
   { "connectionattempts", oConnectionAttempts },
   { "batchmode", oBatchMode },
+  { "checkhostip", oCheckHostIP },
   { "stricthostkeychecking", oStrictHostKeyChecking },
   { "compression", oCompression },
   { "compressionlevel", oCompressionLevel },
@@ -572,6 +573,7 @@ void initialize_options(Options *options)
   options->fallback_to_rsh = -1;
   options->use_rsh = -1;
   options->batch_mode = -1;
+  options->check_host_ip = -1;
   options->strict_host_key_checking = -1;
   options->compression = -1;
   options->keepalives = -1;
@@ -625,6 +627,8 @@ void fill_default_options(Options *options)
     options->use_rsh = 0;
   if (options->batch_mode == -1)
     options->batch_mode = 0;
+  if (options->check_host_ip == -1)
+    options->check_host_ip = 1;
   if (options->strict_host_key_checking == -1)
     options->strict_host_key_checking = 2; /* 2 is default */
   if (options->compression == -1)

@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.12 1999/10/03 18:46:12 aaron Exp $
+.\" $Id: ssh.1,v 1.13 1999/10/03 21:50:04 provos Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -640,6 +640,15 @@ or
 RSA authentication will only be
 attempted if the identity file exists, or an authentication agent is
 running.
+.It Cm CheckHostIP
+If this flag is set to
+.Dq yes ,
+ssh will additionally check the host ip address in the
+.Pa known_hosts
+file. This allows ssh to detect if a host key changed due to DNS spoofing.
+If the option is set to
+.Dq no ,
+the check will not be executed.
 .It Cm StrictHostKeyChecking
 If this flag is set to
 .Dq yes , 

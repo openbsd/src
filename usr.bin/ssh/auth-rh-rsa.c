@@ -15,7 +15,7 @@ authentication.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rh-rsa.c,v 1.1 1999/09/28 04:45:35 provos Exp $");
+RCSID("$Id: auth-rh-rsa.c,v 1.2 1999/10/03 21:50:03 provos Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -32,6 +32,8 @@ int auth_rhosts_rsa(struct passwd *pw, const char *client_user,
 		    int ignore_rhosts, int strict_modes)
 {
   const char *canonical_hostname;
+  HostStatus host_status;
+  BIGNUM *ke, *kn;
 
   debug("Trying rhosts with RSA host authentication for %.100s", client_user);
 
@@ -46,15 +48,20 @@ int auth_rhosts_rsa(struct passwd *pw, const char *client_user,
   
   /* Check if we know the host and its host key. */
   /* Check system-wide host file. */
-  if (check_host_in_hostfile(SSH_SYSTEM_HOSTFILE, canonical_hostname,
-			     client_host_key_bits, client_host_key_e,
-			     client_host_key_n) != HOST_OK)
-    {
-      /* The host key was not found. */
-      debug("Rhosts with RSA host authentication denied: unknown or invalid host key");
-      packet_send_debug("Your host key cannot be verified: unknown or invalid host key.");
-      return 0;
-    }
+  ke = BN_new();
+  kn = BN_new();
+  host_status = check_host_in_hostfile(SSH_SYSTEM_HOSTFILE, canonical_hostname,
+				       client_host_key_bits, client_host_key_e,
+				       client_host_key_n, ke, kn);
+  BN_free(ke);
+  BN_free(kn);
+  if (host_status != HOST_OK) {
+    /* The host key was not found. */
+    debug("Rhosts with RSA host authentication denied: unknown or invalid host key");
+    packet_send_debug("Your host key cannot be verified: unknown or invalid host key.");
+    return 0;
+  }
+
   /* A matching host key was found and is known. */
   
   /* Perform the challenge-response dialog with the client for the host key. */

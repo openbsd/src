@@ -14,7 +14,7 @@ Functions for manipulating the known hosts files.
 */
 
 #include "includes.h"
-RCSID("$Id: hostfile.c,v 1.2 1999/09/28 04:45:36 provos Exp $");
+RCSID("$Id: hostfile.c,v 1.3 1999/10/03 21:50:03 provos Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -168,7 +168,8 @@ match_hostname(const char *host, const char *pattern, unsigned int len)
 HostStatus
 check_host_in_hostfile(const char *filename, 
 		       const char *host, unsigned int bits,
-		       BIGNUM *e, BIGNUM *n)
+		       BIGNUM *e, BIGNUM *n,
+		       BIGNUM *ke, BIGNUM *kn)
 {
   FILE *f;
   char line[8192];
@@ -176,7 +177,6 @@ check_host_in_hostfile(const char *filename,
   char *cp, *cp2;
   HostStatus end_return;
   struct stat st;
-  BIGNUM *ke, *kn;
 
   /* Open the file containing the list of known hosts. */
   f = fopen(filename, "r");
@@ -190,10 +190,6 @@ check_host_in_hostfile(const char *filename,
       return HOST_NEW;
     }
 
-  /* Initialize mp-int variables. */
-  ke = BN_new();
-  kn = BN_new();
-  
   /* Cache the length of the host name. */
   hostlen = strlen(host);
   
@@ -235,8 +231,6 @@ check_host_in_hostfile(const char *filename,
       if (kbits == bits && BN_cmp(ke, e) == 0 && BN_cmp(kn, n) == 0)
 	{
 	  /* Ok, they match. */
-	  BN_clear_free(ke);
-	  BN_clear_free(kn);
 	  fclose(f);
 	  return HOST_OK;
 	}
@@ -246,8 +240,6 @@ check_host_in_hostfile(const char *filename,
       end_return = HOST_CHANGED;
     }
   /* Clear variables and close the file. */
-  BN_clear_free(ke);
-  BN_clear_free(kn);
   fclose(f);
 
   /* Return either HOST_NEW or HOST_CHANGED, depending on whether we saw a

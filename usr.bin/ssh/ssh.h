@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.5 1999/10/01 02:38:10 provos Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.6 1999/10/03 21:50:04 provos Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -244,7 +244,8 @@ void record_logout(int pid, const char *ttyname);
    second.  This returns true on success, and zero on failure.  If the
    connection is successful, this calls packet_set_connection for the
    connection. */
-int ssh_connect(const char *host, int port, int connection_attempts,
+int ssh_connect(const char *host, struct sockaddr_in *hostaddr,
+		int port, int connection_attempts,
 		int anonymous, uid_t original_real_uid,
 		const char *proxy_command);
 
@@ -254,8 +255,9 @@ int ssh_connect(const char *host, int port, int connection_attempts,
    If login fails, this function prints an error and never returns. 
    This initializes the random state, and leaves it initialized (it will also
    have references from the packet module). */
-void ssh_login(int host_key_valid, RSA *host_key,
-	       const char *host, Options *options, uid_t original_real_uid);
+void ssh_login(int host_key_valid, RSA *host_key, const char *host,
+	       struct sockaddr_in *hostaddr, Options *options,
+	       uid_t original_real_uid);
 
 /*------------ Definitions for various authentication methods. -------*/
 
@@ -315,10 +317,11 @@ int match_hostname(const char *host, const char *pattern, unsigned int len);
    Returns HOST_OK if the host is known and has the specified key,
    HOST_NEW if the host is not known, and HOST_CHANGED if the host is known
    but used to have a different host key.  The host must be in all lowercase. */
-typedef enum { HOST_OK, HOST_NEW, HOST_CHANGED } HostStatus;
+typedef enum { HOST_OK, HOST_NEW, HOST_CHANGED, HOST_DIFFER } HostStatus;
 HostStatus check_host_in_hostfile(const char *filename, 
 				  const char *host, unsigned int bits,
-				  BIGNUM *e, BIGNUM *n);
+				  BIGNUM *e, BIGNUM *n,
+				  BIGNUM *ke, BIGNUM *kn);
 
 /* Appends an entry to the host file.  Returns false if the entry
    could not be appended. */

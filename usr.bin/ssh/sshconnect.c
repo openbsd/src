@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.11 1999/10/03 19:22:39 deraadt Exp $");
+RCSID("$Id: sshconnect.c,v 1.12 1999/10/03 21:50:04 provos Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -175,7 +175,8 @@ int ssh_create_socket(uid_t original_real_uid, int privileged)
    and %p substituted for host and port, respectively) to use to contact
    the daemon. */
 
-int ssh_connect(const char *host, int port, int connection_attempts,
+int ssh_connect(const char *host, struct sockaddr_in *hostaddr,
+		int port, int connection_attempts,
 		int anonymous, uid_t original_real_uid, 
 		const char *proxy_command)
 {
@@ -183,7 +184,6 @@ int ssh_connect(const char *host, int port, int connection_attempts,
   int on = 1;
   struct servent *sp;
   struct hostent *hp;
-  struct sockaddr_in hostaddr;
   struct linger linger;
 
   debug("ssh_connect: getuid %d geteuid %d anon %d", 
@@ -217,15 +217,15 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 	debug("Trying again...");
 
       /* Try to parse the host name as a numeric inet address. */
-      memset(&hostaddr, 0, sizeof(hostaddr));
-      hostaddr.sin_family = AF_INET;
-      hostaddr.sin_port = htons(port);
-      hostaddr.sin_addr.s_addr = inet_addr(host);
-      if ((hostaddr.sin_addr.s_addr & 0xffffffff) != 0xffffffff)
+      memset(hostaddr, 0, sizeof(hostaddr));
+      hostaddr->sin_family = AF_INET;
+      hostaddr->sin_port = htons(port);
+      hostaddr->sin_addr.s_addr = inet_addr(host);
+      if ((hostaddr->sin_addr.s_addr & 0xffffffff) != 0xffffffff)
 	{ 
 	  /* Valid numeric IP address */
 	  debug("Connecting to %.100s port %d.", 
-		inet_ntoa(hostaddr.sin_addr), port);
+		inet_ntoa(hostaddr->sin_addr), port);
       
 	  /* Create a socket. */
 	  sock = ssh_create_socket(original_real_uid, 
@@ -236,7 +236,7 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 	     it will help with the problems of tcp_wrappers showing the
 	     remote uid as root. */
 	  temporarily_use_uid(original_real_uid);
-	  if (connect(sock, (struct sockaddr *)&hostaddr, sizeof(hostaddr))
+	  if (connect(sock, (struct sockaddr *)hostaddr, sizeof(*hostaddr))
 	      >= 0)
 	    {
 	      /* Successful connect. */
@@ -266,12 +266,12 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 	  for (i = 0; hp->h_addr_list[i]; i++)
 	    {
 	      /* Set the address to connect to. */
-	      hostaddr.sin_family = hp->h_addrtype;
-	      memcpy(&hostaddr.sin_addr, hp->h_addr_list[i],
-		     sizeof(hostaddr.sin_addr));
+	      hostaddr->sin_family = hp->h_addrtype;
+	      memcpy(&hostaddr->sin_addr, hp->h_addr_list[i],
+		     sizeof(hostaddr->sin_addr));
 
 	      debug("Connecting to %.200s [%.100s] port %d.",
-		    host, inet_ntoa(hostaddr.sin_addr), port);
+		    host, inet_ntoa(hostaddr->sin_addr), port);
 
 	      /* Create a socket for connecting. */
 	      sock = ssh_create_socket(original_real_uid, 
@@ -282,8 +282,8 @@ int ssh_connect(const char *host, int port, int connection_attempts,
 	         it will help with tcp_wrappers showing the remote uid as
 		 root. */
 	      temporarily_use_uid(original_real_uid);
-	      if (connect(sock, (struct sockaddr *)&hostaddr, 
-			  sizeof(hostaddr)) >= 0)
+	      if (connect(sock, (struct sockaddr *)hostaddr, 
+			  sizeof(*hostaddr)) >= 0)
 		{
 		  /* Successful connection. */
 		  restore_uid();
@@ -990,13 +990,14 @@ int read_yes_or_no(const char *prompt, int defval)
 void ssh_login(int host_key_valid, 
 	       RSA *own_host_key,
 	       const char *orighost, 
+	       struct sockaddr_in *hostaddr,
 	       Options *options, uid_t original_real_uid)
 {
   int i, type;
   char *password;
   struct passwd *pw;
   BIGNUM *key;
-  RSA *host_key;
+  RSA *host_key, *file_key;
   RSA *public_key;
   unsigned char session_key[SSH_SESSION_KEY_LENGTH];
   const char *server_user, *local_user;
@@ -1004,6 +1005,7 @@ void ssh_login(int host_key_valid,
   unsigned char check_bytes[8];
   unsigned int supported_ciphers, supported_authentications, protocol_flags;
   HostStatus host_status;
+  HostStatus ip_status;
   int payload_len, clen, sum_len = 0;
   u_int32_t rand = 0;
 
@@ -1056,6 +1058,15 @@ void ssh_login(int host_key_valid,
   packet_get_bignum(host_key->n, &clen);
   sum_len += clen;
 
+  if (options->check_host_ip && strcmp(host, inet_ntoa(hostaddr->sin_addr))) {
+    /* Store the host key from the known host file in here
+     * so that we can compare it with the key for the IP
+     * address. */
+    file_key = RSA_new();
+    file_key->n = BN_new();
+    file_key->e = BN_new();
+  }
+
   /* Get protocol flags. */
   protocol_flags = packet_get_int();
   packet_set_protocol_flags(protocol_flags);
@@ -1082,12 +1093,13 @@ void ssh_login(int host_key_valid,
      or in the systemwide list. */
   host_status = check_host_in_hostfile(options->user_hostfile, 
 				       host, BN_num_bits(host_key->n), 
-				       host_key->e, host_key->n);
+				       host_key->e, host_key->n,
+				       file_key->e, file_key->n);
   if (host_status == HOST_NEW)
     host_status = check_host_in_hostfile(options->system_hostfile, host, 
 					 BN_num_bits(host_key->n),
-					 host_key->e, host_key->n);
-
+					 host_key->e, host_key->n,
+					 file_key->e, file_key->n);
   /* Force accepting of the host key for localhost and 127.0.0.1.
      The problem is that if the home directory is NFS-mounted to multiple
      machines, localhost will refer to a different machine in each of them,
@@ -1101,68 +1113,131 @@ void ssh_login(int host_key_valid,
       host_status = HOST_OK;
     }
 
-  switch (host_status)
+  /* Also perform check for the ip address */
+  if (options->check_host_ip && strcmp(host, inet_ntoa(hostaddr->sin_addr))) {
+    RSA *ip_key = RSA_new();
+    ip_key->n = BN_new();
+    ip_key->e = BN_new();
+    ip_status = check_host_in_hostfile(options->user_hostfile,
+				       inet_ntoa(hostaddr->sin_addr), 
+				       BN_num_bits(host_key->n),
+				       host_key->e, host_key->n,
+				       ip_key->e, ip_key->n);
+
+    if (ip_status == HOST_NEW)
+      ip_status = check_host_in_hostfile(options->system_hostfile,
+					 inet_ntoa(hostaddr->sin_addr), 
+					 BN_num_bits(host_key->n),
+					 host_key->e, host_key->n,
+					 ip_key->e, ip_key->n);
+    if (ip_status == HOST_CHANGED && host_status == HOST_CHANGED &&
+	(BN_cmp(ip_key->e, file_key->e) || BN_cmp(ip_key->n, file_key->n)))
+      ip_status = HOST_DIFFER;
+
+    RSA_free(ip_key);
+    RSA_free(file_key);
+  } else
+    ip_status = host_status;
+
+  switch (host_status) {
+  case HOST_OK:
+    /* The host is known and the key matches. */
+    debug("Host '%.200s' is known and matches the host key.", host);
+    if (options->check_host_ip) {
+      if (ip_status == HOST_NEW) {
+	if (!add_host_to_hostfile(options->user_hostfile,
+				  inet_ntoa(hostaddr->sin_addr),
+				  BN_num_bits(host_key->n), 
+				  host_key->e, host_key->n))
+	  log("Failed to add the host ip to the list of known hosts (%.30s).", 
+	      options->user_hostfile);
+	else
+	  log("Warning: Permanently added host ip '%.30s' to the list of known hosts.", inet_ntoa(hostaddr->sin_addr));
+      } else if (ip_status != HOST_OK)
+	log("Warning: the host key differ from the key of the ip address '%.30s' differs", inet_ntoa(hostaddr->sin_addr));
+    }
+    
+    break;
+  case HOST_NEW:
     {
-    case HOST_OK:
-      /* The host is known and the key matches. */
-      debug("Host '%.200s' is known and matches the host key.", host);
-      break;
-    case HOST_NEW:
+      char hostline[1000], *hostp = hostline;
       /* The host is new. */
-      if (options->strict_host_key_checking == 1)
-	{ /* User has requested strict host key checking.  We will not
-	     add the host key automatically.  The only alternative left
-	     is to abort. */
-	  fatal("No host key is known for %.200s and you have requested strict checking.", host);
-	}
-      else if (options->strict_host_key_checking == 2) /* The default */
-	{
-	  char prompt[1024];
-	  sprintf(prompt,
-		  "The authenticity of host '%.200s' can't be established.\n"
-		  "Are you sure you want to continue connecting (yes/no)? ",
-		  host);
-	  if (!read_yes_or_no(prompt, -1))
-	    fatal("Aborted by user!\n");
-	}
+      if (options->strict_host_key_checking == 1) {
+	/* User has requested strict host key checking.  We will not
+	   add the host key automatically.  The only alternative left
+	   is to abort. */
+	fatal("No host key is known for %.200s and you have requested strict checking.", host);
+      } else if (options->strict_host_key_checking == 2) { /* The default */
+	char prompt[1024];
+	snprintf(prompt, sizeof(prompt),
+		 "The authenticity of host '%.200s' can't be established.\n"
+		 "Are you sure you want to continue connecting (yes/no)? ",
+		 host);
+	if (!read_yes_or_no(prompt, -1))
+	  fatal("Aborted by user!\n");
+      }
+      
+      if (options->check_host_ip && ip_status == HOST_NEW &&
+	  strcmp(host, inet_ntoa(hostaddr->sin_addr)))
+	snprintf(hostline, sizeof(hostline), "%s,%s",
+		 host, inet_ntoa(hostaddr->sin_addr));
+      else
+	hostp = host;
+      
       /* If not in strict mode, add the key automatically to the local
 	 known_hosts file. */
-      if (!add_host_to_hostfile(options->user_hostfile, host,
+      if (!add_host_to_hostfile(options->user_hostfile, hostp,
 				BN_num_bits(host_key->n), 
 				host_key->e, host_key->n))
 	log("Failed to add the host to the list of known hosts (%.500s).", 
 	    options->user_hostfile);
       else
-	log("Warning: Permanently added host '%.200s' to the list of known hosts.", host);
-      break;
-    case HOST_CHANGED:
-      /* The host key has changed. */
-      error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-      error("@       WARNING: HOST IDENTIFICATION HAS CHANGED!         @");
-      error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-      error("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!");
-      error("Someone could be eavesdropping on you right now (man-in-the-middle attack)!");
-      error("It is also possible that the host key has just been changed.");
-      error("Please contact your system administrator.");
-      error("Add correct host key in %.100s to get rid of this message.", 
-	    options->user_hostfile);
-
-      /* If strict host key checking is in use, the user will have to edit
-	 the key manually and we can only abort. */
-      if (options->strict_host_key_checking)
-	fatal("Host key for %.200s has changed and you have requested strict checking.", host);
-
-      /* If strict host key checking has not been requested, allow the
-	 connection but without password authentication. */
-      error("Password authentication is disabled to avoid trojan horses.");
-      options->password_authentication = 0;
-      /* XXX Should permit the user to change to use the new id.  This could
-         be done by converting the host key to an identifying sentence, tell
-	 that the host identifies itself by that sentence, and ask the user
-	 if he/she whishes to accept the authentication. */
+	log("Warning: Permanently added '%.200s' to the list of known hosts.",
+	    hostp);
       break;
     }
-
+  case HOST_CHANGED:
+    if (options->check_host_ip) {
+      if (ip_status != HOST_CHANGED) {
+	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+	error("@       WARNING: POSSIBLE DNS SPOOFNG DETECTED!           @");
+	error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+	error("The host key for %s has changed,", host);
+	error("but the key for the according IP address %s has",
+	      inet_ntoa(hostaddr->sin_addr));
+	error("a different status.  This could either mean that DNS");
+	error("SPOOFING is happening or the IP address for the host");
+	error("and its host key have changed at the same time");
+      }
+    }
+    
+    /* The host key has changed. */
+    error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    error("@       WARNING: HOST IDENTIFICATION HAS CHANGED!         @");
+    error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    error("IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!");
+    error("Someone could be eavesdropping on you right now (man-in-the-middle attack)!");
+    error("It is also possible that the host key has just been changed.");
+    error("Please contact your system administrator.");
+    error("Add correct host key in %.100s to get rid of this message.", 
+	  options->user_hostfile);
+    
+    /* If strict host key checking is in use, the user will have to edit
+       the key manually and we can only abort. */
+    if (options->strict_host_key_checking)
+      fatal("Host key for %.200s has changed and you have requested strict checking.", host);
+    
+    /* If strict host key checking has not been requested, allow the
+       connection but without password authentication. */
+    error("Password authentication is disabled to avoid trojan horses.");
+    options->password_authentication = 0;
+    /* XXX Should permit the user to change to use the new id.  This could
+       be done by converting the host key to an identifying sentence, tell
+       that the host identifies itself by that sentence, and ask the user
+       if he/she whishes to accept the authentication. */
+    break;
+  }
+  
   /* Generate a session key. */
   arc4random_stir();
   
