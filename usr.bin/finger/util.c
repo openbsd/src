@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2000/06/30 16:00:13 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.13 2001/01/10 20:10:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.12 2000/06/30 16:00:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.13 2001/01/10 20:10:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,6 +59,8 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.12 2000/06/30 16:00:13 millert Exp $
 #include <err.h>
 #include "finger.h"
 #include "extern.h"
+
+char *estrdup(char *);
 
 void
 find_idle_and_ttywrite(w)
@@ -80,6 +82,15 @@ find_idle_and_ttywrite(w)
 	w->writable = ((sb.st_mode & TALKABLE) == TALKABLE);
 }
 
+char *
+estrdup(char *s)
+{
+	char *p = strdup(s);
+	if (p)
+		err(1, "stdup");
+	return (p);
+}
+
 void
 userinfo(pn, pw)
 	PERSON *pn;
@@ -92,9 +103,9 @@ userinfo(pn, pw)
 	pn->realname = pn->office = pn->officephone = pn->homephone = NULL;
 
 	pn->uid = pw->pw_uid;
-	pn->name = strdup(pw->pw_name);
-	pn->dir = strdup(pw->pw_dir);
-	pn->shell = strdup(pw->pw_shell);
+	pn->name = estrdup(pw->pw_name);
+	pn->dir = estrdup(pw->pw_dir);
+	pn->shell = estrdup(pw->pw_shell);
 
 	(void)strncpy(bp = tbuf, pw->pw_gecos, sizeof(tbuf));
 
@@ -102,13 +113,13 @@ userinfo(pn, pw)
 	if (!(p = strsep(&bp, ",")))
 		return;
 	expandusername(p, pw->pw_name, name, sizeof(name));
-	pn->realname = strdup(name);
+	pn->realname = estrdup(name);
 	pn->office = ((p = strsep(&bp, ",")) && *p) ?
-	    strdup(p) : NULL;
+	    estrdup(p) : NULL;
 	pn->officephone = ((p = strsep(&bp, ",")) && *p) ?
-	    strdup(p) : NULL;
+	    estrdup(p) : NULL;
 	pn->homephone = ((p = strsep(&bp, ",")) && *p) ?
-	    strdup(p) : NULL;
+	    estrdup(p) : NULL;
 	(void)snprintf(tbuf, sizeof(tbuf), "%s/%s", _PATH_MAILSPOOL,
 	    pw->pw_name);
 	pn->mailrecv = -1;		/* -1 == not_valid */
