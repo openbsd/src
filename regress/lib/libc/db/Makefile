@@ -11,7 +11,7 @@ CLEANFILES+= t1 t2 t3
 
 install:
 
-regress:
+regress: ${PROG}
 	sh ${.CURDIR}/run.test
 
 .include <bsd.prog.mk>
