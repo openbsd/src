@@ -238,7 +238,7 @@ DHCP protocol (for example, server-name and filename).
 .PP
 In Figure 1, each host had \fIhost-specific parameters\fR.   These
 could include such things as the \fIhostname\fR option, the name of a
-file to upload (the \fIfilename parameter) and the address of the
+file to upload (the \fIfilename\fR parameter) and the address of the
 server from which to upload the file (the \fInext-server\fR
 parameter).   In general, any parameter can appear anywhere that
 parameters are allowed, and will be applied according to the scope in
@@ -246,7 +246,7 @@ which the parameter appears.
 .PP
 Imagine that you have a site with a lot of NCD X-Terminals.   These
 terminals come in a variety of models, and you want to specify the
-boot files for each models.   One way to do this would be to have host
+boot files for each model.   One way to do this would be to have host
 declarations for each server and group them by model:
 .nf
 
@@ -468,7 +468,7 @@ The \fBbooting\fR flag is used to tell dhcpd whether or not to respond
 to queries from a particular client.  This keyword only has meaning
 when it appears in a host declaration.   By default, booting is
 \fBallow\fRed, but if it is disabled for a particular client, then
-that client will not be able to get and address from the DHCP server.
+that client will not be able to get an address from the DHCP server.
 .SH REFERENCE: PARAMETERS
 .PP
 .B The
@@ -715,7 +715,7 @@ statement are both in scope, the routers option will be preferred.
 The rationale for this is that in situations where you want to use
 this feature, you probably want it enabled for a whole bunch of
 Windows 95 machines, and you want to override it for a few other
-machines.   Unfortunately, if the opposite happens to be true for you
+machines.   Unfortunately, if the opposite happens to be true for your
 site, you are probably better off not trying to use this flag.
 .PP
 .B The

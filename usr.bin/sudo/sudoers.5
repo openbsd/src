@@ -212,7 +212,7 @@ Each \fIalias\fR definition is of the form
 .Ve
 where \fIAlias_Type\fR is one of \f(CW\*(C`User_Alias\*(C'\fR, \f(CW\*(C`Runas_Alias\*(C'\fR, \f(CW\*(C`Host_Alias\*(C'\fR,
 or \f(CW\*(C`Cmnd_Alias\*(C'\fR.  A \f(CW\*(C`NAME\*(C'\fR is a string of uppercase letters, numbers,
-and the underscore characters ('_').  A \f(CW\*(C`NAME\*(C'\fR \fBmust\fR start with an
+and underscore characters ('_').  A \f(CW\*(C`NAME\*(C'\fR \fBmust\fR start with an
 uppercase letter.  It is possible to put several alias definitions
 of the same type on a single line, joined by a colon (':').  E.g.,
 .PP
@@ -379,7 +379,7 @@ commands on the current host.  This flag is \fIoff\fR by default.
 .Ip "mail_no_perms" 12
 .IX Item "mail_no_perms"
 If set, mail will be sent to the \fImailto\fR user if the invoking
-user allowed to use \fBsudo\fR but the command they are trying is not
+user is allowed to use \fBsudo\fR but the command they are trying is not
 listed in their \fIsudoers\fR file entry.  This flag is \fIoff\fR
 by default.
 .Ip "tty_tickets" 12
@@ -452,7 +452,7 @@ user.  This flag is \fIoff\fR by default.
 .Ip "fqdn" 12
 .IX Item "fqdn"
 Set this flag if you want to put fully qualified hostnames in the
-\&\fIsudoers\fR file.  I.e.: instead of myhost you would use myhost.mydomain.edu.
+\&\fIsudoers\fR file.  I.e., instead of myhost you would use myhost.mydomain.edu.
 You may still use the short form if you wish (and even mix the two).
 Beware that turning on \fIfqdn\fR requires \fBsudo\fR to make \s-1DNS\s0 lookups
 which may make \fBsudo\fR unusable if \s-1DNS\s0 stops working (for example
@@ -472,7 +472,7 @@ password.  This flag is \fIon\fR by default.
 If set, \fBsudo\fR will only run when the user is logged in to a real
 tty.  This will disallow things like \f(CW\*(C`"rsh somehost sudo ls"\*(C'\fR since
 \&\fIrsh\fR\|(1) does not allocate a tty.  Because it is not possible to turn
-of echo when there is no tty present, some sites may with to set
+off echo when there is no tty present, some sites may wish to set
 this flag to prevent a user from entering a visible password.  This
 flag is \fIoff\fR by default.
 .Ip "env_editor" 12
@@ -657,7 +657,8 @@ The default value is `all'.
 .Ip "listpw" 12
 .IX Item "listpw"
 This option controls when a password will be required when a
-user runs \fBsudo\fR with the \fB\-l\fR.  It has the following possible values:
+user runs \fBsudo\fR with the \fB\-l\fR flag.  It has the 
+following possible values:
 .RS 12
 .Ip "all" 8
 .IX Item "all"
@@ -684,12 +685,12 @@ The default value is `any'.
 .IX Item "env_check"
 Environment variables to be removed from the user's environment if
 the variable's value contains \f(CW\*(C`%\*(C'\fR or \f(CW\*(C`/\*(C'\fR characters.  This can
-be used to guard against printf-style format vulnerabilties in
+be used to guard against printf-style format vulnerabilities in
 poorly-written programs.  The argument may be a double-quoted,
 space-separated list or a single value without double-quotes.  The
 list can be replaced, added to, deleted from, or disabled by using
 the \f(CW\*(C`=\*(C'\fR, \f(CW\*(C`+=\*(C'\fR, \f(CW\*(C`\-=\*(C'\fR, and \f(CW\*(C`!\*(C'\fR operators respectively.  The default
-list of environment variable to check is printed when \fBsudo\fR is
+list of environment variables to check is printed when \fBsudo\fR is
 run by root with the \fI\-V\fR option.
 .Ip "env_delete" 12
 .IX Item "env_delete"
@@ -698,7 +699,7 @@ The argument may be a double-quoted, space-separated list or a
 single value without double-quotes.  The list can be replaced, added
 to, deleted from, or disabled by using the \f(CW\*(C`=\*(C'\fR, \f(CW\*(C`+=\*(C'\fR, \f(CW\*(C`\-=\*(C'\fR, and
 \&\f(CW\*(C`!\*(C'\fR operators respectively.  The default list of environment
-variable to remove is printed when \fBsudo\fR is run by root with the
+variables to remove is printed when \fBsudo\fR is run by root with the
 \&\fI\-V\fR option.
 .Ip "env_keep" 12
 .IX Item "env_keep"
@@ -746,7 +747,7 @@ of \fBroot\fR will be used.  A \f(CW\*(C`Runas_Spec\*(C'\fR sets the default for
 commands that follow it.  What this means is that for the entry:
 .PP
 .Vb 1
-\& dgb    boulder = (operator) /bin/ls, /bin/kill, /usr/bin/who
+\& dgb    boulder = (operator) /bin/ls, /bin/kill, /usr/bin/lprm
 .Ve
 The user \fBdgb\fR may run \fI/bin/ls\fR, \fI/bin/kill\fR, and
 \&\fI/usr/bin/lprm\fR \*(-- but only as \fBoperator\fR.  E.g.,
@@ -816,7 +817,7 @@ escape special characters such as: \*(L"*\*(R", \*(L"?\*(R", \*(L"[\*(R", and \*
 .PP
 Note that a forward slash ('/') will \fBnot\fR be matched by
 wildcards used in the pathname.  When matching the command
-line arguments, however, as slash \fBdoes\fR get matched by
+line arguments, however, a slash \fBdoes\fR get matched by
 wildcards.  This is to make a path like:
 .PP
 .Vb 1
@@ -826,7 +827,7 @@ match \f(CW\*(C`/usr/bin/who\*(C'\fR but not \f(CW\*(C`/usr/bin/X11/xterm\*(C'\f
 .Sh "Exceptions to wildcard rules:"
 .IX Subsection "Exceptions to wildcard rules:"
 The following exceptions apply to the above rules:
-.if n .Ip "\f(CW""""""""\fR" 8
+.if n .Ip "\f(CW""""\fR" 8
 .el .Ip "\f(CW``''\fR" 8
 .IX Item """""
 If the empty string \f(CW\*(C`""\*(C'\fR is the only command line argument in the
@@ -1087,4 +1088,4 @@ as returned by the \f(CW\*(C`hostname\*(C'\fR command or use the \fIfqdn\fR opti
 .Ve
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
-\&\fIrsh\fR\|(1), \fIsudo\fR\|(8), \fIvisudo\fR\|(8), \fIsu\fR\|(1), \fIfnmatch\fR\|(3).
+\&\fIrsh\fR\|(1), \fIsu\fR\|(1), \fIfnmatch\fR\|(3), \fIsudo\fR\|(8), \fIvisudo\fR\|(8).

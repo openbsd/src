@@ -72,9 +72,7 @@ the DHCP client if required, however:
 .B timeout
 .I statement
 .PP
-.B timeout
-.I time
-.B ;
+ \fBtimeout \fItime\fR\fB;\fR
 .PP
 The
 .I timeout
@@ -391,7 +389,7 @@ automatically determine the type of network to which they are
 connected.  The media setup string is a system-dependent parameter
 which is passed to the dhcp client configuration script when
 initializing the interface.  On Unix and Unix-like systems, the
-argument is passed on the ifconfig command line when configuring te
+argument is passed on the ifconfig command line when configuring the
 interface.
 .PP
 The dhcp client automatically declares this parameter if it used a
@@ -488,7 +486,7 @@ succeeds in getting a request to the server and hearing the reply is
 probably right (no guarantees).
 .PP
 The media setup is only used for the initial phase of address
-acquisition (the DHCPDISCOVER and DHCPOFFER packtes).   Once an
+acquisition (the DHCPDISCOVER and DHCPOFFER packets).   Once an
 address has been acquired, the dhcp client will record it in its lease
 database and will record the media type used to acquire the address.
 Whenever the client tries to renew the lease, it will use that same

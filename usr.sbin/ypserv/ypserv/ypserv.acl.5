@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.acl.5,v 1.16 2002/11/07 20:57:04 millert Exp $
+.\"	$OpenBSD: ypserv.acl.5,v 1.17 2003/01/23 08:58:47 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -78,16 +78,16 @@ error for the caller.
 Normally both the local hostname and localhost must be
 allowed access. Otherwise
 .Nm ypserv
-might not work correctly
+might not work correctly.
 .Pp
 There is no default name for this file.
 Start
 .Nm ypserv
-with a
+with
 .Fl a Ar filename
 to read a file with this format.
 .Pp
-The following syntaxes may be used:
+The following syntax may be used:
 .Pp
 <
 .Ic allow|deny
@@ -99,7 +99,7 @@ The following syntaxes may be used:
 .Pp
 If
 .Ic hostname
-has more than one IP address then all will be added to the list.
+has more than one IP address, they will all be added to the list.
 .Pp
 <
 .Ic allow|deny
@@ -154,7 +154,7 @@ deny host jodie
 #
 # If netmask isn't given the parser will assume netmask from the first bits
 # of the network number. So if the network is subneted the you have to add
-# the netmask. In my case I've got the network 139.58.253.0 at home so too
+# the netmask. In my case I've got the network 139.58.253.0 at home so to
 # allow any of my computers to talk with the server I need the following
 # line
 #

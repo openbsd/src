@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.8 2001/02/07 06:15:46 fgsch Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.9 2003/01/23 08:58:47 jmc Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -64,9 +64,9 @@ field is separated from the
 field by one or more tab characters.
 .Pp
 The
-.Em Selectors
+.Em selectors
 function
-are encoded as a
+is encoded as a
 .Em facility ,
 a period
 .Pq Ql \&. ,
@@ -96,7 +96,7 @@ library routines.
 The
 .Em level
 describes the severity of the message, and is a keyword from the
-following ordered list (higher to lower): emerg, alert, crit, err,
+following ordered list (highest to lowest): emerg, alert, crit, err,
 warning, notice, info and debug.
 These keywords correspond to the
 similar
@@ -113,7 +113,7 @@ program.
 .Pp
 See
 .Xr syslog 3
-for a further descriptions of both the
+for further descriptions of both the
 .Em facility
 and
 .Em level
@@ -131,7 +131,7 @@ If a received message matches the specified
 .Em facility
 and is of the specified
 .Em level
-.Em (or a higher level) ,
+.Pq Em or a higher level ,
 and the first word in the message after the date matches the
 .Em program ,
 the action specified in the

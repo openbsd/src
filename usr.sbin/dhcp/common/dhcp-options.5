@@ -111,7 +111,7 @@ or
 The documentation for the various options mentioned below is taken
 from the latest IETF draft document on DHCP options.   Options which
 are not listed by name may be defined by the name option-\fInnn\fR,
-where \fInnn\fI is the decimal number of the option code.   These
+where \fInnn\fR is the decimal number of the option code.   These
 options may be followed either by a string, enclosed in quotes, or by
 a series of octets, expressed as two-digit hexadecimal numbers separated
 by colons.   For example:
@@ -308,7 +308,7 @@ See STD 3 (RFC1122) for further information.
 .RS 0.25i
 .PP
 This option specifies the maximum size datagram that the client
-should be prepared to reassemble.  The minimum value legal value is
+should be prepared to reassemble.  The minimum legal value is
 576.
 .RE
 .PP
@@ -461,8 +461,8 @@ connections unless specifically requested by an application.
 .B option \fBtcp-keepalive-garbage\fR \fIflag\fR\fB;\fR
 .RS 0.25i
 .PP
-This option specifies the whether or not the client should send TCP
-keepalive messages with a octet of garbage for compatibility with
+This option specifies whether or not the client should send TCP
+keepalive messages with an octet of garbage for compatibility with
 older implementations.  A value of 0 indicates that a garbage octet
 should not be sent. A value of 1 indicates that a garbage octet
 should be sent.
@@ -526,7 +526,7 @@ Possible node types are:
 B-node: Broadcast - no WINS
 .TP
 .I 2
-P-node: Peer - WINS only.
+P-node: Peer - WINS only
 .TP
 .I 4
 M-node: Mixed - broadcast, then WINS
@@ -565,7 +565,7 @@ should be listed in order of preference.
 .B option \fBdhcp-client-identifier\fR \fIdata-string\fR\fB;\fR
 .RS 0.25i
 .PP
-This option can be used to specify the a DHCP client identifier in a
+This option can be used to specify a DHCP client identifier in a
 host declaration, so that dhcpd can find the host record by matching
 against the client identifier.
 .RE
@@ -625,40 +625,40 @@ the client.  Servers should be listed in order of preference.
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The POP3 server option specifies a list of POP3 available to the
-client.  Servers should be listed in order of preference.
+The POP3 server option specifies a list of POP3 servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBnntp-server\fR \fIip-address\fR [\fB,\fR
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The NNTP server option specifies a list of NNTP available to the
-client.  Servers should be listed in order of preference.
+The NNTP server option specifies a list of NNTP servers available 
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBwww-server\fR \fIip-address\fR [\fB,\fR
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The WWW server option specifies a list of WWW available to the
-client.  Servers should be listed in order of preference.
+The WWW server option specifies a list of WWW servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBfinger-server\fR \fIip-address\fR [\fB,\fR
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The Finger server option specifies a list of Finger available to the
-client.  Servers should be listed in order of preference.
+The Finger server option specifies a list of Finger servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBirc-server\fR \fIip-address\fR [\fB,\fR
 \fIip-address\fR... ]\fB;\fR
 .RS 0.25i
 .PP
-The IRC server option specifies a list of IRC available to the
-client.  Servers should be listed in order of preference.
+The IRC server option specifies a list of IRC servers available
+to the client.  Servers should be listed in order of preference.
 .RE
 .PP
 .B option \fBstreettalk-server\fR \fIip-address\fR [\fB,\fR
