@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2004/07/30 10:02:42 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.13 2004/07/30 22:29:44 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -67,7 +67,6 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/evcount.h>
 
 #include <machine/psl.h>
 #include <machine/autoconf.h>
@@ -103,9 +102,7 @@ int statmin;		/* statclock interval - 1/2*variance */
 struct clocksoftc {
 	struct device	sc_dev;
 	struct intrhand sc_profih;
-	struct evcount	sc_profcnt;
 	struct intrhand sc_statih;
-	struct evcount	sc_statcnt;
 };
 
 void	clockattach(struct device *, struct device *, void *);
@@ -161,32 +158,27 @@ clockattach(parent, self, args)
 	case BUS_PCC:
 		prof_reset = ca->ca_ipl | PCC_IRQ_IEN | PCC_TIMERACK;
 		stat_reset = ca->ca_ipl | PCC_IRQ_IEN | PCC_TIMERACK;
-		pccintr_establish(PCCV_TIMER1, &sc->sc_profih);
-		pccintr_establish(PCCV_TIMER2, &sc->sc_statih);
+		pccintr_establish(PCCV_TIMER1, &sc->sc_profih, "clock");
+		pccintr_establish(PCCV_TIMER2, &sc->sc_statih, "stat");
 		break;
 #endif
 #if NMC > 0
 	case BUS_MC:
 		prof_reset = ca->ca_ipl | MC_IRQ_IEN | MC_IRQ_ICLR;
 		stat_reset = ca->ca_ipl | MC_IRQ_IEN | MC_IRQ_ICLR;
-		mcintr_establish(MCV_TIMER1, &sc->sc_profih);
-		mcintr_establish(MCV_TIMER2, &sc->sc_statih);
+		mcintr_establish(MCV_TIMER1, &sc->sc_profih, "clock");
+		mcintr_establish(MCV_TIMER2, &sc->sc_statih, "stat");
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
 		prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		stat_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih);
-		pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih);
+		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih, "clock");
+		pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih, "stat");
 		break;
 #endif
 	}
-
-	evcount_attach(&sc->sc_statcnt, "stat", (void *)&sc->sc_statih.ih_ipl,
-	    &evcount_intr);
-	evcount_attach(&sc->sc_profcnt, "clock", (void *)&sc->sc_profih.ih_ipl,
-	    &evcount_intr);
 
 	printf("\n");
 }
@@ -198,8 +190,6 @@ int
 clockintr(arg)
 	void *arg;
 {
-	struct clocksoftc *sc = clock_cd.cd_devs[0];
-
 	switch (clockbus) {
 #if NPCC > 0
 	case BUS_PCC:
@@ -218,7 +208,6 @@ clockintr(arg)
 #endif
 	}
 
-	sc->sc_profcnt.ec_count++;
 	hardclock(arg);
 	return (1);
 }
@@ -313,7 +302,6 @@ int
 statintr(cap)
 	void *cap;
 {
-	struct clocksoftc *sc = clock_cd.cd_devs[0];
 	register u_long newint, r, var;
 
 	switch (clockbus) {
@@ -334,7 +322,6 @@ statintr(cap)
 #endif
 	}
 
-	sc->sc_statcnt.ec_count++;
 	statclock((struct clockframe *)cap);
 
 	/*

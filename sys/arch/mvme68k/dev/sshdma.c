@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.10 2004/07/30 09:50:15 miod Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.11 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -158,20 +157,17 @@ void *auxp;
 	switch (ca->ca_bustype) {
 #if NMC > 0
 	case BUS_MC:
-		mcintr_establish(MCV_NCR, &sc->sc_ih);
+		mcintr_establish(MCV_NCR, &sc->sc_ih, self->dv_xname);
 		sys_mc->mc_ncrirq = ca->ca_ipl | MC_IRQ_IEN;
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
+		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih, self->dv_xname);
 		sys_pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
 		break;
 #endif
 	}
-
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
-	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
 
 	/*
 	 * attach all scsi units on us, watching for boot device
@@ -208,7 +204,6 @@ afsc_dmaintr(arg)
 	sc->sc_dstat = rp->ssh_dstat;
 	sc->sc_sstat0 = rp->ssh_sstat0;
 	sshintr(sc);
-	sc->sc_intrcnt.ec_count++;
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.15 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: mc.c,v 1.16 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -150,7 +150,7 @@ mcattach(parent, self, args)
 	sc->sc_nmiih.ih_fn = mcabort;
 	sc->sc_nmiih.ih_ipl = 7;
 	sc->sc_nmiih.ih_wantframe = 1;
-	mcintr_establish(MCV_ABORT, &sc->sc_nmiih);
+	mcintr_establish(MCV_ABORT, &sc->sc_nmiih, self->dv_xname);
 
 	sc->sc_mc->mc_abortirq = 7 | MC_IRQ_IEN | MC_IRQ_ICLR;
 	sc->sc_mc->mc_vecbase = MC_VECBASE;
@@ -164,15 +164,18 @@ mcattach(parent, self, args)
  * MC interrupts land in a MC_NVEC sized hole starting at MC_VECBASE
  */
 int
-mcintr_establish(vec, ih)
+mcintr_establish(vec, ih, name)
 	int vec;
 	struct intrhand *ih;
+	const char *name;
 {
-	if (vec >= MC_NVEC) {
-		printf("mc: illegal vector: 0x%x\n", vec);
-		panic("mcintr_establish");
-	}
-	return (intr_establish(MC_VECBASE+vec, ih));
+#ifdef DIAGNOSTIC
+	if (vec < 0 || vec >= MC_NVEC)
+		panic("mcintr_establish: illegal vector for %s: 0x%x",
+		    name, vec);
+#endif
+
+	return intr_establish(MC_VECBASE + vec, ih, name);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fooip.c,v 1.8 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: fooip.c,v 1.9 2004/07/30 22:29:44 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -97,7 +97,7 @@ fooipattach(parent, self, args)
 	sc->sc_ih.ih_fn = fooipintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
-	ipicintr_establish(ca->ca_vec, &sc->sc_ih);
+	ipicintr_establish(ca->ca_vec, &sc->sc_ih, self->dv_xname);
 
 	sc->sc_regs->fooip_vec = ca->ca_vec;
 	sc->sc_ipicsc->sc_ipic->ipic_irq[sc->sc_slot][0] = ca->ca_ipl |

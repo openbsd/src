@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.13 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.14 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -159,13 +159,16 @@ pcctwoattach(parent, self, args)
  * PCC2 interrupts land in a PCC2_NVEC sized hole starting at PCC2_VECBASE
  */
 int
-pcctwointr_establish(vec, ih)
+pcctwointr_establish(vec, ih, name)
 	int vec;
 	struct intrhand *ih;
+	const char *name;
 {
-	if (vec >= PCC2_NVEC) {
-		printf("pcctwo: illegal vector: 0x%x\n", vec);
-		panic("pcctwointr_establish");
-	}
-	return (intr_establish(PCC2_VECBASE+vec, ih));
+#ifdef DIAGNOSTIC
+	if (vec < 0 || vec >= PCC2_NVEC)
+		panic("pcctwointr_establish: illegal vector for %s: 0x%x",
+		    name, vec);
+#endif
+
+	return intr_establish(PCC2_VECBASE + vec, ih, name);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.26 2004/07/02 17:34:23 miod Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.27 2004/07/30 22:29:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -94,7 +94,7 @@ int	findblkmajor(struct device *);
 struct	device *getdisk(char *, int, int, dev_t *);
 struct	device *parsedisk(char *, int, int, dev_t *);
 
-extern void init_sir(void);
+extern void init_intrs(void);
 extern void dumpconf(void);
 
 /*
@@ -182,7 +182,7 @@ cpu_configure()
 {
 	bootdv = NULL; /* set by device drivers (if found) */
 
-	init_sir();
+	init_intrs();
 
 	extio = extent_create("extio",
 	    (u_long)extiobase, (u_long)extiobase + ctob(EIOMAPSIZE),

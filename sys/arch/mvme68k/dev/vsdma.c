@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsdma.c,v 1.8 2004/07/30 09:50:15 miod Exp $ */
+/*	$OpenBSD: vsdma.c,v 1.9 2004/07/30 22:29:45 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -124,15 +123,11 @@ vsattach(parent, self, auxp)
    
 	vs_initialize(sc);
 
-	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n);
-	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e);
-
-	evcount_attach(&sc->sc_intrcnt_n, self->dv_xname,
-	    (void *)&sc->sc_ih_n.ih_ipl, &evcount_intr);
 	snprintf(sc->sc_intrname_e, sizeof sc->sc_intrname_e,
 	    "%s_err", self->dv_xname);
-	evcount_attach(&sc->sc_intrcnt_e, self->dv_xname,
-	    (void *)&sc->sc_ih_e.ih_ipl, &evcount_intr);
+
+	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n, self->dv_xname);
+	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e, sc->sc_intrname_e);
 
 	/*
 	 * attach all scsi units on us, watching for boot device
@@ -169,7 +164,6 @@ vs_nintr(arg)
 	printf("Normal Interrupt!!!\n");
 #endif 
 	vs_intr(sc);
-	sc->sc_intrcnt_n.ec_count++;
 	return (1);
 }
 
@@ -184,7 +178,6 @@ vs_eintr(arg)
 	printf("Error Interrupt!!!\n");
 #endif
 	vs_intr(sc);
-	sc->sc_intrcnt_e.ec_count++;
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcc.c,v 1.13 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: pcc.c,v 1.14 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -149,7 +149,7 @@ pccattach(parent, self, args)
 	sc->sc_nmiih.ih_fn = pccabort;
 	sc->sc_nmiih.ih_ipl = 7;
 	sc->sc_nmiih.ih_wantframe = 1;
-	pccintr_establish(PCCV_ABORT, &sc->sc_nmiih);
+	pccintr_establish(PCCV_ABORT, &sc->sc_nmiih, self->dv_xname);
 
 	sc->sc_pcc->pcc_vecbase = PCC_VECBASE;
 	sc->sc_pcc->pcc_abortirq = PCC_ABORT_IEN | PCC_ABORT_ACK;
@@ -164,15 +164,18 @@ pccattach(parent, self, args)
  * PCC interrupts land in a PCC_NVEC sized hole starting at PCC_VECBASE
  */
 int
-pccintr_establish(vec, ih)
+pccintr_establish(vec, ih, name)
 	int vec;
 	struct intrhand *ih;
+	const char *name;
 {
-	if (vec >= PCC_NVEC) {
-		printf("pcc: illegal vector: 0x%x\n", vec);
-		panic("pccintr_establish");
-	}
-	return (intr_establish(PCC_VECBASE+vec, ih));
+#ifdef DIAGNOSTIC
+	if (vec < 0 || vec >= PCC_NVEC)
+		panic("pccintr_establish: illegal vector for %s: 0x%x",
+		    name, vec);
+#endif
+
+	return intr_establish(PCC_VECBASE + vec, ih, name);
 }
 
 int

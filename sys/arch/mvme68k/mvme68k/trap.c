@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2004/04/18 20:19:52 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.55 2004/07/30 22:29:49 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -165,7 +165,7 @@ u_char next_sir;
 
 void trap(int, u_int, u_int, struct frame);
 void syscall(register_t, struct frame);
-void init_sir(void);
+void init_intrs(void);
 void hardintr(int, int, void *);
 int writeback(struct frame *fp, int docachepush);
 
@@ -244,7 +244,7 @@ again:
 /*
  * Trap is called from locore to handle most types of processor traps,
  * including events such as simulated software interrupts/AST's.
- * System calls are broken out for efficiency. T_ADDRERR
+ * System calls are broken out for efficiency.
  */
 /*ARGSUSED*/
 void
@@ -1156,23 +1156,25 @@ allocate_sir(proc, arg)
 	return (1 << bit);
 }
 
+typedef SLIST_HEAD(,intrhand) intrhand_t;
+intrhand_t intrs[NVMEINTR];
+
 void
-init_sir()
+init_intrs()
 {
+	int i;
 	extern void netintr(void *);
 
+	/* hard interrupts... */
+	for (i = 0; i < NVMEINTR; i++)
+		SLIST_INIT(&intrs[i]);
+
+	/* soft interrupts... */
 	sir_routines[0] = netintr;
 	sir_routines[1] = (void (*)(void *))softclock;
 	next_sir = 2;
 }
 
-struct intrhand *intrs[256];
-
-/*
- * XXX
- * This is an EXTREMELY good candidate for rewriting in assembly!!
- */
-#ifndef INTR_ASM
 void
 hardintr(pc, evec, frame)
 	int pc;
@@ -1183,28 +1185,31 @@ hardintr(pc, evec, frame)
 	int vec = (evec & 0xfff) >> 2;	/* XXX should be m68k macro? */
 	/*extern u_long intrcnt[];*/	/* XXX from locore */
 	struct intrhand *ih;
+	intrhand_t *list;
 	int count = 0;
 	int r;
 
 	uvmexp.intrs++;
 /*	intrcnt[level]++; */
-	for (ih = intrs[vec]; ih; ih = ih->ih_next) {
-#if 0
-		if (vec >= 0x70 && vec <= 0x73) {
-			zscnputc(0, '[');
-			zscnputc(0, '0' + (vec - 0x70));
-		}
-#endif
-		r = (*ih->ih_fn)(ih->ih_wantframe ? frame : ih->ih_arg);
-		if (r > 0)
-			count++;
-	}
-	if (count != 0)
-		return;
 
-	straytrap(pc, evec);
+	list = &intrs[vec];
+	if (SLIST_EMPTY(list)) {
+		straytrap(pc, evec);
+	} else {
+		SLIST_FOREACH(ih, list, ih_link) {
+			r = (*ih->ih_fn)(ih->ih_wantframe ? frame : ih->ih_arg);
+			if (r != 0) {
+				ih->ih_count.ec_count++;
+				count++;
+			}
+		}
+
+		if (count == 0) {
+			printf("Unclaimed interrupt (vector %d) from %x\n",
+			    evec, pc);
+		}
+	}
 }
-#endif /* !INTR_ASM */
 
 /*
  * find a useable interrupt vector in the range start, end. It starts at
@@ -1218,7 +1223,7 @@ intr_findvec(start, end)
 	extern u_long *vectab[], hardtrap, badtrap;
 	int vec;
 
-	if (start < 0 || end > 255 || start > end)
+	if (start < 0 || end >= NVMEINTR || start > end)
 		return (-1);
 	for (vec = end; vec > start; --vec)
 		if (vectab[vec] == &badtrap || vectab[vec] == &hardtrap)
@@ -1233,28 +1238,45 @@ intr_findvec(start, end)
  * allocated to deal with chained interrupt handlers).
  */
 int
-intr_establish(vec, ih)
+intr_establish(vec, ih, name)
 	int vec;
 	struct intrhand *ih;
+	const char *name;
 {
 	extern u_long *vectab[], hardtrap, badtrap;
-	struct intrhand *ihx;
+	struct intrhand *intr;
+	intrhand_t *list;
+
+#ifdef DIAGNOSTIC
+	if (vec < 0 || vec >= NVMEINTR) {
+		panic("intr_establish: vec (0x%x) out of bounds", vec);
+		return (-1);
+	}
+#endif
 
 	if (vectab[vec] != &badtrap && vectab[vec] != &hardtrap) {
-		printf("intr_establish: vec %d unavailable\n", vec);
+#ifdef DIAGNOSTIC
+		panic("intr_establish: vec (%x) unavailable for devices", vec);
+#endif
 		return (-1);
 	}
 	vectab[vec] = &hardtrap;
 
-	ih->ih_next = NULL;	/* just in case */
+	list = &intrs[vec];
+	if (!SLIST_EMPTY(list)) {
+		intr = SLIST_FIRST(list);
+		if (intr->ih_ipl != ih->ih_ipl) {
+#ifdef DIAGNOSTIC
+			panic("intr_establish: there are other handlers with "
+			    "vec (0x%x) at ipl %x, but you want it at %x",
+			    vec, intr->ih_ipl, ih->ih_ipl);
+#endif
+			return (-1);
+		}
+	}
 
-	/* attach at tail */
-	if ((ihx = intrs[vec])) {
-		while (ihx->ih_next)
-			ihx = ihx->ih_next;
-		ihx->ih_next = ih;
-	} else
-		intrs[vec] = ih;
+	evcount_attach(&ih->ih_count, name, &ih->ih_ipl, &evcount_intr);
+	SLIST_INSERT_HEAD(list, ih, ih_link);
 	return (0);
 }
 

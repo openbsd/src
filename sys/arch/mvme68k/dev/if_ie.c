@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.26 2004/07/30 09:50:15 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.27 2004/07/30 22:29:44 miod Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -105,7 +105,6 @@ Mode of operation:
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/evcount.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -170,7 +169,7 @@ struct vm_map *ie_map; /* for obio */
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
 	struct intrhand sc_ih, sc_failih;  /* interrupt info */
-	struct evcount sc_intrcnt; /* # of interrupts, per ie */
+	char	sc_failintrname[16 + 4];
 
 	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
 	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
@@ -478,19 +477,22 @@ ieattach(parent, self, aux)
 	sc->sc_failih.ih_arg = sc;
 	sc->sc_failih.ih_ipl = pri;
 
+	snprintf(sc->sc_failintrname, sizeof sc->sc_failintrname, "%s_err",		    self->dv_xname);
+
 	switch (sc->sc_bustype) {
 #if NMC > 0
 	case BUS_MC:
-		mcintr_establish(MCV_IE, &sc->sc_ih);
+		mcintr_establish(MCV_IE, &sc->sc_ih, self->dv_xname);
 		sys_mc->mc_ieirq = pri | MC_SC_SNOOP | MC_IRQ_IEN |
 		    MC_IRQ_ICLR;
-		mcintr_establish(MCV_IEFAIL, &sc->sc_failih);
+		mcintr_establish(MCV_IEFAIL, &sc->sc_failih,
+		    sc->sc_failintrname);
 		sys_mc->mc_iefailirq = pri | MC_IRQ_IEN | MC_IRQ_ICLR;
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-		pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
+		pcctwointr_establish(PCC2V_IE, &sc->sc_ih, self->dv_xname);
 		switch (cputyp) {
 #ifdef MVME172
 		case CPU_172:
@@ -508,15 +510,13 @@ ieattach(parent, self, aux)
 			sys_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
 			    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		}
-		pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih);
+		pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih,
+		    sc->sc_failintrname);
 		sys_pcc2->pcc2_iefailirq = pri | PCC2_IRQ_IEN |
 		    PCC2_IRQ_ICLR;
 		break;
 #endif
 	}
-
-	evcount_attach(&sc->sc_intrcnt, self->dv_xname,
-	    (void *)&sc->sc_ih.ih_ipl, &evcount_intr);
 }
 
 /*
@@ -629,7 +629,6 @@ loop:
 	if ((status = sc->scb->ie_status) & IE_ST_WHENCE)
 		goto loop;
 
-	sc->sc_intrcnt.ec_count++;
 	return 1;
 }
 

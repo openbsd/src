@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdsc.c,v 1.10 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: wdsc.c,v 1.11 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -58,17 +58,17 @@ extern void sbicinit(struct sbic_softc *);
 extern int sbicintr(struct sbic_softc *);
 
 struct scsi_adapter wdsc_scsiswitch = {
-    sbic_scsicmd,
-    sbic_minphys,
-    0,          /* no lun support */
-    0,          /* no lun support */
+	sbic_scsicmd,
+	sbic_minphys,
+	0,          /* no lun support */
+	0,          /* no lun support */
 };
 
 struct scsi_device wdsc_scsidev = {
-    NULL,       /* use default error handler */
-    NULL,       /* do not have a start functio */
-    NULL,       /* have no async handler */
-    NULL,       /* Use default done routine */
+	NULL,       /* use default error handler */
+	NULL,       /* do not have a start function */
+	NULL,       /* have no async handler */
+	NULL,       /* Use default done routine */
 };
 
 struct cfattach wdsc_ca = {
@@ -91,14 +91,14 @@ int         shift_nosync = 0;
  */
 int
 wdscmatch(pdp, cdp, auxp)
-    struct device *pdp;
-    struct cfdata *cdp;
-    void *auxp;
+	struct device *pdp;
+	struct cfdata *cdp;
+	void *auxp;
 {
-    /*
-     * Match everything
-     */
-    return(1);
+	/*
+	 * Match everything
+	 */
+	return(1);
 }
 
 
@@ -106,77 +106,76 @@ wdscmatch(pdp, cdp, auxp)
  * Attach the wdsc driver
  */
 void
-wdscattach(pdp, dp, auxp)
-    struct device *pdp, *dp;
-    void *auxp;
+wdscattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-    struct sbic_softc   *sc = (struct sbic_softc *)dp;
-    struct confargs *ca = auxp;
-    int tmp;
+	struct sbic_softc   *sc = (struct sbic_softc *)self;
+	struct confargs *ca = aux;
+	int tmp;
 
-    sc->sc_enintr  = wdsc_enintr;
-    sc->sc_dmago   = wdsc_dmago;
-    sc->sc_dmanext = wdsc_dmanext;
-    sc->sc_dmastop = wdsc_dmastop;
-    sc->sc_dmacmd  = 0;
+	sc->sc_enintr  = wdsc_enintr;
+	sc->sc_dmago   = wdsc_dmago;
+	sc->sc_dmanext = wdsc_dmanext;
+	sc->sc_dmastop = wdsc_dmastop;
+	sc->sc_dmacmd  = 0;
 
-    sc->sc_link.adapter_softc  = sc;
-    sc->sc_link.adapter_target = 7;
-    sc->sc_link.adapter        = &wdsc_scsiswitch;
-    sc->sc_link.device         = &wdsc_scsidev;
-    sc->sc_link.openings       = 2;
+	sc->sc_link.adapter_softc  = sc;
+	sc->sc_link.adapter_target = 7;
+	sc->sc_link.adapter        = &wdsc_scsiswitch;
+	sc->sc_link.device         = &wdsc_scsidev;
+	sc->sc_link.openings       = 2;
 
-    printf(": target %d\n", sc->sc_link.adapter_target);
+	printf(": SCSI ID %d\n", sc->sc_link.adapter_target);
 
-    sc->sc_sbicp = (sbic_regmap_p)ca->ca_vaddr;
+	sc->sc_sbicp = (sbic_regmap_p)ca->ca_vaddr;
 
-    /*
-     * Eveything is a valid dma address.
-     * 
-     */
-    sc->sc_dmamask = 0;
+	/*
+	 * Everything is a valid dma address.
+	 */
+	sc->sc_dmamask = 0;
 
-    /*
-     * The onboard WD33C93 of the '147 is usually clocked at 10MHz...
-     * (We use 10 times this for accuracy in later calculations)
-     */
-    sc->sc_clkfreq = 100;
+	/*
+	 * The onboard WD33C93 of the '147 is usually clocked at 10MHz...
+	 * (We use 10 times this for accuracy in later calculations)
+	 */
+	sc->sc_clkfreq = 100;
 
-    /*
-     * Initialise the hardware
-     */
-    sbicinit(sc);
+	/*
+	 * Initialize the hardware
+	 */
+	sbicinit(sc);
 
-    sc->sc_ipl = ca->ca_ipl;
+	sc->sc_ipl = ca->ca_ipl;
 
-    sys_pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_INT;
-    sys_pcc->pcc_dmairq = ca->ca_ipl | PCC_IRQ_INT;
-    sys_pcc->pcc_dmacsr  = 0;
+	sys_pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_INT;
+	sys_pcc->pcc_dmairq = ca->ca_ipl | PCC_IRQ_INT;
+	sys_pcc->pcc_dmacsr  = 0;
 
-    /*
-     * Fix up the interrupts
-     */
-    sc->sc_dmaih.ih_fn = wdsc_dmaintr;
-    sc->sc_dmaih.ih_arg = sc;
-    sc->sc_dmaih.ih_ipl = ca->ca_ipl;
-    pccintr_establish(PCCV_DMA, &sc->sc_dmaih);
+	/*
+	 * Fix up the interrupts
+	 */
+	sc->sc_dmaih.ih_fn = wdsc_dmaintr;
+	sc->sc_dmaih.ih_arg = sc;
+	sc->sc_dmaih.ih_ipl = ca->ca_ipl;
+	pccintr_establish(PCCV_DMA, &sc->sc_dmaih, self->dv_xname);
 
-    sc->sc_sbicih.ih_fn = wdsc_scsiintr;
-    sc->sc_sbicih.ih_arg = sc;
-    sc->sc_sbicih.ih_ipl = ca->ca_ipl;
-    pccintr_establish(PCCV_SBIC, &sc->sc_sbicih);
+	sc->sc_sbicih.ih_fn = wdsc_scsiintr;
+	sc->sc_sbicih.ih_arg = sc;
+	sc->sc_sbicih.ih_ipl = ca->ca_ipl;
+	pccintr_establish(PCCV_SBIC, &sc->sc_sbicih, self->dv_xname);
 
-    sys_pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
+	sys_pcc->pcc_sbicirq = ca->ca_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
 
-    /*
-     * Attach all scsi units on us, watching for boot device
-     * (see dk_establish).
-     */
-    tmp = bootpart;
-    if (ca->ca_paddr != bootaddr) 
-	bootpart = -1;		/* invalid flag to dk_establish */
-    config_found(dp, &sc->sc_link, scsiprint);
-    bootpart = tmp;		/* restore old value */
+	/*
+	 * Attach all scsi units on us, watching for boot device
+	 * (see dk_establish).
+	 */
+	tmp = bootpart;
+	if (ca->ca_paddr != bootaddr) 
+		bootpart = -1;
+	config_found(parent, &sc->sc_link, scsiprint);
+	bootpart = tmp;		/* restore old value */
 }
 
 /*
@@ -184,11 +183,11 @@ wdscattach(pdp, dp, auxp)
  */
 void
 wdsc_enintr(dev)
-    struct sbic_softc *dev;
+	struct sbic_softc *dev;
 {
-    dev->sc_flags |= SBICF_INTR;
+	dev->sc_flags |= SBICF_INTR;
 
-    sys_pcc->pcc_dmairq = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
+	sys_pcc->pcc_dmairq = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
 }
 
 /*
@@ -196,33 +195,33 @@ wdsc_enintr(dev)
  */
 int
 wdsc_dmago(dev, addr, count, flags)
-    struct sbic_softc *dev;
-    char *addr;
-    int count, flags;
+	struct sbic_softc *dev;
+	char *addr;
+	int count, flags;
 {
-    /*
-     * Set up the command word based on flags
-     */
-    if ( (flags & DMAGO_READ) == 0 )
-        dev->sc_dmacmd = DMAC_CSR_ENABLE | DMAC_CSR_WRITE;
-    else
-        dev->sc_dmacmd = DMAC_CSR_ENABLE;
+	/*
+	 * Set up the command word based on flags
+	 */
+	if ((flags & DMAGO_READ) == 0)
+		dev->sc_dmacmd = DMAC_CSR_ENABLE | DMAC_CSR_WRITE;
+	else
+		dev->sc_dmacmd = DMAC_CSR_ENABLE;
 
-    dev->sc_flags |= SBICF_INTR;
-    dev->sc_tcnt   = dev->sc_cur->dc_count << 1;
+	dev->sc_flags |= SBICF_INTR;
+	dev->sc_tcnt   = dev->sc_cur->dc_count << 1;
 
-    /*
-     * Prime the hardware.
-     * Note, it's probably not necessary to do this here, since dmanext
-     * is called just prior to the actual transfer.
-     */
-    sys_pcc->pcc_dmacsr   = 0;
-    sys_pcc->pcc_dmairq   = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
-    sys_pcc->pcc_dmadaddr = (unsigned long)dev->sc_cur->dc_addr;
-    sys_pcc->pcc_dmabcnt  = (unsigned long)dev->sc_tcnt | (1 << 24);
-    sys_pcc->pcc_dmacsr   = dev->sc_dmacmd;
+	/*
+	 * Prime the hardware.
+	 * Note, it's probably not necessary to do this here, since dmanext
+	 * is called just prior to the actual transfer.
+	 */
+	sys_pcc->pcc_dmacsr   = 0;
+	sys_pcc->pcc_dmairq   = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
+	sys_pcc->pcc_dmadaddr = (unsigned long)dev->sc_cur->dc_addr;
+	sys_pcc->pcc_dmabcnt  = (unsigned long)dev->sc_tcnt | (1 << 24);
+	sys_pcc->pcc_dmacsr   = dev->sc_dmacmd;
 
-    return(dev->sc_tcnt);
+	return dev->sc_tcnt;
 }
 
 /*
@@ -230,29 +229,29 @@ wdsc_dmago(dev, addr, count, flags)
  */
 int
 wdsc_dmanext(dev)
-    struct sbic_softc *dev;
+	struct sbic_softc *dev;
 {
-    if ( dev->sc_cur > dev->sc_last ) {
-        /*
-         * Shouldn't happen !!
-         */
-        printf("wdsc_dmanext at end !!!\n");
-        wdsc_dmastop(dev);
-        return(0);
-    }
+	if (dev->sc_cur > dev->sc_last) {
+		/*
+		 * Shouldn't happen !!
+		 */
+		printf("wdsc_dmanext at end !!!\n");
+		wdsc_dmastop(dev);
+		return 0;
+	}
 
-    dev->sc_tcnt = dev->sc_cur->dc_count << 1;
+	dev->sc_tcnt = dev->sc_cur->dc_count << 1;
 
-    /* 
-     * Load the next DMA address
-     */
-    sys_pcc->pcc_dmacsr   = 0;
-    sys_pcc->pcc_dmairq   = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
-    sys_pcc->pcc_dmadaddr = (unsigned long)dev->sc_cur->dc_addr;
-    sys_pcc->pcc_dmabcnt  = (unsigned long)dev->sc_tcnt | (1 << 24);
-    sys_pcc->pcc_dmacsr   = dev->sc_dmacmd;
+	/* 
+	 * Load the next DMA address
+	 */
+	sys_pcc->pcc_dmacsr   = 0;
+	sys_pcc->pcc_dmairq   = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
+	sys_pcc->pcc_dmadaddr = (unsigned long)dev->sc_cur->dc_addr;
+	sys_pcc->pcc_dmabcnt  = (unsigned long)dev->sc_tcnt | (1 << 24);
+	sys_pcc->pcc_dmacsr   = dev->sc_dmacmd;
 
-    return(dev->sc_tcnt);
+	return dev->sc_tcnt;
 }
 
 /*
@@ -260,16 +259,16 @@ wdsc_dmanext(dev)
  */
 void
 wdsc_dmastop(dev)
-    struct sbic_softc *dev;
+	struct sbic_softc *dev;
 {
-    int                 s;
+	int s;
 
-    s = splbio();
+	s = splbio();
 
-    sys_pcc->pcc_dmacsr    = 0;
-    sys_pcc->pcc_dmairq    = dev->sc_ipl | PCC_IRQ_INT;
+	sys_pcc->pcc_dmacsr    = 0;
+	sys_pcc->pcc_dmairq    = dev->sc_ipl | PCC_IRQ_INT;
 
-    splx(s);
+	splx(s);
 }
 
 /*
@@ -279,26 +278,26 @@ int
 wdsc_dmaintr(arg)
 	void *arg;
 {
-    struct sbic_softc *dev = (struct sbic_softc *)arg;
-    int                 found = 0;
+	struct sbic_softc *dev = (struct sbic_softc *)arg;
+	int found = 0;
 
-    /*
-     * Really a DMA interrupt?
-     */
-    if ( (sys_pcc->pcc_dmairq & PCC_IRQ_INT) == 0 )
-        return(0);
+	/*
+	 * Really a DMA interrupt?
+	 */
+	if ((sys_pcc->pcc_dmairq & PCC_IRQ_INT) == 0)
+		return 0;
 
-    /*
-     * Was it a completion interrupt?
-     * XXXSCW Note: Support for other DMA interrupts is required, eg. buserr
-     */
-    if ( sys_pcc->pcc_dmacsr & DMAC_CSR_DONE ) {
-        ++found;
+	/*
+	 * Was it a completion interrupt?
+	 * XXXSCW Note: Support for other DMA interrupts is required, eg. buserr
+	 */
+	if (sys_pcc->pcc_dmacsr & DMAC_CSR_DONE) {
+		++found;
 
-        sys_pcc->pcc_dmairq = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
-    }
+		sys_pcc->pcc_dmairq = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
+	}
 
-    return(found);
+	return found;
 }
 
 /*
@@ -308,24 +307,24 @@ int
 wdsc_scsiintr(arg)
 	void *arg;
 {
-    struct sbic_softc *dev = (struct sbic_softc *)arg;
-    int                 found;
+	struct sbic_softc *dev = (struct sbic_softc *)arg;
+	int found;
 
-    /*
-     * Really a SCSI interrupt?
-     */
-    if ( (sys_pcc->pcc_sbicirq & PCC_IRQ_INT) == 0 )
-        return(0);
+	/*
+	 * Really a SCSI interrupt?
+	 */
+	if ((sys_pcc->pcc_sbicirq & PCC_IRQ_INT) == 0)
+		return 0;
 
-    /*
-     * Go handle it
-     */
-    found = sbicintr(dev);
+	/*
+	 * Go handle it
+	 */
+	found = sbicintr(dev);
 
-    /*
-     * Acknowledge and clear the interrupt
-     */
-    sys_pcc->pcc_sbicirq = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
+	/*
+	 * Acknowledge and clear the interrupt
+	 */
+	sys_pcc->pcc_sbicirq = dev->sc_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
 
-    return(found);
+	return found;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicdma.c,v 1.10 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: sbicdma.c,v 1.11 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -126,12 +126,12 @@ sbicdmaattach(parent, self, args)
 	sc->sc_ih.ih_fn = sbicdma_scintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
-	pccintr_establish(PCCV_SBIC, &sc->sc_ih);
+	pccintr_establish(PCCV_SBIC, &sc->sc_ih, self->dv_xname);
 
 	sc->sc_dmaih.ih_fn = sbicdma_dmaintr;
 	sc->sc_dmaih.ih_arg = sc;
 	sc->sc_dmaih.ih_ipl = ca->ca_ipl;
-	pccintr_establish(PCCV_DMA, &sc->sc_dmaih);
+	pccintr_establish(PCCV_DMA, &sc->sc_dmaih, self->dv_xname);
 
 	sys_pcc->pcc_dmairq = sc->sc_dmaih.ih_ipl | PCC_IRQ_INT;
 	sys_pcc->pcc_sbicirq = sc->sc_ih.ih_ipl | PCC_SBIC_RESETIRQ;

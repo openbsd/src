@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.c,v 1.9 2004/07/02 17:57:29 miod Exp $ */
+/*	$OpenBSD: lp.c,v 1.10 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -86,7 +86,7 @@ lpattach(parent, self, args)
 	sc->sc_ih.ih_fn = lpintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
-	pccintr_establish(PCCV_PRINTER, &sc->sc_ih);
+	pccintr_establish(PCCV_PRINTER, &sc->sc_ih, self->dv_xname);
 
 	sys_pcc->pcc_lpirq = ca->ca_ipl | PCC_IRQ_IEN | PCC_LPIRQ_ACK;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.28 2004/07/30 09:50:15 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.29 2004/07/30 22:29:45 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -40,7 +40,6 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/evcount.h>
 
 #include <net/if.h>
 
@@ -402,19 +401,16 @@ leattach(parent, self, aux)
 		lesc->sc_ih.ih_fn = vle_intr;
 		lesc->sc_ih.ih_arg = sc;
 		lesc->sc_ih.ih_ipl = pri;
-		vmeintr_establish(ca->ca_vec + 0, &lesc->sc_ih);
+		vmeintr_establish(ca->ca_vec + 0, &lesc->sc_ih, self->dv_xname);
 		break;
 #if NPCC > 0
 	case BUS_PCC:
 		lesc->sc_ih.ih_fn = am7990_intr;
 		lesc->sc_ih.ih_arg = sc;
 		lesc->sc_ih.ih_ipl = pri;
-		pccintr_establish(PCCV_LE, &lesc->sc_ih);
+		pccintr_establish(PCCV_LE, &lesc->sc_ih, self->dv_xname);
 		sys_pcc->pcc_leirq = pri | PCC_IRQ_IEN;
 		break;
 #endif
 	}
-
-	evcount_attach(&lesc->sc_intrcnt, self->dv_xname,
-	    (void *)&lesc->sc_ih.ih_ipl, &evcount_intr);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.21 2004/07/02 18:02:13 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.22 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -391,9 +391,10 @@ vmeattach(parent, self, args)
  * interrupt. If you share you will lose.
  */
 int
-vmeintr_establish(vec, ih)
+vmeintr_establish(vec, ih, name)
 	int vec;
 	struct intrhand *ih;
+	const char *name;
 {
 	struct vmesoftc *sc = (struct vmesoftc *) vme_cd.cd_devs[0];
 #if NPCC > 0
@@ -404,7 +405,7 @@ vmeintr_establish(vec, ih)
 #endif
 	int x;
 
-	x = (intr_establish(vec, ih));
+	x = intr_establish(vec, ih, name);
 
 	switch (vmebustype) {
 #if NPCC > 0
@@ -506,7 +507,7 @@ vme2chip_init(sc)
 		sc->sc_abih.ih_ipl = 7;
 		sc->sc_abih.ih_wantframe = 1;
 
-		intr_establish(110, &sc->sc_abih);	/* XXX 110 */
+		intr_establish(110, &sc->sc_abih, sc->sc_dev.dv_xname);	/* XXX 110 */
 		vme2->vme2_irqen |= VME2_IRQ_AB;
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.85 2004/07/30 09:50:18 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.86 2004/07/30 22:29:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -193,7 +193,6 @@ void initvectors(void);
 void mvme68k_init(void);
 void identifycpu(void);
 int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
-void halt_establish(void (*)(void), int);
 void dumpconf(void);
 void straytrap(int, u_short);
 void netintr(void *);
@@ -657,54 +656,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 int   waittime = -1;
 
-static struct haltvec *halts;
-
-/* XXX insert by priority */
-void
-halt_establish(fn, pri)
-	void (*fn)(void);
-	int pri;
-{
-	struct haltvec *hv, *h;
-
-	hv = (struct haltvec *)malloc(sizeof(*hv), M_TEMP, M_NOWAIT);
-	if (hv == NULL)
-		return;
-	hv->hv_fn = fn;
-	hv->hv_pri = pri;
-	hv->hv_next = NULL;
-
-	/* put higher priorities earlier in the list */
-	h = halts;
-	if (h == NULL) {
-		halts = hv;
-		return;
-	}
-
-	if (h->hv_pri < pri) {
-		/* higher than first element */
-		hv->hv_next = halts;
-		halts = hv;
-		return;
-	}
-
-	while (h) {
-		if (h->hv_next == NULL) {
-			/* no more elements, must be the lowest priority */
-			h->hv_next = hv;
-			return;
-		}
-
-		if (h->hv_next->hv_pri < pri) {
-			/* next element is lower */
-			hv->hv_next = h->hv_next;
-			h->hv_next = hv;
-			return;
-		}
-		h = h->hv_next;
-	}
-}
-
 __dead void
 boot(howto)
 	int howto;
@@ -755,10 +706,6 @@ haltsys:
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
 	} else {
-		struct haltvec *hv;
-
-		for (hv = halts; hv; hv = hv->hv_next)
-			(*hv->hv_fn)();
 		doboot();
 	}
 	for (;;);
@@ -1002,8 +949,8 @@ straytrap(pc, evec)
 	int pc;
 	u_short evec;
 {
-	printf("unexpected trap (vector %d) from %x\n",
-			 (evec & 0xFFF) >> 2, pc);
+	printf("unexpected trap (vector 0x%x) from %x\n",
+	    (evec & 0xFFF) >> 2, pc);
 }
 
 int   *nofault;

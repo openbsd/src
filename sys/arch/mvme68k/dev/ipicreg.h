@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipicreg.h,v 1.5 2003/06/02 05:09:14 deraadt Exp $ */
+/*	$OpenBSD: ipicreg.h,v 1.6 2004/07/30 22:29:45 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -108,4 +108,4 @@ struct ipicsoftc {
 	int		sc_nip;
 };
 
-int ipicintr_establish(int, struct intrhand *);
+int ipicintr_establish(int, struct intrhand *, const char *);
