@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-nroff,v 1.2 1996/08/24 07:47:08 etheisen Exp $
+.\"	$OpenBSD: doc-nroff,v 1.3 2003/03/01 21:13:38 jason Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@
 .ds Lt <
 .ds Gt >
 .ds Pm +-
-.ds If infinity
+.ds If Infinity
 .ds Na \fINaN\fP
 .ds Ba \fR\&|\fP
 
