@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.21 2002/04/01 00:34:07 miod Exp $	*/
+/*	$OpenBSD: theo.c,v 1.22 2002/06/08 09:10:06 beck Exp $	*/
 
 #include "def.h"
 #include "kbd.h"
@@ -82,7 +82,8 @@ static const char *talk[] = {
 	"if they cut you out, muddy their back yards",
 	"Make them want to start over, and play nice the next time.",
 	"It is clear that this has not been thought through.",
-	"if you do not test that, you are banned from editing theo.c"
+	"if you do not test that, you are banned from editing theo.c",
+	"That's the most ridiculous thing I've heard in the last two or three minutes!"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
