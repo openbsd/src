@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.18 1998/08/06 19:34:54 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.19 1999/01/10 23:21:19 art Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -485,10 +485,10 @@ msdosfs_read(v)
 			return (error);
 		}
 		error = uiomove(bp->b_data + on, (int) n, uio);
-		if (!isadir)
-			dep->de_flag |= DE_ACCESS;
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
+	if (!isadir && !(vp->v_mount->mnt_flag & MNT_NOATIME))
+		dep->de_flag |= DE_ACCESS;
 	return (error);
 }
 
