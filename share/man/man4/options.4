@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.141 2004/05/03 15:18:19 drahn Exp $
+.\"	$OpenBSD: options.4,v 1.142 2004/05/05 00:23:29 millert Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -77,6 +77,19 @@ system calls which were replaced in
 when
 .Li struct stat
 was expanded.
+.It Cd option COMPAT_35
+Enables compatibility with
+.Ox 3.5 .
+This makes it possible to run binaries that use old versions of the
+.Xr semop 2
+and
+.Xr shmget 2
+system calls which were replaced in
+.Ox 3.6
+when
+.Li struct stat
+their arguments were changed to match
+.St -p1003.1-2003 .
 .It Cd option COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
