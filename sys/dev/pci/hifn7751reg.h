@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.16 2000/10/26 00:41:26 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.17 2000/12/12 21:30:34 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -87,13 +87,6 @@ typedef struct hifn_desc {
 #define	HIFN_D_LAST		0x20000000	/* last descriptor in chain */
 #define	HIFN_D_JUMP		0x40000000	/* jump descriptor */
 #define	HIFN_D_VALID		0x80000000	/* valid bit */
-
-/*
- * hifn_callback_t 
- *
- * Type for callback function when dest data is ready.
- */
-typedef void (*hifn_callback_t)(hifn_command_t *);
 
 /*
  * Data structure to hold all 4 rings and any other ring related data.
@@ -247,7 +240,7 @@ struct hifn_softc {
  */
 #define	HIFN_1_DMA_CRAR		0x0c	/* DMA Command Ring Address */
 #define	HIFN_1_DMA_SRAR		0x1c	/* DMA Source Ring Address */
-#define	HIFN_1_DMA_RRAR		0x2c	/* DMA Resultt Ring Address */
+#define	HIFN_1_DMA_RRAR		0x2c	/* DMA Result Ring Address */
 #define	HIFN_1_DMA_DRAR		0x3c	/* DMA Destination Ring Address */
 #define	HIFN_1_DMA_CSR		0x40	/* DMA Status and Control */
 #define	HIFN_1_DMA_IER		0x44	/* DMA Interrupt Enable */
