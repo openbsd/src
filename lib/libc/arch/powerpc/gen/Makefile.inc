@@ -1,1 +1,3 @@
-SRCS+= isinf.c infinity.c setjmp.S sigsetjmp.S flt_rounds.c modf.c ldexp.c fabs.c
+SRCS+= isinf.c infinity.c setjmp.S sigsetjmp.S flt_rounds.c modf.c
+SRCS+= ldexp.c fabs.c
+SRCS+= fp.c
