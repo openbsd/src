@@ -859,7 +859,7 @@
 #define PACKAGE "krb4"
 
 /* Version number of package */
-#define VERSION "1.0.2"
+#define VERSION "1.0.4"
 
 /* Define to what version of SunOS you are running. */
 /* #undef SunOS */

@@ -1,6 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.11 2000/05/15 18:24:43 hin Exp $
-
-KRBVERSION = "krb4-1.0"
+# $OpenBSD: Makefile.inc,v 1.12 2001/05/03 19:21:51 hin Exp $
 
 KRBDIR	= ${.CURDIR}/${KRBDEPTH}
 KRBSRC	= ${.CURDIR}/${KRBDEPTH}/src
