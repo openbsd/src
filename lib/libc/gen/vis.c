@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vis.c,v 1.6 2000/11/21 00:47:28 millert Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.7 2001/08/13 15:30:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -166,6 +166,7 @@ strvis(dst, src, flag)
 
 	for (start = dst; (c = *src);)
 		dst = vis(dst, c, flag, *++src);
+	*dst = '\0';
 	return (dst - start);
 }
 
@@ -227,5 +228,6 @@ strvisx(dst, src, len, flag)
 	}
 	if (len)
 		dst = vis(dst, *src, flag, '\0');
+	*dst = '\0';
 	return (dst - start);
 }
