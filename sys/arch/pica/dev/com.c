@@ -376,7 +376,7 @@ comclose(dev, flag, mode, p)
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	s = spltty();
-	bic(iobase + com_cfcr, CFCR_SBREAK);
+	bic(iobase + com_cfcr, LCR_SBREAK);
 	outb(iobase + com_ier, 0);
 	if (tp->t_cflag & HUPCL &&
 	    (sc->sc_swflags & COM_SW_SOFTCAR) == 0) {
@@ -467,10 +467,10 @@ comioctl(dev, cmd, data, flag, p)
 
 	switch (cmd) {
 	case TIOCSBRK:
-		bis(iobase + com_cfcr, CFCR_SBREAK);
+		bis(iobase + com_cfcr, LCR_SBREAK);
 		break;
 	case TIOCCBRK:
-		bic(iobase + com_cfcr, CFCR_SBREAK);
+		bic(iobase + com_cfcr, LCR_SBREAK);
 		break;
 	case TIOCSDTR:
 		outb(iobase + com_mcr, sc->sc_mcr |= sc->sc_dtr);
@@ -572,25 +572,25 @@ comparam(tp, t)
 
 	switch (t->c_cflag & CSIZE) {
 	case CS5:
-		cfcr = CFCR_5BITS;
+		cfcr = LCR_5BITS;
 		break;
 	case CS6:
-		cfcr = CFCR_6BITS;
+		cfcr = LCR_6BITS;
 		break;
 	case CS7:
-		cfcr = CFCR_7BITS;
+		cfcr = LCR_7BITS;
 		break;
 	case CS8:
-		cfcr = CFCR_8BITS;
+		cfcr = LCR_8BITS;
 		break;
 	}
 	if (t->c_cflag & PARENB) {
-		cfcr |= CFCR_PENAB;
+		cfcr |= LCR_PENAB;
 		if ((t->c_cflag & PARODD) == 0)
-			cfcr |= CFCR_PEVEN;
+			cfcr |= LCR_PEVEN;
 	}
 	if (t->c_cflag & CSTOPB)
-		cfcr |= CFCR_STOPB;
+		cfcr |= LCR_STOPB;
 
 	s = spltty();
 
@@ -609,7 +609,7 @@ comparam(tp, t)
 	}
 
 	if (ospeed != 0) {
-		outb(iobase + com_cfcr, cfcr | CFCR_DLAB);
+		outb(iobase + com_cfcr, cfcr | LCR_DLAB);
 		outb(iobase + com_dlbl, ospeed);
 		outb(iobase + com_dlbh, ospeed >> 8);
 		outb(iobase + com_cfcr, cfcr);
@@ -931,11 +931,11 @@ cominit(unit, rate)
 	long iobase = CONADDR;
 	u_char stat;
 
-	outb(iobase + com_cfcr, CFCR_DLAB);
+	outb(iobase + com_cfcr, LCR_DLAB);
 	rate = comspeed(comdefaultrate);
 	outb(iobase + com_dlbl, rate);
 	outb(iobase + com_dlbh, rate >> 8);
-	outb(iobase + com_cfcr, CFCR_8BITS);
+	outb(iobase + com_cfcr, LCR_8BITS);
 	outb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY);
 	outb(iobase + com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
 	stat = inb(iobase + com_iir);
