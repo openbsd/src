@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.15 2001/02/24 19:07:09 csapuntz Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.16 2001/02/24 23:50:00 csapuntz Exp $  */
 
 /*
  *  Portions of this code are:
@@ -124,14 +124,13 @@ vn_syncer_add_to_worklist(vp, delay)
 {
 	int s, slot;
 
-	s = splbio();
-
-	if (vp->v_bioflag & VBIOONSYNCLIST)
-		LIST_REMOVE(vp, v_synclist);
-
 	if (delay > syncer_maxdelay - 2)
 		delay = syncer_maxdelay - 2;
 	slot = (syncer_delayno + delay) & syncer_mask;
+
+	s = splbio();
+	if (vp->v_bioflag & VBIOONSYNCLIST)
+		LIST_REMOVE(vp, v_synclist);
 
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
 	vp->v_bioflag |= VBIOONSYNCLIST;
@@ -159,13 +158,13 @@ sched_sync(p)
 		/*
 		 * Push files whose dirty time has expired.
 		 */
-		s = splbio();
 		slp = &syncer_workitem_pending[syncer_delayno];
 		syncer_delayno += 1;
 		if (syncer_delayno == syncer_maxdelay)
 			syncer_delayno = 0;
-		splx(s);
+		s = splbio();
 		while ((vp = LIST_FIRST(slp)) != NULL) {
+			splx(s);
 			if (VOP_ISLOCKED(vp) == 0) {
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 				(void) VOP_FSYNC(vp, p->p_ucred, MNT_LAZY, p);
@@ -190,8 +189,9 @@ sched_sync(p)
 				 */
 				vn_syncer_add_to_worklist(vp, syncdelay);
 			}
-			splx(s);
 		}
+
+		splx(s);
 
 #ifdef FFS_SOFTUPDATES
 		/*
