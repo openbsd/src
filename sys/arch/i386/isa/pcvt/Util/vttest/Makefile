@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2000/05/25 21:54:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2000/05/27 05:52:12 deraadt Exp $
 
 .if ${MACHINE} == "i386"
 PROG=		vttest
@@ -8,7 +8,7 @@ SRCS=		main.c esc.c
 NOPROG=yes
 .endif
 
-MAN=		vttest.1
+MAN1=		vttest.1
 MANSUBDIR=	/i386
 
 .include <bsd.prog.mk>

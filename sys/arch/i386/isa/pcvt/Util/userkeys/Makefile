@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2000/05/25 21:54:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2000/05/27 05:52:12 deraadt Exp $
 
 .if ${MACHINE} == "i386"
 PROG=		vt220keys
@@ -6,7 +6,7 @@ PROG=		vt220keys
 NOPROG=yes
 .endif
 
-MAN=vt220keys.1
+MAN1=vt220keys.1
 MANSUBDIR=/i386
 
 .include <bsd.prog.mk>
