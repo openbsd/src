@@ -1,4 +1,4 @@
-/* $OpenBSD: isa_machdep.c,v 1.10 2002/01/23 05:06:40 ericj Exp $ */
+/* $OpenBSD: isa_machdep.c,v 1.11 2002/01/24 19:52:48 miod Exp $ */
 /* $NetBSD: isa_machdep.c,v 1.12 1998/08/07 10:26:39 drochner Exp $ */
 
 /*
@@ -103,14 +103,12 @@ isabeepattach(parent, self, aux)
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	ppi_attached = 1;
 }
-#endif
 
 void
 isabeep(pitch, period)
 	int pitch, period;
 {
-#if (NPCPPI > 0)
 	if (ppi_attached)
 		pcppi_bell(ppicookie, pitch, period, 0);
-#endif
 }
+#endif
