@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.33 2000/04/04 20:09:56 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.34 2000/04/19 09:18:15 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -71,6 +71,7 @@ vendor LASAT			0x3401	Lasat
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor DUAL			0x890f	Dual
 vendor COMPEX			0x8a01	Compex
+vendor MELCO			0x8a01	Melco Corporation
 vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
@@ -172,6 +173,9 @@ product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps
 product MEGAHERTZ2 XJEM1144	0x0101 Megahertz X-JACK
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK
 
+/* Melco */
+product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
+
 /* Motorola */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4
 product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD
@@ -242,23 +246,25 @@ vendor SVEC			-1	SVEC/Hawking
 vendor AMBICOM			-1	AmbiCom
 vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
-vendor MELCO			-1	Melco Inc
+vendor ICOM			-1	ICOM Inc
+vendor BILLIONTON		-1	Billionton Systems Inc.
+vendor AMD			-1	AMD
 vendor EDIMAX			-1	Edimax
 vendor CNET			-1	CNet
 vendor SHUTTLE			-1	Shuttle
-vendor ICOM			-1	ICOM Inc
-vendor AMD			-1	AMD
 
 product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL }
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL }
 product PLANET SMARTCOM2000	{ "PCMCIA", "UE2212", NULL, NULL }
 /*
- * vendor ID of FNW-3600-T is LINKSYS(0x0149) and product ID is 0xc1ab, but
- * it conflicts with LINKSYS Combo EthernetCard.
+ * vendor ID of both FNW-3600-T and FNW-3700-T is LINKSYS (0x0149) and
+ * product ID is 0xc1ab, but it conflicts with LINKSYS Combo EthernetCard.
  */
-product PLANEX FNW3600T		-1 Planex FNW-3600-T
+product PLANEX FNW3600T		-1
+product PLANEX FNW3700T		-1
 product DLINK DE650		{ "D-Link", "DE-650", NULL, NULL }
 product DLINK DE660		{ "D-Link", "DE-660", NULL, NULL }
+product RPTI EP400		{ "RPTI&spLTD.", "EP400", "CISV100", NULL }
 product RPTI EP401		{ "RPTI", "EP401&spEthernet&spNE2000&spCompatible", NULL, NULL }
 product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL }
 product YEDATA EXTERNAL_FDD	{ "Y-E&spDATA", "External&spFDD", NULL, NULL }
@@ -268,23 +274,26 @@ product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL }
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL }
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL }
 product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL }
+product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11", NULL, NULL }
 product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL }
 product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL }
 /*
- * vendor ID of PN650TX is LINKSYS(0x0149) and product ID is 0xc1ab, but
+ * vendor ID of PN650TX is LINKSYS (0x0149) and product ID is 0xc1ab, but
  * it conflicts with LINKSYS Combo EthernetCard.
  */
-product SVEC PN650TX		-1 SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card
+product SVEC PN650TX		-1
 product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL }
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL }
 product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRev.&sp00", NULL }
 product EXP EXPMULTIMEDIA	{ "EXP&sp&sp&sp", "PnPIDE", "F1", NULL }
-product MELCO WLI_PCM		{ "AMD", "Am79C930", NULL, NULL }
+product AMD AM79C930		{ "AMD", "Am79C930", NULL, NULL }
+product ICOM SL200		{ "Icom", "SL-200", NULL, NULL }
+product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" }
+product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL }
+product NDC ND5100_E		{ "NDC", "Ethernet", "A", NULL } 
 product PROXIM RL2_7200		{ "PROXIM", "LAN&spCARD", "RANGELAN2", NULL }
 product PROXIM RL2_7400		{ "PROXIM", "LAN&spPC&spCARD", "RANGELAN2", NULL }
 product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL }
 product EDIMAX NE2000		{ "PCMCIA", "Ethernet", NULL, NULL }
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" }
 product SHUTTLE IDE_ATAPI	{ "SHUTTLE&spTECHNOLOGY&spLTD.", "PCCARD-IDE/ATAPI&spAdapter", NULL, NULL }
-product ICOM SL200	{ "Icom", "SL-200", NULL, NULL }
-product AMD AM79C930	{ "AMD", "Am79C930", NULL, NULL }
