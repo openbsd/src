@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.4 1996/10/26 03:13:52 tholo Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.5 1996/10/26 06:54:43 tholo Exp $	*/
 /*	$NetBSD: unistd.h,v 1.10 1994/06/29 06:46:06 cgd Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
-#define	_POSIX_VDISABLE		'\377'
+#define	_POSIX_VDISABLE		(0377)
 
 /* access function */
 #define	F_OK		0	/* test for existence of file */

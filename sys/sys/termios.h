@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.h,v 1.4 1996/10/26 03:13:51 tholo Exp $	*/
+/*	$OpenBSD: termios.h,v 1.5 1996/10/26 06:54:42 tholo Exp $	*/
 /*	$NetBSD: termios.h,v 1.14 1996/04/09 20:55:41 cgd Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #endif
 #define	NCCS		20
 
-#define _POSIX_VDISABLE	'\377'
+#define _POSIX_VDISABLE	(0377)
 
 #ifndef _POSIX_SOURCE
 #define CCEQ(val, c)	(c == val ? val != _POSIX_VDISABLE : 0)
