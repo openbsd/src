@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.243 2004/04/26 02:00:57 deraadt Exp $
+#	$OpenBSD: rc,v 1.244 2004/04/27 22:51:28 markus Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -435,6 +435,19 @@ fi
 if [ ! -f /etc/ssh/ssh_host_key ]; then
 	echo -n "ssh-keygen: generating new RSA1 host key... "
 	if /usr/bin/ssh-keygen -q -t rsa1 -f /etc/ssh/ssh_host_key -N ''; then
+		echo done.
+	else
+		echo failed.
+	fi
+fi
+
+if [ ! -f /etc/isakmpd/private/local.key ]; then
+	echo -n "openssl: generating new isakmpd RSA key... "
+	if /usr/sbin/openssl genrsa -out /etc/isakmpd/private/local.key 1024 \
+	    > /dev/null 2>&1; then
+		chmod 600 /etc/isakmpd/private/local.key
+		openssl rsa -out /etc/isakmpd/private/local.pub \
+		    -in /etc/isakmpd/private/local.key -pubout > /dev/null 2>&1
 		echo done.
 	else
 		echo failed.
