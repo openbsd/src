@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.95 2004/06/16 15:05:37 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.96 2004/06/17 19:39:38 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1816,7 +1816,9 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 	*id = constant_value(ipsec_id_cst, type);
 	switch (*id) {
 	case IPSEC_ID_IPV4_ADDR:
-	case IPSEC_ID_IPV6_ADDR:
+	case IPSEC_ID_IPV6_ADDR: {
+		int ret;
+
 		address = conf_get_str(section, "Address");
 		if (!address) {
 			log_print("ipsec_get_id: section %s has no "
@@ -1828,7 +1830,12 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 			    "section %s", address, section);
 			return -1;
 		}
-		return ipsec_get_proto_port(section, tproto, port);
+		ret = ipsec_get_proto_port(section, tproto, port);
+		if (ret < 0)
+			free(*addr);
+
+		return ret;
+	}
 
 #ifdef notyet
 	case IPSEC_ID_FQDN:
@@ -1839,7 +1846,9 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 #endif
 
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
-	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	case IPSEC_ID_IPV6_ADDR_SUBNET: {
+		int ret;
+
 		address = conf_get_str(section, "Network");
 		if (!address) {
 			log_print("ipsec_get_id: section %s has no "
@@ -1855,14 +1864,22 @@ ipsec_get_id(char *section, int *id, struct sockaddr **addr,
 		if (!netmask) {
 			log_print("ipsec_get_id: section %s has no "
 			    "\"Netmask\" tag", section);
+			free(*addr);
 			return -1;
 		}
 		if (text2sockaddr(netmask, NULL, mask)) {
 			log_print("ipsec_id_build: invalid section %s "
 			    "network %s", section, netmask);
+			free(*addr);
 			return -1;
 		}
-		return ipsec_get_proto_port(section, tproto, port);
+		ret = ipsec_get_proto_port(section, tproto, port);
+		if (ret < 0) {
+			free(*mask);
+			free(*addr);
+		}
+		return ret;
+	}
 
 #ifdef notyet
 	case IPSEC_ID_IPV4_RANGE:
@@ -2019,6 +2036,9 @@ ipsec_build_id(char *section, size_t *sz)
 	if (!p) {
 		log_print("ipsec_build_id: malloc(%lu) failed",
 		    (unsigned long)*sz);
+		if (subnet)
+			free(mask);
+		free(addr);
 		return 0;
 	}
 	SET_ISAKMP_ID_TYPE(p, id);
@@ -2033,6 +2053,9 @@ ipsec_build_id(char *section, size_t *sz)
 	SET_IPSEC_ID_PROTO(p + ISAKMP_ID_DOI_DATA_OFF, tproto);
 	SET_IPSEC_ID_PORT(p + ISAKMP_ID_DOI_DATA_OFF, port);
 
+	if (subnet)
+		free(mask);
+	free(addr);
 	return p;
 }
 
