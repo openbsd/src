@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.54 2000/04/18 06:34:18 csapuntz Exp $	*/
+/*	$OpenBSD: cd.c,v 1.55 2000/07/18 06:09:00 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1320,16 +1320,14 @@ cd_size(cd, flags)
 	struct scsi_read_cd_capacity scsi_cmd;
 	int blksize;
 	u_long size;
+	
+	/* Reasonable defaults for drives that don't support
+	   READ_CD_CAPCITY */
+	cd->params.blksize = 2048;
+	cd->params.disksize = 400000;
 
-	if (cd->sc_link->quirks & ADEV_NOCAPACITY) {
-		/*
-		 * the drive doesn't support the READ_CD_CAPACITY command
-		 * use a fake size
-		 */
-		cd->params.blksize = 2048;
-		cd->params.disksize = 400000;
-		return (400000);
-	}
+	if (cd->sc_link->quirks & ADEV_NOCAPACITY)
+		goto exit;
 
 	/*
 	 * make up a scsi command and ask the scsi driver to do
@@ -1346,7 +1344,7 @@ cd_size(cd, flags)
 	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),
 	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
 	    flags | SCSI_DATA_IN) != 0)
-		return (0);
+		goto exit;
 
 	blksize = _4btol(rdcap.length);
 	if ((blksize < 512) || ((blksize & 511) != 0))
@@ -1358,8 +1356,9 @@ cd_size(cd, flags)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
 
+ exit:
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_size: %d %ld\n", blksize, size));
-	return (size);
+	return (cd->params.disksize);
 }
 
 
