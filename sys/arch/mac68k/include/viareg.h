@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.12 2004/12/01 21:19:12 miod Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.13 2004/12/08 06:59:45 miod Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -190,6 +190,17 @@ extern int VIA2;
 #define vDirA_ADBState	0x30
 
 #ifdef _KERNEL
+/* VIA2 interrupts may be shared */
+struct via2hand {
+	SLIST_ENTRY(via2hand)	v2h_link;
+	struct intrhand 	v2h_ih;
+#define	vh_fn		v2h_ih.ih_fn
+#define	vh_arg		v2h_ih.ih_arg
+#define	vh_ipl		v2h_ih.ih_ipl
+#define	vh_count	v2h_ih.ih_count
+};
+typedef SLIST_HEAD(, via2hand)	via2hand_t;
+
 void	via_init(void);
 int	rbv_vidstatus(void);
 void	via_shutdown(void);
@@ -197,7 +208,7 @@ void	via_set_modem(int);
 void	add_nubus_intr(int, int (*)(void *), void *, const char *);
 void	enable_nubus_intr(void);
 void	via1_register_irq(int, int (*)(void *), void *, const char *);
-void	via2_register_irq(int, int (*)(void *), void *, const char *);
+int	via2_register_irq(struct via2hand *, const char *);
 #endif	/* _KERNEL */
 
 #endif	/* _MAC68K_VIAREG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: espvar.h,v 1.4 2001/07/04 08:52:45 niklas Exp $	*/
+/*	$OpenBSD: espvar.h,v 1.5 2004/12/08 06:59:43 miod Exp $	*/
 /*	$NetBSD: espvar.h,v 1.16 1996/10/13 02:59:50 christos Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 
 struct esp_softc {
 	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
+	struct via2hand		sc_ih;
 
 	volatile u_char *sc_reg;		/* the registers */
 

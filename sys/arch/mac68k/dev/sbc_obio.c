@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc_obio.c,v 1.10 2004/12/02 06:43:25 miod Exp $	*/
+/*	$OpenBSD: sbc_obio.c,v 1.11 2004/12/08 06:59:43 miod Exp $	*/
 /*	$NetBSD: sbc_obio.c,v 1.1 1997/03/01 20:18:59 scottr Exp $	*/
 
 /*
@@ -211,12 +211,17 @@ sbc_obio_attach(parent, self, args)
 		ncr_sc->sc_dma_start = sbc_dma_start;
 		ncr_sc->sc_dma_eop   = sbc_dma_eop;
 		ncr_sc->sc_dma_stop  = sbc_dma_stop;
-		via2_register_irq(VIA2_SCSIDRQ, sbc_drq_intr, ncr_sc,
-		    ncr_sc->sc_dev.dv_xname);
+
+		sc->sc_ih_drq.vh_fn = sbc_drq_intr;
+		sc->sc_ih_drq.vh_arg = ncr_sc;
+		sc->sc_ih_drq.vh_ipl = VIA2_SCSIDRQ;
+		via2_register_irq(&sc->sc_ih_drq, ncr_sc->sc_dev.dv_xname);
 	}
 
-	via2_register_irq(VIA2_SCSIIRQ, sbc_irq_intr, ncr_sc,
-	    ncr_sc->sc_dev.dv_xname);
+	sc->sc_ih_irq.vh_fn = sbc_irq_intr;
+	sc->sc_ih_irq.vh_arg = ncr_sc;
+	sc->sc_ih_irq.vh_ipl = VIA2_SCSIIRQ;
+	via2_register_irq(&sc->sc_ih_irq, ncr_sc->sc_dev.dv_xname);
 	sc->sc_clrintr = sbc_obio_clrintr;
 
 	if (sc->sc_options)

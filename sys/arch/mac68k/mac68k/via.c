@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.19 2004/11/26 21:21:28 miod Exp $	*/
+/*	$OpenBSD: via.c,v 1.20 2004/12/08 06:59:45 miod Exp $	*/
 /*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@ int	via2_nubus_intr(void *);
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
 struct intrhand via1intrs[7];
-struct intrhand via2intrs[7];
+via2hand_t via2intrs[7];
 
 void	oss_intr(struct frame *);
 void	rbv_intr(struct frame *);
@@ -78,9 +78,13 @@ void	(*real_via2_intr)(struct frame *);
  */
 struct intrhand slotintrs[7];
 
+static struct via2hand nubus_intr;
+
 void
 via_init()
 {
+	unsigned int i;
+
 	/* Initialize VIA1 */
 	/* set all timers to 0 */
 	via_reg(VIA1, vT1L) = 0;
@@ -98,6 +102,9 @@ via_init()
 	via1_register_irq(4, mrg_pmintr, NULL, "pm");
 	via1_register_irq(VIA1_T1, rtclock_intr, NULL, "clock");
 
+	for (i = 0; i < 7; i++)
+		SLIST_INIT(&via2intrs[i]);
+
 	if (VIA2 == VIA2OFF) {
 		/* Initialize VIA2 */
 		via2_reg(vT1L) = 0;
@@ -111,7 +118,9 @@ via_init()
 		via2_reg(vACR) &= 0x3f;
 
 		/* register default VIA2 interrupts */
-		via2_register_irq(1, via2_nubus_intr, NULL, NULL);
+		nubus_intr.vh_ipl = 1;
+		nubus_intr.vh_fn = via2_nubus_intr;
+		via2_register_irq(&nubus_intr, NULL);
 		/* 4 snd_intr, 5 via2t2_intr */
 
 		/*
@@ -154,7 +163,10 @@ via_init()
 			via2_reg(rBufB) |= DB2O_CEnable;
 		}
 		real_via2_intr = rbv_intr;
-		via2_register_irq(1, rbv_nubus_intr, NULL, NULL);
+
+		nubus_intr.vh_ipl = 1;
+		nubus_intr.vh_fn = rbv_nubus_intr;
+		via2_register_irq(&nubus_intr, NULL);
 		/* XXX necessary? */
 		add_nubus_intr(0, rbv_slot_ignore, NULL, "dummy");
 	}
@@ -211,9 +223,11 @@ via1_intr(struct frame *fp)
 void
 via2_intr(struct frame *fp)
 {
-	struct intrhand *ih;
+	struct via2hand *v2h;
+	via2hand_t *anchor;
 	u_int8_t intbits, bitnum;
 	u_int mask;
+	int handled, rc;
 
 	intbits = via2_reg(vIFR) & via2_reg(vIER);
 
@@ -224,45 +238,22 @@ via2_intr(struct frame *fp)
 
 	intbits &= 0x7f;
 	mask = 1;
-	for (bitnum = 0, ih = via2intrs; ; bitnum++, ih++) {
-		if ((intbits & mask) != 0 && ih->ih_fn != NULL) {
-			if ((*ih->ih_fn)(ih->ih_arg) != 0)
-				ih->ih_count.ec_count++;
-		} else {
-#if 0
-			printf("spurious VIA2 interrupt, source %d\n", bitnum);
-#endif
-		}
-		mask <<= 1;
-		if (intbits < mask)
-			break;
-	}
-}
-
-void
-oss_intr(struct frame *fp)
-{
-	struct intrhand *ih;
-	u_int8_t intbits, bitnum;
-	u_int mask;
-
-	intbits = via2_reg(vIFR + rIFR);
-
-	if (intbits == 0)
-		return;
-
-	intbits &= 0x7f;
-	mask =1 ;
-	for (bitnum = 0, ih = slotintrs; ; bitnum++, ih++) {
-		if (intbits & mask) {
-			if (ih->ih_fn != NULL) {
-				if ((*ih->ih_fn)(ih->ih_arg) != 0)
+	for (bitnum = 0, anchor = via2intrs; ; bitnum++, anchor++) {
+		if ((intbits & mask) != 0) {
+			handled = 0;
+			SLIST_FOREACH(v2h, anchor, v2h_link) {
+				struct intrhand *ih = &v2h->v2h_ih;
+				rc = (*ih->ih_fn)(ih->ih_arg);
+				if (rc != 0) {
 					ih->ih_count.ec_count++;
-			} else {
-				printf("spurious nubus interrupt, slot %d\n",
-				    bitnum);
+					handled |= rc;
+				}
 			}
-			via2_reg(rIFR) = mask;
+#if 0
+			if (handled == 0)
+				printf("spurious VIA2 interrupt, source %d\n",
+				    bitnum);
+#endif
 		}
 		mask <<= 1;
 		if (intbits < mask)
@@ -273,9 +264,11 @@ oss_intr(struct frame *fp)
 void
 rbv_intr(struct frame *fp)
 {
-	struct intrhand *ih;
+	struct via2hand *v2h;
+	via2hand_t *anchor;
 	u_int8_t intbits, bitnum;
 	u_int mask;
+	int handled, rc;
 
 	intbits = (via2_reg(vIFR + rIFR) & via2_reg(vIER + rIER));
 
@@ -286,13 +279,21 @@ rbv_intr(struct frame *fp)
 
 	intbits &= 0x7f;
 	mask = 1;
-	for (bitnum = 0, ih = via2intrs; ; bitnum++, ih++) {
-		if ((intbits & mask) != 0 && ih->ih_fn != NULL) {
-			if ((*ih->ih_fn)(ih->ih_arg) != 0)
-				ih->ih_count.ec_count++;
-		} else {
+	for (bitnum = 0, anchor = via2intrs; ; bitnum++, anchor++) {
+		if ((intbits & mask) != 0) {
+			handled = 0;
+			SLIST_FOREACH(v2h, anchor, v2h_link) {
+				struct intrhand *ih = &v2h->v2h_ih;
+				rc = (*ih->ih_fn)(ih->ih_arg);
+				if (rc != 0) {
+					ih->ih_count.ec_count++;
+					handled |= rc;
+				}
+			}
 #if 0
-			printf("spurious VIA2 interrupt, source %d\n", bitnum);
+			if (handled == 0)
+				printf("spurious VIA2 interrupt, source %d\n",
+				    bitnum);
 #endif
 		}
 		mask <<= 1;
@@ -351,6 +352,37 @@ enable_nubus_intr()
 		via2_reg(vIER) = 0x80 | V2IF_SLOTINT;
 	else
 		via2_reg(rIER) = 0x80 | V2IF_SLOTINT;
+}
+
+void
+oss_intr(struct frame *fp)
+{
+	struct intrhand *ih;
+	u_int8_t intbits, bitnum;
+	u_int mask;
+
+	intbits = via2_reg(vIFR + rIFR);
+
+	if (intbits == 0)
+		return;
+
+	intbits &= 0x7f;
+	mask =1 ;
+	for (bitnum = 0, ih = slotintrs; ; bitnum++, ih++) {
+		if (intbits & mask) {
+			if (ih->ih_fn != NULL) {
+				if ((*ih->ih_fn)(ih->ih_arg) != 0)
+					ih->ih_count.ec_count++;
+			} else {
+				printf("spurious nubus interrupt, slot %d\n",
+				    bitnum);
+			}
+			via2_reg(rIFR) = mask;
+		}
+		mask <<= 1;
+		if (intbits < mask)
+			break;
+	}
 }
 
 /*ARGSUSED*/
@@ -488,28 +520,19 @@ via1_register_irq(int irq, int (*irq_func)(void *), void *client_data,
 		    &evcount_intr);
 }
 
-void
-via2_register_irq(int irq, int (*irq_func)(void *), void *client_data,
-    const char *name)
+int
+via2_register_irq(struct via2hand *vh, const char *name)
 {
-	struct intrhand *ih;
+	int irq = vh->vh_ipl;
 
 #ifdef DIAGNOSTIC
 	if (irq < 0 || irq > 7)
 		panic("via2_register_irq: bad irq %d", irq);
 #endif
 
-	ih = &via2intrs[irq];
-
-#ifdef DIAGNOSTIC
-	if (ih->ih_fn != NULL)
-		panic("via2_register_irq: attempt to share irq %d", irq);
-#endif
-
-	ih->ih_fn = irq_func;
-	ih->ih_arg = client_data;
-	ih->ih_ipl = irq;
 	if (name != NULL)
-		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_ipl,
+		evcount_attach(&vh->vh_count, name, (void *)&vh->vh_ipl,
 		    &evcount_intr);
+	SLIST_INSERT_HEAD(&via2intrs[irq], vh, v2h_link);
+	return (0);
 }

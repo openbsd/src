@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.18 2004/11/26 21:21:24 miod Exp $	*/
+/*	$OpenBSD: esp.c,v 1.19 2004/12/08 06:59:43 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.59 1996/10/13 02:59:48 christos Exp $	*/
 
 /*
@@ -179,6 +179,9 @@ espattach(parent, self, aux)
 	 */
 	sc->sc_glue = &esp_glue;
 
+	esc->sc_ih.vh_fn = ncr53c9x_intr;
+	esc->sc_ih.vh_arg = esc;
+
 	/*
 	 * Save the regs
 	 */
@@ -186,8 +189,8 @@ espattach(parent, self, aux)
 		unsigned long	reg_offset;
 
 		esc->sc_reg = (volatile u_char *) SCSIBase;
-		via2_register_irq(VIA2_SCSIIRQ, ncr53c9x_intr, esc,
-		    self->dv_xname);
+		esc->sc_ih.vh_ipl = VIA2_SCSIIRQ;
+		via2_register_irq(&esc->sc_ih, self->dv_xname);
 		esc->irq_mask = V2IF_SCSIIRQ;
 		reg_offset = SCSIBase - IOBase;
 		if (reg_offset == 0x10000) {
@@ -197,8 +200,8 @@ espattach(parent, self, aux)
 		}
 	} else {
 		esc->sc_reg = (volatile u_char *) SCSIBase + 0x402;
-		via2_register_irq(VIA2_SCSIDRQ, ncr53c9x_intr, esc,
-		    self->dv_xname);
+		esc->sc_ih.vh_ipl = VIA2_SCSIDRQ;
+		via2_register_irq(&esc->sc_ih, self->dv_xname);
 		esc->irq_mask = V2IF_SCSIDRQ; /* V2IF_T1? */
 		sc->sc_freq = 25000000;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mac68k5380.c,v 1.19 2004/11/26 21:21:24 miod Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.20 2004/12/08 06:59:43 miod Exp $	*/
 /*	$NetBSD: mac68k5380.c,v 1.29 1997/02/28 15:50:50 scottr Exp $	*/
 
 /*
@@ -155,6 +155,7 @@ scsi_mach_init(sc)
 	struct ncr_softc	*sc;
 {
 	static int	initted = 0;
+	static struct via2hand ih_irq, ih_drq;
 
 	if (initted++)
 		panic("scsi_mach_init called again.");
@@ -174,10 +175,14 @@ scsi_mach_init(sc)
 		scsi_flag   = Via1Base + VIA2 * 0x2000 + rIFR;
 	}
 
-	via2_register_irq(VIA2_SCSIIRQ, ncr5380_irq_intr, sc,
-	    sc->sc_dev.dv_xname);
-	via2_register_irq(VIA2_SCSIDRQ, ncr5380_drq_intr, sc,
-	    sc->sc_dev.dv_xname);
+	ih_irq.vh_fn = ncr5380_irq_intr;
+	ih_irq.vh_arg = sc;
+	ih_irq.vh_ipl = VIA2_SCSIIRQ;
+	via2_register_irq(&ih_irq, sc->sc_dev.dv_xname);
+	ih_drq.vh_fn = ncr5380_drq_intr;
+	ih_drq.vh_arg = sc;
+	ih_drq.vh_ipl = VIA2_SCSIDRQ;
+	via2_register_irq(&ih_drq, sc->sc_dev.dv_xname);
 }
 
 static int
