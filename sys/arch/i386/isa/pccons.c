@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.32 1996/12/20 07:24:49 graichen Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.33 1996/12/29 12:25:59 graichen Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -426,6 +426,10 @@ pcprobe(parent, match, aux)
 	if (!kbd_cmd(KBC_RESET, 1)) {
 #ifdef DIAGNOSTIC
 		printf("pcprobe: reset error %d\n", 1);
+		/* XXX - this would make some - maybe very
+		   broken - but usable keyboards unusable 
+		goto lose; 
+		*/
 #endif
 	}
 	for (i = 600000; i; i--)
@@ -436,6 +440,10 @@ pcprobe(parent, match, aux)
 	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
 #ifdef DIAGNOSTIC
 		printf("pcprobe: reset error %d\n", 2);
+		/* XXX - this would make some - maybe very
+		   broken - but usable keyboards unusable 
+		goto lose; 
+		*/
 #endif
 	}
 	/*
