@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.11 2003/06/06 10:29:41 jmc Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.12 2005/03/01 18:49:59 jmc Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ command.
 .Pp
 There are currently four link types supported by
 .Nm ifmedia :
+.Pp
 .Bl -tag -offset indent -width IFM_IEEE80211 -compact
 .It Dv IFM_ETHER
 Ethernet
@@ -79,6 +80,7 @@ option.
 Additional names are acceptable aliases for the media type or option.
 .Sh COMMON MEDIA TYPES AND OPTIONS
 The following media types are shared by all link types:
+.Pp
 .Bl -tag -offset indent -width IFM_MANUAL -compact
 .It Dv IFM_AUTO
 Autoselect the best media.
@@ -120,10 +122,10 @@ The following media types are defined for Ethernet:
 10BASE-T, 10Mb/s over unshielded twisted pair, RJ45 connector.
 [10baseT, UTP, 10UTP]
 .It Dv IFM_10_2
-10BASE2, 10Mb/s over coaxial cable, BNC connector, also called Thinnet.
+10BASE2, 10Mb/s over coaxial cable, BNC connector; also called Thinnet.
 [10base2, BNC, 10BNC]
 .It Dv IFM_10_5
-10BASE5, 10Mb/s over 15-wire cables, DB15 connector, also called AUI.
+10BASE5, 10Mb/s over 15-wire cables, DB15 connector; also called AUI.
 [10base5, AUI, 10AUI]
 .It Dv IFM_10_STP
 10BASE-STP, 10Mb/s over shielded twisted pair, DB9 connector.
@@ -197,6 +199,7 @@ All routes vs. single route broadcast.
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR FDDI
 The following media types are defined for FDDI:
+.Pp
 .Bl -tag -offset indent -width IFM_FDDI_SMF -compact
 .It Dv IFM_FDDI_SMF
 Single-mode fiber.
@@ -217,6 +220,7 @@ Dual-attached station vs. Single-attached station.
 .El
 .Sh MEDIA TYPES AND OPTIONS FOR IEEE802.11 WIRELESS LAN
 The following media types are defined for IEEE802.11 Wireless LAN:
+.Pp
 .Bl -tag -offset indent -width IFM_IEEE80211_DS11 -compact
 .It Dv IFM_IEEE80211_FH1
 Frequency Hopping 1Mbps.
@@ -239,7 +243,8 @@ Direct Sequence 11Mbps.
 .El
 .Pp
 The following media options are defined for IEEE802.11 Wireless LAN:
-.Bl -tag -offset indent -width IFM_IEEE80211_ADHOC -compact
+.Pp
+.Bl -tag -offset indent -width IFM_IEEE80211_HOSTAP -compact
 .It Dv IFM_IEEE80211_ADHOC
 adhoc mode vs. infrastructure mode [adhoc]
 .It Dv IFM_IEEE80211_HOSTAP
