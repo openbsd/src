@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.1 1996/03/19 23:15:40 niklas Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.2 1996/10/23 16:43:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -756,12 +756,24 @@ kvm_doargv(kd, kp, nchr, info)
 	u_long addr;
 	int cnt;
 	struct ps_strings arginfo;
+	static struct ps_strings *ps;
 
+	if (ps == NULL) {
+		struct _ps_strings _ps;
+		int mib[2];
+		size_t len;
+
+		mib[0] = CTL_VM;
+		mib[1] = VM_PSSTRINGS;
+		len = sizeof(_ps);
+		sysctl(mib, 2, &_ps, &len, NULL, 0);
+		ps = (struct ps_strings *)_ps.val;
+	}
 	/*
 	 * Pointers are stored at the top of the user stack.
 	 */
 	if (p->p_stat == SZOMB || 
-	    kvm_uread(kd, p, USRSTACK - sizeof(arginfo), (char *)&arginfo,
+	    kvm_uread(kd, p, ps, (char *)&arginfo,
 		      sizeof(arginfo)) != sizeof(arginfo))
 		return (0);
 
