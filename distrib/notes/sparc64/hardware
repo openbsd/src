@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.53 2003/05/05 20:18:45 miod Exp $
+dnl	$OpenBSD: hardware,v 1.54 2003/05/20 21:46:07 jason Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -32,7 +32,8 @@ dnl		Netra 20
 		SPARCengineUltra AXi
 	- CompactPCI boards:
 		SPARCengine CP1500
-	- faithful clones of the above Sun systems.
+	- faithful clones of the above Sun systems, including:
+		Momentum Leopard-V
 
 If your machine is not listed above, it is very likely that OpenBSD/MACHINE
 does not work on it (yet).
