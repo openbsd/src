@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: scandir.c,v 1.5 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: scandir.c,v 1.6 2002/07/30 22:47:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,6 +45,8 @@ static char rcsid[] = "$OpenBSD: scandir.c,v 1.5 2002/02/16 21:27:23 millert Exp
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -82,6 +84,10 @@ scandir(dirname, namelist, select, dcomp)
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
 	arraysz = (stb.st_size / 24);
+	if (arraysz > SIZE_T_MAX / sizeof(struct dirent *)) {
+		errno = ENOMEM;
+		return(-1);
+	}
 	names = (struct dirent **)malloc(arraysz * sizeof(struct dirent *));
 	if (names == NULL)
 		return(-1);

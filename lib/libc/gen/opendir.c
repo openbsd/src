@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: opendir.c,v 1.7 2002/07/08 20:23:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: opendir.c,v 1.8 2002/07/30 22:47:22 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$OpenBSD: opendir.c,v 1.7 2002/07/08 20:23:14 millert Exp
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -253,6 +254,8 @@ __opendir2(name, flags)
 				free(dpv);
 				break;
 			} else {
+				if (n+1 > SIZE_T_MAX / sizeof(struct dirent *))
+					break;
 				dpv = malloc((n+1) * sizeof(struct dirent *));
 				if (dpv == NULL)
 					break;
