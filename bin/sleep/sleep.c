@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.7 1997/08/19 06:27:52 denny Exp $	*/
+/*	$OpenBSD: sleep.c,v 1.8 1997/09/12 04:44:32 millert Exp $	*/
 /*	$NetBSD: sleep.c,v 1.8 1995/03/21 09:11:11 cgd Exp $	*/
 
 /*
@@ -44,13 +44,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: sleep.c,v 1.7 1997/08/19 06:27:52 denny Exp $";
+static char rcsid[] = "$OpenBSD: sleep.c,v 1.8 1997/09/12 04:44:32 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <ctype.h>
 #include <locale.h>
 #include <time.h>
 #include <signal.h>
