@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)localtime.c	7.78";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.24 2004/06/28 14:47:41 millert Exp $";
+static char elsieid[] = "@(#)localtime.c	7.80";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.25 2004/10/18 22:33:43 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -134,6 +134,9 @@ static void		gmtsub P((const time_t * timep, long offset,
 static void		localsub P((const time_t * timep, long offset,
 				struct tm * tmp));
 static int		increment_overflow P((int * number, int delta));
+static int		long_increment_overflow P((long * number, int delta));
+static int		long_normalize_overflow P((long * tensptr,
+				int * unitsptr, int base));
 static int		normalize_overflow P((int * tensptr, int * unitsptr,
 				int base));
 static void		settzname P((void));
@@ -1183,7 +1186,7 @@ register struct tm * const		tmp;
 	register const struct lsinfo *	lp;
 	register long			days;
 	register long			rem;
-	register int			y;
+	register long			y;
 	register int			yleap;
 	register const int *		ip;
 	register long			corr;
@@ -1252,7 +1255,7 @@ register struct tm * const		tmp;
 	y = EPOCH_YEAR;
 #define LEAPS_THRU_END_OF(y)	((y) / 4 - (y) / 100 + (y) / 400)
 	while (days < 0 || days >= (long) year_lengths[yleap = isleap(y)]) {
-		register int	newy;
+		register long	newy;
 
 		newy = y + days / DAYSPERNYEAR;
 		if (days < 0)
@@ -1328,6 +1331,18 @@ int	delta;
 }
 
 static int
+long_increment_overflow(number, delta)
+long *	number;
+int	delta;
+{
+	long	number0;
+
+	number0 = *number;
+	*number += delta;
+	return (*number < number0) != (delta < 0);
+}
+
+static int
 normalize_overflow(tensptr, unitsptr, base)
 int * const	tensptr;
 int * const	unitsptr;
@@ -1340,6 +1355,21 @@ const int	base;
 		(-1 - (-1 - *unitsptr) / base);
 	*unitsptr -= tensdelta * base;
 	return increment_overflow(tensptr, tensdelta);
+}
+
+static int
+long_normalize_overflow(tensptr, unitsptr, base)
+long * const	tensptr;
+int * const	unitsptr;
+const int	base;
+{
+	register int	tensdelta;
+
+	tensdelta = (*unitsptr >= 0) ?
+		(*unitsptr / base) :
+		(-1 - (-1 - *unitsptr) / base);
+	*unitsptr -= tensdelta * base;
+	return long_increment_overflow(tensptr, tensdelta);
 }
 
 static int
@@ -1369,8 +1399,10 @@ const int		do_norm_secs;
 	register const struct state *	sp;
 	register int			dir;
 	register int			bits;
-	register int			i, j ;
+	register int			i, j;
 	register int			saved_seconds;
+	register long			li;
+	long				y;
 	time_t				newt;
 	time_t				t;
 	struct tm			yourtm, mytm;
@@ -1386,42 +1418,46 @@ const int		do_norm_secs;
 		return WRONG;
 	if (normalize_overflow(&yourtm.tm_mday, &yourtm.tm_hour, HOURSPERDAY))
 		return WRONG;
-	if (normalize_overflow(&yourtm.tm_year, &yourtm.tm_mon, MONSPERYEAR))
+	y = yourtm.tm_year;
+	if (long_normalize_overflow(&y, &yourtm.tm_mon, MONSPERYEAR))
 		return WRONG;
 	/*
-	** Turn yourtm.tm_year into an actual year number for now.
+	** Turn y into an actual year number for now.
 	** It is converted back to an offset from TM_YEAR_BASE later.
 	*/
-	if (increment_overflow(&yourtm.tm_year, TM_YEAR_BASE))
+	if (long_increment_overflow(&y, TM_YEAR_BASE))
 		return WRONG;
 	while (yourtm.tm_mday <= 0) {
-		if (increment_overflow(&yourtm.tm_year, -1))
+		if (long_increment_overflow(&y, -1))
 			return WRONG;
-		i = yourtm.tm_year + (1 < yourtm.tm_mon);
-		yourtm.tm_mday += year_lengths[isleap(i)];
+		li = y + (1 < yourtm.tm_mon);
+		yourtm.tm_mday += year_lengths[isleap(li)];
 	}
 	while (yourtm.tm_mday > DAYSPERLYEAR) {
-		i = yourtm.tm_year + (1 < yourtm.tm_mon);
-		yourtm.tm_mday -= year_lengths[isleap(i)];
-		if (increment_overflow(&yourtm.tm_year, 1))
+		li = y + (1 < yourtm.tm_mon);
+		yourtm.tm_mday -= year_lengths[isleap(li)];
+		if (long_increment_overflow(&y, 1))
 			return WRONG;
 	}
 	for ( ; ; ) {
-		i = mon_lengths[isleap(yourtm.tm_year)][yourtm.tm_mon];
+		i = mon_lengths[isleap(y)][yourtm.tm_mon];
 		if (yourtm.tm_mday <= i)
 			break;
 		yourtm.tm_mday -= i;
 		if (++yourtm.tm_mon >= MONSPERYEAR) {
 			yourtm.tm_mon = 0;
-			if (increment_overflow(&yourtm.tm_year, 1))
+			if (long_increment_overflow(&y, 1))
 				return WRONG;
 		}
 	}
-	if (increment_overflow(&yourtm.tm_year, -TM_YEAR_BASE))
+	if (long_increment_overflow(&y, -TM_YEAR_BASE))
 		return WRONG;
+	yourtm.tm_year = y;
+	if (yourtm.tm_year != y)
+ 		return WRONG;
 	if (yourtm.tm_sec >= 0 && yourtm.tm_sec < SECSPERMIN)
 		saved_seconds = 0;
-	else if (yourtm.tm_year + TM_YEAR_BASE < EPOCH_YEAR) {
+	else if (y + TM_YEAR_BASE < EPOCH_YEAR) {
 		/*
 		** We can't set tm_sec to 0, because that might push the
 		** time below the minimum representable time.

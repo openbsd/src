@@ -1,6 +1,12 @@
+/*
+** XXX To do: figure out correct (as distinct from standard-mandated)
+** output for "two digits of year" and "century" formats when
+** the year is negative or less than 100. --ado, 2004-09-09
+*/
+
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)strftime.c	7.64";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.13 2003/06/04 21:47:58 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.14 2004/10/18 22:33:43 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -120,6 +126,7 @@ static const struct lc_time_T	C_time_locale = {
 
 static char *	_add P((const char *, char *, const char *));
 static char *	_conv P((int, const char *, char *, const char *));
+static char *	_lconv P((long, const char *, char *, const char *));
 static char *	_fmt P((const char *, const struct tm *, char *, const char *, int *));
 
 size_t strftime P((char *, size_t, const char *, const struct tm *));
@@ -225,7 +232,8 @@ label:
 				** something completely different.
 				** (ado, 1993-05-24)
 				*/
-				pt = _conv((t->tm_year + TM_YEAR_BASE) / 100,
+				pt = _conv((int) ((t->tm_year +
+					(long) TM_YEAR_BASE) / 100),
 					"%02d", pt, ptlim);
 				continue;
 			case 'c':
@@ -394,12 +402,13 @@ label:
 ** (ado, 1996-01-02)
 */
 				{
-					int	year;
+					long	year;
 					int	yday;
 					int	wday;
 					int	w;
 
-					year = t->tm_year + TM_YEAR_BASE;
+					year = t->tm_year;
+					year += TM_YEAR_BASE;
 					yday = t->tm_yday;
 					wday = t->tm_wday;
 					for ( ; ; ) {
@@ -441,20 +450,20 @@ label:
 							DAYSPERNYEAR;
 					}
 #ifdef XPG4_1994_04_09
-					if ((w == 52
-					     && t->tm_mon == TM_JANUARY)
-					    || (w == 1
-						&& t->tm_mon == TM_DECEMBER))
-						w = 53;
+					if ((w == 52 &&
+						t->tm_mon == TM_JANUARY) ||
+						(w == 1 &&
+						t->tm_mon == TM_DECEMBER))
+							w = 53;
 #endif /* defined XPG4_1994_04_09 */
 					if (*format == 'V')
 						pt = _conv(w, "%02d",
 							pt, ptlim);
 					else if (*format == 'g') {
 						*warnp = IN_ALL;
-						pt = _conv(year % 100, "%02d",
-							pt, ptlim);
-					} else	pt = _conv(year, "%04d",
+						pt = _conv((int) (year % 100),
+							"%02d", pt, ptlim);
+					} else	pt = _lconv(year, "%04ld",
 							pt, ptlim);
 				}
 				continue;
@@ -492,12 +501,13 @@ label:
 				continue;
 			case 'y':
 				*warnp = IN_ALL;
-				pt = _conv((t->tm_year + TM_YEAR_BASE) % 100,
+				pt = _conv((int) ((t->tm_year +
+					(long) TM_YEAR_BASE) % 100),
 					"%02d", pt, ptlim);
 				continue;
 			case 'Y':
-				pt = _conv(t->tm_year + TM_YEAR_BASE, "%04d",
-					pt, ptlim);
+				pt = _lconv(t->tm_year + (long) TM_YEAR_BASE,
+					"%04ld", pt, ptlim);
 				continue;
 			case 'Z':
 #ifdef TM_ZONE
@@ -595,6 +605,19 @@ char * const		pt;
 const char * const	ptlim;
 {
 	char	buf[INT_STRLEN_MAXIMUM(int) + 1];
+
+	(void) snprintf(buf, sizeof buf, format, n);
+	return _add(buf, pt, ptlim);
+}
+
+static char *
+_lconv(n, format, pt, ptlim)
+const long		n;
+const char * const	format;
+char * const		pt;
+const char * const	ptlim;
+{
+	char	buf[INT_STRLEN_MAXIMUM(long) + 1];
 
 	(void) snprintf(buf, sizeof buf, format, n);
 	return _add(buf, pt, ptlim);

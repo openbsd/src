@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.15 2004/06/28 14:47:41 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.16 2004/10/18 22:33:43 millert Exp $	*/
 #ifndef PRIVATE_H
 
 #define PRIVATE_H
@@ -33,7 +33,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.53";
+static char	privatehid[] = "@(#)private.h	7.54";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -191,6 +191,7 @@ static char	privatehid[] = "@(#)private.h	7.53";
 
 #endif /* !defined FILENAME_MAX */
 
+#if 0
 /*
 ** SunOS 4.1.1 libraries lack remove.
 */
@@ -200,7 +201,6 @@ extern int	unlink P((const char * filename));
 #define remove	unlink
 #endif /* !defined remove */
 
-#if 0
 /*
 ** Some ancient errno.h implementations don't declare errno.
 ** But some newer errno.h implementations define it as a macro.
@@ -209,6 +209,16 @@ extern int	unlink P((const char * filename));
 #ifndef errno
 extern int errno;
 #endif /* !defined errno */
+
+/*
+** Some time.h implementations don't declare asctime_r.
+** Others might define it as a macro.
+** Fix the former without affecting the latter.
+*/
+
+#ifndef asctime_r
+extern char * asctime_r();
+#endif
 #endif
 
 /*

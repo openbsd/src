@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.28 2003/07/07 15:38:38 jmc Exp $
+.\"	$OpenBSD: ctime.3,v 1.29 2004/10/18 22:33:43 millert Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -59,12 +59,19 @@ pointed to by
 representing the time in seconds since
 00:00:00 UTC, 1970-01-01,
 and returns a pointer to a
-26-character string
-of the form
+string of the form
 .Pp
 .Dl Thu Nov 24 18:22:48 1986\en
 .Pp
-All the fields have constant width.
+Years requiring fewer than four characters are padded with trailing spaces.
+For years longer than four characters, the string is of the form
+.Pp
+.Dl Thu Nov 24 18:22:48\ \ \ \ \ 81986\en
+.Pp
+with five spaces before the year.
+This unusual format is designed to make it less likely that older
+software that expects exactly 26 bytes of output will mistakenly output
+misleading values for out-of-range years.
 .Pp
 The
 .Fn ctime_r
@@ -130,10 +137,9 @@ the reentrant version is not required to set
 .Fn asctime
 converts a time value contained in a
 .Li tm
-structure to a 26-character string,
+structure to a string,
 as shown in the above example,
-and returns a pointer
-to the string.
+and returns a pointer to the string.
 .Fn asctime_r
 uses the buffer pointed to by
 .Fa buf
@@ -285,6 +291,20 @@ will also be overwritten at the next call
 (and by calls to
 .Fn tzset ) .
 .Pp
+.Fn asctime
+and
+.Fn ctime
+behave strangely for years before 1000 or after 9999.
+The 1989 and 1999 editions of the C Standard say
+that years from \-99 through 999 are converted without
+extra spaces, but this conflicts with longstanding
+tradition and with this implementation.
+Traditional implementations of these two functions are
+restricted to years in the range 1900 through 2099.
+To avoid this portability mess, new programs should use
+.Fn strftime
+instead.
+.Pp
 The default system time zone may be set by running
 .Dq Li zic -l timezone
 as the superuser.
@@ -292,6 +312,6 @@ as the superuser.
 Avoid using out-of-range values with
 .Fn mktime
 when setting up lunch with promptness sticklers in Riyadh.
-.\" based on @(#)newctime.3	7.14
+.\" based on @(#)newctime.3	7.16
 .\" This file is in the public domain, so clarified as of
 .\" 2003-02-14 by Arthur David Olson (arthur_david_olson@nih.gov).
