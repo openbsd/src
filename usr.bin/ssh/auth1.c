@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.26 2001/12/05 03:56:39 itojun Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.27 2001/12/19 07:18:56 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -77,7 +77,7 @@ do_authloop(Authctxt *authctxt)
 	struct passwd *pw = authctxt->pw;
 
 	debug("Attempting authentication for %s%.100s.",
-	     authctxt->valid ? "" : "illegal user ", authctxt->user);
+	    authctxt->valid ? "" : "illegal user ", authctxt->user);
 
 	/* If the user has no password, accept authentication immediately. */
 	if (options.password_authentication &&
@@ -88,7 +88,7 @@ do_authloop(Authctxt *authctxt)
 		auth_log(authctxt, 1, "without authentication", "");
 		return;
 	}
-	
+
 	/* Indicate that authentication is needed. */
 	packet_start(SSH_SMSG_FAILURE);
 	packet_send();
@@ -112,17 +112,17 @@ do_authloop(Authctxt *authctxt)
 				verbose("Kerberos authentication disabled.");
 			} else {
 				char *kdata = packet_get_string(&dlen);
-				
+
 				packet_integrity_check(plen, 4 + dlen, type);
-				
+
 				if (kdata[0] == 4) { /* KRB_PROT_VERSION */
 #ifdef KRB4
 					KTEXT_ST tkt;
-					
+
 					tkt.length = dlen;
 					if (tkt.length < MAX_KTXT_LEN)
 						memcpy(tkt.dat, kdata, tkt.length);
-					
+
 					if (auth_krb4(authctxt, &tkt, &client_user)) {
 						authenticated = 1;
 						snprintf(info, sizeof(info),
@@ -136,7 +136,7 @@ do_authloop(Authctxt *authctxt)
 					krb5_data tkt;
 					tkt.length = dlen;
 					tkt.data = kdata;
-					
+
 					if (auth_krb5(authctxt, &tkt, &client_user)) {
 						authenticated = 1;
 						snprintf(info, sizeof(info),
@@ -150,7 +150,7 @@ do_authloop(Authctxt *authctxt)
 			}
 			break;
 #endif /* KRB4 || KRB5 */
-			
+
 #if defined(AFS) || defined(KRB5)
 			/* XXX - punt on backward compatibility here. */
 		case SSH_CMSG_HAVE_KERBEROS_TGT:
@@ -162,7 +162,7 @@ do_authloop(Authctxt *authctxt)
 			break;
 #endif /* AFS */
 #endif /* AFS || KRB5 */
-			
+
 		case SSH_CMSG_AUTH_RHOSTS:
 			if (!options.rhosts_authentication) {
 				verbose("Rhosts authentication disabled.");
@@ -344,7 +344,7 @@ do_authentication(void)
 	/* XXX - SSH.com Kerberos v5 braindeath. */
 	if ((p = strchr(user, '@')) != NULL)
 		*p = '\0';
-	
+
 	authctxt = authctxt_new();
 	authctxt->user = user;
 	authctxt->style = style;

@@ -26,7 +26,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.40 2001/08/14 09:23:02 markus Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.41 2001/12/19 07:18:56 deraadt Exp $");
 
 #include <glob.h>
 
@@ -207,7 +207,7 @@ path_append(char *p1, char *p2)
 
 	ret = xmalloc(len);
 	strlcpy(ret, p1, len);
-	if (strcmp(p1, "/") != 0) 
+	if (strcmp(p1, "/") != 0)
 		strlcat(ret, "/", len);
 	strlcat(ret, p2, len);
 
@@ -395,7 +395,7 @@ process_get(int in, int out, char *src, char *dst, char *pwd, int pflag)
 		goto out;
 	}
 
-	for(i = 0; g.gl_pathv[i]; i++) {
+	for (i = 0; g.gl_pathv[i]; i++) {
 		if (infer_path(g.gl_pathv[i], &tmp)) {
 			err = -1;
 			goto out;
@@ -477,7 +477,7 @@ process_put(int in, int out, char *src, char *dst, char *pwd, int pflag)
 		goto out;
 	}
 
-	for(i = 0; g.gl_pathv[i]; i++) {
+	for (i = 0; g.gl_pathv[i]; i++) {
 		if (infer_path(g.gl_pathv[i], &tmp)) {
 			err = -1;
 			goto out;
@@ -519,7 +519,7 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 		return(-1);
 
 	/* Figure out which command we have */
-	for(i = 0; cmds[i].c; i++) {
+	for (i = 0; cmds[i].c; i++) {
 		int cmdlen = strlen(cmds[i].c);
 
 		/* Check for command followed by whitespace */
@@ -690,7 +690,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 	case I_RM:
 		path1 = make_absolute(path1, *pwd);
 		remote_glob(in, out, path1, GLOB_NOCHECK, NULL, &g);
-		for(i = 0; g.gl_pathv[i]; i++) {
+		for (i = 0; g.gl_pathv[i]; i++) {
 			printf("Removing %s\n", g.gl_pathv[i]);
 			if (do_rm(in, out, g.gl_pathv[i]) == -1)
 				err = -1;
@@ -783,7 +783,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		a.flags |= SSH2_FILEXFER_ATTR_PERMISSIONS;
 		a.perm = n_arg;
 		remote_glob(in, out, path1, GLOB_NOCHECK, NULL, &g);
-		for(i = 0; g.gl_pathv[i]; i++) {
+		for (i = 0; g.gl_pathv[i]; i++) {
 			printf("Changing mode on %s\n", g.gl_pathv[i]);
 			do_setstat(in, out, g.gl_pathv[i], &a);
 		}
@@ -791,7 +791,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 	case I_CHOWN:
 		path1 = make_absolute(path1, *pwd);
 		remote_glob(in, out, path1, GLOB_NOCHECK, NULL, &g);
-		for(i = 0; g.gl_pathv[i]; i++) {
+		for (i = 0; g.gl_pathv[i]; i++) {
 			if (!(aa = do_stat(in, out, g.gl_pathv[i], 0)))
 				continue;
 			if (!(aa->flags & SSH2_FILEXFER_ATTR_UIDGID)) {
@@ -808,7 +808,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 	case I_CHGRP:
 		path1 = make_absolute(path1, *pwd);
 		remote_glob(in, out, path1, GLOB_NOCHECK, NULL, &g);
-		for(i = 0; g.gl_pathv[i]; i++) {
+		for (i = 0; g.gl_pathv[i]; i++) {
 			if (!(aa = do_stat(in, out, g.gl_pathv[i], 0)))
 				continue;
 			if (!(aa->flags & SSH2_FILEXFER_ATTR_UIDGID)) {
@@ -896,7 +896,7 @@ interactive_loop(int fd_in, int fd_out, char *file1, char *file2)
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	setvbuf(infile, NULL, _IOLBF, 0);
 
-	for(;;) {
+	for (;;) {
 		char *cp;
 
 		printf("sftp> ");
