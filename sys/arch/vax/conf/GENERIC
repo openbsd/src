@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2001/11/14 14:37:22 hugh Exp $
+#	$OpenBSD: GENERIC,v 1.29 2001/12/05 03:08:58 hugh Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -103,8 +103,8 @@ le0		at ibus0		# LANCE ethernet (MV3400)
 #hp*		at mba? drive?		# RM/RP disk drives
 
 # Devices on Unibus/Qbus adapters
-#uda0		at uba?	csr 0172150	# UDA50/RQDX?
-#uda1		at uba?	csr 0160334
+uda0		at uba?	csr 0172150	# UDA50/RQDX?
+uda1		at uba?	csr 0160334
 mtc0		at uba? csr 0174500	# Tape MSCP ctlr
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 #qd0		at uba? csr 0177400	# 4- or 8-bitplans color graphics
@@ -116,11 +116,11 @@ mtc0		at uba? csr 0174500	# Tape MSCP ctlr
 #dl0		at uba? csr 0176500	# DL-11
 
 # MSCP devices
-#mscpbus*	at uda?
+mscpbus*	at uda?
 mscpbus*	at mtc?
 #mscpbus*	at kdb?
 
-#ra*		at mscpbus? drive?	# MSCP disk
+ra*		at mscpbus? drive?	# MSCP disk
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
 
