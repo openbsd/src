@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.78 1999/07/19 19:47:40 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.79 1999/07/19 20:32:50 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -108,12 +108,9 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "CSI2203", "le" },
 	{ "@@@1980", "ne" },
 	{ "SMC8416", "we" },
-	{ "@X@1001", "mpu" },
-	{ "AZT2001", "mpu" },
-	{ "CSC0003", "mpu" },
-	{ "OPT0002", "mpu" },
-	{ "GRV0000", "gus" },
+	{ "@P@0001", "joy" },
 	{ "@P@1001", "joy" },
+	{ "@P@2001", "joy" },
 	{ "AZT3001", "joy" },
 	{ "CSC0001", "joy" },
 	{ "CSC000F", "joy" },
@@ -123,12 +120,20 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "ESS0001", "joy" },
 	{ "ESS0005", "joy" },
 	{ "OPT0001", "joy" },
+	{ "ESS1868", "ess" },
+	{ "ESS1869", "ess" },
+	{ "ESS1878", "ess" },
+	{ "GRV0000", "gus" },
+	{ "@X@1001", "mpu" },
+	{ "AZT2001", "mpu" },
+	{ "CSC0003", "mpu" },
+	{ "OPT0002", "mpu" },
+	{ "@@@0001", "sb" },
+	{ "@@@2001", "sb" },
 	{ "@X@0001", "sb" },
 	{ "ADS7150", "sb" },
 	{ "ADS7180", "sb" },
 	{ "AZT1008", "sb" },
-	{ "CSC0000", "wss" },
-	{ "CSC0100", "wss" },
 	{ "CTL0001", "sb" },
 	{ "CTL0031", "sb" },
 	{ "CTL0041", "sb" },
@@ -136,17 +141,17 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "CTL0043", "sb" },
 	{ "CTL0044", "sb" },
 	{ "CTL0045", "sb" },
-	{ "ESS1868", "ess" },
-	{ "ESS1869", "ess" },
-	{ "ESS1878", "ess" },
+	{ "GRV0003", "sb" },
+	{ "CSC0000", "wss" },
+	{ "CSC0100", "wss" },
+	{ "CSCA800", "wss" },
 	{ "OPT9310", "wss" },
 	{ "@@@1001", "ym" },
 	{ "YMH0021", "ym" },
-	{ "GRV0003", "sb" },
-	{ "CSCA800", "wss" },
-	{ "@@@0001", "sb" },
-	{ "@P@0001", "joy" },
-	{ "@@@2001", "sb" },
-	{ "@P@2001", "joy" },
+	{ "AZT0500", "wdc" },
+	{ "CSC0004", "wdc" },
+	{ "CTL2011", "wdc" },
+	{ "ESS0002", "wdc" },
+	{ "YMH002F", "wdc" },
 	{ NULL, NULL, }
 };
