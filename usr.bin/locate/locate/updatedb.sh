@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: updatedb.sh,v 1.8 1997/04/02 08:35:01 deraadt Exp $
+#	$OpenBSD: updatedb.sh,v 1.9 1997/04/03 00:57:49 michaels Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -28,7 +28,7 @@
 #
 # updatedb - update locate database for local mounted filesystems
 #
-# $Id: updatedb.sh,v 1.8 1997/04/02 08:35:01 deraadt Exp $
+# $Id: updatedb.sh,v 1.9 1997/04/03 00:57:49 michaels Exp $
 
 LOCATE_CONFIG="/etc/locate.rc"
 if [ -f "$LOCATE_CONFIG" -a -r "$LOCATE_CONFIG" ]; then
@@ -47,7 +47,7 @@ USAGE="Usage: $0 [--tmpdir=dir] [--fcodes=dbfile] [--searchpaths='dir1 dir2...']
 : ${FCODES=/var/db/locate.database}	 # the database
 : ${SEARCHPATHS="/"}			 # directories to be put in the database
 : ${PRUNEPATHS="/tmp /usr/tmp /var/tmp"} # unwanted directories
-: ${FILESYSTEMS="ffs"}			 # allowed filesystems 
+: ${FILESYSTEMS="ffs ufs"}		 # allowed filesystems 
 : ${find=find}
 
 # Command line args override rc file and defaults
