@@ -1,9 +1,9 @@
-	$OpenBSD: syscalls.master,v 1.5 1996/08/25 12:19:58 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.6 1997/01/26 23:52:03 downsj Exp $
 ;	$NetBSD: syscalls.master,v 1.33 1996/02/28 16:05:43 pk Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
-; NetBSD COMPAT_SUNOS system call name/number "master" file.
+; OpenBSD COMPAT_SUNOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
 ; Fields: number type [type-dependent ...]
@@ -59,7 +59,7 @@
 13	OBSOL		time
 14	STD		{ int sunos_sys_mknod(char *path, int mode, int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
-16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
+16	NOARGS		{ int sys_lchown(char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	OBSOL		stat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, int whence); }
