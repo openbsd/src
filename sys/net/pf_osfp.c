@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.6 2004/01/03 14:08:53 espie Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.7 2004/01/03 14:51:02 espie Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -50,6 +50,7 @@ typedef struct pool pool_t;
 # include <errno.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <string.h>
 # define pool_t			int
 # define pool_get(pool, flags)	malloc(*(pool))
 # define pool_put(pool, item)	free(item)
