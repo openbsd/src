@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.9 1999/09/03 09:35:24 hugh Exp $	*/
+/*	$OpenBSD: worm.c,v 1.10 2000/01/25 07:06:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.9 1999/09/03 09:35:24 hugh Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.10 2000/01/25 07:06:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,12 +52,13 @@ static char rcsid[] = "$OpenBSD: worm.c,v 1.9 1999/09/03 09:35:24 hugh Exp $";
  * UCSC
  */
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <curses.h>
 #include <err.h>
 #include <signal.h>
 #include <stdlib.h>
-#include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 #define HEAD '@'
@@ -79,7 +80,7 @@ int running = 0;
 int slow = 0;
 int score = 0;
 int start_len = LENGTH;
-char lastch;
+int lastch;
 char outbuf[BUFSIZ];
 
 void	crash __P((void));
@@ -88,33 +89,36 @@ void	leave __P((int));
 void	life __P((void));
 void	newpos __P((struct body *));
 struct body 	*newlink __P((void));
-void	process __P((char));
+void	process __P((int));
 void	prize __P((void));
 int	rnd __P((int));
 void	setup __P((void));
 void	suspend __P((int));
-void	wake __P((int));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char ch;
+	int retval;
+	struct timeval t, tod;
+	struct timezone tz;
+	fd_set rset;
 
 	/* revoke */
 	setegid(getgid());
 	setgid(getgid());
 
+	FD_ZERO(&rset);
 	setbuf(stdout, outbuf);
 	srandom(getpid());
-	signal(SIGALRM, wake);
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
 	signal(SIGTSTP, suspend);	/* process control signal */
 	initscr();
-	crmode();
+	cbreak();
 	noecho();
+	keypad(stdscr, TRUE);
 	slow = (baudrate() <= 1200);
 	clear();
 	if (argc == 2)
@@ -142,9 +146,17 @@ main(argc, argv)
 		}
 		else
 		{
-		    fflush(stdout);
-		    if (read(0, &ch, 1) >= 0)
-			process(ch);
+			/* fflush(stdout); */
+			/* Delay could be a command line option */
+			t.tv_sec = 1;
+			t.tv_usec = 0;
+			(void)gettimeofday(&tod, &tz);
+			FD_SET(STDIN_FILENO, &rset);
+			retval = select(STDIN_FILENO + 1, &rset, NULL, NULL, &t);
+			if (retval > 0)
+				process(getch());
+			else
+				process(lastch);
 		}
 	}
 }
@@ -195,15 +207,6 @@ leave(dummy)
 	exit(0);
 }
 
-void
-wake(dummy)
-	int dummy;
-{
-	signal(SIGALRM, wake);
-	fflush(stdout);
-	process(lastch);
-}
-
 int
 rnd(range)
 	int range;
@@ -235,20 +238,35 @@ prize()
 
 void
 process(ch)
-	char ch;
+	int ch;
 {
 	register int x,y;
 	struct body *nh;
 
-	alarm(0);
 	x = head->x;
 	y = head->y;
 	switch(ch)
 	{
-		case 'h': x--; break;
-		case 'j': y++; break;
-		case 'k': y--; break;
-		case 'l': x++; break;
+#ifdef KEY_LEFT
+		case KEY_LEFT:
+#endif
+		case 'h':
+			x--; break;
+#ifdef KEY_DOWN
+		case KEY_DOWN:
+#endif
+		case 'j':
+			y++; break;
+#ifdef KEY_UP
+		case KEY_UP:
+#endif
+		case 'k':
+			y--; break;
+#ifdef KEY_RIGHT
+		case KEY_RIGHT:
+#endif
+		case 'l':
+			x++; break;
 		case 'H': x--; running = RUNLEN; ch = tolower(ch); break;
 		case 'J': y++; running = RUNLEN/2; ch = tolower(ch); break;
 		case 'K': y--; running = RUNLEN/2; ch = tolower(ch); break;
@@ -257,8 +275,7 @@ process(ch)
 		case CNTRL('Z'): suspend(0); return;
 		case CNTRL('C'): crash(); return;
 		case CNTRL('D'): crash(); return;
-		default: if (! running) alarm(1);
-			   return;
+		default: return;
 	}
 	lastch = ch;
 	if (growing == 0)
@@ -295,8 +312,6 @@ process(ch)
 		wmove(tv, head->y, head->x);
 		wrefresh(tv);
 	}
-	if (!running)
-		alarm(1);
 }
 
 struct body *
@@ -332,7 +347,7 @@ suspend(dummy)
 	fflush(stdout);
 	kill(getpid(), SIGSTOP);
 	signal(SIGTSTP, suspend);
-	crmode();
+	cbreak();
 	noecho();
 	setup();
 }
@@ -346,5 +361,4 @@ setup()
 	wrefresh(stw);
 	touchwin(tv);
 	wrefresh(tv);
-	alarm(1);
 }
