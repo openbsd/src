@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.41 2004/09/15 18:52:29 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.42 2005/01/07 21:57:10 millert Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.41 2004/09/15 18:52:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.42 2005/01/07 21:57:10 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -602,6 +602,7 @@ check_space(void)
 	struct stat st;
 	struct statfs fsbuf;
 	char buf[100], path[MAXPATHLEN];
+	int fd;
 
 	tkernel = kernel ? kernel : _PATH_UNIX;
 	if (stat(tkernel, &st) < 0) {
@@ -609,10 +610,11 @@ check_space(void)
 		exit(1);
 	}
 	kernelsize = st.st_blocks * S_BLKSIZE;
-	if (statfs(dirn, &fsbuf) < 0) {
+	if ((fd = open(dirn, O_RDONLY, 0)) < 0 || fstatfs(fd, &fsbuf) < 0) {
 		syslog(LOG_ERR, "%s: %m", dirn);
 		exit(1);
 	}
+	close(fd);
 	spacefree = ((off_t)fsbuf.f_bavail * fsbuf.f_bsize) / 1024;
 
 	(void)snprintf(path, sizeof(path), "%s/minfree", dirn);
