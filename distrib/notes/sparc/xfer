@@ -98,7 +98,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 
 Creating a bootable hard disk using SunOS or other Un*x-like system:
 
-	If you don't have a floppy drive you can copy the single floppy
+	If you don't have a floppy drive you can copy the floppy
 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
 	onto the hard disk you intend to boot on.  Traditionally, the
 	way to do this is to use dd(1) to place the bootable filesystem
@@ -160,7 +160,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	disk.
 
 	To copy the floppy image to the hard disk, preserving SunOS,
-	Solaris NetBSD or OpenBSD labels:
+	Solaris, NetBSD or OpenBSD labels:
 
 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
 
@@ -196,10 +196,10 @@ The steps necessary to prepare the distribution sets for installation
 depend on which method of installation you choose.  Some methods
 require a bit of setup first that is explained below.
 
-The new single floppy installation allows installing OpenBSD directly
-from FTP mirror sites over the internet, however you must consider the
-speed and reliability of your internet connection for this option.  It
-may save much time and frustration to use ftp get/reget to transfer the
+The floppy installation allows installing OpenBSD directly from FTP
+mirror sites over the internet, however you must consider the speed and
+reliability of your internet connection for this option.  It may save
+much time and frustration to use ftp get/reget to transfer the
 distribution sets to a local server or disk and perform the installation
 from there, rather than directly on the internet.
 

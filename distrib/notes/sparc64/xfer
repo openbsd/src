@@ -96,10 +96,12 @@ dnl	read/write errors.
 dnl
 dnl
 
-dnl XXX uncomment when miniroot available
+dnl XXX uncomment when floppy or miniroot available
+dnl XXX make sure to adapt text, especially examples, if only floppy
+dnl XXX or miniroot is available, but not both.
 dnl Creating a bootable hard disk using SunOS or other Un*x-like system:
 dnl 
-dnl 	If you don't have a floppy drive you can copy the single floppy
+dnl 	If you don't have a floppy drive you can copy the floppy
 dnl 	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
 dnl 	onto the hard disk you intend to boot on.  Traditionally, the
 dnl 	way to do this is to use dd(1) to place the bootable filesystem
@@ -161,7 +163,7 @@ dnl 	create a "fictitious label" that will let you access the whole
 dnl 	disk.
 dnl 
 dnl 	To copy the floppy image to the hard disk, preserving SunOS,
-dnl 	Solaris NetBSD or OpenBSD labels:
+dnl 	Solaris, NetBSD or OpenBSD labels:
 dnl 
 dnl 		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
 dnl 
@@ -197,13 +199,14 @@ The steps necessary to prepare the distribution sets for installation
 depend on which method of installation you choose.  Some methods
 require a bit of setup first that is explained below.
 
-The new single floppy installation allows installing OpenBSD directly
-from FTP mirror sites over the internet, however you must consider the
-speed and reliability of your internet connection for this option.  It
-may save much time and frustration to use ftp get/reget to transfer the
-distribution sets to a local server or disk and perform the installation
-from there, rather than directly on the internet.
-
+dnl XXX uncomment when floppy available
+dnl The floppy installation allows installing OpenBSD directly from FTP
+dnl mirror sites over the internet, however you must consider the speed and
+dnl reliability of your internet connection for this option.  It may save
+dnl much time and frustration to use ftp get/reget to transfer the
+dnl distribution sets to a local server or disk and perform the installation
+dnl from there, rather than directly on the internet.
+dnl 
 
 To install OpenBSD using a remote partition, mounted via
 NFS, you must do the following:
