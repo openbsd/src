@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.46 2004/02/03 17:36:30 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.47 2004/02/03 22:28:05 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,7 @@ static FILE			*fin = NULL;
 static int			 lineno = 1;
 static int			 errors = 0;
 static int			 pdebug = 1;
+static u_int32_t		 id;
 char				*infile;
 
 int	 yyerror(const char *, ...);
@@ -62,6 +63,7 @@ struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
 int		 add_mrtconfig(enum mrt_type, char *, time_t);
+int		 get_id(struct peer *);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -244,6 +246,10 @@ neighbor	: NEIGHBOR address optnl '{' optnl {
 			curpeer = new_peer();
 			curpeer->conf.remote_addr.af = AF_INET;
 			curpeer->conf.remote_addr.v4.s_addr = $2.s_addr;
+			if (get_id(curpeer)) {
+				yyerror("get_id failed");
+				YYERROR;
+			}
 		}
 		    peeropts_l '}' {
 			curpeer->next = peer_l;
@@ -668,6 +674,7 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	curgroup = NULL;
 	lineno = 1;
 	errors = 0;
+	id = 1;
 
 	conf->listen_addr.sin_len = sizeof(conf->listen_addr);
 	conf->listen_addr.sin_family = AF_INET;
@@ -878,4 +885,29 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout)
 	LIST_INSERT_HEAD(mrtconf, n, list);
 
 	return (0);
+}
+
+int
+get_id(struct peer *newpeer)
+{
+	struct peer	*p;
+
+	for (p = peer_l_old; p != NULL; p = p->next)
+		if (!memcmp(&p->conf.remote_addr, &newpeer->conf.remote_addr,
+		    sizeof(p->conf.remote_addr))) {
+			newpeer->conf.id = p->conf.id;
+			return (0);
+		}
+
+	/* new one */
+	for (; id < UINT_MAX; id++) {
+		for (p = peer_l_old; p != NULL && p->conf.id != id; p = p->next)
+			;	/* nothing */
+		if (p == NULL) {	/* we found a free id */
+			newpeer->conf.id = id++;
+			return (0);
+		}
+	}
+
+	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.26 2004/02/01 19:46:05 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.27 2004/02/03 22:28:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,6 @@
 void			*sconf;
 
 u_int32_t	get_bgpid(void);
-u_int32_t	get_id(struct peer *);
 
 int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
@@ -59,8 +58,6 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf,
 		if (p->conf.announce_type == ANNOUNCE_UNDEF)
 			p->conf.announce_type = p->conf.ebgp == 0 ?
 			    ANNOUNCE_ALL : ANNOUNCE_SELF;
-		if (!p->conf.id)
-			p->conf.id = get_id(p);
 	}
 
 	memcpy(xconf, conf, sizeof(struct bgpd_config));
@@ -91,13 +88,4 @@ get_bgpid(void)
 	freeifaddrs(ifap);
 
 	return (ip);
-}
-
-u_int32_t
-get_id(struct peer *p)
-{
-	/*
-	 * XXX this collides with multiviews and will need more clue later XXX
-	 */
-	return (ntohl(p->conf.remote_addr.v4.s_addr));
 }
