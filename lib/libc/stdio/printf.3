@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.37 2002/05/01 08:03:29 mpech Exp $
+.\"	$OpenBSD: printf.3,v 1.38 2002/07/24 22:58:39 millert Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,6 +134,7 @@ were unlimited
 again, not including the final
 .Ql \e0
 .Pc .
+If an output or encoding error occurs, a value of \-1 is returned instead.
 .Pp
 .Fn asprintf
 and
