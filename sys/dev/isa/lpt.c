@@ -238,8 +238,8 @@ lptattach(parent, self, aux)
 	outb(iobase + lpt_control, LPC_NINIT);
 
 	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
-		    ISA_IPL_NONE, lptintr, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
+		    lptintr, sc);
 }
 
 /*

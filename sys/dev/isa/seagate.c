@@ -438,8 +438,8 @@ seaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sea->sc_id, &sea->sc_deV);
 #endif
-	sea->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    seaintr, sea);
+	sea->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, seaintr,
+	    sea);
 
 	/*
 	 * ask the adapter what subunits are present

@@ -428,7 +428,7 @@ epattach(parent, self, aux)
 					     PCI_COMMAND_STATUS_REG) |
 			       PCI_COMMAND_MASTER_ENABLE);
 
-		sc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, epintr, sc);
+		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, epintr, sc);
 		if (sc->sc_ih == NULL) {
 			printf("%s: couldn't map interrupt\n",
 			       sc->sc_dev.dv_xname);
@@ -440,8 +440,8 @@ epattach(parent, self, aux)
 #endif
 	{
 		struct isa_attach_args *ia = aux;
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
-					       ISA_IPL_NET, epintr, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
+		    epintr, sc);
 	}
 }
 
@@ -569,7 +569,7 @@ epsetlink(sc)
 
 /*
  * Start outputting on the interface.
- * Always called as splimp().
+ * Always called as splnet().
  */
 void
 epstart(ifp)
@@ -1064,7 +1064,7 @@ epioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 
@@ -1159,7 +1159,7 @@ epreset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	epstop(sc);
 	epinit(sc);
 	splx(s);
@@ -1263,7 +1263,7 @@ epmbuffill(sc)
 {
 	int s, i;
 
-	s = splimp();
+	s = splnet();
 	i = sc->last_mb;
 	do {
 		if (sc->mb[i] == NULL)
@@ -1285,7 +1285,7 @@ epmbufempty(sc)
 {
 	int s, i;
 
-	s = splimp();
+	s = splnet();
 	for (i = 0; i<MAX_MBS; i++) {
 		if (sc->mb[i]) {
 			m_freem(sc->mb[i]);

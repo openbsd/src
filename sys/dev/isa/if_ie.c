@@ -87,7 +87,7 @@ that we must include this header in the transmit buffer as well.
 By convention, all transmit commands, and only transmit commands, shall have
 the I (IE_CMD_INTR) bit set in the command.  This way, when an interrupt
 arrives at ieintr(), it is immediately possible to tell what precisely caused
-it.  ANY OTHER command-sending routines should run at splimp(), and should
+it.  ANY OTHER command-sending routines should run at splnet(), and should
 post an acknowledgement to every interrupt they generate.
 
 The 82586 has a 24-bit address space internally, and the adaptor's memory is
@@ -776,8 +776,8 @@ ieattach(parent, self, aux)
 	    sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
-	    ieintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, ieintr,
+	    sc);
 }
 
 /*
@@ -1508,7 +1508,7 @@ check_ie_present(sc, where, size)
 	u_long realbase;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	realbase = (u_long)where + size - (1 << 24);
 
@@ -1759,7 +1759,7 @@ void
 iereset(sc)
 	struct ie_softc *sc;
 {
-	int s = splimp();
+	int s = splnet();
 
 	iestop(sc);
 
@@ -1967,7 +1967,7 @@ iememinit(ptr, sc)
 
 /*
  * Run the multicast setup command.
- * Called at splimp().
+ * Called at splnet().
  */
 static int
 mc_setup(sc, ptr)
@@ -2001,7 +2001,7 @@ mc_setup(sc, ptr)
  * includes executing the CONFIGURE, IA-SETUP, and MC-SETUP commands, starting
  * the receiver unit, and clearing interrupts.
  *
- * THIS ROUTINE MUST BE CALLED AT splimp() OR HIGHER.
+ * THIS ROUTINE MUST BE CALLED AT splnet() OR HIGHER.
  */
 int
 ieinit(sc)
@@ -2115,7 +2115,7 @@ ieioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

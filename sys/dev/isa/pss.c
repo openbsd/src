@@ -1004,8 +1004,8 @@ pssattach(parent, self, aux)
 #endif
 
     /* Setup interrupt handler for PSS */
-    sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
-				   pssintr, sc);
+    sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, pssintr,
+	sc);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
@@ -1039,8 +1039,8 @@ spattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
-	ad1848_intr, sc);
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, IST_EDGE, IPL_AUDIO, ad1848_intr,
+	sc);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d drq %d",
@@ -1067,8 +1067,8 @@ mpuattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-    sc->sc_ih = isa_intr_establish(cf->cf_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
-	mpuintr, sc);
+    sc->sc_ih = isa_intr_establish(cf->cf_irq, IST_EDGE, IPL_AUDIO, mpuintr,
+	sc);
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d\n",

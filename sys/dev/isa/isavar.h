@@ -102,27 +102,11 @@ struct isa_softc {
  */
 
 /* ISA interrupt sharing types */
-typedef enum {
-	ISA_IST_NONE = 0,	/* not yet assigned */
-	ISA_IST_PULSE,		/* pulsed */
-	ISA_IST_EDGE,		/* edge-triggered */
-	ISA_IST_LEVEL		/* level-triggered */
-} isa_intrtype;
-
-/* ISA interrupt levels; system interrupt levels for ISA bus use */
-typedef enum {
-	ISA_IPL_NONE,		/* block only the interrupt's IRQ*/
-	ISA_IPL_BIO,		/* block I/O interrupts */
-	ISA_IPL_NET,		/* network */
-	ISA_IPL_TTY,		/* terminal */
-	ISA_IPL_CLOCK,		/* clock */
-} isa_intrlevel;
-
 void	isascan __P((struct device *parent, void *match));
-void	*isa_intr_establish __P((int intr, isa_intrtype type,
-	    isa_intrlevel level, int (*ih_fun)(void *), void *ih_arg));
+void	*isa_intr_establish __P((int intr, int type, int level,
+	    int (*ih_fun)(void *), void *ih_arg));
 void	isa_intr_disestablish __P((void *handler));
-char	*isa_intr_typename __P((isa_intrtype type));
+char	*isa_intr_typename __P((int type));
 
 #ifdef NEWCONFIG
 /*

@@ -1,6 +1,6 @@
 /**************************************************************************
 **
-**  $Id: ncr.c,v 1.3 1995/12/01 01:51:21 deraadt Exp $
+**  $Id: ncr.c,v 1.4 1995/12/27 22:06:47 deraadt Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -1255,7 +1255,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.3 1995/12/01 01:51:21 deraadt Exp $\n";
+	"\n$Id: ncr.c,v 1.4 1995/12/27 22:06:47 deraadt Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -3261,7 +3261,7 @@ ncr_attach(parent, self, aux)
 	if (retval)
 		return;
 
-	np->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_BIO, ncr_intr, np);
+	np->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ncr_intr, np);
 	if (np->sc_ih == NULL)
 		return;
 

@@ -55,7 +55,6 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
 #include <dev/isa/wdreg.h>
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
@@ -250,8 +249,8 @@ wdcattach(parent, self, aux)
 
 	printf("\n");
 
-	wdc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    wdcintr, wdc);
+	wdc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, wdcintr,
+	    wdc);
 
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, (void *)&wa, wdprint);

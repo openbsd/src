@@ -273,7 +273,7 @@ sbattach(parent, self, aux)
 	register int iobase = ia->ia_iobase;
 	int err;
 	
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO,
 				       sbdsp_intr, sc);
 
 	sbdsp_attach(sc);

@@ -608,7 +608,7 @@ uhaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
-	uha->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
+	uha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
 	    uha->intr, uha);
 
 	/*

@@ -602,8 +602,8 @@ ahaattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&aha->sc_id, &aha->sc_dev);
 #endif
-	aha->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    ahaintr, aha);
+	aha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, ahaintr,
+	    aha);
 
 	/*
 	 * ask the adapter what subunits are present

@@ -132,4 +132,4 @@ extern int	audio_hardware_detach __P((struct audio_hw_if *));
 #define AUDIODEV(x)		(minor(x)&0xf0)
 
 #define splaudio splbio		/* XXX */
-#define ISA_IPL_AUDIO ISA_IPL_BIO /* XXX */
+#define IPL_AUDIO IPL_BIO	/* XXX */

@@ -766,8 +766,8 @@ aicattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    aicintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, aicintr,
+	    sc);
 
 	config_found(self, &sc->sc_link, aicprint);
 }

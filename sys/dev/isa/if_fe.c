@@ -1124,8 +1124,8 @@ feattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
-	    feintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, feintr,
+	    sc);
 }
 
 /*
@@ -1137,7 +1137,7 @@ fe_reset(sc)
 {
 	int s;
 
-	s = splimp();
+	s = splnet();
 	fe_stop(sc);
 	fe_init(sc);
 	splx(s);
@@ -1410,7 +1410,7 @@ fe_xmit(sc)
 /*
  * Start output on interface.
  * We make two assumptions here:
- *  1) that the current priority is set to splimp _before_ this code
+ *  1) that the current priority is set to splnet _before_ this code
  *     is called *and* is returned to the appropriate priority after
  *     return
  *  2) that the IFF_OACTIVE flag is checked before this code is called
@@ -1928,7 +1928,7 @@ fe_ioctl(ifp, command, data)
 	log(LOG_INFO, "%s: ioctl(%x)\n", sc->sc_dev.dv_xname, command);
 #endif
 
-	s = splimp();
+	s = splnet();
 
 	switch (command) {
 
@@ -2427,7 +2427,7 @@ fe_setmode(sc)
 /*
  * Load a new multicast address filter into MARs.
  *
- * The caller must have splimp'ed befor fe_loadmar.
+ * The caller must have splnet'ed befor fe_loadmar.
  * This function starts the DLC upon return.  So it can be called only
  * when the chip is working, i.e., from the driver's point of view, when
  * a device is RUNNING.  (I mistook the point in previous versions.)

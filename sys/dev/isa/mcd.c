@@ -222,8 +222,8 @@ mcdattach(parent, self, aux)
 
 	sc->sc_dk.dk_driver = &mcddkdriver;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    mcdintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, mcdintr,
+	    sc);
 }
 
 /*

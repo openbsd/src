@@ -911,10 +911,10 @@ gusattach(parent, self, aux)
 	 */
 
 	/* XXX we shouldn't have to use splgus == splclock, nor should
-	 * we use ISA_IPL_CLOCK.
+	 * we use IPL_CLOCK.
 	 */
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_AUDIO,
-				       gusintr, sc /* sc->sc_gusdsp */);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, gusintr,
+	    sc /* sc->sc_gusdsp */);
 
 	/*
 	 * Set some default values

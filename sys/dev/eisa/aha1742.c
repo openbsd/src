@@ -539,8 +539,8 @@ ahbattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
 #endif
-	ahb->sc_ih = eisa_intr_establish(ia->ia_irq, EISA_IST_LEVEL,
-	    EISA_IPL_BIO, ahbintr, ahb);
+	ahb->sc_ih = eisa_intr_establish(ia->ia_irq, IST_LEVEL, IPL_BIO,
+	    ahbintr, ahb);
 
 	/*
 	 * ask the adapter what subunits are present

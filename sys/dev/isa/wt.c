@@ -249,8 +249,8 @@ wtattach(parent, self, aux)
 	sc->flags = TPSTART;		/* tape is rewound */
 	sc->dens = -1;			/* unknown density */
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    wtintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, wtintr,
+	    sc);
 }
 
 int

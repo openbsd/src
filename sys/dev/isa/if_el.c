@@ -205,8 +205,8 @@ elattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
-	    elintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, elintr,
+	    sc);
 
 	dprintf(("elattach() finished.\n"));
 }
@@ -221,7 +221,7 @@ elreset(sc)
 	int s;
 
 	dprintf(("elreset()\n"));
-	s = splimp();
+	s = splnet();
 	elstop(sc);
 	elinit(sc);
 	splx(s);
@@ -296,7 +296,7 @@ elinit(sc)
 
 /*
  * Start output on interface.  Get datagrams from the queue and output them,
- * giving the receiver a chance between datagrams.  Call only from splimp or
+ * giving the receiver a chance between datagrams.  Call only from splnet or
  * interrupt level!
  */
 void
@@ -309,7 +309,7 @@ elstart(ifp)
 	int s, i, off, retries;
 
 	dprintf(("elstart()...\n"));
-	s = splimp();
+	s = splnet();
 
 	/* Don't do anything if output is active. */
 	if ((ifp->if_flags & IFF_OACTIVE) != 0) {
@@ -392,7 +392,7 @@ elstart(ifp)
 		outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
 		splx(s);
 		/* Interrupt here. */
-		s = splimp();
+		s = splnet();
 	}
 
 	(void)inb(iobase+EL_AS);
@@ -403,7 +403,7 @@ elstart(ifp)
 
 /*
  * This function actually attempts to transmit a datagram downloaded to the
- * board.  Call at splimp or interrupt, after downloading data!  Returns 0 on
+ * board.  Call at splnet or interrupt, after downloading data!  Returns 0 on
  * success, non-0 on failure.
  */
 static int
@@ -620,7 +620,7 @@ elioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 

@@ -409,8 +409,8 @@ egattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_NET,
-	    egintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, egintr,
+	    sc);
 }
 
 void
@@ -731,7 +731,7 @@ egioctl(ifp, cmd, data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
-	s = splimp();
+	s = splnet();
 
 	switch (cmd) {
 
@@ -813,7 +813,7 @@ egreset(sc)
 	int s;
 
 	dprintf(("egreset()\n"));
-	s = splimp();
+	s = splnet();
 	egstop(sc);
 	eginit(sc);
 	splx(s);

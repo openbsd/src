@@ -223,8 +223,8 @@ comattach(parent, self, aux)
 	outb(iobase + com_mcr, 0);
 
 	if (ia->ia_irq != IRQUNK)
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
-		    ISA_IPL_TTY, comintr, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY,
+		    comintr, sc);
 
 #ifdef KGDB
 	if (kgdb_dev == makedev(commajor, unit)) {

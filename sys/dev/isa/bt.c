@@ -612,8 +612,8 @@ btattach(parent, self, aux)
 #ifdef NEWCONFIG
 	isa_establish(&bt->sc_id, &bt->sc_dev);
 #endif
-	bt->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE, ISA_IPL_BIO,
-	    btintr, bt);
+	bt->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, btintr,
+	    bt);
 
 	/*
 	 * ask the adapter what subunits are present

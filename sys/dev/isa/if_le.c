@@ -397,8 +397,8 @@ leattach(parent, self, aux)
 		if (ia->ia_drq != DRQUNK)
 			isa_dmacascade(ia->ia_drq);
 
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, ISA_IST_EDGE,
-		    ISA_IPL_NET, leintredge, sc);
+		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
+		    leintredge, sc);
 	}
 #endif
 
@@ -410,7 +410,7 @@ leattach(parent, self, aux)
 		    pci_conf_read(pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 		    PCI_COMMAND_MASTER_ENABLE);
 
-		sc->sc_ih = pci_map_int(pa->pa_tag, PCI_IPL_NET, leintr, sc);
+		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, leintr, sc);
 	}
 #endif
 
