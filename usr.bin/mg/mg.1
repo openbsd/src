@@ -103,12 +103,7 @@ is set to
 will use
 .Pa .mg-vt100
 as a startup file.  The terminal type startup file is used
-first.  If either of these files does not exist, 
-.Nm
-will look for a file by the same name (but without the leading
-dot) in
-.Pa /usr/local/lib/mg .
-.Pp
+first.
 See the manual for a full list of the commands that can
 go in the files.
 .Pp
@@ -127,13 +122,11 @@ blink-matching-paren
 set-default-mode blink
 .Ed
 .Sh FILES
-.Bl -tag -width /usr/local/lib/mg -compact
+.Bl -tag -width xxxx -compact
 .It Pa ~/.mg
 normal startup file
 .It Pa ~/.mg-TERM
 terminal-specific startup file
-.It Pa /usr/local/lib/mg
-directory for system-wide startup files
 .El
 .Sh SEE ALSO
 .Xr vi 1
