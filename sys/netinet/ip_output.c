@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.67 2000/04/13 19:22:57 art Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.68 2000/05/04 20:15:38 niklas Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -491,6 +491,13 @@ sendit:
 		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
 					    gw->sen_ipsp_sproto);
 
+		/* Bypass the SA acquisition if that is what we want. */
+		if (tdb && tdb->tdb_satype == SADB_X_SATYPE_BYPASS)
+		{
+		    splx(s);
+		    goto no_encap;
+		}
+
 		/* 
 		 * For VPNs a route with a reserved SPI is used to
 		 * indicate the need for an SA when none is established.
@@ -614,9 +621,11 @@ sendit:
 		    /* XXX Initialize src_id/dst_id */
 
 		    /* PF_KEYv2 notification message */
-		    if (tdb && tdb->tdb_satype != SADB_X_SATYPE_BYPASS)
-		            if ((error = pfkeyv2_acquire(tdb, 0)) != 0)
-			            return error;
+		    if ((error = pfkeyv2_acquire(tdb, 0)) != 0)
+		    {
+			splx(s);
+			return error;
+		    }
 
 		    splx(s);
 
