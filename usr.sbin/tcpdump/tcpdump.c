@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.24 2001/11/07 07:41:21 deraadt Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.25 2001/11/07 18:48:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.24 2001/11/07 07:41:21 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.25 2001/11/07 18:48:00 deraadt Exp $ (LBL)";
 #endif
 
 /*
@@ -415,44 +415,39 @@ default_print_hexl(const u_char *cp, unsigned int length, unsigned int offset)
 {
 	unsigned int i, j, jm;
 	int c;
-	char ln[128];
+	char ln[128], buf[128];
 
 	printf("\n");
 	for (i = 0; i < length; i += 0x10) {
-		snprintf(ln, 
-			 sizeof(ln),
-			 "  %04x: ", (unsigned int)(i + offset));
+		snprintf(ln, sizeof(ln), "  %04x: ",
+		    (unsigned int)(i + offset));
 		jm = length - i;
 		jm = jm > 16 ? 16 : jm;
 
 		for (j = 0; j < jm; j++) {
 			if ((j % 2) == 1)
-				snprintf(ln + strlen(ln),
-					 sizeof(ln) - strlen(ln),
-					 "%02x ", (unsigned int)cp[i+j]);
+				snprintf(buf, sizeof(buf), "%02x ",
+				    (unsigned int)cp[i+j]);
 			else
-				snprintf(ln + strlen(ln), 
-					 sizeof(ln) - strlen(ln),
-					 "%02x", (unsigned int)cp[i+j]);
+				snprintf(buf, sizeof(buf), "%02x",
+				    (unsigned int)cp[i+j]);
+			strlcat(ln, buf, sizeof ln);
 		}
 		for (; j < 16; j++) {
 			if ((j % 2) == 1)
-				snprintf(ln + strlen(ln), 
-					 sizeof(ln) - strlen(ln),
-					 "   ");
+				snprintf(buf, sizeof buf, "   ");
 			else
-				snprintf(ln + strlen(ln), 
-					 sizeof(ln) - strlen(ln),
-					 "  ");
+				snprintf(buf, sizeof buf, "  ");
+			strlcat(ln, buf, sizeof ln);
 		}
 
-		snprintf(ln + strlen(ln), sizeof(ln) - strlen(ln), " ");
+		strlcat(ln, " ", sizeof ln);
 		for (j = 0; j < jm; j++) {
 			c = cp[i+j];
 			c = isprint(c) ? c : '.';
-			snprintf(ln + strlen(ln), 
-				 sizeof(ln) - strlen(ln), 
-				 "%c", c);
+			buf[0] = c;
+			buf[1] = '\0';
+			strlcat(ln, buf, sizeof ln);
 		}
 		printf("%s\n", ln);
 	}
