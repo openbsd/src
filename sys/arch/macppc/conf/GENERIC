@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.76 2005/03/18 02:48:53 krw Exp $g
+#	$OpenBSD: GENERIC,v 1.77 2005/03/19 21:37:09 martin Exp $g
 #
 # PPC GENERIC config file
 #
@@ -212,6 +212,7 @@ kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 cdce*	at uhub?		# CDC Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 udav*	at uhub?		# Davicom DM9601 based Ethernet
+ural*	at uhub?		# Ralink RT2500
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 urio*	at uhub?		# Diamond Multimedia Rio 500
