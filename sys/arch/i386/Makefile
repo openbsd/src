@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2001/01/30 03:01:39 mickey Exp $
+#	$OpenBSD: Makefile,v 1.10 2001/01/31 09:58:27 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -9,7 +9,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=	stand
+SUBDIR=	stand isa/pcvt/Util
 
 TI386=	../i386/tags
 SI386=	../i386/eisa/*.[ch] ../i386/i386/*.[ch] ../i386/include/*.h \
