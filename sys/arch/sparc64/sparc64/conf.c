@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.22 2002/01/13 03:37:08 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.23 2002/01/16 21:36:18 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -163,7 +163,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_tty_init(NKBD+NSUNKBD,kd), /* 1: Sun keyboard/display */
+	cdev_notdef(),			/* 1: tapemaster tape */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
 	cdev_ses_init(NSES,ses),	/* 4: SCSI SES/SAF-TE */
@@ -191,7 +191,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NWD,wd),		/* 26: IDE disk */
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
-	cdev_mouse_init(NKBD+NSUNKBD,kbd),	/* 29: /dev/kbd */
+	cdev_notdef(),			/* 29 */
 	cdev_notdef(),			/* 30: Xylogics tape */
 	cdev_notdef(),			/* 31: /dev/cgtwo */
 	cdev_notdef(),			/* 32: should be /dev/gpone */
