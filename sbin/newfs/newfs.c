@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.4 1996/10/27 20:55:05 downsj Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.5 1996/11/24 23:46:44 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.4 1996/10/27 20:55:05 downsj Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.5 1996/11/24 23:46:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.4 1996/10/27 20:55:05 downsj Exp $"
 struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_ASYNC,
+	MOPT_UPDATE,
 	{ NULL },
 };
 
