@@ -1,4 +1,4 @@
-/*	$OpenBSD: clri.c,v 1.9 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: clri.c,v 1.10 2004/01/25 19:18:54 deraadt Exp $	*/
 /*	$NetBSD: clri.c,v 1.9 1995/03/18 14:54:33 cgd Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)clri.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$OpenBSD: clri.c,v 1.9 2003/08/25 23:28:15 tedu Exp $";
+static char rcsid[] = "$OpenBSD: clri.c,v 1.10 2004/01/25 19:18:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,15 +64,13 @@ static char rcsid[] = "$OpenBSD: clri.c,v 1.9 2003/08/25 23:28:15 tedu Exp $";
 int
 main(int argc, char *argv[])
 {
-	struct fs *sbp;
-	struct ufs1_dinode *ip;
-	int fd;
 	struct ufs1_dinode ibuf[MAXBSIZE / sizeof (struct ufs1_dinode)];
-	int32_t generation;
+	char *fs, sblock[SBSIZE];
+	struct ufs1_dinode *ip;
+	struct fs *sbp;
+	int fd, inonum;
 	off_t offset;
 	size_t bsize;
-	int inonum;
-	char *fs, sblock[SBSIZE];
 
 	if (argc < 3) {
 		fprintf(stderr, "usage: clri filesystem inode ...\n");
@@ -117,9 +115,8 @@ main(int argc, char *argv[])
 		ip = &ibuf[ino_to_fsbo(sbp, inonum)];
 
 		/* clear the inode, and bump the generation count. */
-		generation = ip->di_gen + 1;
 		memset(ip, 0, sizeof(*ip));
-		ip->di_gen = generation;
+		ip->di_gen = arc4random();
 
 		/* backup and write the block */
 		if (lseek(fd, offset, SEEK_SET) < 0)
