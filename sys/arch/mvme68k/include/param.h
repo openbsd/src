@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.5 1997/03/31 00:24:04 downsj Exp $ */
+/*	$OpenBSD: param.h,v 1.6 1999/09/22 09:33:33 espie Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -151,7 +151,7 @@
 	register int _spl_r; \
 \
 	__asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-		"&=d" (_spl_r) : "di" (s)); \
+		"=&d" (_spl_r) : "di" (s)); \
 	_spl_r; \
 })
 
