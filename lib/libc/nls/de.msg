@@ -28,7 +28,7 @@ $ EACCES
 $ EFAULT
 14 Ungültige Adresse
 $ ENOTBLK
-15 Es wird ein Block Gerät benötigt
+15 Es wird ein Blockgerät benötigt
 $ EBUSY
 16 Das Gerät ist belegt
 $ EEXIST
@@ -56,7 +56,7 @@ $ EFBIG
 $ ENOSPC
 28 Kein Platz mehr auf dem Gerät
 $ ESPIPE
-29 Ungültige seek Operation
+29 Ungültige Positionierung
 $ EROFS
 30 Dateisystem ist schreibgeschützt
 $ EMLINK
@@ -86,7 +86,7 @@ $ ENOPROTOOPT
 $ EPROTONOSUPPORT
 43 Protokoll nicht unterstützt
 $ ESOCKTNOSUPPORT
-44 Socket Typ nicht unterstützt
+44 Sockettyp nicht unterstützt
 $ EOPNOTSUPP
 45 Operation nicht unterstützt
 $ EPFNOSUPPORT
@@ -116,7 +116,7 @@ $ ENOTCONN
 $ ESHUTDOWN
 58 Kann nach einem Socket-Shutdown nicht mehr senden
 $ ETOOMANYREFS
-59 Zu viele Referenzen, kann nicht splitten
+59 Zu viele Referenzen, kann nicht verbinden
 $ ETIMEDOUT
 60 Verbindungsabbruch durch Zeitüberschreitung
 $ ECONNREFUSED
@@ -138,15 +138,15 @@ $ EUSERS
 $ EDQUOT
 69 Plattenplatzlimit erschöpft
 $ ESTALE
-70 Verwaister NFS Dateideskriptor
+70 Verwaister NFS-Dateideskriptor
 $ EREMOTE
 71 Zu viele Fernverweise in diesem Zugriff
 $ EBADRPC
-72 RPC Struktur ist ungültig
+72 RPC-Struktur ist ungültig
 $ ERPCMISMATCH
-73 RPC Version stimmt nicht
+73 RPC-Version stimmt nicht
 $ EPROGUNAVAIL
-74 RPC Programm nicht verfügbar
+74 RPC-Programm nicht verfügbar
 $ EPROGMISMATCH
 75 Falsche Programmversion
 $ EPROCUNAVAIL
@@ -199,13 +199,13 @@ $ SIGCONT
 $ SIGCHLD
 20 Kindprozess beendet
 $ SIGTTIN
-21 Getsoppt (Eingabe)
+21 Gestoppt (Eingabe)
 $ SIGTTOU
-22 Getoppt (Ausgabe)
+22 Gestoppt (Ausgabe)
 $ SIGIO
 23 Ein/Ausgabe ist möglich
 $ SIGXCPU
-24 CPU Zeitlimit erschöpft
+24 CPU-Zeitlimit erschöpft
 $ SIGXFSZ
 25 Dateigröße hat das Limit erreicht
 $ SIGVTALRM
@@ -213,7 +213,7 @@ $ SIGVTALRM
 $ SIGPROF
 27 Profil-Wecker abgelaufen
 $ SIGWINCH
-28 Fenstergöße hat sich geändert
+28 Fenstergröße hat sich geändert
 $ SIGINFO
 29 Informationsanforderung
 $ SIGUSR1
