@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2002/05/09 21:58:12 jasoni Exp $	*/
+/*	$OpenBSD: parse.y,v 1.64 2002/05/10 14:09:53 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -438,7 +438,13 @@ ipspec		: ANY				{ $$ = NULL; }
 		;
 
 host_list	: xhost				{ $$ = $1; }
-		| host_list ',' xhost		{ $3->next = $1; $$ = $3; }
+		| host_list ',' xhost		{
+			/* both $1 and $3 may be lists, so join them */
+			$$ = $3;
+			while ($3->next)
+				$3 = $3->next;
+			$3->next = $1;
+		}
 		;
 
 xhost		: '!' host			{ $$ = $2; $$->not = 1; }
@@ -452,26 +458,35 @@ xhost		: '!' host			{ $$ = $2; $$->not = 1; }
 		;
 
 host		: address			{
+			struct node_host *n;
+			for (n = $1; n; n = n->next)
+				if (n->af == AF_INET)
+					ipmask(&n->mask, 32); 
+				else
+					ipmask(&n->mask, 128);
 			$$ = $1;
-			if ($$->af == AF_INET)
-				ipmask(&$$->mask, 32); 
-			else
-				ipmask(&$$->mask, 128);
 		}
 		| address '/' NUMBER		{
-			if ($$->af == AF_INET) {
-				if ($3 < 0 || $3 > 32) {
-					yyerror("illegal netmask value %d", $3);
-					YYERROR;
+			struct node_host *n;
+			for (n = $1; n; n = n->next) {
+				if ($1->af == AF_INET) {
+					if ($3 < 0 || $3 > 32) {
+						yyerror(
+						    "illegal netmask value %d",
+						    $3);
+						YYERROR;
+					}
+				} else {
+					if ($3 < 0 || $3 > 128) {
+						yyerror(
+						    "illegal netmask value %d",
+						    $3);
+						YYERROR;
+					}
 				}
-			} else {
-				if ($3 < 0 || $3 > 128) {
-					yyerror("illegal netmask value %d", $3);
-					YYERROR;
-				}
+				ipmask(&n->mask, $3);
 			}
 			$$ = $1;
-			ipmask(&$$->mask, $3);
 		}
 		;
 
@@ -485,10 +500,9 @@ address		: '(' STRING ')'		{
 			    sizeof($$->addr.addr.pfa.ifname));
 		}
 		| STRING			{
-			struct hostent *hp;
-			struct ifaddrs *ifa;
-
 			if (ifa0_lookup($1)) {
+				struct ifaddrs *ifa;
+
 				/* an interface with this name exists */
 				if ((ifa = ifa4_lookup($1))) {
 					struct sockaddr_in *sin =
@@ -521,29 +535,37 @@ address		: '(' STRING ')'		{
 					    "addresses", $1);
 					YYERROR;
 				}
-			}
-			else if ((hp = gethostbyname2($1, AF_INET)) == NULL) {
-				if ((hp = gethostbyname2($1, AF_INET6))
-				    == NULL) {
-					yyerror("cannot resolve %s", $1);
-					YYERROR;
-				} else {
-					$$ = calloc(1, sizeof(struct node_host));
-					if ($$ == NULL)
-						err(1, "address: calloc");
-					$$->af = AF_INET6;
-					$$->addr.addr_dyn = NULL;
-					memcpy(&$$->addr.addr, hp->h_addr,
-					    sizeof(struct pf_addr));
-				}
 			} else {
-				$$ = calloc(1, sizeof(struct node_host));
-				if ($$ == NULL)
-					err(1, "address: calloc");
-				$$->af = AF_INET;
-				$$->addr.addr_dyn = NULL;
-				memcpy(&$$->addr.addr, hp->h_addr,
-				    sizeof(u_int32_t));
+				struct hostent *hp;
+				char **a;
+				struct node_host *h = NULL, *n;
+
+				hp = gethostbyname2($1, AF_INET);
+				if (hp == NULL) {
+					hp = gethostbyname2($1, AF_INET6);
+					if (hp == NULL) {
+						yyerror("cannot resolve %s", $1);
+						YYERROR;
+					}
+				}
+				for (a = hp->h_addr_list; *a; ++a) {
+					if (!((hp->h_addrtype == AF_INET &&
+					    hp->h_length == 4) ||
+					    (hp->h_addrtype == AF_INET6 &&
+					    hp->h_length == 16)))
+						err(1, "address: invalid");
+					n = calloc(1, sizeof(struct node_host));
+					if (n == NULL)
+						err(1, "address: calloc");
+					n->af = hp->h_addrtype;
+					n->addr.addr_dyn = NULL;
+					memcpy(&n->addr.addr, *a, hp->h_length);
+					n->next = h;
+					h = n;
+				}
+				if (h == NULL)
+					err(1, "address: empty list");
+				$$ = h;
 			}
 		}
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
@@ -899,6 +921,10 @@ redirection	: /* empty */			{ $$ = NULL; }
 			$$ = malloc(sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: malloc");
+			if ($2->next) {
+				yyerror("multiple ip addresses");
+				YYERROR;
+			}
 			$$->address = $2;
 			$$->rport.a = $$->rport.b = $$->rport.t = 0;
 		}
@@ -906,6 +932,10 @@ redirection	: /* empty */			{ $$ = NULL; }
 			$$ = malloc(sizeof(struct redirection));
 			if ($$ == NULL)
 				err(1, "redirection: malloc");
+			if ($2->next) {
+				yyerror("multiple ip addresses");
+				YYERROR;
+			}
 			$$->address = $2;
 			$$->rport = $4;
 		}
@@ -938,6 +968,10 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 				YYERROR;
 			}
 			if ($7 != NULL) {
+				if ($7->next) {
+					yyerror("multiple nat ip addresses");
+					YYERROR;
+				}
 				if ($7->addr.addr_dyn != NULL) {
 					if (!nat.af) {
 						yyerror("address family (inet/"
@@ -959,6 +993,10 @@ natrule		: no NAT interface af proto FROM ipspec TO ipspec redirection
 				free($7);
 			}
 			if ($9 != NULL) {
+				if ($9->next) {
+					yyerror("multiple nat ip addresses");
+					YYERROR;
+				}
 				if ($9->addr.addr_dyn != NULL) {
 					if (!nat.af) {
 						yyerror("address family (inet/"
@@ -1039,6 +1077,10 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 				YYERROR;
 			}
 			if ($7 != NULL) {
+				if ($7->next) {
+					yyerror("multiple binat ip addresses");
+					YYERROR;
+				}
 				if ($7->addr.addr_dyn != NULL) {
 					if (!binat.af) {
 						yyerror("address family (inet/"
@@ -1057,6 +1099,10 @@ binatrule	: no BINAT interface af proto FROM address TO ipspec redirection
 				free($7);
 			}
 			if ($9 != NULL) {
+				if ($9->next) {
+					yyerror("multiple binat ip addresses");
+					YYERROR;
+				}
 				if ($9->addr.addr_dyn != NULL) {
 					if (!binat.af) {
 						yyerror("address family (inet/"
@@ -1138,6 +1184,10 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				YYERROR;
 			}
 			if ($7 != NULL) {
+				if ($7->next) {
+					yyerror("multiple rdr ip addresses");
+					YYERROR;
+				}
 				if ($7->addr.addr_dyn != NULL) {
 					if (!rdr.af) {
 						yyerror("address family (inet/"
@@ -1159,6 +1209,10 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				free($7);
 			}
 			if ($9 != NULL) {
+				if ($9->next) {
+					yyerror("multiple rdr ip addresses");
+					YYERROR;
+				}
 				if ($9->addr.addr_dyn != NULL) {
 					if (!rdr.af) {
 						yyerror("address family (inet/"
@@ -1259,6 +1313,10 @@ route		: /* empty */			{
 				    " dynamic addresses");
 				YYERROR;
 			}
+			if ($4->next) {
+				yyerror("multiple routeto ip addresses");
+				YYERROR;
+			}
 			$$.addr = &$4->addr.addr;
 			$$.af = $4->af;
 		}
@@ -1273,6 +1331,10 @@ route		: /* empty */			{
 			if ($4->addr.addr_dyn != NULL) {
 				yyerror("dup-to does not support"
 				    " dynamic addresses");
+				YYERROR;
+			}
+			if ($4->next) {
+				yyerror("multiple dupto ip addresses");
 				YYERROR;
 			}
 			$$.addr = &$4->addr.addr;
