@@ -1,5 +1,6 @@
+/*	$OpenBSD: awk.h,v 1.5 1997/08/25 16:17:09 kstailey Exp $	*/
 /****************************************************************
-Copyright (C) AT&T and Lucent Technologies 1996
+Copyright (C) Lucent Technologies 1997
 All Rights Reserved
 
 Permission to use, copy, modify, and distribute this software and
@@ -7,19 +8,19 @@ its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all
 copies and that both that the copyright notice and this
 permission notice and warranty disclaimer appear in supporting
-documentation, and that the names of AT&T or Lucent Technologies
-or any of their entities not be used in advertising or publicity
-pertaining to distribution of the software without specific,
-written prior permission.
+documentation, and that the name Lucent Technologies or any of
+its entities not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.
 
-AT&T AND LUCENT DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL AT&T OR LUCENT OR ANY OF THEIR
-ENTITIES BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
-DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-USE OR PERFORMANCE OF THIS SOFTWARE.
+LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
 ****************************************************************/
 
 typedef double	Awkfloat;
@@ -38,16 +39,17 @@ typedef	unsigned char uschar;
 #	define	dprintf(x)
 #endif
 
-extern	char	errbuf[200];
+extern	char	errbuf[];
 #define	ERROR	sprintf(errbuf,
 #define	FATAL	), error(1, errbuf)
 #define	WARNING	), error(0, errbuf)
 #define	SYNTAX	), yyerror(errbuf)
 
 extern int	compile_time;	/* 1 if compiling, 0 if running */
+extern int	safe;		/* 0 => unsafe, 1 => safe */
 
-#define	RECSIZE	(3 * 1024)	/* sets limit on records, fields, etc., etc. */
-extern int	recsize;	/* variable version */
+#define	RECSIZE	(8 * 1024)	/* sets limit on records, fields, etc., etc. */
+extern int	recsize;	/* size of current record, orig RECSIZE */
 
 extern char	**FS;
 extern char	**RS;
@@ -71,20 +73,6 @@ extern char	inputFS[];	/* FS at time of input, for field splitting */
 
 extern int	dbg;
 
-typedef struct {
-	char	*cbuf;
-	int	clen;
-	int	cmax;
-} Gstring;		/* a string that grows */
-
-extern Gstring	*newGstring(void);		/* constructor */
-extern void	delGstring(Gstring *);		/* destructor */
-extern char	*cadd(Gstring *gs, int c);	/* function to grow with */
-extern void	caddreset(Gstring *gs);		/* set cbuf empty */
-extern void	cunadd(Gstring *gs);		/* back up one char in cbuf */
-
-extern Gstring	*gs;	/* used by lex */
-
 extern	char	*patbeg;	/* beginning of pattern matched */
 extern	int	patlen;		/* length of pattern matched.  set in b.c */
 
@@ -100,7 +88,7 @@ typedef struct Cell {
 	struct Cell *cnext;	/* ptr to next if chained */
 } Cell;
 
-typedef struct {		/* symbol table array */
+typedef struct Array {		/* symbol table array */
 	int	nelem;		/* elements in table right now */
 	int	size;		/* size of tab */
 	Cell	**tab;		/* hash table pointers */
@@ -109,7 +97,6 @@ typedef struct {		/* symbol table array */
 #define	NSYMTAB	50	/* initial size of a symbol table */
 extern Array	*symtab;
 
-extern Cell	*recloc;	/* location of input record */
 extern Cell	*nrloc;		/* NR */
 extern Cell	*fnrloc;	/* FNR */
 extern Cell	*nfloc;		/* NF */
@@ -190,7 +177,6 @@ extern Node	*nullnode;
 #define NVALUE	1
 #define NSTAT	2
 #define NEXPR	3
-#define	NFIELD	4
 
 
 extern	int	pairstack[], paircnt;
@@ -205,14 +191,17 @@ extern	int	pairstack[], paircnt;
 #define	isnext(n)	((n)->csub == JNEXT)
 #define	isnextfile(n)	((n)->csub == JNEXTFILE)
 #define	isret(n)	((n)->csub == JRET)
+#define isrec(n)	((n)->tval & REC)
+#define isfld(n)	((n)->tval & FLD)
 #define isstr(n)	((n)->tval & STR)
 #define isnum(n)	((n)->tval & NUM)
 #define isarr(n)	((n)->tval & ARR)
-#define isfunc(n)	((n)->tval & FCN)
+#define isfcn(n)	((n)->tval & FCN)
 #define istrue(n)	((n)->csub == BTRUE)
 #define istemp(n)	((n)->csub == CTEMP)
 #define	isargument(n)	((n)->nobj == ARG)
-#define freeable(p)	(!((p)->tval & DONTFREE))
+/* #define freeable(p)	(!((p)->tval & DONTFREE)) */
+#define freeable(p)	( ((p)->tval & (STR|DONTFREE)) == STR )
 
 /* structures used by regular expression matching machinery, mostly b.c: */
 

@@ -1,5 +1,6 @@
+/*	$OpenBSD: awkgram.y,v 1.4 1997/08/25 16:17:09 kstailey Exp $	*/
 /****************************************************************
-Copyright (C) AT&T and Lucent Technologies 1996
+Copyright (C) Lucent Technologies 1997
 All Rights Reserved
 
 Permission to use, copy, modify, and distribute this software and
@@ -7,19 +8,19 @@ its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all
 copies and that both that the copyright notice and this
 permission notice and warranty disclaimer appear in supporting
-documentation, and that the names of AT&T or Lucent Technologies
-or any of their entities not be used in advertising or publicity
-pertaining to distribution of the software without specific,
-written prior permission.
+documentation, and that the name Lucent Technologies or any of
+its entities not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.
 
-AT&T AND LUCENT DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL AT&T OR LUCENT OR ANY OF THEIR
-ENTITIES BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
-DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-USE OR PERFORMANCE OF THIS SOFTWARE.
+LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
 ****************************************************************/
 
 %{
@@ -59,7 +60,7 @@ Node	*arglist = 0;	/* list of args for current function */
 %token	<i>	PRINT PRINTF SPRINTF
 %token	<p>	ELSE INTEST CONDEXPR
 %token	<i>	POSTINCR PREINCR POSTDECR PREDECR
-%token	<cp>	VAR IVAR VARNF CALL NUMBER STRING FIELD
+%token	<cp>	VAR IVAR VARNF CALL NUMBER STRING
 %token	<s>	REGEXPR
 
 %type	<p>	pas pattern ppattern plist pplist patlist prarg term re
@@ -79,7 +80,7 @@ Node	*arglist = 0;	/* list of args for current function */
 %left	AND
 %left	GETLINE
 %nonassoc APPEND EQ GE GT LE LT NE MATCHOP IN '|'
-%left	ARG BLTIN BREAK CALL CLOSE CONTINUE DELETE DO EXIT FOR FIELD FUNC 
+%left	ARG BLTIN BREAK CALL CLOSE CONTINUE DELETE DO EXIT FOR FUNC 
 %left	GSUB IF INDEX LSUBSTR MATCHFCN NEXT NUMBER
 %left	PRINT PRINTF RETURN SPLIT SPRINTF STRING SUB SUBSTR
 %left	REGEXPR VAR VARNF IVAR WHILE '('
@@ -238,8 +239,12 @@ pattern:
 			$$ = op3($2, (Node *)1, $1, $3); }
 	| pattern IN varname		{ $$ = op2(INTEST, $1, makearr($3)); }
 	| '(' plist ')' IN varname	{ $$ = op2(INTEST, $2, makearr($5)); }
-	| pattern '|' GETLINE var	{ $$ = op3(GETLINE, $4, (Node*)$2, $1); }
-	| pattern '|' GETLINE		{ $$ = op3(GETLINE, (Node*)0, (Node*)$2, $1); }
+	| pattern '|' GETLINE var	{ 
+			if (safe) ERROR "cmd | getline is unsafe" SYNTAX;
+			else $$ = op3(GETLINE, $4, (Node*)$2, $1); }
+	| pattern '|' GETLINE		{ 
+			if (safe) ERROR "cmd | getline is unsafe" SYNTAX;
+			else $$ = op3(GETLINE, (Node*)0, (Node*)$2, $1); }
 	| pattern term %prec CAT	{ $$ = op2(CAT, $1, $2); }
 	| re
 	| term
@@ -288,9 +293,15 @@ rparen:
 	;
 
 simple_stmt:
-	  print prarg '|' term		{ $$ = stat3($1, $2, (Node *) $3, $4); }
-	| print prarg APPEND term	{ $$ = stat3($1, $2, (Node *) $3, $4); }
-	| print prarg GT term		{ $$ = stat3($1, $2, (Node *) $3, $4); }
+	  print prarg '|' term		{ 
+			if (safe) ERROR "print | is unsafe" SYNTAX;
+			else $$ = stat3($1, $2, (Node *) $3, $4); }
+	| print prarg APPEND term	{
+			if (safe) ERROR "print >> is unsafe" SYNTAX;
+			else $$ = stat3($1, $2, (Node *) $3, $4); }
+	| print prarg GT term		{
+			if (safe) ERROR "print > is unsafe" SYNTAX;
+			else $$ = stat3($1, $2, (Node *) $3, $4); }
 	| print prarg			{ $$ = stat3($1, $2, NIL, NIL); }
 	| DELETE varname '[' patlist ']' { $$ = stat2(DELETE, makearr($2), $4); }
 	| DELETE varname		 { $$ = stat2(DELETE, makearr($2), 0); }
@@ -352,8 +363,8 @@ term:
 	| BLTIN '(' ')'			{ $$ = op2(BLTIN, (Node *) $1, rectonode()); }
 	| BLTIN '(' patlist ')'		{ $$ = op2(BLTIN, (Node *) $1, $3); }
 	| BLTIN				{ $$ = op2(BLTIN, (Node *) $1, rectonode()); }
-	| CALL '(' ')'			{ $$ = op2(CALL, valtonode($1,CVAR), NIL); }
-	| CALL '(' patlist ')'		{ $$ = op2(CALL, valtonode($1,CVAR), $3); }
+	| CALL '(' ')'			{ $$ = op2(CALL, celltonode($1,CVAR), NIL); }
+	| CALL '(' patlist ')'		{ $$ = op2(CALL, celltonode($1,CVAR), $3); }
 	| DECR var			{ $$ = op1(PREDECR, $2); }
 	| INCR var			{ $$ = op1(PREINCR, $2); }
 	| var DECR			{ $$ = op1(POSTDECR, $1); }
@@ -375,7 +386,7 @@ term:
 			$$ = op3(MATCHFCN, NIL, $3, (Node*)makedfa(strnode($5), 1));
 		  else
 			$$ = op3(MATCHFCN, (Node *)1, $3, $5); }
-	| NUMBER			{ $$ = valtonode($1, CCON); }
+	| NUMBER			{ $$ = celltonode($1, CCON); }
 	| SPLIT '(' pattern comma varname comma pattern ')'     /* string */
 		{ $$ = op4(SPLIT, $3, makearr($5), $7, (Node*)STRING); }
 	| SPLIT '(' pattern comma varname comma reg_expr ')'    /* const /regexp/ */
@@ -383,7 +394,7 @@ term:
 	| SPLIT '(' pattern comma varname ')'
 		{ $$ = op4(SPLIT, $3, makearr($5), NIL, (Node*)STRING); }  /* default */
 	| SPRINTF '(' patlist ')'	{ $$ = op1($1, $3); }
-	| STRING	 		{ $$ = valtonode($1, CCON); }
+	| STRING	 		{ $$ = celltonode($1, CCON); }
 	| subop '(' reg_expr comma pattern ')'
 		{ $$ = op4($1, NIL, (Node*)makedfa($3, 1), $5, rectonode()); }
 	| subop '(' pattern comma pattern ')'
@@ -408,21 +419,20 @@ term:
 var:
 	  varname
 	| varname '[' patlist ']'	{ $$ = op2(ARRAY, makearr($1), $3); }
-	| FIELD				{ $$ = valtonode($1, CFLD); }
-	| IVAR				{ $$ = op1(INDIRECT, valtonode($1, CVAR)); }
+	| IVAR				{ $$ = op1(INDIRECT, celltonode($1, CVAR)); }
 	| INDIRECT term	 		{ $$ = op1(INDIRECT, $2); }
 	;	
 
 varlist:
 	  /* nothing */		{ arglist = $$ = 0; }
-	| VAR			{ arglist = $$ = valtonode($1,CVAR); }
+	| VAR			{ arglist = $$ = celltonode($1,CVAR); }
 	| varlist comma VAR	{
 			checkdup($1, $3);
-			arglist = $$ = linkum($1,valtonode($3,CVAR)); }
+			arglist = $$ = linkum($1,celltonode($3,CVAR)); }
 	;
 
 varname:
-	  VAR			{ $$ = valtonode($1, CVAR); }
+	  VAR			{ $$ = celltonode($1, CVAR); }
 	| ARG 			{ $$ = op1(ARG, (Node *) $1); }
 	| VARNF			{ $$ = op1(VARNF, (Node *) $1); }
 	;
@@ -438,7 +448,7 @@ void setfname(Cell *p)
 {
 	if (isarr(p))
 		ERROR "%s is an array, not a function", p->nval SYNTAX;
-	else if (isfunc(p))
+	else if (isfcn(p))
 		ERROR "you can't define function %s more than once", p->nval SYNTAX;
 	curfname = p->nval;
 }

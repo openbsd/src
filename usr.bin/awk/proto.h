@@ -1,5 +1,6 @@
+/*	$OpenBSD: proto.h,v 1.3 1997/08/25 16:17:13 kstailey Exp $	*/
 /****************************************************************
-Copyright (C) AT&T and Lucent Technologies 1996
+Copyright (C) Lucent Technologies 1997
 All Rights Reserved
 
 Permission to use, copy, modify, and distribute this software and
@@ -7,19 +8,19 @@ its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all
 copies and that both that the copyright notice and this
 permission notice and warranty disclaimer appear in supporting
-documentation, and that the names of AT&T or Lucent Technologies
-or any of their entities not be used in advertising or publicity
-pertaining to distribution of the software without specific,
-written prior permission.
+documentation, and that the name Lucent Technologies or any of
+its entities not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.
 
-AT&T AND LUCENT DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL AT&T OR LUCENT OR ANY OF THEIR
-ENTITIES BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
-DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-USE OR PERFORMANCE OF THIS SOFTWARE.
+LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
 ****************************************************************/
 
 extern	int	yywrap(void);
@@ -80,7 +81,7 @@ extern	Node	*op3(int, Node *, Node *, Node *);
 extern	Node	*op4(int, Node *, Node *, Node *, Node *);
 extern	Node	*stat2(int, Node *, Node *);
 extern	Node	*stat4(int, Node *, Node *, Node *, Node *);
-extern	Node	*valtonode(Cell *, int);
+extern	Node	*celltonode(Cell *, int);
 extern	Node	*rectonode(void);
 extern	Node	*makearr(Node *);
 extern	Node	*pa2stat(Node *, Node *, Node *);
@@ -110,9 +111,11 @@ extern	char	*qstring(char *, int);
 
 extern	void	recinit(unsigned int);
 extern	void	initgetrec(void);
-extern	int	getrec(char *);
+extern	void	makefields(int, int);
+extern	void	growfldtab(int n);
+extern	int	getrec(char **, int *, int);
 extern	void	nextfile(void);
-extern	int	readrec(char *buf, int bufsize, FILE *inf);
+extern	int	readrec(char **buf, int *bufsize, FILE *inf);
 extern	char	*getargv(int);
 extern	void	setclvar(char *);
 extern	void	fldbld(void);
@@ -132,6 +135,7 @@ extern	double	errcheck(double, char *);
 extern	int	isclvar(char *);
 extern	int	isnumber(char *);
 
+extern	int	adjbuf(char **pb, int *sz, int min, int q, char **pbp, char *what);
 extern	void	run(Node *);
 extern	Cell	*execute(Node *);
 extern	Cell	*program(Node **, int);
@@ -153,7 +157,7 @@ extern	Cell	*field(Node **, int);
 extern	Cell	*indirect(Node **, int);
 extern	Cell	*substr(Node **, int);
 extern	Cell	*sindex(Node **, int);
-extern	int	format(char *, int, char *, Node *);
+extern	int	format(char **, int *, char *, Node *);
 extern	Cell	*awksprintf(Node **, int);
 extern	Cell	*awkprintf(Node **, int);
 extern	Cell	*arith(Node **, int);

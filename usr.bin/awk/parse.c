@@ -1,5 +1,6 @@
+/*	$OpenBSD: parse.c,v 1.2 1997/08/25 16:17:13 kstailey Exp $	*/
 /****************************************************************
-Copyright (C) AT&T and Lucent Technologies 1996
+Copyright (C) Lucent Technologies 1997
 All Rights Reserved
 
 Permission to use, copy, modify, and distribute this software and
@@ -7,19 +8,19 @@ its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all
 copies and that both that the copyright notice and this
 permission notice and warranty disclaimer appear in supporting
-documentation, and that the names of AT&T or Lucent Technologies
-or any of their entities not be used in advertising or publicity
-pertaining to distribution of the software without specific,
-written prior permission.
+documentation, and that the name Lucent Technologies or any of
+its entities not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.
 
-AT&T AND LUCENT DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL AT&T OR LUCENT OR ANY OF THEIR
-ENTITIES BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
-DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-USE OR PERFORMANCE OF THIS SOFTWARE.
+LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
 ****************************************************************/
 
 #define DEBUG
@@ -27,7 +28,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "awkgram.h"
+#include "ytab.h"
 
 Node *nodealloc(int n)
 {
@@ -165,7 +166,7 @@ Node *op4(int a, Node *b, Node *c, Node *d, Node *e)
 	return(x);
 }
 
-Node *valtonode(Cell *a, int b)
+Node *celltonode(Cell *a, int b)
 {
 	Node *x;
 
@@ -178,7 +179,8 @@ Node *valtonode(Cell *a, int b)
 
 Node *rectonode(void)	/* make $0 into a Node */
 {
-	return valtonode(recloc, CFLD);
+	extern Cell *literal0;
+	return op1(INDIRECT, celltonode(literal0, CUNK));
 }
 
 Node *makearr(Node *p)
@@ -187,7 +189,7 @@ Node *makearr(Node *p)
 
 	if (isvalue(p)) {
 		cp = (Cell *) (p->narg[0]);
-		if (isfunc(cp))
+		if (isfcn(cp))
 			ERROR "%s is a function, not an array", cp->nval SYNTAX;
 		else if (!isarr(cp)) {
 			xfree(cp->sval);
@@ -198,12 +200,17 @@ Node *makearr(Node *p)
 	return p;
 }
 
+#define PA2NUM	50	/* max number of pat,pat patterns allowed */
+int	paircnt;		/* number of them in use */
+int	pairstack[PA2NUM];	/* state of each pat,pat */
+
 Node *pa2stat(Node *a, Node *b, Node *c)	/* pat, pat {...} */
 {
 	Node *x;
 
 	x = node4(PASTAT2, a, b, c, (Node *) paircnt);
-	paircnt++;
+	if (paircnt++ >= PA2NUM)
+		ERROR "limited to %d pat,pat statements", PA2NUM SYNTAX;
 	x->ntype = NSTAT;
 	return(x);
 }

@@ -1,5 +1,6 @@
+/*	$OpenBSD: b.c,v 1.5 1997/08/25 16:17:10 kstailey Exp $	*/
 /****************************************************************
-Copyright (C) AT&T and Lucent Technologies 1996
+Copyright (C) Lucent Technologies 1997
 All Rights Reserved
 
 Permission to use, copy, modify, and distribute this software and
@@ -7,19 +8,19 @@ its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all
 copies and that both that the copyright notice and this
 permission notice and warranty disclaimer appear in supporting
-documentation, and that the names of AT&T or Lucent Technologies
-or any of their entities not be used in advertising or publicity
-pertaining to distribution of the software without specific,
-written prior permission.
+documentation, and that the name Lucent Technologies or any of
+its entities not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.
 
-AT&T AND LUCENT DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL AT&T OR LUCENT OR ANY OF THEIR
-ENTITIES BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
-DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-USE OR PERFORMANCE OF THIS SOFTWARE.
+LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
 ****************************************************************/
 
 /* lasciate ogne speranza, voi ch'entrate. */
@@ -31,7 +32,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "awkgram.h"
+#include "ytab.h"
 
 #define	HAT	(NCHARS-1)	/* matches ^ in regular expr */
 				/* NCHARS is 2**n */
@@ -283,42 +284,46 @@ int quoted(char **pp)	/* pick up next thing after a \\ */
 char *cclenter(char *p)	/* add a character class */
 {
 	int i, c, c2;
-	char *op;
-	static Gstring *cgp = 0;
+	char *op, *bp;
+	static char *buf = 0;
+	static int bufsz = 100;
 
 	op = p;
-	if (cgp == 0)
-		cgp = newGstring();
-	caddreset(cgp);
-	i = 0;
-	while ((c = *p++) != 0) {
+	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
+		ERROR "out of space for character class [%.10s...] 1", p FATAL;
+	bp = buf;
+	for (i = 0; (c = *p++) != 0; ) {
 		if (c == '\\') {
 			c = quoted(&p);
-		} else if (c == '-' && i > 0 && cgp->cbuf[i-1] != 0) {
+		} else if (c == '-' && i > 0 && bp[-1] != 0) {
 			if (*p != 0) {
-				c = cgp->cbuf[i-1];
+				c = bp[-1];
 				c2 = *p++;
 				if (c2 == '\\')
 					c2 = quoted(&p);
 				if (c > c2) {	/* empty; ignore */
-					cunadd(cgp);
+					bp--;
 					i--;
 					continue;
 				}
 				while (c < c2) {
-					cadd(cgp, ++c);
+					if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, 0))
+						ERROR "out of space for character class [%.10s...] 2", p FATAL;
+					*bp++ = ++c;
 					i++;
 				}
 				continue;
 			}
 		}
-		cadd(cgp, c);
+		if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, 0))
+			ERROR "out of space for character class [%.10s...] 3", p FATAL;
+		*bp++ = c;
 		i++;
 	}
-	cadd(cgp, 0);
-	dprintf( ("cclenter: in = |%s|, out = |%s|\n", op, cgp->cbuf) );
+	*bp = 0;
+	dprintf( ("cclenter: in = |%s|, out = |%s|\n", op, buf) );
 	xfree(op);
-	return(tostring(cgp->cbuf));
+	return(tostring(buf));
 }
 
 void overflo(char *s)
@@ -339,9 +344,8 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 			maxsetvec *= 4;
 			setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
 			tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
-			if (setvec == 0 || tmpset == 0) { abort();
+			if (setvec == 0 || tmpset == 0)
 				overflo("out of space in cfoll()");
-}
 		}
 		for (i = 0; i <= f->accept; i++)
 			setvec[i] = 0;
@@ -676,9 +680,11 @@ Node *unary(Node *np)
 
 int relex(void)		/* lexical analyzer for reparse */
 {
-	int c;
+	int c, n;
 	int cflag;
-	static Gstring *gp = 0;
+	static char *buf = 0;
+	static int bufsz = 100;
+	char *bp;
 
 	switch (c = *prestr++) {
 	case '|': return OR;
@@ -699,36 +705,39 @@ int relex(void)		/* lexical analyzer for reparse */
 		rlxval = c;
 		return CHAR;
 	case '[': 
-		if (gp == 0)
-			gp = newGstring();
-		caddreset(gp);
+		if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
+			ERROR "out of space in reg expr %.10s..", lastre FATAL;
+		bp = buf;
 		if (*prestr == '^') {
 			cflag = 1;
 			prestr++;
 		}
 		else
 			cflag = 0;
+		n = 2 * strlen(prestr)+1;
+		if (!adjbuf(&buf, &bufsz, n, n, &bp, 0))
+			ERROR "out of space for reg expr %.10s...", lastre FATAL;
 		for (; ; ) {
 			if ((c = *prestr++) == '\\') {
-				cadd(gp, '\\');
+				*bp++ = '\\';
 				if ((c = *prestr++) == '\0')
 					ERROR "nonterminated character class %.20s...", lastre FATAL;
-				cadd(gp, c);
+				*bp++ = c;
 			} else if (c == '\n') {
 				ERROR "newline in character class %.20s...", lastre FATAL;
 			} else if (c == '\0') {
 				ERROR "nonterminated character class %.20s", lastre FATAL;
-			} else if (gp->clen == 0) {	/* 1st char is special */
-				cadd(gp, c);
+			} else if (bp == buf) {	/* 1st char is special */
+				*bp++ = c;
 			} else if (c == ']') {
-				cadd(gp, 0);
-				rlxstr = tostring(gp->cbuf);
+				*bp++ = 0;
+				rlxstr = tostring(buf);
 				if (cflag == 0)
 					return CCL;
 				else
 					return NCCL;
 			} else
-				cadd(gp, c);
+				*bp++ = c;
 		}
 	}
 }

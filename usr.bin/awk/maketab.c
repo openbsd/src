@@ -1,5 +1,6 @@
+/*	$OpenBSD: maketab.c,v 1.2 1997/08/25 16:17:12 kstailey Exp $	*/
 /****************************************************************
-Copyright (C) AT&T and Lucent Technologies 1996
+Copyright (C) Lucent Technologies 1997
 All Rights Reserved
 
 Permission to use, copy, modify, and distribute this software and
@@ -7,32 +8,32 @@ its documentation for any purpose and without fee is hereby
 granted, provided that the above copyright notice appear in all
 copies and that both that the copyright notice and this
 permission notice and warranty disclaimer appear in supporting
-documentation, and that the names of AT&T or Lucent Technologies
-or any of their entities not be used in advertising or publicity
-pertaining to distribution of the software without specific,
-written prior permission.
+documentation, and that the name Lucent Technologies or any of
+its entities not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.
 
-AT&T AND LUCENT DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
-SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL AT&T OR LUCENT OR ANY OF THEIR
-ENTITIES BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
-DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
-DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
-USE OR PERFORMANCE OF THIS SOFTWARE.
+LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
 ****************************************************************/
 
 /*
  * this program makes the table to link function names
  * and type indices that is used by execute() in run.c.
- * it finds the indices in awkgram.h, produced by yacc.
+ * it finds the indices in ytab.h, produced by yacc.
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "awkgram.h"
+#include "ytab.h"
 
 struct xx
 {	int token;
@@ -120,12 +121,12 @@ int main(int argc, char *argv[])
 
 	printf("#include <stdio.h>\n");
 	printf("#include \"awk.h\"\n");
-	printf("#include \"awkgram.h\"\n\n");
+	printf("#include \"ytab.h\"\n\n");
 	for (i = SIZE; --i >= 0; )
 		names[i] = "";
 
-	if ((fp = fopen("awkgram.h", "r")) == NULL) {
-		fprintf(stderr, "maketab can't open awkgram.h!\n");
+	if ((fp = fopen("ytab.h", "r")) == NULL) {
+		fprintf(stderr, "maketab can't open ytab.h!\n");
 		exit(1);
 	}
 	printf("static char *printname[%d] = {\n", SIZE);
