@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.10 2005/03/18 20:18:57 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.11 2005/03/18 22:11:08 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1199,12 +1199,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	int xferlen, rate;
 
 	/* XXX should do automatic rate adaptation */
-	if (ic->ic_fixed_rate != -1)
-		rate = ic->ic_bss->ni_rates.rs_rates[ic->ic_fixed_rate];
-	else
-		rate = ni->ni_rates.rs_rates[ni->ni_txrate];
-
-	rate &= IEEE80211_RATE_VAL;
+	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 4;
+	rate = MAX(rate, ieee80211_get_rate(ic));
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
