@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.3 2004/10/20 11:38:57 espie Exp $
+# $OpenBSD: Error.pm,v 1.4 2004/10/23 09:27:48 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -107,7 +107,7 @@ sub delayed_output
 	for my $pkg (sort keys %{$self->{messages}}) {
 		my $msgs = $self->{messages}->{$pkg};
 		if (@$msgs > 0) {
-			print "$pkg -------------------\n";
+			print "--- $pkg -------------------\n";
 			print @$msgs;
 		}
 	}

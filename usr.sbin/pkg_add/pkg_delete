@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.61 2004/10/20 11:38:57 espie Exp $
+# $OpenBSD: pkg_delete,v 1.62 2004/10/23 09:27:48 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -86,14 +86,16 @@ sub cleanup_shared_items
 			my $realname = $state->{destdir}.$d;
 			if ($remaining->{dirs}->{$realname}) {
 				for my $i (@{$h->{$d}}) {
+					$state->set_pkgname($i->{pkgname});
 					$i->reload($state);
 				}
 			} else {
 				for my $i (@{$h->{$d}}) {
+					$state->set_pkgname($i->{pkgname});
 					$i->cleanup($state);
 				}
 				if (!rmdir $realname) {
-					print "Error deleting directory $realname: $!\n";
+					$state->print("Error deleting directory $realname: $!\n");
 				}
 			}
 			$done++;
@@ -153,7 +155,7 @@ sub record_shared_item
 {
 	my ($self, $pkgname, $db) = @_;
 	my $k = $self->{name};
-	$db->{users}->{$k} = 1;
+	$db->{users}->{$k} = $pkgname;
 }
 
 sub delete
@@ -169,7 +171,7 @@ sub delete
 	$state->{users_to_rm} = {} unless defined $state->{users_to_rm};
 
 	my $h = $state->{users_to_rm};
-	$h->{$name} = 1;
+	$h->{$name} = $state->{pkgname};
 }
 
 package OpenBSD::PackingElement::NewGroup;
@@ -177,7 +179,7 @@ sub record_shared_item
 {
 	my ($self, $pkgname, $db) = @_;
 	my $k = $self->{name};
-	$db->{groups}->{$k} = 1;
+	$db->{groups}->{$k} = $pkgname;
 }
 
 sub delete
@@ -218,7 +220,8 @@ sub delete
 
 	my $h = $state->{dirs_to_rm};
 	$h->{$name} = [] unless defined $h->{$name};
-	push(@{$h->{$name}}, $self->clone());
+	$self->{pkgname} = $state->{pkgname};
+	push(@{$h->{$name}}, $self);
 }
 
 package OpenBSD::PackingElement::DirRm;
@@ -424,7 +427,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname();
-	print "You may wish to remove ", $fullname, " from your font path\n";
+	$state->print("You may wish to remove ", $fullname, " from your font path\n");
 	unlink("$fullname/fonts.alias");
 	unlink("$fullname/fonts.dir");
 	unlink("$fullname/fonts.cache-1");
