@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcibios.4,v 1.4 2001/01/09 18:41:34 krw Exp $
+.\" $OpenBSD: pcibios.4,v 1.5 2001/01/28 20:55:29 mickey Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 2000 Michale Shalayeff, All rights reserved.
@@ -44,11 +44,8 @@
 .Nd introduction to PCI BIOS support
 .Sh SYNOPSIS
 .Cd "pcibios0 at bios0 flags 0x0000"
-.Cd "option	PCIBIOSVERBOSE"
 .\" .Cd "#options  PCIBIOS_IRQS_HINT=0x0a00 #IRQ 9,11"
 .\" .Cd "#options  PCIBIOS_INTR_FIXUP_FORCE"
-.\" .Cd "options   PCIBIOS_INTR_GUESS"
-.\" .Cd "#options  PCIINTR_DEBUG"
 .Pp
 .Sh INTRODUCTION
 .Ox
@@ -129,6 +126,25 @@ of relying upon the BIOS to do so.
 .Pp
 If the BIOS has already assigned an interrupt to a device, this
 procedure leaves the interrupt as is.
+.It 0x0008
+Make PCI interrupt routing fixup work with unknown interrupt router.
+If specified and a PCI interrupt routing table entry indicates that only
+one IRQ is available for the entry, the IRQ is assumed to be already
+connected to the device, and corresponding PCI Interrupt
+Configuration Register will be configured accordingly.
+.Pp
+If a PCI interrupt router is not known, normally interrupt
+configuraion will not be touched.
+.It 0x0010
+Be verbose when perfoming
+.Nm pcibios
+tasks, such as print out pci devices address fixup tables,
+print more information durign interrupt fixup and
+other diagnostic and non-fatal messages.
+.It 0x0020
+Make the PCI interrupt routing fixup procedure verbose.
+.El
+
 .\" .It Nm PCIBIOS_IRQS_HINT
 .\" hint for IRQ use.
 .\" When the
@@ -204,30 +220,8 @@ procedure leaves the interrupt as is.
 .\" remove this option in the future. If you find that this
 .\" option is worth preserving, please report it with send-pr.
 .\"
-.\" .It Nm PCIBIOS_INTR_GUESS
-.\" make
-.\" .Em PCIBIOS_INTR_FIXUP
-.\" work with unknown interrupt router.
-.\" .Pp
-.\" If a PCI interrupt router is not known, normally interrupt
-.\" configuraion will not be touched.
-.\"
-.\" But if
-.\" .Em PCIBIOS_INTR_GUESS
-.\" is specified in addition to the
-.\" .Em PCIBIOS_INTR_FIXUP ,
-.\" and if a PCI interrupt routing table entry indicates that only
-.\" one IRQ is available for the entry, the IRQ is assumed to be already
-.\" connected to the device, and corresponding PCI Interrupt
-.\" Configuration Register will be configured accordingly.
-.\"
-.\" .It Nm PCIINTR_DEBUG
-.\" make the
-.\" .Em PCIBIOS_INTR_FIXUP
-.\" procedure verbose.
-.\"
-.\" .El
 .Sh SEE ALSO
+.Xr autoconf 3 ,
 .Xr cardbus 4 ,
 .Xr pci 4
 .Sh HISTORY
@@ -249,6 +243,14 @@ is a real device, where options control is done through the
 wich are modifiable through the
 .Xr boot_config 8
 interface.
+For
+.Ox 2.9
+PIC interrupt routing procedure was redone to only fixup and route
+interrupts for attaching pci devices, this fixed several
+cases of system hangs due to absent interrupt handlers
+during
+.Xr autoconf 4
+procedures.
 .Sh BUGS
 The
 .Em PCIBIOS Adress Fixup
