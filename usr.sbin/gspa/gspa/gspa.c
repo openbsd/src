@@ -43,42 +43,42 @@
 
 #define YYDEBUG_VALUE	0
 
-extern YYSTYPE yylval;
-int err_count;
+extern	YYSTYPE yylval;
+int	err_count;
 
-char line[MAXLINE];
-int lineno;
+char	line[MAXLINE];
+int	lineno;
 
-extern int yydebug;
-short pass2;
+extern	int yydebug;
+short	pass2;
 
-unsigned pc;
-unsigned highest_pc;
-unsigned line_pc;
+unsigned	int pc;
+unsigned	int highest_pc;
+unsigned	int line_pc;
 
-FILE *infile;
-FILE *current_infile;
-FILE *objfile;
-FILE *listfile;
+FILE	*infile;
+FILE	*current_infile;
+FILE	*objfile;
+FILE	*listfile;
 
-char in_name[PATH_MAX];
+char	in_name[PATH_MAX];
 
-struct input {
+struct	input {
 	FILE	*fp;
 	struct input *next;
 	int	lineno;
 	char	name[128];
 } *pending_input;
 
-jmp_buf synerrjmp;
+jmp_buf	synerrjmp;
 
 main(int argc, char **argv)
 {
-	char *hex_name, *list_name;
-	short in_given, hex_given, list_given;
-	int i, v;
-	int c;
-	char *p;
+	char	*hex_name, *list_name;
+	short	in_given, hex_given, list_given;
+	int	i, v;
+	int	c;
+	char	*p;
 
 	hex_name = list_name = 0;
 
@@ -121,13 +121,13 @@ main(int argc, char **argv)
 	pass2 = 0;
 	pc = 0;
 	lineno = 0;
-	while( get_line(line, MAXLINE) ){
-		if( !setjmp(synerrjmp) ){
+	while (get_line(line, MAXLINE)) {
+		if( !setjmp(synerrjmp)) {
 			lex_init(line);
 			yyparse();
 		}
 	}
-	if( err_count > 0 )
+	if (err_count > 0)
 		exit(1);
 
 	/* Open output files */
@@ -146,9 +146,9 @@ main(int argc, char **argv)
 	pc = 0;
 	lineno = 0;
 	reset_numeric_labels();
-	while( get_line(line, MAXLINE) ){
+	while (get_line(line, MAXLINE)) {
 		line_pc = pc;
-		if( !setjmp(synerrjmp) ){
+		if (!setjmp(synerrjmp)) {
 			lex_init(line);
 			yyparse();
 		}
@@ -160,10 +160,10 @@ main(int argc, char **argv)
 
 setext(char *out, const char *in, const char *ext)
 {
-	const char *p;
+	const	char *p;
 
 	p = strrchr(in, '.');
-	if( p != NULL ){
+	if (p != NULL) {
 		memcpy(out, in, p - in);
 		strcpy(out + (p - in), ext);
 	} else {
@@ -178,7 +178,7 @@ push_input(char *fn)
 	struct input *p;
 
 	f = fopen(fn, "r");
-	if( f == NULL ){
+	if (f == NULL) {
 		p1err("Can't open input file %s", fn);
 		return;
 	}
@@ -196,10 +196,10 @@ push_input(char *fn)
 int
 get_line(char *lp, int maxlen)
 {
-	struct input *p;
+	struct	input *p;
 
-	while( fgets(lp, maxlen, current_infile) == NULL ){
-		if( (p = pending_input) == NULL )
+	while (fgets(lp, maxlen, current_infile) == NULL) {
+		if ((p = pending_input) == NULL)
 			return 0;
 		/* pop the input stack */
 		fclose(current_infile);
@@ -216,10 +216,10 @@ get_line(char *lp, int maxlen)
 void
 perr(char *fmt, ...)
 {
-	va_list ap;
-	char error_string[256];
+	va_list	ap;
+	char	error_string[256];
 
-	if( !pass2 )
+	if (!pass2)
 		return;
 	fprintf(stderr, "Error in line %d: ", lineno);
 	va_start(ap, fmt);
@@ -246,7 +246,7 @@ p1err(char *fmt, ...)
 void
 yyerror(char *err)
 {
-	extern char *lineptr;
+	extern	char *lineptr;
 
 	perr("%s", err);
 	longjmp(synerrjmp, 1);
@@ -255,15 +255,16 @@ yyerror(char *err)
 char *
 alloc(size_t nbytes)
 {
-	register char *p;
+	char	*p;
 
-	if( (p = malloc(nbytes)) == NULL ){
+	if ((p = malloc(nbytes)) == NULL) {
 		fprintf(stderr, "Insufficient memory at line %d\n", lineno);
 		exit(1);
 	}
 	return p;
 }
 
+int
 usage()
 {
 	fprintf(stderr,
