@@ -1,101 +1,200 @@
 #include "includes.h"
-RCSID("$Id: nchan.c,v 1.2 1999/10/16 22:29:01 markus Exp $");
+RCSID("$Id: nchan.c,v 1.3 1999/10/17 16:56:09 markus Exp $");
 
 #include "ssh.h"
 
 #include "buffer.h"
-#include "channels.h"
 #include "packet.h"
+#include "channels.h"
 #include "nchan.h"
 
-void
-dump_chan(Channel *c){
-	debug("chan %d type %d flags 0x%x", c->self, c->type, c->flags);
-}
-void
-chan_rcvd_ieof(Channel *c){
-	dump_chan(c);
-	if(c->flags & CHAN_IEOF_RCVD){
-		debug("chan_rcvd_ieof twice: %d",c->self);
-		return;
-	}
-	debug("rcvd_CHAN_IEOF %d",c->self);
-	c->flags |= CHAN_IEOF_RCVD;
-	/* cannot clear input buffer. remaining data has to be sent to client */
-	chan_del_if_dead(c);
-}
+static void chan_send_ieof(Channel *c);
+static void chan_send_oclose(Channel *c);
+static void chan_shutdown_write(Channel *c);
+static void chan_shutdown_read(Channel *c);
+static void chan_delele_if_full_closed(Channel *c);
+
+/*
+ * EVENTS: update channel input/ouput states
+ *	   execute ACTIONS
+ */
+/* events concerning the INPUT from socket for channel (istate) */
 void
 chan_rcvd_oclose(Channel *c){
-	dump_chan(c);
-	if(c->flags & CHAN_OCLOSE_RCVD){
-		debug("chan_rcvd_oclose twice: %d",c->self);
-		return;
+	switch(c->istate){
+	case CHAN_INPUT_WAIT_OCLOSE:
+		debug("channel %d: INPUT_WAIT_CLOSE -> INPUT_CLOSED [rcvd OCLOSE]", c->self);
+		c->istate=CHAN_INPUT_CLOSED;
+		chan_delele_if_full_closed(c);
+		break;
+	case CHAN_INPUT_OPEN:
+		debug("channel %d: INPUT_OPEN -> INPUT_CLOSED [rvcd OCLOSE, send IEOF]", c->self);
+		chan_shutdown_read(c);
+		chan_send_ieof(c);
+		c->istate=CHAN_INPUT_CLOSED;
+		chan_delele_if_full_closed(c);
+		break;
+	default:
+		debug("protocol error: chan_rcvd_oclose %d for istate %d",c->self,c->istate);
+		break;
 	}
-	debug("rcvd_CHAN_OCLOSE %d",c->self);
-	c->flags |= CHAN_OCLOSE_RCVD;
-	/* our peer can no longer consume, so there is not need to read */
-	chan_shutdown_read(c);
-	buffer_consume(&c->output, buffer_len(&c->output));
-	/* Note: for type==OPEN IEOF is sent by channel_output_poll() */
-	chan_del_if_dead(c);
 }
 void
+chan_read_failed(Channel *c){
+	switch(c->istate){
+	case CHAN_INPUT_OPEN:
+		debug("channel %d: INPUT_OPEN -> INPUT_WAIT_DRAIN [read failed]", c->self);
+		chan_shutdown_read(c);
+		c->istate=CHAN_INPUT_WAIT_DRAIN;
+		break;
+	default:
+		debug("internal error: we do not read, but chan_read_failed %d for istate %d",
+			c->self,c->istate);
+		break;
+	}
+}
+void
+chan_ibuf_empty(Channel *c){
+	if(buffer_len(&c->input)){
+		debug("internal error: chan_ibuf_empty %d for non empty buffer",c->self);
+		return;
+	}
+	switch(c->istate){
+	case CHAN_INPUT_WAIT_DRAIN:
+		debug("channel %d: INPUT_WAIT_DRAIN -> INPUT_WAIT_OCLOSE [inbuf empty, send OCLOSE]", c->self);
+		chan_send_ieof(c);
+		c->istate=CHAN_INPUT_WAIT_OCLOSE;
+		break;
+	default:
+		debug("internal error: chan_ibuf_empty %d for istate %d",c->self,c->istate);
+		break;
+	}
+}
+/* events concerning the OUTPUT from channel for socket (ostate) */
+void
+chan_rcvd_ieof(Channel *c){
+
+	/* X11: if we receive IEOF for X11, then we have to FORCE sending of IEOF,
+	 * this is from ssh-1.2.27 debugging output.
+	 */
+	if(c->x11){
+		debug("channel %d: OUTPUT_OPEN -> OUTPUT_CLOSED/INPUT_WAIT_OCLOSED [X11 FIX]", c->self);
+		chan_send_ieof(c);
+		c->istate=CHAN_INPUT_WAIT_OCLOSE;
+		chan_send_oclose(c);
+		c->ostate=CHAN_OUTPUT_CLOSED;
+		chan_delele_if_full_closed(c);
+		return;
+	}
+	switch(c->ostate){
+	case CHAN_OUTPUT_OPEN:
+		debug("channel %d: OUTPUT_OPEN -> OUTPUT_WAIT_DRAIN [rvcd IEOF]", c->self);
+		c->ostate=CHAN_OUTPUT_WAIT_DRAIN;
+		break;
+	case CHAN_OUTPUT_WAIT_IEOF:
+		debug("channel %d: OUTPUT_WAIT_IEOF -> OUTPUT_CLOSED [rvcd IEOF]", c->self);
+		c->ostate=CHAN_OUTPUT_CLOSED;
+		chan_delele_if_full_closed(c);
+		break;
+	default:
+		debug("protocol error: chan_rcvd_ieof %d for ostate %d", c->self,c->ostate);
+		break;
+	}
+}
+void
+chan_write_failed(Channel *c){
+	switch(c->ostate){
+	case CHAN_OUTPUT_OPEN:
+		debug("channel %d: OUTPUT_OPEN -> OUTPUT_WAIT_IEOF [write failed]", c->self);
+		chan_send_oclose(c);
+		c->ostate=CHAN_OUTPUT_WAIT_IEOF;
+		break;
+	case CHAN_OUTPUT_WAIT_DRAIN:
+		debug("channel %d: OUTPUT_WAIT_DRAIN -> OUTPUT_CLOSED [write failed]", c->self);
+		chan_send_oclose(c);
+		c->ostate=CHAN_OUTPUT_CLOSED;
+		chan_delele_if_full_closed(c);
+		break;
+	default:
+		debug("internal error: chan_write_failed %d for ostate %d",c->self,c->ostate);
+		break;
+	}
+}
+void
+chan_obuf_empty(Channel *c){
+	if(buffer_len(&c->output)){
+		debug("internal error: chan_obuf_empty %d for non empty buffer",c->self);
+		return;
+	}
+	switch(c->ostate){
+	case CHAN_OUTPUT_WAIT_DRAIN:
+		debug("channel %d: OUTPUT_WAIT_DRAIN -> OUTPUT_CLOSED [obuf empty, send OCLOSE]", c->self);
+		chan_send_oclose(c);
+		c->ostate=CHAN_OUTPUT_CLOSED;
+		chan_delele_if_full_closed(c);
+		break;
+	default:
+		debug("internal error: chan_obuf_empty %d for ostate %d",c->self,c->ostate);
+		break;
+	}
+}
+/*
+ * ACTIONS: should never update c->istate or c->ostate
+ */
+static void
 chan_send_ieof(Channel *c){
-	if(c->flags & CHAN_IEOF_SENT){
-		/* this is ok: it takes some time before we get OCLOSE */
-		/* debug("send_chan_ieof twice %d", c->self); */
-		return;
+	switch(c->istate){
+	case CHAN_INPUT_OPEN:
+	case CHAN_INPUT_WAIT_DRAIN:
+		packet_start(SSH_MSG_CHANNEL_INPUT_EOF);
+		packet_put_int(c->remote_id);
+		packet_send();
+		break;
+	default:
+		debug("internal error: channel %d: cannot send IEOF for istate %d",c->self,c->istate);
+		break;
 	}
-	debug("send_CHAN_IEOF %d", c->self);
-	packet_start(CHAN_IEOF);
-	packet_put_int(c->remote_id);
-	packet_send();
-	c->flags |= CHAN_IEOF_SENT;
-	dump_chan(c);
 }
-void
+static void
 chan_send_oclose(Channel *c){
-	if(c->flags & CHAN_OCLOSE_SENT){
-		debug("send_chan_oclose twice %d", c->self);
-		return;
+	switch(c->ostate){
+	case CHAN_OUTPUT_OPEN:
+	case CHAN_OUTPUT_WAIT_DRAIN:
+		chan_shutdown_write(c);
+		buffer_consume(&c->output, buffer_len(&c->output));
+		packet_start(SSH_MSG_CHANNEL_OUTPUT_CLOSE);
+		packet_put_int(c->remote_id);
+		packet_send();
+		break;
+	default:
+		debug("internal error: channel %d: cannot send IEOF for istate %d",c->self,c->istate);
+		break;
 	}
-	debug("send_CHAN_OCLOSE %d", c->self);
-	packet_start(CHAN_OCLOSE);
-	packet_put_int(c->remote_id);
-	packet_send();
-	c->flags |= CHAN_OCLOSE_SENT;
-	dump_chan(c);
 }
-void
+/* helper */
+static void
 chan_shutdown_write(Channel *c){
-	if(c->flags & CHAN_SHUT_WR){
-		debug("chan_shutdown_write twice %d",c->self);
-		return;
-	}
-	debug("chan_shutdown_write %d", c->self);
+	debug("channel %d: shutdown_write", c->self);
 	if(shutdown(c->sock, SHUT_WR)<0)
-		error("chan_shutdown_write failed %.100s", strerror(errno));
-	c->flags |= CHAN_SHUT_WR;
-	/* clear output buffer, since there is noone going to read the data
-	   we just closed the output-socket */
-	/* buffer_consume(&c->output, buffer_len(&c->output)); */
+		error("chan_shutdown_write failed for %d/%d %.100s",
+			c->self, c->sock, strerror(errno));
 }
-void
+static void
 chan_shutdown_read(Channel *c){
-	if(c->flags & CHAN_SHUT_RD){
-		/* chan_shutdown_read is called for read-errors and OCLOSE */
-		/* debug("chan_shutdown_read twice %d",c->self); */
-		return;
-	}
-	debug("chan_shutdown_read %d", c->self);
+	debug("channel %d: shutdown_read", c->self);
 	if(shutdown(c->sock, SHUT_RD)<0)
-		error("chan_shutdown_read failed %.100s", strerror(errno));
-	c->flags |= CHAN_SHUT_RD;
+		error("chan_shutdown_read failed for %d/%d %.100s",
+			c->self, c->sock, strerror(errno));
 }
-void
-chan_del_if_dead(Channel *c){
-	if(c->flags == CHAN_CLOSED){
-		debug("channel %d closing",c->self);
+static void
+chan_delele_if_full_closed(Channel *c){
+	if(c->istate==CHAN_INPUT_CLOSED && c->ostate==CHAN_OUTPUT_CLOSED){
+		debug("channel %d: closing", c->self);
 		channel_free(c->self);
 	}
+}
+void
+chan_init_iostates(Channel *c){
+	c->ostate=CHAN_OUTPUT_OPEN;
+	c->istate=CHAN_INPUT_OPEN;
 }

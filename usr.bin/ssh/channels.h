@@ -1,4 +1,4 @@
-/* RCSID("$Id: channels.h,v 1.2 1999/10/16 22:29:00 markus Exp $"); */
+/* RCSID("$Id: channels.h,v 1.3 1999/10/17 16:56:09 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -17,17 +17,18 @@
 #define SSH_CHANNEL_INPUT_DRAINING	10 /* sending remaining data to conn */
 #define SSH_CHANNEL_OUTPUT_DRAINING	11 /* sending remaining data to app */
 
-
 /* Data structure for channel data.  This is iniailized in channel_allocate
    and cleared in channel_free. */
 
-typedef struct
+typedef struct Channel
 {
   int type;		/* channel type/state */
   int self;		/* my own channel identifier */
   int remote_id;	/* channel identifier for remote peer */
 			/* peer can be reached over encrypted connection, via packet-sent */
-  int flags;		/* flags for close in proto 1.5 */
+  int istate;
+  int ostate;
+  int x11;
   int sock;		/* data socket, linked to this channel */
   Buffer input;		/* data read from socket, to be sent over encrypted connection */
   Buffer output;	/* data received over encrypted connection for send on socket */

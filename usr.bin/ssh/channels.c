@@ -16,7 +16,7 @@ arbitrary tcp/ip connections, and the authentication agent connection.
 */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.15 1999/10/16 21:19:00 deraadt Exp $");
+RCSID("$Id: channels.c,v 1.16 1999/10/17 16:56:08 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -136,10 +136,11 @@ int channel_allocate(int type, int sock, char *remote_name)
 	buffer_init(&channels[i].output);
 	channels[i].self = i;
 	channels[i].type = type;
+	channels[i].x11 = 0;
 	channels[i].sock = sock;
-	channels[i].flags = 0;
 	channels[i].remote_id = -1;
 	channels[i].remote_name = remote_name;
+        chan_init_iostates(&channels[i]);
 	return i;
       }
 
@@ -156,10 +157,11 @@ int channel_allocate(int type, int sock, char *remote_name)
   buffer_init(&channels[old_channels].output);
   channels[old_channels].self = old_channels;
   channels[old_channels].type = type;
+  channels[old_channels].x11 = 0;
   channels[old_channels].sock = sock;
-  channels[old_channels].flags = 0;
   channels[old_channels].remote_id = -1;
   channels[old_channels].remote_name = remote_name;
+  chan_init_iostates(&channels[old_channels]);
   return old_channels;
 }
 
@@ -213,17 +215,14 @@ void channel_prepare_select(fd_set *readset, fd_set *writeset)
 	    break;
 	  }
 	  /* test whether sockets are 'alive' for read/write */
-          if (!(ch->flags & CHAN_SHUT_RD))
+          if (ch->istate == CHAN_INPUT_OPEN)
             if (buffer_len(&ch->input) < 32768)
               FD_SET(ch->sock, readset);
-          if (!(ch->flags & CHAN_SHUT_WR)){
+          if (ch->ostate == CHAN_OUTPUT_OPEN || ch->ostate == CHAN_OUTPUT_WAIT_DRAIN){
             if (buffer_len(&ch->output) > 0){
               FD_SET(ch->sock, writeset);
-            }else if(ch->flags & CHAN_IEOF_RCVD){
-              /* if output-buffer empty AND IEOF received,
-                 we won't get more data for writing */
-              chan_shutdown_write(ch);
-              chan_send_oclose(ch);
+            }else if(ch->ostate == CHAN_OUTPUT_WAIT_DRAIN) {
+              chan_obuf_empty(ch);
             }
           }
           break;
@@ -319,6 +318,8 @@ void channel_prepare_select(fd_set *readset, fd_set *writeset)
 
 	  /* Start normal processing for the channel. */
 	  ch->type = SSH_CHANNEL_OPEN;
+	  /* Enable X11 Problem FIX */
+	  ch->x11 = 1;
 	  goto redo;
 	  
 	reject:
@@ -335,10 +336,10 @@ void channel_prepare_select(fd_set *readset, fd_set *writeset)
             packet_put_int(ch->remote_id);
             packet_send();
           }else{
-            chan_shutdown_read(ch);	/* shutdown, since close() does not update ch->flags */
-            chan_send_ieof(ch);		/* no need to wait for output-buffer */
-            chan_shutdown_write(ch);
-            chan_send_oclose(ch);
+	    debug("X11 rejected %d 0x%x 0x%x", ch->self, ch->istate, ch->ostate);
+	    chan_read_failed(ch);
+	    chan_write_failed(ch);
+	    debug("X11 rejected %d 0x%x 0x%x", ch->self, ch->istate, ch->ostate);
 	  }
 	  break;
 
@@ -461,10 +462,7 @@ void channel_after_select(fd_set *readset, fd_set *writeset)
                     ch->type = SSH_CHANNEL_INPUT_DRAINING;
                     debug("Channel %d status set to input draining.", i);
                   }else{
-                    buffer_consume(&ch->output, buffer_len(&ch->output));
-                    chan_shutdown_read(ch);
-                    /* we have to wait until the input-buffer has been
-                       sent to our peer before we can send IEOF */
+                    chan_read_failed(ch);
 		  }
 		  break;
 		}
@@ -482,15 +480,12 @@ void channel_after_select(fd_set *readset, fd_set *writeset)
                     debug("Channel %d status set to input draining.", i);
                     ch->type = SSH_CHANNEL_INPUT_DRAINING;
                   }else{
-                    buffer_consume(&ch->output, buffer_len(&ch->output));
-                    chan_shutdown_write(ch);
-                    chan_send_oclose(ch);
+                    chan_write_failed(ch);
 		  }
 		  break;
 		}
 	      buffer_consume(&ch->output, len);
 	    }
-	  chan_del_if_dead(ch);
 	  break;
 
 	case SSH_CHANNEL_OUTPUT_DRAINING:
@@ -553,13 +548,13 @@ void channel_output_poll()
 	  packet_send();
 	  buffer_consume(&ch->input, len);
 	}
-      else if(ch->flags & CHAN_SHUT_RD)
+      else if(ch->istate == CHAN_INPUT_WAIT_DRAIN)
      	{
  	  if (compat13)
-	     fatal("cannot happen: CHAN_SHUT_RD set for proto 1.3");
+	     fatal("cannot happen: istate == INPUT_WAIT_DRAIN for proto 1.3");
 	  /* input-buffer is empty and read-socket shutdown:
 	     tell peer, that we will not send more data: send IEOF */
-	  chan_send_ieof(ch);
+	  chan_ibuf_empty(ch);
      	}
     }
 }

@@ -1,4 +1,4 @@
-/* RCSID("$Id: nchan.h,v 1.2 1999/10/16 22:29:01 markus Exp $"); */
+/* RCSID("$Id: nchan.h,v 1.3 1999/10/17 16:56:09 markus Exp $"); */
 
 #ifndef NCHAN_H
 #define NCHAN_H
@@ -25,61 +25,33 @@
  * See the debugging output from 'ssh -v' and 'sshd -d' of
  * ssh-1.2.27 as an example.
  * 
- * Details: (for Channel data structure see channels.h)
- * 
- * - the output_buffer gets data received from the remote peer and
- *   is written to the socket,
- * - the input_buffer gets data from the socket and is sent to remote peer.
- * - the socket represents the local object communicating with an object
- *   reachable via the peer
- * 
- * 	PEER A					PEER B
- * 
- * read(sock, input_buffer) < 0;
- * shutdown_read();
- * flush(input_buffer) =: DATA
- * send(DATA)			->      rcvd(DATA)
- * 					write(sock, output_buffer:=DATA);
- * send(IEOF)			->	rcvd(IEOF)
- * 					shutdown_write() if:
- * 						a) write fails
- * 						b) rcvd_IEOF==true &&
- * 						   output_buffer==empty
- * rcvd(OCLOSE)			<-	send(OCLOSE)
- *
- * The channel is now half closed. No data will flow from A to B.
- *
- * Note that each side can remove the channel only if 2 messages
- * have been sent and received and the associated socket has been
- * shutdown, see below:
  */
 
-enum {
-	/* ssh-proto-1.5 overloads message-types */
-	CHAN_IEOF   = SSH_MSG_CHANNEL_CLOSE,
-			/* there will be no more data from sender */
-	CHAN_OCLOSE = SSH_MSG_CHANNEL_CLOSE_CONFIRMATION,
-			/* all received data has been written to the socket */
+/* ssh-proto-1.5 overloads prot-1.3-message-types */
+#define SSH_MSG_CHANNEL_INPUT_EOF	SSH_MSG_CHANNEL_CLOSE
+#define SSH_MSG_CHANNEL_OUTPUT_CLOSE	SSH_MSG_CHANNEL_CLOSE_CONFIRMATION
 
-	/* channel close flags */
-	CHAN_IEOF_SENT 		= 0x01,
-	CHAN_IEOF_RCVD 		= 0x02,
-	CHAN_OCLOSE_SENT 	= 0x04,
-	CHAN_OCLOSE_RCVD 	= 0x08,
-	CHAN_SHUT_RD 		= 0x10,
-	CHAN_SHUT_WR 		= 0x20,
+/* possible input states */
+#define CHAN_INPUT_OPEN			0x01
+#define CHAN_INPUT_WAIT_DRAIN		0x02
+#define CHAN_INPUT_WAIT_OCLOSE		0x04
+#define CHAN_INPUT_CLOSED		0x08
 
-	/* a channel can be removed if ALL the following flags are set: */
-	CHAN_CLOSED 		= CHAN_IEOF_SENT | CHAN_IEOF_RCVD |
-				  CHAN_OCLOSE_SENT | CHAN_OCLOSE_RCVD |
-				  CHAN_SHUT_RD | CHAN_SHUT_WR
-};
+/* possible output states */
+#define CHAN_OUTPUT_OPEN		0x10
+#define CHAN_OUTPUT_WAIT_DRAIN		0x20
+#define CHAN_OUTPUT_WAIT_IEOF		0x40
+#define CHAN_OUTPUT_CLOSED		0x80
 
-void chan_del_if_dead(Channel *c);
-void chan_rcvd_ieof(Channel *c);
+/* EVENTS for the input state */
 void chan_rcvd_oclose(Channel *c);
-void chan_send_ieof(Channel *c);
-void chan_send_oclose(Channel *c);
-void chan_shutdown_read(Channel *c);
-void chan_shutdown_write(Channel *c);
+void chan_read_failed(Channel *c);
+void chan_ibuf_empty(Channel *c);
+
+/* EVENTS for the output state */
+void chan_rcvd_ieof(Channel *c);
+void chan_write_failed(Channel *c);
+void chan_obuf_empty(Channel *c);
+
+void chan_init_iostates(Channel *c);
 #endif
