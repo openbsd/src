@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: main.c,v 1.20 2000/04/07 23:46:39 brian Exp $
+ * $OpenBSD: main.c,v 1.21 2000/04/09 18:27:25 brian Exp $
  *
  *	TODO:
  */
@@ -437,6 +437,7 @@ main(int argc, char **argv)
                 case EX_NORMAL:
 	          prompt_Printf(prompt, "PPP enabled\n");
 	          log_Printf(LogPHASE, "Parent: PPP enabled\n");
+	          break;
                 case EX_REDIAL:
                   if (!sw.quiet)
 	            prompt_Printf(prompt, "Attempting redial\n");
