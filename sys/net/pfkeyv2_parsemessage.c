@@ -370,7 +370,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 #if INET6
 	    case AF_INET6:
 	      if (i != sizeof(struct sadb_address) +
-		  sizeof(struct sockaddr_in6))
+		  sizeof(struct sockaddr_in6) + 4)
 		return EINVAL;
 
 	      if (sa->sa_len != sizeof(struct sockaddr_in6))
