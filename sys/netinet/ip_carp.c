@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.54 2004/05/25 02:32:07 jolan Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.55 2004/05/29 04:33:27 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1642,8 +1642,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		break;
 
 	case SIOCSIFFLAGS:
-		if (sc->sc_ac.ac_if.if_flags & IFF_UP &&
-		    (ifr->ifr_flags & IFF_UP) == 0) {
+		if (sc->sc_state != INIT && !(ifr->ifr_flags & IFF_UP)) {
 			sc->sc_ac.ac_if.if_flags &= ~IFF_UP;
 			timeout_del(&sc->sc_ad_tmo);
 			timeout_del(&sc->sc_md_tmo);
@@ -1652,11 +1651,8 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 				carp_send_ad(sc);
 			carp_set_state(sc, INIT);
 			carp_setrun(sc, 0);
-		}
-		if (ifr->ifr_flags & IFF_UP &&
-		    (sc->sc_ac.ac_if.if_flags & IFF_UP) == 0) {
+		} else if (sc->sc_state == INIT && (ifr->ifr_flags & IFF_UP)) {
 			sc->sc_ac.ac_if.if_flags |= IFF_UP;
-			carp_set_state(sc, INIT);
 			carp_setrun(sc, 0);
 		}
 		break;
