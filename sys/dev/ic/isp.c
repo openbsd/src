@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.13 2000/02/20 21:22:40 mjacob Exp $ */
+/* 	$OpenBSD: isp.c,v 1.14 2000/03/05 22:18:59 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -2833,50 +2833,45 @@ isp_parse_status(isp, sp, xs)
 
 	case RQCS_INCOMPLETE:
 		if ((sp->req_state_flags & RQSF_GOT_TARGET) == 0) {
-			IDPRINTF(3, ("%s: Selection Timeout for target %d\n",
-			    isp->isp_name, XS_TGT(xs)));
+			IDPRINTF(3, ("%s: Selection Timeout for %d.%d.%d\n",
+			    isp->isp_name, XS_TGT(xs), XS_LUN(xs),
+			    XS_CHANNEL(xs)));
 			XS_SETERR(xs, HBA_SELTIMEOUT);
 			return;
 		}
-		PRINTF("%s: command incomplete for target %d lun %d, state "
-		    "0x%x\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs),
+		PRINTF("%s: command incomplete for %d.%d.%d, state 0x%x\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs),
 		    sp->req_state_flags);
 		break;
 
 	case RQCS_DMA_ERROR:
-		PRINTF("%s: DMA error for command on target %d, lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: DMA error for command on %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_TRANSPORT_ERROR:
-		PRINTF("%s: transport error\n", isp->isp_name);
+		PRINTF("%s: transport error for %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		isp_prtstst(sp);
 		break;
 
 	case RQCS_RESET_OCCURRED:
-		IDPRINTF(2, ("%s: bus %d reset destroyed command for target %d "
-		    "lun %d\n", isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs),
-		    XS_LUN(xs)));
-		/*
-		 * XXX: Get port number for bus
-		 */
-		isp->isp_sendmarker = 3;
+		IDPRINTF(1, ("%s: bus reset destroyed command for %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs)));
+		isp->isp_sendmarker |= (1 << XS_CHANNEL(xs));
 		XS_SETERR(xs, HBA_BUSRESET);
 		return;
 
 	case RQCS_ABORTED:
-		PRINTF("%s: command aborted for target %d lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
-		/*
-		 * XXX: Get port number for bus
-		 */
-		isp->isp_sendmarker = 3;
+		PRINTF("%s: command aborted for %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
+		isp->isp_sendmarker |= (1 << XS_CHANNEL(xs));
 		XS_SETERR(xs, HBA_ABORTED);
 		return;
 
 	case RQCS_TIMEOUT:
-		IDPRINTF(2, ("%s: command timed out for target %d lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs)));
+		IDPRINTF(2, ("%s: command timed out for %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs)));
 		XS_SETERR(xs, HBA_CMDTIMEOUT);
 		return;
 
@@ -2885,100 +2880,99 @@ isp_parse_status(isp, sp, xs)
 			XS_RESID(xs) = sp->req_resid;
 			break;
 		}
+		PRINTF("%s: data overrun for command on %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		XS_SETERR(xs, HBA_DATAOVR);
 		return;
 
 	case RQCS_COMMAND_OVERRUN:
-		PRINTF("%s: command overrun for command on target %d, lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: command overrun for command on %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_STATUS_OVERRUN:
-		PRINTF("%s: status overrun for command on target %d, lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: status overrun for command on %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_BAD_MESSAGE:
-		PRINTF("%s: message not COMMAND COMPLETE after status on "
-		    "target %d, lun %d\n", isp->isp_name, XS_TGT(xs),
-		    XS_LUN(xs));
+		PRINTF("%s: msg not COMMAND COMPLETE after status %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_NO_MESSAGE_OUT:
-		PRINTF("%s: No MESSAGE OUT phase after selection on "
-		    "target %d, lun %d\n", isp->isp_name, XS_TGT(xs),
-		    XS_LUN(xs));
+		PRINTF("%s: No MESSAGE OUT phase after selection on %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_EXT_ID_FAILED:
-		PRINTF("%s: EXTENDED IDENTIFY failed on target %d, lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: EXTENDED IDENTIFY failed %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_IDE_MSG_FAILED:
-		PRINTF("%s: target %d lun %d rejected INITIATOR DETECTED "
-		    "ERROR message\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: INITIATOR DETECTED ERROR rejected by %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_ABORT_MSG_FAILED:
-		PRINTF("%s: target %d lun %d rejected ABORT message\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: ABORT OPERATION rejected by %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_REJECT_MSG_FAILED:
-		PRINTF("%s: target %d lun %d rejected MESSAGE REJECT message\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: MESSAGE REJECT rejected by %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_NOP_MSG_FAILED:
-		PRINTF("%s: target %d lun %d rejected NOP message\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: NOP rejected by %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_PARITY_ERROR_MSG_FAILED:
-		PRINTF("%s: target %d lun %d rejected MESSAGE PARITY ERROR "
-		    "message\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: MESSAGE PARITY ERROR rejected by %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_DEVICE_RESET_MSG_FAILED:
-		PRINTF("%s: target %d lun %d rejected BUS DEVICE RESET "
-		    "message\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: BUS DEVICE RESET rejected by %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_ID_MSG_FAILED:
-		PRINTF("%s: target %d lun %d rejected IDENTIFY "
-		    "message\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: IDENTIFY rejected by %d.%d.%d\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_UNEXP_BUS_FREE:
-		PRINTF("%s: target %d lun %d had an unexpected bus free\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: %d.%d.%d had an unexpected bus free\n",
+		    isp->isp_name, XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_DATA_UNDERRUN:
 		if (IS_FC(isp)) {
 			XS_RESID(xs) = sp->req_resid;
-			/* an UNDERRUN is not a botch ??? */
 		}
 		XS_SETERR(xs, HBA_NOERROR);
 		return;
 
 	case RQCS_XACT_ERR1:
 		PRINTF("%s: HBA attempted queued transaction with disconnect "
-		    "not set for target %d lun %d\n", isp->isp_name, XS_TGT(xs),
-		    XS_LUN(xs));
+		    "not set for %d.%d.%d\n", isp->isp_name, XS_CHANNEL(xs),
+		    XS_TGT(xs), XS_LUN(xs));
 		break;
 
 	case RQCS_XACT_ERR2:
 		PRINTF("%s: HBA attempted queued transaction to target "
-		    "routine %d on target %d\n", isp->isp_name, XS_LUN(xs),
-		    XS_TGT(xs));
+		    "routine %d on target %d, bus %d\n", isp->isp_name,
+		    XS_LUN(xs), XS_TGT(xs), XS_CHANNEL(xs));
 		break;
 
 	case RQCS_XACT_ERR3:
 		PRINTF("%s: HBA attempted queued transaction for target %d lun "
-		    "%d when queueing disabled\n", isp->isp_name, XS_TGT(xs),
-		    XS_LUN(xs));
+		    "%d on bus %d when queueing disabled\n", isp->isp_name,
+		    XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
 		break;
 
 	case RQCS_BAD_ENTRY:
@@ -2987,8 +2981,8 @@ isp_parse_status(isp, sp, xs)
 
 	case RQCS_QUEUE_FULL:
 		IDPRINTF(3, ("%s: internal queues full for target %d lun %d "
-		    "status 0x%x\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs),
-		    XS_STS(xs)));
+		    "bus %d, status 0x%x\n", isp->isp_name, XS_TGT(xs),
+		    XS_LUN(xs), XS_CHANNEL(xs), XS_STS(xs)));
 		/*
 		 * If QFULL or some other status byte is set, then this
 		 * isn't an error, per se.
@@ -3001,44 +2995,43 @@ isp_parse_status(isp, sp, xs)
 
 	case RQCS_PHASE_SKIPPED:
 		PRINTF("%s: SCSI phase skipped (e.g., COMMAND COMPLETE w/o "
-		    "STATUS phase) for target %d lun %d\n", isp->isp_name,
-		    XS_TGT(xs), XS_LUN(xs));
+		    "STATUS phase) for target %d lun %d bus %d\n",
+		    isp->isp_name, XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
 		break;
 
 	case RQCS_ARQS_FAILED:
-		PRINTF("%s: Auto Request Sense failed for target %d lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
-		XS_SETERR(xs, HBA_ARQFAIL);
+		PRINTF("%s: Auto Request Sense failed for %d.%d.%d\n",
+		    isp->isp_name, XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
 		return;
 
 	case RQCS_WIDE_FAILED:
-		PRINTF("%s: Wide Negotiation failed for target %d lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: Wide Negotiation failed for %d.%d.%d\n",
+		    isp->isp_name, XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
 		if (IS_SCSI(isp)) {
 			sdparam *sdp = isp->isp_param;
 			sdp += XS_CHANNEL(xs);
 			sdp->isp_devparam[XS_TGT(xs)].dev_flags &= ~DPARM_WIDE;
 			sdp->isp_devparam[XS_TGT(xs)].dev_update = 1;
-			isp->isp_update = XS_CHANNEL(xs)+1;
+			isp->isp_update |= (1 << XS_CHANNEL(xs));
 		}
 		XS_SETERR(xs, HBA_NOERROR);
 		return;
 
 	case RQCS_SYNCXFER_FAILED:
-		PRINTF("%s: SDTR Message failed for target %d lun %d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: SDTR Message failed for target %d.%d.%d\n",
+		    isp->isp_name, XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
 		if (IS_SCSI(isp)) {
 			sdparam *sdp = isp->isp_param;
 			sdp += XS_CHANNEL(xs);
 			sdp->isp_devparam[XS_TGT(xs)].dev_flags &= ~DPARM_SYNC;
 			sdp->isp_devparam[XS_TGT(xs)].dev_update = 1;
-			isp->isp_update = XS_CHANNEL(xs)+1;
+			isp->isp_update |= (1 << XS_CHANNEL(xs));
 		}
 		break;
 
 	case RQCS_LVD_BUSERR:
-		PRINTF("%s: Bad LVD Bus condition while talking to target %d "
-		    "lun %d\n", isp->isp_name, XS_TGT(xs), XS_LUN(xs));
+		PRINTF("%s: Bad LVD condition while talking to %d.%d.%d\n",
+		    isp->isp_name, XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
 		break;
 
 	case RQCS_PORT_UNAVAILABLE:
@@ -3061,18 +3054,19 @@ isp_parse_status(isp, sp, xs)
 
 	case RQCS_PORT_CHANGED:
 		PRINTF("%s: port changed for target %d\n",
-			isp->isp_name, XS_TGT(xs));
-		break;
+		    isp->isp_name, XS_TGT(xs));
+		XS_SETERR(xs, HBA_SELTIMEOUT);
+		return;
 
 	case RQCS_PORT_BUSY:
 		PRINTF("%s: port busy for target %d\n",
-			isp->isp_name, XS_TGT(xs));
+		    isp->isp_name, XS_TGT(xs));
 		XS_SETERR(xs, HBA_TGTBSY);
 		return;
 
 	default:
-		PRINTF("%s: comp status %x\n", isp->isp_name,
-		    sp->req_completion_status);
+		PRINTF("%s: completion status 0x%x\n",
+		    isp->isp_name, sp->req_completion_status);
 		break;
 	}
 	XS_SETERR(xs, HBA_BOTCH);
