@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 1997/07/08 03:13:19 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 1997/07/08 10:06:31 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.4 1997/07/08 03:13:19 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/07/08 10:06:31 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,8 @@ main(argc, argv)
 			}
 		}
 
-		if (error && oreg && unlink(outfile) && verbose >= 0)
+		if (error && oreg && unlink(outfile) && errno != ENOENT &&
+		    verbose >= 0)
 			warn("%s", outfile);
 		else if (!error && verbose > 0)
 			fputs("OK\n", stderr);
