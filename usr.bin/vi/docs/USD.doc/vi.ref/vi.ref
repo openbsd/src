@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.ref,v 1.9 2004/01/15 11:11:12 jmc Exp $
+.\"	$OpenBSD: vi.ref,v 1.10 2004/01/24 12:26:47 jmc Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -508,15 +508,15 @@ The recovery file has all of the necessary information in it to enable the
 user to recover the edit session.
 In addition, it has all of the necessary email headers for
 .XR sendmail 8 .
-When the system is rebooted, all of the files in
-.LI /var/tmp/vi.recover
-named
-.QC recover.XXXXXXXXXX
-should be sent to their owners, by email, using the
-.b \-t
-option of
-.CO sendmail
-(or a similar mechanism in other mailers).
+.\" When the system is rebooted, all of the files in
+.\" .LI /var/tmp/vi.recover
+.\" named
+.\" .QC recover.XXXXXXXXXX
+.\" should be sent to their owners, by email, using the
+.\" .b \-t
+.\" option of
+.\" .CO sendmail
+.\" (or a similar mechanism in other mailers).
 If
 .EV ex vi
 receives a hangup (SIGHUP) signal, or the user executes the
@@ -525,21 +525,21 @@ receives a hangup (SIGHUP) signal, or the user executes the
 command,
 .EV ex vi
 will automatically email the recovery information to the user.
-.pp
-If your system does not have the
-.CO sendmail
-utility (or a mailer program which supports its interface)
-the source file
-.LI vi/common/recover.c
-will have to be modified to use your local mail delivery programs.
-Note, if
-.EV nex nvi
-is changed to use another mailer,
-it is important to remember that the owner of the file given to
-the mailer is the
-.EV nex nvi
-user, so nothing in the file should be trusted as it may have been
-modified in an effort to compromise the system.
+.\" .pp
+.\" If your system does not have the
+.\" .CO sendmail
+.\" utility (or a mailer program which supports its interface)
+.\" the source file
+.\" .LI vi/common/recover.c
+.\" will have to be modified to use your local mail delivery programs.
+.\" Note, if
+.\" .EV nex nvi
+.\" is changed to use another mailer,
+.\" it is important to remember that the owner of the file given to
+.\" the mailer is the
+.\" .EV nex nvi
+.\" user, so nothing in the file should be trusted as it may have been
+.\" modified in an effort to compromise the system.
 .pp
 Finally, the owner execute bit is set on backup files when they are
 created, and unset when they are first modified, e.g. backup files
@@ -547,7 +547,15 @@ that have no associated email recovery file will have this bit set.
 (There is also a small window where empty files can be created and
 not yet have this bit set.
 This is due to the method in which the files are created.)
-Such files should be deleted when the system reboots.
+Such files are deleted when the system reboots.
+.pp
+Most of the recovery process is automated on OpenBSD.
+When the system boots, the shell script
+.LI /etc/rc
+executes the vi recovery script
+.LI /usr/libexec/vi.recover .
+This takes care of removing stale files, checking for backup files,
+and sending email notification to the owners of such files.
 .\" .pp
 .\" A simple way to do this cleanup is to run the Bourne shell script
 .\" .CO recover ,
@@ -563,7 +571,7 @@ Such files should be deleted when the system reboots.
 .\" installation process.
 .pp
 Consult the manual page for details on recovering preserved or
-aborted editing sessions.
+aborted editing sessions on startup.
 .SH 1 "Sizing the Screen"
 .pp
 The size of the screen can be set in a number of ways.
