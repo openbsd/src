@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.118 2003/12/10 20:57:32 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.119 2003/12/17 05:46:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -626,7 +626,7 @@ cpu_startup(void)
 
 	printf("%s\n", cpu_model);
 	printf("real mem = %d (%d reserved for PROM, %d used by OpenBSD)\n",
-	    ctob(totalphysmem), ctob(resvmem), ctob(physmem));
+	    ctob(totalphysmem), ctob(resvmem), ctob(physmem - resvmem));
 
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, &minaddr, round_page(size),
