@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.15 1998/02/16 21:23:26 deraadt Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.16 1998/08/04 22:35:05 millert Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ struct scsi_xfer {
 	int	cmdlen;			/* how long it is */
 	u_char	*data;			/* dma address OR a uio address */
 	int	datalen;		/* data len (blank if uio)    */
-	int	resid;			/* how much buffer was not touched */
+	size_t	resid;			/* how much buffer was not touched */
 	int	error;			/* an error value	*/
 	struct	buf *bp;		/* If we need to associate with a buf */
 	struct	scsi_sense_data	sense; /* 32 bytes*/
