@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.11 2002/01/28 20:50:07 jason Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.12 2002/01/31 21:34:56 jason Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.22 2002/01/23 08:09:30 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.5 2002/01/23 06:02:19 todd Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.45 2002/01/28 21:11:49 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.46 2002/01/31 21:35:16 jason Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -93,6 +93,7 @@
 #	spif*	spif card (makes 8 tty and 1 bpp)
 #	bpp[jkl]	spif parallel port device
 #	crypto	hardware crypto access driver
+#	uperf	performance counters
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -227,6 +228,10 @@ mouse*)name=${i##mouse-}
 	fi
 	RMlist="$RMlist mouse"
 	MKlist="$MKlist;ln -s $name mouse"
+	;;
+
+uperf)
+	M uperf c 25 0 664
 	;;
 
 crypto)
