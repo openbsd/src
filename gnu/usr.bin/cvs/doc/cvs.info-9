@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ./cvs.texinfo.
+input file ../../work/ccvs/doc/cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -59,6 +59,7 @@ Index
 * /usr/local/cvsroot, as example repository: Repository.
 * :ext:, setting up:                     Connecting via rsh.
 * :ext:, troubleshooting:                Connection.
+* :fork:, setting up:                    Connecting via fork.
 * :gserver:, setting up:                 GSSAPI authenticated.
 * :kserver:, setting up:                 Kerberos authenticated.
 * :local:, setting up:                   Repository.
@@ -188,6 +189,7 @@ Index
 * CVS_PASSFILE, environment variable:    Password authentication client.
 * CVS_RCMD_PORT, environment variable:   Environment variables.
 * CVS_RSH, environment variable:         Environment variables.
+* CVS_SERVER, and :fork::                Connecting via fork.
 * CVS_SERVER, environment variable:      Connecting via rsh.
 * CVS_SERVER_SLEEP, environment variable: Environment variables.
 * CVSEDITOR, environment variable:       Committing your changes.
@@ -221,6 +223,7 @@ Index
 * Deleting files:                        Removing files.
 * Deleting revisions:                    admin options.
 * Deleting sticky tags:                  Sticky tags.
+* deleting tags:                         Modifying tags.
 * Descending directories:                Recursive behavior.
 * device nodes:                          Special Files.
 * Diff:                                  Viewing differences.
@@ -270,6 +273,7 @@ Index
 * Files, reference manual:               Administrative files.
 * Fixing a log message:                  admin options.
 * Forcing a tag match:                   Common options.
+* fork, access method:                   Connecting via fork.
 * Form for log message:                  rcsinfo.
 * Format of CVS commands:                Structure.
 * Getting started:                       A sample session.
@@ -310,7 +314,9 @@ Index
 * Isolation:                             History browsing.
 * Join:                                  Merging a branch.
 * keeping a checked out copy:            Keeping a checked out copy.
-* kerberos:                              Kerberos authenticated.
+* Kerberos, using :gserver::             GSSAPI authenticated.
+* Kerberos, using :kserver::             Kerberos authenticated.
+* Kerberos, using kerberized rsh:        Connecting via rsh.
 * Keyword expansion:                     Keyword substitution.
 * Keyword List:                          Keyword list.
 * Keyword substitution:                  Keyword substitution.
@@ -325,6 +331,7 @@ Index
 * Locally Added:                         File status.
 * Locally Modified:                      File status.
 * Locally Removed:                       File status.
+* LockDir, in CVSROOT/config:            config.
 * Locker keyword:                        Keyword list.
 * Locking files:                         Multiple developers.
 * locks, cvs, and backups:               Backing up.
@@ -369,7 +376,7 @@ Index
 * moving a repository:                   Moving a repository.
 * Moving directories:                    Moving directories.
 * Moving files:                          Moving files.
-* moving tags:                           tag options.
+* moving tags:                           Modifying tags.
 * Multiple developers:                   Multiple developers.
 * Multiple repositories:                 Multiple repositories.
 * Name keyword:                          Keyword list.
@@ -441,10 +448,11 @@ Index
 * Removing a change:                     Merging two revisions.
 * removing directories:                  Removing directories.
 * Removing files:                        Removing files.
+* removing tags:                         Modifying tags.
 * Removing your working copy:            Cleaning up.
 * Renaming directories:                  Moving directories.
 * Renaming files:                        Moving files.
-* renaming tags:                         tag options.
+* renaming tags:                         Modifying tags.
 * Replacing a log message:               admin options.
 * Reporting bugs:                        BUGS.
 * Repositories, multiple:                Multiple repositories.
@@ -459,8 +467,8 @@ Index
 * reserved checkouts:                    Multiple developers.
 * Resetting sticky tags:                 Sticky tags.
 * Resolving a conflict:                  Conflicts example.
-* Restoring old version of removed file: Sticky tags.
-* Resurrecting old version of dead file: Sticky tags.
+* Restoring old version of removed file: Merging two revisions.
+* Resurrecting old version of dead file: Merging two revisions.
 * Retrieve a branch:                     Accessing branches.
 * Retrieving an old revision using tags: Tags.
 * reverting to repository version:       Editing files.
@@ -475,7 +483,8 @@ Index
 * Right-hand options:                    Common options.
 * Root file, in CVS directory:           Specifying a repository.
 * rsh:                                   Connecting via rsh.
-* Rtag (subcommand):                     rtag.
+* rsh replacements (Kerberized, SSH, &c): Connecting via rsh.
+* Rtag (subcommand):                     Tagging by date/tag.
 * rtag, creating a branch using:         Creating a branch.
 * Saving space:                          admin options.
 * SCCS, importing files from:            From other version control systems.
@@ -496,6 +505,7 @@ Index
 * special files:                         Special Files.
 * Specifying dates:                      Common options.
 * Spreading information:                 Informing others.
+* SSH (rsh replacement):                 Connecting via rsh.
 * Starting a project with CVS:           Starting a new project.
 * State keyword:                         Keyword list.
 * Status of a file:                      File status.
@@ -514,7 +524,7 @@ Index
 * Symbolic name (tag):                   Tags.
 * Syntax of info files:                  syntax.
 * SystemAuth, in CVSROOT/config:         config.
-* Tag (subcommand):                      tag.
+* Tag (subcommand):                      Tagging the working directory.
 * Tag file, in CVS directory:            Working directory storage.
 * Tag program:                           Module options.
 * tag, command, introduction:            Tags.
@@ -524,7 +534,9 @@ Index
 * Tag, symbolic name:                    Tags.
 * taginfo:                               user-defined logging.
 * Tags:                                  Tags.
-* tags, renaming:                        tag options.
+* tags, deleting:                        Modifying tags.
+* tags, moving:                          Modifying tags.
+* tags, renaming:                        Modifying tags.
 * Tags, sticky:                          Sticky tags.
 * tc, Trivial Compiler (example):        A sample session.
 * Team of developers:                    Multiple developers.
@@ -567,6 +579,7 @@ Index
 * versions, of CVS:                      Compatibility.
 * Versions, revisions and releases:      Versions revisions releases.
 * Viewing differences:                   Viewing differences.
+* VISUAL, environment variable:          Committing your changes.
 * watch add (subcommand):                Getting Notified.
 * watch off (subcommand):                Setting a watch.
 * watch on (subcommand):                 Setting a watch.

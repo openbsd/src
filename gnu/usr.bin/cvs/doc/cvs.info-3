@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ./cvs.texinfo.
+input file ../../work/ccvs/doc/cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -21,6 +21,234 @@ of a permission notice identical to this one.
 manual into another language, under the above conditions for modified
 versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
+
+
+File: cvs.info,  Node: Tagging by date/tag,  Next: Modifying tags,  Prev: Tagging the working directory,  Up: Revisions
+
+Specifying what to tag by date or revision
+==========================================
+
+   The `cvs rtag' command tags the repository as of a certain date or
+time (or can be used to tag the latest revision).  `rtag' works
+directly on the repository contents (it requires no prior checkout and
+does not look for a working directory).
+
+   The following options specify which date or revision to tag.  See
+*Note Common options::, for a complete description of them.
+
+`-D DATE'
+     Tag the most recent revision no later than DATE.
+
+`-f'
+     Only useful with the `-D DATE' or `-r TAG' flags.  If no matching
+     revision is found, use the most recent revision (instead of
+     ignoring the file).
+
+`-r TAG'
+     Only tag those files that contain existing tag TAG.
+
+   The `cvs tag' command also allows one to specify files by revision
+or date, using the same `-r', `-D', and `-f' options.  However, this
+feature is probably not what you want.  The reason is that `cvs tag'
+chooses which files to tag based on the files that exist in the working
+directory, rather than the files which existed as of the given tag/date.
+Therefore, you are generally better off using `cvs rtag'.  The
+exceptions might be cases like:
+
+     cvs tag -r 1.4 backend.c
+
+
+File: cvs.info,  Node: Modifying tags,  Next: Tagging add/remove,  Prev: Tagging by date/tag,  Up: Revisions
+
+Deleting, moving, and renaming tags
+===================================
+
+   Normally one does not modify tags.  They exist in order to record
+the history of the repository and so deleting them or changing their
+meaning would, generally, not be what you want.
+
+   However, there might be cases in which one uses a tag temporarily or
+accidentally puts one in the wrong place.  Therefore, one might delete,
+move, or rename a tag.  Warning: the commands in this section are
+dangerous; they permanently discard historical information and it can
+difficult or impossible to recover from errors.  If you are a CVS
+administrator, you may consider restricting these commands with taginfo
+(*note user-defined logging::.).
+
+   To delete a tag, specify the `-d' option to either `cvs tag' or `cvs
+rtag'.  For example:
+
+     cvs rtag -d rel-0-4 tc
+
+   deletes the tag `rel-0-4' from the module `tc'.
+
+   When we say "move" a tag, we mean to make the same name point to
+different revisions.  For example, the `stable' tag may currently point
+to revision 1.4 of `backend.c' and perhaps we want to make it point to
+revision 1.6.  To move a tag, specify the `-F' option to either `cvs
+tag' or `cvs rtag'.  For example, the task just mentioned might be
+accomplished as:
+
+     cvs tag -r 1.6 -F stable backend.c
+
+   When we say "rename" a tag, we mean to make a different name point
+to the same revisions as the old tag.  For example, one may have
+misspelled the tag name and want to correct it (hopefully before others
+are relying on the old spelling).  To rename a tag, first create a new
+tag using the `-r' option to `cvs rtag', and then delete the old name.
+This leaves the new tag on exactly the same files as the old tag.  For
+example:
+
+     cvs rtag -r old-name-0-4 rel-0-4 tc
+     cvs rtag -d old-name-0-4 tc
+
+
+File: cvs.info,  Node: Tagging add/remove,  Next: Sticky tags,  Prev: Modifying tags,  Up: Revisions
+
+Tagging and adding and removing files
+=====================================
+
+   The subject of exactly how tagging interacts with adding and
+removing files is somewhat obscure; for the most part CVS will keep
+track of whether files exist or not without too much fussing.  By
+default, tags are applied to only files which have a revision
+corresponding to what is being tagged.  Files which did not exist yet,
+or which were already removed, simply omit the tag, and CVS knows to
+treat the absence of a tag as meaning that the file didn't exist as of
+that tag.
+
+   However, this can lose a small amount of information.  For example,
+suppose a file was added and then removed.  Then, if the tag is missing
+for that file, there is no way to know whether the tag refers to the
+time before the file was added, or the time after it was removed.  If
+you specify the `-r' option to `cvs rtag', then CVS tags the files
+which have been removed, and thereby avoids this problem.  For example,
+one might specify `-r HEAD' to tag the head.
+
+   On the subject of adding and removing files, the `cvs rtag' command
+has a `-a' option which means to clear the tag from removed files that
+would not otherwise be tagged.  For example, one might specify this
+option in conjunction with `-F' when moving a tag.  If one moved a tag
+without `-a', then the tag in the removed files might still refer to
+the old revision, rather than reflecting the fact that the file had
+been removed.  I don't think this is necessary if `-r' is specified, as
+noted above.
+
+
+File: cvs.info,  Node: Sticky tags,  Prev: Tagging add/remove,  Up: Revisions
+
+Sticky tags
+===========
+
+   Sometimes a working copy's revision has extra data associated with
+it, for example it might be on a branch (*note Branching and
+merging::.), or restricted to versions prior to a certain date by
+`checkout -D' or `update -D'.  Because this data persists - that is, it
+applies to subsequent commands in the working copy - we refer to it as
+"sticky".
+
+   Most of the time, stickiness is an obscure aspect of CVS that you
+don't need to think about.  However, even if you don't want to use the
+feature, you may need to know *something* about sticky tags (for
+example, how to avoid them!).
+
+   You can use the `status' command to see if any sticky tags or dates
+are set:
+
+     $ cvs status driver.c
+     ===================================================================
+     File: driver.c          Status: Up-to-date
+     
+         Version:            1.7.2.1 Sat Dec  5 19:35:03 1992
+         RCS Version:        1.7.2.1 /u/cvsroot/yoyodyne/tc/driver.c,v
+         Sticky Tag:         rel-1-0-patches (branch: 1.7.2)
+         Sticky Date:        (none)
+         Sticky Options:     (none)
+
+   The sticky tags will remain on your working files until you delete
+them with `cvs update -A'.  The `-A' option retrieves the version of
+the file from the head of the trunk, and forgets any sticky tags,
+dates, or options.
+
+   The most common use of sticky tags is to identify which branch one
+is working on, as described in *Note Accessing branches::.  However,
+non-branch sticky tags have uses as well.  For example, suppose that
+you want to avoid updating your working directory, to isolate yourself
+from possibly destabilizing changes other people are making.  You can,
+of course, just refrain from running `cvs update'.  But if you want to
+avoid updating only a portion of a larger tree, then sticky tags can
+help.  If you check out a certain revision (such as 1.4) it will become
+sticky.  Subsequent `cvs update' commands will not retrieve the latest
+revision until you reset the tag with `cvs update -A'.  Likewise, use
+of the `-D' option to `update' or `checkout' sets a "sticky date",
+which, similarly, causes that date to be used for future retrievals.
+
+   People often want to retrieve an old version of a file without
+setting a sticky tag.  This can be done with the `-p' option to
+`checkout' or `update', which sends the contents of the file to
+standard output.  For example:
+     $ cvs update -p -r 1.1 file1 >file1
+     ===================================================================
+     Checking out file1
+     RCS:  /tmp/cvs-sanity/cvsroot/first-dir/Attic/file1,v
+     VERS: 1.1
+     ***************
+     $
+
+   However, this isn't the easiest way, if you are asking how to undo a
+previous checkin (in this example, put `file1' back to the way it was
+as of revision 1.1).  In that case you are better off using the `-j'
+option to `update'; for further discussion see *Note Merging two
+revisions::.
+
+
+File: cvs.info,  Node: Branching and merging,  Next: Recursive behavior,  Prev: Revisions,  Up: Top
+
+Branching and merging
+*********************
+
+   CVS allows you to isolate changes onto a separate line of
+development, known as a "branch".  When you change files on a branch,
+those changes do not appear on the main trunk or other branches.
+
+   Later you can move changes from one branch to another branch (or the
+main trunk) by "merging".  Merging involves first running `cvs update
+-j', to merge the changes into the working directory.  You can then
+commit that revision, and thus effectively copy the changes onto
+another branch.
+
+* Menu:
+
+* Branches motivation::         What branches are good for
+* Creating a branch::           Creating a branch
+* Accessing branches::          Checking out and updating branches
+* Branches and revisions::      Branches are reflected in revision numbers
+* Magic branch numbers::        Magic branch numbers
+* Merging a branch::            Merging an entire branch
+* Merging more than once::      Merging from a branch several times
+* Merging two revisions::       Merging differences between two revisions
+* Merging adds and removals::   What if files are added or removed?
+
+
+File: cvs.info,  Node: Branches motivation,  Next: Creating a branch,  Up: Branching and merging
+
+What branches are good for
+==========================
+
+   Suppose that release 1.0 of tc has been made.  You are continuing to
+develop tc, planning to create release 1.1 in a couple of months.
+After a while your customers start to complain about a fatal bug.  You
+check out release 1.0 (*note Tags::.) and find the bug (which turns out
+to have a trivial fix).  However, the current revision of the sources
+are in a state of flux and are not expected to be stable for at least
+another month.  There is no way to make a bugfix release based on the
+newest sources.
+
+   The thing to do in a situation like this is to create a "branch" on
+the revision trees for all the files that make up release 1.0 of tc.
+You can then make modifications to the branch without disturbing the
+main trunk.  When the modifications are finished you can elect to
+either incorporate them on the main trunk, or leave them on the branch.
 
 
 File: cvs.info,  Node: Creating a branch,  Next: Accessing branches,  Prev: Branches motivation,  Up: Branching and merging
@@ -171,11 +399,11 @@ to be forked off from a certain revision.
 an ordinal number to the branch number.  The following figure
 illustrates branching with an example.
 
-                                           +-------------+
-                Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
-                                         / +-------------+
-                                        /
-                                       /
+                                                           +-------------+
+                                Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
+                                                         / +-------------+
+                                                        /
+                                                       /
                       +---------+    +---------+    +---------+
      Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !
                     / +---------+    +---------+    +---------+
@@ -350,14 +578,28 @@ file.
 
      $ cvs update -j 1.5 -j 1.3 backend.c
 
-will *remove* all changes made between revision 1.3 and 1.5.  Note the
+will undo all changes made between revision 1.3 and 1.5.  Note the
 order of the revisions!
 
    If you try to use this option when operating on multiple files,
 remember that the numeric revisions will probably be very different
-between the various files that make up a module.  You almost always use
-symbolic tags rather than revision numbers when operating on multiple
-files.
+between the various files.  You almost always use symbolic tags rather
+than revision numbers when operating on multiple files.
+
+   Specifying two `-j' options can also undo file removals or
+additions.  For example, suppose you have a file named `file1' which
+existed as revision 1.1, and you then removed it (thus adding a dead
+revision 1.2).  Now suppose you want to add it again, with the same
+contents it had previously.  Here is how to do it:
+
+     $ cvs update -j 1.2 -j 1.1 file1
+     U file1
+     $ cvs commit -m test
+     Checking in file1;
+     /tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
+     new revision: 1.3; previous revision: 1.2
+     done
+     $
 
 
 File: cvs.info,  Node: Merging adds and removals,  Prev: Merging two revisions,  Up: Branching and merging
@@ -426,7 +668,7 @@ If `tc' is the current working directory, the following is true:
    * `cvs update testing man' updates all files in the subdirectories
 
    * `cvs update .' or just `cvs update' updates all files in the `tc'
-     module
+     directory
 
    If no arguments are given to `update' it will update all files in
 the current working directory and all its subdirectories.  In other
@@ -531,7 +773,7 @@ File: cvs.info,  Node: Removing files,  Next: Removing directories,  Prev: Addin
 Removing files
 ==============
 
-   Modules change.  New files are added, and old files disappear.
+   Directories change.  New files are added, and old files disappear.
 Still, you want to be able to retrieve an exact copy of old releases.
 
    Here is what you can do to remove a file, but remain able to
@@ -695,7 +937,7 @@ Moving the history file
    This method is more dangerous, since it involves moving files inside
 the repository.  Read this entire section before trying it out!
 
-     $ cd $CVSROOT/MODULE
+     $ cd $CVSROOT/DIR
      $ mv OLD,v NEW,v
 
 Advantages:
@@ -706,9 +948,9 @@ Advantages:
 
 Disadvantages:
 
-   * Old releases of the module cannot easily be fetched from the
-     repository.  (The file will show up as NEW even in revisions from
-     the time before it was renamed).
+   * Old releases cannot easily be fetched from the repository.  (The
+     file will show up as NEW even in revisions from the time before it
+     was renamed).
 
    * There is no log information of when the file was renamed.
 
@@ -726,10 +968,10 @@ Copying the history file
 is safe, but not without drawbacks.
 
      # Copy the RCS file inside the repository
-     $ cd $CVSROOT/MODULE
+     $ cd $CVSROOT/DIR
      $ cp OLD,v NEW,v
      # Remove the old file
-     $ cd ~/MODULE
+     $ cd ~/DIR
      $ rm OLD
      $ cvs remove OLD
      $ cvs commit OLD
@@ -740,8 +982,7 @@ is safe, but not without drawbacks.
      $ cvs tag -d TAG2 NEW
      ...
 
-   By removing the tags you will be able to check out old revisions of
-the module.
+   By removing the tags you will be able to check out old revisions.
 
 Advantages:
 
@@ -769,26 +1010,25 @@ with the `-P' option, as described in *Note Removing directories::.
    If you really want to hack the repository to rename or delete a
 directory in the repository, you can do it like this:
 
-  1. Inform everyone who has a copy of the module that the directory
-     will be renamed.  They should commit all their changes, and remove
-     their working copies of the module, before you take the steps
-     below.
+  1. Inform everyone who has a checked out copy of the directory that
+     the directory will be renamed.  They should commit all their
+     changes, and remove their working copies, before you take the
+     steps below.
 
   2. Rename the directory inside the repository.
 
-          $ cd $CVSROOT/MODULE
+          $ cd $CVSROOT/PARENT-DIR
           $ mv OLD-DIR NEW-DIR
 
   3. Fix the CVS administrative files, if necessary (for instance if
      you renamed an entire module).
 
-  4. Tell everyone that they can check out the module and continue
-     working.
+  4. Tell everyone that they can check out again and continue working.
 
 
-   If someone had a working copy of the module the CVS commands will
-cease to work for him, until he removes the directory that disappeared
-inside the repository.
+   If someone had a working copy the CVS commands will cease to work
+for him, until he removes the directory that disappeared inside the
+repository.
 
    It is almost always better to move the files in the directory
 instead of moving the directory.  If you move the directory you are
@@ -962,359 +1202,4 @@ to avoid merging.  To avoid the merges that result from separate
 working directories, see the discussion of reserved checkouts (file
 locking) in *Note Multiple developers::.  To avoid the merges resulting
 from branches, restrict use of branches.
-
-
-File: cvs.info,  Node: Binary howto,  Prev: Binary why,  Up: Binary files
-
-How to store binary files
-=========================
-
-   There are two issues with using CVS to store binary files.  The
-first is that CVS by default converts line endings between the
-canonical form in which they are stored in the repository (linefeed
-only), and the form appropriate to the operating system in use on the
-client (for example, carriage return followed by line feed for Windows
-NT).
-
-   The second is that a binary file might happen to contain data which
-looks like a keyword (*note Keyword substitution::.), so keyword
-expansion must be turned off.
-
-   The `-kb' option available with some CVS commands insures that
-neither line ending conversion nor keyword expansion will be done.
-
-   Here is an example of how you can create a new file using the `-kb'
-flag:
-
-     $ echo '$Id: cvs.info-3,v 1.1.1.14 1998/08/22 20:57:34 tholo Exp $' > kotest
-     $ cvs add -kb -m"A test file" kotest
-     $ cvs ci -m"First checkin; contains a keyword" kotest
-
-   If a file accidentally gets added without `-kb', one can use the
-`cvs admin' command to recover.  For example:
-
-     $ echo '$Id: cvs.info-3,v 1.1.1.14 1998/08/22 20:57:34 tholo Exp $' > kotest
-     $ cvs add -m"A test file" kotest
-     $ cvs ci -m"First checkin; contains a keyword" kotest
-     $ cvs admin -kb kotest
-     $ cvs update -A kotest
-     # For non-unix systems:
-     # Copy in a good copy of the file from outside CVS
-     $ cvs commit -m "make it binary" kotest
-
-   When you check in the file `kotest' the file is not preserved as a
-binary file, because you did not check it in as a binary file.  The `cvs
-admin -kb' command sets the default keyword substitution method for
-this file, but it does not alter the working copy of the file that you
-have.  If you need to cope with line endings (that is, you are using
-CVS on a non-unix system), then you need to check in a new copy of the
-file, as shown by the `cvs commit' command above.  On unix, the `cvs
-update -A' command suffices.
-
-   However, in using `cvs admin -k' to change the keyword expansion, be
-aware that the keyword expansion mode is not version controlled.  This
-means that, for example, that if you have a text file in old releases,
-and a binary file with the same name in new releases, CVS provides no
-way to check out the file in text or binary mode depending on what
-version you are checking out.  There is no good workaround for this
-problem.
-
-   You can also set a default for whether `cvs add' and `cvs import'
-treat a file as binary based on its name; for example you could say
-that files who names end in `.exe' are binary.  *Note Wrappers::.
-There is currently no way to have CVS detect whether a file is binary
-based on its contents.  The main difficulty with designing such a
-feature is that it is not clear how to distinguish between binary and
-non-binary files, and the rules to apply would vary considerably with
-the operating system.
-
-
-File: cvs.info,  Node: Multiple developers,  Next: Revision management,  Prev: Binary files,  Up: Top
-
-Multiple developers
-*******************
-
-   When more than one person works on a software project things often
-get complicated.  Often, two people try to edit the same file
-simultaneously.  One solution, known as "file locking" or "reserved
-checkouts", is to allow only one person to edit each file at a time.
-This is the only solution with some version control systems, including
-RCS and SCCS.  Currently the usual way to get reserved checkouts with
-CVS is the `cvs admin -l' command (*note admin options::.).  This is
-not as nicely integrated into CVS as the watch features, described
-below, but it seems that most people with a need for reserved checkouts
-find it adequate.  It also may be possible to use the watches features
-described below, together with suitable procedures (not enforced by
-software), to avoid having two people edit at the same time.
-
-   The default model with CVS is known as "unreserved checkouts".  In
-this model, developers can edit their own "working copy" of a file
-simultaneously.  The first person that commits his changes has no
-automatic way of knowing that another has started to edit it.  Others
-will get an error message when they try to commit the file.  They must
-then use CVS commands to bring their working copy up to date with the
-repository revision.  This process is almost automatic.
-
-   CVS also supports mechanisms which facilitate various kinds of
-communcation, without actually enforcing rules like reserved checkouts
-do.
-
-   The rest of this chapter describes how these various models work,
-and some of the issues involved in choosing between them.
-
-* Menu:
-
-* File status::                 A file can be in several states
-* Updating a file::             Bringing a file up-to-date
-* Conflicts example::           An informative example
-* Informing others::            To cooperate you must inform
-* Concurrency::                 Simultaneous repository access
-* Watches::                     Mechanisms to track who is editing files
-* Choosing a model::            Reserved or unreserved checkouts?
-
-
-File: cvs.info,  Node: File status,  Next: Updating a file,  Up: Multiple developers
-
-File status
-===========
-
-   Based on what operations you have performed on a checked out file,
-and what operations others have performed to that file in the
-repository, one can classify a file in a number of states.  The states,
-as reported by the `status' command, are:
-
-Up-to-date
-     The file is identical with the latest revision in the repository
-     for the branch in use.
-
-Locally Modified
-     You have edited the file, and not yet committed your changes.
-
-Locally Added
-     You have added the file with `add', and not yet committed your
-     changes.
-
-Locally Removed
-     You have removed the file with `remove', and not yet committed
-     your changes.
-
-Needs Checkout
-     Someone else has committed a newer revision to the repository.
-     The name is slightly misleading; you will ordinarily use `update'
-     rather than `checkout' to get that newer revision.
-
-Needs Patch
-     Like Needs Checkout, but the CVS server will send a patch rather
-     than the entire file.  Sending a patch or sending an entire file
-     accomplishes the same thing.
-
-Needs Merge
-     Someone else has committed a newer revision to the repository, and
-     you have also made modifications to the file.
-
-File had conflicts on merge
-     This is like Locally Modified, except that a previous `update'
-     command gave a conflict.  If you have not already done so, you
-     need to resolve the conflict as described in *Note Conflicts
-     example::.
-
-Unknown
-     CVS doesn't know anything about this file.  For example, you have
-     created a new file and have not run `add'.
-
-   To help clarify the file status, `status' also reports the `Working
-revision' which is the revision that the file in the working directory
-derives from, and the `Repository revision' which is the latest
-revision in the repository for the branch in use.
-
-   The options to `status' are listed in *Note Invoking CVS::.  For
-information on its `Sticky tag' and `Sticky date' output, see *Note
-Sticky tags::.  For information on its `Sticky options' output, see the
-`-k' option in *Note update options::.
-
-   You can think of the `status' and `update' commands as somewhat
-complementary.  You use `update' to bring your files up to date, and you
-can use `status' to give you some idea of what an `update' would do (of
-course, the state of the repository might change before you actually run
-`update').  In fact, if you want a command to display file status in a
-more brief format than is displayed by the `status' command, you can
-invoke
-
-     $ cvs -n -q update
-
-   The `-n' option means to not actually do the update, but merely to
-display statuses; the `-q' option avoids printing the name of each
-directory.  For more information on the `update' command, and these
-options, see *Note Invoking CVS::.
-
-
-File: cvs.info,  Node: Updating a file,  Next: Conflicts example,  Prev: File status,  Up: Multiple developers
-
-Bringing a file up to date
-==========================
-
-   When you want to update or merge a file, use the `update' command.
-For files that are not up to date this is roughly equivalent to a
-`checkout' command: the newest revision of the file is extracted from
-the repository and put in your working copy of the module.
-
-   Your modifications to a file are never lost when you use `update'.
-If no newer revision exists, running `update' has no effect.  If you
-have edited the file, and a newer revision is available, CVS will merge
-all changes into your working copy.
-
-   For instance, imagine that you checked out revision 1.4 and started
-editing it.  In the meantime someone else committed revision 1.5, and
-shortly after that revision 1.6.  If you run `update' on the file now,
-CVS will incorporate all changes between revision 1.4 and 1.6 into your
-file.
-
-   If any of the changes between 1.4 and 1.6 were made too close to any
-of the changes you have made, an "overlap" occurs.  In such cases a
-warning is printed, and the resulting file includes both versions of
-the lines that overlap, delimited by special markers.  *Note update::,
-for a complete description of the `update' command.
-
-
-File: cvs.info,  Node: Conflicts example,  Next: Informing others,  Prev: Updating a file,  Up: Multiple developers
-
-Conflicts example
-=================
-
-   Suppose revision 1.4 of `driver.c' contains this:
-
-     #include <stdio.h>
-     
-     void main()
-     {
-         parse();
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? 0 : 1);
-     }
-
-Revision 1.6 of `driver.c' contains this:
-
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(!!nerr);
-     }
-
-Your working copy of `driver.c', based on revision 1.4, contains this
-before you run `cvs update':
-
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     void main()
-     {
-         init_scanner();
-         parse();
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     }
-
-You run `cvs update':
-
-     $ cvs update driver.c
-     RCS file: /usr/local/cvsroot/yoyodyne/tc/driver.c,v
-     retrieving revision 1.4
-     retrieving revision 1.6
-     Merging differences between 1.4 and 1.6 into driver.c
-     rcsmerge warning: overlaps during merge
-     cvs update: conflicts found in driver.c
-     C driver.c
-
-CVS tells you that there were some conflicts.  Your original working
-file is saved unmodified in `.#driver.c.1.4'.  The new version of
-`driver.c' contains this:
-
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         init_scanner();
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-     <<<<<<< driver.c
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     =======
-         exit(!!nerr);
-     >>>>>>> 1.6
-     }
-
-Note how all non-overlapping modifications are incorporated in your
-working copy, and that the overlapping section is clearly marked with
-`<<<<<<<', `=======' and `>>>>>>>'.
-
-   You resolve the conflict by editing the file, removing the markers
-and the erroneous line.  Suppose you end up with this file:
-     #include <stdlib.h>
-     #include <stdio.h>
-     
-     int main(int argc,
-              char **argv)
-     {
-         init_scanner();
-         parse();
-         if (argc != 1)
-         {
-             fprintf(stderr, "tc: No args expected.\n");
-             exit(1);
-         }
-         if (nerr == 0)
-             gencode();
-         else
-             fprintf(stderr, "No code generated.\n");
-         exit(nerr == 0 ? EXIT_SUCCESS : EXIT_FAILURE);
-     }
-
-You can now go ahead and commit this as revision 1.7.
-
-     $ cvs commit -m "Initialize scanner. Use symbolic exit values." driver.c
-     Checking in driver.c;
-     /usr/local/cvsroot/yoyodyne/tc/driver.c,v  <--  driver.c
-     new revision: 1.7; previous revision: 1.6
-     done
-
-   For your protection, CVS will refuse to check in a file if a
-conflict occurred and you have not resolved the conflict.  Currently to
-resolve a conflict, you must change the timestamp on the file.  In
-previous versions of CVS, you also needed to insure that the file
-contains no conflict markers.  Because your file may legitimately
-contain conflict markers (that is, occurrences of `>>>>>>> ' at the
-start of a line that don't mark a conflict), the current version of CVS
-will print a warning and proceed to check in the file.
-
-   If you use release 1.04 or later of pcl-cvs (a GNU Emacs front-end
-for CVS) you can use an Emacs package called emerge to help you resolve
-conflicts.  See the documentation for pcl-cvs.
 

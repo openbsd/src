@@ -11,10 +11,10 @@ project: cvs.exe
 install_dir = s:/gnu/util
 
 # srcdir is usually "."
-srcdir     = .
+srcdir     = ../../work/ccvs/emx
 
 # top_srcdir is usually ".."
-top_srcdir = ..
+top_srcdir = ../../work/ccvs
 
 lib_dir     = ${top_srcdir}/lib
 cvs_srcdir = ${top_srcdir}/src
@@ -331,6 +331,9 @@ install-cvs: cvs.exe
 
 %.o: %.c
 	gcc ${OBJ_CFLAGS} ${CFLAGS} -o $@ -c $*.c
+
+${cvs_srcdir}/rcscmds.o: ${cvs_srcdir}/rcscmds.c ${top_srcdir}/diff/diffrun.h
+	gcc ${OBJ_CFLAGS} ${CFLAGS} -I${top_srcdir}/diff -o $@ -c $*.c
 
 ${lib_dir}/libcvs.a: $(LIB_OBJECTS)
 	$(AR) cr $@ $(LIB_OBJECTS)

@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ./cvs.texinfo.
+input file ../../work/ccvs/doc/cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -21,6 +21,273 @@ of a permission notice identical to this one.
 manual into another language, under the above conditions for modified
 versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
+
+
+File: cvs.info,  Node: Builds,  Next: Special Files,  Prev: Tracking sources,  Up: Top
+
+How your build system interacts with CVS
+****************************************
+
+   As mentioned in the introduction, CVS does not contain software for
+building your software from source code.  This section describes how
+various aspects of your build system might interact with CVS.
+
+   One common question, especially from people who are accustomed to
+RCS, is how to make their build get an up to date copy of the sources.
+The answer to this with CVS is two-fold.  First of all, since CVS
+itself can recurse through directories, there is no need to modify your
+`Makefile' (or whatever configuration file your build tool uses) to
+make sure each file is up to date.  Instead, just use two commands,
+first `cvs -q update' and then `make' or whatever the command is to
+invoke your build tool.  Secondly, you do not necessarily *want* to get
+a copy of a change someone else made until you have finished your own
+work.  One suggested approach is to first update your sources, then
+implement, build and test the change you were thinking of, and then
+commit your sources (updating first if necessary).  By periodically (in
+between changes, using the approach just described) updating your
+entire tree, you ensure that your sources are sufficiently up to date.
+
+   One common need is to record which versions of which source files
+went into a particular build.  This kind of functionality is sometimes
+called "bill of materials" or something similar.  The best way to do
+this with CVS is to use the `tag' command to record which versions went
+into a given build (*note Tags::.).
+
+   Using CVS in the most straightforward manner possible, each
+developer will have a copy of the entire source tree which is used in a
+particular build.  If the source tree is small, or if developers are
+geographically dispersed, this is the preferred solution.  In fact one
+approach for larger projects is to break a project down into smaller
+separately-compiled subsystems, and arrange a way of releasing them
+internally so that each developer need check out only those subsystems
+which are they are actively working on.
+
+   Another approach is to set up a structure which allows developers to
+have their own copies of some files, and for other files to access
+source files from a central location.  Many people have come up with
+some such a system using features such as the symbolic link feature
+found in many operating systems, or the `VPATH' feature found in many
+versions of `make'.  One build tool which is designed to help with this
+kind of thing is Odin (see
+`ftp://ftp.cs.colorado.edu/pub/distribs/odin').
+
+
+File: cvs.info,  Node: Special Files,  Next: CVS commands,  Prev: Builds,  Up: Top
+
+Special Files
+*************
+
+   In normal circumstances, CVS works only with regular files.  Every
+file in a project is assumed to be persistent; it must be possible to
+open, read and close them; and so on.  CVS also ignores file
+permissions and ownerships, leaving such issues to be resolved by the
+developer at installation time.  In other words, it is not possible to
+"check in" a device into a repository; if the device file cannot be
+opened, CVS will refuse to handle it.  Files also lose their ownerships
+and permissions during repository transactions.
+
+   If the configuration variable `PreservePermissions' (*note
+config::.) is set in the repository, CVS will save the following file
+characteristics in the repository:
+
+   * user and group ownership
+
+   * permissions
+
+   * major and minor device numbers
+
+   * symbolic links
+
+   * hard link structure
+
+   Using the `PreservePermissions' option affects the behavior of CVS
+in several ways.  First, some of the new operations supported by CVS
+are not accessible to all users.  In particular, file ownership and
+special file characteristics may only be changed by the superuser.
+When the `PreservePermissions' configuration variable is set,
+therefore, users will have to be `root' in order to perform CVS
+operations.
+
+   When `PreservePermissions' is in use, some CVS operations (such as
+`cvs status') will not recognize a file's hard link structure, and so
+will emit spurious warnings about mismatching hard links.  The reason
+is that CVS's internal structure does not make it easy for these
+operations to collect all the necessary data about hard links, so they
+check for file conflicts with inaccurate data.
+
+   A more subtle difference is that CVS considers a file to have
+changed only if its contents have changed (specifically, if the
+modification time of the working file does not match that of the
+repository's file).  Therefore, if only the permissions, ownership or
+hard linkage have changed, or if a device's major or minor numbers have
+changed, CVS will not notice.  In order to commit such a change to the
+repository, you must force the commit with `cvs commit -f'.  This also
+means that if a file's permissions have changed and the repository file
+is newer than the working copy, performing `cvs update' will silently
+change the permissions on the working copy.
+
+   Changing hard links in a CVS repository is particularly delicate.
+Suppose that file `foo' is linked to file `old', but is later relinked
+to file `new'.  You can wind up in the unusual situation where,
+although `foo', `old' and `new' have all had their underlying link
+patterns changed, only `foo' and `new' have been modified, so `old' is
+not considered a candidate for checking in.  It can be very easy to
+produce inconsistent results this way.  Therefore, we recommend that
+when it is important to save hard links in a repository, the prudent
+course of action is to `touch' any file whose linkage or status has
+changed since the last checkin.  Indeed, it may be wise to `touch *'
+before each commit in a directory with complex hard link structures.
+
+   It is worth noting that only regular files may be merged, for
+reasons that hopefully are obvious.  If `cvs update' or `cvs checkout
+-j' attempts to merge a symbolic link with a regular file, or two
+device files for different kinds of devices, CVS will report a conflict
+and refuse to perform the merge.  At the same time, `cvs diff' will not
+report any differences between these files, since no meaningful textual
+comparisons can be made on files which contain no text.
+
+   The `PreservePermissions' features do not work with client/server
+CVS.  Another limitation is that hard links must be to other files
+within the same directory; hard links across directories are not
+supported.
+
+
+File: cvs.info,  Node: CVS commands,  Next: Invoking CVS,  Prev: Special Files,  Up: Top
+
+Guide to CVS commands
+*********************
+
+   This appendix describes the overall structure of CVS commands, and
+describes some commands in detail (others are described elsewhere; for
+a quick reference to CVS commands, *note Invoking CVS::.).
+
+* Menu:
+
+* Structure::                   Overall structure of CVS commands
+* Exit status::                 Indicating CVS's success or failure
+* ~/.cvsrc::                    Default options with the ~/.csvrc file
+* Global options::              Options you give to the left of cvs_command
+* Common options::              Options you give to the right of cvs_command
+* admin::                       Administration
+* checkout::                    Checkout sources for editing
+* commit::                      Check files into the repository
+* diff::                        Show differences between revisions
+* export::                      Export sources from CVS, similar to checkout
+* history::                     Show status of files and users
+* import::                      Import sources into CVS, using vendor branches
+* log::                         Show log messages for files
+* rdiff::                       'patch' format diffs between releases
+* release::                     Indicate that a directory is no longer in use
+* update::                      Bring work tree in sync with repository
+
+
+File: cvs.info,  Node: Structure,  Next: Exit status,  Up: CVS commands
+
+Overall structure of CVS commands
+=================================
+
+   The overall format of all CVS commands is:
+
+     cvs [ cvs_options ] cvs_command [ command_options ] [ command_args ]
+
+`cvs'
+     The name of the CVS program.
+
+`cvs_options'
+     Some options that affect all sub-commands of CVS.  These are
+     described below.
+
+`cvs_command'
+     One of several different sub-commands.  Some of the commands have
+     aliases that can be used instead; those aliases are noted in the
+     reference manual for that command.  There are only two situations
+     where you may omit `cvs_command': `cvs -H' elicits a list of
+     available commands, and `cvs -v' displays version information on
+     CVS itself.
+
+`command_options'
+     Options that are specific for the command.
+
+`command_args'
+     Arguments to the commands.
+
+   There is unfortunately some confusion between `cvs_options' and
+`command_options'.  `-l', when given as a `cvs_option', only affects
+some of the commands.  When it is given as a `command_option' is has a
+different meaning, and is accepted by more commands.  In other words,
+do not take the above categorization too seriously.  Look at the
+documentation instead.
+
+
+File: cvs.info,  Node: Exit status,  Next: ~/.cvsrc,  Prev: Structure,  Up: CVS commands
+
+CVS's exit status
+=================
+
+   CVS can indicate to the calling environment whether it succeeded or
+failed by setting its "exit status".  The exact way of testing the exit
+status will vary from one operating system to another.  For example in
+a unix shell script the `$?' variable will be 0 if the last command
+returned a successful exit status, or greater than 0 if the exit status
+indicated failure.
+
+   If CVS is successful, it returns a successful status; if there is an
+error, it prints an error message and returns a failure status.  The
+one exception to this is the `cvs diff' command.  It will return a
+successful status if it found no differences, or a failure status if
+there were differences or if there was an error.  Because this behavior
+provides no good way to detect errors, in the future it is possible that
+`cvs diff' will be changed to behave like the other CVS commands.
+
+
+File: cvs.info,  Node: ~/.cvsrc,  Next: Global options,  Prev: Exit status,  Up: CVS commands
+
+Default options and the ~/.cvsrc file
+=====================================
+
+   There are some `command_options' that are used so often that you
+might have set up an alias or some other means to make sure you always
+specify that option.  One example (the one that drove the
+implementation of the `.cvsrc' support, actually) is that many people
+find the default output of the `diff' command to be very hard to read,
+and that either context diffs or unidiffs are much easier to understand.
+
+   The `~/.cvsrc' file is a way that you can add default options to
+`cvs_commands' within cvs, instead of relying on aliases or other shell
+scripts.
+
+   The format of the `~/.cvsrc' file is simple.  The file is searched
+for a line that begins with the same name as the `cvs_command' being
+executed.  If a match is found, then the remainder of the line is split
+up (at whitespace characters) into separate options and added to the
+command arguments *before* any options from the command line.
+
+   If a command has two names (e.g., `checkout' and `co'), the official
+name, not necessarily the one used on the command line, will be used to
+match against the file.  So if this is the contents of the user's
+`~/.cvsrc' file:
+
+     log -N
+     diff -u
+     update -P
+     checkout -P
+
+the command `cvs checkout foo' would have the `-P' option added to the
+arguments, as well as `cvs co foo'.
+
+   With the example file above, the output from `cvs diff foobar' will
+be in unidiff format.  `cvs diff -c foobar' will provide context diffs,
+as usual.  Getting "old" format diffs would be slightly more
+complicated, because `diff' doesn't have an option to specify use of
+the "old" format, so you would need `cvs -f diff foobar'.
+
+   In place of the command name you can use `cvs' to specify global
+options (*note Global options::.).  For example the following line in
+`.cvsrc'
+
+     cvs -z6
+
+   causes CVS to use compression level 6.
 
 
 File: cvs.info,  Node: Global options,  Next: Common options,  Prev: ~/.cvsrc,  Up: CVS commands
@@ -183,9 +450,9 @@ options that conflict even with these standard options.
           1972-09-24
           1972-09-24 20:05
 
-     For more details about ISO8601 dates, see:
-
-          http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html
+     There are a lot more ISO8601 date formats, and CVS accepts many of
+     them, but you probably don't want to hear the *whole* long story
+     :-).
 
      In addition to the dates allowed in Internet e-mail itself, CVS
      also allows some of the fields to be omitted.  For example:
@@ -534,7 +801,7 @@ you undo the effect!
      and `Rel' (for released).  By default, the state of a new revision
      is set to `Exp' when it is created.  The state is visible in the
      output from CVS LOG (*note log::.), and in the `$Log: cvs.info-5,v $
-     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.14  1998/08/22 20:57:41  tholo
+     output from CVS LOG (*note log::.), and in the `Revision 1.1.1.15  1999/02/28 21:40:09  tholo
      output from CVS LOG (*note log::.), and in the `Latest version from Cyclic; skipped files
      output from CVS LOG (*note log::.), and in the `' and
      `$State: Exp $' keywords (*note Keyword substitution::.).  Note that CVS
@@ -887,14 +1154,14 @@ Committing to a branch
 
    You can commit to a branch revision (one that has an even number of
 dots) with the `-r' option.  To create a branch revision, use the `-b'
-option of the `rtag' or `tag' commands (*note tag::.  or *note
-rtag::.).  Then, either `checkout' or `update' can be used to base your
-sources on the newly created branch.  From that point on, all `commit'
-changes made within these working sources will be automatically added
-to a branch revision, thereby not disturbing main-line development in
-any way.  For example, if you had to create a patch to the 1.2 version
-of the product, even though the 2.0 version is already under
-development, you might do:
+option of the `rtag' or `tag' commands (*note Branching and
+merging::.).  Then, either `checkout' or `update' can be used to base
+your sources on the newly created branch.  From that point on, all
+`commit' changes made within these working sources will be
+automatically added to a branch revision, thereby not disturbing
+main-line development in any way.  For example, if you had to create a
+patch to the 1.2 version of the product, even though the 2.0 version is
+already under development, you might do:
 
      $ cvs rtag -b -r FCS1_2 FCS1_2_Patch product_module
      $ cvs checkout -r FCS1_2_Patch product_module
@@ -938,428 +1205,4 @@ trunk.
    To work with you on the experimental change, others would simply do
 
      $ cvs checkout -r EXPR1 whatever_module
-
-
-File: cvs.info,  Node: diff,  Next: export,  Prev: commit,  Up: CVS commands
-
-diff--Show differences between revisions
-========================================
-
-   * Synopsis: diff [-lR] [format_options] [[-r rev1 | -D date1] [-r
-     rev2 |  -D date2]] [files...]
-
-   * Requires: working directory, repository.
-
-   * Changes: nothing.
-
-   The `diff' command is used to compare different revisions of files.
-The default action is to compare your working files with the revisions
-they were based on, and report any differences that are found.
-
-   If any file names are given, only those files are compared.  If any
-directories are given, all files under them will be compared.
-
-   The exit status for diff is different than for other CVS commands;
-for details *Note Exit status::.
-
-* Menu:
-
-* diff options::                diff options
-* diff examples::               diff examples
-
-
-File: cvs.info,  Node: diff options,  Next: diff examples,  Up: diff
-
-diff options
-------------
-
-   These standard options are supported by `diff' (*note Common
-options::., for a complete description of them):
-
-`-D DATE'
-     Use the most recent revision no later than DATE.  See `-r' for how
-     this affects the comparison.
-
-`-k KFLAG'
-     Process keywords according to KFLAG.  See *Note Keyword
-     substitution::.
-
-`-l'
-     Local; run only in current working directory.
-
-`-R'
-     Examine directories recursively.  This option is on by default.
-
-`-r TAG'
-     Compare with revision TAG.  Zero, one or two `-r' options can be
-     present.  With no `-r' option, the working file will be compared
-     with the revision it was based on.  With one `-r', that revision
-     will be compared to your current working file.  With two `-r'
-     options those two revisions will be compared (and your working
-     file will not affect the outcome in any way).
-
-     One or both `-r' options can be replaced by a `-D DATE' option,
-     described above.
-
-   The following options specify the format of the output.  They have
-the same meaning as in GNU diff.
-
-     -0 -1 -2 -3 -4 -5 -6 -7 -8 -9
-     --binary
-     --brief
-     --changed-group-format=ARG
-     -c
-       -C NLINES
-       --context[=LINES]
-     -e --ed
-     -t --expand-tabs
-     -f --forward-ed
-     --horizon-lines=ARG
-     --ifdef=ARG
-     -w --ignore-all-space
-     -B --ignore-blank-lines
-     -i --ignore-case
-     -I REGEXP
-        --ignore-matching-lines=REGEXP
-     -h
-     -b --ignore-space-change
-     -T --initial-tab
-     -L LABEL
-       --label=LABEL
-     --left-column
-     -d --minimal
-     -N --new-file
-     --new-line-format=ARG
-     --old-line-format=ARG
-     --paginate
-     -n --rcs
-     -s --report-identical-files
-     -p
-     --show-c-function
-     -y --side-by-side
-     -F REGEXP
-     --show-function-line=REGEXP
-     -H --speed-large-files
-     --suppress-common-lines
-     -a --text
-     --unchanged-group-format=ARG
-     -u
-       -U NLINES
-       --unified[=LINES]
-     -V ARG
-     -W COLUMNS
-       --width=COLUMNS
-
-
-File: cvs.info,  Node: diff examples,  Prev: diff options,  Up: diff
-
-diff examples
--------------
-
-   The following line produces a Unidiff (`-u' flag) between revision
-1.14 and 1.19 of `backend.c'.  Due to the `-kk' flag no keywords are
-substituted, so differences that only depend on keyword substitution
-are ignored.
-
-     $ cvs diff -kk -u -r 1.14 -r 1.19 backend.c
-
-   Suppose the experimental branch EXPR1 was based on a set of files
-tagged RELEASE_1_0.  To see what has happened on that branch, the
-following can be used:
-
-     $ cvs diff -r RELEASE_1_0 -r EXPR1
-
-   A command like this can be used to produce a context diff between
-two releases:
-
-     $ cvs diff -c -r RELEASE_1_0 -r RELEASE_1_1 > diffs
-
-   If you are maintaining ChangeLogs, a command like the following just
-before you commit your changes may help you write the ChangeLog entry.
-All local modifications that have not yet been committed will be
-printed.
-
-     $ cvs diff -u | less
-
-
-File: cvs.info,  Node: export,  Next: history,  Prev: diff,  Up: CVS commands
-
-export--Export sources from CVS, similar to checkout
-====================================================
-
-   * Synopsis: export [-flNnR] [-r rev|-D date] [-k subst] [-d dir]
-     module...
-
-   * Requires: repository.
-
-   * Changes: current directory.
-
-   This command is a variant of `checkout'; use it when you want a copy
-of the source for module without the CVS administrative directories.
-For example, you might use `export' to prepare source for shipment
-off-site.  This command requires that you specify a date or tag (with
-`-D' or `-r'), so that you can count on reproducing the source you ship
-to others.
-
-   One often would like to use `-kv' with `cvs export'.  This causes
-any keywords to be expanded such that an import done at some other site
-will not lose the keyword revision information.  But be aware that
-doesn't handle an export containing binary files correctly.  Also be
-aware that after having used `-kv', one can no longer use the `ident'
-command (which is part of the RCS suite--see ident(1)) which looks for
-keyword strings.  If you want to be able to use `ident' you must not
-use `-kv'.
-
-* Menu:
-
-* export options::              export options
-
-
-File: cvs.info,  Node: export options,  Up: export
-
-export options
---------------
-
-   These standard options are supported by `export' (*note Common
-options::., for a complete description of them):
-
-`-D DATE'
-     Use the most recent revision no later than DATE.
-
-`-f'
-     If no matching revision is found, retrieve the most recent
-     revision (instead of ignoring the file).
-
-`-l'
-     Local; run only in current working directory.
-
-`-n'
-     Do not run any checkout program.
-
-`-R'
-     Export directories recursively.  This is on by default.
-
-`-r TAG'
-     Use revision TAG.
-
-   In addition, these options (that are common to `checkout' and
-`export') are also supported:
-
-`-d DIR'
-     Create a directory called DIR for the working files, instead of
-     using the module name.  *Note checkout options::, for complete
-     details on how CVS handles this flag.
-
-`-k SUBST'
-     Set keyword expansion mode (*note Substitution modes::.).
-
-`-N'
-     Only useful together with `-d DIR'.  *Note checkout options::, for
-     complete details on how CVS handles this flag.
-
-
-File: cvs.info,  Node: history,  Next: import,  Prev: export,  Up: CVS commands
-
-history--Show status of files and users
-=======================================
-
-   * Synopsis:     history [-report] [-flags] [-options args] [files...]
-
-   * Requires: the file `$CVSROOT/CVSROOT/history'
-
-   * Changes: nothing.
-
-   CVS can keep a history file that tracks each use of the `checkout',
-`commit', `rtag', `update', and `release' commands.  You can use
-`history' to display this information in various formats.
-
-   Logging must be enabled by creating the file
-`$CVSROOT/CVSROOT/history'.
-
-   *Warning:* `history' uses `-f', `-l', `-n', and `-p' in ways that
-conflict with the normal use inside CVS (*note Common options::.).
-
-* Menu:
-
-* history options::             history options
-
-
-File: cvs.info,  Node: history options,  Up: history
-
-history options
----------------
-
-   Several options (shown above as `-report')  control  what kind of
-report is generated:
-
-`-c'
-     Report on each time commit was used (i.e., each time the
-     repository was modified).
-
-`-e'
-     Everything (all record types).  Equivalent to specifying `-x' with
-     all record types.  Of course, `-e' will also include record types
-     which are added in a future version of CVS; if you are writing a
-     script which can only handle certain record types, you'll want to
-     specify `-x'.
-
-`-m MODULE'
-     Report on a particular module.  (You can meaningfully use `-m'
-     more than once on the command line.)
-
-`-o'
-     Report on checked-out modules.
-
-`-T'
-     Report on all tags.
-
-`-x TYPE'
-     Extract a particular set of record types TYPE from the CVS
-     history.  The types are indicated by single letters, which you may
-     specify in combination.
-
-     Certain commands have a single record type:
-
-    `F'
-          release
-
-    `O'
-          checkout
-
-    `E'
-          export
-
-    `T'
-          rtag
-
-     One of four record types may result from an update:
-
-    `C'
-          A merge was necessary but collisions were detected (requiring
-          manual merging).
-
-    `G'
-          A merge was necessary and it succeeded.
-
-    `U'
-          A working file was copied from the repository.
-
-    `W'
-          The working copy of a file was deleted during update (because
-          it was gone from the repository).
-
-     One of three record types results from commit:
-
-    `A'
-          A file was added for the first time.
-
-    `M'
-          A file was modified.
-
-    `R'
-          A file was removed.
-
-   The options shown as `-flags' constrain or expand the report without
-requiring option arguments:
-
-`-a'
-     Show data for all users (the default is to show data only for the
-     user executing `history').
-
-`-l'
-     Show last modification only.
-
-`-w'
-     Show only the records for modifications done from the same working
-     directory where `history' is executing.
-
-   The options shown as `-options ARGS' constrain the report based on
-an argument:
-
-`-b STR'
-     Show data back to a record containing  the  string STR  in  either
-     the module name, the file name, or the repository path.
-
-`-D DATE'
-     Show data since DATE.  This is slightly different from the normal
-     use of `-D DATE', which selects the newest revision older than
-     DATE.
-
-`-p REPOSITORY'
-     Show data for a particular source repository  (you can specify
-     several `-p' options on the same command line).
-
-`-r REV'
-     Show records referring to revisions since the revision or tag
-     named REV appears in individual RCS files.  Each RCS file is
-     searched for the revision or tag.
-
-`-t TAG'
-     Show records since tag TAG was last added to the history file.
-     This differs from the `-r' flag above in that it reads only the
-     history file, not the RCS files, and is much faster.
-
-`-u NAME'
-     Show records for user NAME.
-
-
-File: cvs.info,  Node: import,  Next: log,  Prev: history,  Up: CVS commands
-
-import--Import sources into CVS, using vendor branches
-======================================================
-
-   * Synopsis: import [-options] repository vendortag releasetag...
-
-   * Requires: Repository, source distribution directory.
-
-   * Changes: repository.
-
-   Use `import' to incorporate an entire source distribution from an
-outside source (e.g., a source vendor) into your source repository
-directory.  You can use this command both for initial creation of a
-repository, and for wholesale updates to the module from the outside
-source.  *Note Tracking sources::, for a discussion on this subject.
-
-   The REPOSITORY argument gives a directory name (or a path to a
-directory) under the CVS root directory for repositories; if the
-directory did not exist, import creates it.
-
-   When you use import for updates to source that has been modified in
-your source repository (since a prior import), it will notify you of
-any files that conflict in the two branches of development; use
-`checkout -j' to reconcile the differences, as import instructs you to
-do.
-
-   If CVS decides a file should be ignored (*note cvsignore::.), it
-does not import it and prints `I ' followed by the filename (*note
-import output::., for a complete description of the output).
-
-   If the file `$CVSROOT/CVSROOT/cvswrappers' exists, any file whose
-names match the specifications in that file will be treated as packages
-and the appropriate filtering will be performed on the file/directory
-before being imported.  *Note Wrappers::.
-
-   The outside source is saved in a first-level branch, by default
-1.1.1.  Updates are leaves of this branch; for example, files from the
-first imported collection of source will be revision 1.1.1.1, then
-files from the first imported update will be revision 1.1.1.2, and so
-on.
-
-   At least three arguments are required.  REPOSITORY is needed to
-identify the collection of source.  VENDORTAG is a tag for the entire
-branch (e.g., for 1.1.1).  You must also specify at least one
-RELEASETAG to identify the files at the leaves created each time you
-execute `import'.
-
-   Note that `import' does *not* change the directory in which you
-invoke it.  In particular, it does not set up that directory as a CVS
-working directory; if you want to work with the sources import them
-first and then check them out into a different directory (*note Getting
-the source::.).
-
-* Menu:
-
-* import options::              import options
-* import output::               import output
-* import examples::             import examples
 

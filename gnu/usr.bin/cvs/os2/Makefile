@@ -16,13 +16,13 @@ SL = /
 install_dir = s:${SL}gnu${SL}util
 
 # srcdir is usually "."
-srcdir     = .
+srcdir     = ../../work/ccvs/os2
 
 # top_srcdir is usually ".."
-top_srcdir = ..
+top_srcdir = ../../work/ccvs
 
-lib_dir     = ..${SL}lib
-cvs_srcdir = ..${SL}src
+lib_dir     = ../../work/ccvs${SL}lib
+cvs_srcdir = ../../work/ccvs${SL}src
 
 zlib_dir = ${top_srcdir}/zlib
 
@@ -85,7 +85,6 @@ OS2_SOURCES = \
        ${srcdir}${SL}waitpid.c \
        ${srcdir}${SL}popen.c \
        ${srcdir}${SL}porttcp.c \
-       ${srcdir}${SL}getdate.c \
        ${srcdir}${SL}getpass.c
 
 # sources we use from the common src dir, ..${SL}src
@@ -146,6 +145,7 @@ COMMON_SOURCES = \
 # sources from ..${SL}lib
 # FIXME: Is this used anywhere?  I don't think it is.
 LIB_SOURCES = \
+       ${lib_dir}${SL}getdate.c \
        ${lib_dir}${SL}getopt.c \
        ${lib_dir}${SL}getopt1.c \
        ${lib_dir}${SL}getline.c \
@@ -171,7 +171,6 @@ OS2_OBJECTS = \
        ${srcdir}${SL}waitpid.obj \
        ${srcdir}${SL}popen.obj \
        ${srcdir}${SL}porttcp.obj \
-       ${srcdir}${SL}getdate.obj \
        ${srcdir}${SL}getpass.obj
 
 # object files from ..${SL}src
@@ -231,6 +230,7 @@ COMMON_OBJECTS = \
 
 # objects from ..${SL}lib
 LIB_OBJECTS = \
+       ${lib_dir}${SL}getdate.obj \
        ${lib_dir}${SL}getopt.obj \
        ${lib_dir}${SL}getopt1.obj \
        ${lib_dir}${SL}getline.obj \

@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ./cvs.texinfo.
+input file ../../work/ccvs/doc/cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -28,7 +28,7 @@ File: cvs.info,  Node: Top,  Next: Overview,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.10.
+1.10.5.
 
 * Menu:
 
@@ -328,6 +328,12 @@ started.  If `$CVSEDITOR' is not set, then if the environment variable
 are not set then there is a default which will vary with your operating
 system, for example `vi' for unix or `notepad' for Windows NT/95.
 
+   In addition, CVS checks the `$VISUAL' environment variable.
+Opinions vary on whether this behavior is desirable and whether future
+releases of CVS should check `$VISUAL' or ignore it.  You will be OK
+either way if you make sure that `$VISUAL' is either unset or set to
+the same thing as `$EDITOR'.
+
    When CVS starts the editor, it includes a list of files which are
 modified.  For the CVS client, this list is based on comparing the
 modification time of the file against the modification time that the
@@ -364,7 +370,7 @@ but a better way is to use the `release' command (*note release::.):
      M driver.c
      ? tc
      You have [1] altered files in this repository.
-     Are you sure you want to release (and delete) module `tc': n
+     Are you sure you want to release (and delete) directory `tc': n
      ** `release' aborted by user choice.
 
    The `release' command checks that all your modifications have been
@@ -418,7 +424,7 @@ optimization pass.  You check it in, and release the module.
      $ cvs release -d tc
      ? tc
      You have [0] altered files in this repository.
-     Are you sure you want to release (and delete) module `tc': y
+     Are you sure you want to release (and delete) directory `tc': y
 
 
 File: cvs.info,  Node: Repository,  Next: Starting a new project,  Prev: Overview,  Up: Top
@@ -507,9 +513,8 @@ is recorded in the `CVS/Root' file in the working copy).
 
    The `-d' option and the `CVS/Root' file both override the `$CVSROOT'
 environment variable.  If `-d' option differs from `CVS/Root', the
-former is used (and specifying `-d' will cause `CVS/Root' to be
-updated).  Of course, for proper operation they should be two ways of
-referring to the same repository.
+former is used.  Of course, for proper operation they should be two
+ways of referring to the same repository.
 
 
 File: cvs.info,  Node: Repository storage,  Next: Working directory storage,  Prev: Specifying a repository,  Up: Repository
@@ -867,6 +872,12 @@ reading this directory should silently ignore files which are in the
 directory but which are not documented here, to allow for future
 expansion.
 
+   The files are stored according to the text file convention for the
+system in question.  This means that working directories are not
+portable between systems with differing conventions for storing text
+files.  This is intentional, on the theory that the files being managed
+by CVS probably will not be portable between such systems either.
+
 `Root'
      This file contains the current CVS root, as described in *Note
      Specifying a repository::.
@@ -895,13 +906,15 @@ expansion.
 
           yoyodyne/tc
 
+     If the particular working directory does not correspond to a
+     directory in the repository, then `Repository' should contain
+     `CVSROOT/Emptydir'.
+
 `Entries'
-     This file lists the files and directories in the working
-     directory.  It is a text file according to the conventions
-     appropriate for the operating system in question.  The first
-     character of each line indicates what sort of line it is.  If the
-     character is unrecognized, programs reading the file should
-     silently skip that line, to allow for future expansion.
+     This file lists the files and directories in the working directory.
+     The first character of each line indicates what sort of line it
+     is.  If the character is unrecognized, programs reading the file
+     should silently skip that line, to allow for future expansion.
 
      If the first character is `/', then the format is:
 
@@ -944,6 +957,8 @@ expansion.
      fields should be silently ignored, for future expansion.  Programs
      which modify `Entries' files should preserve these fields.
 
+     The lines in the `Entries' file can be in any order.
+
 `Entries.Log'
      This file does not record any information beyond that in
      `Entries', but it does provide a way to update the information
@@ -963,6 +978,9 @@ expansion.
      be silently ignored (for future expansion).  If the second
      character of the line in `Entries.Log' is not a space, then it was
      written by an older version of CVS (not documented here).
+
+     Programs which are writing rather than reading can safely ignore
+     `Entries.Log' if they so choose.
 
 `Entries.Backup'
      This is a temporary file.  Recommended usage is to write a new
@@ -1087,52 +1105,20 @@ to use the repository that was used to check out the working directory
 (*note Specifying a repository::.).
 
    The big advantage of having multiple repositories is that they can
-reside on different servers.  The big disadvantage is that you cannot
-have a single CVS command recurse into directories which comes from
-different repositories.  Generally speaking, if you are thinking of
-setting up several repositories on the same machine, you might want to
-consider using several directories within the same repository.
+reside on different servers.  With CVS version 1.10, a single command
+cannot recurse into directories from different repositories.  With
+development versions of CVS, you can check out code from multiple
+servers into your working directory.  CVS will recurse and handle all
+the details of making connections to as many server machines as
+necessary to perform the requested command.  Here is an example of how
+to set up a working directory:
 
-   None of the examples in this manual show multiple repositories.
+     cvs -d server1:/cvs co dir1
+     cd dir1
+     cvs -d server2:/root co sdir
+     cvs update
 
-
-File: cvs.info,  Node: Creating a repository,  Next: Backing up,  Prev: Multiple repositories,  Up: Repository
-
-Creating a repository
-=====================
-
-   To set up a CVS repository, first choose the machine and disk on
-which you want to store the revision history of the source files.  CPU
-and memory requirements are modest, so most machines should be
-adequate.  For details see *Note Server requirements::.
-
-   To estimate disk space requirements, if you are importing RCS files
-from another system, the size of those files is the approximate initial
-size of your repository, or if you are starting without any version
-history, a rule of thumb is to allow for the server approximately three
-times the size of the code to be under CVS for the repository (you will
-eventually outgrow this, but not for a while).  On the machines on
-which the developers will be working, you'll want disk space for
-approximately one working directory for each developer (either the
-entire tree or a portion of it, depending on what each developer uses).
-
-   The repository should be accessable (directly or via a networked
-file system) from all machines which want to use CVS in server or local
-mode; the client machines need not have any access to it other than via
-the CVS protocol.  It is not possible to use CVS to read from a
-repository which one only has read access to; CVS needs to be able to
-create lock files (*note Concurrency::.).
-
-   To create a repository, run the `cvs init' command.  It will set up
-an empty repository in the CVS root specified in the usual way (*note
-Repository::.).  For example,
-
-     cvs -d /usr/local/cvsroot init
-
-   `cvs init' is careful to never overwrite any existing files in the
-repository, so no harm is done if you run `cvs init' on an already
-set-up repository.
-
-   `cvs init' will enable history logging; if you don't want that,
-remove the history file after running `cvs init'.  *Note history file::.
+   The `cvs co' commands set up the working directory, and then the
+`cvs update' command will contact server2, to update the dir1/sdir
+subdirectory, and server1, to update everything else.
 

@@ -1,5 +1,366 @@
 This is Info file cvsclient.info, produced by Makeinfo version 1.67
-from the input file ./cvsclient.texi.
+from the input file ../../work/ccvs/doc/cvsclient.texi.
+
+
+File: cvsclient.info,  Node: Responses,  Next: Text tags,  Prev: Response pathnames,  Up: Protocol
+
+Responses
+=========
+
+   Here are the responses:
+
+`Valid-requests REQUEST-LIST \n'
+     Indicate what requests the server will accept.  REQUEST-LIST is a
+     space separated list of tokens.  If the server supports sending
+     patches, it will include `update-patches' in this list.  The
+     `update-patches' request does not actually do anything.
+
+`Checked-in PATHNAME \n'
+     Additional data: New Entries line, \n.  This means a file PATHNAME
+     has been successfully operated on (checked in, added, etc.).  name
+     in the Entries line is the same as the last component of PATHNAME.
+
+`New-entry PATHNAME \n'
+     Additional data: New Entries line, \n.  Like `Checked-in', but the
+     file is not up to date.
+
+`Updated PATHNAME \n'
+     Additional data: New Entries line, \n, mode, \n, file
+     transmission.  A new copy of the file is enclosed.  This is used
+     for a new revision of an existing file, or for a new file, or for
+     any other case in which the local (client-side) copy of the file
+     needs to be updated, and after being updated it will be up to
+     date.  If any directory in pathname does not exist, create it.
+     This response is not used if `Created' and `Update-existing' are
+     supported.
+
+`Created PATHNAME \n'
+     This is just like `Updated' and takes the same additional data, but
+     is used only if no `Entry', `Modified', or `Unchanged' request has
+     been sent for the file in question.  The distinction between
+     `Created' and `Update-existing' is so that the client can give an
+     error message in several cases: (1) there is a file in the working
+     directory, but not one for which `Entry', `Modified', or
+     `Unchanged' was sent (for example, a file which was ignored, or a
+     file for which `Questionable' was sent), (2) there is a file in
+     the working directory whose name differs from the one mentioned in
+     `Created' in ways that the client is unable to use to distinguish
+     files.  For example, the client is case-insensitive and the names
+     differ only in case.
+
+`Update-existing PATHNAME \n'
+     This is just like `Updated' and takes the same additional data, but
+     is used only if a `Entry', `Modified', or `Unchanged' request has
+     been sent for the file in question.
+
+     This response, or `Merged', indicates that the server has
+     determined that it is OK to overwrite the previous contents of the
+     file specified by PATHNAME.  Provided that the client has correctly
+     sent `Modified' or `Is-modified' requests for a modified file, and
+     the file was not modified while CVS was running, the server can
+     ensure that a user's modifications are not lost.
+
+`Merged PATHNAME \n'
+     This is just like `Updated' and takes the same additional data,
+     with the one difference that after the new copy of the file is
+     enclosed, it will still not be up to date.  Used for the results
+     of a merge, with or without conflicts.
+
+     It is useful to preserve an copy of what the file looked like
+     before the merge.  This is basically handled by the server; before
+     sending `Merged' it will send a `Copy-file' response.  For
+     example, if the file is `aa' and it derives from revision 1.3, the
+     `Copy-file' response will tell the client to copy `aa' to
+     `.#aa.1.3'.  It is up to the client to decide how long to keep this
+     file around; traditionally clients have left it around forever,
+     thus letting the user clean it up as desired.  But another answer,
+     such as until the next commit, might be preferable.
+
+`Rcs-diff PATHNAME \n'
+     This is just like `Updated' and takes the same additional data,
+     with the one difference that instead of sending a new copy of the
+     file, the server sends an RCS change text.  This change text is
+     produced by `diff -n' (the GNU diff `-a' option may also be used).
+     The client must apply this change text to the existing file.
+     This will only be used when the client has an exact copy of an
+     earlier revision of a file.  This response is only used if the
+     `update' command is given the `-u' argument.
+
+`Patched PATHNAME \n'
+     This is just like `Rcs-diff' and takes the same additional data,
+     except that it sends a standard patch rather than an RCS change
+     text.  The patch is produced by `diff -c' for CVS 1.6 and later
+     (see POSIX.2 for a description of this format), or `diff -u' for
+     previous versions of CVS; clients are encouraged to accept either
+     format.  Like `Rcs-diff', this response is only used if the
+     `update' command is given the `-u' argument.
+
+     The `Patched' response is deprecated in favor of the `Rcs-diff'
+     response.  However, older clients (CVS 1.9 and earlier) only
+     support `Patched'.
+
+`Mode MODE \n'
+     This MODE applies to the next file mentioned in `Checked-in'.
+     `Mode' is a file update modifying response as described in *Note
+     Response intro::.
+
+`Mod-time TIME \n'
+     Set the modification time of the next file sent to TIME.
+     `Mod-time' is a file update modifying response as described in
+     *Note Response intro::.  The TIME is in the format specified by
+     RFC822 as modified by RFC1123.  The server may specify any
+     timezone it chooses; clients will want to convert that to their
+     own timezone as appropriate.  An example of this format is:
+
+          26 May 1997 13:01:40 -0400
+
+     There is no requirement that the client and server clocks be
+     synchronized.  The server just sends its recommendation for a
+     timestamp (based on its own clock, presumably), and the client
+     should just believe it (this means that the time might be in the
+     future, for example).
+
+     If the server does not send `Mod-time' for a given file, the client
+     should pick a modification time in the usual way (usually, just
+     let the operating system set the modification time to the time
+     that the CVS command is running).
+
+`Checksum CHECKSUM\n'
+     The CHECKSUM applies to the next file sent (that is, `Checksum' is
+     a file update modifying response as described in *Note Response
+     intro::).  In the case of `Patched', the checksum applies to the
+     file after being patched, not to the patch itself.  The client
+     should compute the checksum itself, after receiving the file or
+     patch, and signal an error if the checksums do not match.  The
+     checksum is the 128 bit MD5 checksum represented as 32 hex digits
+     (MD5 is described in RFC1321).  This response is optional, and is
+     only used if the client supports it (as judged by the
+     `Valid-responses' request).
+
+`Copy-file PATHNAME \n'
+     Additional data: NEWNAME \n.  Copy file PATHNAME to NEWNAME in the
+     same directory where it already is.  This does not affect
+     `CVS/Entries'.
+
+     This can optionally be implemented as a rename instead of a copy.
+     The only use for it which currently has been identified is prior
+     to a `Merged' response as described under `Merged'.  Clients can
+     probably assume that is how it is being used, if they want to worry
+     about things like how long to keep the NEWNAME file around.
+
+`Removed PATHNAME \n'
+     The file has been removed from the repository (this is the case
+     where cvs prints `file foobar.c is no longer pertinent').
+
+`Remove-entry PATHNAME \n'
+     The file needs its entry removed from `CVS/Entries', but the file
+     itself is already gone (this happens in response to a `ci' request
+     which involves committing the removal of a file).
+
+`Set-static-directory PATHNAME \n'
+     This instructs the client to set the `Entries.Static' flag, which
+     it should then send back to the server in a `Static-directory'
+     request whenever the directory is operated on.  PATHNAME ends in a
+     slash; its purpose is to specify a directory, not a file within a
+     directory.
+
+`Clear-static-directory PATHNAME \n'
+     Like `Set-static-directory', but clear, not set, the flag.
+
+`Set-sticky PATHNAME \n'
+     Additional data: TAGSPEC \n.  Tell the client to set a sticky tag
+     or date, which should be supplied with the `Sticky' request for
+     future operations.  PATHNAME ends in a slash; its purpose is to
+     specify a directory, not a file within a directory.  The client
+     should store TAGSPEC and pass it back to the server as-is, to
+     allow for future expansion.  The first character of TAGSPEC is `T'
+     for a tag, `D' for a date, or something else for future expansion.
+     The remainder of TAGSPEC contains the actual tag or date.
+
+`Clear-sticky PATHNAME \n'
+     Clear any sticky tag or date set by `Set-sticky'.
+
+`Template PATHNAME \n'
+     Additional data: file transmission (note: compressed file
+     transmissions are not supported).  PATHNAME ends in a slash; its
+     purpose is to specify a directory, not a file within a directory.
+     Tell the client to store the file transmission as the template log
+     message, and then use that template in the future when prompting
+     the user for a log message.
+
+`Set-checkin-prog DIR \n'
+     Additional data: PROG \n.  Tell the client to set a checkin
+     program, which should be supplied with the `Checkin-prog' request
+     for future operations.
+
+`Set-update-prog DIR \n'
+     Additional data: PROG \n.  Tell the client to set an update
+     program, which should be supplied with the `Update-prog' request
+     for future operations.
+
+`Notified PATHNAME \n'
+     Indicate to the client that the notification for PATHNAME has been
+     done.  There should be one such response for every `Notify'
+     request; if there are several `Notify' requests for a single file,
+     the requests should be processed in order; the first `Notified'
+     response pertains to the first `Notify' request, etc.
+
+`Module-expansion PATHNAME \n'
+     Return a file or directory which is included in a particular
+     module.  PATHNAME is relative to cvsroot, unlike most pathnames in
+     responses.  PATHNAME should be used to look and see whether some
+     or all of the module exists on the client side; it is not
+     necessarily suitable for passing as an argument to a `co' request
+     (for example, if the modules file contains the `-d' option, it
+     will be the directory specified with `-d', not the name of the
+     module).
+
+`Wrapper-rcsOption PATTERN -k 'OPTION' \n'
+     Transmit to the client a filename pattern which implies a certain
+     keyword expansion mode.  The PATTERN is a wildcard pattern (for
+     example, `*.exe'.  The OPTION is `b' for binary, and so on.  Note
+     that although the syntax happens to resemble the syntax in certain
+     CVS configuration files, it is more constrained; there must be
+     exactly one space between PATTERN and `-k' and exactly one space
+     between `-k' and `'', and no string is permitted in place of `-k'
+     (extensions should be done with new responses, not by extending
+     this one, for graceful handling of `Valid-responses').
+
+`M TEXT \n'
+     A one-line message for the user.
+
+`Mbinary \n'
+     Additional data: file transmission (note: compressed file
+     transmissions are not supported).  This is like `M', except the
+     contents of the file transmission are binary and should be copied
+     to standard output without translation to local text file
+     conventions.  To transmit a text file to standard output, servers
+     should use a series of `M' requests.
+
+`E TEXT \n'
+     Same as `M' but send to stderr not stdout.
+
+`F \n'
+     Flush stderr.  That is, make it possible for the user to see what
+     has been written to stderr (it is up to the implementation to
+     decide exactly how far it should go to ensure this).
+
+`MT TAGNAME DATA \n'
+     This response provides for tagged text.  It is similar to
+     SGML/HTML/XML in that the data is structured and a naive
+     application can also make some sense of it without understanding
+     the structure.  The syntax is not SGML-like, however, in order to
+     fit into the CVS protocol better and (more importantly) to make it
+     easier to parse, especially in a language like perl or awk.
+
+     The TAGNAME can have several forms.  If it starts with `a' to `z'
+     or `A' to `Z', then it represents tagged text.  If the
+     implementation recognizes TAGNAME, then it may interpret DATA in
+     some particular fashion.  If the implementation does not recognize
+     TAGNAME, then it should simply treat DATA as text to be sent to
+     the user (similar to an `M' response).  There are two tags which
+     are general purpose.  The `text' tag is similar to an unrecognized
+     tag in that it provides text which will ordinarily be sent to the
+     user.  The `newline' tag is used without DATA and indicates that a
+     newline will ordinarily be sent to the user (there is no provision
+     for embedding newlines in the DATA of other tagged text responses).
+
+     If TAGNAME starts with `+' it indicates a start tag and if it
+     starts with `-' it indicates an end tag.  The remainder of TAGNAME
+     should be the same for matching start and end tags, and tags
+     should be nested (for example one could have tags in the following
+     order `+bold' `+italic' `text' `-italic' `-bold' but not `+bold'
+     `+italic' `text' `-bold' `-italic').  A particular start and end
+     tag may be documented to constrain the tagged text responses which
+     are valid between them.
+
+     Note that if DATA is present there will always be exactly one
+     space between TAGNAME and DATA; if there is more than one space,
+     then the spaces beyond the first are part of DATA.
+
+     Here is an example of some tagged text responses.  Note that there
+     is a trailing space after `Checking in' and `initial revision:'
+     and there are two trailing spaces after `<--'.  Such trailing
+     spaces are, of course, part of DATA.
+
+          MT +checking-in
+          MT text Checking in
+          MT fname gz.tst
+          MT text ;
+          MT newline
+          MT rcsfile /home/kingdon/zwork/cvsroot/foo/gz.tst,v
+          MT text   <--
+          MT fname gz.tst
+          MT newline
+          MT text initial revision:
+          MT init-rev 1.1
+          MT newline
+          MT text done
+          MT newline
+          MT -checking-in
+
+     If the client does not support the `MT' response, the same
+     responses might be sent as:
+
+          M Checking in gz.tst;
+          M /home/kingdon/zwork/cvsroot/foo/gz.tst,v  <--  gz.tst
+          M initial revision: 1.1
+          M done
+
+     For a list of specific tags, see *Note Text tags::.
+
+`error ERRNO-CODE ` ' TEXT \n'
+     The command completed with an error.  ERRNO-CODE is a symbolic
+     error code (e.g. `ENOENT'); if the server doesn't support this
+     feature, or if it's not appropriate for this particular message,
+     it just omits the errno-code (in that case there are two spaces
+     after `error').  Text is an error message such as that provided by
+     strerror(), or any other message the server wants to use.
+
+`ok \n'
+     The command completed successfully.
+
+
+File: cvsclient.info,  Node: Text tags,  Next: Example,  Prev: Responses,  Up: Protocol
+
+Tags for the MT tagged text response
+====================================
+
+   The `MT' response, as described in *Note Responses::, offers a way
+for the server to send tagged text to the client.  This section
+describes specific tags.  The intention is to update this section as
+servers add new tags.
+
+   In the following descriptions, `text' and `newline' tags are
+omitted.  Such tags contain information which is intended for users (or
+to be discarded), and are subject to change at the whim of the server.
+To avoid being vulnerable to such whim, clients should look for the tags
+listed here, not `text', `newline', or other tags.
+
+   The following tag means to indicate to the user that a file has been
+updated.  It is more or less redundant with the `Created' and
+`Update-existing' responses, but we don't try to specify here whether
+it occurs in exactly the same circumstances as `Created' and
+`Update-existing'.  The NAME is the pathname of the file being updated
+relative to the directory in which the command is occurring (that is,
+the last `Directory' request which is sent before the command).
+
+     MT +updated
+     MT fname NAME
+     MT -updated
+
+   The `importmergecmd' tag is used when doing an import which has
+conflicts.  The client can use it to report how to merge in the newly
+imported changes.  The COUNT is the number of conflicts.  The newly
+imported changes can be merged by running the following command:
+     cvs checkout -j TAG1 -j TAG2 REPOSITORY
+
+     MT +importmergecmd
+     MT conflicts COUNT
+     MT mergetag1 TAG1
+     MT mergetag2 TAG2
+     MT repository REPOSITORY
+     MT -importmergecmd
 
 
 File: cvsclient.info,  Node: Example,  Next: Requirements,  Prev: Text tags,  Up: Protocol
@@ -161,7 +522,9 @@ Notes on the Protocol
 
    A number of enhancements are possible.  Also see the file TODO in
 the CVS source distribution, which has further ideas concerning various
-aspects of CVS, some of which impact the protocol.
+aspects of CVS, some of which impact the protocol.  Similarly, the
+`http://www.cyclic.com' site, in particular the `Development of CVS'
+page.
 
    * The `Modified' request could be speeded up by sending diffs rather
      than entire files.  The client would need some way to keep the
@@ -170,18 +533,6 @@ aspects of CVS, some of which impact the protocol.
      course (the "cvs edit" could be handled by a package like VC for
      emacs).  This would also allow local operation of `cvs diff'
      without arguments.
-
-   * The current procedure for `cvs update' is highly sub-optimal if
-     there are many modified files.  One possible alternative would be
-     to have the client send a first request without the contents of
-     every modified file, then have the server tell it what files it
-     needs.  Note the server needs to do the what-needs-to-be-updated
-     check twice (or more, if changes in the repository mean it has to
-     ask the client for more files), because it can't keep locks open
-     while waiting for the network.  Perhaps this whole thing is
-     irrelevant if there is a multisite capability (as noted in TODO),
-     and therefore the rcsmerge can be done with a repository which is
-     connected via a fast connection.
 
    * The fact that `pserver' requires an extra network turnaround in
      order to perform authentication would be nice to avoid.  This

@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ./cvs.texinfo.
+input file ../../work/ccvs/doc/cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -21,6 +21,290 @@ of a permission notice identical to this one.
 manual into another language, under the above conditions for modified
 versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
+
+
+File: cvs.info,  Node: Variables,  Next: config,  Prev: history file,  Up: Administrative files
+
+Expansions in administrative files
+==================================
+
+   Sometimes in writing an administrative file, you might want the file
+to be able to know various things based on environment CVS is running
+in.  There are several mechanisms to do that.
+
+   To find the home directory of the user running CVS (from the `HOME'
+environment variable), use `~' followed by `/' or the end of the line.
+Likewise for the home directory of USER, use `~USER'.  These variables
+are expanded on the server machine, and don't get any reasonable
+expansion if pserver (*note Password authenticated::.) is in use;
+therefore user variables (see below) may be a better choice to
+customize behavior based on the user running CVS.
+
+   One may want to know about various pieces of information internal to
+CVS.  A CVS internal variable has the syntax `${VARIABLE}', where
+VARIABLE starts with a letter and consists of alphanumeric characters
+and `_'.  If the character following VARIABLE is a non-alphanumeric
+character other than `_', the `{' and `}' can be omitted.  The CVS
+internal variables are:
+
+`CVSROOT'
+     This is the value of the CVS root in use.  *Note Repository::, for
+     a description of the various ways to specify this.
+
+`RCSBIN'
+     In CVS 1.9.18 and older, this specified the directory where CVS
+     was looking for RCS programs.  Because CVS no longer runs RCS
+     programs, specifying this internal variable is now an error.
+
+`CVSEDITOR'
+`VISUAL'
+`EDITOR'
+     These all expand to the same value, which is the editor that CVS
+     is using.  *Note Global options::, for how to specify this.
+
+`USER'
+     Username of the user running CVS (on the CVS server machine).
+
+   If you want to pass a value to the administrative files which the
+user who is running CVS can specify, use a user variable.  To expand a
+user variable, the administrative file contains `${=VARIABLE}'.  To set
+a user variable, specify the global option `-s' to CVS, with argument
+`VARIABLE=VALUE'.  It may be particularly useful to specify this option
+via `.cvsrc' (*note ~/.cvsrc::.).
+
+   For example, if you want the administrative file to refer to a test
+directory you might create a user variable `TESTDIR'.  Then if CVS is
+invoked as
+
+     cvs -s TESTDIR=/work/local/tests
+
+and the administrative file contains `sh ${=TESTDIR}/runtests', then
+that string is expanded to `sh /work/local/tests/runtests'.
+
+   All other strings containing `$' are reserved; there is no way to
+quote a `$' character so that `$' represents itself.
+
+
+File: cvs.info,  Node: config,  Prev: Variables,  Up: Administrative files
+
+The CVSROOT/config configuration file
+=====================================
+
+   The administrative file `config' contains various miscellaneous
+settings which affect the behavior of CVS.  The syntax is slightly
+different from the other administrative files.  Variables are not
+expanded.  Lines which start with `#' are considered comments.  Other
+lines consist of a keyword, `=', and a value.  Note that this syntax is
+very strict.  Extraneous spaces or tabs are not permitted.
+
+   Currently defined keywords are:
+
+`RCSBIN=BINDIR'
+     For CVS 1.9.12 through 1.9.18, this setting told CVS to look for
+     RCS programs in the BINDIR directory.  Current versions of CVS do
+     not run RCS programs; for compatibility this setting is accepted,
+     but it does nothing.
+
+`SystemAuth=VALUE'
+     If VALUE is `yes', then pserver should check for users in the
+     system's user database if not found in `CVSROOT/passwd'.  If it is
+     `no', then all pserver users must exist in `CVSROOT/passwd'.  The
+     default is `yes'.  For more on pserver, see *Note Password
+     authenticated::.
+
+`PreservePermissions=VALUE'
+     Enable support for saving special device files, symbolic links,
+     file permissions and ownerships in the repository.  The default
+     value is `no'.  *Note Special Files:: for the full implications of
+     using this keyword.
+
+`TopLevelAdmin=VALUE'
+     Modify the `checkout' command to create a `CVS' directory at the
+     top level of the new working directory, in addition to `CVS'
+     directories created within checked-out directories.  The default
+     value is `no'.
+
+     This option is useful if you find yourself performing many
+     commands at the top level of your working directory, rather than
+     in one of the checked out subdirectories.  The `CVS' directory
+     created there will mean you don't have to specify `CVSROOT' for
+     each command.  It also provides a place for the `CVS/Template'
+     file (*note Working directory storage::.).
+
+`LockDir=DIRECTORY'
+     Put CVS lock files in DIRECTORY rather than directly in the
+     repository.  This is useful if you want to let users read from the
+     repository while giving them write access only to DIRECTORY, not
+     to the repository.  You need to create DIRECTORY, but CVS will
+     create subdirectories of DIRECTORY as it needs them.  For
+     information on CVS locks, see *Note Concurrency::.
+
+     Before enabling the LockDir option, make sure that you have
+     tracked down and removed any copies of CVS 1.9 or older.  Such
+     versions neither support LockDir, nor will give an error
+     indicating that they don't support it.  The result, if this is
+     allowed to happen, is that some CVS users will put the locks one
+     place, and others will put them another place, and therefore the
+     repository could become corrupted.  CVS 1.10 does not support
+     LockDir but it will print a warning if run on a repository with
+     LockDir enabled.
+
+
+File: cvs.info,  Node: Environment variables,  Next: Compatibility,  Prev: Administrative files,  Up: Top
+
+All environment variables which affect CVS
+******************************************
+
+   This is a complete list of all environment variables that affect CVS.
+
+`$CVSIGNORE'
+     A whitespace-separated list of file name patterns that CVS should
+     ignore. *Note cvsignore::.
+
+`$CVSWRAPPERS'
+     A whitespace-separated list of file name patterns that CVS should
+     treat as wrappers. *Note Wrappers::.
+
+`$CVSREAD'
+     If this is set, `checkout' and `update' will try hard to make the
+     files in your working directory read-only.  When this is not set,
+     the default behavior is to permit modification of your working
+     files.
+
+`$CVSUMASK'
+     Controls permissions of files in the repository.  See *Note File
+     permissions::.
+
+`$CVSROOT'
+     Should contain the full pathname to the root of the CVS source
+     repository (where the RCS files are kept).  This information must
+     be available to CVS for most commands to execute; if `$CVSROOT' is
+     not set, or if you wish to override it for one invocation, you can
+     supply it on the command line: `cvs -d cvsroot cvs_command...'
+     Once you have checked out a working directory, CVS stores the
+     appropriate root (in the file `CVS/Root'), so normally you only
+     need to worry about this when initially checking out a working
+     directory.
+
+`$EDITOR'
+`$CVSEDITOR'
+`$VISUAL'
+     Specifies the program to use for recording log messages during
+     commit.  `$CVSEDITOR' overrides `$EDITOR'.  See *Note Committing
+     your changes::.
+
+`$PATH'
+     If `$RCSBIN' is not set, and no path is compiled into CVS, it will
+     use `$PATH' to try to find all programs it uses.
+
+`$HOME'
+`$HOMEPATH'
+`$HOMEDRIVE'
+     Used to locate the directory where the `.cvsrc' file, and other
+     such files, are searched.  On Unix, CVS just checks for HOME.  On
+     Windows NT, the system will set HOMEDRIVE, for example to `d:' and
+     HOMEPATH, for example to `\joe'.  On Windows 95, you'll probably
+     need to set HOMEDRIVE and HOMEPATH yourself.
+
+`$CVS_RSH'
+     Specifies the external program which CVS connects with, when
+     `:ext:' access method is specified.  *note Connecting via rsh::..
+
+`$CVS_SERVER'
+     Used in client-server mode when accessing a remote repository
+     using RSH.  It specifies the name of the program to start on the
+     server side when accessing a remote repository using RSH.  The
+     default value is `cvs'.  *note Connecting via rsh::.
+
+`$CVS_PASSFILE'
+     Used in client-server mode when accessing the `cvs login server'.
+     Default value is `$HOME/.cvspass'.  *note Password authentication
+     client::.
+
+`$CVS_CLIENT_PORT'
+     Used in client-server mode when accessing the server via Kerberos.
+     *note Kerberos authenticated::.
+
+`$CVS_RCMD_PORT'
+     Used in client-server mode.  If set, specifies the port number to
+     be used when accessing the RCMD demon on the server side.
+     (Currently not used for Unix clients).
+
+`$CVS_CLIENT_LOG'
+     Used for debugging only in client-server mode.  If set, everything
+     send to the server is logged into ``$CVS_CLIENT_LOG'.in' and
+     everything send from the server is logged into
+     ``$CVS_CLIENT_LOG'.out'.
+
+`$CVS_SERVER_SLEEP'
+     Used only for debugging the server side in client-server mode.  If
+     set, delays the start of the server child process the specified
+     amount of seconds so that you can attach to it with a debugger.
+
+`$CVS_IGNORE_REMOTE_ROOT'
+     For CVS 1.10 and older, setting this variable prevents CVS from
+     overwriting the `CVS/Root' file when the `-d' global option is
+     specified.  Later versions of CVS do not rewrite `CVS/Root', so
+     CVS_IGNORE_REMOTE_ROOT has no effect.
+
+`$COMSPEC'
+     Used under OS/2 only.  It specifies the name of the command
+     interpreter and defaults to CMD.EXE.
+
+`$TMPDIR'
+`$TMP'
+`$TEMP'
+     Directory in which temporary files are located.  The CVS server
+     uses `TMPDIR'.  *Note Global options::, for a description of how
+     to specify this.  Some parts of CVS will always use `/tmp' (via
+     the `tmpnam' function provided by the system).
+
+     On Windows NT, `TMP' is used (via the `_tempnam' function provided
+     by the system).
+
+     The `patch' program which is used by the CVS client uses `TMPDIR',
+     and if it is not set, uses `/tmp' (at least with GNU patch 2.1).
+     Note that if your server and client are both running CVS 1.9.10 or
+     later, CVS will not invoke an external `patch' program.
+
+
+File: cvs.info,  Node: Compatibility,  Next: Troubleshooting,  Prev: Environment variables,  Up: Top
+
+Compatibility between CVS Versions
+**********************************
+
+   The repository format is compatible going back to CVS 1.3.  But see
+*Note Watches Compatibility::, if you have copies of CVS 1.6 or older
+and you want to use the optional developer communication features.
+
+   The working directory format is compatible going back to CVS 1.5.
+It did change between CVS 1.3 and CVS 1.5.  If you run CVS 1.5 or newer
+on a working directory checked out with CVS 1.3, CVS will convert it,
+but to go back to CVS 1.3 you need to check out a new working directory
+with CVS 1.3.
+
+   The remote protocol is interoperable going back to CVS 1.5, but no
+further (1.5 was the first official release with the remote protocol,
+but some older versions might still be floating around).  In many cases
+you need to upgrade both the client and the server to take advantage of
+new features and bugfixes, however.
+
+
+File: cvs.info,  Node: Troubleshooting,  Next: Credits,  Prev: Compatibility,  Up: Top
+
+Troubleshooting
+***************
+
+   If you are having trouble with CVS, this appendix may help.  If
+there is a particular error message which you are seeing, then you can
+look up the message alphabetically.  If not, you can look through the
+section on other problems to see if your problem is mentioned there.
+
+* Menu:
+
+* Error messages::              Partial list of CVS errors
+* Connection::                  Trouble making a connection to a CVS server
+* Other problems::              Problems not readily listed by error message
 
 
 File: cvs.info,  Node: Error messages,  Next: Connection,  Up: Troubleshooting
@@ -214,6 +498,14 @@ using at any particular moment).
      be specified with a `-f' option.  Of course, if you don't need
      `log.pl' you can just comment it out of `loginfo'.
 
+`cvs [login aborted]: unrecognized auth response from SERVER'
+     This message typically means that the server is not set up
+     properly.  For example, if `inetd.conf' points to a nonexistent
+     cvs executable.  To debug it further, find the log file which
+     inetd writes (`/var/log/messages' or whatever inetd uses on your
+     system).  For details, see *Note Connection::, and *Note Password
+     authentication server::.
+
 `cvs commit: Up-to-date check failed for `FILE''
      This means that someone else has committed a change to that file
      since the last time that you did a `cvs update'.  So before
@@ -245,6 +537,10 @@ using at any particular moment).
      TEXT is something else, this may signify a problem with your CVS
      server.  Double-check your installation against the instructions
      for setting up the CVS server.
+
+`cvs commit: [TIME] waiting for USER's lock in DIRECTORY'
+     This is a normal message, not an error.  See *Note Concurrency::,
+     for more details.
 
 `cvs commit: warning: editor session failed'
      This means that the editor which CVS is using exits with a nonzero

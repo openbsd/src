@@ -1,5 +1,5 @@
 This is Info file cvs.info, produced by Makeinfo version 1.67 from the
-input file ./cvs.texinfo.
+input file ../../work/ccvs/doc/cvs.texinfo.
 
 START-INFO-DIR-ENTRY
 * CVS: (cvs).          Concurrent Versions System
@@ -21,6 +21,47 @@ of a permission notice identical to this one.
 manual into another language, under the above conditions for modified
 versions, except that this permission notice may be stated in a
 translation approved by the Free Software Foundation.
+
+
+File: cvs.info,  Node: Creating a repository,  Next: Backing up,  Prev: Multiple repositories,  Up: Repository
+
+Creating a repository
+=====================
+
+   To set up a CVS repository, first choose the machine and disk on
+which you want to store the revision history of the source files.  CPU
+and memory requirements are modest, so most machines should be
+adequate.  For details see *Note Server requirements::.
+
+   To estimate disk space requirements, if you are importing RCS files
+from another system, the size of those files is the approximate initial
+size of your repository, or if you are starting without any version
+history, a rule of thumb is to allow for the server approximately three
+times the size of the code to be under CVS for the repository (you will
+eventually outgrow this, but not for a while).  On the machines on
+which the developers will be working, you'll want disk space for
+approximately one working directory for each developer (either the
+entire tree or a portion of it, depending on what each developer uses).
+
+   The repository should be accessible (directly or via a networked
+file system) from all machines which want to use CVS in server or local
+mode; the client machines need not have any access to it other than via
+the CVS protocol.  It is not possible to use CVS to read from a
+repository which one only has read access to; CVS needs to be able to
+create lock files (*note Concurrency::.).
+
+   To create a repository, run the `cvs init' command.  It will set up
+an empty repository in the CVS root specified in the usual way (*note
+Repository::.).  For example,
+
+     cvs -d /usr/local/cvsroot init
+
+   `cvs init' is careful to never overwrite any existing files in the
+repository, so no harm is done if you run `cvs init' on an already
+set-up repository.
+
+   `cvs init' will enable history logging; if you don't want that,
+remove the history file after running `cvs init'.  *Note history file::.
 
 
 File: cvs.info,  Node: Backing up,  Next: Moving a repository,  Prev: Creating a repository,  Up: Repository
@@ -113,6 +154,7 @@ are described in *Note Connecting via rsh::.
 * Password authenticated::      Direct connections using passwords
 * GSSAPI authenticated::        Direct connections using GSSAPI
 * Kerberos authenticated::      Direct connections with kerberos
+* Connecting via fork::         Using a forked `cvs server' to connect
 
 
 File: cvs.info,  Node: Server requirements,  Next: Connecting via rsh,  Up: Remote repositories
@@ -175,15 +217,15 @@ remote user host needs to have a `.rhosts' file which grants access to
 the local user.
 
    For example, suppose you are the user `mozart' on the local machine
-`toe.grunge.com', and the server machine is `chainsaw.yard.com'.  On
-chainsaw, put the following line into the file `.rhosts' in `bach''s
-home directory:
+`toe.example.com', and the server machine is `faun.example.org'.  On
+faun, put the following line into the file `.rhosts' in `bach''s home
+directory:
 
-     toe.grunge.com  mozart
+     toe.example.com  mozart
 
    Then test that `rsh' is working with
 
-     rsh -l bach chainsaw.yard.com 'echo $PATH'
+     rsh -l bach faun.example.org 'echo $PATH'
 
    Next you have to make sure that `rsh' will be able to find the
 server.  Make sure that the path which `rsh' printed in the above
@@ -213,9 +255,9 @@ the documentation for your rsh replacement.
 
    Continuing our example, supposing you want to access the module
 `foo' in the repository `/usr/local/cvsroot/', on machine
-`chainsaw.yard.com', you are ready to go:
+`faun.example.org', you are ready to go:
 
-     cvs -d :ext:bach@chainsaw.yard.com:/usr/local/cvsroot checkout foo
+     cvs -d :ext:bach@faun.example.org:/usr/local/cvsroot checkout foo
 
    (The `bach@' can be omitted if the username is the same on both the
 local and remote hosts.)
@@ -280,6 +322,8 @@ number, then put this in `/etc/services':
    Once the above is taken care of, restart your `inetd', or do
 whatever is necessary to force it to reread its initialization files.
 
+   If you are having trouble setting this up, see *Note Connection::.
+
    Because the client stores and transmits passwords in cleartext
 (almost--see *Note Password authentication security::, for details), a
 separate CVS password file may be used, so people don't compromise their
@@ -319,9 +363,9 @@ example:
      anyone:1sOp854gDF3DY:spwang
 
    Thus, someone remotely accessing the repository on
-`chainsaw.yard.com' with the following command:
+`faun.example.org' with the following command:
 
-     cvs -d :pserver:cvs@chainsaw.yard.com:/usr/local/cvsroot checkout foo
+     cvs -d :pserver:cvs@faun.example.org:/usr/local/cvsroot checkout foo
 
    would end up running the server under the system identity kfogel,
 assuming successful authentication.  However, the remote user would not
@@ -338,7 +382,8 @@ as well.
 
    Right now, the only way to put a password in the CVS `passwd' file
 is to paste it there from somewhere else.  Someday, there may be a `cvs
-passwd' command.
+passwd' command.  Unlike many of the files in `$CVSROOT/CVSROOT', you
+edit the `passwd' file directly, rather than via CVS.
 
 
 File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
@@ -355,7 +400,7 @@ repository argument or the `CVSROOT' environment variable.
 
    `cvs login' is interactive -- it prompts for a password:
 
-     cvs -d :pserver:bach@chainsaw.yard.com:/usr/local/cvsroot login
+     cvs -d :pserver:bach@faun.example.org:/usr/local/cvsroot login
      CVS password:
 
    The password is checked with the server; if it is correct, the
@@ -365,7 +410,7 @@ incorrect.
    Once you have logged in, you can force CVS to connect directly to
 the server and authenticate with the stored password:
 
-     cvs -d :pserver:bach@chainsaw.yard.com:/usr/local/cvsroot checkout foo
+     cvs -d :pserver:bach@faun.example.org:/usr/local/cvsroot checkout foo
 
    The `:pserver:' is necessary because without it, CVS will assume it
 should use `rsh' to connect with the server (*note Connecting via
@@ -381,7 +426,7 @@ trivially encoded to protect them from "innocent" compromise (i.e.,
 inadvertently being seen by a system administrator who happens to look
 at that file).
 
-   The password for the currently choosen remote repository can be
+   The password for the currently chosen remote repository can be
 removed from the CVS_PASSFILE by using the `cvs logout' command.
 
    The `CVS_PASSFILE' environment variable overrides this default.  If
@@ -465,10 +510,10 @@ set this up as required by your GSSAPI mechanism.
 
    To connect using GSSAPI, use `:gserver:'.  For example,
 
-     cvs -d :gserver:chainsaw.yard.com:/usr/local/cvsroot checkout foo
+     cvs -d :gserver:faun.example.org:/usr/local/cvsroot checkout foo
 
 
-File: cvs.info,  Node: Kerberos authenticated,  Prev: GSSAPI authenticated,  Up: Remote repositories
+File: cvs.info,  Node: Kerberos authenticated,  Next: Connecting via fork,  Prev: GSSAPI authenticated,  Up: Remote repositories
 
 Direct connection with kerberos
 -------------------------------
@@ -501,10 +546,37 @@ on the client.
 `kinit'); it must be a ticket which allows you to log into the server
 machine.  Then you are ready to go:
 
-     cvs -d :kserver:chainsaw.yard.com:/usr/local/cvsroot checkout foo
+     cvs -d :kserver:faun.example.org:/usr/local/cvsroot checkout foo
 
    Previous versions of CVS would fall back to a connection via rsh;
 this version will not do so.
+
+
+File: cvs.info,  Node: Connecting via fork,  Prev: Kerberos authenticated,  Up: Remote repositories
+
+Connecting with fork
+--------------------
+
+   This access method allows you to connect to a repository on your
+local disk via the remote protocol.  In other words it does pretty much
+the same thing as `:local:', but various quirks, bugs and the like are
+those of the remote CVS rather than the local CVS.
+
+   For day-to-day operations you might prefer either `:local:' or
+`:fork:', depending on your preferences.  Of course `:fork:' comes in
+particularly handy in testing or debugging `cvs' and the remote
+protocol.  Specifically, we avoid all of the network-related
+setup/configuration, timeouts, and authentication inherent in the other
+remote access methods but still create a connection which uses the
+remote protocol.
+
+   To connect using the `fork' method, use `:fork:' and the pathname to
+your local repository.  For example:
+
+     cvs -d :fork:/usr/local/cvsroot checkout foo
+
+   As with `:ext:', the server is called `cvs' by default, or the value
+of the `CVS_SERVER' environment variable.
 
 
 File: cvs.info,  Node: Read-only access,  Next: Server temporary directory,  Prev: Remote repositories,  Up: Repository
@@ -713,7 +785,7 @@ From RCS
      already exist.  Then copy the files into the appropriate
      directories in the CVS repository (the name in the repository must
      be the name of the source file with `,v' added; the files go
-     directly in the appopriate directory of the repository, not in an
+     directly in the appropriate directory of the repository, not in an
      `RCS' subdirectory).  This is one of the few times when it is a
      good idea to access the CVS repository directly, rather than using
      CVS commands.  Then you are ready to check out a new working
@@ -827,6 +899,10 @@ numeric revision in each file.
 * Versions revisions releases::  Terminology used in this manual
 * Assigning revisions::         Assigning revisions
 * Tags::                        Tags-Symbolic revisions
+* Tagging the working directory::  The cvs tag command
+* Tagging by date/tag::         The cvs rtag command
+* Modifying tags::              Adding, renaming, and deleting tags
+* Tagging add/remove::          Tags with adding and removing files
 * Sticky tags::                 Certain tags are persistent
 
 
@@ -901,7 +977,7 @@ existing revision number.  That is, if revision 3.0 exists, you cannot
 parallel, you need to use a branch (*note Branching and merging::.).
 
 
-File: cvs.info,  Node: Tags,  Next: Sticky tags,  Prev: Assigning revisions,  Up: Revisions
+File: cvs.info,  Node: Tags,  Next: Tagging the working directory,  Prev: Assigning revisions,  Up: Revisions
 
 Tags-Symbolic revisions
 =======================
@@ -947,9 +1023,8 @@ enforcing your convention in the taginfo file (*note user-defined
 logging::.).
 
    The following example shows how you can add a tag to a file.  The
-commands must be issued inside your working copy of the module.  That
-is, you should issue the command in the directory where `backend.c'
-resides.
+commands must be issued inside your working directory.  That is, you
+should issue the command in the directory where `backend.c' resides.
 
      $ cvs tag rel-0-4 backend.c
      T backend.c
@@ -965,6 +1040,9 @@ resides.
      
          Existing Tags:
              rel-0-4                     (revision: 1.4)
+
+   For a complete summary of the syntax of `cvs tag', including the
+various options, see *Note Invoking CVS::.
 
    There is seldom reason to tag a file in isolation.  A more common
 use is to tag all the files that constitute a module with the same tag
@@ -994,7 +1072,8 @@ This is useful, for instance, if someone claims that there is a bug in
 that release, but you cannot find the bug in the current working copy.
 
    You can also check out a module as it was at any given date.  *Note
-checkout options::.
+checkout options::.  When specifying `-r' to any of these commands, you
+will need beware of sticky tags; see *Note Sticky tags::.
 
    When you tag more than one file with the same tag you can think
 about the tag as "a curve drawn through a matrix of filename vs.
@@ -1027,124 +1106,30 @@ of revisions that is "flat" along the tagged revisions, like this:
                                      1.5
 
 
-File: cvs.info,  Node: Sticky tags,  Prev: Tags,  Up: Revisions
+File: cvs.info,  Node: Tagging the working directory,  Next: Tagging by date/tag,  Prev: Tags,  Up: Revisions
 
-Sticky tags
-===========
+Specifying what to tag from the working directory
+=================================================
 
-   Sometimes a working copy's revision has extra data associated with
-it, for example it might be on a branch (*note Branching and
-merging::.), or restricted to versions prior to a certain date by
-`checkout -D' or `update -D'.  Because this data persists - that is, it
-applies to subsequent commands in the working copy - we refer to it as
-"sticky".
+   The example in the previous section demonstrates one of the most
+common ways to choose which revisions to tag.  Namely, running the `cvs
+tag' command without arguments causes CVS to select the revisions which
+are checked out in the current working directory.  For example, if the
+copy of `backend.c' in working directory was checked out from revision
+1.4, then CVS will tag revision 1.4.  Note that the tag is applied
+immediately to revision 1.4 in the repository; tagging is not like
+modifying a file, or other operations in which one first modifies the
+working directory and then runs `cvs commit' to transfer that
+modification to the repository.
 
-   Most of the time, stickiness is an obscure aspect of CVS that you
-don't need to think about.  However, even if you don't want to use the
-feature, you may need to know *something* about sticky tags (for
-example, how to avoid them!).
+   One potentially surprising aspect of the fact that `cvs tag'
+operates on the repository is that you are tagging the checked-in
+revisions, which may differ from locally modified files in your working
+directory.  If you want to avoid doing this by mistake, specify the
+`-c' option to `cvs tag'.  If there are any locally modified files, CVS
+will abort with an error before it tags any files:
 
-   You can use the `status' command to see if any sticky tags or dates
-are set:
-
-     $ cvs status driver.c
-     ===================================================================
-     File: driver.c          Status: Up-to-date
-     
-         Version:            1.7.2.1 Sat Dec  5 19:35:03 1992
-         RCS Version:        1.7.2.1 /u/cvsroot/yoyodyne/tc/driver.c,v
-         Sticky Tag:         rel-1-0-patches (branch: 1.7.2)
-         Sticky Date:        (none)
-         Sticky Options:     (none)
-
-   The sticky tags will remain on your working files until you delete
-them with `cvs update -A'.  The `-A' option retrieves the version of
-the file from the head of the trunk, and forgets any sticky tags,
-dates, or options.
-
-   The most common use of sticky tags is to identify which branch one
-is working on, as described in *Note Accessing branches::.  However,
-non-branch sticky tags have uses as well.  For example, suppose that
-you want to avoid updating your working directory, to isolate yourself
-from possibly destabilizing changes other people are making.  You can,
-of course, just refrain from running `cvs update'.  But if you want to
-avoid updating only a portion of a larger tree, then sticky tags can
-help.  If you check out a certain revision (such as 1.4) it will become
-sticky.  Subsequent `cvs update' commands will not retrieve the latest
-revision until you reset the tag with `cvs update -A'.  Likewise, use
-of the `-D' option to `update' or `checkout' sets a "sticky date",
-which, similarly, causes that date to be used for future retrievals.
-
-   Many times you will want to retrieve an old version of a file
-without setting a sticky tag.  The way to do that is with the `-p'
-option to `checkout' or `update', which sends the contents of the file
-to standard output.  For example, suppose you have a file named `file1'
-which existed as revision 1.1, and you then removed it (thus adding a
-dead revision 1.2).  Now suppose you want to add it again, with the same
-contents it had previously.  Here is how to do it:
-
-     $ cvs update -p -r 1.1 file1 >file1
-     ===================================================================
-     Checking out file1
-     RCS:  /tmp/cvs-sanity/cvsroot/first-dir/Attic/file1,v
-     VERS: 1.1
-     ***************
-     $ cvs add file1
-     cvs add: re-adding file file1 (in place of dead revision 1.2)
-     cvs add: use 'cvs commit' to add this file permanently
-     $ cvs commit -m test
-     Checking in file1;
-     /tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
-     new revision: 1.3; previous revision: 1.2
-     done
-     $
-
-
-File: cvs.info,  Node: Branching and merging,  Next: Recursive behavior,  Prev: Revisions,  Up: Top
-
-Branching and merging
-*********************
-
-   CVS allows you to isolate changes onto a separate line of
-development, known as a "branch".  When you change files on a branch,
-those changes do not appear on the main trunk or other branches.
-
-   Later you can move changes from one branch to another branch (or the
-main trunk) by "merging".  Merging involves first running `cvs update
--j', to merge the changes into the working directory.  You can then
-commit that revision, and thus effectively copy the changes onto
-another branch.
-
-* Menu:
-
-* Branches motivation::         What branches are good for
-* Creating a branch::           Creating a branch
-* Accessing branches::          Checking out and updating branches
-* Branches and revisions::      Branches are reflected in revision numbers
-* Magic branch numbers::        Magic branch numbers
-* Merging a branch::            Merging an entire branch
-* Merging more than once::      Merging from a branch several times
-* Merging two revisions::       Merging differences between two revisions
-* Merging adds and removals::   What if files are added or removed?
-
-
-File: cvs.info,  Node: Branches motivation,  Next: Creating a branch,  Up: Branching and merging
-
-What branches are good for
-==========================
-
-   Suppose that release 1.0 of tc has been made.  You are continuing to
-develop tc, planning to create release 1.1 in a couple of months.
-After a while your customers start to complain about a fatal bug.  You
-check out release 1.0 (*note Tags::.) and find the bug (which turns out
-to have a trivial fix).  However, the current revision of the sources
-are in a state of flux and are not expected to be stable for at least
-another month.  There is no way to make a bugfix release based on the
-newest sources.
-
-   The thing to do in a situation like this is to create a "branch" on
-the revision trees for all the files that make up release 1.0 of tc.
-You can then make modifications to the branch without disturbing the
-main trunk.  When the modifications are finished you can elect to
-either incorporate them on the main trunk, or leave them on the branch.
+     $ cvs tag -c rel-0-4
+     cvs tag: backend.c is locally modified
+     cvs [tag aborted]: correct the above errors first!
 
