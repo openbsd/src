@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.17 1999/06/21 23:21:45 d Exp $
+#	$OpenBSD: files.pcmcia,v 1.18 1999/07/01 06:29:55 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -13,8 +13,7 @@ file	dev/pcmcia/pcmcia_cis_quirks.c		pcmcia
 attach	pcmcia at pcic
 
 # 3Com 3c589 Ethernet, 3c562 multifunction Ethernet, and 3CXEM556
-#   multifunction Ethernet controllers
-# device declaration in sys/conf/files
+# multifunction Ethernet controllers
 attach	ep at pcmcia with ep_pcmcia
 file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
 
@@ -23,7 +22,7 @@ file	dev/pcmcia/if_ep_pcmcia.c		ep_pcmcia
 attach	ne at pcmcia with ne_pcmcia: rtl80x9
 file	dev/pcmcia/if_ne_pcmcia.c		ne_pcmcia
 
-# Adaptec APA-1460 SCSI Host Adapter
+# Adaptec APA-14[56]0 / NewMedia BusToaster SCSI Host Adapter
 attach	aic at pcmcia with aic_pcmcia
 file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
 
@@ -57,9 +56,8 @@ file dev/pcmcia/if_xe.c				xe_pcmcia
 #file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
 
 # Proxim RangeLAN2 PC-Card
-define rln
-attach	rln at pcmcia with rln_pcmcia : rln
-file	dev/pcmcia/if_rl2_pcmcia.c		rln_pcmcia
+attach rln at pcmcia with rln_pcmcia
+file dev/pcmcia/if_rl2_pcmcia.c			rln_pcmcia
 
 # PCMCIA multi-port serial cards
 #device	pcmcom {[slave = -1]}
