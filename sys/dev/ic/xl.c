@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.51 2003/10/21 18:58:50 jmc Exp $	*/
+/*	$OpenBSD: xl.c,v 1.52 2004/05/30 23:49:39 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -51,25 +51,23 @@
  * 3Com 3c900B-FL	10Mbps/Fiber-optic
  * 3Com 3c905B-COMBO	10/100Mbps/RJ-45,AUI,BNC
  * 3Com 3c905B-TX	10/100Mbps/RJ-45
- * 3Com 3c900-FL/FX	10/100Mbps/Fiber-optic
+ * 3Com 3c905B-FL/FX	10/100Mbps/Fiber-optic
  * 3Com 3c905C-TX	10/100Mbps/RJ-45 (Tornado ASIC)
- * 3Com 3c450-TX	10/100Mbps/RJ-45 (Tornado ASIC)
- * 3Com 3c555		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
- * 3Com 3c556		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
- * 3Com 3c556B		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
  * 3Com 3c980-TX	10/100Mbps server adapter (Hurricane ASIC)
  * 3Com 3c980C-TX	10/100Mbps server adapter (Tornado ASIC)
- * 3Com 3C575TX		10/100Mbps LAN CardBus PC Card
- * 3Com 3CCFE575BT	10/100Mbps LAN CardBus PC Card
- * 3Com 3CCFE575CT	10/100Mbps LAN CardBus PC Card
- * 3Com 3C3FE575CT	10/100Mbps LAN CardBus Type III PC Card
- * 3Com 3CCFEM656	10/100Mbps LAN+56k Modem CardBus PC Card
- * 3Com 3CCFEM656B	10/100Mbps LAN+56k Modem CardBus PC Card
- * 3Com 3CCFEM656C	10/100Mbps LAN+56k Global Modem CardBus PC Card
- * 3Com 3C3FEM656C	10/100Mbps LAN+56k Global Modem CardBus Type III PC Card
  * 3Com 3cSOHO100-TX	10/100Mbps/RJ-45 (Hurricane ASIC)
+ * 3Com 3c450-TX	10/100Mbps/RJ-45 (Tornado ASIC)
+ * 3Com 3c555		10/100Mbps/RJ-45 (MiniPCI, Laptop Hurricane)
+ * 3Com 3c556		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
+ * 3Com 3c556B		10/100Mbps/RJ-45 (MiniPCI, Hurricane ASIC)
+ * 3Com 3c575TX		10/100Mbps/RJ-45 (Cardbus, Hurricane ASIC)
+ * 3Com 3c575B		10/100Mbps/RJ-45 (Cardbus, Hurricane ASIC)
+ * 3Com 3c575C		10/100Mbps/RJ-45 (Cardbus, Hurricane ASIC)
+ * 3Com 3cxfem656	10/100Mbps/RJ-45 (Cardbus, Hurricane ASIC)
+ * 3Com 3cxfem656b	10/100Mbps/RJ-45 (Cardbus, Hurricane ASIC)
+ * 3Com 3cxfem656c	10/100Mbps/RJ-45 (Cardbus, Tornado ASIC)
  * Dell Optiplex GX1 on-board 3c918 10/100Mbps/RJ-45
- * Dell on-board 3c920	10/100Mbps/RJ-45
+ * Dell on-board 3c920 10/100Mbps/RJ-45
  * Dell Precision on-board 3c905B 10/100Mbps/RJ-45
  * Dell Latitude laptop docking station embedded 3c905-TX
  *
@@ -84,7 +82,7 @@
  * (3c59x) also supported a bus master mode, however for those chips
  * you could only DMA packets to/from a contiguous memory buffer. For
  * transmission this would mean copying the contents of the queued mbuf
- * chain into a an mbuf cluster and then DMAing the cluster. This extra
+ * chain into an mbuf cluster and then DMAing the cluster. This extra
  * copy would sort of defeat the purpose of the bus master support for
  * any packet that doesn't fit into a single mbuf.
  *
@@ -141,11 +139,19 @@
 
 #include <dev/ic/xlreg.h>
 
+/* 
+ * TX Checksumming is disabled by default for two reasons:
+ * - TX Checksumming will occasionally produce corrupt packets
+ * - TX Checksumming seems to reduce performance
+ *
+ * Only 905B/C cards were reported to have this problem, it is possible
+ * that later chips _may_ be immune.
+ */
+#define	XL905B_TXCSUM_BROKEN	1
+
 int xl_newbuf(struct xl_softc *, struct xl_chain_onefrag *);
 void xl_stats_update(void *);
 int xl_encap(struct xl_softc *, struct xl_chain *,
-    struct mbuf * );
-int xl_encap_90xB(struct xl_softc *, struct xl_chain *,
     struct mbuf * );
 void xl_rxeof(struct xl_softc *);
 int xl_rx_resync(struct xl_softc *);
@@ -173,10 +179,9 @@ int xl_mii_writereg(struct xl_softc *, struct xl_mii_frame *);
 
 void xl_setcfg(struct xl_softc *);
 void xl_setmode(struct xl_softc *, int);
-u_int8_t xl_calchash(caddr_t);
 void xl_setmulti(struct xl_softc *);
 void xl_setmulti_hash(struct xl_softc *);
-void xl_reset(struct xl_softc *, int);
+void xl_reset(struct xl_softc *);
 int xl_list_rx_init(struct xl_softc *);
 int xl_list_tx_init(struct xl_softc *);
 int xl_list_tx_init_90xB(struct xl_softc *);
@@ -208,7 +213,7 @@ xl_power(why, arg)
 	else {
 		ifp = &sc->sc_arpcom.ac_if;
 		if (ifp->if_flags & IFF_UP) {
-			xl_reset(sc, 1);
+			xl_reset(sc);
 			xl_init(sc);
 		}
 	}
@@ -223,7 +228,8 @@ xl_power(why, arg)
  * but it isn't called during normal operation so we can afford
  * to make it a function.
  */
-void xl_wait(sc)
+void
+xl_wait(sc)
 	struct xl_softc		*sc;
 {
 	register int		i;
@@ -233,10 +239,8 @@ void xl_wait(sc)
 			break;
 	}
 
-#ifdef DIAGNOSTIC
 	if (i == XL_TIMEOUT)
 		printf("%s: command never completed!\n", sc->sc_dev.dv_xname);
-#endif
 
 	return;
 }
@@ -252,16 +256,17 @@ void xl_wait(sc)
  */
 #define MII_SET(x)					\
 	CSR_WRITE_2(sc, XL_W4_PHY_MGMT,			\
-		CSR_READ_2(sc, XL_W4_PHY_MGMT) | x)
+		CSR_READ_2(sc, XL_W4_PHY_MGMT) | (x))
 
 #define MII_CLR(x)					\
 	CSR_WRITE_2(sc, XL_W4_PHY_MGMT,			\
-		CSR_READ_2(sc, XL_W4_PHY_MGMT) & ~x)
+		CSR_READ_2(sc, XL_W4_PHY_MGMT) & ~(x))
 
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-void xl_mii_sync(sc)
+void
+xl_mii_sync(sc)
 	struct xl_softc		*sc;
 {
 	register int		i;
@@ -271,9 +276,11 @@ void xl_mii_sync(sc)
 
 	for (i = 0; i < 32; i++) {
 		MII_SET(XL_MII_CLK);
-		DELAY(1);
+		MII_SET(XL_MII_DATA);
+		MII_SET(XL_MII_DATA);
 		MII_CLR(XL_MII_CLK);
-		DELAY(1);
+		MII_SET(XL_MII_DATA);
+		MII_SET(XL_MII_DATA);
 	}
 
 	return;
@@ -282,7 +289,8 @@ void xl_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-void xl_mii_send(sc, bits, cnt)
+void
+xl_mii_send(sc, bits, cnt)
 	struct xl_softc		*sc;
 	u_int32_t		bits;
 	int			cnt;
@@ -298,9 +306,7 @@ void xl_mii_send(sc, bits, cnt)
                 } else {
 			MII_CLR(XL_MII_DATA);
                 }
-		DELAY(1);
 		MII_CLR(XL_MII_CLK);
-		DELAY(1);
 		MII_SET(XL_MII_CLK);
 	}
 }
@@ -308,7 +314,8 @@ void xl_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-int xl_mii_readreg(sc, frame)
+int
+xl_mii_readreg(sc, frame)
 	struct xl_softc		*sc;
 	struct xl_mii_frame	*frame;
 	
@@ -349,19 +356,15 @@ int xl_mii_readreg(sc, frame)
 
 	/* Idle bit */
 	MII_CLR((XL_MII_CLK|XL_MII_DATA));
-	DELAY(1);
 	MII_SET(XL_MII_CLK);
-	DELAY(1);
 
 	/* Turn off xmit. */
 	MII_CLR(XL_MII_DIR);
 
 	/* Check for ack */
 	MII_CLR(XL_MII_CLK);
-	DELAY(1);
-	MII_SET(XL_MII_CLK);
-	DELAY(1);
 	ack = CSR_READ_2(sc, XL_W4_PHY_MGMT) & XL_MII_DATA;
+	MII_SET(XL_MII_CLK);
 
 	/*
 	 * Now try reading data bits. If the ack failed, we still
@@ -370,31 +373,24 @@ int xl_mii_readreg(sc, frame)
 	if (ack) {
 		for(i = 0; i < 16; i++) {
 			MII_CLR(XL_MII_CLK);
-			DELAY(1);
 			MII_SET(XL_MII_CLK);
-			DELAY(1);
 		}
 		goto fail;
 	}
 
 	for (i = 0x8000; i; i >>= 1) {
 		MII_CLR(XL_MII_CLK);
-		DELAY(1);
 		if (!ack) {
 			if (CSR_READ_2(sc, XL_W4_PHY_MGMT) & XL_MII_DATA)
 				frame->mii_data |= i;
-			DELAY(1);
 		}
 		MII_SET(XL_MII_CLK);
-		DELAY(1);
 	}
 
 fail:
 
 	MII_CLR(XL_MII_CLK);
-	DELAY(1);
 	MII_SET(XL_MII_CLK);
-	DELAY(1);
 
 	splx(s);
 
@@ -406,7 +402,8 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-int xl_mii_writereg(sc, frame)
+int
+xl_mii_writereg(sc, frame)
 	struct xl_softc		*sc;
 	struct xl_mii_frame	*frame;
 	
@@ -443,9 +440,7 @@ int xl_mii_writereg(sc, frame)
 
 	/* Idle bit. */
 	MII_SET(XL_MII_CLK);
-	DELAY(1);
 	MII_CLR(XL_MII_CLK);
-	DELAY(1);
 
 	/*
 	 * Turn off xmit.
@@ -495,6 +490,8 @@ xl_miibus_writereg(self, phy, reg, data)
 	frame.mii_data = data;
 
 	xl_mii_writereg(sc, &frame);
+
+	return;
 }
 
 void
@@ -505,6 +502,7 @@ xl_miibus_statchg(self)
 
 	xl_setcfg(sc);
 
+	/* Set ASIC's duplex mode to match the PHY. */
 	XL_SEL_WIN(3);
 	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
 		CSR_WRITE_1(sc, XL_W3_MAC_CTRL, XL_MACCTRL_DUPLEX);
@@ -517,7 +515,8 @@ xl_miibus_statchg(self)
  * The EEPROM is slow: give it time to come ready after issuing
  * it a command.
  */
-int xl_eeprom_wait(sc)
+int
+xl_eeprom_wait(sc)
 	struct xl_softc		*sc;
 {
 	int			i;
@@ -541,7 +540,8 @@ int xl_eeprom_wait(sc)
  * Read a sequence of words from the EEPROM. Note that ethernet address
  * data is stored in the EEPROM in network byte order.
  */
-int xl_read_eeprom(sc, dest, off, cnt, swap)
+int
+xl_read_eeprom(sc, dest, off, cnt, swap)
 	struct xl_softc		*sc;
 	caddr_t			dest;
 	int			off;
@@ -586,49 +586,11 @@ int xl_read_eeprom(sc, dest, off, cnt, swap)
 }
 
 /*
- * This routine is taken from the 3Com Etherlink XL manual,
- * page 10-7. It calculates a CRC of the supplied multicast
- * group address and returns the lower 8 bits, which are used
- * as the multicast filter position.
- * Note: the 3c905B currently only supports a 64-bit hash table,
- * which means we really only need 6 bits, but the manual indicates
- * that future chip revisions will have a 256-bit hash table,
- * hence the routine is set up to calculate 8 bits of position
- * info in case we need it some day.
- * Note II, The Sequel: _CURRENT_ versions of the 3c905B have a
- * 256 bit hash table. This means we have to use all 8 bits regardless.
- * On older cards, the upper 2 bits will be ignored. Grrrr....
- */
-u_int8_t xl_calchash(addr)
-	caddr_t			addr;
-{
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return(crc & 0x000000FF);
-}
-
-/*
  * NICs older than the 3c905B have only one multicast option, which
  * is to enable reception of all multicast frames.
  */
-void xl_setmulti(sc)
+void
+xl_setmulti(sc)
 	struct xl_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -659,7 +621,8 @@ void xl_setmulti(sc)
 /*
  * 3c905B adapters have a hash filter that we can program.
  */
-void xl_setmulti_hash(sc)
+void
+xl_setmulti_hash(sc)
 	struct xl_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -695,7 +658,8 @@ allmulti:
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto allmulti;
 		}
-		h = xl_calchash(enm->enm_addrlo);
+		h = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) &
+		    0x000000FF;
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|XL_HASH_SET|h);
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
@@ -712,7 +676,8 @@ allmulti:
 }
 
 #ifdef notdef
-void xl_testpacket(sc)
+void
+xl_testpacket(sc)
 	struct xl_softc		*sc;
 {
 	struct mbuf		*m;
@@ -742,7 +707,8 @@ void xl_testpacket(sc)
 }
 #endif
 
-void xl_setcfg(sc)
+void
+xl_setcfg(sc)
 	struct xl_softc *sc;
 {
 	u_int32_t icfg;
@@ -751,16 +717,19 @@ void xl_setcfg(sc)
 	icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG);
 	icfg &= ~XL_ICFG_CONNECTOR_MASK;
 	if (sc->xl_media & XL_MEDIAOPT_MII ||
-	    sc->xl_media & XL_MEDIAOPT_BT4)
+		sc->xl_media & XL_MEDIAOPT_BT4)
 		icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
 	if (sc->xl_media & XL_MEDIAOPT_BTX)
 		icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
 
 	CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
+
+	return;
 }
 
-void xl_setmode(sc, media)
+void
+xl_setmode(sc, media)
 	struct xl_softc *sc;
 	int media;
 {
@@ -848,22 +817,30 @@ void xl_setmode(sc, media)
 	CSR_WRITE_2(sc, XL_W4_MEDIA_STATUS, mediastat);
 	DELAY(800);
 	XL_SEL_WIN(7);
+
+	return;
 }
 
-void xl_reset(sc, hard)
+void
+xl_reset(sc)
 	struct xl_softc		*sc;
-	int hard;
 {
 	register int		i;
 
 	XL_SEL_WIN(0);
-	if (hard || (sc->xl_flags & XL_FLAG_WEIRDRESET)) {
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET |
-		    ((sc->xl_flags & XL_FLAG_WEIRDRESET)?0xFF:0));
-	}
-	else
-		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET | 0x0010);
-	xl_wait(sc);
+	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RESET |
+		    ((sc->xl_flags & XL_FLAG_WEIRDRESET) ?
+		     XL_RESETOPT_DISADVFD:0));
+
+	/*
+	 * If we're using memory mapped register mode, pause briefly
+	 * after issuing the reset command before trying to access any
+	 * other registers. With my 3c575C cardbus card, failing to do
+	 * this results in the system locking up while trying to poll
+	 * the command busy bit in the status register.
+	 */
+	if (sc->xl_flags & XL_FLAG_USE_MMIO)
+		DELAY(100000);
 
 	for (i = 0; i < XL_TIMEOUT; i++) {
 		DELAY(10);
@@ -871,18 +848,29 @@ void xl_reset(sc, hard)
 			break;
 	}
 
-	DELAY(100000);
+	if (i == XL_TIMEOUT)
+		printf("xl%d: reset didn't complete\n", sc->sc_dev.dv_xname);
 
-	/* Reset TX and RX. */
+	/* Note: the RX reset takes an absurd amount of time
+	 * on newer versions of the Tornado chips such as those
+	 * on the 3c905CX and newer 3c908C cards. We wait an
+	 * extra amount of time so that xl_wait() doesn't complain
+	 * and annoy the users.
+	 */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_RESET);
+	DELAY(100000);
 	xl_wait(sc);
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 	xl_wait(sc);
 
-	if (sc->xl_flags & XL_FLAG_WEIRDRESET) {
+	if (sc->xl_flags & XL_FLAG_INVERT_LED_PWR || 
+	    sc->xl_flags & XL_FLAG_INVERT_MII_PWR) {
 		XL_SEL_WIN(2);
 		CSR_WRITE_2(sc, XL_W2_RESET_OPTIONS, CSR_READ_2(sc,
-		    XL_W2_RESET_OPTIONS) | 0x4010);
+		    XL_W2_RESET_OPTIONS) 
+		    | ((sc->xl_flags & XL_FLAG_INVERT_LED_PWR)?XL_RESETOPT_INVERT_LED:0)
+		    | ((sc->xl_flags & XL_FLAG_INVERT_MII_PWR)?XL_RESETOPT_INVERT_MII:0)
+		    );
 	}
 
 	/* Wait a little while for the chip to get its brains in order. */
@@ -902,7 +890,8 @@ void xl_reset(sc, hard)
  * will try to guess the media options values and warn the user of a
  * possible manufacturing defect with his adapter/system/whatever.
  */
-void xl_mediacheck(sc)
+void
+xl_mediacheck(sc)
 	struct xl_softc		*sc;
 {
 	/*
@@ -939,7 +928,8 @@ void xl_mediacheck(sc)
 	xl_choose_xcvr(sc, 1);
 }
 
-void xl_choose_xcvr(sc, verbose)
+void
+xl_choose_xcvr(sc, verbose)
 	struct xl_softc *sc;
 	int verbose;
 {
@@ -985,6 +975,13 @@ void xl_choose_xcvr(sc, verbose)
 	case TC_DEVICEID_HURRICANE_555:		/* 3c555 */
 	case TC_DEVICEID_HURRICANE_556:		/* 3c556 */
 	case TC_DEVICEID_HURRICANE_556B:	/* 3c556B */
+	case TC_DEVICEID_HURRICANE_575A:	/* 3c575TX */
+	case TC_DEVICEID_HURRICANE_575B:	/* 3c575B */
+	case TC_DEVICEID_HURRICANE_575C:	/* 3c575C */
+	case TC_DEVICEID_HURRICANE_656:		/* 3c656 */
+	case TC_DEVICEID_HURRICANE_656B:	/* 3c656B */
+	case TC_DEVICEID_TORNADO_656C:		/* 3c656C */
+	case TC_DEVICEID_TORNADO_10_100BT_920B: /* 3c920B-EMB */
 		sc->xl_media = XL_MEDIAOPT_MII;
 		sc->xl_xcvr = XL_XCVR_MII;
 		if (verbose)
@@ -1016,15 +1013,6 @@ void xl_choose_xcvr(sc, verbose)
 			printf("%s: guessing 10/100 plus BNC/AUI\n",
 			    sc->sc_dev.dv_xname);
 		break;
-	case TC_DEVICEID_3C575_CARDBUS:
-	case TC_DEVICEID_3CCFE575BT_CARDBUS:
-	case TC_DEVICEID_3CCFE575CT_CARDBUS:
-	case TC_DEVICEID_3CCFEM656_CARDBUS:
-	case TC_DEVICEID_3CCFEM656B_CARDBUS:
-	case TC_DEVICEID_3CCFEM656C_CARDBUS:
-		sc->xl_media = XL_MEDIAOPT_MII;
-		sc->xl_xcvr = XL_XCVR_MII;
-		break;
 	default:
 		printf("%s: unknown device ID: %x -- "
 			"defaulting to 10baseT\n", sc->sc_dev.dv_xname, devid);
@@ -1038,7 +1026,8 @@ void xl_choose_xcvr(sc, verbose)
 /*
  * Initialize the transmit descriptors.
  */
-int xl_list_tx_init(sc)
+int
+xl_list_tx_init(sc)
 	struct xl_softc		*sc;
 {
 	struct xl_chain_data	*cd;
@@ -1106,7 +1095,8 @@ xl_list_tx_init_90xB(sc)
  * we arrange the descriptors in a closed ring, so that the last descriptor
  * points back to the first.
  */
-int xl_list_rx_init(sc)
+int
+xl_list_rx_init(sc)
 	struct xl_softc		*sc;
 {
 	struct xl_chain_data	*cd;
@@ -1143,7 +1133,8 @@ int xl_list_rx_init(sc)
 /*
  * Initialize an RX descriptor and attach an MBUF cluster.
  */
-int xl_newbuf(sc, c)
+int
+xl_newbuf(sc, c)
 	struct xl_softc		*sc;
 	struct xl_chain_onefrag	*c;
 {
@@ -1199,7 +1190,8 @@ int xl_newbuf(sc, c)
 	return(0);
 }
 
-int xl_rx_resync(sc)
+int
+xl_rx_resync(sc)
 	struct xl_softc *sc;
 {
 	struct xl_chain_onefrag *pos;
@@ -1219,18 +1211,19 @@ int xl_rx_resync(sc)
 	}
 
 	if (i == XL_RX_LIST_CNT)
-		return (0);
+		return(0);
 
 	sc->xl_cdata.xl_rx_head = pos;
 
-	return (EAGAIN);
+	return(EAGAIN);
 }
 
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
  */
-void xl_rxeof(sc)
+void
+xl_rxeof(sc)
 	struct xl_softc		*sc;
 {
         struct mbuf		*m;
@@ -1247,11 +1240,21 @@ again:
 	    != 0) {
 		cur_rx = sc->xl_cdata.xl_rx_head;
 		sc->xl_cdata.xl_rx_head = cur_rx->xl_next;
+		total_len = rxstat & XL_RXSTAT_LENMASK;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 		    ((caddr_t)cur_rx->xl_ptr - sc->sc_listkva),
 		    sizeof(struct xl_list),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+		/*
+		 * Since we have told the chip to allow large frames,
+		 * we need to trap giant frame errors in software. We allow
+		 * a little more than the normal frame size to account for
+		 * frames with VLAN tags.
+		 */
+		if (total_len > XL_MAX_FRAMELEN)
+			rxstat |= (XL_RXSTAT_UP_ERROR|XL_RXSTAT_OVERSIZE);
 
 		/*
 		 * If an error occurs, update stats, clear the
@@ -1266,13 +1269,13 @@ again:
 		}
 
 		/*
-		 * If there error bit was not set, the upload complete
+		 * If the error bit was not set, the upload complete
 		 * bit should be set which means we have a valid packet.
 		 * If not, something truly strange has happened.
 		 */
 		if (!(rxstat & XL_RXSTAT_UP_CMPLT)) {
 			printf("%s: bad receive status -- "
-			    "packet dropped", sc->sc_dev.dv_xname);
+			    "packet dropped\n", sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
 			cur_rx->xl_ptr->xl_status = htole32(0);
 			continue;
@@ -1280,8 +1283,6 @@ again:
 
 		/* No errors; receive the packet. */	
 		m = cur_rx->xl_mbuf;
-		total_len = letoh32(cur_rx->xl_ptr->xl_status) &
-		    XL_RXSTAT_LENMASK;
 
 		/*
 		 * Try to conjure up a new mbuf cluster. If that
@@ -1360,7 +1361,8 @@ again:
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-void xl_txeof(sc)
+void
+xl_txeof(sc)
 	struct xl_softc		*sc;
 {
 	struct xl_chain		*cur_tx;
@@ -1466,6 +1468,8 @@ xl_txeof_90xB(sc)
 
 	if (cur_tx != NULL)
 		ifp->if_flags &= ~IFF_OACTIVE;
+
+	return;
 }
 
 /*
@@ -1473,7 +1477,8 @@ xl_txeof_90xB(sc)
  * only get a 'TX complete' interrupt if there's a transmit error,
  * so this is really TX error handler.
  */
-void xl_txeoc(sc)
+void
+xl_txeoc(sc)
 	struct xl_softc		*sc;
 {
 	u_int8_t		txstat;
@@ -1538,7 +1543,8 @@ void xl_txeoc(sc)
 	return;
 }
 
-int xl_intr(arg)
+int
+xl_intr(arg)
 	void			*arg;
 {
 	struct xl_softc		*sc;
@@ -1549,7 +1555,7 @@ int xl_intr(arg)
 	sc = arg;
 	ifp = &sc->sc_arpcom.ac_if;
 
-	while ((status = CSR_READ_2(sc, XL_STATUS)) & XL_INTRS) {
+	while ((status = CSR_READ_2(sc, XL_STATUS)) & XL_INTRS && status != 0xFFFF) {
 
 		claimed = 1;
 
@@ -1583,7 +1589,7 @@ int xl_intr(arg)
 		}
 
 		if (status & XL_STAT_ADFAIL) {
-			xl_reset(sc, 0);
+			xl_reset(sc);
 			xl_init(sc);
 		}
 
@@ -1600,7 +1606,8 @@ int xl_intr(arg)
 	return (claimed);
 }
 
-void xl_stats_update(xsc)
+void
+xl_stats_update(xsc)
 	void			*xsc;
 {
 	struct xl_softc		*sc;
@@ -1640,7 +1647,7 @@ void xl_stats_update(xsc)
 	XL_SEL_WIN(4);
 	CSR_READ_1(sc, XL_W4_BADSSD);
 
-	if (mii != NULL)
+	if (mii != NULL && (!sc->xl_stats_no_timeout))
 		mii_tick(mii);
 
 	XL_SEL_WIN(7);
@@ -1655,7 +1662,8 @@ void xl_stats_update(xsc)
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-int xl_encap(sc, c, m_head)
+int
+xl_encap(sc, c, m_head)
 	struct xl_softc		*sc;
 	struct xl_chain		*c;
 	struct mbuf		*m_head;
@@ -1700,11 +1708,13 @@ reload:
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL)
+			m_freem(m_head);
 			return(1);
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
+				m_freem(m_head);
 				return(1);
 			}
 		}
@@ -1732,6 +1742,15 @@ reload:
 	c->xl_ptr->xl_status = htole32(total_len);
 	c->xl_ptr->xl_next = 0;
 
+#ifndef XL905B_TXCSUM_BROKEN
+	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_IPCKSUM);
+	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_TCPCKSUM);
+	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_UDPCKSUM);
+#endif
+
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
 	    offsetof(struct xl_list_data, xl_tx_list[0]),
 	    sizeof(struct xl_list) * XL_TX_LIST_CNT,
@@ -1746,12 +1765,15 @@ reload:
  * copy of the pointers since the transmit list fragment pointers are
  * physical addresses.
  */
-void xl_start(ifp)
+void
+xl_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct xl_softc		*sc;
 	struct mbuf		*m_head = NULL;
 	struct xl_chain		*prev = NULL, *cur_tx = NULL, *start_tx;
+	struct xl_chain		*prev_tx;
+	int			error;
 
 	sc = ifp->if_softc;
 
@@ -1776,13 +1798,18 @@ void xl_start(ifp)
 			break;
 
 		/* Pick a descriptor off the free list. */
+		prev_tx = cur_tx;
 		cur_tx = sc->xl_cdata.xl_tx_free;
-		sc->xl_cdata.xl_tx_free = cur_tx->xl_next;
-
-		cur_tx->xl_next = NULL;
 
 		/* Pack the data into the descriptor. */
-		xl_encap(sc, cur_tx, m_head);
+		error = xl_encap(sc, cur_tx, m_head);
+		if (error) {
+			cur_tx = prev_tx;
+			continue;
+		}
+
+		sc->xl_cdata.xl_tx_free = cur_tx->xl_next;
+		cur_tx->xl_next = NULL;
 
 		/* Chain it together. */
 		if (prev != NULL) {
@@ -1872,69 +1899,6 @@ void xl_start(ifp)
 	return;
 }
 
-int xl_encap_90xB(sc, c, m_head)
-	struct xl_softc *sc;
-	struct xl_chain *c;
-	struct mbuf *m_head;
-{
-	struct xl_frag *f = NULL;
-	struct xl_list *d;
-	int frag;
-	bus_dmamap_t map;
-
-	/*
-	 * Start packing the mbufs in this chain into
-	 * the fragment pointers. Stop when we run out
-	 * of fragments or hit the end of the mbuf chain.
-	 */
-	map = sc->sc_tx_sparemap;
-	d = c->xl_ptr;
-	d->xl_status = htole32(0);
-	d->xl_next = 0;
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, map,
-	    m_head, BUS_DMA_NOWAIT) != 0)
-		return (ENOBUFS);
-
-	for (frag = 0; frag < map->dm_nsegs; frag++) {
-		if (frag == XL_MAXFRAGS)
-			break;
-		f = &d->xl_frag[frag];
-		f->xl_addr = htole32(map->dm_segs[frag].ds_addr);
-		f->xl_len = htole32(map->dm_segs[frag].ds_len);
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	/* sync the old map, and unload it (if necessary) */
-	if (c->map->dm_nsegs != 0) {
-		bus_dmamap_sync(sc->sc_dmat, c->map, 0, c->map->dm_mapsize,
-		    BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, c->map);
-	}
-
-	c->xl_mbuf = m_head;
-	sc->sc_tx_sparemap = c->map;
-	c->map = map;
-	c->xl_ptr->xl_frag[frag - 1].xl_len |= htole32(XL_LAST_FRAG);
-	c->xl_ptr->xl_status = htole32(XL_TXSTAT_RND_DEFEAT);
-
-	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_IPCKSUM);
-	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_TCPCKSUM);
-	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
-		c->xl_ptr->xl_status |= htole32(XL_TXSTAT_UDPCKSUM);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_listmap,
-	    offsetof(struct xl_list_data, xl_tx_list[0]),
-	    sizeof(struct xl_list) * XL_TX_LIST_CNT,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	return(0);
-}
-
 void
 xl_start_90xB(ifp)
 	struct ifnet *ifp;
@@ -1942,7 +1906,8 @@ xl_start_90xB(ifp)
 	struct xl_softc *sc;
 	struct mbuf *m_head = NULL;
 	struct xl_chain *prev = NULL, *cur_tx = NULL, *start_tx;
-	int idx;
+	struct xl_chain		*prev_tx;
+	int error, idx;
 
 	sc = ifp->if_softc;
 
@@ -1963,10 +1928,15 @@ xl_start_90xB(ifp)
 		if (m_head == NULL)
 			break;
 
+		prev_tx = cur_tx;
 		cur_tx = &sc->xl_cdata.xl_tx_chain[idx];
 
 		/* Pack the data into the descriptor. */
-		xl_encap_90xB(sc, cur_tx, m_head);
+		error = xl_encap(sc, cur_tx, m_head);
+		if (error) {
+			cur_tx = prev_tx;
+			continue;
+		}
 
 		/* Chain it together. */
 		if (prev != NULL)
@@ -2011,7 +1981,8 @@ xl_start_90xB(ifp)
 	ifp->if_timer = 5;
 }
 
-void xl_init(xsc)
+void
+xl_init(xsc)
 	void			*xsc;
 {
 	struct xl_softc		*sc = xsc;
@@ -2037,7 +2008,6 @@ void xl_init(xsc)
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_RESET);
 	xl_wait(sc);
 	DELAY(10000);
-
 
 	/* Init our MAC address */
 	XL_SEL_WIN(2);
@@ -2127,11 +2097,7 @@ void xl_init(xsc)
 	/*
 	 * Program the multicast filter, if necessary.
 	 */
-#if 0
 	if (sc->xl_type == XL_TYPE_905B)
-#else
-	if (0)	/* xl_setmulti_hash() does not work right */
-#endif
 		xl_setmulti_hash(sc);
 	else
 		xl_setmulti(sc);
@@ -2177,9 +2143,21 @@ void xl_init(xsc)
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
 
 #if NVLAN > 0
-	/* Set max packet size to handle VLAN frames, only on 3c905B */
+	/*
+	 * increase packet size to allow reception of 802.1q or ISL packets.
+	 * For the 3c90x chip, set the 'allow large packets' bit in the MAC
+	 * control register. For 3c90xB/C chips, use the RX packet size
+	 * register.
+	 */
+
 	if (sc->xl_type == XL_TYPE_905B)
-		CSR_WRITE_2(sc, XL_W3_MAX_PKT_SIZE, 1514 + 4);
+		CSR_WRITE_2(sc, XL_W3_MAXPKTSIZE, XL_PACKET_SIZE);
+	else {
+		u_int8_t macctl;
+		macctl = CSR_READ_1(sc, XL_W3_MAC_CTRL);
+		macctl |= XL_MACCTRL_ALLOW_LARGE_PACK;
+		CSR_WRITE_1(sc, XL_W3_MAC_CTRL, macctl);
+	}
 #endif
 
 	/* Clear out the stats counters. */
@@ -2231,7 +2209,8 @@ void xl_init(xsc)
 /*
  * Set media options.
  */
-int xl_ifmedia_upd(ifp)
+int
+xl_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	struct xl_softc		*sc;
@@ -2253,7 +2232,7 @@ int xl_ifmedia_upd(ifp)
 	case IFM_10_2:
 	case IFM_10_5:
 		xl_setmode(sc, ifm->ifm_media);
-		return (0);
+		return(0);
 		break;
 	default:
 		break;
@@ -2272,23 +2251,32 @@ int xl_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-void xl_ifmedia_sts(ifp, ifmr)
+void
+xl_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
 	struct xl_softc		*sc;
 	u_int32_t		icfg;
+	u_int16_t		status = 0;
 	struct mii_data		*mii = NULL;
 
 	sc = ifp->if_softc;
 	if (sc->xl_hasmii != 0)
 		mii = &sc->sc_mii;
 
+	XL_SEL_WIN(4);
+	status = CSR_READ_2(sc, XL_W4_MEDIA_STATUS);
+
 	XL_SEL_WIN(3);
 	icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG) & XL_ICFG_CONNECTOR_MASK;
 	icfg >>= XL_ICFG_CONNECTOR_BITS;
 
 	ifmr->ifm_active = IFM_ETHER;
+	ifmr->ifm_status = IFM_AVALID;
+
+	if ((status & XL_MEDIASTAT_CARRIER) == 0)
+		ifmr->ifm_status |= IFM_ACTIVE;
 
 	switch(icfg) {
 	case XL_XCVR_10BT:
@@ -2418,11 +2406,7 @@ xl_ioctl(ifp, command, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-#if 0
 			if (sc->xl_type == XL_TYPE_905B)
-#else
-			if (0)	/* xl_setmulti_hash() does not work right */
-#endif
 				xl_setmulti_hash(sc);
 			else
 				xl_setmulti(sc);
@@ -2450,7 +2434,8 @@ xl_ioctl(ifp, command, data)
 	return(error);
 }
 
-void xl_watchdog(ifp)
+void
+xl_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct xl_softc		*sc;
@@ -2469,7 +2454,7 @@ void xl_watchdog(ifp)
 	xl_txeoc(sc);
 	xl_txeof(sc);
 	xl_rxeof(sc);
-	xl_reset(sc, 0);
+	xl_reset(sc);
 	xl_init(sc);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -2526,7 +2511,8 @@ xl_freetxrx(sc)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-void xl_stop(sc)
+void
+xl_stop(sc)
 	struct xl_softc *sc;
 {
 	struct ifnet *ifp;
@@ -2572,12 +2558,13 @@ xl_attach(sc)
 	struct xl_softc *sc;
 {
 	u_int8_t enaddr[ETHER_ADDR_LEN];
+	u_int16_t		xcvr[2];
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i, media = IFM_ETHER|IFM_100_TX|IFM_FDX;
 	struct ifmedia *ifm;
 
 	i = splimp();
-	xl_reset(sc, 1);
+	xl_reset(sc);
 	splx(i);
 
 	/*
@@ -2644,7 +2631,7 @@ xl_attach(sc)
 		return;
 	}
 
-	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->xl_flags & (XL_FLAG_INVERT_LED_PWR|XL_FLAG_INVERT_MII_PWR)) {
 		u_int16_t n;
@@ -2665,9 +2652,15 @@ xl_attach(sc)
 	 * Figure out the card type. 3c905B adapters have the
 	 * 'supportsNoTxLength' bit set in the capabilities
 	 * word in the EEPROM.
+	 * Note: my 3c575C cardbus card lies. It returns a value
+	 * of 0x1578 for its capabilities word, which is somewhat
+	 * nonsensical. Another way to distinguish a 3c90x chip
+	 * from a 3c90xB/C chip is to check for the 'supportsLargePackets'
+	 * bit. This will only be set for 3c90x boomerage chips.
 	 */
 	xl_read_eeprom(sc, (caddr_t)&sc->xl_caps, XL_EE_CAPS, 1, 0);
-	if (sc->xl_caps & XL_CAPS_NO_TXLENGTH)
+	if (sc->xl_caps & XL_CAPS_NO_TXLENGTH ||
+	    !(sc->xl_caps & XL_CAPS_LARGE_PKTS))
 		sc->xl_type = XL_TYPE_905B;
 	else
 		sc->xl_type = XL_TYPE_90X;
@@ -2679,10 +2672,15 @@ xl_attach(sc)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xl_ioctl;
 	ifp->if_output = ether_output;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+#endif
 	if (sc->xl_type == XL_TYPE_905B) {
 		ifp->if_start = xl_start_90xB;
-		ifp->if_capabilities = IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+#ifndef XL905B_TXCSUM_BROKEN
+		ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
 		    IFCAP_CSUM_UDPv4;
+#endif
 	} else
 		ifp->if_start = xl_start;
 	ifp->if_watchdog = xl_watchdog;
@@ -2691,34 +2689,15 @@ xl_attach(sc)
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-#if NVLAN > 0
-	if (sc->xl_type == XL_TYPE_905B)
-		ifp->if_capabilities |= IFCAP_VLAN_MTU;
-	/*
-	 * XXX
-	 * Do other cards filter large packets or simply pass them through?
-	 * Apparently only the 905B has the capability to set a larger size.
- 	 */
-#endif
-
 	XL_SEL_WIN(3);
 	sc->xl_media = CSR_READ_2(sc, XL_W3_MEDIA_OPT);
 
-	xl_read_eeprom(sc, (char *)&sc->xl_xcvr, XL_EE_ICFG_0, 2, 0);
+	xl_read_eeprom(sc, (char *)&xcvr, XL_EE_ICFG_0, 2, 0);
+	sc->xl_xcvr = xcvr[0] | xcvr[1] << 16;
 	sc->xl_xcvr &= XL_ICFG_CONNECTOR_MASK;
 	sc->xl_xcvr >>= XL_ICFG_CONNECTOR_BITS;
 
-	DELAY(100000);
-
 	xl_mediacheck(sc);
-
-	if (sc->xl_flags & XL_FLAG_INVERT_MII_PWR) {
-		XL_SEL_WIN(2);
-		CSR_WRITE_2(sc, XL_W2_RESET_OPTIONS, XL_RESETOPT_INVMIIPWR |
-		    CSR_READ_2(sc, XL_W2_RESET_OPTIONS));
-	}
-
-	DELAY(100000);
 
 	if (sc->xl_media & XL_MEDIAOPT_MII || sc->xl_media & XL_MEDIAOPT_BTX
 	    || sc->xl_media & XL_MEDIAOPT_BT4) {
@@ -2757,7 +2736,7 @@ xl_attach(sc)
 	if (sc->xl_xcvr == XL_XCVR_AUTO) {
 		xl_choose_xcvr(sc, 0);
 		i = splimp();
-		xl_reset(sc, 0);
+		xl_reset(sc);
 		splx(i);
 	}
 
@@ -2837,6 +2816,11 @@ xl_attach(sc)
 	if (sc->xl_hasmii == 0)
 		ifmedia_set(&sc->ifmedia, media);
 
+	if (sc->xl_flags & XL_FLAG_NO_XCVR_PWR) {
+		XL_SEL_WIN(0);
+		CSR_WRITE_2(sc, XL_W0_MFG_ID, XL_NO_XCVR_PWR_MAGICBITS);
+	}
+
 	/*
 	 * Call MI attach routines.
 	 */
@@ -2880,7 +2864,7 @@ xl_shutdown(v)
 {
 	struct xl_softc	*sc = (struct xl_softc *)v;
 
-	xl_reset(sc, 1);
+	xl_reset(sc);
 	xl_stop(sc);
 }
 
