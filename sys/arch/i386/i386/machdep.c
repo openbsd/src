@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.121 2000/01/15 08:59:25 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.122 2000/01/29 21:41:49 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -100,6 +100,8 @@
 #include <sys/extent.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -206,14 +208,27 @@ int	bufpages = 0;
 
 extern int	boothowto;
 int	physmem;
-int	dumpmem_low;
-int	dumpmem_high;
+
+struct dumpmem {
+	vm_offset_t	start;
+	vm_size_t	end;
+} dumpmem[VM_PHYSSEG_MAX];
+u_int ndumpmem;
+
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
+
 int	cpu_class;
 
 struct	msgbuf *msgbufp;
 int	msgbufmapped;
 
 bootarg_t *bootargp;
+vm_offset_t avail_end;
 
 #if defined(UVM)
 vm_map_t exec_map = NULL;
@@ -222,9 +237,6 @@ vm_map_t phys_map = NULL;
 #else
 vm_map_t buffer_map;
 #endif
-
-extern	vm_offset_t avail_start, avail_end;
-vm_offset_t hole_start, hole_end;
 
 int kbd_reset;
 
@@ -249,15 +261,13 @@ static	int ioport_malloc_safe;
 caddr_t	allocsys __P((caddr_t));
 void	setup_buffers __P((vm_offset_t *));
 void	dumpsys __P((void));
+int	cpu_dump __P((void));
 void	identifycpu __P((void));
 void	init386 __P((vm_offset_t));
 void	consinit __P((void));
 
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
-
-extern u_int cnvmem;	/* BIOS's conventional memory size */
-extern u_int extmem;	/* BIOS's extended memory size */
 
 #ifdef APERTURE
 #ifdef INSECURE
@@ -304,9 +314,9 @@ cpu_startup()
 
 	/*
 	 * Initialize error message buffer (at end of core).
+	 * (space reserved in /boot)
 	 */
 	pa = avail_end;
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++, pa += NBPG)
 		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG), pa,
@@ -315,24 +325,10 @@ cpu_startup()
 
 	msgbufmapped = 1;
 
-	/* Boot arguments are in page 1 */
-	if (bootapiver & BAPIV_VECTOR) {
-		pa = (vm_offset_t)bootargv;
-		for (i = 0; i < btoc(bootargc); i++, pa += NBPG)
-			pmap_enter(pmap_kernel(),
-			    (vm_offset_t)((caddr_t)bootargp + i * NBPG), pa,
-			    VM_PROT_READ|VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ|VM_PROT_WRITE);
-		bios_getopt();
-	} else
-		panic("/boot is too old: upgrade");
-
 	printf(version);
 	startrtclock();
 	
 	identifycpu();
-	printf("BIOS mem  = %ld conventional, %ld extended\n",
-		1024 * cnvmem, 1024 * extmem);
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
@@ -1530,6 +1526,8 @@ haltsys:
 			 * try to turn the system off.
 		 	 */
 			delay(500000);
+			apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
+			delay(500000);
 			rv = apm_set_powstate(APM_DEV_DISK(0xff), APM_SYS_OFF);
 			if (rv == 0 || rv == ENXIO) {
 				delay(500000);
@@ -1551,13 +1549,6 @@ haltsys:
 }
 
 /*
- * These variables are needed by /sbin/savecore
- */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
-int 	dumpsize = 0;		/* pages */
-long	dumplo = 0; 		/* blocks */
-
-/*
  * This is called by configure to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
@@ -1568,7 +1559,7 @@ void
 dumpconf()
 {
 	int nblks;	/* size of dump area */
-	int maj;
+	register int maj, i;
 
 	if (dumpdev == NODEV)
 		return;
@@ -1581,11 +1572,12 @@ dumpconf()
 	if (nblks <= ctod(1))
 		return;
 
-	dumpsize = btoc(IOM_END + ctob(dumpmem_high));
-
 	/* Always skip the first CLBYTES, in case there is a label there. */
 	if (dumplo < ctod(1))
 		dumplo = ctod(1);
+
+	for (i = 0; i < ndumpmem; i++)
+		dumpsize = max(dumpsize, dumpmem[i].end);
 
 	/* Put dump at end of partition, and make it fit. */
 	if (dumpsize > dtoc(nblks - dumplo))
@@ -1595,11 +1587,33 @@ dumpconf()
 }
 
 /*
+ * cpu_dump: dump machine-dependent kernel core dump headers.
+ */
+int
+cpu_dump()
+{
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	long buf[dbtob(1) / sizeof (long)];
+	kcore_seg_t	*segp;
+
+        dump = bdevsw[major(dumpdev)].d_dump;
+
+	segp = (kcore_seg_t *)buf;
+
+	/*
+	 * Generate a segment header.
+	 */
+	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+}
+
+/*
  * Doadump comes here after turning off memory management and
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
 
 vm_offset_t
@@ -1608,17 +1622,21 @@ reserve_dumppages(p)
 {
 
 	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
+	return (p + NBPG);
 }
 
 void
 dumpsys()
 {
-	unsigned bytes, i, n;
-	int maddr, psize;
+	register u_int i, j, npg;
+	register int maddr;
 	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
+	register char *str;
+
+	/* Save registers. */
+	savectx(&dumppcb);
 
 	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
@@ -1634,9 +1652,9 @@ dumpsys()
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	error = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
-	if (psize == -1) {
+	if (error == -1) {
 		printf("area unavailable\n");
 		return;
 	}
@@ -1646,86 +1664,61 @@ dumpsys()
 	while (sget() != NULL); /*syscons and pccons differ */
 #endif
 
-	bytes = ctob(dumpmem_high) + IOM_END;
-	maddr = 0;
-	blkno = dumplo;
+	/* scan through the dumpmem list */
 	dump = bdevsw[major(dumpdev)].d_dump;
-	error = 0;
-	for (i = 0; i < bytes; i += n) {
-		/*
-		 * Avoid dumping the ISA memory hole, and areas that
-		 * BIOS claims aren't in low memory.
-		 */
-		if (i >= ctob(dumpmem_low) && i < IOM_END) {
-			n = IOM_END - i;
-			maddr += n;
-			blkno += btodb(n);
-			continue;
-		}
+	error = cpu_dump();
+	for (i = 0; !error && i < ndumpmem; i++) {
 
-		/* Print out how many MBs we to go. */
-		n = bytes - i;
-		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+		npg = dumpmem[i].end - dumpmem[i].start;
+		maddr = ctob(dumpmem[i].start);
+		blkno = dumplo + btodb(maddr) + 1;
+#if 0
+		printf("(%d %ld %d) ", maddr, blkno, npg);
+#endif
+		for (j = npg; j--; maddr += NBPG, blkno += btodb(NBPG)) {
 
-		/* Limit size for next transfer. */
-		if (n > BYTES_PER_DUMP)
-			n =  BYTES_PER_DUMP;
-
-		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
-		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
-		if (error)
-			break;
-		maddr += n;
-		blkno += btodb(n);			/* XXX? */
+			/* Print out how many MBs we have more to go. */
+			if (!(dbtob(blkno - dumplo) % (1024*1024)))
+				printf("%d ", (dumpsize - maddr) /
+					      btoc(1024*1024));
+#if 0
+			printf("(%x %d) ", maddr, blkno);
+#endif
+			pmap_enter(pmap_kernel(), dumpspace, maddr,
+				   VM_PROT_READ, TRUE, 0);
+			if ((error = (*dump)(dumpdev, blkno,
+					     (caddr_t)dumpspace, NBPG)))
+				break;
 
 #if 0	/* XXX this doesn't work.  grr. */
-		/* operator aborting dump? */
-		if (sget() != NULL) {
-			error = EINTR;
-			break;
-		}
+			/* operator aborting dump? */
+			if (sget() != NULL) {
+				error = EINTR;
+				break;
+			}
 #endif
+		}
 	}
 
 	switch (error) {
 
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	case EINTR:
-		printf("aborted from console\n");
-		break;
-
-	case 0:
-		printf("succeeded\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
+	case 0:		str = "succeeded\n\n";			break;
+	case ENXIO:	str = "device bad\n\n";			break;
+	case EFAULT:	str = "device not ready\n\n";		break;
+	case EINVAL:	str = "area improper\n\n";		break;
+	case EIO:	str = "i/o error\n\n";			break;
+	case EINTR:	str = "aborted from console\n\n";	break;
+	default:	str = "error %d\n\n";			break;
 	}
-	printf("\n\n");
+	printf(str, error);
+
 	delay(5000000);		/* 5 seconds */
 }
 
 #ifdef HZ
 /*
  * If HZ is defined we use this code, otherwise the code in
- * /sys/i386/i386/microtime.s is used.  The other code only works
+ * /sys/arch/i386/i386/microtime.s is used.  The other code only works
  * for HZ=100.
  */
 void
@@ -1901,9 +1894,8 @@ init386(first_avail)
 	vm_offset_t first_avail;
 {
 	int i;
-	u_int cm, em;
 	struct region_descriptor region;
-	extern void consinit __P((void));
+	bios_memmap_t *im;
 
 	proc0.p_addr = proc0paddr;
 
@@ -1926,6 +1918,7 @@ init386(first_avail)
 	    EX_NOCOALESCE|EX_NOWAIT);
 
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
+			/* XXX here, until we can use bios for printfs */
 
 	/* make gdt gates and memory segments */
 	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
@@ -1978,36 +1971,124 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
-#ifdef EXTMEM_SIZE
-	/* Override memory size */
-	extmem = EXTMEM_SIZE;
+	/* call pmap initialization to make new kernel address space */
+	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
+	/* Boot arguments are in page 1 */
+	if (bootapiver & BAPIV_VECTOR) {
+		if (bootargc > NBPG)
+			panic ("too many boot args");
+
+		if (extent_alloc_region(iomem_ex, (paddr_t)bootargv,
+					bootargc, EX_NOWAIT))
+			panic("cannot reserve /boot args memory");
+
+		pmap_enter(pmap_kernel(), (vaddr_t)bootargp, (paddr_t)bootargv,
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
+
+		bios_getopt();
+
+	} else
+		panic("/boot too old: upgrade!");
+
+#ifdef DIAGNOSTIC
+	if (bios_memmap == NULL)
+		panic("no BIOS memory map supplied");
 #endif
 
 	/*
-	 * BIOS leaves data in low memory and VM system doesn't work with
-	 * phys 0,  /boot leaves arguments at page 1.
+	 * account all the memory passed in the map from /boot
+	 * calculate avail_end and count the physmem.
 	 */
-	avail_start = bootapiver & BAPIV_VECTOR?
-		i386_round_page(bootargv+bootargc): NBPG;
-	avail_end = extmem ? IOM_END + extmem * 1024
-		: cnvmem * 1024;	/* just temporary use */
+	avail_end = 0;
+	physmem = 0;
+#ifdef DEBUG
+	printf("memmap:");
+#endif
+	for(i = 0, im = bios_memmap; im->type != BIOS_MAP_END; im++)
+		if (im->type == BIOS_MAP_FREE) {
+			register int32_t a, e;
 
-	/*
-	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map.  This is done before the addresses are
-	 * page rounded just to make sure we get them all.
-	 */
-	if (extent_alloc_region(iomem_ex, avail_start, IOM_BEGIN, EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE BASE RAM FROM IOMEM EXTENT MAP!\n");
+			a = i386_round_page(im->addr);
+			e = i386_trunc_page(im->addr + im->size);
+			/* skip first four pages */
+			if (a < 4 * NBPG)
+				a = 4 * NBPG;
+#ifdef DEBUG
+			printf(" %u-%u", a, e);
+#endif
+
+			/* skip shorter than page regions */
+			if ((e - a) < NBPG) {
+#ifdef DEBUG
+				printf ("-S");
+#endif
+				continue;
+			}
+			if ((a > IOM_BEGIN && a < IOM_END) ||
+			    (e > IOM_BEGIN && e < IOM_END)) {
+#ifdef DEBUG
+				printf("-I");
+#endif
+				continue;
+			}
+
+			if (extent_alloc_region(iomem_ex, a, e - a, EX_NOWAIT))
+				/* XXX What should we do? */
+				printf("\nWARNING: CAN'T ALLOCATE RAM (%x-%x)"
+				       " FROM IOMEM EXTENT MAP!\n", a, e);
+
+			physmem += btoc(e - a);
+			dumpmem[i].start = btoc(a);
+			dumpmem[i].end = btoc(e);
+			i++;
+			avail_end = max(avail_end, e);
+		}
+
+	ndumpmem = i;
+	avail_end -= i386_round_page(sizeof(struct msgbuf));
+
+#ifdef DEBUG
+	printf(": %lx\n", avail_end);
+#endif
+	if (physmem < btoc(4 * 1024 * 1024)) {
+		printf("\awarning: too little memory available;"
+		       "running in degraded mode\npress a key to confirm\n\n");
+		cngetc();
 	}
 
-	if (avail_end > IOM_END && extent_alloc_region(iomem_ex, IOM_END,
-	    (avail_end - IOM_END), EX_NOWAIT)) {
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM IOMEM EXTENT MAP!\n");
-	}
+#ifdef DEBUG
+	printf("physload: ");
+#endif
+	for (i = 0; i < ndumpmem; i++) {
+		register int32_t a, e;
 
+		a = dumpmem[i].start;
+		e = dumpmem[i].end;
+		if (a < btoc(first_avail) && e > btoc(first_avail))
+			a = btoc(first_avail);
+		if (e > atop(avail_end))
+			e = atop(avail_end);
+#ifdef DEBUG
+		printf (" %x-%x", a, e);
+#endif
+		if (a < e) {
+#ifdef UVM
+			if (e <= 16 * 1024 * 1024)
+				uvm_page_physload(a, e, a, e, VM_FREELIST_FIRST16);
+			else
+				uvm_page_physload(a, e, a, e, VM_FREELIST_DEFAULT);
+#else
+			vm_page_physload(a, e, a, e);
+#endif
+		}
+	}
+#ifdef DEBUG
+	printf("\n");
+#endif
+	pmap_update();
+#if 0
 #if NISADMA > 0
 	/*
 	 * Some motherboards/BIOSes remap the 384K of RAM that would
@@ -2026,32 +2107,7 @@ init386(first_avail)
 		extmem = (15*1024);
 	}
 #endif
-
-	/* Round down to whole pages. */
-	cm = i386_round_page(cnvmem * 1024);
-	em = i386_round_page(extmem * 1024);
-
-	/* number of pages of physmem addr space */
-	physmem = btoc(cm + em);
-	dumpmem_low = btoc(cm);
-	dumpmem_high = btoc(em);
-
-	/*
-	 * Initialize for pmap_free_pages and pmap_next_page.
-	 * These guys should be page-aligned.
-	 * We load right after the I/O hole; adjust hole_end to compensate.
-	 */
-	hole_start = cm;
-	hole_end = round_page(first_avail);
-
-	if (physmem < btoc(2 * 1024 * 1024)) {
-		printf("\awarning: too little memory available;"
-		       "running in degraded mode\npress a key to confirm\n\n");
-		cngetc();
-	}
-
-	/* call pmap initialization to make new kernel address space */
-	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+#endif
 
 #ifdef DDB
 	ddb_init();
@@ -2291,6 +2347,11 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 		return (0);
 	}
 
+	if (IOM_BEGIN <= bpa && bpa <= IOM_END) {
+		*bshp = (bus_space_handle_t)ISA_HOLE_VADDR(bpa);
+		return (0);
+	}
+
 	/*
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
@@ -2443,6 +2504,10 @@ bus_space_unmap(t, bsh, size)
 
 	case I386_BUS_SPACE_MEM:
 		ex = iomem_ex;
+		bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
+		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
+			break;
+
 		va = i386_trunc_page(bsh);
 		endva = i386_round_page(bsh + size);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 1999/11/30 06:44:51 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 2000/01/29 21:41:51 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -176,11 +176,8 @@ pt_entry_t	protection_codes[8];
 
 struct pmap	kernel_pmap_store;
 
-vm_offset_t    	avail_start;	/* PA of first available physical page */
-vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
-extern vm_offset_t hole_start, hole_end;
 int		npages;
 
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
@@ -230,9 +227,6 @@ pmap_bootstrap(virtual_start)
 	vm_offset_t va;
 	pt_entry_t *pte;
 #endif
-#if defined(UVM)
-	int first16q;
-#endif
 
 	/* Register the page size with the vm system */
 #if defined(UVM)
@@ -240,10 +234,6 @@ pmap_bootstrap(virtual_start)
 #else
 	vm_set_page_size();
 #endif
-
-
-	/* XXX: allow for msgbuf */
-	avail_end -= i386_round_page(sizeof(struct msgbuf));
 
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -307,7 +297,8 @@ pmap_bootstrap(virtual_start)
 		vm_offset_t p;
 		int i;
 
-		p = vm_bootstrap_steal_memory((MAXKPDE-NKPDE+1) * NBPG);
+		p = virtual_avail;
+		virtual_avail += (MAXKPDE-NKPDE+1) * NBPG;
 		bzero((void *)p, (MAXKPDE-NKPDE+1) * NBPG);
 		p = round_page(p);
 		for (i = NKPDE; i < MAXKPDE; i++, p += NBPG)
@@ -315,39 +306,6 @@ pmap_bootstrap(virtual_start)
 			    PG_V | PG_KW;
 	}
 #endif
-
-	/*                       
-	 * we must call vm_page_physload() after we are done playing
-	 * with virtual_avail but before we call pmap_steal_memory.
-	 * [i.e. here]
-	 */                               
-#if defined(UVM)
-	if (avail_end < (16 * 1024 * 1024))
-		first16q = VM_FREELIST_DEFAULT;
-	else
-		first16q = VM_FREELIST_FIRST16;
-
-	if (avail_start < hole_start)
-		uvm_page_physload(atop(avail_start), atop(hole_start),
-			atop(avail_start), atop(hole_start), first16q);
-	if (first16q == VM_FREELIST_FIRST16) {
-		uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
-		    atop(hole_end), atop(16 * 1024 * 1024), first16q);
-		uvm_page_physload(atop(16 * 1024 * 1024), atop(avail_end),
-		    atop(16 * 1024 * 1024), atop(avail_end),
-		    VM_FREELIST_DEFAULT);
-	} else {
-		uvm_page_physload(atop(hole_end), atop(avail_end),
-		    atop(hole_end), atop(avail_end), first16q);
-	}
-#else
-	if (avail_start < hole_start)
-		vm_page_physload(atop(avail_start), atop(hole_start),
-				 atop(avail_start), atop(hole_start));      
-	vm_page_physload(atop(hole_end), atop(avail_end),
-			 atop(hole_end), atop(avail_end));
-#endif
-	pmap_update();
 }
 
 void
