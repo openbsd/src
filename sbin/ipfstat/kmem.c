@@ -1,4 +1,4 @@
-/*	$OpenBSD: kmem.c,v 1.16 2001/01/17 05:01:00 fgsch Exp $	*/
+/*	$OpenBSD: kmem.c,v 1.17 2001/01/30 04:27:58 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -27,9 +27,13 @@ static const char rcsid[] = "@(#)$IPFilter: kmem.c,v 2.2 2000/03/13 22:10:25 dar
 
 static	int	kmemfd = -1;
 
-int	openkmem()
+int	openkmem(nlistf, memf)
+char *nlistf, *memf;
 {
-	if ((kmemfd = open(KMEM,O_RDONLY)) == -1)
+	if (memf == NULL)
+		memf = KMEM;
+
+	if ((kmemfd = open(memf,O_RDONLY)) == -1)
 	    {
 		perror("kmeminit:open");
 		return -1;
@@ -47,7 +51,7 @@ register int	n;
 	if (!n)
 		return 0;
 	if (kmemfd == -1)
-		if (openkmem() == -1)
+		if (openkmem(nlistf, memf) == -1)
 			return -1;
 	if (lseek(kmemfd, pos, 0) == -1)
 	    {
@@ -78,7 +82,7 @@ register int	n;
 	if (!n)
 		return 0;
 	if (kmemfd == -1)
-		if (openkmem() == -1)
+		if (openkmem(nlistf, memf) == -1)
 			return -1;
 	if (lseek(kmemfd, pos, 0) == -1)
 	    {
