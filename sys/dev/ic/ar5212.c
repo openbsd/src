@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.8 2005/03/19 17:27:46 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.9 2005/03/19 18:21:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1386,7 +1386,7 @@ ar5k_ar5212_procTxDesc(hal, desc)
 	struct ar5k_ar5212_tx_desc *tx_desc;
 
 	tx_desc = (struct ar5k_ar5212_tx_desc*)&desc->ds_ctl0;
-	tx_status = (struct ar5k_ar5212_tx_status*)&desc->ds_hw[0];
+	tx_status = (struct ar5k_ar5212_tx_status*)&desc->ds_hw[2];
 
 	/* No frame has been send or error */
 	if (tx_status->done == 0)
