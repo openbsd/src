@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.50 2003/09/16 20:49:05 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.51 2003/09/17 22:22:32 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -99,8 +99,6 @@ extern int procfs_domem(struct proc *, struct proc *, void *, struct uio *);
 
 extern void regdump(struct trapframe *f);
 void error_fatal(struct m88100_saved_state *frame);
-void error_fault(struct m88100_saved_state *frame);
-void error_reset(struct m88100_saved_state *frame);
 
 char  *trap_type[] = {
 	"Reset",
@@ -1124,14 +1122,6 @@ m88110_user_fault:
 #endif /* MVME197 */
 
 void
-test_trap(struct m88100_saved_state *frame)
-{
-	DEBUG_MSG("\n[test_trap (Good News[tm]) frame 0x%08x]\n", frame);
-	regdump((struct trapframe*)frame);
-	bugreturn();
-}
-
-void
 error_fatal(struct m88100_saved_state *frame)
 {
 	switch (frame->vector) {
@@ -1148,6 +1138,10 @@ error_fatal(struct m88100_saved_state *frame)
 		break;
 	}
 	regdump((struct trapframe*)frame);
+#ifdef M88100
+	DEBUG_MSG("trap trace %d -> %d -> %d -> %d  ", last_trap[0], last_trap[1], last_trap[2], last_trap[3]);
+	DEBUG_MSG("last exception vector = %d\n", last_vector);
+#endif 
 #if DDB 
 	Debugger();
 	DEBUG_MSG("You really can't restart after exception %d!\n", frame->vector);
@@ -1155,40 +1149,6 @@ error_fatal(struct m88100_saved_state *frame)
 #endif /* DDB */
 	bugreturn();  /* This gets us to Bug instead of a loop forever */
 
-}
-
-void
-error_fault(struct m88100_saved_state *frame)
-{
-	DEBUG_MSG("\n[ERROR EXCEPTION (Bad News[tm]) frame 0x%08x]\n", frame);
-	DEBUG_MSG("This is usually an exception within an exception.  The trap\n");
-	DEBUG_MSG("frame shadow registers you are about to see are invalid.\n");
-	DEBUG_MSG("(read totaly useless)  But R1 to R31 might be interesting.\n");
-	regdump((struct trapframe*)frame);
-#ifdef M88100
-	DEBUG_MSG("trap trace %d -> %d -> %d -> %d  ", last_trap[0], last_trap[1], last_trap[2], last_trap[3]);
-	DEBUG_MSG("last exception vector = %d\n", last_vector);
-#endif 
-#if DDB 
-	Debugger();
-	DEBUG_MSG("You really can't restart after an error exception!\n");
-	Debugger();
-#endif /* DDB */
-	bugreturn();  /* This gets us to Bug instead of a loop forever */
-}
-
-void
-error_reset(struct m88100_saved_state *frame) 
-{
-	DEBUG_MSG("\n[RESET EXCEPTION (Really Bad News[tm]) frame 0x%08x]\n", frame);
-	DEBUG_MSG("This is usually caused by a branch to a NULL function pointer.\n");
-	DEBUG_MSG("e.g. jump to address 0.  Use the debugger trace command to track it down.\n");
-#if DDB 
-	Debugger();
-	DEBUG_MSG("It's useless to restart after a reset exception! You might as well reboot.\n");
-	Debugger();
-#endif /* DDB */
-	bugreturn();  /* This gets us to Bug instead of a loop forever */
 }
 
 #ifdef M88100

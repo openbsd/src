@@ -1,31 +1,31 @@
-/*	$OpenBSD: trap.h,v 1.18 2003/09/09 06:39:02 miod Exp $ */
-/* 
+/*	$OpenBSD: trap.h,v 1.19 2003/09/17 22:22:30 miod Exp $ */
+/*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon 
+ *
+ * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
 /*
- * Trap codes 
+ * Trap codes
  */
 #ifndef __MACHINE_TRAP_H__
 #define __MACHINE_TRAP_H__
@@ -69,13 +69,11 @@
 #define T_USER		29	/* user mode fault */
 
 #ifndef _LOCORE
+
 void panictrap(int, struct m88100_saved_state *);
-void test_trap(struct m88100_saved_state *);
-void error_fault(struct m88100_saved_state *);
-void error_reset(struct m88100_saved_state *);
 unsigned ss_get_value(struct proc *, unsigned, int);
 int ss_put_value(struct proc *, unsigned, unsigned, int);
-unsigned ss_branch_taken(unsigned, unsigned, 
+unsigned ss_branch_taken(unsigned, unsigned,
 			 unsigned (*func)(unsigned int, struct trapframe *),
 			 struct trapframe *);  /* 'opaque' */
 unsigned ss_getreg_val(unsigned, struct trapframe *);
@@ -84,15 +82,11 @@ int ss_inst_delayed(unsigned);
 unsigned ss_next_instr_address(struct proc *, unsigned, unsigned);
 int cpu_singlestep(register struct proc *);
 
-#ifdef M88100
 void m88100_trap(unsigned, struct m88100_saved_state *);
 void m88100_syscall(register_t, struct m88100_saved_state *);
-#endif /* M88100 */
 
-#ifdef M88110
 void m88110_trap(unsigned, struct m88100_saved_state *);
 void m88110_syscall(register_t, struct m88100_saved_state *);
-#endif /* M88110 */
 
 #endif /* _LOCORE */
 
