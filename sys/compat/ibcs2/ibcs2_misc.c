@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.11 1995/10/09 11:24:01 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.13 1996/01/06 03:23:49 scottb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -101,6 +101,7 @@
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_utime.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
+#include <compat/ibcs2/ibcs2_sysi86.h>
 
 
 int
@@ -1395,4 +1396,43 @@ ibcs2_sys_readlink(p, v, retval)
 
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
+}
+
+int
+ibcs2_sysi86(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sysi86_args /* {
+		syscallarg(int) cmd;
+		syscallarg(int) arg;
+	} */ *uap = v;
+	int val, error;
+
+	switch (SCARG(uap, cmd)) {
+	case IBCS2_SI86FPHW:
+		val = IBCS2_FP_NO;
+#ifdef MATH_EMULATE
+		val = IBCS2_FP_SW;
+#else
+		val = IBCS2_FP_387;		/* a real coprocessor */
+#endif
+		if ((error = copyout((caddr_t)&val, (caddr_t)SCARG(uap, arg),
+				     sizeof(val))))
+			return error;
+		break;
+
+	case IBCS2_SI86STIME:		/* XXX - not used much, if at all */
+	case IBCS2_SI86SETNAME:
+		return EINVAL;
+
+	case IBCS2_SI86PHYSMEM:
+                *retval = ctob(physmem);
+		break;
+
+	default:
+		return EINVAL;
+	}
+	return 0;
 }

@@ -50,6 +50,7 @@
 #define	IBCS2_SYS_getgid	47
 #define	IBCS2_SYS_sigsys	48
 #define	IBCS2_SYS_msgsys	49
+#define	IBCS2_SYS_ibcs2_sysi86	50
 #define	IBCS2_SYS_shmsys	52
 #define	IBCS2_SYS_semsys	53
 #define	IBCS2_SYS_ioctl	54
@@ -84,6 +85,7 @@
 #define	IBCS2_SYS_ftime	139
 #define	IBCS2_SYS_nap	140
 #define	IBCS2_SYS_select	164
+#define	IBCS2_SYS_eaccess	165
 #define	IBCS2_SYS_sigaction	167
 #define	IBCS2_SYS_sigprocmask	168
 #define	IBCS2_SYS_sigpending	169

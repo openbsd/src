@@ -141,8 +141,8 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 49 = unimplemented msgsys */
 #endif
-	{ 0, 0,
-	    sys_nosys },			/* 50 = unimplemented ibcs2_sys3b */
+	{ 2, s(struct ibcs2_sysi86_args),
+	    ibcs2_sysi86 },			/* 50 = ibcs2_sysi86 */
 	{ 0, 0,
 	    sys_nosys },			/* 51 = unimplemented ibcs2_acct */
 #ifdef SYSVSHM
@@ -381,8 +381,8 @@ struct sysent ibcs2_sysent[] = {
 	    sys_nosys },			/* 163 = unimplemented */
 	{ 5, s(struct sys_select_args),
 	    sys_select },			/* 164 = select */
-	{ 0, 0,
-	    sys_nosys },			/* 165 = unimplemented xenix_eaccess */
+	{ 2, s(struct ibcs2_sys_eaccess_args),
+	    ibcs2_sys_eaccess },		/* 165 = eaccess */
 	{ 0, 0,
 	    sys_nosys },			/* 166 = unimplemented xenix_paccess */
 	{ 3, s(struct ibcs2_sys_sigaction_args),

@@ -37,9 +37,11 @@
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/syscallargs.h>
+#include <sys/vnode.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_fcntl.h>
+#include <compat/ibcs2/ibcs2_unistd.h>
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
@@ -219,6 +221,46 @@ ibcs2_sys_access(p, v, retval)
         SCARG(&cup, path) = SCARG(uap, path);
         SCARG(&cup, flags) = SCARG(uap, flags);
         return sys_access(p, &cup, retval);
+}
+
+int
+ibcs2_sys_eaccess(p, v, retval)
+        struct proc *p;
+	void *v;
+        register_t *retval;
+{
+	register struct ibcs2_sys_eaccess_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) flags;
+	} */ *uap = v;
+	register struct ucred *cred = p->p_ucred;
+	register struct vnode *vp;
+        int error, flags;
+        struct nameidata nd;
+        caddr_t sg = stackgap_init(p->p_emul);
+
+        IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+        NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+            SCARG(uap, path), p);
+        if (error = namei(&nd))
+                return error;
+        vp = nd.ni_vp;
+
+        /* Flags == 0 means only check for existence. */
+        if (SCARG(uap, flags)) {
+                flags = 0;
+                if (SCARG(uap, flags) & IBCS2_R_OK)
+                        flags |= VREAD;
+                if (SCARG(uap, flags) & IBCS2_W_OK)
+                        flags |= VWRITE;
+                if (SCARG(uap, flags) & IBCS2_X_OK)
+                        flags |= VEXEC;
+                if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
+                        error = VOP_ACCESS(vp, flags, cred, p);
+        }
+        vput(vp);
+        return error;
 }
 
 int

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 1995/10/07 06:26:56 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.7 1996/01/06 03:23:55 scottb Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -103,7 +103,7 @@
 #else
 49	UNIMPL		msgsys
 #endif
-50	UNIMPL		ibcs2_sys3b
+50	STD		{ int ibcs2_sysi86(int cmd, int arg); }
 51	UNIMPL		ibcs2_acct
 #ifdef SYSVSHM
 52	STD		{ int ibcs2_sys_shmsys(int which, int a2, int a3, \
@@ -239,7 +239,7 @@
 163	UNIMPL
 164	NOARGS		{ int sys_select(u_int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
-165	UNIMPL		xenix_eaccess
+165	STD		{ int ibcs2_sys_eaccess(char *path, int flags); }
 166	UNIMPL		xenix_paccess
 167	STD		{ int ibcs2_sys_sigaction(int signum, \
 			    struct ibcs2_sigaction *nsa, \

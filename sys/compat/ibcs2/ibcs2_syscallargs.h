@@ -165,6 +165,11 @@ struct ibcs2_sys_msgsys_args {
 	syscallarg(int) a6;
 };
 
+struct ibcs2_sysi86_args {
+	syscallarg(int) cmd;
+	syscallarg(int) arg;
+};
+
 struct ibcs2_sys_shmsys_args {
 	syscallarg(int) which;
 	syscallarg(int) a2;
@@ -289,6 +294,11 @@ struct xenix_sys_nap_args {
 	syscallarg(int) millisec;
 };
 
+struct ibcs2_sys_eaccess_args {
+	syscallarg(char *) path;
+	syscallarg(int) flags;
+};
+
 struct ibcs2_sys_sigaction_args {
 	syscallarg(int) signum;
 	syscallarg(struct ibcs2_sigaction *) nsa;
@@ -390,6 +400,7 @@ int	ibcs2_sys_sigsys	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_msgsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
+int	ibcs2_sysi86	__P((struct proc *, void *, register_t *));
 #ifdef SYSVSHM
 int	ibcs2_sys_shmsys	__P((struct proc *, void *, register_t *));
 #else
@@ -422,6 +433,7 @@ int	xenix_sys_chsize	__P((struct proc *, void *, register_t *));
 int	xenix_sys_ftime	__P((struct proc *, void *, register_t *));
 int	xenix_sys_nap	__P((struct proc *, void *, register_t *));
 int	sys_select	__P((struct proc *, void *, register_t *));
+int	ibcs2_sys_eaccess	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_sigaction	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_sigprocmask	__P((struct proc *, void *, register_t *));
 int	ibcs2_sys_sigpending	__P((struct proc *, void *, register_t *));

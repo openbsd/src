@@ -60,7 +60,7 @@ char *ibcs2_syscallnames[] = {
 #else
 	"#49 (unimplemented msgsys)",		/* 49 = unimplemented msgsys */
 #endif
-	"#50 (unimplemented ibcs2_sys3b)",		/* 50 = unimplemented ibcs2_sys3b */
+	"ibcs2_sysi86",			/* 50 = ibcs2_sysi86 */
 	"#51 (unimplemented ibcs2_acct)",		/* 51 = unimplemented ibcs2_acct */
 #ifdef SYSVSHM
 	"shmsys",			/* 52 = shmsys */
@@ -183,7 +183,7 @@ char *ibcs2_syscallnames[] = {
 	"#162 (unimplemented xenix_unexecseg)",		/* 162 = unimplemented xenix_unexecseg */
 	"#163 (unimplemented)",		/* 163 = unimplemented */
 	"select",			/* 164 = select */
-	"#165 (unimplemented xenix_eaccess)",		/* 165 = unimplemented xenix_eaccess */
+	"eaccess",			/* 165 = eaccess */
 	"#166 (unimplemented xenix_paccess)",		/* 166 = unimplemented xenix_paccess */
 	"sigaction",			/* 167 = sigaction */
 	"sigprocmask",			/* 168 = sigprocmask */
