@@ -55,7 +55,7 @@ Supported devices {:-include-:}:
 	DEC ("hockey puck" or compatible) mouse.
 
 
-Hardware the we do NOT currently support:
+Hardware that we do NOT currently support:
 	Q-bus Decsystem machines
 	Decstation 5100 machines
 	PrestoServe NVRAM on Decstation 5100 machines 
