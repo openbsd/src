@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.12 2001/06/18 22:18:02 millert Exp $	*/
+/*	$OpenBSD: rup.c,v 1.13 2001/06/18 22:19:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.12 2001/06/18 22:18:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.13 2001/06/18 22:19:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -267,6 +267,7 @@ onehost(host)
 	    xdr_statstime, &host_stat, timeout) != RPC_SUCCESS) {
 		fprintf(stderr, "%s: %s", __progname,
 		    clnt_sperror(rstat_clnt, host));
+		clnt_destroy(rstat_clnt);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.11 2001/02/17 16:52:23 pjanzen Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.12 2001/06/18 22:19:04 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers.c,v 1.11 2001/02/17 16:52:23 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rusers.c,v 1.12 2001/06/18 22:19:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -216,10 +216,12 @@ onehost(char *host)
 	if (clnt_call(rusers_clnt, RUSERSPROC_NAMES, xdr_void, NULL,
 	    xdr_utmpidlearr, &up, timeout) != RPC_SUCCESS) {
 		clnt_perror(rusers_clnt, __progname);
+		clnt_destroy(rusers_clnt);
 		exit(1);
 	}
 	addr.sin_addr.s_addr = *(int *)hp->h_addr;
 	rusers_reply((char *)&up, &addr);
+	clnt_destroy(rusers_clnt);
 }
 
 void
