@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.16 1997/09/05 04:04:06 deraadt Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.17 1997/09/05 05:19:52 millert Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -59,10 +59,10 @@ LIST_HEAD(xs_free_list, scsi_xfer) xs_free_list;
 static __inline struct scsi_xfer *scsi_make_xs __P((struct scsi_link *,
     struct scsi_generic *, int cmdlen, u_char *data_addr,
     int datalen, int retries, int timeout, struct buf *, int flags));
-static inline void asc2ascii __P((u_char asc, u_char ascq, char *result));
 int sc_err1 __P((struct scsi_xfer *, int));
 int scsi_interpret_sense __P((struct scsi_xfer *));
 #if	SCSIVERBOSE
+static inline void asc2ascii __P((u_char asc, u_char ascq, char *result));
 char *scsi_decode_sense __P((void *, int));
 #endif
 
