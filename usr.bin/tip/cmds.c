@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.6 1997/08/22 22:42:07 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.7 1997/09/01 23:24:23 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.6 1997/08/22 22:42:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.7 1997/09/01 23:24:23 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -64,6 +64,7 @@ void	intcopy();		/* interrupt routine for file transfers */
  * FTP - remote ==> local
  *  get a file from the remote host
  */
+void
 getfl(c)
 	char c;
 {
@@ -94,6 +95,7 @@ getfl(c)
 /*
  * Cu-like take command
  */
+void
 cu_take(cc)
 	char cc;
 {
@@ -102,7 +104,8 @@ cu_take(cc)
 
 	if (prompt("[take] ", copyname, sizeof(copyname)))
 		return;
-	if ((argc = args(copyname, argv)) < 1 || argc > 2) {
+	if ((argc = args(copyname, argv, sizeof(argv)/sizeof(argv[0]))) < 1 ||
+	    argc > 2) {
 		printf("usage: <take> from [to]\r\n");
 		return;
 	}
@@ -118,16 +121,19 @@ cu_take(cc)
 }
 
 static	jmp_buf intbuf;
+
 /*
  * Bulk transfer routine --
  *  used by getfl(), cu_take(), and pipefile()
  */
+void
 transfer(buf, fd, eofchars)
 	char *buf, *eofchars;
+	int fd;
 {
 	register int ct;
 	char c, buffer[BUFSIZ];
-	register char *p = buffer;
+	char *p = buffer;
 	register int cnt, eof;
 	time_t start;
 	sig_t f;
@@ -174,7 +180,7 @@ transfer(buf, fd, eofchars)
 			p = buffer;
 		}
 	}
-	if (cnt = (p-buffer))
+	if ((cnt = (p-buffer)))
 		if (write(fd, buffer, cnt) != cnt)
 			printf("\r\nwrite error\r\n");
 
@@ -190,6 +196,7 @@ transfer(buf, fd, eofchars)
  * FTP - remote ==> local process
  *   send remote input to local process via pipe
  */
+void
 pipefile()
 {
 	int cpid, pdes[2];
@@ -249,6 +256,7 @@ stopsnd()
  *  send local file to remote host
  *  terminate transmission with pseudo EOF sequence
  */
+void
 sendfile(cc)
 	char cc;
 {
@@ -280,6 +288,7 @@ sendfile(cc)
  * Bulk transfer routine to remote host --
  *   used by sendfile() and cu_put()
  */
+void
 transmit(fd, eofchars, command)
 	FILE *fd;
 	char *eofchars, *command;
@@ -377,6 +386,7 @@ out:
 /*
  * Cu-like put command
  */
+void
 cu_put(cc)
 	char cc;
 {
@@ -388,7 +398,8 @@ cu_put(cc)
 
 	if (prompt("[put] ", copyname, sizeof(copyname)))
 		return;
-	if ((argc = args(copyname, argv)) < 1 || argc > 2) {
+	if ((argc = args(copyname, argv, sizeof(argv)/sizeof(argv[0]))) < 1 ||
+	    argc > 2) {
 		printf("usage: <put> from [to]\r\n");
 		return;
 	}
@@ -411,8 +422,9 @@ cu_put(cc)
  * FTP - send single character
  *  wait for echo & handle timeout
  */
+void
 send(c)
-	char c;
+	int c;
 {
 	char cc;
 	int retry = 0;
@@ -455,11 +467,12 @@ timeout()
  * Stolen from consh() -- puts a remote file on the output of a local command.
  *	Identical to consh() except for where stdout goes.
  */
+void
 pipeout(c)
 {
 	char buf[256];
 	int cpid, status, p;
-	time_t start;
+	time_t start = time(NULL);
 
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof(buf)))
@@ -476,7 +489,7 @@ pipeout(c)
 	if ((cpid = fork()) < 0)
 		printf("can't fork!\r\n");
 	else if (cpid) {
-		start = time(0);
+		start = time(NULL);
 		while ((p = wait(&status)) > 0 && p != cpid)
 			;
 	} else {
@@ -506,11 +519,12 @@ pipeout(c)
  *  1 <-> remote tty out
  *  2 <-> local tty out
  */
+void
 consh(c)
 {
 	char buf[256];
 	int cpid, status, p;
-	time_t start;
+	time_t start = time(NULL);
 
 	putchar(c);
 	if (prompt("Local command? ", buf, sizeof(buf)))
@@ -555,17 +569,17 @@ consh(c)
 /*
  * Escape to local shell
  */
+void
 shell()
 {
 	int shpid, status;
-	extern char **environ;
 	char *cp;
 
 	printf("[sh]\r\n");
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	unraw();
-	if (shpid = fork()) {
+	if ((shpid = fork())) {
 		while (shpid != wait(&status));
 		raw();
 		printf("\r\n!\r\n");
@@ -590,6 +604,7 @@ shell()
  * TIPIN portion of scripting
  *   initiate the conversation with TIPOUT
  */
+void
 setscript()
 {
 	char c;
@@ -612,6 +627,7 @@ setscript()
  * Change current working directory of
  *   local portion of tip
  */
+void
 chdirectory()
 {
 	char dirname[PATH_MAX];
@@ -627,6 +643,7 @@ chdirectory()
 	printf("!\r\n");
 }
 
+void
 tipabort(msg)
 	char *msg;
 {
@@ -642,6 +659,7 @@ tipabort(msg)
 	exit(0);
 }
 
+void
 finish()
 {
 	char *dismsg;
@@ -661,6 +679,7 @@ intcopy()
 	longjmp(intbuf, 1);
 }
 
+void
 execute(s)
 	char *s;
 {
@@ -674,8 +693,10 @@ execute(s)
 	execl(value(SHELL), cp, "-c", s, 0);
 }
 
-args(buf, a)
+int
+args(buf, a, num)
 	char *buf, *a[];
+	int num;
 {
 	register char *p = buf, *start;
 	register char **parg = a;
@@ -693,11 +714,12 @@ args(buf, a)
 			parg++, n++;
 		if (*p)
 			*p++ = '\0';
-	} while (*p);
+	} while (*p && n < num);
 
 	return(n);
 }
 
+void
 prtime(s, a)
 	char *s;
 	time_t a;
@@ -717,6 +739,7 @@ prtime(s, a)
 	printf("\r\n!\r\n");
 }
 
+void
 variable()
 {
 	char	buf[256];
@@ -756,13 +779,14 @@ variable()
  	}
 	if (vtable[PARITY].v_access&CHANGED) {
 		vtable[PARITY].v_access &= ~CHANGED;
-		setparity();
+		setparity(NOSTR);
 	}
 }
 
 /*
  * Turn tandem mode on or off for remote tty.
  */
+void
 tandem(option)
 	char *option;
 {
@@ -783,6 +807,7 @@ tandem(option)
 /*
  * Send a break.
  */
+void
 genbrk()
 {
 
@@ -794,6 +819,7 @@ genbrk()
 /*
  * Suspend tip
  */
+void
 suspend(c)
 	char c;
 {
@@ -813,9 +839,9 @@ expand(name)
 {
 	static char xname[BUFSIZ];
 	char cmdbuf[BUFSIZ];
-	register int pid, l, rc;
+	register int pid, l;
 	register char *cp, *Shell;
-	int s, pivec[2], (*sigint)();
+	int s, pivec[2];
 
 	if (!anyof(name, "~{[*?$`'\"\\"))
 		return(name);
@@ -877,13 +903,13 @@ expand(name)
 /*
  * Are any of the characters in the two strings the same?
  */
-
+int
 anyof(s1, s2)
 	register char *s1, *s2;
 {
 	register int c;
 
-	while (c = *s1++)
+	while ((c = *s1++))
 		if (any(c, s2))
 			return(1);
 	return(0);

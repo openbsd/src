@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.4 1997/04/02 01:47:04 millert Exp $	*/
+/*	$OpenBSD: value.c,v 1.5 1997/09/01 23:24:28 deraadt Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: value.c,v 1.4 1997/04/02 01:47:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: value.c,v 1.5 1997/09/01 23:24:28 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -51,6 +51,7 @@ static int col = 0;
 /*
  * Variable manipulation
  */
+void
 vinit()
 {
 	register value_t *p;
@@ -60,7 +61,7 @@ vinit()
 
 	for (p = vtable; p->v_name != NULL; p++) {
 		if (p->v_type&ENVIRON)
-			if (cp = getenv(p->v_name))
+			if ((cp = getenv(p->v_name)))
 				p->v_value = cp;
 		if (p->v_type&IREMOTE)
 			setnumber(p->v_value, *address(p->v_value));
@@ -81,7 +82,7 @@ vinit()
 			while (fgets(file, sizeof(file)-1, f) != NULL) {
 				if (vflag)
 					printf("set %s", file);
-				if (tp = strrchr(file, '\n'))
+				if ((tp = strrchr(file, '\n')))
 					*tp = '\0';
 				vlex(file);
 			}
@@ -97,6 +98,7 @@ vinit()
 static int vaccess();
 
 /*VARARGS1*/
+void
 vassign(p, v)
 	register value_t *p;
 	char *v;
@@ -143,6 +145,7 @@ vassign(p, v)
 static void vprint();
 static void vtoken();
 
+void
 vlex(s)
 	register char *s;
 {
@@ -156,7 +159,7 @@ vlex(s)
 		register char *cp;
 
 		do {
-			if (cp = vinterp(s, ' '))
+			if ((cp = vinterp(s, ' ')))
 				cp++;
 			vtoken(s);
 			s = cp;
@@ -176,9 +179,9 @@ vtoken(s)
 	register char *cp;
 	char *expand();
 
-	if (cp = strchr(s, '=')) {
+	if ((cp = strchr(s, '='))) {
 		*cp = '\0';
-		if (p = vlookup(s)) {
+		if ((p = vlookup(s))) {
 			cp++;
 			if (p->v_type&NUMBER)
 				vassign(p, atoi(cp));
@@ -189,7 +192,7 @@ vtoken(s)
 			}
 			return;
 		}
-	} else if (cp = strchr(s, '?')) {
+	} else if ((cp = strchr(s, '?'))) {
 		*cp = '\0';
 		if ((p = vlookup(s)) && vaccess(p->v_access, READ)) {
 			vprint(p);
@@ -241,7 +244,7 @@ vprint(p)
 
 	case NUMBER:
 		col += 6;
-		printf("%s=%-5d", p->v_name, number(p->v_value));
+		printf("%s=%-5ld", p->v_name, number(p->v_value));
 		break;
 
 	case CHAR:
@@ -341,7 +344,7 @@ vinterp(s, stop)
 /*
  * assign variable s with value v (for NUMBER or STRING or CHAR types)
  */
-
+int
 vstring(s,v)
 	register char *s;
 	register char *v;

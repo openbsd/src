@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.3 1997/04/02 01:47:02 millert Exp $	*/
+/*	$OpenBSD: cu.c,v 1.4 1997/09/01 23:24:24 deraadt Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cu.c,v 1.3 1997/04/02 01:47:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: cu.c,v 1.4 1997/09/01 23:24:24 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -48,7 +48,9 @@ void	cleanup();
 /*
  * Botch the interface to look like cu's
  */
+void
 cumain(argc, argv)
+	int argc;
 	char *argv[];
 {
 	register int i;
@@ -109,7 +111,7 @@ cumain(argc, argv)
 	 * The "cu" host name is used to define the
 	 * attributes of the generic dialer.
 	 */
-	(void)snprintf(sbuf, sizeof(sbuf), "cu%d", BR);
+	(void)snprintf(sbuf, sizeof(sbuf), "cu%ld", BR);
 	if ((i = hunt(sbuf)) == 0) {
 		printf("all ports busy\n");
 		exit(3);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 1996/06/26 05:40:44 deraadt Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 1997/09/01 23:24:25 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.4 1994/12/24 17:56:28 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: log.c,v 1.2 1996/06/26 05:40:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.3 1997/09/01 23:24:25 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -49,7 +49,7 @@ static	FILE *flog = NULL;
 /*
  * Log file maintenance routines
  */
-
+void
 logent(group, num, acu, message)
 	char *group, *num, *acu, *message;
 {
@@ -83,6 +83,7 @@ logent(group, num, acu, message)
 	(void) flock(fileno(flog), LOCK_UN);
 }
 
+void
 loginit()
 {
 	flog = fopen(value(LOG), "a");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.7 1997/08/22 22:42:08 millert Exp $	*/
+/*	$OpenBSD: tip.h,v 1.8 1997/09/01 23:24:26 deraadt Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -44,6 +44,8 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/ioctl.h>
 
 #include <termios.h>
 #include <signal.h>
@@ -267,3 +269,40 @@ extern	int disc;			/* current tty discpline */
 extern	char *ctrl();
 extern	char *vinterp();
 extern	char *connect();
+
+char	*sname __P((char *s));
+int	any __P((int cc, char *p));
+int	anyof __P((char *s1, char *s2));
+int	args __P((char *buf, char *a[], int num));
+int	escape __P((void));
+int	prompt __P((char *s, char *p, size_t sz));
+int	size __P((char *s));
+int	speed __P((int n));
+int	uu_lock __P((char *ttyname));
+int	uu_unlock __P((char *ttyname));
+int	vstring __P((char *s, char *v));
+long	hunt __P((char *name));
+void	cumain __P((int argc, char *argv[]));
+void	daemon_uid __P((void));
+void	disconnect __P((char *reason));
+void	execute __P((char *s));
+void	logent __P((char *group, char *num, char *acu, char *message));
+void	loginit __P((void));
+void	prtime __P((char *s, time_t a));
+void	pwrite __P((int fd, char *buf, int n));
+void	raw __P((void));
+void	send __P((int c));
+void	setparity __P((char *defparity));
+void	setscript __P((void));
+void	shell_uid __P((void));
+void	tandem __P((char *option));
+void	tipabort __P((char *msg));
+void	tipin __P((void));
+void	tipout __P((void));
+void	transfer __P((char *buf, int fd, char *eofchars));
+void	transmit __P((FILE *fd, char *eofchars, char *command));
+void	ttysetup __P((int speed));
+void	unraw __P((void));
+void	user_uid __P((void));
+void	vinit __P((void));
+void	vlex __P((char *s));

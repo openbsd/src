@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucplock.c,v 1.4 1997/08/24 23:22:22 deraadt Exp $	*/
+/*	$OpenBSD: uucplock.c,v 1.5 1997/09/01 23:24:27 deraadt Exp $	*/
 /*	$NetBSD: uucplock.c,v 1.7 1997/02/11 09:24:08 mrg Exp $	*/
 
 /*
@@ -38,15 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: uucplock.c,v 1.4 1997/08/24 23:22:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uucplock.c,v 1.5 1997/09/01 23:24:27 deraadt Exp $";
 #endif /* not lint */
 
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/dir.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <errno.h>
 #include "pathnames.h"
 
@@ -56,6 +58,7 @@ static char rcsid[] = "$OpenBSD: uucplock.c,v 1.4 1997/08/24 23:22:22 deraadt Ex
  * 	  -1 - failure
  */
 
+int
 uu_lock(ttyname)
 	char *ttyname;
 {
@@ -118,6 +121,7 @@ uu_lock(ttyname)
 	return(0);
 }
 
+int
 uu_unlock(ttyname)
 	char *ttyname;
 {

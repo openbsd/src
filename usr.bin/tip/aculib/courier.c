@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.5 1997/04/02 01:47:06 millert Exp $	*/
+/*	$OpenBSD: courier.c,v 1.6 1997/09/01 23:24:28 deraadt Exp $	*/
 /*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: courier.c,v 1.5 1997/04/02 01:47:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: courier.c,v 1.6 1997/09/01 23:24:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -56,8 +56,12 @@ static	int timeout = 0;
 static	int connected = 0;
 static	jmp_buf timeoutbuf, intbuf;
 static	int coursync(), cour_connect(), cour_swallow();
+void	cour_nap();
 static	void cour_napx();
 
+void cour_disconnect __P((void));
+
+int
 cour_dialer(num, acu)
 	register char *num;
 	char *acu;
@@ -115,6 +119,7 @@ badsynch:
 	return (connected);
 }
 
+void
 cour_disconnect()
 {
 	 /* first hang up the modem*/
@@ -125,6 +130,7 @@ cour_disconnect()
 	close(FD);
 }
 
+void
 cour_abort()
 {
 	cour_write(FD, "\r", 1);	/* send anything to abort the call */
@@ -141,8 +147,8 @@ sigALRM()
 
 static int
 cour_swallow(match)
-  register char *match;
-  {
+	register char *match;
+{
 	sig_t f;
 	char c;
 
@@ -348,6 +354,7 @@ static napms = 50; /* Give the courier 50 milliseconds between characters */
 
 static int ringring;
 
+void
 cour_nap()
 {
 	int omask;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acu.c,v 1.3 1997/04/02 01:47:01 millert Exp $	*/
+/*	$OpenBSD: acu.c,v 1.4 1997/09/01 23:24:23 deraadt Exp $	*/
 /*	$NetBSD: acu.c,v 1.4 1996/12/29 10:34:03 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: acu.c,v 1.3 1997/04/02 01:47:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: acu.c,v 1.4 1997/09/01 23:24:23 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -70,7 +70,7 @@ connect()
 	register char *cp = PN;
 	char *phnum, string[256];
 	FILE *fd;
-	int tried = 0;
+	volatile int tried = 0;
 
 	if (!DU) {		/* regular connect message */
 		if (CM != NOSTR)
@@ -107,7 +107,7 @@ connect()
 			if (*cp)
 				*cp++ = '\0';
 			
-			if (conflag = (*acu->acu_dialer)(phnum, CU)) {
+			if ((conflag = (*acu->acu_dialer)(phnum, CU))) {
 				if (CM != NOSTR)
 					pwrite(FD, CM, size(CM));
 				logent(value(HOST), phnum, acu->acu_name,
@@ -144,7 +144,7 @@ connect()
 			if (*cp)
 				*cp++ = '\0';
 			
-			if (conflag = (*acu->acu_dialer)(phnum, CU)) {
+			if ((conflag = (*acu->acu_dialer)(phnum, CU))) {
 				fclose(fd);
 				if (CM != NOSTR)
 					pwrite(FD, CM, size(CM));
@@ -165,6 +165,7 @@ connect()
 	return (tried ? "call failed" : "missing phone number");
 }
 
+void
 disconnect(reason)
 	char *reason;
 {
