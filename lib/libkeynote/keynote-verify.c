@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.12 2003/07/05 17:01:49 deraadt Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.13 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,40 +19,17 @@
  * PURPOSE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdlib.h>
-#include <stdio.h>
+
 #include <ctype.h>
-
-#if STDC_HEADERS
-#include <string.h>
-#if !defined(HAVE_MEMCPY)
-#define memcpy(d, s, n) bcopy ((s), (d), (n))
-#endif /* !HAVE_MEMCPY */
-#endif /* STDC_HEADERS */
-
-#if HAVE_MEMORY_H
-#include <memory.h>
-#endif /* HAVE_MEMORY_H */
-
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif /* HAVE_FCNTL_H */
-
-#if !defined(HAVE_GETOPT)
 #include <getopt.h>
-#endif /* HAVE_GETOPT */
-
-#if HAVE_IO_H
-#include <io.h>
-#elif HAVE_UNISTD_H
+#include <memory.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#endif /* HAVE_IO_H */
 
 #include "header.h"
 #include "keynote.h"

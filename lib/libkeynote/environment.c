@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.17 2003/04/02 23:01:10 millert Exp $ */
+/* $OpenBSD: environment.c,v 1.18 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,35 +19,16 @@
  * PURPOSE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #include <sys/types.h>
+
+#include <ctype.h>
+#include <fcntl.h>
+#include <memory.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
-
-#if STDC_HEADERS
 #include <string.h>
-#if !defined(HAVE_MEMCPY)
-#define memcpy(d, s, n) bcopy ((s), (d), (n))
-#endif /* !HAVE_MEMCPY */
-#endif /* STDC_HEADERS */
-
-#if HAVE_MEMORY_H
-#include <memory.h>
-#endif /* HAVE_MEMORY_H */
-
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif /* HAVE_FCNTL_H */
-
-#if HAVE_IO_H
-#include <io.h>
-#elif HAVE_UNISTD_H
 #include <unistd.h>
-#endif /* HAVE_IO_H */
 
 #include "header.h"
 #include "keynote.h"
@@ -122,13 +103,8 @@ keynote_get_action_authorizers(char *name)
 	 kl = kl->key_next)
       if (kl->key_stringkey != (char *) NULL)
       {
-#if !defined(HAVE_SNPRINTF)
-	  sprintf(keynote_current_session->ks_authorizers_cache + len,
-		  "%s,", kl->key_stringkey);
-#else /* !HAVE_SNPRINTF */
 	  snprintf(keynote_current_session->ks_authorizers_cache + len,
 		   cachesize - len, "%s,", kl->key_stringkey);
-#endif /* !HAVE_SNPRINTF */	
 	  len += strlen(kl->key_stringkey) + 1;
       }
 
@@ -176,13 +152,8 @@ keynote_get_values(char *name)
 
     for (len = 0, i = 0; i < keynote_current_session->ks_values_num; i++)
     {
-#if !defined(HAVE_SNPRINTF)
-	sprintf(keynote_current_session->ks_values_cache + len,
-		"%s,", keynote_current_session->ks_values[i]);
-#else /* !HAVE_SNPRINTF */
 	snprintf(keynote_current_session->ks_values_cache + len,
 		 cachesize - len, "%s,", keynote_current_session->ks_values[i]);
-#endif /* !HAVE_SNPRINTF */	
 	len += strlen(keynote_current_session->ks_values[i]) + 1;
     }
 

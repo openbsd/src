@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sigver.c,v 1.13 2003/07/05 17:01:49 deraadt Exp $ */
+/* $OpenBSD: keynote-sigver.c,v 1.14 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,29 +19,15 @@
  * PURPOSE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <stdlib.h>
-#include <stdio.h>
+
 #include <ctype.h>
-
-#if STDC_HEADERS
-#include <string.h>
-#endif /* STDC_HEADERS */
-
-#if HAVE_FCNTL_H
 #include <fcntl.h>
-#endif /* HAVE_FCNTL_H */
-
-#if HAVE_IO_H
-#include <io.h>
-#elif HAVE_UNISTD_H
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#endif /* HAVE_IO_H */
 
 #include "header.h"
 #include "keynote.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: header.h,v 1.8 2003/06/26 23:19:53 deraadt Exp $ */
+/* $OpenBSD: header.h,v 1.9 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -45,34 +45,10 @@ int sessid;
 #define SIG_PRINT_OFFSET      12
 #define SIG_PRINT_LENGTH      50
 
-#if !defined(HAVE_STRCASECMP) && defined(HAVE_STRICMP)
-#define strcasecmp stricmp
-#endif /* !HAVE_STRCASECMP && HAVE_STRICMP */
-
-#if !defined(HAVE_STRNCASECMP) && defined(HAVE_STRNICMP)
-#define strncasecmp strnicmp
-#endif /* !HAVE_STRNCASECMP && HAVE_STRNICMP */
-
-#if !defined(HAVE_OPEN) && defined(HAVE__OPEN)
-#define open _open
-#endif /* !HAVE_OPEN && HAVE__OPEN */
-
-#if !defined(HAVE_READ) && defined(HAVE__READ)
-#define read _read
-#endif /* !HAVE_READ && HAVE__OPEN */
-
-#if !defined(HAVE_CLOSE) && defined(HAVE__CLOSE)
-#define close _close
-#endif /* !HAVE_CLOSE && HAVE__CLOSE */
-
 /* Includes */
-#if HAVE_REGEX_H
 #include <sys/types.h>
-#include <regex.h>
-#endif /* HAVE_REGEX_H */
 
-#if defined(CRYPTO)
-#if defined(HAVE_OPENSSL_CRYPTO_H)
+#include <regex.h>
 #include <openssl/crypto.h>
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -82,29 +58,4 @@ int sessid;
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
-#elif defined(HAVE_SSL_CRYPTO_H)
-#include <ssl/crypto.h>
-#include <ssl/dsa.h>
-#include <ssl/rsa.h>
-#include <ssl/sha.h>
-#include <ssl/md5.h>
-#include <ssl/err.h>
-#include <ssl/rand.h>
-#include <ssl/x509.h>
-#include <ssl/pem.h>
-#elif defined(HAVE_CRYPTO_H)
-#include <crypto.h>
-#include <dsa.h>
-#include <rsa.h>
-#include <sha.h>
-#include <md5.h>
-#include <err.h>
-#include <rand.h>
-#include <x509.h>
-#include <pem.h>
-#else /* HAVE_OPENSSL_CRYPTO_H */
-#error "SSLeay or OpenSSL not detected!"
-#endif /* HAVE_OPENSSL_CRYPTO_H */
-#endif /* CRYPTO */
-
 #endif /* _HEADER_H_ */

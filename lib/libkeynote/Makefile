@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2000/05/18 08:35:36 angelos Exp $
+#	$OpenBSD: Makefile,v 1.15 2004/06/25 05:06:49 msf Exp $
 
 LIB=	keynote
 MAN=	keynote.3 keynote.4 keynote.5
@@ -16,7 +16,7 @@ MLINKS=	keynote.3 kn_init.3 keynote.3 kn_add_assertion.3 \
         kn_sign_assertion.3 keynote.3 kn_verify_assertion.3 \
 	keynote.3 kn_free_key.3 keynote.3 kn_get_string.3
 NOPIC=	
-CFLAGS+= -Wall -DCRYPTO -DHAVE_CONFIG_H -I. -I${.CURDIR}
+CFLAGS+= -Wall -I. -I${.CURDIR}
 LEXFLAGS = -Cr -Pkn -s -i
 YACCFLAGS = -d -p kn -b k
 

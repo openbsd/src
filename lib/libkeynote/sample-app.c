@@ -1,4 +1,4 @@
-/* $OpenBSD: sample-app.c,v 1.5 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: sample-app.c,v 1.6 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -18,15 +18,12 @@
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
  */
+
 #include <sys/types.h>
+
 #include <stdio.h>
 #include <regex.h>
 #include "keynote.h"
-
-/* These is only needed to pull in the SSL include files */
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
 
 #include "header.h"
 

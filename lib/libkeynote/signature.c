@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.15 2003/03/14 15:49:36 ho Exp $ */
+/* $OpenBSD: signature.c,v 1.16 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -24,21 +24,12 @@
  * 3 May 1999
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include <sys/types.h>
+
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#if STDC_HEADERS
 #include <string.h>
-#endif /* STDC_HEADERS */
-
-#if HAVE_LIMITS_H
-#include <limits.h>
-#endif /* HAVE_LIMITS_H */
 
 #include "header.h"
 #include "keynote.h"
@@ -139,7 +130,6 @@ keynote_free_key(void *key, int type)
     if (key == (void *) NULL)
       return;
 
-#ifdef CRYPTO
     /* DSA keys */
     if (type == KEYNOTE_ALGORITHM_DSA)
     {
@@ -160,16 +150,6 @@ keynote_free_key(void *key, int type)
 	RSA_free(key); /* RSA-specific */
 	return;
     }
-#endif /* CRYPTO */
-
-#ifdef PGPLIB
-    /* PGP keys */
-    if (type == KEYNOTE_ALGORITHM_PGP)
-    {
-	/* Unsupported yet */
-	return;
-    }
-#endif /* PGPLIB */
 
     /* BINARY keys */
     if (type == KEYNOTE_ALGORITHM_BINARY)
@@ -281,16 +261,6 @@ keynote_get_sig_algorithm(char *sig, int *hash, int *enc, int *internal)
     }
 #endif /* 0 */
 
-#ifdef PGPLIB
-    if (!strncasecmp(SIG_PGP_NATIVE, sig, SIG_PGP_NATIVE_LEN))
-    {
-	*hash = KEYNOTE_HASH_NONE;
-	*enc = ENCODING_NATIVE;
-	*internal = INTERNAL_ENC_NATIVE;
-	return KEYNOTE_ALGORITHM_PGP;
-    }
-#endif /* PGPLIB */
-
     *hash = KEYNOTE_HASH_NONE;
     *enc = ENCODING_NONE;
     *internal = INTERNAL_ENC_NONE;
@@ -306,7 +276,6 @@ keynote_get_sig_algorithm(char *sig, int *hash, int *enc, int *internal)
 int
 keynote_get_key_algorithm(char *key, int *encoding, int *internalencoding)
 {
-#ifdef CRYPTO
     if (!strncasecmp(DSA_HEX, key, DSA_HEX_LEN))
     {
 	*internalencoding = INTERNAL_ENC_ASN1;
@@ -364,16 +333,6 @@ keynote_get_key_algorithm(char *key, int *encoding, int *internalencoding)
 	return KEYNOTE_ALGORITHM_ELGAMAL;
     }
 #endif /* 0 */
-#endif /* CRYPTO */
-
-#ifdef PGPLIB
-    if (!strncasecmp(PGP_NATIVE, key, PGP_NATIVE_LEN))
-    {
-	*internalencoding = INTERNAL_ENC_NATIVE;
-	*encoding = ENCODING_NATIVE;
-	return KEYNOTE_ALGORITHM_PGP;
-    }
-#endif /* PGPLIB */
 
     if (!strncasecmp(BINARY_HEX, key, BINARY_HEX_LEN))
     {
@@ -420,11 +379,9 @@ keynote_get_private_key_algorithm(char *key, int *encoding,
 int
 kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 {
-#ifdef CRYPTO
     void *kk = (void *) NULL;
     X509 *px509Cert;
     EVP_PKEY *pPublicKey;
-#endif /* CRYPTO */
     unsigned char *ptr = (char *) NULL, *decoded = (char *) NULL;
     int encoding, internalencoding, len = 0;
 
@@ -501,7 +458,6 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	    return -1;
     }
 
-#ifdef CRYPTO
     /* DSA-HEX */
     if ((dc->dec_algorithm == KEYNOTE_ALGORITHM_DSA) &&
 	(internalencoding == INTERNAL_ENC_ASN1))
@@ -630,7 +586,6 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 	  free(ptr);
 	return 0;
     }    
-#endif /* CRYPTO */
 
     /* BINARY keys */
     if ((dc->dec_algorithm == KEYNOTE_ALGORITHM_BINARY) &&
@@ -665,10 +620,8 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 int
 kn_keycompare(void *key1, void *key2, int algorithm)
 {
-#ifdef CRYPTO
     DSA *p1, *p2;
     RSA *p3, *p4;
-#endif /* CRYPTO */
     struct keynote_binary *bn1, *bn2;
 
     if ((key1 == (void *) NULL) ||
@@ -684,7 +637,6 @@ kn_keycompare(void *key1, void *key2, int algorithm)
 	      return RESULT_FALSE;
 	    
 	case KEYNOTE_ALGORITHM_DSA:
-#ifdef CRYPTO
 	    p1 = (DSA *) key1;
 	    p2 = (DSA *) key2;
 	    if (!BN_cmp(p1->p, p2->p) &&
@@ -694,12 +646,8 @@ kn_keycompare(void *key1, void *key2, int algorithm)
 	      return RESULT_TRUE;
 	    else
 	      return RESULT_FALSE;
-#else /* CRYPTO */
-	    return RESULT_FALSE;
-#endif /* CRYPTO */
 
 	case KEYNOTE_ALGORITHM_X509:
-#ifdef CRYPTO
             p3 = (RSA *) key1;
             p4 = (RSA *) key2;
             if (!BN_cmp(p3->n, p4->n) &&
@@ -707,12 +655,8 @@ kn_keycompare(void *key1, void *key2, int algorithm)
               return RESULT_TRUE;
             else
 	      return RESULT_FALSE;
-#else /* CRYPTO */
-	    return RESULT_FALSE;
-#endif /* CRYPTO */
 
 	case KEYNOTE_ALGORITHM_RSA:
-#ifdef CRYPTO
             p3 = (RSA *) key1;
             p4 = (RSA *) key2;
             if (!BN_cmp(p3->n, p4->n) &&
@@ -720,9 +664,6 @@ kn_keycompare(void *key1, void *key2, int algorithm)
               return RESULT_TRUE;
             else
 	      return RESULT_FALSE;
-#else /* CRYPTO */
-	    return RESULT_FALSE;
-#endif /* CRYPTO */
 
 	case KEYNOTE_ALGORITHM_ELGAMAL:
 	    /* Not supported yet */
@@ -753,17 +694,14 @@ kn_keycompare(void *key1, void *key2, int algorithm)
 int
 keynote_sigverify_assertion(struct assertion *as)
 {
-#if defined(CRYPTO) || defined(PGPLIB)
     int hashtype, enc, intenc, alg = KEYNOTE_ALGORITHM_NONE, hashlen = 0;
     unsigned char *sig, *decoded = (char *) NULL, *ptr;
-#ifdef CRYPTO
     unsigned char res2[20];
     SHA_CTX shscontext;
     MD5_CTX md5context;
     int len = 0;
     DSA *dsa;
     RSA *rsa;
-#endif /* CRYPTO */
     if ((as->as_signature == (char *) NULL) ||
 	(as->as_startofsignature == (char *) NULL) ||
 	(as->as_allbutsignature == (char *) NULL) ||
@@ -792,7 +730,6 @@ keynote_sigverify_assertion(struct assertion *as)
     switch (hashtype)
     {
 	case KEYNOTE_HASH_SHA1:
-#ifdef CRYPTO
 	    hashlen = 20;
 	    memset(res2, 0, hashlen);
 	    SHA1_Init(&shscontext);
@@ -801,11 +738,9 @@ keynote_sigverify_assertion(struct assertion *as)
 	    SHA1_Update(&shscontext, as->as_signature, 
 			(char *) sig - as->as_signature);
 	    SHA1_Final(res2, &shscontext);
-#endif /* CRYPTO */
 	    break;
 	    
 	case KEYNOTE_HASH_MD5:
-#ifdef CRYPTO
 	    hashlen = 16;
 	    memset(res2, 0, hashlen);
 	    MD5_Init(&md5context);
@@ -814,7 +749,6 @@ keynote_sigverify_assertion(struct assertion *as)
 	    MD5_Update(&md5context, as->as_signature,
 		       (char *) sig - as->as_signature);
 	    MD5_Final(res2, &md5context);
-#endif /* CRYPTO */
 	    break;
 
 	case KEYNOTE_HASH_NONE:
@@ -914,7 +848,6 @@ keynote_sigverify_assertion(struct assertion *as)
     
     if (ptr != (unsigned char *) NULL)
       free(ptr);
-#endif /* CRYPTO || PGPLIB */
 
     return SIGRESULT_FALSE;
 }
@@ -926,8 +859,6 @@ static char *
 keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 		       int keyalg, int verifyflag)
 {
-#if defined(CRYPTO) || defined(PGPLIB)
-#ifdef CRYPTO
     int slen, i, hashlen = 0, hashtype, alg, encoding, internalenc;
     unsigned char *sig = (char *) NULL, *finalbuf = (char *) NULL;
     unsigned char res2[LARGEST_HASH_SIZE], *sbuf = (char *) NULL;
@@ -936,7 +867,6 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
     RSA *rsa = (RSA *) NULL;
     SHA_CTX shscontext;
     MD5_CTX md5context;
-#endif /* CRYPTO */
     int len;
 
     if ((as->as_signature_string_s == (char *) NULL) ||
@@ -980,7 +910,6 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
     switch (hashtype)
     {
 	case KEYNOTE_HASH_SHA1:
-#ifdef CRYPTO
     	    hashlen = 20;
 	    memset(res2, 0, hashlen);
 	    SHA1_Init(&shscontext);
@@ -988,11 +917,9 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 			as->as_allbutsignature - as->as_startofsignature);
 	    SHA1_Update(&shscontext, sigalg, (char *) sig - sigalg);
 	    SHA1_Final(res2, &shscontext);
-#endif /* CRYPTO */
 	    break;
    
 	case KEYNOTE_HASH_MD5:
-#ifdef CRYPTO
 	    hashlen = 16;
 	    memset(res2, 0, hashlen);
 	    MD5_Init(&md5context);
@@ -1000,14 +927,12 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 		       as->as_allbutsignature - as->as_startofsignature);
 	    MD5_Update(&md5context, sigalg, (char *) sig - sigalg);
 	    MD5_Final(res2, &md5context);
-#endif /* CRYPTO */
 	    break;
 
 	case KEYNOTE_HASH_NONE:
 	    break;
     }
 
-#ifdef CRYPTO
     if ((alg == KEYNOTE_ALGORITHM_DSA) &&
 	(hashtype == KEYNOTE_HASH_SHA1) &&
 	(internalenc == INTERNAL_ENC_ASN1) &&
@@ -1071,11 +996,7 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 	  }
 
 	  /* RSA-specific */
-#if SSLEAY_VERSION_NUMBER >= 0x00904100L
 	  rsa = (RSA *) PEM_read_bio_RSAPrivateKey(biokey, NULL, NULL, NULL);
-#else /* SSLEAY_VERSION_NUMBER */
-	  rsa = (RSA *) PEM_read_bio_RSAPrivateKey(biokey, NULL, NULL);
-#endif /* SSLEAY_VERSION_NUMBER */
 	  if (rsa == (RSA *) NULL)
 	  {
 	      BIO_free(biokey);
@@ -1180,11 +1101,6 @@ keynote_sign_assertion(struct assertion *as, char *sigalg, void *key,
 
     /* Everything ok */
     return (char *) finalbuf;
-#endif /* CRYPTO */
-#else  /* CRYPTO || PGPLIB */
-    keynote_errno = ERROR_SYNTAX;
-    return (char *) NULL;
-#endif /* CRYPTO || PGPLIB */
 }
 
 /*
@@ -1285,12 +1201,10 @@ char *
 kn_encode_key(struct keynote_deckey *dc, int iencoding,
 	      int encoding, int keytype)
 {
-#ifdef CRYPTO
     char *foo, *ptr;
     DSA *dsa;
     RSA *rsa;
     int i;
-#endif /* CRYPTO */
     struct keynote_binary *bn;
     char *s;
 
@@ -1302,7 +1216,6 @@ kn_encode_key(struct keynote_deckey *dc, int iencoding,
 	return (char *) NULL;
     }
 
-#ifdef CRYPTO
     /* DSA keys */
     if ((dc->dec_algorithm == KEYNOTE_ALGORITHM_DSA) &&
 	(iencoding == INTERNAL_ENC_ASN1) &&
@@ -1429,7 +1342,6 @@ kn_encode_key(struct keynote_deckey *dc, int iencoding,
 	      return s;
 	  }
     }
-#endif /* CRYPTO */
 
     /* BINARY keys */
     if ((dc->dec_algorithm == KEYNOTE_ALGORITHM_BINARY) &&

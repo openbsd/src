@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.13 2003/04/02 23:01:10 millert Exp $ */
+/* $OpenBSD: keynote.y,v 1.14 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -43,19 +43,13 @@
 %nonassoc UNARYMINUS DEREF OPENNUM OPENFLT
 %start grammarswitch
 %{
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include <sys/types.h>
-#include <stdlib.h>
-#include <stdio.h>
+
 #include <ctype.h>
 #include <math.h>
-
-#if STDC_HEADERS
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#endif /* STDC_HEADERS */
 
 #include "header.h"
 #include "keynote.h"
@@ -509,12 +503,8 @@ stringexp: str EQ str {
 		  memset(pmatch, 0, sizeof(pmatch));
 		  memset(grp, 0, sizeof(grp));
 
-#if HAVE_REGCOMP
 		  if (regcomp(&preg, $3, REG_EXTENDED))
 		  {
-#else /* HAVE_REGCOMP */
-#error "This system does not have regcomp()."
-#endif /* HAVE_REGCOMP */
 		      free($1);
 		      free($3);
 		      keynote_exceptionflag = 1;
@@ -529,12 +519,8 @@ stringexp: str EQ str {
 		      $$ = (i == 0 ? 1 : 0);
 		      if (i == 0)
 		      {
-#if !defined(HAVE_SNPRINTF)
-			  sprintf(grp, "%lu", (unsigned long)preg.re_nsub);
-#else /* !HAVE_SNPRINTF */
 			  snprintf(grp, sizeof grp, "%lu",
 			        (unsigned long)preg.re_nsub);
-#endif /* !HAVE_SNPRINTF */	
 			  if (keynote_env_add("_0", grp, &keynote_temp_list,
 					      1, 0) != RESULT_TRUE)
 			  {
@@ -558,11 +544,7 @@ stringexp: str EQ str {
 			      strncpy(gr, $1 + pmatch[i].rm_so,
 				      pmatch[i].rm_eo - pmatch[i].rm_so);
 			      gr[pmatch[i].rm_eo - pmatch[i].rm_so] = '\0';
-#if !defined(HAVE_SNPRINTF)
-			      sprintf(grp, "_%d", i);
-#else /* !HAVE_SNPRINTF */
 			      snprintf(grp, sizeof grp, "_%d", i);
-#endif /* !HAVE_SNPRINTF */
 			      if (keynote_env_add(grp, gr, &keynote_temp_list,
 						  1, 0) == -1)
 			      {
@@ -597,12 +579,7 @@ str: str DOTT str    {  if (keynote_exceptionflag || keynote_donteval)
 				keynote_errno = ERROR_MEMORY;
 				return -1;
 			    }
- 
-#if !defined(HAVE_SNPRINTF)
-			    sprintf($$, "%s%s", $1, $3);
-#else /* !HAVE_SNPRINTF */
 			    snprintf($$, len, "%s%s", $1, $3);
-#endif /* !HAVE_SNPRINTF */
 			    free($1);
 			    free($3);
 			    if (keynote_lex_add($$, LEXTYPE_CHAR) == -1)

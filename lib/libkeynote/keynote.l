@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.15 2003/11/08 19:17:27 jmc Exp $ */
+/* $OpenBSD: keynote.l,v 1.16 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -20,31 +20,13 @@
  * PURPOSE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
+#include <sys/time.h>
 #include <sys/types.h>
+
 #include <ctype.h>
-
-#if STDC_HEADERS
 #include <string.h>
-#endif /* STDC_HEADERS */
-
-#if HAVE_UNISTD_H
+#include <time.h>
 #include <unistd.h>
-#endif /* HAVE_UNISTD_H */
-
-#if TIME_WITH_SYS_TIME
-#include <sys/time.h>
-#include <time.h>
-#else
-#if HAVE_SYS_TIME_H
-#include <sys/time.h>
-#else
-#include <time.h>
-#endif
-#endif
 
 #include "k.tab.h"
 #include "header.h"

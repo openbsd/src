@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.7 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: auxil.c,v 1.8 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,22 +19,13 @@
  * PURPOSE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include <sys/types.h>
-#include <stdlib.h>
-#include <stdio.h>
+
 #include <ctype.h>
-
-#if STDC_HEADERS
-#include <string.h>
-#endif /* STDC_HEADERS */
-
-#if HAVE_LIMITS_H
 #include <limits.h>
-#endif /* HAVE_LIMITS_H */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "header.h"
 #include "keynote.h"
@@ -49,17 +40,14 @@ keynote_keyhash(void *key, int alg)
 {
     struct keynote_binary *bn;
     unsigned int res = 0, i;
-#ifdef CRYPTO
     DSA *dsa;
     RSA *rsa;
-#endif /* CRYPTO */
 
     if (key == (void *) NULL)
       return 0;
 
     switch (alg)
     {
-#ifdef CRYPTO
 	case KEYNOTE_ALGORITHM_DSA:
 	    dsa = (DSA *) key;
 	    res += BN_mod_word(dsa->p, HASHTABLESIZE);
@@ -79,7 +67,6 @@ keynote_keyhash(void *key, int alg)
             res += BN_mod_word(rsa->n, HASHTABLESIZE);
             res += BN_mod_word(rsa->e, HASHTABLESIZE);
 	    return res % HASHTABLESIZE;
-#endif /* CRYPTO */
 
 	case KEYNOTE_ALGORITHM_BINARY:
 	    bn = (struct keynote_binary *) key;

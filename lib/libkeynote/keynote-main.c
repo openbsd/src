@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-main.c,v 1.9 2003/07/05 17:01:49 deraadt Exp $ */
+/* $OpenBSD: keynote-main.c,v 1.10 2004/06/25 05:06:49 msf Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -19,28 +19,15 @@
  * PURPOSE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif /* HAVE_CONFIG_H */
-
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <ctype.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
-
-#if STDC_HEADERS
 #include <string.h>
-#endif /* STDC_HEADERS */
-
-#if HAVE_FCNTL_H
-#include <fcntl.h>
-#endif /* HAVE_FCNTL_H */
-#ifdef WIN32
-#include <io.h>
-#else
 #include <unistd.h>
-#endif /* WIN32 */
 
 #include "header.h"
 
@@ -50,10 +37,10 @@ void
 mainusage(void)
 {
     fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "\tkeygen ...\n");
     fprintf(stderr, "\tsign ...\n");
     fprintf(stderr, "\tsigver ...\n");
     fprintf(stderr, "\tverify ...\n");
-    fprintf(stderr, "\tkeygen ...\n");
     fprintf(stderr, "Issue one of the commands by itself to get more help, "
 		    "e.g., keynote sign\n");
 }
