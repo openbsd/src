@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.29 2000/11/07 23:36:10 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.30 2001/04/15 02:35:09 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -52,7 +52,7 @@ id=`basename ${d}`
 #	src/share/tmac/mdoc/doc-common
 #		change	.       ds oS OpenBSD X.X
 #		add	.	if "\\$2"X.X"  .as oS \0X.X
-#	src/share/tmac/mdocs/doc-syms
+#	src/share/tmac/mdoc/doc-syms
 #		ensure new release is listed
 #	src/share/mk/sys.mk
 #		OSMAJOR
@@ -62,7 +62,7 @@ id=`basename ${d}`
 #
 
 ost="OpenBSD"
-osr="2.8"
+osr="2.9"
 
 cat >vers.c <<eof
 char ostype[] = "${ost}";
@@ -70,7 +70,7 @@ char osrelease[] = "${osr}";
 char osversion[] = "${id}#${v}";
 char sccs[8] = { ' ', ' ', ' ', ' ', '@', '(', '#', ')' };
 char version[] =
-    "${ost} ${osr}-current (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
+    "${ost} ${osr}-beta (${id}) #${v}: ${t}\n    ${u}@${h}:${d}\n";
 eof
 
 expr ${v} + 1 > version
