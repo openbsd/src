@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.179 1999/09/11 10:10:42 matthieu Exp 
+ *	OpenBSD: pcidevs,v 1.180 1999/09/16 06:38:16 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -487,6 +487,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced System Products",
 	    "ABP-940UW",
+	},
+	{
+	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT22,
+	    0,
+	    "Alliance Semiconductor",
+	    "AT22",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
@@ -1719,6 +1725,90 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX (Triton II) TXC Host",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
+	    0,
+	    "Intel",
+	    "82801AA LPC Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_IDE,
+	    0,
+	    "Intel",
+	    "82801AA IDE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_USB,
+	    0,
+	    "Intel",
+	    "82801AA USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_SMB,
+	    0,
+	    "Intel",
+	    "82801AA SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
+	    0,
+	    "Intel",
+	    "82801AA AC-97 Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACM,
+	    0,
+	    "Intel",
+	    "82801AA AC-97 Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_HPB,
+	    0,
+	    "Intel",
+	    "82801AA Hub-to-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC,
+	    0,
+	    "Intel",
+	    "82801AB LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_IDE,
+	    0,
+	    "Intel",
+	    "82801AB IDE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_USB,
+	    0,
+	    "Intel",
+	    "82801AB USB",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_SMB,
+	    0,
+	    "Intel",
+	    "82801AB SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
+	    0,
+	    "Intel",
+	    "82801AB AC-97 Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACM,
+	    0,
+	    "Intel",
+	    "82801AB AC-97 Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_HPB,
+	    0,
+	    "Intel",
+	    "82801AB Hub-to-PCI",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB,
 	    0,
 	    "Intel",
@@ -1771,6 +1861,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82371AB Power Management (PIIX4)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH,
+	    0,
+	    "Intel",
+	    "82810 Memory Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_GC,
+	    0,
+	    "Intel",
+	    "82810 Graphics",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_GC,
+	    0,
+	    "Intel",
+	    "82810-DC100 Graphics",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
@@ -1956,13 +2064,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_PCI,
 	    0,
 	    "Matrox",
-	    "MGA Millennium G200 PCI",
+	    "MGA G200 PCI",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G200_AGP,
 	    0,
 	    "Matrox",
-	    "MGA Millennium G200 AGP",
+	    "MGA G200 AGP",
+	},
+	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILL_II_G400_AGP,
+	    0,
+	    "Matrox",
+	    "MGA G400 AGP",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
@@ -1974,19 +2088,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PRODUCTIVA_PCI,
 	    0,
 	    "Matrox",
-	    "MGA Productiva G100 PCI",
+	    "MGA G100 PCI",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_PRODUCTIVA_AGP,
 	    0,
 	    "Matrox",
-	    "MGA Productiva G100 AGP",
+	    "MGA G100 AGP",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
 	    0,
 	    "Matrox",
 	    "MGA 1064SG",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
+	    0,
+	    "Motorola",
+	    "MPC106 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
@@ -2013,10 +2133,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "NS87410",
 	},
 	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_XXX,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
 	    0,
 	    "NEC",
-	    "XXX USB",
+	    "USB",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
@@ -2934,7 +3054,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_TFIRO,
 	    0,
 	    "Toshiba (2nd ID)",
-	    "PCI-FIRO",
+	    "Fast Infrared Type O",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,
