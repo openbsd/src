@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.5 1997/03/16 01:18:48 flipk Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.6 1997/04/20 20:49:42 tholo Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 
 #include <machine/cpu.h>
 
+static void	settime __P((struct timeval *));
+
 /* 
  * Time of day and interval timer support.
  *
@@ -64,6 +66,172 @@
  * and decrementing interval timers, optionally reloading the interval
  * timers when they expire.
  */
+
+/* This function is used by clock_settime and settimeofday */
+static void
+settime(tv)
+	struct timeval *tv;
+{
+	struct timeval delta;
+	int s;
+
+	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
+	s = splclock();
+	timersub(tv, &time, &delta);
+	time = *tv;
+	(void) splsoftclock();
+	timeradd(&boottime, &delta, &boottime);
+	timeradd(&runtime, &delta, &runtime);
+#	if defined(NFS) || defined(NFSSERVER)
+		nqnfs_lease_updatetime(delta.tv_sec);
+#	endif
+	splx(s);
+	resettodr();
+}
+
+/* ARGSUSED */
+int
+sys_clock_gettime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_clock_gettime_args /* {
+		syscallarg(clockid_t) clock_id;
+		syscallarg(struct timespec *) tp;
+	} */ *uap = v;
+	clockid_t clock_id;
+	struct timeval atv;
+	struct timespec ats;
+
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	microtime(&atv);
+	TIMEVAL_TO_TIMESPEC(&atv,&ats);
+
+	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
+}
+
+/* ARGSUSED */
+int
+sys_clock_settime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_clock_settime_args /* {
+		syscallarg(clockid_t) clock_id;
+		syscallarg(const struct timespec *) tp;
+	} */ *uap = v;
+	clockid_t clock_id;
+	struct timeval atv;
+	struct timespec ats;
+	int error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
+		return (error);
+
+	TIMESPEC_TO_TIMEVAL(&atv,&ats);
+	settime(&atv);
+
+	return 0;
+}
+
+int
+sys_clock_getres(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_clock_getres_args /* {
+		syscallarg(clockid_t) clock_id;
+		syscallarg(struct timespec *) tp;
+	} */ *uap = v;
+	clockid_t clock_id;
+	struct timespec ts;
+	int error = 0;
+
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	if (SCARG(uap, tp)) {
+		ts.tv_sec = 0;
+		ts.tv_nsec = 1000000000 / hz;
+
+		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
+	}
+
+	return error;
+}
+
+/* ARGSUSED */
+int
+sys_nanosleep(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	static int nanowait;
+	register struct sys_nanosleep_args/* {
+		syscallarg(struct timespec *) rqtp;
+		syscallarg(struct timespec *) rmtp;
+	} */ *uap = v;
+	struct timespec rqt;
+	struct timespec rmt;
+	struct timeval atv, utv;
+	int error, s, timo;
+
+	error = copyin((caddr_t)SCARG(uap, rqtp), (caddr_t)&rqt,
+		       sizeof(struct timespec));
+	if (error)
+		return (error);
+
+	TIMESPEC_TO_TIMEVAL(&atv,&rqt)
+	if (itimerfix(&atv))
+		return (EINVAL);
+
+	s = splclock();
+	timeradd(&atv,&time,&atv);
+	timo = hzto(&atv);
+	/* 
+	 * Avoid inadvertantly sleeping forever
+	 */
+	if (timo == 0)
+		timo = 1;
+	splx(s);
+
+	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+
+	if (SCARG(uap, rmtp)) {
+		s = splclock();
+		utv = time;
+		splx(s);
+
+		timersub(&atv, &utv, &utv);
+		if (utv.tv_sec < 0)
+			timerclear(&utv);
+
+		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
+		error = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
+			sizeof(rmt));		
+	}
+
+	return error;
+}
 
 /* ARGSUSED */
 int
@@ -102,9 +270,9 @@ sys_settimeofday(p, v, retval)
 		syscallarg(struct timeval *) tv;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
-	struct timeval atv, delta;
+	struct timeval atv;
 	struct timezone atz;
-	int error, s;
+	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
@@ -115,28 +283,8 @@ sys_settimeofday(p, v, retval)
 	if (SCARG(uap, tzp) && (error = copyin((caddr_t)SCARG(uap, tzp),
 	    (caddr_t)&atz, sizeof(atz))))
 		return (error);
-	if (SCARG(uap, tv)) {
-		/*
-		 * If the system is secure, we do not allow the time to be
-		 * set to an earlier value (it may be slowed using adjtime,
-		 * but not set back). This feature prevent interlopers from
-		 * setting arbitrary time stamps on files.
-		 */
-		if (securelevel > 1 && timercmp(&atv, &time, <))
-			return (EPERM);
-		/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-		s = splclock();
-		timersub(&atv, &time, &delta);
-		time = atv;
-		(void) splsoftclock();
-		timeradd(&boottime, &delta, &boottime);
-		timeradd(&runtime, &delta, &runtime);
-# 		if defined(NFSCLIENT) || defined(NFSSERVER)
-			nqnfs_lease_updatetime(delta.tv_sec);
-#		endif
-		splx(s);
-		resettodr();
-	}
+	if (SCARG(uap, tv))
+		settime(&atv);
 	if (SCARG(uap, tzp))
 		tz = atz;
 	return (0);
