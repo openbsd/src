@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.9 2002/02/17 19:42:30 millert Exp $	*/
+/*	$OpenBSD: file.h,v 1.10 2002/06/05 13:46:44 itojun Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -30,10 +30,6 @@
 #ifndef __file_h__
 #define __file_h__
 
-typedef int8_t int8;
-typedef int32_t int32;
-typedef u_int32_t uint32;
-
 #ifndef HOWMANY
 # define HOWMANY 8192		/* how much of the file to look at */
 #endif
@@ -48,12 +44,12 @@ struct magic {
 #define ADD	4		/* if '>&' appears,  */
 	short cont_level;	/* level of ">" */
 	struct {
-		int8 type;	/* byte short long */
-		int32 offset;	/* offset from indirection */
+		int8_t type;	/* byte short long */
+		int32_t offset;	/* offset from indirection */
 	} in;
-	int32 offset;		/* offset to magic number */
+	int32_t offset;		/* offset to magic number */
 	unsigned char reln;	/* relation (0=eq, '>'=gt, etc) */
-	int8 type;		/* int, short, long or string. */
+	int8_t type;		/* int, short, long or string. */
 	char vallen;		/* length of string value, if any */
 #define 			BYTE	1
 #define				SHORT	2
@@ -69,12 +65,12 @@ struct magic {
 	union VALUETYPE {
 		unsigned char b;
 		unsigned short h;
-		uint32 l;
+		uint32_t l;
 		char s[MAXstring];
 		unsigned char hs[2];	/* 2 bytes of a fixed-endian "short" */
 		unsigned char hl[4];	/* 2 bytes of a fixed-endian "long" */
 	} value;		/* either number or string */
-	uint32 mask;	/* mask before comparison with value */
+	uint32_t mask;	/* mask before comparison with value */
 	char nospflag;		/* supress space character */
 	char desc[MAXDESC];	/* description */
 };
@@ -93,7 +89,7 @@ extern int   softmagic(unsigned char *, int);
 extern int   tryit(unsigned char *, int, int);
 extern int   zmagic(unsigned char *, int);
 extern void  ckfprintf(FILE *, const char *, ...);
-extern uint32 signextend(struct magic *, unsigned int32);
+extern uint32_t signextend(struct magic *, uint32_t);
 extern int internatmagic(unsigned char *, int);
 extern void tryelf(int, char *, int);
 

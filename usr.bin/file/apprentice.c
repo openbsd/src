@@ -1,4 +1,4 @@
-/*	$OpenBSD: apprentice.c,v 1.13 2002/03/14 06:51:41 mpech Exp $	*/
+/*	$OpenBSD: apprentice.c,v 1.14 2002/06/05 13:46:44 itojun Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,7 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: apprentice.c,v 1.13 2002/03/14 06:51:41 mpech Exp $";
+static char *moduleid = "$OpenBSD: apprentice.c,v 1.14 2002/06/05 13:46:44 itojun Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -133,10 +133,10 @@ int check;			/* non-zero? checking-only run. */
 /*
  * extend the sign bit if the comparison is to be signed
  */
-uint32
+uint32_t
 signextend(m, v)
 struct magic *m;
-uint32 v;
+uint32_t v;
 {
 	if (!(m->flag & UNSIGNED))
 		switch(m->type) {
@@ -159,7 +159,7 @@ uint32 v;
 		case LONG:
 		case BELONG:
 		case LELONG:
-			v = (int32) v;
+			v = (int32_t) v;
 			break;
 		case STRING:
 			break;

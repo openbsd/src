@@ -1,4 +1,4 @@
-/*	$OpenBSD: softmagic.c,v 1.7 2002/02/17 19:42:30 millert Exp $	*/
+/*	$OpenBSD: softmagic.c,v 1.8 2002/06/05 13:46:44 itojun Exp $	*/
 
 /*
  * softmagic - interpret variable magic from /etc/magic
@@ -37,14 +37,14 @@
 #include "file.h"
 
 #ifndef	lint
-static char *moduleid = "$OpenBSD: softmagic.c,v 1.7 2002/02/17 19:42:30 millert Exp $";
+static char *moduleid = "$OpenBSD: softmagic.c,v 1.8 2002/06/05 13:46:44 itojun Exp $";
 #endif	/* lint */
 
 static int match(unsigned char *, int);
 static int mget(union VALUETYPE *, unsigned char *, struct magic *, int);
 static int mcheck(union VALUETYPE *, struct magic *);
-static int32 mprint(union VALUETYPE *, struct magic *);
-static void mdebug(int32, char *, int);
+static int32_t mprint(union VALUETYPE *, struct magic *);
+static void mdebug(int32_t, char *, int);
 static int mconvert(union VALUETYPE *, struct magic *);
 
 /*
@@ -100,12 +100,12 @@ int nbytes;
 	int cont_level = 0;
 	int need_separator = 0;
 	union VALUETYPE p;
-	static int32 *tmpoff = NULL;
+	static int32_t *tmpoff = NULL;
 	static size_t tmplen = 0;
-	int32 oldoff = 0;
+	int32_t oldoff = 0;
 
 	if (tmpoff == NULL)
-		if ((tmpoff = (int32 *) malloc(tmplen = 20)) == NULL)
+		if ((tmpoff = (int32_t *) malloc(tmplen = 20)) == NULL)
 			err(1, "malloc");
 
 	for (magindex = 0; magindex < nmagic; magindex++) {
@@ -131,7 +131,7 @@ int nbytes;
 			need_separator = 1;
 		/* and any continuations that match */
 		if (++cont_level >= tmplen)
-			if ((tmpoff = (int32 *) realloc(tmpoff,
+			if ((tmpoff = (int32_t *) realloc(tmpoff,
 						       tmplen += 20)) == NULL)
 				err(1, "malloc");
 		while (magic[magindex+1].cont_level != 0 && 
@@ -176,7 +176,7 @@ int nbytes;
 					 */
 					if (++cont_level >= tmplen)
 						if ((tmpoff = 
-						    (int32 *) realloc(tmpoff,
+						    (int32_t *) realloc(tmpoff,
 						    tmplen += 20)) == NULL)
 							err(1, "malloc");
 				}
@@ -190,14 +190,14 @@ int nbytes;
 	return 0;			/* no match at all */
 }
 
-static int32
+static int32_t
 mprint(p, m)
 union VALUETYPE *p;
 struct magic *m;
 {
 	char *pp, *rt;
-	uint32 v;
-	int32 t=0 ;
+	uint32_t v;
+	int32_t t=0 ;
 
 
   	switch (m->type) {
@@ -222,8 +222,8 @@ struct magic *m;
   	case LELONG:
 		v = p->l;
 		v = signextend(m, v) & m->mask;
-		(void) printf(m->desc, (uint32) v);
-		t = m->offset + sizeof(int32);
+		(void) printf(m->desc, (uint32_t) v);
+		t = m->offset + sizeof(int32_t);
   		break;
 
   	case STRING:
@@ -288,7 +288,7 @@ struct magic *m;
 		return 1;
 	case BELONG:
 	case BEDATE:
-		p->l = (int32)
+		p->l = (int32_t)
 		    ((p->hl[0]<<24)|(p->hl[1]<<16)|(p->hl[2]<<8)|(p->hl[3]));
 		return 1;
 	case LESHORT:
@@ -296,7 +296,7 @@ struct magic *m;
 		return 1;
 	case LELONG:
 	case LEDATE:
-		p->l = (int32)
+		p->l = (int32_t)
 		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
 		return 1;
 	default:
@@ -308,7 +308,7 @@ struct magic *m;
 
 static void
 mdebug(offset, str, len)
-int32 offset;
+int32_t offset;
 char *str;
 int len;
 {
@@ -325,7 +325,7 @@ unsigned char	*s;
 struct magic *m;
 int nbytes;
 {
-	int32 offset = m->offset;
+	int32_t offset = m->offset;
 
 	if (offset + sizeof(union VALUETYPE) <= nbytes)
 		memcpy(p, s + offset, sizeof(union VALUETYPE));
@@ -334,7 +334,7 @@ int nbytes;
 		 * the usefulness of padding with zeroes eludes me, it
 		 * might even cause problems
 		 */
-		int32 have = nbytes - offset;
+		int32_t have = nbytes - offset;
 		memset(p, 0, sizeof(union VALUETYPE));
 		if (have > 0)
 			memcpy(p, s + offset, have);
@@ -384,8 +384,8 @@ mcheck(p, m)
 union VALUETYPE* p;
 struct magic *m;
 {
-	uint32 l = m->value.l;
-	uint32 v;
+	uint32_t l = m->value.l;
+	uint32_t v;
 	int matched;
 
 	if ( (m->value.s[0] == 'x') && (m->value.s[1] == '\0') ) {
@@ -468,7 +468,7 @@ struct magic *m;
 					       v, l, matched);
 		}
 		else {
-			matched = (int32) v > (int32) l;
+			matched = (int32_t) v > (int32_t) l;
 			if (debug)
 				(void) fprintf(stderr, "%d > %d = %d\n",
 					       v, l, matched);
@@ -483,7 +483,7 @@ struct magic *m;
 					       v, l, matched);
 		}
 		else {
-			matched = (int32) v < (int32) l;
+			matched = (int32_t) v < (int32_t) l;
 			if (debug)
 				(void) fprintf(stderr, "%d < %d = %d\n",
 					       v, l, matched);
