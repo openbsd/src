@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.6 2002/01/07 06:54:10 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.7 2002/01/07 07:20:50 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -133,7 +133,7 @@ _dl({-std-},{-std-},
 {-ttyB-},{-ttyB0 ttyB1-},
 {-tty0-},{-tty00 tty01 tty02 tty03-},
 {-tzs-},{-ttya ttyb ttyc ttyd-},
-{-tzs-},{-cuaa cuab cuac cuad-},
+{-czs-},{-cuaa cuab cuac cuad-},
 {-lkm-},{-lkm-},
 {-iop-},{-iop0 iop1-},
 {-mmcl-},{-mmclock-},dnl
@@ -568,6 +568,8 @@ __devitem(bktr,bktr*,video capturing)dnl
 _mcdev(bktr,bktr*,bktr,{-major_bktr_c-},644)dnl
 __devitem(tuner,tuner*,tuner device)dnl
 _mkdev(tuner,tuner*,{-M tuner$U c major_tuner_c Add(Mult($U,2),16) 644-},644)dnl
+__devitem(pci,pci,PCI bus device)dnl
+_mkdev(pci,pci,{-M pci c major_pci_c 0 664-},664)dnl
 _mkdev(local,local,{-test -s $T.local && sh $T.local-},666)dnl
 dnl
 divert(1)dnl
