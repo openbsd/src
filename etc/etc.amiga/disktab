@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: disktab,v 1.8 1997/05/13 16:22:42 niklas Exp $
+#	$OpenBSD: disktab,v 1.9 1997/05/18 14:06:43 niklas Exp $
 #	$NetBSD: disktab,v 1.4 1995/11/28 05:40:23 jtc Exp $
 #
 # Disk geometry and partition layout tables. 
@@ -53,5 +53,5 @@ miniroot:\
 	:pc#10240:oc#0:
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:nc#16:nt#2:ns#128:\
-	:ta=4.2BSD:oa#0:pa#4096:fa#1024:ba#8192:\
-	:ob#0:pb#0:oc#0:pc#4096:
+	:ta=4.2BSD:oa#0:pa#3584:fa#1024:ba#8192:\
+	:ob#0:pb#0:oc#0:pc#3584:
