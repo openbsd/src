@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.86 2002/09/18 16:28:47 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.87 2002/09/26 08:30:36 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -727,6 +727,21 @@ expands to
 .Bd -literal
     block in on ! lo0 inet from 127.0.0.1/8 to any 
     block in on ! lo0 inet6 from ::1 to any 
+.Ed
+.Pp
+For non-loopback interfaces, there are additional rules to block incoming 
+packets with a source IP address identical to the interface's IP(s).
+For example, assuming the interface wi0 had an IP address of 10.0.0.1 and a
+netmask of 255.255.255.0,
+the line
+.Bd -literal
+    antispoof for wi0 inet
+.Ed
+.Pp
+expands to
+.Bd -literal
+    block in on ! wi0 inet from 10.0.0.1/24 to any 
+    block in inet from 10.0.0.1 to any 
 .Ed
 .Sh FRAGMENT HANDLING
 IP datagrams (packets) can have a size of up to 65535 bytes.
