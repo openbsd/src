@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.5 2001/07/09 06:57:42 deraadt Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.6 2001/10/26 19:44:38 markus Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -245,7 +245,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		_warn(NULL);
 		goto out;
 	}
-	if (auth_check_expire(as))	/* is this account expired */
+	if (auth_check_expire(as) < 0)	/* is this account expired */
 		goto out;
 	if (_auth_checknologin(lc,
 	    auth_getitem(as, AUTHV_INTERACTIVE) != NULL)) {
