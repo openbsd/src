@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.12 2000/08/01 22:30:53 provos Exp $
+.\"	$OpenBSD: passwd.1,v 1.13 2000/10/17 18:52:18 aaron Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -51,11 +51,10 @@
 .Op Ar user
 .\" This should really be: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]]] [user]
 .Sh DESCRIPTION
-.Nm passwd
+.Nm
 changes the user's local, Kerberos, or YP password.
 First, the user is prompted for their current password.
-If the current password is correctly typed, a new password is
-requested.
+If the current password is correctly typed, a new password is requested.
 The new password must be entered twice to avoid typing errors.
 .Pp
 The new password should be at least six characters long and not
@@ -63,8 +62,8 @@ purely alphabetic.
 Its total length must be less than
 .Dv _PASSWORD_LEN
 (currently 128 characters).
-Numbers, upper case letters and meta-characters
-are encouraged.
+A mixture of both lower and uppercase letters, numbers, and
+meta-characters is encouraged.
 .Pp
 The quality of the password can be enforced by providing an external
 checking program in 
@@ -73,8 +72,7 @@ checking program in
 The options are as follows:
 .Bl -tag -width flag
 .It Fl l
-Causes the password to be updated only in the local
-password file.
+Causes the password to be updated only in the local password file.
 When changing only the local password,
 .Xr pwd_mkdb 8
 is used to update the password databases.
@@ -88,9 +86,8 @@ daemon should be running on the YP master server.
 Forces the change to affect the Kerberos database, even
 if the user has a password in the local database.
 Once the password has been verified,
-.Nm passwd
-communicates the new password information to
-the Kerberos authenticating host.
+.Nm
+communicates the new password information to the Kerberos authenticating host.
 .El
 .Pp
 The following flags are only used when the
@@ -119,14 +116,13 @@ Specifies a fully qualified Kerberos principal.
 .Pp
 This is the behavior if no flags are specified:
 if Kerberos is active then
-.Nm passwd
+.Nm
 will talk to the Kerberos server (even if the user has an entry
 in the local database).
 If the password is not in the local password database, then
 an attempt is made to use the YP database.
 .Pp
-To change another user's Kerberos password, one must first
-run
+To change another user's Kerberos password, one must first run
 .Xr kinit 1
 followed by
 .Xr passwd 1 .
@@ -137,6 +133,14 @@ Which type of cipher is used to encrypt the password information
 depends on the configuration in
 .Xr passwd.conf 5 .
 It can be different for local and YP passwords.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "the passwd file is busy"
+The password file is currently locked by another process, or a
+process previously holding the lock was prematurely terminated.
+In the latter case, it is safe to remove the
+.Pa /etc/ptmp
+file to get rid of this error.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/master.passwd
@@ -147,6 +151,8 @@ a Version 7 format password file
 temporary copy of the password file
 .It /etc/passwd.conf
 configuration options
+.It /etc/ptmp
+lock file for the passwd database
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
@@ -164,6 +170,6 @@ configuration options
 .Re
 .Sh HISTORY
 A
-.Nm passwd
+.Nm
 command appeared in
 .At v6 .

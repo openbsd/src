@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.19 2000/10/07 14:07:08 aaron Exp $
+.\"	$OpenBSD: chpass.1,v 1.20 2000/10/17 18:52:19 aaron Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -213,6 +213,15 @@ Once the information has been verified,
 uses
 .Xr pwd_mkdb 8
 to update the user database.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "the passwd file is busy"
+The password file is currently locked by another process, or a
+process previously holding the lock was prematurely terminated.
+In the latter case, it is safe to remove the
+.Pa /etc/ptmp
+file to get rid of this error.
+.El
 .Sh ENVIRONMENT
 The
 .Xr vi 1
@@ -232,10 +241,10 @@ user database
 a Version 7 format password file
 .It Pa /etc/ptmp
 lock file for the passwd database
-.It Pa /var/tmp/pw.XXXXXXXX
-temporary copy of the user passwd information
 .It Pa /etc/shells
 list of approved shells
+.It Pa /var/tmp/pw.XXXXXXXX
+temporary copy of the user passwd information
 .El
 .Sh SEE ALSO
 .Xr finger 1 ,
