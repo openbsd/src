@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.17 2001/05/30 12:30:02 angelos Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.18 2001/06/08 03:53:45 angelos Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -37,11 +37,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -52,7 +48,6 @@
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
 #include <netinet/in_gif.h>
-#include <netinet/ip_ecn.h>
 #include <netinet/ip_ipsp.h>
 
 #ifdef INET6
@@ -63,14 +58,8 @@
 #include <netinet/ip_mroute.h>
 #endif /* MROUTING */
 
-#include <net/if_gif.h>	
-
 #include "gif.h"
 #include "bridge.h"
-
-#include <machine/stdarg.h>
-
-#include <net/net_osdep.h>
 
 int
 in_gif_output(ifp, family, m, rt)

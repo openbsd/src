@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.22 2001/06/05 02:31:35 deraadt Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.23 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -73,13 +73,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
 #include <sys/socketvar.h>
-#include <sys/errno.h>
-#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -92,8 +90,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_icmp.h>
-
-#include <machine/stdarg.h>
 
 struct inpcbtable rawcbtable;
 

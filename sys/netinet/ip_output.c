@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.100 2001/06/05 11:05:08 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.101 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -37,17 +37,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/errno.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-
-#include <vm/vm.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -64,16 +58,7 @@
 #include <machine/mtpr.h>
 #endif
 
-#include <machine/stdarg.h>
-
 #ifdef IPSEC
-#include <netinet/ip_ah.h>
-#include <netinet/ip_esp.h>
-#include <netinet/udp.h>
-#include <netinet/tcp.h>
-#include <net/pfkeyv2.h>
-#include <net/if_enc.h>
-
 #ifdef ENCDEBUG
 #define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
 #else

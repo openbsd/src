@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.15 2001/05/30 12:22:57 angelos Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.16 2001/06/08 03:53:46 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -41,17 +41,9 @@
 
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
-#include <machine/cpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -63,19 +55,14 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
-#include <netinet/ip_icmp.h>
 #include <netinet/ip_ecn.h>
 
 #ifdef MROUTING
 #include <netinet/ip_mroute.h>
 #endif
 
-#include <sys/socketvar.h>
-#include <net/raw_cb.h>
-
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ipip.h>
-#include <dev/rndvar.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x

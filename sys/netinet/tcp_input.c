@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.92 2001/06/05 02:31:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.93 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -75,13 +75,10 @@
 #ifndef TUBA_INCLUDE
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/errno.h>
-#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -98,20 +95,9 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
-#include <dev/rndvar.h>
-#include <machine/stdarg.h>
-#include <sys/md5k.h>
-
-#ifdef IPSEC
-#include <netinet/ip_ipsp.h>
-#endif /* IPSEC */
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet6/tcpipv6.h>
-#include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 
 struct	tcpiphdr tcp_saveti;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.52 2001/06/05 02:31:37 deraadt Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.53 2001/06/08 03:53:47 angelos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -73,18 +73,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
-#include <sys/proc.h>
-#include <sys/ucred.h>
-#include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/domain.h>
 
@@ -104,7 +97,6 @@
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
-#include <dev/rndvar.h>
 
 /*
  * TCP protocol interface to socket abstraction.

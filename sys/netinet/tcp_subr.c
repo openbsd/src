@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.45 2001/06/05 02:31:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.46 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -73,15 +73,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
-#include <sys/errno.h>
-#include <sys/time.h>
 #include <sys/kernel.h>
 
 #include <net/route.h>
@@ -102,9 +99,6 @@
 #include <dev/rndvar.h>
 
 #ifdef INET6
-#include <netinet6/ip6_var.h>
-#include <netinet6/tcpipv6.h>
-#include <sys/domain.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */

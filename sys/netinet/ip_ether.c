@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.27 2001/05/27 11:52:21 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.28 2001/06/08 03:53:45 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -30,32 +30,23 @@
 #include "bridge.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
-#include <net/netisr.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
-#include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #endif /* INET */
 
-#include <netinet/ip_ipsp.h>
 #include <netinet/ip_ether.h>
 #include <netinet/if_ether.h>
-#include <dev/rndvar.h>
 #include <net/if_bridge.h>
 #include <net/if_gif.h>
 

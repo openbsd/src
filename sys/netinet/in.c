@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.19 2001/05/16 12:53:35 ho Exp $	*/
+/*	$OpenBSD: in.c,v 1.20 2001/06/08 03:53:45 angelos Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -37,20 +37,17 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/systm.h>
 
 #include <net/if.h>
 #include <net/route.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet/if_ether.h>
 #include <netinet/igmp_var.h>
 
 #ifdef MROUTING

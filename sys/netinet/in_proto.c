@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.28 2001/06/05 02:31:35 deraadt Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.29 2001/06/08 03:53:45 angelos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -108,7 +108,6 @@
 #include <sys/mbuf.h>
 
 #include <net/if.h>
-#include <net/radix.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -127,14 +126,11 @@
 
 #include <netinet/igmp_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_fsm.h>
-#include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include <netinet/tcpip.h>
-#include <netinet/tcp_debug.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+
 /*
  * TCP/IP protocol family: IP, ICMP, UDP, TCP.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.61 2001/06/05 02:31:37 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.62 2001/06/08 03:53:47 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -73,17 +73,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/errno.h>
-#include <sys/stat.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-
-#include <vm/vm.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -99,20 +92,10 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-#ifdef IPSEC
-#include <netinet/ip_ipsp.h>
-#endif
-
-#include <machine/stdarg.h>
-
 #ifdef INET6
 #ifndef INET
 #include <netinet/in.h>
 #endif
-#include <netinet/ip6.h>
-#include <netinet6/in6_var.h>
-#include <netinet6/ip6_var.h>
-#include <netinet/icmp6.h>
 #include <netinet6/ip6protosw.h>
 
 extern int ip6_defhlim;

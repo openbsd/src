@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.36 2001/06/05 02:31:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.37 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -74,13 +74,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/errno.h>
-#include <sys/domain.h>
 
 #include <net/route.h>
 

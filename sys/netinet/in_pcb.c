@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.53 2001/06/05 02:31:35 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.54 2001/06/08 03:53:45 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -74,14 +74,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/ioctl.h>
-#include <sys/errno.h>
-#include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/domain.h>
 
@@ -99,16 +95,6 @@
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
-
-#ifdef IPSEC
-#include <netinet/ip_ipsp.h>
-#endif
-
-#if 0 /*KAME IPSEC*/
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
-#include <netkey/key_debug.h>
-#endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
 

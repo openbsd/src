@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.74 2001/06/01 19:53:33 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.75 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -37,20 +37,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/errno.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/proc.h>
-#include <sys/pool.h>
-
-#include <vm/vm.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -65,11 +56,6 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/ip_ipsp.h>
-
-#ifdef IPSEC
-#include <netinet/ip_ipsp.h>
-#endif /* IPSEC */
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY

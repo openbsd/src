@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.9 2001/06/05 02:31:36 deraadt Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.10 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -84,9 +84,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/protosw.h>
-#include <sys/errno.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -97,8 +94,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcp_fsm.h>
-#include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>

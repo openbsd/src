@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.36 2001/06/05 02:31:35 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.37 2001/06/08 03:53:46 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -73,16 +73,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-
-#include <vm/vm.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -95,8 +88,6 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
 #include <netinet/icmp_var.h>
-
-#include <machine/stdarg.h>
 
 /*
  * ICMP routines: error generation, receive packet processing, and
