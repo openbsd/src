@@ -1,3 +1,4 @@
+/*	$OpenBSD: mille.c,v 1.6 1998/09/22 04:08:23 pjanzen Exp $	*/
 /*	$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $	*/
 
 /*
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $";
+static char rcsid[] = "$OpenBSD: mille.c,v 1.6 1998/09/22 04:08:23 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,13 +58,12 @@ static char rcsid[] = "$NetBSD: mille.c,v 1.4 1995/03/24 05:01:48 cgd Exp $";
  * @(#)mille.c	1.3 (Berkeley) 5/10/83
  */
 
-void	rub();
-
+int
 main(ac, av)
-register int		ac;
-register char	*av[]; {
-
-	register bool	restore;
+	int	ac;
+	char	*av[];
+{
+	bool	restore;
 
 	/* revoke */
 	setegid(getgid());
@@ -152,8 +152,9 @@ register char	*av[]; {
  * quit.
  */
 void
-rub() {
-
+rub(dummy)
+	int dummy;
+{
 	(void)signal(SIGINT, SIG_IGN);
 	if (getyn(REALLYPROMPT))
 		die(0);
@@ -163,9 +164,10 @@ rub() {
 /*
  *	Time to go beddy-by
  */
+void
 die(code)
-int code; {
-
+	int code;
+{
 	(void)signal(SIGINT, SIG_IGN);
 	if (outf)
 		fflush(outf);

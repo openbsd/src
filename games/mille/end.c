@@ -1,3 +1,4 @@
+/*	$OpenBSD: end.c,v 1.3 1998/09/22 04:08:22 pjanzen Exp $	*/
 /*	$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $	*/
 
 /*
@@ -37,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)end.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $";
+static char rcsid[] = "$OpenBSD: end.c,v 1.3 1998/09/22 04:08:22 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"mille.h"
+#include	"mille.h"
 
 /*
  * @(#)end.c	1.1 (Berkeley) 4/1/82
@@ -51,10 +52,11 @@ static char rcsid[] = "$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $";
  *	print out the score as if it was final, and add the totals for
  * the end-of-games points to the user who deserves it (if any).
  */
+void
 finalscore(pp)
-register PLAY	*pp; {
-
-	register int		temp, tot, num;
+	PLAY	*pp;
+{
+	int	temp, tot, num;
 
 	if (pp->was_finished == Finished)
 		return;
@@ -95,13 +97,14 @@ static int	Last_tot[2];	/* last tot used for extrapolate	*/
  *	print out the score as if it was final, and add the totals for
  * the end-of-games points to the user who deserves it (if any).
  */
+void
 extrapolate(pp)
-register PLAY	*pp; {
-
-	register int		x, num, tot, count;
+	PLAY	*pp;
+{
+	int		x, num, tot, count;
 
 	num = pp - Player;
-	tot += SC_TRIP + SC_DELAY + SC_EXT;
+	tot += SC_TRIP + SC_DELAY + SC_EXTENSION;
 	x = num * 6 + 21 + 3;
 	for (tot = 5; tot <= 9; tot++)
 		mvaddch(tot, x, '0');
@@ -139,10 +142,11 @@ register PLAY	*pp; {
 	Last_tot[num] = tot;
 }
 
-undoex() {
-
-	register PLAY	*pp;
-	register int		i;
+void
+undoex()
+{
+	PLAY	*pp;
+	int		i;
 
 	i = 0;
 	for (pp = Player; pp < &Player[2]; pp++) {
@@ -150,5 +154,4 @@ undoex() {
 		pp->hand_tot -= Last_tot[i++];
 	}
 }
-# endif
-
+#endif

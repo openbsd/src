@@ -1,3 +1,4 @@
+/*	$OpenBSD: mille.h,v 1.3 1998/09/22 04:08:23 pjanzen Exp $	*/
 /*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
 
 /*
@@ -36,10 +37,17 @@
  */
 
 # include	<sys/types.h>
+# include	<sys/uio.h>
+# include	<sys/stat.h>
 # include	<ctype.h>
+# include	<err.h>
+# include	<errno.h>
 # include	<curses.h>
-# include	<termios.h>
+# include	<fcntl.h>
+# include	<stdlib.h>
 # include	<string.h>
+# include	<termios.h>
+# include	<unistd.h>
 
 /*
  * @(#)mille.h	1.1 (Berkeley) 4/1/82
@@ -158,7 +166,7 @@
 #	define	erasechar()	_tty.c_cc[VERASE]
 #	define	killchar()	_tty.c_cc[VKILL]
 # endif
-# endif	SYSV
+# endif		/* SYSV */
 
 typedef struct {
 	bool	coups[NUM_SAFE];
@@ -223,4 +231,42 @@ extern WINDOW	*Board, *Miles, *Score;
  * functions
  */
 
-CARD	getcard();
+void	account __P((CARD));
+void	calcmove __P((void));
+int	canplay __P((PLAY *, PLAY *, CARD));
+int	check_ext __P((bool));
+void	check_go __P((void));
+void	check_more __P((void));
+void	die __P((int));
+void	domove __P((void));
+bool	error __P((char *, ...));
+void	finalscore __P((PLAY *));
+CARD	getcard __P((void));
+void	getmove __P((void));
+int	getyn __P((int));
+int	haspicked __P((PLAY *));
+void	init __P((void));
+int	isrepair __P((CARD));
+int	main __P((int, char **));
+void	newboard __P((void));
+void	newscore __P((void));
+int	onecard __P((PLAY *));
+int	playcard __P((PLAY *));
+void	prboard __P((void));
+void	prompt __P((int));
+void	prscore __P((int));
+int	readch __P((void));
+bool	rest_f __P((char *));
+int	roll __P((int, int));
+void	rub __P((int));
+int	safety __P((CARD));
+bool	save __P((void));
+void	show_card __P((int, int, CARD, CARD *));
+void	show_score __P((int, int, int, int *));
+void	shuffle __P((void));
+void	sort __P((CARD *));
+bool	varpush __P((int, ssize_t __P((int, const struct iovec *, int))));
+#ifdef EXTRAP
+void	extrapolate __P((PLAY *));
+void	undoex __P((void));
+#endif

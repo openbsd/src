@@ -1,3 +1,4 @@
+/*	$OpenBSD: types.c,v 1.3 1998/09/22 04:08:25 pjanzen Exp $	*/
 /*	$NetBSD: types.c,v 1.4 1995/03/24 05:02:22 cgd Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)types.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: types.c,v 1.4 1995/03/24 05:02:22 cgd Exp $";
+static char rcsid[] = "$OpenBSD: types.c,v 1.3 1998/09/22 04:08:25 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,15 +48,18 @@ static char rcsid[] = "$NetBSD: types.c,v 1.4 1995/03/24 05:02:22 cgd Exp $";
  * @(#)types.c	1.1 (Berkeley) 4/1/82
  */
 
+int
 isrepair(card)
-register CARD	card; {
-
-	return card == C_GAS || card == C_SPARE || card == C_REPAIRS || card == C_INIT;
+	CARD	card;
+{
+	return card == C_GAS || card == C_SPARE ||
+	    card == C_REPAIRS || card == C_INIT;
 }
 
+int
 safety(card)
-register CARD	card; {
-
+	CARD	card;
+{
 	switch (card) {
 	  case C_EMPTY:
 	  case C_GAS:
@@ -78,4 +82,3 @@ register CARD	card; {
 	}
 	/* NOTREACHED */
 }
-

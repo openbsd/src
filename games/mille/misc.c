@@ -1,3 +1,4 @@
+/*	$OpenBSD: misc.c,v 1.3 1998/09/22 04:08:23 pjanzen Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
 
 /*
@@ -37,12 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1998/09/22 04:08:23 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/file.h>
 #include <termios.h>
+
+#if __STDC__
+#include	<stdarg.h>
+#else
+#include	<varargs.h>
+#endif
 
 #include	"mille.h"
 
@@ -57,23 +64,35 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $";
 
 #define	NUMSAFE	4
 
-/* VARARGS1 */
+bool
+#if __STDC__
+error(char *str, ...)
+#else
 error(str, arg)
-char	*str;
+	char	*str;
+	va_dcl
+#endif
 {
-	stdscr = Score;
-	mvprintw(ERR_Y, ERR_X, str, arg);
+	va_list ap;
+
+#if __STDC__
+	va_start(ap, str);
+#else
+	va_start(ap);
+#endif
+	wmove(Score, ERR_Y, ERR_X);
+	vwprintw(Score, str, ap);
 	clrtoeol();
 	putchar('\07');
 	refresh();
-	stdscr = Board;
+	va_end(ap);
 	return FALSE;
 }
 
 CARD
 getcard()
 {
-	register int		c, c1;
+	int	c, c1;
 
 	for (;;) {
 		while ((c = readch()) == '\n' || c == '\r' || c == ' ')
@@ -102,7 +121,7 @@ getcard()
 		}
 		refresh();
 		if (c >= 0) {
-			while ((c1=readch()) != '\r' && c1 != '\n' && c1 != ' ')
+			while ((c1 = readch()) != '\r' && c1 != '\n' && c1 != ' ')
 				if (c1 == killchar())
 					return -1;
 				else if (c1 == erasechar()) {
@@ -119,28 +138,26 @@ cont:		;
 	}
 }
 
+int
 check_ext(forcomp)
-register bool	forcomp; {
-
-
-	if (End == 700)
+	bool	forcomp;
+{
+	if (End == 700) {
 		if (Play == PLAYER) {
 			if (getyn(EXTENSIONPROMPT)) {
 extend:
 				if (!forcomp)
 					End = 1000;
 				return TRUE;
-			}
-			else {
+			} else {
 done:
 				if (!forcomp)
 					Finished = TRUE;
 				return FALSE;
 			}
-		}
-		else {
-			register PLAY	*pp, *op;
-			register int		i, safe, miles;
+		} else {
+			PLAY	*pp, *op;
+			int	i, safe, miles;
 
 			pp = &Player[COMP];
 			op = &Player[PLAYER];
@@ -165,7 +182,7 @@ done:
 				goto extend;
 			goto done;
 		}
-	else
+	} else
 		goto done;
 }
 
@@ -173,10 +190,11 @@ done:
  *	Get a yes or no answer to the given question.  Saves are
  * also allowed.  Return TRUE if the answer was yes, FALSE if no.
  */
+int
 getyn(promptno)
-register int	promptno; {
-
-	register char	c;
+	int	promptno;
+{
+	char	c;
 
 	Saved = FALSE;
 	for (;;) {
@@ -217,10 +235,11 @@ register int	promptno; {
  * came from a saved file, make sure that they don't want to restore
  * it.  Exit appropriately.
  */
-check_more() {
-
+void
+check_more()
+{
 	On_exit = TRUE;
-	if (Player[PLAYER].total >= 5000 || Player[COMP].total >= 5000)
+	if (Player[PLAYER].total >= 5000 || Player[COMP].total >= 5000) {
 		if (getyn(ANOTHERGAMEPROMPT))
 			return;
 		else {
@@ -234,7 +253,7 @@ check_more() {
 			Player[COMP].total = 0;
 			Player[PLAYER].total = 0;
 		}
-	else
+	} else
 		if (getyn(ANOTHERHANDPROMPT))
 			return;
 	if (!Saved && getyn(SAVEGAMEPROMPT))
@@ -243,12 +262,13 @@ check_more() {
 	die(0);
 }
 
+int
 readch()
 {
-	register int		cnt;
+	int	cnt;
 	static char	c;
 
-	for (cnt = 0; read(0, &c, 1) <= 0; cnt++)
+	for (cnt = 0; read(STDIN_FILENO, &c, 1) <= 0; cnt++)
 		if (cnt > 100)
 			exit(1);
 	return c;
