@@ -27,10 +27,9 @@
 **
 */
 
+#include "curses.priv.h"
 #ifdef EXTERN_TERMINFO
 #include <term.h>
-#else
-#include "curses.priv.h"
 #endif
 #include <string.h>
 
