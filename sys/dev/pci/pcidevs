@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.552 2002/10/03 23:50:50 jason Exp $
+	$OpenBSD: pcidevs,v 1.553 2002/10/04 09:39:49 henning Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1315,6 +1315,7 @@ product INITIO INIC950		0x9500	INIC-950 SCSI
 product IMS 8849		0x8849	8849
 
 /* Intel products */
+product INTEL 21145		0x0039	21145
 product INTEL EESISA		0x0008	EES ISA
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL PCEB		0x0482	82375EB PCI-EISA
