@@ -178,10 +178,6 @@ load_kern(pbugargs)
 		status = 0;
 		addr = (char *) (pexec->a_entry & ~0x0FFF);
 
-		if ((int) pexec->a_entry != (int) addr + 0x22) {
-			    (int) addr + 0x22, pexec->a_entry);
-			printf("kernel loaded at %x\n", addr);
-		}
 		bcopy(&buf, addr, 512);
 		/* 2nd block of exe */
 		addr += 512;
