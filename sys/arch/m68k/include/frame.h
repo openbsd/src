@@ -1,4 +1,5 @@
-/*	$NetBSD: frame.h,v 1.10 1995/05/12 12:45:24 mycroft Exp $	*/
+/*	$OpenBSD: frame.h,v 1.2 1996/04/19 06:18:14 niklas Exp $	*/
+/*	$NetBSD: frame.h,v 1.11 1996/03/12 22:21:51 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +62,14 @@ struct frame {
 			u_int	f_ea;
 		} F_fmt3;
 
+		struct fmt4 {
+			u_int	f_fa;
+			u_int	f_fslw;
+			/* for 060FP type 4 FP disabled frames: */
+#define 		f_fea	f_fa	
+#define 		f_pcfi	f_fslw
+		} F_fmt4;
+
 		struct fmt7 {
 			u_int	f_ea;
 			u_short	f_ssw;
@@ -116,6 +125,7 @@ struct frame {
 #define	f_vector	F_t.tf_vector
 #define	f_fmt2		F_u.F_fmt2
 #define	f_fmt3		F_u.F_fmt3
+#define	f_fmt4		F_u.F_fmt4
 #define	f_fmt7		F_u.F_fmt7
 #define	f_fmt9		F_u.F_fmt9
 #define	f_fmtA		F_u.F_fmtA
@@ -127,12 +137,13 @@ struct switchframe {
 
 /* common frame size */
 #define	CFSIZE		(sizeof(struct frame) - sizeof(union F_u))
-#define	NFMTSIZE	8
+#define	NFMTSIZE	9
 
 #define	FMT0		0x0
 #define	FMT1		0x1
 #define	FMT2		0x2
 #define	FMT3		0x3
+#define	FMT4		0x4
 #define	FMT7		0x7
 #define	FMT9		0x9
 #define	FMTA		0xA
@@ -143,6 +154,7 @@ struct switchframe {
 #define	FMT1SIZE	0
 #define	FMT2SIZE	sizeof(struct fmt2)
 #define	FMT3SIZE	sizeof(struct fmt3)
+#define	FMT4SIZE	sizeof(struct fmt4)
 #define	FMT7SIZE	sizeof(struct fmt7)
 #define	FMT9SIZE	sizeof(struct fmt9)
 #define	FMTASIZE	sizeof(struct fmtA)
@@ -185,6 +197,42 @@ struct switchframe {
 #define	SSW4_TMKD	0x0005
 #define	SSW4_TMKC	0x0006
 
+/* 060 Fault Status Long Word (FPSP) */
+
+#define FSLW_MA		0x08000000
+#define FSLW_LK		0x02000000
+#define FSLW_RW		0x01800000
+#define FSLW_SIZE	0x00600000
+
+/*
+ * We better define the FSLW_SIZE values here, as the table given in the 
+ * MC68060UM/AD rev. 0/1 p. 8-23 is wrong, and was corrected in the errata 
+ * document.
+ */
+#define FSLW_SIZE_LONG	0x00000000
+#define FSLW_SIZE_BYTE	0x00200000
+#define FSLW_SIZE_WORD	0x00400000
+#define FSLW_SIZE_MV16	0x00600000
+
+#define FLSW_TT		0x00180000
+#define FSLW_TM		0x00070000
+
+#define FSLW_IO		0x00008000
+#define FSLW_PBE	0x00004000
+#define FSLW_SBE	0x00002000
+#define FSLW_PTA	0x00001000
+#define FSLW_PTB 	0x00000800
+#define FSLW_IL 	0x00000400
+#define FSLW_PF 	0x00000200
+#define FSLW_SP 	0x00000100
+#define FSLW_WP 	0x00000080
+#define FSLW_TWE 	0x00000040
+#define FSLW_RE 	0x00000020
+#define FSLW_WE 	0x00000010
+#define FSLW_TTR 	0x00000008
+#define FSLW_BPE 	0x00000004
+#define FSLW_SEE 	0x00000001
+
 struct fpframe {
 	union FPF_u1 {
 		u_int	FPF_null;
@@ -225,3 +273,30 @@ struct fpframe {
 #define fpf_idle	FPF_u2.FPF_idle
 #define fpf_busy	FPF_u2.FPF_busy
 #define fpf_unimp	FPF_u2.FPF_unimp
+
+/* 
+ * This is incompatible with the earlier one; expecially, an earlier frame 
+ * must not be FRESTOREd on a 060 or vv, because a frame error exception is
+ * not guaranteed.
+ */
+
+
+struct fpframe060 {
+	u_short	fpf6_excp_exp;
+	u_char	fpf6_frmfmt;
+#define FPF6_FMT_NULL	0x00
+#define FPF6_FMT_IDLE	0x60
+#define FPF6_FMT_EXCP	0xe0
+
+	u_char	fpf6_v;
+#define	FPF6_V_BSUN	0
+#define	FPF6_V_INEX12	1
+#define	FPF6_V_DZ	2
+#define	FPF6_V_UNFL	3
+#define	FPF6_V_OPERR	4
+#define	FPF6_V_OVFL	5
+#define	FPF6_V_SNAN	6
+#define	FPF6_V_UNSUP	7
+
+	u_long	fpf6_upper, fpf6_lower;
+};

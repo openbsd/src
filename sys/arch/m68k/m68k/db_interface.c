@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_interface.c,v 1.2 1996/03/21 00:07:42 niklas Exp $	*/
-/*	$NetBSD: db_interface.c,v 1.17 1996/02/09 21:51:39 gwr Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 1996/04/19 06:18:15 niklas Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 1996/02/22 23:23:23 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,7 +28,7 @@
  */
 
 /*
- * Interface to new debugger.
+ * Interface to the "ddb" kernel debugger.
  */
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -40,11 +40,9 @@
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
 
-short	exframesize[];
 extern label_t	*db_recover;
 
 int	db_active = 0;
-int ddb_regs_ssp;	/* system stack pointer */
 
 /*
  * Received keyboard interrupt sequence.
@@ -66,7 +64,6 @@ kdb_trap(type, regs)
 	int	type;
 	register struct mc68020_saved_state *regs;
 {
-	int fsize;
 
 	switch (type) {
 	case T_TRACE:		/* single-step */
@@ -82,18 +79,20 @@ kdb_trap(type, regs)
 			db_error("Caught exception in ddb.\n");
 			/*NOTREACHED*/
 		}
+		/*
+		 * Tell caller "We did NOT handle the trap."
+		 * Caller should panic or whatever.
+		 */
 		return (0);
 	}
 
-	/* XXX - Should switch to kdb's own stack here. */
+	/*
+	 * We'd like to be on a separate debug stack here, but
+	 * that's easier to do in locore.s before we get here.
+	 * See sun3/locore.s:T_TRACE for stack switch code.
+	 */
 
 	ddb_regs = *regs;
-
-	/* Get System Stack Pointer (SSP) */
-	ddb_regs_ssp = (int)(&regs[1]);
-	fsize = exframesize[regs->stkfmt];
-	if (fsize > 0)
-		ddb_regs_ssp += fsize;
 
 	db_active++;
 	cnpollc(TRUE);	/* set polling mode, unblank video */
@@ -103,8 +102,6 @@ kdb_trap(type, regs)
 	cnpollc(FALSE);	/* resume interrupt mode */
 	db_active--;
 
-	/* Can't easily honor change in ssp.  Oh well. */
-
 	*regs = ddb_regs;
 
 	/*
@@ -113,15 +110,11 @@ kdb_trap(type, regs)
 	 * trace bit in the current SR (and trapping while exiting KDB).
 	 */
 	(void) spl7();
-#if 0
-	if (!USERMODE(regs->sr) && (regs->sr & SR_T1) && (current_thread())) {
-		current_thread()->pcb->pcb_flag |= TRACE_KDB;
-	}
-	if ((regs->sr & SR_T1) && (current_thread())) {
-		current_thread()->pcb->flag |= TRACE_KDB;
-	}
-#endif
 
+	/*
+	 * Tell caller "We HAVE handled the trap."
+	 * Caller will return to locore and rte.
+	 */
 	return(1);
 }
 
@@ -148,47 +141,3 @@ Debugger()
 	asm ("trap #15");
 }
 
-#if !defined(sun3) && !defined(amiga) && !defined(atari)
-
-/*
- * Read bytes from kernel address space for debugger.
- * XXX - Each port should provide one of these...
- * (See arch/sun3/sun3/db_machdep.c for example.)
- */
-void
-db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register int	size;
-	register char	*data;
-{
-	register char	*src;
-
-	src = (char *)addr;
-	while (--size >= 0)
-		*data++ = *src++;
-}
-
-/*
- * Write bytes to kernel address space for debugger.
- * XXX - Each port should provide one of these...
- * (See arch/sun3/sun3/db_machdep.c for example.)
- */
-void
-db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register int	size;
-	register char	*data;
-{
-	register char	*dst;
-
-	int		oldmap0 = 0;
-	int		oldmap1 = 0;
-	vm_offset_t	addr1;
-	extern char	etext;
-
-	dst = (char *)addr;
-	while (--size >= 0)
-		*dst++ = *data++;
-
-}
-#endif	/* !defined(sun3) && !defined(amiga) && !defined(atari) */
