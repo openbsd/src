@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2001/08/31 15:12:05 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2001/09/18 17:25:24 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -504,6 +504,9 @@ cpu_configure()
 #if 0
 	extern struct user *proc0paddr;	/* XXX see below */
 #endif
+
+	/* Initialize the mountroot_hook list. */
+	LIST_INIT(&mrh_list);
 
 	/* build the bootpath */
 	bootpath_build();
