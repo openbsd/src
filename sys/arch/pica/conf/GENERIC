@@ -31,6 +31,7 @@ options		SYSVMSG		# System V-like message queues
 options		SYSVSEM		# System V-like semaphores
 options		SYSVSHM		# System V-like memory sharing
 options		SHMMAXPGS=1024	# 1024 pages is the default
+options		NATIVE_ELF
 
 # Filesystem options
 options		FIFO		# POSIX fifo support (in all filesystems)
