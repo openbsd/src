@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.7 1997/06/25 12:32:50 downsj Exp $	*/
+/*	$OpenBSD: endian.h,v 1.8 1997/06/25 12:52:09 grr Exp $	*/
 /*	$NetBSD: endian.h,v 1.10 1996/10/13 02:59:55 christos Exp $	*/
 
 /*
@@ -139,6 +139,13 @@ __END_DECLS
 
 /*
  * Macros for network/external number representation conversion.
+ *
+ * The way this works is that HTONS(x) modifies x and *can't* be used as
+ * and rvalue i.e.  foo=HTONS(bar) is wrong.  Likewise x=htons(x) should
+ * never be used where HTONS(x) will serve i.e. foo=htons(foo) is wrong.
+ * Failing to observe these rule will result in code that appears to work
+ * and probably does work, but generates gcc warnings on architectures
+ * where the macros are used to optimize away an unneeded conversion.
  */
 #define	ntohl(x)	betoh32(x)
 #define	ntohs(x)	betoh16(x)
