@@ -1,9 +1,12 @@
-#	$Id: Makefile.bsd-wrapper,v 1.10 1996/02/02 00:11:23 niklas Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.11 1996/02/06 03:38:29 etheisen Exp $
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/cvsinit.8 man/mkmodules.1
+GNUCFLAGS=	CFLAGS="${CFLAGS}"
+CLEANFILES=	man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 \
+		man/cvsinit.cat8 man/mkmodules.cat1
 
 all:	config.status
-	${MAKE} LDFLAGS=${LDSTATIC}
+	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
 
 .FORCE:	.IGNORE
 
@@ -15,12 +18,13 @@ config.status:
 	sh ${.CURDIR}/configure --prefix=/usr --with-krb4=/usr
 
 install: maninstall
-	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
+	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
+		infodir=${DESTDIR}/usr/share/info \
 		bindir=${DESTDIR}/usr/bin INSTALL_MAN= install
 
 clean cleandir:
+	rm -f ${CLEANFILES}
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
-	rm -f man/cvs.cat1 man/cvs.cat5 man/cvsbug.cat8 man/cvsinit.cat8 man/mkmodules.cat1
 
 depend:
 	# Nothing here so far...
