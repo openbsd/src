@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.27 2003/11/09 08:56:55 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.28 2003/11/14 08:17:46 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -179,6 +179,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 	u_int8_t vhid = sc->sc_vhid & 0xff;
 	struct ifaddr *ifa;
 	int i;
+	struct in6_addr in6;
 
 	/* compute ipad from key */
 	bzero(sc->sc_pad, sizeof(sc->sc_pad));
@@ -202,10 +203,12 @@ carp_hmac_prepare(struct carp_softc *sc)
 #endif /* INET */
 #ifdef INET6
 	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
-		if (ifa->ifa_addr->sa_family == AF_INET6)
-			SHA1Update(&sc->sc_sha1,
-			    (void *)&ifatoia6(ifa)->ia_addr.sin6_addr,
-			    sizeof(struct in6_addr));
+		if (ifa->ifa_addr->sa_family == AF_INET6) {
+			in6 = ifatoia6(ifa)->ia_addr.sin6_addr;
+			if (IN6_IS_ADDR_LINKLOCAL(&in6))
+				in6.s6_addr16[1] = 0;
+			SHA1Update(&sc->sc_sha1, (void *)&in6, sizeof(in6));
+		}
 	}
 #endif /* INET6 */
 
