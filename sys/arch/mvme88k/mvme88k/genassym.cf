@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2001/12/16 23:49:46 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2001/12/22 17:54:23 smurph Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
-#	$Id: genassym.cf,v 1.4 2001/12/16 23:49:46 miod Exp $
+#	$Id: genassym.cf,v 1.5 2001/12/22 17:54:23 smurph Exp $
 #
 
 include <sys/param.h>
@@ -107,13 +107,21 @@ define	EF_MODE		offsetof(struct m88100_saved_state, mode) / sizeof(int)
 define	EF_RET		offsetof(struct m88100_saved_state, scratch1) / sizeof(int)
 define	EF_IPFSR	offsetof(struct m88100_saved_state, ipfsr) / sizeof(int)
 define	EF_DPFSR	offsetof(struct m88100_saved_state, dpfsr) / sizeof(int)
+define	EF_CPU		offsetof(struct m88100_saved_state, cpu) / sizeof(int)
+
+# m88110 m88100_saved_state element indexes
+define	EF_EXIP		offsetof(struct m88100_saved_state, exip) / sizeof(int)
+define	EF_ENIP		offsetof(struct m88100_saved_state, enip) / sizeof(int)
 define	EF_DSR		offsetof(struct m88100_saved_state, dsr) / sizeof(int)
 define	EF_DLAR		offsetof(struct m88100_saved_state, dlar) / sizeof(int)
 define	EF_DPAR		offsetof(struct m88100_saved_state, dpar) / sizeof(int)
-define	EF_ISR		offsetof(struct m88100_saved_state, dsr) / sizeof(int)
+define	EF_ISR		offsetof(struct m88100_saved_state, isr) / sizeof(int)
 define	EF_ILAR		offsetof(struct m88100_saved_state, ilar) / sizeof(int)
 define	EF_IPAR		offsetof(struct m88100_saved_state, ipar) / sizeof(int)
-define	EF_CPU		offsetof(struct m88100_saved_state, cpu) / sizeof(int)
+define	EF_ISAP		offsetof(struct m88100_saved_state, isap) / sizeof(int)
+define	EF_DSAP		offsetof(struct m88100_saved_state, dsap) / sizeof(int)
+define	EF_IUAP		offsetof(struct m88100_saved_state, iuap) / sizeof(int)
+define	EF_DUAP		offsetof(struct m88100_saved_state, duap) / sizeof(int)
 
 define	SIZEOF_EF	sizeof(struct m88100_saved_state)
 
@@ -139,3 +147,4 @@ member	pcb_r28
 member	pcb_r29
 member	pcb_r30
 member	pcb_sp
+
