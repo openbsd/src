@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.117 2002/09/25 12:19:12 krw Exp $
+#	$OpenBSD: install.sh,v 1.118 2002/09/28 23:35:12 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -94,8 +94,6 @@ if [ ! -f /etc/fstab ]; then
 
 	while : ; do
 		_DKDEVS=`rmel "$DISK" $_DKDEVS`
-		_DKDEVS=${_DKDEVS% }
-		[ "$_DKDEVS" ] || break
 
 		# Always do ROOTDISK first, and repeat until
 		# it is configured acceptably.

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.259 2002/09/24 01:26:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.260 2002/09/28 23:35:12 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -197,11 +197,12 @@ askpass() {
 # Allow the user to escape to shells ('!') or execute commands
 # ('!foo') before entering the input.
 ask() {
-	echo -n "$1 "
-	[ $# -lt 2 ] || echo -n "[$2] "
+	local _question=$1 _default=$2
 
 	set -o noglob
 	while : ; do
+		echo -n "$_question "
+		[[ -z $_default ]] || echo -n "[$_default] "
 		read resp
 		case $resp in
 		!)	echo "Type 'exit' to return to install."
@@ -209,7 +210,7 @@ ask() {
 			;;
 		!*)	eval ${resp#?}
 			;;
-		*)	: ${resp:=$2}
+		*)	: ${resp:=$_default}
 			break
 			;;
 		esac
@@ -242,17 +243,29 @@ ask_until () {
 ask_which () {
 	local _name=$1 _query=$2 _devs=$3 _defdev=$4
 
-	[ "$_defdev" ] || _defdev=done
+	# If not default device is supplied, assume 'done'.
+	: ${_defdev:=done}
+
+	# A trailing space may be present if _devs list
+	# was manipulated by rmel().
+	_devs=${_devs% }
 
 	resp=
+	if [[ -z $_devs ]]; then
+		echo "Done - no available ${_name}s found."
+		resp=done
+	fi
+
 	while [ -z "$resp" ]; do
-		echo "Available ${_name}s are: ${_devs}."
-		ask "Which one $_query (or done)" "$_defdev"
+		# Put both lines in ask prompt, rather than use a
+		# separate 'echo', to ensure entire question is
+		# re-ask'ed after a '!' '!foo' shell escape.
+		ask "Available ${_name}s are: ${_devs}.\nWhich one $_query (or done)" "$_defdev"
 
 		if isin $resp $_devs ; then
 			makedev $resp || resp=
 		elif [ "$resp" != "done" ]; then
-			echo "\n'$resp' is not a valid choice."
+			echo "'$resp' is not a valid choice."
 			resp=
 		fi
 	done
@@ -314,6 +327,8 @@ cutword () {
 
 # read a line of data, return last element. Equiv. of awk '{print $NF}'.
 cutlast () {
+	local _a
+
 	read _a; set -- $_a
 	[ $# -gt 0 ] || return
 	eval echo \$\{$#\}
@@ -1163,12 +1178,6 @@ install_mounted_fs() {
 install_cdrom() {
 	local _drive _part _fstype _directory _n
 
-	# Get the cdrom device info
-	if [ -z "$CDDEVS" ]; then
-		echo "No CD-ROM devices are available."
-		return
-	fi
-
 	ask_which "CD-ROM" "contains the ${MODE} media?" "$CDDEVS" "`echo $CDDEVS | cutword 1`"
 	[ "$resp" = "done" ] && return
 
@@ -1255,7 +1264,7 @@ mount_a_disk() {
 	local _drive _def_partition _partition_range _partition
 	local _fstype _fsopts
 
-	ask_which "disk" "contains the ${MODE} sets?" "$DKDEVS"
+	ask_which "disk" "contains the ${MODE} sets?" "$DKDEVS" "`echo $DKDEVS | cutword 1`"
 	[ "$resp" = "done" ] && return 1
 
 	_drive=$resp
@@ -1542,7 +1551,6 @@ __EOT
 
 You can now try to install the missing set(s), or you can enter '!' at the
 prompt to escape to a shell and fix things by hand.
-
 __EOT
 
 	return 1
@@ -1554,12 +1562,10 @@ __EOT
 install_sets() {
  	cat << __EOT
 
-You will now specify the location and names of the ${MODE} sets you want
-to load. You will be able to repeat this step until all of your sets
-have been successfully loaded.
-
-If you are not sure what sets to ${MODE}, refer to the installation notes
-for details on the contents of each.
+You will now specify the location and names of the ${MODE} sets you want to
+load. You will be able to repeat this step until all of your sets have been
+successfully loaded. If you are not sure what sets to ${MODE}, refer to the
+installation notes for details on the contents of each.
 __EOT
 
 	while : ; do
@@ -1567,7 +1573,6 @@ __EOT
 
 Sets can be located on a (m)ounted filesystem; a (c)drom, (d)isk or (t)ape
 device; or a (f)tp, (n)fs or (h)ttp server.
-
 __EOT
 		ask "Where are the ${MODE} sets you want to use? (m, c, f, etc.)"
 
@@ -1592,7 +1597,7 @@ __EOT
 
 		# Give the user the opportunity to extract more sets.
 
-		ask "\nExtract more sets?" n
+		ask "Extract more sets?" n
 		case $resp in
 		n*|N*)	# Perform sanity checks...
 			sane_install && break
