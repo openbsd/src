@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.4 1996/11/13 22:05:10 niklas Exp $	*/
+/*	$OpenBSD: brk.S,v 1.5 2002/10/06 23:31:21 art Exp $	*/
 /*	$NetBSD: brk.S,v 1.4 1996/10/17 03:08:15 cgd Exp $	*/
 
 /*
@@ -32,11 +32,11 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: brk.S,v 1.4 1996/11/13 22:05:10 niklas Exp $"
+	.asciz "$OpenBSD: brk.S,v 1.5 2002/10/06 23:31:21 art Exp $"
 #endif /* SYSLIBC_SCCS */
 
 	.globl	_end
-IMPORT(curbrk, 8)
+IMPORT(__curbrk, 8)
 
 	.data
 EXPORT(minbrk)
@@ -50,7 +50,7 @@ L1:	LDGP(pv)
 	cmpult  a0, v0, t0
 	cmovne  t0, v0, a0
 	CALLSYS_ERROR(break)
-	stq	a0, curbrk
+	stq	a0, __curbrk
 	mov	zero, v0
 	RET
 END(brk)
