@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISKU5,v 1.6 2004/01/04 00:29:50 deraadt Exp $
+# 	$OpenBSD: RAMDISKU5,v 1.7 2004/09/16 09:14:04 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -35,40 +35,40 @@ cpu0	at mainbus0
 
 # Bus types found on SPARC systems.
 psycho*	at mainbus0
-pci*	at psycho?				# Ultra 5
+pci*	at psycho?		# Ultra 5
 pci*	at ppb?
-ppb*	at pci? dev ? function ?
+ppb*	at pci?
 ebus*	at pci?
 
-hme*	at pci? dev ? function ?
-gem*	at pci? dev ? function ?
+hme*	at pci?
+gem*	at pci?
 
 auxio*	at ebus?
 #com*	at ebus?
-clock*	at ebus?				# Mostek clock 
+clock*	at ebus?		# Mostek clock 
 
 ## PROM console driver -- if all else fails
-pcons0	at mainbus0				# PROM console
+pcons0	at mainbus0		# PROM console
 
-timer*	at mainbus0				# Timer chip (some systems)
+timer*	at mainbus0		# Timer chip (some systems)
 
-pciide*	at pci? dev ? function ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0a00
-atapiscsi* at pciide? channel ?
+pciide*	at pci? flags 0x0000
+wd*	at pciide? flags 0x0a00
+atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
-siop*	at pci? dev ? function ?
+siop*	at pci?
 scsibus*	at siop?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*		at scsibus? target ? lun ?	# SCSI disks
-#cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+sd*	at scsibus?		# SCSI disks
+#cd*	at scsibus?		# SCSI CD-ROMs
 
 # Media Independent Interface (mii) drivers)
-nsphy*	at mii? phy ?				# NS and compatible PHYs
-qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
-ukphy*	at mii? phy ?				# Unknown PHYs
+nsphy*	at mii?			# NS and compatible PHYs
+qsphy*	at mii?			# Quality Semi QS6612 PHYs
+ukphy*	at mii?			# Unknown PHYs
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback

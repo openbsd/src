@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.28 2004/08/26 03:44:49 brad Exp $
+# 	$OpenBSD: RAMDISK,v 1.29 2004/09/16 09:14:04 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -34,32 +34,32 @@ mainbus0 at root
 cpu0	at mainbus0
 
 # Bus types found on SPARC systems.
-sbus0	at mainbus0				# Ultra 1
+sbus0	at mainbus0		# Ultra 1
 psycho*	at mainbus0
-pci*	at psycho?				# Ultra 5
+pci*	at psycho?		# Ultra 5
 pci*	at ppb?
-ppb*	at pci? dev ? function ?
+ppb*	at pci?
 ebus*	at pci?
 
 # PCI Ethernet
-hme*	at pci? dev ? function ?
-gem*	at pci? dev ? function ?
-#ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
-fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
-xl*	at pci? dev ? function ?		# 3C9xx ethernet
-dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
-em*	at pci? dev ? function ?		# Intel Pro/1000 ethernet
+hme*	at pci?
+gem*	at pci?
+#ti*	at pci?			# Alteon Tigon 1Gb ethernet
+fxp*	at pci?			# EtherExpress 10/100B ethernet
+xl*	at pci?			# 3C9xx ethernet
+dc*	at pci?			# 21143, "tulip" clone ethernet
+em*	at pci?			# Intel Pro/1000 ethernet
 
 auxio*	at ebus?
 auxio*	at sbus?
 #com*	at ebus?
-clock*	at sbus?				# Mostek clock 
+clock*	at sbus?			# Mostek clock 
 clock*	at ebus?
-rtc*	at ebus?				# DS1287/M5819 clock
-timer*	at mainbus0				# Timer chip
+rtc*	at ebus?			# DS1287/M5819 clock
+timer*	at mainbus0			# Timer chip
 
 ## PROM console driver -- if all else fails
-pcons0	at mainbus0				# PROM console
+pcons0	at mainbus0			# PROM console
 
 ## Lance Ethernet - AMD7990
 le*		at sbus?
@@ -74,9 +74,9 @@ qe*	at qec?
 be*	at qec?
 hme*	at sbus?
 
-pciide*	at pci? dev ? function ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0a00
-atapiscsi* at pciide? channel ?
+pciide*	at pci? flags 0x0000
+wd*	at pciide? flags 0x0a00
+atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
 #
@@ -89,15 +89,15 @@ scsibus* at atapiscsi?
 #	      devices should be allowed to disconnect for the SCSI bus
 #	      to operate acceptably.
 #
-dma*	at sbus?				# SBus
-esp*	at dma? flags 0x0000			# SBus
+dma*	at sbus?		# SBus
+esp*	at dma? flags 0x0000	# SBus
 esp*	at sbus?
 isp*	at sbus?
 option ISP_COMPILE_1000_FW=1
 scsibus* at esp?
 
-siop*	at pci? dev ? function ?
-isp*	at pci? dev ? function ?
+siop*	at pci?
+isp*	at pci?
 option ISP_COMPILE_FW=1
 scsibus*	at siop?
 
@@ -105,20 +105,20 @@ scsibus*	at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*	at scsibus? target ? lun ?	# SCSI disks
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
+sd*	at scsibus?		# SCSI disks
+cd*	at scsibus?		# SCSI CD-ROMs
 
 # Media Independent Interface (mii) drivers)
-exphy*	at mii? phy ?				# 3Com internal PHYs
-brgphy*	at mii? phy ?				# Broadcom PHYs
-nsphy*	at mii? phy ?				# NS and compatible PHYs
-qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
-dcphy*	at mii? phy ?				# Digital clone PHYs
-amphy*	at mii? phy ?				# AMD AM79c873 PHYs
-iophy*	at mii? phy ?				# Intel 82553 PHYs
-inphy*	at mii? phy ?				# Intel 82555 PHYs
-lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
-ukphy*	at mii? phy ?				# Unknown PHYs
+exphy*	at mii?			# 3Com internal PHYs
+brgphy*	at mii?			# Broadcom PHYs
+nsphy*	at mii?			# NS and compatible PHYs
+qsphy*	at mii?			# Quality Semi QS6612 PHYs
+dcphy*	at mii?			# Digital clone PHYs
+amphy*	at mii?			# AMD AM79c873 PHYs
+iophy*	at mii?			# Intel 82553 PHYs
+inphy*	at mii?			# Intel 82555 PHYs
+lxtphy*	at mii?			# Level1 LXT970 PHYs
+ukphy*	at mii?			# Unknown PHYs
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.127 2004/09/15 20:28:53 grange Exp $
+#	$OpenBSD: files.i386,v 1.128 2004/09/16 09:14:03 mickey Exp $
 #
 # new style config file for i386 architecture
 #
@@ -83,7 +83,7 @@ include "../../../dev/ata/files.ata"
 # System bus types
 #
 
-define mainbus { apid = -1 }
+define mainbus {[apid = -1]}
 device	mainbus: isabus, eisabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
@@ -197,7 +197,7 @@ attach sysbeep at pcppi
 
 # Floppy disk controller
 # XXX temporarily conflicts with arc, will soon move to files.isa
-device	fdc {drive = -1}
+device	fdc {[drive = -1]}
 attach	fdc at isa
 file	dev/isa/fdc.c		fdc needs-flag
 
@@ -287,7 +287,7 @@ define	mpbios
 file	arch/i386/i386/mpbios.c		mpbios needs-flag
 
 # CPUS
-define	cpu { apid = -1 }
+define	cpu {[apid = -1]}
 device	cpu
 attach	cpu at mainbus
 file	arch/i386/i386/cpu.c		cpu

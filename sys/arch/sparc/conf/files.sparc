@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.59 2004/02/29 21:44:12 miod Exp $
+#	$OpenBSD: files.sparc,v 1.60 2004/09/16 09:14:04 mickey Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -61,7 +61,7 @@ device memreg
 attach memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
 
-device zs { channel = -1 }
+device zs {[channel = -1]}
 attach zs at mainbus, obio
 file	arch/sparc/dev/zs.c			zs needs-flag
 file	arch/sparc/dev/z8530sc.c		zs
@@ -239,14 +239,14 @@ file	arch/sparc/dev/if_le.c		le
 attach ie at obio, vmes, vmel
 file	arch/sparc/dev/if_ie.c		ie
 
-device xdc {drive = -1}
+device xdc {[drive = -1]}
 attach xdc at vmel
 device xd: disk
 attach xd at xdc
 file	arch/sparc/dev/xd.c		xd needs-flag
 major	{xd = 10}
 
-device xyc {drive = -1}
+device xyc {[drive = -1]}
 attach xyc at vmes
 device xy: disk
 attach xy at xyc

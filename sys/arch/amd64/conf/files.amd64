@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.5 2004/08/20 15:19:28 millert Exp $
+#	$OpenBSD: files.amd64,v 1.6 2004/09/16 09:14:03 mickey Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -64,12 +64,12 @@ include "dev/i2o/files.i2o"
 include "dev/atapiscsi/files.atapiscsi"
 include "dev/ata/files.ata"
 
-define mainbus { apid = -1 }
+define mainbus {[apid = -1]}
 device	mainbus: isabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c	mainbus
 
-define	cpu { apid = -1 }
+define	cpu {[apid = -1]}
 device	cpu
 attach	cpu at mainbus
 file	arch/amd64/amd64/cpu.c	cpu
@@ -127,7 +127,7 @@ device	sysbeep
 attach	sysbeep at pcppi
 
 # Floppy disk controller
-device	fdc { drive = - 1 }
+device	fdc {[drive = -1]}
 attach	fdc at isa
 file	dev/isa/fdc.c			fdc needs-flag
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: M197,v 1.25 2004/05/07 18:12:55 miod Exp $
+#	$OpenBSD: M197,v 1.26 2004/09/16 09:14:03 mickey Exp $
 
 machine mvme88k m88k
 
@@ -62,6 +62,6 @@ scsibus* at vs?
 scsibus* at osiop?
 
 # ------------------------------ scsibus? devices ----------------------
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
+sd*	at scsibus?
+st*	at scsibus?
+cd*	at scsibus?

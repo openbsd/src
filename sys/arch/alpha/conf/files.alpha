@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.60 2004/07/03 19:18:47 millert Exp $
+#	$OpenBSD: files.alpha,v 1.61 2004/09/16 09:14:03 mickey Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -138,8 +138,8 @@ attach isabeep at pcppi
 include "dev/pckbc/files.pckbc"
 
 # Floppy disk controller
-#device	fdc {drive = -1}: isa_dma
-device	fdc {drive = -1}
+#device	fdc {[drive = -1]}: isa_dma
+device	fdc {[drive = -1]}
 attach	fdc at isa
 file	dev/isa/fdc.c	fdc needs-flag
 

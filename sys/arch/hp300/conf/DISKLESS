@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.23 2004/08/04 20:14:39 miod Exp $
+#	$OpenBSD: DISKLESS,v 1.24 2004/09/16 09:14:03 mickey Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -58,26 +58,26 @@ frodo0		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
-apci*		at frodo? offset ?	# tty flavor
+apci*		at frodo?	# tty flavor
 
 # Davinci framebuffer
 dvbox*		at intio?
-dvbox*		at dio? scode ?
+dvbox*		at dio?
 
 # Gatorbox framebuffer
 gbox*		at intio?
-gbox*		at dio? scode ?
+gbox*		at dio?
 
 # Hyperion framebuffer
-hyper*		at dio? scode ?
+hyper*		at dio?
 
 # Renaissance framebuffer
 rbox*		at intio?
-rbox*		at dio? scode ?
+rbox*		at dio?
 
 # Topcat/catseye framebuffers
 topcat*		at intio?
-topcat*		at dio? scode ?
+topcat*		at dio?
 
 # Framebuffer abstraction
 grf*		at dvbox?
@@ -90,8 +90,8 @@ grf*		at topcat?
 ite*		at grf?
 
 dca0		at dio? scode 9	flags 1	  # DCA serial interfaces
-dca*		at dio? scode ?
+dca*		at dio?
 
-dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
+dcm*		at dio?	flags 0xe # DCM 4- or 8-port serial interfaces
 
-le*		at dio? scode ?		# LANCE ethernet interfaces
+le*		at dio?		# LANCE ethernet interfaces

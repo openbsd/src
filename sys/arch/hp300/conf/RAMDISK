@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.19 2004/08/25 21:00:37 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.20 2004/09/16 09:14:03 mickey Exp $
 #
 # Ram disk kernel.
 #
@@ -66,26 +66,26 @@ frodo0		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
 #dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
-apci*		at frodo? offset ?	# tty flavor
+apci*		at frodo?		# tty flavor
 
 # Davinci framebuffer
 dvbox*		at intio?
-dvbox*		at dio? scode ?
+dvbox*		at dio?
 
 # Gatorbox framebuffer
 gbox*		at intio?
-gbox*		at dio? scode ?
+gbox*		at dio?
 
 # Hyperion framebuffer
-hyper*		at dio? scode ?
+hyper*		at dio?
 
 # Renaissance framebuffer
 rbox*		at intio?
-rbox*		at dio? scode ?
+rbox*		at dio?
 
 # Topcat/catseye framebuffers
 topcat*		at intio?
-topcat*		at dio? scode ?
+topcat*		at dio?
 
 # Framebuffer abstraction
 grf*		at dvbox?
@@ -97,32 +97,32 @@ grf*		at topcat?
 # Internal Terminal Emulator
 ite*		at grf?
 
-dca0		at dio? scode 9	flags 1	  # DCA serial interfaces
-dca*		at dio? scode ?
+dca0		at dio? scode 9	flags 1	# DCA serial interfaces
+dca*		at dio?
 
-dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
+dcm*		at dio? flags 0xe	# DCM 4- or 8-port serial interfaces
 
-le*		at dio? scode ?		# LANCE ethernet interfaces
+le*		at dio?			# LANCE ethernet interfaces
 
 nhpib0		at dio? scode 7		# slow internal HP-IB
-nhpib*		at dio? scode ?
+nhpib*		at dio?
 
-fhpib*		at dio? scode ?		# `fast' HP-IB
+fhpib*		at dio?			# `fast' HP-IB
 
 hpibbus0	at nhpib0
 hpibbus*	at nhpib?
 hpibbus*	at fhpib?
 
-hd*		at hpibbus? slave ? punit ?	# HP-IB disks
-ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
-mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
+hd*		at hpibbus?		# HP-IB disks
+ct*		at hpibbus?		# HP-IB cartridge tapes
+mt*		at hpibbus?		# HP-IB 9-track tape
 
-spc*		at dio? scode ? flags 0x00	# SCSI controller
+spc*		at dio? flags 0x00	# SCSI controller
 scsibus*	at spc?
 
-sd*		at scsibus? target ? lun ?	# SCSI disks
-st*		at scsibus? target ? lun ?	# SCSI tapes
-cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+sd*		at scsibus?		# SCSI disks
+st*		at scsibus?		# SCSI tapes
+cd*		at scsibus?		# SCSI CD-ROMs
 
 pseudo-device	loop	1	# network loopback
 pseudo-device	pty	16	# pseudo-terminals

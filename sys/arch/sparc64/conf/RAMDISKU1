@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISKU1,v 1.7 2004/03/20 14:56:05 deraadt Exp $
+# 	$OpenBSD: RAMDISKU1,v 1.8 2004/09/16 09:14:04 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -63,20 +63,20 @@ hme*		at sbus?
 #	      devices should be allowed to disconnect for the SCSI bus
 #	      to operate acceptably.
 #
-dma*	at sbus?				# SBus
-esp*	at dma? flags 0x0000			# SBus
+dma*	at sbus?		# SBus
+esp*	at dma? flags 0x0000	# SBus
 esp*	at sbus?
 scsibus*	at esp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*		at scsibus? target ? lun ?	# SCSI disks
-#cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+sd*	at scsibus?		# SCSI disks
+#cd*	at scsibus?		# SCSI CD-ROMs
 
 # Media Independent Interface (mii) drivers)
-nsphy*	at mii? phy ?				# NS and compatible PHYs
-qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
-ukphy*	at mii? phy ?				# Unknown PHYs
+nsphy*	at mii?			# NS and compatible PHYs
+qsphy*	at mii?			# Quality Semi QS6612 PHYs
+ukphy*	at mii?			# Unknown PHYs
 
 pseudo-device	rd	2	# ramdisk
 pseudo-device	loop	1	# network loopback

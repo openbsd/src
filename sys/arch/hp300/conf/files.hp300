@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.22 2004/08/03 21:46:54 miod Exp $
+#	$OpenBSD: files.hp300,v 1.23 2004/09/16 09:14:03 mickey Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -27,7 +27,7 @@ file	arch/hp300/dev/intio.c		intio
 # DIO bus
 #
 
-device	dio { scode = -1 }
+device	dio {[scode = -1]}
 attach	dio at mainbus
 file	arch/hp300/dev/dio.c		dio
 
@@ -36,7 +36,7 @@ file	arch/hp300/dev/dio.c		dio
 #
 
 # Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
-device	frodo { offset = -1 }
+device	frodo {[offset = -1]}
 attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo
 
@@ -119,7 +119,7 @@ attach	fhpib at dio
 file	arch/hp300/dev/fhpib.c		fhpib
 
 # HP-IB bus layer
-device	hpibbus { slave = -1, punit = -1 }
+device	hpibbus {[slave = -1], [punit = -1]}
 attach	hpibbus at hpibdev
 file	arch/hp300/dev/hpib.c		hpibbus
 

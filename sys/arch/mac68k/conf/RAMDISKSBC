@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKSBC,v 1.4 2004/04/01 22:15:55 xsa Exp $
+#	$OpenBSD: RAMDISKSBC,v 1.5 2004/09/16 09:14:03 mickey Exp $
 #
 # RAMDISKSBC - bsd.rd configuration file (SBC version)
 
@@ -52,7 +52,7 @@ intvid0	at obio?		# Internal video hardware
 mc*	at obio?		# MACE ethernet on Centris/Quadra 660av
 sn*	at obio?		# Internal ethernet
 zsc0	at obio?		# Zilog serial chip
-zstty*	at zsc? channel ?
+zstty*	at zsc?
 
 nubus0		at mainbus?
 
@@ -75,8 +75,8 @@ scsibus*	at esp?
 #scsibus*	at ncrscsi?
 scsibus*	at sbc?
 
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+sd*	at scsibus?		# SCSI disk drives
+st*	at scsibus?		# SCSI tape drives
+cd*	at scsibus?		# SCSI CD-ROM drives
 
 pseudo-device	rd 1

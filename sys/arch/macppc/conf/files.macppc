@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.20 2004/07/20 14:51:07 miod Exp $
+#	$OpenBSD: files.macppc,v 1.21 2004/09/16 09:14:03 mickey Exp $
 
 #
 # macppc-specific configuration info
@@ -136,7 +136,7 @@ device	openpic {}
 attach	openpic at macobio
 file	arch/macppc/dev/openpic.c			openpic
 
-device	zsc {channel = -1}
+device	zsc {[channel = -1]}
 attach	zsc at macobio
 file	arch/macppc/dev/zs.c				zsc needs-flag
 file	arch/macppc/dev/z8530sc.c			zsc

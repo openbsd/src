@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.6 2002/05/02 22:56:06 miod Exp $
+#	$OpenBSD: files.tc,v 1.7 2004/09/16 09:14:02 mickey Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -9,7 +9,7 @@ device	tc {[slot = -1], [offset = -1]}
 file	dev/tc/tc.c			tc	needs-flag
 
 # IOCTL ASIC
-device	ioasic { offset = -1 }
+device	ioasic {[offset = -1]}
 attach	ioasic at tc
 file	dev/tc/ioasic_subr.c		ioasic
 
@@ -29,7 +29,7 @@ attach	fta at tc
 file	dev/tc/if_fta.c			fta
 
 # TCDS dual channel SCSI
-device	tcds { chip = -1 }
+device	tcds {[chip = -1]}
 attach	tcds at tc
 file	dev/tc/tcds.c			tcds
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 2004/08/19 21:49:01 miod Exp $
+#	$OpenBSD: GENERIC,v 1.99 2004/09/16 09:14:04 mickey Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -30,113 +30,113 @@ pci*	at psycho?				#
 schizo*	at mainbus0
 pci*	at schizo?				#
 pci*	at ppb?
-ppb*	at pci? dev ? function ?
+ppb*	at pci?
 ebus*	at pci?
 
 # PCI Ethernet
-hme*	at pci? dev ? function ?
-gem*	at pci? dev ? function ?
-#ti*	at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
-fxp*	at pci? dev ? function ?	# EtherExpress 10/100B ethernet
-xl*	at pci? dev ? function ?	# 3C9xx ethernet
-dc*	at pci? dev ? function ?	# 21143, "tulip" clone ethernet
-em*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
+hme*	at pci?
+gem*	at pci?
+#ti*	at pci?			# Alteon Tigon 1Gb ethernet
+fxp*	at pci?			# EtherExpress 10/100B ethernet
+xl*	at pci?			# 3C9xx ethernet
+dc*	at pci?			# 21143, "tulip" clone ethernet
+em*	at pci?			# Intel Pro/1000 ethernet
 
 # PCI SCSI
-ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+ahc*	at pci?			# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
-siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+siop*	at pci?			# NCR 538XX SCSI controllers
 scsibus* at siop?
-isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 option ISP_COMPILE_FW=1
 
 # PCI Display
-vgafb*		at pci? dev ? function ?
+vgafb*		at pci?
 wsdisplay*	at vgafb?
 
 # PCI crypto
-hifn*		at pci? dev ? function ?	# Hifn 7751/7811/7951
-#nofn*		at pci? dev ? function ?	# Hifn 7814/7851/7854
-lofn*		at pci? dev ? function ?	# Hifn 6500
-ubsec*		at pci? dev ? function ?	# Broadcom 580[125]/582[012]
+hifn*	at pci?			# Hifn 7751/7811/7951
+#nofn*	at pci?			# Hifn 7814/7851/7854
+lofn*	at pci?			# Hifn 6500
+ubsec*	at pci?			# Broadcom 580[125]/582[012]
 
 # PCI sound
-autri*		at pci? dev ? function ? flags 0x0000	# Trident 4D WAVE
-eap*		at pci? dev ? function ?	# Ensoniq AudioPCI S5016
-eso*		at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+autri*	at pci? flags 0x0000	# Trident 4D WAVE
+eap*	at pci?			# Ensoniq AudioPCI S5016
+eso*	at pci?			# ESS Solo-1 PCI AudioDrive
 
-puc*		at pci?				# PCI "universial" comm device
-com*		at puc? port ?
-#lpt*		at puc? port ?
+puc*	at pci?			# PCI "universial" comm device
+com*	at puc?
+#lpt*	at puc?
 
 # Sound support
-audio*		at audioce?
-audio*		at audiocs?
-audio*		at autri?
-audio*		at eap?
-audio*		at eso?
+audio*	at audioce?
+audio*	at audiocs?
+audio*	at autri?
+audio*	at eap?
+audio*	at eso?
 
 # OPL[23] FM synthesizers
-opl*		at eso?
+opl*	at eso?
 
 # MIDI support
-midi*		at autri?
-midi*		at opl?
+midi*	at autri?
+midi*	at opl?
 
 # PCI USB Controllers
-ohci*	at pci? dev ? function ?	# Open Host Controller
-uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
+ohci*	at pci?			# Open Host Controller
+uhci*	at pci?			# Universal Host Controller (Intel)
 
 # USB bus support
 usb*	at ohci? flags 0x1
 usb*	at uhci? flags 0x1
 
 # USB devices
-uhub*	at usb?				# USB Hubs
-uhub*	at uhub? port ? configuration ?	# USB Hubs
-umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+umodem*	at uhub?		# USB Modems/Serial
 ucom*	at umodem?
-uvisor*	at uhub? port ? configuration ?	# Handspring Visor
+uvisor*	at uhub?		# Handspring Visor
 ucom*	at uvisor?
-uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
-ucom*	at uvscom? portno ?
-ubsa*	at uhub? port ?			# Belkin serial adapter
-ucom*	at ubsa? portno ?
-uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-umct*	at uhub? port ?			# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-uaudio* at uhub? port ? configuration ?	# USB Audio
+uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*	at uvscom?
+ubsa*	at uhub?		# Belkin serial adapter
+ucom*	at ubsa?
+uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi?
+uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom?
+umct*	at uhub?		# MCT USB-RS232 serial adapter
+ucom*	at umct?
+uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
-umidi*	at uhub? port ? configuration ?	# USB MIDI
+umidi*	at uhub?		# USB MIDI
 midi*	at umidi?
-ulpt*	at uhub? port ? configuration ? # USB Printers
-umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+ulpt*	at uhub?		# USB Printers
+umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
-uhidev*	at uhub? port ? configuration ? interface ?	# Human Interface Devices
-ums*	at uhidev? reportid ?		# USB mouse
+uhidev*	at uhub?		# Human Interface Devices
+ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
-ukbd*	at uhidev? reportid ?		# USB keyboard
-wskbd*	at ukbd? console ? mux 1
-uhid*	at uhidev? reportid ?		# USB generic HID support
-aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
-axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
-cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
-kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
-cdce*	at uhub? port ?			# CDC Ethernet
-upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
-url*	at uhub? port ?			# Realtek RTL8150L based adapters
-wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
-urio*	at uhub? port ?			# Diamond Multimedia Rio 500
-uscanner* at uhub? port ?		# USB Scanners
-usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
+ukbd*	at uhidev?		# USB keyboard
+wskbd*	at ukbd? mux 1
+uhid*	at uhidev?		# USB generic HID support
+aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+cue*	at uhub?		# CATC USB-EL1201A based Ethernet
+kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+cdce*	at uhub?		# CDC Ethernet
+upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+url*	at uhub?		# Realtek RTL8150L based adapters
+wi*	at uhub?		# WaveLAN IEEE 802.11DS
+urio*	at uhub?		# Diamond Multimedia Rio 500
+uscanner* at uhub?		# USB Scanners
+usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
 scsibus* at usscanner?
-uyap*	at uhub? port ?			# Y@P firmware loader
-udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
-radio*	at udsbr?			# USB radio
-ugen*	at uhub? port ? configuration ? # USB Generic driver
+uyap*	at uhub?		# Y@P firmware loader
+udsbr*	at uhub?		# D-Link DSB-R100 radio
+radio*	at udsbr?		# USB radio
+ugen*	at uhub?		# USB Generic driver
 
 #### Standard system devices -- all required for a given architecture
 
@@ -154,15 +154,15 @@ comkbd*	at ebus?
 wskbd* at comkbd?
 
 # i8042 based serial ports (PS/2 ports)
-pckbc*	at ebus?				# controller
-pckbd*	at pckbc?				#  ps2 keyboard
-wskbd*	at pckbd? console ?			#   generic keyboard layer
-pms*	at pckbc?				#  ps2 mouse
-wsmouse* at pms?				#   generic mouse
-pmsi*	at pckbc?				#  ps2 "intelli"mouse
-wsmouse* at pmsi?				#   generic mouse
+pckbc*	at ebus?			# controller
+pckbd*	at pckbc?			#  ps2 keyboard
+wskbd*	at pckbd?			#   generic keyboard layer
+pms*	at pckbc?			#  ps2 mouse
+wsmouse* at pms?			#   generic mouse
+pmsi*	at pckbc?			#  ps2 "intelli"mouse
+wsmouse* at pmsi?			#   generic mouse
 
-audioce*	at ebus?			# ebus cs4231
+audioce*	at ebus?		# ebus cs4231
 
 # parallel ports
 lpt*	at ebus?
@@ -172,12 +172,12 @@ uperf*	at ebus?
 uperf*	at sbus?
 
 zs*	at sbus?
-zstty*	at zs? channel ?
-zskbd*	at zs? channel ?
-wskbd*	at zskbd? console ?
+zstty*	at zs?
+zskbd*	at zs?
+wskbd*	at zskbd?
 
 ## PROM console driver -- if all else fails
-pcons0	at mainbus0				# PROM console
+pcons0	at mainbus0			# PROM console
 
 ## Mostek/DS1287 clocks
 clock*	at sbus?
@@ -211,9 +211,9 @@ spif*		at sbus?
 stty*		at spif?
 sbpp*		at spif?
 
-pciide*	at pci? dev ? function ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0a00
-atapiscsi* at pciide? channel ?
+pciide*	at pci? flags 0x0000
+wd*	at pciide? flags 0x0a00
+atapiscsi* at pciide?
 scsibus* at atapiscsi?
 
 #
@@ -240,64 +240,64 @@ scsibus*	at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*		at scsibus? target ? lun ?	# SCSI disks
-st*		at scsibus? target ? lun ?	# SCSI tapes
-cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
-ch*		at scsibus? target ? lun ?	# SCSI changer devices
-ss*		at scsibus? target ? lun ?	# SCSI scanners
-uk*		at scsibus? target ? lun ?	# unknown SCSI devices
+sd*		at scsibus?		# SCSI disks
+st*		at scsibus?		# SCSI tapes
+cd*		at scsibus?		# SCSI CD-ROMs
+ch*		at scsibus?		# SCSI changer devices
+ss*		at scsibus?		# SCSI scanners
+uk*		at scsibus?		# unknown SCSI devices
 
 # Media Independent Interface (mii) drivers)
-exphy*	at mii? phy ?				# 3Com internal PHYs
-brgphy*	at mii? phy ?				# Broadcom PHYs
-nsphy*	at mii? phy ?				# NS and compatible PHYs
-qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
-dcphy*	at mii? phy ?				# Digital clone PHYs
-amphy*	at mii? phy ?				# AMD AM79c873 PHYs
-iophy*	at mii? phy ?				# Intel 82553 PHYs
-inphy*	at mii? phy ?				# Intel 82555 PHYs
-lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
-ukphy*	at mii? phy ?				# Unknown PHYs
+exphy*	at mii?				# 3Com internal PHYs
+brgphy*	at mii?				# Broadcom PHYs
+nsphy*	at mii?				# NS and compatible PHYs
+qsphy*	at mii?				# Quality Semi QS6612 PHYs
+dcphy*	at mii?				# Digital clone PHYs
+amphy*	at mii?				# AMD AM79c873 PHYs
+iophy*	at mii?				# Intel 82553 PHYs
+inphy*	at mii?				# Intel 82555 PHYs
+lxtphy*	at mii?				# Level1 LXT970 PHYs
+ukphy*	at mii?				# Unknown PHYs
 
-bwtwo*		at sbus?			# bw2, sbus mono framebuffer
+bwtwo*		at sbus?		# bw2, sbus mono framebuffer
 wsdisplay*	at bwtwo?
 
-cgsix*		at sbus?			# cg6, sbus color framebuffer
+cgsix*		at sbus?		# cg6, sbus color framebuffer
 wsdisplay*	at cgsix?
 
-cgthree*	at sbus?			# cg3, sbus color framebuffer
+cgthree*	at sbus?		# cg3, sbus color framebuffer
 wsdisplay*	at cgthree?
 
-zx*		at sbus?			# Sun Leo (ZX) framebuffer
+zx*		at sbus?		# Sun Leo (ZX) framebuffer
 wsdisplay*	at zx?
 
-rfx*		at sbus?			# RasterFlex framebuffer series
+rfx*		at sbus?		# RasterFlex framebuffer series
 wsdisplay*	at rfx?
 
-mgx*		at sbus?			# SMS MGX/MGXPlus framebuffer
+mgx*		at sbus?		# SMS MGX/MGXPlus framebuffer
 wsdisplay*	at mgx?
 
-agten*		at sbus?			# Fujitsu AG-10e framebuffer
+agten*		at sbus?		# Fujitsu AG-10e framebuffer
 wsdisplay*	at agten?
 
 audiocs*	at sbus?
 
-asio*		at sbus?			# Aurora 210SJ
+asio*		at sbus?		# Aurora 210SJ
 com*		at asio?
-apio*		at sbus?			# Aurora 210SJ
+apio*		at sbus?		# Aurora 210SJ
 lpt*		at apio?
 
-stp*		at sbus?			# STP4020
-pcmcia*		at stp? socket ?
-#com*		at pcmcia? function ?		# PCMCIA modems/serial ports
-wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
-wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
+stp*		at sbus?		# STP4020
+pcmcia*		at stp?
+#com*		at pcmcia?		# PCMCIA modems/serial ports
+wi*		at pci?			# WaveLAN IEEE 802.11DS
+wi*		at pcmcia?		# WaveLAN IEEE 802.11DS
 
 creator*	at mainbus0
 creator*	at upa0
 wsdisplay*	at creator?
 
-#pseudo-device	hotplug	1			# devices hot plugging
+#pseudo-device	hotplug	1		# devices hot plugging
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux 	2

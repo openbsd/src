@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.24 2004/05/07 18:12:55 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.25 2004/09/16 09:14:03 mickey Exp $
 
 machine		mvme88k m88k
 
@@ -78,9 +78,9 @@ vs5	at vmes0 addr 0xffff7800 ipl 2
 scsibus* at vs?
 scsibus* at osiop?
 
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
+sd*	at scsibus?
+st*	at scsibus?
+cd*	at scsibus?
 
 pseudo-device	loop	1
 pseudo-device	bpfilter 1

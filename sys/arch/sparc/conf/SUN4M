@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.62 2004/05/09 22:08:04 miod Exp $
+#	$OpenBSD: SUN4M,v 1.63 2004/09/16 09:14:04 mickey Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -62,9 +62,9 @@ led0	at obio0				# sun4m
 zs0	at obio0					# sun4m
 zs1	at obio0					# sun4m
 
-zstty* at zs? channel ?
-zskbd* at zs? channel ?
-wskbd* at zskbd? console ?
+zstty* at zs?
+zskbd* at zs?
+wskbd* at zskbd?
 
 # Magma serial/parallel port devices
 magma*	at sbus?					# magma serial cards
@@ -194,27 +194,27 @@ tctrl0	at obio0
 
 # Sun PCMCIA bridge
 stp*	at sbus?
-pcmcia*	at stp? socket ?
+pcmcia*	at stp?
 
 # PCMCIA controller found on Tadpole SPARCbook
 tslot*	at sbus?
-pcmcia*	at tslot? socket ?
+pcmcia*	at tslot?
 
 # PCMCIA devices
-wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11DS
-#an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
-ne*	at pcmcia? function ?			# NE2000-compat ethernet
-ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet
-#com*	at pcmcia? function ?			# PCMCIA modems/serial ports
+wi*	at pcmcia?		# WaveLAN IEEE 802.11DS
+#an*	at pcmcia?		# Aironet IEEE 802.11DS
+ne*	at pcmcia?		# NE2000-compat ethernet
+ep*	at pcmcia?		# PCMCIA based 3C5xx ethernet
+#com*	at pcmcia?		# PCMCIA modems/serial ports
 
 # Media Independent Interface (mii) drivers (required by hme, ne, ep)
-bmtphy*	at mii? phy ?				# Broadcom 10/100 PHYs
-lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
-nsphy*	at mii? phy ?				# NS and compatible PHYs
-nsphyter* at mii? phy ?
-qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
-tqphy*	at mii? phy ?				# TDK 78Q212x PHYs
-ukphy*	at mii? phy ?
+bmtphy*	at mii?			# Broadcom 10/100 PHYs
+lxtphy*	at mii?			# Level1 LXT970 PHYs
+nsphy*	at mii?			# NS and compatible PHYs
+nsphyter* at mii? 
+qsphy*	at mii?			# Quality Semi QS6612 PHYs
+tqphy*	at mii?			# TDK 78Q212x PHYs
+ukphy*	at mii? 
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
@@ -223,15 +223,15 @@ scsibus* at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*	at scsibus? target ? lun ?		# SCSI disks
-st*	at scsibus? target ? lun ?		# SCSI tapes
-cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
-ch*	at scsibus? target ? lun ?		# SCSI changer devices
-ss*	at scsibus? target ? lun ?		# SCSI scanners
-uk*	at scsibus? target ? lun ?		# unknown SCSI devices
+sd*	at scsibus?		# SCSI disks
+st*	at scsibus?		# SCSI tapes
+cd*	at scsibus?		# SCSI CD-ROMs
+ch*	at scsibus?		# SCSI changer devices
+ss*	at scsibus?		# SCSI scanners
+uk*	at scsibus?		# unknown SCSI devices
 
 # Floppy controller and drive found on SPARCstations.
-fdc0	at obio0				# sun4m controller
-fd*	at fdc0					# the drive itself
+fdc0	at obio0		# sun4m controller
+fd*	at fdc0			# the drive itself
 
 #pseudo-device	strip	1	# radio clock

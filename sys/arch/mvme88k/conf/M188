@@ -1,4 +1,4 @@
-#	$OpenBSD: M188,v 1.23 2004/04/29 14:33:27 miod Exp $
+#	$OpenBSD: M188,v 1.24 2004/09/16 09:14:03 mickey Exp $
 
 machine mvme88k m88k
 
@@ -55,6 +55,6 @@ vs5	at vmes0 addr 0xffff7800 ipl 2
 scsibus* at vs?
 
 # ------------------------------ scsibus devices -----------------------
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
+sd*	at scsibus?
+st*	at scsibus?
+cd*	at scsibus?

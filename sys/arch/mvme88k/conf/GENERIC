@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2004/05/07 18:12:55 miod Exp $
+#	$OpenBSD: GENERIC,v 1.44 2004/09/16 09:14:03 mickey Exp $
 
 machine		mvme88k m88k
 
@@ -72,9 +72,9 @@ vs5	at vmes0 addr 0xffff7800 ipl 2
 scsibus* at vs?
 scsibus* at osiop?
 
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
-ch*	at scsibus? target ? lun ?
-ss*	at scsibus? target ? lun ?
-uk*	at scsibus? target ? lun ?
+sd*	at scsibus?
+st*	at scsibus?
+cd*	at scsibus?
+ch*	at scsibus?
+ss*	at scsibus?
+uk*	at scsibus?

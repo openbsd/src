@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2004/01/28 23:53:56 miod Exp $
+#	$OpenBSD: GENERIC,v 1.22 2004/09/16 09:14:03 mickey Exp $
 
 machine		mvme68k m68k
 
@@ -90,13 +90,13 @@ scsibus* at wdsc?
 scsibus* at ssh?
 scsibus* at vs?
 
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
-ch*	at scsibus? target ? lun ?
-ss*	at scsibus? target ? lun ?
-uk*	at scsibus? target ? lun ?
+sd*	at scsibus?
+st*	at scsibus?
+cd*	at scsibus?
+ch*	at scsibus?
+ss*	at scsibus?
+uk*	at scsibus?
 
 #si0	at vmes0 addr 0xff200000 ipl 2 vec 0x40
 #nxdc0	at vmes0 addr 0xff00ee80 ipl 2 vec 0x44
-#xd*	at xdc? target ?
+#xd*	at xdc?

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4,v 1.28 2003/05/14 01:07:22 miod Exp $
+#	$OpenBSD: SUN4,v 1.29 2004/09/16 09:14:04 mickey Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -60,9 +60,9 @@ zs1	at obio0 addr 0xf0000000 level 12		# sun4/200 and sun4/300
 zs1	at obio0 addr 0x00000000 level 12		# sun4/100
 zs2	at obio0 addr 0xe0000000 level 12		# sun4/300
 
-zstty* at zs? channel ?
-zskbd* at zs? channel ?
-wskbd* at zskbd? console ?
+zstty* at zs?
+zskbd* at zs?
+wskbd* at zskbd?
 
 #
 # Note the flags on the esp entries below, that work around
@@ -99,13 +99,13 @@ xdc0	at vmel0 addr 0xffffee80 level 3 vect 0x44
 xdc1	at vmel0 addr 0xffffee90 level 3 vect 0x45
 xdc2	at vmel0 addr 0xffffeea0 level 3 vect 0x46
 xdc3	at vmel0 addr 0xffffeeb0 level 3 vect 0x47
-xd*	at xdc? drive ?
+xd*	at xdc?
 
 # Xylogics 451 or 451 VME SMD disk controllers and disks, found
 # on sun4 systems.
 xyc0	at vmes0 addr 0xffffee40 level 3 vect 0x48
 xyc1	at vmes0 addr 0xffffee48 level 3 vect 0x49
-xy*	at xyc? drive ?
+xy*	at xyc?
 
 # NCR5380-based "Sun SCSI 3" VME SCSI controller.
 # This driver has several flags which may be enabled by OR'ing
@@ -163,12 +163,12 @@ scsibus* at sw?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*	at scsibus? target ? lun ?		# SCSI disks
-st*	at scsibus? target ? lun ?		# SCSI tapes
-cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
-ch*	at scsibus? target ? lun ?		# SCSI changer devices
-ss*	at scsibus? target ? lun ?		# SCSI scanners
-uk*	at scsibus? target ? lun ?		# unknown SCSI devices
+sd*	at scsibus?		# SCSI disks
+st*	at scsibus?		# SCSI tapes
+cd*	at scsibus?		# SCSI CD-ROMs
+ch*	at scsibus?		# SCSI changer devices
+ss*	at scsibus?		# SCSI scanners
+uk*	at scsibus?		# unknown SCSI devices
 
 #pseudo-device	strip	1	# radio clock
 

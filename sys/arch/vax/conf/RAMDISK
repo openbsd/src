@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.21 2004/01/04 00:29:50 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.22 2004/09/16 09:14:04 mickey Exp $
 
 machine 	vax			# machine type
 
@@ -139,12 +139,12 @@ mt*		at mscpbus? drive?	# MSCP tape
 scsibus*	at asc?
 scsibus*	at ncr?
 
-sd*		at scsibus? target? lun?
-st*		at scsibus? target? lun?
-cd*		at scsibus? target? lun?
-#ch*		at scsibus? target? lun?
-#ss*		at scsibus? target? lun?
-#uk*		at scsibus? target? lun?
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+#ch*		at scsibus?
+#ss*		at scsibus?
+#uk*		at scsibus?
 
 # Workstation console
 #wsdisplay0	at smg?
@@ -153,7 +153,7 @@ cd*		at scsibus? target? lun?
 #wsdisplay0	at qv0
 
 #lkkbd0		at dz0 line 0
-#wskbd*		at lkkbd? console ?
+#wskbd*		at lkkbd?
 #lkms0		at dz0 line 1
 #wsmouse*	at lkms?
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2004/09/15 16:07:31 pefo Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2004/09/16 09:14:04 mickey Exp $
 #
 
 machine		sgi mips64
@@ -75,62 +75,57 @@ macepcibr0	at macebus0	# MACE controller PCI Bus bridge.
 pci*		at macepcibr?	# PCI is on pci bridge
 
 #### SCSI controllers
-ahc*		at pci? dev ? function ?
-siop*		at pci? dev ? function ?
+ahc*		at pci?
+siop*		at pci?
 
 #### NICs
-dc*		at pci? dev ? function ?	# 21143, "tulip" clone ethernet
-ep*		at pci? dev ? function ?	# 3Com 3c59x
-fxp*		at pci? dev ? function ?	# EtherExpress 10/100B ethernet
-mtd*		at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
-ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet
-ti*		at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
-vr*		at pci? dev ? function ?	# VIA Rhine Fast Ethernet
-xl*		at pci? dev ? function ?	# 3C9xx ethernet
-
-
+dc*		at pci?		# 21143, "tulip" clone ethernet
+ep*		at pci?		# 3Com 3c59x
+fxp*		at pci?		# EtherExpress 10/100B ethernet
+mtd*		at pci?		# Myson MTD803 3-in-1 Ethernet
+ne*		at pci?		# NE2000-compatible Ethernet
+ti*		at pci?		# Alteon ACEnic gigabit Ethernet
+vr*		at pci?		# VIA Rhine Fast Ethernet
+xl*		at pci?		# 3C9xx ethernet
 
 ##### Media Independent Interface (mii) drivers
-exphy*		at mii? phy ?		# 3Com internal PHYs
-inphy*		at mii? phy ?		# Intel 82555 PHYs
-iophy*		at mii? phy ?		# Intel 82553 PHYs
-icsphy*		at mii? phy ?		# ICS 1890 PHYs
-lxtphy*		at mii? phy ?		# Level1 LXT970 PHYs
-nsphy*		at mii? phy ?		# NS and compatible PHYs
-nsphyter*	at mii? phy ?		# NS and compatible PHYs
-qsphy*		at mii? phy ?		# Quality Semi QS6612 PHYs
-sqphy*		at mii? phy ?		# Seeq 8x220 PHYs
-rlphy*		at mii? phy ?		# RealTek 8139 internal PHYs
-mtdphy*		at mii? phy ?		# Myson MTD972 PHYs
-dcphy*		at mii? phy ?		# Digital Clone PHYs
-acphy*		at mii? phy ?		# Altima AC101 PHYs
-amphy*		at mii? phy ?		# AMD 79C873 PHYs
-tqphy*		at mii? phy ?		# TDK 78Q212x PHYs
-bmtphy*		at mii? phy ?		# Broadcom 10/100 PHYs
-brgphy*		at mii? phy ?		# Broadcom Gigabit PHYs
-eephy*		at mii? phy ?		# Marvell 88E1000 series PHY
-xmphy*		at mii? phy ?		# XaQti XMAC-II PHYs
-nsgphy*		at mii? phy ?		# NS gigabit PHYs
-urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHY
-rgephy*		at mii? phy ?		# Realtek 8169S/8110S PHY
-ukphy*		at mii? phy ?		# "unknown" PHYs
+exphy*		at mii?		# 3Com internal PHYs
+inphy*		at mii?		# Intel 82555 PHYs
+iophy*		at mii?		# Intel 82553 PHYs
+icsphy*		at mii?		# ICS 1890 PHYs
+lxtphy*		at mii?		# Level1 LXT970 PHYs
+nsphy*		at mii?		# NS and compatible PHYs
+nsphyter*	at mii?		# NS and compatible PHYs
+qsphy*		at mii?		# Quality Semi QS6612 PHYs
+sqphy*		at mii?		# Seeq 8x220 PHYs
+rlphy*		at mii?		# RealTek 8139 internal PHYs
+mtdphy*		at mii?		# Myson MTD972 PHYs
+dcphy*		at mii?		# Digital Clone PHYs
+acphy*		at mii?		# Altima AC101 PHYs
+amphy*		at mii?		# AMD 79C873 PHYs
+tqphy*		at mii?		# TDK 78Q212x PHYs
+bmtphy*		at mii?		# Broadcom 10/100 PHYs
+brgphy*		at mii?		# Broadcom Gigabit PHYs
+eephy*		at mii?		# Marvell 88E1000 series PHY
+xmphy*		at mii?		# XaQti XMAC-II PHYs
+nsgphy*		at mii?		# NS gigabit PHYs
+urlphy*		at mii?		# Realtek RTL8150L internal PHY
+rgephy*		at mii?		# Realtek 8169S/8110S PHY
+ukphy*		at mii?		# "unknown" PHYs
 
 
 #### SCSI Bus devices
-
 scsibus*	at ahc?
 scsibus*	at siop?
 
-sd*		at scsibus? target ? lun ?
-st*		at scsibus? target ? lun ?
-cd*		at scsibus? target ? lun ?
-#ch*		at scsibus? target ? lun ?
-#ss*		at scsibus? target ? lun ?
-#uk*		at scsibus? target ? lun ?
-
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+#ch*		at scsibus?
+#ss*		at scsibus?
+#uk*		at scsibus?
 
 #### PSEUDO Devices
-
 pseudo-device	loop		 1	# network loopback
 pseudo-device	bpfilter	 1	# packet filter ports
 

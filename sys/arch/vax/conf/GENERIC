@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.34 2003/03/08 04:43:45 hugh Exp $
+#	$OpenBSD: GENERIC,v 1.35 2004/09/16 09:14:04 mickey Exp $
 #	$NetBSD: GENERIC,v 1.61 2000/04/19 06:50:36 itojun Exp $
 
 machine 	vax			# machine type; required
@@ -127,12 +127,12 @@ mt*		at mscpbus? drive?	# MSCP tape
 scsibus*	at asc?
 scsibus*	at ncr?
 
-sd*		at scsibus? target? lun?
-st*		at scsibus? target? lun?
-cd*		at scsibus? target? lun?
-ch*		at scsibus? target? lun?
-ss*		at scsibus? target? lun?
-uk*		at scsibus? target? lun?
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+ss*		at scsibus?
+uk*		at scsibus?
 
 # Workstation console
 wsdisplay0	at smg?
@@ -142,6 +142,6 @@ wsdisplay0	at smg?
 #wsdisplay0	at qv0
 
 lkkbd0		at dz0 line 0
-wskbd*		at lkkbd? console ?
+wskbd*		at lkkbd?
 lkms0		at dz0 line 1
 wsmouse*	at lkms?

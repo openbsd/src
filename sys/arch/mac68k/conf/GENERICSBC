@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICSBC,v 1.17 2004/08/04 20:14:40 miod Exp $
+#	$OpenBSD: GENERICSBC,v 1.18 2004/09/16 09:14:03 mickey Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERICSBC --- our generic kernel using the SBC SCSI driver
@@ -35,7 +35,7 @@ intvid0	at obio?		# Internal video hardware
 mc*	at obio?		# MACE ethernet on Centris/Quadra 660av
 sn*	at obio?		# Internal ethernet
 zsc0	at obio?		# Zilog serial chip
-zstty*	at zsc? channel ?
+zstty*	at zsc?
 
 nubus0		at mainbus?
 
@@ -58,9 +58,9 @@ scsibus*	at esp?
 #scsibus*	at ncrscsi?
 scsibus*	at sbc?
 
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*	at scsibus? target ? lun ?	# SCSI autochangers
-ss*	at scsibus? target ? lun ?	# SCSI scanners
-uk*	at scsibus? target ? lun ?	# SCSI unknown
+sd*	at scsibus?		# SCSI disk drives
+st*	at scsibus?		# SCSI tape drives
+cd*	at scsibus?		# SCSI CD-ROM drives
+ch*	at scsibus?		# SCSI autochangers
+ss*	at scsibus?		# SCSI scanners
+uk*	at scsibus?		# SCSI unknown

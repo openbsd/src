@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.58 2004/08/25 13:03:27 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.59 2004/09/16 09:14:03 mickey Exp $g
 #
 # PPC GENERIC config file
 #
@@ -20,8 +20,6 @@ option		ALTIVEC
 option		APERTURE	# in-kernel aperture driver for XFree86
 option		WSDISPLAY_COMPAT_RAWKBD
 
-
-
 option		USER_PCICONF	# user-space PCI configuration
 
 include "../../../conf/GENERIC"
@@ -31,93 +29,93 @@ config		bsd	swap generic
 mainbus0	at root
 cpu*		at mainbus0
 
-mpcpcibr*	at mainbus0			# MPC106 PCI Bridge.
+mpcpcibr*	at mainbus0	# MPC106 PCI Bridge.
 memc*		at mainbus0
 pchb*		at pci?
 
 #### PCI Bus devices.
 
 pci*		at mpcpcibr?
-ppb*		at pci? dev ? function ?	# PCI-PCI bridges
-pci*		at ppb? bus ?
+ppb*		at pci?		# PCI-PCI bridges
+pci*		at ppb?
 
-siop*		at pci? dev ? function ?
-fxp*		at pci? dev ? function ?
-de*		at pci? dev ? function ?
-#vme*		at pci? dev ? function ?
-vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
-#ep*		at pci? dev ? function ?	# 3Com 3c59x
-#ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet
-#adv*		at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
-#bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
-#ami*		at pci? dev ? function ?
-#pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
-pciide*		at pci? dev ? function ?
-kauaiata*	at pci? dev ? function ?	# Apple ATA 100
+siop*		at pci?
+fxp*		at pci?
+de*		at pci?
+#vme*		at pci?
+vgafb0		at pci?		# PCI VGA graphics 
+#ep*		at pci?		# 3Com 3c59x
+#ne*		at pci?		# NE2000-compatible Ethernet
+#adv*		at pci?		# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
+#bha*		at pci?		# BusLogic 9xx SCSI
+#ami*		at pci?
+#pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
+pciide*		at pci?
+kauaiata*	at pci?		# Apple ATA 100
 wdc*		at kauaiata? 
-macobio0	at pci? dev ? function ?
-gem*		at pci? dev ? function ?	# GMAC ethernet
-hme*		at pci? dev ? function ?	# HME ethernet
-dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
-xl*		at pci? dev ? function ?	# 3C9xx ethernet
-em*		at pci? dev ? function ?	# Intel Pro/1000 ethernet
-ti*		at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
-re*		at pci? dev ? function ?	# Realtek 8169/8169S/8110S
-an*		at pci? dev ? function ?	# Cisco/Aironet
-wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
-iop*		at pci? dev ? function ?	# I2O processor
-ioprbs*		at iop? tid ?			# I2O arrays
-iopsp*		at iop? tid ?			# I2O SCSI pass-through
+macobio0	at pci?
+gem*		at pci?		# GMAC ethernet
+hme*		at pci?		# HME ethernet
+dc*		at pci?		# DEC Tulip 21143 clones
+xl*		at pci?		# 3C9xx ethernet
+em*		at pci?		# Intel Pro/1000 ethernet
+ti*		at pci?		# Alteon Tigon 1Gb ethernet
+re*		at pci?		# Realtek 8169/8169S/8110S
+an*		at pci?		# Cisco/Aironet
+wi*		at pci?		# WaveLAN IEEE 802.11DS
+iop*		at pci?		# I2O processor
+ioprbs*		at iop?		# I2O arrays
+iopsp*		at iop?		# I2O SCSI pass-through
 
-dcphy*		at mii? phy ?			# Digital Clone PHYs
-exphy*		at mii? phy ?			# 3Com internal PHYs
-inphy*		at mii? phy ?			# Intel 82555 PHYs
-iophy*		at mii? phy ?			# Intel 82553 PHYs
-icsphy*		at mii? phy ?			# ICS1890 PHYs
-lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
-nsphy*		at mii? phy ?			# NS83840 PHYs
-#nsphyter*	at mii? phy ?			# NS83843 PHYs
-mtdphy*		at mii? phy ?			# Myson MTD972 PHYs
-#qsphy*		at mii? phy ?			# Quality Semi QS6612 PHYs
-sqphy*		at mii? phy ?			# Seeq 8022[013] PHYs
-#tlphy*		at mii? phy ?			# ThunderLAN PHYs
-#tqphy*		at mii? phy ?			# TDK Semiconductor PHYs
-brgphy*		at mii? phy ?			# Broadcom 10/100/1000 PHYs 
-bmtphy*		at mii? phy ?			# Broadcom 10/100 PHYs 
-eephy*		at mii? phy ?			# Marvell 88E1000 Gigabit PHYs
-rgephy*		at mii? phy ?			# Realtek 8169S/8110S PHY
-ukphy*		at mii? phy ?			# generic unknown PHYs
+dcphy*		at mii?		# Digital Clone PHYs
+exphy*		at mii?		# 3Com internal PHYs
+inphy*		at mii?		# Intel 82555 PHYs
+iophy*		at mii?		# Intel 82553 PHYs
+icsphy*		at mii?		# ICS1890 PHYs
+lxtphy*		at mii?		# Level One LXT-970 PHYs
+nsphy*		at mii?		# NS83840 PHYs
+#nsphyter*	at mii?		# NS83843 PHYs
+mtdphy*		at mii?		# Myson MTD972 PHYs
+#qsphy*		at mii?		# Quality Semi QS6612 PHYs
+sqphy*		at mii?		# Seeq 8022[013] PHYs
+#tlphy*		at mii?		# ThunderLAN PHYs
+#tqphy*		at mii?		# TDK Semiconductor PHYs
+brgphy*		at mii?		# Broadcom 10/100/1000 PHYs 
+bmtphy*		at mii?		# Broadcom 10/100 PHYs 
+eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
+rgephy*		at mii?		# Realtek 8169S/8110S PHY
+ukphy*		at mii?		# generic unknown PHYs
 
 # crypto
-lofn*		at pci? dev ? function ?	# Hifn6500
-hifn*		at pci? dev ? function ?	# Hifn7751/7811/7951
-ubsec*		at pci? dev ? function ?	# Broadcom 58xx
-safe*		at pci? dev ? function ?	# SafeNet SafeXcel 1141/1741
+lofn*		at pci?		# Hifn6500
+hifn*		at pci?		# Hifn7751/7811/7951
+ubsec*		at pci?		# Broadcom 58xx
+safe*		at pci?		# SafeNet SafeXcel 1141/1741
 
-macintr0	at macobio?			# old interrupt controller
-openpic0	at macobio?			# openpic interrupt controller
-bm*		at macobio?			# BMAC ethernet
-#mc*		at macobio?			# MACE ethernet
-#esp*		at macobio? flags 0x00ff	# 53c9x SCSI
-#mesh*		at macobio? flags 0xffff	# MESH SCSI
-#nvram*		at macobio?			# nvram
-adb*		at macobio?			# Apple Desktop Bus
-apm0		at adb?				# APM emulation
-wi*		at macobio?			# airport
-gpio*		at macobio?			# GPIO, PMU interrupt router.
-gpio*		at gpio?			# GPIO, PMU interrupt router.
-aed*		at adb?				# ADB Event Device
-akbd*		at adb?				# ADB keyboard
+macintr0	at macobio?	# old interrupt controller
+openpic0	at macobio?	# openpic interrupt controller
+bm*		at macobio?	# BMAC ethernet
+#mc*		at macobio?	# MACE ethernet
+#esp*		at macobio? flags 0x00ff # 53c9x SCSI
+#mesh*		at macobio? flags 0xffff # MESH SCSI
+#nvram*		at macobio?	# nvram
+adb*		at macobio?	# Apple Desktop Bus
+apm0		at adb?		# APM emulation
+wi*		at macobio?	# airport
+gpio*		at macobio?	# GPIO, PMU interrupt router.
+gpio*		at gpio?	# GPIO, PMU interrupt router.
+aed*		at adb?		# ADB Event Device
+akbd*		at adb?		# ADB keyboard
 
 # FireWire Controllers
-#fwohci*	at pci? dev ? function ?	# PCI FireWire adapter
-#fwohci*	at cardbus? dev ? function ?	# CardBus FireWire adapter
+#fwohci*	at pci?		# PCI FireWire adapter
+#fwohci*	at cardbus?	# CardBus FireWire adapter
 
-#fw*		at fwbus?			# IPv4/v6 over FireWire
-#fwnode*	at fwbus? idhi ? idlo ?
+#fw*		at fwbus?	# IPv4/v6 over FireWire
+#fwnode*	at fwbus?
 
-#fwscsi*	at fwnode?			# SCSI over FireWire
+#fwscsi*	at fwnode?	# SCSI over FireWire
 #scsibus* at fwscsi?
 
 #option	FWOHCI_DEBUG
@@ -126,25 +124,25 @@ akbd*		at adb?				# ADB keyboard
 #option	SBP2_DEBUG
 #option	FWSCSI_DEBUG
 
-wskbd*		at akbd? console ? mux 1
-ams*		at adb?				# ADB mouse
+wskbd*		at akbd? mux 1
+ams*		at adb?		# ADB mouse
 wsmouse*	at ams?	mux 0
-abtn*		at adb?				# ADB button?
+abtn*		at adb?		# ADB button?
 zsc*		at macobio?
-zstty*		at zsc? channel ?
+zstty*		at zsc?
 
 #i2c*		at macobio?
 #tas*		at i2c?
 
-awacs*		at macobio?			# Apple audio device
-ki2c*		at macobio?			# Keywest I2C
-snapper*	at macobio?			# Snapper audio device
+awacs*		at macobio?	# Apple audio device
+ki2c*		at macobio?	# Keywest I2C
+snapper*	at macobio?	# Snapper audio device
 
-bktr0		at pci? dev ? function ?	# Bt8[47][89] tv/fmradio/video
+bktr0		at pci?		# Bt8[47][89] tv/fmradio/video
 radio*		at bktr?
 
 # PCI audio devices
-eap*		at pci? dev ? function ?	# Ensoniq AudioPCI S5016
+eap*		at pci?		# Ensoniq AudioPCI S5016
 
 #scsibus*	at adv?
 scsibus*	at ahc?
@@ -161,83 +159,83 @@ scsibus*	at siop?
 mediabay*	at macobio?
 wdc*		at mediabay?
 wdc*		at macobio?
-wd*		at wdc? drive ? flags 0x0000
-wd*		at pciide? drive ? flags 0x0000
-atapiscsi*	at wdc? channel ? flags 0x0000
-atapiscsi*	at pciide? channel ? flags 0x0000
+wd*		at wdc? flags 0x0000
+wd*		at pciide? flags 0x0000
+atapiscsi*	at wdc? flags 0x0000
+atapiscsi*	at pciide? flags 0x0000
 scsibus*	at atapiscsi?
 
 # PCI USB Controllers
-ohci*		at pci?				# Open Host Controller
-ehci*		at pci? disable			# Enhanced Host Controller
+ohci*		at pci?		# Open Host Controller
+ehci*		at pci? disable	# Enhanced Host Controller
 
 # USB bus support
 usb*		at ohci? flags 0x1
 usb*		at ehci?
 
 # USB devices
-uhub*	at usb?				# USB Hubs
-uhub*	at uhub? port ? configuration ?	# USB Hubs
-umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
+uhub*	at usb?			# USB Hubs
+uhub*	at uhub?		# USB Hubs
+umodem*	at uhub?		# USB Modems/Serial
 ucom*	at umodem?
-uvisor*	at uhub? port ? configuration ?	# Handspring Visor
+uvisor*	at uhub?		# Handspring Visor
 ucom*	at uvisor?
-uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
-ucom*	at uvscom? portno ?
-ubsa*	at uhub? port ?			# Belkin serial adapter
-ucom*	at ubsa? portno ?
-uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-umct*	at uhub? port ?			# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-uaudio* at uhub? port ? configuration ?	# USB Audio
+uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
+ucom*	at uvscom?
+ubsa*	at uhub?		# Belkin serial adapter
+ucom*	at ubsa? 
+uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi?
+uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom?
+umct*	at uhub?		# MCT USB-RS232 serial adapter
+ucom*	at umct?
+uaudio* at uhub?		# USB Audio
 audio*	at uaudio?
-umidi*	at uhub? port ? configuration ?	# USB MIDI
+umidi*	at uhub?		# USB MIDI
 midi*	at umidi?
-ulpt*	at uhub? port ? configuration ? # USB Printers
-umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+ulpt*	at uhub?		# USB Printers
+umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?
-uhidev*	at uhub? port ? configuration ? interface ?	# Human Interface Devices
-ums*	at uhidev? reportid ?		# USB mouse
+uhidev*	at uhub?		# Human Interface Devices
+ums*	at uhidev?		# USB mouse
 wsmouse* at ums? mux 0
-ukbd*	at uhidev? reportid ?		# USB keyboard
-wskbd*	at ukbd? console ? mux 1
-uhid*	at uhidev? reportid ?		# USB generic HID support
-aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
-axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
-cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
-kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
-cdce*	at uhub? port ?			# CDC Ethernet
-upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
-url*	at uhub? port ?			# Realtek RTL8150L based adapters
-wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
-urio*	at uhub? port ?			# Diamond Multimedia Rio 500
-uscanner* at uhub? port ?		# USB Scanners
-usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
+ukbd*	at uhidev?		# USB keyboard
+wskbd*	at ukbd? mux 1
+uhid*	at uhidev? 		# USB generic HID support
+aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
+cue*	at uhub?		# CATC USB-EL1201A based Ethernet
+kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+cdce*	at uhub?		# CDC Ethernet
+upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+url*	at uhub?		# Realtek RTL8150L based adapters
+wi*	at uhub?		# WaveLAN IEEE 802.11DS
+urio*	at uhub?		# Diamond Multimedia Rio 500
+uscanner* at uhub?		# USB Scanners
+usscanner* at uhub?		# USB SCSI scanners, e.g., HP5300
 scsibus* at usscanner?
-uyap*	at uhub? port ?			# Y@P firmware loader
-udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
-radio*	at udsbr?			# USB radio
-ugen*	at uhub? port ? configuration ? # USB Generic driver
+uyap*	at uhub?		# Y@P firmware loader
+udsbr*	at uhub?		# D-Link DSB-R100 radio
+radio*	at udsbr?		# USB radio
+ugen*	at uhub?		# USB Generic driver
 
 # CardBus bus support
 cardbus*	at cardslot?
 pcmcia*		at cardslot?
-cbb*		at pci? dev ? function ?
+cbb*		at pci?
 cardslot*	at cbb?
-ep*		at pcmcia? function ?		# PCMCIA based 3C5xx ethernet
-an*		at pcmcia? function ?		# Cisco/Aironet
-wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
-dc*		at cardbus? dev ? function ?	# 21143, "tulip" clone ethernet
-#fxp*		at cardbus? dev ? function ?	# Intel PRO/100 ethernet
-xl*		at cardbus? dev ? function ?	# 3C575/3C656 ethernet
-#rl*		at cardbus? dev ? function ?	# RealTek 81[23]9 ethernet
-wdc*		at pcmcia? function ?
+ep*		at pcmcia?	# PCMCIA based 3C5xx ethernet
+an*		at pcmcia?	# Cisco/Aironet
+wi*		at pcmcia?	# WaveLAN IEEE 802.11DS
+dc*		at cardbus?	# 21143, "tulip" clone ethernet
+#fxp*		at cardbus?	# Intel PRO/100 ethernet
+xl*		at cardbus?	# 3C575/3C656 ethernet
+#rl*		at cardbus?	# RealTek 81[23]9 ethernet
+wdc*		at pcmcia?
 
 wsdisplay*	at vgafb?
-wskbd*		at ukbd? console ? mux 1
+wskbd*		at ukbd? mux 1
 
 # Audio support
 audio*		at awacs?
@@ -245,12 +243,12 @@ audio*		at snapper?
 audio*		at eap?
 audio*		at uaudio?
 
-sd*		at scsibus? target ? lun ?
-st*		at scsibus? target ? lun ?
-cd*		at scsibus? target ? lun ?
-ch*		at scsibus? target ? lun ?
-ss*		at scsibus? target ? lun ?
-uk*		at scsibus? target ? lun ?
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+ss*		at scsibus?
+uk*		at scsibus?
 
 #pseudo-device	hotplug	1	# devices hot plugging
 pseudo-device	wsmux	2	# mouse & keyboard multiplexor

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2002/03/14 00:47:58 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2004/09/16 09:14:03 mickey Exp $
 #
 # MVMEPPC GENERIC config file
 #
@@ -24,26 +24,26 @@ config		bsd	root on rd0a swap on rd0b
 mainbus0	at root
 cpu*		at mainbus0
 bugtty0		at mainbus0
-raven0		at mainbus0			# raven ASIC
+raven0		at mainbus0		# raven ASIC
 
 #### PCI Bus devices.
 
-openpic0	at raven0			# interrupt controller
-#mpic0		at raven0			# interrupt controller
-mpcpcibr0	at raven0			# PCI controller
+openpic0	at raven0		# interrupt controller
+#mpic0		at raven0		# interrupt controller
+mpcpcibr0	at raven0		# PCI controller
 pci*		at mpcpcibr0
-#ppb*		at pci? dev ? function ?	# PCI-PCI bridges
-#pci*		at ppb? bus ?
+#ppb*		at pci?			# PCI-PCI bridges
+#pci*		at ppb?
 
 # host bridge identifiers
 
-pchb*		at pci?				# PCI host bridge
-pcib*		at pci? dev ? function ?	# PCI-ISA bridge
-siop*		at pci? dev ? function ?
-#ncr*		at pci? dev ? function ?
-de*		at pci? dev ? function ?
-#vme*		at pci? dev ? function ?
-#pciide*	at pci? dev ? function ?
+pchb*		at pci?			# PCI host bridge
+pcib*		at pci?			# PCI-ISA bridge
+siop*		at pci?
+#ncr*		at pci?
+de*		at pci?
+#vme*		at pci?
+#pciide*	at pci?
 
 # ISA Bus 
 isa*	at	pcib?
@@ -52,17 +52,17 @@ isa*	at	pcib?
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 #pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #vga0		at isa?
-#vga*		at pci? dev ? function ?
-#com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+#vga*		at pci?
+#com*	at	isa? port 0x3f8 irq 4	# standard serial ports
 #com*	at	isa? port 0x2f8 irq 3
-#lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
+#lpt*	at	isa? port 0x3bc irq 7	# standard parallel port
 
 # how many of these are needed?
-#ukphy*	at mii? phy ?			# generic unknown PHYs
+#ukphy*	at mii?			# generic unknown PHYs
 
-#nvram*	at mainbus0			# nvram
+#nvram*	at mainbus0		# nvram
 #zsc*	at obio?
-#zstty*	at zsc? channel ?
+#zstty*	at zsc?
 
 #### SCSI attachment points
 
@@ -70,9 +70,9 @@ scsibus*	at siop?
 #scsibus*	at ncr?
 
 #wdc*	at mainbus? flags 0x0
-#wd*	at wdc? drive ? flags 0x0000
+#wd*	at wdc? flags 0x0000
 
-#atapiscsi* at wdc? channel ? flags 0x0000
+#atapiscsi* at wdc? flags 0x0000
 
 # ATAPI<->SCSI
 #scsibus* at atapiscsi?
@@ -80,11 +80,11 @@ scsibus*	at siop?
 #### SCSI Bus devices
  
 sd0		at scsibus? target 0 lun 0
-#st*		at scsibus? target ? lun ?
-#cd*		at scsibus? target ? lun ?
-#ch*		at scsibus? target ? lun ?
-#ss*		at scsibus? target ? lun ?
-#uk*		at scsibus? target ? lun ?
+#st*		at scsibus?
+#cd*		at scsibus?
+#ch*		at scsibus?
+#ss*		at scsibus?
+#uk*		at scsibus?
 
 pseudo-device	rd		 1	# ram disk
 
