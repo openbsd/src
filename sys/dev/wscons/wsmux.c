@@ -1,5 +1,5 @@
-/*	$OpenBSD: wsmux.c,v 1.1 2000/05/16 23:49:12 mickey Exp $	*/
-/*	$NetBSD: wsmux.c,v 1.8 1999/11/08 10:10:25 augustss Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.2 2000/08/01 13:51:18 mickey Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9 2000/05/28 10:33:14 takemura Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -353,7 +353,7 @@ wsmux_create(name, unit)
 	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT);
 	if (!sc)
 		return (0);
-	bzero(sc, sizeof *sc);
+	memset(sc, 0, sizeof *sc);
 	LIST_INIT(&sc->sc_reals);
 	snprintf(sc->sc_dv.dv_xname, sizeof sc->sc_dv.dv_xname,
 		 "%s%d", name, unit);
@@ -601,6 +601,13 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 		DPRINTF(("wsmuxdoioctl: save rawkbd = %d\n", sc->sc_rawkbd));
 		break;
 #endif
+	case FIOASYNC:
+		sc->sc_events.async = *(int *)data != 0;
+		return (0);
+	case TIOCSPGRP:
+		if (*(int *)data != sc->sc_events.io->p_pgid)
+			return (EPERM);
+		return (0);
 	default:
 		break;
 	}

@@ -1,5 +1,5 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
-/* $NetBSD: wsemul_vt100.c,v 1.12 1999/11/03 15:55:29 mycroft Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -220,7 +220,7 @@ wsemul_vt100_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 
 	edp->tabs = malloc(edp->ncols, M_DEVBUF, M_NOWAIT);
 	edp->dblwid = malloc(edp->nrows, M_DEVBUF, M_NOWAIT);
-	bzero(edp->dblwid, edp->nrows);
+	memset(edp->dblwid, 0, edp->nrows);
 	edp->dw = 0;
 	edp->dcsarg = malloc(DCS_MAXLEN, M_DEVBUF, M_NOWAIT);
 	edp->isolatin1tab = malloc(128 * sizeof(int), M_DEVBUF, M_NOWAIT);
@@ -294,7 +294,7 @@ wsemul_vt100_reset(edp)
 	edp->scrreg_startrow = 0;
 	edp->scrreg_nrows = edp->nrows;
 	if (edp->tabs) {
-		bzero(edp->tabs, edp->ncols);
+		memset(edp->tabs, 0, edp->ncols);
 		for (i = 8; i < edp->ncols; i += 8)
 			edp->tabs[i] = 1;
 	}
@@ -418,14 +418,14 @@ wsemul_vt100_output_c0c1(edp, c, kernel)
 	    case CSI: /* 8-bit */
 		/* XXX cancel current escape sequence */
 		edp->nargs = 0;
-		bzero(edp->args, sizeof (edp->args));
+		memset(edp->args, 0, sizeof (edp->args));
 		edp->modif1 = edp->modif2 = '\0';
 		edp->state = VT100_EMUL_STATE_CSI;
 		break;
 	    case DCS: /* 8-bit */
 		/* XXX cancel current escape sequence */
 		edp->nargs = 0;
-		bzero(edp->args, sizeof (edp->args));
+		memset(edp->args, 0, sizeof (edp->args));
 		edp->state = VT100_EMUL_STATE_DCS;
 		break;
 	    case ST: /* string end 8-bit */
@@ -456,7 +456,7 @@ wsemul_vt100_output_esc(edp, c)
 	switch (c) {
 	    case '[': /* CSI */
 		edp->nargs = 0;
-		bzero(edp->args, sizeof (edp->args));
+		memset(edp->args, 0, sizeof (edp->args));
 		edp->modif1 = edp->modif2 = '\0';
 		newstate = VT100_EMUL_STATE_CSI;
 		break;
@@ -538,7 +538,7 @@ wsemul_vt100_output_esc(edp, c)
 		break;
 	    case 'P': /* DCS */
 		edp->nargs = 0;
-		bzero(edp->args, sizeof (edp->args));
+		memset(edp->args, 0, sizeof (edp->args));
 		newstate = VT100_EMUL_STATE_DCS;
 		break;
 	    case 'c': /* RIS */

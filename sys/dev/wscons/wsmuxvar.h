@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmuxvar.h,v 1.1 2000/05/16 23:49:12 mickey Exp $	*/
+/*	$OpenBSD: wsmuxvar.h,v 1.2 2000/08/01 13:51:19 mickey Exp $	*/
 /*	$NetBSD: wsmuxvar.h,v 1.1 1999/07/29 18:20:43 augustss Exp $	*/
 
 /*
@@ -36,9 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _DEV_WSCONS_WSMUXVAR_H_
-#define _DEV_WSCONS_WSMUXVAR_H_
 
 struct wsdisplay_softc;
 struct wsplink;
@@ -96,5 +93,3 @@ int	wskbd_add_mux __P((int, struct wsmux_softc *));
 int	wskbd_rem_mux __P((int, struct wsmux_softc *));
 int	wsmouse_add_mux __P((int, struct wsmux_softc *));
 int	wsmouse_rem_mux __P((int, struct wsmux_softc *));
-
-#endif /* _DEV_WSCONS_WSMUXVAR_H_ */

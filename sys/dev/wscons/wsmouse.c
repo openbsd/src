@@ -1,5 +1,5 @@
-/* $OpenBSD: wsmouse.c,v 1.1 2000/05/16 23:49:12 mickey Exp $ */
-/* $NetBSD: wsmouse.c,v 1.11 2000/01/08 02:57:24 takemura Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $NetBSD: wsmouse.c,v 1.12 2000/05/01 07:36:58 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -137,7 +137,7 @@ struct wsmouse_softc {
 #endif
 };
 
-int	wsmouse_match __P((struct device *, struct cfdata *, void *));
+int	wsmouse_match __P((struct device *, void *, void *));
 void	wsmouse_attach __P((struct device *, struct device *, void *));
 int	wsmouse_detach __P((struct device *, int));
 int	wsmouse_activate __P((struct device *, enum devact));
@@ -154,9 +154,13 @@ struct cfdriver wsmouse_cd = {
 };
 
 struct cfattach wsmouse_ca = {
-	sizeof (struct wsmouse_softc), (cfmatch_t)wsmouse_match, wsmouse_attach,
+	sizeof (struct wsmouse_softc), wsmouse_match, wsmouse_attach,
 	wsmouse_detach, wsmouse_activate
 };
+
+#if NWSMOUSE > 0
+extern struct cfdriver wsmouse_cd;
+#endif /* NWSMOUSE > 0 */
 
 cdev_decl(wsmouse);
 
@@ -183,10 +187,9 @@ wsmousedevprint(aux, pnp)
 int
 wsmouse_match(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
+	void *match;
 	void *aux;
 {
-
 	return (1);
 }
 

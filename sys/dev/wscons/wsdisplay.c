@@ -1,5 +1,5 @@
-/* $OpenBSD: wsdisplay.c,v 1.3 2000/07/19 13:58:17 art Exp $ */
-/* $NetBSD: wsdisplay.c,v 1.36 2000/03/23 07:01:47 thorpej Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.4 2000/08/01 13:51:17 mickey Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -140,12 +140,10 @@ struct wsdisplay_softc {
 extern struct cfdriver wsdisplay_cd;
 
 /* Autoconfiguration definitions. */
-static int wsdisplay_emul_match __P((struct device *, struct cfdata *,
-	    void *));
+static int wsdisplay_emul_match __P((struct device *, void *, void *));
 static void wsdisplay_emul_attach __P((struct device *, struct device *,
 	    void *));
-static int wsdisplay_noemul_match __P((struct device *, struct cfdata *,
-	    void *));
+static int wsdisplay_noemul_match __P((struct device *, void *, void *));
 static void wsdisplay_noemul_attach __P((struct device *, struct device *,
 	    void *));
 
@@ -155,13 +153,13 @@ struct cfdriver wsdisplay_cd = {
 
 struct cfattach wsdisplay_emul_ca = {
 	sizeof (struct wsdisplay_softc),
-	(cfmatch_t)wsdisplay_emul_match,
+	wsdisplay_emul_match,
 	wsdisplay_emul_attach,
 };
  
 struct cfattach wsdisplay_noemul_ca = {
 	sizeof (struct wsdisplay_softc),
-	(cfmatch_t)wsdisplay_noemul_match,
+	wsdisplay_noemul_match,
 	wsdisplay_noemul_attach,
 };
  
@@ -207,7 +205,7 @@ static void (*wsdisplay_cons_kbd_pollc) __P((dev_t, int));
 
 static struct consdev wsdisplay_cons = {
 	NULL, NULL, wsdisplay_getc_dummy, wsdisplay_cnputc,
-	wsdisplay_pollc, NODEV, CN_NORMAL
+	wsdisplay_pollc, NULL, NODEV, CN_NORMAL
 };
 
 #ifndef WSDISPLAY_DEFAULTSCREENS
@@ -486,18 +484,19 @@ wsdisplay_delscreen(sc, idx, flags)
 int
 wsdisplay_emul_match(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
+	void *match;
 	void *aux;
 {
+	struct cfdata *cf = match;
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
-	if (match->wsemuldisplaydevcf_console !=
+	if (cf->wsemuldisplaydevcf_console !=
 	    WSEMULDISPLAYDEVCF_CONSOLE_UNK) {
 		/*
 		 * If console-ness of device specified, either match
 		 * exactly (at high priority), or fail.
 		 */
-		if (match->wsemuldisplaydevcf_console != 0 &&
+		if (cf->wsemuldisplaydevcf_console != 0 &&
 		    ap->console != 0)
 			return (10);
 		else
@@ -553,7 +552,7 @@ wsemuldisplaydevprint(aux, pnp)
 int
 wsdisplay_noemul_match(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
+	void *match;
 	void *aux;
 {
 #if 0 /* -Wunused */
@@ -1146,6 +1145,26 @@ wsdisplaymmap(dev, offset, prot)
 	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, offset, prot));
 }
 
+int
+wsdisplayselect(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
+	struct wsscreen *scr;
+
+	if (ISWSDISPLAYCTL(dev))
+		return (0);
+
+	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+
+	if (WSSCREEN_HAS_TTY(scr))
+		return (ttselect(dev, events, p));
+	else
+		return (0);
+}
+
 void
 wsdisplaystart(tp)
 	struct tty *tp;
@@ -1229,7 +1248,8 @@ wsdisplaystop(tp, flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	splx(s);
-	return 0;
+
+	return (0);
 }
 
 /* Set line parameters. */
@@ -1753,7 +1773,7 @@ wsdisplay_set_cons_kbd(get, poll, bell)
 	void (*bell) __P((dev_t, u_int, u_int, u_int));
 {
 	wsdisplay_cons.cn_getc = get;
-	/* wsdisplay_cons.cn_bell = bell; XXX */
+	wsdisplay_cons.cn_bell = bell;
 	wsdisplay_cons_kbd_pollc = poll;
 }
 
@@ -1761,8 +1781,8 @@ void
 wsdisplay_unset_cons_kbd()
 {
 	wsdisplay_cons.cn_getc = wsdisplay_getc_dummy;
-	/* wsdisplay_cons.cn_bell = NULL; XXX */
-	wsdisplay_cons_kbd_pollc = NULL;
+	wsdisplay_cons.cn_bell = NULL;
+	wsdisplay_cons_kbd_pollc = 0;
 }
 
 /*

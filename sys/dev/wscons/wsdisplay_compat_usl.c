@@ -1,5 +1,5 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.2 2000/07/05 22:50:11 mickey Exp $ */
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.11 1999/12/06 18:52:23 drochner Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.3 2000/08/01 13:51:18 mickey Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998

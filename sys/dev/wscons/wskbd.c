@@ -1,5 +1,5 @@
-/* $OpenBSD: wskbd.c,v 1.1 2000/05/16 23:49:12 mickey Exp $ */
-/* $NetBSD: wskbd.c,v 1.35 2000/01/05 11:19:37 drochner Exp $ */
+/* $OpenBSD: wskbd.c,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -202,7 +202,7 @@ struct wskbd_softc {
 #define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
 #define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
 
-int	wskbd_match __P((struct device *, struct cfdata *, void *));
+int	wskbd_match __P((struct device *, void *, void *));
 void	wskbd_attach __P((struct device *, struct device *, void *));
 int	wskbd_detach __P((struct device *, int));
 int	wskbd_activate __P((struct device *, enum devact));
@@ -232,9 +232,11 @@ struct cfdriver wskbd_cd = {
 };
 
 struct cfattach wskbd_ca = {
-	sizeof (struct wskbd_softc), (cfmatch_t)wskbd_match, wskbd_attach,
+	sizeof (struct wskbd_softc), wskbd_match, wskbd_attach,
 	wskbd_detach, wskbd_activate
 };
+
+extern struct cfdriver wskbd_cd;
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
 #define	WSKBD_DEFAULT_BELL_PITCH	1500	/* 1500Hz */
@@ -321,17 +323,18 @@ wskbddevprint(aux, pnp)
 int
 wskbd_match(parent, match, aux)
 	struct device *parent;
-	struct cfdata *match;
+	void *match;
 	void *aux;
 {
+	struct cfdata *cf = match;
 	struct wskbddev_attach_args *ap = aux;
 
-	if (match->wskbddevcf_console != WSKBDDEVCF_CONSOLE_UNK) {
+	if (cf->wskbddevcf_console != WSKBDDEVCF_CONSOLE_UNK) {
 		/*
 		 * If console-ness of device specified, either match
 		 * exactly (at high priority), or fail.
 		 */
-		if (match->wskbddevcf_console != 0 && ap->console != 0)
+		if (cf->wskbddevcf_console != 0 && ap->console != 0)
 			return (10);
 		else
 			return (0);

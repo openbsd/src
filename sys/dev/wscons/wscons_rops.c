@@ -1,5 +1,5 @@
-/* $OpenBSD: wscons_rops.c,v 1.6 2000/05/16 23:49:11 mickey Exp $ */
-/* $NetBSD: wscons_rops.c,v 1.5 1999/02/12 11:25:23 drochner Exp $ */
+/* $OpenBSD: wscons_rops.c,v 1.7 2000/08/01 13:51:17 mickey Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.6 2000/03/30 12:45:44 augustss Exp $ */
 
 /*
  * Copyright (c) 1991, 1993

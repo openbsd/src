@@ -1,5 +1,5 @@
-/* $OpenBSD: wsemul_vt100var.h,v 1.1 2000/05/16 23:49:11 mickey Exp $ */
-/* $NetBSD: wsemul_vt100var.h,v 1.4 1998/12/04 20:48:04 drochner Exp $ */
+/* $OpenBSD: wsemul_vt100var.h,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998

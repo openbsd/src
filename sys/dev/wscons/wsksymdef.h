@@ -1,5 +1,5 @@
-/*	$OpenBSD: wsksymdef.h,v 1.2 2000/06/30 05:32:12 mickey Exp $	*/
-/*	$NetBSD: wsksymdef.h,v 1.32 2000/05/13 12:16:35 bjh21 Exp $ */
+/*	$OpenBSD: wsksymdef.h,v 1.3 2000/08/01 13:51:18 mickey Exp $	*/
+/*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -455,11 +455,11 @@
 			    (((k) & 0xf800) == 0xf000 ? ((k) & 0x00ff) : (k)))
 
 /*
- * Keyboard types: 8bit encoding, 8bit variant
+ * Keyboard types: 8bit encoding, 24bit variant
  */
 
-#define KB_ENCODING(e)		((e) & 0xff00)
-#define KB_VARIANT(e)		((e) & 0x00ff)
+#define KB_ENCODING(e)		((e) & 0x0000ff00)
+#define KB_VARIANT(e)		((e) & 0xffff00ff)
 
 #define KB_USER			0x0100
 #define KB_US			0x0200
