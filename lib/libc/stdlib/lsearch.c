@@ -47,32 +47,25 @@ static void *linear_base(const void *, const void *, size_t *, size_t,
     cmp_fn_t, int);
 
 void *
-lsearch(key, base, nelp, width, compar)
-	const void *key, *base;
-	size_t *nelp, width;
-	cmp_fn_t compar;
+lsearch(const void *key, const void *base, size_t *nelp, size_t width,
+    	cmp_fn_t compar)
 {
 
 	return(linear_base(key, base, nelp, width, compar, 1));
 }
 
 void *
-lfind(key, base, nelp, width, compar)
-	const void *key, *base;
-	size_t *nelp, width;
-	cmp_fn_t compar;
+lfind(const void *key, const void *base, size_t *nelp, size_t width,
+	cmp_fn_t compar)
 {
 	return(linear_base(key, base, nelp, width, compar, 0));
 }
 
 static void *
-linear_base(key, base, nelp, width, compar, add_flag)
-	const void *key, *base;
-	size_t *nelp, width;
-	cmp_fn_t compar;
-	int add_flag;
+linear_base(const void *key, const void *base, size_t *nelp, size_t width,
+	cmp_fn_t compar, int add_flag)
 {
-	register const char *element, *end;
+	const char *element, *end;
 
 	end = (const char *)base + *nelp * width;
 	for (element = base; element < end; element += width)

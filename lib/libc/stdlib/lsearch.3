@@ -44,11 +44,6 @@
 .Ft char *
 .Fn lfind "const void *key" "const void *base" "size_t *nelp" "size_t width" "int (*compar)(void *, void *)"
 .Sh DESCRIPTION
-.Bf -symbolic
-These interfaces were obsolete before they were written.
-They are available from the compatibility library, libcompat.
-.Ef
-.Pp
 The functions
 .Fn lsearch ,
 and
@@ -100,3 +95,13 @@ is incremented by one.
 .Sh SEE ALSO
 .Xr bsearch 3 ,
 .Xr db 3
+.Sh STANDARDS
+The
+.Fn lsearch
+and
+.Fn lfind
+functions conform to the
+.St -p1003.1-01
+and
+.St -xpg4.3 .
+specifications.
