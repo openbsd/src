@@ -1,5 +1,11 @@
-#	$OpenBSD: bsd.own.mk,v 1.6 1996/03/05 11:12:56 mickey Exp $
-#	$NetBSD: bsd.own.mk,v 1.23 1995/11/03 23:33:33 cgd Exp $
+#	$OpenBSD: bsd.own.mk,v 1.7 1996/04/22 01:28:35 deraadt Exp $
+#	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
+
+.if defined(MAKECONF) && exists(${MAKECONF})
+.include "${MAKECONF}"
+.elif exists(/etc/mk.conf)
+.include "/etc/mk.conf"
+.endif
 
 # Defining `SKEY' causes support for S/key authentication to be compiled in.
 SKEY=		yes

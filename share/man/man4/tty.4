@@ -1,4 +1,5 @@
-.\"	$NetBSD: tty.4,v 1.2 1994/11/30 16:22:40 jtc Exp $
+.\"	$OpenBSD: tty.4,v 1.3 1996/04/22 01:26:49 deraadt Exp $
+.\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -389,6 +390,30 @@ represent modem state as described above, however each bit which is on
 in
 .Fa state
 is cleared in the terminal.
+.It Dv TIOCSFLAGS Fa int *state
+The bits in the integer pointed to by
+.Fa state
+contain bits that correspond to serial port state. Following is a list
+of defined variables and the serial port state they represent:
+.Pp
+.Bl -tag -width TIOCFLAG_SOFTCAR -compact
+.It TIOCFLAG_SOFTCAR
+Ignore hardware carrier.
+.It TIOCFLAG_CLOCAL
+Set clocal on open.
+.It TIOCFLAG_CRTSCTS
+Set crtscts on open.
+.It TIOCFLAG_MDMBUF
+Set mdmbuf on open.
+.El
+.Pp
+This call sets the serial port state to that represented by
+.Fa state .
+Not all serial ports may support this.
+.It Dv TIOCGFLAGS Fa int *state
+Return the current state of the serial port as represented
+above in the integer pointed to by
+.Fa state .
 .El
 .Sh SEE ALSO
 .Xr getty 8 ,

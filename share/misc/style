@@ -1,8 +1,9 @@
+/*	$OpenBSD: style,v 1.2 1996/04/22 01:28:30 deraadt Exp $	*/
+
 /*
  * Style guide for the 4BSD KNF (Kernel Normal Form).
  *
  *	from: @(#)style	1.12 (Berkeley) 3/18/94
- *	$Id: style,v 1.1.1.1 1995/10/18 08:44:44 deraadt Exp $
  */
 
 /*
@@ -122,7 +123,7 @@ main(argc, argv)
 	 * should be checked for accuracy.  Code that cannot be reached should
 	 * have a NOTREACHED comment.
 	 */
-	while ((ch = getopt(argc, argv, "abn")) != EOF)
+	while ((ch = getopt(argc, argv, "abn")) != -1)
 		switch (ch) {		/* Indent the switch. */
 		case 'a':		/* Don't indent the case. */
 			aflag = 1;

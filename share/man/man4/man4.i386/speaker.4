@@ -1,3 +1,4 @@
+.\"	$OpenBSD: speaker.4,v 1.2 1996/04/22 01:28:08 deraadt Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -27,15 +28,15 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: speaker.4,v 1.1.1.1 1995/10/18 08:44:30 deraadt Exp $
-.\"
 .Dd August 6, 1993
 .Dt SPEAKER 4 i386
 .Os NetBSD 0.8a
 .Sh NAME
 speaker \- console speaker device driver
 .Sh SYNOPSIS
-.Cd "pseudo-device speaker"
+.Cd "spkr0	at pckbd? port 0x61"
+.Fd #include <machine/spkr.h>
+.Pa /dev/speaker
 .Sh DESCRIPTION
 The speaker device driver allows applications to control the PC console
 speaker on an IBM-PC-compatible machine running UNIX.
@@ -53,7 +54,7 @@ tones. Other processes may emit beeps while the driver is running.
 .Pp
 Applications may call ioctl() on a speaker file descriptor to control the
 speaker driver directly; definitions for the ioctl() interface are in
-machine/spkr.h. The tone_t structure used in these calls has two fields,
+<machine/spkr.h>. The tone_t structure used in these calls has two fields,
 specifying a frequency (in hz) and a duration (in 1/100ths of a second).
 A frequency of zero is interpreted as a rest.
 .Pp
@@ -139,7 +140,9 @@ melody sections.
 .Sh BUGS
 Due to roundoff in the pitch tables and slop in the tone-generation and timer
 hardware (neither of which was designed for precision), neither pitch accuracy
-nor timings will be mathematically exact. There is no volume control.
+nor timings will be mathematically exact.
+.Pp
+There is no volume control.
 .Pp
 In play strings which are very long (longer than your system's physical I/O
 blocks) note suffixes or numbers may occasionally be parsed incorrectly due

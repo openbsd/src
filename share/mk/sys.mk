@@ -1,5 +1,5 @@
-#	$OpenBSD: sys.mk,v 1.6 1996/03/29 10:17:55 niklas Exp $
-#	$NetBSD: sys.mk,v 1.25 1996/02/29 19:06:57 jtc Exp $
+#	$OpenBSD: sys.mk,v 1.7 1996/04/22 01:28:38 deraadt Exp $
+#	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run OpenBSD.
@@ -14,7 +14,7 @@ RANLIB?=	ranlib
 
 AS?=		as
 AFLAGS?=
-COMPILE.s?=	${AS} ${AFLAGS}
+COMPILE.s?=	${CC} ${AFLAGS} -c
 LINK.s?=	${CC} ${AFLAGS} ${LDFLAGS}
 COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
@@ -142,7 +142,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 .s:
 	${LINK.s} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .s.o:
-	${COMPILE.s} -o ${.TARGET} ${.IMPSRC} 
+	${COMPILE.s} ${.IMPSRC}
 .s.a:
 	${COMPILE.s} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
@@ -150,7 +150,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 .S:
 	${LINK.S} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .S.o:
-	${COMPILE.S} -o ${.TARGET} ${.IMPSRC}
+	${COMPILE.S} ${.IMPSRC}
 .S.a:
 	${COMPILE.S} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o

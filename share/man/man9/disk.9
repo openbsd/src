@@ -1,4 +1,5 @@
-.\"	$NetBSD: disk.9,v 1.1 1996/01/09 00:22:04 thorpej Exp $
+.\"	$OpenBSD: disk.9,v 1.2 1996/04/22 01:28:20 deraadt Exp $
+.\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -248,7 +249,7 @@ foostart(sc)
 	/* Build command to send to drive. */
 	[ . . . ]
 
-	/* Tell the disk framework we're is going busy. */
+	/* Tell the disk framework we're going busy. */
 	disk_busy(&sc->sc_dk);
 
 	/* Send command to the drive. */

@@ -1,4 +1,5 @@
-# @(#)northamerica	7.21
+#	$OpenBSD: northamerica,v 1.3 1996/04/22 01:28:57 deraadt Exp $
+# @(#)northamerica	7.22
 # also includes Central America and the Caribbean
 
 # This data is by no means authoritative; if you think you know better,
@@ -852,6 +853,15 @@ Zone America/Whitehorse	-9:00:12 -	LMT	1900 Aug 20
 # Shanks also says there are four zones, but disagrees about the fourth.
 # Instead of GMT-6 with DST, he says there's GMT-8 without DST.
 
+# From Paul Eggert (1996-02-07):
+# Today in news:4f90v4$g6g@news.internet.com.mx, Kevin Pitts
+# <bravo2@internet.com.mx> wrote that Mexico will use Horario de Verano (DST)
+# starting this year with the same rules as the US, and gave FIDE as a source.
+# (FIDE is a private organization that promotes efficient electrical use.)
+# On 1996-02-02 Mario Camou wrote that the transition times are Apr Sun>=1
+# 0:00 and Nov 1 0:00 but also wrote ``The DST-out date looks a bit fishy''.
+# Go with Pitts after 1996, and with Shanks before that.
+
 # From Shanks (1991):
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Mexico	1922	only	-	Jan	1	0:00	0	S
@@ -863,6 +873,9 @@ Rule	Mexico	1943	only	-	Dec	16	0:00	1:00	D
 Rule	Mexico	1944	only	-	May	1	0:00	0	S
 Rule	Mexico	1950	only	-	Feb	12	0:00	1:00	D
 Rule	Mexico	1950	only	-	Jul	30	0:00	0	S
+Rule	Mexico	1996	max	-	Apr	Sun>=1	2:00	1:00	D
+Rule	Mexico	1996	max	-	Oct	lastSun	2:00	0	S
+#
 Rule	BajaN	1950	1966	-	Apr	lastSun	2:00	1:00	D
 Rule	BajaN	1950	1961	-	Sep	lastSun	2:00	0	S
 Rule	BajaN	1961	1966	-	Oct	lastSun	2:00	0	S
@@ -883,20 +896,22 @@ Zone America/Mazatlan	-7:05:40 -	LMT	1921 Dec 31 23:54:20
 			-6:00	-	CST	1942 Apr
 			-7:00	-	MST	1949 Jan 14
 			-8:00	-	PST	1970
-			-7:00	-	MST
+			-7:00	Mexico	M%sT
 Zone America/Tijuana	-7:48:04 -	LMT	1922 Jan  1  0:11:56
 			-8:00	-	PST	1927 Jun 10 23:00
 			-7:00	-	MST	1930 Nov 16
 			-8:00	-	PST	1942 Apr
 			-7:00	-	MST	1949 Jan 14
 			-8:00	BajaN	P%sT	1967 Apr lastSun 2:00
-			-8:00	US	P%sT
+			-8:00	US	P%sT	1996
+			-8:00	Mexico	P%sT
 Zone America/Ensenada	-7:46:28 -	LMT	1922 Jan  1  0:13:32
 			-8:00	-	PST	1927 Jun 10 23:00
 			-7:00	-	MST	1930 Nov 16
 			-8:00	-	PST	1942 Apr
 			-7:00	-	MST	1949 Jan 14
-			-8:00	-	PST
+			-8:00	-	PST	1996
+			-8:00	Mexico	P%sT
 #
 # Revillagigedo Is
 # no information

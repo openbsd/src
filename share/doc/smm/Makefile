@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 1996/04/22 01:26:42 deraadt Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:44:15 deraadt Exp $
 
 # The following modules do not build/install:
 # 10.named, 13.amd
@@ -13,8 +13,8 @@
 BINDIR=	/usr/share/doc/smm
 FILES=	00.contents Makefile Title
 SUBDIR=	01.setup 04.quotas 05.fastfs 06.nfs 18.net
-.if exists(03.fsck)
-SUBDIR+= 03.fsck
+.if exists(03.fsck_ffs)
+SUBDIR+= 03.fsck_ffs
 .endif
 .if exists(07.lpd)
 SUBDIR+= 07.lpd
