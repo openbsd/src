@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.37 2002/07/20 17:58:16 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.38 2003/05/15 14:52:12 itojun Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.37 2002/07/20 17:58:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.38 2003/05/15 14:52:12 itojun Exp $";
 #endif
 
 
@@ -61,9 +61,7 @@ static char rcsid[] = "$OpenBSD: rarpd.c,v 1.37 2002/07/20 17:58:16 deraadt Exp 
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <util.h>
-#ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
-#endif
 
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
@@ -239,7 +237,6 @@ init_one(char *ifname)
 void
 init_all(void)
 {
-#ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
 
@@ -260,67 +257,6 @@ init_all(void)
 		init_one(ifa->ifa_name);
 	}
 	freeifaddrs(ifap);
-#else
-	char *inbuf = NULL, *ninbuf;
-	struct ifconf ifc;
-	struct ifreq *ifr;
-	struct sockaddr_dl *sdl;
-	int fd, inlen = 8192;
-	int i, len;
-
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		err(FATAL, "socket: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-
-	while (1) {
-		ifc.ifc_len = inlen;
-		ninbuf = realloc(inbuf, inlen);
-		if (ninbuf == NULL) {
-			if (inbuf)
-				free(inbuf);
-			close(fd);
-			err(FATAL, "init_all: malloc: %s", strerror(errno));
-		}
-		ifc.ifc_buf = inbuf = ninbuf;
-		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
-			(void) close(fd);
-			free(inbuf);
-			err(FATAL, "init_all: SIOCGIFCONF: %s",
-			    strerror(errno));
-			/* NOTREACHED */
-		}
-		if (ifc.ifc_len + sizeof(*ifr) < inlen)
-			break;
-		inlen *= 2;
-	}
-
-	ifr = ifc.ifc_req;
-	for (i = 0; i < ifc.ifc_len;
-	    i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
-		len = sizeof(ifr->ifr_name) +
-		    (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
-		    ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
-
-		sdl = (struct sockaddr_dl *)&ifr->ifr_addr;
-		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
-		    sdl->sdl_alen != 6)
-			continue;
-
-		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
-			free(inbuf);
-			err(FATAL, "init_all: SIOCGIFFLAGS %s: %s",
-			    ifr->ifr_name, strerror(errno));
-			/* NOTREACHED */
-		}
-		if ((ifr->ifr_flags &
-		    (IFF_UP | IFF_LOOPBACK | IFF_POINTOPOINT)) != IFF_UP)
-			continue;
-		init_one(ifr->ifr_name);
-	}
-	free(inbuf);
-	(void) close(fd);
-#endif
 }
 
 void
@@ -659,7 +595,6 @@ rarp_process(struct if_info *ii, u_char *pkt)
 void
 lookup_addrs(char *ifname, struct if_info *p)
 {
-#ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
 	u_char *eaddr = p->ii_eaddr;
@@ -717,106 +652,6 @@ lookup_addrs(char *ifname, struct if_info *p)
 	freeifaddrs(ifap);
 	if (!found)
 		err(FATAL, "lookup_addrs: Never saw interface `%s'!", ifname);
-#else
-	u_char *eaddr = p->ii_eaddr;
-	struct if_addr *ia, **iap = &p->ii_addrs;
-	char *inbuf = NULL, *ninbuf;
-	struct ifconf ifc;
-	struct ifreq *ifr, ifr_mask;
-	struct in_addr in;
-	struct sockaddr_dl *sdl;
-	int fd;
-	int i, len, inlen = 8192, found = 0;
-
-	/* We cannot use SIOCGIFADDR on the BPF descriptor.
-	   We must instead get all the interfaces with SIOCGIFCONF
-	   and find the right one.  */
-
-	/* Use datagram socket to get Ethernet address. */
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		err(FATAL, "socket: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-
-	while (1) {
-		ifc.ifc_len = inlen;
-		ninbuf= realloc(inbuf, inlen);
-		if (ninbuf == NULL) {
-			if (inbuf)
-				free(inbuf);
-			close(fd);
-			err(FATAL, "lookup_addrs: malloc: %s",
-			    strerror(errno));
-		}
-		ifc.ifc_buf = inbuf = ninbuf;
-		if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0) {
-			(void) close(fd);
-			free(inbuf);
-			err(FATAL, "lookup_addrs: SIOCGIFCONF: %s",
-			    strerror(errno));
-			/* NOTREACHED */
-		}
-		if (ifc.ifc_len + sizeof(*ifr) < inlen)
-			break;
-		inlen *= 2;
-	}
-
-	ifr = ifc.ifc_req;
-	for (i = 0; i < ifc.ifc_len;
-	    i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
-		len = sizeof(ifr->ifr_name) +
-		    (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
-		    ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
-		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
-			sdl = (struct sockaddr_dl *) & ifr->ifr_addr;
-			if (sdl->sdl_family == AF_LINK &&
-			    sdl->sdl_type == IFT_ETHER && sdl->sdl_alen == 6) {
-				memcpy((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
-				if (dflag)
-					fprintf(stderr,
-					    "%s: %x:%x:%x:%x:%x:%x\n",
-					    ifr->ifr_name,
-					    eaddr[0], eaddr[1], eaddr[2],
-					    eaddr[3], eaddr[4], eaddr[5]);
-				found = 1;
-			} else if (sdl->sdl_family == AF_INET) {
-				ia = malloc (sizeof (struct if_addr));
-				if (ia == NULL)
-					err(FATAL, "lookup_addrs: malloc: %s",
-					    strerror(errno));
-				ia->ia_next = NULL;
-				ia->ia_ipaddr =
-				    ((struct sockaddr_in *) sdl)->
-				    sin_addr.s_addr;
-				memcpy(&ifr_mask, ifr, sizeof(*ifr));
-				if (ioctl(fd, SIOCGIFNETMASK,
-				    (char *) &ifr_mask) < 0)
-					err(FATAL, "SIOCGIFNETMASK: %s",
-					    strerror(errno));
-				ia->ia_netmask =
-				    ((struct sockaddr_in *)
-				    & ifr_mask.ifr_addr)->sin_addr.s_addr;
-				/* If SIOCGIFNETMASK didn't work,
-				   figure out a mask from the IP
-				   address class. */
-				if (ia->ia_netmask == 0)
-					ia->ia_netmask =
-					    ipaddrtonetmask(ia->ia_ipaddr);
-				if (dflag) {
-					in.s_addr = ia->ia_ipaddr;
-					fprintf(stderr, "\t%s\n",
-					    inet_ntoa(in));
-				}
-				*iap = ia;
-				iap = &ia->ia_next;
-			}
-		}
-	}
-
-	free(inbuf);
-	if (!found)
-		err(FATAL, "lookup_addrs: Never saw interface `%s'!", ifname);
-#endif
 }
 
 int arptab_set(u_char *eaddr, u_int32_t host);
