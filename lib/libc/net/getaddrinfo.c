@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.39 2002/07/01 21:57:35 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.40 2002/07/24 01:38:34 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -107,6 +107,8 @@
 #include <rpcsvc/ypclnt.h>
 #include "ypinternal.h"
 #endif
+
+#include "thread_private.h"
 
 #define SUCCESS 0
 #define ANY 0
@@ -500,6 +502,9 @@ getaddrinfo(hostname, servname, hints, res)
 /*
  * FQDN hostname, DNS lookup
  */
+
+_THREAD_PRIVATE_MUTEX(getaddrinfo_explore_fqdn);
+
 static int
 explore_fqdn(pai, hostname, servname, res)
 	const struct addrinfo *pai;
@@ -513,6 +518,8 @@ explore_fqdn(pai, hostname, servname, res)
 	char lookups[MAXDNSLUS];
 	int i;
 
+	_THREAD_PRIVATE_MUTEX_LOCK(getaddrinfo_explore_fqdn);
+
 	result = NULL;
 
 #if 0
@@ -521,15 +528,19 @@ explore_fqdn(pai, hostname, servname, res)
 	 * return the address family or not.
 	 * XXX does not handle PF_UNSPEC case, should filter final result
 	 */
-	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && !addrconfig(pai))
+	if ((pai->ai_flags & AI_ADDRCONFIG) != 0 && !addrconfig(pai)) {
+		_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 		return 0;
+	}
 #endif
 
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
 	 */
-	if (get_portmatch(pai, servname) != 0)
+	if (get_portmatch(pai, servname) != 0) {
+		_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 		return 0;
+	}
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		strncpy(lookups, "f", sizeof lookups);
@@ -560,6 +571,7 @@ explore_fqdn(pai, hostname, servname, res)
 			/* canonname should be filled already */
 		}
 		*res = result;
+		_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 		return 0;
 	} else {
 		/* translate error code */
@@ -591,6 +603,7 @@ explore_fqdn(pai, hostname, servname, res)
 free:
 	if (result)
 		freeaddrinfo(result);
+	_THREAD_PRIVATE_MUTEX_UNLOCK(getaddrinfo_explore_fqdn);
 	return error;
 }
 
