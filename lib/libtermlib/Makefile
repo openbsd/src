@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/12/08 15:22:33 downsj Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/01/05 08:22:05 deraadt Exp $
 #
 # Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
 # All rights reserved.
@@ -73,5 +73,8 @@ includes:	${HDRS}
 	done
 
 .include <bsd.lib.mk>
+
+mkinfo:	mkinfo.c
+	${HOSTCC} ${CFLAGS} -I${.CURDIR} -o mkinfo $>
 
 .depend:	mkinfo.c
