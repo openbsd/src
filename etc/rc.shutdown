@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.shutdown,v 1.1 1999/07/06 07:55:03 deraadt Exp $
+#	$OpenBSD: rc.shutdown,v 1.2 1999/07/15 14:31:52 provos Exp $
 #
 # If it exists, this script is run at system-shutdown by reboot(8),
 # halt(8).
@@ -7,6 +7,10 @@
 #
 
 echo -n /etc/rc.shutdown in progress...
+
+# save part of our entropy pool for reuse on reboot
+dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
+chmod 600 /var/db/host.random
 
 #
 # Your shell code goes here

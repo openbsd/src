@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.99 1999/05/30 23:20:52 millert Exp $
+#	$OpenBSD: rc,v 1.100 1999/07/15 14:31:52 provos Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -77,10 +77,14 @@ rm -f /fastboot		# XXX (root now writeable)
 echo 'setting tty flags'
 ttyflags -a
 
-# if there's no /etc/host.random, make one through /dev/urandom
-if [ ! -f /etc/host.random ]; then
-	dd if=/dev/urandom of=/etc/host.random bs=1024 count=64 >/dev/null 2>&1
-	chmod 600 /etc/host.random
+# if there's no /var/db/host.random, make one through /dev/urandom
+if [ ! -f /var/db/host.random ]; then
+	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
+		>/dev/null 2>&1
+	chmod 600 /var/db/host.random
+else
+	dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
+		>/dev/null 2>&1
 fi
 
 # set hostname, turn on network
