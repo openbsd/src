@@ -1,4 +1,4 @@
-/*	$OpenBSD: paste.c,v 1.4 1997/01/17 07:13:02 millert Exp $	*/
+/*	$OpenBSD: paste.c,v 1.5 1998/11/16 06:09:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,10 +44,11 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	5.7 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$OpenBSD: paste.c,v 1.4 1997/01/17 07:13:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: paste.c,v 1.5 1998/11/16 06:09:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -56,6 +57,12 @@ static char rcsid[] = "$OpenBSD: paste.c,v 1.4 1997/01/17 07:13:02 millert Exp $
 char *delim;
 int delimcnt;
 
+int	tr __P((char *));
+void	usage __P((void));
+void	parallel __P((char **));
+void	sequential __P((char **));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -99,6 +106,7 @@ typedef struct _list {
 	char *name;
 } LIST;
 
+void
 parallel(argv)
 	char **argv;
 {
@@ -109,7 +117,7 @@ parallel(argv)
 	int opencnt, output;
 	char buf[_POSIX2_LINE_MAX + 1], *malloc();
 
-	for (cnt = 0, head = NULL; p = *argv; ++argv, ++cnt) {
+	for (cnt = 0, head = NULL; (p = *argv); ++argv, ++cnt) {
 		if (!(lp = (LIST *)malloc((u_int)sizeof(LIST)))) {
 			(void)fprintf(stderr, "paste: %s.\n", strerror(ENOMEM));
 			exit(1);
@@ -163,9 +171,9 @@ parallel(argv)
 			if (!output) {
 				output = 1;
 				for (cnt = 0; cnt < lp->cnt; ++cnt)
-					if (ch = delim[cnt % delimcnt])
+					if ((ch = delim[cnt % delimcnt]))
 						putchar(ch);
-			} else if (ch = delim[(lp->cnt - 1) % delimcnt])
+			} else if ((ch = delim[(lp->cnt - 1) % delimcnt]))
 				putchar(ch);
 			(void)printf("%s", buf);
 		}
@@ -174,6 +182,7 @@ parallel(argv)
 	}
 }
 
+void
 sequential(argv)
 	char **argv;
 {
@@ -182,7 +191,7 @@ sequential(argv)
 	register char ch, *p, *dp;
 	char buf[_POSIX2_LINE_MAX + 1];
 
-	for (; p = *argv; ++argv) {
+	for (; (p = *argv); ++argv) {
 		if (p[0] == '-' && !p[1])
 			fp = stdin;
 		else if (!(fp = fopen(p, "r"))) {
@@ -202,7 +211,7 @@ sequential(argv)
 				(void)printf("%s", buf);
 				if (!fgets(buf, sizeof(buf), fp))
 					break;
-				if (ch = *dp++)
+				if ((ch = *dp++))
 					putchar(ch);
 				if (++cnt == delimcnt) {
 					dp = delim;
@@ -216,6 +225,7 @@ sequential(argv)
 	}
 }
 
+int
 tr(arg)
 	char *arg;
 {
@@ -247,6 +257,7 @@ tr(arg)
 	return(cnt);
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr, "paste: [-s] [-d delimiters] file ...\n");
