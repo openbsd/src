@@ -77,6 +77,10 @@ This is a list of things that still need to be done:
 		- www/squid
 		- devel/sdl [yes]
 
+* Make getaddrinfo(3) thread-safe.
+
+* What to do with gethostby*_r(3)?
+
 * Some ideas:
   + http://www.cs.wustl.edu/~schmidt/locking-patterns.ps.gz
     http://www.cs.wustl.edu/~schmidt/TSS-pattern.ps.gz
@@ -89,4 +93,4 @@ This is a list of things that still need to be done:
 
 * Clean up the way that signals are delivered to threads. Yuk.
 
-$OpenBSD: TODO,v 1.12 2001/08/18 21:01:03 pvalchev Exp $
+$OpenBSD: TODO,v 1.13 2001/09/05 00:10:41 fgsch Exp $
