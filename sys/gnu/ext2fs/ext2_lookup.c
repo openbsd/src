@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_lookup.c,v 1.1 1996/06/24 03:34:57 downsj Exp $	*/
+/*	$OpenBSD: ext2_lookup.c,v 1.2 1996/07/15 03:39:29 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -102,7 +102,6 @@ ext2_dirconv2ffs( e2dir, ffsdir)
 	de.d_fileno = e2dir->inode;
 	de.d_namlen = e2dir->name_len;
 
-#ifndef NO_HARDWIRED_CONSTANTS
 	if(e2dir->name_len + 8 == e2dir->rec_len)
 		de.d_reclen += 4;
 
@@ -115,13 +114,6 @@ ext2_dirconv2ffs( e2dir, ffsdir)
 	 */
 	de.d_reclen = (de.d_namlen+8+1+3) & ~3;
 	bcopy(&de, ffsdir, de.d_reclen);
-#endif
-
-#if 0
-	printf("dirconv: ino %d rec old %d rec new %d nam %d name %s\n",
-		ffsdir->d_fileno, e2dir->rec_len, ffsdir->d_reclen, 
-		ffsdir->d_namlen, ffsdir->d_name);
-#endif
 }
 
 /*

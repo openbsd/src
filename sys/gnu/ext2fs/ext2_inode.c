@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_inode.c,v 1.2 1996/07/14 06:46:07 downsj Exp $	*/
+/*	$OpenBSD: ext2_inode.c,v 1.3 1996/07/15 03:39:28 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -131,16 +131,12 @@ ext2_update(v)
 	}
 	ext2_di2ei( &ip->i_din, (struct ext2_inode *) ((char *)bp->b_data + EXT2_INODE_SIZE *
 	    ino_to_fsbo(fs, ip->i_number)));
-/*
-	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+	if (ap->a_waitfor)
 		return (bwrite(bp));
 	else {
-*/
 		bdwrite(bp);
 		return (0);
-/*
 	}
-*/
 }
 
 #define	SINGLE	0	/* index of single indirect block */
@@ -220,7 +216,6 @@ printf("ext2_truncate called %d to %d\n", VTOI(ovp)->i_number, ap->a_length);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		vnode_pager_setsize(ovp, length);
 		if (error = ext2_balloc(oip, lbn, offset + 1, ap->a_cred, &bp,
 		    aflags))
 			return (error);
