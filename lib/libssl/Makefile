@@ -1,5 +1,5 @@
 .include <bsd.own.mk>
-
+MAN = ssl.8
 ECHO= /bin/echo
 
 .if exists(${.OBJDIR}/src-patent)
@@ -13,5 +13,6 @@ distribution:
 	${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
 	   ${.CURDIR}/ssleay.cnf ${DESTDIR}/etc/ssl/lib/ssleay.cnf;
 
+.include <bsd.man.mk>
 .include <bsd.subdir.mk>
 

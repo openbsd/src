@@ -1,0 +1,244 @@
+.Dd March 15, 1999
+.Dt SSL 8
+.Os OpenBSD
+.Sh NAME
+.Nm ssl
+.Nd details for libssl and libcrypto
+.Sh DESCRIPTION
+This document describes some of the issues relating to the use of 
+Eric Young's libssl and libcrypto libraries in OpenBSD. This document
+is intended as an overview of what the libraries do, what uses them, 
+and the slightly unorthodox way of upgrading the library.
+.Pp
+The SSL libraries (libssl and libcrypto) implement the
+.Ar SSL version 2 ,
+.Ar SSL version 3 ,
+and
+.Ar TLS version 1
+protocols.
+.Ar SSL version 2
+and
+.Ar 3
+are most
+commonly used by the
+.Ar https
+protocol for encrypted web transactions.
+Due to patent issues in the United States, there are 
+problems with shipping a fully-functional implementation of these
+protocols anywhere in the world, as such shipment would include shipping
+.Ar into
+the United States, thus causing problems.
+.Sh PATENTS AND THE RSA ALGORITHM
+.Ar RSA Data Security Inc (RSADSI)
+holds a patent on the
+.Ar RSA
+algorithm in the United States. Because of this, free
+implementations of
+.Ar RSA
+are difficult to distribute and propogate.
+(The
+.Ar RSA
+patent is probably more effective at preventing the widespread
+international adoption of integrated crypto than the much maligned
+ITAR restrictions are). The versions of libssl and libcrypto
+provided in the stock distribution do not contain the
+.Ar RSA
+algorithm -- all such functions
+are stubbed to fail. Since
+.Ar RSA
+is a key component of
+.Ar SSL version 2 ,
+this
+means that
+.Ar SSL version 2
+will not work at all.
+.Ar SSL version 3
+and
+.Ar TLS version 1
+allow for the exchange of keys via mechanisms that do not
+involve
+.Ar RSA ,
+and will work with the shipped version of the libraries,
+assuming both ends can agree to a cipher suite and key exchange that
+does not involve RSA.
+.Pp
+For instance, another typical alternative
+is
+.Ar DSA
+-- which is patent-free.
+.Pp
+The
+.Ar https
+protocol used by web browsers (in modern incarnations), 
+allows for the use of
+.Ar SSL version 3
+and
+.Ar TLS version 1 ,
+which in theory allows for encrypted web transactions without using
+.Ar RSA .
+Unfortunately all the popular web browsers
+buy their cryptographic code from
+.Ar RSADSI .
+Predictably,
+.Ar RSADSI
+would prefer if web browsers used their patented algorithm, and thus their
+libraries do not implement any
+.Ar non-RSA
+cipher and keying combination.
+.Sh HOW TO ADD RSA LIBRARIES TO OPENBSD
+Fortunately, not all of the world lives in the United
+States.
+Additionally
+.Ar RSADSI
+permits non-licensed use of the algorithm by certain parties
+(ie. non-commercial use).
+If you are permitted to use the
+.Ar RSA
+algorithm, you can enable the full function of the
+.Nm
+libraries by updating the shared libraries on your system,
+using a command like:
+.Bd -literal -offset xxx
+# pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.5/packages/i386/libssl-1.1.tgz
+.Ed
+.Pp
+(Obviously, replace
+.Ar 2.5
+with the current release, and
+.Ar i386
+with your architecture name (see
+.Xr arch 1 ).
+Once your ssl libraries are updated, the ssl libraries will be fully functional.
+.Sh SERVER CERTIFICATES
+The most common uses of
+.Ar SSL/TLS
+will require you to generate a server certificate, which is provided by your
+host as evidence of its identity when clients make new connections. The
+certificates reside in the
+.Pa /etc/ssl 
+directory, with the keys in the 
+.Pa /etc/ssl/private
+directory.
+.Pp
+Private keys can be encrypted using
+.Ar 3DES
+and a passphrase to protect their integrity should the encrypted file
+be disclosed, However it is
+important to note that encrypted server keys mean that the passphrase 
+needs to be typed in every time the server is started. If a passphrase
+is not used, you will need to be absolutely sure your key file
+is kept secure.
+.Sh GENERATING DSA SERVER CERTIFICATES
+Generating a
+.Ar DSA
+certificate involves several steps. First, you generate
+a
+.Ar DSA
+parameter set with a command like the following:
+.Bd -literal -offset indent
+# ssleay dsaparam 1024 -out dsa1024.pem
+.Ed
+.Pp
+Would generate
+.Ar DSA
+parameters for 1024 bit
+.Ar DSA
+keys, and save them to the
+file
+.Pa dsa1024.pem .
+.Pp
+Once you have the
+.Ar DSA
+paramters generated, you can generate a certificate
+and unencrypted private key using the command:
+.Bd -literal -offset indent
+# ssleay req -x509 -nodes -newkey dsa:dsa1024.pem \\
+  -out /etc/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
+.Ed
+.Pp
+To generate an encrypted private key, you would use:
+.Bd -literal -offset indent
+# ssleay req -x509 -nodes -newkey dsa:dsa1024.pem \\
+  -out /etc/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
+.Ed
+.Sh GENERATING RSA SERVER CERTIFICATES FOR WEB SERVERS
+To generate
+.Ar RSA
+certificates, you will first need to upgrade your
+shared libraries to support
+.Ar RSA
+as described above. Once that is done,
+you can generate
+.Ar RSA
+certificates that will be usable by 
+.Xr httpd 8
+for
+.Ar https
+transactions. 
+.Bd -literal -offset indent
+# ssleay genrsa -out /etc/ssl/private/server.key 1024
+.Ed
+.Pp
+Or, if you wish the key to be encrypted with a passphrase that you will
+have to type in when starting servers
+.Bd -literal -offset indent
+# ssleay genrsa -des3 -out /etc/ssl/private/server.key 1024
+.Ed
+.Pp 
+The next step is to generate a
+.Ar Certifiate Signing Request
+which is used
+to get a
+.Ar Certifying Authority (CA)
+to sign your certificate. To do this
+use the command:
+.Bd -literal -offset indent
+# ssleay req -new -key /etc/ssl/private/server.key \\
+  -out /etc/ssl/private/server.csr
+.Ed
+.Pp
+This
+.Pa server.csr
+file can then be given to
+.Ar Certifying Authority
+who will sign the key.
+You can also sign the key yourself, using the command:
+.Bd -literal -offset indent
+# ssleay x509 -req -days 365 -in /etc/ssl/private/server.csr \\
+  -signkey /etc/ssl/private/server.key -out /etc/ssl/server.crt
+.Ed
+.Pp
+With 
+.Pa /etc/ssl/server.crt
+and 
+.Pa /etc/ssl/private/server.key
+in place, you should be able to start 
+.Xr httpd 8
+with the
+.Ar -DSSL
+flag, enabling
+.Ar https
+transactions with your machine on port 443.
+.Sh BUGS
+.Pp
+.Nm ssleay
+and 
+.Nm libssl
+have nearly nonexistent documentation.
+Most documentation consists of examples and README files in
+the sources.  Mail beck@openbsd.org to assist or
+encourage him to finish the job.
+.Pp 
+The world needs more
+.Ar DSA
+capable
+.Ar SSL
+services.
+.Pp
+Patents can be renewed.
+.Sh SEE ALSO
+.Xr httpd 8 ,
+.Xr rc 8
+.Sh HISTORY
+This document first appeared in
+.Ox 2.5 .
