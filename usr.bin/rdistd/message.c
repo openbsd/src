@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.4 1996/06/26 05:38:23 deraadt Exp $	*/
+/*	$OpenBSD: message.c,v 1.5 1996/07/29 17:30:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: message.c,v 1.4 1996/06/26 05:38:23 deraadt Exp $";
+"$OpenBSD: message.c,v 1.5 1996/07/29 17:30:55 millert Exp $";
 
 static char sccsid[] = "@(#)common.c";
 
@@ -119,7 +119,8 @@ extern void msgprconfig()
 
 	debugmsg(DM_MISC, "Current message logging config:");
 	for (i = 0; msgfacility[i].mf_name; ++i) {
-		(void) sprintf(buf, "    %s=", msgfacility[i].mf_name);
+		(void) snprintf(buf, sizeof(buf),
+				"    %s=", msgfacility[i].mf_name);
 		for (x = 0; msgtypes[x].mt_name; ++x)
 			if (IS_ON(msgfacility[i].mf_msgtypes, 
 				  msgtypes[x].mt_type)) {
@@ -180,7 +181,7 @@ static char *setmsgtypes(msgfac, str)
 	 */
 	if (isserver && (msgfac->mf_msgfac != MF_SYSLOG && 
 			 msgfac->mf_msgfac != MF_FILE)) {
-		(void) sprintf(ebuf,
+		(void) snprintf(ebuf, sizeof(ebuf),
 		"The \"%s\" message facility cannot be used by the server.",
 			       msgfac->mf_name);
 		return(ebuf);
@@ -247,8 +248,9 @@ static char *setmsgtypes(msgfac, str)
 			    strcasecmp(word, "debug") == 0)
 				debug = DM_ALL;
 		} else {
-			(void) sprintf(ebuf, "Message type \"%s\" is invalid.",
-				       word);
+			(void) snprintf(ebuf, sizeof(ebuf),
+					"Message type \"%s\" is invalid.",
+				        word);
 			return(ebuf);
 		}
 	}
@@ -291,9 +293,9 @@ extern char *msgparseopts(msgstr, doset)
 			return("No message type specified");
 
 		if ((msgfac = getmsgfac(word)) == NULL) {
-			(void) sprintf(ebuf, 
-				       "%s is not a valid message facility", 
-				       word);
+			(void) snprintf(ebuf, sizeof(ebuf),
+				        "%s is not a valid message facility", 
+				        word);
 			return(ebuf);
 		}
 		
@@ -542,16 +544,15 @@ static void _message(flags, msgbuf)
 	/*
 	 * Special cases
 	 */
-	if (isserver && IS_ON(flags, MT_REMOTE))
+	if (isserver && IS_ON(flags, MT_NOTICE)) {
+		msgsendstdout((MSGFACILITY *)NULL, MT_NOTICE, flags, mbuf);
+		return;
+	} else if (isserver && IS_ON(flags, MT_REMOTE))
 		msgsendstdout((MSGFACILITY *)NULL, MT_REMOTE, flags, mbuf);
 	else if (isserver && IS_ON(flags, MT_NERROR))
 		msgsendstdout((MSGFACILITY *)NULL, MT_NERROR, flags, mbuf);
 	else if (isserver && IS_ON(flags, MT_FERROR))
 		msgsendstdout((MSGFACILITY *)NULL, MT_FERROR, flags, mbuf);
-	else if (isserver && IS_ON(flags, MT_NOTICE)) {
-		msgsendstdout((MSGFACILITY *)NULL, MT_NOTICE, flags, mbuf);
-		return;
-	}
 
 	/*
 	 * For each Message Facility, check each Message Type to see
