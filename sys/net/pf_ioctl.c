@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.56 2003/04/07 13:44:22 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.57 2003/04/09 15:32:59 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -392,6 +392,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 	if (rulequeue != NULL) {
 		TAILQ_REMOVE(rulequeue, rule, entries);
 		rule->entries.tqe_prev = NULL;
+		rule->nr = -1;
 	}
 	if (rule->states > 0 || rule->entries.tqe_prev != NULL)
 		return;
@@ -966,7 +967,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		s = splsoftnet();
 		bcopy(&ps->state, state, sizeof(struct pf_state));
 		state->rule.ptr = NULL;
-		state->nat_rule = NULL;
+		state->nat_rule.ptr = NULL;
+		state->anchor.ptr = NULL;
 		state->rt_ifp = NULL;
 		state->creation = time.tv_sec;
 		state->expire += state->creation;
@@ -999,10 +1001,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(n->state, &ps->state, sizeof(struct pf_state));
-		if (n->state->rule.ptr->entries.tqe_prev == NULL)
-			ps->state.rule.nr = -1;
-		else
-			ps->state.rule.nr = n->state->rule.ptr->nr;
+		ps->state.rule.nr = n->state->rule.ptr->nr;
+		ps->state.nat_rule.nr = (n->state->nat_rule.ptr == NULL) ?
+		    -1 : n->state->nat_rule.ptr->nr;
+		ps->state.anchor.nr = (n->state->anchor.ptr == NULL) ?
+		    -1 : n->state->anchor.ptr->nr;
 		splx(s);
 		secs = time.tv_sec;
 		ps->state.creation = secs - ps->state.creation;
@@ -1038,10 +1041,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 
 			bcopy(n->state, &pstore, sizeof(pstore));
-			if (n->state->rule.ptr->entries.tqe_prev == NULL)
-				pstore.rule.nr = -1;
-			else
-				pstore.rule.nr = n->state->rule.ptr->nr;
+			pstore.rule.nr = n->state->rule.ptr->nr;
+			pstore.nat_rule.nr = (n->state->nat_rule.ptr == NULL) ?
+			    -1 : n->state->nat_rule.ptr->nr;
+			pstore.anchor.nr = (n->state->anchor.ptr == NULL) ?
+			    -1 : n->state->anchor.ptr->nr;
 			pstore.creation = secs - pstore.creation;
 			if (pstore.expire <= (unsigned)secs)
 				pstore.expire = 0;

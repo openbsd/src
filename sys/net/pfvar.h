@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.138 2003/04/05 20:20:58 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.139 2003/04/09 15:32:59 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -312,6 +312,11 @@ struct pf_pool {
 	u_int8_t		 opts;
 };
 
+union pf_rule_ptr {
+	struct pf_rule		*ptr;
+	u_int32_t		 nr;
+};
+
 struct pf_rule {
 	struct pf_rule_addr	 src;
 	struct pf_rule_addr	 dst;
@@ -324,10 +329,7 @@ struct pf_rule {
 #define PF_SKIP_DST_ADDR	6
 #define PF_SKIP_DST_PORT	7
 #define PF_SKIP_COUNT		8
-	union {
-		struct pf_rule	*ptr;
-		u_int32_t	 nr;
-	}			 skip[PF_SKIP_COUNT];
+	union pf_rule_ptr	 skip[PF_SKIP_COUNT];
 #define PF_RULE_LABEL_SIZE	 64
 	char			 label[PF_RULE_LABEL_SIZE];
 	u_int32_t		 timeout[PFTM_MAX];
@@ -352,8 +354,8 @@ struct pf_rule {
 	u_int32_t		 qid;
 	u_int32_t		 pqid;
 	u_int32_t		 rt_listid;
+	u_int32_t		 nr;
 
-	u_int16_t		 nr;
 	u_int16_t		 return_icmp;
 	u_int16_t		 return_icmp6;
 	u_int16_t		 max_mss;
@@ -418,11 +420,9 @@ struct pf_state {
 	struct pf_state_host ext;
 	struct pf_state_peer src;
 	struct pf_state_peer dst;
-	union {
-		struct pf_rule	*ptr;
-		u_int32_t	 nr;
-	} rule;
-	struct pf_rule	*nat_rule;
+	union pf_rule_ptr rule;
+	union pf_rule_ptr anchor;
+	union pf_rule_ptr nat_rule;
 	struct pf_addr	 rt_addr;
 	struct ifnet	*rt_ifp;
 	u_int32_t	 creation;
