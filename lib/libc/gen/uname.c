@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: uname.c,v 1.4 1996/08/19 08:27:12 tholo Exp $";
+static char rcsid[] = "$OpenBSD: uname.c,v 1.5 1996/09/15 09:31:09 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -45,7 +45,6 @@ uname(name)
 {
 	int mib[2], rval;
 	size_t len;
-	char *p;
 
 	rval = 0;
 

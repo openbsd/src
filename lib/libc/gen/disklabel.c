@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.2 1996/08/19 08:22:24 tholo Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.3 1996/09/15 09:30:58 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -48,7 +48,6 @@ static char rcsid[] = "$OpenBSD: disklabel.c,v 1.2 1996/08/19 08:22:24 tholo Exp
 #include <string.h>
 #include <unistd.h>
 
-static void	error __P((int));
 static int	gettype __P((char *, char **));
 
 struct disklabel *
@@ -172,18 +171,4 @@ gettype(t, names)
 	if (isdigit(*t))
 		return (atoi(t));
 	return (0);
-}
-
-static void
-error(err)
-	int err;
-{
-	char *p;
-
-	(void)write(STDERR_FILENO, "disktab: ", 9);
-	(void)write(STDERR_FILENO, _PATH_DISKTAB, sizeof(_PATH_DISKTAB) - 1);
-	(void)write(STDERR_FILENO, ": ", 2);
-	p = strerror(err);
-	(void)write(STDERR_FILENO, p, strlen(p));
-	(void)write(STDERR_FILENO, "\n", 1);
 }

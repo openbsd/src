@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.3 1996/08/19 08:24:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.4 1996/09/15 09:31:02 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -258,7 +258,6 @@ getpwent()
 	DBT key;
 	char bf[sizeof(_pw_keynum) + 1];
 #ifdef YP
-	char *cp;
 	static char *name = (char *)NULL;
 	const char *user, *host, *dom;
 	int has_yppw;
@@ -594,8 +593,6 @@ pwnam_netgrp:
 					break;
 				}
 				break;
-
-				continue;
 			}
 			if(strcmp(_pw_passwd.pw_name, name) == 0) {
 				if (!_pw_stayopen) {
@@ -781,8 +778,6 @@ pwuid_netgrp:
 					break;
 				}
 				break;
-
-				continue;
 			}
 			if( _pw_passwd.pw_uid == uid) {
 				if (!_pw_stayopen) {

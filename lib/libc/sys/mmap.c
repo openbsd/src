@@ -32,12 +32,16 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mmap.c,v 1.4 1996/08/19 08:34:31 tholo Exp $";
+static char rcsid[] = "$OpenBSD: mmap.c,v 1.5 1996/09/15 09:31:55 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
+
+#ifdef lint
+quad_t __syscall(quad_t, ...);
+#endif
 
 /*
  * This function provides 64-bit offset padding that

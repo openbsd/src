@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ypmatch_cache.c,v 1.4 1996/08/19 08:35:12 tholo Exp $";
+static char *rcsid = "$OpenBSD: ypmatch_cache.c,v 1.5 1996/09/15 09:32:01 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -47,6 +47,7 @@ static char *rcsid = "$OpenBSD: ypmatch_cache.c,v 1.4 1996/08/19 08:35:12 tholo 
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+#define YPMATCHCACHE
 #include "ypinternal.h"
 
 int _yplib_cache = 5;

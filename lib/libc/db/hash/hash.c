@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash.c,v 1.3 1996/08/19 08:20:31 tholo Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.4 1996/09/15 09:30:47 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -92,6 +92,7 @@ int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
 /************************** INTERFACE ROUTINES ***************************/
 /* OPEN/CLOSE */
 
+/* ARGSUSED */
 extern DB *
 __hash_open(file, flags, mode, info, dflags)
 	const char *file;

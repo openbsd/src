@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.3 1996/08/19 08:29:44 tholo Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.4 1996/09/15 09:31:18 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -601,7 +601,7 @@ __p_rr(cp, msg, file)
 
 	case T_UINFO:
 		putc('\t', file);
-		fputs(cp, file);
+		fputs((char *) cp, file);
 		cp += dlen;
 		break;
 

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sysconf.c,v 1.2 1996/08/19 08:26:24 tholo Exp $";
+static char rcsid[] = "$OpenBSD: sysconf.c,v 1.3 1996/09/15 09:31:06 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,6 @@ long
 sysconf(name)
 	int name;
 {
-	struct clockinfo clk;
 	struct rlimit rl;
 	size_t len;
 	int mib[2], value;

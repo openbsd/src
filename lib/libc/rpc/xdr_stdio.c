@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: xdr_stdio.c,v 1.3 1996/08/19 08:32:08 tholo Exp $";
+static char *rcsid = "$OpenBSD: xdr_stdio.c,v 1.4 1996/09/15 09:31:44 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -97,7 +97,7 @@ xdrstdio_destroy(xdrs)
 {
 	(void)fflush((FILE *)xdrs->x_private);
 	/* xx should we close the file ?? */
-};
+}
 
 static bool_t
 xdrstdio_getlong(xdrs, lp)
@@ -167,6 +167,7 @@ xdrstdio_setpos(xdrs, pos)
 		FALSE : TRUE);
 }
 
+/* ARGSUSED */
 static int32_t *
 xdrstdio_inline(xdrs, len)
 	XDR *xdrs;

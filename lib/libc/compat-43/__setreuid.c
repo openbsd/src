@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __setreuid.c,v 1.2 1996/08/19 08:19:15 tholo Exp $";
+static char *rcsid = "$OpenBSD: __setreuid.c,v 1.3 1996/09/15 09:30:45 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,20 +43,20 @@ int
 __setreuid(ruid, euid)
 	uid_t ruid, euid;
 {
-	static uid_t svuid = -1;
+	static uid_t svuid = (uid_t) -1;
 	
-	if (svuid == -1)
+	if (svuid == (uid_t) -1)
 		svuid = geteuid();
 	/*
 	 * we assume that the intent of setting ruid is to be able to get
 	 * back ruid priviledge. So we make sure that we will be able to
 	 * do so, but do not actually set the ruid.
 	 */
-	if (ruid != -1 && ruid != getuid() && ruid != svuid) {
+	if (ruid != (uid_t) -1 && ruid != getuid() && ruid != svuid) {
 		errno = EPERM;
 		return (-1);
 	}
-	if (euid != -1 && seteuid(euid) < 0)
+	if (euid != (uid_t) -1 && seteuid(euid) < 0)
 		return (-1);
 	return (0);
 }

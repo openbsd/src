@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: catgets.c,v 1.4 1996/08/19 08:30:06 tholo Exp $";
+static char rcsid[] = "$OpenBSD: catgets.c,v 1.5 1996/09/15 09:31:22 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -63,7 +63,7 @@ _catgets(catd, set_id, msg_id, s)
 	}
 
 	cat_hdr = (struct _nls_cat_hdr *) catd->__data; 
-	set_hdr = (struct _nls_set_hdr *) (catd->__data
+	set_hdr = (struct _nls_set_hdr *) ((char *)catd->__data
 		+ sizeof(struct _nls_cat_hdr));
 
 	/* binary search, see knuth algorithm b */
@@ -74,7 +74,7 @@ _catgets(catd, set_id, msg_id, s)
 		r = set_id - ntohl(set_hdr[i].__setno);
 
 		if (r == 0) {
-			msg_hdr = (struct _nls_msg_hdr *) (catd->__data
+			msg_hdr = (struct _nls_msg_hdr *) ((char *)catd->__data
 				+ sizeof(struct _nls_cat_hdr)
 				+ ntohl(cat_hdr->__msg_hdr_offset));
 
@@ -84,10 +84,10 @@ _catgets(catd, set_id, msg_id, s)
 				i = (l + u) / 2;
 				r = msg_id - ntohl(msg_hdr[i].__msgno);
 				if (r == 0) {
-					return (char *) (catd->__data 
+					return (char *) catd->__data 
 					    + sizeof(struct _nls_cat_hdr)
 					    + ntohl(cat_hdr->__msg_txt_offset)
-					    + ntohl(msg_hdr[i].__offset));
+					    + ntohl(msg_hdr[i].__offset);
 				} else if (r < 0) {
 					u = i - 1;
 				} else {

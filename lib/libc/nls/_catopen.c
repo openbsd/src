@@ -4,7 +4,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: _catopen.c,v 1.2 1996/08/19 08:30:03 tholo Exp $";
+static char rcsid[] = "$OpenBSD: _catopen.c,v 1.3 1996/09/15 09:31:21 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -15,11 +15,11 @@ __indr_reference(_catopen,catopen);
 
 #include <nl_types.h>
 
-extern nl_catd _catopen __P((__const char *, int));
+extern nl_catd _catopen __P((const char *, int));
 
 nl_catd
 catopen(name, oflag)
-	__const char *name;
+	const char *name;
 	int oflag;
 {
 	return _catopen(name, oflag);

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_raw.c,v 1.3 1996/08/19 08:31:54 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc_raw.c,v 1.4 1996/09/15 09:31:39 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -95,6 +95,7 @@ svcraw_stat()
 	return (XPRT_IDLE);
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_recv(xprt, msg)
 	SVCXPRT *xprt;
@@ -113,6 +114,7 @@ svcraw_recv(xprt, msg)
 	return (TRUE);
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_reply(xprt, msg)
 	SVCXPRT *xprt;
@@ -132,6 +134,7 @@ svcraw_reply(xprt, msg)
 	return (TRUE);
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_getargs(xprt, xdr_args, args_ptr)
 	SVCXPRT *xprt;
@@ -145,6 +148,7 @@ svcraw_getargs(xprt, xdr_args, args_ptr)
 	return ((*xdr_args)(&srp->xdr_stream, args_ptr));
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_freeargs(xprt, xdr_args, args_ptr)
 	SVCXPRT *xprt;

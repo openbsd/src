@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.8 1996/09/02 05:01:09 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.9 1996/09/15 09:31:34 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -443,7 +443,7 @@ readtcp(ct, buf, len)
 				free(fds);
 			return (-1);
 		case -1:
-			if (errno == EINTR);
+			if (errno == EINTR)
 				continue;
 			ct->ct_error.re_status = RPC_CANTRECV;
 			ct->ct_error.re_errno = save_errno;

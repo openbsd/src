@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: catopen.c,v 1.7 1996/09/05 12:32:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: catopen.c,v 1.8 1996/09/15 09:31:23 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -54,8 +54,9 @@ static char rcsid[] = "$OpenBSD: catopen.c,v 1.7 1996/09/05 12:32:33 deraadt Exp
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
 
-static nl_catd load_msgcat();
+static nl_catd load_msgcat __P((const char *));
 
+/* ARGSUSED */
 nl_catd
 _catopen(name, oflag)
 	const char *name;
@@ -141,7 +142,7 @@ load_msgcat(path)
 		return (nl_catd) -1;
 	}
 
-	data = mmap(0, (size_t) st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	data = mmap(0, (size_t) st.st_size, PROT_READ, MAP_SHARED, fd, (off_t)0);
 	close (fd);
 
 	if (data == (void *) -1) {

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vsscanf.c,v 1.2 1996/08/19 08:33:15 tholo Exp $";
+static char rcsid[] = "$OpenBSD: vsscanf.c,v 1.3 1996/09/15 09:31:47 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -57,7 +57,6 @@ vsscanf(str, fmt, ap)
 	const char *fmt;
 	_BSD_VA_LIST_ ap;
 {
-	int ret;
 	FILE f;
 
 	f._flags = __SRD;

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ttyname.c,v 1.2 1996/08/19 08:27:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ttyname.c,v 1.3 1996/09/15 09:31:07 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -85,6 +85,7 @@ ttyname(fd)
 	return (oldttyname(fd, &sb));
 }
 
+/* ARGSUSED */
 static char *
 oldttyname(fd, sb)
 	int fd;

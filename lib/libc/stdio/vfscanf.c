@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.2 1996/08/19 08:33:12 tholo Exp $";
+static char rcsid[] = "$OpenBSD: vfscanf.c,v 1.3 1996/09/15 09:31:46 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -354,7 +354,7 @@ literal:
 		case CT_CCL:
 			/* scan a (nonempty) character class (sets NOSKIP) */
 			if (width == 0)
-				width = ~0;	/* `infinity' */
+				width = (size_t)~0;	/* `infinity' */
 			/* take only those things in the class */
 			if (flags & SUPPRESS) {
 				n = 0;
@@ -395,7 +395,7 @@ literal:
 		case CT_STRING:
 			/* like CCL, but zero-length string OK, & no NOSKIP */
 			if (width == 0)
-				width = ~0;
+				width = (size_t)~0;
 			if (flags & SUPPRESS) {
 				n = 0;
 				while (!isspace(*fp->_p)) {

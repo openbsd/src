@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypinternal.h,v 1.1 1996/04/24 12:56:29 deraadt Exp $	 */
+/*	$OpenBSD: ypinternal.h,v 1.2 1996/09/15 09:32:00 tholo Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -48,7 +48,6 @@ struct dom_binding {
 
 #define BINDINGDIR	"/var/yp/binding"
 #define YPBINDLOCK	"/var/run/ypbind.lock"
-#define YPMATCHCACHE
 
 int (*ypresp_allfn) __P((u_long, char *, int, char *, int, void *));
 void *ypresp_data;
@@ -58,6 +57,7 @@ extern char _yp_domain[MAXHOSTNAMELEN];
 extern int _yplib_timeout;
 
 void _yp_unbind __P((struct dom_binding *));
+int _yp_check __P((char **));
 
 #ifdef YPMATCHCACHE
 

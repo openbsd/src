@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getrpcent.c,v 1.6 1996/09/02 05:32:50 tholo Exp $";
+static char *rcsid = "$OpenBSD: getrpcent.c,v 1.7 1996/09/15 09:31:35 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -142,8 +142,6 @@ endrpcent()
 struct rpcent *
 getrpcent()
 {
-	struct rpcent *hp;
-	int reason;
 	register struct rpcdata *d = _rpcdata();
 
 	if (d == 0)

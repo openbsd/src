@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: regerror.c,v 1.2 1996/08/19 08:31:11 tholo Exp $";
+static char rcsid[] = "$OpenBSD: regerror.c,v 1.3 1996/09/15 09:31:26 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -164,8 +164,6 @@ const regex_t *preg;
 char *localbuf;
 {
 	register struct rerr *r;
-	register size_t siz;
-	register char *p;
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: auth_unix.c,v 1.4 1996/08/19 08:31:21 tholo Exp $";
+static char *rcsid = "$OpenBSD: auth_unix.c,v 1.5 1996/09/15 09:31:29 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -188,7 +188,7 @@ authunix_create_default()
 /*
  * authunix operations
  */
-
+/* ARGSUSED */
 static void
 authunix_nextverf(auth)
 	AUTH *auth;

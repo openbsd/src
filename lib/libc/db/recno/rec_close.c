@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rec_close.c,v 1.3 1996/08/19 08:20:58 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rec_close.c,v 1.4 1996/09/15 09:30:53 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -155,7 +155,7 @@ __rec_sync(dbp, flags)
 			status = (dbp->seq)(dbp, &key, &data, R_NEXT);
 		}
 	} else {
-		iov[1].iov_base = &t->bt_bval;
+		iov[1].iov_base = (char *) &t->bt_bval;
 		iov[1].iov_len = 1;
 
 		status = (dbp->seq)(dbp, &key, &data, R_FIRST);

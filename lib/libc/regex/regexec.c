@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: regexec.c,v 1.3 1996/08/19 08:31:15 tholo Exp $";
+static char rcsid[] = "$OpenBSD: regexec.c,v 1.4 1996/09/15 09:31:27 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,8 +56,6 @@ static char rcsid[] = "$OpenBSD: regexec.c,v 1.3 1996/08/19 08:31:15 tholo Exp $
 
 #include "utils.h"
 #include "regex2.h"
-
-static int nope = 0;		/* for use in asserts; shuts lint up */
 
 /* macros for manipulating states, small version */
 #define	states	long

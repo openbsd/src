@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setlocale.c,v 1.3 1996/08/26 00:17:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: setlocale.c,v 1.4 1996/09/15 09:31:14 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -230,4 +230,5 @@ loadlocale(category)
 		case LC_TIME:
 			return (NULL);
 	}
+	return (NULL);
 }

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.3 1996/08/19 08:31:27 tholo Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.4 1996/09/15 09:31:32 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -122,6 +122,7 @@ clntraw_create(prog, vers)
 	return (client);
 }
 
+/* ARGSUSED */
 static enum clnt_stat 
 clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	CLIENT *h;
@@ -202,7 +203,7 @@ clntraw_geterr()
 {
 }
 
-
+/* ARGSUSED */
 static bool_t
 clntraw_freeres(cl, xdr_res, res_ptr)
 	CLIENT *cl;

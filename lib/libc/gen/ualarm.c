@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ualarm.c,v 1.2 1996/08/19 08:27:08 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ualarm.c,v 1.3 1996/09/15 09:31:08 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/time.h>
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: ualarm.c,v 1.2 1996/08/19 08:27:08 tholo Exp $"
  * If ``reload'' is non-zero, keep generating SIGALRM
  * every ``reload'' microseconds after the first signal.
  */
-unsigned
+u_int
 ualarm(usecs, reload)
 	register unsigned usecs;
 	register unsigned reload;
@@ -61,5 +61,5 @@ ualarm(usecs, reload)
 	if (setitimer(ITIMER_REAL, &new, &old) == 0)
 		return (old.it_value.tv_sec * USPS + old.it_value.tv_usec);
 	/* else */
-		return (-1);
+		return ((u_int)-1);
 }

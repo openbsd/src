@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.8 1996/08/19 08:31:24 tholo Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.9 1996/09/15 09:31:30 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -57,8 +57,8 @@ bindresvport(sd, sin)
 
 	if (sin == (struct sockaddr_in *)0) {
 		sin = &myaddr;
-		memset(sin, 0, sizeof(*sin));
-		sin->sin_len = sizeof(*sin);
+		memset(sin, 0, sinlen);
+		sin->sin_len = sinlen;
 		sin->sin_family = AF_INET;
 	} else if (sin->sin_family != AF_INET) {
 		errno = EPFNOSUPPORT;
@@ -79,7 +79,7 @@ bindresvport(sd, sin)
 			return(error);
 	}
 
-	error = bind(sd, (struct sockaddr *)sin, sizeof(*sin));
+	error = bind(sd, (struct sockaddr *)sin, sinlen);
 
 	if (sin->sin_port == 0) {
 		int saved_errno = errno;
@@ -92,8 +92,6 @@ bindresvport(sd, sin)
 		}
 
 		if (sin != &myaddr) {
-			int sinlen = sizeof(*sin);
-
 			/* Hmm, what did the kernel assign... */
 			if (getsockname(sd, (struct sockaddr *)sin,
 			    &sinlen) < 0)

@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.3 1996/08/19 08:29:47 tholo Exp $";
+static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.4 1996/09/15 09:31:20 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ static char rcsid[] = "$OpenBSD: res_mkquery.c,v 1.3 1996/08/19 08:29:47 tholo E
  * Form all types of queries.
  * Returns the size of the result or -1.
  */
+/* ARGSUSED */
 int
 res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	int op;			/* opcode of query */
@@ -80,7 +81,9 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	register HEADER *hp;
 	register u_char *cp;
 	register int n;
+#ifdef ALLOW_UPDATES
 	struct rrec *newrr = (struct rrec *) newrr_in;
+#endif /* ALLOW_UPDATES */
 	u_char *dnptrs[10], **dpp, **lastdnptr;
 
 #ifdef DEBUG

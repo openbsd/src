@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.2 1996/08/19 08:23:10 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.3 1996/09/15 09:31:00 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -192,7 +192,6 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	int fd, depth;
 {
 	DB *capdbp;
-	DBT key, data;
 	register char *r_end, *rp, **db_p;
 	int myfd, eof, foundit, retval, clen;
 	char *record, *cbuf;
@@ -539,8 +538,6 @@ cdbget(capdbp, bp, name)
 	char **bp, *name;
 {
 	DBT key, data;
-	char *buf;
-	int st;
 
 	key.data = name;
 	key.size = strlen(name);
@@ -648,7 +645,7 @@ cgetnext(bp, db_array)
 	char **db_array;
 {
 	size_t len;
-	int status, i, done;
+	int status, done;
 	char *cp, *line, *rp, *np, buf[BSIZE], nbuf[BSIZE];
 	u_int dummy;
 
@@ -705,7 +702,6 @@ cgetnext(bp, db_array)
 		/* 
 		 * Line points to a name line.
 		 */
-		i = 0;
 		done = 0;
 		np = nbuf;
 		for (;;) {

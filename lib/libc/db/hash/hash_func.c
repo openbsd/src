@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: hash_func.c,v 1.3 1996/08/19 08:20:37 tholo Exp $";
+static char rcsid[] = "$OpenBSD: hash_func.c,v 1.4 1996/09/15 09:30:49 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -45,9 +45,11 @@ static char rcsid[] = "$OpenBSD: hash_func.c,v 1.3 1996/08/19 08:20:37 tholo Exp
 #include "page.h"
 #include "extern.h"
 
+#ifdef notdef
 static u_int32_t hash1 __P((const void *, size_t));
 static u_int32_t hash2 __P((const void *, size_t));
 static u_int32_t hash3 __P((const void *, size_t));
+#endif
 static u_int32_t hash4 __P((const void *, size_t));
 
 /* Global default hash function */
@@ -61,6 +63,9 @@ u_int32_t (*__default_hash) __P((const void *, size_t)) = hash4;
  *
  * This came from ejb's hsearch.
  */
+
+#ifdef notdef
+
 
 #define PRIME1		37
 #define PRIME2		1048583
@@ -160,6 +165,7 @@ hash3(keyarg, len)
 	}
 	return (h);
 }
+#endif
 
 /* Hash function from Chris Torek. */
 static u_int32_t

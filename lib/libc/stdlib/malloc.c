@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.10 1996/09/11 03:04:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.11 1996/09/15 09:31:49 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -813,7 +813,7 @@ malloc_bytes(size)
 	;
 
     /* Find that bit, and tweak it */
-    k = ffs(*lp) - 1;
+    k = ffs((unsigned)*lp) - 1;
     *lp ^= 1<<k;
 
     /* If there are no more free, remove from free-list */

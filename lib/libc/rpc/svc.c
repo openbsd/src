@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.7 1996/08/20 23:47:43 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.8 1996/09/15 09:31:38 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -422,7 +422,7 @@ svc_getreqset2(readfds, width)
 	struct svc_req r;
 	register SVCXPRT *xprt;
 	register int bit;
-	register u_int32_t mask, *maskp;
+	register fd_mask mask, *maskp;
 	register int sock;
 	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
 	msg.rm_call.cb_cred.oa_base = cred_area;
@@ -457,7 +457,7 @@ svc_getreqset2(readfds, width)
 				}
 				/* now match message with a registered service*/
 				prog_found = FALSE;
-				low_vers = 0 - 1;
+				low_vers = (u_long) -1;
 				high_vers = 0;
 				for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
 					if (s->sc_prog == r.rq_prog) {

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_udp.c,v 1.3 1996/08/19 08:31:59 tholo Exp $";
+static char *rcsid = "$OpenBSD: svc_udp.c,v 1.4 1996/09/15 09:31:42 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -56,6 +56,8 @@ static enum xprt_stat	svcudp_stat();
 static bool_t		svcudp_getargs();
 static bool_t		svcudp_freeargs();
 static void		svcudp_destroy();
+static void		cache_set __P((SVCXPRT *, u_long));
+static int		cache_get __P((SVCXPRT *, struct rpc_msg *, char **, u_long *));
 
 static struct xp_ops svcudp_op = {
 	svcudp_recv,
@@ -157,6 +159,7 @@ svcudp_create(sock)
 	return(svcudp_bufcreate(sock, UDPMSGSIZE, UDPMSGSIZE));
 }
 
+/* ARGSUSED */
 static enum xprt_stat
 svcudp_stat(xprt)
 	SVCXPRT *xprt;
@@ -175,7 +178,6 @@ svcudp_recv(xprt, msg)
 	register int rlen;
 	char *reply;
 	u_long replylen;
-	static int cache_get();
 
     again:
 	xprt->xp_addrlen = sizeof(struct sockaddr_in);
@@ -209,7 +211,6 @@ svcudp_reply(xprt, msg)
 	register XDR *xdrs = &(su->su_xdrs);
 	register int slen;
 	register bool_t stat = FALSE;
-	static void cache_set();
 
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, 0);
