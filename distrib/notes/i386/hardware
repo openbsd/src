@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.89 2002/10/13 20:13:49 henning Exp $
+dnl	$OpenBSD: hardware,v 1.90 2002/10/13 20:19:34 henning Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -195,7 +195,20 @@ Supported hardware {:-include-:}:
 		    SIIG Cyber I/O (single parallel, single serial)
 		    SIIG Cyber Parallel, Parallel Dual, Serial,
 			Serial Dual
-		    VScom PCI-800 (8 port serial, probably OEM)
+		    VScom PCI 800  (8 port serial)
+		    VScom PCI 011H (1 port parallel)
+		    VScom PCI 100H (1 port serial)
+		    VScom PCI 110H (1 port serial and 1 port parallel)
+		    VScom PCI 200H (2 port serial)
+		    VScom PCI 210H (2 port serial and 1 port parallel)
+		    VScom PCI 400H (4 port serial)
+		    VScom PCI 410H (4 port serial and 1 port parallel)
+		    VScom PCI 800H (8 port serial)
+		    VScom PCI 100L (1 port serial)
+		    VScom PCI 200L (2 port serial)
+		    VScom PCI 210L (2 port serial and 1 port parallel)
+		    VScom PCI 400L (4 port serial)
+		    VScom PCI 800L (8 port serial)
 		    AT&T/Lucent Venus Modem (found on IBM 33L4618
 			card, Actiontec 56K, and others)
 		    US Robotics 3CP5609 PCI (modem)
