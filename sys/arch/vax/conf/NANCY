@@ -1,4 +1,4 @@
-#	$OpenBSD: NANCY,v 1.7 2001/10/10 23:43:42 millert Exp $
+#	$OpenBSD: NANCY,v 1.8 2004/04/16 22:42:48 deraadt Exp $
 #
 # NANCY MV3600 configuration file.
 #
@@ -30,7 +30,6 @@ option		KTRACE
 option		DIAGNOSTIC
 
 # Network support
-#option		GATEWAY
 option		INET
 
 # All supported filesystem types

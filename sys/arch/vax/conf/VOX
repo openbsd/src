@@ -1,4 +1,4 @@
-#	$OpenBSD: VOX,v 1.4 2001/10/10 23:43:42 millert Exp $
+#	$OpenBSD: VOX,v 1.5 2004/04/16 22:42:48 deraadt Exp $
 #
 # simple VS2000 configuration file.
 #
@@ -20,7 +20,6 @@ option		KTRACE
 option		DIAGNOSTIC
 
 # Network support
-#option		GATEWAY
 option		INET
 
 # All supported filesystem types

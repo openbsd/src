@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.48 2002/12/10 23:37:03 miod Exp $
+#	$OpenBSD: DISKLESS,v 1.49 2004/04/16 22:42:47 deraadt Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -82,7 +82,6 @@ option		PROCFS		# /proc
 option		UMAPFS		# NULLFS + uid and gid remapping
 option		UNION		# union file system
 
-#option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)
 option		PULLDOWN_TEST	# use m_pulldown for IPv6 packet parsing
