@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.53 2004/06/01 20:59:25 mickey Exp $	*/
+/*	$OpenBSD: xl.c,v 1.54 2004/06/04 21:49:02 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -658,7 +658,7 @@ allmulti:
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto allmulti;
 		}
-		h = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26) &
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
 		    0x000000FF;
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_RX_SET_HASH|XL_HASH_SET|h);
 		mcnt++;
