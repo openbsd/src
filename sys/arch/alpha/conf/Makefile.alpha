@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.11 1997/02/26 16:30:58 niklas Exp $
+#	$OpenBSD: Makefile.alpha,v 1.12 1997/04/19 21:12:51 tholo Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -153,7 +153,7 @@ links:
 SRCS=	${ALPHA}/alpha/locore.s ${ALPHA}/alpha/cpuconf.c \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
-.depend: ${SRCS} assym.h param.c
+.depend: ${SRCS} assym.h param.c cpuconf.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} cpuconf.c param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
