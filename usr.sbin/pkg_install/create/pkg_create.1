@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.5 1998/10/13 23:09:50 marc Exp $	
+.\"	$OpenBSD: pkg_create.1,v 1.6 1998/12/16 02:47:53 aaron Exp $	
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -25,13 +25,13 @@
 .\" better integration with FreeBSD's new ports collection.
 .\"
 .Dd April 21, 1995
-.Dt pkg_create 1
+.Dt PKG_CREATE 1
 .Os
 .Sh NAME
 .Nm pkg_create
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
-.Nm
+.Nm pkg_create
 .Op Fl Ohv
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
@@ -62,42 +62,53 @@ description of the input syntax is included in this document.
 The following command line options are supported:
 .Bl -tag -width indent
 .It Fl f Ar packinglist
-Fetch ``packing list'' for package from the file
+Fetch
+.Dq packing list
+for package from the file
 .Ar packinglist
-or
-.Cm stdin
-if
+or stdin if
 .Ar packinglist
-is a
-.Cm -
-(dash).
-.It Fl c Ar [-]desc
-Fetch package ``one line description'' from file
+is a dash
+.Dq \&- .
+.It Fl c [ Ar \&- ] Ns Ar desc
+Fetch package
+.Dq one line description
+from file
 .Ar desc
 or, if preceded by
-.Cm - ,
+.Dq \&- ,
 the argument itself.  This string should also
 give some idea of which version of the product (if any) the package
 represents.
-.It Fl d Ar [-]desc
+.It Fl d [ Ar \&- ] Ns Ar desc
 Fetch long description for package from file
 .Ar desc
 or, if preceded by
-.Cm - ,
+.Dq \&- ,
 the argument itself.
 .It Fl Y
-Assume a default answer of `Yes' for any questions asked.
+Assume a default answer of
+.Dq Yes
+for any questions asked.
 .It Fl N
-Assume a default answer of `No' for any questions asked.
+Assume a default answer of
+.Dq \&No
+for any questions asked.
 .It Fl O
-Go into a `packing list Only' mode.
-This is used to do `fake pkg_add' operations when a package is installed.
+Go into a
+.Dq packing list only
+mode.
+This is used to do
+.Dq fake pkg_add
+operations when a package is installed.
 In such cases, it is necessary to know what the final, adjusted packing
 list will look like.
 .It Fl v
 Turn on verbose output.
 .It Fl h
-Force tar to follow symbolic links, so that the files they point to
+Force
+.Xr tar
+to follow symbolic links, so that the files they point to
 are dumped, rather than the links themselves.
 .It Fl i Ar iscript
 Set
@@ -111,18 +122,24 @@ Set the initial package dependency list to
 This is assumed to be a whitespace separated list of package names
 and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgdep
-directives in the packing list (see PACKING LIST DETAILS section below).
+directives in the packing list (see
+.Sx PACKING LIST DETAILS
+section below).
 .It Fl C Ar cpkgs
 Set the initial package conflict list to
 .Ar cpkgs .
 This is assumed to be a whitespace separated list of package names
 and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgcfl
-directives in the packing list (see PACKING LIST DETAILS section below).
+directives in the packing list (see
+.Sx PACKING LIST DETAILS
+section below).
 .It Fl p Ar prefix
 Set
 .Ar prefix
-as the initial directory ``base'' to start from in selecting files for
+as the initial directory
+.Dq base
+to start from in selecting files for
 the package.
 .It Fl k Ar dscript
 Set
@@ -133,7 +150,9 @@ when the package is later (if ever) de-installed.
 .It Fl r Ar rscript
 Set
 .Ar rscript
-to be the ``requirements'' procedure for the package.  This can be any
+to be the
+.Dq requirements
+procedure for the package.  This can be any
 executable program (or shell script).  It will be invoked automatically
 at installation/deinstallation time to determine whether or not
 installation/deinstallation should proceed.
@@ -147,8 +166,9 @@ By default, this is the string
 but it may be necessary to override it in the situation where
 space in your
 .Pa /tmp
-directory is limited.  Be sure to leave some number of `X' characters
-for
+directory is limited.  Be sure to leave some number of
+.Dq X
+characters for
 .Xr mktemp 3
  to fill in with a unique ID.
 .It Fl X Ar excludefile
@@ -157,11 +177,11 @@ Pass
 as a
 .Fl exclude-from
 argument to
-.Cm tar
+.Xr tar
 when creating final package.  See
-.Cm tar
+.Xr tar
 man page (or run
-.Cm tar
+.Xr tar
 with
 .Fl -help
 flag) for further information on using this flag.
@@ -174,7 +194,8 @@ legal notices on almost-free software, etc.
 Run
 .Xr mtree 8
 with input from mtreefile before the package is installed.  
-Mtree is invoked as
+.Xr mtree
+is invoked as
 .Cm mtree
 .Fl u 
 .Fl f 
@@ -191,7 +212,9 @@ directive.
 .El
 .Pp
 .Sh PACKING LIST DETAILS
-The ``packing list'' format (see
+The
+.Dq packing list
+format (see
 .Fl f )
 is fairly simple, being
 nothing more than a single column of filenames to include in the
@@ -199,9 +222,9 @@ package.  However, since absolute pathnames are generally a bad idea
 for a package that could be installed potentially anywhere, there is
 another method of specifying where things are supposed to go
 and, optionally, what ownership and mode information they should be
-installed with.  This is done by imbeding specialized command sequences
+installed with.  This is done by imbedding specialized command sequences
 in the packing list. Briefly described, these sequences are:
-.Bl -tag -width indent -compact
+.Bl -tag -width indent
 .It Cm @cwd Ar directory
 Set the internal directory pointer to point to
 .Ar directory .
@@ -210,7 +233,9 @@ Note:
 .Cm @cd
 is also an alias for this command.
 .It Cm @srcdir Ar directory
-Set the internal directory pointer for _creation only_ to
+Set the internal directory pointer for creation
+.Em only
+to
 .Ar directory .
 That is to say that it overrides
 .Cm @cwd
@@ -227,25 +252,29 @@ is set to
 .Pa /usr/local
 and the last extracted file was
 .Pa bin/emacs .
-.Bl -tag -width indent -compact
+.Bl -tag -width indent
 .It Cm "%F"
-Expands to the last filename extracted (as specified), in the example case
-.Pa bin/emacs
+Expands to the last filename extracted (as specified); in the example case,
+.Pa bin/emacs .
 .It Cm "%D"
-Expand to the current directory prefix, as set with
-.Cm @cwd ,
+Expands to the current directory prefix, as set with
+.Cm @cwd ;
 in the example case
 .Pa /usr/local .
 .It Cm "%B"
-Expand to the ``basename'' of the fully qualified filename, that
+Expands to the
+.Dq basename
+of the fully qualified filename, that
 is the current directory prefix, plus the last filespec, minus
 the trailing filename.  In the example case, that would be
 .Pa /usr/local/bin .
 .It Cm "%f"
-Expand to the ``filename'' part of the fully qualified name, or
+Expands to the
+.Dq filename
+part of the fully qualified name, or
 the converse of
-.Cm %B ,
-being in the example case,
+.Cm %B ;
+in the example case,
 .Pa emacs .
 .El
 .It Cm @unexec Ar command
@@ -263,8 +292,9 @@ as a result of adding the package, but not directly known to
 the package's table of contents (and hence not automatically
 removable).  The advantage of using
 .Cm @unexec
-over a deinstallation script is that you can use the ``special
-sequence expansion'' to get at files regardless of where they've
+over a deinstallation script is that you can use the
+.Dq special sequence expansion
+to get at files regardless of where they've
 been potentially redirected (see
 .Fl p ) .
 .It Cm @mode Ar mode
@@ -279,14 +309,19 @@ permissions.
 Set internal package options, the only two currently supported ones
 being
 .Ar extract-in-place ,
-which tells the pkg_add command not to extract the package's tarball
+which tells the
+.Nm pkg_add
+command not to extract the package's tarball
 into a staging area but rather directly into the target
 hierarchy (this is typically meant to be used only by distributions
 or other special package types), and
 .Ar preserve ,
-which tells pkg_add to move any existing files out of the way,
+which tells
+.Nm pkg_add
+to move any existing files out of the way,
 preserving the previous contents (which are also resurrected on
-pkg_delete, so caveat emptor).
+.Nm pkg_delete ,
+so caveat emptor).
 .It Cm @owner Ar user
 Set default ownership for all subsequently extracted files to
 .Ar user .
@@ -329,7 +364,7 @@ package installation are not deleted when the package is deinstalled;
 this provides an explicit directory cleanup method.  This directive
 should appear at the end of the package list.  If more than one
 .Cm @dirrm
-directives are used, the directories are removed in the order specified.
+directive is used, the directories are removed in the order specified.
 The
 .Pa name
 directory will not be removed unless it is empty.
@@ -366,7 +401,7 @@ Declare a conflict to the
 package.  The
 .Ar pkgcflname
 package must
-.Cm not
+.Em not
 be installed if
 .Ar pkgname
 package gets installed cause they install the same files and thus conflict.
@@ -393,7 +428,7 @@ Hard links between files in a distribution must be bracketed by
 .Cm @cwd
 directives in order to be preserved as hard links when the package is
 extracted.  They additionally must not end up being split between
-.Cm tar
+.Xr tar
 invocations due to exec argument-space limitations (this depends on the
 value returned by
 .Fn sysconf _SC_ARG_MAX ) .

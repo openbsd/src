@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.3 1998/09/07 22:30:15 marc Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.4 1998/12/16 02:47:53 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -18,16 +18,16 @@
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
 .Dd November 25, 1994
-.Dt pkg_delete 1
+.Dt PKG_DELETE 1
 .Os
 .Sh NAME
 .Nm pkg_delete
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
-.Nm
+.Nm pkg_delete
 .Op Fl vDdnf
 .Op Fl p Ar prefix
-.Ar pkg-name ...
+.Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -35,7 +35,6 @@ command is used to delete packages that have been previously installed
 with the
 .Xr pkg_add 1
 command.
-
 .Sh WARNING
 .Bf -emphasis
 Since the
@@ -62,11 +61,10 @@ directives, and/or use the
 .Xr pkg_info 1
 command to examine the installed package control files.
 .Ef
-
 .Sh OPTIONS
 The following command line options are supported:
 .Bl -tag -width indent
-.It Ar pkg-name ...
+.It Ar pkg-name Op Ar ...
 The named packages are deinstalled.
 .It Fl v
 Turn on verbose output.
@@ -95,7 +93,6 @@ the package.
 Force removal of the package, even if a dependency is recorded or the
 deinstall or require script fails.
 .El
-
 .Pp
 .Sh TECHNICAL DETAILS
 .Nm
@@ -115,11 +112,12 @@ If the package contains a
 file (see 
 .Xr pkg_create 1 ),
 then this is executed first as
-.Bd -filled -offset indent -compact
+.Bd -filled -offset indent
 .Cm require
 .Ar <pkg-name>
 .Ar DEINSTALL
 .Ed
+.Pp
 (where
 .Ar pkg-name
 is the name of the package in question and
@@ -140,11 +138,12 @@ knows how to do is delete the files created in the original distribution.
 The
 .Nm deinstall
 script is called as:
-.Bd -filled -offset indent -compact
+.Bd -filled -offset indent
 .Cm deinstall
 .Ar <pkg-name>
 .Ar DEINSTALL
 .Ed
+.Pp
 Passing the keyword
 .Ar DEINSTALL
 lets you potentially write only one program/script that handles all
@@ -167,7 +166,7 @@ or
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
 .Xr mktemp 3 ,
-.Xr mtree 8 .
+.Xr mtree 8
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"

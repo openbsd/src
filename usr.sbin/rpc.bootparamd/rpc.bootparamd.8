@@ -1,4 +1,4 @@
-.\" $OpenBSD: rpc.bootparamd.8,v 1.7 1998/05/03 05:02:13 gene Exp $
+.\" $OpenBSD: rpc.bootparamd.8,v 1.8 1998/12/16 02:47:53 aaron Exp $
 .\" @(#)bootparamd.8
 .Dd Jan 8, 1994
 .Dt BOOTPARAMD 8
@@ -8,28 +8,29 @@
 .Nm rpc.bootparamd
 .Nd boot parameter server
 .Sh SYNOPSIS
-.Nm /usr/sbin/rpc.bootparamd
+.Nm rpc.bootparamd
 .Op Fl d
 .Op Fl s
 .Op Fl r Ar router
 .Op Fl f Ar file
 .Sh DESCRIPTION
-.Nm \&Bootparamd
+.Nm
 is a server process that provides information to diskless clients
 necessary for booting. It consults the file
-.Dq Pa /etc/bootparams .
+.Pa /etc/bootparams .
 It should normally be started from
-.Dq Pa /etc/rc .
+.Pa /etc/rc .
 .Pp
 This version will allow the use of aliases on the hostname in the
-.Dq Pa /etc/bootparams
+.Pa /etc/bootparams
 file. The hostname returned in response to the booting client's whoami request
 will be the name that appears in the config file, not the canonical name.
 In this way you can keep the answer short enough
 so that machines that cannot handle long hostnames won't fail during boot.
 .Pp
-While parsing, if a line containing just ``+'' is found, and
-the YP subsystem is active, the YP map
+While parsing, if a line containing just
+.Dq \&+
+is found, and the YP subsystem is active, the YP map
 .Pa bootparams
 will be searched immediately.
 .Sh OPTIONS
@@ -40,11 +41,11 @@ case.
 .It Fl s
 Log the debugging information with syslog. 
 .It Fl r
-Set the default router (a hostname or IP-address).
+Set the default router (a hostname or IP address).
 This defaults to the machine running the server.
 .It Fl f
 Specify the file to read boot parameters from.  Defaults to
-.Dq Pa /etc/bootparams .
+.Pa /etc/bootparams .
 .El
 .Pp
 .Sh FILES
@@ -52,11 +53,13 @@ Specify the file to read boot parameters from.  Defaults to
 .It Pa /etc/bootparams
 default configuration file
 .El
-.Sh "SEE ALSO"
-.Xr bootparams 5
-.Xr diskless 8 ,
+.Sh SEE ALSO
+.Xr bootparams 5 ,
+.Xr diskless 8
 .Sh WARNINGS
-If rpc.bootparams is run on a system which is also running YP, your YP
+If
+.Nm rpc.bootparamd
+is run on a system which is also running YP, your YP
 domainname will be made public information.
 .Sh BUGS
 You may find the syslog loggings too verbose.
