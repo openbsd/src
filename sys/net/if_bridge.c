@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.3 1999/03/01 04:44:44 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.4 1999/03/05 21:10:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -74,6 +74,13 @@
 #define BRIDGE_RTABLE_MAX	100
 #endif
 
+/*
+ * Timeout (in seconds) for entries learned dynamically
+ */
+#ifndef BRIDGE_RTABLE_TIMEOUT
+#define BRIDGE_RTABLE_TIMEOUT	30
+#endif
+
 extern int ifqmaxlen;
 
 /*
@@ -100,9 +107,9 @@ struct bridge_rtnode {
  */
 struct bridge_softc {
 	struct				ifnet sc_if;	/* the interface */
-	u_int32_t			sc_brtageidx;	/* route age index */
 	u_int32_t			sc_brtmax;	/* max # addresses */
 	u_int32_t			sc_brtcnt;	/* current # addrs */
+	u_int32_t			sc_brttimeout;	/* current # addrs */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
 };
@@ -153,6 +160,7 @@ bridgeattach(unused)
 
 	for (i = 0; i < NBRIDGE; i++) {
 		bridgectl[i].sc_brtmax = BRIDGE_RTABLE_MAX;
+		bridgectl[i].sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
 		LIST_INIT(&bridgectl[i].sc_iflist);
 		ifp = &bridgectl[i].sc_if;
 		sprintf(ifp->if_xname, "bridge%d", i);
@@ -181,61 +189,41 @@ bridge_ioctl(ifp, cmd, data)
 	struct ifbaconf *baconf = (struct ifbaconf *)data;
 	struct ifbcachereq *bcachereq = (struct ifbcachereq *)data;
 	struct ifbifconf *bifconf = (struct ifbifconf *)data;
+	struct ifbcachetoreq *bcacheto = (struct ifbcachetoreq *)data;
 	int	error = 0, s;
 	struct bridge_iflist *p;
 
 	s = splimp();
 	switch(cmd) {
 	case SIOCBRDGADD:
-		/*
-		 * Only root can add interfaces.
-		 */
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
 
-		/*
-		 * Get pointer to ifnet structure for the named interface.
-		 */
 		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {			/* no such interface */
 			error = ENOENT;
 			break;
 		}
 
-		/*
-		 * Check to see if this interface is already a member.
-		 */
 		if (ifs->if_bridge == (caddr_t)sc) {
 			error = EEXIST;
 			break;
 		}
 
-		/*
-		 * Make sure it's not a member of another bridge.
-		 */
 		if (ifs->if_bridge != NULL) {
 			error = EBUSY;
 			break;
 		}
 
-		/*
-		 * Make sure it is an ethernet interface.
-		 */
 		if (ifs->if_type != IFT_ETHER) {
 			error = EINVAL;
 			break;
 		}
 
-		/*
-		 * Put interface into promiscuous mode.
-		 */
 		error = ifpromisc(ifs, 1);
 		if (error != 0)
 			break;
 
-		/*
-		 * Allocate list entry.
-		 */
 		p = (struct bridge_iflist *) malloc(
 		    sizeof(struct bridge_iflist), M_DEVBUF, M_NOWAIT);
 		if (p == NULL) {			/* list alloc failed */
@@ -244,18 +232,11 @@ bridge_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		/*
-		 * Add to interface list, and give the interface a pointer
-		 * back to us.
-		 */
 		p->ifp = ifs;
 		LIST_INSERT_HEAD(&sc->sc_iflist, p, next);
 		ifs->if_bridge = (caddr_t)sc;
 		break;
 	case SIOCBRDGDEL:
-		/*
-		 * Only root can delete interfaces.
-		 */
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
 
@@ -263,21 +244,10 @@ bridge_ioctl(ifp, cmd, data)
 		while (p != NULL) {
 			if (strncmp(p->ifp->if_xname, req->ifbr_ifsname,
 			    sizeof(p->ifp->if_xname)) == 0) {
-				/*
-				 * Remove the pointer back to us.
-				 */
 				p->ifp->if_bridge = NULL;
 
-				/*
-				 * Decrement promisc count
-				 */
 				error = ifpromisc(p->ifp, 0);
 
-				/*
-				 * Finally, remove from list, delete
-				 * routes from that interface, and reclaim
-				 * memory.
-				 */
 				LIST_REMOVE(p, next);
 				bridge_rtdelete(sc, p->ifp);
 				free(p, M_DEVBUF);
@@ -304,8 +274,21 @@ bridge_ioctl(ifp, cmd, data)
 		bcachereq->ifbc_size = sc->sc_brtmax;
 		break;
 	case SIOCBRDGSCACHE:
+		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+			break;
 		sc->sc_brtmax = bcachereq->ifbc_size;
 		bridge_rttrim(sc);
+		break;
+	case SIOCBRDGSTO:
+		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+			break;
+		sc->sc_brttimeout = bcacheto->ifbct_time;
+		untimeout(bridge_rtage, sc);
+		if (bcacheto->ifbct_time != 0)
+			timeout(bridge_rtage, sc, sc->sc_brttimeout);
+		break;
+	case SIOCBRDGGTO:
+		bcacheto->ifbct_time = sc->sc_brttimeout;
 		break;
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == IFF_UP)
@@ -378,8 +361,6 @@ bridge_init(sc)
 	if ((ifp->if_flags & IFF_RUNNING) == IFF_RUNNING)
 		return;
 
-	sc->sc_brtageidx = 0;
-
 	s = splhigh();
 	if (sc->sc_rts == NULL) {
 		sc->sc_rts = (struct bridge_rthead *)malloc(
@@ -397,7 +378,8 @@ bridge_init(sc)
 	ifp->if_flags |= IFF_RUNNING;
 	splx(s);
 
-	timeout(bridge_rtage, sc, 2 * hz);
+	if (sc->sc_brttimeout != 0)
+		timeout(bridge_rtage, sc, sc->sc_brttimeout * hz);
 }
 
 /*
@@ -481,15 +463,9 @@ bridge_output(ifp, m, sa, rt)
 	if (dst_if == NULL || eh->ether_dhost[0] & 1) {
 		for (p = LIST_FIRST(&sc->sc_iflist); p != NULL;
 		    p = LIST_NEXT(p, next)) {
-			/*
-			 * Make sure interface is running.
-			 */
 			if ((p->ifp->if_flags & IFF_RUNNING) == 0)
 				continue;
 
-			/*
-			 * Make sure there's room in the queue.
-			 */
 			if (IF_QFULL(&p->ifp->if_snd)) {
 				sc->sc_if.if_oerrors++;
 				continue;
@@ -514,9 +490,6 @@ bridge_output(ifp, m, sa, rt)
 				struct ether_header *ceh;
 				struct ether_addr *csrc;
 
-				/*
-				 * Pull up ethernet header.
-				 */
 				if (mc->m_len < sizeof(*ceh)) {
 					mc = m_pullup(mc, sizeof(*ceh));
 					if (mc == NULL)
@@ -528,9 +501,6 @@ bridge_output(ifp, m, sa, rt)
 				bcopy(cac->ac_enaddr, csrc, ETHER_ADDR_LEN);
 			}
 
-			/*
-			 * Update stats, queue the packet, and start it.
-			 */
 			sc->sc_if.if_opackets++;
 			sc->sc_if.if_obytes += m->m_pkthdr.len;
 			IF_ENQUEUE(&p->ifp->if_snd, mc);
@@ -598,9 +568,6 @@ bridge_input(ifp, eh, m)
 
 	s = splimp();
 
-	/*
-	 * See if we're running.
-	 */
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0) {
 		splx(s);
 		return (m);
@@ -708,18 +675,12 @@ bridge_input(ifp, eh, m)
 	 * If sucessful lookup, forward packet to that interface only.
 	 */
 	if (dst_if != NULL) {
-		/*
-		 * Make sure target interface is running.
-		 */
 		if ((dst_if->if_flags & IFF_RUNNING) == 0) {
 			m_freem(m);
 			splx(s);
 			return (NULL);
 		}
 
-		/*
-		 * Make sure the interface has room in its queue.
-		 */
 		if (IF_QFULL(&dst_if->if_snd)) {
 			sc->sc_if.if_oerrors++;
 			m_freem(m);
@@ -727,9 +688,6 @@ bridge_input(ifp, eh, m)
 			return (NULL);
 		}
 
-		/*
-		 * Prepend the ethernet header on to the buffer.
-		 */
 		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
 		if (m == NULL) {
 			sc->sc_if.if_oerrors++;
@@ -737,15 +695,9 @@ bridge_input(ifp, eh, m)
 		}
 		*mtod(m, struct ether_header *) = *eh;
 
-		/*
-		 * Update statistics.
-		 */
 		sc->sc_if.if_opackets++;
 		sc->sc_if.if_obytes += m->m_pkthdr.len;
 
-		/*
-		 * Put it in the interface queue and start transmission.
-		 */
 		IF_ENQUEUE(&dst_if->if_snd, m);
        		if ((dst_if->if_flags & IFF_OACTIVE) == 0)
 			(*dst_if->if_start)(dst_if);
@@ -793,48 +745,30 @@ bridge_broadcast(sc, ifp, eh, m)
 		if (p->ifp->if_index == ifp->if_index)
 			continue;
 
-		/*
-		 * Make sure target interface is actually running.
-		 */
 		if ((p->ifp->if_flags & IFF_RUNNING) == 0)
 			continue;
 
-		/*
-		 * Make sure the interface has room in its queue.
-		 */
 		if (IF_QFULL(&p->ifp->if_snd)) {
 			sc->sc_if.if_oerrors++;
 			continue;
 		}
 
-		/*
-		 * Make a copy of the packet.
-		 */
 		mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 		if (mc == NULL) {
 			sc->sc_if.if_oerrors++;
 			continue;
 		}
 
-		/*
-		 * Update statistics
-		 */
 		sc->sc_if.if_opackets++;
 		sc->sc_if.if_obytes += m->m_pkthdr.len;
 		if ((eh->ether_shost[0] & 1) == 0)
 			ifp->if_omcasts++;
 
-		/*
-		 * Put it in interface queue and start transmission.
-		 */
 		IF_ENQUEUE(&p->ifp->if_snd, mc);
 		if ((p->ifp->if_flags & IFF_OACTIVE) == 0)
 			(*p->ifp->if_start)(p->ifp);
 	}
 
-	/*
-	 * Strip header back off
-	 */
 	m_adj(m, sizeof(struct ether_header));
 	return (m);
 }
@@ -1069,13 +1003,16 @@ bridge_rttrim(sc)
 	splx(s);
 }
 
+/*
+ * Perform an aging cycle
+ */
 void
 bridge_rtage(vsc)
 	void *vsc;
 {
 	struct bridge_softc *sc = (struct bridge_softc *)vsc;
 	struct bridge_rtnode *n, *p;
-	int s;
+	int s, i;
 
 	s = splhigh();
 	if (sc->sc_rts == NULL) {
@@ -1083,32 +1020,26 @@ bridge_rtage(vsc)
 		return;
 	}
 
-	n = LIST_FIRST(&sc->sc_rts[sc->sc_brtageidx]);
-	while (n != NULL) {
-		if (n->brt_age) {
-			n->brt_age = 0;
-			n = LIST_NEXT(n, brt_next);
-		}
-		else {
-			p = LIST_NEXT(n, brt_next);
-#if 1
-			printf("RTAGE(%s,%x:%x:%x:%x:%x:%x)\n",
-				n->brt_if->if_xname,
-				n->brt_addr.ether_addr_octet[0],
-				n->brt_addr.ether_addr_octet[1],
-				n->brt_addr.ether_addr_octet[2],
-				n->brt_addr.ether_addr_octet[3],
-				n->brt_addr.ether_addr_octet[4],
-				n->brt_addr.ether_addr_octet[5]);
-#endif
-			LIST_REMOVE(n, brt_next);
-			sc->sc_brtcnt--;
-			free(n, M_DEVBUF);
-			n = p;
+	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
+		n = LIST_FIRST(&sc->sc_rts[i]);
+		while (n != NULL) {
+			if (n->brt_age) {
+				n->brt_age = 0;
+				n = LIST_NEXT(n, brt_next);
+			}
+			else {
+				p = LIST_NEXT(n, brt_next);
+				LIST_REMOVE(n, brt_next);
+				sc->sc_brtcnt--;
+				free(n, M_DEVBUF);
+				n = p;
+			}
 		}
 	}
-	sc->sc_brtageidx = (sc->sc_brtageidx + 1) % BRIDGE_RTABLE_SIZE;
 	splx(s);
+
+	if (sc->sc_brttimeout != 0)
+		timeout(bridge_rtage, sc, sc->sc_brttimeout * hz);
 }
 
 /*

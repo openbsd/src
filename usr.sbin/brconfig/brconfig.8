@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.4 1999/03/01 16:01:48 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.5 1999/03/05 21:10:55 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -46,6 +46,7 @@
 .Op Ar add interface-name
 .Op Ar delete interface-name
 .Op Ar maxaddr size
+.Op Ar timeout time
 .Op Ar link0
 .Op Ar link1
 .Op Ar -link0
@@ -97,6 +98,13 @@ Alias for `delete'.
 Set the address cache size to
 .Cm size .
 The default is 100 entries.
+.It Ar timeout time
+Set the timeout, in seconds, for addresses in the cache to
+.Cm time .
+The default is 30 seconds.
+If
+.Cm time
+is set to zero, then entries will never expire.
 .It Ar link0
 Setting this flag stops all non-IP multicast packets from
 being forwarded by the bridge.

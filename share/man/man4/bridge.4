@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.3 1999/03/01 16:55:56 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.4 1999/03/05 21:10:58 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -157,6 +157,7 @@ struct ifbaconf {
 #define	ifbac_buf       ifbac_ifbacu.ifbacu_buf
 #define	ifbac_req       ifbac_ifbacu.ifbacu_req
 };
+.Ed
 .It Dv SIOCBRDGSCACHE
 .Pq Li "struct ifbcachereq"
 Set the maximum address cache size for the bridge named in
@@ -176,6 +177,21 @@ struct ifbcachereq {
 .Pq Li "struct ifbcachereq"
 Retrieve the maximum size of the address cache for the bridge
 .Ar ifbc_name .
+.It Dv SIOCBRDGSTO
+.Pq Li "struct ifbcachetoreq"
+Set the time, in seconds, that addresses which have not been
+seen on the network (transmitted a packet) remain in the cache.
+If the time is set to zero, no aging is performed on the address
+cache.  The argument structure is as follows:
+.Bd -literal -offset indent
+struct ifbcachetoreq {
+	char ifbct_name[IFNAMSIZ]; /* bridge */
+	u_int32_t ifbct_time;      /* time */
+};
+.Ed
+.It Dv SIOCBRDGGTO
+.Pq Li "struct ifbcachetoreq"
+Retrieve the address cache expiration time (see above).
 .El
 .Sh ERRORS
 If the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.3 1999/03/01 04:44:44 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.4 1999/03/05 21:10:55 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -56,6 +56,7 @@ int bridge_clrflag(int, char *, short);
 int bridge_list(int, char *, char *);
 int bridge_addrs(int, char *, char *);
 int bridge_maxaddr(int, char *, char *);
+int bridge_timeout(int, char *, char *);
 int bridge_add(int, char *, char *);
 int bridge_delete(int, char *, char *);
 int bridge_status(int, char *);
@@ -67,6 +68,8 @@ void printb(char *, unsigned short, char *);
 #define	IFFBITS \
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
+
+#define	IFBABITS	"\020\1BLACKHOLE\2STATIC\3DYNAMIC"
 
 void
 usage() {
@@ -172,6 +175,16 @@ main(argc, argv)
 				return (EX_USAGE);
 			}
 			error = bridge_maxaddr(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
+		else if (strcmp("timeout", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("timeout requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_timeout(sock, brdg, argv[0]);
 			if (error)
 				return (error);
 		}
@@ -347,6 +360,30 @@ bridge_delete(s, brdg, ifn)
 }
 
 int
+bridge_timeout(s, brdg, arg)
+	int s;
+	char *brdg, *arg;
+{
+	struct ifbcachetoreq ifbct;
+	u_int32_t newtime;
+	char *endptr;
+
+	newtime = strtoul(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0') {
+		printf("invalid arg for timeout: %s\n", arg);
+		return (EX_USAGE);
+	}
+
+	strncpy(ifbct.ifbct_name, brdg, sizeof ifbct.ifbct_name);
+	ifbct.ifbct_time = newtime;
+	if (ioctl(s, SIOCBRDGSTO, (caddr_t)&ifbct) < 0) {
+		warn("ioctl(SIOCBRDGGCACHE)");
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
 bridge_maxaddr(s, brdg, arg)
 	int s;
 	char *brdg, *arg;
@@ -400,8 +437,12 @@ bridge_addrs(s, brdg, delim)
 		ifba = ifbac.ifbac_req + i;
 		bzero(buf, sizeof(buf));
 		strncpy(buf, ifba->ifba_name, sizeof(ifba->ifba_name));
-		printf("%s%s %s %u\n", delim, ether_ntoa(&ifba->ifba_dst),
+		printf("%s%s %s %u ", delim, ether_ntoa(&ifba->ifba_dst),
 		    buf, ifba->ifba_age);
+#if 0
+		printb("flags", ifba->ifba_flags, IFBABITS);
+#endif
+		printf("\n");
 	}
 
 	return (0);
@@ -442,6 +483,7 @@ bridge_status(s, brdg)
 {
 	struct ifreq ifr;
 	struct ifbcachereq ifbc;
+	struct ifbcachetoreq ifbct;
 	int err;
 
 	strncpy(ifr.ifr_name, brdg, sizeof ifr.ifr_name);
@@ -468,7 +510,14 @@ bridge_status(s, brdg)
 		return (EX_IOERR);
 	}
 
-	printf("\tAddresses (max cache: %u):\n", ifbc.ifbc_size);
+	strncpy(ifbct.ifbct_name, brdg, sizeof ifbct.ifbct_name);
+	if (ioctl(s, SIOCBRDGGTO, (caddr_t)&ifbct) < 0) {
+		warn("ioctl(SIOCBRDGGTO)");
+		return (EX_IOERR);
+	}
+
+	printf("\tAddresses (max cache: %u, timeout: %u):\n",
+	    ifbc.ifbc_size, ifbct.ifbct_time);
 
 	err = bridge_addrs(s, brdg, "\t\t");
 	return (err);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.2 1999/03/01 04:44:44 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.3 1999/03/05 21:10:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -81,6 +81,15 @@ struct ifbcachereq {
 	char			ifbc_name[IFNAMSIZ];	/* bridge ifs name */
 	u_int32_t		ifbc_size;		/* cache size */
 };
+
+/*
+ * Bridge cache timeout get/set
+ */
+struct ifbcachetoreq {
+	char			ifbct_name[IFNAMSIZ];	/* bridge ifs name */
+	u_int32_t		ifbct_time;		/* cache time (sec) */
+};
+
 
 #ifdef _KERNEL
 struct mbuf *	bridge_input	__P((struct ifnet *, struct ether_header *,
