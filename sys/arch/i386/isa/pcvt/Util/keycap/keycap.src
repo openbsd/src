@@ -1,4 +1,4 @@
-#	$OpenBSD: keycap.src,v 1.10 2000/12/10 03:01:49 deraadt Exp $
+#	$OpenBSD: keycap.src,v 1.11 2000/12/10 03:08:43 deraadt Exp $
 
 # Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis, Joerg Wunsch and
 #                                Holger Veit.
@@ -525,6 +525,14 @@ es|spain|Spainish mapping:\
 	:K55=-:S55=_:\
 	:K104=,:S104=,:\
 	:l1#62:a0:
+
+# from sigh@kuzirabekon.econ.nagasaki-u.ac.jp
+jp106:Japanese 106 keymap:\
+	:S3=":C3=2:S7=&:C7=6:S8=':S9=(:S10=):S11=~:\
+	:S12==:K13=\^:S13=_:C13=\036:K14=\\:S14=|:C14=\034:\
+	:K27=@:S27=`:C27=\000:K28=[:S28={:C28=\033:\
+	:K29=]:S29=}:C29=\035:S40=+:K41=\::S41=*:C41=\::\
+	:K56=\\:S56=_:C56=\034:
 
 # from codrv, untested
 # Contributed by Mats O Jansson, moj@stacken.kth.se
