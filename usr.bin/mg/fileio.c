@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.26 2002/03/16 19:30:29 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.27 2002/03/27 17:42:37 millert Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -297,8 +297,8 @@ adjustname(const char *fn)
 				     != -1;) {
 					if (linkbuf[0] != '/') {
 						--cp;
-						while (cp > fnb && *--cp != '/') {
-						}
+						while (cp > fnb && *--cp != '/')
+							;
 						++cp;
 						(void) strncpy(cp, linkbuf, i);
 						cp += i;
@@ -333,8 +333,8 @@ adjustname(const char *fn)
 		default:
 			break;
 		}
-		while (*fn && (*cp++ = *fn++) != '/') {
-		}
+		while (*fn && (*cp++ = *fn++) != '/')
+			;
 	}
 	if (cp[-1] == '/')
 		--cp;
@@ -350,8 +350,7 @@ adjustname(const char *fn)
  * to the startup file name.
  */
 char *
-startupfile(suffix)
-	char	*suffix;
+startupfile(char *suffix)
 {
 	static char	file[NFILEN];
 	char		*home;
@@ -373,7 +372,7 @@ startupfile(suffix)
 		return file;
 nohome:
 #ifdef STARTUPFILE
-	if (suffix == NULL)
+	if (suffix == NULL) {
 		if (snprintf(file, sizeof(file), "%s", STARTUPFILE)
 			    >= sizeof(file))
 			return NULL;
@@ -395,9 +394,7 @@ nohome:
 #include "kbd.h"
 
 int
-copy(frname, toname)
-	char	*frname;
-	char	*toname;
+copy(char *frname, char *toname)
 {
 	pid_t	pid;
 	int	status;
@@ -418,8 +415,7 @@ copy(frname, toname)
  * dirname needs to have enough place to store an additional '/'.
  */
 BUFFER *
-dired_(dirname)
-	char	*dirname;
+dired_(char *dirname)
 {
 	BUFFER	*bp;
 	FILE	*dirpipe;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyio.c,v 1.18 2002/02/21 00:02:05 deraadt Exp $	*/
+/*	$OpenBSD: ttyio.c,v 1.19 2002/03/27 17:42:37 millert Exp $	*/
 
 /*
  * POSIX terminal I/O.
@@ -121,8 +121,7 @@ ttcooked()
  * to make things a little bit more efficient.
  */
 int
-ttputc(c)
-	int c;
+ttputc(int c)
 {
 
 	if (nobuf >= NOBUF)
@@ -137,12 +136,18 @@ ttputc(c)
 void
 ttflush()
 {
+	ssize_t written;
+	
+	if (nobuf == 0)
+		return;
 
-	if (nobuf != 0) {
-		if (write(1, obuf, nobuf) != nobuf)
+	while ((written = write(fileno(stdout), obuf, nobuf)) != nobuf) {
+		if (written == -1)
 			panic("ttflush write failed");
-		nobuf = 0;
+		else
+			nobuf -= written;
 	}
+	nobuf = 0;
 }
 
 /*
@@ -184,8 +189,7 @@ typeahead()
  * panic - just exit, as quickly as we can.
  */
 void
-panic(s)
-	char *s;
+panic(char *s)
 {
 
 	(void) fputs("panic: ", stderr);
