@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.82 2002/04/30 09:08:01 miod Exp $
+dnl	$OpenBSD: hardware,v 1.83 2002/06/07 02:14:34 niklas Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -145,7 +145,7 @@ Supported hardware {:-include-:}:
 		    Compaq SMART, SMART-2/E, SMART-2/P, SMART-2DH,
 		      SMART-2SL
 		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters [A] [C]
-		ICP-Vortex GDT 6XXXR[DNPS] series [A]
+		Intel (and formerly ICP-Vortex) GDT series [A]
 		I2O (intelligent I/O) RAID controllers, including: [A] [C]
 		    Adaptec SCSI RAID (ASR-2100S, ASR-2110S, ASR-3200S,
 		      etc)
