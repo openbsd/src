@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.81 2004/03/02 18:18:27 miod Exp $
+#	$OpenBSD: bsd.own.mk,v 1.82 2004/05/18 19:07:32 mickey Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -24,14 +24,11 @@ AFS?=		yes
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
 # Set toolchain to be able to know differences.
-.if ( ${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "arm" || \
-     ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "i386" || \
-     ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "sparc" || \
-     ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "x86_64") || \
-     ${MACHINE} == "amd64"
-ELF_TOOLCHAIN?=	yes
-.else
+.if ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m88k" || \
+    ${MACHINE_ARCH} == "vax"
 ELF_TOOLCHAIN?=	no
+.else
+ELF_TOOLCHAIN?=	yes
 .endif
 
 # do the dew
