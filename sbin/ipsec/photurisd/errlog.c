@@ -31,11 +31,14 @@
  */
 
 /*
- * $Header: /home/cvs/src/sbin/ipsec/photurisd/Attic/errlog.c,v 1.3 1997/07/25 19:13:20 mickey Exp $
+ * $Header: /home/cvs/src/sbin/ipsec/photurisd/Attic/errlog.c,v 1.4 1997/08/24 18:30:33 millert Exp $
  *
- * $Author: mickey $
+ * $Author: millert $
  *
  * $Log: errlog.c,v $
+ * Revision 1.4  1997/08/24 18:30:33  millert
+ * #include <string.h> for strlen().
+ *
  * Revision 1.3  1997/07/25 19:13:20  mickey
  * #if __STDC__ --> #ifdef __STDC__
  *
@@ -52,7 +55,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: errlog.c,v 1.3 1997/07/25 19:13:20 mickey Exp $";
+static char rcsid[] = "$Id: errlog.c,v 1.4 1997/08/24 18:30:33 millert Exp $";
 #endif
 
 #define _ERRLOG_C_
@@ -64,7 +67,7 @@ static char rcsid[] = "$Id: errlog.c,v 1.3 1997/07/25 19:13:20 mickey Exp $";
 #else
 #include <varargs.h>
 #endif
-#include <stdio.h>
+#include <string.h>
 #include <syslog.h>
 #include <sys/types.h>
 #include <errno.h>
