@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.2 1997/04/29 00:16:13 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.3 1997/05/31 15:36:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -124,9 +124,10 @@ time_t getsecs(void){
 		year += bcdtoint(datebuf[1]);
 		month = bcdtoint(datebuf[2]);
 		day = bcdtoint(datebuf[3]);
-
-		printf("%d/%d/%d - %d:%d:%d\n", day, month, year, hour, min, sec);
-
+#ifdef notdef
+		printf("%d/%d/%d - %d:%d:%d\n",
+		       day, month, year, hour, min, sec);
+#endif
 		tt = compute(year, month, day, hour, min, sec);
 		return(tt);
 	}
@@ -171,3 +172,15 @@ void time_print(void){
 	return;
 }
 
+u_int
+sleep(i)
+	u_int i;
+{
+	register time_t t;
+
+	/* loop for that number of seconds, polling BIOS,
+	   so that it may handle interrupts */
+	for (t = getsecs(); (getsecs() - t) < i; ischar());
+
+	return 0;
+}
