@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.27 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.28 2002/05/10 15:13:12 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -372,7 +372,7 @@ log_packet_init (char *newname)
   sf_hdr.thiszone = 0;
   sf_hdr.snaplen = SNAPLEN;
   sf_hdr.sigfigs = 0;
-  sf_hdr.linktype = DLT_NULL;
+  sf_hdr.linktype = DLT_LOOP;
 
   fwrite ((char *)&sf_hdr, sizeof sf_hdr, 1, packet_log);
   fflush (packet_log);
