@@ -794,6 +794,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/midwayvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mk48txxreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/monitors.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt_openbsd.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpuvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mtd8xxreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mtd8xxvar.ph
@@ -807,6 +810,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ns16450reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ns16550reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/nslm7xvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oosiopreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oosiopvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oplvar.ph
@@ -2155,8 +2160,3 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/zlib.ph
 ./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt_mpilib.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/mpt_openbsd.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oosiopreg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/oosiopvar.ph

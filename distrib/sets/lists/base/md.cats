@@ -897,6 +897,9 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/midwayvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mk48txxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/monitors.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_mpilib.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_openbsd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpuvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mtd8xxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mtd8xxvar.ph
@@ -910,6 +913,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ns16450reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/ns16550reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/nslm7xvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oosiopreg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oosiopvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/opl3sa3reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oplreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oplvar.ph
@@ -2192,8 +2197,3 @@
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_mpilib.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/mpt_openbsd.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oosiopreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/oosiopvar.ph

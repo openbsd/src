@@ -1935,6 +1935,7 @@
 ./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/kbd.0
 ./usr/share/man/cat8/i386/memconfig.0
+./usr/share/man/cat8/i386/pxeboot.0
 ./usr/share/man/cat8/i386/wsconscfg.0
 ./usr/share/man/cat8/i386/wsconsctl.0
 ./usr/share/man/cat8/i386/wsfontload.0
