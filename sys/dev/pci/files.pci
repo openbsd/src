@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.104 2001/04/11 04:05:17 krw Exp $
+#	$OpenBSD: files.pci,v 1.105 2001/04/13 00:27:57 mjacob Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -335,7 +335,7 @@ attach	sk at skc
 file	dev/pci/if_sk.c			skc | sk
 
 # Intel 82452 (Pro/1000 gigabit server adapter)
-device wx: ether, ifnet, ifmedia
+device wx: ether, ifnet, mii, ifmedia, mii_phy
 attach wx at pci
 file	dev/pci/if_wx.c			wx
 
