@@ -1,4 +1,4 @@
-/* * $OpenBSD: warnings.c,v 1.3 1998/03/26 19:46:29 niklas Exp $*/
+/* * $OpenBSD: warnings.c,v 1.4 2000/01/23 14:57:29 espie Exp $*/
 /*
  */
 
@@ -679,12 +679,21 @@ do_file_warnings (entry, outfile)
 		} else if (g->def_lsp && g->def_lsp->entry != entry &&
 			   !(entry->flags & E_DYNAMIC) &&
 			   g->def_lsp->entry->flags & E_SECONDCLASS) {
-			fprintf(outfile,
-			"%s: Undefined symbol `%s' referenced (use %s ?)\n",
-				get_file_name(entry),
-				g->name,
-				g->def_lsp->entry->local_sym_name);
-			continue;
+			if (g->undef_refs == 0)
+			    reported_undefineds++;
+			if (g->undef_refs >= MAX_UREFS_PRINTED)
+				continue;
+			if (++(g->undef_refs) == MAX_UREFS_PRINTED) {
+				errfmt = "More undefined `%s' refs follow";
+				line_number = -1;
+			} else {
+				fprintf(outfile,
+			    "%s: Undefined symbol `%s' referenced (use %s ?)\n",
+				    get_file_name(entry),
+				    g->name,
+				    g->def_lsp->entry->local_sym_name);
+				continue;
+			}
 		} else if (g->warning) {
 			/*
 			 * There are two cases in which we don't want to do
