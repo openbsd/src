@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.20 2005/03/07 13:31:40 krw Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.21 2005/04/05 01:12:52 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1785,7 +1785,7 @@ struct bge_rcb {
 	bus_space_write_2(sc->bge_btag, sc->bge_bhandle, \
 			  rcb + offsetof(struct bge_rcb, offset), val)
 
-#define BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen << 16) | (flags))
+#define BGE_RCB_MAXLEN_FLAGS(maxlen, flags)	((maxlen) << 16 | (flags))
 
 #define BGE_RCB_FLAG_USE_EXT_RX_BD	0x0001
 #define BGE_RCB_FLAG_RING_DISABLED	0x0002
