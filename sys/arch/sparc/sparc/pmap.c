@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.118 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.119 2002/01/24 10:15:07 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -251,7 +251,7 @@ pgt_page_alloc(struct pool *pp, int flags)
 }       
    
 void
-pgt_page_free(struct pool *pp, void *v);
+pgt_page_free(struct pool *pp, void *v)
 {
         uvm_km_free(kernel_map, (vaddr_t)v, PAGE_SIZE);
 }
@@ -3375,11 +3375,11 @@ pmap_init()
 
                 n = SRMMU_L1SIZE * sizeof(int);
                 pool_init(&L1_pool, n, n, 0, 0, "L1 pagetable",
-		    &pgt_page_allocator);
+		    &pgt_allocator);
 
                 n = SRMMU_L2SIZE * sizeof(int);
                 pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable",
-                    &pgt_page_allocator);
+                    &pgt_allocator);
         }
 #endif
 }
