@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.1 2005/01/14 22:39:26 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.2 2005/01/17 22:31:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -46,13 +46,7 @@
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
 
-#include "wsdisplay.h"
-
-/*
- * This is a safe upper bound of the amount of memory we will need to
- * bus_space_map() for sti frame buffers.
- */
-#define	STI_MEMSIZE		0x0003f000	/* XXX */
+#include <uvm/uvm_extern.h>
 
 int  sti_sgc_match(struct device *, void *, void *);
 void sti_sgc_attach(struct device *, struct device *, void *);
@@ -105,14 +99,42 @@ sti_sgc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sti_softc *sc = (void *)self;
 	struct sgc_attach_args *saa = aux;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int devtype;
+	u_int32_t romend;
 
-	sc->memt = sc->iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
+	iot = HP300_BUS_TAG(HP300_BUS_SGC, saa->saa_slot);
 	sc->base = (bus_addr_t)sgc_slottopa(saa->saa_slot);
 
-	if (bus_space_map(sc->iot, sc->base, STI_MEMSIZE, 0, &sc->romh)) {
+	if (bus_space_map(iot, sc->base, PAGE_SIZE, 0, &ioh)) {
 		printf(": can't map frame buffer");
 		return;
 	}
+
+	/*
+	 * Compute real PROM size
+	 */
+	devtype = bus_space_read_1(iot, ioh, 3);
+	if (devtype == STI_DEVTYPE4) {
+		romend = bus_space_read_4(iot, ioh, 0x18);
+	} else {
+		romend =
+		    (bus_space_read_1(iot, ioh, 0x50 +  3) << 24) |
+		    (bus_space_read_1(iot, ioh, 0x50 +  7) << 16) |
+		    (bus_space_read_1(iot, ioh, 0x50 + 11) <<  8) |
+		    (bus_space_read_1(iot, ioh, 0x50 + 15));
+	}
+
+	bus_space_unmap(iot, ioh, PAGE_SIZE);
+
+	if (bus_space_map(iot, sc->base, round_page(romend), 0, &ioh)) {
+		printf(": can't map frame buffer");
+		return;
+	}
+
+	sc->memt = sc->iot = iot;
+	sc->romh = ioh;
 
 	if (SGC_SLOT_TO_CONSCODE(saa->saa_slot) == conscode)
 		sc->sc_flags |= STI_CONSOLE;
@@ -139,13 +161,13 @@ sti_console_scan(int slot, caddr_t va, void *arg)
 
 	iot = HP300_BUS_TAG(HP300_BUS_SGC, slot);
 
-	if (bus_space_map(iot, (bus_addr_t)sgc_slottopa(slot), STI_MEMSIZE, 0,
+	if (bus_space_map(iot, (bus_addr_t)sgc_slottopa(slot), PAGE_SIZE, 0,
 	    &ioh))
 		return (0);
 
 	devtype = bus_space_read_1(iot, ioh, 3);
 
-	bus_space_unmap(iot, ioh, STI_MEMSIZE);
+	bus_space_unmap(iot, ioh, PAGE_SIZE);
 
 	/* XXX this is not reliable enough */
 	if (devtype != STI_DEVTYPE1 && devtype != STI_DEVTYPE4)
