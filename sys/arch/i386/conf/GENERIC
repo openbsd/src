@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.30 1996/07/31 18:35:16 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.31 1996/08/15 07:46:49 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -52,6 +52,7 @@ pcmcia* at pcic?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
+isapnp0	at isa?
 
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
