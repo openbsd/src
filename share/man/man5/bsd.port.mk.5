@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.27 2001/03/16 04:00:58 brad Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.28 2001/03/22 00:24:58 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -273,12 +273,14 @@ If set to
 will also clean dependencies.
 Note that distclean never recurses down to dependencies.
 .It Ev COMMENT
-File used as a comment for the package, and in the INDEX.
-Set to
-${PKGDIR}/COMMENT by default (with corrections for multi-packages and flavors).
-If COMMENT starts with a dash, this is a literal string instead.
-This can be used to leave a stub Makefile for removed ports and have a complete
-INDEX entry without needing more files.
+Comment used for the package, and in the INDEX.
+.It Ev COMMENT-foo
+Comment used for sub package foo in a multi-package set up.
+.It Ev COMMENT-vanilla
+Comment used for a flavored package, if the non-flavored comment is
+unappropriate.
+.It Ev COMMENT-foo-vanilla
+Comment used for a sub-, flavored package.
 .It Ev CONFIGURE_SCRIPT
 Set to name of script invoked by
 .Ar configure
@@ -459,10 +461,20 @@ Set by the user, and tested by the port to activate wanted functionalities.
 List of all flavors keywords a port may match.
 Used to sort FLAVOR into a canonical order to build the package name,
 or to select the packing-list, and as a quick validity check.
+.It Ev FLAVOR_EXT
+Canonical list of flavors being set for the current build, dash-separated.
+See
+.Ev FULLPKGNAME .
 .It Ev FTP_PACKAGES
 Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed
 (default: ${PORTSDIR}/ftp-packages/${ARCH})
+.It Ev FULLPKGNAME
+Full name of the created package, taking flavors into account. Defaults to
+${PKGNAME}${FLAVOR_EXT}.
+.It Ev FULLPKGNAME-foo
+Full package name for sub-package foo, if the default value is not
+appropriate.
 .It Ev GMAKE
 Location of the gnu make binary, if needed.
 Defaults to gmake.
@@ -643,8 +655,12 @@ Default: pkg.${ARCH} or pkg.
 Name of the created package.
 Default is ${DISTNAME} for the main package,
 and ${DISTNAME}${SUBPACKAGE} for multi-packages ports.
-This is automatically altered to include flavors, so it is unwise to
-base other variables on it.
+This does not take flavors into account. See
+.Ev FULLPKGNAME
+for that.
+.It Ev PKGNAME-foo
+Package name for sub-package foo, if the default value
+of ${PKGNAME}${SUBPACKAGE} is not appropriate.
 .It Ev PKGPATH
 Path to the current port's directory, relative to ${PORTSDIR}.
 Read-only.
@@ -859,6 +875,10 @@ for more efficient and flexible ways to build mirrors.
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
+.It Ev COMMENT
+Used to be the name of the comment file for a package.
+It now holds the comment itself.
+Some magic has been put in to allow for a seamless transition.
 .It Ev DESCR_SRC
 From
 .Nx .
@@ -982,6 +1002,13 @@ This is PLIST.
 .Ox
 does not give a specific name to the generated file.
 It is not recommended to try to access them directly.
+.It Ev PKGNAME
+Used to refer to the full package name, has been superseded by
+.Ev FULLPKGNAME .
+.Ev PKGNAME
+now holds the package name, not taking multi-packages nor flavors
+into account.
+Most ports are not concerned by this change.
 .It Ev PLIST_SUBST
 From
 .Nx
