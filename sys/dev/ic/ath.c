@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.1 2004/11/02 02:45:37 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.2 2004/11/02 14:05:49 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -434,10 +434,10 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		ah->ah_macVersion, ah->ah_macRev,
 		ah->ah_phyRev >> 4, ah->ah_phyRev & 0xf);
 	if (ah->ah_analog5GhzRev != 0)
-		printf(" 5ghz radio %d.%d",
+		printf(" 5GHz radio %d.%d",
 			ah->ah_analog5GhzRev >> 4, ah->ah_analog5GhzRev & 0xf);
 	if (ah->ah_analog2GhzRev != 0)
-		printf(" 2ghz radio %d.%d",
+		printf(" 2GHz radio %d.%d",
 			ah->ah_analog2GhzRev >> 4, ah->ah_analog2GhzRev & 0xf);
 	sc->sc_ah = ah;
 	sc->sc_invalid = 0;	/* ready to go, enable interrupt handling */

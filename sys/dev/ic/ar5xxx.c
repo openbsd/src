@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5xxx.c,v 1.1 2004/11/02 03:01:16 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.2 2004/11/02 14:05:49 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>. 
+ * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
  *
  * All rights reserved.
  *
@@ -137,7 +137,7 @@ ath_hal_attach(device, sc, st, sh, status)
 	int i;
 
 	*status = -EINVAL;
-	
+
 	/*
 	 * Call the chipset-dependent attach routine by device id
 	 */
@@ -194,7 +194,7 @@ ath_hal_attach(device, sc, st, sh, status)
 		AR5K_PRINTF("unable to get device capabilities\n");
 		goto failed;
 	}
-	
+
 	if((*status = ar5k_eeprom_read_mac(hal, mac)) != HAL_OK) {
 		AR5K_PRINTF("unable to read address from EEPROM\n");
 		goto failed;
@@ -220,7 +220,7 @@ ath_hal_attach(device, sc, st, sh, status)
 	return(NULL);
 }
 
-u_int16_t 
+u_int16_t
 ath_hal_computetxtime(hal, rates, frame_length, rate_index, short_preamble)
 	struct ath_hal *hal;
 	const HAL_RATE_TABLE *rates;
@@ -246,13 +246,13 @@ ath_hal_computetxtime(hal, rates, frame_length, rate_index, short_preamble)
 		/*
 		 * CCK / DS mode (802.11b)
 		 */
-		value = AR5K_CCK_TX_TIME(rate->rateKbps, frame_length, 
+		value = AR5K_CCK_TX_TIME(rate->rateKbps, frame_length,
 		    (short_preamble && rate->shortPreamble));
 		break;
 
 	case IEEE80211_T_OFDM:
 		/*
-		 * Orthogonal Frequency Division Multiplexing 
+		 * Orthogonal Frequency Division Multiplexing
 		 */
 		if(AR5K_OFDM_NUM_BITS_PER_SYM(rate->rateKbps) == 0)
 			return(0);
@@ -261,7 +261,7 @@ ath_hal_computetxtime(hal, rates, frame_length, rate_index, short_preamble)
 
 	case IEEE80211_T_TURBO:
 		/*
-		 * Orthogonal Frequency Division Multiplexing 
+		 * Orthogonal Frequency Division Multiplexing
 		 * Atheros "Turbo Mode" (doubled rates)
 		 */
 		if(AR5K_TURBO_NUM_BITS_PER_SYM(rate->rateKbps) == 0)
@@ -271,7 +271,7 @@ ath_hal_computetxtime(hal, rates, frame_length, rate_index, short_preamble)
 
 	case IEEE80211_T_XR:
 		/*
-		 * Orthogonal Frequency Division Multiplexing 
+		 * Orthogonal Frequency Division Multiplexing
 		 * Atheros "eXtended Range" (XR)
 		 */
 		if(AR5K_XR_NUM_BITS_PER_SYM(rate->rateKbps) == 0)
@@ -321,15 +321,18 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 
 	c = 0;
 	domain_current = hal->ah_getRegDomain(hal);
-	domain_5ghz = ieee80211_regdomain2flag(domain_current, IEEE80211_CHANNELS_5GHZ_MIN);
-	domain_2ghz = ieee80211_regdomain2flag(domain_current, IEEE80211_CHANNELS_2GHZ_MIN);
+	domain_5ghz = ieee80211_regdomain2flag(domain_current,
+	    IEEE80211_CHANNELS_5GHZ_MIN);
+	domain_2ghz = ieee80211_regdomain2flag(domain_current,
+	    IEEE80211_CHANNELS_2GHZ_MIN);
 
 	/*
 	 * Create channel list based on chipset capabilities, regulation domain
 	 * and mode. 5GHz...
 	 */
 	for(i = 0; (hal->ah_capabilities.cap_range.range_5ghz_max > 0) &&
-		(i < (sizeof(ar5k_5ghz_channels) / sizeof(ar5k_5ghz_channels[0]))) &&
+		(i < (sizeof(ar5k_5ghz_channels) /
+		sizeof(ar5k_5ghz_channels[0]))) &&
 		(c < max_channels); i++) {
 		/* Check if channel is supported by the chipset */
 		if((ar5k_5ghz_channels[i].rc_channel <
@@ -337,20 +340,20 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 		    (ar5k_5ghz_channels[i].rc_channel >
 			hal->ah_capabilities.cap_range.range_5ghz_max))
 			continue;
-		
+
 		/* Match regulation domain */
 		if((IEEE80211_DMN(ar5k_5ghz_channels[i].rc_domains) &
 		       IEEE80211_DMN(domain_5ghz)) == 0)
 			continue;
-		
+
 		/* Match modes */
 		if(ar5k_5ghz_channels[i].rc_mode & IEEE80211_CHAN_TURBO)
 			all_channels[c].channelFlags = CHANNEL_T;
 		else if(ar5k_5ghz_channels[i].rc_mode & IEEE80211_CHAN_OFDM)
 			all_channels[c].channelFlags = CHANNEL_A;
-		else 
+		else
 			continue;
-		
+
 		/* Write channel and increment counter */
 		all_channels[c++].channel = ar5k_5ghz_channels[i].rc_channel;
 	}
@@ -358,16 +361,17 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 	/*
 	 * ...and 2GHz.
 	 */
-	for(i = 0; (hal->ah_capabilities.cap_range.range_2ghz_max > 0) &&
-		(i < (sizeof(ar5k_2ghz_channels) / sizeof(ar5k_2ghz_channels[0]))) &&
-		(c < max_channels); i++) {
+	for (i = 0; (hal->ah_capabilities.cap_range.range_2ghz_max > 0) &&
+	    (i < (sizeof(ar5k_2ghz_channels) /
+	    sizeof(ar5k_2ghz_channels[0]))) &&
+	    (c < max_channels); i++) {
 		/* Check if channel is supported by the chipset */
 		if((ar5k_2ghz_channels[i].rc_channel <
 		       hal->ah_capabilities.cap_range.range_2ghz_min) ||
 		    (ar5k_2ghz_channels[i].rc_channel >
 			hal->ah_capabilities.cap_range.range_2ghz_max))
 			continue;
-		
+
 		/* Match regulation domain */
 		if((IEEE80211_DMN(ar5k_2ghz_channels[i].rc_domains) &
 		       IEEE80211_DMN(domain_2ghz)) == 0)
@@ -380,7 +384,7 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 			all_channels[c].channelFlags = CHANNEL_TG;
 		else if(ar5k_2ghz_channels[i].rc_mode & IEEE80211_CHAN_OFDM)
 			all_channels[c].channelFlags = CHANNEL_G;
-		else 
+		else
 			continue;
 
 		/* Write channel and increment counter */
@@ -402,7 +406,7 @@ ar5k_radar_alert(hal)
 	struct ath_hal *hal;
 {
 	/*
-	 * Limit ~1/s 
+	 * Limit ~1/s
 	 */
 	if(hal->ah_radar.r_last_channel.channel ==
 	    hal->ah_current_channel.channel &&
@@ -421,7 +425,7 @@ ar5k_radar_alert(hal)
 
 int
 ar5k_eeprom_read_mac(hal, mac)
-	struct ath_hal *hal; 
+	struct ath_hal *hal;
 	u_int8_t *mac;
 {
 	u_int32_t total, offset;
@@ -454,8 +458,8 @@ ar5k_eeprom_read_mac(hal, mac)
 
 	memcpy(mac, &mac_d, IEEE80211_ADDR_LEN);
 
-	if((!total) || total == (3 * 0xffff)) 
-		return(-EINVAL); 
+	if((!total) || total == (3 * 0xffff))
+		return(-EINVAL);
 
 	return(0);
 }
@@ -486,12 +490,12 @@ ar5k_bitswap(val, bits)
 	u_int bits;
 {
 	u_int32_t retval = 0, bit, i;
-	
+
 	for (i = 0; i < bits; i++) {
 		bit = (val >> i) & 1;
 		retval = (retval << 1) | bit;
 	}
-	
+
 	return(retval);
 }
 
@@ -544,5 +548,3 @@ ar5k_register_timeout(hal, reg, flag, val, is_set)
 
 	return(AH_TRUE);
 }
-
-

@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5xxx.h,v 1.1 2004/11/02 03:01:16 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.2 2004/11/02 14:05:49 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>. 
+ * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
  *
  * All rights reserved.
  *
@@ -29,8 +29,8 @@
  * HAL interface for Atheros Wireless LAN devices.
  *
  * ar5k is a free replacement of the binary-only HAL used by some drivers
- * for Atheros chipsets. While using a different ABI, it tries to be 
- * source-compatible with the original (non-free) HAL interface. 
+ * for Atheros chipsets. While using a different ABI, it tries to be
+ * source-compatible with the original (non-free) HAL interface.
  *
  * Many thanks to various contributors who supported the development of
  * ar5k with hard work and useful information. And, of course, for all the
@@ -42,7 +42,7 @@
 #define _AR5K_H
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
@@ -53,7 +53,7 @@
 
 #include <machine/endian.h>
 #include <machine/bus.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -350,7 +350,7 @@ typedef struct {
 #define rt_rate_code_index	rateCodeToIndex
 #define rt_info			info
 
-} HAL_RATE_TABLE;	
+} HAL_RATE_TABLE;
 
 #define AR5K_RATES_11A { 8, { 0 }, { 					\
         { 1, IEEE80211_T_OFDM, 6000, 11, 0, 140, 0 }, 			\
@@ -386,7 +386,7 @@ typedef enum {
 
 typedef struct {
 	u_int16_t 	channel; /* MHz */
-	u_int16_t 	channelFlags;	
+	u_int16_t 	channelFlags;
 
 #define c_channel	channel
 #define c_channel_flags	cnannelFlags
@@ -774,7 +774,7 @@ struct ath_hal {
 	ar5k_capabilities_t	ah_capabilities;
 
 	HAL_TXQ_INFO		ah_txq[HAL_NUM_TX_QUEUES];
-	
+
 	struct {
 		HAL_BOOL	r_enabled;
 		int		r_last_alert;
@@ -802,7 +802,7 @@ struct ath_hal {
 typedef struct ath_hal*(ar5k_attach_t)
 	(u_int16_t, void *, bus_space_tag_t, bus_space_handle_t, HAL_STATUS *);
 
-/* 
+/*
  * Some tuneable values (these should be changeable by the user)
  */
 
@@ -849,7 +849,7 @@ typedef struct ath_hal*(ar5k_attach_t)
 #define AR5K_INIT_TXNOFRM			0
 #define AR5K_INIT_BEACON_PERIOD			65535
 #define AR5K_INIT_TIM_OFFSET			0
-#define AR5K_INIT_BEACON_EN			0 
+#define AR5K_INIT_BEACON_EN			0
 #define AR5K_INIT_RESET_TSF			0
 #define AR5K_INIT_TRANSMIT_LATENCY		(			\
         (AR5K_INIT_TX_LATENCY << 14) | (AR5K_INIT_USEC_32 << 7) |	\
@@ -907,8 +907,8 @@ struct ar5k_ini {
 	} ini_mode;
 };
 
-/* 
- * Unaligned little endian access 
+/*
+ * Unaligned little endian access
  */
 
 #define	AR5K_LE_READ_2(_p) 						\

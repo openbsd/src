@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5210.c,v 1.2 2004/11/02 09:31:59 reyk Exp $	*/
+/*	$OpenBSD: ar5210.c,v 1.3 2004/11/02 14:05:49 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>. 
+ * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
  *
  * All rights reserved.
  *
@@ -26,7 +26,7 @@
  */
 
 /*
- * HAL interface for the Atheros AR5000 Wireless LAN chipset 
+ * HAL interface for the Atheros AR5000 Wireless LAN chipset
  * (AR5210 + AR5110).
  */
 
@@ -45,8 +45,8 @@ void 		 ar5k_ar5210_init_tx_queue(struct ath_hal *, u_int, HAL_BOOL);
 const void	 ar5k_ar5210_fill(struct ath_hal *);
 
 AR5K_HAL_FUNCTIONS(extern, ar5k_ar5210,);
- 
-const void 
+
+const void
 ar5k_ar5210_fill(hal)
 	struct ath_hal *hal;
 {
@@ -58,8 +58,8 @@ ar5k_ar5210_fill(hal)
 	AR5K_HAL_FUNCTION(hal, ar5210, getRateTable);
 	AR5K_HAL_FUNCTION(hal, ar5210, detach);
 
-	/* 
-	 * Reset functions 
+	/*
+	 * Reset functions
 	 */
 	AR5K_HAL_FUNCTION(hal, ar5210, reset);
 	AR5K_HAL_FUNCTION(hal, ar5210, setPCUConfig);
@@ -141,7 +141,7 @@ ar5k_ar5210_fill(hal)
 	AR5K_HAL_FUNCTION(hal, ar5210, setKeyCacheEntryMac);
 
 	/*
-	 * Power management functions 
+	 * Power management functions
 	 */
 	AR5K_HAL_FUNCTION(hal, ar5210, setPowerMode);
 	AR5K_HAL_FUNCTION(hal, ar5210, getPowerMode);
@@ -150,8 +150,8 @@ ar5k_ar5210_fill(hal)
 	AR5K_HAL_FUNCTION(hal, ar5210, enablePSPoll);
 	AR5K_HAL_FUNCTION(hal, ar5210, disablePSPoll);
 
-	/* 
-	 * Beacon functions 
+	/*
+	 * Beacon functions
 	 */
 	AR5K_HAL_FUNCTION(hal, ar5210, beaconInit);
 	AR5K_HAL_FUNCTION(hal, ar5210, setStationBeaconTimers);
@@ -159,7 +159,7 @@ ar5k_ar5210_fill(hal)
 	AR5K_HAL_FUNCTION(hal, ar5210, waitForBeaconDone);
 
 	/*
-	 * Interrupt functions 
+	 * Interrupt functions
 	 */
 	AR5K_HAL_FUNCTION(hal, ar5210, isInterruptPending);
 	AR5K_HAL_FUNCTION(hal, ar5210, getPendingInterrupts);
@@ -202,7 +202,7 @@ ar5k_ar5210_attach(device, sc, st, sh, status)
 
 	/* Get MAC, PHY and RADIO revisions */
 	hal->ah_mac_version = 1;
-	hal->ah_mac_revision = (AR5K_REG_READ(AR5K_AR5210_SREV) & 
+	hal->ah_mac_revision = (AR5K_REG_READ(AR5K_AR5210_SREV) &
 	    AR5K_AR5210_SREV_ID_M);
 	hal->ah_phy_revision = AR5K_REG_READ(AR5K_AR5210_PHY_CHIP_ID) &
 	    0x00ffffffff;
@@ -243,7 +243,7 @@ ar5k_ar5210_nic_reset(hal, val)
 	val &=
 	    AR5K_AR5210_RC_PCU | AR5K_AR5210_RC_MAC |
 	    AR5K_AR5210_RC_PHY | AR5K_AR5210_RC_DMA;
-	
+
 	mask &=
 	    AR5K_AR5210_RC_PCU | AR5K_AR5210_RC_MAC |
 	    AR5K_AR5210_RC_PHY | AR5K_AR5210_RC_DMA;
@@ -265,8 +265,8 @@ ar5k_ar5210_nic_wakeup(hal, turbo, initial)
 	HAL_BOOL turbo;
 	HAL_BOOL initial;
 {
-	/* 
-	 * Reset and wakeup the device 
+	/*
+	 * Reset and wakeup the device
 	 */
 
 	if(initial == AH_TRUE) {
@@ -286,7 +286,7 @@ ar5k_ar5210_nic_wakeup(hal, turbo, initial)
 	}
 
 	/* ...enable Atheros turbo mode if requested */
-	AR5K_REG_WRITE(AR5K_AR5210_PHY_FC, 
+	AR5K_REG_WRITE(AR5K_AR5210_PHY_FC,
 	    turbo == AH_TRUE ? AR5K_AR5210_PHY_FC_TURBO_MODE : 0);
 
 	/* ...reset chipset */
@@ -352,26 +352,26 @@ ar5k_ar5210_set_channel(hal, channel)
 	AR5K_DELAY(1000);
 
 	/*
-	 * Check bounds supported by the PHY 
+	 * Check bounds supported by the PHY
 	 * (don't care about regulation restrictions at this point)
 	 */
 	if(channel->channel < hal->ah_capabilities.cap_range.range_5ghz_min ||
 	    channel->channel > hal->ah_capabilities.cap_range.range_5ghz_max) {
-		AR5K_PRINTF("channel out of supported range (%u MHz)\n", 
+		AR5K_PRINTF("channel out of supported range (%u MHz)\n",
 		    channel->channel);
 		return(AH_FALSE);
 	}
 
 	/*
-	 * Set the channel and wait 
+	 * Set the channel and wait
 	 */
 	data = ar5k_ar5210_chan2athchan(channel);
 	AR5K_REG_WRITE(AR5K_AR5210_PHY(0x27), data);
 	AR5K_REG_WRITE(AR5K_AR5210_PHY(0x30), 0);
 	AR5K_DELAY(1000);
 
-	/* 
-	 * Activate phy and wait 
+	/*
+	 * Activate phy and wait
 	 */
 	AR5K_REG_WRITE(AR5K_AR5210_PHY_ACTIVE, AR5K_AR5210_PHY_ENABLE);
 	AR5K_DELAY(1000);
@@ -407,7 +407,7 @@ ar5k_ar5210_detach(hal)
 	struct ath_hal *hal;
 {
 	/*
-	 * Free HAL structure, assume interrupts are down 
+	 * Free HAL structure, assume interrupts are down
 	 */
 	free(hal, M_DEVBUF);
 }
@@ -423,7 +423,7 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 	int i;
 	struct ar5k_ini initial[] = AR5K_AR5210_INI;
 
-	if(ar5k_ar5210_nic_wakeup(hal, 
+	if(ar5k_ar5210_nic_wakeup(hal,
 	       channel->channelFlags & IEEE80211_CHAN_T ?
 	       AH_TRUE : AH_FALSE, AH_FALSE) == AH_FALSE)
 		return(AH_FALSE);
@@ -451,7 +451,7 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 
 		case INI_WRITE:
 		default:
-			AR5K_REG_WRITE(initial[i].ini_register, 
+			AR5K_REG_WRITE(initial[i].ini_register,
 			    initial[i].ini_value);
 		}
 	}
@@ -461,7 +461,7 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 	/*
 	 * Set channel and calibrate the PHY
 	 */
-	if(ar5k_ar5210_perCalibration(hal, channel) == AH_FALSE) 
+	if(ar5k_ar5210_perCalibration(hal, channel) == AH_FALSE)
 		return(AH_FALSE);
 
 	/*
@@ -470,7 +470,7 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 	if(hal->ah_capabilities.cap_eeprom.ee_rfkill != 0) {
 		if ((hal->ah_gpio[0] = ar5k_ar5210_gpioGet(hal, 0)) == 0)
 			ar5k_ar5210_gpioSetIntr(hal, 0, 1);
-		else 
+		else
 			ar5k_ar5210_gpioSetIntr(hal, 0, 0);
 	}
 
@@ -503,19 +503,19 @@ ar5k_ar5210_setPCUConfig(hal)
 	case IEEE80211_M_STA:
 		pcu_reg |= AR5K_AR5210_STA_ID1_NO_PSPOLL |
 		    AR5K_AR5210_STA_ID1_DESC_ANTENNA |
-		    AR5K_AR5210_STA_ID1_PWR_SV; 
+		    AR5K_AR5210_STA_ID1_PWR_SV;
 		break;
 
 	case IEEE80211_M_IBSS:
-		pcu_reg |= AR5K_AR5210_STA_ID1_ADHOC | 
-		    AR5K_AR5210_STA_ID1_NO_PSPOLL | 
+		pcu_reg |= AR5K_AR5210_STA_ID1_ADHOC |
+		    AR5K_AR5210_STA_ID1_NO_PSPOLL |
 		    AR5K_AR5210_STA_ID1_DESC_ANTENNA;
 		beacon_reg |= AR5K_AR5210_BCR_ADHOC;
 		break;
 
 	case IEEE80211_M_HOSTAP:
-		pcu_reg |= AR5K_AR5210_STA_ID1_AP | 
-		    AR5K_AR5210_STA_ID1_NO_PSPOLL | 
+		pcu_reg |= AR5K_AR5210_STA_ID1_AP |
+		    AR5K_AR5210_STA_ID1_NO_PSPOLL |
 		    AR5K_AR5210_STA_ID1_DESC_ANTENNA;
 		beacon_reg |= AR5K_AR5210_BCR_AP;
 		break;
@@ -527,8 +527,8 @@ ar5k_ar5210_setPCUConfig(hal)
 	default:
 		return;
 	}
-		
-	/* 
+
+	/*
 	 * Set PCU and BCR registers
 	 */
 	memcpy(&low_id, &(hal->ah_sta_id[0]), 4);
@@ -747,8 +747,9 @@ ar5k_ar5210_resetTxQueue(hal, queue)
 	 */
 	if(hal->ah_software_retry == AH_TRUE) {
 		/* XXX Need to test this */
-		retry_lg = hal->ah_limit_tx_retries; 
-		retry_sh = retry_lg = retry_lg > AR5K_AR5210_RETRY_LMT_SH_RETRY ?
+		retry_lg = hal->ah_limit_tx_retries;
+		retry_sh = retry_lg =
+		    retry_lg > AR5K_AR5210_RETRY_LMT_SH_RETRY ?
 		    AR5K_AR5210_RETRY_LMT_SH_RETRY : retry_lg;
 	} else {
 		retry_lg = AR5K_INIT_LG_RETRY;
@@ -863,7 +864,8 @@ ar5k_ar5210_startTxDma(hal, queue)
 	case HAL_TX_QUEUE_CAB:
 		tx_queue |= AR5K_AR5210_CR_TXE1 & ~AR5K_AR5210_CR_TXD1;
 		AR5K_REG_WRITE(AR5K_AR5210_BSR,
-		    AR5K_AR5210_BCR_TQ1FV | AR5K_AR5210_BCR_TQ1V | AR5K_AR5210_BCR_BDMAE);
+		    AR5K_AR5210_BCR_TQ1FV | AR5K_AR5210_BCR_TQ1V |
+		    AR5K_AR5210_BCR_BDMAE);
 		break;
 
 	default:
@@ -981,7 +983,7 @@ ar5k_ar5210_setupTxDesc(hal, desc, packet_length, header_length, type, tx_power,
 	tx_desc->clear_dest_mask = flags & HAL_TXDESC_CLRDMASK ? 1 : 0;
 
 	/*
-	 * WEP crap 
+	 * WEP crap
 	 */
 	if(key_index != HAL_TXKEYIX_INVALID) {
 		tx_desc->encrypt_key_valid = 1;
@@ -989,7 +991,7 @@ ar5k_ar5210_setupTxDesc(hal, desc, packet_length, header_length, type, tx_power,
 	}
 
 	/*
-	 * RTS/CTS 
+	 * RTS/CTS
 	 */
 	if(flags & (HAL_TXDESC_RTSENA|HAL_TXDESC_CTSENA)) {
 		tx_desc->rts_cts_enable = 1;
@@ -1074,7 +1076,7 @@ ar5k_ar5210_procTxDesc(hal, desc)
 	desc->ds_us.tx.ts_status = 0;
 
 	if(tx_status->frame_xmit_ok == 0) {
-		if(tx_status->excessive_retries) 
+		if(tx_status->excessive_retries)
 			desc->ds_us.tx.ts_status |= HAL_TXERR_XRETRY;
 
 		if(tx_status->fifo_underrun)
@@ -1139,7 +1141,7 @@ ar5k_ar5210_stopDmaReceive(hal)
 	/*
 	 * It may take some time to disable the DMA receive unit
 	 */
-	for(i = 2000; 
+	for(i = 2000;
 	    i > 0 && (AR5K_REG_READ(AR5K_AR5210_CR) & AR5K_AR5210_CR_RXE) != 0;
 	    i--)
 		AR5K_DELAY(10);
@@ -1179,7 +1181,7 @@ ar5k_ar5210_setMulticastFilterIndex(hal, index)
 {
 	if(index >= 64)
 		return(AH_FALSE);
-	else if(index >= 32) 
+	else if(index >= 32)
 		AR5K_REG_ENABLE_BITS(AR5K_AR5210_MCAST_FIL1,
 		    (1 << (index - 32)));
 	else
@@ -1196,7 +1198,7 @@ ar5k_ar5210_clrMulticastFilterIndex(hal, index)
 {
 	if(index >= 64)
 		return(AH_FALSE);
-	else if(index >= 32) 
+	else if(index >= 32)
 		AR5K_REG_DISABLE_BITS(AR5K_AR5210_MCAST_FIL1,
 		    (1 << (index - 32)));
 	else
@@ -1270,7 +1272,7 @@ ar5k_ar5210_procRxDesc(hal, desc, phys_addr, next)
 	if(!rx_status->done)
 		return(HAL_EINPROGRESS);
 
-	/* 
+	/*
 	 * Frame receive status
 	 */
 	now = (AR5K_REG_READ(AR5K_AR5210_TSF_L32) >> 10) & 0xffff;
@@ -1288,7 +1290,7 @@ ar5k_ar5210_procRxDesc(hal, desc, phys_addr, next)
 	/*
 	 * Key table status
 	 */
-	if(!rx_status->key_index_valid) 
+	if(!rx_status->key_index_valid)
 		desc->ds_us.rx.rs_keyix = HAL_RXKEYIX_INVALID;
 	else
 		desc->ds_us.rx.rs_keyix = rx_status->key_index;
@@ -1322,7 +1324,7 @@ ar5k_ar5210_rxMonitor(hal)
 	/*
 	 * XXX Not sure, if this works correctly.
 	 */
-	AR5K_REG_ENABLE_BITS(AR5K_AR5210_RX_FILTER, 
+	AR5K_REG_ENABLE_BITS(AR5K_AR5210_RX_FILTER,
 	    AR5K_AR5210_RX_FILTER_PROMISC);
 }
 
@@ -1429,7 +1431,7 @@ ar5k_ar5210_getDiagState(hal, id, device, size)
 {
 	/*
 	 * We'll ignore this right now. This seems to be some kind of an obscure
-         * debugging interface for the binary-only HAL. 
+         * debugging interface for the binary-only HAL.
 	 */
 	return(AH_FALSE);
 }
@@ -1495,7 +1497,7 @@ ar5k_ar5210_setLedState(hal, state)
 	switch(state) {
 	case IEEE80211_S_SCAN:
 	case IEEE80211_S_INIT:
-		led |= 
+		led |=
 		    AR5K_AR5210_PCICFG_LED_PEND |
 		    AR5K_AR5210_PCICFG_LED_BCTL;
 		break;
@@ -1504,7 +1506,7 @@ ar5k_ar5210_setLedState(hal, state)
 		    AR5K_AR5210_PCICFG_LED_ACT;
 		break;
 	default:
-		led |= 
+		led |=
 		    AR5K_AR5210_PCICFG_LED_ACT |
 		    AR5K_AR5210_PCICFG_LED_BCTL;
 		break;
@@ -1538,12 +1540,12 @@ ar5k_ar5210_writeAssocid(hal, bssid, assoc_id, tim_offset)
 	}
 
 	AR5K_REG_WRITE(AR5K_AR5210_BEACON,
-	    (AR5K_REG_READ(AR5K_AR5210_BEACON) & 
+	    (AR5K_REG_READ(AR5K_AR5210_BEACON) &
 		~AR5K_AR5210_BEACON_TIM) |
-	    (((tim_offset ? tim_offset + 4 : 0) << 
+	    (((tim_offset ? tim_offset + 4 : 0) <<
 		AR5K_AR5210_BEACON_TIM_S) &
 		AR5K_AR5210_BEACON_TIM));
-	    
+
 	ar5k_ar5210_enablePSPoll(hal, NULL, 0);
 }
 
@@ -1555,7 +1557,7 @@ ar5k_ar5210_gpioCfgOutput(hal, gpio)
 	if(gpio > AR5K_AR5210_NUM_GPIO)
 		return(AH_FALSE);
 
-	AR5K_REG_WRITE(AR5K_AR5210_GPIOCR, 
+	AR5K_REG_WRITE(AR5K_AR5210_GPIOCR,
 	    (AR5K_REG_READ(AR5K_AR5210_GPIOCR) &~ AR5K_AR5210_GPIOCR_ALL(gpio))
 	    | AR5K_AR5210_GPIOCR_OUT1(gpio));
 
@@ -1570,7 +1572,7 @@ ar5k_ar5210_gpioCfgInput(hal, gpio)
 	if(gpio > AR5K_AR5210_NUM_GPIO)
 		return(AH_FALSE);
 
-	AR5K_REG_WRITE(AR5K_AR5210_GPIOCR, 
+	AR5K_REG_WRITE(AR5K_AR5210_GPIOCR,
 	    (AR5K_REG_READ(AR5K_AR5210_GPIOCR) &~ AR5K_AR5210_GPIOCR_ALL(gpio))
 	    | AR5K_AR5210_GPIOCR_IN(gpio));
 
@@ -1586,7 +1588,7 @@ ar5k_ar5210_gpioGet(hal, gpio)
 		return(0xffffffff);
 
 	/* GPIO input magic */
-	return(((AR5K_REG_READ(AR5K_AR5210_GPIODI) & 
+	return(((AR5K_REG_READ(AR5K_AR5210_GPIODI) &
 		    AR5K_AR5210_GPIOD_MASK) >> gpio) & 0x1);
 }
 
@@ -1626,7 +1628,7 @@ ar5k_ar5210_gpioSetIntr(hal, gpio, interrupt_level)
 	/*
 	 * Set the GPIO interrupt
 	 */
-	data = (AR5K_REG_READ(AR5K_AR5210_GPIOCR) & 
+	data = (AR5K_REG_READ(AR5K_AR5210_GPIOCR) &
 	    ~(AR5K_AR5210_GPIOCR_INT_SEL(gpio) | AR5K_AR5210_GPIOCR_INT_SELH |
 		AR5K_AR5210_GPIOCR_INT_ENA | AR5K_AR5210_GPIOCR_ALL(gpio))) |
 	    (AR5K_AR5210_GPIOCR_INT_SEL(gpio) | AR5K_AR5210_GPIOCR_INT_ENA);
@@ -1892,7 +1894,7 @@ ar5k_ar5210_setKeyCacheEntry(hal, entry, keyval, mac, xor_notused)
 				    offset);
 				offset += 4;
 			}
-			
+
 			if(i == 4 && keyval->wk_len <= 13)
 				key_v[i] &= 0xff;
 		}
@@ -1926,7 +1928,8 @@ ar5k_ar5210_setKeyCacheEntryMac(hal, entry, mac)
 
 	high_id = 0x0000ffff & htole32(high_id);
 
-	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset++ * 4), htole32(low_id));
+	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset++ * 4),
+	    htole32(low_id));
 	AR5K_REG_WRITE(AR5K_AR5210_KEYTABLE(entry) + (offset * 4), high_id);
 
 	return(AH_TRUE);
@@ -1954,7 +1957,8 @@ ar5k_ar5210_setPowerMode(hal, mode, set_chip, sleep_duration)
 
 	case HAL_PM_FULL_SLEEP:
 		if(set_chip)
-			AR5K_REG_WRITE(AR5K_AR5210_SCR, AR5K_AR5210_SCR_SLE_SLP);
+			AR5K_REG_WRITE(AR5K_AR5210_SCR,
+			    AR5K_AR5210_SCR_SLE_SLP);
 		break;
 
 	case HAL_PM_AWAKE:
@@ -1962,10 +1966,10 @@ ar5k_ar5210_setPowerMode(hal, mode, set_chip, sleep_duration)
 			goto commit;
 
 		AR5K_REG_WRITE(AR5K_AR5210_SCR, AR5K_AR5210_SCR_SLE_WAKE);
-		
+
 		for(i = 5000; i > 0; i--) {
 			/* Check if the AR5210 did wake up */
-			if((AR5K_REG_READ(AR5K_AR5210_PCICFG) & 
+			if((AR5K_REG_READ(AR5K_AR5210_PCICFG) &
 			       AR5K_AR5210_PCICFG_SPWR_DN) == 0)
 				break;
 
@@ -1974,7 +1978,7 @@ ar5k_ar5210_setPowerMode(hal, mode, set_chip, sleep_duration)
 			AR5K_REG_WRITE(AR5K_AR5210_SCR,
 			    AR5K_AR5210_SCR_SLE_WAKE);
 		}
-		
+
 		/* Fail if the AR5210 didn't wake up */
 		if(i <= 0)
 			return(AH_FALSE);
@@ -2192,7 +2196,7 @@ ar5k_ar5210_waitForBeaconDone(hal, phys_addr)
 		 * Re-schedule the beacon queue
 		 */
 		AR5K_REG_WRITE(AR5K_AR5210_TXDP1, (u_int32_t)phys_addr);
-		AR5K_REG_WRITE(AR5K_AR5210_BCR, 
+		AR5K_REG_WRITE(AR5K_AR5210_BCR,
 		    AR5K_AR5210_BCR_TQ1V | AR5K_AR5210_BCR_BDMAE);
 
 		return(AH_FALSE);
@@ -2276,7 +2280,7 @@ ar5k_ar5210_setInterrupts(hal, new_mask)
 	int_mask = new_mask & HAL_INT_COMMON;
 
 	if(new_mask & HAL_INT_RX)
-		int_mask |= 
+		int_mask |=
 		    AR5K_AR5210_IMR_RXOK |
 		    AR5K_AR5210_IMR_RXERR |
 		    AR5K_AR5210_IMR_RXORN;
@@ -2359,7 +2363,8 @@ ar5k_ar5210_regulation_domain(hal, write, regdomain)
 {
 	/* Read current value */
 	if(write != AH_TRUE) {
-		memcpy(regdomain, &hal->ah_capabilities.cap_regdomain.reg_current,
+		memcpy(regdomain,
+		    &hal->ah_capabilities.cap_regdomain.reg_current,
 		    sizeof(ieee80211_regdomain_t));
 		return(AH_TRUE);
 	}
@@ -2369,13 +2374,13 @@ ar5k_ar5210_regulation_domain(hal, write, regdomain)
 	    sizeof(ieee80211_regdomain_t));
 
 	if(hal->ah_capabilities.cap_eeprom.ee_protect &
-	    AR5K_AR5210_EEPROM_PROTECT_128_191) 
+	    AR5K_AR5210_EEPROM_PROTECT_128_191)
 		return(AH_FALSE);
 
-	hal->ah_capabilities.cap_eeprom.ee_regdomain = 
+	hal->ah_capabilities.cap_eeprom.ee_regdomain =
 	    ar5k_regdomain_from_ieee(regdomain);
 
-	AR5K_PRINTF("writing new regulation domain to EEPROM: 0x%04x\n", 
+	AR5K_PRINTF("writing new regulation domain to EEPROM: 0x%04x\n",
 	    hal->ah_capabilities.cap_eeprom.ee_regdomain);
 
 	if(ar5k_ar5210_eeprom_write(hal, AR5K_AR5210_EEPROM_REG_DOMAIN,
@@ -2406,7 +2411,7 @@ ar5k_ar5210_eeprom_init(hal)
 		&hal->ah_capabilities.cap_eeprom.ee_magic)) != 0)
 		return(ret);
 
-	if(hal->ah_capabilities.cap_eeprom.ee_magic != 
+	if(hal->ah_capabilities.cap_eeprom.ee_magic !=
 	    AR5K_AR5210_EEPROM_MAGIC_VALUE)
 		return(-EFTYPE);
 
@@ -2433,7 +2438,7 @@ ar5k_ar5210_eeprom_is_busy(hal)
 	    AH_TRUE : AH_FALSE);
 }
 
-int 
+int
 ar5k_ar5210_eeprom_read(hal, offset, data)
 	struct ath_hal *hal;
 	u_int32_t offset;
@@ -2443,12 +2448,12 @@ ar5k_ar5210_eeprom_read(hal, offset, data)
 
 	/* Enable eeprom access */
 	AR5K_REG_ENABLE_BITS(AR5K_AR5210_PCICFG, AR5K_AR5210_PCICFG_EEAE);
-	
-	/* 
-	 * Prime read pump 
+
+	/*
+	 * Prime read pump
 	 */
 	(void)AR5K_REG_READ(AR5K_AR5210_EEPROM_BASE + (4 * offset));
-	
+
 	for(timeout = 10000; timeout > 0; timeout--) {
 		AR5K_DELAY(1);
 		status = AR5K_REG_READ(AR5K_AR5210_EEPROM_STATUS);
@@ -2464,7 +2469,7 @@ ar5k_ar5210_eeprom_read(hal, offset, data)
 	return(-ETIMEDOUT);
 }
 
-int 
+int
 ar5k_ar5210_eeprom_write(hal, offset, data)
 	struct ath_hal *hal;
 	u_int32_t offset;
@@ -2474,12 +2479,12 @@ ar5k_ar5210_eeprom_write(hal, offset, data)
 
 	/* Enable eeprom access */
 	AR5K_REG_ENABLE_BITS(AR5K_AR5210_PCICFG, AR5K_AR5210_PCICFG_EEAE);
-	
-	/* 
+
+	/*
 	 * Prime write pump
 	 */
 	AR5K_REG_WRITE(AR5K_AR5210_EEPROM_BASE + (4 * offset), data);
-	
+
 	for(timeout = 10000; timeout > 0; timeout--) {
 		AR5K_DELAY(1);
 		status = AR5K_REG_READ(AR5K_AR5210_EEPROM_STATUS);

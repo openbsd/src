@@ -1,7 +1,7 @@
-/*	$OpenBSD: ar5210var.h,v 1.1 2004/11/02 03:01:16 reyk Exp $	*/
+/*	$OpenBSD: ar5210var.h,v 1.2 2004/11/02 14:05:49 reyk Exp $	*/
 
 /*
- * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>. 
+ * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
  *
  * All rights reserved.
  *
@@ -74,8 +74,8 @@ struct ar5k_ar5210_rx_desc {
 } __attribute__ ((__packed__));
 
 struct ar5k_ar5210_rx_status {
-	/* 
-	 * First word 
+	/*
+	 * First word
 	 */
 	u_int32_t	data_len:12;
 	u_int32_t	more:1;
@@ -125,7 +125,7 @@ struct ar5k_ar5210_tx_desc {
 	u_int32_t 	inter_req:1;
 	u_int32_t 	encrypt_key_valid:1;
 	u_int32_t 	r1:1;
-	
+
 	/*
 	 * Second word
 	 */
