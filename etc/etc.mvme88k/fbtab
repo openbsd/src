@@ -1,0 +1,2 @@
+/dev/ttya	0600	/dev/console
+/dev/tty00	0600	/dev/console
