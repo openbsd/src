@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.37 2003/11/15 20:25:17 marc Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.38 2003/12/28 04:09:13 espie Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: savecore.c,v 1.37 2003/11/15 20:25:17 marc Exp $";
+static char rcsid[] = "$OpenBSD: savecore.c,v 1.38 2003/12/28 04:09:13 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,6 @@ int	 dump_exists(void);
 char	*find_dev(dev_t, int);
 int	 get_crashtime(void);
 void	 kmem_setup(void);
-void	 log(int, char *, ...);
 void	 Lseek(int, off_t, int);
 int	 Open(char *, int rw);
 char	*rawname(char *s);
