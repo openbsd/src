@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.20 1998/07/02 08:53:04 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.21 1998/07/02 09:03:42 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -491,18 +491,15 @@ sys_execve(p, v, retval)
 			int indx;
 
 			if (p->p_fd->fd_ofiles[i] == NULL) {
-				printf("need %d\n", i);
 				if ((error = falloc(p, &fp, &indx)) != 0)
 					continue;
 				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
 				    "/dev/null", p);
 				if ((error = vn_open(&nd, FREAD, 0)) != 0) {
-					printf("failed %d\n", i);
 					ffree(fp);
 					p->p_fd->fd_ofiles[indx] = NULL;
 					break;
 				}
-				printf("got %d\n", i);
 				fp->f_flag = FREAD;
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
