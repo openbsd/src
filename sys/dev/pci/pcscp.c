@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcscp.c,v 1.3 2001/06/12 15:40:33 niklas Exp $	*/
+/*	$OpenBSD: pcscp.c,v 1.4 2001/08/25 10:13:30 art Exp $	*/
 /*	$NetBSD: pcscp.c,v 1.11 2000/11/14 18:42:58 thorpej Exp $	*/
 
 /*-
@@ -267,8 +267,7 @@ pcscp_attach(parent, self, aux)
 	sc->sc_maxxfer = 16 * 1024 * 1024;
 
 	/* map and establish interrupt */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.18 2001/08/12 20:03:49 mickey Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.19 2001/08/25 10:13:29 art Exp $	*/
 /* $FreeBSD: src/sys/pci/if_tx.c,v 1.45 2001/02/07 20:11:02 semenu Exp $ */
 
 /*-
@@ -270,8 +270,7 @@ epic_openbsd_attach(
 	if( epic_common_attach(sc) ) return;
 
 	/* Map interrupt */
-	if( pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if( pci_intr_map(pa, &ih)) {
 		printf(": can't map interrupt\n");
 		return;
 	}

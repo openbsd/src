@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.6 2001/07/06 17:22:07 jason Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.7 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -190,8 +190,7 @@ wi_pci_attach(parent, self, aux)
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}

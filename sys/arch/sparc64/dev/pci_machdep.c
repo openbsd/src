@@ -396,12 +396,11 @@ pci_conf_write(pc, tag, reg, data)
  * XXX: how does this deal with multiple interrupts for a device?
  */
 int
-pci_intr_map(pc, tag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	int pin, line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	pcitag_t tag = pa->pa_tag;
 	int interrupts;
 	int len, node = PCITAG_NODE(tag);
 	char devtype[30];

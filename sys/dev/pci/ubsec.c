@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.67 2001/08/12 20:03:49 mickey Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.68 2001/08/25 10:13:30 art Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -166,8 +166,7 @@ ubsec_attach(parent, self, aux)
 	}
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
 		return;

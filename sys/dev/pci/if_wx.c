@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wx.c,v 1.14 2001/06/27 06:34:51 kjc Exp $ */
+/* $OpenBSD: if_wx.c,v 1.15 2001/08/25 10:13:29 art Exp $ */
 /*
  * Principal Author: Matthew Jacob
  * Copyright (c) 1999, 2001 by Traakan Software
@@ -261,8 +261,7 @@ wx_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate our interrupt.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 #ifndef __OpenBSD__
 		printf("%s: couldn't map interrupt\n", sc->wx_name);
 #else

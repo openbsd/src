@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.7 2001/08/12 20:03:49 mickey Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.8 2001/08/25 10:13:29 art Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -803,8 +803,7 @@ void nge_attach(parent, self, aux)
 #endif
 
 	DPRINTFN(5, ("pci_intr_map\n"));
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.7 2001/08/20 04:41:39 smart Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.8 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * cy_pci.c
@@ -144,8 +144,7 @@ cy_pci_attach(parent, self, aux)
         }
  
 	/* Enable PCI card interrupts */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih) != 0)
+	if (pci_intr_map(pa, &ih) != 0)
 		panic("%s: couldn't map PCI interrupt", sc->sc_dev.dv_xname);
 
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, cy_intr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.25 2001/08/22 16:33:11 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.26 2001/08/25 10:13:30 art Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -479,8 +479,7 @@ pccbbattach(parent, self, aux)
 	sc->sc_pcmcia_flags = flags;   /* set PCMCIA facility */
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}

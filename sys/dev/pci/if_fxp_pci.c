@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.8 2001/08/09 21:12:51 jason Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.9 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -142,8 +142,7 @@ fxp_pci_attach(parent, self, aux)
 	/*
 	 * Allocate our interrupt.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}

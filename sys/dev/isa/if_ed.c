@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.46 2001/07/08 23:38:07 fgsch Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.47 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -514,8 +514,7 @@ ed_pci_attach(parent, self, aux)
 	printf("%s", sc->isa16bit ? "(16-bit)" : "(8-bit)");	/* XXX */
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("\n%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.14 2001/08/09 19:42:05 ho Exp $	*/
+/*	$OpenBSD: ises.c,v 1.15 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -192,8 +192,7 @@ ises_attach(struct device *parent, struct device *self, void *aux)
 	state++;
 
 	/* Map interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-	    &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail;
 	}

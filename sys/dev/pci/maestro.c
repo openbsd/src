@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.8 2001/08/02 11:16:29 espie Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.9 2001/08/25 10:13:29 art Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -339,8 +339,7 @@ maestro_attach(parent, self, aux)
 	sc->dmat = pa->pa_dmat;
 
 	/* Map interrupt */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-	    &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}

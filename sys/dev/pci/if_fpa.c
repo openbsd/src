@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.14 2001/08/12 20:33:50 mickey Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.15 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -154,8 +154,7 @@ pdq_pci_attach(parent, self, aux)
 		return;
 	}
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}

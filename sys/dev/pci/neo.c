@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.7 2001/06/18 19:27:18 deraadt Exp $       */
+/*      $OpenBSD: neo.c,v 1.8 2001/08/25 10:13:30 art Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -576,8 +576,7 @@ neo_attach(parent, self, aux)
 	}
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("\n%s: couldn't map interrupt\n", sc->dev.dv_xname);
 		return;
 	}

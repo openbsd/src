@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.5 2001/07/27 17:02:49 art Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.6 2001/08/25 10:13:29 art Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -344,8 +344,7 @@ cs4281_attach(parent, self, aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-	    &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

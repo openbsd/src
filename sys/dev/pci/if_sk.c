@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.15 2001/08/15 16:50:26 jason Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.16 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1107,8 +1107,7 @@ skc_attach(parent, self, aux)
 	sc->sc_dmatag = pa->pa_dmat;
 
 	/* Allocate interrupt */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail;
 	}

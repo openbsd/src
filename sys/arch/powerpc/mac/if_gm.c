@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.18 2001/08/08 21:08:33 miod Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.19 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -236,8 +236,7 @@ gmac_attach(parent, self, aux)
 #endif
 
 #if 0
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": unable to map interrupt\n");
 		return;
 	}

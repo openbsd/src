@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.4 2001/06/12 15:40:33 niklas Exp $	*/
+/*	$OpenBSD: puc.c,v 1.5 2001/08/25 10:13:30 art Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -215,8 +215,7 @@ puc_attach(parent, self, aux)
 	}
 
 	/* Map interrupt. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.48 2001/08/12 20:33:50 mickey Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.49 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5538,8 +5538,7 @@ tulip_pci_attach(
 	    pci_intr_handle_t intrhandle;
 	    const char *intrstr;
 
-	    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			     pa->pa_intrline, &intrhandle)) {
+	    if (pci_intr_map(pa, &intrhandle)) {
 		printf(", couldn't map interrupt\n");
 		return;
 	    }

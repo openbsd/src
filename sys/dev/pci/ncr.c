@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.59 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.60 2001/08/25 10:13:30 art Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1467,7 +1467,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.59 2001/08/19 15:07:34 miod Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.60 2001/08/25 10:13:30 art Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3717,8 +3717,7 @@ ncr_attach(parent, self, aux)
 	/*
 	**	Set up the controller chip's interrupt.
 	*/
-	retval = pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle);
+	retval = pci_intr_map(pa, &intrhandle);
 	if (retval) {
 		printf(": couldn't map interrupt\n");
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.8 2001/08/17 22:26:58 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.9 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -87,7 +87,8 @@ pcitag_t	pci_make_tag __P((pci_chipset_tag_t, int, int, int));
 pcireg_t	pci_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void		pci_conf_write __P((pci_chipset_tag_t, pcitag_t, int,
 		    pcireg_t));
-int		pci_intr_map __P((pci_chipset_tag_t, pcitag_t, int, int,
+struct pci_attach_args;
+int		pci_intr_map __P((struct pci_attach_args *,
 		    pci_intr_handle_t *));
 #define		pci_intr_line(ih)	((ih).line)
 const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
@@ -96,14 +97,6 @@ void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
 void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
 void		pci_decompose_tag __P((pci_chipset_tag_t, pcitag_t,
 		    int *, int *, int *));
-
-/*
- * Compatibility functions, to map the old i386 PCI functions to the new ones.
- * NOT TO BE USED BY NEW CODE.
- */
-void		*pci_map_int __P((pcitag_t, int, int (*)(void *), void *));
-int		pci_map_io __P((pcitag_t, int, int *));
-int		pci_map_mem __P((pcitag_t, int, vm_offset_t *, vm_offset_t *));
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PIC Specification,

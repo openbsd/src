@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc_obsd.c,v 1.9 2001/08/12 20:33:50 mickey Exp $ */
+/*	$OpenBSD: if_lmc_obsd.c,v 1.10 2001/08/25 10:13:29 art Exp $ */
 /*	$NetBSD: if_lmc_nbsd.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -358,8 +358,7 @@ lmc_pci_attach(struct device * const parent,
 
 	lmc_read_macaddr(sc);
 
-        if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-                         pa->pa_intrline, &intrhandle)) {
+        if (pci_intr_map(pa, &intrhandle)) {
 		 printf("%s: couldn't map interrupt\n",
 			sc->lmc_dev.dv_xname);
 		return;

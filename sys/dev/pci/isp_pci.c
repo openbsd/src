@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.19 2001/05/16 12:51:49 ho Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.20 2001/08/25 10:13:29 art Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -553,8 +553,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	data &= ~1;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCIR_ROMADDR, data);
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		free(isp->isp_param, M_DEVBUF);
 		return;

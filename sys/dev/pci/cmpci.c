@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.2 2001/06/12 15:40:30 niklas Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.3 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -329,8 +329,7 @@ cmpci_attach(parent, self, aux)
 	}
 
 	/* interrupt */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			  pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("\n%s: failed to map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

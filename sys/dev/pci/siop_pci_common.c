@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.6 2001/06/12 15:40:33 niklas Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.7 2001/08/25 10:13:30 art Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.6 2001/01/10 15:50:20 thorpej Exp $	*/
 
 /*
@@ -267,8 +267,7 @@ siop_pci_attach_common(sc, pa)
 			sc->siop.features &= ~SF_CHIP_RAM;
 	}
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &intrhandle)) {
+	if (pci_intr_map(pa, &intrhandle)) {
 		printf("\n%s: couldn't map interrupt\n",
 		    sc->siop.sc_dev.dv_xname);
 		return 0;

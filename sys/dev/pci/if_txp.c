@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.52 2001/08/24 21:11:14 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.53 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -201,8 +201,7 @@ txp_attach(parent, self, aux)
 	/*
 	 * Allocate our interrupt.
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.4 2001/07/07 12:04:22 niklas Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.5 2001/08/25 10:13:29 art Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -183,8 +183,7 @@ aac_pci_attach(parent, self, aux)
 	}
 	state++;
 
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-	    &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("couldn't map interrupt\n");
 		goto bail_out;
 	}

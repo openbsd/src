@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.3 2001/06/12 15:40:33 niklas Exp $	*/
+/*	$OpenBSD: yds.c,v 1.4 2001/08/25 10:13:30 art Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -663,8 +663,7 @@ yds_attach(parent, self, aux)
 	}
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-	    &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

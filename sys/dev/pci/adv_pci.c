@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.4 1998/11/17 07:55:46 downsj Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.5 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -188,8 +188,7 @@ adv_pci_attach(parent, self, aux)
 	/*
 	 * Map Interrupt line
 	 */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("\n%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

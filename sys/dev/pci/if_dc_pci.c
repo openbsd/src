@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.16 2001/08/22 16:38:38 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.17 2001/08/25 10:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -239,8 +239,7 @@ void dc_pci_attach(parent, self, aux)
 #endif
 
 	/* Allocate interrupt */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-	    &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		goto fail;
 	}

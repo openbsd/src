@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.2 2001/08/23 03:44:46 jason Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.3 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -167,8 +167,7 @@ hmeattach_pci(parent, self, aux)
 	 */
 	hme_config(sc);
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle) != 0) {
+	if (pci_intr_map(pa, &intrhandle) != 0) {
 		printf("%s: couldn't map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;	/* bus_unmap ? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop_pci.c,v 1.2 2001/06/26 06:05:55 niklas Exp $	*/
+/*	$OpenBSD: iop_pci.c,v 1.3 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
 
 /*-
@@ -139,8 +139,7 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 		       reg | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt.  XXX IPL_BIO. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("can't map interrupt\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.18 2001/01/27 04:59:40 mickey Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.19 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -405,12 +405,15 @@ not1:
 }
 
 int
-pci_intr_map(pc, intrtag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t intrtag;
-	int pin, line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t intrtag = pa->pa_intrtag;
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
+
 	if (pin == 0) {
 		/* No IRQ used. */
 		goto bad;

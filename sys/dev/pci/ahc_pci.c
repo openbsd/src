@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.24 2001/08/23 05:41:14 deraadt Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.25 2001/08/25 10:13:29 art Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -469,8 +469,7 @@ void *aux;
 					|TARGCRCENDEN|TARGCRCCNTEN);
 	}
 
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n", ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.12 2001/06/13 07:43:35 deraadt Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.13 2001/08/25 10:13:30 art Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -133,8 +133,7 @@ ohci_pci_attach(parent, self, aux)
 	    OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
