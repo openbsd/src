@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2004/09/22 08:01:58 pefo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.16 2004/09/27 18:51:18 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -227,8 +227,14 @@ mips_init(int argc, int32_t *argv)
 		switch ((cp0_get_prid() >> 8) & 0xff) {
 		case MIPS_R10000:
 		case MIPS_R12000:
-		case MIPS_R14000:
+		case MIPS_R14000:	/* Anyone seen an O2 with R14K? */
 			bootdriveoffs = -1;
+			break;
+		}
+		/* R12K O2's must run with DSD on */
+		switch ((cp0_get_prid() >> 8) & 0xff) {
+		case MIPS_R12000:
+			setsr(SR_DSD);
 			break;
 		}
 	} else {
@@ -752,6 +758,9 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
 #if defined(__LP64__)
 	p->p_md.md_regs->sr = SR_FR_32|SR_XX|SR_KSU_USER|SR_UX|SR_EXL|SR_INT_ENAB;
+	if (sys_config.cpu[0].type == MIPS_R12000 &&
+	    sys_config.system_type == SGI_O2)
+		p->p_md.md_regs->sr |= SR_DSD;
 #else
 	p->p_md.md_regs->sr = SR_KSU_USER|SR_XX|SR_EXL|SR_INT_ENAB;
 #endif
