@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.4 1996/06/06 09:52:07 deraadt Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.5 1996/10/07 19:45:57 deraadt Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -98,13 +98,13 @@ clalloc(clp, size, quot)
 		return (-1);
 	bzero(clp->c_cs, size);
 
-	if(quot) {
+	if (quot) {
 		MALLOC(clp->c_cq, u_char *, QMEM(size), M_TTYS, M_WAITOK);
 		if (!clp->c_cq) {
 			FREE(clp->c_cs, M_TTYS);
 			return (-1);
 		}
-		bzero(clp->c_cs, QMEM(size));
+		bzero(clp->c_cq, QMEM(size));
 	} else
 		clp->c_cq = (u_char *)0;
 
