@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.3 1997/03/14 05:12:59 millert Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.4 1997/04/09 02:28:31 deraadt Exp $	*/
 /*	$NetBSD: refresh.c,v 1.2 1997/01/11 06:48:07 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: refresh.c,v 1.3 1997/03/14 05:12:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: refresh.c,v 1.4 1997/04/09 02:28:31 deraadt Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -616,7 +616,7 @@ re_update_line(el, old, new, i)
      * ^.....................^     ^..................^       ^........^ 
      * \new                  \nfd  \nsb               \nse     \nls    \ne
      * 
-     * fx is the difference in length between the the chars between nfd and
+     * fx is the difference in length between the chars between nfd and
      * nsb, and the chars between ofd and osb, and is thus the number of
      * characters to delete if < 0 (new is shorter than old, as above),
      * or insert (new is longer than short).
