@@ -1,4 +1,4 @@
-#	$OpenBSD: tests,v 1.3 2004/04/02 18:35:54 otto Exp $
+#	$OpenBSD: tests,v 1.4 2004/08/13 07:21:40 otto Exp $
 #	$NetBSD: tests,v 1.5 1995/04/20 22:40:00 cgd Exp $
 
 # regular expression test set
@@ -173,6 +173,16 @@ a\(\(b\)*\2\)*d		b	abbbd	abbbd
 \([^_]*\)\(_*\1\)*	b	foo_foo_bar_bar_bar_baz	foo_foo	foo,_foo
 \([^_]*\)\(_*\1\)*	b	bar_bar_bar_baz	bar_bar_bar	bar,_bar
 \([^_]*\)\(_*\1\)*	b	foo_bar_baz	foo	foo
+\(.*\)\1	b	""	""
+\(.*\)\1	b	a	""
+\(.*\)\1	b	aa	aa
+\(.*\)\1	b	aaa	aa
+\(.*\)\1	b	aaaa	aaaa
+\([^_]*\)\1	b	""	""
+\([^_]*\)\1	b	a	""
+\([^_]*\)\1	b	aa	aa
+\([^_]*\)\1	b	aaa	aa
+\([^_]*\)\1	b	aaaa	aaaa
 
 # ordinary repetitions
 ab*c		&	abc	abc
