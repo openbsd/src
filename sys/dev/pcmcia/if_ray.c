@@ -1,10 +1,10 @@
-/*	$OpenBSD: if_ray.c,v 1.1 2000/03/22 04:40:57 mickey Exp $	*/
-/*	$NetBSD: if_ray.c,v 1.16 2000/03/10 05:47:42 onoe Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.2 2000/03/23 20:02:57 mickey Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.17 2000/03/23 07:01:42 thorpej Exp $	*/
 
-/* 
+/*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -58,6 +58,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#ifdef __NetBSD__
+#include <sys/callout.h>
+#elif defined(__OpenBSD__)
+#include <sys/timeout.h>
+#endif
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -137,6 +142,11 @@
 #define	RAY_START_TIMEOUT	(90 * hz)
 #endif
 
+/* reset reschedule timeout */
+#ifndef	RAY_RESET_TIMEOUT
+#define	RAY_RESET_TIMEOUT	(10 * hz)
+#endif
+
 /*
  * if a command cannot execute because device is busy try later
  * this is also done after interrupts and other command timeouts
@@ -189,13 +199,29 @@ struct ray_softc {
 	int				sc_resumeinit;
 	int				sc_resetloop;
 
+#ifdef __NetBSD__
+	struct callout			sc_check_ccs_ch;
+	struct callout			sc_check_scheduled_ch;
+	struct callout			sc_reset_resetloop_ch;
+	struct callout			sc_disable_ch;
+	struct callout			sc_start_join_timo_ch;
+#elif defined(__OpenBSD__)
+	struct timeout			sc_check_ccs_ch;
+	struct timeout			sc_check_scheduled_ch;
+	struct timeout			sc_reset_resetloop_ch;
+	struct timeout			sc_disable_ch;
+	struct timeout			sc_start_join_timo_ch;
+#define	callout_stop	timeout_del
+#define	callout_reset(t,n,f,a)	timeout_add((t), (n))
+#endif
+
 	struct ray_ecf_startup		sc_ecf_startup;
 	struct ray_startup_params_head	sc_startup;
 	union {
 		struct ray_startup_params_tail_5	u_params_5;
 		struct ray_startup_params_tail_4	u_params_4;
 	} sc_u;
-	
+
 	u_int8_t	sc_ccsinuse[64];	/* ccs in use -- not for tx */
 	u_int		sc_txfree;	/* a free count for efficiency */
 
@@ -423,7 +449,7 @@ void ray_dump_mbuf __P((struct ray_softc *, struct mbuf *));
 #define	SRAM_WRITE_1(sc, off, val)	\
 	bus_space_write_1((sc)->sc_memt, (sc)->sc_memh, (off), (val))
 
-#define	SRAM_WRITE_FIELD_1(sc, off, s, f, v) 	\
+#define	SRAM_WRITE_FIELD_1(sc, off, s, f, v)	\
 	SRAM_WRITE_1(sc, (off) + offsetof(struct s, f), (v))
 
 #define	SRAM_WRITE_FIELD_2(sc, off, s, f, v) do {	\
@@ -614,6 +640,19 @@ ray_attach(parent, self, aux)
 	sc->sc_countrycode = sc->sc_dcountrycode = RAY_PID_COUNTRY_CODE_DEFAULT;
 	sc->sc_resumeinit = 0;
 
+#ifdef __NetBSD__
+	callout_init(&sc->sc_check_ccs_ch);
+	callout_init(&sc->sc_check_scheduled_ch);
+	callout_init(&sc->sc_reset_resetloop_ch);
+	callout_init(&sc->sc_disable_ch);
+	callout_init(&sc->sc_start_join_timo_ch);
+#elif defined(__OpenBSD__)
+	timeout_set(&sc->sc_check_ccs_ch, ray_check_ccs, sc);
+	timeout_set(&sc->sc_check_scheduled_ch, ray_check_scheduled, sc);
+	timeout_set(&sc->sc_reset_resetloop_ch, ray_reset_resetloop, sc);
+	timeout_set(&sc->sc_disable_ch, (void (*)(void *))ray_disable, sc);
+	timeout_set(&sc->sc_start_join_timo_ch, ray_start_join_timo, sc);
+#endif
 	/*
 	 * attach the interface
 	 */
@@ -880,10 +919,10 @@ ray_stop(sc)
 {
 	RAY_DPRINTF(("%s: stop\n", sc->sc_xname));
 
-	untimeout(ray_check_ccs, sc);
+	callout_stop(&sc->sc_check_ccs_ch);
 	sc->sc_timocheck = 0;
 
-	untimeout(ray_check_scheduled, sc);
+	callout_stop(&sc->sc_check_scheduled_ch);
 	sc->sc_timoneed = 0;
 
 	if (sc->sc_repreq) {
@@ -910,15 +949,17 @@ ray_reset(sc)
 		if (sc->sc_resetloop == RAY_MAX_RESETS) {
 			printf("%s: unable to correct, disabling\n",
 			    sc->sc_xname);
-			untimeout(ray_reset_resetloop, sc);
-			timeout((void (*)(void *))ray_disable, sc, 1);
+			callout_stop(&sc->sc_reset_resetloop_ch);
+			callout_reset(&sc->sc_disable_ch, 1,
+			    (void (*)(void *))ray_disable, sc);
 		}
 	} else {
 		printf("%s: unexpected failure resetting hw [%d more]\n",
 		    sc->sc_xname, RAY_MAX_RESETS - sc->sc_resetloop);
-		untimeout(ray_reset_resetloop, sc);
+		callout_stop(&sc->sc_reset_resetloop_ch);
 		ray_init(sc);
-		timeout(ray_reset_resetloop, sc, 30 * hz);
+		callout_reset(&sc->sc_reset_resetloop_ch, RAY_RESET_TIMEOUT,
+		    ray_reset_resetloop, sc);
 	}
 }
 
@@ -1034,7 +1075,7 @@ ray_ioctl(ifp, cmd, data)
 			if ((ifp->if_flags & IFF_RUNNING) == 0) {
 				if ((error = ray_enable(sc)))
 					break;
-			} else 
+			} else
 				ray_update_promisc(sc);
 		} else if (ifp->if_flags & IFF_RUNNING)
 			ray_disable(sc);
@@ -1316,7 +1357,7 @@ ray_intr_start(sc)
 
 		RAY_DPRINTF(("%s: bufp 0x%lx new pktlen %d\n",
 		    ifp->if_xname, (long)bufp, (int)pktlen));
-			
+
 		/* copy out mbuf */
 		for (m = m0; m; m = m->m_next) {
 			if ((len = m->m_len) == 0)
@@ -1331,7 +1372,7 @@ ray_intr_start(sc)
 			else {
 				panic("ray_intr_start");	/* XXX */
 				/* wrapping */
-				tmplen = ebufp - bufp; 
+				tmplen = ebufp - bufp;
 				len -= tmplen;
 				ray_write_region(sc, bufp, d, tmplen);
 				d += tmplen;
@@ -1507,7 +1548,7 @@ ray_recv(sc, ccs)
 		lenread += len;
 	}
 done:
-	
+
 	RAY_DPRINTF(("%s: recv frag count %d\n", sc->sc_xname, frag));
 
 	/* free the rcss */
@@ -1549,7 +1590,7 @@ done:
 		issnap = 1;
 	else {
 		/*
-		 * if user has link0 flag set we allow the weird 
+		 * if user has link0 flag set we allow the weird
 		 * Ethernet2 in 802.11 encapsulation produced by
 		 * the windows driver for the WebGear card
 		 */
@@ -1736,7 +1777,7 @@ ray_check_scheduled(arg)
 	    sc->sc_xname, sc->sc_scheduled, sc->sc_running, RAY_ECF_READY(sc)));
 
 	if (sc->sc_timoneed) {
-		untimeout(ray_check_scheduled, sc);
+		callout_stop(&sc->sc_check_scheduled_ch);
 		sc->sc_timoneed = 0;
 	}
 
@@ -1816,13 +1857,15 @@ breakout:
 			/* give a chance for the interrupt to occur */
 			sc->sc_ccsinuse[i] = 2;
 			if (!sc->sc_timocheck) {
-				timeout(ray_check_ccs, sc, 1);
+				callout_reset(&sc->sc_check_ccs_ch, 1,
+				    ray_check_ccs, sc);
 				sc->sc_timocheck = 1;
 			}
 		} else if ((fp = ray_ccs_done(sc, ccs)))
 			(*fp)(sc);
 	} else {
-		timeout(ray_check_ccs, sc, RAY_CHECK_CCS_TIMEOUT);
+		callout_reset(&sc->sc_check_ccs_ch, RAY_CHECK_CCS_TIMEOUT,
+		    ray_check_ccs, sc);
 		sc->sc_timocheck = 1;
 	}
 	splx(s);
@@ -2111,7 +2154,7 @@ ray_free_ccs(sc, ccs)
 }
 
 /*
- * returns 1 and in `ccb' the bus offset of the free ccb 
+ * returns 1 and in `ccb' the bus offset of the free ccb
  * or 0 if none are free
  *
  * If `track' is not zero, handles tracking this command
@@ -2175,7 +2218,8 @@ ray_set_pending(sc, cmdf)
 	sc->sc_scheduled |= cmdf;
 	if (!sc->sc_timoneed) {
 		RAY_DPRINTF(("%s: ray_set_pending new timo\n", sc->sc_xname));
-		timeout(ray_check_scheduled, sc, RAY_CHECK_SCHED_TIMEOUT);
+		callout_reset(&sc->sc_check_scheduled_ch,
+		    RAY_CHECK_SCHED_TIMEOUT, ray_check_scheduled, sc);
 		sc->sc_timoneed = 1;
 	}
 }
@@ -2231,7 +2275,7 @@ ray_cmd_cancel(sc, cmdf)
 
 	/* if nothing else needed cancel the timer */
 	if (sc->sc_scheduled == 0 && sc->sc_timoneed) {
-		untimeout(ray_check_scheduled, sc);
+		callout_stop(&sc->sc_check_scheduled_ch);
 		sc->sc_timoneed = 0;
 	}
 }
@@ -2252,7 +2296,8 @@ ray_cmd_ran(sc, cmdf)
 		sc->sc_running |= cmdf;
 
 	if ((cmdf & SCP_TIMOCHECK_CMD_MASK) && !sc->sc_timocheck) {
-		timeout(ray_check_ccs, sc, RAY_CHECK_CCS_TIMEOUT);
+		callout_reset(&sc->sc_check_ccs_ch, RAY_CHECK_CCS_TIMEOUT,
+		    ray_check_ccs, sc);
 		sc->sc_timocheck = 1;
 	}
 }
@@ -2287,7 +2332,7 @@ ray_cmd_done(sc, cmdf)
 			ray_cmd_schedule(sc, sc->sc_scheduled & SCP_UPD_MASK);
 	}
 	if ((sc->sc_running & SCP_TIMOCHECK_CMD_MASK) == 0 && sc->sc_timocheck){
-		untimeout(ray_check_ccs, sc);
+		callout_stop(&sc->sc_check_ccs_ch);
 		sc->sc_timocheck = 0;
 	}
 }
@@ -2307,7 +2352,7 @@ ray_issue_cmd(sc, ccs, track)
 	RAY_DPRINTF(("%s: ray_cmd_issue 0x%x\n", sc->sc_xname, track));
 
 	/*
-	 * XXX other drivers did this, but I think 
+	 * XXX other drivers did this, but I think
 	 * what we really want to do is just make sure we don't
 	 * get here or that spinning is ok
 	 */
@@ -2340,7 +2385,7 @@ ray_simple_cmd(sc, cmd, track)
 	return (ray_alloc_ccs(sc, &ccs, cmd, track) &&
 	    ray_issue_cmd(sc, ccs, track));
 }
-	
+
 /*
  * Functions based on CCS commands
  */
@@ -2447,7 +2492,7 @@ ray_download_params(sc)
 
 	ray_cmd_cancel(sc, SCP_UPD_STARTUP);
 
-#define	PUT2(p, v) 	\
+#define	PUT2(p, v)	\
 	do { (p)[0] = ((v >> 8) & 0xff); (p)[1] = (v & 0xff); } while(0)
 
 	sp = &sc->sc_startup;
@@ -2467,15 +2512,15 @@ ray_download_params(sc)
 #if 1
 		/* linux/fbsd */
 		PUT2(sp->sp_dwell_time, 0x200);
-		PUT2(sp->sp_beacon_period, 1); 
+		PUT2(sp->sp_beacon_period, 1);
 #else
 		/* divined */
 		PUT2(sp->sp_dwell_time, 0x400);
-		PUT2(sp->sp_beacon_period, 0); 
+		PUT2(sp->sp_beacon_period, 0);
 #endif
 	} else {
 		PUT2(sp->sp_dwell_time, 128);
-		PUT2(sp->sp_beacon_period, 256); 
+		PUT2(sp->sp_beacon_period, 256);
 	}
 	sp->sp_dtim_interval = 1;
 #if 0
@@ -2485,13 +2530,13 @@ ray_download_params(sc)
 	sp->sp_sifs = 0x1c;
 #elif 1
 	/* these were scrounged from the linux driver */
-	sp->sp_max_retry = 0x07; 
+	sp->sp_max_retry = 0x07;
 
 	sp->sp_ack_timo = 0xa3;
 	sp->sp_sifs = 0x1d;
 #else
 	/* these were divined */
-	sp->sp_max_retry = 0x03; 
+	sp->sp_max_retry = 0x03;
 
 	sp->sp_ack_timo = 0xa3;
 	sp->sp_sifs = 0x1d;
@@ -2664,7 +2709,8 @@ ray_start_join_net(sc)
 		SRAM_WRITE_FIELD_1(sc, ccs, ray_cmd_net, c_upd_param, 1);
 	}
 	if (ray_issue_cmd(sc, ccs, SCP_UPD_STARTJOIN))
-		timeout(ray_start_join_timo, sc, RAY_START_TIMEOUT);
+		callout_reset(&sc->sc_start_join_timo_ch, RAY_START_TIMEOUT,
+		    ray_start_join_timo, sc);
 }
 
 void
@@ -2696,7 +2742,7 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 {
 	struct ray_net_params np;
 
-	untimeout(ray_start_join_timo, sc);
+	callout_stop(&sc->sc_start_join_timo_ch);
 	ray_cmd_done(sc, SCP_UPD_STARTJOIN);
 
 	if (stat == RAY_CCS_STATUS_FAIL) {
@@ -2706,7 +2752,8 @@ ray_start_join_net_done(sc, cmd, ccs, stat)
 	}
 	if (stat == RAY_CCS_STATUS_BUSY || stat == RAY_CCS_STATUS_FREE) {
 		/* handle the timeout condition */
-		timeout(ray_start_join_timo, sc, RAY_START_TIMEOUT);
+		callout_reset(&sc->sc_start_join_timo_ch, RAY_START_TIMEOUT,
+		    ray_start_join_timo, sc);
 
 		/* be safe -- not a lot occurs with no net though */
 		if (!RAY_ECF_READY(sc))
@@ -2962,7 +3009,7 @@ ray_user_report_params(sc, pr)
 		pr->r_failcause = RAY_FAILCAUSE_EDEVSTOP;
 		return (EIO);
 	}
-	
+
 	/* wait to be able to issue the command */
 	rv = 0;
 	while (ray_cmd_is_running(sc, SCP_REPORTPARAMS)
@@ -3117,7 +3164,7 @@ void
 hexdump(const u_int8_t *d, int len, int br, int div, int fl)
 {
 	int i, j, offw, first, tlen, ni, nj, sp;
-	
+
 	sp = br / div;
 	offw = 0;
 	if (len && (fl & HEXDF_NOOFFSET) == 0) {
