@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.13 2003/04/06 03:02:44 krw Exp $ */
+/*	$OpenBSD: hp.c,v 1.14 2003/04/06 22:01:41 miod Exp $ */
 /*	$NetBSD: hp.c,v 1.22 2000/02/12 16:09:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -182,15 +182,14 @@ hpstrategy(bp)
 {
 	struct	hp_softc *sc;
 	struct	buf *gp;
-	int	unit, s, err;
+	int	unit, s;
 	struct disklabel *lp;
 
 	unit = DISKUNIT(bp->b_dev);
 	sc = hp_cd.cd_devs[unit];
 	lp = sc->sc_disk.dk_label;
 
-	err = bounds_check_with_label(bp, lp, sc->sc_wlabel);
-	if (err < 0)
+	if (bounds_check_with_label(bp, lp, sc->sc_wlabel) <= 0)
 		goto done;
 
 	bp->b_rawblkno =
