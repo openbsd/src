@@ -1,3 +1,4 @@
+/*	$OpenBSD: dec_eb164.c,v 1.2 1997/11/10 15:46:23 niklas Exp $	*/
 /*	$NetBSD: dec_eb164.c,v 1.4 1996/11/25 03:59:21 cgd Exp $	*/
 
 /*
