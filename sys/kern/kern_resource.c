@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.17 2001/12/20 21:56:19 nordin Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.18 2002/01/25 14:54:00 art Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/resourcevar.h>
-#include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 
 #include <sys/mount.h>
@@ -425,19 +425,26 @@ ruadd(ru, ru2)
 		*ip++ += *ip2++;
 }
 
+struct pool plimit_pool;
+
 /*
  * Make a copy of the plimit structure.
  * We share these structures copy-on-write after fork,
  * and copy when a limit is changed.
  */
 struct plimit *
-limcopy(lim)
-	struct plimit *lim;
+limcopy(struct plimit *lim)
 {
-	register struct plimit *newlim;
+	struct plimit *newlim;
+	static int initialized;
 
-	MALLOC(newlim, struct plimit *, sizeof(struct plimit),
-	    M_SUBPROC, M_WAITOK);
+	if (!initialized) {
+		pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0,
+		    "plimitpl", &pool_allocator_nointr);
+		initialized = 1;
+	}
+
+	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	bcopy(lim->pl_rlimit, newlim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
 	newlim->p_lflags = 0;
@@ -446,11 +453,9 @@ limcopy(lim)
 }
 
 void
-limfree(lim)
-	struct plimit *lim;
+limfree(struct plimit *lim)
 {
-
 	if (--lim->p_refcnt > 0)
 		return;
-	FREE(lim, M_SUBPROC);
+	pool_put(&plimit_pool, lim);
 }
