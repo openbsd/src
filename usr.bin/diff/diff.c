@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.37 2003/07/29 18:38:47 deraadt Exp $	*/
+/*	$OpenBSD: diff.c,v 1.38 2003/08/18 02:04:42 david Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.37 2003/07/29 18:38:47 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.38 2003/08/18 02:04:42 david Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ static struct option longopts[] = {
 	{ "report-identical-files",	no_argument,		0,	's' },
 	{ "starting-file",		required_argument,	0,	'S' },
 	{ "expand-tabs",		no_argument,		0,	't' },
-	{ "intial-tab",			no_argument,		0,	'T' },
+	{ "initial-tab",		no_argument,		0,	'T' },
 	{ "unified",			optional_argument,	0,	'U' },
 	{ "ignore-all-space",		no_argument,		0,	'w' },
 	{ "exclude",			required_argument,	0,	'x' },
