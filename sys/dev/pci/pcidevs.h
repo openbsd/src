@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.342 2000/11/07 23:06:14 chris Exp 
+ *		OpenBSD: pcidevs,v 1.343 2000/11/07 23:51:43 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -84,7 +84,7 @@
 #define	PCI_VENDOR_TRIDENT	0x1023		/* Trident */
 #define	PCI_VENDOR_ZENITH	0x1024		/* Zenith Data Systems */
 #define	PCI_VENDOR_ACER	0x1025		/* Acer */
-#define	PCI_VENDOR_DELL	0x1028		/* Dell Computer */
+#define	PCI_VENDOR_DELL	0x1028		/* Dell */
 #define	PCI_VENDOR_SNI	0x1029		/* Siemens Nixdorf AG */
 #define	PCI_VENDOR_LSILOGIC	0x102a		/* LSI Logic */
 #define	PCI_VENDOR_MATROX	0x102b		/* Matrox */

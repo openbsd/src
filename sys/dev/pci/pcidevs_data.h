@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.342 2000/11/07 23:06:14 chris Exp 
+ *		OpenBSD: pcidevs,v 1.343 2000/11/07 23:51:43 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1805,19 +1805,19 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
 	    0,
-	    "Dell Computer",
+	    "Dell",
 	    "PERC 2/Si",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI,
 	    0,
-	    "Dell Computer",
+	    "Dell",
 	    "PERC 3/Di",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
 	    0,
-	    "Dell Computer",
+	    "Dell",
 	    "PERC 3/Si",
 	},
 	{
@@ -6155,7 +6155,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_DELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Dell Computer",
+	    "Dell",
 	    NULL,
 	},
 	{
