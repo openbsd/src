@@ -12,11 +12,12 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.7 1999/09/30 14:05:41 provos Exp $");
+RCSID("$Id: cipher.c,v 1.8 1999/09/30 17:08:52 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
-#include "ssh_md5.h"
+
+#include <md5.h>
 
 /*
  * What kind of tripple DES are these 2 routines?
@@ -172,7 +173,7 @@ cipher_number(const char *name)
 void cipher_set_key_string(CipherContext *context, int cipher,
 			   const char *passphrase, int for_encryption)
 {
-  struct MD5Context md;
+  MD5_CTX md;
   unsigned char digest[16];
   
   MD5Init(&md);

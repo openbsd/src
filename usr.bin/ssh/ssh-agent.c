@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.6 1999/09/30 08:34:25 deraadt Exp $");
+RCSID("$Id: ssh-agent.c,v 1.7 1999/09/30 17:08:52 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -23,9 +23,10 @@ RCSID("$Id: ssh-agent.c,v 1.6 1999/09/30 08:34:25 deraadt Exp $");
 #include "bufaux.h"
 #include "xmalloc.h"
 #include "packet.h"
-#include "ssh_md5.h"
 #include "getput.h"
 #include "mpaux.h"
+
+#include <md5.h>
 
 typedef struct
 {
@@ -78,7 +79,7 @@ process_authentication_challenge(SocketEntry *e)
   int i, pub_bits, len;
   BIGNUM *pub_e, *pub_n, *challenge;
   Buffer msg;
-  struct MD5Context md;
+  MD5_CTX md;
   unsigned char buf[32], mdbuf[16], session_id[16];
   unsigned int response_type;
 

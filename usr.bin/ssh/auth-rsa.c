@@ -16,17 +16,17 @@ validity of the host key.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.2 1999/09/29 21:14:15 deraadt Exp $");
+RCSID("$Id: auth-rsa.c,v 1.3 1999/09/30 17:08:51 deraadt Exp $");
 
 #include "rsa.h"
 #include "packet.h"
 #include "xmalloc.h"
 #include "ssh.h"
-#include "ssh_md5.h"
 #include "mpaux.h"
 #include "uidswap.h"
 
 #include <ssl/rsa.h>
+#include <md5.h>
 
 /* Flags that may be set in authorized_keys options. */
 extern int no_port_forwarding_flag;
@@ -60,7 +60,7 @@ auth_rsa_challenge_dialog(unsigned int bits, BIGNUM *e, BIGNUM *n)
   RSA *pk;
   BN_CTX *ctx = BN_CTX_new();
   unsigned char buf[32], mdbuf[16], response[16];
-  struct MD5Context md;
+  MD5_CTX md;
   unsigned int i;
   int plen, len;
 

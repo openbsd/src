@@ -8,7 +8,7 @@ LDADD=	-lcrypto -ldes -lutil -lz
 DPADD=	${LIBCRYPTO} ${LIBDES} ${LIBUTIL} ${LIBZ}
 MAN=	ssh-add.1
 
-SRCS=	ssh-add.c log-client.c readpass.c rsa.c ssh_md5.c buffer.c \
+SRCS=	ssh-add.c log-client.c readpass.c rsa.c buffer.c \
 	xmalloc.c bufaux.c authfd.c authfile.c crc32.c match.c \
 	mpaux.c minfd.c cipher.c compress.c
 

@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.9 1999/09/30 06:06:31 deraadt Exp $");
+RCSID("$Id: sshconnect.c,v 1.10 1999/09/30 17:08:52 deraadt Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -24,9 +24,10 @@ RCSID("$Id: sshconnect.c,v 1.9 1999/09/30 06:06:31 deraadt Exp $");
 #include "packet.h"
 #include "authfd.h"
 #include "cipher.h"
-#include "ssh_md5.h"
 #include "mpaux.h"
 #include "uidswap.h"
+
+#include <md5.h>
 
 /* Session id for the current session. */
 unsigned char session_id[16];
@@ -438,7 +439,7 @@ void
 respond_to_rsa_challenge(BIGNUM *challenge, RSA *prv)
 {
   unsigned char buf[32], response[16];
-  struct MD5Context md;
+  MD5_CTX md;
   int i, len;
 
   /* Decrypt the challenge using the private key. */
