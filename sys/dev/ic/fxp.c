@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.58 2004/09/20 04:25:27 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.59 2004/09/28 05:14:44 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -456,13 +456,11 @@ fxp_attach_common(sc, intrstr)
 	ifp->if_watchdog = fxp_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
-#if NVLAN > 0
 	/*
 	 * Only 82558 and newer cards have a bit to ignore oversized frames.
 	 */
 	if (sc->not_82557)
-		ifp->if_capabilities |= IFCAP_VLAN_MTU;
-#endif
+		ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	printf(": %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr));

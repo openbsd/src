@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.55 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.56 2004/09/28 05:14:44 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2670,9 +2670,7 @@ xl_attach(sc)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xl_ioctl;
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
-#endif
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 	if (sc->xl_type == XL_TYPE_905B) {
 		ifp->if_start = xl_start_90xB;
 #ifndef XL905B_TXCSUM_BROKEN

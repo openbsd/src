@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.27 2004/09/23 17:45:16 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.28 2004/09/28 05:14:44 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1251,9 +1251,7 @@ rl_attach(sc)
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-#if NVLAN > 0
-	ifp->if_capabilities |= IFCAP_VLAN_MTU;
-#endif
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/*
 	 * Initialize our media structures and probe the MII.
