@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.286 2002/12/27 16:55:15 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.287 2002/12/27 21:43:58 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3840,12 +3840,10 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 			ifp = r->rpool.cur->ifp;
 		} else {
 			if (s->rt_ifp == NULL) {
-				s->rt_ifp = r->rpool.cur->ifp;
 				pf_map_addr(AF_INET, &r->rpool,
 				    (struct pf_addr *)&ip->ip_src,
-				    &naddr, NULL);
-				if (!PF_AZERO(&naddr, AF_INET))
-					PF_ACPY(&s->rt_addr, &naddr, AF_INET);
+				    &s->rt_addr, NULL);
+				s->rt_ifp = r->rpool.cur->ifp;
 			}
 			if (!PF_AZERO(&s->rt_addr, AF_INET))
 				dst->sin_addr.s_addr =
@@ -4001,16 +3999,14 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		ifp = r->rpool.cur->ifp;
 	} else {
 		if (s->rt_ifp == NULL) {
-			s->rt_ifp = r->rpool.cur->ifp;
 			pf_map_addr(AF_INET6, &r->rpool,
 			    (struct pf_addr *)&ip6->ip6_src,
-			    &naddr, NULL);
-			if (!PF_AZERO(&naddr, AF_INET6))
-				PF_ACPY(&s->rt_addr, &naddr, AF_INET6);
+			    &s->rt_addr, NULL);
+			s->rt_ifp = r->rpool.cur->ifp;
 		}
 		if (!PF_AZERO(&s->rt_addr, AF_INET6))
 			PF_ACPY((struct pf_addr *)&dst->sin6_addr,
-			    &naddr, AF_INET6);
+			    &s->rt_addr, AF_INET6);
 		ifp = s->rt_ifp;
 	}
 
