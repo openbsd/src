@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.10 2004/09/16 15:02:21 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.11 2004/09/25 11:06:50 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -188,6 +188,12 @@ rcs_open(const char *path, u_int mode)
 		return (NULL);
 	}
 
+	rfp->rf_branch = rcsnum_alloc();
+	if (rfp->rf_branch == NULL) {
+		rcs_close(rfp);
+		return (NULL);
+	}
+
 	rfp->rf_path = strdup(path);
 	if (rfp->rf_path == NULL) {
 		cvs_log(LP_ERRNO, "failed to duplicate RCS file path");
@@ -238,6 +244,8 @@ rcs_close(RCSFILE *rfp)
 
 	if (rfp->rf_head != NULL)
 		rcsnum_free(rfp->rf_head);
+	if (rfp->rf_branch != NULL)
+		rcsnum_free(rfp->rf_branch);
 
 	if (rfp->rf_path != NULL)
 		free(rfp->rf_path);
@@ -379,6 +387,10 @@ rcs_addsym(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 	}
 
 	symp->rs_num = rcsnum_alloc();
+	if (symp->rs_num == NULL) {
+		free(symp);
+		return (-1);
+	}
 	rcsnum_cpy(snum, symp->rs_num, 0);
 
 	TAILQ_INSERT_HEAD(&(rfp->rf_symbols), symp, rs_list);
@@ -578,7 +590,8 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 			 * This will need some rework to support sub branches.
 			 */
 			crev = rcsnum_alloc();
-
+			if (crev == NULL)
+				return (NULL);
 			rcsnum_cpy(rfp->rf_head, crev, 0);
 			do {
 				crev->rn_id[crev->rn_len - 1]--;
@@ -893,7 +906,15 @@ rcs_parse_delta(RCSFILE *rfp)
 	memset(rdp, 0, sizeof(*rdp));
 
 	rdp->rd_num = rcsnum_alloc();
+	if (rdp->rd_num == NULL) {
+		rcs_freedelta(rdp);
+		return (-1);
+	}
 	rdp->rd_next = rcsnum_alloc();
+	if (rdp->rd_next == NULL) {
+		rcs_freedelta(rdp);
+		return (-1);
+	}
 
 	TAILQ_INIT(&(rdp->rd_branches));
 
@@ -983,6 +1004,10 @@ rcs_parse_delta(RCSFILE *rfp)
 
 			if (tok == RCS_TOK_DATE) {
 				datenum = rcsnum_alloc();
+				if (datenum == NULL) {
+					rcs_freedelta(rdp);
+					return (-1);
+				}
 				rcsnum_aton(tokstr, NULL, datenum);
 				if (datenum->rn_len != 6) {
 					cvs_log(LP_ERR,
@@ -1176,11 +1201,17 @@ rcs_parse_symbols(RCSFILE *rfp)
 		}
 
 		symp->rs_num = rcsnum_alloc();
+		if (symp->rs_num == NULL) {
+			cvs_log(LP_ERRNO, "failed to allocate rcsnum info");
+			free(symp);
+			return (-1);
+		}
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_COLON) {
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
+			rcsnum_free(symp->rs_num);
 			free(symp->rs_name);
 			free(symp);
 			return (-1);
@@ -1190,6 +1221,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 		if (type != RCS_TOK_NUM) {
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
+			rcsnum_free(symp->rs_num);
 			free(symp->rs_name);
 			free(symp);
 			return (-1);
@@ -1198,6 +1230,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 		if (rcsnum_aton(RCS_TOKSTR(rfp), NULL, symp->rs_num) < 0) {
 			cvs_log(LP_ERR, "failed to parse RCS NUM `%s'",
 			    RCS_TOKSTR(rfp));
+			rcsnum_free(symp->rs_num);
 			free(symp->rs_name);
 			free(symp);
 			return (-1);
@@ -1240,6 +1273,10 @@ rcs_parse_locks(RCSFILE *rfp)
 			return (-1);
 		}
 		lkp->rl_num = rcsnum_alloc();
+		if (lkp->rl_num == NULL) {
+			free(lkp);
+			return (-1);
+		}
 
 		type = rcs_gettok(rfp);
 		if (type != RCS_TOK_COLON) {
@@ -1317,6 +1354,11 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 			return (-1);
 		}
 		brp->rb_num = rcsnum_alloc();
+		if (brp->rb_num == NULL) {
+			free(brp);
+			return (-1);
+		}
+
 		rcsnum_aton(RCS_TOKSTR(rfp), NULL, brp->rb_num);
 
 		TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
@@ -1419,7 +1461,7 @@ rcs_gettok(RCSFILE *rfp)
 		*(bp++) = ch;
 		while (bp <= bep - 1) {
 			ch = getc(pdp->rp_file);
-			if (!isalnum(ch)) {
+			if (!isalnum(ch) && ch != '_' && ch != '-') {
 				ungetc(ch, pdp->rp_file);
 				break;
 			}
@@ -1437,6 +1479,7 @@ rcs_gettok(RCSFILE *rfp)
 		/* not a keyword, assume it's just a string */
 		if (type == RCS_TOK_ERR)
 			type = RCS_TOK_STRING;
+
 	}
 	else if (ch == '@') {
 		/* we have a string */
