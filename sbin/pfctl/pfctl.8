@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.68 2003/01/24 13:22:05 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.69 2003/01/25 00:47:41 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -134,7 +134,7 @@ Flush the state table (NAT and filter).
 .It Fl F Ar info
 Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar Tables
-Flush the radix tables.
+Flush the tables.
 .It Fl F Ar all
 Flush all of the above.
 .El
@@ -178,7 +178,7 @@ Show the currently loaded NAT rules.
 .It Fl s Ar queue
 Show the currently loaded queue rules.
 When used together with -v, per-queue statistics are also shown.
-When used together with -v -v, 
+When used together with -v -v,
 .Nm
 will loop and show updated queue statistics every five seconds, including
 measured bandwidth and packets per second.
@@ -209,12 +209,12 @@ Show the current global timeouts.
 .It Fl s Ar memory
 Show the current pool memory hard limits.
 .It Fl s Ar Tables
-Show the list of radix tables.
+Show the list of tables.
 .It Fl s Ar all
 Show all of the above.
 .El
 .It Fl t Ar table
-Specify the name of the radix table.
+Specify the name of the table.
 .It Fl T Ar command
 Specify the command to apply to the table. commands include:
 .Bl -tag -width "T Replace " -compact
