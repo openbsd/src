@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.68 2004/01/17 19:35:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.69 2004/01/20 09:44:33 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -154,6 +155,10 @@ main(int argc, char *argv[])
 
 	if (geteuid())
 		errx(1, "need root privileges");
+
+	if (getpwnam(BGPD_USER) == NULL)
+		errx(1, "unknown user %s", BGPD_USER);
+	endpwent();
 
 	log_init(debug);
 
