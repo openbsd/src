@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.6 2001/06/25 04:41:25 art Exp $	*/
+/*	$OpenBSD: dol.c,v 1.7 2002/02/01 02:15:01 itojun Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.6 2001/06/25 04:41:25 art Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.7 2002/02/01 02:15:01 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -490,10 +490,8 @@ Dgetdol()
 		c = DgetC(0);
 	    } while (Isdigit(c));
 	    unDredc(c);
-	    if (subscr < 0) {
-		dolerror(vp->v_name);
-		return;
-	    }
+	    if (subscr < 0)
+		stderror(ERR_RANGE);
 	    if (subscr == 0) {
 		if (bitset) {
 		    dolp = ffile ? STR1 : STR0;
