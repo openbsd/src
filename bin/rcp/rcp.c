@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.20 2001/05/11 18:43:40 mickey Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.21 2001/06/13 08:52:42 markus Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -906,23 +906,29 @@ run_err(fmt, va_alist)
 {
 	static FILE *fp;
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
 	++errs;
 	if (fp == NULL && !(fp = fdopen(rem, "w")))
 		return;
 	(void)fprintf(fp, "%c", 0x01);
 	(void)fprintf(fp, "rcp: ");
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
 	(void)vfprintf(fp, fmt, ap);
+	va_end(ap);
 	(void)fprintf(fp, "\n");
 	(void)fflush(fp);
 
-	if (!iamremote)
+	if (!iamremote) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		vwarnx(fmt, ap);
-
-	va_end(ap);
+		va_end(ap);
+	}
 }

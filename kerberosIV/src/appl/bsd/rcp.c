@@ -145,18 +145,21 @@ run_err(const char *fmt, ...)
 	char errbuf[1024];
 
 	va_list args;
-	va_start(args, fmt);
 	++errs;
 #define RCPERR "\001rcp: "
 	strlcpy (errbuf, RCPERR, sizeof(errbuf));
+	va_start(args, fmt);
 	vsnprintf (errbuf + strlen(errbuf),
 		   sizeof(errbuf) - strlen(errbuf),
 		   fmt, args);
+	va_end(args);
 	strlcat (errbuf, "\n", sizeof(errbuf));
 	des_write (rem, errbuf, strlen(errbuf));
-	if (!iamremote)
+	if (!iamremote) {
+		va_start(args, fmt);
 		vwarnx(fmt, args);
-	va_end(args);
+		va_end(args);
+	}
 }
 
 static void
