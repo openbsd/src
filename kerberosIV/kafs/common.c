@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.5 1998/08/12 23:49:04 art Exp $	*/
+/*	$OpenBSD: common.c,v 1.6 1999/02/28 14:14:12 art Exp $	*/
 /*	$KTH: common.c,v 1.10 1998/04/04 13:08:31 assar Exp $	*/
 
 /*
@@ -187,6 +187,10 @@ find_cells(char *file, char ***cells, int *index)
     while (fgets(cell, sizeof(cell), f)) {
 	char *nl = strchr(cell, '\n');
 	if (nl) *nl = 0;
+
+	/* skip blank lines */
+	if (!cell[0]) continue;
+
 	for(i = 0; i < ind; i++)
 	    if(strcmp((*cells)[i], cell) == 0)
 		break;
