@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.8 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.9 2004/12/06 02:46:47 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -214,7 +214,8 @@ struct excludes {
 
 char	*splice(char *, char *);
 int  cvs_diffreg(const char *, const char *);
-int  cvs_diff_file  (struct cvs_file *, void *);
+int  cvs_diff_file(struct cvs_file *, void *);
+int  cvs_diff_sendflags(struct cvsroot *, struct diff_arg *);
 static void output(const char *, FILE *, const char *, FILE *);
 static void check(FILE *, FILE *);
 static void range(int, int, char *);
