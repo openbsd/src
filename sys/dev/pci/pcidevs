@@ -1,4 +1,4 @@
-M$OpenBSD: pcidevs,v 1.200 1999/12/06 23:42:34 aaron Exp $
+M$OpenBSD: pcidevs,v 1.201 1999/12/10 01:47:51 jason Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -497,6 +497,7 @@ vendor ESSTECH		0x125d	ESS
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
+vendor DAVICOM		0x1282	Davicom Technologies
 vendor LUXSONOR		0x1287	LuxSonor
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
@@ -840,6 +841,10 @@ product CYRIX GXMISA		0x0002	GXm PCI-ISA
 
 /* D-Link products */
 product DLINK 550TX		0x1002	550TX
+
+/* Davicom Technologies */
+product DAVICOM DM9100		0x9100	DM9100
+product DAVICOM DM9102		0x9102	DM9102
 
 /* DEC products */
 product DEC 21050		0x0001	DECchip 21050 PCI-PCI
