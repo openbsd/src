@@ -43,6 +43,7 @@
 #include <netdb.h>
 #include <errno.h>
 #include <string.h>
+#include <resolv.h>
 
 #ifndef AF_LOCAL
 #define AF_LOCAL AF_UNIX
@@ -58,7 +59,7 @@
     } while(0)
 
 static int netdb_lookup_name(int family, void *addr, int addrlen, char *name,
-	int namelen)
+	int namelen, int flags)
 {
   struct hostent *hostent;
   char *c, *c2;
