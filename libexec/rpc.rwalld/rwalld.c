@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.7 2002/06/28 01:04:15 deraadt Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.8 2002/09/05 00:21:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rwalld.c,v 1.7 2002/06/28 01:04:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwalld.c,v 1.8 2002/09/05 00:21:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,11 +72,14 @@ main(int argc, char *argv[])
 	SVCXPRT *transp;
 
 	if (geteuid() == 0) {
-		struct passwd *pep = getpwnam("nobody");
+		struct passwd *pw = getpwnam("nobody");
 
-		if (pep) {
-			seteuid(pep->pw_uid);
-			setuid(pep->pw_uid);
+		if (pw) {
+			setgroups(1, &pw->pw_gid);
+			setegid(pw->pw_gid);
+			setgid(pw->pw_gid);
+			seteuid(pw->pw_uid);
+			setuid(pw->pw_uid);
 		} else {
 			seteuid(getuid());
 			setuid(getuid());
