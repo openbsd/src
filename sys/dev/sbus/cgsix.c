@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.26 2002/07/30 23:03:30 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.27 2002/08/02 16:13:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -506,7 +506,7 @@ cg6_bt_getcmap(bcm, rcm)
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
 
-	if (index >= 256 || index + count > 256)
+	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
 	for (i = 0; i < count; i++) {
 		if ((error = copyout(&bcm->cm_map[index + i][0],
@@ -530,8 +530,7 @@ cg6_bt_putcmap(bcm, rcm)
 	u_int index = rcm->index, count = rcm->count, i;
 	int error;
 
-	if (index >= 256 || rcm->count > 256 ||
-	    (rcm->index + rcm->count) > 256)
+	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
 	for (i = 0; i < count; i++) {
 		if ((error = copyin(&rcm->red[i],

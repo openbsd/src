@@ -1,4 +1,4 @@
-/* $OpenBSD: bt463.c,v 1.8 2002/04/01 11:26:32 matthieu Exp $ */
+/* $OpenBSD: bt463.c,v 1.9 2002/08/02 16:13:07 millert Exp $ */
 /* $NetBSD: bt463.c,v 1.2 2000/06/13 17:21:06 nathanw Exp $ */
 
 /*-
@@ -365,10 +365,11 @@ bt463_set_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt463data *data = (struct bt463data *)rc;
-	int count, index, s;
+	u_int count, index;
+	int s;
 
-	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > BT463_NCMAP_ENTRIES)
+	if (cmapp->index >= BT463_NCMAP_ENTRIES ||
+	    cmapp->count > BT463_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
@@ -397,10 +398,11 @@ bt463_get_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt463data *data = (struct bt463data *)rc;
-	int error, count, index;
+	u_int count, index;
+	int error;
 
-	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > BT463_NCMAP_ENTRIES)
+	if (cmapp->index >= BT463_NCMAP_ENTRIES ||
+	    cmapp->count > BT463_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
 
 	count = cmapp->count;

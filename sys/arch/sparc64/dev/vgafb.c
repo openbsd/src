@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.24 2002/07/30 17:55:56 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.25 2002/08/02 16:13:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -327,6 +327,9 @@ vgafb_getcmap(sc, cm)
 	u_int count = cm->count;
 	int error;
 
+	if (index >= 256 || count > 256 - index)
+		return (EINVAL);
+
 	error = copyout(&sc->sc_cmap_red[index], cm->red, count);
 	if (error)
 		return (error);
@@ -344,13 +347,12 @@ vgafb_putcmap(sc, cm)
 	struct vgafb_softc *sc;
 	struct wsdisplay_cmap *cm;
 {
-	int index = cm->index;
-	int count = cm->count;
+	u_int index = cm->index;
+	u_int count = cm->count;
 	int i;
 	u_char *r, *g, *b;
 
-	if (cm->index >= 256 || cm->count > 256 ||
-	    (cm->index + cm->count) > 256)
+	if (index >= 256 || count > 256 - index)
 		return (EINVAL);
 	if (!uvm_useracc(cm->red, cm->count, B_READ) ||
 	    !uvm_useracc(cm->green, cm->count, B_READ) ||

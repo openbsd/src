@@ -1,4 +1,4 @@
-/*	$OpenBSD: cg4.c,v 1.11 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: cg4.c,v 1.12 2002/08/02 16:13:07 millert Exp $	*/
 /*	$NetBSD: cg4.c,v 1.11 1996/10/29 19:54:19 gwr Exp $	*/
 
 /*
@@ -403,12 +403,12 @@ cg4getcmap(fb, fbcm)
 {
 	struct cg4_softc *sc = fb->fb_private;
 	struct soft_cmap *cm = &sc->sc_cmap;
-	int error, start, count;
+	u_int start, count;
+	int error;
 
 	start = fbcm->index;
 	count = fbcm->count;
-	if ((start < 0) || (start >= CMAP_SIZE) ||
-	    (count < 0) || (start + count > CMAP_SIZE) )
+	if (start >= CMAP_SIZE || count > CMAP_SIZE - start)
 		return (EINVAL);
 
 	if ((error = copyout(&cm->r[start], fbcm->red, count)) != 0)
@@ -434,12 +434,12 @@ cg4putcmap(fb, fbcm)
 {
 	struct cg4_softc *sc = fb->fb_private;
 	struct soft_cmap *cm = &sc->sc_cmap;
-	int error, start, count;
+	u_int start, count;
+	int error;
 
 	start = fbcm->index;
 	count = fbcm->count;
-	if ((start < 0) || (start >= CMAP_SIZE) ||
-	    (count < 0) || (start + count > CMAP_SIZE) )
+	if (start >= CMAP_SIZE || count > CMAP_SIZE - start)
 		return (EINVAL);
 
 	if ((error = copyin(fbcm->red, &cm->r[start], count)) != 0)

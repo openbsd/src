@@ -1,4 +1,4 @@
-/* $OpenBSD: bt485.c,v 1.10 2002/04/01 11:26:32 matthieu Exp $ */
+/* $OpenBSD: bt485.c,v 1.11 2002/08/02 16:13:07 millert Exp $ */
 /* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
@@ -266,7 +266,8 @@ bt485_set_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt485data *data = (struct bt485data *)rc;
-	int count, index, s;
+	u_int count, index;
+	int s;
 
 #ifdef DIAGNOSTIC
 	if (rc == NULL)
@@ -274,8 +275,7 @@ bt485_set_cmap(rc, cmapp)
 	if (cmapp == NULL)
 		panic("bt485_set_cmap: cmapp");
 #endif
-	if ((u_int)cmapp->index >= 256 ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > 256)
+	if (cmapp->index >= 256 || cmapp->count > 256 - cmapp->index)
 		return (EINVAL);
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
@@ -307,10 +307,10 @@ bt485_get_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt485data *data = (struct bt485data *)rc;
-	int error, count, index;
+	u_int count, index;
+	int error;
 
-	if ((u_int)cmapp->index >= 256 ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > 256)
+	if (cmapp->index >= 256 || cmapp->count > 256 - cmapp->index)
 		return (EINVAL);
 
 	count = cmapp->count;

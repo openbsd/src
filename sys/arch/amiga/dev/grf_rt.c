@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_rt.c,v 1.13 2002/04/29 06:26:50 pvalchev Exp $	*/
+/*	$OpenBSD: grf_rt.c,v 1.14 2002/08/02 16:13:07 millert Exp $	*/
 /*	$NetBSD: grf_rt.c,v 1.35 1997/07/29 17:52:09 veego Exp $	*/
 
 /*
@@ -1158,7 +1158,7 @@ rt_getcmap (gfp, cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	ba = gfp->g_regkva;
@@ -1196,7 +1196,7 @@ rt_putcmap (gfp, cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return 0;
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first copy the colors into kernelspace */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.9 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.10 2002/08/02 16:13:07 millert Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -748,11 +748,11 @@ cg14_get_cmap(p, cm, cmsize)
  
         start = p->index;
         count = p->count;
-        if (start >= cmsize || start + count > cmsize)
+	if (start >= cmsize || count > cmsize - start)
 #ifdef DEBUG
 	{
-		printf("putcmaperror: start %d cmsize %d count %d\n",
-		    start,cmsize,count);
+		printf("putcmaperror: start %u cmsize %d count %u\n",
+		    start, cmsize, count);
 #endif
                 return (EINVAL);
 #ifdef DEBUG
@@ -783,11 +783,11 @@ cg14_put_cmap(p, cm, cmsize)
  
         start = p->index;
         count = p->count;
-        if (start >= cmsize || start + count > cmsize)
+	if (start >= cmsize || count > cmsize - start)
 #ifdef DEBUG
 	{
-		printf("putcmaperror: start %d cmsize %d count %d\n",
-		    start,cmsize,count);
+		printf("putcmaperror: start %u cmsize %d count %u\n",
+		    start, cmsize, count);
 #endif
                 return (EINVAL);
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: view.c,v 1.7 2002/06/11 03:25:43 miod Exp $	*/
+/*	$OpenBSD: view.c,v 1.8 2002/08/02 16:13:07 millert Exp $	*/
 /*	$NetBSD: view.c,v 1.16 1996/10/13 03:07:35 christos Exp $	*/
 
 /*
@@ -348,7 +348,10 @@ view_get_colormap (vu, ucm)
 	u_long *uep;
 
 	/* add one incase of zero, ick. */
-	cme = malloc(sizeof (u_long)*(ucm->size + 1), M_IOCTLOPS, M_WAITOK);
+	if (ucm->size >= SIZE_T_MAX / sizeof(u_long))
+		return (EINVAL);
+	cme = malloc(sizeof(u_long) * ((size_t)ucm->size + 1), M_IOCTLOPS,
+	    M_WAITOK);
 
 	uep = ucm->entry;
 	error = 0;	
