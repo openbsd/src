@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 2000/06/05 11:03:00 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 2000/06/08 10:09:33 art Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -113,7 +113,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	/* cache segtab for ULTBMiss() */
-	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
+	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 
 #ifdef notyet
 	/*
