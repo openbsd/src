@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.38 2003/03/28 03:18:03 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.39 2003/03/28 15:03:41 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -278,7 +278,6 @@ cgsixattach(parent, self, aux)
 	printf("\n");
 
 	cgsix_setcolor(sc, WSCOL_BLACK, 0, 0, 0);
-	cgsix_setcolor(sc, 255, 0, 0, 0);
 	cgsix_setcolor(sc, WSCOL_RED, 255, 0, 0);
 	cgsix_setcolor(sc, WSCOL_GREEN, 0, 255, 0);
 	cgsix_setcolor(sc, WSCOL_BROWN, 154, 85, 46);
@@ -286,6 +285,9 @@ cgsixattach(parent, self, aux)
 	cgsix_setcolor(sc, WSCOL_MAGENTA, 255, 255, 0);
 	cgsix_setcolor(sc, WSCOL_CYAN, 0, 255, 255);
 	cgsix_setcolor(sc, WSCOL_WHITE, 255, 255, 255);
+	/* for cursor inversion */
+	cgsix_setcolor(sc, (~WSCOL_WHITE) & 0xff, 0, 0, 0);
+	cgsix_setcolor(sc, (~WSCOL_BLACK) & 0xff, 255, 255, 255);
 
 	if (console) {
 		if (romgetcursoraddr(&sc->sc_crowp, &sc->sc_ccolp))
