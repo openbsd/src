@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.11 1998/09/10 16:18:37 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.12 2000/04/26 15:47:31 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.11 1998/09/10 16:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.12 2000/04/26 15:47:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ quit()
 	}
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if (mp->m_flag & MBOX)
-			if (send(mp, obuf, saveignore, NULL) < 0) {
+			if (sendmessage(mp, obuf, saveignore, NULL) < 0) {
 				warn(mbox);
 				(void)Fclose(ibuf);
 				(void)Fclose(obuf);
@@ -382,7 +382,7 @@ writeback(res)
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag&MPRESERVE)||(mp->m_flag&MTOUCH)==0) {
 			p++;
-			if (send(mp, obuf, (struct ignoretab *)0, NULL) < 0) {
+			if (sendmessage(mp, obuf, NULL, NULL) < 0) {
 				warn(mailname);
 				(void)Fclose(obuf);
 				return(-1);
@@ -494,7 +494,7 @@ edstop()
 		if ((mp->m_flag & MDELETED) != 0)
 			continue;
 		c++;
-		if (send(mp, obuf, (struct ignoretab *) NULL, NULL) < 0) {
+		if (sendmessage(mp, obuf, NULL, NULL) < 0) {
 			warn(mailname);
 			relsesigs();
 			reset(0);

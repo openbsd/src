@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.17 1998/06/12 18:07:54 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.18 2000/04/26 15:47:30 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.17 1998/06/12 18:07:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.18 2000/04/26 15:47:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -589,7 +589,7 @@ forward(ms, fp, fn, f)
 
 		touch(mp);
 		printf(" %d", *msgvec);
-		if (send(mp, fp, ig, tabst) < 0) {
+		if (sendmessage(mp, fp, ig, tabst) < 0) {
 			warn(fn);
 			return(-1);
 		}

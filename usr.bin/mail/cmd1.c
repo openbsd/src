@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.14 2000/04/25 16:42:22 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.15 2000/04/26 15:47:29 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.14 2000/04/25 16:42:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.15 2000/04/26 15:47:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ type1(msgvec, doign, page)
 		dot = mp;
 		if (value("quiet") == NULL)
 			fprintf(obuf, "Message %d:\n", *ip);
-		(void)send(mp, obuf, doign ? ignore : 0, NULL);
+		(void)sendmessage(mp, obuf, doign ? ignore : 0, NULL);
 	}
 close_pipe:
 	if (obuf != stdout) {

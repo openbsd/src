@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.8 1997/11/14 00:23:43 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.9 2000/04/26 15:47:30 millert Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd2.c,v 1.8 1997/11/14 00:23:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd2.c,v 1.9 2000/04/26 15:47:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ save1(str, mark, cmd, ignore)
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
-		if (send(mp, obuf, ignore, NULL) < 0) {
+		if (sendmessage(mp, obuf, ignore, NULL) < 0) {
 			warn("%s", file);
 			(void)Fclose(obuf);
 			return(1);
