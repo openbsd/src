@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.13 2001/07/08 21:18:08 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.14 2001/11/19 01:08:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: subr.c,v 1.13 2001/07/08 21:18:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.14 2001/11/19 01:08:14 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -63,9 +63,9 @@ void
 gettable(name, buf)
 	char *name, *buf;
 {
-	register struct gettystrs *sp;
-	register struct gettynums *np;
-	register struct gettyflags *fp;
+	struct gettystrs *sp;
+	struct gettynums *np;
+	struct gettyflags *fp;
 	long n;
 	char *dba[2];
 	dba[0] = _PATH_GETTYTAB;
@@ -108,9 +108,9 @@ gettable(name, buf)
 void
 gendefaults()
 {
-	register struct gettystrs *sp;
-	register struct gettynums *np;
-	register struct gettyflags *fp;
+	struct gettystrs *sp;
+	struct gettynums *np;
+	struct gettyflags *fp;
 
 	for (sp = gettystrs; sp->field; sp++)
 		if (sp->value)
@@ -128,9 +128,9 @@ gendefaults()
 void
 setdefaults()
 {
-	register struct gettystrs *sp;
-	register struct gettynums *np;
-	register struct gettyflags *fp;
+	struct gettystrs *sp;
+	struct gettynums *np;
+	struct gettyflags *fp;
 
 	for (sp = gettystrs; sp->field; sp++)
 		if (!sp->value)
@@ -161,8 +161,8 @@ charvars[] = {
 void
 setchars()
 {
-	register int i;
-	register char *p;
+	int i;
+	char *p;
 
 	for (i = 0; charnames[i]; i++) {
 		p = *charnames[i];
@@ -182,7 +182,7 @@ void
 setflags(n)
 	int n;
 {
-	register tcflag_t iflag, oflag, cflag, lflag;
+	tcflag_t iflag, oflag, cflag, lflag;
 
 #ifdef COMPAT_43
 	switch (n) {
@@ -363,9 +363,9 @@ out:
  */
 void
 compatflags(flags)
-register long flags;
+long flags;
 {
-	register tcflag_t iflag, oflag, cflag, lflag;
+	tcflag_t iflag, oflag, cflag, lflag;
 
 	iflag = BRKINT|ICRNL|IMAXBEL|IXON|IXANY;
 	oflag = OPOST|ONLCR|OXTABS;
@@ -544,7 +544,7 @@ struct delayval	tbdelay[] = {
 int
 delaybits()
 {
-	register int f;
+	int f;
 
 	f  = adelay(CD, crdelay);
 	f |= adelay(ND, nldelay);
@@ -556,8 +556,8 @@ delaybits()
 
 int
 adelay(ms, dp)
-	register ms;
-	register struct delayval *dp;
+	ms;
+	struct delayval *dp;
 {
 	if (ms == 0)
 		return (0);
@@ -571,10 +571,10 @@ char	editedhost[48];
 
 void
 edithost(pat)
-	register char *pat;
+	char *pat;
 {
-	register char *host = HN;
-	register char *res = editedhost;
+	char *host = HN;
+	char *res = editedhost;
 
 	if (!pat)
 		pat = "";
@@ -613,8 +613,8 @@ makeenv(env)
 	char *env[];
 {
 	static char termbuf[128] = "TERM=";
-	register char *p, *q;
-	register char **ep;
+	char *p, *q;
+	char **ep;
 
 	ep = env;
 	if (TT && *TT) {
@@ -661,7 +661,7 @@ char *
 portselector()
 {
 	char c, baud[20], *type = "default";
-	register struct portselect *ps;
+	struct portselect *ps;
 	int len;
 
 	alarm(5*60);
