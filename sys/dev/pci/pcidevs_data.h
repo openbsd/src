@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.113 1999/01/08 03:15:54 jason Exp 
+ *	OpenBSD: pcidevs,v 1.114 1999/01/10 22:26:53 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2808,13 +2808,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
 	    0,
 	    "VIA Technologies",
-	    "RHINE",
+	    "Rhine/RhineII",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
 	    0,
 	    "VIA Technologies",
-	    "RHINEII",
+	    "RhineII",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
