@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_sstep.c,v 1.6 2001/03/09 05:44:38 smurph Exp $	*/
+/*	$OpenBSD: db_sstep.c,v 1.7 2001/03/16 00:01:51 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -38,136 +38,141 @@
  *
  */
 
-/* is the instruction a branch or jump instruction (br, bb0, bb1, bcnd, jmp)
-   but not a function call (bsr or jsr) */
+boolean_t inst_delayed __P((unsigned ins));
+db_expr_t getreg_val __P((unsigned regno, db_regs_t *frame));
 
+/*
+ * Returns TRUE is the instruction a branch or jump instruction
+ * (br, bb0, bb1, bcnd, jmp) but not a function call (bsr or jsr)
+ */
 boolean_t
-inst_branch(unsigned ins)
+inst_branch(ins)
+	unsigned ins;
 {
-  /* check high five bits */
- 
-  switch (ins >> (32-5))
-    {
-    case 0x18: /* br */
-    case 0x1a: /* bb0 */
-    case 0x1b: /* bb1 */
-    case 0x1d: /* bcnd */
-      return TRUE;
-      break;
-    case 0x1e: /* could be jmp */
-      if ((ins & 0xfffffbe0U) == 0xf400c000U)
-	return TRUE;
-    }
+	/* check high five bits */
+	switch (ins >> (32 - 5)) {
+	case 0x18: /* br */
+	case 0x1a: /* bb0 */
+	case 0x1b: /* bb1 */
+	case 0x1d: /* bcnd */
+		return TRUE;
+		break;
+	case 0x1e: /* could be jmp */
+		if ((ins & 0xfffffbe0U) == 0xf400c000U)
+		return TRUE;
+	}
 
-  return FALSE;
+	return FALSE;
 }
 
-/* inst_load(ins) - returns the number of words the instruction loads. byte,
-   half and word count as 1; double word as 2 */
-
+/* 
+ * inst_load(ins)
+ * Returns the number of words the instruction loads. byte,
+ * half and word count as 1; double word as 2
+ */
 unsigned
-inst_load(unsigned ins)
+inst_load(ins)
+	unsigned ins;
 {
-  /* look at the top six bits, for starters */
+	/* look at the top six bits, for starters */
+	switch (ins >> (32 - 6)) {
+	case 0x0: /* xmem byte imm */
+	case 0x1: /* xmem word imm */
 
-  switch (ins >> (32-6))
-    {
-    case 0x0: /* xmem byte imm */
-    case 0x1: /* xmem word imm */
+	case 0x2: /* unsigned half-word load imm */
+	case 0x3: /* unsigned byte load imm */
+	case 0x5: /* signed word load imm */
+	case 0x6: /* signed half-word load imm */
+	case 0x7: /* signed byte load imm */
+		return 1;
 
-    case 0x2: /* unsigned half-word load imm */
-    case 0x3: /* unsigned byte load imm */
-    case 0x5: /* signed word load imm */
-    case 0x6: /* signed half-word load imm */
-    case 0x7: /* signed byte load imm */
-      return 1;
+	case 0x4: /* signed double word load imm */
+		return 2;
 
-    case 0x4: /* signed double word load imm */
-      return 2;
+	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
+		if ((ins & 0xf400c0e0U) == 0xf4000000U) /* is load/xmem */
+			switch ((ins & 0x0000fce0) >> 5) { /* look at bits 15-5, but mask bits 8-9 */
+			case 0x0: /* xmem byte */
+			case 0x1: /* xmem word */
+			case 0x2: /* unsigned half word */
+			case 0x3: /* unsigned byte load */
+			case 0x5: /* signed word load */
+			case 0x6: /* signed half-word load */
+			case 0x7: /* signed byte load */
+				return 1;
 
-    case 0x3d: /* load/store/xmem scaled/unscaled instruction */
-      if ((ins & 0xf400c0e0U) == 0xf4000000U) /* is load/xmem */
-	switch ((ins & 0x0000fce0)>>5)  /* look at bits 15-5, but mask bits 8-9 */
-	  {
-	  case 0x0: /* xmem byte */
-	  case 0x1: /* xmem word */
-	  case 0x2: /* unsigned half word */
-	  case 0x3: /* unsigned byte load */
-	  case 0x5: /* signed word load */
-	  case 0x6: /* signed half-word load */
-	  case 0x7: /* signed byte load */
-	    return 1;
+			case 0x4: /* signed double word load */
+				return 2;
+		} /* end switch load/xmem  */
+		break;
+	} /* end switch 32-6 */
 
-	  case 0x4: /* signed double word load */
-	    return 2;
-	  } /* end switch load/xmem  */
-      break;
-    } /* end switch 32-6 */
-
-  return 0;
+	return 0;
 }
 
-/* inst_store - like inst_load, except for store instructions. */
-
+/*
+ * inst_store
+ * Like inst_load, except for store instructions.
+ */
 unsigned
-inst_store(unsigned ins)
+inst_store(ins)
+	unsigned ins;
 {
-  /* decode top 6 bits again */
-  switch (ins >> (32-6))
-    {
-    case 0x0: /* xmem byte imm */
-    case 0x1: /* xmem word imm */
-    case 0x9: /* store word imm */
-    case 0xa: /* store half-word imm */
-    case 0xb: /* store byte imm */
-      return 1;
+	/* decode top 6 bits again */
+	switch (ins >> (32 - 6)) {
+	case 0x0: /* xmem byte imm */
+	case 0x1: /* xmem word imm */
+	case 0x9: /* store word imm */
+	case 0xa: /* store half-word imm */
+	case 0xb: /* store byte imm */
+		return 1;
 
-    case 0x8: /* store double word */
-      return 2;
-    case 0x3d: /* load/store/xmem scaled/unscaled instruction */
-      /* check bits 15,14,12,7,6,5 are all 0 */
-      if ((ins & 0x0000d0e0U) == 0)
-	switch ((ins & 0x00003c00U) >> 10 ) /* decode bits 10-13 */
-	  {
-	  case 0x0: /* xmem byte imm */
-	  case 0x1: /* xmem word imm */
-	  case 0x9: /* store word */
-	  case 0xa: /* store half-word */
-	  case 0xb: /* store byte */
-	    return 1;
+	case 0x8: /* store double word */
+		return 2;
+	case 0x3d: /* load/store/xmem scaled/unscaled instruction */
+		/* check bits 15,14,12,7,6,5 are all 0 */
+		if ((ins & 0x0000d0e0U) == 0)
+			switch ((ins & 0x00003c00U) >> 10) { /* decode bits 10-13 */
+			case 0x0: /* xmem byte imm */
+			case 0x1: /* xmem word imm */
+			case 0x9: /* store word */
+			case 0xa: /* store half-word */
+			case 0xb: /* store byte */
+				return 1;
 
-	  case 0x8: /* store double word */
-	    return 2;
-	  } /* end switch store/xmem */
-      break;
-    } /* end switch 32-6 */
+			case 0x8: /* store double word */
+				return 2;
+			} /* end switch store/xmem */
+		break;
+	} /* end switch 32-6 */
 
-  return 0;
+	return 0;
 }
 
-/* inst_delayed - this instruction is followed by a delay slot. Could be
-   br.n, bsr.n bb0.n, bb1.n, bcnd.n or jmp.n or jsr.n */
-
+/*
+ * inst_delayed
+ * Returns TRUE if this instruction is followed by a delay slot.
+ * Could be br.n, bsr.n bb0.n, bb1.n, bcnd.n or jmp.n or jsr.n
+ */
 boolean_t
-inst_delayed(unsigned ins)
+inst_delayed(ins)
+	unsigned ins;
 {
-  /* check the br, bsr, bb0, bb1, bcnd cases */
-  switch ((ins & 0xfc000000U)>>(32-6))
-    {
-    case 0x31: /* br */
-    case 0x33: /* bsr */
-    case 0x35: /* bb0 */
-    case 0x37: /* bb1 */
-    case 0x3b: /* bcnd */
-      return TRUE;
-    }
+	/* check the br, bsr, bb0, bb1, bcnd cases */
+	switch ((ins & 0xfc000000U) >> (32 - 6)) {
+	case 0x31: /* br */
+	case 0x33: /* bsr */
+	case 0x35: /* bb0 */
+	case 0x37: /* bb1 */
+	case 0x3b: /* bcnd */
+		return TRUE;
+	}
 
- /* check the jmp, jsr cases */
- /* mask out bits 0-4, bit 11 */
-  return ((ins & 0xfffff7e0U) == 0xf400c400U) ? TRUE : FALSE;
+	/* check the jmp, jsr cases */
+	/* mask out bits 0-4, bit 11 */
+	return ((ins & 0xfffff7e0U) == 0xf400c400U) ? TRUE : FALSE;
 }
 
- 
 /*
  * next_instr_address(pc,delay_slot,task) has the following semantics.
  * Let inst be the instruction at pc.
@@ -185,17 +190,18 @@ inst_delayed(unsigned ins)
  *
  */
 db_addr_t
-next_instr_address(db_addr_t pc, unsigned delay_slot)
+next_instr_address(pc, delay_slot)
+	db_addr_t pc;
+	unsigned delay_slot;
 {
-    if (delay_slot == 0)
-	return pc + 4;
-    else
-    {
-	if (inst_delayed(db_get_value(pc,sizeof(int),FALSE)))
-	   return pc + 4;
-	else
-	   return pc;
-    }
+	if (delay_slot == 0)
+		return pc + 4;
+	else {
+		if (inst_delayed(db_get_value(pc, sizeof(int), FALSE)))
+			return pc + 4;
+		else
+			return pc;
+	}
 }
 
 
@@ -217,39 +223,36 @@ branch_taken(inst, pc, func, func_data)
 	db_expr_t (*func) __P((db_regs_t *, int));
 	db_regs_t *func_data;
 {
+	/* check if br/bsr */
+	if ((inst & 0xf0000000U) == 0xc0000000U) {
+		/* signed 26 bit pc relative displacement, shift left two bits */
+		inst = (inst & 0x03ffffffU) << 2;
+		/* check if sign extension is needed */
+		if (inst & 0x08000000U)
+			inst |= 0xf0000000U;
+		return pc + inst;
+	}
 
-  /* check if br/bsr */
-  if ((inst & 0xf0000000U) == 0xc0000000U)
-    {
-      /* signed 26 bit pc relative displacement, shift left two bits */
-      inst = (inst & 0x03ffffffU)<<2;
-      /* check if sign extension is needed */
-      if (inst & 0x08000000U)
-	inst |= 0xf0000000U;
-      return pc + inst;
-    }
+	/* check if bb0/bb1/bcnd case */
+	switch ((inst & 0xf8000000U)) {
+	case 0xd0000000U: /* bb0 */
+	case 0xd8000000U: /* bb1 */
+	case 0xe8000000U: /* bcnd */
+		/* signed 16 bit pc relative displacement, shift left two bits */
+		inst = (inst & 0x0000ffffU) << 2;
+		/* check if sign extension is needed */
+		if (inst & 0x00020000U)
+			inst |= 0xfffc0000U;
+		return pc + inst;
+	}
 
-  /* check if bb0/bb1/bcnd case */
-  switch ((inst & 0xf8000000U))
-    {
-    case 0xd0000000U: /* bb0 */
-    case 0xd8000000U: /* bb1 */
-    case 0xe8000000U: /* bcnd */
-      /* signed 16 bit pc relative displacement, shift left two bits */
-      inst = (inst & 0x0000ffffU)<<2;
-      /* check if sign extension is needed */
-      if (inst & 0x00020000U)
-	inst |= 0xfffc0000U;
-      return pc + inst;
-    }
+	/* check jmp/jsr case */
+	/* check bits 5-31, skipping 10 & 11 */
+	if ((inst & 0xfffff3e0U) == 0xf400c000U)
+		return (*func)(func_data, inst & 0x1f);  /* the register value */
 
-  /* check jmp/jsr case */
-  /* check bits 5-31, skipping 10 & 11 */
-  if ((inst & 0xfffff3e0U) == 0xf400c000U)
-    return (*func)(func_data, inst & 0x1f);  /* the register value */
-
-  panic("branch_taken");
-  return 0; /* keeps compiler happy */
+	panic("branch_taken");
+	return 0; /* keeps compiler happy */
 }
 
 /*
@@ -258,14 +261,16 @@ branch_taken(inst, pc, func, func_data)
  *              frame. Only makes sense for general registers.
  */
 db_expr_t
-getreg_val(unsigned regno, db_regs_t *frame)
+getreg_val(regno, frame)
+	unsigned regno;
+	db_regs_t *frame;
 {
-    if (regno == 0)
-	return 0;
-    else if (regno < 31)
-	return frame->r[regno];
-    else {
-	panic("bad register number to getreg_val.");
-	return 0;/*to make compiler happy */
-    }
+	if (regno == 0)
+		return 0;
+	else if (regno < 31)
+		return frame->r[regno];
+	else {
+		panic("bad register number to getreg_val.");
+		return 0;/*to make compiler happy */
+	}
 }
