@@ -1,4 +1,4 @@
-/*	$OpenBSD: addcom_isa.c,v 1.3 2001/07/20 14:26:28 jason Exp $	*/
+/*	$OpenBSD: addcom_isa.c,v 1.4 2001/07/21 04:24:13 jason Exp $	*/
 /*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
 
 /*
@@ -137,6 +137,10 @@ addcomprobe(parent, self, aux)
 	 * XXX Needs more robustness.
 	 */
 
+	/* Disallow wildcard interrupt. */
+	if (ia->ia_irq == IRQUNK)
+		return (0);
+
 	/* Disallow wildcarded i/o address. */
 	if (ia->ia_iobase == -1 /* ISACF_PORT_DEFAULT */)
 		return (0);
@@ -196,16 +200,22 @@ addcomattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	bus_space_tag_t iot = ia->ia_iot;
-	int i, iobase;
-
-	printf("\n");
+	bus_addr_t iobase;
+	int i;
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, addcomintr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": can't establish interrupt\n");
+		return;
+	}
+
 	if (bus_space_map(iot, STATUS_IOADDR, STATUS_SIZE,
 	    0, &sc->sc_statusioh)) {
-		printf("%s: can't map status space\n", sc->sc_dev.dv_xname);
+		printf(": can't map status space\n");
 		return;
 	}
 
@@ -214,15 +224,15 @@ addcomattach(parent, self, aux)
 		    + slave_iobases[i]
 		    - SLAVE_IOBASE_OFFSET;
 
-
 		if ((!(iobase == comconsaddr && !comconsattached)) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 			&sc->sc_slaveioh[i])) {
-			printf("%s: can't map i/o space for slave %d\n",
-			    sc->sc_dev.dv_xname, i);
+			printf(": can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}
+
+	printf("\n");
 
 	for (i = 0; i < NSLAVES; i++) {
 		ca.ca_slave = i;
@@ -238,8 +248,6 @@ addcomattach(parent, self, aux)
 			sc->sc_alive |= 1 << i;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_TTY, addcomintr, sc, sc->sc_dev.dv_xname);
 }
 
 int
@@ -247,20 +255,18 @@ addcomintr(arg)
 	void *arg;
 {
 	struct addcom_softc *sc = arg;
-	int i, r = 0, n = 1, t;
+	int intrd, r = 0, i;
 
-	while (n) {
-		n = 0;
+	do {
+		intrd = 0;
 		for (i = 0; i < NSLAVES; i++) {
-			if (sc->sc_alive & (1 << i)) {
-				t = comintr(sc->sc_slaves[i]);
-				if (t) {
-					n++;
-					r |= t;
-				}
+			if (sc->sc_alive & (1 << i) &&
+			    comintr(sc->sc_slaves[i])) {
+				r = 1;
+				intrd = 1;
 			}
 		}
-	}
+	} while (intrd);
 
 	return (r);
 }
