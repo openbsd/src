@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rl.4,v 1.23 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: rl.4,v 1.24 2005/01/14 03:16:40 pvalchev Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Cd "rl* at pci?"
 .Cd "rl* at cardbus?"
+.Cd "rlphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -181,6 +182,7 @@ the card should be configured correctly.
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr rlphy 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
