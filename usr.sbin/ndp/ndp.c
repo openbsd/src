@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.19 2002/06/02 01:31:14 deraadt Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.20 2002/06/02 15:23:30 itojun Exp $	*/
 /*	$KAME: ndp.c,v 1.86 2002/05/26 01:16:10 itojun Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ int set(int, char **);
 void get(char *);
 int delete(char *);
 void dump(struct in6_addr *);
-static struct in6_nbrinfo *getnbrinfo(struct in6_addr *addr, int ifindex, int);
+static struct in6_nbrinfo *getnbrinfo(struct in6_addr *, int, int);
 static char *ether_str(struct sockaddr_dl *);
 int ndp_ether_aton(char *, u_char *);
 void usage(void);
@@ -152,8 +152,8 @@ void harmonize_rtr(void);
 static void getdefif(void);
 static void setdefif(char *);
 #endif
-static char *sec2str(time_t t);
-static char *ether_str(struct sockaddr_dl *sdl);
+static char *sec2str(time_t);
+static char *ether_str(struct sockaddr_dl *);
 static void ts_print(const struct timeval *);
 
 #ifdef ICMPV6CTL_ND6_DRLIST
