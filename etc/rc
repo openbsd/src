@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.21 1996/07/25 22:04:46 deraadt Exp $
+#	$OpenBSD: rc,v 1.22 1996/07/27 01:39:04 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -143,7 +143,7 @@ mount -a -t nfs
 
 echo -n 'starting system logger'
 rm -f /dev/log
-syslogd -s		# "-s" is for greater security
+syslogd
 
 # $timed_flags is imported from /etc/netstart;
 # if $timed_flags == NO, timed isn't run.
