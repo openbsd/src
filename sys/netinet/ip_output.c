@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.22 1997/08/26 20:07:38 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.23 1997/09/28 22:57:50 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -263,7 +263,7 @@ ip_output(m0, va_alist)
 			/* Check if the SPI is invalid */
 			if (tdb->tdb_flags & TDBF_INVALID) {
 				log(LOG_ALERT,
-				    "ip_output(): attempt to use invalid SA %08x/%x/%x",
+				    "ip_output(): attempt to use invalid SA %08x/%x/%x\n",
 				    ntohl(tdb->tdb_spi), tdb->tdb_dst,
 				    tdb->tdb_sproto);
 				m_freem(m);
@@ -358,8 +358,7 @@ ip_output(m0, va_alist)
 					exp = get_expiration();
 					if (exp == NULL) {
 expbail:
-						log(LOG_WARNING, "ip_output()"
-						    ": no mem for exp timer");
+						log(LOG_WARNING, "ip_output(): no memory for exp timer\n");
 						m_freem(m);
 						RTFREE(re->re_rt);
 						return ENOBUFS;

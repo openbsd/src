@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.19 1997/09/23 21:42:21 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.20 1997/09/28 22:57:50 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -307,7 +307,7 @@ put_expiration(struct expiration *exp)
     {
 #ifdef ENCDEBUG
 	if (encdebug)
-	  log(LOG_WARNING, "put_expiration(): NULL argument");
+	  log(LOG_WARNING, "put_expiration(): NULL argument\n");
 #endif /* ENCDEBUG */	
 	return;
     }
@@ -510,8 +510,8 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
       if (xsp->xf_type == alg)
 	return (*(xsp->xf_init))(tdbp, xsp, m);
 
-    log(LOG_ERR, "tdb_init(): no alg %d for spi %08x, addr %x, proto %d", alg,
-	ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
+    log(LOG_ERR, "tdb_init(): no alg %d for spi %08x, addr %x, proto %d\n", 
+	alg, ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
     
     return EINVAL;
 }

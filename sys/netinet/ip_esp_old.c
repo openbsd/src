@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.5 1997/08/26 12:02:50 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.6 1997/09/28 22:57:49 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -106,7 +106,7 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     if (em->em_msglen - EMT_SETSPI_FLEN <= ESP_OLD_XENCAP_LEN)
     {
-	log(LOG_WARNING, "esp_old_init(): initialization failed");
+	log(LOG_WARNING, "esp_old_init(): initialization failed\n");
 	return EINVAL;
     }
 
@@ -126,14 +126,14 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
             break;
 
         default:
-            log(LOG_WARNING, "esp_old_init(): unsupported encryption algorithm %d specified", xenc.edx_enc_algorithm);
+            log(LOG_WARNING, "esp_old_init(): unsupported encryption algorithm %d specified\n", xenc.edx_enc_algorithm);
             return EINVAL;
     }
 
     if (xenc.edx_ivlen + xenc.edx_keylen + EMT_SETSPI_FLEN +
 	ESP_OLD_XENCAP_LEN != em->em_msglen)
     {
-	log(LOG_WARNING, "esp_old_init(): message length (%d) doesn't match",
+	log(LOG_WARNING, "esp_old_init(): message length (%d) doesn't match\n",
 	    em->em_msglen);
 	return EINVAL;
     }
@@ -143,14 +143,14 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	case ALG_ENC_DES:
 	    if ((xenc.edx_ivlen != 4) && (xenc.edx_ivlen != 8))
 	    {
-	       	log(LOG_WARNING, "esp_old_init(): unsupported IV length %d",
+	       	log(LOG_WARNING, "esp_old_init(): unsupported IV length %d\n",
 		    xenc.edx_ivlen);
 		return EINVAL;
 	    }
 
 	    if (xenc.edx_keylen != 8)
 	    {
-		log(LOG_WARNING, "esp_old_init(): bad key length",
+		log(LOG_WARNING, "esp_old_init(): bad key length\n",
 		    xenc.edx_keylen);
 		return EINVAL;
 	    }
@@ -160,14 +160,14 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	case ALG_ENC_3DES:
             if ((xenc.edx_ivlen != 4) && (xenc.edx_ivlen != 8))
             {
-                log(LOG_WARNING, "esp_old_init(): unsupported IV length %d",
+                log(LOG_WARNING, "esp_old_init(): unsupported IV length %d\n",
                     xenc.edx_ivlen);
                 return EINVAL;
             }
 
             if (xenc.edx_keylen != 24)
             {
-                log(LOG_WARNING, "esp_old_init(): bad key length",
+                log(LOG_WARNING, "esp_old_init(): bad key length\n",
                     xenc.edx_keylen);
                 return EINVAL;
             }
@@ -264,7 +264,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 
 	default:
             log(LOG_ALERT,
-                "esp_old_input(): unsupported algorithm %d in SA %x/%08x",
+                "esp_old_input(): unsupported algorithm %d in SA %x/%08x\n",
                 xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
@@ -542,7 +542,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
         default:
             log(LOG_ALERT,
-                "esp_old_output(): unsupported algorithm %d in SA %x/%08x",
+                "esp_old_output(): unsupported algorithm %d in SA %x/%08x\n",
                 xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;

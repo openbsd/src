@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.10 1997/07/27 23:30:35 niklas Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.11 1997/09/28 22:57:46 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -109,7 +109,7 @@ esp_input(register struct mbuf *m, int iphlen)
     tdbp = gettdb(spi, ipo->ip_dst, IPPROTO_ESP);
     if (tdbp == NULL)
     {
-	log(LOG_ERR, "esp_input(): could not find SA for ESP packet from %x to %x, spi %08x", ipo->ip_src, ipo->ip_dst, ntohl(spi));
+	log(LOG_ERR, "esp_input(): could not find SA for ESP packet from %x to %x, spi %08x\n", ipo->ip_src, ipo->ip_dst, ntohl(spi));
 	m_freem(m);
 	espstat.esps_notdb++;
 	return;
@@ -117,9 +117,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
-        log(LOG_ALERT,
-            "esp_input(): attempted to use invalid ESP SA %08x, packet %x->%x",
-            ntohl(spi), ipo->ip_src, ipo->ip_dst);
+        log(LOG_ALERT, "esp_input(): attempted to use invalid ESP SA %08x, packet %x->%x\n", ntohl(spi), ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	espstat.esps_invalid++;
 	return;
@@ -127,7 +125,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_xform == NULL)
     {
-        log(LOG_ALERT, "esp_input(): attempted to use uninitialized ESP SA %08x, packet from %x to %x", ntohl(spi), ipo->ip_src, ipo->ip_dst);
+        log(LOG_ALERT, "esp_input(): attempted to use uninitialized ESP SA %08x, packet from %x to %x\n", ntohl(spi), ipo->ip_src, ipo->ip_dst);
 	m_freem(m);
 	espstat.esps_noxform++;
 	return;
@@ -146,7 +144,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	    if (exp == (struct expiration *) NULL)
 	    {
 		log(LOG_WARNING,
-		    "esp_input(): out of memory for expiration timer");
+		    "esp_input(): out of memory for expiration timer\n");
 		espstat.esps_hdrops++;
 		m_freem(m);
 		return;
@@ -167,7 +165,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	    if (exp == (struct expiration *) NULL)
 	    {
 		log(LOG_WARNING,
-		    "esp_input(): out of memory for expiration timer");
+		    "esp_input(): out of memory for expiration timer\n");
 		espstat.esps_hdrops++;
 		m_freem(m);
 		return;
@@ -188,7 +186,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
     if (m == NULL)
     {
-	log(LOG_ALERT, "esp_input(): processing failed for ESP packet from %x to %x, spi %08x", ipn.ip_src, ipn.ip_dst, ntohl(spi));
+	log(LOG_ALERT, "esp_input(): processing failed for ESP packet from %x to %x, spi %08x\n", ipn.ip_src, ipn.ip_dst, ntohl(spi));
 	espstat.esps_badkcr++;
 	return;
     }
@@ -211,7 +209,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	}
 	else				/* So we're paranoid */
 	{
-	    log(LOG_ALERT, "esp_input(): ESP-tunnel used when expecting ESP-transport, SA %08x/%x", tdbp->tdb_spi, tdbp->tdb_dst);
+	    log(LOG_ALERT, "esp_input(): ESP-tunnel used when expecting ESP-transport, SA %08x/%x\n", tdbp->tdb_spi, tdbp->tdb_dst);
 	    m_freem(m);
 	    espstat.esps_hdrops++;
 	    return;
