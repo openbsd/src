@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.383 2003/08/14 19:00:12 jason Exp $ */
+/*	$OpenBSD: pf.c,v 1.384 2003/08/17 15:36:48 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1217,6 +1217,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		h6->ip6_hlim = IPV6_DEFHLIM;
 
 		ip6_output(m, NULL, NULL, 0, NULL, NULL);
+		break;
 #endif /* INET6 */
 	}
 }
@@ -4660,7 +4661,7 @@ pf_route6(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		if (mtag == NULL)
 			goto bad;
 		m_tag_prepend(m0, mtag);
-		ip6_output(m0, NULL, NULL, NULL, NULL, NULL);
+		ip6_output(m0, NULL, NULL, 0, NULL, NULL);
 		return;
 	}
 
