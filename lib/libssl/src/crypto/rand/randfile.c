@@ -219,7 +219,7 @@ err:
 const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s = NULL;
-	char *ret=NULL;
+	int ok = 0;
 	struct stat sb;
 
 	if (issetugid() == 0)
@@ -227,7 +227,7 @@ const char *RAND_file_name(char *buf, size_t size)
 	if (s != NULL && *s && strlen(s) + 1 < size)
 		{
 		strlcpy(buf,s,size);
-		ret=buf;
+		ok = 1;
 		}
 	else
 		{
@@ -246,7 +246,7 @@ const char *RAND_file_name(char *buf, size_t size)
 			strcat(buf,"/");
 #endif
 			strlcat(buf,RFILE,size);
-			ret=buf;
+			ok = 1;
 			}
 		else
 		  	buf[0] = '\0'; /* no file name */
@@ -255,17 +255,21 @@ const char *RAND_file_name(char *buf, size_t size)
 #ifdef DEVRANDOM
 	/* given that all random loads just fail if the file can't be 
 	 * seen on a stat, we stat the file we're returning, if it
-	 * fails, use DEVRANDOM instead. the allows the user to 
+	 * fails, use DEVRANDOM instead. this allows the user to 
 	 * use their own source for good random data, but defaults
 	 * to something hopefully decent if that isn't available. 
 	 */
 
-	if (ret == NULL)
-		ret = DEVRANDOM;
+	if (!ok)
+		if (strlcpy(buf,DEVRANDOM,size) >= size) {
+			return(NULL);
+		}	
+	if (stat(buf,&sb) == -1)
+		if (strlcpy(buf,DEVRANDOM,size) >= size) {
+			return(NULL);
+		}	
 
-	if (stat(ret,&sb) == -1)
-		ret = DEVRANDOM;
 #endif
-	return(ret);
+	return(buf);
 	}
 
