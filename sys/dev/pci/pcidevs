@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.769 2004/09/28 05:43:26 grange Exp $
+$OpenBSD: pcidevs,v 1.770 2004/09/30 07:01:35 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1843,6 +1843,7 @@ product NVIDIA QUADRO4NVS	0x018a	Quadro4 NVS
 product NVIDIA QUADRO4_380XGL	0x018b	Quadro4 380 XGL
 product NVIDIA GEFORCE2_11	0x01a0	GeForce2 Crush11
 product NVIDIA NFORCE_PCHB	0x01a4	nForce PCI Host
+product NVIDIA NFORCE_DDR2	0x01aa	nForce 220 DDR
 product NVIDIA NFORCE_DDR	0x01ab	nForce 420 DDR
 product NVIDIA NFORCE_MEM	0x01ac	nForce 220/420
 product NVIDIA NFORCE_MEM1	0x01ad	nForce 220/420
@@ -1853,6 +1854,7 @@ product NVIDIA NFORCE_AGP	0x01b7	nForce AGP
 product NVIDIA NFORCE_PPB	0x01b8	nForce PCI-PCI
 product NVIDIA NFORCE_IDE	0x01bc	nForce IDE
 product NVIDIA NFORCE_USB	0x01c2	nForce USB
+product NVIDIA NFORCE_MCP	0x01c3	nForce MCP
 product NVIDIA NFORCE2_PCHB	0x01e0	nForce2 PCI
 product NVIDIA NFORCE2_AGP	0x01e8	nForce2 AGP
 product NVIDIA NFORCE2_MEM1	0x01eb	nForce2
