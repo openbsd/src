@@ -552,7 +552,7 @@ emipsel_obsd.c: $(srcdir)/emulparams/mipsel_obsd.sh \
   $(srcdir)/emultempl/elfobsd.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} mipsel_obsd "$(tdir_mipsel_obsd)"
 emipseb_obsd.c: $(srcdir)/emulparams/mipseb_obsd.sh \
-  $(srcdir)/emultempl/elfarc.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
+  $(srcdir)/emultempl/elfobsd.em $(srcdir)/scripttempl/elfmips.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} mipseb_obsd "$(tdir_mipseb_obsd)"
 emipsidt.c: $(srcdir)/emulparams/mipsidt.sh \
   $(srcdir)/emultempl/mipsecoff.em $(srcdir)/scripttempl/mips.sc ${GEN_DEPENDS}
