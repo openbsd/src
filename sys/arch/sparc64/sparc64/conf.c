@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2002/01/17 05:17:10 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2002/01/24 03:38:56 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -74,14 +74,6 @@
 #include "fb.h"
 #endif
 #define NFB 0
-#include "ms.h"
-#if 0
-#include "sunkbd.h"
-#include "sunms.h"
-#else
-#define NSUNKBD 0
-#define NSUNMS 0
-#endif
 #include "zstty.h"
 #include "sab.h"
 #include "pcons.h"
@@ -174,7 +166,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 10: systech multi-terminal board */
 	cdev_notdef(),			/* 11: DES encryption chip */
 	cdev_tty_init(NZSTTY,zs),	/* 12: Zilog 8530 serial port */
-	cdev_mouse_init(NMS+NSUNMS,ms),	/* 13: /dev/mouse */
+	cdev_notdef(),			/* 13: /dev/mouse */
 	cdev_notdef(),			/* 14: cgone */
 	cdev_notdef(),			/* 15: sun /dev/winNNN */
 	cdev_log_init(1,log),		/* 16: /dev/klog */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.5 2002/01/17 05:17:10 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.6 2002/01/24 03:38:56 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -73,7 +73,6 @@
 
 #include <sparc64/dev/cons.h>
 
-#include "ms.h"		/* NMS */
 #include "zs.h" 	/* NZS */
 
 struct cfdriver zs_cd = {

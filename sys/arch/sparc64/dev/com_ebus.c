@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.3 2002/01/23 20:16:05 jason Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.4 2002/01/24 03:38:56 jason Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -50,8 +50,6 @@
 #include <dev/cons.h>
 #include <dev/ic/comvar.h>
 #include <dev/sun/kbd_ms_ttyvar.h>
-
-#include "ms.h"
 
 cdev_decl(com); /* XXX this belongs elsewhere */
 
