@@ -2,6 +2,3 @@
 BISON=yacc
 # and we want our libiberty too
 LIBIBERTY=-liberty
-
-# avoid making /usr/i386-unknown-openbsd2.5
-gcc_tooldir=/tmp
