@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.65 2002/12/30 21:50:28 grange Exp $	*/
+/*	$OpenBSD: cd.c,v 1.66 2003/01/05 22:33:23 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1242,7 +1242,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	lp->d_npartitions = RAW_PART + 1;
 
 	/*
-	 * Read the TOC and loop throught the individual tracks and lay them
+	 * Read the TOC and loop through the individual tracks and lay them
 	 * out in our disklabel.  If there is a data track, call the generic
 	 * disklabel read routine.  XXX should we move all data tracks up front
 	 * before any other tracks?
