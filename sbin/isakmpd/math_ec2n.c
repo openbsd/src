@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_ec2n.c,v 1.3 1998/11/17 11:10:16 niklas Exp $	*/
-/*	$EOM: math_ec2n.c,v 1.4 1998/07/18 21:09:41 provos Exp $	*/
+/*	$OpenBSD: math_ec2n.c,v 1.4 1999/02/26 03:46:40 niklas Exp $	*/
+/*	$EOM: math_ec2n.c,v 1.5 1999/02/25 11:39:13 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #include <sys/param.h>
 #include <stdio.h>
+
+#include "sysdep.h"
 
 #include "math_2n.h"
 #include "math_ec2n.h"
