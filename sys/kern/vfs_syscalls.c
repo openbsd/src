@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.34 1997/12/09 09:34:36 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.35 1997/12/11 03:16:34 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1645,8 +1645,8 @@ sys_chown(p, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		if (suser(p->p_ucred, &p->p_acflag) ||
-		    suid_clear) {
+		if ((SCARG(uap, uid) != -1 || SCARG(uap, gid) != -1) &&
+		    (suser(p->p_ucred, &p->p_acflag) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -1697,8 +1697,8 @@ sys_lchown(p, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		if (suser(p->p_ucred, &p->p_acflag) ||
-		    suid_clear) {
+		if ((SCARG(uap, uid) != -1 || SCARG(uap, gid) != -1) &&
+		    (suser(p->p_ucred, &p->p_acflag) || suid_clear)) {
 			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
 			if (error)
 				goto out;
@@ -1748,8 +1748,8 @@ sys_fchown(p, v, retval)
         if (vp->v_mount->mnt_flag & MNT_RDONLY)
                 error = EROFS;
         else {
-                if (suser(p->p_ucred, &p->p_acflag) ||
-                    suid_clear) {
+		if ((SCARG(uap, uid) != -1 || SCARG(uap, gid) != -1) &&
+		    (suser(p->p_ucred, &p->p_acflag) || suid_clear)) {
                         error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
                         if (error)
                                 goto out;
