@@ -1,5 +1,5 @@
 /*	$NetBSD: create.c,v 1.11 1996/09/05 09:24:19 mycroft Exp $	*/
-/*	$OpenBSD: create.c,v 1.6 1997/04/06 09:15:30 deraadt Exp $	*/
+/*	$OpenBSD: create.c,v 1.7 1997/07/12 23:05:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: create.c,v 1.6 1997/04/06 09:15:30 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: create.c,v 1.7 1997/07/12 23:05:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: create.c,v 1.6 1997/04/06 09:15:30 deraadt Exp 
 #include <unistd.h>
 #include <stdio.h>
 #include <md5.h>
+#include <sha1.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -199,11 +200,19 @@ statf(indent, p)
 		char *md5digest, buf[33];
 
 		md5digest = MD5File(p->fts_accpath,buf);
-		if (!md5digest) {
+		if (!md5digest)
 			err("%s: %s", p->fts_accpath, strerror(errno));
-		} else {
+		else
 			output(indent, &offset, "md5digest=%s", md5digest);
-		}
+	}
+	if (keys & F_SHA1 && S_ISREG(p->fts_statp->st_mode)) {
+		char *sha1digest, buf[41];
+
+		sha1digest = SHA1File(p->fts_accpath,buf);
+		if (!sha1digest)
+			err("%s: %s", p->fts_accpath, strerror(errno));
+		else
+			output(indent, &offset, "sha1digest=%s", sha1digest);
 	}
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))

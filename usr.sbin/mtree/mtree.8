@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.5 1997/01/03 21:40:50 millert Exp $
+.\"	$OpenBSD: mtree.8,v 1.6 1997/07/12 23:05:35 millert Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -150,6 +150,8 @@ The number of hard links the file is expected to have.
 .It Cm optional
 The file is optional; don't complain about the file if it's
 not in the file hierarchy.
+.It Cm sha1digest
+The SHA-1 message digest of the file.
 .It Cm uid
 The file owner as a numeric value.
 .It Cm uname
@@ -244,16 +246,16 @@ To detect system binaries that have been ``trojan horsed'', it is recommended
 that
 .Nm mtree
 .Fl K
-.Cm md5digest
+.Cm sha1digest
 be run on the file systems, and a copy of the results stored on a different
 machine, or, at least, in encrypted form.
 The output file itself should be digested using the
-.Xr md5 1
+.Xr sha1 1
 utility.
 Then, periodically,
 .Nm mtree
 and
-.Xr md5 1
+.Xr sha1 1
 should be run against the on-line specifications.
 While it is possible for the bad guys to change the on-line specifications
 to conform to their modified binaries, it is believed to be
@@ -279,13 +281,14 @@ system specification directory
 .Xr chgrp 1 ,
 .Xr cksum 1 ,
 .Xr md5 1 ,
+.Xr sha1 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
 .Xr md5 3 ,
+.Xr sha1 3 ,
 .Xr chown 8
 .Sh HISTORY
 The
 .Nm mtree
 utility appeared in
 .Bx 4.3 Reno .
-The MD5 digest capability was added in FreeBSD.

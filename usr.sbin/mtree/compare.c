@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.6 1997/01/03 21:40:48 millert Exp $	*/
+/*	$OpenBSD: compare.c,v 1.7 1997/07/12 23:05:34 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: compare.c,v 1.6 1997/01/03 21:40:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: compare.c,v 1.7 1997/07/12 23:05:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ static char rcsid[] = "$OpenBSD: compare.c,v 1.6 1997/01/03 21:40:48 millert Exp
 #include <time.h>
 #include <unistd.h>
 #include <md5.h>
+#include <sha1.h>
 #include "mtree.h"
 #include "extern.h"
 
@@ -228,7 +229,7 @@ typeerr:		LABEL;
 	if (s->flags & F_MD5) {
 		char *new_digest, buf[33];
 
-		new_digest = MD5File(p->fts_accpath,buf);
+		new_digest = MD5File(p->fts_accpath, buf);
 		if (!new_digest) {
 			LABEL;
 			printf("%sMD5File: %s: %s\n", tab, p->fts_accpath,
@@ -241,7 +242,22 @@ typeerr:		LABEL;
 			tab = "\t";
 		}
 	}
+	if (s->flags & F_SHA1) {
+		char *new_digest, buf[41];
 
+		new_digest = SHA1File(p->fts_accpath, buf);
+		if (!new_digest) {
+			LABEL;
+			printf("%sSHA1File: %s: %s\n", tab, p->fts_accpath,
+			       strerror(errno));
+			tab = "\t";
+		} else if (strcmp(new_digest, s->sha1digest)) {
+			LABEL;
+			printf("%sSHA1 (%s, %s)\n", tab, s->sha1digest,
+			       new_digest);
+			tab = "\t";
+		}
+	}
 	if (s->flags & F_SLINK && strcmp(cp = rlink(name), s->slink)) {
 		LABEL;
 		(void)printf("%slink ref (%s, %s)\n", tab, cp, s->slink);
