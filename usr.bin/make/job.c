@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.48 2002/03/02 00:23:13 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.49 2002/03/02 13:42:51 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -765,10 +765,8 @@ JobFinish(job, status)
 		MESSAGE(out, job->node);
 		lastNode = job->node;
 	    }
-	    if (!(job->flags & JOB_REMIGRATE)) {
-		(void)fprintf(out, "*** Stopped -- signal %d\n",
-		    WSTOPSIG(*status));
-	    }
+	    (void)fprintf(out, "*** Stopped -- signal %d\n",
+		WSTOPSIG(*status));
 	    job->flags |= JOB_RESUME;
 	    Lst_AtEnd(&stoppedJobs, job);
 	    (void)fflush(out);
@@ -779,7 +777,7 @@ JobFinish(job, status)
 	     * list to the running one (or re-stop it if concurrency is
 	     * exceeded) and go and get another child.
 	     */
-	    if (job->flags & (JOB_RESUME|JOB_REMIGRATE|JOB_RESTART)) {
+	    if (job->flags & (JOB_RESUME|JOB_RESTART)) {
 		if (usePipes && job->node != lastNode) {
 		    MESSAGE(out, job->node);
 		    lastNode = job->node;
@@ -1241,53 +1239,7 @@ static void
 JobRestart(job)
     Job 	  *job; 	/* Job to restart */
 {
-    if (job->flags & JOB_REMIGRATE) {
-	if (DEBUG(JOB)) {
-	   (void)fprintf(stdout, "*** remigrating %x(%s)\n",
-			   job->pid, job->node->name);
-	   (void)fflush(stdout);
-	}
-
-	    if (nLocal != maxLocal) {
-		/*
-		 * Job cannot be remigrated, but there's room on the local
-		 * machine, so resume the job and note that another
-		 * local job has started.
-		 */
-		if (DEBUG(JOB)) {
-		    (void)fprintf(stdout, "*** resuming on local machine\n");
-		    (void)fflush(stdout);
-		}
-		KILL(job->pid, SIGCONT);
-		nLocal +=1;
-		job->flags &= ~(JOB_REMIGRATE|JOB_RESUME);
-	} else {
-		/*
-		 * Job cannot be restarted. Mark the table as full and
-		 * place the job back on the list of stopped jobs.
-		 */
-		if (DEBUG(JOB)) {
-		   (void)fprintf(stdout, "*** holding\n");
-		   (void)fflush(stdout);
-		}
-		Lst_AtFront(&stoppedJobs, job);
-		jobFull = true;
-		if (DEBUG(JOB)) {
-		   (void)fprintf(stdout, "Job queue is full.\n");
-		   (void)fflush(stdout);
-		}
-		return;
-	    }
-	Lst_AtEnd(&jobs, job);
-	nJobs += 1;
-	if (nJobs == maxJobs) {
-	    jobFull = true;
-	    if (DEBUG(JOB)) {
-		(void)fprintf(stdout, "Job queue is full.\n");
-		(void)fflush(stdout);
-	    }
-	}
-    } else if (job->flags & JOB_RESTART) {
+    if (job->flags & JOB_RESTART) {
 	/*
 	 * Set up the control arguments to the shell. This is based on the
 	 * flags set earlier for this job. If the JOB_IGNERR flag is clear,

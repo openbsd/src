@@ -2,7 +2,7 @@
 #define _JOB_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.h,v 1.11 2002/03/02 00:23:14 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.12 2002/03/02 13:42:51 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -110,7 +110,6 @@ typedef struct Job_ {
 #define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing
 				 * commands */
 #define JOB_FIRST	0x020	/* Job is first job for the node */
-#define JOB_REMIGRATE	0x040	/* Job needs to be remigrated */
 #define JOB_RESTART	0x080	/* Job needs to be completely restarted */
 #define JOB_RESUME	0x100	/* Job needs to be resumed b/c it stopped,
 				 * for some reason */
