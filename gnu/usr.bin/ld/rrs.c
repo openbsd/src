@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrs.c,v 1.4 1999/08/24 19:08:47 niklas Exp $*/
+/*	$OpenBSD: rrs.c,v 1.5 1999/08/25 07:36:28 niklas Exp $*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -164,10 +164,9 @@ dlopen_is_used()
 	 * that is not in the text section, because such an entry is the
 	 * definition.
 	 */
-	if (sym)
-		for (lsp = sym->refs; lsp; lsp = lsp->next)
-			if (!(lsp->nzlist.nlist.n_type & N_TEXT))
-				return 1;
+	for (lsp = sym->refs; lsp; lsp = lsp->next)
+		if (!(lsp->nzlist.nlist.n_type & N_TEXT))
+			return 1;
 	return 0;
 }
 
