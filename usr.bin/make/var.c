@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.12 1999/09/28 21:57:04 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.13 1999/11/06 14:34:42 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.12 1999/09/28 21:57:04 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.13 1999/11/06 14:34:42 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2207,7 +2207,7 @@ Var_Subst (var, str, ctxt, undefErr)
 		int expand;
 		for (;;) {
 		    if (str[1] != '(' && str[1] != '{') {
-			if (str[1] != *var) {
+			if (str[1] != *var || var[1] != '\0') {
 			    Buf_AddBytes(buf, 2, (Byte *) str);
 			    str += 2;
 			    expand = FALSE;
