@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccitt_addr.c,v 1.4 1997/06/24 04:05:37 millert Exp $	*/
+/*	$OpenBSD: ccitt_addr.c,v 1.5 2000/09/24 01:02:23 millert Exp $	*/
 /*	$NetBSD: ccitt_addr.c,v 1.8 1995/04/23 10:33:41 cgd Exp $	*/
 
 /*
@@ -64,9 +64,9 @@ static char *copychar __P((char *, char *));
 int
 ccitt_addr (addr, xp)
 char *addr;
-register struct sockaddr_x25 *xp;
+struct sockaddr_x25 *xp;
 {
-	register char *p, *ap, *limit;
+	char *p, *ap, *limit;
 	int havenet = 0;
 
 	memset(xp, 0, sizeof (*xp));
@@ -158,9 +158,9 @@ register struct sockaddr_x25 *xp;
 
 static char *
 copychar (from, to)
-register char *from, *to;
+char *from, *to;
 {
-	register int n;
+	int n;
 
 	if (*from != '\\' || from[1] < '0' || from[1] > '7') {
 		*to = *from++;
@@ -169,7 +169,7 @@ register char *from, *to;
 	n = *++from - '0';
 	from++;
 	if (*from >= '0' && *from <= '7') {
-		register int n1;
+		int n1;
 
 		n = n*8 + *from++ - '0';
 		if (*from >= '0' && *from <= '7' && (n1 = n*8 + *from-'0') < 256) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.17 2000/07/27 20:12:25 angelos Exp $	*/
+/*	$OpenBSD: show.c,v 1.18 2000/09/24 01:02:24 millert Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.17 2000/07/27 20:12:25 angelos Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.18 2000/09/24 01:02:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ show(argc, argv)
 	int argc;
 	char **argv;
 {
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 	char *buf = NULL, *next, *lim;
 	size_t needed;
 	int mib[6];
@@ -173,9 +173,9 @@ pr_rthdr()
  */
 static void
 p_rtentry(rtm)
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 {
-	register struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
+	struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
 #ifdef notdef
 	static int masks_done, banner_printed;
 #endif
@@ -262,13 +262,13 @@ p_sockaddr(sa, flags, width)
 	int flags, width;
 {
 	char workbuf[128], *cplim;
-	register char *cp = workbuf;
+	char *cp = workbuf;
 
 	switch(sa->sa_family) {
 
 	case AF_LINK:
 	    {
-		register struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
+		struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
 
 		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 		    sdl->sdl_slen == 0)
@@ -276,8 +276,8 @@ p_sockaddr(sa, flags, width)
 		else switch (sdl->sdl_type) {
 		case IFT_ETHER:
 		    {
-			register int i;
-			register u_char *lla = (u_char *)sdl->sdl_data +
+			int i;
+			u_char *lla = (u_char *)sdl->sdl_data +
 			    sdl->sdl_nlen;
 
 			cplim = "";
@@ -297,7 +297,7 @@ p_sockaddr(sa, flags, width)
 
 	case AF_INET:
 	    {
-		register struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 
 		if (sin->sin_addr.s_addr == 0)
 			cp = "default";
@@ -327,7 +327,7 @@ p_sockaddr(sa, flags, width)
 
 	default:
 	    {
-		register u_char *s = (u_char *)sa->sa_data, *slim;
+		u_char *s = (u_char *)sa->sa_data, *slim;
 
 		slim =  sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
@@ -352,11 +352,11 @@ p_sockaddr(sa, flags, width)
 
 static void
 p_flags(f, format)
-	register int f;
+	int f;
 	char *format;
 {
 	char name[33], *flags;
-	register const struct bits *p = bits;
+	const struct bits *p = bits;
 
 	for (flags = name; p->b_mask && flags < &name[sizeof name-2]; p++)
 		if (p->b_mask & f)
