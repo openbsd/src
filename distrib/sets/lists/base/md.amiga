@@ -1698,3 +1698,4 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/rijndael.ph

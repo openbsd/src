@@ -1675,3 +1675,4 @@
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank
+./usr/libdata/perl5/site_perl/m68k-openbsd/crypto/rijndael.ph

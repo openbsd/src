@@ -1697,3 +1697,4 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ubsecreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ubsecvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/crypto/rijndael.ph

@@ -298,6 +298,7 @@
 ./usr/bin/man
 ./usr/bin/merge
 ./usr/bin/mesg
+./usr/bin/mg
 ./usr/bin/midiplay
 ./usr/bin/mixerctl
 ./usr/bin/mkdep
