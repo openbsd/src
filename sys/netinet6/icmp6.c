@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.17 2000/06/13 16:36:11 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.18 2000/06/13 17:32:47 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.113 2000/06/12 09:24:41 itojun Exp $	*/
 
 /*
@@ -1406,7 +1406,7 @@ ni6_dnsmatch(a, alen, b, blen)
 		if (a - a0 + 1 > alen || b - b0 + 1 > blen)
 			return 0;
 
-		if ((int)a[0] < 0 || (int)b[0] < 0)
+		if ((signed char)a[0] < 0 || (signed char)b[0] < 0)
 			return 0;
 		/* we don't support compression yet */
 		if (a[0] >= 64 || b[0] >= 64)
