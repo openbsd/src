@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.7 1997/09/22 05:09:14 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.8 1998/08/25 13:35:17 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.7 1997/09/22 05:09:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.8 1998/08/25 13:35:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -261,6 +261,9 @@ escape(fmt)
 			break;
 		case 'a':		/* bell/alert */
 			*store = '\7';
+			break;
+		case 'e':		/* escape */
+			*store = '\033';
 			break;
 		case 'b':		/* backspace */
 			*store = '\b';
