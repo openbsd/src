@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.14 2004/05/08 20:10:12 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.15 2004/05/14 18:29:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -66,6 +66,8 @@
 #define ICU_OFFSET	0
 #define PIC_OFFSET	16
 
+#define	PIC_SPURIOUS	0xff
+
 unsigned char icu1_val = 0xff;
 unsigned char icu2_val = 0xff;
 unsigned char elcr1_val = 0x00;
@@ -95,7 +97,7 @@ void openpic_enable_irq(int, int);
 void openpic_disable_irq(int);
 void openpic_init(void);
 void openpic_set_priority(int, int);
-static __inline int openpic_read_irq(int);
+static __inline int openpic_iack(int);
 static __inline void openpic_eoi(int);
 void openpic_initirq(int, int, int);
 
@@ -543,11 +545,12 @@ intr_calculatemasks()
 			else
 				i8259_disable_irq(hwirq[irq]);
 		}
-		imen = ~irqs;
 	}
 
 	/* always enable the chained 8259 interrupt */
 	i8259_enable_irq(IRQ_SLAVE, IST_EDGE);
+
+	imen = ~irqs;
 	i8259_set_irq_mask();
 }
 
@@ -572,8 +575,8 @@ mapirq(irq)
 
 	hwirq[v] = irq;
 	virq[irq] = v;
-#if 0
-	printf("\nmapirq %x to %x\n", irq, v);
+#ifdef DEBUG
+	printf("mapirq %x to %x\n", irq, v);
 #endif
 
 	return v;
@@ -605,10 +608,10 @@ openpic_do_pending_int()
 	if (processing)
 		return;
 
-	s = ppc_intr_disable();
 	processing = 1;
-
 	pcpl = splhigh();		/* Turn off all */
+	s = ppc_intr_disable();
+
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	imen &= ~hwpend;
 	openpic_enable_irq_mask(~imen);
@@ -651,8 +654,8 @@ openpic_do_pending_int()
 	i8259_set_irq_mask();
 #endif
 
-	processing = 0;
 	ppc_intr_enable(s);
+	processing = 0;
 }
 
 u_int
@@ -710,7 +713,7 @@ openpic_enable_irq(irq, type)
 		irq -= PIC_OFFSET;
 
 	while ((x = openpic_read(OPENPIC_SRC_VECTOR(irq))) & OPENPIC_ACTIVITY) {
-		x = openpic_read_irq(0);
+		x = openpic_iack(0);
 		openpic_eoi(0);
 	}
 
@@ -765,7 +768,7 @@ i8259_disable_irq(irq)
 {
 #ifdef DIAGNOSTIC
 	/* skip invalid irqs */
-	if (irq < 0 || irq > 15)
+	if (irq < 0 || irq >= PIC_OFFSET)
 		return;
 #endif
 
@@ -785,7 +788,7 @@ i8259_enable_irq(irq, type)
 {
 #ifdef DIAGNOSTIC
 	/* skip invalid irqs */
-	if (irq < 0 || irq > 15)
+	if (irq < 0 || irq >= PIC_OFFSET)
 		return;
 #endif
 
@@ -810,7 +813,7 @@ i8259_eoi(int irq)
 {
 #ifdef DIAGNOSTIC
 	/* skip invalid irqs */
-	if (irq < 0 || irq > 15)
+	if (irq < 0 || irq >= PIC_OFFSET)
 		return;
 #endif
 	if (irq < 8)
@@ -834,7 +837,7 @@ openpic_set_priority(cpu, pri)
 }
 
 int
-openpic_read_irq(cpu)
+openpic_iack(cpu)
 	int cpu;
 {
 	return openpic_read(OPENPIC_IACK(cpu)) & OPENPIC_VECTOR_MASK;
@@ -893,9 +896,13 @@ i8259_intr(void)
 		 */
 		outb(IO_ICU1, 0x0b);
 		if ((inb(IO_ICU1) & 0x80) == 0) {
-			return 0xff;
+#ifdef DIAGNOSTIC
+			printf("spurious interrupt on ICU1\n");
+#endif
+			return PIC_SPURIOUS;
 		}
 	}
+
 	return (ICU_OFFSET + irq);
 }
 
@@ -909,14 +916,19 @@ ext_intr_openpic()
 
 	pcpl = cpl;
 
-	realirq = openpic_read_irq(0);
+	realirq = openpic_iack(0);
 
-	while (realirq != 0xff) {
+	while (realirq != PIC_SPURIOUS) {
 		if (realirq == 0x00) {
+			/*
+			 * Interrupt from the PCI/ISA bridge. PCI interrupts
+			 * are shadowed on the ISA PIC for compatibility with
+			 * MVME1600, so simply handle the ISA PIC.
+			 */
 			realirq = i8259_intr();
 			openpic_eoi(0);
-			if (realirq == 0xff)
-				continue;
+			if (realirq == PIC_SPURIOUS)
+				break;
 		} else {
 			realirq += PIC_OFFSET;
 		}
@@ -941,26 +953,16 @@ ext_intr_openpic()
 		} else {
 			if (realirq >= PIC_OFFSET) {
 				openpic_disable_irq(realirq);
-				openpic_eoi(0);
 			} else {
 				i8259_disable_irq(realirq);
 				i8259_set_irq_mask();
-				i8259_eoi(realirq);
 			}
 
 			ocpl = splraise(intrmask[irq]);
 
 			ih = intrhand[irq];
 			while (ih) {
-#if 0
-				ppc_intr_enable(1);
-#endif
-
 				(*ih->ih_fun)(ih->ih_arg);
-
-#if 0
-				ppc_intr_disable();
-#endif
 				ih = ih->ih_next;
 			}
 
@@ -971,17 +973,18 @@ ext_intr_openpic()
 #if 0
 			evirq[realirq].ev_count++;
 #endif
-			if (realirq >= PIC_OFFSET)
+			if (realirq >= PIC_OFFSET) {
+				openpic_eoi(0);
 				openpic_enable_irq(realirq, intrtype[irq]);
-			else {
+			} else {
+				i8259_eoi(realirq);
 				i8259_enable_irq(realirq, intrtype[irq]);
 				i8259_set_irq_mask();
 			}
 		}
 
-		realirq = openpic_read_irq(0);
+		realirq = openpic_iack(0);
 	}
-
 	ppc_intr_enable(1);
 
 	splx(pcpl);	 /* Process pendings. */
@@ -1042,7 +1045,7 @@ openpic_init()
 
 	/* clear all pending interrunts */	/* < ICU_LEN ? */
 	for (irq = 0; irq < PIC_OFFSET; irq++) {
-		openpic_read_irq(0);
+		openpic_iack(0);
 		openpic_eoi(0);
 	}
 
