@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.144 2004/06/21 18:41:06 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.145 2004/06/23 23:36:01 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2263,9 +2263,9 @@ pf_key_v2_convert_id(u_int8_t * id, int idlen, size_t * reslen, int *idtype)
 		if (inet_ntop(AF_INET, addr, addrbuf, ADDRESS_MAX) == NULL)
 			return 0;
 		snprintf(addrbuf + strlen(addrbuf),
-		    ADDRESS_MAX - strlen(addrbuf),
-		    "/%d", pf_key_v2_mask_to_bits((u_int32_t)
-			* (addr + sizeof(struct in_addr))));
+		    ADDRESS_MAX - strlen(addrbuf), "/%d",
+		    pf_key_v2_mask_to_bits(*(u_int32_t *)(addr +
+			sizeof(struct in_addr))));
 		*reslen = strlen(addrbuf);
 		res = (u_int8_t *) strdup(addrbuf);
 		if (!res)
