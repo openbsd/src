@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.42 2001/04/19 05:10:33 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.43 2001/04/19 05:32:39 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -590,8 +590,7 @@ again:
 		}
 	}
 	if (i == NE2000_NDEVS) {
-		printf(": can't match ethernet vendor code\n",
-		    dsc->sc_dev.dv_xname);
+		printf(": can't match ethernet vendor code\n");
 		goto fail_5;
 	}
 
