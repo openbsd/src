@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.2 2000/01/07 21:50:21 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.3 2000/01/07 21:57:02 angelos Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 /*
- * deencapsulate tunneled packets and send them on
+ * decapsulate tunneled packets and send them on
  * output half is in net/if_gre.[ch]
  * This currently handles IPPROTO_GRE, IPPROTO_MOBILE
  */
@@ -51,25 +51,16 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
-#include <sys/protosw.h>
-#include <sys/errno.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
-#include <net/raw_cb.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/ip_gre.h>
 #include <netinet/if_ether.h>
 #else
