@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.5 1997/06/29 23:40:50 millert Exp $	*/
+/*	$OpenBSD: read.c,v 1.6 1997/08/20 03:30:13 millert Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1997/04/11 17:52:47 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: read.c,v 1.5 1997/06/29 23:40:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.6 1997/08/20 03:30:13 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -164,7 +164,7 @@ read_preread(el)
 	if (chrs > 0) {
 	    buf[chrs] = '\0';
 	    el->el_chared.c_macro.nline = strdup(buf);
-	    el_push(el->el_chared.c_macro.nline);
+	    el_push(el, el->el_chared.c_macro.nline);
 	}
     }
 #endif  /* FIONREAD */
@@ -320,6 +320,9 @@ el_gets(el, nread)
     el_action_t  cmdnum = 0;
     int     num;		/* how many chars we have read at NL */
     char    ch;
+#ifdef FIONREAD
+    c_macro_t *ma = &el->el_chared.c_macro;
+#endif /* FIONREAD */
 
     if (el->el_flags & HANDLE_SIGNALS)
 	sig_set(el);
