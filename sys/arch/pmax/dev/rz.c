@@ -1,4 +1,4 @@
-/*	$OpenBSD: rz.c,v 1.15 1998/10/03 21:18:58 millert Exp $	*/
+/*	$OpenBSD: rz.c,v 1.16 1998/10/04 20:05:51 millert Exp $	*/
 /*	$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ int	rzprobe __P((void /*register struct pmax_scsi_device*/ *sd));
 void	rzgetdefaultlabel __P((struct rz_softc *, struct disklabel *lp));
 void	rzstart __P((int unit));
 void	rzdone __P((int unit, int error, int resid, int status));
-void	rzgetinfo __P((dev_t dev));
+void	rzgetinfo __P((dev_t, struct rz_softc *, struct disklabel *, int));
 int	rzsize __P((dev_t dev));
 
 /* Machinery for format and drive inquiry commands. */
@@ -858,12 +858,13 @@ rzdone(unit, error, resid, status)
  * Read or constuct a disklabel
  */
 void
-rzgetinfo(dev)
+rzgetinfo(dev, sc, lp, spoofonly)
 	dev_t dev;
+	struct rz_softc *sc;
+	struct disklabel *lp;
+	int spoofonly;
 {
 	register int unit = DISKUNIT(dev);
-	register struct rz_softc *sc = &rz_softc[unit];
-	register struct disklabel *lp = sc->sc_label;
 	char *msg;
 	int part;
 	struct cpu_disklabel cd;
@@ -909,9 +910,11 @@ rzgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	if ((msg = readdisklabel(dev, rzstrategy, lp, &cd, 0)) == NULL)
+	msg = readdisklabel(dev, rzstrategy, lp, &cd, spoofonly);
+	if (msg == NULL && spoofonly == 0)
 		return;
-	printf("rz%d: WARNING: %s\n", unit, msg);
+	else if (msg != NULL)
+		printf("rz%d: WARNING: %s\n", unit, msg);
 
 #ifdef	COMPAT_ULTRIX
 	/*
@@ -925,7 +928,6 @@ rzgetinfo(dev)
 		rz_setlabelgeom(lp, &sc->params);
 		return;
 	}
-	printf("rz%d: WARNING: trying Ultrix label, %s\n", unit, msg);
 #endif	/* COMPAT_ULTRIX */
 	/*
 	 * No label found, cons up a fake one based on disk geometry.
@@ -958,7 +960,7 @@ rzopen(dev, flags, mode, p)
 	part = DISKPART(dev);
 	mask = 1 << part;
 	if (!(sc->sc_flags & RZF_HAVELABEL))
-		rzgetinfo(dev);
+		rzgetinfo(dev, sc, sc->sc_dkdev.dk_label, 0);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -1099,6 +1101,10 @@ rzioctl(dev, cmd, data, flag, p)
 		 * operation that completed with "check condition" status.
 		 */
 		bcopy((caddr_t)&sc->sc_sense, data, sizeof(sc->sc_sense));
+		return (0);
+
+	case DIOCGPDINFO:
+		rzgetinfo(dev, sc, (struct disklabel *)data, 1);
 		return (0);
 
 	case DIOCGDINFO:
