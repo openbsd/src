@@ -1,4 +1,4 @@
-#	$OpenBSD: TEST.README,v 1.2 1997/06/18 20:28:47 kstailey Exp $
+#	$OpenBSD: TEST.README,v 1.3 1997/06/18 20:39:49 kstailey Exp $
 
 OS/shell			syntax error	failed
 --------------------------------------------------------------------
@@ -14,6 +14,9 @@ HP-UX 10.10 /usr/bin/test	6		2
 IRIX 5.3 ksh			3		0
 IRIX 5.3 sh			3		0
 IRIX 5.3 /usr/bin/test		11		3
+IRIX 6.2 ksh			3		0
+IRIX 6.2 sh			3		0
+IRIX 6.2 /usr/bin/test		14		3
 SunOS 5.4 ksh			3		0
 SunOS 5.4 sh			3		0
 SunOS 5.4 /usr/ucb/test		3		0
