@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.21 1997/10/22 00:05:07 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.22 1997/10/22 00:14:25 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -276,9 +276,8 @@ memprobe()
 	printf("\n");
 #endif
 	pm->type = BIOS_MAP_END;
-	/* Register in global var */
-	addbootarg(BOOTARG_MEMMAP, (pm - bm + 1) * sizeof(*bm), bm);
 	printf("mem0:");
+	memory_map = bm;
 
 	/* Get total free memory */
 	for(im = bm; im->type != BIOS_MAP_END; im++) {
