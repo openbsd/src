@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.13 1999/06/06 19:15:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.14 1999/06/06 19:21:34 deraadt Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -368,8 +368,8 @@ sys_adjtime(p, v, retval)
 	if (SCARG(uap, olddelta)) {
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
-		if (error = copyout((void *)&atv, (void *)SCARG(uap, olddelta),
-		    sizeof(struct timeval)))
+		if ((error = copyout((void *)&atv, (void *)SCARG(uap, olddelta),
+		    sizeof(struct timeval))))
 			return (error);
 	}
 	return (0);
