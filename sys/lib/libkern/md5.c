@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.5 1997/04/04 16:17:04 mickey Exp $	*/
+/*	$OpenBSD: md5.c,v 1.6 1997/06/06 17:48:48 grr Exp $	*/
 
 /*
  * The rest of the code is derived from MD5C.C by RSADSI. Minor cosmetic
@@ -34,9 +34,6 @@ documentation and/or software.
  * Additions by JI
  * 
  * HAVEMEMCOPY is defined if mem* routines are available
- *
- * HAVEHTON is defined if htons() and htonl() can be used
- * for big/little endian conversions
  *
  */
 
