@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.332 2004/02/28 20:24:14 krw Exp $
+#	$OpenBSD: install.sub,v 1.333 2004/03/09 03:58:34 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -823,16 +823,51 @@ __EOT
 }
 
 # Encode $1 as specified for usercodes and passwords in RFC 1738
-# section 3.1, and now supported by our in-tree ftp:
+# section 3.1 and section 5.
 #
-#    ':' -> '%3a'
-#    '@' -> '%40'
-#    '/' -> '%2f'
+# Escape everything between 0x20 and 0x7e to avoid both illegal url
+# characters and characters causing problems during script processing.
 #
-# *NOTE* quotes around $1 are required to preserve trailing or
-# embeddded blanks in usercodes and passwords!
+# *NOTE*
+#	1) quotes around $1 are required to preserve trailing or
+#	   embeddded blanks in usercodes and passwords.
+#	2) substitute '%' FIRST so it doesn't eliminate '%' chars we insert.
 encode_for_url() {
-	echo "$1" | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
+	echo "$1" | sed -e "
+s/%/%25/g
+s/ /%20/g
+s/!/%21/g
+s/\"/%22/g
+s/#/%23/g
+s/\\\$/%24/g
+s/&/%26/g
+s/'/%27/g
+s/(/%28/g
+s/)/%29/g
+s/\*/%2a/g
+s/+/%2b/g
+s/,/%2c/g
+s/-/%2d/g
+s/\./%2e/g
+s/\//%2f/g
+s/:/%3a/g
+s/;/%3b/g
+s/</%3c/g
+s/=/%3d/g
+s/>/%3e/g
+s/?/%3f/g
+s/@/%40/g
+s/\[/%5b/g
+s/\\\\/%5c/g
+s/]/%5d/g
+s/\^/%5e/g
+s/_/%5f/g
+s/\`/%60/g
+s/{/%7b/g
+s/|/%7c/g
+s/}/%7d/g
+s/~/%7e/g
+"
 }
 
 # Check for the presence of an error message in the output of the ftp commands
