@@ -16,7 +16,7 @@
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- * $Id: sys_pipe.c,v 1.2 1996/09/04 22:23:28 niklas Exp $
+ * $Id: sys_pipe.c,v 1.3 1996/09/05 12:31:14 mickey Exp $
  */
 
 #ifndef OLD_PIPE
@@ -73,7 +73,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #endif
-#include <sys/pipe.h>
 
 #include <vm/vm.h>
 #include <vm/vm_prot.h>
@@ -85,6 +84,8 @@
 #include <vm/pmap.h>
 #include <vm/vm_map.h>
 #include <vm/vm_page.h>
+
+#include <sys/pipe.h>
 
 /*
  * Use this define if you want to disable *fancy* VM things.  Expect an
