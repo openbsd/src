@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.78 2001/07/27 17:26:16 deraadt Exp $");
+RCSID("$OpenBSD: scp.c,v 1.79 2001/08/06 19:47:05 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -85,6 +85,8 @@ RCSID("$OpenBSD: scp.c,v 1.78 2001/07/27 17:26:16 deraadt Exp $");
 
 /* For progressmeter() -- number of seconds before xfer considered "stalled" */
 #define STALLTIME	5
+/* alarm() interval for updating progress meter */
+#define PROGRESSTIME	1
 
 /* Visual statistics about files as they are transferred. */
 void progressmeter(int);
@@ -1025,24 +1027,14 @@ lostconn(signo)
 		exit(1);
 }
 
-
-static void
-alarmtimer(int wait)
-{
-	struct itimerval itv;
-
-	itv.it_value.tv_sec = wait;
-	itv.it_value.tv_usec = 0;
-	itv.it_interval = itv.it_value;
-	setitimer(ITIMER_REAL, &itv, NULL);
-}
-
 static void
 updateprogressmeter(int ignore)
 {
 	int save_errno = errno;
 
 	progressmeter(0);
+	signal(SIGALRM, updateprogressmeter);
+	alarm(PROGRESSTIME);
 	errno = save_errno;
 }
 
@@ -1154,9 +1146,9 @@ progressmeter(int flag)
 
 	if (flag == -1) {
 		signal(SIGALRM, updateprogressmeter);
-		alarmtimer(1);
+		alarm(PROGRESSTIME);
 	} else if (flag == 1) {
-		alarmtimer(0);
+		alarm(0);
 		atomicio(write, fileno(stdout), "\n", 1);
 		statbytes = 0;
 	}
