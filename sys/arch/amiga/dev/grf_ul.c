@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.10 1995/12/27 07:24:27 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.11 1996/01/28 20:06:15 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -471,7 +471,7 @@ grfulmatch(pdp, cfp, auxp)
 #ifdef ULOWELLCONSOLE
 	if (amiga_realconfig == 0 || ulconunit != cfp->cf_unit) {
 #endif
-		if ((unsigned)ulowell_default_mon >= ulowell_mon_max)
+		if ((unsigned)ulowell_default_mon > ulowell_mon_max)
 			ulowell_default_mon = 1;
 
 		current_mon = ul_monitor_defs + ulowell_default_mon - 1;
