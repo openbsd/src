@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.300 2000/08/06 22:30:45 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.301 2000/08/08 17:01:09 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -145,7 +145,7 @@ vendor MITSUBISHI	0x1067	Mitsubishi
 vendor DIVERSIFIED	0x1068	Diversified Technology
 vendor MYLEX		0x1069	Mylex
 vendor ATEN		0x106a	Aten Research
-vendor APPLE		0x106b	Apple Computer
+vendor APPLE		0x106b	Apple
 vendor HYUNDAI		0x106c	Hyundai
 vendor SEQUENT		0x106d	Sequent
 vendor DFI		0x106e	DFI
@@ -505,6 +505,7 @@ vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor RISCOM		0x12aa	RISCom
 vendor ALTEON		0x12ae	Alteon
+vendor USR		0x12b9	US Robotics
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor AUREAL		0x12eb	Aureal
@@ -517,6 +518,7 @@ vendor HIFN		0x13a3	Hi/Fn
 vendor THREEWARE	0x13c1	3ware
 vendor SUNDANCE		0x13f0	Sundance
 vendor CMI		0x13f6	C-Media Electronics Inc.
+vendor LAVA		0x1407	Lava
 vendor INVERTEX		0x14e1	Invertex
 vendor AIRONET		0x14b9	Aironet
 vendor BROADCOM		0x14e4	Broadcom
@@ -705,17 +707,17 @@ product AMD PBC756_PMC		0x740B  756 Power Management
 product AMD PBC756_USB		0x740C  756 USB Host
 
 /* Apple products */
-product APPLE BANDIT		0x0001	PCI
-product APPLE GC		0x0002	PCI
-product APPLE OHARE		0x0007	PCI
-product APPLE HEATHROW		0x0010	MACIO
-product APPLE PADDINGTON	0x0017	MACIO
-product APPLE UNINORTHETH	0x001e	PCI
-product APPLE UNINORTH		0x001f	PCI
+product APPLE BANDIT		0x0001	Bandit
+product APPLE GC		0x0002	GC
+product APPLE OHARE		0x0007	OHare
+product APPLE HEATHROW		0x0010	Heathrow
+product APPLE PADDINGTON	0x0017	Paddington
+product APPLE UNINORTHETH	0x001e	Uni-North Ethernet
+product APPLE UNINORTH		0x001f	Uni-North
 product APPLE USB		0x0019	USB
-product APPLE UNINORTHAGP	0x0020	AGP
+product APPLE UNINORTHAGP	0x0020	Uni-North AGP
 product APPLE GMAC		0x0021	GMAC
-product APPLE KEYLARGO		0x0022	MACIO
+product APPLE KEYLARGO		0x0022	Keylargo
 
 /* ARC Logic products */
 product ARC 1000PV		0xa091	1000PV
@@ -1114,6 +1116,13 @@ product LMC DS3			0x0004	DS3
 product LMC SSI			0x0005	SSI
 product LMC DS1			0x0006	DS1
 
+/* Lava */
+product LAVA PARALLEL		0x8000	Parallel
+product LAVA PARALLEL2		0x8001	Dual Parallel
+product LAVA PARALLEL2A		0x8002	Dual Parallel
+product LAVA PARALLELB		0x8003	Dual Parallel B
+product LAVA SERIAL		0x0100	Dual Serial
+
 /* LeadTek Research */
 product LEADTEK S3_805		0x0000	S3 805
 
@@ -1195,6 +1204,7 @@ product NS NS87410		0xd001	NS87410
 product NEC USB			0x0035	USB
 product NEC POWERVR2		0x0046	PowerVR PCX2
 product NEC MARTH		0x0074	I/O
+product NEC PKUG		0x007d	I/O
 
 /* NeoMagic */
 product NEOMAGIC NM2070		0x0001	Magicgraph NM2070
@@ -1589,6 +1599,9 @@ product UMC UM8891N		0xe891	UM8891N
 
 /* ULSI Systems products */
 product ULSI US201		0x0201	US201
+
+/* US Rebotics */
+product USR 3CP5610		0x1008	3CP5610
 
 /* V3 Semiconductor products */
 product V3 V292PBC		0x0292	V292PBC AMD290x0 Host-PCI
