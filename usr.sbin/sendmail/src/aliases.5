@@ -83,7 +83,6 @@ change to take effect.
 .Sh SEE  ALSO
 .Xr newaliases 1 ,
 .Xr dbopen 3 ,
-.Xr dbm 3 ,
 .Xr sendmail 8
 .Rs
 .%T "SENDMAIL Installation and Operation Guide"
@@ -91,15 +90,6 @@ change to take effect.
 .Rs
 .%T "SENDMAIL An Internetwork Mail Router"
 .Re
-.Sh BUGS
-If you have compiled
-.Xr sendmail
-with DBM support instead of NEWDB,
-you may have encountered problems in
-.Xr dbm 3
-restricting a single alias to about 1000 bytes of information.
-You can get longer aliases by ``chaining''; that is, make the last name in
-the alias be a dummy name which is a continuation alias.
 .Sh HISTORY
 The
 .Nm
