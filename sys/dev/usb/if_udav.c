@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.6 2004/12/26 03:29:26 jsg Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.7 2004/12/26 03:48:19 jsg Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1230,73 +1230,71 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		mii = GET_MII(sc);
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
-        case SIOCSIFADDR:
-                ifp->if_flags |= IFF_UP;
-                udav_init(ifp);
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		udav_init(ifp);
 
-                switch (ifa->ifa_addr->sa_family) {
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-                case AF_INET:
-                        arp_ifinit(&sc->sc_ac, ifa);
-                        break;
+		case AF_INET:
+			arp_ifinit(&sc->sc_ac, ifa);
+			break;
 #endif /* INET */
 #ifdef NS
-                case AF_NS:
-                    {
-                        struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+		case AF_NS:
+		{
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
-                        if (ns_nullhost(*ina))
-                                ina->x_host = *(union ns_host *)
-                                        LLADDR(ifp->if_sadl);
-                        else
-                                memcpy(LLADDR(ifp->if_sadl),
-                                       ina->x_host.c_host,
-                                       ifp->if_addrlen);
-                        break;
-                    }
+			if (ns_nullhost(*ina))
+				ina->x_host = *(union ns_host *)
+				    LLADDR(ifp->if_sadl);
+			else
+				memcpy(LLADDR(ifp->if_sadl),
+				    ina->x_host.c_host, ifp->if_addrlen);
+			break;
+		}
 #endif /* NS */
-                }
-                break;
+		}
+		break;
 
-        case SIOCSIFMTU:
-                if (ifr->ifr_mtu > ETHERMTU)
-                        error = EINVAL;
-                else
-                        ifp->if_mtu = ifr->ifr_mtu;
-                break;
-        case SIOCSIFFLAGS:
-                if (ifp->if_flags & IFF_UP) {
-                        if (ifp->if_flags & IFF_RUNNING &&
-                            ifp->if_flags & IFF_PROMISC) {
-                                UDAV_SETBIT(sc, UDAV_RCR,
-                                            UDAV_RCR_ALL|UDAV_RCR_PRMSC);
-                        } else if (ifp->if_flags & IFF_RUNNING &&
-                                   !(ifp->if_flags & IFF_PROMISC)) {
-                                UDAV_CLRBIT(sc, UDAV_RCR,
-                                            UDAV_RCR_PRMSC);
-                        } else if (!(ifp->if_flags & IFF_RUNNING))
-                                udav_init(ifp);
-                } else {
-                        if (ifp->if_flags & IFF_RUNNING)
-                                udav_stop(ifp, 1);
-                }
-                error = 0;
-                break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+	case SIOCSIFFLAGS:
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC) {
+				UDAV_SETBIT(sc, UDAV_RCR,
+				    UDAV_RCR_ALL|UDAV_RCR_PRMSC);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC)) {
+				UDAV_CLRBIT(sc, UDAV_RCR,
+				    UDAV_RCR_PRMSC);
+			} else if (!(ifp->if_flags & IFF_RUNNING))
+				udav_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+			udav_stop(ifp, 1);
+		}
+		error = 0;
+		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-                error = (cmd == SIOCADDMULTI) ?
-                        ether_addmulti(ifr, &sc->sc_ac) :
-                        ether_delmulti(ifr, &sc->sc_ac);
-                if (error == ENETRESET) {
-                        udav_init(ifp);
-                }
-                udav_setmulti(sc);
-                error = 0;
-                break;
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ac) :
+		    ether_delmulti(ifr, &sc->sc_ac);
+		if (error == ENETRESET)
+			udav_init(ifp);
+		udav_setmulti(sc);
+		error = 0;
+		break;
 	default:
-                error = EINVAL;
-                break;
-        }
+		error = EINVAL;
+		break;
+	}
 
 	splx(s);
 
