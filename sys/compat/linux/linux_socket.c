@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.7 1997/12/10 01:51:23 deraadt Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.8 1997/12/10 12:44:38 provos Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -798,6 +798,12 @@ linux_ioctl_socket(p, uap, retval)
 		break;
 	case LINUX_SIOCGIFNETMASK:
 		SCARG(&ia, com) = OSIOCGIFNETMASK;
+		break;
+	case LINUX_SIOCGIFMETRIC:
+		SCARG(&ia, com) = SIOCGIFMETRIC;
+		break;
+	case LINUX_SIOCGIFMTU:
+		SCARG(&ia, com) = SIOCGIFMTU;
 		break;
 	case LINUX_SIOCADDMULTI:
 		SCARG(&ia, com) = SIOCADDMULTI;
