@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.36 2002/12/29 17:20:17 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.37 2003/01/03 17:44:48 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -119,6 +119,9 @@
 #include "extern.h"
 #include "timestamp.h"
 #include "lst.h"
+#ifdef CLEANUP
+#include <stdlib.h>
+#endif
 
 static struct ohash targets;	/* a hash table of same */
 static struct ohash_info gnode_info = {
@@ -129,6 +132,7 @@ static void TargPrintOnlySrc(GNode *);
 static void TargPrintName(void *);
 static void TargPrintNode(GNode *, int);
 #ifdef CLEANUP
+static LIST allTargets;
 static void TargFreeGN(void *);
 #endif
 
@@ -146,6 +150,9 @@ Targ_Init()
 {
     /* A small make file already creates 200 targets.  */
     ohash_init(&targets, 10, &gnode_info);
+#ifdef CLEANUP
+    Lst_Init(&allTargets);
+#endif
 }
 
 /*-
@@ -161,12 +168,7 @@ Targ_Init()
 void
 Targ_End()
 {
-    unsigned int i;
-    GNode *n;
-
-     for (n = ohash_first(&targets, &i); n != NULL; n = ohash_next(&targets, &i))
-     	TargFreeGN(n);
-
+    Lst_Every(&allTargets, TargFreeGN);
     ohash_delete(&targets);
 }
 #endif
@@ -180,6 +182,8 @@ Targ_End()
  *	An initialized graph node with the name field filled with a copy
  *	of the passed name
  *
+ * Side effect:
+ *	add targets to list of all targets if CLEANUP
  *-----------------------------------------------------------------------
  */
 GNode *
@@ -219,6 +223,9 @@ Targ_NewGNi(name, end)
     STAT_GN_COUNT++;
 #endif
 
+#ifdef CLEANUP
+    Lst_AtEnd(&allTargets, gn);
+#endif
     return gn;
 }
 
