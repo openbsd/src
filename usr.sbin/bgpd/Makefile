@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.9 2004/01/01 23:49:10 henning Exp $
+#	$OpenBSD: Makefile,v 1.10 2004/01/01 23:53:43 henning Exp $
 
-SUBDIR=	bgpd
+SUBDIR=	bgpd bgpdctl
 
 .include <bsd.subdir.mk>
