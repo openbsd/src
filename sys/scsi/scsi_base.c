@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.46 2004/01/02 05:30:32 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.47 2004/01/02 05:46:09 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -723,8 +723,7 @@ scsi_interpret_sense(xs)
 			error = EINVAL;
 			break;
 		case SKEY_UNIT_ATTENTION:
-			if (sense->add_sense_code == 0x29 &&
-			    sense->add_sense_code_qual == 0x00)
+			if (sense->add_sense_code == 0x29)
 				return (ERESTART); /* device or bus reset */
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
