@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.4 2000/10/26 20:50:44 aaron Exp $
+#	$OpenBSD: files.cardbus,v 1.5 2002/06/08 00:10:54 aaron Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -36,6 +36,12 @@ file	dev/cardbus/if_dc_cardbus.c		dc_cardbus
 #
 attach	fxp at cardbus with fxp_cardbus
 file	dev/cardbus/if_fxp_cardbus.c		fxp_cardbus
+
+#
+# RealTek 8139 based CardBus cards
+#
+attach	rl at cardbus with rl_cardbus
+file	dev/cardbus/if_rl_cardbus.c		rl_cardbus
 
 #
 #
