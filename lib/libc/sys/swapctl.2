@@ -1,3 +1,4 @@
+.\"	$OpenBSD: swapctl.2,v 1.13 2003/06/02 09:21:32 jmc Exp $
 .\"	$NetBSD: swapctl.2,v 1.10 1998/08/29 17:11:09 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -209,11 +210,6 @@ points outside the process' allocated address space.
 .Sh SEE ALSO
 .Xr config 8 ,
 .Xr swapctl 8
-.Sh AUTHORS
-The current swap system was designed and implemented by Matthew Green
-<mrg@eterna.com.au>, with help from Paul Kranenburg <pk@NetBSD.ORG>
-and Leo Weppelman <leo@NetBSD.ORG>, and insights from Jason R. Thorpe
-<thorpej@NetBSD.ORG>.
 .Sh HISTORY
 The
 .Fn swapctl
@@ -227,3 +223,12 @@ in
 .Nx 1.4 ,
 when the header file was also moved from
 .Aq Pa vm/vm_swap.h .
+.Sh AUTHORS
+The current swap system was designed and implemented by
+.An Matthew Green Aq mrg@eterna.com.au ,
+with help from Paul Kranenburg
+.Aq pk@NetBSD.ORG
+and Leo Weppelman
+.Aq leo@NetBSD.ORG ,
+and insights from Jason R. Thorpe
+.Aq thorpej@NetBSD.ORG .

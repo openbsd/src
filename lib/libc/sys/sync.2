@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sync.2,v 1.7 2002/01/24 21:18:36 mickey Exp $
+.\"	$OpenBSD: sync.2,v 1.8 2003/06/02 09:21:32 jmc Exp $
 .\"	$NetBSD: sync.2,v 1.4 1995/02/27 12:38:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -64,11 +64,11 @@ may be used to synchronize individual file descriptor attributes.
 .Xr fsync 2 ,
 .Xr sync 8 ,
 .Xr update 8
-.Sh BUGS
-.Fn sync
-may return before the buffers are completely flushed.
 .Sh HISTORY
 A
 .Fn sync
 function call appeared in
 .At v2 .
+.Sh BUGS
+.Fn sync
+may return before the buffers are completely flushed.
