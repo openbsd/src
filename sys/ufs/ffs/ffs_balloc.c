@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_balloc.c,v 1.17 2001/11/13 16:01:10 art Exp $	*/
+/*	$OpenBSD: ffs_balloc.c,v 1.18 2001/11/21 21:23:56 csapuntz Exp $	*/
 /*	$NetBSD: ffs_balloc.c,v 1.3 1996/02/09 22:22:21 christos Exp $	*/
 
 /*
@@ -391,12 +391,11 @@ fail:
 		}
 	}
 	if (deallocated) {
-#ifdef QUOTA
 		/*
 		 * Restore user's disk quota because allocation failed.
 		 */
-		(void)chkdq(ip, (long)-btodb(deallocated), cred, FORCE);
-#endif
+		(void)ufs_quota_free_blocks(ip, btodb(deallocated), cred);
+
 		ip->i_ffs_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}

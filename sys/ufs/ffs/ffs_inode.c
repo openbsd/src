@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.24 2001/11/06 19:53:21 miod Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.25 2001/11/21 21:23:56 csapuntz Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -184,10 +184,10 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (UFS_UPDATE(oip, MNT_WAIT));
 	}
-#ifdef QUOTA
+
 	if ((error = getinoquota(oip)) != 0)
 		return (error);
-#endif
+
 	uvm_vnp_setsize(ovp, length);
 	oip->i_ci.ci_lasta = oip->i_ci.ci_clen 
 	    = oip->i_ci.ci_cstart = oip->i_ci.ci_lastw = 0;
@@ -207,9 +207,8 @@ ffs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 					       curproc)) != 0)
 				return (error);
 		} else {
-#ifdef QUOTA
-			(void) chkdq(oip, -oip->i_ffs_blocks, NOCRED, 0);
-#endif
+			(void)ufs_quota_free_blocks(oip, oip->i_ffs_blocks, 
+			    NOCRED);
 			softdep_setup_freeblocks(oip, length);
 			(void) vinvalbuf(ovp, 0, cred, curproc, 0, 0);
 			oip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -404,9 +403,7 @@ done:
 	if (oip->i_ffs_blocks < 0)			/* sanity */
 		oip->i_ffs_blocks = 0;
 	oip->i_flag |= IN_CHANGE;
-#ifdef QUOTA
-	(void) chkdq(oip, -blocksreleased, NOCRED, 0);
-#endif
+	(void)ufs_quota_free_blocks(oip, blocksreleased, NOCRED);
 	return (allerror);
 }
 

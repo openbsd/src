@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.9 2001/07/16 02:56:48 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.10 2001/11/21 21:23:56 csapuntz Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -67,9 +67,8 @@ ufs_init()
 		return;
 	done = 1;
 	ufs_ihashinit();
-#ifdef QUOTA
-	dqinit();
-#endif
+	ufs_quota_init();
+
 	return;
 }
 #endif
@@ -99,10 +98,9 @@ ufs_inactive(v)
 	if (ip->i_ffs_mode == 0)
 		goto out;
 	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-#ifdef QUOTA
-		if (!getinoquota(ip))
-			(void)chkiq(ip, -1, NOCRED, 0);
-#endif
+		if (getinoquota(ip) != 0)
+			(void)ufs_quota_free_inode(ip, NOCRED);
+
 		(void) UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
@@ -150,16 +148,6 @@ ufs_reclaim(vp, p)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
-#ifdef QUOTA
-	{
-		int i;
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if (ip->i_dquot[i] != NODQUOT) {
-				dqrele(vp, ip->i_dquot[i]);
-				ip->i_dquot[i] = NODQUOT;
-			}
-		}
-	}
-#endif
+	ufs_quota_delete(ip);
 	return (0);
 }

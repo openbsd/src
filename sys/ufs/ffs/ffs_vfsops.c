@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.43 2001/06/23 02:07:55 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.44 2001/11/21 21:23:56 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -887,7 +887,6 @@ ffs_flushfiles(mp, flags, p)
 	int error;
 
 	ump = VFSTOUFS(mp);
-#ifdef QUOTA
 	if (mp->mnt_flag & MNT_QUOTA) {
 		int i;
 		if ((error = vflush(mp, NULLVP, SKIPSYSTEM|flags)) != 0)
@@ -902,7 +901,7 @@ ffs_flushfiles(mp, flags, p)
 		 * that we have gotten rid of all the system vnodes.
 		 */
 	}
-#endif
+
 	/*
 	 * Flush all the files.
 	 */
@@ -1040,9 +1039,7 @@ loop:
 			allerror = error;
 		VOP_UNLOCK(ump->um_devvp, 0, p);
 	}
-#ifdef QUOTA
 	qsync(mp);
-#endif
 	/*
 	 * Write back modified superblock.
 	 */
@@ -1099,14 +1096,6 @@ retry:
 	ip->i_number = ino;
 	ip->i_vtbl = &ffs_vtbl;
 
-#ifdef QUOTA
-	{
-		int i;
-
-		for (i = 0; i < MAXQUOTAS; i++)
-			ip->i_dquot[i] = NODQUOT;
-	}
-#endif
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
 	 * this inode will block if they arrive while we are sleeping waiting
@@ -1114,7 +1103,7 @@ retry:
 	 * disk portion of this inode to be read.
 	 */
 	error = ufs_ihashins(ip);
-
+	
 	if (error) {
 		/*
 		 * VOP_INACTIVE will treat this as a stale file
@@ -1352,4 +1341,3 @@ ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	/* NOTREACHED */
 }
-

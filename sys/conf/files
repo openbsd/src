@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.229 2001/11/02 10:06:13 jjbg Exp $
+#	$OpenBSD: files,v 1.230 2001/11/21 21:23:56 csapuntz Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -772,6 +772,7 @@ file ufs/ufs/ufs_ihash.c		ffs | mfs | ext2fs
 file ufs/ufs/ufs_inode.c		ffs | mfs | ext2fs
 file ufs/ufs/ufs_lookup.c		ffs | mfs | ext2fs
 file ufs/ufs/ufs_quota.c		quota & ( ffs | mfs | ext2fs )
+file ufs/ufs/ufs_quota_stub.c		ffs | mfs
 file ufs/ufs/ufs_vfsops.c		ffs | mfs | ext2fs
 file ufs/ufs/ufs_vnops.c		ffs | mfs | ext2fs
 file ufs/ext2fs/ext2fs_alloc.c		ext2fs
