@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.90 2004/12/08 16:05:37 markus Exp $	 */
+/* $OpenBSD: message.c,v 1.91 2004/12/10 09:00:48 markus Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1459,7 +1459,7 @@ message_recv(struct message *msg)
 	 * Update the isakmp transport, but only in phase 1,
 	 * since phase 2 SAs might use this transport
 	 */
-	if (msg->exchange->phase == 1) {
+	if (msg->isakmp_sa && msg->exchange->phase == 1) {
 		t = msg->isakmp_sa->transport;
 		msg->isakmp_sa->transport = msg->transport;
 		transport_reference(msg->transport);
