@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.42 2001/08/19 14:42:06 espie Exp $
+#	$OpenBSD: files.amiga,v 1.43 2001/08/25 11:37:26 espie Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -365,9 +365,6 @@ file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/vm_machdep.c
 file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
-
-# XXX to be moved to files.m68k after 2.2
-file	arch/m68k/m68k/regdump.c
 
 major	{wd = 0}
 major	{fd = 2}

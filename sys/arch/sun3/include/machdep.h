@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.14 2001/08/20 19:49:03 miod Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.15 2001/08/25 11:37:26 espie Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -122,8 +122,6 @@ void	pmap_get_ksegmap __P((u_char *));
 void	pmap_get_pagemap __P((int *pt, int off));
 
 int	reboot2 __P((int, char *));
-
-void	regdump __P((struct frame *, int));
 
 void	savectx __P((struct pcb *));
 

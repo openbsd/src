@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.14 2001/08/20 19:49:03 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.15 2001/08/25 11:37:26 espie Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
 
 /*
@@ -182,7 +182,6 @@ void	hp300_calibrate_delay __P((void));
 /* machdep.c functions */
 int	badaddr __P((caddr_t));
 int	badbaddr __P((caddr_t));
-void	regdump __P((struct frame *, int));
 void	dumpconf __P((void));
 
 /* pmap.c functions */

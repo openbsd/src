@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2001/08/20 20:24:07 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 2001/08/25 11:37:26 espie Exp $	*/
 /*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
@@ -204,6 +204,11 @@ u_long getsfc __P((void));
 /* copy.s */
 int	fusword __P((caddr_t));
 int	susword __P((caddr_t, u_short));
+
+/* regdump.c */
+struct trapframe;
+void regdump __P((struct trapframe *, int));
+
 
 #endif /* _KERNEL */
 

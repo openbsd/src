@@ -1,4 +1,4 @@
-#       $OpenBSD: files.m68k,v 1.8 1997/07/06 07:46:20 downsj Exp $
+#       $OpenBSD: files.m68k,v 1.9 2001/08/25 11:37:26 espie Exp $
 #       $NetBSD: files.m68k,v 1.18 1997/06/06 23:15:28 veego Exp $
 #
 file	arch/m68k/m68k/db_disasm.c		ddb
@@ -16,5 +16,7 @@ file	arch/m68k/m68k/random.s
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copypage.s
+file	arch/m68k/m68k/regdump.c
+
 
 include "../../../compat/m68k4k/files.m68k4k"
