@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.5 1997/01/15 23:41:20 millert Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.6 1997/06/20 14:07:46 kstailey Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.5 1997/01/15 23:41:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.6 1997/06/20 14:07:46 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,11 +114,8 @@ main(argc, argv)
 			errcause = "mount table full";
 			break;
 		case EINVAL:
-			if (mntflags & MNT_UPDATE)
-				errcause =
+			errcause =
 			    "specified device does not match mounted device";
-			else 
-				errcause = "incorrect super block";
 			break;
 		default:
 			errcause = strerror(errno);
