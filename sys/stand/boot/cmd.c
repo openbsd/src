@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.54 2004/06/24 22:10:18 tom Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.55 2004/06/24 22:32:26 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -258,6 +258,9 @@ readline(char *buf, size_t n, int to)
 	} else
 		while (!cnischar())
 			;
+
+	/* User has typed something.  Turn off timeouts. */
+	cmd.timeout = 0;
 
 	while (1) {
 		switch ((ch = getchar())) {
