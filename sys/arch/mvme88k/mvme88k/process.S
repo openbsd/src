@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.27 2004/01/13 01:02:10 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.28 2004/01/13 14:15:56 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -324,13 +324,13 @@ ASENTRY(__savectx)
 	 * We need to save r1 on the stack because we don't know if we were
 	 * called as savectx or __savectx.
 	 */
-	subu	r31, r31, 36		/* allocate stack for r1 and args */
+	subu	r31, r31, 40		/* allocate stack for r1 and args */
 	st	r1,  r31, 32
 	bsr.n	_C_LABEL(getipl)	/* get the current interrupt mask */
 	 or	r14, r0,  r2
 	st	r2,  r14, PCB_IPL	/* save interrupt mask */
 	ld	r1,  r31, 32		/* recover return address */
-	addu	r31, r31, 36		/* put stack pointer back */
+	addu	r31, r31, 40		/* put stack pointer back */
 
 	/*
 	 * Save FP state.
