@@ -334,6 +334,12 @@ void ssl_hook_NewConnection(conn_rec *conn)
                 ap_ctx_set(ap_global_ctx, "ssl::handshake::timeout", (void *)FALSE);
                 return;
             }
+            else if (   (SSL_get_error(ssl, rc) == SSL_ERROR_WANT_READ  && BIO_should_retry(SSL_get_rbio(ssl)))
+                     || (SSL_get_error(ssl, rc) == SSL_ERROR_WANT_WRITE && BIO_should_retry(SSL_get_wbio(ssl)))) {
+                ssl_log(srvr, SSL_LOG_TRACE, "SSL handshake I/O retry (server %s, client %s)",
+                        cpVHostID, conn->remote_ip != NULL ? conn->remote_ip : "unknown");
+                continue;
+            }
             else {
                 /*
                  * Ok, anything else is a fatal error
@@ -1139,7 +1145,6 @@ int ssl_hook_Auth(request_rec *r)
 {
     SSLSrvConfigRec *sc = mySrvConfig(r->server);
     SSLDirConfigRec *dc = myDirConfig(r);
-    char b1[MAX_STRING_LEN], b2[MAX_STRING_LEN];
     char *clientdn;
     const char *cpAL;
     const char *cpUN;
@@ -1200,12 +1205,11 @@ int ssl_hook_Auth(request_rec *r)
      * adding the string "xxj31ZMTZzkVA" as the password in the user file.
      * This is just the crypted variant of the word "password" ;-)
      */
-    ap_snprintf(b1, sizeof(b1), "%s:password", clientdn);
-    ssl_util_uuencode(b2, b1, FALSE);
-    ap_snprintf(b1, sizeof(b1), "Basic %s", b2);
-    ap_table_set(r->headers_in, "Authorization", b1);
+    cpAL = ap_pstrcat(r->pool, "Basic ", ap_pbase64encode(r->pool,
+        ap_pstrcat(r->pool, clientdn, ":password", NULL)), NULL);
+    ap_table_set(r->headers_in, "Authorization", cpAL);
     ssl_log(r->server, SSL_LOG_INFO,
-            "Faking HTTP Basic Auth header: \"Authorization: %s\"", b1);
+            "Faking HTTP Basic Auth header: \"Authorization: %s\"", cpAL);
 
     return DECLINED;
 }

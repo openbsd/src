@@ -151,50 +151,6 @@ char *ssl_util_vhostid(pool *p, server_rec *s)
     return id;
 }
 
-void ssl_util_strupper(char *s)
-{
-    for (; *s; ++s)
-        *s = toupper(*s);
-    return;
-}
-
-static const char ssl_util_uuencode_six2pr[64+1] =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-void ssl_util_uuencode(char *szTo, const char *szFrom, BOOL bPad)
-{
-    ssl_util_uuencode_binary((unsigned char *)szTo,
-                             (const unsigned char *)szFrom,
-                             strlen(szFrom), bPad);
-}
-
-void ssl_util_uuencode_binary(
-    unsigned char *szTo, const unsigned char *szFrom, int nLength, BOOL bPad)
-{
-    const unsigned char *s;
-    int nPad = 0;
-
-    for (s = szFrom; nLength > 0; s += 3) {
-        *szTo++ = ssl_util_uuencode_six2pr[s[0] >> 2];
-        *szTo++ = ssl_util_uuencode_six2pr[(s[0] << 4 | s[1] >> 4) & 0x3f];
-        if (--nLength == 0) {
-            nPad = 2;
-            break;
-        }
-        *szTo++ = ssl_util_uuencode_six2pr[(s[1] << 2 | s[2] >> 6) & 0x3f];
-        if (--nLength == 0) {
-            nPad = 1;
-            break;
-        }
-        *szTo++ = ssl_util_uuencode_six2pr[s[2] & 0x3f];
-        --nLength;
-    }
-    while(bPad && nPad--)
-        *szTo++ = NUL;
-    *szTo = NUL;
-    return;
-}
-
 FILE *ssl_util_ppopen(server_rec *s, pool *p, char *cmd)
 {
     FILE *fpout;

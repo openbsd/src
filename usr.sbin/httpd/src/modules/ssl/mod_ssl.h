@@ -832,9 +832,6 @@ void         ssl_compat_variables(request_rec *);
 /*  Utility Functions  */
 char        *ssl_util_server_root_relative(pool *, char *, char *);
 char        *ssl_util_vhostid(pool *, server_rec *);
-void         ssl_util_strupper(char *);
-void         ssl_util_uuencode(char *, const char *, BOOL);
-void         ssl_util_uuencode_binary(unsigned char *, const unsigned char *, int, BOOL);
 FILE        *ssl_util_ppopen(server_rec *, pool *, char *);
 int          ssl_util_ppopen_child(void *, child_info *);
 void         ssl_util_ppclose(server_rec *, pool *, FILE *);
