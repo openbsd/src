@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.7 1996/10/27 04:51:37 tholo Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.8 1997/03/29 08:58:03 tholo Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -133,7 +133,9 @@ sys_issetugid(p, v, retval)
 	register_t *retval;
 {
 	if (p->p_flag & P_SUGIDEXEC)
-		return (1);
+		*retval = 1;
+	else
+		*retval = 0;
 	return (0);
 }
 
