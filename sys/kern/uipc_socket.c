@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.17 1997/08/31 20:42:24 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.18 1997/11/11 18:22:49 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -354,8 +354,10 @@ sosend(so, addr, uio, top, control, flags)
 	 * if we over-committed, and we must use a signed comparison
 	 * of space and resid.  On the other hand, a negative resid
 	 * causes us to loop sending 0-length segments to the protocol.
+	 * MSG_EOR on a SOCK_STREAM socket is also invalid.
 	 */
-	if (resid < 0) {
+	if (resid < 0 ||
+	    (so->so_type == SOCK_STREAM && (flags & MSG_EOR))) {
 		error = EINVAL;
 		goto out;
 	}
