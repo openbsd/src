@@ -1,10 +1,8 @@
-/*	$OpenBSD: isp_sbus.c,v 1.12 2000/07/06 05:25:15 mjacob Exp $	*/
-/* release_03_25_99 */
+/*	$OpenBSD: isp_sbus.c,v 1.13 2000/10/16 01:01:57 mjacob Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997 by Matthew Jacob
- * NASA AMES Research Center
+ * Copyright (c) 1997, 2000 by Matthew Jacob
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,10 +11,8 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice immediately at the beginning of the file, without modification,
  *    this list of conditions, and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -47,7 +43,9 @@
 #include <sparc/sparc/cpuvar.h>
 
 #include <dev/ic/isp_openbsd.h>
+#if	defined(ISP_COMPILE_FW) || defined(ISP_COMPILE_1000_FW)
 #include <dev/microcode/isp/asm_sbus.h>
+#endif
 
 static u_int16_t isp_sbus_rd_reg __P((struct ispsoftc *, int));
 static void isp_sbus_wr_reg __P((struct ispsoftc *, int, u_int16_t));
@@ -56,12 +54,10 @@ static int isp_sbus_dmasetup __P((struct ispsoftc *, struct scsi_xfer *,
 	ispreq_t *, u_int16_t *, u_int16_t));
 static void isp_sbus_dmateardown __P((struct ispsoftc *, struct scsi_xfer *,
 	u_int32_t));
+static int isp_sbus_intr __P((void *));
 
 #ifndef	ISP_1000_RISC_CODE
 #define	ISP_1000_RISC_CODE	NULL
-#endif
-#ifndef	ISP_CODE_ORG
-#define	ISP_CODE_ORG	0x1000
 #endif
 
 static struct ispmdvec mdvec = {
@@ -73,8 +69,8 @@ static struct ispmdvec mdvec = {
 	NULL,
 	NULL,
 	NULL,
-	ISP_1000_RISC_CODE, 0, ISP_CODE_ORG, 0,
-	BIU_BURST_ENABLE
+	ISP_1000_RISC_CODE,
+	BIU_BURST_ENABLE|BIU_SBUS_CONF1_FIFO_32
 };
 
 struct isp_sbussoftc {
@@ -142,7 +138,6 @@ isp_sbus_attach(parent, self, aux)
 	struct bootpath *bp;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
 	struct ispsoftc *isp = &sbc->sbus_isp;
-	ISP_LOCKVAL_DECL;
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
@@ -214,24 +209,42 @@ isp_sbus_attach(parent, self, aux)
 	sbc->sbus_poff[DMA_BLOCK >> _BLK_REG_SHFT] = DMA_REGS_OFF;
 
 	/* Establish interrupt channel */
-	sbc->sbus_ih.ih_fun = (void *) isp_intr;
+	sbc->sbus_ih.ih_fun = (void *) isp_sbus_intr;
 	sbc->sbus_ih.ih_arg = sbc;
 	intr_establish(sbc->sbus_pri, &sbc->sbus_ih);
 
+	/*
+	 * Set up logging levels.
+	 */
+#ifdef	ISP_LOGDEFAULT
+	isp->isp_dblev = ISP_LOGDEFAULT;
+#else
+	isp->isp_dblev = ISP_LOGCONFIG|ISP_LOGWARN|ISP_LOGERR;
+#ifdef	SCSIDEBUG
+	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
+#endif
+#ifdef	DEBUG
+	isp->isp_dblev |= ISP_LOGDEBUG0;
+#endif
+#ifdef	DIAGNOSTIC
+	isp->isp_dblev |= ISP_LOGINFO;
+#endif
+#endif
+
+	isp->isp_osinfo.no_mbox_ints = 1;
 	ISP_LOCK(isp);
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
 		ISP_UNLOCK(isp);
 		return;
 	}
+	ENABLE_INTS(isp);
 	isp_init(isp);
 	if (isp->isp_state != ISP_INITSTATE) {
 		isp_uninit(isp);
 		ISP_UNLOCK(isp);
 		return;
 	}
-
-	ENABLE_INTS(isp);
 
 	/*
 	 * do generic attach.
@@ -299,8 +312,8 @@ isp_sbus_mbxdma(isp)
 	 * to be uncached.
 	 */
 
-	len = isp->isp_maxcmds * sizeof (ISP_SCSI_XFER_T);
-	isp->isp_xflist = (ISP_SCSI_XFER_T **) malloc(len, M_DEVBUF, M_WAITOK);
+	len = isp->isp_maxcmds * sizeof (XS_T);
+	isp->isp_xflist = (XS_T **) malloc(len, M_DEVBUF, M_WAITOK);
 	if (isp->isp_xflist == NULL) {
 		printf("%s: cannot malloc xflist array\n", isp->isp_name);
 		return (1);
@@ -317,7 +330,7 @@ isp_sbus_mbxdma(isp)
 	/*
 	 * Allocate and map the request queue.
 	 */
-	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
+	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
 	isp->isp_rquest = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_rquest == 0) {
 		printf("%s: cannot allocate request queue\n", isp->isp_name);
@@ -333,7 +346,7 @@ isp_sbus_mbxdma(isp)
 	/*
 	 * Allocate and map the result queue.
 	 */
-	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
+	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
 	isp->isp_result = (volatile caddr_t)malloc(len, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_result == 0) {
 		printf("%s: cannot allocate result queue\n", isp->isp_name);
@@ -386,7 +399,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 	if (XS_CDBLEN(xs) > 12) {
 		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
-		*iptrp = ISP_NXT_QENTRY(*iptrp, RQUEST_QUEUE_LEN);
+		*iptrp = ISP_NXT_QENTRY(*iptrp, RQUEST_QUEUE_LEN(isp));
 		if (*iptrp == optr) {
 			printf("%s: Request Queue Overflow++\n", isp->isp_name);
 			if (CPU_ISSUN4M) {
@@ -414,7 +427,7 @@ isp_sbus_dmasetup(isp, xs, rq, iptrp, optr)
 		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;  
 		crq->req_dataseg[0].ds_count = xs->datalen;
 		crq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
-		ISP_SWIZZLE_CONTINUATION(isp, crq);
+                ISP_SBUSIFY_ISPHDR(isp, &crq->req_header)
 	} else {
 		rq->req_dataseg[0].ds_count = xs->datalen;
 		rq->req_dataseg[0].ds_base =  (u_int32_t) kdvma;
@@ -447,4 +460,22 @@ isp_sbus_dmateardown(isp, xs, handle)
 	if (CPU_ISSUN4M) {
 		dvma_mapout(kdvma, (vaddr_t) xs->data, xs->datalen);
 	}
+}
+
+static int
+isp_sbus_intr(arg)
+	void *arg;
+{
+	int r;
+	struct ispsoftc *isp = (struct ispsoftc *)arg;
+#if	0
+	struct iss_sbussoftc *s = (struct isp_sbussoftc *)isp;
+
+	bus_dmamap_sync(p->pci_dmat, p->pci_result_dmap, BUS_DMASYNC_POSTREAD);
+#endif
+
+	isp->isp_osinfo.onintstack = 1;
+	r = isp_intr(arg);
+	isp->isp_osinfo.onintstack = 0;
+	return (r);
 }
