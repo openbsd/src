@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.1 2000/04/27 02:26:26 bjc Exp $ */
+/*	$OpenBSD: srt0.s,v 1.2 2000/10/04 04:09:01 bjc Exp $ */
 /*	$NetBSD: srt0.s,v 1.2 1999/05/23 21:58:19 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -48,14 +48,11 @@ _start:	.globl	_start
 	nop;nop;		# If we get called by calls, or something
 
 	movl	r8, _memsz	# If we come from disk, save memsize
-	cmpl	ap, $-1		# Check if we are net-booted. XXX - kludge
-	beql	2f		# jump if not
 	ashl	$9,76(r11),_memsz # got memsize from rpb
-	movzbl	102(r11), r10	# Get bootdev from rpb.
-	movzwl	48(r11), r11	# Get howto
+	movzwl	48(r11), r10	# Get howto
 
 2:	movl	$_start, sp	# Probably safe place for stack
-	subl2	$52, sp		# do not overwrite saved boot-registers
+	pushr	$0x1fff
 
 	subl3	$_start, $_edata, r0
 	movab	_start, r1
@@ -68,8 +65,7 @@ _start:	.globl	_start
 1:	movl    $relocated, (sp)   # return-address on top of stack
 	rsb                        # can be replaced with new address
 relocated:	                   # now relocation is done !!!
-	movl	r10,_bootdev	# Save bootdev early
-	movl	r11,_howto	# howto also...
+	movl	r10,_howto	# howto also...
 	movl	sp, _bootregs
 	calls	$0, _Xmain	# Were here!
 	halt			# no return

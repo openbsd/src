@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.2 2000/05/01 00:12:00 bjc Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.3 2000/10/04 04:09:00 bjc Exp $ */
 /*	$NetBSD: autoconf.c,v 1.5 1999/08/23 19:09:27 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -85,6 +85,7 @@ static int uda670[]={0x20004030,0x20004230};
 autoconf()
 {
 	extern int memsz;
+	int copyrpb = 1;
 
 	findcpu(); /* Configures CPU variables */
 	consinit(); /* Allow us to print out things */
@@ -135,6 +136,7 @@ autoconf()
 		break;
 
 	case VAX_BTYP_8000:
+		copyrpb = 0;
 		memsz = 0;
 		nbi = 1;
 		biaddr = bi8200;

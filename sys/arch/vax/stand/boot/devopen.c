@@ -1,4 +1,4 @@
-/*  $OpenBSD: devopen.c,v 1.1 2000/04/27 02:26:25 bjc Exp $ */
+/*  $OpenBSD: devopen.c,v 1.2 2000/10/04 04:09:01 bjc Exp $ */
 /*	$NetBSD: devopen.c,v 1.2 1999/06/30 18:30:42 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
@@ -35,8 +35,10 @@
 
 #include "lib/libsa/stand.h"
 #include "vaxstand.h"
+#include "rpb.h"
 
 unsigned int opendev;
+extern struct rpb *rpb;
 
 int
 devopen(f, fname, file)
@@ -49,11 +51,9 @@ devopen(f, fname, file)
 	extern int cnvtab[];
 	char *s, *c, *u;
 
-	dev   = B_TYPE(bootdev);
-	ctlr  = B_CONTROLLER(bootdev);
-	unit  = B_UNIT(bootdev);
-	part  = B_PARTITION(bootdev);
-	adapt = B_ADAPTOR(bootdev);
+	dev		= rpb->devtyp;
+	unit	= rpb->unit;
+	adapt = ctlr = part = 0;
 
 	for (i = 0, dp = 0; i < ndevs; i++)
 		if (cnvtab[i] == dev)
@@ -99,6 +99,8 @@ devopen(f, fname, file)
 		if (x > 3)
 			adapt = a[0];
 		*file = c;
+
+		x = 1;
 	} else {
 		*file = (char *)fname;
 		c = (char *)fname;
@@ -108,12 +110,16 @@ devopen(f, fname, file)
 		return(ENODEV);
 	f->f_dev = dp;
 
-	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
-
 	if (dev > 95) { /* MOP boot over network, root & swap over NFS */
 		i = (*dp->dv_open)(f, dp->dv_name);
 	} else
 		i = (*dp->dv_open)(f, adapt, ctlr, unit, part);
+
+	if(x == 0) {
+		dev = rpb->devtyp;		/* dv_open may have modified rpb */
+		unit = rpb->unit;	
+	}
+	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
 
 	return i;
 

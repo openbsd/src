@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2000/06/01 00:03:17 bjc Exp $ */
+/*	$OpenBSD: boot.c,v 1.4 2000/10/04 04:09:01 bjc Exp $ */
 /*	$NetBSD: boot.c,v 1.4 1999/10/23 14:42:22 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -37,6 +37,7 @@
 
 #include "sys/param.h"
 #include "sys/reboot.h"
+#include "rpb.h"
 #include "lib/libsa/stand.h"
 
 #define V750UCODE(x)    ((x>>8)&255)
@@ -53,6 +54,7 @@ char line[100];
 int	devtype, bootdev, howto, debug;
 extern	unsigned opendev;
 extern  unsigned *bootregs;
+struct	rpb *rpb;
 
 void	usage(), boot(), halt();
 
@@ -83,6 +85,12 @@ Xmain()
 	int io, type, askname, filindex = 0;
 	int j, nu;
 
+	/* make sure the rpb is out of the way so it does not get trampled;
+	 * this will be the case if booting from net
+	 */
+
+	rpb = (struct rpb *)bootregs[11];
+	bootdev = rpb->devtyp;
 	io=0;
 	skip = 1;
 	autoconf();
@@ -122,8 +130,10 @@ Xmain()
 				printf("> boot %s\n", filer[filindex]);
 				exec(filer[filindex++], 0, 0);
 				printf("boot failed: %s\n", strerror(errno));
+#if 0
 				if (testkey())
 					break;
+#endif
 			}
 	}
 
