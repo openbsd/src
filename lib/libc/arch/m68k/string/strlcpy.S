@@ -29,13 +29,12 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: strlcpy.S,v 1.2 1999/04/30 22:07:13 millert Exp $"
+	.asciz "$OpenBSD: strlcpy.S,v 1.3 1999/04/30 22:18:22 millert Exp $"
 #endif /* LIBC_SCCS */
 
 ENTRY(strlcpy)
 	movl	sp@(4),a1		| a1 = dst
 	movl	sp@(8),a0		| a0 = src
-	movl	a0,a2			| a2 = orig_src
 	movl	sp@(12),d1		| d1 = orig_count
 	movl	d1,d0			| d0 = count
 	beq	slcloop			| don't let count wrap...
@@ -56,5 +55,5 @@ slcnul:
 	clrb	a1@			| clear last byte
 slcdone:
 	movl	a0,d0
-	subl	a2,d0			| return value
+	subl	sp@(8),d0		| return value
 	rts
