@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_encap.h,v 1.8 2000/12/12 01:46:17 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.h,v 1.9 2001/06/29 19:08:11 ho Exp $	*/
 /*	$EOM: pf_encap.h,v 1.13 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -61,8 +61,8 @@ extern int pf_encap_delete_spi (struct sa *, struct proto *, int);
 extern int pf_encap_enable_sa (struct sa *, struct sa *);
 extern int pf_encap_enable_spi (in_addr_t, in_addr_t, in_addr_t, in_addr_t,
 				u_int8_t *, u_int8_t, in_addr_t);
-extern u_int8_t *pf_encap_get_spi (size_t *, u_int8_t, struct sockaddr *, int,
-				   struct sockaddr *, int);
+extern u_int8_t *pf_encap_get_spi (size_t *, u_int8_t, struct sockaddr *,
+				   struct sockaddr *);
 extern int pf_encap_group_spis (struct sa *, struct proto *, struct proto *,
 				int);
 extern void pf_encap_handler (int);

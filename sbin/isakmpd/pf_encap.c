@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_encap.c,v 1.23 2001/06/29 04:12:00 ho Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.24 2001/06/29 19:08:11 ho Exp $	*/
 /*	$EOM: pf_encap.c,v 1.73 2000/12/04 04:46:34 angelos Exp $	*/
 
 /*
@@ -391,8 +391,8 @@ pf_encap_read ()
  * SRC, SRCLEN, DST & DSTLEN.  Stash the SPI size in SZ.
  */
 u_int8_t *
-pf_encap_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src, int srclen,
-		  struct sockaddr *dst, int dstlen)
+pf_encap_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
+		  struct sockaddr *dst)
 {
   struct encap_msghdr *emsg = 0;
   u_int8_t *spi = 0;
@@ -442,7 +442,6 @@ pf_encap_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
 {
   struct encap_msghdr *emsg = 0;
   struct sockaddr *dst;
-  int dstlen;
 
   emsg = calloc (1, EMT_GRPSPIS_FLEN);
   if (!emsg)
@@ -455,9 +454,9 @@ pf_encap_group_spis (struct sa *sa, struct proto *proto1, struct proto *proto2,
   memcpy (&emsg->em_rel_spi2, proto2->spi[incoming],
 	  sizeof emsg->em_rel_spi2);
   if (incoming)
-    sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
+    sa->transport->vtbl->get_src (sa->transport, &dst);
   else
-    sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+    sa->transport->vtbl->get_dst (sa->transport, &dst);
   emsg->em_rel_dst = emsg->em_rel_dst2 = ((struct sockaddr_in *)dst)->sin_addr;
   /* XXX What if IPCOMP etc. comes along?  */
   emsg->em_rel_sproto
@@ -490,7 +489,7 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int incoming)
   struct encap_msghdr *emsg = 0;
   struct ipsec_proto *iproto = proto->data;
   struct sockaddr *dst, *src;
-  int dstlen, srclen, keylen, hashlen;
+  int keylen, hashlen;
   size_t len;
   struct esp_new_xencap *edx;
   struct ah_new_xencap *amx;
@@ -614,8 +613,8 @@ pf_encap_set_spi (struct sa *sa, struct proto *proto, int incoming)
   /* Fill in a well-defined value in this reserved field.  */
   emsg->em_satype = 0;
 
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-  sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
+  sa->transport->vtbl->get_src (sa->transport, &src);
   emsg->em_dst
     = ((struct sockaddr_in *)(incoming ? src : dst))->sin_addr;
   emsg->em_src
@@ -674,7 +673,6 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 {
   struct encap_msghdr *emsg = 0;
   struct sockaddr *dst;
-  int dstlen;
 
   emsg = calloc (1, EMT_DELSPI_FLEN);
   if (!emsg)
@@ -685,9 +683,9 @@ pf_encap_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 
   memcpy (&emsg->em_gen_spi, proto->spi[incoming], sizeof emsg->em_gen_spi);
   if (incoming)
-    sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
+    sa->transport->vtbl->get_src (sa->transport, &dst);
   else
-    sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+    sa->transport->vtbl->get_dst (sa->transport, &dst);
   emsg->em_gen_dst = ((struct sockaddr_in *)dst)->sin_addr;
   /* XXX What if IPCOMP etc. comes along?  */
   emsg->em_gen_sproto
@@ -713,10 +711,9 @@ pf_encap_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 {
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst;
-  int dstlen;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
 
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
 
   return pf_encap_enable_spi (isa->src_net, isa->src_mask, isa->dst_net,
 			      isa->dst_mask, proto->spi[0], proto->proto,

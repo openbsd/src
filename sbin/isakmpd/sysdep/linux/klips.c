@@ -1,4 +1,4 @@
-/*	$OpenBSD: klips.c,v 1.7 2001/06/29 18:45:29 ho Exp $	*/
+/*	$OpenBSD: klips.c,v 1.8 2001/06/29 19:08:12 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -135,8 +135,8 @@ klips_write (struct encap_msghdr *em)
  * SRC, SRCLEN, DST & DSTLEN.  Stash the SPI size in SZ.
  */
 u_int8_t *
-klips_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src, int srclen,
-	       struct sockaddr *dst, int dstlen, u_int32_t seq)
+klips_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
+	       struct sockaddr *dst, u_int32_t seq)
 {
   u_int8_t *spi;
   u_int32_t spinum;

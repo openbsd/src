@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.49 2001/06/29 18:52:17 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.50 2001/06/29 19:08:11 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1486,8 +1486,7 @@ ipsec_get_spi (size_t *sz, u_int8_t proto, struct message *msg)
       transport->vtbl->get_src (transport, &dst);
       /* The peer is the source.  */
       transport->vtbl->get_dst (transport, &src);
-      return sysdep_ipsec_get_spi (sz, proto, src, src->sa_len, dst, 
-				   dst->sa_len, msg->exchange->seq);
+      return sysdep_ipsec_get_spi (sz, proto, src, dst, msg->exchange->seq);
     }
 }
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.71 2001/06/29 18:52:17 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.72 2001/06/29 19:08:11 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ pf_key_v2_open ()
  */
 u_int8_t *
 pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
-		   int srclen, struct sockaddr *dst, int dstlen, u_int32_t seq)
+		   struct sockaddr *dst, u_int32_t seq)
 {
   struct sadb_msg msg;
   struct sadb_sa *sa;
