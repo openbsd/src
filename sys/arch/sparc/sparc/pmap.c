@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.59 2000/01/14 22:18:28 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.60 2000/01/17 21:06:44 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6401,10 +6401,13 @@ void
 pmap_zero_page4m(pa)
 	paddr_t pa;
 {
-	caddr_t va;
 	int pte;
-	int ctx;
 	struct pvlist *pv;
+	static int *ptep;
+	static vaddr_t va;
+
+	if (ptep == NULL)
+		ptep = getptep4m(pmap_kernel(), (va = (vaddr_t)vpage[0]));
 
 	pv = pvhead(atop(pa));
 	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && pv &&
@@ -6424,14 +6427,11 @@ pmap_zero_page4m(pa)
 	else
 		pte &= ~SRMMU_PG_C;
 
-	/* XXX - must use context 0 or else setpte4m() will fail */
-	ctx = getcontext4m();
-	setcontext4m(0);
-	va = vpage[0];
-	setpte4m((vaddr_t) va, pte);
-	qzero(va, NBPG);
-	setpte4m((vaddr_t) va, SRMMU_TEINVALID);
-	setcontext4m(ctx);
+	tlb_flush_page(va);
+	setpgt4m(ptep, pte);
+	qzero((caddr_t)va, PAGE_SIZE);
+	tlb_flush_page(va);
+	setpgt4m(ptep, SRMMU_TEINVALID);
 }
 
 /*
@@ -6447,10 +6447,15 @@ void
 pmap_copy_page4m(src, dst)
 	paddr_t src, dst;
 {
-	caddr_t sva, dva;
 	int spte, dpte;
-	int ctx;
 	struct pvlist *pv;
+	static int *sptep, *dptep;
+	static vaddr_t sva, dva;
+
+	if (sptep == NULL) {
+		sptep = getptep4m(pmap_kernel(), (sva = (vaddr_t)vpage[0]));
+		dptep = getptep4m(pmap_kernel(), (dva = (vaddr_t)vpage[1]));
+	}
 
 	pv = pvhead(atop(src));
 	if (pv && CACHEINFO.c_vactype == VAC_WRITEBACK)
@@ -6470,18 +6475,16 @@ pmap_copy_page4m(src, dst)
 	else
 		dpte &= ~SRMMU_PG_C;
 
-	/* XXX - must use context 0 or else setpte4m() will fail */
-	ctx = getcontext4m();
-	setcontext4m(0);
-	sva = vpage[0];
-	dva = vpage[1];
-	setpte4m((vaddr_t) sva, spte);
-	setpte4m((vaddr_t) dva, dpte);
-	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
+	tlb_flush_page(sva);
+	setpgt4m(sptep, spte);
+	tlb_flush_page(dva);
+	setpgt4m(dptep, dpte);
+	qcopy((caddr_t)sva, (caddr_t)dva, PAGE_SIZE);
 	cache_flush_page((int)sva);
-	setpte4m((vaddr_t) sva, SRMMU_TEINVALID);
-	setpte4m((vaddr_t) dva, SRMMU_TEINVALID);
-	setcontext4m(ctx);
+	tlb_flush_page(sva);
+	setpgt4m(sptep, SRMMU_TEINVALID);
+	tlb_flush_page(dva);
+	setpgt4m(dptep, SRMMU_TEINVALID);
 }
 #endif /* Sun4M */
 
