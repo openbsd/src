@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.15 2004/07/07 06:57:13 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.16 2004/07/07 08:07:02 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -117,7 +117,7 @@ client_dispatch(struct ntp_peer *p)
 		return (0);
 
 	/*
-	 * From RFC 2030:
+	 * From RFC 2030 (with a correction to the delay math):
 	 *
 	 *      Timestamp Name          ID   When Generated
 	 *     ------------------------------------------------------------
@@ -128,7 +128,7 @@ client_dispatch(struct ntp_peer *p)
 	 *
 	 *  The roundtrip delay d and local clock offset t are defined as
 	 *
-	 *    d = (T4 - T1) - (T2 - T3)     t = ((T2 - T1) + (T3 - T4)) / 2.
+	 *    d = (T4 - T1) - (T3 - T2)     t = ((T2 - T1) + (T3 - T4)) / 2.
 	 */
 
 	T1 = p->query->xmttime;
@@ -136,7 +136,7 @@ client_dispatch(struct ntp_peer *p)
 	T3 = lfp_to_d(msg.xmttime);
 
 	p->reply[p->shift].offset = ((T2 - T1) + (T3 - T4)) / 2;
-	p->reply[p->shift].delay = (T4 - T1) - (T2 - T3);
+	p->reply[p->shift].delay = (T4 - T1) - (T3 - T2);
 	p->reply[p->shift].error = (T2 - T1) - (T3 - T4);
 	p->reply[p->shift].rcvd = time(NULL);
 	p->reply[p->shift].good = 1;
