@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.8 2000/10/03 03:12:16 aaron Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.9 2001/01/02 20:09:02 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -219,9 +219,9 @@ int	select;
 	cur.dk_select = calloc(dk_ndrive, sizeof(int));
 	cur.dk_name = calloc(dk_ndrive, sizeof(char *));
 	
-	if (!cur.dk_time || !cur.dk_xfer || !cur.dk_seek || !cur.dk_bytes
-	    || !last.dk_time || !last.dk_xfer || !last.dk_seek || !last.dk_bytes
-	    || !cur.dk_select || !cur.dk_name)
+	if (!cur.dk_time || !cur.dk_xfer || !cur.dk_seek || !cur.dk_bytes ||
+	    !last.dk_time || !last.dk_xfer || !last.dk_seek ||
+	    !last.dk_bytes || !cur.dk_select || !cur.dk_name)
 		errx(1, "Memory allocation failure.");
 
 	/* Set up the compatibility interfaces. */
@@ -235,6 +235,8 @@ int	select;
 		deref_kptr(p, &cur_disk, sizeof(cur_disk));
 		deref_kptr(cur_disk.dk_name, buf, sizeof(buf));
 		cur.dk_name[i] = strdup(buf);
+		if (!cur.dk_name[i])
+			errx(1, "Memory allocation failure.");
 		cur.dk_select[i] = select;
 
 		p = cur_disk.dk_link.tqe_next;
